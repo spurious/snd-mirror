@@ -181,7 +181,7 @@ env_state *make_env_state(chan_info *cp, int samples)
 }
 
 #ifndef AMP_ENV_SUBSAMPLE
-  #define AMP_ENV_SUBSAMPLE 50
+  #define AMP_ENV_SUBSAMPLE 100
   /* sets how may samples we actually check per bin in huge sound files -- 10 looked ok too */
   /* the lower this number, the faster the amp-envs are calculated, but the higher chance of missing something */
 #endif
@@ -204,6 +204,14 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	if (lm > MULTIPLIER) 
 	  lm = MULTIPLIER;
       sb = ep->bin;
+      if (sb >= ep->amp_env_size)
+	{
+	  /* oops... */
+	  es->slice++;
+	  if (es->sf) es->sf = free_snd_fd(es->sf);
+	  ep->completed = 1;
+	  return(TRUE);
+	}
       if ((cp->edit_ctr != 0) || 
 	  (ep->samps_per_bin < (2 * AMP_ENV_SUBSAMPLE)))
 	{
@@ -644,14 +652,14 @@ Float srate_changed(Float val, char *srcbuf, int style, int tones)
   int semi, i, j;
   switch (style)
     {
-    case SPEED_AS_RATIO: 
+    case SPEED_CONTROL_AS_RATIO: 
       for (i = 1; i < TOTAL_RATS; i++)
 	if (rat_values[i] > val) 
 	  break;
       sprintf(srcbuf, "%s", rat_names[i-1]);
       return(rat_values[i - 1]);
       break;
-    case SPEED_AS_SEMITONE: 
+    case SPEED_CONTROL_AS_SEMITONE: 
       /* find closest semitone to val */
       semi = snd_round(log(val) * ((Float)tones / log(2.0)));
       /* space until (-) num (-52 to 52 is its range if 12-tone) */
@@ -819,23 +827,23 @@ void save_controls(snd_info *sp)
       sp->saved_controls = (ctrl_state *)CALLOC(1, sizeof(ctrl_state));
       cs = (ctrl_state *)(sp->saved_controls);
     }
-  cs->amp = sp->amp;
-  cs->srate = sp->srate;
-  cs->expand = sp->expand;
-  cs->revscl = sp->revscl;
-  cs->revlen = sp->revlen;
-  cs->contrast = sp->contrast;
-  cs->expand_on = sp->expanding;
-  cs->reverb_on = sp->reverbing;
-  cs->contrast_on = sp->contrasting;
-  cs->filter_on = sp->filtering;
-  cs->filter_order = sp->filter_order;
-  if (sp->filter_env) 
+  cs->amp = sp->amp_control;
+  cs->srate = sp->speed_control;
+  cs->expand = sp->expand_control;
+  cs->revscl = sp->reverb_control_scale;
+  cs->revlen = sp->reverb_control_length;
+  cs->contrast = sp->contrast_control;
+  cs->expand_on = sp->expand_control_p;
+  cs->reverb_on = sp->reverb_control_p;
+  cs->contrast_on = sp->contrast_control_p;
+  cs->filter_on = sp->filter_control_p;
+  cs->filter_order = sp->filter_control_order;
+  if (sp->filter_control_env) 
     {
       if (cs->filter_env) cs->filter_env = free_env(cs->filter_env);
-      cs->filter_env = copy_env(sp->filter_env);
+      cs->filter_env = copy_env(sp->filter_control_env);
     }
-  if (sp->play_direction == 1) 
+  if (sp->speed_control_direction == 1) 
     cs->direction = 0; 
   else cs->direction = 1;
 }
@@ -848,18 +856,18 @@ void restore_controls(snd_info *sp)
     {
       sp->saved_controls = (ctrl_state *)CALLOC(1, sizeof(ctrl_state));
       cs = (ctrl_state *)(sp->saved_controls);
-      cs->amp = DEFAULT_AMP;
-      cs->srate = DEFAULT_SPEED;
+      cs->amp = DEFAULT_AMP_CONTROL;
+      cs->srate = DEFAULT_SPEED_CONTROL;
       cs->direction = 0; /* 0 = forward, 1 = backward (this is the button's view) */
-      cs->expand = DEFAULT_EXPAND;
-      cs->expand_on = DEFAULT_EXPANDING;
-      cs->revscl = DEFAULT_REVERB_SCALE;
-      cs->revlen = DEFAULT_REVERB_LENGTH;
-      cs->reverb_on = DEFAULT_REVERBING;
-      cs->contrast = DEFAULT_CONTRAST;
-      cs->contrast_on = DEFAULT_CONTRASTING;
-      cs->filter_on = DEFAULT_FILTERING;
-      cs->filter_order = DEFAULT_FILTER_ORDER;
+      cs->expand = DEFAULT_EXPAND_CONTROL;
+      cs->expand_on = DEFAULT_EXPAND_CONTROL_P;
+      cs->revscl = DEFAULT_REVERB_CONTROL_SCALE;
+      cs->revlen = DEFAULT_REVERB_CONTROL_LENGTH;
+      cs->reverb_on = DEFAULT_REVERB_CONTROL_P;
+      cs->contrast = DEFAULT_CONTRAST_CONTROL;
+      cs->contrast_on = DEFAULT_CONTRAST_CONTROL_P;
+      cs->filter_on = DEFAULT_FILTER_CONTROL_P;
+      cs->filter_order = DEFAULT_FILTER_CONTROL_ORDER;
       cs->filter_env = NULL;
     }
   toggle_expand_button(sp, cs->expand_on);
@@ -873,29 +881,29 @@ void restore_controls(snd_info *sp)
   set_snd_expand(sp, cs->expand);
   set_snd_revscl(sp, cs->revscl);
   set_snd_revlen(sp, cs->revlen);
-  if (sp->filter_env) sp->filter_env = free_env(sp->filter_env); 
+  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env); 
   if (cs->filter_env) 
-    sp->filter_env = copy_env(cs->filter_env);
-  else sp->filter_env = default_env(sp->filter_env_xmax, 1.0);
+    sp->filter_control_env = copy_env(cs->filter_env);
+  else sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   set_snd_filter_order(sp, cs->filter_order);
 }
 
 void reset_controls(snd_info *sp) 
 {
-  toggle_expand_button(sp, DEFAULT_EXPANDING);
-  toggle_contrast_button(sp, DEFAULT_CONTRASTING);
-  toggle_reverb_button(sp, DEFAULT_REVERBING);
-  toggle_filter_button(sp, DEFAULT_FILTERING);
+  toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
+  toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
+  toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
+  toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_P);
   toggle_direction_arrow(sp, 0);
-  set_snd_amp(sp, DEFAULT_AMP);
-  set_snd_srate(sp, DEFAULT_SPEED);
-  set_snd_contrast(sp, DEFAULT_CONTRAST);
-  set_snd_expand(sp, DEFAULT_EXPAND);
-  set_snd_revscl(sp, DEFAULT_REVERB_SCALE);
-  set_snd_revlen(sp, DEFAULT_REVERB_LENGTH);
-  set_snd_filter_order(sp, DEFAULT_FILTER_ORDER);
-  if (sp->filter_env) sp->filter_env = free_env(sp->filter_env);
-  sp->filter_env = default_env(sp->filter_env_xmax, 1.0);
+  set_snd_amp(sp, DEFAULT_AMP_CONTROL);
+  set_snd_srate(sp, DEFAULT_SPEED_CONTROL);
+  set_snd_contrast(sp, DEFAULT_CONTRAST_CONTROL);
+  set_snd_expand(sp, DEFAULT_EXPAND_CONTROL);
+  set_snd_revscl(sp, DEFAULT_REVERB_CONTROL_SCALE);
+  set_snd_revlen(sp, DEFAULT_REVERB_CONTROL_LENGTH);
+  set_snd_filter_order(sp, DEFAULT_FILTER_CONTROL_ORDER);
+  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
+  sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
 }
 
 
@@ -1060,14 +1068,14 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   sp = ap->sp;
   if (!(sp->active)) return(BACKGROUND_QUIT);
   ss = sp->state;
-  if (sp->filtering) added_dur = sp->filter_order;
-  mult_dur = 1.0 / fabs(sp->srate);
-  if (sp->expanding) mult_dur *= sp->expand;
-  if (sp->reverbing) added_dur += (int)((SND_SRATE(sp) * reverb_decay(ss)));
+  if (sp->filter_control_p) added_dur = sp->filter_control_order;
+  mult_dur = 1.0 / fabs(sp->speed_control);
+  if (sp->expand_control_p) mult_dur *= sp->expand_control;
+  if (sp->reverb_control_p) added_dur += (int)((SND_SRATE(sp) * reverb_control_decay(ss)));
   if ((ss->apply_choice != APPLY_TO_SELECTION) &&
-      (sp->srate == 1.0) && 
-      (sp->play_direction == 1) &&
-      (!(sp->filtering)) && (!(sp->expanding)) && (!(sp->reverbing)) && (!(sp->contrasting)))
+      (sp->speed_control == 1.0) && 
+      (sp->speed_control_direction == 1) &&
+      (!(sp->filter_control_p)) && (!(sp->expand_control_p)) && (!(sp->reverb_control_p)) && (!(sp->contrast_control_p)))
     {
       old_sync = sp->sync;
       if (ss->apply_choice == APPLY_TO_SOUND)
@@ -1077,7 +1085,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	  sp->sync = maxsync[0] + 1;
 	}
       else sp->sync = 0;
-      scaler[0] = sp->amp;
+      scaler[0] = sp->amp_control;
       scale_by((sp->selected_channel == NO_SELECTION) ? sp->chans[0] : sp->chans[sp->selected_channel], 
 	       scaler, 1, FALSE);
       sp->sync = old_sync;
@@ -1211,17 +1219,17 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      set_apply_button(sp, FALSE);
 	      sp->apply_ok = 0;
 	      
-	      if ((sp->expanding) || 
-		  (sp->play_direction != 1) || (sp->srate != 1.0))
+	      if ((sp->expand_control_p) || 
+		  (sp->speed_control_direction != 1) || (sp->speed_control != 1.0))
 		{
 		  for (i = 0; i < sp->nchans; i++)
 		    {
 		      cp = sp->chans[i];
 		      if (cp->marks)
 			{
-			  if (!(sp->expanding))
-			    ratio = sp->srate;
-			  else ratio = sp->srate / sp->expand;
+			  if (!(sp->expand_control_p))
+			    ratio = sp->speed_control;
+			  else ratio = sp->speed_control / sp->expand_control;
 			  if (ratio != 1.0)
 			    {
 			      over_selection = (ss->apply_choice == APPLY_TO_SELECTION);
@@ -1282,36 +1290,36 @@ static void set_reverb_decay(snd_state *ss, Float val)
 {
   int i;
   snd_info *sp;
-  in_set_reverb_decay(ss, val);
+  in_set_reverb_control_decay(ss, val);
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse))
-	sp->reverb_decay = val;
+	sp->reverb_control_decay = val;
     }
 }
 
 static int map_sounds_speed_tones(snd_info *sp, void *val) 
 {
-  sp->speed_tones = (*((int *)val)); 
+  sp->speed_control_tones = (*((int *)val)); 
   return(0);
 }
 
 static void set_speed_tones(snd_state *ss, int val) 
 {
-  in_set_speed_tones(ss, val); 
+  in_set_speed_control_tones(ss, val); 
   map_over_sounds(ss, map_sounds_speed_tones, (void *)(&val));
 }      
 
 static int map_sounds_speed_style(snd_info *sp, void *val) 
 {
-  sp->speed_style = (*((int *)val)); 
+  sp->speed_control_style = (*((int *)val)); 
   return(0);
 }
 
 void set_speed_style(snd_state *ss, int val) 
 {
-  in_set_speed_style(ss, val); 
+  in_set_speed_control_style(ss, val); 
   map_over_sounds(ss, map_sounds_speed_style, (void *)(&val));
 }      
 
@@ -1323,9 +1331,9 @@ SCM snd_no_such_sound_error(const char *caller, SCM n)
   return(SCM_BOOL_F);
 }
 
-static SCM g_soundQ(SCM snd_n)
+static SCM g_sound_p(SCM snd_n)
 {
-  #define H_soundQ "(" S_soundQ " &optional (index 0)) -> #t if sound associated with index is active (accessible)"
+  #define H_sound_p "(" S_sound_p " &optional (index 0)) -> #t if sound associated with index is active (accessible)"
   snd_info *sp;
   sp = get_sp(snd_n);
   return(TO_SCM_BOOLEAN((sp) && snd_ok(sp)));
@@ -1433,12 +1441,12 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
     case SP_UNITE:               return(TO_SCM_INT(sp->combining));               break;
     case SP_READ_ONLY:           return(TO_SCM_BOOLEAN(sp->read_only));           break;
     case SP_NCHANS:              return(TO_SCM_INT(sp->nchans));                  break;
-    case SP_EXPANDING:           return(TO_SCM_BOOLEAN(sp->expanding));           break;
-    case SP_CONTRASTING:         return(TO_SCM_BOOLEAN(sp->contrasting));         break;
-    case SP_REVERBING:           return(TO_SCM_BOOLEAN(sp->reverbing));           break;
-    case SP_FILTERING:           return(TO_SCM_BOOLEAN(sp->filtering));           break;
-    case SP_FILTER_DBING:        return(TO_SCM_BOOLEAN(sp->filter_dBing));        break;
-    case SP_FILTER_ORDER:        return(TO_SCM_INT(sp->filter_order));            break;
+    case SP_EXPANDING:           return(TO_SCM_BOOLEAN(sp->expand_control_p));    break;
+    case SP_CONTRASTING:         return(TO_SCM_BOOLEAN(sp->contrast_control_p));  break;
+    case SP_REVERBING:           return(TO_SCM_BOOLEAN(sp->reverb_control_p));    break;
+    case SP_FILTERING:           return(TO_SCM_BOOLEAN(sp->filter_control_p));    break;
+    case SP_FILTER_DBING:        return(TO_SCM_BOOLEAN(sp->filter_control_in_dB)); break;
+    case SP_FILTER_ORDER:        return(TO_SCM_INT(sp->filter_control_order));    break;
     case SP_SRATE:               return(TO_SCM_INT((sp->hdr)->srate));            break;
     case SP_DATA_FORMAT:         return(TO_SCM_INT((sp->hdr)->format));           break;
     case SP_HEADER_TYPE:         return(TO_SCM_INT((sp->hdr)->type));             break;
@@ -1454,8 +1462,8 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
     case SP_UPDATE:              snd_update(sp->state, sp);                       break;
     case SP_CURSOR_FOLLOWS_PLAY: return(TO_SCM_BOOLEAN(sp->cursor_follows_play)); break;
     case SP_SHOW_CONTROLS:       return(TO_SCM_BOOLEAN(control_panel_open(sp)));  break;
-    case SP_SPEED_TONES:         return(TO_SCM_INT(sp->speed_tones));             break;
-    case SP_SPEED_STYLE:         return(TO_SCM_INT(sp->speed_style));             break;
+    case SP_SPEED_TONES:         return(TO_SCM_INT(sp->speed_control_tones));     break;
+    case SP_SPEED_STYLE:         return(TO_SCM_INT(sp->speed_control_style));     break;
     case SP_COMMENT:
       str = mus_sound_comment(sp->fullname);
       res = TO_SCM_STRING(str);
@@ -1517,7 +1525,7 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
       toggle_filter_button(sp, TO_C_BOOLEAN_OR_T(val));
       break;
     case SP_FILTER_DBING:   
-      set_filter_dBing(sp, TO_C_BOOLEAN_OR_T(val));
+      set_filter_in_dB(sp, TO_C_BOOLEAN_OR_T(val));
       break;
     case SP_FILTER_ORDER:
       set_snd_filter_order(sp, TO_C_INT(val));
@@ -1531,12 +1539,12 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
       else sound_hide_ctrls(sp); 
       break;
     case SP_SPEED_TONES:
-      sp->speed_tones = TO_C_INT(val);
-      if (sp->speed_tones <= 0) 
-	sp->speed_tones = DEFAULT_SPEED_TONES;
+      sp->speed_control_tones = TO_C_INT(val);
+      if (sp->speed_control_tones <= 0) 
+	sp->speed_control_tones = DEFAULT_SPEED_CONTROL_TONES;
       break;
     case SP_SPEED_STYLE:
-      sp->speed_style = mus_iclamp(0, TO_C_INT(val), MAX_SPEED_STYLE);
+      sp->speed_control_style = mus_iclamp(0, TO_C_INT(val), MAX_SPEED_CONTROL_STYLE);
       break;
     case SP_SRATE:
       mus_sound_set_srate(sp->fullname, TO_C_INT(val));
@@ -1726,89 +1734,89 @@ static SCM g_set_read_only(SCM on, SCM snd_n)
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_read_only_reversed, g_set_read_only)
 
-static SCM g_contrasting(SCM snd_n) 
+static SCM g_contrast_control_p(SCM snd_n) 
 {
-  #define H_contrasting "(" S_contrasting " &optional snd) -> snd's control panel constrast button state"
-  return(sp_iread(snd_n, SP_CONTRASTING, S_contrasting));
+  #define H_contrast_control_p "(" S_contrast_control_p " &optional snd) -> snd's control panel constrast button state"
+  return(sp_iread(snd_n, SP_CONTRASTING, S_contrast_control_p));
 }
 
-static SCM g_set_contrasting(SCM on, SCM snd_n) 
+static SCM g_set_contrast_control_p(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_contrasting, "a boolean");
-  return(sp_iwrite(snd_n, on, SP_CONTRASTING, "set-" S_contrasting));
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_contrast_control_p, "a boolean");
+  return(sp_iwrite(snd_n, on, SP_CONTRASTING, "set-" S_contrast_control_p));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_contrasting_reversed, g_set_contrasting)
+WITH_REVERSED_BOOLEAN_ARGS(g_set_contrast_control_p_reversed, g_set_contrast_control_p)
 
-static SCM g_expanding(SCM snd_n) 
+static SCM g_expand_control_p(SCM snd_n) 
 {
-  #define H_expanding "(" S_expanding " &optional snd) -> snd's control panel expand button state"
-  return(sp_iread(snd_n, SP_EXPANDING, S_expanding));
+  #define H_expand_control_p "(" S_expand_control_p " &optional snd) -> snd's control panel expand button state"
+  return(sp_iread(snd_n, SP_EXPANDING, S_expand_control_p));
 }
 
-static SCM g_set_expanding(SCM on, SCM snd_n) 
+static SCM g_set_expand_control_p(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_expanding, "a boolean");
-  return(sp_iwrite(snd_n, on, SP_EXPANDING, "set-" S_expanding));
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_expand_control_p, "a boolean");
+  return(sp_iwrite(snd_n, on, SP_EXPANDING, "set-" S_expand_control_p));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_expanding_reversed, g_set_expanding)
+WITH_REVERSED_BOOLEAN_ARGS(g_set_expand_control_p_reversed, g_set_expand_control_p)
 
-static SCM g_reverbing(SCM snd_n) 
+static SCM g_reverb_control_p(SCM snd_n) 
 {
-  #define H_reverbing "(" S_reverbing " &optional snd) -> snd's control panel reverb button state"
-  return(sp_iread(snd_n, SP_REVERBING, S_reverbing));
+  #define H_reverb_control_p "(" S_reverb_control_p " &optional snd) -> snd's control panel reverb button state"
+  return(sp_iread(snd_n, SP_REVERBING, S_reverb_control_p));
 }
 
-static SCM g_set_reverbing(SCM on, SCM snd_n) 
+static SCM g_set_reverb_control_p(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_reverbing, "a boolean");
-  return(sp_iwrite(snd_n, on, SP_REVERBING, "set-" S_reverbing));
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_reverb_control_p, "a boolean");
+  return(sp_iwrite(snd_n, on, SP_REVERBING, "set-" S_reverb_control_p));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_reverbing_reversed, g_set_reverbing)
+WITH_REVERSED_BOOLEAN_ARGS(g_set_reverb_control_p_reversed, g_set_reverb_control_p)
 
-static SCM g_filtering(SCM snd_n) 
+static SCM g_filter_control_p(SCM snd_n) 
 {
-  #define H_filtering "(" S_filtering " &optional snd) -> snd's control panel filter button state"
-  return(sp_iread(snd_n, SP_FILTERING, S_filtering));
+  #define H_filter_control_p "(" S_filter_control_p " &optional snd) -> snd's control panel filter button state"
+  return(sp_iread(snd_n, SP_FILTERING, S_filter_control_p));
 }
 
-static SCM g_set_filtering(SCM on, SCM snd_n) 
+static SCM g_set_filter_control_p(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filtering, "a boolean");
-  return(sp_iwrite(snd_n, on, SP_FILTERING, "set-" S_filtering));
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filter_control_p, "a boolean");
+  return(sp_iwrite(snd_n, on, SP_FILTERING, "set-" S_filter_control_p));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_filtering_reversed, g_set_filtering)
+WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_p_reversed, g_set_filter_control_p)
 
-static SCM g_filter_dBing(SCM snd_n) 
+static SCM g_filter_control_in_dB(SCM snd_n) 
 {
-  #define H_filter_dBing "(" S_filter_dBing " &optional snd) -> #t if snd's filter envelope is displayed in dB in control panel"
-  return(sp_iread(snd_n, SP_FILTER_DBING, S_filter_dBing));
+  #define H_filter_control_in_dB "(" S_filter_control_in_dB " &optional snd) -> #t if snd's filter envelope is displayed in dB in control panel"
+  return(sp_iread(snd_n, SP_FILTER_DBING, S_filter_control_in_dB));
 }
 
-static SCM g_set_filter_dBing(SCM on, SCM snd_n) 
+static SCM g_set_filter_control_in_dB(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filter_dBing, "a boolean");
-  return(sp_iwrite(snd_n, on, SP_FILTER_DBING, "set-" S_filter_dBing));
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filter_control_in_dB, "a boolean");
+  return(sp_iwrite(snd_n, on, SP_FILTER_DBING, "set-" S_filter_control_in_dB));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_dBing_reversed, g_set_filter_dBing)
+WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_in_dB_reversed, g_set_filter_control_in_dB)
 
-static SCM g_filter_order(SCM snd_n) 
+static SCM g_filter_control_order(SCM snd_n) 
 {
-  #define H_filter_order "(" S_filter_order " &optional snd) -> filter order (in control panel)"
-  return(sp_iread(snd_n, SP_FILTER_ORDER, S_filter_order));
+  #define H_filter_control_order "(" S_filter_control_order " &optional snd) -> filter order (in control panel)"
+  return(sp_iread(snd_n, SP_FILTER_ORDER, S_filter_control_order));
 }
 
-static SCM g_set_filter_order(SCM on, SCM snd_n) 
+static SCM g_set_filter_control_order(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(INTEGER_P(on), on, SCM_ARG1, "set-" S_filter_order, "an integer"); 
-  return(sp_iwrite(snd_n, on, SP_FILTER_ORDER, "set-" S_filter_order));
+  ASSERT_TYPE(INTEGER_P(on), on, SCM_ARG1, "set-" S_filter_control_order, "an integer"); 
+  return(sp_iwrite(snd_n, on, SP_FILTER_ORDER, "set-" S_filter_control_order));
 }
 
-WITH_REVERSED_ARGS(g_set_filter_order_reversed, g_set_filter_order)
+WITH_REVERSED_ARGS(g_set_filter_control_order_reversed, g_set_filter_control_order)
 
 static SCM g_cursor_follows_play(SCM snd_n) 
 {
@@ -2025,6 +2033,7 @@ You can subsequently make it writable by (set! (read-only) #f)."
       FREE(fname);
       if (sp) return(TO_SCM_INT(sp->index));
     }
+  /* TODO: should this return -1 (others like open-sound also)? */
   return(SCM_BOOL_F);
 }
 
@@ -2193,55 +2202,55 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
   return(SCM_BOOL_F);
 }
 
-static SCM g_speed_style(SCM snd)
+static SCM g_speed_control_style(SCM snd)
 {
-  #define H_speed_style "(" S_speed_style " (snd #t)) -> speed control panel interpretation choice (speed-as-float)"
+  #define H_speed_control_style "(" S_speed_control_style " (snd #t)) -> speed control panel interpretation choice (speed-as-float)"
   if (BOUND_P(snd))
-    return(sp_iread(snd, SP_SPEED_STYLE, S_speed_style));
-  return(TO_SCM_INT(speed_style(get_global_state())));
+    return(sp_iread(snd, SP_SPEED_STYLE, S_speed_control_style));
+  return(TO_SCM_INT(speed_control_style(get_global_state())));
 }
 
-static SCM g_set_speed_style(SCM speed, SCM snd) 
+static SCM g_set_speed_control_style(SCM speed, SCM snd) 
 {
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_P(speed), speed, SCM_ARG1, "set-" S_speed_style, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(speed), speed, SCM_ARG1, "set-" S_speed_control_style, "an integer"); 
   if (BOUND_P(snd))
-    return(sp_iwrite(snd, speed, SP_SPEED_STYLE, "set-" S_speed_style));
+    return(sp_iwrite(snd, speed, SP_SPEED_STYLE, "set-" S_speed_control_style));
   else
     {
       ss = get_global_state();
-      activate_speed_in_menu(ss, mus_iclamp(SPEED_AS_FLOAT,
+      activate_speed_in_menu(ss, mus_iclamp(SPEED_CONTROL_AS_FLOAT,
 					    TO_C_INT(speed),
-					    SPEED_AS_SEMITONE));
-      return(TO_SCM_INT(speed_style(ss)));
+					    SPEED_CONTROL_AS_SEMITONE));
+      return(TO_SCM_INT(speed_control_style(ss)));
     }
 }
 
-WITH_REVERSED_ARGS(g_set_speed_style_reversed, g_set_speed_style)
+WITH_REVERSED_ARGS(g_set_speed_control_style_reversed, g_set_speed_control_style)
 
-static SCM g_speed_tones(SCM snd)
+static SCM g_speed_control_tones(SCM snd)
 {
-  #define H_speed_tones "(" S_speed_tones " (snd #t)) -> if speed-style is speed-as-semitone, this chooses the octave divisions (12)"
+  #define H_speed_control_tones "(" S_speed_control_tones " (snd #t)) -> if " S_speed_control_style " is " S_speed_control_as_semitone ", this chooses the octave divisions (12)"
   if (BOUND_P(snd))
-    return(sp_iread(snd, SP_SPEED_TONES, S_speed_tones));
-  return(TO_SCM_INT(speed_tones(get_global_state())));
+    return(sp_iread(snd, SP_SPEED_TONES, S_speed_control_tones));
+  return(TO_SCM_INT(speed_control_tones(get_global_state())));
 }
 
-static SCM g_set_speed_tones(SCM val, SCM snd)
+static SCM g_set_speed_control_tones(SCM val, SCM snd)
 {
   snd_state *ss;
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG1, "set-" S_speed_tones, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG1, "set-" S_speed_control_tones, "a number"); 
   if (BOUND_P(snd))
-    return(sp_iwrite(snd, val, SP_SPEED_TONES, "set-" S_speed_tones));
+    return(sp_iwrite(snd, val, SP_SPEED_TONES, "set-" S_speed_control_tones));
   else
     {
       ss = get_global_state();
       set_speed_tones(ss, TO_C_INT_OR_ELSE(val, 0));
-      return(TO_SCM_INT(speed_tones(ss)));
+      return(TO_SCM_INT(speed_control_tones(ss)));
     }
 }
 
-WITH_REVERSED_ARGS(g_set_speed_tones_reversed, g_set_speed_tones)
+WITH_REVERSED_ARGS(g_set_speed_control_tones_reversed, g_set_speed_control_tones)
 
 enum {SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
       SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
@@ -2271,19 +2280,23 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
     return(snd_no_such_sound_error(caller, snd_n));
   switch (fld)
     {
-    case SP_AMP:             return(TO_SCM_DOUBLE(sp->amp));           break;
-    case SP_CONTRAST:        return(TO_SCM_DOUBLE(sp->contrast));      break;
-    case SP_CONTRAST_AMP:    return(TO_SCM_DOUBLE(sp->contrast_amp));  break;
-    case SP_EXPAND:          return(TO_SCM_DOUBLE(sp->expand));        break;
-    case SP_EXPAND_LENGTH:   return(TO_SCM_DOUBLE(sp->expand_length)); break;
-    case SP_EXPAND_RAMP:     return(TO_SCM_DOUBLE(sp->expand_ramp));   break;
-    case SP_EXPAND_HOP:      return(TO_SCM_DOUBLE(sp->expand_hop));    break;
-    case SP_SPEED:           if (sp->play_direction == -1) return(TO_SCM_DOUBLE((-(sp->srate)))); else return(TO_SCM_DOUBLE(sp->srate)); break;
-    case SP_REVERB_LENGTH:   return(TO_SCM_DOUBLE(sp->revlen));        break;
-    case SP_REVERB_FEEDBACK: return(TO_SCM_DOUBLE(sp->revfb));         break;
-    case SP_REVERB_SCALE:    return(TO_SCM_DOUBLE(sp->revscl));        break;
-    case SP_REVERB_LOW_PASS: return(TO_SCM_DOUBLE(sp->revlp));         break;
-    case SP_REVERB_DECAY:    return(TO_SCM_DOUBLE(sp->reverb_decay));  break;
+    case SP_AMP:             return(TO_SCM_DOUBLE(sp->amp_control));           break;
+    case SP_CONTRAST:        return(TO_SCM_DOUBLE(sp->contrast_control));      break;
+    case SP_CONTRAST_AMP:    return(TO_SCM_DOUBLE(sp->contrast_control_amp));  break;
+    case SP_EXPAND:          return(TO_SCM_DOUBLE(sp->expand_control));        break;
+    case SP_EXPAND_LENGTH:   return(TO_SCM_DOUBLE(sp->expand_control_length)); break;
+    case SP_EXPAND_RAMP:     return(TO_SCM_DOUBLE(sp->expand_control_ramp));   break;
+    case SP_EXPAND_HOP:      return(TO_SCM_DOUBLE(sp->expand_control_hop));    break;
+    case SP_SPEED:           
+      if (sp->speed_control_direction == -1) 
+	return(TO_SCM_DOUBLE((-(sp->speed_control)))); 
+      else return(TO_SCM_DOUBLE(sp->speed_control)); 
+      break;
+    case SP_REVERB_LENGTH:   return(TO_SCM_DOUBLE(sp->reverb_control_length));   break;
+    case SP_REVERB_FEEDBACK: return(TO_SCM_DOUBLE(sp->reverb_control_feedback)); break;
+    case SP_REVERB_SCALE:    return(TO_SCM_DOUBLE(sp->reverb_control_scale));    break;
+    case SP_REVERB_LOW_PASS: return(TO_SCM_DOUBLE(sp->reverb_control_lowpass));  break;
+    case SP_REVERB_DECAY:    return(TO_SCM_DOUBLE(sp->reverb_control_decay));    break;
     }
   return(SCM_BOOL_F);
 }
@@ -2315,30 +2328,30 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
 	{
 	case SP_AMP:           
 	  if (fval >= 0.0) set_snd_amp(sp, fval); 
-	  return(TO_SCM_DOUBLE(sp->amp)); 
+	  return(TO_SCM_DOUBLE(sp->amp_control)); 
 	  break;
 	case SP_CONTRAST:      
 	  set_snd_contrast(sp, fval); 
-	  return(TO_SCM_DOUBLE(sp->contrast)); 
+	  return(TO_SCM_DOUBLE(sp->contrast_control)); 
 	  break;
 	case SP_CONTRAST_AMP:  
-	  sp->contrast_amp = fval; 
+	  sp->contrast_control_amp = fval; 
 	  if (sp->playing) dac_set_contrast_amp(sp, fval); 
 	  break;
 	case SP_EXPAND:        
 	  if (fval > 0.0) set_snd_expand(sp, fval); 
-	  return(TO_SCM_DOUBLE(sp->expand)); 
+	  return(TO_SCM_DOUBLE(sp->expand_control)); 
 	  break;
 	case SP_EXPAND_LENGTH: 
-	  if (fval > 0.0) sp->expand_length = fval; 
+	  if (fval > 0.0) sp->expand_control_length = fval; 
 	  if (sp->playing) dac_set_expand_length(sp, fval); 
 	  break;
 	case SP_EXPAND_RAMP:   
-	  if ((fval >= 0.0) && (fval < 0.5)) sp->expand_ramp = fval; 
+	  if ((fval >= 0.0) && (fval < 0.5)) sp->expand_control_ramp = fval; 
 	  if (sp->playing) dac_set_expand_ramp(sp, fval); 
 	  break;
 	case SP_EXPAND_HOP:    
-	  if (fval > 0.0) sp->expand_hop = fval; 
+	  if (fval > 0.0) sp->expand_control_hop = fval; 
 	  if (sp->playing) dac_set_expand_hop(sp, fval); 
 	  break;
 	case SP_SPEED: 
@@ -2347,254 +2360,254 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
 	      if (fval > 0.0) direction = 1; else direction = -1;
 	      set_snd_srate(sp, direction * fval); 
 	      toggle_direction_arrow(sp, (direction == -1));
-	      if (sp->play_direction == -1) 
-		return(TO_SCM_DOUBLE((-(sp->srate)))); 
-	      else return(TO_SCM_DOUBLE(sp->srate));
+	      if (sp->speed_control_direction == -1) 
+		return(TO_SCM_DOUBLE((-(sp->speed_control)))); 
+	      else return(TO_SCM_DOUBLE(sp->speed_control));
 	    }
 	  break;
 	case SP_REVERB_LENGTH:    
 	  if (fval >= 0.0) set_snd_revlen(sp, fval); 
-	  return(TO_SCM_DOUBLE(sp->revlen)); 
+	  return(TO_SCM_DOUBLE(sp->reverb_control_length)); 
 	  break;
 	case SP_REVERB_FEEDBACK:  
-	  sp->revfb = fval; 
+	  sp->reverb_control_feedback = fval; 
 	  if (sp->playing) dac_set_reverb_feedback(sp, fval); 
 	  break;
 	case SP_REVERB_SCALE:     
 	  set_snd_revscl(sp, fval); 
-	  return(TO_SCM_DOUBLE(sp->revscl)); 
+	  return(TO_SCM_DOUBLE(sp->reverb_control_scale)); 
 	  break;
 	case SP_REVERB_LOW_PASS:  
-	  sp->revlp = fval; 
+	  sp->reverb_control_lowpass = fval; 
 	  if (sp->playing) dac_set_reverb_lowpass(sp, fval); 
 	  break;
 	case SP_REVERB_DECAY:     
-	  sp->reverb_decay = fval; 
+	  sp->reverb_control_decay = fval; 
 	  break;
 	}
     }
   return(val);
 }
 
-static SCM g_amp(SCM snd_n) 
+static SCM g_amp_control(SCM snd_n) 
 {
-  #define H_amp "(" S_amp " &optional snd) -> current amp slider setting"
-  return(sp_fread(snd_n, SP_AMP, S_amp));
+  #define H_amp_control "(" S_amp_control " &optional snd) -> current amp slider setting"
+  return(sp_fread(snd_n, SP_AMP, S_amp_control));
 }
 
-static SCM g_set_amp(SCM on, SCM snd_n) 
+static SCM g_set_amp_control(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_amp, "a number"); 
-  return(sp_fwrite(snd_n, on, SP_AMP, "set-" S_amp));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_amp_control, "a number"); 
+  return(sp_fwrite(snd_n, on, SP_AMP, "set-" S_amp_control));
 }
 
-WITH_REVERSED_ARGS(g_set_amp_reversed, g_set_amp)
+WITH_REVERSED_ARGS(g_set_amp_control_reversed, g_set_amp_control)
 
-static SCM g_contrast(SCM snd_n) 
+static SCM g_contrast_control(SCM snd_n) 
 {
-  #define H_contrast "(" S_contrast " &optional snd) -> current contrast slider setting"
-  return(sp_fread(snd_n, SP_CONTRAST, S_contrast));
+  #define H_contrast_control "(" S_contrast_control " &optional snd) -> current contrast slider setting"
+  return(sp_fread(snd_n, SP_CONTRAST, S_contrast_control));
 }
 
-static SCM g_set_contrast(SCM on, SCM snd_n) 
+static SCM g_set_contrast_control(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_contrast, "a number"); 
-  return(sp_fwrite(snd_n, on, SP_CONTRAST, "set-" S_contrast));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_contrast_control, "a number"); 
+  return(sp_fwrite(snd_n, on, SP_CONTRAST, "set-" S_contrast_control));
 }
 
-WITH_REVERSED_ARGS(g_set_contrast_reversed, g_set_contrast)
+WITH_REVERSED_ARGS(g_set_contrast_control_reversed, g_set_contrast_control)
 
-static SCM g_contrast_amp(SCM snd_n) 
+static SCM g_contrast_control_amp(SCM snd_n) 
 {
-  #define H_contrast_amp "(" S_contrast_amp " &optional snd) -> snd's contrast amp\n\
+  #define H_contrast_control_amp "(" S_contrast_control_amp " &optional snd) -> snd's contrast amp\n\
    (scaler on data before contrast operation in control panel, 1.0)"
 
-  return(sp_fread(snd_n, SP_CONTRAST_AMP, S_contrast_amp));
+  return(sp_fread(snd_n, SP_CONTRAST_AMP, S_contrast_control_amp));
 }
 
-static SCM g_set_contrast_amp(SCM on, SCM snd_n) 
+static SCM g_set_contrast_control_amp(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_contrast_amp, "a number");
-  return(sp_fwrite(snd_n, on, SP_CONTRAST_AMP, "set-" S_contrast_amp));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_contrast_control_amp, "a number");
+  return(sp_fwrite(snd_n, on, SP_CONTRAST_AMP, "set-" S_contrast_control_amp));
 }
 
-WITH_REVERSED_ARGS(g_set_contrast_amp_reversed, g_set_contrast_amp)
+WITH_REVERSED_ARGS(g_set_contrast_control_amp_reversed, g_set_contrast_control_amp)
 
-static SCM g_expand(SCM snd_n) 
+static SCM g_expand_control(SCM snd_n) 
 {
-  #define H_expand "(" S_expand " &optional snd) -> current expand slider setting"
-  return(sp_fread(snd_n, SP_EXPAND, S_expand));
+  #define H_expand_control "(" S_expand_control " &optional snd) -> current expand slider setting"
+  return(sp_fread(snd_n, SP_EXPAND, S_expand_control));
 }
 
-static SCM g_set_expand(SCM on, SCM snd_n) 
+static SCM g_set_expand_control(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand, "a number"); 
-  return(sp_fwrite(snd_n, on, SP_EXPAND, "set-" S_expand));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_control, "a number"); 
+  return(sp_fwrite(snd_n, on, SP_EXPAND, "set-" S_expand_control));
 }
 
-WITH_REVERSED_ARGS(g_set_expand_reversed, g_set_expand)
+WITH_REVERSED_ARGS(g_set_expand_control_reversed, g_set_expand_control)
 
-static SCM g_expand_length(SCM snd_n) 
+static SCM g_expand_control_length(SCM snd_n) 
 {
-  #define H_expand_length "(" S_expand_length " &optional snd) -> current expansion segment length in seconds (.15)"
-  return(sp_fread(snd_n, SP_EXPAND_LENGTH, S_expand_length));
+  #define H_expand_control_length "(" S_expand_control_length " &optional snd) -> current expansion segment length in seconds (.15)"
+  return(sp_fread(snd_n, SP_EXPAND_LENGTH, S_expand_control_length));
 }
 
-static SCM g_set_expand_length(SCM on, SCM snd_n) 
+static SCM g_set_expand_control_length(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_length, "a number"); 
-  return(sp_fwrite(snd_n, on, SP_EXPAND_LENGTH, "set-" S_expand_length));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_control_length, "a number"); 
+  return(sp_fwrite(snd_n, on, SP_EXPAND_LENGTH, "set-" S_expand_control_length));
 }
 
-WITH_REVERSED_ARGS(g_set_expand_length_reversed, g_set_expand_length)
+WITH_REVERSED_ARGS(g_set_expand_control_length_reversed, g_set_expand_control_length)
 
-static SCM g_expand_ramp(SCM snd_n) 
+static SCM g_expand_control_ramp(SCM snd_n) 
 {
-  #define H_expand_ramp "(" S_expand_ramp " &optional snd) -> current expansion ramp time (.4)"
-  return(sp_fread(snd_n, SP_EXPAND_RAMP, S_expand_ramp));
+  #define H_expand_control_ramp "(" S_expand_control_ramp " &optional snd) -> current expansion ramp time (.4)"
+  return(sp_fread(snd_n, SP_EXPAND_RAMP, S_expand_control_ramp));
 }
 
-static SCM g_set_expand_ramp(SCM on, SCM snd_n) 
+static SCM g_set_expand_control_ramp(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_ramp, "a number");
-  return(sp_fwrite(snd_n, on, SP_EXPAND_RAMP, "set-" S_expand_ramp));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_control_ramp, "a number");
+  return(sp_fwrite(snd_n, on, SP_EXPAND_RAMP, "set-" S_expand_control_ramp));
 }
 
-WITH_REVERSED_ARGS(g_set_expand_ramp_reversed, g_set_expand_ramp)
+WITH_REVERSED_ARGS(g_set_expand_control_ramp_reversed, g_set_expand_control_ramp)
 
-static SCM g_expand_hop(SCM snd_n) 
+static SCM g_expand_control_hop(SCM snd_n) 
 {
-  #define H_expand_hop "(" S_expand_hop " &optional snd) -> current expansion output grain spacing in seconds (0.05)"
-  return(sp_fread(snd_n, SP_EXPAND_HOP, S_expand_hop));
+  #define H_expand_control_hop "(" S_expand_control_hop " &optional snd) -> current expansion output grain spacing in seconds (0.05)"
+  return(sp_fread(snd_n, SP_EXPAND_HOP, S_expand_control_hop));
 }
 
-static SCM g_set_expand_hop(SCM on, SCM snd_n) 
+static SCM g_set_expand_control_hop(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_hop, "a number"); 
-  return(sp_fwrite(snd_n, on, SP_EXPAND_HOP, "set-" S_expand_hop));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_control_hop, "a number"); 
+  return(sp_fwrite(snd_n, on, SP_EXPAND_HOP, "set-" S_expand_control_hop));
 }
 
-WITH_REVERSED_ARGS(g_set_expand_hop_reversed, g_set_expand_hop)
+WITH_REVERSED_ARGS(g_set_expand_control_hop_reversed, g_set_expand_control_hop)
 
-static SCM g_speed(SCM snd_n) 
+static SCM g_speed_control(SCM snd_n) 
 {
-  #define H_speed "(" S_speed " &optional snd) -> current speed (srate) slider setting"
-  return(sp_fread(snd_n, SP_SPEED, S_speed));
+  #define H_speed_control "(" S_speed_control " &optional snd) -> current speed (srate) slider setting"
+  return(sp_fread(snd_n, SP_SPEED, S_speed_control));
 }
 
-static SCM g_set_speed(SCM on, SCM snd_n) 
+static SCM g_set_speed_control(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_speed, "a number"); 
-  return(sp_fwrite(snd_n, on, SP_SPEED, "set-" S_speed));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_speed_control, "a number"); 
+  return(sp_fwrite(snd_n, on, SP_SPEED, "set-" S_speed_control));
 }
 
-WITH_REVERSED_ARGS(g_set_speed_reversed, g_set_speed)
+WITH_REVERSED_ARGS(g_set_speed_control_reversed, g_set_speed_control)
 
-static SCM g_reverb_length(SCM snd_n) 
+static SCM g_reverb_control_length(SCM snd_n) 
 {
-  #define H_reverb_length "(" S_reverb_length " &optional snd) -> reverb decay length scaler"
-  return(sp_fread(snd_n, SP_REVERB_LENGTH, S_reverb_length));
+  #define H_reverb_control_length "(" S_reverb_control_length " &optional snd) -> reverb decay length scaler"
+  return(sp_fread(snd_n, SP_REVERB_LENGTH, S_reverb_control_length));
 }
 
-static SCM g_set_reverb_length(SCM on, SCM snd_n) 
+static SCM g_set_reverb_control_length(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_length, "a number"); 
-  return(sp_fwrite(snd_n, on, SP_REVERB_LENGTH, "set-" S_reverb_length));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_control_length, "a number"); 
+  return(sp_fwrite(snd_n, on, SP_REVERB_LENGTH, "set-" S_reverb_control_length));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_length_reversed, g_set_reverb_length)
+WITH_REVERSED_ARGS(g_set_reverb_control_length_reversed, g_set_reverb_control_length)
 
-static SCM g_reverb_feedback(SCM snd_n) 
+static SCM g_reverb_control_feedback(SCM snd_n) 
 {
-  #define H_reverb_feedback "(" S_reverb_feedback " &optional snd) -> reverb feedback scaler"
-  return(sp_fread(snd_n, SP_REVERB_FEEDBACK, S_reverb_feedback));
+  #define H_reverb_control_feedback "(" S_reverb_control_feedback " &optional snd) -> reverb feedback scaler"
+  return(sp_fread(snd_n, SP_REVERB_FEEDBACK, S_reverb_control_feedback));
 }
 
-static SCM g_set_reverb_feedback(SCM on, SCM snd_n) 
+static SCM g_set_reverb_control_feedback(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_feedback, "a number"); 
-  return(sp_fwrite(snd_n, on, SP_REVERB_FEEDBACK, "set-" S_reverb_feedback));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_control_feedback, "a number"); 
+  return(sp_fwrite(snd_n, on, SP_REVERB_FEEDBACK, "set-" S_reverb_control_feedback));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_feedback_reversed, g_set_reverb_feedback)
+WITH_REVERSED_ARGS(g_set_reverb_control_feedback_reversed, g_set_reverb_control_feedback)
 
-static SCM g_reverb_scale(SCM snd_n) 
+static SCM g_reverb_control_scale(SCM snd_n) 
 {
-  #define H_reverb_scale "(" S_reverb_scale " &optional snd) -> reverb scaler (the amount of reverb)"
-  return(sp_fread(snd_n, SP_REVERB_SCALE, S_reverb_scale));
+  #define H_reverb_control_scale "(" S_reverb_control_scale " &optional snd) -> reverb scaler (the amount of reverb)"
+  return(sp_fread(snd_n, SP_REVERB_SCALE, S_reverb_control_scale));
 }
 
-static SCM g_set_reverb_scale(SCM on, SCM snd_n) 
+static SCM g_set_reverb_control_scale(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_scale, "a number"); 
-  return(sp_fwrite(snd_n, on, SP_REVERB_SCALE, "set-" S_reverb_scale));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_control_scale, "a number"); 
+  return(sp_fwrite(snd_n, on, SP_REVERB_SCALE, "set-" S_reverb_control_scale));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_scale_reversed, g_set_reverb_scale)
+WITH_REVERSED_ARGS(g_set_reverb_control_scale_reversed, g_set_reverb_control_scale)
 
-static SCM g_reverb_lowpass(SCM snd_n) 
+static SCM g_reverb_control_lowpass(SCM snd_n) 
 {
-  #define H_reverb_lowpass "(" S_reverb_lowpass " &optional snd) -> reverb lowpass filter coefficient"
-  return(sp_fread(snd_n, SP_REVERB_LOW_PASS, S_reverb_lowpass));
+  #define H_reverb_control_lowpass "(" S_reverb_control_lowpass " &optional snd) -> reverb lowpass filter coefficient"
+  return(sp_fread(snd_n, SP_REVERB_LOW_PASS, S_reverb_control_lowpass));
 }
 
-static SCM g_set_reverb_lowpass(SCM on, SCM snd_n) 
+static SCM g_set_reverb_control_lowpass(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_lowpass, "a number"); 
-  return(sp_fwrite(snd_n, on, SP_REVERB_LOW_PASS, "set-" S_reverb_lowpass));
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_control_lowpass, "a number"); 
+  return(sp_fwrite(snd_n, on, SP_REVERB_LOW_PASS, "set-" S_reverb_control_lowpass));
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_lowpass_reversed, g_set_reverb_lowpass)
+WITH_REVERSED_ARGS(g_set_reverb_control_lowpass_reversed, g_set_reverb_control_lowpass)
 
-static SCM g_reverb_decay(SCM snd)
+static SCM g_reverb_control_decay(SCM snd)
 {
-  #define H_reverb_decay "(" S_reverb_decay " &optional (snd #t)) -> 'Apply' button reverb decay time (1.0 seconds)"
+  #define H_reverb_control_decay "(" S_reverb_control_decay " &optional (snd #t)) -> 'Apply' button reverb decay time (1.0 seconds)"
   if (BOUND_P(snd))
-    return(sp_fread(snd, SP_REVERB_DECAY, S_reverb_decay));
-  return(TO_SCM_DOUBLE(reverb_decay(get_global_state())));
+    return(sp_fread(snd, SP_REVERB_DECAY, S_reverb_control_decay));
+  return(TO_SCM_DOUBLE(reverb_control_decay(get_global_state())));
 }
 
-static SCM g_set_reverb_decay(SCM val, SCM snd)
+static SCM g_set_reverb_control_decay(SCM val, SCM snd)
 {
   snd_state *ss;
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG1, "set-" S_reverb_decay, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG1, "set-" S_reverb_control_decay, "a number"); 
   if (BOUND_P(snd))
-    return(sp_fwrite(snd, val, SP_REVERB_DECAY, "set-" S_reverb_decay));
+    return(sp_fwrite(snd, val, SP_REVERB_DECAY, "set-" S_reverb_control_decay));
   else
     {
       ss = get_global_state();
       set_reverb_decay(ss, TO_C_DOUBLE(val));
-      return(TO_SCM_DOUBLE(reverb_decay(ss)));
+      return(TO_SCM_DOUBLE(reverb_control_decay(ss)));
     }
 }
 
-WITH_REVERSED_ARGS(g_set_reverb_decay_reversed, g_set_reverb_decay)
+WITH_REVERSED_ARGS(g_set_reverb_control_decay_reversed, g_set_reverb_control_decay)
 
-static SCM g_set_filter_env(SCM edata, SCM snd_n)
+static SCM g_set_filter_control_env(SCM edata, SCM snd_n)
 {
   snd_info *sp;
-  SND_ASSERT_SND("set-" S_filter_env, snd_n, 2);
+  SND_ASSERT_SND("set-" S_filter_control_env, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL)
-    return(snd_no_such_sound_error("set-" S_filter_env, snd_n));
-  if (sp->filter_env) sp->filter_env = free_env(sp->filter_env);  /* set to null in case get_env throws error */
-  sp->filter_env = get_env(edata, SCM_BOOL_F, "set-" S_filter_env);
-  filter_env_changed(sp, sp->filter_env);
+    return(snd_no_such_sound_error("set-" S_filter_control_env, snd_n));
+  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);  /* set to null in case get_env throws error */
+  sp->filter_control_env = get_env(edata, SCM_BOOL_F, "set-" S_filter_control_env);
+  filter_env_changed(sp, sp->filter_control_env);
   return(edata);
 }
 
-static SCM g_filter_env(SCM snd_n)
+static SCM g_filter_control_env(SCM snd_n)
 {
-  #define H_filter_env "(" S_filter_env " &optional snd) -> snd's filter envelope (in the control panel)"
+  #define H_filter_control_env "(" S_filter_control_env " &optional snd) -> snd's filter envelope (in the control panel)"
   snd_info *sp = NULL;
-  SND_ASSERT_SND(S_filter_env, snd_n, 1);
+  SND_ASSERT_SND(S_filter_control_env, snd_n, 1);
   sp = get_sp(snd_n);
   if (sp == NULL)
-    return(snd_no_such_sound_error(S_filter_env, snd_n));
-  return(env2scm(sp->filter_env)); 
+    return(snd_no_such_sound_error(S_filter_control_env, snd_n));
+  return(env2scm(sp->filter_control_env)); 
 }
 
-WITH_REVERSED_ARGS(g_set_filter_env_reversed, g_set_filter_env)
+WITH_REVERSED_ARGS(g_set_filter_control_env_reversed, g_set_filter_control_env)
 
 static SCM g_apply_controls(SCM snd, SCM choice)
 {
@@ -2757,7 +2770,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_sound_widgets, g_sound_widgets, 0, 1, 0, "returns sound widgets");
 #endif
 
-  DEFINE_PROC(S_soundQ, g_soundQ, 0, 1, 0, H_soundQ);
+  DEFINE_PROC(S_sound_p, g_sound_p, 0, 1, 0, H_sound_p);
   DEFINE_PROC(S_bomb, g_bomb, 0, 2, 0, H_bomb);
   DEFINE_PROC(S_find_sound, g_find_sound, 1, 0, 0, H_find_sound);
 
@@ -2809,8 +2822,8 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_apply_controls,       g_apply_controls, 0, 2, 0,       H_apply_controls);
 
 
-  define_procedure_with_reversed_setter(S_filter_env, SCM_FNC g_filter_env, H_filter_env,
-					"set-" S_filter_env, SCM_FNC g_set_filter_env, SCM_FNC g_set_filter_env_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_env, SCM_FNC g_filter_control_env, H_filter_control_env,
+					"set-" S_filter_control_env, SCM_FNC g_set_filter_control_env, SCM_FNC g_set_filter_control_env_reversed,
 					local_doc, 0, 1, 0, 2);
 
   define_procedure_with_reversed_setter(S_cursor_follows_play, SCM_FNC g_cursor_follows_play, H_cursor_follows_play,
@@ -2833,89 +2846,88 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 					"set-" S_read_only, SCM_FNC g_set_read_only, SCM_FNC g_set_read_only_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expanding, SCM_FNC g_expanding, H_expanding,
-					"set-" S_expanding, SCM_FNC g_set_expanding, SCM_FNC g_set_expanding_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_p, SCM_FNC g_expand_control_p, H_expand_control_p,
+					"set-" S_expand_control_p, SCM_FNC g_set_expand_control_p, SCM_FNC g_set_expand_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_contrasting, SCM_FNC g_contrasting, H_contrasting,
-					"set-" S_contrasting, SCM_FNC g_set_contrasting, SCM_FNC g_set_contrasting_reversed,
+  define_procedure_with_reversed_setter(S_contrast_control_p, SCM_FNC g_contrast_control_p, H_contrast_control_p,
+					"set-" S_contrast_control_p, SCM_FNC g_set_contrast_control_p, SCM_FNC g_set_contrast_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverbing, SCM_FNC g_reverbing, H_reverbing,
-					"set-" S_reverbing, SCM_FNC g_set_reverbing, SCM_FNC g_set_reverbing_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_p, SCM_FNC g_reverb_control_p, H_reverb_control_p,
+					"set-" S_reverb_control_p, SCM_FNC g_set_reverb_control_p, SCM_FNC g_set_reverb_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_filtering, SCM_FNC g_filtering, H_filtering,
-					"set-" S_filtering, SCM_FNC g_set_filtering, SCM_FNC g_set_filtering_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_p, SCM_FNC g_filter_control_p, H_filter_control_p,
+					"set-" S_filter_control_p, SCM_FNC g_set_filter_control_p, SCM_FNC g_set_filter_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-
-  define_procedure_with_reversed_setter(S_filter_dBing, SCM_FNC g_filter_dBing, H_filter_dBing,
-					"set-" S_filter_dBing, SCM_FNC g_set_filter_dBing, SCM_FNC g_set_filter_dBing_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_in_dB, SCM_FNC g_filter_control_in_dB, H_filter_control_in_dB,
+					"set-" S_filter_control_in_dB, SCM_FNC g_set_filter_control_in_dB, SCM_FNC g_set_filter_control_in_dB_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_filter_order, SCM_FNC g_filter_order, H_filter_order,
-					"set-" S_filter_order, SCM_FNC g_set_filter_order, SCM_FNC g_set_filter_order_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_order, SCM_FNC g_filter_control_order, H_filter_control_order,
+					"set-" S_filter_control_order, SCM_FNC g_set_filter_control_order, SCM_FNC g_set_filter_control_order_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_contrast, SCM_FNC g_contrast, H_contrast,
-					"set-" S_contrast, SCM_FNC g_set_contrast, SCM_FNC g_set_contrast_reversed,
+  define_procedure_with_reversed_setter(S_contrast_control, SCM_FNC g_contrast_control, H_contrast_control,
+					"set-" S_contrast_control, SCM_FNC g_set_contrast_control, SCM_FNC g_set_contrast_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_contrast_amp, SCM_FNC g_contrast_amp, H_contrast_amp,
-					"set-" S_contrast_amp, SCM_FNC g_set_contrast_amp, SCM_FNC g_set_contrast_amp_reversed,
+  define_procedure_with_reversed_setter(S_contrast_control_amp, SCM_FNC g_contrast_control_amp, H_contrast_control_amp,
+					"set-" S_contrast_control_amp, SCM_FNC g_set_contrast_control_amp, SCM_FNC g_set_contrast_control_amp_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand, SCM_FNC g_expand, H_expand,
-					"set-" S_expand, SCM_FNC g_set_expand, SCM_FNC g_set_expand_reversed,
+  define_procedure_with_reversed_setter(S_expand_control, SCM_FNC g_expand_control, H_expand_control,
+					"set-" S_expand_control, SCM_FNC g_set_expand_control, SCM_FNC g_set_expand_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_length, SCM_FNC g_expand_length, H_expand_length,
-					"set-" S_expand_length, SCM_FNC g_set_expand_length, SCM_FNC g_set_expand_length_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_length, SCM_FNC g_expand_control_length, H_expand_control_length,
+					"set-" S_expand_control_length, SCM_FNC g_set_expand_control_length, SCM_FNC g_set_expand_control_length_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_ramp, SCM_FNC g_expand_ramp, H_expand_ramp,
-					"set-" S_expand_ramp, SCM_FNC g_set_expand_ramp, SCM_FNC g_set_expand_ramp_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_ramp, SCM_FNC g_expand_control_ramp, H_expand_control_ramp,
+					"set-" S_expand_control_ramp, SCM_FNC g_set_expand_control_ramp, SCM_FNC g_set_expand_control_ramp_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_hop, SCM_FNC g_expand_hop, H_expand_hop,
-					"set-" S_expand_hop, SCM_FNC g_set_expand_hop, SCM_FNC g_set_expand_hop_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_hop, SCM_FNC g_expand_control_hop, H_expand_control_hop,
+					"set-" S_expand_control_hop, SCM_FNC g_set_expand_control_hop, SCM_FNC g_set_expand_control_hop_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_speed, SCM_FNC g_speed, H_speed,
-					"set-" S_speed, SCM_FNC g_set_speed, SCM_FNC g_set_speed_reversed,
+  define_procedure_with_reversed_setter(S_speed_control, SCM_FNC g_speed_control, H_speed_control,
+					"set-" S_speed_control, SCM_FNC g_set_speed_control, SCM_FNC g_set_speed_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_length, SCM_FNC g_reverb_length, H_reverb_length,
-					"set-" S_reverb_length, SCM_FNC g_set_reverb_length, SCM_FNC g_set_reverb_length_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_length, SCM_FNC g_reverb_control_length, H_reverb_control_length,
+					"set-" S_reverb_control_length, SCM_FNC g_set_reverb_control_length, SCM_FNC g_set_reverb_control_length_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_scale, SCM_FNC g_reverb_scale, H_reverb_scale,
-					"set-" S_reverb_scale, SCM_FNC g_set_reverb_scale, SCM_FNC g_set_reverb_scale_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_scale, SCM_FNC g_reverb_control_scale, H_reverb_control_scale,
+					"set-" S_reverb_control_scale, SCM_FNC g_set_reverb_control_scale, SCM_FNC g_set_reverb_control_scale_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_feedback, SCM_FNC g_reverb_feedback, H_reverb_feedback,
-					"set-" S_reverb_feedback, SCM_FNC g_set_reverb_feedback, SCM_FNC g_set_reverb_feedback_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_feedback, SCM_FNC g_reverb_control_feedback, H_reverb_control_feedback,
+					"set-" S_reverb_control_feedback, SCM_FNC g_set_reverb_control_feedback, SCM_FNC g_set_reverb_control_feedback_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_lowpass, SCM_FNC g_reverb_lowpass, H_reverb_lowpass,
-					"set-" S_reverb_lowpass, SCM_FNC g_set_reverb_lowpass, SCM_FNC g_set_reverb_lowpass_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_lowpass, SCM_FNC g_reverb_control_lowpass, H_reverb_control_lowpass,
+					"set-" S_reverb_control_lowpass, SCM_FNC g_set_reverb_control_lowpass, SCM_FNC g_set_reverb_control_lowpass_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_amp, SCM_FNC g_amp, H_amp,
-					"set-" S_amp, SCM_FNC g_set_amp, SCM_FNC g_set_amp_reversed,
+  define_procedure_with_reversed_setter(S_amp_control, SCM_FNC g_amp_control, H_amp_control,
+					"set-" S_amp_control, SCM_FNC g_set_amp_control, SCM_FNC g_set_amp_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_decay, SCM_FNC g_reverb_decay, H_reverb_decay,
-					"set-" S_reverb_decay, SCM_FNC g_set_reverb_decay, SCM_FNC g_set_reverb_decay_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_decay, SCM_FNC g_reverb_control_decay, H_reverb_control_decay,
+					"set-" S_reverb_control_decay, SCM_FNC g_set_reverb_control_decay, SCM_FNC g_set_reverb_control_decay_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_speed_style, SCM_FNC g_speed_style, H_speed_style,
-					"set-" S_speed_style, SCM_FNC g_set_speed_style, SCM_FNC g_set_speed_style_reversed,
+  define_procedure_with_reversed_setter(S_speed_control_style, SCM_FNC g_speed_control_style, H_speed_control_style,
+					"set-" S_speed_control_style, SCM_FNC g_set_speed_control_style, SCM_FNC g_set_speed_control_style_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_speed_tones, SCM_FNC g_speed_tones, H_speed_tones,
-					"set-" S_speed_tones, SCM_FNC g_set_speed_tones, SCM_FNC g_set_speed_tones_reversed,
+  define_procedure_with_reversed_setter(S_speed_control_tones, SCM_FNC g_speed_control_tones, H_speed_control_tones,
+					"set-" S_speed_control_tones, SCM_FNC g_set_speed_control_tones, SCM_FNC g_set_speed_control_tones_reversed,
 					local_doc, 0, 1, 0, 2);
 
   DEFINE_PROC(S_peak_env_info, g_peak_env_info, 0, 3, 0, H_peak_env_info);

@@ -122,9 +122,9 @@ static Float expand_input_as_needed(void *arg, int dir)
   else return(next_sample_to_float(dp->chn_fd));
 }
 
-static int max_expand_len(snd_info *sp)
+static int max_expand_control_len(snd_info *sp)
 {
-  if (sp->expand_length > .5)
+  if (sp->expand_control_length > .5)
     return(0);
   return((int)(SND_SRATE(sp) * .5));
 }
@@ -134,9 +134,9 @@ static void *make_expand(snd_info *sp, Float sampling_rate, Float initial_ex, da
   spd_info *spd;
   spd = (spd_info *)CALLOC(1, sizeof(spd_info));
   spd->gen = mus_make_granulate(&expand_input_as_needed,
-				initial_ex, sp->expand_length,
-				.6, sp->expand_hop, sp->expand_ramp, .1,
-				max_expand_len(sp), (void *)spd);
+				initial_ex, sp->expand_control_length,
+				.6, sp->expand_control_hop, sp->expand_control_ramp, .1,
+				max_expand_control_len(sp), (void *)spd);
   spd->dp = dp;
   spd->speeding = 0;
   spd->sr = 0.0;
@@ -160,7 +160,7 @@ static Float expand(dac_info *dp, Float sr, Float ex)
   snd_info *sp;
   spd_info *spd;
   sp = dp->sp;
-  speeding = ((sp->play_direction != 1) || (sp->srate != 1.0) || (dp->cur_srate != 1.0));
+  speeding = ((sp->speed_control_direction != 1) || (sp->speed_control != 1.0) || (dp->cur_srate != 1.0));
   spd = dp->spd;
   spd->speeding = speeding;
   spd->sr = sr;
@@ -212,26 +212,26 @@ char *reverb_name(void)
 /* user hooks into reverb */
 static SCM g_make_reverb, g_reverb, g_free_reverb;
 
-static SCM g_reverb_funcs(void) 
+static SCM g_reverb_procedures(void) 
 {
   return(SCM_LIST3(g_reverb, g_make_reverb, g_free_reverb));
 }
 
-static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
+static SCM g_set_reverb_procedures(SCM rev, SCM make_rev, SCM free_rev)
 {
-  #define H_reverb_funcs "(" S_reverb_funcs ") -> list of the 3 reverb funcs (reverb make-reverb free-reverb)"
-  #define H_set_reverb_funcs "(" "set-" S_reverb_funcs " reverb make-reverb free-reverb) sets the current reverb functions"
+  #define H_reverb_control_procedures "(" S_reverb_control_procedures ") -> list of the 3 reverb procedures (reverb make-reverb free-reverb)"
+  #define H_set_reverb_control_procedures "(" "set-" S_reverb_control_procedures " reverb make-reverb free-reverb) sets the current reverb procedures"
 
   char *errmsg;
   SCM errstr, bad_func = SCM_BOOL_F;
 
-  errmsg = procedure_ok(rev, 3, "set-" S_reverb_funcs, "reverb", 1);
+  errmsg = procedure_ok(rev, 3, "set-" S_reverb_control_procedures, "reverb", 1);
   if (errmsg == NULL) 
     {
-      errmsg = procedure_ok(make_rev, 2, "set-" S_reverb_funcs, "make-reverb", 2); 
+      errmsg = procedure_ok(make_rev, 2, "set-" S_reverb_control_procedures, "make-reverb", 2); 
       if (errmsg == NULL) 
 	{
-	  errmsg = procedure_ok(free_rev, 1, "set-" S_reverb_funcs, "free-reverb", 3); 
+	  errmsg = procedure_ok(free_rev, 1, "set-" S_reverb_control_procedures, "free-reverb", 3); 
 	  if (errmsg) bad_func = free_rev;
 	}
       else bad_func = make_rev;
@@ -241,7 +241,7 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      return(snd_bad_arity_error(S_reverb_funcs, errstr, bad_func));
+      return(snd_bad_arity_error(S_reverb_control_procedures, errstr, bad_func));
     }
   if (PROCEDURE_P(g_reverb)) snd_unprotect(g_reverb);
   if (PROCEDURE_P(g_make_reverb)) snd_unprotect(g_make_reverb);
@@ -279,25 +279,25 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
 static SCM g_contrast;
 static int use_g_contrast = 0;
 
-static SCM g_contrast_func(void) 
+static SCM g_contrast_procedure(void) 
 {
   return(g_contrast);
 }
 
-static SCM g_set_contrast_func(SCM func)
+static SCM g_set_contrast_procedure(SCM func)
 {
-  #define H_contrast_func "(" S_contrast_func ") -> current contrast function"
-  #define H_set_contrast_func "(" "set-" S_contrast_func " func) sets the current contrast function"
+  #define H_contrast_control_procedure "(" S_contrast_control_procedure ") -> current contrast procedure"
+  #define H_set_contrast_control_procedure "(" "set-" S_contrast_control_procedure " proc) sets the current contrast procedure"
 
   char *errmsg;
   SCM errstr;
 
-  errmsg = procedure_ok(func, 2, "set-" S_contrast_func, "contrast", 1);
+  errmsg = procedure_ok(func, 2, "set-" S_contrast_control_procedure, "contrast", 1);
   if (errmsg)
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      return(snd_bad_arity_error(S_contrast_func, errstr, func));
+      return(snd_bad_arity_error(S_contrast_control_procedure, errstr, func));
     }
 
   if (PROCEDURE_P(g_contrast)) snd_unprotect(g_contrast);
@@ -668,7 +668,7 @@ static void *make_nrev(snd_info *sp, int chans)
   int i, j, len;
   rev_info *r;
   if (sp == NULL) return(NULL);
-  srscale = sp->revlen * SND_SRATE(sp) / 25641.0;
+  srscale = sp->reverb_control_length * SND_SRATE(sp) / 25641.0;
   for (i = 0; i < BASE_DLY_LEN; i++) 
     dly_len[i] = get_prime((int)(srscale * base_dly_len[i]));
   r = (rev_info *)CALLOC(1, sizeof(rev_info));
@@ -683,9 +683,9 @@ static void *make_nrev(snd_info *sp, int chans)
   for (i = 0; i < r->num_combs; i++) 
     {
       comb_factors[i] = nrev_comb_factors[i];
-      r->combs[i] = mus_make_comb(comb_factors[i]*sp->revfb, dly_len[i], NULL, dly_len[i]);
+      r->combs[i] = mus_make_comb(comb_factors[i] * sp->reverb_control_feedback, dly_len[i], NULL, dly_len[i]);
     }
-  r->onep = mus_make_one_pole(sp->revlp, sp->revlp - 1.0);
+  r->onep = mus_make_one_pole(sp->reverb_control_lowpass, sp->reverb_control_lowpass - 1.0);
   for (i = 0, j = r->num_combs; i < 4; i++, j++) 
     r->allpasses[i] = mus_make_all_pass(-0.700, 0.700, dly_len[j], NULL, dly_len[j]);
   for (i = 0, j = 10; i < chans; i++)
@@ -716,7 +716,7 @@ static void *make_freeverb(snd_info *sp, int chans)
   rev_info *r;
   Float srscale, fcmb;
   if (sp == NULL) return(NULL);
-  srscale = sp->revlen * SND_SRATE(sp) / 44100.0;
+  srscale = sp->reverb_control_length * SND_SRATE(sp) / 44100.0;
   r = (rev_info *)CALLOC(1, sizeof(rev_info));
   r->num_predelays = chans;
   r->predelays = (mus_any **)CALLOC(chans, sizeof(mus_any *));
@@ -738,8 +738,9 @@ static void *make_freeverb(snd_info *sp, int chans)
 	delay_len = (int)(srscale * freeverb_comb_tuning[j]);
 	if (i & 1) 
 	  delay_len += (int)(srscale * freeverb_stereo_spread);
-	fcmb = (freeverb_scale_damping * freeverb_damping) * sp->revlp / DEFAULT_REVERB_LOWPASS;
-	comb_factors[k] = (freeverb_room_decay * freeverb_scale_room_decay + freeverb_offset_room_decay) * sp->revfb / DEFAULT_REVERB_FEEDBACK;
+	fcmb = (freeverb_scale_damping * freeverb_damping) * sp->reverb_control_lowpass / DEFAULT_REVERB_CONTROL_LOWPASS;
+	comb_factors[k] = (freeverb_room_decay * freeverb_scale_room_decay + freeverb_offset_room_decay) * 
+	                  sp->reverb_control_feedback / DEFAULT_REVERB_CONTROL_FEEDBACK;
 	r->combs[k] = mus_make_fcomb(comb_factors[k], delay_len, 1.0 - fcmb, fcmb);
 	k++;
       }
@@ -856,7 +857,7 @@ static void set_freeverb_filter_coeff(Float newval)
   if (r)
     {
       for (j = 0; j < r->num_combs; j++)
-	set_fcomb_coeff(r->combs[j], newval / DEFAULT_REVERB_LOWPASS);
+	set_fcomb_coeff(r->combs[j], newval / DEFAULT_REVERB_CONTROL_LOWPASS);
     }
 }
 
@@ -879,7 +880,7 @@ static void set_reverb_comb_factors(Float newval)
     {
       r = (rev_info *)global_rev;
       if (which_reverb == FREEVERB)
-	val = newval / DEFAULT_REVERB_FEEDBACK;
+	val = newval / DEFAULT_REVERB_CONTROL_FEEDBACK;
       else val = newval;
       if (r)
 	{
@@ -930,28 +931,28 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
   dp->never_sped = DEFAULT_NEVER_SPED;
   if (sp)
     {
-      dp->expanding = sp->expanding;
-      dp->filtering = ((sp->filtering) && (sp->filter_order > 0));
-      dp->reverbing = sp->reverbing;
-      dp->contrast_amp = sp->contrast_amp;
+      dp->expanding = sp->expand_control_p;
+      dp->filtering = ((sp->filter_control_p) && (sp->filter_control_order > 0));
+      dp->reverbing = sp->reverb_control_p;
+      dp->contrast_amp = sp->contrast_control_amp;
       if ((use_sinc_interp(sp->state)) && 
-	  ((sp->srate * sp->play_direction) != 1.0))
+	  ((sp->speed_control * sp->speed_control_direction) != 1.0))
 	dp->src = make_src(sp->state, 0.0, fd);
       /* that is, if user wants fancy src, he needs to say so before we start */
       if (dp->expanding) 
 	{
-	  dp->spd = (spd_info *)make_expand(sp, (Float)SND_SRATE(sp), sp->expand, dp);
-	  dp->expand_ring_frames = (int)(SND_SRATE(sp) * sp->expand * sp->expand_length * 2);
+	  dp->spd = (spd_info *)make_expand(sp, (Float)SND_SRATE(sp), sp->expand_control, dp);
+	  dp->expand_ring_frames = (int)(SND_SRATE(sp) * sp->expand_control * sp->expand_control_length * 2);
 	}
       if (dp->filtering)
 	{
-	  sp->filter_changed = 0;
-	  if (!(sp->filter_env)) 
+	  sp->filter_control_changed = 0;
+	  if (!(sp->filter_control_env)) 
 	    dp->filtering = 0;
 	  else
 	    {
-	      data = sample_linear_env(sp->filter_env, sp->filter_order);
-	      dp->flt = make_flt(dp, sp->filter_order, data);
+	      data = sample_linear_env(sp->filter_control_env, sp->filter_control_order);
+	      dp->flt = make_flt(dp, sp->filter_control_order, data);
 	      FREE(data);
 	    }
 	}
@@ -1023,13 +1024,13 @@ static void dac_set_field(snd_info *sp, Float newval, int field)
 			    {
 			      val = (int)(SND_SRATE(sp) * newval);
 			      mus_set_length((dp->spd)->gen, val);
-			      mus_set_ramp((dp->spd)->gen, (int)(val * sp->expand_ramp));
+			      mus_set_ramp((dp->spd)->gen, (int)(val * sp->expand_control_ramp));
 			    }
 			  break;
 			case DAC_EXPAND_RAMP: 
 			  if (dp->spd)
 			    {
-			      val = (int)(newval * sp->expand_length * SND_SRATE(sp));
+			      val = (int)(newval * sp->expand_control_length * SND_SRATE(sp));
 			      mus_set_ramp((dp->spd)->gen, val); 
 			    }
 			  break;
@@ -1038,7 +1039,7 @@ static void dac_set_field(snd_info *sp, Float newval, int field)
 			    {
 			      val = (int)(SND_SRATE(sp) * newval);
 			      mus_set_hop((dp->spd)->gen, val); 
-			      mus_set_increment((dp->spd)->gen, sp->expand);
+			      mus_set_increment((dp->spd)->gen, sp->expand_control);
 			    }
 			  break;
 			case DAC_EXPAND_SCALER:
@@ -1235,12 +1236,12 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int 
   if (max_active_slot < slot) max_active_slot = slot;
   if (sp)
     {
-      dp->cur_srate = sp->srate * sp->play_direction;
+      dp->cur_srate = sp->speed_control * sp->speed_control_direction;
       if (dp->cur_srate != 1.0) dp->never_sped = 0;
-      dp->cur_amp = sp->amp;
-      dp->cur_index = sp->contrast;
-      dp->cur_exp = sp->expand;
-      dp->cur_rev = sp->revscl;
+      dp->cur_amp = sp->amp_control;
+      dp->cur_index = sp->contrast_control;
+      dp->cur_exp = sp->expand_control;
+      dp->cur_rev = sp->reverb_control_scale;
     }
   return(dp);
 }
@@ -1328,7 +1329,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
       snd_dacp->channels = channels;
       snd_dacp->frames = 256; /* just a first guess */
       snd_dacp->devices = 1;  /* just a first guess */
-      snd_dacp->reverb_ring_frames = (int)(srate * reverb_decay(ss));
+      snd_dacp->reverb_ring_frames = (int)(srate * reverb_control_decay(ss));
       if (background == IN_BACKGROUND) 
 	BACKGROUND_ADD(ss, dac_in_background, NULL);
       else
@@ -1359,7 +1360,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start
 	  cp->original_cursor = cp->cursor;
 	  handle_cursor(cp, cursor_moveto(cp, start));
 	}
-      if (sp->play_direction == 1) 
+      if (sp->speed_control_direction == 1) 
 	{
 	  direction = READ_FORWARD; 
 	  beg = start;
@@ -1484,8 +1485,8 @@ void play_selection(int background, SCM edpos, const char *caller)
 	  for (i = 0; i < si->chans; i++) 
 	    {
 	      sp = si->cps[i]->sound;
-	      if ((sp) && (sp->srate != 1.0) && (sp->srate > 0.0))
-		ends[i] = si->begs[i] + (int)(((Float)selection_len() / (Float)(sp->srate))); /* TODO this should use the src->sample counter instead */
+	      if ((sp) && (sp->speed_control != 1.0) && (sp->speed_control > 0.0))
+		ends[i] = si->begs[i] + (int)(((Float)selection_len() / (Float)(sp->speed_control))); /* TODO this should use the src->sample counter instead */
 	      else ends[i] = si->begs[i] + selection_len();
 	    }
 	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller);
@@ -1507,15 +1508,15 @@ void play_selection(int background, SCM edpos, const char *caller)
 static int choose_dac_op (dac_info *dp, snd_info *sp)
 {
   if (!sp) return(NO_CHANGE);
-  if ((dp->expanding) || (dp->filtering) || (dp->reverbing) || (sp->contrasting)) 
+  if ((dp->expanding) || (dp->filtering) || (dp->reverbing) || (sp->contrast_control_p)) 
     return(ALL_CHANGES);
   else
     {
-      if ((sp->play_direction != 1) || (sp->srate != 1.0) || (dp->cur_srate != 1.0))
+      if ((sp->speed_control_direction != 1) || (sp->speed_control != 1.0) || (dp->cur_srate != 1.0))
 	return(JUST_SPEED);
       else
 	{
-	  if ((sp->amp == dp->cur_amp) && (sp->amp == 1.0))
+	  if ((sp->amp_control == dp->cur_amp) && (sp->amp_control == 1.0))
 	    {
 	      if (dp->no_scalers)
 		return(NO_CHANGE_AND_NO_SCALING);
@@ -1630,9 +1631,9 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  break;
 
 		case JUST_AMP:
-		  /* sp->amp is current UI value, dp->cur_amp is current local value */
+		  /* sp->amp_control is current UI value, dp->cur_amp is current local value */
 		  amp = dp->cur_amp;
-		  incr = (sp->amp - amp) / (Float)(frames);
+		  incr = (sp->amp_control - amp) / (Float)(frames);
 		  for (j = 0; j < frames; j++, amp += incr) 
 		    buf[j] += MUS_FLOAT_TO_SAMPLE(next_sample_to_float(dp->chn_fd) * amp);
 		  dp->cur_amp = amp;
@@ -1640,12 +1641,12 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 
 		case JUST_SPEED:
 		  /* includes amp changes */
-		  /* sp->srate is current UI value, dp->cur_srate is current local value */
+		  /* sp->speed_control is current UI value, dp->cur_srate is current local value */
 		  dp->never_sped = 0;
 		  amp = dp->cur_amp;
-		  incr = (sp->amp - amp) / (Float)(frames);
+		  incr = (sp->amp_control - amp) / (Float)(frames);
 		  sr = dp->cur_srate;
-		  sincr = (sp->srate * sp->play_direction - sr) / (Float)(frames);
+		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (Float)(frames);
 		  if ((sr != 0.0) || (sincr != 0.0))
 		    {
 		      for (j = 0; j < frames; j++, amp += incr, sr += sincr) 
@@ -1657,29 +1658,29 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 
 		case ALL_CHANGES:
 		  amp = dp->cur_amp;
-		  incr = (sp->amp - amp) / (Float)(frames);
+		  incr = (sp->amp_control - amp) / (Float)(frames);
 		  sr = dp->cur_srate;
-		  sincr = (sp->srate * sp->play_direction - sr) / (Float)(frames);
+		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (Float)(frames);
 		  if ((sincr != 0.0) || (sr != 1.0)) dp->never_sped = 0;
 		  ind = dp->cur_index;
-		  indincr = (sp->contrast - ind) / (Float)(frames);
+		  indincr = (sp->contrast_control - ind) / (Float)(frames);
 		  rev = dp->cur_rev;
-		  revincr = (sp->revscl - rev) / (Float)(frames);
-		  if ((dp->filtering) && (sp->filter_changed))
+		  revincr = (sp->reverb_control_scale - rev) / (Float)(frames);
+		  if ((dp->filtering) && (sp->filter_control_changed))
 		    {
-		      data = sample_linear_env(sp->filter_env, sp->filter_order);
-		      mus_make_fir_coeffs(sp->filter_order, data, dp->a); /* since dp->a is used directly, this might work */
+		      data = sample_linear_env(sp->filter_control_env, sp->filter_control_order);
+		      mus_make_fir_coeffs(sp->filter_control_order, data, dp->a); /* since dp->a is used directly, this might work */
 		      FREE(data);
-		      sp->filter_changed = 0;
+		      sp->filter_control_changed = 0;
 		    }
 		  if (dp->expanding)
 		    {
 		      ex = dp->cur_exp;
-		      exincr = (sp->expand - ex) / (Float)(frames);
+		      exincr = (sp->expand_control - ex) / (Float)(frames);
 		      for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, ex += exincr, rev += revincr) 
 			{
 			  fval = expand(dp, sr, ex);
-			  if (sp->contrasting) fval = contrast(dp, amp, ind, fval); else fval *= amp;
+			  if (sp->contrast_control_p) fval = contrast(dp, amp, ind, fval); else fval *= amp;
 			  if (dp->filtering) fval = mus_fir_filter(dp->flt, fval);
 			  if (dp->reverbing) revin[j] += fval * rev;
 			  buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
@@ -1693,7 +1694,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 			  for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, rev += revincr) 
 			    {
 			      fval = speed(dp, sr);
-			      if (sp->contrasting) fval = contrast(dp, amp, ind, fval); else fval *= amp;
+			      if (sp->contrast_control_p) fval = contrast(dp, amp, ind, fval); else fval *= amp;
 			      fval = mus_fir_filter(dp->flt, fval);
 			      if (dp->reverbing) revin[j] += fval * rev;
 			      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
@@ -1701,7 +1702,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 			}
 		      else
 			{
-			  if (sp->contrasting)
+			  if (sp->contrast_control_p)
 			    {
 			      for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, rev += revincr) 
 				{
@@ -2455,7 +2456,7 @@ void initialize_apply(snd_info *sp, int chans, int dur)
   snd_dacp->devices = 1;
   snd_dacp->chans_per_device = (int *)CALLOC(1, sizeof(int));
   snd_dacp->chans_per_device[0] = chans;
-  snd_dacp->reverb_ring_frames = (int)(snd_dacp->srate * reverb_decay(ss));
+  snd_dacp->reverb_ring_frames = (int)(snd_dacp->srate * reverb_control_decay(ss));
   make_dac_buffers(snd_dacp);
   switch (ss->apply_choice)
     {
@@ -2711,11 +2712,12 @@ void clear_players(void)
 
 /* add-player make-player stop-player start-playing */
 
-static void snd_no_such_player_error(const char *caller, SCM index)
+static SCM snd_no_such_player_error(const char *caller, SCM index)
 {
   ERROR(NO_SUCH_PLAYER,
 	SCM_LIST2(TO_SCM_STRING(caller),
 		  index));
+  return(SCM_BOOL_F);
 }
 
 static SCM g_make_player(SCM snd, SCM chn)
@@ -2736,8 +2738,19 @@ static SCM g_make_player(SCM snd, SCM chn)
       new_sp->chans[cp->chan] = cp;
       return(TO_SCM_INT(make_player(new_sp, cp)));
     }
-  snd_no_such_channel_error(S_make_player, snd, chn);  
-  return(snd);
+  return(snd_no_such_channel_error(S_make_player, snd, chn));  
+}
+
+static SCM g_player_home(SCM snd_chn)
+{
+  #define H_player_home "(" S_player_home " player) returns a list of the sound index and channel number associated with player"
+  int index;
+  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_player_home, "an integer");
+  index = -TO_SMALL_C_INT(snd_chn);
+  if ((index > 0) && (index < players_size) && (players[index]))
+    return(SCM_LIST2(TO_SMALL_SCM_INT(players[index]->index),
+		     TO_SMALL_SCM_INT(player_chans[index])));
+  return(snd_no_such_player_error(S_player_home, snd_chn));
 }
 
 static SCM g_add_player(SCM snd_chn, SCM start, SCM end, SCM edpos)
@@ -2802,9 +2815,9 @@ static SCM g_stop_player(SCM snd_chn)
 
 static SCM g_player_p(SCM snd_chn)
 {
-  #define H_playerQ "(" S_playerQ " obj) -> is obj an active player"
+  #define H_player_p "(" S_player_p " obj) -> is obj an active player"
   int index;
-  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_playerQ, "an integer");
+  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_player_p, "an integer");
   index = -TO_SMALL_C_INT(snd_chn);
   return(TO_SCM_BOOLEAN((index > 0) && 
 			(index < players_size) && 
@@ -2813,12 +2826,12 @@ static SCM g_player_p(SCM snd_chn)
 
 void g_init_dac(SCM local_doc)
 {
-  DEFINE_PROC(S_reverb_funcs, g_reverb_funcs, 0, 0, 0, H_reverb_funcs);
-  DEFINE_PROC("set-" S_reverb_funcs, g_set_reverb_funcs, 3, 0, 0, H_set_reverb_funcs);
+  DEFINE_PROC(S_reverb_control_procedures, g_reverb_procedures, 0, 0, 0, H_reverb_control_procedures);
+  DEFINE_PROC("set-" S_reverb_control_procedures, g_set_reverb_procedures, 3, 0, 0, H_set_reverb_control_procedures);
   /* can't use generalized set here because it's confused by the 3 args -- perhaps a list would be ok */
 
-  define_procedure_with_setter(S_contrast_func, SCM_FNC g_contrast_func, H_contrast_func,
-			       "set-" S_contrast_func, SCM_FNC g_set_contrast_func, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_contrast_control_procedure, SCM_FNC g_contrast_procedure, H_contrast_control_procedure,
+			       "set-" S_contrast_control_procedure, SCM_FNC g_set_contrast_procedure, local_doc, 0, 0, 1, 0);
 
   DEFINE_PROC(S_play,           g_play, 0, 6, 0,           H_play);
   DEFINE_PROC(S_play_selection, g_play_selection, 0, 2, 0, H_play_selection);
@@ -2827,9 +2840,10 @@ void g_init_dac(SCM local_doc)
 
   DEFINE_PROC(S_make_player,    g_make_player, 0, 2, 0,    H_make_player);
   DEFINE_PROC(S_add_player,     g_add_player, 1, 3, 0,     H_add_player);
+  DEFINE_PROC(S_player_home,    g_player_home, 1, 0, 0,    H_player_home);
   DEFINE_PROC(S_start_playing,  g_start_playing, 0, 3, 0,  H_start_playing);
   DEFINE_PROC(S_stop_player,    g_stop_player, 1, 0, 0,    H_stop_player);
-  DEFINE_PROC(S_playerQ,        g_player_p, 1, 0, 0,       H_playerQ);
+  DEFINE_PROC(S_player_p,       g_player_p, 1, 0, 0,       H_player_p);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd) is called when a sound finishes playing."
   #define H_stop_playing_channel_hook S_stop_playing_channel_hook " (snd chn) is called when a channel finishes playing."
@@ -2846,7 +2860,7 @@ If it returns #t, the sound is not played."
 
   init_rev_funcs(local_doc);
 #if HAVE_GUILE
-  EVAL_STRING("(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)");
-  EVAL_STRING("(set-contrast-func snd-contrast)");
+  EVAL_STRING("(set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)");
+  EVAL_STRING("(set-contrast-control-procedure snd-contrast)");
 #endif
 }

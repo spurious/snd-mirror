@@ -267,7 +267,28 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+28-May:  renamed enved-exping -> enved-exp?, enved-waving -> enved-wave?, enved-clipping -> enved-clip?\n\
+           amplitude-env -> enved-amplitude, srate-env -> enved-srate, spectrum-env -> enved-spectrum\n\
+         removed save-state-on-exit (use exit-hook with save-state).\n\
+         removed activate-listener and hide-listener (the latter is now (set! (show-listener) #f)).\n\
 27-May:  replaced mix-sound-channel and mix-sound-index by mix-home.\n\
+         added player-home.\n\
+         Added \"control\" to the various control panel names:\n\
+           amp -> amp-control, contrast -> contrast-control, contrast-amp -> contrast-control-amp, \n\
+           contrast-func -> contrast-control-procedure, contrasting -> contrast-control?, expand -> expand-control, \n\
+           expand-hop -> expand-control-hop, expand-length -> expand-control-length, expand-ramp -> expand-control-ramp, \n\
+           expanding -> expand-control?, filtering -> filter-control?, filter-order -> filter-control-order, \n\
+           filter-env -> filter-control-env, reverb-decay -> reverb-control-decay, reverb-feedback -> reverb-control-feedback, \n\
+           reverb-funcs -> reverb-control-procedures, reverb-length -> reverb-control-length, reverb-lowpass -> reverb-control-lowpass, \n\
+           reverb-scale -> reverb-control-scale, reverbing -> reverb-control?, speed -> speed-control, speed-as-float -> speed-control-as-float, \n\
+           speed-as-ratio -> speed-control-as-ratio, speed-as-semitone -> speed-control-as-semitone, speed-style -> speed-control-style, \n\
+           speed-tones -> speed-control-tones, filter-dBing -> filter-control-in-dB, enved-dBing -> enved-in-dB.\n\
+         renamed filter-env-order -> enved-filter-order.\n\
+         Some rationale: \n\
+           Scheme uses \"procedure\" rather than \"function\" and \"?\" for booleans.\n\
+	   The control names (\"amp\" in particular) were too likely to be confused or shadowed.\n\
+           filter-env-order was too similar to filter-order (and not obvious it meant the envelope editor filter order)\n\
+           These names actually predated the decision to use Guile -- I didn't foresee 4 years ago where Snd was headed.\n\
 26-May:  removed fit-data-on-open; here's a replacement:\n\
              (define (fit-data snd chn dur)\n\
                (let ((mx (maxamp snd chn)))\n\
@@ -683,11 +704,11 @@ change.  The arrow button on the right determines\n\
 the direction we move through the data.\n\
 The scroll bar position is normally interpreted\n\
 as a float between .05 and 20.  The Options\n\
-Speed Style menu (or the " S_speed_style " variable)\n\
+Speed Style menu (or the " S_speed_control_style " variable)\n\
 can change this to use semitones (actually microtones)\n\
 or just-intonation ratios.  The number of equal\n\
 divisions to the octave in the semitone case is\n\
-set by the variable " S_speed_tones " (normally 12).\n\
+set by the variable " S_speed_control_tones " (normally 12).\n\
 \n\
 ";
 
@@ -710,9 +731,9 @@ envelopes.  These can be set in the minibuffer\n\
 via m-x and setf, or in your Snd init file.\n\
 The variables are:\n\
 \n\
-  " S_expand_ramp ": the length of the ramp up (.4, 0 to .5)\n\
-  " S_expand_length ": the length of each slice (.15)\n\
-  " S_expand_hop ": the hop size (.05)\n\
+  " S_expand_control_ramp ": the length of the ramp up (.4, 0 to .5)\n\
+  " S_expand_control_length ": the length of each slice (.15)\n\
+  " S_expand_control_hop ": the hop size (.05)\n\
 \n\
 The expander is on only if the expand\n\
 button is set.\n\
@@ -725,7 +746,7 @@ McNabb's Nrev.  In addition to the controls\n\
 in the control pane, you can set the reverb\n\
 feedback gains and the coefficient of the low\n\
 pass filter in the allpass bank. The variables\n\
-are '" S_reverb_feedback "' and '" S_reverb_lowpass "'.\n\
+are '" S_reverb_control_feedback "' and '" S_reverb_control_lowpass "'.\n\
 The reverb is on only if the reverb button is set.\n\
 ";
 
@@ -900,13 +921,13 @@ X-axis Label:\n\
   " S_x_in_seconds "       " S_x_in_samples "       " S_x_to_one "\n\
 \n\
 Speed Control style:\n\
-  " S_speed_as_float "     " S_speed_as_ratio "     " S_speed_as_semitone "\n\
+  " S_speed_control_as_float "     " S_speed_control_as_ratio "     " S_speed_control_as_semitone "\n\
 \n\
 Channel Combination style; \n\
   " S_channels_separate "  " S_channels_combined "  " S_channels_superimposed "\n\
 \n\
 Envelope Editor target:\n\
-  " S_amplitude_env "      " S_spectrum_env "       " S_srate_env "\n\
+  " S_enved_amplitude "      " S_enved_spectrum "       " S_enved_srate "\n\
 \n\
 Graph Line style:\n\
   " S_graph_lines "        " S_graph_dots "         " S_graph_filled "    " S_graph_lollipops "\n\
@@ -957,14 +978,15 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_dot_size "              1 (snd #t) (chn #t)\n\
   " S_enved_active_env "      '()\n\
   " S_enved_base "            1.0\n\
-  " S_enved_clipping "        #f\n\
-  " S_enved_dBing "           #f\n\
-  " S_enved_exping "          #f\n\
+  " S_enved_clip_p "          #f\n\
+  " S_enved_in_dB "           #f\n\
+  " S_enved_exp_p "           #f\n\
+  " S_enved_filter_order "    40\n\
   " S_enved_power "           3.0\n\
   " S_enved_selected_env "    '()\n\
-  " S_enved_target "          " S_amplitude_env "\n\
+  " S_enved_target "          " S_enved_amplitude "\n\
   " S_enved_waveform_color "  blue\n\
-  " S_enved_waving "          #f\n\
+  " S_enved_wave_p "          #f\n\
   " S_eps_bottom_margin "     0\n\
   " S_eps_file "              \"snd.eps\"\n\
   " S_eps_left_margin "       0\n\
@@ -974,7 +996,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_fft_size "              256 (snd #t) (chn #t)\n\
   " S_fft_style "             " S_normal_fft " (snd #t) (chn #t)\n\
   " S_fft_window "            blackman2-window (snd #t) (chn #t)\n\
-  " S_filter_env_order "      40\n\
   " S_filter_env_in_hz "      #f\n\
   " S_filter_waveform_color " blue\n\
   " S_graph_color "           white\n\
@@ -1011,10 +1032,9 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_recorder_out_format "   same as above\n\
   " S_recorder_srate "        22050\n\
   " S_recorder_trigger "      0.0\n\
-  " S_reverb_decay "          1.0 &optional (snd #t)\n\
+  " S_reverb_control_decay "  1.0 &optional (snd #t)\n\
   " S_sash_color "            lightgreen\n\
   " S_save_dir "              nil\n\
-  " S_save_state_on_exit "    #f\n\
   " S_save_state_file "       nil\n\
   " S_selected_data_color "   black\n\
   " S_selected_graph_color "  white\n\
@@ -1040,8 +1060,8 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_spectro_y_scale "       1.0 (snd #t) (chn #t)\n\
   " S_spectro_z_angle "      -2.0 (snd #t) (chn #t)\n\
   " S_spectro_z_scale "       0.1 (snd #t) (chn #t)\n\
-  " S_speed_style "           " S_speed_as_float " (snd #t)\n\
-  " S_speed_tones "           12 (snd #t)\n\
+  " S_speed_control_style "  " S_speed_control_as_float " (snd #t)\n\
+  " S_speed_control_tones "   12 (snd #t)\n\
   " S_temp_dir "              nil\n\
   " S_text_focus_color "      white\n\
   " S_transform_type "        " S_fourier_transform " (snd #t) (chn #t)\n\
@@ -1135,14 +1155,13 @@ it has only one channel, (" S_cursor ") (" S_cursor " 0), and (" S_cursor " 0 0)
 all refer to the same thing.\n\
 \n\
   " S_abort "             ()\n\
-  " S_activate_listener " ()\n\
   " S_add_idler "         (code)\n\
   " S_add_mark "          (sample snd chn)\n\
   " S_add_player "        (player start end)\n\
   " S_add_to_main_menu "  (menu-label)\n\
   " S_add_to_menu "       (top-menu menu-label callback)\n\
   " S_add_transform "     (name xlab lo hi transform)\n\
-  " S_amp "               (snd)\n\
+  " S_amp_control "       (snd)\n\
   " S_append_to_minibuffer " (msg snd)\n\
   " S_as_one_edit "       (func snd chn)\n\
   " S_autocorrelate "     (data)\n\
@@ -1160,11 +1179,11 @@ all refer to the same thing.\n\
   " S_close_sound "       (snd)\n\
   " S_close_sound_file "  (fd bytes)\n\
   " S_color_dialog "      ()\n\
-  " S_colorQ "            (obj)\n\
+  " S_color_p "           (obj)\n\
   " S_comment "           (snd)\n\
-  " S_contrast "          (snd)\n\
-  " S_contrast_amp "      (snd)\n\
-  " S_contrasting "       (snd)\n\
+  " S_contrast_control "  (snd)\n\
+  " S_contrast_control_amp " (snd)\n\
+  " S_contrast_control_p " (snd)\n\
   " S_convolve_arrays "   (vect1 vect2)\n\
   " S_convolve_selection_with " (file amp)\n\
   " S_convolve_with "     (file amp snd chn)\n\
@@ -1191,21 +1210,21 @@ all refer to the same thing.\n\
   " S_enved_dialog "      ()\n\
   " S_equalize_panes "    (snd)\n\
   " S_exit "              ()\n\
-  " S_expand "            (snd)\n\
-  " S_expand_hop "        (snd)\n\
-  " S_expand_length "     (snd)\n\
-  " S_expand_ramp "       (snd)\n\
-  " S_expanding "         (snd)\n\
+  " S_expand_control "    (snd)\n\
+  " S_expand_control_hop " (snd)\n\
+  " S_expand_control_length " (snd)\n\
+  " S_expand_control_ramp " (snd)\n\
+  " S_expand_control_p "   (snd)\n\
   " S_fft "               (rl im sgn)\n\
   " S_ffting "            (snd chn)\n\
   " S_fht "               (rl)\n\
   " S_file_dialog "       ()\n\
   " S_file_name "         (snd)\n\
-  " S_filter_env "        (snd)\n\
-  " S_filter_order "      (snd)\n\
+  " S_filter_control_env " (snd)\n\
+  " S_filter_control_order " (snd)\n\
+  " S_filter_control_p "   (snd)\n\
   " S_filter_selection "  (env order)\n\
   " S_filter_sound "      (env order snd chn)\n\
-  " S_filtering "         (snd)\n\
   " S_find "              (c-expr start snd chn)\n\
   " S_find_mark "         (samp snd chn)\n\
   " S_find_sound "        (filename)\n\
@@ -1219,7 +1238,6 @@ all refer to the same thing.\n\
   " S_graph2ps "         ()\n\
   " S_header_type "       (snd)\n\
   " S_help_dialog "       (subject help)\n\
-  " S_hide_listener "     ()\n\
   " S_id_region "         (id)\n\
   " S_in "                (ms code)\n\
   " S_insert_region "     (beg reg snd chn)\n\
@@ -1247,7 +1265,7 @@ all refer to the same thing.\n\
   " S_mark_sync "         (mark)\n\
   " S_mark_sync_max "     ()\n\
   " S_marks "             (snd chn pos)\n\
-  " S_markQ "             (id)\n\
+  " S_mark_p "            (id)\n\
   " S_max_sounds "        ()\n\
   " S_maxamp "            (snd chn)\n\
   " S_mix "               (file samp in_chan snd chn)\n\
@@ -1268,7 +1286,7 @@ all refer to the same thing.\n\
   " S_mix_speed "         (mix)\n\
   " S_mix_track "         (mix)\n\
   " S_mix_vct "           (vct beg chans snd chn)\n\
-  " S_mixQ "              (id)\n\
+  " S_mix_p "             (id)\n\
   " S_next_sample "       (rd)\n\
   " S_new_sound "         (name type format srate chans)\n\
   " S_open_raw_sound "    (name chans srate format)\n\
@@ -1280,7 +1298,8 @@ all refer to the same thing.\n\
   " S_play_and_wait "     (samp snd chn sync end)\n\
   " S_play_region "       (reg to-end)\n\
   " S_play_selection "    ()\n\
-  " S_playerQ "           (obj)\n\
+  " S_player_home "       (obj)\n\
+  " S_player_p "          (obj)\n\
   " S_position2x "        (xpos snd chn ap)\n\
   " S_position2y "        (ypos snd chn ap)\n\
   " S_preload_directory " (dir)\n\
@@ -1304,24 +1323,24 @@ all refer to the same thing.\n\
   " S_region_samples2vct "(samp samps reg chn)\n\
   " S_region_srate "      (reg)\n\
   " S_regions "           ()\n\
-  " S_regionQ "           (id)\n\
+  " S_region_p "          (id)\n\
   " S_remove_idler "      (id)\n\
   " S_report_in_minibuffer "(msg snd)\n\
   " S_reset_controls "    (snd)\n\
   " S_restore_controls "  (snd)\n\
-  " S_reverb_feedback "   (snd)\n\
-  " S_reverb_length "     (snd)\n\
-  " S_reverb_lowpass "    (snd)\n\
-  " S_reverb_scale "      (snd)\n\
-  " S_reverbing "         (snd)\n\
+  " S_reverb_control_feedback " (snd)\n\
+  " S_reverb_control_length " (snd)\n\
+  " S_reverb_control_lowpass " (snd)\n\
+  " S_reverb_control_scale " (snd)\n\
+  " S_reverb_control_p "   (snd)\n\
   " S_reverse_selection " ()\n\
   " S_reverse_sound "     (snd chn)\n\
   " S_revert_sound "      (snd)\n\
   " S_right_sample "      (snd chn)\n\
   " S_sample "            (samp snd chn)\n\
-  " S_sample_reader_at_endQ "(rd)\n\
+  " S_sample_reader_at_end_p "(rd)\n\
   " S_sample_reader_home "(rd)\n\
-  " S_sample_readerQ "    (rd)\n\
+  " S_sample_reader_p "   (rd)\n\
   " S_samples "           (samp samps snd chn)\n\
   " S_samples2vct "      (samp samps snd chn)\n\
   " S_save_controls "     (snd)\n\
@@ -1348,7 +1367,7 @@ all refer to the same thing.\n\
   " S_selection_position "()\n\
   " S_selection_to_temp " (type format)\n\
   " S_selection_to_temps "(type format)\n\
-  " S_selectionQ "        ()\n\
+  " S_selection_p "       ()\n\
   " S_short_file_name "   (snd)\n\
   " S_show_controls "     (snd)\n\
   " S_show_listener "     ()\n\
@@ -1357,7 +1376,7 @@ all refer to the same thing.\n\
   " S_sound_files_in_directory "(dir)\n\
   " S_sound_to_temp "     (type format)\n\
   " S_sound_to_temps "    (type format)\n\
-  " S_soundQ "            (snd)\n\
+  " S_sound_p "           (snd)\n\
   " S_sounds "            ()\n\
   " S_snd_apropos "       (name)\n\
   " S_snd_error "         (str)\n\
@@ -1367,7 +1386,8 @@ all refer to the same thing.\n\
   " S_snd_tempnam "       ()\n\
   " S_snd_version "       ()\n\
   " S_snd_warning "       (str)\n\
-  " S_speed "             (snd)\n\
+  " S_speed_control "     (snd)\n\
+  " S_speed_control_tones " (snd)\n\
   " S_squelch_update "    (snd chn)\n\
   " S_srate "             (snd)\n\
   " S_src_selection "     (num-or-env base)\n\
@@ -1657,7 +1677,7 @@ envelope. The envelope can be applied to the\n\
 amplitude, the spectrum, or the sampling rate. The\n\
 choice is made via the three buttons marked 'amp',\n\
 'flt', and 'src'. The filter order is the variable\n\
-" S_filter_env_order " which defaults to 40.\n\
+" S_enved_filter_order " which defaults to 40.\n\
 To apply the changes to the current selection,\n\
 rather than the current sound, set the 'selection'\n\
 button.  To apply it to the currently selected mix,\n\

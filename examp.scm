@@ -1585,7 +1585,7 @@
       (vct-scale! out-data amp)
       (let ((max-samp (vct-peak out-data)))
 	(vct->samples 0 total-len out-data snd1)
-	(if (> max-samp 1.0) (set-y-bounds (- max-samp) max-samp snd1))
+	(if (> max-samp 1.0) (set! (y-bounds snd1) (list (- max-samp) max-samp)))
 	max-samp))))
 
 ; (cnvtest 0 1 .1)
@@ -2521,7 +2521,7 @@
       (begin
 	(set! now-playing #t)
 	(set! hidden-player (make-player))
-	(set! (amp hidden-player) 0.0)
+	(set! (amp-control hidden-player) 0.0)
 	(add-player hidden-player 0 123456789)
 	(start-playing 1 22050))))
 

@@ -22,8 +22,8 @@ static void change_mix_speed(int mix_id, Float val)
   set_mix_speed_from_id(mix_id,
 			srate_changed(val,
 				      speed_number_buffer,
-				      cp->sound->speed_style,
-				      cp->sound->speed_tones),
+				      cp->sound->speed_control_style,
+				      cp->sound->speed_control_tones),
 			dragging);
   gtk_label_set_text(GTK_LABEL(w_speed_number), speed_number_buffer);
 }
@@ -48,8 +48,8 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
   sp = cp->sound;
   val = srate_changed(exp((GTK_ADJUSTMENT(w_speed_adj)->value - .45) / .15),
 		      speed_number_buffer,
-		      sp->speed_style,
-		      sp->speed_tones);
+		      sp->speed_control_style,
+		      sp->speed_control_tones);
   if (dragging == 0) start_mix_drag(mix_id);
   dragging = 1;
   change_mix_speed(mix_id, val);
@@ -68,8 +68,8 @@ static void speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
   sp = cp->sound;
   val = srate_changed(exp((GTK_ADJUSTMENT(w_speed_adj)->value - .45) / .15),
 		      speed_number_buffer,
-		      sp->speed_style,
-		      sp->speed_tones);
+		      sp->speed_control_style,
+		      sp->speed_control_tones);
   dragging = 0;
   change_mix_speed(mix_id, val);
 }
@@ -79,8 +79,8 @@ static void reflect_mix_speed(Float uval, snd_info *sp)
   Float val;
   val = srate_changed(uval,
 		      speed_number_buffer,
-		      sp->speed_style,
-		      sp->speed_tones);
+		      sp->speed_control_style,
+		      sp->speed_control_tones);
   gtk_label_set_text(GTK_LABEL(w_speed_number), speed_number_buffer);
   if (val > 0.0)
     GTK_ADJUSTMENT(w_speed_adj)->value = .45 + .15 * log(val);
@@ -439,10 +439,10 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_container_add(GTK_CONTAINER(w_speed_event), w_speed_label);
       gtk_widget_show(w_speed_label);
 
-      switch (speed_style(ss))
+      switch (speed_control_style(ss))
 	{
-	case SPEED_AS_RATIO: w_speed_number = gtk_label_new("1/1"); break;
-	case SPEED_AS_SEMITONE: w_speed_number = gtk_label_new("1"); break;
+	case SPEED_CONTROL_AS_RATIO: w_speed_number = gtk_label_new("1/1"); break;
+	case SPEED_CONTROL_AS_SEMITONE: w_speed_number = gtk_label_new("1"); break;
 	default:  w_speed_number = gtk_label_new(speed_number_buffer); break;
 	}
       gtk_box_pack_start(GTK_BOX(w_speed_form), w_speed_number, FALSE, FALSE, 0);

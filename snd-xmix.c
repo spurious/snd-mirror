@@ -24,8 +24,8 @@ static void change_mix_speed(int mix_id, Float val)
   set_mix_speed_from_id(mix_id,
 			srate_changed(val,
 				      speed_number_buffer,
-				      cp->sound->speed_style,
-				      cp->sound->speed_tones),
+				      cp->sound->speed_control_style,
+				      cp->sound->speed_control_tones),
 			dragging);
   set_label(w_speed_number, speed_number_buffer);
 }
@@ -43,8 +43,8 @@ static int mix_speed_to_int(Float uval, snd_info *sp)
   Float val;
   val = srate_changed(uval,
 		      speed_number_buffer,
-		      sp->speed_style,
-		      sp->speed_tones);
+		      sp->speed_control_style,
+		      sp->speed_control_tones);
   set_label(w_speed_number, speed_number_buffer);
   if (val > 0.0)
     {

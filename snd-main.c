@@ -17,10 +17,16 @@ static int remove_temp_files(chan_info *cp, void *ignore)
   void mem_report(void);
 #endif
 
-void snd_exit_cleanly(snd_state *ss)
+static SCM exit_hook;
+
+int snd_exit_cleanly(snd_state *ss, int force_exit)
 {  
-  if ((save_state_on_exit(ss)) && (save_state_file(ss)))
-    save_state(ss, save_state_file(ss));
+  SCM res = SCM_BOOL_F;
+  if (HOOKED(exit_hook))
+    res = g_c_run_or_hook(exit_hook, 
+			  SCM_LIST0,
+			  S_exit_hook);
+  if ((TRUE_P(res)) && (!force_exit)) return(0);
   mus_sound_finalize();
   cleanup_dac();
   map_over_chans(ss, remove_temp_files, NULL);
@@ -30,6 +36,7 @@ void snd_exit_cleanly(snd_state *ss)
 #ifdef DEBUG_MEMORY
   mem_report();
 #endif
+  return(1);
 }
 
 int snd_not_current(snd_info *sp, void *ignore)
@@ -124,13 +131,13 @@ static char *x_axis_style_name(int choice)
     }
 }
 
-static char *speed_style_name(int choice)
+static char *speed_control_style_name(int choice)
 {
   switch (choice)
     {
-    case SPEED_AS_RATIO: return(S_speed_as_ratio); break;
-    case SPEED_AS_SEMITONE: return(S_speed_as_semitone); break;
-    default: return(S_speed_as_float); break;
+    case SPEED_CONTROL_AS_RATIO: return(S_speed_control_as_ratio); break;
+    case SPEED_CONTROL_AS_SEMITONE: return(S_speed_control_as_semitone); break;
+    default: return(S_speed_control_as_float); break;
     }
 }
 
@@ -148,9 +155,9 @@ static char *enved_target_name(int choice)
 {
   switch (choice)
     {
-    case SPECTRUM_ENV: return(S_spectrum_env); break;
-    case SRATE_ENV: return(S_srate_env); break;
-    default: return(S_amplitude_env); break;
+    case ENVED_SPECTRUM: return(S_enved_spectrum); break;
+    case ENVED_SRATE: return(S_enved_srate); break;
+    default: return(S_enved_amplitude); break;
     }
 }
 
@@ -196,7 +203,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fft_style(ss) != DEFAULT_FFT_STYLE) pss_ss(fd, S_fft_style, fft_style_name(fft_style(ss)));
   if (x_axis_style(ss) != DEFAULT_AXIS_STYLE) pss_ss(fd, S_x_axis_style, x_axis_style_name(x_axis_style(ss)));
   if (graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_ss(fd, S_graph_style, graph_style_name(graph_style(ss)));
-  if (speed_style(ss) != DEFAULT_SPEED_STYLE) pss_ss(fd, S_speed_style, speed_style_name(speed_style(ss)));
+  if (speed_control_style(ss) != DEFAULT_SPEED_CONTROL_STYLE) pss_ss(fd, S_speed_control_style, speed_control_style_name(speed_control_style(ss)));
   if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) pss_ss(fd, S_channel_style, channel_style_name(channel_style(ss)));
   if (enved_target(ss) != DEFAULT_ENVED_TARGET) pss_ss(fd, S_enved_target, enved_target_name(enved_target(ss)));
   if (transform_type(ss) != DEFAULT_TRANSFORM_TYPE) pss_ss(fd, S_transform_type, transform_type_name(transform_type(ss)));
@@ -206,7 +213,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (show_selection_transform(ss) != DEFAULT_SHOW_SELECTION_TRANSFORM) pss_ss(fd, S_show_selection_transform, b2s(show_selection_transform(ss)));
   if (with_mix_tags(ss) != DEFAULT_WITH_MIX_TAGS) pss_ss(fd, S_with_mix_tags, b2s(with_mix_tags(ss)));
   if (sinc_width(ss) != DEFAULT_SINC_WIDTH) pss_sd(fd, S_sinc_width, sinc_width(ss));
-  if (speed_tones(ss) != DEFAULT_SPEED_TONES) pss_sd(fd, S_speed_tones, speed_tones(ss));
+  if (speed_control_tones(ss) != DEFAULT_SPEED_CONTROL_TONES) pss_sd(fd, S_speed_control_tones, speed_control_tones(ss));
   if (ss->init_window_width != DEFAULT_INIT_WINDOW_WIDTH) pss_sd(fd, S_window_width, widget_width(MAIN_SHELL(ss)));
   if (ss->init_window_height != DEFAULT_INIT_WINDOW_HEIGHT) pss_sd(fd, S_window_height, widget_height(MAIN_SHELL(ss)));
   if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) pss_sd(fd, S_window_x, widget_x(MAIN_SHELL(ss)));
@@ -232,8 +239,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (dac_size(ss) != DEFAULT_DAC_SIZE) pss_sd(fd, S_dac_size, dac_size(ss));
   if (movies(ss) != DEFAULT_MOVIES) pss_ss(fd, S_movies, b2s(movies(ss)));
   if (selection_creates_region(ss) != DEFAULT_SELECTION_CREATES_REGION) pss_ss(fd, S_selection_creates_region, b2s(selection_creates_region(ss)));
-  if (save_state_on_exit(ss) != DEFAULT_SAVE_STATE_ON_EXIT) pss_ss(fd, S_save_state_on_exit, b2s(save_state_on_exit(ss)));
-  if (filter_env_order(ss) != DEFAULT_FILTER_ENV_ORDER) pss_sd(fd, S_filter_env_order, filter_env_order(ss));
+  if (enved_filter_order(ss) != DEFAULT_ENVED_FILTER_ORDER) pss_sd(fd, S_enved_filter_order, enved_filter_order(ss));
   if (filter_env_in_hz(ss) != DEFAULT_FILTER_ENV_IN_HZ) pss_ss(fd, S_filter_env_in_hz, b2s(filter_env_in_hz(ss)));
   if (max_fft_peaks(ss) != DEFAULT_MAX_FFT_PEAKS) pss_sd(fd, S_max_fft_peaks, max_fft_peaks(ss));
   if (max_regions(ss) != DEFAULT_MAX_REGIONS) pss_sd(fd, S_max_regions, max_regions(ss));
@@ -256,10 +262,10 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (mix_waveform_height(ss) != DEFAULT_MIX_WAVEFORM_HEIGHT) pss_sd(fd, S_mix_waveform_height, mix_waveform_height(ss));
   if (mix_tag_height(ss) != DEFAULT_MIX_TAG_HEIGHT) pss_sd(fd, S_mix_tag_height, mix_tag_height(ss));
   if (mix_tag_width(ss) != DEFAULT_MIX_TAG_WIDTH) pss_sd(fd, S_mix_tag_width, mix_tag_width(ss));
-  if (enved_waving(ss) != DEFAULT_ENVED_WAVING) pss_ss(fd, S_enved_waving, b2s(enved_waving(ss)));
-  if (enved_dBing(ss) != DEFAULT_ENVED_DBING) pss_ss(fd, S_enved_dBing, b2s(enved_dBing(ss)));
-  if (enved_clipping(ss) != DEFAULT_ENVED_CLIPPING) pss_ss(fd, S_enved_clipping, b2s(enved_clipping(ss)));
-  if (enved_exping(ss) != DEFAULT_ENVED_EXPING) pss_ss(fd, S_enved_exping, b2s(enved_exping(ss)));
+  if (enved_wave_p(ss) != DEFAULT_ENVED_WAVE_P) pss_ss(fd, S_enved_wave_p, b2s(enved_wave_p(ss)));
+  if (enved_in_dB(ss) != DEFAULT_ENVED_IN_DB) pss_ss(fd, S_enved_in_dB, b2s(enved_in_dB(ss)));
+  if (enved_clip_p(ss) != DEFAULT_ENVED_CLIP_P) pss_ss(fd, S_enved_clip_p, b2s(enved_clip_p(ss)));
+  if (enved_exp_p(ss) != DEFAULT_ENVED_EXP_P) pss_ss(fd, S_enved_exp_p, b2s(enved_exp_p(ss)));
 
   if (vu_font(ss) != DEFAULT_VU_FONT) pss_sq(fd, S_vu_font, vu_font(ss));
   if (save_state_file(ss) != NULL) pss_sq(fd, S_save_state_file, save_state_file(ss));
@@ -272,7 +278,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (audio_output_device(ss) != DEFAULT_AUDIO_OUTPUT_DEVICE) pss_sd(fd, S_audio_output_device, audio_output_device(ss));
 
   if (fneq(fft_beta(ss), DEFAULT_FFT_BETA)) pss_sf(fd, S_fft_beta, fft_beta(ss));
-  if (fneq(reverb_decay(ss), DEFAULT_REVERB_DECAY)) pss_sf(fd, S_reverb_decay, reverb_decay(ss));
+  if (fneq(reverb_control_decay(ss), DEFAULT_REVERB_CONTROL_DECAY)) pss_sf(fd, S_reverb_control_decay, reverb_control_decay(ss));
   if (fneq(ss->min_dB, DEFAULT_MIN_DB)) pss_sf(fd, S_min_dB, ss->min_dB);
   if (fneq(ss->Hankel_Jn, DEFAULT_HANKEL_JN)) pss_sf(fd, S_hankel_jn, ss->Hankel_Jn);
   if (fneq(color_cutoff(ss), DEFAULT_COLOR_CUTOFF)) pss_sf(fd, S_color_cutoff, color_cutoff(ss));
@@ -368,29 +374,29 @@ static int save_sound_state (snd_info *sp, void *ptr)
 	  (sp->read_only) ? S_view_sound : S_open_sound,
 	  sp->fullname);
   if (sp->sync != DEFAULT_SYNC) psp_sd(fd, S_sync, sp->sync);
-  if (sp->contrasting != DEFAULT_CONTRASTING) psp_ss(fd, S_contrasting, b2s(sp->contrasting));
-  if (sp->contrast != DEFAULT_CONTRAST) psp_sf(fd, S_contrast, sp->contrast);
-  if (sp->expanding != DEFAULT_EXPANDING) psp_ss(fd, S_expanding, b2s(sp->expanding));
-  if (sp->expand != DEFAULT_EXPAND) psp_sf(fd, S_expand, sp->expand);
-  if (sp->expand_ramp != DEFAULT_EXPAND_RAMP) psp_sf(fd, S_expand_ramp, sp->expand_ramp);
-  if (sp->expand_hop != DEFAULT_EXPAND_HOP) psp_sf(fd, S_expand_hop, sp->expand_hop);
-  if (sp->expand_length != DEFAULT_EXPAND_LENGTH) psp_sf(fd, S_expand_length, sp->expand_length);
-  if (sp->srate != DEFAULT_SPEED) psp_sf(fd, S_speed, sp->srate);
-  if (sp->speed_tones != DEFAULT_SPEED_TONES) psp_sd(fd, S_speed_tones, sp->speed_tones);
-  if (sp->speed_style != DEFAULT_SPEED_STYLE) psp_ss(fd, S_speed_style, speed_style_name(sp->speed_style));
-  if (sp->reverbing != DEFAULT_REVERBING) psp_ss(fd, S_reverbing, b2s(sp->reverbing));
-  if (sp->revscl != DEFAULT_REVERB_SCALE) psp_sf(fd, S_reverb_scale, sp->revscl);
-  if (sp->revlen != DEFAULT_REVERB_LENGTH) psp_sf(fd, S_reverb_length, sp->revlen);
-  if (sp->revfb != DEFAULT_REVERB_FEEDBACK) psp_sf(fd, S_reverb_feedback, sp->revfb);
-  if (sp->revlp != DEFAULT_REVERB_LOWPASS) psp_sf(fd, S_reverb_lowpass, sp->revlp);
-  if (sp->reverb_decay != DEFAULT_REVERB_DECAY) psp_sf(fd, S_reverb_decay, sp->reverb_decay);
-  if (sp->amp != DEFAULT_AMP) psp_sf(fd, S_amp, sp->amp);
-  if (sp->filtering != DEFAULT_FILTERING) psp_ss(fd, S_filtering, b2s(sp->filtering));
-  if (sp->filter_order != DEFAULT_FILTER_ORDER) psp_sd(fd, S_filter_order, sp->filter_order);
-  if (sp->filter_dBing != DEFAULT_FILTER_DBING) psp_ss(fd, S_filter_dBing, b2s(sp->filter_dBing));
-  if (sp->filter_env) 
+  if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P) psp_ss(fd, S_contrast_control_p, b2s(sp->contrast_control_p));
+  if (sp->contrast_control != DEFAULT_CONTRAST_CONTROL) psp_sf(fd, S_contrast_control, sp->contrast_control);
+  if (sp->expand_control_p != DEFAULT_EXPAND_CONTROL_P) psp_ss(fd, S_expand_control_p, b2s(sp->expand_control_p));
+  if (sp->expand_control != DEFAULT_EXPAND_CONTROL) psp_sf(fd, S_expand_control, sp->expand_control);
+  if (sp->expand_control_ramp != DEFAULT_EXPAND_CONTROL_RAMP) psp_sf(fd, S_expand_control_ramp, sp->expand_control_ramp);
+  if (sp->expand_control_hop != DEFAULT_EXPAND_CONTROL_HOP) psp_sf(fd, S_expand_control_hop, sp->expand_control_hop);
+  if (sp->expand_control_length != DEFAULT_EXPAND_CONTROL_LENGTH) psp_sf(fd, S_expand_control_length, sp->expand_control_length);
+  if (sp->speed_control != DEFAULT_SPEED_CONTROL) psp_sf(fd, S_speed_control, sp->speed_control);
+  if (sp->speed_control_tones != DEFAULT_SPEED_CONTROL_TONES) psp_sd(fd, S_speed_control_tones, sp->speed_control_tones);
+  if (sp->speed_control_style != DEFAULT_SPEED_CONTROL_STYLE) psp_ss(fd, S_speed_control_style, speed_control_style_name(sp->speed_control_style));
+  if (sp->reverb_control_p != DEFAULT_REVERB_CONTROL_P) psp_ss(fd, S_reverb_control_p, b2s(sp->reverb_control_p));
+  if (sp->reverb_control_scale != DEFAULT_REVERB_CONTROL_SCALE) psp_sf(fd, S_reverb_control_scale, sp->reverb_control_scale);
+  if (sp->reverb_control_length != DEFAULT_REVERB_CONTROL_LENGTH) psp_sf(fd, S_reverb_control_length, sp->reverb_control_length);
+  if (sp->reverb_control_feedback != DEFAULT_REVERB_CONTROL_FEEDBACK) psp_sf(fd, S_reverb_control_feedback, sp->reverb_control_feedback);
+  if (sp->reverb_control_lowpass != DEFAULT_REVERB_CONTROL_LOWPASS) psp_sf(fd, S_reverb_control_lowpass, sp->reverb_control_lowpass);
+  if (sp->reverb_control_decay != DEFAULT_REVERB_CONTROL_DECAY) psp_sf(fd, S_reverb_control_decay, sp->reverb_control_decay);
+  if (sp->amp_control != DEFAULT_AMP_CONTROL) psp_sf(fd, S_amp_control, sp->amp_control);
+  if (sp->filter_control_p != DEFAULT_FILTER_CONTROL_P) psp_ss(fd, S_filter_control_p, b2s(sp->filter_control_p));
+  if (sp->filter_control_order != DEFAULT_FILTER_CONTROL_ORDER) psp_sd(fd, S_filter_control_order, sp->filter_control_order);
+  if (sp->filter_control_in_dB != DEFAULT_FILTER_CONTROL_IN_DB) psp_ss(fd, S_filter_control_in_dB, b2s(sp->filter_control_in_dB));
+  if (sp->filter_control_env) 
     {
-      psp_ss(fd, S_filter_env, tmpstr = env_to_string(sp->filter_env));
+      psp_ss(fd, S_filter_control_env, tmpstr = env_to_string(sp->filter_control_env));
       if (tmpstr) FREE(tmpstr);
     }
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
@@ -663,11 +669,8 @@ static SCM g_save_options(SCM filename)
 static SCM g_exit(SCM val) 
 {
   #define H_exit "(" S_exit ") exits Snd"
-  snd_state *ss;
-  ss = get_global_state();
-  if (dont_exit()) return(SCM_BOOL_T);
-  snd_exit_cleanly(ss); 
-  snd_exit(TO_C_INT_OR_ELSE(val,1)); 
+  if (snd_exit_cleanly(get_global_state(), FALSE))
+    snd_exit(TO_C_INT_OR_ELSE(val,1)); 
   return(SCM_BOOL_F);
 }
 
@@ -689,4 +692,9 @@ void g_init_main(SCM local_doc)
 
   #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
   start_hook =          MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
+
+  #define H_exit_hook S_exit_hook " () is called upon exit. \
+If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
+
+  exit_hook =           MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
 }

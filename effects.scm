@@ -146,8 +146,8 @@
   "reverberate adds reverberation scaled by reverb-amount"
   (save-controls)
   (reset-controls)
-  (set! (reverbing) #t)
-  (set! (reverb-scale) reverb-amount)
+  (set! (reverb-control?) #t)
+  (set! (reverb-control-scale) reverb-amount)
   (apply-controls)
   (restore-controls))
 
@@ -168,10 +168,10 @@
   (let ((peak (maxamp)))
     (save-controls)
     (reset-controls)
-    (set! (contrasting) #t)
-    (set! (contrast) contrast-amount)
-    (set! (contrast-amp) (/ 1.0 peak))
-    (set! (amp) peak)
+    (set! (contrast-control?) #t)
+    (set! (contrast-control) contrast-amount)
+    (set! (contrast-control-amp) (/ 1.0 peak))
+    (set! (amp-control) peak)
     (apply-controls)
     (restore-controls)))
 
@@ -464,12 +464,12 @@
 (define (cp-expsrc)
   (save-controls)
   (reset-controls)
-  (set! (speed) pitch-scale)
+  (set! (speed-control) pitch-scale)
   (let ((new-time (* pitch-scale time-scale)))
     (if (not (= new-time 1.0))
 	(begin
-	  (set! (expanding) #t)
-	  (set! (expand) new-time))))
+	  (set! (expand-control?) #t)
+	  (set! (expand-control) new-time))))
   (apply-controls)
   (restore-controls))
 	    

@@ -265,7 +265,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 	  clear_minibuffer_prompt(sp);
 	  report_in_minibuffer(sp, name_buf);
 	}
-      if (state->listening != LISTENER_CLOSED)
+      if (state->listening)
 	{
 	  state->result_printout = MESSAGE_WITH_CARET;
 	  snd_append_command(state, name_buf);
@@ -573,7 +573,7 @@ SCM snd_report_result(snd_state *ss, SCM result, char *buf, int check_mini)
       clear_minibuffer_prompt(sp);
       report_in_minibuffer(sp, str);
     }
-  if (ss->listening != LISTENER_CLOSED)
+  if (ss->listening)
     {
       if (buf) snd_append_command(ss, buf);
       ss->result_printout = MESSAGE_WITH_CARET;
@@ -947,26 +947,26 @@ static SCM g_set_enved_power(SCM val)
   return(TO_SCM_DOUBLE(enved_power(state)));
 }
 
-static SCM g_enved_clipping(void) {return(TO_SCM_BOOLEAN(enved_clipping(state)));}
-static SCM g_set_enved_clipping(SCM on)
+static SCM g_enved_clip_p(void) {return(TO_SCM_BOOLEAN(enved_clip_p(state)));}
+static SCM g_set_enved_clip_p(SCM on)
 {
-  #define H_enved_clipping "(" S_enved_clipping ") -> envelope editor 'clip' button setting; \
+  #define H_enved_clip_p "(" S_enved_clip_p ") -> envelope editor 'clip' button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARGn, "set-" S_enved_clipping, "a boolean");
-  set_enved_clipping(state, TO_C_BOOLEAN_OR_T(on)); 
-  return(TO_SCM_BOOLEAN(enved_clipping(state)));
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARGn, "set-" S_enved_clip_p, "a boolean");
+  set_enved_clip_p(state, TO_C_BOOLEAN_OR_T(on)); 
+  return(TO_SCM_BOOLEAN(enved_clip_p(state)));
 }
 
-static SCM g_enved_exping(void) {return(TO_SCM_BOOLEAN(enved_exping(state)));}
-static SCM g_set_enved_exping(SCM val) 
+static SCM g_enved_exp_p(void) {return(TO_SCM_BOOLEAN(enved_exp_p(state)));}
+static SCM g_set_enved_exp_p(SCM val) 
 {
-  #define H_enved_exping "(" S_enved_exping ") -> envelope editor 'exp' and 'lin' buttons; \
+  #define H_enved_exp_p "(" S_enved_exp_p ") -> envelope editor 'exp' and 'lin' buttons; \
 if enved-exping, the connecting segments use exponential curves rather than straight lines."
 
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_exping, "a boolean");
-  set_enved_exping(state, TO_C_BOOLEAN_OR_T(val)); 
-  return(TO_SCM_BOOLEAN(enved_clipping(state)));
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_exp_p, "a boolean");
+  set_enved_exp_p(state, TO_C_BOOLEAN_OR_T(val)); 
+  return(TO_SCM_BOOLEAN(enved_clip_p(state)));
 }
 
 static SCM g_enved_target(void) {return(TO_SCM_INT(enved_target(state)));}
@@ -974,32 +974,32 @@ static SCM g_set_enved_target(SCM val)
 {
   int n; 
   #define H_enved_target "(" S_enved_target ") determines how the envelope is applied to data in the envelope editor; \
-choices are " S_amplitude_env ", " S_srate_env ", and " S_spectrum_env
+choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
 
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_enved_target, "an integer"); 
-  n = mus_iclamp(AMPLITUDE_ENV,
+  n = mus_iclamp(ENVED_AMPLITUDE,
 	     TO_C_INT(val),
-	     SRATE_ENV); 
+	     ENVED_SRATE); 
   set_enved_target(state, n); 
   return(TO_SCM_INT(enved_target(state)));
 }
 
-static SCM g_enved_waving(void) {return(TO_SCM_BOOLEAN(enved_waving(state)));}
-static SCM g_set_enved_waving(SCM val) 
+static SCM g_enved_wave_p(void) {return(TO_SCM_BOOLEAN(enved_wave_p(state)));}
+static SCM g_set_enved_wave_p(SCM val) 
 {
-  #define H_enved_waving "(" S_enved_waving ") -> #t if the envelope editor is displaying the waveform to be edited"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_waving, "a boolean");
-  set_enved_waving(state, TO_C_BOOLEAN_OR_T(val));
-  return(TO_SCM_BOOLEAN(enved_waving(state)));
+  #define H_enved_wave_p "(" S_enved_wave_p ") -> #t if the envelope editor is displaying the waveform to be edited"
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_wave_p, "a boolean");
+  set_enved_wave_p(state, TO_C_BOOLEAN_OR_T(val));
+  return(TO_SCM_BOOLEAN(enved_wave_p(state)));
 }
 
-static SCM g_enved_dBing(void) {return(TO_SCM_BOOLEAN(enved_dBing(state)));}
-static SCM g_set_enved_dBing(SCM val) 
+static SCM g_enved_in_dB(void) {return(TO_SCM_BOOLEAN(enved_in_dB(state)));}
+static SCM g_set_enved_in_dB(SCM val) 
 {
-  #define H_enved_dBing "(" S_enved_dBing ") -> #t if the envelope editor is using dB"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_dBing, "a boolean");
-  set_enved_dBing(state, TO_C_BOOLEAN_OR_T(val)); 
-  return(TO_SCM_BOOLEAN(enved_dBing(state)));
+  #define H_enved_in_dB "(" S_enved_in_dB ") -> #t if the envelope editor is using dB"
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_in_dB, "a boolean");
+  set_enved_in_dB(state, TO_C_BOOLEAN_OR_T(val)); 
+  return(TO_SCM_BOOLEAN(enved_in_dB(state)));
 }
 
 static SCM g_eps_file(void) {return(TO_SCM_STRING(eps_file(state)));}
@@ -1061,13 +1061,13 @@ static SCM g_set_audio_state_file(SCM val)
   return(TO_SCM_STRING(audio_state_file(state)));
 }
 
-static SCM g_filter_env_order(void) {return(TO_SCM_INT(filter_env_order(state)));}
-static SCM g_set_filter_env_order(SCM val) 
+static SCM g_enved_filter_order(void) {return(TO_SCM_INT(enved_filter_order(state)));}
+static SCM g_set_enved_filter_order(SCM val) 
 {
-  #define H_filter_env_order "(" S_filter_env_order ") -> envelope editor's FIR filter order (40)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_filter_env, "an integer"); 
-  set_filter_env_order(state, TO_C_INT(val));
-  return(TO_SCM_INT(filter_env_order(state)));
+  #define H_enved_filter_order "(" S_enved_filter_order ") -> envelope editor's FIR filter order (40)"
+  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_enved_filter_order, "an integer"); 
+  set_enved_filter_order(state, TO_C_INT(val));
+  return(TO_SCM_INT(enved_filter_order(state)));
 }
 
 static SCM g_movies(void) {return(TO_SCM_BOOLEAN(movies(state)));}
@@ -1109,15 +1109,6 @@ static SCM g_set_previous_files_sort(SCM val)
 				       4));
   update_prevfiles(state);
   return(TO_SCM_INT(previous_files_sort(state)));
-}
-
-static SCM g_save_state_on_exit(void) {return(TO_SCM_BOOLEAN(save_state_on_exit(state)));}
-static SCM g_set_save_state_on_exit(SCM val) 
-{
-  #define H_save_state_on_exit "(" S_save_state_on_exit ") -> #t if Snd should save its current state upon exit"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_save_state_on_exit, "a boolean");
-  set_save_state_on_exit(state, TO_C_BOOLEAN_OR_T(val));
-  return(TO_SCM_BOOLEAN(save_state_on_exit(state)));
 }
 
 static SCM g_show_indices(void) {return(TO_SCM_BOOLEAN(show_indices(state)));}
@@ -1375,26 +1366,16 @@ static SCM g_equalize_panes(SCM snd)
 
 static SCM g_show_listener(void) 
 {
-  #define H_show_listener "(" S_show_listener ") opens the lisp listner pane"
-  if (state->listening != LISTENER_OPEN) 
-    handle_listener(state, LISTENER_OPEN); 
-  return(SCM_BOOL_F);
+  #define H_show_listener "(" S_show_listener ") opens the lisp listener pane"
+  handle_listener(state, TRUE); 
+  return(TO_SCM_BOOLEAN(state->listening));
 }
 
-static SCM g_hide_listener(void) 
+static SCM g_set_show_listener(SCM val)
 {
-  #define H_hide_listener "(" S_hide_listener ") closes the lisp listener pane"
-  if (state->listening == LISTENER_OPEN) 
-    handle_listener(state, LISTENER_LISTENING); 
-  return(SCM_BOOL_F);
-}
-
-static SCM g_activate_listener(void) 
-{
-  #define H_activate_listener "(" S_activate_listener ") makes the listener active, if not open"
-  handle_listener(state, LISTENER_LISTENING); 
-  state->listening = LISTENER_LISTENING; 
-  return(SCM_BOOL_F);
+  ASSERT_TYPE(BOOLEAN_P(val), val, SCM_ARGn, "set-" S_show_listener, "a boolean");
+  handle_listener(state, TO_C_BOOLEAN(val));
+  return(TO_SCM_BOOLEAN(state->listening));
 }
 
 static SCM g_help_text_font(void) {return(TO_SCM_STRING(help_text_font(state)));}
@@ -2941,13 +2922,13 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- CONSTANTS ---------------- */
 
-  #define H_amplitude_env "The value for " S_enved_target " that sets the envelope editor 'amp' button."
-  #define H_spectrum_env "The value for " S_enved_target " that sets the envelope editor 'flt' button."
-  #define H_srate_env "The value for " S_enved_target " that sets the envelope editor 'src' button."
+  #define H_enved_amplitude "The value for " S_enved_target " that sets the envelope editor 'amp' button."
+  #define H_enved_spectrum "The value for " S_enved_target " that sets the envelope editor 'flt' button."
+  #define H_enved_srate "The value for " S_enved_target " that sets the envelope editor 'src' button."
 
-  DEFINE_VAR(S_amplitude_env,         AMPLITUDE_ENV, H_amplitude_env);
-  DEFINE_VAR(S_spectrum_env,          SPECTRUM_ENV,  H_spectrum_env);
-  DEFINE_VAR(S_srate_env,             SRATE_ENV,     H_srate_env);
+  DEFINE_VAR(S_enved_amplitude,       ENVED_AMPLITUDE, H_enved_amplitude);
+  DEFINE_VAR(S_enved_spectrum,        ENVED_SPECTRUM,  H_enved_spectrum);
+  DEFINE_VAR(S_enved_srate,           ENVED_SRATE,     H_enved_srate);
 
   #define H_graph_lines "The value for " S_graph_style " that causes graphs to use line-segments"
   #define H_graph_dots "The value for " S_graph_style " that causes graphs to use dots"
@@ -2979,13 +2960,13 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_VAR(S_x_in_samples,          X_IN_SAMPLES, H_x_in_samples);
   DEFINE_VAR(S_x_to_one,              X_TO_ONE,     H_x_to_one);
 
-  #define H_speed_as_float "The value for " S_speed_style " that interprets the speed slider as a float"
-  #define H_speed_as_ratio "The value for " S_speed_style " that interprets the speed slider as a just-intonation ratio"
-  #define H_speed_as_semitone "The value for " S_speed_style " that interprets the speed slider as a microtone (via " S_speed_tones ")"
+  #define H_speed_control_as_float "The value for " S_speed_control_style " that interprets the speed slider as a float"
+  #define H_speed_control_as_ratio "The value for " S_speed_control_style " that interprets the speed slider as a just-intonation ratio"
+  #define H_speed_control_as_semitone "The value for " S_speed_control_style " that interprets the speed slider as a microtone (via " S_speed_control_tones ")"
 
-  DEFINE_VAR(S_speed_as_float,        SPEED_AS_FLOAT,    H_speed_as_float);
-  DEFINE_VAR(S_speed_as_ratio,        SPEED_AS_RATIO,    H_speed_as_ratio);
-  DEFINE_VAR(S_speed_as_semitone,     SPEED_AS_SEMITONE, H_speed_as_semitone);
+  DEFINE_VAR(S_speed_control_as_float,        SPEED_CONTROL_AS_FLOAT,    H_speed_control_as_float);
+  DEFINE_VAR(S_speed_control_as_ratio,        SPEED_CONTROL_AS_RATIO,    H_speed_control_as_ratio);
+  DEFINE_VAR(S_speed_control_as_semitone,     SPEED_CONTROL_AS_SEMITONE, H_speed_control_as_semitone);
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
   #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one panes (the 'unite' button)"
@@ -3097,20 +3078,20 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_enved_power, SCM_FNC g_enved_power, H_enved_power,
 			       "set-" S_enved_power, SCM_FNC g_set_enved_power, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_clipping, SCM_FNC g_enved_clipping, H_enved_clipping,
-			       "set-" S_enved_clipping, SCM_FNC g_set_enved_clipping, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_clip_p, SCM_FNC g_enved_clip_p, H_enved_clip_p,
+			       "set-" S_enved_clip_p, SCM_FNC g_set_enved_clip_p, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_exping, SCM_FNC g_enved_exping, H_enved_exping,
-			       "set-" S_enved_exping, SCM_FNC g_set_enved_exping, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_exp_p, SCM_FNC g_enved_exp_p, H_enved_exp_p,
+			       "set-" S_enved_exp_p, SCM_FNC g_set_enved_exp_p, local_doc, 0, 0, 0, 1);
 
   define_procedure_with_setter(S_enved_target, SCM_FNC g_enved_target, H_enved_target,
 			       "set-" S_enved_target, SCM_FNC g_set_enved_target, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_waving, SCM_FNC g_enved_waving, H_enved_waving,
-			       "set-" S_enved_waving, SCM_FNC g_set_enved_waving, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_wave_p, SCM_FNC g_enved_wave_p, H_enved_wave_p,
+			       "set-" S_enved_wave_p, SCM_FNC g_set_enved_wave_p, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_dBing, SCM_FNC g_enved_dBing, H_enved_dBing,
-			       "set-" S_enved_dBing, SCM_FNC g_set_enved_dBing, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_in_dB, SCM_FNC g_enved_in_dB, H_enved_in_dB,
+			       "set-" S_enved_in_dB, SCM_FNC g_set_enved_in_dB, local_doc, 0, 0, 0, 1);
 
   define_procedure_with_setter(S_eps_file, SCM_FNC g_eps_file, H_eps_file,
 			       "set-" S_eps_file, SCM_FNC g_set_eps_file, local_doc, 0, 0, 0, 1);
@@ -3127,8 +3108,8 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_audio_state_file, SCM_FNC g_audio_state_file, H_audio_state_file,
 			       "set-" S_audio_state_file, SCM_FNC g_set_audio_state_file, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_filter_env_order, SCM_FNC g_filter_env_order, H_filter_env_order,
-			       "set-" S_filter_env_order, SCM_FNC g_set_filter_env_order, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_filter_order, SCM_FNC g_enved_filter_order, H_enved_filter_order,
+			       "set-" S_enved_filter_order, SCM_FNC g_set_enved_filter_order, local_doc, 0, 0, 0, 1);
 
   define_procedure_with_setter(S_movies, SCM_FNC g_movies, H_movies,
 			       "set-" S_movies, SCM_FNC g_set_movies, local_doc, 0, 0, 0, 1);
@@ -3142,8 +3123,8 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_previous_files_sort, SCM_FNC g_previous_files_sort, H_previous_files_sort,
 			       "set-" S_previous_files_sort, SCM_FNC g_set_previous_files_sort, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_save_state_on_exit, SCM_FNC g_save_state_on_exit, H_save_state_on_exit,
-			       "set-" S_save_state_on_exit, SCM_FNC g_set_save_state_on_exit, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_show_listener, SCM_FNC g_show_listener, H_show_listener,
+			       "set-" S_show_listener, SCM_FNC g_set_show_listener, local_doc, 0, 0, 1, 0);
 
   define_procedure_with_setter(S_show_indices, SCM_FNC g_show_indices, H_show_indices,
 			       "set-" S_show_indices, SCM_FNC g_set_show_indices, local_doc, 0, 0, 0, 1);
@@ -3327,9 +3308,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(S_dismiss_all_dialogs, g_dismiss_all_dialogs, 0, 0, 0, H_dismiss_all_dialogs);
   DEFINE_PROC(S_c_g,                 g_abortq, 0, 0, 0,              H_abortQ);
   DEFINE_PROC(S_snd_version,         g_snd_version, 0, 0, 0,         H_snd_version);
-  DEFINE_PROC(S_show_listener,       g_show_listener, 0, 0, 0,       H_show_listener);
-  DEFINE_PROC(S_hide_listener,       g_hide_listener, 0, 0, 0,       H_hide_listener);
-  DEFINE_PROC(S_activate_listener,   g_activate_listener, 0, 0, 0,   H_activate_listener);
   DEFINE_PROC(S_equalize_panes,      g_equalize_panes, 0, 1, 0,      H_equalize_panes);
   DEFINE_PROC(S_open_sound_file,     g_open_sound_file, 0, 4, 0,     H_open_sound_file);
   DEFINE_PROC(S_close_sound_file,    g_close_sound_file, 2, 0, 0,    H_close_sound_file);
@@ -3426,18 +3404,63 @@ If more than one hook function, results are concatenated. If none, the current c
   EVAL_STRING("(read-set! keywords 'prefix)");
   EVAL_STRING("(print-enable 'source)");  /* added 13-Feb-01 */
 
+  /* not sure about these two */
+  EVAL_STRING("(define scale-sound-to scale-to)");
+  EVAL_STRING("(define scale-sound-by scale-by)");
+
+#if (!DEBUGGING)
   /* backwards compatibility (22-May-01) */
-  EVAL_STRING("(define smooth smooth-sound)"); 
-  EVAL_STRING("(define cut delete-selection)");
-  EVAL_STRING("(define call-apply apply-controls)");
-  EVAL_STRING("(define (open-alternate-sound file) (close-sound) (open-sound file))");
-  EVAL_STRING("(define normalize-view equalize-panes)");
-  EVAL_STRING("(define save-control-panel save-controls)");
-  EVAL_STRING("(define restore-control-panel restore-controls)");
-  EVAL_STRING("(define reset-control-panel reset-controls)");
-  EVAL_STRING("(define mark->sound mark-home)");
-  EVAL_STRING("(define (mix-sound-index m) (car (mix-home m)))");
-  EVAL_STRING("(define (mix-sound-channel m) (cadr (mix-home m)))");
+  EVAL_STRING("(begin\
+               (define smooth smooth-sound)\
+               (define cut delete-selection)\
+               (define call-apply apply-controls)\
+               (define (open-alternate-sound file) (close-sound) (open-sound file))\
+               (define normalize-view equalize-panes)\
+               (define save-control-panel save-controls)\
+               (define restore-control-panel restore-controls)\
+               (define reset-control-panel reset-controls)\
+               (define mark->sound mark-home)\
+               (define (mix-sound-index m) (car (mix-home m)))\
+               (define (mix-sound-channel m) (cadr (mix-home m)))\
+               (define amp amp-control)\
+               (define contrast contrast-control)\
+               (define contrast-amp contrast-control-amp)\
+               (define contrast-func contrast-control-procedure)\
+               (define contrasting contrast-control?)\
+               (define expand expand-control)\
+               (define expand-hop expand-control-hop)\
+               (define expand-length expand-control-length)\
+               (define expand-ramp expand-control-ramp)\
+               (define expanding expand-control?)\
+               (define filtering filter-control?)\
+               (define filter-order filter-control-order)\
+               (define filter-env filter-control-env)\
+               (define filter-dBing filter-control-in-dB)\
+               (define reverb-decay reverb-control-decay)\
+               (define reverb-feedback reverb-control-feedback)\
+               (define reverb-funcs reverb-control-procedures)\
+               (define reverb-length reverb-control-length)\
+               (define reverb-lowpass reverb-control-lowpass)\
+               (define reverb-scale reverb-control-scale)\
+               (define reverbing reverb-control?)\
+               (define speed speed-control)\
+               (define speed-as-float speed-control-as-float)\
+               (define speed-as-ratio speed-control-as-ratio)\
+               (define speed-as-semitone speed-control-as-semitone)\
+               (define speed-style speed-control-style)\
+               (define speed-tones speed-control-tones)\
+               (define filter-env-order enved-filter-order)\
+               (define enved-dBing enved-in-dB)\
+               (define enved-exping enved-exp?)\
+               (define enved-waving enved-wave?)\
+               (define enved-clipping enved-clip?)\
+               (define amplitude-env enved-amplitude)\
+               (define srate-env enved-srate)\
+               (define spectrum-env enved-spectrum)\
+               (define (hide-listener) (set! (show-listener) #f))\
+               (define activate-listener show-listener)\
+               )");
+#endif
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   EVAL_STRING("(define snd-last-file-loaded #f)");

@@ -1025,43 +1025,30 @@ void color_listener_text(Pixel pix)
     XtVaSetValues(listener_text, XmNforeground, pix, NULL);
 }
 
-void handle_listener(snd_state *ss, int new_state)
+void handle_listener(snd_state *ss, int open)
 {
-  if (!listener_text)
+  if (open)
     {
-      /* fire up listener at bottom of overall snd window */
-      if (new_state == LISTENER_OPEN) 
-	{
-	  sndCreateCommandWidget(ss, 100);
-	  set_view_listener_label(STR_Hide_listener);
-	  goto_window(listener_text);
-	}
-      else sndCreateCommandWidget(ss, 1);
-      ss->listening = new_state;
-    }
-  else
-    {
-      if (ss->listening == LISTENER_OPEN)
-	{
-	  /* close listener window but it remains active */
-	  ss->listening = LISTENER_LISTENING;
-	  set_view_listener_label(STR_Show_listener);
-	  XtUnmanageChild(listener_pane);
-	  XtVaSetValues(listener_pane, XmNpaneMaximum, 1, XmNpaneMinimum, 1, NULL);
-	  XtManageChild(listener_pane);
-	  XtVaSetValues(listener_pane, XmNpaneMaximum, LOTSA_PIXELS, XmNpaneMinimum, 1, NULL);
-	}
+      if (!listener_text)
+	sndCreateCommandWidget(ss, 100);
       else
 	{
-	  /* reopen listener pane */
-	  ss->listening = LISTENER_OPEN;
-	  set_view_listener_label(STR_Hide_listener);
 	  XtUnmanageChild(listener_pane);
 	  XtVaSetValues(listener_pane, XmNpaneMinimum, 100, NULL);
 	  XtManageChild(listener_pane);
 	  XtVaSetValues(listener_pane, XmNpaneMinimum, 1, NULL);
 	}
+      set_view_listener_label(STR_Hide_listener);
     }
+  else
+    {
+      set_view_listener_label(STR_Show_listener);
+      XtUnmanageChild(listener_pane);
+      XtVaSetValues(listener_pane, XmNpaneMaximum, 1, XmNpaneMinimum, 1, NULL);
+      XtManageChild(listener_pane);
+      XtVaSetValues(listener_pane, XmNpaneMaximum, LOTSA_PIXELS, XmNpaneMinimum, 1, NULL);
+    }
+  ss->listening = open;
 }
 
 int listener_height(void)

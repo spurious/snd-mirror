@@ -96,7 +96,7 @@ void alert_enved_amp_env(snd_info *sp)
 {
   snd_state *ss;
   ss = sp->state;
-  if ((enved_dialog) && (active_channel) && (enved_waving(ss)))
+  if ((enved_dialog) && (active_channel) && (enved_wave_p(ss)))
     {
       if (active_channel->sound == sp) 
 	env_redisplay(sp->state);
@@ -156,7 +156,7 @@ static void apply_enved(snd_state *ss)
 	  check_for_event(ss);
 	  switch (enved_target(ss))
 	    {
-	    case AMPLITUDE_ENV:
+	    case ENVED_AMPLITUDE:
 	      if (apply_to_mix)
 		{
 		  set_mix_amp_env(mix_id, NO_SELECTION, active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
@@ -168,14 +168,14 @@ static void apply_enved(snd_state *ss)
 			     "Enved: amp", NULL,
 			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION)); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
-	      if (enved_waving(ss)) env_redisplay(ss);
+	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
-	    case SPECTRUM_ENV: 
-	      apply_filter(active_channel, filter_env_order(ss), active_env, 
+	    case ENVED_SPECTRUM: 
+	      apply_filter(active_channel, enved_filter_order(ss), active_env, 
 			   FROM_ENVED, "Enved: flt", apply_to_selection, NULL, NULL,
 			   TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	      break;
-	    case SRATE_ENV:
+	    case ENVED_SRATE:
 	      max_env = copy_env(active_env);
 	      for (i = 0, j = 1; i < max_env->pts; i++, j += 2)
 		if (max_env->data[j] < .01) max_env->data[j] = .01;
@@ -185,7 +185,7 @@ static void apply_enved(snd_state *ss)
 			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	      within_selection_src = 0;
 	      max_env = free_env(max_env);
-	      if (enved_waving(ss)) env_redisplay(ss);
+	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
 	    }
 	  set_sensitive(applyB, TRUE);
@@ -208,10 +208,10 @@ void env_redisplay(snd_state *ss)
 	  name = gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = "noname";
 	  display_env(ss, active_env, name, gc, 0, 0, env_window_width, env_window_height, 1);
-	  if (enved_waving(ss))
+	  if (enved_wave_p(ss))
 	    {
-	      if ((enved_target(ss) == SPECTRUM_ENV) && (active_env))
-		display_frequency_response(ss, active_env, axis_cp->axis, gray_ap->ax, filter_env_order(ss), enved_dBing(ss));
+	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env))
+		display_frequency_response(ss, active_env, axis_cp->axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
 	      else enved_show_background_waveform(ss, axis_cp, gray_ap, apply_to_mix, apply_to_selection);
 	    }
 	}
@@ -220,7 +220,7 @@ void env_redisplay(snd_state *ss)
 
 static void enved_filter_order_callback(GtkWidget *w, gpointer data)
 {
-  set_filter_env_order((snd_state *)data, gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(orderL)));
+  set_enved_filter_order((snd_state *)data, gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(orderL)));
 }
 
 static void text_field_activated(GtkWidget *w, gpointer context)
@@ -297,8 +297,8 @@ static void reflect_segment_state (snd_state *ss)
 {
   if (enved_dialog)
     {
-      set_backgrounds(expB, (enved_exping(ss)) ? (ss->sgx)->yellow : (ss->sgx)->highlight_color);
-      set_backgrounds(linB, (enved_exping(ss)) ? (ss->sgx)->highlight_color : (ss->sgx)->yellow);
+      set_backgrounds(expB, (enved_exp_p(ss)) ? (ss->sgx)->yellow : (ss->sgx)->highlight_color);
+      set_backgrounds(linB, (enved_exp_p(ss)) ? (ss->sgx)->highlight_color : (ss->sgx)->yellow);
       if ((active_env) && (!(showing_all_envs))) env_redisplay(ss);
     }
 }
@@ -320,7 +320,7 @@ static void select_or_edit_env(snd_state *ss, int pos)
       set_sensitive(undoB, FALSE);
       set_sensitive(revertB, FALSE);
       set_sensitive(saveB, FALSE);
-      set_enved_exping(ss, (active_env->base != 1.0));
+      set_enved_exp_p(ss, (active_env->base != 1.0));
       set_enved_base(ss, active_env->base);
       env_redisplay(ss);
     }
@@ -342,7 +342,7 @@ static char brkpt_buf[LABEL_BUFFER_SIZE];
 
 void enved_display_point_label(snd_state *ss, Float x, Float y)
 {
-  if ((enved_dBing(ss)) && (ss->min_dB < -60))
+  if ((enved_in_dB(ss)) && (ss->min_dB < -60))
     mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
   else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   gtk_label_set_text(GTK_LABEL(brktxtL), brkpt_buf);
@@ -400,12 +400,12 @@ static void drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data
       if (env_pos == 0) x = active_env->data[0];
       if (env_pos == (active_env->pts - 1)) x = active_env->data[(active_env->pts - 1) * 2];
       y = ungrf_y(ap, evy);
-      if ((enved_clipping(ss)) || (enved_dBing(ss)))
+      if ((enved_clip_p(ss)) || (enved_in_dB(ss)))
 	{
 	  if (y < ap->y0) y = ap->y0;
 	  if (y > ap->y1) y = ap->y1;
 	}
-      if (enved_dBing(ss)) y = un_dB(ss, y);
+      if (enved_in_dB(ss)) y = un_dB(ss, y);
       if (check_enved_hook(active_env, env_pos, x, y, ENVED_MOVE_POINT) == 0)
 	move_point(active_env, env_pos, x, y);
       enved_display_point_label(ss, x, y);
@@ -494,7 +494,7 @@ static void selection_button_pressed(GtkWidget *w, gpointer context)
       apply_to_mix = 0;
     }
   set_backgrounds(selectionB, (apply_to_selection) ? (ss->sgx)->yellow : (ss->sgx)->highlight_color);
-  if ((enved_target(ss) != SPECTRUM_ENV) && (enved_waving(ss)) && (!showing_all_envs)) env_redisplay(ss);
+  if ((enved_target(ss) != ENVED_SPECTRUM) && (enved_wave_p(ss)) && (!showing_all_envs)) env_redisplay(ss);
 }
 
 static void mix_button_pressed(GtkWidget *w, gpointer data)
@@ -532,7 +532,7 @@ static void mix_button_pressed(GtkWidget *w, gpointer data)
 	}
     }
   set_backgrounds(mixB, (apply_to_mix) ? (ss->sgx)->yellow : (ss->sgx)->highlight_color);
-  if ((enved_target(ss) == AMPLITUDE_ENV) && (enved_waving(ss)) && (!showing_all_envs)) env_redisplay(ss);
+  if ((enved_target(ss) == ENVED_AMPLITUDE) && (enved_wave_p(ss)) && (!showing_all_envs)) env_redisplay(ss);
 }
 
 static void delete_button_pressed(GtkWidget *w, gpointer context)
@@ -578,30 +578,30 @@ static void redo_button_pressed(GtkWidget *w, gpointer context)
 static void reflect_apply_state (snd_state *ss)
 {
   gtk_label_set_text(GTK_LABEL(nameL), env_names[enved_target(ss)]);
-  set_backgrounds(ampB, (enved_target(ss) == AMPLITUDE_ENV) ? (ss->sgx)->green : (ss->sgx)->highlight_color);
-  set_backgrounds(fltB, (enved_target(ss) == SPECTRUM_ENV) ? (ss->sgx)->green : (ss->sgx)->highlight_color);
-  set_backgrounds(srcB, (enved_target(ss) == SRATE_ENV) ? (ss->sgx)->green : (ss->sgx)->highlight_color);
-  if ((!showing_all_envs) && (enved_waving(ss))) env_redisplay(ss);
+  set_backgrounds(ampB, (enved_target(ss) == ENVED_AMPLITUDE) ? (ss->sgx)->green : (ss->sgx)->highlight_color);
+  set_backgrounds(fltB, (enved_target(ss) == ENVED_SPECTRUM) ? (ss->sgx)->green : (ss->sgx)->highlight_color);
+  set_backgrounds(srcB, (enved_target(ss) == ENVED_SRATE) ? (ss->sgx)->green : (ss->sgx)->highlight_color);
+  if ((!showing_all_envs) && (enved_wave_p(ss))) env_redisplay(ss);
 }
 
 static void flt_button_pressed(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
-  in_set_enved_target(ss, SPECTRUM_ENV);
+  in_set_enved_target(ss, ENVED_SPECTRUM);
   reflect_apply_state(ss);
 }
 
 static void amp_button_pressed(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
-  in_set_enved_target(ss, AMPLITUDE_ENV);
+  in_set_enved_target(ss, ENVED_AMPLITUDE);
   reflect_apply_state(ss);
 }
 
 static void src_button_pressed(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
-  in_set_enved_target(ss, SRATE_ENV);
+  in_set_enved_target(ss, ENVED_SRATE);
   reflect_apply_state(ss);
 }
 
@@ -625,30 +625,30 @@ static void env_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventBut
 static void Graph_Button_Callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context; 
-  in_set_enved_waving(ss, GTK_TOGGLE_BUTTON(w)->active);
+  in_set_enved_wave_p(ss, GTK_TOGGLE_BUTTON(w)->active);
   env_redisplay(ss);
 }
 
 static void dB_Button_Callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context; 
-  in_set_enved_dBing(ss, GTK_TOGGLE_BUTTON(w)->active);
+  in_set_enved_in_dB(ss, GTK_TOGGLE_BUTTON(w)->active);
   env_redisplay(ss);
 }
 
 static void Clip_Button_Callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context; 
-  in_set_enved_clipping(ss, GTK_TOGGLE_BUTTON(w)->active);
+  in_set_enved_clip_p(ss, GTK_TOGGLE_BUTTON(w)->active);
 }
 
 static void exp_button_pressed(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context; 
-  in_set_enved_exping(ss, (!(enved_exping(ss))));
+  in_set_enved_exp_p(ss, (!(enved_exp_p(ss))));
   if ((active_env) && (!(showing_all_envs)))
     {
-      if (enved_exping(ss))
+      if (enved_exp_p(ss))
 	active_env->base = enved_base(ss);
       else active_env->base = 1.0;
       set_sensitive(saveB, TRUE);
@@ -659,10 +659,10 @@ static void exp_button_pressed(GtkWidget *w, gpointer context)
 static void lin_button_pressed(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context; 
-  in_set_enved_exping(ss, (!(enved_exping(ss))));
+  in_set_enved_exp_p(ss, (!(enved_exp_p(ss))));
   if ((active_env) && (!(showing_all_envs)))
     {
-      if (enved_exping(ss))
+      if (enved_exp_p(ss))
 	active_env->base = enved_base(ss);
       else active_env->base = 1.0;
       set_sensitive(saveB, TRUE);
@@ -694,7 +694,7 @@ static void make_base_label(snd_state *ss, Float bval)
   if ((active_env) && (!(showing_all_envs))) 
     {
       active_env->base = enved_base(ss);
-      if (enved_exping(ss)) env_redisplay(ss);
+      if (enved_exp_p(ss)) env_redisplay(ss);
     }
 }
 
@@ -716,7 +716,7 @@ static void base_changed(snd_state *ss, Float val)
 	}
     }
   make_base_label(ss, bval);
-  if ((active_env) && (enved_exping(ss))) set_sensitive(saveB, TRUE); /* what about undo/redo here? */
+  if ((active_env) && (enved_exp_p(ss))) set_sensitive(saveB, TRUE); /* what about undo/redo here? */
 }
 
 static void reflect_changed_base(snd_state *ss, Float val)
@@ -1045,9 +1045,9 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       set_sensitive(saveB, FALSE);
       if (!(selection_is_active())) set_sensitive(selectionB, FALSE);
 
-      set_toggle_button(clipB, enved_clipping(ss), FALSE, (void *)ss);
-      set_toggle_button(graphB, enved_waving(ss), FALSE, (void *)ss);
-      set_toggle_button(dBB, enved_dBing(ss), FALSE, (void *)ss);
+      set_toggle_button(clipB, enved_clip_p(ss), FALSE, (void *)ss);
+      set_toggle_button(graphB, enved_wave_p(ss), FALSE, (void *)ss);
+      set_toggle_button(dBB, enved_in_dB(ss), FALSE, (void *)ss);
 
       reflect_apply_state(ss);
       reflect_segment_state(ss);
@@ -1058,15 +1058,15 @@ GtkWidget *create_envelope_editor (snd_state *ss)
   return(enved_dialog);
 }
 
-void set_enved_clipping(snd_state *ss, int val) 
+void set_enved_clip_p(snd_state *ss, int val) 
 {
-  in_set_enved_clipping(ss, val); 
+  in_set_enved_clip_p(ss, val); 
   if (enved_dialog) set_toggle_button(clipB, val, FALSE, (void *)ss);
 }
 
-void set_enved_exping(snd_state *ss, int val) 
+void set_enved_exp_p(snd_state *ss, int val) 
 {
-  in_set_enved_exping(ss, val); 
+  in_set_enved_exp_p(ss, val); 
   /* if (enved_dialog) set_toggle_button(expB, val, FALSE, (void *)ss);  */ /* not a toggle button */
   reflect_segment_state(ss);
 }
@@ -1077,15 +1077,15 @@ void set_enved_target(snd_state *ss, int val)
   if (enved_dialog) reflect_apply_state(ss);
 }
 
-void set_enved_waving(snd_state *ss, int val) 
+void set_enved_wave_p(snd_state *ss, int val) 
 {
-  in_set_enved_waving(ss, val); 
+  in_set_enved_wave_p(ss, val); 
   if (enved_dialog) set_toggle_button(graphB, val, FALSE, (void *)ss);
 }
 
-void set_enved_dBing(snd_state *ss, int val) 
+void set_enved_in_dB(snd_state *ss, int val) 
 {
-  in_set_enved_dBing(ss, val); 
+  in_set_enved_in_dB(ss, val); 
   if (enved_dialog) set_toggle_button(dBB, val, FALSE, (void *)ss);
 }
 
@@ -1100,20 +1100,20 @@ int enved_dialog_is_active(void)
   return((enved_dialog) && (GTK_WIDGET_VISIBLE(enved_dialog)));
 }
 
-void set_filter_env_order(snd_state *ss, int order)
+void set_enved_filter_order(snd_state *ss, int order)
 {
   char str[LABEL_BUFFER_SIZE];
   if ((order > 0) && (order < 2000))
     {
       if (order & 1) 
-	in_set_filter_env_order(ss, order+1);
-      else in_set_filter_env_order(ss, order);
+	in_set_enved_filter_order(ss, order+1);
+      else in_set_enved_filter_order(ss, order);
       if (enved_dialog)
 	{
-	  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", filter_env_order(ss));
+	  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", enved_filter_order(ss));
 	  gtk_entry_set_text(GTK_ENTRY(orderL), str);
-	  if ((enved_target(ss) == SPECTRUM_ENV) && 
-	      (enved_waving(ss)) && 
+	  if ((enved_target(ss) == ENVED_SPECTRUM) && 
+	      (enved_wave_p(ss)) && 
 	      (!showing_all_envs)) 
 	    env_redisplay(ss);
 	}
@@ -1132,8 +1132,8 @@ void enved_reflect_selection(int on)
 	  apply_to_selection = 0;
 	  set_background(selectionB, (ss->sgx)->highlight_color);
 	}
-      if ((enved_target(ss) != SPECTRUM_ENV) && 
-	  (enved_waving(ss)) && 
+      if ((enved_target(ss) != ENVED_SPECTRUM) && 
+	  (enved_wave_p(ss)) && 
 	  (!showing_all_envs)) 
 	env_redisplay(ss);
     }
@@ -1147,7 +1147,7 @@ void color_enved_waveform(GdkColor *pix)
   if (enved_dialog)
     {
       gdk_gc_set_foreground(ggc, pix);
-      if ((enved_waving(ss)) && (enved_dialog)) env_redisplay(ss);
+      if ((enved_wave_p(ss)) && (enved_dialog)) env_redisplay(ss);
     }
 }
 

@@ -35,7 +35,7 @@ int snd_color_p(SCM obj)
 
 static SCM g_color_p(SCM obj) 
 {
-  #define H_color_p "(" S_colorQ " obj) -> #t if obj is a col" STR_OR " object"
+  #define H_color_p "(" S_color_p " obj) -> #t if obj is a col" STR_OR " object"
   return(TO_SCM_BOOLEAN(COLOR_P(obj)));
 }
 
@@ -259,7 +259,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 
   DEFINE_PROC(S_in,            g_in, 2, 0, 0,             H_in);
   DEFINE_PROC(S_make_color,    g_make_snd_color, 3, 0, 0, H_make_color);
-  DEFINE_PROC(S_colorQ,        g_color_p, 1, 0, 0,        H_color_p);
+  DEFINE_PROC(S_color_p,       g_color_p, 1, 0, 0,        H_color_p);
   DEFINE_PROC(S_color2list,    g_color2list, 1, 0, 0,     H_color2list);
   DEFINE_PROC(S_load_colormap, g_load_colormap, 1, 0, 0,  H_load_colormap);
 

@@ -2996,7 +2996,7 @@ static int set_mix_speed(int mix_id, Float val, int from_gui, int remix)
 	{
 	  ss = md->ss;
 	  cs = md->current_cs;
-	  cs->speed = srate_changed(val, srcbuf, speed_style(ss), speed_tones(ss)); 
+	  cs->speed = srate_changed(val, srcbuf, speed_control_style(ss), speed_control_tones(ss)); 
 	  cs->len = (int)(ceil(md->in_samps / cs->speed));
 	  if (!from_gui)
 	    {
@@ -3250,10 +3250,10 @@ static SCM g_mix_chans(SCM n)
   return(TO_SCM_INT(cs->chans));
 }
 
-static SCM g_mixQ(SCM n) 
+static SCM g_mix_p(SCM n) 
 {
-  #define H_mixQ "(" S_mixQ " id) -> #t if mix is active and accessible"
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mixQ, "an integer");
+  #define H_mix_p "(" S_mix_p " id) -> #t if mix is active and accessible"
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_p, "an integer");
   return(TO_SCM_BOOLEAN(mix_ok(TO_C_INT_OR_ELSE(n, 0))));
 }
 
@@ -3776,7 +3776,7 @@ static int mf_p(SCM obj) {return(SMOB_TYPE_P(obj, mf_tag));}
 
 static SCM g_mf_p(SCM obj) 
 {
-  #define H_mf_p "(" S_mix_sample_readerQ " obj) -> #t if obj is a mix-sample-reader"
+  #define H_mf_p "(" S_mix_sample_reader_p " obj) -> #t if obj is a mix-sample-reader"
   return(TO_SCM_BOOLEAN(mf_p(obj)));
 }
 
@@ -3870,7 +3870,7 @@ static int tf_p(SCM obj) {return(SMOB_TYPE_P(obj, tf_tag));}
 
 static SCM g_tf_p(SCM obj) 
 {
-  #define H_tf_p "(" S_track_sample_readerQ " obj) -> #t if obj is a track-sample-reader"
+  #define H_tf_p "(" S_track_sample_reader_p " obj) -> #t if obj is a track-sample-reader"
   return(TO_SCM_BOOLEAN(tf_p(obj)));
 }
 
@@ -4124,7 +4124,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(S_make_mix_sample_reader, g_make_mix_sample_reader, 1, 0, 0, H_make_mix_sample_reader);
   DEFINE_PROC(S_next_mix_sample,        g_next_mix_sample, 1, 0, 0,        H_next_mix_sample);
   DEFINE_PROC(S_free_mix_sample_reader, g_free_mix_sample_reader, 1, 0, 0, H_free_mix_sample_reader);
-  DEFINE_PROC(S_mix_sample_readerQ,     g_mf_p, 1, 0, 0,                   H_mf_p);
+  DEFINE_PROC(S_mix_sample_reader_p,     g_mf_p, 1, 0, 0,                   H_mf_p);
 
 #if HAVE_GUILE
   tf_tag = scm_make_smob_type("tf", sizeof(track_fd));
@@ -4138,7 +4138,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(S_make_track_sample_reader, g_make_track_sample_reader, 1, 3, 0, H_make_track_sample_reader);
   DEFINE_PROC(S_next_track_sample,             g_next_track_sample, 1, 0, 0,                 H_next_track_sample);
   DEFINE_PROC(S_free_track_sample_reader,      g_free_track_sample_reader, 1, 0, 0,          H_free_track_sample_reader);
-  DEFINE_PROC(S_track_sample_readerQ,          g_tf_p, 1, 0, 0,                              H_tf_p);
+  DEFINE_PROC(S_track_sample_reader_p,         g_tf_p, 1, 0, 0,                              H_tf_p);
   DEFINE_PROC(S_play_mix,                      g_play_mix, 0, 1, 0,                          H_play_mix);
   DEFINE_PROC(S_play_track,                    g_play_track, 1, 2, 0,                        H_play_track);
 
@@ -4200,7 +4200,7 @@ void g_init_mix(SCM local_doc)
 
 
   DEFINE_PROC(S_mix_chans,    g_mix_chans, 0, 1, 0,    H_mix_chans);
-  DEFINE_PROC(S_mixQ,         g_mixQ, 0, 1, 0,         H_mixQ);
+  DEFINE_PROC(S_mix_p,        g_mix_p, 0, 1, 0,         H_mix_p);
   DEFINE_PROC(S_mix_home,     g_mix_home, 0, 1, 0,     H_mix_home);
   DEFINE_PROC(S_mixes,        g_mixes, 0, 2, 0,        H_mixes);
   DEFINE_PROC(S_mix_sound,    g_mix_sound, 2, 0, 0,    H_mix_sound);

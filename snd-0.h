@@ -121,7 +121,7 @@
 
 #define AMP_ENV_CUTOFF 100000
 
-enum {AMPLITUDE_ENV, SPECTRUM_ENV, SRATE_ENV};
+enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE};
 
 #define FILE_SAVE_AS 1
 #define EDIT_SAVE_AS 2
@@ -191,8 +191,8 @@ enum {WITHOUT_GRAPH, WITH_GRAPH, WITHOUT_INITIAL_GRAPH_HOOK};
 #define AT_CURRENT_EDIT_POSITION -1
 
 enum {X_IN_SECONDS, X_IN_SAMPLES, X_TO_ONE, X_IN_LENGTH};
-enum {SPEED_AS_FLOAT, SPEED_AS_RATIO, SPEED_AS_SEMITONE};
-#define MAX_SPEED_STYLE SPEED_AS_SEMITONE
+enum {SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE};
+#define MAX_SPEED_CONTROL_STYLE SPEED_CONTROL_AS_SEMITONE
 
 enum {CURSOR_IN_VIEW, CURSOR_ON_LEFT, CURSOR_ON_RIGHT, CURSOR_IN_MIDDLE,
       CURSOR_UPDATE_DISPLAY, CURSOR_NO_ACTION, KEYBOARD_NO_ACTION, NO_ACTION};
@@ -210,7 +210,6 @@ enum {FOURIER, WAVELET, HANKEL, WALSH, AUTOCORRELATION, CHEBYSHEV, CEPSTRUM, HAD
 #define NUM_WAVELETS 20
 
 enum {APPLY_TO_SOUND, APPLY_TO_CHANNEL, APPLY_TO_SELECTION};
-enum {LISTENER_CLOSED, LISTENER_OPEN, LISTENER_LISTENING};
 enum {FCP_X_ANGLE, FCP_X_SCALE, FCP_Y_ANGLE, FCP_Y_SCALE, FCP_Z_ANGLE, FCP_Z_SCALE, FCP_CUTOFF, FCP_START, FCP_BETA};
 
 #define AUDIO_STATE_FILE ".snd-mixer"
@@ -229,24 +228,26 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define DEFAULT_MIN_DB -60.0
 #define DEFAULT_HANKEL_JN 0.0
-#define DEFAULT_AMP 1.0
-#define DEFAULT_CONTRAST 0.0
-#define DEFAULT_CONTRAST_AMP 1.0
-#define DEFAULT_CONTRASTING 0
-#define DEFAULT_EXPAND 1.0
-#define DEFAULT_EXPANDING 0
-#define DEFAULT_EXPAND_HOP 0.05
-#define DEFAULT_EXPAND_LENGTH 0.15
-#define DEFAULT_EXPAND_RAMP 0.4
-#define DEFAULT_FILTERING 0
-#define DEFAULT_FILTER_ORDER 20
-#define DEFAULT_FILTER_DBING 0
-#define DEFAULT_REVERBING 0
-#define DEFAULT_REVERB_FEEDBACK 1.09
-#define DEFAULT_REVERB_LENGTH 1.0
-#define DEFAULT_REVERB_LOWPASS 0.7
-#define DEFAULT_REVERB_SCALE 0.0
-#define DEFAULT_SPEED 1.0
+
+#define DEFAULT_AMP_CONTROL 1.0
+#define DEFAULT_CONTRAST_CONTROL 0.0
+#define DEFAULT_CONTRAST_CONTROL_AMP 1.0
+#define DEFAULT_CONTRAST_CONTROL_P 0
+#define DEFAULT_EXPAND_CONTROL 1.0
+#define DEFAULT_EXPAND_CONTROL_P 0
+#define DEFAULT_EXPAND_CONTROL_HOP 0.05
+#define DEFAULT_EXPAND_CONTROL_LENGTH 0.15
+#define DEFAULT_EXPAND_CONTROL_RAMP 0.4
+#define DEFAULT_FILTER_CONTROL_P 0
+#define DEFAULT_FILTER_CONTROL_ORDER 20
+#define DEFAULT_FILTER_CONTROL_IN_DB 0
+#define DEFAULT_REVERB_CONTROL_P 0
+#define DEFAULT_REVERB_CONTROL_FEEDBACK 1.09
+#define DEFAULT_REVERB_CONTROL_LENGTH 1.0
+#define DEFAULT_REVERB_CONTROL_LOWPASS 0.7
+#define DEFAULT_REVERB_CONTROL_SCALE 0.0
+#define DEFAULT_SPEED_CONTROL 1.0
+
 #define DEFAULT_SYNC 0
 #define DEFAULT_CURSOR_SIZE 15
 
@@ -260,9 +261,9 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define DEFAULT_INITIAL_Y0 -1.0
 #define DEFAULT_INITIAL_Y1 1.0
 
-#define reverb_decay(ss) ss->Reverb_Decay
-#define in_set_reverb_decay(ss, a) ss->Reverb_Decay = a
-#define DEFAULT_REVERB_DECAY 1.0
+#define reverb_control_decay(ss) ss->Reverb_Control_Decay
+#define in_set_reverb_control_decay(ss, a) ss->Reverb_Control_Decay = a
+#define DEFAULT_REVERB_CONTROL_DECAY 1.0
 
 #define default_output_type(ss) ss->Default_Output_Type
 #define set_default_output_type(ss, a) ss->Default_Output_Type = a
@@ -401,13 +402,13 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define in_set_color_map(ss, a) ss->Color_Map = a
 #define DEFAULT_COLOR_MAP -1
 
-#define speed_tones(ss) ss->Speed_Tones
-#define in_set_speed_tones(ss, a) ss->Speed_Tones = a
-#define DEFAULT_SPEED_TONES 12
+#define speed_control_tones(ss) ss->Speed_Control_Tones
+#define in_set_speed_control_tones(ss, a) ss->Speed_Control_Tones = a
+#define DEFAULT_SPEED_CONTROL_TONES 12
 
-#define speed_style(ss) ss->Speed_Style
-#define in_set_speed_style(ss, a) ss->Speed_Style = a
-#define DEFAULT_SPEED_STYLE SPEED_AS_FLOAT
+#define speed_control_style(ss) ss->Speed_Control_Style
+#define in_set_speed_control_style(ss, a) ss->Speed_Control_Style = a
+#define DEFAULT_SPEED_CONTROL_STYLE SPEED_CONTROL_AS_FLOAT
 
 #define graph_style(ss) ss->Graph_Style
 #define in_set_graph_style(ss, a) ss->Graph_Style = a
@@ -429,17 +430,9 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define set_selection_creates_region(ss, a) ss->Selection_Creates_Region = a
 #define DEFAULT_SELECTION_CREATES_REGION 1
 
-#define filter_env_order(ss) ss->Filter_Env_Order
-#define in_set_filter_env_order(ss, a) ss->Filter_Env_Order = a
-#define DEFAULT_FILTER_ENV_ORDER 40
-
 #define filter_env_in_hz(ss) ss->Filter_Env_In_Hz
 #define set_filter_env_in_hz(ss, a) ss->Filter_Env_In_Hz = a
 #define DEFAULT_FILTER_ENV_IN_HZ FALSE
-
-#define save_state_on_exit(ss) ss->Save_State_On_Exit
-#define set_save_state_on_exit(ss, a) ss->Save_State_On_Exit = a
-#define DEFAULT_SAVE_STATE_ON_EXIT 0
 
 #define zoom_focus_style(ss) ss->Zoom_Focus_Style
 #define set_zoom_focus_style(ss, a) ss->Zoom_Focus_Style = a
@@ -609,21 +602,25 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define set_previous_files_sort(ss, a) ss->Previous_Files_Sort = a
 #define DEFAULT_PREVIOUS_FILES_SORT 0
 
-#define enved_clipping(ss) ss->Enved_Clipping
-#define in_set_enved_clipping(ss, a) ss->Enved_Clipping = a
-#define DEFAULT_ENVED_CLIPPING 0
+#define enved_clip_p(ss) ss->Enved_Clip_p
+#define in_set_enved_clip_p(ss, a) ss->Enved_Clip_p = a
+#define DEFAULT_ENVED_CLIP_P 0
 
-#define enved_waving(ss) ss->Enved_Waving
-#define in_set_enved_waving(ss, a) ss->Enved_Waving = a
-#define DEFAULT_ENVED_WAVING 0
+#define enved_wave_p(ss) ss->Enved_Wave_p
+#define in_set_enved_wave_p(ss, a) ss->Enved_Wave_p = a
+#define DEFAULT_ENVED_WAVE_P 0
 
-#define enved_dBing(ss) ss->Enved_dBing
-#define in_set_enved_dBing(ss, a) ss->Enved_dBing = a
-#define DEFAULT_ENVED_DBING 0
+#define enved_filter_order(ss) ss->Enved_Filter_Order
+#define in_set_enved_filter_order(ss, a) ss->Enved_Filter_Order = a
+#define DEFAULT_ENVED_FILTER_ORDER 40
+
+#define enved_in_dB(ss) ss->Enved_in_dB
+#define in_set_enved_in_dB(ss, a) ss->Enved_in_dB = a
+#define DEFAULT_ENVED_IN_DB 0
 
 #define enved_target(ss) ss->Enved_Target
 #define in_set_enved_target(ss, a) ss->Enved_Target = a
-#define DEFAULT_ENVED_TARGET AMPLITUDE_ENV
+#define DEFAULT_ENVED_TARGET ENVED_AMPLITUDE
 
 #define enved_base(ss) ss->Enved_Base
 #define in_set_enved_base(ss, a) ss->Enved_Base = a
@@ -633,9 +630,9 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define set_enved_power(ss, a) ss->Enved_Power = a
 #define DEFAULT_ENVED_POWER 3.0
 
-#define enved_exping(ss) ss->Enved_Exping
-#define in_set_enved_exping(ss, a) ss->Enved_Exping = a
-#define DEFAULT_ENVED_EXPING 0
+#define enved_exp_p(ss) ss->Enved_Exp_p
+#define in_set_enved_exp_p(ss, a) ss->Enved_Exp_p = a
+#define DEFAULT_ENVED_EXP_P 0
 
 #define audio_output_device(ss) ss->Audio_Output_Device
 #define set_audio_output_device(ss, a) ss->Audio_Output_Device = a

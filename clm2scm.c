@@ -15,6 +15,7 @@
 /* it's important to check for mus_scm_p before de-referencing a gen arg */
 
 /* TODO:   add vct-wrappers for other internal arrays?
+ * TODO:   add checks for wrong size whatever_to_float cases
  */
 
 #if defined(HAVE_CONFIG_H)

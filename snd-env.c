@@ -249,14 +249,14 @@ static void sp_make_axis_cp(snd_info *sp, char *name, int ex0, int ey0, int widt
 
 static short sp_grf_y_dB(snd_info *sp, Float val, axis_info *ap)
 {
-  if (sp->filter_dBing)
+  if (sp->filter_control_in_dB)
     return(grf_y(dB(sp->state, val), ap));
   else return(grf_y(val, ap));
 }
 
 static double sp_ungrf_y_dB(snd_info *sp, axis_info *ap, int y)
 {
-  if (sp->filter_dBing)
+  if (sp->filter_control_in_dB)
     return(un_dB(sp->state, ungrf_y(ap, y)));
   else return(ungrf_y(ap, y));
 }
@@ -273,7 +273,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
   int ix0, ix1, iy0, iy1, size, lx0, lx1, ly0, ly1;
   Float curx, xincr;
   int dur;
-  e = sp->filter_env;
+  e = sp->filter_control_env;
   if (e == NULL) return;
   spf = (spflt *)((sp->sgx)->flt);
   if (spf == NULL) return;
@@ -290,7 +290,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
   if (ey0 > 0.0) ey0 = 0.0;
   if ((ey0 == ey1) && (ey1 == 0.0)) ey1 = 1.0; /* fixup degenerate case */
   if (ey1 < 1.0) ey1 = 1.0;
-  if (sp->filter_dBing) 
+  if (sp->filter_control_in_dB) 
     {
       ey0 = ss->min_dB; 
       ey1 = 0.0;
@@ -304,7 +304,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
   else size = (int)(ss->enved_point_size * 0.4);
   sp_set_current_point(spf, 0, ix1, iy1);
   draw_arc(ax, ix1, iy1, size);
-  if (sp->filter_dBing)
+  if (sp->filter_control_in_dB)
     {
       for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 	{
@@ -355,7 +355,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
 	}
     }
   if (spf->edited)
-    display_frequency_response(ss, e, ap, (spf->gray_ap)->ax, sp->filter_order, sp->filter_dBing);
+    display_frequency_response(ss, e, ap, (spf->gray_ap)->ax, sp->filter_control_order, sp->filter_control_in_dB);
 }
 
 void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYPE motion_time)
@@ -365,7 +365,7 @@ void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYP
   Float x0, x1, x, y;
   env *e;
   spf = (spflt *)((sp->sgx)->flt);
-  e = sp->filter_env;
+  e = sp->filter_control_env;
   if ((motion_time - spf->down_time) < 100) return;
   spf->env_dragged = 1;
   spf->click_to_delete = 0;
@@ -376,7 +376,7 @@ void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYP
   else x0 = 0.0;
   if (spf->env_pos < e->pts) 
     x1 = e->data[spf->env_pos * 2 + 2]; 
-  else x1 = sp->filter_env_xmax; /* x1 = 1.0; */
+  else x1 = sp->filter_control_env_xmax; /* x1 = 1.0; */
   if (x < x0) x = x0;
   if (x > x1) x = x1;
   if (spf->env_pos == 0) x = e->data[0];
@@ -384,11 +384,11 @@ void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYP
   y = ungrf_y(ap, evy);
   if (y < ap->y0) y = ap->y0;
   if (y > ap->y1) y = ap->y1;
-  if (sp->filter_dBing) y = un_dB(ss, y);
+  if (sp->filter_control_in_dB) y = un_dB(ss, y);
   move_point(e, spf->env_pos, x, y);
   spf->edited = 1;
   sp_display_env(sp);
-  sp->filter_changed = 1;
+  sp->filter_control_changed = 1;
 }
 
 void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
@@ -399,7 +399,7 @@ void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
   axis_info *ap;
   env *e;
   spf = (spflt *)((sp->sgx)->flt);
-  e = sp->filter_env;
+  e = sp->filter_control_env;
   ap = (spf->axis_cp)->axis;
   spf->down_time = time;
   spf->env_dragged = 0;
@@ -414,10 +414,10 @@ void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
 	  x = 0.0;
 	}
       else 
-	if (x > sp->filter_env_xmax) /* (x > 1.0) */
+	if (x > sp->filter_control_env_xmax) /* (x > 1.0) */
 	  {
 	    pos = e->pts - 1;
-	    x = sp->filter_env_xmax; /* x = 1.0; */
+	    x = sp->filter_control_env_xmax; /* x = 1.0; */
 	  }
     }
   spf->env_pos = pos;
@@ -440,11 +440,11 @@ void handle_filter_release(snd_info *sp)
   char *tmpstr = NULL;
   spflt *spf;
   spf = (spflt *)((sp->sgx)->flt);
-  e = sp->filter_env;
+  e = sp->filter_control_env;
   if ((spf->click_to_delete) && 
       (!(spf->env_dragged)) && 
       ((spf->env_pos > 0) && 
-       (spf->env_pos < ((sp->filter_env)->pts - 1))))
+       (spf->env_pos < ((sp->filter_control_env)->pts - 1))))
     delete_point(e, spf->env_pos);
   spf->env_pos = 0;
   spf->env_dragged = 0;
@@ -452,7 +452,7 @@ void handle_filter_release(snd_info *sp)
   sp_display_env(sp);
   set_filter_text(sp, tmpstr = env_to_string(e));
   if (tmpstr) FREE(tmpstr);
-  sp->filter_changed = 1;
+  sp->filter_control_changed = 1;
 }
 
 void report_filter_edit(snd_info *sp)
@@ -558,14 +558,14 @@ void init_env_axes(chan_info *acp, char *name, int x_offset, int ex0, int ey0, i
 
 static short grf_y_dB(snd_state *ss, Float val, axis_info *ap)
 {
-  if (enved_dBing(ss))
+  if (enved_in_dB(ss))
     return(grf_y(dB(ss, val), ap));
   else return(grf_y(val, ap));
 }
 
 static double ungrf_y_dB(snd_state *ss, axis_info *ap, int y)
 {
-  if (enved_dBing(ss))
+  if (enved_in_dB(ss))
     return(un_dB(ss, ungrf_y(ap, y)));
   else return(ungrf_y(ap, y));
 }
@@ -604,7 +604,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
       ey1 = 1.0;
     }
 
-  if (enved_dBing(ss)) 
+  if (enved_in_dB(ss)) 
     {
       ey0 = ss->min_dB; 
       ey1 = 0.0;
@@ -627,7 +627,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	}
       if (e->base == 1.0)
 	{
-	  if (enved_dBing(ss))
+	  if (enved_in_dB(ss))
 	    {
 	      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 		{
@@ -1075,7 +1075,7 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
   pos = hit_point(ss, current_xs, current_ys, active_env->pts, evx, evy);
   x = ungrf_x(ap, evx);
   y = ungrf_y_dB(ss, ap, evy);
-  if (enved_clipping(ss))
+  if (enved_clip_p(ss))
     {
       if (y < ap->y0) y = ap->y0;
       if (y > ap->y1) y = ap->y1;

@@ -1664,7 +1664,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      /* it might be better to remove the menu accelerators -- they are a dubious feature to begin with */
 #endif
 
-	      if (ss->listening != LISTENER_CLOSED)
+	      if (ss->listening)
 		{
 		  if (listener_height() > 5)
 		    {

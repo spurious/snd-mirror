@@ -3329,7 +3329,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 	    {
 	      first_time = mouse_time;
 	      dragged = 1;
-	      sp->srate = 0.0;
+	      sp->speed_control = 0.0;
 	      mouse_cursor = cp->cursor;
 	      play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark");
 	      set_play_button(sp, 1);
@@ -3340,8 +3340,8 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 	      first_time = mouse_time;
 	      samps = move_play_mark(cp, &mouse_cursor, (Locus)x);
 	      if (time_interval != 0)
-		sp->srate = (Float)(samps * 1000) / (Float)(time_interval * SND_SRATE(sp));
-	      else sp->srate = 0.0;
+		sp->speed_control = (Float)(samps * 1000) / (Float)(time_interval * SND_SRATE(sp));
+	      else sp->speed_control = 0.0;
 	    }
 	}
       else

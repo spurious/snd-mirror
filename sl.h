@@ -84,6 +84,7 @@ SCM scm_return_first(SCM a, ...);
 #define TO_SMALL_SCM_INT(a)          rep_MAKE_INT(a)
 #define TO_SMALL_C_INT(a)            rep_INT(a)
 #define TO_C_UNSIGNED_LONG(a)        rep_get_long_uint(a)
+#define TO_SCM_UNSIGNED_LONG(a)      Qnil
 #define TO_SCM_STRING(a)             rep_string_dupn(a, strlen(a))
 #define TO_NEW_C_STRING(a)           copy_string(TO_C_STRING(a))
 #define TO_SCM_BOOLEAN(a)            ((a) ? Qt : Qnil)

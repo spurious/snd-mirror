@@ -519,7 +519,7 @@ static void set_snd_amp_1(snd_info *sp, Float amp, int setadj)
   Float scrollval;
   char *sfs;
   GtkObject *adj;
-  sp->amp = amp;
+  sp->amp_control = amp;
   if (amp <= 0.0)
     scrollval = 0.0;
   else
@@ -532,7 +532,7 @@ static void set_snd_amp_1(snd_info *sp, Float amp, int setadj)
 	  if (scrollval > .9) scrollval = .9;
 	}
     }
-  sfs = prettyf(sp->amp, 2);
+  sfs = prettyf(sp->amp_control, 2);
   fill_number(sfs, amp_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_snd_amp_number(sp)), amp_number_buffer);
   FREE(sfs);
@@ -547,7 +547,7 @@ static void set_snd_amp_1(snd_info *sp, Float amp, int setadj)
 void set_snd_amp(snd_info *sp, Float amp) 
 {
   if (IS_PLAYER(sp))
-    sp->amp = amp;
+    sp->amp_control = amp;
   else set_snd_amp_1(sp, amp, TRUE);
 }
 
@@ -564,7 +564,7 @@ static void amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
   snd_context *sx;
   sx = sp->sgx;
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
-    set_snd_amp(sp, sp->last_amp);
+    set_snd_amp(sp, sp->last_amp_control);
   else set_snd_amp(sp, 1.0);
 }
 
@@ -576,8 +576,8 @@ static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
 static void amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  sp->last_amp = sp->saved_amp;
-  sp->saved_amp = sp->amp;
+  sp->last_amp_control = sp->saved_amp_control;
+  sp->saved_amp_control = sp->amp_control;
 }
 
 
@@ -589,7 +589,7 @@ void set_snd_srate(snd_info *sp, Float amp)
 {
   Float scrollval;
   GtkObject *adj;
-  sp->srate = amp;
+  sp->speed_control = amp;
   if (!(IS_PLAYER(sp)))
     {
       if (amp > 0.0)
@@ -609,7 +609,7 @@ static void srate_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data
   snd_context *sx;
   sx = sp->sgx;
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
-    set_snd_srate(sp, sp->last_srate);
+    set_snd_srate(sp, sp->last_speed_control);
   else set_snd_srate(sp, 1.0);
 }
 
@@ -617,8 +617,8 @@ static void srate_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   Float scrollval, val;
   snd_info *sp = (snd_info *)data;
-  val = srate_changed(exp((GTK_ADJUSTMENT(adj)->value-.45) / .15), srate_number_buffer, sp->speed_style, sp->speed_tones);
-  sp->srate = val;
+  val = srate_changed(exp((GTK_ADJUSTMENT(adj)->value - .45) / .15), srate_number_buffer, sp->speed_control_style, sp->speed_control_tones);
+  sp->speed_control = val;
   if (val > 0.0)
     scrollval = .45 + .15 * log(val);
   else scrollval = 0.0;
@@ -628,21 +628,21 @@ static void srate_changed_callback(GtkAdjustment *adj, gpointer data)
 static void srate_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  sp->last_srate = sp->saved_srate;
-  sp->saved_srate = sp->srate;
+  sp->last_speed_control = sp->saved_speed_control;
+  sp->saved_speed_control = sp->speed_control;
 }
 
 static void srate_arrow_callback(GtkWidget *w, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  if (sp->play_direction == 1)
+  if (sp->speed_control_direction == 1)
     {
-      sp->play_direction = -1;
+      sp->speed_control_direction = -1;
       gtk_pixmap_set(GTK_PIXMAP(w_snd_srate_pix(sp)), speed_l, speed_l_mask);
     }
   else
     {
-      sp->play_direction = 1;
+      sp->speed_control_direction = 1;
       gtk_pixmap_set(GTK_PIXMAP(w_snd_srate_pix(sp)), speed_r, speed_r_mask);
     }
 }
@@ -651,13 +651,13 @@ void toggle_direction_arrow(snd_info *sp, int state)
 {
   int dir = 1;
   if (state) dir = -1;
-  if ((sp->play_direction != dir) && (!(IS_PLAYER(sp))))
+  if ((sp->speed_control_direction != dir) && (!(IS_PLAYER(sp))))
     {
       if (dir == 1)
 	gtk_pixmap_set(GTK_PIXMAP(w_snd_srate_pix(sp)), speed_r, speed_r_mask);
       else gtk_pixmap_set(GTK_PIXMAP(w_snd_srate_pix(sp)), speed_l, speed_l_mask);
     }
-  sp->play_direction = dir;
+  sp->speed_control_direction = dir;
 }
 
 
@@ -670,12 +670,12 @@ static void set_snd_expand_1(snd_info *sp, Float expand, int setadj)
   Float scrollval;
   char *sfs;
   GtkObject *adj;
-  sp->expand = expand;
-  if (sp->playing) dac_set_expand(sp, sp->expand);
+  sp->expand_control = expand;
+  if (sp->playing) dac_set_expand(sp, sp->expand_control);
   if (expand < .1)
     scrollval = expand * 1.03;
   else scrollval = .45 + .15 * log(expand);
-  sfs = prettyf(sp->expand, 2);
+  sfs = prettyf(sp->expand_control, 2);
   fill_number(sfs, expand_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_snd_expand_number(sp)), expand_number_buffer);
   FREE(sfs);
@@ -690,7 +690,7 @@ static void set_snd_expand_1(snd_info *sp, Float expand, int setadj)
 void set_snd_expand(snd_info *sp, Float val) 
 {
   if (IS_PLAYER(sp))
-    sp->expand = val;
+    sp->expand_control = val;
   else set_snd_expand_1(sp, val, TRUE);
 }
 
@@ -709,8 +709,8 @@ static void expand_changed_callback(GtkAdjustment *adj, gpointer data)
 static void expand_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  sp->last_expand = sp->saved_expand;
-  sp->saved_expand = sp->expand;
+  sp->last_expand_control = sp->saved_expand_control;
+  sp->saved_expand_control = sp->expand_control;
 }
 
 static void expand_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -719,7 +719,7 @@ static void expand_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer dat
   snd_context *sx;
   sx = sp->sgx;
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
-    set_snd_expand(sp, sp->last_expand);
+    set_snd_expand(sp, sp->last_expand_control);
   else set_snd_expand(sp, 1.0);
 }
 
@@ -728,8 +728,8 @@ static void expand_button_callback(GtkWidget *w, gpointer context)
   snd_state *ss;
   snd_info *sp = (snd_info *)context;
   ss = sp->state;
-  sp->expanding = GTK_TOGGLE_BUTTON(w)->active;
- if (sp->expanding) 
+  sp->expand_control_p = GTK_TOGGLE_BUTTON(w)->active;
+ if (sp->expand_control_p) 
    set_background(w_snd_expand(sp), (ss->sgx)->position_color);
  else set_background(w_snd_expand(sp), (ss->sgx)->basic_color);
 }
@@ -737,7 +737,7 @@ static void expand_button_callback(GtkWidget *w, gpointer context)
 void toggle_expand_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
-    sp->expanding = state;
+    sp->expand_control_p = state;
   else set_toggle_button(w_snd_expand_button(sp), state, TRUE, (void *)sp);
 }
 
@@ -751,9 +751,9 @@ static void set_snd_contrast_1(snd_info *sp, Float val, int setadj)
   Float scrollval;
   char *sfs;
   GtkObject *adj;
-  sp->contrast = val;
+  sp->contrast_control = val;
   scrollval = val / 10.0;
-  sfs = prettyf(sp->contrast, 2);
+  sfs = prettyf(sp->contrast_control, 2);
   fill_number(sfs, contrast_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_snd_contrast_number(sp)), contrast_number_buffer);
   FREE(sfs);
@@ -768,7 +768,7 @@ static void set_snd_contrast_1(snd_info *sp, Float val, int setadj)
 void set_snd_contrast(snd_info *sp, Float amp) 
 {
   if (IS_PLAYER(sp))
-    sp->contrast = amp;
+    sp->contrast_control = amp;
   else set_snd_contrast_1(sp, amp, TRUE);
 }
 
@@ -783,7 +783,7 @@ static void contrast_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer d
   snd_context *sx;
   sx = sp->sgx;
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
-    set_snd_contrast(sp, sp->last_contrast);
+    set_snd_contrast(sp, sp->last_contrast_control);
   else set_snd_contrast(sp, 0.0);
 }
 
@@ -795,8 +795,8 @@ static void contrast_changed_callback(GtkAdjustment *adj, gpointer data)
 static void contrast_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  sp->last_contrast = sp->saved_contrast;
-  sp->saved_contrast = sp->contrast;
+  sp->last_contrast_control = sp->saved_contrast_control;
+  sp->saved_contrast_control = sp->contrast_control;
 }
 
 static void contrast_button_callback(GtkWidget *w, gpointer context)
@@ -804,8 +804,8 @@ static void contrast_button_callback(GtkWidget *w, gpointer context)
   snd_state *ss;
   snd_info *sp = (snd_info *)context;
   ss = sp->state;
-  sp->contrasting = GTK_TOGGLE_BUTTON(w)->active;
- if (sp->contrasting) 
+  sp->contrast_control_p = GTK_TOGGLE_BUTTON(w)->active;
+ if (sp->contrast_control_p) 
    set_background(w_snd_contrast(sp), (ss->sgx)->position_color);
  else set_background(w_snd_contrast(sp), (ss->sgx)->basic_color);
 }
@@ -814,7 +814,7 @@ static void contrast_button_callback(GtkWidget *w, gpointer context)
 void toggle_contrast_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
-    sp->contrasting = state;
+    sp->contrast_control_p = state;
   else set_toggle_button(w_snd_contrast_button(sp), state, TRUE, (void *)sp);
 }
 
@@ -847,9 +847,9 @@ static void set_snd_revscl_1(snd_info *sp, Float val, int setadj)
   char *fs, *ps, *sfs;
   int i, j;
   GtkObject *adj;
-  sp->revscl = val;
+  sp->reverb_control_scale = val;
   scrollval = pow(val, .333) * .6;
-  sfs = prettyf(sp->revscl, 3);
+  sfs = prettyf(sp->reverb_control_scale, 3);
   fs = sfs;
   ps=(char *)(revscl_number_buffer);
   j = strlen(fs);
@@ -876,7 +876,7 @@ static void set_snd_revscl_1(snd_info *sp, Float val, int setadj)
 void set_snd_revscl(snd_info *sp, Float amp) 
 {
   if (IS_PLAYER(sp))
-    sp->revscl = amp;
+    sp->reverb_control_scale = amp;
   else set_snd_revscl_1(sp, amp, TRUE);
 }
 
@@ -891,7 +891,7 @@ static void revscl_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer dat
   snd_context *sx;
   sx = sp->sgx;
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
-    set_snd_revscl(sp, sp->last_revlen);
+    set_snd_revscl(sp, sp->last_reverb_control_scale);
   else set_snd_revscl(sp, 0.0);
 }
 
@@ -903,8 +903,8 @@ static void revscl_changed_callback(GtkAdjustment *adj, gpointer data)
 static void revscl_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  sp->last_revscl = sp->saved_revscl;
-  sp->saved_revscl = sp->revscl;
+  sp->last_reverb_control_scale = sp->saved_reverb_control_scale;
+  sp->saved_reverb_control_scale = sp->reverb_control_scale;
 }
 
 
@@ -915,9 +915,9 @@ static void set_snd_revlen_1(snd_info *sp, Float val, int setadj)
   Float scrollval;
   char *sfs;
   GtkObject *adj;
-  sp->revlen = val;
+  sp->reverb_control_length = val;
   scrollval = val / 5.0;
-  sfs = prettyf(sp->revlen, 2);
+  sfs = prettyf(sp->reverb_control_length, 2);
   fill_number(sfs, revlen_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_snd_revlen_number(sp)), revlen_number_buffer);
   FREE(sfs);
@@ -932,7 +932,7 @@ static void set_snd_revlen_1(snd_info *sp, Float val, int setadj)
 void set_snd_revlen(snd_info *sp, Float amp) 
 {
   if (IS_PLAYER(sp))
-    sp->revlen = amp;
+    sp->reverb_control_length = amp;
   else set_snd_revlen_1(sp, amp, TRUE);
 }
 
@@ -947,7 +947,7 @@ static void revlen_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer dat
   snd_context *sx;
   sx = sp->sgx;
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
-    set_snd_revlen(sp, sp->last_revlen);
+    set_snd_revlen(sp, sp->last_reverb_control_length);
   else set_snd_revlen(sp, 1.0);
 }
 
@@ -959,8 +959,8 @@ static void revlen_changed_callback(GtkAdjustment *adj, gpointer data)
 static void revlen_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  sp->last_revlen = sp->saved_revlen;
-  sp->saved_revlen = sp->revlen;
+  sp->last_reverb_control_length = sp->saved_reverb_control_length;
+  sp->saved_reverb_control_length = sp->reverb_control_length;
 }
 
 static void reverb_button_callback(GtkWidget *w, gpointer context)
@@ -968,8 +968,8 @@ static void reverb_button_callback(GtkWidget *w, gpointer context)
   snd_state *ss;
   snd_info *sp = (snd_info *)context;
   ss = sp->state;
-  sp->reverbing = GTK_TOGGLE_BUTTON(w)->active;
- if (sp->reverbing)
+  sp->reverb_control_p = GTK_TOGGLE_BUTTON(w)->active;
+ if (sp->reverb_control_p)
    {
      set_background(w_snd_revscl(sp), (ss->sgx)->position_color);
      set_background(w_snd_revlen(sp), (ss->sgx)->position_color);
@@ -984,7 +984,7 @@ static void reverb_button_callback(GtkWidget *w, gpointer context)
 void toggle_reverb_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
-    sp->reverbing = state;
+    sp->reverb_control_p = state;
   else set_toggle_button(w_snd_reverb_button(sp), state, TRUE, (void *)sp);
 }
 
@@ -1068,26 +1068,26 @@ static void filter_drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer d
 static void filter_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->filtering = GTK_TOGGLE_BUTTON(w)->active;
+  sp->filter_control_p = GTK_TOGGLE_BUTTON(w)->active;
 }
 
 void toggle_filter_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
-    sp->filtering = state;
+    sp->filter_control_p = state;
   else set_toggle_button(w_snd_filter_button(sp), state, TRUE, (void *)sp);
 }
 
 static void filter_db_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->filter_dBing = GTK_TOGGLE_BUTTON(w)->active;
+  sp->filter_control_in_dB = GTK_TOGGLE_BUTTON(w)->active;
   sp_display_env(sp);
 }
 
-void set_filter_dBing(snd_info *sp, int val)
+void set_filter_in_dB(snd_info *sp, int val)
 {
-  sp->filter_dBing = val;
+  sp->filter_control_in_dB = val;
   if (!(IS_PLAYER(sp)))
     {
       set_toggle_button(w_snd_filter_dB(sp), val, FALSE, (void *)sp);
@@ -1097,17 +1097,17 @@ void set_filter_dBing(snd_info *sp, int val)
 
 static void set_snd_filter_order_1(snd_info *sp, int order, int setadj)
 {
-  sp->filter_order = order;
+  sp->filter_control_order = order;
   if (setadj)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(w_snd_filter_order(sp)), (gfloat)order);
   sp_display_env(sp);
-  sp->filter_changed = 1;
+  sp->filter_control_changed = 1;
 }  
 
 void set_snd_filter_order(snd_info *sp, int order) 
 {
   if (IS_PLAYER(sp))
-    sp->filter_order = order;
+    sp->filter_control_order = order;
   else set_snd_filter_order_1(sp, order, TRUE);
 }
 
@@ -1118,8 +1118,8 @@ static void filter_order_callback(GtkWidget *w, gpointer data)
   order = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w_snd_filter_order(sp)));
   if (order&1) order++;
   if (order <= 0) order = 2;
-  sp->filter_order = order;
-  set_snd_filter_order_1(sp, sp->filter_order, FALSE);
+  sp->filter_control_order = order;
+  set_snd_filter_order_1(sp, sp->filter_control_order, FALSE);
 }
 
 static void filter_activate_callback(GtkWidget *w, gpointer context)
@@ -1128,13 +1128,13 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
   snd_info *sp = (snd_info *)context;
   char *str = NULL;
   str = gtk_entry_get_text(GTK_ENTRY(w));
-  if (sp->filter_env) sp->filter_env = free_env(sp->filter_env);
-  sp->filter_env = string2env(str);
-  if (!(sp->filter_env)) /* maybe user cleared text field? */
-    sp->filter_env = default_env(sp->filter_env_xmax, 1.0);
+  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
+  sp->filter_control_env = string2env(str);
+  if (!(sp->filter_control_env)) /* maybe user cleared text field? */
+    sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   report_filter_edit(sp);
   sp_display_env(sp);
-  sp->filter_changed = 1;
+  sp->filter_control_changed = 1;
 }
 
 void filter_env_changed(snd_info *sp, env *e)
@@ -1154,7 +1154,7 @@ void filter_env_changed(snd_info *sp, env *e)
       sp_display_env(sp);
       /* this is called also from snd-scm.c */
     }
-  sp->filter_changed = 1;
+  sp->filter_control_changed = 1;
 }
 
 void color_filter_waveform(snd_state *ss, GdkColor *color)
@@ -1535,10 +1535,10 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_container_add(GTK_CONTAINER(sw[W_srate_event]), sw[W_srate_label]);
       gtk_widget_show(sw[W_srate_label]);
       
-      switch (speed_style(ss))
+      switch (speed_control_style(ss))
 	{
-	case SPEED_AS_RATIO: sw[W_srate_number] = gtk_label_new(ratio_one); break;
-	case SPEED_AS_SEMITONE: sw[W_srate_number] = gtk_label_new(semitone_one); break;
+	case SPEED_CONTROL_AS_RATIO: sw[W_srate_number] = gtk_label_new(ratio_one); break;
+	case SPEED_CONTROL_AS_SEMITONE: sw[W_srate_number] = gtk_label_new(semitone_one); break;
 	default:  sw[W_srate_number] = gtk_label_new(srate_number_buffer); break;
 	}
       gtk_box_pack_start(GTK_BOX(sw[W_srate_form]), sw[W_srate_number], FALSE, FALSE, 0);

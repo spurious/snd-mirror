@@ -300,23 +300,10 @@ void revert_file_from_menu(snd_state *ss)
     }
 }
 
-static SCM exit_hook;
-
-int dont_exit(void)
-{
-  SCM res = SCM_BOOL_F;
-  if (HOOKED(exit_hook))
-    res = g_c_run_or_hook(exit_hook, 
-			  SCM_LIST0,
-			  S_exit_hook);
-  return(TRUE_P(res));
-}
-  
 void exit_from_menu(snd_state *ss)
 {
-  if (dont_exit()) return;
-  snd_exit_cleanly(ss);
-  snd_exit(1);
+  if (snd_exit_cleanly(ss, FALSE))
+    snd_exit(1);
 }
 
 void save_options_from_menu(snd_state *ss)
@@ -447,21 +434,21 @@ void activate_speed_in_menu(snd_state *ss, int newval)
 {
   if (options_speed_ratio_menu())
     {
-      switch (speed_style(ss))
+      switch (speed_control_style(ss))
 	{
-	case SPEED_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), TRUE);    break;
-	case SPEED_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), TRUE); break;
-	default:                set_sensitive(options_speed_float_menu(), TRUE);    break;
+	case SPEED_CONTROL_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), TRUE);    break;
+	case SPEED_CONTROL_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), TRUE); break;
+	default:                        set_sensitive(options_speed_float_menu(), TRUE);    break;
 	}
     }
   set_speed_style(ss, newval);
   if (options_speed_ratio_menu())
     {
-      switch (speed_style(ss))
+      switch (speed_control_style(ss))
 	{
-	case SPEED_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), FALSE);    break;
-	case SPEED_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), FALSE); break;
-	default:                set_sensitive(options_speed_float_menu(), FALSE);    break;
+	case SPEED_CONTROL_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), FALSE);    break;
+	case SPEED_CONTROL_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), FALSE); break;
+	default:                        set_sensitive(options_speed_float_menu(), FALSE);    break;
 	}
     }
 }
@@ -754,9 +741,4 @@ void g_init_menu(SCM local_doc)
   DEFINE_PROC(S_add_to_menu,       gl_add_to_menu, 3, 0, 0,       H_add_to_menu);
   DEFINE_PROC(S_remove_from_menu,  gl_remove_from_menu, 2, 0, 0,  H_remove_from_menu);
   DEFINE_PROC(S_change_menu_label, gl_change_menu_label, 3, 0, 0, H_change_menu_label);
-
-  #define H_exit_hook S_exit_hook " () is called upon exit. \
-If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
-
-  exit_hook =           MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
 }

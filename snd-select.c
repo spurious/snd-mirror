@@ -727,9 +727,9 @@ static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
   return(beg);
 }
 
-static SCM g_selectionQ(void)
+static SCM g_selection_p(void)
 {
-  #define H_selectionQ "(" S_selectionQ ") -> #t if selection is currently active, visible, etc"
+  #define H_selection_p "(" S_selection_p ") -> #t if selection is currently active, visible, etc"
   return(TO_SCM_BOOLEAN(selection_is_active()));
 }
 
@@ -944,7 +944,7 @@ void g_init_selection(SCM local_doc)
 					"set-" S_selection_member, SCM_FNC g_set_selection_member, SCM_FNC g_set_selection_member_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  DEFINE_PROC(S_selectionQ,       g_selectionQ, 0, 0, 0,       H_selectionQ);
+  DEFINE_PROC(S_selection_p,      g_selection_p, 0, 0, 0,       H_selection_p);
   DEFINE_PROC(S_delete_selection, g_delete_selection, 0, 0, 0, H_delete_selection);
   DEFINE_PROC(S_insert_selection, g_insert_selection, 0, 3, 0, H_insert_selection);
   DEFINE_PROC(S_mix_selection,    g_mix_selection, 0, 3, 0,    H_mix_selection);

@@ -206,20 +206,23 @@ typedef struct snd__info {
   int playing;
   mark *playing_mark;
   int sync;
-  int expanding;
-  int contrasting;
-  int reverbing;
-  int filtering, filter_dBing;
-  Float amp;
-  Float srate;                  /* playback srate, not original */
-  Float last_srate, last_amp, last_expand, last_contrast, last_revlen, last_revscl;
-  Float saved_srate, saved_amp, saved_expand, saved_contrast, saved_revlen, saved_revscl;
-  Float expand, expand_length, expand_ramp, expand_hop;
-  Float contrast;
-  Float revlen, revscl, revfb, revlp;
-  int filter_order, filter_changed;
-  env *filter_env;
-  int play_direction;
+  int expand_control_p;
+  int contrast_control_p;
+  int reverb_control_p;
+  int filter_control_p, filter_control_in_dB;
+  Float amp_control;
+  Float speed_control;
+  int speed_control_direction, speed_control_style, speed_control_tones;
+  Float last_speed_control, last_amp_control, last_expand_control, last_contrast_control;
+  Float last_reverb_control_length, last_reverb_control_scale;
+  Float saved_speed_control, saved_amp_control, saved_expand_control, saved_contrast_control;
+  Float saved_reverb_control_length, saved_reverb_control_scale;
+  Float expand_control, expand_control_length, expand_control_ramp, expand_control_hop;
+  Float contrast_control, contrast_control_amp;
+  Float reverb_control_length, reverb_control_scale, reverb_control_feedback, reverb_control_lowpass;
+  Float reverb_control_decay, filter_control_env_xmax;
+  int filter_control_order, filter_control_changed;
+  env *filter_control_env;
   int selected_channel;
   char *fullname;
   char *shortname;
@@ -237,7 +240,6 @@ typedef struct snd__info {
   snd_context *sgx;
   file_info *hdr;             /* header of file that would be affected if we were to save current edits */
   int env_anew, bomb_ctr;
-  Float contrast_amp;
   time_t write_date;          /* check for change behind back while editing */
   int need_update;            /* current in-core data does not match actual file (someone wrote it behind our back) */
   int combining;              /* 0:separate panes per chan, 1:all chans in one pane */
@@ -249,8 +251,6 @@ typedef struct snd__info {
   void *saved_controls;
   int apply_ok, applying;
   /* moved from global to channel-local 4-Aug-00 */
-  int speed_style, speed_tones;
-  Float reverb_decay, filter_env_xmax;
   void *minibuffer_history, *filter_history;
   int active;
 } snd_info;
@@ -295,7 +295,7 @@ typedef struct snd__state {
   char *Eps_File, *Temp_Dir, *Audio_State_File, *Save_Dir;
   char *Listener_Font, *Help_Text_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Button_Font, *Tiny_Font;
   int Verbose_Cursor, Show_Usage_Stats, Trap_Segfault;
-  int Filter_Env_Order, Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
+  int Enved_Filter_Order, Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
   Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin;
   char *Vu_Font;
   Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
@@ -303,16 +303,16 @@ typedef struct snd__state {
   int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type;
   Latus Dot_Size;
   int Fft_Size, Fft_Window, Fft_Style, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo, Wavo_Trace;
-  Float Fft_Beta, Reverb_Decay;
+  Float Fft_Beta, Reverb_Control_Decay;
   Float Color_Scale, Color_Cutoff;
-  int Color_Inverted, Speed_Style, Movies, Normalize_Fft, Show_Mix_Waveforms, Mix_Waveform_Height;
-  int Speed_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Save_State_On_Exit, Graph_Style;
+  int Color_Inverted, Speed_Control_Style, Movies, Normalize_Fft, Show_Mix_Waveforms, Mix_Waveform_Height;
+  int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Graph_Style;
   int Auto_Resize, Auto_Update, Max_Regions, Max_Fft_Peaks;
   int Audio_Output_Device, Audio_Input_Device, Show_Backtrace;
   int Print_Length, Dac_Size, Dac_Folding, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Corruption_Time;
-  int Enved_Clipping, Enved_Exping, Enved_Target, Enved_Waving, Enved_dBing, Graphs_Horizontal;
+  int Enved_Clip_p, Enved_Exp_p, Enved_Target, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal;
   int Graph_Cursor, Use_Sinc_Interp, Data_Clipped, Show_Indices, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
   Float min_dB, lin_dB, Hankel_Jn;
 #if HAVE_HTML
@@ -486,12 +486,11 @@ void set_x_axis_style(snd_state *ss, int val);
 void set_channel_style(snd_state *ss, int val);
 
 void g_init_menu(SCM local_doc);
-int dont_exit(void);
 
 
 /* -------- snd-main.c -------- */
 
-void snd_exit_cleanly(snd_state *ss);
+int snd_exit_cleanly(snd_state *ss, int force_exit);
 int snd_not_current(snd_info *sp, void *dat);
 int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);

@@ -319,7 +319,7 @@ static void View_Lollipops_Callback(Widget w, XtPointer cD, XtPointer mD)
 
 static void View_Listener_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, LISTENER_OPEN);
+  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, TRUE);
 }
 
 static void View_Mix_Panel_Callback(Widget w, XtPointer cD, XtPointer mD) 
@@ -416,17 +416,17 @@ static void Options_Focus_Active_Callback(Widget w, XtPointer cD, XtPointer Data
 
 static void Options_Speed_Float_Callback(Widget w, XtPointer cD, XtPointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_float) activate_speed_in_menu((snd_state *)cD, SPEED_AS_FLOAT);
+  IF_MENU_HOOK(STR_Options, STR_float) activate_speed_in_menu((snd_state *)cD, SPEED_CONTROL_AS_FLOAT);
 }
 
 static void Options_Speed_Ratio_Callback(Widget w, XtPointer cD, XtPointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_ratio) activate_speed_in_menu((snd_state *)cD, SPEED_AS_RATIO);
+  IF_MENU_HOOK(STR_Options, STR_ratio) activate_speed_in_menu((snd_state *)cD, SPEED_CONTROL_AS_RATIO);
 }
 
 static void Options_Speed_Semitone_Callback(Widget w, XtPointer cD, XtPointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_semitone) activate_speed_in_menu((snd_state *)cD, SPEED_AS_SEMITONE);
+  IF_MENU_HOOK(STR_Options, STR_semitone) activate_speed_in_menu((snd_state *)cD, SPEED_CONTROL_AS_SEMITONE);
 }
 
 static void Options_X_Axis_Seconds_Callback(Widget w, XtPointer cD, XtPointer mD) 

@@ -504,37 +504,21 @@ void color_listener_text(GdkColor *pix)
   (ss->sgx)->listener_text_color = pix;
 }
 
-void handle_listener(snd_state *ss, int new_state)
+void handle_listener(snd_state *ss, int open)
 {
-  if (!listener_text)
+  if (open)
     {
-      /* fire up listener at bottom of overall snd window */
-      if (new_state == LISTENER_OPEN) 
-	{
-	  sndCreateCommandWidget(ss, 100);
-	  set_view_listener_label(STR_Hide_listener);
-	  goto_window(listener_text);
-	}
-      else sndCreateCommandWidget(ss, 1);
-      ss->listening = new_state;
+      if (!listener_text)
+	sndCreateCommandWidget(ss, 100);
+      else gtk_widget_show(listener_pane);
+      set_view_listener_label(STR_Hide_listener);
     }
   else
     {
-      if (ss->listening == LISTENER_OPEN)
-	{
-	  /* close listener window but it remains active */
-	  ss->listening = LISTENER_LISTENING;
-	  set_view_listener_label(STR_Show_listener);
-	  gtk_widget_hide(listener_pane);
-	}
-      else
-	{
-	  /* reopen listener pane */
-	  ss->listening = LISTENER_OPEN;
-	  set_view_listener_label(STR_Hide_listener);
-	  gtk_widget_show(listener_pane);
-	}
+      set_view_listener_label(STR_Show_listener);
+      gtk_widget_hide(listener_pane);
     }
+  ss->listening = open;
 }
 
 int listener_height(void) {if (listener_text) return(widget_height(listener_text)); else return(0);}

@@ -1,5 +1,27 @@
 snd change log
 
+  28-May:    renamed enved-exping -> enved-exp?, enved-waving -> enved-wave?, enved-clipping -> enved-clip?
+               amplitude-env -> enved-amplitude, srate-env -> enved-srate, spectrum-env -> enved-spectrum
+             removed save-state-on-exit (use exit-hook with save-state).
+             removed activate-listener and hide-listener (the latter is now (set! (show-listener) #f)).
+  27-May:    replaced mix-sound-channel and mix-sound-index by mix-home.
+             added player-home.  
+             Added "control" to the various control panel names:
+               amp -> amp-control, contrast -> contrast-control, contrast-amp -> contrast-control-amp, 
+               contrast-func -> contrast-control-procedure, contrasting -> contrast-control?, expand -> expand-control, 
+               expand-hop -> expand-control-hop, expand-length -> expand-control-length, expand-ramp -> expand-control-ramp, 
+               expanding -> expand-control?, filtering -> filter-control?, filter-order -> filter-control-order, 
+               filter-env -> filter-control-env, reverb-decay -> reverb-control-decay, reverb-feedback -> reverb-control-feedback, 
+               reverb-funcs -> reverb-control-procedures, reverb-length -> reverb-control-length, reverb-lowpass -> reverb-control-lowpass, 
+               reverb-scale -> reverb-control-scale, reverbing -> reverb-control?, speed -> speed-control, speed-as-float -> speed-control-as-float, 
+               speed-as-ratio -> speed-control-as-ratio, speed-as-semitone -> speed-control-as-semitone, speed-style -> speed-control-style, 
+               speed-tones -> speed-control-tones, filter-dBing -> filter-control-in-dB, enved-dBing -> enved-in-dB.
+             renamed filter-env-order -> enved-filter-order.
+	     Some rationale: 
+                Scheme uses "procedure" rather than "function" and "?" for booleans.
+	        The control names ("amp" in particular) were too likely to be confused or shadowed.
+                filter-env-order was too similar to filter-order (and not obvious it meant the envelope editor filter order)
+                These names actually predated the decision to use Guile -- I didn't foresee 4 years ago where Snd was headed.
   26-May:    removed fit-data-on-open; here's a replacement:
                (define (fit-data snd chn dur)
                  (let ((mx (maxamp snd chn)))

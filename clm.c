@@ -515,6 +515,7 @@ Float mus_array_interp(Float *wave, Float phase, int size)
       if (phase < 0.0) phase += size;
     }
   int_part = (int)floor(phase);
+  if (int_part == size) int_part = 0; /* this can actually happen! */
   frac_part = phase - int_part;
   if (frac_part == 0.0) 
     return(wave[int_part]);

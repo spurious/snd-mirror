@@ -327,7 +327,7 @@ static void View_Ctrls_Callback(GtkWidget *w, gpointer cD)
 
 static void View_Listener_Callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, LISTENER_OPEN);
+  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, TRUE);
 }
 
 static void View_Mix_Panel_Callback(GtkWidget *w, gpointer cD) 
@@ -395,17 +395,17 @@ static void Options_Focus_Active_Callback(GtkWidget *w, gpointer cD, gpointer Da
 
 static void Options_Speed_Float_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_float) activate_speed_in_menu((snd_state *)cD, SPEED_AS_FLOAT);
+  IF_MENU_HOOK(STR_Options, STR_float) activate_speed_in_menu((snd_state *)cD, SPEED_CONTROL_AS_FLOAT);
 }
 
 static void Options_Speed_Ratio_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_ratio) activate_speed_in_menu((snd_state *)cD, SPEED_AS_RATIO);
+  IF_MENU_HOOK(STR_Options, STR_ratio) activate_speed_in_menu((snd_state *)cD, SPEED_CONTROL_AS_RATIO);
 }
 
 static void Options_Speed_Semitone_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_semitone) activate_speed_in_menu((snd_state *)cD, SPEED_AS_SEMITONE);
+  IF_MENU_HOOK(STR_Options, STR_semitone) activate_speed_in_menu((snd_state *)cD, SPEED_CONTROL_AS_SEMITONE);
 }
 
 static void Options_X_Axis_Seconds_Callback(GtkWidget *w, gpointer cD) 

@@ -418,7 +418,7 @@ void finish_moving_play_mark(chan_info *cp)
   sp = cp->sound;
   draw_play_triangle(cp, prev_cx);
   prev_cx = -1;
-  sp->srate = 1.0;
+  sp->speed_control = 1.0;
 }
 
 
@@ -1595,11 +1595,11 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
   return(val);
 }
 
-static SCM g_markQ(SCM id_n)
+static SCM g_mark_p(SCM id_n)
 {
-  #define H_markQ "(" S_markQ " id) -> #t if mark is active"
+  #define H_mark_p "(" S_mark_p " id) -> #t if mark is active"
   chan_info *ncp[1];
-  ASSERT_TYPE(INTEGER_P(id_n), id_n, SCM_ARGn, S_markQ, "an integer");
+  ASSERT_TYPE(INTEGER_P(id_n), id_n, SCM_ARGn, S_mark_p, "an integer");
   return(TO_SCM_BOOLEAN(find_mark_id(ncp, TO_C_INT(id_n), -1)));
 }
 
@@ -1979,7 +1979,7 @@ void g_init_marks(SCM local_doc)
   DEFINE_PROC(S_forward_mark,  g_forward_mark, 0, 3, 0,  H_forward_mark);
   DEFINE_PROC(S_backward_mark, g_backward_mark, 0, 3, 0, H_backward_mark);
   DEFINE_PROC(S_save_marks,    g_save_marks, 0, 1, 0,    H_save_marks);
-  DEFINE_PROC(S_markQ,         g_markQ, 1, 0, 0,         H_markQ);
+  DEFINE_PROC(S_mark_p,        g_mark_p, 1, 0, 0,        H_mark_p);
 }
 
 

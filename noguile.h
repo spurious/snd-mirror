@@ -94,6 +94,7 @@ SCM scm_return_first(SCM a, ...);
 #define TO_SMALL_SCM_INT(a) a
 #define TO_SMALL_C_INT(a) 0
 #define TO_C_UNSIGNED_LONG(a) 0
+#define TO_SCM_UNSIGNED_LONG(a) 0
 #define TO_SCM_STRING(a) 0
 #define TO_NEW_C_STRING(a) NULL
 #define TO_SCM_BOOLEAN(a) 0

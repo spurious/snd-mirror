@@ -222,7 +222,7 @@ static startup_state *make_startup_state(snd_state *ss, Widget shell, Display *d
 #ifndef SND_AS_WIDGET
 static void Window_Close(Widget w, XtPointer context, XtPointer callData)
 {
-  snd_exit_cleanly((snd_state *)context);
+  snd_exit_cleanly((snd_state *)context, TRUE);
 }
 #endif
 

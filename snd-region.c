@@ -1036,10 +1036,10 @@ static SCM region_read(int field, SCM n, char *caller)
   return(TO_SCM_INT(0));
 }
 
-static SCM g_regionQ(SCM n)
+static SCM g_region_p(SCM n)
 {
-  #define H_regionQ "(" S_regionQ " reg) -> #t if region is active"
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARGn, S_regionQ, "an integer");
+  #define H_region_p "(" S_region_p " reg) -> #t if region is active"
+  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARGn, S_region_p, "an integer");
   return(TO_SCM_BOOLEAN(region_ok(TO_C_INT(n))));
 }
 
@@ -1345,7 +1345,7 @@ void g_init_regions(SCM local_doc)
   DEFINE_PROC(S_region_sample,      g_region_sample, 0, 3, 0,      H_region_sample);
   DEFINE_PROC(S_region_samples,     g_region_samples, 0, 4, 0,     H_region_samples);
   DEFINE_PROC(S_region_samples2vct, g_region_samples2vct, 0, 5, 0, H_region_samples2vct);
-  DEFINE_PROC(S_regionQ,            g_regionQ, 1, 0, 0,            H_regionQ);
+  DEFINE_PROC(S_region_p,           g_region_p, 1, 0, 0,           H_region_p);
 
   define_procedure_with_setter(S_max_regions, SCM_FNC g_max_regions, H_max_regions,
 			       "set-" S_max_regions, SCM_FNC g_set_max_regions,

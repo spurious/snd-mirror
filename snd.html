@@ -1777,7 +1777,7 @@ The envelope can be applied to
 the amplitude, the spectrum, or the sampling rate. The
 choice is made via the three buttons marked 'amp',
 'flt', and 'src'.
-The filter order is the variable filter-env-order
+The filter order is the variable enved-filter-order
 which defaults to 40. 
 To interrupt the application of the envelope, click the
 'Stop' button.  To apply the changes to the current
@@ -1800,7 +1800,7 @@ the bottom sets the 'base' of the exponential curves, just as
 in CLM.  If the envelope is being treated as a spectrum ('flt'
 is selected), the 'wave' button shows the actual frequency
 response of the filter that will be applied to the waveform
-by the 'apply' buttons.  Increase the filter-env-order to
+by the 'apply' buttons.  Increase the enved-filter-order to
 improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling rate, labelled as "1.0".
 </p>
 
@@ -1839,7 +1839,6 @@ saved as well, but are commented out (I need to make sure the environment is ok 
         <!-- I(continue session):A(savedstate) -->
         <!-- I(save state):A(savedstate) -->
         <!-- I(save state):L(save-state)(sndsavestate) -->
-        <!-- I(save state):O(save-state-on-exit)(savestateonexit) -->
 
 <h4><A NAME="centeryaxis">Center a tiny signal with DC</a></h4>
 
@@ -2095,11 +2094,11 @@ The arrow button on the right determines
 the direction we move through the data.
 The scroll bar position is normally interpreted
 as a float between .05 and 20.  The Options
-Speed Style menu (or the speed-style variable)
+Speed Style menu (or the speed-control-style variable)
 can change this to use semitones (actually microtones)
 or just-intonation ratios.  The number of equal
 divisions to the octave in the semitone case is
-set by the variable speed-tones (normally 12).
+set by the variable speed-control-tones (normally 12).
         <!-- I(change pitch):O(see 'speed' control)(speed) --><!-- I(change pitch):A(speed) -->
         <!-- I(change srate):O(see 'speed' control)(speed) --><!-- I(change srate):A(speed) -->
         <!-- I(change srate):M(Edit: Edit Env)(editenvelope) --><!-- I(change pitch):M(Edit: Edit Env)(editenvelope) -->
@@ -2140,10 +2139,10 @@ cases make it sound sharper or brighter.
 For softer sounds, it causes only an amplitude
 change.  To scale a soft sound up before
 being 'contrasted', use the variable
-contrast-amp.  The function maxamp
+contrast-control-amp.  The function maxamp
 returns the channel's maximum amplitude, so the
 inverse of that is a good first guess for
-contrast-amp. Contrast is on only if the contrast
+contrast-control-amp. Contrast is on only if the contrast
 button is set.
         <!-- I(brighten file):O(see 'contrast' control)(contrast) --><!-- I(brighten file):A(contrast) -->	
 </p>
@@ -2210,8 +2209,9 @@ panel are:</p>
 <br>
 <center>
 <table border rows=120>
+<table border rows=120>
   <caption>Index</caption>
-  <!-- created 22-Mar-01 -->
+  <!-- created 27-May-01 -->
   <tr><th>Action<th>Menu<th>Keyboard<th>Lisp<th>Other</tr>
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#sndabort"><small>c-g?</small></a></td><td><small>mouse click</small></td></tr>
   <tr><td><a href="#ampenvs">amp env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><a href="#cxca"><small>Cx Ca, Cx a</small></a></td><td><a href="extsnd.html#sndenv"><small>env-sound</small></a></td><td><a href="extsnd.html#sndscaleto"><small>scale-to, scale-by</small></a></td></tr>
@@ -2237,7 +2237,7 @@ panel are:</p>
   <tr><td><a href="extsnd.html#sndconvolve">convolution</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndconvolve"><small>convolve</small></a></td><td><a href="extsnd.html#sndconvolvewith"><small>convolve-with</small></a></td></tr>
   <tr><td><a href="extsnd.html#lcountmatches">count matches</a></td><td><br></td><td><br></td><td><a href="extsnd.html#lcountmatches"><small>count-matches</small></a></td><td><br></td></tr>
   <tr><td><a href="#newfile">create new file</a></td><td><small>File: <a href="#newfile">New</a></small></td><td><br></td><td><a href="extsnd.html#sndnew"><small>new-sound</small></a></td><td><a href="extsnd.html#defaultoutputsrate"><small>default-output-srate</small></a></td></tr>
-  <tr><td><a href="#editoperations">cut selection</a></td><td><small>Edit: <a href="#editcut">Cut</a></small></td><td><a href="#cw"><small>Cw</small></a></td><td><a href="extsnd.html#sndcut"><small>cut</small></a></td><td><br></td></tr>
+  <tr><td><a href="#editoperations">cut selection</a></td><td><small>Edit: <a href="#editcut">Cut</a></small></td><td><a href="#cw"><small>Cw</small></a></td><td><a href="extsnd.html#snddeleteselection"><small>delete-selection</small></a></td><td><br></td></tr>
   <tr><td><a href="#marks">define mark</a></td><td><br></td><td><a href="#cxcm"><small>Cx /, Cx Cm</small></a></td><td><a href="extsnd.html#sndaddmark"><small>add-mark</small></a></td><td><a href="#cm"><small>also Cm</small></a></td></tr>
   <tr><td><a href="#mousedefsect">define selection</a></td><td><small>Edit: <a href="#selectall">Select All</a></small></td><td><a href="#cxc"><small>C[space], Cx c</small></a></td><td><a href="extsnd.html#sndmakeregion"><small>make-region</small></a></td><td><a href="#mousedefsect"><small>mouse drag</small></a></td></tr>
   <tr><td><a href="#marks">delete mark</a></td><td><br></td><td><a href="#cm"><small>- Cm</small></a></td><td><a href="extsnd.html#snddeletemark"><small>delete-mark</small></a></td><td><a href="extsnd.html#snddeletemarks"><small>delete-marks</small></a></td></tr>
@@ -2282,9 +2282,9 @@ panel are:</p>
   <tr><td><a href="#movingwindow">move window ahead</a></td><td><br></td><td><a href="#cxf"><small>[Left], Cx f</small></a></td><td><a href="extsnd.html#sndrightsample"><small>right-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#movingwindow">move window back</a></td><td><br></td><td><a href="#movewindow"><small>[Right], Cx b</small></a></td><td><a href="extsnd.html#sndleftsample"><small>left-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#multichannel">multichannel ops</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndsyncing"><small>sync</small></a></td><td><a href="#syncbutton"><small>sync button</small></a></td></tr>
-  <tr><td><a href="#equalizepanes">normalize display</a></td><td><small>View: <a href="#equalizepanes">Equalize Panes</a></small></td><td><br></td><td><a href="extsnd.html#sndnormalizeview"><small>normalize-view</small></a></td><td><small>Popup: Equalize Panes</small></td></tr>
+  <tr><td><a href="#equalizepanes">normalize display</a></td><td><small>View: <a href="#equalizepanes">Equalize Panes</a></small></td><td><br></td><td><a href="extsnd.html#sndequalizepanes"><small>equalize-panes</small></a></td><td><small>Popup: Equalize Panes</small></td></tr>
   <tr><td><a href="sndscm.html#effectsdoc">normalize sound</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Normalize</a></small></td><td><br></td><td><a href="extsnd.html#sndscaleto"><small>scale-to</small></a></td><td><br></td></tr>
-  <tr><td><a href="#cu">numeric arguments</a></td><td><br></td><td><a href="#kcu"><small>Cu</small></a></td><td><a href="extsnd.html#prefixarg"><small>prefix-arg</small></a></td><td><a href="#kcu"><small>see marks as args</small></a></td></tr>
+  <tr><td><a href="#cu">numeric arguments</a></td><td><br></td><td><a href="#kcu"><small>Cu</small></a></td><td><br></td><td><a href="#kcu"><small>see marks as args</small></a></td></tr>
   <tr><td><a href="#saveopen">open file</a></td><td><small>File: <a href="#openfile">Open</a></small></td><td><a href="#cxcf"><small>Cx Cf</small></a></td><td><a href="extsnd.html#sndopen"><small>open-sound</small></a></td><td><small>Files dialog: click file</small></td></tr>
   <tr><td><a href="#viewfile">open file read-only</a></td><td><small>File: <a href="#viewfile">View</a></small></td><td><br></td><td><a href="extsnd.html#sndview"><small>view-sound</small></a></td><td><br></td></tr>
   <tr><td><a href="#colorbrowser">orientation</a></td><td><small>View: <a href="#orientationbrowser">Orientation</a></small></td><td><br></td><td><a href="extsnd.html#sndorientationdialog"><small>orientation-dialog</small></a></td><td><br></td></tr>
@@ -2302,14 +2302,14 @@ panel are:</p>
   <tr><td><a href="extsnd.html#sndreverse">reverse samples</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Reverse</a></small></td><td><br></td><td><a href="extsnd.html#sndreverse"><small>reverse-sound</small></a></td><td><a href="extsnd.html#sndreverseselection"><small>reverse-selection</small></a></td></tr>
   <tr><td><a href="#revertfile">revert file</a></td><td><small>File: <a href="#revertfile">Revert</a></small></td><td><br></td><td><a href="extsnd.html#sndrevert"><small>revert-sound</small></a></td><td><br></td></tr>
   <tr><td><a href="#cxcw">save channel</a></td><td><br></td><td><a href="#cxcw"><small>Cx Cw</small></a></td><td><a href="extsnd.html#sndsaveas"><small>save-sound-as</small></a></td><td><br></td></tr>
-  <tr><td><a href="#savcontrols">save control panel</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndcontrolpanelsave"><small>control-panel-save</small></a></td><td><a href="#savcontrols"><small>'Remember' button</small></a></td></tr>
+  <tr><td><a href="#savcontrols">save control panel</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndcontrolsave"><small>save-controls</small></a></td><td><a href="#savcontrols"><small>'Remember' button</small></a></td></tr>
   <tr><td><a href="#savefile">save file</a></td><td><small>File: <a href="#savefile">Save</a></small></td><td><a href="#cxcs"><small>Cx Cs</small></a></td><td><a href="extsnd.html#sndsave"><small>save-sound</small></a></td><td><small>Popup: Save</small></td></tr>
   <tr><td><a href="#changeformat">save file as</a></td><td><small>File: <a href="#savefileas">Save as</a></small></td><td><br></td><td><a href="extsnd.html#sndsaveas"><small>save-sound-as</small></a></td><td><a href="#overwrite"><small>see also overwriteCheck</small></a></td></tr>
   <tr><td><a href="#kbdmacros">save macros</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndsavemacros"><small>save-macros</small></a></td><td><br></td></tr>
   <tr><td><a href="#savemarks">save marks</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndsavemarks"><small>save-marks</small></a></td><td><br></td></tr>
   <tr><td><a href="#saveoptions">save options</a></td><td><small>Options: <a href="#saveoptions">Save options</a></small></td><td><br></td><td><a href="extsnd.html#sndsaveoptions"><small>save-options</small></a></td><td><br></td></tr>
   <tr><td><a href="#cxw">save selection</a></td><td><small>Edit: <a href="#cxw">Save selection</a></small></td><td><a href="#cxw"><small>Cx w</small></a></td><td><a href="extsnd.html#sndsaveregion"><small>save-region</small></a></td><td><a href="extsnd.html#sndsaveselection"><small>save-selection</small></a></td></tr>
-  <tr><td><a href="#savedstate">save state</a></td><td><small>Options: <a href="#savedstate">Save State</a></small></td><td><br></td><td><a href="extsnd.html#sndsavestate"><small>save-state</small></a></td><td><a href="extsnd.html#savestateonexit"><small>save-state-on-exit</small></a></td></tr>
+  <tr><td><a href="#savedstate">save state</a></td><td><small>Options: <a href="#savedstate">Save State</a></small></td><td><br></td><td><a href="extsnd.html#sndsavestate"><small>save-state</small></a></td><td><br></td></tr>
   <tr><td><a href="#prevfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#sndselectedsound"><small>selected-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
   <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndffting"><small>ffting</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
   <tr><td><a href="extsnd.html#showmarks">show marks</a></td><td><br></td><td><br></td><td><a href="extsnd.html#showmarks"><small>show-marks</small></a></td><td><br></td></tr>
@@ -2318,7 +2318,7 @@ panel are:</p>
   <tr><td><a href="#cxz">smooth selection</a></td><td><br></td><td><a href="#cxz"><small>Cx z</small></a></td><td><a href="extsnd.html#sndsmoothselection"><small>smooth-selection</small></a></td><td><br></td></tr>
   <tr><td><a href="#fftstyle">sonogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftstyle"><small>fft-style</small></a></td><td><a href="extsnd.html#colormap"><small>colormap</small></a></td></tr>
   <tr><td><a href="#fftstyle">spectrogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftstyle"><small>fft-style</small></a></td><td><a href="extsnd.html#spectrocutoff"><small>orientation, scaling</small></a></td></tr>
-  <tr><td><a href="extsnd.html#lspeedstyle">speed units</a></td><td><small>Options: <a href="extsnd.html#lspeedstyle">Speed style</a></small></td><td><br></td><td><a href="extsnd.html#lspeedstyle"><small>speed-style</small></a></td><td><a href="extsnd.html#speedtones"><small>speed-tones</small></a></td></tr>
+  <tr><td><a href="extsnd.html#lspeedstyle">speed units</a></td><td><small>Options: <a href="extsnd.html#lspeedstyle">Speed style</a></small></td><td><br></td><td><a href="extsnd.html#lspeedstyle"><small>speed-control-style</small></a></td><td><a href="extsnd.html#speedtones"><small>speed-control-tones</small></a></td></tr>
   <tr><td><a href="extsnd.html#sndsrc">srate conversion</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#sndsrc"><small>src-sound</small></a></td><td><a href="extsnd.html#sndsrcselection"><small>src-selection</small></a></td></tr>
   <tr><td><a href="extsnd.html#swapchannels">swap channels</a></td><td><br></td><td><br></td><td><a href="extsnd.html#swapchannels"><small>swap-channels</small></a></td><td><br></td></tr>
   <tr><td><a href="#ktempdir">temp directory</a></td><td><br></td><td><a href="#ktempdir"><small>Cx d</small></a></td><td><a href="extsnd.html#tempdir"><small>temp-dir</small></a></td><td><small>TMPDIR or /var/tmp</small></td></tr>

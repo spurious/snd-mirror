@@ -324,17 +324,16 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
 	  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
 	  XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
 	}
-      if (nj > previous_j)
+      if (min > 0)
 	{
-	  for (i = min - 1; i < nj - 1; i++) 
-	    XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
-	}
-      else
-	{
-	  if (previous_j > nj)
+	  if (nj > previous_j)
+	    for (i = min - 1; i < nj - 1; i++) 
+	      XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
+	  else
 	    {
-	      for (i = min - 1; i < previous_j - 1; i++) 
-		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i + 1].x, ms->p0[i + 1].y);
+	      if (previous_j > nj)
+		for (i = min - 1; i < previous_j - 1; i++) 
+		  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i + 1].x, ms->p0[i + 1].y);
 	    }
 	}
     }
@@ -384,6 +383,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->graph_style == GRAPH_LINES)
     {
+      if (min <= 0) min = 1;
       for (i = 0, j = 1; i < min - 1; i++, j++)
 	{
 	  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);

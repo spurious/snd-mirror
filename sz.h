@@ -83,6 +83,7 @@ SCM scm_return_first(SCM a, ...);
 #define TO_SMALL_SCM_INT(a)                  scheme_make_integer((long)a)
 #define TO_SMALL_C_INT(a)                    SCHEME_INT_VAL(a)
 #define TO_C_UNSIGNED_LONG(a)                scheme_get_int_val(a)
+#define TO_SCM_UNSIGNED_LONG(a)              SCM_BOOL_F
 #define TO_SCM_STRING(a)                     scheme_make_string(a)
 #define TO_NEW_C_STRING(a)                   strdup(SCHEME_STR_VAL(a))
 #define TO_SCM_BOOLEAN(a)                    ((a) ? scheme_true : scheme_false)

@@ -56,9 +56,8 @@
 #ifndef SND_AS_WIDGET
 static gint Window_Close(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  snd_state *ss = (snd_state *)context;
-  snd_exit_cleanly(ss);
-  snd_exit(0);
+  if (snd_exit_cleanly((snd_state *)context, TRUE))
+    snd_exit(0);
   return(FALSE);
 }
 #endif

@@ -2719,7 +2719,7 @@ int sf_p(SCM obj) {return(SMOB_TYPE_P(obj, sf_tag));}
 
 static SCM g_sf_p(SCM obj) 
 {
-  #define H_sf_p "(" S_sample_readerQ " obj) -> #t if obj is a sample-reader"
+  #define H_sf_p "(" S_sample_reader_p " obj) -> #t if obj is a sample-reader"
   return(TO_SCM_BOOLEAN(SAMPLE_READER_P(obj)));
 }
 
@@ -2775,8 +2775,8 @@ static scm_sizet free_sf(SCM obj)
 
 static SCM g_sample_reader_at_end(SCM obj) 
 {
-  #define H_sample_reader_at_end "(" S_sample_reader_at_endQ " obj) -> #t if sample-reader has reached the end of its data"
-  ASSERT_TYPE(SAMPLE_READER_P(obj), obj, SCM_ARGn, S_sample_reader_at_endQ, "a sample-reader");
+  #define H_sample_reader_at_end "(" S_sample_reader_at_end_p " obj) -> #t if sample-reader has reached the end of its data"
+  ASSERT_TYPE(SAMPLE_READER_P(obj), obj, SCM_ARGn, S_sample_reader_at_end_p, "a sample-reader");
   return(TO_SCM_BOOLEAN(read_sample_eof(TO_SAMPLE_READER(obj))));
 }
 
@@ -3169,7 +3169,9 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int
   SCM lst;
   if (LIST_P_WITH_LENGTH(obj, num))
     {
-      if ((*size) != 0) num = (*size);
+      if (num == 0) return(NULL);
+      if (((*size) > 0) && (num > (*size))) 
+	num = (*size);
       vals = (MUS_SAMPLE_TYPE *)MALLOC(num * sizeof(MUS_SAMPLE_TYPE));
       for (i = 0, lst = obj; i < num; i++, lst = SCM_CDR(lst)) 
 	vals[i] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(SCM_CAR(lst)));
@@ -3178,9 +3180,9 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int
     {
       if (VECTOR_P(obj))
 	{
-	  if ((*size) == 0)
-	    num = VECTOR_LENGTH(obj); 
-	  else num = (*size);
+	  num = VECTOR_LENGTH(obj); 
+	  if (((*size) > 0) && (num > (*size)))
+	    num = (*size);
 	  vals = (MUS_SAMPLE_TYPE *)MALLOC(num * sizeof(MUS_SAMPLE_TYPE));
 	  vdata = SCM_VELTS(obj);
 	  for (i = 0; i < num; i++) 
@@ -3191,9 +3193,9 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int
 	  if (VCT_P(obj))
 	    {
 	      v = TO_VCT(obj);
-	      if ((*size) == 0) 
-		num = v->length; 
-	      else num = (*size);
+	      num = v->length; 
+	      if (((*size) > 0) && (num > (*size)))
+		num = (*size);
 	      vals = (MUS_SAMPLE_TYPE *)MALLOC(num * sizeof(MUS_SAMPLE_TYPE));
 	      for (i = 0; i < num; i++) 
 		vals[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
@@ -3290,7 +3292,7 @@ the new data's end"
 
   chan_info *cp;
   MUS_SAMPLE_TYPE *ivals;
-  int len, beg, curlen, override = 0;
+  int len = 0, beg, curlen, override = 0;
   char *fname;
   ASSERT_TYPE(NUMBER_P(samp_0), samp_0, SCM_ARG1, "set-" S_samples, "a number");
   ASSERT_TYPE(NUMBER_P(samps), samps, SCM_ARG2, "set-" S_samples, "a number");
@@ -3312,8 +3314,11 @@ the new data's end"
   else
     {
       ivals = g_floats_to_samples(vect, &len, "set-" S_samples, 3);
-      change_samples(beg, len, ivals, cp, LOCK_MIXES, "set-" S_samples);
-      FREE(ivals);
+      if (ivals)
+	{
+	  change_samples(beg, len, ivals, cp, LOCK_MIXES, "set-" S_samples);
+	  FREE(ivals);
+	}
     }
   update_graph(cp, NULL);
   return(vect);
@@ -3512,7 +3517,7 @@ inserts data (either a vector, vct, or list of samples, or a filename) into snd'
 
   chan_info *cp;
   MUS_SAMPLE_TYPE *ivals;
-  int beg, len;
+  int beg, len = 0;
   ASSERT_TYPE(NUMBER_P(samp), samp, SCM_ARG1, S_insert_samples, "a number");
   ASSERT_TYPE(NUMBER_P(samps), samps, SCM_ARG2, S_insert_samples, "a number");
   SND_ASSERT_CHAN(S_insert_samples, snd_n, chn_n, 4);
@@ -3526,8 +3531,11 @@ inserts data (either a vector, vct, or list of samples, or a filename) into snd'
   else
     {
       ivals = g_floats_to_samples(vect, &len, S_insert_samples, 3);
-      insert_samples(beg, len, ivals, cp, S_insert_samples);
-      FREE(ivals);
+      if (ivals)
+	{
+	  insert_samples(beg, len, ivals, cp, S_insert_samples);
+	  FREE(ivals);
+	}
     }
   update_graph(cp, NULL);
   return(TO_SCM_INT(len));
@@ -3612,8 +3620,8 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(S_previous_sample,           g_previous_sample, 1, 0, 0,           H_previous_sample);
   DEFINE_PROC(S_free_sample_reader,        g_free_sample_reader, 1, 0, 0,        H_free_sample_reader);
   DEFINE_PROC(S_sample_reader_home,        g_sample_reader_home, 1, 0, 0,        H_sample_reader_home);
-  DEFINE_PROC(S_sample_readerQ,            g_sf_p, 1, 0, 0,                      H_sf_p);
-  DEFINE_PROC(S_sample_reader_at_endQ,     g_sample_reader_at_end, 1, 0, 0,      H_sample_reader_at_end);
+  DEFINE_PROC(S_sample_reader_p,           g_sf_p, 1, 0, 0,                      H_sf_p);
+  DEFINE_PROC(S_sample_reader_at_end_p,    g_sample_reader_at_end, 1, 0, 0,      H_sample_reader_at_end);
   DEFINE_PROC(S_loop_samples,              g_loop_samples, 4, 1, 0,              H_loop_samples);
 
   DEFINE_PROC(S_save_edit_history,         g_save_edit_history, 1, 2, 0,         H_save_edit_history);

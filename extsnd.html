@@ -888,13 +888,6 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><td>(Save-as): ask before <a href="snd.html#overwrite">overwriting</a> an existing file</td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- auto-update -->
-<!-- --><tr><td><code><em class=def><a name="autoupdate">auto-update</a></em></code></td>
-<!-- --><td><code>#f</code></td>
-<!-- --><td>should Snd <a href="snd.html#updatefile">update</a> a file automatically.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
 <!-- audio-input-device -->
 <!-- --><tr><td><code><em class=def><a name="audioinputdevice">audio-input-device</a></em></code></td>
 <!-- --><td colspan=2><code>mus-audio-default</code></td></tr>
@@ -921,6 +914,13 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td><code><em class=def><a name="autoresize">auto-resize</a></em></code></td>
 <!-- --><td><code>#t</code></td>
 <!-- --><td>should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a>)
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
+<!-- auto-update -->
+<!-- --><tr><td><code><em class=def><a name="autoupdate">auto-update</a></em></code></td>
+<!-- --><td><code>#f</code></td>
+<!-- --><td>should Snd <a href="snd.html#updatefile">update</a> a file automatically.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1090,13 +1090,6 @@ when you save a sound via the "save" dialog.</p>
 <!-- -->here is that you won't mess with the save-dir files until you no
 <!-- -->longer want to restart that version of Snd.  <br>
 <!-- --><code>(set! (save-dir) "/tmp")</code>.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
-<!-- save-state-on-exit -->
-<!-- --><tr><td><code><em class=def><a name="savestateonexit">save-state-on-exit</a></em></code></td>
-<!-- --><td><code>#f</code></td>
-<!-- --><td>If #t, Snd saves its current state in <a href="#lsavestatefile">save-state-file</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -2214,7 +2207,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
 <p>In many cases, the <i>snd</i>, <i>chn</i>, and <i>reg</i> arguments
 can be #t (for backwards compatibility, a few of them default to #t).
 #t means "all" in this case; if <i>snd</i> is #t, all sounds are included,
-so, for example, <code>(expand #t)</code> returns a list of the current
+so, for example, <code>(expand-control #t)</code> returns a list of the current
 control panel expansion settings of all sounds, and
 <code>(set! (ffting #t #t) #t)</code>
 turns on the fft display in all channels of all sounds.
@@ -3673,7 +3666,7 @@ returns a list of lists of all the fft sizes, and <code>(set! (fft-size) 512)</c
 fft sizes to 512.</p>
 
 <p>The variables are local to each sound or each channel.
-That is, <code>(amp snd)</code> returns the control-panel amp setting, and <code>(set! (amp snd) val)</code>
+That is, <code>(amp-control snd)</code> returns the control-panel amp setting, and <code>(set! (amp-control snd) val)</code>
 sets its value to val.  
 </p>
 
@@ -3702,45 +3695,12 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- amp -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndamp">amp</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->current amp (control panel slider) value.
-<!-- -->It is possible to use these controls (in "real-time") in your own functions.
-<!-- -->See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example, and <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a> for a complicated one. 
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- append-to-minibuffer -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndappendtominibuffer">append-to-minibuffer</a></em> (msg <i>snd</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->append <i>msg</i> to whatever is in <i>snd</i>'s minibuffer [<em class=error>no-such-sound</em>].
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- apply-controls -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="applycontrols">apply-controls</a></em> (<i>snd target</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->equivalent to pushing <i>snd</i>'s 'apply' button (this is intended 
-<!-- -->for internal testing); <i>target</i> can be 0=sound, 1=channel, 2=selection.
-<!-- -->apply-controls can be used in conjunction with the various control panel variables:
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2 align=center>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define expnd 
-  (lambda (amt) 
-    (set! (expanding) #t) 
-    (set! (expand) amt) 
-    (<em class=red>apply-controls</em>)))
-<!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -3791,17 +3751,7 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="channels">channels</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->number of channels in <i>snd</i>.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- chans -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndchans">chans</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->same as <i>channels</i> (the forgetful programmer's friend).
+<!-- -->number of channels in <i>snd</i>.  <a name="sndchans">chans</a> is another name for this procedure.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -3823,36 +3773,6 @@ desired edit history position.
 <!-- --><tr><td></td><td>
 <!-- --><i>snd</i>'s comment, if any.  If this is set, the new value may be appended 
 <!-- -->to the old (AIFC and RIFF headers are the only safe ones in this case).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- contrast -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndcontrast">contrast</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->current <a href="snd.html#contrast">contrast</a> (control panel slider) value.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- contrast-amp -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndcontrastamp">contrast-amp</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#contrast">contrast-amp</a> (control panel variable).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- contrasting -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndcontrasting">contrasting</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->#t if <i>snd</i> has <a href="snd.html#contrast">contrast</a> turned on (control panel)
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4071,58 +3991,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- expand -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndexpand">expand</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->current <a href="snd.html#expand">expansion</a> amount (control panel).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- expand-hop -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndexpandhop">expand-hop</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#expand">expansion</a> hop amount (seconds).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- expand-length -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndexpandlength">expand-length</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#expand">expansion</a> segment length (seconds).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- expand-ramp -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndexpandramp">expand-ramp</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
-<!-- -->This affects the smoothness of the grain overlaps -- .001 gives a 
-<!-- -->rattling effect (see make-control-dialog in <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a>).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- expanding -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndexpanding">expanding</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->#t if <i>snd</i>'s expand button is on.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- fft-beta -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="fftbeta">fft-beta</a></em> (<em class=narg>snd chn</em>)</code></span>
@@ -4211,36 +4079,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- filter-dBing -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndfilterdbing">filter-dBing</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#filter">filter</a> dB button state (control panel).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- filter-env -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndfilterenv">filter-env</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#filter">filter</a> envelope (control panel).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- filter-order -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndfilterorder">filter-order</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s <a href="snd.html#filter">filter</a> order (control panel).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- filter-sound -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndfilter">filter-sound</a></em> (env <i>order snd chn edpos</i>)</code></span>
@@ -4263,16 +4101,6 @@ desired edit history position.
 (filter-sound (make-delay 120))                      ;CLM delay (same as insert-silence)
 (filter-sound (make-formant .99 1200))               ;CLM formant
 <!-- --></pre></td></tr></table>
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- filtering -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndfiltering">filtering</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->#t if <i>snd</i> is filtering (control panel filter button).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4526,7 +4354,7 @@ desired edit history position.
       (do ((chan 0 (1+ chan)))
           ((= chan chans))
         (let ((player (<em class=red>make-player</em> sound chan)))
-          (set! (amp player) (list-ref amps chan))
+          (set! (amp-control player) (list-ref amps chan))
           (<em class=red>add-player</em> player)))
       (<em class=red>start-playing</em> chans (srate sound)))))
 
@@ -4766,6 +4594,16 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- player-home -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="playerhome">player-home</a></em> (player)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td width=150></td><td>
+<!-- -->return a list of the sound index and channel number associated with <i>player-home</i>. [<em class=error>no-such-player</em>]
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- player? -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="playerQ">player?</a></em> (obj)</code></span>
@@ -4892,87 +4730,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- reset-controls -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndcontrolreset">reset-controls</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->clears the control panel.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- restore-controls -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndcontrolrestore">restore-controls</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->same as pushing the control panel '<a href="snd.html#savcontrols">r</a>' button.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- reverb-decay -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="reverbdecay">reverb-decay</a></em> (<em class=narg>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->The length (seconds) of the reverberation after the sound has 
-<!-- -->finished (default: 1.0).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- reverb-feedback -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndreverbfeedback">reverb-feedback</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s reverb feedback coefficient.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- reverb-length -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndreverblength">reverb-length</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><a href="snd.html#reverb">reverb</a> delay line length scaler (control panel).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- reverb-lowpass -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndreverblowpass">reverb-lowpass</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->reverb low pass filter coefficient.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- reverb-scale -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndreverbscale">reverb-scale</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><a href="snd.html#reverb">reverb</a> amount (control panel).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- reverbing -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndreverbing">reverbing</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->#t if <i>snd</i>'s reverb button is on.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- reverse-sound -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndreverse">reverse-sound</a></em> (<i>snd chn edpos</i>)</code></span>
@@ -5051,16 +4808,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- save-controls -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndcontrolsave">save-controls</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->same as pushing the control panel '<a href="snd.html#savcontrols">s</a>' button.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- save-sound -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndsave">save-sound</a></em> (<em class=targ>snd</em>)</code></span>
@@ -5099,7 +4846,8 @@ desired edit history position.
 <!-- -->is scaled (defaults to the currently selected channel).  In addition, you
 <!-- -->may notice a function named section-scale-by used in saved-state files.
 <!-- -->This is essentially scale-by applied to a portion of one channel:
-<!-- -->(section-scale-by scaler beg num snd chn).
+<!-- -->(section-scale-by scaler beg num snd chn).  To be consistent with other names,
+<!-- -->this function (scale-by) also exists under the name scale-sound-by.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5109,7 +4857,8 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="sndscaleto">scale-to</a></em> (<i>scalers snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->(see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i>.
+<!-- -->(see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i>. To be consistent with other names,
+<!-- -->this function also exists under the name scale-sound-to.  I can't decide which name is best.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5234,66 +4983,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- set-contrast-func -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="contrastfunc">set-contrast-func</a></em> (func)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->set contrast function to <i>func</i>, a function of two arguments, 
-<!-- -->the current sample and the current 'contrast' slider setting, 
-<!-- -->returning a new sample, the result of the control panel contrast 
-<!-- -->function; <i>func</i> replaces the built-in contrast function.
-<!-- -->The built-in default (mus-contrast-enhancement) is snd-contrast.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- set-reverb-funcs -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="reverbfuncs">set-reverb-funcs</a></em> (reverb make-reverb free-reverb)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->This function replaces the built-in Snd reverb with your own.
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td colspan=2 align=center>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define delay-line #f)
-(define delay-time 0.5)
-
-(<em class=red>set-reverb-funcs</em>
-  (lambda (ptr invals outvals)
-    (vct-set! outvals 0 
-      (delay delay-line 
-             (+ (* .75 (tap delay-line)) 
-                (vct-ref invals 0))))
-    outvals)
-  (lambda (snd chans)
-    (set! delay-line 
-      (make-delay (inexact-&gt;exact (* (srate snd) delay-time))))
-    delay-line)
-  (lambda (ptr)
-    ptr))
-<!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->The three arguments are the reverb, the function that makes or
-<!-- -->initializes the reverb, and the function to free the reverb.
-<!-- -->The built-in defaults are snd-nrev, make-snd-nrev, and free-snd-nrev.
-<!-- -->Another choice is Jezar Wakefield's Freeverb: snd-freeverb, etc.
-<!-- -->The make-reverb function takes two arguments, the current sound's index,
-<!-- -->and the number of output channels active; it returns an opaque object that 
-<!-- -->is subsequently passed to the reverb and free-reverb functions
-<!-- -->The reverb function takes 3 arguments, the thing returned by make-reverb, 
-<!-- -->the current reverb input samples (a vct object), and the output vct object
-<!-- -->which it should fill with the current reverb output contribution.
-<!-- --><br><br>
-<!-- -->I may change this to take a list of three functions, rather than the
-<!-- -->three functions themselves; as it is, there's no generalized set! for
-<!-- -->reverb-funcs.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- set-samples -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndsetsamples">set-samples</a></em> (samp samps data <i>snd chn trunc</i>)</code></span>
@@ -5329,16 +5018,6 @@ desired edit history position.
 <!-- -->If show-all-axes, display x and y axes; if show-x-axis, 
 <!-- -->just one (bottom) x axis is displayed, reducing screen clutter. 
 <!-- -->The other choice is show-no-axes.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- show-controls -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndshowcontrols">show-controls</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->if #t, opens <i>snd</i>'s control panel, else closes it.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5593,40 +5272,6 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->Same for z-axis (default 0.1).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- speed -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndspeed">speed</a></em> (<em class=targ>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->current <a href="snd.html#speed">speed</a> (control panel).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- speed-style -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="lspeedstyle">speed-style</a></em> (<em class=narg>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->In the control panel, the 'speed' control can be interpreted as a 
-<!-- -->float, (<i>speed-as-float</i>, the default), as a just-intonation ratio 
-<!-- -->of relatively small integers (<i>speed-as-ratio</i>) or as a step in a 
-<!-- -->microtonal scale (<i>speed-as-semitone</i>).  
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- speed-tones -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="speedtones">speed-tones</a></em> (<em class=narg>snd</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->The number of tones per octave in the <i>speed-as-semitone</i> speed 
-<!-- -->style (default: 12).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6110,12 +5755,366 @@ is scaled by the Amp slider's value.  The filter is run next, if
 it's on, and finally the sample is scaled by the reverb slider and
 passed to the reverb, if any, which adds its result to the sample;
 the final result is sent to the speakers.  Besides the various user
-interface controls, and variables such as expand-hop, you can also
-change this sequence by replacing the contrast, expand, or reverb
-functions with your own.  <b>set-contrast-func</b> replaces the
-contrast-enhancement function; <b>set-reverb-funcs</b> replaces
-the reverb.
+interface controls, and variables such as expand-control-hop, you can also
+change this sequence by replacing the contrast or reverb
+functions with your own.  <b>set-contrast-control-procedure</b> replaces the
+contrast-enhancement function; <b>set-reverb-control-procedures</b> replaces
+the reverb.  The control panel procedures are:
 </p>
+<!-- -------------------------------- CONTROL PANEL -------------------------------- -->
+<table border=0 cellspacing=10>
+<!-- -->
+<!-- amp-control -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndamp">amp-control</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->current amp (control panel slider) value.
+<!-- -->It is possible to use these controls (in "real-time") in your own functions.
+<!-- -->See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example, and <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a> for a complicated one. 
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- apply-controls -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="applycontrols">apply-controls</a></em> (<i>snd target</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->equivalent to pushing <i>snd</i>'s 'apply' button (this is intended 
+<!-- -->for internal testing); <i>target</i> can be 0=sound, 1=channel, 2=selection.
+<!-- -->apply-controls can be used in conjunction with the various control panel variables:
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define expnd 
+  (lambda (amt) 
+    (set! (expand-control?) #t) 
+    (set! (expand-control) amt) 
+    (<em class=red>apply-controls</em>)))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- contrast-control -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndcontrast">contrast-control</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->current <a href="snd.html#contrast">contrast</a> (control panel slider) value.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- contrast-control-amp -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndcontrastamp">contrast-control-amp</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><i>snd</i>'s <a href="snd.html#contrast">contrast-control-amp</a> (control panel variable).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- contrast-control? -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndcontrasting">contrast-control?</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->#t if <i>snd</i> has <a href="snd.html#contrast">contrast</a> turned on (control panel)
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- expand-control -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndexpand">expand-control</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->current <a href="snd.html#expand">expansion</a> amount (control panel).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- expand-control-hop -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndexpandhop">expand-control-hop</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><i>snd</i>'s <a href="snd.html#expand">expansion</a> hop amount (seconds).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- expand-control-length -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndexpandlength">expand-control-length</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><i>snd</i>'s <a href="snd.html#expand">expansion</a> segment length (seconds).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- expand-control-ramp -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndexpandramp">expand-control-ramp</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><i>snd</i>'s <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
+<!-- -->This affects the smoothness of the grain overlaps -- .001 gives a 
+<!-- -->rattling effect (see make-control-dialog in <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a>).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- expand-control? -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndexpanding">expand-control?</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->#t if <i>snd</i>'s expand button is on.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- filter-control-in-dB -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndfilterdbing">filter-control-in-dB</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><i>snd</i>'s <a href="snd.html#filter">filter</a> dB button state (control panel).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- filter-control-env -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndfilterenv">filter-control-env</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><i>snd</i>'s <a href="snd.html#filter">filter</a> envelope (control panel).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- filter-control-order -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndfilterorder">filter-control-order</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><i>snd</i>'s <a href="snd.html#filter">filter</a> order (control panel).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- filter-control? -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndfiltering">filter-control?</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->#t if <i>snd</i> is filtering (control panel filter button).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- reset-controls -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndcontrolreset">reset-controls</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->clears the control panel.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- restore-controls -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndcontrolrestore">restore-controls</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->same as pushing the control panel '<a href="snd.html#savcontrols">r</a>' button.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- reverb-control-decay -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="reverbdecay">reverb-control-decay</a></em> (<em class=narg>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->The length (seconds) of the reverberation after the sound has 
+<!-- -->finished (default: 1.0).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- reverb-control-feedback -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndreverbfeedback">reverb-control-feedback</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><i>snd</i>'s reverb feedback coefficient.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- reverb-control-length -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndreverblength">reverb-control-length</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><a href="snd.html#reverb">reverb</a> delay line length scaler (control panel).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- reverb-control-lowpass -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndreverblowpass">reverb-control-lowpass</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->reverb low pass filter coefficient.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- reverb-control-scale -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndreverbscale">reverb-control-scale</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><a href="snd.html#reverb">reverb</a> amount (control panel).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- reverb-control? -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndreverbing">reverb-control?</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->#t if <i>snd</i>'s reverb button is on.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- save-controls -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndcontrolsave">save-controls</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->same as pushing the control panel '<a href="snd.html#savcontrols">s</a>' button.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- set-contrast-control-procedure -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="contrastfunc">set-contrast-control-procedure</a></em> (func)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->set contrast procedure to <i>func</i>, a function of two arguments, 
+<!-- -->the current sample and the current 'contrast' slider setting, 
+<!-- -->returning a new sample, the result of the control panel contrast 
+<!-- -->function; <i>func</i> replaces the built-in contrast procedure.
+<!-- -->The built-in default (mus-contrast-enhancement) is snd-contrast.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- set-reverb-control-procedures -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="reverbfuncs">set-reverb-control-procedures</a></em> (reverb make-reverb free-reverb)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->This function replaces the built-in Snd reverb with your own.
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define delay-line #f)
+(define delay-time 0.5)
+
+(<em class=red>set-reverb-control-procedures</em>
+  (lambda (ptr invals outvals)
+    (vct-set! outvals 0 
+      (delay delay-line 
+             (+ (* .75 (tap delay-line)) 
+                (vct-ref invals 0))))
+    outvals)
+  (lambda (snd chans)
+    (set! delay-line 
+      (make-delay (inexact-&gt;exact (* (srate snd) delay-time))))
+    delay-line)
+  (lambda (ptr)
+    ptr))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->The three arguments are the reverb, the function that makes or
+<!-- -->initializes the reverb, and the function to free the reverb.
+<!-- -->The built-in defaults are snd-nrev, make-snd-nrev, and free-snd-nrev.
+<!-- -->Another choice is Jezar Wakefield's Freeverb: snd-freeverb, etc.
+<!-- -->The make-reverb function takes two arguments, the current sound's index,
+<!-- -->and the number of output channels active; it returns an opaque object that 
+<!-- -->is subsequently passed to the reverb and free-reverb functions
+<!-- -->The reverb function takes 3 arguments, the thing returned by make-reverb, 
+<!-- -->the current reverb input samples (a vct object), and the output vct object
+<!-- -->which it should fill with the current reverb output contribution.
+<!-- --><br><br>
+<!-- -->I may change this to take a list of three functions, rather than the
+<!-- -->three functions themselves; as it is, there's no generalized set! for
+<!-- -->reverb-procedures.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- show-controls -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndshowcontrols">show-controls</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->if #t, opens <i>snd</i>'s control panel, else closes it.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- speed-control -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndspeed">speed-control</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->current <a href="snd.html#speed">speed</a> (control panel).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- speed-control-style -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="lspeedstyle">speed-control-style</a></em> (<em class=narg>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->In the control panel, the 'speed' control can be interpreted as a 
+<!-- -->float, (<i>speed-control-as-float</i>, the default), as a just-intonation ratio 
+<!-- -->of relatively small integers (<i>speed-control-as-ratio</i>) or as a step in a 
+<!-- -->microtonal scale (<i>speed-control-as-semitone</i>).  
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- speed-control-tones -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="speedtones">speed-control-tones</a></em> (<em class=narg>snd</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->The number of tones per octave in the <i>speed-control-as-semitone</i> speed 
+<!-- -->style (default: 12).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+</table>
 
 <!-- Edit Lists -->
 <br>
@@ -6689,14 +6688,14 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="envedbase">enved-base</a></em> () </code></span></td>
 <!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> exponential base value (1.0)</td></tr>
 <!-- -->
-<!-- enved-clipping -->
+<!-- enved-clip? -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="envedclipping">enved-clipping</a></em> ()</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="envedclipping">enved-clip?</a></em> ()</code></span></td>
 <!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> 'clip' button (restricts mouse motion) (#f)</td></tr>
 <!-- -->
-<!-- enved-dBing -->
+<!-- enved-in-dB -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="enveddBing">enved-dBing</a></em> ()</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="envedin-dB">enved-in-dB</a></em> ()</code></span></td>
 <!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> 'dB' button (#f)</td></tr>
 <!-- -->
 <!-- enved-dialog -->
@@ -6704,10 +6703,15 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndenveddialog">enved-dialog</a></em> ()</code></span></td>
 <!-- --><td>create the Envelope editor dialog, if necessary, activate it, and return the dialog widget. See also <a href="#envedhook">enved-hook</a>.</td></tr>
 <!-- -->
-<!-- enved-exping -->
+<!-- enved-exp? -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="envedexping">enved-exping</a></em> ()</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="envedexping">enved-exp?</a></em> ()</code></span></td>
 <!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> 'exp' and 'lin' buttons (type of connecting segments) (#f)</td></tr>
+<!-- -->
+<!-- enved-filter-order -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="filterenvorder">enved-filter-order</a></em> ()</code></span></td>
+<!-- --><td>The order of the Envelope editor's FIR filter. (default is 40)</td></tr>
 <!-- -->
 <!-- enved-power -->
 <!-- -->
@@ -6725,8 +6729,8 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><td>
 <!-- -->Determines how the envelope is applied to the current data
 <!-- -->This chooses one of the 'amp', 'flt', and 'src' buttons in the <a href="snd.html#editenvelope">Envelope editor</a>.
-<!-- -->The other (named constant) choices are <i>srate-env</i> and <i>spectrum-env</i>.
-<!-- -->defaults to <i>amplitude-env</i>
+<!-- -->The other (named constant) choices are <i>enved-srate</i> and <i>enved-spectrum</i>.
+<!-- -->defaults to <i>enved-amplitude</i>
 <!-- --></td></tr>
 <!-- -->
 <!-- enved-waveform-color -->
@@ -6734,17 +6738,12 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="envedwaveformcolor">enved-waveform-color</a></em> ()</code></span></td>
 <!-- --><td>color of waveform displayed in envelope editor. (default is blue).</td></tr>
 <!-- -->
-<!-- enved-waving -->
+<!-- enved-wave? -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="envedwaving">enved-waving</a></em> ()</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="envedwaving">enved-wave?</a></em> ()</code></span></td>
 <!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> 'wave' button
 <!-- -->The wave shown is the time domain display, even when filtering.
 <!-- --></td></tr>
-<!-- -->
-<!-- filter-env-order -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="filterenvorder">filter-env-order</a></em> ()</code></span></td>
-<!-- --><td>The order of the Envelope editor's FIR filter. (default is 40)</td></tr>
 <!-- -->
 <!-- help-dialog -->
 <!-- -->
@@ -6763,20 +6762,20 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="htmldir">html-dir</a></em> ()</code></span></td>
 <!-- --><td>If an HTML widget is in use, the directory to search for documentation.</td></tr>
 <!-- -->
-<!-- activate-listener -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="activatelistener">activate-listener</a></em> ()</code></span></td>
-<!-- --><td>make listener active, even if not open.</td></tr>
-<!-- -->
-<!-- hide-listener -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndhidelistener">hide-listener</a></em> ()</code></span></td>
-<!-- --><td>close the lisp listener pane.</td></tr>
-<!-- -->
 <!-- listener-color -->
 <!-- -->
 <!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="listenercolor">listener-color</a></em> ()</code></span></td>
 <!-- --><td>background color of lisp listener. <code>(set! (listener-color) (make-color 0 0 0))</code> is good too.</td></tr>
+<!-- -->
+<!-- listener-font -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="listenerfont">listener-font</a></em> ()</code></span></td>
+<!-- --><td>listener font.</td></tr>
+<!-- -->
+<!-- listener-prompt -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="listenerprompt">listener-prompt</a></em> ()</code></span></td>
+<!-- --><td>lisp listener prompt (defaults to "&gt;").</td></tr>
 <!-- -->
 <!-- listener-text-color -->
 <!-- -->
@@ -6791,29 +6790,6 @@ And an example that lets us see the result of filtering the waveform:
     (snd-print msg)
     (set! (listener-text-color) old-color)))
 <!-- --></pre></td></tr></table></td></tr>
-<!-- -->
-<!-- listener-font -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="listenerfont">listener-font</a></em> ()</code></span></td>
-<!-- --><td>listener font.</td></tr>
-<!-- -->
-<!-- listener-prompt -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="listenerprompt">listener-prompt</a></em> ()</code></span></td>
-<!-- --><td>lisp listener prompt (defaults to "&gt;").</td></tr>
-<!-- -->
-<!-- print-length -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="printlength">print-length</a></em> ()</code></span></td>
-<!-- --><td>number of elements of lists and vectors that are printed (default is 12).</td></tr>
-<!-- -->
-<!-- show-listener -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndshowlistener">show-listener</a></em> ()</code></span></td>
-<!-- --><td>open the lisp listener pane.</td></tr>
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a href="sndsavelistener">save-listener</a></em> (filename) </code></span></td>
-<!-- --><td>save listener text in filename.</td></tr>
 <!-- -->
 <!-- mix-panel -->
 <!-- -->
@@ -6858,6 +6834,11 @@ And an example that lets us see the result of filtering the waveform:
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><a href="#spectrozscale">spectro-z-scale</a> ()</code></span></td>
 <!-- --><td>Same for z-axis. default: 0.1</td></tr>
+<!-- -->
+<!-- print-length -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="printlength">print-length</a></em> ()</code></span></td>
+<!-- --><td>number of elements of lists and vectors that are printed (default is 12).</td></tr>
 <!-- -->
 <!-- recorder-autoload -->
 <!-- -->
@@ -6925,6 +6906,14 @@ And an example that lets us see the result of filtering the waveform:
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="recordertrigger">recorder-trigger</a></em> ()</code></span></td>
 <!-- --><td>Recorder auto-trigger value.</td></tr>
+<!-- -->
+<!-- show-listener -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndshowlistener">show-listener</a></em> ()</code></span></td>
+<!-- --><td>if set to #t open the lisp listener pane, else close it.  For backwards compatibility, if called outside set!, it opens the pane.</td></tr>
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a href="sndsavelistener">save-listener</a></em> (filename) </code></span></td>
+<!-- --><td>save listener text in filename.</td></tr>
 <!-- -->
 <!-- vu-font -->
 <!-- -->
@@ -7150,7 +7139,7 @@ variable %load-verbosely to #t.
 
 <p><b>Speed Control</b> style:</p>
 <pre>
-  speed-as-float     speed-as-ratio     speed-as-semitone
+  speed-control-as-float     speed-control-as-ratio     speed-control-as-semitone
 </pre><br>
 
 <p><b>Channel Combination</b> style;</p>
@@ -7160,7 +7149,7 @@ variable %load-verbosely to #t.
 
 <p><b>Envelope Editor</b> target:</p>
 <pre>
-  amplitude-env      spectrum-env       srate-env
+  enved-amplitude      enved-spectrum       enved-srate
 </pre><br>
 
 <p><b>Graph Line</b> style:</p>
@@ -7974,14 +7963,14 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(exit Snd):L(exit)(sndexit) -->
         <!-- I(undo edit):L(undo)(sndundo) -->
 	<!-- I(redo edit):L(redo)(sndredo) -->
-        <!-- I(cut selection):L(cut)(sndcut) -->
+        <!-- I(cut selection):L(delete-selection)(snddeleteselection) -->
 	<!-- I(insert selection):L(insert-region)(sndinsertregion) -->
 	<!-- I(play file):L(play, stop)(sndplay) -->
         <!-- I(show marks):L(show-marks)(showmarks) --><!-- I(show marks):A(showmarks) -->
 	<!-- I(y=0 line):L(show-y-zero)(showyzero) -->
 	<!-- I(dots or lines):L(graph-style)(graphstyle) -->
         <!-- I(combine channels):L(channel-style)(channelstyle) -->
-        <!-- I(normalize display):L(normalize-view)(sndnormalizeview) -->
+        <!-- I(normalize display):L(equalize-panes)(sndequalizepanes) -->
         <!-- I(control panel):L(show-controls)(sndshowcontrols) -->
 	<!-- I(fft peaks):L(show-fft-peaks)(showfftpeaks) -->
         <!-- I(fft peaks):O(peaks)(sndpeaks) -->
@@ -8030,10 +8019,10 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(sonogram):L(fft-style)(lfftstyle) -->
 	<!-- I(spectrogram):L(fft-style)(lfftstyle) -->
         <!-- I(X axis units):L(x-axis-style)(xaxisstyle) -->
-	<!-- I(speed units):L(speed-style)(lspeedstyle) -->
+	<!-- I(speed units):L(speed-control-style)(lspeedstyle) -->
         <!-- I(fft normalization):L(normalize-fft)(normalizefft) -->
         <!-- I(fft normalization):A(normalizefft) -->
-	<!-- I(speed units):O(speed-tones)(speedtones) -->
+	<!-- I(speed units):O(speed-control-tones)(speedtones) -->
 	<!-- I(change srate):L(src-sound)(sndsrc) -->	
 	<!-- I(edit env):L(enved-dialog)(sndenveddialog) -->
 	<!-- I(edit header):L(edit-header-dialog)(sndeditheaderdialog) -->

@@ -27,9 +27,9 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
-(define tests 5)
+(define tests 1)
 (define snd-test -1)
-(define keep-going #f)
+(define keep-going #t)
 (define full-test (< snd-test 0))
 (define total-tests 22)
 
@@ -51,9 +51,6 @@
 
 (define include-clm #f)
 (define original-prompt (listener-prompt))
-(activate-listener)
-(show-listener)
-(hide-listener)
 (show-listener)
 (set! (window-x) 600)
 (set! (window-y) 10)
@@ -134,7 +131,7 @@
       (if (procedure? trace-hook) (trace-hook 0))
       (test-constants
        (list
-	'amplitude-env amplitude-env 0 
+	'enved-amplitude enved-amplitude 0 
 	'autocorrelation autocorrelation 4 
 	'bartlett-window bartlett-window 4 
 	'blackman2-window blackman2-window 6 
@@ -179,11 +176,11 @@
 	'riemann-window riemann-window 10 
 	'sonogram sonogram 1
 	'spectrogram spectrogram 2 
-	'spectrum-env spectrum-env 1
-	'speed-as-float speed-as-float 0 
-	'speed-as-ratio speed-as-ratio 1 
-	'speed-as-semitone speed-as-semitone 2 
-	'srate-env srate-env 2 
+	'enved-spectrum enved-spectrum 1
+	'speed-control-as-float speed-control-as-float 0 
+	'speed-control-as-ratio speed-control-as-ratio 1 
+	'speed-control-as-semitone speed-control-as-semitone 2 
+	'enved-srate enved-srate 2 
 	'tukey-window tukey-window 15 
 	'walsh-transform walsh-transform 3
 	'wavelet-transform wavelet-transform 1
@@ -234,7 +231,7 @@
       (if (procedure? trace-hook) (trace-hook 1))
       (test-defaults
        (list
-	'amp (without-errors (amp)) 'no-such-sound
+	'amp-control (without-errors (amp-control)) 'no-such-sound
 	'ask-before-overwrite (ask-before-overwrite) #f 
 	'audio-output-device (audio-output-device) 0
 	'audio-state-file (audio-state-file) ".snd-mixer" 
@@ -245,9 +242,9 @@
 	'color-inverted (color-inverted) #t
 	'color-scale (color-scale) 1.0 
 	'colormap (colormap) -1 
-	'contrast (without-errors (contrast)) 'no-such-sound
-	'contrast-amp (without-errors (contrast-amp)) 'no-such-sound
-	'contrasting (without-errors (contrasting)) 'no-such-sound
+	'contrast-control (without-errors (contrast-control)) 'no-such-sound
+	'contrast-control-amp (without-errors (contrast-control-amp)) 'no-such-sound
+	'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
 	'corruption-time (corruption-time) 60.0 
 	'cursor-follows-play (without-errors (cursor-follows-play)) 'no-such-sound
 	'dac-folding (dac-folding) #t
@@ -260,22 +257,23 @@
 	'default-output-type (default-output-type) 0 
 	'dot-size (dot-size) 1 
 	'enved-base (enved-base) 1.0 
-	'enved-clipping (enved-clipping) #f 
-	'enved-dBing (enved-dBing) #f 
-	'enved-exping (enved-exping) #f 
+	'enved-clip? (enved-clip?) #f 
+	'enved-filter-order (enved-filter-order) 40
+	'enved-in-dB (enved-in-dB) #f 
+	'enved-exp? (enved-exp?) #f 
 	'enved-power (enved-power) 3.0
 	'enved-target (enved-target) 0 
-	'enved-waving (enved-waving) #f 
+	'enved-wave? (enved-wave?) #f 
 	'enved-active-env (enved-active-env) '()
 	'enved-selected-env (enved-selected-env) '()
 	'eps-file (eps-file) "snd.eps" 
 	'eps-bottom-margin (eps-bottom-margin) 0.0
 	'eps-left-margin (eps-left-margin) 0.0
-	'expand (without-errors (expand)) 'no-such-sound
-	'expand-hop (without-errors (expand-hop)) 'no-such-sound
-	'expand-length (without-errors (expand-length)) 'no-such-sound
-	'expand-ramp (without-errors (expand-ramp)) 'no-such-sound
-	'expanding (without-errors (expanding)) 'no-such-sound
+	'expand-control (without-errors (expand-control)) 'no-such-sound
+	'expand-control-hop (without-errors (expand-control-hop)) 'no-such-sound
+	'expand-control-length (without-errors (expand-control-length)) 'no-such-sound
+	'expand-control-ramp (without-errors (expand-control-ramp)) 'no-such-sound
+	'expand-control? (without-errors (expand-control?)) 'no-such-sound
 	'fft-beta (fft-beta) 0.0 
 	'fft-log-frequency (fft-log-frequency) #f 
 	'fft-log-magnitude (fft-log-magnitude) #f 
@@ -283,12 +281,11 @@
 	'fft-style (fft-style) 0
 	'fft-window (fft-window) 6 
 	'ffting (without-errors (ffting)) 'no-such-sound
-	'filter-dBing (without-errors (filter-dBing)) 'no-such-sound
-	'filter-env (without-errors (filter-env)) 'no-such-sound
-	'filter-env-order (filter-env-order) 40
+	'filter-control-in-dB (without-errors (filter-control-in-dB)) 'no-such-sound
+	'filter-control-env (without-errors (filter-control-env)) 'no-such-sound
 	'filter-env-in-hz (filter-env-in-hz) #f
-	'filter-order (without-errors (filter-order)) 'no-such-sound
-	'filtering (without-errors (filtering)) 'no-such-sound
+	'filter-control-order (without-errors (filter-control-order)) 'no-such-sound
+	'filter-control? (without-errors (filter-control?)) 'no-such-sound
 	'graph-cursor (graph-cursor) 34
 	'graph-style (graph-style) 0 
 	'graphing (without-errors (graphing)) 'no-such-sound
@@ -312,14 +309,13 @@
 	'recorder-out-chans (recorder-out-chans) 2 
 	'recorder-srate (recorder-srate) 22050 
 	'recorder-trigger (recorder-trigger) 0.0
-	'reverb-decay (reverb-decay) 1.0 
-	'reverb-feedback (without-errors (reverb-feedback)) 'no-such-sound
-	'reverb-length (without-errors (reverb-length)) 'no-such-sound
-	'reverb-lowpass (without-errors (reverb-lowpass)) 'no-such-sound
-	'reverb-scale (without-errors (reverb-scale)) 'no-such-sound
-	'reverbing (without-errors (reverbing)) 'no-such-sound
+	'reverb-control-decay (reverb-control-decay) 1.0 
+	'reverb-control-feedback (without-errors (reverb-control-feedback)) 'no-such-sound
+	'reverb-control-length (without-errors (reverb-control-length)) 'no-such-sound
+	'reverb-control-lowpass (without-errors (reverb-control-lowpass)) 'no-such-sound
+	'reverb-control-scale (without-errors (reverb-control-scale)) 'no-such-sound
+	'reverb-control? (without-errors (reverb-control?)) 'no-such-sound
 	'save-state-file (save-state-file) "saved-snd.scm" 
-	'save-state-on-exit (save-state-on-exit) #f
 	'show-axes (show-axes) 1
 	'show-fft-peaks (show-fft-peaks) #f 
 	'show-indices (show-indices) #f
@@ -340,9 +336,9 @@
 	'spectro-y-scale (spectro-y-scale) 1.0 
 	'spectro-z-angle (spectro-z-angle) -2.0
 	'spectro-z-scale (spectro-z-scale) 0.1 
-	'speed (without-errors (speed)) 'no-such-sound
-	'speed-style (speed-style) 0 
-	'speed-tones (speed-tones) 12
+	'speed-control (without-errors (speed-control)) 'no-such-sound
+	'speed-control-style (speed-control-style) 0 
+	'speed-control-tones (speed-control-tones) 12
 	'sync (without-errors (sync)) 'no-such-sound
 	'temp-dir (temp-dir) #f 
 	'tiny-font (tiny-font) "6x12"
@@ -734,7 +730,7 @@
 			  (test-vars (cdr lst))))))))
 	(test-vars 
 	 (list
-	  (list 'amp amp 1.0 set-amp 0.5)
+	  (list 'amp-control amp-control 1.0 set-amp-control 0.5)
 	  (list 'ask-before-overwrite ask-before-overwrite #f set-ask-before-overwrite #t)
 	  (list 'audio-state-file audio-state-file ".snd-mixer" set-audio-state-file "not-a-file")
 	  (list 'audio-input-device audio-input-device 0 set-audio-input-device 1)
@@ -746,9 +742,9 @@
 	  (list 'color-cutoff color-cutoff 0.003 set-color-cutoff 0.01)
 	  (list 'color-inverted color-inverted #t set-color-inverted #f)
 	  (list 'color-scale color-scale 1.0 set-color-scale 0.5)
-	  (list 'contrast contrast 0.0 set-contrast 0.5)
-	  (list 'contrast-amp contrast-amp 1.0 set-contrast-amp 0.5)
-	  (list 'contrasting contrasting #f set-contrasting #t)
+	  (list 'contrast-control contrast-control 0.0 set-contrast-control 0.5)
+	  (list 'contrast-control-amp contrast-control-amp 1.0 set-contrast-control-amp 0.5)
+	  (list 'contrast-control? contrast-control? #f set-contrast-control? #t)
 	  (list 'corruption-time corruption-time 60.0 set-corruption-time 120.0)
 	  (list 'cursor-follows-play cursor-follows-play #f set-cursor-follows-play #t)
 	  (list 'dac-folding dac-folding #t set-dac-folding #f)
@@ -761,20 +757,20 @@
 	  (list 'default-output-type default-output-type 0 set-default-output-type 1)
 	  (list 'dot-size dot-size 1 set-dot-size 4)
 	  (list 'enved-base enved-base 1.0  set-enved-base 1.5)
-	  (list 'enved-clipping enved-clipping #f set-enved-clipping #t)
-	  (list 'enved-dBing enved-dBing #f set-enved-dBing #t)
-	  (list 'enved-exping enved-exping #f set-enved-exping #t)
+	  (list 'enved-clip? enved-clip? #f set-enved-clip? #t)
+	  (list 'enved-in-dB enved-in-dB #f set-enved-in-dB #t)
+	  (list 'enved-exp? enved-exp? #f set-enved-exp? #t)
 	  (list 'enved-power enved-power 3.0 set-enved-power 3.5)
 	  (list 'enved-target enved-target 0 set-enved-target 1)
-	  (list 'enved-waving enved-waving #f set-enved-waving #t)
+	  (list 'enved-wave? enved-wave? #f set-enved-wave? #t)
 	  (list 'eps-file eps-file "snd.eps" set-eps-file "snd-1.eps")
 	  (list 'eps-left-margin eps-left-margin 0.0 set-eps-left-margin 72.0)
 	  (list 'eps-bottom-margin eps-bottom-margin 0.0 set-eps-bottom-margin 36.0)
-	  (list 'expand expand 1.0 set-expand 2.0)
-	  (list 'expand-hop expand-hop 0.05 set-expand-hop 0.1)
-	  (list 'expand-length expand-length 0.15 set-expand-length 0.2)
-	  (list 'expand-ramp expand-ramp 0.4 set-expand-ramp 0.2)
-	  (list 'expanding expanding #f set-expanding #t)
+	  (list 'expand-control expand-control 1.0 set-expand-control 2.0)
+	  (list 'expand-control-hop expand-control-hop 0.05 set-expand-control-hop 0.1)
+	  (list 'expand-control-length expand-control-length 0.15 set-expand-control-length 0.2)
+	  (list 'expand-control-ramp expand-control-ramp 0.4 set-expand-control-ramp 0.2)
+	  (list 'expand-control? expand-control? #f set-expand-control? #t)
 	  (list 'fft-beta fft-beta 0.0  set-fft-beta 0.5)
 	  (list 'fft-log-frequency fft-log-frequency #f set-fft-log-frequency #t)
 	  (list 'fft-log-magnitude fft-log-magnitude #f set-fft-log-magnitude #t)
@@ -782,12 +778,12 @@
 	  (list 'fft-style fft-style 0 set-fft-style 1)
 	  (list 'fft-window fft-window 6 set-fft-window 5)
 	  (list 'ffting ffting #f set-ffting #t)
-	  (list 'filter-dBing filter-dBing #f set-filter-dBing #t)
-	  (list 'filter-env filter-env (list 0.0 1.0 1.0 1.0) set-filter-env (list 0.0 1.0 1.0 0.0))
-	  (list 'filter-env-order filter-env-order 40 set-filter-env-order 20)
+	  (list 'filter-control-in-dB filter-control-in-dB #f set-filter-control-in-dB #t)
+	  (list 'filter-control-env filter-control-env (list 0.0 1.0 1.0 1.0) set-filter-control-env (list 0.0 1.0 1.0 0.0))
+	  (list 'enved-filter-order enved-filter-order 40 set-enved-filter-order 20)
 	  (list 'filter-env-in-hz filter-env-in-hz #f set-filter-env-in-hz #t)
-	  (list 'filter-order filter-order 20 set-filter-order 40)
-	  (list 'filtering filtering #f set-filtering #t)
+	  (list 'filter-control-order filter-control-order 20 set-filter-control-order 40)
+	  (list 'filter-control? filter-control? #f set-filter-control? #t)
 	  (list 'graph-cursor graph-cursor 34 set-graph-cursor 33)
 	  (list 'graph-style graph-style 0 set-graph-style 1)
 	  (list 'just-sounds just-sounds #f set-just-sounds #t)
@@ -808,13 +804,12 @@
 	  (list 'recorder-buffer-size recorder-buffer-size 4096 set-recorder-buffer-size 256)
 	  (list 'recorder-max-duration recorder-max-duration 1000000.0 set-recorder-max-duration 1000.0)
 	  (list 'recorder-trigger recorder-trigger 0.0 set-recorder-trigger 0.1)
-	  (list 'reverb-decay reverb-decay 1.0 set-reverb-decay 2.0)
-	  (list 'reverb-feedback reverb-feedback 1.09 set-reverb-feedback 1.6)
-	  (list 'reverb-length reverb-length 1.0 set-reverb-length 2.0)
-	  (list 'reverb-lowpass reverb-lowpass 0.7 set-reverb-lowpass 0.9)
-	  (list 'reverb-scale reverb-scale 0.0 set-reverb-scale 0.2)
-	  (list 'reverbing reverbing #f set-reverbing #t)
-	  (list 'save-state-on-exit save-state-on-exit #f set-save-state-on-exit #t)
+	  (list 'reverb-control-decay reverb-control-decay 1.0 set-reverb-control-decay 2.0)
+	  (list 'reverb-control-feedback reverb-control-feedback 1.09 set-reverb-control-feedback 1.6)
+	  (list 'reverb-control-length reverb-control-length 1.0 set-reverb-control-length 2.0)
+	  (list 'reverb-control-lowpass reverb-control-lowpass 0.7 set-reverb-control-lowpass 0.9)
+	  (list 'reverb-control-scale reverb-control-scale 0.0 set-reverb-control-scale 0.2)
+	  (list 'reverb-control? reverb-control? #f set-reverb-control? #t)
 	  (list 'show-axes show-axes 1 set-show-axes 0)
 	  (list 'show-fft-peaks show-fft-peaks #f set-show-fft-peaks #t)
 	  (list 'show-indices show-indices #f set-show-indices #t)
@@ -834,9 +829,9 @@
 	  (list 'spectro-y-scale spectro-y-scale 1.0 set-spectro-y-scale 2.0)
 	  (list 'spectro-z-angle spectro-z-angle 358.0 set-spectro-z-angle 60.0)
 	  (list 'spectro-z-scale spectro-z-scale 0.1 set-spectro-z-scale 0.2)
-	  (list 'speed speed 1.0 set-speed 0.5)
-	  (list 'speed-style speed-style 0 set-speed-style 1)
-	  (list 'speed-tones speed-tones 12 set-speed-tones 18)
+	  (list 'speed-control speed-control 1.0 set-speed-control 0.5)
+	  (list 'speed-control-style speed-control-style 0 set-speed-control-style 1)
+	  (list 'speed-control-tones speed-control-tones 12 set-speed-control-tones 18)
 	  (list 'sync sync 0 set-sync 1)
 	  (list 'tiny-font tiny-font "6x12" set-tiny-font "9x15")
 	  (list 'transform-type transform-type 0 set-transform-type 1)
@@ -875,19 +870,19 @@
 			(test-bad-args (cdr lst)))))))
 	(test-bad-args
 	 (list
-	  (list 'amp amp 1.0 set-amp '(-1.0 123.123))
+	  (list 'amp-control amp-control 1.0 set-amp-control '(-1.0 123.123))
 	  (list 'channel-style channel-style 0 set-channel-style '(32 -1 1.0))
 	  (list 'colormap colormap 2 set-colormap '(321 -123))
 	  (list 'color-cutoff color-cutoff 0.003 set-color-cutoff '(-1.0 123.123))
 	  (list 'color-scale color-scale 1.0 set-color-scale '(-32.0 32.0))
-	  (list 'contrast contrast 0.0 set-contrast '(-123.123 123.123))
+	  (list 'contrast-control contrast-control 0.0 set-contrast-control '(-123.123 123.123))
 	  (list 'dac-size dac-size 256 set-dac-size '(-1 0 -123))
 	  (list 'dot-size dot-size 1 set-dot-size '(0 -1 -123))
 	  (list 'enved-target enved-target 0 set-enved-target '(123 -321))
-	  (list 'expand expand 1.0 set-expand '(-1.0 0.0))
-	  (list 'expand-hop expand-hop 0.05 set-expand-hop '(-1.0))
-	  (list 'expand-length expand-length 0.15 set-expand-length '(-1.0 0.0))
-	  (list 'expand-ramp expand-ramp 0.4 set-expand-ramp '(-1.0 1.0 123.123))
+	  (list 'expand-control expand-control 1.0 set-expand-control '(-1.0 0.0))
+	  (list 'expand-control-hop expand-control-hop 0.05 set-expand-control-hop '(-1.0))
+	  (list 'expand-control-length expand-control-length 0.15 set-expand-control-length '(-1.0 0.0))
+	  (list 'expand-control-ramp expand-control-ramp 0.4 set-expand-control-ramp '(-1.0 1.0 123.123))
 	  (list 'fft-beta fft-beta 0.0  set-fft-beta '(-1.0 123.123))
 	  (list 'fft-size fft-size 256 set-fft-size '(-1 0))
 	  (list 'zero-pad zero-pad 0 set-zero-pad '(-1 -123))
@@ -895,19 +890,19 @@
 	  (list 'cursor-style cursor-style cursor-line set-cursor-style '(2 123))
 	  (list 'fft-style fft-style 0 set-fft-style '(-1 123))
 	  (list 'fft-window fft-window 6 set-fft-window '(-1 123))
-	  (list 'filter-env-order filter-env-order 40 set-filter-env-order '(-1 0))
-	  (list 'filter-order filter-order 20 set-filter-order '(-10 -1 0))
+	  (list 'enved-filter-order enved-filter-order 40 set-enved-filter-order '(-1 0))
+	  (list 'filter-control-order filter-control-order 20 set-filter-control-order '(-10 -1 0))
 	  (list 'max-fft-peaks max-fft-peaks 100 set-max-fft-peaks '(-1))
 	  (list 'max-regions max-regions 16 set-max-regions '(-1 -123))
 	  (list 'previous-files-sort previous-files-sort 0 set-previous-files-sort '(-1 123))
-	  (list 'reverb-length reverb-length 1.0 set-reverb-length '(-1.0))
+	  (list 'reverb-control-length reverb-control-length 1.0 set-reverb-control-length '(-1.0))
 	  (list 'show-axes show-axes 1 set-show-axes '(-1 123))
 	  (list 'sinc-width sinc-width 10 set-sinc-width '(-10))
 	  (list 'spectro-cutoff spectro-cutoff 1.0 set-spectro-cutoff '(-1.0))
 	  (list 'spectro-hop spectro-hop 4 set-spectro-hop '(-10 -1 0))
 	  (list 'spectro-start spectro-start 0.0 set-spectro-start '(-1.0))
-	  (list 'speed speed 1.0 set-speed '(0.0))
-	  (list 'speed-style speed-style 0 set-speed-style '(-1 10))
+	  (list 'speed-control speed-control 1.0 set-speed-control '(0.0))
+	  (list 'speed-control-style speed-control-style 0 set-speed-control-style '(-1 10))
 	  (list 'transform-type transform-type 0 set-transform-type '(-1 123))
 	  (list 'wavelet-type wavelet-type 0 set-wavelet-type '(-1 123))
 	  (list 'wavo-hop wavo-hop 1 set-wavo-hop '(0 -123))
@@ -1658,6 +1653,8 @@
 	    (samps2 (region-samples->vct 0 50827 0 0))
 	    (vr (make-sample-reader 0 index 0 1)))
 	(if (not (sample-reader? vr)) (snd-display (format #f ";~A not sample-reader?" vr)))
+	(if (not (equal? (sample-reader-home vr) (list index 0))) 
+	    (snd-display (format #f ";sample-reader-home: ~A ~A?" (sample-reader-home vr) (list index 0))))
 	(let ((reader-string (format #f "~A" vr)))
 	  (if (not (string=? (substring reader-string 0 18) "#<sample-reader 0x"))
 	      (snd-display (format #f ";sample reader actually got: [~S]" (substring reader-string 0 18))))
@@ -1856,44 +1853,44 @@
       (let* ((obind (open-sound "oboe.snd"))
 	     (vol (maxamp obind))
 	     (dur (frames)))
-	(set! (amp obind) 2.0)
+	(set! (amp-control obind) 2.0)
 	(if (eq? (without-errors (apply-controls obind)) 'no-such-sound) (snd-display "apply-controls can't find oboe.snd?"))
 	(let ((newamp (maxamp obind)))
 	  (if (> (abs (- (* 2.0 vol) newamp)) .05) (snd-display (format #f ";apply amp: ~A -> ~A?" vol newamp)))
-	  (set! (speed obind) 0.5)
+	  (set! (speed-control obind) 0.5)
 	  (apply-controls obind)
 	  (let ((newdur (frames obind)))
-	    (set! (speed obind) 1.0)
+	    (set! (speed-control obind) 1.0)
 	    (if (not (< (- newdur (* 2.0 dur)) 256)) (snd-display (format #f ";apply speed: ~A -> ~A?" dur newdur)))
 	    ;; within 256 which is apply's buffer size (it always flushes full buffers) 
-	    (set! (contrasting obind) #t)
-	    (set! (contrast obind) 1.0)
+	    (set! (contrast-control? obind) #t)
+	    (set! (contrast-control obind) 1.0)
 	    (apply-controls obind)
 	    (let ((secamp (maxamp obind))
 		  (secdur (frames obind)))
 	      (if (fneq secamp .989) (snd-display (format #f ";apply contrast: ~A?" secamp)))
 	      (if (not (= secdur newdur)) (snd-display (format #f ";apply contrast length: ~A -> ~A?" newdur secdur)))
 	      (undo 3 obind)
-	      (set! (reverbing obind) #t)
-	      (set! (reverb-scale obind) .2)
+	      (set! (reverb-control? obind) #t)
+	      (set! (reverb-control-scale obind) .2)
 	      (apply-controls obind)
 	      (let ((revamp (maxamp obind))
 		    (revdur (frames obind)))
 		(if (fneq revamp .213) (snd-display (format #f ";apply reverb scale: ~A?" revamp)))
-		(if (not (< (- revdur (+ 50828 (inexact->exact (* (reverb-decay) 22050)))) 256)) 
+		(if (not (< (- revdur (+ 50828 (inexact->exact (* (reverb-control-decay) 22050)))) 256)) 
 		    (snd-display (format #f ";apply reverb length: ~A?" revdur)))
 		(undo 1 obind)
-		(set! (expanding obind) #t)
-		(set! (expand obind) 1.5)
+		(set! (expand-control? obind) #t)
+		(set! (expand-control obind) 1.5)
 		(apply-controls obind)
 		(let ((expamp (maxamp obind))
 		      (expdur (frames obind)))
-		  (if (fneq expamp .152) (snd-display (format #f ";apply expand scale: ~A?" expamp)))
-		  (if (not (> expdur (* 1.25 50828))) (snd-display (format #f ";apply expand length: ~A?" expdur)))
+		  (if (fneq expamp .152) (snd-display (format #f ";apply expand-control scale: ~A?" expamp)))
+		  (if (not (> expdur (* 1.25 50828))) (snd-display (format #f ";apply expand-control length: ~A?" expdur)))
 		  (undo 1 obind)
-		  (set! (filtering obind) #t)
-		  (set! (filter-order obind) 40)
-		  (set! (filter-env obind) '(0 0 1 .5 1 0))
+		  (set! (filter-control? obind) #t)
+		  (set! (filter-control-order obind) 40)
+		  (set! (filter-control-env obind) '(0 0 1 .5 1 0))
 		  (apply-controls obind)
 		  (let ((fltamp (maxamp obind))
 			(fltdur (frames obind)))
@@ -2035,7 +2032,7 @@
 
       (let* ((obind (open-sound "4.aiff"))
 	     (amps (maxamp obind #t)))
-	(set! (amp obind) 0.1)
+	(set! (amp-control obind) 0.1)
 	(select-channel 2)
 	(if (eq? (without-errors (apply-controls obind 1)) 'no-such-sound) (snd-display "apply-controls can't find 4.aiff?"))
 	(let ((newamps (maxamp obind #t)))
@@ -2045,7 +2042,7 @@
 		  (fneq (cadddr amps) (cadddr newamps)))
 	      (snd-display (format #f ";apply amps:~%  ~A ->~%  ~A?" amps newamps)))
 	  (undo 1 obind 2)
-	  (set! (amp obind) 0.1)
+	  (set! (amp-control obind) 0.1)
 	  (make-region 0 (frames obind) obind 1)
 	  (without-errors (apply-controls obind 2))
 	  (set! newamps (maxamp obind #t))
@@ -2633,7 +2630,7 @@
 	(test-prc95)
 	(play-and-wait 0 nind)
 	(set! (use-sinc-interp) #f)
-	(set! (speed nind) .5)
+	(set! (speed-control nind) .5)
 	(play-and-wait)
 	(apply-controls)
 	(set! (use-sinc-interp) #t)
@@ -4678,8 +4675,8 @@
 		(anc (mix-anchor mix-id))
 		(spd (mix-speed mix-id))
 		(trk (mix-track mix-id))
-		(snd (mix-sound-index mix-id))
-		(chn (mix-sound-channel mix-id))
+		(snd (car (mix-home mix-id)))
+		(chn (cadr (mix-home mix-id)))
 		(chns (mix-chans mix-id))
 		(amp (mix-amp mix-id 0))
 		(mr (make-mix-sample-reader mix-id)))
@@ -4703,8 +4700,8 @@
 	    (if loc (snd-display (format #f ";mix-locked: ~A?" loc)))
 	    (if (not (= anc 0)) (snd-display (format #f ";mix-anchor: ~A?" anc)))
 	    (if (not (= trk 0)) (snd-display (format #f ";mix-track: ~A?" trk)))
-	    (if (not (= snd new-index)) (snd-display (format #f ";mix-sound-index: ~A?" snd)))		
-	    (if (not (= chn 0)) (snd-display (format #f ";mix-sound-channel: ~A?" chn)))
+	    (if (not (= snd new-index)) (snd-display (format #f ";s mix-home: ~A?" snd)))		
+	    (if (not (= chn 0)) (snd-display (format #f ";c mix-home: ~A?" chn)))
 	    (if (not (= chns 1)) (snd-display (format #f ";mix-chans: ~A?" chn)))
 	    (if (fneq amp 1.0) (snd-display (format #f ";mix-amp: ~A?" amp)))
 	    (if (fneq spd 1.0) (snd-display (format #f ";mix-speed: ~A?" spd)))
@@ -5124,11 +5121,11 @@
 		(set! (cursor) 500)
 		(backward-mark)
 		(if (not (= (cursor) 300)) (snd-display (format #f ";sort marks: ~A?" (cursor))))
-		(if (not (equal? (mark->sound m2) (list fd 0))) (snd-display (format #f ";mark->sound: ~A?" (mark->sound m2))))
+		(if (not (equal? (mark-home m2) (list fd 0))) (snd-display (format #f ";mark-home: ~A?" (mark-home m2))))
 		(let ((sd (open-sound "4.aiff")))
 		  (set! m3 (add-mark 1000 sd 2))
 		  (set! m4 (add-mark 1000 sd 3))
-		  (if (not (equal? (mark->sound m3) (list sd 2))) (snd-display (format #f ";marks->sound 4: ~A?" (mark->sound m3))))
+		  (if (not (equal? (mark-home m3) (list sd 2))) (snd-display (format #f ";marks->sound 4: ~A?" (mark-home m3))))
 		  (close-sound sd))
 		(save-marks fd)
 		(close-sound fd)
@@ -5352,16 +5349,16 @@
 	  (test-spectral-difference (string-append sf-dir "nist-10.wav") (string-append sf-dir "nist-shortpack.wav") 1.0)
 
 	  (let ((obind (open-sound "pistol.snd")))
-	    (set-reverb-funcs snd-freeverb make-snd-freeverb free-snd-freeverb)
-	    (set! (reverb-scale obind) .1)
-	    (set! (reverbing obind) #t)
+	    (set-reverb-control-procedures snd-freeverb make-snd-freeverb free-snd-freeverb)
+	    (set! (reverb-control-scale obind) .1)
+	    (set! (reverb-control? obind) #t)
 	    (play-and-wait 0 obind)
-	    (set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)
-	    (set! (reverb-length obind) 2.0)
+	    (set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)
+	    (set! (reverb-control-length obind) 2.0)
 	    (play-and-wait 0 obind)
 	    (let ((delay-line #f)
 		  (delay-time 0.5))
-	      (set-reverb-funcs
+	      (set-reverb-control-procedures
 	       (lambda (ptr invals outvals)
 		 (vct-fill! outvals 0.0)
 		 (vct-set! outvals 0 (delay delay-line (+ (* .75 (tap delay-line)) (vct-ref invals 0))))
@@ -5374,7 +5371,7 @@
 		 ptr)
 	       ))
 	    (play-and-wait 0 obind)
-	    (set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)
+	    (set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)
 	    (close-sound obind))
 	  )))
 
@@ -6141,6 +6138,7 @@
 		(make-region 0 (1- len) snd))))))
 
 ;;; ---------------- test 14: all together now ----------------
+
 (define test14-file #f)
 
 (if (or full-test (= snd-test 14) (and keep-going (<= snd-test 14)))
@@ -6189,7 +6187,8 @@
 		     (ht (mus-sound-header-type name))
 		     (df (mus-sound-data-format name))
 		     (fd (if (or (= ht mus-raw) (= df -1)) -1 (view-sound name))))
-		(if (not (= fd -1))
+		(if (and (number? fd)
+			 (not (= fd -1)))
 		    (set! open-files (cons fd open-files))))
 	    (if (and (> len 0) (rs close-chance))
 		(let* ((choice (my-random (length open-files)))
@@ -6378,10 +6377,10 @@
 	    (scale-to .1 (choose-fd))
 	    (scale-by 2.0 (choose-fd))
 	    (equalize-panes)
-	    (save-control-panel)
-	    (set! (amp) .5)
-	    (test-panel amp 'amp)
-	    (restore-control-panel)
+	    (save-controls)
+	    (set! (amp-control) .5)
+	    (test-panel amp-control 'amp-control)
+	    (restore-controls)
 	    (report-in-minibuffer "hi")
 	    (append-to-minibuffer "ho")
 	  
@@ -6493,7 +6492,7 @@
 	      (if (selection?) 
 		  (begin
 		    (filter-selection '(0 0 .2 1 .5 0 1 0) 40)
-		    (cut)
+		    (delete-selection)
 		    (mix-region)))
 	      (close-sound zz))
 	    (let ((s8 (view-sound s8-snd)))
@@ -6505,7 +6504,7 @@
 			    (not (= (selected-channel) 5))) 
 			(snd-display (format #f ";select-channel: ~A?" (selected-channel))))))
 	      (select-all)
-	      (cut)
+	      (delete-selection)
 	      (mix "4.aiff")
 	      (set! (sync) 1)
 	      (mix "oboe.snd" 60000)
@@ -6545,57 +6544,57 @@
 	      (select-sound cfd2)
 	      ;; now run apply a few times
 	      (if (rs 0.5) (set! (use-sinc-interp) #t))
-	      (set! (amp) .5) 
-	      (set! (speed) 2.0) 
-	      (test-panel speed 'speed)
+	      (set! (amp-control) .5) 
+	      (set! (speed-control) 2.0) 
+	      (test-panel speed-control 'speed-control)
 	      (apply-controls) 
 	      (play-and-wait)
 
-	      (set! (reverbing) #t)
-	      (set! (reverb-scale) .2) 
-	      (test-panel reverb-scale 'reverb-scale)
-	      (test-panel reverb-length 'reverb-length)
-	      (test-panel reverb-lowpass 'reverb-lowpass)
-	      (test-panel reverb-feedback 'reverb-feedback)
+	      (set! (reverb-control?) #t)
+	      (set! (reverb-control-scale) .2) 
+	      (test-panel reverb-control-scale 'reverb-control-scale)
+	      (test-panel reverb-control-length 'reverb-control-length)
+	      (test-panel reverb-control-lowpass 'reverb-control-lowpass)
+	      (test-panel reverb-control-feedback 'reverb-control-feedback)
 	      (apply-controls) 
 	      (play-and-wait)
-	      (set! (contrasting) #t)
-	      (set! (contrast) .5) 
-	      (test-panel contrast 'contrast)
-	      (test-panel contrast-amp 'contrast-amp)
+	      (set! (contrast-control?) #t)
+	      (set! (contrast-control) .5) 
+	      (test-panel contrast-control 'contrast-control)
+	      (test-panel contrast-control-amp 'contrast-control-amp)
 	      (apply-controls) 
 	      (play-and-wait)
-	      (set! (expanding) #t)
-	      (set! (expand) 2.5) 
-	      (test-panel expand 'expand)
-	      (test-panel expand-length 'expand-length)
-	      (test-panel expand-hop 'expand-hop)
-	      (test-panel expand-ramp 'expand-ramp)
+	      (set! (expand-control?) #t)
+	      (set! (expand-control) 2.5) 
+	      (test-panel expand-control 'expand-control)
+	      (test-panel expand-control-length 'expand-control-length)
+	      (test-panel expand-control-hop 'expand-control-hop)
+	      (test-panel expand-control-ramp 'expand-control-ramp)
 	      (apply-controls) 
 	      (play-and-wait)
-	      (set! (filtering) #t)
-	      (set! (filter-order) 40) 
-	      (test-panel filter-order 'filter-order)
-	      (set! (filter-env) '(0 0 .1 1 .2 0 1 0)) 
-	      (filter-env) 
+	      (set! (filter-control?) #t)
+	      (set! (filter-control-order) 40) 
+	      (test-panel filter-control-order 'filter-control-order)
+	      (set! (filter-control-env) '(0 0 .1 1 .2 0 1 0)) 
+	      (filter-control-env) 
 	      (apply-controls) 
 	      (play-and-wait)
-	      (set! (amp) 1.5) 
-	      (test-panel amp 'amp)
+	      (set! (amp-control) 1.5) 
+	      (test-panel amp-control 'amp-control)
 	      (apply-controls) 
 	      (play-and-wait)
 	      (swap-channels cfd 0 cfd2 0)
-	      (set! (amp #t) .75)
-	      (test-panel amp 'amp)
-	      (if (> (abs (- (amp cfd2) .75)) .05) (snd-display (format #f ";set-amp .75 #t -> ~A?" (amp cfd2))))
-	      (set! (contrast-amp #t) .75)
-	      (if (fneq (contrast-amp cfd2) .75) (snd-display (format #f ";set-contrast-amp .75 #t -> ~A?" (contrast-amp cfd2))))
-	      (set! (expand-length #t) .025)
-	      (if (fneq (expand-length cfd2) .025) (snd-display (format #f ";set-expand-length .025 #t -> ~A?" (expand-length cfd2))))
-	      (set! (expand-hop #t) .025)
-	      (if (fneq (expand-hop cfd2) .025) (snd-display (format #f ";set-expand-hop .025 #t -> ~A?" (expand-hop cfd2))))
-	      (set! (expand-ramp #t) .025)
-	      (if (fneq (expand-ramp cfd2) .025) (snd-display (format #f ";set-expand-ramp .025 #t -> ~A?" (expand-ramp cfd2))))
+	      (set! (amp-control #t) .75)
+	      (test-panel amp-control 'amp-control)
+	      (if (> (abs (- (amp-control cfd2) .75)) .05) (snd-display (format #f ";set-amp .75 #t -> ~A?" (amp-control cfd2))))
+	      (set! (contrast-control-amp #t) .75)
+	      (if (fneq (contrast-control-amp cfd2) .75) (snd-display (format #f ";set-contrast-control-amp .75 #t -> ~A?" (contrast-control-amp cfd2))))
+	      (set! (expand-control-length #t) .025)
+	      (if (fneq (expand-control-length cfd2) .025) (snd-display (format #f ";set-expand-control-length .025 #t -> ~A?" (expand-control-length cfd2))))
+	      (set! (expand-control-hop #t) .025)
+	      (if (fneq (expand-control-hop cfd2) .025) (snd-display (format #f ";set-expand-control-hop .025 #t -> ~A?" (expand-control-hop cfd2))))
+	      (set! (expand-control-ramp #t) .025)
+	      (if (fneq (expand-control-ramp cfd2) .025) (snd-display (format #f ";set-expand-control-ramp .025 #t -> ~A?" (expand-control-ramp cfd2))))
 	      (close-sound cfd2)
 	      (close-sound cfd)
 	      (set! (use-sinc-interp) #f)))
@@ -6603,7 +6602,7 @@
 	  (if (and (rs .5) (not rev-funcs-set))
 	      (begin
 		(set! rev-funcs-set #t)
-		(set-reverb-funcs
+		(set-reverb-control-procedures
 		 (lambda (ptr invals outvals)
 		   (vct-fill! outvals 0.0)
 		   (vct-set! outvals 0 (delay delay-line (+ (* .75 (tap delay-line)) (vct-ref invals 0))))
@@ -6615,11 +6614,11 @@
 		   (set! delay-line #f)
 		   ptr)
 		 )
-		(set-contrast-func (lambda (a b) (* a b))))
+		(set-contrast-control-procedure (lambda (a b) (* a b))))
 	      (begin
 		(set! rev-funcs-set #f)
-		(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)
-		(set-contrast-func snd-contrast)))
+		(set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)
+		(set-contrast-control-procedure snd-contrast)))
 
 	  (add-hook! (edit-hook) (lambda () #f))
 	  (as-one-edit (lambda () (set! (sample 200) .2) (set! (sample 300) .3)))
@@ -6746,7 +6745,7 @@
 			    (reset-vars (cdr lst)))))))
 		  (reset-vars 
 		   (list
-		    (list 'amp #t .1 set-amp 1.0)
+		    (list 'amp-control #t .1 set-amp-control 1.0)
 		    ;(list 'ask-before-overwrite #f #f set-ask-before-overwrite #t)
 		    (list 'auto-resize #f #f set-auto-resize #t)
 		    (list 'auto-update #f #f set-auto-update #t)
@@ -6754,9 +6753,9 @@
 		    (list 'color-cutoff #f 0.0 set-color-cutoff 0.2)
 		    (list 'color-inverted #f #f set-color-inverted #t)
 		    (list 'color-scale #f 0.1 set-color-scale 1.0)
-		    (list 'contrast #t 0.0 set-contrast 1.0)
-		    (list 'contrast-amp #t 0.0 set-contrast-amp 1.0)
-		    (list 'contrasting #t #f set-contrasting #t)
+		    (list 'contrast-control #t 0.0 set-contrast-control 1.0)
+		    (list 'contrast-control-amp #t 0.0 set-contrast-control-amp 1.0)
+		    (list 'contrast-control? #t #f set-contrast-control? #t)
 		    (list 'corruption-time #f 60.0 set-corruption-time 120.0)
 		    (list 'cursor-follows-play #f #f set-cursor-follows-play #t)
 		    (list 'data-clipped #f #f set-data-clipped #t)
@@ -6766,17 +6765,17 @@
 		    (list 'default-output-type #f 0 set-default-output-type 2)
 		    (list 'dot-size #f 1 set-dot-size 10)
 		    (list 'enved-base #f 0.01  set-enved-base 100.0)
-		    (list 'enved-clipping #f #f set-enved-clipping #t)
-		    (list 'enved-dBing #f #f set-enved-dBing #t)
-		    (list 'enved-exping #f #f set-enved-exping #t)
+		    (list 'enved-clip? #f #f set-enved-clip? #t)
+		    (list 'enved-in-dB #f #f set-enved-in-dB #t)
+		    (list 'enved-exp? #f #f set-enved-exp? #t)
 		    (list 'enved-power #f 3.0 set-enved-power 3.5)
 		    (list 'enved-target #f 0 set-enved-target 2)
-		    (list 'enved-waving #f #f set-enved-waving #t)
-		    (list 'expand #t 0.1 set-expand 5.0)
-		    (list 'expand-hop #t 0.01 set-expand-hop 0.5)
-		    (list 'expand-length #t 0.1 set-expand-length 0.25)
-		    (list 'expand-ramp #t 0.1 set-expand-ramp 0.4)
-		    (list 'expanding #t #f set-expanding #t)
+		    (list 'enved-wave? #f #f set-enved-wave? #t)
+		    (list 'expand-control #t 0.1 set-expand-control 5.0)
+		    (list 'expand-control-hop #t 0.01 set-expand-control-hop 0.5)
+		    (list 'expand-control-length #t 0.1 set-expand-control-length 0.25)
+		    (list 'expand-control-ramp #t 0.1 set-expand-control-ramp 0.4)
+		    (list 'expand-control? #t #f set-expand-control? #t)
 		    (list 'fft-beta #f 0.0  set-fft-beta 1.0)
 		    (list 'fft-log-frequency #f #f set-fft-log-frequency #t)
 		    (list 'fft-log-magnitude #f #f set-fft-log-magnitude #t)
@@ -6784,9 +6783,9 @@
 		    (list 'fft-style #f 0 set-fft-style 2)
 		    (list 'fft-window #f 0 set-fft-window dolph-chebyshev-window)
 		    (list 'ffting #t #f set-ffting #t)
-		    (list 'filter-dBing #t #f set-filter-dBing #t)
-		    (list 'filter-order #t 2 set-filter-order 400)
-		    (list 'filtering #t #f set-filtering #t)
+		    (list 'filter-control-in-dB #t #f set-filter-control-in-dB #t)
+		    (list 'filter-control-order #t 2 set-filter-control-order 400)
+		    (list 'filter-control? #t #f set-filter-control? #t)
 		    (list 'graph-cursor #f 0 set-graph-cursor 35)
 		    (list 'graph-style #f 0 set-graph-style 4)
 		    (list 'graphs-horizontal #f #f set-graphs-horizontal #t)
@@ -6798,13 +6797,12 @@
 		    (list 'normalize-fft #f dont-normalize set-normalize-fft normalize-globally)
 		    (list 'previous-files-sort #f 0 set-previous-files-sort 3)
 		    (list 'print-length #f 2 set-print-length 32)
-		    (list 'reverb-decay #f 0.0 set-reverb-decay 2.0)
-		    (list 'reverb-feedback #t 1.00 set-reverb-feedback 1.1)
-		    (list 'reverb-length #t 1.0 set-reverb-length 2.0)
-		    (list 'reverb-lowpass #t 0.2 set-reverb-lowpass 0.99)
-		    (list 'reverb-scale #t 0.0 set-reverb-scale 0.2)
-		    (list 'reverbing #t #f set-reverbing #t)
-		    (list 'save-state-on-exit #f #f set-save-state-on-exit #t)
+		    (list 'reverb-control-decay #f 0.0 set-reverb-control-decay 2.0)
+		    (list 'reverb-control-feedback #t 1.00 set-reverb-control-feedback 1.1)
+		    (list 'reverb-control-length #t 1.0 set-reverb-control-length 2.0)
+		    (list 'reverb-control-lowpass #t 0.2 set-reverb-control-lowpass 0.99)
+		    (list 'reverb-control-scale #t 0.0 set-reverb-control-scale 0.2)
+		    (list 'reverb-control? #t #f set-reverb-control? #t)
 		    (list 'show-axes #f 0 set-show-axes 2)
 		    (list 'show-fft-peaks #f #f set-show-fft-peaks #t)
 		    (list 'show-indices #f #f set-show-indices #t)
@@ -6823,9 +6821,9 @@
 		    (list 'spectro-y-scale #f 0.1 set-spectro-y-scale 2.0)
 		    (list 'spectro-z-angle #f 0.0 set-spectro-z-angle 359.0)
 		    (list 'spectro-z-scale #f 0.1 set-spectro-z-scale 0.2)
-		    (list 'speed #t 0.1 set-speed 5.0)
-		    (list 'speed-style #f 0 set-speed-style 2)
-		    (list 'speed-tones #f 2 set-speed-tones 100)
+		    (list 'speed-control #t 0.1 set-speed-control 5.0)
+		    (list 'speed-control-style #f 0 set-speed-control-style 2)
+		    (list 'speed-control-tones #f 2 set-speed-control-tones 100)
 		    (list 'sync #t 0 set-sync 5)
 		    (list 'transform-type #f 0 set-transform-type 6)
 		    (list 'use-sinc-interp #f #f set-use-sinc-interp #t)
@@ -6845,11 +6843,22 @@
 	  )))
       (if open-files (map close-sound open-files))
       (set! open-files '())
-      (mus-set-rand-seed 1234)
-      (let ((val (mus-random 1.0)))
-	(if (fneq val -0.7828) (snd-display (format #f ";mus-random: ~A?" val))))
+      (set! (mus-rand-seed) 1234)
+      (if (not (= (mus-rand-seed) 1234)) (snd-display (format #f ";mus-rand-seed: ~A (1234)!" (mus-rand-seed))))
+      (let ((val (mus-random 1.0))
+	    (val1 (mus-random 1.0)))
+	(if (or (fneq val -0.7828) 
+		(fneq val1 -0.8804))
+	    (snd-display (format #f ";mus-random: ~A ~A?" val val1)))
+	(if (= (mus-rand-seed) 1234) (snd-display (format #f ";mus-rand-seed: ~A!" (mus-rand-seed)))))
+      (set! (mus-rand-seed) 1234)
+      (let ((val (mus-random 1.0))
+	    (val1 (mus-random 1.0)))
+	(if (or (fneq val -0.7828) 
+		(fneq val1 -0.8804))
+	    (snd-display (format #f ";mus-random repeated: ~A ~A?" val val1))))
       )
-  )
+    )
 
 (define prefix-it
   (lambda (n id)
@@ -7010,14 +7019,16 @@
 		((= chan chans))
 	      (let ((player (make-player sound chan)))
 		(if (not (player? player)) (snd-display (format #f ";player? ~A -> #f?" player)))
-		(set! (amp player) (list-ref amps chan))
-		(set! (speed player) .5)
-		(set! (expanding player) #t)
-		(set! (expand player) 2.0)
-		(set! (contrasting player) #t)
-		(set! (contrast player) 1.0)
-		(set! (reverbing player) #t)
-		(set! (reverb-scale player) .02)
+		(if (not (equal? (player-home player) (list sound chan)))
+		    (snd-display (format #f ";player-home ~A ~A?" (player-home player) (list sound chan))))
+		(set! (amp-control player) (list-ref amps chan))
+		(set! (speed-control player) .5)
+		(set! (expand-control? player) #t)
+		(set! (expand-control player) 2.0)
+		(set! (contrast-control? player) #t)
+		(set! (contrast-control player) 1.0)
+		(set! (reverb-control? player) #t)
+		(set! (reverb-control-scale player) .02)
 		(add-player player)))
 	    (start-playing chans (srate sound) #f))))
 
@@ -7396,7 +7407,7 @@
 	(set! (selection-length) 1200)
 	(if (not (= (selection-length) 1200))
 	    (snd-display (format #f ";selection-length: 1200 ~A?" (selection-length))))
-	(cut)
+	(delete-selection)
 	(if (selection?) (snd-display (format #f ";selection active after cut?")))
 	(undo)
 	(if (not (selection?)) (snd-display (format #f ";selection inactive after undo?")))
@@ -7868,31 +7879,34 @@ EDITS: 3
 (defvar env3 '(0 0 1 1))
 
 (define procs (list 
-	       activate-listener add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp append-to-minibuffer
+	       add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control append-to-minibuffer
 	       as-one-edit ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize auto-update autocorrelate axis-info
 	       axis-label-font axis-numbers-font backward-graph backward-mark backward-mix backward-sample basic-color bind-key bold-button-font
 	       bomb button-font c-g? apply-controls change-menu-label change-samples-with-origin channel-style channel-sync channel-widgets channels
 	       chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog color-inverted color-scale color->list colormap
-	       color? comment contrast contrast-amp contrast-func contrasting convolve-arrays convolve-selection-with convolve-with corruption-time
+	       color? comment contrast-control contrast-control-amp contrast-control-procedure contrast-control? convolve-arrays 
+	       convolve-selection-with convolve-with corruption-time
 	       count-matches current-font cursor cursor-color cursor-follows-play cursor-size cursor-style dac-folding dac-size data-clipped
 	       data-color data-format data-location default-output-chans default-output-format default-output-srate default-output-type define-envelope
 	       delete-mark delete-marks delete-region delete-sample delete-samples delete-samples-with-origin delete-selection dialog-widgets
 	       dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line draw-lines draw-string edit-header-dialog edit-fragment edit-position
-	       edit-tree edits env-base env-selection env-sound enved-active-env enved-base enved-clipping enved-dBing enved-dialog enved-exping enved-power
-	       enved-selected-env enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin expand
-	       expand-hop expand-length expand-ramp expanding fft fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting
-	       fht file-dialog file-name fill-polygon fill-rectangle filter-sound filter-dBing filter-env filter-env-order filter-env-in-hz filter-order
-	       filter-selection filter-waveform-color filtering find find-mark find-sound finish-progress-report fit-data-on-open foreground-color
+	       edit-tree edits env-base env-selection env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
+	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin expand-control
+	       expand-control-hop expand-control-length expand-control-ramp expand-control? fft fft-beta fft-log-frequency 
+	       fft-log-magnitude fft-size fft-style fft-window ffting
+	       fht file-dialog file-name fill-polygon fill-rectangle filter-sound filter-control-in-dB 
+	       filter-control-env enved-filter-order filter-env-in-hz filter-control-order
+	       filter-selection filter-waveform-color filter-control? find find-mark find-sound finish-progress-report foreground-color
 	       forward-graph forward-mark forward-mix forward-sample frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
-	       graph-color graph-cursor graph-data graph->ps graph-style graphing graphs-horizontal header-type help-dialog hide-listener help-text-font
+	       graph-color graph-cursor graph-data graph->ps graph-style graphing graphs-horizontal header-type help-dialog help-text-font
 	       highlight-color id-region in insert-region insert-sample insert-samples insert-samples-with-origin insert-selection insert-silence
 	       insert-sound just-sounds key key-binding left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
 	       load-colormap load-font loop-samples main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
 	       make-region-sample-reader make-sample-reader make-track-sample-reader map-across-all-chans map-across-chans map-across-sound-chans
-	       map-chan map-chans map-sound-chans map-all-chans mark-color mark-name mark-sample mark-sync mark-sync-max mark->sound marks mark?
+	       map-chan map-chans map-sound-chans map-all-chans mark-color mark-name mark-sample mark-sync mark-sync-max mark-home marks mark?
 	       max-fft-peaks max-regions max-sounds maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
 	       mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix? mix-panel mix-position mix-region mix-sample-reader?
-	       mix-selection mix-sound mix-sound-channel mix-sound-index mix-speed mix-tag-height mix-tag-width mix-tag-y mix-vct mix-waveform-height
+	       mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mix-tag-y mix-vct mix-waveform-height
 	       movies new-sound next-mix-sample next-sample next-track-sample normalize-fft equalize-panes
 	       open-raw-sound open-sound open-sound-file orientation-dialog peak-env-info peaks play play-and-wait play-mix play-region play-selection
 	       play-track player? position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample 
@@ -7900,18 +7914,20 @@ EDITS: 3
 	       read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp recorder-in-format
 	       recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
 	       region-id region-length region-maxamp region-sample region-samples region-samples->vct region-srate regions region? remove-from-menu
-	       report-in-minibuffer reset-control-panel restore-control-panel restore-marks restore-region reverb-decay reverb-feedback reverb-funcs
-	       reverb-length reverb-lowpass reverb-scale reverbing reverse-sound reverse-selection revert-sound right-sample sample sample-reader-at-end?
-	       sample-reader? samples samples->vct samples->sound-data sash-color save-control-panel save-dir save-edit-history save-envelopes
+	       report-in-minibuffer reset-controls restore-controls restore-marks restore-region reverb-control-decay reverb-control-feedback 
+	       reverb-control-procedures reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? 
+	       reverse-sound reverse-selection revert-sound right-sample sample sample-reader-at-end?
+	       sample-reader? samples samples->vct samples->sound-data sash-color save-controls save-dir save-edit-history save-envelopes
 	       save-listener save-macros save-marks save-options save-region save-selection save-sound save-sound-as save-state save-state-file
-	       save-state-on-exit scale-by scale-selection-by scale-selection-to scale-to scan-across-all-chans scan-across-chans scan-across-sound-chans
+	       scale-by scale-selection-by scale-selection-to scale-to scan-across-all-chans scan-across-chans scan-across-sound-chans
 	       scan-chan scan-chans scan-sound-chans scan-all-chans search-procedure select-all select-channel select-mix select-region select-sound
 	       selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound selection-position selection-color
 	       selection-creates-region selection-length selection-member? selection? short-file-name show-axes show-backtrace show-controls show-fft-peaks
-	       show-indices show-listener show-marks show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width smooth
+	       show-indices show-listener show-marks show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width smooth-sound
 	       smooth-selection snd-apropos snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory sound-loop-info sound-widgets
 	       soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale
-	       spectro-z-angle spectro-z-scale speed speed-style speed-tones squelch-update srate src-sound src-selection start-playing start-progress-report
+	       spectro-z-angle spectro-z-scale speed-control speed-control-style speed-control-tones 
+	       squelch-update srate src-sound src-selection start-playing start-progress-report
 	       stop-player stop-playing swap-channels syncd-marks sync temp-dir text-focus-color tiny-font track-sample-reader? transform-dialog transform-sample
 	       transform-samples transform-samples->vct transform-size transform-type trap-segfault unbind-key undo uniting update-fft update-graph
 	       update-lisp-graph update-sound update-usage-stats use-sinc-interp vct->samples vct->sound-file verbose-cursor view-sound
@@ -7945,25 +7961,30 @@ EDITS: 3
 	       vct-peak vct? list->vct vct->list vector->vct vct-move! vct-subseq vct little-endian?))
 
 (define set-procs (list 
-		   amp ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize auto-update
+		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize auto-update
 		   axis-label-font axis-numbers-font basic-color bold-button-font button-font channel-style channel-sync color-cutoff color-inverted
-		   color-scale contrast contrast-amp contrast-func contrasting corruption-time current-font cursor cursor-color cursor-follows-play
+		   color-scale contrast-control contrast-control-amp contrast-control-procedure contrast-control? corruption-time 
+		   current-font cursor cursor-color cursor-follows-play
 		   cursor-size cursor-style dac-folding dac-size data-clipped data-color default-output-chans default-output-format default-output-srate
-		   default-output-type dot-size env-base enved-active-env enved-base enved-clipping enved-dBing enved-exping enved-power enved-selected-env
-		   enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin expand expand-hop expand-length
-		   expand-ramp expanding fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting filter-dBing filter-env
-		   filter-env-order filter-env-in-hz filter-order filter-waveform-color filtering fit-data-on-open foreground-color graph-color graph-cursor
+		   default-output-type dot-size env-base enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
+		   enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin 
+		   expand-control expand-control-hop expand-control-length
+		   expand-control-ramp expand-control? fft-beta fft-log-frequency fft-log-magnitude 
+		   fft-size fft-style fft-window ffting filter-control-in-dB filter-control-env
+		   enved-filter-order filter-env-in-hz filter-control-order filter-waveform-color filter-control? foreground-color graph-color graph-cursor
 		   graph-style graphing graphs-horizontal help-text-font highlight-color just-sounds left-sample listener-color listener-font
 		   listener-prompt listener-text-color mark-color mark-name mark-sample mark-sync max-fft-peaks max-regions menu-sensitive min-dB mix-amp
 		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix-position mix-speed mix-tag-height
 		   mix-tag-width mix-tag-y mix-waveform-height movies normalize-fft equalize-panes position-color 
 		   previous-files-sort print-length pushed-button-color recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain
 		   recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate
-		   recorder-trigger reverb-decay reverb-feedback reverb-funcs reverb-length reverb-lowpass reverb-scale reverbing sash-color
-		   save-dir save-state-file save-state-on-exit search-procedure selected-data-color selected-graph-color selected-mix-color
+		   recorder-trigger reverb-control-decay reverb-control-feedback reverb-control-procedures 
+		   reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? sash-color
+		   save-dir save-state-file search-procedure selected-data-color selected-graph-color selected-mix-color
 		   selection-color selection-creates-region show-axes show-backtrace show-controls show-fft-peaks show-indices show-marks
 		   show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start
-		   spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed speed-style speed-tones
+		   spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale 
+		   speed-control speed-control-style speed-control-tones
 		   squelch-update sync temp-dir text-focus-color tiny-font transform-type trap-segfault uniting use-sinc-interp verbose-cursor
 		   vu-font vu-font-size vu-size wavelet-type waving wavo-hop wavo-trace with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
 
@@ -7979,11 +8000,15 @@ EDITS: 3
 				(lambda args (car args)))))
 		    (if (not (eq? tag 'no-such-sound))
 			(snd-display (format #f ";snd no-such-sound ~A: ~A" n tag)))))
-		(list amp bomb apply-controls channels chans close-sound comment contrast contrast-amp contrasting data-format data-location
-		      expand expand-hop expand-length expand-ramp expanding file-name filter-dBing filter-env filter-order filtering
-		      finish-progress-report frames header-type progress-report read-only reset-control-panel restore-control-panel
-		      reverb-decay reverb-feedback reverb-length reverb-lowpass reverb-scale reverbing save-control-panel select-sound
-		      short-file-name sound-loop-info soundfont-info speed speed-style speed-tones srate uniting start-progress-report
+		(list amp-control bomb apply-controls channels chans close-sound comment 
+		      contrast-control contrast-control-amp contrast-control? data-format data-location
+		      expand-control expand-control-hop expand-control-length expand-control-ramp 
+		      expand-control? file-name filter-control-in-dB filter-control-env filter-control-order filter-control?
+		      finish-progress-report frames header-type progress-report read-only reset-controls restore-controls
+		      reverb-control-decay reverb-control-feedback reverb-control-length 
+		      reverb-control-lowpass reverb-control-scale reverb-control? save-controls select-sound
+		      short-file-name sound-loop-info soundfont-info speed-control speed-control-style 
+		      speed-control-tones srate uniting start-progress-report
 		      sync swap-channels))
       
       (for-each (lambda (arg)
@@ -7995,11 +8020,15 @@ EDITS: 3
 					    (lambda args (car args)))))
 				(if (not (eq? tag 'wrong-type-arg))
 				    (snd-display (format #f ";snd wrong-type-arg ~A: ~A ~A" n tag arg)))))
-			    (list amp bomb apply-controls channels chans close-sound comment contrast contrast-amp contrasting data-format data-location
-				  expand expand-hop expand-length expand-ramp expanding file-name filter-dBing filter-env filter-order filtering
-				  finish-progress-report frames header-type read-only reset-control-panel restore-control-panel
-				  reverb-decay reverb-feedback reverb-length reverb-lowpass reverb-scale reverbing save-control-panel select-sound
-				  short-file-name sound-loop-info soundfont-info speed speed-style speed-tones srate uniting start-progress-report
+			    (list amp-control bomb apply-controls channels chans close-sound comment 
+				  contrast-control contrast-control-amp contrast-control? data-format data-location
+				  expand-control expand-control-hop expand-control-length expand-control-ramp 
+				  expand-control? file-name filter-control-in-dB filter-control-env filter-control-order filter-control?
+				  finish-progress-report frames header-type read-only reset-controls restore-controls
+				  reverb-control-decay reverb-control-feedback reverb-control-length 
+				  reverb-control-lowpass reverb-control-scale reverb-control? save-controls select-sound
+				  short-file-name sound-loop-info soundfont-info speed-control speed-control-style 
+				  speed-control-tones srate uniting start-progress-report
 				  sync swap-channels)))
 		(list (current-module) (sqrt -1.0) 1.5 "hiho"))
 
@@ -8014,10 +8043,13 @@ EDITS: 3
 				  (if (not (eq? tag 'wrong-type-arg))
 				      (snd-display (format #f ";snd set wrong-type-arg ~D: ~A: ~A ~A" ctr n tag arg)))
 				  (set! ctr (+ ctr 1))))
-			      (list amp channels chans comment contrast contrast-amp contrasting data-format data-location expand expand-hop 
-				    expand-length expand-ramp expanding filter-dBing filter-env filter-order filtering frames header-type 
-				    read-only reverb-decay reverb-feedback reverb-length reverb-lowpass reverb-scale reverbing sound-loop-info 
-				    soundfont-info speed speed-style speed-tones srate uniting sync))))
+			      (list amp-control channels chans comment contrast-control contrast-control-amp 
+				    contrast-control? data-format data-location expand-control expand-control-hop 
+				    expand-control-length expand-control-ramp expand-control? filter-control-in-dB 
+				    filter-control-env filter-control-order filter-control? frames header-type 
+				    read-only reverb-control-decay reverb-control-feedback 
+				    reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? sound-loop-info 
+				    soundfont-info speed-control speed-control-style speed-control-tones srate uniting sync))))
 		(list (current-module) (sqrt -1.0) 1.5 "hiho"))
 
       (let ((index (open-sound "obtest.snd")))
@@ -8032,9 +8064,11 @@ EDITS: 3
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display (format #f ";snd safe set wrong-type-arg ~A: ~A ~A ~A" ctr n tag arg)))
 				    (set! ctr (+ ctr 1))))
-			      (list amp contrast contrast-amp contrasting expand expand-hop expand-length expand-ramp expanding filter-dBing 
-				    filter-env filter-order filtering reverb-decay reverb-feedback reverb-length reverb-lowpass reverb-scale 
-				    reverbing speed speed-style speed-tones uniting sync))))
+			      (list amp-control contrast-control contrast-control-amp contrast-control? 
+				    expand-control expand-control-hop expand-control-length expand-control-ramp expand-control? filter-control-in-dB 
+				    filter-control-env filter-control-order filter-control? reverb-control-decay 
+				    reverb-control-feedback reverb-control-length reverb-control-lowpass reverb-control-scale 
+				    reverb-control? speed-control speed-control-style speed-control-tones uniting sync))))
 		  (list (current-module) (sqrt -1.0) "hiho"))
 	(close-sound index))
 
@@ -8394,7 +8428,7 @@ EDITS: 3
 			    (snd-display (format #f ";~D: mix procs ~A: ~A" ctr n tag)))
 			(set! ctr (+ ctr 1))))
 		    (list backward-mix mix-amp mix-amp-env mix-anchor mix-chans mix-track mix-length mix-locked mix-name mix? 
-			  mix-position mix-sound-channel mix-sound-index mix-speed mix-tag-y))) 
+			  mix-position mix-home mix-speed mix-tag-y))) 
 
         (let ((ctr 0))
 	  (for-each (lambda (n)
@@ -8407,7 +8441,7 @@ EDITS: 3
 			    (snd-display (format #f ";~D: mix procs ~A: ~A" ctr n tag)))
 			(set! ctr (+ ctr 1))))
 		    (list mix-amp mix-anchor mix-chans mix-track mix-length mix-locked mix-name
-			  mix-position mix-sound-channel mix-sound-index mix-speed mix-tag-y)))
+			  mix-position mix-home mix-speed mix-tag-y)))
  
         (let ((ctr 0))
 	  (for-each (lambda (n)
@@ -8420,7 +8454,7 @@ EDITS: 3
 			    (snd-display (format #f ";~D: mix procs ~A: ~A" ctr n tag)))
 			(set! ctr (+ ctr 1))))
 		    (list mix-anchor mix-chans mix-track mix-length mix-locked mix-name
-			  mix-position mix-sound-channel mix-sound-index mix-speed mix-tag-y))) 
+			  mix-position mix-home mix-speed mix-tag-y))) 
 
         (let* ((ctr 0)
 	       (index (open-sound "oboe.snd"))
@@ -8435,7 +8469,7 @@ EDITS: 3
 			    (snd-display (format #f ";~D: mix procs ~A: ~A" ctr n tag)))
 			(set! ctr (+ ctr 1))))
 		    (list mix-anchor mix-chans mix-track mix-length mix-locked mix-name
-			  mix-position mix-sound-channel mix-sound-index mix-speed mix-tag-y))
+			  mix-position mix-home mix-speed mix-tag-y))
 	  (close-sound index))
 
         (let ((ctr 0))
@@ -8448,7 +8482,7 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display (format #f ";~D: mark procs ~A: ~A" ctr n tag)))
 			(set! ctr (+ ctr 1))))
-		    (list add-mark backward-mark mark-name mark-sample mark-sync mark->sound mark? delete-mark delete-marks find-mark))) 
+		    (list add-mark backward-mark mark-name mark-sample mark-sync mark-home mark? delete-mark delete-marks find-mark))) 
 
         (let ((ctr 0))
 	  (for-each (lambda (n)
@@ -8460,7 +8494,7 @@ EDITS: 3
 			(if (not (eq? tag 'no-such-mark))
 			    (snd-display (format #f ";~D: no mark procs ~A: ~A" ctr n tag)))
 			(set! ctr (+ ctr 1))))
-		    (list mark-name mark-sample mark-sync mark->sound delete-mark))) 
+		    (list mark-name mark-sample mark-sync mark-home delete-mark))) 
 
         (let* ((ctr 0)
 	       (index (open-sound "oboe.snd"))
@@ -8515,16 +8549,16 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display (format #f ";~D: misc procs ~A: ~A" ctr n tag)))
 			(set! ctr (+ ctr 1))))
-		    (list filter-env-order filter-env-in-hz filter-waveform-color ask-before-overwrite audio-state-file auto-resize auto-update 
+		    (list enved-filter-order filter-env-in-hz filter-waveform-color ask-before-overwrite audio-state-file auto-resize auto-update 
 			  axis-label-font axis-numbers-font basic-color bind-key bold-button-font button-font channel-style color-cutoff color-dialog 
 			  color-inverted color-scale cursor-color dac-folding dac-size data-clipped data-color default-output-chans default-output-format 
-			  default-output-srate default-output-type enved-active-env enved-base enved-clipping enved-dBing enved-dialog enved-exping 
-			  enved-power enved-selected-env enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin 
-			  fit-data-on-open foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding listener-color 
+			  default-output-srate default-output-type enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? 
+			  enved-power enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin 
+			  foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding listener-color 
 			  listener-font listener-prompt listener-text-color max-regions max-sounds minibuffer-history-length mix-waveform-height 
 			  movies position-color previous-files-sort print-length pushed-button-color
 			  recorder-autoload recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans recorder-out-format 
-			  recorder-srate recorder-trigger sash-color save-dir save-state-file save-state-on-exit selected-channel selected-data-color 
+			  recorder-srate recorder-trigger sash-color save-dir save-state-file selected-channel selected-data-color 
 			  selected-graph-color selected-mix selected-mix-color selected-sound selection-creates-region show-backtrace show-controls 
 			  show-indices show-listener show-selection-transform show-usage-stats sinc-width temp-dir text-focus-color tiny-font trap-segfault 
 			  unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height window-width window-x 
@@ -8597,7 +8631,7 @@ EDITS: 3
 	(check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
 	
 	(let ((ind (open-sound "oboe.snd"))) 
-	  (check-error-tag 'mus-error (lambda () (set! (filter-env ind) '())))
+	  (check-error-tag 'mus-error (lambda () (set! (filter-control-env ind) '())))
 	  (check-error-tag 'bad-arity (lambda () (set! (search-procedure ind) (lambda (a b c) #t))))
 	  (check-error-tag 'bad-arity (lambda () (map-chan (lambda (a b c) 1.0))))
 	  (check-error-tag 'bad-arity (lambda () (scan-chan (lambda (a b c) 1.0))))
@@ -8639,8 +8673,8 @@ EDITS: 3
 	  (check-error-tag 'no-such-mix (lambda () (make-mix-sample-reader 1234)))
 	  (close-sound ind))
 	
-	(check-error-tag 'bad-arity (lambda () (set-reverb-funcs abs map +)))
-	(check-error-tag 'bad-arity (lambda () (set-contrast-func (lambda () 1.0))))
+	(check-error-tag 'bad-arity (lambda () (set-reverb-control-procedures abs map +)))
+	(check-error-tag 'bad-arity (lambda () (set-contrast-control-procedure (lambda () 1.0))))
 	(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	(check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))
 	(check-error-tag 'cannot-save (lambda () (save-state "/bad/baddy")))
@@ -9447,11 +9481,6 @@ EDITS: 3
 
 ;;; -------------------------------- clean up and quit -------------------------------- 
 
-(if include-clm 
-    (begin
-      (set! (save-dir) "/home/bil/snd-4")
-      (set! (save-state-on-exit) #t))
-    (set! (save-state-on-exit) #f))
 (set! (max-regions) 2)
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (gc)
@@ -9498,9 +9527,8 @@ EDITS: 3
 ;;;   map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans scan-across-sound-chans 
 ;;;   forward-mix save-state mus-sound-reopen-output close-sound-file vct->sound-file
 ;;;   save-marks save-region vcts-map! update-sound make-track-sample-reader free-track-sample-reader 
-;;;   backward-mix peaks cursor-position y->position position->y mix-sound-channel mix-sound-index
-;;;   play-track?
-;;;   
+;;;   backward-mix peaks cursor-position y->position position->y mix-home
+;;;   play-track? equalize-panes
 ;;;   edpos in sound->temp graph-data
 ;;;   open-raw-sound-hook (data-loc/len)
 ;;;   arg to key binding, cursor-on-left et al via key commands
@@ -9513,20 +9541,13 @@ EDITS: 3
 ;;; (dlinit handle "init_gsl_j0")
 ;;; (fneq (j0 1.0) 0.765)
 
-;; TODO: change amp to play-amp or control-amp? (similarly for speed contrast contrast-amp etc)
-;;       close-sound and close-sound-file (etc) are confusingly similar
-;;       display-edits -> edit-list->string [edit-fragment->string? (edit-tree?] edit-history->string?
-;;       find-sound -> sound-name->index
-;;       mark->sound -> mark->sound-index?
-;;       memo-sound -> last-loaded-sound or something (current-sound? or pass as arg somehow -- is it needed at all?)
-;;       mix-vct -> vct->mix
-;;       remove movies?
-;;       mus-set-ran-seed and mus-set-raw-header-defaults should use generalized set
-;;       ?scale-by|to -> scale-sound-by|to?
+;; TODO: close-sound and close-sound-file (etc) are confusingly similar
 ;;       selection|sound-to-temp should use "->" and maybe "file" not "temp"
-;;       view-sound -> open-sound-read-only
-;;  
+;;       the spectro-<mumble> names are no good (and the whole thing is a mess)
 ;; also we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
+;;  perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
 
-
+;; equalize-panes with index is almost a no-op
+;; test unbind-key, new extended args to bind-key, key-binding, unbind-key
+;; auto-set control? vars if slider moved, auto-unset if some other?
 

@@ -103,7 +103,7 @@ void alert_enved_amp_env(snd_info *sp)
 {
   snd_state *ss;
   ss = sp->state;
-  if ((enved_dialog) && (active_channel) && (enved_waving(ss)))
+  if ((enved_dialog) && (active_channel) && (enved_wave_p(ss)))
     if (active_channel->sound == sp) 
       env_redisplay(sp->state);
 }
@@ -159,7 +159,7 @@ static void apply_enved(snd_state *ss)
 	  check_for_event(ss);
 	  switch (enved_target(ss))
 	    {
-	    case AMPLITUDE_ENV:
+	    case ENVED_AMPLITUDE:
 	      if (apply_to_mix)
 		{
 		  set_mix_amp_env(mix_id, NO_SELECTION, active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
@@ -171,16 +171,16 @@ static void apply_enved(snd_state *ss)
 			     "Enved: amp", NULL,
 			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION)); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
-	      if (enved_waving(ss)) env_redisplay(ss);
+	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
-	    case SPECTRUM_ENV: 
+	    case ENVED_SPECTRUM: 
 	      apply_filter(active_channel, 
-			   filter_env_order(ss), active_env, FROM_ENVED, 
+			   enved_filter_order(ss), active_env, FROM_ENVED, 
 			   "Enved: flt", apply_to_selection, 
 			   NULL, NULL,
 			   TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	      break;
-	    case SRATE_ENV:
+	    case ENVED_SRATE:
 	      /* mus_src no longer protects against 0 srate */
 	      max_env = copy_env(active_env);
 	      for (i = 0, j = 1; i < max_env->pts; i++, j += 2)
@@ -193,7 +193,7 @@ static void apply_enved(snd_state *ss)
 			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	      within_selection_src = 0;
 	      max_env = free_env(max_env);
-	      if (enved_waving(ss)) env_redisplay(ss);
+	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
 	    }
 	  set_sensitive(applyB, TRUE);
@@ -217,10 +217,10 @@ void env_redisplay(snd_state *ss)
 	  if (!name) name = copy_string("noname");
 	  display_env(ss, active_env, name, gc, 0, 0, env_window_width, env_window_height, 1);
 	  if (name) XtFree(name);
-	  if (enved_waving(ss))
+	  if (enved_wave_p(ss))
 	    {
-	      if ((enved_target(ss) == SPECTRUM_ENV) && (active_env))
-		display_frequency_response(ss, active_env, axis_cp->axis, gray_ap->ax, filter_env_order(ss), enved_dBing(ss));
+	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env))
+		display_frequency_response(ss, active_env, axis_cp->axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
 	      else enved_show_background_waveform(ss, axis_cp, gray_ap, apply_to_mix, apply_to_selection);
 	    }
 	}
@@ -239,7 +239,7 @@ static void order_field_activated(snd_state *ss)
       if (order & 1) order++;
       if ((order > 0) && 
 	  (order < 2000)) 
-	set_filter_env_order(ss, order);
+	set_enved_filter_order(ss, order);
     }
   if (str) XtFree(str);
 }
@@ -363,10 +363,10 @@ static void reflect_segment_state (snd_state *ss)
       if (!(ss->using_schemes))
 	{
 	  XmChangeColor(expB, 
-			(enved_exping(ss)) ? ((Pixel)(ss->sgx)->yellow) : 
+			(enved_exp_p(ss)) ? ((Pixel)(ss->sgx)->yellow) : 
 			                     ((Pixel)(ss->sgx)->highlight_color));
 	  XmChangeColor(linB, 
-			(enved_exping(ss)) ? ((Pixel)(ss->sgx)->highlight_color) : 
+			(enved_exp_p(ss)) ? ((Pixel)(ss->sgx)->highlight_color) : 
                                             ((Pixel)(ss->sgx)->yellow));
 	}
       if ((active_env) && 
@@ -392,7 +392,7 @@ static void select_or_edit_env(snd_state *ss, int pos)
       set_sensitive(undoB, FALSE);
       set_sensitive(revertB, FALSE);
       set_sensitive(saveB, FALSE);
-      set_enved_exping(ss, (active_env->base != 1.0));
+      set_enved_exp_p(ss, (active_env->base != 1.0));
       set_enved_base(ss, active_env->base);
       env_redisplay(ss);
     }
@@ -413,7 +413,7 @@ static void clear_point_label(void)
 void enved_display_point_label(snd_state *ss, Float x, Float y)
 {
   char brkpt_buf[LABEL_BUFFER_SIZE];
-  if ((enved_dBing(ss)) && (ss->min_dB < -60))
+  if ((enved_in_dB(ss)) && (ss->min_dB < -60))
     mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
   else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   set_button_label_normal(brkptL, brkpt_buf);
@@ -461,13 +461,13 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
       if (env_pos == (active_env->pts - 1)) 
 	x = active_env->data[(active_env->pts - 1) * 2];
       y = ungrf_y(ap, ev->y);
-      if ((enved_clipping(ss)) || 
-	  (enved_dBing(ss)))
+      if ((enved_clip_p(ss)) || 
+	  (enved_in_dB(ss)))
 	{
 	  if (y < ap->y0) y = ap->y0;
 	  if (y > ap->y1) y = ap->y1;
 	}
-      if (enved_dBing(ss)) y = un_dB(ss, y);
+      if (enved_in_dB(ss)) y = un_dB(ss, y);
       if (check_enved_hook(active_env, env_pos, x, y, ENVED_MOVE_POINT) == 0)
 	move_point(active_env, env_pos, x, y);
       enved_display_point_label(ss, x, y);
@@ -627,8 +627,8 @@ static void selection_button_pressed(Widget s, XtPointer context, XtPointer info
   XmChangeColor(selectionB, 
 		(apply_to_selection) ? ((Pixel)(ss->sgx)->yellow) : 
                                        ((Pixel)(ss->sgx)->highlight_color));
-  if ((enved_target(ss) != SPECTRUM_ENV) && 
-      (enved_waving(ss)) && 
+  if ((enved_target(ss) != ENVED_SPECTRUM) && 
+      (enved_wave_p(ss)) && 
       (!showing_all_envs)) 
     env_redisplay(ss);
 }
@@ -672,8 +672,8 @@ static void mix_button_pressed(Widget w, XtPointer context, XtPointer info)
   XmChangeColor(mixB, 
 		(apply_to_mix) ? ((Pixel)(ss->sgx)->yellow) : 
                                  ((Pixel)(ss->sgx)->highlight_color));
-  if ((enved_target(ss) == AMPLITUDE_ENV) && 
-      (enved_waving(ss)) && 
+  if ((enved_target(ss) == ENVED_AMPLITUDE) && 
+      (enved_wave_p(ss)) && 
       (!showing_all_envs)) 
     env_redisplay(ss);
 }
@@ -780,16 +780,16 @@ static void reflect_apply_state (snd_state *ss)
 {
   set_label(nameL, env_names[enved_target(ss)]);
   XmChangeColor(ampB, 
-		(enved_target(ss) == AMPLITUDE_ENV) ? ((Pixel)(ss->sgx)->green) : 
+		(enved_target(ss) == ENVED_AMPLITUDE) ? ((Pixel)(ss->sgx)->green) : 
                                                       ((Pixel)(ss->sgx)->highlight_color));
   XmChangeColor(fltB, 
-		(enved_target(ss) == SPECTRUM_ENV) ? ((Pixel)(ss->sgx)->green) : 
+		(enved_target(ss) == ENVED_SPECTRUM) ? ((Pixel)(ss->sgx)->green) : 
                                                      ((Pixel)(ss->sgx)->highlight_color));
   XmChangeColor(srcB, 
-		(enved_target(ss) == SRATE_ENV) ? ((Pixel)(ss->sgx)->green) : 
+		(enved_target(ss) == ENVED_SRATE) ? ((Pixel)(ss->sgx)->green) : 
                                                   ((Pixel)(ss->sgx)->highlight_color));
   if ((!showing_all_envs) && 
-      (enved_waving(ss))) 
+      (enved_wave_p(ss))) 
     env_redisplay(ss);
 }
 
@@ -797,7 +797,7 @@ static void amp_button_pressed(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   in_set_enved_target(ss, enved_target(ss) + 1);
-  if (enved_target(ss) > SRATE_ENV) in_set_enved_target(ss, AMPLITUDE_ENV);
+  if (enved_target(ss) > ENVED_SRATE) in_set_enved_target(ss, ENVED_AMPLITUDE);
   reflect_apply_state(ss);
 }
 
@@ -816,7 +816,7 @@ envelope applications.\n\
 static void Freq_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
-  in_set_enved_target(ss, SPECTRUM_ENV);
+  in_set_enved_target(ss, ENVED_SPECTRUM);
   reflect_apply_state(ss);
 }
 
@@ -830,7 +830,7 @@ and any sounds sync'd to it. If this button is set, \n\
 the envelope is interpreted as a frequency response\n\
 curve, and used to design an FIR filter that is then\n\
 applied to the current sound. The order of the filter\n\
-is determined by the variable " S_filter_env_order "\n\
+is determined by the variable " S_enved_filter_order "\n\
 which defaults to 40.\n\
 ");
 }
@@ -838,7 +838,7 @@ which defaults to 40.\n\
 static void Amp_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
-  in_set_enved_target(ss, AMPLITUDE_ENV);
+  in_set_enved_target(ss, ENVED_AMPLITUDE);
   reflect_apply_state(ss);
 }
 
@@ -856,7 +856,7 @@ the envelope is interpreted as a amplitude envelope.\n\
 static void Src_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
-  in_set_enved_target(ss, SRATE_ENV);
+  in_set_enved_target(ss, ENVED_SRATE);
   reflect_apply_state(ss);
 }
 
@@ -906,7 +906,7 @@ static void Graph_Button_Callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   snd_state *ss = (snd_state *)context; 
-  in_set_enved_waving(ss, cb->set);
+  in_set_enved_wave_p(ss, cb->set);
   env_redisplay(ss);
 }
 
@@ -928,7 +928,7 @@ static void dB_Button_Callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   snd_state *ss = (snd_state *)context; 
-  in_set_enved_dBing(ss, cb->set);
+  in_set_enved_in_dB(ss, cb->set);
   env_redisplay(ss);
 }
 
@@ -944,7 +944,7 @@ static void Clip_Button_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context; 
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
-  in_set_enved_clipping(ss, cb->set);
+  in_set_enved_clip_p(ss, cb->set);
 }
 
 static void Clip_Button_Help_Callback(Widget w, XtPointer context, XtPointer info) 
@@ -962,11 +962,11 @@ static void Exp_Button_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context; 
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
-  in_set_enved_exping(ss, cb->set);
+  in_set_enved_exp_p(ss, cb->set);
   if ((active_env) && 
       (!(showing_all_envs)))
     {
-      if (enved_exping(ss))
+      if (enved_exp_p(ss))
 	active_env->base = enved_base(ss);
       else active_env->base = 1.0;
       set_sensitive(saveB, TRUE);
@@ -987,11 +987,11 @@ static void Lin_Button_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context; 
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
-  in_set_enved_exping(ss, (!(cb->set)));
+  in_set_enved_exp_p(ss, (!(cb->set)));
   if ((active_env) && 
       (!(showing_all_envs)))
     {
-      if (enved_exping(ss))
+      if (enved_exp_p(ss))
 	active_env->base = enved_base(ss);
       else active_env->base = 1.0;
       set_sensitive(saveB, TRUE);
@@ -1051,7 +1051,7 @@ static void make_base_label(snd_state *ss, Float bval)
       (!(showing_all_envs))) 
     {
       active_env->base = enved_base(ss);
-      if (enved_exping(ss)) 
+      if (enved_exp_p(ss)) 
 	env_redisplay(ss);
     }
 }
@@ -1074,7 +1074,7 @@ static void base_changed(snd_state *ss, int val)
 	}
     }
   make_base_label(ss, bval);
-  if ((active_env) && (enved_exping(ss))) 
+  if ((active_env) && (enved_exp_p(ss))) 
     set_sensitive(saveB, TRUE); /* what about undo/redo here? */
 }
 
@@ -1256,7 +1256,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNmarginHeight, 0); n++;
       XtSetArg(args[n], XmNmarginBottom, 0); n++;
-      mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", filter_env_order(ss));
+      mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", enved_filter_order(ss));
       XtSetArg(args[n], XmNvalue, str); n++;
       orderL = sndCreateTextFieldWidget(ss, "orderL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(orderL, XmNhelpCallback, Order_Help_Callback, ss);
@@ -1691,9 +1691,9 @@ Widget create_envelope_editor (snd_state *ss)
       if (!(selection_is_active())) 
 	set_sensitive(selectionB, FALSE);
 
-      XmToggleButtonSetState(clipB, enved_clipping(ss), FALSE);
-      XmToggleButtonSetState(graphB, enved_waving(ss), FALSE);
-      XmToggleButtonSetState(dBB, enved_dBing(ss), FALSE);
+      XmToggleButtonSetState(clipB, enved_clip_p(ss), FALSE);
+      XmToggleButtonSetState(graphB, enved_wave_p(ss), FALSE);
+      XmToggleButtonSetState(dBB, enved_in_dB(ss), FALSE);
 
       FREE(n1);
       FREE(n2);
@@ -1709,16 +1709,16 @@ Widget create_envelope_editor (snd_state *ss)
   return(enved_dialog);
 }
 
-void set_enved_clipping(snd_state *ss, int val) 
+void set_enved_clip_p(snd_state *ss, int val) 
 {
-  in_set_enved_clipping(ss, val); 
+  in_set_enved_clip_p(ss, val); 
   if (enved_dialog) 
     XmToggleButtonSetState(clipB, val, FALSE);
 }
 
-void set_enved_exping(snd_state *ss, int val) 
+void set_enved_exp_p(snd_state *ss, int val) 
 {
-  in_set_enved_exping(ss, val); 
+  in_set_enved_exp_p(ss, val); 
   if (enved_dialog) 
     XmToggleButtonSetState(expB, val, FALSE); 
   reflect_segment_state(ss);
@@ -1731,16 +1731,16 @@ void set_enved_target(snd_state *ss, int val)
     reflect_apply_state(ss);
 }
 
-void set_enved_waving(snd_state *ss, int val) 
+void set_enved_wave_p(snd_state *ss, int val) 
 {
-  in_set_enved_waving(ss, val); 
+  in_set_enved_wave_p(ss, val); 
   if (enved_dialog) 
     XmToggleButtonSetState(graphB, val, FALSE);
 }
 
-void set_enved_dBing(snd_state *ss, int val) 
+void set_enved_in_dB(snd_state *ss, int val) 
 {
-  in_set_enved_dBing(ss, val);
+  in_set_enved_in_dB(ss, val);
   if (enved_dialog) 
     XmToggleButtonSetState(dBB, val, FALSE);
 }
@@ -1757,21 +1757,21 @@ int enved_dialog_is_active(void)
   return((enved_dialog) && (XtIsManaged(enved_dialog)));
 }
 
-void set_filter_env_order(snd_state *ss, int order)
+void set_enved_filter_order(snd_state *ss, int order)
 {
   char str[LABEL_BUFFER_SIZE];
   if ((order > 0) && (order < 2000))
     {
       if (order & 1) 
-	in_set_filter_env_order(ss, order + 1);
-      else in_set_filter_env_order(ss, order);
+	in_set_enved_filter_order(ss, order + 1);
+      else in_set_enved_filter_order(ss, order);
       if (enved_dialog)
 	{
-	  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", filter_env_order(ss));
+	  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", enved_filter_order(ss));
 	  XmTextFieldSetString(orderL, str);
 	  if ((enved_dialog) && 
-	      (enved_target(ss) == SPECTRUM_ENV) && 
-	      (enved_waving(ss)) && (!showing_all_envs)) 
+	      (enved_target(ss) == ENVED_SPECTRUM) && 
+	      (enved_wave_p(ss)) && (!showing_all_envs)) 
 	    env_redisplay(ss);
 	}
     }
@@ -1789,8 +1789,8 @@ void enved_reflect_selection(int on)
 	  apply_to_selection = 0;
 	  XmChangeColor(selectionB, (Pixel)(ss->sgx)->highlight_color);
 	}
-      if ((enved_target(ss) != SPECTRUM_ENV) && 
-	  (enved_waving(ss)) && 
+      if ((enved_target(ss) != ENVED_SPECTRUM) && 
+	  (enved_wave_p(ss)) && 
 	  (!showing_all_envs)) 
 	env_redisplay(ss);
     }
@@ -1804,7 +1804,7 @@ void color_enved_waveform(Pixel pix)
   if (enved_dialog)
     {
       XSetForeground(MAIN_DISPLAY(ss), ggc, pix);
-      if ((enved_waving(ss)) && 
+      if ((enved_wave_p(ss)) && 
 	  (enved_dialog)) 
 	env_redisplay(ss);
     }

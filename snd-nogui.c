@@ -262,14 +262,14 @@ void env_redisplay(snd_state *ss) {}
 void enved_display_point_label(snd_state *ss, Float x, Float y) {}
 void set_enved_click_to_delete(int n) {}
 int create_envelope_editor (snd_state *ss) {return(0);}
-void set_enved_clipping(snd_state *ss, int val) {}
-void set_enved_exping(snd_state *ss, int val) {}
+void set_enved_clip_p(snd_state *ss, int val) {}
+void set_enved_exp_p(snd_state *ss, int val) {}
 void set_enved_base(snd_state *ss, Float val) {}
 void set_enved_target(snd_state *ss, int val) {}
-void set_enved_waving(snd_state *ss, int val) {}
-void set_enved_dBing(snd_state *ss, int val) {}
+void set_enved_wave_p(snd_state *ss, int val) {}
+void set_enved_in_dB(snd_state *ss, int val) {}
 int enved_dialog_is_active(void) {return(0);}
-void set_filter_env_order(snd_state *ss, int order) {}
+void set_enved_filter_order(snd_state *ss, int order) {}
 void enved_reflect_selection(int on) {}
 void reflect_mix_in_enved(void) {}
 void lock_recording_audio(void) {}
@@ -313,15 +313,15 @@ void set_fft_window(snd_state *ss, int val) {in_set_fft_window(ss, val);}
 void set_transform_type(snd_state *ss, int val) {in_set_transform_type(ss, val);}
 void set_wavelet_type(snd_state *ss, int val) {in_set_wavelet_type(ss, val);}
 void set_fft_style(snd_state *ss, int val) {in_set_fft_style(ss, val);}
-void set_snd_amp(snd_info *sp, Float val) {sp->amp = val;}
-void set_snd_expand(snd_info *sp, Float val) {sp->expand = val;}
-void set_snd_contrast(snd_info *sp, Float val) {sp->contrast = val;}
-void set_snd_srate(snd_info *sp, Float val) {sp->srate = val;}
-void set_snd_revlen(snd_info *sp, Float val) {sp->revlen = val;}
-void set_snd_revscl(snd_info *sp, Float val) {sp->revscl = val;}
+void set_snd_amp(snd_info *sp, Float val) {sp->amp_control = val;}
+void set_snd_expand(snd_info *sp, Float val) {sp->expand_control = val;}
+void set_snd_contrast(snd_info *sp, Float val) {sp->contrast_control = val;}
+void set_snd_srate(snd_info *sp, Float val) {sp->speed_control = val;}
+void set_snd_revlen(snd_info *sp, Float val) {sp->reverb_control_length = val;}
+void set_snd_revscl(snd_info *sp, Float val) {sp->reverb_control_scale = val;}
 void set_reverb_labels(const char *new_label) {}
-void set_snd_filter_order(snd_info *sp, int val) {sp->filter_order = val;}
-void set_filter_dBing(snd_info *sp, int val) {sp->filter_dBing = val;}
+void set_snd_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
+void set_filter_in_dB(snd_info *sp, int val) {sp->filter_control_in_dB = val;}
 
 void reflect_recorder_mixer_gain(int ind, Float val) {}
 void reflect_recorder_out_amp(int ind, Float val) {}
@@ -388,7 +388,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   EVAL_STRING("(define (" S_region_dialog " . args) #f)\
                (define (" S_in " . args) #f)\
                (define (" S_make_color " . args) #f)\
-               (define (" S_colorQ " . args) #f)\
+               (define (" S_color_p " . args) #f)\
                (define (" S_color2list " .args) #f)\
                (define (" S_load_colormap " . args) #f)\
                (define (test-menus) #f)");

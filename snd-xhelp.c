@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* TODO:   xmhtml prints to root window in help-dialog!!
-   TODO:   probably xhelp should load index.scm and use its code to call netscape
- */
-
 /* ---------------- HELP MONOLOG ---------------- */
 
 #define HELP_ROWS 12
