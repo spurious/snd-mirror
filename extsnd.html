@@ -5664,12 +5664,11 @@ the direction argument between the channel and edit-position.
 <!-- -->save <i>snd</i> as <i>filename</i> (same as File Save as option).  If channel is specified,
 <!-- -->only that channel is saved (extracted).  <i>edpos</i>, if given, specifies which edit history position to save.
 <!-- -->Any argument can be #f (the default for an optional argument)
-<!-- -->which causes its value to be taken from the sound being saved. [<em class=error>cannot-save</em>].
+<!-- -->which causes its value to be taken from the sound being saved. 
+<!-- -->To start a parallel editing branch on a given file, you could <code>(save-sound-as "test.snd") (open-sound "test.snd")</code>.
+<!-- -->[<em class=error>cannot-save</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
-<!--
-(save-sound-as...) followed by (open-sound...) to branch
--->
 <!-- -->
 <!-- -->
 <!-- scale-by -->
@@ -5682,7 +5681,7 @@ the direction argument between the channel and edit-position.
 <!-- -->channels. <i>scalers</i> can be either a float or a vector of floats.  
 <!-- -->In the latter case, the values are used one by one, applying each as 
 <!-- -->scale-by moves through the channels. If 'sync' is off, channel <i>chn</i> 
-<!-- -->is scaled (defaults to the currently selected channel).
+<!-- -->is scaled (defaults to the currently selected channel).  <code>(scale-by 2.0)</code> doubles all samples.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5843,6 +5842,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->the current global or sound-local (if <i>snd</i> is specified) search procedure.
+<!-- --><code>(set! (search-procedure) (lambda (y) (> y .1)))</code>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5953,7 +5953,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->If #t, transform peak information is included in the transform display (default: #f).
-<!-- -->(This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> options dialog).
+<!-- -->This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> options dialog.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6188,7 +6188,8 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="squelchupdate">squelch-update</a></em> (<em class=targ>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->are graphic updates squelched (turned off).
+<!-- -->#t if graphic updates squelched (turned off). This is useful primarily in <a href="#asoneedit">as-one-edit</a>
+<!-- -->where it's pointless to waste time displaying in-between states.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6198,7 +6199,13 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndsrate">srate</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s sampling rate.
+<!-- --><i>snd</i>'s sampling rate.  There are several srates floating around in Snd.  <code>(srate snd)</code> returns the
+<!-- -->sampling rate of a particular (currently open) sound. <code>(mus-sound-srate filename)</code> returns a sound file's sampling
+<!-- -->rate.  <code>mus-srate</code> is associated with the CLM package (setting the implicit srate for oscil etc).  
+<!-- --><code>default-output-srate</code> is the default sampling rate used when opening new files.  <code>enved-srate</code>
+<!-- -->is a constant that can be assigned to the envelope editor's <code>enved-target</code> (to apply an envelope to 
+<!-- -->the sampling rate).  <code>region-srate</code> is the sampling rate associated with a region.  <code>recorder-srate</code>
+<!-- -->is the sampling rate of the ADC.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

@@ -39,7 +39,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 /* ---------------- amp envs ---------------- */
 
 typedef struct {
-  int slice; 
+  int slice, edpos;
   off_t samples, m;  
   env_info *ep; 
   snd_fd *sf;
@@ -106,6 +106,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
   es = (env_state *)CALLOC(1, sizeof(env_state));
   es->samples = samples;
   es->slice = 0;
+  es->edpos = cp->edit_ctr;
   es->m = 0;
   if (cp->amp_envs[pos])
     {
@@ -231,7 +232,9 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 	  return(TRUE);
 	}
       if (es->sf == NULL) 
-	es->sf = init_sample_read(ep->bin * ep->samps_per_bin, cp, READ_FORWARD);
+	{
+	  es->sf = init_sample_read_any(ep->bin * ep->samps_per_bin, cp, READ_FORWARD, es->edpos);
+	}
       sfd = es->sf;
       if (sfd == NULL) return(FALSE);
       for (n = 0; n < lm; n++, sb++)
@@ -3274,7 +3277,7 @@ static XEN g_channel_amp_envs(XEN filename, XEN chan, XEN pts, XEN peak_func, XE
 return two vectors of length 'size' containing y vals (min and max) of file's channel chan's amp envs. \
 'peak-file-func' if any is used to get the name of the associated peak_env_info file if the file is very large. \
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background. \
-If 'filename' is a sound index (an integer), pts is an edit-position, and the current amp envs are returned."
+If 'filename' is a sound index (an integer), 'size' is an edit-position, and the current amp envs are returned."
 
   char *fullname = NULL, *peakname;
   int len, chn, pos;

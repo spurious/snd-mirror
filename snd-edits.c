@@ -2243,7 +2243,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
 	return(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[samp - sd->io->beg]));
     }
   /* do it the hard way */
-  sf = init_sample_read_any_with_bufsize(samp, cp, READ_FORWARD, cp->edit_ctr, 2);
+  sf = init_sample_read_any_with_bufsize(samp, cp, READ_FORWARD, pos, 2);
   if (sf)
     {
       val = read_sample_to_float(sf);

@@ -5291,6 +5291,7 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
  * table) causes shrinking in the frequency domain.'
  *
  * we also scale the amplitude if interpolating to take into account the broadened sinc 
+ *   this means that isolated pulses get scaled by 1/src, but that's a dumb special case
  */
 
 typedef struct {
@@ -5542,8 +5543,12 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
     {
       xsf = zf * (1.0 - srp->x - srp->width);
       xs = (int)xsf;
-      for (i = 0; i < lim; i++, xs += xi)
-	sum += (srp->data[i] * srp->sinc_table[(xs >= 0) ? xs : (-xs)]);
+      i = 0;
+      if (xs < 0)
+	for (; (i < lim) && (xs < 0); i++, xs += xi)
+	  sum += (srp->data[i] * srp->sinc_table[-xs]);
+      for (; i < lim; i++, xs += xi)
+	sum += (srp->data[i] * srp->sinc_table[xs]);
     }
   else
     {
