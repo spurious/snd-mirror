@@ -3032,7 +3032,7 @@ static XEN g_sound_widgets(XEN snd)
   #define H_sound_widgets "(" S_sound_widgets " (snd #f)): a list of \
 widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter-env (6)unite-button (7)name-label (8)name-icon (9)sync-button"
   snd_info *sp;
-  ASSERT_SOUND(S_sound_widgets, snd, 1);
+  ASSERT_JUST_SOUND(S_sound_widgets, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_widgets, snd));

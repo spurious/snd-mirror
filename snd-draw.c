@@ -49,7 +49,7 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
 {
   #define H_draw_line "(" S_draw_line " x0 y0 x1 y1 (snd #f) (chn #f) (ax #f)): draw a line"
 
-  ASSERT_CHANNEL(S_draw_line, snd, chn, 5);
+  ASSERT_JUST_CHANNEL(S_draw_line, snd, chn, 5);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x1), x1, XEN_ARG_3, S_draw_line, "a number");
@@ -66,7 +66,7 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
 {
   #define H_draw_dot "(" S_draw_dot " x0 y0 size (snd #f) (chn #f) (ax #f)): draw a dot"
  
-  ASSERT_CHANNEL(S_draw_dot, snd, chn, 4);
+  ASSERT_JUST_CHANNEL(S_draw_dot, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_dot, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_draw_dot, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_3, S_draw_dot, "a number");
@@ -81,7 +81,7 @@ static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN 
 {
   #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height (snd #f) (chn #f) (ax #f)): draw a filled rectangle"
 
-  ASSERT_CHANNEL(S_fill_rectangle, snd, chn, 5);
+  ASSERT_JUST_CHANNEL(S_fill_rectangle, snd, chn, 5);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_fill_rectangle, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_fill_rectangle, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(width), width, XEN_ARG_3, S_fill_rectangle, "a number");
@@ -98,7 +98,7 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 {
   #define H_draw_string "(" S_draw_string " text x0 y0 (snd #f) (chn #f) (ax #f)): draw a string"
 
-  ASSERT_CHANNEL(S_draw_string, snd, chn, 4);
+  ASSERT_JUST_CHANNEL(S_draw_string, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_1, S_draw_string, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_2, S_draw_string, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_3, S_draw_string, "a number");
@@ -144,7 +144,7 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 
   POINT *pack_pts;
   axis_context *ax1;
-  ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
+  ASSERT_JUST_CHANNEL(S_draw_lines, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_lines, "a vector");
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines);
   pack_pts = TO_C_POINTS(pts, S_draw_lines);
@@ -162,7 +162,7 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
  
   POINT *pack_pts;
   axis_context *ax1;
-  ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
+  ASSERT_JUST_CHANNEL(S_draw_dots, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_dots, "a vector");
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots);
   pack_pts = TO_C_POINTS(pts, S_draw_dots);
@@ -180,7 +180,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 
   POINT *pack_pts;
   axis_context *ax;
-  ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
+  ASSERT_JUST_CHANNEL(S_fill_polygon, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_fill_polygon, "a vector");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon);
   pack_pts = TO_C_POINTS(pts, S_fill_polygon);
@@ -240,7 +240,7 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN ax)
 {
   #define H_foreground_color "(" S_foreground_color " (snd #f) (chn #f) (ax #f)): current drawing color"
   chan_info *cp;
-  ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
+  ASSERT_JUST_CHANNEL(S_foreground_color, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_foreground_color);
   return(XEN_WRAP_PIXEL(get_foreground_color(cp,
@@ -252,7 +252,7 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN ax)
 static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
 {
   chan_info *cp;
-  ASSERT_CHANNEL(S_setB S_foreground_color, snd, chn, 2);
+  ASSERT_JUST_CHANNEL(S_setB S_foreground_color, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, S_setB S_foreground_color, "a color");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_setB S_foreground_color);
@@ -300,7 +300,7 @@ static XEN g_load_font(XEN font)
 static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
   axis_context *ax;
-  ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
+  ASSERT_JUST_CHANNEL(S_setB S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer");
   XEN_ASSERT_TYPE((XEN_LIST_P(id)) &&
 		  (XEN_LIST_LENGTH(id) >= 2) &&
@@ -317,7 +317,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
   #define H_current_font "(" S_current_font " (snd #f) (chn #f) (ax #f)): current font id"
   axis_context *ax;
   chan_info *cp;
-  ASSERT_CHANNEL(S_current_font, snd, chn, 1);
+  ASSERT_JUST_CHANNEL(S_current_font, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer");
   cp = get_cp(snd, chn, S_current_font);
   ax = get_ax(cp,
@@ -346,7 +346,7 @@ static XEN g_load_font(XEN font)
 static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
   axis_context *ax;
-  ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
+  ASSERT_JUST_CHANNEL(S_setB S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_setB S_current_font);
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id), id, XEN_ARG_1, S_setB S_current_font, "a wrapped object");
@@ -359,7 +359,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
   #define H_current_font "(" S_current_font " (snd #f) (chn #f) (ax #f)): current font id"
   axis_context *ax;
-  ASSERT_CHANNEL(S_current_font, snd, chn, 1);
+  ASSERT_JUST_CHANNEL(S_current_font, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
   return(XEN_WRAP_C_POINTER(ax->current_font));
@@ -392,7 +392,7 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
 'high' defaults to the current rightmost sample. (graph-data (make-graph-data)) reimplements the time domain graph."
 
   chan_info *cp;
-  ASSERT_CHANNEL(S_make_graph_data, snd, chn, 1);
+  ASSERT_JUST_CHANNEL(S_make_graph_data, snd, chn, 1);
   cp = get_cp(snd, chn, S_make_graph_data);
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(lo), lo, XEN_ARG_4, S_make_graph_data, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(hi), hi, XEN_ARG_5, S_make_graph_data, "a number");
@@ -410,7 +410,7 @@ data in the recipient's graph between points low and high in the drawing mode gr
 
   chan_info *cp;
   vct *v0, *v1 = NULL;
-  ASSERT_CHANNEL(S_graph_data, snd, chn, 2);
+  ASSERT_JUST_CHANNEL(S_graph_data, snd, chn, 2);
   cp = get_cp(snd, chn, S_graph_data);
   XEN_ASSERT_TYPE((XEN_LIST_P(data) && 
 		   (XEN_LIST_LENGTH(data) == 2) &&

@@ -12,6 +12,17 @@
     if (!((XEN_INTEGER_P(Chn)) || (XEN_BOOLEAN_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
       XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or boolean");
 
+#define ASSERT_JUST_SOUND(Origin, Snd, Offset) \
+  if (!((XEN_INTEGER_P(Snd)) || (XEN_BOOLEAN_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
+    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), or a boolean");
+
+#define ASSERT_JUST_CHANNEL(Origin, Snd, Chn, Offset) \
+  if (!((XEN_INTEGER_P(Snd)) || (XEN_BOOLEAN_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
+    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), or a boolean"); \
+  else \
+    if (!((XEN_INTEGER_P(Chn)) || (XEN_BOOLEAN_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
+      XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or boolean");
+
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) \
 static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
 { \
@@ -41,7 +52,7 @@ typedef struct {
 
 typedef struct {
   char *name;             /* full name */
-  off_t samples;          /* total samples = chans * samples/chan */
+  off_t samples;          /* total samples = chans * frames */
   off_t data_location;    /* bytes */
   int srate;
   int chans;

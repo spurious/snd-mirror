@@ -230,9 +230,7 @@ void resize_sy(chan_info *cp)
 void resize_sx(chan_info *cp)
 {
   axis_info *ap;
-  snd_info *sp;
   ap = cp->axis;
-  sp = cp->sound;
   set_scrollbar(channel_sx(cp),
 		(ap->x0 - ap->xmin) / ap->x_ambit,
 		(ap->x1 - ap->x0) / ap->x_ambit,
@@ -588,6 +586,7 @@ static void history_select_callback(Widget w, XtPointer context, XtPointer info)
 }
 #endif
 
+#if (XmVERSION > 1)
 #if WITH_RELATIVE_PANES
 #include <Xm/SashP.h>
 
@@ -638,6 +637,7 @@ static void watch_edit_history_sash(Widget w, XtPointer closure, XtPointer info)
     }
 }
 #endif
+#endif
 
 void reflect_edit_history_change(chan_info *cp)
 {
@@ -645,96 +645,90 @@ void reflect_edit_history_change(chan_info *cp)
   chan_context *cx;
   Widget lst;
   if (cp->in_as_one_edit) return;
-#if (XmVERSION == 1)
-  if (0)
-#endif
+#if (XmVERSION > 1)
+  cx = cp->cgx;
+  if (cx)
     {
-      cx = cp->cgx;
-      if (cx)
-	{
-	  lst = EDIT_HISTORY_LIST(cp);
+      lst = EDIT_HISTORY_LIST(cp);
 #if WITH_RELATIVE_PANES
-	  if ((lst) && (widget_width(lst) > 1)) remake_edit_history(lst, cp, TRUE);
+      if ((lst) && (widget_width(lst) > 1)) remake_edit_history(lst, cp, TRUE);
 #else
-	  /* old form */
-	  if (lst)
+      /* old form */
+      if (lst)
+	{
+	  snd_info *sp;
+	  int i, eds, items = 0;
+	  XmString *edits;
+	  eds = cp->edit_ctr;
+	  while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
+	  if (eds >= 0)
 	    {
-	      snd_info *sp;
-	      int i, eds, items = 0;
-	      XmString *edits;
-	      eds = cp->edit_ctr;
-	      while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
-	      if (eds >= 0)
+	      if ((eds == cp->edit_ctr) && (eds > 1)) /* need to force 0 (1) case to start list with sound file name */
 		{
-		  if ((eds == cp->edit_ctr) && (eds > 1)) /* need to force 0 (1) case to start list with sound file name */
-		    {
-		      XmString edit;
-		      /* special common case -- we're appending a new edit description */
-		      XtVaGetValues(lst, XmNitemCount, &items, NULL);
-		      if (items > eds )
-			XmListDeleteItemsPos(lst, cp->edit_size, eds + 1); 
-		      /* cp->edit_size is too large, but the manual says this is the way to delete to the end */
-		      edit = XmStringCreate(edit_to_string(cp, eds), XmFONTLIST_DEFAULT_TAG);
-		      XmListAddItemUnselected(lst, edit, eds + 1);
-		      XmStringFree(edit);
-		    }
-		  else
-		    {
-		      sp = cp->sound;
-		      edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
-		      edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
-		      for (i = 1; i <= eds; i++) 
-			edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
-		      XtVaSetValues(lst, 
-				    XmNitems, edits, 
-				    XmNitemCount, eds + 1, 
-				    NULL);
-		      for (i = 0; i <= eds; i++) 
-			XmStringFree(edits[i]);
-		      FREE(edits);
-		    }
-		  XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
-		  XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
-		  if (items <= eds)
-		    XtVaSetValues(lst, XmNtopItemPosition, eds - items + 2, NULL);
-		  goto_graph(cp);
+		  XmString edit;
+		  /* special common case -- we're appending a new edit description */
+		  XtVaGetValues(lst, XmNitemCount, &items, NULL);
+		  if (items > eds )
+		    XmListDeleteItemsPos(lst, cp->edit_size, eds + 1); 
+		  /* cp->edit_size is too large, but the manual says this is the way to delete to the end */
+		  edit = XmStringCreate(edit_to_string(cp, eds), XmFONTLIST_DEFAULT_TAG);
+		  XmListAddItemUnselected(lst, edit, eds + 1);
+		  XmStringFree(edit);
 		}
+	      else
+		{
+		  sp = cp->sound;
+		  edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
+		  edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
+		  for (i = 1; i <= eds; i++) 
+		    edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
+		  XtVaSetValues(lst, 
+				XmNitems, edits, 
+				XmNitemCount, eds + 1, 
+				NULL);
+		  for (i = 0; i <= eds; i++) 
+		    XmStringFree(edits[i]);
+		  FREE(edits);
+		}
+	      XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
+	      XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
+	      if (items <= eds)
+		XtVaSetValues(lst, XmNtopItemPosition, eds - items + 2, NULL);
+	      goto_graph(cp);
 	    }
-#endif
 	}
+#endif
     }
+#endif
 }
 
 void reflect_edit_counter_change(chan_info *cp)
 {
   /* undo/redo/revert -- change which line is highlighted */
+#if (XmVERSION > 1)
   chan_context *cx;
   Widget lst;
   int len, top;
-#if (XmVERSION == 1)
-  if (0)
-#endif
+  cx = cp->cgx;
+  if (cx)
     {
-      cx = cp->cgx;
-      if (cx)
+      lst = EDIT_HISTORY_LIST(cp);
+      if ((lst) && (widget_width(lst) > 1))
 	{
-	  lst = EDIT_HISTORY_LIST(cp);
-	  if ((lst) && (widget_width(lst) > 1))
-	    {
-	      XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
-	      XtVaGetValues(lst, 
-			    XmNvisibleItemCount, &len, 
-			    XmNtopItemPosition, &top, 
-			    NULL);
-	      if ((cp->edit_ctr + 1) < top) 
-		XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr + 1, NULL);
-	      else
-		if ((cp->edit_ctr + 1) >= (top + len))
-		  XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr, NULL);
-	      goto_graph(cp);
-	    }
+	  XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
+	  XtVaGetValues(lst, 
+			XmNvisibleItemCount, &len, 
+			XmNtopItemPosition, &top, 
+			NULL);
+	  if ((cp->edit_ctr + 1) < top) 
+	    XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr + 1, NULL);
+	  else
+	    if ((cp->edit_ctr + 1) >= (top + len))
+	      XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr, NULL);
+	  goto_graph(cp);
 	}
     }
+#endif
 }
 
 static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont);
@@ -1315,7 +1309,7 @@ static XEN g_channel_widgets(XEN snd, XEN chn)
 {
   #define H_channel_widgets "(" S_channel_widgets " (snd #f) (chn #f)): a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)"
   chan_info *cp;
-  ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
+  ASSERT_JUST_CHANNEL(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
   return(XEN_CONS(XEN_WRAP_WIDGET(channel_graph(cp)),
 	   XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),

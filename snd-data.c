@@ -122,7 +122,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
 static chan_info *free_chan_info(chan_info *cp)
 {
   /* this does not free the associated widgets -- they are merely unmanaged */
-  snd_state *ss;
   cp->active = FALSE;
   /* need an indication right away that this channel is being deleted -- during free_snd_info (close-sound),
    *   an error may occur (an edit list temp file might have vanished for example), and normally Snd
@@ -132,7 +131,6 @@ static chan_info *free_chan_info(chan_info *cp)
    *   and the sound have "active" flags that are 1 only when everything is ship-shape.
    */
   chan_info_cleanup(cp);
-  ss = cp->state;
   cp->squelch_update = TRUE;
   cp->tcgx = NULL;
   cp->axis = free_axis_info(cp->axis);
@@ -249,7 +247,6 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
 {
   snd_info *sp = NULL;
   int chans, i;
-  Float secs;
   snd_state *ss = (snd_state *)state;
   /* assume file has been found and header read before reaching us */
   /* if a reused pointer, may need to extend current chans array */
@@ -280,7 +277,6 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->sync = DEFAULT_SYNC;
   sp->previous_sync = sp->sync;
   initialize_control_panel(ss, sp);
-  secs = (Float)((double)(hdr->samples) / (Float)(hdr->chans * hdr->srate));
   sp->searching = 0;
   if (chans > 1)
     sp->channel_style = channel_style(ss);

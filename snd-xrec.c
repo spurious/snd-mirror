@@ -1052,7 +1052,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
   int on, button;
   snd_state *ss;
 #if SGI || SUN
-  int j, n, i, output;
+  int j, i, output;
   float val[2];
 #endif
 
@@ -1291,7 +1291,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  recdat = make_file_data_panel(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE);
+  recdat = make_file_data_panel(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE, FALSE);
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, (void *)ss); /* this is a no-op -- textfield widget is not activatable */
 #if SGI
@@ -2863,7 +2863,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
   XmString s1 = NULL, s2 = NULL;
   Wdesc *wd;
   int i, old_srate, ofmt, rs, ochns;
-  off_t oloc;
+  off_t oloc, samples;
   static char *comment;
   char *str;
   PANE *p;
@@ -2881,7 +2881,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	  XtFree(str);
 	  str = NULL;
 	  old_srate = rp->srate;
-	  str = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc); 
+	  str = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
 	  if (str) FREE(str);
 	  str = NULL;
 	  rp->out_format = ofmt;

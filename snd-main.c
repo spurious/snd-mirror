@@ -455,6 +455,16 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (tmpstr) FREE(tmpstr);
     }
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
+  if ((XEN_VECTOR_P(sp->properties)) &&
+      (XEN_LIST_P(XEN_VECTOR_REF(sp->properties, 0))) &&
+      (!(XEN_NULL_P(XEN_VECTOR_REF(sp->properties, 0)))))
+    {
+#if HAVE_RUBY
+      fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
+#else
+      fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
+#endif
+    }
   for (chan = 0; chan < sp->nchans; chan++)
     {
       cp = sp->chans[chan];
@@ -505,6 +515,24 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (cp->beats_per_minute != beats_per_minute(ss)) pcp_sf(fd, S_beats_per_minute, cp->beats_per_minute, chan);
       if (cp->show_axes != show_axes(ss)) pcp_ss(fd, S_show_axes, show_axes2string(cp->show_axes), chan);
       if (cp->graphs_horizontal != graphs_horizontal(ss)) pcp_ss(fd, S_graphs_horizontal, b2s(cp->graphs_horizontal), chan);
+      if ((XEN_VECTOR_P(cp->properties)) &&
+	  (XEN_LIST_P(XEN_VECTOR_REF(cp->properties, 0))) &&
+	  (!(XEN_NULL_P(XEN_VECTOR_REF(cp->properties, 0)))))
+	{
+#if HAVE_RUBY
+	  fprintf(fd, "%sset_%s(%s, sfile, %d)\n", 
+		  white_space, 
+		  TO_PROC_NAME(S_channel_properties), 
+		  XEN_AS_STRING(XEN_VECTOR_REF(cp->properties, 0)),
+		  chan);
+#else
+	  fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", 
+		  white_space, 
+		  S_channel_properties, 
+		  chan,
+		  XEN_AS_STRING(XEN_VECTOR_REF(cp->properties, 0)));
+#endif
+	}
       edit_history_to_file(fd, cp);
     }
 #if HAVE_RUBY

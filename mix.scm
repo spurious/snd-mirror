@@ -1,9 +1,5 @@
 ;;; support for "tracks" in Snd and various mix-related utilities
 ;;;
-;;;   HISTORY: changed 20-Jan-02 to use generalized set, etc
-;;;
-;;; mixes:
-;;;
 ;;; (mix-name->id name) given name of mix return id
 ;;; (pan-mix file frame envelope) mixes file into current (stereo) sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)
 ;;; (mix->vct id) return mix data in vct
@@ -566,6 +562,15 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 	   new-val)
 	 (throw 'no-such-mix (list "set! mix-property" id))))))
 
+(add-hook! close-hook
+	   (lambda (snd)
+	     (if (not (null? all-mix-properties))
+		 ;; prune out inactive mix properties
+		 (set! all-mix-properties (remove-if (lambda (val)
+						       (not (mix? (car val))))
+						     all-mix-properties)))
+	     #f))
+
 (define (mix-click-sets-amp)
   (add-hook! mix-click-hook 
 	     (lambda (n)
@@ -585,14 +590,6 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 			   ((= i (mix-chans n)))
 			 (set! (mix-amp n i) (list-ref amps i)))
 		       (set! (mix-property :zero n) #f)))
-		 #t)))
-  (add-hook! close-hook
-	     (lambda (snd)
-	       ;; prune out inactive mix properties
-	       (set! all-mix-properties (remove-if (lambda (val)
-						     (not (mix? (car val))))
-						   all-mix-properties))
-	       #f)))
-
+		 #t))))
 
   

@@ -175,7 +175,7 @@ the integer returned by mus_sound_open_input.</p>
 <p><i>mus_sound_open_output</i> opens <i>arg</i>, setting its sampling rate
 to be <i>srate</i>, number of channels to <i>chans</i>, data format
 to <i>data_format</i> (see sndlib.h for these types: MUS_BSHORT,
-for example, means 16-bit 2's complement big endian fractions),
+means 16-bit 2's complement big endian fractions),
 header type to <i>header_type</i> (AIFF for example; the available
 writable header types are MUS_AIFC (or AIFF), MUS_RIFF ('wave'),
 MUS_NEXT, MUS_NIST, and MUS_IRCAM), and comment (if any) to
@@ -892,7 +892,7 @@ of Snd and CLM, both of which are freely available.</p>
 <span class=bbox><h3><A NAME="building">How to Make Sndlib and the examples</a></h3></span>
 
 <p>The Sndlib files can be used as separate modules or made into a
-library.  The following sequence, for example, builds the sndplay
+library.  The following sequence builds the sndplay
 program from scratch on an SGI:</p>
 <pre>
 cc -c io.c -O -DSGI
@@ -1268,7 +1268,7 @@ guile&gt; (oscil osc)
 </pre>
 <p>The first dynamic-call (mus_sndlib2xen_initialize) ties sndlib2xen.c into
 Guile, and the second (mus_xen_init) ties clm2xen.c into Guile.  See bess.scm
-and bess.rb in the Snd tarball for examples.
+and bess.rb in the Snd tarball.
 </p>
 
 <center>

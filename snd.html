@@ -397,7 +397,7 @@ you full programming power over sounds, and you can
 extend it to include whatever you want.  But if you
 are in a big hurry, or not yet confident in your ability as a programmer, many such
 operations have been included in the various scm (Guile/Scheme) and
-rb (Ruby) files in the Snd tarball.  For example, Dave Phillips
+rb (Ruby) files in the Snd tarball.  Dave Phillips
 wrote a set of files that implement dozens of the effects and
 editing operations built into other editors.  Just load the
 files that look interesting, and start clicking widgets.
@@ -476,7 +476,7 @@ its arguments for file names, and opens any it finds.</p>
 If a name is preceded by <A NAME="minusp">"-p"</a> or "-preload", it is treated as a directory
 name and all sound files found in that directory are preloaded
 into the <a href="#prevfiles">previous files</a> list.  To
-load arbitrary Snd customizations (your own code, or a <a href="#savedstate">saved state</a> file for example),
+load arbitrary Snd customizations (your own code, or a <a href="#savedstate">saved state</a> file),
 precede the file name with <A NAME="minusl">"-l"</a> or "-load" (or use the load function). </p>
 <pre>
   snd oboe.snd -l examp.scm
@@ -1357,8 +1357,8 @@ selected.</p>
 <h4><A NAME="ampenvs">Amplitude envelopes and scaling</a></h4>
 
 <p>An envelope in Snd is a list of x y break-point pairs.
-The x axis range is arbitrary. For example,
-to define a triangle curve: '(0 0 1 1 2 0).
+The x axis range is arbitrary. 
+To define a triangle curve: '(0 0 1 1 2 0).
 There is no preset limit on the number of
 breakpoints.  Envelopes can be defined with
 define and referred to thereafter by name.
@@ -1413,8 +1413,8 @@ C-s or C-r, the minibuffer below the graph is
 activated and you are asked for the search expression.
 The expression is a
 function that takes one argument, the current
-sample value, and returns #t when it finds a match.  For example,
-to look for the next sample that is greater than
+sample value, and returns #t when it finds a match. 
+To look for the next sample that is greater than
 .1, <code>(lambda (y) (&gt; y .1))</code>.  The
 cursor then moves
 to the next such sample, if any.
@@ -1427,7 +1427,7 @@ The search commands are:</p>
   C-r   find backwards
   <A NAME="cs">C-s</a>   find forwards
 </pre>
-<p>These searching functions can be closures; the following, for example, searches for
+<p>These searching functions can be closures; the following searches for
 the next positive-going zero crossing, placing the cursor just before it:</p>
 <pre>
 (define (zero+)
@@ -1632,7 +1632,7 @@ The easiest way to extend the
 file is to pad it with zeros.  Go to the end of the file,
 via the C-&gt; command, then use the C-u command with a float
 argument, giving the number of seconds to add to the end
-of the file, followed by C-o (insert zeros): for example,
+of the file, followed by C-o (insert zeros): 
 to add a second, C-&gt; C-u 1.0 C-o.  The same sequence
 can be used to add silence to the start of a file.
 Functions such as <a href="extsnd.html#sndinsertfile">insert-sound</a>
@@ -1764,8 +1764,8 @@ printed with 'print'.</p>
 
 <p>Envelopes can be defined
 using defvar, and loaded from a separate file of envelope
-definitions via load.  For example,
-the file:</p>
+definitions via load:
+</p>
 <pre>
   (defvar ramp '(0 0 1 1))
   (defvar pyramid '(0 0 1 1 2 0))
@@ -1952,7 +1952,7 @@ argument which can be either an integer or
 a float; an integer causes the command to be repeated
 that many times; the float is usually multiplied by the
 sound's sampling rate, then applied that many times.
-So, for example, C-u 1.0 C-f causes the cursor to move
+So C-u 1.0 C-f causes the cursor to move
 ahead one second in the sound.  The argument can
 be negative to reverse the sense of the command,
 as in Emacs.  It is often useful to use the distance
@@ -1960,7 +1960,7 @@ to a mark as a count.  If the C-u n command is
 followed by C-m, the 'n' determines how many
 marks to move to, then the count returned is
 the distance from the cursor to that mark.  
-For example, C-u C-m returns the number of samples between
+C-u C-m returns the number of samples between
 the cursor and the next mark, so C-u C-m C-z zeros
 all the samples between the cursor and the next mark.</p>
 
@@ -2206,7 +2206,7 @@ this is an envelope editor like the envelope editor dialog
 but specialized for filtering.  The actual frequency response (given the current filter order)
 is displayed in blue.  As with all the user interface text entry widgets,
 anything you type in the filter envelope text field is evaluated,
-returning in this case a list of breakpoints; you can, for example,
+returning in this case a list of breakpoints; you can
 define a function that returns the list you want, then call that function
 in the text field.
 The filter is on only if the filter button is set.

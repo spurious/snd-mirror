@@ -84,7 +84,7 @@ typedef struct {
 } snd_context;
 
 typedef struct {
-  GtkWidget *header_list, *format_list, *srate_text, *chans_text, *comment_text, *location_text;
+  GtkWidget *header_list, *format_list, *srate_text, *chans_text, *comment_text, *location_text, *samples_text;
   int current_type, current_format, formats, header_pos, format_pos;
 } file_data;
 

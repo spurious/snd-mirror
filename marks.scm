@@ -17,6 +17,7 @@
 ;;;     define-selection-via-marks selects the portion between two marks
 ;;;     snap-mark-to-beat forces dragged mark to end up on a beat
 ;;;     mark-explode splits a sound into a bunch of sounds based on mark placements
+;;;     mark-property implements property lists for marks
 
 
 ;;; -------- mark-name->id is a global version of find-mark
@@ -332,3 +333,51 @@
 	 (set! file-ctr (1+ file-ctr))
 	 (set! start (mark-sample mark))))
      (caar (marks)))))
+
+
+;;; -------- mark property lists
+
+(define all-mark-properties '())
+
+(define mark-properties
+  (make-procedure-with-setter
+   (lambda (id)
+     (let ((data (assoc id all-mark-properties)))
+       (if data
+	   (cdr data)
+           '())))
+   (lambda (id new-val)
+     (let ((old-val (assoc id all-mark-properties)))
+       (if old-val
+	   (set-cdr! old-val new-val)
+	   (set! all-mark-properties (cons (cons id new-val) all-mark-properties)))
+       new-val))))
+     
+(define mark-property
+  (make-procedure-with-setter
+   (lambda (key id)
+     "(mark-property key id) returns the value associated with 'key' in the given mark's property list, or #f"
+     (if (mark? id)
+	 (let ((data (assoc key (mark-properties id))))
+	   (if data
+	       (cdr data)
+	       #f))
+	 (throw 'no-such-mark (list "mark-property" id))))
+   (lambda (key id new-val)
+     (if (mark? id)
+	 (let ((old-val (assoc key (mark-properties id))))
+	   (if old-val
+	       (set-cdr! old-val new-val)
+	       (set! (mark-properties id) (cons (cons key new-val) (mark-properties id))))
+	   new-val)
+	 (throw 'no-such-mark (list "set! mark-property" id))))))
+
+(add-hook! close-hook
+	   (lambda (snd)
+	     (if (not (null? all-mark-properties))
+		 ;; prune out inactive mark properties
+		 (set! all-mark-properties (remove-if (lambda (val)
+						       (not (mark? (car val))))
+						     all-mark-properties)))
+	     #f))
+

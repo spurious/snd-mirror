@@ -2637,7 +2637,6 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off_t beg, off_t num, int pos)
 { 
   snd_state *ss;
-  snd_info *sp;
   snd_fd *sf = NULL;
   off_t kp;
   int temp_file;
@@ -2647,7 +2646,6 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
   XEN v;
   mus_sample_t *data = NULL;
   ss = cp->state;
-  sp = cp->sound;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf == NULL) return(XEN_TRUE);
   temp_file = (num > MAX_BUFFER_SIZE);

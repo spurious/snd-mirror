@@ -337,7 +337,6 @@ void update_graph(chan_info *cp)
 {
   /* don't put display stuff here!  This is needed so that the fft display does not get caught in a loop */
   double cur_srate;
-  snd_state *ss;
   snd_info *sp;
   axis_info *ap;
   if ((updating) || 
@@ -348,7 +347,6 @@ void update_graph(chan_info *cp)
       (cp->sounds[cp->sound_ctr] == NULL)) 
     return;
   updating = TRUE;
-  ss = cp->state;
   sp = cp->sound;
 
   /* next two are needed by fft and lisp displays, but if put off until make_graph cause
@@ -375,7 +373,7 @@ void update_graph(chan_info *cp)
   if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
     calculate_fft_1(cp, TRUE);
-  display_channel_data(cp, sp, ss);
+  display_channel_data(cp, sp, cp->state);
   updating = FALSE;
 #endif
 }
@@ -1218,13 +1216,11 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
   int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
-  double cur_srate = 1.0;
   Float *data = NULL, *data1 = NULL;
   int data_size = 0;
   ap = cp->axis;
   sp = cp->sound;
   ss = get_global_state();
-  cur_srate = (double)SND_SRATE(sp);
   if (losamp == -1) losamp = ap->losamp;
   if (hisamp == -1) hisamp = ap->hisamp;
   x_start = ap->x_axis_x0;
@@ -2785,10 +2781,8 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixe
 
 static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first)
 {
-  snd_state *ss;
   snd_info *sp;
   axis_context *ax;
-  ss = cp->state;
   if (!(ap->ax))
     {
       ax = (axis_context *)CALLOC(1, sizeof(axis_context));
@@ -4211,7 +4205,14 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	}
       else
 	{
-	  ASSERT_CHANNEL(caller, snd_n, chn_n, 1);
+	  if ((fld == CP_MAXAMP) || (fld == CP_FRAMES) || (fld == CP_EDIT_CTR))
+	    {
+	      ASSERT_CHANNEL(caller, snd_n, chn_n, 1);
+	    }
+	  else 
+	    {
+	      ASSERT_JUST_CHANNEL(caller, snd_n, chn_n, 1);
+	    }
 	  cp = get_cp(snd_n, chn_n, caller);
 	  switch(fld)
 	    {
@@ -4365,7 +4366,14 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 	res = XEN_CONS(channel_set(snd_n, C_TO_SMALL_XEN_INT(i), on, fld, caller), res);
       return(res);
     }
-  ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
+  if ((fld == CP_MAXAMP) || (fld == CP_EDIT_CTR))
+    {
+      ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
+    }
+  else 
+    {
+      ASSERT_JUST_CHANNEL(caller, snd_n, chn_n, 2);
+    }
   cp = get_cp(snd_n, chn_n, caller);
   switch (fld)
     {
@@ -5835,7 +5843,7 @@ static XEN g_time_graph_style(XEN snd, XEN chn)
 {
   #define H_time_graph_style "(" S_time_graph_style " snd chn): time domain graph drawing style. \
 one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
-  ASSERT_SOUND(S_time_graph_style, snd, 0);
+  ASSERT_JUST_SOUND(S_time_graph_style, snd, 0);
   return(channel_get(snd, chn, CP_TIME_GRAPH_STYLE, S_time_graph_style));
 }
 
@@ -5843,7 +5851,7 @@ static XEN g_set_time_graph_style(XEN style, XEN snd, XEN chn)
 {
   int val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_time_graph_style, "an integer"); 
-  ASSERT_SOUND(S_time_graph_style, snd, 0);
+  ASSERT_JUST_SOUND(S_time_graph_style, snd, 0);
   val = XEN_TO_C_INT(style);
   if (!(GRAPH_STYLE_OK(val)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_time_graph_style, 1, style, "~A: unknown " S_time_graph_style);
@@ -5856,7 +5864,7 @@ static XEN g_lisp_graph_style(XEN snd, XEN chn)
 {
   #define H_lisp_graph_style "(" S_lisp_graph_style " snd chn): lisp graph drawing style. \
 one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
-  ASSERT_SOUND(S_lisp_graph_style, snd, 0);
+  ASSERT_JUST_SOUND(S_lisp_graph_style, snd, 0);
   return(channel_get(snd, chn, CP_LISP_GRAPH_STYLE, S_lisp_graph_style));
 }
 
@@ -5864,7 +5872,7 @@ static XEN g_set_lisp_graph_style(XEN style, XEN snd, XEN chn)
 {
   int val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_lisp_graph_style, "an integer"); 
-  ASSERT_SOUND(S_lisp_graph_style, snd, 0);
+  ASSERT_JUST_SOUND(S_lisp_graph_style, snd, 0);
   val = XEN_TO_C_INT(style);
   if (!(GRAPH_STYLE_OK(val)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_lisp_graph_style, 1, style, "~A: unknown " S_lisp_graph_style);
@@ -5877,7 +5885,7 @@ static XEN g_transform_graph_style(XEN snd, XEN chn)
 {
   #define H_transform_graph_style "(" S_lisp_graph_style " snd chn): fft graph drawing style, one \
 of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
-  ASSERT_SOUND(S_transform_graph_style, snd, 0);
+  ASSERT_JUST_SOUND(S_transform_graph_style, snd, 0);
   return(channel_get(snd, chn, CP_TRANSFORM_GRAPH_STYLE, S_transform_graph_style));
 }
 
@@ -5885,7 +5893,7 @@ static XEN g_set_transform_graph_style(XEN style, XEN snd, XEN chn)
 {
   int val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_transform_graph_style, "an integer"); 
-  ASSERT_SOUND(S_transform_graph_style, snd, 0);
+  ASSERT_JUST_SOUND(S_transform_graph_style, snd, 0);
   val = XEN_TO_C_INT(style);
   if (!(GRAPH_STYLE_OK(val)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_style, 1, style, "~A: unknown " S_transform_graph_style);
@@ -6044,7 +6052,7 @@ to the help dialog if filename is omitted"
   char *name = NULL;
   int err;
   XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), filename, XEN_ARG_1, S_peaks, "a string or #f");
-  ASSERT_CHANNEL(S_peaks, snd_n, chn_n, 2);
+  ASSERT_JUST_CHANNEL(S_peaks, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_peaks);
   if (XEN_STRING_P(filename))
     name = mus_expand_filename(XEN_TO_C_STRING(filename));
@@ -6119,7 +6127,7 @@ static XEN g_x_bounds(XEN snd_n, XEN chn_n)
 {
   #define H_x_bounds "(" S_x_bounds " (snd #f) (chn #f)): a list (x0 x1) giving the current x axis bounds of snd channel chn"
   chan_info *cp;
-  ASSERT_CHANNEL(S_x_bounds, snd_n, chn_n, 1);
+  ASSERT_JUST_CHANNEL(S_x_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_x_bounds);
   return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->x0),
 		    C_TO_XEN_DOUBLE(cp->axis->x1)));
@@ -6130,7 +6138,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
 {
   chan_info *cp;
   Float x0, x1;
-  ASSERT_CHANNEL(S_setB S_x_bounds, snd_n, chn_n, 2);
+  ASSERT_JUST_CHANNEL(S_setB S_x_bounds, snd_n, chn_n, 2);
   XEN_ASSERT_TYPE(XEN_LIST_P(bounds) && (XEN_LIST_LENGTH(bounds) == 2), bounds, XEN_ARG_1, S_setB S_x_bounds, "a list: (x0 x1)");
   cp = get_cp(snd_n, chn_n, S_setB S_x_bounds);
   if (cp->time_graph_type == GRAPH_ONCE) 
@@ -6152,7 +6160,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   Float low, hi;
   int len = 0;
   XEN y0 = XEN_UNDEFINED; XEN y1 = XEN_UNDEFINED;
-  ASSERT_CHANNEL(S_setB S_y_bounds, snd_n, chn_n, 2);
+  ASSERT_JUST_CHANNEL(S_setB S_y_bounds, snd_n, chn_n, 2);
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(bounds, len), bounds, XEN_ARG_1, S_setB S_y_bounds, "a list");
   cp = get_cp(snd_n, chn_n, S_setB S_y_bounds);
   if (len > 0)
@@ -6210,7 +6218,7 @@ static XEN g_y_bounds(XEN snd_n, XEN chn_n)
 {
   #define H_y_bounds "(" S_y_bounds " (snd #f) (chn #f)): a list (y0 y1) giving the current y axis bounds of snd channel chn"
   chan_info *cp;
-  ASSERT_CHANNEL(S_y_bounds, snd_n, chn_n, 1);
+  ASSERT_JUST_CHANNEL(S_y_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_y_bounds);
   return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->y0),
 		    C_TO_XEN_DOUBLE(cp->axis->y1)));
@@ -6241,7 +6249,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0) && 
 		    ((XEN_NUMBER_P(XEN_CAR(ldata))) || (XEN_VECTOR_P(XEN_CAR(ldata))) || (VCT_P(XEN_CAR(ldata)))))),
 		  ldata, XEN_ARG_1, S_graph, "a vct, vector, or list");
-  ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
+  ASSERT_JUST_CHANNEL(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
   ymin = 32768.0;
   ymax = -32768.0;

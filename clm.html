@@ -109,7 +109,7 @@ named fm-violin) at 440 Hz, and a somewhat soft amplitude.  Compile and load v.i
     (with-sound () (fm-violin 0 1 440 .1)) 
 </pre>
 <p>and the note should emerge from the speakers.  The compile and load sequence can be abbreviated
-in most lisps.  In ACL, for example, <code>:cl v.ins</code> or perhaps even <code>:cl v</code> will call compile-file
+in most lisps.  In ACL<code>:cl v.ins</code> or perhaps even <code>:cl v</code> will call compile-file
 if needed, then load.
 Once loaded, we don't
 need to reload v unless we change it in some way.  (In CMU-CL, load v.cmucl, not v.x86f).
@@ -364,8 +364,8 @@ Each generator consists of a set of functions:  Make-&lt;gen&gt; sets up the
 data structure associated with the generator at initialization time;
 &lt;gen&gt; produces a new sample;
 &lt;gen&gt;? checks whether a variable is that kind of generator.
-Internal fields are accessible via various generic functions such as mus-frequency.
-For example,</p>
+Internal fields are accessible via various generic functions such as mus-frequency:
+</p>
 <pre>
     (setf oscillator (make-oscil :frequency 330))
 </pre>
@@ -401,7 +401,7 @@ argument from a more easily interpreted value.</p>
 read their arguments.  I use the word <a name="optional-key"><em class=def>optional-key</em></a>
 in the function definitions in this document to indicate that the arguments are
 keywords, but the keywords themselves are optional.
-Take, for example, the make-oscil call, defined as:</p>
+Take the make-oscil call, defined as:</p>
 <pre>
   make-oscil &amp;optional-key (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
 </pre>
@@ -584,7 +584,7 @@ of this in ug.ins).</p>
 <p>env-interp and envelope-interp return the value of the envelope at some point
 on the x axis; env-interp operates on an 'env' (the output of make-env), whereas
 envelope-interp operates on an 'envelope' (a list of breakpoints).
-For example, to get weighted random numbers, use the output of
+To get weighted random numbers, use the output of
 random(100.0) as the lookup index into an envelope whose x axis goes
 from 0 to 100.  Then the envelope y values are the numbers returned,
 and the amount of the x-axis taken by a given value is its weight.
@@ -1428,7 +1428,7 @@ an instrument that provides time-varying sampling rate conversion (see also the
         (outa i (* amp (<em class=red>src</em> src-gen (env senv))))))
     (close-input f)))
 </small></pre>
-<p>src can provide an all-purpose "Forbidden Planet" sound effect; for example,</p>
+<p>src can provide an all-purpose "Forbidden Planet" sound effect:</p>
 <pre><small>
 (definstrument simp (start-time duration amp srt fmamp fmfreq filename)
   (let* ((os (make-oscil :frequency fmfreq))
@@ -1575,7 +1575,7 @@ close to the original speed.
        (outa i (<em class=red>granulate</em> exA))))
     (close-input f)))
 </small></pre>
-<p>See expsrc.ins for examples.  Here's a short example of using the <i>input-function</i>
+<p>See expsrc.ins.  Here's a short example of using the <i>input-function</i>
 argument to granulate.  It cause the granulation to run backwards through the file:
 </p>
 <pre><small>
@@ -1775,7 +1775,7 @@ set these fields, use these functions (they are described in conjunction with th
   <a name="mus-file-name"><em class=def>mus-file-name</em></a>  <a name="mus-offset"><em class=def>mus-offset</em></a>          <a name="mus-width"><em class=def>mus-width</em></a>
 </pre>
 <p>
-For example (setf (mus-frequency osc1) 440.0)
+<code>(setf (mus-frequency osc1) 440.0)</code>
 sets osc1's current frequency to (hz-&gt;radians 440.0). 
 
 </p>
@@ -2091,7 +2091,7 @@ Phenomena" by J Blauert).
 If channels &gt; 2, the speakers are assumed to be evenly spaced in
 a circle.
 You can use locsig-set! and locsig-ref to override the placement decisions.
-For example, to have full output to both channels,</p>
+To have full output to both channels,</p>
 <pre>
 (setf (locsig-ref loc 0) 1.0) ;or (locsig-set! loc 0 1.0)
 (setf (locsig-ref loc 1) 1.0)
@@ -2201,7 +2201,7 @@ second; we then divide by the number of samples per second to get the
 radians per sample; in dimensional terms: (radians/sec) /
 (sample/sec) = radians/sample.  We need this conversion whenever a
 frequency-related value is actually being accessed on every sample, as
-an increment of a phase variable, for example.  (We are also assuming
+an increment of a phase variable.  (We are also assuming
 our wave table size is 2 * pi). This conversion value was named "mag"
 in Mus10 and "in-hz" in CLM-1.  The inverse is radians-&gt;hz.
 </small></p></blockquote>
@@ -2209,7 +2209,7 @@ in Mus10 and "in-hz" in CLM-1.  The inverse is radians-&gt;hz.
 <p>These names are different from the underlying sndlib names mostly due
 to confusion and inattention. Nearly all the sndlib constants and functions
 are imported into clm under names that are the same as the C name except
-"_" is replaced by "-". So, for example, <b>mus-sound-duration</b> exists,
+"_" is replaced by "-". So <b>mus-sound-duration</b> exists,
 and is the same as <b>sound-duration</b> mentioned above.  See <a href="sndlib.html">sndlib.html</a>
 for some info.
 </p>
@@ -2326,7 +2326,7 @@ a simple instrument such as:</p>
 	(poly (partials-&gt;polynomial spectr)))
     (mix-vct (vct-map! v0 (lambda () (polynomial poly (driver)))) 0 0 0 #f)))
 </pre>
-<p>and try, for example, </p>
+<p>and try:</p>
 <pre>
 (waver '(1 .6 2 .4) 
        (let ((g0 (make-oscil 100)) 
@@ -2535,7 +2535,7 @@ flux; currently they are:</p>
 <p>The output language is chosen based on the kind of CLM you load.  In most cases,
 it defaults to :c.
 The :lisp option is useful during debugging.  The syntax for these options is somewhat similar to that of <a href="#with-sound">with-sound</a>.
-For example, to specify that the instrument simp should use C with the "-c -O3"
+To specify that the instrument simp should use C with the "-c -O3"
 flags, </p>
 <pre>
    (definstrument (simp :language :c :c-options "-c -O3") (beg dur)
@@ -2911,7 +2911,7 @@ except output, comment, scaled-to, and scaled-by.</p>
 
 <p><a name="notehook">Notehook</a> declares a function that is evaluated each time any instrument is called.
 The arguments passed to the notehook function are the current instrument name (a string) and all its
-arguments.  For example, the following prints out the instrument arguments for any
+arguments.  The following prints out the instrument arguments for any
 calls on simp that are encountered:</p>
 <pre>
 (with-sound (<em class=red>:notehook</em>
@@ -3008,8 +3008,8 @@ instrument).
 Record (microphone) input is enabled when
 <b>rec-chans</b> is greater than 0 (see <a href="#rec-any">rec-any</a>).
 Reverb in this mode is handled currently by the
-generator <b>previn</b> -- see rt.lisp and preverb.ins
-for examples.  With-psound assumes it is dealing with
+generator <b>previn</b> -- see rt.lisp and preverb.ins.
+With-psound assumes it is dealing with
 a precomputed notelist, and runs until all instruments
 have stopped.  That is, in with-psound, time is always
 moving forward and instruments that arrive behind the
@@ -3056,8 +3056,8 @@ memory; (setf (control n) val) sets it to val.  While lisp is running (most usef
 with-psound or with-dac is running), any instrument or program can read or write these
 values (via sliders or whatever) by accessing the same
 memory.  Besides serving as real-time IO locations, these can also be used
-for inter-instrument communication in parallel instruments; for example,
-for example, spectral fusion effects involving shared frequency modulation
+for inter-instrument communication in parallel instruments;
+spectral fusion effects involving shared frequency modulation
 across instruments can be implemented with control.
 Several complete examples can be found in the bess*.cl files.
 The available control-related functions are:</p>
@@ -3263,7 +3263,7 @@ messages).</p>
 <span class=bbox><h3><a name="instrument-let">Instrument-let</a></h3></span>
 
 <p><b>Instrument-let</b> is like Lisp's <i>flet</i> -- it can be used to
-define local instruments.  For example,</p>
+define local instruments:</p>
 <pre><small>
 (defun ins ()
   (<em class=red>instrument-let</em> ((simp (beg dur freq)
@@ -3351,7 +3351,7 @@ current dynamic value of that variable is *&lt;var&gt;*.
 </pre>
 
 <p><b>*clm-player*</b> can be used to override CLM's normal DAC routine (which
-calls sndplay in most cases); for example, say we want to send the sound
+calls sndplay in most cases); say we want to send the sound
 to an ADAT output:</p>
 <pre>
 (setf *clm-player* (lambda (name) (sl-dac name mus-audio-adat-out)))
@@ -3359,7 +3359,7 @@ to an ADAT output:</p>
 
 <p>On machines with plenty of memory and slow disks, you can speed up CLM
 computations by setting <b>*clm-file-buffer-size*</b> to some number larger
-than its default (65536).  For example, on ccrma's PC's running Linux
+than its default (65536).  On ccrma's PC's running Linux
 with IDE drives and 64MBytes of RAM, CLM runs as much as 50% faster
 if you use:</p>
 <pre>
@@ -3491,7 +3491,7 @@ all the usual with-sound closing options such as reverb, statistics, and
 scaling.
 </p>
 
-<p>If you hit a C error (segfault, for example), start gdb with lisp ('gdb /usr/local/lisp/acl', for example),
+<p>If you hit a C error (segfault, for example), start gdb with lisp ('gdb /usr/local/lisp/acl'),
 'run', load clm, run your instrument, then when the error drops you into the gdb debugger, 'where'.  This
 should give you some idea where the problem is.  In the worst case, trace clm::run-in-shell and compile/load
 the instrument to find out what the C compilation sequence is on your machine; next, make whatever changes
@@ -3518,7 +3518,7 @@ int clm_lnxacl_fm_violin3 (int clm_beg, int clm_end, double *clm_double, int *cl
   #define CARRIER_r 19
  ...
 </small></pre>
-<p>For example, to see the carrier fields, we call clm_print_object with the
+<p>To see the carrier fields, we call clm_print_object with the
 two locations:</p>
 <pre><small>
 (gdb) p <em class=red>clm_print_object</em>(38,19,0,clm_int,clm_double)
@@ -3633,7 +3633,7 @@ not fast, but you will get data even if the instrument dies in mid-note.</p>
 
 <p><b>snd-sound</b> returns the current edited state of the desired file in the
 Snd editor (or the currently active file if no file-name is given).  This can
-be used anywhere a file name occurs in CLM, for example:</p>
+be used anywhere a file name occurs in CLM:</p>
 <pre>
   (with-sound () (mix (snd-sound)))
 </pre>
@@ -3674,7 +3674,7 @@ Snd's notion of that envelope (presumably after it has been edited):</p>
   (setf hi (snd-envelope hi))
 </pre>
 <p><b>send-snd</b> can also be called within the run loop, sending Snd any
-arbitrary command; for example, the following instrument prints out the
+arbitrary command; the following instrument prints out the
 seconds as they go by in Snd's minibuffer:</p>
 <pre>
 (definstrument call-snd (beg dur frq)
@@ -3800,8 +3800,8 @@ The other header and data format possibilities are listed in initmus.lisp.</p>
 <!-- INDEX raw-data:raw data  -->
 <p>If you are trying to read raw (no header) sound files, CLM's default settings for
 the sampling rate, channels, and data format are 44100, 2, and mus-bshort
-respectively.  To change these, call (mus-set-raw-header-defaults srate chans format).
-For example</p>
+respectively.  To change these, call (mus-set-raw-header-defaults srate chans format):
+</p>
 <small><pre>
 (mus-set-raw-header-defaults 8012 1 mus-mulaw)
 (open-input "raw.snd")
@@ -3814,8 +3814,8 @@ For example</p>
 
 <p>The major source of unwanted noise in computer music is amplitude
 quantization.  This means soft notes are buzzy.  If these are later used as
-input to a reverberator, for example, the buzziness can easily be magnified.
-If the soft notes are split between channels (via locsig for example), you may
+input to a reverberator, the buzziness can easily be magnified.
+If the soft notes are split between channels (via locsig), you may
 end up increasing the overall noisiness.  My experience has been that anything
 under .003 in amplitude is asking for trouble unless it is covered up in some
 way.  Since reverb amounts are often less than .01, even a loud note can
@@ -3856,7 +3856,7 @@ the initial or final section where there are too few bits, hopefully reducing
 the chirps (these are apparently caused by non-linearities in the audio
 equipment; I don't hear them in very good equipment).  A similar trick
 is to use exponential envelopes that are bowed out (a base less than 1.0 in
-CLM); this is the default in the MusicKit for example.   There may be
+CLM); this is the default in the MusicKit.   There may be
 some combination of problems here; see Robert Maher, "On the Nature of
 Granulation Noise in Uniform Quantization Systems", JAES vol 40 no 1/2, 1992,
 p12; he says "The common assumption that the quantization noise is
@@ -3876,7 +3876,7 @@ sharp attacks.</p>
 loops.  In the latter case, various pieces of equipment are at slightly
 different ground voltages due to tiny resistances in ground wires; this
 sets up a sort of screen upon which all kinds of interference can be projected,
-so to speak.  These loops are hard to avoid.  In my house, for example, the
+so to speak.  These loops are hard to avoid.  In my house the
 grounds are real; that is, the third plug on the power cords is actually
 connected to a solid ground, but I still had to connect all the drives, audio
 equipment, and NeXT itself to the same outlet (representing altogether about
@@ -3888,7 +3888,7 @@ connected to different outlets to be at a slightly different ground voltage.
 Even after putting everything on the same outlet, the external drive was the
 source of a slight hum; after unplugging it, I could turn all the volume
 knobs up all the way and hear only a small hiss which I attribute to the
-unavoidable randomness in any analog equipment (Johnson noise, for example).</p>
+unavoidable randomness in any analog equipment (Johnson noise).</p>
 
 <p>On the NeXT, the DACs are mounted near the monitor, so you can hear
 interference from that all the time. Similarly speaker cables can sometimes act
@@ -4017,7 +4017,7 @@ the C modules assume they have been initialized; if the saved version of
 modules is then executed, the arrays associated with these modules will
 not exist, but the modules won't know that.  In this case, you need to call the
 function <a name="restart-clm"><em class=def>restart-clm</em></a> before doing anything in the newly executed image.
-For example, in Linux, I use the Scheme window manager (scwm), and have the
+In Linux, I use the Scheme window manager (scwm), and have the
 following as a top-level menu item:</p>
 <pre>
 (menuitem "CLM" 

@@ -880,7 +880,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(left_form), ff_sep3, FALSE, FALSE, 8);
   gtk_widget_show(ff_sep3);
 
-  recdat = make_file_data_panel(ss, left_form, "data-form", TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE);
+  recdat = make_file_data_panel(ss, left_form, "data-form", TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE, FALSE);
   g_signal_connect_closure_by_id(GTK_OBJECT(recdat->srate_text), 
 				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(recdat->srate_text))),
 				 0,
@@ -1864,7 +1864,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
   snd_state *ss = (snd_state *)context;
   Wdesc *wd;
   int i, old_srate, ofmt, rs, ochns;
-  off_t oloc;
+  off_t oloc, samples;
   static char *comment;
   char *str;
   PANE *p;
@@ -1881,7 +1881,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	  rp->output_file = mus_expand_filename(str);
 	  str = NULL;
 	  old_srate = rp->srate;
-	  str = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc); 
+	  str = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
 	  if (str) FREE(str);
 	  str = NULL;
 	  rp->out_format = ofmt;

@@ -4,7 +4,7 @@
 
 #define NUM_VISIBLE_HEADERS 4
 
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location)
+char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples)
 {
   char *str;
   int res, val;
@@ -37,6 +37,15 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
 	  if (oval >= 0) (*location) = oval;
 	}
     }
+  if (fdat->samples_text) 
+    {
+      str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->samples_text)); 
+      if (str)
+	{
+	  oval = string2off_t(str);
+	  if (oval >= 0) (*samples) = oval;
+	}
+    }
   if (fdat->comment_text) 
     {
       comment = sg_get_text(fdat->comment_text, 0, -1);
@@ -67,7 +76,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
   return(NULL);
 }
 
-static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, int location, char *comment)
+static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, off_t location, off_t samples, char *comment)
 {
   int i;
   char **fl = NULL;
@@ -111,8 +120,15 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   if ((location >= 0) && (fdat->location_text))
     {
       str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", location);
+      mus_snprintf(str, LABEL_BUFFER_SIZE, OFF_TD, location);
       gtk_entry_set_text(GTK_ENTRY(fdat->location_text), str);
+      FREE(str);
+    }
+  if ((samples >= 0) && (fdat->samples_text))
+    {
+      str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(str, LABEL_BUFFER_SIZE, OFF_TD, samples);
+      gtk_entry_set_text(GTK_ENTRY(fdat->samples_text), str);
       FREE(str);
     }
 }
@@ -381,7 +397,7 @@ static void gfile_header_type(file_data *fd, int row)
       load_header_and_data_lists(fd,
 				 fd->current_type,
 				 fd->current_format,
-				 0, 0, -1, NULL);
+				 0, 0, -1, -1, NULL);
     }
 }
 
@@ -423,9 +439,9 @@ static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *
 }
 
 file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, 
-				int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
+				int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry, int with_samples)
 {
-  GtkWidget *form, *slab, *clab, *comment_label, *loclab, *scbox, *combox;
+  GtkWidget *form, *slab, *clab, *comment_label, *loclab, *scbox, *combox, *samplab;
   file_data *fdat;
   int dformats = 0;
   char **formats = NULL;
@@ -475,6 +491,15 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
 
 	  fdat->location_text = snd_entry_new(ss, scbox, TRUE);
 	}
+    }
+
+  if (with_samples)
+    {
+      samplab = gtk_label_new(_("samples:"));
+      gtk_box_pack_start(GTK_BOX(scbox), samplab, FALSE, FALSE, 0);
+      gtk_widget_show(samplab);
+
+      fdat->samples_text = snd_entry_new(ss, scbox, TRUE);
     }
 
   combox = gtk_hbox_new(FALSE, 0);
@@ -586,7 +611,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
       gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(save_as_dialog)->main_vbox), fbox, TRUE, TRUE, 0);
       gtk_widget_show(fbox);
 
-      save_as_file_data = make_file_data_panel(ss, fbox, "data-form", FALSE, header_type, format_type, FALSE, FALSE);
+      save_as_file_data = make_file_data_panel(ss, fbox, "data-form", FALSE, header_type, format_type, FALSE, FALSE, FALSE);
       set_dialog_widget(ss, FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
 }
@@ -607,7 +632,7 @@ void make_file_save_as_dialog(snd_state *ss)
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
-			     (hdr) ? hdr->srate : selection_srate(), 0, -1, 
+			     (hdr) ? hdr->srate : selection_srate(), 0, -1, -1,
 			     com = output_comment(hdr));
   if (com) FREE(com);
   gtk_widget_show(save_as_dialog);
@@ -620,7 +645,7 @@ void make_edit_save_as_dialog(snd_state *ss)
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
-			     selection_srate(), 0, -1, NULL);
+			     selection_srate(), 0, -1, -1, NULL);
   gtk_widget_show(save_as_dialog);
 }
 
@@ -1492,7 +1517,7 @@ static void new_file_help_callback(GtkWidget *w, gpointer context)
 
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment)
 {
-  off_t loc;
+  off_t loc, samples;
   char *tmpstr, *title, *newer_name = NULL;
   snd_info *sp = NULL;
   GtkWidget *name_label, *hform;
@@ -1552,7 +1577,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
 
       new_dialog_data = make_file_data_panel(ss, GTK_DIALOG(new_dialog)->vbox, "data-form", TRUE, 
-					     default_output_type(ss), default_output_format(ss), FALSE, FALSE);
+					     default_output_type(ss), default_output_format(ss), FALSE, FALSE, FALSE);
       set_dialog_widget(ss, NEW_FILE_DIALOG, new_dialog);
     }
   else
@@ -1560,7 +1585,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_window_set_title(GTK_WINDOW(new_dialog), title);
       gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
     }
-  load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, comment);
+  load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, -1, comment);
   new_file_done = FALSE;
   gtk_widget_show(new_dialog);
   while (!new_file_done) gtk_main_iteration();
@@ -1571,7 +1596,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
     {
       newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_name));
       if (newer_name == NULL) return(NULL);
-      tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc);
+      tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &samples);
       sp = snd_new_file(ss, newer_name, header_type, data_format, srate, chans, tmpstr);
       if (tmpstr) FREE(tmpstr);
     }
@@ -1665,9 +1690,8 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_widget_show(cancel_button);
       gtk_widget_show(save_button);
       gtk_widget_show(help_button);
-
       edit_header_data = make_file_data_panel(ss, GTK_DIALOG(edit_header_dialog)->vbox, _("Edit Header"), TRUE, 
-					      hdr->type, hdr->format, TRUE, FALSE);
+					      hdr->type, hdr->format, TRUE, FALSE, TRUE);
       set_dialog_widget(ss, EDIT_HEADER_DIALOG, edit_header_dialog);
     }
 
@@ -1675,9 +1699,10 @@ GtkWidget *edit_header(snd_info *sp)
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
   gtk_window_set_title(GTK_WINDOW(edit_header_dialog), str);
   FREE(str);
-  load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
 
   gtk_widget_show(edit_header_dialog);
+  load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
+
   return(edit_header_dialog);
 }
 

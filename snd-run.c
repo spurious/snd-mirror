@@ -1932,13 +1932,9 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 {
   if (var->type == R_FLOAT)
     return(add_triple_to_ptree(pt, va_make_triple(store_f, descr_store_f, 2, var, init_val)));
-  else
-    {
-      if (var->type == R_STRING)
-	return(add_triple_to_ptree(pt, va_make_triple(store_s, descr_store_s, 2, var, init_val)));
-      else return(add_triple_to_ptree(pt, va_make_triple(store_i, descr_store_i, 2, var, init_val)));
-    }
-  return(NULL);
+  if (var->type == R_STRING)
+    return(add_triple_to_ptree(pt, va_make_triple(store_s, descr_store_s, 2, var, init_val)));
+  return(add_triple_to_ptree(pt, va_make_triple(store_i, descr_store_i, 2, var, init_val)));
 }
 
 static xen_value *walk(ptree *prog, XEN form, int need_result);
@@ -3220,14 +3216,10 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
       if (num_args == 4) return(package(prog, R_FLOAT, multiply_f4, descr_multiply_f4, args, num_args));
       return(package_n(prog, R_FLOAT, multiply_fn, descr_multiply_fn, args, num_args));
     }
-  else
-    {
-      if (num_args == 2) return(package(prog, R_INT, multiply_i2, descr_multiply_i2, args, num_args)); 
-      if (num_args == 3) return(package(prog, R_INT, multiply_i3, descr_multiply_i3, args, num_args));
-      if (num_args == 4) return(package(prog, R_INT, multiply_i4, descr_multiply_i4, args, num_args));
-      return(package_n(prog, R_INT, multiply_in, descr_multiply_in, args, num_args));
-    }
-  return(run_warn("* trouble"));
+  if (num_args == 2) return(package(prog, R_INT, multiply_i2, descr_multiply_i2, args, num_args)); 
+  if (num_args == 3) return(package(prog, R_INT, multiply_i3, descr_multiply_i3, args, num_args));
+  if (num_args == 4) return(package(prog, R_INT, multiply_i4, descr_multiply_i4, args, num_args));
+  return(package_n(prog, R_INT, multiply_in, descr_multiply_in, args, num_args));
 }
 
 
@@ -3311,14 +3303,10 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
       if (num_args == 4) return(package(prog, R_FLOAT, add_f4, descr_add_f4, args, num_args));
       return(package_n(prog, R_FLOAT, add_fn, descr_add_fn, args, num_args));
     }
-  else
-    {
-      if (num_args == 2) return(package(prog, R_INT, add_i2, descr_add_i2, args, num_args));
-      if (num_args == 3) return(package(prog, R_INT, add_i3, descr_add_i3, args, num_args));
-      if (num_args == 4) return(package(prog, R_INT, add_i4, descr_add_i4, args, num_args));
-      return(package_n(prog, R_INT, add_in, descr_add_in, args, num_args));
-    }
-  return(run_warn("+ trouble"));
+  if (num_args == 2) return(package(prog, R_INT, add_i2, descr_add_i2, args, num_args));
+  if (num_args == 3) return(package(prog, R_INT, add_i3, descr_add_i3, args, num_args));
+  if (num_args == 4) return(package(prog, R_INT, add_i4, descr_add_i4, args, num_args));
+  return(package_n(prog, R_INT, add_in, descr_add_in, args, num_args));
 }
 
 /* ---------------- subtract ---------------- */
@@ -3413,14 +3401,10 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
       if (num_args == 3) return(package(prog, R_FLOAT, subtract_f3, descr_subtract_f3, args, num_args));
       return(package_n(prog, R_FLOAT, subtract_fn, descr_subtract_fn, args, num_args));
     }
-  else
-    {
-      if (num_args == 1) return(package(prog, R_INT, subtract_i1, descr_subtract_i1, args, num_args));
-      if (num_args == 2) return(package(prog, R_INT, subtract_i2, descr_subtract_i2, args, num_args));
-      if (num_args == 3) return(package(prog, R_INT, subtract_i3, descr_subtract_i3, args, num_args));
-      return(package_n(prog, R_INT, subtract_in, descr_subtract_in, args, num_args));
-    }
-  return(run_warn("- trouble"));
+  if (num_args == 1) return(package(prog, R_INT, subtract_i1, descr_subtract_i1, args, num_args));
+  if (num_args == 2) return(package(prog, R_INT, subtract_i2, descr_subtract_i2, args, num_args));
+  if (num_args == 3) return(package(prog, R_INT, subtract_i3, descr_subtract_i3, args, num_args));
+  return(package_n(prog, R_INT, subtract_in, descr_subtract_in, args, num_args));
 }
 
 
@@ -3835,12 +3819,8 @@ static xen_value *max_1(ptree *prog, xen_value **args, int num_args)
       if (num_args == 2) return(package(prog, R_FLOAT, max_f2, descr_max_f2, args, num_args));
       return(package_n(prog, R_FLOAT, max_fn, descr_max_fn, args, num_args));
     }
-  else
-    {
-      if (num_args == 2) return(package(prog, R_INT, max_i2, descr_max_i2, args, num_args));
-      return(package_n(prog, R_INT, max_in, descr_max_in, args, num_args));
-    }
-  return(run_warn("max trouble"));
+  if (num_args == 2) return(package(prog, R_INT, max_i2, descr_max_i2, args, num_args));
+  return(package_n(prog, R_INT, max_in, descr_max_in, args, num_args));
 }
 
 /* ---------------- min ---------------- */
@@ -3906,12 +3886,8 @@ static xen_value *min_1(ptree *prog, xen_value **args, int num_args)
       if (num_args == 2) return(package(prog, R_FLOAT, min_f2, descr_min_f2, args, num_args));
       return(package_n(prog, R_FLOAT, min_fn, descr_min_fn, args, num_args));
     }
-  else
-    {
-      if (num_args == 2) return(package(prog, R_INT, min_i2, descr_min_i2, args, num_args));
-      return(package_n(prog, R_INT, min_in, descr_min_in, args, num_args));
-    }
-  return(run_warn("min trouble"));
+  if (num_args == 2) return(package(prog, R_INT, min_i2, descr_min_i2, args, num_args));
+  return(package_n(prog, R_INT, min_in, descr_min_in, args, num_args));
 }
 
 
@@ -8261,26 +8237,22 @@ static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc, xen_
 	}
       return(run_warn("%s struct field needs type declaration", clm_struct_names[struct_loc]));
     }
-  else
-    {
-      lst_ref = XEN_LIST_REF(lst, offset); /* get type at parse time */
-      run_type = xen_to_run_type(lst_ref);
-      if ((clm_struct_types[struct_loc] != R_UNSPECIFIED) &&
-	  (run_type != clm_struct_types[struct_loc]))
-	return(run_warn("%s declared type, %s, does not match current type, %s: %s",
-			clm_struct_names[struct_loc],
-			type_name(clm_struct_types[struct_loc]),
-			type_name(run_type),
-			XEN_AS_STRING(lst_ref)));
-      addr = find_clm_var(prog, lst, lst_ref, offset, run_type); /* if doesn't exist add to tables, else return holder */
-      if (addr < 0) 
-	return(run_warn("problem with %s (def-clm-struct) value: %s from %s", 
-			clm_struct_names[struct_loc], 
-			XEN_AS_STRING(lst_ref),
-			XEN_AS_STRING(lst)));
-      return(make_xen_value(run_type, addr, R_VARIABLE));
-    }
-  return(NULL);
+  lst_ref = XEN_LIST_REF(lst, offset); /* get type at parse time */
+  run_type = xen_to_run_type(lst_ref);
+  if ((clm_struct_types[struct_loc] != R_UNSPECIFIED) &&
+      (run_type != clm_struct_types[struct_loc]))
+    return(run_warn("%s declared type, %s, does not match current type, %s: %s",
+		    clm_struct_names[struct_loc],
+		    type_name(clm_struct_types[struct_loc]),
+		    type_name(run_type),
+		    XEN_AS_STRING(lst_ref)));
+  addr = find_clm_var(prog, lst, lst_ref, offset, run_type); /* if doesn't exist add to tables, else return holder */
+  if (addr < 0) 
+    return(run_warn("problem with %s (def-clm-struct) value: %s from %s", 
+		    clm_struct_names[struct_loc], 
+		    XEN_AS_STRING(lst_ref),
+		    XEN_AS_STRING(lst)));
+  return(make_xen_value(run_type, addr, R_VARIABLE));
 }
 
 static void clm_struct_restore(ptree *prog, xen_var *var)

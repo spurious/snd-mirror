@@ -260,8 +260,8 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td><code>-noglob</code></td>                 <td>don't read /etc/snd.conf</td></tr>
 <tr><td><code>-noinit</code></td>                 <td>don't read ~/.snd</td></tr>
 <tr><td><code>-nostdin</code></td>                <td>don't watch for possible input from stdin</td></tr>
-<tr><td><code>-p -preload &lt;dir&gt;</code></td> <td>preload sound files in directory &lt;dir&gt; (for example, snd -p .)</td></tr>
-<tr><td><code>-l -load &lt;file&gt;</code></td>   <td>load Scheme or Ruby code in &lt;file&gt; (for example, snd -l test.scm)</td></tr>
+<tr><td><code>-p -preload &lt;dir&gt;</code></td> <td>preload sound files in directory &lt;dir&gt; (snd -p .)</td></tr>
+<tr><td><code>-l -load &lt;file&gt;</code></td>   <td>load Scheme or Ruby code in &lt;file&gt; (snd -l test.scm)</td></tr>
 <tr><td><code>-e -eval expr</code></td>           <td>evaluate expr</td></tr>
 <tr><td><code>-b -batch &lt;file&gt;</code></td>  <td>load Scheme or Ruby code in &lt;file&gt; as a batch (no GUI) job</td></tr>
 <tr><td><code>-I &lt;dir&gt;</code></td>          <td>add &lt;dir&gt; to the load search list</td></tr>
@@ -270,7 +270,7 @@ the usual Xt/X-related flags like -xrm).</p>
 <p>
 The -e switch evaluates its argument as though it had been passed to M-X.  The
 initialization file, if any, is loaded first, then the arguments are processed
-in order.  For example</p>
+in order:</p>
 <pre>
 snd -e "(set! (data-color) (make-color 1 0 0))" oboe.snd
 </pre>
@@ -294,7 +294,7 @@ snd -e '(add-sound-file-extension "WAV")' -p /home/bil/sounds
 When Snd starts, it looks for an initialization file, normally named "~/.snd" (its name can be set
 via the X resource mechanism, or through the environment variable SND_INIT_FILE).  This optional file is
 supposed to be just like Emacs' .emacs file, containing any customizations or
-extensions that you want loaded whenever Snd starts.  For example, say we
+extensions that you want loaded whenever Snd starts.  Say we
 want the Snd window to start out 800x500, want to predefine an envelope named
 "env1", and want the file selection box to
 show just sound files.  We make ~/.snd and put in it:</p>
@@ -641,7 +641,7 @@ as a batch program. A nice side-effect of this is that any other program can fit
 the same mold.</p>
 
 <p>
-For example, say we have a sound processing CLM instrument we like; it takes
+Say we have a sound processing CLM instrument we like; it takes
 two sound file names as its arguments, reading the first and writing the second.
 In Snd we write the current edited state to a temporary file, start CLM, call the instrument 
 passing it the input and output filenames, then pass its output back
@@ -766,7 +766,7 @@ and have saved the image using ACL 5.0 in Linux.  The CLM image is
 invoked in this case with <code>lisp -I clm.dxl</code>.  ACL provides
 a way (<i>-e</i>) to evaluate lisp code from the command line, so
 we'll use that along with the <i>exit</i> function to turn CLM
-into a batch program.  For example, we can reverberate the current data:</p>
+into a batch program.  We can reverberate the current data:</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define reverb
@@ -795,7 +795,7 @@ reverb, and we save that value in the edit-history descriptor.
 Now, in Snd, <code>M-x (reverb .1)</code> reverbs the current
 data and extends the edit-history list with the string "(reverb .1)".
 This example also shows how to mix something into the current 
-data.  For example, to add an fm-violin note starting at the
+data.  To add an fm-violin note starting at the
 current cursor:
 </p>
 
@@ -907,7 +907,7 @@ saw.c has an example.</p>
 described in clm.html, available in clm-2.tar.gz at ccrma-ftp) as a Guile-loadable module.
 They are loaded into Snd when it is built.
 You can see what a generator does, or a group of generators, by running them in the
-lisp listener, and using the graph and spectrum functions.  For example, say we have
+lisp listener, and using the graph and spectrum functions.  Say we have
 these declarations in ~/.snd:
 </p>
 
@@ -2058,7 +2058,7 @@ such a program changes the SND_COMMAND property, Snd notices and evaluates
 the new value (as a string, as if typed in the Snd listener).  To get
 a response from Snd, use the function change-window-property(consat,name,command) where
 consat is the property name Snd should search for, name is the property to change, and command is the string
-that replaces the current property value.  For example, CLM's communication
+that replaces the current property value.  CLM's communication
 with Snd function sends Snd this string:</p>
 <pre>
 "(change-window-property \"CLM_VERSION\" \"CLM_COMMAND\" " str ")"
@@ -2079,7 +2079,7 @@ is setup to handle OpenGL graphics; the GLXContext is (snd-glx-context).
 The GL-to-Scheme bindings are in gl.c, and follow the same name and type
 conventions of the Motif bindings in xm.c.
 Any of the Snd drawing area widgets (or your own) can receive GL graphics
-commands.  For example, here is a translation of the SGI/xjournal glxmotif
+commands.  Here is a translation of the SGI/xjournal glxmotif
 program:
 </p>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -2162,7 +2162,7 @@ document gh
 Prints help string for arg: gh "enved-target"
 end
 </pre>
-<p>SCM values are displayed as integers in gdb, so, for example, say
+<p>SCM values are displayed as integers in gdb, so say
 Snd halts and you notice it's loading some unknown file:
 </p>
 <pre>

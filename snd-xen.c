@@ -2348,8 +2348,6 @@ static XEN g_position_color(void)
 
 static XEN g_set_listener_color (XEN color) 
 {
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_listener_color, "a color"); 
   color_listener(XEN_UNWRAP_PIXEL(color));
   return(color);
@@ -2382,8 +2380,6 @@ static XEN g_listener_text_color(void)
 
 static XEN g_set_enved_waveform_color (XEN color) 
 {
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_enved_waveform_color, "a color"); 
   color_enved_waveform(XEN_UNWRAP_PIXEL(color));
   return(color);

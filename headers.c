@@ -4944,6 +4944,7 @@ int mus_header_change_chans(const char *filename, int new_chans)
 	    case MUS_NIST:
 	      lseek(fd, 0L, SEEK_SET);
 	      write_nist_header(fd, srate, new_chans, mus_bytes_per_sample(data_format) * data_size, data_format);
+	      /* header size is always 1024, so this is safe */
 	      break;
 	    case MUS_AIFF: case MUS_AIFC:
 	      lseek(fd, update_frames_location - 2, SEEK_SET);
@@ -5147,7 +5148,7 @@ int mus_header_change_format(const char *filename, int new_format)
 
 int mus_header_change_location(const char *filename, off_t new_location)
 {
-  /* only NEXT changeable in this regard */
+  /* only Next/Sun changeable in this regard */
   int err = MUS_NO_ERROR, fd;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)

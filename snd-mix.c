@@ -3902,7 +3902,7 @@ static XEN g_forward_mix(XEN count, XEN snd, XEN chn)
   int val;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_mix, "an integer");
-  ASSERT_CHANNEL(S_forward_mix, snd, chn, 2);
+  ASSERT_JUST_CHANNEL(S_forward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mix);
   val = XEN_TO_C_INT_OR_ELSE(count, 1); 
   goto_mix(cp, val);
@@ -3915,7 +3915,7 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
   int val; 
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_mix, "an integer");
-  ASSERT_CHANNEL(S_backward_mix, snd, chn, 2);
+  ASSERT_JUST_CHANNEL(S_backward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mix);
   val = -(XEN_TO_C_INT_OR_ELSE(count, 1)); 
   goto_mix(cp, val);
@@ -3940,7 +3940,7 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(file_chn), file_chn, XEN_ARG_3, S_mix, "an integer");
-  ASSERT_CHANNEL(S_mix, snd_n, chn_n, 4);
+  ASSERT_JUST_CHANNEL(S_mix, snd_n, chn_n, 4);
   XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(tag), tag, XEN_ARG_6, S_mix, "a number");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
   if (!(mus_file_probe(name)))
@@ -4240,7 +4240,7 @@ return a reader ready to access track's data associated with snd's channel chn"
   track_fd *tf = NULL;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(track_id), track_id, XEN_ARG_1, S_make_track_sample_reader, "an integer");
-  ASSERT_CHANNEL(S_make_track_sample_reader, snd, chn, 2); 
+  ASSERT_JUST_CHANNEL(S_make_track_sample_reader, snd, chn, 2); 
   cp = get_cp(snd, chn, S_make_track_sample_reader);
   tf = init_track_reader(cp, 
 			 XEN_TO_C_INT(track_id), 
@@ -4376,7 +4376,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   mus_sample_t *data;
   int i, len, mix_id = -1, with_mixer = TRUE;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_mix_vct, "a vct");
-  ASSERT_CHANNEL(S_mix_vct, snd, chn, 3);
+  ASSERT_JUST_CHANNEL(S_mix_vct, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_mix_vct, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_tag), with_tag, XEN_ARG_5, S_mix_vct, "a boolean");
   v = TO_VCT(obj);
@@ -4419,7 +4419,7 @@ find the mix in snd's channel chn at samp; return the mix id or #f if no such mi
   int id;
   chan_info *cp = NULL;
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_find_mix, "an integer");
-  ASSERT_CHANNEL(S_find_mix, snd_n, chn_n, 2); 
+  ASSERT_JUST_CHANNEL(S_find_mix, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mix);
   id = mix_id_from_channel_position(cp, XEN_TO_C_OFF_T_OR_ELSE(samp_n, -1));
   if (id == INVALID_MIX_ID)

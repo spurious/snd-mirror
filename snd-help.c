@@ -309,6 +309,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+2-May:   data-size, samples field in edit-header dialog.\n\
+1-May:   mark-property in marks.scm.\n\
 30-Apr:  mix-property in mix.scm.\n\
          property-changed-hook -> window-property-changed-hook.\n\
 29-Apr:  mix-click-hook\n\
@@ -1180,6 +1182,7 @@ all refer to the same thing.\n\
   " S_cursor_style "      (val snd chn)\n\
   " S_data_format "       (snd)\n\
   " S_data_location "     (snd)\n\
+  " S_data_size "         (snd)\n\
   " S_delete_mark "       (id snd chn)\n\
   " S_delete_marks "      (snd chn)\n\
   " S_delete_sample "     (samp snd chn edpos)\n\

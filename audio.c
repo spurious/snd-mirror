@@ -783,11 +783,6 @@ static float dB_to_linear(float val)
   return(pow(10.0, val / 20.0));
 }
 
-static float linear_to_dB(float val)
-{
-  return(20.0 * log10(val));
-}
-
 static float dB_to_normalized(float val, float lo, float hi)
 {
   float linlo;

@@ -332,10 +332,10 @@ int midi_open(const char *name, int input)
     {
 #ifdef NO_SNDLIB
       fprintf(stderr,"can't open %s\n", name);
+      return(-1);
 #else
       return(mus_error(MUS_MIDI_OPEN_ERROR, "can't open %s", name));
 #endif
-      return(-1);
     }
   mdSetStampMode(md, MD_NOSTAMP);
   return(new_midi_line(name, md, input));
@@ -370,10 +370,10 @@ int mus_midi_read(int line, unsigned char *buffer, int bytes)
     }
 #ifdef NO_SNDLIB
   fprintf(stderr, "can't read from output %s\n", midi_names[line]);
+  return(-1);
 #else
   return(mus_error(MUS_MIDI_READ_ERROR, "can't read from output %s", midi_names[line]));
 #endif
-  return(-1);
 }
 
 int mus_midi_write(int line, unsigned char *buffer, int bytes)
@@ -398,10 +398,10 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
     }
 #ifdef NO_SNDLIB
   fprintf(stderr, "can't write to input %s\n", midi_names[line]);
+  return(-1);
 #else
   return(mus_error(MUS_MIDI_WRITE_ERROR, "can't write to input %s", midi_names[line]));
 #endif
-  return(-1);
 }
 
 char *mus_midi_device_name(int sysdev)

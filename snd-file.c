@@ -2121,7 +2121,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 {
   /* this blindly changes the header info -- it does not actually reformat the data or whatever */
   int err, chans, srate, type, format;
-  off_t loc;
+  off_t loc, samples;
   char *comment;
   file_info *hdr;
   if (sp->read_only)
@@ -2140,11 +2140,13 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
       if ((hdr->type == MUS_AIFF) || (hdr->type == MUS_AIFC)) mus_header_set_full_aiff_loop_info(mus_sound_loop_info(sp->filename));
       mus_sound_forget(sp->filename);
       /* find out which fields changed -- if possible don't touch the sound data */
-      comment = read_file_data_choices(edit_header_data, &srate, &chans, &type, &format, &loc);
+      comment = read_file_data_choices(edit_header_data, &srate, &chans, &type, &format, &loc, &samples);
       if (hdr->chans != chans)
 	mus_header_change_chans(sp->filename, chans);
       if (hdr->srate != srate)
 	mus_header_change_srate(sp->filename, srate);
+      if (hdr->samples != samples)
+	mus_header_change_samples(sp->filename, samples);
       if (hdr->type != type)
 	mus_header_change_type(sp->filename, type, format);
       else
@@ -2312,7 +2314,7 @@ static XEN g_sound_loop_info(XEN snd)
 list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   snd_info *sp;
-  ASSERT_SOUND(S_sound_loop_info, snd, 1);
+  ASSERT_JUST_SOUND(S_sound_loop_info, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
@@ -2335,7 +2337,6 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   XEN start1 = XEN_UNDEFINED; XEN end1 = XEN_UNDEFINED; 
   XEN mode0 = XEN_UNDEFINED; XEN mode1 = XEN_UNDEFINED;
   XEN note = XEN_UNDEFINED; XEN detune = XEN_UNDEFINED;
-  ASSERT_SOUND(S_setB S_sound_loop_info, snd, 1);
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, S_setB S_sound_loop_info, "a list");
   if (XEN_NOT_BOUND_P(vals))
     {
@@ -2343,7 +2344,11 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
       len = XEN_LIST_LENGTH(vals); 
       sp = get_sp(XEN_UNDEFINED, NO_PLAYERS);
     }
-  else sp = get_sp(snd, NO_PLAYERS);
+  else 
+    {
+      ASSERT_JUST_SOUND(S_setB S_sound_loop_info, snd, 1);
+      sp = get_sp(snd, NO_PLAYERS);
+    }
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_sound_loop_info, snd));
   if (sp->read_only)
@@ -2435,7 +2440,7 @@ each inner list has the form: (name start loopstart loopend)"
   XEN inlist = XEN_EMPTY_LIST; XEN outlist = XEN_EMPTY_LIST;
   int i, lim;
   snd_info *sp;
-  ASSERT_SOUND(S_soundfont_info, snd, 1);
+  ASSERT_JUST_SOUND(S_soundfont_info, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_soundfont_info, snd));

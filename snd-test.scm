@@ -31,21 +31,32 @@
 ;;; test 28: errors
 
 ;;; TODO: drag-mark-hook ex with amps/pitches, also set-0 under dragging mark
-;;; TODO: data size field in header editor
-;;; TODO: data-size alongside data-location: 
-;;;          int mus_header_change_samples(const char *filename, off_t new_samples) [update]
-;;;          mus_sound_set_samples(sp->filename, sp->hdr->samples) [just cache]
-;;;          this is settable (set! (mus-sound-samples...)) -- need update graph etc
-;;; TODO: mouse-drag in time graph hook?
+;;; TODO: mouse-drag in time/fft graph hook?
 ;;; TODO: thumbnail sketch in file dialog info section?
-;;; TODO: hook forward proc cases? ->composition via optarg?           close-hook, mix-click-hook
-;;; TODO: mark property lists (prune in close-hook?), auto-prune mix properties? (close-hook not set by default)
+;;; TODO: hook forward proc cases? open-hook->after-open-hook, apply-hook for before/after, before transform
+;;; TODO: ->composition via optarg?           close-hook, mix-click-hook
 ;;; TODO: find/"fix" clipping
 ;;; TODO: pan env field in mix dialog if stereo in/out
-;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook
-;;; TODO: crossref tables for sections/regions in extsnd.html, enved-*
-;;; TODO: extsnd -- fft graph variables all in one table (min-dB fft-beta etc) -- perhaps in transform section
+;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
+;;; TODO: crossref tables for selection in extsnd.html
 ;;; TODO: does multi-chan mix try to delete temp file twice?
+;;; TODO: xemacs style top list of sounds, current takes whole screen
+;;; TODO: equalize-panes at start? (mvm 2chan)
+;;; TODO: save mix??|mark-properties, other globals in scm -- need after-save-hook:
+;;;           remember-sound-state (extensions.scm) -- state lists
+;;;           make-current-window-display (draw.scm) -- inset sizes
+;;;           autosave? new|gtk-effects?
+;;;           ws.scm clm-style globals
+;;; TODO: mix-drag ex showing current max amp, or setting amp to some norm or global env (quieter as later etc -- or as property (not hook))
+;;; TODO: mark on mix? (mark-home?) -- perhaps remove this option
+;;; TODO: mark-prop ex: comment displayed in minibuf, or all properties (similarly for mix)
+;;; TODO: the header changers in headers.c need testing -- are all fields consistent (format->size)
+;;; TODO: test ruby case of sound property save-state
+;;; TODO: selection/fft popup info menu
+;;; TODO: nth order butterworths in dsp.scm
+;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
+;;;       do we need make-track|mix-sample-reader? should they accept all the standard args?
+;;; TODO: biquad+simple IIR stuff in dsp.scm
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -2103,6 +2114,11 @@
 	  (set! (data-location ab) 1234)
 	  (if (not (= ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	  (if (not (= (data-location ab) 1234)) (snd-display ";set data-location: ~A?" (data-location ab)))
+	  (let ((old-size (data-size ab)))
+	    (set! (data-size ab) 1234)
+	    (if (not (= ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
+	    (if (not (= (data-size ab) 1234)) (snd-display ";set data-size: ~A?" (data-size ab)))
+	    (set! (data-size ab) old-size))
 	  (set! (srate ab) 12345)
 	  (if (not (= ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	  (if (not (= (srate ab) 12345)) (snd-display ";set srate: ~A?" (srate ab)))
@@ -6447,7 +6463,8 @@ EDITS: 5
       (if (not (= (frames index) 50828)) (snd-display ";oboe: frames ~D?" (frames index)))
       (if (not (= (srate index) 22050)) (snd-display ";oboe: srate ~D?" (srate index)))
       (if (not (= (data-location index) 28)) (snd-display ";oboe: location ~D?" (data-location index)))
-      (if (not (= (data-format index) 1)) (snd-display ";oboe: format ~A?" (data-format index)))
+      (if (not (= (data-size index) (* 50828 2))) (snd-display ";oboe: size ~D?" (data-size index)))
+      (if (not (= (data-format index) mus-bshort)) (snd-display ";oboe: format ~A?" (data-format index)))
       (if (fneq (maxamp index) .14724) (snd-display ";oboe: maxamp ~F?" (maxamp index)))
       (if (comment index) (snd-display ";oboe: comment ~A?" (comment index)))
       (if (not (= (string-length "asdf") 4)) (snd-display ";string-length: ~A?" (string-length "asdf")))
@@ -12643,7 +12660,8 @@ EDITS: 5
 	  (if (not (= (frames (list mix-id)) 50828)) (snd-display ";mix oboe: frames ~D?" (frames (list mix-id))))
 	  (if (not (= (srate (list mix-id)) 22050)) (snd-display ";mix oboe: srate ~D?" (srate (list mix-id))))
 	  (if (not (= (data-location (list mix-id)) 28)) (snd-display ";mix oboe: location ~D?" (data-location (list mix-id))))
-	  (if (not (= (data-format (list mix-id)) 1)) (snd-display ";mix oboe: format ~A?" (data-format (list mix-id))))
+	  (if (not (= (data-size (list mix-id)) (* 50828 2))) (snd-display ";mix oboe: size ~D?" (data-size (list mix-id))))
+	  (if (not (= (data-format (list mix-id)) mus-bshort)) (snd-display ";mix oboe: format ~A?" (data-format (list mix-id))))
 	  (if (fneq (maxamp (list mix-id)) .14724) (snd-display ";mix oboe: maxamp ~F?" (maxamp (list mix-id))))
 	  (if (comment (list mix-id)) (snd-display ";mix oboe: comment ~A?" (comment (list mix-id))))
 	  (if (not (string=? (short-file-name (list mix-id)) "oboe.snd")) (snd-display ";mix oboe short name: ~S?" (short-file-name (list mix-id))))
@@ -13668,6 +13686,9 @@ EDITS: 5
 	      (sync-val (+ 1 (mark-sync-max))))
 	  (if (not (mark? m1)) (snd-display ";mark?"))
 	  (if (not (= (mark-sample m1) 123)) (snd-display ";add-mark: ~A? " (mark-sample m1)))
+	  (set! (mark-property :hiho m1) 123)
+	  (if (not (= (mark-property :hiho m1) 123)) (snd-display ";mark-property: ~A" (mark-property m1)))
+	  (if (mark-property :not-there m1) (snd-display ";mark-not-property: ~A" (mark-property :not-there m1)))
 	  (if (not (eq? (without-errors (mark-sample 12345678)) 'no-such-mark)) (snd-display ";mark-sample err: ~A?" (mark-sample 12345678)))
 	  (if (not (eq? (without-errors (add-mark 123 123)) 'no-such-sound)) (snd-display ";add-mark err: ~A?" (add-mark 123 123)))
 	  (let ((m2 (without-errors (add-mark 12345 fd 0))))
@@ -15119,10 +15140,11 @@ EDITS: 5
 		(not (= (chans ind) 1))
 		(not (= (srate ind) 22050))
 		(not (= (data-location ind) 120))
+		(not (= (data-size ind) 320))
 		(not (= (frames ind) 160)))
-	    (snd-display ";open-raw-sound-hook 5: ~A ~A ~A ~A ~A ~A" 
+	    (snd-display ";open-raw-sound-hook 5: ~A ~A ~A ~A ~A ~A ~A" 
 				 (header-type ind) (data-format ind) (chans ind) (srate ind)
-				 (data-location ind) (/ (frames ind) 2)))
+				 (data-location ind) (data-size ind) (/ (frames ind) 2)))
 	(close-sound ind)
 	(reset-hook! open-raw-sound-hook))
 
@@ -21958,6 +21980,9 @@ EDITS: 1
 	(set! (speed-control-style) speed-control-as-ratio)
 	(set! (channel-style) channels-superimposed)
 	(set! (enved-target) enved-srate)
+	(set! (sound-property :hi nind) "hi")
+	(set! (sound-property 'ho nind) 1234)
+	(set! (channel-property :ha nind 0) 3.14)
 	(save-state (save-state-file))
 	(save-options "test.temp")
 	(close-sound nind)
@@ -21978,6 +22003,12 @@ EDITS: 1
 	  (if (not (equal? (edit-tree ind 0) 
 			   (list (list 0 0 0 11 1.0 0.0 0.0 0) (list 12 0 13 50827 1.0 0.0 0.0 0) (list 50827 -2 0 0 0.0 0.0 0.0 0))))
 	      (snd-display ";save edit tree: ~A" (edit-tree ind 0)))
+	  (if (not (= (sound-property 'ho ind) 1234))
+	      (snd-display ";sound-property saved: 1234 -> ~A" (sound-property 'ho ind)))
+	  (if (not (string=? (sound-property :hi ind) "hi"))
+	      (snd-display ";sound-property saved: hi -> ~A" (sound-property :hi ind)))
+	  (if (fneq (channel-property :ha ind 0) 3.14)
+	      (snd-display ";channel-property saved: 3.14 -> ~A" (channel-property :ha ind 0)))
 	  (close-sound ind)
 
 	  (let ((err (catch 'cannot-save
@@ -34181,7 +34212,7 @@ EDITS: 2
 	       color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
 	       contrast-control? vct-convolve! convolve-selection-with convolve-with channel-properties
 	       auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
-	       cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location
+	       cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location data-size
 	       default-output-chans default-output-format default-output-srate default-output-type define-envelope
 	       delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin
 	       delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
@@ -34241,7 +34272,7 @@ EDITS: 2
 	       with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style 
 	       beats-per-minute x-bounds x-position-slider x->position x-zoom-slider
 	       y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style
-	       mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location
+	       mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
 	       mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
 	       mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
 	       mus-data-format-bytes-per-sample mus-sound-loop-info mus-audio-report mus-audio-sun-outputs
@@ -34324,7 +34355,7 @@ EDITS: 2
 		   transform-type trap-segfault optimization verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
 		   time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 		   with-relative-panes  window-x window-y window-width window-height
-		   channels chans colormap comment data-format data-location edit-position frames header-type maxamp
+		   channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
 		   minibuffer-history-length read-only right-sample sample samples selected-channel
 		   selected-mix selected-sound selection-position selection-frames selection-member? sound-loop-info
 		   srate time-graph-type x-position-slider x-zoom-slider
@@ -34384,7 +34415,7 @@ EDITS: 2
 		    (if (not (eq? tag 'no-such-sound))
 			(snd-display ";snd no-such-sound ~A: ~A" n tag))))
 		(list amp-control bomb apply-controls channels chans close-sound comment contrast-control
-		      contrast-control-amp contrast-control? data-format data-location expand-control expand-control-hop
+		      contrast-control-amp contrast-control? data-format data-location data-size expand-control expand-control-hop
 		      expand-control-length expand-control-ramp expand-control? file-name filter-control-in-dB
 		      filter-control-env filter-control-order filter-control?  finish-progress-report frames header-type
 		      progress-report read-only reset-controls restore-controls reverb-control-decay reverb-control-feedback
@@ -34402,7 +34433,7 @@ EDITS: 2
 				(if (not (eq? tag 'wrong-type-arg))
 				    (snd-display ";snd wrong-type-arg ~A: ~A ~A" n tag arg))))
 			    (list amp-control bomb apply-controls channels chans close-sound comment contrast-control
-				  contrast-control-amp contrast-control? data-format data-location expand-control
+				  contrast-control-amp contrast-control? data-format data-location data-size expand-control
 				  expand-control-hop expand-control-length expand-control-ramp expand-control? file-name
 				  filter-control-in-dB filter-control-env filter-control-order filter-control?
 				  finish-progress-report frames header-type read-only reset-controls restore-controls
@@ -34424,7 +34455,7 @@ EDITS: 2
 				      (snd-display ";snd set wrong-type-arg ~D: ~A: ~A ~A" ctr n tag arg))
 				  (set! ctr (+ ctr 1))))
 			      (list amp-control channels chans comment contrast-control contrast-control-amp
-				    contrast-control? data-format data-location expand-control expand-control-hop
+				    contrast-control? data-format data-location data-size expand-control expand-control-hop
 				    expand-control-length expand-control-ramp expand-control? filter-control-in-dB
 				    filter-control-env filter-control-order filter-control? frames header-type read-only
 				    reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
@@ -35126,6 +35157,7 @@ EDITS: 2
 	  (check-error-tag 'out-of-range (lambda () (set! (header-type ind) 12340)))
 	  (check-error-tag 'out-of-range (lambda () (set! (srate ind) 0)))
 	  (check-error-tag 'out-of-range (lambda () (set! (data-location ind) -1)))
+	  (check-error-tag 'out-of-range (lambda () (set! (data-size ind) -1)))
 	  (check-error-tag 'no-such-sample (lambda () (set! (sample -1) -1)))
 	  (check-error-tag 'no-such-sample (lambda () (sample -1)))
 	  (check-error-tag 'out-of-range (lambda () (set! (frames) -10)))
@@ -35255,6 +35287,9 @@ EDITS: 2
 	  (check-error-tag 'no-such-sample (lambda () (samples->sound-data -1)))
 	  (check-error-tag 'out-of-range (lambda () (samples->sound-data 0 2 ind 0 (make-sound-data 1 4) 0 -1)))
 	  (check-error-tag 'wrong-type-arg (lambda () (set! (samples 0 2) -1)))
+	  (check-error-tag 'wrong-type-arg (lambda () (left-sample (list 0))))
+	  (check-error-tag 'wrong-type-arg (lambda () (amp-control (list 0))))
+	  (check-error-tag 'wrong-type-arg (lambda () (sound-loop-info (list 0))))
 	  (close-sound ind))
 	(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	(check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))

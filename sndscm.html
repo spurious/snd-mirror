@@ -188,7 +188,7 @@ arguments set the begin time and maximum duration in seconds of the mix; the dur
 used to allocate the global vct <i>out-data</i>. The <i>func</i> argument is
 a Scheme function of no arguments (known in Scheme as a thunk).  It is called
 via <code>(func)</code>; the assumption is that <i>func</i> will actually provide
-a complete bird song.  For example:</p>
+a complete bird song:</p>
 <pre>
 (define (bobwhite beg)
   (let ((bobup1 '(.00 .00 .40 1.00 1.00 1.0))
@@ -650,7 +650,7 @@ returns the maximum X value:
 </pre>
 <p><i>integrate-envelope</i> returns the area under the envelope; this is
 useful when you need to know in advance the overall effect of an envelope
-controlling the sampling rate, for example.
+controlling the sampling rate.
 </p>
 <pre>
 :<em class=typing>(integrate-envelope '(0 0 1 1))</em>
@@ -1038,7 +1038,7 @@ Snd's <i>snd-print</i>.  Another example of this is snd-debug.
 </p>
 
 <p>There are also a few brief examples showing simple display customizations.
-For example, the following makes the graph dot size dependent on the
+The following makes the graph dot size dependent on the
 number of samples in the graph:
 </p>
 <pre>
@@ -1174,12 +1174,12 @@ the split depends on the panning envelope (0 = all in chan 0, etc).
   <em class=def>flecho</em> scaler secs             ; filtered echo
   <em class=def>ring-mod</em> freq gliss-env        ; ring-modulation
   <em class=def>am</em> freq                        ; amplitude modulation
-  <em class=def>hello-dentist</em> frq amp          ; randomized sampling rate changes
-  <em class=def>fp</em> sr osamp osfrq              ; osc-driven src ("Forbidden Planet")
+  <em class=def><A NAME="exhellodentist">hello-dentist</a></em> frq amp          ; randomized sampling rate changes
+  <em class=def><A NAME="exfp">fp</a></em> sr osamp osfrq              ; osc-driven src ("Forbidden Planet")
   <em class=def><a name="excompand">compand</a></em>
   <em class=def><a name="excompandchannel">compand-channel</a></em> beg dur snd chn edpos
-  <em class=def>expsrc</em> rate snd chn
-  <em class=def>expsnd</em> rate-envelope
+  <em class=def><A NAME="exexpsrc">expsrc</a></em> rate snd chn
+  <em class=def><A NAME="exexpsnd">expsnd</a></em> rate-envelope
   <em class=def><a name="excrosssynthesis">cross-synthesis</a></em> cross-snd amp fftsize radius
   <em class=def><a name="exvoiced2unvoiced">voiced-&gt;unvoiced</a></em> amp fftsize r tempo
   <em class=def>cnvtest</em> snd0 snd1 amp
@@ -1498,7 +1498,7 @@ and if that same sound is subsquently re-opened, restores the previous state.
 
 <p><i>mix-channel</i> is a regularized version of the file mixing functions (mix and mix-sound).
 It's first argument can be either a filename (a string) or a list containing the filename, the
-start point in the file, and (optionally) the channel of the file to mix.  For example:
+start point in the file, and (optionally) the channel of the file to mix:
 </p>
 <pre>
   (mix-channel "pistol.snd")
@@ -1654,6 +1654,7 @@ The function that actually passes the url to the reader is <a href="extsnd.html#
   <em class=def><a name="exdefineselectionviamarks">define-selection-via-marks</a></em> m1 m2
   <em class=def><a name="exsnapmarktobeat">snap-mark-to-beat</a></em>
   <em class=def><a name="exmarkexplode">mark-explode</a></em>
+  <em class=def><a name="markproperty">mark-property</a></em> key id
 </pre>
 
 <p><i>mark-name-&gt;id</i> is like <a href="extsnd.html#sndfindmark">find-mark</a> but searches all currently accessible channels.
@@ -1691,6 +1692,7 @@ between the leftmost marks in <i>snd</i>.
 <i>define-selection-via-marks</i> selects the portion between the given marks.
 <i>snap-mark-to-beat</i> forces a dragged mark to end up on a beat.
 <i>mark-explode</i> splits a sound into a bunch of separate files based on mark placements.
+<i>mark-property</i> associates a property list with each mark.
 </p>
 
 
@@ -1846,7 +1848,7 @@ causes multichannel mixes to be placed in a separate track,
 and subsequent srate or position changes affect all channels in parallel (this makes
 it easier to mix multichannel files into other multichannel files and keep the mixed
 channels in sync).
-Most of the "set-" functions also exist in the generalized set! form, for example
+Most of the "set-" functions also exist in the generalized set! form:
 <code>(set! (track-position trk) 0)</code>.
 </p>
 
@@ -1883,7 +1885,7 @@ faster.
 <p>musglyphs.scm provides Scheme/Snd wrappers to load CMN's cmn-glyphs.lisp (directly!),
 thereby defining most of the standard music notation symbols.  Each of the original
 functions (e.g. draw-bass-clef) becomes a Snd/Scheme procedure of the form
-<code>(name #:optional x y size style snd chn context)</code>.  For example,
+<code>(name #:optional x y size style snd chn context)</code>. 
 <code>(draw-bass-clef 100 100 50)</code> draws a bass clef in the current graph
 at position (100 100) of size 50; since the <i>style</i> argument defaults to
 #f, the clef is displayed as a filled polygon; use #t to get an outline of
@@ -1963,8 +1965,8 @@ model by Scott van Duyne.
 </pre>
 <p><i>play-sound</i> plays the current sound, calling (func data) on each buffer if func is passed.
 It is also an example of calling the low level mus-audio functions, rather than calling
-play-channel and friends. The latter are easier to use, in most cases.  For example,
-to set up the keyboard
+play-channel and friends. The latter are easier to use, in most cases.
+To set up the keyboard
 as a kind of extended piano, we could map keys to sounds:
 </p>
 <pre>
@@ -2088,8 +2090,7 @@ is in mus.lisp, and the C version is in clm.c.
 <p>The <i>analyze</i>, <i>edit</i>, and <i>synthesize</i> arguments to make-pvocoder are
 functions that are applied as needed during pvocoder processing; similarly, the <i>input</i>
 argument to pvocoder can be a function.
-pvoc.scm also contains a few examples of using the CLM phase-vocoder generator.
-For example:
+pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 </p>
 <pre>
 (define test-pv-4
@@ -2257,7 +2258,7 @@ take any number of vcts, followed by a trailing function, and map the function's
 results (assumed to be a list that matches the current number of vcts) into the
 vct array.  In the map! case, the function takes one argument, the current number
 of vcts awaiting values; in the do! case, it takes two arguments, the vct
-number and the current loop index.  For example, we could rewrite the cnvtest
+number and the current loop index.  We could rewrite the cnvtest
 function to take stereo sounds:
 </p>
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
@@ -3198,11 +3199,10 @@ latter is going through the C intermediate file!
 <p>with-sound returns the output file name.</p>
 <p>ws.scm also has a scheme version of <a href="clm.html#def-clm-struct">def-clm-struct</a>
 and <a href="clm.html#sound-let">sound-let</a>.  with-sounds and sound-lets can be nested --
-see clm.html for examples.
+see clm.html.
 <b>def-clm-struct</b> in Snd/Guile provides a way to package up heterogenous data 
 for user-defined generators.  In pure-Scheme it just sets up functions to make
-and access such a list, but in Snd's run macro, it also provides type declarations.
-For example,
+and access such a list, but in Snd's run macro, it also provides type declarations:
 </p>
 <pre>
 (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
@@ -3245,7 +3245,7 @@ split with-sound into two pieces, primarily for Common Music's benefit.
 returns a new envelope editor whose X axis label is <i>name</i>, the X and Y axis bounds
 are in the list <i>axis</i>, the editor's parent widget is <i>parent</i>,  and the Xt-style
 resource argument list is <i>args</i>.  The editor's current envelope is accessible
-(read and write) via <i>xe-envelope</i>.  For example,
+(read and write) via <i>xe-envelope</i>:
 </p>
 <pre>
 (define outer (add-main-pane "hiho" xmFormWidgetClass '()))
@@ -3302,7 +3302,7 @@ an upward ramp and a downward ramp, then zips them together:
 <span class=box><h2><A NAME="extsndvarexpl">A Note on Scheme variables in Snd</a></h2></span>
 
 <p>At first glance, Snd's use of functions for nearly all variable accesses, i.e. <code>(listener-prompt)</code>
-rather than the simpler <code>listener-prompt</code>, seems unmotivated.  For example, the following little
+rather than the simpler <code>listener-prompt</code>, seems unmotivated.  The following little
 program defines "counter" as a scheme variable, accessible in C:
 </p>
 <pre>
@@ -3345,7 +3345,7 @@ counter is 123
 counter is 246
 </pre>
 <p>But the C code itself doesn't see the set!, and there's no way to
-tell set! in Guile to call an auxiliary function when (for example) our counter
+tell set! in Guile to call an auxiliary function when our counter
 is set.  We need to see that set! as soon as it happens to make the user interface
 responsive.  <code>(set! basic-color red)</code> would have no effect unless
 our C code could be informed that the <code>basic-color</code> variable's value had changed.
@@ -3680,7 +3680,7 @@ translation of Jezar Wakefield's freeverb reverberator:
 </pre>
 <p>(In this case we have a two dimensional array of these generators).  This, of course,
 does not make fcomb a full-fledged generator like oscil -- it doesn't
-respond to mus-scaler or the other methods, for example.  To do that
+respond to mus-scaler or the other methods.  To do that
 requires a bit of defclass/defmethod overhead in Lisp, something
 along the lines of:
 </p>

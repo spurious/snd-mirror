@@ -54,11 +54,9 @@ static XEN g_sound_loop_info(XEN gfilename)
   #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename): synth loop info for sound as a list: (start1 \
 end1 start2 end2 base-note base-detune mode1 mode2)"
   int *res;
-  char *filename;
   XEN sres = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_loop_info, "a string"); 
-  filename = local_mus_expand_filename(XEN_TO_C_STRING(gfilename));
-  res = mus_sound_loop_info(filename);
+  res = mus_sound_loop_info(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
   if (res)
     {
       sres = XEN_LIST_8(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
@@ -71,44 +69,28 @@ end1 start2 end2 base-note base-detune mode1 mode2)"
 
 static XEN gmus_sound(const char *caller, int (*func)(const char *file), XEN gfilename)
 {
-  int res;
-  char *filename;
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, caller, "a string"); 
-  filename = local_mus_expand_filename(XEN_TO_C_STRING(gfilename));
-  res = (*func)(filename);
-  return(C_TO_XEN_INT(res));
+  return(C_TO_XEN_INT((*func)(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)))));
 }
 
 static XEN gmus_sound_set(const char *caller, int (*func)(const char *file, int newval), XEN gfilename, XEN val)
 {
-  int res;
-  char *filename;
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ARG_1, caller, "a string"); 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, caller, "an integer");
-  filename = local_mus_expand_filename(XEN_TO_C_STRING(gfilename));
-  res = (*func)(filename, XEN_TO_C_INT(val));
-  return(C_TO_XEN_INT(res));
+  return(C_TO_XEN_INT((*func)(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)), XEN_TO_C_INT(val))));
 }
 
 static XEN glmus_sound(const char *caller, off_t (*func)(const char *file), XEN gfilename)
 {
-  off_t res;
-  char *filename;
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, caller, "a string"); 
-  filename = local_mus_expand_filename(XEN_TO_C_STRING(gfilename));
-  res = (*func)(filename);
-  return(C_TO_XEN_OFF_T(res));
+  return(C_TO_XEN_OFF_T((*func)(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)))));
 }
 
 static XEN glmus_sound_set(const char *caller, int (*func)(const char *file, off_t newval), XEN gfilename, XEN val)
 {
-  off_t res;
-  char *filename;
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ARG_1, caller, "a string"); 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, caller, "a long");
-  filename = local_mus_expand_filename(XEN_TO_C_STRING(gfilename));
-  res = (*func)(filename, XEN_TO_C_OFF_T(val));
-  return(C_TO_XEN_INT(res));
+  return(C_TO_XEN_OFF_T((*func)(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)), XEN_TO_C_OFF_T(val))));
 }
 
 static XEN g_sound_samples(XEN filename) 
@@ -218,10 +200,9 @@ static XEN g_sound_comment(XEN gfilename)
 {
   #define H_mus_sound_comment "(" S_mus_sound_comment " filename): comment (a string) found in sound file's header"
   char *res = NULL; 
-  char *filename;
   XEN newstr;
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_comment, "a string"); 
-  res = mus_sound_comment(filename = local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  res = mus_sound_comment(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
   newstr = C_TO_XEN_STRING(res);
   if (res) FREE(res);
   return(newstr);
@@ -264,10 +245,9 @@ static XEN g_report_audio_state(void)
 static XEN g_sound_duration(XEN gfilename) 
 {
   #define H_mus_sound_duration "(" S_mus_sound_duration " filename): duration (in seconds) of sound file"
-  char *filename;
   float res;
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_duration, "a string"); 
-  res = mus_sound_duration(filename = local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  res = mus_sound_duration(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
   return(C_TO_XEN_DOUBLE(res));
 
 }
@@ -308,11 +288,9 @@ static XEN g_sound_maxamp_exists(XEN file)
 {
   #define H_mus_sound_maxamp_exists "(" S_mus_sound_maxamp_exists " filename): #t if sound's maxamp data is available \
 in the sound cache; if it isn't, a call on " S_mus_sound_maxamp " has to open and read the data to get the maxamp."
-  char *filename;
   int val;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");
-  filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
-  val = mus_sound_maxamp_exists(filename);
+  val = mus_sound_maxamp_exists(local_mus_expand_filename(XEN_TO_C_STRING(file)));
   return(C_TO_XEN_BOOLEAN(val));
 }
 
@@ -639,9 +617,8 @@ static XEN g_open_sound_input(XEN file)
   #define H_mus_sound_open_input "(" S_mus_sound_open_input " filename): open filename for (low-level) sound input, \
 return file descriptor (an integer)"
   int fd;
-  char *filename;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_open_input, "a string");
-  fd = mus_sound_open_input(filename = local_mus_expand_filename(XEN_TO_C_STRING(file)));
+  fd = mus_sound_open_input(local_mus_expand_filename(XEN_TO_C_STRING(file)));
   return(C_TO_XEN_INT(fd));
 }
 
@@ -656,7 +633,6 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 
   int fd = -1, df, ht, chns;
   char *com = NULL;
-  char *filename;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_open_output, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_P(srate), srate, XEN_ARG_2, S_mus_sound_open_output, "a number or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_3, S_mus_sound_open_output, "an integer or #f");
@@ -674,9 +650,8 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 	  chns = XEN_TO_C_INT_OR_ELSE(chans, 0);
 	  if (chns > 0)
 	    {
-	      filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
 	      if (XEN_STRING_P(comment)) com = XEN_TO_C_STRING(comment);
-	      fd = mus_sound_open_output(filename,
+	      fd = mus_sound_open_output(local_mus_expand_filename(XEN_TO_C_STRING(file)),
 					 XEN_TO_C_INT_OR_ELSE(srate, 0),
 					 chns,
 					 df,
@@ -700,7 +675,6 @@ data-format and header-type are sndlib indicators such as " S_mus_bshort " or " 
 data-location should be retrieved from a previous call to " S_mus_sound_data_location "."
 
   int fd = -1, df, ht, chns;
-  char *filename;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_reopen_output, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_2, S_mus_sound_reopen_output, "an integer or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_format), data_format, XEN_ARG_3, S_mus_sound_reopen_output, "an integer (data-format id) or #f");
@@ -715,8 +689,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	  chns = XEN_TO_C_INT_OR_ELSE(chans, 0);
 	  if (chns > 0)
 	    {
-	      filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
-	      fd = mus_sound_reopen_output(filename,
+	      fd = mus_sound_reopen_output(local_mus_expand_filename(XEN_TO_C_STRING(file)),
 					   chns,
 					   df,
 					   ht,
@@ -1097,12 +1070,8 @@ static XEN g_mus_expand_filename(XEN file)
 {
   #define H_mus_expand_filename "(" S_mus_expand_filename " name): expand 'name' into a canonical or absolute filename, that is, \
 one in which all directories in the path are explicit."
-  char *filename;
-  XEN result;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_expand_filename, "a string");
-  filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
-  result = C_TO_XEN_STRING(filename);
-  return(result);
+  return(C_TO_XEN_STRING(local_mus_expand_filename(XEN_TO_C_STRING(file))));
 }
 
 static XEN g_mus_sound_report_cache(XEN file)
@@ -1116,8 +1085,7 @@ cache info to the file given or stdout"
   else
     {
       FILE *fd;
-      char *name = NULL;
-      fd = FOPEN(name = local_mus_expand_filename(XEN_TO_C_STRING(file)), "w");
+      fd = FOPEN(local_mus_expand_filename(XEN_TO_C_STRING(file)), "w");
       mus_sound_report_cache(fd);
       FCLOSE(fd);
       return(file);

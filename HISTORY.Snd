@@ -1,5 +1,7 @@
 Snd change log
 
+  2-May:     data-size, samples field in edit-header dialog.
+  1-May:     mark-property in marks.scm.
   30-Apr:    mix-property in mix.scm.
              property-changed-hook -> window-property-changed-hook.
   29-Apr:    mix-click-hook

@@ -938,12 +938,8 @@ static off_t get_count_1(char *number_buffer, int number_ctr, int dot_seen, chan
       sscanf(number_buffer, "%f", &f);
       return((off_t)(f * SND_SRATE(cp->sound)));
     }
-  else
-    {
-      sscanf(number_buffer, "%d", &i);
-      return(i);
-    }
-  return(1);
+  sscanf(number_buffer, "%d", &i);
+  return(i);
 }
 
 static off_t get_count(char *number_buffer, int number_ctr, int dot_seen, chan_info *cp, int mark_wise)
@@ -1802,7 +1798,7 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   int k, s;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd), kbd, XEN_ARG_1, S_key, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(buckybits), buckybits, XEN_ARG_2, S_key, "an integer");
-  ASSERT_CHANNEL(S_key, snd, chn, 3);
+  ASSERT_JUST_CHANNEL(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
   k = XEN_TO_C_INT(kbd);
   s = XEN_TO_C_INT(buckybits);
@@ -1849,7 +1845,7 @@ returned as a string; otherwise it is evaluated first as Scheme code"
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(callback)) || (XEN_BOOLEAN_P(callback)) || XEN_PROCEDURE_P(callback), 
 		  callback, XEN_ARG_2, S_prompt_in_minibuffer, "#f or a procedure");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(raw), raw, XEN_ARG_4, S_prompt_in_minibuffer, "a boolean");
-  ASSERT_SOUND(S_prompt_in_minibuffer, snd_n, 3);
+  ASSERT_JUST_SOUND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n));
@@ -1883,7 +1879,7 @@ static XEN g_report_in_minibuffer(XEN msg, XEN snd_n)
   #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg (snd #f)): display msg in snd's minibuffer"
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_report_in_minibuffer, "a string");
-  ASSERT_SOUND(S_report_in_minibuffer, snd_n, 2);
+  ASSERT_JUST_SOUND(S_report_in_minibuffer, snd_n, 2);
   sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_report_in_minibuffer, snd_n));
@@ -1897,7 +1893,7 @@ static XEN g_forward_graph(XEN count, XEN snd, XEN chn)
   int val;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_graph, "an integer");
-  ASSERT_CHANNEL(S_forward_graph, snd, chn, 2);
+  ASSERT_JUST_CHANNEL(S_forward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_graph);
   val = XEN_TO_C_INT_OR_ELSE(count, 1);
   cp = goto_next_graph(cp, val);
@@ -1911,7 +1907,7 @@ static XEN g_backward_graph(XEN count, XEN snd, XEN chn)
   int val;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_graph, "an integer");
-  ASSERT_CHANNEL(S_backward_graph, snd, chn, 2);
+  ASSERT_JUST_CHANNEL(S_backward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_graph);
   val = -(XEN_TO_C_INT_OR_ELSE(count, 1));
   cp = goto_previous_graph(cp, val);

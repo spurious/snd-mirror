@@ -314,7 +314,7 @@ void reflect_amp_env_in_progress(snd_info *sp);
 
 /* -------- snd-xfile.c -------- */
 
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location);
+char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
 void alert_new_file(void);
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 void make_cur_name_row(int old_size, int new_size);

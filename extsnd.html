@@ -884,7 +884,7 @@ method combination.
 <tr><td></td><td colspan=2>
 called upon exit.
 If it returns #t, Snd does not exit.  This can be used to check 
-for unsaved edits, or to perform cleanup activities (see, for example, autosave.scm, extensions.scm, or <a href="#unsavededitsp">unsaved-edits?</a>).
+for unsaved edits, or to perform cleanup activities (see autosave.scm, extensions.scm, or <a href="#unsavededitsp">unsaved-edits?</a>).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1087,7 +1087,7 @@ If it returns #t, the key press is not passed to the main handler.
 <span class=defbox><code><em class=def><a name="lispgraphhook">lisp-graph-hook</a></em> (snd chn)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called just before the lisp graph is updated or redisplayed (see, for example, <a href="#displaydb">display-db</a>).
+called just before the lisp graph is updated or redisplayed (see <a href="#displaydb">display-db</a>).
 If it returns a list of pixels (xm style), these are used in order by the list of graphs (if any), rather than Snd's default set
 (this makes it possible to use different colors for the various graphs).
 If it returns a function (of no arguments), that function is called rather than the standard graph routine:
@@ -1224,7 +1224,7 @@ in mix.scm for a fancier version):
 <tr><td></td><td colspan=2>
 called when a mix moves via the mouse (id = mix id, 
 samps = samps moved).  If it returns #t, the actual remix is the 
-hook's responsibility (see, for example, <i>reposition-track</i> in mix.scm).
+hook's responsibility (see <i>reposition-track</i> in mix.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1234,7 +1234,7 @@ hook's responsibility (see, for example, <i>reposition-track</i> in mix.scm).
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mix's speed changes via the mouse (id = mix id).
-If it returns #t, the actual remix is the hook's responsibility (see, for example, <i>respeed-track</i> in mix.scm).
+If it returns #t, the actual remix is the hook's responsibility (see <i>respeed-track</i> in mix.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1267,7 +1267,7 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
 <span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when the mouse is dragged within the lisp graph (see, for example, enved.scm or rtio.scm).
+called when the mouse is dragged within the lisp graph (see enved.scm or rtio.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1388,7 +1388,7 @@ called when the mouse leaves a text widget.
 <span class=defbox><code><em class=def><a name="mousepresshook">mouse-press-hook</a></em> (snd chn button state x y) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon a mouse button press within the lisp graph (see, for example, enved.scm).  The x and y values are 
+called upon a mouse button press within the lisp graph (see enved.scm).  The x and y values are 
 relative to the lisp graph axis (as if the raw mouse pixel position was passed through
 <a href="#position2x">position-&gt;x</a> and <a href="#position2y">position-&gt;y</a>).
 </td></tr>
@@ -1399,7 +1399,7 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 <span class=defbox><code><em class=def><a name="mousereleasehook">mouse-release-hook</a></em> (snd chn button state x y) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon a mouse button release within the lisp graph (see, for example, enved.scm).
+called upon a mouse button release within the lisp graph (see enved.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1585,8 +1585,8 @@ filled for the DAC (see <a href="sndscm.html#enveddoc">enved.scm</a> and <a href
 <tr><td></td><td colspan=2>
 called each time a file is selected in the View Files dialog's previous files list.
 If it returns #t, the file is not opened in Snd (the default action).  We can use this
-hook to use the previous files list for whatever purpose seems handy.  For example,
-say we want to click a file to have it mixed into the currently selected sound at
+hook to use the previous files list for whatever purpose seems handy. 
+Say we want to click a file to have it mixed into the currently selected sound at
 the cursor:
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1773,7 +1773,7 @@ found (this code obviously has to be in the ~/.snd init file):
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a play request is triggered.
-If it returns #t, Snd does not play (see, for example, <i>report-mark-names</i> in marks.scm).
+If it returns #t, Snd does not play (see <i>report-mark-names</i> in marks.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1972,7 +1972,7 @@ printout from hook-&gt;list):
     (reverse (<em class=red>hook-&gt;list</em> hook))))
 </pre></td></tr></table>
 
-<p>For example, say we pile up some random stuff on name-click-hook:
+<p>Say we pile up some random stuff on name-click-hook:
 </p>
 <pre>
 (add-hook! name-click-hook snd-print)
@@ -2255,7 +2255,7 @@ The clm generators also use this syntax:
   <em class=listener>0.125050634145737</em>
 </pre>
 <p>It's no accident that the generator's type (i.e. oscil or whatever)
-is hidden here.  For example, we can make a generator that is either
+is hidden here.  We can make a generator that is either
 an oscil or a sawtooth-wave:
 </p>
 <pre>
@@ -2313,7 +2313,7 @@ an oscil or a sawtooth-wave:
 
 <p>All of the underlying sound library (<a href="sndlib.html">Sndlib</a>)
 functions are available, as well as most of (<a href="grfsnd.html#clmfuncs">CLM</a>).
-See play.scm and rtio.scm for example code. The most important Sndlib functions for Snd are:</p>
+See play.scm and rtio.scm. The most important Sndlib functions for Snd are:</p>
 
 <!-- -------------------------------- SNDLIB TABLE -------------------------------- -->
 
@@ -2623,7 +2623,7 @@ data around explicitly (<i>samples-&gt;vct</i>), and the other involves the
 use of a special object known as a <i>sample-reader</i>.  The sample-reader
 returns the next sample in its sound each time it is called; this kind
 of access is sometimes called an "enumerator".
-The buffer approach (<i>samples-&gt;vct</i> in <a href="grfsnd.html#expsrc">expsrc</a> for example)
+The buffer approach (<i>samples-&gt;vct</i> in <a href="grfsnd.html#expsrc">expsrc</a>)
 is better if you're jumping around in the data, the sample-by-sample approach (examp.scm has examples) if you're treating
 the data as a sequence of samples.
 To get a sample reader,
@@ -2772,7 +2772,7 @@ can read external sounds without going to the trouble of loading them into Snd.
 <!-- sample-reader-at-end? -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderatendQ">sample-reader-at-end?</a></em> (obj)</code></span></td></tr>
 <tr><td></td><td>#t if sample-reader <i>obj</i> is at the end of the sound (and hence returning 0.0 each time it is called).
-See <a href="#scanagain">scan-again</a> and <a href="newcp">find-zero</a> for examples.
+See <a href="#scanagain">scan-again</a> and <a href="newcp">find-zero</a>.
 </td></tr>
 
 <!-- sample-reader-home -->
@@ -2802,7 +2802,7 @@ See <a href="#scanagain">scan-again</a> and <a href="newcp">find-zero</a> for ex
 
 <p>A mark is an object that refers to a particular sample.
 Each mark has an associated sample number (<b>mark-sample</b>), name (<b>mark-name</b>), sync value (<b>mark-sync</b>), and
-a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, for example).  See <a href="snd.html#marks">Marks</a>
+a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>).  See <a href="snd.html#marks">Marks</a>
 for an overview and key bindings associated with marks.
 </p>
 
@@ -3043,6 +3043,7 @@ more examples including:
 <tr><td><em class=def><a href="sndscm.html#exsnapmarktobeat">snap-mark-to-beat</a></em></td><td>force dragged mark to land on a beat</td></tr>
 <tr><td><em class=def><a href="sndscm.html#exloopbetweenmarks">loop-between-marks</a></em></td><td>loop continuously between the two specified marks</td></tr>
 <tr><td><em class=def><a href="sndscm.html#exmarkexplode">mark-explode</a></em></td><td>split sound into separate files based on mark placement</td></tr>
+<tr><td><em class=def><a href="sndscm.html#markproperty">mark-property</a></em></td><td>mark property lists</td></tr>
 </table>
 <p>Other examples can be found in Dave Phillips' dlp/marks-menu.scm, snd-motif.scm (<i>add-mark-pane</i>),
 edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mark, looping).
@@ -3066,7 +3067,7 @@ sets mix 123's channel 0 amplitude scaler to .5.
 <p>
 All of the signal-processing functions can be applied to its data.
 In the functions that refer to a given sound, the form <code>(list mix-id)</code> refers to the
-underlying mix's sound.  So, for example, <code>(src-sound 2.0 1.0 (list 0) 0)</code> performs
+underlying mix's sound.  So, <code>(src-sound 2.0 1.0 (list 0) 0)</code> performs
 sampling-rate conversion on mix 0's sound's channel 0; <code>(display-edits (list 0) 0)</code>
 shows the edit list of that sound.  To undo or redo an edit that actually applied to the underlying
 mix sound, call undo or redo on the outer (resultant, mixed-into) sound.
@@ -3289,6 +3290,7 @@ the mix dialog: <a href="snd.html#mixpanel">Mix Panel</a>
 mix menu: see dlp/mix-menu.scm
 filter mix (or any other such operation): use list with mix id as 'snd' arg.
 read pre-mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a>
+mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm
 </small></blockquote>
 </pre>
 <br>
@@ -3429,6 +3431,18 @@ is mus-next), with header comment <i>comment</i>.
 </td></tr>
 
 </table>
+<pre><small><blockquote>
+See also:
+Max length of region list: <a href="#maxregions">max-regions</a>
+Whether selection creates a region: <a href="selectioncreatesregion">selection-creates-region</a>
+Play hook: <a href="#stopplayingregionhook">stop-playing-region-hook</a>
+To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a>
+Start region browser from Scheme: <a href="#sndregiondialog">region-dialog</a>
+All about regions: <a href="snd.html#regions">regions</a>
+The region dialog: <a href="snd.html#regionbrowser">region browser</a>
+Region rms amp: <a href="sndscm.html#exregionrms">region-rms</a>
+region-play-list and region-play-sequence in examp.scm
+</blockquote></small></pre>
 <br>
 <hr>
 
@@ -3737,7 +3751,7 @@ the direction argument between the channel and edit-position:
 <tr><td><spacer type=horizontal size=40><br></td><td>
 add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
 If <i>pos</i> is given, play at that edit position. See <i>play-with-envs</i> in enved.scm, <i>play-syncd-marks</i>
-in marks.scm, or <i>start-dac</i> in play.scm for examples.
+in marks.scm, or <i>start-dac</i> in play.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4089,7 +4103,7 @@ cursor-follows-play is #t:
 The <i>cursor-style</i> can also be a procedure of three arguments, the
 sound index, channel number, and graph (always time-graph).  The procedure
 should draw the cursor at the current cursor position using the
-cursor-context whenever it is called.  For example, the following 
+cursor-context whenever it is called.  The following 
 replaces the normal "+" cursor with an "x":
 </td></tr>
 
@@ -4119,7 +4133,7 @@ way you like.  Similar remarks apply to the srate, data-location,
 header-type, and channels fields.  There are ambiguities in some header
 specifications, usually involving big/little endian or signed/unsigned data confusion.
 If you encounter a sound that is clipping crazily, try changing these settings.
-For example, some NeXT/Sun (au) header files using the data format for byte-wide data
+Some NeXT/Sun (au) header files using the data format for byte-wide data
 assume the byte is unsigned, whereas most others assume it is signed.  Sndlib
 treats it as signed by default, so to make one of the unsigned-byte files playable,
 <br><br><code>(set! (data-format) mus-ubyte)</code>.<br><br>
@@ -4176,6 +4190,19 @@ The location of the sound samples (an offset in bytes) in the file represented b
 this is 0, but normally the data comes after some portion of the header.  
 To get the data-location of some sound file, use <a href="#sounddatalocation">mus-sound-data-location</a>.
 If you set this field (you don't want to do this!), the underlying file is immediately rewritten.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- data-size -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="snddatasize">data-size</a></em> (<em class=targ>snd</em>)</code></span>
+</td></tr>
+<tr><td></td><td>
+The size of the sound data in bytes in the file represented by <i>snd</i>.
+If you set this field, the underlying file is immediately rewritten.
+Next/Sun files treat the size field as purely "advisory", so an incorrect data size is often
+ignored in that case.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4451,7 +4478,7 @@ return the index of <i>filename</i> or
       (sounds))
      #f)))
 </pre></td></tr></table><br>
-See popup.scm, and <i>files-popup-buffer</i>, <i>open-next-file-in-directory</i> and the "Buffer Menu" code in examp.scm for examples.
+See popup.scm, and <i>files-popup-buffer</i>, <i>open-next-file-in-directory</i> and the "Buffer Menu" code in examp.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4568,7 +4595,7 @@ Each header type has its own peculiarities; if in doubt, use mus-next because it
 and can handle any data format that Snd can write (whereas each of the others is restricted in this regard).
 The writable header types are mus-next (also named mus-sun), mus-nist (NIST Sphere), mus-aiff (obsolete, rarely needed), mus-aifc, mus-riff (MS wave),
 mus-ircam, and mus-raw (no header -- it's up to you to remember what's in the file).  For descriptions of the headers,
-see headers.c; for examples, see sf.tar.gz at ccrma-ftp.
+see headers.c; for actual sound files, see sf.tar.gz at ccrma-ftp.
 To turn a type number into a string, use <a href="#soundtypename">mus-header-type-name</a>. To get
 the header type of some sound file, use <a href="#soundheadertype">mus-sound-header-type</a>.
 If you set the header-type, the sound file is rewritten with the new header.  The default output
@@ -4580,7 +4607,7 @@ in the latter case, when you open the file with the unsupported header,
 Snd will throw up its hands and say "maybe it's a raw (headerless)
 sound"; it will then look at open-raw-sound-hook before trying
 other fallbacks (such as the Raw File Dialog).
-See examp.scm or dlp/misc.scm for examples (MPEG and OGG).
+See examp.scm or dlp/misc.scm (MPEG and OGG).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4844,7 +4871,7 @@ will fit in memory (as in using vct-&gt;samples for example).
 Use <a href="#sndtempnam">snd-tempnam</a> to get a temporary filename that reflects the current
 temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
 is an example of this.  snd4.scm has Snd-4 style mapping functions such as
-map-sound-chans, map-all-chans, etc.  For example:
+map-sound-chans, map-all-chans, etc. 
 <br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (map-sound-chans proc #:optional (beg 0) end edname snd edpos)
@@ -5051,7 +5078,7 @@ no disk space or memory is needed.
 return some of the overall amplitude envelope data for the given channel
 at the given edit list position.  The data currently returned are whether
 the envelopes are complete (they are the result of a background process), and the min and max data values.
-See <a href="#initialgraphhook">initial-graph-hook</a> and peak-env.scm for examples.
+See <a href="#initialgraphhook">initial-graph-hook</a> and peak-env.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5207,7 +5234,7 @@ icons, so there's no point in calling this more often than that).
 start-progress-report posts the initial icon, and finish-progress-report 
 removes it.  If the icons are not available, a message is posted in 
 <i>snd's</i> minibuffer using <i>name</i> and so on to identify itself.
-See new-effects.scm for examples.
+See new-effects.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5318,7 +5345,7 @@ together).  Envelopes have a similar limitation (currently 2 ptrees and 3 envs).
 If no 'init-func' is specified, the editing procedure ('proc') should not assume anything about
 the context in which it is called;  in this case, there's no way for 'proc' to know where it starts, or when it is being restarted,
 or which direction it is running, so,
-for example, the following call:
+the following call:
 <br><br><pre>
    (let ((ctr 0)) 
      (<em class=red>ptree-channel</em> (lambda (y) 
@@ -5327,7 +5354,7 @@ for example, the following call:
 </pre>
 will never reset ctr to 0!  Every time a portion of the data is read by Snd, the samples will be
 higher.  But, the notion of an accessor that returns a different thing each time a sample
-is accessed is not foolish; take, for example:
+is accessed is not foolish:
 <br><br><pre>
   (<em class=red>ptree-channel</em> (lambda (y) (+ y (random .01))))
 </pre>
@@ -5384,7 +5411,6 @@ original data, so the duration is the envelope size.
 <br><br>
 One major limitation of ptree-channel with an 'init-func' is that <a href="#sndsavestate">save-state</a>
 currently doesn't know how to save the enclosing environment along with the init-func. So,
-for example,
 <br><br><pre>
   (let ((outer 0.5))
     (<em class=red>ptree-channel</em> (lambda (y data forward)
@@ -5585,7 +5611,7 @@ Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a>
 <span class=defbox><code><em class=def><a name="sndreverse">reverse-sound</a></em> (<i>snd chn edpos</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-reverse data.  There are some interesting non-causal effects you can get with this; for example,
+reverse data.  There are some interesting non-causal effects you can get with this:
 take a voice sound, reverse it, reverberate it, reverse it again, and you get the original with
 reversed reverb.
 </td></tr>
@@ -5671,7 +5697,7 @@ This is settable (as is <b>sample</b>) -- see <a href="#sndsetsamples">set-sampl
 </td></tr>
 <tr><td></td><td>
 similar to samples-&gt;vct, but fill a <a href="#sndsounddata">sound-data</a> object.  This is an optimization
-for real-time audio applications; see play.scm for examples.
+for real-time audio applications; see play.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5903,7 +5929,7 @@ In this case, we found such a sample at position 4423.<br>
 	   val))
       (set! result (func (read-sample reader))))))
 </pre></td></tr></table>
-<br>snd4.scm has Snd-4 style scanning functions.  For example:<br><br>
+<br>snd4.scm has Snd-4 style scanning functions:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (scan-all-chans proc #:optional (beg 0) end edpos)
   (catch 'done
@@ -6657,7 +6683,7 @@ redisplay <i>chn's</i> time domain graph.  See <i>color-samples</i> in draw.scm.
 </td></tr>
 <tr><td></td><td>
 redisplay <i>chn's</i> fft graph; for historical reasons, it also forces the current transform to completion.  
-See <a href="#zeropad">zero-pad</a> and <a href="#beforeffthook">before-fft-hook</a> for examples.
+See <a href="#zeropad">zero-pad</a> and <a href="#beforeffthook">before-fft-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7294,7 +7320,7 @@ edit.
 <tr><td></td><td>
 current position in the edit history list; can be set.  <code>(set! (edit-position) 0)</code> is equivalent
 to <code>(revert-sound)</code>.
-See, for example, <a href="#makesamplereader">make-sample-reader</a>.
+See <a href="#makesamplereader">make-sample-reader</a>.
 </td></tr>
 <tr><td></td><td></td></tr>
 
@@ -7604,7 +7630,7 @@ Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a 
 <!-- previous-files-sort-procedure -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="filessortproc">previous-files-sort-procedure</a></em> ()</code></span></td></tr>
 <tr><td></td><td>Procedure used to sort files in the files dialog.  It takes one argument, the list of files, and
-should return that list, sorted as it pleases.  For example, the following sorts the list by decreasing max amp:
+should return that list, sorted as it pleases.  The following sorts the list by decreasing max amp:
 </td></tr>
 
 <tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -7759,7 +7785,7 @@ See <i>html</i> in index.scm.
 
 <tr><td colspan=2><span class=defbox><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></span></td></tr>
 <tr><td></td><td>The amount of the frequency domain to include in the spectrum display.
-This number changes as you drag the frequency axis, for example.  
+This number changes as you drag the frequency axis.  
 This is the slider labelled '% of spectrum' in the View Orientation dialog.
 Its default value is 1.0.
 </td></tr>
@@ -7889,8 +7915,8 @@ and return the dialog widget.  This is Option menu's Transform Options choice.</
 <tr><td></td><td>
 In normal use, this is a very annoying thing to call because
 it forces everything to stop until the poor user clicks a button; in Snd, it's used for questions like "destroy disk?".
-While developing code, however, yes-or-no? can be a very handy way to stop and restart a computation.  For example,
-say we're trying to get remove-clicks in examp.scm to work, and can't see why a click is being missed.  We can use
+While developing code, however, yes-or-no? can be a very handy way to stop and restart a computation.
+Say we're trying to get remove-clicks in examp.scm to work, and can't see why a click is being missed.  We can use
 yes-or-no? to step through the samples one at a time, breaking out of the computation at any time (the ellipses here
 mark code omissions -- see the original for details):
 </td></tr>
@@ -8733,7 +8759,7 @@ loads a file into Snd for editing.
 preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).  Preloading a file means
 placing it in the list of previous files in the View menu's <a href="snd.html#prevfiles">View Files</a> dialog.
 By preloading all the files you might want to use, you can use that dialog as a convenient access method, and so on.
-See <a href="sndscm.html#nbdoc">nb.scm</a> for example.
+See <a href="sndscm.html#nbdoc">nb.scm</a>.
 </td></tr>
 
 <!-- preload-file -->
@@ -8790,21 +8816,21 @@ limitations to this process; the worst is that save-state does not try to save h
 see also <a href="#ptreechannel">ptree-channel</a> in this regard.
 If you call save-state with active regions, and have the region browser running all the time, and subsequently
 want to back up the the saved state, it's safer to delete all the regions first (via <a href="forgetregion">forget-region</a>), 
-then load the saved-state file (see snd-test.scm for examples).
+then load the saved-state file (see snd-test.scm).
 </td></tr>
 
 <!-- script-arg -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndscriptarg">script-arg</a></em> ()</code></span></td></tr>
 <tr><td></td><td>
-current startup argument number (normally 1). See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm for examples.
+current startup argument number (normally 1). See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm.
 </td></tr>
 
 <!-- script-args -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndscriptargs">script-args</a></em> ()</code></span></td></tr>
 <tr><td></td><td>
-startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm for examples.
+startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm.
 </td></tr>
 
 <!-- snd-apropos -->
@@ -8833,8 +8859,8 @@ and returns <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndhelp">snd-help</a></em> (obj (formatted #t))</code></span></td></tr>
 <tr><td></td><td>
-return (as a string) the help text associated with <i>obj</i>,
-for example: <br><br>
+return (as a string) the help text associated with <i>obj</i>:
+<br><br>
 <pre>
 :<em class=typing>(snd-help 'open-sound)</em>
 <em class=listener>"(open-sound filename) opens filename (as if opened from File:Open menu option), 
@@ -8910,8 +8936,8 @@ See also <a href="#sndwarninghook">snd-warning-hook</a>.
 return a list of sound file names.  A file is considered a sound if it has data and
 its extension is on the sound file extension list (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
 The directory name defaults to the current directory.
-This is useful for batch processing of sounds.  The following,
-for example, prints the names of all the stereo AIFC files it finds:
+This is useful for batch processing of sounds.  The following
+prints the names of all the stereo AIFC files it finds:
 </td></tr>
 
 <tr><td></td><td>
@@ -9265,8 +9291,7 @@ the graphics mode to use to draw over whatever is currently in a graph.
 The "contexts" refer to graphics contexts used throughout Snd; the <i>copy-context</i>
 copies into the current graph, whereas the <i>cursor-context</i> uses XOR.
 The error thrown for an unimplemented 'context' is 'no-such-graphics-context.
-See draw.scm or <a href="#displaysampsinred">display-samps-in-red</a> 
-for examples.
+See draw.scm or <a href="#displaysampsinred">display-samps-in-red</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9284,7 +9309,7 @@ return the current font (also settable).</td></tr>
 
 <tr><td></td><td>
 the graphics mode for XOR drawing in the cursor color (for cursors, normally).
-See <a href="#xcursor">x-cursor</a> for example, or
+See <a href="#xcursor">x-cursor</a> or
 <a href="#foregroundcolor">foreground-color</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -9297,7 +9322,7 @@ See <a href="#xcursor">x-cursor</a> for example, or
 draw axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
 going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
 <i>style</i> (x-axis-in-seconds etc); whether the axes are actually displayed or just implied
-depends on <i>axes</i>. Return a list of the actual (pixel) axis bounds.  See, for example,  the scanned-synthesis display code in snd-motif.scm,
+depends on <i>axes</i>. Return a list of the actual (pixel) axis bounds.  See the scanned-synthesis display code in snd-motif.scm,
 or the local envelope editor code in xm-enved.scm.
 </td></tr><tr><td colspan=2></td></tr>
 

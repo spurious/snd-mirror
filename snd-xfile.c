@@ -4,7 +4,7 @@
 
 #define NUM_VISIBLE_HEADERS 4
 
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location)
+char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples)
 {
   char *str;
   int n;
@@ -42,6 +42,16 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
 	  XtFree(str);
 	}
     }
+  if (fdat->samples_text) 
+    {
+      str = XmTextGetString(fdat->samples_text); 
+      if (str) 
+	{
+	  oval = string2off_t(str); 
+	  if (oval >= 0) (*samples) = oval;
+	  XtFree(str);
+	}
+    }
   if (fdat->comment_text) 
     {
       comment = XmTextGetString(fdat->comment_text);
@@ -75,7 +85,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
   return(NULL);
 }
 
-static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, off_t location, char *comment)
+static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, off_t location, off_t samples, char *comment)
 {
   int i;
   char **fl = NULL;
@@ -120,6 +130,14 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
       str = (char *)CALLOC(32, sizeof(char));
       sprintf(str, OFF_TD, location);
       XmTextSetString(fdat->location_text, str);
+      FREE(str);
+    }
+  if ((samples >= 0) && 
+      (fdat->samples_text))
+    {
+      str = (char *)CALLOC(32, sizeof(char));
+      sprintf(str, OFF_TD, samples);
+      XmTextSetString(fdat->samples_text, str);
       FREE(str);
     }
 }
@@ -695,7 +713,7 @@ static void file_data_type_callback(Widget w, XtPointer context, XtPointer info)
       load_header_and_data_lists(fd,
 				 fd->current_type,
 				 fd->current_format,
-				 0, 0, -1, NULL);
+				 0, 0, -1, -1, NULL);
     }
 }
 
@@ -712,13 +730,13 @@ static void file_data_format_callback(Widget w, XtPointer context, XtPointer inf
 static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
 
 file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *in_args, int in_n, 
-				int with_chan, int header_type, int data_format, int with_loc, int with_comment)
+				int with_chan, int header_type, int data_format, int with_loc, int with_comment, int with_samples)
 {
   Widget mainform, form,
     sep1, hlab, hlist, dlab, dlist,
-    slab, stext, clab, ctext, sep2, sep3, 
+    slab, stext, clab, ctext = NULL, sep2, sep3, 
     comment_label, comment_text, sep4,
-    loclab, loctext;
+    loclab, loctext = NULL, samplab, samptext;
   file_data *fdat;
   Arg args[32];
   int i, n;
@@ -900,6 +918,30 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
 	}
     }
 
+  if (with_samples)
+    {
+      n = 0;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, ((loctext) ? loctext : ((ctext) ? ctext : stext))); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, sep3); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      samplab = XtCreateManagedWidget(_("samples:"), xmLabelWidgetClass, form, args, n);
+
+      n = 0;
+      XtSetArg(args[n], XmNcolumns, 16); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, samplab); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, sep3); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      samptext = make_textfield_widget(ss, "samples-text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+      fdat->samples_text = samptext;
+    }
+
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, form); n++;
@@ -992,7 +1034,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XtAddCallback(save_as_dialog, XmNokCallback, save_as_ok_callback, ss);
       
       n = attach_all_sides(args, 0);
-      save_as_file_data = make_file_data_panel(ss, save_as_dialog, "data-form", args, n, FALSE, header_type, format_type, FALSE, TRUE);
+      save_as_file_data = make_file_data_panel(ss, save_as_dialog, "data-form", args, n, FALSE, header_type, format_type, FALSE, TRUE, FALSE);
 
       color_file_selection_box(save_as_dialog, ss);
       if (!(ss->using_schemes))	
@@ -1029,7 +1071,7 @@ void make_file_save_as_dialog(snd_state *ss)
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
 			     (hdr) ? hdr->srate : selection_srate(), 
-			     0, -1, 
+			     0, -1, -1,
 			     com = output_comment(hdr));
   if (com) FREE(com);
   if (!XtIsManaged(save_as_dialog)) XtManageChild(save_as_dialog);
@@ -1045,7 +1087,7 @@ void make_edit_save_as_dialog(snd_state *ss)
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
 			     selection_srate(), 
-			     0, -1, NULL);
+			     0, -1, -1, NULL);
   if (!XtIsManaged(save_as_dialog)) XtManageChild(save_as_dialog);
 }
 
@@ -1262,7 +1304,6 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 {
   XmString s1 = NULL;
   char *label = NULL;
-
   if ((r) &&
       (XEN_HOOKED(hook)))
     {
@@ -2109,7 +2150,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 {
   Arg args[20];
   int n;
-  off_t loc;
+  off_t loc, samples;
   XmString titlestr, xok, xcancel, xhelp;
   char *tmpstr, *title, *newer_name = NULL;
   snd_info *sp = NULL;
@@ -2169,7 +2210,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      new_dialog_data = make_file_data_panel(ss, form, "data-form", args, n, TRUE, default_output_type(ss), default_output_format(ss), FALSE, TRUE);
+      new_dialog_data = make_file_data_panel(ss, form, "data-form", args, n, TRUE, default_output_type(ss), default_output_format(ss), FALSE, TRUE, FALSE);
 
       XtManageChild(new_dialog);
       if (!(ss->using_schemes))	
@@ -2194,7 +2235,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XmTextSetString(new_file_name, newname);
     }
 
-  load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, comment);
+  load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, -1, comment);
   if (!(XtIsManaged(new_dialog))) XtManageChild(new_dialog);
   if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
     {
@@ -2207,7 +2248,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
     {
       newer_name = XmTextGetString(new_file_name);
       if (newer_name == NULL) return(NULL);
-      tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc);
+      tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &samples);
       sp = snd_new_file(ss, newer_name, header_type, data_format, srate, chans, tmpstr);
       XtFree(newer_name);
       if (tmpstr) FREE(tmpstr);
@@ -2299,8 +2340,8 @@ Widget edit_header(snd_info *sp)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       n = attach_all_sides(args, n);
-      edit_header_data = make_file_data_panel(ss, edit_header_dialog, "Edit Header", args, n, TRUE, hdr->type, hdr->format, TRUE, TRUE);
-      load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
+      edit_header_data = make_file_data_panel(ss, edit_header_dialog, "Edit Header", args, n, TRUE, hdr->type, hdr->format, TRUE, TRUE, TRUE);
+      load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
 
       XtManageChild(edit_header_dialog);
 
@@ -2318,7 +2359,7 @@ Widget edit_header(snd_info *sp)
   else 
     {
       XtVaSetValues(edit_header_dialog, XmNmessageString, xstr4, NULL);
-      load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
+      load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
       raise_dialog(edit_header_dialog);
     }
   XmStringFree(xstr4);
