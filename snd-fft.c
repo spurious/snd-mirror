@@ -403,11 +403,9 @@ static void abel (Float *f, Float *g)
  * and the UBC Imager Wavelet Package by Bob Lewis
  */
 
-static int data1_size = 0;
-static Float *data1 = NULL;
-
 static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
 {
+  Float *data1 = NULL;
   Float sig = -1.0;
   Float *cr = NULL;
   int i, j, n, n1, nmod, nh, joff, ii, ni, k, jf;
@@ -419,13 +417,8 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
     }
   for (n = num; n >= 4; n /= 2)
     {
-      if (data1_size < n)
-	{
-	  if (data1) FREE(data1);
-	  data1_size = n;
-	  data1 = (Float *)CALLOC(n, sizeof(Float));
-	}
-      else for (i = 0; i < n; i++) data1[i] = 0.0;
+      if (data1) FREE(data1);
+      data1 = (Float *)CALLOC(n, sizeof(Float));
       n1 = n - 1;
       nmod = cc_size * n;
       nh = n >> 1;
@@ -443,6 +436,7 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
       for (i = 0; i < n; i++)
 	data[i] = data1[i];
     }
+  if (data1) FREE(data1);
   if (cr) FREE(cr);
 }
 
@@ -991,7 +985,11 @@ static int scramble_fft_state(fft_state *fs)
   Float vr;
   Float *data;
   data = fs->data;
-  if (!data) {snd_error("no fft data!"); return(1);}
+  if (!data) 
+    {
+      snd_error("no fft data!"); 
+      return(-1); /* i.e. give up */
+    }
   fs->n = (fs->nn * 2);
   j = 1;
   for (i = 1; i < fs->n; i += 2) 

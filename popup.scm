@@ -157,6 +157,7 @@
 		   (apply add-mark pos select)
 		   (apply add-mark (+ pos len) select)))
 	       (selection-members))))
+      (list "Unselect"  |xmPushButtonWidgetClass every-menu (lambda (w c i) (set! (selection-member? #t) #f)))
       (list "Reverse"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
       (list "Invert"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
 
@@ -254,17 +255,22 @@
 		     (beg (cursor snd chn))
 		     (len (selection-length))
 		     (sbeg (selection-position)))
-		(if (or (< (+ beg len) sbeg)
+		(if (or (not (selection-member? snd chn))
+			(< (+ beg len) sbeg)
 			(> beg (+ sbeg len)))
 		    (begin
 		      (delete-samples beg len snd chn)
 		      (insert-selection beg snd chn))
 		    (if (< beg sbeg)
 			(delete-samples beg (- sbeg beg) snd chn)
-			(snd-warning "replace at ~D would collide with selected portion"))))))
+			;(snd-warning "replace at ~D would collide with selected portion")
+			)))))
       (list "Select all"         |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (select-all graph-popup-snd graph-popup-chn)))
+      (list "Unselect"           |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i) 
+	      (set! (selection-member? #t) #f)))
       (list "Equalize panes"     |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (equalize-panes)))
@@ -348,6 +354,7 @@
 			     ((if (> (cadr eds) 0) |XtManageChild |XtUnmanageChild) w)
 			     (if (or (string=? name "Mix selection")
 				     (string=? name "Insert selection")
+				     (string=? name "Unselect")
 				     (string=? name "Replace with selection"))
 				 ((if (selection?) |XtManageChild |XtUnmanageChild) w)
 				 (if (string=? name "Play from cursor")

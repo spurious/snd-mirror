@@ -101,6 +101,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
       str = (char *)CALLOC(32, sizeof(char));
       sprintf(str, "%d", srate);
       XmTextSetString(fdat->srate_text, str);
+      FREE(str);
     }
   if ((chans > 0) && 
       (fdat->chans_text))
@@ -108,6 +109,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
       str = (char *)CALLOC(8, sizeof(char));
       sprintf(str, "%d", chans);
       XmTextSetString(fdat->chans_text, str);
+      FREE(str);
     }
   if (fdat->comment_text) 
     XmTextSetString(fdat->comment_text, comment);
@@ -117,6 +119,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
       str = (char *)CALLOC(32, sizeof(char));
       sprintf(str, "%d", location);
       XmTextSetString(fdat->location_text, str);
+      FREE(str);
     }
 }
 

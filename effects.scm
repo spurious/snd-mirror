@@ -1,4 +1,6 @@
 ;;; TODO: finish adding the target choice to all (relevant) effects
+;;;       (still needed in: gate adsat expsrc contrast various filters robotize)
+;;;       trailing procs still need the dialog support
 
 (use-modules (ice-9 format) (ice-9 common-list))
 
@@ -23,16 +25,80 @@
 	      (sounds))
     (list sndlist chnlist)))
 
-(define map-chan-with-sync
-  (lambda (func origin)
-    (let ((snc (sync)))
+(define (plausible-mark-samples)
+  ;; find two marks in the current channel (in or nearest to current window)
+  (let* ((snd (selected-sound))
+	 (chn (selected-channel))
+	 (ms (sort (map mark-sample (marks snd chn)) <)))
+    (if (< (length ms) 2)
+	(throw 'no-such-mark (list "mark-related action requires two marks"))
+	(if (= (length ms) 2)
+	    ms
+	    (let* ((lw (left-sample snd chn))
+		   (rw (right-sample snd chn))
+		   (cw (cursor snd chn))
+		   (favor (if (and (>= cw lw)
+				   (<= cw rw))
+			      cw
+			      (* .5 (+ lw rw)))))
+	      ;; favor is the point we center the search on
+	      (define (centered-points points)
+		(if (= (length points) 2)
+		    points
+		    (let ((p1 (car points))
+			  (p2 (cadr points))
+			  (p3 (caddr points)))
+		      (if (< (abs (- p1 favor)) (abs (- p3 favor)))
+			  (list p1 p2)
+			  (centered-points (cdr points))))))
+	      (centered-points ms))))))
+
+(define (map-chan-over-target func target)
+  (let ((ms (and (eq? target 'marks)
+		 (plausible-mark-samples))))
+    (map-chan (func)
+	      (if (eq? target 'sound)
+		  0
+		  (if (eq? target 'selection)
+		      (selection-position)
+		      (car ms)))
+	      (if (eq? target 'sound)
+		  (1- (frames))
+		  (if (eq? target 'selection)
+		      (+ (selection-position) (selection-length))
+		      (cadr ms))))))
+
+(define map-chan-over-target-with-sync
+  (lambda (func target origin)
+    (let* ((snc (sync))
+	   (ms (and (eq? target 'marks)
+		    (plausible-mark-samples)))
+	   (beg (if (eq? target 'sound)
+		    0
+		    (if (eq? target 'selection)
+			(selection-position)
+			(car ms)))))
       (if (> snc 0)
 	  (apply for-each
 		 (lambda (snd chn)
 		   (if (= (sync snd) snc)
-		       (map-chan (func) #f #f origin snd chn)))
+		       (map-chan (func) 
+				 beg 
+				 (if (eq? target 'sound)
+				     (1- (frames snd chn))
+				     (if (eq? target 'selection)
+					 (+ (selection-position) (selection-length))
+					 (cadr ms)))
+				 origin snd chn)))
 		 (all-chans))
-	  (map-chan (func) #f #f origin)))))
+	  (map-chan (func) 
+		    beg 
+		    (if (eq? target 'sound)
+			(1- (frames))
+			(if (eq? target 'selection)
+			    (+ (selection-position) (selection-length))
+			    (cadr ms)))
+		    origin)))))
 
 (define (make-effect-dialog label ok-callback dismiss-callback help-callback reset-callback)
   ;; make a standard dialog
@@ -162,36 +228,6 @@
   (if (not (|XtIsManaged dialog))
       (|XtManageChild dialog)
       (raise-dialog dialog)))
-
-(define (plausible-mark-samples)
-  ;; find two marks in the current channel (in or nearest to current window)
-  (let* ((snd (selected-sound))
-	 (chn (selected-channel))
-	 (ms (sort (map mark-sample (marks snd chn)) <)))
-    (if (< (length ms) 2)
-	(begin
-	  (snd-warning "mark-related action requires two marks")
-	  #f)
-	(if (= (length ms) 2)
-	    ms
-	    (let* ((lw (left-sample snd chn))
-		   (rw (right-sample snd chn))
-		   (cw (cursor snd chn))
-		   (favor (if (and (>= cw lw)
-				   (<= cw rw))
-			      cw
-			      (* .5 (+ lw rw)))))
-	      ;; favor is the point we center the search on
-	      (define (centered-points points)
-		(if (= (length points) 2)
-		    points
-		    (let ((p1 (car points))
-			  (p2 (cadr points))
-			  (p3 (caddr points)))
-		      (if (< (abs (- p1 favor)) (abs (- p3 favor)))
-			  (list p1 p2)
-			  (centered-points (cdr points))))))
-	      (centered-points ms))))))
 
 
 ;;; -------- insert silence (at cursor, silence-amount in secs)
@@ -545,21 +581,16 @@
 (define am-dialog #f)
 (define am-target 'sound)
 
+(if (not (defined? 'am))
+    (define am 
+      (lambda (freq) 
+	(let ((os (make-oscil freq))) 
+	  (lambda (inval) 
+	    (amplitude-modulate 1.0 inval (oscil os)))))))
+
 (define (cp-am)
   "amplitude modulation"
-  (let ((ms (and (eq? am-target 'marks)
-		 (plausible-mark-samples))))
-    (map-chan (am am-amount)
-	      (if (eq? am-target 'sound)
-		0
-		(if (eq? am-target 'selection)
-		    (selection-position)
-		    (car ms)))
-	      (if (eq? am-target 'sound)
-		  (1- (frames))
-		  (if (eq? am-target 'selection)
-		      (+ (selection-position) (selection-length))
-		      (cadr ms))))))
+  (map-chan-over-target (lambda () (am am-amount)) am-target))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -610,8 +641,20 @@
 (define ring-mod-dialog #f)
 (define ring-mod-target 'sound)
 
+(if (not (defined? 'ring-mod))
+    (define ring-mod
+      (lambda (freq gliss-env)
+	(let* ((os (make-oscil :frequency freq))
+	       (len (frames))
+	       (genv (make-env :envelope gliss-env :end len)))
+	  (lambda (inval)
+	    (* (oscil os (env genv)) inval))))))
+
 (define (cp-ring-mod)
-  (map-chan (ring-mod ring-mod-frequency (list 0 0 1 (hz->radians ring-mod-radians)))))
+  (map-chan-over-target 
+   (lambda () 
+     (ring-mod ring-mod-frequency (list 0 0 1 (hz->radians ring-mod-radians))))
+   ring-mod-target))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -643,7 +686,12 @@
                                        (list "envelope radians" 0 initial-ring-mod-radians 360
                                              (lambda (w context info)
                                                (set! ring-mod-radians (/ (|value info) 1)))
-                                             1))))))
+                                             1))))
+
+	      (add-target (|XtParent (car sliders))
+			  (lambda (target)
+			    (set! ring-mod-target target)))))
+
         (activate-dialog ring-mod-dialog))
 
       (add-to-menu effects-menu "Ring modulation" (lambda () (post-ring-mod-dialog))))
@@ -1064,6 +1112,7 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 (define echo-amount .2)
 (define echo-label "Echo")
 (define echo-dialog #f)
+(define echo-target 'sound)
 
 (define (cp-echo)
   "echo adds echos spaced by delay-time seconds and scaled by echo-amount"
@@ -1085,7 +1134,7 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
               (set! echo-dialog 
 		    (make-effect-dialog echo-label
 					(lambda (w context info)
-					  (map-chan-with-sync (lambda () (cp-echo)) "echo" ))
+					  (map-chan-over-target-with-sync (lambda () (cp-echo)) echo-target "echo" ))
 					(lambda (w context info) (|XtUnmanageChild echo-dialog))
 					(lambda (w context info)
 					  (help-dialog "Echo Help"
@@ -1104,7 +1153,11 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 				       (list "echo amount" 0.0 initial-echo-amount 1.0
 					     (lambda (w context info)
 					       (set! echo-amount (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+              (add-target (|XtParent (car sliders))
+                          (lambda (target)
+                            (set! echo-target target)))))
+
 	(activate-dialog echo-dialog))
 
       (add-to-menu effects-menu "Echo"
@@ -1127,6 +1180,7 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 (define flecho-delay 0.9)
 (define flecho-label "Filtered echo")
 (define flecho-dialog #f)
+(define flecho-target 'sound)
 
 (if (not (defined? 'flecho))
     (define flecho 
@@ -1139,7 +1193,9 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 		      (fir-filter flt (* scaler (+ (tap del) inval))))))))))
 
 (define (cp-flecho)
- (map-chan (flecho flecho-scaler flecho-delay)))
+ (map-chan-over-target 
+  (lambda () (flecho flecho-scaler flecho-delay))
+  flecho-target))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1173,7 +1229,11 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 				       (list "delay time (secs)" 0.0 initial-flecho-delay 3.0
 					     (lambda (w context info)
 					       (set! flecho-delay (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+	      (add-target (|XtParent (car sliders))
+			  (lambda (target)
+			    (set! flecho-target target)))))
+
 	(activate-dialog flecho-dialog))
 
       (add-to-menu effects-menu "Filtered echo" (lambda () (post-flecho-dialog))))
@@ -1197,6 +1257,7 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 (define zecho-amp 10.0)
 (define zecho-label "Modulated echo")
 (define zecho-dialog #f)
+(define zecho-target 'sound)
 
 (if (not (defined? 'zecho))
     (define zecho 
@@ -1211,7 +1272,7 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 		      (* amp (oscil os)))))))))
 
 (define (cp-zecho)
- (map-chan (zecho zecho-scaler zecho-delay zecho-freq zecho-amp)))
+ (map-chan-over-target (zecho zecho-scaler zecho-delay zecho-freq zecho-amp)) zecho-target)
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1260,7 +1321,11 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                                       (list "modulation amplitude" 0.0 initial-zecho-amp 100.0
                                              (lambda (w context info)
                                                (set! zecho-amp (/ (|value info) 100.0)))
-                                             100))))))
+                                             100))))
+	      (add-target (|XtParent (car sliders))
+			  (lambda (target)
+			    (set! zecho-target target)))))
+
 	(activate-dialog zecho-dialog))
 
       (add-to-menu effects-menu "Modulated echo" (lambda () (post-zecho-dialog))))
@@ -1283,6 +1348,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 (define flange-time 0.001)
 (define flange-label "Flange")
 (define flange-dialog #f)
+(define flange-target 'sound)
 
 (define (cp-flange) ; increase speed and amount to get phaser
   (let* ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
@@ -1307,7 +1373,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
               (set! flange-dialog 
 		    (make-effect-dialog flange-label
 					(lambda (w context info)
-					  (map-chan-with-sync (lambda () (cp-flange)) "flange"))
+					  (map-chan-over-target-with-sync (lambda () (cp-flange)) flange-target "flange"))
 					(lambda (w context info)
 					  (|XtUnmanageChild flange-dialog))
 					(lambda (w context info)
@@ -1334,7 +1400,11 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				       (list "flange time" 0.0 initial-flange-time 1.0
 					     (lambda (w context info)
 					       (set! flange-time (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+              (add-target (|XtParent (car sliders))
+                          (lambda (target)
+                            (set! flange-target target)))))
+
 	(activate-dialog flange-dialog))
 
       (add-to-menu effects-menu "Flange" (lambda () (post-flange-dialog))))
@@ -1746,6 +1816,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 (define comb-chord-interval-two 1.20)
 (define comb-chord-label "Comb filter chord")
 (define comb-chord-dialog #f)
+(define comb-chord-target 'sound)
 
 (define comb-chord
   (lambda (scaler size amp interval-one interval-two)
@@ -1771,10 +1842,11 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
               (set! comb-chord-dialog
                     (make-effect-dialog comb-chord-label
                                         (lambda (w context info)
-                                          (map-chan-with-sync
+                                          (map-chan-over-target-with-sync
                                            (lambda ()
                                              (comb-chord comb-chord-scaler comb-chord-size comb-chord-amp
                                                          comb-chord-interval-one comb-chord-interval-two))
+					   comb-chord-target
                                            "comb-chord"))
                                         (lambda (w context info)
                                           (|XtUnmanageChild comb-chord-dialog))
@@ -1814,7 +1886,11 @@ Move the sliders to set the comb-chord parameters."))
                                        (list "comb-chord interval two" 0.0 initial-comb-chord-interval-two 2.0
                                              (lambda (w context info)
                                                (set! comb-chord-interval-two (/ (|value info) 100.0)))
-                                             100))))))
+                                             100))))
+              (add-target (|XtParent (car sliders))
+                          (lambda (target)
+                            (set! comb-chord-target target)))))
+
         (activate-dialog comb-chord-dialog))
 
       (add-to-menu effects-menu "Comb filter chord" (lambda () (post-comb-chord-dialog))))
@@ -1844,6 +1920,7 @@ Move the sliders to set the comb-chord parameters."))
 (define resonance 0.5)
 (define moog-label "Moog filter")
 (define moog-dialog #f)
+(define moog-target 'sound)
 
 (if (not (defined? 'moog-filter))
     (load "moog.scm"))
@@ -1854,7 +1931,7 @@ Move the sliders to set the comb-chord parameters."))
         (moog-filter gen inval))))
 
 (define (cp-moog)
-  (map-chan (moog cutoff-frequency resonance)))
+  (map-chan-over-target (lambda () (moog cutoff-frequency resonance)) moog-target))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1888,7 +1965,11 @@ Move the sliders to set the comb-chord parameters."))
 				       (list "resonance" 0.0 initial-resonance 1.0
 					     (lambda (w context info)
 					       (set! resonance (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+	      (add-target (|XtParent (car sliders))
+			  (lambda (target)
+			    (set! moog-target target)))))
+
 	(activate-dialog moog-dialog))
 
       (add-to-menu effects-menu "Moog filter" (lambda () (post-moog-dialog))))
@@ -1992,33 +2073,46 @@ Move the sliders to set the comb-chord parameters."))
 (define wobble-amplitude 0.5)
 (define wobble-label "Wobble")
 (define wobble-dialog #f)
+(define wobble-target 'sound)
 
-(if (not (defined? 'hello-dentist))
-    (define hello-dentist 
-      (lambda (frq amp)
-	(let* ((rn (make-rand-interp :frequency frq :amplitude amp))
-	       (i 0)
-	       (j 0)
-	       (len (frames))
-	       (in-data (samples->vct 0 len))
-	       (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
-	       (out-data (make-vct out-len))
-	       (rd (make-src :srate 1.0 
-			     :input (lambda (dir) 
-				      (let ((val (if (and (>= i 0) (< i len)) 
-						     (vct-ref in-data i) 
-						     0.0)))
-					(set! i (+ i dir)) 
-					val)))))
-	  (do ()
-	      ((or (= i len) (= j out-len)))
-	    (vct-set! out-data j (src rd (rand-interp rn)))
-	    (set! j (+ j 1)))
-	  (vct->samples 0 j out-data)))))
+(define hello-dentist-1 ; hello-dentist with added beg and end args
+  (lambda (frq amp beg end)
+    (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
+	   (i 0)
+	   (j 0)
+	   (len (1+ (- end beg)))
+	   (in-data (samples->vct beg len))
+	   (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
+	   (out-data (make-vct out-len))
+	   (rd (make-src :srate 1.0 
+			 :input (lambda (dir) 
+				  (let ((val (if (and (>= i 0) (< i len)) 
+						 (vct-ref in-data i) 
+						 0.0)))
+				    (set! i (+ i dir)) 
+				    val)))))
+      (do ()
+	  ((or (= i len) (= j out-len)))
+	(vct-set! out-data j (src rd (rand-interp rn)))
+	(set! j (+ j 1)))
+      (vct->samples beg j out-data))))
 
 (define (cp-wobble)
   "Wobble: randomly interpolates frequency and amplitude for wobbling effect."
-  (hello-dentist wobble-frequency wobble-amplitude))
+  (let ((ms (and (eq? wobble-target 'marks)
+		 (plausible-mark-samples))))
+    (hello-dentist-1
+     wobble-frequency wobble-amplitude
+     (if (eq? wobble-target 'sound)
+	 0
+	 (if (eq? wobble-target 'selection)
+	     (selection-position)
+	     (car ms)))
+     (if (eq? wobble-target 'sound)
+	 (1- (frames))
+	 (if (eq? wobble-target 'selection)
+	     (+ (selection-position) (selection-length))
+	     (cadr ms))))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -2052,7 +2146,11 @@ Move the sliders to set the comb-chord parameters."))
 				       (list "wobble-amplitude" 0.0 initial-wobble-amplitude 1.0
 					     (lambda (w context info)
 					       (set! wobble-amplitude (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+	      (add-target (|XtParent (car sliders))
+			  (lambda (target)
+			    (set! wobble-target target)))))
+
 	(activate-dialog wobble-dialog))
 
       (add-to-menu effects-menu "Wobble" (lambda () (post-wobble-dialog))))
@@ -2077,6 +2175,7 @@ Move the sliders to set the comb-chord parameters."))
 (define cross-synth-label "Cross synthesis")
 (define cross-synth-dialog #f)
 (define cross-synth-default-fft-widget #f)
+(define cross-synth-target 'sound)
 
 (define use-combo-box-for-fft-size #f) ; radio-buttons or combo-box choice
 
@@ -2111,7 +2210,10 @@ Move the sliders to set the comb-chord parameters."))
 	      (* amp (formant-bank spectr formants inval))))))))
 
 (define (cp-cross-synth)
-  (map-chan (cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
+  (map-chan-over-target
+   (lambda () 
+     (cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+   cross-synth-target))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -2243,7 +2345,12 @@ to be cross-synthesized, the synthesis amplitude, the FFT size, and the radius v
 			 (if (= size cross-synth-fft-size)
 			     (set! cross-synth-default-fft-widget button))))
 		     (list 64 128 256 512 1024 4096))
-		    (|XmStringFree s1)))))
+		    (|XmStringFree s1)))
+
+	      (add-target (|XtParent (car sliders))
+			  (lambda (target)
+			    (set! cross-synth-target target)))))
+
         (activate-dialog cross-synth-dialog))
 
       (add-to-menu effects-menu "Cross synthesis" (lambda () (post-cross-synth-dialog))))

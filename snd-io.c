@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* file buffers (i.e. a sliding window on a given file's data */
+/* file buffers (i.e. a sliding window on a given file's data) */
 
 #define SND_AREF_BLOCK 0
 #define SND_AREF_SIZE 1

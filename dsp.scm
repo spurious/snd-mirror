@@ -57,7 +57,7 @@
 ;;   Sam Heisz, January 1998
 ;;   inspired by some unit generators written for Csound by Paris Smaragdis
 ;;   who based his work on formulas from 
-;;   Charles Doge, Computer music: synthesis, composition, and performance.
+;;   Charles Dodge, Computer music: synthesis, composition, and performance.
 
 (define root-2 (sqrt 2.0))
 
