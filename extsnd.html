@@ -3690,7 +3690,7 @@ Begin time of region <i>reg</i>'s channel <i>chan</i> in the original sound.
 value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
 </td></tr>
 
-<!-- region-samples->vct -->
+<!-- region->vct -->
 <tr><td colspan=2><code><a class=def name="region_to_vct">region-&gt;vct</a> (<i>samp samps reg chn v</i>)</code></td></tr>
 <tr><td></td><td>
 return a vct containing <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
@@ -4655,6 +4655,7 @@ delete a mix or all mixes: <a href="#deletemix">delete-mix</a><br>
 delete a track or all tracks: <a href="#deletetrack">delete-track</a><br>
 delete a mark or all marks: <a href="#deletemark">delete-mark</a><br>
 delete a colormap: <a href="#deletecolormap">delete-colormap</a><br>
+delete samples: <a href="#deletesamples">delete-samples</a><br>
 remove a file from the sound cache: <a href="#soundforget">mus-sound-forget</a><br>
 remove a menu item: <a href="#removefrommenu">remove-from-menu</a> or remove-main-menu in snd-motif.scm<br>
 add a 'delete' option to the file selection dialog: <a href="sndscm.html#adddeleteoption">add-delete-option</a><br>
@@ -4711,6 +4712,7 @@ sets up the envelope property 'envelope-base.
 <blockquote><small>
 <br>
 envelopes in Snd:<br>
+envelope sound: <a href="#envchannel">env-channel</a>, <a href="#envsound">env-sound</a><br>
 Other enveloping functions: <a href="#rampchannel">ramp-channel</a>, <a href="#xrampchannel">xramp-channel</a>, <a href="#smoothchannel">smooth-channel</a><br>
 The CLM env generator: <a href="clm.html#make-env">env</a>, many examples in examp.scm, new-effects.scm, etc<br>
 Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
@@ -5450,12 +5452,6 @@ is an example of this.
   (do ((i 0 (1+ i)))
       ((= i (<a class=quiet href="#chans">chans</a> snd)))
     (<em class=red>map-channel</em> proc beg dur snd i edpos origin)))
-
-(define* (map-all-chans proc #:optional (beg 0) dur origin)
-  (apply for-each 
-	 (lambda (snd chn)
-	   (<em class=red>map-channel</em> proc beg dur snd chn #f origin))
-	 (all-chans)))
 </pre></td></tr></table><br>
 An esoteric aside: map-channel sets up the sample reader before calling the procedure, so if that procedure edits
 the sound itself (independent of map-channel), the result will be all such edits after the current edit, then the map-channel result
@@ -11169,7 +11165,7 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
 	<!-- I(multichannel ops):L(sync)(sync) -->
         <!-- I(save control panel):L(save-controls)(savecontrols) -->
 	<!-- I(amp env):L(env-sound)(envsound) -->
-        <!-- I(filter):L(filter-env)(filtercontrolenvelope) -->
+        <!-- I(filter):L(filter-control-envelope)(filtercontrolenvelope) -->
 	<!-- I(filter):M(Edit: Edit Env)(editenvelope) -->
         <!-- I(axis bounds):L([xy]-bounds)(xbounds) -->
 	<!-- I(max amp):L(maxamp)(maxamp) -->

@@ -18,7 +18,7 @@
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
 
-(define *locsig-type* mus-sinusoidal)
+(define *locsig-type* mus-interp-sinusoidal)
 
 (define* (attack-point duration attack decay #:optional (total-x 100.0))
   (* total-x (/ (if (= 0.0 attack)

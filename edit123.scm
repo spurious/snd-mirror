@@ -162,7 +162,7 @@
  (make-selection pos1 pos2)
 ;(set! (x-bounds) 
 ;    (list (/ (selection-position) (srate))
-;          (/ (+ (selection-position) (selection-length)) (srate))))
+;          (/ (+ (selection-position) (selection-frames)) (srate))))
 (play-selection))
 
 (define (test-mark-forw name  length)
@@ -210,7 +210,7 @@
 (make-selection (cursor)  (+ (cursor) length))
 ;(set! (x-bounds) 
 ;    (list (/ (selection-position) (srate))
-;          (/ (+ (selection-position) (selection-length)) (srate))))
+;          (/ (+ (selection-position) (selection-frames)) (srate))))
 (play-selection))
 
 
@@ -487,7 +487,7 @@
 ; + zoom in 
 (bind-key (char->integer #\+) 0 (lambda () (set! (x-bounds) 
 	                                                           (list (/ (selection-position) (srate))
-                                                                              (/ (+ (selection-position) (selection-length)) (srate))) 
+                                                                              (/ (+ (selection-position) (selection-frames)) (srate))) 
 								                                                              (cursor-on-left)
                                                                          )
 			)

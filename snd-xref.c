@@ -3541,6 +3541,7 @@ static char *Deletions_xrefs[] = {
   "delete a track or all tracks: {delete-track}",
   "delete a mark or all marks: {delete-mark}",
   "delete a colormap: {delete-colormap}",
+  "delete samples: {delete-samples}",
   "remove a file from the sound cache: {mus-sound-forget}",
   "remove a menu item: {remove-from-menu} or remove-main-menu in snd-motif.scm",
   "add a 'delete' option to the file selection dialog: {add-delete-option}",
@@ -3556,6 +3557,7 @@ static char *Deletions_urls[] = {
   "extsnd.html#deletetrack",
   "extsnd.html#deletemark",
   "extsnd.html#deletecolormap",
+  "extsnd.html#deletesamples",
   "extsnd.html#soundforget",
   "extsnd.html#removefrommenu",
   "sndscm.html#adddeleteoption",
@@ -3564,6 +3566,7 @@ static char *Deletions_urls[] = {
 
 static char *Envelopes_xrefs[] = {
   "envelopes in Snd:",
+  "envelope sound: {env-channel}, {env-sound}",
   "Other enveloping functions: {ramp-channel}, {xramp-channel}, {smooth-channel}",
   "The CLM env generator: {env}, many examples in examp.scm, new-effects.scm, etc",
   "Various operations on envelopes: {env.scm}",
@@ -3585,6 +3588,7 @@ static char *Envelopes_xrefs[] = {
 
 static char *Envelopes_urls[] = {
   NULL,
+  "extsnd.html#envchannel",
   "extsnd.html#rampchannel",
   "clm.html#make-env",
   "sndscm.html#envdoc",

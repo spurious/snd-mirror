@@ -2046,7 +2046,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-g</td><td>abort current command</td><td><code><small>c-g!</small></code></td></tr>
 <tr><td>C-h</td><td>delete previous sample</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples">delete-samples</a> (- (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg) arg))</small></code></td></tr>
 <tr><td>C-i</td><td>display cursor info</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#reportinminibuffer">report-in-minibuffer</a> (format #f "cursor at ~A" (<a class=quiet href="extsnd.html#sample">sample</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))</small></code></td></tr>
-<tr><td>C-j</td><td>go to mark</td><td><code><small>(lambda (arg) (<a class=quiet href="sndscm.html#forwardmark">forward-mark</a> arg))</small></code></td></tr>
+<tr><td>C-j</td><td>go to mark</td><td><code><small>(lambda (arg) (<a class=quiet href="sndscm.html#forwardmark">forward-mark</a> arg)) ;snd7.scm</small></code></td></tr>
 <tr><td>C-k</td><td>delete one line's worth of samples</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples">delete-samples</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) (* 128 arg)))</small></code></td></tr>
 <tr><td>C-l</td><td>position window so cursor is in the middle</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#bindkey">cursor-in-middle</a>)</small></code></td></tr>
 <tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#addmark">add-mark</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>)))</small></code></td></tr>
@@ -2095,7 +2095,7 @@ all the samples between the cursor and the next mark.</p>
 	 (minx (max 0.0 (- mid-point (* 0.5 range)))))
     (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx range)))))
 </pre></small></code></td></tr>
-<tr><td>C-x o</td><td>move to next or previous graph</td><td><code><small>(lambda (arg) (<a class=quiet href="sndscm.html#forwardgraph">forward-graph</a> arg))</small></code></td></tr>
+<tr><td>C-x o</td><td>move to next or previous graph</td><td><code><small>(lambda (arg) (<a class=quiet href="sndscm.html#forwardgraph">forward-graph</a> arg)) ;snd7.scm</small></code></td></tr>
 <tr><td>C-x p</td><td>play selection or region n</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#playregion">play-region</a> arg)) ;play-selection if no arg</small></code></td></tr>
 <tr><td>C-x q</td><td>mix in region</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#mixregion">mix-region</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg)) ;mix-selection if no arg</small></code></td></tr>
 <tr><td>C-x r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo">redo</a> arg))</small></code></td></tr>
@@ -2355,7 +2355,7 @@ panel are:</p>
   <tr><td><a href="#fftstyle">fft/sono/spectrogram</a></td><td><small>Options: <a href="extsnd.html#transformgraphtype">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformgraphtype"><small>transform-graph-type</small></a></td><td><br></td></tr>
   <tr><td><a href="#formats">file formats</a></td><td><small>File: <a href="#savefileas">Save as</a></small></td><td><br></td><td><a href="extsnd.html#dataformat"><small>data-format</small></a></td><td><br></td></tr>
   <tr><td><a href="#prevfiles">file lists</a></td><td><small>View: <a href="#prevfiles">Files</a></small></td><td><br></td><td><a href="extsnd.html#viewfilesdialog"><small>view-files-dialog</small></a></td><td><a href="extsnd.html#mouseenterlabelhook"><small>mouse-enter-label-hook</small></a></td></tr>
-  <tr><td><a href="#filtercontrol">filter</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#filtercontrolenvelope"><small>filter-env</small></a></td><td><a href="#filtercontrol"><small>see filter controls</small></a></td></tr>
+  <tr><td><a href="#filtercontrol">filter</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#filtercontrolenvelope"><small>filter-control-envelope</small></a></td><td><a href="#filtercontrol"><small>see filter controls</small></a></td></tr>
   <tr><td><a href="extsnd.html#filtersound">filter samples</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#filtersound"><small>filter-sound</small></a></td><td><a href="extsnd.html#filterselection"><small>filter-selection</small></a></td></tr>
   <tr><td><a href="#find">find</a></td><td><small>Edit: <a href="#find">Find</a></small></td><td><a href="#cs"><small>Cs or Cr</small></a></td><td><a href="extsnd.html#find"><small>find</small></a></td><td><a href="extsnd.html#countmatches"><small>count-matches</small></a></td></tr>
   <tr><td><a href="#verticalpane">horizontal panes</a></td><td><br></td><td><br></td><td><a href="extsnd.html#graphshorizontal"><small>graphs-horizontal</small></a></td><td><a href="#verticalpane"><small>-h switch to Snd</small></a></td></tr>

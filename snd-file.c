@@ -28,7 +28,10 @@
 #if (__bsdi__ || HAVE_SYS_PARAM_H)
   #include <sys/param.h>
 #endif
-/* TODO: how to handle mount.h correctly? */
+/* to handle mount.h correctly in autoconf I'd need to specialize the header checker for
+ *   whatever headers mount.h needs, which I assume depends on the OS -- not worth the
+ *   trouble!  Perhaps there's a better way to handle disk-kspace?
+ */
 #if MAC_OSX || defined(__bsdi__)
   #include <sys/mount.h>
 #endif

@@ -193,7 +193,7 @@ int snd_open_read(const char *arg)
 {
   int fd;
   fd = OPEN(arg, O_RDONLY, 0);
-  if ((fd == -1) && (errno == EMFILE))
+  if ((fd == -1) && (errno == EMFILE)) /* there's also ENFILE = file table overflow (/usr/include/asm/errno.h) */
     {
       fd = too_many_files_cleanup();
       if (fd != -1) 

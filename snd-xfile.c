@@ -434,40 +434,43 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
   filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  if ((filename) && (sound_file_p(filename)))
+  if (filename)
     {
-      XmString label;
-      char *buf;
-      char timestr[64];
-      time_t date;
-      XtManageChild(fd->play_selected_button);
-      buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
-		   filename_without_home_directory(filename),
-		   mus_sound_chans(filename),
-		   (mus_sound_chans(filename) > 1) ? "s" : "",
-		   mus_sound_srate(filename),
-		   mus_sound_duration(filename));
-      label = XmStringCreateLocalized(buf);
-      XtVaSetValues(fd->dialog_info1, XmNlabelString, label, NULL);
-      XmStringFree(label);
-      date = mus_sound_write_date(filename);
+      if (sound_file_p(filename))
+	{
+	  XmString label;
+	  char *buf;
+	  char timestr[64];
+	  time_t date;
+	  XtManageChild(fd->play_selected_button);
+	  buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
+		       filename_without_home_directory(filename),
+		       mus_sound_chans(filename),
+		       (mus_sound_chans(filename) > 1) ? "s" : "",
+		       mus_sound_srate(filename),
+		       mus_sound_duration(filename));
+	  label = XmStringCreateLocalized(buf);
+	  XtVaSetValues(fd->dialog_info1, XmNlabelString, label, NULL);
+	  XmStringFree(label);
+	  date = mus_sound_write_date(filename);
 #if HAVE_STRFTIME
-      strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
+	  strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
 #else
-      sprintf(timestr, "");
+	  sprintf(timestr, "");
 #endif
-      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
-		   mus_header_type_name(mus_sound_header_type(filename)),
-		   mus_short_data_format_name(mus_sound_data_format(filename)),
-		   timestr);
-      label = XmStringCreateLocalized(buf);
-      XtVaSetValues(fd->dialog_info2, XmNlabelString, label, NULL);
-      XmStringFree(label);
-      FREE(buf);
+	  mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
+		       mus_header_type_name(mus_sound_header_type(filename)),
+		       mus_short_data_format_name(mus_sound_data_format(filename)),
+		       timestr);
+	  label = XmStringCreateLocalized(buf);
+	  XtVaSetValues(fd->dialog_info2, XmNlabelString, label, NULL);
+	  XmStringFree(label);
+	  FREE(buf);
+	  if (!(XtIsManaged(fd->dialog_frame))) 
+	    XtManageChild(fd->dialog_frame);
+	}
       XtFree(filename);
-      if (!(XtIsManaged(fd->dialog_frame))) 
-	XtManageChild(fd->dialog_frame);
     }
   else
     {

@@ -286,7 +286,6 @@
 
 
 (define (change-prop winat name command)
-  ;; implements change-window-property via xm
   (define (find-window dpy top natom)
     (let ((res (XGetWindowProperty dpy top natom 0 1024 #f XA_STRING)))
       (if (and (= (car res) Success) 

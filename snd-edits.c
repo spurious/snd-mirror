@@ -5580,6 +5580,13 @@ bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp
       if (new_len > prev_len) reflect_sample_change_in_axis(cp);
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
       fd = snd_open_read(tempfile);
+#if DEBUGGING
+      if (fd == -1) /* not sure this can happen -- snd_error in snd_open_read probably throws us to top */
+	{
+	  fprintf(stderr, "temp file trouble in change_samples");
+	  abort();
+	}
+#endif
       mus_file_open_descriptors(fd,
 				tempfile,
 				hdr->format,
