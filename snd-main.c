@@ -309,14 +309,30 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (enved_clip_p(ss) != DEFAULT_ENVED_CLIP_P) pss_ss(fd, S_enved_clip_p, b2s(enved_clip_p(ss)));
   if (enved_exp_p(ss) != DEFAULT_ENVED_EXP_P) pss_ss(fd, S_enved_exp_p, b2s(enved_exp_p(ss)));
 
-  if (vu_font(ss) != DEFAULT_VU_FONT) pss_sq(fd, S_vu_font, vu_font(ss));
-  if (save_state_file(ss) != NULL) pss_sq(fd, S_save_state_file, save_state_file(ss));
-  if (temp_dir(ss) != DEFAULT_TEMP_DIR) pss_sq(fd, S_temp_dir, temp_dir(ss));
-  if (save_dir(ss) != DEFAULT_SAVE_DIR) pss_sq(fd, S_save_dir, save_dir(ss));
-  if (ladspa_dir(ss) != DEFAULT_LADSPA_DIR) pss_sq(fd, S_ladspa_dir, ladspa_dir(ss));
-  if ((eps_file(ss) != DEFAULT_EPS_FILE) && (strcmp(eps_file(ss), "snd.eps") != 0)) pss_sq(fd, S_eps_file, eps_file(ss));
-  if (strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT) != 0) pss_sq(fd, S_listener_prompt, listener_prompt(ss));
-  if ((audio_state_file(ss) != NULL) && (strcmp(audio_state_file(ss), AUDIO_STATE_FILE) != 0)) pss_sq(fd, S_audio_state_file, audio_state_file(ss));
+  if ((vu_font(ss)) && 
+      ((DEFAULT_VU_FONT == NULL) || (strcmp(vu_font(ss), DEFAULT_VU_FONT) != 0))) 
+    pss_sq(fd, S_vu_font, vu_font(ss));
+  if (save_state_file(ss))
+    pss_sq(fd, S_save_state_file, save_state_file(ss));
+  if ((temp_dir(ss)) && 
+      ((DEFAULT_TEMP_DIR == NULL) || (strcmp(temp_dir(ss), DEFAULT_TEMP_DIR) != 0)))
+    pss_sq(fd, S_temp_dir, temp_dir(ss));
+  if ((save_dir(ss)) && 
+      ((DEFAULT_SAVE_DIR == NULL) || (strcmp(save_dir(ss), DEFAULT_SAVE_DIR) != 0))) 
+    pss_sq(fd, S_save_dir, save_dir(ss));
+  if ((ladspa_dir(ss)) && 
+      ((DEFAULT_LADSPA_DIR == NULL) || (strcmp(ladspa_dir(ss), DEFAULT_LADSPA_DIR) != 0))) 
+    pss_sq(fd, S_ladspa_dir, ladspa_dir(ss));
+  if ((eps_file(ss)) && 
+      ((DEFAULT_EPS_FILE == NULL) || (strcmp(eps_file(ss), DEFAULT_EPS_FILE) != 0)))
+    pss_sq(fd, S_eps_file, eps_file(ss));
+  if ((listener_prompt(ss)) && 
+      ((DEFAULT_LISTENER_PROMPT == NULL) || (strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT) != 0)))
+    pss_sq(fd, S_listener_prompt, listener_prompt(ss));
+  if ((audio_state_file(ss)) && 
+      ((AUDIO_STATE_FILE == NULL) || (strcmp(audio_state_file(ss), AUDIO_STATE_FILE) != 0))) 
+      pss_sq(fd, S_audio_state_file, audio_state_file(ss));
+
   if (audio_input_device(ss) != DEFAULT_AUDIO_INPUT_DEVICE) pss_sd(fd, S_audio_input_device, audio_input_device(ss));
   if (audio_output_device(ss) != DEFAULT_AUDIO_OUTPUT_DEVICE) pss_sd(fd, S_audio_output_device, audio_output_device(ss));
 
@@ -454,11 +470,6 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (tmpstr) FREE(tmpstr);
     }
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
-  if (XEN_PROCEDURE_P(sp->search_proc))
-    {
-      fprintf(fd, "      " XEN_COMMENT_STRING " currently not trying to restore the local search procedure\n");
-      fprintf(fd, "      %s %s\n", XEN_COMMENT_STRING, g_print_1(sp->search_proc, __FUNCTION__));
-    }
   for (chan = 0; chan < sp->nchans; chan++)
     {
       cp = sp->chans[chan];

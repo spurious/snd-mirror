@@ -369,7 +369,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	  sp->search_proc = XEN_UNDEFINED;
 	  if (XEN_STRING_P(proc))
 	    {
-	      expr = XEN_TO_NEW_C_STRING(proc);
+	      expr = copy_string(XEN_TO_C_STRING(proc));
 	      proc = snd_catch_any(eval_str_wrapper, expr, expr);
 	    }
 	  error = procedure_ok(proc, 1, "find", "find", 1);
@@ -377,7 +377,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	    {
 	      sp->search_proc = proc;
 	      snd_protect(proc);
-	      if (sp->search_expr) free(sp->search_expr);
+	      if (sp->search_expr) FREE(sp->search_expr);
 	      sp->search_expr = expr;
 	      return(proc);
 	    }
@@ -399,7 +399,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
       ss->search_proc = XEN_UNDEFINED;
       if (XEN_STRING_P(snd))
 	{
-	  expr = XEN_TO_NEW_C_STRING(snd);
+	  expr = copy_string(XEN_TO_C_STRING(snd));
 	  snd = snd_catch_any(eval_str_wrapper, expr, expr);
 	}
       error = procedure_ok(snd, 1, "find", "find", 1);
@@ -407,7 +407,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	{
 	  ss->search_proc = snd;
 	  snd_protect(snd);
-	  if (ss->search_expr) free(ss->search_expr);
+	  if (ss->search_expr) FREE(ss->search_expr);
 	  ss->search_expr = expr;
 	}
       else 

@@ -618,8 +618,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	       * (lambda (y) (> y .1)) 
 	       * if returns #t, search stops
 	       */
-	      if (sp->search_expr) free(sp->search_expr);
-	      sp->search_expr = str;
+	      if (sp->search_expr) FREE(sp->search_expr);
+	      sp->search_expr = copy_string(str);
 	      if (XEN_PROCEDURE_P(sp->search_proc))
 		snd_unprotect(sp->search_proc);
 	      sp->search_proc = XEN_UNDEFINED;
@@ -629,6 +629,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		  sp->search_proc = proc;
 		  snd_protect(proc);
  		}
+	      free(str);
 	    }
 	}
       if (active_chan)
@@ -711,7 +712,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      break;
 #if HAVE_OPENDIR
 	    case TEMP_FILING:
-	      newdir = snd_strdup(str);
+	      newdir = copy_string(str);
 	      clear_minibuffer(sp);
 	      dp = opendir(newdir);
 	      if (dp) 

@@ -34,7 +34,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
   str = gtk_entry_get_text(GTK_ENTRY(edit_find_text));
   if ((str) && (*str))
     {
-      ss->search_expr = str;
+      ss->search_expr = copy_string(str);
       if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
       ss->search_proc = XEN_UNDEFINED;
       proc = snd_catch_any(eval_str_wrapper, str, str);
@@ -48,6 +48,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
       set_label(edit_find_label, buf);
       gtk_entry_set_text(GTK_ENTRY(edit_find_text), "");
       FREE(buf);
+      if (str) free(str);
     }
   if (XEN_PROCEDURE_P(ss->search_proc))
     {

@@ -96,6 +96,7 @@ env_state *make_env_state(chan_info *cp, int samples)
   int val, pos, i, j, start, start_bin, end, end_bin, old_end_bin, old_samples, happy = 0;
   env_info *ep, *old_ep = NULL;
   env_state *es;
+  if (samples <= 0) return(NULL);
   stop_amp_env(cp);
   pos = cp->edit_ctr;
   es = (env_state *)CALLOC(1, sizeof(env_state));
@@ -1590,7 +1591,6 @@ static XEN sp_iwrite(XEN snd_n, XEN val, int fld, char *caller)
 {
   snd_info *sp;
   snd_state *ss;
-  char *com;
   int i, ival, old_format;
   if (XEN_TRUE_P(snd_n))
     {
@@ -1695,11 +1695,8 @@ static XEN sp_iwrite(XEN snd_n, XEN val, int fld, char *caller)
       snd_update(ss, sp); 
       break;
     case SP_COMMENT:      
-      com = XEN_TO_NEW_C_STRING(val);
-      if (sp->hdr->comment)
-	FREE(sp->hdr->comment);
-      sp->hdr->comment = copy_string(com);
-      free(com);
+      if (sp->hdr->comment) FREE(sp->hdr->comment);
+      sp->hdr->comment = copy_string(XEN_TO_C_STRING(val));
       break;
     }
   return(val);
@@ -2911,12 +2908,7 @@ static env_info *get_peak_env_info(char *fullname)
       (!(POWER_OF_2_P(ibuf[1]))) ||
       (ibuf[2] <= 0) ||
       (ibuf[4] > ibuf[1]))
-    {
-#if DEBUGGING
-      fprintf(stderr,"bogus peak info file: ibuf: [%d %d %d %d %d]\n", ibuf[0], ibuf[1], ibuf[2], ibuf[3], ibuf[4]);
-#endif
-      return(NULL);
-    }
+    return(NULL);
   ep = (env_info *)CALLOC(1, sizeof(env_info));
   ep->completed = ibuf[0];
   ep->amp_env_size = ibuf[1];
@@ -3142,23 +3134,26 @@ If 'filename' is a sound index (an integer), pts is an edit-position, and the cu
       cp->edit_ctr = 0;
       cp->active = 1;
       es = make_env_state(cp, cp->samples[0]);
-      if (XEN_PROCEDURE_P(done_func))
+      if (es)
 	{
-	  et = (env_tick *)CALLOC(1, sizeof(env_tick));
-	  et->cp = cp;
-	  et->es = es;
-	  et->func = done_func;
-	  et->len = len;
-	  et->filename = filename;
-	  snd_protect(done_func);
-	  id = (int)BACKGROUND_ADD(ss, tick_it, (GUI_POINTER)et);
-	  if (fullname) FREE(fullname);
-	  return(C_TO_XEN_INT(id));
+	  if (XEN_PROCEDURE_P(done_func))
+	    {
+	      et = (env_tick *)CALLOC(1, sizeof(env_tick));
+	      et->cp = cp;
+	      et->es = es;
+	      et->func = done_func;
+	      et->len = len;
+	      et->filename = filename;
+	      snd_protect(done_func);
+	      id = (int)BACKGROUND_ADD(ss, tick_it, (GUI_POINTER)et);
+	      if (fullname) FREE(fullname);
+	      return(C_TO_XEN_INT(id));
+	    }
+	  while (tick_amp_env(cp, es) == FALSE);
+	  if (es->sf) free_snd_fd(es->sf);
+	  FREE(es);
+	  peak = g_env_info_to_vectors(cp->amp_envs[0], len);
 	}
-      while (tick_amp_env(cp, es) == FALSE);
-      if (es->sf) free_snd_fd(es->sf);
-      FREE(es);
-      peak = g_env_info_to_vectors(cp->amp_envs[0], len);
       completely_free_snd_info(sp);
     }
   if (fullname) FREE(fullname);

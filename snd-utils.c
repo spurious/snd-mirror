@@ -19,20 +19,11 @@ char *copy_string(const char *str)
     }
   return(newstr);
 #else
-  return(snd_strdup(str));
-#endif
-}
-
-char *snd_strdup(const char *str)
-{
-#if HAVE_STRDUP
-  if (str) return(strdup(str));
+  if (str)
+    return(strdup(str));
   return(NULL);
-#else
-  return(copy_string(str));
 #endif
 }
-
 
 int snd_strlen(char *str)
 {

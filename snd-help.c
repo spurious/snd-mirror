@@ -1944,14 +1944,6 @@ void new_file_dialog_help(snd_state *ss)
 "This dialog sets the new file's output header type, data format, srate, chans, and comment if any.");
 }
 
-void file_mix_dialog_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss,
-		     "File Mix",
-"The file you specify to the mix file prompt will be mixed into the current active sound at \
-the current cursor location of the active channel. The equivalent keyboard command is C-x C-q.");
-}
-
 void edit_header_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,

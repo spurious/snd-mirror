@@ -1240,13 +1240,12 @@ static int find_named_env(XEN name)
   int pos;
   char *env_name;
   if (XEN_STRING_P(name))
-    env_name = XEN_TO_NEW_C_STRING(name);
+    env_name = XEN_TO_C_STRING(name);
   else env_name = XEN_SYMBOL_TO_C_STRING(name);
   pos = find_env(env_name);
-  if (XEN_STRING_P(name)) free(env_name);
   if (pos == -1)
     XEN_ERROR(NO_SUCH_ENVELOPE, 
-	  XEN_LIST_1(name));
+	      XEN_LIST_1(name));
   return(pos);
 }
 

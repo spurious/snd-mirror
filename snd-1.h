@@ -457,7 +457,6 @@ void envelope_editor_dialog_help(snd_state *ss);
 void region_dialog_help(snd_state *ss);
 void raw_data_dialog_help(snd_state *ss);
 void new_file_dialog_help(snd_state *ss);
-void file_mix_dialog_help(snd_state *ss);
 void edit_header_dialog_help(snd_state *ss);
 void print_dialog_help(snd_state *ss);
 void view_files_dialog_help(snd_state *ss);
@@ -1163,7 +1162,6 @@ void g_init_file(void);
 
 int snd_round(double x);
 char *copy_string(const char *str);
-char *snd_strdup(const char *str);
 int snd_strlen(char *str);
 char *filename_without_home_directory(char *name);
 char *just_filename(char *name);

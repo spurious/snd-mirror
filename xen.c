@@ -358,9 +358,8 @@ static XEN xen_rb_rep(XEN ig)
     {
       add_history(line_read);
       val = xen_rb_eval_string_with_error(line_read);
-      str = XEN_TO_NEW_C_STRING(XEN_TO_STRING(val));
+      str = XEN_TO_C_STRING(XEN_TO_STRING(val));
       fprintf(stdout, "%s\n", (str) ? str : "nil");
-      if (str) free(str);
       free(line_read);
       line_read = NULL;
     }
@@ -372,9 +371,8 @@ static XEN xen_rb_rep(XEN ig)
   fprintf(stdout, ">");
   getline(buffer, &size, stdin);
   val = xen_rb_eval_string_with_error(buffer[0]);
-  str = XEN_TO_NEW_C_STRING(XEN_TO_STRING(val));
+  str = XEN_TO_C_STRING(XEN_TO_STRING(val));
   fprintf(stdout, "%s\n", (str) ? str : "nil");
-  if (str) free(str);
   free(buffer[0]);
   free(buffer);
 #endif

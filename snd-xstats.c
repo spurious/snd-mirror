@@ -109,6 +109,6 @@ char *stats_window_state(void)
 {
   if (stats_form)
     return(XmTextGetString(stats_form));
-  return(NULL);
+  return("no stats");
 }
 #endif

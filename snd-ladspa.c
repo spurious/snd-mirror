@@ -387,14 +387,11 @@ a user interface edit the parameter in a useful way."
 	          S_analyse_ladspa, "a string");
 
   /* Plugin. */
-  pcTmp = XEN_TO_NEW_C_STRING(ladspa_plugin_filename);
-  pcLabel = XEN_TO_NEW_C_STRING(ladspa_plugin_label);
+  pcTmp = XEN_TO_C_STRING(ladspa_plugin_filename);
+  pcLabel = XEN_TO_C_STRING(ladspa_plugin_label);
   pcFilename = packLADSPAFilename(pcTmp);
-  free(pcTmp);
-
   psDescriptor = findLADSPADescriptor(pcFilename, pcLabel);
   free(pcFilename);
-  free(pcLabel);
 
   if (!psDescriptor) {
     XEN_ERROR(NO_SUCH_PLUGIN,
@@ -521,10 +518,9 @@ Information about about parameters can be acquired using analyse-ladspa."
 		  S_apply_ladspa, "a string");
 
   /* Plugin. */
-  pcTmp = XEN_TO_NEW_C_STRING(XEN_CAR(ladspa_plugin_configuration));
-  pcLabel = XEN_TO_NEW_C_STRING(XEN_CADR(ladspa_plugin_configuration));
+  pcTmp = XEN_TO_C_STRING(XEN_CAR(ladspa_plugin_configuration));
+  pcLabel = XEN_TO_C_STRING(XEN_CADR(ladspa_plugin_configuration));
   pcFilename = packLADSPAFilename(pcTmp);
-  free(pcTmp);
 
   psDescriptor = findLADSPADescriptor(pcFilename, pcLabel);
   free(pcFilename);
@@ -546,13 +542,11 @@ Information about about parameters can be acquired using analyse-ladspa."
       msg = mus_format("%s inputs (%d) != outputs (%d)", pcLabel, readers, inchans);
       errmsg = C_TO_XEN_STRING(msg);
       FREE(msg);
-      free(pcLabel);
       XEN_ERROR(PLUGIN_ERROR,
 		XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
 			   ladspa_plugin_configuration,
 			   errmsg));
     }
-  free(pcLabel);
 
   lParameterCount = 0;
   for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++)
@@ -745,7 +739,7 @@ Information about about parameters can be acquired using analyse-ladspa."
 			  i,
 			  (readers > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 			  LOCK_MIXES,
-			  XEN_TO_NEW_C_STRING(origin),
+			  XEN_TO_C_STRING(origin),
 			  ncp->edit_ctr);
       update_graph(ncp, NULL);
     }

@@ -3185,7 +3185,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   if (chans > 0)
     {
       if (XEN_STRING_P(origin))
-	as_one_edit_origin = copy_string(XEN_TO_C_STRING(origin)); /* not XEN_TO_NEW_C_STRING since we have to use FREE elsewhere */
+	as_one_edit_origin = copy_string(XEN_TO_C_STRING(origin));
       else as_one_edit_origin = NULL;
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;

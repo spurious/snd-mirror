@@ -818,7 +818,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   file_info *hdr = NULL;
   snd_data *sd;
   int *io;
-  int i, fd, len;
+  int i, fd, len, chans;
   /* we've already checked that filename exists */
   hdr = make_file_info_1(filename);
   if (hdr == NULL)
@@ -829,8 +829,17 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 			     C_TO_XEN_STRING(ss->catch_message)));
       return(NULL);
     }
+  chans = mus_sound_chans(filename);
+  if (chans == 0)
+    {
+      if (ss->catch_exists)
+	XEN_ERROR(XEN_ERROR_TYPE("no-channels"),
+		  XEN_LIST_2(C_TO_XEN_STRING(filename),
+			     C_TO_XEN_STRING("sound has no channels?")));
+      return(NULL);
+    }
   sp = (snd_info *)CALLOC(1, sizeof(snd_info));
-  sp->nchans = mus_sound_chans(filename);
+  sp->nchans = chans;
   sp->allocated_chans = sp->nchans;
   sp->chans = (chan_info **)CALLOC(sp->nchans, sizeof(chan_info *));
   sp->hdr = hdr;
@@ -1546,7 +1555,7 @@ static int less_compare(const void *a, const void *b)
 void make_prevfiles_list_1(snd_state *ss)
 {
   heapdata **data;
-  int i, j, len;
+  int i, len;
   update_prevlist(ss);
   if (prevfile_end >= 0)
     {

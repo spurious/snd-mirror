@@ -1560,7 +1560,7 @@ static int read_riff_header (int chan)
     {
       offset += chunkloc;
       if (offset >= true_file_length) break;
-      if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0) break;
+      if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
       chunksize = big_or_little_endian_int((unsigned char *)(hdrbuf + 4), little);
       if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	{
@@ -1587,6 +1587,8 @@ static int read_riff_header (int chan)
 	  srate = big_or_little_endian_int((unsigned char *)(hdrbuf + 12), little);
 	  block_align = big_or_little_endian_short((unsigned char *)(hdrbuf + 20), little);
 	  bits_per_sample = big_or_little_endian_short((unsigned char *)(hdrbuf + 22), little);
+	  if (original_data_format == -2) /* 0xFFFE = "extensible" : short size=22, short bits, long chanmap, short format */
+	    original_data_format = big_or_little_endian_short((unsigned char *)(hdrbuf + 24 + 8), little);
 	  data_format = wave_to_sndlib_format(original_data_format, bits_per_sample, little);
 	}
       else
@@ -3080,7 +3082,7 @@ static int read_smp_header(int chan)
  *   252     2    int    File identifier (i.e. #o100 #o303)
  *   254     2    int    Data type (0xfc0e = sampled data file)
  *   256     2    int    Resolution (in bits 8, 16)
- *   258     2    int    Companding flag (1 = ulaw, 2 = alaw, 3 = int
+ *   258     2    int    Companding flag
  *   272   240    char   Text strings (3 * 80)
  *   512   ...    --     Audio data
  *
@@ -3107,7 +3109,6 @@ static int read_sppack_header(int chan)
 	  srate = (int)sr;
 	  switch (typ)
 	    {
-	      /* typ decode from SPPACK.html 1-Nov-01 -- this is the old form */
 	    case 1: if (bits == 16) data_format = MUS_BSHORT; else data_format = MUS_BYTE; break;
 	    case 2: data_format = MUS_ALAW; break;
 	    case 3: data_format = MUS_MULAW; break;

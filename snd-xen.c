@@ -112,7 +112,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   /* this is actually catching any throw not caught elsewhere, I think */
   snd_info *sp;
   char *possible_code;
-  XEN port; XEN ans; XEN stmp;
+  XEN port; XEN stmp;
   XEN stack;
   char *name_buf = NULL;
   snd_state *ss;
@@ -142,11 +142,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     scm_puts(": ", lport);
     scm_display(throw_args, lport);
     scm_force_output(lport);
-    ans = scm_strport_to_string(lport);
-    name_buf = XEN_TO_NEW_C_STRING(ans);
-    fprintf(stderr, name_buf);
-    if (name_buf) free(name_buf);
-    name_buf = NULL;
+    fprintf(stderr, XEN_TO_C_STRING(scm_strport_to_string(lport)));
   }
 #endif
 
@@ -229,8 +225,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       last_file_loaded = NULL;
     }
   scm_force_output(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
-  ans = scm_strport_to_string(port);
-  name_buf = XEN_TO_NEW_C_STRING(ans);
+  name_buf = XEN_TO_C_STRING(scm_strport_to_string(port));
   if (send_error_output_to_stdout)
     string_to_stdout(ss, name_buf);
   else
@@ -247,7 +242,6 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	if (!(ss->mx_sp))
 	  snd_error(name_buf);
     }
-  if (name_buf) free(name_buf);
 #endif
   return(tag);
 }
@@ -514,12 +508,12 @@ XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 #endif
 }
 
-char *g_print_1(XEN obj, const char *caller)
+char *g_print_1(XEN obj, const char *caller) /* don't free return val */
 {
   char *str1 = NULL;
 #if HAVE_GUILE
 #if HAVE_SCM_OBJECT_TO_STRING
-  return(XEN_TO_NEW_C_STRING(XEN_TO_STRING(obj))); 
+  return(XEN_TO_C_STRING(XEN_TO_STRING(obj))); 
 #else
   XEN str; XEN val;
   XEN port;
@@ -528,13 +522,13 @@ char *g_print_1(XEN obj, const char *caller)
   scm_prin1 (obj, port, 1);
   val = scm_strport_to_string(port);
   scm_close_port (port);
-  str1 = XEN_TO_NEW_C_STRING(val);
+  str1 = XEN_TO_C_STRING(val);
 #endif
 #endif
 #if HAVE_RUBY
   if (XEN_NULL_P(obj))
-    return(copy_string("nil")); /* Ruby returns the null string in this case??? */
-  return(XEN_TO_NEW_C_STRING(XEN_TO_STRING(obj)));
+    return("nil"); /* Ruby returns the null string in this case??? */
+  return(XEN_TO_C_STRING(XEN_TO_STRING(obj)));
 #endif
   return(str1);
 }
@@ -546,7 +540,7 @@ char *gl_print(XEN result, const char *caller)
   /* specialize vectors which can be enormous in this context */
   if ((!(XEN_VECTOR_P(result))) || 
       ((int)(XEN_VECTOR_LENGTH(result)) <= print_length(state)))
-    return(g_print_1(result, caller));
+    return(copy_string(g_print_1(result, caller)));
   ilen = print_length(state); 
   newbuf = (char *)calloc(128, sizeof(char));
   savelen = 128;
@@ -571,7 +565,6 @@ char *gl_print(XEN result, const char *caller)
 	  strcat(newbuf, str);
 	  savectr += slen;
 	}
-      if (str) free(str);
     }
   if (savectr + 8 > savelen) 
     newbuf = (char *)realloc(newbuf, (savectr + 8) * sizeof(char));
@@ -608,7 +601,7 @@ XEN snd_report_result(snd_state *ss, XEN result, char *buf)
       if (XEN_FALSE_P(res))
 	listener_append_and_prompt(ss, str);
     }
-  if (str) free(str);
+  if (str) FREE(str);
   return(result);
 }
 
@@ -633,7 +626,7 @@ XEN snd_report_listener_result(snd_state *ss, XEN form)
       if (XEN_FALSE_P(res))
 	listener_append_and_prompt(ss, str);
     }
-  if (str) free(str);
+  if (str) FREE(str);
   return(result);
 }
 
@@ -645,7 +638,7 @@ void snd_eval_property_str(snd_state *ss, char *buf)
   result = snd_catch_any(eval_str_wrapper, (void *)buf, buf);
   str = gl_print(result, "eval-listener-str");
   listener_append_and_prompt(ss, str);
-  if (str) free(str);
+  if (str) FREE(str);
 }
 
 static char *stdin_str = NULL;
@@ -699,7 +692,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
       stdin_str = NULL;
       str = gl_print(result, "eval-stdin-str");
       string_to_stdout(ss, str);
-      if (str) free(str);
+      if (str) FREE(str);
     }
 }
 
@@ -763,7 +756,7 @@ static XEN g_snd_print(XEN msg)
   snd_state *ss;
   ss = get_global_state();
   if (XEN_STRING_P(msg))
-    str = XEN_TO_NEW_C_STRING(msg);
+    str = copy_string(XEN_TO_C_STRING(msg));
   else
     {
       if (XEN_CHAR_P(msg))
@@ -774,7 +767,7 @@ static XEN g_snd_print(XEN msg)
       else str = gl_print(msg, S_snd_print);
     }
   listener_append(ss, str);
-  if (str) free(str);
+  if (str) FREE(str);
   check_for_event(ss);
   return(msg);
 }
@@ -980,8 +973,8 @@ static XEN g_set_eps_file(XEN val)
 {
   #define H_eps_file "(" S_eps_file ") -> current eps ('Print' command) file name (snd.eps)"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_eps_file, "a string"); 
-  if (eps_file(state)) free(eps_file(state));
-  set_eps_file(state, XEN_TO_NEW_C_STRING(val)); 
+  if (eps_file(state)) FREE(eps_file(state));
+  set_eps_file(state, copy_string(XEN_TO_C_STRING(val))); 
   return(C_TO_XEN_STRING(eps_file(state)));
 }
 
@@ -1017,8 +1010,8 @@ static XEN g_set_listener_prompt(XEN val)
 {
   #define H_listener_prompt "(" S_listener_prompt ") -> the current lisp listener prompt character ('>') "
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_listener_prompt, "a string"); 
-  if (listener_prompt(state)) free(listener_prompt(state));
-  set_listener_prompt(state, XEN_TO_NEW_C_STRING(val));
+  if (listener_prompt(state)) FREE(listener_prompt(state));
+  set_listener_prompt(state, copy_string(XEN_TO_C_STRING(val)));
 #if USE_NO_GUI
   {
 #if HAVE_GUILE
@@ -1038,8 +1031,8 @@ static XEN g_set_audio_state_file(XEN val)
 {
   #define H_audio_state_file "(" S_audio_state_file ") -> filename for the mus-audio-save-state function (.snd-mixer)"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_audio_state_file, "a string"); 
-  if (audio_state_file(state)) free(audio_state_file(state));
-  set_audio_state_file(state, XEN_TO_NEW_C_STRING(val));
+  if (audio_state_file(state)) FREE(audio_state_file(state));
+  set_audio_state_file(state, copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(audio_state_file(state)));
 }
 
@@ -1184,12 +1177,12 @@ static XEN g_set_temp_dir(XEN val)
   #define H_temp_dir "(" S_temp_dir ") -> name of directory for temp files"
 
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_temp_dir, "a string"); 
-  if (temp_dir(state)) free(temp_dir(state));
+  if (temp_dir(state)) FREE(temp_dir(state));
   if (XEN_FALSE_P(val))
-    set_temp_dir(state, snd_strdup(DEFAULT_TEMP_DIR));
+    set_temp_dir(state, copy_string(DEFAULT_TEMP_DIR));
   else 
     {
-      set_temp_dir(state, XEN_TO_NEW_C_STRING(val));
+      set_temp_dir(state, copy_string(XEN_TO_C_STRING(val)));
       return(snd_access(temp_dir(state), S_temp_dir));
     }
   return(C_TO_XEN_STRING(temp_dir(state)));
@@ -1211,8 +1204,8 @@ static XEN g_set_save_dir(XEN val)
 {
   #define H_save_dir "(" S_save_dir ") -> name of directory for saved state data"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_save_dir, "a string"); 
-  if (save_dir(state)) free(save_dir(state));
-  set_save_dir(state, XEN_TO_NEW_C_STRING(val));
+  if (save_dir(state)) FREE(save_dir(state));
+  set_save_dir(state, copy_string(XEN_TO_C_STRING(val)));
   return(snd_access(save_dir(state), S_save_dir));
 }
 
@@ -1221,10 +1214,10 @@ static XEN g_set_ladspa_dir(XEN val)
 {
   #define H_ladspa_dir "(" S_ladspa_dir ") -> name of directory for ladspa plugin libraries"
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_ladspa_dir, "a string"); 
-  if (ladspa_dir(state)) free(ladspa_dir(state));
+  if (ladspa_dir(state)) FREE(ladspa_dir(state));
   if (XEN_FALSE_P(val))
-    set_ladspa_dir(state, snd_strdup(DEFAULT_LADSPA_DIR));
-  else set_ladspa_dir(state, XEN_TO_NEW_C_STRING(val));
+    set_ladspa_dir(state, copy_string(DEFAULT_LADSPA_DIR));
+  else set_ladspa_dir(state, copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(ladspa_dir(state)));
 }
 
@@ -1300,10 +1293,10 @@ static XEN g_set_vu_font(XEN val)
 {
   #define H_vu_font "(" S_vu_font ") -> name of font used to make VU meter labels (courier)"
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_vu_font, "a string"); 
-  if (vu_font(state)) free(vu_font(state));
+  if (vu_font(state)) FREE(vu_font(state));
   if (XEN_FALSE_P(val))
-    set_vu_font(state, DEFAULT_VU_FONT);
-  else set_vu_font(state, XEN_TO_NEW_C_STRING(val));
+    set_vu_font(state, copy_string(DEFAULT_VU_FONT));
+  else set_vu_font(state, copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(vu_font(state)));
 }
 
@@ -1405,7 +1398,8 @@ static XEN g_set_help_text_font(XEN val)
 {
   #define H_help_text_font "(" S_help_text_font ") -> font used in the Help dialog"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_help_text_font, "a string"); 
-  set_help_text_font(state, XEN_TO_NEW_C_STRING(val)); 
+  /* TODO: check free here and below */
+  set_help_text_font(state, copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
 
@@ -1414,7 +1408,7 @@ static XEN g_set_tiny_font(XEN val)
 {
   #define H_tiny_font "(" S_tiny_font ") -> font use for some info in the graphs"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_tiny_font, "a string"); 
-  set_tiny_font(state, XEN_TO_NEW_C_STRING(val)); 
+  set_tiny_font(state, copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
 
@@ -1423,7 +1417,7 @@ static XEN g_set_axis_label_font(XEN val)
 {
   #define H_axis_label_font "(" S_axis_label_font ") -> font used for axis labels"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_axis_label_font, "a string"); 
-  set_axis_label_font(state, XEN_TO_NEW_C_STRING(val)); 
+  set_axis_label_font(state, copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
 
@@ -1432,7 +1426,7 @@ static XEN g_set_axis_numbers_font(XEN val)
 {
   #define H_axis_numbers_font "(" S_axis_numbers_font ") -> font used for axis numbers"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_axis_numbers_font, "a string"); 
-  set_axis_numbers_font(state, XEN_TO_NEW_C_STRING(val)); 
+  set_axis_numbers_font(state, copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
 
@@ -1441,7 +1435,7 @@ static XEN g_set_listener_font(XEN val)
 {
   #define H_listener_font "(" S_listener_font ") -> font used by the lisp listener"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_listener_font, "a string");
-  set_listener_font(state, XEN_TO_NEW_C_STRING(val)); 
+  set_listener_font(state, copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
 
@@ -1450,7 +1444,7 @@ static XEN g_set_bold_button_font(XEN val)
 {
   #define H_bold_button_font "(" S_bold_button_font ") -> font used by some buttons"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_bold_button_font, "a string"); 
-  set_bold_button_font(state, XEN_TO_NEW_C_STRING(val)); 
+  set_bold_button_font(state, copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
 
@@ -1459,7 +1453,7 @@ static XEN g_set_button_font(XEN val)
 {
   #define H_button_font "(" S_button_font ") -> font used by some buttons"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_button_font, "a string"); 
-  set_button_font(state, XEN_TO_NEW_C_STRING(val)); 
+  set_button_font(state, copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
 
@@ -2225,7 +2219,8 @@ static XEN g_html_dir(void)
 static XEN g_set_html_dir(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_html_dir, "a string");
-  set_html_dir(get_global_state(), XEN_TO_NEW_C_STRING(val)); 
+  /* TODO free? */
+  set_html_dir(get_global_state(), copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }
 #endif
@@ -2738,7 +2733,7 @@ char *output_comment(file_info *hdr)
 			      C_TO_XEN_STRING(com),
 			      S_output_comment_hook);
 #endif
-	  tmpstr = XEN_TO_NEW_C_STRING(result);
+	  tmpstr = XEN_TO_C_STRING(result);
 	  if (tmpstr)
 	    {
 	      if ((snd_strlen(tmpstr) + snd_strlen(new_comment)) >= comment_size)
@@ -2751,7 +2746,6 @@ char *output_comment(file_info *hdr)
 		new_comment = (char *)CALLOC(comment_size, sizeof(char));
 	      else new_comment = (char *)REALLOC(new_comment, comment_size * sizeof(char));
 	      strcat(new_comment, tmpstr);
-	      free(tmpstr);
 	    }
 #if HAVE_GUILE
 	  procs = XEN_CDR (procs);

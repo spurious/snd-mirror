@@ -283,7 +283,7 @@ void new_file_from_menu(snd_state *ss)
   mus_sound_forget(new_file_name);
   make_new_file_dialog(ss, new_file_name, header_type, data_format, srate, chans, new_comment);
   if (new_comment) FREE(new_comment);
-  if (new_file_name) free(new_file_name); /* could be output of output-name-hook -- we'll just ignore the memlog mess-up */
+  if (new_file_name) FREE(new_file_name);
 }
 
 void revert_file_from_menu(snd_state *ss)
@@ -549,12 +549,12 @@ static char *output_name(void)
       while (XEN_NOT_NULL_P(procs))
 	{
 	  result = XEN_CALL_0(XEN_CAR(procs), S_output_name_hook);
-	  if (XEN_STRING_P(result)) return(XEN_TO_NEW_C_STRING(result));
+	  if (XEN_STRING_P(result)) return(copy_string(XEN_TO_C_STRING(result)));
 	  procs = XEN_CDR (procs);
 	}
 #else
 	  result = XEN_CALL_0(procs, S_output_name_hook);
-	  if (XEN_STRING_P(result)) return(XEN_TO_NEW_C_STRING(result));
+	  if (XEN_STRING_P(result)) return(copy_string(XEN_TO_C_STRING(result)));
 #endif
     }
   return(NULL);
@@ -562,15 +562,13 @@ static char *output_name(void)
 
 static XEN g_save_state_file(void) 
 {
-  snd_state *ss;
-  ss = get_global_state();
-  return(C_TO_XEN_STRING(save_state_file(ss)));
+  return(C_TO_XEN_STRING(save_state_file(get_global_state())));
 }
 
 static void set_save_state_file(snd_state *ss, char *name)
 {
-  if (save_state_file(ss)) free(save_state_file(ss));
-  in_set_save_state_file(ss, snd_strdup(name));
+  if (save_state_file(ss)) FREE(save_state_file(ss));
+  in_set_save_state_file(ss, copy_string(name));
   set_sensitive(options_save_state_menu(), (snd_strlen(name) > 0));
 }
 
@@ -580,7 +578,7 @@ static XEN g_set_save_state_file(XEN val)
   snd_state *ss;
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_save_state_file, "a string"); 
   ss = get_global_state();
-  set_save_state_file(ss, XEN_TO_C_STRING(val));
+  set_save_state_file(ss, copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(save_state_file(ss)));
 }
 

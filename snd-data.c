@@ -358,7 +358,7 @@ void free_snd_info(snd_info *sp)
   sp->minibuffer_temp = 0;
   if (sp->search_expr) 
     {
-      free(sp->search_expr); 
+      FREE(sp->search_expr); 
       sp->search_expr = NULL;
     }
   if (XEN_PROCEDURE_P(sp->search_proc))

@@ -22,8 +22,8 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
   str = XmTextGetString(edit_find_text);
   if ((str) && (*str))
     { 
-      if (ss->search_expr) XtFree(ss->search_expr);
-      ss->search_expr = str;
+      if (ss->search_expr) FREE(ss->search_expr);
+      ss->search_expr = copy_string(str);
       if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
       ss->search_proc = XEN_UNDEFINED;
       proc = snd_catch_any(eval_str_wrapper, str, str);
@@ -37,6 +37,7 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
       set_label(edit_find_label, buf);
       XmTextSetString(edit_find_text, NULL);
       FREE(buf);
+      if (str) XtFree(str);
     }
   if (XEN_PROCEDURE_P(ss->search_proc))
     {

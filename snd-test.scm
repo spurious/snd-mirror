@@ -1106,6 +1106,8 @@
 	    (list "RealDrums.sf2" 1 44100 6.39725637435913 "SoundFont" "little endian short (16 bits)")
 	    (list "32bit.sf" 1 44100 4.6 "IRCAM" "little endian float (32 bits, unscaled)")
 	    (list "PCM_48_8bit_m.w64" 1 48000 0.375 "SoundForge" "unsigned byte (8 bits)")
+	    (list "addf8.24we" 1 8000 2.976000 "RIFF" "little endian int (24 bits)")
+	    (list "hybrid.snd" 1 44100 4.600000 "BICSF" "big endian float (32 bits)")
 	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16" "unsupported")))))
     )
 
@@ -1813,6 +1815,9 @@
 	(if (not (= (length mx) 1)) (snd-display ";sound-data-maxamp oboe.snd: ~A?" (sound-data-maxamp sd)))
 	(if (not (= (maxamp ob 0) (car mx))) (snd-display ";sound-data-maxamp oboe.snd: ~A ~A?" (sound-data-maxamp sd) (maxamp ob 0)))
 
+	(let ((var (catch #t (lambda () (set! (selected-channel) 1)) (lambda args args))))
+	  (if (not (eq? (car var) 'no-such-channel))
+	      (snd-display ";set selected-channel bad chan: ~A" var)))
 	(let ((var (catch #t (lambda () (sound-data-ref sd 2 1000)) (lambda args args))))
 	  (if (not (eq? (car var) 'mus-error))
 	      (snd-display ";sound-data-ref bad chan: ~A" var)))
@@ -1835,8 +1840,10 @@
 	       (var (catch #t (lambda () (vct->sound-data v sd 2)) (lambda args args))))
 	  (if (not (eq? (car var) 'mus-error))
 	      (snd-display ";vct->sound-data-set! bad chan: ~A" var)))
-
 	(close-sound ob))
+      (if (not (= (selected-sound) -1))
+	  (snd-display ";selected-sound ~A ~A" (selected-sound) (sounds)))
+      
       (let* ((vals (make-vector 32))
 	     (err (mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)))
 	(if (= err -1) 
@@ -2655,6 +2662,9 @@
 	      (snd-display ";save-region comment: ~A" (mus-sound-comment "fmv.snd")))
 	  (delete-file "fmv.snd")))
       (close-sound index)
+      (let ((var (catch #t (lambda () (new-sound "hi.snd" 0 1 100 0)) (lambda args args))))
+	  (if (not (eq? (car var) 'mus-error))
+	      (snd-display ";new-sound bad chan: ~A" var)))
       (set! index (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "unequal lens"))
       (insert-silence 0 1000 index 1)
       (if (or (not (= (frames index 0) 2))
@@ -7954,7 +7964,6 @@
 	    (oldsize (vu-size)))
 	(add-hook! property-changed-hook (lambda (hi) (set! gotit #t) #f))
 	(change-property "SND_VERSION" "SND_COMMAND" "(set! (vu-size) .5)")
-	(force-event)
 	(reset-hook! property-changed-hook)
 	(if (and gotit
 		 (fneq (vu-size) 0.5))
@@ -8773,6 +8782,25 @@
 	    (reset-hook! transform-hook)
 	    (map revert-sound open-files)
 	  
+	    (let ((ind (open-sound "z.snd")))
+	      (if (not (equal? (peak-env-info ind) '()))
+		  (snd-display ";peak-env-info z.snd: ~A" (peak-env-info ind)))
+	      (let ((var (catch #t (lambda () (write-peak-env-info-file ind 0 "hi")) (lambda args args))))
+		(if (not (eq? (car var) 'no-such-envelope))
+		    (snd-display ";write-peak-env-info-file null env: ~A" var)))
+	      (let ((var (catch #t (lambda () (read-peak-env-info-file ind 0 "hi")) (lambda args args))))
+		(if (not (eq? (car var) 'no-such-file))
+		    (snd-display ";read-peak-env-info-file null file: ~A" var)))
+	      (if (not (= (frames ind) 0)) (snd-display ";frames z.snd ~A" (frames ind)))
+	      (if (fneq (maxamp ind) 0.0) (snd-display ";maxamp z.snd ~A" (maxamp ind)))
+	      (if (fneq (sample 100 ind) 0.0) (snd-display ";sample 100 z.snd ~A" (sample 100 ind)))
+	      (let ((var (catch #t (lambda () (samples->vct)) (lambda args args))))
+		(if (not (eq? (car var) 'impossible-bounds))
+		    (snd-display ";samples->vct null: ~A" var)))
+	      (close-sound ind))
+	    (if (channel-amp-envs "z.snd" 0 100)
+		(snd-display ";channel-amp-envs of empty file: ~A" (channel-amp-envs "z.snd" 0 100)))
+
 	    (let ((zz (view-sound "z.snd")))
 	      (select-sound zz)
 	      (let ((md (mix "4.aiff")))
@@ -10869,6 +10897,11 @@ EDITS: 3
 
 ;;; ---------------- test 22: user-interface ----------------
 
+(if (provided? 'snd-motif)
+    (begin
+      (load "popup.scm")
+      (load "snd-motif.scm")))
+
 (define (widget-string widget text)
   (define (shifted? ch)
     (if (or (and (char>=? ch #\A) (char<=? ch #\Z))
@@ -11974,8 +12007,8 @@ EDITS: 3
 			       (if (> (abs (- (car newvals) (car oldvals) val)) 1)
 				   (snd-display ";move ~A ~A: ~A" (|XtName w) val (car newvals)))))
 			   (snd-display ";move-scroll ~A?" w)))))
-		(load "popup.scm")
-		(load "snd-motif.scm")
+		;(load "popup.scm")
+		;(load "snd-motif.scm")
 		(reset-all-hooks)
 
 		(let* ((ind (open-sound "pistol.snd"))
@@ -12125,17 +12158,18 @@ EDITS: 3
 				      (if (not (check))
 					  (snd-display ";toggle ~A on" name)))
 				    (snd-display ";no ~A togglebutton widget in transform dialog?" name))))
-			    (list "normo-button" "sono-button" "spectro-button" "peaks-button" "db-button" 
+			    (list "normo-button" "sono-button" "spectro-button" "normo-button" "peaks-button" "db-button" 
 				  "logfreq-button" "normalize-button" "selection-button")
 			    (list (lambda () (= (transform-graph-type) graph-transform-once))
 				  (lambda () (= (transform-graph-type) graph-transform-as-sonogram))
 				  (lambda () (= (transform-graph-type) graph-transform-as-spectrogram))
+				  (lambda () (= (transform-graph-type) graph-transform-once))
 				  show-transform-peaks
 				  fft-log-magnitude
 				  fft-log-frequency
 				  (lambda () (= (transform-normalization) 1))
 				  show-selection-transform)
-			    (list #f #f #f #t #t
+			    (list #f #f #f #f #t #t
 				  #t #t #t))
 		  ;; click all the lists
 		  (for-each (lambda (name check)
@@ -14261,4 +14295,4 @@ EDITS: 3
 ;;; (define handle (dlopen "/home/bil/snd-4/gsl-ex.so"))
 ;;; (dlinit handle "init_gsl_j0")
 ;;; (fneq (j0 1.0) 0.765)
-;;; -- ladspa tests?
+;;; TODO: ladspa tests

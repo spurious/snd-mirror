@@ -106,7 +106,6 @@
 #else
   #define INIT_FILE_NAME "snd-init"
 #endif
-#define EPS_FILE_NAME "snd.eps"
 
 #define XOR(a, b) ((~((a) & (b))) & ((a) | (b)))
 
@@ -447,7 +446,7 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define eps_file(ss) ss->Eps_File
 #define set_eps_file(ss, a) ss->Eps_File = a
-#define DEFAULT_EPS_FILE EPS_FILE_NAME
+#define DEFAULT_EPS_FILE "snd.eps"
 
 #define eps_left_margin(ss) ss->Eps_Left_Margin
 #define set_eps_left_margin(ss, a) ss->Eps_Left_Margin = a

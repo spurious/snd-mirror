@@ -164,8 +164,7 @@
   /* this assumes its argument is a XEN string and does not allocate new space */
 #endif
 #define C_TO_XEN_STRING(a)            scm_makfrom0str(a)
-#define XEN_TO_NEW_C_STRING(a)        gh_scm2newstr(a, NULL)
-/* is it safe now to use strdup(C_TO_XEN_STRING(a))? */
+#define XEN_TO_NEW_C_STRING(a)        strdup(C_TO_XEN_STRING(a))
 
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
 #define XEN_TO_C_BOOLEAN_OR_TRUE(a)   ((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? 0 : 1)
