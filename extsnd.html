@@ -5626,19 +5626,18 @@ more like Emacs (which prompts for confirmation first):
 <span class=defbox><code><em class=def><a name="ptreechannel">ptree-channel</a></em> (proc <i>beg dur snd chn edpos env-too init-func (map-fallback #t)</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<b>ptree-channel</b> (only in Guile currently, unless <i>map-fallback</i> is #f)
-applies 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the
-current sample), comes about as an implicit change in the way the data is read. 
+<b>ptree-channel</b>
+applies the function 'proc' as a 'virtual edit'; that is, the effect of 'proc'
+comes about as an implicit change in the way the data is read. 
 <br><br>
 To be less Orphic:
 all the data accesses in Snd go through the edit-history list.  The currently
 active member of that list
-chooses an accessor based on the type of edit. A  multiply by 2, for
-example, does not multiply anything by 2 internally; it just sets up
-the data accessor to multiply by 2 on any read.  From any other
+chooses a channel data accessor based on the type of edit. A  multiply by 2, for
+example, does not multiply anything by 2 internally; it just chooses
+the accessor that multiplies by 2 on any read.  From any other
 point of view, the data has been multiplied.  These accessors make it
-unnecessary to save any data in temp files (so that undo will still
-work) or internal arrays, and editing the edit-history list is very
+unnecessary to save any data in temp files or internal arrays, and editing the edit-history list is very
 fast (we just tack a new accessor choice onto the edit-history list), so the edit operation
 appears to be instantaneous and memory-less.  Lots of other operations
 are already being done this way in Snd (deletions, scaling, most
@@ -5646,7 +5645,7 @@ envelopes, some channel swaps, etc).  <b>ptree-channel</b> extends the idea to (
 functions.  When you call <br><br><code>(ptree-channel (lambda (y) (* y 2)))</code><br><br>
 which has the same effect as <br><br><code>(map-channel (lambda (y) (* y 2)))</code><br><br> the
 optimizer makes the parse-tree that represents <code>(lambda (y) (* y 2))</code>, then the
-edit-history accessor function uses that tree every time the data is
+data accessor system uses that parse-tree every time the data is
 read.<br><br>
 If the argument 'env-too' is #t,
 the same function is applied to the peak env values to get the new version of the peak env data.  
@@ -5664,10 +5663,102 @@ inner "let" because the define* arguments are hidden from the optimizer.
   (let ((dc amount))
     (<em class=red>ptree-channel</em> (lambda (y) (+ y dc)) beg dur snd chn edpos <em class=red>#t</em>)))
 </pre>
+The actual edit that takes place is <code>(+ y dc)</code>; that is, <i>dc</i> is added to
+every sample.  As subsequent editing takes place, the entries representing the <i>offset-channel</i>
+call can become thoroughly fragmented.  
+If your editing operation has any state (i.e. needs to
+know where it is in the data), you need to add an <i>init-func</i> (the 8th argument to ptree-channel).
+The <i>init-func</i> takes two arguments, the begin time of the read operation, relative to
+the original start of the fragment, and the original fragment duration (both in samples).
+It should return a vct
+holding all the information the main function ('proc' above) needs to
+handle the current fragment correctly.  Global variables are not guaranteed to 
+be set within the body of 'proc', so use the vct for local values that change
+as the read operation progresses.
+<br><br>
+The other new argument to 'proc'
+is the read direction; the read operations can change direction at any
+time, and any ptree-channel function needs to know how to deal with that.
+So, in the complicated, 3 argument case,
+the sequence of operations is:
+a read is requested, 'init-func' is called with the read start point (relative to the
+original segment start),
+it returns in a vct any state that 'proc' may need
+to refer to, then each time a sample is needed from the current sample
+reader, 'proc' is called passing it the current underlying sample, the vct of 'init-func',
+and the read direction.
+Here is an example that mixes a sine wave into the current channel:
+</td></tr>
+
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define* (sine-channel freq amp #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (<em class=red>ptree-channel</em>
+   (lambda (y data forward)
+     (declare (y real) (data vct) (forward boolean))
+     (let* ((angle (vct-ref data 0))
+	    (incr (vct-ref data 1))
+	    (val (+ y (* (vct-ref data 2) (sin angle)))))
+       (if forward
+	   (vct-set! data 0 (+ angle incr))
+	   (vct-set! data 0 (- angle incr)))
+       val))
+   beg dur snd chn edpos #f
+   (lambda (frag-beg frag-dur)
+     (let ((incr (/ (* 2 pi freq) (srate))))
+       (vct (fmod (* frag-beg incr) (* 2 pi)) incr amp)))))
+</pre></td></tr></table></td></tr>
+
+<tr><td></td><td>
+(<i>fmod</i> is C's fmod, provided by Snd).  In the "normal" case,
+the function simply mixes in a sine wave: <code>(+ y (* (vct-ref data 2) (sin angle)))</code>
+where the amplitude scaler is stored in <code>(vct-ref data 2)</code>.  In subsequent
+reads, the init-func sets up a vct with the current phase (dependent on the frequency
+and the fragment begin sample), the phase increment (dependent on the frequency), and
+the amplitude (passed as an argument to sine-channel, but stored in the vct since
+the outer function's arguments won't be accessible in the main function ('proc').
+See <i>sine-ramp</i> in extensions.scm for another example.
+<br><br>
+In our <i>sine-channel</i> function, we passed #f as the 'env-too' argument,
+to make sure Snd doesn't blithely apply the sine mix to the peak amplitude
+envelopes.  When 'env-too' is #t,
+'proc' is evaluated over the peak env data, rather than the
+original data.  This makes redisplay much faster whenever a lot of data
+is being displayed, but only works if the function's output at the peak
+env min and max values are still the min and max values in the actual
+data (this is the case in the sinusoidal envelope, sine-ramp, mentioned above).
+When 'proc' is being called to calculate the new peak env, 
+the duration passed to the init-func is the envelope size. 
+Here is a
+version of cosine-channel given under
+<a href="#mapchannel">map-channel</a> that can handle peak-envs:
+</td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define* (<A NAME="cosinechannelviaptree">cosine-channel-via-ptree</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  ;; vct: angle increment
+  (<em class=red>ptree-channel</em>
+   (lambda (y data forward)
+     (declare (y real) (data vct) (forward boolean))
+     (let* ((angle (vct-ref data 0))
+	    (incr (vct-ref data 1))
+	    (val (* y (cos angle))))
+       (if forward
+	   (vct-set! data 0 (+ angle incr))
+	   (vct-set! data 0 (- angle incr)))
+       val))
+   beg dur snd chn edpos <em class=red>#t</em>
+   (lambda (frag-beg frag-dur)
+     (let ((incr (/ pi <em class=red>frag-dur</em>)))
+       (vct (+ (* -0.5 pi) (* frag-beg incr))
+	    incr)))))
+</pre></td></tr></table></td></tr>
+
+<tr><td></td><td>
 If the underlying data
 has too many previous ptree operations, map-channel is called instead and the new
 data is saved in the normal manner (that is, I don't currently try to chain any number of these operations
-together).  Envelopes have a similar limitation (currently 2 ptrees and 4 envs).
+together).
 <br><br>
 If no 'init-func' is specified, the editing procedure ('proc') should not assume anything about
 the context in which it is called;  in this case, there's no way for 'proc' to know where it starts, or when it is being restarted,
@@ -5690,52 +5781,6 @@ of view or redisplay.  But if the details of the noise don't
 matter, this change is also ok -- you're editing a sort
 of mobile in sound (analogous to mobile sculpture).
 <br><br>
-However, not everyone wants his samples floating around randomly beneath his gaze.
-'init-func' provides a way to include state with the 'proc', as in
-this version of cosine-channel given under
-<a href="#mapchannel">map-channel</a>:
-</td></tr>
-
-<tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define* (<A NAME="cosinechannelviaptree">cosine-channel-via-ptree</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
-  ;; vct: angle increment
-  (<em class=red>ptree-channel</em>
-   (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
-     (let* ((angle (vct-ref data 0))
-	    (incr (vct-ref data 1))
-	    (val (* y (cos angle))))
-       (if forward
-	   (vct-set! data 0 (+ angle incr))
-	   (vct-set! data 0 (- angle incr)))
-       val))
-   beg dur snd chn edpos #t
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ pi frag-dur)))
-       (vct (+ (* -0.5 pi) (* frag-beg incr))
-	    incr)))))
-</pre></td></tr></table></td></tr>
-
-<tr><td></td><td>
-Since the ptree-channel function (the first argument, 'proc') is optimized
-via the run macro, all normal closure references are packaged up into the parse tree and never
-seen again (in this context anyway), so we need a way to pass in the initial value of 'angle'
-each time ptree-channel is run over the segment that owns this operation.  So, the 'init-func'
-returns a vct that is then passed to 'proc' on each call. Since a read operation can start
-anywhere in a given fragment, and change read direction unpredictably, the 'init-func' is
-passed the fragment-relative begin time, and the main 'proc' takes the current (sample-wise)
-read direction as well as the vct returned by 'init-func'.  The sequence of operations is:
-a read is requested, 'init-func' is called with the read start point (relative to the
-original segment start),
-it returns in a vct any state that 'proc' may need
-to refer to, then each time a sample is needed from the current sample
-reader, 'proc' is called passing it the current underlying sample, the vct of 'init-func',
-and the read direction.
-<br><br>The second argument to the init-func only comes into play when 'env-too' is #t.
-In this case, 'proc' is being evaluated over the peak env data, rather than the
-original data, so the duration is the envelope size. 
-<br><br>
 One major limitation of ptree-channel with an 'init-func' is that <a href="#sndsavestate">save-state</a>
 currently doesn't know how to save the enclosing environment along with the init-func. So,
 <pre>
@@ -5752,12 +5797,6 @@ This is a general problem with save-state; there's no obvious way in Guile to
 save the current closure as text.
 You can fix the saved state file by hand (it is just Scheme or Ruby code, of course),
 but that's not a very elegant solution.
-
-<br><br>Another limitation is that Guile may garbage collect the enclosing environment.
-Only the vct returned by 'init-func' and 'init-func' itself are protected from the GC (this may change -- it seems
-counterintuitive and unnecessary). 
-In compand-channel (examp.scm), the table of companding data is declared globally
-to protect against this.  We could also, in this case, place the companding table in the vct.
 <br><br>
 The real limitation in using ptree-channel, however, is that the read direction
 can not only be backwards, but it can also change at any time.  This makes it
@@ -5782,7 +5821,7 @@ could in this case be:
 			      (sample (1- pos) ind 0 edpos))))))
 </pre>
 The last (highly experimental) argument to ptree-channel, 'map-fallback', can be set
-to #f if you want to try out a more general virtual operator: 'proc' and 'init-func' can
+to #f if you want to try out a more general virtual operator: in this case, 'proc' and 'init-func' can
 be anything legal in Snd, and the actual forms will be evaluated as virtual ops
 at run-time. This should also work in Ruby, whereas the optimized cases (those that
 depend on the run macro) will work only in Guile.  We could define xen-channel:
@@ -5841,7 +5880,7 @@ Here are a couple more examples:
 	    (/ frag-beg frag-dur))))))
 </pre></td></tr></table><br>
 See also <i>smooth-channel-via-ptree</i> and <i>compand-channel</i> in examp.scm, 
-<a href="#blockchannel">block-channel</a> above, and <i>sine-env-channel</i> in extensions.scm.
+<a href="#blockchannel">block-channel</a> above, and <i>sine-env-channel</i> and others in extensions.scm.
 </td></tr><tr><td colspan=2></td></tr>
 
 

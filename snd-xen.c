@@ -2710,6 +2710,13 @@ static SCM g_continuation_p(XEN obj)
 #endif
 #endif
 
+static XEN g_fmod(XEN a, XEN b)
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(a), a, XEN_ARG_1, "fmod", " a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, XEN_ARG_2, "fmod", " a number");
+  return(C_TO_XEN_DOUBLE(fmod(XEN_TO_C_DOUBLE(a), XEN_TO_C_DOUBLE(b))));
+}
+
 
 #ifdef XEN_ARGIFY_1
 #if HAVE_GUILE && HAVE_DLFCN_H
@@ -2880,6 +2887,7 @@ XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 #if DEBUGGING
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
 #endif
+XEN_NARGIFY_2(g_fmod_w, g_fmod)
 
 #else
 #if HAVE_GUILE && HAVE_DLFCN_H
@@ -3050,6 +3058,7 @@ XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 #if DEBUGGING
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
+#define g_fmod_w g_fmod
 #endif
 
 #if HAVE_STATIC_XM
@@ -3349,6 +3358,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data_w,    0, 7, 0, H_samples2sound_data);
   XEN_DEFINE_PROCEDURE(S_snd_print,           g_snd_print_w,           1, 0, 0, H_snd_print);
   XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w,       0, 0, 0, "return #t if host is little endian");
+  XEN_DEFINE_PROCEDURE("fmod",                g_fmod_w,                2, 0, 0, "C's fmod");
   XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w,      1, 0, 0, "return completion of arg");
   /* XEN_DEFINE_PROCEDURE(S_clm_print,        g_clm_print,             0, 0, 1, H_clm_print); */
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);

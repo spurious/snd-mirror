@@ -57,6 +57,7 @@
 ;;; chain-dsps
 ;;; cursor-follows-play and stays where it was when the play ended
 ;;; smooth-channel as virtual op
+;;; ring-modulate-channel (ring-mod as virtual op)
 
 
 ;;; SOMEDAY: robust pitch tracker
@@ -1150,10 +1151,9 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 (define* (compand-channel #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; this is the "regularized version of the compander using ptree-channel
   (ptree-channel (lambda (inval)
-		   (let ((index (inexact->exact (round (+ 8.0 (* 8.0 inval))))))
+		   (let ((index (+ 8.0 (* 8.0 inval))))
 		     (array-interp compand-table index 17)))
 		 beg dur snd chn edpos #t))
-;;; TODO: check compand-channel table indexing
 
 
 
@@ -2172,3 +2172,22 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	 data)))))
 
 
+;;; -------- ring-modulate-channel (ring-mod as virtual op)
+
+(define* (ring-modulate-channel freq #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (ptree-channel
+   (lambda (y data forward)
+     (declare (y real) (data vct) (forward boolean))
+     (let* ((angle (vct-ref data 0))
+	    (incr (vct-ref data 1))
+	    (val (* y (sin angle))))
+       (if forward
+	   (vct-set! data 0 (+ angle incr))
+	   (vct-set! data 0 (- angle incr)))
+       val))
+   beg dur snd chn edpos #f
+   (lambda (frag-beg frag-dur)
+     (let ((incr (/ (* 2 pi freq) (srate))))
+       (vct (fmod (* frag-beg incr) (* 2 pi)) incr)))))
+
+;;; amplitude-modulate-channel could be (lambda (y data forward) (* y 0.5 (+ 1.0 (sin angle))) etc ...)

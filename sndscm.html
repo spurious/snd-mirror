@@ -1009,6 +1009,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>searching procedures (search-for-click, find-pitch, zero+, next-peak)
     <li>sound-data-&gt;list
     <li>smooth-channel-via-ptree -- smooth-channel as virtual op
+    <li>ring-modulate-channel -- ring-modulation as virtual op
   </ul>
 </small>
 </ul>
@@ -1484,8 +1485,11 @@ holding the samples of one channel.
 </p>
 <pre>
   <em class=def>smooth-channel-via-ptree</em> #:optional beg dur snd chn edpos
+  <em class=def>ring-modulate-channel</em> freq #:optional beg dur snd chn edpos
 </pre>
-<p>This is <a href="extsnd.html#smoothchannel">smooth-channel</a> as a virtual op.
+<p>The first is <a href="extsnd.html#smoothchannel">smooth-channel</a> as a virtual op,
+and the second applies ring-modulation (multiplication by a sine wave, similar to 
+Craig Sapp's ring-modulate.ins in CLM), also as a virtual op.
 </p>
 <br>
 
@@ -1522,7 +1526,8 @@ convenient if they were in one file.
 
   <em class=def><a name="sineramp">sine-ramp</a></em> a0 a1 beg dur snd chn edpos
   <em class=def><a name="sineenvchannel">sine-env-channel</a></em> env beg dur snd chn edpos
-  <!-- TODO: document/test sine-env stuff (also test as-one-edit xen) also offset-channel -->
+  <em class=def><a name="offsetchannel">offset-channel</a></em> amount beg dur snd chn edpos	
+  <em class=def><a name="contrastchannel">contrast-channel</a></em> index beg dur snd chn edpos	
 </pre>
 
 <p><b>channel-property</b> returns the value associated with <i>key</i> in the given channel's
@@ -1642,6 +1647,14 @@ start point in the file, and (optionally) the channel of the file to mix:
 
 <p><b>redo-channel</b> and <b>undo-channel</b> are regularized versions of
 <a href="extsnd.html#sndredo">redo</a> and <a href="extsnd.html#sndundo">undo</a>.
+<b>offset-channel</b> adds a constant to a sound, using <a href="extsnd.html#ptreechannel">ptree-channel</a>.
+<b>contrast-channel</b> is the CLM <a href="clm.html#contrast-enhancement">contrast-enhancement</a> function,
+equivalent to the control panel Contrast slider.
+<b>sine-ramp</b> and <b>sine-env-channel</b> are the sinusoidal versions of <a href="extsnd.html#rampchannel">ramp-channel</a>
+and <a href="extsnd.html#envchannel">env-channel</a>.
+<code>(sine-env-channel '(0 0 1 1 2 -.5 3 1))</code> applies the given envelope to the current channel,
+connecting the points with a sinusoidal curve.  It uses <a href="extsnd.html#ptreechannel">ptree-channel</a>,
+so it's just as fast as env-channel.
 </p>
 <br><br>
 

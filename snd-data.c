@@ -321,10 +321,6 @@ void free_snd_info(snd_info *sp)
 	toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
     }
   /* leave most for reuse as in free_chan_info */
-  if (ss->deferred_regions > 0)
-    for (i = 0; i < sp->nchans; i++)
-      if (sp->chans[i]) 
-	sequester_deferred_regions(sp->chans[i], -1);
   sp->active = false;
   if (sp->sgx)
     {

@@ -530,6 +530,8 @@ else
 	# gtk 2.1
 	AC_CHECK_LIB(m, gtk_file_chooser_dialog_new, [AC_DEFINE(HAVE_GTK_FILE_CHOOSER_DIALOG_NEW)], ,$GTK_LIBS)
 	# gtk 2.3
+	AC_CHECK_LIB(m, gtk_expander_get_use_markup, [AC_DEFINE(HAVE_GTK_EXPANDER_GET_USE_MARKUP)], ,$GTK_LIBS)
+	# gtk 2.3.1
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

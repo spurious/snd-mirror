@@ -2324,7 +2324,6 @@ XEN_NARGIFY_1(gxg_gtk_event_box_get_visible_window_w, gxg_gtk_event_box_get_visi
 XEN_NARGIFY_2(gxg_gtk_event_box_set_visible_window_w, gxg_gtk_event_box_set_visible_window)
 XEN_NARGIFY_1(gxg_gtk_event_box_get_above_child_w, gxg_gtk_event_box_get_above_child)
 XEN_NARGIFY_2(gxg_gtk_event_box_set_above_child_w, gxg_gtk_event_box_set_above_child)
-XEN_NARGIFY_2(gxg_gtk_icon_source_set_icon_name_w, gxg_gtk_icon_source_set_icon_name)
 XEN_NARGIFY_1(gxg_gtk_icon_source_get_icon_name_w, gxg_gtk_icon_source_get_icon_name)
 XEN_NARGIFY_6(gxg_gtk_menu_attach_w, gxg_gtk_menu_attach)
 XEN_NARGIFY_3(gxg_gtk_text_buffer_select_range_w, gxg_gtk_text_buffer_select_range)
@@ -2340,8 +2339,6 @@ XEN_NARGIFY_2(gxg_gtk_toolbar_set_show_arrow_w, gxg_gtk_toolbar_set_show_arrow)
 XEN_NARGIFY_1(gxg_gtk_toolbar_get_show_arrow_w, gxg_gtk_toolbar_get_show_arrow)
 XEN_NARGIFY_1(gxg_gtk_toolbar_get_relief_style_w, gxg_gtk_toolbar_get_relief_style)
 XEN_NARGIFY_3(gxg_gtk_toolbar_get_drop_index_w, gxg_gtk_toolbar_get_drop_index)
-XEN_NARGIFY_5(gxg_gtk_toolbar_highlight_drop_location_w, gxg_gtk_toolbar_highlight_drop_location)
-XEN_NARGIFY_1(gxg_gtk_toolbar_unhighlight_drop_location_w, gxg_gtk_toolbar_unhighlight_drop_location)
 XEN_NARGIFY_2(gxg_gtk_tree_view_column_set_expand_w, gxg_gtk_tree_view_column_set_expand)
 XEN_NARGIFY_1(gxg_gtk_tree_view_column_get_expand_w, gxg_gtk_tree_view_column_get_expand)
 XEN_NARGIFY_2(gxg_gtk_widget_set_no_show_all_w, gxg_gtk_widget_set_no_show_all)
@@ -2387,7 +2384,6 @@ XEN_NARGIFY_4(gxg_gtk_action_group_add_toggle_actions_w, gxg_gtk_action_group_ad
 XEN_NARGIFY_5(gxg_gtk_action_group_add_toggle_actions_full_w, gxg_gtk_action_group_add_toggle_actions_full)
 XEN_NARGIFY_2(gxg_gtk_action_group_set_translation_domain_w, gxg_gtk_action_group_set_translation_domain)
 XEN_NARGIFY_0(gxg_gtk_combo_box_get_type_w, gxg_gtk_combo_box_get_type)
-XEN_NARGIFY_1(gxg_gtk_combo_box_new_w, gxg_gtk_combo_box_new)
 XEN_NARGIFY_2(gxg_gtk_combo_box_set_wrap_width_w, gxg_gtk_combo_box_set_wrap_width)
 XEN_NARGIFY_2(gxg_gtk_combo_box_set_row_span_column_w, gxg_gtk_combo_box_set_row_span_column)
 XEN_NARGIFY_2(gxg_gtk_combo_box_set_column_span_column_w, gxg_gtk_combo_box_set_column_span_column)
@@ -2401,7 +2397,6 @@ XEN_NARGIFY_2(gxg_gtk_combo_box_append_text_w, gxg_gtk_combo_box_append_text)
 XEN_NARGIFY_3(gxg_gtk_combo_box_insert_text_w, gxg_gtk_combo_box_insert_text)
 XEN_NARGIFY_2(gxg_gtk_combo_box_prepend_text_w, gxg_gtk_combo_box_prepend_text)
 XEN_NARGIFY_0(gxg_gtk_combo_box_entry_get_type_w, gxg_gtk_combo_box_entry_get_type)
-XEN_NARGIFY_2(gxg_gtk_combo_box_entry_new_w, gxg_gtk_combo_box_entry_new)
 XEN_NARGIFY_1(gxg_gtk_combo_box_entry_get_text_column_w, gxg_gtk_combo_box_entry_get_text_column)
 XEN_NARGIFY_0(gxg_gtk_expander_get_type_w, gxg_gtk_expander_get_type)
 XEN_NARGIFY_1(gxg_gtk_expander_new_w, gxg_gtk_expander_new)
@@ -2475,7 +2470,6 @@ XEN_NARGIFY_1(gxg_gtk_ui_manager_new_merge_id_w, gxg_gtk_ui_manager_new_merge_id
 XEN_NARGIFY_0(gxg_gtk_radio_tool_button_get_type_w, gxg_gtk_radio_tool_button_get_type)
 XEN_NARGIFY_1(gxg_gtk_radio_tool_button_new_w, gxg_gtk_radio_tool_button_new)
 XEN_NARGIFY_2(gxg_gtk_radio_tool_button_new_from_stock_w, gxg_gtk_radio_tool_button_new_from_stock)
-XEN_NARGIFY_1(gxg_gtk_radio_tool_button_new_from_widget_w, gxg_gtk_radio_tool_button_new_from_widget)
 XEN_NARGIFY_2(gxg_gtk_radio_tool_button_new_with_stock_from_widget_w, gxg_gtk_radio_tool_button_new_with_stock_from_widget)
 XEN_NARGIFY_1(gxg_gtk_radio_tool_button_get_group_w, gxg_gtk_radio_tool_button_get_group)
 XEN_NARGIFY_2(gxg_gtk_radio_tool_button_set_group_w, gxg_gtk_radio_tool_button_set_group)
@@ -2609,8 +2603,6 @@ XEN_NARGIFY_2(gxg_gtk_tool_item_set_homogeneous_w, gxg_gtk_tool_item_set_homogen
 XEN_NARGIFY_1(gxg_gtk_tool_item_get_homogeneous_w, gxg_gtk_tool_item_get_homogeneous)
 XEN_NARGIFY_2(gxg_gtk_tool_item_set_expand_w, gxg_gtk_tool_item_set_expand)
 XEN_NARGIFY_1(gxg_gtk_tool_item_get_expand_w, gxg_gtk_tool_item_get_expand)
-XEN_NARGIFY_2(gxg_gtk_tool_item_set_pack_end_w, gxg_gtk_tool_item_set_pack_end)
-XEN_NARGIFY_1(gxg_gtk_tool_item_get_pack_end_w, gxg_gtk_tool_item_get_pack_end)
 XEN_NARGIFY_4(gxg_gtk_tool_item_set_tooltip_w, gxg_gtk_tool_item_set_tooltip)
 XEN_NARGIFY_2(gxg_gtk_tool_item_set_use_drag_window_w, gxg_gtk_tool_item_set_use_drag_window)
 XEN_NARGIFY_1(gxg_gtk_tool_item_get_use_drag_window_w, gxg_gtk_tool_item_get_use_drag_window)
@@ -2627,6 +2619,27 @@ XEN_NARGIFY_1(gxg_gtk_tool_item_get_relief_style_w, gxg_gtk_tool_item_get_relief
 XEN_NARGIFY_1(gxg_gtk_tool_item_retrieve_proxy_menu_item_w, gxg_gtk_tool_item_retrieve_proxy_menu_item)
 XEN_NARGIFY_2(gxg_gtk_tool_item_get_proxy_menu_item_w, gxg_gtk_tool_item_get_proxy_menu_item)
 XEN_NARGIFY_3(gxg_gtk_tool_item_set_proxy_menu_item_w, gxg_gtk_tool_item_set_proxy_menu_item)
+#endif
+
+#if HAVE_GTK_EXPANDER_GET_USE_MARKUP
+XEN_NARGIFY_8(gxg_gdk_drawable_copy_to_image_w, gxg_gdk_drawable_copy_to_image)
+XEN_NARGIFY_5(gxg_gtk_accel_group_activate_w, gxg_gtk_accel_group_activate)
+XEN_NARGIFY_2(gxg_gtk_menu_set_monitor_w, gxg_gtk_menu_set_monitor)
+XEN_NARGIFY_2(gxg_gtk_widget_can_activate_accel_w, gxg_gtk_widget_can_activate_accel)
+XEN_NARGIFY_1(gxg_gtk_window_is_active_w, gxg_gtk_window_is_active)
+XEN_NARGIFY_1(gxg_gtk_window_has_toplevel_focus_w, gxg_gtk_window_has_toplevel_focus)
+XEN_NARGIFY_0(gxg_gtk_combo_box_new_w, gxg_gtk_combo_box_new)
+XEN_NARGIFY_1(gxg_gtk_combo_box_new_with_model_w, gxg_gtk_combo_box_new_with_model)
+XEN_NARGIFY_2(gxg_gtk_combo_box_set_model_w, gxg_gtk_combo_box_set_model)
+XEN_NARGIFY_2(gxg_gtk_combo_box_remove_text_w, gxg_gtk_combo_box_remove_text)
+XEN_NARGIFY_0(gxg_gtk_combo_box_entry_new_w, gxg_gtk_combo_box_entry_new)
+XEN_NARGIFY_2(gxg_gtk_combo_box_entry_new_with_model_w, gxg_gtk_combo_box_entry_new_with_model)
+XEN_NARGIFY_2(gxg_gtk_combo_box_entry_set_text_column_w, gxg_gtk_combo_box_entry_set_text_column)
+XEN_NARGIFY_2(gxg_gtk_expander_set_use_markup_w, gxg_gtk_expander_set_use_markup)
+XEN_NARGIFY_1(gxg_gtk_expander_get_use_markup_w, gxg_gtk_expander_get_use_markup)
+XEN_NARGIFY_1(gxg_gtk_radio_tool_button_new_from_widget_w, gxg_gtk_radio_tool_button_new_from_widget)
+XEN_NARGIFY_1(gxg_gtk_separator_tool_item_get_draw_w, gxg_gtk_separator_tool_item_get_draw)
+XEN_NARGIFY_2(gxg_gtk_separator_tool_item_set_draw_w, gxg_gtk_separator_tool_item_set_draw)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
@@ -6003,7 +6016,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_event_box_set_visible_window, gxg_gtk_event_box_set_visible_window_w, 2, 0, 0, H_gtk_event_box_set_visible_window);
   XG_DEFINE_PROCEDURE(gtk_event_box_get_above_child, gxg_gtk_event_box_get_above_child_w, 1, 0, 0, H_gtk_event_box_get_above_child);
   XG_DEFINE_PROCEDURE(gtk_event_box_set_above_child, gxg_gtk_event_box_set_above_child_w, 2, 0, 0, H_gtk_event_box_set_above_child);
-  XG_DEFINE_PROCEDURE(gtk_icon_source_set_icon_name, gxg_gtk_icon_source_set_icon_name_w, 2, 0, 0, H_gtk_icon_source_set_icon_name);
   XG_DEFINE_PROCEDURE(gtk_icon_source_get_icon_name, gxg_gtk_icon_source_get_icon_name_w, 1, 0, 0, H_gtk_icon_source_get_icon_name);
   XG_DEFINE_PROCEDURE(gtk_menu_attach, gxg_gtk_menu_attach_w, 6, 0, 0, H_gtk_menu_attach);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_select_range, gxg_gtk_text_buffer_select_range_w, 3, 0, 0, H_gtk_text_buffer_select_range);
@@ -6019,8 +6031,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_toolbar_get_show_arrow, gxg_gtk_toolbar_get_show_arrow_w, 1, 0, 0, H_gtk_toolbar_get_show_arrow);
   XG_DEFINE_PROCEDURE(gtk_toolbar_get_relief_style, gxg_gtk_toolbar_get_relief_style_w, 1, 0, 0, H_gtk_toolbar_get_relief_style);
   XG_DEFINE_PROCEDURE(gtk_toolbar_get_drop_index, gxg_gtk_toolbar_get_drop_index_w, 3, 0, 0, H_gtk_toolbar_get_drop_index);
-  XG_DEFINE_PROCEDURE(gtk_toolbar_highlight_drop_location, gxg_gtk_toolbar_highlight_drop_location_w, 5, 0, 0, H_gtk_toolbar_highlight_drop_location);
-  XG_DEFINE_PROCEDURE(gtk_toolbar_unhighlight_drop_location, gxg_gtk_toolbar_unhighlight_drop_location_w, 1, 0, 0, H_gtk_toolbar_unhighlight_drop_location);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_expand, gxg_gtk_tree_view_column_set_expand_w, 2, 0, 0, H_gtk_tree_view_column_set_expand);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_expand, gxg_gtk_tree_view_column_get_expand_w, 1, 0, 0, H_gtk_tree_view_column_get_expand);
   XG_DEFINE_PROCEDURE(gtk_widget_set_no_show_all, gxg_gtk_widget_set_no_show_all_w, 2, 0, 0, H_gtk_widget_set_no_show_all);
@@ -6066,7 +6076,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_action_group_add_toggle_actions_full, gxg_gtk_action_group_add_toggle_actions_full_w, 5, 0, 0, H_gtk_action_group_add_toggle_actions_full);
   XG_DEFINE_PROCEDURE(gtk_action_group_set_translation_domain, gxg_gtk_action_group_set_translation_domain_w, 2, 0, 0, H_gtk_action_group_set_translation_domain);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_type, gxg_gtk_combo_box_get_type_w, 0, 0, 0, H_gtk_combo_box_get_type);
-  XG_DEFINE_PROCEDURE(gtk_combo_box_new, gxg_gtk_combo_box_new_w, 1, 0, 0, H_gtk_combo_box_new);
   XG_DEFINE_PROCEDURE(gtk_combo_box_set_wrap_width, gxg_gtk_combo_box_set_wrap_width_w, 2, 0, 0, H_gtk_combo_box_set_wrap_width);
   XG_DEFINE_PROCEDURE(gtk_combo_box_set_row_span_column, gxg_gtk_combo_box_set_row_span_column_w, 2, 0, 0, H_gtk_combo_box_set_row_span_column);
   XG_DEFINE_PROCEDURE(gtk_combo_box_set_column_span_column, gxg_gtk_combo_box_set_column_span_column_w, 2, 0, 0, H_gtk_combo_box_set_column_span_column);
@@ -6080,7 +6089,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_combo_box_insert_text, gxg_gtk_combo_box_insert_text_w, 3, 0, 0, H_gtk_combo_box_insert_text);
   XG_DEFINE_PROCEDURE(gtk_combo_box_prepend_text, gxg_gtk_combo_box_prepend_text_w, 2, 0, 0, H_gtk_combo_box_prepend_text);
   XG_DEFINE_PROCEDURE(gtk_combo_box_entry_get_type, gxg_gtk_combo_box_entry_get_type_w, 0, 0, 0, H_gtk_combo_box_entry_get_type);
-  XG_DEFINE_PROCEDURE(gtk_combo_box_entry_new, gxg_gtk_combo_box_entry_new_w, 2, 0, 0, H_gtk_combo_box_entry_new);
   XG_DEFINE_PROCEDURE(gtk_combo_box_entry_get_text_column, gxg_gtk_combo_box_entry_get_text_column_w, 1, 0, 0, H_gtk_combo_box_entry_get_text_column);
   XG_DEFINE_PROCEDURE(gtk_expander_get_type, gxg_gtk_expander_get_type_w, 0, 0, 0, H_gtk_expander_get_type);
   XG_DEFINE_PROCEDURE(gtk_expander_new, gxg_gtk_expander_new_w, 1, 0, 0, H_gtk_expander_new);
@@ -6154,7 +6162,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_radio_tool_button_get_type, gxg_gtk_radio_tool_button_get_type_w, 0, 0, 0, H_gtk_radio_tool_button_get_type);
   XG_DEFINE_PROCEDURE(gtk_radio_tool_button_new, gxg_gtk_radio_tool_button_new_w, 1, 0, 0, H_gtk_radio_tool_button_new);
   XG_DEFINE_PROCEDURE(gtk_radio_tool_button_new_from_stock, gxg_gtk_radio_tool_button_new_from_stock_w, 2, 0, 0, H_gtk_radio_tool_button_new_from_stock);
-  XG_DEFINE_PROCEDURE(gtk_radio_tool_button_new_from_widget, gxg_gtk_radio_tool_button_new_from_widget_w, 1, 0, 0, H_gtk_radio_tool_button_new_from_widget);
   XG_DEFINE_PROCEDURE(gtk_radio_tool_button_new_with_stock_from_widget, gxg_gtk_radio_tool_button_new_with_stock_from_widget_w, 2, 0, 0, H_gtk_radio_tool_button_new_with_stock_from_widget);
   XG_DEFINE_PROCEDURE(gtk_radio_tool_button_get_group, gxg_gtk_radio_tool_button_get_group_w, 1, 0, 0, H_gtk_radio_tool_button_get_group);
   XG_DEFINE_PROCEDURE(gtk_radio_tool_button_set_group, gxg_gtk_radio_tool_button_set_group_w, 2, 0, 0, H_gtk_radio_tool_button_set_group);
@@ -6288,8 +6295,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tool_item_get_homogeneous, gxg_gtk_tool_item_get_homogeneous_w, 1, 0, 0, H_gtk_tool_item_get_homogeneous);
   XG_DEFINE_PROCEDURE(gtk_tool_item_set_expand, gxg_gtk_tool_item_set_expand_w, 2, 0, 0, H_gtk_tool_item_set_expand);
   XG_DEFINE_PROCEDURE(gtk_tool_item_get_expand, gxg_gtk_tool_item_get_expand_w, 1, 0, 0, H_gtk_tool_item_get_expand);
-  XG_DEFINE_PROCEDURE(gtk_tool_item_set_pack_end, gxg_gtk_tool_item_set_pack_end_w, 2, 0, 0, H_gtk_tool_item_set_pack_end);
-  XG_DEFINE_PROCEDURE(gtk_tool_item_get_pack_end, gxg_gtk_tool_item_get_pack_end_w, 1, 0, 0, H_gtk_tool_item_get_pack_end);
   XG_DEFINE_PROCEDURE(gtk_tool_item_set_tooltip, gxg_gtk_tool_item_set_tooltip_w, 4, 0, 0, H_gtk_tool_item_set_tooltip);
   XG_DEFINE_PROCEDURE(gtk_tool_item_set_use_drag_window, gxg_gtk_tool_item_set_use_drag_window_w, 2, 0, 0, H_gtk_tool_item_set_use_drag_window);
   XG_DEFINE_PROCEDURE(gtk_tool_item_get_use_drag_window, gxg_gtk_tool_item_get_use_drag_window_w, 1, 0, 0, H_gtk_tool_item_get_use_drag_window);
@@ -6306,6 +6311,27 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tool_item_retrieve_proxy_menu_item, gxg_gtk_tool_item_retrieve_proxy_menu_item_w, 1, 0, 0, H_gtk_tool_item_retrieve_proxy_menu_item);
   XG_DEFINE_PROCEDURE(gtk_tool_item_get_proxy_menu_item, gxg_gtk_tool_item_get_proxy_menu_item_w, 2, 0, 0, H_gtk_tool_item_get_proxy_menu_item);
   XG_DEFINE_PROCEDURE(gtk_tool_item_set_proxy_menu_item, gxg_gtk_tool_item_set_proxy_menu_item_w, 3, 0, 0, H_gtk_tool_item_set_proxy_menu_item);
+#endif
+
+#if HAVE_GTK_EXPANDER_GET_USE_MARKUP
+  XG_DEFINE_PROCEDURE(gdk_drawable_copy_to_image, gxg_gdk_drawable_copy_to_image_w, 8, 0, 0, H_gdk_drawable_copy_to_image);
+  XG_DEFINE_PROCEDURE(gtk_accel_group_activate, gxg_gtk_accel_group_activate_w, 5, 0, 0, H_gtk_accel_group_activate);
+  XG_DEFINE_PROCEDURE(gtk_menu_set_monitor, gxg_gtk_menu_set_monitor_w, 2, 0, 0, H_gtk_menu_set_monitor);
+  XG_DEFINE_PROCEDURE(gtk_widget_can_activate_accel, gxg_gtk_widget_can_activate_accel_w, 2, 0, 0, H_gtk_widget_can_activate_accel);
+  XG_DEFINE_PROCEDURE(gtk_window_is_active, gxg_gtk_window_is_active_w, 1, 0, 0, H_gtk_window_is_active);
+  XG_DEFINE_PROCEDURE(gtk_window_has_toplevel_focus, gxg_gtk_window_has_toplevel_focus_w, 1, 0, 0, H_gtk_window_has_toplevel_focus);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_new, gxg_gtk_combo_box_new_w, 0, 0, 0, H_gtk_combo_box_new);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_new_with_model, gxg_gtk_combo_box_new_with_model_w, 1, 0, 0, H_gtk_combo_box_new_with_model);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_set_model, gxg_gtk_combo_box_set_model_w, 2, 0, 0, H_gtk_combo_box_set_model);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_remove_text, gxg_gtk_combo_box_remove_text_w, 2, 0, 0, H_gtk_combo_box_remove_text);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_entry_new, gxg_gtk_combo_box_entry_new_w, 0, 0, 0, H_gtk_combo_box_entry_new);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_entry_new_with_model, gxg_gtk_combo_box_entry_new_with_model_w, 2, 0, 0, H_gtk_combo_box_entry_new_with_model);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_entry_set_text_column, gxg_gtk_combo_box_entry_set_text_column_w, 2, 0, 0, H_gtk_combo_box_entry_set_text_column);
+  XG_DEFINE_PROCEDURE(gtk_expander_set_use_markup, gxg_gtk_expander_set_use_markup_w, 2, 0, 0, H_gtk_expander_set_use_markup);
+  XG_DEFINE_PROCEDURE(gtk_expander_get_use_markup, gxg_gtk_expander_get_use_markup_w, 1, 0, 0, H_gtk_expander_get_use_markup);
+  XG_DEFINE_PROCEDURE(gtk_radio_tool_button_new_from_widget, gxg_gtk_radio_tool_button_new_from_widget_w, 1, 0, 0, H_gtk_radio_tool_button_new_from_widget);
+  XG_DEFINE_PROCEDURE(gtk_separator_tool_item_get_draw, gxg_gtk_separator_tool_item_get_draw_w, 1, 0, 0, H_gtk_separator_tool_item_get_draw);
+  XG_DEFINE_PROCEDURE(gtk_separator_tool_item_set_draw, gxg_gtk_separator_tool_item_set_draw_w, 2, 0, 0, H_gtk_separator_tool_item_set_draw);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);

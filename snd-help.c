@@ -381,7 +381,7 @@ void about_snd_help(void)
 15-Dec:  kosine-summation in dsp.scm -- sum-of-cosines with an \"FM index\".\n\
          sine-ramp and sine-env-channel for envelopes that connect the dots\n\
            with a sinusoidal curve.\n\
-         offset-channel\n\
+         offset-channel, contrast-channel, ring-modulate-channel.\n\
 28-Nov:  pan-mix-selection|region|vct in mix.scm.\n\
 26-Nov:  rtio.rb thanks to Michael Scholz.\n\
 25-Nov:  copy-sample-reader, region-sample-reader?, read-region-sample.\n\

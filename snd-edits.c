@@ -3824,7 +3824,7 @@ static bool RAMP_OP(int type)
   return(type_info[type].xramps + type_info[type].ramps > 0);
 }
 
-#if DEBUGGING
+#if DEBUGGING && 0
 static int hit_entry[NUM_OPS];
 static void init_hit_entries(void)
 {
@@ -9166,6 +9166,7 @@ append the rest?
       embed scaler into xramp somehow?
          val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)))
          so multiply into offset and scaler fields, but these aren't temps like incr
+	 xramp could be handled via ptree, as could ramp...
 
       more xen cases? (xen2 as well?)
         same on ptree3[zero] -- doesn't seem useful yet (need real-life stats here)
@@ -9174,7 +9175,7 @@ append the rest?
           so ca 50 lines of real code + 300 lines of cases entries to get ptree3
 	xen2 could piggy-back on xen in the same manner
 
-      currently mix+tag then scl locks mix -- seems unnecessary (env as well?)
+      TODO: currently mix+tag then scl locks mix -- seems unnecessary (env as well?)
         but remix is needed somewhere -- initial stab at this failed
       
       filter: need to save segment init state vals, own local reader for base of table and mimic dir in table reader
@@ -9183,25 +9184,19 @@ append the rest?
       reverse as pure-top-level (i.e. any split=>make explicit)
         but init_read within reversed fragment needs to get beg correctly etc
 
-      contrast-enhancement from control panel; ptree example for it
-        (lambda (y) (sin (+ (* y 0.5 pi) (* index (sin (* y 2.0 pi))))))
-
-      chebychev-channel: 
+      TODO: chebychev-channel: 
 	 (coeffs (partials->polynomial (normalize-partials partials)))
 	 (polynomial coeffs y)
 
-      ring-mod with oscil: set initial phase as in sine-ramp init proc, initial phase incr
-        forward: add incr etc:
-        (lambda (y) (* y (sin phase0)))
-      am could be (lambda (y) (* y 0.5 (+ 1.0 (sin phase))))
+      TODO: power-env-channel as ptree case (via xramp-channel?), x2-env? db-env?
 
-      add sine tone:
-        (lambda (y) (+ y (sin phase))) -> extsnd.html?
-        so a CLM instrument would need to be reversible and startable at an arbitrary point
+      xref table for ptree? or table of examples?
 
-      power-env-channel as ptree case (via xramp-channel?), x2-env? db-env?
+      TODO: there is still the one-samp -> wrong begin point bug
+      TODO: there seems to be a flakiness in ptree-channel fragment playback??
+      TODO: snd-test for this old bug: if closure-using-ptree+deferred-region+close-sound: segfault because init func gets 'no-such-sound
+      TODO: test contrast-channel, ring-modulate-channel (and all the ptree guys at once/as-one-edit etc)
+      TOD): example of env in ptree? (ring-mod gliss func)
 
-      xref table for ptree?
-
-      there is still the one-samp -> wrong begin point bug
+      TODO: tie sine-env (et al) into the envelope editors
 */

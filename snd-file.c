@@ -768,6 +768,12 @@ void snd_close_file(snd_info *sp)
 		      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
 		      S_close_hook);
   if (XEN_TRUE_P(res)) return;
+  /* exit does not go through this function to clean up temps -- see snd_exit_cleanly in snd-main.c */
+  if (selection_creation_in_progress()) finish_selection_creation();
+  if (ss->deferred_regions > 0)
+    for (i = 0; i < sp->nchans; i++)
+      if (sp->chans[i]) 
+	sequester_deferred_regions(sp->chans[i], -1);
   sp->inuse = SOUND_IDLE;
   for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
   add_to_previous_files(sp->short_filename, sp->filename);
@@ -775,7 +781,11 @@ void snd_close_file(snd_info *sp)
   if (sp->sgx) clear_minibuffer(sp); /* this can trigger a redisplay-expose sequence, so make sure channels ignore it above */
   if (sp == selected_sound()) 
     ss->selected_sound = NO_SELECTION;
-  if (selection_creation_in_progress()) finish_selection_creation();
+  /* if sequester_deferred_regions is in free_snd_info (moved up to this level 15-12-03)
+   *   if needs an active-looking sound if its active edit op is a ptree read with an in-use closure.
+   *   If the sound is set to SOUND_IDLE, the init function returns 'no-such-sound, and the
+   *   subsequent read segfaults.
+   */
   free_snd_info(sp);
   ss->active_sounds--;
   files = ss->active_sounds;

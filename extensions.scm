@@ -578,3 +578,12 @@ If 'check' is #f, the hooks are removed."
   (let ((dc amount))
     (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t)))
 
+
+;;; -------- contrast-channel
+
+(define* (contrast-channel index #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (let ((ind index))
+    (ptree-channel
+     (lambda (y)
+       (sin (+ (* y 0.5 pi) (* ind (sin (* y 2.0 pi))))))
+     beg dur snd chn edpos #f)))
