@@ -219,49 +219,67 @@ void resize_zy(chan_info *cp)
 static void W_sy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp = (chan_info *)context;
-  START_JUST_TIME(cp);
-  sy_changed(1.0 - adj->value, cp);
-  END_JUST_TIME(cp);
+  if (cp->active)
+    {
+      START_JUST_TIME(cp);
+      sy_changed(1.0 - adj->value, cp);
+      END_JUST_TIME(cp);
+    }
 }
 
 static void W_sx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp = (chan_info *)context;
-  START_JUST_TIME(cp);
-  sx_changed(adj->value, cp);
-  END_JUST_TIME(cp);
+  if (cp->active)
+    {
+      START_JUST_TIME(cp);
+      sx_changed(adj->value, cp);
+      END_JUST_TIME(cp);
+    }
 }
 
 static void W_zy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp = (chan_info *)context;
-  START_JUST_TIME(cp);
-  zy_changed(1.0 - adj->value, cp);
-  END_JUST_TIME(cp);
+  if (cp->active)
+    {
+      START_JUST_TIME(cp);
+      zy_changed(1.0 - adj->value, cp);
+      END_JUST_TIME(cp);
+    }
 }
 
 static void W_zx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp = (chan_info *)context;
-  START_JUST_TIME(cp);
-  zx_changed(adj->value, cp);
-  END_JUST_TIME(cp);
+  if (cp->active)
+    {
+      START_JUST_TIME(cp);
+      zx_changed(adj->value, cp);
+      END_JUST_TIME(cp);
+    }
 }
 
 static void W_gzy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp = (chan_info *)context;
-  START_JUST_TIME(cp);
-  gzy_changed(1.0 - adj->value, cp);
-  END_JUST_TIME(cp);
+  if (cp->active)
+    {
+      START_JUST_TIME(cp);
+      gzy_changed(1.0 - adj->value, cp);
+      END_JUST_TIME(cp);
+    }
 }
 
 static void W_gsy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp = (chan_info *)context;
-  START_JUST_TIME(cp);
-  gsy_changed(1.0 - adj->value, cp);
-  END_JUST_TIME(cp);
+  if (cp->active)
+    {
+      START_JUST_TIME(cp);
+      gsy_changed(1.0 - adj->value, cp);
+      END_JUST_TIME(cp);
+    }
 }
 
 static gint F_Button_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -937,8 +955,8 @@ void change_channel_style(snd_info *sp, int new_style)
 		      cx = cp->cgx;
 		      cw = cx->chan_widgets;
 		      gtk_widget_show_all(cw[W_main_window]);
-		      set_toggle_button(cw[W_f], cp->ffting, FALSE, (void *)cp);
-		      set_toggle_button(cw[W_w], cp->waving, FALSE, (void *)cp);
+		      set_toggle_button(cw[W_f], cp->graph_transform_p, FALSE, (void *)cp);
+		      set_toggle_button(cw[W_w], cp->graph_time_p, FALSE, (void *)cp);
 		      /* these can get out of sync if changes are made in the unseparated case */
 		      set_axes(cp, ap->x0, ap->x1, ap->y0, ap->y1);
 		    }

@@ -74,8 +74,8 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->wavo = wavo(ss);
   cp->wavo_hop = wavo_hop(ss);
   cp->wavo_trace = wavo_trace(ss);
-  cp->max_fft_peaks = max_fft_peaks(ss);
-  cp->show_fft_peaks = show_fft_peaks(ss);
+  cp->max_transform_peaks = max_transform_peaks(ss);
+  cp->show_transform_peaks = show_transform_peaks(ss);
   cp->zero_pad = zero_pad(ss);
   cp->verbose_cursor = verbose_cursor(ss);
   cp->fft_log_frequency = fft_log_frequency(ss);
@@ -92,20 +92,20 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->spectro_cutoff = spectro_cutoff(ss);
   cp->spectro_start = spectro_start(ss);
   cp->spectro_hop = spectro_hop(ss);
-  cp->fft_beta = fft_beta(ss);
-  cp->fft_size = fft_size(ss);
-  cp->fft_style = fft_style(ss);
+  cp->fft_window_beta = fft_window_beta(ss);
+  cp->transform_size = transform_size(ss);
+  cp->transform_graph_type = transform_graph_type(ss);
   cp->fft_window = fft_window(ss);
   cp->transform_type = transform_type(ss);
-  cp->normalize_fft = normalize_fft(ss);
+  cp->transform_normalization = transform_normalization(ss);
   cp->show_mix_waveforms = show_mix_waveforms(ss);
   cp->graph_style = graph_style(ss);
   cp->graphs_horizontal = graphs_horizontal(ss);
   cp->dot_size = dot_size(ss);
   cp->show_axes = show_axes(ss);
   cp->sync = 0;
-  cp->waving = 1; /* the default state (button is set when we start) */
-  cp->ffting = 0;
+  cp->graph_time_p = 1; /* the default state (button is set when we start) */
+  cp->graph_transform_p = 0;
   cp->printing = 0;
   cp->waiting_to_make_graph = 0;
   cp->state = ss;
@@ -147,9 +147,9 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
   if (cp->fft_data) {FREE(cp->fft_data); cp->fft_data = NULL;}
   /* this may leave ->wp window unfreed? -- see snd-fft.c free_fft_state */
-  cp->ffting = 0;
+  cp->graph_transform_p = 0;
   cp->printing = 0;
-  cp->waving = 1;
+  cp->graph_time_p = 1;
   if (cp->samples) {FREE(cp->samples); cp->samples = NULL;}
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
@@ -193,7 +193,7 @@ static chan_info *free_chan_info(chan_info *cp)
       cp->stats = NULL;
       if (show_usage_stats(ss)) update_stats_display(ss, FALSE);
     }
-  cp->lisp_graphing = 0;
+  cp->graph_lisp_p = 0;
   cp->selection_transform_size = 0;
   CLEAR_HOOK(cp->edit_hook);
   CLEAR_HOOK(cp->undo_hook);
@@ -288,7 +288,6 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->selected_channel = NO_SELECTION;
   sp->playing = 0;
   sp->applying = 0;
-  sp->lisp_graphing = 0;
   sp->saved_controls = NULL;
   sp->env_anew = 0;
   sp->contrast_control_amp = DEFAULT_CONTRAST_CONTROL_AMP;
@@ -337,7 +336,6 @@ void free_snd_info(snd_info *sp)
   sp->applying = 0;
   sp->channel_style = CHANNELS_SEPARATE;
   sp->read_only = 0;
-  sp->lisp_graphing = 0;
   sp->minibuffer_on = 0;                     /* if it's on, should we clear it first ?? */
   sp->minibuffer_temp = 0;
   if (sp->search_expr) 

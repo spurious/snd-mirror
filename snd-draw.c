@@ -36,10 +36,10 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
   if ((cp) && (AXIS_INFO_ID_OK(ap_id)))
     switch (ap_id)
       {
-      case WAVE_AXIS_INFO: 
+      case TIME_AXIS_INFO: 
 	return(cp->axis); 
 	break;
-      case FFT_AXIS_INFO:  
+      case TRANSFORM_AXIS_INFO:  
 	if (cp->fft) return(cp->fft->axis); 
 	break;
       case LISP_AXIS_INFO: 
@@ -584,7 +584,7 @@ in the drawing mode graphic-style."
 		  v0->data,
 		  (v1) ? (v1->data) : NULL,
 		  get_ax(cp, TO_C_INT_OR_ELSE(ax, CHAN_GC), S_graph_data),
-		  TO_C_INT_OR_ELSE(style, MAIN_GRAPH_STYLE(cp)));
+		  TO_C_INT_OR_ELSE(style, TIME_GRAPH_STYLE(cp)));
 
   return(SCM_BOOL_F);
 }
@@ -755,9 +755,9 @@ void g_init_draw(SCM local_doc)
 
   /* ---------------- stable? ---------------- */
 
-  DEFINE_VAR(S_time_graph,           WAVE_AXIS_INFO, "time domain graph");
-  DEFINE_VAR(S_fft_graph,            FFT_AXIS_INFO,  "frequency domain graph");
-  DEFINE_VAR(S_lisp_graph,           LISP_AXIS_INFO, "lisp graph");
+  DEFINE_VAR(S_time_graph,           TIME_AXIS_INFO,      "time domain graph");
+  DEFINE_VAR(S_transform_graph,      TRANSFORM_AXIS_INFO, "frequency domain graph");
+  DEFINE_VAR(S_lisp_graph,           LISP_AXIS_INFO,      "lisp graph");
 
   DEFINE_VAR(S_copy_context,         CHAN_GC,        "graphics context to draw a line");
   DEFINE_VAR(S_cursor_context,       CHAN_CGC,       "graphics context for the cursor");

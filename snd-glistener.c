@@ -145,7 +145,7 @@ void snd_append_command(snd_state *ss, char *msg)
 	append_listener_text(0, "\n");
       if (msg)
 	append_listener_text(0, msg);
-      if (ss->result_printout == MESSAGE_WITH_CARET) 
+      if (ss->result_printout == MESSAGE_WITH_PROMPT) 
 	append_listener_text(0, listener_prompt_with_cr(ss));
       ss->result_printout = 0;
       cmd_eot = gtk_text_get_length(GTK_TEXT(listener_text));

@@ -45,6 +45,13 @@
 #define GUI_POINTER gpointer
 #define GUI_WIDGET GtkWidget*
 
+#if DEBUGGING
+  #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr,"%s:[%s %d] widget arg is wrong type", __FUNCTION__, __FILE__, __LINE__)
+  /* GTK_IS_TOGGLE_BUTTON(obj) etc -- not currently used */
+#else
+  #define ASSERT_WIDGET_TYPE(Cond, Wid)
+#endif
+
 #define Locus gint16
 #define Latus guint16
 

@@ -31,7 +31,7 @@
 
 (define tests 1)
 (define snd-test -1)
-(define keep-going #f)
+(define keep-going #t)
 (define full-test (< snd-test 0))
 (define total-tests 22)
 
@@ -43,6 +43,9 @@
 (if (and (not (file-exists? "2.snd"))
 	 (not (string=? (getcwd) "/home/bil/cl")))
     (copy-file "/home/bil/cl/2.snd" (string-append (getcwd) "/2.snd")))
+(if (and (not (file-exists? "sndxtest"))
+	 (not (string=? (getcwd) "/home/bil/cl")))
+    (copy-file "/home/bil/cl/sndxtest" (string-append (getcwd) "/sndxtest")))
 
 (define times '())
 (defmacro time (a) 
@@ -171,13 +174,13 @@
 	'kaiser-window kaiser-window 11 
 	'keyboard-no-action keyboard-no-action 6
 	'cepstrum cepstrum 6
-	'normal-fft normal-fft 0 
+	'graph-transform-once graph-transform-once 0 
 	'parzen-window parzen-window 3
 	'poisson-window poisson-window 13
 	'rectangular-window rectangular-window 0 
 	'riemann-window riemann-window 10 
-	'sonogram sonogram 1
-	'spectrogram spectrogram 2 
+	'graph-transform-as-sonogram graph-transform-as-sonogram 1
+	'graph-transform-as-spectrogram graph-transform-as-spectrogram 2 
 	'enved-spectrum enved-spectrum 1
 	'speed-control-as-float speed-control-as-float 0 
 	'speed-control-as-ratio speed-control-as-ratio 1 
@@ -189,10 +192,10 @@
 	'welch-window welch-window 2 
 	'cursor-cross cursor-cross 0
 	'cursor-line cursor-line 1
-	'dont-normalize dont-normalize 0
-	'normalize-by-channel normalize-by-channel 1
-	'normalize-by-sound normalize-by-sound 2
-	'normalize-globally normalize-globally 3
+	'dont-normalize-transform dont-normalize-transform 0
+	'normalize-transform-by-channel normalize-transform-by-channel 1
+	'normalize-transform-by-sound normalize-transform-by-sound 2
+	'normalize-transform-globally normalize-transform-globally 3
 	'x-axis-in-samples x-axis-in-samples 1 
 	'x-axis-in-seconds x-axis-in-seconds 0 
 	'x-axis-as-percentage x-axis-as-percentage 2
@@ -200,7 +203,7 @@
 	'enved-delete-point enved-delete-point 1
 	'enved-move-point enved-move-point 2
 	'time-graph time-graph 0
-	'fft-graph fft-graph 1
+	'transform-graph transform-graph 1
 	'lisp-graph lisp-graph 2
 	'copy-context copy-context 0
 	'cursor-context cursor-context 3
@@ -276,13 +279,13 @@
 	'expand-control-length (without-errors (expand-control-length)) 'no-such-sound
 	'expand-control-ramp (without-errors (expand-control-ramp)) 'no-such-sound
 	'expand-control? (without-errors (expand-control?)) 'no-such-sound
-	'fft-beta (fft-beta) 0.0 
+	'fft-window-beta (fft-window-beta) 0.0 
 	'fft-log-frequency (fft-log-frequency) #f 
 	'fft-log-magnitude (fft-log-magnitude) #f 
-	'fft-size (fft-size) 256 
-	'fft-style (fft-style) 0
+	'transform-size (transform-size) 256 
+	'transform-graph-type (transform-graph-type) 0
 	'fft-window (fft-window) 6 
-	'ffting (without-errors (ffting)) 'no-such-sound
+	'graph-transform? (without-errors (graph-transform?)) 'no-such-sound
 	'filter-control-in-dB (without-errors (filter-control-in-dB)) 'no-such-sound
 	'filter-control-env (without-errors (filter-control-env)) 'no-such-sound
 	'filter-env-in-hz (filter-env-in-hz) #f
@@ -290,17 +293,17 @@
 	'filter-control? (without-errors (filter-control?)) 'no-such-sound
 	'graph-cursor (graph-cursor) 34
 	'graph-style (graph-style) 0 
-	'graphing (without-errors (graphing)) 'no-such-sound
+	'graph-lisp? (without-errors (graph-lisp?)) 'no-such-sound
 	'graphs-horizontal (graphs-horizontal) #t
 	'hankel-jn (hankel-jn) 0.0
 	'just-sounds (just-sounds) #f
 	'listener-prompt (listener-prompt) ">" 
-	'max-fft-peaks (max-fft-peaks) 100
+	'max-transform-peaks (max-transform-peaks) 100
 	'max-regions (max-regions) 16 
 	'min-dB (min-dB) -60.0 
 	'movies (movies) #t 
 	'selection-creates-region (selection-creates-region) #t 
-	'normalize-fft (normalize-fft) normalize-by-channel
+	'transform-normalization (transform-normalization) normalize-transform-by-channel
 	'previous-files-sort (previous-files-sort) 0 
 	'print-length (print-length) 12 
 	'read-only (without-errors (read-only)) 'no-such-sound
@@ -319,7 +322,7 @@
 	'reverb-control? (without-errors (reverb-control?)) 'no-such-sound
 	'save-state-file (save-state-file) "saved-snd.scm" 
 	'show-axes (show-axes) 1
-	'show-fft-peaks (show-fft-peaks) #f 
+	'show-transform-peaks (show-transform-peaks) #f 
 	'show-indices (show-indices) #f
 	'show-backtrace (show-backtrace) #f
 	'show-marks (show-marks) #t 
@@ -352,7 +355,7 @@
 	'vu-font-size (vu-font-size) 1.0 
 	'vu-size (vu-size) 1.0 
 	'wavelet-type (wavelet-type) 0 
-	'waving (without-errors (waving)) 'no-such-sound
+	'graph-time? (without-errors (graph-time?)) 'no-such-sound
 	'wavo (wavo) #f 
 	'wavo-hop (wavo-hop) 3 
 	'wavo-trace (wavo-trace) 64 
@@ -772,13 +775,13 @@
 	  (list 'expand-control-length expand-control-length 0.15 set-expand-control-length 0.2)
 	  (list 'expand-control-ramp expand-control-ramp 0.4 set-expand-control-ramp 0.2)
 	  (list 'expand-control? expand-control? #f set-expand-control? #t)
-	  (list 'fft-beta fft-beta 0.0  set-fft-beta 0.5)
+	  (list 'fft-window-beta fft-window-beta 0.0  set-fft-window-beta 0.5)
 	  (list 'fft-log-frequency fft-log-frequency #f set-fft-log-frequency #t)
 	  (list 'fft-log-magnitude fft-log-magnitude #f set-fft-log-magnitude #t)
-	  (list 'fft-size fft-size 256 set-fft-size 512)
-	  (list 'fft-style fft-style 0 set-fft-style 1)
+	  (list 'transform-size transform-size 256 set-transform-size 512)
+	  (list 'transform-graph-type transform-graph-type 0 set-transform-graph-type 1)
 	  (list 'fft-window fft-window 6 set-fft-window 5)
-	  (list 'ffting ffting #f set-ffting #t)
+	  (list 'graph-transform? graph-transform? #f set-graph-transform? #t)
 	  (list 'filter-control-in-dB filter-control-in-dB #f set-filter-control-in-dB #t)
 	  (list 'filter-control-env filter-control-env (list 0.0 1.0 1.0 1.0) set-filter-control-env (list 0.0 1.0 1.0 0.0))
 	  (list 'enved-filter-order enved-filter-order 40 set-enved-filter-order 20)
@@ -789,7 +792,7 @@
 	  (list 'graph-style graph-style 0 set-graph-style 1)
 	  (list 'just-sounds just-sounds #f set-just-sounds #t)
 	  (list 'listener-prompt listener-prompt ">" set-listener-prompt ":")
-	  (list 'max-fft-peaks max-fft-peaks 100 set-max-fft-peaks 10)
+	  (list 'max-transform-peaks max-transform-peaks 100 set-max-transform-peaks 10)
 	  (list 'max-regions max-regions 16 set-max-regions 6)
 	  (list 'min-dB min-dB -60.0 set-min-dB -90.0)
 	  (list 'mix-waveform-height mix-waveform-height 20 set-mix-waveform-height 40)
@@ -797,7 +800,7 @@
 	  (list 'mix-tag-width mix-tag-width 6 set-mix-tag-width 20)
 	  (list 'movies movies #t set-movies #f)
 	  (list 'selection-creates-region selection-creates-region #t set-selection-creates-region #f)
-	  (list 'normalize-fft normalize-fft normalize-by-channel set-normalize-fft dont-normalize)
+	  (list 'transform-normalization transform-normalization normalize-transform-by-channel set-transform-normalization dont-normalize-transform)
 	  (list 'previous-files-sort previous-files-sort 0 set-previous-files-sort 1)
 	  (list 'print-length print-length 12 set-print-length 16)
 	  (list 'recorder-autoload recorder-autoload #f set-recorder-autoload #t)
@@ -812,7 +815,7 @@
 	  (list 'reverb-control-scale reverb-control-scale 0.0 set-reverb-control-scale 0.2)
 	  (list 'reverb-control? reverb-control? #f set-reverb-control? #t)
 	  (list 'show-axes show-axes 1 set-show-axes 0)
-	  (list 'show-fft-peaks show-fft-peaks #f set-show-fft-peaks #t)
+	  (list 'show-transform-peaks show-transform-peaks #f set-show-transform-peaks #t)
 	  (list 'show-indices show-indices #f set-show-indices #t)
 	  (list 'show-backtrace show-backtrace #f set-show-backtrace #t)
 	  (list 'show-marks show-marks #t set-show-marks #f)
@@ -841,7 +844,7 @@
 	  (list 'vu-size vu-size 1.0 set-vu-size 2.0)
 	  (list 'vu-font-size vu-font-size 1.0 set-vu-font-size 2.0)
 	  (list 'wavelet-type wavelet-type 0 set-wavelet-type 1)
-	  (list 'waving waving #f set-waving #t)
+	  (list 'graph-time? graph-time? #f set-graph-time? #t)
 	  (list 'wavo wavo #f set-wavo #t)
 	  (list 'wavo-hop wavo-hop 3 set-wavo-hop 6)
 	  (list 'wavo-trace wavo-trace 64 set-wavo-trace 128)
@@ -884,16 +887,16 @@
 	  (list 'expand-control-hop expand-control-hop 0.05 set-expand-control-hop '(-1.0))
 	  (list 'expand-control-length expand-control-length 0.15 set-expand-control-length '(-1.0 0.0))
 	  (list 'expand-control-ramp expand-control-ramp 0.4 set-expand-control-ramp '(-1.0 1.0 123.123))
-	  (list 'fft-beta fft-beta 0.0  set-fft-beta '(-1.0 123.123))
-	  (list 'fft-size fft-size 256 set-fft-size '(-1 0))
+	  (list 'fft-window-beta fft-window-beta 0.0  set-fft-window-beta '(-1.0 123.123))
+	  (list 'transform-size transform-size 256 set-transform-size '(-1 0))
 	  (list 'zero-pad zero-pad 0 set-zero-pad '(-1 -123))
 	  (list 'cursor-style cursor-style cursor-cross set-cursor-style '(-1))
 	  (list 'cursor-style cursor-style cursor-line set-cursor-style '(2 123))
-	  (list 'fft-style fft-style 0 set-fft-style '(-1 123))
+	  (list 'transform-graph-type transform-graph-type 0 set-transform-graph-type '(-1 123))
 	  (list 'fft-window fft-window 6 set-fft-window '(-1 123))
 	  (list 'enved-filter-order enved-filter-order 40 set-enved-filter-order '(-1 0))
 	  (list 'filter-control-order filter-control-order 20 set-filter-control-order '(-10 -1 0))
-	  (list 'max-fft-peaks max-fft-peaks 100 set-max-fft-peaks '(-1))
+	  (list 'max-transform-peaks max-transform-peaks 100 set-max-transform-peaks '(-1))
 	  (list 'max-regions max-regions 16 set-max-regions '(-1 -123))
 	  (list 'previous-files-sort previous-files-sort 0 set-previous-files-sort '(-1 123))
 	  (list 'reverb-control-length reverb-control-length 1.0 set-reverb-control-length '(-1.0))
@@ -1004,15 +1007,16 @@
 	  (sys (mus-audio-systems)))
       (if (procedure? trace-hook) (trace-hook 4))
       (mus-sound-report-cache "hiho.tmp")
-      (let ((p (open-input-file "hiho.tmp")))
-	(if (not p)
-	    (snd-display (format #f ";mus-sound-report-cache->hiho.tmp failed?"))
-	    (let ((line (read-line p)))
-	      (if (or (not (string? line))
-		      (not (string=? "sound table:")))
-		  (snd-display (format #f ";print-cache 1: ~A?" line)))
-	      (close-port p)
-	      (delete-file "hiho.tmp"))))
+      (if (defined? 'read-line)
+	  (let ((p (open-input-file "hiho.tmp")))
+	    (if (not p)
+		(snd-display (format #f ";mus-sound-report-cache->hiho.tmp failed?"))
+		(let ((line (read-line p)))
+		  (if (or (not (string? line))
+			  (not (string=? "sound table:")))
+		      (snd-display (format #f ";print-cache 1: ~A?" line)))
+		  (close-port p)
+		  (delete-file "hiho.tmp")))))
       (if (< (string-length (mus-audio-report)) 10)
 	  (snd-display (format #f ";mus-audio-report: ~A" (mus-audio-report))))
       (if (and (not (= sys 1)) (not (= sys 2))) (snd-display (format #f ";mus-audio-systems: ~A?" sys)))
@@ -1509,9 +1513,9 @@
       (play-and-wait "oboe.snd" 12000 15000)
       (play-and-wait 0 #f #f #f #f (1- (edit-position)))
       (bomb index #t)
-      (if (not (= (transform-size) 0)) (snd-display (format #f ";transform-size ~A?" (transform-size))))
-      (set! (ffting) #t)
-      (set! (waving) #t)
+      (if (not (= (transform-graph-data-size) 0)) (snd-display (format #f ";transform-graph-data-size ~A?" (transform-graph-data-size))))
+      (set! (graph-transform?) #t)
+      (set! (graph-time?) #t)
       (graph '(0 0 1 1 2 0))
       (update-lisp-graph)
       (graph #(0 0 1 1 2 0))
@@ -1520,39 +1524,41 @@
 	(graph #(0 1 2)) 
 	(graph (list #(0 1 2) #(3 2 1) #(1 2 3)))
 	(graph (list #(0 1 2) #(3 2 1))))
-      (if (= (transform-size) 0) (snd-display (format #f ";ffting transform-size ~A?" (transform-size))))
-      (update-fft)
+      (if (= (transform-graph-data-size) 0) (snd-display (format #f ";graph-transform? transform-graph-data-size ~A?" (transform-graph-data-size))))
+      (update-transform)
       (peaks "tmp.peaks")
-      (let ((p (open-input-file "tmp.peaks")))
-	(if (not p)
-	    (snd-display (format #f ";peaks->tmp.peaks failed?"))
-	    (let ((line (read-line p)))
-	      (if (or (not (string? line))
-		      (not (string=? "Snd: fft peaks" (substring line 0 14))))
-		  (snd-display (format #f ";peaks 1: ~A?" line)))
-	      (set! line (read-line p))
-	      (set! line (read-line p))
-	      (if (or (not (string? line))
-		      (not (string=? "oboe.snd, fft 256 points beginning at sample 0 (0.000 secs)" line)))
-		  (snd-display (format #f ";peaks 2: ~A?" line)))
-	      (set! line (read-line p))
-	      (set! line (read-line p))
-	      (if (or (not (string? line))
-		      (not (string=? "  86.132812  1.00000" line)))
-		  (snd-display (format #f ";peaks 3: ~A?" line)))
-	      (close-port p)
-	      (delete-file "tmp.peaks"))))
+      (if (defined? 'read-line)
+	  (let ((p (open-input-file "tmp.peaks")))
+	    (if (not p)
+		(snd-display (format #f ";peaks->tmp.peaks failed?"))
+		(let ((line (read-line p)))
+		  (if (or (not (string? line))
+			  (not (string=? "Snd: fft peaks" (substring line 0 14))))
+		      (snd-display (format #f ";peaks 1: ~A?" line)))
+		  (set! line (read-line p))
+		  (set! line (read-line p))
+		  (if (or (not (string? line))
+			  (not (string=? "oboe.snd, fft 256 points beginning at sample 0 (0.000 secs)" line)))
+		      (snd-display (format #f ";peaks 2: ~A?" line)))
+		  (set! line (read-line p))
+		  (set! line (read-line p))
+		  (if (or (not (string? line))
+			  (not (string=? "  86.132812  1.00000" line)))
+		      (snd-display (format #f ";peaks 3: ~A?" line)))
+		  (close-port p)
+		  (delete-file "tmp.peaks")))))
       (let* ((num-transforms 9)
-	     (num-fft-styles 3))
-	(set! (ffting index 0) #t)
-	(set! (fft-size index 0) 64)
+	     (num-transform-graph-types 3))
+	(set! (graph-transform? index 0) #t)
+	(set! (transform-size index 0) 64)
 	(do ((i 0 (1+ i)))
 	    ((= i num-transforms))
 	  (set! (transform-type) i)
 	  (do ((j 0 (1+ j)))
-	      ((= j num-fft-styles))
-	    (set! (fft-style index 0) j)
-	    (update-fft index 0))))
+	      ((= j num-transform-graph-types))
+	    (set! (transform-graph-type index 0) j)
+	    (update-transform index 0))))
+
       (if (read-only index) (snd-display (format #f ";read-only open-sound: ~A?" (read-only index))))
       (set! (read-only index) #t)
       (if (not (read-only index)) (snd-display (format #f ";set-read-only: ~A?" (read-only index))))
@@ -1635,6 +1641,7 @@
 	(if (not (= (edit-position) (car eds)))
 	    (snd-display (format #f ";edit-position: ~A ~A?" (edit-position) eds))))
       (play-and-wait 0 index 0)
+
       (bomb index #f)
       (select-all index 0) 
       (let ((r0 (car (regions))))
@@ -1676,8 +1683,8 @@
       
       (revert-sound index)
       (insert-sample 100 .5 index) 
-      (update-fft index) 
-      (update-graph index) 
+      (update-transform index) 
+      (update-time-graph index) 
       (if (or (fneq (sample 100) .5)
 	      (not (= (frames index) 50829)))
 	  (snd-display (format #f ";insert-sample: ~A ~A?" (sample 100) (frames index))))
@@ -2278,7 +2285,7 @@
 		(ups3 (count-matches (lambda (n) (> n .03)) 0 ind1 0)))
 	    (if (not (= total (+ ups1 ups2 ups3)))
 		(snd-display (format #f ";scan-all-chans: ~A ~A?" total (+ ups1 ups2 ups3))))))
-	
+
 	(select-sound ind1)
 	(forward-graph)
 	(if (or (not (= (selected-sound) ind2))
@@ -2341,7 +2348,7 @@
 		    (fneq (cadr ups4) (cadr ups2)))
 		(snd-display (format #f ";map-chans: ~A ~A?" ups2 ups4))))
 	  (set! (sync ind1) #f)
-	  
+
 	  (let ((len-err #f))
 	    (map-across-all-chans (lambda (data len)
 				    (if (not (= len 3))
@@ -2352,6 +2359,7 @@
 					    (vector-set! data 1 (vector-ref data 2))
 					    (vector-set! data 2 chan0-sample))))
 				    data))
+
 	    (if (number? len-err)
 		(snd-display (format #f ";map-across-all-chans len: ~A?" len-err)))
 	    (let ((ups3 (maxamp ind1 0))
@@ -2361,10 +2369,10 @@
 	      (if (or (fneq (car ups4) (cadr ups2))
 		      (fneq (car ups4) (cadr ups2)))
 		  (snd-display (format #f ";map-across-all-chans 2: ~A ~A?" ups2 ups4)))))
-  
 	  (revert-sound ind1)
 	  (revert-sound ind2)
 	  (map-all-chans (lambda (n) (* n 4.0)))
+
 	  (let ((ups3 (maxamp ind1 0))
 		(ups4 (maxamp ind2 0))
 		(ups5 (maxamp ind1 0 0))
@@ -2399,13 +2407,15 @@
 	(if (> ctr 4)
 	    (snd-display (format #f ";map-chan no-edit count: ~A?" ctr)))
 	(revert-sound ind1)
-	(map-chan (lambda (n)
-		    (vct n (* n 3)))
-		  0 (frames ind1) "cut 2" ind1 0)
+	(let ((v1 (make-vct 2)))
+	  (map-chan (lambda (n)
+		      (vct-set! v1 0 n)
+		      (vct-set! v1 1 (* n 3))
+		      v1)
+		    0 (frames ind1) "cut 2" ind1 0))
 	(if (> (abs (- (frames ind1) (* len 2))) 3)
 	    (snd-display (format #f ";map-chan double: ~A ~A?" len (frames ind1))))
 	(close-sound ind1))
-
       (let* ((ind1 (open-sound "oboe.snd")))
 	(test-edpos maxamp 'maxamp (lambda () (scale-by 2.0 ind1 0)) ind1)
 	(test-edpos frames 'frames (lambda () (src-sound 2.0 ind1 0)) ind1)
@@ -5308,6 +5318,7 @@
 	  (let ((fd (open-raw-sound (string-append sf-dir "addf8.nh") 1 8012 mus-mulaw)))
 	    (if (not (= (data-format fd) mus-mulaw)) (snd-display (format #f ";open-raw-sound: ~A?" (mus-data-format-name (data-format fd)))))
 	    (close-sound fd))
+
 	  (time (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_24") 20.0))
 	  (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_40") 3.0)
 	  (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g721") 6.0)
@@ -5323,6 +5334,7 @@
 	    (set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)
 	    (set! (reverb-control-length obind) 2.0)
 	    (play-and-wait 0 obind)
+
 	    (let ((delay-line #f)
 		  (delay-time 0.5))
 	      (set-reverb-control-procedures
@@ -5337,6 +5349,7 @@
 		 (set! delay-line #f)
 		 ptr)
 	       ))
+
 	    (play-and-wait 0 obind)
 	    (set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)
 	    (close-sound obind))
@@ -5481,7 +5494,7 @@
 
   (reset-hook! after-graph-hook) (add-hook! after-graph-hook arg2) (carg2 after-graph-hook) (reset-hook! after-graph-hook)
   (reset-hook! lisp-graph-hook) (add-hook! lisp-graph-hook arg2) (carg2 lisp-graph-hook) (reset-hook! lisp-graph-hook)
-  (reset-hook! before-fft-hook) (add-hook! before-fft-hook arg2) (carg2 before-fft-hook) (reset-hook! before-fft-hook)
+  (reset-hook! before-transform-hook) (add-hook! before-transform-hook arg2) (carg2 before-transform-hook) (reset-hook! before-transform-hook)
   (reset-hook! mix-position-changed-hook) (add-hook! mix-position-changed-hook arg2) (carg2 mix-position-changed-hook) (reset-hook! mix-position-changed-hook)
   (reset-hook! stop-playing-channel-hook) (add-hook! stop-playing-channel-hook arg2) (carg2 stop-playing-channel-hook) (reset-hook! stop-playing-channel-hook)
   (reset-hook! save-hook) (add-hook! save-hook arg2) (carg2 save-hook) (reset-hook! save-hook)
@@ -5515,12 +5528,13 @@
   (reset-hook! property-changed-hook) (add-hook! property-changed-hook arg1) (carg1 property-changed-hook) (reset-hook! property-changed-hook)
   (reset-hook! select-sound-hook) (add-hook! select-sound-hook arg1) (carg1 select-sound-hook) (reset-hook! select-sound-hook)
   (reset-hook! select-mix-hook) (add-hook! select-mix-hook arg1) (carg1 select-mix-hook) (reset-hook! select-mix-hook)
+  (reset-hook! print-hook) (add-hook! print-hook arg1) (carg1 print-hook) (reset-hook! print-hook)
 
   (reset-hook! exit-hook) (add-hook! exit-hook arg0) (carg0 exit-hook) (reset-hook! exit-hook)
   (reset-hook! output-name-hook) (add-hook! output-name-hook arg0) (carg0 output-name-hook) (reset-hook! output-name-hook)
 
   (reset-hook! during-open-hook) (add-hook! during-open-hook arg3) (carg3 during-open-hook) (reset-hook! during-open-hook)
-  (reset-hook! fft-hook) (add-hook! fft-hook arg3) (carg3 fft-hook) (reset-hook! fft-hook)
+  (reset-hook! transform-hook) (add-hook! transform-hook arg3) (carg3 transform-hook) (reset-hook! transform-hook)
   (reset-hook! mouse-enter-label-hook) (add-hook! mouse-enter-label-hook arg3) (carg3 mouse-enter-label-hook) (reset-hook! mouse-enter-label-hook)
   (reset-hook! mouse-leave-label-hook) (add-hook! mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook) (reset-hook! mouse-leave-label-hook)
   (reset-hook! initial-graph-hook) (add-hook! initial-graph-hook arg3) (carg3 initial-graph-hook) (reset-hook! initial-graph-hook)
@@ -5543,8 +5557,8 @@
 	  (mb (add-to-main-menu "clm")))
       (if (procedure? trace-hook) (trace-hook 13))
       (set! (cursor fd) 2000)
-      (set! (fft-style) normal-fft)
-      (set! (ffting fd) #t)
+      (set! (transform-graph-type) graph-transform-once)
+      (set! (graph-transform? fd) #t)
       (add-to-menu mb "fm-violin" (lambda () (if (sound?) (clm-fm-violin .1 660 .1))))
       (add-to-menu mb "not here" (lambda () (snd-display ";oops")))
       (set! (menu-sensitive mb "not here") #f)
@@ -5579,8 +5593,8 @@
 		  (fneq mx (maxamp fd))
 		  (fneq sr (srate fd)))
 	      (snd-display (format #f ";copyfile(2): ~A ~A ~A ~A?" (frames fd) (chans fd) (srate fd) (maxamp fd))))))
-      
-      (update-fft fd)
+
+      (update-transform fd)
       (let ((v0 (transform-samples->vct fd))
 	    (vc (transform-samples fd))
 	    (val (transform-sample 50 0 fd)))
@@ -5652,7 +5666,7 @@
 	  (if (not (vequal new1 old1))
 	      (snd-display (format #f ";sndxtest chan 1 ? ~A ~A" old1 new1)))))
       (close-sound fd)
-      
+
       (set! fd (open-sound "2.snd"))
       (let ((fr (frames fd))
 	    (chn (chans fd))
@@ -5693,6 +5707,7 @@
 				     ""
 				     (format #f ":~{~A~^, ~}" names)))))
       (load "effects.scm")
+
       (add-hook! menu-hook
 		 (lambda (name option)
 		   (if (and (string=? name "File")
@@ -5731,8 +5746,10 @@
 			      (string=? option "invert"))
 			 (set! ctr (+ ctr 1)))
 		     #t))
+
 	(without-errors
 	 (test-menus)) ; built-in self-test function
+
 	(revert-sound fd)
 	(close-sound fd)
 	(if (not (= ctr 4)) (snd-display (format #f ";ctr after test-menus: ~A? " ctr)))
@@ -5879,7 +5896,7 @@
 		       (if (not (= chn 0))
 			   (snd-display (format #f ";after-graph-hook (channel): ~A not 0?" chn)))
 		       (set! agr #t)))
-	  (update-graph ind 0)
+	  (update-time-graph ind 0)
 	  (if (not gr) (snd-display ";graph-hook not called?"))
 	  (if (not agr) (snd-display ";after-graph-hook not called?"))
 	  (reset-hook! graph-hook)
@@ -6039,9 +6056,9 @@
 		(delete-file "baddy.snd")))
 	  (reset-hook! save-hook))
 
-	;; fft-hooks require some way to force the fft to run to completion
+	;; transform-hooks require some way to force the fft to run to completion
 	;; property-changed hook is similar (seems to happen whenever it's good and ready)
-	
+
 	(add-hook! close-hook
 		   (lambda (snd)
 		     (if (not (= snd ind))
@@ -6437,7 +6454,7 @@
 	    (convolve-with "fyow.snd" .25)
 	    (insert-sound "oboe.snd")
 	    (reset-hook! graph-hook)
-	    (reset-hook! fft-hook)
+	    (reset-hook! transform-hook)
 	    (map revert-sound open-files)
 	  
 	    (let ((zz (view-sound "z.snd")))
@@ -6614,10 +6631,10 @@
 		       #t))
 	  (redo 1)
 	  (reset-hook! name-click-hook)
-	  (set! (ffting) #t)
-	  (test-channel ffting 'ffting)
-	  (test-channel waving 'waving)
-	  (test-channel graphing 'graphing)
+	  (set! (graph-transform?) #t)
+	  (test-channel graph-transform? 'graph-transform?)
+	  (test-channel graph-time? 'graph-time?)
+	  (test-channel graph-lisp? 'graph-lisp?)
 	  (test-channel frames 'frames)
 	  (test-channel cursor 'cursor)
 	  (test-channel cursor-size 'cursor-size)
@@ -6636,7 +6653,7 @@
 	  (test-channel undo-hook 'undo-hook)
 	  (set! (transform-type) histogram)
 	  (set! (x-bounds) '(.1 .2))
-	  (set! (transform-type) normal-fft)
+	  (set! (transform-type) graph-transform-once)
 	  (set! (x-bounds) '(.1 .2))
 	  (add-hook! lisp-graph-hook display-energy)
 	  (shell "df")
@@ -6645,12 +6662,12 @@
 	  (set! (x-bounds) '(.1 .12))
 	  (set! (x-bounds) '(.1 .2))
 	  (remove-hook! graph-hook correlate)
-	  (set! (graphing) #f)
+	  (set! (graph-lisp?) #f)
 	  (map-chan (map-silence .01 #f))
 	  (let ((maxval (+ (maxamp) .01)))
 	    (if (not (every-sample? (lambda (y) (< y maxval)))) (snd-display (format #f ";every-sample: ~A?" maxval))))
 	  (map-chan (echo .5 .75) 0 60000)
-	  (reset-hook! fft-hook)
+	  (reset-hook! transform-hook)
 	  (reset-hook! lisp-graph-hook)
 	  (add-hook! lisp-graph-hook 
 		     (lambda (snd chn) 
@@ -6740,25 +6757,25 @@
 		    (list 'expand-control-length #t 0.1 set-expand-control-length 0.25)
 		    (list 'expand-control-ramp #t 0.1 set-expand-control-ramp 0.4)
 		    (list 'expand-control? #t #f set-expand-control? #t)
-		    (list 'fft-beta #f 0.0  set-fft-beta 1.0)
+		    (list 'fft-window-beta #f 0.0  set-fft-window-beta 1.0)
 		    (list 'fft-log-frequency #f #f set-fft-log-frequency #t)
 		    (list 'fft-log-magnitude #f #f set-fft-log-magnitude #t)
-		    (list 'fft-size #f 16 set-fft-size 4096)
-		    (list 'fft-style #f 0 set-fft-style 2)
+		    (list 'transform-size #f 16 set-transform-size 4096)
+		    (list 'transform-graph-type #f 0 set-transform-graph-type 2)
 		    (list 'fft-window #f 0 set-fft-window dolph-chebyshev-window)
-		    (list 'ffting #t #f set-ffting #t)
+		    (list 'graph-transform? #t #f set-graph-transform? #t)
 		    (list 'filter-control-in-dB #t #f set-filter-control-in-dB #t)
 		    (list 'filter-control-order #t 2 set-filter-control-order 400)
 		    (list 'filter-control? #t #f set-filter-control? #t)
 		    (list 'graph-cursor #f 0 set-graph-cursor 35)
 		    (list 'graph-style #f 0 set-graph-style 4)
 		    (list 'graphs-horizontal #f #f set-graphs-horizontal #t)
-		    (list 'max-fft-peaks #f 1 set-max-fft-peaks 100)
+		    (list 'max-transform-peaks #f 1 set-max-transform-peaks 100)
 		    (list 'max-regions #f 1 set-max-regions 32)
 		    (list 'min-dB #f -120.0 set-min-dB -30.0)
 		    (list 'movies #f #f set-movies #t)
 		    (list 'selection-creates-region #f #f set-selection-creates-region #t)
-		    (list 'normalize-fft #f dont-normalize set-normalize-fft normalize-globally)
+		    (list 'transform-normalization #f dont-normalize-transform set-transform-normalization normalize-transform-globally)
 		    (list 'previous-files-sort #f 0 set-previous-files-sort 3)
 		    (list 'print-length #f 2 set-print-length 32)
 		    (list 'reverb-control-decay #f 0.0 set-reverb-control-decay 2.0)
@@ -6768,7 +6785,7 @@
 		    (list 'reverb-control-scale #t 0.0 set-reverb-control-scale 0.2)
 		    (list 'reverb-control? #t #f set-reverb-control? #t)
 		    (list 'show-axes #f 0 set-show-axes 2)
-		    (list 'show-fft-peaks #f #f set-show-fft-peaks #t)
+		    (list 'show-transform-peaks #f #f set-show-transform-peaks #t)
 		    (list 'show-indices #f #f set-show-indices #t)
 		    (list 'show-backtrace #f #f set-show-backtrace #t)
 		    (list 'show-marks #f #f set-show-marks #t)
@@ -6793,7 +6810,7 @@
 		    (list 'use-sinc-interp #f #f set-use-sinc-interp #t)
 		    (list 'verbose-cursor #f #f set-verbose-cursor #t)
 		    (list 'wavelet-type #f 0 set-wavelet-type 10)
-		    (list 'waving #t #f set-waving #t)
+		    (list 'graph-time? #t #f set-graph-time? #t)
 		    (list 'x-axis-style #f 0 set-x-axis-style 2)
 		    (list 'zero-pad #f 0 set-zero-pad 2)
 		    (list 'zoom-focus-style #f 0 set-zoom-focus-style 3))))
@@ -6801,8 +6818,8 @@
 	  (save-options "hiho.scm")
 	  (if (not (= (transform-type) fourier-transform))
 	      (begin
-		(set! (ffting #t #t) #f)
-		(set! (fft-size) (min (fft-size) 128))))
+		(set! (graph-transform? #t #t) #f)
+		(set! (transform-size) (min (transform-size) 128))))
 
 	  )))
       (if open-files (map close-sound open-files))
@@ -6841,25 +6858,25 @@
 	  ((= i digits))
 	(key (char->integer (string-ref ns i)) 0 id)))))
 
-(define funcs (list wavo wavo-hop wavo-trace max-fft-peaks show-fft-peaks zero-pad fft-style fft-window 
-		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB wavelet-type fft-size fft-beta transform-type 
-		    normalize-fft show-mix-waveforms graph-style dot-size show-axes show-y-zero show-marks
+(define funcs (list wavo wavo-hop wavo-trace max-transform-peaks show-transform-peaks zero-pad transform-graph-type fft-window 
+		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB wavelet-type transform-size fft-window-beta transform-type 
+		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-marks
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		    spectro-hop spectro-cutoff spectro-start graphs-horizontal
 		    ))
-(define set-funcs (list set-wavo set-wavo-hop set-wavo-trace set-max-fft-peaks set-show-fft-peaks set-zero-pad set-fft-style set-fft-window 
-		    set-verbose-cursor set-fft-log-frequency set-fft-log-magnitude set-min-dB set-wavelet-type set-fft-size set-fft-beta set-transform-type 
-		    set-normalize-fft set-show-mix-waveforms set-graph-style set-dot-size set-show-axes set-show-y-zero set-show-marks
+(define set-funcs (list set-wavo set-wavo-hop set-wavo-trace set-max-transform-peaks set-show-transform-peaks set-zero-pad set-transform-graph-type set-fft-window 
+		    set-verbose-cursor set-fft-log-frequency set-fft-log-magnitude set-min-dB set-wavelet-type set-transform-size set-fft-window-beta set-transform-type 
+		    set-transform-normalization set-show-mix-waveforms set-graph-style set-dot-size set-show-axes set-show-y-zero set-show-marks
 		    set-spectro-x-angle set-spectro-x-scale set-spectro-y-angle set-spectro-y-scale set-spectro-z-angle set-spectro-z-scale
 		    set-spectro-hop set-spectro-cutoff set-spectro-start set-graphs-horizontal
 		    ))
-(define func-names (list 'wavo 'wavo-hop 'wavo-trace 'max-fft-peaks 'show-fft-peaks 'zero-pad 'fft-style 'fft-window
-			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB 'wavelet-type 'fft-size 'fft-beta 'transform-type
-			 'normalize-fft 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-marks
+(define func-names (list 'wavo 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
+			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB 'wavelet-type 'transform-size 'fft-window-beta 'transform-type
+			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-marks
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
 			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal
 			 ))
-(define new-values (list #t 12 512 3 #t 32 sonogram cauchy-window
+(define new-values (list #t 12 512 3 #t 32 graph-transform-as-sonogram cauchy-window
 			 #t #t #t -120.0 3 32 .5 autocorrelation
 			 0 #t graph-lollipops 8 show-no-axes #t #f
 			 32.0 .5 32.0 .5 32.0 .5
@@ -7013,13 +7030,13 @@
 	(if (not (= (locate-zero .001) 1050)) (snd-display (format #f ";locate-zero: ~A?" (locate-zero .001))))
 	(add-hook! graph-hook auto-dot)
 	(add-hook! graph-hook superimpose-ffts)
-	(set! (ffting obi 0) #t)
+	(set! (graph-transform? obi 0) #t)
 	(update-graphs)
 	(set! s2i (open-sound (car (match-sound-files-1 (lambda (file) (= (mus-sound-chans file) 2))))))
 	(update-graphs)
 	(remove-hook! graph-hook auto-dot)
 	(remove-hook! graph-hook superimpose-ffts)
-	(set! (ffting obi 0) #f)
+	(set! (graph-transform? obi 0) #f)
 	(select-sound obi)
 	(let ((m1 (add-mark 100 obi 0)))
 	  (first-mark-in-window-at-left)
@@ -7675,7 +7692,7 @@
 	  (set! (x-bounds) (list 0 (* i .3))))
 	(revert-sound ind)
 	(draw-bass-clef 100 100 100 0 ind 0)
-	(update-graph ind 0)
+	(update-time-graph ind 0)
 	(draw-fermata 200 100 60 0 ind 0)
 	(draw-line 100 100 200 200 ind 0)
 	(draw-dot 300 300 10 ind 0)
@@ -7684,7 +7701,7 @@
 	(-> 100 50 10 ind 0)
 	(fill-rectangle 20 20 100 100 ind 0)
 	(make-bezier 0 0 20 20 40 30 60 10 10)
-	(update-graph ind 0)
+	(update-time-graph ind 0)
 	(reset-hook! after-graph-hook)
 	(reset-hook! lisp-graph-hook)
 	(let* ((ind1 (open-sound "2.snd"))
@@ -7840,22 +7857,22 @@ EDITS: 3
 	       dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line draw-lines draw-string edit-header-dialog edit-fragment edit-position
 	       edit-tree edits env-selection env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
 	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin expand-control
-	       expand-control-hop expand-control-length expand-control-ramp expand-control? fft fft-beta fft-log-frequency 
-	       fft-log-magnitude fft-size fft-style fft-window ffting
+	       expand-control-hop expand-control-length expand-control-ramp expand-control? fft fft-window-beta fft-log-frequency 
+	       fft-log-magnitude transform-size transform-graph-type fft-window graph-transform?
 	       fht file-dialog file-name fill-polygon fill-rectangle filter-sound filter-control-in-dB 
 	       filter-control-env enved-filter-order filter-env-in-hz filter-control-order
 	       filter-selection filter-waveform-color filter-control? find find-mark find-sound finish-progress-report foreground-color
 	       forward-graph forward-mark forward-mix forward-sample frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
-	       graph-color graph-cursor graph-data graph->ps graph-style graphing graphs-horizontal header-type help-dialog help-text-font
+	       graph-color graph-cursor graph-data graph->ps graph-style graph-lisp? graphs-horizontal header-type help-dialog help-text-font
 	       highlight-color in insert-region insert-sample insert-samples insert-samples-with-origin insert-selection insert-silence
 	       insert-sound just-sounds key key-binding left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
 	       load-colormap load-font loop-samples main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
 	       make-region-sample-reader make-sample-reader make-track-sample-reader 
 	       map-chan mark-color mark-name mark-sample mark-sync mark-sync-max mark-home marks mark?
-	       max-fft-peaks max-regions max-sounds maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
+	       max-transform-peaks max-regions max-sounds maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
 	       mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix? mix-panel mix-position mix-region mix-sample-reader?
 	       mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mix-tag-y mix-vct mix-waveform-height
-	       movies new-sound next-mix-sample next-sample next-track-sample normalize-fft equalize-panes
+	       movies new-sound next-mix-sample next-sample next-track-sample transform-normalization equalize-panes
 	       open-raw-sound open-sound open-sound-file orientation-dialog peak-env-info peaks play play-and-wait play-mix play-region play-selection
 	       play-track player? position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample 
 	       print-length progress-report prompt-in-minibuffer protect-region pushed-button-color read-only
@@ -7870,16 +7887,16 @@ EDITS: 3
 	       scale-by scale-selection-by scale-selection-to scale-to 
 	       scan-chan search-procedure select-all select-channel select-mix select-sound
 	       selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound selection-position selection-color
-	       selection-creates-region selection-length selection-member? selection? short-file-name show-axes show-backtrace show-controls show-fft-peaks
+	       selection-creates-region selection-length selection-member? selection? short-file-name show-axes show-backtrace show-controls show-transform-peaks
 	       show-indices show-listener show-marks show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width smooth-sound
 	       smooth-selection snd-apropos snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory sound-loop-info sound-widgets
 	       soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale
 	       spectro-z-angle spectro-z-scale speed-control speed-control-style speed-control-tones 
 	       squelch-update srate src-sound src-selection start-playing start-progress-report
 	       stop-player stop-playing swap-channels syncd-marks sync temp-dir text-focus-color tiny-font track-sample-reader? transform-dialog transform-sample
-	       transform-samples transform-samples->vct transform-size transform-type trap-segfault unbind-key undo update-fft update-graph
+	       transform-samples transform-samples->vct transform-graph-data-size transform-type trap-segfault unbind-key undo update-transform update-time-graph
 	       update-lisp-graph update-sound update-usage-stats use-sinc-interp vct->samples vct->sound-file verbose-cursor view-sound
-	       vu-font vu-font-size vu-size wavelet-type waving wavo wavo-hop wavo-trace window-height window-width window-x window-y with-mix-tags
+	       vu-font vu-font-size vu-size wavelet-type graph-time? wavo wavo-hop wavo-trace window-height window-width window-x window-y with-mix-tags
 	       write-peak-env-info-file x-axis-style x-bounds x-position-slider x->position x-zoom-slider y-bounds y-position-slider y->position
 	       y-zoom-slider zero-pad zoom-color zoom-focus-style mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
 	       mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier
@@ -7917,24 +7934,24 @@ EDITS: 3
 		   default-output-type dot-size enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
 		   enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin 
 		   expand-control expand-control-hop expand-control-length
-		   expand-control-ramp expand-control? fft-beta fft-log-frequency fft-log-magnitude 
-		   fft-size fft-style fft-window ffting filter-control-in-dB filter-control-env
+		   expand-control-ramp expand-control? fft-window-beta fft-log-frequency fft-log-magnitude 
+		   transform-size transform-graph-type fft-window graph-transform? filter-control-in-dB filter-control-env
 		   enved-filter-order filter-env-in-hz filter-control-order filter-waveform-color filter-control? foreground-color graph-color graph-cursor
-		   graph-style graphing graphs-horizontal help-text-font highlight-color just-sounds left-sample listener-color listener-font
-		   listener-prompt listener-text-color mark-color mark-name mark-sample mark-sync max-fft-peaks max-regions menu-sensitive min-dB mix-amp
+		   graph-style graph-lisp? graphs-horizontal help-text-font highlight-color just-sounds left-sample listener-color listener-font
+		   listener-prompt listener-text-color mark-color mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
 		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix-position mix-speed mix-tag-height
-		   mix-tag-width mix-tag-y mix-waveform-height movies normalize-fft equalize-panes position-color 
+		   mix-tag-width mix-tag-y mix-waveform-height movies transform-normalization equalize-panes position-color 
 		   previous-files-sort print-length pushed-button-color recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain
 		   recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate
 		   recorder-trigger reverb-control-decay reverb-control-feedback reverb-control-procedures 
 		   reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? sash-color
 		   save-dir save-state-file search-procedure selected-data-color selected-graph-color selected-mix-color
-		   selection-color selection-creates-region show-axes show-backtrace show-controls show-fft-peaks show-indices show-marks
+		   selection-color selection-creates-region show-axes show-backtrace show-controls show-transform-peaks show-indices show-marks
 		   show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start
 		   spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale 
 		   speed-control speed-control-style speed-control-tones
 		   squelch-update sync temp-dir text-focus-color tiny-font transform-type trap-segfault use-sinc-interp verbose-cursor
-		   vu-font vu-font-size vu-size wavelet-type waving wavo-hop wavo-trace with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
+		   vu-font vu-font-size vu-size wavelet-type graph-time? wavo-hop wavo-trace with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
 
 (if (or full-test (= snd-test 20) (and keep-going (<= snd-test 20)))
     (begin
@@ -8236,15 +8253,15 @@ EDITS: 3
 			(set! ctr (+ ctr 1))))
 		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor cursor-follows-play cursor-position 
 			  cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines edit-fragment edit-position edit-tree edits 
-			  fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting find forward-graph forward-mark forward-mix 
-			  forward-sample graph graph-style graphing insert-region insert-sound left-sample make-graph-data 
-			  map-chan max-fft-peaks maxamp min-dB mix-region 
-			  normalize-fft peak-env-info peaks play play-and-wait position->x position->y reverse-sound revert-sound right-sample sample 
+			  fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window graph-transform? find forward-graph forward-mark forward-mix 
+			  forward-sample graph graph-style graph-lisp? insert-region insert-sound left-sample make-graph-data 
+			  map-chan max-transform-peaks maxamp min-dB mix-region 
+			  transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound revert-sound right-sample sample 
 			  samples->vct samples->sound-data save-sound save-sound-as 
-			  scan-chan select-channel show-axes show-fft-peaks show-marks show-mix-waveforms 
+			  scan-chan select-channel show-axes show-transform-peaks show-marks show-mix-waveforms 
 			  show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-size 
-			  transform-type update-fft update-graph update-lisp-graph update-sound wavelet-type waving wavo wavo-hop wavo-trace x-bounds 
+			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-graph-data-size 
+			  transform-type update-transform update-time-graph update-lisp-graph update-sound wavelet-type graph-time? wavo wavo-hop wavo-trace x-bounds 
 			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad))
 	  (gc))
 
@@ -8260,15 +8277,15 @@ EDITS: 3
 			(set! ctr (+ ctr 1))))
 		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor cursor-position 
 			  cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines edit-fragment edit-position edit-tree edits 
-			  fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting find forward-graph forward-mark forward-mix 
-			  forward-sample graph graph-style graphing insert-region insert-sound left-sample make-graph-data
-			  map-chan max-fft-peaks maxamp min-dB mix-region 
-			  normalize-fft peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample 
+			  fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window graph-transform? find forward-graph forward-mark forward-mix 
+			  forward-sample graph graph-style graph-lisp? insert-region insert-sound left-sample make-graph-data
+			  map-chan max-transform-peaks maxamp min-dB mix-region 
+			  transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample 
 			  samples->vct samples->sound-data save-sound-as 
-			  scan-chan show-axes show-fft-peaks show-marks show-mix-waveforms 
+			  scan-chan show-axes show-transform-peaks show-marks show-mix-waveforms 
 			  show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-size 
-			  transform-type update-fft update-graph update-lisp-graph wavelet-type waving wavo wavo-hop wavo-trace x-bounds 
+			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-graph-data-size 
+			  transform-type update-transform update-time-graph update-lisp-graph wavelet-type graph-time? wavo wavo-hop wavo-trace x-bounds 
 			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad)))
 
         (let ((ctr 0))
@@ -8282,14 +8299,14 @@ EDITS: 3
 			    (snd-display (format #f ";~D: chn procs ~A: ~A" ctr n tag)))
 			(set! ctr (+ ctr 1))))
 		    (list backward-graph backward-sample channel-sync channel-widgets cursor cursor-follows-play cursor-position cursor-size cursor-style 
-			  delete-sample display-edits dot-size edit-fragment edit-position edit-tree edits env-sound fft-beta fft-log-frequency fft-log-magnitude 
-			  fft-size fft-style fft-window ffting filter-sound forward-graph forward-mark forward-mix forward-sample graph-data graph-style 
-			  graphing insert-region left-sample make-graph-data max-fft-peaks maxamp min-dB normalize-fft peak-env-info play 
+			  delete-sample display-edits dot-size edit-fragment edit-position edit-tree edits env-sound fft-window-beta fft-log-frequency fft-log-magnitude 
+			  transform-size transform-graph-type fft-window graph-transform? filter-sound forward-graph forward-mark forward-mix forward-sample graph-data graph-style 
+			  graph-lisp? insert-region left-sample make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info play 
 			  play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample samples->vct samples->sound-data 
-			  save-sound scale-by scale-to show-axes show-fft-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop 
+			  save-sound scale-by scale-to show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop 
 			  spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update 
-			  src-sound transform-sample transform-samples transform-samples->vct transform-size transform-type undo update-fft update-graph 
-			  update-lisp-graph update-sound wavelet-type waving wavo wavo-hop wavo-trace x-bounds x-position-slider x->position x-zoom-slider 
+			  src-sound transform-sample transform-samples transform-samples->vct transform-graph-data-size transform-type undo update-transform update-time-graph 
+			  update-lisp-graph update-sound wavelet-type graph-time? wavo wavo-hop wavo-trace x-bounds x-position-slider x->position x-zoom-slider 
 			  y-bounds y-position-slider y->position y-zoom-slider zero-pad )))
 
         (let ((ctr 0))
@@ -8332,12 +8349,12 @@ EDITS: 3
 			    (snd-display (format #f ";~D: chn procs ~A: ~A" ctr n tag)))
 			(set! ctr (+ ctr 1))))
 		    (list channel-sync channel-widgets cursor cursor-position cursor-size cursor-style display-edits dot-size 
-			  edit-position edit-tree edits fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window 
-			  ffting graph-style graphing left-sample make-graph-data max-fft-peaks maxamp min-dB normalize-fft
-			  peak-env-info reverse-sound right-sample show-axes show-fft-peaks show-marks show-mix-waveforms show-y-zero 
+			  edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window 
+			  graph-transform? graph-style graph-lisp? left-sample make-graph-data max-transform-peaks maxamp min-dB transform-normalization
+			  peak-env-info reverse-sound right-sample show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero 
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-size transform-type update-fft 
-			  update-graph update-lisp-graph wavelet-type waving wavo wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
+			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-graph-data-size transform-type update-transform 
+			  update-time-graph update-lisp-graph wavelet-type graph-time? wavo wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
 			  y-bounds y-position-slider y-zoom-slider zero-pad ))
 	  (close-sound index))
 
@@ -8354,12 +8371,12 @@ EDITS: 3
 			(set! ctr (+ ctr 1))))
 		    (list channel-sync channel-widgets cursor cursor-position
 			  display-edits dot-size 
-			  edit-tree edits fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window 
-			  ffting graph-style graphing left-sample make-graph-data max-fft-peaks maxamp min-dB normalize-fft
-			  peak-env-info reverse-sound right-sample show-axes show-fft-peaks show-marks show-mix-waveforms show-y-zero 
+			  edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window 
+			  graph-transform? graph-style graph-lisp? left-sample make-graph-data max-transform-peaks maxamp min-dB transform-normalization
+			  peak-env-info reverse-sound right-sample show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero 
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
-			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-size transform-type update-fft 
-			  update-graph update-lisp-graph wavelet-type waving wavo wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
+			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-graph-data-size transform-type update-transform 
+			  update-time-graph update-lisp-graph wavelet-type graph-time? wavo wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
 			  y-bounds y-position-slider y-zoom-slider zero-pad
 			  ))
 	  (gc)
@@ -8524,7 +8541,7 @@ EDITS: 3
 			  (snd-display (format #f ";hooks ~A: ~A" hook-name tag)))))
 		  (list (list after-graph-hook 'after-graph-hook)
 			(list lisp-graph-hook 'lisp-graph-hook)
-			(list before-fft-hook 'before-fft-hook)
+			(list before-transform-hook 'before-transform-hook)
 			(list mix-position-changed-hook 'mix-position-changed-hook)
 			(list stop-playing-channel-hook 'stop-playing-channel-hook)
 			(list save-hook 'save-hook)
@@ -8557,7 +8574,7 @@ EDITS: 3
 			(list select-sound-hook 'select-sound-hook)
 			(list select-mix-hook 'select-mix-hook)
 			(list during-open-hook 'during-open-hook)
-			(list fft-hook 'fft-hook)
+			(list transform-hook 'transform-hook)
 			(list mouse-enter-label-hook 'mouse-enter-label-hook)
 			(list mouse-leave-label-hook 'mouse-leave-label-hook)
 			(list initial-graph-hook 'initial-graph-hook)
@@ -9433,8 +9450,8 @@ EDITS: 3
 (reset-hook! graph-hook)
 (reset-hook! name-click-hook)
 (reset-hook! menu-hook)
-(reset-hook! before-fft-hook)
-(reset-hook! fft-hook)
+(reset-hook! before-transform-hook)
+(reset-hook! transform-hook)
 
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)

@@ -185,8 +185,8 @@ void g_init_gxmenu(SCM local_doc);
 
 /* -------- snd-gfft.c -------- */
 
-void set_fft_beta(snd_state *ss, Float val);
-void set_fft_size(snd_state *ss, int val);
+void set_fft_window_beta(snd_state *ss, Float val);
+void set_transform_size(snd_state *ss, int val);
 void set_fft_window(snd_state *ss, int val);
 void set_transform_type(snd_state *ss, int val);
 void set_wavelet_type(snd_state *ss, int val);
@@ -197,12 +197,12 @@ char *transform_type_name(int choice);
 int add_transform_to_list(char *name);
 int max_transform_type(void);
 
-void set_show_fft_peaks(snd_state *ss, int val);
+void set_show_transform_peaks(snd_state *ss, int val);
 void set_fft_log_magnitude(snd_state *ss, int val);
 void set_fft_log_frequency(snd_state *ss, int val);
-void set_normalize_fft(snd_state *ss, int val);
+void set_transform_normalization(snd_state *ss, int val);
 void set_show_selection_transform(snd_state *ss, int show);
-void set_fft_style(snd_state *ss, int val);
+void set_transform_graph_type(snd_state *ss, int val);
 
 
 
@@ -225,6 +225,8 @@ void set_region_protect(int reg, int protect);
 void View_Region_Callback(GtkWidget *w, gpointer clientData);
 void allocate_region_rows(snd_state *ss, int n);
 int region_dialog_is_active(void);
+void reflect_regions_in_region_browser(void);
+void reflect_no_regions_in_region_browser(void);
 
 void g_init_gxregion(SCM local_doc);
 

@@ -665,7 +665,7 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
 
 #define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller) \
   get_ap(get_cp(Snd, Chn, Caller), \
-         TO_C_INT_OR_ELSE(Ap, WAVE_AXIS_INFO), \
+         TO_C_INT_OR_ELSE(Ap, TIME_AXIS_INFO), \
          Caller)
 
 

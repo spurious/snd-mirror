@@ -117,12 +117,14 @@ int g_remove_from_menu(int which_menu, char *label) {return(0);}
 void dismiss_all_dialogs(snd_state *ss) {}
 int fire_up_transform_dialog(snd_state *ss) {return(0);}
 int transform_dialog_is_active(void) {return(0);}
-void set_show_fft_peaks(snd_state *ss, int val) {}
+void set_show_transform_peaks(snd_state *ss, int val) {}
 void set_fft_log_magnitude(snd_state *ss, int val) {}
 void set_fft_log_frequency(snd_state *ss, int val) {}
-void set_normalize_fft(snd_state *ss, int val) {}
+void set_transform_normalization(snd_state *ss, int val) {}
 void set_show_selection_transform(snd_state *ss, int show) {}
 void intern_atoms (snd_state *ss) {}
+void reflect_regions_in_region_browser(void) {}
+void reflect_no_regions_in_region_browser(void) {}
 void update_region_browser(snd_state *ss, int grf_too) {}
 int region_browser_is_active(void) {return(0);}
 void delete_region_and_update_browser(snd_state *ss, int n) {}
@@ -307,12 +309,12 @@ int make_mix_panel(snd_state *ss) {return(0);}
 int mix_play_stopped(void) {return(0);}
 void reflect_mix_play_stop(void) {}
 
-void set_fft_beta(snd_state *ss, Float val) {in_set_fft_beta(ss, val);}
-void set_fft_size(snd_state *ss, int val) {in_set_fft_size(ss, val);}
+void set_fft_window_beta(snd_state *ss, Float val) {in_set_fft_window_beta(ss, val);}
+void set_transform_size(snd_state *ss, int val) {in_set_transform_size(ss, val);}
 void set_fft_window(snd_state *ss, int val) {in_set_fft_window(ss, val);}
 void set_transform_type(snd_state *ss, int val) {in_set_transform_type(ss, val);}
 void set_wavelet_type(snd_state *ss, int val) {in_set_wavelet_type(ss, val);}
-void set_fft_style(snd_state *ss, int val) {in_set_fft_style(ss, val);}
+void set_transform_graph_type(snd_state *ss, int val) {in_set_transform_graph_type(ss, val);}
 void set_snd_amp(snd_info *sp, Float val) {sp->amp_control = val;}
 void set_snd_expand(snd_info *sp, Float val) {sp->expand_control = val;}
 void set_snd_contrast(snd_info *sp, Float val) {sp->contrast_control = val;}
@@ -436,7 +438,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_just_sounds " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_html_dir " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_time_graph " 0)\
-               (define " S_fft_graph " 1)\
+               (define " S_transform_graph " 1)\
                (define " S_lisp_graph " 2)\
                (define " S_copy_context " 0)\
                (define " S_cursor_context " 3)\

@@ -166,6 +166,7 @@ static void File_Open_OK_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *) info;
   char *filename;
+  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
   XtUnmanageChild(w);
   XmStringGetLtoR (cbs->value, XmFONTLIST_DEFAULT_TAG, &filename);
   /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
@@ -348,6 +349,7 @@ static void force_directory_reread(void)
 static void just_sounds_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   if (cb->set)
     XtVaSetValues(open_dialog, XmNfileSearchProc, sound_file_search, NULL);
   else XtVaSetValues(open_dialog, XmNfileSearchProc, default_search_proc, NULL);
@@ -468,6 +470,7 @@ static void file_data_Type_Callback(Widget w, XtPointer context, XtPointer info)
   int pos;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
+  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNuserData, &fd, NULL);
   pos = cbs->item_position-1;
   if (header_type_from_position(pos) != fd->current_type)
@@ -484,6 +487,7 @@ static void file_data_Format_Callback(Widget w, XtPointer context, XtPointer inf
 {
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
+  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNuserData, &fd, NULL);
   fd->current_format = data_format_from_position(fd->current_type, cbs->item_position - 1);
 }
@@ -1318,6 +1322,7 @@ static void View_CurFiles_Play_Callback(Widget w, XtPointer context, XtPointer i
 {
   regrow *r = (regrow *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   view_curfiles_play(r->ss, r->pos, cb->set);
 }
 
@@ -1370,6 +1375,7 @@ static void View_PrevFiles_Play_Callback(Widget w, XtPointer context, XtPointer 
   /* open and play -- close at end or when button off toggled */
   regrow *r = (regrow *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   if (view_prevfiles_play(r->ss, r->pos, cb->set))
     XmToggleButtonSetState(w, FALSE, FALSE);
 }
@@ -1698,6 +1704,7 @@ static void raw_data_browse_Callback(Widget w, XtPointer context, XtPointer info
 {
   int sr, oc, fr;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   mus_header_raw_defaults(&sr, &oc, &fr);
   fr = cbs->item_position;
   mus_header_set_raw_defaults(sr, oc, fr);

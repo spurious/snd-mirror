@@ -60,7 +60,7 @@
 	       (scale-to scaled-to snd-output)
 	       (if scaled-by
 		   (scale-by scaled-by snd-output)))
-	   (update-graph snd-output))))
+	   (update-time-graph snd-output))))
 
      (lambda () 
        (set! (with-mix-tags) old-tags)

@@ -297,7 +297,7 @@
 
 
         (set! (squelch-update snd chn) #f)
-	(update-graph snd chn)
+	(update-time-graph snd chn)
 	;; and return to original srate
 	(unsample-sound snd chn)
 	))))

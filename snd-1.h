@@ -149,9 +149,9 @@ typedef struct {
 typedef struct chan__info {
   int chan;                /* which chan are we */
   int *samples;            /* current length */
-  int ffting;              /* f button state */
-  int waving;              /* w button state */
-  int lisp_graphing;       /* lisp function display state */
+  int graph_transform_p;   /* f button state */
+  int graph_time_p;        /* w button state */
+  int graph_lisp_p;        /* is lisp graph active */
   lisp_grf *lisp_info;
   int cursor_on;           /* channel's cursor */
   int cursor_visible;      /* for XOR decisions */
@@ -189,11 +189,11 @@ typedef struct chan__info {
   int squelch_update, waiting_to_make_graph;
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
-  Float lin_dB, min_dB, fft_beta;
-  int show_y_zero, show_marks, wavo, wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, verbose_cursor, max_fft_peaks;
-  int show_fft_peaks, show_axes, graph_style, fft_log_frequency, fft_log_magnitude, fft_size, fft_style, fft_window;
+  Float lin_dB, min_dB, fft_window_beta;
+  int show_y_zero, show_marks, wavo, wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, verbose_cursor, max_transform_peaks;
+  int show_transform_peaks, show_axes, graph_style, fft_log_frequency, fft_log_magnitude, transform_size, transform_graph_type, fft_window, time_graph_type;
   Latus dot_size;
-  int normalize_fft, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
+  int transform_normalization, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
   void *mix_md;
   SCM edit_hook, undo_hook, cursor_proc;
   int selection_visible, sync, active;
@@ -230,7 +230,7 @@ typedef struct snd__info {
   SCM search_proc;
   SCM prompt_callback;
   char *search_expr;
-  int searching, marking, filing, finding_mark, amping, reging, printing, loading, lisp_graphing, macroing, prompting;
+  int searching, marking, filing, finding_mark, amping, reging, printing, loading, macroing, prompting;
   int minibuffer_on, minibuffer_temp;
   int sx_scroll_max;
   int read_only;
@@ -277,7 +277,7 @@ typedef struct snd__state {
   int result_printout, listening;
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
-  int fft_hook_active, graph_hook_active;
+  int transform_hook_active, graph_hook_active;
 
   /* user-visible global variables
    *   all of these are accessed through macros in snd-0.h 
@@ -290,7 +290,7 @@ typedef struct snd__state {
    *              several styles of tests in snd-test.scm
    *              brought out to user via Guile
    */
-  int Show_Fft_Peaks, Show_Y_Zero, Show_Marks, Fft_Log_Frequency, Fft_Log_Magnitude, Channel_Style, Sound_Style, Show_Axes;
+  int Show_Transform_Peaks, Show_Y_Zero, Show_Marks, Fft_Log_Frequency, Fft_Log_Magnitude, Channel_Style, Sound_Style, Show_Axes;
   char *Eps_File, *Temp_Dir, *Audio_State_File, *Save_Dir;
   char *Listener_Font, *Help_Text_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Button_Font, *Tiny_Font;
   int Verbose_Cursor, Show_Usage_Stats, Trap_Segfault;
@@ -301,12 +301,12 @@ typedef struct snd__state {
   int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;
   int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type;
   Latus Dot_Size;
-  int Fft_Size, Fft_Window, Fft_Style, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo, Wavo_Trace;
-  Float Fft_Beta, Reverb_Control_Decay;
+  int Transform_Size, Fft_Window, Transform_Graph_Type, Time_Graph_Type, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo, Wavo_Trace;
+  Float Fft_Window_Beta, Reverb_Control_Decay;
   Float Color_Scale, Color_Cutoff;
-  int Color_Inverted, Speed_Control_Style, Movies, Normalize_Fft, Show_Mix_Waveforms, Mix_Waveform_Height;
+  int Color_Inverted, Speed_Control_Style, Movies, Transform_Normalization, Show_Mix_Waveforms, Mix_Waveform_Height;
   int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Graph_Style;
-  int Auto_Resize, Auto_Update, Max_Regions, Max_Fft_Peaks;
+  int Auto_Resize, Auto_Update, Max_Regions, Max_Transform_Peaks;
   int Audio_Output_Device, Audio_Input_Device, Show_Backtrace;
   int Print_Length, Dac_Size, Dac_Combines_Channels, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
@@ -705,7 +705,7 @@ Float ed_selection_maxamp(chan_info *cp);
 /* -------- snd-fft.c -------- */
 
 int make_fft_window_1(Float *window, int size, int type, Float beta);
-int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize, int srate, Float samps_per_pixel, Float fft_scale);
+int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize, int srate, Float samps_per_pixel, Float fft_scale);
 int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size);
 fft_info *free_fft_info(fft_info *fp);
 void free_sonogram_fft_state(void *ptr);
@@ -951,7 +951,7 @@ void set_dot_size(snd_state *ss, int val);
 chan_info *virtual_selected_channel(chan_info *cp);
 
 void map_chans_field(snd_state *ss, int field, Float val);
-void in_set_fft_style(snd_state *ss, int val);
+void in_set_transform_graph_type(snd_state *ss, int val);
 void in_set_fft_window(snd_state *ss, int val);
 void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);

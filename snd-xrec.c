@@ -1004,6 +1004,7 @@ static void Record_Amp_Click_Callback(Widget w, XtPointer context, XtPointer inf
   AMP *ap = (AMP *)context;
   XButtonEvent *ev;
   int val;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   ev = (XButtonEvent *)(cb->event);
 #if DEBUGGING
   if ((int)ev <= 0) return;
@@ -1017,6 +1018,7 @@ static void Record_Amp_Click_Callback(Widget w, XtPointer context, XtPointer inf
 
 static void Record_Amp_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   record_amp_changed((AMP *)context, 
 		     ((XmScrollBarCallbackStruct *)info)->value);
 }
@@ -1025,6 +1027,7 @@ static void Record_Amp_ValueChanged_Callback(Widget w, XtPointer context, XtPoin
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   AMP *ap = (AMP *)context;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   ap->last_amp = cb->value;
   record_amp_changed(ap, cb->value);
 }
@@ -1181,12 +1184,14 @@ static void change_trigger_Callback(Widget w, XtPointer context, XtPointer info)
 {
   /* if val = 0, set record button normal label to 'Record', else 'Triggered Record' */
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   internal_trigger_set((Float)(cb->value) / 100.0);
 }
 
 static void drag_trigger_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   make_trigger_label((Float)(cb->value) / 100.0);
 }
 
@@ -1929,6 +1934,7 @@ static void volume_callback(Widget w, XtPointer context, XtPointer info)
 {
   Wdesc *wd = (Wdesc *)context;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   set_mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field, (Float)(cbs->value) / 100.0);
 }
 

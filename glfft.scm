@@ -21,7 +21,7 @@
 	       (or (= selchn -1) (= selchn chn))
 	       (not (file-exists? lock-file)))
 	  (let ((data (transform-samples->vct snd chn))
-		(sizes (cons (srate) (cons scaler (transform-size snd chn))))
+		(sizes (cons (srate) (cons scaler (transform-graph-data-size snd chn))))
 		(fd (mus-sound-open-output data-file 1 1 mus-bfloat mus-raw "")))
 	    (if (not (vct? data))
 		(snd-error (format #f "fft-data: ~A?" data)))
@@ -37,11 +37,11 @@
 
 (define start-gl
   (lambda ()
-    (add-hook! fft-hook write-fft-data)))
+    (add-hook! transform-hook write-fft-data)))
 
 (define stop-gl 
   (lambda ()
-    (remove-hook! fft-hook write-fft-data)))
+    (remove-hook! transform-hook write-fft-data)))
 
 (define cleanup-gl 
   (lambda ()

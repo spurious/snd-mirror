@@ -79,22 +79,22 @@ static char *zoom_focus_style_name(int choice)
 {
   switch (choice)
     {
-    case FOCUS_LEFT: return(S_zoom_focus_left); break;
-    case FOCUS_RIGHT: return(S_zoom_focus_right); break;
-    case FOCUS_MIDDLE: return(S_zoom_focus_middle); break;
+    case ZOOM_FOCUS_LEFT: return(S_zoom_focus_left); break;
+    case ZOOM_FOCUS_RIGHT: return(S_zoom_focus_right); break;
+    case ZOOM_FOCUS_MIDDLE: return(S_zoom_focus_middle); break;
     default: return(S_zoom_focus_active); break;
     }
 }
 
-static char *normalize_fft_name(int choice)
+static char *transform_normalization_name(int choice)
 {
   switch (choice)
     {
-    case DONT_NORMALIZE: return(S_dont_normalize); break;
-    case NORMALIZE_BY_CHANNEL:return(S_normalize_by_channel); break;
-    case NORMALIZE_BY_SOUND: return(S_normalize_by_sound); break;
-    case NORMALIZE_GLOBALLY:return(S_normalize_globally); break;
-    default:return(S_normalize_by_channel); break;
+    case DONT_NORMALIZE_TRANSFORM: return(S_dont_normalize_transform); break;
+    case NORMALIZE_TRANSFORM_BY_CHANNEL:return(S_normalize_transform_by_channel); break;
+    case NORMALIZE_TRANSFORM_BY_SOUND: return(S_normalize_transform_by_sound); break;
+    case NORMALIZE_TRANSFORM_GLOBALLY:return(S_normalize_transform_globally); break;
+    default:return(S_normalize_transform_by_channel); break;
     }
 }
 
@@ -111,13 +111,13 @@ static char *graph_style_name(int choice)
     }
 }
 
-static char *fft_style_name(int choice)
+static char *transform_graph_type_name(int choice)
 {
   switch (choice)
     {
-    case SONOGRAM: return(S_sonogram); break;
-    case SPECTROGRAM: return(S_spectrogram); break;
-    default: return(S_normal_fft); break;
+    case GRAPH_TRANSFORM_AS_SONOGRAM: return(S_graph_transform_as_sonogram); break;
+    case GRAPH_TRANSFORM_AS_SPECTROGRAM: return(S_graph_transform_as_spectrogram); break;
+    default: return(S_graph_transform_once); break;
     }
 }
 
@@ -197,18 +197,18 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   fprintf(fd, "\n;;; Snd %s (%s)\n", SND_RPM_VERSION, SND_VERSION);
 #endif
 
-  if (fft_size(ss) != DEFAULT_FFT_SIZE) pss_sd(fd, S_fft_size, fft_size(ss));
+  if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sd(fd, S_transform_size, transform_size(ss));
   if (minibuffer_history_length(ss) != DEFAULT_MINIBUFFER_HISTORY_LENGTH) pss_sd(fd, S_minibuffer_history_length, minibuffer_history_length(ss));
   if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, mus_fft_window_name(fft_window(ss)));
-  if (fft_style(ss) != DEFAULT_FFT_STYLE) pss_ss(fd, S_fft_style, fft_style_name(fft_style(ss)));
+  if (transform_graph_type(ss) != DEFAULT_TRANSFORM_GRAPH_TYPE) pss_ss(fd, S_transform_graph_type, transform_graph_type_name(transform_graph_type(ss)));
   if (x_axis_style(ss) != DEFAULT_AXIS_STYLE) pss_ss(fd, S_x_axis_style, x_axis_style_name(x_axis_style(ss)));
   if (graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_ss(fd, S_graph_style, graph_style_name(graph_style(ss)));
   if (speed_control_style(ss) != DEFAULT_SPEED_CONTROL_STYLE) pss_ss(fd, S_speed_control_style, speed_control_style_name(speed_control_style(ss)));
   if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) pss_ss(fd, S_channel_style, channel_style_name(channel_style(ss)));
   if (enved_target(ss) != DEFAULT_ENVED_TARGET) pss_ss(fd, S_enved_target, enved_target_name(enved_target(ss)));
   if (transform_type(ss) != DEFAULT_TRANSFORM_TYPE) pss_ss(fd, S_transform_type, transform_type_name(transform_type(ss)));
-  if (zoom_focus_style(ss) != FOCUS_ACTIVE) pss_ss(fd, S_zoom_focus_style, zoom_focus_style_name(zoom_focus_style(ss)));
-  if (normalize_fft(ss) != DEFAULT_NORMALIZE_FFT) pss_ss(fd, S_normalize_fft, normalize_fft_name(normalize_fft(ss)));
+  if (zoom_focus_style(ss) != ZOOM_FOCUS_ACTIVE) pss_ss(fd, S_zoom_focus_style, zoom_focus_style_name(zoom_focus_style(ss)));
+  if (transform_normalization(ss) != DEFAULT_TRANSFORM_NORMALIZATION) pss_ss(fd, S_transform_normalization, transform_normalization_name(transform_normalization(ss)));
   if (trap_segfault(ss) != DEFAULT_TRAP_SEGFAULT) pss_ss(fd, S_trap_segfault, b2s(trap_segfault(ss)));
   if (show_selection_transform(ss) != DEFAULT_SHOW_SELECTION_TRANSFORM) pss_ss(fd, S_show_selection_transform, b2s(show_selection_transform(ss)));
   if (with_mix_tags(ss) != DEFAULT_WITH_MIX_TAGS) pss_ss(fd, S_with_mix_tags, b2s(with_mix_tags(ss)));
@@ -241,13 +241,13 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (selection_creates_region(ss) != DEFAULT_SELECTION_CREATES_REGION) pss_ss(fd, S_selection_creates_region, b2s(selection_creates_region(ss)));
   if (enved_filter_order(ss) != DEFAULT_ENVED_FILTER_ORDER) pss_sd(fd, S_enved_filter_order, enved_filter_order(ss));
   if (filter_env_in_hz(ss) != DEFAULT_FILTER_ENV_IN_HZ) pss_ss(fd, S_filter_env_in_hz, b2s(filter_env_in_hz(ss)));
-  if (max_fft_peaks(ss) != DEFAULT_MAX_FFT_PEAKS) pss_sd(fd, S_max_fft_peaks, max_fft_peaks(ss));
+  if (max_transform_peaks(ss) != DEFAULT_MAX_TRANSFORM_PEAKS) pss_sd(fd, S_max_transform_peaks, max_transform_peaks(ss));
   if (max_regions(ss) != DEFAULT_MAX_REGIONS) pss_sd(fd, S_max_regions, max_regions(ss));
   if (corruption_time(ss) != DEFAULT_CORRUPTION_TIME) pss_sf(fd, S_corruption_time, corruption_time(ss));
   if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_verbose_cursor, b2s(verbose_cursor(ss)));
   if (show_indices(ss) != DEFAULT_SHOW_INDICES) pss_ss(fd, S_show_indices, b2s(show_indices(ss)));
   if (show_backtrace(ss) != DEFAULT_SHOW_BACKTRACE) pss_ss(fd, S_show_backtrace, b2s(show_backtrace(ss)));
-  if (show_fft_peaks(ss) != DEFAULT_SHOW_FFT_PEAKS) pss_ss(fd, S_show_fft_peaks, b2s(show_fft_peaks(ss)));
+  if (show_transform_peaks(ss) != DEFAULT_SHOW_TRANSFORM_PEAKS) pss_ss(fd, S_show_transform_peaks, b2s(show_transform_peaks(ss)));
   if (show_y_zero(ss) != DEFAULT_SHOW_Y_ZERO) pss_ss(fd, S_show_y_zero, b2s(show_y_zero(ss)));
   if (show_axes(ss) != DEFAULT_SHOW_AXES) pss_ss(fd, S_show_axes, show_axes2string(show_axes(ss)));
   if (show_marks(ss) != DEFAULT_SHOW_MARKS) pss_ss(fd, S_show_marks, b2s(show_marks(ss)));
@@ -277,7 +277,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (audio_input_device(ss) != DEFAULT_AUDIO_INPUT_DEVICE) pss_sd(fd, S_audio_input_device, audio_input_device(ss));
   if (audio_output_device(ss) != DEFAULT_AUDIO_OUTPUT_DEVICE) pss_sd(fd, S_audio_output_device, audio_output_device(ss));
 
-  if (fneq(fft_beta(ss), DEFAULT_FFT_BETA)) pss_sf(fd, S_fft_beta, fft_beta(ss));
+  if (fneq(fft_window_beta(ss), DEFAULT_FFT_WINDOW_BETA)) pss_sf(fd, S_fft_window_beta, fft_window_beta(ss));
   if (fneq(reverb_control_decay(ss), DEFAULT_REVERB_CONTROL_DECAY)) pss_sf(fd, S_reverb_control_decay, reverb_control_decay(ss));
   if (fneq(ss->min_dB, DEFAULT_MIN_DB)) pss_sf(fd, S_min_dB, ss->min_dB);
   if (fneq(ss->Hankel_Jn, DEFAULT_HANKEL_JN)) pss_sf(fd, S_hankel_jn, ss->Hankel_Jn);
@@ -409,9 +409,9 @@ static int save_sound_state (snd_info *sp, void *ptr)
     {
       cp = sp->chans[chan];
       ap = cp->axis;
-      if (!(cp->waving)) pcp_ss(fd, S_waving, b2s(cp->waving), chan);
-      if (cp->ffting) pcp_ss(fd, S_ffting, b2s(cp->ffting), chan);
-      if (cp->lisp_graphing) pcp_ss(fd, S_graphing, b2s(cp->lisp_graphing), chan);
+      if (!(cp->graph_time_p)) pcp_ss(fd, S_graph_time_p, b2s(cp->graph_time_p), chan);
+      if (cp->graph_transform_p) pcp_ss(fd, S_graph_transform_p, b2s(cp->graph_transform_p), chan);
+      if (cp->graph_lisp_p) pcp_ss(fd, S_graph_lisp_p, b2s(cp->graph_lisp_p), chan);
       if ((ap->x0 != 0.0) || (ap->x1 != 0.1)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);
       if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
       if (cp->cursor != 0) pcp_sd(fd, S_cursor, cp->cursor, chan);
@@ -422,8 +422,8 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (cp->wavo != DEFAULT_WAVO) pcp_ss(fd, S_wavo, b2s(cp->wavo), chan);
       if (cp->wavo_hop != DEFAULT_WAVO_HOP) pcp_sd(fd, S_wavo_hop, cp->wavo_hop, chan);
       if (cp->wavo_trace != DEFAULT_WAVO_TRACE) pcp_sd(fd, S_wavo_trace, cp->wavo_trace, chan);
-      if (cp->max_fft_peaks != DEFAULT_MAX_FFT_PEAKS) pcp_sd(fd, S_max_fft_peaks, cp->max_fft_peaks, chan);
-      if (cp->show_fft_peaks != DEFAULT_SHOW_FFT_PEAKS) pcp_ss(fd, S_show_fft_peaks, b2s(cp->show_fft_peaks), chan);
+      if (cp->max_transform_peaks != DEFAULT_MAX_TRANSFORM_PEAKS) pcp_sd(fd, S_max_transform_peaks, cp->max_transform_peaks, chan);
+      if (cp->show_transform_peaks != DEFAULT_SHOW_TRANSFORM_PEAKS) pcp_ss(fd, S_show_transform_peaks, b2s(cp->show_transform_peaks), chan);
       if (cp->fft_log_frequency != DEFAULT_FFT_LOG_FREQUENCY) pcp_ss(fd, S_fft_log_frequency, b2s(cp->fft_log_frequency), chan);
       if (cp->fft_log_magnitude != DEFAULT_FFT_LOG_MAGNITUDE) pcp_ss(fd, S_fft_log_magnitude, b2s(cp->fft_log_magnitude), chan);
       if (cp->verbose_cursor != DEFAULT_VERBOSE_CURSOR) pcp_ss(fd, S_verbose_cursor, b2s(cp->verbose_cursor), chan);
@@ -438,13 +438,13 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (fneq(cp->spectro_z_scale, DEFAULT_SPECTRO_Z_SCALE)) pcp_sf(fd, S_spectro_z_scale, cp->spectro_z_scale, chan);
       if (fneq(cp->spectro_cutoff, DEFAULT_SPECTRO_CUTOFF)) pcp_sf(fd, S_spectro_cutoff, cp->spectro_cutoff, chan);
       if (fneq(cp->spectro_start, DEFAULT_SPECTRO_START)) pcp_sf(fd, S_spectro_start, cp->spectro_start, chan);
-      if (fneq(cp->fft_beta, DEFAULT_FFT_BETA)) pcp_sf(fd, S_fft_beta, cp->fft_beta, chan);
+      if (fneq(cp->fft_window_beta, DEFAULT_FFT_WINDOW_BETA)) pcp_sf(fd, S_fft_window_beta, cp->fft_window_beta, chan);
       if (cp->spectro_hop != DEFAULT_SPECTRO_HOP) pcp_sd(fd, S_spectro_hop, cp->spectro_hop, chan);
-      if (cp->fft_size != DEFAULT_FFT_SIZE) pcp_sd(fd, S_fft_size, cp->fft_size, chan);
-      if (cp->fft_style != DEFAULT_FFT_STYLE) pcp_ss(fd, S_fft_style, fft_style_name(cp->fft_style), chan);
+      if (cp->transform_size != DEFAULT_TRANSFORM_SIZE) pcp_sd(fd, S_transform_size, cp->transform_size, chan);
+      if (cp->transform_graph_type != DEFAULT_TRANSFORM_GRAPH_TYPE) pcp_ss(fd, S_transform_graph_type, transform_graph_type_name(cp->transform_graph_type), chan);
       if (cp->fft_window != DEFAULT_FFT_WINDOW) pcp_ss(fd, S_fft_window, mus_fft_window_name(cp->fft_window), chan);
       if (cp->transform_type != DEFAULT_TRANSFORM_TYPE) pcp_ss(fd, S_transform_type, transform_type_name(cp->transform_type), chan);
-      if (cp->normalize_fft != DEFAULT_NORMALIZE_FFT) pcp_ss(fd, S_normalize_fft, normalize_fft_name(cp->normalize_fft), chan);
+      if (cp->transform_normalization != DEFAULT_TRANSFORM_NORMALIZATION) pcp_ss(fd, S_transform_normalization, transform_normalization_name(cp->transform_normalization), chan);
       if (cp->graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_graph_style, graph_style_name(cp->graph_style), chan);
       if (cp->show_mix_waveforms != DEFAULT_SHOW_MIX_WAVEFORMS) pcp_ss(fd, S_show_mix_waveforms, b2s(cp->show_mix_waveforms), chan);
       if (cp->dot_size != DEFAULT_DOT_SIZE) pcp_sd(fd, S_dot_size, cp->dot_size, chan);
@@ -690,10 +690,10 @@ void g_init_main(SCM local_doc)
   DEFINE_PROC("mem-report",   g_mem_report, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
 
   #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
-  start_hook =          MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
+  start_hook = MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
 
   #define H_exit_hook S_exit_hook " () is called upon exit. \
 If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
 
-  exit_hook =           MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
+  exit_hook = MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
 }

@@ -452,7 +452,7 @@ between these examples, other .scm files, and discussions in other documents.
 <small>
   <ul>
     <li>correlation
-    <li>set fft-size based on current time domain window size
+    <li>set transform-size based on current time domain window size
     <li>superimpose spectra of sycn'd sounds
     <li>fft-edit -- FFT based editing
     <li>fft-smoother -- fft-based smoothing
@@ -716,10 +716,10 @@ size.  The simpler one is:
 <pre>
 (add-hook! graph-hook 
 	   (lambda (snd chn y0 y1)
-	     (if (and (ffting snd chn) 
-                      (= (fft-style snd chn) normal-fft))
+	     (if (and (graph-transform? snd chn) 
+                      (= (transform-graph-type snd chn) graph-transform-once))
 		 (begin
-		   (set! (fft-size snd chn)
+		   (set! (transform-size snd chn)
 			 (expt 2 (ceiling 
 				  (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
 				     (log 2.0)))))
@@ -750,15 +750,15 @@ log10 arguments fall between 0.0 and 1.0.
 <span class=bbox><h3><A NAME="ssuserinterface">user-interface</a></h3></span>
 
 <pre>
-  <em class=def><a name="exmaingraphstyle">main-graph-style</a></em> snd chn
-  <em class=def><a name="exfftgraphstyle">fft-graph-style</a></em> snd chn
+  <em class=def><a name="exmaingraphstyle">time-graph-style</a></em> snd chn
+  <em class=def><a name="exfftgraphstyle">transform-graph-style</a></em> snd chn
   <em class=def><a name="exlispgraphstyle">lisp-graph-style</a></em> snd chn
 </pre>
 <p>These three functions provide accessors for the channel-specific
 graph styles. Each is of the form:
 </p>
 <pre>
-(define main-graph-style
+(define time-graph-style
   (make-procedure-with-setter
    (lambda (snd chn)
      (logand (graph-style snd chn) #xff))
@@ -777,15 +777,15 @@ To return to this mode after setting a specific field, set that field to -1.
 <pre>
 :<em class=typing>graph-dots</em>
 <em class=listener>1</em>
-:<em class=typing>(set! (fft-graph-style 0 0) graph-dots) ;now the time-domain uses lines, the fft dots</em>
+:<em class=typing>(set! (transform-graph-style 0 0) graph-dots) ;now the time-domain uses lines, the fft dots</em>
 <em class=listener>512</em>
-:<em class=typing>(fft-graph-style 0 0)</em>
+:<em class=typing>(transform-graph-style 0 0)</em>
 <em class=listener>1</em>
-:<em class=typing>(main-graph-style 0 0)</em>
+:<em class=typing>(time-graph-style 0 0)</em>
 <em class=listener>0</em>
-:<em class=typing>(set! (fft-graph-style 0 0) -1)</em>
+:<em class=typing>(set! (transform-graph-style 0 0) -1)</em>
 <em class=listener>0</em>
-:<em class=typing>(fft-graph-style 0 0)</em>
+:<em class=typing>(transform-graph-style 0 0)</em>
 <em class=listener>0</em>
 </pre>
 <p><i>show-draggable-graph</i>, in imitation of Snd's FFT display, implements a
@@ -1145,7 +1145,7 @@ displayed in the current window for <i>snd</i>'s channel <i>chn</i>.
 any open sounds with unsaved edits.
 <i>no-startup-file></i> is a start-hook function that causes Snd to exit immediately
 if a file is specified on Snd's invocation line, but that file doesn't exist.
-<i>fft-peak</i> is an fft-hook function that returns the peak spectral magnitude.
+<i>fft-peak</i> is a transform-hook function that returns the peak spectral magnitude.
 </p>
 <pre>
   <em class=def><A NAME="exlocatezero">locate-zero</a></em> limit
@@ -2429,8 +2429,8 @@ an upward ramp and a downward ramp, then zips them together using
 
 <span class=box><h2><A NAME="extsndvarexpl">A Note on Scheme variables in Snd</a></h2></span>
 
-<p>At first glance, Snd's use of functions for nearly all variable accesses (i.e. <code>(listener-prompt)</code>
-rather than the simpler <code>listener-prompt</code>) seems unmotivated.  For example, the following little
+<p>At first glance, Snd's use of functions for nearly all variable accesses, i.e. <code>(listener-prompt)</code>
+rather than the simpler <code>listener-prompt</code>, seems unmotivated.  For example, the following little
 program defines "counter" as a scheme variable, accessible in C:
 </p>
 <pre>

@@ -273,7 +273,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 	}
       if (state->listening)
 	{
-	  state->result_printout = MESSAGE_WITH_CARET;
+	  state->result_printout = MESSAGE_WITH_PROMPT;
 	  snd_append_command(state, name_buf);
 	}
       else 
@@ -568,10 +568,13 @@ SCM snd_eval_str(snd_state *ss, char *buf)
   return(snd_report_result(ss, snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf, TRUE));
 }
 
+static SCM print_hook;
+
 SCM snd_report_result(snd_state *ss, SCM result, char *buf, int check_mini)
 {
   snd_info *sp = NULL;
   char *str = NULL;
+  SCM res = SCM_BOOL_F;
   str = gl_print(result, "eval-str");
   if ((check_mini) && (ss->mx_sp))
     {
@@ -582,9 +585,15 @@ SCM snd_report_result(snd_state *ss, SCM result, char *buf, int check_mini)
   if (ss->listening)
     {
       if (buf) snd_append_command(ss, buf);
-      ss->result_printout = MESSAGE_WITH_CARET;
-      /* TODO: print-hook? but need before/after stuff or around-method (to distinguish user from snd text) */
-      snd_append_command(ss, str);
+      if (HOOKED(print_hook))
+	res = g_c_run_or_hook(print_hook, 
+			      SCM_LIST1(TO_SCM_STRING(str)),
+			      S_print_hook);
+      if (!(STRING_P(res)))
+	{
+	  ss->result_printout = MESSAGE_WITH_PROMPT;
+	  snd_append_command(ss, str);
+	}
     }
   if (str) free(str);
   return(result);
@@ -597,7 +606,7 @@ void snd_eval_property_str(snd_state *ss, char *buf)
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   result = snd_catch_any(eval_str_wrapper, (void *)buf, buf);
   str = gl_print(result, "eval-listener-str");
-  ss->result_printout = MESSAGE_WITH_CARET;
+  ss->result_printout = MESSAGE_WITH_PROMPT;
   snd_append_command(ss, str);
   if (str) free(str);
 }
@@ -610,7 +619,7 @@ void clear_listener(void)
   ss = get_global_state();
   if (stdin_str) FREE(stdin_str);
   stdin_str = NULL;
-  ss->result_printout = MESSAGE_WITH_CARET;
+  ss->result_printout = MESSAGE_WITH_PROMPT;
   snd_append_command(ss, "");
 }
 
@@ -718,7 +727,7 @@ static SCM g_snd_print(SCM msg)
 {
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   char *str = NULL;
-  state->result_printout = MESSAGE_WITHOUT_CARET;
+  state->result_printout = MESSAGE_WITHOUT_PROMPT;
   if (STRING_P(msg))
     str = TO_NEW_C_STRING(msg);
   else
@@ -739,6 +748,7 @@ static SCM g_snd_print(SCM msg)
 
 /* -------- global variables -------- */
 
+/* TODO: ask-before-overwrite -> overwrite-hook? */
 static SCM g_ask_before_overwrite(void) {return(TO_SCM_BOOLEAN(ask_before_overwrite(state)));}
 static SCM g_set_ask_before_overwrite(SCM val) 
 {
@@ -1290,12 +1300,12 @@ static SCM g_set_vu_size(SCM val)
 static SCM g_x_axis_style(void) {return(TO_SCM_INT(x_axis_style(state)));}
 static SCM g_set_x_axis_style(SCM val) 
 {
+  /* TODO: why isn't x-axis-style channel-local? */
   #define H_x_axis_style "(" S_x_axis_style ") -> labelling of time domain x axis (x-in-seconds)"
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_x_axis_style, "an integer"); 
   set_x_axis_style(state, mus_iclamp(X_AXIS_IN_SECONDS,
-				TO_C_INT(val),
-				X_AXIS_IN_LENGTH));
-  /* TODO: change existing xlabels */
+				     TO_C_INT(val),
+				     X_AXIS_IN_LENGTH));
   return(TO_SCM_INT(x_axis_style(state)));
 }
 
@@ -1305,9 +1315,9 @@ static SCM g_set_zoom_focus_style(SCM focus)
   #define H_zoom_focus_style "(" S_zoom_focus_style ") -> one of '(" S_zoom_focus_left " " S_zoom_focus_right " " S_zoom_focus_middle " " S_zoom_focus_active ")\n\
   decides what zooming centers on (default: " S_zoom_focus_active ")"
   ASSERT_TYPE(INTEGER_P(focus), focus, SCM_ARGn, "set-" S_zoom_focus_style, "an integer"); 
-  activate_focus_menu(state, mus_iclamp(FOCUS_LEFT,
-				    TO_C_INT(focus),
-				    FOCUS_MIDDLE));
+  activate_focus_menu(state, mus_iclamp(ZOOM_FOCUS_LEFT,
+					TO_C_INT(focus),
+					ZOOM_FOCUS_MIDDLE));
   return(TO_SCM_INT(zoom_focus_style(state)));
 }
 
@@ -1502,7 +1512,7 @@ static SCM g_set_window_y(SCM val)
 
 static SCM g_abort(void)
 {
-  #define H_abort "(" S_abort ") drops Snd into gdb, the C debugger"
+  #define H_abort "(" S_abort ") exits Snd via \"abort\", presumably to land in the debugger"
   abort();
   return(SCM_BOOL_F);
 }
@@ -1878,30 +1888,30 @@ char *string2string(char *str)
 }
 #endif
 
-static SCM g_update_graph(SCM snd, SCM chn) 
+static SCM g_update_time_graph(SCM snd, SCM chn) 
 {
-  #define H_update_graph "(" S_update_graph " &optional snd chn) redraws snd channel chn's graphs"
+  #define H_update_time_graph "(" S_update_time_graph " &optional snd chn) redraws snd channel chn's graphs"
   chan_info *cp;
-  SND_ASSERT_CHAN(S_update_graph, snd, chn, 1); 
-  cp = get_cp(snd, chn, S_update_graph);
+  SND_ASSERT_CHAN(S_update_time_graph, snd, chn, 1); 
+  cp = get_cp(snd, chn, S_update_time_graph);
   update_graph(cp, NULL);
   return(SCM_BOOL_F);
 }
 
-static SCM g_update_fft(SCM snd, SCM chn) 
+static SCM g_update_transform(SCM snd, SCM chn) 
 {
-  #define H_update_fft "(" S_update_fft " &optional snd chn) recalculates snd channel chn's fft (and forces it to completion)"
+  #define H_update_transform "(" S_update_transform " &optional snd chn) recalculates snd channel chn's fft (and forces it to completion)"
   chan_info *cp;
   void *val;
-  SND_ASSERT_CHAN(S_update_fft, snd, chn, 1); 
-  cp = get_cp(snd, chn, S_update_fft);
-  if (cp->ffting)
+  SND_ASSERT_CHAN(S_update_transform, snd, chn, 1); 
+  cp = get_cp(snd, chn, S_update_transform);
+  if (cp->graph_transform_p)
     {
       if (chan_fft_in_progress(cp)) 
 	force_fft_clear(cp, NULL);
 
       (cp->state)->checking_explicitly = 1;  /* do not allow UI events to intervene here! */
-      if (cp->fft_style == NORMAL_FFT)
+      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
 	{
 	  val = (void *)make_fft_state(cp, 1);
 	  while (safe_fft_in_slices(val) == BACKGROUND_CONTINUE);
@@ -2124,7 +2134,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       uap->width = w;
       uap->graph_x0 = gx0;
     }
-  cp->lisp_graphing = 1;
+  cp->graph_lisp_p = 1;
   if ((SCM_EQ_P(force_display, SCM_UNDEFINED)) || 
       (NOT_FALSE_P(force_display)))
     {
@@ -2925,6 +2935,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_VAR(S_enved_spectrum,        ENVED_SPECTRUM,  H_enved_spectrum);
   DEFINE_VAR(S_enved_srate,           ENVED_SRATE,     H_enved_srate);
 
+  /* should these be named "graph-with-lines" etc? */
   #define H_graph_lines "The value for " S_graph_style " that causes graphs to use line-segments"
   #define H_graph_dots "The value for " S_graph_style " that causes graphs to use dots"
   #define H_graph_filled "The value for " S_graph_style " that causes graphs to use filled polygons"
@@ -2942,10 +2953,10 @@ void g_initialize_gh(snd_state *ss)
   #define H_zoom_focus_middle "The value for " S_zoom_focus_style " that causes zooming to focus on the middle sample"
   #define H_zoom_focus_active "The value for " S_zoom_focus_style " that causes zooming to focus on the currently active object"
 
-  DEFINE_VAR(S_zoom_focus_left,       FOCUS_LEFT,   H_zoom_focus_left);
-  DEFINE_VAR(S_zoom_focus_right,      FOCUS_RIGHT,  H_zoom_focus_right);
-  DEFINE_VAR(S_zoom_focus_active,     FOCUS_ACTIVE, H_zoom_focus_active);
-  DEFINE_VAR(S_zoom_focus_middle,     FOCUS_MIDDLE, H_zoom_focus_middle);
+  DEFINE_VAR(S_zoom_focus_left,       ZOOM_FOCUS_LEFT,   H_zoom_focus_left);
+  DEFINE_VAR(S_zoom_focus_right,      ZOOM_FOCUS_RIGHT,  H_zoom_focus_right);
+  DEFINE_VAR(S_zoom_focus_active,     ZOOM_FOCUS_ACTIVE, H_zoom_focus_active);
+  DEFINE_VAR(S_zoom_focus_middle,     ZOOM_FOCUS_MIDDLE, H_zoom_focus_middle);
 
   #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
   #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
@@ -2993,15 +3004,21 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_VAR(S_show_no_axes,          SHOW_NO_AXES,  H_show_no_axes);
   DEFINE_VAR(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
 
-  #define H_dont_normalize "The value for " S_normalize_fft " that causes the fft to display raw data"
-  #define H_normalize_by_channel "The value for " S_normalize_fft " that causes the fft to be normalized in each channel independently"
-  #define H_normalize_by_sound "The value for " S_normalize_fft " that causes the fft to be normalized across a sound's channels"
-  #define H_normalize_globally "The value for " S_normalize_fft " that causes the fft to be normalized across all sounds"
+  #define H_dont_normalize_transform "The value for " S_transform_normalization " that causes the transform to display raw data"
+  #define H_normalize_transform_by_channel "The value for " S_transform_normalization " that causes the transform to be normalized in each channel independently"
+  #define H_normalize_transform_by_sound "The value for " S_transform_normalization " that causes the transform to be normalized across a sound's channels"
+  #define H_normalize_transform_globally "The value for " S_transform_normalization " that causes the transform to be normalized across all sounds"
 
-  DEFINE_VAR(S_dont_normalize,        DONT_NORMALIZE,       H_dont_normalize);
-  DEFINE_VAR(S_normalize_by_channel,  NORMALIZE_BY_CHANNEL, H_normalize_by_channel);
-  DEFINE_VAR(S_normalize_by_sound,    NORMALIZE_BY_SOUND,   H_normalize_by_sound);
-  DEFINE_VAR(S_normalize_globally,    NORMALIZE_GLOBALLY,   H_normalize_globally);
+  DEFINE_VAR(S_dont_normalize_transform,        DONT_NORMALIZE_TRANSFORM,       H_dont_normalize_transform);
+  DEFINE_VAR(S_normalize_transform_by_channel,  NORMALIZE_TRANSFORM_BY_CHANNEL, H_normalize_transform_by_channel);
+  DEFINE_VAR(S_normalize_transform_by_sound,    NORMALIZE_TRANSFORM_BY_SOUND,   H_normalize_transform_by_sound);
+  DEFINE_VAR(S_normalize_transform_globally,    NORMALIZE_TRANSFORM_GLOBALLY,   H_normalize_transform_globally);
+
+  #define H_graph_time_once "The value for " S_time_graph_type " to display the standard time domain waveform"
+  #define H_graph_time_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
+
+  DEFINE_VAR(S_graph_time_once,        GRAPH_TIME_ONCE,        H_graph_time_once);
+  DEFINE_VAR(S_graph_time_as_wavogram, GRAPH_TIME_AS_WAVOGRAM, H_graph_time_as_wavogram);
 
 
   /* ---------------- VARIABLES ---------------- */
@@ -3285,9 +3302,9 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(S_max_sounds,          g_max_sounds, 0, 0, 0,          H_max_sounds);
   DEFINE_PROC(S_sounds,              g_sounds, 0, 0, 0,              H_sounds);
   DEFINE_PROC(S_yes_or_no_p,         g_yes_or_no_p, 1, 0, 0,         H_yes_or_no_p);
-  DEFINE_PROC(S_update_graph,        g_update_graph, 0, 2, 0,        H_update_graph);
+  DEFINE_PROC(S_update_time_graph,   g_update_time_graph, 0, 2, 0,   H_update_time_graph);
   DEFINE_PROC(S_update_lisp_graph,   g_update_lisp_graph, 0, 2, 0,   H_update_lisp_graph);
-  DEFINE_PROC(S_update_fft,          g_update_fft, 0, 2, 0,          H_update_fft);
+  DEFINE_PROC(S_update_transform,    g_update_transform, 0, 2, 0,    H_update_transform);
   DEFINE_PROC(S_abort,               g_abort, 0, 0, 0,               H_abort);
   DEFINE_PROC(S_dismiss_all_dialogs, g_dismiss_all_dialogs, 0, 0, 0, H_dismiss_all_dialogs);
   DEFINE_PROC(S_c_g,                 g_abortq, 0, 0, 0,              H_abortQ);
@@ -3331,6 +3348,8 @@ If more than one hook function, results are concatenated. If none, the current c
   during_open_hook =    MAKE_HOOK(S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
   after_open_hook =     MAKE_HOOK(S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
   output_comment_hook = MAKE_HOOK(S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
+
+  print_hook = MAKE_HOOK(S_print_hook, 1, "hook into printout in listener");
 
   g_init_marks(local_doc);
   g_init_regions(local_doc);
@@ -3451,6 +3470,27 @@ If more than one hook function, results are concatenated. If none, the current c
                (define x-to-one          x-axis-as-percentage)\
                (define x-in-seconds      x-axis-in-seconds)\
                (define x-in-samples      x-axis-in-samples)\
+               (define graphing          graph-lisp?)\
+               (define waving            graph-time?)\
+               (define ffting            graph-transform?)\
+               (define fft-graph         transform-graph)\
+               (define fft-beta          fft-window-beta)\
+               (define fft-hook          transform-hook)\
+               (define fft-size          transform-size)\
+               (define fft-style         transform-graph-type)\
+               (define before-fft-hook   before-transform-hook)\
+               (define max-fft-peaks     max-transform-peaks)\
+               (define show-fft-peaks    show-transform-peaks)\
+               (define normal-fft        graph-transform-once)\
+               (define sonogram          graph-transform-as-sonogram)\
+               (define spectrogram       graph-transform-as-spectrogram)\
+               (define normalize-by-channel normalize-transform-by-channel)\
+               (define normalize-by-sound normalize-transform-by-sound)\
+               (define normalize-globally normalize-transform-globally)\
+               (define normalize-transform transform-normalization)\
+               (define dont-normalize    dont-normalize-transform)\
+               (define update-fft        update-transform)\
+               (define update-graph      update-time-graph)\
                (define uniting \
                  (make-procedure-with-setter \
                    (lambda arg \

@@ -746,7 +746,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
 <tr><td><a href="extsnd.html#showusagestats">Show stats</a></td><td>show disk and memory usage</td></tr>
 </table>
 </center>
-        <!-- I(fft size):M(Options: Transform)(fftsize) --><!-- I(fft size):O(fft-size: numberpad: '*', '/')(lfftsize) -->
+        <!-- I(fft size):M(Options: Transform)(fftsize) --><!-- I(fft size):O(transform-size: numberpad: '*', '/')(lfftsize) -->
         <!-- I(fft size):A(fftsize) --><!-- I(fft peaks):M(Options: Transform)(showpeaks) -->
 	<!-- I(fft normalization):M(Options: Transform)(normalizefft) -->
         <!-- I(fft peaks):A(showpeaks) --><!-- I(fft log freq):M(Options: Transform)(logfreq) -->
@@ -786,8 +786,8 @@ window size:<p>
 <pre>
 (add-hook! <a href="extsnd.html#graphhook">graph-hook</a>
 	   (lambda (snd chn y0 y1)
-	     (if (and (ffting) (= (fft-style) normal-fft))
-		 (set! (<a href="extsnd.html#lfftsize">fft-size)</a>
+	     (if (and (graph-transform?) (= (fft-style) normal-fft))
+		 (set! (<a href="extsnd.html#lfftsize">transform-size)</a>
 		   (expt 2 (ceiling (/ (log (- (right-sample) (left-sample))) 
 				       (log 2.0))))))))
 </pre>
@@ -833,7 +833,7 @@ The keypad keys are mapped to various variables as follows:</p>
 <tr><td><a href="extsnd.html#spectroxangle">spectro-x-angle</a></td><td>Ctrl-UpArrow (8)</td><td>Ctrl-DownArrow (2)</td></tr>
 <tr><td><a href="extsnd.html#spectroyangle">spectro-y-angle</a></td><td>Ctrl-RightArrow (6)</td><td>Ctrl-LeftArrow (4)</td></tr>
 <tr><td><a href="extsnd.html#spectrozscale">spectro-z-scale</a></td><td>UpArrow (8)</td><td>DownArrow (2)</td></tr>
-<tr><td><a href="extsnd.html#lfftsize">fft-size</a></td><td>Multiply (*)</td><td>Divide (/)</td></tr>
+<tr><td><a href="extsnd.html#lfftsize">transform-size</a></td><td>Multiply (*)</td><td>Divide (/)</td></tr>
 <tr><td><a href="extsnd.html#dotsize">dot-size</a></td><td>Delete (.)</td><td>Insert (0)</td></tr>
 </table>
 <p>You can rotate the spectrogram around the various axes
@@ -857,7 +857,7 @@ arbitrarily small or large ffts with the Multiply and
 Divide keys.  
 The keypad Enter key resets all the
 spectrogram variables to their default values.
-See also the <a href="extsnd.html#lfftsize">fft-size</a> variable.
+See also the <a href="extsnd.html#lfftsize">transform-size</a> variable.
 To interrupt a long transform-related computation,
 deactivate the 'f' button or type C-g (which should
 be able to interrupt anything).
@@ -2219,9 +2219,9 @@ panel are:</p>
 <span class=box><h2><A NAME="index">Index</a></h2></span>
 <br>
 <center>
-<table border rows=120>
+<table border rows=121>
   <caption>Index</caption>
-  <!-- created 30-May-01 -->
+  <!-- created 3-June-01 -->
   <tr><th>Action<th>Menu<th>Keyboard<th>Lisp<th>Other</tr>
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#sndabort"><small>c-g?</small></a></td><td><small>mouse click</small></td></tr>
   <tr><td><a href="#ampenvs">amp env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><a href="#cxca"><small>Cx Ca, Cx a</small></a></td><td><a href="extsnd.html#sndenv"><small>env-sound</small></a></td><td><a href="extsnd.html#sndscaleto"><small>scale-to, scale-by</small></a></td></tr>
@@ -2264,12 +2264,12 @@ panel are:</p>
   <tr><td><a href="#cxcw">extract channel</a></td><td><br></td><td><a href="#cxcw"><small>Cx Cw</small></a></td><td><a href="extsnd.html#sndsaveas"><small>save-sound-as</small></a></td><td><br></td></tr>
   <tr><td><a href="#fftindb">fft in dB</a></td><td><small>Options: <a href="#fftindb">Transform</a></small></td><td><br></td><td><a href="extsnd.html#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><br></td></tr>
   <tr><td><a href="#logfreq">fft log freq</a></td><td><small>Options: <a href="#logfreq">Transform</a></small></td><td><br></td><td><a href="extsnd.html#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><br></td></tr>
-  <tr><td><a href="extsnd.html#normalizefft">fft normalization</a></td><td><small>Options: <a href="extsnd.html#normalizefft">Transform</a></small></td><td><br></td><td><a href="extsnd.html#normalizefft"><small>normalize-fft</small></a></td><td><br></td></tr>
-  <tr><td><a href="#showpeaks">fft peaks</a></td><td><small>Options: <a href="#showpeaks">Transform</a></small></td><td><br></td><td><a href="extsnd.html#showfftpeaks"><small>show-fft-peaks</small></a></td><td><a href="extsnd.html#sndpeaks"><small>peaks</small></a></td></tr>
-  <tr><td><a href="#fftsize">fft size</a></td><td><small>Options: <a href="#fftsize">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftsize"><small>fft-size</small></a></td><td><a href="extsnd.html#lfftsize"><small>fft-size: numberpad: '*', '/'</small></a></td></tr>
+  <tr><td>fft normalization</td><td><small>Options: <a href="extsnd.html#normalizefft">Transform</a></small></td><td><br></td><td><br></td><td><br></td></tr>
+  <tr><td><a href="#showpeaks">fft peaks</a></td><td><small>Options: <a href="#showpeaks">Transform</a></small></td><td><br></td><td><a href="extsnd.html#showfftpeaks"><small>show-transform-peaks</small></a></td><td><a href="extsnd.html#sndpeaks"><small>peaks</small></a></td></tr>
+  <tr><td><a href="#fftsize">fft size</a></td><td><small>Options: <a href="#fftsize">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftsize"><small>transform-size</small></a></td><td><a href="extsnd.html#lfftsize"><small>transform-size: numberpad: '*', '/'</small></a></td></tr>
   <tr><td><a href="#fftwindow">fft window</a></td><td><small>Options: <a href="#fftwindow">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftwindow"><small>fft-window</small></a></td><td><br></td></tr>
-  <tr><td><a href="#Xfftbeta">fft window parameter</a></td><td><small>Options: <a href="#Xfftbeta">Transform</a></small></td><td><br></td><td><a href="extsnd.html#fftbeta"><small>fft-beta</small></a></td><td><br></td></tr>
-  <tr><td><a href="#fftstyle">fft/sono/spectrogram</a></td><td><small>Options: <a href="extsnd.html#lfftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftstyle"><small>fft-style</small></a></td><td><br></td></tr>
+  <tr><td><a href="#Xfftbeta">fft window parameter</a></td><td><small>Options: <a href="#Xfftbeta">Transform</a></small></td><td><br></td><td><a href="extsnd.html#fftbeta"><small>fft-window-beta</small></a></td><td><br></td></tr>
+  <tr><td><a href="#fftstyle">fft/sono/spectrogram</a></td><td><small>Options: <a href="extsnd.html#lfftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftstyle"><small>transform-graph-type</small></a></td><td><br></td></tr>
   <tr><td><a href="#formats">file formats</a></td><td><small>File: <a href="#savefileas">Save as</a></small></td><td><br></td><td><br></td><td><br></td></tr>
   <tr><td><a href="#prevfiles">file lists</a></td><td><small>View: <a href="#prevfiles">Files</a></small></td><td><br></td><td><a href="extsnd.html#sndfiledialog"><small>file-dialog</small></a></td><td><a href="extsnd.html#mouseenterlabelhook"><small>mouse-enter-label-hook</small></a></td></tr>
   <tr><td><a href="#filter">filter</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#sndfilterenv"><small>filter-env</small></a></td><td><a href="#filter"><small>see filter controls</small></a></td></tr>
@@ -2321,18 +2321,19 @@ panel are:</p>
   <tr><td><a href="#cxw">save selection</a></td><td><small>Edit: <a href="#cxw">Save selection</a></small></td><td><a href="#cxw"><small>Cx w</small></a></td><td><a href="extsnd.html#sndsaveregion"><small>save-region</small></a></td><td><a href="extsnd.html#sndsaveselection"><small>save-selection</small></a></td></tr>
   <tr><td><a href="#savedstate">save state</a></td><td><small>Options: <a href="#savedstate">Save State</a></small></td><td><br></td><td><a href="extsnd.html#sndsavestate"><small>save-state</small></a></td><td><br></td></tr>
   <tr><td><a href="#prevfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#sndselectedsound"><small>selected-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
-  <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndffting"><small>ffting</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
+  <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndffting"><small>graph-transform?</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
   <tr><td><a href="extsnd.html#showmarks">show marks</a></td><td><br></td><td><br></td><td><a href="extsnd.html#showmarks"><small>show-marks</small></a></td><td><br></td></tr>
-  <tr><td><a href="#fw">show time domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndwaving"><small>waving</small></a></td><td><a href="#fw"><small>'w' button</small></a></td></tr>
+  <tr><td><a href="#fw">show time domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndwaving"><small>graph-time?</small></a></td><td><a href="#fw"><small>'w' button</small></a></td></tr>
   <tr><td><a href="#cxcz">smooth samples</a></td><td><br></td><td><a href="#cxcz"><small>Cx Cz</small></a></td><td><a href="extsnd.html#sndsmooth"><small>smooth</small></a></td><td><br></td></tr>
   <tr><td><a href="#cxz">smooth selection</a></td><td><br></td><td><a href="#cxz"><small>Cx z</small></a></td><td><a href="extsnd.html#sndsmoothselection"><small>smooth-selection</small></a></td><td><br></td></tr>
-  <tr><td><a href="#fftstyle">sonogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftstyle"><small>fft-style</small></a></td><td><a href="extsnd.html#colormap"><small>colormap</small></a></td></tr>
-  <tr><td><a href="#fftstyle">spectrogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftstyle"><small>fft-style</small></a></td><td><a href="extsnd.html#spectrocutoff"><small>orientation, scaling</small></a></td></tr>
+  <tr><td><a href="#fftstyle">sonogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftstyle"><small>transform-graph-type</small></a></td><td><a href="extsnd.html#colormap"><small>colormap</small></a></td></tr>
+  <tr><td><a href="#fftstyle">spectrogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftstyle"><small>transform-graph-type</small></a></td><td><a href="extsnd.html#spectrocutoff"><small>orientation, scaling</small></a></td></tr>
   <tr><td><a href="extsnd.html#lspeedstyle">speed units</a></td><td><small>Options: <a href="extsnd.html#lspeedstyle">Speed style</a></small></td><td><br></td><td><a href="extsnd.html#lspeedstyle"><small>speed-control-style</small></a></td><td><a href="extsnd.html#speedtones"><small>speed-control-tones</small></a></td></tr>
   <tr><td><a href="extsnd.html#sndsrc">srate conversion</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#sndsrc"><small>src-sound</small></a></td><td><a href="extsnd.html#sndsrcselection"><small>src-selection</small></a></td></tr>
   <tr><td><a href="extsnd.html#swapchannels">swap channels</a></td><td><br></td><td><br></td><td><a href="extsnd.html#swapchannels"><small>swap-channels</small></a></td><td><br></td></tr>
   <tr><td><a href="#ktempdir">temp directory</a></td><td><br></td><td><a href="#ktempdir"><small>Cx d</small></a></td><td><a href="extsnd.html#tempdir"><small>temp-dir</small></a></td><td><small>TMPDIR or /var/tmp</small></td></tr>
   <tr><td><a href="#trackingcursor">tracking cursor</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndcursorfollowsplay"><small>cursor-follows-play</small></a></td><td><a href="#trackingcursor"><small>control click 'play'</small></a></td></tr>
+  <tr><td>transform normalization</td><td><br></td><td><br></td><td><a href="extsnd.html#normalizefft"><small>transform-normalization</small></a></td><td><br></td></tr>
   <tr><td><a href="sndscm.html#effectsdoc">trim sound</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Trim</a></small></td><td><br></td><td><br></td><td><br></td></tr>
   <tr><td><a href="#undoredo">undo edit</a></td><td><small>Edit: <a href="#undoredo">Undo</a></small></td><td><a href="#cxcu"><small>C_ or Cx Cu</small></a></td><td><a href="extsnd.html#sndundo"><small>undo</small></a></td><td><small>Popup: Undo</small></td></tr>
   <tr><td><a href="#updatefile">update file</a></td><td><small>File: <a href="#updatefile">Update</a></small></td><td><small>[Home]</small></td><td><a href="extsnd.html#sndupdate"><small>update</small></a></td><td><a href="extsnd.html#corruptiontime"><small>corruption-time, auto-update</small></a></td></tr>

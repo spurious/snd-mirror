@@ -405,10 +405,10 @@ void activate_focus_menu(snd_state *ss, int new_focus)
     {
       switch (zoom_focus_style(ss))
 	{
-	case FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), TRUE);   break;
-	case FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), TRUE);  break;
-	case FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), TRUE); break;
-	case FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), TRUE); break;
+	case ZOOM_FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), TRUE);   break;
+	case ZOOM_FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), TRUE);  break;
+	case ZOOM_FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), TRUE); break;
+	case ZOOM_FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), TRUE); break;
 	}
     }
   set_zoom_focus_style(ss, new_focus);
@@ -416,10 +416,10 @@ void activate_focus_menu(snd_state *ss, int new_focus)
     {
       switch (new_focus)
 	{
-	case FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), FALSE);   break;
-	case FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), FALSE);  break;
-	case FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), FALSE); break;
-	case FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), FALSE); break;
+	case ZOOM_FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), FALSE);   break;
+	case ZOOM_FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), FALSE);  break;
+	case ZOOM_FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), FALSE); break;
+	case ZOOM_FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), FALSE); break;
 	}
     }
 }  
@@ -447,6 +447,25 @@ void activate_speed_in_menu(snd_state *ss, int newval)
     }
 }
 
+static int map_chans_x_axis_style(chan_info *cp, void *ptr)
+{
+  axis_info *ap;
+  int new_style = (*((int *)ptr));
+  ap = cp->axis;
+  if (ap)
+    {
+      if (ap->xlabel) FREE(ap->xlabel);
+      switch (new_style)
+	{
+	case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(STR_time_samples); break;
+	case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(STR_time_percent); break;
+	default:                   ap->xlabel = copy_string(STR_time);         break;
+	}
+      update_graph(cp, NULL);
+    }
+  return(0);
+} 
+
 static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
 {
   switch (oldval)
@@ -469,7 +488,7 @@ void set_x_axis_style(snd_state *ss, int val)
 {
   reflect_x_axis_unit_change_in_menu(x_axis_style(ss), val);
   in_set_x_axis_style(ss, val);
-  map_over_chans(ss, update_graph, NULL);
+  map_over_chans(ss, map_chans_x_axis_style, (void *)(&val));
 }
 
 static int update_sound(snd_info *sp, void *ptr)

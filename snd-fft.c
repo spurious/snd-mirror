@@ -131,7 +131,7 @@ static SCM added_transform_proc(int type)
   return(SCM_BOOL_F);
 }
 
-static SCM before_fft_hook;
+static SCM before_transform_hook;
 static fft_window_state *fft_windows[NUM_CACHED_FFT_WINDOWS];
 
 
@@ -767,7 +767,7 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
 
 #define MIN_CHECK 0.000001
 
-int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize2, int srate, Float samps_per_pixel, Float fft_scale)
+int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize2, int srate, Float samps_per_pixel, Float fft_scale)
 {
   /* we want to reflect the graph as displayed, so each "bin" is samps_per_pixel wide */
   int i, j, k, pks, minpk, hop, pkj, oldpkj;
@@ -1229,7 +1229,7 @@ static void make_sonogram_axes(chan_info *cp)
       ap = cp->axis;
       if (cp->transform_type == FOURIER)
 	{
-	  if ((cp->fft_log_frequency) || (cp->fft_style == SPECTROGRAM))
+	  if ((cp->fft_log_frequency) || (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SPECTROGRAM))
 	    {
 	      max_freq = cp->spectro_cutoff;
 	      min_freq = cp->spectro_start;
@@ -1255,7 +1255,7 @@ static void make_sonogram_axes(chan_info *cp)
 	}
       yang = fmod(cp->spectro_y_angle, 360.0);
       if (yang < 0.0) yang += 360.0;
-      if (cp->fft_style == SPECTROGRAM)
+      if (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SPECTROGRAM)
 	{
 	  if (cp->transform_type == FOURIER)
 	    {
@@ -1311,17 +1311,17 @@ static int apply_fft_window(fft_state *fs)
       (fs->datalen > 0))
     {
       ind0 = fs->databeg;
-      if (cp->fft_style == NORMAL_FFT) data_len = fs->datalen;
+      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE) data_len = fs->datalen;
     }
   else 
     {
       SCM res;
-      if (HOOKED(before_fft_hook))
+      if (HOOKED(before_transform_hook))
 	{
-	  res = g_c_run_progn_hook(before_fft_hook, 
+	  res = g_c_run_progn_hook(before_transform_hook, 
 				   SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index), 
 					     TO_SMALL_SCM_INT(cp->chan)),
-				   S_before_fft_hook);
+				   S_before_transform_hook);
 	  if (NUMBER_P(res))
 	    ind0 = TO_C_INT_OR_ELSE(res, 0) + fs->beg;
 	  else ind0 = (cp->axis)->losamp + fs->beg;
@@ -1478,7 +1478,7 @@ static int display_snd_fft(fft_state *fs)
   fp = cp->fft;
   data = fp->data;
   sp = cp->sound;
-  if (cp->fft_style == NORMAL_FFT)
+  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
     {
       xlabel = spectro_xlabel(cp);
       switch (cp->transform_type)
@@ -1509,7 +1509,7 @@ static int display_snd_fft(fft_state *fs)
 	  break;
 	}
 
-      if (cp->normalize_fft == DONT_NORMALIZE)
+      if (cp->transform_normalization == DONT_NORMALIZE_TRANSFORM)
 	{
 	  lo = 0;
 	  hi = (int)(fp->current_size / 2);
@@ -1529,15 +1529,15 @@ static int display_snd_fft(fft_state *fs)
 	}
 
       data_max = 0.0;
-      if ((cp->normalize_fft == NORMALIZE_BY_SOUND) ||
-	  ((cp->normalize_fft == DONT_NORMALIZE) && 
+      if ((cp->transform_normalization == NORMALIZE_TRANSFORM_BY_SOUND) ||
+	  ((cp->transform_normalization == DONT_NORMALIZE_TRANSFORM) && 
 	   (sp->nchans > 1) && 
 	   (sp->channel_style == CHANNELS_SUPERIMPOSED)))
 	{
 	  for (j = 0; j < sp->nchans; j++)
 	    {
 	      ncp = sp->chans[j];
-	      if ((ncp->ffting) && (ncp->fft)) /* normalize-by-sound but not ffting all chans? */
+	      if ((ncp->graph_transform_p) && (ncp->fft)) /* normalize-by-sound but not ffting all chans? */
 		{
 		  nfp = ncp->fft;
 		  tdata = nfp->data;
@@ -1569,7 +1569,7 @@ static int display_snd_fft(fft_state *fs)
 	}
 
       if (data_max == 0.0) data_max = 1.0;
-      if (cp->normalize_fft != DONT_NORMALIZE)
+      if (cp->transform_normalization != DONT_NORMALIZE_TRANSFORM)
 	scale = 1.0 / data_max;
       else 
 	{
@@ -1597,14 +1597,14 @@ static int display_snd_fft(fft_state *fs)
 
       if (cp->fft_log_magnitude) 
 	{
-	  if (cp->normalize_fft == DONT_NORMALIZE)
+	  if (cp->transform_normalization == DONT_NORMALIZE_TRANSFORM)
 	    max_val = ((data_max <= cp->lin_dB) ? cp->min_dB : (20.0 * (log10(data_max))));
 	  else max_val = 0.0;
 	  min_val = cp->min_dB;
 	}
       else 
 	{
-	  if (cp->normalize_fft == DONT_NORMALIZE)
+	  if (cp->transform_normalization == DONT_NORMALIZE_TRANSFORM)
 	    {
 	      if (cp->transform_type == FOURIER)
 		min_val = 0.0;
@@ -1644,10 +1644,10 @@ void *make_fft_state(chan_info *cp, int simple)
   ss = cp->state;
   ap = cp->axis;
   if ((show_selection_transform(ss)) && 
-      (cp->fft_style == NORMAL_FFT) && 
+      (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE) && 
       (selection_is_active_in_channel(cp)))
     {
-      /* override fft_size(ss) in this case (sonograms cover selection but use preset size) */
+      /* override transform_size(ss) in this case (sonograms cover selection but use preset size) */
       dbeg = selection_beg(cp);
       dlen = selection_len();
       /* these need to be handled at the same time, and not re-examined until the next call */
@@ -1658,7 +1658,7 @@ void *make_fft_state(chan_info *cp, int simple)
     }
   else 
     {
-      fftsize = (int)pow(2.0, (int)(ceil(log((Float)(cp->fft_size * (1 + cp->zero_pad))) / log(2.0))));
+      fftsize = (int)pow(2.0, (int)(ceil(log((Float)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0))));
       cp->selection_transform_size = 0;
     }
 
@@ -1666,16 +1666,16 @@ void *make_fft_state(chan_info *cp, int simple)
     {
       fs = (fft_state *)(cp->fft_data);
       if ((fs->losamp == ap->losamp) && 
-	  (!(HOOKED(before_fft_hook))) &&
+	  (!(HOOKED(before_transform_hook))) &&
 	  (fs->size == fftsize) &&
 	  (fs->transform_type == cp->transform_type) &&
 	  (fs->wintype == cp->fft_window) &&
-	  ((!(fft_window_beta_in_use(fs->wintype))) || (fs->beta == cp->fft_beta)) &&
+	  ((!(fft_window_beta_in_use(fs->wintype))) || (fs->beta == cp->fft_window_beta)) &&
 	  (fs->dBing == cp->fft_log_magnitude) &&
 	  (fs->lfreq == cp->fft_log_frequency) &&
 	  (fs->pad_zero == cp->zero_pad) &&
 	  (fs->cutoff == cp->spectro_cutoff) &&
-	  (fs->old_style == cp->fft_style) &&
+	  (fs->old_style == cp->transform_graph_type) &&
 	  (fs->wavelet_choice == cp->wavelet_type) &&
 	  (fs->edit_ctr == cp->edit_ctr))
 	reuse_old = 1;
@@ -1702,8 +1702,8 @@ void *make_fft_state(chan_info *cp, int simple)
       fs->hwin = NULL;
       fs->wavelet_choice = cp->wavelet_type;
       fs->transform_type = cp->transform_type;
-      fs->old_style = cp->fft_style;
-      fs->beta = cp->fft_beta;
+      fs->old_style = cp->transform_graph_type;
+      fs->beta = cp->fft_window_beta;
     }
   fs->nn = fs->size / 2;
   fs->beg = 0;
@@ -1761,21 +1761,21 @@ BACKGROUND_TYPE safe_fft_in_slices(void *fftData)
   fft_state *fs;
   fs = (fft_state *)fftData;
   cp = (chan_info *)(fs->chan);
-  if (!(cp->ffting)) return(BACKGROUND_QUIT);
+  if (!(cp->graph_transform_p)) return(BACKGROUND_QUIT);
   res = fft_in_slices(fftData);
   if (res == BACKGROUND_QUIT)
     {
       ss = cp->state;
       sp = cp->sound;
       set_chan_fft_in_progress(cp, 0);
-      if (cp->fft_size >= 65536) finish_progress_report(sp, NOT_FROM_ENVED);
+      if (cp->transform_size >= 65536) finish_progress_report(sp, NOT_FROM_ENVED);
       display_channel_fft_data(cp, sp, ss);
     }
   return(res);
 }
 
 
-/* -------------------------------- SONOGRAM -------------------------------- */
+/* -------------------------------- GRAPH_TRANSFORM_AS_SONOGRAM -------------------------------- */
 /*
  * calls calculate_fft for each slice, each bin being a gray-scaled rectangle in the display
  */
@@ -1870,7 +1870,7 @@ static int set_up_sonogram(sonogram_state *sg)
   sonogram_state *lsg = NULL;
   int i, tempsize, dpys = 1;
   cp = sg->cp;
-  if (cp->ffting == 0) return(2);
+  if (cp->graph_transform_p == 0) return(2);
   ss = cp->state;
   ap = cp->axis;
   sg->slice = 0;
@@ -1880,9 +1880,9 @@ static int set_up_sonogram(sonogram_state *sg)
   sg->hisamp = ap->hisamp;
   sg->window = cp->fft_window;
   sg->minibuffer_needs_to_be_cleared = 0;
-  if (cp->waving) dpys++; 
-  if (cp->lisp_graphing) dpys++; 
-  if (cp->fft_style == SPECTROGRAM)
+  if (cp->graph_time_p) dpys++; 
+  if (cp->graph_lisp_p) dpys++; 
+  if (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SPECTROGRAM)
     sg->outlim = ap->height / cp->spectro_hop;
   else sg->outlim = ap->window_width / dpys;
   if (sg->outlim <= 1) return(2);
@@ -1890,8 +1890,8 @@ static int set_up_sonogram(sonogram_state *sg)
   /* if fewer samps than pixels, draw rectangles */
   if ((cp->transform_type == FOURIER) || 
       (cp->transform_type == AUTOCORRELATION))
-    sg->spectrum_size = (cp->fft_size) / 2;
-  else sg->spectrum_size = cp->fft_size;
+    sg->spectrum_size = (cp->transform_size) / 2;
+  else sg->spectrum_size = cp->transform_size;
   sg->edit_ctr = cp->edit_ctr;
   si = (sono_info *)(cp->sonogram_data);
   if (!si)
@@ -1948,10 +1948,10 @@ static int set_up_sonogram(sonogram_state *sg)
 	  si->active_slices = si->target_slices;
 	  sg->old_scale = lsg->old_scale;
 	  si->scale = sg->old_scale;
-	  if ((lsg->old_style != cp->fft_style) ||
+	  if ((lsg->old_style != cp->transform_graph_type) ||
 	      (lsg->old_logxing != cp->fft_log_frequency))
 	    make_sonogram_axes(cp);                    /* may need to fixup frequency axis labels */
-	  sg->old_style = cp->fft_style;
+	  sg->old_style = cp->transform_graph_type;
 	  sg->old_logxing = cp->fft_log_frequency;
 	  return(2);                                   /* so skip the ffts! */
 	}
@@ -1982,12 +1982,14 @@ static int run_all_ffts(sonogram_state *sg)
       sg->msg_ctr--;
       if (sg->msg_ctr == 0)
 	{
-	  progress_report(cp->sound, (cp->fft_style == SONOGRAM) ? S_sonogram : S_spectrogram, 0, 0,
+	  progress_report(cp->sound, 
+			  (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SONOGRAM) ? S_graph_transform_as_sonogram : S_graph_transform_as_spectrogram, 
+			  0, 0,
 			  ((Float)(si->active_slices) / (Float)(si->target_slices)), 
 			  NOT_FROM_ENVED);
 	  sg->minibuffer_needs_to_be_cleared = 1;
 	  sg->msg_ctr = 8;
-	  if (cp->ffting == 0) return(1);
+	  if (cp->graph_transform_p == 0) return(1);
 	}
       if (cp->transform_type == FOURIER)
 	{
@@ -2010,7 +2012,7 @@ static int run_all_ffts(sonogram_state *sg)
 	}
       si->active_slices++;
       sg->outer++;
-      if ((sg->outer == sg->outlim) || (cp->ffting == 0) || (cp->fft_style == NORMAL_FFT)) return(1);
+      if ((sg->outer == sg->outlim) || (cp->graph_transform_p == 0) || (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)) return(1);
       fs->beg += sg->hop;
       fs->slice = 0;
       ap = cp->axis;
@@ -2030,7 +2032,7 @@ static int cleanup_sonogram(sonogram_state *sg)
   if (sg)
     {
       cp = sg->cp;
-      if (cp->ffting == 0)
+      if (cp->graph_transform_p == 0)
 	{
 	  if (sg->fs) sg->fs = free_fft_state(sg->fs);
 	  return(1);
@@ -2061,7 +2063,7 @@ BACKGROUND_TYPE sonogram_in_slices(void *sono)
   int res = 0;
   cp = sg->cp;
   cp->temp_sonogram = NULL;
-  if (cp->ffting == 0) 
+  if (cp->graph_transform_p == 0) 
     {
       if (sg) cleanup_sonogram(sg);
       return(BACKGROUND_QUIT);
@@ -2083,7 +2085,7 @@ BACKGROUND_TYPE sonogram_in_slices(void *sono)
 
 int sono_update(chan_info *cp, void *ignore)
 {
-  if (cp->fft_style != NORMAL_FFT) make_sonogram_axes(cp);
+  if (cp->transform_graph_type != GRAPH_TRANSFORM_ONCE) make_sonogram_axes(cp);
   update_graph(cp, NULL);
   return(0);
 }
@@ -2274,20 +2276,21 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
 					proc)));
 }
 
-static SCM g_transform_size(SCM snd, SCM chn)
+static SCM g_transform_graph_data_size(SCM snd, SCM chn)
 {
-  #define H_transform_size "(" S_transform_size " &optional snd chn)\n\
-returns a description of transform data in snd's channel chn. \
-If no fft, returns 0; if normal-fft, returns fft-size, else returns a list (full-size active-bins active-slices)"
+  #define H_transform_graph_data_size "(" S_transform_graph_data_size " &optional snd chn)\n\
+returns a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
+If no transform graph, returns 0; if " S_graph_transform_once ", returns " S_transform_size ",\
+and otherwise returns a list (total-size active-bins active-slices)"
 
   chan_info *cp;
   sono_info *si;
-  SND_ASSERT_CHAN(S_transform_size, snd, chn, 1);
-  cp = get_cp(snd, chn, S_transform_size);
-  if (!(cp->ffting)) 
+  SND_ASSERT_CHAN(S_transform_graph_data_size, snd, chn, 1);
+  cp = get_cp(snd, chn, S_transform_graph_data_size);
+  if (!(cp->graph_transform_p)) 
     return(INTEGER_ZERO);
-  if (fft_style(cp->state) == NORMAL_FFT) 
-    return(TO_SMALL_SCM_INT(fft_size(cp->state)));
+  if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE) 
+    return(TO_SMALL_SCM_INT(transform_size(cp->state)));
   si = (sono_info *)(cp->sonogram_data);
   if (si) return(SCM_LIST3(TO_SCM_DOUBLE(spectro_cutoff(cp->state)),
 			   TO_SMALL_SCM_INT(si->active_slices),
@@ -2308,7 +2311,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
   ASSERT_TYPE(INTEGER_IF_BOUND_P(slice), slice, SCM_ARG2, S_transform_sample, "an integer");
   SND_ASSERT_CHAN(S_transform_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_transform_sample);
-  if (cp->ffting)
+  if (cp->graph_transform_p)
     {
       /* BACK */
       fbin = TO_C_INT_OR_ELSE(bin, 0);
@@ -2316,7 +2319,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
       if ((fp) && 
 	  (fbin < fp->current_size))
 	{
-	  if (fft_style(cp->state) == NORMAL_FFT)
+	  if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE)
 	    return(TO_SCM_DOUBLE(fp->data[fbin]));
 	  else 
 	    {
@@ -2347,14 +2350,14 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
   SCM *vdata, *tdata;
   SND_ASSERT_CHAN(S_transform_samples, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_transform_samples);
-  if (cp->ffting)
+  if (cp->graph_transform_p)
     {
       /* BACK */
       fp = cp->fft;
       if (fp)
 	{
 	  bins = fp->current_size;
-	  if (fft_style(cp->state) == NORMAL_FFT)
+	  if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE)
 	    {
 	      len = fp->current_size;
 	      new_vect = MAKE_VECTOR(len, TO_SCM_DOUBLE(0.0));
@@ -2401,10 +2404,10 @@ returns a vct object (vct-obj if passed), with the current transform data from s
   vct *v1 = get_vct(v);
   SND_ASSERT_CHAN(S_transform_samples2vct, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_transform_samples2vct);
-  if ((cp->ffting) && (cp->fft))
+  if ((cp->graph_transform_p) && (cp->fft))
     {
       /* BACK */
-      if (fft_style(cp->state) == NORMAL_FFT)
+      if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE)
 	{
 	  fp = cp->fft;
 	  len = fp->current_size;
@@ -2510,19 +2513,19 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
 
 void g_init_fft(SCM local_doc)
 {
-  #define H_before_fft_hook S_before_fft_hook " (snd chn) is called just before an FFT (or spectrum) is calculated.  If it returns \
-an integer, it is used as the starting point of the fft.  The following \
-somewhat brute-force code shows a way to have the fft reflect the position \
+  #define H_before_transform_hook S_before_transform_hook " (snd chn) is called just before a transform is calculated.  If it returns \
+an integer, it is used as the starting point of the transform.  The following \
+somewhat brute-force code shows a way to have the transform reflect the position \
 of a moving mark:\n\
-  (define fft-position #f)\n\
-  (add-hook! before-fft-hook \n\
-    (lambda (snd chn) fft-position))\n\
+  (define transform-position #f)\n\
+  (add-hook! before-transform-hook \n\
+    (lambda (snd chn) transform-position))\n\
   (add-hook! mark-drag-hook \n\
     (lambda (id)\n\
-      (set! fft-position (mark-sample id))\n\
-      (update-fft)))"
+      (set! transform-position (mark-sample id))\n\
+      (update-transform)))"
 
-  before_fft_hook = MAKE_HOOK(S_before_fft_hook, 2, H_before_fft_hook);  /* args = snd chn */
+  before_transform_hook = MAKE_HOOK(S_before_transform_hook, 2, H_before_transform_hook);  /* args = snd chn */
 
   #define H_fourier_transform   S_transform_type " value for Fourier transform (sinusoid basis)"
   #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"
@@ -2544,15 +2547,15 @@ of a moving mark:\n\
   DEFINE_VAR(S_walsh_transform,     WALSH,           H_walsh_transform);
   DEFINE_VAR(S_autocorrelation,     AUTOCORRELATION, H_autocorrelation);
 
-  #define H_normal_fft "The value for " S_fft_style " that causes a single transform to be displayed"
-  #define H_sonogram "The value for " S_fft_style " that causes a snongram to be displayed"
-  #define H_spectrogram "The value for " S_fft_style " that causes a spectrogram to be displayed"
+  #define H_graph_transform_once "The value for " S_transform_graph_type " that causes a single transform to be displayed"
+  #define H_graph_transform_as_sonogram "The value for " S_transform_graph_type " that causes a snongram to be displayed"
+  #define H_graph_transform_as_spectrogram "The value for " S_transform_graph_type " that causes a spectrogram to be displayed"
 
-  DEFINE_VAR(S_normal_fft,          NORMAL_FFT,      H_normal_fft);
-  DEFINE_VAR(S_sonogram,            SONOGRAM,        H_sonogram);
-  DEFINE_VAR(S_spectrogram,         SPECTROGRAM,     H_spectrogram);
+  DEFINE_VAR(S_graph_transform_once,           GRAPH_TRANSFORM_ONCE,           H_graph_transform_once);
+  DEFINE_VAR(S_graph_transform_as_sonogram,    GRAPH_TRANSFORM_AS_SONOGRAM,    H_graph_transform_as_sonogram);
+  DEFINE_VAR(S_graph_transform_as_spectrogram, GRAPH_TRANSFORM_AS_SPECTROGRAM, H_graph_transform_as_spectrogram);
 
-  DEFINE_PROC(S_transform_size,        g_transform_size, 0, 2, 0,      H_transform_size);
+  DEFINE_PROC(S_transform_graph_data_size,  g_transform_graph_data_size, 0, 2, 0,H_transform_graph_data_size);
   DEFINE_PROC(S_transform_samples,     g_transform_samples, 0, 2, 0,   H_transform_samples);
   DEFINE_PROC(S_transform_sample,      g_transform_sample, 0, 4, 0,    H_transform_sample);
   DEFINE_PROC(S_transform_samples2vct, transform_samples2vct, 0, 3, 0, H_transform_samples2vct);

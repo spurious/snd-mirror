@@ -150,17 +150,18 @@ enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE};
 
 enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS};
 #define GRAPH_STYLE_OK(Grf) ((Grf >= GRAPH_LINES) && (Grf <= GRAPH_LOLLIPOPS))
-enum {NORMAL_FFT, SONOGRAM, SPECTROGRAM};
-#define MAX_FFT_STYLE SPECTROGRAM
+enum {GRAPH_TRANSFORM_ONCE, GRAPH_TRANSFORM_AS_SONOGRAM, GRAPH_TRANSFORM_AS_SPECTROGRAM};
+#define MAX_TRANSFORM_GRAPH_TYPE GRAPH_TRANSFORM_AS_SPECTROGRAM
+enum {GRAPH_TIME_ONCE, GRAPH_TIME_AS_WAVOGRAM};
 enum {ARRAY_USAGE, TEMP_USAGE, FILE_USAGE, TEMPS_ACTIVE, TEMPS_OPEN, ARRAYS_ACTIVE, AMP_ENVS_ACTIVE, AMP_ENV_USAGE};
-enum {FOCUS_LEFT, FOCUS_RIGHT, FOCUS_ACTIVE, FOCUS_MIDDLE};
+enum {ZOOM_FOCUS_LEFT, ZOOM_FOCUS_RIGHT, ZOOM_FOCUS_ACTIVE, ZOOM_FOCUS_MIDDLE};
 enum {DONT_LOCK_MIXES, LOCK_MIXES};
 enum {DONT_DELETE_ME, DELETE_ME, ALREADY_DELETED, MULTICHANNEL_DELETION};
-enum {PLAIN_MESSAGE, MESSAGE_WITH_CARET, MESSAGE_WITHOUT_CARET};
+enum {PLAIN_MESSAGE, MESSAGE_WITH_PROMPT, MESSAGE_WITHOUT_PROMPT};
 enum {SND_REOPEN_CLOSED_FILE, SND_OPEN_CHANNEL, SND_COPY_READER, SND_INSERT_FILE, SND_CHANGE_FILE, SND_OVERRIDE_FILE, SND_MIX_FILE};
 enum {CURSOR_CROSS, CURSOR_LINE, CURSOR_PROC};
 enum {SHOW_NO_AXES, SHOW_ALL_AXES, SHOW_X_AXIS};
-enum {DONT_NORMALIZE, NORMALIZE_BY_CHANNEL, NORMALIZE_BY_SOUND, NORMALIZE_GLOBALLY};
+enum {DONT_NORMALIZE_TRANSFORM, NORMALIZE_TRANSFORM_BY_CHANNEL, NORMALIZE_TRANSFORM_BY_SOUND, NORMALIZE_TRANSFORM_GLOBALLY};
 enum {NO_PROBLEM, BLIND_LEAP, GIVE_UP, HUNKER_DOWN};
 enum {ENVED_ADD_POINT,ENVED_DELETE_POINT,ENVED_MOVE_POINT};
 enum {CHAN_GC, CHAN_IGC, CHAN_SELGC, CHAN_CGC, CHAN_MGC, CHAN_MXGC, CHAN_TMPGC, CHAN_SELMXGC};
@@ -221,11 +222,11 @@ enum {FCP_X_ANGLE, FCP_X_SCALE, FCP_Y_ANGLE, FCP_Y_SCALE, FCP_Z_ANGLE, FCP_Z_SCA
 #define START_JUST_TIME(cp) (cp->state)->just_time = 1
 #define END_JUST_TIME(cp) (cp->state)->just_time = 0
 
-enum {WAVE_AXIS_INFO, FFT_AXIS_INFO, LISP_AXIS_INFO};
-#define AXIS_INFO_ID_OK(Id) ((Id >= WAVE_AXIS_INFO) && ((Id <= LISP_AXIS_INFO)))
+enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO};
+#define AXIS_INFO_ID_OK(Id) ((Id >= TIME_AXIS_INFO) && ((Id <= LISP_AXIS_INFO)))
 
-#define MAIN_GRAPH_STYLE(cp) (cp->graph_style & 0xff)
-#define FFT_GRAPH_STYLE(cp) (((cp->graph_style & 0xff00) != 0) ? (((cp->graph_style >> 8) & 0xff) - 1) : (cp->graph_style & 0xff))
+#define TIME_GRAPH_STYLE(cp) (cp->graph_style & 0xff)
+#define TRANSFORM_GRAPH_STYLE(cp) (((cp->graph_style & 0xff00) != 0) ? (((cp->graph_style >> 8) & 0xff) - 1) : (cp->graph_style & 0xff))
 #define LISP_GRAPH_STYLE(cp) (((cp->graph_style & 0xff0000) != 0) ? (((cp->graph_style >> 16) & 0xff) - 1) : (cp->graph_style & 0xff))
 
 enum {COLOR_POSITION, COLOR_ZOOM};
@@ -302,9 +303,9 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define in_set_max_regions(ss, a) ss->Max_Regions = a
 #define DEFAULT_MAX_REGIONS 16
 
-#define max_fft_peaks(ss) ss->Max_Fft_Peaks
-#define in_set_max_fft_peaks(ss, a) ss->Max_Fft_Peaks = a
-#define DEFAULT_MAX_FFT_PEAKS 100
+#define max_transform_peaks(ss) ss->Max_Transform_Peaks
+#define in_set_max_transform_peaks(ss, a) ss->Max_Transform_Peaks = a
+#define DEFAULT_MAX_TRANSFORM_PEAKS 100
 
 #define auto_resize(ss) ss->Auto_Resize
 #define set_auto_resize(ss, a) ss->Auto_Resize = a
@@ -330,17 +331,21 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define in_set_color_scale(ss, a) ss->Color_Scale = a
 #define DEFAULT_COLOR_SCALE 1.0
 
-#define fft_beta(ss) ss->Fft_Beta
-#define in_set_fft_beta(ss, a) ss->Fft_Beta = a
-#define DEFAULT_FFT_BETA 0.0
+#define fft_window_beta(ss) ss->Fft_Window_Beta
+#define in_set_fft_window_beta(ss, a) ss->Fft_Window_Beta = a
+#define DEFAULT_FFT_WINDOW_BETA 0.0
 
-#define fft_size(ss) ss->Fft_Size
-#define in_set_fft_size(ss, a) ss->Fft_Size = a
-#define DEFAULT_FFT_SIZE 256
+#define transform_size(ss) ss->Transform_Size
+#define in_set_transform_size(ss, a) ss->Transform_Size = a
+#define DEFAULT_TRANSFORM_SIZE 256
 
-#define fft_style(ss) ss->Fft_Style
-#define in_set_fft_style_1(ss, a) ss->Fft_Style = a
-#define DEFAULT_FFT_STYLE NORMAL_FFT
+#define transform_graph_type(ss) ss->Transform_Graph_Type
+#define in_set_transform_graph_type_1(ss, a) ss->Transform_Graph_Type = a
+#define DEFAULT_TRANSFORM_GRAPH_TYPE GRAPH_TRANSFORM_ONCE
+
+#define time_graph_type(ss) ss->Time_Graph_Type
+#define in_set_time_graph_type_1(ss, a) ss->Time_Graph_Type = a
+#define DEFAULT_TIME_GRAPH_TYPE GRAPH_TIME_ONCE
 
 #define fft_window(ss) ss->Fft_Window
 #define in_set_fft_window_1(ss, a) ss->Fft_Window = a
@@ -358,9 +363,9 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define set_minibuffer_history_length(ss, a) ss->Minibuffer_History_Length = a
 #define DEFAULT_MINIBUFFER_HISTORY_LENGTH 8
 
-#define normalize_fft(ss) ss->Normalize_Fft
-#define in_set_normalize_fft(ss, a) ss->Normalize_Fft = a
-#define DEFAULT_NORMALIZE_FFT NORMALIZE_BY_CHANNEL
+#define transform_normalization(ss) ss->Transform_Normalization
+#define in_set_transform_normalization(ss, a) ss->Transform_Normalization = a
+#define DEFAULT_TRANSFORM_NORMALIZATION NORMALIZE_TRANSFORM_BY_CHANNEL
 
 #define ask_before_overwrite(ss) ss->Ask_Before_Overwrite
 #define set_ask_before_overwrite(ss, a) ss->Ask_Before_Overwrite = a
@@ -440,7 +445,7 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define zoom_focus_style(ss) ss->Zoom_Focus_Style
 #define set_zoom_focus_style(ss, a) ss->Zoom_Focus_Style = a
-#define DEFAULT_ZOOM_FOCUS_STYLE FOCUS_ACTIVE
+#define DEFAULT_ZOOM_FOCUS_STYLE ZOOM_FOCUS_ACTIVE
 
 #define eps_file(ss) ss->Eps_File
 #define set_eps_file(ss, a) ss->Eps_File = a
@@ -538,9 +543,9 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define in_set_zero_pad(ss, a) ss->Zero_Pad = a
 #define DEFAULT_ZERO_PAD 0
 
-#define show_fft_peaks(ss) ss->Show_Fft_Peaks
-#define in_set_show_fft_peaks(ss, a) ss->Show_Fft_Peaks = a
-#define DEFAULT_SHOW_FFT_PEAKS 0
+#define show_transform_peaks(ss) ss->Show_Transform_Peaks
+#define in_set_show_transform_peaks(ss, a) ss->Show_Transform_Peaks = a
+#define DEFAULT_SHOW_TRANSFORM_PEAKS 0
 
 #define show_indices(ss) ss->Show_Indices
 #define set_show_indices(ss, a) ss->Show_Indices = a

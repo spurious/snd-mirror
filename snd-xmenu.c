@@ -396,22 +396,22 @@ static void Options_Save_Callback(Widget w, XtPointer cD, XtPointer mD)
 
 static void Options_Focus_Right_Callback(Widget w, XtPointer cD, XtPointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_focus_right) activate_focus_menu((snd_state *)cD, FOCUS_RIGHT);
+  IF_MENU_HOOK(STR_Options, STR_focus_right) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_RIGHT);
 }
 
 static void Options_Focus_Left_Callback(Widget w, XtPointer cD, XtPointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_focus_left) activate_focus_menu((snd_state *)cD, FOCUS_LEFT);
+  IF_MENU_HOOK(STR_Options, STR_focus_left) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_LEFT);
 }
 
 static void Options_Focus_Middle_Callback(Widget w, XtPointer cD, XtPointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_focus_middle) activate_focus_menu((snd_state *)cD, FOCUS_MIDDLE);
+  IF_MENU_HOOK(STR_Options, STR_focus_middle) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_MIDDLE);
 }
 
 static void Options_Focus_Active_Callback(Widget w, XtPointer cD, XtPointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_focus_active) activate_focus_menu((snd_state *)cD, FOCUS_ACTIVE);
+  IF_MENU_HOOK(STR_Options, STR_focus_active) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_ACTIVE);
 }
 
 static void Options_Speed_Float_Callback(Widget w, XtPointer cD, XtPointer Data) 

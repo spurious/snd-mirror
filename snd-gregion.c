@@ -10,6 +10,30 @@ static int current_region = -1;
 static GtkWidget *srate_text, *length_text, *chans_text, *maxamp_text;
 static regrow *region_row(int n);
 
+void reflect_regions_in_region_browser(void)
+{
+  int i;
+  if (reg_sp)
+    {
+      reg_sp->active = 1;
+      if (reg_sp->chans)
+	for (i = 0; i < reg_sp->nchans; i++)
+	  reg_sp->chans[i]->active = 1;
+    }
+}
+
+void reflect_no_regions_in_region_browser(void)
+{
+  int i;
+  if (reg_sp)
+    {
+      reg_sp->active = 0;
+      if (reg_sp->chans)
+	for (i = 0; i < reg_sp->nchans; i++)
+	  reg_sp->chans[i]->active = 0;
+    }
+}
+
 static void region_update_graph(chan_info *cp)
 {
   if (current_region == -1) return;

@@ -584,6 +584,7 @@ static void Invert_Color_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss;
   color_chooser_info *cd = (color_chooser_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ss = cd->state;
   in_set_color_inverted(ss, cb->set);
   map_over_chans(ss, update_graph, NULL);
@@ -605,6 +606,7 @@ static void Scale_Color_Callback(Widget w, XtPointer context, XtPointer info)
   int scale_val;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   color_chooser_info *cd = (color_chooser_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = cd->state;
   scale_val = cbs->value;
   if (scale_val <= 50) 
@@ -635,6 +637,7 @@ static void List_Color_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   color_chooser_info *cd = (color_chooser_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   ss = cd->state;
   in_set_color_map(ss, (cbs->item_position - 1));
   map_over_chans(ss, update_graph, NULL);
@@ -655,6 +658,7 @@ static void Cutoff_Color_Callback(Widget w, XtPointer context, XtPointer info) /
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   color_chooser_info *cd = (color_chooser_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = cd->state;
   in_set_color_cutoff(ss, (Float)(cbs->value) / 1000.0);
   map_over_chans(ss, update_graph, NULL);
@@ -894,6 +898,7 @@ static void AX_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   orientation_info *od = (orientation_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_x_angle(ss, (Float)(cbs->value));
   map_chans_field(ss, FCP_X_ANGLE, (Float)(cbs->value));
@@ -921,6 +926,7 @@ static void AY_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   orientation_info *od = (orientation_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_y_angle(ss, (Float)(cbs->value));
   map_chans_field(ss, FCP_Y_ANGLE, (Float)(cbs->value));
@@ -948,6 +954,7 @@ static void AZ_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   orientation_info *od = (orientation_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_z_angle(ss, (Float)(cbs->value));
   map_chans_field(ss, FCP_Z_ANGLE, (Float)(cbs->value));
@@ -975,6 +982,7 @@ static void SX_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   orientation_info *od = (orientation_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_x_scale(ss, (Float)(cbs->value) * 0.01);
   map_chans_field(ss, FCP_X_SCALE, (Float)(cbs->value) * 0.01);
@@ -1002,6 +1010,7 @@ static void SY_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   orientation_info *od = (orientation_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_y_scale(ss, (Float)(cbs->value) * 0.01);
   map_chans_field(ss, FCP_Y_SCALE, (Float)(cbs->value) * 0.01);
@@ -1029,6 +1038,7 @@ static void SZ_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   orientation_info *od = (orientation_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   in_set_spectro_z_scale(ss, (Float)(cbs->value) * 0.01);
   map_chans_field(ss, FCP_Z_SCALE, (Float)(cbs->value) * 0.01);
@@ -1059,6 +1069,7 @@ static void Hop_Orientation_Callback(Widget w, XtPointer context, XtPointer info
   int val;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   orientation_info *od = (orientation_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   val = mus_iclamp(1, cbs->value, 20);
   in_set_spectro_hop(ss, val);
@@ -1091,6 +1102,7 @@ static void Cut_Orientation_Callback(Widget w, XtPointer context, XtPointer info
   snd_state *ss;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   orientation_info *od = (orientation_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
   map_chans_field(ss, FCP_CUTOFF, (Float)(cbs->value) * 0.01);
   set_spectro_cutoff_and_redisplay(ss, (Float)(cbs->value) * 0.01); /* calls in_set... */

@@ -6,7 +6,7 @@ static void after_fft(snd_state *ss, chan_info *cp, Float scaler);
 
 static SCM lisp_graph_hook;
 static SCM mouse_press_hook, mark_click_hook;
-static SCM mouse_release_hook, mouse_drag_hook, key_press_hook, fft_hook;
+static SCM mouse_release_hook, mouse_drag_hook, key_press_hook, transform_hook;
 static SCM graph_hook, after_graph_hook;
 
 static void set_y_bounds(axis_info *ap);
@@ -47,15 +47,15 @@ void set_wavo_trace(snd_state *ss, int uval)
   map_over_chans(ss, map_chans_wavo_trace, (void *)(&val));
 }
 
-static int map_chans_max_fft_peaks(chan_info *cp, void *ptr) {cp->max_fft_peaks = (*((int *)ptr)); return(0);}
-static void set_max_fft_peaks(snd_state *ss, int uval) 
+static int map_chans_max_transform_peaks(chan_info *cp, void *ptr) {cp->max_transform_peaks = (*((int *)ptr)); return(0);}
+static void set_max_transform_peaks(snd_state *ss, int uval) 
 {
   int val; 
   if (uval < 0) 
     val = 0; 
   else val = uval; 
-  in_set_max_fft_peaks(ss, val); 
-  map_over_chans(ss, map_chans_max_fft_peaks, (void *)(&val));
+  in_set_max_transform_peaks(ss, val); 
+  map_over_chans(ss, map_chans_max_transform_peaks, (void *)(&val));
 }
 
 static int map_chans_zero_pad(chan_info *cp, void *ptr) {cp->zero_pad = (*((int *)ptr)); return(0);}
@@ -69,13 +69,13 @@ static void set_zero_pad(snd_state *ss, int uval)
   map_over_chans(ss, map_chans_zero_pad, (void *)(&val));
 }
 
-static int map_chans_fft_style(chan_info *cp, void *ptr) {cp->fft_style = (*((int *)ptr)); return(0);}
-void in_set_fft_style(snd_state *ss, int uval) 
+static int map_chans_transform_graph_type(chan_info *cp, void *ptr) {cp->transform_graph_type = (*((int *)ptr)); return(0);}
+void in_set_transform_graph_type(snd_state *ss, int uval) 
 {
   int val;
-  val = mus_iclamp(0, uval, MAX_FFT_STYLE);
-  in_set_fft_style_1(ss, val); 
-  map_over_chans(ss, map_chans_fft_style, (void *)(&val));
+  val = mus_iclamp(0, uval, MAX_TRANSFORM_GRAPH_TYPE);
+  in_set_transform_graph_type_1(ss, val); 
+  map_over_chans(ss, map_chans_transform_graph_type, (void *)(&val));
 }
 
 static int map_chans_show_mix_waveforms(chan_info *cp, void *ptr) {cp->show_mix_waveforms = (*((int *)ptr)); return(0);}
@@ -106,15 +106,15 @@ void map_chans_field(snd_state *ss, int field, Float val)
 	for (j = 0; j < sp->nchans; j++)
 	  switch (field)
 	    {
-	    case FCP_X_ANGLE: sp->chans[j]->spectro_x_angle = val;                   break;
-	    case FCP_X_SCALE: sp->chans[j]->spectro_x_scale = val;                   break;
-	    case FCP_Y_ANGLE: sp->chans[j]->spectro_y_angle = val;                   break;
-	    case FCP_Y_SCALE: sp->chans[j]->spectro_y_scale = val;                   break;
-	    case FCP_Z_ANGLE: sp->chans[j]->spectro_z_angle = val;                   break;
-	    case FCP_Z_SCALE: sp->chans[j]->spectro_z_scale = val;                   break;
+	    case FCP_X_ANGLE: sp->chans[j]->spectro_x_angle = val;                       break;
+	    case FCP_X_SCALE: sp->chans[j]->spectro_x_scale = val;                       break;
+	    case FCP_Y_ANGLE: sp->chans[j]->spectro_y_angle = val;                       break;
+	    case FCP_Y_SCALE: sp->chans[j]->spectro_y_scale = val;                       break;
+	    case FCP_Z_ANGLE: sp->chans[j]->spectro_z_angle = val;                       break;
+	    case FCP_Z_SCALE: sp->chans[j]->spectro_z_scale = val;                       break;
 	    case FCP_START:   sp->chans[j]->spectro_start = mus_fclamp(0.0, val, 1.0);   break;
 	    case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = mus_fclamp(0.0, val, 1.0);  break;
-	    case FCP_BETA:    sp->chans[j]->fft_beta = mus_fclamp(0.0, val, 1.0);        break;
+	    case FCP_BETA:    sp->chans[j]->fft_window_beta = mus_fclamp(0.0, val, 1.0); break;
 	    }
     }
 }
@@ -223,13 +223,13 @@ chan_info *virtual_selected_channel(chan_info *cp)
 int calculate_fft(chan_info *cp, void *ptr)
 {
   snd_state *ss;
-  if ((cp->ffting) &&
+  if ((cp->graph_transform_p) &&
       (!(chan_fft_in_progress(cp))))
     {
       ss = cp->state;
-      if (cp->fft_style == NORMAL_FFT)
+      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
 	{
-	  if (cp->fft_size >= 65536) 
+	  if (cp->transform_size >= 65536) 
 	    start_progress_report(cp->sound, NOT_FROM_ENVED);
 	  set_chan_fft_in_progress(cp,
 				   BACKGROUND_ADD(ss,
@@ -278,7 +278,7 @@ int update_graph(chan_info *cp, void *ptr)
   if (!(((cp->cgx)->ax)->wn)) 
     if (!(fixup_cp_cgx_ax_wn(cp))) 
       return(0);
-  if ((cp->ffting) && 
+  if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
     calculate_fft(cp, NULL);
   display_channel_data(cp, sp, ss);
@@ -681,13 +681,13 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
       ap->xmax = ap->xmin + .001;
       ap->x_ambit = .001;
     }
-  if (focus_style != FOCUS_LEFT)
+  if (focus_style != ZOOM_FOCUS_LEFT)
     {
       switch (focus_style)
 	{
-	case FOCUS_RIGHT:   ap->x0 = ap->x1 - ap->zx * ap->x_ambit; break;
-	case FOCUS_MIDDLE:  ap->x0 = 0.5 * ((ap->x1 + ap->x0) - ap->zx * ap->x_ambit); break;
-	case FOCUS_ACTIVE:
+	case ZOOM_FOCUS_RIGHT:   ap->x0 = ap->x1 - ap->zx * ap->x_ambit; break;
+	case ZOOM_FOCUS_MIDDLE:  ap->x0 = 0.5 * ((ap->x1 + ap->x0) - ap->zx * ap->x_ambit); break;
+	case ZOOM_FOCUS_ACTIVE:
 	  ncp = virtual_selected_channel(cp);
 	  /* axes should be the same, since all move together in this mode */
 	  if (ncp->cursor_visible)
@@ -875,7 +875,7 @@ static void display_channel_id (chan_info *cp, int height, int chans)
     }
 }
 
-static void display_selection_fft_size (chan_info *cp, axis_info *fap)
+static void display_selection_transform_size (chan_info *cp, axis_info *fap)
 {
   int x0, y0;
   if (fap->height < 60) return;
@@ -987,9 +987,9 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       if (sp)
 	{
-	  draw_grf_points(cp, ax, j, ap, 0.0, MAIN_GRAPH_STYLE(cp));
+	  draw_grf_points(cp, ax, j, ap, 0.0, TIME_GRAPH_STYLE(cp));
 	  if (cp->printing) 
-	    ps_draw_grf_points(cp, ap, j, 0.0, MAIN_GRAPH_STYLE(cp));
+	    ps_draw_grf_points(cp, ap, j, 0.0, TIME_GRAPH_STYLE(cp));
 	}
     }
   else
@@ -1047,9 +1047,9 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       if (sp)
 	{
-	  draw_both_grf_points(cp, ax, j, MAIN_GRAPH_STYLE(cp));
+	  draw_both_grf_points(cp, ax, j, TIME_GRAPH_STYLE(cp));
 	  if (cp->printing) 
-	    ps_draw_both_grf_points(cp, ap, j, MAIN_GRAPH_STYLE(cp));
+	    ps_draw_both_grf_points(cp, ap, j, TIME_GRAPH_STYLE(cp));
 	}
     }
   if (sf) {free_snd_fd(sf); sf = NULL;}
@@ -1277,11 +1277,11 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       else tens = -1;
   num_peaks = (fap->y_axis_y0 - fap->y_axis_y1) / 20;
   if (num_peaks <= 0) return;
-  peak_freqs = (fft_peak *)CALLOC(cp->max_fft_peaks, sizeof(fft_peak));
-  peak_amps = (fft_peak *)CALLOC(cp->max_fft_peaks, sizeof(fft_peak));
-  if (num_peaks > cp->max_fft_peaks) num_peaks = cp->max_fft_peaks;
+  peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
+  peak_amps = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
+  if (num_peaks > cp->max_transform_peaks) num_peaks = cp->max_transform_peaks;
   if (fft_data)
-    num_peaks = find_and_sort_fft_peaks(data, peak_freqs, num_peaks, samps, 1, samps_per_pixel, fft_scale); /* srate 1.0=>freqs between 0 and 1.0 */
+    num_peaks = find_and_sort_transform_peaks(data, peak_freqs, num_peaks, samps, 1, samps_per_pixel, fft_scale); /* srate 1.0=>freqs between 0 and 1.0 */
   else num_peaks = find_and_sort_peaks(data, peak_freqs, num_peaks, samps);
   if ((num_peaks == 1) && (peak_freqs[0].freq == 0.0)) 
     {
@@ -1298,7 +1298,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
     {
       col -= AMP_ROOM;
       if ((fft_data) && 
-	  (cp->normalize_fft == DONT_NORMALIZE))
+	  (cp->transform_normalization == DONT_NORMALIZE_TRANSFORM))
 	{
 	  col -= 5;
 	  acol -= 5;
@@ -1465,9 +1465,9 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		}
 	    }
 	}
-      draw_grf_points(cp, ax, i - losamp, fap, 0.0, FFT_GRAPH_STYLE(cp));
+      draw_grf_points(cp, ax, i - losamp, fap, 0.0, TRANSFORM_GRAPH_STYLE(cp));
       if (cp->printing) 
-	ps_draw_grf_points(cp, fap, i - losamp, 0.0, FFT_GRAPH_STYLE(cp));
+	ps_draw_grf_points(cp, fap, i - losamp, 0.0, TRANSFORM_GRAPH_STYLE(cp));
     }
   else
     {
@@ -1540,16 +1540,16 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		}
 	    }
 	}
-      draw_grf_points(cp, ax, j, fap, 0.0, FFT_GRAPH_STYLE(cp));
+      draw_grf_points(cp, ax, j, fap, 0.0, TRANSFORM_GRAPH_STYLE(cp));
       if (cp->printing) 
-	ps_draw_grf_points(cp, fap, j, 0.0, FFT_GRAPH_STYLE(cp));
+	ps_draw_grf_points(cp, fap, j, 0.0, TRANSFORM_GRAPH_STYLE(cp));
     }
   if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     {
       copy_context(cp); /* reset for axes etc */
       if (cp->printing) ps_reset_color(cp);
     }
-  if (cp->show_fft_peaks) 
+  if (cp->show_transform_peaks) 
     {
       if (cp->transform_type == FOURIER)
 	display_peaks(cp, fap, data, 
@@ -1559,11 +1559,11 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 			 (int)(fp->current_size * cp->spectro_cutoff), 
 			 hisamp, samples_per_pixel, 1, 0.0);
     }
-  if (cp->selection_transform_size != 0) display_selection_fft_size(cp, fap);
+  if (cp->selection_transform_size != 0) display_selection_transform_size(cp, fap);
   if (cp->hookable) after_fft(ss, cp, scale);
 }
 
-static int display_fft_peaks(chan_info *ucp, char *filename)
+static int display_transform_peaks(chan_info *ucp, char *filename)
 {
   /* put (sync'd) peak info in help window */
   char *str = NULL, *mcf = NULL;
@@ -1637,9 +1637,9 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 		      if (samps > (srate / 20)) 
 			tens = 0; 
 		      else tens = -1;
-		  peak_freqs = (fft_peak *)CALLOC(cp->max_fft_peaks, sizeof(fft_peak));
-		  peak_amps = (fft_peak *)CALLOC(cp->max_fft_peaks, sizeof(fft_peak));
-		  num_peaks = find_and_sort_fft_peaks(data, peak_freqs, cp->max_fft_peaks, samps, 1, samples_per_pixel, fp->scale);
+		  peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
+		  peak_amps = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
+		  num_peaks = find_and_sort_transform_peaks(data, peak_freqs, cp->max_transform_peaks, samps, 1, samples_per_pixel, fp->scale);
 		  if ((num_peaks != 1) || 
 		      (peak_freqs[0].freq != 0.0))
 		    {
@@ -1916,10 +1916,10 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		    ps_set_grf_point(ungrf_x(fap, (int)(xval + x0)), i, 
 				     ungrf_y(fap, (int)(yval + y0)));
 		}
-	      draw_grf_points(cp, ax, bins, fap, 0.0, FFT_GRAPH_STYLE(cp));
+	      draw_grf_points(cp, ax, bins, fap, 0.0, TRANSFORM_GRAPH_STYLE(cp));
 	      if (cp->printing) 
 		{
-		  ps_draw_grf_points(cp, fap, bins, 0.0, FFT_GRAPH_STYLE(cp));
+		  ps_draw_grf_points(cp, fap, bins, 0.0, TRANSFORM_GRAPH_STYLE(cp));
 		  check_for_event(ss);
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
@@ -2046,9 +2046,9 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		ps_set_grf_point(ungrf_x(ap, (int)(xval + x0)), i, 
 				 ungrf_y(ap, (int)(y0 + yval)));
 	    }
-	  draw_grf_points(cp, ax, cp->wavo_trace, ap, 0.0, MAIN_GRAPH_STYLE(cp));
+	  draw_grf_points(cp, ax, cp->wavo_trace, ap, 0.0, TIME_GRAPH_STYLE(cp));
 	  if (cp->printing) 
-	    ps_draw_grf_points(cp, ap, cp->wavo_trace, 0.0, MAIN_GRAPH_STYLE(cp));
+	    ps_draw_grf_points(cp, ap, cp->wavo_trace, 0.0, TIME_GRAPH_STYLE(cp));
 	}
     }
   else
@@ -2219,7 +2219,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  copy_context(cp); /* reset for axes etc */
 	  if (cp->printing) ps_reset_color(cp);
 	}
-      if (cp->show_fft_peaks) 
+      if (cp->show_transform_peaks) 
 	display_peaks(cp, uap, up->data[0], 1, up->len[0] - 1, samples_per_pixel, 0, 0.0);
     }
 }
@@ -2279,8 +2279,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   ap->window_width = width;
   ap->width = width;
   ap->y_offset = offset;
-  if (cp->waving) displays = 1; else displays = 0;
-  if (cp->lisp_graphing) displays++;
+  if (cp->graph_time_p) displays = 1; else displays = 0;
+  if (cp->graph_lisp_p) displays++;
   up = (lisp_grf *)(cp->lisp_info);
 
   if ((up == NULL) && 
@@ -2290,7 +2290,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       cp->lisp_info = (lisp_grf *)CALLOC(1, sizeof(lisp_grf));
       up = (lisp_grf *)(cp->lisp_info);
       up->axis = make_axis_info(cp, 0.0, 1.0, -1.0, 1.0, "dummy axis", 0.0, 1.0, -1.0, 1.0, NULL);
-      cp->lisp_graphing = 1;
+      cp->graph_lisp_p = 1;
     }
   if (up)
     {
@@ -2307,7 +2307,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     }
   else with_lisp = 0;
 
-  if (cp->ffting) displays++;
+  if (cp->graph_transform_p) displays++;
   fp = cp->fft;
   if (fp)
     {
@@ -2332,14 +2332,14 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 
   if (cp->graphs_horizontal)
     {
-      if (cp->waving) ap->width = width / displays;
+      if (cp->graph_time_p) ap->width = width / displays;
       if (with_fft) fap->width =  width / displays;
       if (with_lisp) uap->width = width / displays;
 
       /* now the x axis offsets for fap and uap */
       if (with_fft) 
 	{
-	  if (cp->waving) 
+	  if (cp->graph_time_p) 
 	    fap->graph_x0 = ap->width;
 	  else fap->graph_x0 = 0;
 	}
@@ -2349,14 +2349,14 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   else
     {
       height /= displays;
-      if (cp->waving) ap->height = height;
+      if (cp->graph_time_p) ap->height = height;
       if (with_fft) fap->height =  height;
       if (with_lisp) uap->height = height;
 
       /* now the y axis offsets for fap and uap */
       if (with_fft)
 	{
-	  if (cp->waving) fap->y_offset += height; 
+	  if (cp->graph_time_p) fap->y_offset += height; 
 	  fap->graph_x0 = 0;
 	}
       if (with_lisp) 
@@ -2371,7 +2371,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       marks_off(cp);
       clear_mix_tags(cp);
 
-      if (cp->waving)
+      if (cp->graph_time_p)
 	{
 	  if (cp->wavo)
 	    {
@@ -2415,17 +2415,17 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
                     /* In Gtk+ (apparently) the first proc added is run, not the most recent */
 #endif
 
-        if ((!cp->waving) || (just_fft))
+        if ((!cp->graph_time_p) || (just_fft))
 	    { /* make_graph does this -- sets losamp needed by fft to find its starting point */
 	      ap->losamp = (int)(ap->x0 * (double)SND_SRATE(sp));
 	      ap->hisamp = (int)(ap->x1 * (double)SND_SRATE(sp));
 	    }
-	  switch (cp->fft_style)
+	  switch (cp->transform_graph_type)
 	    {
-	    case NORMAL_FFT:  make_fft_graph(cp, sp, ss);                        break;
-	    case SONOGRAM:    make_sonogram(cp, sp, ss);                         break;
-	    case SPECTROGRAM: make_spectrogram(cp, sp, ss);                      break;
-	    default:          snd_error("unknown fft style: %d", cp->fft_style); break;
+	    case GRAPH_TRANSFORM_ONCE:           make_fft_graph(cp, sp, ss);                        break;
+	    case GRAPH_TRANSFORM_AS_SONOGRAM:    make_sonogram(cp, sp, ss);                         break;
+	    case GRAPH_TRANSFORM_AS_SPECTROGRAM: make_spectrogram(cp, sp, ss);                      break;
+	    default:                             snd_error("unknown fft style: %d", cp->transform_graph_type); break;
 	    }
 	}
     }
@@ -2434,7 +2434,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     {
       if (with_lisp)
 	{
-	  if ((just_lisp) || ((!(cp->waving)) && (!(with_fft))))
+	  if ((just_lisp) || ((!(cp->graph_time_p)) && (!(with_fft))))
 	    {
 	      ap->losamp = (int)(ap->x0 * (double)SND_SRATE(sp));
 	      ap->hisamp = (int)(ap->x1 * (double)SND_SRATE(sp));
@@ -2459,7 +2459,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 
       if (!just_lisp)
 	{
-	  if (cp->waving)
+	  if (cp->graph_time_p)
 	    {
 	      display_selection(cp);
 	      if ((cp->marks) && (cp->show_marks)) display_channel_marks(cp);
@@ -2575,7 +2575,7 @@ static void draw_graph_cursor(chan_info *cp)
 	  CALL3(cp->cursor_proc,
 		TO_SCM_INT(cp->sound->index),
 		TO_SCM_INT(cp->chan),
-		TO_SCM_INT(WAVE_AXIS_INFO),
+		TO_SCM_INT(TIME_AXIS_INFO),
 		__FUNCTION__);
 	  break;
 	}
@@ -2595,7 +2595,7 @@ static void draw_graph_cursor(chan_info *cp)
       CALL3(cp->cursor_proc,
 	    TO_SCM_INT(cp->sound->index),
 	    TO_SCM_INT(cp->chan),
-	    TO_SCM_INT(WAVE_AXIS_INFO),
+	    TO_SCM_INT(TIME_AXIS_INFO),
 	    __FUNCTION__);
       break;
     }
@@ -2812,7 +2812,7 @@ static int within_graph(chan_info *cp, int x, int y)
   x1 = x + SLOPPY_MOUSE;
   y0 = y - SLOPPY_MOUSE;
   y1 = y + SLOPPY_MOUSE;
-  if (cp->waving)
+  if (cp->graph_time_p)
     {
       ap = cp->axis;
       /* does (x, y) fall within the current axis bounds x_axis_x0|x1, y_axis_y0|y1 */
@@ -2820,12 +2820,12 @@ static int within_graph(chan_info *cp, int x, int y)
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(WAVE);
     }
-  if (cp->ffting)
+  if (cp->graph_transform_p)
     {
       fp = cp->fft;
       ap = fp->axis;
       /* look first for on-axis (axis drag) mouse */
-      if (cp->fft_style != SONOGRAM)
+      if (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SONOGRAM)
 	{
 	  if (((x >= ap->x_axis_x0) && (x <= ap->x_axis_x1)) && 
 	      ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y0)))
@@ -2842,7 +2842,7 @@ static int within_graph(chan_info *cp, int x, int y)
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(FFT_MAIN);
     }
-  if ((cp->lisp_graphing) && (cp->lisp_info))
+  if ((cp->graph_lisp_p) && (cp->lisp_info))
     {
       ap = (cp->lisp_info)->axis;
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
@@ -2869,7 +2869,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0);
   if (cp->fft_log_frequency)                                /* map axis x1 = 1.0 to srate/2 */
     xf = ((exp(xf * log(LOG_FACTOR + 1.0)) - 1.0) / LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff; 
-  if (cp->fft_style == NORMAL_FFT)                          /* fp->data[bins] */
+  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)                          /* fp->data[bins] */
     {
       if (cp->transform_type == FOURIER)
 	ind = (int)((fp->current_size * xf) / (Float)SND_SRATE(cp->sound));
@@ -2883,7 +2883,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
     }
   else 
     {
-      if (cp->fft_style == SONOGRAM) 	  /* si->data[slices][bins] */
+      if (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SONOGRAM) 	  /* si->data[slices][bins] */
 	{
 	  yf = ap->y0 + (ap->y1 - ap->y0) * (Float)(y - ap->y_axis_y0) / (Float)(ap->y_axis_y1 - ap->y_axis_y0);
 	  si = (sono_info *)(cp->sonogram_data);
@@ -2903,14 +2903,14 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 
 void fftb(chan_info *cp, int on)
 {
-  cp->ffting = on;
+  cp->graph_transform_p = on;
   set_toggle_button(channel_f(cp), on, FALSE, (void *)cp);
   calculate_fft(cp, NULL);
 }
 
 void waveb(chan_info *cp, int on)
 {
-  cp->waving = on;
+  cp->graph_time_p = on;
   set_toggle_button(channel_w(cp), on, FALSE, (void *)cp);
   update_graph(cp, NULL);
 }
@@ -2922,13 +2922,13 @@ static void propogate_wf_state(snd_info *sp)
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       cp = sp->chans[0];
-      w = cp->waving;
-      f = cp->ffting;
+      w = cp->graph_time_p;
+      f = cp->graph_transform_p;
       for (i = 1; i < sp->nchans; i++) 
 	{
 	  cp = sp->chans[i];
-	  cp->waving = w;
-	  cp->ffting = f;
+	  cp->graph_time_p = w;
+	  cp->graph_transform_p = f;
 	  set_toggle_button(channel_f(cp), (f) ? TRUE : FALSE, FALSE, (void *)cp);
 	  set_toggle_button(channel_w(cp), (w) ? TRUE : FALSE, FALSE, (void *)cp);
 	}
@@ -2941,7 +2941,7 @@ void f_button_callback(chan_info *cp, int on, int with_control)
   snd_info *sp;
   int i;
   chan_info *ncp;
-  cp->ffting = on;
+  cp->graph_transform_p = on;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     propogate_wf_state(sp);
@@ -2955,7 +2955,7 @@ void f_button_callback(chan_info *cp, int on, int with_control)
 	      ncp = sp->chans[i];
 	      if (cp != ncp)
 		{
-		  ncp->ffting = on;
+		  ncp->graph_transform_p = on;
 #if USE_GTK
 		  set_toggle_button(channel_f(ncp), (on) ? TRUE : FALSE, TRUE, (void *)cp);
 #else
@@ -2974,7 +2974,7 @@ void w_button_callback(chan_info *cp, int on, int with_control)
   snd_info *sp;
   int i;
   chan_info *ncp;
-  cp->waving = on;
+  cp->graph_time_p = on;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     propogate_wf_state(sp);
@@ -2988,7 +2988,7 @@ void w_button_callback(chan_info *cp, int on, int with_control)
 	      ncp = sp->chans[i];
 	      if (cp != ncp)
 		{
-		  ncp->waving = on;
+		  ncp->graph_time_p = on;
 #if USE_GTK
 		  set_toggle_button(channel_w(ncp), (on) ? TRUE : FALSE, TRUE, (void *)cp);
 #else
@@ -3032,7 +3032,7 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
   cp = virtual_selected_channel(ncp);
   sp = cp->sound;
   select_channel(sp, cp->chan);
-  if ((cp->lisp_graphing) && 
+  if ((cp->graph_lisp_p) && 
       (within_graph(cp, x, y) == LISP) &&
       (HOOKED(key_press_hook)))
     {
@@ -3075,7 +3075,7 @@ static Float fft_axis_extent(chan_info *cp)
   fft_info *fp;
   fp = cp->fft;
   ap = fp->axis;
-  if (cp->fft_style != SONOGRAM)
+  if (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SONOGRAM)
     return((Float)(ap->x_axis_x1 - ap->x_axis_x0));
   else return((Float)(ap->y_axis_y0 - ap->y_axis_y1));
 }
@@ -3126,7 +3126,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   click_within_graph = within_graph(cp, x, y);
   if (click_within_graph == FFT_AXIS) 
     {
-      if (cp->fft_style != SONOGRAM)
+      if (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SONOGRAM)
 	fft_axis_start = x;
       else fft_axis_start = y;
     }
@@ -3383,7 +3383,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 		{
 		  /* change spectro_cutoff(ss) and redisplay fft */
 		  old_cutoff = cp->spectro_cutoff;
-		  if (cp->fft_style != SONOGRAM)
+		  if (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SONOGRAM)
 		    {
 		      set_spectro_cutoff(ss, cp->spectro_cutoff + ((Float)(fft_axis_start - x) / fft_axis_extent(cp)));
 		      fft_axis_start = x;
@@ -3398,7 +3398,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 		  if (old_cutoff != spectro_cutoff(ss)) 
 		    {
 		      reflect_spectro(ss);
-		      if (cp->fft_style != NORMAL_FFT)
+		      if (cp->transform_graph_type != GRAPH_TRANSFORM_ONCE)
 			map_over_chans(ss, sono_update, NULL);
 		      else map_over_chans(ss, update_graph, NULL);
 		    }
@@ -3494,14 +3494,14 @@ static axis_context *combined_context (chan_info *cp)       {return(set_context(
 
 #include "vct.h"
 
-enum {CP_FFTING, CP_WAVING, CP_FRAMES, CP_CURSOR, CP_LISP_GRAPHING, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
+enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP_P, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
       CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK,
-      CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_WAVO, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_FFT_PEAKS, 
-      CP_SHOW_FFT_PEAKS, CP_ZERO_PAD, CP_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
-      CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_FFT_SIZE, CP_FFT_STYLE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
-      CP_NORMALIZE_FFT, CP_SHOW_MIX_WAVEFORMS, CP_GRAPH_STYLE, CP_DOT_SIZE,
+      CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_WAVO, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_TRANSFORM_PEAKS, 
+      CP_SHOW_TRANSFORM_PEAKS, CP_ZERO_PAD, CP_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
+      CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_TRANSFORM_SIZE, CP_TRANSFORM_GRAPH_TYPE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
+      CP_TRANSFORM_NORMALIZATION, CP_SHOW_MIX_WAVEFORMS, CP_GRAPH_STYLE, CP_DOT_SIZE,
       CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_SYNC, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
-      CP_EDPOS_FRAMES
+      CP_EDPOS_FRAMES, CP_TIME_GRAPH_TYPE
 };
 
 static SCM cp_edpos;
@@ -3542,11 +3542,11 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	  switch(fld)
 	    {
 	    case CP_EDIT_CTR:           return(TO_SCM_INT(cp->edit_ctr));                          break;
-	    case CP_FFTING:             return(TO_SCM_BOOLEAN(cp->ffting));                        break;
-	    case CP_WAVING:             return(TO_SCM_BOOLEAN(cp->waving));                        break;
+	    case CP_GRAPH_TRANSFORM_P:  return(TO_SCM_BOOLEAN(cp->graph_transform_p));             break;
+	    case CP_GRAPH_TIME_P:       return(TO_SCM_BOOLEAN(cp->graph_time_p));                  break;
 	    case CP_CURSOR:             return(TO_SCM_INT(cp->cursor));                            break;
 	    case CP_FRAMES:             return(TO_SCM_INT(current_ed_samples(cp)));                break;
-	    case CP_LISP_GRAPHING:      return(TO_SCM_BOOLEAN(cp->lisp_graphing));                 break;
+	    case CP_GRAPH_LISP_P:       return(TO_SCM_BOOLEAN(cp->graph_lisp_p));                  break;
 	    case CP_AP_LOSAMP:          if (cp->axis) return(TO_SCM_INT((cp->axis)->losamp));      break;
 	    case CP_AP_HISAMP:          if (cp->axis) return(TO_SCM_INT((cp->axis)->hisamp));      break;
 	    case CP_SQUELCH_UPDATE:     return(TO_SCM_BOOLEAN(cp->squelch_update));                break;
@@ -3559,19 +3559,19 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case CP_WAVO:               return(TO_SCM_BOOLEAN(cp->wavo));                          break;
 	    case CP_WAVO_HOP:           return(TO_SCM_INT(cp->wavo_hop));                          break;
 	    case CP_WAVO_TRACE:         return(TO_SCM_INT(cp->wavo_trace));                        break;
-	    case CP_MAX_FFT_PEAKS:      return(TO_SCM_INT(cp->max_fft_peaks));                     break;
+	    case CP_MAX_TRANSFORM_PEAKS: return(TO_SCM_INT(cp->max_transform_peaks));              break;
 	    case CP_ZERO_PAD:           return(TO_SCM_INT(cp->zero_pad));                          break;
 	    case CP_WAVELET_TYPE:       return(TO_SCM_INT(cp->wavelet_type));                      break;
-	    case CP_SHOW_FFT_PEAKS:     return(TO_SCM_BOOLEAN(cp->show_fft_peaks));                break;
+	    case CP_SHOW_TRANSFORM_PEAKS: return(TO_SCM_BOOLEAN(cp->show_transform_peaks));        break;
 	    case CP_VERBOSE_CURSOR:     return(TO_SCM_BOOLEAN(cp->verbose_cursor));                break;
 	    case CP_FFT_LOG_FREQUENCY:  return(TO_SCM_BOOLEAN(cp->fft_log_frequency));             break;
 	    case CP_FFT_LOG_MAGNITUDE:  return(TO_SCM_BOOLEAN(cp->fft_log_magnitude));             break;
 	    case CP_SPECTRO_HOP:        return(TO_SCM_INT(cp->spectro_hop));                       break;
-	    case CP_FFT_SIZE:           return(TO_SCM_INT(cp->fft_size));                          break;
-	    case CP_FFT_STYLE:          return(TO_SCM_INT(cp->fft_style));                         break;
+	    case CP_TRANSFORM_SIZE:     return(TO_SCM_INT(cp->transform_size));                    break;
+	    case CP_TRANSFORM_GRAPH_TYPE: return(TO_SCM_INT(cp->transform_graph_type));            break;
 	    case CP_FFT_WINDOW:         return(TO_SCM_INT(cp->fft_window));                        break;
 	    case CP_TRANSFORM_TYPE:     return(TO_SCM_INT(cp->transform_type));                    break;
-	    case CP_NORMALIZE_FFT:      return(TO_SCM_INT(cp->normalize_fft));                     break;
+	    case CP_TRANSFORM_NORMALIZATION: return(TO_SCM_INT(cp->transform_normalization));      break;
 	    case CP_SHOW_MIX_WAVEFORMS: return(TO_SCM_BOOLEAN(cp->show_mix_waveforms));            break;
 	    case CP_GRAPH_STYLE:        return(TO_SCM_INT(cp->graph_style));                       break;
 	    case CP_DOT_SIZE:           return(TO_SCM_INT(cp->dot_size));                          break;
@@ -3580,6 +3580,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case CP_SYNC:               return(TO_SCM_INT(cp->sync));                              break;
 	    case CP_CURSOR_POSITION:    return(SCM_LIST2(TO_SCM_INT(cp->cx), TO_SCM_INT(cp->cy))); break;
 	    case CP_EDPOS_FRAMES:       return(TO_SCM_INT(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
+	    case CP_TIME_GRAPH_TYPE:    return(TO_SCM_INT(cp->time_graph_type));                   break;
 	    }
 	}
     }
@@ -3639,11 +3640,11 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       else undo_edit(cp, cp->edit_ctr - val);
       return(TO_SCM_INT(cp->edit_ctr));
       break;
-    case CP_FFTING:
+    case CP_GRAPH_TRANSFORM_P:
       fftb(cp, val = TO_C_BOOLEAN_OR_T(on)); 
       update_graph(cp, NULL);
       break;
-    case CP_WAVING:
+    case CP_GRAPH_TIME_P:
       waveb(cp, val = TO_C_BOOLEAN_OR_T(on)); 
       update_graph(cp, NULL);
       break;
@@ -3651,9 +3652,9 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       cp->cursor_on = 1; 
       handle_cursor(cp, cursor_moveto(cp, val = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, 1, caller)));
       break;
-    case CP_LISP_GRAPHING:
-      cp->lisp_graphing = TO_C_BOOLEAN_OR_T(on); 
-      val = cp->lisp_graphing; 
+    case CP_GRAPH_LISP_P:
+      cp->graph_lisp_p = TO_C_BOOLEAN_OR_T(on); 
+      val = cp->graph_lisp_p; 
       update_graph(cp, NULL);
       break;
     case CP_AP_LOSAMP:
@@ -3730,9 +3731,9 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       update_graph(cp, NULL); 
       return(TO_SCM_INT(cp->wavo_trace));
       break;
-    case CP_MAX_FFT_PEAKS:
-      cp->max_fft_peaks = g_imin(0, on, DEFAULT_MAX_FFT_PEAKS); 
-      return(TO_SCM_INT(cp->max_fft_peaks));
+    case CP_MAX_TRANSFORM_PEAKS:
+      cp->max_transform_peaks = g_imin(0, on, DEFAULT_MAX_TRANSFORM_PEAKS); 
+      return(TO_SCM_INT(cp->max_transform_peaks));
       break;
     case CP_ZERO_PAD:
       cp->zero_pad = g_imin(0, on, DEFAULT_ZERO_PAD); 
@@ -3744,10 +3745,10 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       update_graph(cp, NULL);
       return(TO_SCM_INT(cp->wavelet_type));
       break;
-    case CP_SHOW_FFT_PEAKS:
-      cp->show_fft_peaks = TO_C_BOOLEAN_OR_T(on); 
+    case CP_SHOW_TRANSFORM_PEAKS:
+      cp->show_transform_peaks = TO_C_BOOLEAN_OR_T(on); 
       update_graph(cp, NULL); 
-      return(TO_SCM_BOOLEAN(cp->show_fft_peaks));
+      return(TO_SCM_BOOLEAN(cp->show_transform_peaks));
       break;
     case CP_VERBOSE_CURSOR:
       cp->verbose_cursor = TO_C_BOOLEAN_OR_T(on); 
@@ -3755,28 +3756,28 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       break;
     case CP_FFT_LOG_FREQUENCY:
       cp->fft_log_frequency = TO_C_BOOLEAN_OR_T(on); 
-      if (cp->ffting) calculate_fft(cp, NULL); 
+      if (cp->graph_transform_p) calculate_fft(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->fft_log_frequency));
       break;
     case CP_FFT_LOG_MAGNITUDE:
       cp->fft_log_magnitude = TO_C_BOOLEAN_OR_T(on); 
-      if (cp->ffting) calculate_fft(cp, NULL); 
+      if (cp->graph_transform_p) calculate_fft(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->fft_log_magnitude));
       break;
     case CP_SPECTRO_HOP:
       cp->spectro_hop = g_imin(1, on, DEFAULT_SPECTRO_HOP); 
-      if (cp->ffting) calculate_fft(cp, NULL); 
+      if (cp->graph_transform_p) calculate_fft(cp, NULL); 
       return(TO_SCM_INT(cp->spectro_hop));
       break;
-    case CP_FFT_SIZE:
-      cp->fft_size = g_imin(1, on, DEFAULT_FFT_SIZE); 
+    case CP_TRANSFORM_SIZE:
+      cp->transform_size = g_imin(1, on, DEFAULT_TRANSFORM_SIZE); 
       calculate_fft(cp, NULL);
-      return(TO_SCM_INT(cp->fft_size));
+      return(TO_SCM_INT(cp->transform_size));
       break;
-    case CP_FFT_STYLE: 
-      cp->fft_style = g_mus_iclamp(0, on, DEFAULT_FFT_STYLE, MAX_FFT_STYLE); 
+    case CP_TRANSFORM_GRAPH_TYPE: 
+      cp->transform_graph_type = g_mus_iclamp(0, on, DEFAULT_TRANSFORM_GRAPH_TYPE, MAX_TRANSFORM_GRAPH_TYPE); 
       calculate_fft(cp, NULL); 
-      return(TO_SCM_INT(cp->fft_style)); 
+      return(TO_SCM_INT(cp->transform_graph_type)); 
       break;
     case CP_FFT_WINDOW:
       cp->fft_window = g_mus_iclamp(0, on, DEFAULT_FFT_WINDOW, NUM_FFT_WINDOWS - 1); 
@@ -3788,21 +3789,21 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       calculate_fft(cp, NULL); 
       return(TO_SCM_INT(cp->transform_type));
       break;
-    case CP_NORMALIZE_FFT:      
+    case CP_TRANSFORM_NORMALIZATION:      
       if (INTEGER_P(on))
-	cp->normalize_fft = TO_SMALL_C_INT(on);
+	cp->transform_normalization = TO_SMALL_C_INT(on);
       else
 	if (NUMBER_P(on))
-	  cp->normalize_fft = ((int)TO_C_DOUBLE_WITH_ORIGIN(on, caller));
+	  cp->transform_normalization = ((int)TO_C_DOUBLE_WITH_ORIGIN(on, caller));
 	else
 	  if (FALSE_P(on))
-	    cp->normalize_fft = 0;
+	    cp->transform_normalization = 0;
 	  else 
 	    if (TRUE_P(on))
-	      cp->normalize_fft = 1;
-	    else cp->normalize_fft = DEFAULT_NORMALIZE_FFT;
+	      cp->transform_normalization = 1;
+	    else cp->transform_normalization = DEFAULT_TRANSFORM_NORMALIZATION;
       calculate_fft(cp, NULL); 
-      return(TO_SCM_INT(cp->normalize_fft));
+      return(TO_SCM_INT(cp->transform_normalization));
       break;
     case CP_SHOW_MIX_WAVEFORMS: 
       cp->show_mix_waveforms = TO_C_BOOLEAN_OR_T(on); 
@@ -3833,6 +3834,8 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       cp->sync = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, 1, caller); 
       return(TO_SCM_INT(cp->sync)); 
       break;
+    case CP_TIME_GRAPH_TYPE: 
+      cp->time_graph_type = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, GRAPH_TIME_ONCE, caller);
     case CP_FRAMES:
       /* if less than current, delete, else zero pad */
       curlen = current_ed_samples(cp);
@@ -3851,7 +3854,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 }
 
 enum {CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
-      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP
+      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP
 };
 
 
@@ -3911,7 +3914,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
     case CP_SPECTRO_Z_SCALE: return(TO_SCM_DOUBLE(cp->spectro_z_scale));              break;
     case CP_SPECTRO_CUTOFF:  return(TO_SCM_DOUBLE(cp->spectro_cutoff));               break;
     case CP_SPECTRO_START:   return(TO_SCM_DOUBLE(cp->spectro_start));                break;
-    case CP_FFT_BETA:        return(TO_SCM_DOUBLE(cp->fft_beta));                     break;
+    case CP_FFT_WINDOW_BETA:        return(TO_SCM_DOUBLE(cp->fft_window_beta));                     break;
     case CP_MAXAMP:          return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION)));        break;
     case CP_EDPOS_MAXAMP:    return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
     }
@@ -3984,10 +3987,10 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       calculate_fft(cp, NULL); 
       return(TO_SCM_DOUBLE(cp->spectro_start));   
       break;
-    case CP_FFT_BETA:        
-      cp->fft_beta = mus_fclamp(0.0, TO_C_DOUBLE(on), 1.0); 
+    case CP_FFT_WINDOW_BETA:        
+      cp->fft_window_beta = mus_fclamp(0.0, TO_C_DOUBLE(on), 1.0); 
       calculate_fft(cp, NULL); 
-      return(TO_SCM_DOUBLE(cp->fft_beta));             
+      return(TO_SCM_DOUBLE(cp->fft_window_beta));             
       break;
     case CP_MAXAMP:
       curamp = get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION);
@@ -4031,47 +4034,47 @@ static SCM g_set_edit_position(SCM on, SCM snd_n, SCM chn_n)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_edit_position_reversed, g_set_edit_position)
 
-static SCM g_ffting(SCM snd_n, SCM chn_n) 
+static SCM g_graph_transform_p(SCM snd_n, SCM chn_n) 
 {
-  #define H_ffting "(" S_ffting " &optional snd chn) -> #t if fft display is active in snd's channel chn"
-  return(cp_iread(snd_n, chn_n, CP_FFTING, S_ffting));
+  #define H_graph_transform_p "(" S_graph_transform_p " &optional snd chn) -> #t if fft display is active in snd's channel chn"
+  return(cp_iread(snd_n, chn_n, CP_GRAPH_TRANSFORM_P, S_graph_transform_p));
 }
 
-static SCM g_set_ffting(SCM on, SCM snd_n, SCM chn_n) 
+static SCM g_set_graph_transform_p(SCM on, SCM snd_n, SCM chn_n) 
 {
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_ffting, "a boolean");
-  return(cp_iwrite(snd_n, chn_n, on, CP_FFTING, "set-" S_ffting));
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_graph_transform_p, "a boolean");
+  return(cp_iwrite(snd_n, chn_n, on, CP_GRAPH_TRANSFORM_P, "set-" S_graph_transform_p));
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_ffting_reversed, g_set_ffting)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_transform_p_reversed, g_set_graph_transform_p)
 
-static SCM g_waving(SCM snd_n, SCM chn_n) 
+static SCM g_graph_time_p(SCM snd_n, SCM chn_n) 
 {
-  #define H_waving "(" S_waving " &optional snd chn) -> #t if time domain display is active in snd's channel chn"
-  return(cp_iread(snd_n, chn_n, CP_WAVING, S_waving));
+  #define H_graph_time_p "(" S_graph_time_p " &optional snd chn) -> #t if time domain display is active in snd's channel chn"
+  return(cp_iread(snd_n, chn_n, CP_GRAPH_TIME_P, S_graph_time_p));
 }
 
-static SCM g_set_waving(SCM on, SCM snd_n, SCM chn_n) 
+static SCM g_set_graph_time_p(SCM on, SCM snd_n, SCM chn_n) 
 {
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_waving, "a boolean");
-  return(cp_iwrite(snd_n, chn_n, on, CP_WAVING, "set-" S_waving));
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_graph_time_p, "a boolean");
+  return(cp_iwrite(snd_n, chn_n, on, CP_GRAPH_TIME_P, "set-" S_graph_time_p));
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_waving_reversed, g_set_waving)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_time_p_reversed, g_set_graph_time_p)
 
-static SCM g_graphing(SCM snd_n, SCM chn_n) 
+static SCM g_graph_lisp_p(SCM snd_n, SCM chn_n) 
 {
-  #define H_graphing "(" S_graphing " &optional snd chn) -> #t if lisp-generated data display is active in snd's channel chn"
-  return(cp_iread(snd_n, chn_n, CP_LISP_GRAPHING, S_graphing));
+  #define H_graph_lisp_p "(" S_graph_lisp_p " &optional snd chn) -> #t if lisp-generated data display is active in snd's channel chn"
+  return(cp_iread(snd_n, chn_n, CP_GRAPH_LISP_P, S_graph_lisp_p));
 }
 
-static SCM g_set_graphing(SCM on, SCM snd_n, SCM chn_n) 
+static SCM g_set_graph_lisp_p(SCM on, SCM snd_n, SCM chn_n) 
 {
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_graphing, "a boolean");
-  return(cp_iwrite(snd_n, chn_n, on, CP_LISP_GRAPHING, "set-" S_graphing));
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_graph_lisp_p, "a boolean");
+  return(cp_iwrite(snd_n, chn_n, on, CP_GRAPH_LISP_P, "set-" S_graph_lisp_p));
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graphing_reversed, g_set_graphing)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_lisp_p_reversed, g_set_graph_lisp_p)
 
 static SCM g_cursor(SCM snd_n, SCM chn_n) 
 {
@@ -4304,29 +4307,29 @@ static SCM g_set_min_dB(SCM val, SCM snd, SCM chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_min_dB_reversed, g_set_min_dB)
 
-static SCM g_fft_beta(SCM snd, SCM chn) 
+static SCM g_fft_window_beta(SCM snd, SCM chn) 
 {
-  #define H_fft_beta "(" S_fft_beta " *optional (snd #t) (chn #t)) -> 'beta' fft data window parameter value (0.0)"
+  #define H_fft_window_beta "(" S_fft_window_beta " *optional (snd #t) (chn #t)) -> 'beta' fft data window parameter value (0.0)"
   if (BOUND_P(snd))
-    return(cp_fread(snd, chn, CP_FFT_BETA, S_fft_beta));
-  return(TO_SCM_DOUBLE(fft_beta(get_global_state())));
+    return(cp_fread(snd, chn, CP_FFT_WINDOW_BETA, S_fft_window_beta));
+  return(TO_SCM_DOUBLE(fft_window_beta(get_global_state())));
 }
 
-static SCM g_set_fft_beta(SCM val, SCM snd, SCM chn) 
+static SCM g_set_fft_window_beta(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG1, "set-" S_fft_beta, "a number"); 
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG1, "set-" S_fft_window_beta, "a number"); 
   if (BOUND_P(snd))
-    return(cp_fwrite(snd, chn, val, CP_FFT_BETA, "set-" S_fft_beta));
+    return(cp_fwrite(snd, chn, val, CP_FFT_WINDOW_BETA, "set-" S_fft_window_beta));
   else
     {
       ss = get_global_state();
-      set_fft_beta(ss, mus_fclamp(0.0, TO_C_DOUBLE(val), 1.0));
-      return(TO_SCM_DOUBLE(fft_beta(ss)));
+      set_fft_window_beta(ss, mus_fclamp(0.0, TO_C_DOUBLE(val), 1.0));
+      return(TO_SCM_DOUBLE(fft_window_beta(ss)));
     }
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_beta_reversed, g_set_fft_beta)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_beta_reversed, g_set_fft_window_beta)
 
 static SCM g_spectro_cutoff(SCM snd, SCM chn) 
 {
@@ -4569,29 +4572,29 @@ static SCM g_set_show_marks(SCM on, SCM snd, SCM chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_marks_reversed, g_set_show_marks)
 
-static SCM g_show_fft_peaks(SCM snd, SCM chn)
+static SCM g_show_transform_peaks(SCM snd, SCM chn)
 {
-  #define H_show_fft_peaks "(" S_show_fft_peaks " (snd #t) (chn #t)) -> #t if fft display should include peak list"
+  #define H_show_transform_peaks "(" S_show_transform_peaks " (snd #t) (chn #t)) -> #t if fft display should include peak list"
   if (BOUND_P(snd))
-    return(cp_iread(snd, chn, CP_SHOW_FFT_PEAKS, S_show_fft_peaks));
-  return(TO_SCM_BOOLEAN(show_fft_peaks(get_global_state())));
+    return(cp_iread(snd, chn, CP_SHOW_TRANSFORM_PEAKS, S_show_transform_peaks));
+  return(TO_SCM_BOOLEAN(show_transform_peaks(get_global_state())));
 }
 
-static SCM g_set_show_fft_peaks(SCM val, SCM snd, SCM chn)
+static SCM g_set_show_transform_peaks(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_show_fft_peaks, "a boolean");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_show_transform_peaks, "a boolean");
   if (BOUND_P(snd))
-    return(cp_iwrite(snd, chn, val, CP_SHOW_FFT_PEAKS, "set-" S_show_fft_peaks));
+    return(cp_iwrite(snd, chn, val, CP_SHOW_TRANSFORM_PEAKS, "set-" S_show_transform_peaks));
   else
     {
       ss = get_global_state();
-      set_show_fft_peaks(ss, TO_C_BOOLEAN_OR_T(val));
-      return(TO_SCM_BOOLEAN(show_fft_peaks(ss)));
+      set_show_transform_peaks(ss, TO_C_BOOLEAN_OR_T(val));
+      return(TO_SCM_BOOLEAN(show_transform_peaks(ss)));
     }
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_fft_peaks_reversed, g_set_show_fft_peaks)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_transform_peaks_reversed, g_set_show_transform_peaks)
 
 static SCM g_zero_pad(SCM snd, SCM chn)
 {
@@ -4812,58 +4815,58 @@ static SCM g_set_wavo_trace(SCM val, SCM snd, SCM chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
 
-static SCM g_fft_size(SCM snd, SCM chn)
+static SCM g_transform_size(SCM snd, SCM chn)
 {
-  #define H_fft_size "(" S_fft_size " (snd #t) (chn #t)) -> current fft size (256)"
+  #define H_transform_size "(" S_transform_size " (snd #t) (chn #t)) -> current fft size (256)"
   if (BOUND_P(snd))
-    return(cp_iread(snd, chn, CP_FFT_SIZE, S_fft_size));
-  return(TO_SCM_INT(fft_size(get_global_state())));
+    return(cp_iread(snd, chn, CP_TRANSFORM_SIZE, S_transform_size));
+  return(TO_SCM_INT(transform_size(get_global_state())));
 }
 
-static SCM g_set_fft_size(SCM val, SCM snd, SCM chn)
+static SCM g_set_transform_size(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
   int len;
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_fft_size, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_transform_size, "an integer"); 
   len = TO_C_INT(val);
   if (len <= 0) return(SCM_BOOL_F);
   if (BOUND_P(snd))
-    return(cp_iwrite(snd, chn, val, CP_FFT_SIZE, "set-" S_fft_size));
+    return(cp_iwrite(snd, chn, val, CP_TRANSFORM_SIZE, "set-" S_transform_size));
   else
     {
       ss = get_global_state();
-      set_fft_size(ss, (int)pow(2, (ceil(log((double)(len))/log(2.0)))));
-      return(TO_SCM_INT(fft_size(ss)));
+      set_transform_size(ss, (int)pow(2, (ceil(log((double)(len))/log(2.0)))));
+      return(TO_SCM_INT(transform_size(ss)));
     }
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_size_reversed, g_set_fft_size)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_size_reversed, g_set_transform_size)
 
-static SCM g_fft_style(SCM snd, SCM chn)
+static SCM g_transform_graph_type(SCM snd, SCM chn)
 {
-  #define H_fft_style "(" S_fft_style " (snd #t) (chn #t)) -> normal-fft, sonogram, or spectrogram"
+  #define H_transform_graph_type "(" S_transform_graph_type " (snd #t) (chn #t)) -> normal-fft, sonogram, or spectrogram"
   if (BOUND_P(snd))
-    return(cp_iread(snd, chn, CP_FFT_STYLE, S_fft_style));
-  return(TO_SCM_INT(fft_style(get_global_state())));
+    return(cp_iread(snd, chn, CP_TRANSFORM_GRAPH_TYPE, S_transform_graph_type));
+  return(TO_SCM_INT(transform_graph_type(get_global_state())));
 }
 
-static SCM g_set_fft_style(SCM val, SCM snd, SCM chn)
+static SCM g_set_transform_graph_type(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
   int style;
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_fft_style, "an integer"); 
-  style = mus_iclamp(NORMAL_FFT, TO_C_INT(val), SPECTROGRAM);
+  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_transform_graph_type, "an integer"); 
+  style = mus_iclamp(GRAPH_TRANSFORM_ONCE, TO_C_INT(val), GRAPH_TRANSFORM_AS_SPECTROGRAM);
   if (BOUND_P(snd))
-    return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(style), CP_FFT_STYLE, "set-" S_fft_style));
+    return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(style), CP_TRANSFORM_GRAPH_TYPE, "set-" S_transform_graph_type));
   else
     {
       ss = get_global_state();
-      set_fft_style(ss, style);
-      return(TO_SCM_INT(fft_style(ss)));
+      set_transform_graph_type(ss, style);
+      return(TO_SCM_INT(transform_graph_type(ss)));
     }
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_style_reversed, g_set_fft_style)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_type_reversed, g_set_transform_graph_type)
 
 static SCM g_fft_window(SCM snd, SCM chn)
 {
@@ -4917,58 +4920,58 @@ static SCM g_set_transform_type(SCM val, SCM snd, SCM chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_type_reversed, g_set_transform_type)
 
-static SCM g_normalize_fft(SCM snd, SCM chn)
+static SCM g_transform_normalization(SCM snd, SCM chn)
 {
-  #define H_normalize_fft "(" S_normalize_fft " (snd #t) (chn #t)) -> one of '(" S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally ") \
-decides whether spectral data is normalized before display (default: " S_normalize_by_channel ")"
+  #define H_transform_normalization "(" S_transform_normalization " (snd #t) (chn #t)) -> one of '(" S_dont_normalize_transform " " S_normalize_transform_by_channel " " S_normalize_transform_by_sound " " S_normalize_transform_globally ") \
+decides whether spectral data is normalized before display (default: " S_normalize_transform_by_channel ")"
 
   if (BOUND_P(snd))
-    return(cp_iread(snd, chn, CP_NORMALIZE_FFT, S_normalize_fft));
-  return(TO_SCM_INT(normalize_fft(get_global_state())));
+    return(cp_iread(snd, chn, CP_TRANSFORM_NORMALIZATION, S_transform_normalization));
+  return(TO_SCM_INT(transform_normalization(get_global_state())));
 }
 
-static SCM g_set_normalize_fft(SCM val, SCM snd, SCM chn)
+static SCM g_set_transform_normalization(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_normalize_fft, "an integer");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_transform_normalization, "an integer");
   if (BOUND_P(snd))
-    return(cp_iwrite(snd, chn, val, CP_NORMALIZE_FFT, "set-" S_normalize_fft));
+    return(cp_iwrite(snd, chn, val, CP_TRANSFORM_NORMALIZATION, "set-" S_transform_normalization));
   else
     {
       ss = get_global_state();
-      set_normalize_fft(ss, TO_C_BOOLEAN_OR_T(val));
-      return(TO_SCM_INT(normalize_fft(ss)));
+      set_transform_normalization(ss, TO_C_BOOLEAN_OR_T(val));
+      return(TO_SCM_INT(transform_normalization(ss)));
     }
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_normalize_fft_reversed, g_set_normalize_fft)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_normalization_reversed, g_set_transform_normalization)
 
-static SCM g_max_fft_peaks(SCM snd, SCM chn)
+static SCM g_max_transform_peaks(SCM snd, SCM chn)
 {
-  #define H_max_fft_peaks "(" S_max_fft_peaks " (snd #t) (chn #t)) -> max number of fft peaks reported in fft display"
+  #define H_max_transform_peaks "(" S_max_transform_peaks " (snd #t) (chn #t)) -> max number of fft peaks reported in fft display"
   if (BOUND_P(snd))
-    return(cp_iread(snd, chn, CP_MAX_FFT_PEAKS, S_max_fft_peaks));
-  return(TO_SCM_INT(max_fft_peaks(get_global_state())));
+    return(cp_iread(snd, chn, CP_MAX_TRANSFORM_PEAKS, S_max_transform_peaks));
+  return(TO_SCM_INT(max_transform_peaks(get_global_state())));
 }
 
-static SCM g_set_max_fft_peaks(SCM n, SCM snd, SCM chn)
+static SCM g_set_max_transform_peaks(SCM n, SCM snd, SCM chn)
 {
   int lim;
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_max_fft_peaks, "an integer"); 
+  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_max_transform_peaks, "an integer"); 
   if (BOUND_P(snd))
-    return(cp_iwrite(snd, chn, n, CP_MAX_FFT_PEAKS, "set-" S_max_fft_peaks));
+    return(cp_iwrite(snd, chn, n, CP_MAX_TRANSFORM_PEAKS, "set-" S_max_transform_peaks));
   else
     {
       lim = TO_C_INT(n);
       ss = get_global_state();
       if (lim >= 0)
-	set_max_fft_peaks(ss, lim);
-      return(TO_SCM_INT(max_fft_peaks(ss)));
+	set_max_transform_peaks(ss, lim);
+      return(TO_SCM_INT(max_transform_peaks(ss)));
     }
 }
 
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_max_fft_peaks_reversed, g_set_max_fft_peaks)
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_max_transform_peaks_reversed, g_set_max_transform_peaks)
 
 static SCM g_graph_style(SCM snd, SCM chn)
 {
@@ -5095,7 +5098,7 @@ to the help dialog if filename is omitted"
   if (STRING_P(filename))
     name = mus_expand_filename(TO_C_STRING(filename));
   else name = NULL;
-  err = display_fft_peaks(cp, name);
+  err = display_transform_peaks(cp, name);
   if (name) FREE(name);
   if ((STRING_P(filename)) && (err == 0)) 
     return(filename);
@@ -5273,16 +5276,16 @@ static SCM g_backward_sample(SCM count, SCM snd, SCM chn)
 
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
 {
-  if ((!(ss->fft_hook_active)) &&
-      (HOOKED(fft_hook)))
+  if ((!(ss->transform_hook_active)) &&
+      (HOOKED(transform_hook)))
     {
-      ss->fft_hook_active = 1;
-      g_c_run_progn_hook(fft_hook,
+      ss->transform_hook_active = 1;
+      g_c_run_progn_hook(transform_hook,
 			 SCM_LIST3(TO_SMALL_SCM_INT((cp->sound)->index),
 				   TO_SMALL_SCM_INT(cp->chan),
 				   TO_SCM_DOUBLE(scaler)),
-			 S_fft_hook);
-      ss->fft_hook_active = 0;
+			 S_transform_hook);
+      ss->transform_hook_active = 0;
     }
 }
 
@@ -5342,16 +5345,16 @@ void g_init_chn(SCM local_doc)
 					"set-" S_edit_position, SCM_FNC g_set_edit_position, SCM_FNC g_set_edit_position_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_ffting, SCM_FNC g_ffting, H_ffting,
-					"set-" S_ffting, SCM_FNC g_set_ffting, SCM_FNC g_set_ffting_reversed,
+  define_procedure_with_reversed_setter(S_graph_transform_p, SCM_FNC g_graph_transform_p, H_graph_transform_p,
+					"set-" S_graph_transform_p, SCM_FNC g_set_graph_transform_p, SCM_FNC g_set_graph_transform_p_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_waving, SCM_FNC g_waving, H_waving,
-					"set-" S_waving, SCM_FNC g_set_waving, SCM_FNC g_set_waving_reversed,
+  define_procedure_with_reversed_setter(S_graph_time_p, SCM_FNC g_graph_time_p, H_graph_time_p,
+					"set-" S_graph_time_p, SCM_FNC g_set_graph_time_p, SCM_FNC g_set_graph_time_p_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_graphing, SCM_FNC g_graphing, H_graphing,
-					"set-" S_graphing, SCM_FNC g_set_graphing, SCM_FNC g_set_graphing_reversed,
+  define_procedure_with_reversed_setter(S_graph_lisp_p, SCM_FNC g_graph_lisp_p, H_graph_lisp_p,
+					"set-" S_graph_lisp_p, SCM_FNC g_set_graph_lisp_p, SCM_FNC g_set_graph_lisp_p_reversed,
 					local_doc, 0, 2, 0, 3);
 
   define_procedure_with_reversed_setter(S_squelch_update, SCM_FNC g_squelch_update, H_squelch_update,
@@ -5382,8 +5385,8 @@ void g_init_chn(SCM local_doc)
 					"set-" S_channel_sync, SCM_FNC g_set_channel_sync, SCM_FNC g_set_channel_sync_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_max_fft_peaks, SCM_FNC g_max_fft_peaks, H_max_fft_peaks,
-					"set-" S_max_fft_peaks, SCM_FNC g_set_max_fft_peaks, SCM_FNC g_set_max_fft_peaks_reversed,
+  define_procedure_with_reversed_setter(S_max_transform_peaks, SCM_FNC g_max_transform_peaks, H_max_transform_peaks,
+					"set-" S_max_transform_peaks, SCM_FNC g_set_max_transform_peaks, SCM_FNC g_set_max_transform_peaks_reversed,
 					local_doc, 0, 2, 0, 3);
 
   define_procedure_with_reversed_setter(S_show_y_zero, SCM_FNC g_show_y_zero, H_show_y_zero,
@@ -5406,8 +5409,8 @@ void g_init_chn(SCM local_doc)
 					"set-" S_wavo_trace, SCM_FNC g_set_wavo_trace, SCM_FNC g_set_wavo_trace_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_fft_peaks, SCM_FNC g_show_fft_peaks, H_show_fft_peaks,
-					"set-" S_show_fft_peaks, SCM_FNC g_set_show_fft_peaks, SCM_FNC g_set_show_fft_peaks_reversed,
+  define_procedure_with_reversed_setter(S_show_transform_peaks, SCM_FNC g_show_transform_peaks, H_show_transform_peaks,
+					"set-" S_show_transform_peaks, SCM_FNC g_set_show_transform_peaks, SCM_FNC g_set_show_transform_peaks_reversed,
 					local_doc, 0, 2, 0, 3);
 
   define_procedure_with_reversed_setter(S_zero_pad, SCM_FNC g_zero_pad, H_zero_pad,
@@ -5466,20 +5469,20 @@ void g_init_chn(SCM local_doc)
 					"set-" S_spectro_z_scale, SCM_FNC g_set_spectro_z_scale, SCM_FNC g_set_spectro_z_scale_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_beta, SCM_FNC g_fft_beta, H_fft_beta,
-					"set-" S_fft_beta, SCM_FNC g_set_fft_beta, SCM_FNC g_set_fft_beta_reversed,
+  define_procedure_with_reversed_setter(S_fft_window_beta, SCM_FNC g_fft_window_beta, H_fft_window_beta,
+					"set-" S_fft_window_beta, SCM_FNC g_set_fft_window_beta, SCM_FNC g_set_fft_window_beta_reversed,
 					local_doc, 0, 2, 0, 3);
 
   define_procedure_with_reversed_setter(S_spectro_hop, SCM_FNC g_spectro_hop, H_spectro_hop,
 					"set-" S_spectro_hop, SCM_FNC g_set_spectro_hop, SCM_FNC g_set_spectro_hop_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_size, SCM_FNC g_fft_size, H_fft_size,
-					"set-" S_fft_size, SCM_FNC g_set_fft_size, SCM_FNC g_set_fft_size_reversed,
+  define_procedure_with_reversed_setter(S_transform_size, SCM_FNC g_transform_size, H_transform_size,
+					"set-" S_transform_size, SCM_FNC g_set_transform_size, SCM_FNC g_set_transform_size_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_style, SCM_FNC g_fft_style, H_fft_style,
-					"set-" S_fft_style, SCM_FNC g_set_fft_style, SCM_FNC g_set_fft_style_reversed,
+  define_procedure_with_reversed_setter(S_transform_graph_type, SCM_FNC g_transform_graph_type, H_transform_graph_type,
+					"set-" S_transform_graph_type, SCM_FNC g_set_transform_graph_type, SCM_FNC g_set_transform_graph_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
   define_procedure_with_reversed_setter(S_fft_window, SCM_FNC g_fft_window, H_fft_window,
@@ -5490,8 +5493,8 @@ void g_init_chn(SCM local_doc)
 					"set-" S_transform_type, SCM_FNC g_set_transform_type, SCM_FNC g_set_transform_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_normalize_fft, SCM_FNC g_normalize_fft, H_normalize_fft,
-					"set-" S_normalize_fft, SCM_FNC g_set_normalize_fft, SCM_FNC g_set_normalize_fft_reversed,
+  define_procedure_with_reversed_setter(S_transform_normalization, SCM_FNC g_transform_normalization, H_transform_normalization,
+					"set-" S_transform_normalization, SCM_FNC g_set_transform_normalization, SCM_FNC g_set_transform_normalization_reversed,
 					local_doc, 0, 2, 0, 3);
 
   define_procedure_with_reversed_setter(S_show_mix_waveforms, SCM_FNC g_show_mix_waveforms, H_show_mix_waveforms,
@@ -5522,7 +5525,7 @@ void g_init_chn(SCM local_doc)
 					"set-" S_y_bounds, SCM_FNC g_set_y_bounds, SCM_FNC g_set_y_bounds_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  #define H_fft_hook S_fft_hook " (snd chn scaler) is called just after a spectrum is calculated."
+  #define H_transform_hook S_transform_hook " (snd chn scaler) is called just after a spectrum is calculated."
   #define H_graph_hook S_graph_hook " (snd chn y0 y1) is called each time a graph is about to be updated. If it returns #t, the display is not updated."
   #define H_after_graph_hook S_after_graph_hook " (snd chn) is called after a graph is updated."
   #define H_lisp_graph_hook S_lisp_graph_hook " (snd chn) is called just before the lisp graph is updated."
@@ -5534,7 +5537,7 @@ void g_init_chn(SCM local_doc)
 If it returns #t, the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
   #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur) is called when a sound is displayed for the first time"
 
-  fft_hook =           MAKE_HOOK(S_fft_hook, 3, H_fft_hook);                     /* args = sound channel scaler */
+  transform_hook =     MAKE_HOOK(S_transform_hook, 3, H_transform_hook);         /* args = sound channel scaler */
   graph_hook =         MAKE_HOOK(S_graph_hook, 4, H_graph_hook);                 /* args = sound channel y0 y1 */
   after_graph_hook =   MAKE_HOOK(S_after_graph_hook, 2, H_after_graph_hook);     /* args = sound channel */
   lisp_graph_hook =    MAKE_HOOK(S_lisp_graph_hook, 2, H_lisp_graph_hook);       /* args = sound channel */

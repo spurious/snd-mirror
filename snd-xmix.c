@@ -3,6 +3,7 @@
 /* 
  * TODO create more amp chans if > 4 chans input
  * TODO display exp envs (e->base)
+ * TODO make mix env editable
  */
 
 static Widget mix_panel = NULL;
@@ -61,6 +62,7 @@ static void Speed_Drag_Callback(Widget w, XtPointer context, XtPointer info)
   int ival;
   snd_state *ss = (snd_state *)context;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (dragging == 0) start_mix_drag(current_mix_id(ss));
   dragging = 1;
   change_mix_speed(current_mix_id(ss), exp((Float)(ival - 450.0) / 150.0));
@@ -70,6 +72,7 @@ static void Speed_ValueChanged_Callback(Widget w, XtPointer context, XtPointer i
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_state *ss = (snd_state *)context;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   dragging = 0;
   change_mix_speed(current_mix_id(ss), exp((Float)(cb->value - 450.0) / 150.0));
 }
@@ -153,6 +156,7 @@ static void Amp_Drag_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (dragging == 0) start_mix_drag(current_mix_id(ss));
   dragging = 1;
   change_mix_amp(current_mix_id(ss), chan, int_amp_to_Float(ival));
@@ -162,8 +166,9 @@ static void Amp_ValueChanged_Callback(Widget w, XtPointer context, XtPointer inf
 {
   int ival, chan;
   snd_state *ss = (snd_state *)context;
-  XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
+  XtVaGetValues(w, XmNuserData, &chan, NULL);
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   dragging = 0;
   change_mix_amp(current_mix_id(ss), chan, int_amp_to_Float(ival));
 }

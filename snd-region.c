@@ -250,7 +250,11 @@ static int check_regions(void)
 {
   int act;
   act = first_region_active();
-  if (act == NO_REGIONS) reflect_no_regions_in_menu();
+  if (act == NO_REGIONS) 
+    {
+      reflect_no_regions_in_menu();
+      reflect_no_regions_in_region_browser();
+    }
   return(act);
 }
 
@@ -715,6 +719,7 @@ int define_region(sync_info *si, int *ends)
   for (i = 0; i < r->chans; i++) free_snd_fd(sfs[i]);
   FREE(sfs);
   reflect_regions_in_menu();
+  reflect_regions_in_region_browser();
   if (region_browser_is_active()) update_region_browser(ss, 1);
   return(r->id);
 }
@@ -1001,6 +1006,7 @@ static SCM g_restore_region(SCM pos, SCM chans, SCM len, SCM srate, SCM maxamp, 
 	}
     }
   reflect_regions_in_menu();
+  reflect_regions_in_region_browser();
   return(TO_SCM_INT(r->id));
 }
 

@@ -3,6 +3,16 @@ snd change log
   4-June:    configure.ac for autoconf 2.50.
              prepended "zoom-" to the zoom-focus-style choices (e.g. zoom-focus-left).
              added axis- to x-axis-style choices (e.g. x-axis-in-samples). x-to-one -> x-axis-as-percentage.
+             added print-hook.
+             graphing -> graph-lisp?, ffting -> graph-transform?, waving -> graph-time?,
+             fft-graph -> transform-graph, fft-beta -> fft-window-beta, fft-hook -> transform-hook,
+             transform-size -> transform-graph-data-size, fft-size -> transform-size, fft-style -> transform-graph-type,
+             before-fft-hook -> before-transform-hook, max-fft-peaks -> max-transform-peaks,
+             show-fft-peaks -> show-transform-peaks, normal-fft -> graph-transform-once,
+             sonogram -> graph-transform-as-sonogram, spectrogram -> graph-transform-as-spectrogram,
+             normalize-by-channel -> normalize-transform-by-channel, normalize-by-sound -> normalize-transform-by-sound,
+             normalize-globally -> normalize-transform-globally, normalize-transform -> transform-normalization,
+             update-fft -> update-transform, update-graph -> update-time-graph, dont-normalize -> dont-normalize-transform.
   1-June:    add-to-menu and remove-from-menu can affect the popup menu.
              region handling changed to use the region "id", not its current stack position.
                many related changes: 

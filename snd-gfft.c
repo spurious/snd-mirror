@@ -14,9 +14,9 @@ static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform op
 static Float current_graph_fftr[GRAPH_SIZE * 2];
 static Float current_graph_ffti[GRAPH_SIZE * 2];
 
-#define NUM_FFT_SIZES 14
-static char *FFT_SIZES[NUM_FFT_SIZES] = {"16", "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576    "};
-static int fft_sizes[NUM_FFT_SIZES] = {16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576};
+#define NUM_TRANSFORM_SIZES 14
+static char *TRANSFORM_SIZES[NUM_TRANSFORM_SIZES] = {"16", "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576    "};
+static int transform_sizes[NUM_TRANSFORM_SIZES] = {16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576};
 
 #if HAVE_GSL
   #define GUI_NUM_FFT_WINDOWS NUM_FFT_WINDOWS
@@ -152,7 +152,7 @@ static void graph_redisplay(snd_state *ss)
 static void get_fft_window_data(snd_state *ss)
 {
   int i;
-  make_fft_window_1(current_graph_data, GRAPH_SIZE, fft_window(ss), fft_beta(ss));
+  make_fft_window_1(current_graph_data, GRAPH_SIZE, fft_window(ss), fft_window_beta(ss));
   memset((void *)current_graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(Float));
   memset((void *)current_graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(Float));
   memcpy((void *)current_graph_fftr, (void *)current_graph_data, GRAPH_SIZE * sizeof(Float));
@@ -161,12 +161,12 @@ static void get_fft_window_data(snd_state *ss)
     current_graph_fftr[i] = (current_graph_fftr[i] + 80.0) / 80.0;
 }
 
-static int map_chans_fft_size(chan_info *cp, void *ptr) 
+static int map_chans_transform_size(chan_info *cp, void *ptr) 
 {
   fft_info *fp;
   int size;
   size = (*((int *)ptr)); 
-  cp->fft_size = size;
+  cp->transform_size = size;
   if (cp->fft) 
     {
       fp = cp->fft;
@@ -180,9 +180,9 @@ static void size_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventBu
 {
   snd_state *ss = (snd_state *)context;
   int size;
-  in_set_fft_size(ss, fft_sizes[row]);
-  size = fft_size(ss);
-  map_over_chans(ss, map_chans_fft_size, (void *)(&size));
+  in_set_transform_size(ss, transform_sizes[row]);
+  size = transform_size(ss);
+  map_over_chans(ss, map_chans_transform_size, (void *)(&size));
   map_over_chans(ss, calculate_fft, NULL);
   if (graph_frame) 
     gtk_frame_set_label(GTK_FRAME(graph_frame), 
@@ -235,8 +235,8 @@ static void normal_fft_Callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   if (GTK_TOGGLE_BUTTON(w)->active)
-    in_set_fft_style(ss, NORMAL_FFT);
-  else in_set_fft_style(ss, SONOGRAM);
+    in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
+  else in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SONOGRAM);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
@@ -244,8 +244,8 @@ static void sonogram_Callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   if (GTK_TOGGLE_BUTTON(w)->active)
-    in_set_fft_style(ss, SONOGRAM);
-  else in_set_fft_style(ss, NORMAL_FFT);
+    in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SONOGRAM);
+  else in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
@@ -253,19 +253,19 @@ static void spectrogram_Callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   if (GTK_TOGGLE_BUTTON(w)->active)
-    in_set_fft_style(ss, SPECTROGRAM);
-  else in_set_fft_style(ss, NORMAL_FFT);
+    in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SPECTROGRAM);
+  else in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static int map_show_fft_peaks(chan_info *cp, void *ptr) {cp->show_fft_peaks = (*((int *)ptr)); return(0);}
+static int map_show_transform_peaks(chan_info *cp, void *ptr) {cp->show_transform_peaks = (*((int *)ptr)); return(0);}
 
 static void peaks_Callback(GtkWidget *w, gpointer context)
 {
   int val = 0;
   snd_state *ss = (snd_state *)context;
-  in_set_show_fft_peaks(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
-  map_over_chans(ss, map_show_fft_peaks, (void *)(&val));
+  in_set_show_transform_peaks(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
+  map_over_chans(ss, map_show_transform_peaks, (void *)(&val));
   map_over_chans(ss, calculate_fft, NULL);
 }
 
@@ -291,15 +291,15 @@ static void logfreq_Callback(GtkWidget *w, gpointer context)
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static int map_chans_normalize_fft(chan_info *cp, void *ptr) {cp->normalize_fft = (*((int *)ptr)); return(0);}
+static int map_chans_transform_normalization(chan_info *cp, void *ptr) {cp->transform_normalization = (*((int *)ptr)); return(0);}
 
 static void normalize_Callback(GtkWidget *w, gpointer context)
 {
   int choice;
   snd_state *ss = (snd_state *)context;
   choice = GTK_TOGGLE_BUTTON(w)->active;
-  in_set_normalize_fft(ss, choice);
-  map_over_chans(ss, map_chans_normalize_fft, (void *)(&choice));
+  in_set_transform_normalization(ss, choice);
+  map_over_chans(ss, map_chans_transform_normalization, (void *)(&choice));
   map_over_chans(ss, calculate_fft, NULL);
 }
 
@@ -313,7 +313,7 @@ static void selection_Callback(GtkWidget *w, gpointer context)
 static void beta_Callback(GtkAdjustment *adj, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
-  in_set_fft_beta(ss, (Float)(adj->value));
+  in_set_fft_window_beta(ss, (Float)(adj->value));
   map_chans_field(ss, FCP_BETA, (Float)(adj->value));
   if (fft_window_beta_in_use(fft_window(ss)))
     {
@@ -447,9 +447,9 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss)
       gtk_clist_set_selection_mode(GTK_CLIST(size_list), GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(size_list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(size_list));
-      for (i = 0; i < NUM_FFT_SIZES; i++) 
+      for (i = 0; i < NUM_TRANSFORM_SIZES; i++) 
 	{
-	  str = FFT_SIZES[i];
+	  str = TRANSFORM_SIZES[i];
 	  gtk_clist_append(GTK_CLIST(size_list), &str);
 	}
       gtk_signal_connect(GTK_OBJECT(size_list), "select_row", GTK_SIGNAL_FUNC(size_browse_Callback), (gpointer)ss);
@@ -478,7 +478,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss)
       gtk_container_add(GTK_CONTAINER(display_frame), buttons);
       set_background(buttons, (ss->sgx)->position_color);
 
-      normal_fft_button = gtk_radio_button_new_with_label(NULL, STR_normal_fft);
+      normal_fft_button = gtk_radio_button_new_with_label(NULL, STR_single_transform);
       gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, FALSE, FALSE, 0);
       gtk_widget_show(normal_fft_button);
       gtk_signal_connect(GTK_OBJECT(normal_fft_button), "clicked", GTK_SIGNAL_FUNC(normal_fft_Callback), (gpointer)ss);
@@ -633,20 +633,20 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss)
 
 
       gtk_clist_select_row(GTK_CLIST(transform_list), transform_type(ss), 0);
-      for (i = 0; i < NUM_FFT_SIZES; i++)
-	if (fft_sizes[i] == fft_size(ss))
+      for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
+	if (transform_sizes[i] == transform_size(ss))
 	  {
 	    gtk_clist_select_row(GTK_CLIST(size_list), i, 0);
 	    gtk_clist_moveto(GTK_CLIST(size_list), i, 0, 0.5, 0.5);
 	    break;
 	  }
-      if (fft_style(ss) == NORMAL_FFT) set_toggle_button(normal_fft_button, TRUE, FALSE, (gpointer)ss);
-      if (fft_style(ss) == SONOGRAM) set_toggle_button(sono_button, TRUE, FALSE, (gpointer)ss);
-      if (fft_style(ss) == SPECTROGRAM) set_toggle_button(spectro_button, TRUE, FALSE, (gpointer)ss);
-      set_toggle_button(peaks_button, show_fft_peaks(ss), FALSE, (gpointer)ss);
+      if (transform_graph_type(ss) == GRAPH_TRANSFORM_ONCE) set_toggle_button(normal_fft_button, TRUE, FALSE, (gpointer)ss);
+      if (transform_graph_type(ss) == GRAPH_TRANSFORM_AS_SONOGRAM) set_toggle_button(sono_button, TRUE, FALSE, (gpointer)ss);
+      if (transform_graph_type(ss) == GRAPH_TRANSFORM_AS_SPECTROGRAM) set_toggle_button(spectro_button, TRUE, FALSE, (gpointer)ss);
+      set_toggle_button(peaks_button, show_transform_peaks(ss), FALSE, (gpointer)ss);
       set_toggle_button(db_button, fft_log_magnitude(ss), FALSE, (gpointer)ss);
       set_toggle_button(logfreq_button, fft_log_frequency(ss), FALSE, (gpointer)ss);
-      set_toggle_button(normalize_button, normalize_fft(ss), FALSE, (gpointer)ss);
+      set_toggle_button(normalize_button, transform_normalization(ss), FALSE, (gpointer)ss);
       set_toggle_button(selection_button, show_selection_transform(ss), FALSE, (gpointer)ss);
       gtk_clist_select_row(GTK_CLIST(window_list), fft_window(ss), 0);
       gtk_clist_moveto(GTK_CLIST(window_list), fft_window(ss), 0, 0.5, 0.5);
@@ -674,9 +674,9 @@ int transform_dialog_is_active(void)
   return((transform_dialog) && (GTK_WIDGET_VISIBLE(transform_dialog)));
 }
 
-void set_fft_beta(snd_state *ss, Float val)
+void set_fft_window_beta(snd_state *ss, Float val)
 {
-  in_set_fft_beta(ss, val);
+  in_set_fft_window_beta(ss, val);
   map_chans_field(ss, FCP_BETA, val);
   if (transform_dialog) 
     {
@@ -687,15 +687,15 @@ void set_fft_beta(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
 }
 
-void set_fft_size(snd_state *ss, int val)
+void set_transform_size(snd_state *ss, int val)
 {
   int i;
-  in_set_fft_size(ss, val);
-  map_over_chans(ss, map_chans_fft_size, (void *)(&val));
+  in_set_transform_size(ss, val);
+  map_over_chans(ss, map_chans_transform_size, (void *)(&val));
   if (transform_dialog)
     {
-      for (i = 0; i < NUM_FFT_SIZES; i++)
-	if (fft_sizes[i] == val)
+      for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
+	if (transform_sizes[i] == val)
 	  {
 	    gtk_clist_select_row(GTK_CLIST(size_list), i, 0);
 	    gtk_clist_moveto(GTK_CLIST(size_list), i, 0, 0.5, 0.5);
@@ -747,10 +747,10 @@ void set_wavelet_type(snd_state *ss, int val)
 }
 
 /* various set- cases need to be reflected in the transform dialog */
-void set_show_fft_peaks(snd_state *ss, int val)
+void set_show_transform_peaks(snd_state *ss, int val)
 {
-  in_set_show_fft_peaks(ss, val);
-  map_over_chans(ss, map_show_fft_peaks, (void *)(&val));
+  in_set_show_transform_peaks(ss, val);
+  map_over_chans(ss, map_show_transform_peaks, (void *)(&val));
   if (transform_dialog) 
     set_toggle_button(peaks_button, val, FALSE, (void *)ss);
   if (!(ss->graph_hook_active)) 
@@ -777,19 +777,19 @@ void set_fft_log_magnitude(snd_state *ss, int val)
     map_over_chans(ss, calculate_fft, NULL);
 }
 
-void set_fft_style(snd_state *ss, int val)
+void set_transform_graph_type(snd_state *ss, int val)
 {
-  in_set_fft_style(ss, val);
+  in_set_transform_graph_type(ss, val);
   if (transform_dialog) 
     switch (val)
       {
-      case NORMAL_FFT: 
+      case GRAPH_TRANSFORM_ONCE: 
 	set_toggle_button(normal_fft_button, TRUE, FALSE, (void *)ss); 
 	break;
-      case SONOGRAM:   
+      case GRAPH_TRANSFORM_AS_SONOGRAM:   
 	set_toggle_button(sono_button, TRUE, FALSE, (void *)ss); 
 	break;
-      case SPECTROGRAM:
+      case GRAPH_TRANSFORM_AS_SPECTROGRAM:
 	set_toggle_button(spectro_button, TRUE, FALSE, (void *)ss);
 	break;
       }
@@ -797,10 +797,10 @@ void set_fft_style(snd_state *ss, int val)
     map_over_chans(ss, calculate_fft, NULL);
 }
 
-void set_normalize_fft(snd_state *ss, int val)
+void set_transform_normalization(snd_state *ss, int val)
 {
-  in_set_normalize_fft(ss, val);
-  map_over_chans(ss, map_chans_normalize_fft, (void *)(&val));
+  in_set_transform_normalization(ss, val);
+  map_over_chans(ss, map_chans_transform_normalization, (void *)(&val));
   if (transform_dialog) 
     set_toggle_button(normalize_button, val, FALSE, (void *)ss);
   if (!(ss->graph_hook_active)) 

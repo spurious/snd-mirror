@@ -11,6 +11,30 @@ static Widget reg_srtxt, reg_lentxt, reg_chntxt, reg_maxtxt;
 static Widget region_ww = NULL;
 static regrow *region_row(int n);
 
+void reflect_regions_in_region_browser(void)
+{
+  int i;
+  if (reg_sp)
+    {
+      reg_sp->active = 1;
+      if (reg_sp->chans)
+	for (i = 0; i < reg_sp->nchans; i++)
+	  reg_sp->chans[i]->active = 1;
+    }
+}
+
+void reflect_no_regions_in_region_browser(void)
+{
+  int i;
+  if (reg_sp)
+    {
+      reg_sp->active = 0;
+      if (reg_sp->chans)
+	for (i = 0; i < reg_sp->nchans; i++)
+	  reg_sp->chans[i]->active = 0;
+    }
+}
+
 static void region_update_graph(chan_info *cp)
 {
   if (current_region == -1) return;
@@ -239,6 +263,7 @@ static void region_save_Callback(Widget w, XtPointer context, XtPointer info)
 {
   regrow *r = (regrow *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   protect_region(stack_position_to_id(r->pos), cb->set);
 }
 

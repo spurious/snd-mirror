@@ -839,8 +839,8 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
       axis_data[(i * 4) + 1] = ap->x1;
       axis_data[(i * 4) + 2] = ap->y0;
       axis_data[(i * 4) + 3] = ap->y1;
-      waves[i] = cp->waving;
-      ffts[i] = cp->ffting;
+      waves[i] = cp->graph_time_p;
+      ffts[i] = cp->graph_transform_p;
     }
   snd_close_file(sp, ss);
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */

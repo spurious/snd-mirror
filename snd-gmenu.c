@@ -375,22 +375,22 @@ static void Options_Save_Callback(GtkWidget *w, gpointer cD)
 
 static void Options_Focus_Right_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_focus_right) activate_focus_menu((snd_state *)cD, FOCUS_RIGHT);
+  IF_MENU_HOOK(STR_Options, STR_focus_right) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_RIGHT);
 }
 
 static void Options_Focus_Left_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_focus_left) activate_focus_menu((snd_state *)cD, FOCUS_LEFT);
+  IF_MENU_HOOK(STR_Options, STR_focus_left) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_LEFT);
 }
 
 static void Options_Focus_Middle_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_focus_middle) activate_focus_menu((snd_state *)cD, FOCUS_MIDDLE);
+  IF_MENU_HOOK(STR_Options, STR_focus_middle) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_MIDDLE);
 }
 
 static void Options_Focus_Active_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
-  IF_MENU_HOOK(STR_Options, STR_focus_active) activate_focus_menu((snd_state *)cD, FOCUS_ACTIVE);
+  IF_MENU_HOOK(STR_Options, STR_focus_active) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_ACTIVE);
 }
 
 static void Options_Speed_Float_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
@@ -1362,11 +1362,11 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
   GtkWidget *m, *menw;
    switch (which_menu)
     {
-    case FILE_MENU:    menw = mw[file_menu]; break;
-    case EDIT_MENU:    menw = mw[edit_menu]; break;
-    case VIEW_MENU:    menw = mw[view_menu]; break;
-    case OPTIONS_MENU: menw = mw[option_menu]; break;
-    case HELP_MENU:    menw = mw[help_menu]; break;
+    case FILE_MENU:    menw = mw[f_cascade_menu]; break;
+    case EDIT_MENU:    menw = mw[e_cascade_menu]; break;
+    case VIEW_MENU:    menw = mw[v_cascade_menu]; break;
+    case OPTIONS_MENU: menw = mw[o_cascade_menu]; break;
+    case HELP_MENU:    menw = mw[h_cascade_menu]; break;
     case POPUP_MENU:   menw = popup_menu; break;
     default: 
       if (which_menu < MAX_MAIN_MENUS)

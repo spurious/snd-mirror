@@ -441,7 +441,7 @@ static int cp_redraw_selection(chan_info *cp, void *with_fft)
       cp->old_x1 = x1;
       cp->selection_visible = 1;
     }
-  if ((with_fft) && (cp->ffting) && (cp_has_selection(cp, NULL)) && (!(chan_fft_in_progress(cp))))
+  if ((with_fft) && (cp->graph_transform_p) && (cp_has_selection(cp, NULL)) && (!(chan_fft_in_progress(cp))))
     {
       ss = get_global_state();
       if (show_selection_transform(ss)) 

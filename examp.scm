@@ -8,7 +8,7 @@
 ;;; 'info' from extsnd.html using format
 ;;; correlation
 ;;; XEmacs-like "Buffers" menu
-;;; set fft-size based on current time domain window size
+;;; set transform-size based on current time domain window size
 ;;; superimpose spectra of sycn'd sounds
 ;;; example of c-g?
 ;;; play sound n times or until c-g
@@ -262,13 +262,13 @@
 (define fft-peak
   (lambda (snd chn scale)
     "(fft-peak) returns the peak spectral magnitude"
-    (if (and (ffting) (= (fft-style) normal-fft))
+    (if (and (graph-transform?) (= (transform-graph-type) graph-transform-once))
 	(report-in-minibuffer 
-	 (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn))) (fft-size)))
+	 (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn))) (transform-size)))
 	 snd)
       #f)))
 
-;(add-hook! fft-hook fft-peak)
+;(add-hook! transform-hook fft-peak)
 
 
 ;;; -------- 'info' from extsnd.html using format --------
@@ -364,14 +364,14 @@
 ;(add-hook! close-hook close-buffer)
 
 
-;;; -------- set fft-size based on current time domain window size
+;;; -------- set transform-size based on current time domain window size
 ;;;
 ;;; also zoom spectrum based on y-axis zoom slider
 
 (define (zoom-spectrum snd chn y0 y1)
-  (if (and (ffting snd chn) (= (fft-style snd chn) normal-fft))
+  (if (and (graph-transform? snd chn) (= (transform-graph-type snd chn) graph-transform-once))
       (begin
-	(set! (fft-size snd chn)
+	(set! (transform-size snd chn)
 	      (expt 2 (ceiling 
 		       (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
 			  (log 2.0)))))
@@ -384,11 +384,11 @@
 ;;;   this can be confusing if fft normalization is on (the default)
 
 (define (zoom-fft snd chn y0 y1)
-  (if (and (ffting snd chn)
-	   (not (waving snd chn))
-	   (= (fft-style snd chn) normal-fft))
+  (if (and (graph-transform? snd chn)
+	   (not (graph-time? snd chn))
+	   (= (transform-graph-type snd chn) graph-transform-once))
       (begin
-	(set! (fft-size snd chn)
+	(set! (transform-size snd chn)
 	      (expt 2 (ceiling 
 		       (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
 			  (log 2.0)))))
@@ -438,7 +438,7 @@
 	  (if (> pow2 2)
 	      (graph (collect-ffts ls fftlen snd chn '() snd)
 		     "spectra" 0.0 0.5 #f #f snd chn)))
-	(set! (graphing snd chn) #f))
+	(set! (graph-lisp? snd chn) #f))
     #f))
 
 ;(add-hook! graph-hook superimpose-ffts)
@@ -927,7 +927,7 @@
   (lambda ()
     "(update-graphs) updates (redraws) all graphs"
     (apply map (lambda (snd chn)
-		 (update-graph snd chn))
+		 (update-time-graph snd chn))
 	   (all-chans))))
 
 (define do-chans
@@ -2647,7 +2647,7 @@
 			   (if (>= ctr dlen) (set! ctr 0))
 			   (* amp val))))
     (mix-vct out-data beg #f 0 #f)
-    (update-graph)))
+    (update-time-graph)))
 
 ;(pluck .01 1 330 .3 .96 0 0 0)
 
@@ -2773,7 +2773,7 @@
 			  (* .05 (+ (* amp4 (oscil of4 (+ frq4 (* 1.0 car))))
 				    (* amp5 (oscil of5 (+ frq5 (* 1.0 car))))))))))
 	(mix-vct out-data beg #f 0 #f)
-	(update-graph)))))
+	(update-time-graph)))))
   
 ;;; (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) .025 .1)
 ;;; (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) .05 .1)
@@ -2847,7 +2847,7 @@
 
 ;;; -------- accessors for graph-style fields
 
-(define main-graph-style
+(define time-graph-style
   (make-procedure-with-setter
    (lambda (snd chn)
      (logand (graph-style snd chn) #xff))
@@ -2856,12 +2856,12 @@
 	   (logior (logand (graph-style snd chn) #xffff00)
 		   val)))))
 
-(define fft-graph-style
+(define transform-graph-style
   (make-procedure-with-setter
    (lambda (snd chn)
      (let ((style (logand (ash (graph-style snd chn) -8) #xff)))
        (if (= style 0)
-	   (main-graph-style snd chn)
+	   (time-graph-style snd chn)
 	   (- style 1))))
    (lambda (snd chn val)
      ;; -1 will unset
@@ -2874,7 +2874,7 @@
    (lambda (snd chn)
      (let ((style (logand (ash (graph-style snd chn) -16) #xff)))
        (if (= style 0)
-	   (main-graph-style snd chn)
+	   (time-graph-style snd chn)
 	   (- style 1))))
    (lambda (snd chn val)
      ;; -1 will unset
@@ -3269,6 +3269,30 @@ read, even if not playing.  'files' is a list of files to be played."
       (define x-to-one          x-axis-as-percentage)
       (define x-in-seconds      x-axis-in-seconds)
       (define x-in-samples      x-axis-in-samples)
+
+      (define graphing          graph-lisp?)
+      ;; old transform-size is shadowed by new version = transform-graph-data-size
+      (define waving            graph-time?)
+      (define ffting            graph-transform?)
+      (define fft-graph         transform-graph)
+      (define fft-beta          fft-window-beta)
+      (define fft-hook          transform-hook)
+      (define normalize-by-channel normalize-transform-by-channel)
+      (define normalize-by-sound   normalize-transform-by-sound)
+      (define normalize-globally   normalize-transform-globally)
+      (define normalize-transform  transform-normalization)
+      (define dont-normalize    dont-normalize-transform)
+      (define max-fft-peaks     max-transform-peaks)
+      (define show-fft-peaks    show-transform-peaks)
+      (define before-fft-hook   before-transform-hook)
+      (define fft-style         transform-graph-type)
+      (define normal-fft        graph-transform-once)
+      (define sonogram          graph-transform-as-sonogram)
+      (define spectrogram       graph-transform-as-spectrogram)
+      (define update-fft        update-transform)
+      (define update-graph      update-time-graph)
+      (define fft-size          transform-size)
+
       (define uniting 
 	(make-procedure-with-setter 
 	 (lambda arg 
@@ -3561,7 +3585,7 @@ read, even if not playing.  'files' is a list of files to be played."
 		 ((= i (chans s)))
 	       (let ((need-update (selection-member? s i)))
 		 (set! (selection-member? s i) #f)
-		 (if need-update (update-graph s i)))))
+		 (if need-update (update-time-graph s i)))))
 	   (sounds)))
       (if chn
 	  (add-chan-to-selection beg end snd chn)

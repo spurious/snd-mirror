@@ -137,11 +137,11 @@ static repv snd_rep_main(repv arg)
 
   ss=(snd_state *)CALLOC(1, sizeof(snd_state));
 
-  ss->Fft_Size = DEFAULT_FFT_SIZE;
+  ss->Transform_Size = DEFAULT_TRANSFORM_SIZE;
   ss->Minibuffer_History_Length = DEFAULT_MINIBUFFER_HISTORY_LENGTH;
   ss->Fft_Window = DEFAULT_FFT_WINDOW;
-  ss->Fft_Beta = DEFAULT_FFT_BETA;
-  ss->Fft_Style = DEFAULT_FFT_STYLE;
+  ss->Fft_Window_Beta = DEFAULT_FFT_WINDOW_BETA;
+  ss->Transform_Graph_Type = DEFAULT_TRANSFORM_GRAPH_TYPE;
   ss->Sinc_Width = DEFAULT_SINC_WIDTH;
   ss->Speed_Control_Tones = DEFAULT_SPEED_CONTROL_TONES;
   ss->Default_Output_Chans = DEFAULT_OUTPUT_CHANS;
@@ -181,7 +181,7 @@ static repv snd_rep_main(repv arg)
   ss->Speed_Control_Style = DEFAULT_SPEED_CONTROL_STYLE;
   ss->Movies = DEFAULT_MOVIES;
   ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
-  ss->Normalize_Fft = DEFAULT_NORMALIZE_FFT;
+  ss->Transform_Normalization = DEFAULT_TRANSFORM_NORMALIZATION;
   ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;
   ss->Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Use_Sinc_Interp = DEFAULT_USE_SINC_INTERP;
@@ -195,7 +195,7 @@ static repv snd_rep_main(repv arg)
   ss->Eps_Left_Margin = DEFAULT_EPS_LEFT_MARGIN;
   ss->Listener_Prompt = snd_strdup(DEFAULT_LISTENER_PROMPT);
   ss->Audio_State_File = snd_strdup(AUDIO_STATE_FILE);
-  ss->Show_Fft_Peaks = DEFAULT_SHOW_FFT_PEAKS;
+  ss->Show_Transform_Peaks = DEFAULT_SHOW_TRANSFORM_PEAKS;
   ss->Show_Y_Zero = DEFAULT_SHOW_Y_ZERO;
   ss->Show_Axes = DEFAULT_SHOW_AXES;
   ss->Show_Marks = DEFAULT_SHOW_MARKS;
@@ -232,7 +232,7 @@ static repv snd_rep_main(repv arg)
   ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
   ss->Corruption_Time = DEFAULT_CORRUPTION_TIME;
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
-  ss->Max_Fft_Peaks = DEFAULT_MAX_FFT_PEAKS;
+  ss->Max_Transform_Peaks = DEFAULT_MAX_TRANSFORM_PEAKS;
   ss->Reverb_Control_Decay = DEFAULT_REVERB_CONTROL_DECAY;
   allocate_regions(ss, max_regions(ss));
 
@@ -255,7 +255,7 @@ static repv snd_rep_main(repv arg)
   ss->sounds = (snd_info **)CALLOC(ss->max_sounds, sizeof(snd_info *));
   ss->print_choice = PRINT_SND;
   ss->listening = 0;
-  ss->fft_hook_active = 0;
+  ss->transform_hook_active = 0;
   ss->graph_hook_active = 0;
   ss->search_in_progress = 0;
   ss->just_time = 0;

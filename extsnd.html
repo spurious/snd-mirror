@@ -686,7 +686,7 @@ The lowest level procedures are:
 <!-- --><code>'(left-sample right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
 <!-- -->x0-position y0-position x1-position y1-position)</code>.  This might be
 <!-- -->useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
-<!-- -->time-graph; the other choices are fft-graph and lisp-graph.
+<!-- -->time-graph; the other choices are transform-graph and lisp-graph.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- --></table>
@@ -1280,9 +1280,9 @@ the hook.
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
-<!-- before-fft-hook -->
+<!-- before-transform-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="beforeffthook">before-fft-hook</a></em> (snd chn)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="beforeffthook">before-transform-hook</a></em> (snd chn)</code></span>
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -1295,10 +1295,10 @@ the hook.
 <!-- --><tr><td colspan=2 align=center>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define fft-position #f)
-(add-hook! <em class=red>before-fft-hook</em> (lambda (snd chn) fft-position))
+(add-hook! <em class=red>before-transform-hook</em> (lambda (snd chn) fft-position))
 (add-hook! mark-drag-hook (lambda (id)
                             (set! fft-position (mark-sample id))
-                            (update-fft)))
+                            (update-transform)))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1309,11 +1309,15 @@ the hook.
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->called each time a file is closed (before the close). (<b>or hook</b>)
-<!-- -->If it returns #t, the file is not closed. <pre><code>
-<!-- -->(add-hook! close-hook 
-<!-- -->  (lambda (snd) 
-<!-- -->    (system \"sndplay wood16.wav\")))
-<!-- --></code></pre></td></tr>
+<!-- -->If it returns #t, the file is not closed. 
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(add-hook! <em class=red>close-hook</em>
+  (lambda (snd) 
+    (system \"sndplay wood16.wav\")))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- drop-hook -->
@@ -1399,28 +1403,6 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
-<!-- fft-hook -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="ffthook">fft-hook</a></em> (snd chn scaler)</code></span>
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->called just after an FFT (or spectrum) is calculated.
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td colspan=2 align=center>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(add-hook! fft-hook
-  (lambda (snd chn scale)
-    (if (and (ffting snd chn) (= (fft-style snd chn) normal-fft))
-	(report-in-minibuffer 
-	 (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn))) 
-                            (fft-size snd chn)))
-	 snd)
-      #f)))
-<!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
 <!-- graph-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="graphhook">graph-hook</a></em> (snd chn y0 y1) </code></span>
@@ -1432,7 +1414,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2 align=center>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(add-hook! graph-hook
+(add-hook! <em class=red>graph-hook</em>
   (lambda (snd chn y0 y1)
     "set the dot size depending on the number of samples being displayed"
     (let ((dots (- (right-sample snd chn) (left-sample snd chn))))
@@ -1720,7 +1702,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2 align=center>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(add-hook! mouse-enter-label-hook
+(add-hook! <em class=red>mouse-enter-label-hook</em>
   (lambda (type position name)
     (if (not (= type 2))
         (help-dialog name (finfo name)))))
@@ -1911,6 +1893,36 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- print-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="printhook">print-hook</a></em> (text)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->called each time some Snd-generated response (<i>text</i>) is about to be appended to the listener.
+<!-- -->If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt.
+<!-- -->This is intended to make it possible to
+<!-- -->distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, etc.  Here are two
+<!-- -->examples, the first adds a timestamp, the second (in Gtk) displays Snd's responses in red:
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(add-hook! <em class=red>print-hook</em>
+  (lambda (msg) 
+    (snd-print (format #f "~A~%[~A]~%~A" ;need newline just before listener-prompt
+                      msg 
+                      (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
+                      (listener-prompt)))))
+
+(add-hook! <em class=red>print-hook</em>
+  (lambda (msg) 
+    (let ((old-color (listener-text-color)))
+    (set! (listener-text-color) (make-color 1 0 0))
+    (snd-print msg)
+    (set! (listener-text-color) old-color))
+    (snd-print (listener-prompt))))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- property-changed-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="propertychangedhook">property-changed-hook</a></em> (command)</code></span>
@@ -2039,9 +2051,9 @@ the hook.
 (define (play-until-c-g)
   (define (play-once snd)
     (if (c-g?)
-        (remove-hook! stop-playing-hook play-once)
+        (remove-hook! <em class=red>stop-playing-hook</em> play-once)
         (play 0 snd)))
-  (add-hook! stop-playing-hook play-once)
+  (add-hook! <em class=red>stop-playing-hook</em> play-once)
   (play))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -2053,6 +2065,30 @@ the hook.
 <!-- --><tr><td></td><td>
 <!-- -->called when a region finishes playing. (<b>or hook</b>)
 <!-- --></td></tr>
+<!-- -->
+<!-- transform-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="ffthook">transform-hook</a></em> (snd chn scaler)</code></span>
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->called just after an FFT (or spectrum) is calculated.
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(add-hook! <em class=red>transform-hook</em>
+  (lambda (snd chn scale)
+    (if (and (graph-transform? snd chn) 
+             (= (transform-graph-type snd chn) graph-transform-once))
+	(report-in-minibuffer 
+	 (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn))) 
+                            (transform-size snd chn)))
+	 snd)
+      #f)))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- --></table>
 
 <pre>
@@ -2182,7 +2218,7 @@ can be #t (for backwards compatibility, a few of them default to #t).
 #t means "all" in this case; if <i>snd</i> is #t, all sounds are included,
 so, for example, <code>(expand-control #t)</code> returns a list of the current
 control panel expansion settings of all sounds, and
-<code>(set! (ffting #t #t) #t)</code>
+<code>(set! (graph-transform? #t #t) #t)</code>
 turns on the fft display in all channels of all sounds.
 </p>
 
@@ -3599,14 +3635,14 @@ which refers to the current cursor location, is listed here as:
 <code>(cursor)</code> returns the location in the currently selected sound, <code>(cursor #t #t)</code>
 returns a list of lists of all the cursor locations, and <code>(set! (cursor) 0)</code> sets (just) the
 cursor in the currently selected channel;
-on the other hand, the <b>fft-size</b> function
+on the other hand, the <b>transform-size</b> function
 is listed as:</p>
 <pre>
-  fft-size         (<em class=narg>snd chn</em>)     FFT size.
+  transform-size         (<em class=narg>snd chn</em>)     FFT size.
 </pre>
-<p>which means that <code>(fft-size 0 0)</code> returns the fft size used in sound 0, channel 0,
-<code>(fft-size)</code> returns the globally effective fft size, <code>(fft-size #t #t)</code>
-returns a list of lists of all the fft sizes, and <code>(set! (fft-size) 512)</code> sets all
+<p>which means that <code>(transform-size 0 0)</code> returns the fft size used in sound 0, channel 0,
+<code>(transform-size)</code> returns the globally effective fft size, <code>(transform-size #t #t)</code>
+returns a list of lists of all the fft sizes, and <code>(set! (transform-size) 512)</code> sets all
 fft sizes to 512.</p>
 
 <p>The variables are local to each sound or each channel.
@@ -3937,16 +3973,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- fft-beta -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="fftbeta">fft-beta</a></em> (<em class=narg>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->The fft data <a href="snd.html#Xfftbeta">window parameter</a>, if relevant.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- fft-log-frequency -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="fftlogfrequency">fft-log-frequency</a></em> (<em class=narg>snd chn</em>)</code></span>
@@ -3963,27 +3989,6 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->spectrum magnitude axis is in decibels (#t) or linear (#f) (default #f).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- fft-size -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="lfftsize">fft-size</a></em> (<em class=narg>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->FFT size (default = 256).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- fft-style -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="lfftstyle">fft-style</a></em> (<em class=narg>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->choice of spectral display.  The choices are (default) <i>normal-fft</i>, 
-<!-- --><i>sonogram</i>, and <i>spectrogram</i>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4005,12 +4010,12 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- ffting -->
+<!-- fft-window-beta -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndffting">ffting</a></em> (<em class=targ>snd chn</em>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="fftbeta">fft-window-beta</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->#t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
+<!-- -->The fft data <a href="snd.html#Xfftbeta">window parameter</a>, if relevant.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4166,18 +4171,38 @@ desired edit history position.
 <!-- --><tr><td></td><td>
 <!-- -->causes the main (time domain) graph to be displayed using dots, 
 <!-- -->the fft graph to use lines, and the lisp graph lollipops.  There 
-<!-- -->are some functions in <a href="sndscm.html#exampdoc">examp.scm</a> (main-graph-style et al) that 
+<!-- -->are some functions in <a href="sndscm.html#exampdoc">examp.scm</a> (time-graph-style et al) that 
 <!-- -->might make these fields easier to access and change.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- graphing -->
+<!-- graph-lisp? -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndgraphing">graphing</a></em> (<i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndgraphing">graph-lisp?</a></em> (<i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->#t if (lisp) graph data is being displayed.
+<!-- -->#t if lisp-generated graph is being displayed.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- graph-time? -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndwaving">graph-time?</a></em> (<em class=targ>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->the state of <i>snd</i>'s channel <i>chn</i>'s 'w' button.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- graph-transform? -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndffting">graph-transform?</a></em> (<em class=targ>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->#t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4442,22 +4467,22 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- max-fft-peaks -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="maxfftpeaks">max-fft-peaks</a></em> (<em class=narg>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->max number of fft peaks reported (default: 100).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- max-sounds -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndmaxsounds">max-sounds</a></em> ()</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->current size of sound array (grows as required).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- max-transform-peaks -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="maxfftpeaks">max-transform-peaks</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->max number of transform peaks reported (default: 100).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4490,20 +4515,6 @@ desired edit history position.
 <!-- --><pre>
 <!-- -->mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
 <!-- --></pre>
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- normalize-fft -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="normalizefft">normalize-fft</a></em> (<em class=narg>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->FFT normalization choice (default: <i>normalize-by-channel</i>)
-<!-- -->If normalize-by-channel (#t) or normalize-by-sound, spectral data is 
-<!-- -->normalized to 1.0 before display. If dont-normalize (#f), you get the 
-<!-- -->raw data values, which can reflect amplitude changes.  Snd tries to 
-<!-- -->choose a y axis limit that makes successive displays move smoothly.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5014,17 +5025,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- show-fft-peaks -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="showfftpeaks">show-fft-peaks</a></em> (<em class=narg>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->If #t, fft peak information is included in the fft display (default: #f).
-<!-- -->(This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> options dialog).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- show-marks -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="showmarks">show-marks</a></em> (<em class=narg>snd chn</em>)</code></span>
@@ -5042,6 +5042,17 @@ desired edit history position.
 <!-- --><tr><td></td><td>
 <!-- -->If #t (default = #t), mix displays the waveform of the sound
 <!-- -->being mixed.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- show-transform-peaks -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="showfftpeaks">show-transform-peaks</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->If #t, transform peak information is included in the transform display (default: #f).
+<!-- -->(This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> options dialog).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5347,6 +5358,42 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- transform-graph-data-size -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="transformgraphsize">transform-graph-data-size</a></em> (<i>snd chn</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->returns either 0 if no transform, transform-graph-type if graph-transform-once,
+<!-- -->or (list full-size bins slices) if sonogram or spectrogram.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- transform-graph-type -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="lfftstyle">transform-graph-type</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->choice of spectral display.  The choices are (default) <i>graph-transform-once</i>, 
+<!-- --><i>graph-transform-as-sonogram</i>, and <i>graph-transform-as-spectrogram</i>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- transform-normalization -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="normalizefft">transform-normalization</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->Transform normalization choice (default: <i>normalize-transform-by-channel</i>)
+<!-- -->If normalize-transform-by-channel or normalize-transform-by-sound, spectral data is 
+<!-- -->normalized to 1.0 before display. If dont-normalize-transform, you get the 
+<!-- -->raw data values, which can reflect amplitude changes -- Snd tries to 
+<!-- -->choose a y axis limit that makes successive displays move smoothly. The other choice is normalize-transform-globally (i.e. across all sounds).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- transform-sample -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndtransformsample">transform-sample</a></em> (<i>bin slice snd chn</i>)</code></span>
@@ -5354,7 +5401,7 @@ desired edit history position.
 <!-- --><tr><td></td><td>
 <!-- -->return the current value of the transform (if any) in <i>bin</i> and (if a 
 <!-- -->sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.  
-<!-- -->Use <a href="#sndupdatefft">update-fft</a> to make sure the transform has run to completion. [<em class=error>no-such-sample</em>].
+<!-- -->Use <a href="#sndupdatefft">update-transform</a> to make sure the transform has run to completion. [<em class=error>no-such-sample</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5365,7 +5412,7 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return the transform data currently in <i>snd</i>'s channel <i>chn</i>.
-<!-- -->Use <a href="#sndupdatefft">update-fft</a> to make sure the transform has run to completion.
+<!-- -->Use <a href="#sndupdatefft">update-transform</a> to make sure the transform has run to completion.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5377,18 +5424,17 @@ desired edit history position.
 <!-- --><tr><td></td><td>
 <!-- -->return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
 <!-- -->If v (a vct) is provided, it is filled, rather than creating a new vct.
-<!-- -->Use <a href="#sndupdatefft">update-fft</a> to make sure the transform has run to completion.
+<!-- -->Use <a href="#sndupdatefft">update-transform</a> to make sure the transform has run to completion.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
 <!-- transform-size -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="transformsize">transform-size</a></em> (<i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="lfftsize">transform-size</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->returns either 0 if no transform, fft-size if normal-fft, 
-<!-- -->or (list full-size bins slices) if sonogram or spectrogram.
+<!-- -->FFT size (default = 256).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5414,26 +5460,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- update-fft -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndupdatefft">update-fft</a></em> (<i>snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->recalculate <i>chn's</i> fft, forcing it to completion.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- update-graph -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndupdategraph">update-graph</a></em> (<i>snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->redisplay <i>chn's</i> graph(s).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- update-lisp-graph -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndupdatelispgraph">update-lisp-graph</a></em> (<i>snd chn</i>)</code></span>
@@ -5450,6 +5476,26 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->update <i>snd</i> (re-reads data from disk, flushing any pending edits).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- update-time-graph -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndupdategraph">update-time-graph</a></em> (<i>snd chn</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->redisplay <i>chn's</i> graph(s).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- update-transform -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndupdatefft">update-transform</a></em> (<i>snd chn</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->recalculate <i>chn's</i> fft, forcing it to completion.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5485,16 +5531,6 @@ desired edit history position.
 <!-- -->wavelet is used.  The list of available wavelets is in the Transform 
 <!-- -->Dialog. There are currently 20 choices, so this variable goes from 
 <!-- -->0 to 19 (default: 0).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- waving -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndwaving">waving</a></em> (<em class=targ>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->the state of <i>snd</i>'s channel <i>chn</i>'s 'w' button.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5663,7 +5699,7 @@ desired edit history position.
 <!-- --><tr><td></td><td>
 <!-- -->fft zero pad size as a multiple of the fft size; <code>(set! (zero-pad) 1)</code>
 <!-- -->gives you half data, half zeros (default: 0) (the data length is 
-<!-- -->determined by the nominal fft-size).  Zero padding causes sinc-interpolation 
+<!-- -->determined by the nominal transform-size).  Zero padding causes sinc-interpolation 
 <!-- -->of the fft points, making the display smoother.
 <!-- --></td></tr>
 <!-- -->
@@ -5672,12 +5708,12 @@ desired edit history position.
 (bind-key (char-&gt;integer #\p) 0 
   (lambda () 
     (set! (zero-pad) (+ (<em class=red>zero-pad</em>) 1)) 
-    (update-fft)))
+    (update-transform)))
 
 (bind-key (char-&gt;integer #\m) 0 
   (lambda () 
     (set! (zero-pad) (- (<em class=red>zero-pad</em>) 1)) 
-    (update-fft)))
+    (update-transform)))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6335,22 +6371,89 @@ And an example that lets us see the result of filtering the waveform:
          ((= i len) v)
       (vct-set! v i (fir-filter flt (next-sample fd)))))))
 </pre></td></tr></table></td></tr>
+
+<!-- autocorrelate -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndautocorrelate">autocorrelate</a></em> (data)</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->return (in place) autocorrelation of <i>data</i>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- convolve-arrays -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndconvolve">convolve-arrays</a></em> (rl1 rl2)</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->convolve vectors <i>rl1</i> with <i>rl2</i>.  Result returned in rl1.
+<!-- -->rl1 should be large enough to hold the full convolution result.
+<!-- -->As a special dispensation for forgetful users, if rl1 is a file
+<!-- -->name and rl2 is not a vector, <i>convolve-with</i> is called instead.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- fft -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndfft">fft</a></em> (rl im <i>sgn</i>)</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->perform an FFT on <i>rl</i> and <i>im</i> (the real and imaginary parts of the
+<!-- -->input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- fht -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndfht">fht</a></em> (vobj)</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->perform Hartley transform on vct <i>vobj</i> whose length must be a power of 4.
+<!-- -->This is a fast version of the FFT (it's about 4 to 6 times faster than the fft, 
+<!-- -->but can be applied only to real data; it is its own inverse).  The following 
+<!-- -->function reads data from the left window edge, calls the Hartley transform 
+<!-- -->(using a "rectangular window"), turns that into a magnitude spectrum, and graphs 
+<!-- -->the result (which is the same as the fft-generated magnitude spectrum before 
+<!-- -->any normalization etc).
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (hgrf snd chn y0 y1)
+  (let* ((size (transform-size snd chn))
+         (hv0 (samples-&gt;vct (left-sample snd chn) size))
+         (hv1 (make-vct (/ size 2))))
+    (<em class=red>fht</em> hv0)
+    (do ((i 1 (1+ i)))
+        ((= i (/ size 2)))
+      (vct-set! hv1 i 
+        (* (sqrt (+ (* (vct-ref hv0 i) 
+                       (vct-ref hv0 i))
+                    (* (vct-ref hv0 (- size i)) 
+                       (vct-ref hv0 (- size i)))))
+           (/ (sqrt 2.0) size))))
+    (graph hv1)))
+
+(add-hook! graph-hook hgrf)
+<!-- --></pre></td></tr></table></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->The explicit (slow) form of this transform is dht in <a href="sndscm.html#exampdoc">examp.scm</a>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+
 </table>
 
-<p>Other related variables:</p>
-<table cellpadding=0 celspacing=0 border=0>
+<p>Other related variables and functions:</p>
+<table cellpadding=0 celspacing=10 border=0>
 
-<tr><td width=200><a href="#sndffting">ffting</a> (<em class=targ>snd chn</em>)           </td><td><a href="#showfftpeaks">show-fft-peaks</a>             </td><td><a href="#sndtransformsample">transform-sample</a> (<i>bin slice snd chn</i>)</td></tr>
-<tr><td><a href="#fftbeta">fft-beta</a>                  </td><td><a href="#lshowselectiontransform">show-selection-transform</a>   </td><td><a href="#sndtransformsamples">transform-samples</a> (<i>snd chn</i>)</td></tr>
-<tr><td><a href="#ffthook">fft-hook</a> (snd chn scaler) </td><td><a href="#spectrocutoff">spectro-cutoff</a>             </td><td><a href="#transformsamples2vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>)</td></tr>
-<tr><td><a href="#fftlogfrequency">fft-log-frequency</a>         </td><td><a href="#spectrohop">spectro-hop</a>                </td><td><a href="#transformsize">transform-size</a> (<i>snd chn</i>)</td></tr>
-<tr><td><a href="#fftlogmagnitude">fft-log-magnitude</a>         </td><td><a href="#spectrostart">spectro-start</a>              </td><td><a href="#ltransformtype">transform-type</a></td></tr>
-<tr><td><a href="#lfftsize">fft-size</a>                  </td><td><a href="#spectroxangle">spectro-x-angle</a>            </td><td><a href="#sndupdatefft">update-fft</a> (<i>snd chn</i>)</td></tr>
-<tr><td><a href="#lfftstyle">fft-style</a>                 </td><td><a href="#spectroxscale">spectro-x-scale</a>            </td><td><a href="#normalizefft">normalize-fft</a></td></tr>
-<tr><td><a href="#lfftwindow">fft-window</a>                </td><td><a href="#spectroyangle">spectro-y-angle</a>            </td><td><a href="#zeropad">zero-pad</a></td></tr>
-<tr><td><a href="#maxfftpeaks">max-fft-peaks</a>             </td><td><a href="#spectroyscale">spectro-y-scale</a>            </td><td><a href="#wavelettype">wavelet-type</a></td></tr>
-<tr><td><a href="#mindb">min-dB</a>                    </td><td><a href="#spectrozangle">spectro-z-angle</a>
-  </td><td><a href="#normalizefft">normalize-fft</a>             <a href="#spectrozscale">spectro-z-scale</a></td></tr>
+<tr><td width=200><a href="#sndffting">graph-transform?</a></td><td><a href="#showfftpeaks">show-transform-peaks</a></td><td><a href="#sndtransformsample">transform-sample</a></td></tr>
+<tr><td><a href="#fftbeta">fft-window-beta</a></td><td><a href="#lshowselectiontransform">show-selection-transform</a></td><td><a href="#sndtransformsamples">transform-samples</a></td></tr>
+<tr><td><a href="#ffthook">transform-hook</a></td><td><a href="#spectrocutoff">spectro-cutoff</a></td><td><a href="#transformsamples2vct">transform-samples-&gt;vct</a></td></tr>
+<tr><td><a href="#fftlogfrequency">fft-log-frequency</a></td><td><a href="#spectrohop">spectro-hop</a></td><td><a href="#transformgraphsize">transform-graph-data-size</a></td></tr>
+<tr><td><a href="#fftlogmagnitude">fft-log-magnitude</a></td><td><a href="#spectrostart">spectro-start</a></td><td><a href="#ltransformtype">transform-type</a></td></tr>
+<tr><td><a href="#lfftsize">transform-size</a></td><td><a href="#spectroxangle">spectro-x-angle</a></td><td><a href="#sndupdatefft">update-transform</a></td></tr>
+<tr><td><a href="#lfftstyle">transform-graph-type</a></td><td><a href="#spectroxscale">spectro-x-scale</a></td><td><a href="#normalizefft">transform-normalization</a></td></tr>
+<tr><td><a href="#lfftwindow">fft-window</a></td><td><a href="#spectroyangle">spectro-y-angle</a></td><td><a href="#zeropad">zero-pad</a></td></tr>
+<tr><td><a href="#maxfftpeaks">max-transform-peaks</a></td><td><a href="#spectroyscale">spectro-y-scale</a></td><td><a href="#wavelettype">wavelet-type</a></td></tr>
+<tr><td><a href="#mindb">min-dB</a></td><td><a href="#spectrozangle">spectro-z-angle</a></td><td><a href="#spectrozscale">spectro-z-scale</a></td></tr>
 </table>
 
 <!-- Dialogs -->
@@ -6823,7 +6926,7 @@ variable %load-verbosely to #t.
 
 <p><b>Transform normalization</b>:
 <pre>
-  dont-normalize    normalize-by-channel normalize-by-sound  normalize-globally
+  dont-normalize-transform   normalize-transform-by-channel normalize-transform-by-sound  normalize-transform-globally
 </pre><br>
 
 <p><b><a name="fftwindowchoices"></a>FFT Window</b> type:</p>
@@ -6884,7 +6987,7 @@ variable %load-verbosely to #t.
 
 <p><b>Graph</b> id:</p>
 <pre>
-  time-graph     fft-graph     lisp-graph
+  time-graph     transform-graph     lisp-graph
 </pre>
 
 
@@ -6921,7 +7024,8 @@ variable %load-verbosely to #t.
 <!-- -->It is assumed that the data will be floats in the native format (written by 
 <!-- -->the caller interleaving channels), and that the file will be closed by 
 <!-- -->close-sound-file. One simple way to write the data is to call 
-<!-- --><a href="#vct2soundfile">vct-&gt;sound-file</a>.
+<!-- --><a href="#vct2soundfile">vct-&gt;sound-file</a>.  <i>open-sound-file</i> opens a file external to Snd, where <i>open-sound</i>
+<!-- -->loads a file into Snd for editing.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6929,7 +7033,7 @@ variable %load-verbosely to #t.
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="abort">abort</a></em> ()</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->drop into gdb
+<!-- -->exit Snd via "abort", presumably to fall into the C debugger (gdb).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6939,14 +7043,6 @@ variable %load-verbosely to #t.
 <!-- --><tr><td></td><td>
 <!-- -->add <i>ext</i> to the list of sound file extensions.
 <!-- -->The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve")
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- autocorrelate -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndautocorrelate">autocorrelate</a></em> (data)</code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->return (in place) autocorrelation of <i>data</i>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7095,17 +7191,6 @@ variable %load-verbosely to #t.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
-<!-- convolve-arrays -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndconvolve">convolve-arrays</a></em> (rl1 rl2)</code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->convolve vectors <i>rl1</i> with <i>rl2</i>.  Result returned in rl1.
-<!-- -->rl1 should be large enough to hold the full convolution result.
-<!-- -->As a special dispensation for forgetful users, if rl1 is a file
-<!-- -->name and rl2 is not a vector, <i>convolve-with</i> is called instead.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
 <!-- equalize-panes -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndequalizepanes">equalize-panes</a></em> (<i>snd</i>)</code></span></td></tr>
@@ -7125,53 +7210,6 @@ variable %load-verbosely to #t.
 <!-- --><span class=defbox><code><em class=def><a name="sndexit">exit</a></em>              (<i>exit-value</i>)</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->   exit Snd.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- fft -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndfft">fft</a></em> (rl im <i>sgn</i>)</code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->perform an FFT on <i>rl</i> and <i>im</i> (the real and imaginary parts of the
-<!-- -->input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- fht -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndfht">fht</a></em> (vobj)</code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->perform Hartley transform on vct <i>vobj</i> whose length must be a power of 4.
-<!-- -->This is a fast version of the FFT (it's about 4 to 6 times faster than the fft, 
-<!-- -->but can be applied only to real data; it is its own inverse).  The following 
-<!-- -->function reads data from the left window edge, calls the Hartley transform 
-<!-- -->(using a "rectangular window"), turns that into a magnitude spectrum, and graphs 
-<!-- -->the result (which is the same as the fft-generated magnitude spectrum before 
-<!-- -->any normalization etc).
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td colspan=2 align=center>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define (hgrf snd chn y0 y1)
-  (let* ((size (fft-size snd chn))
-         (hv0 (samples-&gt;vct (left-sample snd chn) size))
-         (hv1 (make-vct (/ size 2))))
-    (<em class=red>fht</em> hv0)
-    (do ((i 1 (1+ i)))
-        ((= i (/ size 2)))
-      (vct-set! hv1 i 
-        (* (sqrt (+ (* (vct-ref hv0 i) 
-                       (vct-ref hv0 i))
-                    (* (vct-ref hv0 (- size i)) 
-                       (vct-ref hv0 (- size i)))))
-           (/ (sqrt 2.0) size))))
-    (graph hv1)))
-
-(add-hook! graph-hook hgrf)
-<!-- --></pre></td></tr></table></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->The explicit (slow) form of this transform is dht in <a href="sndscm.html#exampdoc">examp.scm</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7624,27 +7662,27 @@ found (this code obviously has to be in the init file):</p>
         #f)))
 </pre></td></tr></table>
 
-<p>And just for completeness, here's an example of using the fft-hook.
+<p>And just for completeness, here's an example of using the transform-hook.
 </p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define fft-peak
   (lambda (snd chn scale)
-    (if (and (ffting) 
-             (= (fft-style) normal-fft))
+    (if (and (graph-transform?) 
+             (= (transform-graph-type) graph-transform-once))
 	(let* ((samps (transform-samples snd chn))
 	       (len (vector-length samps))
 	       (mx (vector-ref samps 0))
 	       (peak (do ((i 1 (+ i 1))) 
                          ((= i len) 
-                          (/ (* 2 mx) (fft-size)))
+                          (/ (* 2 mx) (transform-size)))
 		       (let ((val (abs (vector-ref samps i))))
 			 (if (&gt; val mx) 
                              (set! mx val))))))
 	  (report-in-minibuffer (number-&gt;string peak) snd))
       #f)))
 	
-(add-hook! fft-hook fft-peak)
+(add-hook! transform-hook fft-peak)
 </pre></td></tr></table>
 
 <p>The following function uses the sndlib functions to mimic the 'info' popup menu option (see <a href="sndscm.html#exampdoc">examp.scm</a> for a version that uses format):</p>
@@ -7689,9 +7727,9 @@ found (this code obviously has to be in the init file):</p>
         <!-- I(combine channels):L(channel-style)(channelstyle) -->
         <!-- I(normalize display):L(equalize-panes)(sndequalizepanes) -->
         <!-- I(control panel):L(show-controls)(sndshowcontrols) -->
-	<!-- I(fft peaks):L(show-fft-peaks)(showfftpeaks) -->
+	<!-- I(fft peaks):L(show-transform-peaks)(showfftpeaks) -->
         <!-- I(fft peaks):O(peaks)(sndpeaks) -->
-	<!-- I(fft/sono/spectrogram):L(fft-style)(lfftstyle) -->
+	<!-- I(fft/sono/spectrogram):L(transform-graph-type)(lfftstyle) -->
         <!-- I(zoom focus):L(zoom-focus-style)(zoomfocusstyle) -->
 	<!-- I(fft in dB):L(fft-log-magnitude)(fftlogmagnitude) -->
 	<!-- I(fft log freq):L(fft-log-frequency)(fftlogfrequency) -->
@@ -7715,8 +7753,8 @@ found (this code obviously has to be in the init file):</p>
         <!-- I(temp directory):L(temp-dir)(tempdir) -->
         <!-- I(continue session):L(load) -->
         <!-- I(fft window):L(fft-window)(lfftwindow) -->
-	<!-- I(fft size):L(fft-size)(lfftsize) -->
-        <!-- I(fft window parameter):L(fft-beta)(fftbeta) -->
+	<!-- I(fft size):L(transform-size)(lfftsize) -->
+        <!-- I(fft window parameter):L(fft-window-beta)(fftbeta) -->
 	<!-- I(move cursor ahead):L(forward-sample)(sndforwardsample) -->
         <!-- I(move cursor back):L(backward-sample)(sndbackwardsample) -->
         <!-- I(insert zeros):L(insert-samples)(sndinsertsamples) -->
@@ -7729,16 +7767,15 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(filter samples):L(filter-sound)(sndfilter) --><!-- I(filter samples):M(Edit: Edit Env)(editenvelope) -->
 	<!-- I(filter samples):O(filter-selection)(sndfilterselection) --><!-- I(filter samples):A(sndfilter) -->
 	<!-- I(save marks):L(save-marks)(sndsavemarks) -->
-        <!-- I(show freq domain):L(ffting)(sndffting) -->
-	<!-- I(show time domain):L(waving)(sndwaving) -->
+        <!-- I(show freq domain):L(graph-transform?)(sndffting) -->
+	<!-- I(show time domain):L(graph-time?)(sndwaving) -->
         <!-- I(keyboard macros):L(key)(sndkey) -->
         <!-- I(delete mark):L(delete-mark)(snddeletemark) --> <!-- I(delete mark):O(delete-marks)(snddeletemarks) -->
-	<!-- I(sonogram):L(fft-style)(lfftstyle) -->
-	<!-- I(spectrogram):L(fft-style)(lfftstyle) -->
+	<!-- I(sonogram):L(transform-graph-type)(lfftstyle) -->
+	<!-- I(spectrogram):L(transform-graph-type)(lfftstyle) -->
         <!-- I(X axis units):L(x-axis-style)(xaxisstyle) -->
 	<!-- I(speed units):L(speed-control-style)(lspeedstyle) -->
-        <!-- I(fft normalization):L(normalize-fft)(normalizefft) -->
-        <!-- I(fft normalization):A(normalizefft) -->
+        <!-- I(transform normalization):L(transform-normalization)(normalizefft) -->
 	<!-- I(speed units):O(speed-control-tones)(speedtones) -->
 	<!-- I(change srate):L(src-sound)(sndsrc) -->	
 	<!-- I(edit env):L(enved-dialog)(sndenveddialog) -->

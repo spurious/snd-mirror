@@ -816,7 +816,7 @@ void snd_append_command(snd_state *ss, char *msg)
       if (msg)
 	XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
       cmd_eot = XmTextGetLastPosition(listener_text);
-      if (ss->result_printout == MESSAGE_WITH_CARET) 
+      if (ss->result_printout == MESSAGE_WITH_PROMPT) 
 	XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(ss));
       ss->result_printout = 0;
       cmd_eot = XmTextGetLastPosition(listener_text);

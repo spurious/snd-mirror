@@ -1,6 +1,7 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 #include "vct.h"
+#include "clm2scm.h"
 
 void ssnd_help(snd_state *ss, char *subject, ...)
 {
@@ -270,6 +271,16 @@ void news_help(snd_state *ss)
 4-June:  configure.ac for autoconf 2.50.\n\
          prepended \"zoom-\" to the zoom-focus-style choices (e.g. zoom-focus-left)\n\
          added \"axis-\" to x-axis-style choices (e.g. x-axis-in-samples),  x-to-one -> x-axis-as-percentage.\n\
+         added print-hook.\n\
+         graphing -> graph-lisp?, ffting -> graph-transform?, waving -> graph-time?,\n\
+         fft-graph -> transform-graph, fft-beta -> fft-window-beta, fft-hook -> transform-hook,\n\
+         transform-size -> transform-graph-data-size, fft-size -> transform-size, fft-style -> transform-graph-type,\n\
+         before-fft-hook -> before-transform-hook, max-fft-peaks -> max-transform-peaks,\n\
+         show-fft-peaks -> show-transform-peaks, normal-fft -> graph-transform-once,\n\
+         sonogram -> graph-transform-as-sonogram, spectrogram -> graph-transform-as-spectrogram,\n\
+         normalize-by-channel -> normalize-transform-by-channel, normalize-by-sound -> normalize-transform-by-sound,\n\
+         normalize-globally -> normalize-transform-globally, normalize-transform -> transform-normalization,\n\
+         update-fft -> update-transform, update-graph -> update-time-graph, dont-normalize -> dont-normalize-transform.\n\
 1-June:  add-to-menu and remove-from-menu can affect the popup menu.\n\
          region handling changed to use the region \"id\", not its current stack position.\n\
            many related changes: \n\
@@ -588,7 +599,7 @@ static char fft_keypad_help_string[] =
   " S_spectro_x_angle "  Ctrl-UpArrow (8)    Ctrl-DownArrow (2)\n\
   " S_spectro_y_angle "  Ctrl-RightArrow (6) Ctrl-LeftArrow (4)\n\
   " S_spectro_z_scale "  UpArrow (8)         DownArrow (2)\n\
-  " S_fft_size "         Multiply (*)        Divide (/)\n\
+  " S_transform_size "   Multiply (*)        Divide (/)\n\
   " S_dot_size "         Delete (.)          Insert (0)\n\
 \n\
 You can rotate the spectrogram around the various axes\n\
@@ -657,7 +668,7 @@ The spectrum data is usually normalized to fit\n\
 between 0.0 to 1.0; if you'd rather have un-normalized\n\
 data (the y-axis in this case changes to reflect the\n\
 data values, to some extent), set the variable\n\
-" S_normalize_fft " to 0.\n\
+" S_transform_normalization " to " S_dont_normalize_transform ".\n\
 \n\
 The harmonic analysis function is normally the\n\
 Fourier Transform, but others are available,\n\
@@ -917,22 +928,22 @@ static char constants_help_string[] =
   " S_mus_bint "    " S_mus_alaw "     " S_mus_ubyte "   " S_mus_lfloat "\n\
   " S_mus_bdouble " " S_mus_b24int "   " S_mus_bfloat "  " S_mus_lint "\n\
 \n\
-FFT style (the Transform Options Display choice):\n\
-  " S_normal_fft "         " S_sonogram "            " S_spectrogram "\n\
+Transform Graph style (the Transform Options Display choice):\n\
+  " S_graph_transform_once "   " S_graph_transform_as_sonogram "  " S_graph_transform_as_spectrogram "\n\
 \n\
 Transform type:\n\
   " S_fourier_transform "  " S_wavelet_transform "   " S_hankel_transform "  " S_chebyshev_transform "   " S_cepstrum "\n\
-  " S_autocorrelation "    " S_walsh_transform "\n\
+  " S_autocorrelation "    " S_walsh_transform "  " S_hadamard_transform " " S_haar_transform "\n\
 \n\
 FFT Window type:\n\
-  rectangular-window  hann(ing)-window    welch-window       parzen-window\n\
-  bartlett-window     hamming-window      blackman2-window   blackman3-window\n\
-  blackman4-window    exponential-window  riemann-window     kaiser-window\n\
-  cauchy-window       poisson-window      gaussian-window    tukey-window\n\
-  dolph-chebychev-window\n\
+  " S_rectangular_window " " S_hann_window " " S_welch_window " "  S_parzen_window "\n\
+  " S_bartlett_window " " S_hamming_window " " S_blackman2_window " "  S_blackman3_window "\n\
+  " S_blackman4_window " " S_exponential_window " " S_riemann_window " " S_kaiser_window "\n\
+  " S_cauchy_window " " S_poisson_window " " S_gaussian_window " " S_tukey_window "\n\
+  " S_dolph_chebyshev_window "\n\
 \n\
 Transform normalization choice:\n\
-  dont-normalize    normalize-by-channel normalize-by-sound  normalize-globally\n\
+  " S_dont_normalize_transform " " S_normalize_transform_by_channel " " S_normalize_transform_by_sound " " S_normalize_transform_globally "\n\
 \n\
 Zoom Focus style:\n\
   " S_zoom_focus_left "    " S_zoom_focus_right "   " S_zoom_focus_active " " S_zoom_focus_middle "\n\
@@ -964,7 +975,7 @@ Axis choice:\n\
   " S_show_no_axes "    " S_show_all_axes "         " S_show_x_axis "\n\
 \n\
 Graph:\n\
-  " S_time_graph "      " S_fft_graph "             " S_lisp_graph "\n\
+  " S_time_graph "      " S_transform_graph "       " S_lisp_graph "\n\
 ";
 
 static char variables_help_string[] =
@@ -1008,12 +1019,10 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_eps_bottom_margin "     0\n\
   " S_eps_file "              \"snd.eps\"\n\
   " S_eps_left_margin "       0\n\
-  " S_fft_beta "              0.0 (snd #t) (chn #t)\n\
+  " S_fft_window_beta "       0.0 (snd #t) (chn #t)\n\
   " S_fft_log_frequency "     #f (snd #t) (chn #t)\n\
   " S_fft_log_magnitude "     #f (snd #t) (chn #t)\n\
-  " S_fft_size "              256 (snd #t) (chn #t)\n\
-  " S_fft_style "             " S_normal_fft " (snd #t) (chn #t)\n\
-  " S_fft_window "            blackman2-window (snd #t) (chn #t)\n\
+  " S_fft_window "            " S_blackman2_window " (snd #t) (chn #t)\n\
   " S_filter_env_in_hz "      #f\n\
   " S_filter_waveform_color " blue\n\
   " S_graph_color "           white\n\
@@ -1028,7 +1037,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_listener_prompt "       \">\"\n\
   " S_listener_text_color "   black\n\
   " S_mark_color "            red\n\
-  " S_max_fft_peaks "         100 (snd #t) (chn #t)\n\
+  " S_max_transform_peaks "   100 (snd #t) (chn #t)\n\
   " S_min_dB "               -60.0 (snd #t) (chn #t)\n\
   " S_minibuffer_history_length " 8\n\
   " S_mix_color "             lightgreen\n\
@@ -1037,7 +1046,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_mix_tag_y "             0\n\
   " S_mix_waveform_height "   20\n\
   " S_movies "                #t\n\
-  " S_normalize_fft "         normalize-by-channel (snd #t) (chn #t)\n\
+  " S_transform_normalization " " S_normalize_transform_by_channel " (snd #t) (chn #t)\n\
   " S_position_color "        ivory3\n\
   " S_print_length "          12\n\
   " S_pushed_button_color "   lightsteelblue1\n\
@@ -1061,11 +1070,11 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_selection_creates_region " #t\n\
   " S_show_axes "             show-all-axes (snd #t) (chn #t)\n\
   " S_show_backtrace "        #f\n\
-  " S_show_fft_peaks "        #f (snd #t) (chn #t)\n\
   " S_show_indices "          #f\n\
   " S_show_marks "            #t (snd #t) (chn #t)\n\
   " S_show_mix_waveforms "    #f (snd #t) (chn #t)\n\
   " S_show_selection_transform " #f\n\
+  " S_show_transform_peaks "  #f (snd #t) (chn #t)\n\
   " S_show_usage_stats "      #f\n\
   " S_show_y_zero "           #f (snd #t) (chn #t)\n\
   " S_sinc_width "            10\n\
@@ -1082,7 +1091,9 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_speed_control_tones "   12 (snd #t)\n\
   " S_temp_dir "              nil\n\
   " S_text_focus_color "      white\n\
-  " S_transform_type "        " S_fourier_transform " (snd #t) (chn #t)\n\
+  " S_transform_size "        256 (snd #t) (chn #t)\n\
+  " S_transform_graph_type " " S_graph_transform_once " (snd #t) (chn #t)\n\
+  " S_transform_type "       " S_fourier_transform " (snd #t) (chn #t)\n\
   " S_trap_segfault "         #t\n\
   " S_use_sinc_interp "       #f\n\
   " S_verbose_cursor "        #f (snd #t) (chn #t)\n\
@@ -1111,14 +1122,14 @@ user-interface manipulations.\n\
 \n\
   " S_after_graph_hook " (snd chn)\n\
   " S_after_open_hook " (snd)\n\
-  " S_before_fft_hook " (snd chn)\n\
+  " S_before_transform_hook " (snd chn)\n\
   " S_close_hook " (snd)\n\
   " S_drop_hook " (filename\n\
   " S_during_open_hook " (fd name reason)\n\
   " S_edit_hook " (snd chn)\n\
   " S_enved_hook " (env pt new-x new-y)\n\
   " S_exit_hook "\n\
-  " S_fft_hook " (snd chn scaler)\n\
+  " S_transform_hook " (snd chn scaler)\n\
   " S_graph_hook " (snd chn y0 y1)\n\
   " S_initial_graph_hook " (snd chn dur)\n\
   " S_just_sounds_hook " (filename)\n\
@@ -1235,7 +1246,6 @@ all refer to the same thing.\n\
   " S_expand_control_ramp " (snd)\n\
   " S_expand_control_p "   (snd)\n\
   " S_fft "               (rl im sgn)\n\
-  " S_ffting "            (snd chn)\n\
   " S_fht "               (rl)\n\
   " S_file_dialog "       ()\n\
   " S_file_name "         (snd)\n\
@@ -1254,7 +1264,9 @@ all refer to the same thing.\n\
   " S_forward_sample "    (count)\n\
   " S_free_sample_reader "(rd)\n\
   " S_graph "             (data xlabel x0 x1 snd chn)\n\
-  " S_graphing "          (snd chn)\n\
+  " S_graph_lisp_p "      (snd chn)\n\
+  " S_graph_time_p "      (snd chn)\n\
+  " S_graph_transform_p " (snd chn)\n\
   " S_graph2ps "         ()\n\
   " S_header_type "       (snd)\n\
   " S_help_dialog "       (subject help)\n\
@@ -1417,13 +1429,13 @@ all refer to the same thing.\n\
   " S_transform_sample "  (bin slice snd chn)\n\
   " S_transform_samples " (snd chn()\n\
   " S_transform_samples2vct " (snd chn)\n\
-  " S_transform_size "    (snd chn)\n\
+  " S_transform_graph_data_size " (snd chn)\n\
   " S_unbind_key "        (key state)\n\
   " S_undo "              (edits snd chn)\n\
-  " S_update_sound "      ()\n\
-  " S_update_fft "        (snd chn)\n\
-  " S_update_graph "      (snd chn)\n\
   " S_update_lisp_graph " (snd chn)\n\
+  " S_update_sound "      ()\n\
+  " S_update_time_graph " (snd chn)\n\
+  " S_update_transform "  (snd chn)\n\
   " S_widget_position "   (wid)\n\
   " S_widget_size "       (wid)\n\
   " S_vct_p "            (vobj)\n\
@@ -1446,7 +1458,6 @@ all refer to the same thing.\n\
   " S_vcts_mapB "         (obj ... proc)\n\
   " S_vector2vct "       (vect)\n\
   " S_view_sound "        (filename)\n\
-  " S_waving "            (snd chn()\n\
   " S_window_height "     ()\n\
   " S_window_width "      ()\n\
   " S_x_bounds "          (snd chn)\n\
