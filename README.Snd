@@ -1,7 +1,7 @@
 Snd
 
 Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
-OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, Mac OSX (XDarwin),
+OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, Mac OSX,
 and BSD (BSDI 4.2).  And Stefan Schwandter says, "Snd now compiles on mips, 
 mipsel, hppa, ia64, arm, sparc, s390, and m68k."  It compiles and loads
 in Windows/Cygwin.
@@ -565,6 +565,8 @@ from the sources:
 from ccrma-ftp:
   libXm.a (omitted from motifzone package, but sometimes needed by Snd)
 
+(I think Snd runs much more smoothly in 10.3's X11 that comes from Apple:
+it's on the Xcode Tools CD (X11 SDK) and gets installed into /Applications/utils).
 
 Loading xm.c (--with-static-xm etc) is problematic on Mac.  If you use
 the libXm.dylib from openMotif, you'll probably need the langinfo

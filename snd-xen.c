@@ -1170,7 +1170,9 @@ static XEN g_set_auto_resize(XEN val)
   #define H_auto_resize "(" S_auto_resize "): #t if Snd can change its main window size as it pleases (default: #t)"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_auto_resize, "a boolean");
   set_auto_resize(XEN_TO_C_BOOLEAN(val)); 
-  reflect_resize(); 
+#if HAVE_MOTIF
+  XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, auto_resize(ss), NULL);
+#endif
   return(C_TO_XEN_BOOLEAN(auto_resize(ss)));
 }
 

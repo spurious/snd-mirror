@@ -213,7 +213,6 @@ void set_title(const char *title);
 void check_for_event(void);
 bool event_pending(void);
 void recolor_graph(chan_info *cp, bool selected);
-void reflect_resize(void);
 void set_sensitive(int wid, bool val);
 void set_toggle_button(int wid, bool val, bool passed, void *data);
 int widget_height(int w);

@@ -336,8 +336,8 @@ void free_snd_info(snd_info *sp)
 	}
       set_filter_text(sp, "");
     }
-  snd_info_cleanup(sp);
   sp->sync = 0;
+  snd_info_cleanup(sp);
   sp->previous_sync = sp->sync;
   for (i = 0; i < sp->nchans; i++)
     if (sp->chans[i]) 

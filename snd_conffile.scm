@@ -569,10 +569,10 @@
 	    (begin
 	      (set! (foreground-color) backgroundcolor)
 	      (if #f
-		  (draw-string (cadddr olddim) (car olddim) (+ (cadr olddim) fontheight))
+		  (draw-string (cadddr olddim) (car olddim) (cadr olddim))
 		  (fill-rectangle (car olddim) (cadr olddim) (caddr olddim) fontheight))))
 	(set! (foreground-color) color)
-	(draw-string string x (+ y fontheight))
+	(draw-string string x y)
 	(case level
 	  ((0) (set-car! lastpainted newdim))
 	  ((1) (set-car! (cdr lastpainted) newdim))

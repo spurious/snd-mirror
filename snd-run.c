@@ -6277,10 +6277,6 @@ FLOAT_INT_OP(region_maxamp);
 
 char *r_mark_name(int n);
 
-/* TODO: snd-test run mix-chans|position|frames|track|inverted|locked|speed track-speed|tempo|amp|track|chans
-         region-maxamp|srate|chans|frames
-*/
-
 /* PERHAPS: simple snd ops
   bool from 0: selection?
   int from 0: [selection-position(2)] [selection-frames(2)] [selected-sound -> #f]
@@ -6294,6 +6290,7 @@ char *r_mark_name(int n);
      select-channel select-sound
 
      error returns?
+     set cases?
 */
 
 

@@ -328,8 +328,6 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
   if (sp->channel_style != CHANNELS_SEPARATE)
     for_each_sound_chan(sp, update_graph);
   else update_graph(cp);
-  if (SOUND_PANE(ss)) /* not used in -separate mode */
-    sound_check_control_panel(sp, widget_height(SOUND_PANE(ss)));
   return(false);
 }
 

@@ -766,33 +766,32 @@ if test $GUILE_CONFIG_works = yes; then
     LIBS="$GUILE_LIBS"
     OLD_CFLAGS="$CFLAGS"
     CFLAGS="$GUILE_CFLAGS"
+    GNAME="guile"
 
 # special Mac OSX stuff -- need to protect against multiple -lguile's, add -all_load, and add -lguile-ltdl
     case "$host" in
       *-apple-*)
  	CFLAGS="$CFLAGS -all_load"
-        if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.7"))'`" = "#t"; then
-          LIBS="$OLD_LIBS -lguile-ltdl -ldl -lm"
-        fi
+	GNAME="m"
     esac
 
-    AC_CHECK_LIB(guile, scm_set_smob_apply,     [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
-    AC_CHECK_LIB(guile, scm_remember_upto_here, [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
-    AC_CHECK_LIB(guile, scm_make_real,          [AC_DEFINE(HAVE_SCM_MAKE_REAL)])
-    AC_CHECK_LIB(guile, scm_object_to_string,   [AC_DEFINE(HAVE_SCM_OBJECT_TO_STRING)])
-    AC_CHECK_LIB(guile, scm_num2long_long,      [AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
-    AC_CHECK_LIB(guile, scm_num2int,            [AC_DEFINE(HAVE_SCM_NUM2INT)])
-    AC_CHECK_LIB(guile, scm_c_make_vector,      [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
-    AC_CHECK_LIB(guile, scm_c_define,           [AC_DEFINE(HAVE_SCM_C_DEFINE)])
-    AC_CHECK_LIB(guile, scm_c_define_gsubr,     [AC_DEFINE(HAVE_SCM_C_DEFINE_GSUBR)])
-    AC_CHECK_LIB(guile, scm_c_eval_string,      [AC_DEFINE(HAVE_SCM_C_EVAL_STRING)])
-    AC_CHECK_LIB(guile, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
-    AC_CHECK_LIB(guile, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
-    AC_CHECK_LIB(guile, scm_defined_p,          [AC_DEFINE(HAVE_SCM_DEFINED_P)])
-    AC_CHECK_LIB(guile, scm_port_p,             [AC_DEFINE(HAVE_SCM_PORT_P)])
-    AC_CHECK_LIB(guile, scm_mem2string,         [AC_DEFINE(HAVE_SCM_MEM2STRING)])
-    AC_CHECK_LIB(guile, scm_continuation_p,     [AC_DEFINE(HAVE_SCM_CONTINUATION_P)])
-    AC_CHECK_LIB(guile, scm_c_define_module,    [AC_DEFINE(HAVE_SCM_C_DEFINE_MODULE)
+    AC_CHECK_LIB($GNAME, scm_set_smob_apply,     [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
+    AC_CHECK_LIB($GNAME, scm_remember_upto_here, [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
+    AC_CHECK_LIB($GNAME, scm_make_real,          [AC_DEFINE(HAVE_SCM_MAKE_REAL)])
+    AC_CHECK_LIB($GNAME, scm_object_to_string,   [AC_DEFINE(HAVE_SCM_OBJECT_TO_STRING)])
+    AC_CHECK_LIB($GNAME, scm_num2long_long,      [AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
+    AC_CHECK_LIB($GNAME, scm_num2int,            [AC_DEFINE(HAVE_SCM_NUM2INT)])
+    AC_CHECK_LIB($GNAME, scm_c_make_vector,      [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
+    AC_CHECK_LIB($GNAME, scm_c_define,           [AC_DEFINE(HAVE_SCM_C_DEFINE)])
+    AC_CHECK_LIB($GNAME, scm_c_define_gsubr,     [AC_DEFINE(HAVE_SCM_C_DEFINE_GSUBR)])
+    AC_CHECK_LIB($GNAME, scm_c_eval_string,      [AC_DEFINE(HAVE_SCM_C_EVAL_STRING)])
+    AC_CHECK_LIB($GNAME, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
+    AC_CHECK_LIB($GNAME, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
+    AC_CHECK_LIB($GNAME, scm_defined_p,          [AC_DEFINE(HAVE_SCM_DEFINED_P)])
+    AC_CHECK_LIB($GNAME, scm_port_p,             [AC_DEFINE(HAVE_SCM_PORT_P)])
+    AC_CHECK_LIB($GNAME, scm_mem2string,         [AC_DEFINE(HAVE_SCM_MEM2STRING)])
+    AC_CHECK_LIB($GNAME, scm_continuation_p,     [AC_DEFINE(HAVE_SCM_CONTINUATION_P)])
+    AC_CHECK_LIB($GNAME, scm_c_define_module,    [AC_DEFINE(HAVE_SCM_C_DEFINE_MODULE)
                                                  if test "$with_modules" = yes; then
 						   AC_DEFINE(WITH_MODULES)
 						 fi])

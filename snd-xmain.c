@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: in Mac OSX 10.3 using Apple's X11, the title bar is sometimes repeated? */
+
 #include <X11/cursorfont.h>
 
 #define FALLBACK_FONT "fixed"

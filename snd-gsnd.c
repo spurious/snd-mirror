@@ -1250,6 +1250,8 @@ static void close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 
 /* -------- SOUND PANE -------- */
 
+static bool showing_controls = false;
+
 snd_info *add_sound_window(char *filename, bool read_only)
 {
   snd_info *sp, *osp;
@@ -1320,6 +1322,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       sw = sx->snd_widgets;
       adjs = sx->snd_adjs;
     }
+  if (!(auto_resize(ss))) gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), false);
   if ((!make_widgets) && (old_chans < nchans))
     {
       for (i = old_chans; i < nchans; i++) 
@@ -1916,6 +1919,8 @@ snd_info *add_sound_window(char *filename, bool read_only)
 	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], sp->short_filename);
       else reset_controls(sp); /* segfault here in notebook case! */
     }
+  gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), true);
+  if (showing_controls) sound_show_ctrls(sp); else sound_hide_ctrls(sp);
 
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
     {
@@ -1958,6 +1963,21 @@ void snd_info_cleanup(snd_info *sp)
   if ((sp) && (sp->sgx))
     {
       sx = sp->sgx;
+
+      if (SYNC_BUTTON(sp))
+	{
+
+	  set_toggle_button(SYNC_BUTTON(sp), false, false, (void *)sp);
+	  set_sync_color(sp);
+	  set_toggle_button(EXPAND_BUTTON(sp), false, false, (void *)sp);
+	  set_toggle_button(CONTRAST_BUTTON(sp), false, false, (void *)sp);
+	  set_toggle_button(FILTER_BUTTON(sp), false, false, (void *)sp);
+	  set_toggle_button(REVERB_BUTTON(sp), false, false, (void *)sp);
+	  set_toggle_button(unite_button(sp), false, false, (void *)sp);
+	}
+      if ((sx->dialog) && (GTK_WIDGET_VISIBLE(sx->dialog)))
+	gtk_widget_hide(sx->dialog);
+
       if ((sx->snd_widgets) && (sx->snd_widgets[W_pane])) gtk_widget_hide(sx->snd_widgets[W_pane]);
       sp->channel_style = CHANNELS_SEPARATE; 
     }
@@ -1995,10 +2015,12 @@ bool control_panel_open(snd_info *sp)
   return((GTK_WIDGET_MAPPED(CONTROL_PANEL(sp))) && (GTK_WIDGET_VISIBLE(CONTROL_PANEL(sp))));
 }
 
+
 void show_controls(void)
 {
   snd_info *sp;
   int i;
+  showing_controls = true;
   set_view_ctrls_label(_("Hide controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
@@ -2012,6 +2034,7 @@ void hide_controls(void)
 {
   snd_info *sp;
   int i;
+  showing_controls = false;
   set_view_ctrls_label(_("Show controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
@@ -2026,16 +2049,6 @@ int control_panel_height(snd_info *sp)
   return(widget_height(CONTROL_PANEL(sp)));
 }
 
-void sound_check_control_panel(snd_info *sp, int height)
-{
-  if (sp->inuse != SOUND_NORMAL) return;
-  if ((!((sp->sgx)->controls_fixed)) && 
-      (height > 50))
-    {
-      (sp->sgx)->controls_fixed = true;
-      sound_hide_ctrls(sp);
-    }
-}
 
 
 /* -------- PROGRESS REPORT -------- */

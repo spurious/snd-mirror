@@ -438,11 +438,6 @@ char *XpmGetErrorString(int err);
 char *XpmGetErrorString(int err) {return("");}
 #endif
 
-void reflect_resize(void)
-{
-  XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, auto_resize(ss), NULL);
-}
-
 void set_sensitive(Widget wid, bool val) {if (wid) XtSetSensitive(wid, val);}
 bool is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(false);}
 void set_toggle_button(Widget wid, bool val, bool passed, void *data) {XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);}

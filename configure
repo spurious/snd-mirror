@@ -13458,23 +13458,23 @@ _ACEOF
     LIBS="$GUILE_LIBS"
     OLD_CFLAGS="$CFLAGS"
     CFLAGS="$GUILE_CFLAGS"
+    GNAME="guile"
 
 # special Mac OSX stuff -- need to protect against multiple -lguile's, add -all_load, and add -lguile-ltdl
     case "$host" in
       *-apple-*)
  	CFLAGS="$CFLAGS -all_load"
-        if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.7"))'`" = "#t"; then
-          LIBS="$OLD_LIBS -lguile-ltdl -ldl -lm"
-        fi
+	GNAME="m"
     esac
 
-    echo "$as_me:$LINENO: checking for scm_set_smob_apply in -lguile" >&5
-echo $ECHO_N "checking for scm_set_smob_apply in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_set_smob_apply+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_set_smob_apply" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_set_smob_apply in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_set_smob_apply in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -13510,32 +13510,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_set_smob_apply=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_set_smob_apply=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_set_smob_apply" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_set_smob_apply" >&6
-if test $ac_cv_lib_guile_scm_set_smob_apply = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_APPLICABLE_SMOB 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_remember_upto_here in -lguile" >&5
-echo $ECHO_N "checking for scm_remember_upto_here in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_remember_upto_here+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_remember_upto_here" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_remember_upto_here in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_remember_upto_here in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -13571,32 +13572,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_remember_upto_here=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_remember_upto_here=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_remember_upto_here" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_remember_upto_here" >&6
-if test $ac_cv_lib_guile_scm_remember_upto_here = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_REMEMBER_UPTO_HERE 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_make_real in -lguile" >&5
-echo $ECHO_N "checking for scm_make_real in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_make_real+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_make_real" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_make_real in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_make_real in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -13632,32 +13634,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_make_real=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_make_real=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_make_real" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_make_real" >&6
-if test $ac_cv_lib_guile_scm_make_real = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_MAKE_REAL 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_object_to_string in -lguile" >&5
-echo $ECHO_N "checking for scm_object_to_string in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_object_to_string+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_object_to_string" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_object_to_string in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_object_to_string in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -13693,32 +13696,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_object_to_string=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_object_to_string=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_object_to_string" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_object_to_string" >&6
-if test $ac_cv_lib_guile_scm_object_to_string = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_OBJECT_TO_STRING 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_num2long_long in -lguile" >&5
-echo $ECHO_N "checking for scm_num2long_long in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_num2long_long+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_num2long_long" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_num2long_long in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_num2long_long in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -13754,32 +13758,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_num2long_long=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_num2long_long=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_num2long_long" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_num2long_long" >&6
-if test $ac_cv_lib_guile_scm_num2long_long = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_NUM2LONG_LONG 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_num2int in -lguile" >&5
-echo $ECHO_N "checking for scm_num2int in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_num2int+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_num2int" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_num2int in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_num2int in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -13815,32 +13820,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_num2int=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_num2int=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_num2int" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_num2int" >&6
-if test $ac_cv_lib_guile_scm_num2int = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_NUM2INT 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_c_make_vector in -lguile" >&5
-echo $ECHO_N "checking for scm_c_make_vector in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_c_make_vector+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_c_make_vector" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_c_make_vector in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_c_make_vector in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -13876,32 +13882,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_c_make_vector=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_c_make_vector=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_c_make_vector" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_c_make_vector" >&6
-if test $ac_cv_lib_guile_scm_c_make_vector = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_C_MAKE_VECTOR 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_c_define in -lguile" >&5
-echo $ECHO_N "checking for scm_c_define in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_c_define+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_c_define" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_c_define in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_c_define in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -13937,32 +13944,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_c_define=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_c_define=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_c_define" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_c_define" >&6
-if test $ac_cv_lib_guile_scm_c_define = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_C_DEFINE 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_c_define_gsubr in -lguile" >&5
-echo $ECHO_N "checking for scm_c_define_gsubr in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_c_define_gsubr+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_c_define_gsubr" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_c_define_gsubr in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_c_define_gsubr in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -13998,32 +14006,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_c_define_gsubr=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_c_define_gsubr=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_c_define_gsubr" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_c_define_gsubr" >&6
-if test $ac_cv_lib_guile_scm_c_define_gsubr = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_C_DEFINE_GSUBR 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_c_eval_string in -lguile" >&5
-echo $ECHO_N "checking for scm_c_eval_string in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_c_eval_string+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_c_eval_string" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_c_eval_string in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_c_eval_string in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -14059,32 +14068,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_c_eval_string=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_c_eval_string=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_c_eval_string" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_c_eval_string" >&6
-if test $ac_cv_lib_guile_scm_c_eval_string = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_C_EVAL_STRING 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_list_n in -lguile" >&5
-echo $ECHO_N "checking for scm_list_n in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_list_n+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_list_n" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_list_n in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_list_n in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -14120,32 +14130,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_list_n=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_list_n=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_list_n" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_list_n" >&6
-if test $ac_cv_lib_guile_scm_list_n = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_LIST_N 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_str2symbol in -lguile" >&5
-echo $ECHO_N "checking for scm_str2symbol in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_str2symbol+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_str2symbol" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_str2symbol in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_str2symbol in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -14181,32 +14192,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_str2symbol=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_str2symbol=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_str2symbol" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_str2symbol" >&6
-if test $ac_cv_lib_guile_scm_str2symbol = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_STR2SYMBOL 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_defined_p in -lguile" >&5
-echo $ECHO_N "checking for scm_defined_p in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_defined_p+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_defined_p" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_defined_p in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_defined_p in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -14242,32 +14254,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_defined_p=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_defined_p=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_defined_p" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_defined_p" >&6
-if test $ac_cv_lib_guile_scm_defined_p = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_DEFINED_P 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_port_p in -lguile" >&5
-echo $ECHO_N "checking for scm_port_p in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_port_p+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_port_p" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_port_p in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_port_p in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -14303,32 +14316,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_port_p=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_port_p=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_port_p" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_port_p" >&6
-if test $ac_cv_lib_guile_scm_port_p = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_PORT_P 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_mem2string in -lguile" >&5
-echo $ECHO_N "checking for scm_mem2string in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_mem2string+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_mem2string" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_mem2string in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_mem2string in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -14364,32 +14378,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_mem2string=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_mem2string=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_mem2string" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_mem2string" >&6
-if test $ac_cv_lib_guile_scm_mem2string = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_MEM2STRING 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_continuation_p in -lguile" >&5
-echo $ECHO_N "checking for scm_continuation_p in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_continuation_p+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_continuation_p" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_continuation_p in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_continuation_p in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -14425,32 +14440,33 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_continuation_p=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_continuation_p=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_continuation_p" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_continuation_p" >&6
-if test $ac_cv_lib_guile_scm_continuation_p = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_CONTINUATION_P 1
 _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_c_define_module in -lguile" >&5
-echo $ECHO_N "checking for scm_c_define_module in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_c_define_module+set}" = set; then
+    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_c_define_module" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for scm_c_define_module in -l$GNAME" >&5
+echo $ECHO_N "checking for scm_c_define_module in -l$GNAME... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
+LIBS="-l$GNAME  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -14486,19 +14502,19 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_c_define_module=yes
+  eval "$as_ac_Lib=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_guile_scm_c_define_module=no
+eval "$as_ac_Lib=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_c_define_module" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_c_define_module" >&6
-if test $ac_cv_lib_guile_scm_c_define_module = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_C_DEFINE_MODULE 1
 _ACEOF

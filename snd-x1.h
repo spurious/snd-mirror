@@ -310,7 +310,6 @@ void color_graph(Pixel color);
 void color_selected_graph(Pixel color);
 void set_mix_color(Pixel color);
 void recolor_graph(chan_info *cp, bool selected);
-void reflect_resize(void);
 void set_sensitive(Widget wid, bool val);
 bool is_sensitive(Widget wid);
 void set_toggle_button(Widget wid, bool val, bool passed, void *data);

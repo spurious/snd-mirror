@@ -342,13 +342,6 @@ void recolor_graph(chan_info *cp, bool selected)
   gtk_widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, (selected) ? sx->selected_graph_color : sx->graph_color);
 }
 
-
-void reflect_resize(void)
-{
-  /* gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), auto_resize(ss)); */
-  /* this clobbers the user's ability to resize by dragging the edge */
-}
-
 void set_sensitive(GtkWidget *wid, bool val) 
 {
   if (wid) 
