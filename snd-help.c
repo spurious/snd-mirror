@@ -373,6 +373,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Oct:   optional filename arg for save-marks (and Ruby case implemented).\n\
 6-Oct:   cursor-style and cursor-size can be set globally.\n\
 24-Sep:  snd 6.12.\n\
 22-Sep:  env.rb, spectr.rb, and spectr.scm thanks to Michael Scholz.\n\

@@ -448,7 +448,7 @@ GtkWidget *make_mix_panel(void);
 bool mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 void reflect_no_mix_in_mix_panel(void);
-
+void reflect_undo_in_mix_panel(void);
 
 
 /* -------- snd-genv.c -------- */

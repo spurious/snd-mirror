@@ -394,7 +394,7 @@ static void show_gz_scrollbars(snd_info *sp)
 
 /* edit history support */
 
-static bool flush_select = false;
+static bool flush_select = false, first_history_select = true;
 
 static void history_select_callback(GtkTreeSelection *selection, gpointer *gp)
 {
@@ -406,6 +406,17 @@ static void history_select_callback(GtkTreeSelection *selection, gpointer *gp)
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   path = gtk_tree_model_get_path(model, &iter);
   indices = gtk_tree_path_get_indices(path);
+  if (first_history_select) /* goddamn gtk sends a bogus initial select of row 0 when the list is first clicked
+			     *   but that causes the entire mix panel to close because it thinks we've reverted
+			     */
+    {
+      first_history_select = false;
+      if (indices[0] == 0)
+	{
+	  gtk_tree_path_free(path);
+	  return;
+	}
+    }
   flush_select = true;
   edit_history_select((chan_info *)gp, indices[0]);
   flush_select = false;

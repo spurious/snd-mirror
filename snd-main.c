@@ -468,6 +468,38 @@ static int find_sound_nth(snd_info *nsp)
   return(which);
 }
 
+void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
+{
+  /* here we have to use the 'nth' arg to find_sound -- it should return #f if such an 'nth' case is not found,
+   *   so that we can tell when to open another view on a given file
+   */
+#if HAVE_RUBY
+  fprintf(fd, "begin\n  sfile = %s(\"%s\", %d)\n  if (sfile == false)\n    sfile = %s(\"%s\")\n  end\n",
+	  TO_PROC_NAME(S_find_sound),
+	  sp->short_filename,
+	  (with_nth) ? find_sound_nth(sp) : 0,
+	  TO_PROC_NAME((sp->read_only) ? S_view_sound : S_open_sound),
+	  sp->filename);
+  
+#else
+  fprintf(fd, "(let ((sfile (or (%s \"%s\" %d) (%s \"%s\"))))\n  (if sfile\n    (begin\n",
+	  S_find_sound,
+	  sp->short_filename, /* short filename ok because find-sound searches for that name as well as the full filename */
+	  (with_nth) ? find_sound_nth(sp) : 0,
+	  (sp->read_only) ? S_view_sound : S_open_sound,
+	  sp->filename);
+#endif
+}
+
+void close_save_sound_block(FILE *fd)
+{
+#if HAVE_RUBY
+  fprintf(fd, "end\n");
+#else
+  fprintf(fd, "      )))\n");
+#endif
+}
+
 static void save_sound_state (snd_info *sp, void *ptr) 
 {
   /* called only after the global settings have been established, so here we can't use the DEFAULT_* macros that are ambiguous */
@@ -477,25 +509,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
   axis_info *ap;
   char *tmpstr = NULL;
   fd = (FILE *)ptr;
-  /* here we have to use the 'nth' arg to find_sound -- it should return #f if such an 'nth' case is not found,
-   *   so that we can tell when to open another view on a given file
-   */
-#if HAVE_RUBY
-  fprintf(fd, "begin\n  sfile = %s(\"%s\", %d)\n  if (sfile == false)\n    sfile = %s(\"%s\")\n  end\n",
-	  TO_PROC_NAME(S_find_sound),
-	  sp->short_filename,
-	  find_sound_nth(sp),
-	  TO_PROC_NAME((sp->read_only) ? S_view_sound : S_open_sound),
-	  sp->filename);
-  
-#else
-  fprintf(fd, "(let ((sfile (or (%s \"%s\" %d) (%s \"%s\"))))\n  (if sfile\n    (begin\n",
-	  S_find_sound,
-	  sp->short_filename, /* short filename ok because find-sound searches for that name as well as the full filename */
-	  find_sound_nth(sp),
-	  (sp->read_only) ? S_view_sound : S_open_sound,
-	  sp->filename);
-#endif
+  open_save_sound_block(sp, fd, true);
   if (sp->sync != DEFAULT_SYNC) psp_sd(fd, S_sync, sp->sync);
   if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P) psp_ss(fd, S_contrast_control_p, b2s(sp->contrast_control_p));
   if (sp->contrast_control != DEFAULT_CONTRAST_CONTROL) psp_sf(fd, S_contrast_control, sp->contrast_control);
@@ -613,11 +627,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
 	}
       edit_history_to_file(fd, cp);
     }
-#if HAVE_RUBY
-  fprintf(fd, "end\n");
-#else
-  fprintf(fd, "      )))\n");
-#endif
+  close_save_sound_block(fd);
 }
 
 static XEN after_save_state_hook;

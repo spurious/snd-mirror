@@ -367,7 +367,7 @@ void reflect_mix_play_stop(void);
 void reflect_no_mix_in_mix_panel(void);
 void set_mix_color(int color);
 void set_selected_mix_color(int color);
-
+void reflect_undo_in_mix_panel(void);
 
 
 /* -------- snd-xrec.c -------- */

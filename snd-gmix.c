@@ -754,8 +754,11 @@ GtkWidget *make_mix_panel(void)
       speed_number_buffer[1] = local_decimal_point();
       amp_number_buffer[1] = local_decimal_point();
     }
-  else raise_dialog(mix_panel);
-
+  else 
+    {
+      raise_dialog(mix_panel);
+      reflect_edit_in_mix_panel_envs(current_mix_id());
+    }
   update_mix_panel(current_mix_id());
   return(mix_panel);
 }
@@ -824,9 +827,7 @@ static void update_mix_panel(int mix_id)
 	  gtk_widget_hide(w_amps[i]);
 	  gtk_widget_hide(w_amp_forms[i]);
 	}
-
       mix_amp_env_resize(w_env);
-
     }
 }
 
@@ -842,6 +843,17 @@ void reflect_mix_in_mix_panel(int mix_id)
 	  set_sensitive(nextb, (next_mix_id(current_mix_id()) != INVALID_MIX_ID));
 	  set_sensitive(previousb, (previous_mix_id(current_mix_id()) != INVALID_MIX_ID));
 	}
+    }
+}
+
+void reflect_undo_in_mix_panel(void)
+{
+  if ((mix_panel) && 
+      (GTK_WIDGET_VISIBLE(mix_panel)))
+    {
+      /* check that currently displayed mix controls match the current edit state */
+      reflect_edit_in_mix_panel_envs(current_mix_id());
+      update_mix_panel(current_mix_id());
     }
 }
 

@@ -511,6 +511,7 @@ bool mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 void reflect_no_mix_in_mix_panel(void);
 void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
+void reflect_undo_in_mix_panel(void);
 
 
 /* -------- snd-xrec.c -------- */

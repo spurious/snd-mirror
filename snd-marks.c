@@ -1025,6 +1025,7 @@ void save_mark_list(FILE *fd, chan_info *cp)
   mark *m;
   if (cp->marks)
     {
+#if HAVE_GUILE
       fprintf(fd, "      (%s %d sfile %d '(", S_restore_marks, cp->marks_size, cp->chan);
       for (i = 0; i < cp->marks_size; i++)
 	{
@@ -1048,6 +1049,39 @@ void save_mark_list(FILE *fd, chan_info *cp)
 	  fprintf(fd, "))");
 	}
       fprintf(fd, "))\n");
+#endif
+#if HAVE_RUBY
+      {
+	bool need_comma = false, need_cr = false;
+	fprintf(fd, "      %s(%d, sfile, %d, [\n      ", xen_scheme_procedure_to_ruby(S_restore_marks), cp->marks_size, cp->chan);
+	for (i = 0; i < cp->marks_size; i++)
+	  {
+	    if (need_cr) fprintf(fd, ",\n      ");
+	    fprintf(fd, "[%d, %d, [", cp->mark_size[i], cp->mark_ctr[i]);
+	    mps = cp->marks[i];
+	    if (mps)
+	      {
+		marks = cp->mark_ctr[i];
+		for (j = 0; j <= marks; j++)
+		  {
+		    m = mps[j];
+		    if (need_comma) fprintf(fd, ", ");
+		    if (m)
+		      {
+			if (m->name)
+			  fprintf(fd, "[\"%s\", " OFF_TD ", %d, %d]", m->name, m->samp, mark_id(m), mark_sync(m));
+			else fprintf(fd, "[false, " OFF_TD ", %d, %d]", m->samp, mark_id(m), mark_sync(m));
+		      }
+		    else fprintf(fd, "[false false false false]");
+		    need_comma = true;
+		  }
+	      }
+	    fprintf(fd, "]]");
+	    need_cr = true;
+	  }
+	fprintf(fd, "])\n");
+      }
+#endif
     }
 }
 
@@ -2205,12 +2239,13 @@ static bool find_any_marks (chan_info *cp, void *ptr)
   return(false);
 }
 
-static XEN g_save_marks(XEN snd_n)
+static XEN g_save_marks(XEN snd_n, XEN filename)
 {
-  #define H_save_marks "(" S_save_marks " (snd #f)): save snd's marks in <snd's file-name>.marks"
+  #define H_save_marks "(" S_save_marks " (snd #f) (filename \"<snd-file-name>.marks\")): save snd's marks in filename"
   snd_info *sp;
   XEN res = XEN_FALSE;
   ASSERT_JUST_SOUND(S_save_marks, snd_n, 1);
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ARG_2, S_save_marks, "a string");  
   sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_marks, snd_n));
@@ -2219,28 +2254,36 @@ static XEN g_save_marks(XEN snd_n)
       char *newname = NULL;
       int i, len;
       FILE *fd;
-      len = strlen(sp->filename);
-      newname = (char *)CALLOC(len + 7, sizeof(char));
-      strcpy(newname, sp->filename);
-      for (i = len - 1; i > 0; i--) 
-	if (newname[i] == '.') 
-	  break;
-      if (i > 0) len = i;
-      newname[len] = '\0';
-      strcat(newname, ".marks");
-      fd = FOPEN(newname, "w");
-      if (fd == NULL)
-	XEN_ERROR(CANNOT_SAVE,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_save_marks),
-			     C_TO_XEN_STRING("open ~A: ~A"),
-			     XEN_LIST_2(C_TO_XEN_STRING(newname),
-					C_TO_XEN_STRING(strerror(errno)))));
+      if (XEN_STRING_P(filename))
+	newname = copy_string(XEN_TO_C_STRING(filename));
       else
 	{
-	  fprintf(fd, "(let ((sfile (find-sound \"%s\")))\n", sp->short_filename);
+	  len = strlen(sp->filename);
+	  newname = (char *)CALLOC(len + 7, sizeof(char));
+	  strcpy(newname, sp->filename);
+	  for (i = len - 1; i > 0; i--) 
+	    if (newname[i] == '.') 
+	      break;
+	  if (i > 0) len = i;
+	  newname[len] = '\0';
+	  strcat(newname, ".marks");
+	}
+      fd = FOPEN(newname, "w");
+      if (fd == NULL)
+	{
+	  FREE(newname);
+	  XEN_ERROR(CANNOT_SAVE,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_save_marks),
+			       C_TO_XEN_STRING("open ~A: ~A"),
+			       XEN_LIST_2(C_TO_XEN_STRING(newname),
+					  C_TO_XEN_STRING(strerror(errno)))));
+	}
+      else
+	{
+	  open_save_sound_block(sp, fd, false);
 	  for (i = 0; i < sp->nchans; i++)
 	    save_mark_list(fd, sp->chans[i]);
-	  fprintf(fd, ")");
+	  close_save_sound_block(fd);
 	  snd_fclose(fd, newname);
 	  res = C_TO_XEN_STRING(newname);
 	}
@@ -2267,7 +2310,7 @@ XEN_NARGIFY_1(g_syncd_marks_w, g_syncd_marks)
 XEN_ARGIFY_4(g_find_mark_w, g_find_mark)
 XEN_ARGIFY_3(g_forward_mark_w, g_forward_mark)
 XEN_ARGIFY_3(g_backward_mark_w, g_backward_mark)
-XEN_ARGIFY_1(g_save_marks_w, g_save_marks)
+XEN_ARGIFY_2(g_save_marks_w, g_save_marks)
 XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 #else
 #define g_mark_sample_w g_mark_sample
@@ -2320,7 +2363,7 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_find_mark,     g_find_mark_w, 1, 3, 0,     H_find_mark);
   XEN_DEFINE_PROCEDURE(S_forward_mark,  g_forward_mark_w, 0, 3, 0,  H_forward_mark);
   XEN_DEFINE_PROCEDURE(S_backward_mark, g_backward_mark_w, 0, 3, 0, H_backward_mark);
-  XEN_DEFINE_PROCEDURE(S_save_marks,    g_save_marks_w, 0, 1, 0,    H_save_marks);
+  XEN_DEFINE_PROCEDURE(S_save_marks,    g_save_marks_w, 0, 2, 0,    H_save_marks);
   XEN_DEFINE_PROCEDURE(S_mark_p,        g_mark_p_w, 1, 0, 0,        H_mark_p);
 
   #define H_draw_mark_hook S_draw_mark_hook " (mark-id): called before a mark is drawn (in XOR mode). \

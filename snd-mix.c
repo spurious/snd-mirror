@@ -28,6 +28,22 @@
  *          or mix-clicked would need a way to alert this code to drag a set
  *
  * actually, all the track ops from either drag or mix-panel should affect all together
+ *
+ * MIX FIX:
+ * xenv has make_mix_readable_from_id for bg wave (I assume)
+ * xen has get_sp case 
+ * --> remove both, xenv should use mix envs/mix drawers
+ * -->   add xenv over track
+ * --> scaling use mix-amp, env->mix amp env, src->mix speed
+ * --> if track here, add maps for amp/amp-env(global)/speed, perhaps tempo
+ * --> all else, get_sp should return mix_reader and lock result (so filter etc still work, but no underlying edit)
+ * --> all else, if track, track reader -- this automates track editing
+ * --> remove notion of underlying edits (doc, possible lists below), remove list case from edits/edit-fragment etc
+ * --> add mix/track button to mix-panel to automate track edits (tempo slider), or add new track panel
+ * --> if drag track, all drag together (track edits should undo/redo together, even across all outputs?)
+ * --> add track funcs from mix.scm
+ * --> add easy pan choices with linear, sinusoidal, exponential envs
+ * --> add easy synchronization across mixes ("snap")
  */
 
 #define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
@@ -247,7 +263,6 @@ static void release_pending_consoles(mix_info *md)
       if (md->states[i]) 
 	md->states[i] = free_console_state(md->states[i]);
 }
-
 
 
 /* -------- mix_info (state of mix) -------- */
@@ -3437,6 +3452,31 @@ env **mix_panel_envs(int n)
   return(NULL);
 }
 
+void reflect_edit_in_mix_panel_envs(int n)
+{
+  mix_info *md;
+  console_state *cs; 
+  md = md_from_id(n);
+  if (md) 
+    {
+      cs = md->current_cs;
+      if (cs)
+	{
+	  int i;
+	  Float flat[4] = {0.0, 1.0, 1.0, 1.0};
+	  if (md->panel_envs == NULL)
+	    md->panel_envs = (env **)CALLOC(md->in_chans, sizeof(env *));
+	  for (i = 0; i < md->in_chans; i++)
+	    {
+	      if (md->panel_envs[i]) free_env(md->panel_envs[i]);
+	      if ((cs->amp_envs) && (cs->amp_envs[i]))
+		md->panel_envs[i] = copy_env(cs->amp_envs[i]);
+	      else md->panel_envs[i] = make_envelope(flat, 4);
+	    }
+	}
+    }
+}
+
 env *mix_panel_env(int n, int chan)
 {
   env **envs;
@@ -3491,7 +3531,6 @@ static int set_mix_amp_env_1(int n, int chan, env *val, bool remix, bool from_gu
 		}
 	      if (!(XEN_TRUE_P(res)))
 		remix_file(md, S_setB S_mix_amp_env);
-	      /* remix_file(md, S_setB S_mix_amp_env); */
 	    }
 	  return(0);
 	}

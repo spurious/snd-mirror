@@ -3046,8 +3046,9 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 </td></tr>
 
 <!-- save-marks -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsavemarks">save-marks</a></em> (<i>snd</i>)</code></span></td></tr>
-<tr><td></td><td>save <i>snd</i>'s marks, writing a file &lt;name&gt;.marks (return file name or #f if no marks).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsavemarks">save-marks</a></em> (<i>snd filename</i>)</code></span></td></tr>
+<tr><td></td><td>save <i>snd</i>'s marks, writing a Scheme or Ruby source file named either <i>filename</i> or
+&lt;snd's file-name&gt;.marks;  return the file name or #f if no marks.
 </td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a href="#showmarks">show-marks</a></em></code></span></td></tr>

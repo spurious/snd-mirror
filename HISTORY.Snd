@@ -1,5 +1,6 @@
 Snd change log
 
+  8-Oct:     optional filename arg for save-marks (and Ruby case implemented).
   6-Oct:     cursor-style and cursor-size can be set globally.
   24-Sep:    snd 6.12.
   22-Sep:    env.rb, spectr.rb, and spectr.scm thanks to Michael Scholz.

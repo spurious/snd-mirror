@@ -565,6 +565,8 @@ void g_init_menu(void);
 
 /* -------- snd-main.c -------- */
 
+void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
+void close_save_sound_block(FILE *fd);
 int snd_exit_cleanly(bool force_exit);
 void sound_not_current(snd_info *sp, void *dat);
 int save_options (void);
@@ -1326,6 +1328,7 @@ env *mix_panel_env(int n, int chan);
 void mix_at_x_y(int data, char *filename, int x, int y);
 int next_mix_id(int id);
 int previous_mix_id(int id);
+void reflect_edit_in_mix_panel_envs(int n);
 
 
 
