@@ -141,10 +141,9 @@ void update_region_browser(bool grf_too)
     }
 }
 
-static gboolean region_browser_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static void region_browser_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(region_dialog);
-  return(false);
 }
 
 static void region_ok_callback(GtkWidget *w, gpointer context)
@@ -297,7 +296,7 @@ static void make_region_dialog(void)
   chan_info *cp;
   ww_info *wwl;
   GtkWidget *infobox, *labels, *labbox;
-  region_dialog = gtk_dialog_new();
+  region_dialog = snd_gtk_dialog_new();
   g_signal_connect_closure_by_id(GTK_OBJECT(region_dialog),
 				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(region_dialog))),
 				 0,
@@ -337,7 +336,7 @@ static void make_region_dialog(void)
   gtk_widget_show(help_button);
   gtk_widget_show(dismiss_button);
 
-  wwl = make_title_row(GTK_DIALOG(region_dialog)->vbox, _("play"), _("regions"), DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
+  wwl = make_title_row(GTK_DIALOG(region_dialog)->vbox, _("play"), NULL, DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
   region_list = wwl->list;
 
   infobox = gtk_vbox_new(false, 0);
@@ -470,6 +469,7 @@ void view_region_callback(GtkWidget *w, gpointer context)
     make_region_dialog();
   else 
     {
+      update_region_browser(true);
       raise_dialog(region_dialog);
       current_region = 0;
     }

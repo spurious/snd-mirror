@@ -679,7 +679,13 @@ widget \"*.listener_text\" style \"listener\"\n\
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
-      snd_error(_("Caught seg fault (will try to continue):\n"));
+      if (!(ss->exiting))
+	snd_error(_("Caught seg fault (will try to continue):\n"));
+      else
+	{
+	  snd_error(_("Caught seg fault while trying to exit.\n"));
+	  exit(0);
+	}
     }
 #endif
   if (setjmp(top_level_jump))
@@ -700,4 +706,6 @@ widget \"*.listener_text\" style \"listener\"\n\
 
 void g_init_gxmain(void)
 {
+  #define H_window_property_changed_hook S_window_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
+  XEN_DEFINE_HOOK(window_property_changed_hook, S_window_property_changed_hook, 1, H_window_property_changed_hook);
 }

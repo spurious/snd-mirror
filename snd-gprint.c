@@ -101,7 +101,7 @@ void file_print_callback(GtkWidget *w, gpointer context)
   snd_info *nsp;
   if (!file_print_dialog)
     {
-      file_print_dialog = gtk_dialog_new();
+      file_print_dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(file_print_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(file_print_dialog))),
 				     0,

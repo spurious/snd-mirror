@@ -536,7 +536,13 @@ void snd_doit(int argc, char **argv)
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
-      snd_error(_("Caught seg fault (will try to continue):\n"));
+      if (!(ss->exiting))
+	snd_error(_("Caught seg fault (will try to continue):\n"));
+      else
+	{
+	  snd_error(_("Caught seg fault while trying to exit.\n"));
+	  exit(0);
+	}
     }
 #endif
   if (setjmp(top_level_jump))

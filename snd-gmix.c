@@ -407,10 +407,9 @@ static void dismiss_mix_panel(GtkWidget *w, gpointer context)
   gtk_widget_hide(mix_panel);
 }
 
-static gboolean delete_mix_panel(GtkWidget *w, GdkEvent *event, gpointer context)
+static void delete_mix_panel(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(mix_panel);
-  return(false);
 }
 
 static GtkWidget *nextb, *previousb;
@@ -463,7 +462,7 @@ GtkWidget *make_mix_panel(void)
   mix_id = current_mix_id();
   if (mix_panel == NULL)
     {
-      mix_panel = gtk_dialog_new();
+      mix_panel = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(mix_panel),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(mix_panel))),
 				     0,

@@ -24,6 +24,7 @@ static XEN exit_hook;
 int snd_exit_cleanly(bool force_exit)
 {  
   XEN res = XEN_FALSE;
+  ss->exiting = true; /* if segfault during exit code, don't try to restart at event loop! */
   if (XEN_HOOKED(exit_hook))
     res = run_or_hook(exit_hook, 
 		      XEN_EMPTY_LIST,

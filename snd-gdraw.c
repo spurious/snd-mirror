@@ -643,7 +643,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
     {
       /* create color chooser dialog window */
       ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
-      ccd->dialog = gtk_dialog_new();
+      ccd->dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(ccd->dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(ccd->dialog))),
 				     0,
@@ -1018,7 +1018,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
     {
       /* create orientation window */
       oid = (orientation_info *)CALLOC(1, sizeof(orientation_info));
-      oid->dialog = gtk_dialog_new();
+      oid->dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(oid->dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(oid->dialog))),
 				     0,

@@ -289,6 +289,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->lisp_graph_hook_active = false;
   ss->just_time = false;
   ss->error_lock = false;
+  ss->exiting = false;
   ss->deferred_regions = 0;
   init_recorder();
 

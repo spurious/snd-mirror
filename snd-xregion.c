@@ -323,7 +323,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(region_dialog, XmDIALOG_SEPARATOR)); n++;
   formw = XtCreateManagedWidget("formw", xmFormWidgetClass, region_dialog, args, n);
 
-  wwl = make_title_row(formw, _("play"), _("regions"), DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
+  wwl = make_title_row(formw, _("play"), NULL, DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
   ww = wwl->ww;
   region_ww = ww;
   region_list = wwl->list;

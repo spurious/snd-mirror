@@ -665,3 +665,10 @@ Cessator add_work_proc(GtkFunction func, gpointer data)
     }
 }
 
+GtkWidget *snd_gtk_dialog_new(void)
+{
+  GtkWidget *w;
+  w = gtk_dialog_new();
+  g_object_ref(w);  /* don't ask... */
+  return(w);
+}

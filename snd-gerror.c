@@ -18,7 +18,7 @@ static void delete_snd_error(GtkWidget *w, GdkEvent *event, gpointer context)
 static void create_snd_error_dialog(bool popup)
 {
   GtkWidget *ok_button;
-  snd_error_dialog = gtk_dialog_new();
+  snd_error_dialog = snd_gtk_dialog_new();
   g_signal_connect_closure_by_id(GTK_OBJECT(snd_error_dialog),
 				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(snd_error_dialog))),
 				 0,
@@ -123,7 +123,7 @@ bool snd_yes_or_no_p(const char *format, ...)
   yes_or_no = false;
   if (!yes_or_no_dialog)
     {
-      yes_or_no_dialog = gtk_dialog_new();
+      yes_or_no_dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(yes_or_no_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(yes_or_no_dialog))),
 				     0,

@@ -1923,10 +1923,9 @@ static GtkWidget *rec_panes, *file_info_pane;
 
 #define AUDVAL_SIZE 64
 
-static gboolean recorder_delete(GtkWidget *w, GdkEvent *event, gpointer context)
+static void recorder_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   dismiss_record_callback(w, context);
-  return(false);
 }
 
 void snd_record_file(void)
@@ -1969,7 +1968,7 @@ void snd_record_file(void)
       AMP_rec_outs = (AMP **)CALLOC(MAX_OUT_CHANS, sizeof(AMP *));
       small_font = pango_font_description_from_string((vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
 
-      recorder = gtk_dialog_new();
+      recorder = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(recorder),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(recorder))),
 				     0,

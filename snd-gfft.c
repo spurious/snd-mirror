@@ -417,7 +417,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
   if (!transform_dialog)
     {
-      transform_dialog = gtk_dialog_new();
+      transform_dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(transform_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(transform_dialog))),
 				     0,

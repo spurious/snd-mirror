@@ -1114,26 +1114,28 @@ ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_
   ww_info *wwi;
   wwi = (ww_info *)CALLOC(1, sizeof(ww_info));
   
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-  rlw = XtCreateManagedWidget(main_str, xmLabelWidgetClass, formw, args, n);
+  if (main_str)
+    {
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
+      rlw = XtCreateManagedWidget(main_str, xmLabelWidgetClass, formw, args, n);
       
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;}
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, rlw); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-  XtSetArg(args[n], XmNseparatorType, XmDOUBLE_LINE); n++;
-  sep1 = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, formw, args, n);
-  wwi->dbline = sep1;
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, rlw); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNseparatorType, XmDOUBLE_LINE); n++;
+      sep1 = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, formw, args, n);
+    }
 
   if (with_pane == WITH_PANED_WINDOW)
     {
@@ -1141,8 +1143,15 @@ ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sep1); n++;
+      if (main_str)
+	{
+	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n], XmNtopWidget, sep1); n++;
+	}
+      else
+	{
+	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+	}
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNallowResize, true); n++;
       wwi->panes = XtCreateManagedWidget("panes", xmPanedWindowWidgetClass, formw, args, n);
@@ -1178,8 +1187,15 @@ ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_
     }
   else
     {
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sep1); n++;
+      if (main_str)
+	{
+	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n], XmNtopWidget, sep1); n++;
+	}
+      else
+	{
+	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+	}
     }
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   plw = XtCreateManagedWidget(top_str, xmLabelWidgetClass, formw, args, n);
@@ -1192,8 +1208,15 @@ ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sep1); n++;
+      if (main_str)
+	{
+	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n], XmNtopWidget, sep1); n++;
+	}
+      else
+	{
+	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+	}
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;

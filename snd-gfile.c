@@ -180,7 +180,6 @@ static GtkWidget *snd_gtk_file_selection_new(char *title, GtkSignalFunc gdelete,
 				 0,
 				 g_cclosure_new_swap(cancel, NULL, 0),
 				 0);
-  gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(new_dialog));
   return(new_dialog);
 }
 
@@ -676,13 +675,33 @@ ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_
   wwi = (ww_info *)CALLOC(1, sizeof(ww_info));
 
   /* assuming "formw" is a vbox */
-  rlw = gtk_label_new(main_str);
-  gtk_box_pack_start(GTK_BOX(formw), rlw, false, false, 0);
-  gtk_widget_show(rlw);
+  if (main_str)
+    {
 
-  sep1 = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
-  gtk_widget_show(sep1);
+      /* -------------------------------- fUn WiTh DuMb SoFtWaRe!!  -------------------------------- */
+#if 0
+      /* this is what any reasonable gui widget set would let us do */
+      rlw = gtk_label_new(main_str);
+      gtk_box_pack_start(GTK_BOX(formw), rlw, false, false, 0);
+      gtk_widget_show(rlw);
+#endif
+
+      /* this is what goddamn gtk forces us to use -- all I want is a label with a background color! */
+      rlw = gtk_entry_new();
+      gtk_entry_set_has_frame(GTK_ENTRY(rlw), false);
+      gtk_entry_set_text(GTK_ENTRY(rlw), main_str);
+      gtk_entry_set_editable(GTK_ENTRY(rlw), false);
+      gtk_box_pack_start(GTK_BOX(formw), rlw, false, false, 0);
+      GTK_WIDGET_UNSET_FLAGS(GTK_WIDGET(rlw), GTK_CAN_FOCUS); /* turn off the $%#@$! blinking cursor */
+      gtk_widget_modify_base(rlw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      gtk_widget_modify_base(rlw, GTK_STATE_ACTIVE, ss->sgx->highlight_color);
+      gtk_widget_show(rlw);
+
+      sep1 = gtk_hseparator_new();
+      gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
+      gtk_widget_modify_bg(sep1, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      gtk_widget_show(sep1);
+    }
   
   if (with_pane == WITH_PANED_WINDOW)
     {
@@ -1128,7 +1147,7 @@ void view_files_callback(GtkWidget *w, gpointer context)
     {
       vf_selected_file = -1;
 
-      view_files_dialog = gtk_dialog_new();
+      view_files_dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(view_files_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(view_files_dialog))),
 				     0,
@@ -1319,7 +1338,7 @@ static void make_raw_data_dialog(void)
   GtkWidget *lst, *dls, *dloclab, *chnlab;
   GtkWidget *defaultB, *helpB, *cancelB, *okB, *sratehbox, *lochbox;
   mus_header_raw_defaults(&sr, &oc, &fr);
-  raw_data_dialog = gtk_dialog_new();
+  raw_data_dialog = snd_gtk_dialog_new();
   g_signal_connect_closure_by_id(GTK_OBJECT(raw_data_dialog),
 				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(raw_data_dialog))),
 				 0,
@@ -1485,7 +1504,7 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
   sprintf(title, _("create new sound: %s"), newname);
   if (!new_dialog)
     {
-      new_dialog = gtk_dialog_new();
+      new_dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(new_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(new_dialog))),
 				     0,
@@ -1607,7 +1626,7 @@ GtkWidget *edit_header(snd_info *sp)
 
   if (!edit_header_dialog)
     {
-      edit_header_dialog = gtk_dialog_new();
+      edit_header_dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(edit_header_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(edit_header_dialog))),
 				     0,

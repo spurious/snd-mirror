@@ -82,7 +82,7 @@ void edit_find_callback(GtkWidget *w, gpointer context)
   GtkWidget *help_button;
   if (!edit_find_dialog)
     {
-      edit_find_dialog = gtk_dialog_new();
+      edit_find_dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(edit_find_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(edit_find_dialog))),
 				     0,

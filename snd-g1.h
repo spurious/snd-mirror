@@ -378,6 +378,7 @@ void sg_text_delete(GtkWidget *w, int start, int end);
 void sg_make_resizable(GtkWidget *w);
 
 Cessator add_work_proc(GtkFunction func, gpointer data);
+GtkWidget *snd_gtk_dialog_new(void);
 
 
 /* -------- snd-gsnd.c -------- */

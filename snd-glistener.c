@@ -65,7 +65,7 @@ static void start_completion_dialog(int num_items, char **items)
   GtkTreeSelection *tree;
   if (!completion_dialog)
     {
-      completion_dialog = gtk_dialog_new();
+      completion_dialog = snd_gtk_dialog_new();
       g_signal_connect_closure_by_id(GTK_OBJECT(completion_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(completion_dialog))),
 				     0,
