@@ -645,23 +645,6 @@ static void set_x_axis_x1(chan_info *cp, off_t right)
     }
 }
 
-static void set_y_axis_y0y1 (chan_info *cp, Float y0, Float y1) 
-{
-  /* used only in set y-bounds */
-  axis_info *ap;
-  ap = cp->axis;
-  ap->ymin = y0;
-  ap->ymax = y1;
-  ap->y_ambit = (ap->ymax - ap->ymin);
-  ap->y0 = y0;
-  ap->y1 = y1;
-  ap->zy = 1.0;
-  ap->sy = 0.0;
-  resize_sy(cp);
-  resize_zy(cp);
-  apply_y_axis_change(ap, cp);
-}
-
 void reset_x_display(chan_info *cp, double sx, double zx)
 {
   axis_info *ap;
@@ -5972,7 +5955,20 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
       low = -hi;
     }
   if (hi > low)
-    set_y_axis_y0y1(cp, low, hi);
+    {
+      axis_info *ap;
+      ap = cp->axis;
+      ap->ymin = low;
+      ap->ymax = hi;
+      ap->y_ambit = (ap->ymax - ap->ymin);
+      ap->y0 = low;
+      ap->y1 = hi;
+      ap->zy = 1.0;
+      ap->sy = 0.0;
+      resize_sy(cp);
+      resize_zy(cp);
+      apply_y_axis_change(ap, cp);
+    }
   else XEN_ERROR(IMPOSSIBLE_BOUNDS,
 		 XEN_LIST_2(C_TO_XEN_STRING("set-" S_y_bounds),
 			    bounds));

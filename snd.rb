@@ -519,8 +519,8 @@ test_headers("zulu_a4.w11", 1, 33000, 1.21987879276276, "TX-16W", "unsupported")
 
 # ---------------------------------------- test 3 ----------------------------------------
 
-oboe = open_sound "oboe.snd"
-td = temp_dir     
+$oboe = open_sound "oboe.snd"
+$td = temp_dir     
 if (sample(1000) - 0.0328).abs > .001 then snd_print sprintf("# sample: %s\n", sample(1000)); end
 set_show_controls true
 if not provided? "snd-nogui" then
@@ -530,12 +530,11 @@ if not provided? "snd-nogui" then
 #	    (set! (enved_active_env) '(0.0 0.0 1.0 1.0 2.0 0.0))
 #	    (if (not (equal? (enved_active_env) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
 #		(snd_display ";set enved_active_env: ~A?" (enved_active_env)))
-  
+#   
   orientation_dialog
   if !dialog_widgets[1] then snd_print sprintf("# orientation_dialog?") end
-
-
 end
+dismiss_all_dialogs
 
 set_amp_control 0.5
 if ffneq(amp_control, 0.5) then snd_display sprintf("\n# amp_control: %s", amp_control) end
@@ -729,10 +728,10 @@ set_fft_window 5
 if fft_window !=  5 then snd_display sprintf("\n# fft_window: %s", fft_window) end
 set_fft_window 6 
 if fft_window != 6 then snd_display sprintf("\n# fft_window: %s", fft_window) end
-set_graph_transform? true
-if graph_transform? !=  true then snd_display sprintf("\n# graph_transform?: %s", graph_transform?) end
-set_graph_transform? false 
-if graph_transform? != false then snd_display sprintf("\n# graph_transform?: %s", graph_transform?) end
+set_transform_graph? true
+if transform_graph? !=  true then snd_display sprintf("\n# transform_graph?: %s", transform_graph?) end
+set_transform_graph? false 
+if transform_graph? != false then snd_display sprintf("\n# transform_graph?: %s", transform_graph?) end
 set_filter_control_in_dB true
 if filter_control_in_dB !=  true then snd_display sprintf("\n# filter_control_in_dB: %s", filter_control_in_dB) end
 set_filter_control_in_dB false 
@@ -977,10 +976,10 @@ set_wavelet_type 1
 if wavelet_type !=  1 then snd_display sprintf("\n# wavelet_type: %s", wavelet_type) end
 set_wavelet_type 0 
 if wavelet_type != 0 then snd_display sprintf("\n# wavelet_type: %s", wavelet_type) end
-set_graph_time? true
-if graph_time? !=  true then snd_display sprintf("\n# graph_time?: %s", graph_time?) end
-set_graph_time? false 
-if graph_time? != false then snd_display sprintf("\n# graph_time?: %s", graph_time?) end
+set_time_graph? true
+if time_graph? !=  true then snd_display sprintf("\n# time_graph?: %s", time_graph?) end
+set_time_graph? false 
+if time_graph? != false then snd_display sprintf("\n# time_graph?: %s", time_graph?) end
 set_time_graph_type Graph_as_wavogram
 if time_graph_type !=  Graph_as_wavogram then snd_display sprintf("\n# time_graph_type: %s", time_graph_type) end
 set_time_graph_type Graph_once 
@@ -1014,8 +1013,7 @@ if zoom_focus_style != 1 then snd_display sprintf("\n# zoom_focus_style: %s", zo
 set_zoom_focus_style 2 
 if zoom_focus_style != 2 then snd_display sprintf("\n# zoom_focus_style: %s", zoom_focus_style) end
 
-close_sound oboe
-dismiss_all_dialogs
+close_sound $oboe
 
 
 # ---------------------------------------- test 6 ----------------------------------------
@@ -1169,9 +1167,11 @@ if fneq(v1[1], 2.0) then snd_display sprintf("\n# (v1 1) = %s?", v1[1]) end
 
 
 # from test 9
-load "bird.rb"
+load "/home/bil/cl/bird.rb"
 make_birds
 close_sound(find_sound("test.snd"))
+
+
 
 
 def display_energy(snd, chn)
@@ -1197,3 +1197,63 @@ oboe = find_sound "oboe.snd"
 if (oboe == false) then snd_print "oops"
 else close_sound oboe
 end
+
+
+# from test 25
+
+$snd_widgets = main_widgets()
+$shell = $snd_widgets[1]
+$dpy = RXtDisplay($shell)
+$scr = RDefaultScreenOfDisplay $dpy
+
+if Rheight($scr) != 1200 then snd_display sprintf("\n# screen height: %d", Rheight($scr)) end
+if Rwidth($scr) != 1600 then snd_display sprintf("\n# screen width: %d", Rwidth($scr)) end
+if Rndepths($scr) != 7 then snd_display sprintf("\n# screen ndepths: %d", Rndepths($scr)) end
+if Rwhite_pixel($scr)[1] !=  65535 then snd_display sprintf("\n# screen white_pixel: %d", Rwhite_pixel($scr)[1]) end
+if Rblack_pixel($scr)[1] !=  0 then snd_display sprintf("\n# screen black_pixel: %d", Rblack_pixel($scr)[1]) end
+if Rbacking_store($scr)  then snd_display sprintf("\n# screen backing_store") end
+if Rmin_maps($scr) != 1 then snd_display sprintf("\n# screen min_maps: %d", Rmin_maps($scr)) end
+if Rmax_maps($scr) != 1 then snd_display sprintf("\n# screen max_maps: %d", Rmax_maps($scr)) end
+if Rsave_unders($scr) then snd_display sprintf("\n# screen save_unders") end
+if !RGC? Rdefault_gc($scr) then snd_display sprintf("\n# screen default_gc: %s", Rdefault_gc($scr)) end
+if !RWindow? Rroot($scr) then snd_display sprintf("\n# screen root: %s", Rroot($scr)) end
+if !RColormap? Rcmap($scr) then snd_display sprintf("\n# screen colormap: %s", Rcmap($scr)) end
+
+if RDisplayOfScreen($scr) != Rdisplay($scr) then snd_display sprintf("\n# DisplayOfScreen: %s %s", RDisplayOfScreen($scr), Rdisplay($scr)) end
+if RRootWindowOfScreen($scr) != Rroot($scr) then snd_display sprintf("\n# RootWindowOfScreen: %s %s", RRootWindowOfScreen($scr), Rroot($scr)) end
+if RBlackPixelOfScreen($scr) != Rblack_pixel($scr) then snd_display sprintf("\n# BlackPixelOfScreen: %s %s", RBlackPixelOfScreen($scr), Rblack_pixel($scr)) end
+if RWhitePixelOfScreen($scr) != Rwhite_pixel($scr) then snd_display sprintf("\n# WhitePixelOfScreen: %s %s", RWhitePixelOfScreen($scr), Rwhite_pixel($scr)) end
+if RDefaultColormapOfScreen($scr) != Rcmap($scr) then snd_display sprintf("\n# DefaultColormapOfScreen: %s %s", RDefaultColormapOfScreen($scr), Rcmap($scr)) end
+if RDefaultDepthOfScreen($scr) != Rroot_depth($scr) then snd_display sprintf("\n# DefaultDepthOfScreen: %s %s", RDefaultDepthOfScreen($scr), Rroot_depth($scr)) end
+if RDefaultGCOfScreen($scr) != Rdefault_gc($scr) then snd_display sprintf("\n# DefaultGCOfScreen: %s %s", RDefaultGCOfScreen($scr), Rdefault_gc($scr)) end
+if RDefaultVisualOfScreen($scr) != Rroot_visual($scr) then snd_display sprintf("\n# DefaultVisualOfScreen: %s %s", RDefaultVisualOfScreen($scr), Rroot_visual($scr)) end
+if RWidthOfScreen($scr) != Rwidth($scr) then snd_display sprintf("\n# WidthOfScreen: %s %s", RWidthOfScreen($scr), Rwidth($scr)) end
+if RHeightOfScreen($scr) != Rheight($scr) then snd_display sprintf("\n# HeightOfScreen: %s %s", RHeightOfScreen($scr), Rheight($scr)) end
+if RWidthMMOfScreen($scr) != Rmwidth($scr) then snd_display sprintf("\n# WidthMMOfScreen: %s %s", RWidthMMOfScreen($scr), Rmwidth($scr)) end
+if RHeightMMOfScreen($scr) != Rmheight($scr) then snd_display sprintf("\n# HeightMMOfScreen: %s %s", RHeightMMOfScreen($scr), Rmheight($scr)) end
+if RPlanesOfScreen($scr) != Rroot_depth($scr) then snd_display sprintf("\n# PlanesOfScreen: %s %s", RPlanesOfScreen($scr), Rroot_depth($scr)) end
+if RMinCmapsOfScreen($scr) != Rmin_maps($scr) then snd_display sprintf("\n# MinCmapsOfScreen: %s %s", RMinCmapsOfScreen($scr), Rmin_maps($scr)) end
+if RMaxCmapsOfScreen($scr) != Rmax_maps($scr) then snd_display sprintf("\n# MaxCmapsOfScreen: %s %s", RMaxCmapsOfScreen($scr), Rmax_maps($scr)) end
+if RDoesSaveUnders($scr) != Rsave_unders($scr) then snd_display sprintf("\n# DoesSaveUnders: %s %s", RDoesSaveUnders($scr), Rsave_unders($scr)) end
+if RDoesBackingStore($scr) != Rbacking_store($scr) then snd_display sprintf("\n# DoesBackingStore: %s %s", RDoesBackingStore($scr), Rbacking_store($scr)) end
+if REventMaskOfScreen($scr) != Rroot_input_mask($scr) then snd_display sprintf("\n# EventMaskOfScreen: %s %s", REventMaskOfScreen($scr), Rroot_input_mask($scr)) end
+if RXDisplayOfScreen($scr) != Rdisplay($scr) then snd_display sprintf("\n# XDisplayOfScreen: %s %s", RXDisplayOfScreen($scr), Rdisplay($scr)) end
+if RXRootWindowOfScreen($scr) != Rroot($scr) then snd_display sprintf("\n# XRootWindowOfScreen: %s %s", RXRootWindowOfScreen($scr), Rroot($scr)) end
+if RXBlackPixelOfScreen($scr) != Rblack_pixel($scr) then snd_display sprintf("\n# XBlackPixelOfScreen: %s %s", RXBlackPixelOfScreen($scr), Rblack_pixel($scr)) end
+if RXWhitePixelOfScreen($scr) != Rwhite_pixel($scr) then snd_display sprintf("\n# XWhitePixelOfScreen: %s %s", RXWhitePixelOfScreen($scr), Rwhite_pixel($scr)) end
+if RXDefaultColormapOfScreen($scr) != Rcmap($scr) then snd_display sprintf("\n# XDefaultColormapOfScreen: %s %s", RXDefaultColormapOfScreen($scr), Rcmap($scr)) end
+if RXDefaultDepthOfScreen($scr) != Rroot_depth($scr) then snd_display sprintf("\n# XDefaultDepthOfScreen: %s %s", RXDefaultDepthOfScreen($scr), Rroot_depth($scr)) end
+if RXDefaultGCOfScreen($scr) != Rdefault_gc($scr) then snd_display sprintf("\n# XDefaultGCOfScreen: %s %s", RXDefaultGCOfScreen($scr), Rdefault_gc($scr)) end
+if RXDefaultVisualOfScreen($scr) != Rroot_visual($scr) then snd_display sprintf("\n# XDefaultVisualOfScreen: %s %s", RXDefaultVisualOfScreen($scr), Rroot_visual($scr)) end
+if RXWidthOfScreen($scr) != Rwidth($scr) then snd_display sprintf("\n# XWidthOfScreen: %s %s", RXWidthOfScreen($scr), Rwidth($scr)) end
+if RXHeightOfScreen($scr) != Rheight($scr) then snd_display sprintf("\n# XHeightOfScreen: %s %s", RXHeightOfScreen($scr), Rheight($scr)) end
+if RXWidthMMOfScreen($scr) != Rmwidth($scr) then snd_display sprintf("\n# XWidthMMOfScreen: %s %s", RXWidthMMOfScreen($scr), Rmwidth($scr)) end
+if RXHeightMMOfScreen($scr) != Rmheight($scr) then snd_display sprintf("\n# XHeightMMOfScreen: %s %s", RXHeightMMOfScreen($scr), Rmheight($scr)) end
+if RXPlanesOfScreen($scr) != Rroot_depth($scr) then snd_display sprintf("\n# XPlanesOfScreen: %s %s", RXPlanesOfScreen($scr), Rroot_depth($scr)) end
+if RXMinCmapsOfScreen($scr) != Rmin_maps($scr) then snd_display sprintf("\n# XMinCmapsOfScreen: %s %s", RXMinCmapsOfScreen($scr), Rmin_maps($scr)) end
+if RXMaxCmapsOfScreen($scr) != Rmax_maps($scr) then snd_display sprintf("\n# XMaxCmapsOfScreen: %s %s", RXMaxCmapsOfScreen($scr), Rmax_maps($scr)) end
+if RXDoesSaveUnders($scr) != Rsave_unders($scr) then snd_display sprintf("\n# XDoesSaveUnders: %s %s", RXDoesSaveUnders($scr), Rsave_unders($scr)) end
+if RXDoesBackingStore($scr) != Rbacking_store($scr) then snd_display sprintf("\n# XDoesBackingStore: %s %s", RXDoesBackingStore($scr), Rbacking_store($scr)) end
+if RXEventMaskOfScreen($scr) != Rroot_input_mask($scr) then snd_display sprintf("\n# XEventMaskOfScreen: %s %s", RXEventMaskOfScreen($scr), Rroot_input_mask($scr)) end
+
+exit

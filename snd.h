@@ -69,8 +69,6 @@
   #define _FILE_OFFSET_BITS 64
 #endif
 
-/* in all Snd-related files, it is important that the #include "snd.h" immediately follow the #include <config.h> */
-
 #include <ctype.h>
 #include <stddef.h>
 #include <math.h>
@@ -145,7 +143,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "29-Aug-02"
+#define SND_VERSION "30-Aug-02"
 #define SND_RPM_VERSION "6.1"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 1

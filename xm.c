@@ -3,11 +3,8 @@
  *   for tests and examples see snd-motif.scm and snd-test.scm
  */
 
-/* SOMEDAY: finish selection-oriented Xt callbacks
- * SOMEDAY: get Xprt to work and test the Xp stuff
- */
-
 /* HISTORY: 
+ *   30-Aug:    added add-resource for user-defined extensions to the resources.
  *   29-Aug:    added ten resources accidentally omitted earlier (thanks to Michael Scholz).
  *   2-Aug:     some Lesstif-related compile-time switches.
  *   26-Jul:    removed wrappers Widget Pixel GC and XtAppContext.
@@ -42,6 +39,7 @@
  *   1-Feb:     Motif 2.2 additions (tooltip).
  *   21-Jan:    Ruby fixups (XEN_COPY_ARG to protect lists)
  *   7-Jan-02:  XEvent fields settable. added XtCallCallbacks-raw.
+ *   ----------
  *   12-Sep:    xm-version.
  *   13-Aug:    Xp bindings, X11 predefined Atoms.
  *   6-Aug:     XmTransfer functions inadvertently omitted earlier.
@@ -81,6 +79,7 @@
 #endif
 #ifndef CALLOC
   #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
+  #define MALLOC(a)     malloc((size_t)(a))
   #define FREE(a)       free(a)
 #endif
 
@@ -13062,13 +13061,130 @@ static XEN gxm_XDestroyImage(XEN arg1)
 
 #if HAVE_MOTIF
 
-/* I think these are globals in the sense that only one such procedure per selection atom  */
-static void gxm_XtCancelConvertSelectionProc(Widget w, Atom *a1, Atom *a2, XtRequestId *id, XtPointer x) {} 
-static void gxm_XtConvertSelectionProc(Widget w, Atom *a1, Atom *a2, Atom *a3, XtPointer* x, unsigned long *l, int *i) {}
-static void gxm_XtLoseSelectionIncrProc(Widget w, Atom *a, XtPointer x) {}
-static void gxm_XtLoseSelectionProc(Widget w, Atom *a) {}
-static void gxm_XtSelectionDoneProc(Widget w, Atom *a1, Atom *a2) {}
-static void gxm_XtSelectionDoneIncrProc(Widget w, Atom *a1, Atom *a2, XtRequestId *i, XtPointer x) {}
+enum {CANCEL_CONVERT, CONVERT, LOSE, DONE, CONVERT_INCR, LOSE_INCR, DONE_INCR};
+/* need a way to map from widget to selection proc */
+
+typedef struct {
+  Widget w;
+  int type;
+  XEN proc;
+} selmap;
+
+static selmap *selmaps = NULL;
+static int selmap_size = 0;
+static int selmap_ctr = 0;
+static void add_selmap(Widget w, int type, XEN proc)
+{
+  if (selmap_size == 0)
+    selmaps = (selmap *)CALLOC(8, sizeof(selmap));
+  else
+    {
+      if (selmap_size == selmap_ctr)
+	{
+	  int i;
+	  selmap_size += 8;
+	  selmaps = (selmap *)REALLOC(selmaps, selmap_size * sizeof(selmap));
+	  for (i = selmap_ctr; i < selmap_size; i++) selmaps[i].w = NULL;
+	}
+    }
+  selmaps[selmap_ctr].w = w;
+  selmaps[selmap_ctr].type = type;
+  xm_protect(proc);
+  selmaps[selmap_ctr++].proc = proc;
+}
+
+static XEN unselmap(Widget w, int type)
+{
+  int i;
+  for (i = 0; i < selmap_ctr; i++)
+    if ((selmaps[i].w == w) &&
+	(selmaps[i].type == type))
+      return(selmaps[i].proc);
+  return(XEN_FALSE);
+}
+
+static void gxm_XtCancelConvertSelectionProc(Widget w, Atom *a1, Atom *a2, XtRequestId *id, XtPointer x) 
+{
+  XEN proc;
+  proc = unselmap(w, CANCEL_CONVERT);
+  if (XEN_PROCEDURE_P(proc))
+    XEN_CALL_5(proc,
+	       C_TO_XEN_Widget(w),
+	       C_TO_XEN_Atom(*a1),
+	       C_TO_XEN_Atom(*a2),
+	       C_TO_XEN_XtRequestId(*id),
+	       (XEN)x,
+	       "CancelConvert");
+} 
+
+static Boolean gxm_XtConvertSelectionProc(Widget w, Atom *a1, Atom *a2, Atom *a3, XtPointer* x, unsigned long *l, int *i) 
+{
+  XEN proc, val;
+  proc = unselmap(w, CONVERT);
+  if (XEN_PROCEDURE_P(proc))
+    {
+      val = XEN_CALL_3(proc,
+		       C_TO_XEN_Widget(w),
+		       C_TO_XEN_Atom(*a1),
+		       C_TO_XEN_Atom(*a2),
+		       "ConvertSelection");
+      (*a3) = XEN_TO_C_Atom(XEN_LIST_REF(val, 1));
+      (*x) = (XtPointer)(XEN_LIST_REF(val, 2));
+      (*l) = XEN_TO_C_ULONG(XEN_LIST_REF(val, 3));
+      (*i) = XEN_TO_C_INT(XEN_LIST_REF(val, 4));
+      return(XEN_TO_C_BOOLEAN(XEN_CAR(val)));
+    }
+  return(False);
+}
+
+static void gxm_XtLoseSelectionIncrProc(Widget w, Atom *a, XtPointer x) 
+{
+  XEN proc;
+  proc = unselmap(w, LOSE_INCR);
+  if (XEN_PROCEDURE_P(proc))
+    XEN_CALL_3(proc,
+	       C_TO_XEN_Widget(w),
+	       C_TO_XEN_Atom(*a),
+	       (XEN)x,
+	       "LoseSelectionIncr");
+}
+
+static void gxm_XtLoseSelectionProc(Widget w, Atom *a) 
+{
+  XEN proc;
+  proc = unselmap(w, LOSE);
+  if (XEN_PROCEDURE_P(proc))
+    XEN_CALL_2(proc,
+	       C_TO_XEN_Widget(w),
+	       C_TO_XEN_Atom(*a),
+	       "LoseSelection");
+}
+
+static void gxm_XtSelectionDoneProc(Widget w, Atom *a1, Atom *a2) 
+{
+  XEN proc;
+  proc = unselmap(w, DONE);
+  if (XEN_PROCEDURE_P(proc))
+    XEN_CALL_3(proc,
+	       C_TO_XEN_Widget(w),
+	       C_TO_XEN_Atom(*a1),
+	       C_TO_XEN_Atom(*a2),
+	       "DoneSelection");
+}
+
+static void gxm_XtSelectionDoneIncrProc(Widget w, Atom *a1, Atom *a2, XtRequestId *i, XtPointer x) 
+{
+  XEN proc;
+  proc = unselmap(w, DONE_INCR);
+  if (XEN_PROCEDURE_P(proc))
+    XEN_CALL_5(proc,
+	       C_TO_XEN_Widget(w),
+	       C_TO_XEN_Atom(*a1),
+	       C_TO_XEN_Atom(*a2),
+	       C_TO_XEN_XtRequestId(*i),
+	       (XEN)x,
+	       "DoneSelectionIncr");
+}
 
 static XEN gxm_XtAppUnlock(XEN arg1)
 {
@@ -16052,6 +16168,10 @@ done_callback, cancel_callback, client_data)"
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 3), arg5, 5, "XtOwnSelectionIncremental", "XtLoseSelectionIncrProc");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 5), arg6, 6, "XtOwnSelectionIncremental", "XtSelectionDoneIncrProc");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg7) && (XEN_REQUIRED_ARGS(arg7) == 5), arg7, 7, "XtOwnSelectionIncremental", "XtCancelConvertSelectionProc");
+  add_selmap(XEN_TO_C_Widget(arg1), CONVERT_INCR, arg4);
+  add_selmap(XEN_TO_C_Widget(arg1), LOSE_INCR, arg5);
+  add_selmap(XEN_TO_C_Widget(arg1), DONE_INCR, arg6);
+  add_selmap(XEN_TO_C_Widget(arg1), CANCEL_CONVERT, arg7);	     
   return(C_TO_XEN_BOOLEAN(XtOwnSelectionIncremental(XEN_TO_C_Widget(arg1), 
 						    XEN_TO_C_Atom(arg2), 
 						    XEN_TO_C_Time(arg3), 
@@ -16072,6 +16192,9 @@ mechanism that a widget believes it owns a selection."
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 7), arg4, 4, "XtOwnSelection", "XtConvertSelectionProc");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 2), arg5, 5, "XtOwnSelection", "XtLoseSelectionProc");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 3), arg6, 6, "XtOwnSelection", "XtSelectionDoneProc");
+  add_selmap(XEN_TO_C_Widget(arg1), CONVERT, arg4);
+  add_selmap(XEN_TO_C_Widget(arg1), LOSE, arg5);
+  add_selmap(XEN_TO_C_Widget(arg1), DONE, arg6);	     
   return(C_TO_XEN_BOOLEAN(XtOwnSelection(XEN_TO_C_Widget(arg1), 
 					 XEN_TO_C_Atom(arg2), 
 					 XEN_TO_C_Time(arg3), 
@@ -21911,9 +22034,8 @@ static int alphabet_compare(const void *a, const void *b)
   return(strcmp(d1->name, d2->name));
 }
 
-/* #define XM_HASH_SIZE 1024 */
-/* 600 in Motif 2.1, but more added for 2.2 */
 #define XM_HASH_SIZE 750
+/* 616 resources predefined */
 
 static hdata **xm_hash = NULL;
 static int hd_ctr = 0;
@@ -22663,6 +22785,26 @@ static void define_strings(void)
       }
   }
 }
+#endif
+
+#define S_add_resource "add-resource"
+
+static XEN g_add_resource(XEN nam, XEN typ)
+{
+  #define H_add_resource "(" S_add_resource " name type) adds the resource 'name' with the libxm type 'type'. \
+The types are defined in xm.c around line 679.  To add XmNhiho as an integer: \n\
+    (define XmNhiho (add-resource \"hiho\" 0))"
+
+  XEN_ASSERT_TYPE(XEN_STRING_P(nam), nam, XEN_ARG_1, S_add_resource, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(typ), typ, XEN_ARG_2, S_add_resource, "an integer");
+  hash_resource(XEN_TO_C_STRING(nam), XEN_TO_C_INT(typ));
+  return(nam);
+}
+
+#if HAVE_RUBY
+  XEN_NARGIFY_2(g_add_resource_w, g_add_resource)
+#else
+  #define g_add_resource_w g_add_resource
 #endif
 
 
@@ -24530,9 +24672,10 @@ static int xm_already_inited = 0;
       define_pointers();
       define_procedures();
       define_structs();
+      XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"29-Aug-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"30-Aug-02\")");
 #endif
       xm_already_inited = 1;
     }

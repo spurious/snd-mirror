@@ -1956,9 +1956,9 @@ object system.  Keywords, CLM generic functions, and optional arguments work as 
 <pre>
 &gt;<em class=typing>osc = make_oscil(:frequency, 440)</em>
 <em class=listener>oscil freq: 440.000Hz, phase: 0.000</em>
-&gt;<em class=typing>(oscil osc)</em>
+&gt;<em class=typing>oscil osc</em>
 <em class=listener>0.0</em>
-&gt;<em class=typing>(oscil osc)</em>
+&gt;<em class=typing>oscil osc</em>
 <em class=listener>0.1250506192</em>
 &gt;<em class=typing>osc.frequency</em>
 <em class=listener>440.0</em>
@@ -2003,6 +2003,17 @@ def display_energy(snd, chn)
 
 # $lisp_graph_hook = Proc.new {|snd,chn| display_energy(snd,chn)}
 </pre>
+<p>
+In Ruby you make a symbol by prepending ":", so Guile's
+</p>
+<pre>
+(list 'KeySym (char->integer #\F)
+</pre> 
+<p>becomes</p>
+<pre>
+[:KeySym, ?F]
+</pre>
+
 <p>In the listener, everything is line-oriented (that is, I'm not trying to
 catch incomplete expressions).  And it appears that in Ruby, variables defined
 within a file are considered local to that file(?).

@@ -23128,8 +23128,8 @@ EDITS: 5
 						      XmNdoubleClickInterval  100
 						      XmNitemCount            3
 						      XmNitems                (list (XmStringCreate "one" XmFONTLIST_DEFAULT_TAG)
-										     (XmStringCreate "two" XmFONTLIST_DEFAULT_TAG)
-										     (XmStringCreate "three" XmFONTLIST_DEFAULT_TAG))
+										    (XmStringCreate "two" XmFONTLIST_DEFAULT_TAG)
+										    (XmStringCreate "three" XmFONTLIST_DEFAULT_TAG))
 						      XmNlistMarginHeight     4
 						      XmNlistMarginWidth      1
 						      XmNlistSizePolicy       XmVARIABLE
