@@ -20,11 +20,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 27
-#define XEN_VERSION "1.27"
+#define XEN_MINOR_VERSION 28
+#define XEN_VERSION "1.28"
 
 /* HISTORY:
  *
+ *  7-Mar-05:  C99 complex number changes (creal, _Complex_I) (Steve Bankowitz).
  *  2-Mar-05:  Ruby support for off_t (Mike Scholz).
  *  4-Jan-05:  more guile changes, deprecated XEN_VECTOR_ELEMENTS.
  *  --------
@@ -273,19 +274,18 @@
 
 #if HAVE_COMPLEX_TRIG
   #if HAVE_SCM_C_MAKE_RECTANGULAR
+    #define XEN_COMPLEX_P(Arg)        scm_is_complex(Arg)
     #if defined(__GNUC__) && (!(defined(__cplusplus)))
-      #define XEN_TO_C_COMPLEX(a)       ({ XEN _xen_h_23_ = a; (scm_c_real_part(_xen_h_23_) + scm_c_imag_part(_xen_h_23_) * 1.0fi); })    
-      #define C_TO_XEN_COMPLEX(a)       ({ complex _xen_h_24_ = a; scm_c_make_rectangular(__real__ _xen_h_24_, __imag__ _xen_h_24_); })
-      #define XEN_COMPLEX_P(Arg)        scm_is_complex(Arg)
+      #define XEN_TO_C_COMPLEX(a)     ({ XEN _xen_h_23_ = a; (scm_c_real_part(_xen_h_23_) + scm_c_imag_part(_xen_h_23_) * _Complex_I); })    
+      #define C_TO_XEN_COMPLEX(a)     ({ complex _xen_h_24_ = a; scm_c_make_rectangular(creal(_xen_h_24_), cimag(_xen_h_24_)); })
     #else
-      #define XEN_TO_C_COMPLEX(a)       (scm_c_real_part(a) + scm_c_imag_part(a) * 1.0fi)
-      #define C_TO_XEN_COMPLEX(a)       scm_c_make_rectangular(__real__ a, __imag__ a)
-      #define XEN_COMPLEX_P(Arg)        scm_is_complex(Arg)
+      #define XEN_TO_C_COMPLEX(a)     (scm_c_real_part(a) + scm_c_imag_part(a) * _Complex_I)
+      #define C_TO_XEN_COMPLEX(a)     scm_c_make_rectangular(creal(a), cimag(a))
     #endif
   #else
-    #define XEN_TO_C_COMPLEX(a)         XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * 1.0fi)
-    #define C_TO_XEN_COMPLEX(a)         scm_make_complex(__real__ a, __imag__ a)
-    #define XEN_COMPLEX_P(Arg)          (XEN_NOT_FALSE_P(scm_number_p(Arg)))
+    #define XEN_COMPLEX_P(Arg)        (XEN_NOT_FALSE_P(scm_number_p(Arg)))
+    #define XEN_TO_C_COMPLEX(a)       XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * _Complex_I)
+    #define C_TO_XEN_COMPLEX(a)       scm_make_complex(creal(a), cimag(a))
   #endif
 #endif
 

@@ -83,6 +83,7 @@
  */
 
 /* TODO: run safety complex checks (CL too?) -- will require extracted macro or something
+ * TODO: run* equivalent in Snd/Scheme (need all reflections from run, I think)
  */
 
 #include "snd.h"

@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: why does rb version write small temps?
+ */
+
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
 {

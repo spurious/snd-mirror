@@ -19,9 +19,6 @@
 </style>
 </head>
 
-<!-- TODO: document (file->array file-name channel start num-samples arr) and (array->file file-name arr num-samples srate chans)
--->
-
 <!-- 
      The index at the end is generated automatically by index.cl which notices all names, and
      special comments labelled INDEX. 
@@ -90,7 +87,8 @@ ccrma-ftp.stanford.edu; the Snd editor is <a href="ftp://ccrma-ftp.stanford.edu/
 <ul>
 <li><small><a href="#generators">Generators</a></small>
 <li><small><a href="#generic-functions">Generic Functions</a></small>
-<li><small><a href="#sound IO">Frames, Mixers, Sound IO</a></small>
+<li><small><a href="#framesandmixers">Frames, Mixers</a></small>
+<li><small><a href="#soundio">Sound file IO</a></small>
 <li><small><a href="#functions">Useful functions</a></small>
 <li><small><a href="#def-clm-struct">def-clm-struct</a></small>
 <li><small><a href="#definstrument">Definstrument</a></small>
@@ -2437,7 +2435,7 @@ the envelope to apply over the entire input file:</p>
 
 <!-- ---------------------------------------- FRAME, MIXER ---------------------------------------- -->
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="sound IO">Frames, Mixers, Sound IO</a></h3></td></tr></table>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="framesandmixers">Frames, Mixers, Sound IO</a></h3></td></tr></table>
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>Frames and Mixers</h4></td></tr></table>
 
@@ -2454,31 +2452,31 @@ input/output ports (files, audio ports, etc) to handle all the underlying
 data IO.
 </p>
 <pre>
-  <em class=emdef>make-empty-frame</em> chans             ;create frame of 0's
-  <a class=def name="make-frame">make-frame</a> chans &amp;rest <i>args</i>        ;create frame and load it with args
-  <a class=def name="frame?">frame?</a> obj                         ;is <i>obj</i> a frame
-  <a class=def name="frame+">frame+</a> f1 f2 &amp;optional <i>outf</i>        ;add <i>f1</i> and <i>f2</i> element-wise, return new frame (or <i>outf</i>)
-  <a class=def name="frame*">frame*</a> f1 f2 &amp;optional <i>outf</i>        ;multiply <i>f1</i> and <i>f2</i> element-size, return new frame (or <i>outf</i>)
-  <a class=def name="frame-ref">frame-ref</a> f1 chan                  ;return <i>f1</i>[<i>chan</i>]
-  <a class=def name="frame-set!">frame-set!</a> f1 chan val             ;<i>f1</i>[<i>chan</i>] = <i>val</i> (also setf with frame-ref)
+  <em class=emdef>make-empty-frame</em> chans                 ;create frame of 0's
+  <a class=def name="make-frame">make-frame</a> chans &amp;rest <i>args</i>            ;create frame and load it with args
+  <a class=def name="frame?">frame?</a> obj                             ;is <i>obj</i> a frame
+  <a class=def name="frame+">frame+</a> f1 f2 &amp;optional <i>outf</i>            ;add <i>f1</i> and <i>f2</i> element-wise, return new frame (or <i>outf</i>)
+  <a class=def name="frame*">frame*</a> f1 f2 &amp;optional <i>outf</i>            ;multiply <i>f1</i> and <i>f2</i> element-size, return new frame (or <i>outf</i>)
+  <a class=def name="frame-ref">frame-ref</a> f1 chan                      ;return <i>f1</i>[<i>chan</i>]
+  <a class=def name="frame-set!">frame-set!</a> f1 chan val                 ;<i>f1</i>[<i>chan</i>] = <i>val</i> (also setf with frame-ref)
 
-  <em class=emdef>make-empty-mixer</em> chans             ;create a mixer of 0's
-  <a class=def name="make-identity-mixer">make-identity-mixer</a> chans          ;create a mixer of 1's on the diagonal
-  <a class=def name="make-scalar-mixer">make-scalar-mixer</a> chans scl        ;create a mixer with <i>scl</i> on the diagonal
-  <a class=def name="make-mixer">make-mixer</a> chans &amp;rest <i>args</i>        ;create a mixer and load it with args
-  <a class=def name="mixer?">mixer?</a> obj                         ;is <i>obj a mixer</i>
-  <a class=def name="mixermultiply">mixer*</a> m1 m2 &amp;optional <i>outm</i>        ;matrix multiply of <i>m1</i> and <i>m2</i>, return new mixer (or <i>outm</i>)
-  <a class=def name="mixeradd">mixer+</a> m1 m2 &amp;optional <i>outm</i>        ;matrix add of <i>m1</i> and <i>m2</i>, return new mixer (or <i>outm</i>)
-  <a class=def name="mixerscale">mixer-scale</a> m1 scl &amp;optional <i>outm</i>  ;scale matrix <i>m1</i> by <i>scl</i>, return new mixer (or <i>outm</i>)
-  <a class=def name="mixer-ref">mixer-ref</a> m1 in out                ;<i>m1</i>[<i>in</i>,<i>out</i>] (use setf to change)
-  <a class=def name="mixer-set!">mixer-set!</a> m1 in out val           ;<i>m1</i>[<i>in,out</i>] = <i>val</i> (also setf with mixer-ref)
+  <em class=emdef>make-empty-mixer</em> chans                 ;create a mixer of 0's
+  <a class=def name="make-identity-mixer">make-identity-mixer</a> chans              ;create a mixer of 1's on the diagonal
+  <a class=def name="make-scalar-mixer">make-scalar-mixer</a> chans scl            ;create a mixer with <i>scl</i> on the diagonal
+  <a class=def name="make-mixer">make-mixer</a> chans &amp;rest <i>args</i>            ;create a mixer and load it with args
+  <a class=def name="mixer?">mixer?</a> obj                             ;is <i>obj a mixer</i>
+  <a class=def name="mixermultiply">mixer*</a> m1 m2 &amp;optional <i>outm</i>            ;matrix multiply of <i>m1</i> and <i>m2</i>, return new mixer (or <i>outm</i>)
+  <a class=def name="mixeradd">mixer+</a> m1 m2 &amp;optional <i>outm</i>            ;matrix add of <i>m1</i> and <i>m2</i>, return new mixer (or <i>outm</i>)
+  <a class=def name="mixerscale">mixer-scale</a> m1 scl &amp;optional <i>outm</i>      ;scale matrix <i>m1</i> by <i>scl</i>, return new mixer (or <i>outm</i>)
+  <a class=def name="mixer-ref">mixer-ref</a> m1 in out                    ;<i>m1</i>[<i>in</i>,<i>out</i>] (use setf to change)
+  <a class=def name="mixer-set!">mixer-set!</a> m1 in out val               ;<i>m1</i>[<i>in,out</i>] = <i>val</i> (also setf with mixer-ref)
 
   <a class=def name="frame-&gt;frame">frame-&gt;frame</a> mixer frame &amp;optional <i>outf</i>
-                                     ;pass <i>frame</i> through <i>mixer</i>, return new frame (or outf)
-  <a class=def name="frame-&gt;list">frame-&gt;list</a> frame                  ;return list of <i>frame's</i> contents
+                                         ;pass <i>frame</i> through <i>mixer</i>, return new frame (or outf)
+  <a class=def name="frame-&gt;list">frame-&gt;list</a> frame                      ;return list of <i>frame's</i> contents
   <a class=def name="sample-&gt;frame">sample-&gt;frame</a> frame-or-mixer sample &amp;optional <i>outf</i>
-                                     ;pass <i>sample</i> through <i>frame-or-mixer</i>, return new frame (or <i>outf</i>)
-  <a class=def name="frame-&gt;sample">frame-&gt;sample</a> frame-or-mixer frame ;pass <i>frame</i> through <i>frame-or-mixer</i>, return sample
+                                         ;pass <i>sample</i> through <i>frame-or-mixer</i>, return new frame (or <i>outf</i>)
+  <a class=def name="frame-&gt;sample">frame-&gt;sample</a> frame-or-mixer frame     ;pass <i>frame</i> through <i>frame-or-mixer</i>, return sample
 </pre>
 
 <table border cellpadding=4 hspace=20>
@@ -2508,41 +2506,54 @@ In matrix terminology, a mixer is a square matrix, a frame is a column (or row) 
 matrix multiply, and so on. 
 </p>
 
-<p>Sound file IO is supported by a variety of low-level functions:</p>
-<pre>
-  <a class=def name="mus-input?">mus-input?</a> <i>obj</i>                ;t if <i>obj</i> performs sound input
-  <a class=def name="mus-output?">mus-output?</a> <i>obj</i>               ;t if <i>obj</i> performs sound output
-  <a class=def name="file-&gt;sample?">file-&gt;sample?</a> <i>obj</i>             ;t if <i>obj</i> reads a sound file returning a sample
-  <a class=def name="sample-&gt;file?">sample-&gt;file?</a> <i>obj</i>             ;t if <i>obj</i> writes a sample to a sound file
-  <a class=def name="frame-&gt;file?">frame-&gt;file?</a> <i>obj</i>              ;t if <i>obj</i> writes a frame to a sound file
-  <a class=def name="file-&gt;frame?">file-&gt;frame?</a> <i>obj</i>              ;t if <i>obj</i> reads a sound file returning a frame
-   
-  <a class=def name="make-file-&gt;sample">make-file-&gt;sample</a> <i>name</i>        ;return gen that reads samples from sound file <i>name</i>
-  <a class=def name="make-sample-&gt;file">make-sample-&gt;file</a> <i>name chans</i> &amp;optional <i>format type comment</i>
-                                ;return gen that writes samples to sound file <i>name</i>
-  <a class=def name="make-file-&gt;frame">make-file-&gt;frame</a> <i>name</i>         ;return gen that reads frames from sound file <i>name</i>
-  <a class=def name="make-frame-&gt;file">make-frame-&gt;file</a> <i>name chans</i> &amp;optional <i>format type comment</i>
-                                ;return gen that writes frames to sound file <i>name</i>
 
-  <a class=def name="file-&gt;sample">file-&gt;sample</a> <i>obj samp</i> &amp;optional <i>chan</i>    ;return sample at <i>samp</i> in channel <i>chan</i>
-  <a class=def name="sample-&gt;file">sample-&gt;file</a> <i>obj samp chan val</i>;write (add) sample <i>val</i> at <i>samp</i> in channel <i>chan</i>
-  <a class=def name="file-&gt;frame">file-&gt;frame</a> <i>obj samp</i> &amp;optional <i>outf</i>     ;return frame at <i>samp</i>
-  <a class=def name="frame-&gt;file">frame-&gt;file</a> <i>obj samp val</i>      ;write (add) frame <i>val</i> at <i>samp</i>
+<!-- ---------------------------------------- IN-ANY/OUT-ANY ---------------------------------------- -->
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><a class=def NAME="soundio">Sound IO</a></h4></td></tr></table>
+
+<p>Sound file IO is supported by a variety of functions.  To read and write sound files into an
+array, use <b>array-&gt;file</b> and <b>file-&gt;array</b>.  (In the CL version of CLM, these
+are the only portable ways to read and write sound files outside with-sound; other versions
+of CLM aren't restricted in this regard).  Within the run-loop, <b>out-any</b>, <b>in-any</b>, and <b>readin</b>
+are the simplest; <b>locsig</b> provides a sort of sound placement; <b>dlocsig</b> provides
+moving sound placement.  When you use with-sound, the variable <b>*output*</b> is bound to a <b>sample-&gt;file</b>
+object, so output by default goes to with-sound's output file. You can open (for reading or
+writing) any sound files via <b>make-file-&gt;sample</b> (or -&gt;frame), and <b>make-sample-&gt;file</b>
+(or frame-&gt;).  These return an IO object which you subsequently pass to <b>file-&gt;sample</b>
+(for input) and <b>sample-&gt;file</b> (for output).  To close the connection to the file system,
+you can use <b>mus-close</b>, but it's also called automatically during garbage collection, if needed.
+</p>
+<pre>
+  <a class=def name="mus-input?">mus-input?</a> <i>obj</i>                        ;t if <i>obj</i> performs sound input
+  <a class=def name="mus-output?">mus-output?</a> <i>obj</i>                       ;t if <i>obj</i> performs sound output
+  <a class=def name="file-&gt;sample?">file-&gt;sample?</a> <i>obj</i>                     ;t if <i>obj</i> reads a sound file returning a sample
+  <a class=def name="sample-&gt;file?">sample-&gt;file?</a> <i>obj</i>                     ;t if <i>obj</i> writes a sample to a sound file
+  <a class=def name="frame-&gt;file?">frame-&gt;file?</a> <i>obj</i>                      ;t if <i>obj</i> writes a frame to a sound file
+  <a class=def name="file-&gt;frame?">file-&gt;frame?</a> <i>obj</i>                      ;t if <i>obj</i> reads a sound file returning a frame
+   
+  <a class=def name="make-file-&gt;sample">make-file-&gt;sample</a> <i>name</i>                ;return gen that reads samples from sound file <i>name</i>
+  <a class=def name="make-sample-&gt;file">make-sample-&gt;file</a> <i>name chans</i> &amp;optional <i>format type comment</i>
+                                        ;return gen that writes samples to sound file <i>name</i>
+  <a class=def name="make-file-&gt;frame">make-file-&gt;frame</a> <i>name</i>                 ;return gen that reads frames from sound file <i>name</i>
+  <a class=def name="make-frame-&gt;file">make-frame-&gt;file</a> <i>name chans</i> &amp;optional <i>format type comment</i>
+                                        ;return gen that writes frames to sound file <i>name</i>
+
+  <a class=def name="file-&gt;sample">file-&gt;sample</a> <i>obj samp</i> &amp;optional <i>chan</i>  ;return sample at <i>samp</i> in channel <i>chan</i>
+  <a class=def name="sample-&gt;file">sample-&gt;file</a> <i>obj samp chan val</i>        ;write (add) sample <i>val</i> at <i>samp</i> in channel <i>chan</i>
+  <a class=def name="file-&gt;frame">file-&gt;frame</a> <i>obj samp</i> &amp;optional <i>outf</i>   ;return frame at <i>samp</i>
+  <a class=def name="frame-&gt;file">frame-&gt;file</a> <i>obj samp val</i>              ;write (add) frame <i>val</i> at <i>samp</i>
 
   <a class=def name="file-&gt;array">file-&gt;array</a> <i>filename channel start-sample samples array</i>
   <a class=def name="array-&gt;file">array-&gt;file</a> <i>file data len srate channels</i>
   ;; these two read and write sample (sound) files to or from float arrays
 
-  <a class=def name="continue-frame-&gt;file">continue-frame-&gt;file</a> <i>file</i>      ;reopen <i>file</i> for more output
-  <a class=def name="continue-sample-&gt;file">continue-sample-&gt;file</a> <i>file</i>     ;reopen <i>file</i> for more output
+  <a class=def name="continue-frame-&gt;file">continue-frame-&gt;file</a> <i>file</i>              ;reopen <i>file</i> for more output
+  <a class=def name="continue-sample-&gt;file">continue-sample-&gt;file</a> <i>file</i>             ;reopen <i>file</i> for more output
 
-  <a class=def name="mus-close">mus-close</a> <i>obj</i>                  ;close the output file associated with <i>obj</i>
+  <a class=def name="mus-close">mus-close</a> <i>obj</i>                          ;close the output file associated with <i>obj</i>
 </pre>
 <p>In the Scheme version of CLM, the Guile built-in (but unused) function frame? is available as %frame?.
 </p>
 
-
-<!-- ---------------------------------------- OUT-ANY ---------------------------------------- -->
 
 <!-- INDEX ina-outa:Input and output --><A class=def NAME="ina-outa"></a>
 <A class=def NAME="outa"></a>
@@ -2593,9 +2604,6 @@ These are macros equivalent to <code>(in-any loc 0 stream)</code> etc.
     (close-input fil)))
 </pre>
 </td></tr></table>
-
-<p>It's probably better to use <a href="#readin">readin</a> for file input.
-</p>
 <br>
 
 

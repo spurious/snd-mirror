@@ -277,6 +277,10 @@ if test "$with_gsl" != yes; then
 	[AC_LANG_PROGRAM(
         	[#include <complex.h>],
 		[ _Complex double val; 
+                  double rl, im;
+                  val = 1.0 + 0.5 * _Complex_I;
+                  rl = creal(val);
+                  im = cimag(val);
                   val = ccosh(cacosh(1.5) / 100.0)
                 ])],
         [
@@ -286,6 +290,7 @@ if test "$with_gsl" != yes; then
     	],
 	[AC_MSG_RESULT(no)])
 fi
+
 
 
 #--------------------------------------------------------------------------------
@@ -759,7 +764,7 @@ else
 	AC_CHECK_LIB(m, gdk_pango_renderer_new, [AC_DEFINE(HAVE_GDK_PANGO_RENDERER_NEW)],  ,$GTK_LIBS)
 	# gtk 2.5.6
 	AC_CHECK_LIB(m, gtk_text_layout_get_iter_at_position, [AC_DEFINE(HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION)],  ,$GTK_LIBS)
-	# gtk 2.6.0|1|2|3
+	# gtk 2.6.0|1|2|3|4
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)
