@@ -78,6 +78,7 @@
 #if HAVE_SCM_C_DEFINE
   #define XEN_VARIABLE_SET(Var, Val)   SCM_VARIABLE_SET(Var, Val)
   #define XEN_NAME_AS_C_STRING_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), XEN_TRUE))
+  /* this is probably not the right thing -- the 3rd arg should be XEN_FALSE, else we're defining a new variable in the current module */
 #else
   #define XEN_VARIABLE_SET(Var, Val)   SCM_SETCDR(Var, Val)
   #define XEN_NAME_AS_C_STRING_TO_VALUE(a) scm_symbol_value0(a)

@@ -1,20 +1,19 @@
-dnl Configuration script for Snd
-dnl Process this file with autoconf 2.57 to produce a configure script.
+dnl Configuration script for Snd via autoconf 2.57
 
-AC_INIT(snd, 6.10, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz)
+AC_INIT(snd, 6.11, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES(makefile po/Makefile.in )
 AC_PROG_CC
-AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER! (autoconf docs don't mention this problem)
+AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER!
 AC_PROG_INSTALL
 
 audio_system="unknown"
 MAKE_TARGET="snd"
 
 PACKAGE=snd
-VERSION=6.10
+VERSION=6.11
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -1025,8 +1024,6 @@ fi
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
 
-# TODO: does with_shared_sndlib work if it was built with_modules? (how to tell?)
-
 SNDLIB_FILES="SNDLIB_O_FILES"
 if test "$enable_snd_debug" != yes ; then
   SNDLIB_LIB=""
@@ -1060,6 +1057,16 @@ if test "$with_shared_sndlib" = yes; then
 	    SNDLIB_FILES="NO_FILES"
             SNDLIB_LIB="-L$SNDLIB_PREFIX/lib -lsndlib"
             AC_DEFINE(WITH_SHARED_SNDLIB)
+	    SNDLIB_WITH_MODULES=`$SNDLIB_CONFIG --modules`
+            if test "$SNDLIB_WITH_MODULES" = "yes" ; then
+	      if test "$with_modules" != yes; then
+		AC_DEFINE(WITH_MODULES)
+              fi
+            else
+	      if test "$with_modules" = yes; then
+		AC_DEFINE(WITH_MODULES, 0)
+              fi
+            fi
           else
 	    AC_MSG_WARN([libsndlib.so was built with $SNDLIB_LANGUAGE, but current choice is $LOCAL_LANGUAGE])
           fi

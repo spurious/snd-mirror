@@ -121,8 +121,8 @@ switch).
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-6-9.i386.rpm (for Linux), snd-6-9.src.rpm
-(sources), and snd-6-9.ppc.rpm (linuxPPC).  These RPM files have been
+mentioned above: snd-6-10.i386.rpm (for Linux), snd-6-10.src.rpm
+(sources), and snd-6-10.ppc.rpm (linuxPPC).  These RPM files have been
 superseded by Fernando Lopez-Lezcano's set available at
 http://www-ccrma.stanford.edu/planetccrma/software/
 

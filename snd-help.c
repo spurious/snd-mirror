@@ -295,6 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+30-Jun:  snd 6.10.\n\
 24-Jun:  moved mix-name and mix-name->id to snd6.scm.\n\
 23-Jun:  mix-amp-env-changed-hook.\n\
          changed mix-amp-changed-hook to take 2nd chan arg.\n\
@@ -306,7 +307,6 @@ void news_help(snd_state *ss)
 12-Jun:  bess1.scm and bess1.rb from Michael Scholz.\n\
 10-Jun:  added initial-length arg to new-sound.\n\
 2-June:  debug.scm and with-sound debugger in ws.scm.\n\
-28-May:  snd 6.9.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1326,8 +1326,9 @@ and its value is returned."
 
   XEN help_text = XEN_FALSE; 
   char *str = NULL, *new_str, *subject = NULL;
+
 #if HAVE_GUILE
-  XEN value;
+  XEN value = XEN_FALSE, sym = XEN_FALSE;
   if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
     {
       help_text = C_TO_XEN_STRING(H_snd_help);
@@ -1335,28 +1336,47 @@ and its value is returned."
     }
   else
     {
-      if ((XEN_STRING_P(text)) || (XEN_SYMBOL_P(text)))            /* arg can be name (string), symbol, or the value */
+      if (XEN_SYMBOL_P(text)) 
+	{
+	  help_text = XEN_OBJECT_HELP(text);
+	  sym = text;
+	  subject = XEN_SYMBOL_TO_C_STRING(text);
+	}
+      else 
 	{
 	  if (XEN_STRING_P(text))
-	    str = XEN_TO_C_STRING(text);
-	  else str = XEN_SYMBOL_TO_C_STRING(text);
-	  subject = str;
-	  value = XEN_NAME_AS_C_STRING_TO_VALUE(str);
+	    {
+	      subject = XEN_TO_C_STRING(text);
+	      sym = C_STRING_TO_XEN_SYMBOL(subject);
+	      help_text = XEN_OBJECT_HELP(sym);
+	    }
+	  else
+	    {
+	      value = text;
+	      help_text = XEN_OBJECT_HELP(text);
+	    }
 	}
-      else value = text;
-      help_text = XEN_OBJECT_HELP(value);         /* (object-property ...) */
-      if ((XEN_FALSE_P(help_text)) &&
-	  (XEN_PROCEDURE_P(value)))
+      if (XEN_FALSE_P(help_text))
 	{
-	  help_text = XEN_PROCEDURE_HELP(value);  /* (procedure-property ...) */
-	  if (XEN_FALSE_P(help_text))
-	    help_text = XEN_PROCEDURE_SOURCE_HELP(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
+#if HAVE_SCM_C_DEFINE
+	  XEN lookup;
+	  if ((XEN_FALSE_P(value)) && (XEN_SYMBOL_P(sym)))
+	    {
+	      lookup = scm_sym2var(sym, scm_current_module_lookup_closure(), XEN_FALSE); /* don't define in current module! */
+	      if (!(XEN_FALSE_P(lookup)))
+		value = XEN_VARIABLE_REF(lookup);
+	    }
+#endif
+	  help_text = XEN_OBJECT_HELP(value);         /* (object-property ...) */	      
+	  if ((XEN_FALSE_P(help_text)) &&
+	      (XEN_PROCEDURE_P(value)))
+	    {
+	      help_text = XEN_PROCEDURE_HELP(value);  /* (procedure-property ...) */
+	      if (XEN_FALSE_P(help_text))
+		help_text = XEN_PROCEDURE_SOURCE_HELP(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
+	    }
 	}
-      if ((XEN_FALSE_P(help_text)) &&
-	  (str))
-	help_text = XEN_OBJECT_HELP(C_STRING_TO_XEN_SYMBOL(str));
     }
-  
   /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */
   /*   this means all the H_doc strings in Snd need to omit line-feeds except where necessary (i.e. code) */
 
