@@ -3,8 +3,6 @@
 (use-modules (ice-9 optargs) (ice-9 format))
 (if (not (defined? 'local-variables)) (load-from-path "debug.scm"))
 
-;;; TODO: with-mix
-
 ;;; changed default variable names 3-Apr-03 for Common Music's benefit
 ;;;   *clm-channels* is the default number of with-sound output chans in
 ;;;   both CL and Scheme now.  *channels* (the old name) was a dynamic
@@ -127,7 +125,7 @@ returning you to the true top-level."
 		     (if (memoized? source)
 			 (ok (unmemoize source))
 			 (ok source)))))))))
-      ""))
+      #f))
   
 (define (ws-help)
   "\n\
@@ -147,7 +145,7 @@ returning you to the true top-level."
 ;;; ws-interrupt? checks for C-g within with-sound, setting up continuation etc
 ;;; this goes anywhere in the instrument (and any number of times), 
 ;;;    but not in the run macro body (run doesn't (yet?) handle code this complex)
-(defmacro* ws-interrupt? (#:optional message)
+(defmacro* ws-interrupt? (#:optional (message "with-sound"))
   ;; using defmacro, not define, so that we can more easily find the instrument (as a procedure)
   ;;   for ws-locals above -- some sort of procedure property is probably better
   `(if (c-g?) 
@@ -238,11 +236,14 @@ returning you to the true top-level."
 						   (make-stack #t)))    ; stack at point of ws-interrupt or stack right here
 				      (set! in-debugger #t)             ; gad -- turn off dynamic-wind output fixup below
 				      (throw 'snd-top-level             ; return to "top level" (can be nested)
-					     (format #f ";~Awith-sound interrupted at: ~A" 
+					     (format #f ";~A~A" 
 						     (if (> (length args) 3)    ; optional message to ws-interrupt
-							 (format #f ";~A, " (list-ref args 3))
+							 (list-ref args 3)
 							 "")
-						     (ws-location)))))))
+						     (let ((loc (ws-location)))
+						       (if (string? loc)
+							   (format #f ", interrupted at: ~A" loc)
+							   ""))))))))
 			  (set! in-debugger #f)
 			  (set! flush-reverb (eq? val #f)))
 			(begin
@@ -586,32 +587,107 @@ returning you to the true top-level."
 	*ws-prog*))))
 !#
 
-#!
+
 ;;; -------- with-mix --------
+;;;
+;;; weird syntax = with-mix (with-sound-args) file-name start-in-output &body body
+;;;
+;;; (with-sound () 
+;;;   (with-mix () "section-1" 0 (fm-violin 0 1 440 .1)
+;;;                              (fm-violin 1 2 660 .1))
+;;; ...)
 
-(define *with-mix-options* #f)
-(define *with-mix-calls* #f)
+(define (with-mix-find-file-with-extensions file extensions)
+  (if (file-exists? file)
+      file
+      (call-with-current-continuation
+       (lambda (found-one)
+	 (for-each
+	  (lambda (ext)
+	    (let ((new-file (string-append file "." ext)))
+	      (if (file-exists? new-file)
+		  (found-one new-file))))
+	  extensions)
+	 #f))))
 
-(define (make-with-mix-comment options calls)
-  (format #f "(begin~%;; written ~A (Snd: ~A)~%(set! *with-mix-options* '~A)~%(set! *with-mix-calls* '~A))~%"
-	  (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))
-	  (snd-version)
-	  options
-	  calls))
+(define (with-mix-file-extension file default)
+  (let ((pos #f)
+	(len (string-length file)))
+    (call-with-current-continuation
+     (lambda (ok)
+       (do ((i (1- len) (1- i)))
+	   ((= i 0))
+	 (if (char=? (string-ref file i) #\.)
+	     (ok (substring file (1+ i) len))))
+       default))))
 
-(define (eval-with-mix-comment file)
-  (let ((comment (mus-sound-comment file)))
-    (set *with-mix-calls* #f)
-    (and (string? comment)
-	 (catch #t
-		(lambda ()
-		  (eval-string comment)
-		  *with-mix-calls*)
-		(lambda args #f))))) ; any error means we lost
+(defmacro with-mix-error (message)
+  `(let ((stack (make-stack #t)))
+     (call-with-current-continuation
+      (lambda (continue)
+	(throw 'with-sound-interrupt continue stack ,message)))))
 
-;;; (mus-mix *output* input-file sample-in-output) can replace sound.lisp's mix-in
-!#
+(defmacro with-mix (options ur-chkpt-file ur-beg . body)
+  `(let ((chkpt-file ,ur-chkpt-file)
+	 (beg-1 ,ur-beg))
+     (if (not (list? ',options))
+	 (with-mix-error (format #f "with-mix options list (arg 1) is ~A?~%;" ',options))
+	 (if (not (string? chkpt-file))
+	     (with-mix-error (format #f "with-mix file (arg 2) is ~A?~%;" ,ur-chkpt-file))
+	     (if (not (number? beg-1))
+		 (with-mix-error (format #f "with-mix begin time (arg 3) for ~S = ~A?~%;" chkpt-file beg-1))
+		 (let ((beg (inexact->exact (round (* (mus-srate) beg-1)))))
+		   (if (null? ',body)
+		       (mus-mix *output* chkpt-file beg)
+		       (let* ((call-str (object->string ',body))
+			      (option-str (object->string ',options))
+			      (sndf (with-mix-find-file-with-extensions chkpt-file (list (with-mix-file-extension *clm-file-name* "snd") "snd")))
+			      (revf (and sndf *reverb* (with-mix-find-file-with-extensions chkpt-file (list "rev"))))
+			      (mix-values (and sndf
+					       (or (not *reverb*)
+						   revf)
+					       (let ((comment (mus-sound-comment sndf)))
+						 (and (string? comment)
+						      (catch #t
+							     (lambda ()
+							       (eval-string comment))
+							     (lambda args #f))))))) ; any error means we lost
+			 (if (and sndf
+				  (or (not *reverb*)
+				      revf)
+				  (list? mix-values)
+				  (= (length mix-values) 2)
+				  (string? (car mix-values))
+				  (string? (cadr mix-values))
+				  (string=? (car mix-values) option-str)
+				  (string=? (cadr mix-values) call-str))
+			     (begin
+;			     (snd-print (format #f "mix ~S at ~F~%" sndf beg))
+			       (mus-mix *output* sndf beg)
+			       (if revf (mus-mix *reverb* revf beg)))
+			     ;; else recompute
+			     (let ((old-to-snd *to-snd*))
+			       (set! *to-snd* #f)
+;			     (snd-print (format #f "remake ~S at ~F~%" chkpt-file beg))
+			       (let ((new-sound 
+				      (apply with-sound-helper 
+					     (lambda () ,@body) 
+					     (append (list :output (string-append chkpt-file "." (with-mix-file-extension *clm-file-name* "snd")))
+						     (list :comment (format #f "(begin~%;; written ~A (Snd: ~A)~%(list ~S ~S))~%"
+									    (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))
+									    (snd-version)
+									    option-str
+									    call-str))
+						     (if (and (> (mus-channels *output*) 1)
+							      (not (member :channels ',options)))
+							 (list :channels (mus-channels *output*))
+							 '())
+						     ',options))))
+				 (set! *to-snd* old-to-snd)
+				 (mus-mix *output* new-sound beg)
+				 (if revf (mus-mix *reverb* revf beg)))))))))))))
+  
+  
+  
 ;;; a test case for ws-debug
 ;;; (with-sound () (fm-violin 0 1 440 .1) (sleep 1) (fm-violin 1 1 440 .1) (sleep 1) (fm-violin 2 1 440 .1) (sleep 1))
-
-

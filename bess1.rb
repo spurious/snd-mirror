@@ -5,7 +5,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Sep 15 19:11:12 CEST 2002
-# Last: Wed Jun 11 04:29:46 CEST 2003
+# Last: Sun Jun 15 03:47:10 CEST 2003
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -351,6 +351,7 @@ class Bess < Agn
                             RXmNrightAttachment, RXmATTACH_FORM,
                             RXmNshowValue, false,
                             RXmNorientation, RXmHORIZONTAL,
+                            RXmNheight, 20,
                             RXmNbackground, get_color(@sliderback)])
   end
 
@@ -520,10 +521,9 @@ begin
   # Bess.new.start(:srate, $rbm_srate,
   #                :bufsize, $rbm_rt_bufsize,
   #                :data_format, $rbm_data_format,
-  #                :which, :vct_test,
+  #                :which, :agn,
   #                :play, false)
   Bess.new.start
 end
 
 # bess1.rb ends here
-

@@ -3370,8 +3370,8 @@ mus-mix with *output*:
 <p>with-sound returns the output file name. If a previous file of the same name
 is currently open, it is closed before the new version is opened.
 </p>
-<p>ws.scm also has a version of <a href="clm.html#def-clm-struct">def-clm-struct</a>
-and <a href="clm.html#sound-let">sound-let</a>.  with-sounds and sound-lets can be nested --
+<p>ws.scm also has a version of <a href="clm.html#def-clm-struct">def-clm-struct</a>,
+<a href="clm.html#sound-let">sound-let</a>, and <a href="clm.html#mix-and-with-mix">with-mix</a>.  with-sounds and sound-lets can be nested --
 see clm.html.
 <b>def-clm-struct</b> in Snd/Guile provides a way to package up heterogenous data 
 for user-defined generators.  In pure-Scheme it just sets up functions to make
@@ -3405,6 +3405,8 @@ split with-sound into two pieces, primarily for Common Music's benefit.
 (with-sound (:scaled-to .5)
   (fm-violin 0 1 440 .1))
 </pre>
+<p>
+
 <!-- INDEX wsdebug:Debugging (notelists) -->
 <A NAME="wsdebug"></a>
 <p>with-sound establishes a catch for debugging: 'with-sound-interrupt.  If you

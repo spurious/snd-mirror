@@ -5,7 +5,7 @@
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Thu May 29 04:14:35 CEST 2003
-;; Last: Wed Jun 11 04:13:29 CEST 2003
+;; Last: Sun Jun 15 03:50:21 CEST 2003
 
 ;;; Commentary:
 
@@ -355,6 +355,7 @@
 						     XmNrightAttachment  XmATTACH_FORM
 						     XmNshowValue        #f
 						     XmNorientation      XmHORIZONTAL
+						     XmNheight           20
 						     XmNbackground       light-blue)))
 	   ;; freq
 	   (freq (XtCreateManagedWidget "  freq:" xmLabelWidgetClass form
@@ -382,6 +383,7 @@
 						    XmNrightAttachment  XmATTACH_FORM
 						    XmNshowValue        #f
 						    XmNorientation      XmHORIZONTAL
+						    XmNheight           20
 						    XmNbackground       light-blue)))
 	   ;; amp
 	   (amp (XtCreateManagedWidget "   amp:" xmLabelWidgetClass form
@@ -409,6 +411,7 @@
 						   XmNrightAttachment  XmATTACH_FORM
 						   XmNshowValue        #f
 						   XmNorientation      XmHORIZONTAL
+						   XmNheight           20
 						   XmNbackground       light-blue)))
 	   ;; index
 	   (index (XtCreateManagedWidget " index:" xmLabelWidgetClass form
@@ -436,6 +439,7 @@
 						     XmNrightAttachment  XmATTACH_FORM
 						     XmNshowValue        #f
 						     XmNorientation      XmHORIZONTAL
+						     XmNheight           20
 						     XmNbackground       light-blue)))
 	   (low-tempo 0.05)
 	   (high-tempo 0.5)
@@ -526,4 +530,3 @@
     (XtAppMainLoop app)))
 
 ;; bess1.scm ends here
-

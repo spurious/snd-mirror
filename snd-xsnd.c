@@ -3021,7 +3021,9 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 
 void finish_progress_report(snd_info *sp, int from_enved)
 {
+#if (!HAVE_XPM)
   snd_state *ss;
+#endif
   if (sp->inuse != SOUND_NORMAL) return;
 #if HAVE_XPM
   if (from_enved)

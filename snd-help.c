@@ -298,6 +298,7 @@ void news_help(snd_state *ss)
 16-Jun:  mark-drag-triangle-hook.\n\
          renamed mix-position-changed-hook to mix-dragged-hook.\n\
          mix.scm name changes (see snd6.scm for old forms).\n\
+         with-mix (ws.scm).\n\
 12-Jun:  bess1.scm and bess1.rb from Michael Scholz.\n\
 10-Jun:  added initial-length arg to new-sound.\n\
 2-June:  debug.scm and with-sound debugger in ws.scm.\n\

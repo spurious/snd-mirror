@@ -406,6 +406,42 @@ int save_options(snd_state *ss)
   return(0);
 }
 
+#if DEBUGGING
+/* TODO: test/doc/add-to-extensions.scm save-state-ignore property */
+static void save_property_list(FILE *fd, XEN property_list, int chan)
+{
+  XEN ignore_list;
+  ignore_list = scm_assoc(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
+  if (!(XEN_LIST_P(ignore_list)))
+    {
+      if (chan == -1)
+	fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(property_list));
+      else fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, XEN_AS_STRING(property_list));
+    }
+  else
+    {
+      XEN new_properties = XEN_EMPTY_LIST;
+      int i, property_len, gc_loc;
+      gc_loc = snd_protect(new_properties);
+      property_len = XEN_LIST_LENGTH(property_list);
+      for (i = 0; i < property_len; i++)
+	{
+	  XEN property;
+	  property = XEN_LIST_REF(property_list, i);
+	  if (XEN_FALSE_P(scm_member(XEN_CAR(property), ignore_list)))
+	    new_properties = XEN_CONS(property, new_properties);
+	}
+      if (!(XEN_NULL_P(new_properties)))
+	{
+	  if (chan == -1)
+	    fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(new_properties));
+	  else fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, XEN_AS_STRING(new_properties));
+	}
+      snd_unprotect_at(gc_loc);
+    }
+}
+#endif
+
 static void save_sound_state (snd_info *sp, void *ptr) 
 {
   /* called only after the global settings have been established, so here we can't use the DEFAULT_* macros that are ambiguous */
@@ -458,7 +494,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (tmpstr) FREE(tmpstr);
     }
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
-  /* TODO: in both sound|channel-properties, need a way to signal that a given property is temporary (not to be saved) -- e.g. 'inset-envelope */
+
   if ((XEN_VECTOR_P(sp->properties)) &&
       (XEN_LIST_P(XEN_VECTOR_REF(sp->properties, 0))) &&
       (!(XEN_NULL_P(XEN_VECTOR_REF(sp->properties, 0)))))
@@ -466,7 +502,11 @@ static void save_sound_state (snd_info *sp, void *ptr)
 #if HAVE_RUBY
       fprintf(fd, "%sset_%s([%s], sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
 #else
+#if DEBUGGING
+      save_property_list(fd, XEN_VECTOR_REF(sp->properties, 0), -1);
+#else
       fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
+#endif
 #endif
     }
   for (chan = 0; chan < sp->nchans; chan++)
@@ -539,11 +579,15 @@ static void save_sound_state (snd_info *sp, void *ptr)
 		  XEN_AS_STRING(XEN_VECTOR_REF(cp->properties, 0)),
 		  chan);
 #else
+#if DEBUGGING
+	  save_property_list(fd, XEN_VECTOR_REF(cp->properties, 0), chan);
+#else
 	  fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", 
 		  white_space, 
 		  S_channel_properties, 
 		  chan,
 		  XEN_AS_STRING(XEN_VECTOR_REF(cp->properties, 0)));
+#endif
 #endif
 	}
       edit_history_to_file(fd, cp);
