@@ -538,10 +538,10 @@ char *info_completer(char *text)
   sp = selected_sound(get_global_state());
   if (sp)
     {
-      if (sp->evaling) return(copy_string(text));   /* C-x C-x so nothing useful for completion to work on */
-      if (sp->searching) return(copy_string(text)); /* C-s or C-r so as above */
+      if (sp->evaling) return(copy_string(text));        /* C-x C-x so nothing useful for completion to work on */
+      if (sp->searching) return(copy_string(text));      /* C-s or C-r so as above */
       if ((sp->marking) || (sp->finding_mark)) return(copy_string(text)); /* C-x C-m etc */
-      if (sp->printing) return(copy_string(text));  /* C-x C-d so anything is possible */
+      if (sp->printing) return(copy_string(text));       /* C-x C-d so anything is possible */
       if (sp->amping) return(env_name_completer(text));
       if (use_filename_completer(sp->filing)) return(filename_completer(text));
       if (sp->loading) return(filename_completer(text)); /* C-x C-l */
@@ -552,7 +552,7 @@ char *info_completer(char *text)
 	    {
 	      beg = 0;
 	      parens = 0;
-	      /* filename would have to be a string in this context */
+	                                                /* filename would have to be a string in this context */
 	      len = snd_strlen(text);
 	      for (i = 0; i < len; i++)
 		if (text[i] == '\"')
@@ -561,7 +561,7 @@ char *info_completer(char *text)
 		    parens++;
 		    break;
 		  }
-	      if ((beg > 0) && (parens & 1)) /* i.e. there is a string and we're in it */
+	      if ((beg > 0) && (parens & 1))            /* i.e. there is a string and we're in it */
 		{
 		  if (new_text) FREE(new_text);
 		  new_file = filename_completer((char *)(text+beg));

@@ -388,17 +388,12 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok, "set-" S_filter_env) == 0) 
     {sp = get_sp(ss, str[2]); if (sp) {sp->filter_env = scan_envelope(str[1]); filter_env_changed(sp, sp->filter_env); isym(ss, 0); return(0);}}
   if (strcmp(tok, "set-" S_filtering) == 0) {sp = get_sp(ss, str[2]); if (sp) toggle_filter_button(sp, istr(str[1])); isym(ss, 0); return(0);}
-  if (strcmp(tok, "set-" S_fit_data_on_open) == 0) {set_fit_data_on_open(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_graph_style) == 0) {in_set_graph_style(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_graph_style) == 0) {set_graph_style(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_graphing) == 0) {cp = get_cp(ss, str[2], str[3]); if (cp) cp->lisp_graphing = istr(str[1]); isym(ss, 0); return(0);}
 #if HAVE_HTML
   if (strcmp(tok, "set-" S_html_dir) == 0) {set_html_dir(ss, sstr(str[1])); isym(ss, 0); return(0);}
 #endif
-  if (strcmp(tok, "set-" S_initial_x0) == 0) {set_initial_x0(ss, fstr(str[1])); isym(ss, 0); return(0);}
-  if (strcmp(tok, "set-" S_initial_x1) == 0) {set_initial_x1(ss, fstr(str[1])); isym(ss, 0); return(0);}
-  if (strcmp(tok, "set-" S_initial_y0) == 0) {set_initial_y0(ss, fstr(str[1])); isym(ss, 0); return(0);}
-  if (strcmp(tok, "set-" S_initial_y1) == 0) {set_initial_y1(ss, fstr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_movies) == 0) {set_movies(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_normalize_fft) == 0) {set_normalize_fft(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_normalize_on_open) == 0) {set_normalize_on_open(ss, istr(str[1])); isym(ss, 0); return(0);}
@@ -753,7 +748,6 @@ static int symit(snd_state *ss, char **str)
 	  isym(ss, -1); 
 	  return(0);
 	}
-      if (strcmp(tok, S_fit_data_on_open) == 0) {isym(ss, fit_data_on_open(ss)); return(0);}
       if (strcmp(tok, S_frames) == 0) {cp = get_cp(ss, str[1], str[2]); if (cp) isym(ss, current_ed_samples(cp)); else isym(ss, 0); return(0);}
       break;
     case 'g':
@@ -771,10 +765,6 @@ static int symit(snd_state *ss, char **str)
 #endif
       break;
     case 'i':
-      if (strcmp(tok, S_initial_x0) == 0) {fsym(ss, initial_x0(ss)); return(0);}
-      if (strcmp(tok, S_initial_x1) == 0) {fsym(ss, initial_x1(ss)); return(0);}
-      if (strcmp(tok, S_initial_y0) == 0) {fsym(ss, initial_y0(ss)); return(0);}
-      if (strcmp(tok, S_initial_y1) == 0) {fsym(ss, initial_y1(ss)); return(0);}
       if (strcmp(tok, S_insert_sample) == 0) 
 	{
 	  cp = get_cp(ss, str[3], str[4]); 

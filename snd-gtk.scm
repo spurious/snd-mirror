@@ -6,11 +6,11 @@
 ;;; provide separate amplitude control for each channel (an extension of the control panel)
 
 ;;; TODO:  scanned synthesis controller
+;;; TODO:  example of guile-gui text handler
+;;; TODO:  musglyphs.scm as gtk prog (i.e. not Snd-dependent)
 
 
 (use-modules (gtk gtk) (gtk gdk))
-(if (not (provided? 'snd-guile-gtk)) 
-    (display "This version of Snd apparently doesn't have the guile-gtk tie-ins for Snd"))
 
 ;;; --------------------------------
 ;;; make a dialog connected to a menu item that controls playback amp

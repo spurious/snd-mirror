@@ -21,8 +21,6 @@
 </style>
 </head>
 <!-- TODO: change remaining <i> and <b> into <em class=mumble> -->
-<!-- TODO: add TOPIC references for things like sound overlay -->
-<!-- TODO: maybe a screen shot of colored samples, or overlays -->
 
 <body bgcolor=white>
 
@@ -143,6 +141,7 @@ various examples of and extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#marksdoc">marks.scm</a></td><td>functions related to marks</td></tr>
 <tr><td><a href="sndscm.html#mixdoc">mix.scm</a></td><td>functions related to mixes and tracks</td></tr>
 <tr><td><a href="sndscm.html#moogdoc">moog.scm</a></td><td>Moog filter (from CLM)</td></tr>
+<tr><td><a href="sndscm.html#musglyphs">musglyphs.scm</a></td><td>Music notation symbols (from CMN)</td></tr>
 <tr><td><a href="sndscm.html#nbdoc">nb.scm</a></td><td>Popup File info etc</td></tr>
 <tr><td><a href="sndscm.html#pqwvoxdoc">pqwvox.scm</a></td><td>phase-quadrature waveshaping (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm</a></td><td>Perry Cook's physical model examples (from CLM)</td></tr>
@@ -316,7 +315,7 @@ This is still kludgey, but the following shows how to use it:
 </p>
 
 <p><small>(British spelling enthusiasts can use "colour" throughout Snd by building it with the CFLAG
- -DSTR_OR=\"our\").  Now, what about "centre"?</small>
+ -DSTR_OR=\"our\").</small>
 </p>
 
 <br>
@@ -432,7 +431,9 @@ The lowest level procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="drawlines">draw-lines</a></em> (lines size snd chn context)</code></span></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->draws lines following the (x y) pairs in the vector <i>lines</i> in the given context.</td></tr>
+<!-- -->draws lines following the (x y) pairs in the vector <i>lines</i> in the given context.
+<!-- --><i>make-bezier-1</i> in musglyphs.scm can be used to draw Bezier curves.
+<!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- draw-string -->
@@ -511,6 +512,9 @@ The lowest level procedures are:
 <!-- -->                    snd chn)))	
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->musglyphs.scm has some elaborate examples that use fill-polygon to draw various music symbols.
+<!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- load-font -->
 <!-- --><tr><td colspan=2>
@@ -708,7 +712,9 @@ sound over another at an arbitrary point, and so on:
 		(set! (foreground-color snd chn) old-color)))))))
 
 ;; (add-hook! after-graph-hook display-samps-in-red)
-
+</pre>
+<center><image src="redsamps.png" alt="red samples"></center>
+<pre>
 (define (display-previous-edits snd chn)
   "display all edits of the current sound, with older versions gradually fading away"
   (let* ((edits (edit-position snd chn))
@@ -947,47 +953,11 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- fit-data-on-open -->
-<!-- --><tr><td valign=top><code><em class=def><a name="fitdataonopen">fit-data-on-open</a></em></code></td>
-<!-- --><td valign=top><code>#f</code></td>
-<!-- --><td>If #t, the initial time-domain display of a sound shows
-<!-- -->its entire duration, with the Y-axis set to show its maxamp.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
 <!-- graph-cursor -->
 <!-- --><tr><td><code><em class=def><a name="graphcursor">graph-cursor</a></em></code></td>
 <!-- --><td colspan=2><code>XC_crosshair (34)</code></td></tr>
 <!-- --><tr><td colspan=2></td><td>cursor displayed following mouse in graph
 <!-- -->The X cursors are declared in /usr/X11R6/include/X11/cursorfont.h or some such file.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
-<!-- initial-x0 -->
-<!-- --><tr><td><code><em class=def><a name="initialx0">initial-x0</a></em></code></td>
-<!-- --><td><code>0.0</code></td>
-<!-- --><td>Initial time domain window left bound (seconds).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
-<!-- initial-x1 -->
-<!-- --><tr><td><code><em class=def><a name="initialx1">initial-x1</a></em></code></td>
-<!-- --><td><code>0.1</code></td>
-<!-- --><td>Same, but on the right.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
-<!-- initial-y0 -->
-<!-- --><tr><td><code><em class=def><a name="initialy0">initial-y0</a></em></code></td>
-<!-- --><td><code>-1.0</code></td>
-<!-- --><td>Initial window y axis minimum.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
-<!-- initial-y1 -->
-<!-- --><tr><td><code><em class=def><a name="initialy1">initial-y1</a></em></code></td>
-<!-- --><td><code>1.0</code></td>
-<!-- --><td>Same, but maximum.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1316,8 +1286,11 @@ the hook.
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->called each time a file is closed (before the close). (<b>or hook</b>)
-<!-- -->If it returns #t, the file is not closed.
-<!-- --></td></tr>
+<!-- -->If it returns #t, the file is not closed. <pre><code>
+<!-- -->(add-hook! close-hook 
+<!-- -->  (lambda (snd) 
+<!-- -->    (system \"sndplay wood16.wav\")))
+<!-- --></code></pre></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- during-open-hook -->
@@ -2430,12 +2403,6 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundloopinfo">mus-sound-loop-info</a></em> (filename)</code></span></td>
 <!-- --><td>loop info (for an example, see <a href="sndscm.html#exampdoc">examp.scm</a> mark-loops)</td></tr>
 <!-- -->
-<!-- set-sound-loop-info -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="setsoundloopinfo">set-sound-loop-info</a></em> (start0 end0 <i>start1 end1 snd</i>)</code></span></td>
-<!-- --></tr><tr><td></td>
-<!-- --><td>set loop points in header -- start0 refers to the "sustain" loop,
-<!-- -->start1 to the "release".</td></tr>
-<!-- -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def>mus-sound-write</em> (fd beg end chans sdata)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>write data to sound file <i>fd</i></td></tr>
@@ -3451,7 +3418,9 @@ sets its value to val.
 <!-- --><span class=defbox><code><em class=def><a name="bomb">bomb</a></em> (<i>snd on</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->display bomb icon in <i>snd's</i> minibuffer.  Set <i>on</i> to #f to erase bomb.
+<!-- -->display bomb icon in <i>snd's</i> minibuffer.  Set <i>on</i> to #f to erase bomb.  Each time <i>bomb</i>
+<!-- -->is called, the bomb icon moves to the next image in its sequence (showing the bomb's fuse burning down),
+<!-- -->restarting the sequence whenever it reaches the end.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5068,6 +5037,14 @@ sets its value to val.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- sound-loop-info -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsoundloopinfo">sound-loop-info</a></em> (snd</i>)</code></span></td>
+<!-- --></tr><tr><td></td>
+<!-- --><td>returns or sets loop points in header.  In each case, the loop info is a list of
+<!-- -->up to 4 points, the first two (start, end) refer to the "sustain" loop,
+<!-- -->the second two to the "release".  This is similar to mus-sound-loop-info (but it's settable).
+<!-- --></td></tr>
+<!-- -->
 <!-- sounds -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sounds">sounds</a></em> ()</code></span>
@@ -5748,7 +5725,7 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <!-- --><tr><td width=150></td><td>
 <!-- -->apply <i>func</i> (a function of no arguments), treating it as
 <!-- -->one edit (in all channels) in the edit history mechanism.
-<!-- --></td></tr>
+<!-- --></td></tr>bomb
 <!-- -->
 <!-- --><tr><td colspan=2 align=center>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
@@ -6992,6 +6969,7 @@ variable %load-verbosely to #t.
 <!-- --><span class=defbox><code><em class=def><a name="gin">in</a></em> (ms thunk)</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.
+<!-- --><pre><code>(in 5000 (lambda () (snd-print "boo!")))</code></pre>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7033,6 +7011,11 @@ variable %load-verbosely to #t.
 <!-- --><tr><td></td><td>
 <!-- -->normalize Snd display as in View menu <a href="snd.html#viewnormalize">Normalize</a> option.
 <!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(add-hook! after-open-hook 
+<!-- -->  (lambda (n) (if (> (channels n) 3) (normalize-view))))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- preload-directory -->
@@ -7071,7 +7054,7 @@ variable %load-verbosely to #t.
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndsavemacros">save-macros</a></em> ()</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->save <a href="snd.html#kbdmacros">keyboard macros</a> in Snd's init file (~/.snd).
+<!-- -->save <a href="snd.html#kbdmacros">keyboard macros</a> in Snd's init file (~/.snd). [<em class=error>cannot-save</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7096,8 +7079,13 @@ variable %load-verbosely to #t.
 <!-- --><span class=defbox><code><em class=def><a name="sndapropos">snd-apropos</a></em> (name) </code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return possible completions of <i>name</i> (a string or a symbol).
+<!-- --><pre>
+<!-- -->:<em class=typing>(snd-apropos "mouse-enter")</em>
+<!-- --><em class=listener>(guile): mouse-enter-graph-hook
+<!-- -->(guile): mouse-enter-label-hook
+<!-- -->(guile): mouse-enter-listener-hook
+<!-- --></em></pre>
 <!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- snd-error -->
 <!-- --><tr><td colspan=2>
@@ -7457,8 +7445,7 @@ found (this code obviously has to be in the init file):</p>
         <!-- I(zoom focus):L(zoom-focus-style)(zoomfocusstyle) -->
 	<!-- I(fft in dB):L(fft-log-magnitude)(fftlogmagnitude) -->
 	<!-- I(fft log freq):L(fft-log-frequency)(fftlogfrequency) -->
-	<!-- I(axis fits data):L(fit-data-on-open)(fitdataonopen) --><!-- I(axis fits data):O(y-bounds)(sndybounds) -->
-        <!-- I(axis fits data):A(fitdataonopen) -->
+	<!-- I(axis fits data):O(y-bounds)(sndybounds) -->
 	<!-- I(select sound):L(selected-sound)(sndselectedsound) -->
 	<!-- I(multichannel ops):L(sync)(sndsyncing) -->
         <!-- I(save control panel):L(control-panel-save)(sndcontrolpanelsave) -->
@@ -7533,7 +7520,7 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(abort command):L(c-g?)(sndabort) -->
 	<!-- I(count matches):L(count-matches)(lcountmatches) --><!-- I(count matches):A(lcountmatches) -->
 	<!-- I(convolution):L(convolve)(sndconvolve) --><!-- I(convolution):A(sndconvolve) --><!-- I(convolution):O(convolve-with)(sndconvolvewith) -->
-	<!-- I(auto-save):O(examp.scm) -->
+	<!-- I(auto save):O(examp.scm) -->
         <!-- I(reverberate file):L(convolve-with)(sndconvolvewith) -->
         <!-- I(record sound):L(recorder-dialog)(sndrecorderdialog) -->
         <!-- I(describe file):L(info)(sndinfo) -->
@@ -7541,7 +7528,16 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(change colors):L(make-color)(aboutcolors) --><!-- I(change colors):A(aboutcolors) --><!-- I(change colors):O(resources)(sndresources) -->
 	<!-- I(create new file):O(default-output-srate)(defaultoutputsrate) -->
 	<!-- I(autocorrelation):L(autocorrelate)(sndautocorrelate) -->
-
+	<!-- I(axis bounds):O(axis-info)(axisinfo) -->
+	<!-- I(horizontal panes):L(graphs-horizontal)(graphshorizontal) -->
+	<!-- I(extract channel):L(save-sound-as)(sndsaveas) -->
+	<!-- I(save channel):L(save-sound-as)(sndsaveas) -->
+	<!-- I(swap channels):L(swap-channels)(swapchannels) -->
+	<!-- I(overlay sounds):L(graph-data)(graphdata) -->
+	<!-- I(overlay sounds):A(graphdata) -->
+	<!-- I(edit env):O(enved-hook)(envedhook) -->
+	<!-- I(file lists):O(mouse-enter-label-hook)(mouseenterlabelhook) -->
+	<!-- I(swap channels):A(swapchannels) -->
 
 <center>
 <span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>

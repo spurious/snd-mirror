@@ -46,6 +46,7 @@
   <li><a href="#marksdoc">marks.scm: functions related to marks</a>
   <li><a href="#mixdoc">mix.scm: functions related to mixes and tracks</a>
   <li><a href="#moogdoc">moog.scm: Moog filter</a>
+  <li><a href="#musglyphs">musglyphs.scm: Music notation symbols (from CMN)</a>
   <li><a href="#nbdoc">nb.scm: Popup File info etc</a>
   <li><a href="#pqwvoxdoc">pqwvox.scm: phase-quadrature waveshaping</a>
   <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
@@ -65,7 +66,7 @@
 </center>
 <br>
 
-<p>This file contains a leisurely discourse upon the various *.scm files included with Snd.
+<p>This file contains notes upon the various *.scm files included with Snd.
 To use any of these files, (load &lt;file&gt;); for example (load "bell.scm").  To start Snd with
 the file already loaded, snd -l bell.scm.
 </p>
@@ -220,6 +221,17 @@ The effects implemented currently are:
   expsrc (independent pitch/time scaling) (time-scale and pitch-scale)
   notch filter (notch-freq and notch-bw)
 </pre>
+
+<!-- I(reverse samples):M(Effects: Reverse)(effectsdoc) -->
+<!-- I(reverberate file):M(Effects: Reverberate)(effectsdoc) -->
+<!-- I(normalize sound):M(Effects: Normalize)(effectsdoc) -->
+<!-- I(normalize sound):A(effectsdoc) -->
+<!-- I(normalize sound):L(scale-to)(sndscaleto) -->
+<!-- I(insert zeros):M(Effects: Add Silence)(effectsdoc) -->
+<!-- I(change tempo):M(Effects: Expsrc)(effectsdoc) -->
+<!-- I(trim sound):M(Effects: Trim)(effectsdoc) -->
+<!-- I(trim sound):A(effectsdoc) -->
+
 <p>Most of these are either simple calls on Snd functions ("invert" is <code>(scale-by -1)</code>),
 or use functions in examp.scm.  The actual operations follow the sync chain of the
 currently active channel.  Many are dependent on variables that could, I suppose, be
@@ -773,6 +785,9 @@ Two of the examples are imitations of Xemacs: a "Buffers" menu and an auto-save 
   <em class=def><a name="exautosave">auto-save</a></em>
   <em class=def><a name="excancelautosave">cancel-auto-save</a></em>
 </pre>
+<!-- I(auto save):L(auto-save)(exautosave) -->
+<!-- I(auto save):A(exautosave) -->
+
 <p>The Buffers menu provides a list of currently open sounds; selecting one
 in the menu causes it to become the selected sound; <i>open-buffer</i>
 adds a menu item that will select a file, <i>close-buffer</i> removes it.
@@ -1279,7 +1294,8 @@ and that anything more complicated should save the value of the first form, retu
 it at the end.  There's nothing special (in Scheme) about the "&lt; &gt;" business,
 and probably a better way to specify the "_result_".  The "..." is Scheme's "and so on"
 marker within these syntax patterns.  loop.scm has a first stab at loop, and
-implementations of dotimes, progn, and prog1.
+implementations of dotimes, progn, and prog1.  musglyphs.scm uses these to load
+cmn-glyphs.lisp directly.
 Any additions are welcome!
 </p>
 <pre>
@@ -1484,6 +1500,24 @@ faster.
   (map-chan (moog 1200.0 .7))
 </pre>
 
+<A NAME="musglyphs"></a><span class=box><h2>musglyphs.scm</h2></span>
+
+<p>musglyphs.scm provides Scheme/Snd wrappers to load CMN's cmn-glyphs.lisp (directly!),
+thereby defining most of the standard music notation symbols.  Each of the original
+functions (e.g. draw-bass-clef) becomes a Snd/Scheme procedure of the form
+<code>(name &optional x y size style snd chn context)</code>.  For example,
+<code>(draw-bass-clef 100 100 50)</code> draws a bass clef in the current graph
+at position (100 100) of size 50; since the <i>style</i> argument defaults to
+#f, the clef is displayed as a filled polygon; use #t to get an outline of
+the clef instead.  You need CMN, or at least the CMN file cmn-glyphs.lisp
+before loading this file.
+</p>
+<image src="sndcmn.png" alt="Snd with music symbols">
+<br>
+<p>In the indefinite future, I'll probably translate CMN to guile-gtk.
+</p>
+<br>
+
 <A NAME="nbdoc"></a><span class=box><h2>nb.scm</h2></span>
 
 <p>nb.scm provides "popup" help for files in the View:Files dialog; as you move
@@ -1646,7 +1680,7 @@ reason (except perhaps psychophysical) to limit these numbers to bytes.
 <pre>
   <em class=def><A NAME="exshowinput">show-input</a></em> &amp;optional (in-sys 0)
   <em class=def><A NAME="exshowinputfft">show-input-fft</a></em> &amp;optional (in-sys 0)
-  <em class=def><A NAME="exshowinputfft">show-draggable-input-fft</a></em> &amp;optional (in-sys 0)
+  <em class=def><A NAME="exshowdraggableinputfft">show-draggable-input-fft</a></em> &amp;optional (in-sys 0)
   <em class=def><A NAME="exinout">in-out</a></em> func in-sys out-sys
 </pre>
 <p>These three functions show how to read incoming data (from the adc),

@@ -302,6 +302,28 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   int samples_per_channel;
   hdr = sp->hdr;
   samples_per_channel = hdr->samples / hdr->chans;
+
+  /* TODO: get rid of initial_x|y0|1 also fit_data_on_open,
+   *       replace with initial_graph_hook or something --
+   *       could return (x0 y0 x1 y1 [ymin ymax xlabel]) and these could include the fit-data decisions
+   * but probably should be only if graphed==WITH_GRAPH
+   *   this is called in snd-file for make_sound_readable
+   *                     snd-region for make_region_readable
+   *                     below in add_channel_data (called only in snd-snd) from add_sound_data
+   *                          itself from snd-edits [after save and re-read] -- here we don't want a call either?
+   *                                      snd-x|gsnd [after open-sound]
+   *   also delete sp->fit_data_amps
+   */
+  /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
+   *         but would be much faster if we can wait until the amp-env is computed
+   *         via after-open-hook?
+   *
+   * remove from snd-completion, snd-1, snd-0, snd-strings, snd-main, snd-scm, snd-snd, snd-data
+   * add initial_graph_hook (or hook), doc, test, etc
+   *   try to use mus_sound_max_amp, and delete file_maxamps in snd-data
+   *   (also remember to set this where possible)
+   */
+
   x0 = initial_x0(ss);
   x1 = initial_x1(ss);
   y0 = initial_y0(ss);
@@ -2286,7 +2308,6 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   if (cp->lisp_graphing) displays++;
   up = (lisp_grf *)(cp->lisp_info);
 
-  /* TODO: should lisp-graph-hook (and graph-hook and after-graph-hook) be channel-local? */
 #if HAVE_HOOKS
   if ((up == NULL) && 
       (HOOKED(lisp_graph_hook)))

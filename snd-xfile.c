@@ -2268,11 +2268,3 @@ See also nb.scm."
 
 #endif
 
-/* TODO: decide on these label-hook names, implement in gtk as well
- *       export to scheme the label types ("current-file-viewer" etc)
- * (add-hook! mouse-enter-label-hook (lambda (typ pos arg) (help-dialog arg "this is helpful")))
- *
- * TODO: positioning and size of help-dialog (and dismissal)
- * TODO: write a nice example of mouse label hooks (and so on)
- */
-

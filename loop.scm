@@ -1,4 +1,7 @@
 ;;; reimplement a few common lisp-isms that I like
+;;;
+;;; ok: dotimes, dolist, when, unless, progn, prog1, if*
+;;; not complete: loop
 
 (use-modules (ice-9 syncase))
 
@@ -47,11 +50,47 @@
     ))
     
 
+(define-syntax dolist
+  (syntax-rules ()
+    ((dolist (<var> <list>)) #f)
+    ((dolist (<var> <list> <result>) <body> ...)
+     (let ((<new-list> <list>))
+       (do ()
+	   ((null? <new-list>) <result>)
+	 (let ((<var> (car <new-list>)))
+	   <body> ...)
+	 (set! <new-list> (cdr <new-list>)))))
+    ((dolist (<var> <list>) <body> ...)
+     (let ((<new-list> <list>))
+       (do ()
+	   ((null? <new-list>) #f)
+	 (let ((<var> (car <new-list>)))
+	   <body> ...)
+	 (set! <new-list> (cdr <new-list>)))))
+    ))
+    
+
+(define-syntax when
+  (syntax-rules ()
+    ((when <test>) #f)
+    ((when <test> <form> ...)
+     (if <test> 
+	 (begin <form> ...)))))
+
+
+(define-syntax unless
+  (syntax-rules ()
+    ((unless <test>) #f)
+    ((unless <test> <form> ...)
+     (if (not <test> )
+	 (begin <form> ...)))))
+
+
 (define-syntax progn
   (syntax-rules ()
     ((progn) #f)
     ((progn <body> ...)
-     (begin <body> ...))
+     (begin <body> ...)) ; but "begin" isn't guaranteed to return its last form?
     ))
 
 
@@ -67,3 +106,5 @@
   (syntax-rules ()
     ((if* <form1> <form2>) (if <form1> <form2> #f))
     ((if* <form1> <form2> <form3>) (if <form1> <form2> <form3>))))
+
+

@@ -7,8 +7,8 @@
  *         but to make this work requires the load-side deferred resizing and reshaping
  *         and some way to access the sound-widget parent dialog, since otherwise widget-size is unsettable
  * TODO: similar split for make_fft_graph [needs sonogram etc??]
- * TODO: need tests for all of these as well, and cursor-position etc [snd-help listing docs]
  * TODO: decide about the "info" functions, fft-info? sync_info + accessors?
+ * TODO: in gtk widget position to always be 0 0, or initial if using gdk_get_window_geometry?
  */
 
 #if HAVE_GUILE && (!USE_NO_GUI)
@@ -137,6 +137,13 @@ static POINT *TO_C_POINTS(SCM pts, const char *caller)
   SCM *data;
   SCM_ASSERT(gh_vector_p(pts), pts, SCM_ARG1, caller);
   len = gh_vector_length(pts) / 2;
+  if (len <= 0) 
+    {
+      scm_misc_error(caller,
+		     "empty vector: ~A?",
+		     SCM_LIST1(pts));
+      return(NULL);
+    }
   data = SCM_VELTS(pts);
   pack_pts = (POINT *)CALLOC(len, sizeof(POINT));
   for (i = 0, j = 0; i < len; i++, j += 2)
@@ -151,7 +158,7 @@ static SCM g_draw_lines(SCM pts, SCM snd, SCM chn, SCM ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
   POINT *pack_pts;
-  pack_pts = TO_C_POINTS(pts, "draw-lines");
+  pack_pts = TO_C_POINTS(pts, S_draw_lines);
   draw_lines(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines), 
 	     pack_pts, 
 	     gh_vector_length(pts) / 2);
@@ -163,7 +170,7 @@ static SCM g_draw_dots(SCM pts, SCM size, SCM snd, SCM chn, SCM ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
   POINT *pack_pts;
-  pack_pts = TO_C_POINTS(pts, "draw-dots");
+  pack_pts = TO_C_POINTS(pts, S_draw_dots);
   draw_points(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots), 
 	      pack_pts, 
 	      gh_vector_length(pts) / 2,
@@ -177,14 +184,53 @@ static SCM g_fill_polygon(SCM pts, SCM snd, SCM chn, SCM ax_id)
   POINT *pack_pts;
   axis_context *ax;
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon);
-  pack_pts = TO_C_POINTS(pts, "draw-dots");
+  pack_pts = TO_C_POINTS(pts, S_fill_polygon);
 #if USE_MOTIF
-  XFillPolygon(ax->dp, ax->wn, ax->gc, pack_pts, gh_vector_length(pts) / 2, Convex, CoordModeOrigin);
+  XFillPolygon(ax->dp, ax->wn, ax->gc, pack_pts, gh_vector_length(pts) / 2, Complex, CoordModeOrigin);
 #else
   gdk_draw_polygon(ax->wn, ax->gc, TRUE, pack_pts, gh_vector_length(pts) / 2);
 #endif
   return(pts);
 }
+
+static SCM g_make_bezier(SCM args)
+{
+  #define S_make_bezier "make-bezier"
+  /* XDrawBezier from cmn's glfed.c (where it was assuming PostScript coordinates) */
+  int ax, ay, bx, by, cx, cy, i;
+  float incr, val;
+  int x[4];
+  int y[4];
+  int n = 50;
+  SCM pts;
+  SCM *data;
+  for (i = 0; i < 4; i++)
+    {
+      x[i] = TO_C_INT(SCM_CAR(args));
+      y[i] = TO_C_INT(SCM_CADR(args));
+      args = SCM_CDDR(args);
+    }
+  if (SCM_NNULLP(args)) 
+    n = TO_C_INT(SCM_CAR(args));
+  cx = 3 * (x[1] - x[0]);
+  cy = 3 * (y[1] - y[0]);
+  bx = 3 * (x[2] - x[1]) - cx;
+  by = 3 * (y[2] - y[1]) - cy;
+  ax = x[3] - (x[0] + cx + bx);
+  ay = y[3] - (y[0] + cy + by);
+  incr = 1.0 / (float)n;
+  pts = gh_make_vector(TO_SCM_INT(2 * (n + 1)), TO_SMALL_SCM_INT(0));
+  data = SCM_VELTS(pts);
+  data[0] = TO_SCM_INT(x[0]);
+  data[1] = TO_SCM_INT(y[0]);
+  for (i = 1, val = incr; i <= n; i++, val += incr)
+    {
+      data[i * 2] = TO_SCM_INT(x[0] + val * (cx + (val * (bx + (val * ax)))));
+      data[i * 2 + 1] = TO_SCM_INT(y[0] + val * (cy + (val * (by + (val * ay)))));
+    }
+  return(pts);
+}
+
 
 static SCM g_foreground_color(SCM snd, SCM chn, SCM ax)
 {
@@ -690,6 +736,8 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_remove_input,    SCM_FNC g_remove_input, 1, 0, 0),    "(" S_remove_input " id)");
 
   DEFINE_PROC(gh_new_procedure("set-widget-foreground", SCM_FNC g_set_widget_foreground, 2, 0, 0), "(set-widget-foreground widget color)");
+  DEFINE_PROC(gh_new_procedure(S_make_bezier,     SCM_FNC g_make_bezier, 0, 0, 1),     "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points");
+
 
   /* ---------------- backwards compatibility ---------------- */
 #if USE_MOTIF

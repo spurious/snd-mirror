@@ -315,6 +315,9 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
 		   hdr->format);
       /* can't use snd-chn.c get_maxamp here because the file edit tree is not yet set up */
       /* can't use mus_sound_chans etc here because this might be a raw header file */
+      /* TODO: why not mus_sound_max_amps?
+       *       even better, why not defer this until either maxamp or envs are set?
+       */
     }
   return(sp);
 }

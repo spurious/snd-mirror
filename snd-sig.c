@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: (src-sound '(0 -1 1 -1)) hangs */
+
 /* collect syncd chans */
 typedef struct {
   sync_info *si;

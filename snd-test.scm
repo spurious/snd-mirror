@@ -22,9 +22,6 @@
 ;;; test 19: save and restore
 ;;; test 20: transforms
 
-;;; TODO: mouse-enter|leave hook
-;;; TODO: most of the new drawing and widget funcs
-
 (use-modules (ice-9 format) (ice-9 debug))
 
 (define tests 1)
@@ -265,15 +262,10 @@
 	'filter-env-in-hz (filter-env-in-hz) #f
 	'filter-order (without-errors (filter-order)) 'no-such-sound
 	'filtering (without-errors (filtering)) 'no-such-sound
-	'fit-data-on-open (fit-data-on-open) #f 
 	'graph-cursor (graph-cursor) 34
 	'graph-style (graph-style) 0 
 	'graphing (without-errors (graphing)) 'no-such-sound
 	'graphs-horizontal (graphs-horizontal) #t
-	'initial-x0 (initial-x0) 0.0 
-	'initial-x1 (initial-x1) 0.1 
-	'initial-y0 (initial-y0) -1.0
-	'initial-y1 (initial-y1) 1.0 
 	'just-sounds (just-sounds) #f
 	'line-size (line-size) 128 
 	'listener-prompt (listener-prompt) ">" 
@@ -612,28 +604,8 @@
 (if (or full-test (= snd-test 3))
     (begin
       (if tracing (snd-display "test 3"))
+      (open-sound "oboe.snd")
       (if (file-exists? "funcs.cl") (load "funcs.cl"))
-      (let ((old-x0 (initial-x0))
-	    (old-x1 (initial-x1))
-	    (old-y0 (initial-y0))
-	    (old-y1 (initial-y1)))
-	(set! (initial-x0) .1)
-	(set! (initial-x1) .3)
-	(set! (initial-y0) -.1)
-	(set! (initial-y1) .1)
-	(open-sound "oboe.snd")
-	(if (fneq (/ (left-sample) (srate)) .1) 
-	    (snd-display (format #f ";initial-x0: ~A ~A?" (/ (left-sample) (srate)) (initial-x0))))
-	(if (fneq (/ (right-sample) (srate)) .3) 
-	    (snd-display (format #f ";initial-x1: ~A ~A?" (/ (right-sample) (srate)) (initial-x1))))
-	(if (fneq (car (y-bounds)) -.1)
-	    (snd-display (format #f ";initial-y0: ~A ~A?" (car (y-bounds)) (initial-y0))))
-	(if (fneq (cadr (y-bounds)) .1)
-	    (snd-display (format #f ";initial-y1: ~A ~A?" (cadr (y-bounds)) (initial-y1))))
-	(set! (initial-x0) old-x0)
-	(set! (initial-x1) old-x1)
-	(set! (initial-y0) old-y0)
-	(set! (initial-y1) old-y1))
       (let ((td (temp-dir)))
 	(set! (temp-dir) "/hoho/wasup")
 	(if (not (string=? (temp-dir) "/hoho/wasup")) (snd-display (format #f ";set temp-dir: ~A?" (temp-dir))))
@@ -771,13 +743,8 @@
 	  (list 'filter-env-in-hz filter-env-in-hz #f set-filter-env-in-hz #t)
 	  (list 'filter-order filter-order 20 set-filter-order 40)
 	  (list 'filtering filtering #f set-filtering #t)
-	  (list 'fit-data-on-open fit-data-on-open #f set-fit-data-on-open #t)
 	  (list 'graph-cursor graph-cursor 34 set-graph-cursor 33)
 	  (list 'graph-style graph-style 0 set-graph-style 1)
-	  (list 'initial-x0 initial-x0 0.0 set-initial-x0 .1)
-	  (list 'initial-x1 initial-x1 0.1 set-initial-x1 .1)
-	  (list 'initial-y0 initial-y0 -1.0 set-initial-y0 -.1)
-	  (list 'initial-y1 initial-y1 1.0 set-initial-y1 .1)
 	  (list 'just-sounds just-sounds #f set-just-sounds #t)
 	  (list 'line-size line-size 128 set-line-size 64)
 	  (list 'listener-prompt listener-prompt ">" set-listener-prompt ":")
@@ -3881,8 +3848,8 @@
      (load "hiho.env")
      (if (not (equal? env1 (list 0.0 1.0 1.0 0.0))) (snd-display (format #f ";save-envelopes: ~A?" env1)))
      (delete-file "hiho.env")
-     (dismiss-all-dialogs)))
-
+     (dismiss-all-dialogs)
+     ))
 
 (define map-silence
   (lambda (silence replacement)
@@ -5004,7 +4971,6 @@
 		    (list 'filter-dBing #t #f set-filter-dBing #t)
 		    (list 'filter-order #t 2 set-filter-order 400)
 		    (list 'filtering #t #f set-filtering #t)
-		    (list 'fit-data-on-open #f #f set-fit-data-on-open #t)
 		    (list 'graph-cursor #f 0 set-graph-cursor 35)
 		    (list 'graph-style #f 0 set-graph-style 4)
 		    (list 'graphs-horizontal #f #f set-graphs-horizontal #t)

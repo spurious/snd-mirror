@@ -2,7 +2,6 @@
 
 /* TODO  make completions list mouse sensitive as in Motif version
  *        -> use click(select) callback!
- * TODO  completions seem to be broken in gtk?
  */
 
 static GtkWidget *listener_text = NULL;
@@ -213,11 +212,20 @@ static void back_to_start(snd_state *ss)
   if (full_str) g_free(full_str);
 }
 
+static int last_highlight_position = -1;
+
 static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   chan_info *cp;
   int end;
+
+  if (last_highlight_position != -1)
+    {
+      gtk_editable_select_region(GTK_EDITABLE(listener_text), 0, 0);
+      last_highlight_position = -1;
+    }
+
   if ((ss->sgx)->graph_is_active) 
     {
       cp = current_channel(ss);
@@ -295,16 +303,6 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 					}
 				      else 
 					{
-#if 0
-					  int current_position;
-					  char *fstr;
-					  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
-					  if (current_position > 1)
-					    {
-					      fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text), current_position - 1, current_position);
-fprintf(stderr,"at %s\n",fstr);					      
-					    }
-#endif
 					  return(TRUE);
 					}
 				    }
@@ -318,6 +316,56 @@ fprintf(stderr,"at %s\n",fstr);
     }
   gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key_press_event");
   return(TRUE);
+}
+
+static gint clear_paren_check(gpointer nada)
+{
+  if (last_highlight_position != -1)
+    {
+      gtk_editable_select_region(GTK_EDITABLE(listener_text), 0, 0);
+      last_highlight_position = -1;
+    }
+  return(0);
+}
+
+static gint check_parens(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  int current_position;
+  char *fstr, *prompt;
+  int parens = 0, i;
+  snd_state *ss;
+  
+  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
+  fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text), 0, -1);
+
+  if (last_highlight_position != -1)
+    {
+      gtk_editable_select_region(GTK_EDITABLE(listener_text), 0, 0);
+      last_highlight_position = -1;
+    }
+
+  if ((current_position > 1) && 
+      (fstr[current_position - 1] == ')'))
+    {
+      ss = get_global_state();
+      parens = 1;
+      prompt = listener_prompt(ss);
+      for (i = current_position - 2; i > 0; i--)
+	{
+	  if ((i > 0) && (fstr[i] == prompt[0]) && (fstr[i - 1] == '\n'))
+	    break;
+	  if (fstr[i] == ')') parens++;
+	  if (fstr[i] == '(') parens--;
+	  if (parens == 0)
+	    {
+	      gtk_editable_select_region(GTK_EDITABLE(listener_text), i, i + 1);
+	      last_highlight_position = i;
+	      gtk_timeout_add(500, clear_paren_check, NULL);
+	      break;
+	    }
+	}
+    }
+  return(FALSE);
 }
 
 static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -373,6 +421,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       gtk_text_set_word_wrap(GTK_TEXT(listener_text), FALSE);
       gtk_text_set_line_wrap(GTK_TEXT(listener_text), FALSE);
       gtk_signal_connect(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss);
+      gtk_signal_connect_after(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(check_parens), (gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(listener_button_press), (gpointer)ss);
 #if HAVE_HOOKS
       gtk_signal_connect(GTK_OBJECT(listener_text), "enter_notify_event", GTK_SIGNAL_FUNC(listener_focus_callback), NULL);

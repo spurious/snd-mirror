@@ -1,8 +1,6 @@
 /* DIFFS: no "just-sounds" button since the search proc is apparently a simple string
  *          depending on built-in filename completion routine
  *        no forced re-read of directory when file is written (update button?)
- *
- * TODO: mouse-enter-label-hook tied into file/region viewers
  */
 
 #include "snd.h"
@@ -106,7 +104,8 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   if (fdat->comment_text) 
     {
       chars = gtk_text_get_length(GTK_TEXT(fdat->comment_text));
-      if (chars > 0) gtk_editable_delete_text(GTK_EDITABLE(fdat->comment_text), 0, -1);
+      if (chars > 0) 
+	gtk_editable_delete_text(GTK_EDITABLE(fdat->comment_text), 0, -1);
       gtk_text_insert(GTK_TEXT(fdat->comment_text), 
 		      (ss->sgx)->help_text_fnt, 
 		      (ss->sgx)->black, (ss->sgx)->white, comment, -1);
@@ -635,6 +634,36 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
 #if HAVE_HOOKS
 static SCM mouse_name_enter_hook, mouse_name_leave_hook;
 
+static gint mouse_name(SCM hook, GtkWidget *w)
+{
+  char *label = NULL;
+  regrow *r;
+  if (HOOKED(hook))
+    {
+      gtk_label_get(GTK_LABEL(GTK_BIN(w)->child), &label);
+      if (label)
+	{
+	  r = (regrow *)gtk_object_get_user_data(GTK_OBJECT(w));
+	  if (r)
+	    g_c_run_progn_hook(hook,
+			       SCM_LIST3(TO_SMALL_SCM_INT(r->parent),
+					 TO_SMALL_SCM_INT(r->pos),
+					 TO_SCM_STRING(label)));
+	}
+    }
+  return(0);
+}
+
+static gint label_enter_callback(GtkWidget *w, GdkEventCrossing *ev)
+{
+  return(mouse_name(mouse_name_enter_hook, w));
+}
+
+static gint label_leave_callback(GtkWidget *w, GdkEventCrossing *ev)
+{
+  return(mouse_name(mouse_name_leave_hook, w));
+}
+
 #endif
 
 regrow *make_regrow(snd_state *ss, GtkWidget *ww,
@@ -666,6 +695,11 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   set_backgrounds(r->nm, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, TRUE, TRUE, 2);
   gtk_signal_connect(GTK_OBJECT(r->nm), "clicked", GTK_SIGNAL_FUNC(third_callback), (gpointer)r);
+#if HAVE_HOOKS
+  gtk_signal_connect(GTK_OBJECT(r->nm), "enter_notify_event", GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r);
+  gtk_signal_connect(GTK_OBJECT(r->nm), "leave_notify_event", GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r);
+  gtk_object_set_user_data(GTK_OBJECT(r->nm), (gpointer)r);
+#endif
   gtk_widget_show(r->nm);
 
   return(r);

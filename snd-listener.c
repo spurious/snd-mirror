@@ -2,7 +2,6 @@
 
 /* 
  * TODO: enclosing expr confused by preceding non-prompt (:1 (+ 1 2) => 1) -- is this a bug?
- * TODO: show matching cursor in gtk
  * TODO: in gtk after click to paste, move cursor to new location
  * TODO: in motif after selection+char, remove selected portion first, then char
  */

@@ -91,12 +91,11 @@ int main(int argc, char *argv[])
       if (comment) fprintf(stdout, "  comment: %s\n", comment);
       if (loops)
 	{
+	  fprintf(stdout, "  loop: %d to %d\n", loops[0], loops[1]);
+	  if (loops[2] != 0)
+	    fprintf(stdout, "  loop: %d to %d\n", loops[2], loops[3]);
 	  if (loops[0] != 0)
-	    fprintf(stdout, "  loop: %d to %d\n", loops[1], loops[2]);
-	  if (loops[3] != 0)
-	    fprintf(stdout, "  loop: %d to %d\n", loops[4], loops[5]);
-	  if (loops[0] != 0)
-	    fprintf(stdout, "    base: %d, detune: %d\n", loops[7], loops[6]);
+	    fprintf(stdout, "    base: %d, detune: %d\n", loops[4], loops[5]);
 	}
     }
   else

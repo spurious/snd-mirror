@@ -1,5 +1,6 @@
 snd change log
 
+ 12-Mar:     musglyphs.scm.
  10-Mar:     moved grfsnd.html index to new file: index.html.
   9-Mar:     removed *.txt
              mouse-enter|leave-graph|listener-hook.

@@ -1,11 +1,6 @@
 #include "snd.h"
 #include "vct.h"
 
-/* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
- *         but would be much faster if we can wait until the amp-env is computed
- *         via after-open-hook?
- */
-
 #if HAVE_GUILE
 
 #include "sndlib2scm.h"
@@ -71,7 +66,8 @@ void snd_protect(SCM obj)
   else
     {
       for (i = 0; i < gc_protection_size; i++)
-	if (SCM_EQ_P(scm_vector_ref(gc_protection, TO_SCM_INT(i)), DEFAULT_GC_VALUE))
+	if (SCM_EQ_P(scm_vector_ref(gc_protection, TO_SCM_INT(i)), 
+		     DEFAULT_GC_VALUE))
 	  {
 	    scm_vector_set_x(gc_protection, TO_SCM_INT(i), obj);
 	    return;
@@ -165,12 +161,14 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 
 #ifdef SCM_MAKE_CHAR
   port = scm_mkstrport(SCM_INUM0, 
-		       scm_make_string(TO_SCM_INT(MAX_ERROR_STRING_LENGTH), SCM_MAKE_CHAR(0)),
+		       scm_make_string(TO_SCM_INT(MAX_ERROR_STRING_LENGTH), 
+				       SCM_MAKE_CHAR(0)),
 		       SCM_OPN | SCM_WRTNG,
 		       __FUNCTION__);
 #else
   port = scm_mkstrport(SCM_INUM0, 
-		       scm_make_string(TO_SCM_INT(MAX_ERROR_STRING_LENGTH), SCM_UNDEFINED),
+		       scm_make_string(TO_SCM_INT(MAX_ERROR_STRING_LENGTH), 
+				       SCM_UNDEFINED),
 		       SCM_OPN | SCM_WRTNG,
 		       __FUNCTION__);
 #endif
@@ -251,7 +249,9 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
   ans = scm_strport_to_string(port);
 #else
   SCM_DEFER_INTS;
-  ans = scm_makfromstr (TO_C_STRING (SCM_CDR (SCM_STREAM (port))), SCM_INUM (SCM_CAR (SCM_STREAM (port))), 0);
+  ans = scm_makfromstr(TO_C_STRING(SCM_CDR(SCM_STREAM(port))), 
+		       SCM_INUM(SCM_CAR(SCM_STREAM(port))), 
+		       0);
   SCM_ALLOW_INTS;
 #endif
 
@@ -343,7 +343,9 @@ SCM g_call0(SCM proc) /* replacement for gh_call0 -- protect ourselves from prem
 
 static SCM g_call1_1(void *arg)
 {
-  return(scm_apply(((SCM *)arg)[0], ((SCM *)arg)[1], scm_listofnull));
+  return(scm_apply(((SCM *)arg)[0], 
+		   ((SCM *)arg)[1], 
+		   scm_listofnull));
 }
 
 SCM g_call1(SCM proc, SCM arg)
@@ -356,7 +358,9 @@ SCM g_call1(SCM proc, SCM arg)
 
 static SCM g_call_any_1(void *arg)
 {
-  return(scm_apply(((SCM *)arg)[0], ((SCM *)arg)[1], SCM_EOL));
+  return(scm_apply(((SCM *)arg)[0], 
+		   ((SCM *)arg)[1], 
+		   SCM_EOL));
 }
 
 SCM g_call_any(SCM proc, SCM arglist)
@@ -369,7 +373,10 @@ SCM g_call_any(SCM proc, SCM arglist)
 
 static SCM g_call2_1(void *arg)
 {
-  return(scm_apply(((SCM *)arg)[0], ((SCM *)arg)[1], scm_cons(((SCM *)arg)[2], scm_listofnull)));
+  return(scm_apply(((SCM *)arg)[0], 
+		   ((SCM *)arg)[1], 
+		   scm_cons(((SCM *)arg)[2], 
+			    scm_listofnull)));
 }
 
 SCM g_call2(SCM proc, SCM arg1, SCM arg2)
@@ -383,7 +390,11 @@ SCM g_call2(SCM proc, SCM arg1, SCM arg2)
 
 static SCM g_call3_1(void *arg)
 {
-  return(scm_apply(((SCM *)arg)[0], ((SCM *)arg)[1], scm_cons2(((SCM *)arg)[2], ((SCM *)arg)[3], scm_listofnull)));
+  return(scm_apply(((SCM *)arg)[0], 
+		   ((SCM *)arg)[1], 
+		   scm_cons2(((SCM *)arg)[2], 
+			     ((SCM *)arg)[3], 
+			     scm_listofnull)));
 }
 
 SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3)

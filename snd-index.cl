@@ -20,16 +20,20 @@
     	 (snd-all-names (make-array (* 2 index-size) :initial-element nil))
 	 (ext-all-names (make-array (* 2 index-size) :initial-element nil))
 	 (grf-all-names (make-array (* 2 index-size) :initial-element nil))
+	 (scm-all-names (make-array (* 2 index-size) :initial-element nil))
 	 (snd-name-ctr 0)
 	 (ext-name-ctr 0)
-	 (grf-name-ctr 0))
+	 (grf-name-ctr 0)
+	 (scm-name-ctr 0))
 
   (flet ((addext (name)
 	   (if (find name ext-all-names :test #'string=)
 	       (format nil "extsnd.html#~A" name)
 	     (if (find name grf-all-names :test #'string=)
 		 (format nil "grfsnd.html#~A" name)
-	       (format nil "#~A" name)))))
+	       (if (find name scm-all-names :test #'string=)
+		   (format nil "sndscm.html#~A" name)
+		 (format nil "#~A" name))))))
   
     (with-open-file (sndf "snd.html")
       (let ((happy t))
@@ -37,7 +41,8 @@
 	  (let* ((line (read-line sndf nil :EOF)))
 	    (setf happy (not (eq line :EOF)))
 	    (when happy
-	      (let ((pos (search "<a name=" line)))
+	      (let ((pos (or (search "<a name=" line)
+			     (search "<A NAME=" line))))
 		(if pos
 		    (let* ((epos (search ">" (subseq line pos)))
 			   (name (subseq line (+ pos 9) (+ pos epos -1))))
@@ -55,7 +60,8 @@
 	  (let* ((line (read-line sndf nil :EOF)))
 	    (setf happy (not (eq line :EOF)))
 	    (when happy
-	      (let ((pos (search "<a name=" line)))
+	      (let ((pos (or (search "<a name=" line)
+			     (search "<A NAME=" line))))
 		(if pos
 		    (let* ((epos (search ">" (subseq line pos)))
 			   (name (subseq line (+ pos 9) (+ pos epos -1))))
@@ -74,7 +80,8 @@
 	  (let* ((line (read-line sndf nil :EOF)))
 	    (setf happy (not (eq line :EOF)))
 	    (when happy
-	      (let ((pos (search "<a name=" line)))
+	      (let ((pos (or (search "<a name=" line)
+			     (search "<A NAME=" line))))
 		(if pos
 		    (let* ((epos (search ">" (subseq line pos)))
 			   (name (subseq line (+ pos 9) (+ pos epos -1))))
@@ -90,7 +97,30 @@
     (print (format nil "found ~D names in grfsnd.html" grf-name-ctr))
     ;;; got names, now find index data
 
-    (loop for file in '("snd.html" "extsnd.html" "grfsnd.html") do
+    (with-open-file (sndf "sndscm.html")
+      (let ((happy t))
+	(loop while happy do
+	  (let* ((line (read-line sndf nil :EOF)))
+	    (setf happy (not (eq line :EOF)))
+	    (when happy
+	      (let ((pos (or (search "<a name=" line)
+			     (search "<A NAME=" line))))
+		(if pos
+		    (let* ((epos (search ">" (subseq line pos)))
+			   (name (subseq line (+ pos 9) (+ pos epos -1))))
+		      (if (find name scm-all-names :test #'string=)
+			  (print (format nil "multiple definitions of ~A?" name))
+			(if (find name ext-all-names :test #'string=)
+			    (print (format nil "multiple definitions of ~A (scm ext)?" name))
+			  (if (find name snd-all-names :test #'string=)
+			      (print (format nil "multiple definitions of ~A (scm snd)?" name))
+			    (progn
+			      (setf (aref scm-all-names scm-name-ctr) name)
+			      (incf scm-name-ctr)))))))))))))
+    (print (format nil "found ~D names in sndscm.html" scm-name-ctr))
+    ;;; got names, now find index data
+
+    (loop for file in '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html") do
     (with-open-file (sndf file)
       (let ((happy t))
 	(loop while happy do
@@ -161,27 +191,32 @@
 	(if (and (aref namesh i)
 		 (not (find (aref namesh i) snd-all-names :test #'string=))
 		 (not (find (aref namesh i) ext-all-names :test #'string=))
-		 (not (find (aref namesh i) grf-all-names :test #'string=)))
+		 (not (find (aref namesh i) grf-all-names :test #'string=))
+		 (not (find (aref namesh i) scm-all-names :test #'string=)))
 	    (print (format nil "no definition of ~A (~A)?" (aref namesh i) (aref names i))))
 	(if (and (aref menuh i)
 		 (not (find (aref menuh i) snd-all-names :test #'string=))
 		 (not (find (aref menuh i) ext-all-names :test #'string=))
-		 (not (find (aref menuh i) grf-all-names :test #'string=)))
+		 (not (find (aref menuh i) grf-all-names :test #'string=))
+		 (not (find (aref menuh i) scm-all-names :test #'string=)))
 	    (print (format nil "no definition of ~A (~A)?" (aref menuh i) (aref menu i))))
 	(if (and (aref otherh i)
 		 (not (find (aref otherh i) snd-all-names :test #'string=))
 		 (not (find (aref otherh i) ext-all-names :test #'string=))
-		 (not (find (aref otherh i) grf-all-names :test #'string=)))
+		 (not (find (aref otherh i) grf-all-names :test #'string=))
+		 (not (find (aref otherh i) scm-all-names :test #'string=)))
 	    (print (format nil "no definition of ~A (~A)?" (aref otherh i) (aref other i))))
 	(if (and (aref lisph i)
 		 (not (find (aref lisph i) snd-all-names :test #'string=))
 		 (not (find (aref lisph i) ext-all-names :test #'string=))
-		 (not (find (aref lisph i) grf-all-names :test #'string=)))
+		 (not (find (aref lisph i) grf-all-names :test #'string=))
+		 (not (find (aref lisph i) scm-all-names :test #'string=)))
 	    (print (format nil "no definition of ~A (~A)?" (aref lisph i) (aref lisp i))))
 	(if (and (aref cxcxh i)
 		 (not (find (aref cxcxh i) snd-all-names :test #'string=))
 		 (not (find (aref cxcxh i) ext-all-names :test #'string=))
-		 (not (find (aref cxcxh i) grf-all-names :test #'string=)))
+		 (not (find (aref cxcxh i) grf-all-names :test #'string=))
+		 (not (find (aref cxcxh i) scm-all-names :test #'string=)))
 	    (print (format nil "no definition of ~A (~A)?" (aref cxcxh i) (aref cxcx i))))
 	(setf (aref tparr i) (make-tp :name (aref names i) :nh (aref namesh i)
 				      :m (aref menu i) :mh (aref menuh i)

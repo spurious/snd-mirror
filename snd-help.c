@@ -272,6 +272,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+12-Mar:  musglyphs.scm.\n\
 9-Mar:   removed *.txt\n\
          mouse-enter|leave-graph|listener-hook.\n\
          show-widget, hide-widget, focus-widget.\n\
@@ -975,17 +976,12 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_filter_env_order "      40\n\
   " S_filter_env_in_hz "      #f\n\
   " S_filter_waveform_color " blue\n\
-  " S_fit_data_on_open "      #f\n\
   " S_graph_color "           white\n\
   " S_graph_cursor "          XC_crosshair (34)\n\
   " S_graph_style "           " S_graph_lines " (snd #t) (chn #t)\n\
   " S_graphs_horizontal "     #t (snd #t) (chn #t)\n\
   " S_help_text_font "        varies\n\
   " S_highlight_color "       ivory1\n\
-  " S_initial_x0 "            0.0\n\
-  " S_initial_x1 "            0.1\n\
-  " S_initial_y0 "           -1.0\n\
-  " S_initial_y1 "            1.0\n\
   " S_just_sounds "           #f\n\
   " S_line_size "             128 (snd #t) (chn #t)\n\
   " S_listener_color "        aliceblue\n\

@@ -124,7 +124,8 @@ file_info *copy_header(char *fullname, file_info *ohdr)
       if (ohdr->loops)
 	{
 	  hdr->loops = (int *)CALLOC(6, sizeof(int));
-	  for (i = 0; i < 6; i++) hdr->loops[i] = ohdr->loops[i];
+	  for (i = 0; i < 6; i++) 
+	    hdr->loops[i] = ohdr->loops[i];
 	}
     }
   return(hdr);
@@ -340,29 +341,25 @@ dir *find_sound_files_in_dir (char *name)
     {
       dp = make_dir(name);
       while ((dirp = readdir(dpos)) != NULL)
-	{
-	  if (dirp->d_name[0] != '.')
-	    {
-	      dot = NULL;
-	      for (sp = dirp->d_name; (*sp) != '\0'; sp++) 
-		if ((*sp) == '.') 
-		  dot = (++sp);
-	      if (dot)
-		{
-		  for (i = 0; i < sound_file_extensions_end; i++)
+	if (dirp->d_name[0] != '.')
+	  {
+	    dot = NULL;
+	    for (sp = dirp->d_name; (*sp) != '\0'; sp++) 
+	      if ((*sp) == '.') 
+		dot = (++sp);
+	    if (dot)
+	      {
+		for (i = 0; i < sound_file_extensions_end; i++)
+		  if (strcmp(dot, sound_file_extensions[i]) == 0)
 		    {
-		      if (strcmp(dot, sound_file_extensions[i]) == 0)
-			{
 #if HAVE_HOOKS
-			  if (just_sounds_happy(dirp->d_name))
+		      if (just_sounds_happy(dirp->d_name))
 #endif
-			    add_snd_file_to_dir_list(dp, dirp->d_name);
-			  break;
-			}
+			add_snd_file_to_dir_list(dp, dirp->d_name);
+		      break;
 		    }
-		}
-	    }
-	}
+	      }
+	  }
 #if defined(CLOSEDIR_VOID)
       closedir(dpos);
 #else
@@ -433,7 +430,7 @@ static int add_sound_to_active_list (snd_info *sp, void *sptr1)
   sptr->names[sptr->active_sounds] = sp->fullname;
   sptr->sounds[sptr->active_sounds] = sp->index;
   (sptr->active_sounds)++;
-  return(0); /*assume no problem -- nothing can go wrong! */
+  return(0);                        /*assume no problem -- nothing can go wrong! */
 }
 
 static char title_buffer[4*(MUS_MAX_FILE_NAME)];
@@ -452,13 +449,17 @@ static void reflect_file_change_in_title(snd_state *ss)
 	  ((alist->active_sounds > 0) ? ": " : ""));
   if (alist->active_sounds > 0)
     {
-      if (alist->active_sounds < 4) j = alist->active_sounds; else j = 4;
+      if (alist->active_sounds < 4) 
+	j = alist->active_sounds; 
+      else j = 4;
       for (i = 0; i < j; i++)
 	{
 	  strcat(title_buffer, filename_without_home_directory(alist->names[i]));
-	  if (i < j - 1) strcat(title_buffer, ", ");
+	  if (i < j - 1)
+	    strcat(title_buffer, ", ");
 	}
-      if (alist->active_sounds > 4) strcat(title_buffer, "...");
+      if (alist->active_sounds > 4) 
+	strcat(title_buffer, "...");
     }
   set_title(ss, title_buffer);
   FREE(alist->sounds);
@@ -562,7 +563,8 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
     {
       if (select) select_channel(sp, 0);
       read_memo_file(sp);
-      if ((sp->combining != CHANNELS_SEPARATE) && (sp->nchans > 1)) 
+      if ((sp->combining != CHANNELS_SEPARATE) && 
+	  (sp->nchans > 1)) 
 	{
 	  val = sp->combining;
 	  sp->combining = CHANNELS_SEPARATE; 
@@ -737,7 +739,8 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 			       hdr->data_location,
 			       hdr->chans,
 			       hdr->type);
-      datai = make_file_state(fd, hdr, i, (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
+      datai = make_file_state(fd, hdr, i, 
+			      (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
       cp->sounds[0] = make_snd_data_file(filename, datai,
 					 MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(i)]),
 					 copy_header(hdr->name, hdr),
@@ -805,16 +808,26 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   for (i = 0, j = 0; i < nsp->nchans; i++)
     {
       cp = nsp->chans[i];
-      if (duration < axis_data[(j*4)+0]) axis_data[(j * 4) + 0] = duration - .1;
-      if (duration < axis_data[(j*4)+1]) axis_data[(j * 4) + 1] = duration;
+      if (duration < axis_data[(j * 4) + 0]) 
+	axis_data[(j * 4) + 0] = duration - .1;
+      if (duration < axis_data[(j * 4) + 1]) 
+	axis_data[(j * 4) + 1] = duration;
       set_axes(cp,
 	       axis_data[(j * 4) + 0], 
 	       axis_data[(j * 4) + 1], 
 	       axis_data[(j * 4) + 2], 
 	       axis_data[(j * 4) + 3]);
       update_graph(cp, NULL); /* get normalized state before messing with it */
-      if (ffts[j]) {fftb(cp, TRUE); need_update = 1;}
-      if (!(waves[j])) {waveb(cp, FALSE); need_update = 1;}
+      if (ffts[j]) 
+	{
+	  fftb(cp, TRUE); 
+	  need_update = 1;
+	}
+      if (!(waves[j])) 
+	{
+	  waveb(cp, FALSE); 
+	  need_update = 1;
+	}
       if (j < (old_chans - 1)) j++;
     }
   if (nsp->combining != old_combine) combineb(nsp, old_combine);
@@ -965,7 +978,8 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
 	      play_sp = NULL;
 	    }
 	}
-      if (!play_sp) play_sp = make_sound_readable(ss, prevfullnames[pos], FALSE);
+      if (!play_sp) 
+	play_sp = make_sound_readable(ss, prevfullnames[pos], FALSE);
       if (play_sp)
 	{
 	  play_sp->shortname = prevnames[pos];
@@ -1042,12 +1056,14 @@ static void file_prevlist(char *filename, char *fullname)
   prevnames[0] = copy_string(filename);
   prevfullnames[0] = copy_string(fullname);
   prevtimes[0] = prevtime++;
-  if (max_prevfile_end < prevfile_end) max_prevfile_end = prevfile_end;
+  if (max_prevfile_end < prevfile_end) 
+    max_prevfile_end = prevfile_end;
 }
 
 void update_prevfiles(snd_state *ss)
 {
-  if (file_dialog_is_active()) make_prevfiles_list(ss);
+  if (file_dialog_is_active()) 
+    make_prevfiles_list(ss);
 }
 
 void add_directory_to_prevlist(snd_state *ss, char *dirname)
@@ -1061,7 +1077,8 @@ void add_directory_to_prevlist(snd_state *ss, char *dirname)
     {
       fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
       strcpy(fullpathname, dirname);
-      if (dirname[strlen(dirname) - 1] != '/') strcat(fullpathname, "/");
+      if (dirname[strlen(dirname) - 1] != '/') 
+	strcat(fullpathname, "/");
       end = strlen(fullpathname);
       fullnames = (char **)CALLOC(sound_files->len, sizeof(char *));
       for (i = 0; i < sound_files->len; i++) 
@@ -1076,7 +1093,8 @@ void add_directory_to_prevlist(snd_state *ss, char *dirname)
 	  fullnames[i] = NULL;
 	}
       FREE(fullnames);
-      if (file_dialog_is_active()) make_prevfiles_list(ss);
+      if (file_dialog_is_active()) 
+	make_prevfiles_list(ss);
       free_dir(sound_files);
       FREE(fullpathname);
     }
@@ -1094,10 +1112,10 @@ static void remember_me(snd_state *ss, char *shortname, char *fullname)
       curnames[i] = NULL;
       for (j = i; j < curfile_end-1; j++)
 	{
-	  curnames[j] = curnames[j+1];
-	  a_big_star[j] = a_big_star[j+1];
+	  curnames[j] = curnames[j + 1];
+	  a_big_star[j] = a_big_star[j + 1];
 	}
-      curnames[curfile_end-1] = NULL;
+      curnames[curfile_end - 1] = NULL;
       curfile_end--;
     }
   if (file_dialog_is_active())
@@ -1134,7 +1152,8 @@ static void greet_me(snd_state *ss, char *shortname)
   curnames[curfile_end] = copy_string(shortname);
   a_big_star[curfile_end] = 0;
   curfile_end++;
-  if (max_curfile_end < curfile_end) max_curfile_end = curfile_end;
+  if (max_curfile_end < curfile_end)
+    max_curfile_end = curfile_end;
   file_unprevlist(shortname);
   if (file_dialog_is_active())
     {
@@ -1190,11 +1209,9 @@ int find_prevfile_regrow(char *shortname)
 {
   int i;
   if (prevnames)
-    {
-      for (i = 0; i <= prevfile_end; i++)
-	if (strcmp(prevnames[i], shortname) == 0) 
-	  return(i);
-    }
+    for (i = 0; i <= prevfile_end; i++)
+      if (strcmp(prevnames[i], shortname) == 0) 
+	return(i);
   return(-1);
 }
 
@@ -1202,12 +1219,10 @@ void save_prevlist(FILE *fd)
 {
   int i;
   if (prevfullnames)
-    {
-      for (i = 0; i <= prevfile_end; i++)
-	fprintf(fd, "(%s \"%s\")\n",
-		S_preload_file,
-		prevfullnames[i]);
-    }
+    for (i = 0; i <= prevfile_end; i++)
+      fprintf(fd, "(%s \"%s\")\n",
+	      S_preload_file,
+	      prevfullnames[i]);
 }
 
 void clear_prevlist(snd_state *ss)
@@ -1216,15 +1231,13 @@ void clear_prevlist(snd_state *ss)
   if (prevnames)
     {
       for (i = 0; i < prevfile_size; i++)
-	{
-	  if (prevnames[i]) 
-	    {
-	      FREE(prevnames[i]); 
-	      prevnames[i] = NULL;
-	      FREE(prevfullnames[i]); 
-	      prevfullnames[i] = NULL;
-	    }
-	}
+	if (prevnames[i]) 
+	  {
+	    FREE(prevnames[i]); 
+	    prevnames[i] = NULL;
+	    FREE(prevfullnames[i]); 
+	    prevfullnames[i] = NULL;
+	  }
       prevfile_end = -1;
       prevtime = 0;
       make_prevfiles_list(ss);
@@ -1392,7 +1405,13 @@ int num_header_types(void) {return(NUM_HEADER_TYPES);}
 
 
 static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
-char *header_short_name(int i) {if ((i >= 0) && (i < NUM_HEADER_TYPES)) return(header_short_names[i]); else return("unknown type");}
+char *header_short_name(int i) 
+{
+  if ((i >= 0) && 
+      (i < NUM_HEADER_TYPES)) 
+    return(header_short_names[i]); 
+  else return("unknown type");
+}
 
 static char *next_data_formats[NUM_NEXT_FORMATS] = {"short", "mulaw", "signed byte  ", "float", "long", "alaw", "24-bit", "double"};
 static char *ircam_data_formats[NUM_IRCAM_FORMATS] = {"short", "mulaw", "float        ", "long", "alaw"};
@@ -1445,7 +1464,13 @@ static char *data_formats[NUM_DATA_FORMATS] = {
   "32 bit little-endian normalized int"};
 
 int num_data_formats(void) {return(NUM_DATA_FORMATS);}
-char *data_format_name(int i) {if ((i >= 0) && (i < NUM_DATA_FORMATS)) return(data_formats[i]); else return("unknown format");}
+char *data_format_name(int i)
+{
+  if ((i >= 0) && 
+      (i < NUM_DATA_FORMATS)) 
+    return(data_formats[i]); 
+  else return("unknown format");
+}
 
 /* must parallel sndlib.h definitions */
 
@@ -1585,7 +1610,6 @@ static int check_for_same_name(snd_info *sp1, void *ur_info)
   same_name_info *info = (same_name_info *)ur_info;
   if ((sp1) && (strcmp(sp1->fullname, info->fullname) == 0))
     {
-      
       info->sp = sp1;
       for (i = 0; i < sp1->nchans; i++) 
 	{
@@ -1697,7 +1721,9 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	  ripple1 = (unsigned char *)CALLOC(RIPPLE_SIZE, sizeof(unsigned char));
 	  lseek(fd, hdr->data_location, SEEK_SET);
 	  bytes0 = read(fd, ripple0, RIPPLE_SIZE);
-	  if (bytes0 == RIPPLE_SIZE) bytes1 = read(fd, ripple1, RIPPLE_SIZE); else bytes1 = -1;
+	  if (bytes0 == RIPPLE_SIZE) 
+	    bytes1 = read(fd, ripple1, RIPPLE_SIZE); 
+	  else bytes1 = -1;
 	  srate = hdr->srate;
 	  chans = hdr->chans;
 	  type = hdr->type;
@@ -1767,7 +1793,8 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	  FREE(ripple0);
 	  FREE(ripple1);
 	  FREE(comment);
-	  if (auto_update(ss)) map_over_sounds(ss, snd_not_current, NULL);
+	  if (auto_update(ss)) 
+	    map_over_sounds(ss, snd_not_current, NULL);
 	}
       else 
 	snd_error("can't open %s: %s", sp->shortname, strerror(errno));
@@ -1786,7 +1813,10 @@ static int swap_int (int n)
   unsigned char *inp, *outp; 
   inp = (unsigned char *)&n; 
   outp = (unsigned char *)&o;
-  outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
+  outp[0] = inp[3]; 
+  outp[1] = inp[2]; 
+  outp[2] = inp[1]; 
+  outp[3] = inp[0];
   return(o);
 }
 
@@ -1796,7 +1826,8 @@ static short swap_short (short n)
   unsigned char *inp, *outp; 
   inp = (unsigned char *)&n; 
   outp = (unsigned char *)&o;
-  outp[0] = inp[1]; outp[1] = inp[0]; 
+  outp[0] = inp[1]; 
+  outp[1] = inp[0]; 
   return(o);
 }
 
@@ -1809,7 +1840,8 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   /* try to provide some notion of what might be the intended header (currently limited to byte-order mistakes) */
   sprintf(reason_str, "srate: %d", hdr->srate);
   ns = (int)swap_int(hdr->srate);
-  if ((ns < 4000) || (ns > 100000)) ns = (int)swap_short((short)(hdr->srate));
+  if ((ns < 4000) || (ns > 100000)) 
+    ns = (int)swap_short((short)(hdr->srate));
   if ((ns > 4000) && (ns < 100000))
     {
       better_srate = ns;
@@ -1819,7 +1851,8 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   sprintf(tmp_str, "\nchans: %d", hdr->chans);
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->chans);
-  if ((ns < 0) || (ns > 8)) ns = swap_short((short)(hdr->chans));
+  if ((ns < 0) || (ns > 8)) 
+    ns = swap_short((short)(hdr->chans));
   if ((ns > 0) && (ns <= 8))
     {
       better_chans = ns;
@@ -1860,7 +1893,9 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   hdr->type = MUS_RAW;
   snd_help(ss, "Current header values", reason_str);
   file_string = (char *)CALLOC(256, sizeof(char));
-  sprintf(file_string, "Bogus header found for %s", filename_without_home_directory(filename));
+  sprintf(file_string, 
+	  "Bogus header found for %s", 
+	  filename_without_home_directory(filename));
   FREE(tmp_str);
   FREE(reason_str);
   return(file_string);
@@ -1878,7 +1913,9 @@ snd_info *finish_new_file(snd_state *ss, char *newname, int header_type, int dat
     {
       if (mus_header_writable(header_type, data_format))
 	{
-	  snd_write_header(ss, newname, header_type, srate, chans, 0, chans*2, data_format, new_comment, snd_strlen(new_comment), NULL);
+	  snd_write_header(ss, newname, header_type, srate, chans, 0, 
+			   chans * 2, data_format, new_comment, 
+			   snd_strlen(new_comment), NULL);
 	  chan = snd_reopen_write(ss, newname);
 	  lseek(chan, mus_header_data_location(), SEEK_SET);
 	  size = chans * mus_samples_to_bytes(data_format, 2); /* why 2 samples? */
@@ -1933,30 +1970,60 @@ static SCM g_file_write_date(SCM file)
   return(scm_return_first(TO_SCM_INT(date), file));
 }
 
-static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM snd)
+static SCM g_sound_loop_info(SCM snd)
 {
-  #define H_set_sound_loop_info "(" "set-" S_sound_loop_info " start0 end0 &optional start1 end1 snd) sets loop points"
+  int *res;
+  SCM sres = SCM_EOL;
+  snd_info *sp;
+  sp = get_sp(snd);
+  if (sp == NULL) 
+    return(scm_throw(NO_SUCH_SOUND,
+		     SCM_LIST2(TO_SCM_STRING(S_sound_loop_info),
+			       snd)));
+  res = mus_sound_loop_info(sp->fullname);
+  if (res)
+    {
+      sres = SCM_LIST6(TO_SCM_INT(res[0]), TO_SCM_INT(res[1]), TO_SCM_INT(res[2]),
+		       TO_SCM_INT(res[3]), TO_SCM_INT(res[4]), TO_SCM_INT(res[5]));
+      FREE(res);
+    }
+  return(sres);
+}
+
+static SCM g_set_sound_loop_info(SCM snd, SCM vals)
+{
+  #define H_sound_loop_info "(" "set-" S_sound_loop_info " snd vals) sets loop points"
   snd_info *sp;
   char *tmp_file;
-  int type;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(start0)), start0, SCM_ARG1, "set-" S_sound_loop_info);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(end0)), end0, SCM_ARG2, "set-" S_sound_loop_info);
-  SCM_ASSERT(bool_or_arg_p(start1), start1, SCM_ARG3, "set-" S_sound_loop_info);
-  SCM_ASSERT(bool_or_arg_p(end1), end1, SCM_ARG4, "set-" S_sound_loop_info);
-  SND_ASSERT_SND("set-" S_sound_loop_info, snd, 5);
-  sp = get_sp(snd);
+  file_info *hdr;
+  int type, len;
+  SCM start0 = SCM_UNDEFINED, end0 = SCM_UNDEFINED, start1 = SCM_UNDEFINED, end1 = SCM_UNDEFINED;
+  SND_ASSERT_SND("set-" S_sound_loop_info, snd, 1);
+  SCM_ASSERT(SCM_UNBNDP(vals) || gh_list_p(vals), vals, SCM_ARG2, "set-" S_sound_loop_info);
+  if (SCM_UNBNDP(vals))
+    {
+      vals = snd;
+      sp = get_sp(SCM_UNDEFINED);
+    }
+  else sp = get_sp(snd);
   if (sp == NULL) 
     return(scm_throw(NO_SUCH_SOUND,
 		     SCM_LIST2(TO_SCM_STRING("set-" S_sound_loop_info),
 			       snd)));
-  if ((sp->hdr)->loops == NULL)
-    (sp->hdr)->loops = (int *)CALLOC(6, sizeof(int));
-  (sp->hdr)->loops[0] = TO_C_INT_OR_ELSE(start0, 0);
-  (sp->hdr)->loops[1] = TO_C_INT_OR_ELSE(end0, 0);
-  (sp->hdr)->loops[2] = TO_C_INT_OR_ELSE(start1, 0);
-  (sp->hdr)->loops[3] = TO_C_INT_OR_ELSE(end1, 0);
-  mus_sound_set_loop_info(sp->fullname, (sp->hdr)->loops);
-  type = (sp->hdr)->type;
+  hdr = sp->hdr;
+  len = gh_length(vals);
+  if (len > 0) start0 = SCM_CAR(vals);
+  if (len > 1) end0 = SCM_CADR(vals);
+  if (len > 2) start1 = SCM_CADDR(vals);
+  if (len > 3) end1 = SCM_CADDDR(vals);
+  if (hdr->loops == NULL)
+    hdr->loops = (int *)CALLOC(6, sizeof(int));
+  hdr->loops[0] = TO_C_INT_OR_ELSE(start0, 0);
+  hdr->loops[1] = TO_C_INT_OR_ELSE(end0, 0);
+  hdr->loops[2] = TO_C_INT_OR_ELSE(start1, 0);
+  hdr->loops[3] = TO_C_INT_OR_ELSE(end1, 0);
+  mus_sound_set_loop_info(sp->fullname, hdr->loops);
+  type = hdr->type;
   if ((type != MUS_AIFF) && 
       (type != MUS_AIFC))
     {
@@ -1966,7 +2033,10 @@ static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM
       type = MUS_AIFC;
     }
   tmp_file = snd_tempnam(sp->state);
-  save_edits_2(sp, tmp_file, type, (sp->hdr)->format, (sp->hdr)->srate, (sp->hdr)->comment);
+  save_edits_2(sp, tmp_file, type, 
+	       hdr->format, 
+	       hdr->srate, 
+	       hdr->comment);
   move_file(tmp_file, sp->fullname);
   remove(tmp_file);
   free(tmp_file);
@@ -1994,16 +2064,14 @@ each inner list has the form: (name start loopstart loopend)"
     {
       lim = mus_header_sf2_entries();
       if (lim > 0)
-	{
-	  for (i = lim-1; i >= 0; i--)
-	    {
-	      inlist = SCM_LIST4(TO_SCM_STRING(mus_header_sf2_name(i)),
-				 TO_SCM_INT(mus_header_sf2_start(i)),
-				 TO_SCM_INT(mus_header_sf2_loop_start(i)),
-				 TO_SCM_INT(mus_header_sf2_end(i)));
-	      outlist = gh_cons(inlist, outlist);
-	    }
-	}
+	for (i = lim-1; i >= 0; i--)
+	  {
+	    inlist = SCM_LIST4(TO_SCM_STRING(mus_header_sf2_name(i)),
+			       TO_SCM_INT(mus_header_sf2_start(i)),
+			       TO_SCM_INT(mus_header_sf2_loop_start(i)),
+			       TO_SCM_INT(mus_header_sf2_end(i)));
+	    outlist = gh_cons(inlist, outlist);
+	  }
     }
   return(outlist);
 }
@@ -2061,12 +2129,13 @@ void g_init_file(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure1_0(S_add_sound_file_extension,    g_add_sound_file_extension),     H_add_sound_file_extension);
   DEFINE_PROC(gh_new_procedure1_0(S_file_write_date,             g_file_write_date),              H_file_write_date);
-  DEFINE_PROC(gh_new_procedure("set-" S_sound_loop_info, SCM_FNC g_set_sound_loop_info, 2, 3, 0), H_set_sound_loop_info);
   DEFINE_PROC(gh_new_procedure0_1(S_soundfont_info,              g_soundfont_info),               H_soundfont_info);
-  /* TODO: make this (soundfont) generalized set! */
   DEFINE_PROC(gh_new_procedure1_0(S_preload_directory,           g_preload_directory),            H_preload_directory);
   DEFINE_PROC(gh_new_procedure1_0(S_preload_file,                g_preload_file),                 H_preload_file);
   DEFINE_PROC(gh_new_procedure1_0(S_sound_files_in_directory,    g_sound_files_in_directory),     H_sound_files_in_directory);
+
+  define_procedure_with_setter(S_sound_loop_info, SCM_FNC g_sound_loop_info, H_sound_loop_info,
+			       "set-" S_sound_loop_info, SCM_FNC g_set_sound_loop_info, local_doc, 0, 1, 1, 1);
 
   memo_sound = gh_define(S_memo_sound, SCM_BOOL_F);
 

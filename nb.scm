@@ -100,7 +100,7 @@
 			   (files-position (widget-position files-dialog))
 			   (files-size (widget-size files-dialog)))
 		      (set! (widget-position widget) (list (+ (car files-position) (car files-size) 10)
-							   (cadr files-position)))))
+							   (+ (cadr files-position) 10)))))
 		(recolor-widget widget alert-color)))))))
 
 (define (files-popup-quit type position name)

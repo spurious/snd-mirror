@@ -1,8 +1,6 @@
 #include "snd.h"
 
-/* TODO:   when quad file is opened, its panes are a mess (normalize?)
- * TODO    paned windows should use ratios (not doable currently -- need own panedwindow widget)
- * TODO    amp slider for each chan (as in mix panel)
+/* TODO    paned windows should use ratios (not doable currently -- need own panedwindow widget)
  * TODO    gmeteor tie-in directly to filter text widget
  */
 
