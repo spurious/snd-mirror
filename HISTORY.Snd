@@ -1,7 +1,7 @@
 Snd change log
 
   13-Sep:    removed buffer generator.
-             dB-base and log-freq-base.
+             log-freq-start.
   9-Sep:     vct-reverse!
   8-Sep:     create-ssb-dialog in snd-motif.scm.
   6-Sep:     removed vct-convolve! (see snd7.scm).

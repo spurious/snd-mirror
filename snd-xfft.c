@@ -49,7 +49,7 @@ int max_transform_type(void) {return(num_transform_types - 1);}
 
 static Float fp_dB(Float py)
 {
-  return((py <= ss->lin_dB) ? 0.0 : (1.0 - (ss->dbb * log(py) / ss->min_dB)));
+  return((py <= ss->lin_dB) ? 0.0 : (1.0 - (20.0 * log10(py) / ss->min_dB)));
 }
 
 static Locus local_grf_x(double val, axis_info *ap)
@@ -226,56 +226,41 @@ static void transform_type_browse_callback(Widget w, XtPointer context, XtPointe
 
 static void graph_transform_once_callback(Widget w, XtPointer context, XtPointer info)
 {
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  graph_type_t old_type;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  if (cb->set)
-    {
-      XmToggleButtonSetState(sono_button, false, false);
-      XmToggleButtonSetState(spectro_button, false, false);
-      in_set_transform_graph_type(GRAPH_ONCE);
-    }
-  else
-    {
-      XmToggleButtonSetState(sono_button, true, false);
-      in_set_transform_graph_type(GRAPH_AS_SONOGRAM);
-    }
-  for_each_chan(calculate_fft);
+  old_type = transform_graph_type(ss);
+  XmToggleButtonSetState(normo_button, true, false);
+  XmToggleButtonSetState(sono_button, false, false);
+  XmToggleButtonSetState(spectro_button, false, false);
+  in_set_transform_graph_type(GRAPH_ONCE);
+  if (old_type != GRAPH_ONCE)
+    for_each_chan(calculate_fft);
 }
 
 static void sonogram_callback(Widget w, XtPointer context, XtPointer info)
 {
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  graph_type_t old_type;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  if (cb->set)
-    {
-      XmToggleButtonSetState(normo_button, false, false);
-      XmToggleButtonSetState(spectro_button, false, false);
-      in_set_transform_graph_type(GRAPH_AS_SONOGRAM);
-    }
-  else
-    {
-      XmToggleButtonSetState(normo_button, true, false);
-      in_set_transform_graph_type(GRAPH_ONCE);
-    }
-  for_each_chan(calculate_fft);
+  old_type = transform_graph_type(ss);
+  XmToggleButtonSetState(sono_button, true, false);
+  XmToggleButtonSetState(normo_button, false, false);
+  XmToggleButtonSetState(spectro_button, false, false);
+  in_set_transform_graph_type(GRAPH_AS_SONOGRAM);
+  if (old_type != GRAPH_AS_SONOGRAM)
+    for_each_chan(calculate_fft);
 }
 
 static void spectrogram_callback(Widget w, XtPointer context, XtPointer info)
 {
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  graph_type_t old_type;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  if (cb->set)
-    {
-      XmToggleButtonSetState(normo_button, false, false);
-      XmToggleButtonSetState(sono_button, false, false);
-      in_set_transform_graph_type(GRAPH_AS_SPECTROGRAM);
-    }
-  else
-    {
-      XmToggleButtonSetState(normo_button, true, false);
-      in_set_transform_graph_type(GRAPH_ONCE);
-    }
-  for_each_chan(calculate_fft);
+  old_type = transform_graph_type(ss);
+  XmToggleButtonSetState(spectro_button, true, false);
+  XmToggleButtonSetState(normo_button, false, false);
+  XmToggleButtonSetState(sono_button, false, false);
+  in_set_transform_graph_type(GRAPH_AS_SPECTROGRAM);
+  if (old_type != GRAPH_AS_SPECTROGRAM)
+    for_each_chan(calculate_fft);
 }
 
 static void map_show_transform_peaks(chan_info *cp, void *ptr) {cp->show_transform_peaks = (*((bool *)ptr));}
@@ -439,13 +424,13 @@ static void peaks_activate_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-void reflect_log_freq_base_in_transform_dialog(void)
+void reflect_log_freq_start_in_transform_dialog(void)
 {
   if (transform_dialog)
-    widget_float_to_text(freq_base_txt, log_freq_base(ss));
+    widget_float_to_text(freq_base_txt, log_freq_start(ss));
 }
 
-static void log_freq_base_activate_callback(Widget w, XtPointer context, XtPointer info)
+static void log_freq_start_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   char *str;
   Float new_lfb;
@@ -454,8 +439,8 @@ static void log_freq_base_activate_callback(Widget w, XtPointer context, XtPoint
     {
       new_lfb = string_to_Float(str);
       if (new_lfb > 0.0)
-	set_log_freq_base(new_lfb);
-      else widget_float_to_text(w, log_freq_base(ss));
+	set_log_freq_start(new_lfb);
+      else widget_float_to_text(w, log_freq_start(ss));
     }
 }
 
@@ -711,7 +696,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
       normo_button = make_togglebutton_widget("normo-button", display_form, args, n);
-      XtAddCallback(normo_button, XmNvalueChangedCallback, graph_transform_once_callback, NULL);
+      XtAddCallback(normo_button, XmNdisarmCallback, graph_transform_once_callback, NULL);
       XmStringFree(bstr);
 
       n = 0;
@@ -730,7 +715,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
       sono_button = make_togglebutton_widget("sono-button", display_form, args, n);
-      XtAddCallback(sono_button, XmNvalueChangedCallback, sonogram_callback, NULL);
+      XtAddCallback(sono_button, XmNdisarmCallback, sonogram_callback, NULL);
       XmStringFree(bstr);
 
       n = 0;
@@ -749,7 +734,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
       spectro_button = make_togglebutton_widget("spectro-button", display_form, args, n);
-      XtAddCallback(spectro_button, XmNvalueChangedCallback, spectrogram_callback, NULL);
+      XtAddCallback(spectro_button, XmNdisarmCallback, spectrogram_callback, NULL);
       XmStringFree(bstr);
 
       n = 0;
@@ -875,8 +860,8 @@ Widget fire_up_transform_dialog(bool managed)
       XtAddCallback(freq_base_txt, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
       XtAddEventHandler(freq_base_txt, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
       XtAddEventHandler(freq_base_txt, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
-      widget_float_to_text(freq_base_txt, log_freq_base(ss));
-      XtAddCallback(freq_base_txt, XmNactivateCallback, log_freq_base_activate_callback, NULL);
+      widget_float_to_text(freq_base_txt, log_freq_start(ss));
+      XtAddCallback(freq_base_txt, XmNactivateCallback, log_freq_start_activate_callback, NULL);
 
       n = 0;
       if (!(ss->using_schemes)) 

@@ -44,7 +44,7 @@ int snd_2pow2(int n)
 
 Float in_dB(Float min_dB, Float lin_dB, Float py)
 {
-  return((py <= lin_dB) ? min_dB : (ss->dbb * log(py)));
+  return((py <= lin_dB) ? min_dB : (20.0 * log10(py)));
 }
 
 char *copy_string(const char *str)

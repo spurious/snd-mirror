@@ -453,13 +453,9 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 #define set_trap_segfault(a) ss->Trap_Segfault = a
 #define DEFAULT_TRAP_SEGFAULT true
 
-#define db_base(ss) ss->dB_Base
-#define set_db_base(a) ss->dB_Base = a
-#define DEFAULT_DB_BASE 10.0
-
-#define log_freq_base(ss) ss->Log_Freq_Base
-#define in_set_log_freq_base(a) ss->Log_Freq_Base = a
-#define DEFAULT_LOG_FREQ_BASE 25.0
+#define log_freq_start(ss) ss->Log_Freq_Start
+#define in_set_log_freq_start(a) ss->Log_Freq_Start = a
+#define DEFAULT_LOG_FREQ_START 32.0
 
 #define optimization(ss) ss->Optimization
 #define set_optimization(a) ss->Optimization = a

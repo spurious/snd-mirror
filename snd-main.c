@@ -352,8 +352,7 @@ static void save_snd_state_options (FILE *fd)
 
   if (fneq(fft_window_beta(ss), DEFAULT_FFT_WINDOW_BETA)) pss_sf(fd, S_fft_window_beta, fft_window_beta(ss));
   if (fneq(ss->min_dB, DEFAULT_MIN_DB)) pss_sf(fd, S_min_dB, ss->min_dB);
-  if (fneq(ss->dB_Base, DEFAULT_DB_BASE)) pss_sf(fd, S_db_base, ss->dB_Base);
-  if (fneq(ss->Log_Freq_Base, DEFAULT_LOG_FREQ_BASE)) pss_sf(fd, S_log_freq_base, ss->Log_Freq_Base);
+  if (fneq(ss->Log_Freq_Start, DEFAULT_LOG_FREQ_START)) pss_sf(fd, S_log_freq_start, ss->Log_Freq_Start);
   if (fneq(color_cutoff(ss), DEFAULT_COLOR_CUTOFF)) pss_sf(fd, S_color_cutoff, color_cutoff(ss));
   if (fneq(color_scale(ss), DEFAULT_COLOR_SCALE)) pss_sf(fd, S_color_scale, color_scale(ss));
   if (fneq(spectro_x_scale(ss), DEFAULT_SPECTRO_X_SCALE)) pss_sf(fd, S_spectro_x_scale, spectro_x_scale(ss));

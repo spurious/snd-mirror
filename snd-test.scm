@@ -706,12 +706,9 @@
       (set! (min-dB) (min-dB))
       (if (fneq (min-dB)  -60.0 )
 	  (snd-display ";min-dB set def: ~A" (min-dB)))
-      (set! (dB-base) (dB-base))
-      (if (fneq (dB-base)  10.0 )
-	  (snd-display ";dB-base set def: ~A" (dB-base)))
-      (set! (log-freq-base) (log-freq-base))
-      (if (fneq (log-freq-base)  25.0 )
-	  (snd-display ";log-freq-base set def: ~A" (log-freq-base)))
+      (set! (log-freq-start) (log-freq-start))
+      (if (fneq (log-freq-start)  32.0 )
+	  (snd-display ";log-freq-start set def: ~A" (log-freq-start)))
       (set! (selection-creates-region) (selection-creates-region))
       (if (not (equal? (selection-creates-region)  #t )) 
 	  (snd-display ";selection-creates-region set def: ~A" (selection-creates-region)))
@@ -991,8 +988,7 @@
 	'max-transform-peaks (max-transform-peaks) 100
 	'max-regions (max-regions) 16 
 	'min-dB (min-dB) -60.0 
-	'dB-base (dB-base) 10.0
-	'log-freq-base (log-freq-base) 25.0
+	'log-freq-start (log-freq-start) 32.0
 	'selection-creates-region (selection-creates-region) #t 
 	'transform-normalization (transform-normalization) normalize-by-channel
 	'previous-files-sort (previous-files-sort) 0 
@@ -1565,8 +1561,7 @@
 	  (list 'max-transform-peaks max-transform-peaks 100 10)
 	  (list 'max-regions max-regions 16 6)
 	  (list 'min-dB min-dB -60.0 -90.0)
-	  (list 'dB-base dB-base 10.0 20.0)
-	  (list 'log-freq-base log-freq-base 25.0 10.0)
+	  (list 'log-freq-start log-freq-start 32.0 10.0)
 	  (list 'mix-waveform-height mix-waveform-height 20 40)
 	  (list 'mix-tag-height mix-tag-height 14 20)
 	  (list 'mix-tag-width mix-tag-width 6 20)
@@ -24244,8 +24239,7 @@ EDITS: 5
 		(list 'max-transform-peaks max-transform-peaks #f 1 100)
 		(list 'max-regions max-regions #f 1 32)
 		(list 'min-dB min-dB #f -120.0 -30.0)
-		(list 'dB-base dB-base #f 20.0 5.0)
-		(list 'log-freq-base log-freq-base #f 50.0 5.0)
+		(list 'log-freq-start log-freq-start #f 50.0 5.0)
 		(list 'selection-creates-region selection-creates-region #f #f #t)
 		(list 'transform-normalization transform-normalization #f dont-normalize normalize-globally)
 		(list 'previous-files-sort previous-files-sort #f 0 5)
@@ -49747,7 +49741,7 @@ EDITS: 2
 		     main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
 		     make-region-sample-reader make-sample-reader make-track-sample-reader map-chan mark-color mark-name
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
-		     maxamp menu-widgets minibuffer-history-length min-dB dB-base log-freq-base mix mixes mix-amp mix-amp-env
+		     maxamp menu-widgets minibuffer-history-length min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-tag-position mix-chans mix-color mix-track mix-frames mix-locked? mix? view-mixes-dialog mix-position view-tracks-dialog
 		     track-dialog-track mix-dialog-mix mix-inverted?
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
@@ -49892,7 +49886,7 @@ EDITS: 2
 			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
-			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB dB-base log-freq-base mix-amp
+			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
 			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-position
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height transform-normalization
 			 equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color

@@ -269,12 +269,9 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   allocate_regions(max_regions(ss));
   ss->HTML_Dir = NULL;
   ss->HTML_Program = copy_string(DEFAULT_HTML_PROGRAM);
-  ss->Log_Freq_Base = DEFAULT_LOG_FREQ_BASE;
-  ss->lfb = 1.0 / log(ss->Log_Freq_Base);
-  ss->dB_Base = DEFAULT_DB_BASE;
-  ss->dbb = 20.0 / log(ss->dB_Base);
+  ss->Log_Freq_Start = DEFAULT_LOG_FREQ_START;
   ss->min_dB = DEFAULT_MIN_DB;
-  ss->lin_dB = pow(ss->dB_Base, DEFAULT_MIN_DB * 0.05);
+  ss->lin_dB = pow(10.0, DEFAULT_MIN_DB * 0.05);
   ss->init_window_x = DEFAULT_INIT_WINDOW_X; 
   ss->init_window_y = DEFAULT_INIT_WINDOW_Y; 
   ss->init_window_width = DEFAULT_INIT_WINDOW_WIDTH; 

@@ -49,7 +49,7 @@ int max_transform_type(void) {return(num_transform_types - 1);}
 
 static Float fp_dB(Float py)
 {
-  return((py <= ss->lin_dB) ? 0.0 : (1.0 - (ss->dbb * log(py) / ss->min_dB)));
+  return((py <= ss->lin_dB) ? 0.0 : (1.0 - (20.0 * log10(py) / ss->min_dB)));
 }
 
 static axis_info *axis_ap = NULL;
@@ -405,6 +405,49 @@ static void help_transform_callback(GtkWidget *w, gpointer context)
   transform_dialog_help();
 }
 
+static GtkWidget *db_txt, *peaks_txt, *lf_txt;
+
+static void max_peaks_callback(GtkWidget *w, gpointer data)
+{
+  int new_peaks;
+  new_peaks = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(data));
+  set_max_transform_peaks(new_peaks);
+  for_each_chan(calculate_fft);
+}
+
+static void min_db_callback(GtkWidget *w, gpointer data)
+{
+  Float new_db;
+  new_db = gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(data));
+  set_min_db(-new_db);
+}
+
+static void log_freq_callback(GtkWidget *w, gpointer data)
+{
+  Float new_lfb;
+  new_lfb = gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(data));
+  set_log_freq_start(new_lfb);
+}
+
+void reflect_peaks_in_transform_dialog(void) 
+{
+  if (transform_dialog)
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(peaks_txt), max_transform_peaks(ss));
+}
+
+void reflect_log_freq_start_in_transform_dialog(void) 
+{
+  if (transform_dialog)
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(lf_txt), log_freq_start(ss));
+}
+
+void reflect_min_db_in_transform_dialog(void) 
+{
+  if (transform_dialog)
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(db_txt), (gfloat)(-(ss->min_dB)));
+}
+
+
 #define BUTTON_HEIGHT 20
 #define BUTTON_WIDTH 40
 /* for some reason gtk puts a mile and a half of padding around buttons */
@@ -448,7 +491,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(orient_button);
       gtk_widget_show(help_button);
 
-      outer_table = gtk_table_new(2, 3, false);
+      outer_table = gtk_table_new(6, 3, false);
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(transform_dialog)->vbox), outer_table);
       gtk_table_set_row_spacings(GTK_TABLE(outer_table), 4);
       gtk_table_set_col_spacings(GTK_TABLE(outer_table), 4);
@@ -469,23 +512,19 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	    else transform_names[i] = added_transform_name(i);
 	  }
 	transform_list = sg_make_list(_("type"), outer_table, TABLE_ATTACH, NULL, num_transform_types, transform_names, 
-				      GTK_SIGNAL_FUNC(transform_browse_callback), 0, 1, 0, 1);
+				      GTK_SIGNAL_FUNC(transform_browse_callback), 0, 1, 0, 3);
 	gtk_widget_show(transform_list);
 	FREE(transform_names);
       }
 
       /* SIZE */
       size_list = sg_make_list(_("size"), outer_table, TABLE_ATTACH, NULL, NUM_TRANSFORM_SIZES, TRANSFORM_SIZES, 
-			       GTK_SIGNAL_FUNC(size_browse_callback), 1, 2, 0, 1);
+			       GTK_SIGNAL_FUNC(size_browse_callback), 1, 2, 0, 3);
       gtk_widget_show(size_list);
 
       /* DISPLAY */
       display_frame = gtk_frame_new(_("display"));
-      /* gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 2, 3, 0, 1); */
-      gtk_table_attach(GTK_TABLE(outer_table), display_frame, 2, 3, 0, 1,
-		       (GtkAttachOptions)(GTK_FILL | GTK_SHRINK), 
-		       (GtkAttachOptions)(GTK_FILL | GTK_SHRINK),
-		       0, 0);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 2, 3, 0, 4);
       gtk_frame_set_label_align(GTK_FRAME(display_frame), 0.5, 0.0);
       gtk_frame_set_shadow_type(GTK_FRAME(display_frame), GTK_SHADOW_ETCHED_IN);
 
@@ -540,17 +579,55 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       SG_SIGNAL_CONNECT(selection_button, "toggled", selection_callback, NULL);
       gtk_widget_set_size_request(GTK_WIDGET(selection_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
+      {
+	GtkWidget *pk_lab, *db_lab, *lf_lab;
+	GtkObject *pk_vals, *db_vals, *lf_vals;
+
+	pk_lab = gtk_label_new(_("max peaks:"));
+	gtk_box_pack_start(GTK_BOX(buttons), pk_lab, false, false, 0);
+	gtk_widget_show(pk_lab);
+      
+	pk_vals = gtk_adjustment_new(max_transform_peaks(ss), 2, 1000, 2, 10, 0);
+	peaks_txt = gtk_spin_button_new(GTK_ADJUSTMENT(pk_vals), 0.0, 0);
+	gtk_box_pack_start(GTK_BOX(buttons), peaks_txt, false, false, 0);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(peaks_txt), true);
+	SG_SIGNAL_CONNECT(pk_vals, "value_changed", max_peaks_callback, (gpointer)peaks_txt);
+	gtk_widget_show(peaks_txt);
+
+	db_lab = gtk_label_new(_("min dB:"));
+	gtk_box_pack_start(GTK_BOX(buttons), db_lab, false, false, 0);
+	gtk_widget_show(db_lab);
+      
+	db_vals = gtk_adjustment_new((int)(-(ss->min_dB)), 2, 1000, 2, 10, 0); /* can't be negative!! */
+	db_txt = gtk_spin_button_new(GTK_ADJUSTMENT(db_vals), 0.0, 0);
+	gtk_box_pack_start(GTK_BOX(buttons), db_txt, false, false, 0);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(db_txt), true);
+	SG_SIGNAL_CONNECT(db_vals, "value_changed", min_db_callback, (gpointer)db_txt);
+	gtk_widget_show(db_txt);
+
+	lf_lab = gtk_label_new(_("log freq start:"));
+	gtk_box_pack_start(GTK_BOX(buttons), lf_lab, false, false, 0);
+	gtk_widget_show(lf_lab);
+      
+	lf_vals = gtk_adjustment_new((int)(log_freq_start(ss)), 1, 1000, 1, 10, 0);
+	lf_txt = gtk_spin_button_new(GTK_ADJUSTMENT(lf_vals), 0.0, 0);
+	gtk_box_pack_start(GTK_BOX(buttons), lf_txt, false, false, 0);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(lf_txt), true);
+	SG_SIGNAL_CONNECT(lf_vals, "value_changed", log_freq_callback, (gpointer)lf_txt);
+	gtk_widget_show(lf_txt);
+      }
+
       gtk_widget_show(buttons);
       gtk_widget_show(display_frame);
 
       /* WAVELET */
       wavelet_list = sg_make_list(_("wavelet"), outer_table, TABLE_ATTACH, NULL, NUM_WAVELETS, wavelet_names(),
-				  GTK_SIGNAL_FUNC(wavelet_browse_callback), 0, 1, 1, 2);
+				  GTK_SIGNAL_FUNC(wavelet_browse_callback), 0, 1, 3, 6);
       gtk_widget_show(wavelet_list);
 
       /* WINDOW */
       window_box = gtk_table_new(2, 2, false);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 1, 2);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 3, 6);
       window_list = sg_make_list(_("window"), window_box, TABLE_ATTACH, NULL, GUI_NUM_FFT_WINDOWS, FFT_WINDOWS, 
 				 GTK_SIGNAL_FUNC(window_browse_callback), 0, 1, 0, 1);
 
@@ -574,7 +651,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       /* GRAPH */
       graph_frame = gtk_frame_new(FFT_WINDOWS[(int)fft_window(ss)]);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 2, 3, 1, 2);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 2, 3, 4, 6);
       gtk_frame_set_label_align(GTK_FRAME(graph_frame), 0.5, 0.0);
       gtk_frame_set_shadow_type(GTK_FRAME(graph_frame), GTK_SHADOW_ETCHED_IN);
 
@@ -794,6 +871,3 @@ int add_transform_to_list(char *name)
   return(num_transform_types++);
 }
 
-void reflect_peaks_in_transform_dialog(void) {}
-void reflect_log_freq_base_in_transform_dialog(void) {}
-void reflect_min_db_in_transform_dialog(void) {}

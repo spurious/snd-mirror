@@ -383,7 +383,7 @@ typedef struct snd_state {
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   bool Verbose_Cursor, Trap_Segfault;
   int Enved_Filter_Order;
-  Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, dB_Base, dbb, Log_Freq_Base, lfb;
+  Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, Log_Freq_Start;
   char *Vu_Font;
   Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
   int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;
@@ -903,7 +903,7 @@ void clear_stdin(void);
 #if HAVE_RUBY
   void snd_rb_raise(XEN type, XEN info);
 #endif
-void set_log_freq_base(Float base);
+void set_log_freq_start(Float base);
 
 
 /* -------- snd-select.c -------- */

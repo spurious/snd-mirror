@@ -621,7 +621,8 @@ static void make_sonogram_axes(chan_info *cp)
       ap = cp->axis;
       if (cp->transform_type == FOURIER)
 	{
-	  if ((cp->fft_log_frequency) || (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM))
+	  /* if ((cp->fft_log_frequency) || (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)) */
+	  if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
 	    {
 	      max_freq = cp->spectro_cutoff;
 	      min_freq = cp->spectro_start;
@@ -629,7 +630,10 @@ static void make_sonogram_axes(chan_info *cp)
 	  else 
 	    {
 	      max_freq = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5;
-	      min_freq = cp->spectro_start * (Float)SND_SRATE(cp->sound) * 0.5;
+
+	      if ((cp->fft_log_frequency) && ((SND_SRATE(cp->sound) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
+		min_freq = log_freq_start(ss);
+	      else min_freq = cp->spectro_start * (Float)SND_SRATE(cp->sound) * 0.5;
 	    }
 	}
       else 
@@ -861,16 +865,10 @@ static void display_fft(fft_state *fs)
       switch (cp->transform_type)
 	{
 	case FOURIER: 
-	  if (cp->fft_log_frequency)
-	    {
-	      max_freq = cp->spectro_cutoff;
-	      min_freq = cp->spectro_start;
-	    }
-	  else
-	    {
-	      max_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_cutoff);
-	      min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
-	    }
+	  max_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_cutoff);
+	  if ((cp->fft_log_frequency) && ((SND_SRATE(sp) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
+	    min_freq = log_freq_start(ss);
+	  else min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
 	  break;
 	case WAVELET: case WALSH: case HAAR:
 	  max_freq = fs->size * cp->spectro_cutoff; 

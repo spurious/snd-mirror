@@ -369,7 +369,7 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 13-Sep:  removed buffer generator.\n\
-         added dB-base and log-freq-base.\n\
+         log-freq-start.\n\
 9-Sep:   vct-reverse!\n\
 8-Sep:   create-ssb-dialog in snd-motif.scm.\n\
 6-Sep:   removed vct-convolve! (see snd7.scm).\n\

@@ -379,13 +379,6 @@ causes wrap-around which makes the out-of-range values very obvious.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- dB-base -->
-<tr><td colspan=2><code><a class=def name="dbbase">dB-base</a></code></td>
-<td><code>10.0</code></td></tr>
-<tr><td></td><td colspan=2>Base used in log magnitude display (ffts).
-</td></tr>
-<tr><td colspan=3></td></tr>
-
 <!-- default-output-chans -->
 <tr><td colspan=2><code><a class=def name="defaultoutputchans">default-output-chans</a></code></td>
 <td><code>1</code></td></tr>
@@ -487,10 +480,17 @@ See <a href="grfsnd.html#sndandladspa">Snd and LADSPA</a>.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- log-freq-base -->
-<tr><td colspan=2><code><a class=def name="logfreqbase">log-freq-base</a></code></td>
+<!-- log-freq-start -->
+<tr><td colspan=2><code><a class=def name="logfreqstart">log-freq-start</a></code></td>
 <td><code>25.0</code></td></tr>
-<tr><td></td><td colspan=2>Base used in log freq display (ffts); the higher the base, the more we emphasize the lower octaves.
+<tr><td></td><td colspan=2>start freq used in log freq display (ffts).  Since the log display emphasizes the lower
+frequencies, but the lowest are all inaudible, it seemed more informative to squash the lowest 30Hz or so
+into a single point (0 Hz) on the log freq graphs; otherwise the audible data starts about 1/4 of the way 
+down the x axis, wasting valuable screen space!  But it also seemed a bother to have to set/reset the
+<a href="#spectrostart">spectro-start</a> variable every time you wanted to flip between log and linear
+displays.  log-freq-start to the rescue?  (In earlier versions of Snd I tried to kludge around this
+by pre-multiplying the frequencies by some big number, thereby shifting everything up in log space,
+but I decided that was a worse kludge than log-freq-start.
 </td></tr>
 <tr><td colspan=3></td></tr>
 

@@ -217,7 +217,7 @@ void set_transform_normalization(fft_normalize_t val);
 void set_show_selection_transform(bool show);
 void set_transform_graph_type(graph_type_t val);
 void reflect_peaks_in_transform_dialog(void);
-void reflect_log_freq_base_in_transform_dialog(void);
+void reflect_log_freq_start_in_transform_dialog(void);
 void reflect_min_db_in_transform_dialog(void);
 
 
