@@ -9205,7 +9205,7 @@ static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN
   beg = beg_to_sample(samp_0, caller);
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, cp->samples[pos] - beg);
   if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
-  if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A < 0?");
+  if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
   if (v1)
     {
       fvals = v1->data;

@@ -1,7 +1,7 @@
 #include "snd.h"
 
 static Widget mix_panel = NULL;
-static bool dragging = false;
+static bool mix_panel_slider_dragging = false;
 static void update_mix_panel(int mix_id);
 static int mix_panel_id = INVALID_MIX_ID;
 
@@ -23,7 +23,7 @@ static void change_mix_speed(int mix_id, Float val)
 				      speed_number_buffer,
 				      cp->sound->speed_control_style,
 				      cp->sound->speed_control_tones),
-			dragging);
+			mix_panel_slider_dragging);
   set_label(w_speed_number, speed_number_buffer);
 }
 
@@ -57,8 +57,8 @@ static void speed_drag_callback(Widget w, XtPointer context, XtPointer info)
   int ival;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!dragging) start_mix_panel_slider_drag(mix_panel_id);
-  dragging = true;
+  if (!mix_panel_slider_dragging) start_mix_panel_slider_drag(mix_panel_id);
+  mix_panel_slider_dragging = true;
   change_mix_speed(mix_panel_id, exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
@@ -66,7 +66,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  dragging = false;
+  mix_panel_slider_dragging = false;
   change_mix_speed(mix_panel_id, exp((Float)(cb->value - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
@@ -81,7 +81,7 @@ static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 static void change_mix_amp(int mix_id, int chan, Float val)
 {
   char *sfs;
-  set_mix_amp_from_id(mix_id, chan, val, dragging);
+  set_mix_amp_from_id(mix_id, chan, val, mix_panel_slider_dragging);
   sfs = prettyf(val, 2);
   fill_number(sfs, amp_number_buffer);
   set_label(w_amp_numbers[chan], amp_number_buffer);
@@ -114,8 +114,8 @@ static void amp_drag_callback(Widget w, XtPointer context, XtPointer info)
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!dragging) start_mix_panel_slider_drag(mix_panel_id);
-  dragging = true;
+  if (!mix_panel_slider_dragging) start_mix_panel_slider_drag(mix_panel_id);
+  mix_panel_slider_dragging = true;
   change_mix_amp(mix_panel_id, chan, int_amp_to_Float(ival));
 }
 
@@ -125,7 +125,7 @@ static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  dragging = false;
+  mix_panel_slider_dragging = false;
   change_mix_amp(mix_panel_id, chan, int_amp_to_Float(ival));
 }
 
@@ -455,7 +455,7 @@ Widget make_mix_panel(void)
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       xapply = XmStringCreate(_("Apply Env"), XmFONTLIST_DEFAULT_TAG);
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-      xtitle = XmStringCreate(_("Mix Panel"), XmFONTLIST_DEFAULT_TAG);
+      xtitle = XmStringCreate(_("Mixes"), XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -467,7 +467,7 @@ Widget make_mix_panel(void)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Mix Panel"), args, n);
+      mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Mixes"), args, n);
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -791,7 +791,7 @@ Widget make_mix_panel(void)
       XtAddEventHandler(w_env, ButtonMotionMask, false, mix_drawer_button_motion, NULL);
       XtAddEventHandler(w_env, ButtonReleaseMask, false, mix_drawer_button_release, NULL);
 
-      set_dialog_widget(MIX_PANEL_DIALOG, mix_panel);
+      set_dialog_widget(MIX_PANEL_DIALOG, mix_panel);  /* or TRACK_PANEL_DIALOG */
       speed_number_buffer[1] = local_decimal_point();
       amp_number_buffer[1] = local_decimal_point();
     }
@@ -915,11 +915,31 @@ void reflect_no_mix_in_mix_panel(void)
     XtUnmanageChild(mix_panel);
 }
 
+
+/* -------------------------------- TRACK PANEL -------------------------------- */
+
+static Widget track_panel = NULL;
+static bool track_panel_slider_dragging = false;
+static void update_track_panel(int mix_id);
+static int track_panel_id = INVALID_TRACK_ID;
+
+Widget make_track_panel(void) 
+{
+  return(NULL);
+}
+
+
+
+
 static XEN g_set_mix_panel_mix(XEN val)
 {
+  /* TODO: snd-test is claiming this doesn't work? or doesn't reset the mix id entry field */
   mix_panel_id = XEN_TO_C_INT(val);
+  update_mix_panel(mix_panel_id);
   return(val);
 }
+
+static void update_track_panel(int mix_id) {}
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_set_mix_panel_mix_w, g_set_mix_panel_mix)
@@ -931,3 +951,4 @@ void g_init_gxmix(void)
 {
   XEN_DEFINE_PROCEDURE("set-mix-panel-mix", g_set_mix_panel_mix_w, 1, 0, 0, "internal testing func");
 }
+

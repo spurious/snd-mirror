@@ -1921,6 +1921,7 @@ Max Mathews.
   <em class=def><A NAME="deleteallmixes">delete-all-mixes</a></em>
   <em class=def><a name="findmix">find-mix</a></em> sample snd chn
   <em class=def><A NAME="mixmaxamp">mix-maxamp</a></em> id
+  <em class=def><A NAME="savemix">save-mix</a></em> id filename
 </pre>
 <p>
 <b>mix-sound</b> mixes <i>file</i> (all chans) into the currently selected sound at <i>start</i>.
@@ -1941,6 +1942,7 @@ pre-zero value.
 <b>find-mix</b> returns the identifier of the mix at sample <i>sample</i> (or anywhere in the given channel if 
 <i>sample</i> is not specified), or #f if no mix is found.
 <b>mix-maxamp</b> returns the maxamp in the given mix.
+<b>save-mix</b> saves a given mix's data in a file.
 </p>
 <center><img src="pan.png" alt="picture of panning"></center>
 <pre>

@@ -3075,6 +3075,11 @@ sets mix 123's channel 0 amplitude scaler to .5.
 <tr><td width=50><br></td><td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id.
 </td></tr>
 
+<!-- copy-mix -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="copymix">copy-mix</a></em> (mix (beg copied-mix-beg))</code></span></td></tr>
+<tr><td></td><td>copy <i>mix</i>, placing the copy at <i>beg</i> which defaults to the copied mix's position.  The new mix's track is set to 0.
+</td></tr>
+
 <!-- delete-mix -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="snddeletemix">delete-mix</a></em> (mix)</code></span></td></tr>
 <tr><td></td><td>delete mix (set amps to 0.0).
@@ -3285,6 +3290,11 @@ take the track id as their initial argument.
 <!-- -------------------------------- TRACK FUNCTION TABLE -------------------------------- -->
 
 <table border=0 cellspacing=10>
+
+<!-- copy-track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="copytrack">copy-track</a></em> (track (beg copied-track-beg))</code></span></td></tr>
+<tr><td></td><td>copy <i>track</i>, placing the copy at <i>beg</i> which defaults to the copied track's position.  The new track's track is set to 0.
+</td></tr>
 
 <!-- delete-track -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="deletetrack">delete-track</a></em> (track-id)</code></span></td></tr>
@@ -5173,6 +5183,8 @@ Sound data object maxamp: <a href="#sounddatamaxamp">sound-data-maxamp</a><br>
 Vct maxamp: <a href="#vctpeak">vct-peak</a><br>
 CLM's sound maxamp: <a href="clm.html#sound-maxamp">sound-maxamp</a> (same as mus-sound-maxamp)<br>
 To set the y axis bounds to reflect the channel's maxamp: <a href="#sndybounds">y-bounds</a><br>
+Mix maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
+Track maxamp: <a href="sndscm.html#trackmaxamp">track-maxamp</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -5984,6 +5996,7 @@ To save Snd's complete state (unsaved edits and all): <a href="#sndsavestate">sa
 To save just the current options: <a href="#sndsaveoptions">save-options</a><br>
 To save the selection: <a href="#sndsaveselection">save-selection</a><br>
 To save a region: <a href="#sndsaveregion">save-region</a><br>
+To save a mix: <a href="sndscm.html#savemix">save-mix</a><br>
 To save a track: <a href="sndscm.html#savetrack">save-track</a><br>
 To save the control panel state: <a href="#sndcontrolsave">save-controls</a><br>
 To save currently defined envelopes (envelope editor): <a href="#sndsaveenvelopes">save-envelopes</a><br>
@@ -9518,7 +9531,8 @@ The four "-widgets" procedures return lists of possibly useful widgets:
                      7:file_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 
                      10:new_file_dialog 11:file_mix_dialog 12:edit_header_dialog 
                      13:find_dialog 14:help_dialog 15:completion_dialog 16:mix_panel_dialog
-                     17:print_dialog 18:recorder_dialog 19:region_dialog, 20:info_dialog)
+                     17:print_dialog 18:recorder_dialog 19:region_dialog, 20:info_dialog
+                     21:track_dialog)
 </pre>
 <p>
 <i>dialog-widgets</i> entries are #f for any dialog that has not

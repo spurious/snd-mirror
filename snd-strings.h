@@ -74,6 +74,8 @@
 #define S_convolve_selection_with       "convolve-selection-with"
 #define S_convolve_with                 "convolve-with"
 #define S_copy_context                  "copy-context"
+#define S_copy_mix                      "copy-mix"
+#define S_copy_track                    "copy-track"
 #define S_count_matches                 "count-matches"
 #define S_current_edit_position         "current-edit-position"
 #define S_current_font                  "current-font"

@@ -1,5 +1,6 @@
 Snd change log
 
+  4-Nov:     copy-mix, copy-track.
   31-Oct:    removed 'snd' arg to make-track-sample-reader.
   30-Oct:    added Kjetil S. Matheussen's snd_conffile.scm.
   27-Oct:    removed notion of a selected mix (selected-mix, selected-mix-color, select-mix, select-mix-hook).

@@ -31,14 +31,14 @@ enum {menu_menu,
           v_combine_menu, v_combine_cascade_menu,
             v_combine_separate_menu, v_combine_combined_menu, v_combine_superimposed_menu,
           v_color_menu, v_orientation_menu, 
-          v_files_menu, v_mix_panel_menu,
+          v_files_menu, v_mix_panel_menu, v_track_panel_menu,
           v_x_axis_menu, v_x_axis_cascade_menu,
             v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu,
           v_error_history_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 102
+#define NUM_MENU_WIDGETS 103
 static Widget mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
@@ -72,6 +72,7 @@ Widget edit_header_menu(void) {return(mw[e_header_menu]);}
 
 Widget view_equalize_panes_menu(void) {return(mw[v_equalize_panes_menu]);}
 Widget view_mix_panel_menu(void) {return(mw[v_mix_panel_menu]);}
+Widget view_track_panel_menu(void) {return(mw[v_track_panel_menu]);}
 Widget view_region_menu(void) {return(mw[v_region_menu]);}
 Widget view_combine_separate_menu(void) {return(mw[v_combine_separate_menu]);}
 Widget view_combine_combined_menu(void) {return(mw[v_combine_combined_menu]);}
@@ -187,6 +188,7 @@ static void view_lollipops_callback(Widget w, XtPointer info, XtPointer context)
 static void view_listener_callback(Widget w, XtPointer info, XtPointer context) {handle_listener((listener_height() < 5));}
 #endif
 static void view_mix_panel_callback(Widget w, XtPointer info, XtPointer context) {make_mix_panel();}
+static void view_track_panel_callback(Widget w, XtPointer info, XtPointer context) {make_track_panel();}
 static void view_error_history_callback(Widget w, XtPointer info, XtPointer context) {show_snd_errors();}
 static void view_zero_callback(Widget w, XtPointer info, XtPointer context){set_show_y_zero((!(show_y_zero(ss))));}
 static void view_cursor_callback(Widget w, XtPointer info, XtPointer context){set_verbose_cursor((!(verbose_cursor(ss))));}
@@ -462,8 +464,11 @@ Widget add_menu(void)
   XtVaSetValues(mw[v_listener_menu], XmNmnemonic, 'L', NULL);
 #endif
 
-  mw[v_mix_panel_menu] = XtCreateManagedWidget(_("Mix Panel"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
+  mw[v_mix_panel_menu] = XtCreateManagedWidget(_("Mixes"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
   XtAddCallback(mw[v_mix_panel_menu], XmNactivateCallback, view_mix_panel_callback, NULL);
+
+  mw[v_track_panel_menu] = XtCreateManagedWidget(_("Tracks"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
+  XtAddCallback(mw[v_track_panel_menu], XmNactivateCallback, view_track_panel_callback, NULL);
 
   mw[v_region_menu] = XtCreateManagedWidget(_("Regions"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
   XtAddCallback(mw[v_region_menu], XmNactivateCallback, view_region_callback_1, NULL);

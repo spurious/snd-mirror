@@ -81,6 +81,7 @@ int edit_find_menu(void) {return(0);}
 int edit_select_all_menu(void) {return(0);}
 int edit_header_menu(void) {return(0);}
 int view_mix_panel_menu(void) {return(0);}
+int view_track_panel_menu(void) {return(0);}
 int view_region_menu(void) {return(0);}
 int view_combine_separate_menu(void) {return(0);}
 int view_combine_combined_menu(void) {return(0);}
@@ -293,6 +294,7 @@ int max_transform_type(void) {return(19);}
 void reflect_mix_in_mix_panel(int mix_id) {}
 void reflect_no_mix_in_mix_panel(void) {}
 int make_mix_panel(void) {return(0);}
+int make_track_panel(void) {return(0);}
 bool mix_play_stopped(void) {return(false);}
 void reflect_mix_play_stop(void) {}
 void set_mix_color(int color) {}

@@ -1,16 +1,5 @@
 #include "snd.h"
 
-/* TODO: view:track-panel dialog to automate track edits (tempo slider)
- * TODO: pan choices with linear, sinusoidal, exponential envs
- * TODO: synchronization across mixes ("snap")
- * SOMEDAY: (clone)copy_mix|track
- * SOMEDAY: choice of y-style (i.e. split out tracks vertically -- track all at same height)
- * SOMEDAY: timing grid
- */
-
-/* TODO: if mix-waveform-height 50 top of mix waveform can be pushed off top of graph */
-/* TODO: first and last samples of mix-peak-amp-waveform don't cancel */
-
 typedef struct {
   int chans;
   Float *scalers;
@@ -43,7 +32,7 @@ typedef struct {
   int current_state;
   file_delete_t temporary;     /* in-filename was written by us and needs to be deleted when mix state is deleted */
   snd_info *add_snd;           /* readable snd_info struct for mix input */
-  int id, x, nx, y, track, tagx, tagy, tag_y, height; 
+  int id, x, nx, y, track, tagx, tagy, tag_y, height, orig_chan; 
                                /* tag_y only for user set mix_tag_y */
   env **panel_envs;            /* mix panel version of current amp envs */
 } mix_info;
@@ -1014,6 +1003,7 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, char *fu
   cs = make_mix_state(input_chans, cp->edit_ctr, beg, beg + num - 1);
   md->active_mix_state = make_mix_state(input_chans, cp->edit_ctr, beg, beg + num - 1);
   md->states[0] = cs;
+  md->orig_chan = chan;
   if (chan < input_chans)
     cs->scalers[chan] = 1.0;
   cs->speed = 1.0;
@@ -3169,6 +3159,7 @@ Float mix_amp_from_id(int mix_id, int chan)
   return(0.0);
 }
 
+/* TODO: if mix-track and track-amp-env, need global fixup if bounds change after mix-speed set */
 static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 {
   mix_info *md;
@@ -3236,6 +3227,7 @@ int mix_track_from_id(int mix_id)
   return(0);
 }
 
+/* TODO: if mix-track and track-amp-env, need global fixup if bounds change after mix-position set */
 int set_mix_position(int mix_id, off_t val)
 {
   mix_info *md;
@@ -3923,7 +3915,7 @@ track-id is the track value for each newly created mix."
 			     file,
 			     C_TO_XEN_STRING("chans <= 0"),
 			     C_TO_XEN_INT(chans)));
-      file_channel = XEN_TO_C_INT(file_chn);
+      file_channel = XEN_TO_C_INT_OR_ELSE(file_chn, 0);
       if (file_channel >= chans)
 	XEN_ERROR(NO_SUCH_CHANNEL,
 		  XEN_LIST_3(C_TO_XEN_STRING(S_mix),
@@ -4887,15 +4879,13 @@ static track_list **tracks;
 static int tracks_size = 0;
 static int track_ctr = 0; /* 0 is the no-track indication */
 
-#define INVALID_TRACK -1
-
 static int plausible_track(void)
 {
   int i;
   for (i = 1; i < track_ctr; i++)
     if (track_p(i))
       return(i);
-  return(INVALID_TRACK);
+  return(INVALID_TRACK_ID);
 }
 
 static int xen_to_c_track(XEN id, const char *origin)
@@ -5834,10 +5824,10 @@ static bool found_track_amp_env(int trk)
 {
   while (track_p(trk))
     {
-      if (active_track_amp_env(trk)) return(TRUE);
+      if (active_track_amp_env(trk)) return(true);
       trk = active_track_track(trk);      
     }
-  return(FALSE);
+  return(false);
 }
 
 static void set_track_position_1(mix_info *md, void *val)
@@ -5935,7 +5925,7 @@ static void reset_frames(mix_info *md, void *val)
 	  if (cs->beg < tr->beg)
 	    tr->beg = cs->beg;
 	  if ((cs->beg + (cs->len * tr->speed)) > tr->end)
-	    tr->end = cs->beg + (cs->len * tr->speed);
+	    tr->end = cs->beg + (off_t)(cs->len * tr->speed);
 	}
     }
 }
@@ -5957,7 +5947,7 @@ static void set_track_speed(int id, Float speed)
 	  beg = track_position(id, -1);
 	  change = active_track_speed(id) / speed;
 	  tr = (track_reset_position_t *)CALLOC(1, sizeof(track_reset_position_t));
-	  tr->id = INVALID_TRACK;
+	  tr->id = INVALID_TRACK_ID;
 	  tr->speed = change;
 	  tr->beg = beg;
 	  tr->end = beg + track_frames(id, -1);
@@ -6036,37 +6026,28 @@ static void set_mix_track(mix_info *md, int trk, bool redisplay)
       ((trk == 0) || (track_p(trk))))
     {
       md->track = trk;
+      /* TODO: set color? if 0 pickup global else pickup track */
       remix_file(md, S_setB S_mix_track, redisplay); 
       /* TODO: set-mix-track if track-amp-env (either pre or post) may force fixups */
     }
 }
 
-static XEN g_make_track(XEN ids)
+static int make_track(int *mixes, int len)
 {
-  #define H_make_track "(" S_make_track "mix-ids...) returns a new track containing the mixes passed as its argument"
-  int track_id, mix_id, len;
+  int track_id, mix_id, k;
   mix_info *md;
-  XEN lst;
   int *edpos = NULL;
   chan_info **cps = NULL;
-  for (lst = XEN_COPY_ARG(ids); XEN_NOT_NULL_P(lst); lst = XEN_CDR(lst))
-    if ((!(XEN_INTEGER_P(XEN_CAR(lst)))) ||
-	(!(mix_ok(XEN_TO_C_INT(XEN_CAR(lst))))))
-      XEN_ERROR(NO_SUCH_MIX,
-		XEN_LIST_3(C_TO_XEN_STRING(S_make_track),
-			   XEN_CAR(lst),
-			   ids));
   track_id = new_track();
-  len = XEN_LIST_LENGTH(ids);
   if (len > 0)
     {
       bool got_that_one = false;
       int ctr = 0, i;
       edpos = (int *)CALLOC(len, sizeof(int));
       cps = (chan_info **)CALLOC(len, sizeof(chan_info *));
-      for (lst = XEN_COPY_ARG(ids); XEN_NOT_NULL_P(lst); lst = XEN_CDR(lst))
+      for (k = 0; k < len; k++)
 	{
-	  mix_id = XEN_TO_C_INT(XEN_CAR(lst));
+	  mix_id = mixes[k];
 	  md = md_from_id(mix_id);
 	  got_that_one = false;
 	  for (i = 0; i < ctr; i++)
@@ -6100,7 +6081,33 @@ static XEN g_make_track(XEN ids)
       if (edpos) FREE(edpos);
       if (cps) FREE(cps);
     }
-  return(C_TO_XEN_INT(track_id));
+  return(track_id);
+}
+
+static XEN g_make_track(XEN ids)
+{
+  #define H_make_track "(" S_make_track "mix-ids...) returns a new track containing the mixes passed as its argument"
+  int i, len = 0, track_id;
+  XEN lst;
+  int *mixes = NULL;
+  for (lst = XEN_COPY_ARG(ids); XEN_NOT_NULL_P(lst); lst = XEN_CDR(lst))
+    if ((!(XEN_INTEGER_P(XEN_CAR(lst)))) ||
+	(!(mix_ok(XEN_TO_C_INT(XEN_CAR(lst))))))
+      XEN_ERROR(NO_SUCH_MIX,
+		XEN_LIST_3(C_TO_XEN_STRING(S_make_track),
+			   XEN_CAR(lst),
+			   ids));
+  len = XEN_LIST_LENGTH(ids);
+  if (len > 0)
+    {
+      mixes = (int *)CALLOC(len, sizeof(int));
+      for (i = 0, lst = XEN_COPY_ARG(ids); XEN_NOT_NULL_P(lst); lst = XEN_CDR(lst), i++)
+	mixes[i] = XEN_TO_C_INT(XEN_CAR(lst));
+    }
+  /* null arg is ok here -- just open track for later mix adds */
+  track_id = make_track(mixes, len);
+  if (mixes) FREE(mixes);
+  return(xen_return_first(C_TO_XEN_INT(track_id), ids));
 }
 
 static int unset_track(mix_info *md, void *ptr)
@@ -6345,6 +6352,119 @@ void update_track_lists(chan_info *cp, int top_ctr)
     }
 }
 
+static int copy_mix(int id, off_t beg)
+{
+  int new_id = INVALID_MIX_ID, edpos, i;
+  mix_info *md, *new_md;
+  mix_state *cs, *old_cs;
+  chan_info *cp;
+  md = md_from_id(id);
+  if (md)
+    {
+      cp = md->cp;
+      new_md = file_mix_samples(beg, md->in_samps, md->in_filename, cp, md->orig_chan,
+				(md->temporary == DELETE_ME) ? MULTICHANNEL_DELETION : DONT_DELETE_ME,
+				S_copy_mix, true, 0, false);
+      if (md->temporary == DELETE_ME) md->temporary = MULTICHANNEL_DELETION;
+      edpos = cp->edit_ctr;
+      new_id = new_md->id;
+      new_md->track = 0;
+      new_md->anchor = md->anchor;
+      if (md->current_state > 0)
+	{
+	  old_cs = md->states[md->current_state];
+	  cs = new_md->active_mix_state;
+	  for (i = 0; i < cs->chans; i++) 
+	    cs->scalers[i] = old_cs->scalers[i];
+	  cs->speed = old_cs->speed;
+	  if (old_cs->amp_envs)
+	    {
+	      cs->amp_envs = (env **)CALLOC(old_cs->chans, sizeof(env *));
+	      for (i = 0; i < old_cs->chans; i++) 
+		cs->amp_envs[i] = copy_env(old_cs->amp_envs[i]);
+	    }
+	  else cs->amp_envs = NULL;
+	  cs->len = old_cs->len;
+	  reflect_mix_in_mix_panel(new_id);
+	  remix_file(new_md, S_copy_mix, true);
+	  while (cp->edit_ctr > edpos) backup_edit_list(cp);
+	  backup_mix_list(cp, edpos); /* needed if track exists and imposes changes on mixed-in data */
+	}
+    }
+  return(new_id);
+}
+
+static int copy_track(int id, off_t beg)
+{
+  int new_id = INVALID_TRACK_ID;
+  track_state *ts;
+  /* remember possible embedded tracks which will also need to be copied */
+  /* so... copy each mix individually and save ids + backpointers,                      -> copy_mix + bkptr array
+   *   copy each local track, embedding corresponding mixes, then setting all fields    -> make_track + settings + its track
+   *   copy top track, its track=0, set all 2nd level tracks to it,                     -> make_track + settings (assuming previous track->track)
+   *   backup all edits to 1+ original and reset origin                                 -> backup_edit_list etc
+   */
+  new_id = make_track(NULL, 0);
+
+  /*
+    all this if (amp != 1.0) || (speed != 1.0) || (amp_env)
+      ts= copy_track_state(old_ts, true)
+      ts = extend_track_list(id, false);
+      ts->amp = old_ts->amp;
+      ts->speed = old_ts->speed;
+      ts->track = 0;
+      ts->amp_env = copy_env(old_ts->amp_env);
+      ts->color = old_ts->color;
+      static void copy_track_1(mix_info *md, void *val){remix_file(md, S_copy_track, false);}
+      remix_track(id, copy_track_1, NULL);
+    then
+      set_track_position(id, beg);
+      backup lists
+  */
+
+  /* TODO: implement/test copy_track */
+  return(new_id);
+}
+
+static XEN g_copy_mix(XEN id, XEN beg)
+{
+  #define H_copy_mix "(" S_copy_mix " mix-id (beg mix-beg)) copies the given mix, placing \
+the copy at 'beg' which defaults to the copied mix's position."
+
+  int new_id, old_id;
+  off_t pos;
+  mix_state *cs; 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ARG_1, S_copy_mix, "int");
+  ASSERT_SAMPLE_TYPE(S_copy_mix, beg, 2);
+  old_id = XEN_TO_C_INT(id);
+  cs = cs_from_id(old_id);
+  if (cs == NULL)
+    return(snd_no_such_mix_error(S_copy_mix, id));
+  pos = XEN_TO_C_OFF_T_OR_ELSE(beg, cs->beg);
+  new_id = copy_mix(old_id, pos);
+  return(C_TO_XEN_INT(new_id));
+}
+
+static XEN g_copy_track(XEN id, XEN beg)
+{
+  #define H_copy_track "(" S_copy_track " track-id (beg track-beg)) copies the given track, placing \
+the copy at 'beg' which defaults to the copied track's position."
+
+  int new_id, old_id;
+  off_t old_pos, pos;
+  new_id = xen_to_c_track_no_default(id, S_copy_track);
+  ASSERT_SAMPLE_TYPE(S_copy_mix, beg, 2);
+  old_id = XEN_TO_C_INT(id);
+  if (!(track_p(old_id)))
+    XEN_ERROR(NO_SUCH_TRACK,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_copy_mix),
+			 id));
+  old_pos = track_position(old_id, -1);
+  pos = XEN_TO_C_OFF_T_OR_ELSE(beg, old_pos);
+  new_id = copy_track(old_id, pos);
+  return(C_TO_XEN_INT(new_id));
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_3(g_make_track_sample_reader_w, g_make_track_sample_reader)
 XEN_NARGIFY_1(g_next_track_sample_w, g_next_track_sample)
@@ -6373,6 +6493,8 @@ XEN_ARGIFY_2(g_track_frames_w, g_track_frames)
 XEN_ARGIFY_1(g_delete_track_w, g_delete_track)
 XEN_ARGIFY_1(g_lock_track_w, g_lock_track)
 XEN_VARGIFY(g_make_track_w, g_make_track)
+XEN_ARGIFY_2(g_copy_mix_w, g_copy_mix)
+XEN_ARGIFY_2(g_copy_track_w, g_copy_track)
 #else
 #define g_make_track_sample_reader_w g_make_track_sample_reader
 #define g_next_track_sample_w g_next_track_sample
@@ -6401,6 +6523,8 @@ XEN_VARGIFY(g_make_track_w, g_make_track)
 #define g_delete_track_w g_delete_track
 #define g_lock_track_w g_lock_track
 #define g_make_track_w g_make_track
+#define g_copy_mix_w g_copy_mix
+#define g_copy_track_w g_copy_track
 #endif
 
 void g_init_track(void)
@@ -6440,9 +6564,20 @@ void g_init_track(void)
   XEN_DEFINE_PROCEDURE(S_make_track,   g_make_track_w,   0, 0, 1, H_make_track);  
   XEN_DEFINE_PROCEDURE(S_track_p,      g_track_p_w,      1, 0, 0, H_track_p);
   XEN_DEFINE_PROCEDURE(S_track_chans,  g_track_chans_w,  1, 0, 0, H_track_chans);
+  XEN_DEFINE_PROCEDURE(S_copy_mix,     g_copy_mix_w,     1, 1, 0, H_copy_mix);
+  XEN_DEFINE_PROCEDURE(S_copy_track,   g_copy_track_w,   1, 1, 0, H_copy_track);
 }
 
-/* how to save-state here? -- mixes are not currently saved, but the track states could be
-   dlp/mix-menu etc
+/* SOMEDAY: how to save-(mix|track)-state? -- mixes are not currently saved, but the track states could be
+   TODO: check dlp/mix-menu etc
    TODO: test lock-track and make it work with undo/redo somehow (similarly for mix-locked?)
+   TODO: if set mix-track, check amp-env if bounds change
+   TODO: view:track-panel dialog to automate track edits (tempo slider)
+   TODO: pan choices with linear, sinusoidal, exponential envs
+   TODO: synchronization across mixes ("snap")
+   SOMEDAY: choice of y-style (i.e. split out tracks vertically -- track all at same height)
+   SOMEDAY: timing grid
+   TODO: if mix-waveform-height 50 top of mix waveform can be pushed off top of graph
+   TODO: first and last samples of mix-peak-amp-waveform don't cancel
+   TODO: change mix process to use amp=0 as "previous", then just one reader elsewhere
 */

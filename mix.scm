@@ -11,12 +11,8 @@
 ;;; (snap-mix-to-beat (at-anchor)) forces dragged mix to end up on a beat
 ;;; (delete-all-mixes) removes all mixes
 ;;; (find-mix sample snd chn) returns the id of the mix at the given sample, or #f
-;;; TODO: (save-mix mix filename)
-;;; TODO: (clone-mix mix new-beg snd chn) or (copy-mix...) -- the distinction being that "clone" saves state, copy makes a new (initial) state
-;;;       would be nice here to use same temp file (with tempfile_ctr snd-io.c) = md->in_filename always (no arrays for tagged mixes)
-;;; TODO: add mix-file-name (parallel file-name)
-;;;       snd-mix 375 multichannel_deletion already an option, so we could just change md->temporary 
-;;; TODO: (clone-track track new-beg) or (copy-track...)
+;;; (save-mix mix filename) saves mix data in file filename
+;;; (mix-maxamp id) maxamp of mix
 ;;;
 ;;; (track->vct track) place track data in vct
 ;;; (save-track track filename) save track data in file
@@ -27,6 +23,7 @@
 ;;;
 ;;; (transpose-track track semitones) transposes each mix in track  by semitones
 ;;; (retempo-track track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)
+;;; (track-maxamp id) maxamp of track
 ;;;
 ;;; mix-property associates a property list with a mix
 ;;; track-property associates a property list with a track
@@ -195,6 +192,13 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 	(free-mix-sample-reader reader)
 	v)
       (throw 'no-such-mix (list "mix->vct" id))))
+
+(define (save-mix id filename)
+  "(save-mix id filename) saves mix data (as floats) in file filename"
+  (let ((v (mix->vct id))
+	(fd (open-sound-file filename 1 (srate) "")))
+    (vct->sound-file fd v (vct-length v))
+    (close-sound-file fd (* 4 (vct-length v)))))
 
 (define (mix-maxamp id)
   (if (mix? id)

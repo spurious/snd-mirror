@@ -1,7 +1,7 @@
 #include "snd.h"
 
 static GtkWidget *mix_panel = NULL;
-static bool dragging = false;
+static bool mix_panel_slider_dragging = false;
 static void update_mix_panel(int mix_id);
 static int mix_panel_id = INVALID_MIX_ID;
 
@@ -21,7 +21,7 @@ static void change_mix_speed(int mix_id, Float val)
 				      speed_number_buffer,
 				      cp->sound->speed_control_style,
 				      cp->sound->speed_control_tones),
-			dragging);
+			mix_panel_slider_dragging);
   gtk_label_set_text(GTK_LABEL(w_speed_number), speed_number_buffer);
 }
 
@@ -46,8 +46,8 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
 		      speed_number_buffer,
 		      sp->speed_control_style,
 		      sp->speed_control_tones);
-  if (!dragging) start_mix_panel_slider_drag(mix_id);
-  dragging = true;
+  if (!mix_panel_slider_dragging) start_mix_panel_slider_drag(mix_id);
+  mix_panel_slider_dragging = true;
   change_mix_speed(mix_id, val);
   gtk_label_set_text(GTK_LABEL(w_speed_number), speed_number_buffer);
 }
@@ -65,7 +65,7 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
 		      speed_number_buffer,
 		      sp->speed_control_style,
 		      sp->speed_control_tones);
-  dragging = false;
+  mix_panel_slider_dragging = false;
   change_mix_speed(mix_id, val);
   return(false);
 }
@@ -97,7 +97,7 @@ static void change_mix_amp(int mix_id, int chan, Float val)
   char *sfs;
   chan_info *cp;
   cp = mix_channel_from_id(mix_id);
-  set_mix_amp_from_id(mix_id, chan, val, dragging);
+  set_mix_amp_from_id(mix_id, chan, val, mix_panel_slider_dragging);
   sfs = prettyf(val, 2);
   fill_number(sfs, amp_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_amp_numbers[chan]), amp_number_buffer);
@@ -139,8 +139,8 @@ static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
   Float scrollval;
   chan = get_user_int_data(G_OBJECT(adj));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
-  if (!dragging) start_mix_panel_slider_drag(mix_panel_id);
-  dragging = true;
+  if (!mix_panel_slider_dragging) start_mix_panel_slider_drag(mix_panel_id);
+  mix_panel_slider_dragging = true;
   change_mix_amp(mix_panel_id, chan, scroll_to_amp(scrollval));
 }
 
@@ -150,7 +150,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   Float scrollval;
   chan = get_user_int_data(G_OBJECT(w));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
-  dragging = false;
+  mix_panel_slider_dragging = false;
   change_mix_amp(mix_panel_id, chan, scroll_to_amp(scrollval));
   return(false);
 }
@@ -461,7 +461,7 @@ GtkWidget *make_mix_panel(void)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_mix_panel), NULL, 0),
 				     0);
-      gtk_window_set_title(GTK_WINDOW(mix_panel), _("Mix Panel"));
+      gtk_window_set_title(GTK_WINDOW(mix_panel), _("Mixes"));
       sg_make_resizable(mix_panel);
       gtk_container_set_border_width (GTK_CONTAINER(mix_panel), 6);
       gtk_widget_realize(mix_panel);
@@ -871,7 +871,13 @@ void reflect_no_mix_in_mix_panel(void)
 static XEN g_set_mix_panel_mix(XEN val)
 {
   mix_panel_id = XEN_TO_C_INT(val);
+  update_mix_panel(mix_panel_id);
   return(val);
+}
+
+GtkWidget *make_track_panel(void)
+{
+  return(NULL);
 }
 
 #ifdef XEN_ARGIFY_1
@@ -884,3 +890,4 @@ void g_init_gxmix(void)
 {
   XEN_DEFINE_PROCEDURE("set-mix-panel-mix", g_set_mix_panel_mix_w, 1, 0, 0, "internal testing func");
 }
+

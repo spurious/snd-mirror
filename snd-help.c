@@ -375,6 +375,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+4-Nov:   copy-mix, copy-track.\n\
 31-Oct:  removed 'snd' arg to make-track-sample-reader.\n\
 30-Oct:  added Kjetil S. Matheussen's snd_conffile.scm.\n\
 27-Oct:  removed notion of a selected mix (selected-mix, selected-mix-color,\n\
@@ -398,9 +399,6 @@ void about_snd_help(void)
 24-Sep:  snd 6.12.\n\
 22-Sep:  env.rb, spectr.rb, and spectr.scm thanks to Michael Scholz.\n\
 19-Sep:  clm-ins.rb thanks to Michael Scholz.\n\
-         removed menu-hook.\n\
-18-Sep:  info-dialog.\n\
-17-Sep:  removed finder.scm, changed index.scm|rb to use snd-xref.c tables.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

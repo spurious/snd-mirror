@@ -30,14 +30,14 @@ enum {menu_menu,
           v_combine_menu, v_combine_cascade_menu,
             v_combine_separate_menu, v_combine_combined_menu, v_combine_superimposed_menu,
           v_color_menu, v_orientation_menu, 
-          v_files_menu, v_mix_panel_menu,
+          v_files_menu, v_mix_panel_menu, v_track_panel_menu,
           v_x_axis_menu, v_x_axis_cascade_menu,
             v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu,
           v_error_history_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 101
+#define NUM_MENU_WIDGETS 102
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 static const char *ml[NUM_MENU_WIDGETS];
 
@@ -72,6 +72,7 @@ GtkWidget *edit_select_all_menu(void) {return(mw[e_select_all_menu]);}
 GtkWidget *edit_header_menu(void) {return(mw[e_header_menu]);}
 
 GtkWidget *view_mix_panel_menu(void) {return(mw[v_mix_panel_menu]);}
+GtkWidget *view_track_panel_menu(void) {return(mw[v_track_panel_menu]);}
 GtkWidget *view_region_menu(void) {return(mw[v_region_menu]);}
 GtkWidget *view_combine_separate_menu(void) {return(mw[v_combine_separate_menu]);}
 GtkWidget *view_combine_combined_menu(void) {return(mw[v_combine_combined_menu]);}
@@ -198,6 +199,7 @@ static void view_listener_callback(GtkWidget *w, gpointer info)
 #endif
 
 static void view_mix_panel_callback(GtkWidget *w, gpointer info) {make_mix_panel();}
+static void view_track_panel_callback(GtkWidget *w, gpointer info) {make_track_panel();}
 static void view_error_history_callback(GtkWidget *w, gpointer info) {show_snd_errors();}
 static void view_region_callback_1(GtkWidget *w, gpointer info) {view_region_callback(w, info);}
 static void view_orientation_callback_1(GtkWidget *w, gpointer info) {view_orientation_callback(w, info);}
@@ -590,8 +592,8 @@ GtkWidget *add_menu(void)
 				 0);
 #endif
 
-  mw[v_mix_panel_menu] = gtk_menu_item_new_with_label(_("Mix Panel"));
-  ml[v_mix_panel_menu] = _("Mix Panel");
+  mw[v_mix_panel_menu] = gtk_menu_item_new_with_label(_("Mixes"));
+  ml[v_mix_panel_menu] = _("Mixes");
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_cascade_menu]), mw[v_mix_panel_menu]);
   gtk_widget_show(mw[v_mix_panel_menu]);
   g_signal_connect_closure_by_id(GTK_OBJECT(mw[v_mix_panel_menu]),
@@ -600,6 +602,17 @@ GtkWidget *add_menu(void)
 				 g_cclosure_new(GTK_SIGNAL_FUNC(view_mix_panel_callback), NULL, 0),
 				 0);
   set_sensitive(mw[v_mix_panel_menu], false);
+
+  mw[v_track_panel_menu] = gtk_menu_item_new_with_label(_("Tracks"));
+  ml[v_track_panel_menu] = _("Tracks");
+  gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_cascade_menu]), mw[v_track_panel_menu]);
+  gtk_widget_show(mw[v_track_panel_menu]);
+  g_signal_connect_closure_by_id(GTK_OBJECT(mw[v_track_panel_menu]),
+				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(mw[v_track_panel_menu]))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(view_track_panel_callback), NULL, 0),
+				 0);
+  set_sensitive(mw[v_track_panel_menu], false);
 
   mw[v_region_menu] = gtk_menu_item_new_with_label(_("Regions"));
   ml[v_region_menu] = _("Regions");
