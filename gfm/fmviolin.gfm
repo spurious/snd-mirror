@@ -1,0 +1,1796 @@
+#! /usr/bin/env gforth-fast
+\ fmviolin.gfm -- CLM fmviolin.clm -*- forth -*-
+
+\ Copyright (C) 2004--2005 Michael Scholz
+
+\ Author: Michael Scholz <scholz-micha@gmx.de>
+\ Created: Mon Dec 06 17:23:22 CET 2004
+\ Last: Thu Jan 13 17:17:34 CET 2005
+\ Ident: $Id: fmviolin.gfm,v 1.22 2005/01/13 16:17:53 mike Exp $
+
+\ This file is part of GFM Gforth Music.
+
+\ This program is free software; you can redistribute it and/or
+\ modify it under the terms of the GNU General Public License as
+\ published by the Free Software Foundation; either version 2 of
+\ the License, or (at your option) any later version.
+
+\ This program is distributed in the hope that it will be
+\ useful, but WITHOUT ANY WARRANTY; without even the implied
+\ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+\ PURPOSE.  See the GNU General Public License for more details.
+
+\ You should have received a copy of the GNU General Public
+\ License along with this program; if not, write to the Free
+\ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+\ MA 02111-1307 USA
+
+\ Commentary:
+
+\ A translation from Lisp into Gforth of Bill Schottstaedt's
+\ clm-3/fmviolin.clm.
+
+\ short-example
+\ long-example
+
+\ Code:
+
+0 assert-level !
+
+true value *fmviolin-debug*
+
+: finish ( -- ) *fmviolin-debug* if f.s .s cr then bye ;
+
+require utils.fs
+
+: (fmviolin-help) ( -- )
+    ." Usage: " argv @ 1 cells + @ $c>string file-basename .string ."  [ options ]" cr
+    ."	   -c, --csndlib	       use csndlib.fs (default)" cr
+    ."	   -f, --fsndlib	       use fsndlib.fs" cr
+    ."	   -d, --dac		       write to dac" cr
+    cr
+    ."	   -l, --long         	       computes long example" cr
+    ."	   -r, --short	               computes short example (defaul)" cr
+    cr
+    ."	   -V, --version	       display version information and exit" cr
+    ."	   -h, --help		       display this help message and exit" cr
+;
+' (fmviolin-help) is str-help
+
+script? [unless] cr [then]
+require gfm.fs
+.sndversion
+
+*clm-use-csndlib* [if]
+    *clm-search-list* $" c-fmv.snd"    $+ to *clm-file-name*
+    *clm-search-list* $" c-fmv.reverb" $+ to *clm-reverb-file-name*
+[else]
+    *clm-search-list* $" f-fmv.snd"    $+ to *clm-file-name*
+    *clm-search-list* $" f-fmv.reverb" $+ to *clm-reverb-file-name*
+[then]
+
+false value *fmviolin-long-example*
+
+array[ $" -l" $" --long" ]  opt-bool getopts [if] true  to *fmviolin-long-example* [then]
+array[ $" -r" $" --short" ] opt-bool getopts [if] false to *fmviolin-long-example* [then]
+
+true   	              to *clm-play*
+true   	              to *clm-statistics*
+true   	              to *clm-verbose*
+nil    	              to *clm-notehook*
+22050  	              to *clm-srate*
+2      	              to *clm-channels*
+2                     to *clm-reverb-channels*
+true                  to *clm-delete-reverb*
+mus-interp-sinusoidal to *clm-locsig-type*
+
+*clm-use-csndlib* [if]
+    ' freeverb to *clm-reverb*
+    :room-decay 0.8e freeverb-args to *clm-reverb-data*
+[else]
+    ' jc-reverb to *clm-reverb*
+    :amp-env vct[ 0e 0e 25e 1e 75e 1e 100e 0e ] jc-reverb-args to *clm-reverb-data*
+[then]
+
+1.0e                                   fvalue fmv-fm-index                   
+vct[ 0e 0e 25e 1e 75e 1e 100e 0e ]      value fmv-amp-env                    
+5e				       fvalue fmv-periodic-vibrato-rate      
+0.0025e				       fvalue fmv-periodic-vibrato-amp
+16e				       fvalue fmv-random-vibrato-rate        
+0.005e				       fvalue fmv-random-vibrato-amp
+1000e				       fvalue fmv-noise-freq                 
+0e				       fvalue fmv-noise-amount               
+10e				       fvalue fmv-ind-noise-freq             
+0e				       fvalue fmv-ind-noise-amount           
+20e				       fvalue fmv-amp-noise-freq             
+0e				       fvalue fmv-amp-noise-amount           
+vct[ 0e 0e 100e 0e ]		        value fmv-gliss-env                  
+0e				       fvalue fmv-glissando-amount           
+vct[ 0e 1e 25e 0.4e 75e 0.6e 100e 0e ]  value fmv-fm1-env                    
+vct[ 0e 1e 25e 0.4e 75e 0.6e 100e 0e ]  value fmv-fm2-env                    
+vct[ 0e 1e 25e 0.4e 75e 0.6e 100e 0e ]  value fmv-fm3-env                    
+1e				       fvalue fmv-fm1-rat                    
+3e				       fvalue fmv-fm2-rat                    
+4e				       fvalue fmv-fm3-rat                    
+0e				       fvalue fmv-fm1-index                  
+0e				       fvalue fmv-fm2-index                  
+0e				       fvalue fmv-fm3-index                  
+0e				       fvalue fmv-base                       
+0.01e				       fvalue fmv-reverb-amount              
+0e				       fvalue fmv-degree                     
+1e				       fvalue fmv-distance                   
+:violin				        value fmv-index-type                 
+false                                   value fmv-no-waveshaping
+
+: restore-fm-violin-defaults ( -- )
+    1.0e                                   fto fmv-fm-index                   
+    vct[ 0e 0e 25e 1e 75e 1e 100e 0e ]      to fmv-amp-env                    
+    5e				           fto fmv-periodic-vibrato-rate      
+    0.0025e				   fto fmv-periodic-vibrato-amp
+    16e				           fto fmv-random-vibrato-rate        
+    0.005e				   fto fmv-random-vibrato-amp
+    1000e				   fto fmv-noise-freq                 
+    0e				       	   fto fmv-noise-amount               
+    10e				       	   fto fmv-ind-noise-freq             
+    0e				       	   fto fmv-ind-noise-amount           
+    20e				       	   fto fmv-amp-noise-freq             
+    0e				       	   fto fmv-amp-noise-amount           
+    vct[ 0e 0e 100e 0e ]		    to fmv-gliss-env                  
+    0e				           fto fmv-glissando-amount           
+    vct[ 0e 1e 25e 0.4e 75e 0.6e 100e 0e ]  to fmv-fm1-env                    
+    vct[ 0e 1e 25e 0.4e 75e 0.6e 100e 0e ]  to fmv-fm2-env                    
+    vct[ 0e 1e 25e 0.4e 75e 0.6e 100e 0e ]  to fmv-fm3-env                    
+    1e				       	   fto fmv-fm1-rat                    
+    3e				       	   fto fmv-fm2-rat                    
+    4e				       	   fto fmv-fm3-rat                    
+    0e				       	   fto fmv-fm1-index                  
+    0e				       	   fto fmv-fm2-index                  
+    0e				       	   fto fmv-fm3-index                  
+    0e				       	   fto fmv-base                       
+    0e				           fto fmv-degree                     
+    1e				           fto fmv-distance                   
+    0.01e				   fto fmv-reverb-amount              
+    :violin				    to fmv-index-type                 
+    false                                   to fmv-no-waveshaping
+;
+
+: old-fm-violin ( start dur freq amp keyword-args -- args )
+    make-hash { args }
+    fmv-fm-index              :fm-index              args set-fargs
+    fmv-amp-env               :amp-env               args set-args 
+    fmv-periodic-vibrato-rate :periodic-vibrato-rate args set-fargs
+    fmv-periodic-vibrato-amp  :periodic-vibrato-amp  args set-fargs
+    fmv-random-vibrato-rate   :random-vibrato-rate   args set-fargs
+    fmv-random-vibrato-amp    :random-vibrato-amp    args set-fargs
+    fmv-noise-freq            :noise-freq            args set-fargs
+    fmv-noise-amount          :noise-amount          args set-fargs
+    fmv-ind-noise-freq        :ind-noise-freq        args set-fargs
+    fmv-ind-noise-amount      :ind-noise-amount      args set-fargs
+    fmv-amp-noise-freq        :amp-noise-freq        args set-fargs
+    fmv-amp-noise-amount      :amp-noise-amount      args set-fargs
+    fmv-gliss-env             :gliss-env             args set-args 
+    fmv-glissando-amount      :gliss-amount          args set-fargs
+    fmv-fm1-env               :fm1-env               args set-args 
+    fmv-fm2-env               :fm2-env               args set-args 
+    fmv-fm3-env               :fm3-env               args set-args 
+    fmv-fm1-rat               :fm1-rat               args set-fargs
+    fmv-fm2-rat               :fm2-rat               args set-fargs
+    fmv-fm3-rat               :fm3-rat               args set-fargs
+    fmv-fm1-index             :fm1-index             args set-fargs
+    fmv-fm2-index             :fm2-index             args set-fargs
+    fmv-fm3-index             :fm3-index             args set-fargs
+    fmv-base                  :base                  args set-fargs
+    fmv-degree                :degree                args set-fargs
+    fmv-distance              :distance              args set-fargs
+    fmv-reverb-amount         :reverb-amount         args set-fargs
+    fmv-index-type            :index-type            args set-args 
+    fmv-no-waveshaping        :no-waveshaping        args set-args 
+    args
+;
+
+instrument: vln-one-sin ( start dur freq amp keyword-args -- )
+    old-fm-violin { args }
+    { f: start f: dur f: freq f: amp }
+    90e random :locsig-degree
+    :noise-amount 0e args fhash!
+    start dur freq amp 0.125e f* args main-fm-violin
+;instrument
+
+instrument: vln-one-sin-ran ( start dur freq amp keyword-args -- )
+    old-fm-violin { args }
+    { f: start f: dur f: freq f: amp }
+    :degree 90e random args fhash!
+    start dur freq amp 0.125e f* args main-fm-violin
+;instrument
+
+instrument: vln-one-sin-exp ( start dur freq amp keyword-args -- )
+    :base 0.03125e vln-one-sin
+;instrument
+
+instrument: cel-one-sum ( start dur freq amp keyword-args -- )
+    old-fm-violin { args }
+    { f: start f: dur f: freq f: amp }
+    :degree 90e random args fhash!
+    :index-type :cello args hash!
+    start dur freq amp 0.125e f* args main-fm-violin
+;instrument
+
+instrument: fm-violin-new ( start dur freq amp keyword-args -- )
+    1e   :fm-index      get-fargs { f: fm-index }
+    nil  :amp-env       get-args  { amp-env }
+    0.2e :reverb-amount get-fargs { f: rev-amt }
+    old-fm-violin { args }
+    { f: start f: dur f: freq f: amp }
+    amp-env if
+	false
+    else
+	:amp-env vct[ 0e 0e 221e 1e 240e 0e ] args hash!
+	true
+    then { del-amp }
+    freq 400e f> if
+	0.02e 1e random f* 0.99e f+
+    else
+	freq 200e f> if
+	    0.01e 1e random f* 0.995e f+
+	else
+	    0.002e 1e random f* 0.999e f+
+	then
+    then freq f* to freq
+    6 0 do
+	:reverb-amount rev-amt args fhash!
+	:fm-index fm-index 1e random 0.75e f+ f* args fhash!
+
+	1e random 0.05e f* i s>f f* start f+
+	1e random 0.1e f* i s>f f* dur f+
+	freq amp args main-fm-violin
+    loop
+    del-amp if amp-env gen-free then
+;instrument
+
+event: short-example ( -- )
+    vct[ 0e -1e 5e 0.25e 10e 0e 100e 0.1e ] { skwfrq }
+    vct[ 0e 0e 221e 1e 240e 0e ] { amp-env }
+    12e    fto fmv-random-vibrato-rate
+    0.01e  fto fmv-random-vibrato-amp
+    skwfrq  to fmv-gliss-env
+    0.01e  fto fmv-glissando-amount
+    0.002e fto fmv-noise-amount
+
+    0e 8.53e 993.323e 0.03e
+    :fm-index 0.75e :reverb-amount 0.2e :amp-env amp-env fm-violin-new
+
+    5e 4.53e 5e 6e f/ 993.323e f* 0.02e
+    :fm-index 0.55e :reverb-amount 0.2e :amp-env amp-env fm-violin-new
+
+    amp-env gen-free
+    skwfrq gen-free
+;event
+
+variable *test-counter*
+variable *test-timer*
+
+*verbose* [if]
+    : test-info ( time -- )
+	1 *test-counter* +!
+	*test-timer* @ stop-timer
+	." \ " *test-counter* @ 2 u.r
+	." :   score " ( time ) f>s 3 u.r
+	."    utime " *test-timer* @ user-time@ 8 3 uf.r cr
+    ;
+[else]
+    : test-info ( time -- ) fdrop ;
+[then]
+
+event: long-example ( -- )
+    vct[ 0e 0e 1e 1e 99e 1e 100e 0e ] { tap }
+    vct[ 0e 0e 0.5e 1e 5e 1e 10e 0.5e 15e 0.25e 35e 0.1e 100e 0e ] { metalamp }
+    vct[ 0e 0e 75e 0.1e 90e 0.3e 97e 0.6e 100e 1e ] { whoosh }
+    vct[ 0e 0e 50e 1e 100e 0e ] { mamp }
+    vct[ 0e 0e 65e 1e 100e 0e ] { n-amp }
+    0e { f: beg }
+
+    0 *test-counter* !
+    make-timer *test-timer* !
+
+    restore-fm-violin-defaults
+    beg test-info
+
+    \ 1, score 0
+    0e fto fmv-glissando-amount
+    0.1e fto fmv-reverb-amount
+    metalamp to fmv-amp-env
+    6.718e fto fmv-fm1-rat
+    4.414e fto fmv-fm2-rat
+    5.141e fto fmv-fm3-rat
+    beg 0.0000e f+ 1.6e 164.5868e 0.16e   :fm-index 2.1087e vln-one-sin
+    beg 0.0003e f+ 4e   164.5868e 0.2600e :fm-index 1.5488e vln-one-sin
+    beg 0.0005e f+ 1.2e 125.9513e 0.2600e :fm-index 2.2999e vln-one-sin
+    beg 0.0005e f+ 2.8e 125.9513e 0.16e   :fm-index 1.6818e vln-one-sin
+    beg 0.0013e f+ 4e    24.4994e 0.3e    :fm-index 2.4557e vln-one-sin
+    beg 0.0033e f+ 3e    24.4994e 0.3e    :fm-index 1.9387e vln-one-sin
+    beg 0.0035e f+ 2.8e  24.4994e 0.2600e :fm-index 2.3828e vln-one-sin
+    beg 0.0040e f+ 0.8e  24.4994e 0.16e   :fm-index 1.7348e vln-one-sin
+    beg 0.0043e f+ 4e    24.4994e 0.3e    :fm-index 2.0886e vln-one-sin
+
+    beg 6e f+ fdup to beg test-info
+
+    \ 2, score 6
+    2.718e fto fmv-fm1-rat
+    4.414e fto fmv-fm2-rat
+    3.141e fto fmv-fm3-rat
+    beg 0.0003e f+ 1.2e  88.8854e 0.16e   :fm-index 2.0711e vln-one-sin
+    beg 0.0003e f+ 4e    88.8854e 0.2600e :fm-index 2.0225e vln-one-sin
+    beg 0.0005e f+ 1.2e 102.7186e 0.2600e :fm-index 1.9300e vln-one-sin
+    beg 0.0010e f+ 1.2e  32.7025e 0.3600e :fm-index 1.9269e vln-one-sin
+    beg 0.0015e f+ 2.8e  32.7025e 0.2600e :fm-index 2.2153e vln-one-sin
+    beg 0.0023e f+ 2e    32.7025e 0.2600e :fm-index 2.1968e vln-one-sin
+    beg 0.0023e f+ 4e    32.7025e 0.3600e :fm-index 1.6091e vln-one-sin
+    beg 0.0025e f+ 2e    32.7025e 0.2600e :fm-index 2.1766e vln-one-sin
+    beg 0.0035e f+ 1.2e  32.7025e 0.16e   :fm-index 1.5157e vln-one-sin
+    beg 0.0040e f+ 0.8e  32.7025e 0.16e   :fm-index 1.8092e vln-one-sin
+    beg 0.0043e f+ 2e    32.7025e 0.2600e :fm-index 1.6198e vln-one-sin
+
+    beg 6e f+ fdup to beg test-info
+
+    \ 3, score 12
+    0.2e   fto fmv-reverb-amount
+    5.141e fto fmv-fm3-rat
+    beg 0.0003e f+ 1.2e 177.7708e 0.3e  :fm-index 1.9631e vln-one-sin
+    beg 0.0003e f+ 4e   177.7708e 0.3e  :fm-index 1.9647e vln-one-sin
+    beg 0.0005e f+ 2.8e 336.2471e 0.16e :fm-index 2.3977e vln-one-sin
+    beg 0.0008e f+ 1.2e 336.2471e 0.25e :fm-index 2.4103e vln-one-sin
+    beg 0.0010e f+ 2e    65.4050e 0.3e  :fm-index 1.8419e vln-one-sin
+    beg 0.0033e f+ 2e    65.4050e 0.3e  :fm-index 2.4540e vln-one-sin
+    beg 0.0043e f+ 4e    65.4050e 0.16e :fm-index 2.2909e vln-one-sin
+
+    beg 6e f+ fdup to beg test-info
+
+    \ 4, score 18
+    0.1e fto fmv-reverb-amount
+    beg 0.0003e f+ 1.2e 11.1107e 0.3e  :fm-index 1.8715e vln-one-sin
+    beg 0.0003e f+ 4e   11.1107e 0.3e  :fm-index 2.4590e vln-one-sin
+    beg 0.0005e f+ 2.8e 21.0154e 0.16e :fm-index 2.3802e vln-one-sin
+    beg 0.0008e f+ 1.2e 21.0154e 0.25e :fm-index 1.7564e vln-one-sin
+    beg 0.0010e f+ 2e    4.0878e 0.3e  :fm-index 2.2529e vln-one-sin
+    beg 0.0033e f+ 2e    4.0878e 0.3e  :fm-index 1.9693e vln-one-sin
+    beg 0.0043e f+ 4e    4.0878e 0.16e :fm-index 2.2534e vln-one-sin
+
+    beg 6e f+ fdup to beg test-info
+
+    \ 5, score 24
+    restore-fm-violin-defaults
+    0.1e fto fmv-noise-amount
+    beg 0.0000e f+ 5.4e 116.5400e 0.25e :fm-index 2.2822e :reverb-amount 0.0280e
+    :amp-env vct[ 0e 0e 0.0556e 1e 4.0937e 0.6e 9.1414e 0.3e 24.2845e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.0100e f+ 5.4e  43.6538e 0.25e :fm-index 2.0867e :reverb-amount 0.0202e
+    :amp-env vct[ 0e 0e 0.0556e 1e 4.0937e 0.6e 9.1414e 0.3e 24.2845e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.0200e f+ 5.4e 130.8100e 0.25e :fm-index 1.9652e :reverb-amount 0.0270e
+    :amp-env vct[ 0e 0e 0.0556e 1e 4.0937e 0.6e 9.1414e 0.3e 24.2845e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.0250e f+ 5.4e  87.3075e 0.25e :fm-index 2.1524e :reverb-amount 0.0260e
+    :amp-env vct[ 0e 0e 0.0556e 1e 4.0937e 0.6e 9.1414e 0.3e 24.2845e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.0300e f+ 4.5e 261.6200e 0.15e :fm-index 2.1384e :reverb-amount 0.0242e
+    :amp-env vct[ 0e 0e 0.0667e 1e 4.1044e 0.6e 9.1515e 0.3e 24.2929e 0.1e 100e 0e ]
+    vln-one-sin-ran
+    beg 0.0300e f+ 4.5e 174.6150e 0.15e :fm-index 2.1425e :reverb-amount 0.0265e
+    :amp-env vct[ 0e 0e 0.0667e 1e 4.1044e 0.6e 9.1515e 0.3e 24.2929e 0.1e 100e 0e ]
+    vln-one-sin-ran
+    beg 0.0300e f+ 4.5e 130.8100e 0.15e :fm-index 1.9805e :reverb-amount 0.0201e
+    :amp-env vct[ 0e 0e 0.0667e 1e 4.1044e 0.6e 9.1515e 0.3e 24.2929e 0.1e 100e 0e ] 
+    vln-one-sin-ran
+    beg 0.0350e f+ 4.5e  43.6538e 0.15e :fm-index 2.4876e :reverb-amount 0.0329e
+    :amp-env vct[ 0e 0e 0.0667e 1e 4.1044e 0.6e 9.1515e 0.3e 24.2929e 0.1e 100e 0e ]
+    vln-one-sin-ran
+    beg 0.0400e f+ 3.6e 220e      0.15e :fm-index 1.8282e :reverb-amount 0.0244e
+    :amp-env vct[ 0e 0e 0.0833e 1e 4.1204e 0.6e 9.1667e 0.3e 24.3056e 0.1e 100.0e 0e ]
+    :noise-amount 0.15e vln-one-sin-ran
+    beg 0.0400e f+ 3.6e 174.6150e 0.15e :fm-index 2.3479e :reverb-amount 0.0200e
+    :amp-env vct[ 0e 0e 0.0833e 1e 4.1204e 0.6e 9.1667e 0.3e 24.3056e 0.1e 100.0e 0e ]
+    :noise-amount 0.15e vln-one-sin-ran
+    beg 0.0400e f+ 3.6e 523.2400e 0.15e :fm-index 1.6424e :reverb-amount 0.0286e
+    :amp-env vct[ 0e 0e 0.0833e 1e 4.1204e 0.6e 9.1667e 0.3e 24.3056e 0.1e 100.0e 0e ]
+    :noise-amount 0.15e vln-one-sin-ran
+    beg 0.0450e f+ 3.6e 349.2300e 0.15e :fm-index 1.6449e :reverb-amount 0.0333e
+    :amp-env vct[ 0e 0e 0.0833e 1e 4.1204e 0.6e 9.1667e 0.3e 24.3056e 0.1e 100.0e 0e ]
+    :noise-amount 0.15e vln-one-sin-ran
+    beg 0.0500e f+ 6e   699.4600e 0.15e :fm-index 1.5570e :reverb-amount 0.1300e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0500e f+ 6e  1397.9200e 0.15e :fm-index 1.5131e :reverb-amount 0.1300e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0500e f+ 6e   783.9800e 0.15e :fm-index 2.2031e :reverb-amount 0.1300e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0500e f+ 6e  1046.4800e 0.15e :fm-index 2.2724e :reverb-amount 0.1300e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0600e f+ 9e    21.8269e 0.15e :fm-index 2.1048e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0600e f+ 8e    87.3075e 0.15e :fm-index 1.8854e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0600e f+ 7e    65.4050e 0.15e :fm-index 1.6781e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0600e f+ 8e    43.6538e 0.15e :fm-index 1.7862e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0700e f+ 6e   175.6150e 0.15e :fm-index 2.2656e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0700e f+ 6e   350.2300e 0.15e :fm-index 2.4241e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0700e f+ 6e   131.8100e 0.15e :fm-index 2.4294e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0700e f+ 6e    32.7025e 0.15e :fm-index 1.5779e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0800e f+ 6e   196.9950e 0.15e :fm-index 1.8511e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0800e f+ 6e  1047.4800e 0.15e :fm-index 2.2148e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0800e f+ 6e   831.6200e 0.15e :fm-index 1.9913e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.0800e f+ 6e  2793.8400e 0.15e :fm-index 2.2607e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.2700e f+ 6e   784.9800e 0.16e :fm-index 2.0693e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.2700e f+ 6e    64.4050e 0.16e :fm-index 1.6920e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.2700e f+ 6e   208.6550e 0.16e :fm-index 2.2597e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+    beg 0.2700e f+ 6e    43.6538e 0.16e :fm-index 2.2522e :reverb-amount 0.1e :amp-env tap
+    vln-one-sin-ran
+
+    beg 12e f+ fdup to beg test-info
+
+    \ 6, score 36
+    restore-fm-violin-defaults
+    beg 0.0000e f+ 1.8e 349.2300e 0.16e :fm-index 2.1541e :reverb-amount 0.0225e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0500e vln-one-sin-ran
+    beg 0.0100e f+ 2.7e 146.8300e 0.16e :fm-index 2.3335e :reverb-amount 0.0274e
+    :amp-env vct[ 0e 0e 0.1111e 1e 4.1470e 0.6e 9.1919e 0.3e 24.3266e 0.1e 100.0e 0e ]
+    :noise-amount 0.0500e vln-one-sin-ran
+    beg 0.0200e f+ 1.8e 880e      0.16e :fm-index 2.1910e :reverb-amount 0.0279e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0500e vln-one-sin-ran
+    beg 0.0250e f+ 3.6e  73.4150e 0.16e :fm-index 2.1410e :reverb-amount 0.0223e
+    :amp-env vct[ 0e 0e 0.0833e 1e 4.1204e 0.6e 9.1667e 0.3e 24.3056e 0.1e 100.0e 0e ]
+    :noise-amount 0.0500e vln-one-sin-ran
+    beg 0.0300e f+ 2.7e  87.3075e 0.16e :fm-index 1.8491e :reverb-amount 0.0217e
+    :amp-env vct[ 0e 0e 0.1111e 1e 4.1470e 0.6e 9.1919e 0.3e 24.3266e 0.1e 100.0e 0e ]
+    :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0300e f+ 2.7e  75.5662e 0.16e :fm-index 1.9191e :reverb-amount 0.0204e
+    :amp-env vct[ 0e 0e 0.1111e 1e 4.1470e 0.6e 9.1919e 0.3e 24.3266e 0.1e 100.0e 0e ]
+    :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0400e f+ 3.6e  52.3432e 0.16e :fm-index 1.6090e :reverb-amount 0.0296e
+    :amp-env vct[ 0e 0e 0.0833e 1e 4.1204e 0.6e 9.1667e 0.3e 24.3056e 0.1e 100.0e 0e ]
+    :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0450e f+ 1.8e  73.4150e 0.16e :fm-index 2.2201e :reverb-amount 0.0221e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0500e f+ 4e   116.5400e 0.06e :fm-index 2.0230e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0500e f+ 4e    97.9975e 0.06e :fm-index 1.7284e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0600e f+ 4e    36.7075e 0.06e :fm-index 1.6845e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0650e f+ 4e    97.9975e 0.06e :fm-index 2.4616e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0010e vln-one-sin-ran
+
+    beg 7e f+ fdup to beg test-info
+
+    \ 7, score 43
+    beg 0.0000e f+ 1.8e 261.6200e 0.16e :fm-index 2.2576e :reverb-amount 0.0286e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0100e f+ 2.7e 130.8100e 0.16e :fm-index 2.1530e :reverb-amount 0.0330e
+    :amp-env vct[ 0e 0e 0.1111e 1e 4.1470e 0.6e 9.1919e 0.3e 24.3266e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0200e f+ 1.8e 523.2400e 0.16e :fm-index 2.0608e :reverb-amount 0.0235e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0250e f+ 3.6e  65.4050e 0.16e :fm-index 2.2203e :reverb-amount 0.0234e
+    :amp-env vct[ 0e 0e 0.0833e 1e 4.1204e 0.6e 9.1667e 0.3e 24.3056e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0300e f+ 2.7e  65.4050e 0.16e :fm-index 1.7089e :reverb-amount 0.0208e
+    :amp-env vct[ 0e 0e 0.1111e 1e 4.1470e 0.6e 9.1919e 0.3e 24.3266e 0.1e 100.0e 0e ]
+    :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0300e f+ 2.7e 130.8100e 0.16e :fm-index 2.2948e :reverb-amount 0.0269e
+    :amp-env vct[ 0e 0e 0.1111e 1e 4.1470e 0.6e 9.1919e 0.3e 24.3266e 0.1e 100.0e 0e ]
+    :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0400e f+ 3.6e  32.7025e 0.16e :fm-index 1.7677e :reverb-amount 0.0288e
+    :amp-env vct[ 0e 0e 0.0833e 1e 4.1204e 0.6e 9.1667e 0.3e 24.3056e 0.1e 100.0e 0e ]
+    :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0450e f+ 1.8e  32.7025e 0.16e :fm-index 1.9030e :reverb-amount 0.0209e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0500e f+ 4e    65.4050e 0.06e :fm-index 2.2757e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0500e f+ 4e    65.4050e 0.06e :fm-index 2.2435e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0600e f+ 4e    32.7025e 0.06e :fm-index 1.9619e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0010e vln-one-sin-ran
+    beg 0.0650e f+ 4e    65.4050e 0.06e :fm-index 2.0207e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0010e vln-one-sin-ran
+
+    beg 6e f+ fdup to beg test-info
+
+    \ 8, score 49
+    beg 0.0100e f+ 0.9e  3135.9200e 0.16e :fm-index 2.1204e :reverb-amount 0.0024e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0100e f+ 0.45e 1567.96e   0.16e :fm-index 2.0691e :reverb-amount 0.0025e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0200e f+ 0.9e  6271.8400e 0.16e :fm-index 2.2081e :reverb-amount 0.0022e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0250e f+ 0.9e   783.9800e 0.16e :fm-index 1.8719e :reverb-amount 0.0022e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0300e f+ 0.27e  783.9800e 0.16e :fm-index 1.9705e :reverb-amount 0.0020e
+    :amp-env vct[ 0e 0e 1.1111e 1e 5.1066e 0.6e 10.1010e 0.3e 25.0842e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0300e f+ 0.63e 1567.96e   0.16e :fm-index 1.6778e :reverb-amount 0.0021e
+    :amp-env vct[ 0e 0e 0.4762e 1e 4.4974e 0.6e 9.5238e 0.3e 24.6032e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0400e f+ 0.9e   391.9900e 0.16e :fm-index 1.9558e :reverb-amount 0.0023e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0450e f+ 0.45e  195.9950e 0.16e :fm-index 2.1344e :reverb-amount 0.0027e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0500e f+ 2e     783.9800e 0.16e :reverb-amount 0.0100e :amp-env tap
+    :noise-amount 0.0090e vln-one-sin-ran 
+    beg 0.0500e f+ 1e    1567.9600e 0.16e :reverb-amount 0.0100e :amp-env tap
+    :noise-amount 0.0090e vln-one-sin-ran
+    beg 0.0600e f+ 2e     391.9900e 0.16e :reverb-amount 0.0100e :amp-env tap
+    :noise-amount 0.0090e vln-one-sin-ran
+    beg 0.0650e f+ 1e     783.9800e 0.16e :reverb-amount 0.0100e :amp-env tap
+    :noise-amount 0.0090e vln-one-sin-ran
+    beg 0.0700e f+ 2e     195.9950e 0.16e :reverb-amount 0.0100e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0700e f+ 1e    1567.9600e 0.16e :reverb-amount 0.0100e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0800e f+ 1e     784.9800e 0.16e :reverb-amount 0.0100e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0850e f+ 2e     391.9900e 0.16e :reverb-amount 0.0100e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+
+    beg 6e f+ fdup to beg test-info
+
+    \ 9, score 55
+    beg 0.0100e f+ 0.9e  97.9975e 0.1e :fm-index 2.0885e :reverb-amount 0.0031e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0100e f+ 1.8e  48.9988e 0.1e :fm-index 2.2269e :reverb-amount 0.0026e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0200e f+ 0.9e 195.9950e 0.1e :fm-index 2.0305e :reverb-amount 0.0032e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0250e f+ 0.9e  24.4994e 0.1e :fm-index 2.4934e :reverb-amount 0.0025e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0300e f+ 1.8e  97.9975e 0.1e :fm-index 2.4039e :reverb-amount 0.0023e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0400e vln-one-sin-ran
+    beg 0.0300e f+ 0.9e 195.9950e 0.1e :fm-index 1.5159e :reverb-amount 0.0021e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0400e vln-one-sin-ran
+    beg 0.0300e f+ 0.9e 392.9900e 0.1e :fm-index 2.2122e :reverb-amount 0.0028e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0400e vln-one-sin-ran
+    beg 0.0300e f+ 1.8e 784.9800e 0.1e :fm-index 2.1574e :reverb-amount 0.0020e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0400e vln-one-sin-ran
+    beg 0.0300e f+ 2.7e  24.4994e 0.1e :fm-index 2.1963e :reverb-amount 0.0031e
+    :amp-env vct[ 0e 0e 0.1111e 1e 4.1470e 0.6e 9.1919e 0.3e 24.3266e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0300e f+ 1.8e  48.9988e 0.1e :fm-index 1.9761e :reverb-amount 0.0032e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0400e f+ 2.7e  12.2497e 0.1e :fm-index 1.5088e :reverb-amount 0.0021e
+    :amp-env vct[ 0e 0e 0.1111e 1e 4.1470e 0.6e 9.1919e 0.3e 24.3266e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0450e f+ 1.8e   6.1248e 0.1e :fm-index 1.7384e :reverb-amount 0.0021e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0500e f+ 2e    24.4994e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0500e f+ 1e    48.9988e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0600e f+ 2e    12.2497e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0650e f+ 1e    24.4994e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0700e f+ 2e     6.1248e 0.1e :fm-index 1.2474e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0700e f+ 1e    48.9988e 0.1e :fm-index 0.7526e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0800e f+ 1e    25.4994e 0.1e :fm-index 1.1080e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0850e f+ 2e    12.2497e 0.1e :fm-index 1.0859e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0900e f+ 4e    97.9975e 0.1e :fm-index 2.4788e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0900e f+ 3e    48.9988e 0.1e :fm-index 1.8980e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0900e f+ 3e    25.4994e 0.1e :fm-index 2.1151e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0950e f+ 5e    12.2497e 0.1e :fm-index 2.3224e :reverb-amount 0.1e
+    :amp-env tap :noise-amount 0.0040e vln-one-sin-ran
+
+    beg 6e f+ fdup to beg test-info
+
+    \ 10, score 61
+    beg 0.2100e f+ 0.9e 123.4725e 0.1e :reverb-amount 0.0031e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.2100e f+ 1.8e  61.7363e 0.1e :reverb-amount 0.0023e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.2200e f+ 0.9e 246.9450e 0.1e :reverb-amount 0.0023e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.2250e f+ 0.9e  30.8681e 0.1e :reverb-amount 0.0026e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.2300e f+ 1.8e 123.4725e 0.1e :reverb-amount 0.0027e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0400e vln-one-sin-ran
+    beg 0.2300e f+ 0.9e 246.9450e 0.1e :reverb-amount 0.0026e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0400e vln-one-sin-ran
+    beg 0.2300e f+ 0.9e 494.8900e 0.1e :reverb-amount 0.0020e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0400e vln-one-sin-ran
+    beg 0.2300e f+ 1.8e 988.7800e 0.1e :reverb-amount 0.0025e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0400e vln-one-sin-ran
+    beg 0.2300e f+ 2.7e  30.8681e 0.1e :reverb-amount 0.0028e
+    :amp-env vct[ 0e 0e 0.1111e 1e 4.1470e 0.6e 9.1919e 0.3e 24.3266e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.2300e f+ 1.8e  61.7363e 0.1e :reverb-amount 0.0023e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.2400e f+ 2.7e  15.4341e 0.1e :reverb-amount 0.0030e
+    :amp-env vct[ 0e 0e 0.1111e 1e 4.1470e 0.6e 9.1919e 0.3e 24.3266e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.2450e f+ 1.8e  20.5788e 0.1e :reverb-amount 0.0023e
+    :amp-env vct[ 0e 0e 0.1667e 1e 4.2003e 0.6e 9.2424e 0.3e 24.3687e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.2500e f+ 2e 30.8681e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0090e vln-one-sin-ran
+    beg 0.2500e f+ 1e 61.7363e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0090e vln-one-sin-ran
+    beg 0.2600e f+ 2e 15.4341e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0090e  vln-one-sin-ran
+    beg 0.2650e f+ 1e 30.8681e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0090e vln-one-sin-ran
+    beg 0.2710e f+ 2e 30.8681e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.2710e f+ 1e 61.7363e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.2810e f+ 1e 31.8681e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.2860e f+ 2e 15.4341e 0.1e :reverb-amount 0.1e :amp-env tap
+    :noise-amount 0.0040e vln-one-sin-ran
+
+    beg 8e f+ fdup to beg test-info
+
+    \ 11, score 69
+    vct[ 0e 0e 1e 1e 100e 0e ] { yup }
+    beg 0.0100e f+ 0.9e  3135.9200e 0.16e :fm-index 1.7299e :reverb-amount 0.0026e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0100e f+ 0.45e 1464.6987e 0.16e :fm-index 1.9173e :reverb-amount 0.0027e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0200e f+ 0.9e  6714.0048e 0.16e :fm-index 2.4604e :reverb-amount 0.0032e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0250e f+ 0.9e   684.1190e 0.16e :fm-index 1.9969e :reverb-amount 0.0021e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0300e f+ 0.27e  684.1190e 0.16e :fm-index 2.0022e :reverb-amount 0.0026e
+    :amp-env vct[ 0e 0e 1.1111e 1e 5.1066e 0.6e 10.1010e 0.3e 25.0842e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0300e f+ 0.63e 1464.6987e 0.16e :fm-index 2.1058e :reverb-amount 0.0027e
+    :amp-env vct[ 0e 0e 0.4762e 1e 4.4974e 0.6e 9.5238e 0.3e 24.6032e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0400e f+ 0.9e   319.5325e 0.16e :fm-index 2.2293e :reverb-amount 0.0029e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0450e f+ 0.45e  149.2445e 0.16e :fm-index 1.5780e :reverb-amount 0.0025e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0500e f+ 1e     684.1190e 0.16e :reverb-amount 0.0100e :amp-env yup
+    :noise-amount 0.0090e vln-one-sin-ran
+    beg 0.0500e f+ 1e    1464.6987e 0.16e :reverb-amount 0.0100e :amp-env yup
+    :noise-amount 0.0090e vln-one-sin-ran
+    beg 0.0600e f+ 1e     319.5325e 0.16e :reverb-amount 0.0100e :amp-env yup
+    :noise-amount 0.0090e vln-one-sin-ran
+    beg 0.0650e f+ 1e     684.1190e 0.16e :reverb-amount 0.0100e :amp-env yup
+    :noise-amount 0.0090e vln-one-sin-ran
+    beg 0.0700e f+ 1e     149.2445e 0.16e :reverb-amount 0.0100e :amp-env yup
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0700e f+ 1e    1464.6987e 0.16e :reverb-amount 0.0100e :amp-env yup
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0800e f+ 1e     561.6022e 0.16e :reverb-amount 0.0100e :amp-env yup
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.0850e f+ 1e     319.5325e 0.16e :reverb-amount 0.0100e :amp-env yup
+    :noise-amount 0.0040e vln-one-sin-ran
+
+    beg 3e f+ fdup to beg test-info
+
+    \ 12, score 72
+    beg 0.0100e f+ 0.9e 3135.9200e 0.16e :fm-index 1.6329e :reverb-amount 0.0031e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0100e f+ 0.45e 1810.5774e 0.16e :fm-index 1.8298e :reverb-amount 0.0031e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0200e f+ 0.9e 5431.4135e 0.16e :fm-index 2.1640e :reverb-amount 0.0022e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0250e f+ 0.9e 1045.3680e 0.16e :fm-index 1.6971e :reverb-amount 0.0032e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0300e f+ 0.27e 1045.3680e 0.16e :fm-index 2.4855e :reverb-amount 0.0028e
+    :amp-env vct[ 0e 0e 1.1111e 1e 5.1066e 0.6e 10.1010e 0.3e 25.0842e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0300e f+ 0.63e 1810.5774e 0.16e :fm-index 2.1604e :reverb-amount 0.0020e
+    :amp-env vct[ 0e 0e 0.4762e 1e 4.4974e 0.6e 9.5238e 0.3e 24.6032e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0400e f+ 0.9e 603.5612e 0.16e :fm-index 2.4204e :reverb-amount 0.0031e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0450e f+ 0.4500e 348.4765e 0.16e :fm-index 2.3918e :reverb-amount 0.0026e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0460e f+ 0.9e 201.1989e 0.16e :fm-index 1.5205e :reverb-amount 0.0024e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0460e f+ 0.9e 116.1656e 0.16e :fm-index 2.3049e :reverb-amount 0.0028e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0500e f+ 0.9e 3135.9200e 0.16e :fm-index 2.4363e :reverb-amount 0.0021e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0500e f+ 0.45e 1464.6987e 0.16e :fm-index 2.3865e :reverb-amount 0.0027e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0600e f+ 0.9e 6714.0048e 0.16e :fm-index 1.7354e :reverb-amount 0.0021e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0650e f+ 0.9e 684.1190e 0.16e :fm-index 1.8282e :reverb-amount 0.0025e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0700e f+ 0.2700e 684.1190e 0.16e :fm-index 2.3923e :reverb-amount 0.0025e
+    :amp-env vct[ 0e 0e 1.1111e 1e 5.1066e 0.6e 10.1010e 0.3e 25.0842e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0700e f+ 0.63e 1464.6987e 0.16e :fm-index 2.2789e :reverb-amount 0.0028e
+    :amp-env vct[ 0e 0e 0.4762e 1e 4.4974e 0.6e 9.5238e 0.3e 24.6032e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0800e f+ 0.9e 319.5325e 0.16e :fm-index 1.5438e :reverb-amount 0.0027e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0850e f+ 0.4500e 149.2445e 0.16e :fm-index 2.4210e :reverb-amount 0.0028e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0860e f+ 0.9e 69.7078e 0.16e :fm-index 2.0288e :reverb-amount 0.0029e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+    beg 0.0860e f+ 0.9e 32.5585e 0.16e :fm-index 1.8254e :reverb-amount 0.0028e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    :noise-amount 0.0100e vln-one-sin-ran
+
+    beg 3e f+ fdup to beg test-info
+
+    \ 13, score 75
+    0e    fto fmv-reverb-amount
+    0.01e fto fmv-noise-amount
+    beg 0.0500e f+ 0.9e  3135.9200e 0.16e :fm-index 1.7334e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.0500e f+ 0.45e 1810.5774e 0.16e :fm-index 2.3629e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    vln-one-sin-ran
+    beg 0.0600e f+ 0.9e  5431.4135e 0.16e :fm-index 2.2744e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.0650e f+ 0.9e  1045.3680e 0.16e :fm-index 1.8722e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.1100e f+ 0.27e 1045.3680e 0.16e :fm-index 2.3139e
+    :amp-env vct[ 0e 0e 1.1111e 1e 5.1066e 0.6e 10.101e 0.3e 25.0842e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.1100e f+ 0.63e 1810.5774e 0.16e :fm-index 1.6216e
+    :amp-env vct[ 0e 0e 0.4762e 1e 4.4974e 0.6e 9.5238e 0.3e 24.6032e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.1200e f+ 0.9e   603.5612e 0.16e :fm-index 1.5308e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.1650e f+ 0.45e  348.4765e 0.16e :fm-index 2.0346e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    vln-one-sin-ran
+    beg 0.1660e f+ 0.9e   201.1989e 0.16e :fm-index 1.8176e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.1660e f+ 0.9e   116.1656e 0.16e :fm-index 1.7145e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.1700e f+ 0.9e  3135.9200e 0.16e :fm-index 2.4459e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.1700e f+ 0.45e 1464.6987e 0.16e :fm-index 2.4644e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    vln-one-sin-ran
+    beg 0.1800e f+ 0.9e  6714.0048e 0.16e :fm-index 1.9985e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.1850e f+ 0.9e   684.1190e 0.16e :fm-index 2.4542e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.2900e f+ 0.27e  684.1190e 0.16e :fm-index 2.3391e
+    :amp-env vct[ 0e 0e 1.1111e 1e 5.1066e 0.6e 10.101e 0.3e 25.0842e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.2900e f+ 0.63e 1464.6987e 0.16e :fm-index 1.5138e
+    :amp-env vct[ 0e 0e 0.4762e 1e 4.4974e 0.6e 9.5238e 0.3e 24.6032e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.3e    f+ 0.9e   319.5325e 0.16e :fm-index 1.5440e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.3050e f+ 0.45e  149.2445e 0.16e :fm-index 2.2283e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]
+    vln-one-sin-ran
+    beg 0.3060e f+ 0.9e    69.7078e 0.16e :fm-index 1.9498e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+    beg 0.3060e f+ 0.9e    32.5585e 0.16e :fm-index 2.2943e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100.0e 0e ]
+    vln-one-sin-ran
+
+    beg 3e f+ fdup to beg test-info
+
+    \ 14, score 78
+    restore-fm-violin-defaults
+    metalamp to fmv-amp-env
+    0e     fto fmv-glissando-amount
+    0.01e  fto fmv-reverb-amount
+    2.718e fto fmv-fm1-rat
+    1.414e fto fmv-fm2-rat
+    3.141e fto fmv-fm3-rat
+    beg 0.2600e f+ 1.2e 355.5416e 0.16e :fm-index 2.0375e vln-one-sin
+    beg 0.2600e f+ 1.5e 354.8319e 0.16e :fm-index 1.8744e vln-one-sin
+    beg 0.2603e f+ 0.9e 356.2527e 0.16e :fm-index 1.8743e vln-one-sin
+    beg 0.2605e f+ 0.9e 409.2356e 0.16e :fm-index 2.0808e vln-one-sin
+    beg 0.2605e f+ 2.1e 410.0541e 0.16e :fm-index 1.9219e vln-one-sin
+    beg 0.2608e f+ 1.2e 130.8100e 0.16e :fm-index 1.5746e vln-one-sin
+    beg 0.2613e f+ 3e   130.2883e 0.16e :fm-index 2.3771e vln-one-sin
+    beg 0.2615e f+ 0.9e 130.2883e 0.16e :fm-index 1.7765e vln-one-sin
+    beg 0.2615e f+ 2.1e 130.5489e 0.26e :fm-index 1.6485e vln-one-sin
+    beg 0.2625e f+ 2e   130.8100e 0.16e :fm-index 2.1416e vln-one-sin
+    beg 0.2633e f+ 2e   130.5488e 0.16e :fm-index 2.0883e vln-one-sin
+
+    beg 4e f+ fdup to beg test-info
+
+    \ 15, score 82
+    vct[ 0e 0e 0.5e 1e 5e 1e 10e 0.5e 15e 0.25e 35e 0.1e 100e 0e ] to fmv-amp-env
+    0.0001e fto fmv-noise-amount
+    0.01e   fto fmv-reverb-amount
+    beg 0.2605e f+ 0.8e  523.2400e 0.16e :fm-index 2.3056e vln-one-sin-ran
+    beg 0.2605e f+ 1e    247.1611e 0.16e :fm-index 1.6308e vln-one-sin-ran
+    beg 0.2610e f+ 0.6e 1107.6991e 0.16e :fm-index 1.9364e vln-one-sin-ran
+    beg 0.2613e f+ 2e    116.7506e 0.16e :fm-index 2.3740e vln-one-sin-ran
+    beg 0.2615e f+ 0.6e  116.7506e 0.16e :fm-index 1.8374e vln-one-sin-ran
+    beg 0.2615e f+ 1.4e  247.1611e 0.16e :fm-index 1.7250e vln-one-sin-ran
+    beg 0.2620e f+ 0.6e   55.1491e 0.16e :fm-index 1.5495e vln-one-sin-ran
+    beg 0.2623e f+ 1e     26.0506e 0.16e :fm-index 1.7235e vln-one-sin-ran
+    beg 0.2623e f+ 2e     12.3054e 0.16e :fm-index 1.8818e vln-one-sin-ran
+    beg 0.2623e f+ 2e      5.8127e 0.16e :fm-index 1.9537e vln-one-sin-ran
+    beg 0.2625e f+ 2e    523.2400e 0.16e :fm-index 2.1593e vln-one-sin-ran
+    beg 0.2625e f+ 1e    256.2390e 0.16e :fm-index 1.9851e vln-one-sin-ran
+    beg 0.2630e f+ 2e   1068.4561e 0.16e :fm-index 1.8015e vln-one-sin-ran
+    beg 0.2633e f+ 2e    125.4843e 0.16e :fm-index 1.6161e vln-one-sin-ran
+    beg 0.2635e f+ 0.6e  125.4843e 0.16e :fm-index 2.2767e vln-one-sin-ran
+    beg 0.2635e f+ 1.4e  256.2390e 0.16e :fm-index 2.0835e vln-one-sin-ran
+    beg 0.2640e f+ 0.4e   61.4517e 0.16e :fm-index 1.5310e vln-one-sin-ran
+    beg 0.2643e f+ 1e     30.0939e 0.16e :fm-index 1.5803e vln-one-sin-ran
+    beg 0.2643e f+ 2e     14.7374e 0.16e :fm-index 1.9586e vln-one-sin-ran
+    beg 0.2643e f+ 2e      7.2172e 0.16e :fm-index 1.7270e vln-one-sin-ran
+    beg 0.2645e f+ 6e     28.4710e 0.16e :fm-index 1.5983e vln-one-sin-ran
+    beg 0.2648e f+ 10e    25.6239e 0.16e :fm-index 1.7285e vln-one-sin-ran
+    beg 0.2648e f+ 8e     21.3532e 0.16e :fm-index 1.7955e vln-one-sin-ran
+    beg 0.2648e f+ 8e     17.0826e 0.16e :fm-index 2.0866e vln-one-sin-ran
+
+    beg 4e f+ fdup to beg test-info
+
+    \ 16, score 86
+    0.001e fto fmv-reverb-amount
+    0.004e fto fmv-noise-amount
+    3.141e fto fmv-fm1-rat
+    1.414e fto fmv-fm2-rat
+    2.718e fto fmv-fm3-rat
+    beg 0.2600e f+ 1.6e 1643.4968e 0.16e :fm-index 2.1104e vln-one-sin-ran
+    beg 0.2600e f+ 2e   1643.4968e 0.16e :fm-index 1.5191e vln-one-sin-ran
+    beg 0.2603e f+ 1.2e 1643.4968e 0.16e :fm-index 2.0478e vln-one-sin-ran
+    beg 0.2603e f+ 4e   1643.4968e 0.16e :fm-index 2.0473e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 1422.1663e 0.16e :fm-index 1.9845e vln-one-sin-ran
+    beg 0.2605e f+ 2.8e 1422.1663e 0.16e :fm-index 2.0429e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 1422.1663e 0.16e :fm-index 1.6184e vln-one-sin-ran
+    beg 0.2608e f+ 1.6e  523.2400e 0.16e :fm-index 2.3908e vln-one-sin-ran
+    beg 0.2608e f+ 2e    523.2400e 0.16e :fm-index 1.6733e vln-one-sin-ran
+    beg 0.2610e f+ 1.2e  523.2400e 0.16e :fm-index 2.0431e vln-one-sin-ran
+    beg 0.2610e f+ 4e    523.2400e 0.16e :fm-index 1.7430e vln-one-sin-ran
+    beg 0.2613e f+ 1.2e  523.2400e 0.16e :fm-index 2.2030e vln-one-sin-ran
+    beg 0.2613e f+ 2.8e  523.2400e 0.16e :fm-index 2.0149e vln-one-sin-ran
+    beg 0.2615e f+ 1.2e  523.2400e 0.16e :fm-index 2.2310e vln-one-sin-ran
+    beg 0.2615e f+ 2e    523.2400e 0.16e :fm-index 2.1625e vln-one-sin-ran
+    beg 0.2618e f+ 4e    523.2400e 0.16e :fm-index 2.0000e vln-one-sin-ran
+    beg 0.2618e f+ 4e    523.2400e 0.16e :fm-index 2.2034e vln-one-sin-ran
+    beg 0.2620e f+ 3e    523.2400e 0.16e :fm-index 2.0186e vln-one-sin-ran
+    beg 0.2620e f+ 1.5e  523.2400e 0.16e :fm-index 2.1373e vln-one-sin-ran
+    beg 0.2623e f+ 3e    523.2400e 0.16e :fm-index 1.9046e vln-one-sin-ran
+    beg 0.2623e f+ 3e    523.2400e 0.16e :fm-index 2.1834e vln-one-sin-ran
+    beg 0.2625e f+ 1.2e  523.2400e 0.16e :fm-index 1.8266e vln-one-sin-ran
+    beg 0.2625e f+ 2.8e  523.2400e 0.16e :fm-index 1.5937e vln-one-sin-ran
+    beg 0.2628e f+ 0.8e  523.2400e 0.16e :fm-index 1.9762e vln-one-sin-ran
+    beg 0.2628e f+ 2e    523.2400e 0.16e :fm-index 1.8954e vln-one-sin-ran
+    beg 0.2630e f+ 4e    523.2400e 0.16e :fm-index 2.3302e vln-one-sin-ran
+    beg 0.2630e f+ 4e    523.2400e 0.16e :fm-index 2.4949e vln-one-sin-ran
+
+    beg 4e f+ fdup to beg test-info
+
+    \ 17, score 90
+    3.414e fto fmv-fm1-rat
+    1.414e fto fmv-fm2-rat
+    2.718e fto fmv-fm3-rat
+    beg 0.2600e f+ 1.6e 821.7484e 0.16e :fm-index 2.4793e vln-one-sin-ran
+    beg 0.2600e f+ 2e   821.7484e 0.16e :fm-index 2.4789e vln-one-sin-ran
+    beg 0.2603e f+ 1.2e 821.7484e 0.16e :fm-index 2.0827e vln-one-sin-ran
+    beg 0.2603e f+ 4e   821.7484e 0.16e :fm-index 2.4769e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 711.0832e 0.16e :fm-index 2.4094e vln-one-sin-ran
+    beg 0.2605e f+ 2.8e 711.0832e 0.16e :fm-index 2.4031e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 711.0832e 0.16e :fm-index 2.1428e vln-one-sin-ran
+    beg 0.2608e f+ 1.6e 261.6200e 0.16e :fm-index 2.3129e vln-one-sin-ran
+    beg 0.2608e f+ 2e   261.6200e 0.16e :fm-index 2.3488e vln-one-sin-ran
+    beg 0.2610e f+ 1.2e 261.6200e 0.16e :fm-index 2.1466e vln-one-sin-ran
+    beg 0.2610e f+ 4e   261.6200e 0.16e :fm-index 1.6938e vln-one-sin-ran
+    beg 0.2613e f+ 1.2e 261.6200e 0.16e :fm-index 2.1287e vln-one-sin-ran
+    beg 0.2613e f+ 2.8e 261.6200e 0.16e :fm-index 2.1917e vln-one-sin-ran
+    beg 0.2615e f+ 1.2e 261.6200e 0.16e :fm-index 2.3583e vln-one-sin-ran
+    beg 0.2615e f+ 2e   261.6200e 0.16e :fm-index 1.8368e vln-one-sin-ran
+    beg 0.2618e f+ 4e   261.6200e 0.16e :fm-index 1.5107e vln-one-sin-ran
+    beg 0.2618e f+ 4e   261.6200e 0.16e :fm-index 1.6218e vln-one-sin-ran
+    beg 0.2620e f+ 3e   261.6200e 0.16e :fm-index 1.9041e vln-one-sin-ran
+    beg 0.2620e f+ 1.5e 261.6200e 0.16e :fm-index 1.5748e vln-one-sin-ran
+    beg 0.2623e f+ 3e   261.6200e 0.16e :fm-index 1.9339e vln-one-sin-ran
+    beg 0.2623e f+ 3e   261.6200e 0.16e :fm-index 2.0489e vln-one-sin-ran
+    beg 0.2625e f+ 1.2e 261.6200e 0.16e :fm-index 2.0888e vln-one-sin-ran
+    beg 0.2625e f+ 2.8e 261.6200e 0.16e :fm-index 1.7306e vln-one-sin-ran
+    beg 0.2628e f+ 0.8e 261.6200e 0.16e :fm-index 2.3257e vln-one-sin-ran
+    beg 0.2628e f+ 2e   261.6200e 0.16e :fm-index 2.4755e vln-one-sin-ran
+    beg 0.2630e f+ 4e   261.6200e 0.16e :fm-index 1.9459e vln-one-sin-ran
+    beg 0.2630e f+ 4e   261.6200e 0.16e :fm-index 1.5782e vln-one-sin-ran
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 18, score 94
+    3.414e fto fmv-fm1-rat
+    1.414e fto fmv-fm2-rat
+    2.718e fto fmv-fm3-rat
+    beg 0.2600e f+ 1.6e 3286.9937e 0.16e :fm-index 1.6655e vln-one-sin-ran
+    beg 0.2600e f+ 2e   3286.9937e 0.16e :fm-index 1.9356e vln-one-sin-ran
+    beg 0.2603e f+ 1.2e 3286.9937e 0.16e :fm-index 1.5665e vln-one-sin-ran
+    beg 0.2603e f+ 4e   3286.9937e 0.16e :fm-index 1.6701e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 2844.3326e 0.16e :fm-index 2.3273e vln-one-sin-ran
+    beg 0.2605e f+ 2.8e 2844.3326e 0.16e :fm-index 1.5520e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 2844.3326e 0.16e :fm-index 2.4104e vln-one-sin-ran
+    beg 0.2608e f+ 1.6e 1046.4800e 0.16e :fm-index 2.1075e vln-one-sin-ran
+    beg 0.2608e f+ 2e   1046.4800e 0.16e :fm-index 1.7004e vln-one-sin-ran
+    beg 0.2610e f+ 1.2e 1046.4800e 0.16e :fm-index 1.6502e vln-one-sin-ran
+    beg 0.2610e f+ 4e   1046.4800e 0.16e :fm-index 2.4591e vln-one-sin-ran
+    beg 0.2613e f+ 1.2e 1046.4800e 0.16e :fm-index 2.1491e vln-one-sin-ran
+    beg 0.2613e f+ 2.8e 1046.4800e 0.16e :fm-index 2.1594e vln-one-sin-ran
+    beg 0.2615e f+ 1.2e 1046.4800e 0.16e :fm-index 2.4783e vln-one-sin-ran
+    beg 0.2615e f+ 2e   1046.4800e 0.16e :fm-index 2.2080e vln-one-sin-ran
+    beg 0.2618e f+ 4e   1046.4800e 0.16e :fm-index 1.5844e vln-one-sin-ran
+    beg 0.2618e f+ 4e   1046.4800e 0.16e :fm-index 1.5440e vln-one-sin-ran
+    beg 0.2620e f+ 3e   1046.4800e 0.16e :fm-index 1.9857e vln-one-sin-ran
+    beg 0.2620e f+ 1.5e 1046.4800e 0.16e :fm-index 1.5165e vln-one-sin-ran
+    beg 0.2623e f+ 3e   1046.4800e 0.16e :fm-index 1.8309e vln-one-sin-ran
+    beg 0.2623e f+ 3e   1046.4800e 0.16e :fm-index 2.1236e vln-one-sin-ran
+    beg 0.2625e f+ 1.2e 1046.4800e 0.1e  :fm-index 2.4074e vln-one-sin-ran
+    beg 0.2625e f+ 2.8e 1046.4800e 0.1e  :fm-index 1.6315e vln-one-sin-ran
+    beg 0.2628e f+ 0.8e 1046.4800e 0.1e  :fm-index 1.8061e vln-one-sin-ran
+    beg 0.2628e f+ 2e   1046.4800e 0.1e  :fm-index 2.3664e vln-one-sin-ran
+    beg 0.2630e f+ 4e   1046.4800e 0.1e  :fm-index 2.2490e vln-one-sin-ran
+    beg 0.2630e f+ 4e   1046.4800e 0.1e  :fm-index 2.4081e vln-one-sin-ran
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 19, score 98
+    0.01e fto fmv-reverb-amount
+    beg 0.2600e f+ 1.6e 1643.4968e 0.16e :fm-index 1.9284e vln-one-sin-ran
+    beg 0.2600e f+ 2e   1643.4968e 0.16e :fm-index 2.2171e vln-one-sin-ran
+    beg 0.2603e f+ 1.2e 1643.4968e 0.16e :fm-index 2.2272e vln-one-sin-ran
+    beg 0.2603e f+ 4e   1643.4968e 0.16e :fm-index 1.5677e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 1422.1663e 0.16e :fm-index 2.0476e vln-one-sin-ran
+    beg 0.2605e f+ 2.8e 1422.1663e 0.16e :fm-index 2.3289e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 1422.1663e 0.16e :fm-index 2.0269e vln-one-sin-ran
+    beg 0.2608e f+ 1.6e  523.2400e 0.16e :fm-index 1.7767e vln-one-sin-ran
+    beg 0.2608e f+ 2e    523.2400e 0.16e :fm-index 1.8117e vln-one-sin-ran
+    beg 0.2610e f+ 1.2e  523.2400e 0.16e :fm-index 1.5694e vln-one-sin-ran
+    beg 0.2610e f+ 4e    523.2400e 0.16e :fm-index 1.6869e vln-one-sin-ran
+    beg 0.2613e f+ 1.2e  523.2400e 0.16e :fm-index 1.9340e vln-one-sin-ran
+    beg 0.2613e f+ 2.8e  523.2400e 0.16e :fm-index 2.3986e vln-one-sin-ran
+    beg 0.2615e f+ 1.2e  523.2400e 0.16e :fm-index 2.4593e vln-one-sin-ran
+    beg 0.2615e f+ 2e    523.2400e 0.16e :fm-index 2.3430e vln-one-sin-ran
+    beg 0.2618e f+ 4e    523.2400e 0.16e :fm-index 2.2650e vln-one-sin-ran
+    beg 0.2618e f+ 4e    523.2400e 0.16e :fm-index 2.3015e vln-one-sin-ran
+    beg 0.2620e f+ 3e    523.2400e 0.16e :fm-index 1.9909e vln-one-sin-ran
+    beg 0.2620e f+ 1.5e  523.2400e 0.16e :fm-index 2.3916e vln-one-sin-ran
+    beg 0.2623e f+ 3e    523.2400e 0.16e :fm-index 2.0401e vln-one-sin-ran
+    beg 0.2623e f+ 3e    523.2400e 0.16e :fm-index 1.8484e vln-one-sin-ran
+    beg 0.2625e f+ 1.2e  523.2400e 0.16e :fm-index 2.3138e vln-one-sin-ran
+    beg 0.2625e f+ 2.8e  523.2400e 0.16e :fm-index 1.6295e vln-one-sin-ran
+    beg 0.2628e f+ 0.8e  523.2400e 0.16e :fm-index 2.2344e vln-one-sin-ran
+    beg 0.2628e f+ 2e    523.2400e 0.16e :fm-index 1.8423e vln-one-sin-ran
+    beg 0.2630e f+ 4e    523.2400e 0.16e :fm-index 2.2086e vln-one-sin-ran
+    beg 0.2630e f+ 4e    523.2400e 0.16e :fm-index 2.3130e vln-one-sin-ran
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 20, score 102
+    0.0001e fto fmv-noise-amount
+    0.01e   fto fmv-reverb-amount
+    2.718e  fto fmv-fm1-rat
+    1.141e  fto fmv-fm2-rat
+    3.141e  fto fmv-fm3-rat
+    beg 0.2605e f+ 0.8e 523.2400e 0.16e :fm-index 2.0123e vln-one-sin-ran
+    beg 0.2605e f+ 1e   493.8728e 0.16e :fm-index 2.1176e vln-one-sin-ran
+    beg 0.2610e f+ 0.6e 554.3535e 0.16e :fm-index 1.9163e vln-one-sin-ran
+    beg 0.2613e f+ 2e   466.1539e 0.16e :fm-index 1.5048e vln-one-sin-ran
+    beg 0.2615e f+ 0.6e 466.1539e 0.16e :fm-index 1.5242e vln-one-sin-ran
+    beg 0.2615e f+ 1.4e 493.8728e 0.16e :fm-index 1.9509e vln-one-sin-ran
+    beg 0.2620e f+ 0.6e 439.9907e 0.16e :fm-index 2.2131e vln-one-sin-ran
+    beg 0.2623e f+ 1e   415.2959e 0.16e :fm-index 1.7326e vln-one-sin-ran
+    beg 0.2623e f+ 2e   391.9871e 0.16e :fm-index 1.9936e vln-one-sin-ran
+    beg 0.2623e f+ 2e   369.9866e 0.16e :fm-index 2.1103e vln-one-sin-ran
+    beg 0.2625e f+ 2e   523.2400e 0.16e :fm-index 1.6206e vln-one-sin-ran
+    beg 0.2625e f+ 1e   522.7173e 0.16e :fm-index 1.8598e vln-one-sin-ran
+    beg 0.2630e f+ 2e   523.7632e 0.16e :fm-index 1.8015e vln-one-sin-ran
+    beg 0.2633e f+ 2e   522.1951e 0.16e :fm-index 2.3575e vln-one-sin-ran
+    beg 0.2635e f+ 0.6e 522.1951e 0.16e :fm-index 1.5010e vln-one-sin-ran
+    beg 0.2635e f+ 1.4e 522.7173e 0.16e :fm-index 2.4075e vln-one-sin-ran
+    beg 0.2640e f+ 0.4e 521.6734e 0.16e :fm-index 2.0721e vln-one-sin-ran
+    beg 0.2643e f+ 1e   521.1523e 0.16e :fm-index 2.0433e vln-one-sin-ran
+    beg 0.2643e f+ 2e   520.6316e 0.16e :fm-index 1.9788e vln-one-sin-ran
+    beg 0.2643e f+ 2e   520.1115e 0.16e :fm-index 1.6770e vln-one-sin-ran
+    
+    beg 8e f+ fdup to beg test-info
+
+    \ 21, score 110
+    0.004e fto fmv-noise-amount
+    beg 0.2600e f+ 0.8e 1046.4800e 0.16e :fm-index 1.5610e vln-one-sin-ran
+    beg 0.2600e f+ 1e   1044.3912e 0.16e :fm-index 2.3514e vln-one-sin-ran
+    beg 0.2603e f+ 0.6e 1048.5730e 0.16e :fm-index 1.9958e vln-one-sin-ran
+    beg 0.2603e f+ 2e   1042.3066e 0.16e :fm-index 1.9654e vln-one-sin-ran
+    beg 0.2605e f+ 0.6e 1042.3066e 0.16e :fm-index 1.5285e vln-one-sin-ran
+    beg 0.2605e f+ 1.4e 1044.3912e 0.16e :fm-index 1.8881e vln-one-sin-ran
+    beg 0.2608e f+ 0.6e 1040.2262e 0.16e :fm-index 1.8682e vln-one-sin-ran
+    beg 0.2608e f+ 0.8e  523.2400e 0.16e :fm-index 1.8296e vln-one-sin-ran
+    beg 0.2610e f+ 1e    522.1956e 0.16e :fm-index 2.1899e vln-one-sin-ran
+    beg 0.2610e f+ 0.6e  524.2865e 0.16e :fm-index 1.9614e vln-one-sin-ran
+    beg 0.2613e f+ 2e    521.1533e 0.16e :fm-index 1.7483e vln-one-sin-ran
+    beg 0.2615e f+ 0.6e  521.1533e 0.16e :fm-index 1.8717e vln-one-sin-ran
+    beg 0.2615e f+ 1.4e  522.1956e 0.16e :fm-index 1.5619e vln-one-sin-ran
+    beg 0.2620e f+ 0.6e  520.1131e 0.16e :fm-index 2.4331e vln-one-sin-ran
+    beg 0.2623e f+ 1e    519.0749e 0.16e :fm-index 2.4153e vln-one-sin-ran
+    beg 0.2623e f+ 2e    518.0388e 0.16e :fm-index 1.5477e vln-one-sin-ran
+    beg 0.2623e f+ 2e    517.0048e 0.16e :fm-index 1.9956e vln-one-sin-ran
+    beg 0.2625e f+ 2e    523.2400e 0.16e :fm-index 1.8111e vln-one-sin-ran
+    beg 0.2625e f+ 1e    522.7173e 0.16e :fm-index 2.4820e vln-one-sin-ran
+    beg 0.2630e f+ 2e    523.7632e 0.16e :fm-index 1.5744e vln-one-sin-ran
+    beg 0.2633e f+ 2e    522.1951e 0.16e :fm-index 1.9950e vln-one-sin-ran
+    beg 0.2635e f+ 0.6e  522.1951e 0.16e :fm-index 1.9792e vln-one-sin-ran
+    beg 0.2635e f+ 1.4e  522.7173e 0.16e :fm-index 1.7415e vln-one-sin-ran
+    beg 0.2640e f+ 0.4e  521.6734e 0.16e :fm-index 2.0884e vln-one-sin-ran
+    beg 0.2643e f+ 1e    521.1523e 0.16e :fm-index 2.3605e vln-one-sin-ran
+    beg 0.2643e f+ 2e    520.6316e 0.16e :fm-index 1.7817e vln-one-sin-ran
+    beg 0.2643e f+ 2e    520.1115e 0.16e :fm-index 2.0283e vln-one-sin-ran
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 22, score 114
+    0.1e   fto fmv-reverb-amount
+    0e     fto fmv-glissando-amount
+    2.718e fto fmv-fm1-rat
+    1.414e fto fmv-fm2-rat
+    3.141e fto fmv-fm3-rat
+    beg 0.2600e f+ 1.6e 177.7708e 0.16e :fm-index 1.6447e vln-one-sin-ran
+    beg 0.2600e f+ 2e   177.7708e 0.16e :fm-index 2.4875e vln-one-sin-ran
+    beg 0.2603e f+ 1.2e 177.7708e 0.16e :fm-index 1.6126e vln-one-sin-ran
+    beg 0.2603e f+ 4e   177.7708e 0.16e :fm-index 2.3122e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 205.4371e 0.16e :fm-index 2.4116e vln-one-sin-ran
+    beg 0.2605e f+ 2.8e 205.4371e 0.16e :fm-index 1.5337e vln-one-sin-ran
+    beg 0.2608e f+ 1.2e 205.4371e 0.16e :fm-index 2.0307e vln-one-sin-ran
+    beg 0.2608e f+ 1.6e  65.4050e 0.16e :fm-index 2.2341e vln-one-sin-ran
+    beg 0.2610e f+ 2e    65.4050e 0.16e :fm-index 2.4683e vln-one-sin-ran
+    beg 0.2610e f+ 1.2e  65.4050e 0.16e :fm-index 2.0643e vln-one-sin-ran
+    beg 0.2613e f+ 4e    65.4050e 0.16e :fm-index 2.1925e vln-one-sin-ran
+    beg 0.2615e f+ 1.2e  65.4050e 0.16e :fm-index 2.1325e vln-one-sin-ran
+    beg 0.2615e f+ 2.8e  65.4050e 0.16e :fm-index 1.5847e vln-one-sin-ran
+    beg 0.2620e f+ 1.2e  65.4050e 0.16e :fm-index 1.8781e vln-one-sin-ran
+    beg 0.2623e f+ 2e    65.4050e 0.16e :fm-index 2.0283e vln-one-sin-ran
+    beg 0.2623e f+ 4e    65.4050e 0.16e :fm-index 2.4739e vln-one-sin-ran
+    beg 0.2623e f+ 4e    65.4050e 0.16e :fm-index 2.2333e vln-one-sin-ran
+    beg 0.2625e f+ 2e    65.4050e 0.16e :fm-index 2.2194e vln-one-sin-ran
+    beg 0.2625e f+ 1e    65.4050e 0.16e :fm-index 2.4491e vln-one-sin-ran
+    beg 0.2630e f+ 2e    65.4050e 0.16e :fm-index 1.5672e vln-one-sin-ran
+    beg 0.2633e f+ 2e    65.4050e 0.16e :fm-index 2.3254e vln-one-sin-ran
+    beg 0.2635e f+ 1.2e  65.4050e 0.16e :fm-index 1.8302e vln-one-sin-ran
+    beg 0.2635e f+ 2.8e  65.4050e 0.16e :fm-index 1.9201e vln-one-sin-ran
+    beg 0.2640e f+ 0.8e  65.4050e 0.16e :fm-index 1.9164e vln-one-sin-ran
+    beg 0.2643e f+ 2e    65.4050e 0.16e :fm-index 1.9483e vln-one-sin-ran
+    beg 0.2643e f+ 4e    65.4050e 0.16e :fm-index 2.4247e vln-one-sin-ran
+    beg 0.2643e f+ 4e    65.4050e 0.16e :fm-index 2.0419e vln-one-sin-ran
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 23, score 118
+    2.718e fto fmv-fm1-rat
+    4.414e fto fmv-fm2-rat
+    3.141e fto fmv-fm3-rat
+    beg 0.2600e f+ 1.6e  88.8854e 0.16e :fm-index 2.2832e vln-one-sin-ran
+    beg 0.2600e f+ 2e    88.8854e 0.16e :fm-index 1.6588e vln-one-sin-ran
+    beg 0.2603e f+ 1.2e  88.8854e 0.16e :fm-index 2.2392e vln-one-sin-ran
+    beg 0.2603e f+ 4e    88.8854e 0.16e :fm-index 1.7354e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 102.7186e 0.16e :fm-index 1.6692e vln-one-sin-ran
+    beg 0.2605e f+ 2.8e 102.7186e 0.16e :fm-index 2.1518e vln-one-sin-ran
+    beg 0.2608e f+ 1.2e 102.7186e 0.16e :fm-index 2.2439e vln-one-sin-ran
+    beg 0.2608e f+ 1.6e  32.7025e 0.16e :fm-index 2.1665e vln-one-sin-ran
+    beg 0.2610e f+ 2e    32.7025e 0.16e :fm-index 1.7947e vln-one-sin-ran
+    beg 0.2610e f+ 1.2e  32.7025e 0.16e :fm-index 2.0740e vln-one-sin-ran
+    beg 0.2613e f+ 4e    32.7025e 0.16e :fm-index 1.9705e vln-one-sin-ran
+    beg 0.2615e f+ 1.2e  32.7025e 0.16e :fm-index 1.9447e vln-one-sin-ran
+    beg 0.2615e f+ 2.8e  32.7025e 0.16e :fm-index 2.4918e vln-one-sin-ran
+    beg 0.2620e f+ 1.2e  32.7025e 0.16e :fm-index 1.6275e vln-one-sin-ran
+    beg 0.2623e f+ 2e    32.7025e 0.16e :fm-index 2.2355e vln-one-sin-ran
+    beg 0.2623e f+ 4e    32.7025e 0.16e :fm-index 2.0084e vln-one-sin-ran
+    beg 0.2623e f+ 4e    32.7025e 0.16e :fm-index 1.8964e vln-one-sin-ran
+    beg 0.2625e f+ 2e    32.7025e 0.16e :fm-index 2.3937e vln-one-sin-ran
+    beg 0.2625e f+ 1e    32.7025e 0.16e :fm-index 1.8634e vln-one-sin-ran
+    beg 0.2630e f+ 2e    32.7025e 0.16e :fm-index 1.5217e vln-one-sin-ran
+    beg 0.2633e f+ 2e    32.7025e 0.16e :fm-index 1.9275e vln-one-sin-ran
+    beg 0.2635e f+ 1.2e  32.7025e 0.16e :fm-index 2.4413e vln-one-sin-ran
+    beg 0.2635e f+ 2.8e  32.7025e 0.16e :fm-index 2.3242e vln-one-sin-ran
+    beg 0.2640e f+ 0.8e  32.7025e 0.16e :fm-index 2.3267e vln-one-sin-ran
+    beg 0.2643e f+ 2e    32.7025e 0.16e :fm-index 1.7004e vln-one-sin-ran
+    beg 0.2643e f+ 4e    32.7025e 0.16e :fm-index 1.8785e vln-one-sin-ran
+    beg 0.2643e f+ 4e    32.7025e 0.16e :fm-index 2.4573e vln-one-sin-ran
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 24, score 122
+    2.718e fto fmv-fm1-rat
+    4.414e fto fmv-fm2-rat
+    5.141e fto fmv-fm3-rat
+    beg 0.2600e f+ 1.6e 22.2213e 0.16e :fm-index 1.6232e vln-one-sin-ran
+    beg 0.2600e f+ 2e   22.2213e 0.16e :fm-index 1.5982e vln-one-sin-ran
+    beg 0.2603e f+ 1.2e 22.2213e 0.16e :fm-index 2.1585e vln-one-sin-ran
+    beg 0.2603e f+ 4e   22.2213e 0.16e :fm-index 2.2207e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 42.0309e 0.16e :fm-index 1.5294e vln-one-sin-ran
+    beg 0.2605e f+ 2.8e 42.0309e 0.16e :fm-index 1.9544e vln-one-sin-ran
+    beg 0.2608e f+ 1.2e 42.0309e 0.16e :fm-index 2.4016e vln-one-sin-ran
+    beg 0.2608e f+ 1.6e  8.1756e 0.16e :fm-index 1.5267e vln-one-sin-ran
+    beg 0.2610e f+ 2e    8.1756e 0.16e :fm-index 2.4190e vln-one-sin-ran
+    beg 0.2610e f+ 1.2e  8.1756e 0.16e :fm-index 2.2757e vln-one-sin-ran
+    beg 0.2613e f+ 4e    8.1756e 0.16e :fm-index 2.3607e vln-one-sin-ran
+    beg 0.2615e f+ 1.2e  8.1756e 0.16e :fm-index 1.8698e vln-one-sin-ran
+    beg 0.2615e f+ 2.8e  8.1756e 0.16e :fm-index 2.3753e vln-one-sin-ran
+    beg 0.2620e f+ 1.2e  8.1756e 0.16e :fm-index 2.3392e vln-one-sin-ran
+    beg 0.2623e f+ 2e    8.1756e 0.16e :fm-index 1.5088e vln-one-sin-ran
+    beg 0.2623e f+ 4e    8.1756e 0.16e :fm-index 2.2084e vln-one-sin-ran
+    beg 0.2623e f+ 4e    8.1756e 0.16e :fm-index 1.9512e vln-one-sin-ran
+    beg 0.2625e f+ 2e    8.1756e 0.16e :fm-index 2.0399e vln-one-sin-ran
+    beg 0.2625e f+ 1e    8.1756e 0.16e :fm-index 1.7053e vln-one-sin-ran
+    beg 0.2630e f+ 2e    8.1756e 0.16e :fm-index 2.3204e vln-one-sin-ran
+    beg 0.2633e f+ 2e    8.1756e 0.16e :fm-index 1.6336e vln-one-sin-ran
+    beg 0.2635e f+ 1.2e  8.1756e 0.16e :fm-index 1.9483e vln-one-sin-ran
+    beg 0.2635e f+ 2.8e  8.1756e 0.16e :fm-index 2.3255e vln-one-sin-ran
+    beg 0.2640e f+ 0.8e  8.1756e 0.16e :fm-index 1.7331e vln-one-sin-ran
+    beg 0.2643e f+ 2e    8.1756e 0.16e :fm-index 1.9318e vln-one-sin-ran
+    beg 0.2643e f+ 4e    8.1756e 0.16e :fm-index 1.6908e vln-one-sin-ran
+    beg 0.2643e f+ 4e    8.1756e 0.16e :fm-index 2.4103e vln-one-sin-ran
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 25, score 126
+    beg 0.2600e f+ 1.6e 11.1107e 0.16e :fm-index 1.6371e vln-one-sin-ran
+    beg 0.2600e f+ 2e   11.1107e 0.16e :fm-index 1.8971e vln-one-sin-ran
+    beg 0.2603e f+ 1.2e 11.1107e 0.16e :fm-index 1.9065e vln-one-sin-ran
+    beg 0.2603e f+ 4e   11.1107e 0.16e :fm-index 2.2143e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 21.0154e 0.16e :fm-index 1.8011e vln-one-sin-ran
+    beg 0.2605e f+ 2.8e 21.0154e 0.16e :fm-index 2.1950e vln-one-sin-ran
+    beg 0.2608e f+ 1.2e 21.0154e 0.16e :fm-index 2.3563e vln-one-sin-ran
+    beg 0.2608e f+ 1.6e  4.0878e 0.16e :fm-index 2.3181e vln-one-sin-ran
+    beg 0.2610e f+ 2e    4.0878e 0.16e :fm-index 2.0776e vln-one-sin-ran
+    beg 0.2610e f+ 1.2e  4.0878e 0.16e :fm-index 1.8336e vln-one-sin-ran
+    beg 0.2613e f+ 4e    4.0878e 0.16e :fm-index 1.5019e vln-one-sin-ran
+    beg 0.2615e f+ 1.2e  4.0878e 0.16e :fm-index 2.2368e vln-one-sin-ran
+    beg 0.2615e f+ 2.8e  4.0878e 0.16e :fm-index 1.7462e vln-one-sin-ran
+    beg 0.2620e f+ 1.2e  4.0878e 0.16e :fm-index 1.9604e vln-one-sin-ran
+    beg 0.2623e f+ 2e    4.0878e 0.16e :fm-index 2.2361e vln-one-sin-ran
+    beg 0.2623e f+ 4e    4.0878e 0.16e :fm-index 1.9972e vln-one-sin-ran
+    beg 0.2623e f+ 4e    4.0878e 0.16e :fm-index 2.4870e vln-one-sin-ran
+    beg 0.2625e f+ 2e    4.0878e 0.16e :fm-index 2.0762e vln-one-sin-ran
+    beg 0.2625e f+ 1e    4.0878e 0.16e :fm-index 2.2973e vln-one-sin-ran
+    beg 0.2630e f+ 2e    4.0878e 0.16e :fm-index 2.2350e vln-one-sin-ran
+    beg 0.2633e f+ 2e    4.0878e 0.16e :fm-index 2.1613e vln-one-sin-ran
+    beg 0.2635e f+ 1.2e  4.0878e 0.16e :fm-index 2.0640e vln-one-sin-ran
+    beg 0.2635e f+ 2.8e  4.0878e 0.16e :fm-index 2.1738e vln-one-sin-ran
+    beg 0.2640e f+ 0.8e  4.0878e 0.16e :fm-index 1.5188e vln-one-sin-ran
+    beg 0.2643e f+ 2e    4.0878e 0.16e :fm-index 1.8766e vln-one-sin-ran
+    beg 0.2643e f+ 4e    4.0878e 0.16e :fm-index 2.3083e vln-one-sin-ran
+    beg 0.2643e f+ 4e    4.0878e 0.16e :fm-index 2.2215e vln-one-sin-ran
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 26, score 130
+    beg 0.2600e f+ 1.6e  66.5893e 0.16e :fm-index 1.7041e vln-one-sin-ran
+    beg 0.2600e f+ 2e    66.4564e 0.16e :fm-index 2.0296e vln-one-sin-ran
+    beg 0.2603e f+ 1.2e  66.7225e 0.16e :fm-index 1.8321e vln-one-sin-ran
+    beg 0.2603e f+ 4e    66.3237e 0.16e :fm-index 2.1550e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 125.4490e 0.16e :fm-index 2.1806e vln-one-sin-ran
+    beg 0.2605e f+ 2.8e 125.6999e 0.16e :fm-index 2.3570e vln-one-sin-ran
+    beg 0.2608e f+ 1.2e 125.1986e 0.16e :fm-index 1.9861e vln-one-sin-ran
+    beg 0.2608e f+ 1.6e  24.4994e 0.16e :fm-index 1.6412e vln-one-sin-ran
+    beg 0.2610e f+ 2e    24.4505e 0.16e :fm-index 1.9770e vln-one-sin-ran
+    beg 0.2610e f+ 1.2e  24.5484e 0.16e :fm-index 2.0103e vln-one-sin-ran
+    beg 0.2613e f+ 4e    24.4017e 0.16e :fm-index 2.0663e vln-one-sin-ran
+    beg 0.2615e f+ 1.2e  24.4017e 0.16e :fm-index 2.1521e vln-one-sin-ran
+    beg 0.2615e f+ 2.8e  24.4505e 0.16e :fm-index 2.4453e vln-one-sin-ran
+    beg 0.2620e f+ 1.2e  24.3530e 0.16e :fm-index 2.0930e vln-one-sin-ran
+    beg 0.2623e f+ 2e    24.6960e 0.16e :fm-index 2.3423e vln-one-sin-ran
+    beg 0.2623e f+ 4e    24.7454e 0.16e :fm-index 2.0856e vln-one-sin-ran
+    beg 0.2623e f+ 4e    24.7948e 0.16e :fm-index 1.9570e vln-one-sin-ran
+    beg 0.2625e f+ 2e    24.4994e 0.16e :fm-index 2.4642e vln-one-sin-ran
+    beg 0.2625e f+ 1e    24.4749e 0.16e :fm-index 1.9901e vln-one-sin-ran
+    beg 0.2630e f+ 2e    24.5239e 0.16e :fm-index 1.9972e vln-one-sin-ran
+    beg 0.2633e f+ 2e    24.4505e 0.16e :fm-index 1.9148e vln-one-sin-ran
+    beg 0.2635e f+ 1.2e  24.4505e 0.16e :fm-index 1.9017e vln-one-sin-ran
+    beg 0.2635e f+ 2.8e  24.4749e 0.16e :fm-index 2.4958e vln-one-sin-ran
+    beg 0.2640e f+ 0.8e  24.4260e 0.16e :fm-index 2.2518e vln-one-sin-ran
+    beg 0.2643e f+ 2e    24.5975e 0.16e :fm-index 2.1120e vln-one-sin-ran
+    beg 0.2643e f+ 4e    24.6221e 0.16e :fm-index 2.3154e vln-one-sin-ran
+    beg 0.2643e f+ 4e    24.6467e 0.16e :fm-index 1.9240e vln-one-sin-ran
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 27, score 134
+    6.718e fto fmv-fm1-rat
+    4.414e fto fmv-fm2-rat
+    5.141e fto fmv-fm3-rat
+    beg 0.2600e f+ 1.6e 164.5868e 0.16e :fm-index 1.9587e vln-one-sin-ran
+    beg 0.2600e f+ 2e   164.5868e 0.16e :fm-index 1.5071e vln-one-sin-ran
+    beg 0.2603e f+ 1.2e 164.5868e 0.16e :fm-index 1.7690e vln-one-sin-ran
+    beg 0.2603e f+ 4e   164.5868e 0.16e :fm-index 1.7686e vln-one-sin-ran
+    beg 0.2605e f+ 1.2e 125.9513e 0.16e :fm-index 1.5702e vln-one-sin-ran
+    beg 0.2605e f+ 2.8e 125.9513e 0.16e :fm-index 2.1962e vln-one-sin-ran
+    beg 0.2608e f+ 1.2e 125.9513e 0.16e :fm-index 1.7701e vln-one-sin-ran
+    beg 0.2608e f+ 1.6e  24.4994e 0.16e :fm-index 2.1665e vln-one-sin-ran
+    beg 0.2610e f+ 2e    24.4994e 0.16e :fm-index 1.9345e vln-one-sin-ran
+    beg 0.2610e f+ 1.2e  24.4994e 0.16e :fm-index 2.2037e vln-one-sin-ran
+    beg 0.2613e f+ 4e    24.4994e 0.16e :fm-index 1.6826e vln-one-sin-ran
+    beg 0.2615e f+ 1.2e  24.4994e 0.16e :fm-index 1.5410e vln-one-sin-ran
+    beg 0.2615e f+ 2.8e  24.4994e 0.16e :fm-index 1.8293e vln-one-sin-ran
+    beg 0.2620e f+ 1.2e  24.4994e 0.16e :fm-index 2.1468e vln-one-sin-ran
+    beg 0.2623e f+ 2e    24.4994e 0.16e :fm-index 2.0758e vln-one-sin-ran
+    beg 0.2623e f+ 4e    24.4994e 0.16e :fm-index 2.4138e vln-one-sin-ran
+    beg 0.2623e f+ 4e    24.4994e 0.16e :fm-index 1.8479e vln-one-sin-ran
+    beg 0.2625e f+ 3e    24.4994e 0.16e :fm-index 2.4639e vln-one-sin-ran
+    beg 0.2625e f+ 1.5e  24.4994e 0.16e :fm-index 2.3995e vln-one-sin-ran
+    beg 0.2630e f+ 3e    24.4994e 0.16e :fm-index 1.8609e vln-one-sin-ran
+    beg 0.2633e f+ 3e    24.4994e 0.16e :fm-index 2.4506e vln-one-sin-ran
+    beg 0.2635e f+ 1.2e  24.4994e 0.16e :fm-index 2.1577e vln-one-sin-ran
+    beg 0.2635e f+ 2.8e  24.4994e 0.16e :fm-index 1.6663e vln-one-sin-ran
+    beg 0.2640e f+ 0.8e  24.4994e 0.16e :fm-index 2.1166e vln-one-sin-ran
+    beg 0.2643e f+ 2e    24.4994e 0.16e :fm-index 1.9362e vln-one-sin-ran
+    beg 0.2643e f+ 4e    24.4994e 0.16e :fm-index 2.2052e vln-one-sin-ran
+    beg 0.2643e f+ 4e    24.4994e 0.16e :fm-index 2.0102e vln-one-sin-ran
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 28, score 138
+    restore-fm-violin-defaults
+    whoosh   to fmv-gliss-env
+    metalamp to fmv-amp-env
+    0.8e   fto fmv-glissando-amount
+    0.01e  fto fmv-reverb-amount
+    2.718e fto fmv-fm1-rat
+    1.141e fto fmv-fm2-rat
+    3.141e fto fmv-fm3-rat
+    beg 0.2600e f+ 0.4e 1046.4800e 0.16e :fm-index 2.3870e vln-one-sin
+    beg 0.2600e f+ 0.5e 1044.3912e 0.16e :fm-index 2.4309e vln-one-sin
+    beg 0.2603e f+ 0.3e 1048.5730e 0.16e :fm-index 2.15e   vln-one-sin
+    beg 0.2603e f+ 0.5e 1042.3066e 0.16e :fm-index 1.7211e vln-one-sin
+    beg 0.2610e f+ 0.3e  524.2865e 0.16e :fm-index 2.1751e vln-one-sin
+    beg 0.2620e f+ 0.3e  520.1131e 0.16e :fm-index 1.5433e vln-one-sin
+    beg 0.2623e f+ 0.4e  517.0048e 0.16e :fm-index 2.4335e vln-one-sin
+    beg 0.2625e f+ 0.4e  523.2400e 0.16e :fm-index 2.2778e vln-one-sin
+    beg 0.2635e f+ 0.3e  522.1951e 0.16e :fm-index 1.9441e vln-one-sin
+    beg 0.2643e f+ 0.4e  520.6316e 0.16e :fm-index 2.4656e vln-one-sin
+    
+    beg 4e f+ fdup to beg test-info
+
+    \ 29, score 142
+    restore-fm-violin-defaults
+    beg 0.1200e f+ 0.4e 2092.9600e 0.16e :fm-index 3e :reverb-amount 0e
+    :amp-env metalamp :fm2-rat 1.1410e :fm3-rat 3.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.1200e f+ 0.5e 2088.7820e 0.16e :fm-index 3e :reverb-amount 0e
+    :amp-env metalamp :fm2-rat 1.1410e :fm3-rat 3.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.1200e f+ 0.3e 2097.1460e 0.16e :fm-index 3e :reverb-amount 0e
+    :amp-env metalamp :fm2-rat 1.1410e :fm3-rat 3.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.1200e f+ 0.5e 2084.6130e 0.16e :fm-index 3e :reverb-amount 0e
+    :amp-env metalamp :fm2-rat 1.1410e :fm3-rat 3.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.1210e f+ 0.3e 1048.5730e 0.16e :fm-index 3e :reverb-amount 0e
+    :amp-env metalamp :fm2-rat 1.1410e :fm3-rat 3.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.1220e f+ 0.3e 1040.2260e 0.16e :fm-index 3e :reverb-amount 0e
+    :amp-env metalamp :fm2-rat 1.1410e :fm3-rat 3.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.1220e f+ 0.5e 1034.0100e 0.16e :fm-index 3e :reverb-amount 0e
+    :amp-env metalamp :fm2-rat 1.1410e :fm3-rat 3.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.1230e f+ 0.5e 1046.4800e 0.16e :fm-index 3e :reverb-amount 0e
+    :amp-env metalamp :fm2-rat 1.1410e :fm3-rat 3.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.1240e f+ 0.3e 1044.3900e 0.16e :fm-index 3e :reverb-amount 0e
+    :amp-env metalamp :fm2-rat 1.1410e :fm3-rat 3.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.1240e f+ 0.5e 1041.2630e 0.16e :fm-index 3e :reverb-amount 0e
+    :amp-env metalamp :fm2-rat 1.1410e :fm3-rat 3.1410e :fm1-rat 2.7180e vln-one-sin
+
+    beg 2e f+ fdup to beg test-info
+
+    \ 30, score 144
+    vct[ 0e 0e 20e 0.5000e 40e 0.1e 60e 0.2e 80e 1e 100e 0e ] { z1amp }
+    vct[ 0e 0e 20e 1e 60e 0.1e 75e 0.3e 100e 0e ]	      { z2amp }
+    2.718e fto fmv-fm1-rat
+    4.414e fto fmv-fm2-rat
+    5.141e fto fmv-fm3-rat
+    beg 0.4880e f+ 1.1770e  416.6072e 0.0110e :fm-index 1.1140e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.5050e f+ 2.4900e  859.5863e 0.0083e :fm-index 0.5890e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 1e f+ to beg
+    beg 0.0590e f+ 1.0550e 1758.0816e 0.0053e :fm-index 1.8640e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.0930e f+ 1.8580e  229.0566e 0.0110e :fm-index 1.9690e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.3490e f+ 3.3680e  479.1994e 0.0083e :fm-index 1.9970e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.5010e f+ 3.0680e  411.8241e 0.0110e :fm-index 1.5390e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.5200e f+ 2.8290e  984.8456e 0.0053e :fm-index 0.0560e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.6100e f+ 0.7040e 1767.7444e 0.0053e :fm-index 1.2620e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.8480e f+ 3.0510e  859.7203e 0.0083e :fm-index 1.6080e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 1e f+ to beg
+    beg 0.4880e f+ 3.2350e  231.9431e 0.0110e :fm-index 0.9690e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.5610e f+ 3.2810e  475.2009e 0.0083e :fm-index 0.3740e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.7970e f+ 2.8400e  988.8375e 0.0053e :fm-index 0.4200e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 1e f+ to beg
+    beg 0.0620e f+ 1.0210e  411.7247e 0.0110e :fm-index 0.1370e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.2130e f+ 1.1610e  848.5959e 0.0083e :fm-index 1.3120e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.4410e f+ 2.6160e  390.0600e 0.0110e :fm-index 1.9030e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.4490e f+ 0.7000e  802.3538e 0.0083e :fm-index 1.5940e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.5270e f+ 2.5080e 1773.9366e 0.0053e :fm-index 1.8030e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.7820e f+ 2.7990e  232.4344e 0.0110e :fm-index 0.0590e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.7830e f+ 2.7660e 1650.1434e 0.0053e :fm-index 0.4400e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.7890e f+ 3.1560e  475.7231e 0.0083e :fm-index 0.7370e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 1e f+ to beg
+    beg 0.1540e f+ 2.1290e  976.0237e 0.0053e :fm-index 1.2690e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.4890e f+ 3.3650e  390.0525e 0.0110e :fm-index 1.4580e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.7450e f+ 1.5070e 1665.9722e 0.0053e :fm-index 1.9330e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.8320e f+ 1.4430e  798.1238e 0.0083e :fm-index 0.8560e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.9440e f+ 3.1560e  229.0528e 0.0110e :fm-index 1.8300e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 1e f+ to beg
+    beg 0.3930e f+ 1.1100e  473.7225e 0.0083e :fm-index 1.6260e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.6970e f+ 1.6170e  988.7953e 0.0053e :fm-index 0.4230e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 1e f+ to beg
+    beg 0.0620e f+ 1.3190e  390.9769e 0.0110e :fm-index 0.4100e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.0840e f+ 3.3660e  804.6413e 0.0083e :fm-index 1.8760e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.1740e f+ 2.7210e  418.6819e 0.0110e :fm-index 0.0910e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.5700e f+ 3.4460e  845.4019e 0.0077e :fm-index 0.7660e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.6440e f+ 1.1790e 1656.5756e 0.0049e :fm-index 0.2960e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.6600e f+ 2.8520e 1758.9788e 0.0049e :fm-index 0.4520e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.8270e f+ 1.8840e  387.0009e 0.0099e :fm-index 1.3010e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.8870e f+ 3.4040e  796.7213e 0.0077e :fm-index 1.1820e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.9640e f+ 3.3230e  416.3916e 0.0099e :fm-index 0.6290e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 1e f+ to beg
+    beg 0.1320e f+ 1.7050e 1637.2303e 0.0049e :fm-index 1.0570e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.15e   f+ 3.1250e 1762.4906e 0.0049e :fm-index 1.3170e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.3860e f+ 2.9670e  852.0487e 0.0077e :fm-index 1.4790e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.6670e f+ 0.6780e  413.7094e 0.0099e :fm-index 0.9470e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.8780e f+ 2.7490e 1749.7509e 0.0049e :fm-index 0.5040e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.9730e f+ 0.5990e  848.1253e 0.0077e :fm-index 1.9380e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 1e f+ to beg
+    beg 0.0880e f+ 3.3360e  229.9144e 0.0099e :fm-index 1.3930e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.1170e f+ 1.1300e  984.0816e 0.0049e :fm-index 0.3560e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.4640e f+ 1.7330e  478.7184e 0.0077e :fm-index 0.2840e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.5760e f+ 0.5680e  413.4253e 0.0099e :fm-index 1.5020e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.8200e f+ 1.2150e  230.9588e 0.0099e :fm-index 1.0990e :reverb-amount 0.1e
+    :amp-env z1amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.8320e f+ 3.4590e  473.8903e 0.0077e :fm-index 0.7680e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+    beg 0.8320e f+ 0.7260e  857.2875e 0.0077e :fm-index 0.7520e :reverb-amount 0.1e
+    :amp-env z2amp :noise-amount 0.0050e vln-one-sin-ran
+
+    beg 4e f+ fdup to beg test-info
+
+    \ 31, score 156
+    vct[ 0e 1e 20e 0e 100e 0e ] { indfunc }
+    vct[ 0e 1e 90e 1e 100e 0e ] { indfunc2 }
+    vct[ 0e 1e 6e 1e 10e 0.5e 20e 0.3630e 30e 0.27e 40e 0.2e 50e 0.12e 60e 0.08e 70e 0.04e 100e 0e ] { ampfunc }
+    vct[ 0e 0e 1e 1e 3e 1e 10e 0.5e 30e 0.2e 60e 0.05e 100e 0e ] { ampfunc1 }
+    restore-fm-violin-defaults
+    beg 0.2600e f+ 0.0500e 80e 0.8e :fm-index 5e :reverb-amount 0e
+    :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin
+    beg 1e f+ to beg
+    beg 0.2610e f+ 0.2e 80e 0.8e :fm-index 4e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 1e f+ to beg
+    beg 0.2600e f+ 0.05e 80e 0.8e :fm-index 5e :reverb-amount 0e
+    :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin
+    beg 0.2620e f+ 0.2e  80e 0.8e :fm-index 5e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 1e f+ to beg
+    beg 0.2600e f+ 0.0500e 80e 0.8e :fm-index 6e :reverb-amount 0e
+    :amp-env ampfunc1 :fm1-env indfunc2  vln-one-sin
+    beg 0.2630e f+ 0.2e 80e 0.8e :fm-index 6e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 1e f+ to beg
+    beg 0.2600e f+ 0.0500e 80e 0.3e :fm-index 4e :reverb-amount 0e
+    :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin 
+    beg 0.2620e f+ 0.1e 160e 0.3e :fm-index 4e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 0.2620e f+ 0.2500e 80e 0.8e :fm-index 4e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 1e f+ to beg
+    beg 0.2600e f+ 0.0500e 80e 0.5000e :fm-index 4e :reverb-amount 0e
+    :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin
+    beg 0.2610e f+ 0.1e 210e 0.3e :fm-index 4e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 0.2620e f+ 0.2e 80e 0.1e :fm-index 4e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 0.2630e f+ 0.2500e 320e 0.1e :fm-index 2e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 1e f+ to beg
+    beg 0.2600e f+ 0.0500e 80e 0.8e :fm-index 4e :reverb-amount 0e
+    :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin 
+    beg 0.2610e f+ 0.1e 210e 0.1e :fm-index 2e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 0.2620e f+ 0.2e 80e 0.2e :fm-index 4e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 0.2630e f+ 0.2500e 320e 0.3e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e  vln-one-sin
+    beg 1e f+ to beg
+    beg 0.2600e f+ 0.0500e 80e 0.8e :fm-index 2e :reverb-amount 0e
+    :amp-env ampfunc1 :fm1-env indfunc2 vln-one-sin
+    beg 0.2610e f+ 0.1e 210e 0.1e :fm-index 2e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 0.2620e f+ 0.2e 80e 0.2e :fm-index 2e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+    beg 0.2630e f+ 0.2500e 320e 0.3e :reverb-amount 0e
+    :amp-env ampfunc :fm1-env indfunc :fm2-rat 0.6875e vln-one-sin
+
+    beg 1e f+ fdup to beg test-info
+
+    \ 32, score 164
+    0e     fto fmv-glissando-amount
+    0.004e fto fmv-noise-amount
+    3.141e fto fmv-fm1-rat
+    4.414e fto fmv-fm2-rat
+    2.718e fto fmv-fm3-rat
+    beg 0.2600e f+ 4e 3286.9937e 0.16e :fm-index 2.2165e :reverb-amount 0.01e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2603e f+ 4e 1046.4800e 0.16e :fm-index 2.3234e :reverb-amount 0.01e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2605e f+ 4e 2844.3326e 0.16e :fm-index 2.4790e :reverb-amount 0.1e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2608e f+ 4e  821.7484e 0.1e  :fm-index 1.8667e :reverb-amount 0.01e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2610e f+ 4e  261.6200e 0.1e  :fm-index 1.8523e :reverb-amount 0.01e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2613e f+ 4e  711.0832e 0.1e  :fm-index 2.2300e :reverb-amount 0.1e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2615e f+ 4e  205.4371e 0.06e :fm-index 1.5187e :reverb-amount 0.01e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2618e f+ 4e   65.4050e 0.06e :fm-index 2.4074e :reverb-amount 0.01e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2620e f+ 4e  177.7708e 0.06e :fm-index 2.4481e :reverb-amount 0.1e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2623e f+ 4e   51.3593e 0.01e :fm-index 2.3069e :reverb-amount 0.01e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2625e f+ 4e   16.3513e 0.01e :fm-index 2.1008e :reverb-amount 0.01e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+    beg 0.2628e f+ 4e   44.4427e 0.01e :fm-index 2.4860e :reverb-amount 0.1e
+    :amp-env n-amp :fm1-env n-amp vln-one-sin-ran
+
+    beg 8e f+ fdup to beg test-info
+
+    \ 33, score 172
+    restore-fm-violin-defaults
+    beg 0.2603e f+ 1.2e  88.8854e 0.1e  :fm-index 2.3144e :reverb-amount 0.2e
+    :amp-env mamp :fm2-rat 4.4140e :fm3-rat 5.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.2603e f+ 4e    88.8854e 0.1e  :fm-index 2.1690e :reverb-amount 0.2e
+    :amp-env mamp :fm2-rat 4.4140e :fm3-rat 5.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.2605e f+ 2.8e 168.1236e 0.05e :fm-index 2.1850e :reverb-amount 0.2e
+    :amp-env mamp :fm2-rat 4.4140e :fm3-rat 5.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.2608e f+ 1.2e 168.1236e 0.08e :fm-index 1.7743e :reverb-amount 0.2e
+    :amp-env mamp :fm2-rat 4.4140e :fm3-rat 5.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.2610e f+ 2e    32.7025e 0.1e  :fm-index 2.4925e :reverb-amount 0.2e
+    :amp-env mamp :fm2-rat 4.4140e :fm3-rat 5.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.2633e f+ 2e    32.7025e 0.1e  :fm-index 2.1325e :reverb-amount 0.2e
+    :amp-env mamp :fm2-rat 4.4140e :fm3-rat 5.1410e :fm1-rat 2.7180e vln-one-sin
+    beg 0.2643e f+ 4e    32.7025e 0.05e :fm-index 1.7578e :reverb-amount 0.2e
+    :amp-env mamp :fm2-rat 4.4140e :fm3-rat 5.1410e :fm1-rat 2.7180e vln-one-sin
+
+    beg 8e f+ fdup to beg test-info
+
+    \ 34, score 180
+    beg 0.2600e f+ 6.6830e  244.8160e 0.0060e :fm-index 2e   :reverb-amount 0.2e
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.2600e f+ 5.5170e  495.4040e 0.0060e :fm-index 2e   :reverb-amount 0.2e
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.2600e f+ 7.5350e  980.6190e 0.0020e :fm-index 2e   :reverb-amount 0.2e
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.2600e f+ 7.1990e 1965.4290e 0.0020e :fm-index 0.8e :reverb-amount 0.2e
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.2600e f+ 4.0790e 3835.3170e 0.0020e :fm-index 0.8e :reverb-amount 0.2e
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.5170e f+ 4.7400e 1320.9670e 0.0020e :fm-index 0.8e :reverb-amount 0.2e
+    :noise-amount 0.0040e vln-one-sin-ran
+    beg 0.7040e f+ 7.2080e  655.5670e 0.0040e :fm-index 2e   :reverb-amount 0.2e
+    :noise-amount 0.0040e vln-one-sin-ran
+
+    beg 9e f+ fdup to beg test-info
+
+    \ 35, score 189
+    vct[ 0e 0e 15e 1e 100e 0e ] { updown }
+    0e   fto fmv-glissando-amount
+    0.9e fto fmv-reverb-amount
+    beg 0.5450e f+ 6.4650e  366.3330e 0.0320e :fm-index 1.0480e
+    :amp-env vct[ 0e 0e 1.5468e 1e 2.0882e 0.7e 2.3202e 1e 98.4532e 0.7500e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.5950e f+ 8.4340e 1172.5830e 0.0180e :fm-index 1.1350e
+    :amp-env vct[ 0e 0e 1.1857e 1.0e 1.6007e 0.7e 1.7785e 1e 98.8143e 0.5556e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.7650e f+ 1.6210e  369.9940e 0.0170e :fm-index 0.0960e
+    :amp-env vct[ 0e 0e 6.1690e 1.0e 8.3282e 0.7e 9.2535e 1e 93.8310e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.8820e f+ 3.0640e  246.9420e 0.0170e :fm-index 0.0020e
+    :amp-env vct[ 0e 0e 3.2637e 1e 4.4060e 0.7e 4.8956e 1.0e 96.7363e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.9250e f+ 3.1170e  123.4710e 0.0380e :fm-index 0.2330e
+    :amp-env vct[ 0e 0e 3.2082e 1e 4.3311e 0.7e 4.8123e 1e 96.7918e 0.7895e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.9810e f+ 3.5670e  123.4710e 0.0420e :fm-index 0.2330e
+    :amp-env vct[ 0e 0e 2.8035e 1e 3.7847e 0.7e 4.2052e 1.0e 97.1965e 0.8095e 100e 0e ]
+    vln-one-sin-exp
+    beg 1e f+ to beg
+    beg 0.1280e f+ 1.0450e  246.9420e 0.0170e :fm-index 1.2050e
+    :amp-env vct[ 0e 0e 9.5694e 1e 12.9187e 0.7e 14.3541e 1e 90.4306e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.2550e f+ 3.3870e  374.1370e 0.0170e :fm-index 0.1800e
+    :amp-env vct[ 0e 0e 2.9525e 1.0e 3.9858e 0.7e 4.4287e 1e 97.0475e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.2990e f+ 8.3050e 1576.9120e 0.0200e :fm-index 0.2990e
+    :amp-env vct[ 0e 0e 1.2041e 1e 1.6255e 0.7e 1.8061e 1e 98.7959e 0.6e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.3300e f+ 4.4630e  246.9420e 0.0170e :fm-index 0.0020e
+    :amp-env vct[ 0e 0e 2.2406e 1e 3.0249e 0.7e 3.3610e 1.0e 97.7594e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.6600e f+ 8.9940e 1576.9120e 0.0200e :fm-index 0.2990e
+    :amp-env vct[ 0e 0e 1.1119e 1e 1.5010e 0.7e 1.6678e 1e 98.8881e 0.6e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.9060e f+ 8.8360e 1172.5830e 0.0180e :fm-index 1.1350e
+    :amp-env vct[ 0e 0e 1.1317e 1e 1.5278e 0.7e 1.6976e 1e 98.8683e 0.5556e 100e 0e ]
+    vln-one-sin-exp
+    beg 1e f+ to beg
+    beg 0.1510e f+ 4.9320e 374.1370e 0.0170e :fm-index 0.1800e
+    :amp-env vct[ 0e 0e 2.0276e 1e 2.7372e 0.7e 3.0414e 1e 97.9724e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.2720e f+ 2.3250e 369.9940e 0.0170e :fm-index 1.1030e
+    :amp-env vct[ 0e 0e 4.3011e 1e 5.8065e 0.7e 6.4516e 1e 95.6989e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 1e f+ to beg
+    beg 0.6960e f+ 3.5540e 366.3330e 0.0310e :fm-index 1.0480e
+    :amp-env vct[ 0e 0e 2.8137e 1e 3.7985e 0.7e 4.2206e 1e 97.1863e 0.7419e 100e 0e ]
+    vln-one-sin-exp
+    beg 1e f+ to beg
+    beg 0.7240e f+ 0.6040e 246.9420e 0.0170e :fm-index 1.2050e
+    :amp-env vct[ 0e 0e 16.5563e 1e 22.351e 0.7e 24.8344e 1e 83.4437e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.9420e f+ 2.5010e 123.4710e 0.0330e :fm-index 0.2330e
+    :amp-env vct[ 0e 0e 3.9984e 1e 5.3978e 0.7e 5.9976e 1e 96.0016e 0.7576e 100e 0e ]
+    vln-one-sin-exp
+    beg 1e f+ to beg
+    beg 0.0340e f+ 2.3860e 246.9420e 0.0170e :fm-index 0.0020e
+    :amp-env vct[ 0e 0e 4.1911e 1e 5.6580e 0.7e 6.2867e 1e 95.8089e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.3850e f+ 1.4510e 369.9940e 0.0170e :fm-index 1.1030e
+    :amp-env vct[ 0e 0e 6.8918e 1e 9.3039e 0.7e 10.3377e 1e 93.1082e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.5670e f+ 2.6550e 374.1370e 0.0170e :fm-index 0.1800e
+    :amp-env vct[ 0e 0e 3.7665e 1e 5.0847e 0.7e 5.6497e 1e 96.2335e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.9830e f+ 2.9860e 123.4710e 0.0380e :fm-index 0.2330e
+    :amp-env vct[ 0e 0e 3.3490e 1e 4.5211e 0.7e 5.0234e 1e 96.6510e 0.7895e 100e 0e ]
+    vln-one-sin-exp
+    beg 1e f+ to beg
+    beg 0.4910e f+ 0.6110e 123.9770e 0.0170e :fm-index 0.7550e
+    :amp-env vct[ 0e 0e 16.3666e 1e 22.0949e 0.7e 24.55e 1e 83.6334e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.7570e f+ 1.4440e 123.4710e 0.0170e :fm-index 0.0020e
+    :amp-env vct[ 0e 0e 6.9252e 1e 9.3490e 0.7e 10.3878e 1e 93.0748e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.7750e f+ 0.5370e  92.4435e 0.0330e :fm-index 0.9200e
+    :amp-env vct[ 0e 0e 18.622e 1e 25.1397e 0.7e 27.9330e 1e 81.3780e 0.7576e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.7750e f+ 10.537e  92.4435e 0.0130e :fm-index 0.9200e
+    :amp-env vct[ 0e 0e 0.9490e 1e 1.2812e 0.7e 1.4236e 1e 99.0510e 0.3846e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.9380e f+ 0.6520e 122.2995e 0.0170e :fm-index 1.8380e
+    :amp-env vct[ 0e 0e 15.3374e 1e 20.706e 0.7e 23.0061e 1e 84.6626e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 1e f+ to beg 
+    beg 0.2350e f+ 3.7250e 586.2915e 0.0180e :fm-index 1.1350e
+    :amp-env vct[ 0e 0e 2.6846e 1e 3.6242e 0.7e 4.0268e 1e 97.3154e 0.5556e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.2560e f+ 2.8900e 183.1665e 0.0260e :fm-index 1.0480e
+    :amp-env vct[ 0e 0e 3.4602e 1e 4.6713e 0.7e 5.1903e 1e 96.5398e 0.6923e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.2710e f+ 1.6210e 187.0685e 0.0170e :fm-index 0.1800e
+    :amp-env vct[ 0e 0e 6.169e 1.0e 8.3282e 0.7e 9.2535e 1e 93.8310e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.2920e f+ 2.0160e 183.1665e 0.0290e :fm-index 1.0480e
+    :amp-env vct[ 0e 0e 4.9603e 1e 6.6964e 0.7e 7.4405e 1e 95.0397e 0.7241e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.2920e f+ 12.016e 183.1665e 0.0290e :fm-index 1.0480e
+    :amp-env vct[ 0e 0e 0.832e 1e 1.1235e 0.7e 1.248e 1.0e 99.1678e 0.7241e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.3300e f+ 0.7300e 184.9970e 0.0170e :fm-index 0.0960e
+    :amp-env vct[ 0e 0e 13.699e 1e 18.4932e 0.7e 20.548e 1.0e 86.3014e 0.529e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.3570e f+ 1.9600e 183.1665e 0.0280e :fm-index 1.0480e
+    :amp-env vct[ 0e 0e 5.1020e 1.0e 6.8878e 0.7e 7.6531e 1e 94.8980e 0.7143e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.3820e f+ 2.2450e  61.7355e 0.0330e :fm-index 0.2330e
+    :amp-env vct[ 0e 0e 4.4543e 1e 6.0134e 0.7e 6.6815e 1e 95.5457e 0.7576e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.3820e f+ 12.2450e 61.7355e 0.0330e :fm-index 0.2330e
+    :amp-env vct[ 0e 0e 0.8167e 1e 1.1025e 0.7e 1.2250e 1e 99.1833e 0.7576e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.5410e f+ 3.0130e 246.5050e 0.0360e :fm-index 1.1350e
+    :amp-env vct[ 0e 0e 3.3190e 1.0e 4.4806e 0.7e 4.9784e 1e 96.6810e 0.7778e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.5570e f+ 2.322e 1251.5960e 0.0400e :fm-index 0.2990e
+    :amp-env vct[ 0e 0e 4.3066e 1e 5.8140e 0.7e 6.4599e 1e 95.6934e 0.8e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.5570e f+ 18.322e 1251.5960e 0.020e :fm-index 0.2990e
+    :amp-env vct[ 0e 0e 0.5458e 1.000e 0.7368e 0.7e 0.8187e 1e 99.4542e 0.6e 100e 0e ]
+    vln-one-sin-exp
+    beg 1e f+ to beg
+    beg 0.1060e f+ 1.9900e 183.1665e 0.0230e :fm-index 1.0480e
+    :amp-env vct[ 0e 0e 5.0251e 1.0e 6.7839e 0.7e 7.5377e 1e 94.9749e 0.6522e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.2570e f+ 1.9180e  61.7355e 0.0330e :fm-index 0.2330e
+    :amp-env vct[ 0e 0e 5.2138e 1e 7.0386e 0.7e 7.8206e 1e 94.7862e 0.7576e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.6370e f+ 1.3090e 183.1665e 0.0310e :fm-index 1.0480e
+    :amp-env vct[ 0e 0e 7.6394e 1e 10.3132e 0.7e 11.4591e 1e 92.3606e 0.7419e 100e 0e ]
+    vln-one-sin-exp
+    beg 1e f+ to beg 
+    beg 0.0330e f+ 1.1590e 183.1665e 0.0250e :fm-index 1.0480e
+    :amp-env vct[ 0e 0e 8.6281e 1e 11.6480e 0.7e 12.9422e 1e 91.3719e 0.6800e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.0980e f+ 1.2400e  30.8675e 0.0330e :fm-index 0.2330e
+    :amp-env vct[ 0e 0e 8.0645e 1e 10.8871e 0.7e 12.0968e 1e 91.9355e 0.7576e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.0980e f+ 11.2400e 30.8675e 0.0130e :fm-index 0.2330e
+    :amp-env vct[ 0e 0e 0.8897e 1e 1.2011e 0.7e 1.3345e 1e 99.1103e 0.3846e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.1260e f+ 0.2600e 123.4710e 0.0170e :fm-index 1.2050e
+    :amp-env vct[ 0e 0e 38.462e 1e 51.9231e 0.7e 57.6923e 1e 61.5385e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.1260e f+ 10.26e  123.4710e 0.0170e :fm-index 1.2050e
+    :amp-env vct[ 0e 0e 0.9747e 1e 1.3158e 0.7e 1.4620e 1e 99.0253e 0.5294e 100e 0e ]
+    vln-one-sin-exp
+    beg 0.0600e f+ 13.8770e 3951.1200e 0.0090e :amp-env updown                vln-one-sin
+    beg 0.2600e f+ 14.8770e  123.4725e 0.0170e :fm-index 1.5e :amp-env updown vln-one-sin
+    beg 0.2600e f+ 13.8770e   61.7363e 0.0170e :fm-index 1.5e :amp-env updown vln-one-sin
+    beg 0.2600e f+ 12.8770e   30.8681e 0.0170e :fm-index 1.5e :amp-env updown vln-one-sin
+    beg 0.2600e f+ 11.8770e   15.4341e 0.0170e :fm-index 1.5e :amp-env updown vln-one-sin
+
+    beg 19e f+ fdup to beg test-info
+
+    \ 36, score 217
+    restore-fm-violin-defaults
+    beg 0.2620e f+ 0.3906e 440e 0.4500e :fm-index 1.2e :reverb-amount 0.0013e
+    :amp-env vct[ 0e 0e 0.7680e 1e 4.7774e 0.6e 9.7891e 0.3e 24.8243e 0.1e 100e 0e ]   cel-one-sum
+    beg 0.2640e f+ 0.5220e 220e 0.4500e :fm-index 1.2e :reverb-amount 0.0012e
+    :amp-env vct[ 0e 0e 0.5747e 1.0e 4.5919e 0.6e 9.6134e 0.3e 24.6778e 0.1e 100e 0e ] cel-one-sum
+    beg 0.2660e f+ 1.5660e 880e 0.4500e :fm-index 1.2e :reverb-amount 0.0014e
+    :amp-env vct[ 0e 0e 0.1916e 1.0e 4.2242e 0.6e 9.2651e 0.3e 24.3876e 0.1e 100e 0e ] cel-one-sum
+    beg 0.2680e f+ 1.5660e 110e 0.4500e :fm-index 1.2e :reverb-amount 0.0013e
+    :amp-env vct[ 0e 0e 0.1916e 1.0e 4.2242e 0.6e 9.2651e 0.3e 24.3876e 0.1e 100e 0e ] cel-one-sum
+
+    beg 3e f+ fdup to beg test-info
+
+    \ 37, score 220
+    beg 0.8600e f+ 0.9e    733.3330e 0.1875e :fm-index 0.2e :distance 1.0e :reverb-amount 0.0012e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100e 0e ]  vln-one-sin
+    beg 0.8600e f+ 0.225e  550e      0.1875e :fm-index 0.2e :distance 1.0e :reverb-amount 0.0015e
+    :amp-env vct[ 0e 0e 1.3333e 1e 5.3199e 0.6e 10.3030e 0.3e 25.2525e 0.1e 100e 0e ] vln-one-sin
+    beg 0.8600e f+ 0.45e   586.6670e 0.3750e :fm-index 0.2e :distance 1.0e :reverb-amount 0.0013e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]  vln-one-sin
+    beg 0.9020e f+ 0.9e    733.3330e 0.1875e :fm-index 0.4e :distance 1.0e :reverb-amount 0.0013e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100e 0e ]  vln-one-sin
+    beg 0.9020e f+ 0.225e  550e      0.1875e :fm-index 0.4e :distance 1.0e :reverb-amount 0.0010e
+    :amp-env vct[ 0e 0e 1.3333e 1e 5.3199e 0.6e 10.3030e 0.3e 25.2525e 0.1e 100e 0e ] vln-one-sin
+    beg 0.9020e f+ 0.45e   586.6670e 0.3750e :fm-index 0.4e :distance 1.0e :reverb-amount 0.0015e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]  vln-one-sin
+    beg 0.9430e f+ 0.9e    366.6670e 0.1875e :fm-index 0.6e :distance 1.0e :reverb-amount 0.0016e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100e 0e ]  vln-one-sin
+    beg 0.9430e f+ 0.225e  275e      0.1875e :fm-index 0.6e :distance 1.0e :reverb-amount 0.0015e
+    :amp-env vct[ 0e 0e 1.3333e 1e 5.3199e 0.6e 10.3030e 0.3e 25.2525e 0.1e 100e 0e ] vln-one-sin
+    beg 0.9430e f+ 0.45e   293.3340e 0.3750e :fm-index 0.6e :distance 1.0e :reverb-amount 0.0015e
+    :amp-env vct[ 0e 0e 0.6667e 1e 4.6801e 0.6e 9.6970e 0.3e 24.7475e 0.1e 100e 0e ]  vln-one-sin
+    beg 0.9850e f+ 0.9e    733.3330e 0.1875e :fm-index 0.8e :distance 1.0e :reverb-amount 0.0010e
+    :amp-env vct[ 0e 0e 0.3333e 1e 4.3603e 0.6e 9.3939e 0.3e 24.4950e 0.1e 100e 0e ]  vln-one-sin
+    beg 0.9850e f+ 0.225e  550e      0.1875e :fm-index 0.8e :distance 1.0e :reverb-amount 0.0013e
+    :amp-env vct[ 0e 0e 1.3333e 1e 5.3199e 0.6e 10.3030e 0.3e 25.2525e 0.1e 100e 0e ] vln-one-sin
+;event
+
+script? [if]
+    *fmviolin-long-example* [if] ' long-example [else] ' short-example [then] with-sound
+    finish
+[then]
+
+\ fmviolin.gfm ends here

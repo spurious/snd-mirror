@@ -1,12 +1,12 @@
 #! /usr/bin/env gforth-fast
 \ cm-examp.gfm -- (cm-2.4.0/etc/examples) intro.cm, reich.cm -*- forth -*-
 
-\ Copyright (C) 2003--2004 Michael Scholz
+\ Copyright (C) 2003--2005 Michael Scholz
 
 \ Author: Michael Scholz <scholz-micha@gmx.de>
 \ Created: Sun Aug 17 02:23:42 CEST 2003
-\ Last: Fri Oct 08 20:27:53 CEST 2004
-\ Ident: $Id: cm-examp.gfm,v 1.43 2004/10/08 18:28:04 mike Exp $
+\ Last: Thu Jan 13 17:07:29 CET 2005
+\ Ident: $Id: cm-examp.gfm,v 1.67 2005/01/13 16:07:48 mike Exp $
 
 \ This file is part of GFM Gforth Music.
 
@@ -42,20 +42,14 @@
 
 \ Code:
 
-true value *clm-use-csndlib*
 0 assert-level !
-
-argc @ 2 > [if]
-    s" -f" 2 arg str= [if] false to *clm-use-csndlib* [then]
-    s" -c" 2 arg str= [if] true to *clm-use-csndlib* [then]
-[then]
 
 require gfm.fs
 
-0e 0e 20e 1e 40e 0.6e 90e 0.5e 100e 0e 10 >vct value ind-env-brass
-: cm-inst ( f: start f: dur f: freq f: amp f: index ) ind-env-brass fm-violin ;
+vct[ 0e 0e 20e 1e 40e 0.6e 90e 0.5e 100e 0e ] constant amp-env
+: cm-inst ( start dur freq amp index -- ) :fm-index :amp-env amp-env fm-violin ;
 
-: sinus { w: len f: cycl f: low f: hi f: rhy f: dur f: amp f: fm-index }
+: sinus { len f: cycl f: low f: hi f: rhy f: dur f: amp f: fm-index }
     len 0 do
 	i s>f len s>f f/ two-pi f* cycl f* fsin -1e 1e low hi rescale fround f>s keynum>hertz
 	now@ dur frot amp fm-index cm-inst
@@ -66,12 +60,12 @@ event: sinus1 ( -- ) 80 4e 20e 100e 0.1e 0.1e 0.5e 1.5e sinus ;event
 event: sinus2 ( -- ) 60 5.7e 50e 80e 0.1e 0.1e 0.5e 0.5e sinus ;event
 
 : simul { num -- }
-    C4 D4 Ef4 F4 G4 Af4 Bf4 C5 8 >vct { pat-ary }
-    0e 0.2e 5e 0.8e 4 >vct { amp-ary }
-    -24 -12 12 24 4 >array { oct-ary }
+    vct[ |C4 |D4 |Ef4 |F4 |G4 |Af4 |Bf4 |C5 ] { pat-ary }
+    vct[ 0e 0.2e 5e 0.8e ] { amp-ary }
+    array[ -24 -12 12 24 ] { oct-ary }
     0.1e { f: rhy } 0e { f: freq }
     num 0 do
-	i 8 mod pat-ary vct@ to freq
+	pat-ary cycle to freq
 	now@				\ start
 	rhy 1.25e f*			\ dur
 	freq				\ freq
@@ -79,41 +73,45 @@ event: sinus2 ( -- ) 60 5.7e 50e 80e 0.1e 0.1e 0.5e 0.5e sinus ;event
 	1e cm-inst
 	now@				\ start
 	rhy 1.25e f*			\ dur
-	freq hertz>keynum oct-ary rnd-pick array@ + keynum>hertz \ freq
+	freq hertz>keynum oct-ary rnd-pick + keynum>hertz \ freq
 	i 6 mod s>f amp-ary interp 0.5e f- \ amp
 	1e cm-inst
 	rhy wait
     loop
+    pat-ary free-vct
+    amp-ary free-vct
+    oct-ary free-array
 ;
 event: simul1 ( -- ) 40 simul ;event
 
-: sierpinski recursive { w: key w: ints f: dur f: amp w: depth }
-    ints array-length 0 do
-	key i ints array@ + { keyn }
-	depth 1 > if
+: sierpinski recursive { key ints f: dur f: amp s-depth }
+    ints length s>f { f: flen }
+    ints each
+	key + { keyn }
+	s-depth 1 > if
 	    now@ { f: cur }
 	    keyn 12 +			 \ key
 	    ints			 \ ints
-	    dur ints array-length s>f f/ \ dur
+	    dur flen f/			 \ dur
 	    amp				 \ amp
-	    depth 1-			 \ depth
+	    s-depth 1-			 \ depth
 	    sierpinski
 	    cur now!
 	then
 	now@ dur keyn keynum>hertz amp 2e cm-inst
 	dur wait
-    loop
+    end-each
 ;
-event: sierp1 ( -- ) A0 hertz>keynum 0 7 5 3 >array 3e 0.3e 4 sierpinski ;event
-event: sierp2 ( -- ) A0 hertz>keynum 0 -1 2 13 4 >array 6e 0.3e 4 sierpinski ;event
+event: sierp1 ( -- ) |A0 hertz>keynum array[ 0 7 5 ] 3e 0.3e 4 sierpinski ;event
+event: sierp2 ( -- ) |A0 hertz>keynum array[ 0 -1 2 13 ] 6e 0.3e 4 sierpinski ;event
 
 : drunkard { num -- }
-    Q S S A A A 6 >vct { rpat }
-    0e 1e 0.5e 0.5e 1e 1e 6 >vct { dur-ary }
-    60 0e 0e { key f: amp f: dur }
+    vct[ |Q |S |S |A |A |A ] { rpat }
+    vct[ 0e 1e 0.5e 0.5e 1e 1e ] { dur-ary }
+    60 { key }
     num 0 do
-	0.2e 0.4e fbetween to amp
-	i s>f num s>f f/ dur-ary interp rpat rnd-pick vct@ f2/ f* to dur
+	0.2e 0.4e fbetween { f: amp }
+	i s>f num s>f f/ dur-ary interp rpat rnd-pick f2/ f* { f: dur }
 	now@ dur key keynum>hertz amp 2e cm-inst
 	0.4e ?odds if
 	    now@
@@ -124,52 +122,51 @@ event: sierp2 ( -- ) A0 hertz>keynum 0 -1 2 13 4 >array 6e 0.3e 4 sierpinski ;ev
 	key 6 30 90 drunk to key
 	dur wait
     loop
+    rpat free-vct
+    dur-ary free-vct
 ;
 event: drunkard1 ( -- ) 100 drunkard ;event
 
 : octie { num -- }
-    -24 -12 0 12 24 5 >array rnd-pick array@ { oct }
-    C4 D4 Ef4 F4 G4 Af4 B4 7 >vct { pitches }
+    array[ -24 -12 0 12 24 ] rnd-pick { oct }
+    vct[ |C4 |D4 |Ef4 |F4 |G4 |Af4 |B4 ] { pitches }
+    vct[ 0e 0.2e 5e 0.8e ] { amp-ary }
     0.1e { f: rhy }
-    0e 0.2e 5e 0.8e 4 >vct { amp-ary }
+    rhy 1.25e f* { f: dur }
     num 0 do
 	now@
-	rhy 1.25e f*
-	i 7 mod pitches vct@ hertz>keynum oct + keynum>hertz
+	dur
+	pitches cycle hertz>keynum oct + keynum>hertz
 	i 6 mod s>f amp-ary interp
 	1e cm-inst
 	rhy wait
     loop
+    pitches free-vct
+    amp-ary free-vct
 ;
 event: octie1 ( -- ) 40 octie ;event
 
-: make-chance ( ary-1 ary-w ary-interp "name" -- )
-    create , , ,
-  does> ( idx -- n )
-    { f: idx } dup @ { ary-interp } dup cell+ @ { ary-w } 2 cells + @ { ary-1 }
-    idx ary-interp interp { f: val }
-    1e val 0.25e 3 >vct { rnd-ary }
-    begin rnd-ary rnd-pick over -rot vct@ ?chance 0= while drop repeat
-    case
-	0 of ary-1 rnd-pick vct@ hertz>keynum endof
-	1 of ary-w rnd-pick vct@ hertz>keynum endof
-	2 of -1 endof
-    endcase
-;
-
-Bf3 D4 F4 3 >vct
-G3 A3 C4 E4 G4 5 >vct
-0e 0.5e 90e 4e 4 >vct make-chance cage-rnd
-
 : cage { offset -- }
-    0e { f: rhy } 0 { key }
-    S A T T 4 >vct { rhy-ary }
+    vct[ |S |A |T |T ]    { rhy-ary }
+    vct[ 0e 0.5e 90e 4e ] { ary-interp }
+    0e { f: weight }
     100 0 do
-	rhy-ary rnd-pick vct@ to rhy
-	i s>f cage-rnd to key
-	key 0>= if now@ rhy key offset + keynum>hertz 0.3e 1e cm-inst then
+	rhy-ary rnd-pick { f: rhy }
+	weight |G3
+	weight |A3
+	1e     |Bf3
+	weight |C3
+	1e     |D4
+	weight |E4
+	1e     |F4
+	weight |G4 16 >vct make-rnd { rn }
+	i s>f ary-interp interp to weight
+	now@ rhy rn rnd-randomize f>s offset + keynum>hertz 0.3e 1e cm-inst
+	rn gen-free
 	rhy wait
     loop
+    rhy-ary free-vct
+    ary-interp free-vct
 ;
 event: cage4 ( -- )
     65e tempo!
@@ -179,28 +176,37 @@ event: cage4 ( -- )
     60e tempo!
 ;event
 
-: piano-phase { w: trope f: pulse f: amp w: stay w: move }
-    trope vct-length { len }
+: piano-phase { trope f: pulse f: amp stay mv -- }
+    trope length { len }
     pulse f2* 0.01e f- { f: dur }
-    len len * stay move + * { stop }
+    len len * stay mv + * { stop }
     now@ { f: cur }
+    trope vct-copy { trp1 }
     stop 0 do
-	now@ dur i len mod trope vct@ amp 1.5e cm-inst
+	now@ dur trp1 cycle amp 1.5e cm-inst
 	pulse wait
     loop
+    trp1 gen-free
     cur now!
     len stay * { ary1-len }
-    len move * { ary2-len }
-    ary1-len ary2-len + { ary-len }
-    ary1-len 0 do 1e loop ary2-len 0 do ary2-len 1 - s>f ary2-len s>f f/ loop
-    ary-len >vct { tempo }
+    len mv * { ary2-len }
+    ary1-len ary2-len + make-vct { tempo }
+    1e tempo vct-fill!
+    ary2-len 1- s>f ary2-len s>f f/ { f: scl }
+    tempo length ary2-len do scl i tempo vct! loop
+    trope vct-copy { trp2 }
     stop 0 do
-	now@ dur i len mod trope vct@ amp 0.5e cm-inst
-	pulse i ary-len mod tempo vct@ f* wait
+	now@ dur trp2 cycle amp 0.5e cm-inst
+	pulse tempo cycle f* wait
     loop
+    trp2 gen-free
+    tempo gen-free
 ;
-E4 Fs4 B4 Cs5 D5 Fs4 E4 Cs5 B4 Fs4 D5 Cs5 12 >vct value pnotes
-event: reich ( -- ) pnotes 0.15e 0.3e 5 3 piano-phase ;event
+event: reich ( -- )
+    vct[ |E4 |Fs4 |B4 |Cs5 |D5 |Fs4 |E4 |Cs5 |B4 |Fs4 |D5 |Cs5 ] { pnotes }
+    pnotes 0.15e 0.3e 5 3 piano-phase
+    pnotes free-vct
+;event
 
 lambda:
     .sndversion
@@ -216,13 +222,13 @@ lambda:
     cage4 1e wait
     reich
 ;
-true :play
-2 :channels
-' jc-reverb :reverb
-false :notehook
-*clm-search-list* s" cm-examp.snd" $+ :output
-*clm-search-list* s" cm-examp.reverb" $+ :rev-file-name
-s" cm-2.4.0/etc/examples/intro.cm using GFM Gforth Music" :comment with-sound
+:play             true
+:channels         2
+:reverb           *clm-use-csndlib* [if] ' freeverb [else] ' jl-reverb [then]
+:notehook         nil
+:output           *clm-search-list* $" cm-examp.snd" $+
+:reverb-file-name *clm-search-list* $" cm-examp.reverb" $+
+:comment make-default-comment $"  -- cm-2.4.0/etc/examples/intro.cm" $+ with-sound
 
 script? [if] bye [then]
 

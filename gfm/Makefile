@@ -1,11 +1,11 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2003--2004 Michael Scholz
+# Copyright (C) 2003--2005 Michael Scholz
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Sep 23 05:59:33 CEST 2003
-# Last: Tue Oct 05 16:14:51 CEST 2004
-# Ident: $Id: Makefile,v 1.9 2004/10/05 14:15:36 mike Exp $
+# Last: Thu Jan 13 23:37:34 CET 2005
+# Ident: $Id: Makefile,v 1.20 2005/01/13 22:39:47 mike Exp $
 
 # This file is part of GFM Gforth Music.
 
@@ -25,37 +25,45 @@
 # MA 02111-1307 USA
 
 prefix	= /usr/local
-datadir	= ${prefix}/share
-forthdir = ${datadir}/gforth/site-forth
+forthdir= ${prefix}/share/gforth/site-forth
+gfmdir  = ${forthdir}/gfm
 
 SHELL	= /bin/sh
 INSTALL	= install -v -c
 CHMOD	= chmod u+w
 CP	= cp -p
-MKDIR	= mkdir
-RM	= rm -frv
+RM	= rm -fr
 TAR	= tar cvfz
+INSTDIRS= mkinstalldirs
 TARGET	= gfm.tar.gz
 DISTDIR	= gfm
-FLIBS	= gfm.fs utils.fs gfm-gens.fs gfm-defs.fs csndlib.fs fsndlib.fs notelist.fs clm-ins.fs
-SAMPS	= sndtest.gfm bird.gfm pachelbel.gfm ricercari12.gfm cm-examp.gfm
-SOURCES	= Makefile README COPYING ${SAMPS} ${FLIBS}
+SPECIAL = gfm.fs utils.fs gfmpath.fs
+FLIBS	= gfm-defs.fs csndlib.fs fsndlib.fs clm-ins.fs spectr.fs dlocsig.fs
+SAMPS	= sndtest.gfm bird.gfm cm-examp.gfm fmviolin.gfm
+SOURCES	= Makefile README COPYING ${SPECIAL} ${SAMPS} ${FLIBS} mkinstalldirs
 
 all:
-	@echo \`make install\' to install all \*.fs files in ${forthdir}
-	@echo \`make install prefix=/usr/gnu\' to install \*.fs in /usr/gnu/share/gforth/site-forth
+	@echo \`make install\' to install all \*.fs files in ${gfmdir}
+	@echo \`make install prefix=/usr/gnu\' to install \*.fs in /usr/gnu/share/gforth/site-forth/gfm
 
 install:
-	@for f in ${FLIBS}; do ${INSTALL} $$f ${forthdir}; done
+	${INSTDIRS} ${forthdir}
+	${INSTDIRS} ${gfmdir}
+	@echo "fpath path+ ${gfmdir}" > gfmpath.fs
+	@for f in ${SPECIAL}; do ${INSTALL} $$f ${forthdir}; done
+	@for f in ${FLIBS}; do ${INSTALL} $$f ${gfmdir}; done
 
 uninstall:
-	@for f in ${FLIBS}; do ${RM} ${forthdir}/$$f; done
+	@for f in ${SPECIAL}; do ${RM} ${forthdir}/$$f; done
+	${RM} ${gfmdir}
 
 dist:
 	${RM} ${DISTDIR}
-	${MKDIR} ${DISTDIR}
+	${INSTDIRS} ${DISTDIR}
 	${CP} ${SOURCES} ${DISTDIR}/
 	${CHMOD} ${DISTDIR}/*
+	${RM} ${DISTDIR}/gfmpath.fs
+	touch ${DISTDIR}/gfmpath.fs
 	${TAR} ${TARGET} ${DISTDIR}
 	${RM} ${DISTDIR}
 
