@@ -3374,7 +3374,7 @@ static XEN snd_no_such_mix_error(const char *caller, XEN n)
 
 static XEN g_mix_position(XEN n) 
 {
-  #define H_mix_position "(" S_mix_position " id) -> sample number of start of mix"
+  #define H_mix_position "(" S_mix_position " id): sample number of start of mix"
   console_state *cs; 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_position, "an integer");
   cs = cs_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3385,7 +3385,7 @@ static XEN g_mix_position(XEN n)
 
 static XEN g_mix_chans(XEN n) 
 {
-  #define H_mix_chans "(" S_mix_chans " id) -> (input) channels in mix"
+  #define H_mix_chans "(" S_mix_chans " id): input channels in mix"
   console_state *cs; 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_chans, "an integer");
   cs = cs_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3396,7 +3396,7 @@ static XEN g_mix_chans(XEN n)
 
 static XEN g_mix_p(XEN n) 
 {
-  #define H_mix_p "(" S_mix_p " id) -> #t if mix is active and accessible"
+  #define H_mix_p "(" S_mix_p " id): #t if mix is active and accessible"
   if (XEN_INTEGER_P(n))
     return(C_TO_XEN_BOOLEAN(mix_ok(XEN_TO_C_INT_OR_ELSE(n, 0))));
   return(XEN_FALSE);
@@ -3404,7 +3404,7 @@ static XEN g_mix_p(XEN n)
 
 static XEN g_mix_frames(XEN n) 
 {
-  #define H_mix_frames "(" S_mix_frames " id) -> mix's length in samples"
+  #define H_mix_frames "(" S_mix_frames " id): mix's length in frames"
   off_t len;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_frames, "an integer");
   len = mix_frames(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3415,7 +3415,7 @@ static XEN g_mix_frames(XEN n)
 
 static XEN g_mix_locked(XEN n) 
 {
-  #define H_mix_locked "(" S_mix_locked " id) -> #t if mix cannot be moved (due to subsequent edits overlapping it)"
+  #define H_mix_locked "(" S_mix_locked " id): #t if mix cannot be moved (due to subsequent edits overlapping it)"
   mix_info *md;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_locked, "an integer");
   md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3426,7 +3426,7 @@ static XEN g_mix_locked(XEN n)
 
 static XEN g_mix_anchor(XEN n) 
 {
-  #define H_mix_anchor "(" S_mix_anchor " id) -> location of mix 'anchor' (determines tag position within mix)"
+  #define H_mix_anchor "(" S_mix_anchor " id): location of mix anchor (determines tag position within mix)"
   mix_info *md; 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_anchor, "an integer");
   md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3437,7 +3437,7 @@ static XEN g_mix_anchor(XEN n)
 
 static XEN g_mix_name(XEN n) 
 {
-  #define H_mix_name "(" S_mix_name " id) -> name associated with mix"
+  #define H_mix_name "(" S_mix_name " id): name associated with mix"
   mix_info *md; 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_name, "an integer");
   md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3448,7 +3448,7 @@ static XEN g_mix_name(XEN n)
 
 static XEN g_mix_track(XEN n) 
 {
-  #define H_mix_track "(" S_mix_track " id) -> track that mix is a member of"
+  #define H_mix_track "(" S_mix_track " id): track that mix is a member of"
   mix_info *md; 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_track, "an integer");
   md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3459,7 +3459,7 @@ static XEN g_mix_track(XEN n)
 
 static XEN g_mix_tag_y(XEN n) 
 {
-  #define H_mix_tag_y "(" S_mix_tag_y " id) -> height of mix's tag"
+  #define H_mix_tag_y "(" S_mix_tag_y " id): height of mix's tag"
   mix_info *md; 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_tag_y, "an integer");
   md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3470,7 +3470,7 @@ static XEN g_mix_tag_y(XEN n)
 
 static XEN g_mix_speed(XEN n) 
 {
-  #define H_mix_speed "(" S_mix_speed " id) -> srate (speed slider setting) of mix"
+  #define H_mix_speed "(" S_mix_speed " id): srate (speed slider setting) of mix"
   console_state *cs; 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_speed, "an integer");
   cs = cs_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3481,7 +3481,7 @@ static XEN g_mix_speed(XEN n)
 
 static XEN g_mixes(XEN snd, XEN chn)
 {
-  #define H_mixes "(" S_mixes ") -> list of mixes (ids) associated with snd and chn"
+  #define H_mixes "(" S_mixes " (snd) (chn)): list of mixes (ids) associated with snd and chn"
   snd_state *ss;
   snd_info *sp;
   chan_info *cp;
@@ -3523,7 +3523,7 @@ static XEN g_mixes(XEN snd, XEN chn)
 
 static XEN g_mix_home(XEN n) 
 {
-  #define H_mix_home "(" S_mix_home " id) -> list of index of sound and channel number affected by mix"
+  #define H_mix_home "(" S_mix_home " id): list of sound index and channel affected by mix"
   mix_info *md; 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_home, "an integer");
   md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3535,7 +3535,7 @@ static XEN g_mix_home(XEN n)
 
 static XEN g_mix_amp(XEN n, XEN uchan) 
 {
-  #define H_mix_amp "(" S_mix_amp " id &optional (chan 0)) -> amp of mix's channel chan"
+  #define H_mix_amp "(" S_mix_amp " id (chan 0)): amp of mix's channel chan"
   console_state *cs; 
   int chan;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ARG_1, S_mix_amp, "an integer");
@@ -3551,7 +3551,7 @@ static XEN g_mix_amp(XEN n, XEN uchan)
 
 static XEN g_mix_amp_env(XEN n, XEN chan) 
 {
-  #define H_mix_amp_env "(" S_mix_amp_env " id &optional (chan 0)) -> amplitude envelope applied to mix's channel chan"
+  #define H_mix_amp_env "(" S_mix_amp_env " id (chan 0)): amplitude envelope applied to mix's channel chan"
   env *e;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ARG_1, S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_mix_amp_env, "an integer");
@@ -3752,7 +3752,7 @@ static XEN g_set_mix_amp_env(XEN n, XEN chan_1, XEN val_1)
 
 static XEN g_mix_sound(XEN file, XEN start_samp)
 {
-  #define H_mix_sound "(" S_mix_sound " file start_samp) mixes file (all channels) into the currently selected sound at start_samp."
+  #define H_mix_sound "(" S_mix_sound " file start-samp): mix file (all channels) into the currently selected sound at start-samp."
 
   char *filename;
   snd_state *ss;
@@ -3803,7 +3803,7 @@ static int update_mix_waveform_height(mix_info *md, void *new_val)
 static XEN g_mix_waveform_height(void) {snd_state *ss; ss = get_global_state(); return(C_TO_XEN_INT(mix_waveform_height(ss)));}
 static XEN g_set_mix_waveform_height(XEN val) 
 {
-  #define H_mix_waveform_height "(" S_mix_waveform_height ") -> max height (pixels) of mix waveforms (20)"
+  #define H_mix_waveform_height "(" S_mix_waveform_height "): max height (pixels) of mix waveforms (20)"
   snd_state *ss; 
   int new_val[1];
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_waveform_height, "a number"); 
@@ -3818,7 +3818,7 @@ static XEN g_set_mix_waveform_height(XEN val)
 #define S_mix_tag_position "mix-tag-position"
 static XEN g_mix_tag_position(XEN id)
 {
-  #define H_mix_tag_position "(" S_mix_tag_position " id) returns position of mix tag"
+  #define H_mix_tag_position "(" S_mix_tag_position " id): position of mix tag (list of x and y)"
   mix_info *md;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_mix_tag_position, "an integer");
   md = md_from_id(XEN_TO_C_INT(id));
@@ -3831,7 +3831,7 @@ static XEN g_mix_tag_position(XEN id)
 static XEN g_mix_tag_width(void) {snd_state *ss; ss = get_global_state(); return(C_TO_XEN_INT(mix_tag_width(ss)));}
 static XEN g_set_mix_tag_width(XEN val) 
 {
-  #define H_mix_tag_width "(" S_mix_tag_width ") -> width (pixels) of mix tags (6)"
+  #define H_mix_tag_width "(" S_mix_tag_width "): width (pixels) of mix tags (6)"
   snd_state *ss; 
   int width;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_width, "a number"); 
@@ -3845,7 +3845,7 @@ static XEN g_set_mix_tag_width(XEN val)
 static XEN g_mix_tag_height(void) {snd_state *ss; ss = get_global_state(); return(C_TO_XEN_INT(mix_tag_height(ss)));}
 static XEN g_set_mix_tag_height(XEN val) 
 {
-  #define H_mix_tag_height "(" S_mix_tag_height ") -> height (pixels) of mix tags (14)"
+  #define H_mix_tag_height "(" S_mix_tag_height "): height (pixels) of mix tags (14)"
   snd_state *ss; 
   int height;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_height, "a number"); 
@@ -3858,7 +3858,7 @@ static XEN g_set_mix_tag_height(XEN val)
 
 static XEN g_selected_mix(void)
 {
-  #define H_selected_mix "(" S_selected_mix ") -> the id of the currently selected mix"
+  #define H_selected_mix "(" S_selected_mix "): the id of the currently selected mix"
   snd_state *ss;
   ss = get_global_state();
   if (ss->selected_mix != INVALID_MIX_ID)
@@ -3879,7 +3879,7 @@ static XEN g_set_selected_mix(XEN id)
 
 static XEN g_forward_mix(XEN count, XEN snd, XEN chn) 
 {
-  #define H_forward_mix "(" S_forward_mix " &optional (count 1) snd chn) moves the cursor forward count mixes, returns mix id if any"
+  #define H_forward_mix "(" S_forward_mix " (count 1) (snd #f) (chn #f)): move the cursor forward count mixes, returns mix id if any"
   int val;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_mix, "an integer");
@@ -3892,7 +3892,7 @@ static XEN g_forward_mix(XEN count, XEN snd, XEN chn)
 
 static XEN g_backward_mix(XEN count, XEN snd, XEN chn) 
 {
-  #define H_backward_mix "(" S_backward_mix " &optional (count 1) snd chn) moves the cursor back count mixes, returns mix id if any"
+  #define H_backward_mix "(" S_backward_mix " (count 1) (snd #f) (chn #f)): move the cursor back count mixes, returns mix id if any"
   int val; 
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_mix, "an integer");
@@ -3906,8 +3906,8 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
 
 static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag)
 {
-  #define H_mix "(" S_mix " file &optional (chn-start 0) (file-chan 0) snd chn with-tag))\n\
-mixes file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
+  #define H_mix "(" S_mix " file (chn-start 0) (file-chan 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ")): \
+mix file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
 is omitted), returning the new mix's id.  if with-tag is #f, the data is mixed (no draggable tag is created). \
 If file_chn is omitted, file's channels are mixed until snd runs out of channels."
 
@@ -3999,7 +3999,7 @@ static int mf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, mf_tag));}
 
 static XEN g_mf_p(XEN obj) 
 {
-  #define H_mf_p "(" S_mix_sample_reader_p " obj) -> #t if obj is a mix-sample-reader"
+  #define H_mf_p "(" S_mix_sample_reader_p " obj): #t if obj is a mix-sample-reader"
   return(C_TO_XEN_BOOLEAN(mf_p(obj)));
 }
 
@@ -4034,7 +4034,7 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(mix_fd, free_mf, mf_free)
 
 static XEN g_make_mix_sample_reader(XEN mix_id)
 {
-  #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id) returns a reader ready to access mix 'id'"
+  #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id): return a reader ready to access mix id"
   mix_info *md = NULL;
   mix_fd *mf = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(mix_id), mix_id, XEN_ONLY_ARG, S_make_mix_sample_reader, "an integer");
@@ -4051,21 +4051,21 @@ static XEN g_make_mix_sample_reader(XEN mix_id)
 
 static XEN g_next_mix_sample(XEN obj)
 {
-  #define H_next_mix_sample "(" S_next_mix_sample " reader) -> next sample from mix reader"
+  #define H_next_mix_sample "(" S_next_mix_sample " reader): next sample from mix reader"
   XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_next_mix_sample, "a mix-sample-reader");
   return(C_TO_XEN_DOUBLE(next_mix_sample(TO_MIX_SAMPLE_READER(obj))));
 }
 
 static XEN g_read_mix_sample(XEN obj)
 {
-  #define H_read_mix_sample "(" S_read_mix_sample " reader) -> read sample from mix reader"
+  #define H_read_mix_sample "(" S_read_mix_sample " reader): read sample from mix reader"
   XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_mix_sample, "a mix-sample-reader");
   return(C_TO_XEN_DOUBLE(next_mix_sample(TO_MIX_SAMPLE_READER(obj))));
 }
 
 static XEN g_free_mix_sample_reader(XEN obj)
 {
-  #define H_free_mix_sample_reader "(" S_free_mix_sample_reader " reader) frees mix sample reader 'reader'"
+  #define H_free_mix_sample_reader "(" S_free_mix_sample_reader " reader): free mix sample reader"
   mix_fd *mf;
   XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_mix_sample_reader, "a mix-sample-reader");
   mf = TO_MIX_SAMPLE_READER(obj);
@@ -4084,7 +4084,7 @@ static int tf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, tf_tag));}
 
 static XEN g_tf_p(XEN obj) 
 {
-  #define H_tf_p "(" S_track_sample_reader_p " obj) -> #t if obj is a track-sample-reader"
+  #define H_tf_p "(" S_track_sample_reader_p " obj): #t if obj is a track-sample-reader"
   return(C_TO_XEN_BOOLEAN(tf_p(obj)));
 }
 
@@ -4141,8 +4141,8 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
 
 static XEN g_make_track_sample_reader(XEN track_id, XEN snd, XEN chn)
 {
-  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track &optional snd chn)\n\
-returns a reader ready to access track's data associated with snd's channel chn"
+  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track (snd #f) (chn #f)): \
+return a reader ready to access track's data associated with snd's channel chn"
 
   track_fd *tf = NULL;
   chan_info *cp;
@@ -4164,21 +4164,21 @@ returns a reader ready to access track's data associated with snd's channel chn"
 
 static XEN g_next_track_sample(XEN obj)
 {
-  #define H_next_track_sample "(" S_next_track_sample " reader) -> next sample from track reader"
+  #define H_next_track_sample "(" S_next_track_sample " reader): next sample from track reader"
   XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_next_track_sample, "a track-sample-reader");
   return(C_TO_XEN_DOUBLE(next_track_sample(TO_TRACK_SAMPLE_READER(obj))));
 }
 
 static XEN g_read_track_sample(XEN obj)
 {
-  #define H_read_track_sample "(" S_read_track_sample " reader) -> read sample from track reader"
+  #define H_read_track_sample "(" S_read_track_sample " reader): read sample from track reader"
   XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_track_sample, "a track-sample-reader");
   return(C_TO_XEN_DOUBLE(next_track_sample(TO_TRACK_SAMPLE_READER(obj))));
 }
 
 static XEN g_free_track_sample_reader(XEN obj)
 {
-  #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader) frees the track sample reader 'reader'"
+  #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader): free the track sample reader"
   track_fd *tf = NULL;
   XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_track_sample_reader, "a track-sample-reader");
   tf = TO_TRACK_SAMPLE_READER(obj);
@@ -4188,7 +4188,7 @@ static XEN g_free_track_sample_reader(XEN obj)
 
 static XEN g_play_track(XEN num, XEN snd, XEN chn)
 {
-  #define H_play_track "(" S_play_track " track &optional snd chn) plays track"
+  #define H_play_track "(" S_play_track " track (snd #f) (chn #f)): play track"
   /* just a dummy for testing */
   chan_info *cp = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(num), num, XEN_ARG_1, S_play_track, "an integer");
@@ -4205,7 +4205,7 @@ static XEN g_play_track(XEN num, XEN snd, XEN chn)
 
 static XEN g_play_mix(XEN num)
 {
-  #define H_play_mix "(" S_play_mix " id) plays mix"
+  #define H_play_mix "(" S_play_mix " id): play mix"
   mix_info *md;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ONLY_ARG, S_play_mix, "an integer");
   md = md_from_id(XEN_TO_C_INT(num));
@@ -4271,8 +4271,8 @@ static int call_mix_position_changed_hook(mix_info *md, off_t samps)
 
 static XEN mix_vct(XEN obj, XEN beg, XEN snd, XEN chn, XEN with_tag, XEN origin)
 {
-  #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) snd chn (with-tag #t) origin)\n\
-mixes data (a vct object) into snd's channel chn starting at beg; returns the new mix id"
+  #define H_mix_vct "(" S_mix_vct " data (beg 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ") (origin #f)): \
+mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
 
   vct *v;
   off_t bg;
@@ -4324,8 +4324,8 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 
 static XEN g_find_mix(XEN samp_n, XEN snd_n, XEN chn_n) 
 {
-  #define H_find_mix "(" S_find_mix " samp &optional snd chn)\n\
-finds the mix in snd's channel chn at samp, returning the mix id; returns #f if no mix found."
+  #define H_find_mix "(" S_find_mix " samp (snd #f) (chn #f)): \
+find the mix in snd's channel chn at samp; return the mix id or #f if no such mix found."
 
   int id;
   chan_info *cp = NULL;
@@ -4361,7 +4361,7 @@ static XEN g_set_mix_color (XEN arg1, XEN arg2)
 
 static XEN g_mix_color(XEN mix_id) 
 {
-  #define H_mix_color "(" S_mix_color ") -> color of mix tags"
+  #define H_mix_color "(" S_mix_color "): color of mix tags"
   snd_state *ss;
   ss = get_global_state();
   if (XEN_INTEGER_P(mix_id))
@@ -4381,7 +4381,7 @@ static XEN g_set_selected_mix_color (XEN color)
 
 static XEN g_selected_mix_color(void) 
 {
-  #define H_selected_mix_color "(" S_selected_mix_color ") -> color of the currently selected mix"
+  #define H_selected_mix_color "(" S_selected_mix_color "): color of the currently selected mix"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->selected_mix_color));
@@ -4390,7 +4390,7 @@ static XEN g_selected_mix_color(void)
 static XEN g_with_mix_tags(void) {return(C_TO_XEN_BOOLEAN(with_mix_tags(get_global_state())));}
 static XEN g_set_with_mix_tags(XEN val) 
 {
-  #define H_with_mix_tags "(" S_with_mix_tags ") -> #t if Snd should display mixed portions with a draggable tag"
+  #define H_with_mix_tags "(" S_with_mix_tags "): #t if Snd should display mixed portions with a draggable tag"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_with_mix_tags, "a boolean");
@@ -4603,16 +4603,16 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
 				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 0, 1);
 
-  #define H_multichannel_mix_hook S_multichannel_mix_hook "(ids) is called when a multichannel mix happens in a sync'd sound. \
+  #define H_multichannel_mix_hook S_multichannel_mix_hook "(ids): called when a multichannel mix happens in a sync'd sound. \
 'ids' is a list of mix id numbers."
 
-  #define H_mix_speed_changed_hook S_mix_speed_changed_hook " (mix-id) is called when a mix speed changes via the mouse. \
+  #define H_mix_speed_changed_hook S_mix_speed_changed_hook " (mix-id): called when a mix speed changes via the mouse. \
 If it returns #t, the actual remix is the hook's responsibility."
 
-  #define H_mix_amp_changed_hook S_mix_amp_changed_hook " (mix-id) is called when a mix amp changes via the mouse. \
+  #define H_mix_amp_changed_hook S_mix_amp_changed_hook " (mix-id): called when a mix amp changes via the mouse. \
 If it returns #t, the actual remix is the hook's responsibility."
 
-  #define H_mix_position_changed_hook S_mix_position_changed_hook " (mix-id samps) is called when a mix position changes via the mouse. \
+  #define H_mix_position_changed_hook S_mix_position_changed_hook " (mix-id samps): called when a mix position changes via the mouse. \
 'samps' = samples moved. If it returns #t, the actual remix is the hook's responsibility."
 
   XEN_DEFINE_HOOK(multichannel_mix_hook, S_multichannel_mix_hook, 1, H_multichannel_mix_hook);
@@ -4620,7 +4620,7 @@ If it returns #t, the actual remix is the hook's responsibility."
   XEN_DEFINE_HOOK(mix_amp_changed_hook, S_mix_amp_changed_hook, 1, H_mix_amp_changed_hook);
   XEN_DEFINE_HOOK(mix_position_changed_hook, S_mix_position_changed_hook, 2, H_mix_position_changed_hook);
 
-  #define H_select_mix_hook S_select_mix_hook " (id) is called when a mix is selected. \
+  #define H_select_mix_hook S_select_mix_hook " (id): called when a mix is selected. \
 The hook function argument 'id' is the newly selected mix's id."
 
   XEN_DEFINE_HOOK(select_mix_hook, S_select_mix_hook, 1, H_select_mix_hook); /* arg = newly selected mix id */

@@ -30,9 +30,6 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
-;;; TODO: GL tests (test/gl/Mesa-4.0.2/samples/), gtk (xg) tests
-;;; TODO: test midi.c: mus-midi-|open|close|read|write|describe|device-name
-
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 ;(use-syntax (ice-9 syncase))
 
@@ -10400,7 +10397,7 @@ EDITS: 5
 		      (let ((z2 (make-ppolar .1 600.0))) (two-pole z2 1.0) z2)
 		      (let ((z3 (make-ppolar .1 600.0))) (two-pole z3 0.5) z3))
 
-      (let ((gen (make-zpolar .1 1200.0))
+      (let ((gen (make-zpolar :radius .1 :frequency 1200.0))
 	    (v0 (make-vct 10)))
 	(vct-set! v0 0 (two-zero gen 1.0))
 	(do ((i 1 (1+ i)))
@@ -13948,17 +13945,17 @@ EDITS: 5
        (IF (or (not (string? str1)) ; can happen if we're running -DTIMING
 	       (not (string-equal-ignoring-white-space str2 str3)))
 	   (snd-display ";snd-help open-sound: ~A ~A ~A" str1 str2 str3)))
-     (IF (not (string-equal-ignoring-white-space (snd-help enved-base) "(enved-base) -> envelope editor exponential base value (1.0)"))
+     (IF (not (string-equal-ignoring-white-space (snd-help enved-base) "(enved-base): envelope editor exponential base value (1.0)"))
 	 (snd-display ";snd-help enved-base: ~A?" (snd-help enved-base)))
-     (IF (not (string-equal-ignoring-white-space (snd-help vu-font) "(vu-font) -> name of font used to make VU meter labels (courier)"))
+     (IF (not (string-equal-ignoring-white-space (snd-help vu-font) "(vu-font): name of font used to make VU meter labels (courier)"))
 	 (snd-display ";snd-help vu-font: ~A?" (snd-help vu-font)))
-     (IF (not (string-equal-ignoring-white-space (snd-help 'enved-base) "(enved-base) -> envelope editor exponential base value (1.0)"))
+     (IF (not (string-equal-ignoring-white-space (snd-help 'enved-base) "(enved-base): envelope editor exponential base value (1.0)"))
 	 (snd-display ";snd-help 'enved-base: ~A?" (snd-help 'enved-base)))
-     (IF (not (string-equal-ignoring-white-space (snd-help 'vu-font) "(vu-font) -> name of font used to make VU meter labels (courier)"))
+     (IF (not (string-equal-ignoring-white-space (snd-help 'vu-font) "(vu-font): name of font used to make VU meter labels (courier)"))
 	 (snd-display ";snd-help 'vu-font: ~A?" (snd-help 'vu-font)))
-     (IF (not (string-equal-ignoring-white-space (snd-help "enved-base") "(enved-base) -> envelope editor exponential base value (1.0)"))
+     (IF (not (string-equal-ignoring-white-space (snd-help "enved-base") "(enved-base): envelope editor exponential base value (1.0)"))
 	 (snd-display ";snd-help \"enved-base\": ~A?" (snd-help "enved-base")))
-     (IF (not (string-equal-ignoring-white-space (snd-help "vu-font") "(vu-font) -> name of font used to make VU meter labels (courier)"))
+     (IF (not (string-equal-ignoring-white-space (snd-help "vu-font") "(vu-font): name of font used to make VU meter labels (courier)"))
 	 (snd-display ";snd-help \"vu-font\": ~A?" (snd-help "vu-font")))
      (let ((str1 (snd-help 'hamming-window))
 	   (str2 (snd-help "hamming-window")))
@@ -14338,7 +14335,7 @@ EDITS: 5
 	(add-hook! help-hook (lambda (a b) 
 			       (if (not (string=? a "cursor-position"))
 				   (snd-display ";help-hook subject: ~A" a))
-			       (if (not (string=? b "(cursor-position &optional snd chn) -> current cursor position (x y) in snd's channel chn"))
+			       (if (not (string=? b "(cursor-position (snd #f) (chn #f)): current cursor position (x y in pixels) in snd's channel chn"))
 				   (snd-display ";help-hook text: ~A" b))
 			       "hiho:"))
 	(let ((ho (snd-help 'cursor-position)))
@@ -24946,6 +24943,17 @@ EDITS: 2
       (if (not (char=? (st3-one svar) #\f)) (snd-display ";restore st3-one (#\f): ~A" (st3-one svar))) 
       (if (not (st3-two svar)) (snd-display ";restore st3-two (#t): ~A" (st3-two svar))) 
 
+      (def-clm-struct hiho1 i x (s "hiho") (ii 3 :type int) (xx 1.0 :type float))
+      (define hi1 (make-hiho1))
+      (let ((val (run-eval '(lambda (y) (declare (y hiho1)) (hiho1-ii y)) hi1)))
+	(if (not (= val 3)) (snd-display ";typed hiho1-ii: ~A" val)))
+      (define hi2 (make-hiho1 :xx 3.14))
+      (let ((val (run-eval '(lambda (y) (declare (y hiho1)) (hiho1-xx y)) hi2)))
+	(if (fneq val 3.14) (snd-display ";typed hiho1-xx: ~A" val)))
+      (let ((val (run-eval '(lambda (x y) (declare (x hiho1) (y hiho1)) (+ (hiho1-xx y) (hiho1-xx x))) hi1 hi2)))
+	(if (fneq val 4.14) (snd-display ";typed hiho1-xx+xx: ~A" val)))
+      (let ((val (run-eval '(lambda (y) (declare (y hiho1)) y) hi1)))
+	(if (not (hiho1? val)) (snd-display ";clm-struct return: ~A" val)))
 
       (let ((lst (list 1 2 (vct-fill! (make-vct 4) 3.14) 3))
 	    (k 123.0))

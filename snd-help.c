@@ -305,7 +305,7 @@ void news_help(snd_state *ss)
 	    "\nRecent changes include:\n\
 \n\
 17-Mar:  Mac OSX Record implemented.\n\
-         piano.rb, rgb.rb, strad.scm thanks to Michael Scholz.\n\
+         piano.rb, rgb.rb, strad.scm, and strad.rb thanks to Michael Scholz.\n\
          moved contrib/* to the main directory.\n\
 13-Mar:  removed use-sinc-interp.\n\
 12-Mar:  select-mix, clear-audio-inputs and append-to-minibuffer moved to snd6.scm.\n\
@@ -1002,7 +1002,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_recorder_out_format "   same as above\n\
   " S_recorder_srate "        22050\n\
   " S_recorder_trigger "      0.0\n\
-  " S_reverb_control_decay "  1.0 &optional (snd #t)\n\
+  " S_reverb_control_decay "  1.0 (snd #t)\n\
   " S_sash_color "            lightgreen\n\
   " S_save_dir "              nil\n\
   " S_save_state_file "       nil\n\
@@ -1940,12 +1940,12 @@ S_all_pass "            (gen input pm)       all-pass filter\n\
 " S_make_filter "         (order xcoeffs ycoeffs)\n\
 " S_make_fir_filter "     (order xcoeffs)\n\
 " S_make_formant "        (radius frequency gain)\n\
-" S_make_frame "          (chans &rest vals)\n\
+" S_make_frame "          (chans vals...)\n\
 " S_make_frame2file "    (name chans format type)\n\
 " S_make_granulate "      (input expansion length scaler hop ramp jitter max-size)\n\
 " S_make_iir_filter "     (order ycoeffs)\n\
 " S_make_locsig "         (degree distance reverb output revout channels)\n\
-" S_make_mixer "          (chans &rest vals)\n\
+" S_make_mixer "          (chans vals...)\n\
 " S_make_notch "          (scaler size max-size initial-contents initial-element)\n\
 " S_make_one_pole "       (a0 b1)\n\
 " S_make_one_zero "       (a0 a1)\n\
@@ -1982,7 +1982,7 @@ S_all_pass "            (gen input pm)       all-pass filter\n\
 " S_mus_array_print_length "()                 how many array elements to print in mus_describe\n\
 " S_mus_b1 "              (gen)                b1 field (simple filters)\n\
 " S_mus_b2 "              (gen)                b2 field (simple filters)\n\
-" S_mus_bank "            (gens amps &optional args1 args2)\n\
+" S_mus_bank "            (gens amps args1 args2)\n\
 " S_mus_channel "         (gen)                channel of gen\n\
 " S_mus_channels "        (gen)                channels of gen\n\
 " S_mus_cosines "         (gen)                cosines of sum-of-cosines gen\n\

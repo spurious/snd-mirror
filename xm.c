@@ -213,7 +213,7 @@
  * added:
  *
  *    XGCValues -> a blank XGCValues struct (for XCreateGC etc)
- *    XColor &optional pixel red green blue flags pad
+ *    XColor pixel red green blue flags pad
  *    XArc XRectangle XPoint XSegment XEvent XWindowChanges XSetWindowAttributes
  *    XTextItem XpmImage XpmColorSymbol
  *    XDrawLinesDirect same as XDrawLines but takes (opaque) ptr to XPoint array

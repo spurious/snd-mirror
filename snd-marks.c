@@ -1834,7 +1834,7 @@ static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
 
 static XEN g_mark_p(XEN id_n)
 {
-  #define H_mark_p "(" S_mark_p " id) -> #t if mark is active"
+  #define H_mark_p "(" S_mark_p " id): #t if mark is active"
   chan_info *ncp[1];
   if (XEN_INTEGER_P(id_n))
     return(C_TO_XEN_BOOLEAN(find_mark_from_id(XEN_TO_C_INT(id_n), ncp, -1)));
@@ -1843,7 +1843,7 @@ static XEN g_mark_p(XEN id_n)
 
 static XEN g_mark_sample(XEN mark_n, XEN pos_n) 
 {
-  #define H_mark_sample "(" S_mark_sample " &optional id pos) returns the mark's location (sample number) at edit history pos"
+  #define H_mark_sample "(" S_mark_sample " (id #f) (pos #f)): mark's location (sample number) at edit history pos"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, S_mark_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos_n), pos_n, XEN_ARG_2, S_mark_sample, "an integer");
   return(mark_get(mark_n, MARK_SAMPLE, pos_n, S_mark_sample));
@@ -1858,7 +1858,7 @@ static XEN g_set_mark_sample(XEN mark_n, XEN samp_n)
 
 static XEN g_mark_sync(XEN mark_n) 
 {
-  #define H_mark_sync "(" S_mark_sync " id) returns the mark's sync value"
+  #define H_mark_sync "(" S_mark_sync " id): mark's sync value"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_sync, "an integer");
   return(mark_get(mark_n, MARK_SYNC, XEN_UNDEFINED, S_mark_sync));
 }
@@ -1872,7 +1872,7 @@ static XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
 
 static XEN g_mark_name(XEN mark_n) 
 {
-  #define H_mark_name "(" S_mark_name " id &optional snd chn) returns the mark's name"
+  #define H_mark_name "(" S_mark_name " id (snd #f) (chn #f)): mark's name"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_name, "an integer");
   return(mark_get(mark_n, MARK_NAME, XEN_UNDEFINED, S_mark_name));
 }
@@ -1886,21 +1886,21 @@ static XEN g_set_mark_name(XEN mark_n, XEN name)
 
 static XEN g_mark_sync_max(void) 
 {
-  #define H_mark_sync_max "(" S_mark_sync_max ") -> max mark sync value seen so far"
+  #define H_mark_sync_max "(" S_mark_sync_max "): max mark sync value seen so far"
   return(C_TO_XEN_INT(mark_sync_max()));
 }
 
 static XEN g_mark_home(XEN mark_n)
 {
-  #define H_mark_home "(" S_mark_home " id) returns the sound (index) and channel that hold mark id"
+  #define H_mark_home "(" S_mark_home " id): the sound (index) and channel that hold mark id"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_home, "an integer");
   return(mark_get(mark_n, MARK_HOME, XEN_UNDEFINED, S_mark_home));
 }
 
 static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos) 
 {
-  #define H_find_mark "(" S_find_mark " samp-or-name &optional snd chn edpos)\n\
-finds the mark in snd's channel chn at samp (if a number) or with the given name (if a string), returning the mark id; returns #f if no mark found."
+  #define H_find_mark "(" S_find_mark " samp-or-name (snd #f) (chn #f) (edpos #f)): \
+find the mark in snd's channel chn at samp (if a number) or with the given name (if a string); return the mark id or #f if no mark found."
 
   mark **mps;
   int i, pos;
@@ -1940,7 +1940,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
 
 static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n) 
 {
-  #define H_add_mark "(" S_add_mark ") samp &optional snd chn) adds a mark at sample samp returning the mark id."
+  #define H_add_mark "(" S_add_mark " samp (snd #f) (chn #f)): add a mark at sample samp returning the mark id."
   mark *m = NULL;
   chan_info *cp;
   off_t loc;
@@ -1965,7 +1965,7 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n)
 
 static XEN g_delete_mark(XEN id_n) 
 {
-  #define H_delete_mark "(" S_delete_mark " id) deletes mark id"
+  #define H_delete_mark "(" S_delete_mark " id): delete mark id"
   chan_info *cp[1];
   mark *m;
   int id;
@@ -1981,7 +1981,7 @@ static XEN g_delete_mark(XEN id_n)
 
 static XEN g_delete_marks(XEN snd_n, XEN chn_n) 
 {
-  #define H_delete_marks "(" S_delete_marks " &optional snd chn) deletes all marks in snd's channel chn"
+  #define H_delete_marks "(" S_delete_marks " (snd #f) (chn #f)): delete all marks in snd's channel chn"
   chan_info *cp;
   ASSERT_CHANNEL(S_delete_marks, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_delete_marks);
@@ -2014,7 +2014,7 @@ static int *syncd_marks(snd_state *ss, int sync)
 
 static XEN g_syncd_marks(XEN sync)
 {
-  #define H_syncd_marks "(" S_syncd_marks " sync) -> list of mark ids that share a given sync value (mark-sync)"
+  #define H_syncd_marks "(" S_syncd_marks " sync): list of mark ids that share a given sync value (" S_mark_sync ")"
   int *ids;
   XEN res;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(sync), sync, XEN_ONLY_ARG, S_syncd_marks, "an integer");
@@ -2048,7 +2048,7 @@ static int *channel_marks(chan_info *cp, int pos)
 
 static XEN g_marks(XEN snd_n, XEN chn_n, XEN pos_n) 
 {
-  #define H_marks "(" S_marks " &optional snd chn pos) -> list of marks (ids) in snd/chn at edit history position pos. \
+  #define H_marks "(" S_marks " (snd) (chn) (edpos #f)): list of marks (ids) in snd/chn at edit history position pos. \
 mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neither given: (((id ...) ...) ...)."
   chan_info *cp;
   snd_info *sp;
@@ -2116,7 +2116,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 
 static XEN g_forward_mark(XEN count, XEN snd, XEN chn) 
 {
-  #define H_forward_mark "(" S_forward_mark " &optional (count 1) snd chn) moves the cursor forward by count marks"
+  #define H_forward_mark "(" S_forward_mark " (count 1) (snd #f) (chn #f)): move the cursor forward by count marks"
   int val; 
   chan_info *cp;
   mark *mp = NULL;
@@ -2135,7 +2135,7 @@ static XEN g_forward_mark(XEN count, XEN snd, XEN chn)
 
 static XEN g_backward_mark(XEN count, XEN snd, XEN chn) 
 {
-  #define H_backward_mark "(" S_backward_mark " &optional (count 1) snd chn) moves the cursor back by count marks"
+  #define H_backward_mark "(" S_backward_mark " (count 1) (snd #f) (chn #f)): move the cursor back by count marks"
   int val; 
   chan_info *cp;
   mark *mp = NULL;
@@ -2200,7 +2200,7 @@ static char *save_marks(snd_info *sp)
 
 static XEN g_save_marks(XEN snd_n)
 {
-  #define H_save_marks "(" S_save_marks " &optional snd) saves snd's marks in <snd's file-name>.marks"
+  #define H_save_marks "(" S_save_marks " (snd #f)): save snd's marks in <snd's file-name>.marks"
   snd_info *sp;
   char *str;
   XEN res = XEN_FALSE;
@@ -2261,8 +2261,8 @@ XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 
 void g_init_marks(void)
 {
-  #define H_mark_drag_hook S_mark_drag_hook " (id) is called when a mark is dragged"
-  #define H_mark_hook S_mark_hook " (id snd chn reason) is called when a mark added, deleted, or moved. \
+  #define H_mark_drag_hook S_mark_drag_hook " (id): called when a mark is dragged"
+  #define H_mark_hook S_mark_hook " (id snd chn reason): called when a mark added, deleted, or moved. \
 'Reason' can be 0: add, 1: delete, 2: move, 3: delete all marks"
 
   XEN_DEFINE_HOOK(mark_drag_hook, S_mark_drag_hook, 1, H_mark_drag_hook); /* arg = id */
@@ -2291,7 +2291,7 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_save_marks,    g_save_marks_w, 0, 1, 0,    H_save_marks);
   XEN_DEFINE_PROCEDURE(S_mark_p,        g_mark_p_w, 1, 0, 0,        H_mark_p);
 
-  #define H_draw_mark_hook S_draw_mark_hook " (mark-id) is called before a mark is drawn (in XOR mode). \
+  #define H_draw_mark_hook S_draw_mark_hook " (mark-id): called before a mark is drawn (in XOR mode). \
 If the hook returns #t, the mark is not drawn."
 
   XEN_DEFINE_HOOK(draw_mark_hook, S_draw_mark_hook, 1, H_draw_mark_hook);  /* arg = mark-id */

@@ -1,4 +1,5 @@
-#include "snd.h" 
+#include "snd.h"
+#include "sndlib-strings.h"
 
 #define REGION_FILE 1
 #define REGION_DEFERRED 0
@@ -1169,8 +1170,8 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
 
 static XEN g_insert_region(XEN samp_n, XEN reg_n, XEN snd_n, XEN chn_n) /* opt reg_n */
 {
-  #define H_insert_region "("  S_insert_region " &optional (start-samp 0) (region-id 0) snd chn)\n\
-inserts region data into snd's channel chn starting at 'start-samp'"
+  #define H_insert_region "("  S_insert_region " (start-samp 0) (region-id 0) (snd #f) (chn #f)): \
+insert region data into snd's channel chn starting at start-samp"
 
   chan_info *cp;
   int rg;
@@ -1190,7 +1191,7 @@ inserts region data into snd's channel chn starting at 'start-samp'"
 
 static XEN g_max_regions(void) 
 {
-  #define H_max_regions "(" S_max_regions ") -> max number of regions saved on the region list"
+  #define H_max_regions "(" S_max_regions "): max number of regions saved on the region list"
   snd_state *ss;
   ss = get_global_state();
   return(C_TO_XEN_INT(max_regions(ss)));
@@ -1230,7 +1231,7 @@ static XEN region_get(int field, XEN n, char *caller)
 
 static XEN g_region_p(XEN n)
 {
-  #define H_region_p "(" S_region_p " reg) -> #t if region is active"
+  #define H_region_p "(" S_region_p " reg): #t if region is active"
   if (XEN_REGION_P(n))
     return(C_TO_XEN_BOOLEAN(region_ok(XEN_REGION_TO_C_INT(n))));
   return(XEN_FALSE);
@@ -1238,42 +1239,42 @@ static XEN g_region_p(XEN n)
 
 static XEN g_region_frames (XEN n) 
 {
-  #define H_region_frames "(" S_region_frames " &optional (n 0)) -> length in frames of region"
+  #define H_region_frames "(" S_region_frames " (reg 0)): region length in frames"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_frames, "a region id");
   return(region_get(REGION_FRAMES, n, S_region_frames));
 }
 
 static XEN g_region_srate (XEN n) 
 {
-  #define H_region_srate "(" S_region_srate " &optional (n 0)) -> srate of region n"
+  #define H_region_srate "(" S_region_srate " (reg 0)): region (nominal) srate"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_srate, "a region id");
   return(region_get(REGION_SRATE, n, S_region_srate));
 }
 
 static XEN g_region_chans (XEN n) 
 {
-  #define H_region_chans "(" S_region_chans " &optional (n 0) -> channels of data in region n"
+  #define H_region_chans "(" S_region_chans " (reg 0): region channels"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_chans, "a region id");
   return(region_get(REGION_CHANS, n, S_region_chans));
 }
 
 static XEN g_region_maxamp (XEN n) 
 {
-  #define H_region_maxamp "(" S_region_maxamp " &optional (n 0)) -> max amp of region n"
+  #define H_region_maxamp "(" S_region_maxamp " (reg 0)): region maxamp"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_maxamp, "a region id");
   return(region_get(REGION_MAXAMP, n, S_region_maxamp));
 }
 
 static XEN g_forget_region (XEN n) 
 {
-  #define H_forget_region "(" S_forget_region " &optional (n 0)) remove region n from the region list"
+  #define H_forget_region "(" S_forget_region " (reg 0)): remove region reg from the region list"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_forget_region, "a region id");
   return(region_get(REGION_FORGET, n, S_forget_region));
 }
 
 static XEN g_play_region (XEN n, XEN wait) 
 {
-  #define H_play_region "(" S_play_region " &optional (n 0) (wait #f)) play region n, if wait is #t, play to end before returning"
+  #define H_play_region "(" S_play_region " (reg 0) (wait #f)): play region reg; if wait is #t, play to end before returning"
   int rg, wt = FALSE;
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_play_region, "a region id");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_2, S_play_region, "a boolean");
@@ -1287,8 +1288,8 @@ static XEN g_play_region (XEN n, XEN wait)
 
 static XEN g_protect_region (XEN n, XEN protect) 
 {
-  #define H_protect_region "(" S_protect_region " &optional (n 0) (val #t))\n\
-if val is #t protects region n from being pushed off the end of the region list"
+  #define H_protect_region "(" S_protect_region " (reg 0) (val #t)): \
+if val is #t protect region n from being pushed off the end of the region list, else unprotect it"
 
   int rg;
   XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_protect_region, "a region id");
@@ -1302,7 +1303,7 @@ if val is #t protects region n from being pushed off the end of the region list"
 
 static XEN g_regions(void) 
 {
-  #define H_regions "(" S_regions ") -> current stack of regions (by id)"
+  #define H_regions "(" S_regions "): current active regions (a list of region ids)"
   int i;
   XEN result;
   result = XEN_EMPTY_LIST;
@@ -1314,8 +1315,8 @@ static XEN g_regions(void)
 
 static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
 {
-  #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd, returning its id. \
-If 'chn' is #t, all chans are included, taking the 'snd' sync field into account if it's not 0.  If no args are passed, the current \
+  #define H_make_region "(" S_make_region " (beg) (end) (snd #f) (chn #f)): make a new region between beg and end in snd, returning its id. \
+If chn is #t, all chans are included, taking the snd sync field into account if it's not 0.  If no args are passed, the current \
 selection is used."
   chan_info *cp;
   sync_info *si = NULL;
@@ -1387,8 +1388,8 @@ selection is used."
 
 static XEN g_save_region (XEN n, XEN filename, XEN type, XEN format, XEN comment) 
 {
-  #define H_save_region "(" S_save_region " region filename &optional type format comment) saves region in filename \
-using data format (mus-bshort), header type (default is mus-next), and comment"
+  #define H_save_region "(" S_save_region " region filename (type #f) (format #f) (comment #f)): save region in filename \
+using data format (default depends on machine), header type (" S_mus_next " by default), and comment"
 
   char *name = NULL, *com = NULL;
   snd_state *ss;
@@ -1429,8 +1430,8 @@ using data format (mus-bshort), header type (default is mus-next), and comment"
 
 static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n)
 {
-  #define H_mix_region "(" S_mix_region " &optional (chn-samp 0) (region 0) snd chn)\n\
-mixes region into snd's channel chn starting at chn-samp; returns new mix id."
+  #define H_mix_region "(" S_mix_region " (chn-samp 0) (region 0) (snd #f) (chn #f)): \
+mix region into snd's channel chn starting at chn-samp; return new mix id."
 
   chan_info *cp;
   off_t samp;
@@ -1456,7 +1457,7 @@ mixes region into snd's channel chn starting at chn-samp; returns new mix id."
 
 static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
 {
-  #define H_region_sample "(" S_region_sample " &optional (samp 0) (region 0) (chan 0)) -> region's sample at samp in chan"
+  #define H_region_sample "(" S_region_sample " (samp 0) (region 0) (chan 0)): region's sample at samp in chan"
 
   int rg, chan;
   off_t samp;
@@ -1475,8 +1476,8 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
 
 static XEN g_region_samples2vct(XEN beg_n, XEN num, XEN reg_n, XEN chn_n, XEN v)
 {
-  #define H_region_samples2vct "(" S_region_samples2vct " &optional (beg 0) samps (region 0) (chan 0) obj)\n\
-writes region's samples starting at beg for samps in channel chan to vct obj, returning obj (or creating a new one)"
+  #define H_region_samples2vct "(" S_region_samples2vct " (beg 0) (samps reglen) (region 0) (chan 0) (obj #f)): \
+write region's samples starting at beg for samps in channel chan to vct obj; return obj (or create a new one)"
 
   Float *data;
   int reg, chn;

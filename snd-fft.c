@@ -1687,7 +1687,7 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 
 static XEN g_autocorrelate(XEN reals)
 {
-  #define H_autocorrelate "(" S_autocorrelate " data) returns (in place) the autocorrelation of data (vct)"
+  #define H_autocorrelate "(" S_autocorrelate " data): in place autocorrelation of data (a vct)"
   /* assumes length is power of 2 */
   vct *v1 = NULL;
   XEN_ASSERT_TYPE(VCT_P(reals), reals, XEN_ONLY_ARG, S_autocorrelate, "a vct");
@@ -1698,10 +1698,10 @@ static XEN g_autocorrelate(XEN reals)
 
 static XEN g_add_transform(XEN name, XEN xlabel, XEN lo, XEN hi, XEN proc)
 {
-  #define H_add_transform "(" S_add_transform " name x-label low high func) adds the transform func \
+  #define H_add_transform "(" S_add_transform " name x-label low high func): add the transform func \
 to the transform lists; func should be a function of two arguments, the length of the transform \
-and a sample-reader to get the data, and should return a vct object containing the transform results. \
-'name' is the transform's name, x-label is its x-axis label, and the relevant returned data \
+and a sample-reader to get the data, and should return a vct containing the transform results. \
+name is the transform's name, x-label is its x-axis label, and the relevant returned data \
 to be displayed goes from low to high (normally 0.0 to 1.0)"
 
   char *errmsg;
@@ -1727,10 +1727,10 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
 
 static XEN g_transform_samples_size(XEN snd, XEN chn)
 {
-  #define H_transform_samples_size "(" S_transform_samples_size " &optional snd chn)\n\
-returns a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
-If no transform graph, returns 0; if " S_graph_once ", returns " S_transform_size ",\
-and otherwise returns a list (total-size active-bins active-slices)"
+  #define H_transform_samples_size "(" S_transform_samples_size " (snd #f) (chn #f)): \
+return a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
+If there is no transform graph, return 0; if " S_graph_once ", return " S_transform_size ",\
+and otherwise return a list (total-size active-bins active-slices)"
 
   chan_info *cp;
   sono_info *si;
@@ -1749,8 +1749,8 @@ and otherwise returns a list (total-size active-bins active-slices)"
 
 static XEN g_transform_sample(XEN bin, XEN slice, XEN snd_n, XEN chn_n)
 {
-  #define H_transform_sample "(" S_transform_sample " &optional (bin 0) (slice 0) snd chn)\n\
-returns the current transform sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
+  #define H_transform_sample "(" S_transform_sample " (bin 0) (slice 0) (snd #f) (chn #f)): \
+return the current transform sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
 
   chan_info *cp;
   fft_info *fp;
@@ -1800,8 +1800,8 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 
 static XEN transform_samples2vct(XEN snd_n, XEN chn_n, XEN v)
 {
-  #define H_transform_samples2vct "(" S_transform_samples2vct " &optional snd chn vct-obj)\n\
-returns a vct object (vct-obj if passed), with the current transform data from snd's channel chn"
+  #define H_transform_samples2vct "(" S_transform_samples2vct " (snd #f) (chn #f) (obj #f)): \
+return a vct (obj if it's passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;
   fft_info *fp;
@@ -1934,7 +1934,7 @@ XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
 
 void g_init_fft(void)
 {
-  #define H_before_transform_hook S_before_transform_hook " (snd chn) is called just before a transform is calculated.  If it returns \
+  #define H_before_transform_hook S_before_transform_hook " (snd chn): called just before a transform is calculated.  If it returns \
 an integer, it is used as the starting point of the transform.  The following \
 somewhat brute-force code shows a way to have the transform reflect the position \
 of a moving mark:\n\

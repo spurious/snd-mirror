@@ -1224,7 +1224,7 @@ env *name_to_env(char *str)
 
 static XEN g_define_envelope(XEN a, XEN b)
 {
-  #define H_define_envelope "(" S_define_envelope " name data) defines 'name' to be the envelope 'data', a list of breakpoints"
+  #define H_define_envelope "(" S_define_envelope " name data): define 'name' to be the envelope 'data', a list of breakpoints"
   XEN_ASSERT_TYPE(XEN_STRING_P(a), a, XEN_ARG_1, S_define_envelope, "a string");
   if (XEN_LIST_P(b)) 
     alert_envelope_editor(get_global_state(), 
@@ -1285,7 +1285,7 @@ env *get_env(XEN e, char *origin) /* list in e */
 
 static XEN g_save_envelopes(XEN filename)
 {
-  #define H_save_envelopes "(" S_save_envelopes " filename) saves the envelopes known to the envelope editor in filename"
+  #define H_save_envelopes "(" S_save_envelopes " filename): save the envelopes known to the envelope editor in filename"
   char *name = NULL;
   FILE *fd;
   XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), filename, XEN_ONLY_ARG, S_save_envelopes, "a string or #f");
@@ -1369,7 +1369,7 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 static XEN g_enved_base(void) {return(C_TO_XEN_DOUBLE(enved_base(get_global_state())));}
 static XEN g_set_enved_base(XEN val) 
 {
-  #define H_enved_base "(" S_enved_base ") -> envelope editor exponential base value (1.0)"
+  #define H_enved_base "(" S_enved_base "): envelope editor exponential base value (1.0)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_base, "a number"); 
   set_enved_base(get_global_state(), mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 300000.0));
   return(C_TO_XEN_DOUBLE(enved_base(get_global_state())));
@@ -1378,7 +1378,7 @@ static XEN g_set_enved_base(XEN val)
 static XEN g_enved_power(void) {return(C_TO_XEN_DOUBLE(enved_power(get_global_state())));}
 static XEN g_set_enved_power(XEN val) 
 {
-  #define H_enved_power "(" S_enved_power ") -> envelope editor base scale range (9.0^power)"
+  #define H_enved_power "(" S_enved_power "): envelope editor base scale range (9.0^power)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_power, "a number"); 
   set_enved_power(get_global_state(), mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 10.0));
   return(C_TO_XEN_DOUBLE(enved_power(get_global_state())));
@@ -1387,7 +1387,7 @@ static XEN g_set_enved_power(XEN val)
 static XEN g_enved_clip_p(void) {return(C_TO_XEN_BOOLEAN(enved_clip_p(get_global_state())));}
 static XEN g_set_enved_clip_p(XEN on)
 {
-  #define H_enved_clip_p "(" S_enved_clip_p ") -> envelope editor 'clip' button setting; \
+  #define H_enved_clip_p "(" S_enved_clip_p "): envelope editor clip button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ONLY_ARG, S_setB S_enved_clip_p, "a boolean");
@@ -1398,7 +1398,7 @@ if clipping, the motion of the mouse is restricted to the current graph bounds."
 static XEN g_enved_exp_p(void) {return(C_TO_XEN_BOOLEAN(enved_exp_p(get_global_state())));}
 static XEN g_set_enved_exp_p(XEN val) 
 {
-  #define H_enved_exp_p "(" S_enved_exp_p ") -> envelope editor 'exp' and 'lin' buttons; \
+  #define H_enved_exp_p "(" S_enved_exp_p "): envelope editor 'exp' and 'lin' buttons; \
 if enved-exping, the connecting segments use exponential curves rather than straight lines."
 
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_enved_exp_p, "a boolean");
@@ -1410,7 +1410,7 @@ static XEN g_enved_target(void) {return(C_TO_XEN_INT(enved_target(get_global_sta
 static XEN g_set_enved_target(XEN val) 
 {
   int n; 
-  #define H_enved_target "(" S_enved_target ") determines how the envelope is applied to data in the envelope editor; \
+  #define H_enved_target "(" S_enved_target "): where (amplitude, frequency, etc) the envelope is applied in the envelope editor; \
 choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_target, "an integer"); 
@@ -1424,7 +1424,7 @@ choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
 static XEN g_enved_wave_p(void) {return(C_TO_XEN_BOOLEAN(enved_wave_p(get_global_state())));}
 static XEN g_set_enved_wave_p(XEN val) 
 {
-  #define H_enved_wave_p "(" S_enved_wave_p ") -> #t if the envelope editor is displaying the waveform to be edited"
+  #define H_enved_wave_p "(" S_enved_wave_p "): #t if the envelope editor is displaying the waveform to be edited"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_enved_wave_p, "a boolean");
   set_enved_wave_p(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(val));
   return(C_TO_XEN_BOOLEAN(enved_wave_p(get_global_state())));
@@ -1433,7 +1433,7 @@ static XEN g_set_enved_wave_p(XEN val)
 static XEN g_enved_in_dB(void) {return(C_TO_XEN_BOOLEAN(enved_in_dB(get_global_state())));}
 static XEN g_set_enved_in_dB(XEN val) 
 {
-  #define H_enved_in_dB "(" S_enved_in_dB ") -> #t if the envelope editor is using dB"
+  #define H_enved_in_dB "(" S_enved_in_dB "): #t if the envelope editor is using dB"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_enved_in_dB, "a boolean");
   set_enved_in_dB(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(val)); 
   return(C_TO_XEN_BOOLEAN(enved_in_dB(get_global_state())));
@@ -1442,7 +1442,7 @@ static XEN g_set_enved_in_dB(XEN val)
 static XEN g_enved_filter_order(void) {return(C_TO_XEN_INT(enved_filter_order(get_global_state())));}
 static XEN g_set_enved_filter_order(XEN val) 
 {
-  #define H_enved_filter_order "(" S_enved_filter_order ") -> envelope editor's FIR filter order (40)"
+  #define H_enved_filter_order "(" S_enved_filter_order "): envelope editor's FIR filter order (40)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_filter_order, "an integer"); 
   set_enved_filter_order(get_global_state(), XEN_TO_C_INT(val));
   return(C_TO_XEN_INT(enved_filter_order(get_global_state())));
@@ -1450,7 +1450,7 @@ static XEN g_set_enved_filter_order(XEN val)
 
 static XEN g_enved_dialog(void) 
 {
-  #define H_enved_dialog "(" S_enved_dialog ") fires up the Envelope Editor"
+  #define H_enved_dialog "(" S_enved_dialog "): start the Envelope Editor"
   return(XEN_WRAP_WIDGET(create_envelope_editor(get_global_state()))); 
 }
 
@@ -1525,13 +1525,13 @@ void g_init_env(void)
   XEN_DEFINE_CONSTANT(S_enved_delete_point, ENVED_DELETE_POINT, S_enved_hook " 'reason' arg when point is deleted");
   XEN_DEFINE_CONSTANT(S_enved_move_point,   ENVED_MOVE_POINT,   S_enved_hook " 'reason' arg when point is moved");
 
-  #define H_enved_hook S_enved_hook " (env pt new-x new-y reason)\n\
-Each time a breakpoint is changed in the envelope editor, this hook \
-is called; if it returns a list, that list defines the new envelope, \
+  #define H_enved_hook S_enved_hook " (env pt new-x new-y reason): \
+called each time a breakpoint is changed in the envelope editor; \
+if it returns a list, that list defines the new envelope, \
 otherwise the breakpoint is moved (but not beyond the neighboring \
-breakpoint), leaving other points untouched.  The kind of change \
-is 'reason' which can be enved-point-moved, enved-point-deleted, \
-or enved-point-added.  This hook makes it possible to define attack \
+breakpoint), leaving other points untouched.  The kind of change that triggered the hook \
+is 'reason' which can be " S_enved_move_point ", " S_enved_delete_point ", \
+or " S_enved_add_point ".  This hook makes it possible to define attack \
 and decay portions in the envelope editor, or use functions such as \
 stretch-envelope from env.scm: \n\
  (add-hook! enved-hook\n\

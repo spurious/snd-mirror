@@ -687,7 +687,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 
 static XEN g_delete_selection(void)
 {
-  #define H_delete_selection "(" S_delete_selection ") deletes the currently selected portion"
+  #define H_delete_selection "(" S_delete_selection "): delete the currently selected portion"
   if (selection_is_active())
     {
       delete_selection(S_delete_selection, UPDATE_DISPLAY);
@@ -698,7 +698,7 @@ static XEN g_delete_selection(void)
 
 static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 {
-  #define H_insert_selection "(" S_insert_selection " beg snd chn) inserts the currently selected portion start at beg"
+  #define H_insert_selection "(" S_insert_selection " (beg 0) (snd #f) (chn #f)): insert the currently selected portion starting at beg"
   chan_info *cp;
   snd_state *ss;
   off_t samp;
@@ -718,7 +718,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 
 static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
 {
-  #define H_mix_selection "(" S_mix_selection " beg snd chn) mixes the currently selected portion start at beg"
+  #define H_mix_selection "(" S_mix_selection " (beg 0) (snd #f) (chn #f)): mix the currently selected portion starting at beg"
   chan_info *cp;
   snd_state *ss;
   off_t obeg;
@@ -736,13 +736,13 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
 
 static XEN g_selection_p(void)
 {
-  #define H_selection_p "(" S_selection_p ") -> #t if selection is currently active, visible, etc"
+  #define H_selection_p "(" S_selection_p "): #t if selection is currently active, visible, etc"
   return(C_TO_XEN_BOOLEAN(selection_is_active()));
 }
 
 static XEN g_selection_position(XEN snd, XEN chn)
 {
-  #define H_selection_position "(" S_selection_position " &optional snd chn) -> selection start samp"
+  #define H_selection_position "(" S_selection_position " (snd #f) (chn #f)): selection start samp"
   chan_info *cp;
   if (selection_is_active())
     {
@@ -796,7 +796,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_selection_position_reversed, g_set_selection_po
 
 static XEN g_selection_frames(XEN snd, XEN chn)
 {
-  #define H_selection_frames "(" S_selection_frames " &optional snd chn) -> selection length"
+  #define H_selection_frames "(" S_selection_frames " (snd #f) (chn #f)): selection length"
   chan_info *cp;
   if (selection_is_active())
     {
@@ -852,7 +852,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_selection_frames_reversed, g_set_selection_fram
 
 static XEN g_selection_member(XEN snd, XEN chn)
 {
-  #define H_selection_member "(" S_selection_member " &optional snd chn) -> #t if snd's channel chn is a member of the current selection"
+  #define H_selection_member "(" S_selection_member " (snd #f) (chn #f)): #t if snd's channel chn is a member of the current selection"
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_member, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_member);
@@ -890,8 +890,8 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_selection_member_reversed, g_set_selection_memb
 
 static XEN g_select_all(XEN snd_n, XEN chn_n)
 {
-  #define H_select_all "(" S_select_all " &optional snd chn) makes a new selection containing all of snd's channel chn. \
-If sync is set, all chans are included.  The new region number is returned."
+  #define H_select_all "(" S_select_all " (snd #f) (chn #f)): make a new selection containing all of snd's channel chn. \
+If sync is set, all chans are included.  The new region id is returned (if " S_selection_creates_region " is #t)."
   chan_info *cp;
   int id;
   ASSERT_CHANNEL(S_select_all, snd_n, chn_n, 1);
@@ -904,8 +904,8 @@ If sync is set, all chans are included.  The new region number is returned."
 
 static XEN g_save_selection(XEN filename, XEN header_type, XEN data_format, XEN srate, XEN comment, XEN chan)
 {
-  #define H_save_selection "(" S_save_selection " filename\n    &optional header-type data-format srate comment chan)\n\
-saves the current selection in filename using the indicated file attributes.  If chan is given, save only that channel."
+  #define H_save_selection "(" S_save_selection " filename (header-type #f) (data-format #f) (srate #f) (comment #f) (chan #f)): \
+save the current selection in filename using the indicated file attributes.  If chan is given, save only that channel."
 
   snd_state *ss;
   int type, format, sr, err, chn;
@@ -954,19 +954,19 @@ saves the current selection in filename using the indicated file attributes.  If
 
 static XEN g_selection_chans(void)
 {
-  #define H_selection_chans "(" S_selection_chans ") -> chans in active selection"
+  #define H_selection_chans "(" S_selection_chans "): chans in active selection"
   return(C_TO_XEN_INT(selection_chans()));
 }
 
 static XEN g_selection_srate(void)
 {
-  #define H_selection_srate "(" S_selection_srate ") -> selection srate"
+  #define H_selection_srate "(" S_selection_srate "): selection srate"
   return(C_TO_XEN_INT(selection_srate()));
 }
 
 static XEN g_selection_maxamp(XEN snd, XEN chn)
 {
-  #define H_selection_maxamp "(" S_selection_maxamp " &optional snd chn) -> selection maxamp in given channel"
+  #define H_selection_maxamp "(" S_selection_maxamp " (snd #f) (chn #f)): selection maxamp in given channel"
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_maxamp, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_maxamp);

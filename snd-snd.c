@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "sndlib-strings.h"
 
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment)
 {
@@ -1829,7 +1830,7 @@ XEN snd_no_such_sound_error(const char *caller, XEN n)
 
 static XEN g_sound_p(XEN snd_n)
 {
-  #define H_sound_p "(" S_sound_p " &optional (index 0)) -> #t if sound associated with index is active (accessible)"
+  #define H_sound_p "(" S_sound_p " (index 0)): #t if sound associated with index is active (accessible)"
   snd_info *sp;
   sp = get_sp(snd_n, PLAYERS_OK);
   return(C_TO_XEN_BOOLEAN((sp) && snd_ok(sp)));
@@ -1837,7 +1838,7 @@ static XEN g_sound_p(XEN snd_n)
 
 static XEN g_select_sound(XEN snd_n)
 {
-  #define H_select_sound "(" S_select_sound " &optional snd) makes snd the selected (active) sound"
+  #define H_select_sound "(" S_select_sound " (snd #f)): select snd."
   int val;
   snd_state *ss;
   snd_info *sp;
@@ -1867,7 +1868,7 @@ static XEN g_select_sound(XEN snd_n)
 
 static XEN g_select_channel(XEN chn_n)
 {
-  #define H_select_channel "(" S_select_channel " &optional chn) makes chn the selected (active) channel"
+  #define H_select_channel "(" S_select_channel " (chn 0)): select channel"
   snd_info *sp;
   snd_state *ss;
   int chan;
@@ -1887,7 +1888,7 @@ static XEN g_select_channel(XEN chn_n)
 
 static XEN g_find_sound(XEN filename)
 {
-  #define H_find_sound "(" S_find_sound " name) returns the id of the sound associated with file 'name'"
+  #define H_find_sound "(" S_find_sound " name): return the id of the sound associated with file 'name'"
   snd_state *ss;
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_find_sound, "a string");
@@ -1900,7 +1901,7 @@ static XEN g_find_sound(XEN filename)
 
 static XEN g_bomb(XEN snd, XEN on)
 {
-  #define H_bomb "(" S_bomb " &optional snd (on #t)) displays (or erases if on=#f) the bomb icon"
+  #define H_bomb "(" S_bomb " (snd #f) (on #t)): display (or erase if on=#f) the bomb icon"
   snd_info *sp;
   ASSERT_SOUND(S_bomb, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
@@ -2257,7 +2258,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 
 static XEN g_channels(XEN snd_n)
 {
-  #define H_channels "("  S_channels " &optional snd) how many channels snd has"
+  #define H_channels "("  S_channels " (snd #f)): how many channels snd has"
   return(sound_get(snd_n, SP_NCHANS, S_channels));
 }
 
@@ -2276,7 +2277,7 @@ static XEN g_set_channels(XEN snd_n, XEN val)
 
 static XEN g_srate(XEN snd_n) 
 {
-  #define H_srate "(" S_srate " &optional snd) -> snd's srate"
+  #define H_srate "(" S_srate " (snd #f)): snd's srate"
   return(sound_get(snd_n, SP_SRATE, S_srate));
 }
 
@@ -2289,7 +2290,7 @@ static XEN g_set_srate(XEN snd_n, XEN val)
 
 static XEN g_data_location(XEN snd_n) 
 {
-  #define H_data_location "(" S_data_location " &optional snd) -> snd's data location"
+  #define H_data_location "(" S_data_location " (snd #f)): snd's data location (bytes)"
   return(sound_get(snd_n, SP_DATA_LOCATION, S_data_location));
 }
 
@@ -2302,7 +2303,7 @@ static XEN g_set_data_location(XEN snd_n, XEN val)
 
 static XEN g_data_format(XEN snd_n) 
 {
-  #define H_data_format "(" S_data_format " &optional snd) -> snd's data format (e.g. mus-bshort)"
+  #define H_data_format "(" S_data_format " (snd #f)): snd's data format (e.g. " S_mus_bshort ")"
   return(sound_get(snd_n, SP_DATA_FORMAT, S_data_format));
 }
 
@@ -2315,7 +2316,7 @@ static XEN g_set_data_format(XEN snd_n, XEN val)
 
 static XEN g_header_type(XEN snd_n) 
 {
-  #define H_header_type "(" S_header_type " &optional snd) -> snd's header type (e.g. mus-aiff)"
+  #define H_header_type "(" S_header_type " (snd #f)): snd's header type (e.g. " S_mus_aiff ")"
   return(sound_get(snd_n, SP_HEADER_TYPE, S_header_type));
 }
 
@@ -2328,7 +2329,7 @@ static XEN g_set_header_type(XEN snd_n, XEN val)
 
 static XEN g_comment(XEN snd_n)
 {
-  #define H_comment "(" S_comment " &optional snd) -> snd's comment (in its header)"
+  #define H_comment "(" S_comment " (snd #f)): snd's comment (in its header)"
   return(sound_get(snd_n, SP_COMMENT, S_comment));
 }
 
@@ -2366,7 +2367,7 @@ static XEN name_reversed(XEN arg1, XEN arg2) \
 
 static XEN g_sync(XEN snd_n) 
 {
-  #define H_sync "(" S_sync " &optional snd) -> whether snd is sync'd to other sounds (0 = no sync), built-in Posix sync is called %sync"
+  #define H_sync "(" S_sync " (snd #f)): snd's sync value (0 = no sync)"
   return(sound_get(snd_n, SP_SYNC, S_sync));
 }
 
@@ -2381,7 +2382,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_sync_reversed, g_set_sync)
 
 static XEN g_sound_properties(XEN snd_n) 
 {
-  #define H_sound_properties "(" S_sound_properties " snd) -> snd's property list"
+  #define H_sound_properties "(" S_sound_properties " snd): snd's property list"
   return(sound_get(snd_n, SP_PROPERTIES, S_sound_properties));
 }
 
@@ -2411,8 +2412,8 @@ static XEN g_set_channel_style(XEN style, XEN snd)
   snd_state *ss;
   snd_info *sp;
   int new_style = CHANNELS_SEPARATE;
-  #define H_channel_style "(" S_channel_style " &optional snd) -> how multichannel sounds layout the channels. \
-Default is channels-separate, other values are channels-combined and channels-superimposed. \
+  #define H_channel_style "(" S_channel_style " (snd #f)): how multichannel sounds lay out the channels. \
+Default is " S_channels_separate ", other values are " S_channels_combined " and " S_channels_superimposed ". \
 As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button."
 
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(style), style, XEN_ARG_1, S_setB S_channel_style, "an integer or boolean"); 
@@ -2439,7 +2440,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_channel_style_reversed, g_set_channel_style)
 
 static XEN g_read_only(XEN snd_n) 
 {
-  #define H_read_only "(" S_read_only " &optional snd) -> whether snd is write-protected"
+  #define H_read_only "(" S_read_only " (snd #f)): whether snd is write-protected"
   return(sound_get(snd_n, SP_READ_ONLY, S_read_only));
 }
 
@@ -2453,7 +2454,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_read_only_reversed, g_set_read_only)
 
 static XEN g_contrast_control_p(XEN snd_n) 
 {
-  #define H_contrast_control_p "(" S_contrast_control_p " &optional snd) -> snd's control panel constrast button state"
+  #define H_contrast_control_p "(" S_contrast_control_p " (snd #f)): snd's control panel constrast button state"
   return(sound_get(snd_n, SP_CONTRASTING, S_contrast_control_p));
 }
 
@@ -2467,7 +2468,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_contrast_control_p_reversed, g_set_contrast_con
 
 static XEN g_expand_control_p(XEN snd_n) 
 {
-  #define H_expand_control_p "(" S_expand_control_p " &optional snd) -> snd's control panel expand button state"
+  #define H_expand_control_p "(" S_expand_control_p " (snd #f)): snd's control panel expand button state"
   return(sound_get(snd_n, SP_EXPANDING, S_expand_control_p));
 }
 
@@ -2481,7 +2482,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_expand_control_p_reversed, g_set_expand_control
 
 static XEN g_reverb_control_p(XEN snd_n) 
 {
-  #define H_reverb_control_p "(" S_reverb_control_p " &optional snd) -> snd's control panel reverb button state"
+  #define H_reverb_control_p "(" S_reverb_control_p " (snd #f)): snd's control panel reverb button state"
   return(sound_get(snd_n, SP_REVERBING, S_reverb_control_p));
 }
 
@@ -2495,7 +2496,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_reverb_control_p_reversed, g_set_reverb_control
 
 static XEN g_filter_control_p(XEN snd_n) 
 {
-  #define H_filter_control_p "(" S_filter_control_p " &optional snd) -> snd's control panel filter button state"
+  #define H_filter_control_p "(" S_filter_control_p " (snd #f)): snd's control panel filter button state"
   return(sound_get(snd_n, SP_FILTERING, S_filter_control_p));
 }
 
@@ -2509,7 +2510,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_p_reversed, g_set_filter_control
 
 static XEN g_filter_control_in_dB(XEN snd_n) 
 {
-  #define H_filter_control_in_dB "(" S_filter_control_in_dB " &optional snd) -> #t if snd's filter envelope is displayed in dB in control panel"
+  #define H_filter_control_in_dB "(" S_filter_control_in_dB " (snd #f)): #t if snd's filter envelope is displayed in dB in control panel"
   return(sound_get(snd_n, SP_FILTER_DBING, S_filter_control_in_dB));
 }
 
@@ -2523,13 +2524,13 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_in_dB_reversed, g_set_filter_con
 
 static XEN g_filter_control_coeffs(XEN snd_n) 
 {
-  #define H_filter_control_coeffs "(" S_filter_control_coeffs " &optional snd) -> current control panel filter coeffs"
+  #define H_filter_control_coeffs "(" S_filter_control_coeffs " (snd #f)): control panel filter coeffs"
   return(sound_get(snd_n, SP_FILTER_COEFFS, S_filter_control_coeffs));
 }
 
 static XEN g_filter_control_order(XEN snd_n) 
 {
-  #define H_filter_control_order "(" S_filter_control_order " &optional snd) -> filter order (in control panel)"
+  #define H_filter_control_order "(" S_filter_control_order " (snd #f)): filter order (in control panel)"
   return(sound_get(snd_n, SP_FILTER_ORDER, S_filter_control_order));
 }
 
@@ -2543,7 +2544,7 @@ WITH_REVERSED_ARGS(g_set_filter_control_order_reversed, g_set_filter_control_ord
 
 static XEN g_cursor_follows_play(XEN snd_n) 
 {
-  #define H_cursor_follows_play "("  S_cursor_follows_play " &optional snd) -> #t if cursor moves along in waveform display as sound is played (#f)"
+  #define H_cursor_follows_play "("  S_cursor_follows_play " (snd #f)): #t if cursor moves along in waveform display as sound is played (#f)"
   return(sound_get(snd_n, SP_CURSOR_FOLLOWS_PLAY, S_cursor_follows_play));
 }
 
@@ -2557,7 +2558,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_cursor_follows_play_reversed, g_set_cursor_foll
 
 static XEN g_show_controls(XEN snd_n) 
 {
-  #define H_show_controls "(" S_show_controls " &optional snd) -> #t if snd's control panel is known to be open"
+  #define H_show_controls "(" S_show_controls " (snd #f)): #t if snd's control panel is known to be open"
   return(sound_get(snd_n, SP_SHOW_CONTROLS, S_show_controls));
 }
 
@@ -2571,25 +2572,25 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_show_controls_reversed, g_set_show_controls)
 
 static XEN g_save_controls(XEN snd_n) 
 {
-  #define H_save_controls "(" S_save_controls " &optional snd) saves the current control panel settings for subsequent " S_restore_controls
+  #define H_save_controls "(" S_save_controls " (snd #f)): save the control panel settings for subsequent " S_restore_controls
   return(sound_get(snd_n, SP_SAVE_CONTROLS, S_save_controls));
 }
 
 static XEN g_restore_controls(XEN snd_n) 
 {
-  #define H_restore_controls "(" S_restore_controls " &optional snd) restores the previously saved control panel settings"
+  #define H_restore_controls "(" S_restore_controls " (snd #f)): restore the previously saved control panel settings"
   return(sound_get(snd_n, SP_RESTORE_CONTROLS, S_restore_controls));
 }
 
 static XEN g_reset_controls(XEN snd_n) 
 {
-  #define H_reset_controls "(" S_reset_controls " &optional snd) resets (clears) the control panel settings"
+  #define H_reset_controls "(" S_reset_controls " (snd #f)): reset (clear) the control panel settings"
   return(sound_get(snd_n, SP_RESET_CONTROLS, S_reset_controls));
 }
 
 static XEN g_selected_channel(XEN snd_n) 
 {
-  #define H_selected_channel "(" S_selected_channel " &optional snd) -> currently selected channel in snd (or #f if none)"
+  #define H_selected_channel "(" S_selected_channel " (snd #f)): currently selected channel in snd (or #f if none)"
   return(sound_get(snd_n, SP_SELECTED_CHANNEL, S_selected_channel));
 }
 
@@ -2624,38 +2625,38 @@ static XEN g_set_selected_channel(XEN snd_n, XEN chn_n)
 
 static XEN g_file_name(XEN snd_n) 
 {
-  #define H_file_name "(" S_file_name " &optional snd) -> snd's full filename"
+  #define H_file_name "(" S_file_name " (snd #f)): snd's full filename"
   return(sound_get(snd_n, SP_FILE_NAME, S_file_name));
 }
 
 static XEN g_short_file_name(XEN snd_n) 
 {
-  #define H_short_file_name "(" S_short_file_name " &optional snd) -> short form of snd's file name (no directory)"
+  #define H_short_file_name "(" S_short_file_name " (snd #f)): short form of snd's file name (no directory)"
   return(sound_get(snd_n, SP_SHORT_FILE_NAME, S_short_file_name));
 }
 
 static XEN g_close_sound(XEN snd_n) 
 {
-  #define H_close_sound "(" S_close_sound " snd) closes snd"
+  #define H_close_sound "(" S_close_sound " (snd #f)): close snd"
   return(sound_get(snd_n, SP_CLOSE, S_close_sound));
 }
 
 static XEN g_update_sound(XEN snd_n) 
 {
-  #define H_update_sound "(" S_update_sound " snd) updates snd (re-reads from disk flushing pending edits)"
+  #define H_update_sound "(" S_update_sound " (snd #f)): update snd (re-read it from the disk after flushing pending edits)"
   return(sound_get(snd_n, SP_UPDATE, S_update_sound));
 }
 
 /* should this throw an error if write-protected or whatever (not snd_error in this context)?  */
 static XEN g_save_sound(XEN snd_n) 
 {
-  #define H_save_sound "(" S_save_sound " &optional snd) saves snd (updates the on-disk data to match Snd's current version)"
+  #define H_save_sound "(" S_save_sound " (snd #f)): save snd (update the on-disk data to match Snd's current version)"
   return(sound_get(snd_n, SP_SAVE, S_save_sound));
 }
 
 static XEN g_revert_sound(XEN index)
 {
-  #define H_revert_sound "("  S_revert_sound " &optional snd) reverts snd to its unedited state (undo all)"
+  #define H_revert_sound "("  S_revert_sound " (snd #f)): revert snd to its unedited state (undo all)"
   snd_info *sp;
   int i;
   if (XEN_LIST_P(index))
@@ -2679,7 +2680,7 @@ static XEN g_revert_sound(XEN index)
 
 static XEN g_selected_sound(void)
 {
-  #define H_selected_sound "(" S_selected_sound ") -> index of currently selected sound (or #f if none)"
+  #define H_selected_sound "(" S_selected_sound "): index of currently selected sound (or #f if none)"
   snd_state *ss;
   ss = get_global_state();
   if ((ss->selected_sound != NO_SELECTION) && 
@@ -2690,8 +2691,8 @@ static XEN g_selected_sound(void)
 
 static XEN g_open_sound(XEN filename)
 { /* returns index of new sound if successful */
-  #define H_open_sound "(" S_open_sound " filename)\n\
-opens filename (as if opened from File:Open menu option), and returns the new file's index"
+  #define H_open_sound "(" S_open_sound " filename): \
+open filename (as if opened from File:Open menu option), and return the new sound's index"
   char *fname = NULL;
   snd_state *ss;
   snd_info *sp;
@@ -2714,8 +2715,8 @@ opens filename (as if opened from File:Open menu option), and returns the new fi
 
 static XEN g_open_raw_sound(XEN filename, XEN chans, XEN srate, XEN format)
 {
-  #define H_open_raw_sound "(" S_open_raw_sound " filename chans srate format)\n\
-opens filename assuming the data matches the attributes indicated unless the file actually has a header"
+  #define H_open_raw_sound "(" S_open_raw_sound " filename chans srate format): \
+open filename assuming the data matches the attributes indicated unless the file actually has a header"
 
   char *fname = NULL;
   snd_state *ss;
@@ -2750,7 +2751,7 @@ opens filename assuming the data matches the attributes indicated unless the fil
 
 static XEN g_view_sound(XEN filename)
 {
-  #define H_view_sound "(" S_view_sound " filename) opens a file in read-only mode.\n\
+  #define H_view_sound "(" S_view_sound " filename): open a file in read-only mode. \
 You can subsequently make it writable by (set! (read-only) #f)."
   char *fname = NULL;
   snd_info *sp = NULL;
@@ -2773,8 +2774,8 @@ You can subsequently make it writable by (set! (read-only) #f)."
 
 static XEN g_save_sound_as(XEN newfile, XEN index, XEN type, XEN format, XEN srate, XEN channel, XEN edpos)
 {
-  #define H_save_sound_as "("  S_save_sound_as " filename\n     &optional snd header-type data-format srate channel edpos)\n\
-saves snd in filename using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
+  #define H_save_sound_as "("  S_save_sound_as " filename (snd #f) (header-type #f) (data-format #f) (srate #f) (channel #f) (edpos #f)): \
+save snd in filename using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
 Any argument can be #f which causes its value to be taken from the sound being saved.\n\
   (save-sound-as \"test.snd\" index mus-next mus-bshort)"
 
@@ -2858,8 +2859,8 @@ Any argument can be #f which causes its value to be taken from the sound being s
 
 static XEN g_new_sound(XEN name, XEN type, XEN format, XEN srate, XEN chans, XEN comment) 
 {
-  #define H_new_sound "(" S_new_sound " &optional name type format srate chans comment)\n\
-creates a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used"
+  #define H_new_sound "(" S_new_sound " (name #f) (type #f) (format #f) (srate #f) (chans #f) (comment #f)): \
+create a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used"
 
   snd_info *sp = NULL; 
   int ht, df, sr, ch, err;
@@ -2941,7 +2942,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 
 static XEN g_speed_control_style(XEN snd)
 {
-  #define H_speed_control_style "(" S_speed_control_style " (snd #t)) -> speed control panel interpretation choice (" S_speed_control_as_float ")"
+  #define H_speed_control_style "(" S_speed_control_style " (snd #t)): speed control panel interpretation choice (" S_speed_control_as_float ")"
   if (XEN_BOUND_P(snd))
     return(sound_get(snd, SP_SPEED_STYLE, S_speed_control_style));
   return(C_TO_XEN_INT(speed_control_style(get_global_state())));
@@ -2967,7 +2968,7 @@ WITH_REVERSED_ARGS(g_set_speed_control_style_reversed, g_set_speed_control_style
 
 static XEN g_speed_control_tones(XEN snd)
 {
-  #define H_speed_control_tones "(" S_speed_control_tones " (snd #t)) -> if " S_speed_control_style " is " S_speed_control_as_semitone ", this chooses the octave divisions (12)"
+  #define H_speed_control_tones "(" S_speed_control_tones " (snd #t)): if " S_speed_control_style " is " S_speed_control_as_semitone ", this chooses the octave divisions (12)"
   if (XEN_BOUND_P(snd))
     return(sound_get(snd, SP_SPEED_TONES, S_speed_control_tones));
   return(C_TO_XEN_INT(speed_control_tones(get_global_state())));
@@ -2991,7 +2992,7 @@ WITH_REVERSED_ARGS(g_set_speed_control_tones_reversed, g_set_speed_control_tones
 
 static XEN g_amp_control(XEN snd_n, XEN chn_n) 
 {
-  #define H_amp_control "(" S_amp_control " &optional snd chn) -> current amp slider setting"
+  #define H_amp_control "(" S_amp_control " (snd #f) (chn #f)): current amp slider setting"
   chan_info *cp;
   if (XEN_BOUND_P(chn_n))
     {
@@ -3023,7 +3024,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_amp_control_reversed, g_set_amp_control)
 
 static XEN g_contrast_control(XEN snd_n) 
 {
-  #define H_contrast_control "(" S_contrast_control " &optional snd) -> current contrast slider setting"
+  #define H_contrast_control "(" S_contrast_control " (snd #f)): current contrast slider setting"
   return(sound_get(snd_n, SP_CONTRAST, S_contrast_control));
 }
 
@@ -3037,7 +3038,7 @@ WITH_REVERSED_ARGS(g_set_contrast_control_reversed, g_set_contrast_control)
 
 static XEN g_contrast_control_amp(XEN snd_n) 
 {
-  #define H_contrast_control_amp "(" S_contrast_control_amp " &optional snd) -> snd's contrast amp\n\
+  #define H_contrast_control_amp "(" S_contrast_control_amp " (snd #f)): snd's contrast amp\n\
    (scaler on data before contrast operation in control panel, 1.0)"
 
   return(sound_get(snd_n, SP_CONTRAST_AMP, S_contrast_control_amp));
@@ -3053,7 +3054,7 @@ WITH_REVERSED_ARGS(g_set_contrast_control_amp_reversed, g_set_contrast_control_a
 
 static XEN g_expand_control(XEN snd_n) 
 {
-  #define H_expand_control "(" S_expand_control " &optional snd) -> current expand slider setting"
+  #define H_expand_control "(" S_expand_control " (snd #f)): current expand slider setting"
   return(sound_get(snd_n, SP_EXPAND, S_expand_control));
 }
 
@@ -3067,7 +3068,7 @@ WITH_REVERSED_ARGS(g_set_expand_control_reversed, g_set_expand_control)
 
 static XEN g_expand_control_length(XEN snd_n) 
 {
-  #define H_expand_control_length "(" S_expand_control_length " &optional snd) -> current expansion segment length in seconds (.15)"
+  #define H_expand_control_length "(" S_expand_control_length " (snd #f)): current expansion segment length in seconds (.15)"
   return(sound_get(snd_n, SP_EXPAND_LENGTH, S_expand_control_length));
 }
 
@@ -3081,7 +3082,7 @@ WITH_REVERSED_ARGS(g_set_expand_control_length_reversed, g_set_expand_control_le
 
 static XEN g_expand_control_ramp(XEN snd_n) 
 {
-  #define H_expand_control_ramp "(" S_expand_control_ramp " &optional snd) -> current expansion ramp time (.4)"
+  #define H_expand_control_ramp "(" S_expand_control_ramp " (snd #f)): current expansion ramp time (.4)"
   return(sound_get(snd_n, SP_EXPAND_RAMP, S_expand_control_ramp));
 }
 
@@ -3095,7 +3096,7 @@ WITH_REVERSED_ARGS(g_set_expand_control_ramp_reversed, g_set_expand_control_ramp
 
 static XEN g_expand_control_hop(XEN snd_n) 
 {
-  #define H_expand_control_hop "(" S_expand_control_hop " &optional snd) -> current expansion output grain spacing in seconds (0.05)"
+  #define H_expand_control_hop "(" S_expand_control_hop " (snd #f)): current expansion output grain spacing in seconds (0.05)"
   return(sound_get(snd_n, SP_EXPAND_HOP, S_expand_control_hop));
 }
 
@@ -3109,7 +3110,7 @@ WITH_REVERSED_ARGS(g_set_expand_control_hop_reversed, g_set_expand_control_hop)
 
 static XEN g_speed_control(XEN snd_n) 
 {
-  #define H_speed_control "(" S_speed_control " &optional snd) -> current speed (srate) slider setting"
+  #define H_speed_control "(" S_speed_control " (snd #f)): current speed (srate) slider setting"
   return(sound_get(snd_n, SP_SPEED, S_speed_control));
 }
 
@@ -3123,7 +3124,7 @@ WITH_REVERSED_ARGS(g_set_speed_control_reversed, g_set_speed_control)
 
 static XEN g_reverb_control_length(XEN snd_n) 
 {
-  #define H_reverb_control_length "(" S_reverb_control_length " &optional snd) -> reverb decay length scaler"
+  #define H_reverb_control_length "(" S_reverb_control_length " (snd #f)): reverb decay length scaler"
   return(sound_get(snd_n, SP_REVERB_LENGTH, S_reverb_control_length));
 }
 
@@ -3137,7 +3138,7 @@ WITH_REVERSED_ARGS(g_set_reverb_control_length_reversed, g_set_reverb_control_le
 
 static XEN g_reverb_control_feedback(XEN snd_n) 
 {
-  #define H_reverb_control_feedback "(" S_reverb_control_feedback " &optional snd) -> reverb feedback scaler"
+  #define H_reverb_control_feedback "(" S_reverb_control_feedback " (snd #f)): reverb feedback scaler"
   return(sound_get(snd_n, SP_REVERB_FEEDBACK, S_reverb_control_feedback));
 }
 
@@ -3151,7 +3152,7 @@ WITH_REVERSED_ARGS(g_set_reverb_control_feedback_reversed, g_set_reverb_control_
 
 static XEN g_reverb_control_scale(XEN snd_n) 
 {
-  #define H_reverb_control_scale "(" S_reverb_control_scale " &optional snd) -> reverb scaler (the amount of reverb)"
+  #define H_reverb_control_scale "(" S_reverb_control_scale " (snd #f)): reverb scaler (the amount of reverb)"
   return(sound_get(snd_n, SP_REVERB_SCALE, S_reverb_control_scale));
 }
 
@@ -3165,7 +3166,7 @@ WITH_REVERSED_ARGS(g_set_reverb_control_scale_reversed, g_set_reverb_control_sca
 
 static XEN g_reverb_control_lowpass(XEN snd_n) 
 {
-  #define H_reverb_control_lowpass "(" S_reverb_control_lowpass " &optional snd) -> reverb lowpass filter coefficient"
+  #define H_reverb_control_lowpass "(" S_reverb_control_lowpass " (snd #f)): reverb lowpass filter coefficient"
   return(sound_get(snd_n, SP_REVERB_LOW_PASS, S_reverb_control_lowpass));
 }
 
@@ -3179,7 +3180,7 @@ WITH_REVERSED_ARGS(g_set_reverb_control_lowpass_reversed, g_set_reverb_control_l
 
 static XEN g_reverb_control_decay(XEN snd)
 {
-  #define H_reverb_control_decay "(" S_reverb_control_decay " &optional (snd #t)) -> 'Apply' button reverb decay time (1.0 seconds)"
+  #define H_reverb_control_decay "(" S_reverb_control_decay " (snd #t)): 'Apply' button reverb decay time (1.0 seconds)"
   if (XEN_BOUND_P(snd))
     return(sound_get(snd, SP_REVERB_DECAY, S_reverb_control_decay));
   return(C_TO_XEN_DOUBLE(reverb_control_decay(get_global_state())));
@@ -3229,7 +3230,7 @@ static XEN g_set_filter_control_env(XEN edata, XEN snd_n)
 
 static XEN g_filter_control_env(XEN snd_n)
 {
-  #define H_filter_control_env "(" S_filter_control_env " &optional snd) -> snd's filter envelope (in the control panel)"
+  #define H_filter_control_env "(" S_filter_control_env " (snd #f)): snd's filter envelope (in the control panel)"
   snd_info *sp = NULL;
   ASSERT_SOUND(S_filter_control_env, snd_n, 1);
   sp = get_sp(snd_n, PLAYERS_OK);
@@ -3242,7 +3243,8 @@ WITH_REVERSED_ARGS(g_set_filter_control_env_reversed, g_set_filter_control_env)
 
 static XEN g_apply_controls(XEN snd, XEN choice, XEN beg, XEN dur)
 {
-  #define H_apply_controls "(" S_apply_controls " &optional snd choice beg dur) is equivalent to clicking the control panel 'Apply' button.\
+  #define H_apply_controls "(" S_apply_controls " (snd #f) (choice 0) (beg 0) (dur len)): \
+equivalent to clicking the control panel 'Apply' button.\
 The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to selection).  If 'beg' is given, the apply starts there."
 
   snd_info *sp;
@@ -3270,7 +3272,11 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
 
 static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
 {
-  #define H_peak_env_info "(" S_peak_env_info " snd chn pos) -> '(complete ymin ymax)"
+  #define H_peak_env_info "(" S_peak_env_info " (snd #f) (chn #f) (edpos #f)): \
+return some of the overall amplitude envelope data for the given channel \
+at the given edit list position.  The data currently returned are whether \
+the envelopes are complete (they are the result of a background process), and the min and max data values."
+
   chan_info *cp;
   env_info *ep;
   int edpos;
@@ -3318,7 +3324,7 @@ static int mus_sample_type_ok(int val)
 
 static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 {
-  #define H_write_peak_env_info_file "(" S_write_peak_env_info_file " snd chn name) saves current peak-env info in file"
+  #define H_write_peak_env_info_file "(" S_write_peak_env_info_file " snd chn name): save current peak-env info in file"
   chan_info *cp;
   char *fullname = NULL;
   env_info *ep;
@@ -3430,7 +3436,7 @@ static env_info *get_peak_env_info(char *fullname, int *error)
 
 static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
 {
-  #define H_read_peak_env_info_file "(" S_read_peak_env_info_file " snd chn name) reads stored peak-env info from file"
+  #define H_read_peak_env_info_file "(" S_read_peak_env_info_file " snd chn name): read stored peak-env info from file"
   /* has to happen in initial_graph_hook to precede add_amp_env */
   chan_info *cp;
   int err = 0;
@@ -3540,9 +3546,9 @@ static XEN g_channel_amp_envs(XEN filename, XEN chan, XEN pts, XEN peak_func, XE
    *   if peak_func, use it to get peak_env_info file if needed
    *   if done_func set workproc that calls it when done
    */
-  #define H_channel_amp_envs "(" S_channel_amp_envs " file chan size peak-file-func work-proc-func)\n\
+  #define H_channel_amp_envs "(" S_channel_amp_envs " (file #f) (chan 0) (size #f) (peak-file-func #f) (work-proc-func #f)): \
 return two vcts of length 'size' containing y vals (min and max) of file's channel chan's amp envs. \
-'peak-file-func' if any is used to get the name of the associated peak_env_info file if the file is very large. \
+'peak-file-func' is used to get the name of the associated peak_env_info file if the file is very large. \
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background. \
 If 'filename' is a sound index (an integer), 'size' is an edit-position, and the current amp envs are returned."
 
@@ -3675,7 +3681,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 
 static XEN g_start_progress_report(XEN snd)
 {
-  #define H_start_progress_report "(" S_start_progress_report " &optional snd) posts the hour-glass icon"
+  #define H_start_progress_report "(" S_start_progress_report " (snd #f)): post the hour-glass icon"
   snd_info *sp;
   ASSERT_SOUND(S_start_progress_report, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
@@ -3687,7 +3693,7 @@ static XEN g_start_progress_report(XEN snd)
 
 static XEN g_finish_progress_report(XEN snd)
 {
-  #define H_finish_progress_report "(" S_finish_progress_report " &optional snd) removes the hour-glass icon"
+  #define H_finish_progress_report "(" S_finish_progress_report " (snd #f)): remove the hour-glass icon"
   snd_info *sp;
   ASSERT_SOUND(S_finish_progress_report, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
@@ -3699,8 +3705,8 @@ static XEN g_finish_progress_report(XEN snd)
 
 static XEN g_progress_report(XEN pct, XEN name, XEN cur_chan, XEN chans, XEN snd)
 {
-  #define H_progress_report "(" S_progress_report " pct &optional name cur-chan chans snd)\n\
-updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd using pct to indicate how far along we are"
+  #define H_progress_report "(" S_progress_report " pct (name #f) (cur-chan #f) (chans #f) (snd #f)): \
+update an on-going 'progress report' (an animated hour-glass icon) in snd using pct to indicate how far along we are"
 
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(pct), pct, XEN_ARG_1, S_progress_report, "a number");
@@ -3926,13 +3932,13 @@ XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 
 void g_init_snd(void)
 {
-  #define H_name_click_hook S_name_click_hook " (snd) is called when sound name clicked. \
+  #define H_name_click_hook S_name_click_hook " (snd): called when sound name clicked. \
 If it returns #t, the usual informative minibuffer babbling is squelched."
 
-  #define H_before_apply_hook S_before_apply_hook " (snd) is called when 'Apply' is clicked or apply-controls called. \
+  #define H_before_apply_hook S_before_apply_hook " (snd): called when 'Apply' is clicked or apply-controls called. \
 If it returns #t, the apply is aborted."
 
-  #define H_after_apply_hook S_after_apply_hook " (snd) is called when 'Apply' finishes."
+  #define H_after_apply_hook S_after_apply_hook " (snd): called when 'Apply' finishes."
 
   XEN_DEFINE_HOOK(name_click_hook,   S_name_click_hook,   1, H_name_click_hook);       /* args = snd-index */
   XEN_DEFINE_HOOK(before_apply_hook, S_before_apply_hook, 1, H_before_apply_hook);     /* args = snd-index */

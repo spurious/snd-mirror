@@ -15,26 +15,26 @@
  *   vct *c_vct_copy(vct *vc)              return copy of vc
  *
  * Scheme side:
- *   (make-vct len &opt (filler 0.0))      make new vct
- *   (vct? obj)                            is obj a vct
- *   (vct-ref v index)                     return v[index]
- *   (vct-set! v index val)                v[index] = val
- *   (vct-copy v)                          return a copy of v
- *   (vct-length v)                        return length of v
- *   (vct-add! v1 v2 &opt (offset 0))      v1[i+offset] = v1[i+offset] + v2[i] -> v1
- *   (vct-subtract! v1 v2)                 v1[i] = v1[i] - v2[i] -> v1
- *   (vct-offset! v1 scl)                  v1[i] += scl -> v1
- *   (vct-multiply! v1 v2)                 v1[i] *= v2[i] -> v1
- *   (vct-scale! v1 scl)                   v1[i] *= scl -> v1
- *   (vct-fill! v1 val)                    v1[i] = val -> v1
- *   (vct-map! v1 proc)                    set each element of v1 to value of function proc()
- *   (vct-peak v1)                         max val (abs) in v
- *   (list->vct lst)                       return vct with elements of list lst
- *   (vct->list v1)                        return list with elements of vct v1
- *   (vector->vct vect)                    return vct with elements of vector vect
- *   (vct->vector v)                       return vector of vct contents
- *   (vct-move! v new old)                 v[new++] = v[old++] -> v
- *   (vct-subseq v start end &opt vnew)    vnew = v[start..end]
+ *   (make-vct len (filler 0.0))      make new vct
+ *   (vct? obj)                       is obj a vct
+ *   (vct-ref v index)                return v[index]
+ *   (vct-set! v index val)           v[index] = val
+ *   (vct-copy v)                     return a copy of v
+ *   (vct-length v)                   return length of v
+ *   (vct-add! v1 v2 (offset 0))      v1[i+offset] = v1[i+offset] + v2[i] -> v1
+ *   (vct-subtract! v1 v2)            v1[i] = v1[i] - v2[i] -> v1
+ *   (vct-offset! v1 scl)             v1[i] += scl -> v1
+ *   (vct-multiply! v1 v2)            v1[i] *= v2[i] -> v1
+ *   (vct-scale! v1 scl)              v1[i] *= scl -> v1
+ *   (vct-fill! v1 val)               v1[i] = val -> v1
+ *   (vct-map! v1 proc)               set each element of v1 to value of function proc()
+ *   (vct-peak v1)                    max val (abs) in v
+ *   (list->vct lst)                  return vct with elements of list lst
+ *   (vct->list v1)                   return list with elements of vct v1
+ *   (vector->vct vect)               return vct with elements of vector vect
+ *   (vct->vector v)                  return vector of vct contents
+ *   (vct-move! v new old)            v[new++] = v[old++] -> v
+ *   (vct-subseq v start end vnew)    vnew = v[start..end]
  *
  * The intended use is a sort of latter-day array-processing system that handles huge
  * one-dimensional vectors -- fft's, etc.  Some of these functions can be found in

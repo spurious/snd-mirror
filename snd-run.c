@@ -8109,8 +8109,8 @@ static void clm_struct_ref_r(int *args, int *ints, Float *dbls)
     }
 }
 
-/* TODO: run-time set of clm-def-struct field */
-/* TODO: display snd-test case for clm-struct (and run-time cases from tmp11.scm) */
+/* TODO: run-time set of non-constant list clm-def-struct field */
+
 static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc)
 {
   /* types can't change within run */

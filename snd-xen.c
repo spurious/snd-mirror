@@ -890,7 +890,7 @@ void snd_load_file(char *filename)
 
 static XEN g_snd_print(XEN msg)
 {
-  #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
+  #define H_snd_print "(" S_snd_print " str): display str in the lisp listener window"
   char *str = NULL;
   if (XEN_STRING_P(msg))
     str = copy_string(XEN_TO_C_STRING(msg));
@@ -915,7 +915,7 @@ static XEN g_snd_print(XEN msg)
 static XEN format_func = XEN_UNDEFINED;
 static XEN g_clm_print(XEN args)
 {
-  #define H_clm_print "(" S_clm_print " . args) applies 'format' to 'args' and appends the result in the listener."
+  #define H_clm_print "(" S_clm_print " args...): apply format to args and append the result in the listener."
   XEN str, format_var;
   if (XEN_NOT_BOUND_P(format_func))
     {
@@ -957,7 +957,7 @@ int listener_print_p(char *msg)
 static XEN g_region_graph_style(void) {return(C_TO_XEN_INT(region_graph_style(get_global_state())));}
 static XEN g_set_region_graph_style(XEN val) 
 {
-  #define H_region_graph_style "(" S_region_graph_style ") refers to the graph-style of the region dialog graph. \
+  #define H_region_graph_style "(" S_region_graph_style "): graph-style of the region dialog graph. \
 The region-graph-style choices are graph-lines, graph-dots, graph-filled, graph-lollipops, and graph-dots-and-lines."
   snd_state *ss;
   ss = get_global_state();
@@ -970,8 +970,8 @@ The region-graph-style choices are graph-lines, graph-dots, graph-filled, graph-
 static XEN g_ask_before_overwrite(void) {return(C_TO_XEN_BOOLEAN(ask_before_overwrite(get_global_state())));}
 static XEN g_set_ask_before_overwrite(XEN val) 
 {
-  #define H_ask_before_overwrite "(" S_ask_before_overwrite ") should be #t if you want Snd to ask before overwriting a file. \
-If #f, any existing file will be overwritten when you save or save-as."
+  #define H_ask_before_overwrite "(" S_ask_before_overwrite "): #t if you want Snd to ask before overwriting a file. \
+If #f, any existing file of the same name will be overwritten without warning when you save or save-as."
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_ask_before_overwrite, "a boolean");
@@ -982,7 +982,7 @@ If #f, any existing file will be overwritten when you save or save-as."
 static XEN g_audio_output_device(void) {return(C_TO_XEN_INT(audio_output_device(get_global_state())));}
 static XEN g_set_audio_output_device(XEN val) 
 {
-  #define H_audio_output_device "(" S_audio_output_device ") is the current sndlib default output device (mus-audio-default)"
+  #define H_audio_output_device "(" S_audio_output_device "): the current sndlib default output device (mus-audio-default)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_audio_output_device, "an integer"); 
@@ -993,7 +993,7 @@ static XEN g_set_audio_output_device(XEN val)
 static XEN g_audio_input_device(void) {return(C_TO_XEN_INT(audio_input_device(get_global_state())));}
 static XEN g_set_audio_input_device(XEN val) 
 {
-  #define H_audio_input_device "(" S_audio_input_device ") is the current sndlib default input device (mus-audio-default)"
+  #define H_audio_input_device "(" S_audio_input_device "): the current sndlib default input device (mus-audio-default)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_audio_input_device, "an integer"); 
@@ -1004,7 +1004,7 @@ static XEN g_set_audio_input_device(XEN val)
 static XEN g_minibuffer_history_length(void) {return(C_TO_XEN_INT(minibuffer_history_length(get_global_state())));}
 static XEN g_set_minibuffer_history_length(XEN val) 
 {
-  #define H_minibuffer_history_length "(" S_minibuffer_history_length ") is the minibuffer history length. \
+  #define H_minibuffer_history_length "(" S_minibuffer_history_length "): the minibuffer history length. \
 This pertains to the M-p and M-n commands."
   int len;
   snd_state *ss;
@@ -1019,7 +1019,7 @@ This pertains to the M-p and M-n commands."
 static XEN g_emacs_style_save_as(void) {return(C_TO_XEN_BOOLEAN(emacs_style_save_as(get_global_state())));}
 static XEN g_set_emacs_style_save_as(XEN val) 
 {
-  #define H_emacs_style_save_as "(" S_emacs_style_save_as ") #t if File:Save-as dialog option should move to the new file (default: #f)"
+  #define H_emacs_style_save_as "(" S_emacs_style_save_as "): #t if File:Save-as dialog option should move to the new file (default: #f)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_emacs_style_save_as, "a boolean");
@@ -1030,7 +1030,7 @@ static XEN g_set_emacs_style_save_as(XEN val)
 static XEN g_auto_resize(void) {return(C_TO_XEN_BOOLEAN(auto_resize(get_global_state())));}
 static XEN g_set_auto_resize(XEN val) 
 {
-  #define H_auto_resize "(" S_auto_resize ") should be #t if Snd can change its main window size as it pleases (default: #t)"
+  #define H_auto_resize "(" S_auto_resize "): #t if Snd can change its main window size as it pleases (default: #t)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_auto_resize, "a boolean");
@@ -1042,8 +1042,8 @@ static XEN g_set_auto_resize(XEN val)
 static XEN g_auto_update(void) {return(C_TO_XEN_BOOLEAN(auto_update(get_global_state())));}
 static XEN g_set_auto_update(XEN val) 
 {
-  #define H_auto_update "(" S_auto_update ") -> #t if Snd should automatically update a file if it changes unexpectedly (default: #f). \
-The number of seconds between update checks is set by auto-update-interval."
+  #define H_auto_update "(" S_auto_update "): #t if Snd should automatically update a file if it changes unexpectedly (default: #f). \
+The number of seconds between update checks is set by " S_auto_update_interval "."
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_auto_update, "a boolean");
@@ -1054,7 +1054,7 @@ The number of seconds between update checks is set by auto-update-interval."
 static XEN g_filter_env_in_hz(void) {return(C_TO_XEN_BOOLEAN(filter_env_in_hz(get_global_state())));}
 static XEN g_set_filter_env_in_hz(XEN val) 
 {
-  #define H_filter_env_in_hz "(" S_filter_env_in_hz ") -> #t if filter env x axis should be in Hz"
+  #define H_filter_env_in_hz "(" S_filter_env_in_hz "): #t if filter env x axis should be in Hz"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_filter_env_in_hz, "a boolean");
@@ -1065,7 +1065,7 @@ static XEN g_set_filter_env_in_hz(XEN val)
 static XEN g_color_cutoff(void) {return(C_TO_XEN_DOUBLE(color_cutoff(get_global_state())));}
 static XEN g_set_color_cutoff(XEN val) 
 {
-  #define H_color_cutoff "(" S_color_cutoff ") -> color map cutoff point (default .003).  Any values \
+  #define H_color_cutoff "(" S_color_cutoff "): color map cutoff point (default .003).  Any values \
 below the cutoff are displayed in the background color"
   snd_state *ss;
   ss = get_global_state();
@@ -1079,7 +1079,7 @@ below the cutoff are displayed in the background color"
 static XEN g_color_inverted(void) {return(C_TO_XEN_BOOLEAN(color_inverted(get_global_state())));}
 static XEN g_set_color_inverted(XEN val) 
 {
-  #define H_color_inverted "(" S_color_inverted ") -> whether the colormap in operation should be inverted"
+  #define H_color_inverted "(" S_color_inverted "): whether the colormap in operation should be inverted"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_color_inverted, "a boolean");
@@ -1090,7 +1090,7 @@ static XEN g_set_color_inverted(XEN val)
 static XEN g_color_scale(void) {return(C_TO_XEN_DOUBLE(color_scale(get_global_state())));}
 static XEN g_set_color_scale(XEN val) 
 {
-  #define H_color_scale "(" S_color_scale ") -> essentially a darkness setting for colormaps (0.5)"
+  #define H_color_scale "(" S_color_scale "): darkness setting for colormaps (0.5)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_color_scale, "a number"); 
@@ -1104,8 +1104,8 @@ static XEN g_auto_update_interval(void) {return(C_TO_XEN_DOUBLE(auto_update_inte
 static XEN g_set_auto_update_interval(XEN val) 
 {
   Float ctime;
-  #define H_auto_update_interval "(" S_auto_update_interval ") -> time (seconds) between background checks for changed file on disk (default: 60). \
-This value only matters if auto-update is #t"
+  #define H_auto_update_interval "(" S_auto_update_interval "): time (seconds) between background checks for changed file on disk (default: 60). \
+This value only matters if " S_auto_update " is #t"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_auto_update_interval, "a number"); 
@@ -1119,7 +1119,7 @@ This value only matters if auto-update is #t"
 static XEN g_default_output_chans(void) {return(C_TO_XEN_INT(default_output_chans(get_global_state())));}
 static XEN g_set_default_output_chans(XEN val) 
 {
-  #define H_default_output_chans "(" S_default_output_chans ") -> default number of channels when a new or temporary file is created (1)"
+  #define H_default_output_chans "(" S_default_output_chans "): default number of channels when a new or temporary file is created (1)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_chans, "an integer"); 
@@ -1130,7 +1130,7 @@ static XEN g_set_default_output_chans(XEN val)
 static XEN g_default_output_srate(void) {return(C_TO_XEN_INT(default_output_srate(get_global_state())));}
 static XEN g_set_default_output_srate(XEN val) 
 {
-  #define H_default_output_srate "(" S_default_output_srate ") -> default srate when a new or temporary file is created (22050)" 
+  #define H_default_output_srate "(" S_default_output_srate "): default srate when a new or temporary file is created (22050)" 
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_srate, "a number"); 
@@ -1142,7 +1142,7 @@ static XEN g_default_output_type(void) {return(C_TO_XEN_INT(default_output_type(
 static XEN g_set_default_output_type(XEN val) 
 {
   int typ;
-  #define H_default_output_type "(" S_default_output_type ") -> default header type when a new or temporary file is created. \
+  #define H_default_output_type "(" S_default_output_type "): default header type when a new or temporary file is created. \
 Normally this is " S_mus_next "; -1 here indicates you want Snd to use the current sound's header type, if possible. \
 Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", " S_mus_nist ", " S_mus_aifc ", and " S_mus_raw "."
 
@@ -1163,7 +1163,7 @@ static XEN g_default_output_format(void) {return(C_TO_XEN_INT(default_output_for
 static XEN g_set_default_output_format(XEN val) 
 {
   int format;
-  #define H_default_output_format "(" S_default_output_format ") -> default data format when a new or temporary file is created, \
+  #define H_default_output_format "(" S_default_output_format "): default data format when a new or temporary file is created, \
 normally " S_mus_bshort "; -1 here means try to use the current sound's data format; many other formats \
 are available, but not all are compatible with all header types"
 
@@ -1178,7 +1178,7 @@ are available, but not all are compatible with all header types"
 static XEN g_audio_state_file(void) {return(C_TO_XEN_STRING(audio_state_file(get_global_state())));}
 static XEN g_set_audio_state_file(XEN val) 
 {
-  #define H_audio_state_file "(" S_audio_state_file ") -> filename for the mus-audio-save-state function (.snd-mixer)"
+  #define H_audio_state_file "(" S_audio_state_file "): filename for the mus-audio-save-state function (.snd-mixer)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_audio_state_file, "a string"); 
@@ -1190,7 +1190,7 @@ static XEN g_set_audio_state_file(XEN val)
 static XEN g_selection_creates_region(void) {return(C_TO_XEN_BOOLEAN(selection_creates_region(get_global_state())));}
 static XEN g_set_selection_creates_region(XEN val) 
 {
-  #define H_selection_creates_region "(" S_selection_creates_region ") -> #t if a region should be created each time a selection is made. \
+  #define H_selection_creates_region "(" S_selection_creates_region "): #t if a region should be created each time a selection is made. \
 The default is currently #t, but that may change.  If you're dealing with large selections, and have no need of \
 regions (saved selections), you can speed up many operations by setting this flag to #f"
   snd_state *ss;
@@ -1203,7 +1203,7 @@ regions (saved selections), you can speed up many operations by setting this fla
 static XEN g_print_length(void) {return(C_TO_XEN_INT(print_length(get_global_state())));}
 static XEN g_set_print_length(XEN val) 
 {
-  #define H_print_length "(" S_print_length ") -> number of vector elements to print in the listener (default: 12)"
+  #define H_print_length "(" S_print_length "): number of vector elements to print in the listener (default: 12)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_print_length, "an integer"); 
@@ -1215,7 +1215,7 @@ static XEN g_set_print_length(XEN val)
 static XEN g_show_indices(void) {return(C_TO_XEN_BOOLEAN(show_indices(get_global_state())));}
 static XEN g_set_show_indices(XEN val) 
 {
-  #define H_show_indices "(" S_show_indices ") -> #t if sound name should be preceded by its index"
+  #define H_show_indices "(" S_show_indices "): #t if sound name should be preceded by its index in the sound display."
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_show_indices, "a boolean");
@@ -1226,7 +1226,7 @@ static XEN g_set_show_indices(XEN val)
 static XEN g_show_backtrace(void) {return(C_TO_XEN_BOOLEAN(show_backtrace(get_global_state())));}
 static XEN g_set_show_backtrace(XEN val) 
 {
-  #define H_show_backtrace "(" S_show_backtrace ") -> #t to show backtrace automatically upon error"
+  #define H_show_backtrace "(" S_show_backtrace "): #t to show backtrace automatically upon error"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_show_backtrace, "a boolean");
@@ -1237,10 +1237,11 @@ static XEN g_set_show_backtrace(XEN val)
 static XEN g_color_map(void) {return(C_TO_XEN_INT(color_map(get_global_state())));}
 static XEN g_set_color_map(XEN val) 
 {
-  #define H_colormap "(" S_colormap ") -> current colormap choice. \
+  #define H_colormap "(" S_colormap "): current colormap choice. \
 This should be an integer between -1 and 15.  The maps (from 0 to 15) are: \
 gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
-spring, summer, colorcube, flag, and lines.  -1 means black and white."
+spring, summer, colorcube, flag, and lines.  -1 means black and white. \
+These names are defined in rgb.scm."
 
   snd_state *ss;
   ss = get_global_state();
@@ -1281,7 +1282,7 @@ static int snd_access(char *dir, char *caller)
 static XEN g_temp_dir(void) {return(C_TO_XEN_STRING(temp_dir(get_global_state())));}
 static XEN g_set_temp_dir(XEN val) 
 {
-  #define H_temp_dir "(" S_temp_dir ") -> name of directory for temp files (or #f=null)"
+  #define H_temp_dir "(" S_temp_dir "): name of directory for temp files (or #f=null)"
   char *dir = DEFAULT_TEMP_DIR;
   snd_state *ss;
   ss = get_global_state();
@@ -1297,7 +1298,7 @@ static XEN g_set_temp_dir(XEN val)
 
 static XEN g_snd_tempnam(void) 
 {
-  #define H_snd_tempnam "(" S_snd_tempnam ") -> new temp file name using temp-dir"
+  #define H_snd_tempnam "(" S_snd_tempnam "): return a new temp file name using " S_temp_dir "."
   char *tmp;
   XEN res;
   tmp = snd_tempnam(get_global_state());
@@ -1309,7 +1310,7 @@ static XEN g_snd_tempnam(void)
 static XEN g_save_dir(void) {return(C_TO_XEN_STRING(save_dir(get_global_state())));}
 static XEN g_set_save_dir(XEN val) 
 {
-  #define H_save_dir "(" S_save_dir ") -> name of directory for saved state data (or #f=null)"
+  #define H_save_dir "(" S_save_dir "): name of directory for saved state data (or #f=null)"
   char *dir = DEFAULT_SAVE_DIR;
   snd_state *ss;
   ss = get_global_state();
@@ -1326,7 +1327,7 @@ static XEN g_set_save_dir(XEN val)
 static XEN g_ladspa_dir(void) {return(C_TO_XEN_STRING(ladspa_dir(get_global_state())));}
 static XEN g_set_ladspa_dir(XEN val) 
 {
-  #define H_ladspa_dir "(" S_ladspa_dir ") -> name of directory for ladspa plugin libraries"
+  #define H_ladspa_dir "(" S_ladspa_dir "): name of directory for ladspa plugin libraries"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_ladspa_dir, "a string or #f=default (null)"); 
@@ -1340,7 +1341,7 @@ static XEN g_set_ladspa_dir(XEN val)
 static XEN g_trap_segfault(void) {return(C_TO_XEN_BOOLEAN(trap_segfault(get_global_state())));}
 static XEN g_set_trap_segfault(XEN val) 
 {
-  #define H_trap_segfault "(" S_trap_segfault ") -> #t if Snd should try to trap (and whine about) segfaults"
+  #define H_trap_segfault "(" S_trap_segfault "): #t if Snd should try to trap (and whine about) segfaults"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_trap_segfault, "a boolean");
@@ -1351,7 +1352,7 @@ static XEN g_set_trap_segfault(XEN val)
 static XEN g_show_selection_transform(void) {return(C_TO_XEN_BOOLEAN(show_selection_transform(get_global_state())));}
 static XEN g_set_show_selection_transform(XEN val) 
 {
-  #define H_show_selection_transform "(" S_show_selection_transform ") -> #t if transform display reflects selection, not time-domain window"
+  #define H_show_selection_transform "(" S_show_selection_transform "): #t if transform display reflects selection, not time-domain window"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_show_selection_transform, "a boolean");
@@ -1362,7 +1363,7 @@ static XEN g_set_show_selection_transform(XEN val)
 static XEN g_with_gl(void) {return(C_TO_XEN_BOOLEAN(with_gl(get_global_state())));}
 static XEN g_set_with_gl(XEN val) 
 {
-  #define H_with_gl "(" S_with_gl ") -> #t if Snd should use GL graphics"
+  #define H_with_gl "(" S_with_gl "): #t if Snd should use GL graphics"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_with_gl, "a boolean");
@@ -1376,7 +1377,7 @@ static XEN g_set_with_gl(XEN val)
 static XEN g_with_relative_panes(void) {return(C_TO_XEN_BOOLEAN(with_relative_panes(get_global_state())));}
 static XEN g_set_with_relative_panes(XEN val) 
 {
-  #define H_with_relative_panes "(" S_with_relative_panes ") -> #t if multichannel sounds should try to maintain relative pane sizes"
+  #define H_with_relative_panes "(" S_with_relative_panes "): #t if multichannel sounds should try to maintain relative pane sizes"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_with_relative_panes, "a boolean");
@@ -1387,7 +1388,7 @@ static XEN g_set_with_relative_panes(XEN val)
 static XEN g_with_background_processes(void) {return(C_TO_XEN_BOOLEAN(with_background_processes(get_global_state())));}
 static XEN g_set_with_background_processes(XEN val) 
 {
-  #define H_with_background_processes "(" S_with_background_processes ") -> #t if Snd should use background (idle time) processing"
+  #define H_with_background_processes "(" S_with_background_processes "): #t if Snd should use background (idle time) processing"
   snd_state *ss;
   ss = get_global_state();
   if ((XEN_INTEGER_P(val)) && (XEN_TO_C_INT(val) == DISABLE_BACKGROUND_PROCESSES))
@@ -1407,7 +1408,7 @@ static XEN g_set_with_background_processes(XEN val)
 static XEN g_data_clipped(void) {return(C_TO_XEN_BOOLEAN(data_clipped(get_global_state())));}
 static XEN g_set_data_clipped(XEN val) 
 {
-  #define H_data_clipped "(" S_data_clipped ") -> #t if Snd should clip output values to the current \
+  #define H_data_clipped "(" S_data_clipped "): #t if Snd should clip output values to the current \
 output data format's maximum. The default (#f) allows them to wrap-around which makes a very loud click"
 
   snd_state *ss;
@@ -1420,8 +1421,8 @@ output data format's maximum. The default (#f) allows them to wrap-around which 
 static XEN g_zoom_focus_style(void) {return(C_TO_XEN_INT(zoom_focus_style(get_global_state())));}
 static XEN g_set_zoom_focus_style(XEN focus) 
 {
-  #define H_zoom_focus_style "(" S_zoom_focus_style ") -> one of '(" S_zoom_focus_left " " S_zoom_focus_right " " S_zoom_focus_middle " " S_zoom_focus_active ")\n\
-  decides what zooming centers on (default: " S_zoom_focus_active ")"
+  #define H_zoom_focus_style "(" S_zoom_focus_style "): one of '(" S_zoom_focus_left " " S_zoom_focus_right " " S_zoom_focus_middle " " S_zoom_focus_active "); \
+This determines what zooming centers on (default: " S_zoom_focus_active ")"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(focus), focus, XEN_ONLY_ARG, S_setB S_zoom_focus_style, "an integer"); 
@@ -1433,13 +1434,13 @@ static XEN g_set_zoom_focus_style(XEN focus)
 
 static XEN g_snd_version(void) 
 {
-  #define H_snd_version "(" S_snd_version ") -> current Snd version"
+  #define H_snd_version "(" S_snd_version "): current Snd version (a string)"
   return(C_TO_XEN_STRING(SND_VERSION));
 }
 
 static XEN g_sounds(void)
 {
-  #define H_sounds "(" S_sounds ") -> list of active sounds (ids)"
+  #define H_sounds "(" S_sounds "): list of active sounds (ids)"
   int i;
   snd_state *ss;
   snd_info *sp;
@@ -1458,7 +1459,7 @@ static XEN g_sounds(void)
 
 static XEN g_equalize_panes(XEN snd) 
 {
-  #define H_equalize_panes "(" S_equalize_panes " (&optional snd) causes Snd to try to give all channels about the same screen space"
+  #define H_equalize_panes "(" S_equalize_panes " (snd #f)): try to give all channels about the same screen space"
   snd_info *sp;
   snd_state *ss;
   ss = get_global_state();
@@ -1479,7 +1480,7 @@ static XEN g_equalize_panes(XEN snd)
 static XEN g_help_text_font(void) {return(C_TO_XEN_STRING(help_text_font(get_global_state())));}
 static XEN g_set_help_text_font(XEN val) 
 {
-  #define H_help_text_font "(" S_help_text_font ") -> font used in the Help dialog"
+  #define H_help_text_font "(" S_help_text_font "): font used in the Help dialog"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_help_text_font, "a string"); 
@@ -1490,7 +1491,7 @@ static XEN g_set_help_text_font(XEN val)
 static XEN g_tiny_font(void) {return(C_TO_XEN_STRING(tiny_font(get_global_state())));}
 static XEN g_set_tiny_font(XEN val) 
 {
-  #define H_tiny_font "(" S_tiny_font ") -> font use for some info in the graphs"
+  #define H_tiny_font "(" S_tiny_font "): font use for some info in the graphs"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_tiny_font, "a string"); 
@@ -1501,7 +1502,7 @@ static XEN g_set_tiny_font(XEN val)
 static XEN g_axis_label_font(void) {return(C_TO_XEN_STRING(axis_label_font(get_global_state())));}
 static XEN g_set_axis_label_font(XEN val) 
 {
-  #define H_axis_label_font "(" S_axis_label_font ") -> font used for axis labels"
+  #define H_axis_label_font "(" S_axis_label_font "): font used for axis labels"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_axis_label_font, "a string"); 
@@ -1512,7 +1513,7 @@ static XEN g_set_axis_label_font(XEN val)
 static XEN g_axis_numbers_font(void) {return(C_TO_XEN_STRING(axis_numbers_font(get_global_state())));}
 static XEN g_set_axis_numbers_font(XEN val) 
 {
-  #define H_axis_numbers_font "(" S_axis_numbers_font ") -> font used for axis numbers"
+  #define H_axis_numbers_font "(" S_axis_numbers_font "): font used for axis numbers"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_axis_numbers_font, "a string"); 
@@ -1523,7 +1524,7 @@ static XEN g_set_axis_numbers_font(XEN val)
 static XEN g_listener_font(void) {return(C_TO_XEN_STRING(listener_font(get_global_state())));}
 static XEN g_set_listener_font(XEN val) 
 {
-  #define H_listener_font "(" S_listener_font ") -> font used by the lisp listener"
+  #define H_listener_font "(" S_listener_font "): font used by the lisp listener"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_listener_font, "a string");
@@ -1534,7 +1535,7 @@ static XEN g_set_listener_font(XEN val)
 static XEN g_bold_button_font(void) {return(C_TO_XEN_STRING(bold_button_font(get_global_state())));}
 static XEN g_set_bold_button_font(XEN val) 
 {
-  #define H_bold_button_font "(" S_bold_button_font ") -> font used by some buttons"
+  #define H_bold_button_font "(" S_bold_button_font "): font used by some buttons"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_bold_button_font, "a string"); 
@@ -1545,7 +1546,7 @@ static XEN g_set_bold_button_font(XEN val)
 static XEN g_button_font(void) {return(C_TO_XEN_STRING(button_font(get_global_state())));}
 static XEN g_set_button_font(XEN val) 
 {
-  #define H_button_font "(" S_button_font ") -> font used by some buttons"
+  #define H_button_font "(" S_button_font "): font used by some buttons"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_button_font, "a string"); 
@@ -1556,7 +1557,7 @@ static XEN g_set_button_font(XEN val)
 static XEN g_bold_peaks_font(void) {return(C_TO_XEN_STRING(bold_peaks_font(get_global_state())));}
 static XEN g_set_bold_peaks_font(XEN val) 
 {
-  #define H_bold_peaks_font "(" S_bold_peaks_font ") -> font used by fft peak display"
+  #define H_bold_peaks_font "(" S_bold_peaks_font "): bold font used by fft peak display"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_bold_peaks_font, "a string"); 
@@ -1567,7 +1568,7 @@ static XEN g_set_bold_peaks_font(XEN val)
 static XEN g_peaks_font(void) {return(C_TO_XEN_STRING(peaks_font(get_global_state())));}
 static XEN g_set_peaks_font(XEN val) 
 {
-  #define H_peaks_font "(" S_peaks_font ") -> font used by fft peak display"
+  #define H_peaks_font "(" S_peaks_font "): normal font used by fft peak display"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_peaks_font, "a string"); 
@@ -1577,25 +1578,25 @@ static XEN g_set_peaks_font(XEN val)
 
 static XEN g_window_width(void) 
 {
-  #define H_window_width "(" S_window_width ") -> current Snd window width in pixels"
+  #define H_window_width "(" S_window_width "): current Snd window width in pixels"
   return(C_TO_XEN_INT(widget_width(MAIN_SHELL(get_global_state()))));
 }
 
 static XEN g_window_height(void) 
 {
-  #define H_window_height "(" S_window_height ") -> current Snd window height in pixels"
+  #define H_window_height "(" S_window_height "): current Snd window height in pixels"
   return(C_TO_XEN_INT(widget_height(MAIN_SHELL(get_global_state()))));
 }
 
 static XEN g_window_x(void) 
 {
-  #define H_window_x "(" S_window_x ") -> current Snd window x position in pixels"
+  #define H_window_x "(" S_window_x "): current Snd window x position in pixels"
   return(C_TO_XEN_INT(widget_x(MAIN_SHELL(get_global_state()))));
 }
 
 static XEN g_window_y(void) 
 {
-  #define H_window_y "(" S_window_y ") -> current Snd window y position in pixels"
+  #define H_window_y "(" S_window_y "): current Snd window y position in pixels"
   return(C_TO_XEN_INT(widget_y(MAIN_SHELL(get_global_state()))));
 }
 
@@ -1663,7 +1664,6 @@ static XEN g_set_window_width(XEN width)
 
 static XEN g_set_window_x(XEN val) 
 {
-  #define H_set_window_x "(" S_setB S_window_x " val) sets the Snd window x position in pixels"
   Locus x;
   snd_state *ss;
   ss = get_global_state();
@@ -1679,7 +1679,6 @@ static XEN g_set_window_x(XEN val)
 
 static XEN g_set_window_y(XEN val) 
 {
-  #define H_set_window_y "(" S_setB S_window_y " val) sets the Snd window y position in pixels"
   Locus y;
   snd_state *ss;
   ss = get_global_state();
@@ -1695,21 +1694,21 @@ static XEN g_set_window_y(XEN val)
 
 static XEN g_abort(void)
 {
-  #define H_abort "(" S_abort ") exits Snd via \"abort\", presumably to land in the debugger"
+  #define H_abort "(" S_abort "): exit Snd via \"abort\", presumably to land in the debugger"
   abort();
   return(XEN_FALSE);
 }
 
 static XEN g_dismiss_all_dialogs(void)
 {
-  #define H_dismiss_all_dialogs "(" S_dismiss_all_dialogs ") closes all active dialogs"
+  #define H_dismiss_all_dialogs "(" S_dismiss_all_dialogs "): close all active dialogs"
   dismiss_all_dialogs(get_global_state());
   return(XEN_FALSE);
 }
 
 static XEN g_abortq(void)
 {
-  #define H_abortQ "(" S_c_g ") allows pending user interface events to occur, returning #t if C-g was typed"
+  #define H_abortQ "(" S_c_g "): allow pending user interface events to occur, returning #t if C-g was typed"
   snd_state *ss;
   ss = get_global_state();
   check_for_event(ss);
@@ -1845,9 +1844,9 @@ static void unset_temp_fd(int fd)
 
 static XEN g_open_sound_file(XEN g_name, XEN g_chans, XEN g_srate, XEN g_comment)
 {
-  #define H_open_sound_file "(" S_open_sound_file " &optional (name \"test.snd\")\n    (chans 1) (srate 22050) comment)\n\
-creates a new sound file 'name' using either 'wave' or 'next' headers and float data, returns the file descriptor for \
-subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
+  #define H_open_sound_file "(" S_open_sound_file " (name \"test.snd\") (chans 1) (srate 22050) (comment #f)): \
+create a new sound file 'name' using either 'wave' or 'next' headers and float data; return the file descriptor for \
+a " S_close_sound_file ". data can be written with " S_vct2sound_file
 
   /* assume user temp files are writing floats in native format */
   char *name = NULL, *comment = NULL;
@@ -1907,7 +1906,7 @@ subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
 
 static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
 {
-  #define H_close_sound_file "(" S_close_sound_file " fd bytes) closes file pointed to by fd, updating its header to report 'bytes' bytes of data"
+  #define H_close_sound_file "(" S_close_sound_file " fd bytes): close file fd, updating its header to report 'bytes' bytes of data"
   file_info *hdr;
   int result, fd;
   off_t bytes;
@@ -1931,9 +1930,9 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
 
 static XEN samples2sound_data(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN sdobj, XEN edpos, XEN sdchan)
 {
-  #define H_samples2sound_data "(" S_samples2sound_data " &optional (start-samp 0)\n    samps snd chn sdobj edit-position (sdobj-chan 0))\n\
-returns a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps, \
-reading edit version edit-position (defaulting to the current version)"
+  #define H_samples2sound_data "(" S_samples2sound_data " (start-samp 0) (samps len) (snd #f) (chn #f) (sdobj #f) (edpos #f) (sdobj-chan 0)): \
+return a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps, \
+reading edit version edpos"
 
   chan_info *cp;
   snd_fd *sf;
@@ -1985,7 +1984,7 @@ reading edit version edit-position (defaulting to the current version)"
 
 static XEN vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
 {
-  #define H_vct2sound_file "(" S_vct2sound_file " fd vct-obj samps) writes samps samples from vct-obj to the sound file controlled by fd"
+  #define H_vct2sound_file "(" S_vct2sound_file " fd vct-obj samps): write samps samples from vct-obj to the sound file fd"
   int fd, nums, i;
   off_t err;
   float *vals;
@@ -2074,7 +2073,7 @@ off_t string2off_t(char *str)
 
 static XEN g_help_dialog(XEN subject, XEN msg)
 {
-  #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
+  #define H_help_dialog "(" S_help_dialog " subject message): start the Help window with subject and message"
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
   return(XEN_WRAP_WIDGET(snd_help_with_wrap(get_global_state(), XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg))));
@@ -2082,38 +2081,38 @@ static XEN g_help_dialog(XEN subject, XEN msg)
 
 static XEN g_mix_panel(void)
 {
-  #define H_mix_panel "(" S_mix_panel ") starts (and returns) the mix panel"
+  #define H_mix_panel "(" S_mix_panel "): start the Mix panel"
   return(XEN_WRAP_WIDGET(make_mix_panel(get_global_state())));
 }
 
 static XEN g_color_dialog(void) 
 {
-  #define H_color_dialog "(" S_color_dialog ") fires up the Color dialog"
+  #define H_color_dialog "(" S_color_dialog "): start the Color dialog"
   return(XEN_WRAP_WIDGET(start_color_dialog(get_global_state(), 0, 0))); 
 }
 
 static XEN g_orientation_dialog(void) 
 {
-  #define H_orientation_dialog "(" S_orientation_dialog ") fires up the Orientation dialog"
+  #define H_orientation_dialog "(" S_orientation_dialog "): start the Orientation dialog"
   return(XEN_WRAP_WIDGET(start_orientation_dialog(get_global_state(), 0, 0))); 
 }
 
 static XEN g_transform_dialog(XEN managed) 
 {
-  #define H_transform_dialog "(" S_transform_dialog " (managed #t)) creates and (if managed) fires up the Transforms dialog"
+  #define H_transform_dialog "(" S_transform_dialog " (managed #t)): start the Transforms dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_transform_dialog, "a boolean");
   return(XEN_WRAP_WIDGET(fire_up_transform_dialog(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(managed))));
 }
 
 static XEN g_file_dialog(void) 
 {
-  #define H_file_dialog "(" S_file_dialog ") fires up the View Current/Previous File dialog"
+  #define H_file_dialog "(" S_file_dialog "): start the View Previous Files dialog"
   return(XEN_WRAP_WIDGET(start_file_dialog(get_global_state(), 0, 0)));
 }
 
 static XEN g_edit_header_dialog(XEN snd_n) 
 {
-  #define H_edit_header_dialog "(" S_edit_header_dialog " snd) opens the Edit Header dialog on sound snd"
+  #define H_edit_header_dialog "(" S_edit_header_dialog " snd): start the Edit Header dialog on sound snd"
   snd_info *sp; 
   sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL)
@@ -2123,21 +2122,21 @@ static XEN g_edit_header_dialog(XEN snd_n)
 
 static XEN g_edit_save_as_dialog(void) 
 {
-  #define H_edit_save_as_dialog "(" S_edit_save_as_dialog ") opens the Selection Save-as dialog"
+  #define H_edit_save_as_dialog "(" S_edit_save_as_dialog "): start the Selection Save-as dialog"
   make_edit_save_as_dialog(get_global_state()); 
   return(XEN_FALSE);
 }
 
 static XEN g_file_save_as_dialog(void) 
 {
-  #define H_file_save_as_dialog "(" S_file_save_as_dialog ") opens the File Save-as dialog"
+  #define H_file_save_as_dialog "(" S_file_save_as_dialog "): start the File Save-as dialog"
   make_file_save_as_dialog(get_global_state()); 
   return(XEN_FALSE);
 }
 
 static XEN g_yes_or_no_p(XEN msg) 
 {
-  #define H_yes_or_no_p "(" S_yes_or_no_p " message) displays message and waits for 'y' or 'n'; returns #t if 'y'"
+  #define H_yes_or_no_p "(" S_yes_or_no_p " message): display message and wait for 'y' or 'n'; return #t if 'y'"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_yes_or_no_p, "a string");
   return(C_TO_XEN_BOOLEAN(snd_yes_or_no_p(get_global_state(), XEN_TO_C_STRING(msg))));
 }
@@ -2146,7 +2145,7 @@ static XEN g_yes_or_no_p(XEN msg)
 #define S_mus_audio_describe            "mus-audio-describe"
 static XEN g_mus_audio_describe(void) 
 {
-  #define H_mus_audio_describe "("  S_mus_audio_describe ") posts a description of the audio hardware state in the Help dialog"
+  #define H_mus_audio_describe "("  S_mus_audio_describe "): post a description of the audio hardware state in the Help dialog"
   snd_help(get_global_state(), "Audio State", mus_audio_report()); 
   return(XEN_TRUE);
 }
@@ -2156,7 +2155,7 @@ static XEN g_mus_audio_describe(void)
 
 static XEN g_color_p(XEN obj) 
 {
-  #define H_color_p "(" S_color_p " obj) -> #t if obj is a color"
+  #define H_color_p "(" S_color_p " obj): #t if obj is a color"
   return(C_TO_XEN_BOOLEAN(XEN_PIXEL_P(obj)));
 }
 
@@ -2184,7 +2183,7 @@ static XEN g_set_cursor_color (XEN color)
 
 static XEN g_cursor_color(void) 
 {
-  #define H_cursor_color "(" S_cursor_color ") -> cursor color"
+  #define H_cursor_color "(" S_cursor_color "): cursor color"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->cursor_color));
@@ -2201,7 +2200,7 @@ static XEN g_set_highlight_color (XEN color)
 
 static XEN g_highlight_color(void) 
 {
-  #define H_highlight_color "(" S_highlight_color ") -> color of highlighted text or buttons"
+  #define H_highlight_color "(" S_highlight_color "): color of highlighted text or buttons"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->highlight_color));
@@ -2219,7 +2218,7 @@ static XEN g_set_mark_color (XEN color)
 
 static XEN g_mark_color(void) 
 {
-  #define H_mark_color "(" S_mark_color ") -> mark color"
+  #define H_mark_color "(" S_mark_color "): mark color"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->mark_color));
@@ -2237,7 +2236,7 @@ static XEN g_set_zoom_color (XEN color)
 
 static XEN g_zoom_color(void) 
 {
-  #define H_zoom_color "(" S_zoom_color ") -> color of zoom sliders"
+  #define H_zoom_color "(" S_zoom_color "): color of zoom sliders"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->zoom_color));
@@ -2255,7 +2254,7 @@ static XEN g_set_position_color (XEN color)
 
 static XEN g_position_color(void) 
 {
-  #define H_position_color "(" S_position_color ") -> color of position sliders"
+  #define H_position_color "(" S_position_color "): color of position sliders"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->position_color));
@@ -2272,7 +2271,7 @@ static XEN g_set_listener_color (XEN color)
 
 static XEN g_listener_color(void) 
 {
-  #define H_listener_color "(" S_listener_color ") -> background color of the lisp listener"
+  #define H_listener_color "(" S_listener_color "): background color of the lisp listener"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->listener_color));
@@ -2289,7 +2288,7 @@ static XEN g_set_listener_text_color (XEN color)
 
 static XEN g_listener_text_color(void) 
 {
-  #define H_listener_text_color "(" S_listener_text_color ") -> text color in the lisp listener"
+  #define H_listener_text_color "(" S_listener_text_color "): text color in the lisp listener"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->listener_text_color));
@@ -2306,7 +2305,7 @@ static XEN g_set_enved_waveform_color (XEN color)
 
 static XEN g_enved_waveform_color(void) 
 {
-  #define H_enved_waveform_color "(" S_enved_waveform_color ") -> color of the envelope editor wave display"
+  #define H_enved_waveform_color "(" S_enved_waveform_color "): color of the envelope editor wave display"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->enved_waveform_color));
@@ -2323,7 +2322,7 @@ static XEN g_set_filter_waveform_color (XEN color)
 
 static XEN g_filter_waveform_color(void) 
 {
-  #define H_filter_waveform_color "(" S_filter_waveform_color ") -> color of the filter waveform"
+  #define H_filter_waveform_color "(" S_filter_waveform_color "): color of the filter waveform"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->filter_waveform_color));
@@ -2341,7 +2340,7 @@ static XEN g_set_selection_color (XEN color)
 
 static XEN g_selection_color(void) 
 {
-  #define H_selection_color "(" S_selection_color ") -> selection color"
+  #define H_selection_color "(" S_selection_color "): selection color"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->selection_color));
@@ -2358,7 +2357,7 @@ static XEN g_set_text_focus_color (XEN color)
 
 static XEN g_text_focus_color(void) 
 {
-  #define H_text_focus_color "(" S_text_focus_color ") -> color used to show a text field has focus"
+  #define H_text_focus_color "(" S_text_focus_color "): color used to show a text field has focus"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->text_focus_color));
@@ -2375,7 +2374,7 @@ static XEN g_set_sash_color (XEN color)
 
 static XEN g_sash_color(void) 
 {
-  #define H_sash_color "(" S_sash_color ") -> color used to draw paned window sashes"
+  #define H_sash_color "(" S_sash_color "): color used to draw paned window sashes"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->sash_color));
@@ -2393,7 +2392,7 @@ static XEN g_set_data_color (XEN color)
 
 static XEN g_data_color(void) 
 {
-  #define H_data_color "(" S_data_color ") -> color used to draw unselected data"
+  #define H_data_color "(" S_data_color "): color used to draw unselected data"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->data_color));
@@ -2417,7 +2416,7 @@ static XEN g_set_selected_data_color (XEN color)
 
 static XEN g_selected_data_color(void) 
 {
-  #define H_selected_data_color "(" S_selected_data_color ") -> color used for selected data"
+  #define H_selected_data_color "(" S_selected_data_color "): color used for selected data"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->selected_data_color));
@@ -2435,7 +2434,7 @@ static XEN g_set_graph_color (XEN color)
 
 static XEN g_graph_color(void) 
 {
-  #define H_graph_color "(" S_graph_color ") -> background color used for unselected data"
+  #define H_graph_color "(" S_graph_color "): background color used for unselected data"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->graph_color));
@@ -2462,7 +2461,7 @@ static XEN g_set_selected_graph_color (XEN color)
 
 static XEN g_selected_graph_color(void) 
 {
-  #define H_selected_graph_color "(" S_selected_graph_color ") -> background color of selected data"
+  #define H_selected_graph_color "(" S_selected_graph_color "): background color of selected data"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->selected_graph_color));
@@ -2482,7 +2481,7 @@ static XEN g_set_pushed_button_color (XEN color)
 
 static XEN g_pushed_button_color(void) 
 {
-  #define H_pushed_button_color "(" S_pushed_button_color ") -> color of a pushed button"
+  #define H_pushed_button_color "(" S_pushed_button_color "): color of a pushed button"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->pushed_button_color));
@@ -2490,7 +2489,7 @@ static XEN g_pushed_button_color(void)
 
 static XEN g_basic_color(void) 
 {
-  #define H_basic_color "(" S_basic_color ") -> Snd's basic color"
+  #define H_basic_color "(" S_basic_color "): Snd's basic color"
   snd_state *ss;
   ss = get_global_state();
   return(XEN_WRAP_PIXEL((ss->sgx)->basic_color));
@@ -2560,7 +2559,7 @@ XEN run_or_hook (XEN hook, XEN args, const char *caller)
 {
 #if HAVE_GUILE
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and calls everything on the list */
-  XEN result = XEN_FALSE; /* (or) -> #f */
+  XEN result = XEN_FALSE; /* (or): #f */
   XEN procs = XEN_HOOK_PROCEDURES (hook);
   while (XEN_NOT_NULL_P (procs))
     {
@@ -2581,7 +2580,7 @@ XEN run_or_hook (XEN hook, XEN args, const char *caller)
 XEN run_and_hook(XEN hook, XEN args, const char *caller)
 {
 #if HAVE_GUILE
-  XEN result = XEN_TRUE; /* (and) -> #t */
+  XEN result = XEN_TRUE; /* (and): #t */
   XEN procs = XEN_HOOK_PROCEDURES (hook);
   while (XEN_NOT_NULL_P (procs))
     {
@@ -3328,14 +3327,14 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w, 1, 0, 0,      "return completion of arg");
   /* XEN_DEFINE_PROCEDURE(S_clm_print,        g_clm_print, 0, 0, 1,             H_clm_print); */
 
-  #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, \
+  #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
 but before data has been read. \n\
   (add-hook! during-open-hook \n\
     (lambda (fd name reason) \n\
       (if (= (mus-sound-header-type name) mus-raw) \n\
           (mus-file-set-prescaler fd 500.0))))"
 
-  #define H_after_open_hook S_after_open_hook " (snd) is called just before the new file's window is displayed. \
+  #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
 This provides a way to set various sound-specific defaults. \n\
   (add-hook! after-open-hook \n\
     (lambda (snd) \n\
@@ -3345,7 +3344,7 @@ This provides a way to set various sound-specific defaults. \n\
   XEN_DEFINE_HOOK(during_open_hook,    S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
   XEN_DEFINE_HOOK(after_open_hook,     S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
 
-  #define H_print_hook S_print_hook " (text) is called each time some Snd-generated response (text) is about to be appended to the listener. \
+  #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
   (add-hook! print-hook \n\
     (lambda (msg) \n\

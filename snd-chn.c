@@ -4663,19 +4663,19 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 
 static XEN g_update_time_graph(XEN snd, XEN chn) 
 {
-  #define H_update_time_graph "(" S_update_time_graph " &optional snd chn) redraws snd channel chn's graphs"
+  #define H_update_time_graph "(" S_update_time_graph " (snd #f) (chn #f)): redraw snd channel chn's graphs"
   return(channel_get(snd, chn, CP_UPDATE_TIME, S_update_time_graph));
 }
 
 static XEN g_update_transform_graph(XEN snd, XEN chn) 
 {
-  #define H_update_transform_graph "(" S_update_transform_graph " &optional snd chn) redraws snd channel chn's fft display"
+  #define H_update_transform_graph "(" S_update_transform_graph " (snd #f) (chn #f)): redraw snd channel chn's fft display"
   return(channel_get(snd, chn, CP_UPDATE_TRANSFORM_GRAPH, S_update_time_graph));
 }
 
 static XEN g_update_lisp_graph(XEN snd, XEN chn) 
 {
-  #define H_update_lisp_graph "(" S_update_lisp_graph " &optional snd chn) redraws snd channel chn's lisp graph"
+  #define H_update_lisp_graph "(" S_update_lisp_graph " (snd #f) (chn #f)): redraw snd channel chn's lisp graph"
   return(channel_get(snd, chn, CP_UPDATE_LISP, S_update_time_graph));
 }
 
@@ -4697,7 +4697,7 @@ static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
 
 static XEN g_edit_position(XEN snd_n, XEN chn_n) 
 {
-  #define H_edit_position "(" S_edit_position " &optional snd chn) -> current edit history position in snd's channel chn"
+  #define H_edit_position "(" S_edit_position " (snd #f) (chn #f)): current edit history position in snd's channel chn"
   return(channel_get(snd_n, chn_n, CP_EDIT_CTR, S_edit_position));
 }
 
@@ -4711,7 +4711,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_edit_position_reversed, g_set_edit_posi
 
 static XEN g_transform_graph_p(XEN snd_n, XEN chn_n) 
 {
-  #define H_transform_graph_p "(" S_transform_graph_p " &optional snd chn) -> #t if fft display is active in snd's channel chn"
+  #define H_transform_graph_p "(" S_transform_graph_p " (snd #f) (chn #f)): #t if fft display is active in snd's channel chn"
   return(channel_get(snd_n, chn_n, CP_GRAPH_TRANSFORM_P, S_transform_graph_p));
 }
 
@@ -4725,7 +4725,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_p_reversed, g_set_trans
 
 static XEN g_time_graph_p(XEN snd_n, XEN chn_n) 
 {
-  #define H_time_graph_p "(" S_time_graph_p " &optional snd chn) -> #t if time domain display is active in snd's channel chn"
+  #define H_time_graph_p "(" S_time_graph_p " (snd #f) (chn #f)): #t if time domain display is active in snd's channel chn"
   return(channel_get(snd_n, chn_n, CP_GRAPH_TIME_P, S_time_graph_p));
 }
 
@@ -4739,7 +4739,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_time_graph_p_reversed, g_set_time_graph
 
 static XEN g_lisp_graph_p(XEN snd_n, XEN chn_n) 
 {
-  #define H_lisp_graph_p "(" S_lisp_graph_p " &optional snd chn) -> #t if lisp-generated data display is active in snd's channel chn"
+  #define H_lisp_graph_p "(" S_lisp_graph_p " (snd #f) (chn #f)): #t if lisp-generated data display is active in snd's channel chn"
   return(channel_get(snd_n, chn_n, CP_GRAPH_LISP_P, S_lisp_graph_p));
 }
 
@@ -4753,7 +4753,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_lisp_graph_p_reversed, g_set_lisp_graph
 
 static XEN g_cursor(XEN snd_n, XEN chn_n, XEN edpos) 
 {
-  #define H_cursor "(" S_cursor " &optional snd chn edpos) -> current cursor location in snd's channel chn"
+  #define H_cursor "(" S_cursor " (snd #f) (chn #f) edpos): current cursor location in snd's channel chn"
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
@@ -4803,9 +4803,9 @@ static XEN g_set_cursor_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN g_cursor_style(XEN snd_n, XEN chn_n) 
 {
-  #define H_cursor_style "(" S_cursor_style " &optional snd chn) -> current cursor style in snd's channel chn. \
-Possible values are cursor-cross (default), cursor-line (a vertical line), or a procedure of three arguments, the \
-sound index, channel number, and graph (always time-graph).  The procedure \
+  #define H_cursor_style "(" S_cursor_style " (snd #f) (chn #f)): current cursor style in snd's channel chn. \
+Possible values are " S_cursor_cross " (default), " S_cursor_line " (a vertical line), or a procedure of three arguments, the \
+sound index, channel number, and graph (always " S_time_graph ").  The procedure \
 should draw the cursor at the current cursor position using the \
 cursor-context whenever it is called."
 
@@ -4822,7 +4822,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_style_reversed, g_set_cursor_style)
 
 static XEN g_cursor_size(XEN snd_n, XEN chn_n) 
 {
-  #define H_cursor_size "(" S_cursor_size " &optional snd chn) -> current cursor size in snd's channel chn"
+  #define H_cursor_size "(" S_cursor_size " (snd #f) (chn #f)): current cursor size in snd's channel chn"
   return(channel_get(snd_n, chn_n, CP_CURSOR_SIZE, S_cursor_size));
 }
 
@@ -4836,13 +4836,13 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_size_reversed, g_set_cursor_size)
 
 static XEN g_cursor_position(XEN snd, XEN chn)
 {
-  #define H_cursor_position "(" S_cursor_position " &optional snd chn) -> current cursor position (x y) in snd's channel chn"
+  #define H_cursor_position "(" S_cursor_position " (snd #f) (chn #f)): current cursor position (x y in pixels) in snd's channel chn"
   return(channel_get(snd, chn, CP_CURSOR_POSITION, S_cursor_position));
 }
 
 static XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_frames "(" S_frames " &optional snd chn edpos) -> number of frames of data in snd's channel chn"
+  #define H_frames "(" S_frames " (snd #f) (chn #f) (edpos #f)): number of frames of data in snd's channel chn"
   XEN res;
   if (XEN_BOUND_P(edpos))
     {
@@ -4868,7 +4868,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_frames_reversed, g_set_frames)
 
 static XEN g_maxamp(XEN snd_n, XEN chn_n, XEN edpos) 
 {
-  #define H_maxamp "(" S_maxamp " &optional snd chn edpos) -> max amp of data in snd's channel chn"
+  #define H_maxamp "(" S_maxamp " (snd #f) (chn #f) (edpos #f)): maxamp of data in snd's channel chn"
   XEN res;
   if (XEN_BOUND_P(edpos))
     {
@@ -4894,7 +4894,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_maxamp_reversed, g_set_maxamp)
 
 static XEN g_squelch_update(XEN snd_n, XEN chn_n) 
 {
-  #define H_squelch_update "(" S_squelch_update " &optional snd chn) -> #t if updates (redisplays) are off in snd's channel chn"
+  #define H_squelch_update "(" S_squelch_update " (snd #f) (chn #f)): #t if updates (redisplays) are turned off in snd's channel chn"
   return(channel_get(snd_n, chn_n, CP_SQUELCH_UPDATE, S_squelch_update));
 }
 
@@ -4908,7 +4908,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_squelch_update_reversed, g_set_squelch_
 
 static XEN g_ap_sx(XEN snd_n, XEN chn_n) 
 {
-  #define H_x_position_slider "(" S_x_position_slider " &optional snd chn) -> current x axis position slider of snd channel chn"
+  #define H_x_position_slider "(" S_x_position_slider " (snd #f) (chn #f)): current x axis position slider of snd channel chn"
   return(channel_get(snd_n, chn_n, CP_AP_SX, S_x_position_slider));
 }
 
@@ -4922,7 +4922,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_ap_sx_reversed, g_set_ap_sx)
 
 static XEN g_ap_sy(XEN snd_n, XEN chn_n) 
 {
-  #define H_y_position_slider "(" S_y_position_slider " &optional snd chn) -> current y axis position slider of snd channel chn"
+  #define H_y_position_slider "(" S_y_position_slider " (snd #f) (chn #f)): current y axis position slider of snd channel chn"
   return(channel_get(snd_n, chn_n, CP_AP_SY, S_y_position_slider));
 }
 
@@ -4936,7 +4936,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_ap_sy_reversed, g_set_ap_sy)
 
 static XEN g_ap_zx(XEN snd_n, XEN chn_n) 
 {
-  #define H_x_zoom_slider "(" S_x_zoom_slider " &optional snd chn) -> current x axis zoom slider of snd channel chn"
+  #define H_x_zoom_slider "(" S_x_zoom_slider " (snd #f) (chn #f)): current x axis zoom slider of snd channel chn"
   return(channel_get(snd_n, chn_n, CP_AP_ZX, S_x_zoom_slider));
 }
 
@@ -4951,7 +4951,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_ap_zx_reversed, g_set_ap_zx)
 
 static XEN g_ap_zy(XEN snd_n, XEN chn_n) 
 {
-  #define H_y_zoom_slider "(" S_y_zoom_slider " &optional snd chn) -> current y axis zoom slider of snd channel chn"
+  #define H_y_zoom_slider "(" S_y_zoom_slider " (snd #f) (chn #f)): current y axis zoom slider of snd channel chn"
   return(channel_get(snd_n, chn_n, CP_AP_ZY, S_y_zoom_slider));
 }
 
@@ -4965,25 +4965,34 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_ap_zy_reversed, g_set_ap_zy)
 
 static XEN g_edit_hook(XEN snd_n, XEN chn_n) 
 {
-  #define H_edit_hook "(" S_edit_hook " &optional snd chn) -> snd's channel chn's edit-hook"
+  #define H_edit_hook "(" S_edit_hook " (snd #f) (chn #f)): snd's channel chn's edit-hook. \
+This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
+arguments. " S_edit_hook " is called just before any attempt to edit the channel's data; if it returns #t, \
+the edit is aborted."
   return(channel_get(snd_n, chn_n, CP_EDIT_HOOK, S_edit_hook));
 }
 
 static XEN g_after_edit_hook(XEN snd_n, XEN chn_n) 
 {
-  #define H_after_edit_hook "(" S_after_edit_hook " &optional snd chn) -> snd's channel chn's after-edit-hook"
+  #define H_after_edit_hook "(" S_after_edit_hook " (snd #f) (chn #f)): snd's channel chn's after-edit-hook. \
+This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
+arguments. " S_after_edit_hook " is called after an edit, but before " S_after_graph_hook "."
+
   return(channel_get(snd_n, chn_n, CP_AFTER_EDIT_HOOK, S_after_edit_hook));
 }
 
 static XEN g_undo_hook(XEN snd_n, XEN chn_n) 
 {
-  #define H_undo_hook "(" S_undo_hook " &optional snd chn) -> snd's channel chn's undo-hook"
+  #define H_undo_hook "(" S_undo_hook " (snd #f) (chn #f)): snd's channel chn's undo-hook. \
+This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
+arguments. " S_undo_hook " is called just after any undo, redo, or revert that affects the channel."
+
   return(channel_get(snd_n, chn_n, CP_UNDO_HOOK, S_undo_hook));
 }
 
 static XEN g_show_y_zero(XEN snd, XEN chn)
 {
-  #define H_show_y_zero "(" S_show_y_zero " (snd #t) (chn #t)) -> #t if Snd should include a line at y = 0.0"
+  #define H_show_y_zero "(" S_show_y_zero " (snd #t) (chn #t)): #t if Snd should include a line at y = 0.0"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_Y_ZERO, S_show_y_zero));
   return(C_TO_XEN_BOOLEAN(show_y_zero(get_global_state())));
@@ -5007,7 +5016,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_y_zero_reversed, g_set_show_y_zero
 
 static XEN g_min_dB(XEN snd, XEN chn) 
 {
-  #define H_min_dB "(" S_min_dB " (snd #t) (chn #t)) -> min dB value displayed in fft graphs using dB scales"
+  #define H_min_dB "(" S_min_dB " (snd #t) (chn #t)): min dB value displayed in fft graphs using dB scales (default: -60)"
   snd_state *ss;
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_MIN_DB, S_min_dB));
@@ -5037,7 +5046,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_min_dB_reversed, g_set_min_dB)
 
 static XEN g_fft_window_beta(XEN snd, XEN chn) 
 {
-  #define H_fft_window_beta "(" S_fft_window_beta " *optional (snd #t) (chn #t)) -> 'beta' fft data window parameter value (0.0)"
+  #define H_fft_window_beta "(" S_fft_window_beta " *optional (snd #t) (chn #t)): fft window beta parameter value"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_FFT_WINDOW_BETA, S_fft_window_beta));
   return(C_TO_XEN_DOUBLE(fft_window_beta(get_global_state())));
@@ -5061,7 +5070,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_beta_reversed, g_set_fft_win
 
 static XEN g_spectro_cutoff(XEN snd, XEN chn) 
 {
-  #define H_spectro_cutoff "(" S_spectro_cutoff " *optional (snd #t) (chn #t)) -> max frequency shown in spectra (1.0)"
+  #define H_spectro_cutoff "(" S_spectro_cutoff " *optional (snd #t) (chn #t)): max frequency shown in spectra (1.0 = srate/2)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_CUTOFF, S_spectro_cutoff));
   return(C_TO_XEN_DOUBLE(spectro_cutoff(get_global_state())));
@@ -5085,7 +5094,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_cutoff_reversed, g_set_spectro_
 
 static XEN g_spectro_start(XEN snd, XEN chn) 
 {
-  #define H_spectro_start "(" S_spectro_start " *optional (snd #t) (chn #t)) -> lower bound of frequency in spectral displays (0.0)"
+  #define H_spectro_start "(" S_spectro_start " *optional (snd #t) (chn #t)): lower bound of frequency in spectral displays (0.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_START, S_spectro_start));
   return(C_TO_XEN_DOUBLE(spectro_start(get_global_state())));
@@ -5109,7 +5118,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_start_reversed, g_set_spectro_s
 
 static XEN g_spectro_x_angle(XEN snd, XEN chn) 
 {
-  #define H_spectro_x_angle "(" S_spectro_x_angle " *optional (snd #t) (chn #t)) -> spectrogram x-axis viewing angle (90.0)"
+  #define H_spectro_x_angle "(" S_spectro_x_angle " *optional (snd #t) (chn #t)): spectrogram x-axis viewing angle (90.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_X_ANGLE, S_spectro_x_angle));
   return(C_TO_XEN_DOUBLE(spectro_x_angle(get_global_state())));
@@ -5133,7 +5142,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_x_angle_reversed, g_set_spectro
 
 static XEN g_spectro_x_scale(XEN snd, XEN chn) 
 {
-  #define H_spectro_x_scale "(" S_spectro_x_scale " *optional (snd #t) (chn #t)) -> scaler (stretch) along the spectrogram x axis (1.0)"
+  #define H_spectro_x_scale "(" S_spectro_x_scale " *optional (snd #t) (chn #t)): scaler (stretch) along the spectrogram x axis (1.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_X_SCALE, S_spectro_x_scale));
   return(C_TO_XEN_DOUBLE(spectro_x_scale(get_global_state())));
@@ -5157,7 +5166,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_x_scale_reversed, g_set_spectro
 
 static XEN g_spectro_y_angle(XEN snd, XEN chn) 
 {
-  #define H_spectro_y_angle "(" S_spectro_y_angle " *optional (snd #t) (chn #t)) -> spectrogram y-axis viewing angle (0.0)"
+  #define H_spectro_y_angle "(" S_spectro_y_angle " *optional (snd #t) (chn #t)): spectrogram y-axis viewing angle (0.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_Y_ANGLE, S_spectro_y_angle));
   return(C_TO_XEN_DOUBLE(spectro_y_angle(get_global_state())));
@@ -5181,7 +5190,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_y_angle_reversed, g_set_spectro
 
 static XEN g_spectro_y_scale(XEN snd, XEN chn) 
 {
-  #define H_spectro_y_scale "(" S_spectro_y_scale " *optional (snd #t) (chn #t)) -> scaler (stretch) along the spectrogram y axis (1.0)"
+  #define H_spectro_y_scale "(" S_spectro_y_scale " *optional (snd #t) (chn #t)): scaler (stretch) along the spectrogram y axis (1.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_Y_SCALE, S_spectro_y_scale));
   return(C_TO_XEN_DOUBLE(spectro_y_scale(get_global_state())));
@@ -5205,7 +5214,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_y_scale_reversed, g_set_spectro
 
 static XEN g_spectro_z_angle(XEN snd, XEN chn) 
 {
-  #define H_spectro_z_angle "(" S_spectro_z_angle " *optional (snd #t) (chn #t)) -> spectrogram z-axis viewing angle (-2.0)"
+  #define H_spectro_z_angle "(" S_spectro_z_angle " *optional (snd #t) (chn #t)): spectrogram z-axis viewing angle (-2.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_Z_ANGLE, S_spectro_z_angle));
   return(C_TO_XEN_DOUBLE(spectro_z_angle(get_global_state())));
@@ -5229,7 +5238,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_z_angle_reversed, g_set_spectro
 
 static XEN g_spectro_z_scale(XEN snd, XEN chn) 
 {
-  #define H_spectro_z_scale "(" S_spectro_z_scale " *optional (snd #t) (chn #t)) -> scaler (stretch) along the spectrogram z axis (0.1)"
+  #define H_spectro_z_scale "(" S_spectro_z_scale " *optional (snd #t) (chn #t)): scaler (stretch) along the spectrogram z axis (0.1)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_Z_SCALE, S_spectro_z_scale));
   return(C_TO_XEN_DOUBLE(spectro_z_scale(get_global_state())));
@@ -5253,7 +5262,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_z_scale_reversed, g_set_spectro
 
 static XEN g_spectro_hop(XEN snd, XEN chn)
 {
-  #define H_spectro_hop "(" S_spectro_hop " (snd #t) (chn #t)) -> hop amount (pixels) in spectral displays"
+  #define H_spectro_hop "(" S_spectro_hop " (snd #t) (chn #t)): hop amount (pixels) in spectral displays"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_HOP, S_spectro_hop));
   return(C_TO_XEN_INT(spectro_hop(get_global_state())));
@@ -5278,7 +5287,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_hop_reversed, g_set_spectro_hop
 
 static XEN g_show_marks(XEN snd, XEN chn)
 {
-  #define H_show_marks "(" S_show_marks " (snd #t) (chn #t)) -> #t if Snd should show marks"
+  #define H_show_marks "(" S_show_marks " (snd #t) (chn #t)): #t if Snd should show marks"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_MARKS, S_show_marks));
   return(C_TO_XEN_BOOLEAN(show_marks(get_global_state())));
@@ -5302,7 +5311,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_marks_reversed, g_set_show_marks)
 
 static XEN g_show_transform_peaks(XEN snd, XEN chn)
 {
-  #define H_show_transform_peaks "(" S_show_transform_peaks " (snd #t) (chn #t)) -> #t if fft display should include peak list"
+  #define H_show_transform_peaks "(" S_show_transform_peaks " (snd #t) (chn #t)): #t if fft display should include peak list"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_TRANSFORM_PEAKS, S_show_transform_peaks));
   return(C_TO_XEN_BOOLEAN(show_transform_peaks(get_global_state())));
@@ -5326,7 +5335,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_transform_peaks_reversed, g_set_sh
 
 static XEN g_zero_pad(XEN snd, XEN chn)
 {
-  #define H_zero_pad "(" S_zero_pad " (snd #t) (chn #t)) -> zero padding used in fft as a multiple of fft size (0)"
+  #define H_zero_pad "(" S_zero_pad " (snd #t) (chn #t)): zero padding used in fft as a multiple of fft size (0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_ZERO_PAD, S_zero_pad));
   return(C_TO_XEN_INT(zero_pad(get_global_state())));
@@ -5350,7 +5359,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_zero_pad_reversed, g_set_zero_pad)
 
 static XEN g_wavelet_type(XEN snd, XEN chn)
 {
-  #define H_wavelet_type "(" S_wavelet_type " (snd #t) (chn #t)) -> wavelet used in wavelet-transform (0)"
+  #define H_wavelet_type "(" S_wavelet_type " (snd #t) (chn #t)): wavelet used in wavelet-transform (0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_WAVELET_TYPE, S_wavelet_type));
   return(C_TO_XEN_INT(wavelet_type(get_global_state())));
@@ -5374,7 +5383,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavelet_type_reversed, g_set_wavelet_ty
 
 static XEN g_fft_log_frequency(XEN snd, XEN chn)
 {
-  #define H_fft_log_frequency "(" S_fft_log_frequency " (snd #t) (chn #t)) -> #t if fft displays use log on the frequency axis (#f)"
+  #define H_fft_log_frequency "(" S_fft_log_frequency " (snd #t) (chn #t)): #t if fft displays use log on the frequency axis (#f)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_FFT_LOG_FREQUENCY, S_fft_log_frequency));
   return(C_TO_XEN_BOOLEAN(fft_log_frequency(get_global_state())));
@@ -5398,7 +5407,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_log_frequency_reversed, g_set_fft_l
 
 static XEN g_fft_log_magnitude(XEN snd, XEN chn)
 {
-  #define H_fft_log_magnitude "(" S_fft_log_magnitude " (snd #t) (chn #t)) -> #t if fft displays use dB (#f)"
+  #define H_fft_log_magnitude "(" S_fft_log_magnitude " (snd #t) (chn #t)): #t if fft displays use dB (#f)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_FFT_LOG_MAGNITUDE, S_fft_log_magnitude));
   return(C_TO_XEN_BOOLEAN(fft_log_magnitude(get_global_state())));
@@ -5422,7 +5431,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_log_magnitude_reversed, g_set_fft_l
 
 static XEN g_show_mix_waveforms(XEN snd, XEN chn)
 {
-  #define H_show_mix_waveforms "(" S_show_mix_waveforms " (snd #t) (chn #t)) -> #t if Snd should display mix waveforms"
+  #define H_show_mix_waveforms "(" S_show_mix_waveforms " (snd #t) (chn #t)): #t if Snd should display mix waveforms (above the main waveform)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_MIX_WAVEFORMS, S_show_mix_waveforms));
   return(C_TO_XEN_BOOLEAN(show_mix_waveforms(get_global_state())));
@@ -5446,7 +5455,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_mix_waveforms_reversed, g_set_show
 
 static XEN g_verbose_cursor(XEN snd, XEN chn)
 {
-  #define H_verbose_cursor "(" S_verbose_cursor " (snd #t) (chn #t)) -> #t if the cursor's position and so on is displayed in the minibuffer"
+  #define H_verbose_cursor "(" S_verbose_cursor " (snd #t) (chn #t)): #t if the cursor's position and so on is displayed in the minibuffer"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_VERBOSE_CURSOR, S_verbose_cursor));
   return(C_TO_XEN_BOOLEAN(verbose_cursor(get_global_state())));
@@ -5471,7 +5480,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_verbose_cursor_reversed, g_set_verbose_
 
 static XEN g_time_graph_type(XEN snd, XEN chn)
 {
-  #define H_time_graph_type "(" S_time_graph_type " (snd #t) (chn #t)) -> " S_graph_as_wavogram " if Snd's time domain display is a 'wavogram',\
+  #define H_time_graph_type "(" S_time_graph_type " (snd #t) (chn #t)): " S_graph_as_wavogram " if Snd's time domain display is a 'wavogram',\
 otherwise " S_graph_once "."
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TIME_GRAPH_TYPE, S_time_graph_type));
@@ -5498,7 +5507,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_time_graph_type_reversed, g_set_time_gr
 
 static XEN g_wavo_hop(XEN snd, XEN chn)
 {
-  #define H_wavo_hop "(" S_wavo_hop " (snd #t) (chn #t)) -> wavogram spacing between successive traces"
+  #define H_wavo_hop "(" S_wavo_hop " (snd #t) (chn #t)): wavogram spacing between successive traces"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_WAVO_HOP, S_wavo_hop));
   return(C_TO_XEN_INT(wavo_hop(get_global_state())));
@@ -5522,7 +5531,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_hop_reversed, g_set_wavo_hop)
 
 static XEN g_wavo_trace(XEN snd, XEN chn)
 {
-  #define H_wavo_trace "(" S_wavo_trace " (snd #t) (chn #t)) -> length (samples) of each trace in the wavogram (64)"
+  #define H_wavo_trace "(" S_wavo_trace " (snd #t) (chn #t)): length (samples) of each trace in the wavogram (64)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_WAVO_TRACE, S_wavo_trace));
   return(C_TO_XEN_INT(wavo_trace(get_global_state())));
@@ -5546,7 +5555,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
 
 static XEN g_transform_size(XEN snd, XEN chn)
 {
-  #define H_transform_size "(" S_transform_size " (snd #t) (chn #t)) -> current fft size (256)"
+  #define H_transform_size "(" S_transform_size " (snd #t) (chn #t)): current fft size (256)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_SIZE, S_transform_size));
   return(C_TO_XEN_INT(transform_size(get_global_state())));
@@ -5575,7 +5584,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_size_reversed, g_set_transfor
 
 static XEN g_transform_graph_type(XEN snd, XEN chn)
 {
-  #define H_transform_graph_type "(" S_transform_graph_type " (snd #t) (chn #t)) can be graph-once, graph-as-sonogram, or graph-as-spectrogram."
+  #define H_transform_graph_type "(" S_transform_graph_type " (snd #t) (chn #t)) can \
+be " S_graph_once ", " S_graph_as_sonogram ", or " S_graph_as_spectrogram "."
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_GRAPH_TYPE, S_transform_graph_type));
   return(C_TO_XEN_INT(transform_graph_type(get_global_state())));
@@ -5601,7 +5611,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_type_reversed, g_set_tr
 
 static XEN g_fft_window(XEN snd, XEN chn)
 {
-  #define H_fft_window "(" S_fft_window " (snd #t) (chn #t)) -> current fft data window choice (e.g. blackman2-window).  The \
+  #define H_fft_window "(" S_fft_window " (snd #t) (chn #t)): fft data window choice (e.g. blackman2-window).  The \
 choices are: rectangular-window, hann(ing)-window, welch-window, parzen-window, \
 bartlett-window, hamming-window, blackman2-window, blackman3-window, \
 blackman4-window, exponential-window, riemann-window, kaiser-window, \
@@ -5633,7 +5643,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_reversed, g_set_fft_window)
 
 static XEN g_transform_type(XEN snd, XEN chn)
 {
-  #define H_transform_type "(" S_transform_type " (snd #t) (chn #t)) -> transform type; can be one of fourier-transform, \
+  #define H_transform_type "(" S_transform_type " (snd #t) (chn #t)): transform type; can be one of fourier-transform, \
 wavelet-transform, haar-transform, autocorrelation, walsh-transform, hadamard-transform, cepstrum, or an index corresponding \
 to an added transform."
 
@@ -5662,7 +5672,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_type_reversed, g_set_transfor
 
 static XEN g_transform_normalization(XEN snd, XEN chn)
 {
-  #define H_transform_normalization "(" S_transform_normalization " (snd #t) (chn #t)) -> one of '(" S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally ") \
+  #define H_transform_normalization "(" S_transform_normalization " (snd #t) (chn #t)): one of '(" S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally ") \
 decides whether spectral data is normalized before display (default: " S_normalize_by_channel ")"
 
   if (XEN_BOUND_P(snd))
@@ -5690,7 +5700,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_normalization_reversed, g_set
 
 static XEN g_max_transform_peaks(XEN snd, XEN chn)
 {
-  #define H_max_transform_peaks "(" S_max_transform_peaks " (snd #t) (chn #t)) -> max number of fft peaks reported in fft display"
+  #define H_max_transform_peaks "(" S_max_transform_peaks " (snd #t) (chn #t)): max number of fft peaks reported in fft display"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_MAX_TRANSFORM_PEAKS, S_max_transform_peaks));
   return(C_TO_XEN_INT(max_transform_peaks(get_global_state())));
@@ -5718,7 +5728,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_max_transform_peaks_reversed, g_set_max
 
 static XEN g_graph_style(XEN snd, XEN chn)
 {
-  #define H_graph_style "(" S_graph_style " (snd #t) (chn #t)) -> graph style, one \
+  #define H_graph_style "(" S_graph_style " (snd #t) (chn #t)): graph style, one \
 of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
 
   if (XEN_BOUND_P(snd))
@@ -5762,7 +5772,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_style_reversed, g_set_graph_style
 
 static XEN g_time_graph_style(XEN snd, XEN chn)
 {
-  #define H_time_graph_style "(" S_time_graph_style " snd chn) -> time domain graph drawing style. \
+  #define H_time_graph_style "(" S_time_graph_style " snd chn): time domain graph drawing style. \
 one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
   ASSERT_SOUND(S_time_graph_style, snd, 0);
   return(channel_get(snd, chn, CP_TIME_GRAPH_STYLE, S_time_graph_style));
@@ -5784,7 +5794,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_time_graph_style_reversed, g_set_time_g
 
 static XEN g_lisp_graph_style(XEN snd, XEN chn)
 {
-  #define H_lisp_graph_style "(" S_lisp_graph_style " snd chn) -> lisp graph drawing style. \
+  #define H_lisp_graph_style "(" S_lisp_graph_style " snd chn): lisp graph drawing style. \
 one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
   ASSERT_SOUND(S_lisp_graph_style, snd, 0);
   return(channel_get(snd, chn, CP_LISP_GRAPH_STYLE, S_lisp_graph_style));
@@ -5806,7 +5816,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_lisp_graph_style_reversed, g_set_lisp_g
 
 static XEN g_transform_graph_style(XEN snd, XEN chn)
 {
-  #define H_transform_graph_style "(" S_lisp_graph_style " snd chn) -> fft graph drawing style, one \
+  #define H_transform_graph_style "(" S_lisp_graph_style " snd chn): fft graph drawing style, one \
 of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
   ASSERT_SOUND(S_transform_graph_style, snd, 0);
   return(channel_get(snd, chn, CP_TRANSFORM_GRAPH_STYLE, S_transform_graph_style));
@@ -5829,7 +5839,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_style_reversed, g_set_t
 
 static XEN g_dot_size(XEN snd, XEN chn)
 {
-  #define H_dot_size "(" S_dot_size " (snd #t) (chn #t)) -> size in pixels of dots when graphing with dots (1)"
+  #define H_dot_size "(" S_dot_size " (snd #t) (chn #t)): size in pixels of dots when graphing with dots (1)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_DOT_SIZE, S_dot_size));
   return(C_TO_XEN_INT(dot_size(get_global_state())));
@@ -5854,8 +5864,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_dot_size_reversed, g_set_dot_size)
 static XEN g_x_axis_style(XEN snd, XEN chn)
 {
   #define H_x_axis_style "(" S_x_axis_style " (snd #t) (chn #t)) \
-The x axis labelling of the time domain waveform can be in seconds (x-axis-in-seconds), in samples (x-axis-in-samples), expressed as a \
-       percentage of the overall duration (x-axis-as-percentage), or as a beat number (x-axis-in-beats)."
+The x axis labelling of the time domain waveform can be in seconds (" S_x_axis_in_seconds "), in samples (" S_x_axis_in_samples "), expressed as a \
+percentage of the overall duration (" S_x_axis_as_percentage "), or as a beat number (" S_x_axis_in_beats ")."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_X_AXIS_STYLE, S_x_axis_style));
@@ -5881,7 +5891,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_x_axis_style_reversed, g_set_x_axis_sty
 
 static XEN g_beats_per_minute(XEN snd, XEN chn)
 {
-  #define H_beats_per_minute "(" S_beats_per_minute " (snd #t) (chn #t)) -> beats per minute if " S_x_axis_style " = " S_x_axis_in_beats
+  #define H_beats_per_minute "(" S_beats_per_minute " (snd #t) (chn #t)): beats per minute if " S_x_axis_style " is " S_x_axis_in_beats
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_BEATS_PER_MINUTE, S_beats_per_minute));
   return(C_TO_XEN_DOUBLE(beats_per_minute(get_global_state())));
@@ -5909,8 +5919,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_beats_per_minute_reversed, g_set_beats_
 static XEN g_show_axes(XEN snd, XEN chn)
 {
   #define H_show_axes "(" S_show_axes "(snd #t) (chn #t)) \
-If show-all-axes, display x and y axes; if show-x-axis, just one (bottom) axis is displayed. \
-The other choice is show-no-axes."
+If " S_show_all_axes ", display x and y axes; if " S_show_x_axis ", just one (bottom) axis is displayed. \
+The other choice is " S_show_no_axes "."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_AXES, S_show_axes));
@@ -5935,7 +5945,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_axes_reversed, g_set_show_axes)
 
 static XEN g_graphs_horizontal(XEN snd, XEN chn)
 {
-  #define H_graphs_horizontal "(" S_graphs_horizontal " (snd #t) (chn #t)) -> #t if the time domain, fft, and lisp graphs are layed out horizontally (#t)"
+  #define H_graphs_horizontal "(" S_graphs_horizontal " (snd #t) (chn #t)): #t if the time domain, fft, and lisp graphs are layed out horizontally (#t)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_GRAPHS_HORIZONTAL, S_graphs_horizontal));
   return(C_TO_XEN_BOOLEAN(graphs_horizontal(get_global_state())));
@@ -5960,7 +5970,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graphs_horizontal_reversed, g_set_graph
 
 static XEN g_peaks(XEN filename, XEN snd_n, XEN chn_n)
 {
-  #define H_peaks "(" S_peaks " &optional filename snd chn) writes current fft peaks data to filename, or \
+  #define H_peaks "(" S_peaks " (filename #f) (snd #f) (chn #f)): write current fft peaks data to filename, or \
 to the help dialog if filename is omitted"
 
   chan_info *cp;
@@ -5981,7 +5991,7 @@ to the help dialog if filename is omitted"
 
 static XEN g_left_sample(XEN snd_n, XEN chn_n) 
 {
-  #define H_left_sample "(" S_left_sample " &optional snd chn) -> left sample number in time domain window"
+  #define H_left_sample "(" S_left_sample " (snd #f) (chn #f)): left sample number in time domain window"
   return(channel_get(snd_n, chn_n, CP_AP_LOSAMP, S_left_sample));
 }
 
@@ -5995,7 +6005,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_left_sample_reversed, g_set_left_sample)
 
 static XEN g_right_sample(XEN snd_n, XEN chn_n) 
 {
-  #define H_right_sample "(" S_right_sample " &optional snd chn) -> right sample number in time domain window"
+  #define H_right_sample "(" S_right_sample " (snd #f) (chn #f)): right sample number in time domain window"
   return(channel_get(snd_n, chn_n, CP_AP_HISAMP, S_right_sample));
 }
 
@@ -6009,7 +6019,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_right_sample_reversed, g_set_right_sample)
 
 static XEN g_channel_properties(XEN snd_n, XEN chn_n) 
 {
-  #define H_channel_properties "(" S_channel_properties " &optional snd chn). \
+  #define H_channel_properties "(" S_channel_properties " (snd #f) (chn #f)): \
 A property list associated with the given channel. It is set to '() at the time a sound is opened. \
 The accessor channel-property is provided in extensions.scm."
 
@@ -6027,7 +6037,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_channel_properties_reversed, g_set_channel_prop
 
 static XEN g_edits(XEN snd_n, XEN chn_n)
 {
-  #define H_edits "(" S_edits " &optional snd chn) returns a vector of undoable and redoable edits in snd's channel chn"
+  #define H_edits "(" S_edits " (snd #f) (chn #f)): a list of undoable and redoable edits in snd's channel chn"
   chan_info *cp;
   int i;
   ASSERT_CHANNEL(S_edits, snd_n, chn_n, 1);
@@ -6040,7 +6050,7 @@ static XEN g_edits(XEN snd_n, XEN chn_n)
 
 static XEN g_x_bounds(XEN snd_n, XEN chn_n)
 {
-  #define H_x_bounds "(" S_x_bounds " &optional snd chn) returns a list (x0 x1) giving the current x axis bounds of snd channel chn"
+  #define H_x_bounds "(" S_x_bounds " (snd #f) (chn #f)): a list (x0 x1) giving the current x axis bounds of snd channel chn"
   chan_info *cp;
   ASSERT_CHANNEL(S_x_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_x_bounds);
@@ -6131,7 +6141,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
 
 static XEN g_y_bounds(XEN snd_n, XEN chn_n)
 {
-  #define H_y_bounds "(" S_y_bounds " &optional snd chn) returns a list (y0 y1) giving the current y axis bounds of snd channel chn"
+  #define H_y_bounds "(" S_y_bounds " (snd #f) (chn #f)): a list (y0 y1) giving the current y axis bounds of snd channel chn"
   chan_info *cp;
   ASSERT_CHANNEL(S_y_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_y_bounds);
@@ -6141,7 +6151,7 @@ static XEN g_y_bounds(XEN snd_n, XEN chn_n)
 
 static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display)
 {
-  #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn force-display)\n\
+  #define H_graph "(" S_graph " data (xlabel #f) (x0 0.0) (x1 1.0) (y0 #f) (y1 #f) (snd #f) (chn #f) (force-display #t)): \
 displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector. \
 If 'data' is a list of numbers, it is treated as an envelope."
 
@@ -6303,9 +6313,9 @@ If 'data' is a list of numbers, it is treated as an envelope."
 
 static XEN g_colormap_ref(XEN map, XEN pos)
 {
-  #define H_colormap_ref "(colormap-ref map &optional position) -> (list r g b). 'map' can be a number \
-between 0.0 and 1.0 with 'pos' omitted -- in this case the color_map and so on comes from the color dialog. \
-colormap_ref returns -1 if the current background color should be used."
+  #define H_colormap_ref "(colormap-ref map (pos #f)): (list r g b). map can be a number \
+between 0.0 and 1.0 with pos omitted -- in this case the color_map and so on comes from the color \
+dialog.  Colormap names can be found in rgb.scm"
   unsigned short r, g, b;
   snd_state *ss;
   if (XEN_NOT_BOUND_P(pos))
@@ -6669,13 +6679,13 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_graph_p, g_transform_graph_p_w, H_transform_graph_p,
 					    S_setB S_transform_graph_p, g_set_transform_graph_p_w, g_set_transform_graph_p_reversed, 0, 2, 0, 3);
 
-  #define H_graph_once "The value for the graph-types that displays the standard waveform"
+  #define H_graph_once "The value for the various graph-type variables that displays the standard waveform"
   #define H_graph_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
 
   XEN_DEFINE_CONSTANT(S_graph_once,        GRAPH_ONCE,        H_graph_once);
   XEN_DEFINE_CONSTANT(S_graph_as_wavogram, GRAPH_AS_WAVOGRAM, H_graph_as_wavogram);
 
-  #define H_graph_as_sonogram "The value for " S_transform_graph_type " that causes a snongram to be displayed"
+  #define H_graph_as_sonogram "The value for " S_transform_graph_type " that causes a sonogram to be displayed"
   #define H_graph_as_spectrogram "The value for " S_transform_graph_type " that causes a spectrogram to be displayed"
 
   XEN_DEFINE_CONSTANT(S_graph_as_sonogram,    GRAPH_AS_SONOGRAM,    H_graph_as_sonogram);
@@ -6875,21 +6885,21 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE("glSpectrogram", g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram);
 #endif
 
-  #define H_transform_hook S_transform_hook " (snd chn scaler) is called just after a spectrum is calculated."
-  #define H_graph_hook S_graph_hook " (snd chn y0 y1) is called each time a graph is about to be updated. If it returns #t, the display is not updated."
-  #define H_after_graph_hook S_after_graph_hook " (snd chn) is called after a graph is updated."
-  #define H_lisp_graph_hook S_lisp_graph_hook " (snd chn) is called just before the lisp graph is updated. If it returns a list \
+  #define H_transform_hook S_transform_hook " (snd chn scaler): called just after a spectrum is calculated."
+  #define H_graph_hook S_graph_hook " (snd chn y0 y1): called each time a graph is about to be updated. If it returns #t, the display is not updated."
+  #define H_after_graph_hook S_after_graph_hook " (snd chn): called after a graph is updated."
+  #define H_lisp_graph_hook S_lisp_graph_hook " (snd chn): called just before the lisp graph is updated. If it returns a list \
 of pixels, these are used in order by the list of graphs (if any), rather than Snd's default set; \
 this makes it possible to use different colors for the various graphs. \
 If it returns a function (of no arguments), that function is called rather than the standard graph routine."
-  #define H_mouse_press_hook S_mouse_press_hook " (snd chn button state x y) is called upon mouse button press within the lisp graph."
-  #define H_mouse_click_hook S_mouse_click_hook " (snd chn button state x y axis) is called upon button click."
-  #define H_mouse_release_hook S_mouse_release_hook " (snd chn button state x y) is called upon mouse button release within the lisp graph."
-  #define H_mouse_drag_hook S_mouse_drag_hook " (snd chn button state x y) is called upon mouse drag within the lisp graph."
-  #define H_mark_click_hook S_mark_click_hook " (id) is called when a mark is clicked; return #t to squelch the default message."
-  #define H_key_press_hook S_key_press_hook " (snd chn key state) is called upon a key press if the mouse is in the lisp graph. \
+  #define H_mouse_press_hook S_mouse_press_hook " (snd chn button state x y): called upon mouse button press within the lisp graph."
+  #define H_mouse_click_hook S_mouse_click_hook " (snd chn button state x y axis): called upon button click."
+  #define H_mouse_release_hook S_mouse_release_hook " (snd chn button state x y): called upon mouse button release within the lisp graph."
+  #define H_mouse_drag_hook S_mouse_drag_hook " (snd chn button state x y): called upon mouse drag within the lisp graph."
+  #define H_mark_click_hook S_mark_click_hook " (id): called when a mark is clicked; return #t to squelch the default message."
+  #define H_key_press_hook S_key_press_hook " (snd chn key state): called upon a key press if the mouse is in the lisp graph. \
 If it returns #t, the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
-  #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur) is called when a sound is displayed for the first time"
+  #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur): called when a sound is displayed for the first time"
 
   
   XEN_DEFINE_HOOK(transform_hook,     S_transform_hook, 3,     H_transform_hook);     /* args = sound channel scaler */
