@@ -2,8 +2,6 @@
 
 #include "snd.h"
 
-/* TODO: the window graph y axis should show dB scale if dB is in use */
-
 static Widget transform_dialog = NULL; /* main dialog shell */
 static Widget type_list, size_list, wavelet_list, window_list, window_beta_scale,
               db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button,
@@ -304,6 +302,7 @@ static void db_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   val = cb->set;
   in_set_fft_log_magnitude(val);
+  graph_redisplay();
   for_each_chan_1(chans_fft_log_magnitude, (void *)(&val));
   for_each_chan(calculate_fft);
 }

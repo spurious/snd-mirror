@@ -1,6 +1,6 @@
 dnl Configuration script for Snd
 
-AC_INIT(snd, 7.4, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
+AC_INIT(snd, 7.5, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
 
 INVOKED_PROG="$[0]"
 INVOKED_ARGS="$[@]"
@@ -17,7 +17,7 @@ audio_system="unknown"
 MAKE_TARGET="snd"
 
 PACKAGE=snd
-VERSION=7.4
+VERSION=7.5
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -814,9 +814,10 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
 	  ;;
       esac
       if test "$with_gtk" = yes ; then
-	if which pkg-config >/dev/null 2>/dev/null && pkg-config gtkglext-1.0 --exists ; then
-           GL_LIBS=$GL_LIBS" "`pkg-config gtkglext-1.0 --libs`
-           GL_FLAGS=$GL_FLAGS" "`pkg-config gtkglext-1.0 --cflags`
+	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+	if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
+          GL_LIBS=$GL_LIBS" "`$PKG_CONFIG gtkglext-1.0 --libs`
+          GL_FLAGS=$GL_FLAGS" "`$PKG_CONFIG gtkglext-1.0 --cflags`
         else
           OLD_CFLAGS="$CFLAGS"
 	  OLD_CPPFLAGS="$CPPFLAGS"

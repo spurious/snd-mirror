@@ -853,10 +853,6 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
       if (val > 1.0) val = 1.0;
     }
   gen->phase += (gen->freq + fm);
-  /*
-  while (gen->phase > TWO_PI) gen->phase -= TWO_PI;
-  while (gen->phase < 0.0) gen->phase += TWO_PI;
-  */
   return(val);
 }
 
@@ -1018,10 +1014,6 @@ Float mus_sum_of_sines(mus_any *ptr, Float fm)
     val = 0.0;
   else val = gen->scaler * sin(gen->cosines * a2) * sin(a2 * gen->cos5) / den;
   gen->phase += (gen->freq + fm);
-  /*
-  while (gen->phase > TWO_PI) gen->phase -= TWO_PI;
-  while (gen->phase < 0.0) gen->phase += TWO_PI;
-  */
   return(val);
 }
 

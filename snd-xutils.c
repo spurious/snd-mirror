@@ -9,6 +9,8 @@
 #endif
 #endif
 
+#define FREE_FONTS 1
+
 #if (USE_RENDITIONS)
 static XmRenderTable get_xm_font(XFontStruct *ignore, char *font, char *tag)
 {
@@ -45,6 +47,10 @@ bool set_tiny_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
+#if FREE_FONTS
+      /* it's not clear to me whether this is safe -- what if two fontstructs are pointing to the same font? */
+      if (sgx->tiny_fontstruct) XFreeFont(MAIN_DISPLAY(ss), sgx->tiny_fontstruct);
+#endif
       if (tiny_font(ss)) FREE(tiny_font(ss));
       in_set_tiny_font(copy_string(font));
       sgx->tiny_fontstruct = fs;
@@ -61,6 +67,9 @@ bool set_listener_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
+#if FREE_FONTS
+      if (ss->sgx->listener_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->listener_fontstruct);
+#endif
       if (listener_font(ss)) FREE(listener_font(ss));
       in_set_listener_font(copy_string(font));
       (ss->sgx)->listener_fontstruct = fs;
@@ -78,6 +87,9 @@ bool set_peaks_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
+#if FREE_FONTS
+      if (ss->sgx->peaks_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->peaks_fontstruct);
+#endif
       if (peaks_font(ss)) FREE(peaks_font(ss));
       in_set_peaks_font(copy_string(font));
       (ss->sgx)->peaks_fontstruct = fs;
@@ -94,6 +106,9 @@ bool set_bold_peaks_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
+#if FREE_FONTS
+      if (ss->sgx->bold_peaks_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->bold_peaks_fontstruct);
+#endif
       if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
       in_set_bold_peaks_font(copy_string(font));
       (ss->sgx)->bold_peaks_fontstruct = fs;
@@ -110,9 +125,11 @@ bool set_axis_label_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
+#if FREE_FONTS
+      if (ss->sgx->axis_label_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->axis_label_fontstruct);
+#endif
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
       in_set_axis_label_font(copy_string(font));
-      /* TODO: should this call XFreeFont(MAIN_DISPLAY(ss), (ss->sgx)->axis_label_fontstruct)? [also XQueryFont] */
       (ss->sgx)->axis_label_fontstruct = fs;
 #if HAVE_GL
       reload_label_font();
@@ -128,6 +145,9 @@ bool set_axis_numbers_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
+#if FREE_FONTS
+      if (ss->sgx->axis_numbers_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->axis_numbers_fontstruct);
+#endif
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
       in_set_axis_numbers_font(copy_string(font));
       (ss->sgx)->axis_numbers_fontstruct = fs;
@@ -439,7 +459,6 @@ char *XpmGetErrorString(int err) {return("");}
 #endif
 
 void set_sensitive(Widget wid, bool val) {if (wid) XtSetSensitive(wid, val);}
-bool is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(false);}
 void set_toggle_button(Widget wid, bool val, bool passed, void *data) {XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);}
 
 Dimension widget_height(Widget w)

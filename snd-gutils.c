@@ -350,13 +350,6 @@ void set_sensitive(GtkWidget *wid, bool val)
     gtk_widget_set_sensitive(wid, val);
 }
 
-bool is_sensitive(GtkWidget *wid) 
-{
-  if (wid) 
-    return(GTK_WIDGET_IS_SENSITIVE(wid)); 
-  return(false);
-}
-
 void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data) 
 {
   if (!passed) g_signal_handlers_block_matched(GTK_OBJECT(wid), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)data);

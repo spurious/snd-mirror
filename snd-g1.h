@@ -347,7 +347,6 @@ void color_selected_graph(GdkColor *color);
 void set_mix_color(GdkColor *color);
 void recolor_graph(chan_info *cp, bool selected);
 void set_sensitive(GtkWidget *wid, bool val);
-bool is_sensitive(GtkWidget *wid);
 void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data);
 guint16 widget_height(GtkWidget *w);
 guint16 widget_width(GtkWidget *w);

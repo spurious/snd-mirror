@@ -4911,7 +4911,7 @@ the lisp-graph-hook, where the redisplay is automatic.
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define display-energy
+(define <A NAME="xdisplayenergy">display-energy</A>
   ;; y-zoom-slider controls the graph amp
   (lambda (snd chn)
     "display time domain data as energy"
@@ -7471,7 +7471,10 @@ This sets the length (in samples) of each wavogram trace (default: 64).  See <a 
 <code><a class=def name="writepeakenvinfofile">write-peak-env-info-file</a> (snd chn filename)</code>
 </td></tr>
 <tr><td></td><td>
-writes the current peak-env amp info of the given channel to <i>filename</i>.
+writes the current peak-env amp info of the given channel to <i>filename</i>.  See peak-env.scm which uses
+this function and its friends to write the peak env data to a file when a sound is closed; a subsequent
+open of that sound can use that data to speed up the sound's redisplay; without the peak env data,
+a background process is launched to read the entire sound to get the needed data.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7601,7 +7604,7 @@ value of y axis position slider.  See <i>zync</i> in snd-motif.scm.
 <code><a class=def name="yzoomslider">y-zoom-slider</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-value of y axis zoom slider.
+value of y axis zoom slider.  See, for example, <a href="#xdisplayenergy">display-energy</a>, or <i>zync</i> in snd-motif.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7613,7 +7616,7 @@ value of y axis zoom slider.
 <tr><td></td><td>
 fft zero pad size as a multiple of the fft size; <code>(set! (zero-pad) 1)</code>
 gives you half data, half zeros (default: 0) (the data length is 
-determined by the nominal transform-size).  Zero padding causes sinc-interpolation 
+determined by the nominal transform-size).  Zero padding causes interpolation 
 of the fft points, making the display smoother.
 </td></tr>
 
@@ -8021,7 +8024,7 @@ The <a href="snd.html#savcontrols">Remember</a> button.  This remembers the curr
 settings for a later 'Restore'.  In new-effects.scm, the effects that use the control panel
 internally (post-expsrc-dialog, for example) can save and restore the current state via:
 <pre>
-(save-controls)
+(<em class=red>save-controls</em>)
 (reset-controls)
 ;;; now set the ones that are of interest for the current effect
 (apply-controls)

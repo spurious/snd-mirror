@@ -313,6 +313,7 @@ static void db_callback(GtkWidget *w, gpointer context)
   bool val;
   val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
   in_set_fft_log_magnitude(val);
+  graph_redisplay();
   for_each_chan_1(chans_fft_log_magnitude, (void *)(&val));
   for_each_chan(calculate_fft);
 }

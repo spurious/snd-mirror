@@ -1069,7 +1069,11 @@ including about 20 wavelet choices. \
 The top three buttons in the transform dialog choose between a normal fft, a sonogram, or a \
 spectrogram. The 'peaks' button affects whether peak info is displayed alongside the graph of the \
 spectrum. The 'dB' button selects between a linear and logarithmic Y (magnitude) axis. The 'log freq' \
-button makes a similar choice along the frequency axis.",
+button makes a similar choice along the frequency axis. \
+\n\n\
+If you choose dB, the fft window graph (in the lower right) displays the window spectrum in dB, \
+but the y axis labelling is still 0.0 to 1.0 to reflect the fact that the fft window itself is still displayed \
+in linear terms.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("FFT"),
 		      snd_xref_urls("FFT"));
