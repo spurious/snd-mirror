@@ -8,6 +8,7 @@
 /*
  * 26-Apr:     mus_sum_of_sines changed to mus_sine_bank.
  *             new mus_sum_of_sines parallels mus_sum_of_cosines.
+ *             deprecated mus_sin.
  * 14-Apr:     changed "2" to "_to_" in several function names.
  * 12-Apr:     mus_average, mus_average_p, mus_make_average.
  * 17-Mar:     edit function added to mus_granulate.
@@ -122,9 +123,6 @@
 
 /* compile time switches:
  *
- * WITH_SINE_TABLE(default 1)
- *   if 1, use table lookup for sine, else math library's sin
- *
  * HAVE_GSL(default 0)
  *   if 1, use libgsl for some math functions
  * 
@@ -229,7 +227,6 @@ off_t mus_seconds_to_samples(Float secs);
 Float mus_samples_to_seconds(off_t samps);
 int mus_array_print_length(void);
 int mus_set_array_print_length(int val);
-Float mus_sin(Float phase);
 Float mus_sine_bank(Float *amps, Float *phases, int size);
 
 Float mus_ring_modulate(Float s1, Float s2);
@@ -631,6 +628,7 @@ void *mus_environ(mus_any *rd);
 #define mus_frame2file(Ptr, Samp, Data) mus_frame_to_file(Ptr, Samp, Data)
 #define mus_file2fltarray(Filename, Chan, Start, Samples, Array) mus_file_to_float_array(Filename, Chan, Start, Samples, Array)
 #define mus_fltarray2file(Filename, Ddata, Len, Srate, Channels) mus_float_array_to_file(Filename, Ddata, Len, Srate, Channels)
+Float mus_sin(Float phase);
 #endif
 
 #ifdef __cplusplus

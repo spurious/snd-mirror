@@ -4742,7 +4742,11 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	  for (i = 0; i < ed->allocated_size; i++)
 	    if (FRAGMENT(ed, i))
 	      FREE(FRAGMENT(ed, i));
+#if (!DEBUG_MEMORY) || (defined(__GNUC__))
 	  FREE(FRAGMENTS(ed));
+#else
+	  FREE(((void *)(ed->fragments))); /* SGI compiler won't accept the assignment in the FREE macro (if debugging) */
+#endif
 	}
       if (ed->origin) FREE(ed->origin);
       if ((ed->edit_type == PTREE_EDIT) || (ed->edit_type == XEN_EDIT))

@@ -72,23 +72,6 @@ int mus_set_file_buffer_size(int size) {clm_file_buffer_size = size; return(size
 #define DESCRIBE_BUFFER_SIZE 2048
 static char describe_buffer[DESCRIBE_BUFFER_SIZE];
 
-#ifndef WITH_SINE_TABLE
-  #define WITH_SINE_TABLE 1
-#endif
-
-#if WITH_SINE_TABLE
-
-  /* use of "sin" rather than table lookup of a stored sine wave costs us about 
-   * 1.5 (23/16) in compute time on a Pentium, using all doubles is slightly faster (~10%)
-   * 2.5 (14/6) on an SGI
-   * 4.5 (86/18) on a PPC
-   * 4 (88/23) on a Sun
-   * 5 (31/6) on a NeXT
-   */
-
-#define SINE_SIZE 8192
-static Float *sine_table = NULL;
-
 static void *clm_calloc(int num, int size, const char* what)
 {
   register void *mem;
@@ -102,39 +85,7 @@ static void *clm_calloc(int num, int size, const char* what)
   return(mem);
 }
 
-static void init_sine(void)
-{
-  int i;
-  Float phase, incr;
-  if (sine_table == NULL)
-    {
-      sine_table = (Float *)clm_calloc(SINE_SIZE + 1, sizeof(Float), "sine table");
-      incr = TWO_PI / (Float)SINE_SIZE;
-      for (i = 0, phase = 0.0; i < SINE_SIZE + 1; i++, phase += incr)
-	sine_table[i] = (Float)sin(phase);
-    }
-}
-
-Float mus_sin(Float phase)
-{
-  Float mag_phase, frac;
-  int index;
-  if (phase < 0.0)
-    {
-      index = (int)(phase / TWO_PI);
-      phase += (Float)(((1 - index) * (TWO_PI)));
-    }
-  mag_phase = phase * SINE_SIZE / TWO_PI;
-  index = (int)mag_phase;
-  frac = mag_phase - index;
-  index = index % SINE_SIZE;
-  if (frac < 0.0001)
-    return(sine_table[index]);
-  else return(sine_table[index] + 
-	      (frac * (sine_table[index + 1] - sine_table[index])));
-}
-
-#else
+#ifndef CLM_DISABLE_DEPRECATED
   Float mus_sin(Float phase) {return(sin(phase));}
 #endif
 
@@ -144,7 +95,7 @@ Float mus_sine_bank(Float *amps, Float *phases, int size)
   Float sum = 0.0;
   for (i = 0; i < size; i++) 
     if (amps[i] != 0.0)
-      sum += (amps[i] * mus_sin(phases[i]));
+      sum += (amps[i] * sin(phases[i]));
   return(sum);
 }
 
@@ -564,7 +515,7 @@ off_t mus_location(mus_any *gen)
 
 Float mus_ring_modulate(Float sig1, Float sig2) {return(sig1 * sig2);}
 Float mus_amplitude_modulate(Float carrier, Float sig1, Float sig2) {return(sig1 * (carrier + sig2));}
-Float mus_contrast_enhancement(Float sig, Float index) {return(mus_sin((sig * M_PI_2) + (index * mus_sin(sig * TWO_PI))));}
+Float mus_contrast_enhancement(Float sig, Float index) {return(sin((sig * M_PI_2) + (index * sin(sig * TWO_PI))));}
 void mus_clear_array(Float *arr, int size) {memset((void *)arr, 0, size * sizeof(Float));}
 
 Float mus_dot_product(Float *data1, Float *data2, int size)
@@ -667,7 +618,7 @@ Float mus_oscil(mus_any *ptr, Float fm, Float pm)
 {
   Float result;
   osc *gen = (osc *)ptr;
-  result = mus_sin(gen->phase + pm);
+  result = sin(gen->phase + pm);
   gen->phase += (gen->freq + fm);
   if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
@@ -678,7 +629,7 @@ Float mus_oscil_0(mus_any *ptr)
 {
   Float result;
   osc *gen = (osc *)ptr;
-  result = mus_sin(gen->phase);
+  result = sin(gen->phase);
   gen->phase += gen->freq;
   if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
@@ -688,7 +639,7 @@ Float mus_oscil_1(mus_any *ptr, Float fm)
 {
   Float result;
   osc *gen = (osc *)ptr;
-  result = mus_sin(gen->phase);
+  result = sin(gen->phase);
   gen->phase += (gen->freq + fm);
   if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
@@ -780,12 +731,12 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
   /*   (/ (- (/ (sin (* (+ n 0.5) angle)) (* 2 (sin (* 0.5 angle)))) 0.5) n) */
   Float val, den;
   cosp *gen = (cosp *)ptr;
-  den = mus_sin(gen->phase * 0.5);
+  den = sin(gen->phase * 0.5);
   if (den == 0.0)
     val = 1.0;
   else 
     {
-      val = (gen->scaler * (((mus_sin(gen->phase * (gen->cosines + 0.5))) / (2.0 * den)) - 0.5));
+      val = (gen->scaler * (((sin(gen->phase * (gen->cosines + 0.5))) / (2.0 * den)) - 0.5));
       if (val > 1.0) val = 1.0;
     }
   gen->phase += (gen->freq + fm);
@@ -938,10 +889,10 @@ Float mus_sum_of_sines(mus_any *ptr, Float fm)
   Float val, den, a2;
   cosp *gen = (cosp *)ptr;
   a2 = gen->phase * 0.5;
-  den = mus_sin(a2);
+  den = sin(a2);
   if (den == 0.0)
     val = 0.0;
-  else val = gen->scaler * mus_sin(gen->cosines * a2) * mus_sin(a2 * (gen->cosines + 1)) / den;
+  else val = gen->scaler * sin(gen->cosines * a2) * sin(a2 * (gen->cosines + 1)) / den;
   gen->phase += (gen->freq + fm);
   while (gen->phase > TWO_PI) gen->phase -= TWO_PI;
   while (gen->phase < 0.0) gen->phase += TWO_PI;
@@ -1495,7 +1446,7 @@ Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int
 	{
 	  freq = (partial_data[partial * 2] * TWO_PI) / (Float)table_size;
 	  for (i = 0, angle = 0.0; i < table_size; i++, angle += freq) 
-	    table[i] += amp * mus_sin(angle);
+	    table[i] += amp * sin(angle);
 	}
     }
   if (normalize) 
@@ -1515,7 +1466,7 @@ Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *tabl
 	{
 	  freq = (partial_data[partial * 3] * TWO_PI) / (Float)table_size;
 	  for (i = 0, angle = partial_data[n]; i < table_size; i++, angle += freq) 
-	    table[i] += amp * mus_sin(angle);
+	    table[i] += amp * sin(angle);
 	}
     }
   if (normalize) 
@@ -2250,7 +2201,7 @@ Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
   asyfm *gen = (asyfm *)ptr;
   Float result, mth;
   mth = gen->ratio * gen->phase;
-  result = exp(index * gen->cosr * cos(mth)) * mus_sin(gen->phase + index * gen->sinr * mus_sin(mth));
+  result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 */
   gen->phase += (gen->freq + fm);
   if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
@@ -2262,7 +2213,7 @@ Float mus_asymmetric_fm_1(mus_any *ptr, Float index) /* mostly for internal opti
   asyfm *gen = (asyfm *)ptr;
   Float result, mth;
   mth = gen->ratio * gen->phase;
-  result = exp(index * gen->cosr * cos(mth)) * mus_sin(gen->phase + index * gen->sinr * mus_sin(mth));
+  result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 */
   gen->phase += gen->freq;
   if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
@@ -2387,9 +2338,9 @@ Float mus_sine_summation(mus_any *ptr, Float fm)
    * which should be a sine wave! 
    * I wonder if that formula is incorrect...
    */
-  else result = (mus_sin(gen->phase) - (gen->a * mus_sin(thB)) - 
-		 (gen->an * (mus_sin(gen->phase + (B * (gen->n + 1))) - 
-			     (gen->a * mus_sin(gen->phase + (B * gen->n)))))) / divisor;
+  else result = (sin(gen->phase) - (gen->a * sin(thB)) - 
+		 (gen->an * (sin(gen->phase + (B * (gen->n + 1))) - 
+			     (gen->a * sin(gen->phase + (B * gen->n)))))) / divisor;
   gen->phase += (gen->freq + fm);
   gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
@@ -3378,7 +3329,7 @@ Float mus_waveshape(mus_any *ptr, Float index, Float fm)
 {
   ws *gen = (ws *)ptr;
   Float oscval, table_index;
-  oscval = mus_sin(gen->phase);
+  oscval = sin(gen->phase);
   gen->phase += (gen->freq + fm);
   if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
   table_index = gen->offset * (1.0 + (oscval * index));
@@ -3389,7 +3340,7 @@ Float mus_waveshape_1(mus_any *ptr, Float index)
 {
   ws *gen = (ws *)ptr;
   Float oscval, table_index;
-  oscval = mus_sin(gen->phase);
+  oscval = sin(gen->phase);
   gen->phase += gen->freq;
   if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
   table_index = gen->offset * (1.0 + (oscval * index));
@@ -7670,8 +7621,5 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 
 void init_mus_module(void)
 {
-#if WITH_SINE_TABLE
-  init_sine();
-#endif
 }
 

@@ -59,7 +59,7 @@
 	(vct-set! im2 i (vct-ref im1 i))
 	(vct-set! im2 j (vct-ref im1 k)))
       (fft rl2 im2 -1)
-      (vct->samples 0 (* 2 fftlen) rl2))))
+      (vct->samples 0 (* 2 len) rl2))))
 
 
 ;;; -------- compute-uniform-circular-string
@@ -403,6 +403,7 @@
    (lambda (gen val) (list-set! gen 4 val))))
 
 (define (asyfm-J gen input)
+  ;; this is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra
   (let* ((freq (list-ref gen 0))
 	 (phase (asyfm-phase gen))
 	 (ratio (asyfm-ratio gen))
