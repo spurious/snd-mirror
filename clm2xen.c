@@ -2398,7 +2398,7 @@ static XEN g_mixer_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
   return(g_wrap_mixer(mus_mixer_multiply((mus_any *)XEN_TO_MUS_ANY(uf1),
 					 (mus_any *)XEN_TO_MUS_ANY(uf2),
 					 res),
-		      (int)res));
+		      (res) ? TRUE : FALSE));
 }
 
 static XEN g_frame2frame(XEN mx, XEN infr, XEN outfr) /* optional outfr */

@@ -1528,8 +1528,6 @@ int snd_translate(char *oldname, char *newname, int type)
   FREE(hdr);
   if (err == MUS_CANT_TRANSLATE) /* i.e a case we don't even try to handle */
     {
-#if (!HAVE_RUBY)
-      /* TODO: why does bad data format in header cause segfault in Ruby? */
       snd_state *ss;
       ss = get_global_state();
       if (ss->catch_exists)
@@ -1540,7 +1538,6 @@ int snd_translate(char *oldname, char *newname, int type)
 			 any_format_name(oldname),
 			 mus_sound_original_format(oldname)));
       else 
-#endif
 	snd_error(_("can't translate %s\n  (%s header: %s (0x%x) data format)\n"),
 		     oldname,
 		     mus_header_type_name(type),

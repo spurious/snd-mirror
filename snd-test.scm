@@ -32479,6 +32479,59 @@ EDITS: 2
 		    (/ (.green col) 65535.0)
 		    (/ (.blue col) 65535.0)))))
 
+(define (tagged-p val sym) (or (eq? val #f) (and (list? val) (not (null? val)) (eq? (car val) sym))))
+(define (array-p val type) (and (list? val) (or (null? val) (type (car val)))))
+(define (XM_INT val) (integer? val))
+(define (XM_ULONG val) (and (integer? val) (>= val 0)))
+(define (XM_UCHAR val) (or (char? val) (and (integer? val) (>= val 0) (< val 65536))))
+(define (XM_FLOAT val) (real? val))
+(define (XM_STRING val) (or (eq? val #f) (string? val) (= val 0)))
+(define (XM_XMSTRING val) (or (tagged-p val 'XmString) (= val 0)))
+(define (XM_STRING_TABLE val) (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (= val 0)))
+(define (XM_INT_TABLE val) (or (array-p val integer?) (= val 0)))
+(define (XM_BOOLEAN val) (or (boolean? val) (= val 0)))
+(define (XM_RENDER_TABLE val) (or (tagged-p val 'XmRenderTable) (= val 0)))
+(define (XM_TRANSFER_ENTRY_LIST val) (or (= val 0)))
+(define (XM_RECTANGLE_LIST val) (or (array-p val (lambda (n) (eq? (car n) 'XRectangle))) (= val 0)))
+(define (XM_TAB_LIST val) (or (tagged-p val 'XmTabList) (= val 0)))
+(define (XM_WIDGET_LIST val) (or (array-p val (lambda (n) (eq? (car n) 'Widget))) (= val 0)))
+(define (XM_ATOM_LIST val) (or (array-p val (lambda (n) (eq? (car n) 'Atom))) (= val 0)))
+(define (XM_STRING_LIST val) (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (= val 0)))
+(define (XM_CHARSET_TABLE val) (or (array-p val (lambda (n) (eq? (car n) 'CharSet))) (= val 0)))
+(define (XM_KEYSYM_TABLE val) (or (array-p val (lambda (n) (eq? (car n) 'KeySym))) (= val 0)))
+(define (XM_WIDGET val) (or (tagged-p val 'Widget) (= val 0)))
+(define (XM_PIXEL val) (or (tagged-p val 'Pixel) (= val 0)))
+(define (XM_PIXMAP val) (or (tagged-p val 'Pixmap) (= val 0)))
+(define (XM_XFONTSTRUCT val) (or (tagged-p val 'XFontStruct) (= val 0)))
+(define (XM_DIMENSION val) (and (integer? val) (>= val 0) (< val 65536)))
+(define (XM_ATOM val) (or (tagged-p val 'Atom) (= val 0)))
+(define (XM_TEXT_SOURCE val) (or (tagged-p val 'XmTextSource) (= val 0)))
+(define (XM_FONTLIST val) (or (tagged-p val 'FontList) (= val 0)))
+(define (XM_COLORMAP val) (or (tagged-p val 'Colormap) (= val 0)))
+(define (XM_KEYSYM val) (or (tagged-p val 'KeySym) (= val 0)))
+(define (XM_SCREEN val) (or (tagged-p val 'Screen) (= val 0)))
+(define (XM_WINDOW val) (or (tagged-p val 'Window) (= val 0)))
+(define (XM_VISUAL val) (or (tagged-p val 'Visual) (= val 0)))
+(define (XM_WIDGET_CLASS val) (or (tagged-p val 'WidgetClass) (= val 0)))
+(define (XM_STRING_OR_INT val) (or (string? val) (integer? val) (eq? val #f)))
+(define (XM_STRING_OR_XMSTRING val) (or (string? val) (eq? val #f) (and (list? val) (not (null? val)) (eq? (car val) 'XmString)) (= val 0)))
+(define (XM_BOOLEAN_OR_INT val) (or (boolean? val) (integer? val)))
+(define (XM_POSITION val) (and (integer? val) (< (abs val) 65536)))
+(define (XM_SHORT val) (and (integer? val) (< (abs val) 65536)))
+(define (XM_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_TRANSFER_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_CONVERT_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_SEARCH_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_ORDER_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_QUALIFY_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_ALLOC_COLOR_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_POPUP_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_SCREEN_COLOR_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_DROP_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_DRAG_CALLBACK val) (or (eq? val #f) (integer? val)))
+(define (XM_PARSE_CALLBACK val) (or (eq? val #f) (integer? val)))
+
+
 (if (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
     (begin
       (run-hook before-test-hook 25)
@@ -35759,130 +35812,206 @@ EDITS: 2
 	    
 	    (let ((shell (cadr (main-widgets)))
 		  (resource-list
-		   (list XmNaccelerator XmNacceleratorText XmNaccelerators XmNactivateCallback XmNadjustLast XmNadjustMargin XmNalignment 
-			 XmNallowOverlap XmNallowResize XmNallowShellResize XmNancestorSensitive XmNanimationMask XmNanimationPixmap 
-			 XmNanimationPixmapDepth XmNanimationStyle XmNapplyCallback XmNapplyLabelString XmNargc XmNargv XmNarmCallback 
-			 XmNarmColor XmNarmPixmap XmNarrowDirection XmNattachment XmNaudibleWarning XmNautoShowCursorPosition XmNautoUnmanage 
-			 XmNautomaticSelection XmNbackground XmNbackgroundPixmap XmNbaseHeight XmNbaseWidth XmNbitmap XmNblendModel XmNblinkRate 
-			 XmNborderColor XmNborderColor XmNborderPixmap XmNborderWidth XmNbottomAttachment XmNbottomOffset XmNbottomPosition 
-			 XmNbottomShadowColor XmNbottomShadowPixmap XmNbottomWidget XmNbrowseSelectionCallback XmNbuttonAcceleratorText 
-			 XmNbuttonAccelerators XmNbuttonCount XmNbuttonMnemonicCharSets XmNbuttonMnemonics XmNbuttonSet XmNbuttonType 
-			 XmNbuttons XmNcancelButton XmNcancelCallback XmNcancelLabelString XmNcascadePixmap XmNcascadingCallback 
-			 XmNchildHorizontalAlignment XmNchildHorizontalSpacing XmNchildPlacement XmNchildVerticalAlignment XmNchildren 
-			 XmNclientData XmNclipWindow XmNcolormap XmNcolumns XmNcommand XmNcommandChangedCallback XmNcommandEnteredCallback 
-			 XmNcommandWindow XmNcommandWindowLocation XmNconvertProc XmNcreatePopupChildProc XmNcursorBackground 
-			 XmNcursorForeground XmNcursorPosition XmNcursorPositionVisible XmNdarkThreshold XmNdecimalPoints 
-			 XmNdecrementCallback XmNdefaultActionCallback XmNdefaultButton XmNdefaultButtonShadowThickness 
-			 XmNdefaultButtonType XmNdefaultCopyCursorIcon XmNdefaultInvalidCursorIcon XmNdefaultLinkCursorIcon 
-			 XmNdefaultMoveCursorIcon XmNdefaultNoneCursorIcon XmNdefaultPosition XmNdefaultSourceCursorIcon 
-			 XmNdefaultValidCursorIcon XmNdeleteResponse XmNdepth XmNdestroyCallback XmNdialogStyle XmNdialogTitle 
-			 XmNdialogType XmNdirListItemCount XmNdirListItems XmNdirListLabelString XmNdirMask XmNdirSearchProc 
-			 XmNdirSpec XmNdirectory XmNdirectoryValid XmNdisarmCallback XmNdoubleClickInterval XmNdragCallback 
-			 XmNdragDropFinishCallback XmNdragInitiatorProtocolStyle XmNdragMotionCallback XmNdragOperations XmNdragProc 
-			 XmNdragReceiverProtocolStyle XmNdropFinishCallback XmNdropProc XmNdropRectangles XmNdropSiteActivity 
-			 XmNdropSiteEnterCallback XmNdropSiteLeaveCallback XmNdropSiteOperations XmNdropSiteType XmNdropStartCallback 
-			 XmNdropTransfers XmNeditMode XmNeditable XmNentryAlignment XmNentryBorder XmNentryCallback XmNentryClass 
-			 XmNentryVerticalAlignment XmNexportTargets XmNexposeCallback XmNextendedSelectionCallback ;XmNfile 
-			 XmNfileListItemCount XmNfileListItems XmNfileListLabelString XmNfileSearchProc XmNfileTypeMask XmNfillOnArm 
-			 XmNfillOnSelect XmNfilterLabelString XmNfocusCallback XmNfont XmNforeground XmNforegroundThreshold 
-			 XmNfractionBase XmNgainPrimaryCallback XmNgeometry XmNheight XmNheightInc XmNhelpCallback XmNhelpLabelString 
-			 ;XmNhighlight 
-			 XmNhighlightColor XmNhighlightOnEnter XmNhighlightPixmap XmNhighlightThickness XmNhistoryItemCount 
-			 XmNhistoryItems XmNhistoryMaxItems XmNhistoryVisibleItemCount XmNhorizontalFontUnit XmNhorizontalScrollBar 
-			 XmNhorizontalSpacing XmNhotX XmNhotY XmNiconMask XmNiconName XmNiconNameEncoding XmNiconPixmap XmNiconWindow 
-			 XmNiconX XmNiconY XmNiconic XmNimportTargets XmNincrement XmNincrementCallback XmNincremental XmNindicatorOn 
-			 XmNindicatorSize XmNindicatorType XmNinitialDelay XmNinitialFocus XmNinitialResourcesPersistent XmNinitialState 
-			 XmNinput XmNinputCallback XmNinputMethod XmNinsertPosition XmNinvalidCursorForeground XmNisAligned 
-			 XmNisHomogeneous XmNitemCount XmNitems XmNkeyboardFocusPolicy XmNlabelInsensitivePixmap XmNlabelPixmap 
-			 XmNlabelString XmNlabelType XmNleftAttachment XmNleftOffset XmNleftPosition XmNleftWidget 
-			 XmNlightThreshold ;XmNlineSpace 
-			 XmNlistItemCount XmNlistItems XmNlistLabelString XmNlistMarginHeight 
-			 XmNlistMarginWidth XmNlistSizePolicy XmNlistSpacing XmNlistUpdated XmNlistVisibleItemCount XmNlosePrimaryCallback
-			 XmNlosingFocusCallback XmNmainWindowMarginHeight XmNmainWindowMarginWidth XmNmapCallback XmNmappedWhenManaged 
-			 XmNmappingDelay XmNmargin XmNmarginBottom XmNmarginHeight XmNmarginLeft XmNmarginRight XmNmarginTop 
-			 XmNmarginWidth XmNmask XmNmaxAspectX XmNmaxAspectY XmNmaxHeight XmNmaxLength XmNmaxWidth XmNmaximum 
-			 XmNmenuAccelerator XmNmenuBar XmNmenuCursor XmNmenuHelpWidget XmNmenuHistory XmNmenuPost XmNmessageAlignment 
-			 XmNmessageString XmNmessageWindow XmNminAspectX XmNminAspectY XmNminHeight XmNminWidth XmNminimizeButtons 
-			 XmNminimum XmNmnemonic XmNmnemonicCharSet XmNmodifyVerifyCallback XmNmotionVerifyCallback XmNmoveOpaque 
-			 XmNmultiClick XmNmultipleSelectionCallback XmNmustMatch XmNmwmDecorations XmNmwmFunctions XmNmwmInputMode 
-			 XmNmwmMenu XmNnavigationType XmNnoMatchCallback XmNnoMatchString XmNnoResize XmNnoneCursorForeground 
-			 XmNnumChildren XmNnumColumns XmNnumDropRectangles XmNnumDropTransfers XmNnumExportTargets XmNnumImportTargets 
-			 XmNoffsetX XmNoffsetY XmNokCallback XmNokLabelString XmNoperationChangedCallback XmNoperationCursorIcon 
-			 XmNoptionLabel XmNoptionMnemonic XmNorientation XmNoverrideRedirect XmNpacking XmNpageDecrementCallback 
-			 XmNpageIncrement XmNpageIncrementCallback XmNpaneMaximum XmNpaneMinimum XmNpattern XmNpendingDelete 
-			 XmNpixmap XmNpopdownCallback XmNpopupCallback XmNpopupEnabled XmNpositionIndex XmNpostFromButton 
-			 XmNpreeditType XmNprocessingDirection XmNpromptString XmNpushButtonEnabled XmNqualifySearchDataProc 
-			 XmNradioAlwaysOne XmNradioBehavior XmNrecomputeSize XmNrefigureMode XmNrepeatDelay XmNresizable ;XmNresize 
-			 XmNresizeCallback XmNresizeHeight XmNresizePolicy XmNresizeWidth XmNrightAttachment XmNrightOffset 
-			 XmNrightPosition XmNrightWidget XmNrowColumnType XmNrows XmNrubberPositioning XmNsashHeight XmNsashIndent 
-			 XmNsashShadowThickness XmNsashWidth XmNsaveUnder XmNscaleHeight XmNscaleMultiple XmNscaleWidth XmNscreen 
-			 XmNscrollBarDisplayPolicy XmNscrollBarPlacement XmNscrollHorizontal XmNscrollLeftSide XmNscrollTopSide 
-			 XmNscrollVertical XmNscrolledWindowMarginHeight XmNscrolledWindowMarginWidth XmNscrollingPolicy 
-			 XmNselectColor XmNselectInsensitivePixmap XmNselectPixmap XmNselectThreshold XmNselectedItemCount 
-			 XmNselectedItems ;XmNselection 
-			 XmNselectionArray XmNselectionArrayCount XmNselectionLabelString XmNselectionPolicy 
-			 XmNsensitive XmNseparatorOn XmNseparatorType XmNset ;XmNshadow 
-			 XmNshadowThickness XmNshadowType XmNshowArrows 
-			 XmNshowAsDefault XmNshowSeparator XmNshowValue XmNsimpleCallback XmNsingleSelectionCallback XmNskipAdjust 
-			 XmNsliderSize XmNsliderVisual XmNslidingMode XmNsource XmNsourceCursorIcon XmNsourcePixmapIcon XmNspacing 
-			 XmNspotLocation XmNstateCursorIcon ;XmNstring 
-			 XmNsubMenuId XmNsymbolPixmap XmNtearOffMenuActivateCallback
-			 XmNtearOffMenuDeactivateCallback XmNtearOffModel XmNtextAccelerators XmNtextColumns XmNtextString
-			 XmNtextTranslations XmNtitle XmNtitleEncoding XmNtitleString XmNtoBottomCallback XmNtoTopCallback 
-			 ;XmNtop 
-			 XmNtopAttachment XmNtopCharacter XmNtopItemPosition XmNtopLevelEnterCallback XmNtopLevelLeaveCallback 
-			 XmNtopOffset XmNtopPosition XmNtopShadowColor XmNtopShadowPixmap XmNtopWidget XmNtransferProc XmNtransferStatus 
-			 XmNtransient XmNtransientFor XmNtranslations XmNtraversalOn XmNtraverseObscuredCallback XmNtroughColor 
-			 XmNunitType XmNunmapCallback XmNunpostBehavior XmNuseAsyncGeometry XmNuserData XmNvalidCursorForeground 
-			 XmNvalue XmNvalueChangedCallback XmNverifyBell XmNverticalFontUnit XmNverticalScrollBar XmNverticalSpacing 
-			 XmNvisibleItemCount XmNvisibleWhenOff XmNvisual XmNvisualPolicy XmNwidth XmNwidthInc XmNwinGravity 
-			 XmNwindow XmNwindowGroup XmNwmTimeout XmNwordWrap XmNworkWindow XmNx XmNy XmNarrowLayout XmNarrowOrientation 
-			 XmNarrowSensitivity XmNarrowSize XmNarrowSpacing XmNautoDragModel XmNbackPageBackground XmNbackPageForeground 
-			 XmNbackPageNumber XmNbackPagePlacement XmNbackPageSize XmNbindingPixmap XmNbindingType XmNbindingWidth 
-			 XmNbitmapConversionModel XmNbuttonRenderTable XmNcollapsedStatePixmap XmNcolorAllocationProc 
-			 XmNcolorCalculationProc XmNcomboBoxType XmNconvertCallback XmNdecimal XmNdefaultArrowSensitivity 
-			 XmNdefaultButtonEmphasis XmNdefaultVirtualBindings XmNdestinationCallback XmNdetail XmNdetailColumnHeading 
-			 XmNdetailColumnHeadingCount XmNdetailCount XmNdetailOrder XmNdetailOrderCount XmNdetailShadowThickness 
-			 XmNdetailTabList XmNdirTextLabelString XmNdragStartCallback XmNenableBtn1Transfer XmNenableButtonTab 
-			 XmNenableDragIcon XmNenableEtchedInMenu XmNenableMultiKeyBindings XmNenableThinThickness XmNenableToggleColor 
-			 XmNenableToggleVisual XmNenableUnselectableDrag XmNenableWarp ;XmNendJobCallback 
-			 XmNentryParent 
-			 XmNentryViewType XmNexpandedStatePixmap XmNfileFilterStyle XmNfirstPageNumber XmNfontName XmNfontType 
-			 XmNframeChildType XmNframeShadowThickness XmNgrabStyle XmNincludeStatus XmNincrementValue 
-			 XmNindeterminateInsensitivePixmap XmNindeterminatePixmap XmNinnerMarginHeight XmNinnerMarginWidth 
-			 XmNinputPolicy XmNinsensitiveStippleBitmap XmNinvokeParseProc XmNlabelRenderTable XmNlargeCellHeight 
-			 XmNlargeCellWidth ;XmNlargeIcon 
-			 XmNlargeIconMask XmNlargeIconPixmap XmNlastPageNumber XmNlayoutDirection 
-			 XmNlayoutType XmNlist XmNloadModel XmNmajorTabSpacing XmNmatchBehavior ;XmNmaxX XmNmaxY 
-			 XmNmaximumValue 
-			 ;XmNminX XmNminY 
-			 XmNminimumValue XmNminorTabSpacing XmNmotifVersion XmNnoFontCallback XmNnoRenditionCallback 
-			 XmNnotebookChildType XmNnumValues XmNoutlineButtonPolicy XmNoutlineChangedCallback XmNoutlineColumnWidth 
-			 XmNoutlineIndentation XmNoutlineLineStyle XmNoutlineState XmNpageChangedCallback XmNpageNumber 
-			 ;XmNpageSetupCallback 
-			 XmNpathMode XmNpatternType ;XmNpdmNotificationCallback 
-			 XmNpopupHandlerCallback 
-			 XmNposition XmNpositionMode XmNpositionType ;XmNpreeditCaretCallback XmNpreeditDoneCallback 
-			 ;XmNpreeditDrawCallback XmNpreeditStartCallback 
-			 XmNprimaryOwnership XmNrenderTable XmNrenditionBackground 
-			 XmNrenditionForeground XmNscrolledWindowChildType XmNselectedItem XmNselectedObjectCount XmNselectedObjects 
-			 XmNselectedPosition XmNselectedPositionCount XmNselectedPositions XmNselectionCallback XmNselectionMode 
-			 XmNselectionTechnique XmNsliderMark XmNsmallCellHeight XmNsmallCellWidth ;XmNsmallIcon 
-			 XmNsmallIconMask 
-			 XmNsmallIconPixmap XmNsnapBackMultiple XmNspatialIncludeModel XmNspatialResizeModel XmNspatialSnapModel 
-			 XmNspatialStyle XmNspinBoxChildType ;XmNstartJobCallback 
-			 XmNstrikethruType XmNsubstitute XmNtabList 
-			 XmNtag XmNtearOffTitle XmNtextField XmNtextRenderTable XmNtoggleMode ;XmNtotalLines 
-			 XmNunderlineType 
-			 XmNunselectColor XmNuseColorObj XmNvalues ;XmNverifyPreedit 
-			 XmNviewType XmNvisualEmphasis XmNwrap 
-			 XmNlabelFontList XmNbuttonFontList XmNtextFontList XmNwhichButton XmNchildType XmNstringDirection 
-			 XmNfontList XmNdefaultFontList XmNshellUnitType)))
-	      
+		   (list
+		    (list XmNaccelerator XM_STRING) (list XmNacceleratorText XM_XMSTRING) (list XmNaccelerators XM_ULONG)
+		    (list XmNactivateCallback XM_CALLBACK) (list XmNadjustLast XM_BOOLEAN) (list XmNadjustMargin XM_BOOLEAN)
+		    (list XmNalignment XM_UCHAR) (list XmNallowOverlap XM_BOOLEAN) (list XmNallowResize XM_BOOLEAN)
+		    (list XmNallowShellResize XM_BOOLEAN) (list XmNancestorSensitive XM_BOOLEAN) (list XmNanimationMask XM_PIXMAP)
+		    (list XmNanimationPixmap XM_PIXMAP) (list XmNanimationPixmapDepth XM_INT) (list XmNanimationStyle XM_UCHAR)
+		    (list XmNapplyCallback XM_CALLBACK) (list XmNapplyLabelString XM_XMSTRING) (list XmNargc XM_INT)
+		    (list XmNargv XM_STRING_LIST) (list XmNarmCallback XM_CALLBACK) (list XmNarmColor XM_PIXEL)
+		    (list XmNarmPixmap XM_PIXMAP) (list XmNarrowDirection XM_UCHAR) (list XmNattachment XM_UCHAR)
+		    (list XmNaudibleWarning XM_UCHAR) (list XmNautoShowCursorPosition XM_BOOLEAN) (list XmNautoUnmanage XM_BOOLEAN)
+		    (list XmNautomaticSelection XM_UCHAR) (list XmNbackground XM_PIXEL) (list XmNbackgroundPixmap XM_PIXMAP)
+		    (list XmNbaseHeight XM_INT) (list XmNbaseWidth XM_INT) (list XmNbitmap XM_PIXMAP)
+		    (list XmNblendModel XM_ULONG) (list XmNblinkRate XM_INT) (list XmNborderColor XM_PIXEL)
+		    (list XmNborderPixmap XM_PIXMAP) (list XmNborderWidth XM_DIMENSION) (list XmNbottomAttachment XM_UCHAR)
+		    (list XmNbottomOffset XM_INT) (list XmNbottomPosition XM_INT) (list XmNbottomShadowColor XM_PIXEL)
+		    (list XmNbottomShadowPixmap XM_PIXMAP) (list XmNbottomWidget XM_WIDGET) (list XmNbrowseSelectionCallback XM_CALLBACK)
+		    (list XmNbuttonAcceleratorText XM_STRING_TABLE) (list XmNbuttonAccelerators XM_STRING_TABLE) (list XmNbuttonCount XM_INT)
+		    (list XmNbuttonMnemonicCharSets XM_CHARSET_TABLE) (list XmNbuttonMnemonics XM_KEYSYM_TABLE) (list XmNbuttonSet XM_INT)
+		    (list XmNbuttonType XM_ULONG) (list XmNbuttons XM_STRING_TABLE) (list XmNcancelButton XM_WIDGET)
+		    (list XmNcancelCallback XM_CALLBACK) (list XmNcancelLabelString XM_XMSTRING) (list XmNcascadePixmap XM_PIXMAP)
+		    (list XmNcascadingCallback XM_CALLBACK) (list XmNchildHorizontalAlignment XM_UCHAR) (list XmNchildHorizontalSpacing XM_DIMENSION)
+		    (list XmNchildPlacement XM_UCHAR) (list XmNchildVerticalAlignment XM_UCHAR) (list XmNchildren XM_WIDGET_LIST)
+		    (list XmNclientData XM_ULONG) (list XmNclipWindow XM_WIDGET) (list XmNcolormap XM_COLORMAP)
+		    (list XmNcolumns XM_SHORT) (list XmNcommand XM_XMSTRING) (list XmNcommandChangedCallback XM_CALLBACK)
+		    (list XmNcommandEnteredCallback XM_CALLBACK) (list XmNcommandWindow XM_WIDGET) (list XmNcommandWindowLocation XM_UCHAR)
+		    (list XmNconvertProc XM_CONVERT_CALLBACK) (list XmNcreatePopupChildProc XM_POPUP_CALLBACK) (list XmNcursorBackground XM_PIXEL)
+		    (list XmNcursorForeground XM_PIXEL) (list XmNcursorPosition XM_INT) (list XmNcursorPositionVisible XM_BOOLEAN)
+		    (list XmNdarkThreshold XM_INT) (list XmNdecimalPoints XM_SHORT) (list XmNdecrementCallback XM_CALLBACK)
+		    (list XmNdefaultActionCallback XM_CALLBACK) (list XmNdefaultButton XM_WIDGET) (list XmNdefaultButtonShadowThickness XM_DIMENSION)
+		    (list XmNdefaultButtonType XM_UCHAR) (list XmNdefaultCopyCursorIcon XM_WIDGET) (list XmNdefaultInvalidCursorIcon XM_WIDGET)
+		    (list XmNdefaultLinkCursorIcon XM_WIDGET) (list XmNdefaultMoveCursorIcon XM_WIDGET) (list XmNdefaultNoneCursorIcon XM_WIDGET)
+		    (list XmNdefaultPosition XM_BOOLEAN) (list XmNdefaultSourceCursorIcon XM_WIDGET) (list XmNdefaultValidCursorIcon XM_WIDGET)
+		    (list XmNdeleteResponse XM_UCHAR) (list XmNdepth XM_INT) (list XmNdestroyCallback XM_CALLBACK)
+		    (list XmNdialogStyle XM_UCHAR) (list XmNdialogTitle XM_XMSTRING) (list XmNdialogType XM_UCHAR)
+		    (list XmNdirListItemCount XM_INT) (list XmNdirListItems XM_STRING_TABLE) (list XmNdirListLabelString XM_XMSTRING)
+		    (list XmNdirMask XM_XMSTRING) (list XmNdirSearchProc XM_SEARCH_CALLBACK) (list XmNdirSpec XM_XMSTRING)
+		    (list XmNdirectory XM_XMSTRING) (list XmNdirectoryValid XM_BOOLEAN) (list XmNdisarmCallback XM_CALLBACK)
+		    (list XmNdoubleClickInterval XM_INT) (list XmNdragDropFinishCallback XM_CALLBACK) (list XmNdragInitiatorProtocolStyle XM_UCHAR)
+		    (list XmNdragMotionCallback XM_CALLBACK) (list XmNdragOperations XM_UCHAR) (list XmNdragReceiverProtocolStyle XM_UCHAR)
+		    (list XmNdropFinishCallback XM_CALLBACK) (list XmNdropProc XM_DROP_CALLBACK) (list XmNdropRectangles XM_RECTANGLE_LIST)
+		    (list XmNdropSiteActivity XM_UCHAR) (list XmNdropSiteEnterCallback XM_CALLBACK) (list XmNdropSiteLeaveCallback XM_CALLBACK)
+		    (list XmNdropSiteOperations XM_UCHAR) (list XmNdropSiteType XM_UCHAR) (list XmNdropStartCallback XM_CALLBACK)
+		    (list XmNdropTransfers XM_TRANSFER_ENTRY_LIST) (list XmNeditMode XM_INT) (list XmNeditable XM_BOOLEAN)
+		    (list XmNentryAlignment XM_UCHAR) (list XmNentryBorder XM_DIMENSION) (list XmNentryCallback XM_CALLBACK)
+		    (list XmNentryClass XM_WIDGET_CLASS) (list XmNentryVerticalAlignment XM_UCHAR) (list XmNexportTargets XM_ATOM_LIST)
+		    (list XmNexposeCallback XM_CALLBACK) (list XmNextendedSelectionCallback XM_CALLBACK) (list XmNfileListItemCount XM_INT)
+		    (list XmNfileListItems XM_STRING_TABLE) (list XmNfileListLabelString XM_XMSTRING) (list XmNfileSearchProc XM_SEARCH_CALLBACK)
+		    (list XmNfileTypeMask XM_UCHAR) (list XmNfillOnArm XM_BOOLEAN) (list XmNfillOnSelect XM_BOOLEAN)
+		    (list XmNfilterLabelString XM_XMSTRING) (list XmNfocusCallback XM_CALLBACK) (list XmNfont XM_XFONTSTRUCT)
+		    (list XmNforeground XM_PIXEL) (list XmNforegroundThreshold XM_INT) (list XmNfractionBase XM_INT)
+		    (list XmNgainPrimaryCallback XM_CALLBACK) (list XmNgeometry XM_STRING) (list XmNheight XM_DIMENSION)
+		    (list XmNheightInc XM_INT) (list XmNhelpCallback XM_CALLBACK) (list XmNhelpLabelString XM_XMSTRING)
+		    (list XmNhighlightColor XM_PIXEL) (list XmNhighlightOnEnter XM_BOOLEAN) (list XmNhighlightPixmap XM_PIXMAP)
+		    (list XmNhighlightThickness XM_DIMENSION) (list XmNhistoryItemCount XM_INT) (list XmNhistoryItems XM_STRING_TABLE)
+		    (list XmNhistoryMaxItems XM_INT) (list XmNhistoryVisibleItemCount XM_INT) (list XmNhorizontalFontUnit XM_INT)
+		    (list XmNhorizontalScrollBar XM_WIDGET) (list XmNhorizontalSpacing XM_DIMENSION) (list XmNhotX XM_POSITION)
+		    (list XmNhotY XM_POSITION) (list XmNiconMask XM_PIXMAP) (list XmNiconName XM_STRING)
+		    (list XmNiconNameEncoding XM_ATOM) (list XmNiconPixmap XM_PIXMAP) (list XmNiconWindow XM_WIDGET)
+		    (list XmNiconX XM_INT) (list XmNiconY XM_INT) (list XmNiconic XM_BOOLEAN)
+		    (list XmNimportTargets XM_ATOM_LIST) (list XmNincrement XM_INT) (list XmNincrementCallback XM_CALLBACK)
+		    (list XmNincremental XM_BOOLEAN) (list XmNindicatorOn XM_INT) (list XmNindicatorSize XM_DIMENSION)
+		    (list XmNindicatorType XM_UCHAR) (list XmNinitialDelay XM_INT) (list XmNinitialFocus XM_WIDGET)
+		    (list XmNinitialResourcesPersistent XM_BOOLEAN) (list XmNinitialState XM_INT) (list XmNinput XM_BOOLEAN)
+		    (list XmNinputCallback XM_CALLBACK) (list XmNinputMethod XM_STRING) (list XmNinsertPosition XM_ORDER_CALLBACK)
+		    (list XmNinvalidCursorForeground XM_PIXEL) (list XmNisAligned XM_BOOLEAN) (list XmNisHomogeneous XM_BOOLEAN)
+		    (list XmNitemCount XM_INT) (list XmNitems XM_STRING_TABLE) (list XmNkeyboardFocusPolicy XM_UCHAR)
+		    (list XmNlabelInsensitivePixmap XM_PIXMAP) (list XmNlabelPixmap XM_PIXMAP) (list XmNlabelString XM_XMSTRING)
+		    (list XmNlabelType XM_UCHAR) (list XmNleftAttachment XM_UCHAR) (list XmNleftOffset XM_INT)
+		    (list XmNleftPosition XM_INT) (list XmNleftWidget XM_WIDGET) (list XmNlightThreshold XM_INT)
+		    (list XmNlistItemCount XM_INT) (list XmNlistItems XM_STRING_TABLE) (list XmNlistLabelString XM_XMSTRING)
+		    (list XmNlistMarginHeight XM_DIMENSION) (list XmNlistMarginWidth XM_DIMENSION) (list XmNlistSizePolicy XM_UCHAR)
+		    (list XmNlistSpacing XM_DIMENSION) (list XmNlistUpdated XM_BOOLEAN) (list XmNlistVisibleItemCount XM_INT)
+		    (list XmNlosePrimaryCallback XM_CALLBACK) (list XmNlosingFocusCallback XM_CALLBACK) (list XmNmainWindowMarginHeight XM_DIMENSION)
+		    (list XmNmainWindowMarginWidth XM_DIMENSION) (list XmNmapCallback XM_CALLBACK) (list XmNmappedWhenManaged XM_BOOLEAN)
+		    (list XmNmappingDelay XM_INT) (list XmNmargin XM_DIMENSION) (list XmNmarginBottom XM_DIMENSION)
+		    (list XmNmarginHeight XM_DIMENSION) (list XmNmarginLeft XM_DIMENSION) (list XmNmarginRight XM_DIMENSION)
+		    (list XmNmarginTop XM_DIMENSION) (list XmNmarginWidth XM_DIMENSION) (list XmNmask XM_PIXMAP)
+		    (list XmNmaxAspectX XM_INT) (list XmNmaxAspectY XM_INT) (list XmNmaxHeight XM_INT)
+		    (list XmNmaxLength XM_INT) (list XmNmaxWidth XM_INT) (list XmNmaximum XM_INT)
+		    (list XmNmenuAccelerator XM_STRING) (list XmNmenuBar XM_WIDGET) (list XmNmenuCursor XM_STRING)
+		    (list XmNmenuHelpWidget XM_WIDGET) (list XmNmenuHistory XM_WIDGET) (list XmNmenuPost XM_STRING)
+		    (list XmNmessageAlignment XM_UCHAR) (list XmNmessageString XM_XMSTRING) (list XmNmessageWindow XM_WIDGET)
+		    (list XmNminAspectX XM_INT) (list XmNminAspectY XM_INT) (list XmNminHeight XM_INT)
+		    (list XmNminWidth XM_INT) (list XmNminimizeButtons XM_BOOLEAN) (list XmNminimum XM_INT)
+		    (list XmNmnemonic XM_KEYSYM) (list XmNmnemonicCharSet XM_STRING) (list XmNmodifyVerifyCallback XM_CALLBACK)
+		    (list XmNmotionVerifyCallback XM_CALLBACK) (list XmNmoveOpaque XM_BOOLEAN) (list XmNmultiClick XM_UCHAR)
+		    (list XmNmultipleSelectionCallback XM_CALLBACK) (list XmNmustMatch XM_BOOLEAN) (list XmNmwmDecorations XM_INT)
+		    (list XmNmwmFunctions XM_INT) (list XmNmwmInputMode XM_INT) (list XmNmwmMenu XM_STRING)
+		    (list XmNnavigationType XM_UCHAR) (list XmNnoMatchCallback XM_CALLBACK) (list XmNnoMatchString XM_XMSTRING)
+		    (list XmNnoResize XM_BOOLEAN) (list XmNnoneCursorForeground XM_PIXEL) (list XmNnumChildren XM_INT)
+		    (list XmNnumColumns XM_SHORT) (list XmNnumDropRectangles XM_INT) (list XmNnumDropTransfers XM_INT)
+		    (list XmNnumExportTargets XM_INT) (list XmNnumImportTargets XM_INT) (list XmNoffsetX XM_POSITION)
+		    (list XmNoffsetY XM_POSITION) (list XmNokCallback XM_CALLBACK) (list XmNokLabelString XM_XMSTRING)
+		    (list XmNoperationChangedCallback XM_CALLBACK) (list XmNoperationCursorIcon XM_WIDGET) (list XmNoptionLabel XM_XMSTRING)
+		    (list XmNoptionMnemonic XM_KEYSYM) (list XmNorientation XM_UCHAR) (list XmNoverrideRedirect XM_BOOLEAN)
+		    (list XmNpacking XM_UCHAR) (list XmNpageDecrementCallback XM_CALLBACK) (list XmNpageIncrement XM_INT)
+		    (list XmNpageIncrementCallback XM_CALLBACK) (list XmNpaneMaximum XM_DIMENSION) (list XmNpaneMinimum XM_DIMENSION)
+		    (list XmNpattern XM_STRING_OR_XMSTRING) (list XmNpendingDelete XM_BOOLEAN) (list XmNpixmap XM_PIXMAP)
+		    (list XmNpopdownCallback XM_CALLBACK) (list XmNpopupCallback XM_CALLBACK) (list XmNpopupEnabled XM_BOOLEAN)
+		    (list XmNpositionIndex XM_SHORT) (list XmNpostFromButton XM_INT) (list XmNpreeditType XM_STRING)
+		    (list XmNprocessingDirection XM_UCHAR) (list XmNpromptString XM_XMSTRING) (list XmNpushButtonEnabled XM_BOOLEAN)
+		    (list XmNqualifySearchDataProc XM_QUALIFY_CALLBACK) (list XmNradioAlwaysOne XM_BOOLEAN) (list XmNradioBehavior XM_BOOLEAN)
+		    (list XmNrecomputeSize XM_BOOLEAN) (list XmNrefigureMode XM_BOOLEAN) (list XmNrepeatDelay XM_INT)
+		    (list XmNresizable XM_BOOLEAN) (list XmNresizeCallback XM_CALLBACK) (list XmNresizeHeight XM_BOOLEAN)
+		    (list XmNresizePolicy XM_UCHAR) (list XmNresizeWidth XM_BOOLEAN) (list XmNrightAttachment XM_UCHAR)
+		    (list XmNrightOffset XM_INT) (list XmNrightPosition XM_INT) (list XmNrightWidget XM_WIDGET)
+		    (list XmNrowColumnType XM_UCHAR) (list XmNrows XM_SHORT) (list XmNrubberPositioning XM_BOOLEAN)
+		    (list XmNsashHeight XM_DIMENSION) (list XmNsashIndent XM_POSITION) (list XmNsashShadowThickness XM_DIMENSION)
+		    (list XmNsashWidth XM_DIMENSION) (list XmNsaveUnder XM_BOOLEAN) (list XmNscaleHeight XM_DIMENSION)
+		    (list XmNscaleMultiple XM_INT) (list XmNscaleWidth XM_DIMENSION) (list XmNscreen XM_SCREEN)
+		    (list XmNscrollBarDisplayPolicy XM_UCHAR) (list XmNscrollBarPlacement XM_UCHAR) (list XmNscrollHorizontal XM_BOOLEAN)
+		    (list XmNscrollLeftSide XM_BOOLEAN) (list XmNscrollTopSide XM_BOOLEAN) (list XmNscrollVertical XM_BOOLEAN)
+		    (list XmNscrolledWindowMarginHeight XM_DIMENSION) (list XmNscrolledWindowMarginWidth XM_DIMENSION) (list XmNscrollingPolicy XM_UCHAR)
+		    (list XmNselectColor XM_PIXEL) (list XmNselectInsensitivePixmap XM_PIXMAP) (list XmNselectPixmap XM_PIXMAP)
+		    (list XmNselectThreshold XM_INT) (list XmNselectedItemCount XM_INT) (list XmNselectedItems XM_STRING_TABLE)
+		    (list XmNselectionArray XM_INT_TABLE) (list XmNselectionArrayCount XM_INT) (list XmNselectionLabelString XM_XMSTRING)
+		    (list XmNselectionPolicy XM_UCHAR) (list XmNsensitive XM_BOOLEAN) (list XmNseparatorOn XM_BOOLEAN)
+		    (list XmNseparatorType XM_UCHAR) (list XmNset XM_UCHAR) (list XmNshadowThickness XM_DIMENSION)
+		    (list XmNshadowType XM_UCHAR) (list XmNshowArrows XM_BOOLEAN) (list XmNshowAsDefault XM_DIMENSION)
+		    (list XmNshowSeparator XM_BOOLEAN) (list XmNsimpleCallback XM_CALLBACK) (list XmNsingleSelectionCallback XM_CALLBACK)
+		    (list XmNskipAdjust XM_BOOLEAN) (list XmNsliderSize XM_INT) (list XmNsliderVisual XM_INT)
+		    (list XmNslidingMode XM_INT) (list XmNsource XM_TEXT_SOURCE) (list XmNsourceCursorIcon XM_WIDGET)
+		    (list XmNsourcePixmapIcon XM_WIDGET) (list XmNspacing XM_DIMENSION) (list XmNspotLocation XM_INT)
+		    (list XmNstateCursorIcon XM_WIDGET) (list XmNsubMenuId XM_WIDGET) (list XmNsymbolPixmap XM_PIXMAP)
+		    (list XmNtearOffMenuActivateCallback XM_CALLBACK) (list XmNtearOffMenuDeactivateCallback XM_CALLBACK) (list XmNtearOffModel XM_UCHAR)
+		    (list XmNtextAccelerators XM_ULONG) (list XmNtextColumns XM_SHORT) (list XmNtextString XM_XMSTRING)
+		    (list XmNtextTranslations XM_CALLBACK) (list XmNtitle XM_STRING) (list XmNtitleEncoding XM_ATOM)
+		    (list XmNtitleString XM_XMSTRING) (list XmNtoBottomCallback XM_CALLBACK) (list XmNtoTopCallback XM_CALLBACK)
+		    (list XmNtopAttachment XM_UCHAR) (list XmNtopCharacter XM_INT) (list XmNtopItemPosition XM_INT)
+		    (list XmNtopLevelEnterCallback XM_CALLBACK) (list XmNtopLevelLeaveCallback XM_CALLBACK) (list XmNtopOffset XM_INT)
+		    (list XmNtopPosition XM_INT) (list XmNtopShadowColor XM_PIXEL) (list XmNtopShadowPixmap XM_PIXMAP)
+		    (list XmNtopWidget XM_WIDGET) (list XmNtransferProc XM_TRANSFER_CALLBACK) (list XmNtransferStatus XM_UCHAR)
+		    (list XmNtransient XM_BOOLEAN) (list XmNtransientFor XM_WIDGET) (list XmNtranslations XM_CALLBACK)
+		    (list XmNtraversalOn XM_BOOLEAN) (list XmNtraverseObscuredCallback XM_CALLBACK) (list XmNtroughColor XM_PIXEL)
+		    (list XmNunitType XM_UCHAR) (list XmNunmapCallback XM_CALLBACK) (list XmNunpostBehavior XM_UCHAR)
+		    (list XmNuseAsyncGeometry XM_BOOLEAN) (list XmNuserData XM_ULONG) (list XmNvalidCursorForeground XM_PIXEL)
+		    (list XmNvalue XM_STRING_OR_INT) (list XmNvalueChangedCallback XM_CALLBACK) (list XmNverifyBell XM_BOOLEAN)
+		    (list XmNverticalFontUnit XM_INT) (list XmNverticalScrollBar XM_WIDGET) (list XmNverticalSpacing XM_DIMENSION)
+		    (list XmNvisibleItemCount XM_INT) (list XmNvisibleWhenOff XM_BOOLEAN) (list XmNvisual XM_VISUAL)
+		    (list XmNvisualPolicy XM_UCHAR) (list XmNwidth XM_DIMENSION) (list XmNwidthInc XM_INT)
+		    (list XmNwinGravity XM_INT) (list XmNwindow XM_WIDGET) (list XmNwindowGroup XM_WINDOW)
+		    (list XmNwmTimeout XM_INT) (list XmNwordWrap XM_BOOLEAN) (list XmNworkWindow XM_WIDGET)
+		    (list XmNx XM_POSITION) (list XmNy XM_POSITION) (list XmNarrowLayout XM_UCHAR)
+		    (list XmNarrowOrientation XM_UCHAR) (list XmNarrowSensitivity XM_UCHAR) (list XmNarrowSize XM_INT)
+		    (list XmNarrowSpacing XM_INT) (list XmNautoDragModel XM_INT) (list XmNbackPageBackground XM_PIXEL)
+		    (list XmNbackPageForeground XM_PIXEL) (list XmNbackPageNumber XM_INT) (list XmNbackPagePlacement XM_UCHAR)
+		    (list XmNbackPageSize XM_DIMENSION) (list XmNbindingPixmap XM_PIXMAP) (list XmNbindingType XM_UCHAR)
+		    (list XmNbindingWidth XM_INT) (list XmNbitmapConversionModel XM_INT) (list XmNbuttonRenderTable XM_RENDER_TABLE)
+		    (list XmNcollapsedStatePixmap XM_PIXMAP) (list XmNcolorAllocationProc XM_ALLOC_COLOR_CALLBACK) 
+		    (list XmNcolorCalculationProc XM_SCREEN_COLOR_CALLBACK)
+		    (list XmNcomboBoxType XM_UCHAR) (list XmNconvertCallback XM_CALLBACK) (list XmNcurrentPageNumber XM_INT)
+		    (list XmNdecimal XM_STRING) (list XmNdefaultArrowSensitivity XM_UCHAR) (list XmNdefaultButtonEmphasis XM_INT)
+		    (list XmNdefaultVirtualBindings XM_STRING) (list XmNdestinationCallback XM_CALLBACK) (list XmNdetail XM_STRING_TABLE)
+		    (list XmNdetailColumnHeading XM_INT) (list XmNdetailColumnHeadingCount XM_INT) (list XmNdetailCount XM_INT)
+		    (list XmNdetailOrder XM_INT_TABLE) (list XmNdetailOrderCount XM_INT) (list XmNdetailShadowThickness XM_INT)
+		    (list XmNdetailTabList XM_TAB_LIST) (list XmNdirTextLabelString XM_XMSTRING) (list XmNdragStartCallback XM_CALLBACK)
+		    (list XmNenableBtn1Transfer XM_INT) (list XmNenableButtonTab XM_BOOLEAN) (list XmNenableDragIcon XM_BOOLEAN)
+		    (list XmNenableEtchedInMenu XM_BOOLEAN) (list XmNenableMultiKeyBindings XM_BOOLEAN) (list XmNenableThinThickness XM_INT)
+		    (list XmNenableToggleColor XM_BOOLEAN) (list XmNenableToggleVisual XM_BOOLEAN) (list XmNenableUnselectableDrag XM_BOOLEAN)
+		    (list XmNenableWarp XM_INT) (list XmNentryParent XM_WIDGET) (list XmNentryViewType XM_UCHAR)
+		    (list XmNexpandedStatePixmap XM_PIXMAP) (list XmNfileFilterStyle XM_INT) (list XmNfirstPageNumber XM_INT)
+		    (list XmNfontName XM_STRING) (list XmNfontType XM_UCHAR) (list XmNframeBackground XM_PIXEL)
+		    (list XmNframeChildType XM_UCHAR) (list XmNframeShadowThickness XM_DIMENSION) (list XmNgrabStyle XM_INT)
+		    (list XmNincludeStatus XM_INT) (list XmNincrementValue XM_INT) (list XmNindeterminateInsensitivePixmap XM_PIXMAP)
+		    (list XmNindeterminatePixmap XM_PIXMAP) (list XmNinnerMarginHeight XM_DIMENSION) (list XmNinnerMarginWidth XM_DIMENSION)
+		    (list XmNinputPolicy XM_ULONG) (list XmNinsensitiveStippleBitmap XM_PIXMAP) (list XmNinvokeParseProc XM_PARSE_CALLBACK)
+		    (list XmNlabelRenderTable XM_RENDER_TABLE) (list XmNlargeCellHeight XM_DIMENSION) (list XmNlargeCellWidth XM_DIMENSION)
+		    (list XmNlargeIconMask XM_PIXMAP) (list XmNlargeIconPixmap XM_PIXMAP) (list XmNlargeIconX XM_FLOAT)
+		    (list XmNlargeIconY XM_FLOAT) (list XmNlastPageNumber XM_INT) (list XmNlayoutDirection XM_UCHAR)
+		    (list XmNlayoutType XM_UCHAR) (list XmNlist XM_WIDGET) (list XmNloadModel XM_UCHAR)
+		    (list XmNmajorTabSpacing XM_DIMENSION) (list XmNmatchBehavior XM_UCHAR) (list XmNmaximumValue XM_INT)
+		    (list XmNminimumValue XM_INT) (list XmNminorTabSpacing XM_DIMENSION) (list XmNmotifVersion XM_INT)
+		    (list XmNnoFontCallback XM_CALLBACK) (list XmNnoRenditionCallback XM_CALLBACK) (list XmNnotebookChildType XM_UCHAR)
+		    (list XmNnumValues XM_INT) (list XmNoutlineButtonPolicy XM_UCHAR) (list XmNoutlineChangedCallback XM_CALLBACK)
+		    (list XmNoutlineColumnWidth XM_DIMENSION) (list XmNoutlineIndentation XM_DIMENSION) (list XmNoutlineLineStyle XM_UCHAR)
+		    (list XmNoutlineState XM_UCHAR) (list XmNpageChangedCallback XM_CALLBACK) (list XmNpageNumber XM_INT)
+		    (list XmNpathMode XM_INT) (list XmNpatternType XM_UCHAR) (list XmNpopupHandlerCallback XM_CALLBACK)
+		    (list XmNposition XM_INT) (list XmNpositionMode XM_INT) (list XmNpositionType XM_UCHAR)
+		    (list XmNprimaryOwnership XM_UCHAR) (list XmNrenderTable XM_RENDER_TABLE) (list XmNrenditionBackground XM_PIXEL)
+		    (list XmNrenditionForeground XM_PIXEL) (list XmNscrolledWindowChildType XM_UCHAR) (list XmNselectedItem XM_XMSTRING)
+		    (list XmNselectedObjectCount XM_INT) (list XmNselectedObjects XM_WIDGET_LIST) (list XmNselectedPosition XM_INT)
+		    (list XmNselectedPositionCount XM_INT) (list XmNselectedPositions XM_INT_TABLE) (list XmNselectionCallback XM_CALLBACK)
+		    (list XmNselectionMode XM_UCHAR) (list XmNselectionTechnique XM_UCHAR) (list XmNsliderMark XM_INT)
+		    (list XmNsmallCellHeight XM_DIMENSION) (list XmNsmallCellWidth XM_DIMENSION) (list XmNsmallIconMask XM_PIXMAP)
+		    (list XmNsmallIconPixmap XM_PIXMAP) (list XmNsmallIconX XM_FLOAT) (list XmNsmallIconY XM_FLOAT)
+		    (list XmNsnapBackMultiple XM_SHORT) (list XmNspatialIncludeModel XM_UCHAR) (list XmNspatialResizeModel XM_UCHAR)
+		    (list XmNspatialSnapModel XM_UCHAR) (list XmNspatialStyle XM_UCHAR) (list XmNspinBoxChildType XM_UCHAR)
+		    (list XmNstrikethruType XM_UCHAR) (list XmNsubstitute XM_XMSTRING) (list XmNtabList XM_TAB_LIST)
+		    (list XmNtag XM_STRING) (list XmNtearOffTitle XM_XMSTRING) (list XmNtextField XM_WIDGET)
+		    (list XmNtextRenderTable XM_RENDER_TABLE) (list XmNtoggleMode XM_UCHAR) (list XmNunderlineType XM_UCHAR)
+		    (list XmNunselectColor XM_PIXEL) (list XmNtabValue XM_FLOAT) (list XmNoffsetModel XM_INT)
+		    (list XmNcallback XM_CALLBACK) (list XmNwaitForWm XM_BOOLEAN) (list XmNuseColorObj XM_BOOLEAN)
+		    (list XmNvalues XM_STRING_TABLE) (list XmNviewType XM_UCHAR) (list XmNvisualEmphasis XM_UCHAR)
+		    (list XmNwrap XM_BOOLEAN)
+		    )))
+	    
 	      (for-each
 	       (lambda (n)
-		 (if (not (string? n)) (snd-display ";resource ~A is not a string?" n))
-		 (XtVaGetValues shell (list n 0)))
+		 (if (not (string? (car n))) (snd-display ";resource ~A is not a string?" (car n)))
+		 (XtVaGetValues shell (list (car n) 0)))
 	       resource-list)
 	      
 	      (let* ((create-procs (list
@@ -35952,7 +36081,9 @@ EDITS: 2
 			 (snd-display ";~A is not ~A" wid qq))
 		     (for-each
 		      (lambda (n)
-			(XtVaGetValues wid (list n 0)))
+			(let ((val (XtVaGetValues wid (list (car n) 0))))
+			  (if (not ((cadr n) (cadr val)))
+	                      (snd-display ";resource: ~A -> ~A" (car n) (cadr val)))))
 		      resource-list)
 		     ))
 		 create-procs ques is)))

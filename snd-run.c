@@ -97,8 +97,6 @@
 
 static XEN optimization_hook = XEN_FALSE;
 
-/* this code assumes a void* is the same size as int */
-/*   but I'm working on it... */
 #ifdef SIZEOF_VOID_P
   #if (SIZEOF_VOID_P <= SIZEOF_INT)
     #define Int int
@@ -342,16 +340,57 @@ static int current_optimization = DONT_OPTIMIZE;
 static int run_warned = FALSE;
 
 typedef struct {
+  int type;
+  int addr;
+  int constant;
+  int gc;
+} xen_value;
+
+static xen_value ***indirect_args = NULL;
+static int indirect_args_size = 0;
+#define INDIRECT_ARGS_SIZE_INCREMENT 8
+static int allocate_indirect_args(int size)
+{
+  int i, loc = -1;
+  for (i = 0; i < indirect_args_size; i++)
+    if (indirect_args[i] == NULL)
+      {
+	loc = i;
+	break;
+      }
+  if (loc == -1)
+    {
+      loc = indirect_args_size;
+      indirect_args_size += INDIRECT_ARGS_SIZE_INCREMENT;
+      if (indirect_args == NULL)
+	indirect_args = (xen_value ***)CALLOC(indirect_args_size, sizeof(xen_value **));
+      else
+	{
+	  indirect_args = (xen_value ***)REALLOC(indirect_args, indirect_args_size * sizeof(xen_value **));
+	  for (i = loc; i < indirect_args_size; i++) indirect_args[i] = NULL;
+	}
+    }
+  indirect_args[loc] = (xen_value **)CALLOC(size, sizeof(xen_value *));
+  return(loc);
+}
+
+typedef struct {
   void (*function)(int *arg_addrs, Int *ints, Float *dbls);
   int *args;
   char *(*descr)(int *arg_addrs, Int *ints, Float *dbls); /* for debugging */
-  int no_opt;
+  int no_opt, xarg_addr;
 } triple;
 
 static triple *free_triple(triple *trp)
 {
   if (trp->args) FREE(trp->args);
   trp->args = NULL;
+  if ((trp->xarg_addr >= 0) && (indirect_args[trp->xarg_addr]))
+    {
+      FREE(indirect_args[trp->xarg_addr]);
+      indirect_args[trp->xarg_addr] = NULL;
+      trp->xarg_addr = -1;
+    }
   FREE(trp);
   return(NULL);
 }
@@ -362,13 +401,6 @@ static char *describe_triple(triple *trp, Int *ints, Float *dbls)
     return((*(trp->descr))(trp->args, ints, dbls));
   return(NULL);
 }
-
-typedef struct {
-  int type;
-  int addr;
-  int constant;
-  int gc;
-} xen_value;
 
 static xen_value *make_xen_value(int typ, int address, int constant)
 {
@@ -1794,6 +1826,7 @@ static triple *make_triple(void (*function)(int *arg_addrs, Int *ints, Float *db
   trp->function = function;
   trp->args = addrs;
   trp->descr = descr;
+  trp->xarg_addr = -1;
   return(trp);
 }
 
@@ -1821,6 +1854,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, Int *ints, Float 
   trp->function = function;
   trp->args = addrs;
   trp->descr = descr;
+  trp->xarg_addr = -1;
   return(trp);
 }
 
@@ -7809,19 +7843,24 @@ static triple *make_indirect_triple(void (*function)(int *arg_addrs, Int *ints, 
 {
   triple *trp;
   int *addrs = NULL;
-  int i;
+  xen_value **xaddrs = NULL;
+  int i, xloc = -1;
   if (args > 0)
     {
       addrs = (int *)CALLOC(args, sizeof(int));
+      xloc = allocate_indirect_args(args);
+      xaddrs = indirect_args[xloc];
       addrs[0] = typed_args[0]->addr; /* string result */
       addrs[1] = typed_args[1]->addr; /* num args */
+      addrs[2] = xloc;                /* addr of indirect arg list */
       for (i = 2; i < args; i++) 
-	addrs[i] = (int)(typed_args[i]);
+	xaddrs[i] = typed_args[i];
     }
   trp = (triple *)CALLOC(1, sizeof(triple));
   trp->function = function;
   trp->args = addrs;
   trp->descr = descr;
+  trp->xarg_addr = xloc;
   return(trp);
 }
 
@@ -7856,6 +7895,7 @@ static char *describe_indirect(const char *caller, int result_type, int *args, I
   char **descrs = NULL;
   char *buf;
   xen_value *res;
+  xen_value **xargs = NULL;
   res = make_xen_value(result_type, args[0], R_VARIABLE);
   num_args = ints[args[1]];
   descrs = (char **)CALLOC(num_args + 2, sizeof(char *));
@@ -7864,9 +7904,10 @@ static char *describe_indirect(const char *caller, int result_type, int *args, I
   if (descrs[0]) len += strlen(descrs[0]);
   FREE(res);
   res = NULL;
+  if (args[2] >= 0) xargs = indirect_args[args[2]];
   for (i = 2; i <= num_args + 1; i++)
     {
-      descrs[i] = describe_xen_value((xen_value *)(args[i]), ints, dbls);
+      descrs[i] = describe_xen_value(xargs[i], ints, dbls);
       if (descrs[i]) len += (2 + strlen(descrs[i]));
     }
   buf = (char *)CALLOC(len + 16, sizeof(char));
@@ -7890,8 +7931,10 @@ static XEN xen_values_to_list(ptree *pt, int num_args, int *args, Int *ints)
 {
   XEN lst = XEN_EMPTY_LIST;
   int i;
+  xen_value **xargs = NULL;
+  if (args[2] >= 0) xargs = indirect_args[args[2]];
   for (i = num_args + 1; i >= 2; i--)
-    lst = XEN_CONS(xen_value_to_xen(pt, (xen_value *)(args[i])), lst);
+    lst = XEN_CONS(xen_value_to_xen(pt, xargs[i]), lst);
   return(lst);
 }
 

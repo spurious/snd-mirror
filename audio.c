@@ -5241,6 +5241,13 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
       if (field == MUS_AUDIO_FORMAT)  /* this actually depends on the audio device */
         {
 	  err = ioctl(audio_fd, AUDIO_GETDEV, &ad); /* SUNW, dbri|am79c30|CS4231|sbpro|sb16 */
+	  /* Jurgen Keil's drivers use SUNW,CS4231, but the "real" names are:
+	     "TOOLS,sbpci"           SoundBlaster PCI card
+	     "TOOLS,EMU10Kx"         SoundBlaster Live! or Audigy
+	     "TOOLS,i810"            Intel i8xx audio (and compatible)
+	     "TOOLS,via686"          VIA 686 audio
+	     "TOOLS,via8233"         VIA 8233 (and compatible)
+	  */
 	  if (err == -1) 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
 			      mus_format("can't get device info on %s (%s)",
@@ -5651,6 +5658,10 @@ static void describe_audio_state_1(void)
   if (info.play.pause) {mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "Playback is paused\n"); pprint(audio_strbuf);}
   if (info.record.pause) {mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "Recording is paused\n"); pprint(audio_strbuf);}
   if (info.output_muted) {mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "Output is muted\n"); pprint(audio_strbuf);}
+#ifdef AUDIO_HWFEATURE_DUPLEX
+  if (info.hw_features == AUDIO_HWFEATURE_DUPLEX) 
+    {mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "Simultaneous play and record supported\n"); pprint(audio_strbuf);}
+#endif
 #if HAVE_SYS_MIXER_H
   {
     int i, num = 0, choice;

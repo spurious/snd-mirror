@@ -63,7 +63,7 @@ if Graph_lollipops != 4 then snd_display sprintf("\n# Graph_lollipops => %d", Gr
 if Hadamard_transform != 5 then snd_display sprintf("\n# Hadamard_transform => %d", Hadamard_transform) end
 if Haar_transform != 6 then snd_display sprintf("\n# Haar_transform => %d", Haar_transform) end
 if Hamming_window != 5 then snd_display sprintf("\n# Hamming_window => %d", Hamming_window) end
-if Hanning_window != 1 then snd_display sprintf("\n# Hanning_window => %d", Hanning_window) end
+if Hann_window != 1 then snd_display sprintf("\n# Hann_window => %d", Hann_window) end
 if Kaiser_window != 11 then snd_display sprintf("\n# Kaiser_window => %d", Kaiser_window) end
 if Keyboard_no_action != 4 then snd_display sprintf("\n# Keyboard_no_action => %d", Keyboard_no_action) end
 if Cepstrum != 4 then snd_display sprintf("\n# Cepstrum => %d", Cepstrum) end

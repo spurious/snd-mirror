@@ -298,11 +298,7 @@ static snd_state *ss = NULL;
   ss->deferred_regions = 0;
   init_recorder();
 
-#if HAVE_RUBY
-  ss->catch_exists = 1;
-#else
   ss->catch_exists = 0;
-#endif
   g_initialize_gh();
   ss->search_proc = XEN_UNDEFINED;
   ss->file_sort_proc = XEN_UNDEFINED;
