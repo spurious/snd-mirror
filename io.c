@@ -1502,7 +1502,7 @@ char *mus_format(const char *format, ...)
 {
   /* this is primarily intended for error messages */
   /* caller should free result */
-  char *buf = NULL;
+  char *buf = NULL, *rtn = NULL;
 #if HAVE_VPRINTF
   va_list ap;
   buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
@@ -1521,7 +1521,13 @@ char *mus_format(const char *format, ...)
   sprintf(buf, "%s...[you need vprintf]", format);
 #endif
 #endif
-  return(buf);
+#if DEBUG_MEMORY
+  rtn = copy_string(buf);
+#else
+  rtn = strdup(buf);
+#endif
+  FREE(buf);
+  return(rtn);
 }
 
 Float mus_fclamp(Float lo, Float val, Float hi) 

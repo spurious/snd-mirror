@@ -144,13 +144,12 @@ the black text back with:
 ./snd -xrm '*foreground: Black'
 </pre>
 <p>or put the equivalent line in your .Xdefaults file.  The listener text color can be set
-via <code>(set! (listener-text-color) (make-color 0 0 0))</code> in ~/.snd or wherever.
+via <code>(set! (listener-text-color) (make-color 0 0 0))</code> in ~/.snd.
 </p>
 
-<p>The color names can be found in <a href="sndscm.html#rgbdoc">rgb.scm</a>. 
-If you use SGI color schemes (the useSchemes resource), most of the color resources mentioned above are ignored 
-(the cursor and selection colors are never ignored). If color schemes are available
-they're listed in /usr/lib/X11/schemes, probably -- it's unfortunate that
+<p>The colors are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. 
+"useSchemes" refers to SGI color schemes.
+It's unfortunate that
 there is the language Scheme implemented by Guile, and the notion of an SGI color scheme -- there is
 no connection between the two. Other systems (Linux, Solaris) use the term "theme" here;
 you can get Snd to honor your current window manager theme by setting useSchemes to all.  
@@ -162,7 +161,7 @@ to work, set the autoResize resource to 0:</p>
   snd oboe.snd -geometry 800x200 -xrm '*autoResize: 0'
 </pre>
 
-<p>These resources can be set in your .Xdefaults file:</p>
+<p>These resources can be set in Snd.ad or in your .Xdefaults file:</p>
 <pre>
 snd*buttonFont:         -adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*
 snd*boldbuttonFont:     -adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*
@@ -174,9 +173,9 @@ snd*helpTextFont:       9x15
 
 <p>
 The <A NAME="xautoresize">autoResize resource</a> determines how Snd acts when files
-are added or removed from its overall display.  The default (1)
+are added to or removed from its overall display.  The default (1)
 causes Snd to expand or contract the main window's size to accommodate
-the sounds (many people find this distracting); if <i>autoResize</i> is 0, the outer window size remains the
+the sounds; many people find this distracting.  If <i>autoResize</i> is 0, the outer window size remains the
 same, and the sounds try to fit as best they can.  See also
 the variable <a href="extsnd.html#autoresize">auto-resize</a>.
 If <i>overwriteCheck</i> is 1, Snd asks before overwriting existing files.
@@ -221,7 +220,7 @@ help-text-font    "Monospace 14"
 </table>
 <p>
 Each of these colors can be set in Guile using the second name given above ("basic-color").
-Colors are defined by calling <a href="extsnd.html#makecolor">make-color</a> with the three red/green/blue values,
+Colors are defined by <a href="extsnd.html#makecolor">make-color</a> with the three red/green/blue values,
 each a float between 0.0 and 1.0. <code>(set! (basic-color) (make-color 1.0 0.0 0.0))</code> sets
 the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.scm</a> defines all the standard X11 color names
 (you probably don't want to load the whole thing; just use the names as needed). 
@@ -235,8 +234,8 @@ greencolor (a few buttons),
 yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
 </p>
 
-<p>In the GTK version, you can load a gtkrc file, overriding all Snd defaults, with the
-function <b>parse-rc-file</b>:
+<p>In the GTK version, you can load a gtkrc file, overriding all Snd defaults, with
+<b>parse-rc-file</b>:
 </p>
 <pre>
   (parse-rc-file "/home/bil/test/gtk+-1.2.9/gtk/testgtkrc")
@@ -247,7 +246,7 @@ function <b>parse-rc-file</b>:
 <br>
 <span class=bbox><h3><A NAME="sndswitches">Snd invocation flags</a></h3></span>
 
-<p>The following flags are recognized by Snd (leaving aside all
+<p>Snd recognizes the following switches in its command line (leaving aside all
 the usual Xt/X-related flags like -xrm).</p>
 
 <table cellspacing=0 cellpadding=0>
@@ -293,8 +292,8 @@ snd -e '(add-sound-file-extension "WAV")' -p /home/bil/sounds
 <p>
 When Snd starts up, it looks for an "initialization file", normally named "~/.snd" (its name can be set
 via the X resource mechanism, or through the environment variable SND_INIT_FILE).  This optional file is
-supposed to be just like emacs' .emacs file, containing any customizations or
-extensions that you want loaded whenever Snd starts up.  For example, say we
+supposed to be just like Emacs' .emacs file, containing any customizations or
+extensions that you want loaded when Snd starts.  For example, say we
 want the Snd window to start out 800x500, want to predefine an envelope named
 "env1", and want the file selection box to
 default to showing just sound files.  We make ~/.snd and put in it:</p>
@@ -305,7 +304,7 @@ default to showing just sound files.  We make ~/.snd and put in it:</p>
 (set! (just-sounds) #t)
 </pre>
 <p>
-In addition, we could add our own analysis functions or whatever.  In more
+In more
 complex situations, you may want an initialization file particular to a given
 machine, and global across users; the 
 name of this optional global initialization file is "/etc/snd.conf". It
@@ -368,7 +367,7 @@ And, perhaps most useful, you can run Snd as an Emacs subjob.
 <p>Snd watches stdin; any input received
 is evaluated as if typed in Snd's lisp listener; any subsequent output
 is sent to stdout; presumably any process could communicate with
-Snd in this manner.  But the intention here was to connect to Emacs 
+Snd in this manner.  But the intention here is to connect to Emacs 
 via ILISP (available at
 http://sourceforge.net/projects/ilisp,
 and possibly built into Xemacs).

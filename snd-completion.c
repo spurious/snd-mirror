@@ -250,7 +250,17 @@ char *complete_text(char *text, int func)
   else return(copy_string(text));
 }
 
-void clear_possible_completions(void) {possible_completions_ctr = 0;}
+void clear_possible_completions(void) 
+{
+  int i;
+  for (i = 0; i < possible_completions_size; i++)
+    if (possible_completions[i]) 
+      {
+	FREE(possible_completions[i]);
+	possible_completions[i] = NULL;
+      }
+  possible_completions_ctr = 0;
+}
 
 char *srate_completer(char *text)
 {

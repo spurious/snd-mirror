@@ -67,6 +67,7 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 <br>
 <span class=box><h2>Contents</h2></span>
 
+<table><tr><td>
 <ul>
 <li><a href="#gettingstarted">Getting Started</a>
 <li><a href="#fileoperations">File Operations</a>
@@ -104,7 +105,9 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
   <li><a href="#keyboardcommands">Keyboard Commands</a>
   </ul>
 <li><a href="#controls">The  Control Panel</a>
-<li><a href="extsnd.html#extsndcontents">Customization and Extension</a>
+</ul>
+</td><td>
+<ul><li><a href="extsnd.html#extsndcontents">Customization and Extension</a>
   <ul>
   <li><a href="extsnd.html#lisplistener">Introduction</a>
   <li><a href="extsnd.html#etc">Snd Programming</a>
@@ -138,6 +141,11 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
       <li><a href="extsnd.html#sndwidgets">Widgets</a>
       </ul>
     </ul>
+  </ul>
+</ul>
+</td><td>
+<ul>
+  <ul>
   <li><a href="grfsnd.html#startup">Snd Startup</a>
     <ul>
     <li><a href="grfsnd.html#sndresources">Snd resources</a>
@@ -166,10 +174,12 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
     <li><a href="grfsnd.html#sndclmcmn">Snd, CLM, CMN</a>
     </ul>
   <li><a href="index.html">Index</a>
-  <li><a href="sndscm.html#introduction">Scheme Functions included with Snd</a>
+  <li><a href="sndscm.html#introduction">Functions included with Snd</a>
   </ul>
 <li><a href="#index">Topical Index</a>
 </ul>
+</td></tr>
+</table>
 
         <!-- I(examine regions):A(regions) --><!-- I(control panel):A(controls) -->
         <!-- I(move cursor ahead):A(thecursor) --><!-- I(move cursor back):A(thecursor) -->
@@ -312,70 +322,99 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 <br>
 <span class=box><h2><A NAME="gettingstarted">Getting Started</a></h2></span>
 
-<p>Once compiled and loaded (see README.Snd for instructions), fire Snd up with</p>
+<p>Once compiled and loaded (see README.Snd for instructions), start Snd:</p>
 <pre>
   snd some.snd
 </pre>
 <p>where "some.snd" is any available sound file.  You should
 get a window with the first .1 seconds of the sound displayed as a time
 domain waveform. Click the file name at the lower left to get 
-some information about the file.<A NAME="fw"></a> Click the "f" button, and an fft window
+some information about the file. <A NAME="fw"></a> Click the "f" button, and an fft window
 appears alongside the waveform.  Drag the upper scale at the
 bottom of the graph and both graphs are updated as you move
 through the file.  Drag the lower scale to zoom in or out.
-Drag the outer scale (the wider one) on the left to zoom
-the y axis in or out.  The inner scale 
+Drag the outer scale (the wider one) on the left to change
+the y axis bounds.  The inner scale 
 moves the y axis up and down.
-Click the "w" button (to unset the button) and
+Click the "w" button (unset it) and
 the time domain waveform goes away.  Click "play" to
 play the file.  "sync" is more complicated -- it is used
 to group sounds together for simultaneous editing.</p>
 
 <p>Now return to the time domain form (click "w" and "f"),
-and click on the graph itself.  A red cursor (a big "+")
-appears at that point.  The cursor is exactly like an
+and click in the graph itself.  A red cursor (a big "+")
+appears at that point.  The cursor is just like an
 Emacs cursor -- you can delete the sample at the cursor,
 for example, by typing control D (abbreviated in this
 document C-d), or move back one sample with C-b.
 </p>
 
-<p>Now click and drag the mouse through some portion of
+<p>Click and drag the mouse through some portion of
 the graph -- the portion dragged is highlighted in
 some way.  When you release the mouse button, the
-highlighted portion is 'selected' -- it becomes a
-'region' that can be deleted, pasted elsewhere
-(move the mouse and click the middle button), 
-played, and operated on in many ways.  You'll
+highlighted portion becomes a
+'selection' that you can play, delete, or mix elsewhere.
+</p>
+<p>You'll
 notice if you make some change to the data that
 the file name gets an asterisk, as in Emacs, and
 the various 'undo' and 'redo' menu options come
-to life.  Just for laughs, cut the selection, then click the right mouse
+to life.  Just for laughs, delete the selection (via the Edit menu), then click the right mouse
 button to get the popup menu, and try Undo followed
-by Redo.  </p>
+by Redo.</p>
 
-<p>Next type C-m -- this sets a
+<p>Next type C-m.  This places a
 mark at the current cursor location.  C-a goes
 to the start of the window; C-j jumps forward to the
-nearest mark.  Click and drag the upper horizontal
+next mark.  Click and drag the upper horizontal
 mark portion to move the mark; click the triangular
-lower portion to play from the mark.  Drag the triangular
-portion to play the data following the mouse.</p>
+lower portion to play from the mark.  If you are
+editing a multi-channel file, control-click the
+triangle to play all channels together from the mark.
+Drag the triangular
+portion to play the data following the mouse.
+</p>
 
 <p>Finally, go to the View menu and select 'Show controls'.
-A new portion of the Snd window is opened, containing
+A new portion of the Snd window opens, containing
 a number of controls.  Try goofing around with them
 while playing the sound.  For the more complex
 cases, the button on the right side turns the
-option on or off.  If an embedded language (e.g. Guile) is loaded, most of the text
-input widgets are actually little lisp listeners,
-so in the control panel's filter
-envelope text entry widget, you can type a list
-(the default), or any Scheme expression that
-evaluates to a list; similarly wherever an integer
-is expected (in the File:Save as dialog under "srate:"
-for example), you can type any Scheme expression that
-evaluates to an integer.  Finally, there is a full-blown
-listener available under the View:Open Listener menu option.
+option on or off.
+</p>
+<p>
+But all this is standard stuff for a sound editor; even the
+various dialogs scattered around the menus will present
+no surprises.  The GL spectrograph is somewhat unusual,
+and I like the paned window approach to multichannel sounds ("<i>de gustibus...</i>").
+But it is primarily the embedded extension language
+(Guile or Ruby) that 
+makes Snd different from other editors.
+Everything in Snd from the low-level data readers to the
+high-level editing operations is tied into the extension
+language.  You can do anything you want with sounds.
+Rather than try to present endless menus full of
+canned "effects" and editing operations, Snd gives
+you full programming power over sounds, and you can 
+extend it to include whatever you want.  But if you
+are in a big hurry, or not yet confident in your ability as a programmer, many such
+operations have been included in the various scm (Guile/Scheme) and
+rb (Ruby) files in the Snd tarball.  For example, Dave Phillips
+wrote a set of files that implement dozens of the effects and
+editing operations built into other editors.  Just load the
+files that look interesting, and start clicking widgets.
+</p>
+
+<p>Manipulating sounds in a programming environment
+is most enjoyable if you can edit and retry expressions
+easily.  Old-time Lispers called this special kind of
+text widget a "listener".  There is one in Snd -- see
+the View:Open Listener menu.  The listener has a prompt ("&gt;") 
+at which you can type any expression ("(+ 1 2)"),
+which it then evaluates, returning the result.
+I normally work in the listener, leaving the menus
+untouched, and using the mouse mainly to scan quickly
+through the current sound data.
 </p>
 <p>Dave Phillips has written a tutorial for Snd: see the 
 <a href="contrib/tutorial/1_intro_and_build_snd.html">contrib/tutorial</a> directory of the Snd sources.
@@ -418,7 +457,7 @@ listener available under the View:Open Listener menu option.
         <!-- I(change format):M(File: Save as)(savefileas) --><!-- I(change format):O(Edit: Edit header)(editheader) -->
 	<!-- I(mix file):O(see mix.scm for tracks) -->
 
-<p>Snd operates on sound files.  When invoked, Snd scans
+<p>When invoked, Snd scans
 its arguments for file names, and opens any it finds.</p>
 <pre>
   snd oboe.snd fyow.snd
@@ -427,8 +466,8 @@ its arguments for file names, and opens any it finds.</p>
 If a name is preceded by <A NAME="minusp">"-p"</a> or "-preload", it is treated as a directory
 name and all sound files found in that directory are preloaded
 into the <a href="#prevfiles">previous files</a> list.  To
-load arbitrary Snd customizations (scheme code, or a <a href="#savedstate">saved state</a> file for example)
-use a ".scm" extension, or precede the file name with <A NAME="minusl">"-l"</a> or "-load". </p>
+load arbitrary Snd customizations (your own code, or a <a href="#savedstate">saved state</a> file for example),
+precede the file name with <A NAME="minusl">"-l"</a> or "-load" (or use the load function). </p>
 <pre>
   snd oboe.snd -l examp.scm
 </pre>
@@ -443,7 +482,7 @@ displayed.
 To position sounds horizontally (adding on the right), use the "-h" (or "-horizontal") flag,
 or the <a href="grfsnd.html#horizontalpanes">horizontalPanes</a> resource.
 (This only works on systems with Motif 2.0 or later).  Other overall layout
-choices include the Notebook widget (horizontalPanes: 2, -notebook), 
+choices include the Notebook widget (-notebook), 
 and separate windows for each sound (-separate).  
 These special choices need to be set either
 in the resource file, or in the invocation line.
@@ -454,30 +493,29 @@ in the resource file, or in the invocation line.
 <p>A file can be opened from the File menu via Open
 or View.  <A NAME="viewfile">View</a> opens the file read-only, whereas Open
 <!-- I(open file read-only):A(viewfile) -->
-will allow it to be changed.  The equivalent keyboard
+allows it to be changed.  The equivalent keyboard
 command is C-x C-f.  
-If a file cannot be written (either it was opened read-only
-or you don't have write permission on it), a lock appears
+If a file cannot be changed (either it was opened read-only
+or you don't have write permission for it), a lock appears
 next to the file name.  <A NAME="updatefile"></a>Similarly, if Snd notices that
 the file on the disk no longer matches the original,
-a bomb appears (this can happen if some other program
+a bomb appears.  This can happen if some other program
 writes a sound while you are editing an earlier version
 of it; see also <a href="#overwrite">ask-before-overwrite</a> and <a href="extsnd.html#corruptiontime">auto-update-interval</a>).
-If the variable <a href="extsnd.html#autoupdate">auto-update</a> is #t (default is #f), Snd
-automatically updates any such file (this is also useful if
-you're editing the same file in two separate panes).
+If the variable <a href="extsnd.html#autoupdate">auto-update</a> is #t (the default is #f), Snd
+automatically updates any such file. 
 </p>
 
 <A NAME="soundsonlybutton"></a><p>In the file selection dialog, there's a button marked
-'Sound files only'.  This can be set by default (see
-<a href="extsnd.html#justsounds">just-sounds</a>).  If it is set, only files that appear
-to be sound files are included in the directory listing.
+'Sound files only' (<a href="extsnd.html#justsounds">just-sounds</a>).  If it is set, 
+the file dialog lists only those files that appear
+to be sound files.
 Currently Snd uses the file extension to decide whether
-it is a sound file -- the initial extensions are
+it is a sound file.  The built-in extensions are
 "snd", "wav", "aiff", "aif", "au", "aifc", "voc", and "wve". To add
 an extension to this list, use <a href="extsnd.html#addsoundfileextension">add-sound-file-extension</a>.
-You can also apply an arbitrary Scheme function to each such filename, making as fancy
-a filter as you like (see <a href="extsnd.html#justsoundshook">just-sounds-hook</a>).
+In the Motif version of Snd, you can also apply an arbitrary function to each such filename, making the 
+filter as fancy as you like (see <a href="extsnd.html#justsoundshook">just-sounds-hook</a>).
 </p>
 <A NAME="formats"></a>
 <p>Snd can handle the following file and data types:</p>
@@ -489,7 +527,7 @@ a filter as you like (see <a href="extsnd.html#justsoundshook">just-sounds-hook<
   <li>RIFF (Microsoft wave)
   <li>IRCAM (old style)
   <li>NIST-sphere
-  <li>no header
+  <li>no header ("raw")
   </ul>
 <li>read-only (in selected data formats):
   <ul>
@@ -504,7 +542,7 @@ a filter as you like (see <a href="extsnd.html#justsoundshook">just-sounds-hook<
   <li>Ultratracker WaveSample, Sample Dump exchange, 
   <li>Yamaha SY85, SY99, and TX16, Covox v8, SPL, AVI, 
   </ul>
-<li>automatically translated to Sun 16-bit, then read/write:
+<li>automatically translated to a readable format:
   <ul>
   <li>IEEE text, Mus10 SAM 16-bit (modes 1 and 4), IBM CVSD, AVI
   <li>NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM, MIDI sample dump
@@ -516,17 +554,18 @@ a filter as you like (see <a href="extsnd.html#justsoundshook">just-sounds-hook<
 <p>
 The files can have any number of channels.
 Data can be either big or little endian.
-A 'New' file can get its type and so on from
-the variables <a href="extsnd.html#defaultoutputtype">default-output-type</a> 
-and friends, or from a dialog that pops up when not every decision has been
-made in advance.
-A raw data file gets its srate, chans,
+A 'New' file (one created by the File:New option) can get its type and so on from
+the default output variables such as <a href="extsnd.html#defaultoutputtype">default-output-type</a>,
+or from a dialog that pops up when some field has not been set
+in advance.
+Similary, a raw data file gets its srate, chans,
 and data format information either from the open-raw-sound-hook
 or from a dialog window that pops up when such a file
 is opened. The file types listed above as "automatically translated" are
-decoded upon being opened, rewritten in Sun 16-bit format
-to a new file with an added (possibly redundant) extension .snd,
-and that form is the one the editor sees from then on. To read
+decoded upon being opened, translated to some format Snd can read and write,
+and rewritten 
+as a new file with an added (possibly redundant) extension .snd,
+and that file is the one the editor sees from then on. To read
 mpeg files, see the mpg function in <a href="sndscm.html#exampdoc">examp.scm</a>.
 </p>
 
@@ -558,14 +597,11 @@ for various kinds of simple text-based interactions,
 a 'sync' button for grouped display and edit
 operations, a 'unite' button (if the sound has more than one channel),
 and a 'play' button to play the
-current (edited) state of the file.  Any number
-of files can be played at the same time.  The 
-rest of the control panel modifies how the file
-is played.
+current (edited) state of the file. 
 </p>
         <!-- I(control panel):O(drag pane sash)(panecontrol) -->
 
-<A NAME="newfile"></a><p>To open a new, empty file, use the New option.
+<A NAME="newfile"></a><p>To open a new, empty file, use the File:New option.
 The default values for the fields can be set via <a href="extsnd.html#defaultoutputchans">default-output-chans</a>,
 <a href="extsnd.html#defaultoutputformat">default-output-format</a>,
 <a href="extsnd.html#defaultoutputsrate">default-output-srate</a>, and
@@ -576,9 +612,9 @@ comment field via <a href="extsnd.html#outputcommenthook">output-comment-hook</a
 </p>
 
 <A NAME="closefile"></a><p>To close a file (flushing any unsaved edits), use
-the File menu Close option, or C-x k.  This command
-applies to the file that contains the active channel,
-or the top file in the display.</p>
+the File:Close option, or C-x k.  This command
+applies to the currently selected sound.
+</p>
 
 <A NAME="savefile"></a><p>To save the current edited state of a file, use the
 Save option (to overwrite the old version of the
@@ -598,17 +634,19 @@ or include the expression (set! (<a href="extsnd.html#askbeforeoverwrite">ask-be
         <!-- I(overwrite check):L(ask-before-overwrite)(overwrite) -->
 If you edit a write-protected file and try to save the edits, Snd will
 try to save the edits in a temporary file and will post a warning
-that the current file could not be edited.  A similar sequence can
-occur when opening a file on a write-protected directory where the sound file uses some compression
-scheme that Snd wants to translate before editing.
+that the current file can not be overwritten.
 </p>
 
 <A NAME="revertfile"></a><p>To undo all edits and return to the last saved state
 of a file, use the Revert option.  The edit history
 is still available, so you can redo all the edits
-in order simply by calling <a href="#undoredo">Redo</a> repeatedly.</p>
+in order simply by calling <a href="#undoredo">Redo</a> repeatedly.
+There's also a list on the left of each channel pane containing a list of
+the current edits.  You can click anywhere in the list to move to that
+edit.
+</p>
 
-<A NAME="printfile"></a><p>The Print option fires up the Print
+<A NAME="printfile"></a><p>The Print option opens the Print
 dialog.  You can send the currently active graph directly to
 a printer, or save it as an "encapsulated Postscript"
 file.  The default name
@@ -635,8 +673,8 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
 <center>
 <table border=8 bordercolor="lightgreen">
 <tr><th></th><th>View Menu</th><th></th></tr>
-<tr><td width=140><a href="#controls">Show controls</a></td><td>show/hide the control panel</td><td>(C-x C-o, C-x C-c)</td></tr>
-<tr><td><a href="extsnd.html#lisplistener">Open listener</a></td><td>show/hide lisp listener</td><td></td></tr>
+<tr><td width=140><a href="#controls">Show controls</a></td><td>show the control panel</td><td>(C-x C-o, C-x C-c)</td></tr>
+<tr><td><a href="extsnd.html#lisplistener">Open listener</a></td><td>show lisp listener</td><td></td></tr>
 <tr><td><a href="#mixpanel">Mix Panel</a></td><td>mix controller</td><td></td></tr>
 <tr><td><a href="#regionbrowser">Regions</a></td><td>a browser to examine the region stack</td><td></td></tr>
 <tr><td><a href="#prevfiles">Files</a></td><td>a browser of currently and previously loaded files</td><td></td></tr>
@@ -648,7 +686,7 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
 <tr><td><a href="#equalizepanes">Equalize Panes</a></td><td>cleanup current Snd display</td><td></td></tr>
 <tr><td><a href="#viewy0">Show y=0</a></td><td>show or hide the y=0 line</td><td></td></tr>
 <tr><td><a href="extsnd.html#xaxisstyle">X axis units</a></td><td>x axis labelled in seconds, samples, percent of total</td><td></td></tr>
-<tr><td><a href="#errorhistory">Error History</a></td><td>saved error messages</td><td></td></tr>
+<tr><td><a href="#errorhistory">Error History</a></td><td>a list of saved error messages</td><td></td></tr>
 </table>
 </center>
         <!-- I(control panel):M(View: Show controls)(controls) --><!-- I(control panel):K(C-x C-o, C-x C-c)(cxco) -->
@@ -664,9 +702,9 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
         <!-- I(file lists):M(View: Files)(prevfiles) -->
         <!-- I(X axis units):M(View: X axis units)(xaxisstyle) --><!-- I(X axis units):A(xaxisstyle) -->
 
-<p>The file display can be modified in various ways.  <A NAME="viewdots"></a>To use
-dots rather than connected lines, use the Dots option in
-the View menu's Graph style option (see also <a href="extsnd.html#dotsize">dot-size</a>).  <A NAME="viewy0"></a>Similarly, to show (or hide) the line
+<p>The sound display can be modified in various ways.  <A NAME="viewdots"></a>Choose View:Graph style:dots
+to view the sound as dots rather than connected lines
+(see also <a href="extsnd.html#dotsize">dot-size</a>).  <A NAME="viewy0"></a>Similarly, to show (or hide) the line
 Y = 0, use the y=0 option.  The Region browser is described under
 <a href="#regions">Regions</a>.  To open the control panel, use Show Controls.
 To open or close the lisp listener panel, use Open listener.
@@ -688,7 +726,7 @@ printer characteristics.
         <!-- I(color):A(colorbrowser) --><!-- I(orientation):A(colorbrowser) -->
 
 <p>The <A NAME="viewinfo">Popup menu's Info</a> dialog can be left in view and updated with M-v i
-to reflect the currently active sound.  Except for the header comment, the same information is displayed in the
+to reflect the currently active sound.  The same information is displayed in the
 minibuffer when you click the file name.</p>
 
 <p>The <a href="#prevfiles">Files</a> option fires up the file browser:</p>
@@ -710,9 +748,9 @@ list checking for files that have been deleted or moved behind Snd's back.
 'Clear' clears the previous files list. </p>
 
 <p>The previous
-files list can be preloaded via the -p switch to Snd, and the extended commands <A NAME="preload">preload</a>
-and <A NAME="preload-file-browser">preload-file-browser</a>.
-By preloading your "working set" of sounds, you can save
+files list can be preloaded via the -p switch to Snd, and the functions <a href="extsnd.html#sndpreloadfile">preload-file</a>
+and <a href="extsnd.html#sndpreloaddirectory">preload-directory</a>.
+By preloading your "working set" of sounds, you can avoid
 the bother of picking them up one by one from the
 clumsy file selection box.
 See nb.scm for an extension of this dialog that posts various kinds of information
@@ -720,9 +758,9 @@ about each file as the mouse passes over it.
 </p>
 <br clear=left>
 <br>
-<p>The <A NAME="errorhistory">Error History</a> option displays whatever errors have been
+<p>The <A NAME="errorhistory">Error History</a> displays whatever errors have been
 posted during the current run of Snd.  If some error gets erased too quickly from the
-'minibuffer', you can recover it in this dialog.</p>
+'minibuffer', you can find it in this dialog.</p>
         <!-- I(file lists):A(prevfiles) --><!-- I(play file):M(Popup: Play) -->
         <!-- I(play file):O(File or main window: 'play') --><!-- I(select sound):O(File dialog: click file) -->
         <!-- I(select sound):A(prevfiles) --><!-- I(open file):O(Files dialog: click file) -->
@@ -736,7 +774,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
 <center>
 <table border=8 bordercolor="lightgreen">
 <tr><th></th><th>Options Menu</th><th></th></tr>
-<tr><td width=160><a href="#viewfft">Transform options</a></td><td>various transform choices</td></tr>
+<tr><td width=160><a href="#viewfft">Transform options</a></td><td>various transform (FFT, etc) choices</td></tr>
 <tr><td><a href="extsnd.html#lspeedstyle">Speed style</a></td><td>control panel speed scrollbar interpretation</td></tr>
 <tr><td><a href="#zoomoption">Zoom style</a></td><td>where to focus during zooms</td></tr>
 <tr><td><a href="#saveoptions">Save options</a></td><td>save current state of options</td></tr>
@@ -760,8 +798,8 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
         <!-- I(speed units):A(lspeedstyle) -->
 	<!-- I(wavelets):A(transformtype) --><!-- I(wavelets):M(Options: Transform)(transformtype) -->
 
-<A NAME="viewfft"></a><p>The Options menu sets various preferences.
-The Transform Options menu applies mainly to the FFT display triggered
+<A NAME="viewfft"></a><p>
+Transform Options applies mainly to the FFT display triggered
 by setting the 'f' button in the channel window.  The dialog that is
 launched by this menu item has six sections: on the upper left
 is a list of available transform types; next on the right is a
@@ -769,12 +807,13 @@ list of fft sizes; next is a panel of buttons that sets various
 display-oriented choices; the lower left panel sets the current
 wavelet, when relevant; <A NAME="fftwindow">next</a> is the fft data window choice; and
 next to it is a graph of the current fft window with the spectrum of that window
-in blue (in dB with the min at -80dB); <A NAME="Xfftbeta">when</a> the window
+in blue; <A NAME="Xfftbeta">when</a> the window
 has an associated parameter (sometimes known as "alpha" or "beta"),
 the slider beneath the window list is highlighted and can be used
-to choose the desired member of that family of windows.</p>
+to choose the desired member of that family of windows.
+</p>
 
-<img src="ftrans.png" alt="transform dialog">
+<img src="ftrans.png" alt="transform dialog" align=left hspace=20>
 
 <p>The FFT is taken from the start (the left edge) of the
 current window and is updated as the window bounds change.
@@ -782,37 +821,40 @@ If you'd like the fft size to reflect the current time domain
 window size:</p>
 <pre>
 (add-hook! <a href="extsnd.html#graphhook">graph-hook</a>
-	   (lambda (snd chn y0 y1)
-	     (if (and (transform-graph?) (= (fft-style) normal-fft))
-		 (set! (<a href="extsnd.html#lfftsize">transform-size)</a>
-		   (expt 2 (ceiling (/ (log (- (right-sample) (left-sample))) 
-				       (log 2.0))))))))
+  (lambda (snd chn y0 y1)
+    (if (and (<a href="extsnd.html#sndffting">transform-graph?</a>) 
+             (= (<a href="extsnd.html#lfftstyle">transform-graph-type</a>) graph-once))
+      (set! (<a href="extsnd.html#lfftsize">transform-size)</a>
+        (expt 2 (ceiling (/ (log (- (right-sample) 
+                                    (left-sample))) 
+                            (log 2.0))))))))
 </pre>
+<br>
 <p>
 The fft data is scaled to fit between 0.0 and 1.0 unless
-the fft normalization is off. 
+transform normalization is off. 
 The full frequency axis is normally displayed, but the
 axis is "dragable" -- put the mouse on the axis and
 drag it either way to change the range (this is equivalent
 to changing the variable <a href="extsnd.html#spectrocutoff">spectro-cutoff</a>).  You can also click
-on any point in the fft to get the associated fft data
+on any point in the fft to get the associated fft value at that point
 displayed; if verbose-cursor is on, you can
 drag the mouse through the fft display and the
 description in the minibuffer will be constantly
-updated.  Use <a href="extsnd.html#spectrostart">spectro-start</a> to set the spectrum display start point.
+updated.
 </p>
 
-<A NAME="transformtype"></a><p>The harmonic analysis function is
+<A NAME="transformtype"></a><p>The transform is
 normally the Fourier Transform, but others are available, including
 about 20 wavelet choices, and <A NAME="autocorrelation">autocorrelation</a>.</p>
 
 	<!-- I(autocorrelation):A(autocorrelation) --><!-- I(autocorrelation):M(Options: Transform)(viewfft) -->
 
 <A NAME="fftstyle"></a><p>The top three buttons in the transform dialog choose between a normal
-fft, a sonogram, or a spectrogram.  The <A NAME="showpeaks">"peaks"</a>
+fft, a sonogram, or a spectrogram.  The <A NAME="showpeaks">peaks</a>
 button affects whether peak info is displayed alongside the graph
-of the spectrum.  The <A NAME="fftindb">"dB"</a> button selects between
-a linear and logarithmic Y (magnitude) axis.  The <A NAME="logfreq">"log freq"</a>
+of the spectrum.  The <A NAME="fftindb">dB</a> button selects between
+a linear and logarithmic Y (magnitude) axis.  The <A NAME="logfreq">log freq</a>
 button makes a similar choice along the frequency axis.
 </p>
 
@@ -833,7 +875,7 @@ The keypad keys are mapped to various variables as follows:</p>
 <tr><td><a href="extsnd.html#dotsize">dot-size</a></td><td>Delete</td><td>Insert</td></tr>
 </table>
 <p>You can rotate the spectrogram around the various axes
-by holding down the keypad and control keys.  You can get
+by holding down the keypad and control keys. <A NAME="fftsize"></a> You can get
 arbitrarily small or large ffts with the Multiply and
 Divide keys.  The x and y axis scalers are named
 spectro-x-scale and spectro-y-scale.
@@ -843,41 +885,29 @@ spectrogram variables to their default values.
 <img src="hfft.png" alt="picture of sonogram">
 <br><br>
 
-<A NAME="fftsize"></a><p>If the choice of sizes in the fft size list
-doesn't include the one you want, you can get
-arbitrarily small or large ffts with the Multiply and
-Divide keys.  
-The keypad Enter key resets all the
-spectrogram variables to their default values.
-See also the <a href="extsnd.html#lfftsize">transform-size</a> variable.
-To interrupt a long transform-related computation,
-deactivate the 'f' button or type C-g (which should
-be able to interrupt anything).
-</p>
-
-<p>A somewhat frivolous feature, known to Snd as the
+<p>A somewhat frivolous feature, known here as the
 <A NAME="wavogram">"wavogram"</a>, mimics the spectrogram in the time domain.
 The same rotation commands apply to this display,
 with the additional variable <a href="extsnd.html#wavohop">wavo-hop</a> which sets the
-density of the traces.  To get this display <code>M-x (set! (time-graph-type) graph-as-wavogram)</code>.  It is
-important in this case to get the length of each trace
-so successive peaks more or less line up.  The
-trace length in samples is set by the variable wavo-trace,
+density of the traces.  To get this display <code>(set! (<a href="extsnd.html#wavo">time-graph-type</a>) graph-as-wavogram)</code>.  It is
+important to set the length of each trace
+so that successive peaks line up.  The
+trace length in samples is set by the variable <a href="extsnd.html#wavotrace">wavo-trace</a>,
 or the numeric keypad + and - keys.
 </p>
 <img src="wavo.png" alt="wavogram of oboe">
 <br><br>
         <!-- I(wavogram):A(wavogram) --><!-- I(wavogram):L(time-graph-type)(wavogram) --><!-- I(wavogram):O(wavo-trace, wavo-hop)(wavohop) -->
 
-<A NAME="saveoptions"></a><p>The Save options menu option is best explained as a part
-of the <a href="extsnd.html#appearance">customization</a> process.  It basically
-sets up (or adds to) an <a href="grfsnd.html#sndinitfile">initialization file</a> for Snd that sets all
-the options to their current settings; 
-this is intended to be similar to the ~/.emacs file (its default name is ~/.snd).
+<A NAME="saveoptions"></a><p>The Save options menu option is a part
+of the <a href="extsnd.html#appearance">customization</a> process.  It
+sets up (or adds to) an <a href="grfsnd.html#sndinitfile">initialization file</a> (normally ~/.snd) that sets all
+the options to their current settings, 
+similar to Emacs' ~/.emacs file.
 </p>
 
-<A NAME="zoomoption"></a><p>The Zoom style option determines the graph point that tries to
-remain stable in the display during an x-axis zoom.
+<A NAME="zoomoption"></a><p>The Zoom style option chooses which graph point to center on
+during an x-axis zoom.
 The default is to zoom onto the cursor or the beginning of the current
 selection if either is visible.  You can also have
 zoom focus on the left edge, right edge, or
@@ -898,7 +928,7 @@ midpoint of the current window.</p>
 <tr><td><a href="#editcut">Mix selection</a></td><td>Mix (add) selected portion</td><td>(C-x q)</td></tr>
 <tr><td><a href="#cxp">Play selection</a></td><td>Play selected portion</td><td>(C-x p)</td></tr>
 <tr><td><a href="#cxw">Save selection</a></td><td>Save selected portion as file</td><td>(C-x w)</td></tr>
-<tr><td><a href="#selectall">Select all</a></td><td>select entire file (following sync state)</td><td></td></tr>
+<tr><td><a href="#selectall">Select all</a></td><td>select entire file</td><td></td></tr>
 <tr><td><a href="#editenvelope">Edit Envelope</a></td><td>Edit or view envelopes</td><td></td></tr>
 <tr><td><a href="#editheader">Edit Header</a></td><td>Edit or view file header</td><td></td></tr>
 </table>
@@ -921,8 +951,8 @@ at the cursor.  Operations can be applied simultaneously to
 any other channels or sounds by using the 'sync' button.  And
 as in Emacs, there is a notion of a region ('selection'), and
 a list of saved regions.  Operations can be applied
-either to a sample, a region, a channel, a file, or any number of
-files at the same time.  Where an operation has an obvious
+either to a sample, a region, a channel, a sound, or any number of
+sounds at the same time.  Where an operation has an obvious
 analog in text editing, I've tried to use the associated Emacs command.
 To delete the sample at the cursor, for example, use C-d.</p>
 
@@ -939,10 +969,10 @@ has a chapter to itself.</p>
 
 <h4>The Active Channel</h4>
 
-<p>The cursor is activated (and its associated channel selected) by clicking on the time domain waveform.
-Although the selected channel is indicated as such in some (nearly invisible) manner,
-it will be more noticeable if
-you set the selected-data-color or the selected-graph-color:</p>
+<p>Click in the time domain waveform to activate the cursor and select that channel.
+To make the selected channel stand out from the rest,
+set the <a href="extsnd.html#selecteddatacolor">selected-data-color</a> 
+or the <a href="extsnd.html#selectedgraphcolor">selected-graph-color</a>:</p>
 <pre>
   (define beige (make-color 0.96 0.96 0.86))
   (define blue (make-color 0 0 1))
@@ -950,7 +980,7 @@ you set the selected-data-color or the selected-graph-color:</p>
   (set! (selected-data-color) blue)
 </pre>
 <p>The selected channel receives keyboard commands.  You can
-also move between windows with <A NAME="cxo">C-x o</a> (forwards or backwards).</p>
+also move between windows with <A NAME="cxo">C-x o</a>.</p>
         <!-- I(select sound):K(C-x o)(cxo) -->
 
 <h4>Moving the Cursor</h4>
@@ -993,9 +1023,7 @@ the cursor forward 2.1 seconds in the data.</p>
 <p>The simplest way to move the window (the portion of the data in the current graph) is to drag the
 scrollbars with the mouse.  The darker scrollbars zoom in and
 out; the lighter bars move the window along the x or y axis.
-Because sound files can be enormous, the x axis placement
-needs some special handling to make it useful in
-all cases.  To move by a single windowful, click the
+To move by a single windowful, click the
 arrows on the scrollbar.  To move by smaller amounts,
 use the left and right arrow keys (or zoom with the up and
 down arrow keys);  the control, shift, and meta keys
@@ -1039,8 +1067,8 @@ the window display .1 seconds of data.</p>
 <br>
 <span class=bbox><h3><A NAME="marks">Marks</a></h3></span>
 
-<p>A mark marks a particular sample in a sound file (not a
-position in that file).
+<p>A 'mark' marks a particular sample in a sound (not a
+position in that sound).
 If we mark a sample, then delete 100 samples before it,
 the mark follows the sample, changing its current position 
 in the data.  If we delete the sample, the mark is also
@@ -1050,15 +1078,14 @@ right thing, but it's a lot less stupid than marking
 a position.
 </p>
 
-<p>Once set, a mark can be moved (redefined) by dragging the
+<p>Once set, a mark can be moved by dragging the
 horizontal tab at the top.  Control-click of the tab followed by mouse
-drag will either insert zeros or delete data, following the motion
-of the mark.
+drag will drag the underlying data too, either inserting zeros or deleting data.
 Click on the triangle at the
 bottom to play (or stop playing) from the mark; drag the
 triangle to play following the mouse.</p>
 
-<p>A mark can be named or unnamed -- the name is displayed
+<p>A mark can be named or unnamed.  It it has a name, it is displayed
 above the horizontal tab at the top of the window. As with
 sounds and mixes, marks can be grouped together through
 the "sync" field; marks sharing the same sync value (other
@@ -1081,9 +1108,9 @@ number in-between is the number of marks to jump forward before
 getting the distance.</p>
 
 <A NAME="savemarks"></a>
-<p>The current marks associated with a sound can be saved in a
-file that Snd will load automatically later via
-<code>(save-marks)</code>.</p>
+<p>The function <a href="extsnd.html#sndsavemarks">save-marks</a> saves the current marks in a
+file.
+</p>
         <!-- I(save marks):A(savemarks) -->
 
 <br>
@@ -1101,16 +1128,18 @@ region; subsequent edits
 will not affect the region data.
 You can disable the region creation by setting the variable
 <a href="extsnd.html#selectioncreatesregion">selection-creates-region</a>
-to #f (its default is #t, but in this can slow down editing of very large sounds).
-<A NAME="mousedefsect">Regions</a> can be defined by <a href="extsnd.html#sndmakeregion">make-region</a> or by dragging the mouse
-through a portion of the data.  If the mouse drags off
+to #f (its default is #t which can slow down editing of very large sounds).
+<A NAME="mousedefsect">Regions</a> can be defined by <a href="extsnd.html#sndmakeregion">make-region</a>, by dragging the mouse
+through a portion of the data, or via 
+the <A NAME="selectall">Select All</a> menu option.
+If the mouse drags off
 the end of the graph, the x axis moves, in a sense dragging
 the data along to try to keep up with the mouse; the further
 away the mouse is from the display, the faster the axis
 moves.  (One minor caveat: if you drag the mouse too quickly off the end
 of the graph, making a grand sweeping gesture, the last portion
 of the graph may be missed because the mouse updates are
-coalesced to some extent; move deliberately as you near the end
+coalesced by X; move deliberately as you near the end
 of the sound).  In large sounds, the mouse "granularity" can be
 large, but you can zoom onto the start or end of the selected
 portion and move them using <a href="extsnd.html#selectionposition">selection-position</a>
@@ -1143,17 +1172,6 @@ the file, the region is updated to reflect any edits
 you made.
 </p>
 
-<p><A NAME="selectall"></a>The Select all menu option (in the
-Edit menu) uses the region mechanism as a way to save
-the entire current sync'd state.  Besides making it easier to
-select an entire file (mouse event handling can make it tiresome to
-pick up the last few samples sometimes), this option provides a
-quick way to save in a temporary place the current edits applied
-to some file, channel, or group thereof.  You can then quickly
-return to this state later via the region browser.
-</p>
-<br clear=left>
-<br>
 <p>The keyboard commands that apply to regions are:</p>
 <pre>
   <A NAME="cy">C-y</a>         paste in current selection at cursor
@@ -1170,7 +1188,7 @@ return to this state later via the region browser.
 </pre>
 
 <p>If the current selection is active (displayed somewhere in the
-current time domain displays), there are lots of <a href="extsnd.html#sndregions">functions</a> that
+current time domain displays), there are lots of functions that
 can edit that portion of the current sounds.
 If the 'selection' button is set in the transform options dialog,
 (or equivalently, <a href="extsnd.html#lshowselectiontransform">show-selection-transform</a>
@@ -1182,7 +1200,7 @@ is #t), the fft display, if any, displays the transform of the selected portion.
 
 <p>The current state of the undo/redo list can be viewed
 as a scrolled list of strings in the pane on the left of the 
-graph (in Motif 1, there's a 'Show Edit History' menu option).
+graph.
 If there are no
 current edits, it just lists the associated file name
 (i.e. the zero-edits state).  As you edit the sound,
@@ -1247,7 +1265,7 @@ file which can be sent to directly a printer or saved for later use.</p>
 <h4><A NAME="deleteinsert">Delete, insert, mix</a></h4>
 
 <A NAME="editcut"></a><p>The fastest way to delete a section is to drag the mouse through it and
-call the Edit menu's Cut option.  Any active region
+call the Edit menu's Delete selection option.  Any region
 can be pasted or mixed in using C-x q and C-x i with a
 numeric argument (the region number); the current selection
 (region 0) can be pasted in
@@ -1279,7 +1297,7 @@ cursor, define a command something like:</p>
 <A NAME="syncbutton"></a><p>Normally each operation applies only to the currently
 active channel.  If, however, the sound's 'sync' button is set,
 the operations apply to every sound or channel that also
-has the sync button set to the same value.  If you click
+has the sync field set to the same value.  If you click
 the 'sync' button, its value is 1 and its color is blue;
 C-click gives 2 and green, C-M-click gives 3 and yellow;
 C-M-Shift-click gives 4 and red; any other value (set via
@@ -1303,8 +1321,7 @@ scrollbar affects the placement of the window within
 the overall set of graphs, and the scrollbar on its left
 zooms in and out of the overall graph.  For stereo files,
 this is user-interface overkill, but the hope is to
-accommodate sounds with many channels, making it easy
-to focus on particular portions and so on.
+accommodate sounds with many channels.
 The View menu Channel style
 option has the same effect but applies to all active
 multichannel sounds.  Control-click the unite button
@@ -1326,10 +1343,10 @@ selected.</p>
 <p>An envelope in Snd is a list of x y break-point pairs.
 The x axis range is arbitrary. For example,
 to define a triangle curve: '(0 0 1 1 2 0).
-There is no (obvious) limit on the number of
+There is no preset limit on the number of
 breakpoints.  Envelopes can be defined with
-define (or defvar) and referred to thereafter by name.  This
-can save much typing.  Use the <a href="#editenvelope">envelope editor</a>
+define and referred to thereafter by name.
+Use the <a href="#editenvelope">envelope editor</a>
 to draw envelopes with the mouse.
 </p>
 
@@ -1346,7 +1363,7 @@ applied to the entire file.</p>
 </p>
 
 <A NAME="scaling"></a><p>To scale a file or selection by or to some
-amplitude, use the lisp functions:</p>
+amplitude, use the functions:</p>
 <pre>
   <a href="extsnd.html#sndscaleby">scale-by</a> args
   <a href="extsnd.html#sndscaleto">scale-to</a> args
@@ -1379,7 +1396,7 @@ in general, patterned after Emacs.  When you type
 C-s or C-r, the minibuffer below the graph is
 activated and you are asked for the search expression.
 The expression is a
-Scheme function that takes one argument, the current
+function that takes one argument, the current
 sample value, and returns #t when it finds a match.  For example,
 to look for the next sample that is greater than
 .1, <code>(lambda (y) (&gt; y .1))</code>.  The
@@ -1388,26 +1405,20 @@ to the next such sample, if any.
 Successive C-s's
 or C-r's repeat the search.  C-x C-s can redefine the
 search pattern, which is also cleared by various other
-commands, much as in Emacs. To place the cursor offset from the
-location that would have stopped the search, return an integer
-representing that offset.  For example <code>(lambda (y) (and (&gt; y .1) -2))</code>
-finds the next sample greater than .1, and places the cursor two samples before it.
-</p>
-
-<p>The search commands are:</p>
+commands, much as in Emacs.
+The search commands are:</p>
 <pre>
   <A NAME="cr">C-r</a>   find backwards
   <A NAME="cs">C-s</a>   find forwards
 </pre>
 <p>These searching functions can be closures; the following, for example, searches for
-the next positive-going zero crossing, placing the cursor just before it:
-</p>
+the next positive-going zero crossing, placing the cursor just before it:</p>
 <pre>
 (define (zero+)
   (let ((lastn 0.0))
     (lambda (n)
-      (let ((rtn (and (< lastn 0.0)
-		      (>= n 0.0)
+      (let ((rtn (and (&lt; lastn 0.0)
+		      (&gt;= n 0.0)
 		      -1)))
 	(set! lastn n)
 	rtn))))
@@ -1427,7 +1438,6 @@ See also the functions <a href="extsnd.html#lfind">find</a> and <a href="extsnd.
 
 <p>M-x (set! (sample (cursor)) .1) sets the sample
 at the cursor to .1.  To set several samples to zero, use C-u <number> C-z.
-For much fancier stuff, see <a href="extsnd.html#scanchan">scan-chan</a> and <a href="extsnd.html#mapchan">map-chan</a>.
 </p>
 
         <!-- I(change samples):A(changesamples) --><!-- I(change samples):K(C-z, C-x C-z)(cz) -->
@@ -1436,7 +1446,7 @@ For much fancier stuff, see <a href="extsnd.html#scanchan">scan-chan</a> and <a 
 <h4><A NAME="undoredo">Undo, redo, revert</a></h4>
 
 <p>Snd supports 'unlimited undo' in the sense that you can
-move back and forth in the list of edits without any obvious
+move back and forth in the list of edits without any
 limit on how long that list can get.  The data displayed is
 always the edited form thereof.  Each editing operation
 extends the current edit list; each undo backs up in that
@@ -1485,11 +1495,6 @@ The color of the play button corresponds to the state of
 the playback: normal: not playing, blue: playing,
 green: playing and tracking with the cursor (if any),
 red: playback paused.</p>
-
-<p><small>In Linux, the soundcard input lines are sometimes left active
-by default, causing an amazing amount of hum and whatnot.  To
-try to turn these off, call the function clear-audio-inputs.
-</small></p>
 
 <p>
 If you're getting
@@ -1787,8 +1792,7 @@ operations.
 </p>
 
 <p>
-To interrupt the application of the envelope, click the
-'Stop' button.  To apply the changes to the current
+To apply the envelope to the current
 selection, rather than the current sound, set the 'selection' button.
 To apply it to the currently selected mix, set the 'mix' button.
 In this case, if the mix has multiple input channels, the envelope
@@ -2085,13 +2089,13 @@ all the samples between the cursor and the next mark.</p>
 </pre></small></code></td></tr>
 <tr><td>C-x C-z</td><td>smooth using cosine</td><td><code><small>(lambda (arg) (smooth-sound (cursor) arg))</small></code></td></tr>
 </table>
-<p>In addition, within the listener, the "minibuffer", and the filter text field the commands, M-p and M-n
-march back and forth in the list of saved strings, much as in
+<p>In the listener, the minibuffer, and the filter text field, the commands M-p and M-n
+march back and forth in a list of saved strings, much as in
 a shell (this applies only to the Motif version; in the Gtk+
 version, M-p and M-n are menu accelerators).
-This is especially useful in the listener in conjunction with C-M-g (clear listener).  It is
+It is
 not uncommon to make some typo or forget an argument while trying things out in the listener.
-If the error happens within map-channel or some other long loop, you get a raft of
+If the error happens within some long loop, you can get a raft of
 error messages.  C-g interrupts the computation, C-M-g clears out all the error messages,
 and M-p reloads the listener with the last line you typed, ready to be edited.
 </p>
@@ -2104,11 +2108,8 @@ and M-p reloads the listener with the last line you typed, ready to be edited.
 <br>
 <span class=box><h2><A NAME="controls">The Control Panel</a></h2></span>
 
-<p>The control panel is the portion of each sound's display
-beneath the channel graphs.  It is normally hidden, except
-for the upper portion that shows the file name, the
-sync and play buttons, and the minibuffer (the portion
-in between that opens into a text window when activated).
+<p>The control panel is the portion of each sound's pane
+beneath the channel graphs.
 </p>
 <center><img src="controls.png" alt="picture of Snd control panel"></center>
 
@@ -2121,9 +2122,9 @@ Another term might be 'srate'.  Snd normally uses
 sinc interpolation to perform the speed
 change, but slow machines may not be able to handle the computational
 burden; in that case, <code>(set! (use-sinc-interp) #f)</code>; the
-fallback method is linear interpolation.
+fallback (lo-fi) method is linear interpolation.
 The arrow button on the right determines
-the direction we move through the data.
+the direction Snd moves through the data.
 The scroll bar position is normally interpreted
 as a float between .05 and 20.  The Options
 Speed Style menu (or the speed-control-style variable)

@@ -24,6 +24,7 @@
 
 /* HISTORY:
  *  
+ *   17-Feb-03: added XEN_HOOK_P
  *   20-Jan-03: added Windows case for auto-import loader bugfix.
  *   19-Dec-02: proc arg checks for Ruby (to make sure XEN_[N|V]ARGIFY|DEFINE_PROCEDURE[etc] agree)
  *   29-Jul-02: SCM_WRITABLE_VELTS for current CVS Guile
@@ -309,6 +310,7 @@
 #define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
 #define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
+#define XEN_HOOK_P(Arg)               (SCM_HOOKP(Arg))
 
 #define XEN_LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))
 #define XEN_LIST_REF(Lst, Num)        scm_list_ref(Lst, C_TO_SMALL_XEN_INT(Num))
@@ -665,6 +667,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_ULONG_P(Arg1)                XEN_INTEGER_P(Arg1)
 #define XEN_EXACT_P(Arg1)                XEN_INTEGER_P(Arg1)
 #define XEN_OFF_T_P(Arg)                 ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
+#define XEN_HOOK_P(Arg)                  XEN_PROCEDURE_P(Arg)
 
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)
@@ -1154,6 +1157,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_TO_C_ULONG(a) 0
 #define C_TO_XEN_ULONG(a) 0
 #define XEN_ULONG_P(Arg) 0
+#define XEN_HOOK_P(Arg) 0
 #define XEN_EXACT_P(Arg) 0
 #define XEN_LIST_P(Arg) 0
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) 0

@@ -241,7 +241,8 @@ char *version_info(void)
 	  _("\n    with large file support"),
 #endif
 #if ENABLE_NLS && HAVE_GETTEXT
-	  _("\n    with gettext"),
+	  _("\n    with gettext: "),
+	  setlocale(LC_ALL, NULL),
 #endif
 #ifdef __DATE__
 	  "\n    Compiled ", __DATE__, " ", __TIME__,
@@ -271,10 +272,10 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+17-Feb:  snd 6.6.\n\
 10-Feb:  removed click-for-help option.\n\
 7-Feb:   German translation (po/de.po) thanks to Michael Scholz.\n\
 30-Jan:  gettext changes\n\
-12-Jan:  snd-6.5\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

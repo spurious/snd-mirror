@@ -28,7 +28,7 @@ void dump_protection(FILE *Fp)
       {
 	fprintf(Fp,"  %d %p %s\n", i, gcdata[i], XEN_AS_STRING(gcdata[i]));
 #if HAVE_GUILE
-	if (XEN_TRUE_P(scm_hook_p(gcdata[i])))
+	if (XEN_HOOK_P(gcdata[i]))
 	  fprintf(Fp, "    -> %s\n", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
 #endif
       }
@@ -3430,6 +3430,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                                 (if (not (member new-path %load-path))\
 	                                            (set! %load-path (cons new-path %load-path))))))))");
 #endif
+  /* TODO: Ruby clm-print support (and snd-apropos?, and debugger for that matter?) */
 
 #if HAVE_STATIC_XM
 #if HAVE_GUILE

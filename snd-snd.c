@@ -349,7 +349,8 @@ int amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, int sta
     }
   if ((start_new) &&
       (!(cgx->amp_env_in_progress)) && 
-      (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF)) 
+      (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF) &&
+      (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
     start_amp_env(cp);
   return(FALSE);
 }

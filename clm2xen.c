@@ -2671,8 +2671,15 @@ is basically the same as make-oscil"
     }
   if (wave == NULL) 
     {
-      if (partials == NULL) return(XEN_FALSE);
-      wave = mus_partials2waveshape(npartials, partials, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
+      if (partials == NULL)
+	{
+	  /* clm.html says '(1 1) is the default */
+	  Float data[2];
+	  data[0] = 0.0;
+	  data[1] = 1.0;
+	  wave = mus_partials2waveshape(1, data, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
+	}
+      else wave = mus_partials2waveshape(npartials, partials, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
     }
   if (partials_allocated) {FREE(partials); partials = NULL;}
   ge = mus_make_waveshape(freq, 0.0, wave, wsize);

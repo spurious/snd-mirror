@@ -8056,7 +8056,7 @@ remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-
 
 
 <p>In addition, the hook <em class=def><a name="menuhook">menu-hook</a></em> is checked each time a menu item is selected;
-its entries should be functions of two arguments, the top menu name and the option
+its entries should be functions of two arguments, the parent menu name and the option
 selected (both as strings), and should return #f if it wants to override the default
 menu action.</p>
 
@@ -9440,10 +9440,10 @@ currently in the time-domain graph:
 	      (text-width (* 6 (string-length text)))
 	      (ls (left-sample snd chn))
 	      (rs (right-sample snd chn)))
-	 (if (and (< ls samp)
-		  (> rs samp))
-	     (let ((xpos (x->position (/ samp (srate))))
-		   (ypos (y->position (sample samp))))
+	 (if (and (&lt; ls samp)
+		  (&gt; rs samp))
+	     (let ((xpos (x-&gt;position (/ samp (srate))))
+		   (ypos (y-&gt;position (sample samp))))
 	       (draw-line xpos 20 xpos (- ypos 4))
 	       (draw-string text (- xpos (/ text-width 2)) 18)))))
      comments)))

@@ -1352,6 +1352,7 @@ selection is used."
 	      si = snd_sync(ss, sp->sync);
 	      sp->sync = old_sync;
 	    }
+	  else return(snd_no_such_sound_error(S_make_region, snd_n));
 	}
       else
 	{

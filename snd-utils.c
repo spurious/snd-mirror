@@ -666,6 +666,8 @@ int io_fclose(FILE *stream, const char *func, const char *file, int line)
   return(fclose(stream));
 }
 
+/* TODO: gtk side of the remove_menu unprotect callback stuff */
+
 void dump_protection(FILE *Fp);
 
 void mem_report(void)
@@ -760,7 +762,15 @@ void mem_report(void)
 	  if (have_stacks)
 	    for (j = 0; j < mem_size; j++)
 	      if ((stacks[j]) && (locations[j] == ptr) && (pointers[j]))
-		fprintf(Fp, "    %s\n", stacks[j]);
+		fprintf(Fp, "    %s    %p\n", stacks[j], (void *)(pointers[j]));
+	  if ((strcmp("mus_format", functions[ptr]) == 0) ||
+	      (strcmp("copy_string", functions[ptr]) == 0))
+	    {
+	      for (j = 0; j < mem_size; j++)
+		if ((locations[j] == ptr) && (pointers[j]))
+		  fprintf(Fp, "[%s] ", (char *)(pointers[j]));
+	      fprintf(Fp, "\n");
+	    }
 	}
     }
   for (i = 0; i < 512; i++)

@@ -535,7 +535,8 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 	}
     }
   if ((CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF) &&
-      (cp->amp_envs[0] == NULL))                      /* perhaps created in initial-graph-hook by read-peak-env-info-file */
+      (cp->amp_envs[0] == NULL) &&                     /* perhaps created in initial-graph-hook by read-peak-env-info-file */
+      (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
     start_amp_env(cp);
 }
 
@@ -4122,7 +4123,9 @@ enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP
       CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR
 };
 
+#define EDPOS_NOT_PROTECTED -1
 static XEN cp_edpos;
+static int cp_edpos_loc = EDPOS_NOT_PROTECTED;
 
 static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 {
@@ -4729,11 +4732,13 @@ static XEN g_cursor(XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
-      int loc;
+      if (cp_edpos_loc != EDPOS_NOT_PROTECTED)
+	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
-      loc = snd_protect(cp_edpos);
+      cp_edpos_loc = snd_protect(cp_edpos);
       res = channel_get(snd_n, chn_n, CP_EDPOS_CURSOR, S_cursor);
-      snd_unprotect_at(loc);
+      snd_unprotect_at(cp_edpos_loc);
+      cp_edpos_loc = EDPOS_NOT_PROTECTED;
       return(res);
     }
   return(channel_get(snd_n, chn_n, CP_CURSOR, S_cursor));
@@ -4745,11 +4750,13 @@ static XEN g_set_cursor(XEN on, XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
-      int loc;
+      if (cp_edpos_loc != EDPOS_NOT_PROTECTED)
+	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
-      loc = snd_protect(cp_edpos);
+      cp_edpos_loc = snd_protect(cp_edpos);
       res = channel_set(snd_n, chn_n, on, CP_EDPOS_CURSOR, S_setB S_cursor);
-      snd_unprotect_at(loc);
+      snd_unprotect_at(cp_edpos_loc);
+      cp_edpos_loc = EDPOS_NOT_PROTECTED;
       return(res);
     }
   return(channel_set(snd_n, chn_n, on, CP_CURSOR, S_setB S_cursor));
@@ -4814,11 +4821,13 @@ static XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos)
   XEN res;
   if (XEN_BOUND_P(edpos))
     {
-      int loc;
+      if (cp_edpos_loc != EDPOS_NOT_PROTECTED)
+	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
-      loc = snd_protect(cp_edpos);
+      cp_edpos_loc = snd_protect(cp_edpos);
       res = channel_get(snd_n, chn_n, CP_EDPOS_FRAMES, S_frames);
-      snd_unprotect_at(loc);
+      snd_unprotect_at(cp_edpos_loc);
+      cp_edpos_loc = EDPOS_NOT_PROTECTED;
       return(res);
     }
   return(channel_get(snd_n, chn_n, CP_FRAMES, S_frames));
@@ -4838,11 +4847,13 @@ static XEN g_maxamp(XEN snd_n, XEN chn_n, XEN edpos)
   XEN res;
   if (XEN_BOUND_P(edpos))
     {
-      int loc;
+      if (cp_edpos_loc != EDPOS_NOT_PROTECTED)
+	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
-      loc = snd_protect(cp_edpos);
+      cp_edpos_loc = snd_protect(cp_edpos);
       res = channel_get(snd_n, chn_n, CP_EDPOS_MAXAMP, S_maxamp);
-      snd_unprotect_at(loc);
+      snd_unprotect_at(cp_edpos_loc);
+      cp_edpos_loc = EDPOS_NOT_PROTECTED;
       return(res);
     }
   return(channel_get(snd_n, chn_n, CP_MAXAMP, S_maxamp));

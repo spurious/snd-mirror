@@ -69,8 +69,9 @@
  * TODO: left|right-sample? mark-name? mark? mark-sample mark-sync find-mark
  * TODO: optimization? mix/track/region sample readers? region info? selection info? mix info?
  * TODO: samples->vct? samples? access to sound|channel-properties? sound?
- * TODO: in-Hz? make funcs? xcoeffs? ycoeffs? partial->poly etc?
- * TODO: finish keyword support (aimed at make-funcs using indirection a la format_1, but that leaves gc undecided - (un)protect?)
+ * TODO: in-Hz? xcoeffs? ycoeffs? partial->poly etc?
+ * TODO: non-constant lists passed as xenable args (for make-env)
+ * TODO: save ptree somehow (local runs make this problematic)
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -314,7 +315,7 @@ typedef struct {
   int gc;
 } xen_value;
 
-#if 1
+#if (!DEBUG_MEMORY)
 static xen_value *make_xen_value(int typ, int address, int constant)
 {
   xen_value *v;
@@ -455,6 +456,8 @@ typedef struct {
   int goto_ctr, gotos_size;
   xen_value **gcs;
   int gc_ctr, gcs_size;
+  int *gc_protected;
+  int gc_protected_ctr, gc_protected_size;
   int initial_pc;
   int need_init;
   XEN code, form;
@@ -569,6 +572,7 @@ static char *add_comments(ptree *pt, char *str)
   char *new_buf;
   char name[64];
   int name_pending = FALSE;
+  if (str == NULL) return(NULL);
   /* look for i%n(...) or d%n(...), if found, look for addr in pt tables, if found add name to buf */
   len = snd_strlen(str);
   new_buf = (char *)CALLOC(len + 256, sizeof(char));
@@ -691,8 +695,11 @@ static char *describe_ptree(ptree *p)
   for (i = 0; i < p->triple_ctr; i++)
     {
       temp = add_comments(p, describe_triple(p->program[i], ints, dbls));
-      buf = str_append(buf, &size, mus_format("  %d: %s\n", i, temp));
-      FREE(temp);
+      if (temp)
+	{
+	  buf = str_append(buf, &size, mus_format("  %d: %s\n", i, temp));
+	  FREE(temp);
+	}
     }
   strcat(buf, "\n");
   for (i = 0; i < p->var_ctr; i++)
@@ -738,7 +745,9 @@ typedef struct {
 static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
 {
   char *buf = NULL;
+  char *vstr;
   if (v == NULL) return(copy_string("null xen_value"));
+  if (ints == NULL) return(copy_string("null ints???"));
   switch (v->type)
     {
     case R_BOOL:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "i%d(%s)", v->addr, (ints[v->addr] == 0) ? "#f" : "#t");   break;
@@ -747,6 +756,7 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
     case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); mus_snprintf(buf, 256, STR_PT , v->addr, (char *)(ints[v->addr]));              break;
     case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, FLT_PT , v->addr, dbls[v->addr]);                          break;
     case R_KEYWORD: buf = (char *)CALLOC(64, sizeof(char)); mus_snprintf(buf, 64, "i%d(%s)" , v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); break;
+    case R_GOTO:    buf = mus_format("continuation: " INT_PT , v->addr, ints[v->addr]);                                                      break;
     case R_LIST:
     case R_PAIR:
       buf = (char *)CALLOC(512, sizeof(char)); 
@@ -755,16 +765,39 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
       else sprintf(buf, "non-constant cons");
       break;
     case R_FLOAT_VECTOR:
-    case R_VCT:         buf = vct_to_string((vct *)(ints[v->addr]));                                                                         break;
-    case R_READER:      if (ints[v->addr]) buf = sf_to_string((snd_fd *)(ints[v->addr])); else buf = copy_string("null");                    break;
-    case R_CLM:         if (ints[v->addr]) buf = copy_string(mus_describe((mus_any *)(ints[v->addr])));  else buf = copy_string("null");     break;
-    case R_GOTO:        return(mus_format("continuation: " INT_PT , v->addr, ints[v->addr]));                                                break;
-    case R_FUNCTION:    return(describe_ptree((ptree *)(ints[v->addr])));                                                                    break;
+    case R_VCT:
+      if (ints[v->addr])
+	{
+	  vstr = vct_to_string((vct *)(ints[v->addr]));
+	  buf = mus_format("v%d(%s)", v->addr, vstr);
+	  if (vstr) FREE(vstr);
+	}
+      else buf = copy_string("null");
+      break;
+    case R_READER:
+      if (ints[v->addr])
+	{
+	  vstr = sf_to_string((snd_fd *)(ints[v->addr]));
+	  buf = mus_format("r%d(%s)", v->addr, vstr);
+	  if (vstr) FREE(vstr);
+	}
+      else buf = copy_string("null");
+      break;
+    case R_CLM:
+      if (ints[v->addr]) 
+	buf = mus_format("c%d(%s)", v->addr, mus_describe((mus_any *)(ints[v->addr])));  
+      else buf = copy_string("null");
+      break;
+    case R_FUNCTION: 
+      if (ints[v->addr])
+	buf = describe_ptree((ptree *)(ints[v->addr]));
+      else buf = copy_string("internal lambda?");
+      break;
     case R_INT_VECTOR:  return(mus_format("int vector " PTR_PT , v->addr, (int_vct *)(ints[v->addr])));                                      break;
     case R_VCT_VECTOR:  return(mus_format("vct vector " PTR_PT , v->addr, (vct_vct *)(ints[v->addr])));                                      break;
     case R_CLM_VECTOR:  return(mus_format("clm vector " PTR_PT , v->addr, (clm_vct *)(ints[v->addr])));                                      break;
     case R_UNSPECIFIED: return(copy_string("#<unspecified>"));                                                                               break;
-    default:            buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "unknown type: %d", v->type);                          break;
+    default:            buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "i%d(unknown type: %d)", v->addr, v->type);            break;
     }
   return(buf);
 }
@@ -799,6 +832,9 @@ static ptree *make_ptree(int initial_data_size)
   pt->gcs = NULL;
   pt->gc_ctr = 0;
   pt->gcs_size = 0;
+  pt->gc_protected = NULL;
+  pt->gc_protected_ctr = 0;
+  pt->gc_protected_size = 0;
   pt->initial_pc = 0;
   pt->code = XEN_FALSE;
   pt->strs_size = 0;
@@ -843,7 +879,9 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->gcs_size = pt->gcs_size;
   new_tree->str_ctr = pt->str_ctr;
   new_tree->strs_size = pt->strs_size;
-
+  new_tree->gc_protected = pt->gc_protected;
+  new_tree->gc_protected_ctr = pt->gc_protected_ctr;
+  new_tree->gc_protected_size = pt->gc_protected_size;
   return(new_tree);
 }
 
@@ -857,6 +895,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->gcs = inner->gcs;
   outer->gotos = inner->gotos;
   outer->strs = inner->strs;
+  outer->gc_protected = inner->gc_protected;
 
   inner->ints = NULL;
   inner->dbls = NULL;
@@ -865,6 +904,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->gcs = NULL;
   inner->gotos = NULL;
   inner->strs = NULL;
+  inner->gc_protected = NULL;
 
   outer->ints_size = inner->ints_size;
   outer->dbls_size = inner->dbls_size;
@@ -881,6 +921,8 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->str_ctr = inner->str_ctr;
   outer->strs_size = inner->strs_size;
   outer->need_init = (outer->need_init || inner->need_init);
+  outer->gc_protected_ctr = inner->gc_protected_ctr;
+  outer->gc_protected_size = inner->gc_protected_size;
 
   inner->ints_size = 0;
   inner->dbls_size = 0;
@@ -897,6 +939,8 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->str_ctr = 0;
   inner->strs_size = 0;
   inner->need_init = 0;
+  inner->gc_protected_size = 0;
+  inner->gc_protected_ctr = 0;
 }
 
 
@@ -1051,31 +1095,34 @@ void *free_ptree(void *upt)
 	    {
 	      xen_value *v;
 	      v = pt->gcs[i];
-	      if ((v) && (v->gc))
+	      if (v)
 		{
-		  if (pt->ints[v->addr])
+		  if (v->gc)
 		    {
-		      switch (v->type)
+		      if (pt->ints[v->addr])
 			{
-			case R_VCT:          c_free_vct((vct *)(pt->ints[v->addr]));            break;
-			case R_READER:       free_snd_fd((snd_fd *)(pt->ints[v->addr]));        break;
-			case R_FUNCTION:     free_embedded_ptree((ptree *)(pt->ints[v->addr])); break;
-			case R_CLM:          mus_free((mus_any *)(pt->ints[v->addr]));          break;
-			case R_FLOAT_VECTOR: c_free_vct((vct *)(pt->ints[v->addr]));            break;
-			case R_INT_VECTOR:   free_int_vct((int_vct *)(pt->ints[v->addr]));      break;
-			case R_CLM_VECTOR:   free_clm_vct((clm_vct *)(pt->ints[v->addr]));      break;
-			case R_VCT_VECTOR:   free_vct_vct((vct_vct *)(pt->ints[v->addr]));      break;
-			case R_STRING:       
-			  if (pt->ints[v->addr]) 
+			  switch (v->type)
 			    {
-			      FREE((char *)(pt->ints[v->addr]));
-			      pt->ints[v->addr] = 0;
+			    case R_VCT:          c_free_vct((vct *)(pt->ints[v->addr]));            break;
+			    case R_READER:       free_snd_fd((snd_fd *)(pt->ints[v->addr]));        break;
+			    case R_FUNCTION:     free_embedded_ptree((ptree *)(pt->ints[v->addr])); break;
+			    case R_CLM:          mus_free((mus_any *)(pt->ints[v->addr]));          break;
+			    case R_FLOAT_VECTOR: c_free_vct((vct *)(pt->ints[v->addr]));            break;
+			    case R_INT_VECTOR:   free_int_vct((int_vct *)(pt->ints[v->addr]));      break;
+			    case R_CLM_VECTOR:   free_clm_vct((clm_vct *)(pt->ints[v->addr]));      break;
+			    case R_VCT_VECTOR:   free_vct_vct((vct_vct *)(pt->ints[v->addr]));      break;
+			    case R_STRING:       
+			      if (pt->ints[v->addr]) 
+				{
+				  FREE((char *)(pt->ints[v->addr]));
+				  pt->ints[v->addr] = 0;
+				}
+			      break;
 			    }
-			  break;
+			  pt->ints[v->addr] = 0;
 			}
-		      pt->ints[v->addr] = 0;
+		      v->gc = FALSE;
 		    }
-		  v->gc = FALSE;
 		  FREE(v);
 		  pt->gcs[i] = NULL;
 		}
@@ -1091,6 +1138,12 @@ void *free_ptree(void *upt)
 		pt->ints[pt->strs[i]] = 0;
 	      }
 	  FREE(pt->strs);
+	}
+      if (pt->gc_protected)
+	{
+	  for (i = 0; i < pt->gc_protected_ctr; i++)
+	    snd_unprotect_at(pt->gc_protected[i]);
+	  FREE(pt->gc_protected);
 	}
       if (pt->program)
 	{
@@ -1274,7 +1327,6 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
 static void add_xen_value_to_gcs(ptree *pt, xen_value *v)
 {
   int old_size, i;
-  v->gc = TRUE;
   if (pt->gc_ctr >= pt->gcs_size)
     {
       old_size = pt->gcs_size;
@@ -1292,7 +1344,28 @@ static void add_xen_value_to_gcs(ptree *pt, xen_value *v)
 
 static void add_obj_to_gcs(ptree *pt, int type, int addr)
 {
-  add_xen_value_to_gcs(pt, make_xen_value(type, addr, R_VARIABLE));
+  xen_value *v;
+  v = make_xen_value(type, addr, R_VARIABLE);
+  v->gc = TRUE;
+  add_xen_value_to_gcs(pt, v);
+}
+
+static void add_loc_to_protected_list(ptree *pt, int loc)
+{
+  int old_size, i;
+  if (pt->gc_protected_ctr >= pt->gc_protected_size)
+    {
+      old_size = pt->gc_protected_size;
+      pt->gc_protected_size += 8;
+      if (old_size == 0)
+	pt->gc_protected = (int *)CALLOC(pt->gc_protected_size, sizeof(int));
+      else
+	{
+	  pt->gc_protected = (int *)REALLOC(pt->gc_protected, pt->gc_protected_size * sizeof(int));
+	  for (i = old_size; i < pt->gc_protected_size; i++) pt->gc_protected[i] = -1;
+	}
+    }
+  pt->gc_protected[pt->gc_protected_ctr++] = loc;
 }
 
 static int_vct *read_int_vector(XEN vect)
@@ -1654,9 +1727,13 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, int *ints, Float 
 #if (!(defined(__GNUC__))) || (defined(__cplusplus))
   #define STRING_RESULT (*((char **)(&(ints[args[0]]))))
   #define CHAR_RESULT (*((char *)(&(ints[args[0]]))))
+  #define CLM_RESULT (*((mus_any **)(&(ints[args[0]]))))
+  #define VCT_RESULT (*((vct **)(&(ints[args[0]]))))
 #else
   #define STRING_RESULT ((char *)(ints[args[0]]))
   #define CHAR_RESULT ((char)(ints[args[0]]))
+  #define CLM_RESULT ((mus_any *)(ints[args[0]]))
+  #define VCT_RESULT ((vct *)(ints[args[0]]))
 #endif
 #define BOOL_ARG_1 ints[args[1]]
 #define BOOL_ARG_2 ints[args[2]]
@@ -2027,19 +2104,27 @@ static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **a
       new_tree = attach_to_ptree(prog);
       new_tree->code = XEN_FALSE;
       outer_locals = prog->var_ctr;
-      declare_args(new_tree, form, R_INT, separate, args, num_args);
-      new_tree->result = walk_then_undefine(new_tree, XEN_CDDR(form), TRUE, "lambda", prog->var_ctr);
-      if (new_tree->result)
+      err = declare_args(new_tree, form, R_INT, separate, args, num_args);
+      if (err)
 	{
-	  xen_value *v;
-	  add_triple_to_ptree(new_tree, make_triple(quit, descr_quit, NULL, 0));
-	  unattach_ptree(new_tree, prog);
-	  for (i = outer_locals; i < prog->var_ctr; i++)
-	    if (prog->vars[i]) prog->vars[i] = free_xen_var(prog, prog->vars[i]);
-	  prog->var_ctr = outer_locals;
-	  v = make_xen_value(R_FUNCTION, add_int_to_ptree(prog, (int)new_tree), R_VARIABLE);
-	  add_obj_to_gcs(prog, R_FUNCTION, v->addr);
-	  return(v);
+	  run_warn(err);
+	  FREE(err);
+	}
+      else
+	{
+	  new_tree->result = walk_then_undefine(new_tree, XEN_CDDR(form), TRUE, "lambda", prog->var_ctr);
+	  if (new_tree->result)
+	    {
+	      xen_value *v;
+	      add_triple_to_ptree(new_tree, make_triple(quit, descr_quit, NULL, 0));
+	      unattach_ptree(new_tree, prog);
+	      for (i = outer_locals; i < prog->var_ctr; i++)
+		if (prog->vars[i]) prog->vars[i] = free_xen_var(prog, prog->vars[i]);
+	      prog->var_ctr = outer_locals;
+	      v = make_xen_value(R_FUNCTION, add_int_to_ptree(prog, (int)new_tree), R_VARIABLE);
+	      add_obj_to_gcs(prog, R_FUNCTION, v->addr);
+	      return(v);
+	    }
 	}
       /* we get here if walk failed, so clean up */
       unattach_ptree(new_tree, prog); /* needed in case we realloc'd during failed tree walk */
@@ -2049,7 +2134,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **a
   got_lambda = TRUE;
   locals_loc = prog->var_ctr;
   err = declare_args(prog, form, R_FLOAT, separate, args, num_args);
-  if (err) return(run_warn(err));
+  if (err) return(run_warn_with_free(err));
   return(walk_then_undefine(prog, XEN_CDDR(form), TRUE, "lambda", locals_loc));
 }
 
@@ -2064,7 +2149,7 @@ static xen_value *let_star_form(ptree *prog, XEN form, int need_result)
   char *err = NULL;
   locals_loc = prog->var_ctr; /* lets can be nested */
   err = sequential_binds(prog, XEN_CADR(form), "let*");
-  if (err) return(run_warn(err));
+  if (err) return(run_warn_with_free(err));
   if (!got_lambda) prog->initial_pc = prog->triple_ctr;
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let*", locals_loc));
 }
@@ -5825,10 +5910,8 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 
 static void make_vct_v(int *args, int *ints, Float *dbls) 
 {
-  vct *v;
-  v = c_make_vct(INT_ARG_1);
-  if (INT_RESULT) c_free_vct((vct *)(INT_RESULT));
-  INT_RESULT = (int)v;
+  if (VCT_RESULT) c_free_vct(VCT_RESULT);
+  VCT_RESULT = c_make_vct(INT_ARG_1);
 }
 static char *descr_make_vct_v(int *args, int *ints, Float *dbls) 
 {
@@ -5838,9 +5921,9 @@ static void make_vct_v2(int *args, int *ints, Float *dbls)
 {
   vct *v;
   int i;
+  if (VCT_RESULT) c_free_vct(VCT_RESULT);
   v = c_make_vct(INT_ARG_1);
-  if (INT_RESULT) c_free_vct((vct *)(INT_RESULT));
-  INT_RESULT = (int)v;
+  VCT_RESULT = v;
   for (i = 0; i < v->length; i++) v->data[i] = FLOAT_ARG_2;
 }
 static char *descr_make_vct_v2(int *args, int *ints, Float *dbls) 
@@ -5859,10 +5942,8 @@ static xen_value *make_vct_1(ptree *prog, xen_value **args, int num_args)
 
 static void vct_copy_v(int *args, int *ints, Float *dbls) 
 {
-  vct *v;
-  v = c_vct_copy((vct *)(INT_ARG_1));
-  if (INT_RESULT) c_free_vct((vct *)(INT_RESULT));
-  INT_RESULT = (int)v;
+  if (VCT_RESULT) c_free_vct(VCT_RESULT);
+  VCT_RESULT = c_vct_copy((vct *)(INT_ARG_1));
 }
 static char *descr_vct_copy_v(int *args, int *ints, Float *dbls) 
 {
@@ -5880,9 +5961,9 @@ static xen_value *vct_copy_1(ptree *prog, xen_value **args, int num_args)
 static void vct_ ## CName ## _f(int *args, int *ints, Float *dbls) \
 { \
   int i; \
-  vct *v = (vct *)(INT_ARG_1); \
+  vct *v = VCT_ARG_1; \
   for (i = 0; i < v->length; i++) v->data[i] COp FLOAT_ARG_2; \
-  INT_RESULT = INT_ARG_1; \
+  VCT_RESULT = VCT_ARG_1; \
 } \
 static char *descr_vct_ ## CName ## _f(int *args, int *ints, Float *dbls)  \
 { \
@@ -5908,12 +5989,12 @@ VCT_OP_1(offset!, offset, +=)
 static void vct_ ## CName ## _f(int *args, int *ints, Float *dbls) \
 { \
   int i, len; \
-  vct *v0 = (vct *)(INT_ARG_1); \
-  vct *v1 = (vct *)(INT_ARG_2); \
+  vct *v0 = VCT_ARG_1; \
+  vct *v1 = VCT_ARG_2; \
   len = v0->length; \
   if (v1->length < len) len = v1->length; \
   for (i = 0; i < len; i++) v0->data[i] COp v1->data[i]; \
-  INT_RESULT = INT_ARG_1; \
+  VCT_RESULT = v0; \
 } \
 static char *descr_vct_ ## CName ## _f(int *args, int *ints, Float *dbls)  \
 { \
@@ -6522,6 +6603,7 @@ static xen_value *frame2file_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_CLM, frame2file_3, descr_frame2file_3, args, 3));
 }
 
+/* ---------------- file->frame ---------------- */
 static char *descr_file2frame_3(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( PTR_PT " = file->frame((" PTR_PT ", " INT_PT ", " PTR_PT ")", 
@@ -6531,8 +6613,21 @@ static void file2frame_3(int *args, int *ints, Float *dbls)
 {
   INT_RESULT = (int)mus_file2frame((mus_any *)(INT_ARG_1), INT_ARG_2, (mus_any *)(INT_ARG_3));
 }
+
+static char *descr_file2frame_2(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format( PTR_PT " = file->frame((" PTR_PT ", " INT_PT ")", 
+		     args[0], (void *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2));
+}
+static void file2frame_2(int *args, int *ints, Float *dbls) 
+{
+  if (INT_RESULT) mus_free((mus_any *)(INT_RESULT));
+  INT_RESULT = (int)(mus_file2frame((mus_any *)(INT_ARG_1), INT_ARG_2, NULL));
+}
 static xen_value *file2frame_1(ptree *prog, xen_value **args, int num_args) 
 {
+  if (num_args == 2)
+    return(package(prog, R_CLM, file2frame_2, descr_file2frame_2, args, 2));
   return(package(prog, R_CLM, file2frame_3, descr_file2frame_3, args, 3));
 }
 
@@ -7256,23 +7351,29 @@ static int xenable(xen_value *v)
 static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 {
   vct *vc;
+  XEN val = XEN_UNDEFINED;
   switch (v->type)
     {
-    case R_FLOAT:   return(C_TO_XEN_DOUBLE(pt->dbls[v->addr])); break;
-    case R_INT:     return(C_TO_XEN_INT(pt->ints[v->addr])); break;
-    case R_CHAR:    return(C_TO_XEN_CHAR((char)(pt->ints[v->addr]))); break;
-    case R_STRING:  return(C_TO_XEN_STRING((char *)(pt->ints[v->addr]))); break;
+    case R_FLOAT:   val = C_TO_XEN_DOUBLE(pt->dbls[v->addr]); break;
+    case R_INT:     val = C_TO_XEN_INT(pt->ints[v->addr]); break;
+    case R_CHAR:    val = C_TO_XEN_CHAR((char)(pt->ints[v->addr])); break;
+    case R_STRING:  val = C_TO_XEN_STRING((char *)(pt->ints[v->addr])); break;
     case R_BOOL:    return(C_TO_XEN_BOOLEAN(pt->ints[v->addr])); break;
     case R_KEYWORD:
     case R_LIST:    
-    case R_PAIR:    return((XEN)(pt->ints[v->addr])); break;
+    case R_PAIR:    val = (XEN)(pt->ints[v->addr]); break;
     case R_FLOAT_VECTOR:
     case R_VCT:
       vc = (vct *)(pt->ints[v->addr]);
-      return(make_vct_wrapper(vc->length, vc->data));
+      val = make_vct_wrapper(vc->length, vc->data);
       break;
     }
-  return(NULL);
+  if (XEN_BOUND_P(val))
+    {
+      add_loc_to_protected_list(pt, snd_protect(val));
+      return(val);
+    }
+  return(XEN_FALSE);
 }
 
 static triple *make_indirect_triple(void (*function)(int *arg_addrs, int *ints, Float *dbls),
@@ -7352,7 +7453,7 @@ static char *describe_indirect(const char *caller, int result_type, int *args, i
 	strcat(buf, descrs[i]);
       }
   strcat(buf, ")");
-  for (i = 0; i < num_args + 1; i++)
+  for (i = 0; i <= num_args + 1; i++)
     if (descrs[i]) FREE(descrs[i]);
   FREE(descrs);
   return(buf);
@@ -7489,10 +7590,13 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, int
       /* any further formats will be checked in walk, but this one needs explicit check */
       for (i = 1; i <= num_args; i++)
 	if (!(xenable(args[i])))
-	  return(run_warn("can't handle %s as arg (%d) to %s", 
-			  describe_xen_value(args[i + 1], prog->ints, prog->dbls),
-			  i,
-			  (is_format) ? "format" : "clm-print"));
+	  {
+	    char *xv;
+	    xv = describe_xen_value(args[i + 1], prog->ints, prog->dbls);
+	    run_warn("can't handle %s as arg (%d) to %s", xv, i, (is_format) ? "format" : "clm-print");
+	    FREE(xv);
+	    return(NULL);
+	  }
       /* no cleanup because it is handled in walk */
       if (is_format) 
 	return(format_1(prog, args, num_args));
@@ -7501,30 +7605,80 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, int
   return(run_warn("format not defined"));
 }
 
-#if 0
-/* with this and the keyword support, we should be able to add all the clm make functions (all in this mold):
-static void make_oscil_0(int *args, int *ints, Float *dbls) 
+#define CLM_MAKE_FUNC(Name) \
+static void make_ ## Name ## _0(int *args, int *ints, Float *dbls) \
+{ \
+  XEN res; \
+  res = XEN_APPLY(XEN_VARIABLE_REF(XEN_VAR_NAME_TO_VAR(S_make_ ## Name)), xen_values_to_list(PTREE, ints[args[1]], args, ints), S_make_ ## Name); \
+  if (mus_xen_p(res)) \
+    { \
+      add_loc_to_protected_list(PTREE, snd_protect(res)); \
+      CLM_RESULT = MUS_XEN_TO_CLM(res); \
+    } \
+  else CLM_RESULT = NULL; \
+} \
+static char *descr_make_ ## Name ## _0(int *args, int *ints, Float *dbls) {return(describe_indirect(S_make_ ## Name, R_CLM, args, ints, dbls));} \
+static xen_value *make_ ## Name ## _1(ptree *prog, xen_value **args, int num_args) \
+{ \
+  return(package_n_indirect(prog, R_CLM, make_ ## Name ## _0, descr_make_ ## Name ## _0, args, num_args)); \
+}
+
+CLM_MAKE_FUNC(all_pass)
+CLM_MAKE_FUNC(asymmetric_fm)
+CLM_MAKE_FUNC(buffer)
+CLM_MAKE_FUNC(comb)
+CLM_MAKE_FUNC(convolve)
+CLM_MAKE_FUNC(delay)
+CLM_MAKE_FUNC(env)
+CLM_MAKE_FUNC(file2frame)
+CLM_MAKE_FUNC(file2sample)
+CLM_MAKE_FUNC(filter)
+CLM_MAKE_FUNC(fir_filter)
+CLM_MAKE_FUNC(formant)
+CLM_MAKE_FUNC(frame)
+CLM_MAKE_FUNC(frame2file)
+CLM_MAKE_FUNC(granulate)
+CLM_MAKE_FUNC(iir_filter)
+CLM_MAKE_FUNC(locsig)
+CLM_MAKE_FUNC(mixer)
+CLM_MAKE_FUNC(notch)
+CLM_MAKE_FUNC(one_pole)
+CLM_MAKE_FUNC(one_zero)
+CLM_MAKE_FUNC(oscil)
+CLM_MAKE_FUNC(phase_vocoder)
+CLM_MAKE_FUNC(ppolar)
+CLM_MAKE_FUNC(pulse_train)
+CLM_MAKE_FUNC(rand)
+CLM_MAKE_FUNC(rand_interp)
+CLM_MAKE_FUNC(readin)
+CLM_MAKE_FUNC(sample2file)
+CLM_MAKE_FUNC(sawtooth_wave)
+CLM_MAKE_FUNC(sine_summation)
+CLM_MAKE_FUNC(square_wave)
+CLM_MAKE_FUNC(src)
+CLM_MAKE_FUNC(sum_of_cosines)
+CLM_MAKE_FUNC(table_lookup)
+CLM_MAKE_FUNC(triangle_wave)
+CLM_MAKE_FUNC(two_pole)
+CLM_MAKE_FUNC(two_zero)
+CLM_MAKE_FUNC(wave_train)
+CLM_MAKE_FUNC(waveshape)
+CLM_MAKE_FUNC(zpolar)
+
+static void make_fft_window_0(int *args, int *ints, Float *dbls)
 {
   XEN res;
-  if (CLM_RESULT) run_unprotect(CLM_RESULT)
-  res = XEN_APPLY(g_make_oscil, xen_values_to_list(PTREE, ints[args[1]], args, ints), S_make_oscil);
-  run_protect(res);
-  CLM_RESULT = res;
-} 
--- need run_protect(XEN val) and run_unprotect(mus_any *val) [snd_protect now returns loc for snd_unprotect, so just need table of clm->loc]
--- need g_make_oscil exported from clm2xen.c
--- need cleanup via gcs at end (unprotect pending clm_results)
-
-#define CLM_RESULT ((mus_any *)(ints[args[0]]))
-static char *descr_make_oscil_0(int *args, int *ints, Float *dbls) {return(describe_indirect(S_make_oscil, R_CLM, args, ints, dbls));}
-
-static xen_value *make_oscil_1(ptree *prog, xen_value **args, int num_args)
-{
-  return(package_n_indirect(prog, R_CLM, make_oscil_0, descr_make_oscil_0, args, num_args));
+  res = XEN_APPLY(XEN_VARIABLE_REF(XEN_VAR_NAME_TO_VAR(S_make_fft_window)), xen_values_to_list(PTREE, ints[args[1]], args, ints), S_make_fft_window);
+  add_loc_to_protected_list(PTREE, snd_protect(res));
+  VCT_RESULT = get_vct(res);
 }
-  INIT_WALKER(S_make_oscil, make_walker(make_oscil_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
-*/
-#endif
+static char *descr_make_fft_window_0(int *args, int *ints, Float *dbls) {return(describe_indirect(S_make_fft_window, R_VCT, args, ints, dbls));}
+static xen_value *make_fft_window_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package_n_indirect(prog, R_VCT, make_fft_window_0, descr_make_fft_window_0, args, num_args));
+}
+
+
 
 /* def-clm-struct support */
 
@@ -7760,6 +7914,11 @@ static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value *
   return(NULL);
 }
 
+#define WITH_PROCPROP 0
+/* aimed at eventual apply support -- places walker property on function so it can be
+ *   found even if name has changed -- (define hi min) for example (not very useful by itself)
+ */
+
 static xen_value *walk(ptree *prog, XEN form, int need_result)
 {
   /* walk form, storing vars, making program entries for operators etc */
@@ -7781,6 +7940,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (XEN_SYMBOL_P(function))
 	{
 	  walker = scm_object_property(function, walk_sym);
+#if WITH_PROCPROP
+	  if ((XEN_FALSE_P(walker)) && (XEN_PROCEDURE_P(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VAR(function)))))
+	    walker = scm_procedure_property(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VAR(function)), walk_sym);
+#endif
 	  if (XEN_ULONG_P(walker))
 	    {
 	      w = (walk_info *)(XEN_TO_C_ULONG(walker));
@@ -7991,8 +8154,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      got_lambda = old_got_lambda;
 	      if (v) 
 		{
+		  xen_value *result;
 		  add_var_to_ptree(prog, funcname, v);
-		  return(clean_up(funcall_n(prog, args, num_args, v), args, num_args));
+		  result = funcall_n(prog, args, num_args, v);
+		  FREE(v);
+		  return(clean_up(result, args, num_args));
 		}
 	    }
 	}
@@ -8514,7 +8680,14 @@ XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 #endif
 
 #if HAVE_GUILE && WITH_RUN
+
+#if WITH_PROCPROP
+#define INIT_WALKER(Name, Val) \
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val)); \
+  scm_set_procedure_property_x(XEN_VARIABLE_REF(XEN_VAR_NAME_TO_VAR(Name)), walk_sym, C_TO_XEN_ULONG(Val))
+#else
 #define INIT_WALKER(Name, Val) scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val))
+#endif
 
 static void init_walkers(void)
 {
@@ -8686,7 +8859,6 @@ static void init_walkers(void)
 
 
   /* -------- clm funcs */
-
   INIT_WALKER(S_buffer2sample, make_walker(mus_buffer2sample_0, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
   INIT_WALKER(S_oscil_p, make_walker(oscil_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
   INIT_WALKER(S_env_p, make_walker(env_p, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_CLM));
@@ -8850,6 +9022,49 @@ static void init_walkers(void)
   INIT_WALKER(S_db_linear, make_walker(mus_db2linear_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
   INIT_WALKER(S_linear_db, make_walker(mus_linear2db_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
   INIT_WALKER(S_mus_random, make_walker(mus_random_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
+
+  INIT_WALKER(S_make_all_pass, make_walker(make_all_pass_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_asymmetric_fm, make_walker(make_asymmetric_fm_1, NULL, NULL, 0, 8, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_buffer, make_walker(make_buffer_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_comb, make_walker(make_comb_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_convolve, make_walker(make_convolve_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_delay, make_walker(make_delay_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_env, make_walker(make_env_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_fft_window, make_walker(make_fft_window_1, NULL, NULL, 2, 3, R_VCT, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_file2frame, make_walker(make_file2frame_1, NULL, NULL, 0, 1, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_file2sample, make_walker(make_file2sample_1, NULL, NULL, 0, 1, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_filter, make_walker(make_filter_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_fir_filter, make_walker(make_fir_filter_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_formant, make_walker(make_formant_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_frame, make_walker(make_frame_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_frame2file, make_walker(make_frame2file_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_granulate, make_walker(make_granulate_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_iir_filter, make_walker(make_iir_filter_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_locsig, make_walker(make_locsig_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_mixer, make_walker(make_mixer_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_notch, make_walker(make_notch_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_one_pole, make_walker(make_one_pole_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_one_zero, make_walker(make_one_zero_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_oscil, make_walker(make_oscil_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_phase_vocoder, make_walker(make_phase_vocoder_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_ppolar, make_walker(make_ppolar_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_pulse_train, make_walker(make_pulse_train_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_rand, make_walker(make_rand_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_rand_interp, make_walker(make_rand_interp_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_readin, make_walker(make_readin_1, NULL, NULL, 0, 8, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_sample2file, make_walker(make_sample2file_1, NULL, NULL, 4, 5, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_sawtooth_wave, make_walker(make_sawtooth_wave_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_sine_summation, make_walker(make_sine_summation_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_square_wave, make_walker(make_square_wave_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_src, make_walker(make_src_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_sum_of_cosines, make_walker(make_sum_of_cosines_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_table_lookup, make_walker(make_table_lookup_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_triangle_wave, make_walker(make_triangle_wave_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_two_pole, make_walker(make_two_pole_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_two_zero, make_walker(make_two_zero_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_wave_train, make_walker(make_wave_train_1, NULL, NULL, 0, 6, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_waveshape, make_walker(make_waveshape_1, NULL, NULL, 0, 8, R_CLM, FALSE, 1, -R_XEN));
+  INIT_WALKER(S_make_zpolar, make_walker(make_zpolar_1, NULL, NULL, 0, 4, R_CLM, FALSE, 1, -R_XEN));
 
 
   /* -------- sndlib funcs */

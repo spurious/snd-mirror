@@ -472,12 +472,8 @@ static void make_region_dialog(snd_state *ss)
   XtManageChild(region_dialog);
   if (widget_width(region_dialog) < 400) set_widget_width(region_dialog, 400);
 
-  if (!rsp)
-    {
-      rsp = make_initial_region_sp(ss, region_grf);
-      current_region = 0;
-    }
-  else add_channel_window(rsp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
+  rsp = make_initial_region_sp(ss, region_grf);
+  current_region = 0;
   cp = rsp->chans[0];
 
   cp->hookable = FALSE;
