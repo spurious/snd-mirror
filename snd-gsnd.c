@@ -222,7 +222,7 @@ char *get_minibuffer_string(snd_info *sp)
   return(copy_string((char *)gtk_entry_get_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)))));
 } 
 
-static char stupid[1] ={'\0'};
+static char stupid[1] = {'\0'};
 void set_minibuffer_string(snd_info *sp, char *str) 
 {
   if (str)
@@ -485,10 +485,10 @@ static gboolean name_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer d
   return(FALSE);
 }
 
-static char semitone_one[5] ={' ',' ',' ','0','\0'};
-static char ratio_one[5] ={' ','1','/','1','\0'};
+static char semitone_one[5] = {' ', ' ', ' ', '0', '\0'};
+static char ratio_one[5] = {' ', '1', '/', '1', '\0'};
 
-static char amp_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
+static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 static void set_snd_amp_1(snd_info *sp, Float amp, int setadj)
 {
@@ -564,7 +564,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 
 /* -------- SRATE CALLBACKS -------- */
 
-static char srate_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
+static char srate_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 void set_snd_srate(snd_info *sp, Float amp)
 {
@@ -650,7 +650,7 @@ void toggle_direction_arrow(snd_info *sp, int state)
 
 /* -------- EXPAND CALLBACKS -------- */
 
-static char expand_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
+static char expand_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 static void set_snd_expand_1(snd_info *sp, Float expand, int setadj)
 {
@@ -730,7 +730,7 @@ void toggle_expand_button(snd_info *sp, int state)
 
 /* -------- CONTRAST CALLBACKS -------- */
 
-static char contrast_number_buffer[5] ={'0', STR_decimal,'0','0','\0'};
+static char contrast_number_buffer[5] = {'0', STR_decimal, '0', '0', '\0'};
 
 static void set_snd_contrast_1(snd_info *sp, Float val, int setadj)
 {
@@ -806,7 +806,7 @@ void toggle_contrast_button(snd_info *sp, int state)
 
 /* -------- REVERB CALLBACKS -------- */
 
-static char revscl_number_buffer[7] ={'0', STR_decimal,'0','0','0','0','\0'};
+static char revscl_number_buffer[7] = {'0', STR_decimal, '0', '0', '0', '0', '\0'};
 
 static void set_snd_revscl_1(snd_info *sp, Float val, int setadj)
 {
@@ -877,7 +877,7 @@ static gboolean revscl_release_callback(GtkWidget *w, GdkEventButton *ev, gpoint
 }
 
 
-static char revlen_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
+static char revlen_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 static void set_snd_revlen_1(snd_info *sp, Float val, int setadj)
 {
@@ -1278,8 +1278,11 @@ void reflect_amp_env_completion(snd_info *sp)
 void reflect_amp_env_in_progress(snd_info *sp)
 {
   GtkWidget *info_sep;
-  info_sep = MINIBUFFER_SEPARATOR(sp);
-  if (info_sep) gtk_widget_hide(info_sep);
+  if ((sp) && (sp->sgx))
+    {
+      info_sep = MINIBUFFER_SEPARATOR(sp);
+      if (info_sep) gtk_widget_hide(info_sep);
+    }
 }
 
 static gboolean close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
@@ -2168,5 +2171,13 @@ pane-box (10)name-form"
 
 void g_init_gxsnd(void) 
 {
+  char dpoint;
+  dpoint = local_decimal_point();
+  amp_number_buffer[1] = dpoint;
+  srate_number_buffer[1] = dpoint;
+  expand_number_buffer[1] = dpoint;
+  contrast_number_buffer[1] = dpoint;
+  revscl_number_buffer[1] = dpoint;
+  revlen_number_buffer[1] = dpoint;
   XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
 }

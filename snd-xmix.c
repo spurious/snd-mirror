@@ -11,7 +11,7 @@ static void update_mix_panel(int mix_id);
 
 /* ---------------- SPEED ---------------- */
 
-static char speed_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
+static char speed_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 #define SPEED_SCROLLBAR_MID (0.45 * SCROLLBAR_MAX)
 #define SPEED_SCROLLBAR_BREAK (0.15 * SCROLLBAR_MAX)
@@ -83,7 +83,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
 static Widget *w_amp_numbers, *w_amp_labels, *w_amps;
 static Float *current_amps;
 static int chans_allocated = 0;
-static char amp_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
+static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 static int allocate_amps(int chans)
 {
@@ -735,6 +735,8 @@ Widget make_mix_panel(snd_state *ss)
       XtAddEventHandler(w_env, ButtonReleaseMask, FALSE, mix_drawer_button_release, ss);
 
       set_dialog_widget(ss, MIX_PANEL_DIALOG, mix_panel);
+      speed_number_buffer[1] = local_decimal_point();
+      amp_number_buffer[1] = local_decimal_point();
     }
   else raise_dialog(mix_panel);
   if (!(XtIsManaged(mix_panel))) XtManageChild(mix_panel);

@@ -242,7 +242,7 @@ static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
 
   chan_info *cp;
   ASSERT_CHANNEL(S_setB S_foreground_color, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, "set-" S_foreground_color, "a color");
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, S_setB S_foreground_color, "a color");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_setB S_foreground_color);
   set_foreground_color(cp,                                  /* snd-xchn.c */
@@ -858,24 +858,24 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE(S_fill_polygon,     g_fill_polygon_w, 1, 3, 0,    H_fill_polygon);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_foreground_color, g_foreground_color_w, H_foreground_color,
-					    "set-" S_foreground_color, g_set_foreground_color_w, g_set_foreground_color_reversed, 0, 3, 1, 3);
+					    S_setB S_foreground_color, g_set_foreground_color_w, g_set_foreground_color_reversed, 0, 3, 1, 3);
 
   XEN_DEFINE_PROCEDURE(S_load_font,        g_load_font_w, 1, 0, 0,       H_load_font);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_current_font, g_current_font_w, H_current_font,
-					    "set-" S_current_font, g_set_current_font_w, g_set_current_font_reversed, 0, 3, 1, 3);
+					    S_setB S_current_font, g_set_current_font_w, g_set_current_font_reversed, 0, 3, 1, 3);
 
   XEN_DEFINE_PROCEDURE(S_main_widgets,     g_main_widgets_w, 0, 0, 0,    H_main_widgets);
   XEN_DEFINE_PROCEDURE(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0,  H_dialog_widgets);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_size, g_widget_size_w, H_widget_size,
-				   "set-" S_widget_size, g_set_widget_size_w,  1, 0, 2, 0);
+				   S_setB S_widget_size, g_set_widget_size_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_position, g_widget_position_w, H_widget_position,
-				   "set-" S_widget_position, g_set_widget_position_w,  1, 0, 2, 0);
+				   S_setB S_widget_position, g_set_widget_position_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_text, g_widget_text_w, H_widget_text,
-				   "set-" S_widget_text, g_set_widget_text_w,  1, 0, 2, 0);
+				   S_setB S_widget_text, g_set_widget_text_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_recolor_widget,  g_recolor_widget_w, 2, 0, 0,  H_recolor_widget);
   XEN_DEFINE_PROCEDURE(S_hide_widget,     g_hide_widget_w, 1, 0, 0,     H_hide_widget);

@@ -1771,54 +1771,54 @@ XEN_ARGIFY_1(g_set_vu_size_w, g_set_vu_size)
 void g_init_recorder(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_autoload, g_recorder_autoload_w, H_recorder_autoload,
-				   "set-" S_recorder_autoload, g_set_recorder_autoload_w,  0, 0, 0, 1);
+				   S_setB S_recorder_autoload, g_set_recorder_autoload_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_buffer_size, g_recorder_buffer_size_w, H_recorder_buffer_size,
-				   "set-" S_recorder_buffer_size, g_set_recorder_buffer_size_w,  0, 0, 1, 0);
+				   S_setB S_recorder_buffer_size, g_set_recorder_buffer_size_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_file, g_recorder_file_w, H_recorder_file,
-				   "set-" S_recorder_file, g_set_recorder_file_w,  0, 0, 1, 0);
+				   S_setB S_recorder_file, g_set_recorder_file_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_format, g_recorder_in_format_w, H_recorder_in_format,
-				   "set-" S_recorder_in_format, g_set_recorder_in_format_w,  0, 0, 1, 0);
+				   S_setB S_recorder_in_format, g_set_recorder_in_format_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_device, g_recorder_in_device_w, H_recorder_in_device,
-				   "set-" S_recorder_in_device, g_set_recorder_in_device_w,  0, 0, 1, 0);
+				   S_setB S_recorder_in_device, g_set_recorder_in_device_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_chans, g_recorder_out_chans_w, H_recorder_out_chans,
-				   "set-" S_recorder_out_chans, g_set_recorder_out_chans_w,  0, 0, 1, 0);
+				   S_setB S_recorder_out_chans, g_set_recorder_out_chans_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_format, g_recorder_out_format_w, H_recorder_out_format,
-				   "set-" S_recorder_out_format, g_set_recorder_out_format_w,  0, 0, 1, 0);
+				   S_setB S_recorder_out_format, g_set_recorder_out_format_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_srate, g_recorder_srate_w, H_recorder_srate,
-				   "set-" S_recorder_srate, g_set_recorder_srate_w,  0, 0, 1, 0);
+				   S_setB S_recorder_srate, g_set_recorder_srate_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_trigger, g_recorder_trigger_w, H_recorder_trigger,
-				   "set-" S_recorder_trigger, g_set_recorder_trigger_w,  0, 0, 1, 0);
+				   S_setB S_recorder_trigger, g_set_recorder_trigger_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_max_duration, g_recorder_max_duration_w, H_recorder_max_duration,
-				   "set-" S_recorder_max_duration, g_set_recorder_max_duration_w,  0, 0, 1, 0);
+				   S_setB S_recorder_max_duration, g_set_recorder_max_duration_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_gain, g_recorder_gain_w, H_recorder_gain,
-				   "set-" S_recorder_gain, g_set_recorder_gain_w,  0, 1, 2, 0);
+				   S_setB S_recorder_gain, g_set_recorder_gain_w,  0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_amp, g_recorder_in_amp_w, H_recorder_in_amp,
-				   "set-" S_recorder_in_amp, g_set_recorder_in_amp_w,  2, 0, 3, 0);
+				   S_setB S_recorder_in_amp, g_set_recorder_in_amp_w,  2, 0, 3, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_amp, g_recorder_out_amp_w, H_recorder_out_amp,
-				   "set-" S_recorder_out_amp, g_set_recorder_out_amp_w,  1, 0, 2, 0);
+				   S_setB S_recorder_out_amp, g_set_recorder_out_amp_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_recorder_dialog, g_recorder_dialog_w, 0, 0, 0, H_recorder_dialog);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_font, g_vu_font_w, H_vu_font,
-				   "set-" S_vu_font, g_set_vu_font_w,  0, 0, 0, 1);
+				   S_setB S_vu_font, g_set_vu_font_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_font_size, g_vu_font_size_w, H_vu_font_size,
-				   "set-" S_vu_font_size, g_set_vu_font_size_w,  0, 0, 0, 1);
+				   S_setB S_vu_font_size, g_set_vu_font_size_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_size, g_vu_size_w, H_vu_size,
-				   "set-" S_vu_size, g_set_vu_size_w,  0, 0, 0, 1);
+				   S_setB S_vu_size, g_set_vu_size_w,  0, 0, 0, 1);
 
 }
 

@@ -1186,6 +1186,8 @@ char *snd_tempnam(snd_state *ss);
 void fill_number(char *fs, char *ps);
 void snd_exit(int val);
 char *kmg (int num);
+char local_decimal_point(void);
+void g_init_utils(void);
 #ifdef DEBUG_MEMORY
   void set_encloser(char *name);
 #endif

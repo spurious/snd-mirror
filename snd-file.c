@@ -2591,10 +2591,10 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE(S_mix_file_dialog, g_mix_file_dialog_w, 0, 1, 0, H_mix_file_dialog);
   XEN_DEFINE_PROCEDURE(S_disk_kspace,                 g_disk_kspace_w, 1, 0, 0,               H_disk_kspace);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info, g_sound_loop_info_w, H_sound_loop_info,
-				   "set-" S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
+				   S_setB S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort, g_previous_files_sort_w, H_previous_files_sort,
-				   "set-" S_previous_files_sort, g_set_previous_files_sort_w,  0, 0, 0, 1);
+				   S_setB S_previous_files_sort, g_set_previous_files_sort_w,  0, 0, 0, 1);
 
   XEN_DEFINE_VARIABLE(S_memo_sound, memo_sound, XEN_FALSE);
 
@@ -2634,7 +2634,7 @@ the newly updated sound may have a different index."
   XEN_DEFINE_HOOK(update_hook, S_update_hook, 1, H_update_hook);            /* arg = sound index */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort_procedure, g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
-                                   "set-" S_previous_files_sort_procedure, g_set_previous_files_sort_procedure_w,  0, 0, 1, 0);
+                                   S_setB S_previous_files_sort_procedure, g_set_previous_files_sort_procedure_w,  0, 0, 1, 0);
 
   #define H_previous_files_select_hook S_previous_files_select_hook "(filename) called when a file is selected in the \
 previous files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."

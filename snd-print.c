@@ -654,14 +654,14 @@ void g_init_print(void)
   XEN_DEFINE_PROCEDURE(S_graph2ps, g_graph2ps_w, 0, 1, 0, H_graph2ps);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_file, g_eps_file_w, H_eps_file,
-				   "set-" S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);
+				   S_setB S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_left_margin, g_eps_left_margin_w, H_eps_left_margin,
-				   "set-" S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 0, 1);
+				   S_setB S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 0, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
-				   "set-" S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 0, 1);
+				   S_setB S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_size, g_eps_size_w, H_eps_size,
-				   "set-" S_eps_size, g_set_eps_size_w,  0, 0, 0, 1);
+				   S_setB S_eps_size, g_set_eps_size_w,  0, 0, 0, 1);
 }

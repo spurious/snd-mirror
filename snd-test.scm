@@ -33756,12 +33756,15 @@ EDITS: 2
 	(check-error-tag 'no-such-file (lambda () (set! (temp-dir) "/hiho")))
 	(check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
 	(check-error-tag 'mus-error (lambda () (snd-transform 20 (make-vct 4))))
-	(check-error-tag 'no-such-widget (lambda () (widget-position (list 'Widget 0)))) ; dubious -- not sure these should be supported
-	(check-error-tag 'no-such-widget (lambda () (widget-size (list 'Widget 0))))
-	(check-error-tag 'no-such-widget (lambda () (widget-text (list 'Widget 0))))
-	(check-error-tag 'no-such-widget (lambda () (set! (widget-position (list 'Widget 0)) (list 0 0))))
-	(check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
-	(check-error-tag 'no-such-widget (lambda () (recolor-widget (list 'Widget 0) (make-color 1 0 0))))
+	(if (provided? 'snd-motif)
+	    (begin
+	      (check-error-tag 'no-such-widget (lambda () (widget-position (list 'Widget 0)))) ; dubious -- not sure these should be supported
+	      (check-error-tag 'no-such-widget (lambda () (widget-size (list 'Widget 0))))
+	      (check-error-tag 'no-such-widget (lambda () (widget-text (list 'Widget 0))))
+	      (check-error-tag 'no-such-widget (lambda () (set! (widget-position (list 'Widget 0)) (list 0 0))))
+	      (check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
+	      (check-error-tag 'no-such-widget (lambda () (set! (widget-text (list 'Widget 0)) "hiho")))
+	      (check-error-tag 'no-such-widget (lambda () (recolor-widget (list 'Widget 0) (make-color 1 0 0))))))
 	(check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	(check-error-tag 'no-such-menu (lambda () (main-menu 111)))
 	(check-error-tag 'no-such-menu (lambda () (change-menu-label -1 "hiho" "hhoo")))
@@ -33915,18 +33918,17 @@ EDITS: 2
 	(check-error-tag 'no-such-file (lambda () (make-sample-reader 0 "/bad/baddy.snd")))
 	(check-error-tag 'no-such-region (lambda () (make-region-sample-reader 0 1234567)))
 	(check-error-tag 'no-such-mix (lambda () (mix-tag-position 12345)))
-	(check-error-tag 'no-such-widget (lambda () (widget-text (list 'Widget 0))))
-	(check-error-tag 'no-such-widget (lambda () (set! (widget-text (list 'Widget 0)) "hiho")))
 
-	(for-each
-	 (lambda (n name)
-	   (let ((tag (catch #t
-			     (lambda () (n (list 'Widget 0)))
-			     (lambda args (car args)))))
-	     (IF (not (eq? tag 'no-such-widget))
-		 (snd-display ";~A of null widget -> ~A" name tag))))
-	 (list widget-position widget-size widget-text hide-widget show-widget focus-widget)
-	 (list 'widget-position 'widget-size 'widget-text 'hide-widget 'show-widget 'focus-widget))
+	(if (provided? 'snd-motif)
+	    (for-each
+	     (lambda (n name)
+	       (let ((tag (catch #t
+				 (lambda () (n (list 'Widget 0)))
+				 (lambda args (car args)))))
+		 (IF (not (eq? tag 'no-such-widget))
+		     (snd-display ";~A of null widget -> ~A" name tag))))
+	     (list widget-position widget-size widget-text hide-widget show-widget focus-widget)
+	     (list 'widget-position 'widget-size 'widget-text 'hide-widget 'show-widget 'focus-widget)))
 
 
 	;; now try everything! (all we care about here is that Snd keeps running)

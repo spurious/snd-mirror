@@ -2484,10 +2484,10 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_player_p,       g_player_p_w, 1, 0, 0,       H_player_p);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_size, g_dac_size_w, H_dac_size,
-				   "set-" S_dac_size, g_set_dac_size_w,  0, 0, 0, 1);
+				   S_setB S_dac_size, g_set_dac_size_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
-				   "set-" S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 0, 1);
+				   S_setB S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 0, 1);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd) is called when a sound finishes playing."
   #define H_stop_playing_channel_hook S_stop_playing_channel_hook " (snd chn) is called when a channel finishes playing."

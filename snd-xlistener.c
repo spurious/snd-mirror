@@ -1072,14 +1072,6 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void command_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_url_and_wrap((snd_state *)context,
-			     "Lisp Listener",
-			     "#customization",
-"This is the lisp listener pane; it is one way to access the interpreter.");
-}
-
 static XEN mouse_enter_listener_hook;
 static XEN mouse_leave_listener_hook;
 
@@ -1144,7 +1136,6 @@ static void make_command_widget(snd_state *ss, int height)
       XtAddCallback(listener_text, XmNactivateCallback, command_return_callback, ss);
       XtAddCallback(listener_text, XmNmodifyVerifyCallback, command_modify_callback, ss);
       XtAddCallback(listener_text, XmNmotionVerifyCallback, command_motion_callback, ss);
-      XtAddCallback(listener_text, XmNhelpCallback, command_help_callback, ss);
 
       lisp_window = XtParent(listener_text);
       XtAddEventHandler(lisp_window, EnterWindowMask, FALSE, listener_focus_callback, NULL);

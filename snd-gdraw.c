@@ -505,7 +505,8 @@ void allocate_color_map(snd_state *ss, int colormap)
 static XEN color_hook;
 static void check_color_hook(void)
 {
-  run_hook(color_hook, XEN_EMPTY_LIST, S_color_hook);
+  if (XEN_HOOKED(color_hook))
+    run_hook(color_hook, XEN_EMPTY_LIST, S_color_hook);
 }
 
 typedef struct {

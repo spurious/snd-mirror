@@ -92,6 +92,22 @@ char *just_filename(char *name)
   return(nodir);
 }
 
+#if HAVE_LANGINFO_DECIMAL_POINT || HAVE_LANGINFO_RADIXCHAR
+#include <langinfo.h>
+#endif
+
+static char decimal_pt;
+char local_decimal_point(void)
+{
+#if HAVE_LANGINFO_DECIMAL_POINT
+  return(nl_langinfo(DECIMAL_POINT)[0]);
+#endif
+#if HAVE_LANGINFO_RADIXCHAR
+  return(nl_langinfo(RADIXCHAR)[0]);
+#endif
+  return(STR_decimal);
+}
+
 static char prtbuf[256];
 
 char *prettyf(Float num, int tens)
@@ -112,13 +128,13 @@ char *prettyf(Float num, int tens)
   if ((num - fullf) == 0.0) 
     {
       if (num < 100.0)
-	sprintf(prtbuf, "%d%c0", fullf, STR_decimal);
+	sprintf(prtbuf, "%d%c0", fullf, decimal_pt);
       else sprintf(prtbuf, "%d", fullf);
       return(copy_string(prtbuf));
     }
   if (num > 1000)
     {
-      sprintf(prtbuf, "%d%c%d", fullf, STR_decimal, (int)((num - fullf) * pow(10.0, tens)));
+      sprintf(prtbuf, "%d%c%d", fullf, decimal_pt, (int)((num - fullf) * pow(10.0, tens)));
       return(copy_string(prtbuf));
     }
   fullf = (int)(num * pow(10.0, tens + 1) + rounder);
@@ -150,14 +166,14 @@ char *prettyf(Float num, int tens)
 	  sn++; 
 	  sp++;
 	}
-      (*sn) = STR_decimal; 
+      (*sn) = decimal_pt; 
       sn++;
     }
   else
     {
       (*sn) = '0';
       sn++;
-      (*sn) = STR_decimal;
+      (*sn) = decimal_pt;
       sn++;
       lim = abs(len - tens - 1);
       for (i = 0; i < lim; i++) 
@@ -191,9 +207,9 @@ void fill_number(char *fs, char *ps)
       ps[4] = '\0'; 
       ps[3] = '0'; 
       ps[2] = '0'; 
-      ps[1] = STR_decimal;
+      ps[1] = decimal_pt;
     }
-  if ((*fs) == STR_decimal) 
+  if ((*fs) == decimal_pt)
     {
       *ps++ = '0'; 
       if (j == 4) j = 3;
@@ -772,3 +788,8 @@ void start_timing(void) {start = clock();}
 void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 1000.0 / CLOCKS_PER_SEC));}
 
 #endif
+
+void g_init_utils(void)
+{
+  decimal_pt = local_decimal_point();
+}

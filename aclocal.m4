@@ -2152,3 +2152,29 @@ AC_DEFUN([jm_AC_TYPE_UINTMAX_T],
    if <inttypes.h> and <stdint.h> don't define.])
   fi
 ])
+
+# based on AM_LANGINFO_CODESET of Bruno Haible
+AC_DEFUN([AM_LANGINFO_DECIMAL_POINT],
+[
+  AC_CACHE_CHECK([for nl_langinfo and DECIMAL_POINT], am_cv_langinfo_decimal_point,
+    [AC_TRY_LINK([#include <langinfo.h>],
+      [char* cs = nl_langinfo(DECIMAL_POINT);],
+      am_cv_langinfo_decimal_point=yes,
+      am_cv_langinfo_decimal_point=no)
+    ])
+  if test $am_cv_langinfo_decimal_point = yes; then
+    AC_DEFINE(HAVE_LANGINFO_DECIMAL_POINT, 1,
+      [Define if you have <langinfo.h> and nl_langinfo(DECIMAL_POINT).])
+  else
+    AC_CACHE_CHECK([for nl_langinfo and RADIXCHAR], am_cv_langinfo_radixchar,
+      [AC_TRY_LINK([#include <langinfo.h>],
+        [char* cs = nl_langinfo(RADIXCHAR);],
+        am_cv_langinfo_radixchar=yes,
+        am_cv_langinfo_radixchar=no)
+	])
+      if test $am_cv_langinfo_radixchar = yes; then
+        AC_DEFINE(HAVE_LANGINFO_RADIXCHAR, 1,
+          [Define if you have <langinfo.h> and nl_langinfo(RADIXCHAR).])
+      fi
+  fi
+])

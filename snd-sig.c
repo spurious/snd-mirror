@@ -4351,7 +4351,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_pad_channel,             g_pad_channel_w, 2, 3, 0,             H_pad_channel);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
-				   "set-" S_sinc_width, g_set_sinc_width_w,  0, 0, 0, 1);
+				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 0, 1);
 }
 
 

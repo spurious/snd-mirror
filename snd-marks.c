@@ -2262,13 +2262,13 @@ void g_init_marks(void)
   XEN_DEFINE_HOOK(mark_hook, S_mark_hook, 4, H_mark_hook);                /* args = id snd chn reason */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sample, g_mark_sample_w, H_mark_sample,
-				   "set-" S_mark_sample, g_set_mark_sample_w, 0, 2, 1, 1);
+				   S_setB S_mark_sample, g_set_mark_sample_w, 0, 2, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sync, g_mark_sync_w, H_mark_sync,
-				   "set-" S_mark_sync, g_set_mark_sync_w, 0, 1, 1, 1);
+				   S_setB S_mark_sync, g_set_mark_sync_w, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_name, g_mark_name_w, H_mark_name,
-				   "set-" S_mark_name, g_set_mark_name_w, 0, 1, 1, 1);
+				   S_setB S_mark_name, g_set_mark_name_w, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "internal func used in save-state, restores marks");
   XEN_DEFINE_PROCEDURE(S_mark_sync_max, g_mark_sync_max_w, 0, 0, 0, H_mark_sync_max);

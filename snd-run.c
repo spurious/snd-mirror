@@ -8604,7 +8604,7 @@ void g_init_run(void)
 #endif
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization,
-				   "set-" S_optimization, g_set_optimization_w,  0, 0, 1, 0);
+				   S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
 
   #define H_optimization_hook S_optimization_hook " (msg) is called if the run macro encountered \
 something it couldn't optimize.  'msg' is a string description of the offending form:\n\

@@ -116,12 +116,12 @@ static void name_click_callback(Widget w, XtPointer context, XtPointer info)
   sp_name_click((snd_info *)context);
 }
 
-static char number_one[5] ={'1', STR_decimal, '0', '0', '\0'};
-static char number_zero[5] ={'0', STR_decimal, '0', '0', '\0'};
-static char semitone_one[5] ={' ', ' ', ' ', '0', '\0'};
-static char ratio_one[5] ={' ', '1', '/', '1', '\0'};
+static char number_one[5] = {'1', STR_decimal, '0', '0', '\0'};
+static char number_zero[5] = {'0', STR_decimal, '0', '0', '\0'};
+static char semitone_one[5] = {' ', ' ', ' ', '0', '\0'};
+static char ratio_one[5] = {' ', '1', '/', '1', '\0'};
 
-static char amp_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
+static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 static int snd_amp_to_int(Float amp)
 {
@@ -204,7 +204,7 @@ static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
 #define SPEED_SCROLLBAR_MID (0.45 * SCROLLBAR_MAX)
 #define SPEED_SCROLLBAR_BREAK (0.15 * SCROLLBAR_MAX)
 
-static char srate_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
+static char srate_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 XmString initial_speed_label(snd_state *ss)
 {
@@ -293,8 +293,7 @@ void toggle_direction_arrow(snd_info *sp, int state)
 #define EXPAND_SCROLLBAR_MULT (.9697 / SCROLLBAR_MAX)
 #define EXPAND_SCROLLBAR_SPLIT (0.1 * SCROLLBAR_MAX)
 
-/* TODO: these STR_decimal things should be done correctly */
-static char expand_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
+static char expand_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 static int snd_expand_to_int(Float ep)
 {
@@ -382,7 +381,7 @@ void toggle_expand_button(snd_info *sp, int state)
 
 
 #define CONTRAST_SCROLLBAR_MULT (SCROLLBAR_MAX / 10)
-static char contrast_number_buffer[5] ={'0', STR_decimal, '0', '0', '\0'};
+static char contrast_number_buffer[5] = {'0', STR_decimal, '0', '0', '\0'};
 
 static int snd_contrast_to_int(Float val)
 {
@@ -465,8 +464,8 @@ void toggle_contrast_button(snd_info *sp, int state)
 
 #define REVSCL_SCROLLBAR_MULT (0.60 * SCROLLBAR_MAX)
 
-static char revscl_number_buffer[7] ={'0', STR_decimal, '0', '0', '0', '0', '\0'};
-static char number_long_zero[7] ={'0', STR_decimal, '0', '0', '0', '0', '\0'};
+static char revscl_number_buffer[7] = {'0', STR_decimal, '0', '0', '0', '0', '\0'};
+static char number_long_zero[7] = {'0', STR_decimal, '0', '0', '0', '0', '\0'};
 
 static int snd_revscl_to_int(Float val)
 {
@@ -491,7 +490,7 @@ static int snd_revscl_changed(snd_info *sp, int val)
       revscl_number_buffer[4] ='0'; 
       revscl_number_buffer[3] ='0';
       revscl_number_buffer[2] ='0'; 
-      revscl_number_buffer[1] = STR_decimal;
+      revscl_number_buffer[1] = local_decimal_point();
     }
   for (i = 0; i < j; i++) (*ps++) = (*fs++);
   set_label(REVSCL_LABEL(sp), revscl_number_buffer);
@@ -544,7 +543,7 @@ static void revscl_valuechanged_callback(Widget w, XtPointer context, XtPointer 
 
 #define REVLEN_SCROLLBAR_MULT (SCROLLBAR_MAX / 5.0)
 
-static char revlen_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
+static char revlen_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 static int snd_revlen_to_int(Float val)
 {
@@ -3072,6 +3071,18 @@ static XEN g_sash(void)
 
 void g_init_gxsnd(void)
 {
+  char dpoint;
+  dpoint = local_decimal_point();
+  number_one[1] = dpoint;
+  number_zero[1] = dpoint;
+  amp_number_buffer[1] = dpoint;
+  srate_number_buffer[1] = dpoint;
+  expand_number_buffer[1] = dpoint;
+  contrast_number_buffer[1] = dpoint;
+  revscl_number_buffer[1] = dpoint;
+  number_long_zero[1] = dpoint;
+  revlen_number_buffer[1] = dpoint;
+
   XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("top-sash", g_sash, 0, 0, 0, "autotest func");

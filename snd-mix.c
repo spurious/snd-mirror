@@ -4582,32 +4582,32 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_play_mix,                 g_play_mix_w, 0, 1, 0,                 H_play_mix);
   XEN_DEFINE_PROCEDURE(S_play_track,               g_play_track_w, 1, 2, 0,               H_play_track);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position, g_mix_position_w, H_mix_position, "set-" S_mix_position, g_set_mix_position_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_frames, g_mix_frames_w, H_mix_frames, "set-" S_mix_frames, g_set_mix_frames_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked, g_mix_locked_w, H_mix_locked, "set-" S_mix_locked, g_set_mix_locked_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_anchor, g_mix_anchor_w, H_mix_anchor, "set-" S_mix_anchor, g_set_mix_anchor_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track, g_mix_track_w, H_mix_track, "set-" S_mix_track, g_set_mix_track_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y, g_mix_tag_y_w, H_mix_tag_y, "set-" S_mix_tag_y, g_set_mix_tag_y_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed, g_mix_speed_w, H_mix_speed, "set-" S_mix_speed, g_set_mix_speed_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_name, g_mix_name_w, H_mix_name, "set-" S_mix_name, g_set_mix_name_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position, g_mix_position_w, H_mix_position, S_setB S_mix_position, g_set_mix_position_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_frames, g_mix_frames_w, H_mix_frames, S_setB S_mix_frames, g_set_mix_frames_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked, g_mix_locked_w, H_mix_locked, S_setB S_mix_locked, g_set_mix_locked_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_anchor, g_mix_anchor_w, H_mix_anchor, S_setB S_mix_anchor, g_set_mix_anchor_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track, g_mix_track_w, H_mix_track, S_setB S_mix_track, g_set_mix_track_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y, g_mix_tag_y_w, H_mix_tag_y, S_setB S_mix_tag_y, g_set_mix_tag_y_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed, g_mix_speed_w, H_mix_speed, S_setB S_mix_speed, g_set_mix_speed_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_name, g_mix_name_w, H_mix_name, S_setB S_mix_name, g_set_mix_name_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height,
-				   "set-" S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);
+				   S_setB S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_width, g_mix_tag_width_w, H_mix_tag_width,
-				   "set-" S_mix_tag_width, g_set_mix_tag_width_w, 0, 0, 1, 0);
+				   S_setB S_mix_tag_width, g_set_mix_tag_width_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height,
-				   "set-" S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
+				   S_setB S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
-				   "set-" S_mix_color, g_set_mix_color_w,  0, 1, 1, 1);
+				   S_setB S_mix_color, g_set_mix_color_w,  0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix_color, g_selected_mix_color_w, H_selected_mix_color,
-				   "set-" S_selected_mix_color, g_set_selected_mix_color_w,  0, 0, 1, 0);
+				   S_setB S_selected_mix_color, g_set_selected_mix_color_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp, "set-" S_mix_amp, g_set_mix_amp_w, 0, 2, 2, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env, "set-" S_mix_amp_env, g_set_mix_amp_env_w, 0, 2, 2, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp, S_setB S_mix_amp, g_set_mix_amp_w, 0, 2, 2, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env, S_setB S_mix_amp_env, g_set_mix_amp_env_w, 0, 2, 2, 1);
 
   XEN_DEFINE_PROCEDURE(S_mix_tag_position, g_mix_tag_position_w, 1, 0, 0, H_mix_tag_position);
 
@@ -4619,7 +4619,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_select_mix,   g_select_mix_w, 1, 0, 0,   H_select_mix);
   XEN_DEFINE_PROCEDURE(S_find_mix,     g_find_mix_w, 0, 3, 0,     H_find_mix);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix, g_selected_mix_w, H_selected_mix, "set-" S_selected_mix, g_select_mix_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix, g_selected_mix_w, H_selected_mix, S_setB S_selected_mix, g_select_mix_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_forward_mix,  g_forward_mix_w, 0, 3, 0,  H_forward_mix);
   XEN_DEFINE_PROCEDURE(S_backward_mix, g_backward_mix_w, 0, 3, 0, H_backward_mix);
@@ -4627,7 +4627,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_mix_vct,      mix_vct_w, 1, 5, 0,        H_mix_vct);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
-				   "set-" S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 0, 1);
+				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 0, 1);
 
   #define H_multichannel_mix_hook S_multichannel_mix_hook "(ids) is called when a multichannel mix happens in a sync'd sound. \
 'ids' is a list of mix id numbers."

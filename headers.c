@@ -275,7 +275,7 @@ static const unsigned char I_TWIN[4] = {'T','W','I','N'};  /* TwinVQ */
 #define I_IRCAM_NEXT  0x0004a364
 
 #define NINRS	7
-static const unsigned int I_INRS[NINRS] ={0xcb460020, 0xd0465555, 0xfa460000, 0x1c470040, 0x3b470080, 0x7a470000, 0x9c470040};
+static const unsigned int I_INRS[NINRS] = {0xcb460020, 0xd0465555, 0xfa460000, 0x1c470040, 0x3b470080, 0x7a470000, 0x9c470040};
 
 static off_t data_location = 0;
 static int srate = 0, chans = 0, header_type = 0, data_format = 0, original_data_format = 0;
@@ -5383,7 +5383,7 @@ A DVSM sample file has the following structure:
 followed by cookies and the sound data.
 
 The sample frequencies 0 to 7 correspond to the following frequencies:
-sam_freq[8] ={8195, 9834, 12292, 16390, 19668, 24585, 32778, 49170};
+sam_freq[8] = {8195, 9834, 12292, 16390, 19668, 24585, 32778, 49170};
 For further information refer to the WinRec documentation or take a look at
 the article series 'Sound Sample Formate' in the german magazin ST Computer
 (3/94 - 6/94).

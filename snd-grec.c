@@ -2218,6 +2218,9 @@ static void initialize_recorder(recorder_info *rp)
 #endif
   if (rp->trigger != 0.0) set_recorder_trigger(rp, rp->trigger);
   if (rp->max_duration <= 0.0) rp->max_duration = 1000000.0;
+  record_one[1] = local_decimal_point();
+  record_zero[1] = local_decimal_point();
+  amp_number_buffer[1] = local_decimal_point();
 }
 
 void reflect_record_size(int size)

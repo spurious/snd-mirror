@@ -588,10 +588,10 @@ void g_init_listener(void)
   XEN_DEFINE_PROCEDURE(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_listener, g_show_listener_w, H_show_listener,
-				   "set-" S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
+				   S_setB S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
-				   "set-" S_listener_prompt, g_set_listener_prompt_w,  0, 0, 0, 1);
+				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 0, 1);
 
   #define H_read_hook S_read_hook " (text) is called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\

@@ -892,9 +892,9 @@ void recorder_set_vu_out_val(int chan, mus_sample_t val) {set_vu_val(rec_out_VU[
 #define INPUT_AMP 0
 #define OUTPUT_AMP 1
 
-static char record_one[5] ={'1', STR_decimal, '0', '0', '\0'};
-static char record_zero[5] ={'0', STR_decimal, '0', '0', '\0'};
-static char amp_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
+static char record_one[5] = {'1', STR_decimal, '0', '0', '\0'};
+static char record_zero[5] = {'0', STR_decimal, '0', '0', '\0'};
+static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 #define RECORD_SCROLLBAR_MAX 300
 #define RECORD_SCROLLBAR_MID 150
@@ -3277,6 +3277,9 @@ static void initialize_recorder(recorder_info *rp)
 #endif
   if (rp->trigger != 0.0) set_recorder_trigger(rp, rp->trigger);
   if (rp->max_duration <= 0.0) rp->max_duration = 1000000.0;
+  record_one[1] = local_decimal_point();
+  record_zero[1] = local_decimal_point();
+  amp_number_buffer[1] = local_decimal_point();
 }
 
 

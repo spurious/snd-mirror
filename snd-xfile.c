@@ -2367,7 +2367,7 @@ static XEN g_new_file_dialog(void)
 void g_init_gxfile(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
-				   "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
+				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \

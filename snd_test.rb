@@ -9,11 +9,11 @@ def snd_display(str)
 end
 
 def fneq(a, b)
-  (a - b).abs > .001
+  (a - b).abs > 0.001
 end
 
 def ffneq(a, b)
-  (a - b).abs > .01
+  (a - b).abs > 0.01
 end
 
 def vequal(a, b)
@@ -518,7 +518,7 @@ test_headers("zulu_a4.w11", 1, 33000, 1.21987879276276, "TX-16W", "unsupported")
 
 $oboe = open_sound "oboe.snd"
 $td = temp_dir     
-if (sample(1000) - 0.0328).abs > .001 then snd_print sprintf("# sample: %s\n", sample(1000)); end
+if (sample(1000) - 0.0328).abs > 0.001 then snd_print sprintf("# sample: %s\n", sample(1000)); end
 set_show_controls true
 if not provided? "snd-nogui" then
   enved_dialog
@@ -1031,7 +1031,7 @@ if v1 != v2 then snd_display sprintf("\n#vct not eq? %s %s", v1, v2) end
 vct_fill!(v3, 0.5)
 if v3 != v1 then snd_display sprintf("\n#vct not equal? %s %s", v3, v1) end
 if v4 == v1 then snd_display sprintf("\n#len diff vct equal? %s %s", v4, v1) end
-vct_set!(vlst, 1, .1)
+vct_set!(vlst, 1, 0.1)
 if !(vequal(vct2list(vlst), [0.0, 0.1, 0.0])) then snd_display sprintf("\n#vct2list: %s?", vct2list(vlst)) end
 vect = [0, 1, 2, 3]
 v2 = vector2vct vect
@@ -1208,7 +1208,7 @@ end
 
 with_sound(:play, 1,
 	   :channels, 2,
-	   :scaled_to, .3,
+	   :scaled_to, 0.3,
 	   :reverb, :jc_reverb,
 	   :statistics, true) { 
   0.upto(2) { |i| 

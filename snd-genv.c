@@ -1533,11 +1533,11 @@ XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 void g_init_gxenv(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter, g_enved_filter_w, H_enved_filter,
-				   "set-" S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
+				   S_setB S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_active_env, g_enved_active_env_w, H_enved_active_env,
-				   "set-" S_enved_active_env, g_set_enved_active_env_w,  0, 0, 1, 0);
+				   S_setB S_enved_active_env, g_set_enved_active_env_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_selected_env, g_enved_selected_env_w, H_enved_selected_env,
-				   "set-" S_enved_selected_env, g_set_enved_selected_env_w,  0, 0, 1, 0);
+				   S_setB S_enved_selected_env, g_set_enved_selected_env_w,  0, 0, 1, 0);
 
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "");

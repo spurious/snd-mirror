@@ -6110,6 +6110,113 @@ _ACEOF
 fi
 
 
+  echo "$as_me:$LINENO: checking for nl_langinfo and DECIMAL_POINT" >&5
+echo $ECHO_N "checking for nl_langinfo and DECIMAL_POINT... $ECHO_C" >&6
+if test "${am_cv_langinfo_decimal_point+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <langinfo.h>
+int
+main ()
+{
+char* cs = nl_langinfo(DECIMAL_POINT);
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  am_cv_langinfo_decimal_point=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+am_cv_langinfo_decimal_point=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $am_cv_langinfo_decimal_point" >&5
+echo "${ECHO_T}$am_cv_langinfo_decimal_point" >&6
+  if test $am_cv_langinfo_decimal_point = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LANGINFO_DECIMAL_POINT 1
+_ACEOF
+
+  else
+    echo "$as_me:$LINENO: checking for nl_langinfo and RADIXCHAR" >&5
+echo $ECHO_N "checking for nl_langinfo and RADIXCHAR... $ECHO_C" >&6
+if test "${am_cv_langinfo_radixchar+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <langinfo.h>
+int
+main ()
+{
+char* cs = nl_langinfo(RADIXCHAR);
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  am_cv_langinfo_radixchar=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+am_cv_langinfo_radixchar=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $am_cv_langinfo_radixchar" >&5
+echo "${ECHO_T}$am_cv_langinfo_radixchar" >&6
+      if test $am_cv_langinfo_radixchar = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LANGINFO_RADIXCHAR 1
+_ACEOF
+
+      fi
+  fi
+
+
 echo "$as_me:$LINENO: checking for int" >&5
 echo $ECHO_N "checking for int... $ECHO_C" >&6
 if test "${ac_cv_type_int+set}" = set; then

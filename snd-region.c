@@ -1582,6 +1582,6 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_region_samples2vct, g_region_samples2vct_w, 0, 5, 0, H_region_samples2vct);
   XEN_DEFINE_PROCEDURE(S_region_p,           g_region_p_w, 1, 0, 0,           H_region_p);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_regions, g_max_regions_w, H_max_regions, "set-" S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_regions, g_max_regions_w, H_max_regions, S_setB S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
 }
 

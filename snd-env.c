@@ -1157,7 +1157,7 @@ static int x_increases(XEN res)
   #define ENV_BUFFER_SIZE 128
   static int env_buffer_size = 0;
   static Float *env_buffer = NULL;
-  static char env_white_space[5] ={' ','(', ')','\t','\''};
+  static char env_white_space[5] = {' ', '(', ')', '\t', '\''};
 #endif
 
 env *string2env(char *str) 
@@ -1503,16 +1503,16 @@ void g_init_env(void)
   XEN_DEFINE_CONSTANT(S_enved_spectrum,  ENVED_SPECTRUM,  H_enved_spectrum);
   XEN_DEFINE_CONSTANT(S_enved_srate,     ENVED_SRATE,     H_enved_srate);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   "set-" S_enved_base,   g_set_enved_base_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  "set-" S_enved_power,  g_set_enved_power_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_p, g_enved_clip_p_w, H_enved_clip_p, "set-" S_enved_clip_p, g_set_enved_clip_p_w,  0, 0, 0, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_exp_p,  g_enved_exp_p_w,  H_enved_exp_p,  "set-" S_enved_exp_p,  g_set_enved_exp_p_w,  0, 0, 0, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_target, g_enved_target_w, H_enved_target, "set-" S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_wave_p, g_enved_wave_p_w, H_enved_wave_p, "set-" S_enved_wave_p, g_set_enved_wave_p_w,  0, 0, 0, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  "set-" S_enved_in_dB,  g_set_enved_in_dB_w,  0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_p, g_enved_clip_p_w, H_enved_clip_p, S_setB S_enved_clip_p, g_set_enved_clip_p_w,  0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_exp_p,  g_enved_exp_p_w,  H_enved_exp_p,  S_setB S_enved_exp_p,  g_set_enved_exp_p_w,  0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_wave_p, g_enved_wave_p_w, H_enved_wave_p, S_setB S_enved_wave_p, g_set_enved_wave_p_w,  0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
-			       "set-" S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
+				   S_setB S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_enved_dialog,    g_enved_dialog_w, 0, 0, 0,     H_enved_dialog);
   XEN_DEFINE_PROCEDURE(S_save_envelopes,  g_save_envelopes_w, 0, 1, 0,   H_save_envelopes);

@@ -486,5 +486,5 @@ XEN_ARGIFY_2(g_set_search_procedure_w, g_set_search_procedure)
 void g_init_find(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_search_procedure, g_search_procedure_w, H_search_procedure,
-				   "set-" S_search_procedure, g_set_search_procedure_w,  0, 1, 1, 1);
+				   S_setB S_search_procedure, g_set_search_procedure_w,  0, 1, 1, 1);
 }

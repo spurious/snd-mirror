@@ -109,6 +109,7 @@
 
 #define STR_decimal '.'
 /* defines the decimal point character used where I'm making float representations by hand */
+/* if nl_langinfo is available, it's decimal point will override this */
 
 #define XOR(a, b) ((~((a) & (b))) & ((a) | (b)))
 
@@ -771,4 +772,3 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define DEFAULT_MIX_TAG_HEIGHT 14
 
 #endif
-

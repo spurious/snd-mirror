@@ -846,6 +846,6 @@ If it returns #t, Snd does not exit.  This can be used to check for unsaved edit
 
   XEN_DEFINE_HOOK(exit_hook, S_exit_hook, 0, H_exit_hook);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, H_script_arg, "set-" S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);
 }

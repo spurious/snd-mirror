@@ -979,7 +979,7 @@ static short oki_step_size[49] = { 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41,
      190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658,
      724, 796, 876, 963, 1060, 1166, 1282, 1408, 1552 };
 
-static short oki_adjust[8] ={-1, -1, -1, -1, 2, 4, 6, 8};
+static short oki_adjust[8] = {-1, -1, -1, -1, 2, 4, 6, 8};
 
 static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat) 
 {

@@ -8851,7 +8851,7 @@ static XEN g_set_sample_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 
 static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan, XEN edpos)
 {
-  #define H_set_samples "(" "set-" S_samples " start-samp samps data &optional snd chn truncate edname infile-chan edpos)\n\
+  #define H_set_samples "(set-" S_samples " start-samp samps data &optional snd chn truncate edname infile-chan edpos)\n\
 sets snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename)); \
 start-samp can be beyond current data end if truncate is #t and start-samp is 0, the end of the file is set to match \
 the new data's end."
@@ -8863,7 +8863,7 @@ the new data's end."
   char *fname, *caller;
   if (XEN_STRING_P(edname))
     caller = XEN_TO_C_STRING(edname);
-  else caller = "set-" S_samples;
+  else caller = "set-samples";
   ASSERT_SAMPLE_TYPE(caller, samp_0, XEN_ARG_1);
   ASSERT_SAMPLE_TYPE(caller, samps, XEN_ARG_2);
   ASSERT_CHANNEL(caller, snd_n, chn_n, 4);
@@ -9469,12 +9469,12 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin, g_insert_samples_with_origin_w, 4, 3, 0, "internal function used in save-state");
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
-					    "set-" S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 0, 5);
+					    S_setB S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 0, 5);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
-					    "set-" S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 6);
+					    S_setB S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 6);
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("set-" S_samples, g_set_samples_w, 3, 6, 0, H_samples);
+  XEN_DEFINE_PROCEDURE("set-samples", g_set_samples_w, 3, 6, 0, H_samples);
 #endif
 
   #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \

@@ -1606,7 +1606,7 @@ static XEN g_enved_active_env(void)
 
 static XEN g_set_enved_active_env(XEN e)
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, XEN_ONLY_ARG, "set-" S_enved_active_env, "a list, symbol, or string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, XEN_ONLY_ARG, S_setB S_enved_active_env, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
   if ((XEN_STRING_P(e)) || (XEN_SYMBOL_P(e)))
     active_env = copy_env(enved_all_envs(find_named_env(e)));
@@ -1625,7 +1625,7 @@ static XEN g_enved_selected_env(void)
 static XEN g_set_enved_selected_env(XEN name)
 {
   int pos;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ONLY_ARG, "set-" S_enved_selected_env, "a string or symbol");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ONLY_ARG, S_setB S_enved_selected_env, "a string or symbol");
   pos = find_named_env(name);
   if (pos >= 0)
     {
@@ -1634,7 +1634,7 @@ static XEN g_set_enved_selected_env(XEN name)
 	XmListSelectPos(screnvlst, pos + 1, FALSE);
     }
   else XEN_ERROR(NO_SUCH_ENVELOPE,
-		 XEN_LIST_2(C_TO_XEN_STRING("set-" S_enved_selected_env),
+		 XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_selected_env),
 			    name));
   return(name);
 }
@@ -1647,7 +1647,7 @@ static XEN g_enved_filter(void)
 
 static XEN g_set_enved_filter(XEN type)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, XEN_ONLY_ARG, "set-" S_enved_filter, "boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, XEN_ONLY_ARG, S_setB S_enved_filter, "boolean");
   FIR_p = XEN_TO_C_BOOLEAN(type);
   if (firB)
     set_label(firB, (FIR_p) ? "fir" : "fft");
@@ -1733,11 +1733,11 @@ XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 void g_init_gxenv(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter, g_enved_filter_w, H_enved_filter,
-				   "set-" S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
+				   S_setB S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_active_env, g_enved_active_env_w, H_enved_active_env,
-				   "set-" S_enved_active_env, g_set_enved_active_env_w,  0, 0, 1, 0);
+				   S_setB S_enved_active_env, g_set_enved_active_env_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_selected_env, g_enved_selected_env_w, H_enved_selected_env,
-				   "set-" S_enved_selected_env, g_set_enved_selected_env_w,  0, 0, 1, 0);
+				   S_setB S_enved_selected_env, g_set_enved_selected_env_w,  0, 0, 1, 0);
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE("enved-axis-info",  g_enved_axis_info_w, 0, 0, 0, "internal testing function");

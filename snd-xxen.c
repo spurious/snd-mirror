@@ -196,5 +196,5 @@ void g_init_gxen(void)
   XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
-				   "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
+				   S_setB S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
 }
