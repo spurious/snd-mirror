@@ -1732,7 +1732,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 ;;; -------- add date and time to title bar
 ;;;
 ;;; The window manager's property that holds the Snd window's title is WM_NAME,
-;;;   we can use the change-property function (used normally for CLM/Snd communication)
+;;;   we can use the change-window-property function (used normally for CLM/Snd communication)
 ;;;   to reset this value.  The Snd window's identifier is SND_VERSION.
 ;;;   Here we're also using the #t argument to short-file-name to get a list of all current sounds.
 
@@ -1742,12 +1742,12 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
   "(title-with-date) causes Snd's main window to display the time of day.  To turn off \
 this clock, set retitle-time to 0"
   (let ((names (short-file-name #t)))
-    (change-property "SND_VERSION" "WM_NAME"
-		     (format #f "snd (~A)~A"
-			     (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
-			     (if (null? names)
-				 ""
-				 (format #f ":~{~A~^, ~}" names))))
+    (change-window-property "SND_VERSION" "WM_NAME"
+			    (format #f "snd (~A)~A"
+				    (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
+				    (if (null? names)
+					""
+					(format #f ":~{~A~^, ~}" names))))
     (if (> retitle-time 0)
 	(in retitle-time title-with-date))))
 

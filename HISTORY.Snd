@@ -1,5 +1,8 @@
 Snd change log
 
+  11-Apr:    moved dismiss-all-dialogs to snd6.scm.
+             change-property -> change-window-property (old form in snd6.scm)
+  9-Apr:     nb.rb, ws.rb, dlocsig.rb from Michael Scholz.
   3-Apr:     noise.scm and noise.rb from Michael Scholz.
   2-Apr:     init-with-sound and finish-with-sound in ws.scm.
   31-Mar:    removed audio-state-file.

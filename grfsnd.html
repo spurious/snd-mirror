@@ -2105,12 +2105,12 @@ the program sndctrl.c is a simple example.  Snd has two X window properties:
 and the latter is the communication path for other programs.  Any time
 such a program changes the SND_COMMAND property, Snd notices and evaluates
 the new value (as a string, as if typed in the Snd listener).  To get
-a response from Snd, use the function change-property(consat,name,command) where
+a response from Snd, use the function change-window-property(consat,name,command) where
 consat is the property name Snd should search for, name is the property to change, and command is the string
 that replaces the current property value.  For example, CLM's communication
 with Snd function sends Snd this string:</p>
 <pre>
-"(change-property \"CLM_VERSION\" \"CLM_COMMAND\" " str ")"
+"(change-window-property \"CLM_VERSION\" \"CLM_COMMAND\" " str ")"
 </pre>
 <p>where <i>str</i> is the form to be evaluated within Snd.  It then waits
 for a change to the CLM_COMMAND property, returning its value to the
@@ -2247,7 +2247,7 @@ $8 = 0x8296cf0 "\"snd.eps\""
 *_VERSION which is guaranteed to have some value, and *_COMMAND which is
 evaluated as a string (i.e. (eval (read-from-string ...))) whenever
 it changes.  In Snd, this happens via XEvents, but in the other two
-you have to poll for the change.  In Snd, change-property can be used
+you have to poll for the change.  In Snd, change-window-property can be used
 to talk to the others; in CLM clm-send-snd and clm-receive-snd, in
 CMN cmn-send-snd and cmn-receive-snd.  
 </p>

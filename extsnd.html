@@ -661,7 +661,7 @@ the hook.
 
 <!-- after-apply-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="afterapplyhook">after-apply-hook</a></em> (snd)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="afterapplyhook">after-apply-hook</a></em> (snd)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when 'Apply' finishes.  <i>add-amp-controls</i> in snd-motif.scm uses this hook to
@@ -671,7 +671,7 @@ reset any added amplitude sliders to 1.0 when Apply finishes.
 
 <!-- after-graph-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="aftergraphhook">after-graph-hook</a></em> (snd chn)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="aftergraphhook">after-graph-hook</a></em> (snd chn)</code></span></td><td>
 </td></tr>
 <tr><td width=150></td><td colspan=2>
 called after a graph is updated or redisplayed; see <a href="#displaysampsinred">display-samps-in-red</a>,
@@ -681,7 +681,7 @@ called after a graph is updated or redisplayed; see <a href="#displaysampsinred"
 
 <!-- after-open-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="afteropenhook">after-open-hook</a></em> (snd)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="afteropenhook">after-open-hook</a></em> (snd)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called just before a newly opened sound's window is displayed.
@@ -710,8 +710,8 @@ examples in snd-motif.scm.
 
 <!-- bad-header-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="badheaderhook">bad-header-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
-</td></tr>
+<span class=defbox><code><em class=def><a name="badheaderhook">bad-header-hook</a></em> (filename)</code></span></td><td align=right><b>or</b></td>
+</tr>
 <tr><td></td><td colspan=2>
 called if a file has a bogus-looking header. Return #t to give up on that file. <br><br><code>(add-hook! bad-header-hook (lambda (n) #t))</code>
 </td></tr>
@@ -719,8 +719,8 @@ called if a file has a bogus-looking header. Return #t to give up on that file. 
 
 <!-- before-apply-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="beforeapplyhook">before-apply-hook</a></em> (snd)</code></span><td align=right><b>or</b></td>
-</td></tr>
+<span class=defbox><code><em class=def><a name="beforeapplyhook">before-apply-hook</a></em> (snd)</code></span></td><td align=right><b>or</b></td>
+</tr>
 <tr><td></td><td colspan=2>
 called when 'Apply' is clicked or apply-controls is called.
 If it returns #t, the apply is aborted.
@@ -729,8 +729,8 @@ If it returns #t, the apply is aborted.
 
 <!-- before-transform-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="beforeffthook">before-transform-hook</a></em> (snd chn)</code></span><td align=right><b>progn</b></td>
-</td></tr>
+<span class=defbox><code><em class=def><a name="beforeffthook">before-transform-hook</a></em> (snd chn)</code></span></td><td align=right><b>progn</b></td>
+</tr>
 
 <tr><td></td><td colspan=2>
 called just before an FFT (or spectrum) is calculated.  If it returns 
@@ -751,8 +751,8 @@ of a moving mark:
 
 <!-- close-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="closehook">close-hook</a></em> (snd) </code></span><td align=right><b>or</b></td>
-</td></tr>
+<span class=defbox><code><em class=def><a name="closehook">close-hook</a></em> (snd) </code></span></td><td align=right><b>or</b></td>
+</tr>
 
 <tr><td></td><td colspan=2>
 called each time a file is closed (before the close).
@@ -772,8 +772,8 @@ If it returns #t, the file is not closed.
 
 <!-- color-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="colorhook">color-hook</a></em> () </code></span><td align=right><b>progn</b></td>
-</td></tr>
+<span class=defbox><code><em class=def><a name="colorhook">color-hook</a></em> () </code></span></td><td align=right><b>progn</b></td>
+</tr>
 
 <tr><td></td><td colspan=2>
 called whenever one of the variables associated with the color dialog changes.  See <i>start-waterfall</i> in snd-gl.scm.
@@ -781,8 +781,8 @@ called whenever one of the variables associated with the color dialog changes.  
 
 <!-- dac-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="dachook">dac-hook</a></em> (data) </code></span><td align=right><b>progn</b></td>
-</td></tr>
+<span class=defbox><code><em class=def><a name="dachook">dac-hook</a></em> (data) </code></span></td><td align=right><b>progn</b></td>
+</tr>
 
 <tr><td></td><td colspan=2>
 called just before data is sent to DAC passing data as sound-data object. See <i>with-level-meters</i> in snd-motif.scm.
@@ -790,8 +790,8 @@ called just before data is sent to DAC passing data as sound-data object. See <i
 
 <!-- draw-mark-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="drawmarkhook">draw-mark-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
-</td></tr>
+<span class=defbox><code><em class=def><a name="drawmarkhook">draw-mark-hook</a></em> (id)</code></span></td><td align=right><b>progn</b></td>
+</tr>
 <tr><td></td><td colspan=2>
 called before a mark is drawn (in XOR mode). If the hook returns #t, the mark is not drawn.  <i>mark-sync-color</i>
 in snd-motif.scm uses this hook to draw sync'd marks in some other color than the current mark-color.
@@ -800,8 +800,8 @@ in snd-motif.scm uses this hook to draw sync'd marks in some other color than th
 
 <!-- drop-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="drophook">drop-hook</a></em> (filename) </code></span><td align=right><b>or</b></td>
-</td></tr>
+<span class=defbox><code><em class=def><a name="drophook">drop-hook</a></em> (filename) </code></span></td><td align=right><b>or</b></td>
+</tr>
 
 <tr><td></td><td colspan=2>
 called each time Snd receives a drag-and-drop event, passing the hook the filename.
@@ -816,7 +816,7 @@ change an existing callback (to pass the sound index and channel number to the d
 
 <!-- during-open-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="duringopenhook">during-open-hook</a></em> (fd name reason)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="duringopenhook">during-open-hook</a></em> (fd name reason)</code></span></td><td>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -839,7 +839,7 @@ The prescaling affects only sound data made up of floats or doubles.
 
 <!-- enved-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="envedhook">enved-hook</a></em> (env pt new-x new-y reason)</code></span><td align=right><b>composition</b></td>
+<span class=defbox><code><em class=def><a name="envedhook">enved-hook</a></em> (env pt new-x new-y reason)</code></span></td><td align=right><b>composition</b>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -877,7 +877,7 @@ method combination.
 
 <!-- exit-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="exithook">exit-hook</a></em> ()</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="exithook">exit-hook</a></em> ()</code></span></td><td align=right><b>or</b>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -889,7 +889,7 @@ for unsaved edits, or to perform cleanup activities (see, for example, autosave.
 
 <!-- graph-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="graphhook">graph-hook</a></em> (snd chn y0 y1) </code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="graphhook">graph-hook</a></em> (snd chn y0 y1) </code></span></td><td align=right><b>or</b>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -916,7 +916,7 @@ See examp.scm for many examples.
 
 <!-- help-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="helphook">help-hook</a></em> (subject help-string)</code></span><td align=right><b>concat</b></td>
+<span class=defbox><code><em class=def><a name="helphook">help-hook</a></em> (subject help-string)</code></span></td><td align=right><b>concat</b>
 </td></tr>
 <tr><td width=150></td><td colspan=2>
 called from snd-help with the current help subject and default help-string.  Say we want the index.scm
@@ -928,7 +928,7 @@ If there is more than one hook function, results are concatenated (return #f to 
 
 <!-- initial-graph-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="initialgraphhook">initial-graph-hook</a></em> (snd chn dur) </code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="initialgraphhook">initial-graph-hook</a></em> (snd chn dur) </code></span></td><td align=right><b>or</b>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -1050,7 +1050,7 @@ immediate display of any size file.
 
 <!-- just-sounds-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="justsoundshook">just-sounds-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="justsoundshook">just-sounds-hook</a></em> (filename)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called on each file (after the sound file extension check) if the
@@ -1072,7 +1072,7 @@ don't provide a way to specialize the directory read.
 
 <!-- key-press-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="keypresshook">key-press-hook</a></em> (snd chn key state)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="keypresshook">key-press-hook</a></em> (snd chn key state)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called upon key press while the mouse is in the lisp graph.
@@ -1083,7 +1083,7 @@ If it returns #t, the key press is not passed to the main handler.
 
 <!-- lisp-graph-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="lispgraphhook">lisp-graph-hook</a></em> (snd chn)</code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="lispgraphhook">lisp-graph-hook</a></em> (snd chn)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called just before the lisp graph is updated or redisplayed (see, for example, <a href="#displaydb">display-db</a>).
@@ -1106,7 +1106,7 @@ If it returns a function (of no arguments), that function is called rather than 
 
 <!-- listener-click-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="listenerclickhook">listener-click-hook</a></em> (textpos)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="listenerclickhook">listener-click-hook</a></em> (textpos)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a click occurs in the listener; the argument is the position in the text where the click occurred.
@@ -1116,7 +1116,7 @@ See click-for-listener-help in draw.scm.
 
 <!-- mark-click-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="markclickhook">mark-click-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="markclickhook">mark-click-hook</a></em> (id)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mark is clicked; return #t to squelch message.
@@ -1132,7 +1132,7 @@ called when a mark is clicked; return #t to squelch message.
 
 <!-- mark-drag-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="markdraghook">mark-drag-hook</a></em> (id)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="markdraghook">mark-drag-hook</a></em> (id)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mark is dragged.
@@ -1156,7 +1156,7 @@ called when a mark is dragged.
 
 <!-- mark-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="markhook">mark-hook</a></em> (id snd chn reason)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="markhook">mark-hook</a></em> (id snd chn reason)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mark is added, deleted, or moved (but not while moving). 'id' can be -1 (i.e. no specific mark).
@@ -1187,7 +1187,7 @@ and if the mark-sync is active, the hook is called on each syncd mark.
 
 <!-- mix-amp-changed-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mixampchangedhook">mix-amp-changed-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="mixampchangedhook">mix-amp-changed-hook</a></em> (id)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mix's amp changes via the mouse (id = mix id).
@@ -1197,7 +1197,7 @@ If it returns #t, the actual remix is the hook's responsibility.
 
 <!-- mix-position-changed-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mixpositionchangedhook">mix-position-changed-hook</a></em> (id samps)</code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="mixpositionchangedhook">mix-position-changed-hook</a></em> (id samps)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mix moves via the mouse (id = mix id, 
@@ -1208,7 +1208,7 @@ hook's responsibility (see, for example, <i>reposition-track</i> in mix.scm).
 
 <!-- mix-speed-changed-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mixspeedchangedhook">mix-speed-changed-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="mixspeedchangedhook">mix-speed-changed-hook</a></em> (id)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mix's speed changes via the mouse (id = mix id).
@@ -1218,7 +1218,7 @@ If it returns #t, the actual remix is the hook's responsibility (see, for exampl
 
 <!-- mouse-click-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mouseclickhook">mouse-click-hook</a></em> (snd chn button state x y axis) </code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="mouseclickhook">mouse-click-hook</a></em> (snd chn button state x y axis) </code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called upon a mouse button click (press and release without drag).  If it returns #t, the click is ignored by Snd.
@@ -1242,7 +1242,7 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
 
 <!-- mouse-drag-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse is dragged within the lisp graph (see, for example, enved.scm or rtio.scm).
@@ -1251,7 +1251,7 @@ called when the mouse is dragged within the lisp graph (see, for example, enved.
 
 <!-- mouse-enter-graph-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mouseentergraphhook">mouse-enter-graph-hook</a></em> (snd chn) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mouseentergraphhook">mouse-enter-graph-hook</a></em> (snd chn) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse enters a channel's drawing area (graph pane).
@@ -1266,7 +1266,7 @@ called when the mouse enters a channel's drawing area (graph pane).
 
 <!-- mouse-enter-label-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mouseenterlabelhook">mouse-enter-label-hook</a></em> (type position name) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mouseenterlabelhook">mouse-enter-label-hook</a></em> (type position name) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a file viewer or region label 
@@ -1287,7 +1287,7 @@ to popup file info as follows:
 
 <!-- mouse-enter-listener-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mouseenterlistenerhook">mouse-enter-listener-hook</a></em> (widget) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mouseenterlistenerhook">mouse-enter-listener-hook</a></em> (widget) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse enters the lisp listener pane. This hook, along with the parallel graph hook
@@ -1313,22 +1313,21 @@ I much prefer this style of operation.
 
 <!-- mouse-enter-text-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mouseentertexthook">mouse-enter-text-hook</a></em> (widget) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mouseentertexthook">mouse-enter-text-hook</a></em> (widget) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse enters a text widget (this is the third of the pointer-focus hooks).
-<tr><td></td><td colspan=2>
+</td></tr><tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>mouse-enter-text-hook</em>
   (lambda (w)
     (focus-widget w)))
 </pre></td></tr></table></td></tr>
-</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- mouse-leave-graph-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mouseleavegraphhook">mouse-leave-graph-hook</a></em> (snd chn) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mouseleavegraphhook">mouse-leave-graph-hook</a></em> (snd chn) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse leaves a channel's drawing area (graph pane). 
@@ -1337,7 +1336,7 @@ called when the mouse leaves a channel's drawing area (graph pane).
 
 <!-- mouse-leave-label-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mouseleavelabelhook">mouse-leave-label-hook</a></em> (type position name) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mouseleavelabelhook">mouse-leave-label-hook</a></em> (type position name) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse exits one of the labels covered by mouse-enter-label-hook. (See nb.scm)
@@ -1346,7 +1345,7 @@ called when the mouse exits one of the labels covered by mouse-enter-label-hook.
 
 <!-- mouse-leave-listener-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mousleavelistenerhook">mouse-leave-listener-hook</a></em> (widget) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mousleavelistenerhook">mouse-leave-listener-hook</a></em> (widget) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse leaves the lisp listener pane.
@@ -1355,7 +1354,7 @@ called when the mouse leaves the lisp listener pane.
 
 <!-- mouse-leave-text-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mousleavetexthook">mouse-leave-text-hook</a></em> (widget) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mousleavetexthook">mouse-leave-text-hook</a></em> (widget) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the mouse leaves a text widget.
@@ -1364,7 +1363,7 @@ called when the mouse leaves a text widget.
 
 <!-- mouse-press-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mousepresshook">mouse-press-hook</a></em> (snd chn button state x y) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mousepresshook">mouse-press-hook</a></em> (snd chn button state x y) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called upon a mouse button press within the lisp graph (see, for example, enved.scm).
@@ -1373,7 +1372,7 @@ called upon a mouse button press within the lisp graph (see, for example, enved.
 
 <!-- mouse-release-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mousereleasehook">mouse-release-hook</a></em> (snd chn button state x y) </code></span><td></td>
+<span class=defbox><code><em class=def><a name="mousereleasehook">mouse-release-hook</a></em> (snd chn button state x y) </code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called upon a mouse button release within the lisp graph (see, for example, enved.scm).
@@ -1382,7 +1381,7 @@ called upon a mouse button release within the lisp graph (see, for example, enve
 
 <!-- multichannel-mix-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="multichannelmixhook">multichannel-mix-hook</a></em> (ids)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="multichannelmixhook">multichannel-mix-hook</a></em> (ids)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a multichannel sound is mixed into a sync'd sound.
@@ -1392,8 +1391,8 @@ called when a multichannel sound is mixed into a sync'd sound.
 
 <!-- mus-error-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="muserrorhook">mus-error-hook</a></em> (error-type error-message)</code></span><td align=right><b>or</b></td>
-</td></tr>
+<span class=defbox><code><em class=def><a name="muserrorhook">mus-error-hook</a></em> (error-type error-message)</code></span></td><td align=right><b>or</b></td>
+</tr>
 <tr><td></td><td colspan=2>
 called upon mus_error.
 If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
@@ -1403,7 +1402,7 @@ This hook is used in <i>play-sound</i> in play.scm to flush an error message tha
 
 <!-- name-click-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="nameclickhook">name-click-hook</a></em> (snd)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="nameclickhook">name-click-hook</a></em> (snd)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the sound name is clicked.
@@ -1420,7 +1419,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched.
 
 <!-- new-sound-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="newsoundhook">new-sound-hook</a></em> (filename)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="newsoundhook">new-sound-hook</a></em> (filename)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called whenever a new sound file is being created.
@@ -1429,7 +1428,7 @@ called whenever a new sound file is being created.
 
 <!-- new-widget-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="newwidgethook">new-widget-hook</a></em> (widget)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="newwidgethook">new-widget-hook</a></em> (widget)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time a dialog or a new set of channel or sound widgets is created.  This is used in snd-motif.scm (<i>paint-all</i>) to
@@ -1439,7 +1438,7 @@ make sure all newly created widgets have the same background pixmaps.
 
 <!-- open-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="openhook">open-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="openhook">open-hook</a></em> (filename)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time a file is opened (before the actual open).
@@ -1472,7 +1471,7 @@ See also <a href="sndscm.html#exopenbuffer">open-buffer</a> in examp.scm.
 
 <!-- open-raw-sound-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="openrawsoundhook">open-raw-sound-hook</a></em> (filename current-choices)</code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="openrawsoundhook">open-raw-sound-hook</a></em> (filename current-choices)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time <a href="#sndopen">open-sound</a> encounters a headerless file.
@@ -1488,7 +1487,7 @@ Return '() to accept all the current raw header defaults; return #f to fallback 
 
 <!-- optimization-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="optimizationhook">optimization-hook</a></em> (message)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="optimizationhook">optimization-hook</a></em> (message)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time the optimizer hits something it can't handle; <i>message</i> tries to give some information about the situation.
@@ -1497,7 +1496,7 @@ called each time the optimizer hits something it can't handle; <i>message</i> tr
 
 <!-- orientation-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="orientationhook">orientation-hook</a></em> () </code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="orientationhook">orientation-hook</a></em> () </code></span></td><td align=right><b>progn</b>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -1506,7 +1505,7 @@ called whenever one of the variables associated with the orientation dialog chan
 
 <!-- output-comment-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="outputcommenthook">output-comment-hook</a></em> (str)</code></span><td align=right><b>concat</b></td>
+<span class=defbox><code><em class=def><a name="outputcommenthook">output-comment-hook</a></em> (str)</code></span></td><td align=right><b>concat</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called in the Save-As dialog. <i>str</i> is the current sound's comment.
@@ -1525,7 +1524,7 @@ If the hook is empty, the current comment is used.
 
 <!-- output-name-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="outputnamehook">output-name-hook</a></em> ()</code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="outputnamehook">output-name-hook</a></em> ()</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called in the New File dialog, setting the file name in the associated text widget.
@@ -1544,7 +1543,7 @@ called in the New File dialog, setting the file name in the associated text widg
 
 <!-- play-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="playhook">play-hook</a></em> (samps)</code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="playhook">play-hook</a></em> (samps)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time a buffer (size: <i>samps</i>) is about to be 
@@ -1554,7 +1553,7 @@ filled for the DAC (see <a href="sndscm.html#enveddoc">enved.scm</a> and <a href
 
 <!-- previous-files-select-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="previousfilesselecthook">previous-files-select-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="previousfilesselecthook">previous-files-select-hook</a></em> (filename)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time a file is selected in the View Files dialog's previous files list.
@@ -1574,7 +1573,7 @@ the cursor:
 
 <!-- print-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="printhook">print-hook</a></em> (text)</code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="printhook">print-hook</a></em> (text)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time some Snd-generated response (<i>text</i>) is about to be appended to the listener.
@@ -1609,7 +1608,7 @@ examples, the first adds a timestamp, the second (in Gtk) displays Snd's respons
 
 <!-- property-changed-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="propertychangedhook">property-changed-hook</a></em> (command)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="propertychangedhook">property-changed-hook</a></em> (command)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when Snd sees a SND_COMMAND window property change.
@@ -1619,7 +1618,7 @@ If it returns #t, the command is not evaluated.  (This is mostly an internal deb
 
 <!-- read-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="readhook">read-hook</a></em> (text)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="readhook">read-hook</a></em> (text)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time a line is typed into the listener (it is triggered by the carriage return).
@@ -1640,7 +1639,7 @@ This is intended to make it possible to read user-typing in the listener.
 
 <!-- save-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="savehook">save-hook</a></em> (snd name)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="savehook">save-hook</a></em> (snd name)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time a file is about to be saved.
@@ -1666,7 +1665,7 @@ without the save-state-hook, if you are saving several states, it can be a pain 
 
 <!-- select-channel-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="selectchannelhook">select-channel-hook</a></em> (snd chn)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="selectchannelhook">select-channel-hook</a></em> (snd chn)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a channel is selected (after the sound has been selected). The arguments are the sound's index and the channel number.
@@ -1675,7 +1674,7 @@ called when a channel is selected (after the sound has been selected). The argum
 
 <!-- select-mix-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="selectmixhook">select-mix-hook</a></em> (id)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="selectmixhook">select-mix-hook</a></em> (id)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mix is selected. The argument is the newly selected mix's id.
@@ -1684,7 +1683,7 @@ called when a mix is selected. The argument is the newly selected mix's id.
 
 <!-- select-sound-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="selectsoundhook">select-sound-hook</a></em> (snd)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="selectsoundhook">select-sound-hook</a></em> (snd)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a sound is selected. The argument is the about-to-be-selected sound's index.
@@ -1693,7 +1692,7 @@ called when a sound is selected. The argument is the about-to-be-selected sound'
 
 <!-- snd-error-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="snderrorhook">snd-error-hook</a></em> (error-message)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="snderrorhook">snd-error-hook</a></em> (error-message)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called upon snd_error.
@@ -1711,7 +1710,7 @@ reported it via the hook).
 
 <!-- snd-warning-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndwarninghook">snd-warning-hook</a></em> (warning-message)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="sndwarninghook">snd-warning-hook</a></em> (warning-message)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called upon snd_warning.
@@ -1731,7 +1730,7 @@ reported it via the hook).
 
 <!-- start-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="starthook">start-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="starthook">start-hook</a></em> (filename)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when Snd starts.
@@ -1753,7 +1752,7 @@ found (this code obviously has to be in the ~/.snd init file):
 
 <!-- start-playing-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="startplayinghook">start-playing-hook</a></em> (snd)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="startplayinghook">start-playing-hook</a></em> (snd)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a play request is triggered.
@@ -1763,7 +1762,7 @@ If it returns #t, Snd does not play (see, for example, <i>report-mark-names</i> 
 
 <!-- stop-dac-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="stopdachook">stop-dac-hook</a></em>()</code></span><td></td>
+<span class=defbox><code><em class=def><a name="stopdachook">stop-dac-hook</a></em>()</code></span></td><td>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -1772,7 +1771,7 @@ called when Snd stops playing and turns off the DAC, normally upon mus_audio_clo
 
 <!-- stop-playing-channel-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="stopplayingchannelhook">stop-playing-channel-hook</a></em> (snd chn)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="stopplayingchannelhook">stop-playing-channel-hook</a></em> (snd chn)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a sound finishes playing.
@@ -1781,7 +1780,7 @@ called when a sound finishes playing.
 
 <!-- stop-playing-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="stopplayinghook">stop-playing-hook</a></em> (snd)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="stopplayinghook">stop-playing-hook</a></em> (snd)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a sound finishes playing.
@@ -1819,7 +1818,7 @@ Here's somewhat brute-force code to play a sound a given number of times.
 
 <!-- stop-playing-region-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="stopplayingregionhook">stop-playing-region-hook</a></em> (n)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="stopplayingregionhook">stop-playing-region-hook</a></em> (n)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a region finishes playing.  See play.scm.
@@ -1827,7 +1826,7 @@ called when a region finishes playing.  See play.scm.
 
 <!-- stop-playing-selection-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="stopplayingselectionhook">stop-playing-selection-hook</a></em> ()</code></span><td align=right><b>progn</b></td>
+<span class=defbox><code><em class=def><a name="stopplayingselectionhook">stop-playing-selection-hook</a></em> ()</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the selection finishes playing.  See popup.scm.
@@ -1835,7 +1834,7 @@ called when the selection finishes playing.  See popup.scm.
 
 <!-- transform-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="ffthook">transform-hook</a></em> (snd chn scaler)</code></span><td></td>
+<span class=defbox><code><em class=def><a name="ffthook">transform-hook</a></em> (snd chn scaler)</code></span></td><td>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -1856,7 +1855,7 @@ called just after an FFT (or spectrum) is calculated.
 
 <!-- update-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="updatehook">update-hook</a></em> (snd)</code></span><td align=right><b>or</b></td>
+<span class=defbox><code><em class=def><a name="updatehook">update-hook</a></em> (snd)</code></span></td><td align=right><b>or</b>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -2849,7 +2848,7 @@ channel; the inverse function is <b>marks</b>.
 <!-- mark-name -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmarkname">mark-name</a></em> (<i>id</i>)</code></span></td></tr>
 <tr><td></td><td>name of mark <i>id</i>.
-</tr>
+</td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (add-named-mark samp name #:optional snd chn)
@@ -2879,7 +2878,7 @@ Marks that are syncd together can be used for insertions, and deletions, and can
 set arbitrary groups of play points.  But it's a bit tedious to type (set! (mark-sync ...)...)
 for each of the marks you want in the group.  The following uses the mark-clicked-hook
 instead; you type (start-sync), then click the set of marks to sync, then (stop-sync).
-</tr>
+</td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define mark-sync-number 0)
@@ -2907,7 +2906,7 @@ If <i>chn</i> and <i>pos</i> are omitted, a list of lists is returned,
 each inner list representing a channel of <i>snd</i>.  If <i>snd</i> is 
 also omitted, a list of lists of lists is returned, representing
 each sound and its channels.
-</tr>
+</td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (how-many-marks-in-channel snd chn)
@@ -2928,7 +2927,7 @@ specified, <b>marks</b> returns just the list of mark ids.  If the edit history 
 the list of ids reflects the mark list at that time in the edit history.  So, for example, the
 following procedure returns a list describing the history of a mark over the course of
 editing a channel, each list entry being the mark sample at that time or #f if the mark was not active:
-</tr>
+</td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (describe-mark id)
@@ -2986,7 +2985,7 @@ editing a channel, each list entry being the mark sample at that time or #f if t
 <!-- syncd-marks -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="syncdmarks">syncd-marks</a></em> (sync)</code></span></td></tr>
 <tr><td></td><td>a list of marks (the mark id's) that share the mark-sync value <i>sync</i>.
-</tr>
+</td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (move-syncd-marks sync diff)
@@ -3163,7 +3162,7 @@ mix (subsequent channels simply increment this number).
 mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 </td></tr>
 
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixsound">mix-sound</a></em> (file start)</code></span></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixsound">mix-sound</a></em> (file start)</code></span></td></tr>
 <tr><td></td><td>
 mix <i>file</i> (all chans) into selected sound at <i>start</i>.
 </td></tr>
@@ -3283,7 +3282,7 @@ although in fact there's no necessary connection between them.
 
 <!-- forget-region -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="snddeleteregion">forget-region</a></em> (<i>reg</i>)</code></span></td></tr>
-<td><spacer type=horizontal size=40><br></td><td>
+<tr><td><spacer type=horizontal size=40><br></td><td>
 "forget" (delete) region <i>reg</i>, removing it from the region stack.
 </td></tr>
 
@@ -3948,7 +3947,7 @@ take one argument (the current sample value), and return #t for a hit. <i>sample
 determines where to start the search.<br><br>
 <code>(count-matches (lambda (y) (&gt; y .1)))</code>
 </td></tr>
-<td></td><td>
+<tr><td></td><td>
 This function is obviously modelled on Emacs. It could be defined along these lines:
 </td></tr>
 
@@ -4256,7 +4255,7 @@ curve's exponent and <i>env-base</i>.  Here's a brief restatement:
 <tr><td></td><td>
 If <i>envelope</i> is a CLM env generator, <i>env-base</i> 
 is ignored.
-<tr><td colspan=2></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
 
 
 <!-- fft-log-frequency -->
@@ -4620,7 +4619,7 @@ To get the data currently displayed in the time domain window:
 	(wr (<a href="#sndrightsample">right-sample</a>)))
    (<a href="#sndsamples">samples</a> wl (+ 1 (- wr wl)))))
 </pre></td></tr></table>
-<tr><td colspan=2></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
 
 
 <!-- lisp-graph? -->
@@ -5208,7 +5207,6 @@ more like Emacs (which prompts for confirmation first):
      #t)) ; treat as string (i.e. don't require double quotes)
   #t)     ; C-x ...
 </pre></td></tr></table></td></tr>
-</td></tr>
 <tr><td colspan=2></td></tr>
 
 
@@ -5424,7 +5422,7 @@ depend on the run macro) will work only in Guile.  We could define xen-channel:
 	    (/ frag-beg frag-dur))))))
 </pre></td></tr></table><br>
 See also <i>smooth-channel-via-ptree</i> in examp.scm.
-<tr><td colspan=2></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
 
 
 <!-- ramp-channel -->
@@ -7492,11 +7490,6 @@ Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a 
 <!-- -------------------------------- DIALOG TABLE -------------------------------- -->
 <table border=0 cellspacing=10>
 
-<!-- dismiss-all-dialogs -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="dismissalldialogs">dismiss-all-dialogs</a></em> ()</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br>
-</td><td>deactivate all dialogs.</td></tr>
-
 <!-- just-sounds -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="justsounds">just-sounds</a></em> ()</code></span></td></tr>
 <tr><td></td><td>reflects the just-sounds button (if any). See also <a href="#justsoundshook">just-sounds-hook</a>.</td></tr>
@@ -8299,9 +8292,9 @@ A Scheme implementation: <a href="sndscm.html#addsoundextension1">add-sound-file
 <span class=defbox><code><em class=def><a name="sndbindkey">bind-key</a></em> (key state func extended origin) </code></span></td></tr>
 <tr><td></td><td>
 Cause <i>key</i> (an integer) with modifiers <i>state</i> (and preceding C-x if <i>extended</i>) to evaluate <i>func</i>.
-If <i>origin</i> is included, it is the name reported if an error occurs.  The ugly default is "user key func".<br><br>
+If <i>origin</i> is included, it is the name reported if an error occurs.  The ugly default is "user key func".
 
-<tr><td></td><td>
+</td></tr><tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (<em class=red>bind-key</em> (char-&gt;integer #\a) 4 
           (lambda () 
@@ -8459,17 +8452,17 @@ In the next example, we rebind them to treat same-sense zero-crossings as line m
 The key bindings set by bind-key are active only when the active widget is a graph; when the listener is receiving
 key strokes, the underlying text widget interprets them itself.  You can change the listener's interpretation
 in the following manner (this assumes you're using Motif and have the xm module loaded):
-<tr><td></td><td>
+</td></tr><tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
-(XtOverrideTranslations (list-ref (main-widgets) 4) (XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
+(XtOverrideTranslations (list-ref (main-widgets) 4) (XtParseTranslationTable "Ctrl &lt;Key&gt;i: hiho()\n"))
 </pre></td></tr></table><br></td></tr>
 
-<!-- change-property -->
+<!-- change-window-property -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="changeproperty">change-property</a></em> (known-atom property value)</code></span></td></tr>
+<span class=defbox><code><em class=def><a name="changeproperty">change-window-property</a></em> (known-atom property value)</code></span></td></tr>
 <tr><td width=150></td><td>
-<i>change-property</i> changes an X-window's property; there's an example in examp.scm. 
+<i>change-window-property</i> changes an X-window's property; there's an example in examp.scm. 
 </td></tr>
 
 <!-- clear-listener -->
@@ -9522,7 +9515,7 @@ the graphics context for XOR drawing in the selection color.</td></tr>
 
 <tr><td></td><td>
 Start netscape, if necessary, and tell it to go to the location 'url'.
-<tr><td colspan=2></td></tr>
+</td></tr><tr><td colspan=2></td></tr>
 
 <!-- snd-gcs -->
 <tr><td colspan=2>
@@ -9532,9 +9525,8 @@ Start netscape, if necessary, and tell it to go to the location 'url'.
 <i>snd-gcs</i> returns a list of Snd's graphics contexts (intended for use with the xm module in snd-motif.scm):
 (0)basic (1)selected_basic (2)combined (3)cursor (4)selected_cursor (5)selection (6)selected_selection 
 (7)erase (8)selected_erase (9)mark (10)selected_mark (11)mix (12)selected_mix (13)fltenv_basic (14)fltenv_data.
-<tr><td></td><td>
-
-<tr><td colspan=2></td></tr>
+</td>
+</tr><tr><td colspan=2></td></tr>
 
 <!-- with-gl -->
 <tr><td colspan=2>

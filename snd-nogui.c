@@ -118,7 +118,6 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int pos
 int g_remove_from_menu(int which_menu, char *label) {return(0);}
 void reflect_play_stop_in_popup_menu(void) {}
 void reflect_play_selection_stop(void) {}
-void dismiss_all_dialogs(snd_state *ss) {}
 int fire_up_transform_dialog(snd_state *ss, int managed) {return(0);}
 int transform_dialog_is_active(void) {return(0);}
 void set_show_transform_peaks(snd_state *ss, int val) {}
@@ -423,7 +422,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_cursor_context " 3)\
                (define " S_selection_context " 2)\
                (define (" S_axis_info " . args) #f)\
-               (define (" S_change_property " . args) #f)\
+               (define (" S_change_window_property " . args) #f)\
                (define (" S_dialog_widgets ") #f)\
                (define (" S_channel_widgets " . args) #f)\
                (define (" S_sound_widgets " . args) #f)\
@@ -464,7 +463,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   XEN_EVAL_C_STRING("def color_p (a) false end");
   XEN_EVAL_C_STRING("def color2list (a) false end");
   XEN_EVAL_C_STRING("def axis_info (s c a) false end");
-  XEN_EVAL_C_STRING("def change_property (s) false end");
+  XEN_EVAL_C_STRING("def change_window_property (s) false end");
   XEN_EVAL_C_STRING("def dialog_widgets () false end");
   XEN_EVAL_C_STRING("def channel_widgets (s c) false end");
   XEN_EVAL_C_STRING("def sound_widgets (s) false end");

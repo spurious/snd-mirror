@@ -233,7 +233,7 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
     }
 }
 
-void dismiss_all_dialogs(snd_state *ss)
+static void dismiss_all_dialogs(snd_state *ss)
 {
   state_context *sx;
   int i;

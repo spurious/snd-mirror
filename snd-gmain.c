@@ -79,18 +79,6 @@ static gint auto_update_check(gpointer context)
   return(0);
 }
 
-void dismiss_all_dialogs(snd_state *ss)
-{
-  state_context *sx;
-  int i;
-  sx = ss->sgx;
-  if (record_dialog_is_active()) close_recorder_audio();
-  if (sx->dialogs)
-    for (i = 0; i < NUM_DIALOGS; i++)
-      if (sx->dialogs[i])
-	gtk_widget_hide(sx->dialogs[i]);
-}
-
 static GdkAtom snd_v, snd_c;
 
 #if HAVE_EXTENSION_LANGUAGE

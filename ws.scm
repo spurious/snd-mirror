@@ -278,3 +278,6 @@
 
 (define definstrument define*)
 ;;; this will be using #:optional etc -- not currently compatible with cm's formals->defobject
+
+
+;;; TODO: with-mix?

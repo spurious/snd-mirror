@@ -72,3 +72,22 @@
 (define (mus-file-set-prescaler fd val) (set! (mus-file-prescaler fd) val))
 (define (mus-file-set-data-clipped fd val) (set! (mus-file-data-clipped fd) val))
 (define (mus-sound-set-maxamp file vals) (set! (mus-sound-maxamp file) vals))
+
+(define (dismiss-all-dialogs)
+  (define (is-active? dialog)
+    (if (provided? 'xm)
+	(XtIsManaged dialog)
+	#t))
+  (define (deactivate dialog)
+    (if (provided? 'xm)
+	(XtUnmanageChild dialog)
+	(if (provided? 'xg)
+	    (gtk_widget_hide dialog))))
+  (for-each
+   (lambda (dialog)
+     (if dialog
+	 (if (is-active? dialog)
+	     (deactivate dialog))))
+   (dialog-widgets)))
+
+(define change-property change-window-property)

@@ -1194,6 +1194,8 @@
     )
 
 
+(load "snd6.scm")
+
 ;;; ---------------- test 3: can variables be set/reset ----------------
 (if (or full-test (= snd-test 3) (and keep-going (<= snd-test 3)))
     (begin
@@ -1571,7 +1573,6 @@
 	frame)))
 
 (load "snd5.scm")
-(load "snd6.scm")
 
 (define (show-input-1 . arg)
   ;; from rtio.scm
@@ -9892,6 +9893,14 @@ EDITS: 5
 	(IF (fneq (mus-apply) 0.0)
 	    (snd-display ";(mus-apply): ~A" (mus-apply))))
 
+      (let ((o1 (make-oscil (+ (mus-srate) 100)))
+	    (o2 (make-oscil 100)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (let ((val1 (o1))
+		(val2 (o2)))
+	    (if (fneq val1 val2) (snd-display "~D: o1: ~A, o2: ~A" i val1 val2)))))
+
       (fm-test (make-oscil))
       (fm-test (make-sine-summation))
       (fm-test (make-square-wave))
@@ -14624,22 +14633,22 @@ EDITS: 5
 
       (set! fd (open-sound "obtest.snd"))
       (let ((names (short-file-name #t)))
-	(change-property "SND_VERSION" "WM_NAME"
-			 (format #f "snd (~A)~A"
-				 (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
-				 (if (null? names)
-				     ""
-				     (format #f ":~{~A~^, ~}" names)))))
+	(change-window-property "SND_VERSION" "WM_NAME"
+				(format #f "snd (~A)~A"
+					(strftime "%d-%b %H:%M %Z" (localtime (current-time)))
+					(if (null? names)
+					    ""
+					    (format #f ":~{~A~^, ~}" names)))))
       (let ((gotit #f)
 	    (oldsize (vu-size)))
 	(add-hook! property-changed-hook (lambda (hi) (set! gotit #t) #f))
-	(change-property "SND_VERSION" "SND_COMMAND" "(set! (vu-size) .5)")
+	(change-window-property "SND_VERSION" "SND_COMMAND" "(set! (vu-size) .5)")
 	(reset-hook! property-changed-hook)
 	(if (and gotit
 		 (fneq (vu-size) 0.5))
 	    (snd-display ";property vu-size: ~A" (vu-size)))
 	;; this basically never gets called -- force-event didn't help
-	(change-property "SND_VERSION" "SND_COMMAND" "(make-vector 10 3.14)")
+	(change-window-property "SND_VERSION" "SND_COMMAND" "(make-vector 10 3.14)")
 	(set! (vu-size) oldsize))
 
       (if (and (provided? 'snd-motif) (provided? 'xm)) (load "new-effects.scm"))

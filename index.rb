@@ -263,7 +263,6 @@ Snd_names_and_urls =
     ["describe_mark", "sndscm.html#describemark", "marks.scm"],
     ["dialog_widgets", "extsnd.html#dialogwidgets", "snd-draw.c"],
     ["disable_control_panel", "sndscm.html#disablecontrolpanel", "snd-gtk.scm"],
-    ["dismiss_all_dialogs", "extsnd.html#dismissalldialogs", "snd-xen.c"],
     ["display_edits", "extsnd.html#snddisplayedits", "snd-edits.c"],
     ["display_energy", "sndscm.html#exdisplayenergy", "draw.scm"],
     ["display_scanned_synthesis", "sndscm.html#displayscannedsynthesis", "snd-gtk.scm"],

@@ -311,6 +311,9 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+11-Apr:  moved dismiss-all-dialogs to snd6.scm.\n\
+         change-property -> change-window-property (old form in snd6.scm)\n\
+9-Apr:   nb.rb, ws.rb, dlocsig.rb from Michael Scholz.\n\
 3-Apr:   noise.scm and noise.rb from Michael Scholz.\n\
 2-Apr:   init-with-sound and finish-with-sound in ws.scm.\n\
 31-Mar:  removed audio-state-file.\n\
@@ -324,12 +327,6 @@ void news_help(snd_state *ss)
 17-Mar:  Mac OSX Record implemented.\n\
          piano.rb, rgb.rb, strad.scm, and strad.rb thanks to Michael Scholz.\n\
          moved contrib/* to the main directory.\n\
-13-Mar:  removed use-sinc-interp.\n\
-12-Mar:  select-mix, clear-audio-inputs and append-to-minibuffer moved to snd6.scm.\n\
-10-Mar:  Ruby-related bugfixes thanks to Michael Scholz.\n\
-5-Mar:   contrib/popup.rb from Michael Scholz.\n\
-4-Mar:   redo renamed redo_edit in Ruby version, in -> call_in.\n\
-3-Mar:   contrib/effects.rb from Michael Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1186,7 +1183,6 @@ all refer to the same thing.\n\
   " S_delete_sample "     (samp snd chn edpos)\n\
   " S_delete_samples "    (samp samps snd chn edpos)\n\
   " S_delete_selection "  ()\n\
-  " S_dismiss_all_dialogs "()\n\
   " S_edit_fragment "     (num snd chn)\n\
   " S_edit_header_dialog "()\n\
   " S_edits "             (snd chn)\n\

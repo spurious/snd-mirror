@@ -294,20 +294,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->just_time = 0;
   ss->error_lock = FALSE;
   ss->deferred_regions = 0;
-
-#if HAVE_LLONGS && (!MAC_OSX)
-  md = FOPEN("/proc/meminfo", "r");
-  if (md)
-    {
-      long long mem;
-      fscanf(md, "        total:    used:    free:  shared: buffers:  cached:\nMem:  %lld", &mem);
-      snd_fclose(md, "/proc/meminfo");
-      ss->memory_available = mem / 1024;
-    }
-  else 
-#endif
-    ss->memory_available = 0;
-
   init_recorder();
 
 #if HAVE_RUBY

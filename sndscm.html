@@ -733,7 +733,7 @@ the second if you're setting it to something new:
 
 <p>event.scm has functions used by snd-test.scm to exercise the user interface.
 These functions depend on the xm module and XSendEvent primarily, but there are
-also Scheme implementations of some of the built-in functions (change-prop).
+also Scheme implementations of some of the built-in functions (change-window-property).
 </p>
 
 
@@ -2283,10 +2283,8 @@ in Linux/OSS, tries to reduce soundcard background racket.
 <b><a name="sndappendtominibuffer">append-to-minibuffer</a></b> (msg <i>snd</i>)
 appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 <b><a name="sndselectmix">select-mix</a></b> sets the selected mix (#f = none).
-</td></tr>
-
+<b>dismiss-all-dialogs</b> deactivates all active dialogs.
 </p>
-
 
 
 <A NAME="sndgldoc"></a><span class=box><h2>snd-gl.scm</h2></span>

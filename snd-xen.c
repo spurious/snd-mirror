@@ -1793,13 +1793,6 @@ static XEN g_abort(void)
   return(XEN_FALSE);
 }
 
-static XEN g_dismiss_all_dialogs(void)
-{
-  #define H_dismiss_all_dialogs "(" S_dismiss_all_dialogs "): close all active dialogs"
-  dismiss_all_dialogs(get_global_state());
-  return(XEN_FALSE);
-}
-
 static XEN g_abortq(void)
 {
   #define H_abortQ "(" S_c_g "): allow pending user interface events to occur, returning #t if C-g was typed"
@@ -2940,7 +2933,6 @@ XEN_NARGIFY_0(g_mix_panel_w, g_mix_panel)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
 XEN_NARGIFY_0(g_abort_w, g_abort)
-XEN_NARGIFY_0(g_dismiss_all_dialogs_w, g_dismiss_all_dialogs)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
 XEN_NARGIFY_0(g_snd_version_w, g_snd_version)
 XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
@@ -3105,7 +3097,6 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #define g_sounds_w g_sounds
 #define g_yes_or_no_p_w g_yes_or_no_p
 #define g_abort_w g_abort
-#define g_dismiss_all_dialogs_w g_dismiss_all_dialogs
 #define g_abortq_w g_abortq
 #define g_snd_version_w g_snd_version
 #define g_equalize_panes_w g_equalize_panes
@@ -3397,7 +3388,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_sounds,              g_sounds_w, 0, 0, 0,              H_sounds);
   XEN_DEFINE_PROCEDURE(S_yes_or_no_p,         g_yes_or_no_p_w, 1, 0, 0,         H_yes_or_no_p);
   XEN_DEFINE_PROCEDURE(S_abort,               g_abort_w, 0, 0, 0,               H_abort);
-  XEN_DEFINE_PROCEDURE(S_dismiss_all_dialogs, g_dismiss_all_dialogs_w, 0, 0, 0, H_dismiss_all_dialogs);
   XEN_DEFINE_PROCEDURE(S_c_g,                 g_abortq_w, 0, 0, 0,              H_abortQ);
   XEN_DEFINE_PROCEDURE(S_snd_version,         g_snd_version_w, 0, 0, 0,         H_snd_version);
   XEN_DEFINE_PROCEDURE(S_equalize_panes,      g_equalize_panes_w, 0, 1, 0,      H_equalize_panes);

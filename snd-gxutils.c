@@ -90,9 +90,9 @@ string 'cmd'.  cmd should be a URL.  This is used by index.scm."
   return(XEN_TRUE);
 }
 
-static void change_property(snd_state *ss, char *winat, char *name, char *command)
+static void change_window_property(snd_state *ss, char *winat, char *name, char *command)
 {
-  #define H_change_property "(" S_change_property " version-name command-name command): look for the \
+  #define H_change_window_property "(" S_change_window_property " version-name command-name command): look for the \
 X atom 'version-name', and if it is found, set the property 'command-name' to the string 'command'.\n\
 (change-property \"SND_VERSION\" \"SND_COMMAND\" \"(snd-print (+ 1 2))\"\n\
 for example"
@@ -113,17 +113,17 @@ for example"
     }
 }
 
-static XEN g_change_property(XEN winat, XEN name, XEN command)
+static XEN g_change_window_property(XEN winat, XEN name, XEN command)
 {
   char *c = NULL;
   /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
   /*   Supposedly WM_STATE is just such an atom */
-  XEN_ASSERT_TYPE(XEN_STRING_P(winat), name, XEN_ARG_1, S_change_property, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_change_property, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(winat), name, XEN_ARG_1, S_change_window_property, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_change_window_property, "a string");
   if (XEN_STRING_P(command))
     c = copy_string(XEN_TO_C_STRING(command));
   else c = copy_string(g_print_1(command));
-  change_property(get_global_state(), 
+  change_window_property(get_global_state(), 
 		  XEN_TO_C_STRING(winat), 
 		  XEN_TO_C_STRING(name), c);
   if (c) FREE(c);
@@ -132,16 +132,16 @@ static XEN g_change_property(XEN winat, XEN name, XEN command)
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(send_netscape_w, send_netscape)
-XEN_NARGIFY_3(g_change_property_w, g_change_property)
+XEN_NARGIFY_3(g_change_window_property_w, g_change_window_property)
 #else
 #define send_netscape_w send_netscape
-#define g_change_property_w g_change_property
+#define g_change_window_property_w g_change_window_property
 #endif
 
 void g_init_gxutils(void)
 {
   XEN_DEFINE_PROCEDURE("send-netscape", send_netscape_w, 1, 0, 0, H_send_netscape);
-  XEN_DEFINE_PROCEDURE(S_change_property, g_change_property_w, 3, 0, 0, H_change_property);
+  XEN_DEFINE_PROCEDURE(S_change_window_property, g_change_window_property_w, 3, 0, 0, H_change_window_property);
 }
 
 #endif

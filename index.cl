@@ -423,6 +423,7 @@
 	(let ((line t)
 	      (linectr 0)
 	      (openctr 0)
+	      (warned nil)
 	      (in-comment nil)
 	      (scripting nil))
 	  ;;(if (> (length commands) 0) (warn "commands before ~A: ~A" file commands))
@@ -486,8 +487,27 @@
 					    (if (not scripting)
 						(if (not (member closer commands :test #'string-equal))
 						    (warn "~A without start? ~A from ~A[~D][~D:~D]" closer line file linectr (+ start 2) i)
-						  (if (member closer (list "ul" "tr" "td" "table" "small" "sub" "blockquote") :test #'string-equal)
-						      (setf commands (remove closer commands :test #'string-equal :count 1))
+						  (if (member closer (list "ul" "tr" "td" "table" "small" "sub" "blockquote" "center" "p"
+									   "a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
+									   "em" "head" "h4" "sup" "font" "map" "smaller" "th"
+									   ) :test #'string-equal)
+						      (progn
+							(setf commands (remove closer commands :test #'string-equal :count 1))
+							(if (not warned)
+							    (progn
+							      (if (and (string-equal closer "table")
+								       (not (member "table" commands :test #'string-equal)))
+								  (progn
+								    (if (member "tr" commands :test #'string-equal)
+									(progn
+									  (setf warned t)
+									  (remove "tr" commands :test #'string-equal)
+									  (format t "unclosed tr at table ~A ~A~%" file linectr)))
+								    (if (member "td" commands :test #'string-equal)
+									(progn
+									  (setf warned t)
+									  (remove "td" commands :test #'string-equal)
+									  (format t "unclosed td at table ~A ~A~%" file linectr))))))))
 						    (setf commands (remove closer commands :test #'string-equal))))))
 					  (setf closing nil))
 				      (if (not scripting)
@@ -498,7 +518,24 @@
 						  (if (and (member opener commands :test #'string-equal)
 							   (not (member opener (list "ul" "tr" "td" "table" "small" "sub" "blockquote") :test #'string-equal)))
 						      (warn "nested ~A? ~A from ~A[~D]" opener line file linectr)
-						    (setf commands (push opener commands))))))))
+						    (progn
+						      (if (not warned)
+							  (progn
+							    (if (and (string-equal opener "tr")
+								     (member "tr" commands :test #'string-equal)
+								     (< (count "table" commands :test #'string-equal) 2))
+								(progn
+								  (setf warned t)
+								  (remove "tr" commands :test #'string-equal :count 1)
+								  (format t "unclosed tr at table ~A ~A~%" file linectr)))
+							    (if (and (string-equal opener "td")
+								     (member "td" commands :test #'string-equal)
+								     (< (count "table" commands :test #'string-equal) 2))
+								(progn
+								  (setf warned t)
+								  (remove "td" commands :test #'string-equal :count 1)
+								  (format t "unclosed td at table ~A ~A~%" file linectr)))))
+						      (setf commands (push opener commands)))))))))
 				    (setf start nil)))))))))
 		
 		;; search for name
@@ -540,7 +577,10 @@
 			  (setf dline (subseq dline epos))
 			  (setf pos (or (search "<a href=" dline)
 					(search "<A HREF=" dline))))))))))
-	    (incf linectr)))))
+	    (incf linectr)))
+	(if commands (format t "open directives at end of ~A: ~A~%" file commands))
+	(setf commands nil)
+	))
     
     ;(format t "tds: ~A" tds)
     

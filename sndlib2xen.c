@@ -1686,7 +1686,6 @@ void mus_sndlib2xen_initialize(void)
 	       S_mus_error_to_string,
 	       S_mus_expand_filename,
 	       S_mus_file_prescaler,
-	       S_mus_file_set_data_clipped,
 	       S_mus_header_type_name,
 	       S_mus_ircam,
 	       S_mus_l24int,

@@ -1401,13 +1401,9 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   if ((!ur_a) && 
       (!gen) && 
       (!over_selection) &&
-      ((order == 0) || (order >= 128)) && 
-      ((ss->memory_available == 0) ||
-       ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available))) /* this is in Kbytes */
+      ((order == 0) || (order >= 128)))
     {
-      /* use convolution if order is large and there's memory available (and not over_selection) */
-      /*   probably faster here would be overlap-add */
-      /*   but user is almost certainly making a mistake elsewhere... */
+      /* use convolution if order is large and not over_selection */
       for (i = 0; i < si->chans; i++)
 	{
 	  cp = si->cps[i];

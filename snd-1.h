@@ -340,23 +340,11 @@ typedef struct snd__state {
   int max_sounds;
   snd_info *mx_sp;
   char *pending_change;
-  int print_choice, apply_choice, just_time, memory_available, gl_has_double_buffer;
+  int print_choice, apply_choice, just_time, gl_has_double_buffer;
   int stopped_explicitly, checking_explicitly, reloading_updated_file;
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
   int graph_hook_active, lisp_graph_hook_active;
-
-  /* user-visible global variables
-   *   all of these are accessed through macros in snd-0.h 
-   *   each has a default defined in snd-0.h,
-   *              name defined in snd-strings.h
-   *              initialized in snd.c
-   *              saved in snd-main.c
-   *              included in snd-help.c's variable list
-   *              documented in extsnd.html
-   *              several styles of tests in snd-test.scm
-   *              brought out to user via Guile
-   */
   int Show_Transform_Peaks, Show_Y_Zero, Show_Marks, Fft_Log_Frequency, Fft_Log_Magnitude, Channel_Style, Sound_Style, Show_Axes;
   char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir;
   char *Listener_Font, *Help_Text_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Button_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
