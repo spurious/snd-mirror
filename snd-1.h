@@ -757,6 +757,7 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
 void g_init_fft(void);
 Float fft_beta_max(int win);
 void cp_free_fft_state(chan_info *cp);
+void autocorrelation(Float *data, int n);
 
 
 

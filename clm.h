@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 21
-#define MUS_DATE "3-Feb-03"
+#define MUS_REVISION 22
+#define MUS_DATE "7-Feb-03"
 
 /* 
+ * 7-Feb:      split strings out of clm2xen.c into clm-strings.h.
  * 3-Feb:      mus_offset for envs, mus_width for square_wave et al.
  *             new core class fields (10) for various methods.
  * 7-Jan-03:   mus_src with very large sr_change segfault bugfix.

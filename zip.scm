@@ -23,6 +23,8 @@ a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping pro
      ramp-env                 ;ramp location (where we are between the sounds)
      )))
 
+;; TODO: run (via vct rather than list)?
+
 (define (zipper zp input1 input2)
   "(zipper zip in1 in2) creates the digital zipper sound effect using zipper generator 'zip' and the two input thunks 'in1' and 'in2'"
 

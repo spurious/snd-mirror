@@ -165,6 +165,8 @@ static int add_ptree(chan_info *cp)
 static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
 static void prune_edits(chan_info *cp, int edpt)
 {
+  int es = 0;
+
   int i;
   if (cp->edits[edpt]) 
     {
@@ -173,6 +175,7 @@ static void prune_edits(chan_info *cp, int edpt)
       for (i = edpt; i < cp->edit_size; i++) 
 	{
 	  cp->edits[i] = free_ed_list(cp->edits[i], cp);
+	  if (cp->amp_envs[i]) es++;
 	  cp->amp_envs[i] = free_amp_env(cp, i);
 	}
       release_pending_marks(cp, edpt);

@@ -208,7 +208,7 @@ static void walsh_transform(Float *data, int n)
 
 /* -------------------------------- AUTOCORRELATION -------------------------------- */
 
-static void autocorrelation(Float *data, int n)
+void autocorrelation(Float *data, int n)
 {
 #if HAVE_FFTW
   Float *rl;

@@ -45,6 +45,7 @@ install: snd
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 	$(mkinstalldirs) $(DESTDIR)$(mandir)
 	$(mkinstalldirs) $(DESTDIR)$(mandir)/man1
+	(cd po && $(MAKE) install)
 	$(INSTALL) snd $(bindir)/snd
 	$(INSTALL) snd.1 $(mandir)/man1
 

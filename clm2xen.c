@@ -53,6 +53,7 @@
 #include "sndlib2xen.h"
 #include "vct.h"
 #include "clm2xen.h"
+#include "clm-strings.h"
 
 
 static int local_error_type = MUS_NO_ERROR;
@@ -252,33 +253,6 @@ static off_t okeyarg (XEN key, char *caller, int n, off_t def)
 
 
 /* ---------------- AM and simple stuff ---------------- */
-
-#define S_radians_hz             "radians->hz"
-#define S_hz_radians             "hz->radians"
-#define S_in_hz                  "in-hz"
-#define S_degrees_radians        "degrees->radians"
-#define S_radians_degrees        "radians->degrees"
-#define S_db_linear              "db->linear"
-#define S_linear_db              "linear->db"
-#define S_ring_modulate          "ring-modulate"
-#define S_amplitude_modulate     "amplitude-modulate"
-#define S_contrast_enhancement   "contrast-enhancement"
-#define S_mus_set_srate          "mus-set-srate"
-#define S_mus_srate              "mus-srate"
-#define S_mus_set_array_print_length "mus-set-array-print-length"
-#define S_mus_array_print_length "mus-array-print-length"
-#define S_dot_product            "dot-product"
-#define S_clear_array            "clear-array"
-#define S_polynomial             "polynomial"
-#define S_multiply_arrays        "multiply-arrays"
-#define S_make_fft_window        "make-fft-window"
-#define S_mus_fft                "mus-fft"
-#define S_spectrum               "spectrum"
-#define S_convolution            "convolution"
-#define S_rectangular2polar      "rectangular->polar"
-#define S_polar2rectangular      "polar->rectangular"
-#define S_array_interp           "array-interp"
-#define S_sum_of_sines           "sum-of-sines"
 
 static char *FFT_WINDOW_CONSTANTS[17] = {S_rectangular_window, S_hann_window, S_welch_window, S_parzen_window, S_bartlett_window,
 					 S_hamming_window, S_blackman2_window, S_blackman3_window, S_blackman4_window,
@@ -733,26 +707,6 @@ XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v) /* global for user-defined ge
 
 /* ---------------- generic functions ---------------- */
 
-#define S_mus_phase          "mus-phase"
-#define S_mus_set_phase      "mus-set-phase"
-#define S_mus_frequency      "mus-frequency"
-#define S_mus_set_frequency  "mus-set-frequency"
-#define S_mus_length         "mus-length"
-#define S_mus_set_length     "mus-set-length"
-#define S_mus_data           "mus-data"
-#define S_mus_set_data       "mus-set-data"
-#define S_mus_scaler         "mus-scaler"
-#define S_mus_set_scaler     "mus-set-scaler"
-#define S_mus_width          "mus-width"
-#define S_mus_set_width      "mus-set-width"
-#define S_mus_offset         "mus-offset"
-#define S_mus_file_name      "mus-file-name"
-#define S_mus_inspect        "mus-inspect"
-#define S_mus_describe       "mus-describe"
-#define S_mus_name           "mus-name"
-#define S_mus_run            "mus-run"
-#define S_mus_bank           "mus-bank"
-
 static XEN g_inspect(XEN gen)
 {
   #define H_mus_inspect "(" S_mus_inspect " gen) -> the internal state of gen"
@@ -999,12 +953,6 @@ static XEN g_mus_bank(XEN gens, XEN amps, XEN inp, XEN inp2)
 
 /* ---------------- oscil ---------------- */
 
-#define S_make_oscil "make-oscil"
-#define S_oscil      "oscil"
-#define S_oscil_bank "oscil-bank"
-#define S_oscil_p    "oscil?"
-#define S_mus_apply  "mus-apply"
-
 static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_make_oscil "(" S_make_oscil " &opt-key (frequency 440.0) (phase 0.0)) -> a new " S_oscil " (sinewave) generator"
@@ -1080,24 +1028,6 @@ static XEN g_mus_apply(XEN arglist)
 
 
 /* ---------------- delay ---------------- */
-
-#define S_make_delay "make-delay"
-#define S_delay "delay"
-#define S_delay_p "delay?"
-#define S_tap "tap"
-#define S_comb "comb"
-#define S_make_comb "make-comb"
-#define S_comb_p "comb?"
-#define S_notch "notch"
-#define S_make_notch "make-notch"
-#define S_notch_p "notch?"
-#define S_all_pass "all-pass"
-#define S_make_all_pass "make-all-pass"
-#define S_all_pass_p "all-pass?"
-#define S_mus_feedback "mus-feedback"
-#define S_mus_set_feedback "mus-set-feedback"
-#define S_mus_feedforward "mus-feedforward"
-#define S_mus_set_feedforward "mus-set-feedforward"
 
 enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS};
 
@@ -1360,11 +1290,6 @@ static XEN g_all_pass_p(XEN obj)
 
 /* -------- sum-of-cosines -------- */
 
-#define S_make_sum_of_cosines "make-sum-of-cosines"
-#define S_sum_of_cosines      "sum-of-cosines"
-#define S_sum_of_cosines_p    "sum-of-cosines?"
-#define S_mus_cosines         "mus-cosines"
-
 static XEN g_sum_of_cosines_p(XEN obj) 
 {
   #define H_sum_of_cosines_p "(" S_sum_of_cosines_p " gen) -> #t if gen is a " S_sum_of_cosines " generator, else #f"
@@ -1422,16 +1347,6 @@ gets the next sample of the band-limited pulse-train produced by gen"
 
 
 /* ---------------- rand, rand_interp ---------------- */
-
-#define S_make_rand "make-rand"
-#define S_rand "rand"
-#define S_rand_p "rand?"
-#define S_make_rand_interp "make-rand-interp"
-#define S_rand_interp "rand-interp"
-#define S_rand_interp_p "rand-interp?"
-#define S_mus_set_rand_seed "mus-set-rand-seed"
-#define S_mus_rand_seed "mus-rand-seed"
-#define S_mus_random "mus-random"
 
 static XEN g_make_noi(int rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -1540,12 +1455,6 @@ this can be used to re-run a particular random number sequence."
 /* ---------------- table lookup ---------------- */
 
 static int DEFAULT_TABLE_SIZE = 512;
-
-#define S_table_lookup_p     "table-lookup?"
-#define S_make_table_lookup  "make-table-lookup"
-#define S_table_lookup       "table-lookup"
-#define S_partials2wave      "partials->wave"
-#define S_phasepartials2wave "phase-partials->wave"
 
 static XEN g_table_lookup_p(XEN obj) 
 {
@@ -1685,19 +1594,6 @@ with 'wrap-around' when gen's phase marches off the end of its table."
 
 
 /* ---------------- sawtooth et al ---------------- */
-
-#define S_make_sawtooth_wave "make-sawtooth-wave"
-#define S_sawtooth_wave      "sawtooth-wave"
-#define S_sawtooth_wave_p    "sawtooth-wave?"
-#define S_make_square_wave   "make-square-wave"
-#define S_square_wave        "square-wave"
-#define S_square_wave_p      "square-wave?"
-#define S_make_triangle_wave "make-triangle-wave"
-#define S_triangle_wave      "triangle-wave"
-#define S_triangle_wave_p    "triangle-wave?"
-#define S_make_pulse_train   "make-pulse-train"
-#define S_pulse_train        "pulse-train"
-#define S_pulse_train_p      "pulse-train?"
 
 enum {G_SAWTOOTH_WAVE, G_SQUARE_WAVE, G_TRIANGLE_WAVE, G_PULSE_TRAIN};
 
@@ -1843,10 +1739,6 @@ static XEN g_pulse_train_p(XEN obj)
 
 /* ---------------- asymmetric-fm ---------------- */
 
-#define S_make_asymmetric_fm "make-asymmetric-fm"
-#define S_asymmetric_fm "asymmetric-fm"
-#define S_asymmetric_fm_p "asymmetric-fm?"
-
 static XEN g_make_asymmetric_fm(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
   #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " &opt-key (frequency 440.0) (initial-phase 0.0) (r 1.0) (ratio 1.0))\n\
@@ -1903,31 +1795,6 @@ static XEN g_asymmetric_fm_p(XEN obj)
 
 
 /* ---------------- simple filters ---------------- */
-
-#define S_make_one_zero "make-one-zero"
-#define S_one_zero      "one-zero"
-#define S_one_zero_p    "one-zero?"
-#define S_make_one_pole "make-one-pole"
-#define S_one_pole      "one-pole"
-#define S_one_pole_p    "one-pole?"
-#define S_make_two_zero "make-two-zero"
-#define S_two_zero      "two-zero"
-#define S_two_zero_p    "two-zero?"
-#define S_make_two_pole "make-two-pole"
-#define S_two_pole      "two-pole"
-#define S_two_pole_p    "two-pole?"
-#define S_make_zpolar   "make-zpolar"
-#define S_make_ppolar   "make-ppolar"
-#define S_mus_a0        "mus-a0"
-#define S_mus_a1        "mus-a1"
-#define S_mus_a2        "mus-a2"
-#define S_mus_b1        "mus-b1"
-#define S_mus_b2        "mus-b2"
-#define S_mus_set_a0    "mus-set-a0"
-#define S_mus_set_a1    "mus-set-a1"
-#define S_mus_set_a2    "mus-set-a2"
-#define S_mus_set_b1    "mus-set-b1"
-#define S_mus_set_b2    "mus-set-b2"
 
 enum {G_ONE_POLE, G_ONE_ZERO, G_TWO_POLE, G_TWO_ZERO, G_ZPOLAR, G_PPOLAR};
 static char *smpflts[6] = {S_make_one_pole, S_make_one_zero, S_make_two_pole, S_make_two_zero, S_make_zpolar, S_make_ppolar};
@@ -2164,14 +2031,6 @@ static XEN g_set_b2(XEN obj, XEN val)
 
 /* ---------------- formant ---------------- */
 
-#define S_make_formant "make-formant"
-#define S_formant "formant"
-#define S_formant_bank "formant-bank"
-#define S_formant_p "formant?"
-#define S_mus_formant_radius "mus-formant-radius"
-#define S_mus_set_formant_radius "mus-set-formant-radius"
-#define S_mus_set_formant_radius_and_frequency "mus-set-formant-radius-and-frequency"
-
 static XEN g_make_formant(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   #define H_make_formant "(" S_make_formant " &opt-key radius frequency (gain 1.0))\n\
@@ -2244,14 +2103,6 @@ generator) gen's radius and frequency"
 
 
 /* ---------------- frame ---------------- */
-
-#define S_make_frame       "make-frame"
-#define S_frame_p          "frame?"
-#define S_frame_add        "frame+"
-#define S_frame_multiply   "frame*"
-#define S_frame_ref        "frame-ref"
-#define S_frame_set        "frame-set!"
-#define S_frame            "frame"
 
 static XEN g_make_frame(XEN arglist)
 {
@@ -2365,18 +2216,6 @@ static XEN g_set_frame_ref(XEN uf1, XEN uchan, XEN val)
 
 
 /* ---------------- mixer ---------------- */
-
-#define S_make_mixer       "make-mixer"
-#define S_mixer_p          "mixer?"
-#define S_mixer_multiply   "mixer*"
-#define S_mixer_ref        "mixer-ref"
-#define S_mixer_set        "mixer-set!"
-#define S_mixer            "mixer"
-
-#define S_frame2sample     "frame->sample"
-#define S_sample2frame     "sample->frame"
-#define S_frame2frame      "frame->frame"
-#define S_frame2list       "frame->list"
 
 static XEN g_mixer_p(XEN obj) 
 {
@@ -2558,16 +2397,6 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
 
 /* ---------------- buffer ---------------- */
 
-#define S_make_buffer    "make-buffer"
-#define S_buffer_p       "buffer?"
-#define S_buffer2sample  "buffer->sample"
-#define S_sample2buffer  "sample->buffer"
-#define S_buffer2frame   "buffer->frame"
-#define S_frame2buffer   "frame->buffer"
-#define S_buffer_empty_p "buffer-empty?"
-#define S_buffer_full_p  "buffer-full?"
-#define S_buffer         "buffer"
-
 static XEN g_buffer_p(XEN obj) 
 {
   #define H_buffer_p "(" S_buffer_p " gen) -> #t if gen is a " S_buffer " object, else #f"
@@ -2673,10 +2502,6 @@ static XEN g_frame2buffer(XEN obj, XEN val)
 
 /* ---------------- wave-train ---------------- */
 
-#define S_make_wave_train "make-wave-train"
-#define S_wave_train "wave-train"
-#define S_wave_train_p "wave-train?"
-
 static XEN g_make_wave_train(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   #define H_make_wave_train "(" S_make_wave_train " &opt-key (frequency 440.0) (initial-phase 0.0) wave)\n\
@@ -2749,12 +2574,6 @@ static XEN g_wave_train_p(XEN obj)
 
 
 /* ---------------- waveshape ---------------- */
-
-#define S_make_waveshape       "make-waveshape"
-#define S_waveshape            "waveshape"
-#define S_waveshape_p          "waveshape?"
-#define S_partials2waveshape   "partials->waveshape"
-#define S_partials2polynomial  "partials->polynomial"
 
 static Float *list2partials(XEN harms, int *npartials)
 {
@@ -2930,10 +2749,6 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 
 /* ---------------- sine-summation ---------------- */
 
-#define S_make_sine_summation "make-sine-summation"
-#define S_sine_summation      "sine-summation"
-#define S_sine_summation_p    "sine-summation?"
-
 static XEN g_sine_summation_p(XEN obj) 
 {
   #define H_sine_summation_p "(" S_sine_summation_p " gen) -> #t if gen is a " S_sine_summation " generator, else #f"
@@ -2992,19 +2807,6 @@ returns a new sine summation synthesis generator."
 
 
 /* ----------------  filter ---------------- */
-
-#define S_filter          "filter"
-#define S_filter_p        "filter?"
-#define S_make_filter     "make-filter"
-#define S_fir_filter      "fir-filter"
-#define S_fir_filter_p    "fir-filter?"
-#define S_make_fir_filter "make-fir-filter"
-#define S_iir_filter      "iir-filter"
-#define S_iir_filter_p    "iir-filter?"
-#define S_make_iir_filter "make-iir-filter"
-#define S_mus_xcoeffs     "mus-xcoeffs"
-#define S_mus_ycoeffs     "mus-ycoeffs"
-#define S_mus_order       "mus-order"
 
 static XEN g_filter_p(XEN obj) 
 {
@@ -3181,12 +2983,6 @@ static XEN g_mus_ycoeffs(XEN gen)
 
 /* ---------------- env ---------------- */
 
-#define S_env_p       "env?"
-#define S_env         "env"
-#define S_make_env    "make-env"
-#define S_restart_env "restart-env"
-#define S_env_interp  "env-interp"
-
 static XEN g_env_p(XEN obj) 
 {
   #define H_env_p "(" S_env_p " gen) -> #t if gen is a " S_env " generator, else #f"
@@ -3301,34 +3097,6 @@ static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!
 
 
 /* ---------------- io ---------------- */
-
-#define S_file2sample      "file->sample"
-#define S_file2sample_p    "file->sample?"
-#define S_make_file2sample "make-file->sample"
-#define S_sample2file      "sample->file"
-#define S_sample2file_p    "sample->file?"
-#define S_make_sample2file "make-sample->file"
-#define S_continue_sample2file "continue-sample->file"
-#define S_file2frame       "file->frame"
-#define S_file2frame_p     "file->frame?"
-#define S_make_file2frame  "make-file->frame"
-#define S_frame2file       "frame->file"
-#define S_frame2file_p     "frame->file?"
-#define S_make_frame2file  "make-frame->file"
-#define S_mus_input_p      "mus-input?"
-#define S_mus_output_p     "mus-output?"
-#define S_in_any           "in-any"
-#define S_out_any          "out-any"
-#define S_ina              "ina"
-#define S_inb              "inb"
-#define S_outa             "outa"
-#define S_outb             "outb"
-#define S_outc             "outc"
-#define S_outd             "outd"
-#define S_file2array       "file->array"
-#define S_array2file       "array->file"
-#define S_mus_close        "mus-close"
-#define S_mus_file_buffer_size "mus-file-buffer-size"
 
 static XEN g_input_p(XEN obj) 
 {
@@ -3721,15 +3489,6 @@ static XEN g_mus_set_file_buffer_size(XEN val)
 
 /* ---------------- readin ---------------- */
 
-#define S_readin            "readin"
-#define S_readin_p          "readin?"
-#define S_make_readin       "make-readin"
-#define S_mus_increment     "mus-increment"
-#define S_mus_set_increment "mus-set-increment"
-#define S_mus_location      "mus-location"
-#define S_mus_set_location  "mus-set-location"
-#define S_mus_channel       "mus-channel"
-
 static XEN g_readin_p(XEN obj) 
 {
   #define H_readin_p "(" S_readin_p " gen) -> #t if gen is a " S_readin " generator, else #f"
@@ -3832,20 +3591,6 @@ static XEN g_channel(XEN obj)
 
 
 /* ---------------- locsig ---------------- */
-
-#define S_locsig_p          "locsig?"
-#define S_locsig            "locsig"
-#define S_make_locsig       "make-locsig"
-#define S_mus_channels      "mus-channels"
-#define S_locsig_ref        "locsig-ref"
-#define S_locsig_set        "locsig-set!"
-#define S_locsig_reverb_ref "locsig-reverb-ref"
-#define S_locsig_reverb_set "locsig-reverb-set!"
-#define S_mus_linear        "mus-linear"
-#define S_mus_sinusoidal    "mus-sinusoidal"
-#define S_locsig_type       "locsig-type"
-#define S_set_locsig_type   "set-locsig-type"
-#define S_move_locsig       "move-locsig"
 
 static XEN g_locsig_ref(XEN obj, XEN chan)
 {
@@ -4049,11 +3794,6 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
   else return(0.0);
 }
 
-#define S_src         "src"
-#define S_src_p       "src?"
-#define S_make_src    "make-src"
-#define S_clear_sincs "clear-sincs"
-
 static XEN g_clear_sincs(void)
 {
   mus_clear_sinc_tables();
@@ -4143,14 +3883,6 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 
 
 /* ---------------- granulate ---------------- */
-
-#define S_granulate_p    "granulate?"
-#define S_granulate      "granulate"
-#define S_make_granulate "make-granulate"
-#define S_mus_ramp       "mus-ramp"
-#define S_mus_set_ramp   "mus-set-ramp"
-#define S_mus_hop        "mus-hop"
-#define S_mus_set_hop    "mus-set-hop"
 
 static XEN g_granulate_p(XEN obj) 
 {
@@ -4259,11 +3991,6 @@ jitter controls the randomness in that spacing, input can be a file pointer."
 
 
 /* ---------------- convolve ---------------- */
-
-#define S_convolve_p     "convolve?"
-#define S_convolve       "convolve"
-#define S_make_convolve  "make-convolve"
-#define S_convolve_files "convolve-files"
 
 static XEN g_convolve_p(XEN obj) 
 {
@@ -4415,16 +4142,6 @@ static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
 					      gn->vcts[INPUT_FUNCTION], 
 					      "phase-vocoder analysis function")));
 }
-
-#define S_phase_vocoder       "phase-vocoder"
-#define S_phase_vocoder_p     "phase-vocoder?"
-#define S_make_phase_vocoder  "make-phase-vocoder"
-#define S_pv_outctr           "pv-outctr"
-#define S_pv_amps             "pv-amps"
-#define S_pv_freqs            "pv-freqs"
-#define S_pv_amp_increments   "pv-amp-increments"
-#define S_pv_phases           "pv-phases"
-#define S_pv_phase_increments "pv-phase-increments"
 
 static XEN g_phase_vocoder_p(XEN obj) 
 {
@@ -4639,8 +4356,6 @@ static XEN g_set_hop(XEN obj, XEN val)
 
 
 /* ---------------- mix ---------------- */
-
-#define S_mus_mix "mus-mix"
 
 static XEN g_mus_mix(XEN out, XEN in, XEN ost, XEN olen, XEN ist, XEN mx, XEN envs)
 {
