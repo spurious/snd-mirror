@@ -601,11 +601,7 @@ static XEN g_widget_text(XEN wid)
 	  if (XmStringEmpty(s1)) return(XEN_FALSE);
 	  XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &text);
 	  if (text == NULL)
-	    {
-	      XmStringGetLtoR(s1, "button_font", &text);
-	      if (text == NULL)
-		XmStringGetLtoR(s1, "bold_button_font", &text);
-	    }
+	    XmStringGetLtoR(s1, "bold_button_font", &text);
 	  XmStringFree(s1);
 	  res = C_TO_XEN_STRING(text);
 	}
@@ -664,7 +660,7 @@ static XEN g_set_widget_text(XEN wid, XEN text)
 #if USE_MOTIF
       if ((XmIsText(w)) || (XmIsTextField(w)))
 	XmTextSetString(w, XEN_TO_C_STRING(text));
-      else set_button_label_normal(w, XEN_TO_C_STRING(text));
+      else set_button_label(w, XEN_TO_C_STRING(text));
 #else
       if (GTK_IS_ENTRY(w))
 	gtk_entry_set_text(GTK_ENTRY(w), XEN_TO_C_STRING(text));

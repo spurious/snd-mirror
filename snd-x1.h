@@ -272,10 +272,8 @@ void edit_find_callback(Widget w, XtPointer context, XtPointer info);
 
 /* -------- snd-xutils.c -------- */
 
-int set_help_text_font(snd_state *ss, char *font);
 int set_tiny_font(snd_state *ss, char *font);
 int set_listener_font(snd_state *ss, char *font);
-int set_button_font(snd_state *ss, char *font);
 int set_bold_button_font(snd_state *ss, char *font);
 int set_peaks_font(snd_state *ss, char *font);
 int set_bold_peaks_font(snd_state *ss, char *font);
@@ -292,7 +290,6 @@ void raise_dialog(Widget w);
 void set_main_color_of_widget (Widget w, void *userptr);
 void highlight_color(snd_state *ss, Widget w);
 void white_color(snd_state *ss, Widget w);
-void set_button_label_normal(Widget button, const char *str);
 void set_button_label_bold(Widget button, const char *str);
 void set_button_label(Widget label, const char *str);
 void set_label(Widget label, const char *str);

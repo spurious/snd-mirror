@@ -198,10 +198,8 @@ void reflect_region_graph_style(snd_state *ss);
 /* -------- snd-xutils.c -------- */
 
 void goto_window(int text);
-int set_help_text_font(snd_state *ss, char *font);
 int set_tiny_font(snd_state *ss, char *font);
 int set_listener_font(snd_state *ss, char *font);
-int set_button_font(snd_state *ss, char *font);
 int set_bold_button_font(snd_state *ss, char *font);
 int set_peaks_font(snd_state *ss, char *font);
 int set_bold_peaks_font(snd_state *ss, char *font);

@@ -1607,28 +1607,12 @@ static Widget make_recorder_slider(snd_state *ss, PANE *p, AMP *a, Widget last_s
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-#if 0
-  /* smaller (in height) sliders need font changes here and below */
-  if (amp_sliders > 4)
-    {
-      XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
-    }
-  s1 = XmStringCreate("     ", "button_font");
-  XtSetArg(args[n], XmNlabelString, s1); n++;
-#endif
   a->label = make_pushbutton_widget(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out), 
 				       p->pane, args, n);
   XtAddCallback(a->label, XmNactivateCallback, record_amp_click_callback, a);
   
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-#if 0
-  if (amp_sliders > 4)
-    {
-      s1 = XmStringCreate(amp_to_string(global_amp(a)), "button_font");
-      XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(state)); n++;
-    }
-#endif
   s1 = XmStringCreate(amp_to_string(global_amp(a)), XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -3027,7 +3011,7 @@ void snd_record_file(snd_state *ss)
 	n = 0;
 	if (small_fontstruct)
 	  XtSetArg(args[n], XmNfontName, (vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
-	else XtSetArg(args[n], XmNfontName, button_font(ss));
+	else XtSetArg(args[n], XmNfontName, peaks_font(ss));
 	n++;
 	XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++;
 	XtSetArg(args[n], XmNloadModel, XmLOAD_DEFERRED); n++;
@@ -3037,12 +3021,14 @@ void snd_record_file(snd_state *ss)
 #else
       if (small_fontstruct)
 	{
-	  small_fontlist = XmFontListCreate(small_fontstruct, "smallfont");
-	  XmFontListEntryCreate("small_font", XmFONT_IS_FONT, (XtPointer)small_fontstruct);
+	  XmFontListEntry e1;
+	  e1 = XmFontListEntryCreate("small_font", XmFONT_IS_FONT, (XtPointer)small_fontstruct);
+	  small_fontlist = XmFontListAppendEntry(NULL, e1);
+	  XmFontListEntryFree(&e1);
 	}
       else
 	{
-	  small_fontlist = BUTTON_FONT(ss);
+	  small_fontlist = ss->sgx->peaks_fontlist;
 	  XmFontListEntryCreate("small_font", XmFONT_IS_FONT, (XtPointer)PEAK_NUMBERS_FONT(ss));
 	}
 #endif

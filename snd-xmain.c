@@ -47,13 +47,11 @@
 
 /* we assume later that we can always find these fonts (if resource file gives bogus entry, we fall back on these) */
 
-#define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_PEAKS_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_BOLD_PEAKS_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
-#define DEFAULT_HELP_TEXT_FONT "9x15"
 
 #ifdef SGI
   #define ICON_TYPE PLAIN_ICON
@@ -110,14 +108,12 @@ typedef struct {
   char *lighter_blue_color;
 
   char *use_schemes;
-  char *button_font;
   char *peaks_font;
   char *listener_font;
   char *bold_button_font;
   char *bold_peaks_font;
   char *axis_label_font;
   char *axis_numbers_font;
-  char *help_text_font;
   char *init_file_name;
   char *eps_file_name;
   int spectrogram_color;
@@ -164,14 +160,12 @@ static XtResource resources[] = {
   {"sashcolor", "Sashcolor", XmRString, sizeof(char *), XtOffset(sndres *, sash_color), XmRString, (XtPointer)SASH_COLOR},
   {"pushedbuttoncolor", "Pushedbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, pushed_button_color), XmRString, (XtPointer)PUSHED_BUTTON_COLOR},
   {"useSchemes", "UseSchemes", XmRString, sizeof(char *), XtOffset(sndres *, use_schemes), XmRString, (XtPointer)"none"},
-  {"buttonFont", "ButtonFont", XmRString, sizeof(char *), XtOffset(sndres *, button_font), XmRString, (XtPointer)DEFAULT_BUTTON_FONT},
   {"peaksFont", "PeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, peaks_font), XmRString, (XtPointer)DEFAULT_PEAKS_FONT},
   {"listenerFont", "ListenerFont", XmRString, sizeof(char *), XtOffset(sndres *, listener_font), XmRString, (XtPointer)NULL},
   {"boldbuttonFont", "BoldbuttonFont", XmRString, sizeof(char *), XtOffset(sndres *, bold_button_font), XmRString, (XtPointer)DEFAULT_BOLD_BUTTON_FONT},
   {"boldpeaksFont", "BoldPeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, bold_peaks_font), XmRString, (XtPointer)DEFAULT_BOLD_PEAKS_FONT},
   {"axisLabelFont", "AxisLabelFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_label_font), XmRString, (XtPointer)DEFAULT_AXIS_LABEL_FONT},
   {"axisNumbersFont", "AxisNumbersFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_numbers_font), XmRString, (XtPointer)DEFAULT_AXIS_NUMBERS_FONT},
-  {"helpTextFont", "HelpTextFont", XmRString, sizeof(char *), XtOffset(sndres *, help_text_font), XmRString, (XtPointer)DEFAULT_HELP_TEXT_FONT},
   {"initFile", "InitFile", XmRString, sizeof(char *), XtOffset(sndres *, init_file_name), XmRString, (XtPointer)INIT_FILE_NAME},
   {"epsFile", "EpsFile", XmRString, sizeof(char *), XtOffset(sndres *, eps_file_name), XmRString, (XtPointer)DEFAULT_EPS_FILE},
   {"spectrogramColor", "SpectrogramColor", XmRInt, sizeof(int), XtOffset(sndres *, spectrogram_color), XmRImmediate, (XtPointer)DEFAULT_COLOR_MAP},
@@ -378,7 +372,7 @@ static Cessate startup_funcs(XtPointer context)
   Display *dpy;
   ss = get_global_state();
   shell = ss->sgx->mainshell;
-  dpy = ss->sgx->mdpy;
+  dpy = MAIN_DISPLAY(ss);
   switch (tm_slice)
     {
     case 0:
@@ -741,11 +735,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   sx->pushed_button_color =   get_color(shell, snd_rs.pushed_button_color,   PUSHED_BUTTON_COLOR,   NULL, NULL, FALSE);
   sx->text_focus_color =      get_color(shell, snd_rs.text_focus_color,      TEXT_FOCUS_COLOR,      NULL, NULL, FALSE);
 
-  if ((!(set_button_font(ss, snd_rs.button_font))) &&
-      (!(set_button_font(ss, DEFAULT_BUTTON_FONT))) &&
-      (!(set_button_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font %s"), snd_rs.button_font);
-
   if ((!(set_peaks_font(ss, snd_rs.peaks_font))) &&
       (!(set_peaks_font(ss, DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(ss, FALLBACK_FONT))))
@@ -774,11 +763,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       (!(set_axis_numbers_font(ss, DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(ss, FALLBACK_FONT))))
     fprintf(stderr, _("can't find font %s"), snd_rs.axis_numbers_font);
-
-  if ((!(set_help_text_font(ss, snd_rs.help_text_font))) &&
-      (!(set_help_text_font(ss, DEFAULT_HELP_TEXT_FONT))) &&
-      (!(set_help_text_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font %s"), snd_rs.help_text_font);
 
   if ((snd_rs.listener_font) &&
       (!(set_listener_font(ss, snd_rs.listener_font))))

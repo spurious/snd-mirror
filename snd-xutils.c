@@ -37,24 +37,6 @@ static XmFontList get_xm_font(snd_state *ss, XFontStruct *fs, char *font, char *
 }
 #endif
 
-int set_help_text_font(snd_state *ss, char *font)
-{
-  XFontStruct *fs = NULL;
-  state_context *sgx;
-  sgx = ss->sgx;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
-  if (fs)
-    {
-      if (help_text_font(ss)) FREE(help_text_font(ss));
-      in_set_help_text_font(ss, copy_string(font)); /* may be temporary from caller's viewpoint */
-      sgx->help_text_fontstruct = fs;
-      if (sgx->help_text_fontlist) XM_FONT_FREE(sgx->help_text_fontlist);
-      sgx->help_text_fontlist = get_xm_font(ss, sgx->help_text_fontstruct, font, "help_text_font");
-      return(TRUE);
-    }
-  return(FALSE);
-}
-
 int set_tiny_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;
@@ -84,22 +66,6 @@ int set_listener_font(snd_state *ss, char *font)
       (ss->sgx)->listener_fontstruct = fs;
       if ((ss->sgx)->listener_fontlist) XM_FONT_FREE((ss->sgx)->listener_fontlist);
       (ss->sgx)->listener_fontlist = get_xm_font(ss, (ss->sgx)->listener_fontstruct, font, "listener_font");
-      return(TRUE);
-    }
-  return(FALSE);
-}
-
-int set_button_font(snd_state *ss, char *font)
-{
-  XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
-  if (fs)
-    {
-      if (button_font(ss)) FREE(button_font(ss));
-      in_set_button_font(ss, copy_string(font));
-      (ss->sgx)->button_fontstruct = fs;
-      if ((ss->sgx)->button_fontlist) XM_FONT_FREE((ss->sgx)->button_fontlist);
-      (ss->sgx)->button_fontlist = get_xm_font(ss, (ss->sgx)->button_fontstruct, font, "button_font");
       return(TRUE);
     }
   return(FALSE);
@@ -200,7 +166,7 @@ int mark_name_width(snd_state *ss, char *txt)
   if (txt)
     {
       sgx = ss->sgx;
-      return(XTextWidth(sgx->button_fontstruct, txt, strlen(txt)));
+      return(XTextWidth(sgx->peaks_fontstruct, txt, strlen(txt)));
     }
   return(0);
 }
@@ -285,21 +251,6 @@ void set_main_color_of_widget (Widget w, void *userptr)
 
 void highlight_color(snd_state *ss, Widget w) {XmChangeColor(w, (ss->sgx)->highlight_color);}
 void white_color(snd_state *ss, Widget w) {XmChangeColor(w, (ss->sgx)->white);}
-
-void set_button_label_normal(Widget button, const char *str) 
-{
-  XmString s1;
-  s1 = XmStringCreate((char *)str, "button_font");
-#if (USE_RENDITIONS)
-  XtVaSetValues(button, 
-		XmNrenderTable, BUTTON_FONT(get_global_state()), 
-		XmNlabelString, s1, 
-		NULL);
-#else
-  XtVaSetValues(button, XmNlabelString, s1, NULL);
-#endif
-  XmStringFree(s1);
-}
 
 void set_button_label_bold(Widget button, const char *str)
 {

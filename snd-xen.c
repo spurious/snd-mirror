@@ -1567,17 +1567,6 @@ static XEN g_equalize_panes(XEN snd)
   return(XEN_FALSE);
 }
 
-static XEN g_help_text_font(void) {return(C_TO_XEN_STRING(help_text_font(get_global_state())));}
-static XEN g_set_help_text_font(XEN val) 
-{
-  #define H_help_text_font "(" S_help_text_font "): font used in the Help dialog"
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_help_text_font, "a string"); 
-  set_help_text_font(ss, XEN_TO_C_STRING(val)); 
-  return(C_TO_XEN_STRING(help_text_font(ss)));
-}
-
 static XEN g_tiny_font(void) {return(C_TO_XEN_STRING(tiny_font(get_global_state())));}
 static XEN g_set_tiny_font(XEN val) 
 {
@@ -1631,17 +1620,6 @@ static XEN g_set_bold_button_font(XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_bold_button_font, "a string"); 
   set_bold_button_font(ss, XEN_TO_C_STRING(val)); 
   return(C_TO_XEN_STRING(bold_button_font(ss)));
-}
-
-static XEN g_button_font(void) {return(C_TO_XEN_STRING(button_font(get_global_state())));}
-static XEN g_set_button_font(XEN val) 
-{
-  #define H_button_font "(" S_button_font "): font used by some buttons"
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_button_font, "a string"); 
-  set_button_font(ss, XEN_TO_C_STRING(val)); 
-  return(C_TO_XEN_STRING(button_font(ss)));
 }
 
 static XEN g_bold_peaks_font(void) {return(C_TO_XEN_STRING(bold_peaks_font(get_global_state())));}
@@ -2765,6 +2743,13 @@ static SCM g_continuation_p(XEN obj)
 }
 #endif
 
+
+/* backwards compatibility */
+static XEN g_button_font(void) {return(XEN_FALSE);}
+static XEN g_set_button_font(XEN val) {return(XEN_FALSE);}
+static XEN g_help_text_font(void) {return(XEN_FALSE);}
+static XEN g_set_help_text_font(XEN val) {return(XEN_FALSE);}
+
 #ifdef XEN_ARGIFY_1
 #if HAVE_GUILE && HAVE_DLFCN_H
 XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
@@ -2840,12 +2825,8 @@ XEN_NARGIFY_0(g_window_y_w, g_window_y)
 XEN_NARGIFY_1(g_set_window_y_w, g_set_window_y)
 XEN_NARGIFY_0(g_zoom_focus_style_w, g_zoom_focus_style)
 XEN_NARGIFY_1(g_set_zoom_focus_style_w, g_set_zoom_focus_style)
-XEN_NARGIFY_0(g_help_text_font_w, g_help_text_font)
-XEN_NARGIFY_1(g_set_help_text_font_w, g_set_help_text_font)
 XEN_NARGIFY_0(g_tiny_font_w, g_tiny_font)
 XEN_NARGIFY_1(g_set_tiny_font_w, g_set_tiny_font)
-XEN_NARGIFY_0(g_button_font_w, g_button_font)
-XEN_NARGIFY_1(g_set_button_font_w, g_set_button_font)
 XEN_NARGIFY_0(g_bold_button_font_w, g_bold_button_font)
 XEN_NARGIFY_1(g_set_bold_button_font_w, g_set_bold_button_font)
 XEN_NARGIFY_0(g_peaks_font_w, g_peaks_font)
@@ -2929,6 +2910,11 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #if DEBUGGING
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
 #endif
+XEN_NARGIFY_0(g_button_font_w, g_button_font)
+XEN_NARGIFY_1(g_set_button_font_w, g_set_button_font)
+XEN_NARGIFY_0(g_help_text_font_w, g_help_text_font)
+XEN_NARGIFY_1(g_set_help_text_font_w, g_set_help_text_font)
+
 #else
 #if HAVE_GUILE && HAVE_DLFCN_H
 #define g_dlopen_w g_dlopen
@@ -3004,12 +2990,8 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #define g_set_window_y_w g_set_window_y
 #define g_zoom_focus_style_w g_zoom_focus_style
 #define g_set_zoom_focus_style_w g_set_zoom_focus_style
-#define g_help_text_font_w g_help_text_font
-#define g_set_help_text_font_w g_set_help_text_font
 #define g_tiny_font_w g_tiny_font
 #define g_set_tiny_font_w g_set_tiny_font
-#define g_button_font_w g_button_font
-#define g_set_button_font_w g_set_button_font
 #define g_bold_button_font_w g_bold_button_font
 #define g_set_bold_button_font_w g_set_bold_button_font
 #define g_peaks_font_w g_peaks_font
@@ -3093,6 +3075,10 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #if DEBUGGING
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
+#define g_button_font_w g_button_font
+#define g_set_button_font_w g_set_button_font
+#define g_help_text_font_w g_help_text_font
+#define g_set_help_text_font_w g_set_help_text_font
 #endif
 
 #if HAVE_STATIC_XM
@@ -3268,14 +3254,14 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_focus_style, g_zoom_focus_style_w, H_zoom_focus_style,
 				   S_setB S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_help_text_font, g_help_text_font_w, H_help_text_font,
-				   S_setB S_help_text_font, g_set_help_text_font_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER("help-text-font", g_help_text_font_w, "obsolete no-op",
+				   "set help-text-font", g_set_help_text_font_w,  0, 0, 1, 0);
   
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_tiny_font, g_tiny_font_w, H_tiny_font,
 				   S_setB S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_button_font, g_button_font_w, H_button_font,
-				   S_setB S_button_font, g_set_button_font_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER("button-font", g_button_font_w, "obsolete no-op",
+				   "set button-font", g_set_button_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_bold_button_font, g_bold_button_font_w, H_bold_button_font,
 				   S_setB S_bold_button_font, g_set_bold_button_font_w,  0, 0, 1, 0);

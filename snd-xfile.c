@@ -1178,9 +1178,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
       XtSetArg(args[n], XmNtopWidget, sep1); n++;
     }
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
   svw = XtCreateManagedWidget(first_str, xmLabelWidgetClass, formw, args, n);
-  set_button_label_normal(svw, first_str);
   wwi->svw = svw;
 
   n = 0;
@@ -1198,9 +1196,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
       XtSetArg(args[n], XmNtopWidget, sep1); n++;
     }
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
   plw = XtCreateManagedWidget(second_str, xmLabelWidgetClass, formw, args, n);
-  set_button_label_normal(plw, second_str);
   wwi->plw = plw;
 
   if (with_sort == WITH_SORT_BUTTON)
@@ -1225,7 +1221,6 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNsubMenuId, smenu); n++;
-      XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
@@ -1233,7 +1228,6 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
       
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       wwi->byname = XtCreateManagedWidget(_("name"), xmPushButtonWidgetClass, smenu, args, n);
       wwi->bydate = XtCreateManagedWidget(_("date"), xmPushButtonWidgetClass, smenu, args, n);
       wwi->bysize = XtCreateManagedWidget(_("size"), xmPushButtonWidgetClass, smenu, args, n);
@@ -1323,12 +1317,8 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 	      if (XmStringEmpty(s1)) return;
 	      XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &label);
 	      if (label == NULL)
-		{
-		  XmStringGetLtoR(s1, "button_font", &label);
-		  if (label == NULL)
-		    XmStringGetLtoR(s1, "bold_button_font", &label);
-		  XmStringFree(s1);
-		}
+		XmStringGetLtoR(s1, "bold_button_font", &label);
+	      XmStringFree(s1);
 	    }
 	}
       if (label)
@@ -1382,6 +1372,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n], XmNlabelString, s1); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n1 = make_callback_list(first_callback, (XtPointer)r)); n++;
   if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
+  XtSetArg(args[n], XmNmarginWidth, 8); n++;
   r->sv = make_togglebutton_widget("sv", r->rw, args, n);
 
   n = 0;
@@ -1395,6 +1386,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n], XmNlabelString, s1); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(second_callback, (XtPointer)r)); n++;
   if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
+  XtSetArg(args[n], XmNmarginWidth, 8); n++;
   r->pl = make_togglebutton_widget("pl", r->rw, args, n);
 
   n = 0;

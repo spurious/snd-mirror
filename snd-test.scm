@@ -820,10 +820,8 @@
 	       (if (or (not (string? (func)))
 		       (not (string=? val (func))))
 		   (snd-display ";set ~A to bogus value: ~A ~A" name val (func)))))
-	   (list axis-label-font axis-numbers-font help-text-font 
-		 tiny-font button-font bold-button-font peaks-font bold-peaks-font)
-	   (list 'axis-label-font 'axis-numbers-font 'help-text-font 
-		 'tiny-font button-font 'bold-button-font 'peaks-font 'bold-peaks-font)))
+	   (list axis-label-font axis-numbers-font tiny-font bold-button-font peaks-font bold-peaks-font)
+	   (list 'axis-label-font 'axis-numbers-font 'tiny-font 'bold-button-font 'peaks-font 'bold-peaks-font)))
       (run-hook after-test-hook 0)
       ))
 
@@ -34487,6 +34485,7 @@ EDITS: 2
 		  (if (not (string=? (.name sym) "hiho")) (snd-display "set .name colorsymbol: ~A" (.name sym)))
 		  (set! (.visual attr) vis)
 		  (if (not (equal? vis (.visual attr))) (snd-display ";visual xpm attr: ~A" (.visual attr)))
+		  (if (not (list? (.colorsymbols attr))) (snd-display ";.colorsymbols attr: ~A" (.colorsymbols attr)))
 		  (set! (.colorsymbols attr) (list sym))
 		  (set! (.pixel sym) (basic-color))
 		  (set! (.numsymbols attr) 1)
@@ -36851,7 +36850,7 @@ EDITS: 2
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 		     backward-graph backward-mark backward-mix basic-color bind-key bold-button-font bomb
-		     button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style
+		     c-g?  apply-controls change-menu-label change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font
 		     close-sound ;close-sound-file 
 		     color-cutoff color-dialog
@@ -36873,7 +36872,7 @@ EDITS: 2
 		     find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
 		     frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
 		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
-		     help-dialog help-text-font highlight-color in insert-region insert-sample insert-samples
+		     help-dialog highlight-color in insert-region insert-sample insert-samples
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
 		     left-sample listener-color listener-font listener-prompt listener-selection listener-text-color load-font
 		     main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
@@ -36971,7 +36970,7 @@ EDITS: 2
       (define set-procs (list 
 			 amp-control ask-before-overwrite audio-input-device audio-output-device auto-resize
 			 auto-update axis-label-font axis-numbers-font ;basic-color 
-			 bold-button-font button-font channel-style peaks-font bold-peaks-font
+			 bold-button-font channel-style peaks-font bold-peaks-font
 			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
@@ -36982,7 +36981,7 @@ EDITS: 2
 			 fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
 			 transform-graph? filter-control-in-dB filter-control-env enved-filter-order enved-filter emacs-style-save-as
 			 filter-env-in-hz filter-control-order filter-waveform-color filter-control?  foreground-color
-			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal help-text-font highlight-color
+			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
 			 mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
 			 mix-amp-env mix-anchor mix-chans mix-color mix-track mix-frames mix-locked mix-position
@@ -37646,12 +37645,12 @@ EDITS: 2
 			    (set! ctr (+ ctr 1))))
 			(list enved-filter-order enved-filter filter-env-in-hz filter-waveform-color ask-before-overwrite
 			      auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
-			      bold-button-font button-font channel-style color-cutoff color-dialog color-inverted color-scale
+			      bold-button-font channel-style color-cutoff color-dialog color-inverted color-scale
 			      cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans emacs-style-save-as
 			      default-output-format default-output-srate default-output-type enved-active-env enved-base
 			      enved-clip? enved-in-dB enved-dialog enved-exp?  enved-power enved-selected-env enved-target
 			      enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
-			      foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding
+			      foreground-color graph-color graph-cursor highlight-color just-sounds key-binding
 			      listener-color listener-font listener-prompt listener-text-color max-regions
 			      minibuffer-history-length mix-waveform-height region-graph-style position-color
 			      time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font

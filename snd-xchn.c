@@ -831,7 +831,6 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
 	{
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-	  XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
 	  XtSetArg(args[n], XmNspacing, 1); n++;
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, sx->pushed_button_color); n++;}
 	  cw[W_f] = make_togglebutton_widget(_("f"), cw[W_wf_buttons], args, n);

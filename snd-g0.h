@@ -95,12 +95,10 @@ typedef struct {
   GtkWidget *listener_pane;
   GdkWindow *mainwindow;
 
-  PangoFontDescription *button_fnt;
   PangoFontDescription *bold_button_fnt; 
   PangoFontDescription *listener_fnt;
   PangoFontDescription *axis_label_fnt;
   PangoFontDescription *axis_numbers_fnt;
-  PangoFontDescription *help_text_fnt;
   PangoFontDescription *tiny_fnt;
   PangoFontDescription *peaks_fnt;
   PangoFontDescription *bold_peaks_fnt; 

@@ -212,11 +212,11 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, int show)
     {
       ss = get_global_state();
 #if USE_MOTIF
-      ax->current_font = ((ss->sgx)->button_fontstruct)->fid;
-      XSetFont(ax->dp, ax->gc, ((ss->sgx)->button_fontstruct)->fid);
+      ax->current_font = ((ss->sgx)->peaks_fontstruct)->fid;
+      XSetFont(ax->dp, ax->gc, ((ss->sgx)->peaks_fontstruct)->fid);
 #else
   #if USE_GTK
-      ax->current_font = (ss->sgx)->button_fnt;
+      ax->current_font = (ss->sgx)->peaks_fnt;
   #endif
 #endif
       len = mark_name_width(cp->state, mp->name);

@@ -535,14 +535,8 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define set_eps_size(ss, a) ss->Eps_Size = a
 #define DEFAULT_EPS_SIZE 1.0
 
-#define help_text_font(ss) ss->Help_Text_Font
-#define in_set_help_text_font(ss, a) ss->Help_Text_Font = a
-
 #define tiny_font(ss) ss->Tiny_Font
 #define in_set_tiny_font(ss, a) ss->Tiny_Font = a
-
-#define button_font(ss) ss->Button_Font
-#define in_set_button_font(ss, a) ss->Button_Font = a
 
 #define bold_button_font(ss) ss->Bold_Button_Font
 #define in_set_bold_button_font(ss, a) ss->Bold_Button_Font = a

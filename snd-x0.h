@@ -23,7 +23,6 @@
 #endif
 
 #if (USE_RENDITIONS)
-  /* SOMEDAY: get renditions working */
   #define xm_font_t XmRenderTable
   #define XM_FONT_RESOURCE XmNrenderTable
   #define XM_FONT_FREE XmRenderTableFree
@@ -36,7 +35,7 @@
 #ifdef SGI
   #define CLOSED_CTRLS_HEIGHT 22
 #else
-  #define CLOSED_CTRLS_HEIGHT 18
+  #define CLOSED_CTRLS_HEIGHT 19
 #endif
 
 #define LOTSA_PIXELS 10000
@@ -135,8 +134,6 @@ typedef struct {
   Widget soundpane;
   Widget soundpanebox;
   Display *mdpy;
-  xm_font_t button_fontlist;
-  XFontStruct *button_fontstruct;
   xm_font_t bold_button_fontlist;
   XFontStruct *bold_button_fontstruct; 
   xm_font_t peaks_fontlist;
@@ -147,8 +144,6 @@ typedef struct {
   XFontStruct *listener_fontstruct;
   XFontStruct *axis_label_fontstruct;
   XFontStruct *axis_numbers_fontstruct;
-  xm_font_t help_text_fontlist;
-  XFontStruct *help_text_fontstruct;
   xm_font_t tiny_fontlist;
   XFontStruct *tiny_fontstruct;
 
@@ -219,14 +214,12 @@ typedef struct {
 #define SOUND_PANE_BOX(a) (a->sgx)->soundpanebox
 #define MAIN_APP(a) (a->sgx)->mainapp
 #define MAIN_DISPLAY(a) (a->sgx)->mdpy
-#define BUTTON_FONT(a) (a->sgx)->button_fontlist
 #define BOLD_BUTTON_FONT(a) (a->sgx)->bold_button_fontlist
 #define PEAK_NUMBERS_FONT(a) (a->sgx)->peaks_fontstruct
 #define BOLD_PEAK_NUMBERS_FONT(a) (a->sgx)->bold_peaks_fontstruct
 #define AXIS_NUMBERS_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_numbers_fontstruct
 #define AXIS_LABEL_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_label_fontstruct
 #define TINY_NUMBERS_FONT(a) (a->sgx)->tiny_fontstruct
-#define HELP_TEXT_FONT(a) (a->sgx)->help_text_fontlist
 #define color_t Pixel
 /* this was unsigned long = Pixel (/usr/X11R6/include/X11/Intrinsic.h) */
 

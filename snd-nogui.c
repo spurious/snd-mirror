@@ -135,10 +135,8 @@ int region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(snd_state *ss) {}
 void snd_completion_help(snd_state *ss, int matches, char **buffer) {}
-int set_help_text_font(snd_state *ss, char *font) {ss->Help_Text_Font = copy_string(font); return(0);}
 int set_tiny_font(snd_state *ss, char *font) {ss->Tiny_Font = copy_string(font); return(0);}
 int set_listener_font(snd_state *ss, char *font) {ss->Listener_Font = copy_string(font); return(0);}
-int set_button_font(snd_state *ss, char *font) {ss->Button_Font = copy_string(font); return(0);}
 int set_bold_button_font(snd_state *ss, char *font) {ss->Bold_Button_Font = copy_string(font); return(0);}
 int set_peaks_font(snd_state *ss, char *font) {ss->Peaks_Font = copy_string(font); return(0);}
 int set_bold_peaks_font(snd_state *ss, char *font) {ss->Bold_Peaks_Font = copy_string(font); return(0);}
@@ -492,14 +490,12 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   XEN_EVAL_C_STRING("Cursor_context = 3");
   XEN_EVAL_C_STRING("Selection_context = 2");
 #endif
-  set_button_font(ss, FALLBACK_FONT);
   set_peaks_font(ss, FALLBACK_FONT);
   set_tiny_font(ss, FALLBACK_FONT);
   set_bold_button_font(ss, FALLBACK_FONT);
   set_bold_peaks_font(ss, FALLBACK_FONT);
   set_axis_label_font(ss, FALLBACK_FONT);
   set_axis_numbers_font(ss, FALLBACK_FONT);
-  set_help_text_font(ss, FALLBACK_FONT);
   set_listener_font(ss, FALLBACK_FONT);
   set_html_dir(ss, copy_string(DEFAULT_HTML_DIR));
 

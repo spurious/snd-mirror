@@ -41,13 +41,11 @@
 #define NOTEBOOK_BINDING_WIDTH 20
 
 #define TINY_FONT "Monospace 8"
-#define DEFAULT_BUTTON_FONT "Serif 14"
 #define DEFAULT_BOLD_BUTTON_FONT "Serif Bold 14"
 #define DEFAULT_PEAKS_FONT "Serif 10"
 #define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 10"
 #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
 #define DEFAULT_AXIS_LABEL_FONT "Serif 14"
-#define DEFAULT_HELP_TEXT_FONT "Monospace 14"
 
 #define POSITION_SLIDER_WIDTH 13
 #define ZOOM_SLIDER_WIDTH 10
@@ -513,10 +511,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   sx->pushed_button_color =   get_color(PUSHED_BUTTON_COLOR,   NULL, NULL, FALSE);
   sx->text_focus_color =      get_color(TEXT_FOCUS_COLOR,      NULL, NULL, FALSE);
 
-  if ((!(set_button_font(ss, DEFAULT_BUTTON_FONT))) &&
-      (!(set_button_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font: %s"), DEFAULT_BUTTON_FONT);
-
   if ((!(set_tiny_font(ss, TINY_FONT))) &&
       (!(set_tiny_font(ss, FALLBACK_FONT))))
     fprintf(stderr, _("can't find font: %s"), TINY_FONT);
@@ -532,10 +526,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   if ((!(set_axis_numbers_font(ss, DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(ss, FALLBACK_FONT))))
     fprintf(stderr, _("can't find font: %s"), DEFAULT_AXIS_NUMBERS_FONT);
-
-  if ((!(set_help_text_font(ss, DEFAULT_HELP_TEXT_FONT))) &&
-      (!(set_help_text_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font: %s"), DEFAULT_HELP_TEXT_FONT);
 
   if ((!(set_peaks_font(ss, DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(ss, FALLBACK_FONT))))

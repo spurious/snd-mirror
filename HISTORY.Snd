@@ -1,5 +1,6 @@
 Snd change log
 
+  18-Jul:    removed button-font and buttonFont resource, help-text-font and helpTextFont.
   10-Jul:    record->raw file segfault bugfix (thanks to Russell Aspinwall).
   1-July:    added optional 'nth' arg to find-sound.
              added optional begin time to make-track-sample-reader, play-track, and play-mix.

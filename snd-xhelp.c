@@ -87,7 +87,6 @@ static void create_help_monolog(snd_state *ss)
   XtSetArg(args[n], XmNeditable, FALSE); n++;
   XtSetArg(args[n], XmNcolumns, HELP_COLUMNS); n++;
   XtSetArg(args[n], XmNrows, HELP_ROWS); n++;
-  XtSetArg(args[n], XM_FONT_RESOURCE, HELP_TEXT_FONT(ss)); n++;
   if (!(ss->using_schemes))
     {
       XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++; /* needed if color allocation fails completely */
@@ -116,12 +115,7 @@ Widget snd_help(snd_state *ss, const char *subject, const char *helpstr, int wit
   outer_with_wrap = ((with_wrap) && (no_cr(helpstr)));
   if (!(help_dialog)) 
     create_help_monolog(ss); 
-  else 
-    {
-      /* XtVaSetValues(help_text, XM_FONT_RESOURCE, HELP_TEXT_FONT(ss), NULL); */ /* in case it changed */ 
-      /* this causes segfaults for no reason that I can see */
-      raise_dialog(help_dialog);
-    }
+  else raise_dialog(help_dialog);
 
   mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, _("%s help"), subject);
   xstr1 = XmStringCreate(help_window_label, XmFONTLIST_DEFAULT_TAG);

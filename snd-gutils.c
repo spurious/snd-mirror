@@ -1,21 +1,5 @@
 #include "snd.h"
 
-int set_help_text_font(snd_state *ss, char *font)
-{
-  PangoFontDescription *fs = NULL;
-  state_context *sgx;
-  sgx = ss->sgx;
-  fs = pango_font_description_from_string(font);
-  if (fs)
-    {
-      if (help_text_font(ss)) FREE(help_text_font(ss));
-      in_set_help_text_font(ss, copy_string(font));
-      sgx->help_text_fnt = fs;
-      return(TRUE);
-    }
-  return(FALSE);
-}
-
 int set_tiny_font(snd_state *ss, char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -41,20 +25,6 @@ int set_listener_font(snd_state *ss, char *font)
       if (listener_font(ss)) FREE(listener_font(ss));
       in_set_listener_font(ss, copy_string(font));
       (ss->sgx)->listener_fnt = fs;
-      return(TRUE);
-    }
-  return(FALSE);
-}
-
-int set_button_font(snd_state *ss, char *font)
-{
-  PangoFontDescription *fs = NULL;
-  fs = pango_font_description_from_string(font);
-  if (fs)
-    {
-      if (button_font(ss)) FREE(button_font(ss));
-      in_set_button_font(ss, copy_string(font));
-      (ss->sgx)->button_fnt = fs;
       return(TRUE);
     }
   return(FALSE);
@@ -163,7 +133,7 @@ int label_width(snd_state *ss, char *txt)
 int mark_name_width(snd_state *ss, char *txt)
 {
   if (txt)
-    return(sg_text_width(txt, (ss->sgx)->button_fnt));
+    return(sg_text_width(txt, (ss->sgx)->peaks_fnt));
   return(0);
 }
 

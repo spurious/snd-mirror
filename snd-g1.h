@@ -309,10 +309,8 @@ void edit_find_callback(GtkWidget *w, gpointer info);
 
 /* -------- snd-gutils.c -------- */
 
-int set_help_text_font(snd_state *ss, char *font);
 int set_tiny_font(snd_state *ss, char *font);
 int set_listener_font(snd_state *ss, char *font);
-int set_button_font(snd_state *ss, char *font);
 int set_bold_button_font(snd_state *ss, char *font);
 int set_peaks_font(snd_state *ss, char *font);
 int set_bold_peaks_font(snd_state *ss, char *font);

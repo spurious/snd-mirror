@@ -74,13 +74,11 @@ a built-in default value, so you can ignore any that are already acceptable:</p>
 <tr><td>autoResize</td>                       <td>1</td></tr>
 <tr><td>horizontalPanes</td>                  <td>0</td></tr>
 <tr><td><br></td><td><br></td></tr>
-<tr><td>buttonFont</td>                       <td>-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1</td></tr>
 <tr><td>boldbuttonFont</td>                   <td>-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1</td></tr>
 <tr><td>peaksFont</td>                        <td>-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1</td></tr>
 <tr><td>boldpeaksFont</td>                    <td>-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1</td></tr>
 <tr><td>axisLabelFont</td>                    <td>-*-times-medium-r-normal-*-20-*-*-*-*-*-iso8859-1</td></tr>
 <tr><td>axisNumbersFont</td>                  <td>-*-courier-medium-r-normal-*-14-*-*-*-*-*-iso8859-1</td></tr>
-<tr><td>helpTextFont</td>                     <td>9x15</td></tr>
 <tr><td>listenerFont</td>                     <td>default</td></tr>
 <tr><td><br></td><td><br></td></tr>
 <tr><td>useSchemes</td>                       <td>none</td></tr>
@@ -146,12 +144,10 @@ to work, set the autoResize resource to 0:</p>
 
 <p>These resources can be set in Snd.ad or in your .Xdefaults file:</p>
 <pre>
-snd*buttonFont:         -adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*
 snd*boldbuttonFont:     -adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*
 snd*axisLabelFont:      -adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*
 snd*axisNumbersFont:    9x15
 snd*fontList:           9x15
-snd*helpTextFont:       9x15
 </pre>
 
 <p>
@@ -170,7 +166,6 @@ widget holding the sounds.
 <p>In Gtk2, the (pango) font defaults are:</p>
 <pre>
 tiny-font         "Monospace 8"
-button-font       "Serif 14"
 bold-button-font  "Serif Bold 14"
 axis-numbers-font "Monospace 10"
 axis-label-font   "Serif 14"
@@ -311,7 +306,6 @@ Here's a more elaborate initialization file:
 
 (if (provided? 'snd-motif)          ;if using Motif, set some fonts
     (begin
-      (set! (button-font) "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*")
       (set! (bold-button-font) "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*")
       (set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
       (set! (axis-numbers-font) "9x15")))
@@ -1637,7 +1631,6 @@ set_window_width 800
 set_window_height 500
 
 set_listener_font "9x15"
-set_help_text_font "9x15"
 set_axis_numbers_font "9x15"
 
 set_show_mix_waveforms true
