@@ -878,21 +878,21 @@ void set_tiny_numbers_font(chan_info *cp) {cp->cgx->ax->current_font = TINY_FONT
 void set_peak_numbers_font(chan_info *cp) {cp->cgx->ax->current_font = PEAKS_FONT(ss);}
 void set_bold_peak_numbers_font(chan_info *cp) {cp->cgx->ax->current_font = BOLD_PEAKS_FONT(ss);}
 
-color_t get_foreground_color(chan_info *cp, axis_context *ax)
+color_t get_foreground_color(axis_context *ax)
 {
   GdkGCValues gv;
   gdk_gc_get_values(ax->gc, &gv);
   return(gdk_color_copy(&(gv.foreground)));
 }
 
-color_t get_background_color(chan_info *cp, axis_context *ax)
+color_t get_background_color(axis_context *ax)
 {
   GdkGCValues gv;
   gdk_gc_get_values(ax->gc, &gv);
   return(gdk_color_copy(&(gv.background)));
 }
 
-void set_foreground_color(chan_info *cp, axis_context *ax, GdkColor *color)
+void set_foreground_color(axis_context *ax, GdkColor *color)
 {
   gdk_gc_set_foreground(ax->gc, color);
 }

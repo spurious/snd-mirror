@@ -1172,21 +1172,21 @@ void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAK_NUMBERS_FONT(
 void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_NUMBERS_FONT(ss));}
 void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAK_NUMBERS_FONT(ss));}
 
-color_t get_foreground_color(chan_info *cp, axis_context *ax)
+color_t get_foreground_color(axis_context *ax)
 {
   XGCValues gv;
   XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCForeground, &gv);
   return(gv.foreground);
 }
 
-color_t get_background_color(chan_info *cp, axis_context *ax)
+color_t get_background_color(axis_context *ax)
 {
   XGCValues gv;
   XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCBackground, &gv);
   return(gv.background);
 }
 
-void set_foreground_color(chan_info *cp, axis_context *ax, Pixel color)
+void set_foreground_color(axis_context *ax, Pixel color)
 {
   XSetForeground(MAIN_DISPLAY(ss), ax->gc, color);
 }

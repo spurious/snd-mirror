@@ -299,9 +299,9 @@ int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, 
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
-color_t get_foreground_color(chan_info *cp, axis_context *ax);
-color_t get_background_color(chan_info *cp, axis_context *ax);
-void set_foreground_color(chan_info *cp, axis_context *ax, GdkColor *color);
+color_t get_foreground_color(axis_context *ax);
+color_t get_background_color(axis_context *ax);
+void set_foreground_color(axis_context *ax, GdkColor *color);
 GdkGC *copy_GC(chan_info *cp);
 GdkGC *erase_GC(chan_info *cp);
 void cleanup_cw(chan_info *cp);

@@ -354,17 +354,17 @@ static void ps_set_color(color_t color)
 void ps_bg(axis_info *ap, axis_context *ax)
 {
   /* get background color, fill graph, then set foreground for axis */
-  ps_set_color(get_background_color(ap->cp, ax));
+  ps_set_color(get_background_color(ax));
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %d %d %d %d RF\n",
 	       ap->graph_x0 + bx0, ap->y_offset + by0, ap->width, ap->height);
   ps_write(pbuf);
-  ps_fg(ap, ax);
+  ps_fg(ax);
 }
 
-void ps_fg(axis_info *ap, axis_context *ax)
+void ps_fg(axis_context *ax)
 {
   /* set foreground color for subsequent line drawing */
-  ps_set_color(get_foreground_color(ap->cp, ax));
+  ps_set_color(get_foreground_color(ax));
 }
 
 /* the rest are in real coordinates except upsidedown from PS point of view */

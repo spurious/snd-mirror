@@ -173,9 +173,7 @@ void xen_initialize(void)
 #endif
 }
 
-void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help,
-					    char *set_name, XEN (*set_func)(), 
-					    XEN local_doc,
+void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN local_doc,
 					    int get_req, int get_opt, int set_req, int set_opt)
 {
 #if HAVE_SCM_C_DEFINE
@@ -208,10 +206,8 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), c
 #endif
 }
 
-void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help,
-						     char *set_name, XEN (*set_func)(), XEN (*reversed_set_func)(), 
-						     XEN local_doc,
-						     int get_req, int get_opt, int set_req, int set_opt)
+void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
+						     XEN local_doc, int get_req, int get_opt, int set_req, int set_opt)
 {
 #if HAVE_SCM_C_DEFINE
   XEN str = XEN_FALSE;

@@ -20,8 +20,8 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 25
-#define XEN_VERSION "1.25"
+#define XEN_MINOR_VERSION 26
+#define XEN_VERSION "1.26"
 
 /* HISTORY:
  *
@@ -366,14 +366,14 @@
     scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
   else XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
 
+/* Set_Name is ignored here, but is needed in Ruby */
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_guile_define_procedure_with_setter(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Help, \
-                                         Set_Name, XEN_PROCEDURE_CAST Set_Func, \
-                                         XEN_DOCUMENTATION_SYMBOL, Get_Req, Get_Opt, Set_Req, Set_Opt)
+                                         XEN_PROCEDURE_CAST Set_Func, XEN_DOCUMENTATION_SYMBOL, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_guile_define_procedure_with_reversed_setter(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Help, \
-                                                  Set_Name, XEN_PROCEDURE_CAST Set_Func, XEN_PROCEDURE_CAST Rev_Func, \
+                                                  XEN_PROCEDURE_CAST Set_Func, XEN_PROCEDURE_CAST Rev_Func, \
                                                   XEN_DOCUMENTATION_SYMBOL, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
 #if HAVE_SCM_C_DEFINE
@@ -690,15 +690,11 @@
 #define XEN_PORT_TO_STRING(Port) scm_strport_to_string(Port)
 
 XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN local_doc);
-void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help,
-					    char *set_name, XEN (*set_func)(), 
-					    XEN local_doc,
-					    int get_req, int get_opt, int set_req, int set_opt);
+void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), 
+					    XEN local_doc, int get_req, int get_opt, int set_req, int set_opt);
 
-void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help,
-						     char *set_name, XEN (*set_func)(), XEN (*reversed_set_func)(), 
-						     XEN local_doc,
-						     int get_req, int get_opt, int set_req, int set_opt);
+void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
+						     XEN local_doc, int get_req, int get_opt, int set_req, int set_opt);
 double xen_to_c_double(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 int xen_to_c_int(XEN a);

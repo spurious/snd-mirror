@@ -1875,9 +1875,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
   chan_info *cp;
   sp = ncp->sound;
   caller = (char *)((over_selection) ? S_reverse_selection : S_reverse_sound);
-  sc = get_sync_state(sp, ncp, 0, over_selection, READ_BACKWARD, 
-		      edpos,
-		      (const char *)caller, arg_pos);
+  sc = get_sync_state(sp, ncp, 0, over_selection, READ_BACKWARD, edpos, (const char *)caller, arg_pos);
   if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;

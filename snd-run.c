@@ -82,7 +82,7 @@
  *   args to same type (i.e. int->float done just once, if possible)
  */
 
-/* TODO: run safety complex checks (CL too?) -- will require extracted macro or something
+/* TODO: run safety complex checks (CL too?) -- will require extracted macro or something (sound_data index checks?)
  */
 
 #include "snd.h"
@@ -7099,6 +7099,24 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- vct stuff ---------------- */
 
+static void vct_check_arg_1(int *args, ptree *pt) {if (!(VCT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");}
+static char *descr_vct_check_arg_1(int *args, ptree *pt) {return(mus_format("if (!(" VCT_PT ") mus-error", args[1], DESC_VCT_ARG_1));}
+
+static void vct_check_index_1(int *args, ptree *pt) {if (VCT_ARG_1->length < 2) mus_error(MUS_NO_DATA, "vct index (1) too high");}
+static void vct_check_index_2(int *args, ptree *pt) {if (VCT_ARG_1->length < 3) mus_error(MUS_NO_DATA, "vct index (2) too high");}
+static void vct_check_index(int *args, ptree *pt) 
+{
+  if (VCT_ARG_1->length < INT_ARG_2) 
+    mus_error(MUS_NO_DATA, "vct index (" INT_PT ") too high (len = %d)", args[2], INT_ARG_2, VCT_ARG_1->length);
+}
+
+static char *descr_vct_check_index_1(int *args, ptree *pt) {return(mus_format("if (" VCT_PT "->length < 2) mus-error", args[1], DESC_VCT_ARG_1));}
+static char *descr_vct_check_index_2(int *args, ptree *pt) {return(mus_format("if (" VCT_PT "->length < 3) mus-error", args[1], DESC_VCT_ARG_1));}
+static char *descr_vct_check_index(int *args, ptree *pt) 
+{
+  return(mus_format("if (" VCT_PT "->length < " INT_PT ") mus-error", args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2));
+}
+
 static void vct_length_i(int *args, ptree *pt) {INT_RESULT = VCT_ARG_1->length;}
 static char *descr_vct_length_i(int *args, ptree *pt) 
 {
@@ -7106,22 +7124,10 @@ static char *descr_vct_length_i(int *args, ptree *pt)
 }
 static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_arg_1, descr_vct_check_arg_1, args, 1);
   return(package(prog, R_INT, vct_length_i, descr_vct_length_i, args, 1));
 }
 
-/* TODO: add safety checks for vct ref beyond end of data -- also what about all the vct accessors?
- *
- * this for constant_ref_1 {2}
- * static void vct_check_index_1(int *args, ptree *pt) 
- *  {
- *    if (!(VCT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");
- *    if (VCT_ARG_1->length < 2) mus_error(MUS_NO_DATA, "vct index (1) too high");
- *  }
- *   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index_1, descr_vct_check_index_1, args, 1);
- *
- * for indexed ref (v[i]):
- *     if (VCT_ARG_1->length < INT_ARG_2) mus_error(MUS_NO_DATA, "vct index (%d) too high (len = %d)", INT_ARG_2, VCT_ARG_1->length);
- */
 static void vct_constant_ref_0(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[0];}
 static void vct_constant_ref_1(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[1];}
 static void vct_constant_ref_2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[2];}
@@ -7145,15 +7151,23 @@ static char *descr_vct_ref_f(int *args, ptree *pt)
 }
 static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_arg_1, descr_vct_check_arg_1, args, 1);
   if (args[2]->constant == R_CONSTANT)
     {
       if (prog->ints[args[2]->addr] == 0)
 	return(package(prog, R_FLOAT, vct_constant_ref_0, descr_vct_constant_ref_0, args, 1));
       if (prog->ints[args[2]->addr] == 1)
-	return(package(prog, R_FLOAT, vct_constant_ref_1, descr_vct_constant_ref_1, args, 1));
+	{
+	  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index_1, descr_vct_check_index_1, args, 2);
+	  return(package(prog, R_FLOAT, vct_constant_ref_1, descr_vct_constant_ref_1, args, 1));
+	}
       if (prog->ints[args[2]->addr] == 2)
-	return(package(prog, R_FLOAT, vct_constant_ref_2, descr_vct_constant_ref_2, args, 1));
+	{
+	  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index_2, descr_vct_check_index_2, args, 2);
+	  return(package(prog, R_FLOAT, vct_constant_ref_2, descr_vct_constant_ref_2, args, 1));
+	}
     }
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index, descr_vct_check_index, args, 2);
   return(package(prog, R_FLOAT, vct_ref_f, descr_vct_ref_f, args, 2));
 }
 
@@ -7207,6 +7221,7 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
   if (var) var->unclean = true;
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_arg_1, descr_vct_check_arg_1, args, 1);
   if (args[3]->type == R_FLOAT)
     {
       if (args[2]->constant == R_CONSTANT)
@@ -7214,12 +7229,20 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 	  if (prog->ints[args[2]->addr] == 0)
 	    return(package(prog, R_FLOAT, vct_constant_set_0, descr_vct_constant_set_0, args, 3));
 	  if (prog->ints[args[2]->addr] == 1)
-	    return(package(prog, R_FLOAT, vct_constant_set_1, descr_vct_constant_set_1, args, 3));
+	    {
+	      if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index_1, descr_vct_check_index_1, args, 2);
+	      return(package(prog, R_FLOAT, vct_constant_set_1, descr_vct_constant_set_1, args, 3));
+	    }
 	  if (prog->ints[args[2]->addr] == 2)
-	    return(package(prog, R_FLOAT, vct_constant_set_2, descr_vct_constant_set_2, args, 3));
+	    {
+	      if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index_2, descr_vct_check_index_2, args, 2);
+	      return(package(prog, R_FLOAT, vct_constant_set_2, descr_vct_constant_set_2, args, 3));
+	    }
 	}
+      if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index, descr_vct_check_index, args, 2);
       return(package(prog, R_FLOAT, vct_set_f, descr_vct_set_f, args, 3));
     }
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index, descr_vct_check_index, args, 2);
   return(package(prog, R_FLOAT, vct_set_i, descr_vct_set_i, args, 3));
 }
 
@@ -7311,7 +7334,7 @@ static void vct_ ## CName ## _f(int *args, ptree *pt) \
 { \
   int i; \
   vct *v = VCT_ARG_1; \
-  for (i = 0; i < v->length; i++) v->data[i] COp FLOAT_ARG_2; \
+  if (v) for (i = 0; i < v->length; i++) v->data[i] COp FLOAT_ARG_2; \
   VCT_RESULT = VCT_ARG_1; \
 } \
 static char *descr_vct_ ## CName ## _f(int *args, ptree *pt)  \
@@ -7341,9 +7364,12 @@ static void vct_ ## CName ## _f(int *args, ptree *pt) \
   int i, len; \
   vct *v0 = VCT_ARG_1; \
   vct *v1 = VCT_ARG_2; \
-  len = v0->length; \
-  if (v1->length < len) len = v1->length; \
-  for (i = 0; i < len; i++) v0->data[i] COp v1->data[i]; \
+  if ((v0) && (v1)) \
+    { \
+      len = v0->length; \
+      if (v1->length < len) len = v1->length; \
+      for (i = 0; i < len; i++) v0->data[i] COp v1->data[i]; \
+    } \
   VCT_RESULT = v0; \
 } \
 static char *descr_vct_ ## CName ## _f(int *args, ptree *pt)  \
@@ -7364,7 +7390,7 @@ VCT_OP_2(subtract!, subtract, -=)
 static void vct_reverse_v(vct *v, int len)
 {
   int i, j;
-  if (len > 1)
+  if ((v) && (len > 1))
     {
       for (i = 0, j = len - 1; i < j; i++, j--)
 	{
@@ -10175,19 +10201,15 @@ static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value *
     {
       run_warn("%s argument %d (%s) is a%s %s, not a%s %s?", 
 	       funcname, arg_num, xb, 
-	       (vowel_p(tb[0])) ? "n" : "",
-		tb,
-	       (vowel_p(correct_type[0])) ? "n" : "",
-	       correct_type);
+	       (vowel_p(tb[0])) ? "n" : "", tb,
+	       (vowel_p(correct_type[0])) ? "n" : "", correct_type);
       FREE(xb);
     }
   else 
     run_warn("%s argument %d is a%s %s, not a%s %s?", 
 	     funcname, arg_num, 
-	     (vowel_p(tb[0])) ? "n" : "",
-	     type_name(args[arg_num]->type),
-	     (vowel_p(correct_type[0])) ? "n" : "", 
-	     correct_type);
+	     (vowel_p(tb[0])) ? "n" : "", tb,
+	     (vowel_p(correct_type[0])) ? "n" : "", correct_type);
   return(NULL);
 }
 
@@ -10526,9 +10548,9 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 	      vb = type_name(v->type);
 	      run_warn("can't set %s (a%s %s) to %s (a%s %s)",
 		       XEN_SYMBOL_TO_C_STRING(acc_form),
-		       tb, (vowel_p(tb[0])) ? "n" : "",
+		       (vowel_p(tb[0])) ? "n" : "", tb,
 		       xb,
-		       vb, (vowel_p(vb[0])) ? "n" : "");
+		       (vowel_p(vb[0])) ? "n" : "", vb);
 	      if (xb) FREE(xb);
 	      happy = 2;
 	    }
@@ -10577,6 +10599,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
   if (in_v1) FREE(in_v1);
   if (in_v2) FREE(in_v2);
   if (happy == 1) return(v);
+  if (v) FREE(v);
   if (happy == 0) run_warn("can't set %s", XEN_SYMBOL_TO_C_STRING(acc_form));
   return(NULL);
 }

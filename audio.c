@@ -479,7 +479,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int requ
       }
   if (line == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_NO_LINES_AVAILABLE, line,
-		      mus_format("no free audio lines?"));
+		      "no free audio lines?");
   channels[line] = chans;
   line_out[line] = 1;
 
@@ -551,7 +551,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int requ
   config[line] = al_newconfig();
   if (!(config[line])) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, -1,
-		      mus_format("can't allocate audio configuration?"));
+		      "can't allocate audio configuration?");
   if ((al_setsampfmt(config[line], sgi_format) == -1) ||
       (al_setwidth(config[line], width) == -1))           /* this is a no-op in the float and double cases */
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, line,
@@ -601,7 +601,7 @@ int mus_audio_write(int line, char *buf, int bytes)
   if (ALwritesamps(port[line], (short *)buf, bytes / datum_size[line]))
 #endif
     RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
-		      mus_format("write error"));
+		      "write error");
   end_sgi_print();
   return(MUS_NO_ERROR);
 }
@@ -649,7 +649,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
       }
   if (line == -1)
     RETURN_ERROR_EXIT(MUS_AUDIO_NO_LINES_AVAILABLE, -1,
-		      mus_format("no free audio lines?"));
+		      "no free audio lines?");
   channels[line] = chans;
   line_out[line] = 0;
   datum_size[line] = mus_bytes_per_sample(format);
@@ -721,7 +721,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
   config[line] = al_newconfig();
   if (!(config[line])) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, -1,
-		      mus_format("can't allocate audio configuration?"));
+		      "can't allocate audio configuration?");
   sgi_format = to_sgi_format(format);
   if (sgi_format == MUS_ERROR)
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
@@ -770,7 +770,7 @@ int mus_audio_read(int line, char *buf, int bytes)
   if (ALreadsamps(port[line], (short *)buf, bytes / datum_size[line]))
 #endif
     RETURN_ERROR_EXIT(MUS_AUDIO_READ_ERROR, -1,
-		      mus_format("read error"));
+		      "read error");
   end_sgi_print();
   return(MUS_NO_ERROR);
 }
@@ -1997,8 +1997,12 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 	  if (audio_out == -1) return(MUS_ERROR);
           buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
           if (ioctl(audio_out, SNDCTL_DSP_SETFRAGMENT, &buffer_info) == -1) 
-	    fprintf(stderr, mus_format("can't set %s fragments to: %d x %d",
-				       dev_name, FRAGMENTS, FRAGMENT_SIZE)); /* not an error if ALSA OSS-emulation */
+	    {
+	      char *tmp;
+	      fprintf(stderr, tmp = mus_format("can't set %s fragments to: %d x %d",
+					       dev_name, FRAGMENTS, FRAGMENT_SIZE)); /* not an error if ALSA OSS-emulation */
+	      FREE(tmp);
+	    }
         }
     }
   if ((ioctl(audio_out, SNDCTL_DSP_SETFMT, &oss_format) == -1) || 

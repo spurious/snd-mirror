@@ -247,8 +247,7 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN ax)
   ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_foreground_color);
-  return(XEN_WRAP_PIXEL(get_foreground_color(cp,
-					     get_ax(cp, 
+  return(XEN_WRAP_PIXEL(get_foreground_color(get_ax(cp, 
 						    XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC),
 						    S_foreground_color))));
 }
@@ -260,8 +259,7 @@ static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, S_setB S_foreground_color, "a color");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_setB S_foreground_color);
-  set_foreground_color(cp,                                  /* snd-xchn.c */
-		       get_ax(cp, 
+  set_foreground_color(get_ax(cp, 
 			      XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC),
 			      S_setB S_foreground_color),
 		       XEN_UNWRAP_PIXEL(color));

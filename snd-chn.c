@@ -1205,7 +1205,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
       if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
 	ax = combined_context(cp); 
       else ax = copy_context(cp);
-      if (cp->printing) ps_fg(ap, ax);
+      if (cp->printing) ps_fg(ax);
     }
   if ((samples_per_pixel < 1.0) ||
       ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)) ||
@@ -1698,7 +1698,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   scale = fp->scale;
   if (cp->printing) ps_allocate_grf_points();
   samples_per_pixel = (Float)((double)(hisamp - losamp) / (Float)(fap->x_axis_x1 - fap->x_axis_x0));
-  if (cp->printing) ps_fg(fap, ax);
+  if (cp->printing) ps_fg(ax);
 
   if (cp->fft_log_frequency)
     {
@@ -2839,7 +2839,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
   if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     ax = combined_context(cp); 
   else ax = copy_context(cp);
-  if (cp->printing) ps_fg(uap, ax);
+  if (cp->printing) ps_fg(ax);
   if (up->env_data)
     {
       int x0, x1, y0, y1;
@@ -2868,22 +2868,22 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
       if (XEN_LIST_P(pixel_list))
 	pixel_len = XEN_LIST_LENGTH(pixel_list);
       if (up->graphs > 1) 
-	old_color = get_foreground_color(cp, ax);
+	old_color = get_foreground_color(ax);
       for (graph = 0; graph < up->graphs; graph++)
 	{
 	  if ((pixel_len > graph) &&
 	      (XEN_PIXEL_P(XEN_LIST_REF(pixel_list, graph))))
-	    set_foreground_color(cp, ax, (color_t)XEN_UNWRAP_PIXEL(XEN_LIST_REF(pixel_list, graph)));
+	    set_foreground_color(ax, (color_t)XEN_UNWRAP_PIXEL(XEN_LIST_REF(pixel_list, graph)));
 	  else
 	    {
 	      switch (graph)
 		{
 		case 0:  break;
-		case 1:  set_foreground_color(cp, ax, (ss->sgx)->red);        break;
-		case 2:  set_foreground_color(cp, ax, (ss->sgx)->green);      break;
-		case 3:  set_foreground_color(cp, ax, (ss->sgx)->light_blue); break;
-		case 4:  set_foreground_color(cp, ax, (ss->sgx)->yellow);     break;
-		default: set_foreground_color(cp, ax, (ss->sgx)->black);      break;
+		case 1:  set_foreground_color(ax, (ss->sgx)->red);        break;
+		case 2:  set_foreground_color(ax, (ss->sgx)->green);      break;
+		case 3:  set_foreground_color(ax, (ss->sgx)->light_blue); break;
+		case 4:  set_foreground_color(ax, (ss->sgx)->yellow);     break;
+		default: set_foreground_color(ax, (ss->sgx)->black);      break;
 		}
 	    }
 	  /* check for up->len[graph] > pixels available and use ymin ymax if needed */
@@ -2950,7 +2950,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 		ps_draw_both_grf_points(uap, j, cp->lisp_graph_style, cp->dot_size);
 	    }
 	}
-      if (up->graphs > 1) set_foreground_color(cp, ax, old_color);
+      if (up->graphs > 1) set_foreground_color(ax, old_color);
       if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
 	{
 	  copy_context(cp); /* reset for axes etc */
@@ -4478,10 +4478,10 @@ axis_context *set_context(chan_info *cp, chan_gc_t gc)
 	  ax->gc = sx->combined_basic_gc;
 	  switch (cp->chan % 4)
 	    {
-	    case 0: set_foreground_color(cp, ax, sx->black);      break;
-	    case 1: set_foreground_color(cp, ax, sx->red);        break;
-	    case 2: set_foreground_color(cp, ax, sx->green);      break;
-	    case 3: set_foreground_color(cp, ax, sx->light_blue); break;
+	    case 0: set_foreground_color(ax, sx->black);      break;
+	    case 1: set_foreground_color(ax, sx->red);        break;
+	    case 2: set_foreground_color(ax, sx->green);      break;
+	    case 3: set_foreground_color(ax, sx->light_blue); break;
 	    }
 	  break;
 	}

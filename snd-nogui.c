@@ -186,9 +186,9 @@ void reflect_edit_counter_change(chan_info *cp) {}
 void set_peak_numbers_font(chan_info *cp) {}
 void set_bold_peak_numbers_font(chan_info *cp) {}
 void set_tiny_numbers_font(chan_info *cp) {}
-color_t get_foreground_color(chan_info *cp, axis_context *ax) {return(0);}
-color_t get_background_color(chan_info *cp, axis_context *ax) {return(0);}
-void set_foreground_color(chan_info *cp, axis_context *ax, int color) {}
+color_t get_foreground_color(axis_context *ax) {return(0);}
+color_t get_background_color(axis_context *ax) {return(0);}
+void set_foreground_color(axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
@@ -436,6 +436,7 @@ void snd_doit(int argc, char **argv)
                (define (" S_make_graph_data " . args) #f)\
                (define (" S_widget_text " . args) \"\")\
                (define (" S_colormap_p " . args) #f)\
+               (define (" S_send_mozilla " . args) #f)\
                (define " S_x_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\

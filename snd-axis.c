@@ -278,23 +278,23 @@ void reload_number_font(void)
 static void draw_horizontal_grid_line(int y, axis_info *ap, axis_context *ax)
 {
   color_t old_color;
-  old_color = get_foreground_color(ap->cp, ax);
+  old_color = get_foreground_color(ax);
   if (ap->cp->cgx->selected)
-    set_foreground_color(ap->cp, ax, ss->sgx->selected_grid_color);
-  else set_foreground_color(ap->cp, ax, ss->sgx->grid_color);
+    set_foreground_color(ax, ss->sgx->selected_grid_color);
+  else set_foreground_color(ax, ss->sgx->grid_color);
   draw_line(ax, ap->y_axis_x0, y, ap->x_axis_x1, y);
-  set_foreground_color(ap->cp, ax, old_color);
+  set_foreground_color(ax, old_color);
 }
 
 static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
 {
   color_t old_color;
-  old_color = get_foreground_color(ap->cp, ax);
+  old_color = get_foreground_color(ax);
   if (ap->cp->cgx->selected)
-    set_foreground_color(ap->cp, ax, ss->sgx->selected_grid_color);
-  else set_foreground_color(ap->cp, ax, ss->sgx->grid_color);
+    set_foreground_color(ax, ss->sgx->selected_grid_color);
+  else set_foreground_color(ax, ss->sgx->grid_color);
   draw_line(ax, x, ap->x_axis_y0, x, ap->y_axis_y1);
-  set_foreground_color(ap->cp, ax, old_color);
+  set_foreground_color(ax, old_color);
 }
 
 static void draw_label(char *label, int x, int y, axis_info *ap, axis_context *ax, printing_t printing)

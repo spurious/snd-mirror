@@ -208,11 +208,14 @@ vct *c_free_vct(vct *v)
 
 vct *c_vct_copy(vct *vc)
 {
-  vct *v;
+  vct *v = NULL;
   int len;
-  len = vc->length;
-  v = c_make_vct(len);
-  memcpy((void *)(v->data), (void *)(vc->data), (len * sizeof(Float)));
+  if (vc)
+    {
+      len = vc->length;
+      v = c_make_vct(len);
+      memcpy((void *)(v->data), (void *)(vc->data), (len * sizeof(Float)));
+    }
   return(v);
 }
 

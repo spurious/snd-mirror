@@ -117,7 +117,7 @@ static axis_context *set_mix_waveform_context(chan_info *cp, mix_info *md)
 {
   axis_context *ax;
   ax = mix_waveform_context(cp);
-  set_foreground_color(cp, ax, md->wg->color); 
+  set_foreground_color(ax, md->wg->color); 
   return(ax);
 }
 

@@ -4312,7 +4312,7 @@ return two vcts of length 'size' containing y vals (min and max) of file's chann
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background. \
 If 'filename' is a sound index (an integer), 'size' is an edit-position, and the current amp envs are returned."
 
-  char *fullname = NULL;
+  static char *fullname = NULL;
   int len, chn;
   snd_info *sp = NULL;
   chan_info *cp = NULL;
@@ -4321,6 +4321,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
   env_info *ep;
   int id;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
+  if (fullname) {FREE(fullname); fullname = NULL;}
   XEN_ASSERT_TYPE(XEN_STRING_P(filename) || XEN_INTEGER_P(filename) || XEN_NOT_BOUND_P(filename), 
 		  filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_channel_amp_envs, "an integer");
@@ -4378,7 +4379,6 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	{
 	  /* read amp_env data into pts (presumably smaller) */
 	  peak = g_env_info_to_vcts(cp->amp_envs[0], len);
-	  if (fullname) FREE(fullname);
 	  return(peak);
 	}
     }
@@ -4401,7 +4401,6 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 		  peak = g_env_info_to_vcts(ep, len);
 		  ep = free_env_info(ep);
 		  if (peakname) FREE(peakname);
-		  if (fullname) FREE(fullname);
 		  return(peak);
 		}
 	    }
@@ -4431,7 +4430,6 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	      et->len = len;
 	      et->filename = filename;
 	      id = (int)BACKGROUND_ADD(tick_it, (Indicium)et);
-	      if (fullname) FREE(fullname);
 	      return(C_TO_XEN_INT(id));
 	    }
 	  while (!(tick_amp_env(cp, es)));
@@ -4442,7 +4440,6 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
       cp->active = false;
       completely_free_snd_info(sp);
     }
-  if (fullname) FREE(fullname);
   return(xen_return_first(peak, peak_func));
 }
 
