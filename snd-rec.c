@@ -124,7 +124,7 @@ char *pane_device_name(int dev)
     case MUS_AUDIO_MICROPHONE: return("the microphone");                break;
     case MUS_AUDIO_DIGITAL_IN: return("digital in");                    break;
     case MUS_AUDIO_DAC_FILTER: return("the analog tone control");       break;
-    case MUS_AUDIO_MIXER:      return("various analog volume controls");break;
+    case MUS_AUDIO_MIXER:      return("various analog volume controls"); break;
     case MUS_AUDIO_CD:         return("the internal CD");               break;
     default:                   return("the input");                     break;
     }
@@ -246,7 +246,7 @@ int recorder_sort_mixer_device(void *wd, int i, int chan, int input, int device,
 	    }
 	  else
 	    {
-	      for (k=0; k<MAX_AUDIO_FIELD; k++)
+	      for (k = 0; k < MAX_AUDIO_FIELD; k++)
 		{
 		  if (mixflds[k] > 0)
 		    {
@@ -266,7 +266,7 @@ int recorder_sort_mixer_device(void *wd, int i, int chan, int input, int device,
 
 int recorder_check_device(int system, int device, int *mixer_gains_posted, int *tone_controls_posted, int *mixflds, int *gains, int *inp)
 {
-  int vu_meters = 0,input,num_gains,k;
+  int vu_meters = 0, input, num_gains, k;
 #if (HAVE_OSS || HAVE_ALSA)
   float mixer_field_chans[MAX_AUDIO_FIELD];
 #endif
@@ -284,13 +284,13 @@ int recorder_check_device(int system, int device, int *mixer_gains_posted, int *
     {
       if ((input) && (!mixer_gains_posted[system]))
 	{
-	  for (k=0; k<MAX_AUDIO_FIELD; k++) 
+	  for (k = 0; k < MAX_AUDIO_FIELD; k++) 
 	    mixer_field_chans[k] = 0.0;
 	  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER, 
 			       MUS_AUDIO_FORMAT, 
 			       MAX_AUDIO_FIELD, 
 			       mixer_field_chans);
-	  for (k=0; k<MAX_AUDIO_FIELD; k++) 
+	  for (k = 0; k < MAX_AUDIO_FIELD; k++) 
 	    mixflds[k] = (int)mixer_field_chans[k]; /* simplify life later */
 	  mixer_gains_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER);
 	  num_gains = mixer_gains_posted[system]; /* includes the MUS_AUDIO_LINE_IN gains */
@@ -345,7 +345,7 @@ void init_recorder(void)
   rp->out_amps = (Float *)CALLOC(MAX_OUT_CHANS, sizeof(Float));
   rp->mixer_gains = (Float *)CALLOC(MAX_MIXER_GAINS, sizeof(Float));
   rp->in_amps = (Float **)CALLOC(MAX_IN_CHANS, sizeof(Float));
-  for (i=0; i<MAX_IN_CHANS; i++) rp->in_amps[i] = (Float *)CALLOC(MAX_OUT_CHANS, sizeof(Float));
+  for (i = 0; i < MAX_IN_CHANS; i++) rp->in_amps[i] = (Float *)CALLOC(MAX_OUT_CHANS, sizeof(Float));
   rp->chan_in_active = (int *)CALLOC(MAX_IN_CHANS, sizeof(int));
   rp->chan_out_active = (int *)CALLOC(MAX_OUT_CHANS, sizeof(int));
 }
@@ -357,15 +357,15 @@ int record_in_progress(void)
 
 int in_chans_active(void)
 {
-  int val = 0,i;
-  for (i=0; i<MAX_IN_CHANS; i++) if (rp->chan_in_active[i]) val++;
+  int val = 0, i;
+  for (i = 0; i < MAX_IN_CHANS; i++) if (rp->chan_in_active[i]) val++;
   return(val);
 }
 
 int out_chans_active(void)
 {
-  int val = 0,i;
-  for (i=0; i<MAX_OUT_CHANS; i++) if (rp->chan_out_active[i]) val++;
+  int val = 0, i;
+  for (i = 0; i < MAX_OUT_CHANS; i++) if (rp->chan_out_active[i]) val++;
   return(val);
 }
 
@@ -493,7 +493,7 @@ void recorder_set_audio_srate(snd_state *ss, int device, int srate, int system, 
 #if OLD_SGI_AL
 void set_line_source(snd_state *ss, int in_digital)
 {
-  int aud,err;
+  int aud, err;
   aud = rp->taking_input;
   if (aud) close_recorder_audio();
   rp->input_channels[0] = ((in_digital) ? 2 : 4);
@@ -531,7 +531,7 @@ void set_record_size (int new_size)
 	}
       if (rp->output_bufs)
 	{
-	  for (i=0; i<rp->out_chans; i++) 
+	  for (i = 0; i < rp->out_chans; i++) 
 	    {
 	      if (rp->output_bufs[i]) 
 		{
@@ -540,7 +540,7 @@ void set_record_size (int new_size)
 		}
 	    }
 	}
-      for (i=0; i<rp->systems; i++)
+      for (i = 0; i < rp->systems; i++)
 	{
 	  if (rp->raw_input_bufs[i]) 
 	    {
@@ -567,7 +567,7 @@ void fire_up_recorder(snd_state *ss)
   int i, j;
   float val[64];
   float direction = 0.0;
-  int size,sys,dev,sysdev,in_count;
+  int size, sys, dev, sysdev, in_count;
   int err;
 
   if (!rp->all_systems_input_buf) 
@@ -575,7 +575,7 @@ void fire_up_recorder(snd_state *ss)
       rp->system_input_buffer_size = rp->buffer_size;
       rp->all_systems_input_buf = (MUS_SAMPLE_TYPE *)CALLOC(rp->system_input_buffer_size, sizeof(MUS_SAMPLE_TYPE));
     }
-  for (i=0; i<rp->systems; i++) 
+  for (i = 0; i < rp->systems; i++) 
     rp->input_ports[i] = -1;
   if (rp->mixer_settings_saved) 
     mus_audio_restore(); 
@@ -583,7 +583,7 @@ void fire_up_recorder(snd_state *ss)
   if (rp->srate <= 0) 
     rp->srate = DEFAULT_RECORDER_SRATE;
   rp->monitor_chans = 2;
-  for (i=0; i<rp->possible_input_chans; i++) 
+  for (i = 0; i < rp->possible_input_chans; i++) 
     rp->input_channel_active[i] = 1; 
 
   if (mus_audio_api() == ALSA_API) 
@@ -597,7 +597,7 @@ void fire_up_recorder(snd_state *ss)
        * state variables are being set with the results of the first system scanned */
 
       in_count = 0;
-      for (i=0; i<rp->ordered_devices_size; i++)
+      for (i = 0; i < rp->ordered_devices_size; i++)
 	{
 	  sys = rp->ordered_systems[i];
 	  dev = rp->ordered_devices[i];
@@ -640,7 +640,7 @@ void fire_up_recorder(snd_state *ss)
 	}
 
       /* open all input devices */
-      for (i=0; i<rp->ordered_devices_size; i++)
+      for (i = 0; i < rp->ordered_devices_size; i++)
 	{
 	  sys = rp->ordered_systems[i];
 	  dev = rp->ordered_devices[i];
@@ -658,7 +658,7 @@ void fire_up_recorder(snd_state *ss)
 		  if (rp->input_ports[sys] == -1)
 		    {
 		      recorder_error("open device: ");
-		      for (j=0; j<rp->ordered_devices_size; j++)
+		      for (j = 0; j < rp->ordered_devices_size; j++)
 			{
 			  sys = rp->ordered_systems[j];
 			  if (rp->input_ports[sys] != -1)
@@ -676,7 +676,7 @@ void fire_up_recorder(snd_state *ss)
 
       /* search for output devices for rp->monitoring, first one wins */
 
-      for (i=0; i<rp->ordered_devices_size; i++)
+      for (i = 0; i < rp->ordered_devices_size; i++)
 	{
 	  sys = rp->ordered_systems[i];
 	  dev = rp->ordered_devices[i];
@@ -704,7 +704,7 @@ void fire_up_recorder(snd_state *ss)
 		    {
 		      if (!rp->output_bufs)
 			rp->output_bufs = (MUS_SAMPLE_TYPE **)CALLOC(MAX_OUT_CHANS, sizeof(MUS_SAMPLE_TYPE *));
-		      for (i=0; i<rp->monitor_chans; i++) 
+		      for (i = 0; i < rp->monitor_chans; i++) 
 			{
 			  if (rp->output_bufs[i]) 
 			    FREE(rp->output_bufs[i]);
@@ -727,14 +727,14 @@ void fire_up_recorder(snd_state *ss)
   else
     {
       /* OSS_API */
-      for (i=0; i<rp->systems; i++)
+      for (i = 0; i < rp->systems; i++)
 	{
 	  if (!(rp->raw_input_bufs[i]))
 	    rp->raw_input_bufs[i] = (char *)CALLOC(rp->buffer_size, sizeof(int)); /* 4 bytes per sample is probably enough?? */
 	  rp->input_formats[i] = rp->in_format;
 	  rp->input_buffer_sizes[i] = rp->buffer_size / rp->out_chans;
 	}
-      for (i=0; i<rp->systems; i++)
+      for (i = 0; i < rp->systems; i++)
 	{
 	  if (rp->input_channels[i] == 0)
 	    {
@@ -754,7 +754,7 @@ void fire_up_recorder(snd_state *ss)
 	    }
 	}
       err = 1;
-      for (i=0; i<rp->systems; i++) 
+      for (i = 0; i < rp->systems; i++) 
 	if (rp->input_channels[i] > 0) 
 	  {
 	    err = 0; 
@@ -766,7 +766,7 @@ void fire_up_recorder(snd_state *ss)
 	  return;
 	}
       /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
-      for (i=0; i<rp->systems; i++)
+      for (i = 0; i < rp->systems; i++)
 	{
 	  rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,
 						    rp->srate,
@@ -811,16 +811,16 @@ void fire_up_recorder(snd_state *ss)
 {
   int i;
 #if NEW_SGI_AL
-  int j,n;
+  int j, n;
 #endif
   float val[8];
-  int err,new_srate = 0;
+  int err, new_srate = 0;
 #ifdef SGI
   int cur_dev;
   long sb[8];
 #endif
 
-  for (i=0; i<rp->systems; i++)
+  for (i = 0; i < rp->systems; i++)
     if (!(rp->raw_input_bufs[i]))
       rp->raw_input_bufs[i] = (char *)CALLOC(rp->buffer_size, sizeof(int)); /* 4 bytes per sample is probably enough?? */
   if (!rp->all_systems_input_buf) 
@@ -828,7 +828,7 @@ void fire_up_recorder(snd_state *ss)
       rp->system_input_buffer_size = rp->buffer_size;
       rp->all_systems_input_buf = (MUS_SAMPLE_TYPE *)CALLOC(rp->system_input_buffer_size, sizeof(MUS_SAMPLE_TYPE));
     }
-  for (i=0; i<rp->systems; i++) rp->input_ports[i] = -1;
+  for (i = 0; i < rp->systems; i++) rp->input_ports[i] = -1;
 #if HAVE_OSS
   if (rp->mixer_settings_saved) mus_audio_restore(); else mus_audio_save();
 #else
@@ -866,7 +866,7 @@ void fire_up_recorder(snd_state *ss)
       }
     if ((new_srate > 0) && (new_srate != rp->srate)) set_recorder_srate(rp, new_srate);
     rp->monitor_chans = rp->input_channels[0];
-    for (i=0; i<4; i++) 
+    for (i = 0; i < 4; i++) 
       {
         rp->input_channel_active[i] = (cur_dev != MUS_AUDIO_DIGITAL_IN);
       }
@@ -900,14 +900,14 @@ void fire_up_recorder(snd_state *ss)
 	  set_recorder_srate(rp, new_srate);
       }
     rp->monitor_chans = 2;
-    for (i=0; i<rp->possible_input_chans; i++) 
+    for (i = 0; i < rp->possible_input_chans; i++) 
       {
 	rp->input_channel_active[i] = 1; 
       }
   #endif
 #endif
 
-  for (i=0; i<rp->systems; i++)
+  for (i = 0; i < rp->systems; i++)
     {
       if (rp->input_channels[i] == 0)
 	{
@@ -937,7 +937,7 @@ void fire_up_recorder(snd_state *ss)
     }
 
   err = 1;
-  for (i=0; i<rp->systems; i++) if (rp->input_channels[i] > 0) {err = 0; break;}
+  for (i = 0; i < rp->systems; i++) if (rp->input_channels[i] > 0) {err = 0; break;}
   if (err)
     {
       recorder_error("no inputs?: ");
@@ -967,7 +967,7 @@ void fire_up_recorder(snd_state *ss)
     #else
     /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
 
-    for (i=0; i<rp->systems; i++)
+    for (i = 0; i < rp->systems; i++)
       {
 	rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,
 						  rp->srate,
@@ -1022,7 +1022,7 @@ void close_recorder_audio(void)
   int i;
   if (rp->taking_input)
     {
-      for (i=0; i<rp->systems; i++)
+      for (i = 0; i < rp->systems; i++)
 	if (rp->input_ports[i] != -1)
 	  {
 	    mus_audio_close(rp->input_ports[i]);
@@ -1046,7 +1046,7 @@ void close_recorder_audio(void)
 void recorder_characterize_devices(int devs, int output_devices)
 {
   float direction = 0.0;
-  int i,k,def_out,system,cur_devices,device,err,n;
+  int i, k, def_out, system, cur_devices, device, err, n;
   float audval[AUDVAL_SIZE];
   rp->ordered_devices_size = devs;
   rp->ordered_devices = (int *)CALLOC(rp->ordered_devices_size, sizeof(int));
@@ -1054,11 +1054,11 @@ void recorder_characterize_devices(int devs, int output_devices)
   rp->possible_input_chans = 0;
   def_out = 2;
   k = 0;
-  for (system=0; system<rp->systems; system++)
+  for (system = 0; system < rp->systems; system++)
     {
       mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DEFAULT, MUS_AUDIO_PORT, AUDVAL_SIZE, audval);
       cur_devices = (int)(audval[0]);
-      for (i=0; i<cur_devices; i++)
+      for (i = 0; i < cur_devices; i++)
 	{
 #if (HAVE_ALSA || HAVE_OSS)
 	  device = (int)audval[i + 1];
@@ -1091,11 +1091,11 @@ void recorder_characterize_devices(int devs, int output_devices)
     {
       /* search for output devices, first one wins, previous code
        * was assuming one particular device existed */
-      for (system=0; system<rp->systems; system++)
+      for (system = 0; system < rp->systems; system++)
 	{
 	  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|MUS_AUDIO_DEFAULT, MUS_AUDIO_PORT, AUDVAL_SIZE, audval);
 	  cur_devices = (int)(audval[0]);
-	  for (i=0; i<cur_devices; i++)
+	  for (i = 0; i < cur_devices; i++)
 	    {
 	      float direction = 0.0;
 	      device = (int)audval[i + 1];
@@ -1124,7 +1124,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 
 static BACKGROUND_TYPE read_adc(snd_state *ss) 
 {
-  int in_chan,out_chan,i,k,m,n,out_frame,inchn,offset,active_in_chans,ochns,sr,buffer_size,in_datum_size;
+  int in_chan, out_chan, i, k, m, n, out_frame, inchn, offset, active_in_chans, ochns, sr, buffer_size, in_datum_size;
   MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE *input_bufs[1];
   out_frame = 0;
@@ -1151,10 +1151,10 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       active_in_chans = 0;
       /* rp->possible_input_chans is a count of all possible input channels, some of which may be incompatible */
       /* rp->input_channels[i] is how many of these channels can be active at once on a given system */
-      for (i=0; i<rp->systems; i++) active_in_chans += rp->input_channels[i];
+      for (i = 0; i < rp->systems; i++) active_in_chans += rp->input_channels[i];
       offset = 0;
       buffer_size = 0;
-      for (i=0; i<rp->systems; i++) 
+      for (i = 0; i < rp->systems; i++) 
 	buffer_size += rp->input_buffer_sizes[i] * rp->input_channels[i];
       if (ochns > active_in_chans) buffer_size /= ochns;
       if (rp->system_input_buffer_size < buffer_size)
@@ -1166,7 +1166,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	  rp->one_system_input_buf = (MUS_SAMPLE_TYPE *)CALLOC(rp->system_input_buffer_size, sizeof(MUS_SAMPLE_TYPE));
 	}
       input_bufs[0] = rp->one_system_input_buf;
-      for (i=0; i<rp->systems; i++)
+      for (i = 0; i < rp->systems; i++)
 	{
 	  in_datum_size = mus_data_format_to_bytes_per_sample(rp->input_formats[i]);
 	  mus_audio_read(rp->input_ports[i], 
@@ -1177,39 +1177,39 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 			       rp->input_buffer_sizes[i] * rp->input_channels[i], 
 			       input_bufs, 
 			       rp->raw_input_bufs[i]);
-	  for (k=0, m=offset; m<buffer_size; m+=active_in_chans) 
-	    for (n=0;n<rp->input_channels[i];n++) 
+	  for (k = 0, m = offset; m < buffer_size; m+=active_in_chans) 
+	    for (n = 0; n < rp->input_channels[i]; n++) 
 	      rp->all_systems_input_buf[m+n] = rp->one_system_input_buf[k++];
 	  offset += rp->input_channels[i];
 	}
     }
-  for (i=0; i<rp->possible_input_chans; i++)
+  for (i = 0; i < rp->possible_input_chans; i++)
     rp->input_vu_maxes[i] = MUS_SAMPLE_0;
-  for (i=0; i<ochns; i++) 
+  for (i = 0; i < ochns; i++) 
     rp->output_vu_maxes[i] = MUS_SAMPLE_0;
 
   /* run through input devices looking for any that are currently turned on */
   /* for each channel currently on, get its associated input channel */
 
-  for (i=0, out_frame=0; i<buffer_size; i+=active_in_chans, out_frame++)
+  for (i = 0, out_frame = 0; i < buffer_size; i+=active_in_chans, out_frame++)
     {
-      for (out_chan=0; out_chan<ochns; out_chan++) 
+      for (out_chan = 0; out_chan < ochns; out_chan++) 
 	rp->unscaled_output_bufs[out_chan] = MUS_SAMPLE_0;
       inchn = 0;
-      for (in_chan=0; in_chan<rp->possible_input_chans; in_chan++)
+      for (in_chan = 0; in_chan < rp->possible_input_chans; in_chan++)
 	{
 	  if (rp->input_channel_active[in_chan])
 	    {
 	      val = rp->all_systems_input_buf[i + inchn];
 	      if (rp->chan_in_active[in_chan])
-		for (out_chan=0;out_chan<ochns;out_chan++)
+		for (out_chan = 0; out_chan < ochns; out_chan++)
 		  rp->unscaled_output_bufs[out_chan] += (MUS_SAMPLE_TYPE)(rp->in_amps[in_chan][out_chan] * val);
 	      if (val < MUS_SAMPLE_0) val = -val; 
 	      if (val > rp->input_vu_maxes[in_chan]) rp->input_vu_maxes[in_chan] = val;
 	      inchn++;
 	    }
 	}
-      for (out_chan=0;out_chan<ochns;out_chan++)
+      for (out_chan = 0; out_chan < ochns; out_chan++)
 	{
 	  val = (MUS_SAMPLE_TYPE)(rp->unscaled_output_bufs[out_chan] * rp->out_amps[out_chan]);
 	  if ((rp->recording) && 
@@ -1220,12 +1220,12 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	    rp->output_vu_maxes[out_chan] = val;
 	}
     }
-  for (in_chan=0; in_chan<rp->possible_input_chans; in_chan++)
+  for (in_chan = 0; in_chan < rp->possible_input_chans; in_chan++)
     {
       if (rp->input_channel_active[in_chan])
 	recorder_set_vu_in_val(in_chan, rp->input_vu_maxes[in_chan]);
     }
-  for (out_chan=0;out_chan<ochns;out_chan++)
+  for (out_chan = 0; out_chan < ochns; out_chan++)
     {
       recorder_set_vu_out_val(out_chan, rp->output_vu_maxes[out_chan]);
       if ((!rp->triggered) && 
@@ -1257,7 +1257,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 
 static BACKGROUND_TYPE read_adc(snd_state *ss)
 {
-  int in_chan,out_chan,i,k,m,n,out_frame,inchn,offset,active_in_chans,cur_size,ochns,sr,sz,ifmt,in_datum_size;
+  int in_chan, out_chan, i, k, m, n, out_frame, inchn, offset, active_in_chans, cur_size, ochns, sr, sz, ifmt, in_datum_size;
   MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE *input_bufs[1];
   input_bufs[0] = rp->all_systems_input_buf;
@@ -1279,7 +1279,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       active_in_chans = 0;
       /* rp->possible_input_chans is a count of all possible input channels, some of which may be incompatible */
       /* rp->input_channels[i] is how many of these channels can be active at once on a given system */
-      for (i=0; i<rp->systems; i++) active_in_chans += rp->input_channels[i];
+      for (i = 0; i < rp->systems; i++) active_in_chans += rp->input_channels[i];
       offset = 0;
       sz = (int)(((Float)sz / (Float)active_in_chans) + .5);
       sz *= active_in_chans; /* size has to be a multiple of incoming channels */
@@ -1292,46 +1292,46 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	}
       if (!rp->one_system_input_buf) rp->one_system_input_buf = (MUS_SAMPLE_TYPE *)CALLOC(sz, sizeof(MUS_SAMPLE_TYPE));
       input_bufs[0] = rp->one_system_input_buf;
-      for (i=0; i<rp->systems; i++)
+      for (i = 0; i < rp->systems; i++)
 	{
 	  cur_size = sz * rp->input_channels[i] / active_in_chans;
 	  mus_audio_read(rp->input_ports[i], 
 			 rp->raw_input_bufs[i], 
 			 cur_size * in_datum_size);
 	  mus_file_read_buffer(ifmt, 0, 1, sz, input_bufs, rp->raw_input_bufs[i]);
-	  for (k=0, m=offset; m<sz; m+=active_in_chans) 
-	    for (n=0; n<rp->input_channels[i]; n++) 
+	  for (k = 0, m = offset; m < sz; m+=active_in_chans) 
+	    for (n = 0; n < rp->input_channels[i]; n++) 
 	      rp->all_systems_input_buf[m + n] = rp->one_system_input_buf[k++];
 	  offset += rp->input_channels[i];
 	}
     }
-  for (i=0; i<rp->possible_input_chans; i++) 
+  for (i = 0; i < rp->possible_input_chans; i++) 
     rp->input_vu_maxes[i] = MUS_SAMPLE_0;
-  for (i=0; i<ochns; i++) 
+  for (i = 0; i < ochns; i++) 
     rp->output_vu_maxes[i] = MUS_SAMPLE_0;
 
   /* run through input devices looking for any that are currently turned on */
   /* for each channel currently on, get its associated input channel */
 
-  for (i=0, out_frame=0; i<sz; i+=active_in_chans, out_frame++)
+  for (i = 0, out_frame = 0; i < sz; i+=active_in_chans, out_frame++)
     {
-      for (out_chan=0;out_chan<ochns;out_chan++) 
+      for (out_chan = 0; out_chan < ochns; out_chan++) 
 	rp->unscaled_output_bufs[out_chan] = MUS_SAMPLE_0;
       inchn = 0;
-      for (in_chan=0; in_chan<rp->possible_input_chans; in_chan++)
+      for (in_chan = 0; in_chan < rp->possible_input_chans; in_chan++)
 	{
 	  if (rp->input_channel_active[in_chan])
 	    {
 	      val = rp->all_systems_input_buf[i+inchn];
 	      if (rp->chan_in_active[in_chan])
-		for (out_chan=0; out_chan<ochns; out_chan++)
+		for (out_chan = 0; out_chan < ochns; out_chan++)
 		  rp->unscaled_output_bufs[out_chan] += (MUS_SAMPLE_TYPE)(rp->in_amps[in_chan][out_chan] * val);
 	      if (val < MUS_SAMPLE_0) val = -val; 
 	      if (val > rp->input_vu_maxes[in_chan]) rp->input_vu_maxes[in_chan] = val;
 	      inchn++;
 	    }
 	}
-      for (out_chan=0; out_chan<ochns; out_chan++)
+      for (out_chan = 0; out_chan < ochns; out_chan++)
 	{
 	  val = (MUS_SAMPLE_TYPE)(rp->unscaled_output_bufs[out_chan] * rp->out_amps[out_chan]);
 	  if ((rp->recording) && 
@@ -1342,10 +1342,10 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	    rp->output_vu_maxes[out_chan] = val;
 	}
     }
-  for (in_chan=0; in_chan<rp->possible_input_chans; in_chan++)
+  for (in_chan = 0; in_chan < rp->possible_input_chans; in_chan++)
     if (rp->input_channel_active[in_chan])
       recorder_set_vu_in_val(in_chan, rp->input_vu_maxes[in_chan]);
-  for (out_chan=0;out_chan<ochns;out_chan++)
+  for (out_chan = 0; out_chan < ochns; out_chan++)
     {
       recorder_set_vu_out_val(out_chan, rp->output_vu_maxes[out_chan]);
       if ((!rp->triggered) && 
@@ -1379,7 +1379,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 
 int recorder_start_output_file(snd_state *ss, char *comment)
 {
-  int comlen,err,i;
+  int comlen, err, i;
   char *msg;
   comlen = (int)(snd_strlen(comment) + 3) / 4;
   comlen *= 4;
@@ -1412,7 +1412,7 @@ int recorder_start_output_file(snd_state *ss, char *comment)
   rp->duration_label_update_frames = rp->srate / 4;
   if (!rp->output_bufs)
     rp->output_bufs = (MUS_SAMPLE_TYPE **)CALLOC(MAX_OUT_CHANS, sizeof(MUS_SAMPLE_TYPE *));
-  for (i=0; i<rp->out_chans; i++) 
+  for (i = 0; i < rp->out_chans; i++) 
     {
       if (!rp->output_bufs[i])
 	rp->output_bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(rp->buffer_size, sizeof(MUS_SAMPLE_TYPE));
@@ -1422,14 +1422,14 @@ int recorder_start_output_file(snd_state *ss, char *comment)
 
 int recorder_get_devices(recorder_info *rp, int *outs)
 {
-  int i,err,input_devices=0,output_devices = 0,system,cur_devices,device;
+  int i, err, input_devices = 0, output_devices = 0, system, cur_devices, device;
   float audval[AUDVAL_SIZE];
 
   rp->systems = mus_audio_systems();
 #if (HAVE_OSS || HAVE_ALSA)
   mus_audio_mixer_restore(AUDIO_STATE_FILE);
 #endif
-  for (system=0; system<rp->systems; system++)
+  for (system = 0; system < rp->systems; system++)
     {
       /* look for audio input devices -- if none, report problem and quit */
       err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DEFAULT, 
@@ -1445,7 +1445,7 @@ int recorder_get_devices(recorder_info *rp, int *outs)
 	  snd_error("no audio devices available"); 
 	  return(-1);
 	}
-      for (i=0; i<cur_devices; i++) 
+      for (i = 0; i < cur_devices; i++) 
 	{
 	  device = (int)(audval[i + 1]);
 	  if (recorder_input_device(device))
@@ -1612,7 +1612,7 @@ static SCM g_set_recorder_gain (SCM num, SCM amp)
 
 static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp) 
 {
-  int in_ind,out_ind;
+  int in_ind, out_ind;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(in)), in, SCM_ARG1, "set-" S_recorder_in_amp);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(out)), out, SCM_ARG2, "set-" S_recorder_in_amp);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(amp)), amp, SCM_ARG3, "set-" S_recorder_in_amp);

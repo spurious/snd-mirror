@@ -33,7 +33,7 @@
  *   (list->vct lst)                       return vct with elements of list lst
  *   (vct->list v1)                        return list with elements of vct v1
  *   (vector->vct vect)                    return vct with elements of vector vect
- *   (vct-move! v new old)                 v[new++]=v[old++] -> v
+ *   (vct-move! v new old)                 v[new++] = v[old++] -> v
  *   (vct-subseq v start end &opt vnew)    vnew = v[start..end]
  *
  * The intended use is a sort of latter-day array-processing system that handles huge
@@ -124,7 +124,7 @@ static scm_sizet free_vct(SCM obj)
 
 static int print_vct(SCM obj, SCM port, scm_print_state *pstate)
 {
-  int len,i;
+  int len, i;
   char *buf;
   vct *v = (vct *)SND_VALUE_OF(obj);
   buf = (char *)CALLOC(64, sizeof(char));
@@ -134,7 +134,7 @@ static int print_vct(SCM obj, SCM port, scm_print_state *pstate)
   if (len > v->length) len = v->length;
   if (len > 0)
     {
-      for (i=0; i<len; i++)
+      for (i = 0; i < len; i++)
 	{
 	  sprintf(buf, " %.3f", v->data[i]);
 	  scm_puts(buf, port);
@@ -150,13 +150,13 @@ static int print_vct(SCM obj, SCM port, scm_print_state *pstate)
 
 static SCM equalp_vct(SCM obj1, SCM obj2)
 {
-  vct *v1,*v2;
+  vct *v1, *v2;
   int i;
   v1 = (vct *)SND_VALUE_OF(obj1);
   v2 = (vct *)SND_VALUE_OF(obj2);
   if (v1->length != v2->length) 
     return(SCM_BOOL_F);
-  for (i=0; i<v1->length; i++)
+  for (i = 0; i < v1->length; i++)
     if (v1->data[i] != v2->data[i])
       return(SCM_BOOL_F);
   return(scm_return_first(SCM_BOOL_T, obj1, obj2));
@@ -211,14 +211,14 @@ static SCM copy_vct(SCM obj)
   #define H_vct_copy "(" S_vct_copy " v) -> a copy of vct v"
   vct *v;
   Float *copied_data;
-  int len,i;
+  int len, i;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_copy);
   v = get_vct(obj);
   if (v)
     {
       len = v->length;
       copied_data = (Float *)CALLOC(len, sizeof(Float));
-      for (i=0; i<len; i++) 
+      for (i = 0; i < len; i++) 
 	copied_data[i] = v->data[i];
       return(make_vct(len, copied_data));
     }
@@ -229,7 +229,7 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
 {
   #define H_vct_moveB "(" S_vct_moveB " obj new old backwards) moves obj data from old to new"
   vct *v;
-  int i,j,ni,nj;
+  int i, j, ni, nj;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_moveB);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(newi)), newi, SCM_ARG2, S_vct_moveB);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(oldi)), oldi, SCM_ARG3, S_vct_moveB);
@@ -249,7 +249,7 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
 		       "old-index: ~A (len: ~A)?",
 		       SCM_LIST2(oldi,
 				 TO_SCM_INT(v->length)));
-      if (v) for (i=ni, j=nj; (j>=0) && (i>=0); i--, j--) 
+      if (v) for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
 	v->data[i] = v->data[j];
     }
   else
@@ -262,7 +262,7 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
 	scm_misc_error(S_vct_moveB,
 		       "old-index: ~A?",
 		       SCM_LIST1(oldi));
-      if (v) for (i=ni, j=nj; (j<v->length) && (i<v->length); i++, j++) 
+      if (v) for (i = ni, j = nj; (j < v->length) && (i < v->length); i++, j++) 
 	v->data[i] = v->data[j];
     }
   return(obj);
@@ -309,7 +309,7 @@ static SCM vct_ref(SCM obj, SCM pos)
 
 static SCM vct_set(SCM obj, SCM pos, SCM val)
 {
-  #define H_vct_setB "(" S_vct_setB " v n val) sets element n of vct v to val, v[n]=val"
+  #define H_vct_setB "(" S_vct_setB " v n val) sets element n of vct v to val, v[n] = val"
   vct *v = get_vct(obj);
   int loc;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_setB);
@@ -337,8 +337,8 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
 static SCM vct_multiply(SCM obj1, SCM obj2)
 {
   #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2) -> v1 with element-wise multiply of vcts v1 and v2:\n   v1[i] *= v2[i]"
-  int i,lim;
-  vct *v1,*v2;
+  int i, lim;
+  vct *v1, *v2;
   SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_multiplyB);
   SCM_ASSERT(vct_p(obj2), obj2, SCM_ARG2, S_vct_multiplyB);
   v1 = get_vct(obj1);
@@ -346,7 +346,7 @@ static SCM vct_multiply(SCM obj1, SCM obj2)
   if ((v1) && (v2))
     {
       lim = MIN(v1->length, v2->length);
-      for (i=0; i<lim; i++) v1->data[i] *= v2->data[i];
+      for (i = 0; i < lim; i++) v1->data[i] *= v2->data[i];
     }
   return(scm_return_first(obj1, obj2)); /* I wonder if this is necessary */
 }
@@ -354,8 +354,8 @@ static SCM vct_multiply(SCM obj1, SCM obj2)
 static SCM vct_add(SCM obj1, SCM obj2, SCM offs)
 {
   #define H_vct_addB "(" S_vct_addB " v1 v2 &optional (offset 0)) -> v1 with element-wise add of vcts v1 and v2:\n   v1[i+offset] += v2[i]"
-  int i,lim,j;
-  vct *v1,*v2;
+  int i, lim, j;
+  vct *v1, *v2;
   SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_addB);
   SCM_ASSERT(vct_p(obj2), obj2, SCM_ARG2, S_vct_addB);
   v1 = get_vct(obj1);
@@ -364,10 +364,10 @@ static SCM vct_add(SCM obj1, SCM obj2, SCM offs)
     {
       lim = MIN(v1->length, v2->length);
       if (SCM_INUMP(offs))
-	for (i=0, j=SCM_INUM(offs); i<lim; i++, j++) 
+	for (i = 0, j = SCM_INUM(offs); i < lim; i++, j++) 
 	  v1->data[j] += v2->data[i];
       else
-	for (i=0; i<lim; i++) 
+	for (i = 0; i < lim; i++) 
 	  v1->data[i] += v2->data[i];
     }
   return(scm_return_first(obj1, obj2));
@@ -376,8 +376,8 @@ static SCM vct_add(SCM obj1, SCM obj2, SCM offs)
 static SCM vct_subtract(SCM obj1, SCM obj2)
 {
   #define H_vct_subtractB "(" S_vct_subtractB " v1 v2) -> v1 with element-wise subtract of vcts v1 and v2:\n   v1[i] -= v2[i]"
-  int i,lim;
-  vct *v1,*v2;
+  int i, lim;
+  vct *v1, *v2;
   SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_subtractB);
   SCM_ASSERT(vct_p(obj2), obj2, SCM_ARG2, S_vct_subtractB);
   v1 = get_vct(obj1);
@@ -385,7 +385,7 @@ static SCM vct_subtract(SCM obj1, SCM obj2)
   if ((v1) && (v2))
     {
       lim = MIN(v1->length, v2->length);
-      for (i=0; i<lim; i++) v1->data[i] -= v2->data[i];
+      for (i = 0; i < lim; i++) v1->data[i] -= v2->data[i];
     }
   return(scm_return_first(obj1, obj2));
 }
@@ -401,7 +401,7 @@ static SCM vct_scale(SCM obj1, SCM obj2)
   v1 = get_vct(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
-    for (i=0; i<v1->length; i++) v1->data[i] *= scl;
+    for (i = 0; i < v1->length; i++) v1->data[i] *= scl;
   return(scm_return_first(obj1, obj2));
 }
 
@@ -416,7 +416,7 @@ static SCM vct_offset(SCM obj1, SCM obj2)
   v1 = get_vct(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
-    for (i=0; i<v1->length; i++) v1->data[i] += scl;
+    for (i = 0; i < v1->length; i++) v1->data[i] += scl;
   return(scm_return_first(obj1, obj2));
 }
 
@@ -431,7 +431,7 @@ static SCM vct_fill(SCM obj1, SCM obj2)
   v1 = get_vct(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
-    for (i=0; i<v1->length; i++) v1->data[i] = scl;
+    for (i = 0; i < v1->length; i++) v1->data[i] = scl;
   return(scm_return_first(obj1, obj2));
 }
 
@@ -445,11 +445,11 @@ static SCM vct_map(SCM obj, SCM proc)
   v = get_vct(obj);
 #if USE_SND
   if (v) 
-    for (i=0; i<v->length; i++) 
+    for (i = 0; i < v->length; i++) 
       v->data[i] = TO_C_DOUBLE(g_call0(proc));
 #else
   if (v) 
-    for (i=0; i<v->length; i++) 
+    for (i = 0; i < v->length; i++) 
       v->data[i] = TO_C_DOUBLE(gh_call0(proc));
 #endif
   return(obj);
@@ -465,11 +465,11 @@ static SCM vct_do(SCM obj, SCM proc)
   v = get_vct(obj);
 #if USE_SND
   if (v) 
-    for (i=0; i<v->length; i++) 
+    for (i = 0; i < v->length; i++) 
       v->data[i] = TO_C_DOUBLE(g_call1(proc, TO_SCM_INT(i)));
 #else
   if (v) 
-    for (i=0; i<v->length; i++) 
+    for (i = 0; i < v->length; i++) 
       v->data[i] = TO_C_DOUBLE(gh_call1(proc, TO_SCM_INT(i)));
 #endif
   return(obj);
@@ -479,9 +479,9 @@ static SCM vcts_map(SCM args)
 {
   #define H_vcts_mapB "(" S_vcts_mapB " v1 v2 ... proc) sets each element of the vct objects from\n   the list of values returned by (proc)"
   /* n vcts followed by proc, proc returns n values (list) on each call */
-  int i,vi,vnum,vsize,argnum;
+  int i, vi, vnum, vsize, argnum;
   vct **v;
-  SCM proc,arg,svi,lst;
+  SCM proc, arg, svi, lst;
   argnum = gh_length(args);
   vnum = argnum-1;
   if (vnum <= 0)
@@ -490,7 +490,7 @@ static SCM vcts_map(SCM args)
       return(TO_SMALL_SCM_INT(0));
     }
   v = (vct **)CALLOC(vnum, sizeof(vct *));
-  for (i=0; i<vnum; i++)
+  for (i = 0; i < vnum; i++)
     {
       arg = gh_list_ref(args, TO_SMALL_SCM_INT(i));
       if (!(vct_p(arg))) 
@@ -511,10 +511,10 @@ static SCM vcts_map(SCM args)
     }
   svi = TO_SMALL_SCM_INT(vnum);
   vsize = v[0]->length;
-  for (i=1; i<vnum; i++) 
+  for (i = 1; i < vnum; i++) 
     if (vsize > v[i]->length) 
       vsize = v[i]->length;
-  for (i=0; i<vsize; i++)
+  for (i = 0; i < vsize; i++)
     {
 #if USE_SND
       arg = g_call1(proc, svi);
@@ -523,7 +523,7 @@ static SCM vcts_map(SCM args)
 #endif
       if (gh_list_p(arg))
 	{
-	  for (vi=0, lst=arg;vi<vnum;vi++,lst=SCM_CDR(lst))
+	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
 	    v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
 	}
     }
@@ -535,9 +535,9 @@ static SCM vcts_do(SCM args)
 {
   #define H_vcts_doB "(" S_vcts_doB " v1 v2 ... proc) sets each element of the vct objects from\n   the list of values returned by (proc i)"
   /* n vcts followed by proc, proc returns n values (list) on each call */
-  int i,vi,vnum,vsize,argnum;
+  int i, vi, vnum, vsize, argnum;
   vct **v;
-  SCM proc,arg,svi,lst;
+  SCM proc, arg, svi, lst;
   argnum = gh_length(args);
   vnum = argnum-1;
   if (vnum <= 0)
@@ -546,7 +546,7 @@ static SCM vcts_do(SCM args)
       return(TO_SMALL_SCM_INT(0));
     }
   v = (vct **)CALLOC(vnum, sizeof(vct *));
-  for (i=0; i<vnum; i++)
+  for (i = 0; i < vnum; i++)
     {
       arg = gh_list_ref(args, TO_SMALL_SCM_INT(i));
       if (!(vct_p(arg))) 
@@ -567,10 +567,10 @@ static SCM vcts_do(SCM args)
     }
   vsize = v[0]->length;
   svi = TO_SMALL_SCM_INT(vnum);
-  for (i=1; i<vnum; i++) 
+  for (i = 1; i < vnum; i++) 
     if (vsize > v[i]->length) 
       vsize = v[i]->length;
-  for (i=0; i<vsize; i++)
+  for (i = 0; i < vsize; i++)
     {
 #if USE_SND
       arg = g_call2(proc, svi, TO_SCM_INT(i));
@@ -579,7 +579,7 @@ static SCM vcts_do(SCM args)
 #endif
       if (gh_list_p(arg))
 	{
-	  for (vi=0, lst=arg;vi<vnum;vi++,lst=SCM_CDR(lst))
+	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
 	    v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
 	}
     }
@@ -591,14 +591,14 @@ static SCM vct_peak(SCM obj)
 {
   #define H_vct_peak "(" S_vct_peak " v) -> max of abs of elements of v"
   int i;
-  Float val = 0.0,absv;
+  Float val = 0.0, absv;
   vct *v;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_peak);
   v = get_vct(obj);
   if (v) 
     {
       val = fabs(v->data[0]); 
-      for (i=1; i<v->length; i++) 
+      for (i = 1; i < v->length; i++) 
 	{
 	  absv = fabs(v->data[i]); 
 	  if (absv > val) val = absv;
@@ -610,14 +610,14 @@ static SCM vct_peak(SCM obj)
 static SCM list2vct(SCM lst)
 {
   #define H_list2vct "(" S_list2vct " lst) -> a new vct object filled with elements of list lst"
-  int len,i;
+  int len, i;
   vct *v;
-  SCM scv,lst1;
+  SCM scv, lst1;
   SCM_ASSERT(gh_list_p(lst), lst, SCM_ARG1, S_list2vct);
   len = gh_length(lst);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = get_vct(scv);
-  for (i=0, lst1=lst; i<len; i++, lst1=SCM_CDR(lst1)) 
+  for (i = 0, lst1 = lst; i < len; i++, lst1 = SCM_CDR(lst1)) 
     v->data[i] = (Float)TO_C_DOUBLE(SCM_CAR(lst1));
   return(scm_return_first(scv, lst));
 }
@@ -649,7 +649,7 @@ static SCM vct2list(SCM vobj)
 static SCM vector2vct(SCM vect)
 {
   #define H_vector2vct "(" S_vector2vct " vect) -> a new vct object with the elements of vector vect"
-  int len,i;
+  int len, i;
   vct *v;
   SCM *vdata;
   SCM scv;
@@ -658,7 +658,7 @@ static SCM vector2vct(SCM vect)
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = get_vct(scv);
   vdata = SCM_VELTS(vect);
-  for (i=0; i<len; i++) 
+  for (i = 0; i < len; i++) 
     v->data[i] = (Float)TO_C_DOUBLE(vdata[i]);
   return(scm_return_first(scv, vect));
 }
@@ -666,9 +666,9 @@ static SCM vector2vct(SCM vect)
 static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
 {
   #define H_vct_subseq "(" S_vct_subseq " v start end &optional vnew) -> vnew with vals v[start..end]"
-  vct *vold,*vnew;
+  vct *vold, *vnew;
   SCM res;
-  int i,old_len,new_len,j;
+  int i, old_len, new_len, j;
   SCM_ASSERT(vct_p(vobj), vobj, SCM_ARG1, S_vct_subseq);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(start)), start, SCM_ARG2, S_vct_subseq);
   vold = get_vct(vobj);
@@ -684,7 +684,7 @@ static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
   vnew = get_vct(res);
   if (new_len > vnew->length) 
     new_len = vnew->length;
-  for (i=SCM_INUM(start), j=0; (j < new_len) && (i < old_len); i++, j++)
+  for (i = SCM_INUM(start), j = 0; (j < new_len) && (i < old_len); i++, j++)
     vnew->data[j] = vold->data[i];
   return(scm_return_first(res, vobj, vnew));
 }

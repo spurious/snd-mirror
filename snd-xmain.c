@@ -59,8 +59,8 @@
 #define HTML_WIDTH 600
 #define HTML_HEIGHT 400
 #define HTML_DIR "."
-#define HTML_FONT_SIZE_LIST "14,10,24,24,18,14,12"
-#define HTML_FIXED_FONT_SIZE_LIST "14,10"
+#define HTML_FONT_SIZE_LIST "14, 10, 24, 24, 18, 14, 12"
+#define HTML_FIXED_FONT_SIZE_LIST "14, 10"
 #endif
 
 #define NO_ICON 0
@@ -174,59 +174,59 @@ typedef struct {
 } sndres;
 
 static XtResource resources[] = {
-  {"highlightcol" STR_OR,"Highlightcolor",XmRString,sizeof(char *),XtOffset(sndres *, highlight_color),XmRString,(XtPointer)HIGHLIGHT_COLOR},
-  {"basiccol" STR_OR,"Basiccolor",XmRString,sizeof(char *),XtOffset(sndres *, basic_color),XmRString,(XtPointer)BASIC_COLOR},
-  {"positioncol" STR_OR,"Positioncolor",XmRString,sizeof(char *),XtOffset(sndres *, position_color),XmRString,(XtPointer)POSITION_COLOR},
-  {"zoomcol" STR_OR,"Zoomcolor",XmRString,sizeof(char *),XtOffset(sndres *, zoom_color),XmRString,(XtPointer)ZOOM_COLOR},
-  {"listenercol" STR_OR,"Listenercolor",XmRString,sizeof(char *),XtOffset(sndres *, listener_color),XmRString,(XtPointer)LISTENER_COLOR},
-  {"cursorcol" STR_OR,"Cursorcolor",XmRString,sizeof(char *),XtOffset(sndres *, cursor_color),XmRString,(XtPointer)CURSOR_COLOR},
-  {"selectioncol" STR_OR,"Selectioncolor",XmRString,sizeof(char *),XtOffset(sndres *, selection_color),XmRString,(XtPointer)SELECTION_COLOR},
-  {"mixcol" STR_OR,"Mixcolor",XmRString,sizeof(char *),XtOffset(sndres *, mix_color),XmRString,(XtPointer)MIX_COLOR},
-  {"selectedmixcol" STR_OR,"Selectedmixcolor",XmRString,sizeof(char *),XtOffset(sndres *, selected_mix_color),XmRString,(XtPointer)SELECTED_MIX_COLOR},
-  {"textfocuscol" STR_OR,"Textfocuscolor",XmRString,sizeof(char *),XtOffset(sndres *, text_focus_color),XmRString,(XtPointer)TEXT_FOCUS_COLOR},
-  {"redcol" STR_OR,"Redcolor",XmRString,sizeof(char *),XtOffset(sndres *, red_color),XmRString,(XtPointer)RED_COLOR},
-  {"greencol" STR_OR,"Greencolor",XmRString,sizeof(char *),XtOffset(sndres *, green_color),XmRString,(XtPointer)GREEN_COLOR},
-  {"whitecol" STR_OR,"Whitecolor",XmRString,sizeof(char *),XtOffset(sndres *, white_color),XmRString,(XtPointer)WHITE_COLOR},
-  {"blackcol" STR_OR,"Blackcolor",XmRString,sizeof(char *),XtOffset(sndres *, black_color),XmRString,(XtPointer)BLACK_COLOR},
-  {"lightbluecol" STR_OR,"Lightbluecolor",XmRString,sizeof(char *),XtOffset(sndres *, light_blue_color),XmRString,(XtPointer)LIGHT_BLUE_COLOR},
-  {"lighterbluecol" STR_OR,"Ligterbluecolor",XmRString,sizeof(char *),XtOffset(sndres *, lighter_blue_color),XmRString,(XtPointer)LIGHTER_BLUE_COLOR},
-  {"yellowcol" STR_OR,"Yellowcolor",XmRString,sizeof(char *),XtOffset(sndres *, yellow_color),XmRString,(XtPointer)YELLOW_COLOR},
-  {"envedwaveformcol" STR_OR,"Envedwaveformcolor",XmRString,sizeof(char *),XtOffset(sndres *, enved_waveform_color),XmRString,(XtPointer)ENVED_WAVEFORM_COLOR},
-  {"filterwaveformcol" STR_OR,"Filterwaveformcolor",XmRString,sizeof(char *),XtOffset(sndres *, filter_waveform_color),XmRString,(XtPointer)FILTER_WAVEFORM_COLOR},
-  {"graphcol" STR_OR,"Graphcolor",XmRString,sizeof(char *),XtOffset(sndres *, graph_color),XmRString,(XtPointer)GRAPH_COLOR},
-  {"selectedgraphcol" STR_OR,"Selectedgraphcolor",XmRString,sizeof(char *),XtOffset(sndres *, selected_graph_color),XmRString,(XtPointer)SELECTED_GRAPH_COLOR},
-  {"datacol" STR_OR,"Datacolor",XmRString,sizeof(char *),XtOffset(sndres *, data_color),XmRString,(XtPointer)DATA_COLOR},
-  {"selecteddatacol" STR_OR,"Selecteddatacolor",XmRString,sizeof(char *),XtOffset(sndres *, selected_data_color),XmRString,(XtPointer)SELECTED_DATA_COLOR},
-  {"markcol" STR_OR,"Markcolor",XmRString,sizeof(char *),XtOffset(sndres *, mark_color),XmRString,(XtPointer)MARK_COLOR},
-  {"sashcol" STR_OR,"Sashcolor",XmRString,sizeof(char *),XtOffset(sndres *, sash_color),XmRString,(XtPointer)SASH_COLOR},
-  {"pushedbuttoncol" STR_OR,"Pushedbuttoncolor",XmRString,sizeof(char *),XtOffset(sndres *, pushed_button_color),XmRString,(XtPointer)PUSHED_BUTTON_COLOR},
-  {"useSchemes","UseSchemes",XmRString,sizeof(char *),XtOffset(sndres *, use_schemes),XmRString,(XtPointer)"none"},
-  {"buttonFont","ButtonFont",XmRString,sizeof(char *),XtOffset(sndres *, button_font),XmRString,(XtPointer)DEFAULT_BUTTON_FONT},
-  {"listenerFont","ListenerFont",XmRString,sizeof(char *),XtOffset(sndres *, listener_font),XmRString,(XtPointer)NULL},
-  {"boldbuttonFont","BoldbuttonFont",XmRString,sizeof(char *),XtOffset(sndres *, bold_button_font),XmRString,(XtPointer)DEFAULT_BOLD_BUTTON_FONT},
-  {"axisLabelFont","AxisLabelFont",XmRString,sizeof(char *),XtOffset(sndres *, axis_label_font),XmRString,(XtPointer)DEFAULT_AXIS_LABEL_FONT},
-  {"axisNumbersFont","AxisNumbersFont",XmRString,sizeof(char *),XtOffset(sndres *, axis_numbers_font),XmRString,(XtPointer)DEFAULT_AXIS_NUMBERS_FONT},
-  {"helpTextFont","HelpTextFont",XmRString,sizeof(char *),XtOffset(sndres *, help_text_font),XmRString,(XtPointer)DEFAULT_HELP_TEXT_FONT},
-  {"initFile","InitFile",XmRString,sizeof(char *),XtOffset(sndres *, init_file_name),XmRString,(XtPointer)INIT_FILE_NAME},
-  {"epsFile","EpsFile",XmRString,sizeof(char *),XtOffset(sndres *, eps_file_name),XmRString,(XtPointer)EPS_FILE_NAME},
-  {"spectrogramCol" STR_OR,"SpectrogramColor",XmRInt,sizeof(int),XtOffset(sndres *, spectrogram_color),XmRImmediate,(XtPointer)DEFAULT_SPECTROGRAM_COLOR},
-  {"overwriteCheck","OverwriteCheck",XmRInt,sizeof(int),XtOffset(sndres *, overwrite_check),XmRImmediate,(XtPointer)0},
-  {"autoResize","AutoResize",XmRInt,sizeof(int),XtOffset(sndres *, auto_resize),XmRImmediate,(XtPointer)AUTO_RESIZE_DEFAULT},
-  {"horizontalPanes","HorizontalPanes",XmRInt,sizeof(int),XtOffset(sndres *, horizontal_panes),XmRImmediate,(XtPointer)SOUNDS_VERTICAL},
-  {"zoomSliderWidth","ZoomSliderWidth",XmRInt,sizeof(int),XtOffset(sndres *, zoom_slider_width),XmRImmediate,(XtPointer)ZOOM_SLIDER_WIDTH},
-  {"positionSliderWidth","PositionSliderWidth",XmRInt,sizeof(int),XtOffset(sndres *, position_slider_width),XmRImmediate,(XtPointer)POSITION_SLIDER_WIDTH},
-  {"toggleSize","ToggleSize",XmRInt,sizeof(int),XtOffset(sndres *, toggle_size),XmRImmediate,(XtPointer)TOGGLE_SIZE},
-  {"envedPointSize","EnvedPointSize",XmRInt,sizeof(int),XtOffset(sndres *, enved_point_size),XmRImmediate,(XtPointer)ENVED_POINT_SIZE},
-  {"channelSashIndent","ChannelSashIndent",XmRInt,sizeof(int),XtOffset(sndres *, channel_sash_indent),XmRImmediate,(XtPointer)CHANNEL_SASH_INDENT},
-  {"channelSashSize","ChannelSashSize",XmRInt,sizeof(int),XtOffset(sndres *, channel_sash_size),XmRImmediate,(XtPointer)CHANNEL_SASH_SIZE},
-  {"sashSize","SashSize",XmRInt,sizeof(int),XtOffset(sndres *, sash_size),XmRImmediate,(XtPointer)SASH_SIZE},
-  {"sashIndent","SashIndent",XmRInt,sizeof(int),XtOffset(sndres *, sash_indent),XmRImmediate,(XtPointer)SASH_INDENT},
+  {"highlightcol" STR_OR, "Highlightcolor", XmRString, sizeof(char *), XtOffset(sndres *, highlight_color), XmRString,(XtPointer)HIGHLIGHT_COLOR},
+  {"basiccol" STR_OR, "Basiccolor", XmRString, sizeof(char *), XtOffset(sndres *, basic_color), XmRString,(XtPointer)BASIC_COLOR},
+  {"positioncol" STR_OR, "Positioncolor", XmRString, sizeof(char *), XtOffset(sndres *, position_color), XmRString,(XtPointer)POSITION_COLOR},
+  {"zoomcol" STR_OR, "Zoomcolor", XmRString, sizeof(char *), XtOffset(sndres *, zoom_color), XmRString,(XtPointer)ZOOM_COLOR},
+  {"listenercol" STR_OR, "Listenercolor", XmRString, sizeof(char *), XtOffset(sndres *, listener_color), XmRString,(XtPointer)LISTENER_COLOR},
+  {"cursorcol" STR_OR, "Cursorcolor", XmRString, sizeof(char *), XtOffset(sndres *, cursor_color), XmRString,(XtPointer)CURSOR_COLOR},
+  {"selectioncol" STR_OR, "Selectioncolor", XmRString, sizeof(char *), XtOffset(sndres *, selection_color), XmRString,(XtPointer)SELECTION_COLOR},
+  {"mixcol" STR_OR, "Mixcolor", XmRString, sizeof(char *), XtOffset(sndres *, mix_color), XmRString,(XtPointer)MIX_COLOR},
+  {"selectedmixcol" STR_OR, "Selectedmixcolor", XmRString, sizeof(char *), XtOffset(sndres *, selected_mix_color), XmRString,(XtPointer)SELECTED_MIX_COLOR},
+  {"textfocuscol" STR_OR, "Textfocuscolor", XmRString, sizeof(char *), XtOffset(sndres *, text_focus_color), XmRString,(XtPointer)TEXT_FOCUS_COLOR},
+  {"redcol" STR_OR, "Redcolor", XmRString, sizeof(char *), XtOffset(sndres *, red_color), XmRString,(XtPointer)RED_COLOR},
+  {"greencol" STR_OR, "Greencolor", XmRString, sizeof(char *), XtOffset(sndres *, green_color), XmRString,(XtPointer)GREEN_COLOR},
+  {"whitecol" STR_OR, "Whitecolor", XmRString, sizeof(char *), XtOffset(sndres *, white_color), XmRString,(XtPointer)WHITE_COLOR},
+  {"blackcol" STR_OR, "Blackcolor", XmRString, sizeof(char *), XtOffset(sndres *, black_color), XmRString,(XtPointer)BLACK_COLOR},
+  {"lightbluecol" STR_OR, "Lightbluecolor", XmRString, sizeof(char *), XtOffset(sndres *, light_blue_color), XmRString,(XtPointer)LIGHT_BLUE_COLOR},
+  {"lighterbluecol" STR_OR, "Ligterbluecolor", XmRString, sizeof(char *), XtOffset(sndres *, lighter_blue_color), XmRString,(XtPointer)LIGHTER_BLUE_COLOR},
+  {"yellowcol" STR_OR, "Yellowcolor", XmRString, sizeof(char *), XtOffset(sndres *, yellow_color), XmRString,(XtPointer)YELLOW_COLOR},
+  {"envedwaveformcol" STR_OR, "Envedwaveformcolor", XmRString, sizeof(char *), XtOffset(sndres *, enved_waveform_color), XmRString,(XtPointer)ENVED_WAVEFORM_COLOR},
+  {"filterwaveformcol" STR_OR, "Filterwaveformcolor", XmRString, sizeof(char *), XtOffset(sndres *, filter_waveform_color), XmRString,(XtPointer)FILTER_WAVEFORM_COLOR},
+  {"graphcol" STR_OR, "Graphcolor", XmRString, sizeof(char *), XtOffset(sndres *, graph_color), XmRString,(XtPointer)GRAPH_COLOR},
+  {"selectedgraphcol" STR_OR, "Selectedgraphcolor", XmRString, sizeof(char *), XtOffset(sndres *, selected_graph_color), XmRString,(XtPointer)SELECTED_GRAPH_COLOR},
+  {"datacol" STR_OR, "Datacolor", XmRString, sizeof(char *), XtOffset(sndres *, data_color), XmRString,(XtPointer)DATA_COLOR},
+  {"selecteddatacol" STR_OR, "Selecteddatacolor", XmRString, sizeof(char *), XtOffset(sndres *, selected_data_color), XmRString,(XtPointer)SELECTED_DATA_COLOR},
+  {"markcol" STR_OR, "Markcolor", XmRString, sizeof(char *), XtOffset(sndres *, mark_color), XmRString,(XtPointer)MARK_COLOR},
+  {"sashcol" STR_OR, "Sashcolor", XmRString, sizeof(char *), XtOffset(sndres *, sash_color), XmRString,(XtPointer)SASH_COLOR},
+  {"pushedbuttoncol" STR_OR, "Pushedbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, pushed_button_color), XmRString,(XtPointer)PUSHED_BUTTON_COLOR},
+  {"useSchemes", "UseSchemes", XmRString, sizeof(char *), XtOffset(sndres *, use_schemes), XmRString,(XtPointer)"none"},
+  {"buttonFont", "ButtonFont", XmRString, sizeof(char *), XtOffset(sndres *, button_font), XmRString,(XtPointer)DEFAULT_BUTTON_FONT},
+  {"listenerFont", "ListenerFont", XmRString, sizeof(char *), XtOffset(sndres *, listener_font), XmRString,(XtPointer)NULL},
+  {"boldbuttonFont", "BoldbuttonFont", XmRString, sizeof(char *), XtOffset(sndres *, bold_button_font), XmRString,(XtPointer)DEFAULT_BOLD_BUTTON_FONT},
+  {"axisLabelFont", "AxisLabelFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_label_font), XmRString,(XtPointer)DEFAULT_AXIS_LABEL_FONT},
+  {"axisNumbersFont", "AxisNumbersFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_numbers_font), XmRString,(XtPointer)DEFAULT_AXIS_NUMBERS_FONT},
+  {"helpTextFont", "HelpTextFont", XmRString, sizeof(char *), XtOffset(sndres *, help_text_font), XmRString,(XtPointer)DEFAULT_HELP_TEXT_FONT},
+  {"initFile", "InitFile", XmRString, sizeof(char *), XtOffset(sndres *, init_file_name), XmRString,(XtPointer)INIT_FILE_NAME},
+  {"epsFile", "EpsFile", XmRString, sizeof(char *), XtOffset(sndres *, eps_file_name), XmRString,(XtPointer)EPS_FILE_NAME},
+  {"spectrogramCol" STR_OR, "SpectrogramColor", XmRInt, sizeof(int), XtOffset(sndres *, spectrogram_color), XmRImmediate,(XtPointer)DEFAULT_SPECTROGRAM_COLOR},
+  {"overwriteCheck", "OverwriteCheck", XmRInt, sizeof(int), XtOffset(sndres *, overwrite_check), XmRImmediate,(XtPointer)0},
+  {"autoResize", "AutoResize", XmRInt, sizeof(int), XtOffset(sndres *, auto_resize), XmRImmediate,(XtPointer)AUTO_RESIZE_DEFAULT},
+  {"horizontalPanes", "HorizontalPanes", XmRInt, sizeof(int), XtOffset(sndres *, horizontal_panes), XmRImmediate,(XtPointer)SOUNDS_VERTICAL},
+  {"zoomSliderWidth", "ZoomSliderWidth", XmRInt, sizeof(int), XtOffset(sndres *, zoom_slider_width), XmRImmediate,(XtPointer)ZOOM_SLIDER_WIDTH},
+  {"positionSliderWidth", "PositionSliderWidth", XmRInt, sizeof(int), XtOffset(sndres *, position_slider_width), XmRImmediate,(XtPointer)POSITION_SLIDER_WIDTH},
+  {"toggleSize", "ToggleSize", XmRInt, sizeof(int), XtOffset(sndres *, toggle_size), XmRImmediate,(XtPointer)TOGGLE_SIZE},
+  {"envedPointSize", "EnvedPointSize", XmRInt, sizeof(int), XtOffset(sndres *, enved_point_size), XmRImmediate,(XtPointer)ENVED_POINT_SIZE},
+  {"channelSashIndent", "ChannelSashIndent", XmRInt, sizeof(int), XtOffset(sndres *, channel_sash_indent), XmRImmediate,(XtPointer)CHANNEL_SASH_INDENT},
+  {"channelSashSize", "ChannelSashSize", XmRInt, sizeof(int), XtOffset(sndres *, channel_sash_size), XmRImmediate,(XtPointer)CHANNEL_SASH_SIZE},
+  {"sashSize", "SashSize", XmRInt, sizeof(int), XtOffset(sndres *, sash_size), XmRImmediate,(XtPointer)SASH_SIZE},
+  {"sashIndent", "SashIndent", XmRInt, sizeof(int), XtOffset(sndres *, sash_indent), XmRImmediate,(XtPointer)SASH_INDENT},
 #if HAVE_HTML
-  {"htmlWidth","HtmlWidth",XmRInt,sizeof(int),XtOffset(sndres *, html_width),XmRImmediate,(XtPointer)HTML_WIDTH},
-  {"htmlHeight","HtmlHeight",XmRInt,sizeof(int),XtOffset(sndres *, html_height),XmRImmediate,(XtPointer)HTML_HEIGHT},
-  {"htmldir","HtmlDir",XmRString,sizeof(char *),XtOffset(sndres *, html_dir),XmRString,(XtPointer)HTML_DIR},
-  {"htmlfontsizelist","Htmlfontsizelist",XmRString,sizeof(char *),XtOffset(sndres *, html_font_size_list),XmRString,(XtPointer)HTML_FONT_SIZE_LIST},
-  {"htmlfixedfontsizelist","Htmlfixedfontsizelist",XmRString,sizeof(char *),XtOffset(sndres *, html_fixed_font_size_list),XmRString,(XtPointer)HTML_FIXED_FONT_SIZE_LIST}
+  {"htmlWidth", "HtmlWidth", XmRInt, sizeof(int), XtOffset(sndres *, html_width), XmRImmediate,(XtPointer)HTML_WIDTH},
+  {"htmlHeight", "HtmlHeight", XmRInt, sizeof(int), XtOffset(sndres *, html_height), XmRImmediate,(XtPointer)HTML_HEIGHT},
+  {"htmldir", "HtmlDir", XmRString, sizeof(char *), XtOffset(sndres *, html_dir), XmRString,(XtPointer)HTML_DIR},
+  {"htmlfontsizelist", "Htmlfontsizelist", XmRString, sizeof(char *), XtOffset(sndres *, html_font_size_list), XmRString,(XtPointer)HTML_FONT_SIZE_LIST},
+  {"htmlfixedfontsizelist", "Htmlfixedfontsizelist", XmRString, sizeof(char *), XtOffset(sndres *, html_fixed_font_size_list), XmRString,(XtPointer)HTML_FIXED_FONT_SIZE_LIST}
 #endif
 };
 
@@ -272,7 +272,7 @@ void add_dialog(snd_state *ss, Widget dialog)
   int i;
   sx = ss->sgx;
   if (sx->dialogs)
-    for (i=0; i<sx->ndialogs; i++)
+    for (i = 0; i < sx->ndialogs; i++)
       if (sx->dialogs[i] == dialog)
 	return;
   if (sx->dialog_list_size == 0)
@@ -287,7 +287,7 @@ void add_dialog(snd_state *ss, Widget dialog)
 	{
 	  sx->dialog_list_size *= 2;
 	  sx->dialogs = (Widget *)REALLOC(sx->dialogs, sx->dialog_list_size * sizeof(Widget));
-	  for (i=sx->ndialogs; i<sx->dialog_list_size; i++) sx->dialogs[i] = NULL;
+	  for (i = sx->ndialogs; i < sx->dialog_list_size; i++) sx->dialogs[i] = NULL;
 	}
     }
   sx->dialogs[sx->ndialogs] = dialog;
@@ -301,7 +301,7 @@ void dismiss_all_dialogs(snd_state *ss)
   sx = ss->sgx;
   if (record_dialog_is_active()) close_recorder_audio();
   if (sx->dialog_list_size > 0)
-    for (i=0; i<sx->ndialogs; i++)
+    for (i = 0; i < sx->ndialogs; i++)
       if (sx->dialogs[i])
 	if (XtIsManaged(sx->dialogs[i])) 
 	  XtUnmanageChild(sx->dialogs[i]);
@@ -321,7 +321,7 @@ void test_all_dialogs(snd_state *ss)
   int i;
   sx = ss->sgx;
   if (sx->dialog_list_size > 0)
-    for (i=0; i<sx->ndialogs; i++)
+    for (i = 0; i < sx->ndialogs; i++)
       if (sx->dialogs[i])
 	if (XtIsManaged(sx->dialogs[i]))
 	  map_over_children(sx->dialogs[i], push_buttons, NULL);
@@ -342,7 +342,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
   if (ev->type == UnmapNotify) dismiss_all_dialogs(ss);
 }
 
-static Atom snd_v,snd_c;
+static Atom snd_v, snd_c;
 
 static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -384,10 +384,10 @@ static XtInputId stdin_id = 0;
 
 static void GetStdinString (XtPointer context, int *fd, XtInputId *id)
 {
-  int bytes,size;
+  int bytes, size;
   char *buf;
   buf = (char *)CALLOC(1024, sizeof(char));
-  size=1024;
+  size = 1024;
   bytes = read(*fd, buf, 1024);
   if (bytes <= 0) 
     {
@@ -467,7 +467,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
       /* this stupid thing (which I can't customize without major hassles) takes forever on large directories */
 #if HAVE_OPENDIR
       files = 0;
-      if ((dp=opendir(".")) != NULL)
+      if ((dp = opendir(".")) != NULL)
 	{
 	  while ((files < 400) && (readdir(dp) != NULL)) files++;
 	}
@@ -519,8 +519,8 @@ static void SetupIcon(Widget shell)
 {
   Display *dpy;
   Window root;
-  int status,scr;
-  Pixmap pix,mask;
+  int status, scr;
+  Pixmap pix, mask;
   XpmAttributes attributes;
   dpy = XtDisplay(shell);
   root = DefaultRootWindow(dpy);
@@ -567,10 +567,10 @@ static Pixel get_color(Widget shell,
   Colormap cmap;
   Display *dpy;
   int scr;
-  XColor tmp_color,ignore;
-  dpy=XtDisplay(shell);
+  XColor tmp_color, ignore;
+  dpy = XtDisplay(shell);
   scr = DefaultScreen(dpy);
-  cmap=DefaultColormap(dpy, scr);
+  cmap = DefaultColormap(dpy, scr);
   if ((!XAllocNamedColor(dpy, cmap, rs_color, &tmp_color, &ignore)) &&
       (!XAllocNamedColor(dpy, cmap, defined_color, &tmp_color, &ignore)) &&
       ((!fallback_color) || (!XAllocNamedColor(dpy, cmap, fallback_color, &tmp_color, &ignore))) &&
@@ -606,7 +606,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   Display *dpy;
   Drawable wn;
   Arg args[32];
-  int i,n,err;
+  int i, n, err;
   sndres snd_rs;
   state_context *sx;
   Widget menu;
@@ -656,13 +656,13 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   auto_open_files = argc-1;
   if (argc > 1) auto_open_file_names = (char **)(argv+1);
 
-  dpy=XtDisplay(shell);
+  dpy = XtDisplay(shell);
   XtGetApplicationResources(shell, &snd_rs, resources, XtNumber(resources), NULL, 0);
   XtVaGetValues(shell, XmNtitle, &app_title, NULL);  /* perhaps caller included -title arg */
   if (app_title) ss->startup_title = copy_string(app_title); else ss->startup_title = copy_string("snd");
 
   set_sound_style(ss, snd_rs.horizontal_panes);
-  for (i=1; i<argc; i++)
+  for (i = 1; i < argc; i++)
     {
       if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "-horizontal") == 0))
 	set_sound_style(ss, SOUNDS_HORIZONTAL);

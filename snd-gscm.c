@@ -117,7 +117,7 @@ static SCM g_color2list(SCM obj)
 
 static SCM equalp_snd_color(SCM obj1, SCM obj2)
 {
-  snd_color *v1,*v2;
+  snd_color *v1, *v2;
   v1 = (snd_color *)SND_VALUE_OF(obj1);
   v2 = (snd_color *)SND_VALUE_OF(obj2);
   return(TO_SCM_BOOLEAN(v1->color->pixel == v2->color->pixel));
@@ -184,15 +184,15 @@ static SCM g_basic_color(void)
 
 static void color_unselected_graphs(GdkColor *color)
 {
-  int i,j;
+  int i, j;
   chan_info *cp;
   snd_info *sp;
-  for (i=0;i<state->max_sounds;i++)
+  for (i = 0; i < state->max_sounds; i++)
     {
       sp = (snd_info *)state->sounds[i];
       if (sp)
 	{
-	  for (j=0;j<sp->allocated_chans;j++)
+	  for (j = 0; j < sp->allocated_chans; j++)
 	    {
 	      cp = sp->chans[j];
 	      if ((cp) && ((i != state->selected_sound) || (j != sp->selected_channel)))
@@ -207,15 +207,15 @@ static void color_unselected_graphs(GdkColor *color)
 
 static void color_chan_components(GdkColor *color, int which_component)
 {
-  int i,j;
+  int i, j;
   chan_info *cp;
   snd_info *sp;
-  for (i=0;i<state->max_sounds;i++)
+  for (i = 0; i < state->max_sounds; i++)
     {
       sp = (snd_info *)state->sounds[i];
       if (sp)
 	{
-	  for (j=0;j<sp->allocated_chans;j++)
+	  for (j = 0; j < sp->allocated_chans; j++)
 	    {
 	      cp = sp->chans[j];
 	      if (cp)
@@ -478,7 +478,7 @@ static SCM g_filter_waveform_color(void)
 static SCM g_set_mix_color (SCM arg1, SCM arg2) 
 {
   snd_color *v; 
-  SCM color,mix_id=SCM_UNDEFINED;
+  SCM color, mix_id = SCM_UNDEFINED;
   if (SCM_UNBNDP(arg2))
     color = arg1;
   else
@@ -528,11 +528,8 @@ static SCM g_selected_mix_color(void)
 
 static void recolor_button(GtkWidget *w, gpointer ptr)
 {
-  if (GTK_IS_WIDGET(w))
-    {
-      if (GTK_IS_BUTTON(w))
-	set_pushed_button_colors(w, state);
-    }
+  if ((GTK_IS_WIDGET(w)) && (GTK_IS_BUTTON(w)))
+    set_pushed_button_colors(w, state);
 }
 
 static SCM g_set_pushed_button_color (SCM color) 
@@ -587,13 +584,13 @@ static SCM g_sash_color(void)
 static SCM g_load_colormap(SCM colors)
 {
   #define H_load_colormap "(" S_load_colormap " colors) uses the vector colors to set the current colormap"
-  int i,len;
+  int i, len;
   GdkColor **xcs;
   snd_color *v;
   SCM_ASSERT((gh_vector_p(colors)), colors, SCM_ARG1, S_load_colormap);
   len = gh_vector_length(colors);
   xcs = (GdkColor **)CALLOC(len, sizeof(GdkColor *));
-  for (i=0;i<len;i++)
+  for (i = 0; i < len; i++)
     {
       v = get_snd_color(gh_vector_ref(colors, TO_SCM_INT(i)));
       xcs[i] = v->color;
@@ -641,12 +638,12 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   define_procedure_with_setter(S_html_dir, SCM_FNC g_html_dir, H_html_dir,
 			       "set-" S_html_dir, SCM_FNC g_set_html_dir, local_doc, 0, 0, 1, 0);
 #endif
-  DEFINE_PROC(gh_new_procedure0_0(S_region_dialog, g_region_dialog), H_region_dialog);
-  DEFINE_PROC(gh_new_procedure2_0(S_in, g_in), H_in);
-  DEFINE_PROC(gh_new_procedure3_0(S_make_color, g_make_snd_color), H_make_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_colorQ, g_color_p), H_color_p);
-  DEFINE_PROC(gh_new_procedure1_0(S_color2list, g_color2list), H_color2list);
-  DEFINE_PROC(gh_new_procedure1_0(S_load_colormap, g_load_colormap), H_load_colormap);
+  DEFINE_PROC(gh_new_procedure0_0(S_region_dialog, g_region_dialog),  H_region_dialog);
+  DEFINE_PROC(gh_new_procedure2_0(S_in,            g_in),             H_in);
+  DEFINE_PROC(gh_new_procedure3_0(S_make_color,    g_make_snd_color), H_make_color);
+  DEFINE_PROC(gh_new_procedure1_0(S_colorQ,        g_color_p),        H_color_p);
+  DEFINE_PROC(gh_new_procedure1_0(S_color2list,    g_color2list),     H_color2list);
+  DEFINE_PROC(gh_new_procedure1_0(S_load_colormap, g_load_colormap),  H_load_colormap);
 
   define_procedure_with_setter(S_basic_color, SCM_FNC g_basic_color, H_basic_color,
 			       "set-" S_basic_color, SCM_FNC g_set_basic_color, local_doc, 0, 0, 1, 0);
@@ -1079,55 +1076,55 @@ static void init_guile_gtk(SCM local_doc)
   init_sound_widgets(local_doc);
   init_region_widgets(local_doc);
 
-  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_cursor_gc, sg_selected_cursor_gc), H_sg_selected_cursor_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_basic_gc, sg_selected_basic_gc), H_sg_selected_basic_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_combined_basic_gc, sg_combined_basic_gc), H_sg_combined_basic_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_cursor_gc, sg_cursor_gc), H_sg_cursor_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_selection_gc, sg_selection_gc), H_sg_selection_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_cursor_gc,    sg_selected_cursor_gc),    H_sg_selected_cursor_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_basic_gc,     sg_selected_basic_gc),     H_sg_selected_basic_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_combined_basic_gc,     sg_combined_basic_gc),     H_sg_combined_basic_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_cursor_gc,             sg_cursor_gc),             H_sg_cursor_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_selection_gc,          sg_selection_gc),          H_sg_selection_gc);
   DEFINE_PROC(gh_new_procedure0_0(Sg_selected_selection_gc, sg_selected_selection_gc), H_sg_selected_selection_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_erase_gc, sg_erase_gc), H_sg_erase_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_erase_gc, sg_selected_erase_gc), H_sg_selected_erase_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_mark_gc, sg_mark_gc), H_sg_mark_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_mark_gc, sg_selected_mark_gc), H_sg_selected_mark_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_mix_gc, sg_mix_gc), H_sg_mix_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_fltenv_basic_gc, sg_fltenv_basic_gc), H_sg_fltenv_basic_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_fltenv_data_gc, sg_fltenv_data_gc), H_sg_fltenv_data_gc);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_speed_gc, sg_speed_gc), H_sg_speed_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_erase_gc,              sg_erase_gc),              H_sg_erase_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_erase_gc,     sg_selected_erase_gc),     H_sg_selected_erase_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_mark_gc,               sg_mark_gc),               H_sg_mark_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_mark_gc,      sg_selected_mark_gc),      H_sg_selected_mark_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_mix_gc,                sg_mix_gc),                H_sg_mix_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_fltenv_basic_gc,       sg_fltenv_basic_gc),       H_sg_fltenv_basic_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_fltenv_data_gc,        sg_fltenv_data_gc),        H_sg_fltenv_data_gc);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_speed_gc,              sg_speed_gc),              H_sg_speed_gc);
 
-  DEFINE_PROC(gh_new_procedure0_0(Sg_listener_font, sg_listener_font), H_sg_listener_font);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_axis_label_font, sg_axis_label_font), H_sg_axis_label_font);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_axis_numbers_font, sg_axis_numbers_font), H_sg_axis_numbers_font);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_tiny_font, sg_tiny_font), H_sg_tiny_font);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_button_font, sg_button_font), H_sg_button_font);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_bold_button_font, sg_bold_button_font), H_sg_bold_button_font);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_help_text_font, sg_help_text_font), H_sg_help_text_font);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_listener_font,         sg_listener_font),         H_sg_listener_font);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_axis_label_font,       sg_axis_label_font),       H_sg_axis_label_font);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_axis_numbers_font,     sg_axis_numbers_font),     H_sg_axis_numbers_font);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_tiny_font,             sg_tiny_font),             H_sg_tiny_font);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_button_font,           sg_button_font),           H_sg_button_font);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_bold_button_font,      sg_bold_button_font),      H_sg_bold_button_font);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_help_text_font,        sg_help_text_font),        H_sg_help_text_font);
 
-  DEFINE_PROC(gh_new_procedure0_0(Sg_basic_color, sg_basic_color), H_sg_basic_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_white_color, sg_white_color), H_sg_white_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_black_color, sg_black_color), H_sg_black_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_red_color, sg_red_color), H_sg_red_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_yellow_color, sg_yellow_color), H_sg_yellow_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_green_color, sg_green_color), H_sg_green_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_light_blue_color, sg_light_blue_color), H_sg_light_blue_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_lighter_blue_color, sg_lighter_blue_color), H_sg_lighter_blue_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_data_color, sg_data_color), H_sg_data_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_data_color, sg_selected_data_color), H_sg_selected_data_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_mark_color, sg_mark_color), H_sg_mark_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_graph_color, sg_graph_color), H_sg_graph_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_graph_color, sg_selected_graph_color), H_sg_selected_graph_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_listener_color, sg_listener_color), H_sg_listener_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_cursor_color, sg_cursor_color), H_sg_cursor_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_selection_color, sg_selection_color), H_sg_selection_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_zoom_color, sg_zoom_color), H_sg_zoom_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_position_color, sg_position_color), H_sg_position_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_highlight_color, sg_highlight_color), H_sg_highlight_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_enved_waveform_color, sg_enved_waveform_color), H_sg_enved_waveform_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_mix_color, sg_selected_mix_color), H_sg_selected_mix_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_text_focus_color, sg_text_focus_color), H_sg_text_focus_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_basic_color,           sg_basic_color),           H_sg_basic_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_white_color,           sg_white_color),           H_sg_white_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_black_color,           sg_black_color),           H_sg_black_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_red_color,             sg_red_color),             H_sg_red_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_yellow_color,          sg_yellow_color),          H_sg_yellow_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_green_color,           sg_green_color),           H_sg_green_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_light_blue_color,      sg_light_blue_color),      H_sg_light_blue_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_lighter_blue_color,    sg_lighter_blue_color),    H_sg_lighter_blue_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_data_color,            sg_data_color),            H_sg_data_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_data_color,   sg_selected_data_color),   H_sg_selected_data_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_mark_color,            sg_mark_color),            H_sg_mark_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_graph_color,           sg_graph_color),           H_sg_graph_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_graph_color,  sg_selected_graph_color),  H_sg_selected_graph_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_listener_color,        sg_listener_color),        H_sg_listener_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_cursor_color,          sg_cursor_color),          H_sg_cursor_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_selection_color,       sg_selection_color),       H_sg_selection_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_zoom_color,            sg_zoom_color),            H_sg_zoom_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_position_color,        sg_position_color),        H_sg_position_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_highlight_color,       sg_highlight_color),       H_sg_highlight_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_enved_waveform_color,  sg_enved_waveform_color),  H_sg_enved_waveform_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_selected_mix_color,    sg_selected_mix_color),    H_sg_selected_mix_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_text_focus_color,      sg_text_focus_color),      H_sg_text_focus_color);
   DEFINE_PROC(gh_new_procedure0_0(Sg_filter_waveform_color, sg_filter_waveform_color), H_sg_filter_waveform_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_mix_color, sg_mix_color), H_sg_mix_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_pushed_button_color, sg_pushed_button_color), H_sg_pushed_button_color);
-  DEFINE_PROC(gh_new_procedure0_0(Sg_sash_color, sg_sash_color), H_sg_sash_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_mix_color,             sg_mix_color),             H_sg_mix_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_pushed_button_color,   sg_pushed_button_color),   H_sg_pushed_button_color);
+  DEFINE_PROC(gh_new_procedure0_0(Sg_sash_color,            sg_sash_color),            H_sg_sash_color);
 
   scm_add_feature("snd-guile-gtk");
 }

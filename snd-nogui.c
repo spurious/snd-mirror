@@ -293,7 +293,7 @@ void check_stats_window(snd_state *ss, int val) {}
 void get_current_color(int colormap, int j, int *r, int *g, int *b) {}
 #if HAVE_GUILE
 #define NUM_TRANSFORM_TYPES 8
-static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES]={S_fourier_transform,S_wavelet_transform,S_hankel_transform,S_walsh_transform,S_autocorrelation,S_chebyshev_transform,S_cepstrum,S_hadamard_transform};
+static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] ={S_fourier_transform, S_wavelet_transform, S_hankel_transform, S_walsh_transform, S_autocorrelation, S_chebyshev_transform, S_cepstrum, S_hadamard_transform};
 char *transform_type_name(int choice) {return(TRANSFORM_TYPE_CONSTANTS[choice]);}
 #else
 char *transform_type_name(int choice) {return(NULL);}
@@ -331,7 +331,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
 {
   snd_info *sp;
   file_info *hdr;
-  int snd_slot,nchans,i;
+  int snd_slot, nchans, i;
   hdr = make_file_info(filename, ss);
   if (!hdr) return(NULL);
   nchans = hdr->chans;
@@ -349,7 +349,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   snd_slot = find_free_sound_slot(ss, nchans); /* expands sound list if needed */
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot);
   sp = ss->sounds[snd_slot];
-  for (i=0;i<nchans;i++) sp->chans[i] = make_chan_info(sp->chans[i], i, sp, ss);
+  for (i = 0; i < nchans; i++) sp->chans[i] = make_chan_info(sp->chans[i], i, sp, ss);
   add_sound_data(filename, sp, ss);
   after_open(sp->index);
   return(sp);
@@ -476,7 +476,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   scm_create_hook(S_menu_hook, 2);
 #endif
 
-  for (i=1;i<argc;i++)
+  for (i = 1; i < argc; i++)
     {
       if (strcmp(argv[i], "-noglob") == 0)
 	noglob = 1;

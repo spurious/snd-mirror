@@ -657,47 +657,76 @@ fi
 dnl fstatfs is a mess
 fstatfs_args=0
 AC_MSG_CHECKING([fstafs args])
-AC_TRY_COMPILE([#include <sys/statfs.h>],
-[struct statfs buf; int err,fd; err=fstatfs(fd,&buf,sizeof(buf),0)],
-fstatfs_args=4)
+AC_TRY_COMPILE(
+  [#include <sys/statfs.h>],
+  [struct statfs buf; 
+   int err,fd; 
+   err=fstatfs(fd,&buf,sizeof(buf),0)
+  ],
+  fstatfs_args=4)
+
 if test $fstatfs_args = 0; then
-  AC_TRY_COMPILE([#include <sys/vfs.h>],
-[struct statfs buf; int err,fd; err=fstatfs(fd,&buf,sizeof(buf),0)],
-fstatfs_args=4)
+  AC_TRY_COMPILE(
+    [#include <sys/vfs.h>],
+    [struct statfs buf; 
+     int err,fd; 
+     err=fstatfs(fd,&buf,sizeof(buf),0)
+    ],
+    fstatfs_args=4)
 fi
 if test $fstatfs_args = 0; then
-  AC_TRY_COMPILE([
-#include <dirent.h>
-#include <sys/vfs.h>
-#include <sys/statfs.h>],
-[struct statfs buf; int err,fd; err=fstatfs(fd,&buf,sizeof(buf),0)],
-fstatfs_args=4)
+  AC_TRY_COMPILE(
+    [#include <dirent.h>
+     #include <sys/vfs.h>
+     #include <sys/statfs.h>
+    ],
+    [struct statfs buf;
+     int err,fd; 
+     err=fstatfs(fd,&buf,sizeof(buf),0)
+    ],
+    fstatfs_args=4)
 fi
 if test $fstatfs_args = 0; then
-  AC_TRY_COMPILE([#include <sys/statfs.h>],
-[struct statfs buf; int err,fd; err=fstatfs(fd,&buf)],
-fstatfs_args=2)
+  AC_TRY_COMPILE(
+    [#include <sys/statfs.h>],
+    [struct statfs buf; 
+     int err,fd; 
+     err=fstatfs(fd,&buf)
+    ],
+    fstatfs_args=2)
 fi
 if test $fstatfs_args = 0; then
-  AC_TRY_COMPILE([#include <sys/vfs.h>],
-[struct statfs buf; int err,fd; err=fstatfs(fd,&buf)],
-fstatfs_args=2)
+  AC_TRY_COMPILE(
+    [#include <sys/vfs.h>],
+    [struct statfs buf; 
+     int err,fd; 
+     err=fstatfs(fd,&buf)
+    ],
+    fstatfs_args=2)
 fi
 if test $fstatfs_args = 0; then
-  AC_TRY_COMPILE([#include <sys/mount.h>],
-[struct statfs buf; int err,fd; err=fstatfs(fd,&buf)],
-fstatfs_args=2)
+  AC_TRY_COMPILE(
+    [#include <sys/mount.h>],
+    [struct statfs buf; 
+     int err,fd;
+     err=fstatfs(fd,&buf)
+    ],
+    fstatfs_args=2)
 fi
 if test $fstatfs_args = 0; then
-  AC_TRY_COMPILE([
-#include <dirent.h>
-#include <sys/vfs.h>
-#include <sys/statfs.h>],
-[struct statfs buf; int err,fd; err=fstatfs(fd,&buf)],
-fstatfs_args=2)
+  AC_TRY_COMPILE(
+    [#include <dirent.h>
+     #include <sys/vfs.h>
+     #include <sys/statfs.h>
+    ],
+    [struct statfs buf; 
+     int err,fd; 
+     err=fstatfs(fd,&buf)
+    ],
+    fstatfs_args=2)
 fi
 if test $fstatfs_args = 0; then
-fstatfs_args=2
+  fstatfs_args=2
 fi
 AC_MSG_RESULT($fstatfs_args)
 AC_DEFINE_UNQUOTED(FSTATFS_ARGS,$fstatfs_args)

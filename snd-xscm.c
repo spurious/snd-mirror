@@ -87,8 +87,8 @@ static scm_sizet free_snd_color(SCM obj)
   Colormap cmap;
   Display *dpy;
   snd_color *v = (snd_color *)SND_VALUE_OF(obj);
-  dpy=XtDisplay(MAIN_SHELL(state));
-  cmap=DefaultColormap(dpy, DefaultScreen(dpy));
+  dpy = XtDisplay(MAIN_SHELL(state));
+  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   XFreeColors(dpy, cmap, &(v->color), 1, 0);
   FREE(v);
   return(0);
@@ -102,8 +102,8 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
   XColor tmp_color;
   Display *dpy;
   buf = (char *)CALLOC(128, sizeof(char));
-  dpy=XtDisplay(MAIN_SHELL(state));
-  cmap=DefaultColormap(dpy, DefaultScreen(dpy));
+  dpy = XtDisplay(MAIN_SHELL(state));
+  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = v->color;
   XQueryColor(dpy, cmap, &tmp_color);
@@ -125,8 +125,8 @@ static SCM g_color2list(SCM obj)
   Display *dpy;
   SCM_ASSERT(snd_color_p(obj), obj, SCM_ARG1, S_color2list); 
   v = (snd_color *)SND_VALUE_OF(obj);
-  dpy=XtDisplay(MAIN_SHELL(state));
-  cmap=DefaultColormap(dpy, DefaultScreen(dpy));
+  dpy = XtDisplay(MAIN_SHELL(state));
+  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = v->color;
   XQueryColor(dpy, cmap, &tmp_color);
@@ -138,7 +138,7 @@ static SCM g_color2list(SCM obj)
 
 static SCM equalp_snd_color(SCM obj1, SCM obj2)
 {
-  snd_color *v1,*v2;
+  snd_color *v1, *v2;
   v1 = (snd_color *)SND_VALUE_OF(obj1);
   v2 = (snd_color *)SND_VALUE_OF(obj2);
   return(TO_SCM_BOOLEAN(v1->color == v2->color));
@@ -156,8 +156,8 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(g)), g, SCM_ARG2, S_make_color);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(b)), b, SCM_ARG3, S_make_color);
   new_color = (snd_color *)CALLOC(1, sizeof(snd_color));
-  dpy=XtDisplay(MAIN_SHELL(state));
-  cmap=DefaultColormap(dpy, DefaultScreen(dpy));
+  dpy = XtDisplay(MAIN_SHELL(state));
+  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.red = (int)(65535 * TO_C_DOUBLE(r));
   tmp_color.green = (int)(65535 * TO_C_DOUBLE(g));
@@ -173,8 +173,8 @@ static SCM pixel2color(Pixel pix)
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-  dpy=XtDisplay(MAIN_SHELL(state));
-  cmap=DefaultColormap(dpy, DefaultScreen(dpy));
+  dpy = XtDisplay(MAIN_SHELL(state));
+  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = pix;
   XQueryColor(dpy, cmap, &tmp_color);
@@ -225,15 +225,15 @@ static SCM g_basic_color(void)
 
 static void color_unselected_graphs(Pixel color)
 {
-  int i,j;
+  int i, j;
   chan_info *cp;
   snd_info *sp;
-  for (i=0; i<state->max_sounds; i++)
+  for (i = 0; i < state->max_sounds; i++)
     {
       sp = (snd_info *)state->sounds[i];
       if (sp)
 	{
-	  for (j=0; j<sp->allocated_chans; j++)
+	  for (j = 0; j < sp->allocated_chans; j++)
 	    {
 	      cp = sp->chans[j];
 	      if ((cp) && ((i != state->selected_sound) || (j != sp->selected_channel)))
@@ -250,15 +250,15 @@ static void color_unselected_graphs(Pixel color)
 
 static void color_chan_components(Pixel color, int which_component)
 {
-  int i,j;
+  int i, j;
   chan_info *cp;
   snd_info *sp;
-  for (i=0; i<state->max_sounds; i++)
+  for (i = 0; i < state->max_sounds; i++)
     {
       sp = (snd_info *)state->sounds[i];
       if (sp)
 	{
-	  for (j=0; j<sp->allocated_chans; j++)
+	  for (j = 0; j < sp->allocated_chans; j++)
 	    {
 	      cp = sp->chans[j];
 	      if (cp)
@@ -525,7 +525,7 @@ static SCM g_filter_waveform_color(void)
 static SCM g_set_mix_color (SCM arg1, SCM arg2) 
 {
   snd_color *v; 
-  SCM color,mix_id=SCM_UNDEFINED;
+  SCM color, mix_id = SCM_UNDEFINED;
   if (SCM_UNBNDP(arg2))
     color = arg1;
   else
@@ -638,7 +638,7 @@ static SCM g_set_sash_color (SCM color)
 static SCM g_load_colormap(SCM colors)
 {
   #define H_load_colormap "(" S_load_colormap " colors) uses the vector colors to set the current colormap"
-  int i,len;
+  int i, len;
   Pixel *xcs;
   snd_color *v;
   SCM *vdata;
@@ -646,7 +646,7 @@ static SCM g_load_colormap(SCM colors)
   len = gh_vector_length(colors);
   xcs = (Pixel *)CALLOC(len, sizeof(Pixel));
   vdata = SCM_VELTS(colors);
-  for (i=0; i<len; i++)
+  for (i = 0; i < len; i++)
     {
       v = get_snd_color(vdata[i]);
       xcs[i] = v->color;
@@ -728,12 +728,12 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 			       "set-" S_html_dir, SCM_FNC g_set_html_dir, local_doc, 0, 0, 1, 0);
 #endif
   
-  DEFINE_PROC(gh_new_procedure0_0(S_region_dialog, g_region_dialog), H_region_dialog);
-  DEFINE_PROC(gh_new_procedure2_0(S_in, g_in), H_in);
-  DEFINE_PROC(gh_new_procedure3_0(S_make_color, g_make_snd_color), H_make_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_colorQ, g_color_p), H_color_p);
-  DEFINE_PROC(gh_new_procedure1_0(S_color2list, g_color2list), H_color2list);
-  DEFINE_PROC(gh_new_procedure1_0(S_load_colormap, g_load_colormap), H_load_colormap);
+  DEFINE_PROC(gh_new_procedure0_0(S_region_dialog, g_region_dialog),  H_region_dialog);
+  DEFINE_PROC(gh_new_procedure2_0(S_in,            g_in),             H_in);
+  DEFINE_PROC(gh_new_procedure3_0(S_make_color,    g_make_snd_color), H_make_color);
+  DEFINE_PROC(gh_new_procedure1_0(S_colorQ,        g_color_p),        H_color_p);
+  DEFINE_PROC(gh_new_procedure1_0(S_color2list,    g_color2list),     H_color2list);
+  DEFINE_PROC(gh_new_procedure1_0(S_load_colormap, g_load_colormap),  H_load_colormap);
 
   define_procedure_with_setter(S_basic_color, SCM_FNC g_basic_color, H_basic_color,
 			       "set-" S_basic_color, SCM_FNC g_set_basic_color, local_doc, 0, 0, 1, 0);

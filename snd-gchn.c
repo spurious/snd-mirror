@@ -2,19 +2,19 @@
 
 enum {
     W_main_window,
-    W_edhist,W_edscroll,
+    W_edhist, W_edscroll,
     W_graph_window,
     W_wf_buttons,
-      W_f,W_w,
-    W_zy,W_sy,
+      W_f, W_w,
+    W_zy, W_sy,
     W_bottom_scrollers,
-      W_sx,W_zx,
+      W_sx, W_zx,
     W_graph,
-    W_gzy,W_gsy,
-    W_up_ev,W_down_ev
+    W_gzy, W_gsy,
+    W_up_ev, W_down_ev
 };
 
-enum {W_zy_adj,W_zx_adj,W_sy_adj,W_sx_adj,W_gzy_adj,W_gsy_adj};
+enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj};
 
 #define NUM_CHAN_WIDGETS 17
 #define NUM_CHAN_ADJS 6
@@ -208,49 +208,49 @@ void resize_zy(chan_info *cp)
   set_scrollbar(zy_adj(cp), 1.0 - sqrt(ap->zy), .1);
 }
 
-static void W_sy_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
+static void W_sy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)clientData;
+  chan_info *cp = (chan_info *)context;
   START_JUST_TIME(cp);
   sy_changed(1.0 - adj->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_sx_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
+static void W_sx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)clientData;
+  chan_info *cp = (chan_info *)context;
   START_JUST_TIME(cp);
   sx_changed(adj->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_zy_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
+static void W_zy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)clientData;
+  chan_info *cp = (chan_info *)context;
   START_JUST_TIME(cp);
   zy_changed(1.0 - adj->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_zx_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
+static void W_zx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)clientData;
+  chan_info *cp = (chan_info *)context;
   START_JUST_TIME(cp);
   zx_changed(adj->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_gzy_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
+static void W_gzy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)clientData;
+  chan_info *cp = (chan_info *)context;
   START_JUST_TIME(cp);
   gzy_changed(1.0 - adj->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_gsy_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
+static void W_gsy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)clientData;
+  chan_info *cp = (chan_info *)context;
   START_JUST_TIME(cp);
   gsy_changed(1.0 - adj->value, cp);
   END_JUST_TIME(cp);
@@ -318,10 +318,10 @@ static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->arrow_cursor);
 }
 
-static void edit_select_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer clientData)
+static void edit_select_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   /* undo/redo to reach selected position */
-  chan_info *cp = (chan_info *)clientData;
+  chan_info *cp = (chan_info *)context;
 #if DEBUGGING
   if (event == NULL) return;
 #endif
@@ -360,7 +360,7 @@ void reflect_edit_history_change(chan_info *cp)
   GtkWidget *lst;
   snd_state *ss;
   snd_info *sp;
-  int i,eds;
+  int i, eds;
   char *str;
   ss = cp->state;
   cx = cp->cgx;
@@ -371,13 +371,13 @@ void reflect_edit_history_change(chan_info *cp)
 	{
 	  eds = cp->edit_ctr;
 	  while ((eds<(cp->edit_size-1)) && (cp->edits[eds+1])) eds++;
-	  if (eds>=0)
+	  if (eds >= 0)
 	    {
 	      gtk_clist_clear(GTK_CLIST(lst));
 	      sp = cp->sound;
 	      str = sp->fullname;
 	      gtk_clist_append(GTK_CLIST(lst), &str);
-	      for (i=1;i<=eds;i++) 
+	      for (i = 1; i <= eds; i++) 
 		{
 		  str = edit_to_string(cp, i);
 		  gtk_clist_append(GTK_CLIST(lst), &str);
@@ -443,8 +443,8 @@ void reflect_edit_counter_change(chan_info *cp)
 static gint real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 {
   chan_info *cp = (chan_info *)data;
-  int keysym,theirs;
-  int x,y;
+  int keysym, theirs;
+  int x, y;
   snd_state *ss;
   GdkModifierType key_state;
   gdk_window_get_pointer(ev->window, &x, &y, &key_state);
@@ -461,8 +461,8 @@ static gint real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 gint graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 {
   chan_info *cp = (chan_info *)data;
-  int keysym,theirs;
-  int x,y;
+  int keysym, theirs;
+  int x, y;
   snd_state *ss;
   GdkModifierType key_state;
   gdk_window_get_pointer(ev->window, &x, &y, &key_state);
@@ -499,7 +499,7 @@ static void graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data
 
 static void graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
-  int x,y;
+  int x, y;
   GdkModifierType state;
   if (ev->state & GDK_BUTTON1_MASK)
     {
@@ -524,7 +524,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   chan_context *cx;
   axis_context *cax;
   state_context *sx;
-  int make_widgets,need_extra_scrollbars;
+  int make_widgets, need_extra_scrollbars;
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp, ss);
   cp = sp->chans[channel];
@@ -822,9 +822,9 @@ void cleanup_cw(chan_info *cp)
 
 void change_channel_style(snd_info *sp, int new_style)
 {
-  int i,old_style;
+  int i, old_style;
   snd_state *ss;
-  chan_info *ncp,*cp,*pcp;
+  chan_info *ncp, *cp, *pcp;
   int height[1];
   chan_context *mcgx;
   GtkWidget **cw;
@@ -866,7 +866,7 @@ void change_channel_style(snd_info *sp, int new_style)
 	      sound_lock_ctrls(sp, NULL);
 	      /* channel_lock_pane(ncp, height); */
 	      mcgx = ncp->cgx;
-	      for (i=1;i<sp->nchans;i++) 
+	      for (i = 1; i < sp->nchans; i++) 
 		{
 		  ncp = sp->chans[i];
 		  cleanup_cw(ncp);
@@ -889,10 +889,10 @@ void change_channel_style(snd_info *sp, int new_style)
 		  map_over_sound_chans(sp, channel_open_pane, NULL);
 		  /* map_over_sound_chans(sp, channel_unlock_pane, NULL); */
 		  sound_unlock_ctrls(sp, NULL);
-		  for (i=0;i<sp->nchans;i++) reset_mix_graph_parent(sp->chans[i]);
+		  for (i = 0; i < sp->nchans; i++) reset_mix_graph_parent(sp->chans[i]);
 		  pcp = sp->chans[0];
 		  ap = pcp->axis;
-		  for (i=1;i<sp->nchans;i++)
+		  for (i = 1; i < sp->nchans; i++)
 		    {
 		      cp = sp->chans[i];
 		      cp->tcgx = NULL;

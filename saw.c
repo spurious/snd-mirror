@@ -7,7 +7,7 @@
 /* ---------------- MOTIF VERSION ---------------- */
 
 static int snd_running = 0;
-Widget form,shell,label,snd;
+Widget form, shell, label, snd;
 XtAppContext app;     
 int n;
 Arg args[20];
@@ -55,7 +55,7 @@ int main (int argc, char **argv )
 /* here's a sample makefile:
 
 CC = gcc
-CFLAGS = -g -DLINUX -DUSR_LIB_OSS=1 -I/usr/X11R6/include -DSND_AS_WIDGET -DHAVE_SNDLIB
+CFLAGS = -g -DLINUX -DUSR_LIB_OSS = 1 -I/usr/X11R6/include -DSND_AS_WIDGET -DUSE_SND
 
 LIBS = /usr/X11R6/lib/libMrm.a /usr/X11R6/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXpm.a /usr/X11R6/lib/libXext.a /usr/X11R6/lib/libXt.a /usr/X11R6/lib/libSM.a /usr/X11R6/lib/libICE.a /usr/X11R6/lib/libFS.a /usr/X11R6/lib/libX11.a -lm
 
@@ -96,7 +96,7 @@ include makesnd.back
 /* Gtk+ version using Guile */
 
 static int snd_running = 0;
-GtkWidget *form,*shell,*label,*snd;
+GtkWidget *form, *shell, *label, *snd;
 
 static void Snd_Callback(GtkWidget *w, gpointer data) 
 {

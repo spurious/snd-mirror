@@ -4,19 +4,19 @@
 
 static Widget stats_window = NULL;
 
-static void stats_help(Widget w, XtPointer clientData, XtPointer callData) 
+static void stats_help(Widget w, XtPointer context, XtPointer info) 
 {
-  stats_dialog_help((snd_state *)clientData);
+  stats_dialog_help((snd_state *)context);
 }
 
-static void stats_dismiss(Widget w, XtPointer clientData, XtPointer callData) 
+static void stats_dismiss(Widget w, XtPointer context, XtPointer info) 
 {
-  set_show_usage_stats((snd_state *)clientData, FALSE);
+  set_show_usage_stats((snd_state *)context, FALSE);
 }
 
-static void stats_update(Widget w, XtPointer clientData, XtPointer callData) 
+static void stats_update(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   update_all_usage_stats(ss);
   check_stats_window(ss, TRUE);
 }
@@ -31,7 +31,7 @@ void update_stats(snd_state *ss)
 void update_stats_display(snd_state *ss, int all)
 {
   /* dismiss update help -- update forces recalc of all stats */
-  XmString xstr1,xstr2,xstr3,titlestr;
+  XmString xstr1, xstr2, xstr3, titlestr;
   int n;
   Arg args[20];
 

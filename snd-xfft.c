@@ -5,11 +5,11 @@
 static Widget transform_dialog = NULL; /* main dialog shell */
 static Widget type_list,
               size_list,
-              db_button,peaks_button,logfreq_button,sono_button,spectro_button,normo_button,normalize_button,selection_button,
-              window_list,window_beta_scale,
+              db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button,
+              window_list, window_beta_scale,
               wavelet_list,
-              graph_label,graph_drawer;
-static GC gc,fgc;
+              graph_label, graph_drawer;
+static GC gc, fgc;
 
 #define GRAPH_SIZE 128
 static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
@@ -17,8 +17,8 @@ static Float current_graph_fftr[GRAPH_SIZE * 2];
 static Float current_graph_ffti[GRAPH_SIZE * 2];
 
 #define NUM_FFT_SIZES 14
-static char *FFT_SIZES[NUM_FFT_SIZES] = {"16","32","64","128","256","512","1024","2048","4096","8192","16384","65536","262144","1048576    "};
-static int fft_sizes[NUM_FFT_SIZES] = {16,32,64,128,256,512,1024,2048,4096,8192,16384,65536,262144,1048576};
+static char *FFT_SIZES[NUM_FFT_SIZES] = {"16", "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576    "};
+static int fft_sizes[NUM_FFT_SIZES] = {16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576};
 
 #if HAVE_GSL
   #define GUI_NUM_FFT_WINDOWS NUM_FFT_WINDOWS
@@ -27,22 +27,22 @@ static int fft_sizes[NUM_FFT_SIZES] = {16,32,64,128,256,512,1024,2048,4096,8192,
 #endif
 
 static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
-     {"Rectangular","Hanning","Welch","Parzen","Bartlett","Hamming","Blackman2","Blackman3","Blackman4",
-      "Exponential","Riemann","Kaiser","Cauchy","Poisson","Gaussian","Tukey","Dolph-Chebyshev"};
+     {"Rectangular", "Hanning", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
+      "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev"};
 
-static char *WAVELETS[NUM_WAVELETS]={
-  "daub4","daub6","daub8","daub10","daub12","daub14","daub16","daub18","daub20",
-  "battle_lemarie","burt_adelson","beylkin","coif2","coif4","coif6",
-  "sym2","sym3","sym4","sym5","sym6"};
+static char *WAVELETS[NUM_WAVELETS] ={
+  "daub4", "daub6", "daub8", "daub10", "daub12", "daub14", "daub16", "daub18", "daub20",
+  "battle_lemarie", "burt_adelson", "beylkin", "coif2", "coif4", "coif6",
+  "sym2", "sym3", "sym4", "sym5", "sym6"};
 
 #define NUM_TRANSFORM_TYPES 8
-static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES]={"Fourier","Wavelet","Hankel","Walsh","Autocorrelate","Chebychev","Cepstrum","Hadamard"};
+static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] ={"Fourier", "Wavelet", "Hankel", "Walsh", "Autocorrelate", "Chebychev", "Cepstrum", "Hadamard"};
 static int num_transform_types = NUM_TRANSFORM_TYPES;
 
 #if HAVE_GUILE
-static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES]={
-  S_fourier_transform,S_wavelet_transform,S_hankel_transform,S_walsh_transform,
-  S_autocorrelation,S_chebyshev_transform,S_cepstrum,S_hadamard_transform};
+static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] ={
+  S_fourier_transform, S_wavelet_transform, S_hankel_transform, S_walsh_transform,
+  S_autocorrelation, S_chebyshev_transform, S_cepstrum, S_hadamard_transform};
 
 char *transform_type_name(int choice) 
 {
@@ -126,8 +126,8 @@ static void graph_redisplay(snd_state *ss)
 {
   Display *dp;
   Drawable wn;
-  int ix0,iy0,ix1,iy1,i;
-  Float xincr,x;
+  int ix0, iy0, ix1, iy1, i;
+  Float xincr, x;
   axis_context *ax;
 
   ax = make_axis_cp(ss, graph_drawer);
@@ -139,7 +139,7 @@ static void graph_redisplay(snd_state *ss)
   iy1 = local_grf_y(current_graph_data[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i=1, x=xincr; i<GRAPH_SIZE; i++, x+=xincr)
+  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x+=xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
@@ -153,7 +153,7 @@ static void graph_redisplay(snd_state *ss)
   iy1 = local_grf_y(current_graph_fftr[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i=1, x=xincr; i<GRAPH_SIZE; i++, x+=xincr)
+  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x+=xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
@@ -180,15 +180,15 @@ static void get_fft_window_data(snd_state *ss)
 {
   int i;
   make_fft_window_1(current_graph_data, GRAPH_SIZE, fft_window(ss), fft_beta(ss));
-  for (i=0; i<GRAPH_SIZE*2; i++)
+  for (i = 0; i < GRAPH_SIZE*2; i++)
     {
       current_graph_fftr[i] = 0.0;
       current_graph_ffti[i] = 0.0;
     }
-  for (i=0; i<GRAPH_SIZE; i++)
+  for (i = 0; i < GRAPH_SIZE; i++)
     current_graph_fftr[i] = current_graph_data[i];
   mus_spectrum(current_graph_fftr, current_graph_ffti, NULL, GRAPH_SIZE*2, 0);
-  for (i=0; i<GRAPH_SIZE; i++)
+  for (i = 0; i < GRAPH_SIZE; i++)
     current_graph_fftr[i] = (current_graph_fftr[i] + 80.0)/80.0;
 }
 
@@ -462,27 +462,27 @@ static void Help_Transform_Callback(Widget w, XtPointer context, XtPointer info)
 
 void fire_up_transform_dialog(snd_state *ss)
 {
-  XmString xhelp,xdismiss,xtitle,bstr;
+  XmString xhelp, xdismiss, xtitle, bstr;
   Arg args[32];
   XmString sizes[NUM_FFT_SIZES];
   XmString *types;
   XmString wavelets[NUM_WAVELETS];
   XmString windows[GUI_NUM_FFT_WINDOWS];
   XGCValues gv;
-  XtCallbackList n1,n2;
+  XtCallbackList n1, n2;
   int size_pos = 1;
-  int n,i,need_callback = 0;
-  Widget mainform,type_frame,type_form,type_label,
-                  size_frame,size_form,size_label,
-                  display_frame,display_form,display_label,
-                  window_frame,window_form,window_label,
-                  wavelet_frame,wavelet_form,wavelet_label,
-                  graph_frame,graph_form;
+  int n, i, need_callback = 0;
+  Widget mainform, type_frame, type_form, type_label,
+                  size_frame, size_form, size_label,
+                  display_frame, display_form, display_label,
+                  window_frame, window_form, window_label,
+                  wavelet_frame, wavelet_form, wavelet_label,
+                  graph_frame, graph_form;
     
   if (!transform_dialog)
     {
       types = (XmString *)CALLOC(num_transform_types, sizeof(XmString));
-      for (i=0; i<NUM_FFT_SIZES; i++)
+      for (i = 0; i < NUM_FFT_SIZES; i++)
 	if (fft_sizes[i] == fft_size(ss))
 	  {
 	    size_pos = i + 1;
@@ -578,7 +578,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       type_list = XmCreateScrolledList(type_form, "type-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(type_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      for (i=0; i<num_transform_types; i++) 
+      for (i = 0; i < num_transform_types; i++) 
 	{
 	  if (i < NUM_TRANSFORM_TYPES)
 	    types[i] = XmStringCreate(TRANSFORM_TYPES[i], XmFONTLIST_DEFAULT_TAG);
@@ -589,7 +589,7 @@ void fire_up_transform_dialog(snd_state *ss)
 		    XmNitemCount, num_transform_types, 
 		    XmNvisibleItemCount, 6, 
 		    NULL);
-      for (i=0; i<num_transform_types; i++) 
+      for (i = 0; i < num_transform_types; i++) 
 	XmStringFree(types[i]);
       XtManageChild(type_list); 
       XtAddCallback(type_list, XmNbrowseSelectionCallback, transform_type_browse_Callback, ss);
@@ -636,17 +636,17 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, size_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopItemPosition, (size_pos>2) ? (size_pos - 2) : size_pos); n++;
+      XtSetArg(args[n], XmNtopItemPosition, (size_pos > 2) ? (size_pos - 2) : size_pos); n++;
       size_list = XmCreateScrolledList(size_form, "size-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(size_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      for (i=0; i<NUM_FFT_SIZES; i++) 
+      for (i = 0; i < NUM_FFT_SIZES; i++) 
 	sizes[i] = XmStringCreate(FFT_SIZES[i], XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(size_list, 
 		    XmNitems, sizes, 
 		    XmNitemCount, NUM_FFT_SIZES, 
 		    XmNvisibleItemCount, 6, 
 		    NULL);
-      for (i=0; i<NUM_FFT_SIZES; i++) 
+      for (i = 0; i < NUM_FFT_SIZES; i++) 
 	XmStringFree(sizes[i]);
       XtManageChild(size_list); 
       XtAddCallback(size_list, XmNbrowseSelectionCallback, size_browse_Callback, ss);
@@ -873,14 +873,14 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       wavelet_list = XmCreateScrolledList(wavelet_form, "wavelet-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(wavelet_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      for (i=0; i<NUM_WAVELETS; i++) 
+      for (i = 0; i < NUM_WAVELETS; i++) 
 	wavelets[i] = XmStringCreate(WAVELETS[i], XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(wavelet_list, 
 		    XmNitems, wavelets, 
 		    XmNitemCount, NUM_WAVELETS, 
 		    XmNvisibleItemCount, 5, 
 		    NULL);
-      for (i=0; i<NUM_WAVELETS; i++) 
+      for (i = 0; i < NUM_WAVELETS; i++) 
 	XmStringFree(wavelets[i]);
       XtManageChild(wavelet_list); 
       XtAddCallback(wavelet_list, XmNbrowseSelectionCallback, wavelet_browse_Callback, ss);
@@ -947,14 +947,14 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNtopItemPosition, (fft_window(ss)>2) ? (fft_window(ss)-1) : (fft_window(ss)+1)); n++;
       window_list = XmCreateScrolledList(window_form, "window-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(window_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      for (i=0; i<GUI_NUM_FFT_WINDOWS; i++)
+      for (i = 0; i < GUI_NUM_FFT_WINDOWS; i++)
 	windows[i] = XmStringCreate(FFT_WINDOWS[i], XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(window_list, 
 		    XmNitems, windows, 
 		    XmNitemCount, GUI_NUM_FFT_WINDOWS, 
 		    XmNvisibleItemCount, 5, 
 		    NULL);
-      for (i=0; i<GUI_NUM_FFT_WINDOWS; i++) 
+      for (i = 0; i < GUI_NUM_FFT_WINDOWS; i++) 
 	XmStringFree(windows[i]);
       XtManageChild(window_list); 
       XtAddCallback(window_list, XmNbrowseSelectionCallback, window_browse_Callback, ss);
@@ -1103,7 +1103,7 @@ void set_fft_size(snd_state *ss, int val)
   map_over_chans(ss, map_chans_fft_size, (void *)val);
   if (transform_dialog)
     {
-      for (i=0; i<NUM_FFT_SIZES; i++)
+      for (i = 0; i < NUM_FFT_SIZES; i++)
 	if (fft_sizes[i] == val)
 	  {
 	    XmListSelectPos(size_list, i+1, FALSE);

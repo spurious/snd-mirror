@@ -69,7 +69,7 @@
  *                 (used by help functions -- perhaps better would be to call netscape?)
  *
  *   Float         This can be defined to double in CFLAGS if you want Snd to use 
- *                 doubles throughout (i.e. -DFloat=double).
+ *                 doubles throughout (i.e. -DFloat = double).
  *
  *   STR_OR        British spelling enthusiasts can -DSTR_OR=\"our\" (this changes
  *                 every "color" to "colour" even in the resource names).
@@ -168,7 +168,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "23-Feb-01"
+#define SND_VERSION "26-Feb-01"
 #define SND_RPM_VERSION "4.11"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 11

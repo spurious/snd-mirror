@@ -16,7 +16,7 @@ static char help_window_label[64];
 #if HAVE_HTML
 
 #include <XmHTML/XmHTML.h>
-/* CFLAGS = -g -Wall -DLINUX -DUSR_LIB_OSS=1 -DHAVE_GUILE -DHAVE_HTML=1 -I/home/bil/test/XmHTML-1.1.4/include */
+/* CFLAGS = -g -Wall -DLINUX -DUSR_LIB_OSS = 1 -DHAVE_GUILE -DHAVE_HTML = 1 -I/home/bil/test/XmHTML-1.1.4/include */
 /* LIBS = /home/bil/test/XmHTML-1.1.4/src/libXmHTML.a -L/usr/X11R6/lib -lMrm -lXp -lXm -lXpm -lXmu -lXt -lXext -lX11 /usr/local/lib/libguile.a -lm -ldl */
 
 static char *Load_HTML_File(char *filename)
@@ -41,7 +41,7 @@ static char *Load_HTML_File(char *filename)
   return(content);
 }
 
-enum {NO_HTML,SND_HTML,EXTSND_HTML,GRFSND_HTML,SNDLIB_HTML,CLM_HTML,SNDSCM_HTML};
+enum {NO_HTML, SND_HTML, EXTSND_HTML, GRFSND_HTML, SNDLIB_HTML, CLM_HTML, SNDSCM_HTML};
 static char *htmls[7] = {"","snd.html","extsnd.html","grfsnd.html","sndlib.html","clm.html","sndscm.html"};
 static char *html_text = NULL;
 static int html_loaded = NO_HTML;
@@ -50,7 +50,7 @@ static int html_loaded = NO_HTML;
 static int current_anchor = -1;
 static char *anchors[MAX_HTML_HISTORY];
 static int html_files[MAX_HTML_HISTORY];
-static Widget back_button=NULL,forward_button=NULL;
+static Widget back_button = NULL, forward_button = NULL;
 
 static void add_anchor(int html, char *anchor)
 {
@@ -58,7 +58,7 @@ static void add_anchor(int html, char *anchor)
   if (current_anchor == (MAX_HTML_HISTORY-1))
     {
       FREE(anchors[0]);
-      for (i=0; i<MAX_HTML_HISTORY-1; i++) 
+      for (i = 0; i < MAX_HTML_HISTORY-1; i++) 
 	anchors[i] = anchors[i+1];
     }
   else 
@@ -66,7 +66,7 @@ static void add_anchor(int html, char *anchor)
       current_anchor++;
       if (anchors[current_anchor]) 
 	{
-	  for (i=current_anchor; i<MAX_HTML_HISTORY; i++) 
+	  for (i = current_anchor; i < MAX_HTML_HISTORY; i++) 
 	    if (anchors[i])
 	      {
 		FREE(anchors[i]);
@@ -83,7 +83,7 @@ static void add_anchor(int html, char *anchor)
 
 static void load_html(snd_state *ss, int which_html, char *anchor, int added)
 {
-  char *buf,*temp = NULL;
+  char *buf, *temp = NULL;
   if (anchor) temp = copy_string(anchor);
   if (html_loaded != which_html)
     {
@@ -106,9 +106,9 @@ static void load_html(snd_state *ss, int which_html, char *anchor, int added)
     }
 }
 
-static void back_anchor_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void back_anchor_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (current_anchor > 0) 
     {
       current_anchor--;
@@ -120,9 +120,9 @@ static void back_anchor_callback(Widget w, XtPointer clientData, XtPointer callD
   if (!XtIsManaged(help_dialog)) XtManageChild(help_dialog);
 }
 
-static void forward_anchor_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void forward_anchor_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if ((current_anchor < (MAX_HTML_HISTORY - 1)) &&
       (anchors[current_anchor + 1]))
     {
@@ -189,9 +189,9 @@ static XmImageInfo* loadImage(Widget w, String url, Dimension width, Dimension h
             
 #endif
 
-static void help_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void help_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  help_dialog_help((snd_state *)clientData);
+  help_dialog_help((snd_state *)context);
 }
 
 static void create_help_monolog(snd_state *ss)
@@ -203,7 +203,7 @@ static void create_help_monolog(snd_state *ss)
 #if HAVE_HTML
   Widget ww;
   int i;
-  XmString forwardstr,backstr;
+  XmString forwardstr, backstr;
 #endif
 
   titlestr = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
@@ -232,7 +232,7 @@ static void create_help_monolog(snd_state *ss)
     XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
   }
 #if HAVE_HTML
-  for (i=0; i<MAX_HTML_HISTORY; i++) anchors[i] = NULL;
+  for (i = 0; i < MAX_HTML_HISTORY; i++) anchors[i] = NULL;
   back_button = XtCreateManagedWidget(STR_Back, xmPushButtonWidgetClass, help_dialog, args, n);
   XtAddCallback(back_button, XmNactivateCallback, back_anchor_callback, ss);
   XtSetSensitive(back_button, FALSE);

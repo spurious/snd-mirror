@@ -72,12 +72,12 @@ typedef struct {
   GtkWidget *tab;
   void *flt;
   GtkWidget *dialog;
-  int controls_fixed,page,mini_active;
+  int controls_fixed, page, mini_active;
 } snd_context;
 
 typedef struct {
-  GtkWidget *header_list,*format_list,*srate_text,*chans_text,*comment_text,*location_text;
-  int current_type,current_format,formats,header_pos,format_pos;
+  GtkWidget *header_list, *format_list, *srate_text, *chans_text, *comment_text, *location_text;
+  int current_type, current_format, formats, header_pos, format_pos;
 } file_data;
 
 typedef struct {
@@ -95,28 +95,28 @@ typedef struct {
   GdkFont *help_text_fnt;
   GdkFont *tiny_fnt;
 
-  GdkColor *white,*black,*red,*yellow,*green,*light_blue,*lighter_blue;
-  GdkColor *data_color,*selected_data_color,*mark_color,*graph_color,*selected_graph_color,*listener_color,*cursor_color;
-  GdkColor *basic_color,*selection_color,*zoom_color,*position_color,*highlight_color,*enved_waveform_color;
-  GdkColor *selected_mix_color,*text_focus_color,*filter_waveform_color,*mix_color,*pushed_button_color,*sash_color;
+  GdkColor *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
+  GdkColor *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *cursor_color;
+  GdkColor *basic_color, *selection_color, *zoom_color, *position_color, *highlight_color, *enved_waveform_color;
+  GdkColor *selected_mix_color, *text_focus_color, *filter_waveform_color, *mix_color, *pushed_button_color, *sash_color;
 
-  GdkGC *basic_gc,*selected_basic_gc,*combined_basic_gc;        
-  GdkGC *cursor_gc,*selected_cursor_gc;      
-  GdkGC *selection_gc,*selected_selection_gc;
-  GdkGC *erase_gc,*selected_erase_gc;        
-  GdkGC *mark_gc,*selected_mark_gc;          
-  GdkGC *mix_gc,*selected_mix_gc;    
-  GdkGC *fltenv_basic_gc,*fltenv_data_gc,*speed_gc;
+  GdkGC *basic_gc, *selected_basic_gc, *combined_basic_gc;        
+  GdkGC *cursor_gc, *selected_cursor_gc;      
+  GdkGC *selection_gc, *selected_selection_gc;
+  GdkGC *erase_gc, *selected_erase_gc;        
+  GdkGC *mark_gc, *selected_mark_gc;          
+  GdkGC *mix_gc, *selected_mix_gc;    
+  GdkGC *fltenv_basic_gc, *fltenv_data_gc, *speed_gc;
 
   GtkWidget **dialogs;
-  int dialog_list_size,ndialogs,graph_is_active;
+  int dialog_list_size, ndialogs, graph_is_active;
   
-  GdkCursor *arrow_cursor,*wait_cursor,*mix_cursor,*graph_cursor;
+  GdkCursor *arrow_cursor, *wait_cursor, *mix_cursor, *graph_cursor;
 } state_context;
 
 typedef struct {
   GtkWidget *graph;
-  GdkPoint *p0,*p1;
+  GdkPoint *p0, *p1;
   int lastpj;
   GdkColor *color;
 } mix_context;
@@ -150,7 +150,7 @@ typedef struct {
   GtkWidget *bysize;
   GtkWidget *byname;
   GtkWidget *byentry;
-  GtkWidget *panes,*toppane,*tophbox;
+  GtkWidget *panes, *toppane, *tophbox;
 } ww_info;
 
 #define snd_ShiftMask GDK_SHIFT_MASK

@@ -16,15 +16,15 @@ static int prepare_global_search (chan_info *cp, void *g0)
 static int run_global_search (snd_state *ss, gfd *g)
 {
   /* return 0 until success or all eof */
-  /* if success, n=winner (as aref index), if eofs, n=-1 */
+  /* if success, n = winner (as aref index), if eofs, n=-1 */
 #if HAVE_GUILE
-  int i,j,k;
+  int i, j, k;
   Float samp;
   SCM res;
   snd_fd *sf;
   if (gh_procedure_p(ss->search_proc))
     {
-      for (i=0;i<g->chans;i++)
+      for (i = 0; i < g->chans; i++)
 	{
 	  if (g->cps[i])
 	    {
@@ -49,12 +49,12 @@ static int run_global_search (snd_state *ss, gfd *g)
 		  free_snd_fd(sf);
 		  g->fds[i] = NULL;
 		  g->cps[i] = NULL;
-		  k=0;
-		  for (j=0;j<g->chans;j++) 
+		  k = 0;
+		  for (j = 0; j < g->chans; j++) 
 		    {
 		      if (g->cps[i]) 
 			{
-			  k=1;
+			  k = 1;
 			  break;
 			}
 		    }
@@ -81,7 +81,7 @@ char *global_search(snd_state *ss, int direction)
    * update cursor/graph and report success (if any) in associated info window
    * subsequent runs (if no new text) repeat the search from the current locations
    */
-  int chans,i,redisplay,passes = 0;
+  int chans, i, redisplay, passes = 0;
   gfd *fd;
   chan_info *cp;
   if (ss->search_in_progress) 
@@ -105,7 +105,7 @@ char *global_search(snd_state *ss, int direction)
       while (!(run_global_search(ss, fd)))
 	{
 	  passes++;
-	  if (passes>=10000)
+	  if (passes >= 10000)
 	    {
 	      check_for_event(ss);
 	      if (ss->stopped_explicitly) break;
@@ -136,7 +136,9 @@ char *global_search(snd_state *ss, int direction)
 	  handle_cursor(cp, redisplay);
 	}
       ss->stopped_explicitly = 0;
-      for (i=0;i<chans;i++) if (fd->cps[i]) free_snd_fd(fd->fds[i]);
+      for (i = 0; i < chans; i++) 
+	if (fd->cps[i]) 
+	  free_snd_fd(fd->fds[i]);
       FREE(fd->fds);
       FREE(fd->cps);
       FREE(fd);
@@ -147,9 +149,9 @@ char *global_search(snd_state *ss, int direction)
 
 static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
 {
-  /* count>0 -> search forward, else back */
+  /* count > 0 -> search forward, else back */
 #if HAVE_GUILE
-  int i,c,inc,passes=0;
+  int i, c, inc, passes = 0;
   Float samp;
   snd_fd *sf;
   snd_state *ss;
@@ -160,38 +162,42 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
       report_in_minibuffer(sp, "search in progress");
       return(-1);
     }
-  c=count;
+  c = count;
   if (count > 0) 
     {
-      i=cp->cursor+1; 
+      i = cp->cursor + 1; 
       inc = 1;
     }
   else 
     {
-      i=cp->cursor-1;
-      c=-c;
+      i = cp->cursor-1;
+      c = -c;
       inc = -1;
       end_sample--;
     }
   ss->search_in_progress = 1;
-  sf = init_sample_read(i, cp, (count>0) ? READ_FORWARD : READ_BACKWARD);
+  sf = init_sample_read(i, cp, (count > 0) ? READ_FORWARD : READ_BACKWARD);
   if (!sf)
     {
       ss->search_in_progress = 0;
       return(-1);
     }
   if (count > 0) sf->direction = READ_FORWARD; else sf->direction = READ_BACKWARD;
-  while ((c>0) && (i != end_sample) && (!read_sample_eof(sf)))
+  while ((c > 0) && (i != end_sample) && (!read_sample_eof(sf)))
     {
       if (count > 0)
 	samp = next_sample_to_float(sf);
       else samp = previous_sample_to_float(sf);
       res = g_call1(sp->search_proc, TO_SCM_DOUBLE((double)samp));
       if (SCM_SYMBOLP(res)) break;
-      if (SCM_NFALSEP(res)) {c--; if (c == 0) break;}
-      i+=inc;
+      if (SCM_NFALSEP(res)) 
+	{
+	  c--; 
+	  if (c == 0) break;
+	}
+      i += inc;
       passes++;
-      if (passes>=10000)
+      if (passes >= 10000)
 	{
 	  check_for_event(ss);
 	  /* if user types C-s during an active search, we risk stomping on our current pointers */
@@ -225,7 +231,7 @@ int cursor_search(chan_info *cp, int count)
 #if HAVE_GUILE
   int samp;
   snd_info *sp;
-  char *s1,*s2;
+  char *s1, *s2;
   snd_state *ss;
   ss = cp->state;
   sp = cp->sound;

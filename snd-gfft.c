@@ -3,11 +3,11 @@
 #include "snd.h"
 
 static GtkWidget *transform_dialog = NULL; /* main dialog shell */
-static GtkWidget *transform_list,*size_list,*window_list,*wavelet_list,
-                 *db_button,*peaks_button,*logfreq_button,*sono_button,*spectro_button,*normal_fft_button,*normalize_button,*selection_button,
-                 *window_beta_scale,*graph_drawer=NULL,*graph_frame=NULL;
+static GtkWidget *transform_list, *size_list, *window_list, *wavelet_list,
+                 *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button, *normalize_button, *selection_button,
+                 *window_beta_scale, *graph_drawer = NULL, *graph_frame = NULL;
 static GtkObject *beta_adj;
-static GdkGC *gc,*fgc;
+static GdkGC *gc, *fgc;
 
 #define GRAPH_SIZE 128
 static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
@@ -15,8 +15,8 @@ static Float current_graph_fftr[GRAPH_SIZE*2];
 static Float current_graph_ffti[GRAPH_SIZE*2];
 
 #define NUM_FFT_SIZES 14
-static char *FFT_SIZES[NUM_FFT_SIZES] = {"16","32","64","128","256","512","1024","2048","4096","8192","16384","65536","262144","1048576    "};
-static int fft_sizes[NUM_FFT_SIZES] = {16,32,64,128,256,512,1024,2048,4096,8192,16384,65536,262144,1048576};
+static char *FFT_SIZES[NUM_FFT_SIZES] = {"16", "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576    "};
+static int fft_sizes[NUM_FFT_SIZES] = {16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576};
 
 #if HAVE_GSL
   #define GUI_NUM_FFT_WINDOWS NUM_FFT_WINDOWS
@@ -25,22 +25,22 @@ static int fft_sizes[NUM_FFT_SIZES] = {16,32,64,128,256,512,1024,2048,4096,8192,
 #endif
 
 static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
-     {"Rectangular","Hanning","Welch","Parzen","Bartlett","Hamming","Blackman2","Blackman3","Blackman4",
-      "Exponential","Riemann","Kaiser","Cauchy","Poisson","Gaussian","Tukey","Dolph-Chebyshev"};
+     {"Rectangular", "Hanning", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
+      "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev"};
 
-static char *WAVELETS[NUM_WAVELETS]={
-  "daub4","daub6","daub8","daub10","daub12","daub14","daub16","daub18","daub20",
-  "battle_lemarie","burt_adelson","beylkin","coif2","coif4","coif6",
-  "sym2","sym3","sym4","sym5","sym6"};
+static char *WAVELETS[NUM_WAVELETS] ={
+  "daub4", "daub6", "daub8", "daub10", "daub12", "daub14", "daub16", "daub18", "daub20",
+  "battle_lemarie", "burt_adelson", "beylkin", "coif2", "coif4", "coif6",
+  "sym2", "sym3", "sym4", "sym5", "sym6"};
 
 #define NUM_TRANSFORM_TYPES 8
-static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES]={"Fourier","Wavelet","Hankel","Walsh","Autocorrelate","Chebychev","Cepstrum","Hadamard"};
+static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] ={"Fourier", "Wavelet", "Hankel", "Walsh", "Autocorrelate", "Chebychev", "Cepstrum", "Hadamard"};
 static int num_transform_types = NUM_TRANSFORM_TYPES;
 
 #if HAVE_GUILE
-static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES]={
-  S_fourier_transform,S_wavelet_transform,S_hankel_transform,S_walsh_transform,
-  S_autocorrelation,S_chebyshev_transform,S_cepstrum,S_hadamard_transform};
+static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] ={
+  S_fourier_transform, S_wavelet_transform, S_hankel_transform, S_walsh_transform,
+  S_autocorrelation, S_chebyshev_transform, S_cepstrum, S_hadamard_transform};
 
 char *transform_type_name(int choice)
 {
@@ -109,8 +109,8 @@ static Float fp_dB(snd_state *ss, Float py)
 static void graph_redisplay(snd_state *ss)
 {
   GdkDrawable *wn;
-  int ix0,iy0,ix1,iy1,i;
-  Float xincr,x;
+  int ix0, iy0, ix1, iy1, i;
+  Float xincr, x;
   axis_context *ax;
   if (!(transform_dialog_is_active())) return;
   if (graph_drawer == NULL) return;
@@ -123,7 +123,7 @@ static void graph_redisplay(snd_state *ss)
   iy1 = grf_y(current_graph_data[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i=1, x=xincr; i<GRAPH_SIZE; i++,x+=xincr)
+  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x+=xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
@@ -137,7 +137,7 @@ static void graph_redisplay(snd_state *ss)
   iy1 = grf_y(current_graph_fftr[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i=1, x=xincr; i<GRAPH_SIZE; i++,x+=xincr)
+  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x+=xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
@@ -153,15 +153,15 @@ static void get_fft_window_data(snd_state *ss)
 {
   int i;
   make_fft_window_1(current_graph_data, GRAPH_SIZE, fft_window(ss), fft_beta(ss));
-  for (i=0; i<GRAPH_SIZE*2; i++)
+  for (i = 0; i < GRAPH_SIZE*2; i++)
     {
       current_graph_fftr[i] = 0.0;
       current_graph_ffti[i] = 0.0;
     }
-  for (i=0; i<GRAPH_SIZE; i++)
+  for (i = 0; i < GRAPH_SIZE; i++)
     current_graph_fftr[i] = current_graph_data[i];
   mus_spectrum(current_graph_fftr, current_graph_ffti, NULL, GRAPH_SIZE*2, 0);
-  for (i=0; i<GRAPH_SIZE; i++)
+  for (i = 0; i < GRAPH_SIZE; i++)
     current_graph_fftr[i] = (current_graph_fftr[i] + 80.0)/80.0;
 }
 
@@ -178,9 +178,9 @@ static int map_chans_fft_size(chan_info *cp, void *ptr)
   return(0);
 }
 
-static void size_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer clientData)
+static void size_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int size;
   in_set_fft_size(ss, fft_sizes[row]);
   size = fft_size(ss);
@@ -193,18 +193,18 @@ static void size_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventBu
 
 static int map_chans_wavelet_type(chan_info *cp, void *ptr) {cp->wavelet_type = (int)ptr; return(0);}
 
-static void wavelet_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer clientData)
+static void wavelet_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   in_set_wavelet_type(ss, row);
   map_over_chans(ss, map_chans_wavelet_type, (void *)row);
   if (transform_type(ss) == WAVELET)
     map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void window_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer clientData)
+static void window_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   in_set_fft_window(ss, row);
   map_over_chans(ss, calculate_fft, NULL);
   if (graph_frame) gtk_frame_set_label(GTK_FRAME(graph_frame), FFT_WINDOWS[fft_window(ss)]);
@@ -220,36 +220,36 @@ static void window_browse_Callback(GtkWidget *w, gint row, gint column, GdkEvent
 
 static int map_chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (int)ptr; return(0);}
 
-static void transform_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer clientData)
+static void transform_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   map_over_chans(ss, force_fft_clear, NULL);
   in_set_transform_type(ss, row);
   map_over_chans(ss, map_chans_transform_type, (void *)row);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void normal_fft_Callback(GtkWidget *w, gpointer clientData)
+static void normal_fft_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (GTK_TOGGLE_BUTTON(w)->active)
     in_set_fft_style(ss, NORMAL_FFT);
   else in_set_fft_style(ss, SONOGRAM);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void sonogram_Callback(GtkWidget *w, gpointer clientData)
+static void sonogram_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (GTK_TOGGLE_BUTTON(w)->active)
     in_set_fft_style(ss, SONOGRAM);
   else in_set_fft_style(ss, NORMAL_FFT);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void spectrogram_Callback(GtkWidget *w, gpointer clientData)
+static void spectrogram_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (GTK_TOGGLE_BUTTON(w)->active)
     in_set_fft_style(ss, SPECTROGRAM);
   else in_set_fft_style(ss, NORMAL_FFT);
@@ -258,10 +258,10 @@ static void spectrogram_Callback(GtkWidget *w, gpointer clientData)
 
 static int map_show_fft_peaks(chan_info *cp, void *ptr) {cp->show_fft_peaks = (int)ptr; return(0);}
 
-static void peaks_Callback(GtkWidget *w, gpointer clientData)
+static void peaks_Callback(GtkWidget *w, gpointer context)
 {
-  int val=0;
-  snd_state *ss = (snd_state *)clientData;
+  int val = 0;
+  snd_state *ss = (snd_state *)context;
   in_set_show_fft_peaks(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
   map_over_chans(ss, map_show_fft_peaks, (void *)val);
   map_over_chans(ss, calculate_fft, NULL);
@@ -269,9 +269,9 @@ static void peaks_Callback(GtkWidget *w, gpointer clientData)
 
 static int map_chans_fft_log_magnitude(chan_info *cp, void *ptr) {cp->fft_log_magnitude = (int)ptr; return(0);}
 
-static void db_Callback(GtkWidget *w, gpointer clientData)
+static void db_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int val;
   in_set_fft_log_magnitude(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
   map_over_chans(ss, map_chans_fft_log_magnitude, (void *)val);
@@ -280,9 +280,9 @@ static void db_Callback(GtkWidget *w, gpointer clientData)
 
 static int map_chans_fft_log_frequency(chan_info *cp, void *ptr) {cp->fft_log_frequency = (int)ptr; return(0);}
 
-static void logfreq_Callback(GtkWidget *w, gpointer clientData)
+static void logfreq_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int val;
   in_set_fft_log_frequency(ss, val = (GTK_TOGGLE_BUTTON(w)->active));
   map_over_chans(ss, map_chans_fft_log_frequency, (void *)val);
@@ -291,26 +291,26 @@ static void logfreq_Callback(GtkWidget *w, gpointer clientData)
 
 static int map_chans_normalize_fft(chan_info *cp, void *ptr) {cp->normalize_fft = (int)ptr; return(0);}
 
-static void normalize_Callback(GtkWidget *w, gpointer clientData)
+static void normalize_Callback(GtkWidget *w, gpointer context)
 {
   int choice;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   choice = GTK_TOGGLE_BUTTON(w)->active;
   in_set_normalize_fft(ss, choice);
   map_over_chans(ss, map_chans_normalize_fft, (void *)choice);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void selection_Callback(GtkWidget *w, gpointer clientData)
+static void selection_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   in_set_show_selection_transform(ss, GTK_TOGGLE_BUTTON(w)->active);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void beta_Callback(GtkAdjustment *adj, gpointer clientData)
+static void beta_Callback(GtkAdjustment *adj, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   in_set_fft_beta(ss, (Float)(adj->value));
   map_chans_field(ss, FCP_BETA, (Float)(adj->value));
   if (fft_window_beta_in_use(fft_window(ss)))
@@ -331,19 +331,19 @@ static void graph_expose_Callback(GtkWidget *w, GdkEventExpose *ev, gpointer dat
   graph_redisplay((snd_state *)data);
 }
 
-static void Dismiss_Transform_Callback(GtkWidget *w, gpointer clientData)
+static void Dismiss_Transform_Callback(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(transform_dialog);
 }
 
-static void delete_transform_dialog(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void delete_transform_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(transform_dialog);
 }
 
-static void Help_Transform_Callback(GtkWidget *w, gpointer clientData)
+static void Help_Transform_Callback(GtkWidget *w, gpointer context)
 {
-  transform_dialog_help((snd_state *)clientData);
+  transform_dialog_help((snd_state *)context);
 }
 
 static void button_pushed_red(GtkWidget *w, snd_state *ss)
@@ -362,11 +362,11 @@ static void button_pushed_red(GtkWidget *w, snd_state *ss)
 
 void fire_up_transform_dialog(snd_state *ss)
 {
-  GtkWidget *outer_table,*buttons;
+  GtkWidget *outer_table, *buttons;
   char *str;
-  int i,need_callback = 0;
-  GtkWidget *type_frame,*size_frame,*display_frame,*window_frame,*wavelet_frame,*help_button,*dismiss_button;
-  GtkWidget *type_scroller,*size_scroller,*window_scroller,*wavelet_scroller,*window_box;
+  int i, need_callback = 0;
+  GtkWidget *type_frame, *size_frame, *display_frame, *window_frame, *wavelet_frame, *help_button, *dismiss_button;
+  GtkWidget *type_scroller, *size_scroller, *window_scroller, *wavelet_scroller, *window_box;
 
   if (!transform_dialog)
     {
@@ -414,7 +414,7 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_clist_set_selection_mode(GTK_CLIST(transform_list), GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(transform_list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(transform_list));
-      for (i=0; i<num_transform_types; i++) 
+      for (i = 0; i < num_transform_types; i++) 
 	{
 	  if (i < NUM_TRANSFORM_TYPES)
 	    str = TRANSFORM_TYPES[i];
@@ -443,7 +443,7 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_clist_set_selection_mode(GTK_CLIST(size_list), GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(size_list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(size_list));
-      for (i=0; i<NUM_FFT_SIZES; i++) 
+      for (i = 0; i < NUM_FFT_SIZES; i++) 
 	{
 	  str = FFT_SIZES[i];
 	  gtk_clist_append(GTK_CLIST(size_list), &str);
@@ -543,7 +543,7 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_clist_set_selection_mode(GTK_CLIST(wavelet_list), GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(wavelet_list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(wavelet_list));
-      for (i=0; i<NUM_WAVELETS; i++) 
+      for (i = 0; i < NUM_WAVELETS; i++) 
 	{
 	  str = WAVELETS[i];
 	  gtk_clist_append(GTK_CLIST(wavelet_list), &str);
@@ -573,7 +573,7 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_clist_set_selection_mode(GTK_CLIST(window_list), GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(window_list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(window_list));
-      for (i=0; i<GUI_NUM_FFT_WINDOWS; i++) 
+      for (i = 0; i < GUI_NUM_FFT_WINDOWS; i++) 
 	{
 	  str = FFT_WINDOWS[i];
 	  gtk_clist_append(GTK_CLIST(window_list), &str);
@@ -629,7 +629,7 @@ void fire_up_transform_dialog(snd_state *ss)
 
 
       gtk_clist_select_row(GTK_CLIST(transform_list), transform_type(ss), 0);
-      for (i=0; i<NUM_FFT_SIZES; i++)
+      for (i = 0; i < NUM_FFT_SIZES; i++)
 	if (fft_sizes[i] == fft_size(ss))
 	  {
 	    gtk_clist_select_row(GTK_CLIST(size_list), i, 0);
@@ -689,7 +689,7 @@ void set_fft_size(snd_state *ss, int val)
   map_over_chans(ss, map_chans_fft_size, (void *)val);
   if (transform_dialog)
     {
-      for (i=0; i<NUM_FFT_SIZES; i++)
+      for (i = 0; i < NUM_FFT_SIZES; i++)
 	if (fft_sizes[i] == val)
 	  {
 	    gtk_clist_select_row(GTK_CLIST(size_list), i, 0);

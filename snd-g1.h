@@ -2,7 +2,7 @@
 #define SND_G1_H_LOADED
 
 typedef struct {
-  GtkWidget *rw,*nm,*pl,*sv;
+  GtkWidget *rw, *nm, *pl, *sv;
   int pos;
   snd_state *ss;
 } regrow;

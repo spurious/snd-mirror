@@ -28,14 +28,14 @@ static Window compare_window(Display *display, Window window, char *id)
 
 static Window find_window(Display *display, Window starting_window, char *name, Window (*compare_func)())
 {
-  Window rootwindow,window_parent;
-  int i=0;
-  unsigned int num_children=0;
-  Window *children=NULL;
+  Window rootwindow, window_parent;
+  int i = 0;
+  unsigned int num_children = 0;
+  Window *children = NULL;
   Window window = (compare_func)(display, starting_window, name);
   if (window != (Window)None)return (window);
   if ((XQueryTree(display, starting_window, &rootwindow, &window_parent, &children, &num_children)) == 0) return ((Window)None);
-  while ((i<num_children) && (window == (Window)None))
+  while ((i < num_children) && (window == (Window)None))
     window = find_window(display, children[i++], name, compare_func);
   if (children) XFree((char *)children);
   return(window);

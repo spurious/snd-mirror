@@ -6,7 +6,7 @@
 
 static Widget listener_text = NULL;
 
-static Widget completion_help_dialog = NULL,completion_help_list = NULL;
+static Widget completion_help_dialog = NULL, completion_help_list = NULL;
 
 static void completion_help_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -19,15 +19,15 @@ If you select one, it will be used to complete the current name.\n\
 
 static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  int choice,i,j,old_len,new_len;
-  char *text=NULL,*old_text=NULL;
+  int choice, i, j, old_len, new_len;
+  char *text = NULL, *old_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   choice = cbs->item_position - 1;
   XmStringGetLtoR(cbs->item, XmFONTLIST_DEFAULT_TAG, &text);
   old_text = XmTextGetString(listener_text);
   old_len = snd_strlen(old_text);
   new_len = snd_strlen(text);
-  for (i=old_len-1, j=new_len-1; j>=0; j--)
+  for (i = old_len-1, j = new_len-1; j >= 0; j--)
     {
       if (old_text[i] != text[j])
 	i = old_len - 1;
@@ -86,13 +86,13 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
 void snd_completion_help(snd_state *ss, int matches, char **buffer)
 {
   int i;
-  Dimension w,h;
+  Dimension w, h;
   XmString *match;
   if (completion_help_dialog)
     XtManageChild(completion_help_dialog);
   else create_completion_help_dialog(ss, "Completions");
   match = (XmString *)CALLOC(matches, sizeof(XmString));
-  for (i=0; i<matches; i++) 
+  for (i = 0; i < matches; i++) 
     match[i] = XmStringCreate(buffer[i], XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(completion_help_list, 
 		XmNitems, match, 
@@ -108,7 +108,7 @@ void snd_completion_help(snd_state *ss, int matches, char **buffer)
 		  XmNwidth, 200,
 		  XmNheight, 200, 
 		  NULL);
-  for (i=0; i<matches; i++) 
+  for (i = 0; i < matches; i++) 
     XmStringFree(match[i]);
   FREE(match);
 }
@@ -176,7 +176,7 @@ static char *listener_selection = NULL;
 static void Kill_line(Widget w, XEvent *ev, char **str, Cardinal *num) 
 {
   /* C-k with storage of killed text */
-  XmTextPosition curpos,loc;
+  XmTextPosition curpos, loc;
   Boolean found;
   curpos = XmTextGetCursorPosition(w);
   found = XmTextFindString(w, curpos, "\n", XmTEXT_FORWARD, &loc);
@@ -210,7 +210,7 @@ static int last_prompt = 0;
 static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num) 
 {
   /* don't back up before listener prompt */
-  XmTextPosition curpos,loc;
+  XmTextPosition curpos, loc;
   int prompt_len;
   char *str = NULL;
   snd_state *ss;
@@ -303,8 +303,8 @@ static void Text_transpose(Widget w, XEvent *event, char **str, Cardinal *num)
 
 static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  int i,j,length,wstart,wend,up,cap;
-  XmTextPosition curpos,endpos;
+  int i, j, length, wstart, wend, up, cap;
+  XmTextPosition curpos, endpos;
   char *buf;
   up = (str[0][0] == 'u');
   cap = (str[0][0] == 'c');
@@ -317,13 +317,13 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
       XmTextGetSubstring(w, curpos, length, length + 1, buf);
       wstart = 0;
       wend = length;
-      for (i=0; i<length; i++)
+      for (i = 0; i < length; i++)
 	if (!isspace((int)(buf[i])))
 	  {
 	    wstart = i;
 	    break;
 	  }
-      for (i=wstart+1; i<length; i++)
+      for (i = wstart+1; i < length; i++)
 	if (isspace((int)(buf[i])))
 	  {
 	    wend = i;
@@ -337,7 +337,7 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
 	}
       else
 	{
-	  for (i=wstart, j=0; i<wend; i++, j++)
+	  for (i = wstart, j = 0; i < wend; i++, j++)
 	    if (up) 
 	      buf[j] = toupper(buf[i]);
 	    else buf[j] = tolower(buf[i]);
@@ -365,7 +365,7 @@ static void add_completer_widget(Widget w, int row)
 	  else 
 	    {
 	      cmpwids = (Widget *)REALLOC(cmpwids, cmpwids_size * sizeof(Widget));
-	      for (; i<cmpwids_size; i++) cmpwids[i] = NULL;
+	      for (; i < cmpwids_size; i++) cmpwids[i] = NULL;
 	    }
 	}
       cmpwids[row] = w;
@@ -374,16 +374,16 @@ static void add_completer_widget(Widget w, int row)
 
 static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  int data,i,matches,need_position;
-  Position wx,wy;
-  int xoff,yoff; 
+  int data, i, matches, need_position;
+  Position wx, wy;
+  int xoff, yoff; 
   Window wn;
   Pixel old_color;
-  char *old_text,*new_text,*search_text;
+  char *old_text, *new_text, *search_text;
   snd_state *ss;
   ss = get_global_state();
   data = -1;
-  for (i=0; i<cmpwids_size; i++)
+  for (i = 0; i < cmpwids_size; i++)
     if (w == cmpwids[i])
       {
 	data = i;
@@ -463,10 +463,10 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
    *   also if at start of line (or all white-space to previous \n, indent
    */
   int beg, end, len, matches = 0, need_position;
-  char *old_text,*new_text = NULL,*file_text = NULL;
+  char *old_text, *new_text = NULL, *file_text = NULL;
   int try_completion = 1;
-  Position wx,wy;
-  int xoff,yoff; 
+  Position wx, wy;
+  int xoff, yoff; 
   Window wn;
   snd_state *ss;
   ss = get_global_state();
@@ -526,20 +526,20 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 
 #define NUM_ACTS 14
 static XtActionsRec acts[] = {
-  {"no-op",No_op},
-  {"activate-keyboard",Activate_keyboard},
-  {"activate-channel",Activate_channel},
-  {"yank",Yank},
-  {"delete-region",Delete_region},
-  {"kill-line",Kill_line},
-  {"begin-of-line",Begin_of_line},
-  {"b1-press",B1_press},
-  {"b1-move",B1_move},
-  {"b1-release",B1_release},
-  {"text-transpose",Text_transpose},
-  {"word-upper",Word_upper},
-  {"name-completion",Name_completion},
-  {"listener-completion",Listener_completion},
+  {"no-op", No_op},
+  {"activate-keyboard", Activate_keyboard},
+  {"activate-channel", Activate_channel},
+  {"yank", Yank},
+  {"delete-region", Delete_region},
+  {"kill-line", Kill_line},
+  {"begin-of-line", Begin_of_line},
+  {"b1-press", B1_press},
+  {"b1-move", B1_move},
+  {"b1-release", B1_release},
+  {"text-transpose", Text_transpose},
+  {"word-upper", Word_upper},
+  {"name-completion", Name_completion},
+  {"listener-completion", Listener_completion},
 };
 
 /* translation tables for emacs compatibility and better inter-widget communication */
@@ -814,8 +814,8 @@ static void Command_Motion_Callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
   snd_state *ss = (snd_state *)context;
-  char *str = NULL,*prompt;
-  int pos,i,parens;
+  char *str = NULL, *prompt;
+  int pos, i, parens;
   cbs->doit = TRUE; 
   if (last_highlight_position != -1)
     {
@@ -831,7 +831,7 @@ static void Command_Motion_Callback(Widget w, XtPointer context, XtPointer info)
       if (str[pos] == ')')
 	{
 	  parens = 1;
-	  for (i=pos-1; i>0; i--)
+	  for (i = pos-1; i > 0; i--)
 	    {
 	      if ((i > 0) && (str[i] == prompt[0]) && (str[i - 1] == '\n'))
 		break;
@@ -853,7 +853,7 @@ static void Command_Modify_Callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
   snd_state *ss = (snd_state *)context;
-  char *str=NULL,*prompt;
+  char *str = NULL, *prompt;
   int len;
   if ((cbs->text)->length > 0)
     cbs->doit = TRUE;
@@ -886,7 +886,7 @@ static void Command_Help_Callback(Widget w, XtPointer context, XtPointer info)
 static void sndCreateCommandWidget(snd_state *ss, int height)
 {
   Arg args[32];
-  Widget wv,wh;
+  Widget wv, wh;
   XtCallbackList n1;
   int n;
   if (!listener_text)

@@ -2,7 +2,7 @@
 #define SND_X1_H_LOADED
 
 typedef struct {
-  Widget rw,nm,pl,sv;
+  Widget rw, nm, pl, sv;
   int pos;
   snd_state *ss;
 } regrow;

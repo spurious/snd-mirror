@@ -55,13 +55,13 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   fl = set_header_and_data_positions(fdat, type, format); 
   XmListSelectPos(fdat->header_list, fdat->header_pos + 1, FALSE);
   strs = (XmString *)CALLOC(fdat->formats, sizeof(XmString)); 
-  for (i=0; i<fdat->formats; i++) 
+  for (i = 0; i < fdat->formats; i++) 
     strs[i] = XmStringCreate(fl[i], XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(fdat->format_list, 
 		XmNitems, strs, 
 		XmNitemCount, fdat->formats, 
 		NULL);
-  for (i=0; i<fdat->formats; i++)
+  for (i = 0; i < fdat->formats; i++)
     XmStringFree(strs[i]);
   FREE(strs); 
   XmListSelectPos(fdat->format_list, fdat->format_pos + 1, FALSE);
@@ -92,7 +92,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
 
 static void color_file_selection_box(Widget w, snd_state *ss)
 {
-  Widget wtmp = NULL,ftmp = NULL;
+  Widget wtmp = NULL, ftmp = NULL;
   if (!(ss->using_schemes)) 	
     {
       map_over_children(w, set_main_color_of_widget, (void *)ss);
@@ -209,15 +209,15 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
    * the pattern (file name mask) only matters if the filter button is hit, 
    * it appears to be "*" until the filter is invoked.
    */
-  char *pattern,*our_dir,*sp,*sn;
+  char *pattern, *our_dir, *sp, *sn;
   static char *save_dir = NULL;
   static char *last_dir = NULL;
-  static dir *sound_files,*current_files;
+  static dir *sound_files, *current_files;
   static char *last_pattern = NULL;
   dir *cdp;
   XmFileSelectionBoxCallbackStruct *data = (XmFileSelectionBoxCallbackStruct *)info;
   XmString *names = NULL;
-  int i,filter_callback,need_update;
+  int i, filter_callback, need_update;
 
   XmStringGetLtoR (data->pattern, XmFONTLIST_DEFAULT_TAG, &pattern);
   XmStringGetLtoR (data->dir, XmFONTLIST_DEFAULT_TAG, &our_dir);
@@ -274,18 +274,18 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	   */
 #endif
 
-	  for (i=0; i<cdp->len; i++) 
+	  for (i = 0; i < cdp->len; i++) 
 	    {
-	      for (sp=save_dir, sn=cdp->files[i];((*sp)=(*sn)) != '\0';sp++,sn++);
+	      for (sp = save_dir, sn = cdp->files[i]; ((*sp) =(*sn)) != '\0'; sp++, sn++);
 	      /* save_dir is a pointer into fullpathname after the directory portion */
 	      names[i] = XmStringCreate(fullpathname, XmFONTLIST_DEFAULT_TAG);
 	    }
 	}
-      else names=NULL;
+      else names = NULL;
       if (cdp) XtVaSetValues(FSB_w, XmNfileListItems, names, XmNfileListItemCount, cdp->len, XmNlistUpdated, TRUE, NULL);
       if (names)
 	{
-	  for (i=0; i<cdp->len; i++) if (names[i]) XmStringFree(names[i]);
+	  for (i = 0; i < cdp->len; i++) if (names[i]) XmStringFree(names[i]);
 	  FREE(names);
 	}
     }
@@ -414,9 +414,9 @@ static int save_as_dialog_type = FILE_SAVE_AS;
 static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 { 
   snd_state *ss = (snd_state *)context;
-  char *str = NULL,*comment;
+  char *str = NULL, *comment;
   snd_info *sp;
-  int type,format,srate;
+  int type, format, srate;
   str = XmTextGetString(save_as_file_data->srate_text);
   srate = string2int(str);
   if (str) XtFree(str);
@@ -534,15 +534,15 @@ header.\n\
 
 file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *in_args, int in_n, int with_chan, int header_type, int data_format, int with_loc)
 {
-  Widget mainform,form,
-    sep1,hlab,hlist,dlab,dlist,
-    slab,stext,clab,ctext,sep2,sep3, 
-    comment_label,comment_text,sep4,
-    loclab,loctext;
+  Widget mainform, form,
+    sep1, hlab, hlist, dlab, dlist,
+    slab, stext, clab, ctext, sep2, sep3, 
+    comment_label, comment_text, sep4,
+    loclab, loctext;
   int hdrtyps;
   file_data *fdat;
   Arg args[32];
-  int i,n;
+  int i, n;
   XmString *strs;
   int dformats = 0;
   char **formats = NULL;
@@ -591,14 +591,14 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   /* what is selected depends on current type */
   hdrtyps = num_header_types();
   strs = (XmString *)CALLOC(hdrtyps, sizeof(XmString)); 
-  for (i=0; i<hdrtyps; i++) strs[i] = XmStringCreate(header_short_name(i), XmFONTLIST_DEFAULT_TAG);
+  for (i = 0; i < hdrtyps; i++) strs[i] = XmStringCreate(header_short_name(i), XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNitems, strs); n++;
   XtSetArg(args[n], XmNitemCount, num_header_types()); n++;
   XtSetArg(args[n], XmNvisibleItemCount, NUM_VISIBLE_HEADERS); n++;
   hlist = XmCreateScrolledList(form, "header type", args, n);
   XtAddCallback(hlist, XmNhelpCallback, file_header_help_callback, ss);
   XtManageChild(hlist);
-  for (i=0; i<hdrtyps; i++) XmStringFree(strs[i]);
+  for (i = 0; i < hdrtyps; i++) XmStringFree(strs[i]);
   FREE(strs);
   XmListSelectPos(hlist, fdat->header_pos+1, FALSE);
   fdat->header_list = hlist;
@@ -636,9 +636,9 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   /* what is displayed and selected depends on current type */
   XtAddCallback(dlist, XmNhelpCallback, file_data_help_callback, ss);
   strs = (XmString *)CALLOC(dformats, sizeof(XmString)); 
-  for (i=0; i<dformats; i++) strs[i] = XmStringCreate(formats[i], XmFONTLIST_DEFAULT_TAG);
+  for (i = 0; i < dformats; i++) strs[i] = XmStringCreate(formats[i], XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(dlist, XmNitems, strs, XmNitemCount, dformats, NULL);
-  for (i=0; i<dformats; i++) XmStringFree(strs[i]);
+  for (i = 0; i < dformats; i++) XmStringFree(strs[i]);
   FREE(strs);
   XmListSelectPos(dlist, fdat->format_pos+1, FALSE);
   XtManageChild(dlist);
@@ -774,7 +774,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
   /* save old as new, close old, open new */
   Arg args[32];
   int n;
-  XmString xmstr1,xmstr2,s1;
+  XmString xmstr1, xmstr2, s1;
   char *file_string;
   if (!save_as_dialog)
     {
@@ -782,7 +782,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       s1 = XmStringCreate(STR_save_as_p, XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
-      xmstr1=XmStringCreate(STR_Save, XmFONTLIST_DEFAULT_TAG);
+      xmstr1 = XmStringCreate(STR_Save, XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
       file_string = (char *)CALLOC(256, sizeof(char));
       sprintf(file_string, "saving %s", sound_name);
@@ -885,8 +885,8 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
 {
   int n;
   Arg args[32];
-  Widget plw,svw,rlw,sep1;
-  Widget smenu,sbar;
+  Widget plw, svw, rlw, sep1;
+  Widget smenu, sbar;
   ww_info *wwi;
 
   wwi = (ww_info *)CALLOC(1, sizeof(ww_info));
@@ -1093,7 +1093,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   Arg args[32];
   regrow *r;
   XmString s1;
-  XtCallbackList n1,n2,n3;
+  XtCallbackList n1, n2, n3;
 
   s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
   r = (regrow *)CALLOC(1, sizeof(regrow));
@@ -1162,7 +1162,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
 
 static Widget view_files_dialog = NULL;
 static int vf_selected_file = -1;
-static Widget vf_curww,vf_prevlst,vf_curlst,vf_prevww;
+static Widget vf_curww, vf_prevlst, vf_curlst, vf_prevww;
 
 static regrow **cur_name_row = NULL;
 static regrow **prev_name_row = NULL;
@@ -1175,7 +1175,7 @@ void make_cur_name_row(int old_size, int new_size)
   else 
     {
       cur_name_row = (regrow **)REALLOC(cur_name_row, new_size * sizeof(regrow *));
-      for (i=old_size; i<new_size; i++) cur_name_row[i] = NULL;
+      for (i = old_size; i < new_size; i++) cur_name_row[i] = NULL;
     }
 }
 
@@ -1187,7 +1187,7 @@ void make_prev_name_row(int old_size, int new_size)
   else 
     {
       prev_name_row = (regrow **)REALLOC(prev_name_row, new_size * sizeof(regrow *));
-      for (i=old_size; i<new_size; i++) prev_name_row[i] = NULL;
+      for (i = old_size; i < new_size; i++) prev_name_row[i] = NULL;
     }
 }
 
@@ -1233,16 +1233,16 @@ static void View_CurFiles_Save_Callback(Widget w, XtPointer context, XtPointer i
 
 void set_file_browser_play_button(char *name, int state)
 {
-  int i,list;
+  int i, list;
   regrow *r;
   list = 0;
   if (file_dialog_is_active())
     {
-      i=find_curfile_regrow(name); 
-      if (i != -1) list = 1; else i=find_prevfile_regrow(name);
+      i = find_curfile_regrow(name); 
+      if (i != -1) list = 1; else i = find_prevfile_regrow(name);
       if (i != -1)
 	{
-	  if (list) r=cur_name_row[i]; else r=prev_name_row[i];
+	  if (list) r = cur_name_row[i]; else r = prev_name_row[i];
 	  XmToggleButtonSetState(r->pl, state, FALSE);
 	}
     }
@@ -1334,7 +1334,7 @@ void make_curfiles_list (snd_state *ss)
   Widget last_row = NULL;
   char *str;
   regrow *r;
-  for (i=0; i<get_curfile_end(); i++)
+  for (i = 0; i < get_curfile_end(); i++)
     {
       r = cur_name_row[i];
       if (r == NULL)
@@ -1354,7 +1354,7 @@ void make_curfiles_list (snd_state *ss)
       XtManageChild(r->rw);
       last_row = r->rw;
     }
-  for (i=get_curfile_end(); i<get_max_curfile_end(); i++)
+  for (i = get_curfile_end(); i < get_max_curfile_end(); i++)
     {
       if ((r = cur_name_row[i]))
 	{
@@ -1402,7 +1402,7 @@ void make_prevfiles_list (snd_state *ss)
   if (get_prevfile_end() >= 0)
     {
       make_prevfiles_list_1(ss);
-      for (i=0; i<=get_prevfile_end(); i++)
+      for (i = 0; i <= get_prevfile_end(); i++)
 	{
 	  if (!((r = prev_name_row[i])))
 	    {
@@ -1420,7 +1420,7 @@ void make_prevfiles_list (snd_state *ss)
 	  last_row = r->rw;
 	}
     }
-  for (i=get_prevfile_end()+1; i<=get_max_prevfile_end(); i++)
+  for (i = get_prevfile_end()+1; i <= get_max_prevfile_end(); i++)
     {
       if ((r = prev_name_row[i]))
 	{
@@ -1450,8 +1450,8 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
   Arg args[20];
   ww_info *wwl;
   regrow *r;
-  XmString xdismiss,xhelp,xclear,titlestr;
-  Widget mainform,curform,prevform,updateB,sep;
+  XmString xdismiss, xhelp, xclear, titlestr;
+  Widget mainform, curform, prevform, updateB, sep;
   if (!view_files_dialog)
     {
       vf_selected_file = -1;
@@ -1545,7 +1545,7 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
       vf_curlst = wwl->list;
       if (!(ss->using_schemes)) map_over_children(vf_curlst, set_main_color_of_widget, (void *)context);
       FREE(wwl); 
-      wwl=NULL;
+      wwl = NULL;
       if (get_curfile_size() == 0) /* apparently we need at least one row to get Motif to allocate the outer widgets correctly */
 	{                    /* not curfile_end here since it is tracking currently active files before this dialog is created */
 	  init_curfiles(4);
@@ -1569,7 +1569,7 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
       vf_prevlst = wwl->list;
       if (!(ss->using_schemes)) map_over_children(vf_prevlst, set_main_color_of_widget, (void *)context);
       FREE(wwl); 
-      wwl=NULL;
+      wwl = NULL;
       if (get_prevfile_size() == 0)
 	{
 	  init_prevfiles(4);
@@ -1607,7 +1607,7 @@ int file_dialog_is_active(void)
 /* -------------------------------- Raw Data Dialog -------------------------------- */
 
 static Widget raw_data_dialog = NULL;
-static Widget raw_srate_text,raw_chans_text,raw_location_text;
+static Widget raw_srate_text, raw_chans_text, raw_location_text;
 static int raw_data_location = 0;
 static int raw_cancelled = 0;
 
@@ -1639,11 +1639,11 @@ static char dfc_str[4];
 static void make_raw_data_dialog(char *filename, snd_state *ss)
 {
   XmString *formats;
-  XmString xstr1,xstr2,xstr3,xstr4,titlestr;
-  int i,n;
+  XmString xstr1, xstr2, xstr3, xstr4, titlestr;
+  int i, n;
   char *str;
   Arg args[20];
-  Widget lst,defw,dls,dfs,dfc,rform,dlab,dloc,dloclab,chnlab;
+  Widget lst, defw, dls, dfs, dfc, rform, dlab, dloc, dloclab, chnlab;
   n = 0;
   xstr1 = XmStringCreate(STR_Cancel, XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
   xstr2 = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
@@ -1766,13 +1766,13 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNtopWidget, dlab); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   formats = (XmString *)CALLOC(num_data_formats(), sizeof(XmString));
-  for (i=1; i<num_data_formats(); i++) 
+  for (i = 1; i < num_data_formats(); i++) 
     formats[i-1] = XmStringCreate(data_format_name(i), XmFONTLIST_DEFAULT_TAG);
   lst = XmCreateScrolledList(rform, "raw-data-format-list", args, n);
   XtVaSetValues(lst, XmNitems, formats, XmNitemCount, num_data_formats()-1, XmNvisibleItemCount, 6, NULL);
   XtManageChild(lst); 
   XmListSelectPos(lst, raw_format(ss), FALSE);
-  for (i=1; i<num_data_formats(); i++) 
+  for (i = 1; i < num_data_formats(); i++) 
     XmStringFree(formats[i]);
   FREE(formats);
   XtAddCallback(lst, XmNbrowseSelectionCallback, raw_data_browse_Callback, ss);
@@ -1898,11 +1898,11 @@ static void new_file_help_callback(Widget w, XtPointer context, XtPointer info)
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment)
 {
   Arg args[20];
-  int n,loc;
-  XmString titlestr,xok,xcancel,xhelp;
-  char *tmpstr,*title,*newer_name = NULL;
+  int n, loc;
+  XmString titlestr, xok, xcancel, xhelp;
+  char *tmpstr, *title, *newer_name = NULL;
   snd_info *sp = NULL;
-  Widget name_label,form;
+  Widget name_label, form;
   new_file_cancelled = 0;
   title = (char *)CALLOC(snd_strlen(newname) + 32, sizeof(char));
   sprintf(title, "create new sound: %s", newname);
@@ -2029,7 +2029,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   XtUnmanageChild(w);
   mix_complete_file(any_selected_sound(ss), 
-		    str=XmTextGetString(file_mix_name), 
+		    str = XmTextGetString(file_mix_name), 
 		    "File: mix",
 		    with_mix_tags(ss));
   if (str) XtFree(str);
@@ -2110,7 +2110,7 @@ void edit_header(snd_info *sp)
    * if any are changed, need save button, cancel button, dismiss (leave unsaved but pending), reflect (change Snd display, not file)
    * this means the Snd-effective header is separate from the in-file header even across saves??
    */
-  XmString xstr1,xstr2,xstr3,xstr4,titlestr;
+  XmString xstr1, xstr2, xstr3, xstr4, titlestr;
   int n;
   Arg args[20];
   snd_state *ss;

@@ -4,24 +4,24 @@
 
 static GtkWidget *stats_window = NULL;
 
-static void stats_help(GtkWidget *w, gpointer clientData) 
+static void stats_help(GtkWidget *w, gpointer context) 
 {
-  stats_dialog_help((snd_state *)clientData);
+  stats_dialog_help((snd_state *)context);
 }
 
-static void stats_dismiss(GtkWidget *w, gpointer clientData)
+static void stats_dismiss(GtkWidget *w, gpointer context)
 {
-  set_show_usage_stats((snd_state *)clientData, FALSE);
+  set_show_usage_stats((snd_state *)context, FALSE);
 }
 
-static void stats_delete(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void stats_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  set_show_usage_stats((snd_state *)clientData, FALSE);
+  set_show_usage_stats((snd_state *)context, FALSE);
 }
 
-static void stats_update(GtkWidget *w, gpointer clientData) 
+static void stats_update(GtkWidget *w, gpointer context) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   update_all_usage_stats(ss);
   check_stats_window(ss, TRUE);
 }
@@ -41,7 +41,7 @@ void update_stats(snd_state *ss)
 void update_stats_display(snd_state *ss, int all)
 {
   /* dismiss update help -- update forces recalc of all stats */
-  GtkWidget *help_button,*dismiss_button,*update_button,*table,*hscrollbar,*vscrollbar;
+  GtkWidget *help_button, *dismiss_button, *update_button, *table, *hscrollbar, *vscrollbar;
   if (!stats_window)
     {
       stats_window = gtk_dialog_new();

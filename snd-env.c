@@ -37,7 +37,7 @@ env *copy_env(env *e)
       ne->pts = e->pts;
       ne->data_size = e->pts * 2;
       ne->data = (Float *)CALLOC(e->pts * 2, sizeof(Float));
-      for (i=0; i<e->pts * 2; i++) ne->data[i] = e->data[i];
+      for (i = 0; i < e->pts * 2; i++) ne->data[i] = e->data[i];
       ne->base = e->base;
       return(ne);
     }
@@ -46,7 +46,7 @@ env *copy_env(env *e)
 
 char *env_to_string(env *e)
 {
-  int i,j;
+  int i, j;
   char *expr_buf;
   char *news = NULL;
   if (e)
@@ -56,7 +56,7 @@ char *env_to_string(env *e)
       news[1] = '(';
       news[2] = '\0';
       expr_buf = (char *)CALLOC(128, sizeof(char));
-      for (i=0, j=0; i<e->pts; i++, j+=2)
+      for (i = 0, j = 0; i < e->pts; i++, j+=2)
 	{
 	  sprintf(expr_buf, "%.3f %.3f ", e->data[j], e->data[j+1]);
 	  strcat(news, expr_buf);
@@ -75,13 +75,13 @@ char *env_to_string(env *e)
 env *make_envelope(Float *env_buffer, int len)
 {
   env *e;
-  int i,flen;
+  int i, flen;
   if (len == 2) flen = 4; else flen = len;
   e = (env *)CALLOC(1, sizeof(env));
   e->data = (Float *)CALLOC(flen, sizeof(Float));
   e->data_size = flen;
   e->pts = flen / 2;
-  for (i=0; i<len; i++) e->data[i] = env_buffer[i];
+  for (i = 0; i < len; i++) e->data[i] = env_buffer[i];
   if ((flen == 4) && (len == 2))  /* fixup degenerate envelope */
     {
       e->data[2] = e->data[0] + 1.0; 
@@ -93,15 +93,15 @@ env *make_envelope(Float *env_buffer, int len)
 
 static Float *magify_env(env *e, int dur, Float scaler)
 { /* from magify-seg, mus.lisp, with less worry about special cases */
-  int i,j,curx;
-  Float x0,y0,x1,y1,xmag;
+  int i, j, curx;
+  Float x0, y0, x1, y1, xmag;
   Float *result;
   if (!e) return(NULL);
   x1 = e->data[0];
   xmag = (Float)dur / (Float)(e->data[e->pts * 2 - 2] - x1);
   y1 = e->data[1];
   result = (Float *)CALLOC(e->pts * 2, sizeof(Float));
-  for (j=0, i=2; i<e->pts * 2; i+=2, j+=2)
+  for (j = 0, i = 2; i < e->pts * 2; i+=2, j+=2)
     {
       x0 = x1;
       x1 = e->data[i];
@@ -119,8 +119,8 @@ static Float *magify_env(env *e, int dur, Float scaler)
 
 static Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base)
 {
-  Float min_y,max_y,val = 0.0,tmp = 0.0,b,b1;
-  int flat,len,i;
+  Float min_y, max_y, val = 0.0, tmp = 0.0, b, b1;
+  int flat, len, i;
   Float *result = NULL;
   if (!e) return(NULL);
   if ((base <= 0.0) || (base == 1.0)) return(NULL);
@@ -132,7 +132,7 @@ static Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base)
   result = (Float *)CALLOC(len, sizeof(Float));
   result[0] = e->data[0];
   result[1] = min_y;
-  for (i=2; i<len; i+=2)
+  for (i = 2; i < len; i+=2)
     {
       tmp = (*offset) + (*scaler) * e->data[i + 1];
       result[i] = e->data[i];
@@ -142,7 +142,7 @@ static Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base)
     }
   flat = (min_y == max_y);
   if (!flat) val = 1.0 / (max_y - min_y);
-  for (i=1; i<len; i+=2)
+  for (i = 1; i < len; i+=2)
     {
       if (flat) 
 	tmp = 1.0;
@@ -156,13 +156,13 @@ static Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base)
 
 static void add_point (env *e, int pos, Float x, Float y)
 {
-  int i,j;
+  int i, j;
   if (e->pts * 2 == e->data_size)
     {
       e->data_size += 16;
       e->data = (Float *)REALLOC(e->data, (e->data_size) * sizeof(Float));
     }
-  for (i=e->pts-1, j=(e->pts - 1) * 2; i>=pos; i--, j-=2)
+  for (i = e->pts-1, j=(e->pts - 1) * 2; i >= pos; i--, j-=2)
     {
       e->data[j + 2] = e->data[j];
       e->data[j + 3] = e->data[j + 1];
@@ -180,8 +180,8 @@ void move_point (env *e, int pos, Float x, Float y)
 
 void delete_point(env *e, int pos)
 {
-  int i,j;
-  for (i=pos, j=pos*2; i<e->pts-1; i++, j+=2)
+  int i, j;
+  for (i = pos, j = pos*2; i < e->pts-1; i++, j+=2)
     {
       e->data[j] = e->data[j + 2];
       e->data[j + 1] = e->data[j + 3];
@@ -192,7 +192,7 @@ void delete_point(env *e, int pos)
 static int place_point(int *cxs, int points, int x)
 {
   int i;
-  for (i=0; i<points; i++)
+  for (i = 0; i < points; i++)
     if (x < cxs[i]) 
       return(i - 1);
   return(points);
@@ -201,7 +201,7 @@ static int place_point(int *cxs, int points, int x)
 static int hit_point(snd_state *ss, int *cxs, int *cys, int points, int x, int y)
 {
   int i;
-  for (i=0; i<points; i++)
+  for (i = 0; i < points; i++)
     if (((x > (cxs[i] - ss->enved_point_size)) && 
 	 (x < (cxs[i] + ss->enved_point_size))) &&
 	((y > (cys[i] - ss->enved_point_size)) && 
@@ -334,10 +334,10 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
   axis_info *ap;
   spflt *spf;
   env *e;
-  int i,j,k;
-  Float ex0,ey0,ex1,ey1,val;
-  int ix0,ix1,iy0,iy1,size,lx0,lx1,ly0,ly1;
-  Float curx,xincr;
+  int i, j, k;
+  Float ex0, ey0, ex1, ey1, val;
+  int ix0, ix1, iy0, iy1, size, lx0, lx1, ly0, ly1;
+  Float curx, xincr;
   int dur;
   e = sp->filter_env;
   if (e == NULL) return;
@@ -347,7 +347,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
   ey0 = e->data[1];
   ex1 = e->data[(e->pts * 2) - 2];
   ey1 = ey0;
-  for (i=3; i<e->pts*2; i+=2)
+  for (i = 3; i < e->pts*2; i+=2)
     {
       val = e->data[i];
       if (ey0 > val) ey0 = val;
@@ -372,7 +372,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
   draw_arc(ax, ix1, iy1, size);
   if (sp->filter_dBing)
     {
-      for (j=1, i=2; i<e->pts*2; i+=2,j++)
+      for (j = 1, i = 2; i < e->pts*2; i+=2, j++)
 	{
 	  ix0 = ix1;
 	  iy0 = iy1;
@@ -394,7 +394,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
 	      curx = e->data[i - 2] + xincr;
 	      lx1 = ix0;
 	      ly1 = iy0;
-	      for (k=1; k<dur; k++, curx+=xincr)
+	      for (k = 1; k < dur; k++, curx+=xincr)
 		{
 		  lx0 = lx1;
 		  ly0 = ly1;
@@ -409,7 +409,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
     }
   else
     {
-      for (j=1, i=2; i<e->pts*2; i+=2,j++)
+      for (j = 1, i = 2; i < e->pts*2; i+=2, j++)
 	{
 	  ix0 = ix1;
 	  iy0 = iy1;
@@ -428,7 +428,7 @@ void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYP
 {
   spflt *spf;
   axis_info *ap;
-  Float x0,x1,x,y;
+  Float x0, x1, x, y;
   env *e;
   spf = (spflt *)((sp->sgx)->flt);
   e = sp->filter_env;
@@ -460,7 +460,7 @@ void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYP
 void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
 {
   int pos;
-  Float x,y;
+  Float x, y;
   spflt *spf;
   axis_info *ap;
   env *e;
@@ -503,7 +503,7 @@ void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
 void handle_filter_release(snd_info *sp)
 {
   env *e;
-  char *tmpstr=NULL;
+  char *tmpstr = NULL;
   spflt *spf;
   spf = (spflt *)((sp->sgx)->flt);
   e = sp->filter_env;
@@ -637,13 +637,13 @@ static double ungrf_y_dB(snd_state *ss, axis_info *ap, int y)
 void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_cp, 
 		       char *name, int x0, int y0, int width, int height, int dots)
 {
-  int i,j,k;
-  Float ex0,ey0,ex1,ey1,val,offset;
-  int ix0,ix1,iy0,iy1,size = 0,lx0,lx1,ly0,ly1;
-  Float *efm,*ef;
-  Float scl,env_val,env_power,env_incr,logbase,curx,xincr;
+  int i, j, k;
+  Float ex0, ey0, ex1, ey1, val, offset;
+  int ix0, ix1, iy0, iy1, size = 0, lx0, lx1, ly0, ly1;
+  Float *efm, *ef;
+  Float scl, env_val, env_power, env_incr, logbase, curx, xincr;
   env *newe;
-  int dur,env_ctr,pass;
+  int dur, env_ctr, pass;
 
   if (e)
     {
@@ -651,7 +651,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
       ey0 = e->data[1];
       ex1 = e->data[(e->pts * 2) - 2];
       ey1 = ey0;
-      for (i=3; i<e->pts*2; i+=2)
+      for (i = 3; i < e->pts*2; i+=2)
 	{
 	  val = e->data[i];
 	  if (ey0 > val) ey0 = val;
@@ -690,7 +690,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	{
 	  if (enved_dBing(ss))
 	    {
-	      for (j=1, i=2; i<e->pts*2; i+=2, j++)
+	      for (j = 1, i = 2; i < e->pts*2; i+=2, j++)
 		{
 		  ix0 = ix1;
 		  iy0 = iy1;
@@ -715,7 +715,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		      curx = e->data[i - 2] + xincr;
 		      lx1 = ix0;
 		      ly1 = iy0;
-		      for (k=1; k<dur; k++, curx+=xincr)
+		      for (k = 1; k < dur; k++, curx+=xincr)
 			{
 			  lx0 = lx1;
 			  ly0 = ly1;
@@ -730,7 +730,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	    }
 	  else
 	    {
-	      for (j=1, i=2; i<e->pts*2; i+=2, j++)
+	      for (j = 1, i = 2; i < e->pts*2; i+=2, j++)
 		{
 		  ix0 = ix1;
 		  iy0 = iy1;
@@ -750,7 +750,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	{
 	  if (e->base <= 0.0)
 	    {
-	      for (j=1, i=2; i<e->pts*2; i+=2, j++)
+	      for (j = 1, i = 2; i < e->pts*2; i+=2, j++)
 		{
 		  ix0 = ix1;
 		  iy0 = iy1;
@@ -796,8 +796,8 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	      ix1 = grf_x(0.0, axis_cp->axis);
 	      iy1 = grf_y_dB(ss, env_val, axis_cp->axis);
 	      xincr = (ex1 - ex0) / (Float)dur;
-	      j=1;
-	      for (i=1, curx=ex0; i<dur; i++, curx+=xincr)
+	      j = 1;
+	      for (i = 1, curx = ex0; i < dur; i++, curx+=xincr)
 		{
 		  iy0 = iy1;
 		  ix0 = ix1;
@@ -847,7 +847,7 @@ void view_envs(snd_state *ss, int env_window_width, int env_window_height)
 {
   /* divide space available into a grid (if needed) that shows all currently defined envelopes */
   /* I suppose if there were several hundred envelopes, we'd need a scrollable viewer... */
-  int cols,rows,i,j,width,height,x,y,k;
+  int cols, rows, i, j, width, height, x, y, k;
   if (all_envs_top > 1)
     {
       cols = round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
@@ -861,10 +861,10 @@ void view_envs(snd_state *ss, int env_window_width, int env_window_height)
     }
   width = (int)((Float)env_window_width / (Float)cols);
   height = (int)((Float)env_window_height / (Float)rows);
-  k=0;
-  for (i=0, x=0; i<cols; i++, x+=width)
+  k = 0;
+  for (i = 0, x = 0; i < cols; i++, x+=width)
     {
-      for (j=0, y=0; j<rows; j++, y+=height)
+      for (j = 0, y = 0; j < rows; j++, y+=height)
 	{
 	  display_enved_env_with_selection(ss, all_envs[k], all_names[k], x, y, width, height, 0);
 	  k++;
@@ -875,7 +875,7 @@ void view_envs(snd_state *ss, int env_window_width, int env_window_height)
 
 int hit_env(int xe, int ye, int env_window_width, int env_window_height)
 {
-  int cols,rows,i,j,width,height,x,y,k;
+  int cols, rows, i, j, width, height, x, y, k;
   if (all_envs_top == 0)
     return(-1);
   else
@@ -889,12 +889,12 @@ int hit_env(int xe, int ye, int env_window_width, int env_window_height)
 	  if ((rows * cols) < all_envs_top) rows++;
 	  width = (int)((Float)env_window_width / (Float)cols);
 	  height = (int)((Float)env_window_height / (Float)rows);
-	  k=0;
-	  for (i=0, x=width; i<cols; i++, x+=width)
+	  k = 0;
+	  for (i = 0, x = width; i < cols; i++, x+=width)
 	    {
 	      if (x > xe)
 		{
-		  for (j=0, y=height; j<rows; j++, y+=height)
+		  for (j = 0, y = height; j < rows; j++, y+=height)
 		    {
 		      if (y > ye) return(k);
 		      k++;
@@ -916,12 +916,12 @@ void do_enved_edit(env *new_env)
       if (env_list)
 	{
 	  env_list = (env **)REALLOC(env_list, env_list_size * sizeof(env *));
-	  for (i=env_list_top; i<env_list_size; i++) env_list[i] = NULL;
+	  for (i = env_list_top; i < env_list_size; i++) env_list[i] = NULL;
 	}
       else env_list = (env **)CALLOC(env_list_size, sizeof(env *));
     }
   /* clear out current edit list above this edit */
-  for (i=env_list_top; i<env_list_size; i++)
+  for (i = env_list_top; i < env_list_size; i++)
     if (env_list[i]) 
       env_list[i] = free_env(env_list[i]);
   env_list[env_list_top] = copy_env(new_env);
@@ -985,7 +985,7 @@ static int find_env(char *name)
 { /* -1 upon failure */
   int i;
   if ((all_envs) && (name))
-    for (i=0; i<all_envs_top; i++)
+    for (i = 0; i < all_envs_top; i++)
       if (strcmp(name, all_names[i]) == 0) 
 	return(i);
   return(-1);
@@ -1006,7 +1006,7 @@ static void add_envelope(snd_state *ss, char *name, env *val)
 	{
 	  all_envs = (env **)REALLOC(all_envs, all_envs_size * sizeof(env *));
 	  all_names = (char **)REALLOC(all_names, all_envs_size * sizeof(char *));
-	  for (i=all_envs_size-16; i<all_envs_size; i++) {all_names[i] = NULL; all_envs[i] = NULL;}
+	  for (i = all_envs_size-16; i < all_envs_size; i++) {all_names[i] = NULL; all_envs[i] = NULL;}
 	}
       else
 	{
@@ -1027,12 +1027,12 @@ static void add_envelope(snd_state *ss, char *name, env *val)
 
 void delete_envelope(snd_state *ss, char *name)
 {
-  int i,pos;
+  int i, pos;
   pos = find_env(name);
   if (pos != -1)
     {
       if (all_names[pos]) FREE(all_names[pos]);
-      for (i=pos; i<all_envs_size-1; i++)
+      for (i = pos; i < all_envs_size-1; i++)
 	{
 	  all_envs[i] = all_envs[i+1]; all_envs[i+1] = NULL;
 	  all_names[i] = all_names[i+1]; all_names[i+1] = NULL;
@@ -1063,9 +1063,9 @@ void alert_envelope_editor(snd_state *ss, char *name, env *val)
 
 void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection)
 {
-  int samps,srate,pts = 0,id = INVALID_MIX_ID,old_wavo = 0,mixing = 0;
-  axis_info *ap,*active_ap = NULL;
-  chan_info *active_channel = NULL,*ncp;
+  int samps, srate, pts = 0, id = INVALID_MIX_ID, old_wavo = 0, mixing = 0;
+  axis_info *ap, *active_ap = NULL;
+  chan_info *active_channel = NULL, *ncp;
 
   if (!(any_selected_sound(ss))) return;
   set_grf_points(-1, 0, 0, 0); /* this is a kludge to handle one-sided graphs (snd-xchn.c) */
@@ -1159,8 +1159,8 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
 
 int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, int evx, int evy)
 {
-  int pos,env_pos;
-  Float x,y;
+  int pos, env_pos;
+  Float x, y;
   pos = hit_point(ss, current_xs, current_ys, active_env->pts, evx, evy);
   x = ungrf_x(ap, evx);
   y = ungrf_y_dB(ss, ap, evy);
@@ -1209,12 +1209,12 @@ env *enved_next_env(void)
 
 char *env_name_completer(char *text)
 {
-  int i,j,len,curlen,matches = 0;
+  int i, j, len, curlen, matches = 0;
   char *current_match = NULL;
   if ((all_envs) && (text) && (*text))
     {
       len = strlen(text);
-      for (i=0; i<all_envs_top; i++)
+      for (i = 0; i < all_envs_top; i++)
 	{
 	  if (strncmp(text, all_names[i], len) == 0)
 	    {
@@ -1225,7 +1225,7 @@ char *env_name_completer(char *text)
 	      else 
 		{
 		  curlen = strlen(current_match);
-		  for (j=0; j<curlen; j++)
+		  for (j = 0; j < curlen; j++)
 		    if (current_match[j] != all_names[i][j])
 		      {
 			current_match[j] = '\0';
@@ -1245,7 +1245,7 @@ void save_envelope_editor_state(FILE *fd)
 {
   char *estr;
   int i;
-  for (i=0; i<all_envs_top; i++)
+  for (i = 0; i < all_envs_top; i++)
     {
       estr = env_to_string(all_envs[i]);
       if (estr)
@@ -1267,8 +1267,8 @@ void save_envelope_editor_state(FILE *fd)
 
 env *scm2env(SCM res)
 {
-  SCM el,lst;
-  int i,len;
+  SCM el, lst;
+  int i, len;
   Float *data;
   env *rtn = NULL;
   if (gh_list_p(res))
@@ -1277,7 +1277,7 @@ env *scm2env(SCM res)
       if (len > 0)
 	{
 	  data = (Float *)CALLOC(len, sizeof(Float));
-	  for (i=0, lst=res; i<len; i++, lst=SCM_CDR(lst))
+	  for (i = 0, lst = res; i < len; i++, lst = SCM_CDR(lst))
 	    {
 	      el = SCM_CAR(lst);
 	      if (gh_number_p(el))
@@ -1294,12 +1294,12 @@ env *scm2env(SCM res)
 
 static int x_increases(SCM res)
 {
-  int i,len;
+  int i, len;
   SCM lst;
-  Float x,nx;
+  Float x, nx;
   len = gh_length(res);
   x = TO_C_DOUBLE(SCM_CAR(res));
-  for (i=2, lst=SCM_CDDR(res); i<len; i+=2, lst=SCM_CDDR(lst))
+  for (i = 2, lst = SCM_CDDR(res); i < len; i+=2, lst = SCM_CDDR(lst))
     {
       nx = TO_C_DOUBLE(SCM_CAR(lst));
       if (x >= nx) return(0);
@@ -1392,7 +1392,7 @@ void add_or_edit_symbol(char *name, env *val)
 {
   /* called from envelope editor -- pass new definition into scheme */
   SCM e;
-  char *buf,*tmpstr=NULL;
+  char *buf, *tmpstr = NULL;
   buf = (char *)CALLOC(256, sizeof(char));
   e = SND_LOOKUP(name);
   if ((e) && (gh_list_p(e)))
@@ -1406,8 +1406,8 @@ void add_or_edit_symbol(char *name, env *val)
 env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
 {
   Float *buf = NULL;
-  int i,len;
-  env *newenv=NULL;
+  int i, len;
+  env *newenv = NULL;
   SCM *vdata;
   SCM lst;
   SCM_ASSERT(((gh_vector_p(e)) || (gh_list_p(e))), e, SCM_ARG1, origin);
@@ -1416,7 +1416,7 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
       len = gh_vector_length(e);
       buf = (Float *)CALLOC(len, sizeof(Float));
       vdata = SCM_VELTS(e);
-      for (i=0; i<len; i++) 
+      for (i = 0; i < len; i++) 
 	buf[i] = TO_C_DOUBLE(vdata[i]);
     }
   else
@@ -1424,7 +1424,7 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
       {
 	len = gh_length(e);
 	buf = (Float *)CALLOC(len, sizeof(Float));
-        for (i=0, lst=e; i<len; i++, lst=SCM_CDR(lst)) 
+        for (i = 0, lst = e; i < len; i++, lst = SCM_CDR(lst)) 
 	  buf[i] = TO_C_DOUBLE(SCM_CAR(lst));
       }
     else return(NULL);

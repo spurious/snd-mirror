@@ -31,8 +31,8 @@ static GLXContext glx_context;
 
 static void read_file(Widget mesa)
 {
-  int fd,bins,slices,srate,i,j;
-  float cutoff,scaler,x,y,z;
+  int fd, bins, slices, srate, i, j;
+  float cutoff, scaler, x, y, z;
   if (file_probe("glfft.lock"))
     {
       fd = open("glfft.data", O_RDONLY, 0);
@@ -44,7 +44,7 @@ static void read_file(Widget mesa)
       bins = (int)desc[4];
       fprintf(stderr, "srate: %d, scaler: %f, cutoff: %f, slices: %d, bins: %d\n", srate, scaler, cutoff, slices, bins);
       data = (float **)malloc(slices * sizeof(float *));
-      for (i=0;i<slices;i++) 
+      for (i = 0; i < slices; i++) 
 	{
 	  data[i] = (float *)malloc(bins * sizeof(float));
 	  read(fd, (char *)(data[i]), bins*sizeof(float));
@@ -59,11 +59,11 @@ static void read_file(Widget mesa)
       glColor3f(1.0, 0.0, 0.0);
 
       y = -1.0;
-      for (i=0;i<slices;i++)
+      for (i = 0; i < slices; i++)
 	{
 	  glBegin(GL_LINE_STRIP);
 	  x = -1.0;
-	  for (j=0;j<bins;j++)
+	  for (j = 0; j < bins; j++)
 	    {
 	      glVertex3f(x, y + data[i][j], 0.0);
 	      x += (2.0/bins);
@@ -74,7 +74,7 @@ static void read_file(Widget mesa)
       glFlush();
       glXSwapBuffers(XtDisplay (mesa), XtWindow (mesa));
 
-      for (i=0;i<slices;i++) free(data[i]);
+      for (i = 0; i < slices; i++) free(data[i]);
       free(data);
     }
 }

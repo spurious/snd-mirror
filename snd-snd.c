@@ -44,8 +44,8 @@ void free_env_state(chan_info *cp)
 
 env_state *make_env_state(chan_info *cp, int samples)
 {
-  int val,pos,i,j,start,start_bin,end,end_bin,old_end_bin,old_samples,happy=0;
-  env_info *ep,*old_ep;
+  int val, pos, i, j, start, start_bin, end, end_bin, old_end_bin, old_samples, happy = 0;
+  env_info *ep, *old_ep;
   env_state *es;
   stop_amp_env(cp);
   pos = cp->edit_ctr;
@@ -90,7 +90,7 @@ env_state *make_env_state(chan_info *cp, int samples)
 		  start_bin = (int)(start / ep->samps_per_bin);
 		  ep->fmin = MUS_SAMPLE_0;
 		  ep->fmax = MUS_SAMPLE_0;
-		  for (i=0; i<start_bin; i++) 
+		  for (i = 0; i < start_bin; i++) 
 		    {
 		      ep->data_min[i] = old_ep->data_min[i];
 		      ep->data_max[i] = old_ep->data_max[i];
@@ -103,7 +103,7 @@ env_state *make_env_state(chan_info *cp, int samples)
 		      old_end_bin = (int)(end / old_ep->samps_per_bin);
 		      end += (samples - old_samples);
 		      end_bin = (int)(end / ep->samps_per_bin);
-		      for (i=end_bin, j=old_end_bin; (i < ep->amp_env_size) && (j < old_ep->amp_env_size); i++, j++)
+		      for (i = end_bin, j = old_end_bin; (i < ep->amp_env_size) && (j < old_ep->amp_env_size); i++, j++)
 			{
 			  ep->data_min[i] = old_ep->data_min[j];
 			  ep->data_max[i] = old_ep->data_max[j];
@@ -149,8 +149,8 @@ env_state *make_env_state(chan_info *cp, int samples)
 int tick_amp_env(chan_info *cp, env_state *es)
 {
   env_info *ep;
-  int i,n,sb,lm;
-  MUS_SAMPLE_TYPE ymin,ymax,val;
+  int i, n, sb, lm;
+  MUS_SAMPLE_TYPE ymin, ymax, val;
   snd_fd *sfd;
   ep = es->ep;
   if (es->slice == 0)
@@ -170,12 +170,12 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	  if (es->sf == NULL) 
 	    es->sf = init_sample_read(ep->bin * ep->samps_per_bin, cp, READ_FORWARD);
 	  sfd = es->sf;
-	  for (n=0;n<lm;n++,sb++)
+	  for (n = 0; n < lm; n++, sb++)
 	    {
 	      val = next_sample(sfd);
 	      ymin = val;
 	      ymax = val;
-	      for (i=1; i<ep->samps_per_bin; i++)
+	      for (i = 1; i < ep->samps_per_bin; i++)
 		{
 		  val = next_sample(sfd);
 		  if (ymin > val) 
@@ -196,7 +196,7 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	  /* sub sample reads even at the lowest level (io.c -- using dummy chans to subsample) */
 	  /* this actually only helps after the initial read -- the first pass has to read the file into the RAM cache */
 
-	  int fd,subsamp,bin_size,nc,m;
+	  int fd, subsamp, bin_size, nc, m;
 	  snd_info *sp;
 	  MUS_SAMPLE_TYPE **bufs;
 	  sp = cp->sound;
@@ -226,12 +226,12 @@ int tick_amp_env(chan_info *cp, env_state *es)
 			    bufs,
 			    (MUS_SAMPLE_TYPE *)bufs);
 
-	  for (m=0, n=0; n<lm; n++, sb++)
+	  for (m = 0, n = 0; n < lm; n++, sb++)
 	    {
 	      val = bufs[nc][m++];
 	      ymin = val;
 	      ymax = val;
-	      for (i=1; i<ep->samps_per_bin; i+=subsamp,m++)
+	      for (i = 1; i < ep->samps_per_bin; i+=subsamp, m++)
 		{
 		  val = bufs[nc][m];
 		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
@@ -353,9 +353,9 @@ static inline short local_grf_y(Float val, axis_info *ap)
 
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate) 
 {
-  Float step,x,xf,xk,pinc = 0.0;
-  MUS_SAMPLE_TYPE ymin,ymax;
-  int i,j,xi,k,kk;
+  Float step, x, xf, xk, pinc = 0.0;
+  MUS_SAMPLE_TYPE ymin, ymax;
+  int i, j, xi, k, kk;
   env_info *ep;
   ep = cp->amp_envs[cp->edit_ctr];
   step = samples_per_pixel / (Float)(ep->samps_per_bin);
@@ -375,10 +375,10 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
       kk = (int)xf;
       if (kk >= ep->amp_env_size) 
 	kk = ep->amp_env_size - 1;
-      for (;k<=kk;k++)
+      for (; k <= kk; k++)
 	{
-	  if (ep->data_min[k] < ymin) ymin=ep->data_min[k];
-	  if (ep->data_max[k] > ymax) ymax=ep->data_max[k];
+	  if (ep->data_min[k] < ymin) ymin = ep->data_min[k];
+	  if (ep->data_max[k] > ymax) ymax = ep->data_max[k];
 	}
       xk += samples_per_pixel;
       i = (int)xk;
@@ -402,7 +402,7 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
 
 void amp_env_scale_by(chan_info *cp, Float scl)
 {
-  env_info *old_ep,*new_ep;
+  env_info *old_ep, *new_ep;
   int i;
   old_ep = cp->amp_envs[cp->edit_ctr - 1];
   if ((old_ep) && (old_ep->completed))
@@ -423,7 +423,7 @@ void amp_env_scale_by(chan_info *cp, Float scl)
 	{
 	  new_ep->fmin = (MUS_SAMPLE_TYPE)(old_ep->fmin * scl);
 	  new_ep->fmax = (MUS_SAMPLE_TYPE)(old_ep->fmax * scl);
-	  for (i=0; i<new_ep->amp_env_size; i++) 
+	  for (i = 0; i < new_ep->amp_env_size; i++) 
 	    {
 	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
 	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
@@ -433,7 +433,7 @@ void amp_env_scale_by(chan_info *cp, Float scl)
 	{
 	  new_ep->fmax = (MUS_SAMPLE_TYPE)(old_ep->fmin * scl);
 	  new_ep->fmin = (MUS_SAMPLE_TYPE)(old_ep->fmax * scl);
-	  for (i=0; i<new_ep->amp_env_size; i++) 
+	  for (i = 0; i < new_ep->amp_env_size; i++) 
 	    {
 	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
 	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
@@ -448,9 +448,9 @@ void amp_env_scale_by(chan_info *cp, Float scl)
 
 void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
 {
-  env_info *old_ep,*new_ep;
-  MUS_SAMPLE_TYPE fmax = MUS_SAMPLE_0,fmin = MUS_SAMPLE_0;
-  int i,cursamp,start,end;
+  env_info *old_ep, *new_ep;
+  MUS_SAMPLE_TYPE fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
+  int i, cursamp, start, end;
   old_ep = cp->amp_envs[cp->edit_ctr - 1];
   if ((old_ep) && (old_ep->completed))
     {
@@ -468,7 +468,7 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       end = beg+num-1;
       start = beg - new_ep->samps_per_bin;
-      for (i=0, cursamp=0; i<new_ep->amp_env_size; i++,cursamp+=new_ep->samps_per_bin) 
+      for (i = 0, cursamp = 0; i < new_ep->amp_env_size; i++, cursamp+=new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
 	    {
@@ -494,8 +494,8 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
 	      else
 		{
 		  snd_fd *sf;
-		  int n,segstart,segend;
-		  MUS_SAMPLE_TYPE val,ymin,ymax;
+		  int n, segstart, segend;
+		  MUS_SAMPLE_TYPE val, ymin, ymax;
 		  /* here we have to read the current bin using the current fragments */
 		  segstart = beg - cursamp;
 		  if (segstart < 0) segstart = 0;
@@ -504,7 +504,7 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
 		  sf = init_sample_read(cursamp, cp, READ_FORWARD);
 		  ymin = MUS_SAMPLE_0;
 		  ymax = MUS_SAMPLE_0;
-		  for (n=0;n<new_ep->samps_per_bin;n++)
+		  for (n = 0; n < new_ep->samps_per_bin; n++)
 		    {
 		      val = next_sample(sf);
 		      if ((n >= segstart) && 
@@ -537,8 +537,8 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
 
 env_info *amp_env_copy(chan_info *cp, int reversed)
 {
-  env_info *old_ep,*new_ep = NULL;
-  int i,j;
+  env_info *old_ep, *new_ep = NULL;
+  int i, j;
   old_ep = cp->amp_envs[cp->edit_ctr];
   if ((old_ep) && (old_ep->completed))
     {
@@ -551,7 +551,7 @@ env_info *amp_env_copy(chan_info *cp, int reversed)
       new_ep->fmax = old_ep->fmax;
       if (reversed)
 	{
-	  for (i=0, j=new_ep->amp_env_size-1; i<new_ep->amp_env_size; i++, j--) 
+	  for (i = 0, j = new_ep->amp_env_size-1; i < new_ep->amp_env_size; i++, j--) 
 	    {
 	      new_ep->data_min[j] = old_ep->data_min[i];
 	      new_ep->data_max[j] = old_ep->data_max[i];
@@ -559,7 +559,7 @@ env_info *amp_env_copy(chan_info *cp, int reversed)
 	}
       else
 	{
-	  for (i=0; i<new_ep->amp_env_size; i++) 
+	  for (i = 0; i < new_ep->amp_env_size; i++) 
 	    {
 	      new_ep->data_min[i] = old_ep->data_min[i];
 	      new_ep->data_max[i] = old_ep->data_max[i];
@@ -599,11 +599,11 @@ static Float rat_values[] = {
 Float srate_changed(Float val, char *srcbuf, int style, int tones)
 {
   char *sfs;
-  int semi,i,j;
+  int semi, i, j;
   switch (style)
     {
     case SPEED_AS_RATIO: 
-      for (i=1; i<TOTAL_RATS; i++)
+      for (i = 1; i < TOTAL_RATS; i++)
 	if (rat_values[i] > val) 
 	  break;
       sprintf(srcbuf, "%s", rat_names[i-1]);
@@ -613,10 +613,10 @@ Float srate_changed(Float val, char *srcbuf, int style, int tones)
       /* find closest semitone to val */
       semi = round(log(val) * ((Float)tones / log(2.0)));
       /* space until (-) num (-52 to 52 is its range if 12-tone) */
-      for (i=0; i<3; i++) srcbuf[i] = ' '; 
+      for (i = 0; i < 3; i++) srcbuf[i] = ' '; 
       sprintf(src_txt_buf, "%d", semi);
       j = strlen(src_txt_buf) - 1;
-      for (i=3; (i>=0) && (j>=0); i--, j--) 
+      for (i = 3; (i >= 0) && (j >= 0); i--, j--) 
 	srcbuf[i] = src_txt_buf[j];
       return(pow(2.0, ((Float)semi / (Float)tones)));
       break;
@@ -656,7 +656,7 @@ char *shortname_indexed(snd_info *sp)
 void add_sound_data(char *filename, snd_info *sp, snd_state *ss)
 {
   int i;
-  for (i=0; i<sp->nchans; i++) 
+  for (i = 0; i < sp->nchans; i++) 
     add_channel_data(filename, sp->chans[i], sp->hdr, ss);
 }
 
@@ -755,9 +755,9 @@ void sp_name_click(snd_info *sp)
 /* ---------------- save and restore control panel buttons ----------------*/
 
 typedef struct {
-  Float amp,srate,contrast,expand,revscl,revlen;
+  Float amp, srate, contrast, expand, revscl, revlen;
   env *filter_env;
-  int expand_on,contrast_on,reverb_on,filter_on,direction,filter_order;
+  int expand_on, contrast_on, reverb_on, filter_on, direction, filter_order;
 } ctrl_state;
 
 void free_controls(snd_info *sp)
@@ -865,15 +865,15 @@ void reset_control_panel(snd_info *sp)
 
 typedef struct {
   char **strings;
-  int strings_size,strings_pos,first_time;
+  int strings_size, strings_pos, first_time;
 } mini_history;
   
-enum {MINIBUFFER,FILTER_TEXT};
+enum {MINIBUFFER, FILTER_TEXT};
 
 static void remember_string(snd_info *sp, char *str, int which)
 {
   mini_history *mh = NULL;
-  int i,top;
+  int i, top;
   switch (which)
     {
     case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
@@ -893,7 +893,7 @@ static void remember_string(snd_info *sp, char *str, int which)
     }
   top = mh->strings_size - 1;
   if (mh->strings[top]) FREE(mh->strings[top]);
-  for (i=top; i>0; i--) mh->strings[i] = mh->strings[i-1];
+  for (i = top; i > 0; i--) mh->strings[i] = mh->strings[i-1];
   mh->strings[0] = copy_string(str);
   mh->strings_pos = 0;
   mh->first_time = 1;
@@ -953,7 +953,7 @@ static void clear_strings(snd_info *sp, int which)
 	case MINIBUFFER: sp->minibuffer_history = NULL; break;
 	case FILTER_TEXT: sp->filter_history = NULL; break;
 	}
-      for (i=0; i<mh->strings_size; i++) 
+      for (i = 0; i < mh->strings_size; i++) 
 	if (mh->strings[i])
 	  FREE(mh->strings[i]);
       FREE(mh->strings);
@@ -1004,7 +1004,7 @@ static int max_sync(snd_info *sp, void *val)
   return(0);
 }
 
-static int apply_dur,apply_tick = 0, apply_reporting = 0, orig_dur;
+static int apply_dur, apply_tick = 0, apply_reporting = 0, orig_dur;
 
 BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 {
@@ -1014,8 +1014,8 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   snd_info *sp;
   chan_info *cp;
   sync_info *si;
-  Float ratio,mult_dur;
-  int i,len,over_selection,curchan=0,added_dur = 0,old_sync;
+  Float ratio, mult_dur;
+  int i, len, over_selection, curchan = 0, added_dur = 0, old_sync;
   int maxsync[1];
   Float scaler[1];
   if (ptr == NULL) return(BACKGROUND_QUIT);
@@ -1131,7 +1131,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		case APPLY_TO_SOUND:
 		  if (sp->nchans > 1) 
 		    remember_temp(ap->ofile, sp->nchans);
-		  for (i=0; i<sp->nchans; i++)
+		  for (i = 0; i < sp->nchans; i++)
 		    file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
 					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 					  LOCK_MIXES, "Apply");
@@ -1147,7 +1147,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		  si = selection_sync();
 		  if (apply_dur == selection_len())
 		    {
-		      for (i=0; i<si->chans; i++)
+		      for (i = 0; i < si->chans; i++)
 			{
 			  file_change_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], i,
 					      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
@@ -1159,7 +1159,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		    {
 		      int ok;
 		      ok = delete_selection(S_src_selection, DONT_UPDATE_DISPLAY);
-		      for (i=0; i<si->chans; i++)
+		      for (i = 0; i < si->chans; i++)
 			{
 			  file_insert_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], 0, DELETE_ME, "Apply to selection");
 			  reactivate_selection(si->cps[i], si->begs[i], si->begs[i] + apply_dur);
@@ -1176,7 +1176,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      if ((sp->expanding) || 
 		  (sp->play_direction != 1) || (sp->srate != 1.0))
 		{
-		  for (i=0; i<sp->nchans; i++)
+		  for (i = 0; i < sp->nchans; i++)
 		    {
 		      cp = sp->chans[i];
 		      if (cp->marks)
@@ -1203,7 +1203,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      report_in_minibuffer(sp, "apply flushed!");
 	    }
 	  free(ap->ofile);                                              /* safe only if tempnam, not tmpnam used */
-	  ap->ofile=NULL;
+	  ap->ofile = NULL;
 	  if (ap->hdr) ap->hdr = free_file_info(ap->hdr);
 	  free_controls(sp);
 	  break;
@@ -1245,7 +1245,7 @@ static void set_reverb_decay(snd_state *ss, Float val)
   int i;
   snd_info *sp;
   in_set_reverb_decay(ss, val);
-  for (i=0; i<ss->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse))
@@ -1343,10 +1343,10 @@ static SCM g_bomb(SCM snd, SCM on)
   return(on);
 }
 
-enum {SP_SYNC,SP_UNITE,SP_READ_ONLY,SP_NCHANS,SP_CONTRASTING,SP_EXPANDING,SP_REVERBING,SP_FILTERING,SP_FILTER_ORDER,
-      SP_SRATE,SP_DATA_FORMAT,SP_DATA_LOCATION,SP_HEADER_TYPE,SP_CONTROL_PANEL_SAVE,SP_CONTROL_PANEL_RESTORE,SP_SELECTED_CHANNEL,
-      SP_COMMENT,SP_FILE_NAME,SP_SHORT_FILE_NAME,SP_CLOSE,SP_UPDATE,SP_SAVE,SP_CURSOR_FOLLOWS_PLAY,SP_SHOW_CONTROLS,
-      SP_FILTER_DBING,SP_SPEED_TONES,SP_SPEED_STYLE,SP_CONTROL_PANEL_RESET
+enum {SP_SYNC, SP_UNITE, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
+      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_CONTROL_PANEL_SAVE, SP_CONTROL_PANEL_RESTORE, SP_SELECTED_CHANNEL,
+      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_SAVE, SP_CURSOR_FOLLOWS_PLAY, SP_SHOW_CONTROLS,
+      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_CONTROL_PANEL_RESET
 };
 
 static SCM sp_iread(SCM snd_n, int fld, char *caller)
@@ -1359,7 +1359,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0; i<ss->max_sounds; i++)
+      for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -1416,11 +1416,11 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
   snd_info *sp;
   snd_state *ss;
   char *com;
-  int ival=0,i;
+  int ival = 0, i;
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0; i<ss->max_sounds; i++)
+      for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -1802,7 +1802,7 @@ static SCM g_revert_sound(SCM index)
     return(scm_throw(NO_SUCH_SOUND,
 		     SCM_LIST2(TO_SCM_STRING(S_revert_sound),
 			       index)));
-  for (i=0; i<sp->nchans; i++) 
+  for (i = 0; i < sp->nchans; i++) 
     {
       revert_edits(sp->chans[i], NULL); 
       update_graph(sp->chans[i], NULL);
@@ -1846,17 +1846,17 @@ static SCM g_open_raw_sound(SCM filename, SCM chans, SCM srate, SCM format)
   char *fname = NULL;
   snd_state *ss;
   snd_info *sp;
-  int os,oc,ofr,ou,ofit;
+  int os, oc, ofr, ou, ofit;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_open_raw_sound);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(srate)), srate, SCM_ARG2, S_open_raw_sound);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG3, S_open_raw_sound);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(format)), format, SCM_ARG4, S_open_raw_sound);
   ss = get_global_state();
-  ou=use_raw_defaults(ss);
-  os=raw_srate(ss);
-  oc=raw_chans(ss);
-  ofr=raw_format(ss);
-  ofit=fit_data_on_open(ss);
+  ou = use_raw_defaults(ss);
+  os = raw_srate(ss);
+  oc = raw_chans(ss);
+  ofr = raw_format(ss);
+  ofit = fit_data_on_open(ss);
   set_raw_srate(ss, TO_C_INT_OR_ELSE(srate, 0));
   set_raw_chans(ss, TO_C_INT_OR_ELSE(chans, 0));
   set_raw_format(ss, TO_C_INT_OR_ELSE(format, 0));
@@ -1922,7 +1922,7 @@ static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM sra
 
   snd_info *sp;
   file_info *hdr;
-  int ht,df,sr,chan;
+  int ht, df, sr, chan;
   char *fname = NULL;
   SCM_ASSERT(gh_string_p(newfile), newfile, SCM_ARG1, S_save_sound_as);
   sp = get_sp(index);
@@ -1965,9 +1965,9 @@ static SCM g_new_sound(SCM name, SCM type, SCM format, SCM srate, SCM chans, SCM
    with the indicated attributes; if any are omitted, the corresponding default-output variable is used"
 
   snd_info *sp; 
-  int ht,df,sr,ch;
+  int ht, df, sr, ch;
   snd_state *ss;
-  char *str = NULL,*com = NULL;
+  char *str = NULL, *com = NULL;
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_new_sound);
   ss = get_global_state();
   str = full_filename(name);
@@ -2115,8 +2115,8 @@ static SCM g_set_show_controls(SCM on, SCM snd_n)
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_show_controls_reversed, g_set_show_controls)
 
-enum {SP_AMP,SP_CONTRAST,SP_CONTRAST_AMP,SP_EXPAND,SP_EXPAND_LENGTH,SP_EXPAND_RAMP,SP_EXPAND_HOP,
-      SP_SPEED,SP_REVERB_LENGTH,SP_REVERB_FEEDBACK,SP_REVERB_SCALE,SP_REVERB_LOW_PASS,
+enum {SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
+      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
       SP_REVERB_DECAY
 };
 
@@ -2129,7 +2129,7 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0; i<ss->max_sounds; i++)
+      for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -2165,12 +2165,12 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
 {
   snd_info *sp;
   Float fval;
-  int direction,i;
+  int direction, i;
   snd_state *ss;
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0; i<ss->max_sounds; i++)
+      for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -2522,7 +2522,7 @@ static int dont_babble_info(snd_info *sp)
 {
   /* call name-click-hook (if any) return #t = don't print info in minibuffer */
 #if HAVE_HOOKS
-  SCM res = SCM_BOOL_F,ind;
+  SCM res = SCM_BOOL_F, ind;
   ind = TO_SMALL_SCM_INT(sp->index);
   if (HOOKED(name_click_hook))
     res = g_c_run_or_hook(name_click_hook, SCM_LIST1(ind));

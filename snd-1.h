@@ -2,10 +2,10 @@
 #define SND_1_H_LOADED
 
 typedef struct {
-  int samps_per_bin,amp_env_size;
-  MUS_SAMPLE_TYPE fmax,fmin;
-  MUS_SAMPLE_TYPE *data_max,*data_min;
-  int completed,bin,top_bin;
+  int samps_per_bin, amp_env_size;
+  MUS_SAMPLE_TYPE fmax, fmin;
+  MUS_SAMPLE_TYPE *data_max, *data_min;
+  int completed, bin, top_bin;
 } env_info;
 
 typedef struct {
@@ -39,7 +39,7 @@ typedef struct {
 typedef struct {
   int size;
   int *fragments;
-  int beg,len;
+  int beg, len;
   char *origin;
   int sfnum;
   int selection_beg, selection_end;    /* added 11-Sep-00: selection needs to follow edit list */
@@ -61,7 +61,7 @@ typedef struct snd_fd {
   MUS_SAMPLE_TYPE *view_buffered_data;
   snd_data **sounds;
   snd_data *current_sound;
-  int beg,end,initial_samp;
+  int beg, end, initial_samp;
   int direction;
   struct chan__info *cp;
   struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
@@ -71,28 +71,28 @@ typedef struct snd_fd {
 typedef struct {Float freq; Float amp;} fft_peak;
 
 typedef struct {
-  Float y0,y1;                         /* scroller-dependent axis bounds */
-  double x0,x1;
-  Float xmin,xmax,ymin,ymax;           /* data-dependent absolute limits */
-  Float y_scale,y_base;
-  double x_scale,x_base;
+  Float y0, y1;                         /* scroller-dependent axis bounds */
+  double x0, x1;
+  Float xmin, xmax, ymin, ymax;           /* data-dependent absolute limits */
+  Float y_scale, y_base;
+  double x_scale, x_base;
   char *xlabel;
-  int x_label_x,x_label_y;
-  int y_axis_x0,x_axis_x0,
-      y_axis_y0,x_axis_y0,
+  int x_label_x, x_label_y;
+  int y_axis_x0, x_axis_x0,
+      y_axis_y0, x_axis_y0,
       x_axis_x1,
       y_axis_y1;
   int graph_active;
-  int losamp,hisamp;                   /* displayed x-axis bounds in terms of sound sample numbers */
+  int losamp, hisamp;                   /* displayed x-axis bounds in terms of sound sample numbers */
   int graph_x0;                        /* x axis offset relative to window (for double graphs) */
-  void *x_ticks,*y_ticks;              /* actual type is tick_descriptor local to snd-axis.c */
+  void *x_ticks, *y_ticks;              /* actual type is tick_descriptor local to snd-axis.c */
   axis_context *ax;
-  int width,height;
+  int width, height;
   struct snd__state *ss;               /* back pointers for debugging and whatnot */
   struct chan__info *cp;
-  Float sy,zy;                         /* as set by user, 0.0 - 1.0 */
-  double sx,zx;
-  int y_offset,window_width;
+  Float sy, zy;                         /* as set by user, 0.0 - 1.0 */
+  double sx, zx;
+  int y_offset, window_width;
   int no_data;
 } axis_info;
 
@@ -107,12 +107,12 @@ typedef struct {
 typedef struct {
   int samp;
   char *name;
-  unsigned int id,sync;
+  unsigned int id, sync;
 } mark;
 
 typedef struct {
   Float *data;
-  int pts,data_size;
+  int pts, data_size;
   int exponential;
   Float base;
 } env;
@@ -152,7 +152,7 @@ typedef struct chan__info {
   int cursor_visible;      /* for XOR decisions */
   int cursor;              /* sample */
   int cursor_style;
-  int cx,cy;               /* graph-relative cursor loc (for XOR) */
+  int cx, cy;               /* graph-relative cursor loc (for XOR) */
   int edit_ctr;            /* channel's edit history */
   int edit_size;           /* current edit list size */
   ed_list **edits;         /* the edit list */
@@ -171,28 +171,28 @@ typedef struct chan__info {
   chan_context *tcgx;      /* when combining chans, all should use chan[0]'s context */
   env_info **amp_envs;
   void *sonogram_data;
-  void *last_sonogram,*temp_sonogram;
+  void *last_sonogram, *temp_sonogram;
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
   int printing;
-  Float gsy,gzy;
+  Float gsy, gzy;
   void *mix_dragging;
-  int height,mixes;
+  int height, mixes;
   int original_cursor;     /* for cursor reset after cursor-moving play */
   int hookable;
   int selection_transform_size;
   int *stats;
-  int squelch_update,waiting_to_make_graph;
+  int squelch_update, waiting_to_make_graph;
   /* moved from global to channel-local 4-Aug-00 */
-  Float spectro_x_scale,spectro_y_scale,spectro_z_scale,spectro_z_angle,spectro_x_angle,spectro_y_angle,spectro_cutoff,spectro_start;
-  Float lin_dB,min_dB,fft_beta;
-  int show_y_zero,show_marks,wavo,wavo_hop,wavo_trace,zero_pad,x_axis_style,wavelet_type,verbose_cursor,max_fft_peaks;
-  int show_fft_peaks,show_axes,line_size,graph_style,fft_log_frequency,fft_log_magnitude,fft_size,fft_style,fft_window;
-  int dot_size,normalize_fft,transform_type,show_mix_waveforms,spectro_hop,graphs_horizontal;
+  Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
+  Float lin_dB, min_dB, fft_beta;
+  int show_y_zero, show_marks, wavo, wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, verbose_cursor, max_fft_peaks;
+  int show_fft_peaks, show_axes, line_size, graph_style, fft_log_frequency, fft_log_magnitude, fft_size, fft_style, fft_window;
+  int dot_size, normalize_fft, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
   void *mix_md;
 #if HAVE_GUILE
-  SCM edit_hook,undo_hook;
+  SCM edit_hook, undo_hook;
 #endif
-  int selection_visible,old_x0,old_x1,sync;
+  int selection_visible, old_x0, old_x1, sync;
 } chan_info;
 
 typedef struct snd__info {
@@ -204,15 +204,15 @@ typedef struct snd__info {
   int expanding;
   int contrasting;
   int reverbing;
-  int filtering,filter_dBing;
+  int filtering, filter_dBing;
   Float amp;
   Float srate;                  /* playback srate, not original */
-  Float last_srate,last_amp,last_expand,last_contrast,last_revlen,last_revscl;
-  Float saved_srate,saved_amp,saved_expand,saved_contrast,saved_revlen,saved_revscl;
-  Float expand,expand_length,expand_ramp,expand_hop;
+  Float last_srate, last_amp, last_expand, last_contrast, last_revlen, last_revscl;
+  Float saved_srate, saved_amp, saved_expand, saved_contrast, saved_revlen, saved_revscl;
+  Float expand, expand_length, expand_ramp, expand_hop;
   Float contrast;
-  Float revlen,revscl,revfb,revlp;
-  int filter_order,filter_changed;
+  Float revlen, revscl, revfb, revlp;
+  int filter_order, filter_changed;
   env *filter_env;
   int play_direction;
   int selected_channel;
@@ -221,19 +221,19 @@ typedef struct snd__info {
   int nchans;
 #if HAVE_GUILE
   SCM search_proc;
-  SCM eval_proc,prompt_callback;
+  SCM eval_proc, prompt_callback;
 #endif
   char *search_expr;
-  int searching,marking,evaling,filing,finding_mark,amping,reging,printing,loading,lisp_graphing,macroing,prompting;
+  int searching, marking, evaling, filing, finding_mark, amping, reging, printing, loading, lisp_graphing, macroing, prompting;
   char *eval_expr;
-  int minibuffer_on,minibuffer_temp;
+  int minibuffer_on, minibuffer_temp;
   int sx_scroll_max;
   int read_only;
   chan_info **chans;
   struct snd__state *state;
   snd_context *sgx;
   file_info *hdr;             /* header of file that would be affected if we were to save current edits */
-  int env_anew,bomb_ctr;
+  int env_anew, bomb_ctr;
   Float contrast_amp;
   time_t write_date;          /* check for change behind back while editing */
   int need_update;            /* current in-core data does not match actual file (someone wrote it behind our back) */
@@ -245,22 +245,22 @@ typedef struct snd__info {
   int delete_me;
   chan_info *lacp;
   void *saved_controls;
-  int apply_ok,applying;
+  int apply_ok, applying;
   /* moved from global to channel-local 4-Aug-00 */
-  int speed_style,speed_tones;
-  Float reverb_decay,filter_env_xmax;
-  void *minibuffer_history,*filter_history;
+  int speed_style, speed_tones;
+  Float reverb_decay, filter_env_xmax;
+  void *minibuffer_history, *filter_history;
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
 
 typedef struct snd__state {
-  int selected_sound,selected_mix;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
+  int selected_sound, selected_mix;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
   int active_sounds;
   int viewing;
-  int ctrls_height,open_ctrls_height,channel_min_height;
+  int ctrls_height, open_ctrls_height, channel_min_height;
   snd_info **sounds;
-  char *search_expr,*startup_title;
+  char *search_expr, *startup_title;
 #if HAVE_GUILE
   SCM search_proc;
   int catch_exists;
@@ -268,15 +268,15 @@ typedef struct snd__state {
   int search_in_progress;
   int using_schemes;
   state_context *sgx;
-  int position_slider_width,zoom_slider_width,toggle_size,enved_point_size,channel_sash_indent,sash_size,channel_sash_size,sash_indent;
+  int position_slider_width, zoom_slider_width, toggle_size, enved_point_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
   char *init_file;
   int max_sounds;
   snd_info *mx_sp;
   char *pending_change;
-  int print_choice,apply_choice,just_time,memory_available;
-  int stopped_explicitly,checking_explicitly;
-  int result_printout,listening,init_window_width,init_window_height,init_window_x,init_window_y;
-  int open_hook_active,close_hook_active,fft_hook_active,graph_hook_active,exit_hook_active,start_hook_active,save_hook_active;
+  int print_choice, apply_choice, just_time, memory_available;
+  int stopped_explicitly, checking_explicitly;
+  int result_printout, listening, init_window_width, init_window_height, init_window_x, init_window_y;
+  int open_hook_active, close_hook_active, fft_hook_active, graph_hook_active, exit_hook_active, start_hook_active, save_hook_active;
 
   /* user-visible global variables
    *   all of these are accessed through macros in snd-0.h 
@@ -290,33 +290,33 @@ typedef struct snd__state {
    *              completed via the table in snd-completion.c
    *              brought out to user in snd-scm.c (and possibly snd-noscm.c)
    */
-  int Show_Fft_Peaks,Show_Y_Zero,Show_Marks,Fft_Log_Frequency,Fft_Log_Magnitude,Channel_Style,Sound_Style,Show_Axes;
-  char *Eps_File,*Temp_Dir,*Audio_State_File,*Save_Dir;
-  char *Listener_Font,*Help_Text_Font,*Axis_Label_Font,*Axis_Numbers_Font,*Bold_Button_Font,*Button_Font,*Tiny_Font;
-  int Verbose_Cursor,Show_Usage_Stats,Trap_Segfault;
-  int Filter_Env_Order,Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
-  Float Vu_Size,Vu_Font_Size,Eps_Left_Margin,Eps_Bottom_Margin;
+  int Show_Fft_Peaks, Show_Y_Zero, Show_Marks, Fft_Log_Frequency, Fft_Log_Magnitude, Channel_Style, Sound_Style, Show_Axes;
+  char *Eps_File, *Temp_Dir, *Audio_State_File, *Save_Dir;
+  char *Listener_Font, *Help_Text_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Button_Font, *Tiny_Font;
+  int Verbose_Cursor, Show_Usage_Stats, Trap_Segfault;
+  int Filter_Env_Order, Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
+  Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin;
   char *Vu_Font;
-  Float Spectro_X_Scale,Spectro_Y_Scale,Spectro_Z_Scale,Spectro_Z_Angle,Spectro_X_Angle,Spectro_Y_Angle,Spectro_Cutoff,Spectro_Start;
-  int Default_Output_Type,Default_Output_Format,Default_Output_Chans,Default_Output_Srate;
-  int Spectro_Hop,Color_Map,Wavelet_Type,Transform_Type,Dot_Size;
-  int Fft_Size,Fft_Window,Fft_Style,Zero_Pad,Ask_Before_Overwrite,Line_Size,Wavo_Hop,Wavo,Wavo_Trace;
+  Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
+  int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;
+  int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type, Dot_Size;
+  int Fft_Size, Fft_Window, Fft_Style, Zero_Pad, Ask_Before_Overwrite, Line_Size, Wavo_Hop, Wavo, Wavo_Trace;
   Float Fft_Beta;
-  Float Color_Scale,Color_Cutoff;
-  int Color_Inverted,Speed_Style,Movies,Normalize_Fft,Show_Mix_Waveforms,Mix_Waveform_Height,Fit_Data_On_Open;
-  int Speed_Tones,Sinc_Width,X_Axis_Style,Zoom_Focus_Style,Save_State_On_Exit,Graph_Style;
-  int Normalize_On_Open,Auto_Resize,Auto_Update,Max_Regions,Max_Fft_Peaks;
-  Float Initial_X0,Initial_X1,Initial_Y0,Initial_Y1,Reverb_Decay;
-  int Raw_Srate,Raw_Chans,Raw_Format,Use_Raw_Defaults,Audio_Output_Device,Audio_Input_Device;
-  int Print_Length,Dac_Size,Dac_Folding,Previous_Files_Sort,Show_Selection_Transform,With_Mix_Tags,Selection_Creates_Region;
-  char *Save_State_File,*Listener_Prompt;
-  Float Enved_Base,Enved_Power,Corruption_Time;
-  int Enved_Clipping,Enved_Exping,Enved_Target,Enved_Waving,Enved_dBing,Prefix_Arg,Graphs_Horizontal;
-  int Graph_Cursor,Use_Sinc_Interp,Data_Clipped,Show_Indices,Mix_Tag_Width,Mix_Tag_Height,Minibuffer_History_Length;
-  Float min_dB,lin_dB;
+  Float Color_Scale, Color_Cutoff;
+  int Color_Inverted, Speed_Style, Movies, Normalize_Fft, Show_Mix_Waveforms, Mix_Waveform_Height, Fit_Data_On_Open;
+  int Speed_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Save_State_On_Exit, Graph_Style;
+  int Normalize_On_Open, Auto_Resize, Auto_Update, Max_Regions, Max_Fft_Peaks;
+  Float Initial_X0, Initial_X1, Initial_Y0, Initial_Y1, Reverb_Decay;
+  int Raw_Srate, Raw_Chans, Raw_Format, Use_Raw_Defaults, Audio_Output_Device, Audio_Input_Device;
+  int Print_Length, Dac_Size, Dac_Folding, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
+  char *Save_State_File, *Listener_Prompt;
+  Float Enved_Base, Enved_Power, Corruption_Time;
+  int Enved_Clipping, Enved_Exping, Enved_Target, Enved_Waving, Enved_dBing, Prefix_Arg, Graphs_Horizontal;
+  int Graph_Cursor, Use_Sinc_Interp, Data_Clipped, Show_Indices, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
+  Float min_dB, lin_dB;
 #if HAVE_HTML
-  int HTML_Width,HTML_Height;
-  char *HTML_Dir,*HTML_Font_Size_List,*HTML_Fixed_Font_Size_List;
+  int HTML_Width, HTML_Height;
+  char *HTML_Dir, *HTML_Font_Size_List, *HTML_Fixed_Font_Size_List;
 #endif
 } snd_state;
 
@@ -350,7 +350,7 @@ typedef struct {
   int samples;  
   env_info *ep; 
   snd_fd *sf;
-  int m,amp_buffer_size;
+  int m, amp_buffer_size;
 } env_state;
 
 

@@ -33,12 +33,12 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
 
 int main(int argc, char *argv[])
 {
-  int chans,srate,samples,format,type;
+  int chans, srate, samples, format, type;
   float length;
   time_t date;
   int *loops = NULL;
-  char *comment,*header_name;
-  char *format_info,*format_name;
+  char *comment, *header_name;
+  char *format_info, *format_name;
   char timestr[64];
 #if MACOS
   argc = ccommand(&argv);

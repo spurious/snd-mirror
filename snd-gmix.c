@@ -10,9 +10,9 @@ static void update_mix_panel(int mix_id);
 
 /* ---------------- SPEED ---------------- */
 
-static GtkWidget *w_speed,*w_speed_label,*w_speed_number,*w_speed_form,*w_speed_event;
+static GtkWidget *w_speed, *w_speed_label, *w_speed_number, *w_speed_form, *w_speed_event;
 static GtkObject *w_speed_adj;
-static char speed_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
+static char speed_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
 static Float current_speed = 1.0;
 
 static void change_mix_speed(int mix_id, Float val)
@@ -46,7 +46,7 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
   mix_id = current_mix_id(ss);
   cp = mix_channel_from_id(mix_id);
   sp = cp->sound;
-  val = srate_changed(exp((GTK_ADJUSTMENT(w_speed_adj)->value-.45)/.15),
+  val = srate_changed(exp((GTK_ADJUSTMENT(w_speed_adj)->value - .45) / .15),
 		      speed_number_buffer,
 		      sp->speed_style,
 		      sp->speed_tones);
@@ -66,7 +66,7 @@ static void speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
   mix_id = current_mix_id(ss);
   cp = mix_channel_from_id(mix_id);
   sp = cp->sound;
-  val = srate_changed(exp((GTK_ADJUSTMENT(w_speed_adj)->value-.45)/.15),
+  val = srate_changed(exp((GTK_ADJUSTMENT(w_speed_adj)->value - .45) / .15),
 		      speed_number_buffer,
 		      sp->speed_style,
 		      sp->speed_tones);
@@ -90,11 +90,11 @@ static void reflect_mix_speed(Float uval, snd_info *sp)
 
 /* ---------------- AMP ---------------- */
 
-static GtkWidget **w_amps,**w_amp_labels,**w_amp_numbers,**w_amp_events,**w_amp_forms;
+static GtkWidget **w_amps, **w_amp_labels, **w_amp_numbers, **w_amp_events, **w_amp_forms;
 static GtkObject **w_amp_adjs;
 static Float *current_amps;
 static int chans_allocated = 0;
-static char amp_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
+static char amp_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
 
 static int allocate_amps(int chans)
 {
@@ -123,7 +123,7 @@ static int allocate_amps(int chans)
 	  w_amp_forms = (GtkWidget **)REALLOC(w_amps, chans * sizeof(GtkWidget *));
 	  w_amp_adjs = (GtkObject **)REALLOC(w_amps, chans * sizeof(GtkObject *));
 	  current_amps = (Float *)REALLOC(current_amps, chans * sizeof(Float));
-	  for (i=chans_allocated;i<chans;i++)
+	  for (i = chans_allocated; i < chans; i++)
 	    {
 	      w_amp_numbers[i] = NULL;
 	      w_amp_labels[i] = NULL;
@@ -169,7 +169,7 @@ static Float amp_to_scroll(Float amp)
     {
       if (amp < .173)
 	return(amp * .867);
-      else return(log(amp)*0.2 + 0.5);
+      else return(log(amp) * 0.2 + 0.5);
     }
 }
 
@@ -206,7 +206,7 @@ static void amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data
 
 /* ---------------- AMP ENV ---------------- */
 
-static GtkWidget *w_env_frame,*w_env;
+static GtkWidget *w_env_frame, *w_env;
 static chan_info *axis_cp = NULL;
 static axis_context *ax = NULL;
 static GdkGC *cur_gc;
@@ -249,15 +249,15 @@ static void Mix_Amp_Env_Resize(GtkWidget *w, GdkEventConfigure *ev, gpointer dat
 
 /* ---------------- MIX PANEL ---------------- */
 
-static GtkWidget *w_id=NULL,*w_name=NULL,*w_beg=NULL,*w_track=NULL,*w_play=NULL,*w_id_label=NULL,*w_track_label=NULL,*w_play_pix=NULL;
+static GtkWidget *w_id = NULL, *w_name = NULL, *w_beg = NULL, *w_track = NULL, *w_play = NULL, *w_id_label = NULL, *w_track_label = NULL, *w_play_pix = NULL;
 static GdkPixmap *speaker_pix;
 static GdkBitmap *speaker_mask;
 
-static void id_activated(GtkWidget *w, gpointer clientData)
+static void id_activated(GtkWidget *w, gpointer context)
 {
   char *val;
   int id;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   val = gtk_entry_get_text(GTK_ENTRY(w_id));
   if (val)
     {
@@ -270,21 +270,21 @@ static void id_activated(GtkWidget *w, gpointer clientData)
     }
 }
 
-static void name_activated(GtkWidget *w, gpointer clientData) 
+static void name_activated(GtkWidget *w, gpointer context) 
 {
   char *val;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   val = gtk_entry_get_text(GTK_ENTRY(w_name));
   if (val)
     set_mix_name_from_id(current_mix_id(ss), val);
 }
 
-static void beg_activated(GtkWidget *w, gpointer clientData) 
+static void beg_activated(GtkWidget *w, gpointer context) 
 {
   char *val;
   chan_info *cp;
   int mix_id;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   val = gtk_entry_get_text(GTK_ENTRY(w_beg));
   if (val)
     {
@@ -295,10 +295,10 @@ static void beg_activated(GtkWidget *w, gpointer clientData)
     }
 }
 
-static void track_activated(GtkWidget *w, gpointer clientData) 
+static void track_activated(GtkWidget *w, gpointer context) 
 {
   char *val;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   val = gtk_entry_get_text(GTK_ENTRY(w_track));
   if (val)
     set_mix_track_from_id(current_mix_id(ss), string2int(val));
@@ -318,9 +318,9 @@ void reflect_mix_play_stop(void)
   mix_playing = 0;
 }
 
-static void play_callback(GtkWidget *w, gpointer clientData) 
+static void play_callback(GtkWidget *w, gpointer context) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (mix_playing)
     {
       reflect_mix_play_stop();
@@ -333,29 +333,29 @@ static void play_callback(GtkWidget *w, gpointer clientData)
     }
 }
 
-static void dismiss_mix_panel(GtkWidget *w, gpointer clientData)
+static void dismiss_mix_panel(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(mix_panel);
 }
 
-static void delete_mix_panel(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void delete_mix_panel(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(mix_panel);
 }
 
-static void mix_panel_help(GtkWidget *w, gpointer clientData) 
+static void mix_panel_help(GtkWidget *w, gpointer context) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Mix Panel",
 "This dialog controls the currently selected mix");
 }
 
 void make_mix_panel(snd_state *ss)
 {
-  GtkWidget *dismiss_button,*help_button,*rc;
+  GtkWidget *dismiss_button, *help_button, *rc;
   GdkWindow *wn;
   char amplab[16];
-  int mix_id,i,chans;
+  int mix_id, i, chans;
   mix_id = current_mix_id(ss);
 
   if (mix_panel == NULL)
@@ -470,7 +470,7 @@ void make_mix_panel(snd_state *ss)
 
       /* AMP */
       chans = allocate_amps(4);
-      for (i=0;i<chans;i++)
+      for (i = 0; i < chans; i++)
 	{
 	  w_amp_forms[i] = gtk_hbox_new(FALSE, 2);
 	  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->vbox), w_amp_forms[i], FALSE, FALSE, 0);
@@ -528,7 +528,7 @@ static void update_mix_panel(int mix_id)
 {
   snd_state *ss;
   chan_info *cp;
-  int i,chans,beg,len;
+  int i, chans, beg, len;
   Float val;
   char lab[32];
   ss = get_global_state();
@@ -566,7 +566,7 @@ static void update_mix_panel(int mix_id)
       chans = mix_input_chans_from_id(mix_id);
       if (chans > 4) chans = 4; /* TODO: fix this! */
 
-      for (i=0;i<chans;i++)
+      for (i = 0; i < chans; i++)
 	{
 	  gtk_widget_show(w_amp_labels[i]);	  
 	  gtk_widget_show(w_amp_numbers[i]);	  
@@ -581,7 +581,7 @@ static void update_mix_panel(int mix_id)
 	    }
 	}
 
-      for (i=chans;i<chans_allocated;i++)
+      for (i = chans; i < chans_allocated; i++)
 	{
 	  gtk_widget_hide(w_amp_labels[i]);	  
 	  gtk_widget_hide(w_amp_numbers[i]);	  

@@ -19,7 +19,7 @@ typedef struct {
   int header_type;         /* for file save */
   int save;
   snd_info *rsp;
-  char *name,*start,*end;  /* for region browser */
+  char *name, *start, *end;  /* for region browser */
   char *filename;          /* if region data is stored in a temp file */
   int use_temp_file;       /* REGION_ARRAY = data is in 'data' arrays, else in temp file 'filename' */
   Float maxamp;
@@ -43,7 +43,7 @@ static void free_region(region *r, int complete)
 	}
       if (r->data)  /* null if temp file */
 	{
-	  for (i=0; i<r->chans; i++) 
+	  for (i = 0; i < r->chans; i++) 
 	    if (r->data[i]) 
 	      FREE(r->data[i]);
 	  FREE(r->data);
@@ -82,7 +82,7 @@ void allocate_regions(snd_state *ss, int numreg)
       if (regions)
 	{
 	  regions = (region **)REALLOC(regions, numreg * sizeof(region *));
-	  for (i=regions_size; i<numreg; i++) regions[i] = NULL;
+	  for (i = regions_size; i < numreg; i++) regions[i] = NULL;
 	}
       else regions = (region **)CALLOC(numreg, sizeof(region *));
     }
@@ -90,7 +90,7 @@ void allocate_regions(snd_state *ss, int numreg)
     {
       if (regions_size > numreg)
 	{
-	  for (i=numreg; i<regions_size; i++)
+	  for (i = numreg; i < regions_size; i++)
 	    if (regions[i])
 	      {
 		free_region(regions[i], COMPLETE_DELETION);
@@ -112,7 +112,7 @@ static void set_max_regions(snd_state *ss, int n)
     }
 }
 
-int region_ok(int n) {return((n<regions_size) && (regions[n]));}
+int region_ok(int n) {return((n < regions_size) && (regions[n]));}
 int region_len(int n) {if (region_ok(n)) return(regions[n]->frames); else return(0);}
 int region_chans(int n) {if (region_ok(n)) return(regions[n]->chans); else return(0);}
 int region_srate(int n) {if (region_ok(n)) return(regions[n]->srate); else return(0);}
@@ -122,7 +122,7 @@ int region_id(int n) {if (region_ok(n)) return(regions[n]->id); else return(-1);
 static int id_region(int id)
 {
   int i;
-  for (i=0; i<regions_size; i++)
+  for (i = 0; i < regions_size; i++)
     if ((regions[i]) && (regions[i]->id == id))
       return(i);
   return(-1);
@@ -156,7 +156,7 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
 {
   region *r;
   snd_fd *sf;
-  int i,j;
+  int i, j;
   if (region_ok(reg))
     {
       r = regions[reg];
@@ -164,17 +164,17 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
 	{
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
-	      for (i=beg, j=0;(i<r->frames) && (j<num); i++,j++) 
+	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
 		data[j] = MUS_SAMPLE_TO_FLOAT(r->data[chn][i]);
 	    }
 	  else
 	    {
 	      sf = init_region_read(get_global_state(), beg, reg, chn, READ_FORWARD);
-	      for (i=beg, j=0;(i<r->frames) && (j<num); i++,j++) 
+	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
 		data[j] = next_sample_to_float(sf);
 	      free_snd_fd(sf);
 	    }
-	  if (j < num) for (;j<num;j++) data[j] = 0.0;
+	  if (j < num) for (; j < num; j++) data[j] = 0.0;
 	}
     }
 }
@@ -182,7 +182,7 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
 static int first_region_active(void)
 {
   int i;
-  for (i=0; i<regions_size; i++)
+  for (i = 0; i < regions_size; i++)
     if (regions[i]) 
       return(i);
   return(NO_REGIONS);
@@ -202,7 +202,7 @@ static void make_region_readable(region *r, snd_state *ss)
   chan_info *cp;
   file_info *hdr;
   int *datai;
-  int i,fd;
+  int i, fd;
   if (r->rsp) return;
   regsp = (snd_info *)CALLOC(1, sizeof(snd_info));
   regsp->nchans = r->chans;
@@ -214,7 +214,7 @@ static void make_region_readable(region *r, snd_state *ss)
   hdr->srate = r->srate;
   hdr->chans = r->chans;
   hdr->comment = NULL;
-  for (i=0; i<r->chans; i++)
+  for (i = 0; i < r->chans; i++)
     {
       cp = make_chan_info(NULL, i, regsp, ss);
       regsp->chans[i] = cp;
@@ -278,12 +278,12 @@ file_info *fixup_region_data(chan_info *cp, int chan, int n)
 region_state *region_report(void)
 {
   region_state *rs;
-  int i,len;
+  int i, len;
   char *reg_buf;
   region *r;
   rs = (region_state *)CALLOC(1, sizeof(region_state));
   len = regions_size;
-  for (i=0; i<regions_size; i++) 
+  for (i = 0; i < regions_size; i++) 
     if (!(regions[i])) 
       {
 	len = i; 
@@ -293,7 +293,7 @@ region_state *region_report(void)
   if (len == 0) return(rs);
   rs->save = (int *)CALLOC(len, sizeof(int));
   rs->name = (char **)CALLOC(len, sizeof(char *));
-  for (i=0; i<len; i++)
+  for (i = 0; i < len; i++)
     {
       r = regions[i];
       rs->save[i] = r->save;
@@ -309,7 +309,7 @@ void free_region_state (region_state *r)
   int i;
   if (r)
     {
-      for (i=0; i<r->len; i++)
+      for (i = 0; i < r->len; i++)
 	if (r->name[i]) FREE(r->name[i]);
       if (r->name) FREE(r->name);
       if (r->save) FREE(r->save);
@@ -324,7 +324,7 @@ void select_region(int n) /* region browser */
   if (region_ok(n))
     {
       r = regions[n];
-      for (i=n; i>0; i--) regions[i]=regions[i-1]; 
+      for (i = n; i > 0; i--) regions[i] = regions[i-1]; 
       regions[0] = r;
     }
 }
@@ -339,7 +339,7 @@ int delete_region(int n) /* region browser */
       stop_playing_region(n);
       free_region(regions[n], COMPLETE_DELETION);
     }
-  for (i=n; i<regions_size-1; i++) regions[i]=regions[i+1]; 
+  for (i = n; i < regions_size-1; i++) regions[i] = regions[i+1]; 
   regions[regions_size-1] = NULL;
   return(check_regions());
 }
@@ -356,9 +356,9 @@ void protect_region(int n, int protect) /* region browser */
 
 static void stack_region(snd_state *ss, region *r) 
 {
-  int i,okr = -1;
+  int i, okr = -1;
   /* leave protected regions alone -- search for highest unprotected region */
-  for (i=max_regions(ss)-1; i>=0; i--) 
+  for (i = max_regions(ss)-1; i >= 0; i--) 
     {
       if ((!(regions[i])) || (!((regions[i])->save))) {okr = i; break;}
     }
@@ -373,18 +373,18 @@ static void stack_region(snd_state *ss, region *r)
       stop_playing_region(okr);
       free_region(regions[okr], COMPLETE_DELETION);
     }
-  for (i=okr; i>0; i--) regions[i]=regions[i-1]; 
-  regions[0]=r;
+  for (i = okr; i > 0; i--) regions[i] = regions[i-1]; 
+  regions[0] = r;
   if (!r) check_regions();
 }
 
 static int save_region_1(snd_state *ss, char *ofile, int type, int format, int srate, int reg, char *comment)
 {
-  int ofd,oloc,ifd,chans,i,frames,cursamples,iloc,comlen,err=0;
+  int ofd, oloc, ifd, chans, i, frames, cursamples, iloc, comlen, err = 0;
   MUS_SAMPLE_TYPE **bufs;
   region *r;
   comlen = snd_strlen(comment);
-  if (region_ok(reg)) r = regions[reg]; else r=NULL;
+  if (region_ok(reg)) r = regions[reg]; else r = NULL;
   if (r)
     {
       if ((snd_write_header(ss, ofile, type, srate, r->chans, 28, r->chans*r->frames, format, comment, comlen, NULL)) == -1)
@@ -418,11 +418,11 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 				   mus_sound_header_type(r->filename));
 	  mus_file_seek(ifd, iloc, SEEK_SET);
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
-	  for (i=0; i<chans; i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+	  for (i = 0; i < chans; i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
 
 	  /* TODO: check for disk space (progress report?) */
 
-	  for (i=0; i<frames; i+=FILE_BUFFER_SIZE)
+	  for (i = 0; i < frames; i+=FILE_BUFFER_SIZE)
 	    {
 	      if ((i+FILE_BUFFER_SIZE)<frames) 
 		cursamples = FILE_BUFFER_SIZE; 
@@ -443,7 +443,7 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 		      ifd, r->filename,
 		      strerror(errno),
 		      __FILE__, __LINE__, __FUNCTION__);
-	  for (i=0; i<chans; i++) FREE(bufs[i]);
+	  for (i = 0; i < chans; i++) FREE(bufs[i]);
 	  FREE(bufs);
 	}
       if (mus_file_close(ofd) != 0)
@@ -479,7 +479,7 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
 static int paste_region_1(int n, chan_info *cp, int add, int beg, char *origin)
 {
   region *r;
-  int i,j,err=MUS_NO_ERROR,id=-1,idtmp;
+  int i, j, err = MUS_NO_ERROR, id=-1, idtmp;
   snd_info *sp;
   sync_info *si;
   chan_info *ncp;
@@ -510,13 +510,13 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, char *origin)
 	    if (r->chans > 1) 
 	      remember_temp(tempfile, r->chans);
 	}
-      for (i=0;((i<r->chans) && (i<si->chans)); i++)
+      for (i = 0; ((i < r->chans) && (i < si->chans)); i++)
 	{
 	  ncp = si->cps[i]; /* currently syncd chan that we might paste to */
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
 	      data = (MUS_SAMPLE_TYPE *)CALLOC(r->frames, sizeof(MUS_SAMPLE_TYPE));
-	      for (j=0;j<r->frames;j++) 
+	      for (j = 0; j < r->frames; j++) 
 		data[j] = r->data[i][j];
 	      insert_samples(beg, r->frames, data, ncp, origin);
 	      FREE(data);
@@ -541,9 +541,9 @@ static int mix_region(int n, chan_info *cp, int beg) {return(paste_region_1(n, c
 
 void region_stats(int *vals)
 {
-  int i,fil=0,arr=0;
+  int i, fil = 0, arr = 0;
   region* r;
-  for (i=0; i<regions_size; i++) 
+  for (i = 0; i < regions_size; i++) 
     {
       r = regions[i];
       if (r)
@@ -561,8 +561,8 @@ void define_region(sync_info *si, int *ends)
 {
   /* now look at all sync'd channels, collect them into the current region */
   /* we created the necessary pointers in create_selection above */
-  int i,j,len,k,ofd = 0,datumb = 0,err=0;
-  MUS_SAMPLE_TYPE val,mval,curval;
+  int i, j, len, k, ofd = 0, datumb = 0, err = 0;
+  MUS_SAMPLE_TYPE val, mval, curval;
   chan_info *cp0;
   snd_info *sp0;
   region *r;
@@ -570,7 +570,7 @@ void define_region(sync_info *si, int *ends)
   snd_state *ss;
   file_info *hdr = NULL;
   len = 0;
-  for (i=0; i<si->chans; i++)
+  for (i = 0; i < si->chans; i++)
     if (len < (ends[i] - si->begs[i]))
       len = ends[i] - si->begs[i];
   len += 1;
@@ -607,14 +607,14 @@ void define_region(sync_info *si, int *ends)
       r->use_temp_file = REGION_ARRAY;
       r->filename = NULL;
     }
-  for (i=0; i<r->chans; i++)
+  for (i = 0; i < r->chans; i++)
     {
-      sfs[i]=init_sample_read(si->begs[i], si->cps[i], READ_FORWARD);
+      sfs[i] = init_sample_read(si->begs[i], si->cps[i], READ_FORWARD);
       if (r->use_temp_file == REGION_ARRAY)
 	r->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
       else r->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
     }
-  for (j=0, k=0;j<len;j++,k++) 
+  for (j = 0, k = 0; j < len; j++, k++) 
     {
       if (k == MAX_BUFFER_SIZE)
 	{
@@ -622,7 +622,7 @@ void define_region(sync_info *si, int *ends)
 	  k = 0;
 	  if (err == -1) break;
 	}
-      for (i=0; i<r->chans; i++)
+      for (i = 0; i < r->chans; i++)
 	{
 	  if (j < ends[i]) 
 	    {
@@ -639,13 +639,13 @@ void define_region(sync_info *si, int *ends)
       if (k > 0) mus_file_write(ofd, 0, k-1, r->chans, r->data);
       close_temp_file(ofd, hdr, len*r->chans*datumb, sp0);
       hdr = free_file_info(hdr);
-      for (i=0; i<r->chans; i++) FREE(r->data[i]);
+      for (i = 0; i < r->chans; i++) FREE(r->data[i]);
       FREE(r->data);
       r->data = NULL; /* filename only access in this case */
     }
   if (val < (-mval)) val=-mval;
   r->maxamp = MUS_SAMPLE_TO_FLOAT(val);
-  for (i=0; i<r->chans; i++) free_snd_fd(sfs[i]);
+  for (i = 0; i < r->chans; i++) free_snd_fd(sfs[i]);
   FREE(sfs);
   reflect_regions_in_menu();
   if (region_browser_is_active()) update_region_browser(ss, 1);
@@ -675,7 +675,7 @@ void cleanup_region_temp_files(void)
 { /* called upon exit to get rid of lingering region-related temp files */
   int i;
   region *r;
-  for (i=0; i<regions_size; i++)
+  for (i = 0; i < regions_size; i++)
     {
       r = regions[i];
       if ((r) && (r->use_temp_file == REGION_FILE) && (r->filename))
@@ -689,9 +689,9 @@ void cleanup_region_temp_files(void)
 
 int snd_regions(void)
 {
-  int i,num;
+  int i, num;
   num = 0;
-  for (i=0; i<regions_size; i++) if (regions[i]) num++;
+  for (i = 0; i < regions_size; i++) if (regions[i]) num++;
   return(num);
 }
 
@@ -699,10 +699,10 @@ int snd_regions(void)
 
 void save_regions(snd_state *ss, FILE *fd)
 {
-  int i,j,k;
+  int i, j, k;
   region *r;
   char *newname;
-  for (i=0; i<regions_size; i++)
+  for (i = 0; i < regions_size; i++)
     {
       r = regions[i];
       if (r)
@@ -712,9 +712,9 @@ void save_regions(snd_state *ss, FILE *fd)
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
 	      fprintf(fd, "\n  #(");
-	      for (j=0;j<r->chans;j++)
+	      for (j = 0; j < r->chans; j++)
 		{
-		  for (k=0;k<r->frames;k++)
+		  for (k = 0; k < r->frames; k++)
 #if SNDLIB_USE_FLOATS
 		    fprintf(fd, "%f ", r->data[j][k]);
 #else
@@ -735,7 +735,7 @@ void save_regions(snd_state *ss, FILE *fd)
 	      else
 		{
 		  /* read at very low level */
-		  int ifd,iloc;
+		  int ifd, iloc;
 		  MUS_SAMPLE_TYPE **ibufs;
 		  ifd = mus_file_open_read(r->filename);
 		  iloc = mus_sound_data_location(r->filename);
@@ -748,13 +748,13 @@ void save_regions(snd_state *ss, FILE *fd)
 					   mus_sound_header_type(r->filename));
 		  mus_file_seek(ifd, iloc, SEEK_SET);
 		  ibufs = (MUS_SAMPLE_TYPE **)CALLOC(r->chans, sizeof(MUS_SAMPLE_TYPE *));
-		  for (j=0;j<r->chans;j++)
+		  for (j = 0; j < r->chans; j++)
 		    ibufs[j] = (MUS_SAMPLE_TYPE *)CALLOC(r->frames, sizeof(MUS_SAMPLE_TYPE));
 		  mus_file_read(ifd, 0, r->frames-1, r->chans, ibufs);
 		  fprintf(fd, "\n  #(");
-		  for (j=0;j<r->chans;j++)
+		  for (j = 0; j < r->chans; j++)
 		    {
-		      for (k=0;k<r->frames;k++) 
+		      for (k = 0; k < r->frames; k++) 
 #if SNDLIB_USE_FLOATS
 			fprintf(fd, "%f ", ibufs[j][k]);
 #else
@@ -763,7 +763,7 @@ void save_regions(snd_state *ss, FILE *fd)
 		    }
 		  fprintf(fd, ")");
 		  mus_file_close(ifd);
-		  for (j=0;j<r->chans;j++) FREE(ibufs[j]);
+		  for (j = 0; j < r->chans; j++) FREE(ibufs[j]);
 		  FREE(ibufs);
 		}
 	    }
@@ -839,7 +839,7 @@ void save_region_backpointer(snd_info *sp)
 {
   /* region being edited, user chose 'save' */
   region *r;
-  int i,err;
+  int i, err;
   Float val;
   snd_state *ss;
   if (sp->edited_region)
@@ -854,7 +854,7 @@ void save_region_backpointer(snd_info *sp)
 	  r->use_temp_file = REGION_FILE;
 	  r->maxamp = 0.0;
 	  r->frames = current_ed_samples(sp->chans[0]);
-	  for (i=0; i<sp->nchans; i++)
+	  for (i = 0; i < sp->nchans; i++)
 	    {
 	      val = get_maxamp(sp, sp->chans[i]);
 	      if (val > r->maxamp) r->maxamp = val;
@@ -880,7 +880,7 @@ static char *g_scm2newstr(SCM str)
 static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
 {
   region *r;
-  int i,j,k,regn;
+  int i, j, k, regn;
   SCM *vdata;
   r = (region *)CALLOC(1, sizeof(region));
   regn = TO_SMALL_C_INT(n);
@@ -906,12 +906,12 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
       r->use_temp_file = REGION_ARRAY;
       r->filename = NULL;
       r->data = (MUS_SAMPLE_TYPE **)CALLOC(r->chans, sizeof(MUS_SAMPLE_TYPE *));
-      k=0; 
+      k = 0; 
       vdata = SCM_VELTS(data);
-      for (i=0; i<r->chans; i++)
+      for (i = 0; i < r->chans; i++)
 	{
 	  r->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(r->frames, sizeof(MUS_SAMPLE_TYPE));
-	  for (j=0;j<r->frames;j++,k++)
+	  for (j = 0; j < r->frames; j++, k++)
 	    {
 #if SNDLIB_USE_FLOATS
 	      r->data[i][j] = TO_C_DOUBLE(vdata[k]);
@@ -931,7 +931,7 @@ static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt r
    into snd's channel chn starting at 'start-samp'"
 
   chan_info *cp;
-  int rg,samp;
+  int rg, samp;
   SCM_ASSERT(bool_or_arg_p(samp_n), samp_n, SCM_ARG1, S_insert_region);
   SCM_ASSERT(bool_or_arg_p(reg_n), reg_n, SCM_ARG2, S_insert_region);
   SND_ASSERT_CHAN(S_insert_region, snd_n, chn_n, 3);
@@ -964,7 +964,7 @@ static SCM g_set_max_regions(SCM n)
   return(TO_SCM_INT(max_regions(ss)));
 }
 
-enum {REGION_LENGTH,REGION_SRATE,REGION_CHANS,REGION_MAXAMP,REGION_SELECT,REGION_DELETE,REGION_PLAY,REGION_ID};
+enum {REGION_LENGTH, REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_SELECT, REGION_DELETE, REGION_PLAY, REGION_ID};
 
 static SCM region_read(int field, SCM n, char *caller)
 {
@@ -973,7 +973,7 @@ static SCM region_read(int field, SCM n, char *caller)
   SCM res = SCM_EOL;
   if (SCM_EQ_P(n, SCM_BOOL_T))
     {
-      for (i=0; i<regions_size; i++)
+      for (i = 0; i < regions_size; i++)
 	if (regions[i])
 	  res = gh_cons(region_read(field, TO_SCM_INT(i), caller), res);
       return(scm_reverse(res));
@@ -1073,7 +1073,7 @@ static SCM g_delete_region (SCM n)
 static SCM g_play_region (SCM n, SCM wait) 
 {
   #define H_play_region "(" S_play_region " &optional (n 0) (wait #f)) play region n, if wait is #t, play to end before returning"
-  int rg,wt=0;
+  int rg, wt = 0;
   SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_play_region);
   SCM_ASSERT(bool_or_arg_p(wait), wait, SCM_ARG2, S_play_region);
   rg = TO_C_INT_OR_ELSE(n, 0);
@@ -1109,7 +1109,7 @@ static SCM g_regions(void)
   int i;
   SCM result;
   result = SCM_EOL;
-  for (i=(regions_size-1); i>=0; i--)
+  for (i=(regions_size-1); i >= 0; i--)
     if (regions[i])
       result = gh_cons(TO_SCM_INT(regions[i]->id), result);
   return(result);
@@ -1150,7 +1150,7 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
 {
   #define H_save_region "(" S_save_region " region filename &optional format) saves region in filename using data format (mus-bshort)"
   char *name = NULL;
-  int res=MUS_NO_ERROR,rg;
+  int res = MUS_NO_ERROR, rg;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)), n, SCM_ARG1, S_save_region);
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG2, S_save_region);
   SCM_ASSERT(bool_or_arg_p(format), format, SCM_ARG3, S_save_region);
@@ -1176,7 +1176,7 @@ static SCM g_mix_region(SCM chn_samp_n, SCM reg_n, SCM snd_n, SCM chn_n)
    into snd's channel chn starting at chn-samp; returns new mix id."
 
   chan_info *cp;
-  int rg,id=-1;
+  int rg, id=-1;
   SCM_ASSERT(bool_or_arg_p(chn_samp_n), chn_samp_n, SCM_ARG1, S_mix_region);
   SCM_ASSERT(bool_or_arg_p(reg_n), reg_n, SCM_ARG2, S_mix_region);
   SND_ASSERT_CHAN(S_mix_region, snd_n, chn_n, 3);
@@ -1197,7 +1197,7 @@ static SCM g_region_sample(SCM samp_n, SCM reg_n, SCM chn_n)
 {
   #define H_region_sample "(" S_region_sample " &optional (samp 0) (region 0) (chan 0)) -> region's sample at samp in chan"
 
-  int rg,chan;
+  int rg, chan;
   SCM_ASSERT(bool_or_arg_p(samp_n), samp_n, SCM_ARG1, S_region_sample);
   SCM_ASSERT(bool_or_arg_p(reg_n), reg_n, SCM_ARG2, S_region_sample);
   SCM_ASSERT(bool_or_arg_p(chn_n), chn_n, SCM_ARG3, S_region_sample);
@@ -1225,7 +1225,7 @@ static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
   SCM new_vect;
   SCM *vdata;
   Float *data;
-  int len,reg,i,chn;
+  int len, reg, i, chn;
   SCM_ASSERT(bool_or_arg_p(beg_n), beg_n, SCM_ARG1, S_region_samples);
   SCM_ASSERT(bool_or_arg_p(num), num, SCM_ARG2, S_region_samples);
   SCM_ASSERT(bool_or_arg_p(reg_n), reg_n, SCM_ARG3, S_region_samples);
@@ -1246,7 +1246,7 @@ static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
 	  vdata = SCM_VELTS(new_vect);
 	  data = (Float *)CALLOC(len, sizeof(Float));
 	  region_samples(reg, chn, TO_C_INT_OR_ELSE(beg_n, 0), len, data);
-	  for (i=0; i<len; i++) 
+	  for (i = 0; i < len; i++) 
 	    vdata[i] = TO_SCM_DOUBLE(data[i]);
 	  FREE(data);
 	  return(new_vect);
@@ -1267,7 +1267,7 @@ static SCM g_region_samples2vct(SCM beg_n, SCM num, SCM reg_n, SCM chn_n, SCM v)
    region's samples starting at beg for samps in channel chan to vct obj, returning obj (or creating a new one)"
 
   Float *data;
-  int len,reg,chn;
+  int len, reg, chn;
   vct *v1 = get_vct(v);
   SCM_ASSERT(bool_or_arg_p(beg_n), beg_n, SCM_ARG1, S_region_samples_vct);
   SCM_ASSERT(bool_or_arg_p(num), num, SCM_ARG2, S_region_samples_vct);
@@ -1302,26 +1302,26 @@ static SCM g_region_samples2vct(SCM beg_n, SCM num, SCM reg_n, SCM chn_n, SCM v)
 
 void g_init_regions(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_restore_region, SCM_FNC g_restore_region, 9, 0, 0), "restores a region");
-  DEFINE_PROC(gh_new_procedure(S_insert_region, SCM_FNC g_insert_region, 0, 4, 0), H_insert_region);
-  DEFINE_PROC(gh_new_procedure(S_regions, SCM_FNC g_regions, 0, 0, 0), H_regions);
-  DEFINE_PROC(gh_new_procedure(S_region_length, SCM_FNC g_region_length, 0, 1, 0), H_region_length);
-  DEFINE_PROC(gh_new_procedure(S_region_srate, SCM_FNC g_region_srate, 0, 1, 0), H_region_srate);
-  DEFINE_PROC(gh_new_procedure(S_region_chans, SCM_FNC g_region_chans, 0, 1, 0), H_region_chans);
-  DEFINE_PROC(gh_new_procedure(S_region_id, SCM_FNC g_region_id, 0, 1, 0), H_region_id);
-  DEFINE_PROC(gh_new_procedure(S_id_region, SCM_FNC g_id_region, 0, 1, 0), H_id_region);
-  DEFINE_PROC(gh_new_procedure(S_region_maxamp, SCM_FNC g_region_maxamp, 0, 1, 0), H_region_maxamp);
-  DEFINE_PROC(gh_new_procedure(S_save_region, SCM_FNC g_save_region, 2, 1, 0), H_save_region);
-  DEFINE_PROC(gh_new_procedure(S_select_region, SCM_FNC g_select_region, 0, 1, 0), H_select_region);
-  DEFINE_PROC(gh_new_procedure(S_delete_region, SCM_FNC g_delete_region, 0, 1, 0), H_delete_region);
-  DEFINE_PROC(gh_new_procedure(S_protect_region, SCM_FNC g_protect_region, 2, 0, 0), H_protect_region);
-  DEFINE_PROC(gh_new_procedure(S_play_region, SCM_FNC g_play_region, 0, 2, 0), H_play_region);
-  DEFINE_PROC(gh_new_procedure(S_make_region, SCM_FNC g_make_region, 0, 4, 0), H_make_region);
-  DEFINE_PROC(gh_new_procedure(S_mix_region, SCM_FNC g_mix_region, 0, 4, 0), H_mix_region);
-  DEFINE_PROC(gh_new_procedure(S_region_sample, SCM_FNC g_region_sample, 0, 3, 0), H_region_sample);
-  DEFINE_PROC(gh_new_procedure(S_region_samples, SCM_FNC g_region_samples, 0, 4, 0), H_region_samples);
+  DEFINE_PROC(gh_new_procedure(S_restore_region,     SCM_FNC g_restore_region, 9, 0, 0),     "restores a region");
+  DEFINE_PROC(gh_new_procedure(S_insert_region,      SCM_FNC g_insert_region, 0, 4, 0),      H_insert_region);
+  DEFINE_PROC(gh_new_procedure(S_regions,            SCM_FNC g_regions, 0, 0, 0),            H_regions);
+  DEFINE_PROC(gh_new_procedure(S_region_length,      SCM_FNC g_region_length, 0, 1, 0),      H_region_length);
+  DEFINE_PROC(gh_new_procedure(S_region_srate,       SCM_FNC g_region_srate, 0, 1, 0),       H_region_srate);
+  DEFINE_PROC(gh_new_procedure(S_region_chans,       SCM_FNC g_region_chans, 0, 1, 0),       H_region_chans);
+  DEFINE_PROC(gh_new_procedure(S_region_id,          SCM_FNC g_region_id, 0, 1, 0),          H_region_id);
+  DEFINE_PROC(gh_new_procedure(S_id_region,          SCM_FNC g_id_region, 0, 1, 0),          H_id_region);
+  DEFINE_PROC(gh_new_procedure(S_region_maxamp,      SCM_FNC g_region_maxamp, 0, 1, 0),      H_region_maxamp);
+  DEFINE_PROC(gh_new_procedure(S_save_region,        SCM_FNC g_save_region, 2, 1, 0),        H_save_region);
+  DEFINE_PROC(gh_new_procedure(S_select_region,      SCM_FNC g_select_region, 0, 1, 0),      H_select_region);
+  DEFINE_PROC(gh_new_procedure(S_delete_region,      SCM_FNC g_delete_region, 0, 1, 0),      H_delete_region);
+  DEFINE_PROC(gh_new_procedure(S_protect_region,     SCM_FNC g_protect_region, 2, 0, 0),     H_protect_region);
+  DEFINE_PROC(gh_new_procedure(S_play_region,        SCM_FNC g_play_region, 0, 2, 0),        H_play_region);
+  DEFINE_PROC(gh_new_procedure(S_make_region,        SCM_FNC g_make_region, 0, 4, 0),        H_make_region);
+  DEFINE_PROC(gh_new_procedure(S_mix_region,         SCM_FNC g_mix_region, 0, 4, 0),         H_mix_region);
+  DEFINE_PROC(gh_new_procedure(S_region_sample,      SCM_FNC g_region_sample, 0, 3, 0),      H_region_sample);
+  DEFINE_PROC(gh_new_procedure(S_region_samples,     SCM_FNC g_region_samples, 0, 4, 0),     H_region_samples);
   DEFINE_PROC(gh_new_procedure(S_region_samples_vct, SCM_FNC g_region_samples2vct, 0, 5, 0), H_region_samples2vct);
-  DEFINE_PROC(gh_new_procedure(S_regionQ, SCM_FNC g_regionQ, 1, 0, 0), H_regionQ);
+  DEFINE_PROC(gh_new_procedure(S_regionQ,            SCM_FNC g_regionQ, 1, 0, 0),            H_regionQ);
 
   define_procedure_with_setter(S_max_regions, SCM_FNC g_max_regions, H_max_regions,
 			       "set-" S_max_regions, SCM_FNC g_set_max_regions,

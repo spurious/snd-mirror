@@ -5,8 +5,8 @@
 void ssnd_help(snd_state *ss, char *subject, ...)
 {
   va_list ap;
-  char *helpstr,*newstr;
-  int len,size;
+  char *helpstr, *newstr;
+  int len, size;
   va_start(ap, subject);
   size = 1024;
   newstr = (char *)CALLOC(size, sizeof(char));
@@ -42,8 +42,8 @@ static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
 #else
   /* groan! */
   va_list ap;
-  char *helpstr,*newstr;
-  int len,size;
+  char *helpstr, *newstr;
+  int len, size;
   va_start(ap, url);
   size = 1024;
   newstr = (char *)CALLOC(size, sizeof(char));
@@ -256,7 +256,7 @@ char *version_info(void)
                           gnu_get_libc_release(),
 #endif
 	  "\n", NULL);
-  for (i=0; i<NUM_ITOAS; i++) 
+  for (i = 0; i < NUM_ITOAS; i++) 
     if (itoa[i])
       FREE(itoa[i]);
   FREE(itoa);
@@ -337,7 +337,7 @@ static char view_menu_help_string[] =
      one graph.\n\
   Graph style: display data as dots, lines or,\n\
      filled polygons.\n\
-  Show Y=0: display the y=0 line.\n\
+  Show Y = 0: display the y = 0 line.\n\
   Verbose cursor: show cursor loc and sample value.\n\
   X axis units: x axis labels in seconds, samples, ect.\n\
 ";
@@ -387,7 +387,7 @@ open a sound file.  To hear the sound, click\n\
 the 'play' button. To see an fft, click the\n\
 'f' button on the left.  The left mouse button\n\
 is used for most pointing operations; the\n\
-middle button pastes in the current selection;\n\
+middle button pastes in the current selection; \n\
 the right button brings up the Snd popup menu.\n\
 \n\
 ";
@@ -493,7 +493,7 @@ The extended commands (preceded by c-x) are:\n\
   c-x: evaluate expression\n\
   c-z: smooth using cosine\n\
 \n\
-Unless otherwise noted, case is not significant;\n\
+Unless otherwise noted, case is not significant; \n\
 c-a is the same as c-A.\n\
 \n\
 Most commands can be prefaced by an integer or\n\
@@ -842,7 +842,7 @@ static char init_file_help_string[] =
 "Nearly everything in Snd can be set in an initialization file, loaded at any\n\
 time from a saved-state (Guile) file, specified via inter-process communciation from any\n\
 other program, invoked via M-x in the minibuffer, imbedded in a keyboard\n\
-macro, or dealt with from the lisp listener panel. The syntax used is lisp;\n\
+macro, or dealt with from the lisp listener panel. The syntax used is lisp; \n\
 if the Guile library is loaded, the underlying language is actually Scheme,\n\
 these entities are fully incorporated into lisp, and all of them can be used\n\
 in arbitrarily complicated functions. I've tried to bring out to lisp nearly\n\
@@ -887,7 +887,7 @@ X-axis Label:\n\
 Speed Control style:\n\
   " S_speed_as_float "     " S_speed_as_ratio "     " S_speed_as_semitone "\n\
 \n\
-Channel Combination style;\n\
+Channel Combination style; \n\
   " S_channels_separate "  " S_channels_combined "  " S_channels_superimposed "\n\
 \n\
 Envelope Editor target:\n\
@@ -1741,7 +1741,7 @@ close, and save files. Its options are:\n\
 \n",
 file_menu_help_string,
 "\n\
-The Print option produces a Postscript file;\n\
+The Print option produces a Postscript file; \n\
 you can print it with lpr.\n",
 NULL);
 }
@@ -1888,7 +1888,7 @@ void click_for_amp_help(snd_state *ss)
 static char sp_srate_arrow_help_string[] = 
 "This button determines which direction\n\
 the sound file is played.  When pointing\n\
-to the right, the sound is played forwards;\n\
+to the right, the sound is played forwards; \n\
 to the left, backwards.\n\
 ";
 
@@ -2017,7 +2017,7 @@ static char sp_filter_envelope_help_string[] =
 "The filter envelope is a line-segment\n\
 description of the frequency response\n\
 you want.  It consists of a sequence of\n\
-x,y pairs; normally the x axis goes\n\
+x, y pairs; normally the x axis goes\n\
 from 0 to .5 or 0 to 1.0.  For example,\n\
 a low-pass filter envelope could be:\n\
 0.0 1.0 .25 1.0 .5 0.0 1.0 0.0\n\
@@ -2139,7 +2139,7 @@ void transform_dialog_help(snd_state *ss)
 related choices.\n\
 \n\
 On the upper left is a list of available transform\n\
-types; next on the right is a list of fft sizes;\n\
+types; next on the right is a list of fft sizes; \n\
 next is a panel of buttons that sets various\n\
 display-oriented choices; the lower left panel\n\
 sets the current wavelet, when relevant; next is\n\

@@ -15,7 +15,7 @@
   #endif
 #endif
 
-enum {NOGRAPH,WAVE,FFT_AXIS,LISP,FFT_MAIN};    /* for marks, regions, mouse click detection */
+enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
 
 #if HAVE_GUILE
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler);
@@ -128,14 +128,14 @@ void in_set_fft_window(snd_state *ss, int val) {in_set_fft_window_1(ss, val); ma
 
 void map_chans_field(snd_state *ss, int field, Float val)
 {
-  int i,j;
+  int i, j;
   snd_info *sp;
-  for (i=0; i<ss->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse))
 	{
-	  for (j=0; j<sp->nchans; j++)
+	  for (j = 0; j < sp->nchans; j++)
 	    {
 	      switch (field)
 		{
@@ -327,7 +327,7 @@ static int map_chans_dot_size(chan_info *cp, void *ptr)
 
 static void set_dot_size(snd_state *ss, int val)
 {
-  if (val>0)  /* -1 here can crash X! */
+  if (val > 0)  /* -1 here can crash X! */
     {
       in_set_dot_size(ss, val);
       map_over_chans(ss, map_chans_dot_size, (void *)val);
@@ -349,11 +349,11 @@ static void goto_previous_graph (chan_info *cp, int count)
 {
   snd_info *sp;
   snd_state *ss;
-  chan_info *ncp,*vcp;
-  int i,k,j,chan;
+  chan_info *ncp, *vcp;
+  int i, k, j, chan;
   if (count == 0) return;
-  sp=cp->sound;
-  ss=cp->state;
+  sp = cp->sound;
+  ss = cp->state;
   vcp = virtual_selected_channel(cp);
   chan = vcp->chan;
   ncp = NULL;
@@ -375,7 +375,7 @@ static void goto_previous_graph (chan_info *cp, int count)
     {
       /* look for previous sound, (wrap around) */
       /* goto channel n */
-      for (i=(sp->index-1); i>=0; i--)
+      for (i=(sp->index-1); i >= 0; i--)
 	{
 	  if (snd_ok(ss->sounds[i]))
 	    {
@@ -389,7 +389,7 @@ static void goto_previous_graph (chan_info *cp, int count)
 	}
       if (k > 0)
 	{
-	  for (i=ss->max_sounds-1; i>=sp->index; i--)
+	  for (i = ss->max_sounds-1; i >= sp->index; i--)
 	    {
 	      if (snd_ok(ss->sounds[i]))
 		{
@@ -414,11 +414,11 @@ static void goto_next_graph (chan_info *cp, int count)
 {
   snd_info *sp;
   snd_state *ss;
-  chan_info *ncp,*vcp;
-  int i,k,j,chan;
+  chan_info *ncp, *vcp;
+  int i, k, j, chan;
   if (count == 0) return;
-  sp=cp->sound;
-  ss=cp->state;
+  sp = cp->sound;
+  ss = cp->state;
   vcp = virtual_selected_channel(cp);
   chan = vcp->chan;
   ncp = NULL;
@@ -439,7 +439,7 @@ static void goto_next_graph (chan_info *cp, int count)
     {
       /* look for next sound, (wrap around) */
       /* goto channel 0 */
-      for (i=(sp->index+1); i<ss->max_sounds; i++)
+      for (i=(sp->index+1); i < ss->max_sounds; i++)
 	{
 	  if (snd_ok(ss->sounds[i]))
 	    {
@@ -455,7 +455,7 @@ static void goto_next_graph (chan_info *cp, int count)
       /* not really right because C-x in listener already exits listener (so C-x O in one chan case bounces back to self) */
       if (k > 0)
 	{
-	  for (i=0; i<=sp->index; i++)
+	  for (i = 0; i <= sp->index; i++)
 	    {
 	      if (snd_ok(ss->sounds[i]))
 		{
@@ -522,9 +522,9 @@ int update_graph(chan_info *cp, void *ptr)
   if (ap)
     {
       cur_srate = (double)(SND_SRATE(sp));
-      ap->losamp = (int)(ceil(ap->x0*cur_srate)); 
+      ap->losamp = (int)(ceil(ap->x0 * cur_srate)); 
       if (ap->losamp < 0) ap->losamp = 0;
-      ap->hisamp = (int)(ap->x1*cur_srate);
+      ap->hisamp = (int)(ap->x1 * cur_srate);
     }
   if (!(((cp->cgx)->ax)->wn)) 
     if (!(fixup_cp_cgx_ax_wn(cp))) return(0);
@@ -540,7 +540,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
 {
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
-  Float ymin,ymax,xmax,y0,y1,x0,x1,dur,gdur;
+  Float ymin, ymax, xmax, y0, y1, x0, x1, dur, gdur;
   char *label;
   file_info *hdr;
   int samples_per_channel;
@@ -551,7 +551,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   y0 = initial_y0(ss);
   y1 = initial_y1(ss);
   label = STR_time;
-  dur = (Float)samples_per_channel/(Float)hdr->srate;
+  dur = (Float)samples_per_channel / (Float)hdr->srate;
   if (dur == 0.0) gdur = .001; else gdur = dur;
   xmax = gdur;
   if ((sp->fit_data_amps) && (fit_data_on_open(ss)))
@@ -580,11 +580,11 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   else
     {
       if (xmax > dur) xmax = dur;
-      if (x0 >= x1) x0 = x1-.01;
+      if (x0 >= x1) x0 = x1 - .01;
     }
   if (xmax <= 0.0) xmax = .001;
-  if (ymin >= ymax) ymin = ymax-.01;
-  if (y0 >= y1) y0 = y1-.01;
+  if (ymin >= ymax) ymin = ymax - .01;
+  if (y0 >= y1) y0 = y1 - .01;
   ap = make_axis_info(cp, 0.0, xmax, ymin, ymax, label, x0, x1, y0, y1, NULL);
   if (dur == 0)
     {
@@ -631,7 +631,7 @@ void start_amp_env(chan_info *cp)
 
 void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss)
 {
-  int fd,chn=0;
+  int fd, chn = 0;
   int *datai;
   snd_info *sp;
   file_info *chdr;
@@ -700,7 +700,7 @@ void apply_y_axis_change (axis_info *ap, chan_info *cp)
   chan_info *ncp;
   axis_info *nap;
   int i;
-  Float zy,sy;
+  Float zy, sy;
   set_y_bounds(ap);
   update_graph(cp, NULL);
   sp = cp->sound;
@@ -708,7 +708,7 @@ void apply_y_axis_change (axis_info *ap, chan_info *cp)
     {
       sy = ap->sy;
       zy = ap->zy;
-      for (i=0; i<sp->nchans; i++)
+      for (i = 0; i < sp->nchans; i++)
 	{
 	  ncp = sp->chans[i];
 	  if (ncp != cp)
@@ -794,7 +794,7 @@ static void set_y_axis_y0y1 (chan_info *cp, Float y0, Float y1)
 static void reset_x_display(chan_info *cp, double sx, double zx)
 {
   axis_info *ap;
-  ap=cp->axis;
+  ap = cp->axis;
   ap->sx = sx;
   ap->zx = zx;
   set_x_bounds(ap);
@@ -826,7 +826,7 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp)
   if (sp->syncing != 0)
     {
       si = snd_sync(cp->state, sp->syncing);
-      for (i=0; i<si->chans; i++) 
+      for (i = 0; i < si->chans; i++) 
 	if (cp != si->cps[i]) 
 	  update_xs(si->cps[i], ap);
       si = free_sync_info(si);
@@ -834,7 +834,7 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp)
   else 
     {
       if (sp->combining != CHANNELS_SEPARATE)
-	for (i=1; i<sp->nchans; i++)
+	for (i = 1; i < sp->nchans; i++)
 	  update_xs(sp->chans[i], ap);
     }
 }
@@ -844,24 +844,24 @@ static int visible_syncd_cursor(chan_info *cp)
   snd_info *sp;
   snd_state *ss;
   chan_info *ncp;
-  int i,j,sync;
+  int i, j, sync;
   sp = cp->sound;
   sync = sp->syncing;
   if (sync != 0)
     {
-      for (i=0; i<sp->nchans; i++)
+      for (i = 0; i < sp->nchans; i++)
 	{
 	  ncp = sp->chans[i];
 	  if (ncp->cursor_visible) return(ncp->cursor);
 	}
       /* geez, maybe it's in a separate syncd sound */
       ss = cp->state;
-      for (j=0; j<ss->max_sounds; j++)
+      for (j = 0; j < ss->max_sounds; j++)
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse) && (sp->syncing == sync) && (sp != cp->sound))
 	    {
-	      for (i=0; i<sp->nchans; i++)
+	      for (i = 0; i < sp->nchans; i++)
 		{
 		  ncp = sp->chans[i];
 		  if (ncp->cursor_visible) return(ncp->cursor);
@@ -883,7 +883,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
    */
   chan_info *ncp;
   int newf;
-  Float loc,pos;
+  Float loc, pos;
   if (ap->xmax == 0.0) return;
   if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin+.001;
   if (focus_style != FOCUS_LEFT)
@@ -942,7 +942,7 @@ void sx_incremented(chan_info *cp, double amount)
   ap = cp->axis;
   ap->sx += (ap->zx*amount);
   if (ap->sx < 0.0) ap->sx = 0.0;
-  if (ap->sx > (1.0-ap->zx)) ap->sx = 1.0 - ap->zx;
+  if (ap->sx > (1.0 - ap->zx)) ap->sx = 1.0 - ap->zx;
   apply_x_axis_change(ap, cp, cp->sound);
   resize_sx(cp);
 }
@@ -1042,8 +1042,8 @@ static char chn_id_str[32];
 
 static void display_channel_id (chan_info *cp, int height, int chans)
 {
-  int x0,y0;
-  if ((chans>1) || (cp->edit_ctr > 0))
+  int x0, y0;
+  if ((chans > 1) || (cp->edit_ctr > 0))
     {
       set_peak_numbers_font(cp);
       if (cp->printing) ps_set_peak_numbers_font(cp);
@@ -1076,7 +1076,7 @@ static void display_channel_id (chan_info *cp, int height, int chans)
 
 static void display_selection_fft_size (chan_info *cp, axis_info *fap)
 {
-  int x0,y0;
+  int x0, y0;
   if (fap->height < 60) return;
   set_tiny_numbers_font(cp);
   if (cp->printing) ps_set_tiny_numbers_font(cp);
@@ -1103,10 +1103,10 @@ static axis_context *combined_context(chan_info *cp);
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 {
   /* axes are already set, determining the data we will show -- do we need explicit clipping ? */
-  int i,j = 0,samps,xi;
+  int i, j = 0, samps, xi;
   axis_info *ap;
-  Float samples_per_pixel,xf,pinc = 0.0;
-  double x,incr;  
+  Float samples_per_pixel, xf, pinc = 0.0;
+  double x, incr;  
   /* in long files with small windows we can run into floating point errors that accumulate
    * in the loop (incrementing by a truncated amount each time), making the x amounts smaller
    * than they should be (so the graph appears squeezed).
@@ -1128,11 +1128,11 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
    * be tiny, so we're pushing the arithmetic into dangerous realms.  This stuff has been tested
    * on some extreme cases (hour-long 44KHz stereo), but there's always another special case...
    */
-  Float samp,ymin,ymax;
+  Float samp, ymin, ymax;
   int pixels;
   snd_fd *sf = NULL;
-  int x_start,x_end;
-  double start_time = 0.0,cur_srate = 1.0;
+  int x_start, x_end;
+  double start_time = 0.0, cur_srate = 1.0;
   axis_context *ax = NULL;
   chan_context *cgx;
   env_info *ep;
@@ -1157,7 +1157,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE-1;
   if ((x_start == x_end) || (samps <= 1))
     samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
-  else samples_per_pixel = (Float)(samps-1) / (Float)pixels;
+  else samples_per_pixel = (Float)(samps - 1) / (Float)pixels;
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   if (sp)
@@ -1177,7 +1177,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
        */
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       incr = (double)1.0 / cur_srate;
-      for (j=0, i=ap->losamp, x=((double)(ap->losamp)/cur_srate); i<=ap->hisamp; i++, j++, x+=incr)
+      for (j = 0, i = ap->losamp, x=((double)(ap->losamp)/cur_srate); i <= ap->hisamp; i++, j++, x+=incr)
 	{
 	  samp = next_sample_to_float(sf);
 	  set_grf_point(local_grf_x(x, ap), j, local_grf_y(samp, ap));
@@ -1193,7 +1193,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 
 	  /* to show fft extent, losamp to losamp+fft_size min hisamp in fft-color */
 
-	  if (cp->printing) ps_set_grf_point((double)i/cur_srate, j, samp);
+	  if (cp->printing) ps_set_grf_point((double)i / cur_srate, j, samp);
 	}
       if (sp)
 	{
@@ -1207,7 +1207,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
 	  incr = (double)1.0 /cur_srate;
-	  for (j=0, i=ap->losamp, x=start_time; i<=ap->hisamp; i++,j++,x+=incr)
+	  for (j = 0, i = ap->losamp, x = start_time; i <= ap->hisamp; i++, j++, x+=incr)
 	    {
 	      samp = next_sample_to_float(sf);
 	      set_grf_point(local_grf_x(x, ap), j, local_grf_y(samp, ap));
@@ -1222,7 +1222,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       else
 	{
 	  /* take min, max */
-	  if (amp_env_usable(cp, samples_per_pixel, ap->hisamp,TRUE)) /* true=start new background amp env process if needed */
+	  if (amp_env_usable(cp, samples_per_pixel, ap->hisamp,TRUE)) /* true = start new background amp env process if needed */
 	    j = amp_env_graph(cp, ap, samples_per_pixel, (sp) ? ((int)SND_SRATE(sp)) : 1);
 	  else
 	    {
@@ -1241,22 +1241,22 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		}
 	      sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
 	      j = 0;      /* graph point counter */
-	      x=ap->x0;
-	      xi=local_grf_x(x, ap);
-	      xf=0.0;     /* samples per pixel counter */
+	      x = ap->x0;
+	      xi = local_grf_x(x, ap);
+	      xf = 0.0;     /* samples per pixel counter */
 	      ymin = 100.0;
 	      ymax = -100.0;
 	      if (cp->printing) pinc = samples_per_pixel/cur_srate;
-	      for (i=ap->losamp, xf=0.0; i<=ap->hisamp; i++)
+	      for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
 		{
 		  samp = next_sample_to_float(sf);
 		  if (samp > ymax) ymax = samp;
 		  if (samp < ymin) ymin = samp;
-		  xf+=1.0;
-		  if (xf>samples_per_pixel)
+		  xf += 1.0;
+		  if (xf > samples_per_pixel)
 		    {
 		      set_grf_points(xi, j, local_grf_y(ymin, ap), local_grf_y(ymax, ap));
-		      if (cp->printing) {x+=pinc; ps_set_grf_points(x, j, ymin, ymax);}
+		      if (cp->printing) {x += pinc; ps_set_grf_points(x, j, ymin, ymax);}
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
@@ -1297,22 +1297,22 @@ static char ampstr[8];
 
 static Float cp_dB(chan_info *cp, Float py)
 {
-  return((py <= cp->lin_dB) ? cp->min_dB : (20.0*(log10(py))));
+  return((py <= cp->lin_dB) ? cp->min_dB : (20.0 * (log10(py))));
 }
 
 static Float dB(snd_state *ss, Float py)
 {
-  return((py <= ss->lin_dB) ? ss->min_dB : (20.0*(log10(py))));
+  return((py <= ss->lin_dB) ? ss->min_dB : (20.0 * (log10(py))));
 }
 
 static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler, int samps, Float samps_per_pixel, int fft_data, Float fft_scale)
 {
-  int num_peaks,row,col,tens,i,with_amps,acol,acols;
-  Float amp0,px;
+  int num_peaks, row, col, tens, i, with_amps, acol, acols;
+  Float amp0, px;
   char *fstr;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
-  if (samps > (scaler*10)) 
+  if (samps > (scaler * 10)) 
     tens = 2; 
   else 
     if (samps > scaler) 
@@ -1321,7 +1321,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       if (samps > (scaler/10)) 
 	tens = 0; 
       else tens = -1;
-  num_peaks = (fap->y_axis_y0-fap->y_axis_y1) / 20;
+  num_peaks = (fap->y_axis_y0 - fap->y_axis_y1) / 20;
   if (num_peaks <= 0) return;
   peak_freqs = (fft_peak *)CALLOC(cp->max_fft_peaks, sizeof(fft_peak));
   peak_amps = (fft_peak *)CALLOC(cp->max_fft_peaks, sizeof(fft_peak));
@@ -1335,11 +1335,11 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       FREE(peak_amps); 
       return;
     }
-  with_amps = (fap->width > ((30+5*tens+AMP_ROOM)*AMP_ROOM_CUTOFF));
+  with_amps = (fap->width > ((30 + 5 * tens + AMP_ROOM) * AMP_ROOM_CUTOFF));
   acols = 3;
-  col = fap->x_axis_x1 - 30 - tens*5; 
+  col = fap->x_axis_x1 - 30 - tens * 5; 
   /* in some cases (lisp graph with integer peak "freqs") this can move the freq column over too far */
-  acol = fap->x_axis_x1-AMP_ROOM+15;
+  acol = fap->x_axis_x1 - AMP_ROOM + 15;
   if (with_amps) 
     {
       col -= AMP_ROOM;
@@ -1352,13 +1352,13 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
     }
   if (num_peaks > 6)
     {
-      for (i=0; i<num_peaks; i++) peak_amps[i]=peak_freqs[i];
+      for (i = 0; i < num_peaks; i++) peak_amps[i] = peak_freqs[i];
       qsort((void *)peak_amps, num_peaks, sizeof(fft_peak), compare_peak_amps);
       if (num_peaks < 12) amp0 = peak_amps[2].amp; else amp0 = peak_amps[5].amp;
       set_bold_peak_numbers_font(cp);
       if (cp->printing) ps_set_bold_peak_numbers_font(cp);
       row = fap->y_axis_y1 + 15;
-      for (i=0; i<num_peaks; i++)
+      for (i = 0; i < num_peaks; i++)
 	{
 	  if (peak_freqs[i].amp >= amp0)
 	    {
@@ -1367,7 +1367,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	      draw_string(copy_context(cp), col, row, fstr, strlen(fstr));
 	      if (cp->printing) ps_draw_string(cp, col, row, fstr);
 	      FREE(fstr);
-	      fstr=NULL;
+	      fstr = NULL;
 	      if (with_amps)
 		{
 		  if ((fft_data) && (cp->fft_log_magnitude))
@@ -1385,7 +1385,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (cp->printing) ps_set_peak_numbers_font(cp);
   /* choose a small font for these numbers */
   row = fap->y_axis_y1 + 15;
-  for (i=0; i<num_peaks; i++)
+  for (i = 0; i < num_peaks; i++)
     {
       if (peak_freqs[i].amp < amp0)
 	{
@@ -1394,7 +1394,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	  draw_string(copy_context(cp), col, row, fstr, strlen(fstr));
 	  if (cp->printing) ps_draw_string(cp, col, row, fstr);
 	  FREE(fstr);
-	  fstr=NULL;
+	  fstr = NULL;
 	  if (with_amps)
 	    {
 	      if ((fft_data) && (cp->fft_log_magnitude))
@@ -1418,11 +1418,11 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   axis_info *fap;
   axis_context *ax;
   Float *data;
-  Float incr,x,scale;
-  int i,j,xi,hisamp,losamp=0;
-  Float samples_per_pixel,xf,ina,ymax,scaler;
-  short logx,logy;
-  Float pslogx,pslogy;
+  Float incr, x, scale;
+  int i, j, xi, hisamp, losamp = 0;
+  Float samples_per_pixel, xf, ina, ymax, scaler;
+  short logx, logy;
+  Float pslogx, pslogy;
   fp = cp->fft;
   if (chan_fft_in_progress(cp)) return;
   fap = fp->axis;
@@ -1431,8 +1431,8 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   /* these lo..hi values are just for upcoming loops -- not axis info */
   if (cp->transform_type == FOURIER)
     {
-      hisamp = (int)(fp->current_size*cp->spectro_cutoff/2);
-      losamp = (int)(fp->current_size*cp->spectro_start/2);
+      hisamp = (int)(fp->current_size * cp->spectro_cutoff / 2);
+      losamp = (int)(fp->current_size * cp->spectro_start / 2);
       incr = (Float)SND_SRATE(sp) / (Float)(fp->current_size);
     }
   else
@@ -1446,7 +1446,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   scale = fp->scale;
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
-  samples_per_pixel = (Float)(hisamp - losamp) / (Float)(fap->x_axis_x1-fap->x_axis_x0);
+  samples_per_pixel = (Float)(hisamp - losamp) / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
   if (sp->combining == CHANNELS_SUPERIMPOSED) 
     {
       ax = combined_context(cp); 
@@ -1459,18 +1459,18 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  if (losamp == 0)
 	    {
-	      for (i=0, x=0.0; i<hisamp; i++,x+=incr)
+	      for (i = 0, x = 0.0; i < hisamp; i++, x+=incr)
 		{
 		  set_grf_point(local_grf_x(x, fap), i, local_grf_y(data[i]*scale, fap));
-		  if (cp->printing) ps_set_grf_point(x, i, data[i]*scale);
+		  if (cp->printing) ps_set_grf_point(x, i, data[i] * scale);
 		}
 	    }
 	  else
 	    {
-	      for (i=losamp, x=fap->x0; i<hisamp; i++,x+=incr)
+	      for (i = losamp, x = fap->x0; i < hisamp; i++, x+=incr)
 		{
-		  set_grf_point(local_grf_x(x, fap), i-losamp, local_grf_y(data[i]*scale, fap));
-		  if (cp->printing) ps_set_grf_point(x, i-losamp, data[i]*scale);
+		  set_grf_point(local_grf_x(x, fap), i - losamp, local_grf_y(data[i] * scale, fap));
+		  if (cp->printing) ps_set_grf_point(x, i - losamp, data[i] * scale);
 		}
 	    }
 	}
@@ -1479,19 +1479,23 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  if (cp->fft_log_frequency) 
 	    {
 	      ymax = LOG_FACTOR;
-	      incr = ymax/(Float)(hisamp - losamp);
-	      scaler = 1.0/log(ymax+1.0);
+	      incr = ymax / (Float)(hisamp - losamp);
+	      scaler = 1.0 / log(ymax + 1.0);
 	    }
 	  else scaler = 0.0;
-	  for (i=losamp, x=fap->x0; i<hisamp; i++,x+=incr)
+	  for (i = losamp, x = fap->x0; i < hisamp; i++, x+=incr)
 	    {
-	      if (cp->fft_log_frequency) logx = local_grf_x(log(x+1.0)*scaler, fap); else logx = local_grf_x(x, fap);
-	      if (cp->fft_log_magnitude) logy = local_grf_y(cp_dB(cp, data[i]*scale), fap); else logy = local_grf_y(data[i]*scale, fap);
-	      set_grf_point(logx, i-losamp, logy);
+	      if (cp->fft_log_frequency) 
+		logx = local_grf_x(log(x + 1.0) * scaler, fap); 
+	      else logx = local_grf_x(x, fap);
+	      if (cp->fft_log_magnitude) 
+		logy = local_grf_y(cp_dB(cp, data[i] * scale), fap); 
+	      else logy = local_grf_y(data[i] * scale, fap);
+	      set_grf_point(logx, i - losamp, logy);
 	      if (cp->printing) 
 		{
-		  if (cp->fft_log_frequency) pslogx = log(x+1.0)*scaler; else pslogx = x;
-		  if (cp->fft_log_magnitude) pslogy = cp_dB(cp, data[i]*scale); else pslogy = data[i]*scale;
+		  if (cp->fft_log_frequency) pslogx = log(x + 1.0) * scaler; else pslogx = x;
+		  if (cp->fft_log_magnitude) pslogy = cp_dB(cp, data[i] * scale); else pslogy = data[i] * scale;
 		  ps_set_grf_point(pslogx, i-losamp, pslogy);
 		}
 	    }
@@ -1503,68 +1507,68 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
     {
       /* take max -- min not interesting here */
       j = 0;      /* graph point counter */
-      i=losamp;
+      i = losamp;
       if (losamp == 0) x = 0.0; else x = fap->x0;
-      xi=local_grf_x(x, fap);
-      xf=0.0;     /* samples per pixel counter */
+      xi = local_grf_x(x, fap);
+      xf = 0.0;     /* samples per pixel counter */
       if (cp->fft_log_frequency) 
 	{
 	  ymax = LOG_FACTOR;
-	  incr = ymax/(Float)(hisamp - losamp);
-	  scaler = 1.0/log(ymax+1.0);
+	  incr = ymax / (Float)(hisamp - losamp);
+	  scaler = 1.0 / log(ymax + 1.0);
 	}
       else scaler = 0.0;
-      ymax=-1.0;
+      ymax = -1.0;
       if ((!(cp->fft_log_magnitude)) && (!(cp->fft_log_frequency)))
 	{
-	  while (i<hisamp)
+	  while (i < hisamp)
 	    {
 	      ina = data[i];
 	      if (ina > ymax) ymax = ina;
-	      xf+=1.0;
+	      xf += 1.0;
 	      i++;
-	      if (xf>samples_per_pixel)
+	      if (xf > samples_per_pixel)
 		{
-		  set_grf_point(xi, j, local_grf_y(ymax*scale, fap));
-		  if (cp->printing) {x+=(incr*samples_per_pixel); ps_set_grf_point(x, j, ymax*scale);}
+		  set_grf_point(xi, j, local_grf_y(ymax * scale, fap));
+		  if (cp->printing) {x += (incr * samples_per_pixel); ps_set_grf_point(x, j, ymax * scale);}
 		  xi++;
 		  j++;
 		  xf -= samples_per_pixel;
-		  ymax=-1.0;
+		  ymax = -1.0;
 		}
 	    }
 	}
       else
 	{
-	  while (i<hisamp)
+	  while (i < hisamp)
 	    {
 	      ina = data[i];
 	      if (ina > ymax) ymax = ina;
-	      xf+=1.0;
+	      xf += 1.0;
 	      i++;
-	      if (xf>samples_per_pixel)
+	      if (xf > samples_per_pixel)
 		{
 		  if (cp->fft_log_frequency) 
-		    logx = local_grf_x(log(x+1.0)*scaler, fap); 
+		    logx = local_grf_x(log(x + 1.0) * scaler, fap); 
 		  else logx = local_grf_x(x, fap);
 		  if (cp->fft_log_magnitude) 
-		    logy = local_grf_y(cp_dB(cp, ymax*scale), fap); 
-		  else logy = local_grf_y(ymax*scale, fap);
+		    logy = local_grf_y(cp_dB(cp, ymax * scale), fap); 
+		  else logy = local_grf_y(ymax * scale, fap);
 		  set_grf_point(logx, j, logy);
 		  if (cp->printing) 
 		    {
 		      if (cp->fft_log_frequency) 
-			pslogx = log(x+1.0)*scaler; 
+			pslogx = log(x + 1.0) * scaler; 
 		      else pslogx = x;
 		      if (cp->fft_log_magnitude) 
-			pslogy = cp_dB(cp, ymax*scale); 
-		      else pslogy = ymax*scale;
+			pslogy = cp_dB(cp, ymax * scale); 
+		      else pslogy = ymax * scale;
 		      ps_set_grf_point(pslogx, j, pslogy);
 		    }
-		  x+=(incr*samples_per_pixel);
+		  x += (incr * samples_per_pixel);
 		  j++;
 		  xf -= samples_per_pixel;
-		  ymax=-1.0;
+		  ymax = -1.0;
 		}
 	    }
 	}
@@ -1580,7 +1584,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
     {
       if (cp->transform_type == FOURIER)
 	display_peaks(cp, fap, data, 
-		      (int)(SND_SRATE(sp)*cp->spectro_cutoff/2), 
+		      (int)(SND_SRATE(sp)*cp->spectro_cutoff / 2), 
 		      hisamp, samples_per_pixel, 1, scale);
       else display_peaks(cp, fap, data, 
 			 (int)(fp->current_size*cp->spectro_cutoff), 
@@ -1593,9 +1597,9 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 static int display_fft_peaks(chan_info *ucp, char *filename)
 {
   /* put (sync'd) peak info in help window */
-  char *str = NULL,*mcf = NULL;
+  char *str = NULL, *mcf = NULL;
   fft_info *fp;
-  axis_info *fap,*ap;
+  axis_info *fap, *ap;
   snd_state *ss;
   snd_info *sp;
   Float *data;
@@ -1605,7 +1609,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
   FILE *fd = NULL;
-  int i,chn,samps,num_peaks,tens,srate,err = 0,tmp_file = 1,chars;
+  int i, chn, samps, num_peaks, tens, srate, err = 0, tmp_file = 1, chars;
   Float samples_per_pixel;
   sync_info *si = NULL;
   chan_info *cp;
@@ -1639,7 +1643,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 #else
       fprintf(fd, "Snd: fft peaks (%s)\n\n");
 #endif
-      for (chn=0;chn<si->chans;chn++)
+      for (chn = 0; chn < si->chans; chn++)
 	{
 	  cp = si->cps[chn];
 	  fp = cp->fft;
@@ -1651,29 +1655,30 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 		  ap = cp->axis;
 		  sp = cp->sound;
 		  data = fp->data;
-		  samps = fp->current_size/2;
+		  samps = fp->current_size / 2;
 		  samples_per_pixel = (Float)samps / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
 		  srate = SND_SRATE(sp);
 		  srate2 = (Float)srate * .5;
-		  if (samps > (5*srate)) 
+		  if (samps > (5 * srate)) 
 		    tens = 2; 
 		  else 
 		    if (samps > (int)srate2) 
 		      tens = 1; 
 		    else 
-		      if (samps > (srate/20)) 
+		      if (samps > (srate / 20)) 
 			tens = 0; 
 		      else tens = -1;
 		  peak_freqs = (fft_peak *)CALLOC(cp->max_fft_peaks, sizeof(fft_peak));
 		  peak_amps = (fft_peak *)CALLOC(cp->max_fft_peaks, sizeof(fft_peak));
 		  num_peaks = find_and_sort_fft_peaks(data, peak_freqs, cp->max_fft_peaks, samps, 1, samples_per_pixel, fp->scale);
-		  if ((num_peaks != 1) || (peak_freqs[0].freq != 0.0))
+		  if ((num_peaks != 1) || 
+		      (peak_freqs[0].freq != 0.0))
 		    {
 		      fprintf(fd, sp->shortname);
 		      if (sp->nchans > 1) fprintf(fd, ": chan %d", cp->chan);
 		      fprintf(fd, ", fft %d points beginning at sample %d (%.3f secs)\n\n",
 			      fp->current_size, ap->losamp, (Float)(ap->losamp) / (Float)srate);
-		      for (i=0; i<num_peaks; i++)
+		      for (i = 0; i < num_peaks; i++)
 			fprintf(fd, "  %.*f  %.5f\n",
 				tens, peak_freqs[i].freq * srate2, peak_freqs[i].amp); 
 		      fprintf(fd, "\n");
@@ -1691,7 +1696,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 	  fseek(fd, 0, SEEK_END);
 	  chars = ftell(fd);
 	  rewind(fd);
-	  str = (char *)CALLOC(chars+1, sizeof(char));
+	  str = (char *)CALLOC(chars + 1, sizeof(char));
 	  fread(str, 1, chars, fd);
 	  fclose(fd);
 	  snd_help(ss, "fft peaks", str);
@@ -1706,7 +1711,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 static Float skew_color(Float x, Float base)
 {
   if ((base <= 0.0) || (base == 1.0)) return(x);
-  return((pow(base, x)-1.0) / (base-1.0));
+  return((pow(base, x) - 1.0) / (base - 1.0));
 }
 
 static int js[GRAY_SCALES];
@@ -1714,11 +1719,11 @@ static int js[GRAY_SCALES];
 static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 { /* colormap allocated in snd-fft via allocate_sono_rects in snd-xchn */
   sono_info *si;
-  int i,slice,fwidth,fheight,rectw,recth,j,bins;
+  int i, slice, fwidth, fheight, rectw, recth, j, bins;
   fft_info *fp;
   axis_info *fap;
   Float *fdata;
-  Float binval,xf,xfincr,yf,yfincr,scaler = 0.0,frectw,frecth,xscl,scl = 1.0;
+  Float binval, xf, xfincr, yf, yfincr, scaler = 0.0, frectw, frecth, xscl, scl = 1.0;
   Float *hfdata;
   int *hidata;
   if (chan_fft_in_progress(cp)) return;
@@ -1728,21 +1733,21 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       bins = (int)(si->target_bins * cp->spectro_cutoff);
       allocate_grf_points();
       if (cp->printing) ps_allocate_grf_points();
-      if (cp->fft_log_frequency) scaler = 1.0/log(LOG_FACTOR+1.0);
+      if (cp->fft_log_frequency) scaler = 1.0 / log(LOG_FACTOR + 1.0);
       scl = si->scale; 
       fp = cp->fft;
       fap = fp->axis;
       fwidth = fap->x_axis_x1 - fap->x_axis_x0;
       fheight = fap->y_axis_y0 - fap->y_axis_y1;
-      frectw = (Float)fwidth/(Float)(si->target_slices);
-      frecth = (Float)fheight/(Float)bins;
+      frectw = (Float)fwidth / (Float)(si->target_slices);
+      frecth = (Float)fheight / (Float)bins;
       xscl = (Float)(fap->x1 - fap->x0) / (Float)(si->target_slices);
       rectw = (int)(ceil(frectw));
       recth = (int)(ceil(frecth));
-      if (rectw==0) rectw=1;
-      if (recth==0) recth=1;
-      hfdata = (Float *)CALLOC(bins+1, sizeof(Float));
-      hidata = (int *)CALLOC(bins+1, sizeof(int));
+      if (rectw == 0) rectw = 1;
+      if (recth == 0) recth = 1;
+      hfdata = (Float *)CALLOC(bins + 1, sizeof(Float));
+      hidata = (int *)CALLOC(bins + 1, sizeof(int));
       if (cp->transform_type == FOURIER)
 	{
 	  if (cp->fft_log_frequency)
@@ -1752,50 +1757,50 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       else yfincr = 1.0;
       if (cp->fft_log_frequency)
 	{
-	  for (yf=0.0, i=0; i<=bins; i++,yf+=yfincr)
+	  for (yf = 0.0, i = 0; i <= bins; i++, yf+=yfincr)
 	    {
-	      hfdata[i] = log(yf+1.0) * scaler;
+	      hfdata[i] = log(yf + 1.0) * scaler;
 	      hidata[i] = local_grf_y(hfdata[i], fap);
 	    }
 	}
       else
 	{
-	  for (yf=0.0, i=0; i<=bins; i++,yf+=yfincr)
+	  for (yf = 0.0, i = 0; i <= bins; i++, yf+=yfincr)
 	    {
 	      hfdata[i] = yf;
 	      hidata[i] = local_grf_y(yf, fap);
 	    }
 	}
-      xfincr = ((Float)fwidth/(Float)(si->target_slices));
-      xf = 2+fap->x_axis_x0;
-      for (slice=0;slice<si->active_slices;slice++,xf+=xfincr)
+      xfincr = ((Float)fwidth / (Float)(si->target_slices));
+      xf = 2 + fap->x_axis_x0;
+      for (slice = 0; slice < si->active_slices; slice++, xf+=xfincr)
 	{
-	  for (i=0; i<GRAY_SCALES; i++) js[i] = 0;
+	  for (i = 0; i < GRAY_SCALES; i++) js[i] = 0;
 	  fdata = si->data[slice];
-	  for (i=0; i<bins; i++)
+	  for (i = 0; i < bins; i++)
 	    {
 	      /* above is fdata[i-1], left is si->data[slice-1][i] */
-	      binval = fdata[i]/scl;
-	      if (cp->fft_log_magnitude) binval = 1.0 - (cp_dB(cp, binval))/cp->min_dB;
+	      binval = fdata[i] / scl;
+	      if (cp->fft_log_magnitude) binval = 1.0 - (cp_dB(cp, binval)) / cp->min_dB;
 	      if (binval >= color_cutoff(ss))
 		{
 		  if (color_inverted(ss)) 
 		    j = (int)(skew_color((1.0 - binval), color_scale(ss))*GRAY_SCALES); 
 		  else j = (int)(skew_color(binval, color_scale(ss))*GRAY_SCALES);
-		  if (j>0) j--; else j=0;
+		  if (j > 0) j--; else j = 0;
 		  if (cp->fft_log_frequency)
-		    set_sono_rectangle(js[j], j, (int)xf, hidata[i+1], rectw, hidata[i]-hidata[i+1]);
+		    set_sono_rectangle(js[j], j, (int)xf, hidata[i+1], rectw, hidata[i] - hidata[i+1]);
 		  else set_sono_rectangle(js[j], j, (int)xf, hidata[i+1], rectw, recth);
 		  if (cp->printing)
 		    {
 		      if (cp->fft_log_frequency) 
-			ps_draw_sono_rectangle(cp, fap, j, fap->x0 + xscl*slice, hfdata[i+1], frectw, hfdata[i]-hfdata[i+1]);
-		      else ps_draw_sono_rectangle(cp, fap, j, fap->x0 + xscl*slice, hfdata[i+1], frectw, frecth);
+			ps_draw_sono_rectangle(cp, fap, j, fap->x0 + xscl * slice, hfdata[i+1], frectw, hfdata[i] - hfdata[i+1]);
+		      else ps_draw_sono_rectangle(cp, fap, j, fap->x0 + xscl * slice, hfdata[i+1], frectw, frecth);
 		    }
 		  js[j]++;
 		}
 	    }
-	  for (i=0; i<GRAY_SCALES; i++)
+	  for (i = 0; i < GRAY_SCALES; i++)
 	    {
 	      if (js[i] > 0) draw_sono_rectangles(copy_context(cp), i, js[i]);
 	    }
@@ -1820,7 +1825,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, Float yscl, Float zscl, Float *mat)
 {
   /* return rotation matrix for rotation through angles xangle, yangle, then zangle with scaling by xscl, yscl, zscl */
-  Float sinx,siny,sinz,cosx,cosy,cosz,deg;
+  Float sinx, siny, sinz, cosx, cosy, cosz, deg;
   deg = TWO_PI / 360.0;
   /* might be nice to use sincosf here, but it segfaults in GnuC */
   sinx = sin(xangle * deg);
@@ -1842,7 +1847,7 @@ static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, 
 
 static void rotate(Float *xyz, Float *mat)
 { /* use rotation/scaling matrix set up by rotate_matrix to rotate and scale the vector xyz */
-  Float x,y,z;
+  Float x, y, z;
   x = xyz[0];
   y = xyz[1];
   z = xyz[2];
@@ -1877,9 +1882,9 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
   Float *fdata;
   Float matrix[9];
   Float xyz[3];
-  Float xoff,yoff,x,y,xincr,yincr,x0,y0,binval,scl = 1.0;
-  Float fwidth,fheight,zscl,yval,xval;
-  int bins,slice,i,j,xx,yy;
+  Float xoff, yoff, x, y, xincr, yincr, x0, y0, binval, scl = 1.0;
+  Float fwidth, fheight, zscl, yval, xval;
+  int bins, slice, i, j, xx, yy;
   if (chan_fft_in_progress(cp)) return;
   si = (sono_info *)(cp->sonogram_data);
   if ((si) && (si->scale > 0.0))
@@ -1892,39 +1897,39 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
       bins = (int)(si->target_bins * cp->spectro_cutoff);
       fwidth = (fap->x_axis_x1 - fap->x_axis_x0);
       fheight = (fap->y_axis_y1 - fap->y_axis_y0); /* negative! */
-      xincr = fwidth/(Float)bins;
-      yincr = fheight/(Float)si->active_slices;
-      x0 = (fap->x_axis_x0+fap->x_axis_x1)*0.5;
-      y0 = (fap->y_axis_y0+fap->y_axis_y1)*0.5;
+      xincr = fwidth / (Float)bins;
+      yincr = fheight / (Float)si->active_slices;
+      x0 = (fap->x_axis_x0 + fap->x_axis_x1) * 0.5;
+      y0 = (fap->y_axis_y0 + fap->y_axis_y1) * 0.5;
       if (!(cp->fft_log_magnitude))
-	zscl = -(cp->spectro_z_scale*fheight/scl);
-      else zscl = -(cp->spectro_z_scale*fheight);
+	zscl = -(cp->spectro_z_scale * fheight/scl);
+      else zscl = -(cp->spectro_z_scale * fheight);
       rotate_matrix(cp->spectro_x_angle, cp->spectro_y_angle, cp->spectro_z_angle,
 		    cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		    matrix);
       if (color_map(ss) == -1)
 	{
-	  for (slice=0, xoff=fap->x_axis_x0, yoff=fap->y_axis_y0;slice<si->active_slices;slice++,yoff+=yincr)
+	  for (slice = 0, xoff = fap->x_axis_x0, yoff = fap->y_axis_y0; slice < si->active_slices; slice++, yoff+=yincr)
 	    {
 	      fdata = si->data[slice];
-	      x=xoff;
-	      y=yoff;
-	      for (i=0; i<bins; i++,x+=xincr)
+	      x = xoff;
+	      y = yoff;
+	      for (i = 0; i < bins; i++, x+=xincr)
 		{
-		  xyz[0] =x - x0; 
-		  xyz[1] =y - y0; 
+		  xyz[0] = x - x0; 
+		  xyz[1] = y - y0; 
 		  if (!(cp->fft_log_magnitude))
 		    xyz[2] = fdata[i];
 		  else 
 		    {
-		      binval = fdata[i]/scl; 
-		      xyz[2] = 1.0 - (cp_dB(cp, binval))/cp->min_dB;
+		      binval = fdata[i] / scl; 
+		      xyz[2] = 1.0 - (cp_dB(cp, binval)) / cp->min_dB;
 		    }
 		  rotate(xyz, matrix);
-		  yval = xyz[1]+xyz[2];
+		  yval = xyz[1] + xyz[2];
 		  xval = xyz[0];
-		  set_grf_point((int)(xval+x0), i, (int)(yval+y0));
-		  if (cp->printing) ps_set_grf_point(ungrf_x(fap, (int)(xval+x0)), i, ungrf_y(fap, (int)(yval+y0)));
+		  set_grf_point((int)(xval + x0), i, (int)(yval + y0));
+		  if (cp->printing) ps_set_grf_point(ungrf_x(fap, (int)(xval + x0)), i, ungrf_y(fap, (int)(yval + y0)));
 		}
 	      draw_grf_points(cp, copy_context(cp), bins, fap, 0.0, FFT_GRAPH_STYLE(cp));
 	      if (cp->printing) 
@@ -1944,7 +1949,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  /* spectrogram in various colors */
 	  allocate_color_map(ss, color_map(ss));
-	  for (slice=0, xoff=fap->x_axis_x0, yoff=fap->y_axis_y0; slice<si->active_slices; slice++, yoff+=yincr)
+	  for (slice = 0, xoff = fap->x_axis_x0, yoff = fap->y_axis_y0; slice < si->active_slices; slice++, yoff+=yincr)
 	    {
 	      fdata = si->data[slice];
 	      x = xoff;
@@ -1955,16 +1960,16 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      rotate(xyz, matrix);
 	      xx = (int)(xyz[0] + x0); 
 	      yy = (int)(xyz[1] + xyz[2] + y0);
-	      for (i=0; i<bins; i++,x+=xincr)
+	      for (i = 0; i < bins; i++, x+=xincr)
 		{
 		  xyz[0] = x - x0; 
 		  xyz[1] = y - y0;
-		  binval = fdata[i]/scl;
+		  binval = fdata[i] / scl;
 		  if (!(cp->fft_log_magnitude)) 		  
 		    xyz[2] = fdata[i];
 		  else 
 		    {
-		      xyz[2] = 1.0 - (cp_dB(cp, binval))/cp->min_dB; 
+		      xyz[2] = 1.0 - (cp_dB(cp, binval)) / cp->min_dB; 
 		      binval = xyz[2];
 		    }
 		  rotate(xyz, matrix);
@@ -1973,15 +1978,15 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  if (binval >= color_cutoff(ss))
 		    {
 		      if (color_inverted(ss)) 
-			j = (int)(skew_color((1.0 - binval), color_scale(ss))*GRAY_SCALES); 
-		      else j = (int)(skew_color(binval, color_scale(ss))*GRAY_SCALES);
-		      if (j>0) j--;
-		      if (j >= GRAY_SCALES) j=GRAY_SCALES-1;
-		      draw_spectro_line(copy_context(cp), j, xx, yy, (int)(xval+x0), (int)(yval+y0));
-		      if (cp->printing) ps_draw_spectro_line(cp, j, xx, yy, xval+x0, yval+y0);
+			j = (int)(skew_color((1.0 - binval), color_scale(ss)) * GRAY_SCALES); 
+		      else j = (int)(skew_color(binval, color_scale(ss)) * GRAY_SCALES);
+		      if (j > 0) j--;
+		      if (j >= GRAY_SCALES) j = GRAY_SCALES-1;
+		      draw_spectro_line(copy_context(cp), j, xx, yy, (int)(xval + x0), (int)(yval + y0));
+		      if (cp->printing) ps_draw_spectro_line(cp, j, xx, yy, xval + x0, yval + y0);
 		    }
-		  xx = (int)(xval+x0); 
-		  yy = (int)(yval+y0);
+		  xx = (int)(xval + x0); 
+		  yy = (int)(yval + y0);
 		}
 	      if (cp->printing) 
 		{
@@ -1996,52 +2001,52 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	  if (cp->printing) ps_reset_color(cp);
 	}
-      if (cp->hookable) after_fft(ss, cp, 1.0/scl);
+      if (cp->hookable) after_fft(ss, cp, 1.0 / scl);
     }
 }
 
 static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 {
-  Float xoff,x,y,x0,y0,xincr;
-  Float width,height,zscl,yval,xval,binval;
-  int i,j,yincr,yoff,xx,yy;
+  Float xoff, x, y, x0, y0, xincr;
+  Float width, height, zscl, yval, xval, binval;
+  int i, j, yincr, yoff, xx, yy;
   Float matrix[9];
   Float xyz[3];
   snd_fd *sf;
   axis_info *ap;
   ap = cp->axis;
-  if (sp) ap->losamp = (int)(ap->x0*SND_SRATE(sp));
+  if (sp) ap->losamp = (int)(ap->x0 * SND_SRATE(sp));
   sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   width = (ap->x_axis_x1 - ap->x_axis_x0);
   height = (ap->y_axis_y1 - ap->y_axis_y0); /* negative! */
-  xincr = width/(Float)(cp->wavo_trace);
+  xincr = width / (Float)(cp->wavo_trace);
   yincr = -(cp->wavo_hop);
   if (yincr > 0) yincr = -yincr;
   if (yincr == 0) yincr = -1;
-  x0 = (ap->x_axis_x0+ap->x_axis_x1)*0.5;
-  y0 = (ap->y_axis_y0+ap->y_axis_y1)*0.5;
-  zscl = -(cp->spectro_z_scale*height);
+  x0 = (ap->x_axis_x0 + ap->x_axis_x1) * 0.5;
+  y0 = (ap->y_axis_y0 + ap->y_axis_y1) * 0.5;
+  zscl = -(cp->spectro_z_scale * height);
   rotate_matrix(cp->spectro_x_angle, cp->spectro_y_angle, cp->spectro_z_angle,
 		cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		matrix);
   if (color_map(ss) == -1)
     {
-      for (xoff=ap->x_axis_x0, yoff=ap->y_axis_y0;yoff>ap->y_axis_y1;yoff+=yincr)
+      for (xoff = ap->x_axis_x0, yoff = ap->y_axis_y0; yoff > ap->y_axis_y1; yoff+=yincr)
 	{
-	  x=xoff;
-	  y=yoff;
-	  for (i=0; i<cp->wavo_trace; i++,x+=xincr)
+	  x = xoff;
+	  y = yoff;
+	  for (i = 0; i < cp->wavo_trace; i++, x+=xincr)
 	    {
-	      xyz[0]=x-x0; 
-	      xyz[1]=y-y0; 
-	      xyz[2]=next_sample_to_float(sf);
+	      xyz[0] = x - x0; 
+	      xyz[1] = y - y0; 
+	      xyz[2] = next_sample_to_float(sf);
 	      rotate(xyz, matrix);
-	      yval = xyz[1]+xyz[2];
+	      yval = xyz[1] + xyz[2];
 	      xval = xyz[0];
-	      set_grf_point((int)(xval+x0), i, (int)(yval+y0));
-	      if (cp->printing) ps_set_grf_point(ungrf_x(ap, (int)(xval+x0)), i, ungrf_y(ap, (int)(y0+yval)));
+	      set_grf_point((int)(xval + x0), i, (int)(yval + y0));
+	      if (cp->printing) ps_set_grf_point(ungrf_x(ap, (int)(xval + x0)), i, ungrf_y(ap, (int)(y0 + yval)));
 	    }
 	  draw_grf_points(cp, copy_context(cp), cp->wavo_trace, ap, 0.0, MAIN_GRAPH_STYLE(cp));
 	  if (cp->printing) ps_draw_grf_points(cp, ap, cp->wavo_trace, 0.0, MAIN_GRAPH_STYLE(cp));
@@ -2050,13 +2055,13 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
   else
     {
       allocate_color_map(ss, color_map(ss));
-      for (xoff=ap->x_axis_x0, yoff=ap->y_axis_y0;yoff>ap->y_axis_y1;yoff+=yincr)
+      for (xoff = ap->x_axis_x0, yoff = ap->y_axis_y0; yoff > ap->y_axis_y1; yoff+=yincr)
 	{
 	  xx = -1;
 	  x = xoff;
 	  y = yoff;
 	  yy = (int)y0; /* ? */
-	  for (i=0; i<cp->wavo_trace; i++,x+=xincr)
+	  for (i = 0; i < cp->wavo_trace; i++, x+=xincr)
 	    {
 	      binval = next_sample_to_float(sf);
 	      xyz[0] = x - x0; 
@@ -2070,15 +2075,15 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if ((binval >= color_cutoff(ss)) && (xx != -1))
 		{
 		  if (color_inverted(ss)) 
-		    j = (int)(skew_color((1.0 - binval), color_scale(ss))*GRAY_SCALES); 
-		  else j = (int)(skew_color(binval, color_scale(ss))*GRAY_SCALES);
-		  if (j>0) j--;
-		  if (j >= GRAY_SCALES) j=GRAY_SCALES-1;
-		  draw_spectro_line(copy_context(cp), j, xx, yy, (int)(xval+x0), (int)(yval+y0));
-		  if (cp->printing) ps_draw_spectro_line(cp, j, xx, yy, xval+x0, yval+y0);
+		    j = (int)(skew_color((1.0 - binval), color_scale(ss)) * GRAY_SCALES); 
+		  else j = (int)(skew_color(binval, color_scale(ss)) * GRAY_SCALES);
+		  if (j > 0) j--;
+		  if (j >= GRAY_SCALES) j = GRAY_SCALES - 1;
+		  draw_spectro_line(copy_context(cp), j, xx, yy, (int)(xval + x0), (int)(yval + y0));
+		  if (cp->printing) ps_draw_spectro_line(cp, j, xx, yy, xval + x0, yval + y0);
 		}
-	      xx = (int)(xval+x0); 
-	      yy = (int)(yval+y0);
+	      xx = (int)(xval + x0); 
+	      yy = (int)(yval + y0);
 	    }
 	}
       if (cp->printing) ps_reset_color(cp);
@@ -2091,11 +2096,11 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   lisp_grf *up;
   /* data can be evenly spaced data or an envelope (up->env_data) */
   axis_info *uap = NULL;
-  int i,j,grf_len,graph;
+  int i, j, grf_len, graph;
   axis_context *ax;
-  COLOR_TYPE old_color=0;
-  Float x,y,samples_per_pixel=1.0,xinc,start_x,xf,ymin,ymax,xi,pinc;
-  int x0,x1,y0,y1;
+  COLOR_TYPE old_color = 0;
+  Float x, y, samples_per_pixel = 1.0, xinc, start_x, xf, ymin, ymax, xi, pinc;
+  int x0, x1, y0, y1;
   up = (lisp_grf *)(cp->lisp_info);
   if (up) uap = up->axis; else return;
   if ((!uap) || (!uap->graph_active) || (up->len[0] <= 0)) return;
@@ -2113,7 +2118,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       x0 = local_grf_x(up->data[0][0], uap);
       y0 = local_grf_y(up->data[0][1], uap);
       if (cp->dot_size > 0) draw_arc(ax, x0, y0, cp->dot_size);
-      for (i=2; i<grf_len; i+=2)
+      for (i = 2; i < grf_len; i+=2)
 	{
 	  x1 = local_grf_x(up->data[0][i], uap);
 	  y1 = local_grf_y(up->data[0][i+1], uap);
@@ -2126,7 +2131,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   else
     {
       if (up->graphs > 1) old_color = get_foreground_color(cp, ax);
-      for (graph=0;graph<up->graphs;graph++)
+      for (graph = 0; graph < up->graphs; graph++)
 	{
 	  /* check for up->len[graph] > pixels available and use ymin ymax if needed */
 	  /* TODO: provide a way to turn this (lisp graph color) off */
@@ -2147,7 +2152,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if (grf_len <= 1) 
 		xinc = 1.0;
 	      else xinc = (uap->x1 - uap->x0) / (Float)(grf_len-1);
-	      for (i=0, x=start_x; i<grf_len; i++,x+=xinc)
+	      for (i = 0, x = start_x; i < grf_len; i++, x+=xinc)
 		{
 		  y = up->data[graph][i];
 		  set_grf_point(local_grf_x(x, uap), i, local_grf_y(y, uap));
@@ -2162,7 +2167,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	      i = 0;
 	      xf = 0.0;
 	      x = 0.0;
-	      pinc = samples_per_pixel/(Float)(up->len[graph]);
+	      pinc = samples_per_pixel / (Float)(up->len[graph]);
 	      xi = local_grf_x(0.0, uap);
 	      ymin = 32768.0;
 	      ymax = -32768.0;
@@ -2173,15 +2178,15 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		  if (y < ymin) ymin = y;
 		  xf += 1.0;
 		  i++;
-		  if (xf>samples_per_pixel)
+		  if (xf > samples_per_pixel)
 		    {
 		      set_grf_points((int)xi, j, local_grf_y(ymin, uap), local_grf_y(ymax, uap));
 		      if (cp->printing) {x += pinc; ps_set_grf_points(x, j, ymin, ymax);}
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
-		      ymin=32767.0;
-		      ymax=-32768.0;
+		      ymin = 32767.0;
+		      ymax = -32768.0;
 		    }
 		}
 	      draw_both_grf_points(cp, ax, j, LISP_GRAPH_STYLE(cp));
@@ -2225,7 +2230,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 					    int width, int height, int offset, 
 					    int just_fft, int just_lisp)
 {
-  int with_fft,with_lisp,displays,points;
+  int with_fft, with_lisp, displays, points;
   axis_info *ap = NULL;
   axis_info *fap = NULL;
   axis_info *uap = NULL;
@@ -2287,8 +2292,14 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       if (with_lisp) uap->width = width/displays;
 
       /* now the x axis offsets for fap and uap */
-      if (with_fft) {if (cp->waving) fap->graph_x0 = ap->width; else fap->graph_x0 = 0;}
-      if (with_lisp) uap->graph_x0 = uap->width*(displays - 1);
+      if (with_fft) 
+	{
+	  if (cp->waving) 
+	    fap->graph_x0 = ap->width;
+	  else fap->graph_x0 = 0;
+	}
+      if (with_lisp) 
+	uap->graph_x0 = uap->width * (displays - 1);
     }
   else
     {
@@ -2361,8 +2372,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 
         if ((!cp->waving) || (just_fft))
 	    { /* make_graph does this -- sets losamp needed by fft to find its starting point */
-	      ap->losamp = (int)(ap->x0*(double)SND_SRATE(sp));
-	      ap->hisamp = (int)(ap->x1*(double)SND_SRATE(sp));
+	      ap->losamp = (int)(ap->x0 * (double)SND_SRATE(sp));
+	      ap->hisamp = (int)(ap->x1 * (double)SND_SRATE(sp));
 	    }
 	  switch (cp->fft_style)
 	    {
@@ -2384,8 +2395,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 
 	  if ((just_lisp) || ((!(cp->waving)) && (!(with_fft))))
 	    {
-	      ap->losamp = (int)(ap->x0*(double)SND_SRATE(sp));
-	      ap->hisamp = (int)(ap->x1*(double)SND_SRATE(sp));
+	      ap->losamp = (int)(ap->x0 * (double)SND_SRATE(sp));
+	      ap->hisamp = (int)(ap->x1 * (double)SND_SRATE(sp));
 	    }
 	  make_lisp_graph(cp, sp, ss);
 	}
@@ -2400,7 +2411,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	      if ((cp->mixes)) display_channel_mixes(cp);
 	    }
 	  if ((sp->combining != CHANNELS_SUPERIMPOSED) && (height > 10))
-	    display_channel_id(cp, height+offset, sp->nchans);
+	    display_channel_id(cp, height + offset, sp->nchans);
 	  if (cp->hookable) after_graph(cp);
 	}
     } 
@@ -2408,8 +2419,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 
 static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, int just_fft, int just_lisp)
 {
-  int width,height,offset,full_height,chan_height,y0,y1,bottom,top;
-  Float val,size;
+  int width, height, offset, full_height, chan_height, y0, y1, bottom, top;
+  Float val, size;
   axis_info *ap;
   if ((sp->combining == CHANNELS_SEPARATE) || (sp->nchans == 1))
     {
@@ -2445,7 +2456,7 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
 	      chan_height += offset;
 	      offset = 0;
 	    }
-	  if ((cp->chan == (sp->nchans - 1)) && ((offset+chan_height) < height))
+	  if ((cp->chan == (sp->nchans - 1)) && ((offset + chan_height) < height))
 	    chan_height = height - offset;
 	  if (((y0 < top) && (y0 >= bottom)) || ((y1 > bottom) && (y1 <= top)))
 	    display_channel_data_with_size(cp, sp, ss, width, chan_height, offset, just_fft, just_lisp);
@@ -2518,7 +2529,7 @@ static int cursor_decision(chan_info *cp)
 {
   int len;
   len = current_ed_samples(cp);
-  if (cp->cursor >= len) cp->cursor = len-1; /* zero based, but in 0-length files, len=0 */
+  if (cp->cursor >= len) cp->cursor = len - 1; /* zero based, but in 0-length files, len = 0 */
   if (cp->cursor < 0) cp->cursor = 0;        /* perhaps the cursor should be forced off in empty files? */
   if (cp->cursor < (cp->axis)->losamp)
     {
@@ -2527,7 +2538,7 @@ static int cursor_decision(chan_info *cp)
     }
   if (cp->cursor > (cp->axis)->hisamp)
     {
-      if (cp->cursor >= (len-1)) return(CURSOR_ON_RIGHT);
+      if (cp->cursor >= (len - 1)) return(CURSOR_ON_RIGHT);
       else return(CURSOR_IN_MIDDLE);
     }
   return(CURSOR_IN_VIEW);
@@ -2544,7 +2555,7 @@ static void handle_cursor_with_sync(chan_info *cp, int decision)
       if ((sp) && (sp->syncing != 0))
 	{
 	  si = snd_sync(cp->state, sp->syncing);
-	  for (i=0; i<si->chans; i++)
+	  for (i = 0; i < si->chans; i++)
 	    handle_cursor(si->cps[i], decision);
 	  si = free_sync_info(si);
 	}
@@ -2562,11 +2573,12 @@ int cursor_moveto (chan_info *cp, int samp)
   if ((sp) && (sp->syncing != 0))
     {
       si = snd_sync(cp->state, sp->syncing);
-      for (i=0; i<si->chans; i++)
+      for (i = 0; i < si->chans; i++)
 	{
 	  ncp = si->cps[i];
 	  ncp->cursor = samp;
-	  if (ncp != cp) handle_cursor(ncp, cursor_decision(ncp)); /* checks len */
+	  if (ncp != cp) 
+	    handle_cursor(ncp, cursor_decision(ncp)); /* checks len */
 	}
       si = free_sync_info(si);
     }
@@ -2609,17 +2621,17 @@ void show_cursor_info(chan_info *cp)
 {
   snd_info *sp;
   chan_info *ncp;
-  Float y,absy;
-  int digits,i,samp;
-  char *s1,*s2;
+  Float y, absy;
+  int digits, i, samp;
+  char *s1, *s2;
   sp = cp->sound;
   if ((sp->syncing != 0) && (cp->chan != 0)) return;
   samp = cp->cursor;
   y = sample(samp, cp);
   absy = fabs(y);
-  if (absy < .0001) digits=4;
-  else if (absy<.001) digits=3;
-  else digits=2;
+  if (absy < .0001) digits = 4;
+  else if (absy<.001) digits = 3;
+  else digits = 2;
   if (sp->nchans == 1)
     sprintf(expr_str, "cursor at %s (sample %d) = %s",
 	    s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
@@ -2641,7 +2653,7 @@ void show_cursor_info(chan_info *cp)
 		  s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
 		  samp,
 		  s2 = prettyf(y, digits));
-	  for (i=1; i<sp->nchans; i++)
+	  for (i = 1; i < sp->nchans; i++)
 	    {
 	      strcat(expr_str, ", ");
 	      FREE(s2);
@@ -2667,7 +2679,7 @@ void show_cursor_info(chan_info *cp)
   FREE(s2);
 }
 
-enum {NOT_FILING,INPUT_FILING,REGION_FILING,CHANNEL_FILING,TEMP_FILING,CHANGE_FILING,INSERT_FILING,MACRO_FILING};
+enum {NOT_FILING, INPUT_FILING, REGION_FILING, CHANNEL_FILING, TEMP_FILING, CHANGE_FILING, INSERT_FILING, MACRO_FILING};
 
 void clear_minibuffer(snd_info *sp)
 {
@@ -2700,7 +2712,7 @@ static int set_window_bounds(chan_info *cp, int count)
   axis_info *ap;
   Float sx;
   ap = cp->axis;
-  sx = (((double)count/(double)SND_SRATE(cp->sound)) - ap->xmin) / (ap->xmax -ap->xmin);
+  sx = (((double)count / (double)SND_SRATE(cp->sound)) - ap->xmin) / (ap->xmax - ap->xmin);
   reset_x_display(cp, sx, ap->zx);
   return(CURSOR_IN_VIEW);
 }
@@ -2711,7 +2723,7 @@ static int set_window_size(chan_info *cp, int count)
   axis_info *ap;
   Float zx;
   ap = cp->axis;
-  zx = ((double)count/(((double)SND_SRATE(cp->sound)) * (ap->xmax -ap->xmin)));
+  zx = ((double)count / (((double)SND_SRATE(cp->sound)) * (ap->xmax - ap->xmin)));
   reset_x_display(cp, ap->sx, zx);
   return(CURSOR_IN_VIEW);
 }
@@ -2729,7 +2741,7 @@ static int set_window_percentage(chan_info *cp, int count)
 
 static void window_frames_selection(chan_info *cp)
 {
-  Float x0,x1;
+  Float x0, x1;
   int i;
   snd_info *sp;
   snd_state *ss;
@@ -2737,7 +2749,7 @@ static void window_frames_selection(chan_info *cp)
   x1 = x0 + ((double)(selection_len())) / ((double)(SND_SRATE(cp->sound)));
   set_x_axis_x0x1(cp, x0, x1);
   ss = cp->state;
-  for (i=0; i<ss->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && 
@@ -2783,8 +2795,8 @@ void handle_cursor(chan_info *cp, int redisplay)
 	      switch (redisplay)
 		{
 		case CURSOR_ON_LEFT: gx = (double)(cp->cursor) / (double)SND_SRATE(sp); break;
-		case CURSOR_ON_RIGHT: gx = (double)(cp->cursor) / (double)SND_SRATE(sp) - ap->zx*(ap->xmax-ap->xmin); break;
-		case CURSOR_IN_MIDDLE: gx = (double)(cp->cursor) / (double)SND_SRATE(sp) - ap->zx*0.5*(ap->xmax-ap->xmin); break;
+		case CURSOR_ON_RIGHT: gx = (double)(cp->cursor) / (double)SND_SRATE(sp) - ap->zx * (ap->xmax - ap->xmin); break;
+		case CURSOR_IN_MIDDLE: gx = (double)(cp->cursor) / (double)SND_SRATE(sp) - ap->zx * 0.5 * (ap->xmax - ap->xmin); break;
 		}
 	      if (gx < 0.0) gx = 0.0;
 	      reset_x_display(cp, (gx - ap->xmin) / (ap->xmax - ap->xmin), ap->zx);
@@ -2817,7 +2829,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
   /* can return NULL if regexpr and no current selection */
   sync_info *si = NULL;
   snd_fd **sfs = NULL;
-  int dur,i,pbeg;
+  int dur, i, pbeg;
   sync_state *sc;
   dur = 0;
   if ((!regexpr) && (sp == NULL)) return(NULL);
@@ -2825,12 +2837,12 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
     {
       si = snd_sync(ss, sp->syncing);
       sfs = (snd_fd **)CALLOC(si->chans, sizeof(snd_fd *));
-      for (i=0; i<si->chans; i++) 
+      for (i = 0; i < si->chans; i++) 
 	{
 	  si->begs[i] = beg;
 	  if (forwards == READ_FORWARD)
 	    sfs[i] = init_sample_read(beg, si->cps[i], READ_FORWARD);
-	  else sfs[i] = init_sample_read(current_ed_samples(si->cps[i])-1, si->cps[i], READ_BACKWARD);
+	  else sfs[i] = init_sample_read(current_ed_samples(si->cps[i]) - 1, si->cps[i], READ_BACKWARD);
 	}
     }
   else
@@ -2842,7 +2854,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
 	      si = selection_sync();
 	      dur = selection_len();
 	      sfs = (snd_fd **)CALLOC(si->chans, sizeof(snd_fd *));
-	      for (i=0; i<si->chans; i++) 
+	      for (i = 0; i < si->chans; i++) 
 		{
 		  if (forwards == READ_FORWARD)
 		    {
@@ -2850,7 +2862,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
 		      if (pbeg < 0) pbeg = 0;
 		      sfs[i] = init_sample_read(pbeg, si->cps[i], READ_FORWARD);
 		    }
-		  else sfs[i] = init_sample_read(si->begs[i]+dur-1, si->cps[i], READ_BACKWARD);
+		  else sfs[i] = init_sample_read(si->begs[i] + dur - 1, si->cps[i], READ_BACKWARD);
 		}
 	    }
 	  else 
@@ -2866,7 +2878,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
       sfs = (snd_fd **)CALLOC(1, sizeof(snd_fd *));
       if (forwards == READ_FORWARD)
 	sfs[0] = init_sample_read(beg, cp, READ_FORWARD);
-      else sfs[0] = init_sample_read(current_ed_samples(cp)-1, cp, READ_BACKWARD);
+      else sfs[0] = init_sample_read(current_ed_samples(cp) - 1, cp, READ_BACKWARD);
     }
   sc = (sync_state *)CALLOC(1, sizeof(sync_state));
   sc->dur = dur;
@@ -2910,7 +2922,7 @@ static sync_state *get_sound_chans_sync_state(chan_info *cp, int beg)
   si->cps = (chan_info **)CALLOC(sp->nchans, sizeof(chan_info *));
   si->begs = (int *)CALLOC(sp->nchans, sizeof(int));
   sfs = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
-  for (i=0; i<sp->nchans; i++) 
+  for (i = 0; i < sp->nchans; i++) 
     {
       si->cps[i] = sp->chans[i];
       si->begs[i] = beg;
@@ -2928,19 +2940,19 @@ static sync_state *get_active_chans_sync_state(snd_state *ss, int beg)
   snd_fd **sfs;
   sync_state *sc;
   snd_info *sp;
-  int snd,chn,i;
+  int snd, chn, i;
   si = (sync_info *)CALLOC(1, sizeof(sync_info));
   si->chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
   si->cps = (chan_info **)CALLOC(si->chans, sizeof(chan_info *));
   si->begs = (int *)CALLOC(si->chans, sizeof(int));
   sfs = (snd_fd **)CALLOC(si->chans, sizeof(snd_fd *));
   chn = 0;
-  for (snd=0;snd<ss->max_sounds;snd++)
+  for (snd = 0; snd < ss->max_sounds; snd++)
     {
       sp = (ss->sounds[snd]);
       if (snd_ok(sp))
 	{
-	  for (i=0; i<sp->nchans; i++)
+	  for (i = 0; i < sp->nchans; i++)
 	    {
 	      si->cps[chn] = sp->chans[i];
 	      si->begs[chn] = beg;
@@ -2955,16 +2967,16 @@ static sync_state *get_active_chans_sync_state(snd_state *ss, int beg)
   return(sc);
 }
 
-enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
+enum {SCAN_CURRENT_CHAN, SCAN_SOUND_CHANS, SCAN_SYNCD_CHANS, SCAN_ALL_CHANS};
 
 static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
 {
-  sync_state *sc=NULL;
+  sync_state *sc = NULL;
   sync_info *si;
   snd_info *sp;
   snd_fd **sfs;
   snd_fd *sf;
-  int kp,j,ip,len,num,reporting = 0,rpt = 0,rpt4;
+  int kp, j, ip, len, num, reporting = 0, rpt = 0, rpt4;
   SCM res;
   sp = cp->sound;
   switch (chan_choice)
@@ -2978,7 +2990,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
   si = sc->si;
   sfs = sc->sfs;
   rpt4 = MAX_BUFFER_SIZE / 4;
-  for (ip=0; ip<si->chans; ip++)
+  for (ip = 0; ip < si->chans; ip++)
     {
       cp = si->cps[ip];
       sp = cp->sound;
@@ -2991,27 +3003,30 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
        * if beg > end after fixup, omit.
        */
       len = current_ed_samples(cp);
-      if (end >= len) end = len-1;
-      if (end == 0) end = len-1;
-      num = end-beg+1;
+      if (end >= len) end = len - 1;
+      if (end == 0) end = len - 1;
+      num = end - beg + 1;
       if (num > 0)
 	{
 	  reporting = (num > MAX_BUFFER_SIZE);
 	  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
-	  for (kp=0; kp<num; kp++)
+	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = g_call1(proc,
 			    TO_SCM_DOUBLE((double)next_sample_to_float(sf)));
-	      if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res)))
+	      if ((SCM_NFALSEP(res)) || 
+		  (SCM_SYMBOLP(res)))
 		{
-		  for (j=ip; j<si->chans; j++) free_snd_fd(sfs[j]);
+		  for (j = ip; j < si->chans; j++) 
+		    free_snd_fd(sfs[j]);
 		  free_sync_state(sc); 
-		  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+		  if (reporting) 
+		    finish_progress_report(sp, NOT_FROM_ENVED);
 		  if (SCM_SYMBOLP(res))
 		    return(scm_throw(res,
 				     SCM_LIST1(TO_SCM_STRING(origin))));
 		  return(gh_list(res,
-				 TO_SCM_INT(kp+beg),
+				 TO_SCM_INT(kp + beg),
 				 TO_SMALL_SCM_INT(cp->chan),
 				 TO_SMALL_SCM_INT(sp->index),
 				 SCM_UNDEFINED));
@@ -3021,7 +3036,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		  rpt++;
 		  if (rpt > rpt4)
 		    {
-		      progress_report(sp, origin, ip+1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
+		      progress_report(sp, origin, ip + 1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
 		      rpt = 0;
 		      if (ss->stopped_explicitly)
 			{
@@ -3030,8 +3045,8 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 			  if (si->chans == 1)
 			    report_in_minibuffer(sp, "C-G stopped %s at sample %d", origin, kp+beg);
 			  else report_in_minibuffer(sp, "C-G stopped %s in %s chan %d at sample %d",
-						    origin, sp->shortname, cp->chan+1, kp+beg);
-			  for (j=ip; j<si->chans; j++) free_snd_fd(sfs[j]);
+						    origin, sp->shortname, cp->chan + 1, kp + beg);
+			  for (j = ip; j < si->chans; j++) free_snd_fd(sfs[j]);
 			  free_sync_state(sc); 
 			  return(SCM_BOOL_F);
 			}
@@ -3049,13 +3064,13 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
 {
   /* here we need to load the arglist in order */
-  sync_state *sc=NULL;
+  sync_state *sc = NULL;
   sync_info *si;
   snd_info *sp;
   snd_fd **sfs;
   SCM *vdata;
-  int kp,ip,pos = 0,len,num,reporting = 0,rpt = 0,rpt4;
-  SCM res=SCM_UNDEFINED,args,gh_chans;
+  int kp, ip, pos = 0, len, num, reporting = 0, rpt = 0, rpt4;
+  SCM res = SCM_UNDEFINED, args, gh_chans;
   sp = cp->sound;
   switch (chan_choice)
     {
@@ -3076,23 +3091,28 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
    * others with zero.
    */
   len = current_ed_samples(si->cps[0]);
-  for (ip=1; ip<si->chans; ip++)
+  for (ip = 1; ip < si->chans; ip++)
     {
       num = current_ed_samples(si->cps[ip]);
       if (num > len) len = num;
     }
-  if (end >= len) end = len-1;
-  if (end == 0) end = len-1;
-  num = end-beg+1;
+  if (end >= len) end = len - 1;
+  if (end == 0) end = len - 1;
+  num = end - beg + 1;
   reporting = (num > MAX_BUFFER_SIZE);
   if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
   if (si->chans == 1)
     { /* optimize common special case */
-      for (kp=0; kp<num; kp++)
+      for (kp = 0; kp < num; kp++)
 	{
 	  vdata[0] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[0]));
 	  res = g_call2(proc, args, gh_chans);
-	  if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res))) {pos = kp+beg; break;}
+	  if ((SCM_NFALSEP(res)) || 
+	      (SCM_SYMBOLP(res))) 
+	    {
+	      pos = kp + beg; 
+	      break;
+	    }
 	  if (reporting) 
 	    {
 	      rpt++;
@@ -3108,12 +3128,17 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
     }
   else
     {
-      for (kp=0; kp<num; kp++)
+      for (kp = 0; kp < num; kp++)
 	{
-	  for (ip=0; ip<si->chans; ip++)
+	  for (ip = 0; ip < si->chans; ip++)
 	    vdata[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
 	  res = g_call2(proc, args, gh_chans);
-	  if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res))) {pos = kp+beg; break;}
+	  if ((SCM_NFALSEP(res)) || 
+	      (SCM_SYMBOLP(res))) 
+	    {
+	      pos = kp + beg; 
+	      break;
+	    }
 	  if (reporting) 
 	    {
 	      rpt++;
@@ -3127,7 +3152,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	}
     }
   if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-  for (ip=0; ip<si->chans; ip++) free_snd_fd(sfs[ip]);
+  for (ip = 0; ip < si->chans; ip++) free_snd_fd(sfs[ip]);
   free_sync_state(sc); 
   if (ss->stopped_explicitly)
     {
@@ -3150,11 +3175,11 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 
 /* someday it might be good to tie this into the rest of this file */
 typedef struct {
-  int buffer_size,data_size,datumb,loc,fd,filing,orig_size;
+  int buffer_size, data_size, datumb, loc, fd, filing, orig_size;
   char *filename;
   MUS_SAMPLE_TYPE *buffer;
   MUS_SAMPLE_TYPE **mus_data;
-  file_info *hdr,*sp_hdr;
+  file_info *hdr, *sp_hdr;
 } output_state;
 
 static output_state *start_output(int bufsize, file_info *default_hdr, int orig_size)
@@ -3241,13 +3266,13 @@ static output_state *end_output(output_state *os, int beg, chan_info *cp, char *
 
 static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
 {
-  sync_state *sc=NULL;
+  sync_state *sc = NULL;
   sync_info *si;
   snd_info *sp;
   snd_fd **sfs;
   snd_fd *sf;
   output_state *os = NULL;
-  int kp,j,k,ip,num,val_size,reporting = 0,rpt = 0,rpt4;
+  int kp, j, k, ip, num, val_size, reporting = 0, rpt = 0, rpt4;
   MUS_SAMPLE_TYPE *vals;
   SCM res;
   sp = cp->sound;
@@ -3262,19 +3287,19 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
   si = sc->si;
   sfs = sc->sfs;
   rpt4 = MAX_BUFFER_SIZE / 4;
-  for (ip=0; ip<si->chans; ip++)
+  for (ip = 0; ip < si->chans; ip++)
     {
       cp = si->cps[ip];
       sp = cp->sound;
       sf = sfs[ip];
       if (end == 0) end = current_ed_samples(cp) - 1;
-      num = end-beg+1;
+      num = end - beg + 1;
       if (num > 0)
 	{
 	  reporting = (num > MAX_BUFFER_SIZE);
 	  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
 	  os = start_output(MAX_BUFFER_SIZE, sp->hdr, num);
-	  for (kp=0; kp<num; kp++)
+	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = g_call1(proc, TO_SCM_DOUBLE((double)next_sample_to_float(sf)));
 	      if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
@@ -3284,7 +3309,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		      if (SCM_SYMBOLP(res))
 			{
 			  end_output(os, beg, cp, origin);
-			  for (j=ip; j<si->chans; j++) free_snd_fd(sfs[j]);    
+			  for (j = ip; j < si->chans; j++) free_snd_fd(sfs[j]);    
 			  free_sync_state(sc); 
 			  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
 			  return(scm_throw(res,
@@ -3298,7 +3323,8 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 			  vals = g_floats_to_samples(res, &val_size, origin, 1);
 			  if (vals)
 			    {
-			      for (k=0; k<val_size; k++) output_sample(ss, os, SND_SRATE(sp), vals[k]);
+			      for (k = 0; k < val_size; k++) 
+				output_sample(ss, os, SND_SRATE(sp), vals[k]);
 			      FREE(vals);
 			    }
 			}
@@ -3306,7 +3332,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		  else /* #t -> halt */
 		    {
 		      os = end_output(os, beg, cp, origin);
-		      for (j=ip; j<si->chans; j++) free_snd_fd(sfs[j]);    
+		      for (j = ip; j < si->chans; j++) free_snd_fd(sfs[j]);    
 		      free_sync_state(sc); 
 		      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
 		      return(res);
@@ -3317,12 +3343,12 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		  rpt++;
 		  if (rpt > rpt4)
 		    {
-		      progress_report(sp, origin, ip+1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
+		      progress_report(sp, origin, ip + 1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
 		      rpt = 0;
 		      if (ss->stopped_explicitly) 
 			{
 			  os = end_output(os, beg, cp, origin);
-			  for (j=ip; j<si->chans; j++) free_snd_fd(sfs[j]);    
+			  for (j = ip; j < si->chans; j++) free_snd_fd(sfs[j]);    
 			  free_sync_state(sc); 
 			  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
 			  ss->stopped_explicitly = 0;
@@ -3343,15 +3369,15 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 
 static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
 {
-  sync_state *sc=NULL;
+  sync_state *sc = NULL;
   sync_info *si;
   snd_info *sp;
   snd_fd **sfs;
-  SCM *vdata,*vargs;
+  SCM *vdata, *vargs;
   output_state **os_arr;
-  int kp,k,n,ip,len,num,val_size,res_size,reporting = 0,rpt = 0,rpt4;
+  int kp, k, n, ip, len, num, val_size, res_size, reporting = 0, rpt = 0, rpt4;
   MUS_SAMPLE_TYPE *vals;
-  SCM res=SCM_UNDEFINED,args,gh_chans,resval;
+  SCM res = SCM_UNDEFINED, args, gh_chans, resval;
   sp = cp->sound;
   switch (chan_choice)
     {
@@ -3365,24 +3391,24 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   sfs = sc->sfs;
   rpt4 = MAX_BUFFER_SIZE / 4;
   len = current_ed_samples(si->cps[0]);
-  for (ip=1; ip<si->chans; ip++)
+  for (ip = 1; ip < si->chans; ip++)
     {
       num = current_ed_samples(si->cps[ip]);
       if (num > len) len = num;
     }
-  if (end == 0) end = len-1;
-  num = end-beg+1;
+  if (end == 0) end = len - 1;
+  num = end - beg + 1;
   reporting = (num > MAX_BUFFER_SIZE);
   if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
   os_arr = (output_state **)CALLOC(si->chans, sizeof(output_state *)); 
-  for (ip=0; ip<si->chans; ip++)
+  for (ip = 0; ip < si->chans; ip++)
     os_arr[ip] = start_output(MAX_BUFFER_SIZE, sp->hdr, num);
   gh_chans = TO_SMALL_SCM_INT(si->chans);
   args = gh_make_vector(gh_chans, SCM_BOOL_F);
   vargs = SCM_VELTS(args);
-  for (kp=0; kp<num; kp++)
+  for (kp = 0; kp < num; kp++)
     {
-      for (ip=0; ip<si->chans; ip++)
+      for (ip = 0; ip < si->chans; ip++)
 	vargs[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
       res = g_call2(proc, args, gh_chans);
       /* #f -> no output in any channel, #t -> halt */
@@ -3396,7 +3422,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 		{
 		  res_size = gh_vector_length(res);
 		  vdata = SCM_VELTS(res);
-		  for (n=0;n<res_size;n++)
+		  for (n = 0; n < res_size; n++)
 		    {
 		      resval = vdata[n];
 		      if (SCM_NFALSEP(resval))
@@ -3409,7 +3435,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 			      vals = g_floats_to_samples(resval, &val_size, origin, 1);
 			      if (vals)
 				{
-				  for (k=0; k<val_size; k++) output_sample(ss, os_arr[n], SND_SRATE(sp), vals[k]);
+				  for (k = 0; k < val_size; k++) output_sample(ss, os_arr[n], SND_SRATE(sp), vals[k]);
 				  FREE(vals);
 				}
 			    }
@@ -3424,14 +3450,14 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 	  rpt++;
 	  if (rpt > rpt4)
 	    {
-	      progress_report(sp, origin, ip+1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
+	      progress_report(sp, origin, ip + 1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
 	      rpt = 0;
 	      if (ss->stopped_explicitly) break;
 	    }
 	}
     }
   if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-  for (ip=0; ip<si->chans; ip++) 
+  for (ip = 0; ip < si->chans; ip++) 
     {
       os_arr[ip] = end_output(os_arr[ip], beg, si->cps[ip], origin);
       sfs[ip] = free_snd_fd(sfs[ip]);
@@ -3462,13 +3488,13 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
   sync_state *sc;
   sync_info *si;
   snd_state *ss;
-  snd_info *sp = NULL,*gsp = NULL;
-  int ip,stop_point = 0,err,impulse_chan = 0,filter_chans,ok=0;
+  snd_info *sp = NULL, *gsp = NULL;
+  int ip, stop_point = 0, err, impulse_chan = 0, filter_chans, ok = 0;
   snd_fd **sfs;
   file_info *hdr;
-  int scfd,fltfd,fftsize,ipow,filtersize=0,filesize=0,dataloc,dataformat;
-  char *ofile = NULL,*saved_chan_file;
-  chan_info *ncp,*ucp;
+  int scfd, fltfd, fftsize, ipow, filtersize = 0, filesize = 0, dataloc, dataformat;
+  char *ofile = NULL, *saved_chan_file;
+  chan_info *ncp, *ucp;
   char *origin;
 
   if (cp) 
@@ -3497,12 +3523,12 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
   dataformat = mus_sound_data_format(filename);
   if (!(ss->stopped_explicitly))
     {
-      for (ip=0; ip<si->chans; ip++)
+      for (ip = 0; ip < si->chans; ip++)
 	{
 	  ok = 0;
       	  ucp = si->cps[ip];
 	  sp = ucp->sound;
-	  if ((ip>0) && (sp != gsp)) 
+	  if ((ip > 0) && (sp != gsp)) 
 	    finish_progress_report(gsp, NOT_FROM_ENVED);
 	  if ((ip == 0) || (sp != gsp)) 
 	    {
@@ -3579,9 +3605,9 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 		{
 		  ok = delete_selection(origin, DONT_UPDATE_DISPLAY);
 		  file_insert_samples(si->begs[ip], filtersize + filesize, ofile, ucp, 0, DELETE_ME, origin);
-		  reactivate_selection(si->cps[ip], si->begs[ip], si->begs[ip]+filtersize+filesize);
-		  if (ok) backup_edit_list(ucp); /* pray... */
-		  if (ucp->marks) ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize+filesize);
+		  reactivate_selection(si->cps[ip], si->begs[ip], si->begs[ip] + filtersize + filesize);
+		  if (ok) backup_edit_list(ucp); 
+		  if (ucp->marks) ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize + filesize);
 		  update_graph(ucp, NULL); 
 		}
 	      else file_override_samples(filtersize + filesize, ofile, ucp, 0, DELETE_ME, LOCK_MIXES, origin);
@@ -3602,7 +3628,7 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
     {
       /* clean up and undo all edits up to stop_point */
       ss->stopped_explicitly = 0;
-      for (ip=0; ip<=stop_point; ip++)
+      for (ip = 0; ip <= stop_point; ip++)
 	{
 	  ucp = si->cps[ip];
 	  undo_edit(ucp, 1);
@@ -3624,11 +3650,11 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, int selection)
    */
   sync_info *si;
   chan_info *ncp;
-  int i,j,beg,frames;
+  int i, j, beg, frames;
   if (selection)
     si = selection_sync();
   else si = sync_to_chan(cp);
-  for (i=0, j=0; i<si->chans; i++)
+  for (i = 0, j = 0; i < si->chans; i++)
     {
       ncp = si->cps[i];
       if (selection)
@@ -3661,8 +3687,8 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, int selection)
 Float get_maxamp(snd_info *sp, chan_info *cp)
 {
   snd_fd *sf;
-  Float ymax,val;
-  int i,len;
+  Float ymax, val;
+  int i, len;
   if (!sp) return(0.0);
   if (!cp) cp = sp->chans[0];
   if (amp_env_maxamp_ok(cp)) return(amp_env_maxamp(cp));
@@ -3671,7 +3697,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
   sf = init_sample_read(0, cp, READ_FORWARD);
   ymax = 0.0;
   len = current_ed_samples(cp);
-  for (i=0; i<len; i++)
+  for (i = 0; i < len; i++)
     {
       val = next_sample_to_float(sf);
       if (val < 0.0) val = -val;
@@ -3685,14 +3711,14 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
 static Float get_selection_maxamp(chan_info *cp)
 {
   snd_fd *sf;
-  Float ymax,val;
-  int i,len;
+  Float ymax, val;
+  int i, len;
   val = ed_selection_maxamp(cp);
   if (val >= 0.0) return(val);
   sf = init_sample_read(selection_beg(cp), cp, READ_FORWARD);
   len = selection_end(cp) - selection_beg(cp) + 1;
   ymax = 0.0;
-  for (i=0; i<len; i++)
+  for (i = 0; i < len; i++)
     {
       val = next_sample_to_float(sf);
       if (val < 0.0) val = -val;
@@ -3708,10 +3734,10 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   /* essentially the same as scale-by, but first take into account current maxamps */
   /* here it matters if more than one arg is given -- if one, get overall maxamp */
   /*   if more than one, get successive maxamps */
-  int i,chans,nlen,beg,frames,datum_size;
+  int i, chans, nlen, beg, frames, datum_size;
   sync_info *si = NULL;
   chan_info *ncp;
-  Float maxamp,val;
+  Float maxamp, val;
   Float *scalers;
   if ((!selection) && (cp == NULL)) return;
   if (selection) 
@@ -3724,17 +3750,20 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   datum_size = mus_data_format_to_bytes_per_sample((sp->hdr)->format);
   chans = si->chans;
   scalers = (Float *)CALLOC(chans, sizeof(Float));
-  if (chans < len) nlen = chans; else nlen = len;
-  for (i=0; i<nlen; i++) scalers[i] = ur_scalers[i];
+  if (chans < len)
+    nlen = chans; else nlen = len;
+  for (i = 0; i < nlen; i++) 
+    scalers[i] = ur_scalers[i];
   if (chans > len)
-    for (i=len; i<chans; i++) scalers[i] = ur_scalers[len-1];
+    for (i = len; i < chans; i++) 
+      scalers[i] = ur_scalers[len-1];
   /* now find maxamps (special if len==1) and fixup the scalers */
   if (len == 1)
     {
       if (scalers[0] != 0.0)
 	{
 	  maxamp = 0.0;
-	  for (i=0; i<chans; i++)
+	  for (i = 0; i < chans; i++)
 	    {
 	      ncp = si->cps[i];
 	      if (selection)
@@ -3745,18 +3774,19 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	  if ((data_clipped(ss) == 0) && 
 	      (scalers[0] == 1.0) && 
 	      (datum_size < 4)) 
-	    scalers[0] = 32767.0/32768.0;
+	    scalers[0] = 32767.0 / 32768.0;
 	  /* 1.0 = -1.0 in these cases, so we'll get a click  -- added 13-Dec-99 */
 	  if (maxamp != 0.0)
-	    val = scalers[0]/maxamp;
+	    val = scalers[0] / maxamp;
 	  else val = 0.0;
 	}
       else val = 0.0;
-      for (i=0; i<chans; i++) scalers[i] = val;
+      for (i = 0; i < chans; i++) 
+	scalers[i] = val;
     }
   else
     {
-      for (i=0; i<chans; i++)
+      for (i = 0; i < chans; i++)
 	{
 	  ncp = si->cps[i];
 	  if (scalers[i] != 0.0)
@@ -3769,14 +3799,14 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 		  if ((data_clipped(ss) == 0) && 
 		      (scalers[i] == 1.0) && 
 		      (datum_size < 4)) 
-		    scalers[i] = 32767.0/32768.0;
+		    scalers[i] = 32767.0 / 32768.0;
 		  scalers[i] /= val;
 		}
 	      else scalers[i] = 0.0;
 	    }
 	}
     }
-  for (i=0; i<si->chans; i++)
+  for (i = 0; i < si->chans; i++)
     {
       ncp = si->cps[i];
       if (selection)
@@ -3807,14 +3837,14 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 
 static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c1)
 {
-  chan_info *cp0,*cp1;
+  chan_info *cp0, *cp1;
   snd_info *sp0;
-  file_info *hdr0 = NULL,*hdr1 = NULL;
-  int j,k,ofd0 = 0,ofd1 = 0,datumb = 0,temp_file,err=0;
-  MUS_SAMPLE_TYPE **data0,**data1;
-  MUS_SAMPLE_TYPE *idata0,*idata1;
+  file_info *hdr0 = NULL, *hdr1 = NULL;
+  int j, k, ofd0 = 0, ofd1 = 0, datumb = 0, temp_file, err = 0;
+  MUS_SAMPLE_TYPE **data0, **data1;
+  MUS_SAMPLE_TYPE *idata0, *idata1;
   int reporting = 0;
-  char *ofile0 = NULL,*ofile1 = NULL;
+  char *ofile0 = NULL, *ofile1 = NULL;
   if (dur <= 0) return;
   data0 = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
   data0[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
@@ -3840,7 +3870,7 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
   idata0 = data0[0];
   idata1 = data1[0];
   j = 0;
-  for (k=0; k<dur; k++)
+  for (k = 0; k < dur; k++)
     {
       idata0[j] = next_sample(c1);
       idata1[j] = next_sample(c0);
@@ -3851,7 +3881,7 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
 	    {
 	      err = mus_file_write(ofd0, 0, j-1, 1, data0);
 	      err = mus_file_write(ofd1, 0, j-1, 1, data1);
-	      j=0;
+	      j = 0;
 	      if (err == -1) break;
 	      if (reporting) progress_report(sp0, "scl", 1, 1, (Float)k / (Float)dur, NOT_FROM_ENVED);
 	    }
@@ -3870,8 +3900,8 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
       free_file_info(hdr1);
       file_change_samples(beg, dur, ofile0, cp0, 0, DELETE_ME, LOCK_MIXES, S_swap_channels);
       file_change_samples(beg, dur, ofile1, cp1, 0, DELETE_ME, LOCK_MIXES, S_swap_channels);
-      if (ofile0) {free(ofile0); ofile0=NULL;}
-      if (ofile1) {free(ofile1); ofile1=NULL;}
+      if (ofile0) {free(ofile0); ofile0 = NULL;}
+      if (ofile1) {free(ofile1); ofile1 = NULL;}
       if (reporting) finish_progress_report(sp0, NOT_FROM_ENVED);
     }
   else 
@@ -3906,7 +3936,7 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
   snd_info *sp;
   sync_state *sc;
   sync_info *si;
-  int i,chans,len;
+  int i, chans, len;
   file_info *nhdr;
   snd_fd **temp_sfs;
   snd_exf *data = NULL;
@@ -3923,7 +3953,7 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
   if (one_file) data->files = 1; else data->files = chans;
   data->old_filenames = (char **)CALLOC(data->files, sizeof(char *));
   data->new_filenames = (char **)CALLOC(data->files, sizeof(char *));
-  for (i=0; i<data->files; i++)
+  for (i = 0; i < data->files; i++)
     {
       data->old_filenames[i] = snd_tempnam(ss);
       data->new_filenames[i] = NULL;
@@ -3941,7 +3971,7 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
   else
     {
       temp_sfs = (snd_fd **)CALLOC(1, sizeof(snd_fd *));
-      for (i=0; i<chans; i++)
+      for (i = 0; i < chans; i++)
 	{
 	  if (selection) len = sc->dur; else len = current_ed_samples(si->cps[i]);
 	  nhdr = copy_header(data->old_filenames[i], sp->hdr);
@@ -3953,7 +3983,7 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
 	}
       FREE(temp_sfs);
     }
-  for (i=0; i<chans; i++) sc->sfs[i] = free_snd_fd(sc->sfs[i]);
+  for (i = 0; i < chans; i++) sc->sfs[i] = free_snd_fd(sc->sfs[i]);
   return(data);
 }
 
@@ -3961,18 +3991,19 @@ static int temp_to_snd(snd_exf *data, char *origin)
 {
   sync_state *sc;
   sync_info *si;
-  int i,k,chans,err,new_len,old_len,new_chans,ok,orig_chans;
+  int i, k, chans, err, new_len, old_len, new_chans, ok, orig_chans;
   if (!data) return(-1);
   sc = (sync_state *)(data->sc);
   si = sc->si;
   chans = si->chans;
   orig_chans = chans;
-  for (i=0; i<data->files; i++)
+  for (i = 0; i < data->files; i++)
     {
       if (data->old_filenames[i])
 	{
 	  /* if user didn't re-use the temp file for his output, delete it */
-	  if ((data->new_filenames[i] == NULL) || (strcmp(data->new_filenames[i], data->old_filenames[i]) != 0))
+	  if ((data->new_filenames[i] == NULL) || 
+	      (strcmp(data->new_filenames[i], data->old_filenames[i]) != 0))
 	    {
 	      mus_sound_forget(data->old_filenames[i]);
 	      err = remove(data->old_filenames[i]);
@@ -3999,19 +4030,20 @@ static int temp_to_snd(snd_exf *data, char *origin)
 		    }
 		  if (old_len == new_len)
 		    {
-		      for (k=0; k<chans; k++)
+		      for (k = 0; k < chans; k++)
 			file_change_samples(si->begs[k], old_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, LOCK_MIXES, origin);
 		    }
 		  else
 		    {
 		      ok = delete_selection(origin, DONT_UPDATE_DISPLAY);
 		      if (!ok) snd_warning("temp-to-selection: no active selection? (inserting at sample %d...)", si->begs[0]);
-		      for (k=0; k<chans; k++)
+		      for (k = 0; k < chans; k++)
 			{
 			  file_insert_samples(si->begs[k], new_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, origin);
-			  reactivate_selection(si->cps[k], si->begs[k], si->begs[k]+new_len);
+			  reactivate_selection(si->cps[k], si->begs[k], si->begs[k] + new_len);
 			  if (ok) backup_edit_list(si->cps[k]);
-			  if ((si->cps[k])->marks) ripple_trailing_marks(si->cps[k], si->begs[k], old_len, new_len);
+			  if ((si->cps[k])->marks) 
+			    ripple_trailing_marks(si->cps[k], si->begs[k], old_len, new_len);
 			}
 		    }
 		}
@@ -4022,7 +4054,7 @@ static int temp_to_snd(snd_exf *data, char *origin)
 	{
 	  ok = delete_selection(origin, DONT_UPDATE_DISPLAY); /* "ok" means there was a selection that was deleted */
 	  if (!ok) snd_warning("temps-to-selection: no active selection? (inserting at sample %d...)", si->begs[0]);
-	  for (k=0; k<data->files; k++)
+	  for (k = 0; k < data->files; k++)
 	    {
 	      if (snd_strlen(data->new_filenames[k]) > 0)
 		{
@@ -4030,9 +4062,10 @@ static int temp_to_snd(snd_exf *data, char *origin)
 		  if (new_len != -1)
 		    {
 		      file_insert_samples(si->begs[k], new_len, data->new_filenames[k], si->cps[k], 0, DELETE_ME, origin);
-		      reactivate_selection(si->cps[k], si->begs[k], si->begs[k]+new_len);
+		      reactivate_selection(si->cps[k], si->begs[k], si->begs[k] + new_len);
 		      if (ok) backup_edit_list(si->cps[k]);
-		      if ((si->cps[k])->marks) ripple_trailing_marks(si->cps[k], si->begs[k], old_len, new_len);
+		      if ((si->cps[k])->marks) 
+			ripple_trailing_marks(si->cps[k], si->begs[k], old_len, new_len);
 		    }
 		  else snd_warning("temps-to-selection: %s not readable?", data->new_filenames[k]);
 		}
@@ -4045,7 +4078,7 @@ static int temp_to_snd(snd_exf *data, char *origin)
 	{
 	  if (snd_strlen(data->new_filenames[0]) > 0)
 	    {
-	      new_len = mus_sound_samples(data->new_filenames[0])/chans;
+	      new_len = mus_sound_samples(data->new_filenames[0]) / chans;
 	      if (new_len != -1)
 		{
 		  new_chans = mus_sound_chans(data->new_filenames[0]);
@@ -4054,7 +4087,7 @@ static int temp_to_snd(snd_exf *data, char *origin)
 		      snd_warning("temp-to-sound: original chans: %d, new chans: %d", chans, new_chans);
 		      if (chans > new_chans) chans = new_chans;
 		    }
-		  for (k=0; k<chans; k++)
+		  for (k = 0; k < chans; k++)
 		    file_override_samples(new_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, LOCK_MIXES, origin);
 		}
 	      else snd_warning("temp-to-sound: %s not readable?", data->new_filenames[0]);
@@ -4062,7 +4095,7 @@ static int temp_to_snd(snd_exf *data, char *origin)
 	}
       else
 	{
-	  for (k=0; k<data->files; k++)
+	  for (k = 0; k < data->files; k++)
 	    {
 	      if (snd_strlen(data->new_filenames[k]) > 0)
 		{
@@ -4074,13 +4107,14 @@ static int temp_to_snd(snd_exf *data, char *origin)
 	    }
 	}
     }
-  for (i=0; i<orig_chans; i++)
+  for (i = 0; i < orig_chans; i++)
     {
       update_graph(si->cps[i], NULL); 
       sc->sfs[i] = free_snd_fd(sc->sfs[i]);
     }
-  for (i=0; i<data->files; i++)
-    if (data->new_filenames[i]) free(data->new_filenames[i]); /* from tempnam */
+  for (i = 0; i < data->files; i++)
+    if (data->new_filenames[i]) 
+      free(data->new_filenames[i]); /* from tempnam */
   FREE(data->new_filenames);
   FREE(data->old_filenames);
   free_sync_state(sc);
@@ -4132,19 +4166,19 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
   sync_info *si;
   snd_fd **sfs;
   snd_fd *sf;
-  int i,idiff,jj;
+  int i, idiff, jj;
   MUS_SAMPLE_TYPE **data;
   file_info *hdr = NULL;
-  int j,k,ofd = 0,datumb = 0,ok,err=0;
+  int j, k, ofd = 0, datumb = 0, ok, err = 0;
   char *ofile = NULL;
   MUS_SAMPLE_TYPE *idata;
   src_state *sr;
-  int scdur,dur;
-  int *old_marks = NULL,*new_marks = NULL;
+  int scdur, dur;
+  int *old_marks = NULL, *new_marks = NULL;
   mark **mps;
-  int cur_mark=0,cur_mark_sample=-1,cur_marks=0,m;
+  int cur_mark = 0, cur_mark_sample = -1, cur_marks = 0, m;
   Float env_val;
-  int next_pass,stop_point=0;
+  int next_pass, stop_point = 0;
   mus_any *egen;
 
   if ((!just_num) && (e == NULL) && (gen == NULL)) return;
@@ -4155,7 +4189,9 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
       sp = any_selected_sound(ss); 
       if (sp) 
 	cp = any_selected_channel(sp); 
-      else if (!over_selection) return;
+      else 
+	if (!over_selection) 
+	  return;
     }
   else sp = cp->sound;
   /* get current syncd chans */
@@ -4169,7 +4205,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 
   if (!(ss->stopped_explicitly))
     {
-      for (i=0; i<si->chans; i++)
+      for (i = 0; i < si->chans; i++)
 	{
 	  cp = si->cps[i];
 	  sp = cp->sound;
@@ -4190,17 +4226,17 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  sf = sfs[i];
 	  idata = data[0];
 	  sr = make_src(ss, ratio, sf);
-	  j=0;
+	  j = 0;
 	  if (just_num)
 	    {
-	      for (k=0;sr->sample<dur; k++) /* sr->sample tracks input location -- produce output until input exhausted */
+	      for (k = 0; sr->sample < dur; k++) /* sr->sample tracks input location -- produce output until input exhausted */
 		{
-		  idata[j]=(MUS_FLOAT_TO_SAMPLE(run_src(sr, 0.0)));
+		  idata[j] =(MUS_FLOAT_TO_SAMPLE(run_src(sr, 0.0)));
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {
 		      err = mus_file_write(ofd, 0, j-1, 1, data);
-		      j=0;
+		      j = 0;
 		      if (err == -1) break;
 		      if (reporting) 
 			{
@@ -4220,12 +4256,12 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		  cur_marks = cp->mark_ctr[cp->edit_ctr]+1;
 		  new_marks = (int *)CALLOC(cur_marks, sizeof(int));
 		  old_marks = (int *)CALLOC(cur_marks, sizeof(int));
-		  for (m=0;m<cur_marks;m++)
+		  for (m = 0; m < cur_marks; m++)
 		    {
 		      new_marks[m] = -1;
 		      old_marks[m] = mps[m]->samp;
 		    }
-		  for (m=0;m<cur_marks;m++)
+		  for (m = 0; m < cur_marks; m++)
 		    {
 		      if (old_marks[m] > si->begs[i])
 			{
@@ -4240,14 +4276,14 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	      else egen = gen;
 	      next_pass = sr->sample;
 	      env_val = mus_env(egen);
-	      for (k=0;sr->sample<dur; k++)
+	      for (k = 0; sr->sample < dur; k++)
 		{
 		  idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr, env_val)));
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {
 		      err = mus_file_write(ofd, 0, j-1, 1, data);
-		      j=0;
+		      j = 0;
 		      if (err == -1) break;
 		      if (reporting) 
 			{
@@ -4259,7 +4295,9 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		    {
 		      idiff = sr->sample - next_pass;
 		      next_pass = sr->sample;
-		      if ((new_marks) && (cur_mark_sample != -1) && (next_pass >= (cur_mark_sample - si->begs[i]))) 
+		      if ((new_marks) && 
+			  (cur_mark_sample != -1) && 
+			  (next_pass >= (cur_mark_sample - si->begs[i]))) 
 			{
 			  /* not '==' because sr->sample can be incremented by more than 1 */
 			  new_marks[cur_mark] = k + si->begs[i];
@@ -4268,7 +4306,8 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 			    cur_mark_sample = old_marks[cur_mark];
 			  else cur_mark_sample = -1;
 			}
-		      for (jj=0; jj<idiff; jj++) env_val = mus_env(egen);
+		      for (jj = 0; jj < idiff; jj++) 
+			env_val = mus_env(egen);
 		    }
 		}
 	      if (e) 
@@ -4290,7 +4329,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		  ok = delete_selection(S_src_selection, DONT_UPDATE_DISPLAY);
 		  file_insert_samples(si->begs[i], k, ofile, cp, 0, DELETE_ME, S_src_selection);
 		  reactivate_selection(si->cps[i], si->begs[i], si->begs[i]+k);
-		  if (ok) backup_edit_list(cp); /* pray... */
+		  if (ok) backup_edit_list(cp);
 		  if (cp->marks) ripple_marks(cp, 0, 0);
 		  update_graph(cp, NULL);
 		}
@@ -4304,7 +4343,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	      else
 		{
 		  if (new_marks) 
-		    reset_marks(cp, cur_marks, new_marks, si->begs[i]+dur, (k - dur), over_selection);
+		    reset_marks(cp, cur_marks, new_marks, si->begs[i] + dur, (k - dur), over_selection);
 		}
 	      update_graph(cp, NULL);
 	    }
@@ -4313,7 +4352,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  if (new_marks) FREE(new_marks);
 	  new_marks = NULL;
 	  free(ofile); 
-	  ofile=NULL;
+	  ofile = NULL;
 	  sfs[i] = free_snd_fd(sfs[i]);
 	  if (ss->stopped_explicitly) 
 	    {
@@ -4326,7 +4365,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
     {
       /* clean up and undo all edits up to stop_point */
       ss->stopped_explicitly = 0;
-      for (i=0; i<=stop_point; i++)
+      for (i = 0; i <= stop_point; i++)
 	{
 	  cp = si->cps[i];
 	  undo_edit(cp, 1);
@@ -4334,7 +4373,9 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
     }
   FREE(data[0]);
   FREE(data);
-  for (i=0; i<si->chans; i++) if (sfs[i]) free_snd_fd(sfs[i]);
+  for (i = 0; i < si->chans; i++) 
+    if (sfs[i]) 
+      free_snd_fd(sfs[i]);
   free_sync_state(sc);
 }
 
@@ -4345,16 +4386,16 @@ static Float *env2array(int order, env *e)
 {
   Float *fdata = NULL;
   Float x;
-  int i,j;
-  Float last_x,step;
+  int i, j;
+  Float last_x, step;
   if (!e) return(NULL);
   /* get the frequency envelope and design the FIR filter */
   fdata = (Float *)CALLOC(order, sizeof(Float));
-  last_x = e->data[(e->pts-1)*2];
-  step = 2*last_x/((Float)order-1);
-  for (i=0, x=0.0; i<order/2; i++,x+=step) 
+  last_x = e->data[(e->pts - 1) * 2];
+  step = 2 * last_x / ((Float)order - 1);
+  for (i = 0, x = 0.0; i < order / 2; i++, x+=step) 
     fdata[i] = list_interp(x, e->data, e->pts); /* not mus_env here since it's likely the points fall between the order-related samples */
-  for (j=order/2-1, i=order/2;(i<order) && (j>=0); i++,j--) fdata[i] = fdata[j];
+  for (j = order/2-1, i = order/2; (i < order) && (j >= 0); i++, j--) fdata[i] = fdata[j];
   return(fdata);
 }
 
@@ -4374,24 +4415,25 @@ static Float *get_filter_coeffs(int order, env *e)
 
 static Float frequency_response(Float *coeffs, int order, Float frq)
 {
-  Float at = 0.0,am;
-  int n2,i;
-  n2 = order>>1;
-  am = (order+1) * 0.5;
-  for (i=0; i<n2; i++) at += coeffs[i] * cos(M_PI*(am-i-1)*frq);
-  if (at<0.0) return(-2*at);
-  return(2*at);
+  Float at = 0.0, am;
+  int n2, i;
+  n2 = order >> 1;
+  am = (order + 1) * 0.5;
+  for (i = 0; i < n2; i++) 
+    at += coeffs[i] * cos(M_PI * (am - i - 1) * frq);
+  if (at < 0.0) return(-2 * at);
+  return(2 * at);
 }
 
 /* Hartley Transfrom */
 
-static Float *fht_sines=NULL,*fht_cosines=NULL;
-static int fht_last_length = 0,fht_length = 0;
+static Float *fht_sines = NULL, *fht_cosines = NULL;
+static int fht_last_length = 0, fht_length = 0;
 
 static void make_sines(int length)
 {
   int i;
-  Float freq,temp;
+  Float freq, temp;
   if (length != fht_last_length)
     {
       if (fht_length < length)
@@ -4404,7 +4446,7 @@ static void make_sines(int length)
 	}
       fht_last_length = length;
       freq = TWO_PI / (Float)length;
-      for (i=0; i<length; i++) 
+      for (i = 0; i < length; i++) 
 	{
 	  temp = freq * i;
 	  fht_sines[i] = sin(temp);
@@ -4425,24 +4467,24 @@ static void fht(int powerOfFour, Float *array)
    */
   /* fht is its own inverse, so to speak -- run it again to return to original data */
 
-  register int j=0,i=0,k=0,L=0;
-  int n=0,n4=0,d1=0,d2=0,d3=0,d4=0,d5=1,d6=0,d7=0,d8=0,d9=0;
-  int L1=0,L2=0,L3=0,L4=0,L5=0,L6=0,L7=0,L8=0;
+  register int j = 0, i = 0, k = 0, L = 0;
+  int n = 0, n4 = 0, d1 = 0, d2 = 0, d3 = 0, d4 = 0, d5 = 1, d6 = 0, d7 = 0, d8 = 0, d9 = 0;
+  int L1 = 0, L2 = 0, L3 = 0, L4 = 0, L5 = 0, L6 = 0, L7 = 0, L8 = 0;
   int n_over_d3;
-  Float r=0.0;
-  int a1=0,a2=0,a3=0;
-  Float t=0.0,t1=0.0,t2 =0.0,t3=0.0,t4=0.0,t5=0.0,t6=0.0,t7=0.0,t8=0.0;
-  Float t9=0.0,t0=0.0;
+  Float r = 0.0;
+  int a1 = 0, a2 = 0, a3 = 0;
+  Float t = 0.0, t1 = 0.0, t2 =0.0, t3 = 0.0, t4 = 0.0, t5 = 0.0, t6 = 0.0, t7 = 0.0, t8 = 0.0;
+  Float t9 = 0.0, t0 = 0.0;
   n = (int)(pow(4.0 , (double)powerOfFour));
   make_sines(n);
   n4 = n / 4;
   r = 1.414213562;
   j = 1;
   i = 0;
-  while (i<n-1)	
+  while (i < n-1)	
     {
       i++;
-      if (i<j)	
+      if (i < j)	
 	{
 	  t = array[j-1];
 	  array[j-1] = array[i-1];
@@ -4456,7 +4498,7 @@ static void fht(int powerOfFour, Float *array)
     	}
       j += k;
     }
-  for (i=0; i<n; i += 4) 
+  for (i = 0; i < n; i += 4) 
     {
       t5 = array[i];
       t6 = array[i+1];
@@ -4471,32 +4513,32 @@ static void fht(int powerOfFour, Float *array)
       array[i+2] = t2 + t4;
       array[i+3] = t2 - t4;
     }
-  for (L=2;L<=powerOfFour;L++)  
+  for (L = 2; L <= powerOfFour; L++)  
     {
       d1 = (int)(pow(2.0 , L+L-3.0));
-      d2=d1+d1;
-      d3=d2+d2;
+      d2 = d1 + d1;
+      d3 = d2 + d2;
       n_over_d3 = n / 2 / d3;
-      d4=d2+d3;
-      d5=d3+d3;
-      for (j=0; j<n; j += d5)	  
+      d4 = d2 + d3;
+      d5 = d3 + d3;
+      for (j = 0; j < n; j += d5)	  
 	{
 	  t5 = array[j];
 	  t6 = array[j+d2];
 	  t7 = array[j+d3];
 	  t8 = array[j+d4];
-	  t1 = t5+t6;
-	  t2 = t5-t6;
-	  t3 = t7+t8;
-	  t4 = t7-t8;
+	  t1 = t5 + t6;
+	  t2 = t5 - t6;
+	  t3 = t7 + t8;
+	  t4 = t7 - t8;
 	  array[j] = t1 + t3;
 	  array[j+d2] = t1 - t3;
 	  array[j+d3] = t2 + t4;
 	  array[j+d4] = t2 - t4;
-	  d6 = j+d1;
-	  d7 = j+d1+d2;
-	  d8 = j+d1+d3;
-	  d9 = j+d1+d4;
+	  d6 = j + d1;
+	  d7 = j + d1 + d2;
+	  d8 = j + d1 + d3;
+	  d9 = j + d1 + d4;
 	  t1 = array[d6];
 	  t2 = array[d7] * r;
 	  t3 = array[d8];
@@ -4505,7 +4547,7 @@ static void fht(int powerOfFour, Float *array)
 	  array[d7] = t1 - t3 + t4;
 	  array[d8] = t1 - t2 + t3;
 	  array[d9] = t1 - t3 - t4;
-	  for (k=1; k<d1; k++)	
+	  for (k = 1; k < d1; k++)	
 	    {
 	      L1 = j + k;
 	      L2 = L1 + d2;
@@ -4559,25 +4601,25 @@ static void fht(int powerOfFour, Float *array)
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a, mus_any *gen)
 {
   /* interpret e as frequency response and apply as filter to all sync'd chans */
-  Float *a = NULL,*d = NULL;
+  Float *a = NULL, *d = NULL;
   Float x;
   sync_state *sc;
   sync_info *si;
   snd_state *ss;
   snd_info *sp;
   int reporting = 0;
-  int i,m,scdur,dur,k,stop_point = 0,prebeg=0;
+  int i, m, scdur, dur, k, stop_point = 0, prebeg = 0;
   snd_fd **sfs;
   snd_fd *sf;
   file_info *hdr = NULL;
-  int j,ofd = 0,datumb = 0,temp_file,err=0;
+  int j, ofd = 0, datumb = 0, temp_file, err = 0;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   char *ofile = NULL;
   chan_info *cp;
   int fsize;
   Float scale;
-  Float *sndrdat,*fltdat;
+  Float *sndrdat, *fltdat;
 #if USE_MUS_FFT
   Float *sndidat;
   Float spectr;
@@ -4608,7 +4650,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
       /* use convolution if order is large and there's memory available (and not over_selection) */
       /*   probably faster here would be overlap-add */
       /*   but user is almost certainly making a mistake elsewhere... */
-      for (i=0; i<si->chans; i++)
+      for (i = 0; i < si->chans; i++)
 	{
 	  cp = si->cps[i];
 	  sp = cp->sound;
@@ -4620,13 +4662,14 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	    }
 #if USE_MUS_FFT
 	  /* this is about 3 times slower then the fht version below */
-	  fsize = (int)(pow(2.0, (int)ceil(log(order + dur)/log(2.0))));
+	  fsize = (int)(pow(2.0, (int)ceil(log(order + dur) / log(2.0))));
 	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
 	  sndidat = (Float *)CALLOC(fsize, sizeof(Float));
 	  fltdat = env2array(fsize, e);
 
 	  sf = sfs[i]; /* init_sample_read(0, cp, READ_FORWARD); */
-	  for (k=0; k<dur; k++) sndrdat[k] = (Float)(next_sample_to_float(sf));
+	  for (k = 0; k < dur; k++) 
+	    sndrdat[k] = (Float)(next_sample_to_float(sf));
 	  sfs[i] = free_snd_fd(sf);
 
 	  mus_fft(sndrdat, sndidat, fsize, 1);
@@ -4638,7 +4681,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	      break;
 	    }
 	  scale = 2.0 / (Float)fsize;
-	  for (k=0; k<fsize; k++)
+	  for (k = 0; k < fsize; k++)
 	    {
 	      spectr = scale * fltdat[k];
 	      sndrdat[k] *= spectr;
@@ -4646,12 +4689,12 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	    }
 	  mus_fft(sndrdat, sndidat, fsize, -1);
 #else
-	  fsize = (int)(pow(4.0, pow4 = (int)ceil(log(order + dur)/log(4.0))));
+	  fsize = (int)(pow(4.0, pow4 = (int)ceil(log(order + dur) / log(4.0))));
 	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
 	  fltdat = env2array(fsize, e);
 
 	  sf = sfs[i]; /* init_sample_read(0, cp, READ_FORWARD); */
-	  for (k=0; k<dur; k++) sndrdat[k] = (Float)(next_sample_to_float(sf));
+	  for (k = 0; k < dur; k++) sndrdat[k] = (Float)(next_sample_to_float(sf));
 	  sfs[i] = free_snd_fd(sf);
 
 	  fht(pow4, sndrdat);
@@ -4663,7 +4706,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	      break;
 	    }
 	  scale = 1.0 / (Float)fsize;
-	  for (k=0; k<fsize; k++)
+	  for (k = 0; k < fsize; k++)
 	    sndrdat[k] *= (scale * fltdat[k]); /* fltdat (via env2array) is already reflected around midpoint */
 	  fht(pow4, sndrdat);
 #endif
@@ -4684,7 +4727,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	  close_temp_file(ofd, hdr, fsize*sizeof(Float), sp);
 	  hdr = free_file_info(hdr);
 	  file_change_samples(0, dur+order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin);
-	  if (ofile) {free(ofile); ofile=NULL;}
+	  if (ofile) {free(ofile); ofile = NULL;}
 	  update_graph(cp, NULL);
 	  FREE(sndrdat);
 #if USE_MUS_FFT
@@ -4708,7 +4751,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	    a = ur_a;
 	  else 
 	    {
-	      if (order&1) order++;
+	      if (order & 1) order++;
 	      a = get_filter_coeffs(order, e);
 	    }
 	  if (!a) return;
@@ -4721,7 +4764,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
       
       if (!(ss->stopped_explicitly))
 	{
-	  for (i=0; i<si->chans; i++)
+	  for (i = 0; i < si->chans; i++)
 	    {
 	      /* done channel at a time here, rather than in parallel as in apply_env because */
 	      /* in this case, the various sync'd channels may be different lengths */
@@ -4752,7 +4795,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 		}
 	      else
 		{
-		  for (m=0;m<order;m++) d[m] = 0.0;
+		  for (m = 0; m < order; m++) d[m] = 0.0;
 		  if (over_selection)
 		    {
 		      /* see if there's data to pre-load the filter */
@@ -4760,25 +4803,25 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 			prebeg = order-1;
 		      else prebeg = si->begs[i];
 		      if (prebeg > 0)
-			for (m=prebeg;m>0;m--)
+			for (m = prebeg; m > 0; m--)
 			  d[m] = next_sample_to_float(sf);
 		    }
 		}
 	      j = 0;
-	      for (k=0; k<dur; k++)
+	      for (k = 0; k < dur; k++)
 		{
 		  if (gen)
 		    x = MUS_RUN(gen, next_sample_to_float(sf), 0.0);
 		  else
 		    {
-		      x=0.0; 
+		      x = 0.0; 
 		      d[0] = next_sample_to_float(sf);
-		      for (m=order-1;m>0;m--) 
+		      for (m = order-1; m > 0; m--) 
 			{
-			  x+=d[m]*a[m]; 
-			  d[m]=d[m-1];
+			  x += d[m] * a[m]; 
+			  d[m] = d[m-1];
 			} 
-		      x+=d[0]*a[0]; 
+		      x += d[0] * a[0]; 
 		    }
 		  idata[j] = MUS_FLOAT_TO_SAMPLE(x);
 		  j++;
@@ -4787,7 +4830,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 		      if (j == MAX_BUFFER_SIZE)
 			{
 			  err = mus_file_write(ofd, 0, j-1, 1, data);
-			  j=0;
+			  j = 0;
 			  if (err == -1) break;
 			  if (reporting) 
 			    {
@@ -4806,7 +4849,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 		  if (over_selection)
 		    file_change_samples(si->begs[i], dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin);
 		  else file_change_samples(0, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin);
-		  if (ofile) {free(ofile); ofile=NULL;}
+		  if (ofile) {free(ofile); ofile = NULL;}
 		}
 	      else change_samples(si->begs[i], dur, data[0], cp, LOCK_MIXES, origin);
 	      update_graph(cp, NULL); 
@@ -4822,7 +4865,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	{
 	  /* clean up and undo all edits up to stop_point */
 	  ss->stopped_explicitly = 0;
-	  for (i=0; i<=stop_point; i++)
+	  for (i = 0; i <= stop_point; i++)
 	    {
 	      cp = si->cps[i];
 	      undo_edit(cp, 1);
@@ -4850,11 +4893,11 @@ static void reverse_sound(chan_info *ncp, int over_selection)
   snd_state *ss;
   snd_info *sp;
   env_info *ep;
-  int i,dur,k,stop_point = 0;
+  int i, dur, k, stop_point = 0;
   snd_fd **sfs;
   snd_fd *sf;
   file_info *hdr = NULL;
-  int j,ofd = 0,datumb = 0,temp_file,err=0;
+  int j, ofd = 0, datumb = 0, temp_file, err = 0;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   char *ofile = NULL;
@@ -4869,7 +4912,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
   data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
   if (!(ss->stopped_explicitly))
     {
-      for (i=0; i<si->chans; i++)
+      for (i = 0; i < si->chans; i++)
 	{
 	  cp = si->cps[i];
 	  sp = cp->sound;
@@ -4900,7 +4943,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	  j = 0;
 	  if (no_ed_scalers(cp))
 	    {
-	      for (k=0; k<dur; k++)
+	      for (k = 0; k < dur; k++)
 		{
 		  idata[j] = previous_sample_unscaled(sf);
 		  j++;
@@ -4909,7 +4952,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 		      if (j == MAX_BUFFER_SIZE)
 			{
 			  err = mus_file_write(ofd, 0, j-1, 1, data);
-			  j=0;
+			  j = 0;
 			  if (err == -1) break;
 			}
 		    }
@@ -4917,7 +4960,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	    }
 	  else
 	    {
-	      for (k=0; k<dur; k++)
+	      for (k = 0; k < dur; k++)
 		{
 		  idata[j] = previous_sample(sf);
 		  j++;
@@ -4926,7 +4969,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 		      if (j == MAX_BUFFER_SIZE)
 			{
 			  err = mus_file_write(ofd, 0, j-1, 1, data);
-			  j=0;
+			  j = 0;
 			  if (err == -1) break;
 			}
 		    }
@@ -4940,7 +4983,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	      if (over_selection)
 		file_change_samples(si->begs[i], dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, S_reverse_selection);
 	      else file_change_samples(0, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, S_reverse_sound);
-	      if (ofile) {free(ofile); ofile=NULL;}
+	      if (ofile) {free(ofile); ofile = NULL;}
 	    }
 	  else change_samples(si->begs[i], dur, data[0], cp, LOCK_MIXES, (char *)((over_selection) ? S_reverse_selection : S_reverse_sound));
 	  if (ep) cp->amp_envs[cp->edit_ctr] = ep;
@@ -4963,7 +5006,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
   if (ss->stopped_explicitly)
     {
       ss->stopped_explicitly = 0;
-      for (i=0; i<=stop_point; i++)
+      for (i = 0; i <= stop_point; i++)
 	{
 	  cp = si->cps[i];
 	  undo_edit(cp, 1);
@@ -4986,7 +5029,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   sync_state *sc;
   snd_fd **sfs;
   file_info *hdr;
-  int i,j,k,ofd = 0,datumb = 0,temp_file,err=0,scalable=1;
+  int i, j, k, ofd = 0, datumb = 0, temp_file, err = 0, scalable = 1;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   int reporting = 0;
@@ -5001,7 +5044,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
     {
       if (e->pts == 0) return;
       val[0] = e->data[1];
-      for (i=1, j=2; i<e->pts; i++,j+=2)
+      for (i = 1, j = 2; i < e->pts; i++, j+=2)
 	if (e->data[j+1] != val[0]) 
 	  {
 	    scalable = 0; 
@@ -5025,7 +5068,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   if (regexpr) dur = sc->dur;
   if (dur == 0) 
     {
-      for (i=0; i<si->chans; i++) if (sfs[i]) free_snd_fd(sfs[i]);
+      for (i = 0; i < si->chans; i++) if (sfs[i]) free_snd_fd(sfs[i]);
       free_sync_state(sc); 
       return;
     }
@@ -5043,31 +5086,31 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   else temp_file = 0;
 
   data = (MUS_SAMPLE_TYPE **)CALLOC(si->chans, sizeof(MUS_SAMPLE_TYPE *));
-  for (i=0; i<si->chans; i++) 
+  for (i = 0; i < si->chans; i++) 
     {
       if (temp_file)
 	data[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
       else data[i] = (MUS_SAMPLE_TYPE *)CALLOC(dur, sizeof(MUS_SAMPLE_TYPE)); 
     }
 
-  j=0;
+  j = 0;
   reporting = (dur > (MAX_BUFFER_SIZE * 4));
   if (reporting) start_progress_report(sp, from_enved);
   if (si->chans > 1)
     {
-      for (i=0; i<dur; i++)
+      for (i = 0; i < dur; i++)
 	{
 	  egen_val = mus_env(egen);
-	  for (k=0; k<si->chans; k++)
-	    data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k])*egen_val);
+	  for (k = 0; k < si->chans; k++)
+	    data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k]) * egen_val);
 	  j++;
 	  if (temp_file)
 	    {
 	      if (j == FILE_BUFFER_SIZE)
 		{
-		  progress_report(sp, S_env_sound, 0, 0, (Float)i/((Float)dur), from_enved);
+		  progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
 		  err = mus_file_write(ofd, 0, j-1, si->chans, data);
-		  j=0;
+		  j = 0;
 		  if (err == -1) break;
 		  if (ss->stopped_explicitly) break;
 		}
@@ -5078,17 +5121,17 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
     {
       sf = sfs[0];
       idata = data[0];
-      for (i=0; i<dur; i++)
+      for (i = 0; i < dur; i++)
 	{
-	  idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf)*mus_env(egen));
+	  idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf) * mus_env(egen));
 	  j++;
 	  if (temp_file)
 	    {
 	      if (j == FILE_BUFFER_SIZE)
 		{
-		  progress_report(sp, S_env_sound, 0, 0, (Float)i/((Float)dur), from_enved);
+		  progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
 		  err = mus_file_write(ofd, 0, j-1, 1, data);
-		  j=0;
+		  j = 0;
 		  if (err == -1) break;
 		  if (ss->stopped_explicitly) break;
 		}
@@ -5098,19 +5141,24 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 
   if (temp_file)
     {
-      if (j>0) mus_file_write(ofd, 0, j-1, si->chans, data);
-      close_temp_file(ofd, hdr, dur*si->chans*datumb, sp);
+      if (j > 0) mus_file_write(ofd, 0, j-1, si->chans, data);
+      close_temp_file(ofd, hdr, dur * si->chans * datumb, sp);
     }
   if (reporting) finish_progress_report(sp, from_enved);
   if (ss->stopped_explicitly)
     {
       ss->stopped_explicitly = 0;
-      if (temp_file) {mus_sound_forget(ofile); remove(ofile);}
+      if (temp_file) 
+	{
+	  mus_sound_forget(ofile); 
+	  remove(ofile);
+	}
     }
   else
     {
-      if ((temp_file) && (si->chans > 1)) remember_temp(ofile, si->chans);
-      for (i=0; i<si->chans; i++)
+      if ((temp_file) && (si->chans > 1)) 
+	remember_temp(ofile, si->chans);
+      for (i = 0; i < si->chans; i++)
 	{
 	  /* TODO: ?? envelope the amp-env? */
 	  if (temp_file)
@@ -5119,12 +5167,12 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	  update_graph(si->cps[i], NULL);
 	}
     }
-  for (i=0; i<si->chans; i++)
+  for (i = 0; i < si->chans; i++)
     {
       sfs[i] = free_snd_fd(sfs[i]);
       FREE(data[i]);
     }
-  if ((temp_file) && (ofile)) {free(ofile); ofile=NULL;} /* safe only if snd_tempnam, not tmpnam used */
+  if ((temp_file) && (ofile)) {free(ofile); ofile = NULL;} /* safe only if snd_tempnam, not tmpnam used */
   if (data) FREE(data);
   if (e) mus_free(egen);
   free_sync_state(sc);
@@ -5135,7 +5183,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 
 static int cursor_delete(chan_info *cp, int count, char *origin)
 {
-  int i,beg;
+  int i, beg;
   snd_info *sp;
   sync_info *si;
   chan_info **cps;
@@ -5146,7 +5194,7 @@ static int cursor_delete(chan_info *cp, int count, char *origin)
     {
       si = snd_sync(cp->state, sp->syncing);
       cps = si->cps;
-      for (i=0; i<si->chans; i++)
+      for (i = 0; i < si->chans; i++)
 	{
 	  if (count > 0)
 	    delete_samples(beg, count, cps[i], origin); 
@@ -5159,7 +5207,7 @@ static int cursor_delete(chan_info *cp, int count, char *origin)
     {
       if (count > 0)
 	delete_samples(beg, count, cp, origin);
-      else delete_samples(beg+count, -count, cp, origin);
+      else delete_samples(beg + count, -count, cp, origin);
     }
   return(CURSOR_UPDATE_DISPLAY);
 }
@@ -5194,23 +5242,27 @@ static int cursor_insert(chan_info *cp, int beg, int count, char *origin)
     {
       si = snd_sync(cp->state, sp->syncing);
       cps = si->cps;
-      for (i=0; i<si->chans; i++)
+      for (i = 0; i < si->chans; i++)
 	{
-	  extend_with_zeros(cps[i], iclamp(0, beg, current_ed_samples(si->cps[i])-1), count, origin);
+	  extend_with_zeros(cps[i], 
+			    iclamp(0, beg, current_ed_samples(si->cps[i]) - 1), 
+			    count, origin);
 	  update_graph(cps[i], NULL);
 	}
       si = free_sync_info(si);
     }
-  else extend_with_zeros(cp, iclamp(0, beg, current_ed_samples(cp)), count, origin);
+  else extend_with_zeros(cp, 
+			 iclamp(0, beg, current_ed_samples(cp)), 
+			 count, origin);
   return(CURSOR_UPDATE_DISPLAY);
 }
 
 static int cursor_zeros(chan_info *cp, int count, int regexpr)
 {
-  int i,num,old_sync,beg;
-  snd_info *sp,*nsp;
+  int i, num, old_sync, beg;
+  snd_info *sp, *nsp;
   MUS_SAMPLE_TYPE *zeros;
-  sync_info *si=NULL;
+  sync_info *si = NULL;
   chan_info *ncp;
   Float scaler[1];
   if (count == 0) return(CURSOR_NO_ACTION);
@@ -5219,7 +5271,8 @@ static int cursor_zeros(chan_info *cp, int count, int regexpr)
   if ((sp->syncing != 0) && (!regexpr))
     {
       si = snd_sync(cp->state, sp->syncing);
-      for (i=0; i<si->chans; i++) si->begs[i] = cp->cursor;
+      for (i = 0; i < si->chans; i++) 
+	si->begs[i] = cp->cursor;
     }
   else
     {
@@ -5230,11 +5283,12 @@ static int cursor_zeros(chan_info *cp, int count, int regexpr)
 	}
     }
   if (!si) si = make_simple_sync(cp, cp->cursor);
-  for (i=0; i<si->chans; i++)
+  for (i = 0; i < si->chans; i++)
     {
       /* if zeroing entire sound, set scalers and remake amp_env */
       ncp = si->cps[i];
-      if ((si->begs[i] == 0) && (num >= current_ed_samples(ncp)))
+      if ((si->begs[i] == 0) && 
+	  (num >= current_ed_samples(ncp)))
 	{
 	  nsp = ncp->sound;
 	  old_sync = nsp->syncing;
@@ -5270,13 +5324,14 @@ static int cursor_zeros(chan_info *cp, int count, int regexpr)
 static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr)
 {
   sync_info *si = NULL;
-  int dur,i;
+  int dur, i;
   sync_state *sc;
   dur = 0;
   if ((sp->syncing != 0) && (!regexpr))
     {
       si = snd_sync(ss, sp->syncing);
-      for (i=0; i<si->chans; i++) si->begs[i] = beg;
+      for (i = 0; i < si->chans; i++) 
+	si->begs[i] = beg;
     }
   else
     {
@@ -5312,8 +5367,8 @@ static void cos_smooth(chan_info *cp, int beg, int num, int regexpr, char *origi
   MUS_SAMPLE_TYPE *data = NULL;
   chan_info *ncp;
   sync_state *sc;
-  int i,k;
-  Float y0,y1,angle,incr,off,scale;
+  int i, k;
+  Float y0, y1, angle, incr, off, scale;
   snd_info *sp;
   sync_info *si;
   sp = cp->sound;
@@ -5321,17 +5376,17 @@ static void cos_smooth(chan_info *cp, int beg, int num, int regexpr, char *origi
   if (sc == NULL) return;
   si = sc->si;
   if (regexpr) num = sc->dur;
-  for (i=0; i<si->chans; i++)
+  for (i = 0; i < si->chans; i++)
     {
       ncp = si->cps[i];
       y0 = sample(si->begs[i], ncp);
       y1 = sample(si->begs[i]+num, ncp);
-      if (y1 > y0) angle=M_PI; else angle=0.0;
+      if (y1 > y0) angle = M_PI; else angle = 0.0;
       incr = M_PI/(Float)num;
-      off = 0.5*(y1+y0);
-      scale = 0.5*fabs(y0-y1);
+      off = 0.5 * (y1 + y0);
+      scale = 0.5 * fabs(y0 - y1);
       data = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
-      for (k=0; k<num; k++,angle+=incr) 
+      for (k = 0; k < num; k++, angle+=incr) 
 	data[k] = MUS_FLOAT_TO_SAMPLE(off + scale * cos(angle));
       change_samples(si->begs[i], num, data, ncp, LOCK_MIXES, origin);
       update_graph(ncp, NULL);
@@ -5348,7 +5403,7 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
   sync_state *sc; 
   sync_info *si;
   snd_fd *sf;
-  int dur,chan_dur=0,chan,j,k;
+  int dur, chan_dur = 0, chan, j, k;
   int beg = 0;
   SCM res;
   snd_state *ss;
@@ -5382,7 +5437,7 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
       else dur = count;
       if (dur > 0)
 	{
-	  for (chan=0;chan<si->chans;chan++)
+	  for (chan = 0; chan < si->chans; chan++)
 	    {
 	      sf = sfs[chan];	      
 	      if (regexpr) 
@@ -5395,13 +5450,13 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 		  if (dur > MAX_BUFFER_SIZE) start_progress_report(sp, FALSE);
 		}
 	      j = 0;
-	      for (k=0; k<chan_dur; k++)
+	      for (k = 0; k < chan_dur; k++)
 		{
 		  res = g_call1(sp->eval_proc,
 				TO_SCM_DOUBLE((double)next_sample_to_float(sf)));
 		  if (SCM_SYMBOLP(res))
 		    {
-		      for (j=chan; j<si->chans; j++) free_snd_fd(sfs[j]);
+		      for (j = chan; j < si->chans; j++) free_snd_fd(sfs[j]);
 		      free_sync_state(sc);
 		      scm_throw(res,
 				SCM_LIST1(TO_SCM_STRING("eval expression")));
@@ -5411,7 +5466,7 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {
-		      progress_report(sp, "C-x C-x", chan, si->chans, (Float)k/((Float)chan_dur), FALSE);
+		      progress_report(sp, "C-x C-x", chan, si->chans, (Float)k / ((Float)chan_dur), FALSE);
 		      check_for_event(ss);
 		      if ((ss->stopped_explicitly) || (!(sp->inuse)))
 			{
@@ -5433,7 +5488,7 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 	}
       else
 	{
-	  for (chan=0;chan<si->chans;chan++)
+	  for (chan = 0; chan < si->chans; chan++)
 	    if (sfs[chan]) sfs[chan] = free_snd_fd(sfs[chan]);
 	}
       free_sync_state(sc);
@@ -5448,7 +5503,7 @@ static int prompt_named_mark(chan_info *cp)
   make_minibuffer_label(sp, "mark:");
   sp->minibuffer_on = 1;
   goto_minibuffer(sp);
-  sp->marking = cp->cursor+1; /* +1 so it's not confused with 0 (if (sp->marking)...) */
+  sp->marking = cp->cursor + 1; /* +1 so it's not confused with 0 (if (sp->marking)...) */
   return(CURSOR_IN_VIEW);
 }
 
@@ -5470,7 +5525,7 @@ static int named_macro_size = 0;
 
 static void allocate_macro_cmds(void)
 {
-  int i,old_size;
+  int i, old_size;
   old_size = macro_cmd_size;
   macro_cmd_size += 16;
   if (!macro_cmds)
@@ -5478,7 +5533,7 @@ static void allocate_macro_cmds(void)
   else 
     {
       macro_cmds = (macro_cmd **)REALLOC(macro_cmds, macro_cmd_size * sizeof(macro_cmd *));
-      for (i=old_size; i<macro_cmd_size; i++) macro_cmds[i] = NULL;
+      for (i = old_size; i < macro_cmd_size; i++) macro_cmds[i] = NULL;
     }
 }
 
@@ -5498,17 +5553,13 @@ static void stop_defining_macro (void)
 
 static void execute_last_macro (chan_info *cp, int count)
 {
-  int i,j;
+  int i, j;
   if (macro_cmds)
-    {
-      for (j=0; j<count; j++)
-	{
-	  for (i=0; i<macro_size; i++) 
-	    {
-	      keyboard_command(cp, macro_cmds[i]->keysym, macro_cmds[i]->state);
-	    }
-	}
-    }
+    for (j = 0; j < count; j++)
+      for (i = 0; i < macro_size; i++) 
+	keyboard_command(cp, 
+			 macro_cmds[i]->keysym, 
+			 macro_cmds[i]->state);
 }
 
 static void continue_macro (int keysym, int state)
@@ -5517,13 +5568,14 @@ static void continue_macro (int keysym, int state)
   macro_cmds[macro_size]->keysym = keysym;
   macro_cmds[macro_size]->state = state;
   macro_size++;
-  if (macro_size == macro_cmd_size) allocate_macro_cmds();
+  if (macro_size == macro_cmd_size) 
+    allocate_macro_cmds();
 }
 
 static named_macro *name_macro(char *name)
 {
   named_macro *nm;
-  int i,old_size;
+  int i, old_size;
   if (named_macro_ctr == named_macro_size)
     {
       old_size = named_macro_size;
@@ -5532,10 +5584,11 @@ static named_macro *name_macro(char *name)
       else 
 	{
 	  named_macros = (named_macro **)REALLOC(named_macros, named_macro_size * sizeof(named_macro *));
-	  for (i=old_size; i<named_macro_size; i++) named_macros[i] = NULL;
+	  for (i = old_size; i < named_macro_size; i++) named_macros[i] = NULL;
 	}
     }
-  if (!(named_macros[named_macro_ctr])) named_macros[named_macro_ctr] = (named_macro *)CALLOC(1, sizeof(named_macro));
+  if (!(named_macros[named_macro_ctr])) 
+    named_macros[named_macro_ctr] = (named_macro *)CALLOC(1, sizeof(named_macro));
   nm = named_macros[named_macro_ctr];
   nm->name = copy_string(name);
   named_macro_ctr++;
@@ -5555,7 +5608,7 @@ static void name_last_macro (char *name)
   nm = name_macro(name);
   nm->macro_size = macro_size;
   nm->cmds = (macro_cmd **)CALLOC(macro_size, sizeof(macro_cmd *));
-  for (i=0; i<macro_size; i++)
+  for (i = 0; i < macro_size; i++)
     {
       nm->cmds[i] = (macro_cmd *)CALLOC(1, sizeof(macro_cmd));
       mc = nm->cmds[i];
@@ -5569,35 +5622,35 @@ static void save_macro_1(named_macro *nm, FILE *fd)
   int i;
   macro_cmd *mc;
   fprintf(fd, "(define (%s)\n", nm->name);
-  for (i=0; i<nm->macro_size; i++)
+  for (i = 0; i < nm->macro_size; i++)
     {
       mc = nm->cmds[i];
       if (mc->keysym != 0)
-	fprintf(fd, "  (%s (char->integer #\\%c) %d)\n", S_key, (char)(mc->keysym), mc->state);
+	fprintf(fd, 
+		"  (%s (char->integer #\\%c) %d)\n", 
+		S_key, (char)(mc->keysym), mc->state);
     }
   fprintf(fd, ")\n");
 }
 
 static int execute_named_macro_1(chan_info *cp, char *name, int count)
 {
-  int i,j,k;
+  int i, j, k;
   named_macro *nm;
   macro_cmd *mc;
-  for (k=0; k<named_macro_ctr; k++)
+  for (k = 0; k < named_macro_ctr; k++)
     {
       if ((named_macros[k]->name) && 
 	  (strcmp(name, named_macros[k]->name) == 0))
 	{
 	  nm = named_macros[k];
-	  for (j=0; j<count; j++)
-	    {
-	      for (i=0; i<nm->macro_size; i++) 
-		{
-		  mc = nm->cmds[i];
-		  if (mc->keysym != 0)
-		    keyboard_command(cp, mc->keysym, mc->state);
-		}
-	    }
+	  for (j = 0; j < count; j++)
+	    for (i = 0; i < nm->macro_size; i++) 
+	      {
+		mc = nm->cmds[i];
+		if (mc->keysym != 0)
+		  keyboard_command(cp, mc->keysym, mc->state);
+	      }
 	  return(1);
 	}
     }
@@ -5629,13 +5682,11 @@ static int in_user_keymap(int key, int state)
 {
   int i;
   if (keymap_top == 0) return(-1);
-  for (i=0; i<keymap_top; i++)
-    {
-      if ((user_keymap[i].key == key) && 
-	  (user_keymap[i].state == state) && 
-	  (user_keymap[i].func != SCM_UNDEFINED))
-	return(i);
-    }
+  for (i = 0; i < keymap_top; i++)
+    if ((user_keymap[i].key == key) && 
+	(user_keymap[i].state == state) && 
+	(user_keymap[i].func != SCM_UNDEFINED))
+      return(i);
   return(-1);
 }
 
@@ -5645,20 +5696,18 @@ void save_user_key_bindings(FILE *fd)
   int i;
   char binder[64];
   SCM con;
-  for (i=0; i<keymap_top; i++)
-    {
-      if (user_keymap[i].func != SCM_UNDEFINED)
-	{
-	  sprintf(binder,
-		  "(bind-key (char->integer #\\%c) %d ",
-		  (unsigned char)(user_keymap[i].key),
-		  user_keymap[i].state);
-	  con = TO_SCM_STRING(binder);
-	  fprintf(fd, ";    %s\n",
-		  gh_print_1(user_keymap[i].func,
-			     __FUNCTION__));
-	}
-    }
+  for (i = 0; i < keymap_top; i++)
+    if (user_keymap[i].func != SCM_UNDEFINED)
+      {
+	sprintf(binder,
+		"(bind-key (char->integer #\\%c) %d ",
+		(unsigned char)(user_keymap[i].key),
+		user_keymap[i].state);
+	con = TO_SCM_STRING(binder);
+	fprintf(fd, ";    %s\n",
+		gh_print_1(user_keymap[i].func,
+			   __FUNCTION__));
+      }
 #endif
 }
 
@@ -5687,15 +5736,15 @@ static void set_keymap_entry(int key, int state, int ignore, SCM func)
 	  if (keymap_top == 0)
 	    {
 	      user_keymap = (key_entry *)CALLOC(keymap_size, sizeof(key_entry));
-	      for (i=0; i<keymap_size; i++) user_keymap[i].func = SCM_UNDEFINED;
+	      for (i = 0; i < keymap_size; i++) user_keymap[i].func = SCM_UNDEFINED;
 	    }
 	  else 
 	    {
 	      user_keymap = (key_entry *)REALLOC(user_keymap, keymap_size * sizeof(key_entry));
-	      for (i=keymap_top; i<keymap_size; i++) 
+	      for (i = keymap_top; i < keymap_size; i++) 
 		{
-		  user_keymap[i].key=0; 
-		  user_keymap[i].state=0; 
+		  user_keymap[i].key = 0; 
+		  user_keymap[i].state = 0; 
 		  user_keymap[i].func = SCM_UNDEFINED;
 		}
 	    }
@@ -5723,12 +5772,12 @@ static void set_keymap_entry(int key, int state, int ignore, SCM func)
 
 static int call_user_keymap(int hashedsym, int count)
 {
-  int i,res = KEYBOARD_NO_ACTION;
+  int i, res = KEYBOARD_NO_ACTION;
   SCM funcres;
   /* if guile call the associated scheme code, else see if basic string parser can handle it */
-  if (user_keymap[hashedsym].ignore_prefix) count=1;
+  if (user_keymap[hashedsym].ignore_prefix) count = 1;
   if (user_keymap[hashedsym].func != SCM_UNDEFINED)
-    for (i=0; i<count; i++) 
+    for (i = 0; i < count; i++) 
       {
 	funcres = g_call0(user_keymap[hashedsym].func);
 	if (SCM_SYMBOLP(funcres)) break; /* error tag returned? */
@@ -5743,7 +5792,8 @@ void save_macro_state (FILE *fd)
 {
 #if HAVE_GUILE
   int i;
-  for (i=0; i<named_macro_ctr; i++) save_macro_1(named_macros[i], fd);
+  for (i = 0; i < named_macro_ctr; i++) 
+    save_macro_1(named_macros[i], fd);
 #endif
 }
 
@@ -5754,9 +5804,9 @@ static char *dir_from_tempnam(snd_state *ss)
   int i;
   name = snd_tempnam(ss);
   i = strlen(name)-1;
-  while ((name[i] != '/') && (i>0)) i--;
-  if (i == 0) name[0]='.';
-  name[i+1]='\0';
+  while ((name[i] != '/') && (i > 0)) i--;
+  if (i == 0) name[0] ='.';
+  name[i + 1] ='\0';
   return(name);
 }
 
@@ -5777,10 +5827,10 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
   snd_state *ss;
   snd_info *nsp;
   int s_or_r = 0;
-  int nc,i,len;
+  int nc, i, len;
   chan_info *active_chan;
-  char *str = NULL,*mcf = NULL;
-  char *tok,*newdir,*str1;
+  char *str = NULL, *mcf = NULL;
+  char *tok, *newdir, *str1;
   env *e;
   mark *m;
 #if HAVE_OPENDIR
@@ -5830,7 +5880,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	       */
 	      if (sp->search_expr) free(sp->search_expr);
 	      sp->search_expr = str;
-	      if ((sp->search_proc) && (gh_procedure_p(sp->search_proc))) snd_unprotect(sp->search_proc);
+	      if ((sp->search_proc) && 
+		  (gh_procedure_p(sp->search_proc))) 
+		snd_unprotect(sp->search_proc);
 	      sp->search_proc = SCM_UNDEFINED;
 	      proc = parse_proc(str);
 	      if (procedure_ok(proc, 1, 0, "find", "find procedure", 1))
@@ -5851,13 +5903,13 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
     {
       if (sp->marking) 
 	{
-	  m = add_mark(sp->marking-1, str, active_chan);
+	  m = add_mark(sp->marking - 1, str, active_chan);
 	  if (m)
 	    {
-	      report_in_minibuffer(sp, "%s placed at sample %d", str, sp->marking-1);
+	      report_in_minibuffer(sp, "%s placed at sample %d", str, sp->marking - 1);
 	      draw_mark(active_chan, active_chan->axis, m);
 	    }
-	  else report_in_minibuffer(sp, "There is already a mark at sample %d", sp->marking-1);
+	  else report_in_minibuffer(sp, "There is already a mark at sample %d", sp->marking - 1);
 	  sp->marking = 0;
 	}	
       else 
@@ -5948,7 +6000,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		  len = mus_sound_samples(str1)/nc;
 		  if (nc > sp->nchans) nc = sp->nchans;
 		  if (!active_chan) active_chan = sp->chans[0];
-		  for (i=0; i<nc; i++)
+		  for (i = 0; i < nc; i++)
 		    {
 		      file_insert_samples(active_chan->cursor, len, str1, sp->chans[i], i, DONT_DELETE_ME, "C-x C-i");
 		      update_graph(sp->chans[i], NULL);
@@ -5977,9 +6029,11 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  if (e)
 	    {
 	      if (sp->amping != 1)
-		apply_env(active_chan, e, active_chan->cursor, sp->amping, 1.0, sp->reging, NOT_FROM_ENVED,
+		apply_env(active_chan, e, active_chan->cursor, 
+			  sp->amping, 1.0, sp->reging, NOT_FROM_ENVED,
 			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL);
-	      else apply_env(active_chan, e, 0, current_ed_samples(active_chan), 1.0, sp->reging, NOT_FROM_ENVED,
+	      else apply_env(active_chan, e, 0, current_ed_samples(active_chan), 1.0, 
+			     sp->reging, NOT_FROM_ENVED,
 			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL);
 	      free_env(e);
 	    }
@@ -6012,7 +6066,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	{
 	  proc = parse_proc(str);
 	  snd_protect(proc);
-	  if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback)))
+	  if ((sp->prompt_callback) && 
+	      (gh_procedure_p(sp->prompt_callback)))
 	    g_call2(sp->prompt_callback, proc, TO_SMALL_SCM_INT(sp->index));
 	  snd_unprotect(proc);
 	  if (str) free(str);
@@ -6030,7 +6085,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  sp->eval_expr = str;
 	  if (sp->evaling)
 	    {
-	      if ((sp->eval_proc) && (gh_procedure_p(sp->eval_proc))) snd_unprotect(sp->eval_proc);
+	      if ((sp->eval_proc) && 
+		  (gh_procedure_p(sp->eval_proc))) 
+		snd_unprotect(sp->eval_proc);
 	      sp->eval_proc = SCM_UNDEFINED;
 	      proc = parse_proc(str);
 	      if (procedure_ok(proc, 1, 0, "eval", "eval procedure", 1))
@@ -6079,7 +6136,7 @@ static int get_count_1(char *number_buffer, int number_ctr, int dot_seen, chan_i
 
 static int get_count(char *number_buffer, int number_ctr, int dot_seen, chan_info *cp, int mark_wise)
 {
-  int val,old_cursor;
+  int val, old_cursor;
   val = get_count_1(number_buffer, number_ctr, dot_seen, cp);
   if (!mark_wise) return(val);
   old_cursor = cp->cursor;
@@ -6131,7 +6188,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   static int extended_mode = 0;
   static int count = 1, got_count = 0;
   static int m = 0;
-  int redisplay,searching,cursor_searching,hashloc,loc,sync_num,i;
+  int redisplay, searching, cursor_searching, hashloc, loc, sync_num, i;
   static int ext_count = NO_CX_ARG_SPECIFIED;
   snd_info *sp;
   axis_info *ap;
@@ -6152,7 +6209,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 #if HAVE_GUILE
   if (defining_macro) continue_macro(keysym, state);
 #endif
-  if (!m) count = 1; else m=0;
+  if (!m) count = 1; else m = 0;
   if (u_count == 0) set_prefix_arg(ss, 0);
   
   /* should we check snd_keypad_Decimal as well as snd_K_period? -- is this assuming USA float syntax? */
@@ -6209,7 +6266,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_A: case snd_K_a: 
 	      cp->cursor_on = 1; 
 	      loc = (int)(ap->x0*SND_SRATE(sp)); 
-	      if ((loc+1) == ap->losamp) loc=ap->losamp; /* handle dumb rounding problem */
+	      if ((loc+1) == ap->losamp) loc = ap->losamp; /* handle dumb rounding problem */
 	      cursor_moveto(cp, loc); 
 	      break;
 	    case snd_K_B: case snd_K_b: 
@@ -6223,7 +6280,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_E: case snd_K_e:
 	      cp->cursor_on = 1; 
 	      loc = (int)(ap->x1*(double)SND_SRATE(sp));
-	      if ((loc+1) == ap->hisamp) loc=ap->hisamp;
+	      if ((loc+1) == ap->hisamp) loc = ap->hisamp;
 	      cursor_moveto(cp, loc); 
 	      break;
 	    case snd_K_F: case snd_K_f:
@@ -6278,7 +6335,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		  sync_num = mark_sync_max() + 1; 
 		  if (mk) set_mark_sync(mk, sync_num);
 		  si = snd_sync(cp->state, (cp->sound)->syncing);
-		  for (i=0; i<si->chans; i++) 
+		  for (i = 0; i < si->chans; i++) 
 		    {
 		      if (cp != si->cps[i])
 			{
@@ -6529,13 +6586,13 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_0: case snd_K_1: case snd_K_2: case snd_K_3: case snd_K_4:
 	    case snd_K_5: case snd_K_6: case snd_K_7: case snd_K_8: case snd_K_9: 
 	      counting = 1;
-	      number_buffer[number_ctr]=(char)('0'+keysym-snd_K_0); 
+	      number_buffer[number_ctr] =(char)('0'+keysym-snd_K_0); 
 	      if (number_ctr < (NUMBER_BUFFER_SIZE-2)) number_ctr++; 
 	      break;
-	    case snd_K_period: counting=1; number_buffer[number_ctr]='.'; number_ctr++; dot_seen = 1; break;
+	    case snd_K_period: counting = 1; number_buffer[number_ctr] ='.'; number_ctr++; dot_seen = 1; break;
 	    case snd_K_greater: cp->cursor_on = 1; redisplay = cursor_moveto_end(cp); break;
 	    case snd_K_less: cp->cursor_on = 1; redisplay = cursor_moveto_beginning(cp); break;
-	    case snd_K_minus: counting=1; number_buffer[0]='-'; number_ctr=1; break;
+	    case snd_K_minus: counting = 1; number_buffer[0] ='-'; number_ctr = 1; break;
 	    case snd_K_Right: sx_incremented(cp, state_amount(state)); break;
 	    case snd_K_Left:  sx_incremented(cp, -state_amount(state)); break;
 	    case snd_K_Up:    zx_incremented(cp, 1.0+state_amount(state)); break;
@@ -6686,7 +6743,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		    {
 		      char buf[2];
 		      goto_listener();
-		      buf[0]=keysym; buf[1]=0;
+		      buf[0] = keysym; buf[1] = 0;
 		      snd_append_char(ss, buf);
 		    }
 		  /* else activate?? */
@@ -6905,7 +6962,7 @@ static int within_graph(chan_info *cp, int x, int y)
 {
   axis_info *ap;
   fft_info *fp;
-  int x0,x1,y0,y1;
+  int x0, x1, y0, y1;
   x0 = x - SLOPPY_MOUSE;
   x1 = x + SLOPPY_MOUSE;
   y0 = y - SLOPPY_MOUSE;
@@ -6952,11 +7009,11 @@ static int within_graph(chan_info *cp, int x, int y)
 
 static char *describe_fft_point(chan_info *cp, int x, int y)
 {
-  Float xf,yf;
+  Float xf, yf;
   axis_info *ap;
   fft_info *fp;
   sono_info *si;
-  int ind,time;
+  int ind, time;
   fp = cp->fft;
   ap = fp->axis;
   if (x < ap->x_axis_x0) 
@@ -7015,14 +7072,14 @@ void waveb(chan_info *cp, int on)
 
 static void propogate_wf_state(snd_info *sp)
 {
-  int i,w,f;
+  int i, w, f;
   chan_info *cp;
   if (sp->combining != CHANNELS_SEPARATE)
     {
       cp = sp->chans[0];
       w = cp->waving;
       f = cp->ffting;
-      for (i=1; i<sp->nchans; i++) 
+      for (i = 1; i < sp->nchans; i++) 
 	{
 	  cp = sp->chans[i];
 	  cp->waving = w;
@@ -7048,7 +7105,7 @@ void f_button_callback(chan_info *cp, int on, int with_control)
       update_graph(cp, NULL);
       if (with_control)
 	{
-	  for (i=0; i<sp->nchans; i++) 
+	  for (i = 0; i < sp->nchans; i++) 
 	    {
 	      ncp = sp->chans[i];
 	      if (cp != ncp)
@@ -7077,7 +7134,7 @@ void w_button_callback(chan_info *cp, int on, int with_control)
       update_graph(cp, NULL);
       if (with_control)
 	{
-	  for (i=0; i<sp->nchans; i++) 
+	  for (i = 0; i < sp->nchans; i++) 
 	    {
 	      ncp = sp->chans[i];
 	      if (cp != ncp)
@@ -7137,10 +7194,10 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 static chan_info *which_channel(snd_info *sp, int y)
 {
   int i;
-  chan_info *cp,*ncp;
+  chan_info *cp, *ncp;
   axis_info *ap;
   ncp = NULL;
-  for (i=0; i<sp->nchans; i++)
+  for (i = 0; i < sp->nchans; i++)
     {
       cp = sp->chans[i];
       ap = cp->axis;
@@ -7231,7 +7288,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   snd_state *ss;
   axis_info *ap;
   mark *old_mark;
-  int actax,samps;
+  int actax, samps;
   sp = cp->sound;
   ss = cp->state;
   if (sp->combining == CHANNELS_COMBINED) cp = which_channel(sp, y);
@@ -7369,7 +7426,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 {
   snd_info *sp;
   snd_state *ss;
-  TIME_TYPE mouse_time,time_interval;
+  TIME_TYPE mouse_time, time_interval;
   int samps;
   Float old_cutoff;
   /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
@@ -7474,8 +7531,8 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
 {
   /* not cp->min_dB here -- this is sound panel related which refers to ss->min_dB */
   Float *coeffs = NULL;
-  int height,width,i,pts,x0,y0,x1,y1;
-  Float samps_per_pixel,invpts,resp,frq,pix;
+  int height, width, i, pts, x0, y0, x1, y1;
+  Float samps_per_pixel, invpts, resp, frq, pix;
   if (order&1) order++;
   height = (ap->y_axis_y1 - ap->y_axis_y0);
   width = (ap->x_axis_x1 - ap->x_axis_x0);
@@ -7492,7 +7549,7 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   if (dBing)
     y1 = (int)(ap->y_axis_y0 + (ss->min_dB - dB(ss, resp)) * height / ss->min_dB);
   else y1 = (int)(ap->y_axis_y0 + resp * height);
-  for (i=1, pix=x1, frq=invpts; i<pts; i++, pix+=samps_per_pixel, frq+=invpts)
+  for (i = 1, pix = x1, frq = invpts; i < pts; i++, pix+=samps_per_pixel, frq+=invpts)
     {
       x0 = x1;
       y0 = y1;
@@ -7595,7 +7652,7 @@ static SCM g_temp_filenames(SCM data)
   program_data = (snd_exf *)(SCM_UNWRAP(data));
   lst = gh_make_vector(TO_SCM_INT(program_data->files), SCM_BOOL_F);
   vlst = SCM_VELTS(lst);
-  for (i=0; i<program_data->files; i++)
+  for (i = 0; i < program_data->files; i++)
     vlst[i] = TO_SCM_STRING(program_data->old_filenames[i]);
   return(lst);
 }
@@ -7604,7 +7661,7 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file)
 {
   snd_exf *program_data;
   chan_info *cp;
-  int type,format;
+  int type, format;
   snd_state *ss;
   if ((selection) && (selection_is_active() == 0)) 
     return(scm_throw(NO_ACTIVE_SELECTION,
@@ -7674,14 +7731,14 @@ static SCM g_temps_to_sound(SCM data, SCM new_names, SCM origin)
    using data returned by the latter and origin as the edit history entry for the edit"
 
   snd_exf *program_data;
-  int i,len;
+  int i, len;
   SCM *vdata;
   SCM_ASSERT((gh_vector_p(new_names)), new_names, SCM_ARG2, S_temps_to_sound);
   SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_temps_to_sound);
   program_data = (snd_exf *)(SCM_UNWRAP(data));
   len = (int)gh_vector_length(new_names);
   vdata = SCM_VELTS(new_names);
-  for (i=0; i<len; i++)
+  for (i = 0; i < len; i++)
     program_data->new_filenames[i] = TO_NEW_C_STRING(vdata[i]);
   temp_to_snd(program_data, SCM_STRING_CHARS(origin));
   return(SCM_BOOL_T);
@@ -7691,9 +7748,9 @@ static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series
 {
   snd_state *ss;
   chan_info *cp;
-  int beg,end;
+  int beg, end;
   SCM result;
-  char *origin=NULL,*ed_origin = NULL;
+  char *origin = NULL, *ed_origin = NULL;
   if (scan)
     {
       switch (chan_choice)
@@ -7877,8 +7934,8 @@ static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
    samples satisfy func (a function of one argument, the current sample, returning #t upon match)"
 
   chan_info *cp = NULL;
-  int samp = 0,matches,lim;
-  SCM match,cursamp;
+  int samp = 0, matches, lim;
+  SCM match, cursamp;
   SCM_ASSERT(gh_procedure_p(expr), expr, SCM_ARG1, S_count_matches);
   SCM_ASSERT(bool_or_arg_p(sample), sample, SCM_ARG2, S_count_matches);
   SND_ASSERT_CHAN(S_count_matches, snd_n, chn_n, 3);
@@ -7948,7 +8005,7 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
 {
   #define H_append_to_minibuffer "(" S_append_to_minibuffer " msg &optional snd) appends msg to snd's minibuffer"
   snd_info *sp;
-  char *str1=NULL;
+  char *str1 = NULL;
   SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_append_to_minibuffer);
   SND_ASSERT_SND(S_append_to_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
@@ -8047,13 +8104,13 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   return(TO_SCM_INT(val));
 }
 
-enum {CP_FFTING,CP_WAVING,CP_FRAMES,CP_CURSOR,CP_LISP_GRAPHING,CP_AP_LOSAMP,CP_AP_HISAMP,CP_SQUELCH_UPDATE,
-      CP_EDIT_CTR,CP_CURSOR_STYLE,CP_EDIT_HOOK,CP_UNDO_HOOK,
-      CP_SHOW_Y_ZERO,CP_SHOW_MARKS,CP_WAVO,CP_WAVO_HOP,CP_WAVO_TRACE,CP_MAX_FFT_PEAKS,CP_LINE_SIZE,
-      CP_SHOW_FFT_PEAKS,CP_ZERO_PAD,CP_VERBOSE_CURSOR,CP_FFT_LOG_FREQUENCY,CP_FFT_LOG_MAGNITUDE,
-      CP_WAVELET_TYPE,CP_SPECTRO_HOP,CP_FFT_SIZE,CP_FFT_STYLE,CP_FFT_WINDOW,CP_TRANSFORM_TYPE,
-      CP_NORMALIZE_FFT,CP_SHOW_MIX_WAVEFORMS,CP_GRAPH_STYLE,CP_DOT_SIZE,
-      CP_SHOW_AXES,CP_GRAPHS_HORIZONTAL,CP_SYNC
+enum {CP_FFTING, CP_WAVING, CP_FRAMES, CP_CURSOR, CP_LISP_GRAPHING, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
+      CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK,
+      CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_WAVO, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_FFT_PEAKS, CP_LINE_SIZE,
+      CP_SHOW_FFT_PEAKS, CP_ZERO_PAD, CP_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
+      CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_FFT_SIZE, CP_FFT_STYLE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
+      CP_NORMALIZE_FFT, CP_SHOW_MIX_WAVEFORMS, CP_GRAPH_STYLE, CP_DOT_SIZE,
+      CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_SYNC
 };
 
 static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
@@ -8066,7 +8123,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0; i<ss->max_sounds; i++)
+      for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -8082,7 +8139,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,
 					   SCM_LIST2(TO_SCM_STRING(caller),
 						     snd_n)));
-	  for (i=0; i<sp->nchans; i++)
+	  for (i = 0; i < sp->nchans; i++)
 	    res = gh_cons(cp_iread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
 	  return(scm_reverse(res));
 	}
@@ -8153,12 +8210,12 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   int val = 0;
   snd_info *sp;
   snd_state *ss;
-  int i,curlen,newlen;
+  int i, curlen, newlen;
   SCM res = SCM_EOL;
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0; i<ss->max_sounds; i++)
+      for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -8173,7 +8230,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	return(scm_throw(NO_SUCH_SOUND,
 			 SCM_LIST2(TO_SCM_STRING(caller),
 				   snd_n)));
-      for (i=0; i<sp->nchans; i++)
+      for (i = 0; i < sp->nchans; i++)
 	res = gh_cons(cp_iwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(scm_reverse(res));
     }
@@ -8369,15 +8426,15 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   return(TO_SCM_BOOLEAN(val));
 }
 
-enum {CP_MIN_DB,CP_SPECTRO_X_ANGLE,CP_SPECTRO_Y_ANGLE,CP_SPECTRO_Z_ANGLE,CP_SPECTRO_X_SCALE,CP_SPECTRO_Y_SCALE,CP_SPECTRO_Z_SCALE,
-      CP_SPECTRO_CUTOFF,CP_SPECTRO_START,CP_FFT_BETA,CP_AP_SX,CP_AP_SY,CP_AP_ZX,CP_AP_ZY,CP_MAXAMP
+enum {CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
+      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP
 };
 
 
 static void reset_y_display(chan_info *cp, double sy, double zy)
 {
   axis_info *ap;
-  ap=cp->axis;
+  ap = cp->axis;
   ap->sy = sy;
   ap->zy = zy;
   resize_sy(cp);
@@ -8396,7 +8453,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0; i<ss->max_sounds; i++)
+      for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -8411,7 +8468,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	return(scm_throw(NO_SUCH_SOUND,
 			 SCM_LIST2(TO_SCM_STRING(caller),
 				   snd_n)));
-      for (i=0; i<sp->nchans; i++)
+      for (i = 0; i < sp->nchans; i++)
 	res = gh_cons(cp_fread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
       return(scm_reverse(res));
     }
@@ -8449,7 +8506,7 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
-      for (i=0; i<ss->max_sounds; i++)
+      for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
@@ -8464,7 +8521,7 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	return(scm_throw(NO_SUCH_SOUND,
 			 SCM_LIST2(TO_SCM_STRING(caller),
 				   snd_n)));
-      for (i=0; i<sp->nchans; i++)
+      for (i = 0; i < sp->nchans; i++)
 	res = gh_cons(cp_fwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(scm_reverse(res));
     }
@@ -8760,7 +8817,7 @@ static SCM g_undo_hook(SCM snd_n, SCM chn_n)
 
 static SCM g_show_y_zero(SCM snd, SCM chn)
 {
-  #define H_show_y_zero "(" S_show_y_zero " (snd #t) (chn #t)) -> #t if Snd should include a line at y=0.0"
+  #define H_show_y_zero "(" S_show_y_zero " (snd #t) (chn #t)) -> #t if Snd should include a line at y = 0.0"
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd, chn, CP_SHOW_Y_ZERO, S_show_y_zero));
   SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG1, S_show_y_zero);
@@ -9745,7 +9802,7 @@ static SCM g_edits(SCM snd_n, SCM chn_n)
   int i;
   SND_ASSERT_CHAN(S_edits, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_edits);
-  for (i=cp->edit_ctr+1; i<cp->edit_size; i++)
+  for (i = cp->edit_ctr+1; i < cp->edit_size; i++)
     if (!(cp->edits[i])) break;
   return(SCM_LIST2(TO_SCM_INT(cp->edit_ctr),
 		   TO_SCM_INT(i-cp->edit_ctr-1)));
@@ -9754,7 +9811,7 @@ static SCM g_edits(SCM snd_n, SCM chn_n)
 static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
 {
   chan_info *cp;
-  Float x0,x1;
+  Float x0, x1;
   SND_ASSERT_CHAN("set-" S_x_bounds, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, "set-" S_x_bounds);
   x0 = TO_C_DOUBLE(gh_car(bounds));
@@ -9772,8 +9829,8 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
 static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
 {
   chan_info *cp;
-  Float low,hi;
-  SCM y0 = SCM_UNDEFINED,y1 = SCM_UNDEFINED;
+  Float low, hi;
+  SCM y0 = SCM_UNDEFINED, y1 = SCM_UNDEFINED;
   SND_ASSERT_CHAN("set-" S_y_bounds, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, "set-" S_y_bounds);
   if (gh_length(bounds) > 0)
@@ -9930,11 +9987,11 @@ static SCM g_insert_silence(SCM beg, SCM num, SCM snd, SCM chn)
 static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM dur)
 {
   #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1) swaps the indicated channels"
-  chan_info *cp0 = NULL,*cp1 = NULL;
-  snd_fd *c0,*c1;
-  int dur0 = 0,dur1 = 0,beg0 = 0,num,old_squelch0,old_squelch1;
+  chan_info *cp0 = NULL, *cp1 = NULL;
+  snd_fd *c0, *c1;
+  int dur0 = 0, dur1 = 0, beg0 = 0, num, old_squelch0, old_squelch1;
   snd_info *sp = NULL;
-  env_info *e0,*e1;
+  env_info *e0, *e1;
   SND_ASSERT_CHAN(S_swap_channels, snd0, chn0, 1);
   cp0 = get_cp(snd0, chn0, S_swap_channels);
   if (SCM_INUMP(snd1) && SCM_INUMP(chn1)) 
@@ -10020,9 +10077,9 @@ static SCM g_fht(SCM data)
   return(data);
 }
 
-static SCM mouse_press_hook,mark_click_hook;
-static SCM mouse_release_hook,mouse_drag_hook,key_press_hook,fft_hook;
-static SCM graph_hook,after_graph_hook;
+static SCM mouse_press_hook, mark_click_hook;
+static SCM mouse_release_hook, mouse_drag_hook, key_press_hook, fft_hook;
+static SCM graph_hook, after_graph_hook;
 
 
 #if HAVE_HOOKS

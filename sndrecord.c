@@ -66,7 +66,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
 
 int main(int argc, char *argv[])
 {
-  int fd,afd,i,err,bytes_per_sample,bytes_per_read;
+  int fd, afd, i, err, bytes_per_sample, bytes_per_read;
   float mic_gain[1];
   indata *ibuf;
 #if MACOS
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
       afd = mus_audio_open_input(MUS_AUDIO_MICROPHONE, SAMPLING_RATE, CHANNELS, DATA_TYPE, bytes_per_read);
       if (afd != -1)
 	{
-	  for (i=0;i<READS;i++)
+	  for (i = 0; i < READS; i++)
 	    {
 	      err = mus_audio_read(afd, (char *)ibuf, bytes_per_read);
 	      if (err == MUS_NO_ERROR) write(fd, (char *)ibuf, bytes_per_read);

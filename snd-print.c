@@ -4,7 +4,7 @@
 
 #define PRINT_BUFFER_SIZE 256
 static char *pbuf = NULL;
-static int bbx,bby,bx0,by0;
+static int bbx, bby, bx0, by0;
 static int ps_fd;
 
 static char *nbuf = NULL;
@@ -123,8 +123,8 @@ void ps_set_grf_points(double x, int j, Float ymin, Float ymax)
 
 void ps_set_grf_point(double x, int j, Float y) 
 {
-  xpts[j]=x;
-  ypts[j]=y;
+  xpts[j] = x;
+  ypts[j] = y;
 }
 
 static Float ps_grf_x(axis_info *ap, Float val)
@@ -142,7 +142,7 @@ static void ps_draw_lines(chan_info *cp, axis_info *ap, int j, Float *xpts, Floa
   int i;
   sprintf(pbuf, " %.2f %.2f moveto\n", ps_grf_x(ap, xpts[0]), ps_grf_y(ap, ypts[0]));
   ps_write(ps_fd, pbuf);
-  for (i=1; i<j; i++)
+  for (i = 1; i < j; i++)
     {
       sprintf(pbuf, " %.2f %.2f lineto\n", ps_grf_x(ap, xpts[i]), ps_grf_y(ap, ypts[i]));
       ps_write(ps_fd, pbuf);
@@ -156,7 +156,7 @@ static void ps_draw_dots(chan_info *cp, axis_info *ap, int j, Float *xpts, Float
   int i;
   Float arc_size;
   arc_size = .5 * cp->dot_size; /* radius here, diameter in X */
-  for (i=0; i<j; i++)
+  for (i = 0; i < j; i++)
     {
       sprintf(pbuf, " %.2f %.2f %.2f 0 360 NAF\n", ps_grf_x(ap, xpts[i]), ps_grf_y(ap, ypts[i]), arc_size);
       ps_write(ps_fd, pbuf);
@@ -166,7 +166,7 @@ static void ps_draw_dots(chan_info *cp, axis_info *ap, int j, Float *xpts, Float
 static void ps_fill_polygons(chan_info *cp, axis_info *ap, int j, Float *xpts, Float *ypts, Float y0)
 {
   int i;
-  for (i=1; i<j; i++)
+  for (i = 1; i < j; i++)
     {
       sprintf(pbuf, " %.2f %.2f moveto\n", ps_grf_x(ap, xpts[i-1]), ps_grf_y(ap, ypts[i-1]));
       ps_write(ps_fd, pbuf);
@@ -183,7 +183,7 @@ static void ps_fill_polygons(chan_info *cp, axis_info *ap, int j, Float *xpts, F
 
 void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0, int graph_style) 
 {
-  int i,gy0,size8,size4;
+  int i, gy0, size8, size4;
   switch (graph_style)
     {
     case GRAPH_LINES:
@@ -205,7 +205,7 @@ void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0, int graph
       size8 = cp->dot_size/8;
       size4 = cp->dot_size/4;
       if (size4 < 1) size4 = 1;
-      for (i=0; i<j; i++)
+      for (i = 0; i < j; i++)
 	{
 	  sprintf(pbuf, " %.2f %.2f %.2f %.2f RF\n",
 		  ps_grf_x(ap, xpts[i])-size8,
@@ -220,7 +220,7 @@ void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0, int graph
 
 void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_style) 
 {
-  int i,size8,size4;
+  int i, size8, size4;
   switch (graph_style)
     {
     case GRAPH_LINES:
@@ -232,7 +232,7 @@ void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_styl
       ps_draw_dots(cp, ap, j, xpts, ypts1);
       break;
     case GRAPH_FILLED:
-      for (i=1; i<j; i++)
+      for (i = 1; i < j; i++)
 	{
 	  sprintf(pbuf, " %.2f %.2f moveto\n", ps_grf_x(ap, xpts[i-1]), ps_grf_y(ap, ypts[i-1]));
 	  ps_write(ps_fd, pbuf);
@@ -264,7 +264,7 @@ void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_styl
       size8 = cp->dot_size/8;
       size4 = cp->dot_size/4;
       if (size4 < 1) size4 = 1;
-      for (i=0; i<j; i++)
+      for (i = 0; i < j; i++)
 	{
 	  sprintf(pbuf, " %.2f %.2f %.2f %.2f RF\n",
 		  ps_grf_x(ap, xpts[i])-size8,
@@ -283,7 +283,7 @@ static int last_color = -1;
 void ps_draw_sono_rectangle(chan_info *cp, axis_info *ap, int color, Float x, Float y, Float width, Float height)
 {
   snd_state *ss;
-  int r,g,b;
+  int r, g, b;
   ss = cp->state;
   if (last_color != color)
     {
@@ -314,7 +314,7 @@ void ps_recolor(chan_info *cp)
 /* the rest are in real coordinates except upsidedown from PS point of view */
 void ps_draw_line (chan_info *cp, int x0, int y0, int x1, int y1) 
 {
-  int py0,py1,px0,px1;
+  int py0, py1, px0, px1;
   px0 = x0 + bx0;
   px1 = x1 + bx0;
   py0 = reflect_y(cp, y0) + by0;
@@ -331,7 +331,7 @@ void ps_draw_spectro_line(chan_info *cp, int color, Float x0, Float y0, Float x1
 {
   /* these are in local coords */
   snd_state *ss;
-  int r,g,b;
+  int r, g, b;
   ss = cp->state;
   if (last_color != color)
     {
@@ -345,7 +345,7 @@ void ps_draw_spectro_line(chan_info *cp, int color, Float x0, Float y0, Float x1
 
 void ps_fill_rectangle (chan_info *cp, int x0, int y0, int width, int height) 
 {
-  int py0,py1,px0,px1;
+  int py0, py1, px0, px1;
   px0 = x0 + bx0;
   px1 = x0 + bx0 + width;
   py0 = reflect_y(cp, y0) + by0;
@@ -360,7 +360,7 @@ void ps_fill_rectangle (chan_info *cp, int x0, int y0, int width, int height)
 
 void ps_draw_string (chan_info *cp, int x0, int y0, char *str) 
 {
-  int px0,py0;
+  int px0, py0;
   px0 = x0 + bx0;
   py0 = reflect_y(cp, y0)+by0;
   if (px0 > bbx) bbx = px0;
@@ -404,7 +404,7 @@ void ps_set_tiny_numbers_font(chan_info *cp)
 
 void snd_print(snd_state *ss, char *output)
 {
-  int j,i,err;
+  int j, i, err;
   int *offsets = NULL;
   snd_info *sp;
   sync_info *si;
@@ -419,24 +419,24 @@ void snd_print(snd_state *ss, char *output)
 	}
       si = sync_to_chan(ccp);
       offsets = (int *)CALLOC(si->chans, sizeof(int));
-      for (j=0, i=(si->chans-1); i>=0; i--)
+      for (j = 0, i=(si->chans-1); i >= 0; i--)
 	{
 	  offsets[i] = j;
 	  j += ((((axis_info *)((si->cps[i])->axis))->height) + PRINTED_VERTICAL_SPACING);
 	}
-      for (i=0; i<si->chans;)
+      for (i = 0; i < si->chans; )
 	{
 	  sp = (si->cps[i])->sound;
 	  if (sp == NULL) break;
 	  if (sp->combining == CHANNELS_COMBINED)
 	    {
-	      for (j=i+1;j<i+sp->nchans;j++) offsets[j]=offsets[i];
+	      for (j = i+1; j < i+sp->nchans; j++) offsets[j] = offsets[i];
 	    }
 	  else
 	    {
 	      if (sp->combining == CHANNELS_SUPERIMPOSED)
 		{
-		  for (j=i; j<i+sp->nchans-1; j++) 
+		  for (j = i; j < i+sp->nchans-1; j++) 
 		    offsets[j] = offsets[i + sp->nchans - 1];
 		}
 	    }
@@ -445,7 +445,7 @@ void snd_print(snd_state *ss, char *output)
       err = start_ps_graph(output, ((si->cps[0])->sound)->fullname);
       if (err == 0)
 	{
-	  for (i=0; i<si->chans; i++)
+	  for (i = 0; i < si->chans; i++)
 	    {
 	      ps_graph(si->cps[i], 0, offsets[i]);
 	    }

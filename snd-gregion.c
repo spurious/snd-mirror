@@ -2,11 +2,11 @@
 
 /* -------- region browser -------- */
 
-static GtkWidget *region_dialog=NULL,*region_list,*region_grf;
+static GtkWidget *region_dialog = NULL, *region_list, *region_grf;
 static regrow **region_rows = NULL;
 static snd_info *reg_sp = NULL;
 static int current_region = -1;
-static GtkWidget *select_button,*srate_text,*length_text,*chans_text,*maxamp_text;
+static GtkWidget *select_button, *srate_text, *length_text, *chans_text, *maxamp_text;
 
 static void region_update_graph(chan_info *cp)
 {
@@ -64,7 +64,7 @@ static void make_region_labels(file_info *hdr)
   set_label(srate_text, str);
   sprintf(str, STR_chans, hdr->chans);
   set_label(chans_text, str);
-  sprintf(str, STR_length, (float)(hdr->samples)/(float)(hdr->chans * hdr->srate));
+  sprintf(str, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
   set_label(length_text, str);
   sprintf(str, STR_maxamp, region_maxamp(current_region));
   set_label(maxamp_text, str);
@@ -73,13 +73,13 @@ static void make_region_labels(file_info *hdr)
 
 void update_region_browser(snd_state *ss, int grf_too)
 {
-  int i,len;
+  int i, len;
   region_state *rs;
   chan_info *cp;
   rs = region_report();
   len = rs->len;
-  for (i=0;i<len;i++) make_region_element(rs, i);
-  for (i=len;i<max_regions(ss);i++) gtk_widget_hide(region_rows[i]->rw);
+  for (i = 0; i < len; i++) make_region_element(rs, i);
+  for (i = len; i < max_regions(ss); i++) gtk_widget_hide(region_rows[i]->rw);
   free_region_state(rs);
   if (len == 0) return;
   gtk_widget_show(region_list);
@@ -107,12 +107,12 @@ void update_region_browser(snd_state *ss, int grf_too)
 }
 
 
-static void region_browser_delete_Callback(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void region_browser_delete_Callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(region_dialog);
 }
 
-static void region_ok_Callback(GtkWidget *w, gpointer clientData)
+static void region_ok_Callback(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(region_dialog);
 }
@@ -154,16 +154,16 @@ void delete_region_and_update_browser(snd_state *ss, int n)
     }
 }
 
-static void region_delete_Callback(GtkWidget *w, gpointer clientData)
+static void region_delete_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (current_region != -1)
     delete_region_and_update_browser(ss, current_region);
 }
 
-static void region_help_Callback(GtkWidget *w, gpointer clientData)
+static void region_help_Callback(GtkWidget *w, gpointer context)
 {
-  region_dialog_help((snd_state *)clientData);
+  region_dialog_help((snd_state *)context);
 }
 
 void select_region_and_update_browser(snd_state *ss, int n)
@@ -181,9 +181,9 @@ void select_region_and_update_browser(snd_state *ss, int n)
     }
 }
 
-static void region_select_Callback(GtkWidget *w, gpointer clientData)
+static void region_select_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (current_region != -1)
     select_region_and_update_browser(ss, current_region);
 }
@@ -216,14 +216,14 @@ static void region_down_arrow_Callback(GtkWidget *w, GdkEventButton *ev, gpointe
     }
 }
 
-static void region_focus_Callback(GtkWidget *w, gpointer clientData) /* button clicked callback */
+static void region_focus_Callback(GtkWidget *w, gpointer context) /* button clicked callback */
 {
   snd_state *ss;
   chan_info *cp;
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   ss = r->ss;
   unhighlight_region(ss);
-  current_region=r->pos;
+  current_region = r->pos;
   cp = reg_sp->chans[0];
   cp->chan  = 0;
   highlight_region(ss);
@@ -245,17 +245,17 @@ void reflect_play_region_stop(int n)
     }
 }
 
-static void region_play_Callback(GtkWidget *w, gpointer clientData)
+static void region_play_Callback(GtkWidget *w, gpointer context)
 {
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   if (GTK_TOGGLE_BUTTON(r->pl)->active)
     play_region(r->ss, r->pos, IN_BACKGROUND);
   else stop_playing_region(r->pos);
 }
 
-static void region_save_Callback(GtkWidget *w, gpointer clientData)
+static void region_save_Callback(GtkWidget *w, gpointer context)
 {
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   protect_region(r->pos, GTK_TOGGLE_BUTTON(r->sv)->active);
 }
 
@@ -270,17 +270,17 @@ void set_region_protect(int reg, int protect)
     }
 }
 
-static void region_print_Callback(GtkWidget *w, gpointer clientData)
+static void region_print_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (current_region != -1)
     region_print(eps_file(ss), "region", reg_sp->chans[0]);
 }
 
-static void region_edit_Callback(GtkWidget *w, gpointer clientData)
+static void region_edit_Callback(GtkWidget *w, gpointer context)
 {
   if (current_region != -1) 
-    region_edit((snd_state *)clientData, current_region);
+    region_edit((snd_state *)context, current_region);
 }
 
 static void region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
@@ -291,12 +291,12 @@ static void region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoint
 static void make_region_dialog(snd_state *ss)
 {
   int i;
-  GtkWidget *print_button,*edit_button;
+  GtkWidget *print_button, *edit_button;
   regrow *r;
   chan_info *cp;
   file_info *hdr;
   ww_info *wwl;
-  GtkWidget *dismiss_button,*help_button,*delete_button,*infobox,*labels,*labbox;
+  GtkWidget *dismiss_button, *help_button, *delete_button, *infobox, *labels, *labbox;
 
   region_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(region_dialog), "delete_event", GTK_SIGNAL_FUNC(region_browser_delete_Callback), (gpointer)ss);
@@ -341,9 +341,12 @@ static void make_region_dialog(snd_state *ss)
   gtk_widget_show(infobox);
   
   region_rows = (regrow **)CALLOC(max_regions(ss), sizeof(regrow *));
-  for (i=0;i<max_regions(ss);i++)
+  for (i = 0; i < max_regions(ss); i++)
     {
-      r = make_regrow(ss, region_list, (void (*)())region_save_Callback, (void (*)())region_play_Callback, (void (*)())region_focus_Callback);
+      r = make_regrow(ss, region_list, 
+		      (void (*)())region_save_Callback, 
+		      (void (*)())region_play_Callback, 
+		      (void (*)())region_focus_Callback);
       region_rows[i] = r;
       r->pos = i;
       r->ss = ss;
@@ -452,13 +455,13 @@ static void make_region_dialog(snd_state *ss)
   highlight_region(ss);
   region_update_graph(cp);
   FREE(wwl); 
-  wwl=NULL;
+  wwl = NULL;
 }
 
-void View_Region_Callback(GtkWidget *w, gpointer clientData)
+void View_Region_Callback(GtkWidget *w, gpointer context)
 {
   /* put up scrollable dialog describing/playing/editing the region list */
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (region_dialog == NULL)
     make_region_dialog(ss);
   else 
@@ -481,9 +484,12 @@ void allocate_region_rows(snd_state *ss, int n)
     {
       r = region_rows[max_regions(ss) - 1];
       region_rows = (regrow **)REALLOC(region_rows, n * sizeof(regrow *));
-      for (i=max_regions(ss);i<n;i++)
+      for (i = max_regions(ss); i < n; i++)
 	{
-	  r = make_regrow(ss, region_list, (void (*)())region_save_Callback, (void (*)())region_play_Callback, (void (*)())region_focus_Callback);
+	  r = make_regrow(ss, region_list, 
+			  (void (*)())region_save_Callback, 
+			  (void (*)())region_play_Callback, 
+			  (void (*)())region_focus_Callback);
 	  region_rows[i] = r;
 	  r->pos = i;
 	  r->ss = ss;

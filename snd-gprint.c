@@ -5,22 +5,22 @@
 static GtkWidget *file_print_dialog = NULL;
 static GtkWidget *file_print_name = NULL;
 static GtkWidget *file_print_eps_or_lpr = NULL;
-static GtkWidget *file_print_ok_button,*file_print_message;
+static GtkWidget *file_print_ok_button, *file_print_message;
 static char print_string[256];
 
-static void file_print_help_callback(GtkWidget *w, gpointer clientData)
+static void file_print_help_callback(GtkWidget *w, gpointer context)
 {
-  print_dialog_help((snd_state *)clientData);
+  print_dialog_help((snd_state *)context);
 }
 
-static void file_print_cancel_callback(GtkWidget *w, gpointer clientData)
+static void file_print_cancel_callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   ss->print_choice = PRINT_SND;
   gtk_widget_hide(file_print_dialog);
 }
 
-static void file_print_delete_callback(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void file_print_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(file_print_dialog);
 }
@@ -34,10 +34,10 @@ static int lpr (char *name)
 
 static int printing = 0;
 
-static void file_print_ok_callback(GtkWidget *w, gpointer clientData)
+static void file_print_ok_callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
-  int print_it,quit = 0,err = 0;
+  snd_state *ss = (snd_state *)context;
+  int print_it, quit = 0, err = 0;
   char *name;
   snd_info *nsp = NULL;
   if (printing) 
@@ -72,8 +72,12 @@ static void file_print_ok_callback(GtkWidget *w, gpointer clientData)
 	{
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(ss, gtk_entry_get_text(GTK_ENTRY(file_print_name))); break;
-	    case PRINT_ENV: enved_print(gtk_entry_get_text(GTK_ENTRY(file_print_name))); break;
+	    case PRINT_SND: 
+	      snd_print(ss, gtk_entry_get_text(GTK_ENTRY(file_print_name))); 
+	      break;
+	    case PRINT_ENV: 
+	      enved_print(gtk_entry_get_text(GTK_ENTRY(file_print_name))); 
+	      break;
 	    }
 	}
     }
@@ -88,11 +92,11 @@ static void file_print_ok_callback(GtkWidget *w, gpointer clientData)
   if (quit) gtk_widget_hide(file_print_dialog);
 }
 
-void File_Print_Callback(GtkWidget *w, gpointer clientData)
+void File_Print_Callback(GtkWidget *w, gpointer context)
 {
-  GtkWidget *print_button,*help_button,*dismiss_button,*epsbox,*epslabel;
+  GtkWidget *print_button, *help_button, *dismiss_button, *epsbox, *epslabel;
   snd_info *nsp;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (!file_print_dialog)
     {
       file_print_dialog = gtk_dialog_new();
@@ -171,7 +175,10 @@ char *ps_rgb(snd_state *ss, int pchan)
     default: color = sx->black;     break;
     }
   buf = (char *)CALLOC(128, sizeof(char));
-  sprintf(buf, " %.2f %.2f %.2f RG\n", (float)color->red / 65535.0, (float)color->green / 65535.0, (float)color->blue / 65535.0);
+  sprintf(buf, " %.2f %.2f %.2f RG\n", 
+	  (float)color->red / 65535.0, 
+	  (float)color->green / 65535.0, 
+	  (float)color->blue / 65535.0);
   return(buf);
 }
 

@@ -28,7 +28,7 @@ void fill_polygon(axis_context *ax, int points, ...)
   if (points == 0) return;
   pts = (XPoint *)CALLOC(points, sizeof(XPoint));
   va_start(ap, points);
-  for (i=0; i<points; i++)
+  for (i = 0; i < points; i++)
     {
       pts[i].x = va_arg(ap, int);
       pts[i].y = va_arg(ap, int);
@@ -46,7 +46,7 @@ void draw_polygon(axis_context *ax, int points, ...)
   if (points == 0) return;
   pts = (XPoint *)CALLOC(points, sizeof(XPoint));
   va_start(ap, points);
-  for (i=0; i<points; i++)
+  for (i = 0; i < points; i++)
     {
       pts[i].x = va_arg(ap, int);
       pts[i].y = va_arg(ap, int);
@@ -66,7 +66,7 @@ static void draw_lines (axis_context *ax, XPoint *points, int num)
 static void draw_points (axis_context *ax, XPoint *points, int num, int size)
 {
   XArc *rs;
-  int i,size2;
+  int i, size2;
   if (num == 0) return;
   if (size == 1)
     XDrawPoints(ax->dp, ax->wn, ax->gc, points, num, CoordModeOrigin);
@@ -75,7 +75,7 @@ static void draw_points (axis_context *ax, XPoint *points, int num, int size)
       /* create squares or whatever centered on each point */
       size2 = size/2;
       rs = (XArc *)CALLOC(num, sizeof(XArc));
-      for (i=0; i<num; i++)
+      for (i = 0; i < num; i++)
 	{
 	  rs[i].x = points[i].x - size2;
 	  rs[i].y = points[i].y - size2;
@@ -115,7 +115,7 @@ static XPoint polypts[4];
 static void fill_polygons (axis_context *ax, XPoint *points, int num, int y0)
 {
   int i;
-  for (i=1; i<num; i++)
+  for (i = 1; i < num; i++)
     {
       polypts[0].x = points[i-1].x;
       polypts[0].y = points[i-1].y;
@@ -132,7 +132,7 @@ static void fill_polygons (axis_context *ax, XPoint *points, int num, int y0)
 static void fill_two_sided_polygons(axis_context *ax, XPoint *points, XPoint *points1, int num)
 {
   int i;
-  for (i=1; i<num; i++)
+  for (i = 1; i < num; i++)
     {
       polypts[0].x = points[i-1].x;
       polypts[0].y = points[i-1].y;
@@ -173,7 +173,7 @@ void set_grf_point(int xi, int j, int yi)
 
 void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style)
 {
-  int i,size8,size4;
+  int i, size8, size4;
   switch (graph_style)
     {
     case GRAPH_LINES:
@@ -199,7 +199,7 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_styl
     case GRAPH_LOLLIPOPS:
       if (cp->dot_size == 1)
 	{
-	  for (i=0; i<j; i++)
+	  for (i = 0; i < j; i++)
 	    XDrawLine(ax->dp, ax->wn, ax->gc, points[i].x, points[i].y, points1[i].x, points1[i].y);
 	}
       else
@@ -209,7 +209,7 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_styl
 	  if (size4 < 1) size4 = 1;
 	  draw_points(ax, points, j, cp->dot_size);
 	  draw_points(ax, points1, j, cp->dot_size);
-	  for (i=0; i<j; i++)
+	  for (i = 0; i < j; i++)
 	    XFillRectangle(ax->dp, ax->wn, ax->gc, 
 			   points[i].x - size8, 
 			   points[i].y, 
@@ -222,7 +222,7 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_styl
 
 void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style)
 {
-  int i,gy0,size8,size4;
+  int i, gy0, size8, size4;
   switch (graph_style)
     {
     case GRAPH_LINES: 
@@ -242,7 +242,7 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
       gy0 = grf_y(y0, ap);
       if (cp->dot_size == 1)
 	{
-	  for (i=0; i<j; i++)
+	  for (i = 0; i < j; i++)
 	    XDrawLine(ax->dp, ax->wn, ax->gc, points[i].x, points[i].y, points[i].x, gy0);
 	}
       else
@@ -251,7 +251,7 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
 	  size4 = cp->dot_size / 4;
 	  if (size4 < 1) size4 = 1;
 	  draw_points(ax, points, j, cp->dot_size);
-	  for (i=0; i<j; i++)
+	  for (i = 0; i < j; i++)
 	    if (points[i].y > gy0) /* unsigned int height */
 	      XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, gy0, size4, points[i].y - gy0);
 	    else XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
@@ -279,11 +279,11 @@ static void allocate_erase_grf_points(mix_context *ms)
 static void backup_erase_grf_points(mix_context *ms, int nj)
 {
   int i;
-  XPoint *points,*points1;
+  XPoint *points, *points1;
   points = points_address(0);
   points1 = points_address(1);
   ms->lastpj = nj;
-  for (i=0; i<nj; i++)
+  for (i = 0; i < nj; i++)
     {
       ms->p0[i] = points[i];
       ms->p1[i] = points1[i];
@@ -301,12 +301,12 @@ void mix_save_graph(snd_state *ss, mix_context *ms, int j)
 
 void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
 {
-  int i,j,min,previous_j;
+  int i, j, min, previous_j;
   chan_context *cx;
   axis_context *ax;
   Display *dpy;
   Drawable wn;
-  GC draw_gc,undraw_gc;
+  GC draw_gc, undraw_gc;
   XPoint *points;
   points = points_address(0);
   previous_j = ms->lastpj;
@@ -320,42 +320,42 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->graph_style == GRAPH_LINES)
     {
-      for (i=0, j=1; i<min-1; i++, j++)
+      for (i = 0, j = 1; i < min-1; i++, j++)
 	{
 	  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
 	  XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
 	}
       if (nj > previous_j)
 	{
-	  for (i=min-1; i<nj-1; i++) 
+	  for (i = min-1; i < nj-1; i++) 
 	    XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
 	}
       else
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i=min-1; i<previous_j-1; i++) 
+	      for (i = min-1; i < previous_j-1; i++) 
 		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
 	    }
 	}
     }
   else /* dots */
     {
-      for (i=0; i<min; i++)
+      for (i = 0; i < min; i++)
 	{
 	  draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
 	  draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
 	}
       if (nj > previous_j)
 	{
-	  for (i=min; i<nj; i++) 
+	  for (i = min; i < nj; i++) 
 	    draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
 	}
       else
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i=min; i<previous_j; i++) 
+	      for (i = min; i < previous_j; i++) 
 		draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
 	    }
 	}
@@ -365,13 +365,13 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
 
 void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 {
-  int i,j,min,previous_j;
+  int i, j, min, previous_j;
   chan_context *cx;
   axis_context *ax;
   Display *dpy;
   Drawable wn;
-  GC draw_gc,undraw_gc;
-  XPoint *points,*points1;
+  GC draw_gc, undraw_gc;
+  XPoint *points, *points1;
   points = points_address(0);
   points1 = points_address(1);
   previous_j = ms->lastpj;
@@ -385,7 +385,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->graph_style == GRAPH_LINES)
     {
-      for (i=0, j=1; i<min-1; i++, j++)
+      for (i = 0, j = 1; i < min-1; i++, j++)
 	{
 	  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
 	  XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
@@ -394,7 +394,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	}
       if (nj > previous_j)
 	{
-	  for (i=min-1; i<nj-1; i++) 
+	  for (i = min-1; i < nj-1; i++) 
 	    {
 	      XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
 	      XDrawLine(dpy, wn, draw_gc, points1[i].x, points1[i].y, points1[i+1].x, points1[i+1].y);
@@ -403,7 +403,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
       else
 	if (previous_j > nj)
 	  {
-	    for (i=min-1; i<previous_j-1; i++) 
+	    for (i = min-1; i < previous_j-1; i++) 
 	      {
 		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
 		XDrawLine(dpy, wn, undraw_gc, ms->p1[i].x, ms->p1[i].y, ms->p1[i+1].x, ms->p1[i+1].y);
@@ -412,7 +412,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
     }
   else /* dots */
     {
-      for (i=0; i<min; i++)
+      for (i = 0; i < min; i++)
 	{
 	  draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
 	  draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
@@ -421,7 +421,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	}
       if (nj > previous_j)
 	{
-	  for (i=min; i<nj; i++) 
+	  for (i = min; i < nj; i++) 
 	    {
 	      draw_point(dpy, wn, draw_gc, points[i], cp->dot_size);
 	      draw_point(dpy, wn, draw_gc, points1[i], cp->dot_size);
@@ -431,7 +431,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i=min; i<previous_j; i++) 
+	      for (i = min; i < previous_j; i++) 
 		{
 		  draw_point(dpy, wn, undraw_gc, ms->p0[i], cp->dot_size);
 		  draw_point(dpy, wn, undraw_gc, ms->p1[i], cp->dot_size);
@@ -505,12 +505,12 @@ void allocate_sono_rects(snd_state *ss, int size)
   else allocate_color_map(ss, 0);
   if (size > sono_size)
     {
-      for (i=0; i<GRAY_SCALES; i++)
+      for (i = 0; i < GRAY_SCALES; i++)
 	{
 	  if ((sono_size > 0) && (sono_data[i])) FREE(sono_data[i]); 
 	  sono_data[i] = NULL;
 	}
-      for (i=0; i<GRAY_SCALES; i++)
+      for (i = 0; i < GRAY_SCALES; i++)
 	{
 	  sono_data[i] = (XRectangle *)CALLOC(size, sizeof(XRectangle));
 	}
@@ -521,7 +521,7 @@ void allocate_sono_rects(snd_state *ss, int size)
 void allocate_color_map(snd_state *ss, int colormap)
 {
   static int warned_color = 0;
-  int i,j;
+  int i, j;
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
@@ -531,13 +531,13 @@ void allocate_color_map(snd_state *ss, int colormap)
     {
       curmap = snd_colormap(colormap);
       tmp_color.flags = DoRed | DoGreen | DoBlue;
-      dpy=XtDisplay(MAIN_SHELL(ss));
-      scr=DefaultScreen(dpy);
-      cmap=DefaultColormap(dpy, scr);
+      dpy = XtDisplay(MAIN_SHELL(ss));
+      scr = DefaultScreen(dpy);
+      cmap = DefaultColormap(dpy, scr);
       /* 8-bit color displays can't handle all these colors, apparently, so we have to check status */
       if (grays_allocated != -1) XFreeColors(dpy, cmap, grays, GRAY_SCALES, 0);
       j = 0;
-      for (i=0; i<GRAY_SCALES; i++)
+      for (i = 0; i < GRAY_SCALES; i++)
 	{
 	  tmp_color.red = curmap[j++];
 	  tmp_color.green = curmap[j++];
@@ -565,7 +565,7 @@ void allocate_color_map(snd_state *ss, int colormap)
 void x_load_colormap(Pixel *colors)
 {
   int i;
-  for (i=0; i<GRAY_SCALES; i++) 
+  for (i = 0; i < GRAY_SCALES; i++) 
     grays[i] = colors[i];
 }
 #endif
@@ -690,10 +690,10 @@ static void Help_Color_Callback(Widget w, XtPointer context, XtPointer info)
 void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
 {
   Arg args[32];
-  int n,i;
-  XmString xhelp,xdismiss,xcutoff,xinvert,titlestr;
+  int n, i;
+  XmString xhelp, xdismiss, xcutoff, xinvert, titlestr;
   XmString *cmaps;
-  Widget mainform,list_label,light_label,sep,sep1;
+  Widget mainform, list_label, light_label, sep, sep1;
   snd_state *ss = (snd_state *)context;
   if (!ccd)
     {
@@ -750,7 +750,7 @@ void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
       
       n = 0;
       cmaps = (XmString *)CALLOC(NUM_COLORMAPS, sizeof(XmString));
-      for (i=0; i<NUM_COLORMAPS; i++) cmaps[i] = XmStringCreate(colormap_name(i), XmFONTLIST_DEFAULT_TAG);
+      for (i = 0; i < NUM_COLORMAPS; i++) cmaps[i] = XmStringCreate(colormap_name(i), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -770,7 +770,7 @@ void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
 		    XmNvisibleItemCount, 6, 
 		    NULL);
       XtAddCallback(ccd->list, XmNbrowseSelectionCallback, List_Color_Callback, ccd);
-      for (i=0; i<NUM_COLORMAPS; i++) XmStringFree(cmaps[i]);
+      for (i = 0; i < NUM_COLORMAPS; i++) XmStringFree(cmaps[i]);
       FREE(cmaps);
       XtManageChild(ccd->list);
 
@@ -886,7 +886,7 @@ int color_dialog_is_active(void)
 
 typedef struct {
   Widget dialog;
-  Widget ax,ay,az,sx,sy,sz,hop,cut; 
+  Widget ax, ay, az, sx, sy, sz, hop, cut; 
   snd_state *state;
 } orientation_info;
 
@@ -1071,7 +1071,7 @@ static void Hop_Orientation_Callback(Widget w, XtPointer context, XtPointer info
 
 void set_spectro_hop(snd_state *ss, int val)
 {
-  if (val>0)
+  if (val > 0)
     {
       in_set_spectro_hop(ss, val);
       if (oid) XmScaleSetValue(oid->hop, val);
@@ -1171,8 +1171,8 @@ static void Reset_Orientation_Callback(Widget w, XtPointer context, XtPointer in
 void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
-  Widget mainform,rightbox,leftbox;
-  XmString xdismiss,xhelp,xstr,xreset,titlestr;
+  Widget mainform, rightbox, leftbox;
+  XmString xdismiss, xhelp, xstr, xreset, titlestr;
   int n;
   Arg args[20];
   if (!oid)

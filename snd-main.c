@@ -208,9 +208,9 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 #if HAVE_STRFTIME
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  fprintf(fd, "\n;;; Snd %s (%s) options saved %s\n",SND_RPM_VERSION,SND_VERSION,time_buf);
+  fprintf(fd, "\n; ; ; Snd %s (%s) options saved %s\n", SND_RPM_VERSION, SND_VERSION, time_buf);
 #else
-  fprintf(fd, "\n;;; Snd %s (%s)\n",SND_RPM_VERSION,SND_VERSION);
+  fprintf(fd, "\n; ; ; Snd %s (%s)\n", SND_RPM_VERSION, SND_VERSION);
 #endif
 
   if (fft_size(ss) != DEFAULT_FFT_SIZE) pss_sd(fd, S_fft_size, fft_size(ss));
@@ -339,7 +339,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fneq(eps_left_margin(ss), DEFAULT_EPS_LEFT_MARGIN)) pss_sf(fd, S_eps_left_margin, eps_left_margin(ss));
   save_recorder_state(fd);
 
-  fprintf(fd, ";;; end of snd options\n");
+  fprintf(fd, "; ; ; end of snd options\n");
   if (locale)
     {
 #if HAVE_SETLOCALE
@@ -361,7 +361,7 @@ static FILE *open_restart_file(char *name, int append)
     {
       strcpy(buf, getenv("HOME"));
       strcat(buf, ++str);
-      str=buf;
+      str = buf;
     }
   if (append)
     fd = fopen(str, "a");
@@ -397,7 +397,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
   FILE *fd;
   chan_info *cp;
   axis_info *ap;
-  char *tmpstr=NULL;
+  char *tmpstr = NULL;
   fd = (FILE *)ptr;
   fprintf(fd, "(let ((sfile (or (%s \"%s\") (%s \"%s\"))))\n  (if sfile\n    (begin\n",
 	  S_find_sound,
@@ -438,11 +438,11 @@ static int save_sound_state (snd_info *sp, void *ptr)
 #if HAVE_HOOKS
   if (gh_procedure_p(sp->search_proc))
     {
-      fprintf(fd, "      ;;; currently not trying to restore the local search procedure\n");
-      fprintf(fd, "      ;;; %s\n",gh_print_1(sp->search_proc, __FUNCTION__));
+      fprintf(fd, "      ; ; ; currently not trying to restore the local search procedure\n");
+      fprintf(fd, "      ; ; ; %s\n", gh_print_1(sp->search_proc, __FUNCTION__));
     }
 #endif
-  for (chan=0;chan<sp->nchans;chan++)
+  for (chan = 0; chan < sp->nchans; chan++)
     {
       cp = sp->chans[chan];
       ap = cp->axis;
@@ -541,8 +541,8 @@ int save_state (snd_state *ss, char *save_state_name)
 #if HAVE_HOOKS
 	{
 	  #define NUM_HOOKS 34
-	  SCM hook,procs;
-	  int i,sent_comment = 0;
+	  SCM hook, procs;
+	  int i, sent_comment = 0;
 
 	  static char *hook_names[NUM_HOOKS] = {
 	    "fft-hook", "graph-hook", "after-graph-hook", "mouse-press-hook", "mouse-release-hook", "mouse-drag-hook", 
@@ -566,22 +566,22 @@ int save_state (snd_state *ss, char *save_state_name)
 	   *   some sort of pretty-printer is really needed, but I couldn't get slib's to work.
 	   */
 
-	  for (i=0; i<NUM_HOOKS; i++)
+	  for (i = 0; i < NUM_HOOKS; i++)
 	    {
 	      hook = SND_LOOKUP(hook_names[i]);
 	      if (HOOKED(hook))
 		{
 		  if (!sent_comment)
 		    {
-		      fprintf(save_fd, "\n;;; hook values follow but are commented out since I'm not sure they should be saved");
-		      fprintf(save_fd, "\n;;;   (they can depend on things that I'm not yet saving for example)\n");
+		      fprintf(save_fd, "\n; ; ; hook values follow but are commented out since I'm not sure they should be saved");
+		      fprintf(save_fd, "\n; ; ;   (they can depend on things that I'm not yet saving for example)\n");
 		      sent_comment = 1;
 		    }
-		  fprintf(save_fd, "\n; %s\n",hook_names[i]);
+		  fprintf(save_fd, "\n; %s\n", hook_names[i]);
 		  procs = SCM_HOOK_PROCEDURES(hook);
 		  while (SCM_NIMP (procs))
 		    {
-		      fprintf(save_fd, ";    %s\n",gh_print_1(SCM_CAR(procs), __FUNCTION__));
+		      fprintf(save_fd, ";    %s\n", gh_print_1(SCM_CAR(procs), __FUNCTION__));
 		      procs = SCM_CDR (procs);
 		    }
 		}
@@ -589,13 +589,13 @@ int save_state (snd_state *ss, char *save_state_name)
 
 	  if (!sent_comment)
 	    {
-	      fprintf(save_fd, "\n;;; these bindings are commented out since I'm not sure they should be saved");
-	      fprintf(save_fd, "\n;;;   (they can depend on things that I'm not yet saving for example)");
+	      fprintf(save_fd, "\n; ; ; these bindings are commented out since I'm not sure they should be saved");
+	      fprintf(save_fd, "\n; ; ;   (they can depend on things that I'm not yet saving for example)");
 	      sent_comment = 1;
 	    }
 
 	  if (gh_procedure_p(ss->search_proc))
-	    fprintf(save_fd, ";    %s\n",gh_print_1(ss->search_proc, __FUNCTION__));
+	    fprintf(save_fd, ";    %s\n", gh_print_1(ss->search_proc, __FUNCTION__));
 
 	  save_user_key_bindings(save_fd);
 
@@ -618,9 +618,9 @@ int save_state (snd_state *ss, char *save_state_name)
 
 static char *file_extension(char *arg)
 {
-  char *dot = NULL,*sp;
+  char *dot = NULL, *sp;
   if (arg) 
-    for (sp=arg; (*sp) != '\0'; sp++) 
+    for (sp = arg; (*sp) != '\0'; sp++) 
       if ((*sp) == '.') 
 	dot = (++sp);
   return(dot);

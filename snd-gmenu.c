@@ -3,40 +3,40 @@
 static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer data);
 
 enum {menu_menu,
-        file_menu,f_cascade_menu,
-          f_open_menu,f_close_menu,f_save_menu,f_save_as_menu,f_revert_menu,f_exit_menu,f_new_menu,
-          f_view_menu,f_print_menu,f_mix_menu,f_update_menu,f_record_menu,f_sep_menu,
-        edit_menu,e_cascade_menu,
-          e_cut_menu,e_paste_menu,e_mix_menu,e_play_menu,e_save_as_menu,e_undo_menu,
-          e_redo_menu,e_find_menu,e_edenv_menu,e_header_menu,
+        file_menu, f_cascade_menu,
+          f_open_menu, f_close_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
+          f_view_menu, f_print_menu, f_mix_menu, f_update_menu, f_record_menu, f_sep_menu,
+        edit_menu, e_cascade_menu,
+          e_cut_menu, e_paste_menu, e_mix_menu, e_play_menu, e_save_as_menu, e_undo_menu,
+          e_redo_menu, e_find_menu, e_edenv_menu, e_header_menu,
           e_select_all_menu,
-          e_select_sep_menu,e_edit_sep_menu,
-        help_menu,h_cascade_menu,
-          h_about_snd_menu,h_fft_menu,h_find_menu,h_undo_menu,h_sync_menu,h_speed_menu,
-          h_expand_menu,h_contrast_menu,h_reverb_menu,h_env_menu,h_marks_menu,h_sound_files_menu,h_init_file_menu,
-          h_mix_menu,h_recording_menu,h_clm_menu,h_news_menu,
-        option_menu,o_cascade_menu,
+          e_select_sep_menu, e_edit_sep_menu,
+        help_menu, h_cascade_menu,
+          h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_speed_menu,
+          h_expand_menu, h_contrast_menu, h_reverb_menu, h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
+          h_mix_menu, h_recording_menu, h_clm_menu, h_news_menu,
+        option_menu, o_cascade_menu,
           o_transform_menu,
-          o_focus_style_menu,o_focus_cascade_menu,
-            o_focus_right_menu,o_focus_left_menu,o_focus_middle_menu,o_focus_active_menu,
-          o_save_menu,o_save_state_menu,
-          o_speed_menu,o_speed_cascade_menu,
-            o_speed_float_menu,o_speed_ratio_menu,o_speed_semitone_menu,
+          o_focus_style_menu, o_focus_cascade_menu,
+            o_focus_right_menu, o_focus_left_menu, o_focus_middle_menu, o_focus_active_menu,
+          o_save_menu, o_save_state_menu,
+          o_speed_menu, o_speed_cascade_menu,
+            o_speed_float_menu, o_speed_ratio_menu, o_speed_semitone_menu,
           o_stats_menu,
-        view_menu,v_cascade_menu,
+        view_menu, v_cascade_menu,
 #if 0
           v_normalize_menu, 
 #endif
           v_graph_style_menu, v_graph_style_cascade_menu,
-            v_lines_menu,v_dots_menu,v_filled_menu,v_dots_and_lines_menu,v_lollipops_menu,
+            v_lines_menu, v_dots_menu, v_filled_menu, v_dots_and_lines_menu, v_lollipops_menu,
           v_zero_menu, v_cursor_menu, v_ctrls_menu, v_listener_menu,
           v_region_menu,
           v_combine_menu, v_combine_cascade_menu,
-            v_combine_separate_menu,v_combine_combined_menu,v_combine_superimposed_menu,
+            v_combine_separate_menu, v_combine_combined_menu, v_combine_superimposed_menu,
           v_color_menu, v_orientation_menu, 
           v_files_menu, v_mix_panel_menu,
-          v_x_axis_menu,v_x_axis_cascade_menu,
-            v_x_axis_seconds_menu,v_x_axis_samples_menu,v_x_axis_percentage_menu,
+          v_x_axis_menu, v_x_axis_cascade_menu,
+            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu,
           v_error_history_menu,
           v_sep2_menu
 };
@@ -44,7 +44,7 @@ enum {menu_menu,
 #define NUM_MENU_WIDGETS 97
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 
-enum {W_pop_play,W_pop_undo,W_pop_redo,W_pop_save,W_pop_info};
+enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_info};
 #define NUM_POPUP_CHILDREN 6
 static GtkWidget *popup_menu = NULL;
 static GtkWidget *popup_children[NUM_POPUP_CHILDREN];
@@ -1130,7 +1130,7 @@ static char *main_menu_name(int callb)
 static int callb2option(int callb)
 {
   int i;
-  for (i=0;i<added_options_pos;i++)
+  for (i = 0; i < added_options_pos; i++)
     if (added_options_callb[i] == callb)
       return(i);
   return(-1);
@@ -1138,7 +1138,7 @@ static int callb2option(int callb)
 
 static void SND_Callback(GtkWidget *w, gpointer cD) 
 {
-  int callb,opt;
+  int callb, opt;
   callb = (int)gtk_object_get_user_data(GTK_OBJECT(w));
   opt = callb2option(callb);
   IF_MENU_HOOK(main_menu_name(opt), added_options_names[(opt < 0) ? 0 : opt])
@@ -1164,7 +1164,7 @@ static void add_option(GtkWidget *w, int which_menu, char *label, int callb)
 	  added_options_names = (char **)REALLOC(added_options_names, added_options_size * sizeof(char *));
 	  added_options_menus = (int *)REALLOC(added_options_menus, added_options_size * sizeof(int));
 	  added_options_callb = (int *)REALLOC(added_options_callb, added_options_size * sizeof(int));
-	  for (i=added_options_pos;i<added_options_size;i++) 
+	  for (i = added_options_pos; i < added_options_size; i++) 
 	    {
 	      added_options[i] = NULL;
 	      added_options_callb[i] = 0;
@@ -1181,7 +1181,7 @@ static void add_option(GtkWidget *w, int which_menu, char *label, int callb)
 static int remove_option(int which_menu, char *label)
 {
   int i;
-  for (i=0;i<added_options_pos;i++)
+  for (i = 0; i < added_options_pos; i++)
     {
       if ((added_options_menus[i] == which_menu) && (strcmp(label, added_options_names[i]) == 0) && (added_options[i]))
 	{
@@ -1273,9 +1273,11 @@ static int remove_option(int which_menu, char *label)
 int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
 {
   int i;
-  for (i=0;i<added_options_pos;i++)
+  for (i = 0; i < added_options_pos; i++)
     {
-      if ((added_options_menus[i] == which_menu) && (strcmp(old_label, added_options_names[i]) == 0) && (added_options[i]))
+      if ((added_options_menus[i] == which_menu) && 
+	  (strcmp(old_label, added_options_names[i]) == 0) && 
+	  (added_options[i]))
 	{
 	  set_button_label(added_options[i], new_label);
 	  if (added_options_names[i]) FREE(added_options_names[i]);
@@ -1289,9 +1291,11 @@ int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
 int gh_menu_is_sensitive(int which_menu, char *old_label)
 {
   int i;
-  for (i=0;i<added_options_pos;i++)
+  for (i = 0; i < added_options_pos; i++)
     {
-      if ((added_options_menus[i] == which_menu) && (strcmp(old_label, added_options_names[i]) == 0) && (added_options[i]))
+      if ((added_options_menus[i] == which_menu) && 
+	  (strcmp(old_label, added_options_names[i]) == 0) && 
+	  (added_options[i]))
 	{
 	  return(is_sensitive(added_options[i]));
 	}
@@ -1302,9 +1306,11 @@ int gh_menu_is_sensitive(int which_menu, char *old_label)
 int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
 {
   int i;
-  for (i=0;i<added_options_pos;i++)
+  for (i = 0; i < added_options_pos; i++)
     {
-      if ((added_options_menus[i] == which_menu) && (strcmp(old_label, added_options_names[i]) == 0) && (added_options[i]))
+      if ((added_options_menus[i] == which_menu) && 
+	  (strcmp(old_label, added_options_names[i]) == 0) && 
+	  (added_options[i]))
 	{
 	  set_sensitive(added_options[i], on);
 	  return(0);
@@ -1315,7 +1321,7 @@ int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
 
 int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
 {
-  GtkWidget *m,*mc;
+  GtkWidget *m, *mc;
   m = gtk_menu_item_new_with_label(label);
   set_background(m, (ss->sgx)->highlight_color);
   gtk_menu_bar_append(GTK_MENU_BAR(mw[menu_menu]), m);
@@ -1339,7 +1345,7 @@ int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
 
 int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
 {
-  GtkWidget *m,*menw;
+  GtkWidget *m, *menw;
    switch (which_menu)
     {
     case 0: menw = mw[f_cascade_menu]; break;
@@ -1422,7 +1428,7 @@ static void Popup_Info_Callback(GtkWidget *w, gpointer cD)
 
 void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time)
 {
-  int undo_possible=0,redo_possible=0;
+  int undo_possible = 0, redo_possible = 0;
   chan_info *selcp = NULL;
   if (!popup_menu)
     {
@@ -1430,7 +1436,8 @@ void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time)
       if (selcp)
 	{
 	  undo_possible = (selcp->edit_ctr > 0);
-	  redo_possible = ((selcp->edit_size > (selcp->edit_ctr+1)) && (selcp->edits[selcp->edit_ctr+1]));
+	  redo_possible = ((selcp->edit_size > (selcp->edit_ctr+1)) && 
+			   (selcp->edits[selcp->edit_ctr+1]));
 	}
       popup_menu = gtk_menu_new();
 
@@ -1489,7 +1496,7 @@ static SCM g_test_menus(void)
 {
   guint signal_id;
   int i;
-  for (i=0;i<NUM_MENU_WIDGETS;i++)
+  for (i = 0; i < NUM_MENU_WIDGETS; i++)
     if ((mw[i]) && (is_sensitive(mw[i])) &&
 	(i != f_exit_menu) && (i != f_save_menu) && (i != f_close_menu) && (i != e_header_menu) &&
 	(i != f_new_menu) && (i != f_record_menu) && (i != v_mix_panel_menu))
@@ -1498,7 +1505,7 @@ static SCM g_test_menus(void)
 	if (signal_id >= 1)
 	  gtk_signal_emit_by_name(GTK_OBJECT(mw[i]), "activate");
       }
-  for (i=0;i<added_options_pos;i++)
+  for (i = 0; i < added_options_pos; i++)
     if ((added_options[i]) && (is_sensitive(added_options[i])))
       {
 	signal_id = gtk_signal_lookup("activate", GTK_OBJECT_TYPE(added_options[i]));

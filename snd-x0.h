@@ -123,7 +123,7 @@ typedef struct {
 } chan_context;
 
 typedef struct {
-  Pixmap speed_r,speed_l,file_pix;
+  Pixmap speed_r, speed_l, file_pix;
   BACKGROUND_FUNCTION_TYPE apply_in_progress;
   Widget *snd_widgets;
   Widget tab;
@@ -132,8 +132,8 @@ typedef struct {
 } snd_context;
 
 typedef struct {
-  Widget header_list,format_list,srate_text,chans_text,comment_text,location_text;
-  int current_type,current_format,formats,header_pos,format_pos;
+  Widget header_list, format_list, srate_text, chans_text, comment_text, location_text;
+  int current_type, current_format, formats, header_pos, format_pos;
 } file_data;
 
 typedef struct {
@@ -156,25 +156,25 @@ typedef struct {
   XM_FONT_TYPE tiny_fontlist;
   XFontStruct *tiny_fontstruct;
 
-  Pixel white,black,red,yellow,green,light_blue,lighter_blue;
-  Pixel data_color,selected_data_color,mark_color,graph_color,selected_graph_color,listener_color,cursor_color;
-  Pixel basic_color,selection_color,zoom_color,position_color,highlight_color,enved_waveform_color;
-  Pixel selected_mix_color,text_focus_color,filter_waveform_color,mix_color,pushed_button_color,sash_color;
+  Pixel white, black, red, yellow, green, light_blue, lighter_blue;
+  Pixel data_color, selected_data_color, mark_color, graph_color, selected_graph_color, listener_color, cursor_color;
+  Pixel basic_color, selection_color, zoom_color, position_color, highlight_color, enved_waveform_color;
+  Pixel selected_mix_color, text_focus_color, filter_waveform_color, mix_color, pushed_button_color, sash_color;
 
-  GC basic_gc,selected_basic_gc,combined_basic_gc;        
-  GC cursor_gc,selected_cursor_gc;      
-  GC selection_gc,selected_selection_gc;
-  GC erase_gc,selected_erase_gc;        
-  GC mark_gc,selected_mark_gc;          
-  GC mix_gc,selected_mix_gc;         
-  GC fltenv_basic_gc,fltenv_data_gc,speed_gc;
+  GC basic_gc, selected_basic_gc, combined_basic_gc;        
+  GC cursor_gc, selected_cursor_gc;      
+  GC selection_gc, selected_selection_gc;
+  GC erase_gc, selected_erase_gc;        
+  GC mark_gc, selected_mark_gc;          
+  GC mix_gc, selected_mix_gc;         
+  GC fltenv_basic_gc, fltenv_data_gc, speed_gc;
 
   XEvent *text_activate_event;
   Widget text_widget;
   Widget *dialogs;
-  int dialog_list_size,ndialogs;
+  int dialog_list_size, ndialogs;
 
-  Cursor mix_cursor,graph_cursor,wait_cursor;
+  Cursor mix_cursor, graph_cursor, wait_cursor;
 #if HAVE_THEMES
   Pixmap backmap;
 #endif
@@ -182,7 +182,7 @@ typedef struct {
 
 typedef struct {
   Widget graph;
-  XPoint *p0,*p1;
+  XPoint *p0, *p1;
   int lastpj;
   Pixel color;
 } mix_context;
@@ -213,7 +213,7 @@ typedef struct {
   Widget bysize;
   Widget byname;
   Widget byentry;
-  Widget panes,toppane;
+  Widget panes, toppane;
 } ww_info;
 
 #define snd_ShiftMask ShiftMask

@@ -452,7 +452,7 @@ by any arguments. (Information about about parameters can be acquired using anal
   chan_info *cp;
   snd_info *sp;
   char *ofile;
-  int num,i,j=0,ofd,datumb,err=0;
+  int num, i, j = 0, ofd, datumb, err = 0;
   snd_fd *sf;
   file_info *hdr;
   snd_state *state;

@@ -9,17 +9,17 @@
  */
 
 enum {
-    W_top,W_form,
+    W_top, W_form,
     W_main_window,
     W_edhist,
     W_wf_buttons,
-      W_f,W_w,
+      W_f, W_w,
     W_left_scrollers,
-      W_zy,W_sy,
+      W_zy, W_sy,
     W_bottom_scrollers,
-      W_sx,W_zx,
+      W_sx, W_zx,
     W_graph,
-      W_gzy,W_gsy
+      W_gzy, W_gsy
 };
 #define NUM_CHAN_WIDGETS 16
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
@@ -120,7 +120,7 @@ void set_zx_scrollbar_value(chan_info *cp, Float value)
 
 static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_max) /* position and range 0 to 1.0 */
 {
-  int size,val;
+  int size, val;
   size = (int)(scrollbar_max * range);
   if (size > scrollbar_max) 
     size = scrollbar_max; /* this can't happen!?! */
@@ -136,7 +136,7 @@ static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_m
 
 static void gzy_changed(int value, chan_info *cp)
 {
-  Float chan_frac,new_gsy,new_size;
+  Float chan_frac, new_gsy, new_size;
   cp->gzy = get_scrollbar(channel_gzy(cp), value, SCROLLBAR_MAX);
   chan_frac = 1.0 / ((Float)(((snd_info *)(cp->sound))->nchans));
   new_size = chan_frac + ((1.0 - chan_frac) * cp->gzy);
@@ -160,7 +160,7 @@ void fixup_gsy(chan_info *cp, Float low, Float high)
 {
   Widget wcp;
   int ival;
-  Float val,size;
+  Float val, size;
   wcp = channel_gsy(cp);
   XtVaGetValues(wcp, XmNvalue, &ival, NULL);
   val = (Float)ival / (Float)(SCROLLBAR_MAX);
@@ -489,7 +489,7 @@ static void W_button_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void Channel_Expose_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  TIME_TYPE last_expose_event_time=0;
+  TIME_TYPE last_expose_event_time = 0;
   snd_info *sp;
   chan_info *cp = (chan_info *)context;
   XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)info;
@@ -596,7 +596,7 @@ void reflect_edit_history_change(chan_info *cp)
   chan_context *cx;
   Widget lst;
   snd_info *sp;
-  int i,eds;
+  int i, eds;
   XmString *edits;
   XmString edit;
 #if (XmVERSION == 1)
@@ -626,13 +626,13 @@ void reflect_edit_history_change(chan_info *cp)
 		      sp = cp->sound;
 		      edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
 		      edits[0] = XmStringCreate(sp->fullname, XmFONTLIST_DEFAULT_TAG);
-		      for (i=1; i<=eds; i++) 
+		      for (i = 1; i <= eds; i++) 
 			edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
 		      XtVaSetValues(lst, 
 				    XmNitems, edits, 
 				    XmNitemCount, eds+1, 
 				    NULL);
-		      for (i=0; i<=eds; i++) 
+		      for (i = 0; i <= eds; i++) 
 			XmStringFree(edits[i]);
 		      FREE(edits);
 		    }
@@ -681,7 +681,7 @@ void reflect_edit_counter_change(chan_info *cp)
   /* undo/redo/revert -- change which line is highlighted */
   chan_context *cx;
   Widget lst;
-  int len,top;
+  int len, top;
 #if (XmVERSION == 1)
   if (0)
 #endif
@@ -714,12 +714,12 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 {
   Widget *cw;
   Widget left_widget = NULL;
-  XtCallbackList n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,n13,n14;
+  XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14;
   chan_info *cp;
   chan_context *cx;
   axis_context *cax;
   state_context *sx;
-  int make_widgets,i,n,need_colors,need_extra_scrollbars;
+  int make_widgets, i, n, need_colors, need_extra_scrollbars;
   Arg args[32];
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp, ss);
@@ -1048,7 +1048,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, 1, NULL);
 #endif
       if ((sp->combining != CHANNELS_COMBINED) || (channel == 0))
-	for (i=0; i<NUM_CHAN_WIDGETS; i++)
+	for (i = 0; i < NUM_CHAN_WIDGETS; i++)
 	  {
 	    if (cw[i])
 	      {
@@ -1212,9 +1212,9 @@ void cleanup_cw(chan_info *cp)
 
 void change_channel_style(snd_info *sp, int new_style)
 {
-  int i,j,old_style;
+  int i, j, old_style;
   snd_state *ss;
-  chan_info *ncp,*cp,*pcp;
+  chan_info *ncp, *cp, *pcp;
   int height[1];
   chan_context *mcgx;
   Widget *cw;
@@ -1256,7 +1256,7 @@ void change_channel_style(snd_info *sp, int new_style)
 	      sound_lock_ctrls(sp, NULL);
 	      channel_lock_pane(ncp, height);
 	      mcgx = ncp->cgx;
-	      for (i=1; i<sp->nchans; i++) 
+	      for (i = 1; i < sp->nchans; i++) 
 		{
 		  ncp = sp->chans[i];
 		  cleanup_cw(ncp);
@@ -1279,11 +1279,11 @@ void change_channel_style(snd_info *sp, int new_style)
 		  map_over_sound_chans(sp, channel_open_pane, NULL);
 		  map_over_sound_chans(sp, channel_unlock_pane, NULL);
 		  sound_unlock_ctrls(sp, NULL);
-		  for (i=0; i<sp->nchans; i++) 
+		  for (i = 0; i < sp->nchans; i++) 
 		    reset_mix_graph_parent(sp->chans[i]);
 		  pcp = sp->chans[0];
 		  ap = pcp->axis;
-		  for (i=1; i<sp->nchans; i++)
+		  for (i = 1; i < sp->nchans; i++)
 		    {
 		      cp = sp->chans[i];
 		      cp->tcgx = NULL;
@@ -1293,7 +1293,7 @@ void change_channel_style(snd_info *sp, int new_style)
 		      if (cw[W_edhist]) 
 			XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, DEFAULT_EDIT_HISTORY_WIDTH, NULL);
 #endif
-		      for (j=0;j<NUM_CHAN_WIDGETS;j++)
+		      for (j = 0; j < NUM_CHAN_WIDGETS; j++)
 			{
 			  if ((cw[j]) && (!XtIsManaged(cw[j]))) 
 			    XtManageChild(cw[j]);

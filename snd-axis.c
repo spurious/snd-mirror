@@ -4,12 +4,12 @@
 /* removed y-label support 18-Dec-00 */
 
 typedef struct {
-  double hi,lo; 
+  double hi, lo; 
   int max_ticks;
-  double flo,fhi,mlo,mhi,step,tenstep;
-  int tens,min_label_width,max_label_width;
-  int min_label_x,max_label_x,maj_tick_len,min_tick_len;
-  char *min_label,*max_label;
+  double flo, fhi, mlo, mhi, step, tenstep;
+  int tens, min_label_width, max_label_width;
+  int min_label_x, max_label_x, maj_tick_len, min_tick_len;
+  char *min_label, *max_label;
 } tick_descriptor;
 
 static tick_descriptor *free_tick_descriptor (tick_descriptor *td)
@@ -28,11 +28,11 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   /* given absolute (unchangeable) axis bounds lo and hi, and abolute maximum number of ticks to use, find a "pretty" tick placement */
   /* much of the work here involves floating point rounding problems.  We assume the tick labeller will round as well */
   tick_descriptor *td;
-  int ten,hib,lob;
-  double flog10,plog10;
-  double frac,ften,hilo_diff,eten,flt_ten,flt_ften;
-  double inside,mfdiv,mten,mften;
-  int mticks,mdiv;
+  int ten, hib, lob;
+  double flog10, plog10;
+  double frac, ften, hilo_diff, eten, flt_ten, flt_ften;
+  double inside, mfdiv, mten, mften;
+  int mticks, mdiv;
 
   if (!gd_td)
     td = (tick_descriptor *)CALLOC(1, sizeof(tick_descriptor));
@@ -160,21 +160,21 @@ static short tick_grf_x(double val, axis_info *ap, int style, int srate)
 }
 
 
-enum {axis_x_bottom,axis_x_middle};
+enum {axis_x_bottom, axis_x_middle};
 
 void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 {
-  int width,height;
+  int width, height;
   int axis_style;                 /* x_bottom or x_middle or xy_middle => |_ or |- or + */
-  double x_range,y_range,tens;
-  int axis_thickness,left_border_width,bottom_border_width,top_border_width,right_border_width;
-  int inner_border_width,tick_label_width;
-  int major_tick_length,minor_tick_length,x_tick_spacing,y_tick_spacing;
-  int include_x_label,include_x_ticks,include_x_tick_labels,include_y_ticks,include_y_tick_labels;
-  int x_label_width,x_label_height,x_number_height;
-  int num_ticks,majy,miny,majx,minx,x,y,tx,ty,x0,y0;
-  double fy,fx;
-  tick_descriptor *tdx = NULL,*tdy = NULL;
+  double x_range, y_range, tens;
+  int axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width;
+  int inner_border_width, tick_label_width;
+  int major_tick_length, minor_tick_length, x_tick_spacing, y_tick_spacing;
+  int include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels;
+  int x_label_width, x_label_height, x_number_height;
+  int num_ticks, majy, miny, majx, minx, x, y, tx, ty, x0, y0;
+  double fy, fx;
+  tick_descriptor *tdx = NULL, *tdy = NULL;
   int curx, cury, curdy, show_x_axis = 1;
   axis_context *ax;
   snd_info *sp;
@@ -309,7 +309,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	    }
 	}
 
-      tdy=describe_ticks((tick_descriptor *)(ap->y_ticks), ap->y0, ap->y1, num_ticks);
+      tdy = describe_ticks((tick_descriptor *)(ap->y_ticks), ap->y0, ap->y1, num_ticks);
       ap->y_ticks = tdy;
       if (include_y_tick_labels)
 	{
@@ -494,7 +494,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
     }
   if (include_x_tick_labels)
     {
-      int lx0,lx1,tx0,tx1;
+      int lx0, lx1, tx0, tx1;
       /* the label is at ap->x_label_x to that plus x_label_width */
       /* the number label widths are tdx->max|min_label_width */
       lx0 = ap->x_label_x;

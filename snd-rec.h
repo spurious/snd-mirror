@@ -70,7 +70,7 @@ typedef struct {
   int input_buffer_sizes[MAX_SOUNDCARDS];
   int input_channels[MAX_SOUNDCARDS];
   int input_channel_active[MAX_IN_CHANS]; /* is this input channel receiving input */
-  char *raw_input_bufs[MAX_SOUNDCARDS];/* incoming data has not yet been converted to sndlib representation */
+  char *raw_input_bufs[MAX_SOUNDCARDS]; /* incoming data has not yet been converted to sndlib representation */
   MUS_SAMPLE_TYPE unscaled_output_bufs[MAX_OUT_CHANS]; /* per-channel (output) buffer, before final output scaling */
   MUS_SAMPLE_TYPE input_vu_maxes[MAX_IN_CHANS]; /* VU label values on input chans */
   MUS_SAMPLE_TYPE output_vu_maxes[MAX_OUT_CHANS]; /* VU label values on output chans */
@@ -80,8 +80,8 @@ typedef struct {
 
   int *chan_in_active;             /* overall_in_chans */
   int *chan_out_active;            /* (file)_out_chans */
-  Float max_duration,trigger;
-  int autoload,srate,in_format,out_format,out_chans,buffer_size,triggering,triggered;
+  Float max_duration, trigger;
+  int autoload, srate, in_format, out_format, out_chans, buffer_size, triggering, triggered;
   Float **in_amps;                /* overall_in_chans X out_chans */
   Float *out_amps;                /* out_chans (independent of file write: monitor vol) */
   Float *mixer_gains;             /* audio gain values (widgets are per pane) */
@@ -106,7 +106,7 @@ typedef struct {
   int duration_label_update_frames; /* frames between updates of the duration label */
   int total_output_frames;
   int systems;                    /* soundcards normally = how many independent input sources from sndlib's point of view */
-  int *ordered_devices,*ordered_systems; /* soundcards in recorder dialog order with output at end */
+  int *ordered_devices, *ordered_systems; /* soundcards in recorder dialog order with output at end */
   int ordered_devices_size;
   int mixer_settings_saved;
   int autoload_button;

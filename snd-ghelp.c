@@ -14,17 +14,17 @@ static GtkWidget *help_dialog = NULL;
 static GtkWidget *help_text = NULL;
 static char help_window_label[64];
 
-static void help_help_callback(GtkWidget *w, gpointer clientData) 
+static void help_help_callback(GtkWidget *w, gpointer context) 
 {
-  help_dialog_help((snd_state *)clientData);
+  help_dialog_help((snd_state *)context);
 }
 
-static void dismiss_help(GtkWidget *w, gpointer clientData)
+static void dismiss_help(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(help_dialog);
 }
 
-static void delete_help(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void delete_help(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(help_dialog);
 }
@@ -72,7 +72,7 @@ static GtkWidget *create_scrolled_text(snd_state *ss, int editable)
 static void create_help_monolog(snd_state *ss)
 {
   /* create scrollable but not editable text window */
-  GtkWidget *help_button,*ok_button,*table;
+  GtkWidget *help_button, *ok_button, *table;
   help_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
@@ -116,7 +116,9 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
 void move_help_dialog_to(int x, int y)
 {
   /* only used in snd-glistener, and is obsolete there */
-  if (!(help_dialog)) create_help_monolog(get_global_state()); else raise_dialog(help_dialog);
+  if (!(help_dialog)) 
+    create_help_monolog(get_global_state()); 
+  else raise_dialog(help_dialog);
   set_widget_position(help_dialog, x, y);
 }
 

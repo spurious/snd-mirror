@@ -175,7 +175,7 @@ static SCM g_sound_type_specifier(SCM filename)
 static SCM g_sound_comment(SCM filename) 
 {
   #define H_mus_sound_comment "(" S_mus_sound_comment " filename) -> comment (string) found in sound's header"
-  char *tmpstr = NULL,*res = NULL; 
+  char *tmpstr = NULL, *res = NULL; 
   SCM newstr;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_comment); 
   res = mus_sound_comment(tmpstr = full_filename(filename));
@@ -241,7 +241,7 @@ static SCM g_audio_outputs(SCM speakers, SCM headphones, SCM line_out)
 static SCM g_sound_max_amp(SCM file)
 {
   #define H_mus_sound_max_amp "(" S_mus_sound_max_amp " filename) -> max amps in sound (a vector of amps and locations)"
-  int chans,rtn,i;
+  int chans, rtn, i;
   MUS_SAMPLE_TYPE *vals;
   char *filename;
   SCM *vdata;
@@ -257,7 +257,7 @@ static SCM g_sound_max_amp(SCM file)
 	{
 	  vect = gh_make_vector(TO_SMALL_SCM_INT(chans*2), TO_SMALL_SCM_INT(0));
 	  vdata = SCM_VELTS(vect);
-	  for (i=0; i<chans*2; i+=2)
+	  for (i = 0; i < chans*2; i+=2)
 	    {
 	      vdata[i] = TO_SCM_INT((int)(vals[i]));
 	      vdata[i+1] = TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i+1]));
@@ -308,7 +308,7 @@ static scm_sizet free_sound_data(SCM obj)
   if (v == NULL) return(0);
   if (v->data) 
     {
-      for (i=0; i<v->chans; i++) if (v->data[i]) FREE(v->data[i]);
+      for (i = 0; i < v->chans; i++) if (v->data[i]) FREE(v->data[i]);
       FREE(v->data);
     }
   v->data = NULL;
@@ -337,7 +337,7 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
 
 static SCM equalp_sound_data(SCM obj1, SCM obj2)
 {
-  sound_data *v1,*v2;
+  sound_data *v1, *v2;
   v1 = (sound_data *)SND_VALUE_OF(obj1);
   v2 = (sound_data *)SND_VALUE_OF(obj2);
   if (v1 == v2) return(SCM_BOOL_T);
@@ -369,7 +369,7 @@ SCM make_sound_data(int chans, int frames)
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
-  for (i=0; i<chans; i++)
+  for (i = 0; i < chans; i++)
     new_sound_data->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(frames, sizeof(MUS_SAMPLE_TYPE));
   SND_RETURN_NEWSMOB(sound_data_tag, new_sound_data);
 }
@@ -394,7 +394,7 @@ static SCM sound_data_ref(SCM obj, SCM chan, SCM frame)
 {
   #define H_sound_data_ref "(" S_sound_data_ref " sd chan i) -> sample in channel chan at location i of sound-data object sd: sd[chan][i]"
   sound_data *v = (sound_data *)SND_VALUE_OF(obj);
-  int loc,chn;
+  int loc, chn;
   SCM_ASSERT(sound_data_p(obj), obj, SCM_ARG1, S_sound_data_ref);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)), chan, SCM_ARG2, S_sound_data_ref);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(frame)), frame, SCM_ARG3, S_sound_data_ref);
@@ -425,7 +425,7 @@ static SCM sound_data_set(SCM obj, SCM chan, SCM frame, SCM val)
 {
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data object sd's i-th element in channel chan to val: sd[chan][i] = val"
   sound_data *v = (sound_data *)SND_VALUE_OF(obj);
-  int loc,chn;
+  int loc, chn;
   if (v)
     {
       chn = TO_C_INT_OR_ELSE(chan, 0);
@@ -452,7 +452,7 @@ static SCM sound_data2vct(SCM sdobj, SCM chan, SCM vobj)
   #define H_sound_data2vct "(" S_sound_data2vct " sd chan v) places sound-data object sd's channel chan data into vct object v"
   vct *v;
   sound_data *sd;
-  int len,i,chn;
+  int len, i, chn;
   SCM_ASSERT(sound_data_p(sdobj), sdobj, SCM_ARG1, S_sound_data2vct);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)), chan, SCM_ARG2, S_sound_data2vct);
   SCM_ASSERT(vct_p(vobj), vobj, SCM_ARG3, S_sound_data2vct);
@@ -464,7 +464,7 @@ static SCM sound_data2vct(SCM sdobj, SCM chan, SCM vobj)
       if (sd->length < v->length) 
 	len = sd->length; 
       else len = v->length;
-      for (i=0; i<len; i++) 
+      for (i = 0; i < len; i++) 
 	v->data[i] = (Float)(MUS_SAMPLE_TO_FLOAT(sd->data[chn][i]));
     }
   else scm_misc_error(S_sound_data2vct,
@@ -478,7 +478,7 @@ static SCM vct2sound_data(SCM vobj, SCM sdobj, SCM chan)
   #define H_vct2sound_data "(" S_vct2sound_data " v sd chan) places vct v's data into sound-data sd's channel chan"
   vct *v;
   sound_data *sd;
-  int len,i,chn;
+  int len, i, chn;
   SCM_ASSERT(vct_p(vobj), vobj, SCM_ARG1, S_vct2sound_data);
   SCM_ASSERT(sound_data_p(sdobj), sdobj, SCM_ARG2, S_vct2sound_data);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)), chan, SCM_ARG3, S_vct2sound_data);
@@ -490,7 +490,7 @@ static SCM vct2sound_data(SCM vobj, SCM sdobj, SCM chan)
       if (sd->length < v->length) 
 	len = sd->length; 
       else len = v->length;
-      for (i=0; i<len; i++) 
+      for (i = 0; i < len; i++) 
 	sd->data[chn][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
     }
   else scm_misc_error(S_vct2sound_data,
@@ -718,7 +718,7 @@ static SCM g_write_audio(SCM line, SCM sdata, SCM frames)
   short *obuf;
   MUS_SAMPLE_TYPE **bufs;
   sound_data *sd;
-  int i,j,k,outbytes,val,frms;
+  int i, j, k, outbytes, val, frms;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(line)), line, SCM_ARG1, S_mus_audio_write);
   SCM_ASSERT(sound_data_p(sdata), sdata, SCM_ARG2, S_mus_audio_write);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(frames)), frames, SCM_ARG3, S_mus_audio_write);
@@ -729,16 +729,14 @@ static SCM g_write_audio(SCM line, SCM sdata, SCM frames)
   obuf = (short *)CALLOC(frms * sd->chans, sizeof(short));
   if (sd->chans == 1)
     {
-      for (k=0;k<frms;k++) 
+      for (k = 0; k < frms; k++) 
 	obuf[k] = MUS_SAMPLE_TO_SHORT(bufs[0][k]);
     }
   else
     {
-      for (k=0, j=0;k<frms;k++,j+=sd->chans)
-	{
-	  for (i=0; i<sd->chans; i++) 
-	    obuf[j+i] = MUS_SAMPLE_TO_SHORT(bufs[i][k]);
-	}
+      for (k = 0, j = 0; k < frms; k++, j+=sd->chans)
+	for (i = 0; i < sd->chans; i++) 
+	  obuf[j+i] = MUS_SAMPLE_TO_SHORT(bufs[i][k]);
     }
   val = mus_audio_write(TO_C_INT_OR_ELSE(line, 0), (char *)obuf, outbytes);
   FREE(obuf);
@@ -752,7 +750,7 @@ static SCM g_read_audio(SCM line, SCM sdata, SCM frames)
 
   short *inbuf;
   sound_data *sd;
-  int val,inbytes,i,j,k,frms;
+  int val, inbytes, i, j, k, frms;
   MUS_SAMPLE_TYPE **bufs;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(line)), line, SCM_ARG1, S_mus_audio_read);
   SCM_ASSERT(sound_data_p(sdata), sdata, SCM_ARG2, S_mus_audio_read);
@@ -765,16 +763,14 @@ static SCM g_read_audio(SCM line, SCM sdata, SCM frames)
   val = mus_audio_read(TO_C_INT_OR_ELSE(line, 0), (char *)inbuf, inbytes);
   if (sd->chans == 1)
     {
-      for (k=0;k<frms;k++) 
+      for (k = 0; k < frms; k++) 
 	bufs[0][k] = MUS_SHORT_TO_SAMPLE(inbuf[k]);
     }
   else
     {
-      for (k=0, j=0;k<frms;k++,j+=sd->chans)
-	{
-	  for (i=0; i<sd->chans; i++) 
-	    bufs[i][k] = MUS_SHORT_TO_SAMPLE(inbuf[j+i]);
-	}
+      for (k = 0, j = 0; k < frms; k++, j+=sd->chans)
+	for (i = 0; i < sd->chans; i++) 
+	  bufs[i][k] = MUS_SHORT_TO_SAMPLE(inbuf[j+i]);
     }
   FREE(inbuf);
   return(scm_return_first(TO_SCM_INT(val), sdata));
@@ -783,7 +779,7 @@ static SCM g_read_audio(SCM line, SCM sdata, SCM frames)
 static SCM g_read_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
 {
   #define H_mus_audio_mixer_read "(" S_mus_audio_mixer_read " device field channel vals) reads sound card 'mixer' state"
-  int val,i,len;
+  int val, i, len;
   float *fvals;
   SCM *vdata;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(dev)), dev, SCM_ARG1, S_mus_audio_mixer_read);
@@ -799,7 +795,7 @@ static SCM g_read_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
 			     TO_C_INT_OR_ELSE(chan, 0),
 			     fvals);
   vdata = SCM_VELTS(vals);
-  for (i=0; i<len; i++) 
+  for (i = 0; i < len; i++) 
     vdata[i] = TO_SCM_DOUBLE(fvals[i]);
   FREE(fvals);
   return(TO_SCM_INT(val));
@@ -808,7 +804,7 @@ static SCM g_read_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
 static SCM g_write_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
 {
   #define H_mus_audio_mixer_write "(" S_mus_audio_mixer_write " device field channel vals) changes the sound card's 'mixer' state"
-  int i,len,res;
+  int i, len, res;
   float *fvals;
   SCM *vdata;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(dev)), dev, SCM_ARG1, S_mus_audio_mixer_write);
@@ -822,7 +818,7 @@ static SCM g_write_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
     {
       fvals = (float *)CALLOC(len, sizeof(float));
       vdata = SCM_VELTS(vals);
-      for (i=0; i<len; i++) 
+      for (i = 0; i < len; i++) 
 	fvals[i] = TO_C_DOUBLE(vdata[i]);
     }
   res = mus_audio_mixer_write(TO_C_INT_OR_ELSE(dev, 0),
@@ -891,124 +887,124 @@ void mus_sndlib2scm_initialize(void)
   sound_data_tag = scm_newsmob(&sound_data_smobfuns);
 #endif
 
-  gh_define(S_mus_next, TO_SMALL_SCM_INT(MUS_NEXT));
-  gh_define(S_mus_aifc, TO_SMALL_SCM_INT(MUS_AIFC));
-  gh_define(S_mus_riff, TO_SMALL_SCM_INT(MUS_RIFF));
-  gh_define(S_mus_nist, TO_SMALL_SCM_INT(MUS_NIST));
-  gh_define(S_mus_raw, TO_SMALL_SCM_INT(MUS_RAW));
+  gh_define(S_mus_next,  TO_SMALL_SCM_INT(MUS_NEXT));
+  gh_define(S_mus_aifc,  TO_SMALL_SCM_INT(MUS_AIFC));
+  gh_define(S_mus_riff,  TO_SMALL_SCM_INT(MUS_RIFF));
+  gh_define(S_mus_nist,  TO_SMALL_SCM_INT(MUS_NIST));
+  gh_define(S_mus_raw,   TO_SMALL_SCM_INT(MUS_RAW));
   gh_define(S_mus_ircam, TO_SMALL_SCM_INT(MUS_IRCAM));
-  gh_define(S_mus_aiff, TO_SMALL_SCM_INT(MUS_AIFF));
+  gh_define(S_mus_aiff,  TO_SMALL_SCM_INT(MUS_AIFF));
 
-  gh_define(S_mus_bshort, TO_SMALL_SCM_INT(MUS_BSHORT));
-  gh_define(S_mus_lshort, TO_SMALL_SCM_INT(MUS_LSHORT));
-  gh_define(S_mus_mulaw, TO_SMALL_SCM_INT(MUS_MULAW));
-  gh_define(S_mus_alaw, TO_SMALL_SCM_INT(MUS_ALAW));
-  gh_define(S_mus_byte, TO_SMALL_SCM_INT(MUS_BYTE));
-  gh_define(S_mus_ubyte, TO_SMALL_SCM_INT(MUS_UBYTE));
-  gh_define(S_mus_bfloat, TO_SMALL_SCM_INT(MUS_BFLOAT));
-  gh_define(S_mus_lfloat, TO_SMALL_SCM_INT(MUS_LFLOAT));
-  gh_define(S_mus_bint, TO_SMALL_SCM_INT(MUS_BINT));
-  gh_define(S_mus_lint, TO_SMALL_SCM_INT(MUS_LINT));
-  gh_define(S_mus_bintn, TO_SMALL_SCM_INT(MUS_BINTN));
-  gh_define(S_mus_lintn, TO_SMALL_SCM_INT(MUS_LINTN));
-  gh_define(S_mus_b24int, TO_SMALL_SCM_INT(MUS_B24INT));
-  gh_define(S_mus_l24int, TO_SMALL_SCM_INT(MUS_L24INT));
+  gh_define(S_mus_bshort,  TO_SMALL_SCM_INT(MUS_BSHORT));
+  gh_define(S_mus_lshort,  TO_SMALL_SCM_INT(MUS_LSHORT));
+  gh_define(S_mus_mulaw,   TO_SMALL_SCM_INT(MUS_MULAW));
+  gh_define(S_mus_alaw,    TO_SMALL_SCM_INT(MUS_ALAW));
+  gh_define(S_mus_byte,    TO_SMALL_SCM_INT(MUS_BYTE));
+  gh_define(S_mus_ubyte,   TO_SMALL_SCM_INT(MUS_UBYTE));
+  gh_define(S_mus_bfloat,  TO_SMALL_SCM_INT(MUS_BFLOAT));
+  gh_define(S_mus_lfloat,  TO_SMALL_SCM_INT(MUS_LFLOAT));
+  gh_define(S_mus_bint,    TO_SMALL_SCM_INT(MUS_BINT));
+  gh_define(S_mus_lint,    TO_SMALL_SCM_INT(MUS_LINT));
+  gh_define(S_mus_bintn,   TO_SMALL_SCM_INT(MUS_BINTN));
+  gh_define(S_mus_lintn,   TO_SMALL_SCM_INT(MUS_LINTN));
+  gh_define(S_mus_b24int,  TO_SMALL_SCM_INT(MUS_B24INT));
+  gh_define(S_mus_l24int,  TO_SMALL_SCM_INT(MUS_L24INT));
   gh_define(S_mus_bdouble, TO_SMALL_SCM_INT(MUS_BDOUBLE));
   gh_define(S_mus_ldouble, TO_SMALL_SCM_INT(MUS_LDOUBLE));
   gh_define(S_mus_ubshort, TO_SMALL_SCM_INT(MUS_UBSHORT));
   gh_define(S_mus_ulshort, TO_SMALL_SCM_INT(MUS_ULSHORT));
 
-  gh_define(S_mus_audio_default, TO_SMALL_SCM_INT(MUS_AUDIO_DEFAULT));
+  gh_define(S_mus_audio_default,        TO_SMALL_SCM_INT(MUS_AUDIO_DEFAULT));
   gh_define(S_mus_audio_duplex_default, TO_SMALL_SCM_INT(MUS_AUDIO_DUPLEX_DEFAULT));
-  gh_define(S_mus_audio_line_out, TO_SMALL_SCM_INT(MUS_AUDIO_LINE_OUT));
-  gh_define(S_mus_audio_line_in, TO_SMALL_SCM_INT(MUS_AUDIO_LINE_IN));
-  gh_define(S_mus_audio_microphone, TO_SMALL_SCM_INT(MUS_AUDIO_MICROPHONE));
-  gh_define(S_mus_audio_speakers, TO_SMALL_SCM_INT(MUS_AUDIO_SPEAKERS));
-  gh_define(S_mus_audio_dac_out, TO_SMALL_SCM_INT(MUS_AUDIO_DAC_OUT));
-  gh_define(S_mus_audio_adat_in, TO_SMALL_SCM_INT(MUS_AUDIO_ADAT_IN));
-  gh_define(S_mus_audio_aes_in, TO_SMALL_SCM_INT(MUS_AUDIO_AES_IN));
-  gh_define(S_mus_audio_digital_in, TO_SMALL_SCM_INT(MUS_AUDIO_DIGITAL_IN));
-  gh_define(S_mus_audio_digital_out, TO_SMALL_SCM_INT(MUS_AUDIO_DIGITAL_OUT));
-  gh_define(S_mus_audio_adat_out, TO_SMALL_SCM_INT(MUS_AUDIO_ADAT_OUT));
-  gh_define(S_mus_audio_aes_out, TO_SMALL_SCM_INT(MUS_AUDIO_AES_OUT));
-  gh_define(S_mus_audio_dac_filter, TO_SMALL_SCM_INT(MUS_AUDIO_DAC_FILTER));
-  gh_define(S_mus_audio_mixer, TO_SMALL_SCM_INT(MUS_AUDIO_MIXER));
-  gh_define(S_mus_audio_line1, TO_SMALL_SCM_INT(MUS_AUDIO_LINE1));
-  gh_define(S_mus_audio_line2, TO_SMALL_SCM_INT(MUS_AUDIO_LINE2));
-  gh_define(S_mus_audio_line3, TO_SMALL_SCM_INT(MUS_AUDIO_LINE3));
-  gh_define(S_mus_audio_aux_input, TO_SMALL_SCM_INT(MUS_AUDIO_AUX_INPUT));
-  gh_define(S_mus_audio_cd, TO_SMALL_SCM_INT(MUS_AUDIO_CD));
-  gh_define(S_mus_audio_aux_output, TO_SMALL_SCM_INT(MUS_AUDIO_AUX_OUTPUT));
-  gh_define(S_mus_audio_spdif_in, TO_SMALL_SCM_INT(MUS_AUDIO_SPDIF_IN));
-  gh_define(S_mus_audio_spdif_out, TO_SMALL_SCM_INT(MUS_AUDIO_SPDIF_OUT));
-  gh_define(S_mus_audio_direction, TO_SMALL_SCM_INT(MUS_AUDIO_DIRECTION));
+  gh_define(S_mus_audio_line_out,       TO_SMALL_SCM_INT(MUS_AUDIO_LINE_OUT));
+  gh_define(S_mus_audio_line_in,        TO_SMALL_SCM_INT(MUS_AUDIO_LINE_IN));
+  gh_define(S_mus_audio_microphone,     TO_SMALL_SCM_INT(MUS_AUDIO_MICROPHONE));
+  gh_define(S_mus_audio_speakers,       TO_SMALL_SCM_INT(MUS_AUDIO_SPEAKERS));
+  gh_define(S_mus_audio_dac_out,        TO_SMALL_SCM_INT(MUS_AUDIO_DAC_OUT));
+  gh_define(S_mus_audio_adat_in,        TO_SMALL_SCM_INT(MUS_AUDIO_ADAT_IN));
+  gh_define(S_mus_audio_aes_in,         TO_SMALL_SCM_INT(MUS_AUDIO_AES_IN));
+  gh_define(S_mus_audio_digital_in,     TO_SMALL_SCM_INT(MUS_AUDIO_DIGITAL_IN));
+  gh_define(S_mus_audio_digital_out,    TO_SMALL_SCM_INT(MUS_AUDIO_DIGITAL_OUT));
+  gh_define(S_mus_audio_adat_out,       TO_SMALL_SCM_INT(MUS_AUDIO_ADAT_OUT));
+  gh_define(S_mus_audio_aes_out,        TO_SMALL_SCM_INT(MUS_AUDIO_AES_OUT));
+  gh_define(S_mus_audio_dac_filter,     TO_SMALL_SCM_INT(MUS_AUDIO_DAC_FILTER));
+  gh_define(S_mus_audio_mixer,          TO_SMALL_SCM_INT(MUS_AUDIO_MIXER));
+  gh_define(S_mus_audio_line1,          TO_SMALL_SCM_INT(MUS_AUDIO_LINE1));
+  gh_define(S_mus_audio_line2,          TO_SMALL_SCM_INT(MUS_AUDIO_LINE2));
+  gh_define(S_mus_audio_line3,          TO_SMALL_SCM_INT(MUS_AUDIO_LINE3));
+  gh_define(S_mus_audio_aux_input,      TO_SMALL_SCM_INT(MUS_AUDIO_AUX_INPUT));
+  gh_define(S_mus_audio_cd,             TO_SMALL_SCM_INT(MUS_AUDIO_CD));
+  gh_define(S_mus_audio_aux_output,     TO_SMALL_SCM_INT(MUS_AUDIO_AUX_OUTPUT));
+  gh_define(S_mus_audio_spdif_in,       TO_SMALL_SCM_INT(MUS_AUDIO_SPDIF_IN));
+  gh_define(S_mus_audio_spdif_out,      TO_SMALL_SCM_INT(MUS_AUDIO_SPDIF_OUT));
+  gh_define(S_mus_audio_direction,      TO_SMALL_SCM_INT(MUS_AUDIO_DIRECTION));
   gh_define(S_mus_audio_samples_per_channel, TO_SMALL_SCM_INT(MUS_AUDIO_SAMPLES_PER_CHANNEL));
 
-  gh_define(S_mus_audio_amp, TO_SMALL_SCM_INT(MUS_AUDIO_AMP));
-  gh_define(S_mus_audio_srate, TO_SMALL_SCM_INT(MUS_AUDIO_SRATE));
+  gh_define(S_mus_audio_amp,     TO_SMALL_SCM_INT(MUS_AUDIO_AMP));
+  gh_define(S_mus_audio_srate,   TO_SMALL_SCM_INT(MUS_AUDIO_SRATE));
   gh_define(S_mus_audio_channel, TO_SMALL_SCM_INT(MUS_AUDIO_CHANNEL));
-  gh_define(S_mus_audio_format, TO_SMALL_SCM_INT(MUS_AUDIO_FORMAT));
-  gh_define(S_mus_audio_port, TO_SMALL_SCM_INT(MUS_AUDIO_PORT));
-  gh_define(S_mus_audio_imix, TO_SMALL_SCM_INT(MUS_AUDIO_IMIX));
-  gh_define(S_mus_audio_igain, TO_SMALL_SCM_INT(MUS_AUDIO_IGAIN));
-  gh_define(S_mus_audio_reclev, TO_SMALL_SCM_INT(MUS_AUDIO_RECLEV));
-  gh_define(S_mus_audio_pcm, TO_SMALL_SCM_INT(MUS_AUDIO_PCM));
-  gh_define(S_mus_audio_pcm2, TO_SMALL_SCM_INT(MUS_AUDIO_PCM2));
-  gh_define(S_mus_audio_ogain, TO_SMALL_SCM_INT(MUS_AUDIO_OGAIN));
-  gh_define(S_mus_audio_line, TO_SMALL_SCM_INT(MUS_AUDIO_LINE));
-  gh_define(S_mus_audio_synth, TO_SMALL_SCM_INT(MUS_AUDIO_SYNTH));
-  gh_define(S_mus_audio_bass, TO_SMALL_SCM_INT(MUS_AUDIO_BASS));
-  gh_define(S_mus_audio_treble, TO_SMALL_SCM_INT(MUS_AUDIO_TREBLE));
+  gh_define(S_mus_audio_format,  TO_SMALL_SCM_INT(MUS_AUDIO_FORMAT));
+  gh_define(S_mus_audio_port,    TO_SMALL_SCM_INT(MUS_AUDIO_PORT));
+  gh_define(S_mus_audio_imix,    TO_SMALL_SCM_INT(MUS_AUDIO_IMIX));
+  gh_define(S_mus_audio_igain,   TO_SMALL_SCM_INT(MUS_AUDIO_IGAIN));
+  gh_define(S_mus_audio_reclev,  TO_SMALL_SCM_INT(MUS_AUDIO_RECLEV));
+  gh_define(S_mus_audio_pcm,     TO_SMALL_SCM_INT(MUS_AUDIO_PCM));
+  gh_define(S_mus_audio_pcm2,    TO_SMALL_SCM_INT(MUS_AUDIO_PCM2));
+  gh_define(S_mus_audio_ogain,   TO_SMALL_SCM_INT(MUS_AUDIO_OGAIN));
+  gh_define(S_mus_audio_line,    TO_SMALL_SCM_INT(MUS_AUDIO_LINE));
+  gh_define(S_mus_audio_synth,   TO_SMALL_SCM_INT(MUS_AUDIO_SYNTH));
+  gh_define(S_mus_audio_bass,    TO_SMALL_SCM_INT(MUS_AUDIO_BASS));
+  gh_define(S_mus_audio_treble,  TO_SMALL_SCM_INT(MUS_AUDIO_TREBLE));
 
-  DEFINE_PROC(gh_new_procedure1_0(S_sound_data_length, sound_data_length), H_sound_data_length);
-  DEFINE_PROC(gh_new_procedure1_0(S_sound_data_chans, sound_data_chans), H_sound_data_chans);
-  DEFINE_PROC(gh_new_procedure3_0(S_sound_data_ref, sound_data_ref), H_sound_data_ref);
-  DEFINE_PROC(gh_new_procedure4_0(S_sound_data_setB, sound_data_set), H_sound_data_setB);
-  DEFINE_PROC(gh_new_procedure2_0(S_make_sound_data, g_make_sound_data), H_make_sound_data);
-  DEFINE_PROC(gh_new_procedure1_0(S_sound_data_p, g_sound_data_p), H_sound_data_p);
-  DEFINE_PROC(gh_new_procedure3_0(S_sound_data2vct, sound_data2vct), H_sound_data2vct);
-  DEFINE_PROC(gh_new_procedure3_0(S_vct2sound_data, vct2sound_data), H_vct2sound_data);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_samples, g_sound_samples), H_mus_sound_samples);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_frames, g_sound_frames), H_mus_sound_frames);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_duration, g_sound_duration), H_mus_sound_duration);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_datum_size, g_sound_datum_size), H_mus_sound_datum_size);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_data_location, g_sound_data_location), H_mus_sound_data_location);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_chans, g_sound_chans), H_mus_sound_chans);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_srate, g_sound_srate), H_mus_sound_srate);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_header_type, g_sound_header_type), H_mus_sound_header_type);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_data_format, g_sound_data_format), H_mus_sound_data_format);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_length, g_sound_length), H_mus_sound_length	);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_type_specifier, g_sound_type_specifier), H_mus_sound_type_specifier);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_header_type_name, g_sound_type_name), H_mus_header_type_name);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_data_format_name, g_sound_format_name), H_mus_data_format_name);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_comment, g_sound_comment), H_mus_sound_comment);
+  DEFINE_PROC(gh_new_procedure1_0(S_sound_data_length,        sound_data_length),       H_sound_data_length);
+  DEFINE_PROC(gh_new_procedure1_0(S_sound_data_chans,         sound_data_chans),        H_sound_data_chans);
+  DEFINE_PROC(gh_new_procedure3_0(S_sound_data_ref,           sound_data_ref),          H_sound_data_ref);
+  DEFINE_PROC(gh_new_procedure4_0(S_sound_data_setB,          sound_data_set),          H_sound_data_setB);
+  DEFINE_PROC(gh_new_procedure2_0(S_make_sound_data,          g_make_sound_data),       H_make_sound_data);
+  DEFINE_PROC(gh_new_procedure1_0(S_sound_data_p,             g_sound_data_p),          H_sound_data_p);
+  DEFINE_PROC(gh_new_procedure3_0(S_sound_data2vct,           sound_data2vct),          H_sound_data2vct);
+  DEFINE_PROC(gh_new_procedure3_0(S_vct2sound_data,           vct2sound_data),          H_vct2sound_data);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_samples,        g_sound_samples),         H_mus_sound_samples);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_frames,         g_sound_frames),          H_mus_sound_frames);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_duration,       g_sound_duration),        H_mus_sound_duration);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_datum_size,     g_sound_datum_size),      H_mus_sound_datum_size);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_data_location,  g_sound_data_location),   H_mus_sound_data_location);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_chans,          g_sound_chans),           H_mus_sound_chans);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_srate,          g_sound_srate),           H_mus_sound_srate);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_header_type,    g_sound_header_type),     H_mus_sound_header_type);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_data_format,    g_sound_data_format),     H_mus_sound_data_format);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_length,         g_sound_length),          H_mus_sound_length	);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_type_specifier, g_sound_type_specifier),  H_mus_sound_type_specifier);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_header_type_name,     g_sound_type_name),       H_mus_header_type_name);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_data_format_name,     g_sound_format_name),     H_mus_data_format_name);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_comment,        g_sound_comment),         H_mus_sound_comment);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_data_format_bytes_per_sample, g_sound_bytes_per_sample), H_mus_data_format_bytes_per_sample);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_loop_info, g_sound_loop_info), H_mus_sound_loop_info);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_max_amp, g_sound_max_amp), H_mus_sound_max_amp);
-  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_report, g_report_audio_state), H_mus_audio_report);
-  DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_sun_outputs, g_audio_outputs), H_mus_audio_sun_outputs);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_open_input, g_open_sound_input), H_mus_sound_open_input);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_close_input, g_close_sound_input), H_mus_sound_close_input);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_audio_close, g_close_audio), H_mus_audio_close);
-  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_save, g_save_audio_state), H_mus_audio_save);
-  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_restore, g_restore_audio_state), H_mus_audio_restore);
-  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_systems, g_audio_systems), H_mus_audio_systems);
-  DEFINE_PROC(gh_new_procedure4_0(S_mus_audio_mixer_read, g_read_audio_state), H_mus_audio_mixer_read);
-  DEFINE_PROC(gh_new_procedure4_0(S_mus_audio_mixer_write, g_write_audio_state), H_mus_audio_mixer_write);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_loop_info,      g_sound_loop_info),       H_mus_sound_loop_info);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_max_amp,        g_sound_max_amp),         H_mus_sound_max_amp);
+  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_report,         g_report_audio_state),    H_mus_audio_report);
+  DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_sun_outputs,    g_audio_outputs),         H_mus_audio_sun_outputs);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_open_input,     g_open_sound_input),      H_mus_sound_open_input);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_close_input,    g_close_sound_input),     H_mus_sound_close_input);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_audio_close,          g_close_audio),           H_mus_audio_close);
+  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_save,           g_save_audio_state),      H_mus_audio_save);
+  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_restore,        g_restore_audio_state),   H_mus_audio_restore);
+  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_systems,        g_audio_systems),         H_mus_audio_systems);
+  DEFINE_PROC(gh_new_procedure4_0(S_mus_audio_mixer_read,     g_read_audio_state),      H_mus_audio_mixer_read);
+  DEFINE_PROC(gh_new_procedure4_0(S_mus_audio_mixer_write,    g_write_audio_state),     H_mus_audio_mixer_write);
   DEFINE_PROC(gh_new_procedure2_0(S_mus_file_set_data_clipped, g_mus_set_data_clipped), H_mus_file_set_data_clipped);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_file_prescaler, g_mus_prescaler), H_mus_file_prescaler);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_file_set_prescaler, g_mus_set_prescaler), H_mus_file_set_prescaler);
-  DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_write, g_write_audio), H_mus_audio_write);
-  DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_read, g_read_audio), H_mus_audio_read);
-  DEFINE_PROC(gh_new_procedure5_1(S_mus_sound_open_output, g_open_sound_output), H_mus_sound_open_output);
-  DEFINE_PROC(gh_new_procedure5_0(S_mus_sound_reopen_output, g_reopen_sound_output), H_mus_sound_reopen_output);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_sound_close_output, g_close_sound_output), H_mus_sound_close_output);
-  DEFINE_PROC(gh_new_procedure5_0(S_mus_sound_read, g_read_sound), H_mus_sound_read);
-  DEFINE_PROC(gh_new_procedure5_0(S_mus_sound_write, g_write_sound), H_mus_sound_write);
-  DEFINE_PROC(gh_new_procedure3_0(S_mus_sound_seek, g_seek_sound), H_mus_sound_seek);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_sound_seek_frame, g_seek_sound_frame), H_mus_sound_seek_frame);
-  DEFINE_PROC(gh_new_procedure5_0(S_mus_audio_open_output, g_open_audio_output), H_mus_audio_open_output);
-  DEFINE_PROC(gh_new_procedure5_0(S_mus_audio_open_input, g_open_audio_input), H_mus_audio_open_input);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_file_prescaler,       g_mus_prescaler),         H_mus_file_prescaler);
+  DEFINE_PROC(gh_new_procedure2_0(S_mus_file_set_prescaler,   g_mus_set_prescaler),     H_mus_file_set_prescaler);
+  DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_write,          g_write_audio),           H_mus_audio_write);
+  DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_read,           g_read_audio),            H_mus_audio_read);
+  DEFINE_PROC(gh_new_procedure5_1(S_mus_sound_open_output,    g_open_sound_output),     H_mus_sound_open_output);
+  DEFINE_PROC(gh_new_procedure5_0(S_mus_sound_reopen_output,  g_reopen_sound_output),   H_mus_sound_reopen_output);
+  DEFINE_PROC(gh_new_procedure2_0(S_mus_sound_close_output,   g_close_sound_output),    H_mus_sound_close_output);
+  DEFINE_PROC(gh_new_procedure5_0(S_mus_sound_read,           g_read_sound),            H_mus_sound_read);
+  DEFINE_PROC(gh_new_procedure5_0(S_mus_sound_write,          g_write_sound),           H_mus_sound_write);
+  DEFINE_PROC(gh_new_procedure3_0(S_mus_sound_seek,           g_seek_sound),            H_mus_sound_seek);
+  DEFINE_PROC(gh_new_procedure2_0(S_mus_sound_seek_frame,     g_seek_sound_frame),      H_mus_sound_seek_frame);
+  DEFINE_PROC(gh_new_procedure5_0(S_mus_audio_open_output,    g_open_audio_output),     H_mus_audio_open_output);
+  DEFINE_PROC(gh_new_procedure5_0(S_mus_audio_open_input,     g_open_audio_input),      H_mus_audio_open_input);
 #if USE_SND
   define_procedure_with_setter(S_sound_data_ref, SCM_FNC sound_data_ref, H_sound_data_ref,
 			       "set-" S_sound_data_ref, SCM_FNC sound_data_set, local_doc, 3, 0, 4, 0);

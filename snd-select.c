@@ -220,7 +220,7 @@ static void update_selection(chan_info *cp, int newend)
 
 void ripple_selection(ed_list *ed, int beg, int num)
 {
-  /* beg=insert or delete begin point (snd-edits.c), num = samps inserted (num positive) or deleted (num negative) at beg */
+  /* beg = insert or delete begin point (snd-edits.c), num = samps inserted (num positive) or deleted (num negative) at beg */
   if (ed->selection_beg != NO_SELECTION)
     {
       if (beg < ed->selection_beg) 
@@ -273,7 +273,7 @@ static int mix_selection(snd_state *ss, chan_info *cp, int beg, char *origin)
 {
   char *tempfile = NULL;
   sync_info *si_out;
-  int err,id = INVALID_MIX_ID;
+  int err, id = INVALID_MIX_ID;
   tempfile = snd_tempnam(ss);
   err = save_selection(ss, tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL);
   if (err == MUS_NO_ERROR)
@@ -303,9 +303,9 @@ void mix_selection_from_menu(snd_state *ss)
 static int insert_selection(snd_state *ss, chan_info *cp, int beg, char *origin)
 {
   char *tempfile = NULL;
-  sync_info *si_out,*si_in;
-  chan_info *cp_in,*cp_out;
-  int i,err = MUS_NO_ERROR;
+  sync_info *si_out, *si_in;
+  chan_info *cp_in, *cp_out;
+  int i, err = MUS_NO_ERROR;
   tempfile = snd_tempnam(ss);
   err = save_selection(ss, tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL);
   if (err == MUS_NO_ERROR)
@@ -314,7 +314,7 @@ static int insert_selection(snd_state *ss, chan_info *cp, int beg, char *origin)
       si_in = selection_sync();
       if (si_in->chans > 1) 
 	remember_temp(tempfile, si_in->chans);
-      for (i=0; ((i<si_in->chans) && (i<si_out->chans)); i++)
+      for (i = 0; ((i < si_in->chans) && (i < si_out->chans)); i++)
 	{
 	  cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
 	  cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
@@ -357,7 +357,7 @@ void start_selection_creation(chan_info *cp, int samp)
     make_region_from_selection();
   deactivate_selection();
   selection_creation_chans = sync_to_chan(cp);
-  for (i=0; i<selection_creation_chans->chans; i++)
+  for (i = 0; i < selection_creation_chans->chans; i++)
     reactivate_selection(selection_creation_chans->cps[i], samp, samp);
 }
 
@@ -368,7 +368,7 @@ void update_possible_selection_in_progress(int samp)
   int i;
   if (selection_creation_chans)
     {
-      for (i=0; i<selection_creation_chans->chans; i++)
+      for (i = 0; i < selection_creation_chans->chans; i++)
 	update_selection(selection_creation_chans->cps[i], samp);
       redraw_selection();
     }
@@ -391,8 +391,8 @@ void finish_selection_creation(void)
 
 static int cp_redraw_selection(chan_info *cp, void *with_fft)
 {
-  int x0,x1;
-  int beg,end;
+  int x0, x1;
+  int beg, end;
   axis_info *ap;
   double sp_srate;
   snd_state *ss;
@@ -446,12 +446,12 @@ void display_selection(chan_info *cp)
 void make_region_from_selection(void)
 {
   int *ends = NULL;
-  int i,happy = 0;
+  int i, happy = 0;
   sync_info *si;
   if (!(selection_is_active())) return;
   si = selection_sync();
   ends = (int *)CALLOC(si->chans, sizeof(int));
-  for (i=0; i<si->chans; i++) 
+  for (i = 0; i < si->chans; i++) 
     {
       ends[i] = selection_end(si->cps[i]);
       if (ends[i] > si->begs[i]) happy = 1;
@@ -477,7 +477,7 @@ void select_all(chan_info *cp)
     {
       deactivate_selection();
       si = sync_to_chan(cp);
-      for (i=0; i<si->chans; i++)
+      for (i = 0; i < si->chans; i++)
 	{
 	  reactivate_selection(si->cps[i], 0, current_ed_samples(si->cps[i]));
 	  update_graph(si->cps[i], NULL);
@@ -544,10 +544,10 @@ void move_selection(chan_info *cp, int x)
 
 int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, char *comment)
 {
-  int ofd,oloc,comlen,err=MUS_NO_ERROR,reporting=0,no_space,num,bps;
+  int ofd, oloc, comlen, err = MUS_NO_ERROR, reporting = 0, no_space, num, bps;
   sync_info *si;
   int *ends;
-  int i,dur,j,k;
+  int i, dur, j, k;
   snd_fd **sfs;
   snd_info *sp = NULL;
   MUS_SAMPLE_TYPE **data;
@@ -589,7 +589,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
 	  ends = (int *)CALLOC(si->chans, sizeof(int));
 	  sfs = (snd_fd **)CALLOC(si->chans, sizeof(snd_fd *));
-	  for (i=0; i<si->chans; i++) 
+	  for (i = 0; i < si->chans; i++) 
 	    {
 	      ends[i] = selection_end(si->cps[i]);
 	      sfs[i] = init_sample_read(selection_beg(si->cps[i]), si->cps[i], READ_FORWARD);
@@ -600,12 +600,12 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  mus_file_set_data_clipped(ofd, data_clipped(ss));
 	  mus_file_seek(ofd, oloc, SEEK_SET);
 	  data = (MUS_SAMPLE_TYPE **)CALLOC(si->chans, sizeof(MUS_SAMPLE_TYPE *));
-	  for (i=0; i<si->chans; i++) 
+	  for (i = 0; i < si->chans; i++) 
 	    data[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
 	  j = 0;
-	  for (i=0; i<dur; i++)
+	  for (i = 0; i < dur; i++)
 	    {
-	      for (k=0; k<si->chans; k++)
+	      for (k = 0; k < si->chans; k++)
 		{
 		  if (i <= ends[k]) 
 		    data[k][j] = next_sample(sfs[k]);
@@ -630,7 +630,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  if ((err == MUS_NO_ERROR) && (j > 0)) 
 	    mus_file_write(ofd, 0, j - 1, si->chans, data);
 	  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-	  for (i=0; i<si->chans; i++)
+	  for (i = 0; i < si->chans; i++)
 	    {
 	      free_snd_fd(sfs[i]);
 	      FREE(data[i]);
@@ -756,7 +756,7 @@ static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
 {
   chan_info *cp;
   sync_info *si = NULL;
-  int i,beg;
+  int i, beg;
   beg = TO_C_INT_OR_ELSE(pos, 0);
   if (SCM_UNBNDP(snd))
     {
@@ -769,7 +769,7 @@ static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
 	}
       if (si)
 	{
-	  for (i=0; i<si->chans; i++) 
+	  for (i = 0; i < si->chans; i++) 
 	    cp_set_selection_beg(si->cps[i], beg);
 	  si = free_sync_info(si);
 	}
@@ -807,7 +807,7 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
 {
   chan_info *cp;
   sync_info *si = NULL;
-  int i,len;
+  int i, len;
   len = TO_C_INT_OR_ELSE(samps, 0);
   if (SCM_UNBNDP(snd))
     {
@@ -820,7 +820,7 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
 	}
       if (si)
 	{
-	  for (i=0; i<si->chans; i++)
+	  for (i = 0; i < si->chans; i++)
 	    cp_set_selection_len(si->cps[i], len);
 	  si = free_sync_info(si);
 	}
@@ -884,7 +884,7 @@ static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM 
    saves the current selection in filename using the indicated file attributes"
 
   snd_state *ss;
-  int type,format,sr,err;
+  int type, format, sr, err;
   char *com = NULL, *fname = NULL;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_selection);
   if (selection_is_active() == 0)

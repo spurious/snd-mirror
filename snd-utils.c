@@ -10,20 +10,20 @@ int round(Float x)
 
 Float fclamp(Float lo, Float val, Float hi) 
 {
-  if (val>hi) 
+  if (val > hi) 
     return(hi); 
   else 
-    if (val<lo) 
+    if (val < lo) 
       return(lo); 
     else return(val);
 }
 
 int iclamp(int lo, int val, int hi) 
 {
-  if (val>hi) 
+  if (val > hi) 
     return(hi); 
   else 
-    if (val<lo) 
+    if (val < lo) 
       return(lo); 
     else return(val);
 }
@@ -64,10 +64,10 @@ int snd_strlen(char *str)
 char *filename_without_home_directory(char *name)
 {
   /* since we don't want to mess with freeing these guys, I'll just return a pointer into the name */
-  int i,len,last_slash;
+  int i, len, last_slash;
   last_slash = 0;
   len = strlen(name);
-  for (i=0; i<len-1; i++) 
+  for (i = 0; i < len-1; i++) 
     if (name[i] == '/') 
       last_slash = i + 1;
   return((char *)(name + last_slash));
@@ -76,10 +76,10 @@ char *filename_without_home_directory(char *name)
 char *just_filename(char *name)
 {
   char *nodir;
-  int i,len;
+  int i, len;
   nodir = copy_string(filename_without_home_directory(name));
   len = strlen(nodir);
-  for (i=0; i<len; i++) 
+  for (i = 0; i < len; i++) 
     if (nodir[i] == '.') 
       {
 	nodir[i] = '\0'; 
@@ -91,10 +91,10 @@ char *just_filename(char *name)
 static char prtbuf[256];
 
 char *prettyf(Float num, int tens)
-{ /* try to prettify float display -- if tens<0, return int */
-  int fullf,len,i;
+{ /* try to prettify float display -- if tens < 0, return int */
+  int fullf, len, i;
   Float rounder;
-  char *newval,*sp,*sn,*zp;
+  char *newval, *sp, *sn, *zp;
   zp = NULL;
   if (tens > 9) tens = 9;
   if (num < 0.0) rounder = -.49; else rounder = .49;
@@ -127,7 +127,7 @@ char *prettyf(Float num, int tens)
       return(newval);
     }
   sprintf(prtbuf, "%d", fullf);
-  len=strlen(prtbuf);
+  len = strlen(prtbuf);
   newval=(char *)CALLOC(len + tens + 10, sizeof(char));
   sn = newval;
   sp = prtbuf;
@@ -140,9 +140,9 @@ char *prettyf(Float num, int tens)
     }
   if (len >= (tens+1))
     {
-      for (i=0; i<len-tens-1; i++) 
+      for (i = 0; i < len-tens-1; i++) 
 	{
-	  (*sn)=(*sp); 
+	  (*sn) =(*sp); 
 	  sn++; 
 	  sp++;
 	}
@@ -155,14 +155,14 @@ char *prettyf(Float num, int tens)
       sn++;
       (*sn) = STR_decimal;
       sn++;
-      for (i=0; i<abs(len-tens-1); i++) 
+      for (i = 0; i < abs(len-tens-1); i++) 
 	{
 	  (*sn) = '0';
 	  sn++;
 	}
     }
   if (tens > 5) tens = 5;
-  for (i=0; i<=tens; i++) 
+  for (i = 0; i <= tens; i++) 
     {
       if (!(*sp)) break;
       (*sn) = (*sp); 
@@ -178,7 +178,7 @@ char *prettyf(Float num, int tens)
 
 void fill_number(char *fs, char *ps)
 {
-  int i,j;
+  int i, j;
   j = snd_strlen(fs);
   if (j > 4) j = 4;
   if (j < 4) 
@@ -193,7 +193,7 @@ void fill_number(char *fs, char *ps)
       *ps++ = '0'; 
       if (j == 4) j = 3;
     }
-  for (i=0; i<j; i++) 
+  for (i = 0; i < j; i++) 
     (*ps++) = (*fs++);
 }
 
@@ -338,9 +338,9 @@ void set_encloser(char *name)
   encloser = name;
 } /* for exposing call chains */
 
-static int *pointers=NULL,*sizes=NULL,*locations=NULL;
-static char **functions=NULL,**files=NULL;
-static int *lines=NULL;
+static int *pointers = NULL, *sizes = NULL, *locations = NULL;
+static char **functions = NULL, **files = NULL;
+static int *lines = NULL;
 static int mem_location = -1;
 static int mem_locations = 0;
 
@@ -354,7 +354,7 @@ static int find_mem_location(const char *ur_func, const char *file, int line)
       sprintf(func, "%s->%s", encloser, ur_func);
     }
   else func = (char *)ur_func;
-  for (i=0; i<=mem_location; i++)
+  for (i = 0; i <= mem_location; i++)
     if ((line == lines[i]) &&
 	(strcmp(func, functions[i]) == 0) &&
 	(strcmp(file, files[i]) == 0))
@@ -374,7 +374,7 @@ static int find_mem_location(const char *ur_func, const char *file, int line)
 	  functions = (char **)realloc(functions, (mem_locations+1024)*sizeof(char *));
 	  files = (char **)realloc(files, (mem_locations+1024)*sizeof(char *));
 	  lines = (int *)realloc(lines, (mem_location+1024)*sizeof(int));
-	  for (i=0; i<1024; i++) 
+	  for (i = 0; i < 1024; i++) 
 	    {
 	      functions[i+mem_locations] = NULL;
 	      files[i+mem_locations] = NULL;
@@ -397,7 +397,7 @@ static void forget_pointer(void *ptr, const char *func, const char *file, int li
 {
   int i;
   if (ptr == NULL) {fprintf(stderr, "attempt to free NULL"); mem_report(); abort();}
-  for (i=0; i<mem_size; i++)
+  for (i = 0; i < mem_size; i++)
     if (pointers[i] == (int)ptr)
       {
 	pointers[i] = 0;
@@ -408,7 +408,7 @@ static void forget_pointer(void *ptr, const char *func, const char *file, int li
 
 static void remember_pointer(void *ptr, size_t len, const char *func, const char *file, int line)
 {
-  int i,least=10000,least_loc=-1;
+  int i, least = 10000, least_loc=-1;
   if (mem_size == 0)
     {
       mem_size = 4096;
@@ -416,7 +416,7 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
       sizes = (int *)calloc(mem_size, sizeof(int));
       locations = (int *)calloc(mem_size, sizeof(int));
     }
-  for (i=0; i<mem_size; i++)
+  for (i = 0; i < mem_size; i++)
     {
       if (pointers[i] == 0) 
 	{
@@ -436,7 +436,7 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
       pointers = (int *)realloc(pointers, mem_size * sizeof(int));
       sizes = (int *)realloc(sizes, mem_size * sizeof(int));
       locations = (int *)realloc(locations, mem_size * sizeof(int));
-      for (i=least_loc; i<mem_size; i++)
+      for (i = least_loc; i < mem_size; i++)
 	{
 	  pointers[i] = 0;
 	  sizes[i] = 0;
@@ -505,17 +505,17 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
 char *mem_stats(snd_state *ss, int ub);
 char *mem_stats(snd_state *ss, int ub)
 {
-  int i,ptrs = 0,sum = 0,snds = 0,chns = 0;
+  int i, ptrs = 0, sum = 0, snds = 0, chns = 0;
   snd_info *sp;
-  char *result,*ksum = NULL,*kptrs = NULL,*kpers = NULL;
-  for (i=0; i<mem_size; i++)
+  char *result, *ksum = NULL, *kptrs = NULL, *kpers = NULL;
+  for (i = 0; i < mem_size; i++)
     if (pointers[i])
       {
 	ptrs++;
 	sum += sizes[i];
       }
   result = (char *)calloc(128, sizeof(char));
-  for (i=0; i<ss->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     {
       if ((sp=((snd_info *)(ss->sounds[i]))))
 	{
@@ -536,19 +536,19 @@ char *mem_stats(snd_state *ss, int ub)
 
 void mem_report(void)
 {
-  int loc,i,sum,ptr=0;
-  int *sums,*ptrs;
+  int loc, i, sum, ptr = 0;
+  int *sums, *ptrs;
   FILE *Fp;
   time_t ts;
   char time_buf[TIME_STR_SIZE];
 
   sums = (int *)calloc(mem_location+1, sizeof(int));
   ptrs = (int *)calloc(mem_location+1, sizeof(int));
-  for (loc=0; loc<=mem_location; loc++)
+  for (loc = 0; loc <= mem_location; loc++)
     {
       sum = 0;
       ptr = 0;
-      for (i=0; i<mem_size; i++)
+      for (i = 0; i < mem_size; i++)
 	{
 	  if ((pointers[i]) && (locations[i] == loc))
 	    {
@@ -559,16 +559,16 @@ void mem_report(void)
       sums[loc] = sum;
       ptrs[loc] = ptr;
     }
-  Fp=fopen("memlog", "w");
+  Fp = fopen("memlog", "w");
 
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
   fprintf(Fp, "memlog: %s: %s\n\n", time_buf, mem_stats(get_global_state(), 0));
 
-  for (i=0; i<=mem_location; i++)
+  for (i = 0; i <= mem_location; i++)
     {
       sum = 0;
-      for (loc=0; loc<=mem_location; loc++)
+      for (loc = 0; loc <= mem_location; loc++)
 	{
 	  if (sums[loc]>sum)
 	    {
@@ -583,7 +583,7 @@ void mem_report(void)
 	}
     }
 
-  for (i=0; i<512; i++)
+  for (i = 0; i < 512; i++)
     if (mus_file_fd_name(i))
       fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));
   fclose(Fp);

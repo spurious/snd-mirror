@@ -9,7 +9,7 @@ static int last_prompt;
 
 void save_listener_text(FILE *fp)
 {
-  char *str=NULL;
+  char *str = NULL;
   str = gtk_editable_get_chars(GTK_EDITABLE(listener_text), 0, -1);
   if (str)
     {
@@ -47,11 +47,11 @@ static void activate_channel (snd_state *ss)
 
 static void listener_completion(snd_state *ss)
 {
-  int beg,end,matches = 0,need_position;
-  char *old_text,*new_text = NULL,*file_text = NULL;
-  gint xoff,yoff; 
+  int beg, end, matches = 0, need_position;
+  char *old_text, *new_text = NULL, *file_text = NULL;
+  gint xoff, yoff; 
   int try_completion = 1;
-  beg = last_prompt+1;
+  beg = last_prompt + 1;
   end = gtk_text_get_length(GTK_TEXT(listener_text));
   if (end <= beg) return;
   old_text = gtk_editable_get_chars(GTK_EDITABLE(listener_text), beg, end);
@@ -66,7 +66,7 @@ static void listener_completion(snd_state *ss)
 	}
       if (strcmp(old_text, new_text) == 0) 
 	matches = get_completion_matches();
-      gtk_text_backward_delete(GTK_TEXT(listener_text), (end-beg));
+      gtk_text_backward_delete(GTK_TEXT(listener_text), (end - beg));
       append_listener_text(0, new_text);
       if (new_text) 
 	{
@@ -92,8 +92,9 @@ static void listener_completion(snd_state *ss)
 	    {
 	      /* try to position the newly popped up help window below the text field */
 	      gdk_window_get_origin(listener_text->window, &xoff, &yoff);
-	      /* move_help_dialog_to(widget_x(listener_text)+xoff, widget_y(listener_text)+yoff+140); */
-	      move_help_dialog_to(widget_x(listener_text)+xoff, widget_y(listener_text)+yoff+40);
+	      /* move_help_dialog_to(widget_x(listener_text) + xoff, widget_y(listener_text) + yoff + 140); */
+	      move_help_dialog_to(widget_x(listener_text) + xoff, 
+				  widget_y(listener_text) + yoff + 40);
 	    }
 	  if (file_text) FREE(file_text);
 	}
@@ -103,15 +104,15 @@ static void listener_completion(snd_state *ss)
 
 void snd_completion_help(snd_state *ss, int matches, char **pbuffer) 
 {
-  int i,len;
+  int i, len;
   char *buffer;
   if (matches > 0)
     {
       len = 0;
-      for (i=0;i<matches;i++) 
+      for (i = 0; i < matches; i++) 
 	len += (snd_strlen(pbuffer[i]) + 3);
       buffer = (char *)CALLOC(len, sizeof(char));
-      for (i=0;i<matches;i++)
+      for (i = 0; i < matches; i++)
 	{
 	  strcat(buffer, pbuffer[i]);
 	  strcat(buffer, "\n");
@@ -147,7 +148,7 @@ void snd_append_command(snd_state *ss, char *msg)
 	append_listener_text(0, listener_prompt_with_cr(ss));
       ss->result_printout = 0;
       cmd_eot = gtk_text_get_length(GTK_TEXT(listener_text));
-      last_prompt = cmd_eot-1;
+      last_prompt = cmd_eot - 1;
     }
 }
 
@@ -160,19 +161,20 @@ static char *C_k_str = NULL;
 static void grab_line(snd_state *ss)
 {
   char *full_str;
-  int current_position,last_position,i,j,k;
+  int current_position, last_position, i, j, k;
   full_str = gtk_editable_get_chars(GTK_EDITABLE(listener_text), 0, -1);
   current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
   last_position = gtk_text_get_length(GTK_TEXT(listener_text));
-  for (i=current_position;i<last_position;i++)
+  for (i = current_position; i < last_position; i++)
     if (full_str[i] == '\n')
       break;
   if (C_k_str) FREE(C_k_str);
   C_k_str = NULL;
   if (i > current_position)
     {
-      C_k_str = (char *)CALLOC(i-current_position+2, sizeof(char));
-      for (j=current_position, k=0;j<i;j++,k++) C_k_str[k] = full_str[j];
+      C_k_str = (char *)CALLOC(i - current_position + 2, sizeof(char));
+      for (j = current_position, k = 0; j < i; j++, k++) 
+	C_k_str[k] = full_str[j];
     }
   if (full_str) g_free(full_str);
 }
@@ -190,18 +192,18 @@ static void insert_line(snd_state *ss)
 
 static void back_to_start(snd_state *ss)
 {
-  char *full_str = NULL,*prompt;
-  int i,start_of_text;
+  char *full_str = NULL, *prompt;
+  int i, start_of_text;
   full_str = gtk_editable_get_chars(GTK_EDITABLE(listener_text), 0, -1);
   start_of_text = gtk_editable_get_position(GTK_EDITABLE(listener_text));
   prompt = listener_prompt(ss);
   if (start_of_text > 0)
     {
-      for (i=start_of_text;i>=0;i--)
+      for (i = start_of_text; i >= 0; i--)
 	if ((full_str[i] == prompt[0]) && 
 	    ((i == 0) || (full_str[i-1] == '\n')))
 	  {
-	    start_of_text = i+1;
+	    start_of_text = i + 1;
 	    break;
 	  }
     }
@@ -264,7 +266,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 				  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
 				  if (current_position > 1)
 				    {
-				      fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text), current_position-2, current_position);
+				      fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text), current_position - 2, current_position);
 				      if ((current_position != (last_prompt - 2)) && 
 					  (strcmp(fstr, listener_prompt_with_cr(ss)) != 0))
 					{
@@ -311,7 +313,7 @@ static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer dat
 
 static void sndCreateCommandWidget(snd_state *ss, int height)
 {
-  GtkWidget *hscrollbar,*vscrollbar,*frame;
+  GtkWidget *hscrollbar, *vscrollbar, *frame;
   if (!listener_text)
     {
       frame = gtk_frame_new(NULL);

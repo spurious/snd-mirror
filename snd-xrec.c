@@ -24,7 +24,7 @@ typedef struct {
   int scr;
   int on_off;
   int clipped;
-  Float current_val,last_val;
+  Float current_val, last_val;
   Float max_val;
   Float red_deg;
   Float size;
@@ -38,13 +38,13 @@ typedef struct {
 typedef struct {
   Widget label, number, slider, top;
   snd_state *ss;
-  int last_amp,type,in,out;
+  int last_amp, type, in, out;
   int device_in_chan;
   void *wd;
 } AMP;
 
 typedef struct {
-  int in_chans,out_chans,meters_size,amps_size,active_size,on_buttons_size,in_chan_loc;
+  int in_chans, out_chans, meters_size, amps_size, active_size, on_buttons_size, in_chan_loc;
   VU **meters;         /* has meter widget, can assume frame is local to creator */
   AMP **amps;          /* chans -- has label number slider amp which_amp -- software input gains to output */ 
   int *active;         /* which (incoming or file_out outgoing) channels are actively shoveling samples */
@@ -54,16 +54,16 @@ typedef struct {
   Widget pane;
   Widget button_vertical_sep;
   Dimension pane_size;
-  int device,system;          /* audio.c style device descriptor */
+  int device, system;          /* audio.c style device descriptor */
   int **active_sliders;
   Widget **matrix_buttons;
-  Position bx,by;
-  Dimension bw,bh;
+  Position bx, by;
+  Dimension bw, bh;
 } PANE;
 
 typedef struct {
   snd_state *ss;
-  int chan,field,device,system;
+  int chan, field, device, system;
   int gain;
   PANE *p;
   Widget wg;
@@ -85,8 +85,8 @@ static Widget recorder = NULL;      /* the outer dialog shell */
 static PANE **all_panes = NULL;
 static int out_file_pane;
 
-static Widget rec_size_text,trigger_scale,trigger_label;
-static Widget file_duration,messages,record_button,reset_button,file_text;
+static Widget rec_size_text, trigger_scale, trigger_label;
+static Widget file_duration, messages, record_button, reset_button, file_text;
 static Widget *device_buttons;
 static int device_buttons_size = 0;
 #if NEW_SGI_AL || defined(SUN)
@@ -154,7 +154,7 @@ static void attach_error(char *msg)
 }
 #endif
 
-static GC draw_gc,vu_gc;
+static GC draw_gc, vu_gc;
 
 /* -------------------------------- ROTATE TEXT -------------------------------- */
 /* rotate and scale text */
@@ -168,18 +168,18 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
   /* bg = background color, fg = foreground (text) color) */
   Float matrix[4];
   Float angle_in_radians;
-  XImage *before,*after;
-  Pixmap pix,rotpix;
-  unsigned int width,height,depth,nwidth,nheight,x,y,nx,ny,tx,ty,depth_bytes;
-  int inx,iny;
+  XImage *before, *after;
+  Pixmap pix, rotpix;
+  unsigned int width, height, depth, nwidth, nheight, x, y, nx, ny, tx, ty, depth_bytes;
+  int inx, iny;
   char *data;
   unsigned long px;
   Display *dp;
   Drawable wn;
   Visual *vis;
   int scr;
-  int bx0,bx1,by0,by1,b;
-  int i,j;
+  int bx0, bx1, by0, by1, b;
+  int i, j;
   if (str == NULL) return(0);
   /* set up transformation matrix */
   angle_in_radians = mus_degrees2radians(angle_in_degrees);
@@ -196,7 +196,7 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
 
   XtVaGetValues(w, XmNdepth, &depth, NULL);
   depth_bytes = (depth>>3);
-  if (depth_bytes == 0) depth_bytes=1; /* unsigned so can't be negative */
+  if (depth_bytes == 0) depth_bytes = 1; /* unsigned so can't be negative */
 
   /* find extent of original text, expand out to byte boundaries */
   XSetFont(dp, draw_gc, font->fid);
@@ -206,19 +206,19 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
   if (height%8) height = 8*(1+(int)(height/8));
 
   /* get bounding box of transformed text */
-  bx0=0; bx1=0; by0=0; by1=0;
+  bx0 = 0; bx1 = 0; by0 = 0; by1 = 0;
   b=(int)(width*matrix[0]);
-  if (b<0) bx0=b; else bx1=b;
+  if (b < 0) bx0 = b; else bx1 = b;
   b=(int)(height*matrix[2]);
-  if (b<0) bx0+=b; else bx1+=b;
+  if (b < 0) bx0+=b; else bx1+=b;
   b=(int)(width*matrix[1]);
-  if (b<0) by0=b; else by1=b;
+  if (b < 0) by0 = b; else by1 = b;
   b=(int)(height*matrix[3]);
-  if (b<0) by0+=b; else by1+=b;
+  if (b < 0) by0+=b; else by1+=b;
   
   /* set translation vector so we're centered in the resultant pixmap */
-  if (bx0<0) tx=-bx0; else tx=0;
-  if (by0<0) ty=-by0; else ty=0;
+  if (bx0 < 0) tx=-bx0; else tx = 0;
+  if (by0 < 0) ty=-by0; else ty = 0;
   nx = bx1-bx0;
   ny = by1-by0;
 
@@ -251,28 +251,28 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
   after = XCreateImage(dp, vis, depth, XYPixmap, 0, data, nwidth, nheight, 8, 0);
 
   /* clear background of result image */
-  for (x=0;x<nwidth;x++) {for (y=0;y<nheight;y++) XPutPixel(after, x, y, bg);}
+  for (x = 0; x < nwidth; x++) {for (y = 0; y < nheight; y++) XPutPixel(after, x, y, bg);}
 
   /* write transformed pixels to result image */
-  for (x=0;x<width;x++)
+  for (x = 0; x < width; x++)
     {
-      for (y=0;y<height;y++)
+      for (y = 0; y < height; y++)
 	{
 	  px = XGetPixel(before, x, y);
 	  if (px != bg)
 	    {
-	      bx0 = (int)xscl; if (bx0 == 0) bx0=1;  /* draw full lines if possible (i.e. fill in scaled gaps) */
-	      by0 = (int)yscl; if (by0 == 0) by0=1;
-	      for (i=0; i<bx0; i++)
+	      bx0 = (int)xscl; if (bx0 == 0) bx0 = 1;  /* draw full lines if possible (i.e. fill in scaled gaps) */
+	      by0 = (int)yscl; if (by0 == 0) by0 = 1;
+	      for (i = 0; i < bx0; i++)
 		{
-		  for (j=0;j<by0;j++)
+		  for (j = 0; j < by0; j++)
 		    {
 		      inx = tx + round((x+(Float)i/xscl)*matrix[0] + (y+(Float)j/yscl)*matrix[2]);  
-		      if (inx<0) inx=0; 
-		      if (inx>=(int)nwidth) inx=nwidth-1;
+		      if (inx < 0) inx = 0; 
+		      if (inx >=(int)nwidth) inx = nwidth-1;
 		      iny = ty + round((x+(Float)i/xscl)*matrix[1] + (y+(Float)j/yscl)*matrix[3]); 
-		      if (iny<0) iny=0; 
-		      if (iny>=(int)nheight) iny=nheight-1;
+		      if (iny < 0) iny = 0; 
+		      if (iny >=(int)nheight) iny = nheight-1;
 		      XPutPixel(after, inx, iny, px);
 		    }
 		}
@@ -328,7 +328,7 @@ static unsigned char cd_bits[] = {
    0xf8, 0x00, 0x06, 0x03, 0x72, 0x02, 0x89, 0x04, 0x75, 0x05, 0x55, 0x05,
    0x75, 0x05, 0x89, 0x04, 0x72, 0x02, 0x06, 0x03, 0xf8, 0x00, 0x00, 0x00};
 
-static Pixmap speaker_icon,line_in_icon,mic_icon,aes_icon,adat_icon,digital_in_icon,cd_icon;
+static Pixmap speaker_icon, line_in_icon, mic_icon, aes_icon, adat_icon, digital_in_icon, cd_icon;
 
 static void make_record_icons(Widget w, snd_state *ss)
 {
@@ -404,17 +404,17 @@ static XFontStruct *get_vu_font(snd_state *ss, Float size)
   if (!(label_font))
     {
       sprintf(font_name, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
-      label_font=XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
+      label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
       if (!(label_font))
 	{
 	  sprintf(font_name, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
-	  label_font=XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
+	  label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
 	  while (!(label_font))
 	    {
 	      sprintf(font_name, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
-	      label_font=XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
+	      label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
 	      font_size++;
-	      if (font_size>60) {label_font=XLoadQueryFont(MAIN_DISPLAY(ss), "-*-*-*-*-*-*-*-*-*-*-*-*-*"); break;}
+	      if (font_size > 60) {label_font = XLoadQueryFont(MAIN_DISPLAY(ss), "-*-*-*-*-*-*-*-*-*-*-*-*-*"); break;}
 	    }
 	}
     }
@@ -424,7 +424,7 @@ static XFontStruct *get_vu_font(snd_state *ss, Float size)
 #if HAVE_XPM
 static int allocate_meter_2(Widget w, vu_label *vu)
 {
-  int off_err,err;
+  int off_err, err;
   Pixmap shape;
   Display *dp;
   Drawable wn;
@@ -477,32 +477,32 @@ static int allocate_meter_2(Widget w, vu_label *vu)
 #define CENTER_Y 160
 #define VU_COLORS 11
 #define VU_NUMBERS 15
-/* these are for the highly optimized size=1.0 case */
+/* these are for the highly optimized size = 1.0 case */
 
 static Pixel yellows[VU_COLORS];
 static Pixel reds[VU_COLORS];
 static int vu_colors_allocated = 0;
-static int yellow_vals[] = {0,16,32,64,96,128,160,175,185,200,210,220,230,240};
+static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220, 230, 240};
 
 static void allocate_meter_1(snd_state *ss, vu_label *vu)
 {
-  /* called only if size not allocated yet and size=1.0 not available as pre-made pixmap */
+  /* called only if size not allocated yet and size = 1.0 not available as pre-made pixmap */
   int scr;
   Display *dp;
   Drawable wn;
   Colormap cmap;
   XColor tmp_color;
-  int i,j,k;
-  Pixel white,black,red;
+  int i, j, k;
+  Pixel white, black, red;
   unsigned int depth;
   int band;
   XPoint pts[16];
-  int x0,y0,x1,y1;
+  int x0, y0, x1, y1;
   Float rdeg;
   Float size;
   Pixmap numbers[VU_NUMBERS];
-  int wids[VU_NUMBERS],hgts[VU_NUMBERS];
-  int xs[5],ys[5];
+  int wids[VU_NUMBERS], hgts[VU_NUMBERS];
+  int xs[5], ys[5];
 
   Float BAND_X;
   Float BAND_Y;
@@ -523,14 +523,14 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
       vu_colors_allocated = 1;
       tmp_color.flags = DoRed | DoGreen | DoBlue;
       tmp_color.red = (unsigned short)65535;
-      for (i=0; i<VU_COLORS; i++)
+      for (i = 0; i < VU_COLORS; i++)
 	{
 	  tmp_color.blue = (unsigned short)(256*yellow_vals[i]);
 	  tmp_color.green = (unsigned short)(256*230 + 26*yellow_vals[i]);
 	  XAllocColor(dp, cmap, &tmp_color);
 	  yellows[i] = tmp_color.pixel;
 	}
-      for (i=0; i<VU_COLORS; i++)
+      for (i = 0; i < VU_COLORS; i++)
 	{
 	  tmp_color.blue = (unsigned short)(128*yellow_vals[i]);
 	  tmp_color.green = (unsigned short)(128*yellow_vals[i]);
@@ -539,7 +539,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	}
     }
   /* need two versions of these, one with white bg and black fg for "off" state, then... */
-  j=0;
+  j = 0;
   numbers[j] = transform_text(recorder, "0.0", vu->label_font, -40.0, 1.0, 1.0, &wids[j], &hgts[j], yellows[9], red); j++;
   numbers[j] = transform_text(recorder, "0.25", vu->label_font, -25.0, 1.0, 1.0, &wids[j], &hgts[j], yellows[7], red); j++;
   numbers[j] = transform_text(recorder, "0.5", vu->label_font, 0.0, 1.0, 1.0, &wids[j], &hgts[j], yellows[7], red); j++;
@@ -556,7 +556,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   numbers[j] = transform_text(recorder, "0.75", vu->label_font, 23.0, 1.0, 1.0, &wids[j], &hgts[j], reds[7], black); j++;
   numbers[j] = transform_text(recorder, "1.0", vu->label_font, 40.0, 1.0, 1.0, &wids[j], &hgts[j], reds[9], black); j++;
       
-  for (k=0;k<2;k++) 
+  for (k = 0; k < 2; k++) 
     {
       band = 1;
       if (k == 1)
@@ -590,14 +590,14 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	XFillPolygon(dp, vu->clip_label, draw_gc, pts, 7, Convex, CoordModeOrigin);
       else XFillPolygon(dp, vu->on_label, draw_gc, pts, 7, Convex, CoordModeOrigin);
 
-      for (i=1; i<VU_COLORS; i++)
+      for (i = 1; i < VU_COLORS; i++)
 	{
 	  band += i;
 	  if (k == 1) 
 	    XSetForeground(dp, draw_gc, reds[i]); 
 	  else 
 	    {
-	      if (i<2) XSetForeground(dp, draw_gc, yellows[2]); else XSetForeground(dp, draw_gc, yellows[i]);
+	      if (i < 2) XSetForeground(dp, draw_gc, yellows[2]); else XSetForeground(dp, draw_gc, yellows[i]);
 	    }
 	  pts[6].x = (short)(LIGHT_X*size + band*BAND_X);
 	  pts[6].y = pts[5].y;
@@ -616,7 +616,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	  if (k == 1)
 	    XFillPolygon(dp, vu->clip_label, draw_gc, pts, 13, Complex, CoordModeOrigin);
 	  else XFillPolygon(dp, vu->on_label, draw_gc, pts, 13, Complex, CoordModeOrigin);
-	  for (j=0;j<6;j++) 
+	  for (j = 0; j < 6; j++) 
 	    { 
 	      /* set up initial portion of next polygon */
 	      pts[j].x = pts[j+6].x;
@@ -644,21 +644,21 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   xs[4] = (int)(size*(CENTER_X + 88));
   ys[4] = (int)(size*(CENTER_Y - 116));
 
-  j=0;
+  j = 0;
   XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[0], ys[0]); j++;
   XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[1], ys[1]); j++;
   XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[2], ys[2]); j++;
   XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[3], ys[3]); j++;
   XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[4], ys[4]); j++;
   
-  j=5;
+  j = 5;
   XCopyArea(dp, numbers[j], vu->off_label, draw_gc, 0, 0, wids[j], hgts[j], xs[0], ys[0]); j++;
   XCopyArea(dp, numbers[j], vu->off_label, draw_gc, 0, 0, wids[j], hgts[j], xs[1], ys[1]); j++;
   XCopyArea(dp, numbers[j], vu->off_label, draw_gc, 0, 0, wids[j], hgts[j], xs[2], ys[2]); j++;
   XCopyArea(dp, numbers[j], vu->off_label, draw_gc, 0, 0, wids[j], hgts[j], xs[3], ys[3]); j++;
   XCopyArea(dp, numbers[j], vu->off_label, draw_gc, 0, 0, wids[j], hgts[j], xs[4], ys[4]);
 
-  j=10;
+  j = 10;
   XCopyArea(dp, numbers[j], vu->clip_label, draw_gc, 0, 0, wids[j], hgts[j], xs[0], ys[0]); j++;
   XCopyArea(dp, numbers[j], vu->clip_label, draw_gc, 0, 0, wids[j], hgts[j], xs[1], ys[1]); j++;
   XCopyArea(dp, numbers[j], vu->clip_label, draw_gc, 0, 0, wids[j], hgts[j], xs[2], ys[2]); j++;
@@ -691,7 +691,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   XDrawArc(dp, vu->clip_label, draw_gc, xs[3], ys[3], (unsigned int)(size*(232)), (unsigned int)(size*(232)), 45*64, 90*64);
 
   /* draw the axis ticks */
-  for (i=0; i<5; i++)
+  for (i = 0; i < 5; i++)
     {
       rdeg = mus_degrees2radians(45-i*22.5);
       x0 = (int)(CENTER_X*size+120*size*sin(rdeg));
@@ -704,9 +704,9 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
       XDrawLine(dp, vu->off_label, draw_gc, x0+1, y0, x1+1, y1);
       XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
       XDrawLine(dp, vu->clip_label, draw_gc, x0+1, y0, x1+1, y1);
-      if (i<4)
+      if (i < 4)
 	{
-	  for (j=1;j<6;j++)
+	  for (j = 1; j < 6; j++)
 	    {
 	      rdeg = mus_degrees2radians(45-i*22.5-j*(90.0/20.0));
 	      x0 = (int)(CENTER_X*size+120*size*sin(rdeg));
@@ -719,7 +719,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	    }
 	}
     }
-  for (i=0; i<VU_NUMBERS; i++) XFreePixmap(dp, numbers[i]);
+  for (i = 0; i < VU_NUMBERS; i++) XFreePixmap(dp, numbers[i]);
 }
 
 #if 0
@@ -732,8 +732,8 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 
 static void display_vu_meter(VU *vu)
 {
-  Float deg,rdeg,val;
-  int nx0,nx1,ny0,ny1,redx,redy,bub0,bub1,i,j;
+  Float deg, rdeg, val;
+  int nx0, nx1, ny0, ny1, redx, redy, bub0, bub1, i, j;
   Pixmap label = 0;
   snd_state *ss;
   Float size;
@@ -806,10 +806,10 @@ static void display_vu_meter(VU *vu)
       else vu->red_deg = vu->current_val*VU_BUBBLE_SPEED + (vu->red_deg*(1.0 - VU_BUBBLE_SPEED));
       XSetForeground(vu->dp, vu_gc, sx->red);
       redx = (int)(vu->red_deg * 90*64);
-      if (redx<(VU_BUBBLE_SIZE)) redy=redx; else redy=VU_BUBBLE_SIZE;
+      if (redx<(VU_BUBBLE_SIZE)) redy = redx; else redy = VU_BUBBLE_SIZE;
       bub0 = (int)(size*117);
       bub1 = (int)(size*119);
-      for (i=bub0, j=bub0*2; i<=bub1; i++,j+=(int)(2*size))
+      for (i = bub0, j = bub0*2; i <= bub1; i++, j+=(int)(2*size))
 	XDrawArc(vu->dp, vu->wn, vu_gc, vu->center_x - i, vu->center_y - i, j, j, 135*64 - redx, redy);
       XSetForeground(vu->dp, vu_gc, sx->black);
     }
@@ -844,7 +844,7 @@ static VU *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, i
   vu->center_x = (int)(center_x*size);
   vu->center_y = (int)(center_y*size);
   vu->ss = ss;
-  for (i=0; i<current_vu_label; i++)
+  for (i = 0; i < current_vu_label; i++)
     if (vu_labels[i]->size == size) 
       {
 	vl = vu_labels[i];
@@ -901,9 +901,9 @@ void recorder_set_vu_out_val(int chan, MUS_SAMPLE_TYPE val) {set_vu_val(rec_out_
 #define INPUT_AMP 0
 #define OUTPUT_AMP 1
 
-static char record_one[5]={'1',STR_decimal,'0','0','\0'};
-static char record_zero[5]={'0',STR_decimal,'0','0','\0'};
-static char amp_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
+static char record_one[5] ={'1', STR_decimal,'0','0','\0'};
+static char record_zero[5] ={'0', STR_decimal,'0','0','\0'};
+static char amp_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
 
 #define RECORD_SCROLLBAR_MAX 300
 #define RECORD_SCROLLBAR_MID 150
@@ -926,7 +926,7 @@ static void record_amp_changed(AMP *ap, int val)
 	amp = (Float)val * RECORD_SCROLLBAR_LINEAR_MULT;
       else amp = exp((Float)(val-RECORD_SCROLLBAR_MID)/((Float)RECORD_SCROLLBAR_MAX*.2));
     }
-  sfs=prettyf(amp, 2);
+  sfs = prettyf(amp, 2);
   fill_number(sfs, amp_number_buffer);
   set_button_label(ap->number, amp_number_buffer);
   FREE(sfs);
@@ -962,7 +962,7 @@ static char *amp_to_string(Float val)
   char *sfs;
   if (val == 0.0) return(record_zero);
   else if (val == 1.0) return(record_one);
-  sfs=prettyf(val, 2);
+  sfs = prettyf(val, 2);
   fill_number(sfs, amp_number_buffer);
   FREE(sfs);
   return(amp_number_buffer);
@@ -1067,7 +1067,7 @@ static void button_holder_help_callback(Widget w, XtPointer context, XtPointer i
   snd_state *ss = (snd_state *)context;
   snd_help(ss,
 	   "Record Options",
-"These buttons configure the appearance of the recorder;\n\
+"These buttons configure the appearance of the recorder; \n\
 'Autoload Recording', if set, causes the recorded output to be\n\
 loaded automatically into Snd.\n\
 ");
@@ -1146,7 +1146,7 @@ static void internal_trigger_set(Float val)
 
 static void change_trigger_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /* if val=0, set record button normal label to 'Record', else 'Triggered Record' */
+  /* if val = 0, set record button normal label to 'Record', else 'Triggered Record' */
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
   internal_trigger_set((Float)(cb->value)/100.0);
 }
@@ -1160,10 +1160,10 @@ static void drag_trigger_Callback(Widget w, XtPointer context, XtPointer info)
 static void device_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   PANE *p = (PANE *)context;
-  int on,button;
+  int on, button;
   snd_state *ss;
 #if defined(SGI) || defined(SUN)
-  int other_button,j,n,i,output;
+  int other_button, j, n, i, output;
   float val[2];
 #endif
 
@@ -1218,7 +1218,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
   	  if (active_device_button != -1)
 	    {
 	      p = all_panes[active_device_button];
-	      for (i=p->in_chan_loc, j=0;j<p->in_chans;j++,i++) rp->input_channel_active[i]=0;
+	      for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = 0;
 	      if (active_device_button != button)
 		{
 		  /* XtVaGetValues(p->pane, XmNheight, &(p->pane_size), NULL); */
@@ -1230,7 +1230,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	    }
 	  active_device_button = button;
 	  p = all_panes[button];
-	  for (i=p->in_chan_loc, j=0;j<p->in_chans;j++,i++) rp->input_channel_active[i]=1;
+	  for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = 1;
 	  rp->input_channels[0] = p->in_chans;
 
 	  /* if digital in, get its srate (and reflect in srate text) */
@@ -1323,7 +1323,7 @@ static void Srate_Changed_Callback(Widget w, XtPointer context, XtPointer info)
   if (str) 
     {
       n = string2int(str);
-      if ((n>0) && (n != rp->srate))
+      if ((n > 0) && (n != rp->srate))
 	{
 	  rp->srate = n;
 	  recorder_set_audio_srate(get_global_state(), MUS_AUDIO_DEFAULT, rp->srate, 0, rp->taking_input);
@@ -1342,7 +1342,7 @@ static void Rec_Size_Changed_Callback(Widget w, XtPointer context, XtPointer inf
   if (str) 
     {
       n = string2int(str);
-      if ((n>0) && (n != rp->buffer_size)) set_record_size(n);
+      if ((n > 0) && (n != rp->buffer_size)) set_record_size(n);
       XtFree(str);
     }
 }
@@ -1362,13 +1362,13 @@ with this number.\n\
 
 static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pane, int ndevs)
 {
-  int i,n,init_n;
+  int i, n, init_n;
   Position pane_max;
   Arg args[32];
   char *name;
-  Widget file_label,file_form,button_frame,button_holder,duration_label,rec_size_label,
-    ff_form,ff_sep1,ff_sep2,ff_sep3,ff_sep4,autoload_file;
-  XtCallbackList n1,n2;
+  Widget file_label, file_form, button_frame, button_holder, duration_label, rec_size_label,
+    ff_form, ff_sep1, ff_sep2, ff_sep3, ff_sep4, autoload_file;
+  XtCallbackList n1, n2;
 #if (HAVE_OSS || HAVE_ALSA)
   Widget save_audio_settings;
 #endif
@@ -1607,7 +1607,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
       XtSetArg(args[n], XmNselectColor, (ss->sgx)->red); n++;
     }
   init_n = n;
-  for (i=0; i<ndevs; i++)
+  for (i = 0; i < ndevs; i++)
     {
       n = init_n;
       XtSetArg(args[n], XmNuserData, i); n++;
@@ -1715,7 +1715,7 @@ static void volume_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   Wdesc *wd = (Wdesc *)context;
 #if (HAVE_OSS || HAVE_ALSA)
-  int device,channel,field;
+  int device, channel, field;
   device = wd->device;
   field = wd->field;
   channel = wd->chan;
@@ -1824,7 +1824,7 @@ static void VU_Reset_Callback(Widget w, XtPointer context, XtPointer info)
   int i;
   PANE *p = (PANE *)context;
   VU *vu;
-  for (i=0; i<p->meters_size; i++)
+  for (i = 0; i < p->meters_size; i++)
     {
       vu = p->meters[i];
       vu->max_val = 0.0;
@@ -1837,7 +1837,7 @@ static void Meter_Button_Callback(Widget w, XtPointer context, XtPointer info)
   Wdesc *wd = (Wdesc *)context;
   VU *vu;
   snd_state *ss;
-  int val,i,n;
+  int val, i, n;
   char *str;
   PANE *p;
   recorder_info *rp;
@@ -1870,8 +1870,8 @@ static void Meter_Button_Callback(Widget w, XtPointer context, XtPointer info)
 	}
       else n = 0;
       val = 0;
-      for (i=0; i<p->active_size; i++) {if (p->active[i]) val++;}
-      if ((val>0) && (val != n))
+      for (i = 0; i < p->active_size; i++) {if (p->active[i]) val++;}
+      if ((val > 0) && (val != n))
 	{
 	  sprintf(timbuf, "%d", val);
 	  XmTextSetString(recdat->chans_text, timbuf);
@@ -1919,7 +1919,7 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   int n;
   Arg args[32];
   XmString s1;
-  XtCallbackList n1,n2;
+  XtCallbackList n1, n2;
 
   n = 0;      
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1936,11 +1936,11 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
 #if 0
   /* smaller (in height) sliders need font changes here and below */
-  if (amp_sliders>4)
+  if (amp_sliders > 4)
     {
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
     }
-  s1=XmStringCreate("     ", "button_font");
+  s1 = XmStringCreate("     ", "button_font");
   XtSetArg(args[n], XmNlabelString, s1); n++;
 #endif
   a->label = sndCreatePushButtonWidget(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out), p->pane, args, n);
@@ -1950,13 +1950,13 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 #if 0
-  if (amp_sliders>4)
+  if (amp_sliders > 4)
     {
-      s1=XmStringCreate(amp_to_string(global_amp(a)), "button_font");
+      s1 = XmStringCreate(amp_to_string(global_amp(a)), "button_font");
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(state)); n++;
     }
 #endif
-  s1=XmStringCreate(amp_to_string(global_amp(a)), XmFONTLIST_DEFAULT_TAG);
+  s1 = XmStringCreate(amp_to_string(global_amp(a)), XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, a->label); n++;
@@ -1982,7 +1982,7 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   XtSetArg(args[n], XmNtopWidget, a->number); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
 #if 0
-  XtSetArg(args[n], XmNheight, (amp_sliders>4) ? 12 : 16); n++;
+  XtSetArg(args[n], XmNheight, (amp_sliders > 4) ? 12 : 16); n++;
 #endif
   XtSetArg(args[n], XmNheight, 16); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -2038,7 +2038,7 @@ static void handle_matrix_slider(Widget mb, PANE *p, int bin, int bout, int cura
 	  new_top = sndCreateRecorderSlider(ss, p, a, a->top, TRUE);
 	}
     }
-  for (i=curamp+1; i<p->amps_size; i++)
+  for (i = curamp+1; i < p->amps_size; i++)
     {
       a = p->amps[i];
       if (a)
@@ -2056,7 +2056,7 @@ static void handle_matrix_slider(Widget mb, PANE *p, int bin, int bout, int cura
 typedef struct {
   PANE *p;
   AMP *a;
-  int in_chan,out_chan;
+  int in_chan, out_chan;
 } slider_info;
 
 static void Matrix_Button_Callback(Widget mb, XtPointer context, XtPointer info) 
@@ -2074,7 +2074,7 @@ static int button_matrix_state = 0;
 static int initial_button = 0;
 static Widget active_button = NULL;
 
-enum {CORNER_BUTTON,OUTPUT_BUTTON,INPUT_BUTTON};
+enum {CORNER_BUTTON, OUTPUT_BUTTON, INPUT_BUTTON};
 
 static void button_matrix_button_press(Widget w, XtPointer context, XEvent *event, Boolean *flag) 
 {
@@ -2090,12 +2090,12 @@ static void button_matrix_button_motion(Widget w, XtPointer context, XEvent *eve
   PANE *p = (PANE *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
   Widget current_button = NULL;
-  Position x,y;
-  int bin = 0,bout=0;
+  Position x, y;
+  int bin = 0, bout = 0;
   XtVaGetValues(w, XmNx, &x, XmNy, &y, NULL);
   x += (ev->x - p->bx);
   y += (ev->y - p->by);
-  if ((x > (Position)(p->bw)) || (y > (Position)(p->bh)) || (x<0) || (y<0)) return;
+  if ((x > (Position)(p->bw)) || (y > (Position)(p->bh)) || (x < 0) || (y < 0)) return;
   bin = (int)y * p->in_chans / p->bh;
   bout = (int)x * p->out_chans / p->bw;
   current_button = p->matrix_buttons[bin][bout];
@@ -2112,9 +2112,9 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
 {
   PANE *p = (PANE *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
-  Position x,y;
-  int row,col,on;
-  int bin = 0,bout=0;
+  Position x, y;
+  int row, col, on;
+  int bin = 0, bout = 0;
 #if DEBUGGING
   if ((int)ev <= 0) return;
 #endif
@@ -2123,8 +2123,8 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
       switch (initial_button)
 	{
 	case CORNER_BUTTON:
-	  for (row=0;row<p->in_chans;row++)
-	    for (col=0;col<p->out_chans;col++)
+	  for (row = 0; row < p->in_chans; row++)
+	    for (col = 0; col < p->out_chans; col++)
 	      {
 		if (button_matrix_state & snd_ControlMask)
 		  on = (row == col);
@@ -2138,7 +2138,7 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
 	  x += (ev->x - p->bx);
 	  bout = x*p->out_chans/p->bw;
 	  on = (button_matrix_button == 1);
-	  for (row=0;row<p->in_chans;row++)
+	  for (row = 0; row < p->in_chans; row++)
 	    if (on != p->active_sliders[row][bout])
 	      handle_matrix_slider(p->matrix_buttons[row][bout], p, row, bout, bout * p->in_chans + row, !on);
 	  break;
@@ -2147,7 +2147,7 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
 	  y += (ev->y - p->by);
 	  bin = y*p->in_chans/p->bh;
 	  on = (button_matrix_button == 1);
-	  for (col=0;col<p->out_chans;col++)
+	  for (col = 0; col < p->out_chans; col++)
 	    if (on != p->active_sliders[bin][col])
 	      handle_matrix_slider(p->matrix_buttons[bin][col], p, bin, col, col * p->in_chans + bin, !on);
 	  break;
@@ -2157,11 +2157,11 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
 
 static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget parent, Arg *in_args, int in_n, Float meter_size)
 {
-  Widget outer_form,outer_frame;
+  Widget outer_form, outer_frame;
   Arg args[32];
-  int n,ins,outs,row,col,vu_rows;
-  int width,height;
-  Widget outputs_label,inputs_label0,inputs_label1,inputs_label2,inner_frame,inner_form,diag_button,mb;
+  int n, ins, outs, row, col, vu_rows;
+  int width, height;
+  Widget outputs_label, inputs_label0, inputs_label1, inputs_label2, inner_frame, inner_form, diag_button, mb;
   slider_info *si;
   int **active_sliders;
 
@@ -2279,7 +2279,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   ins = p->in_chans;
   outs = p->out_chans;
   p->matrix_buttons = (Widget **)CALLOC(ins, sizeof(Widget *));
-  for (row=0;row<ins;row++) p->matrix_buttons[row] = (Widget *)CALLOC(outs, sizeof(Widget));
+  for (row = 0; row < ins; row++) p->matrix_buttons[row] = (Widget *)CALLOC(outs, sizeof(Widget));
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2290,8 +2290,8 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtSetArg(args[n], XmNfractionBase, ins*outs); n++;
   inner_form = sndCreateFormWidget("inner-form", inner_frame, args, n);
 
-  for (col=0;col<outs;col++)
-    for (row=0;row<ins;row++)
+  for (col = 0; col < outs; col++)
+    for (row = 0; row < ins; row++)
       {
 	si = (slider_info *)CALLOC(1, sizeof(slider_info));
 	si->p = p;
@@ -2342,14 +2342,14 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 {
   /* VU meters (frame, then drawing area widget) */
   /* Linux OSS complication -- the top input panel also has all the "mixer" input volume controls and the output pane has the tone controls, if any */
-  int n,i,k;
+  int n, i, k;
   Arg args[32];
   PANE *p;
   Widget *frames = NULL;
-  Widget last_frame,vu_vertical_sep,last_slider=NULL,matrix_frame,
-    button_box,left_frame;
+  Widget last_frame, vu_vertical_sep, last_slider = NULL, matrix_frame,
+    button_box, left_frame;
   Widget first_frame[1];
-  int vu_meters,num_gains,input;
+  int vu_meters, num_gains, input;
   Position pane_max;
   Float meter_size;
   int mixflds[MAX_AUDIO_FIELD];
@@ -2366,7 +2366,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
     {
       p->in_chans = vu_meters;
       p->out_chans = rp->out_chans;
-      /* this determines how many of the left-side buttons we get if chans>4; if defaults to 2 (snd.c)
+      /* this determines how many of the left-side buttons we get if chans > 4; if defaults to 2 (snd.c)
        * but probably should look at the output device's out chans when we start the recorder for the
        * first time, but not clobber user's setting (if any); perhaps if it's not the default, it can
        * be reset?  And if more than (say) 100 buttons, use pull-down menus?
@@ -2384,7 +2384,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   p->active = (int *)CALLOC(vu_meters, sizeof(int));
   p->active_size = vu_meters;
   p->active_sliders = (int **)CALLOC(p->in_chans, sizeof(int *));
-  for (i=0; i<p->in_chans; i++) p->active_sliders[i] = (int *)CALLOC(p->out_chans, sizeof(int));
+  for (i = 0; i < p->in_chans; i++) p->active_sliders[i] = (int *)CALLOC(p->out_chans, sizeof(int));
   frames = (Widget *)CALLOC(vu_meters, sizeof(Widget));
 
   n = 0;
@@ -2404,8 +2404,8 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 
   if ((input) && ((p->in_chans*p->out_chans) > 8))
     {
-      for (i=0; i<p->in_chans; i++) 
-	for (k=0;k<p->out_chans;k++) 
+      for (i = 0; i < p->in_chans; i++) 
+	for (k = 0; k < p->out_chans; k++) 
 	  if (i == k) p->active_sliders[i][k] = 1;
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
@@ -2421,9 +2421,9 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
     }
   else 
     {
-      for (i=0; i<p->in_chans; i++) 
-	for (k=0;k<p->out_chans;k++) 
-	  p->active_sliders[i][k]=1;
+      for (i = 0; i < p->in_chans; i++) 
+	for (k = 0; k < p->out_chans; k++) 
+	  p->active_sliders[i][k] = 1;
     }
 
   last_frame = make_vu_meters(ss, p, vu_meters, frames, last_frame, left_frame, overall_input_ctr, meter_size, input, first_frame);
@@ -2451,7 +2451,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 
 #if NEW_SGI_AL
   if (p->device == MUS_AUDIO_MICROPHONE)
-    for (i=p->in_chan_loc, k=0;k<p->in_chans; i++,k++) 
+    for (i = p->in_chan_loc, k = 0; k < p->in_chans; i++, k++) 
       rp->input_channel_active[i] = 1;
 #endif
 
@@ -2468,8 +2468,8 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *frames, Widget in_last_frame, Widget in_left_frame,
 			   int overall_input_ctr, Float meter_size, int input, Widget *out_frame)
 {
-  int i,n,columns,row;
-  Widget first_frame = NULL,frame,meter,last_frame,left_frame;
+  int i, n, columns, row;
+  Widget first_frame = NULL, frame, meter, last_frame, left_frame;
   Wdesc *wd;
   VU *vu;
   Arg args[32];
@@ -2480,7 +2480,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
   columns = recorder_columns(vu_meters);
   row = 0;
 
-  for (i=0; i<vu_meters; i++)
+  for (i = 0; i < vu_meters; i++)
     {
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->black); n++;}
@@ -2594,7 +2594,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
 					 int num_gains, int gain_ctr, int *mixflds, int input)
 {
   /* vertical scalers on the right (with icon) */
-  int n,i,chan,this_device=0,last_device=-1;
+  int n, i, chan, this_device = 0, last_device=-1;
   Arg args[32];
   Widget icon_label, last_slider;
   Wdesc *wd;
@@ -2614,7 +2614,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
   else {XtSetArg(args[n], XmNlabelPixmap, device_icon(p->device)); n++;}
   if (input)
     {
-      if (mixflds[MUS_AUDIO_MICROPHONE]<=0)
+      if (mixflds[MUS_AUDIO_MICROPHONE]<= 0)
 	last_device = MUS_AUDIO_LINE;
     }
   else last_device = MUS_AUDIO_DAC_OUT;
@@ -2638,7 +2638,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
   icon_label = XtCreateManagedWidget("icon", xmLabelWidgetClass, p->pane, args, n);
       
   last_slider = NULL;
-  for (i=0, chan=num_gains-1; i<num_gains; i++,chan--)
+  for (i = 0, chan = num_gains-1; i < num_gains; i++, chan--)
     {
       /* we're moving right to left here, so the first slider represents the highest channel */
       /* in the Linux case, as each new device pops up, we need some indication above it */
@@ -2684,7 +2684,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
 	    {XtSetArg(args[n], XmNwidth, (mixflds[this_device] == 1) ? 30 : 15); n++;} /* 1 because we subtracted one already above */
 	  else {XtSetArg(args[n], XmNwidth, 30); n++;}
 	  icon_label = XtCreateManagedWidget("icon", xmLabelWidgetClass, p->pane, args, n);
-	  if ((this_device != MUS_AUDIO_LINE_IN) && (slabel)) {XmStringFree(slabel); slabel=NULL;}
+	  if ((this_device != MUS_AUDIO_LINE_IN) && (slabel)) {XmStringFree(slabel); slabel = NULL;}
 	}
 #endif
       n = 0;
@@ -2751,9 +2751,9 @@ static void make_gain_separator(snd_state *ss, PANE *p, int num_gains, int vu_me
 static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float meter_size,
 			      int input, int overall_input_ctr, int vu_meters, Widget vu_vertical_sep, Widget *frames)
 {
-  int i,n,row,columns,button_size;
+  int i, n, row, columns, button_size;
   Arg args[32];
-  Widget button_label,button1_label,last_button,last_max,max_label,button_box;
+  Widget button_label, button1_label, last_button, last_max, max_label, button_box;
   Wdesc *wd;
   VU *vu;
 
@@ -2765,7 +2765,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
   XtSetArg(args[n], XmNleftWidget, vu_vertical_sep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
-  if (meter_size<SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
+  if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
   if ((rp->systems == 1) || (!input))
     button_label = XtCreateManagedWidget(recorder_device_name(p->device), xmLabelWidgetClass, p->pane, args, n);
   else 
@@ -2781,7 +2781,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
       XtSetArg(args[n], XmNleftWidget, vu_vertical_sep); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
-      if (meter_size<SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
+      if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
       button_label = XtCreateManagedWidget(recorder_device_name(p->device), xmLabelWidgetClass, p->pane, args, n);
     }
   
@@ -2808,7 +2808,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
   row = 0;
   button_size = 100/columns;
 
-  for (i=0; i<vu_meters; i++)
+  for (i = 0; i < vu_meters; i++)
     {
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2831,7 +2831,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
 	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
 	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
 	}
-      if (meter_size<SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
+      if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
       if (((i+1)%columns) != 0)
 	{
 	  /* these are the right sides of the buttons before the rightmost one */
@@ -2888,7 +2888,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
-      if (meter_size<SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
+      if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
       max_label = XtCreateManagedWidget("0.000", xmLabelWidgetClass, last_max, args, n);
       wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
       wd->chan = i;
@@ -2918,7 +2918,7 @@ static void make_reset_button(snd_state *ss, PANE *p, Float meter_size, Widget b
   int n;
   Arg args[32];
 
-  if (meter_size<SMALL_FONT_CUTOFF)
+  if (meter_size < SMALL_FONT_CUTOFF)
     labelstr = XmStringCreate(STR_Reset, "small_font");
   else labelstr = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
   n = 0;
@@ -2935,7 +2935,7 @@ static void make_reset_button(snd_state *ss, PANE *p, Float meter_size, Widget b
   XtSetArg(args[n], XmNleftWidget, vu_vertical_sep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
-  if (meter_size<SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
+  if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
   XtSetArg(args[n], XmNlabelString, labelstr); n++;
   p->reset_button = XtCreateManagedWidget("reset", xmPushButtonWidgetClass, p->pane, args, n);
   XtAddCallback(p->reset_button, XmNactivateCallback, VU_Reset_Callback, p);
@@ -2945,8 +2945,8 @@ static void make_reset_button(snd_state *ss, PANE *p, Float meter_size, Widget b
 
 static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widget first_frame, int input, int overall_input_ctr)
 {
-  Widget last_slider,slider_sep;
-  int i,n,amp_sliders,temp_out_chan,temp_in_chan,out_chan,in_chan,system;
+  Widget last_slider, slider_sep;
+  int i, n, amp_sliders, temp_out_chan, temp_in_chan, out_chan, in_chan, system;
   Position pane_max;
   Arg args[32];
   AMP *a;
@@ -2978,7 +2978,7 @@ static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widg
   /* if input, do direct cases first, then fill in rest of 1, rest of 2 etc */
   temp_out_chan = 0;
   temp_in_chan = 0;
-  for (i=0; i<amp_sliders; i++)
+  for (i = 0; i < amp_sliders; i++)
     {
       in_chan = temp_in_chan;
       out_chan = temp_out_chan;
@@ -3037,7 +3037,7 @@ static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widg
 void sensitize_control_buttons(void)
 {
   int i;
-  for (i=0; i<device_buttons_size-1; i++) /* last button is autoload_file */
+  for (i = 0; i < device_buttons_size-1; i++) /* last button is autoload_file */
     {
       if (device_buttons[i])
 	set_sensitive(device_buttons[i], TRUE);
@@ -3047,7 +3047,7 @@ void sensitize_control_buttons(void)
 void unsensitize_control_buttons(void)
 {
   int i;
-  for (i=0; i<device_buttons_size-1; i++)
+  for (i = 0; i < device_buttons_size-1; i++)
     {
       if (device_buttons[i])
 	set_sensitive(device_buttons[i], FALSE);
@@ -3067,7 +3067,7 @@ static void Reset_Record_Callback(Widget w, XtPointer context, XtPointer info)
   XmString s1;
   PANE *p;
   VU *vu;
-  int i,k;
+  int i, k;
   recorder_info *rp;
   rp = get_recorder_info();
   if (rp->recording)                  /* cancel */
@@ -3096,10 +3096,10 @@ static void Reset_Record_Callback(Widget w, XtPointer context, XtPointer info)
     }
   else                            /* reset or restart */
     { 
-      for (i=0; i<rp->ordered_devices_size; i++)
+      for (i = 0; i < rp->ordered_devices_size; i++)
 	{
 	  p = all_panes[i];
-	  for (k=0;k<p->meters_size;k++)
+	  for (k = 0; k < p->meters_size; k++)
 	    {
 	      vu = p->meters[k];
 	      vu->max_val = 0.0;
@@ -3138,7 +3138,7 @@ static void Dismiss_Record_Callback(Widget w, XtPointer context, XtPointer info)
 
 void finish_recording(snd_state *ss, recorder_info *rp)
 {
-  XmString s1 = NULL,s2 = NULL;
+  XmString s1 = NULL, s2 = NULL;
   char *str;
   snd_info *sp;
   Float duration;
@@ -3192,9 +3192,9 @@ void finish_recording(snd_state *ss, recorder_info *rp)
 static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
-  XmString s1 = NULL,s2 = NULL;
+  XmString s1 = NULL, s2 = NULL;
   Wdesc *wd;
-  int i,old_srate,ofmt,rs,ochns,oloc;
+  int i, old_srate, ofmt, rs, ochns, oloc;
   static char *comment;
   char *str;
   PANE *p;
@@ -3210,7 +3210,7 @@ static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info)
 	  if (rp->output_file) FREE(rp->output_file);
 	  rp->output_file = mus_file_full_name(str);
 	  XtFree(str);
-	  str=NULL;
+	  str = NULL;
 	  old_srate = rp->srate;
 	  str = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc); 
 	  if (str) FREE(str);
@@ -3245,7 +3245,7 @@ static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info)
 	      wd->field = MUS_AUDIO_AMP;
 	      wd->device = p->device;
 	      wd->system = 0;
-	      for (i=0; i<rp->out_chans; i++)
+	      for (i = 0; i < rp->out_chans; i++)
 		{
 		  if (!(p->active[i]))
 		    {
@@ -3285,13 +3285,13 @@ static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info)
 }
 
 static void initialize_recorder(recorder_info *rp);
-static Widget rec_panes,message_pane,file_info_pane;
+static Widget rec_panes, message_pane, file_info_pane;
 
 void snd_record_file(snd_state *ss)
 {
   Arg args[32];
-  int n,i,device,input_devices,output_devices,system;
-  XmString xdismiss,xhelp,xreset,titlestr;
+  int n, i, device, input_devices, output_devices, system;
+  XmString xdismiss, xhelp, xreset, titlestr;
   XFontStruct *small_fontstruct;
   Atom wm_delete;
   XGCValues v;
@@ -3327,7 +3327,7 @@ void snd_record_file(snd_state *ss)
       rec_out_VU = (VU **)CALLOC(MAX_OUT_CHANS, sizeof(VU *));
 
       AMP_rec_ins = (AMP ***)CALLOC(rp->possible_input_chans, sizeof(AMP **));
-      for (i=0; i<rp->possible_input_chans; i++) 
+      for (i = 0; i < rp->possible_input_chans; i++) 
 	AMP_rec_ins[i] = (AMP **)CALLOC(MAX_OUT_CHANS, sizeof(AMP *));
       AMP_rec_outs = (AMP **)CALLOC(MAX_OUT_CHANS, sizeof(AMP *));
 
@@ -3427,7 +3427,7 @@ void snd_record_file(snd_state *ss)
       if ((rp->out_chans == DEFAULT_RECORDER_OUT_CHANS) && (n > 2))
 	rp->out_chans = n;
 
-      for (i=0; i<rp->ordered_devices_size; i++)
+      for (i = 0; i < rp->ordered_devices_size; i++)
 	{
 	  /* last one is output */
 	  device = rp->ordered_devices[i];
@@ -3452,7 +3452,7 @@ void snd_record_file(snd_state *ss)
       if (!(ss->using_schemes)) map_over_children(rec_panes, color_sashes, (void *)ss);
 
       /* loop through all panes reading p->pane_size and */
-      for (i=0; i<rp->ordered_devices_size; i++)
+      for (i = 0; i < rp->ordered_devices_size; i++)
 	{
 	  p = all_panes[i];
 	  XtVaSetValues(p->pane, XmNpaneMaximum, p->pane_size, NULL);
@@ -3470,15 +3470,15 @@ void snd_record_file(snd_state *ss)
     }
   if (!XtIsManaged(recorder)) XtManageChild(recorder);
   XtVaSetValues(message_pane, XmNpaneMinimum, 1, NULL);
-  for (i=0; i<rp->ordered_devices_size; i++)
+  for (i = 0; i < rp->ordered_devices_size; i++)
     {
       p = all_panes[i];
       XtVaSetValues(p->pane, XmNpaneMaximum, LOTSA_PIXELS, NULL); /* release max once we're set up so user can do what he wants */
     }
 
-  if (pending_errors>0)
+  if (pending_errors > 0)
     {
-      for (i=0; i<pending_errors; i++)
+      for (i = 0; i < pending_errors; i++)
 	{
 	  record_report(messages, pending_error[i], NULL);
 	  FREE(pending_error[i]);
@@ -3541,7 +3541,7 @@ static void initialize_recorder(recorder_info *rp)
   int err;
   int in_digital = 0;
 #endif
-  for (i=0; i<MAX_SOUNDCARDS; i++)
+  for (i = 0; i < MAX_SOUNDCARDS; i++)
     {
       rp->raw_input_bufs[i] = NULL;
 #if (HAVE_OSS || HAVE_ALSA)
@@ -3559,7 +3559,7 @@ static void initialize_recorder(recorder_info *rp)
 #if NEW_SGI_AL || defined(SUN)
   /* for simplicity, and until someone complains, new SGI AL machines will just have one active input device */
   active_device_button = rp->microphone_button;
-  for (i=0; i<device_buttons_size-1; i++)
+  for (i = 0; i < device_buttons_size-1; i++)
     {
       if (device_buttons[i])
 	{
@@ -3571,7 +3571,7 @@ static void initialize_recorder(recorder_info *rp)
     }
 #endif
   if (rp->trigger != 0.0) set_recorder_trigger(rp, rp->trigger);
-  if (rp->max_duration<=0.0) rp->max_duration = 1000000.0;
+  if (rp->max_duration <= 0.0) rp->max_duration = 1000000.0;
 }
 
 

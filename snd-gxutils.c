@@ -34,12 +34,12 @@ static Window compare_window(Display *display, Window window, char *id)
 static Window find_window(Display *display, Window starting_window, char *name, Window (*compare_func)(Display *dpy, Window win, char *id))
 {
   Window rootwindow, window_parent;
-  unsigned int i=0,num_children=0;
-  Window *children=NULL;
+  unsigned int i = 0, num_children = 0;
+  Window *children = NULL;
   Window window = (compare_func)(display, starting_window, name);
   if (window != (Window)None) return (window);
   if ((XQueryTree(display, starting_window, &rootwindow, &window_parent, &children, &num_children)) == 0) return ((Window)None);
-  while ((i<num_children) && (window == (Window)None))
+  while ((i < num_children) && (window == (Window)None))
     window = find_window(display, children[i++], name, compare_func);
   if (children) XFree((char *)children);
   return(window);
@@ -50,7 +50,7 @@ static SCM send_netscape(SCM cmd)
   Window window;
   snd_state *ss;
   Display *dpy;
-  char *command,*tmp=NULL;
+  char *command, *tmp = NULL;
   SCM_ASSERT(gh_string_p(cmd), cmd, SCM_ARG1, "send-netscape");
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);

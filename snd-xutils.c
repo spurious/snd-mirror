@@ -14,7 +14,7 @@ static XmRenderTable get_xm_font(snd_state *ss, XFontStruct *fs, char *font, cha
   XmRendition tmp;
   int n;
   Arg args[12];
-  n=0;
+  n = 0;
   XtSetArg(args[n], XmNfontName, font); n++;
   XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++; 
   XtSetArg(args[n], XmNloadModel, XmLOAD_DEFERRED); n++;
@@ -212,12 +212,12 @@ void map_over_children (Widget w, void (*func)(Widget, void *), void *userptr)
       if (XtIsComposite(w))
 	{
 	  CompositeWidget cw = (CompositeWidget)w;
-	  for (i=0; i<cw->composite.num_children; i++)
+	  for (i = 0; i < cw->composite.num_children; i++)
 	    map_over_children(cw->composite.children[i], func, userptr);
 	}
       if (XtIsWidget(w))
 	{
-	  for (i=0; i<w->core.num_popups; i++)
+	  for (i = 0; i < w->core.num_popups; i++)
 	    {
 	      Widget child = w->core.popup_list[i];
 	      map_over_children(child, func, userptr);
@@ -270,7 +270,7 @@ void white_color(snd_state *ss, Widget w) {XmChangeColor(w, (ss->sgx)->white);}
 void set_button_label_normal(Widget button, const char *str) 
 {
   XmString s1;
-  s1=XmStringCreate((char *)str, "button_font");
+  s1 = XmStringCreate((char *)str, "button_font");
 #if (USE_RENDITIONS)
   XtVaSetValues(button, 
 		XmNlabelString, s1, 
@@ -285,7 +285,7 @@ void set_button_label_normal(Widget button, const char *str)
 void set_button_label_bold(Widget button, const char *str)
 {
   XmString s1;
-  s1=XmStringCreate((char *)str, "bold_button_font");
+  s1 = XmStringCreate((char *)str, "bold_button_font");
 #if (USE_RENDITIONS)
   XtVaSetValues(button, 
 		XmNlabelString, s1,
@@ -300,7 +300,7 @@ void set_button_label_bold(Widget button, const char *str)
 void set_label(Widget label, const char *str)
 {
   XmString s1;
-  s1=XmStringCreate((char *)str, XmFONTLIST_DEFAULT_TAG);
+  s1 = XmStringCreate((char *)str, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(label, XmNlabelString, s1, NULL);
   XmStringFree(s1);
 }
@@ -578,7 +578,7 @@ void fixup_axis_context(axis_context *ax, Widget w, GC gc)
 
 Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc)
 {
-  Pixmap rb,nr;
+  Pixmap rb, nr;
   rb = XCreateBitmapFromData(MAIN_DISPLAY(ss), 
 			     RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), 
 			     (const char *)bits, 
@@ -619,10 +619,10 @@ void make_bg(snd_state *ss, unsigned int width, unsigned int height)
   XGCValues v;
   state_context *sx;
   Colormap cmap;
-  int scr,i,j,err,wid_incr;
+  int scr, i, j, err, wid_incr;
   GC draw_gc;
   XColor tmp_color;
-  Float red_incr,blue_incr,green_incr,red_init,blue_init,green_init;
+  Float red_incr, blue_incr, green_incr, red_init, blue_init, green_init;
   sx = ss->sgx;
   w = MAIN_PANE(ss);
   dp = MAIN_DISPLAY(ss);
@@ -630,7 +630,7 @@ void make_bg(snd_state *ss, unsigned int width, unsigned int height)
   scr = DefaultScreen(dp);
   XtVaGetValues(w, XmNdepth, &depth, NULL);
   if (sx->backmap) XFreePixmap(dp, sx->backmap);
-  cmap=DefaultColormap(dp, scr);
+  cmap = DefaultColormap(dp, scr);
   if (bgs) 
     {
       XFreeColors(dp, cmap, bgs, bgs_size, 0);
@@ -656,7 +656,7 @@ void make_bg(snd_state *ss, unsigned int width, unsigned int height)
   green_incr = (tmp_color.green - green_init) / bgs_size;
   blue_incr = (tmp_color.blue - blue_init) / bgs_size;
   /* this should probably be light at left top and shade toward lower right */
-  for (i=0, j=0; i<width; i+=wid_incr, j++)
+  for (i = 0, j = 0; i < width; i+=wid_incr, j++)
     {
       tmp_color.flags = DoRed | DoGreen | DoBlue;
       tmp_color.red = red_init; red_init += red_incr;

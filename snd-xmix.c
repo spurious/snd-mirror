@@ -12,9 +12,9 @@ static void update_mix_panel(int mix_id);
 
 /* ---------------- SPEED ---------------- */
 
-static char speed_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
+static char speed_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
 #define SPEED_SCROLLBAR_MAX 1000
-static Widget w_speed_number,w_speed_label,w_speed;
+static Widget w_speed_number, w_speed_label, w_speed;
 static Float current_speed = 1.0;
 
 static void change_mix_speed(int mix_id, Float val)
@@ -77,10 +77,10 @@ static void Speed_ValueChanged_Callback(Widget w, XtPointer context, XtPointer i
 
 /* ---------------- AMP ---------------- */
 
-static Widget *w_amp_numbers,*w_amp_labels,*w_amps;
+static Widget *w_amp_numbers, *w_amp_labels, *w_amps;
 static Float *current_amps;
 static int chans_allocated = 0;
-static char amp_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
+static char amp_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
 
 static int allocate_amps(int chans)
 {
@@ -103,7 +103,7 @@ static int allocate_amps(int chans)
 	  w_amp_labels = (Widget *)REALLOC(w_amp_labels, chans * sizeof(Widget));
 	  w_amps = (Widget *)REALLOC(w_amps, chans * sizeof(Widget));
 	  current_amps = (Float *)REALLOC(current_amps, chans * sizeof(Float));
-	  for (i=chans_allocated; i<chans; i++)
+	  for (i = chans_allocated; i < chans; i++)
 	    {
 	      w_amp_numbers[i] = NULL;
 	      w_amp_labels[i] = NULL;
@@ -149,7 +149,7 @@ static Float int_amp_to_Float(int amp)
 
 static void Amp_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  int ival,chan;
+  int ival, chan;
   snd_state *ss = (snd_state *)context;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
@@ -160,7 +160,7 @@ static void Amp_Drag_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void Amp_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  int ival,chan;
+  int ival, chan;
   snd_state *ss = (snd_state *)context;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
@@ -193,7 +193,7 @@ static int mix_amp_to_int(Float amp, int chan)
 
 /* ---------------- AMP ENV ---------------- */
 
-static Widget w_env_frame,w_env;
+static Widget w_env_frame, w_env;
 static chan_info *axis_cp = NULL;
 static axis_context *ax = NULL;
 static GC cur_gc;
@@ -227,7 +227,7 @@ static void Mix_Amp_Env_Resize(Widget w, XtPointer context, XtPointer info)
 
 /* ---------------- MIX PANEL ---------------- */
 
-static Widget w_id=NULL,w_name=NULL,w_beg=NULL,w_track=NULL,w_play=NULL;
+static Widget w_id = NULL, w_name = NULL, w_beg = NULL, w_track = NULL, w_play = NULL;
 
 static void track_activated(snd_state *ss)
 {
@@ -361,12 +361,12 @@ static unsigned char p_speaker_bits[] = {
 
 void make_mix_panel(snd_state *ss) 
 {
-  Widget mainform,w_row,last_label,last_number,w_track_label,w_id_label;
+  Widget mainform, w_row, last_label, last_number, w_track_label, w_id_label;
   Pixmap speaker_r;
-  XmString xdismiss,xhelp,xtitle,s1;
-  int n,chans,i;
+  XmString xdismiss, xhelp, xtitle, s1;
+  int n, chans, i;
   Arg args[20];
-  XtCallbackList n1,n2;
+  XtCallbackList n1, n2;
   GC gc;
   int depth;
   XGCValues v;
@@ -472,7 +472,7 @@ void make_mix_panel(snd_state *ss)
 
       /* SRATE */
       n = 0;
-      s1=XmStringCreate(STR_speed, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate(STR_speed, XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -528,11 +528,11 @@ void make_mix_panel(snd_state *ss)
       /* now amp scalers */
 
       chans = allocate_amps(8);
-      for (i=0; i<chans; i++)
+      for (i = 0; i < chans; i++)
 	{
 	  n = 0;
 	  sprintf(amplab, "amp %d:", i);
-	  s1=XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
+	  s1 = XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -551,7 +551,7 @@ void make_mix_panel(snd_state *ss)
 	  XmStringFree(s1);
 
 	  n = 0;
-	  s1=XmStringCreate(amp_number_buffer, XmFONTLIST_DEFAULT_TAG);
+	  s1 = XmStringCreate(amp_number_buffer, XmFONTLIST_DEFAULT_TAG);
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -627,7 +627,7 @@ static void update_mix_panel(int mix_id)
 {
   snd_state *ss;
   chan_info *cp;
-  int i,chans,beg,len;
+  int i, chans, beg, len;
   Float val;
   char lab[32];
   ss = get_global_state();
@@ -665,7 +665,7 @@ static void update_mix_panel(int mix_id)
       chans = mix_input_chans_from_id(mix_id);
       if (chans > 8) chans = 8; /* TODO: fix this! */
 
-      for (i=0; i<chans; i++)
+      for (i = 0; i < chans; i++)
 	{
 	  if (!(XtIsManaged(w_amp_labels[i]))) XtManageChild(w_amp_labels[i]);
 	  if (!(XtIsManaged(w_amp_numbers[i]))) XtManageChild(w_amp_numbers[i]);
@@ -677,7 +677,7 @@ static void update_mix_panel(int mix_id)
 	      current_amps[i] = val;
 	    }
 	}
-      for (i=chans; i<chans_allocated; i++)
+      for (i = chans; i < chans_allocated; i++)
 	{
 	  if ((w_amp_labels[i]) && (XtIsManaged(w_amp_labels[i])))
 	    {

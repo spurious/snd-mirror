@@ -144,14 +144,14 @@ int number_width(axis_context *ax, char *num)
 
 int number_height(axis_context *ax)
 {
-  gint lb,rb,asc,des,wid;
+  gint lb, rb, asc, des, wid;
   gdk_text_extents(AXIS_NUMBERS_FONT(ax->ss), "1", 1, &lb, &rb, &wid, &asc, &des);
   return(asc+des);
 }
 
 int label_height(axis_context *ax)
 {
-  gint lb,rb,asc,des,wid;
+  gint lb, rb, asc, des, wid;
   gdk_text_extents(AXIS_LABEL_FONT(ax->ss), "1", 1, &lb, &rb, &wid, &asc, &des);
   return(asc+des);
 }
@@ -205,7 +205,7 @@ void set_backgrounds(GtkWidget *w, GdkColor *col)
   GtkStyle *style;
   int i;
   style = gtk_style_copy(gtk_widget_get_style(w));
-  for (i=0; i<5; i++)
+  for (i = 0; i < 5; i++)
     {
       style->bg[i].pixel = col->pixel;
       style->bg[i].red = col->red;

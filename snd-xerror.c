@@ -51,7 +51,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
 void add_to_error_history(snd_state *ss, char *msg, int popup)
 {
 #if HAVE_STRFTIME
-  char *tim,*buf;
+  char *tim, *buf;
   time_t ts;
 #endif
   int pos;
@@ -112,15 +112,15 @@ void show_snd_errors(snd_state *ss)
 
 static int yes_or_no = 0;
 
-static void YesCallback(Widget w, XtPointer clientData, XtPointer callData) {yes_or_no = 1;}
-static void NoCallback(Widget w, XtPointer clientData, XtPointer callData) {yes_or_no = 0;}
+static void YesCallback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 1;}
+static void NoCallback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 0;}
 
 int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 {
   static Widget yes_or_no_dialog = NULL;
   Arg args[20];
   int n;
-  XmString titlestr,error_msg,xmstr1,xmstr2;
+  XmString titlestr, error_msg, xmstr1, xmstr2;
 
   char *yes_buf;
 #if HAVE_VPRINTF
@@ -137,8 +137,8 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   if (!yes_or_no_dialog)
     {
       titlestr = XmStringCreate(STR_Big_Trouble, XmFONTLIST_DEFAULT_TAG);
-      xmstr1=XmStringCreate(STR_Yes, XmFONTLIST_DEFAULT_TAG);
-      xmstr2=XmStringCreate(STR_No, XmFONTLIST_DEFAULT_TAG);
+      xmstr1 = XmStringCreate(STR_Yes, XmFONTLIST_DEFAULT_TAG);
+      xmstr2 = XmStringCreate(STR_No, XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

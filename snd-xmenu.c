@@ -2,37 +2,37 @@
 #include <X11/cursorfont.h>
 
 enum {menu_menu,
-        file_menu,f_cascade_menu,
-          f_open_menu,f_close_menu,f_save_menu,f_save_as_menu,f_revert_menu,f_exit_menu,f_new_menu,
-          f_view_menu,f_print_menu,f_mix_menu,f_update_menu,f_record_menu,f_sep_menu,
-        edit_menu,e_cascade_menu,
-          e_cut_menu,e_paste_menu,e_mix_menu,e_play_menu,e_save_as_menu,e_undo_menu,
-          e_redo_menu,e_find_menu,e_edenv_menu,e_header_menu,e_select_all_menu,
-          e_select_sep_menu,e_edit_sep_menu,
-        help_menu,h_cascade_menu,
-          h_click_for_help_menu,h_about_snd_menu,h_fft_menu,h_find_menu,h_undo_menu,h_sync_menu,h_speed_menu,
-          h_expand_menu,h_contrast_menu,h_reverb_menu,h_env_menu,h_marks_menu,h_sound_files_menu,h_init_file_menu,
-          h_mix_menu,h_recording_menu,h_clm_menu,h_news_menu,
-        option_menu,o_cascade_menu,
+        file_menu, f_cascade_menu,
+          f_open_menu, f_close_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
+          f_view_menu, f_print_menu, f_mix_menu, f_update_menu, f_record_menu, f_sep_menu,
+        edit_menu, e_cascade_menu,
+          e_cut_menu, e_paste_menu, e_mix_menu, e_play_menu, e_save_as_menu, e_undo_menu,
+          e_redo_menu, e_find_menu, e_edenv_menu, e_header_menu, e_select_all_menu,
+          e_select_sep_menu, e_edit_sep_menu,
+        help_menu, h_cascade_menu,
+          h_click_for_help_menu, h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_speed_menu,
+          h_expand_menu, h_contrast_menu, h_reverb_menu, h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
+          h_mix_menu, h_recording_menu, h_clm_menu, h_news_menu,
+        option_menu, o_cascade_menu,
           o_transform_menu,
-          o_focus_style_menu,o_focus_cascade_menu,
-            o_focus_right_menu,o_focus_left_menu,o_focus_middle_menu,o_focus_active_menu,
-          o_save_menu,o_save_state_menu,
-          o_speed_menu,o_speed_cascade_menu,
-            o_speed_float_menu,o_speed_ratio_menu,o_speed_semitone_menu,
+          o_focus_style_menu, o_focus_cascade_menu,
+            o_focus_right_menu, o_focus_left_menu, o_focus_middle_menu, o_focus_active_menu,
+          o_save_menu, o_save_state_menu,
+          o_speed_menu, o_speed_cascade_menu,
+            o_speed_float_menu, o_speed_ratio_menu, o_speed_semitone_menu,
           o_stats_menu,
-        view_menu,v_cascade_menu,
+        view_menu, v_cascade_menu,
           v_normalize_menu, 
           v_graph_style_menu, v_graph_style_cascade_menu,
-            v_lines_menu,v_dots_menu,v_filled_menu,v_dots_and_lines_menu,v_lollipops_menu,
+            v_lines_menu, v_dots_menu, v_filled_menu, v_dots_and_lines_menu, v_lollipops_menu,
           v_zero_menu, v_cursor_menu, v_ctrls_menu, v_listener_menu,
           v_region_menu,
           v_combine_menu, v_combine_cascade_menu,
-            v_combine_separate_menu,v_combine_combined_menu,v_combine_superimposed_menu,
+            v_combine_separate_menu, v_combine_combined_menu, v_combine_superimposed_menu,
           v_color_menu, v_orientation_menu, 
           v_files_menu, v_mix_panel_menu,
-          v_x_axis_menu,v_x_axis_cascade_menu,
-            v_x_axis_seconds_menu,v_x_axis_samples_menu,v_x_axis_percentage_menu,
+          v_x_axis_menu, v_x_axis_cascade_menu,
+            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu,
           v_error_history_menu,
           v_sep2_menu
 };
@@ -40,7 +40,7 @@ enum {menu_menu,
 #define NUM_MENU_WIDGETS 99
 static Widget mw[NUM_MENU_WIDGETS];
 
-enum {W_pop_menu,W_pop_sep,W_pop_play,W_pop_undo,W_pop_redo,W_pop_save,W_pop_normalize,W_pop_info};
+enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_normalize, W_pop_info};
 #define NUM_POPUP_CHILDREN 8
 static Widget popup_menu = NULL;
 static Widget popup_children[NUM_POPUP_CHILDREN];
@@ -526,7 +526,7 @@ Widget add_menu(snd_state *ss)
   static Arg in_args[12];
   static Arg high_args[12];
   Arg sep_args[12];
-  int in_n,n,high_n,main_n,start_high_n,k,j,p;
+  int in_n, n, high_n, main_n, start_high_n, k, j, p;
   /* this mainly passes the global data pointer (ss) to all the menu-related callbacks */
   
   in_n = 0;
@@ -606,7 +606,7 @@ Widget add_menu(snd_state *ss)
   XtAddCallback(mw[f_print_menu], XmNactivateCallback, File_Print_Callback_1, ss);
   XtVaSetValues(mw[f_print_menu], XmNmnemonic, 'P', NULL);
 
-  j=0;
+  j = 0;
   if (!(ss->using_schemes)) {XtSetArg(sep_args[j], XmNbackground, (ss->sgx)->basic_color); j++;}
   XtSetArg(sep_args[j], XmNseparatorType, XmSHADOW_ETCHED_IN); j++;
   mw[f_sep_menu] = XtCreateManagedWidget("", xmSeparatorWidgetClass, mw[file_menu], sep_args, j);
@@ -713,7 +713,7 @@ Widget add_menu(snd_state *ss)
 
   mw[v_graph_style_menu] = XmCreatePulldownMenu(mw[view_menu], "graph-style", main_args, main_n);
 
-  k=main_n;
+  k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, mw[v_graph_style_menu]); k++;
   mw[v_graph_style_cascade_menu] = XtCreateManagedWidget(STR_Graph_style, xmCascadeButtonWidgetClass, mw[view_menu], main_args, k);
 
@@ -742,7 +742,7 @@ Widget add_menu(snd_state *ss)
 
   mw[v_combine_menu] = XmCreatePulldownMenu(mw[view_menu], "combine", main_args, main_n);
 
-  k=main_n;
+  k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, mw[v_combine_menu]); k++;
   mw[v_combine_cascade_menu] = XtCreateManagedWidget(STR_Channel_style, xmCascadeButtonWidgetClass, mw[view_menu], main_args, k);
 
@@ -768,7 +768,7 @@ Widget add_menu(snd_state *ss)
 
   mw[v_x_axis_menu] = XmCreatePulldownMenu(mw[view_menu], "xaxis", main_args, main_n);
 
-  k=main_n;
+  k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, mw[v_x_axis_menu]); k++;
   mw[v_x_axis_cascade_menu] = XtCreateManagedWidget(STR_X_axis_units, xmCascadeButtonWidgetClass, mw[view_menu], main_args, k);
 
@@ -803,7 +803,7 @@ Widget add_menu(snd_state *ss)
 
   mw[o_speed_menu] = XmCreatePulldownMenu(mw[option_menu], "speedstyle", main_args, main_n);
 
-  k=main_n;
+  k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, mw[o_speed_menu]); k++;
   mw[o_speed_cascade_menu] = XtCreateManagedWidget(STR_Speed_style, xmCascadeButtonWidgetClass, mw[option_menu], main_args, k);
 
@@ -819,7 +819,7 @@ Widget add_menu(snd_state *ss)
 
   mw[o_focus_style_menu] = XmCreatePulldownMenu(mw[option_menu], "focusstyle", main_args, main_n);
 
-  k=main_n;
+  k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, mw[o_focus_style_menu]); k++;
   mw[o_focus_cascade_menu] = XtCreateManagedWidget(STR_Focus_style, xmCascadeButtonWidgetClass, mw[option_menu], main_args, k);
 
@@ -951,7 +951,7 @@ static char *main_menu_name(int callb)
 static int callb2option(int callb)
 {
   int i;
-  for (i=0; i<added_options_pos; i++)
+  for (i = 0; i < added_options_pos; i++)
     if (added_options_callb[i] == callb)
       return(i);
   return(-1);
@@ -959,7 +959,7 @@ static int callb2option(int callb)
 
 static void SND_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  int callb,opt;
+  int callb, opt;
   XtVaGetValues(w, XmNuserData, &callb, NULL);
   opt = callb2option(callb);
   IF_MENU_HOOK(main_menu_name(opt), added_options_names[(opt < 0) ? 0 : opt])
@@ -990,7 +990,7 @@ static void add_option(Widget w, int which_menu, char *label, int callb)
 	  added_options_names = (char **)REALLOC(added_options_names, added_options_size * sizeof(char *));
 	  added_options_menus = (int *)REALLOC(added_options_menus, added_options_size * sizeof(int));
 	  added_options_callb = (int *)REALLOC(added_options_callb, added_options_size * sizeof(int));
-	  for (i=added_options_pos; i<added_options_size; i++) 
+	  for (i = added_options_pos; i < added_options_size; i++) 
 	    {
 	      added_options[i] = NULL;
 	      added_options_callb[i] = 0;
@@ -1011,7 +1011,7 @@ static int remove_option(int which_menu, char *label)
    *         (this requires that the cascade widget also be saved, at least -- 
    *          simply unmanaging added_menus[which_menu] doesn't work).
    */
-  for (i=0; i<added_options_pos; i++)
+  for (i = 0; i < added_options_pos; i++)
     {
       if ((added_options_menus[i] == which_menu) && (strcmp(label, added_options_names[i]) == 0) && (added_options[i]))
 	{
@@ -1103,7 +1103,7 @@ static int remove_option(int which_menu, char *label)
 int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
 {
   int i;
-  for (i=0; i<added_options_pos; i++)
+  for (i = 0; i < added_options_pos; i++)
     {
       if ((added_options_menus[i] == which_menu) && (strcmp(old_label, added_options_names[i]) == 0) && (added_options[i]))
 	{
@@ -1119,7 +1119,7 @@ int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
 int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
 {
   int i;
-  for (i=0; i<added_options_pos; i++)
+  for (i = 0; i < added_options_pos; i++)
     {
       if ((added_options_menus[i] == which_menu) && (strcmp(old_label, added_options_names[i]) == 0) && (added_options[i]))
 	{
@@ -1133,7 +1133,7 @@ int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
 int gh_menu_is_sensitive(int which_menu, char *old_label)
 {
   int i;
-  for (i=0; i<added_options_pos; i++)
+  for (i = 0; i < added_options_pos; i++)
     {
       if ((added_options_menus[i] == which_menu) && (strcmp(old_label, added_options_names[i]) == 0) && (added_options[i]))
 	{
@@ -1146,7 +1146,7 @@ int gh_menu_is_sensitive(int which_menu, char *old_label)
 int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
 {
   static Arg args[12];
-  Widget m,cas;
+  Widget m, cas;
   int n;
 
   if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, FALSE, NULL);
@@ -1176,7 +1176,7 @@ int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
 
 int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
 {
-  Widget m,menw;
+  Widget m, menw;
   static Arg args[12];
   int n;
   switch (which_menu)
@@ -1314,14 +1314,14 @@ static SCM g_test_menus(void)
   snd_state *ss;
   ss = get_global_state();
 #ifndef SGI
-  for (i=0; i<NUM_MENU_WIDGETS; i++)
+  for (i = 0; i < NUM_MENU_WIDGETS; i++)
     if ((mw[i]) && (XmIsPushButton(mw[i])) && (XtIsSensitive(mw[i])) &&
 	(i != f_exit_menu) && (i != f_save_menu) && (i != f_close_menu) &&
 	(i != f_new_menu) && (i != h_click_for_help_menu) && (i != v_mix_panel_menu))
       XtCallCallbacks(mw[i], XmNactivateCallback, (void *)ss);
   /* test_all_dialogs(ss); */
 #endif
-  for (i=0; i<added_options_pos; i++)
+  for (i = 0; i < added_options_pos; i++)
     if ((added_options[i]) && (XmIsPushButton(mw[i])) && (XtIsSensitive(mw[i])))
       XtCallCallbacks(added_options[i], XmNactivateCallback, (void *)ss);
   dismiss_all_dialogs(ss);

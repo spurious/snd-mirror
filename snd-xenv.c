@@ -3,12 +3,12 @@
 /* envelope editor and viewer */
 
 static Widget enved_dialog = NULL;
-static Widget mainform,applyB,apply2B,cancelB,drawer,colB,colF,showB,saveB,revertB,undoB,redoB,printB,brkptL,graphB,fltB,ampB,srcB,rbrow,clipB;
-static Widget nameL,textL,screnvlst,screnvname,dBB,orderL, revrow,deleteB;
-static Widget expB,linB,lerow,baseScale,baseLabel,baseValue,baseSep,selectionB,mixB,selrow,unrow,saverow;
-static GC gc,rgc,ggc;
+static Widget mainform, applyB, apply2B, cancelB, drawer, colB, colF, showB, saveB, revertB, undoB, redoB, printB, brkptL, graphB, fltB, ampB, srcB, rbrow, clipB;
+static Widget nameL, textL, screnvlst, screnvname, dBB, orderL, revrow, deleteB;
+static Widget expB, linB, lerow, baseScale, baseLabel, baseValue, baseSep, selectionB, mixB, selrow, unrow, saverow;
+static GC gc, rgc, ggc;
 
-static char *env_names[3] = {STR_amp_env_p,STR_flt_env_p,STR_src_env_p};
+static char *env_names[3] = {STR_amp_env_p, STR_flt_env_p, STR_src_env_p};
 
 static int showing_all_envs = 0; /* edit one env (0), or view all currently defined envs (1) */
 static int apply_to_selection = 0;
@@ -48,7 +48,7 @@ chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax,
 static void display_env(snd_state *ss, env *e, char *name, GC cur_gc, 
 			int x0, int y0, int width, int height, int dots)
 {
-  axis_context *ax=NULL;  
+  axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ax->wn = XtWindow(drawer);
   ax->dp = XtDisplay(drawer);
@@ -83,17 +83,17 @@ void set_enved_show_sensitive(int val) {set_sensitive(showB, val);}
 void make_scrolled_env_list (snd_state *ss)
 {
   XmString *strs;
-  int n,size;
+  int n, size;
   size = enved_all_envs_top();
   if (!(ss->using_schemes)) XtVaSetValues(screnvlst, XmNbackground, (ss->sgx)->highlight_color, NULL); 
   strs = (XmString *)CALLOC(size, sizeof(XmString)); 
-  for (n=0; n<size; n++) 
+  for (n = 0; n < size; n++) 
     strs[n] = XmStringCreate(enved_all_names(n), "button_font");
   XtVaSetValues(screnvlst, 
 		XmNitems, strs, 
 		XmNitemCount, size, 
 		NULL);
-  for (n=0; n<size; n++) 
+  for (n = 0; n < size; n++) 
     XmStringFree(strs[n]);
   FREE(strs);
 }
@@ -134,7 +134,7 @@ static int within_selection_src = 0;
 
 static void apply_enved(snd_state *ss)
 {
-  int mix_id = 0,i,j,chan;
+  int mix_id = 0, i, j, chan;
   env *max_env = NULL;
   snd_info *sp;
   if (active_env)
@@ -180,7 +180,7 @@ static void apply_enved(snd_state *ss)
 	    case SRATE_ENV:
 	      /* mus_src no longer protects against 0 srate */
 	      max_env = copy_env(active_env);
-	      for (i=0, j=1; i<max_env->pts; i++, j+=2)
+	      for (i = 0, j = 1; i < max_env->pts; i++, j+=2)
 		if (max_env->data[j] < .01) 
 		  max_env->data[j] = .01;
 	      within_selection_src = 1;
@@ -226,7 +226,7 @@ void env_redisplay(snd_state *ss)
 static void order_field_activated(snd_state *ss)
 {
   /* return in order text field */
-  char *str=NULL;
+  char *str = NULL;
   int order;
   str = XmTextGetString(orderL);
   if ((str) && (*str))
@@ -242,7 +242,7 @@ static void order_field_activated(snd_state *ss)
 
 static void text_field_activated(snd_state *ss)
 { /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
-  char *name = NULL,*str;
+  char *name = NULL, *str;
   env *e = NULL;
   name = XmTextGetString(textL);
   if ((name) && (*name))
@@ -437,7 +437,7 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
   XMotionEvent *ev = (XMotionEvent *)event;
   TIME_TYPE motion_time;
   axis_info *ap;
-  Float x0,x1,x,y;
+  Float x0, x1, x, y;
   if (!showing_all_envs)
     {
       motion_time = ev->time;
@@ -632,7 +632,7 @@ static void mix_button_pressed(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   int chan = 0;
-  int mxchan,mix_id=NO_SELECTION;
+  int mxchan, mix_id = NO_SELECTION;
   apply_to_mix = (!apply_to_mix);
   if (apply_to_mix) 
     {
@@ -693,11 +693,11 @@ mix, or the entire current sound, or the current selection.\n\
 
 static void delete_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
-  int i,len;
+  int i, len;
   if (selected_env)
     {
       len = enved_all_envs_top();
-      for (i=0; i<len; i++)
+      for (i = 0; i < len; i++)
 	if (selected_env == enved_all_envs(i))
 	  {
 	    delete_envelope((snd_state *)context, enved_all_names(i));
@@ -1027,15 +1027,15 @@ the 'flt' envelope.\n\
 
 static void make_base_label(snd_state *ss, Float bval)
 {
-  char *sfs,*buf;
-  int i,len,scale_len;
+  char *sfs, *buf;
+  int i, len, scale_len;
   len = (int)(enved_power(ss) * 4);
   if (len < 32) len = 32;
   sfs = (char *)CALLOC(len, sizeof(char));
   sprintf(sfs, "%f", bval);
   scale_len = (int)(enved_power(ss) + 3);
   buf = (char *)CALLOC(scale_len, sizeof(char));
-  for (i=0; i<scale_len-1; i++) 
+  for (i = 0; i < scale_len-1; i++) 
     buf[i] = sfs[i];
   set_button_label(baseValue, buf);
   FREE(sfs);
@@ -1061,7 +1061,7 @@ static void base_changed(snd_state *ss, int val)
 	bval = 1.0;
       else
 	{
-	  if (val>BASE_MID)
+	  if (val > BASE_MID)
 	    bval = pow(1.0 + (10.0 * ((Float)(val - BASE_MID) / (Float)BASE_MID)), enved_power(ss));  
 	  else 
 	    bval = pow(((Float)val / (Float)BASE_MID), enved_power(ss) - 1.0);
@@ -1130,10 +1130,10 @@ void create_envelope_editor (snd_state *ss)
 {
   int n;
   Arg args[32];
-  Widget spacer,spacer1,aform;
-  XmString xhelp,xdismiss,xapply,titlestr,s1;
+  Widget spacer, spacer1, aform;
+  XmString xhelp, xdismiss, xapply, titlestr, s1;
   XGCValues gv;
-  XtCallbackList n1,n2;
+  XtCallbackList n1, n2;
   char str[8];
 
   if (!enved_dialog)
@@ -1813,10 +1813,10 @@ void reflect_mix_in_enved(void)
 static env *find_named_env(SCM name)
 {
   char *env_name;
-  int i,len;
+  int i, len;
   env_name = TO_NEW_C_STRING(name);
   len = enved_all_envs_top();
-  for (i=0; i<len; i++)
+  for (i = 0; i < len; i++)
     if (strcmp(env_name, enved_all_names(i)) == 0)
       {
 	free(env_name);

@@ -4,7 +4,7 @@
 #if HAVE_GUILE
 
 typedef struct {
-  int length,chans;
+  int length, chans;
   MUS_SAMPLE_TYPE **data;
 } sound_data;
 

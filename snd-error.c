@@ -130,7 +130,7 @@ static SCM g_snd_warning(SCM msg)
   return(msg);
 }
  
-static SCM snd_error_hook,snd_warning_hook,mus_error_hook;
+static SCM snd_error_hook, snd_warning_hook, mus_error_hook;
 
 #if HAVE_HOOKS
 int ignore_mus_error(int type, char *msg)

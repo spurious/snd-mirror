@@ -180,7 +180,7 @@ void reflect_undo_ok_in_menu(void)
 
 void reflect_undo_or_redo_in_menu(chan_info *cp)
 {
-  int undoable,redoable;
+  int undoable, redoable;
   if ((cp) && (cp->cgx))
     {
       undoable = (cp->edit_ctr > 0);
@@ -265,7 +265,7 @@ static int new_ctr = 0;
 
 void new_file_from_menu(snd_state *ss)
 {
-  char *new_file_name = NULL,*extension = NULL, *new_comment = NULL;
+  char *new_file_name = NULL, *extension = NULL, *new_comment = NULL;
   int header_type, data_format, chans, srate;
 #if HAVE_GUILE
   new_file_name = output_name();
@@ -298,7 +298,7 @@ void revert_file_from_menu(snd_state *ss)
   sp = any_selected_sound(ss);
   if (sp)
     {
-      for (i=0; i<sp->nchans; i++) revert_edits(sp->chans[i], NULL);
+      for (i = 0; i < sp->nchans; i++) revert_edits(sp->chans[i], NULL);
       reflect_file_revert_in_label(sp);
       reflect_file_revert_in_menu(ss);
     }
@@ -575,7 +575,7 @@ static int callb = 0;
 
 static int make_callback_slot(void)
 {
-  int old_callb,i;
+  int old_callb, i;
   if (callbacks_size == callb)
     {
       callbacks_size += CALLBACK_INCR;
@@ -588,7 +588,7 @@ static int make_callback_slot(void)
 	{
 	  menu_strings = (char **)REALLOC(menu_strings, callbacks_size * sizeof(char *));
 	  menu_functions = (SCM *)REALLOC(menu_functions, callbacks_size * sizeof(SCM));
-	  for (i=callbacks_size - CALLBACK_INCR;i<callbacks_size;i++)
+	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++)
 	    {
 	      menu_strings[i] = NULL;
 	      menu_functions[i] = 0;
@@ -617,7 +617,7 @@ static void add_callback(int slot, SCM callstr)
 static SCM g_add_to_main_menu(SCM label, SCM callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label &optional callback) adds label to the main (top-level) menu, returning its index"
-  int val,slot=-1;
+  int val, slot=-1;
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG1, S_add_to_main_menu);
   if (gh_procedure_p(callback)) 
     {
@@ -635,7 +635,7 @@ static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
   #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated\n\
    menu is the index returned by add-to-main-menu, func should be a function of no arguments"
 
-  int err=0,slot;
+  int err = 0, slot;
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, S_add_to_menu);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, S_add_to_menu);
   slot = make_callback_slot();

@@ -13,19 +13,19 @@ int check_balance(char *expr, int start, int end)
 {
   /* If you think _this_ is hairy, try doing it for C statements. */
   int i;
-  int non_whitespace_p=0;
-  int paren_count=0;
-  int prev_separator=1;
-  int quote_wait=0;
+  int non_whitespace_p = 0;
+  int paren_count = 0;
+  int prev_separator = 1;
+  int quote_wait = 0;
 
-  i=start;
-  while (i<end) {
+  i = start;
+  while (i < end) {
     switch(expr[i]) {
     case ';' :
       /* skip till newline. */
       do {
 	i++;
-      } while (expr[i]!='\n' && i<end);
+      } while (expr[i]!='\n' && i < end);
       break;
     case ' ':
     case '\n':
@@ -34,7 +34,7 @@ int check_balance(char *expr, int start, int end)
       if (non_whitespace_p && paren_count==0 && !quote_wait) {
 	return i;
       } else {
-	prev_separator=1;
+	prev_separator = 1;
 	i++;
       }
       break;
@@ -46,7 +46,7 @@ int check_balance(char *expr, int start, int end)
 	/* skip past ", ignoring \" */
 	do {
  	  i++;
-	  if (i < end && expr[i]=='\\') {
+	  if (i < end && expr[i] =='\\') {
 	    i++;
 	  }
 	} while (i < end && expr[i]!='\"');
@@ -58,9 +58,9 @@ int check_balance(char *expr, int start, int end)
 	    return 0;
 	  }
 	} else {
-	  prev_separator=1;
-	  non_whitespace_p=1;
-	  quote_wait=0;
+	  prev_separator = 1;
+	  non_whitespace_p = 1;
+	  quote_wait = 0;
 	}
       }
       break;
@@ -69,15 +69,15 @@ int check_balance(char *expr, int start, int end)
 	  !quote_wait) {
 	return i;
       } else {
-	if (prev_separator && i+1<end && expr[i+1]=='{') {
+	if (prev_separator && i+1 < end && expr[i+1] =='{') {
 	  /* skip past }#, ignoring \} */
 	  do {
 	    i++;
-	    if (i < end && expr[i]=='\\') {
+	    if (i < end && expr[i] =='\\') {
 	      i++;
 	    }
-	  } while (i < end && !(expr[i]=='}' && i+1<end
-				&& expr[i+1]=='#'));
+	  } while (i < end && !(expr[i] =='}' && i+1 < end
+				&& expr[i+1] =='#'));
 	  i+=2;
 	  if (paren_count==0) {
 	    if (i < end) {
@@ -86,15 +86,15 @@ int check_balance(char *expr, int start, int end)
 	      return 0;
 	    }
 	  } else {
-	    prev_separator=1;
-	    non_whitespace_p=1;
-	    quote_wait=0;
+	    prev_separator = 1;
+	    non_whitespace_p = 1;
+	    quote_wait = 0;
 	  }
 	  /* MS:FIXME:: Handle #\) properly! */
 	} else {
-	  prev_separator=0;
-	  quote_wait=0;
-	  non_whitespace_p=1;
+	  prev_separator = 0;
+	  quote_wait = 0;
+	  non_whitespace_p = 1;
 	  i++;
 	}
       }
@@ -105,9 +105,9 @@ int check_balance(char *expr, int start, int end)
       } else {
 	i++;
 	paren_count++;
-	non_whitespace_p=1;
-	prev_separator=1;
-	quote_wait=0;
+	non_whitespace_p = 1;
+	prev_separator = 1;
+	quote_wait = 0;
       }
       break;
     case ')' :
@@ -116,27 +116,27 @@ int check_balance(char *expr, int start, int end)
 	return i+1;
       } else {
 	i++;
-	non_whitespace_p=1;
-	prev_separator=1;
-	quote_wait=0;
+	non_whitespace_p = 1;
+	prev_separator = 1;
+	quote_wait = 0;
       }
       break;
     case '\'' :
       if (prev_separator) {
-	non_whitespace_p=1;
-	quote_wait=1;
-	prev_separator=1;
+	non_whitespace_p = 1;
+	quote_wait = 1;
+	prev_separator = 1;
 	i++;
       } else {
-	non_whitespace_p=1;
-	prev_separator=0;
+	non_whitespace_p = 1;
+	prev_separator = 0;
 	i++;
       }
       break;
     default :
-      prev_separator=0;
-      quote_wait=0;
-      non_whitespace_p=1;
+      prev_separator = 0;
+      quote_wait = 0;
+      non_whitespace_p = 1;
       i++;
       break;
     }
@@ -187,10 +187,10 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 {
 #if (!USE_NO_GUI)
   /* try to find complete form either enclosing current cursor, or just before it */
-  GUI_TEXT_POSITION_TYPE new_eot = 0,cmd_eot = 0;
-  char *str = NULL,*full_str = NULL,*prompt;
-  int i,j,slen;
-  int end_of_text,start_of_text,last_position,current_position,parens;
+  GUI_TEXT_POSITION_TYPE new_eot = 0, cmd_eot = 0;
+  char *str = NULL, *full_str = NULL, *prompt;
+  int i, j, slen;
+  int end_of_text, start_of_text, last_position, current_position, parens;
   full_str = GUI_TEXT(w);
   current_position = GUI_TEXT_INSERTION_POSITION(w);
   start_of_text = current_position;
@@ -199,7 +199,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   prompt = listener_prompt(ss);
   if (last_position > end_of_text)
     {
-      for (i=current_position; i<last_position; i++)
+      for (i = current_position; i < last_position; i++)
 	if ((full_str[i+1] == prompt[0]) && 
 	    (full_str[i] == '\n'))
 	  {
@@ -209,7 +209,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
     }
   if (start_of_text > 0)
     {
-      for (i=end_of_text; i>=0; i--)
+      for (i = end_of_text; i >= 0; i--)
 	if ((full_str[i] == prompt[0]) && 
 	    ((i == 0) || 
 	     (full_str[i - 1] == '\n')))
@@ -224,7 +224,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
       parens = 0;
       slen = end_of_text - start_of_text + 2;
       str = (char *)CALLOC(slen, sizeof(char));
-      for (i=start_of_text, j=0; i<=end_of_text; j++, i++) 
+      for (i = start_of_text, j = 0; i <= end_of_text; j++, i++) 
 	{
 	  str[j] = full_str[i]; 
 	  if (str[j] == '(') 
@@ -243,7 +243,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	      if (end_of_text < (slen - 1))
 		str[end_of_text + 1] = 0;
 	      else str[end_of_text] = 0;
-	      if (str[end_of_text] == '\n') str[end_of_text]=0;
+	      if (str[end_of_text] == '\n') str[end_of_text] = 0;
 	      /* fprintf(stderr, "now str: %s ", str); */
 	    }
 	  else
@@ -258,16 +258,16 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
       else
 	{
 	  /* no parens -- pick up closest entity */
-	  int loc,k,len;
+	  int loc, k, len;
 	  char *tmp;
 	  loc = current_position - start_of_text - 1;
-          for (i=loc; i>=0; i--)
+          for (i = loc; i >= 0; i--)
 	    if ((str[i] == '\n') || (i == 0))
 	      {
 		len = snd_strlen(str);
 		tmp = (char *)CALLOC(len+1, sizeof(char));
 		if (i != 0) i++;
-		for (k=0; i<len; i++, k++) 
+		for (k = 0; i < len; i++, k++) 
 		  if ((i > loc) &&
 		      ((str[i] == '\n') || 
 		       (str[i] == ' ')))
@@ -319,16 +319,16 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 {
 #if (!USE_NO_GUI)
-  int i,j,regs,used_bytes=0;
+  int i, j, regs, used_bytes = 0;
   GUI_TEXT_POSITION_TYPE pos;
   int vals[2];
   snd_info *sp;
   chan_info *cp;
-  char *str,*r0 = NULL,*r1 = NULL;
+  char *str, *r0 = NULL, *r1 = NULL;
   GUI_SET_TEXT(stats_form, "file chn: mem(#bufs), main, temp(#files), amp envs\n\n");
-  for (i=0; i<ss->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     if ((sp = ((snd_info *)(ss->sounds[i]))) &&	(sp->inuse))
-      for (j=0; j<(sp->nchans); j++)
+      for (j = 0; j<(sp->nchans); j++)
 	if ((cp = ((chan_info *)(sp->chans[j]))) && (cp->stats))
 	  {
 	    pos = GUI_TEXT_END(stats_form);
@@ -354,7 +354,7 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 #if HAVE_MALLINFO
   {
     struct mallinfo mall;
-    char *m0 = NULL,*m1 = NULL,*m2 = NULL,*m3 = NULL;
+    char *m0 = NULL, *m1 = NULL, *m2 = NULL, *m3 = NULL;
     mall = mallinfo();
     str = (char *)CALLOC(256, sizeof(char));
     sprintf(str, "\nmalloc: %s + %s (in use: %s, freed: %s)\n",
@@ -384,13 +384,20 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
     if (gh_list_p(stats))
       {
 	str = (char *)CALLOC(2048,sizeof(char));
-	sprintf(str,
-		"\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %d (%d gc'd)\n  heap size: %d",
-		(float)TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(0)))) * 1000.0 / (float)CLOCKS_PER_SEC,
-		TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(5)))),
-		TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(1)))),
-		TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(9)))),
-		TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(2)))));
+	if (gh_length(stats) > 7)
+	  sprintf(str,
+		  "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %d (%d gc'd)\n  heap size: %d",
+		  (float)TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(0)))) * 1000.0 / (float)CLOCKS_PER_SEC, /* gc_time_taken */
+		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(5)))),     /* times */
+		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(1)))),     /* cells allocated */
+		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(9)))),     /* cells swept */
+		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(2)))));    /* heap size */
+	else
+	  sprintf(str,
+		  "\nGuile:\n  gc time: %.2f secs\n  cells: %d\n  heap size: %d",
+		  (float)TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(0)))) * 1000.0 / (float)CLOCKS_PER_SEC,
+		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(1)))),
+		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(2)))));
 	pos = GUI_TEXT_END(stats_form);
 	GUI_STATS_TEXT_INSERT(stats_form, pos, str);
 	FREE(str);
@@ -399,4 +406,3 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 #endif
 #endif
 }
-

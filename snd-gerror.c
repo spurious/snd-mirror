@@ -5,19 +5,19 @@
 static GtkWidget *snd_error_dialog = NULL;
 static GtkWidget *snd_error_history = NULL;
 
-static void dismiss_snd_error(GtkWidget *w, gpointer clientData)
+static void dismiss_snd_error(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(snd_error_dialog);
 }
 
-static void delete_snd_error(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void delete_snd_error(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(snd_error_dialog);
 }
 
 static void create_snd_error_dialog(snd_state *ss, int popup)
 {
-  GtkWidget *ok_button,*table;
+  GtkWidget *ok_button, *table;
   GtkWidget *hscrollbar;
   GtkWidget *vscrollbar;
 
@@ -69,7 +69,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
 void add_to_error_history(snd_state *ss, char *msg, int popup)
 {
 #if HAVE_STRFTIME
-  char *tim,*buf;
+  char *tim, *buf;
   time_t ts;
 #endif
   int pos;
@@ -117,13 +117,13 @@ static int yes_or_no = 0;
 static GtkWidget *yes_or_no_dialog = NULL;
 static GtkWidget *yn_label;
 
-static void YesCallback(GtkWidget *w, gpointer clientData) {gtk_widget_hide(yes_or_no_dialog); yes_or_no=1;}
-static void NoCallback(GtkWidget *w, gpointer clientData) {gtk_widget_hide(yes_or_no_dialog); yes_or_no=0;}
-static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer clientData) {gtk_widget_hide(yes_or_no_dialog); yes_or_no=1;}
+static void YesCallback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 1;}
+static void NoCallback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 0;}
+static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 1;}
 
 int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 {
-  GtkWidget *yes_button,*no_button;
+  GtkWidget *yes_button, *no_button;
 
   char *yes_buf;
 #if HAVE_VPRINTF

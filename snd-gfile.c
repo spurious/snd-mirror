@@ -67,7 +67,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
 
 static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, int location, char *comment)
 {
-  int i,chars;
+  int i, chars;
   char **fl = NULL;
   char *str;
   snd_state *ss;
@@ -79,7 +79,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   gtk_clist_select_row(GTK_CLIST(fdat->header_list), fdat->header_pos, 0);
   gtk_signal_handler_unblock_by_data(GTK_OBJECT(fdat->header_list), (gpointer)ss);
   gtk_clist_clear(GTK_CLIST(fdat->format_list));
-  for (i=0; i<fdat->formats; i++) 
+  for (i = 0; i < fdat->formats; i++) 
     {
       str = fl[i];
       gtk_clist_insert(GTK_CLIST(fdat->format_list), i, &str);
@@ -213,12 +213,12 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
     }
 }
 
-static void file_open_dialog_dismiss(GtkWidget *w, gpointer clientData)
+static void file_open_dialog_dismiss(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(open_dialog);
 }
 
-static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(open_dialog);
 }
@@ -236,7 +236,7 @@ void make_open_file_dialog(snd_state *ss)
 
 /* -------- file data choices -------- */
 
-static void save_as_header_type_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer clientData)
+static void save_as_header_type_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   file_data *fd;
   fd = (file_data *)gtk_object_get_user_data(GTK_OBJECT(w));
@@ -251,7 +251,7 @@ static void save_as_header_type_Callback(GtkWidget *w, gint row, gint column, Gd
     }
 }
 
-static void save_as_data_format_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer clientData)
+static void save_as_data_format_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   file_data *fd;
   fd = (file_data *)gtk_object_get_user_data(GTK_OBJECT(w));
@@ -261,8 +261,8 @@ static void save_as_data_format_Callback(GtkWidget *w, gint row, gint column, Gd
 
 file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
 {
-  GtkWidget *form,*hlab,*dlab,*slab,*clab,*comment_label,*loclab,
-    *hscroll,*dscroll,*scbox,*combox,*table,*hscrollbar,*vscrollbar;
+  GtkWidget *form, *hlab, *dlab, *slab, *clab, *comment_label, *loclab,
+    *hscroll, *dscroll, *scbox, *combox, *table, *hscrollbar, *vscrollbar;
   file_data *fdat;
   int i;
   int dformats = 0;
@@ -289,7 +289,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, i
   gtk_clist_set_shadow_type(GTK_CLIST(fdat->header_list), GTK_SHADOW_ETCHED_IN);
   gtk_clist_column_titles_passive(GTK_CLIST(fdat->header_list));
 
-  for (i=0; i<num_header_types(); i++) 
+  for (i = 0; i < num_header_types(); i++) 
     {
       str = header_short_name(i);
       gtk_clist_append(GTK_CLIST(fdat->header_list), &str);
@@ -317,7 +317,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, i
   gtk_clist_set_shadow_type(GTK_CLIST(fdat->format_list), GTK_SHADOW_ETCHED_IN);
   gtk_clist_column_titles_passive(GTK_CLIST(fdat->format_list));
 
-  for (i=0; i<dformats; i++) 
+  for (i = 0; i < dformats; i++) 
     {
       str = formats[i];
       gtk_clist_append(GTK_CLIST(fdat->format_list), &str);
@@ -433,9 +433,9 @@ static char *last_save_as_filename = NULL;
 
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
 {
-  char *str = NULL,*comment=NULL;
+  char *str = NULL, *comment = NULL;
   int result;
-  int type,format,srate;
+  int type, format, srate;
   snd_info *sp;
   snd_state *ss = (snd_state *)data;
   str = gtk_entry_get_text(GTK_ENTRY(save_as_file_data->srate_text));
@@ -456,7 +456,7 @@ static void save_as_cancel_callback(GtkWidget *w, gpointer data)
   gtk_widget_hide(save_as_dialog);
 } 
 
-static void save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(save_as_dialog);
 }
@@ -534,8 +534,8 @@ void make_edit_save_as_dialog(snd_state *ss)
 
 ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *second_str, char *main_str, int pad, int with_sort, int with_pane)
 {
-  GtkWidget *rlw,*sep1,*cww,*phbox;
-  GtkWidget *smenu,*sbar,*sitem;
+  GtkWidget *rlw, *sep1, *cww, *phbox;
+  GtkWidget *smenu, *sbar, *sitem;
   ww_info *wwi;
 
   wwi = (ww_info *)CALLOC(1, sizeof(ww_info));
@@ -672,7 +672,7 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
 
 static GtkWidget *view_files_dialog = NULL;
 static int vf_selected_file = -1;
-static GtkWidget *vf_curww,*vf_prevlst,*vf_curlst,*vf_prevww;
+static GtkWidget *vf_curww, *vf_prevlst, *vf_curlst, *vf_prevww;
 
 static regrow **cur_name_row = NULL;
 static regrow **prev_name_row = NULL;
@@ -685,7 +685,7 @@ void make_cur_name_row(int old_size, int new_size)
   else 
     {
       cur_name_row = (regrow **)REALLOC(cur_name_row, new_size * sizeof(regrow *));
-      for (i=old_size; i<new_size; i++) cur_name_row[i] = NULL;
+      for (i = old_size; i < new_size; i++) cur_name_row[i] = NULL;
     }
 }
 
@@ -697,7 +697,7 @@ void make_prev_name_row(int old_size, int new_size)
   else 
     {
       prev_name_row = (regrow **)REALLOC(prev_name_row, new_size * sizeof(regrow *));
-      for (i=old_size; i<new_size; i++) prev_name_row[i] = NULL;
+      for (i = old_size; i < new_size; i++) prev_name_row[i] = NULL;
     }
 }
 
@@ -711,60 +711,60 @@ void view_curfiles_set_row_name(int pos)
   FREE(str);
 }
 
-static void View_Files_Help_Callback(GtkWidget *w, gpointer clientData) 
+static void View_Files_Help_Callback(GtkWidget *w, gpointer context) 
 {
-  view_files_dialog_help((snd_state *)clientData);
+  view_files_dialog_help((snd_state *)context);
 }
 
-static void View_Files_Dismiss_Callback(GtkWidget *w, gpointer clientData) 
-{
-  gtk_widget_hide(view_files_dialog);
-}
-
-static void View_Files_Delete_Callback(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void View_Files_Dismiss_Callback(GtkWidget *w, gpointer context) 
 {
   gtk_widget_hide(view_files_dialog);
 }
 
-static void View_Files_Clear_Callback(GtkWidget *w, gpointer clientData) 
+static void View_Files_Delete_Callback(GtkWidget *w, GdkEvent *event, gpointer context)
+{
+  gtk_widget_hide(view_files_dialog);
+}
+
+static void View_Files_Clear_Callback(GtkWidget *w, gpointer context) 
 {
   /* clear previous files list and associated widget list */
-  clear_prevlist((snd_state *)clientData);
+  clear_prevlist((snd_state *)context);
 }
 
-static void View_Files_Update_Callback(GtkWidget *w, gpointer clientData) 
+static void View_Files_Update_Callback(GtkWidget *w, gpointer context) 
 {
   /* run through previous files list looking for any that have been deleted behind our back */
-  update_prevlist((snd_state *)clientData);
+  update_prevlist((snd_state *)context);
 }
 
-static void View_CurFiles_Save_Callback(GtkWidget *w, gpointer clientData) 
+static void View_CurFiles_Save_Callback(GtkWidget *w, gpointer context) 
 {
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   view_curfiles_save(r->ss, r->pos);
   set_toggle_button(r->sv, FALSE, FALSE, (void *)r);
 }
 
 void set_file_browser_play_button(char *name, int state)
 {
-  int i,list;
+  int i, list;
   regrow *r;
   list = 0;
   if (file_dialog_is_active())
     {
-      i=find_curfile_regrow(name); 
-      if (i != -1) list = 1; else i=find_prevfile_regrow(name);
+      i = find_curfile_regrow(name); 
+      if (i != -1) list = 1; else i = find_prevfile_regrow(name);
       if (i != -1)
 	{
-	  if (list) r=cur_name_row[i]; else r=prev_name_row[i];
+	  if (list) r = cur_name_row[i]; else r = prev_name_row[i];
 	  set_toggle_button(r->pl, state, FALSE, (void *)r);
 	}
     }
 }
 
-static void View_CurFiles_Play_Callback(GtkWidget *w, gpointer clientData) 
+static void View_CurFiles_Play_Callback(GtkWidget *w, gpointer context) 
 {
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   view_curfiles_play(r->ss, r->pos, GTK_TOGGLE_BUTTON(w)->active);
 }
 
@@ -796,31 +796,31 @@ void curfile_highlight(snd_state *ss, int i)
     }
 }
 
-static void View_CurFiles_Select_Callback(GtkWidget *w, gpointer clientData) 
+static void View_CurFiles_Select_Callback(GtkWidget *w, gpointer context) 
 {
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   view_curfiles_select(r->ss, r->pos);
 }
 
-static void View_PrevFiles_Unlist_Callback(GtkWidget *w, gpointer clientData) 
+static void View_PrevFiles_Unlist_Callback(GtkWidget *w, gpointer context) 
 {
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   file_unprevlist(get_prevnames(r->pos));
   make_prevfiles_list(r->ss);
 }
 
-static void View_PrevFiles_Play_Callback(GtkWidget *w, gpointer clientData) 
+static void View_PrevFiles_Play_Callback(GtkWidget *w, gpointer context) 
 {
   /* open and play -- close at end or when button off toggled */
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   if (view_prevfiles_play(r->ss, r->pos, GTK_TOGGLE_BUTTON(w)->active))
     set_toggle_button(w, FALSE, FALSE, (void *)r);
 }
 
-static void View_PrevFiles_Select_Callback(GtkWidget *w, gpointer clientData) 
+static void View_PrevFiles_Select_Callback(GtkWidget *w, gpointer context) 
 {
   /* open and set as selected */
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   view_prevfiles_select(r->ss, r->pos);
 }
 
@@ -842,7 +842,7 @@ void make_curfiles_list (snd_state *ss)
   int i;
   char *str;
   regrow *r;
-  for (i=0; i<get_curfile_end(); i++)
+  for (i = 0; i < get_curfile_end(); i++)
     {
       r = cur_name_row[i];
       if (r == NULL)
@@ -859,7 +859,7 @@ void make_curfiles_list (snd_state *ss)
       set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
       gtk_widget_show(r->rw);
     }
-  for (i=get_curfile_end(); i<get_max_curfile_end(); i++)
+  for (i = get_curfile_end(); i < get_max_curfile_end(); i++)
     {
       if ((r = cur_name_row[i]))
 	{
@@ -871,7 +871,7 @@ void make_curfiles_list (snd_state *ss)
   gtk_widget_show(vf_curlst);
 }
 
-static void sort_prevfiles_by_name(GtkWidget *w, gpointer clientData) 
+static void sort_prevfiles_by_name(GtkWidget *w, gpointer context) 
 {
   snd_state *ss;
   ss = get_global_state();
@@ -879,7 +879,7 @@ static void sort_prevfiles_by_name(GtkWidget *w, gpointer clientData)
   make_prevfiles_list(ss);
 }
 
-static void sort_prevfiles_by_date(GtkWidget *w, gpointer clientData) 
+static void sort_prevfiles_by_date(GtkWidget *w, gpointer context) 
 {
   snd_state *ss;
   ss = get_global_state();
@@ -887,7 +887,7 @@ static void sort_prevfiles_by_date(GtkWidget *w, gpointer clientData)
   make_prevfiles_list(ss);
 }
 
-static void sort_prevfiles_by_size(GtkWidget *w, gpointer clientData) 
+static void sort_prevfiles_by_size(GtkWidget *w, gpointer context) 
 {
   snd_state *ss;
   ss = get_global_state();
@@ -895,7 +895,7 @@ static void sort_prevfiles_by_size(GtkWidget *w, gpointer clientData)
   make_prevfiles_list(ss);
 }
 
-static void sort_prevfiles_by_entry(GtkWidget *w, gpointer clientData) 
+static void sort_prevfiles_by_entry(GtkWidget *w, gpointer context) 
 {
   snd_state *ss;
   ss = get_global_state();
@@ -910,7 +910,7 @@ void make_prevfiles_list (snd_state *ss)
   if (get_prevfile_end() >= 0)
     {
       make_prevfiles_list_1(ss);
-      for (i=0; i<=get_prevfile_end(); i++)
+      for (i = 0; i <= get_prevfile_end(); i++)
 	{
 	  if (!((r = prev_name_row[i])))
 	    {
@@ -925,7 +925,7 @@ void make_prevfiles_list (snd_state *ss)
 	  gtk_widget_show(r->rw);
 	}
     }
-  for (i=get_prevfile_end()+1; i<=get_max_prevfile_end(); i++)
+  for (i = get_prevfile_end()+1; i <= get_max_prevfile_end(); i++)
     {
       if ((r = prev_name_row[i]))
 	{
@@ -938,8 +938,8 @@ void make_prevfiles_list (snd_state *ss)
 
 /* play open unlist for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
 
-static GtkWidget *fs1,*fs3;
-void View_Files_Callback(GtkWidget *w, gpointer clientData)
+static GtkWidget *fs1, *fs3;
+void View_Files_Callback(GtkWidget *w, gpointer context)
 {
   /* fire up a dialog window with a list of currently open files, 
    * currently selected file also selected in list --
@@ -950,9 +950,9 @@ void View_Files_Callback(GtkWidget *w, gpointer clientData)
    * The previous files list requires that we keep such a list as we go along, on the
    * off-chance this browser will be fired up.  (Such files may be subsequently moved or deleted).
    */
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   ww_info *wwl;
-  GtkWidget *mainform,*curform,*prevform,*updateB,*helpB,*dismissB,*clearB,*sep;
+  GtkWidget *mainform, *curform, *prevform, *updateB, *helpB, *dismissB, *clearB, *sep;
   if (!view_files_dialog)
     {
       vf_selected_file = -1;
@@ -1010,7 +1010,7 @@ void View_Files_Callback(GtkWidget *w, gpointer clientData)
       vf_curww = wwl->list; /* different from Motif */
       vf_curlst = wwl->list;
       FREE(wwl); 
-      wwl=NULL;
+      wwl = NULL;
 
       /* previous files section: unlist play previous files | files */
       wwl = make_title_row(ss, prevform, STR_unlist, STR_play, STR_previous_files, PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
@@ -1024,7 +1024,7 @@ void View_Files_Callback(GtkWidget *w, gpointer clientData)
       vf_prevww = wwl->list;
       vf_prevlst = wwl->list;
       FREE(wwl); 
-      wwl=NULL;
+      wwl = NULL;
     }
   gtk_widget_show(view_files_dialog);
   make_curfiles_list(ss);
@@ -1049,30 +1049,30 @@ int file_dialog_is_active(void)
 /* -------------------------------- Raw Data Dialog -------------------------------- */
 
 static GtkWidget *raw_data_dialog = NULL;
-static GtkWidget *raw_srate_text,*raw_chans_text,*raw_location_text,*raw_data_label;
+static GtkWidget *raw_srate_text, *raw_chans_text, *raw_location_text, *raw_data_label;
 static int raw_data_location = 0;
 static int raw_cancelled = 0, raw_done = 0;
 
-static void raw_data_ok_Callback(GtkWidget *w, gpointer clientData) {raw_cancelled = 0; raw_done = 1;}
-static void raw_data_cancel_Callback(GtkWidget *w, gpointer clientData) {raw_cancelled = 1; raw_done = 1;}
-static void raw_data_delete_Callback(GtkWidget *w, GdkEvent *event, gpointer clientData) {raw_cancelled = 1; raw_done = 1;}
+static void raw_data_ok_Callback(GtkWidget *w, gpointer context) {raw_cancelled = 0; raw_done = 1;}
+static void raw_data_cancel_Callback(GtkWidget *w, gpointer context) {raw_cancelled = 1; raw_done = 1;}
+static void raw_data_delete_Callback(GtkWidget *w, GdkEvent *event, gpointer context) {raw_cancelled = 1; raw_done = 1;}
 
-static void raw_data_default_Callback(GtkWidget *w, gpointer clientData) 
+static void raw_data_default_Callback(GtkWidget *w, gpointer context) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   set_use_raw_defaults(ss, 1);
   raw_cancelled = 0; raw_done = 1;
 }
 
-static void raw_data_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer clientData)
+static void raw_data_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   set_raw_format(ss, row+1);
 }
 
-static void raw_data_help_Callback(GtkWidget *w, gpointer clientData) 
+static void raw_data_help_Callback(GtkWidget *w, gpointer context) 
 {
-  raw_data_dialog_help((snd_state *)clientData);
+  raw_data_dialog_help((snd_state *)context);
 }
 
 static void make_raw_data_dialog(snd_state *ss)
@@ -1080,8 +1080,8 @@ static void make_raw_data_dialog(snd_state *ss)
   char dfs_str[16];
   int i;
   char *str;
-  GtkWidget *lst,*dls,*dlab,*dloclab,*chnlab;
-  GtkWidget *defaultB,*helpB,*cancelB,*okB,*sratehbox,*lochbox,*scroller;
+  GtkWidget *lst, *dls, *dlab, *dloclab, *chnlab;
+  GtkWidget *defaultB, *helpB, *cancelB, *okB, *sratehbox, *lochbox, *scroller;
 
   raw_data_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(raw_data_dialog), "delete_event", GTK_SIGNAL_FUNC(raw_data_delete_Callback), (gpointer)ss);
@@ -1169,7 +1169,7 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_clist_set_selection_mode(GTK_CLIST(lst), GTK_SELECTION_SINGLE);
   gtk_clist_set_shadow_type(GTK_CLIST(lst), GTK_SHADOW_ETCHED_IN);
   gtk_clist_column_titles_passive(GTK_CLIST(lst));
-  for (i=1; i<num_data_formats(); i++) 
+  for (i = 1; i < num_data_formats(); i++) 
     {
       str = data_format_name(i);
       gtk_clist_append(GTK_CLIST(lst), &str);
@@ -1257,25 +1257,25 @@ file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hd
 /* no longer shares with raw data -- 11-Nov-99 */
 
 static int new_file_cancelled = 0, new_file_done = 0;
-static GtkWidget *new_dialog = NULL,*new_file_name;
+static GtkWidget *new_dialog = NULL, *new_file_name;
 static file_data *new_dialog_data = NULL;
 
-static void NewFileOkCallback(GtkWidget *w, gpointer clientData) {new_file_cancelled = 0; new_file_done = 1;}
-static void NewFileCancelCallback(GtkWidget *w, gpointer clientData) {new_file_cancelled = 1; new_file_done = 1;}
-static void NewFileDeleteCallback(GtkWidget *w, GdkEvent *event, gpointer clientData) {new_file_cancelled = 1; new_file_done = 1;}
+static void NewFileOkCallback(GtkWidget *w, gpointer context) {new_file_cancelled = 0; new_file_done = 1;}
+static void NewFileCancelCallback(GtkWidget *w, gpointer context) {new_file_cancelled = 1; new_file_done = 1;}
+static void NewFileDeleteCallback(GtkWidget *w, GdkEvent *event, gpointer context) {new_file_cancelled = 1; new_file_done = 1;}
 
-static void new_file_help_callback(GtkWidget *w, gpointer clientData) 
+static void new_file_help_callback(GtkWidget *w, gpointer context) 
 {
-  new_file_dialog_help((snd_state *)clientData);
+  new_file_dialog_help((snd_state *)context);
 }
 
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment)
 {
   int loc;
-  char *tmpstr,*title,*newer_name = NULL;
+  char *tmpstr, *title, *newer_name = NULL;
   snd_info *sp = NULL;
-  GtkWidget *name_label,*hform;
-  GtkWidget *help_button,*cancel_button,*ok_button;
+  GtkWidget *name_label, *hform;
+  GtkWidget *help_button, *cancel_button, *ok_button;
   new_file_cancelled = 0;
   title = (char *)CALLOC(snd_strlen(newname) + 32, sizeof(char));
   sprintf(title, "create new sound: %s", newname);
@@ -1353,28 +1353,28 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 
 static GtkWidget *file_mix_dialog = NULL;
 
-static void file_mix_cancel_callback(GtkWidget *w, gpointer clientData)
+static void file_mix_cancel_callback(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(file_mix_dialog);
 }
 
-static void file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(file_mix_dialog);
 }
 
-static void file_mix_ok_callback(GtkWidget *w, gpointer clientData)
+static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   gtk_widget_hide(file_mix_dialog);
   mix_complete_file(any_selected_sound(ss),
 		    snd_gtk_get_filename(file_mix_dialog),
 		    "File: mix", with_mix_tags(ss));
 }
 
-void File_Mix_Callback(GtkWidget *w, gpointer clientData)
+void File_Mix_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (!file_mix_dialog)
     {
       file_mix_dialog = snd_gtk_file_selection_new(ss, STR_mix_file_p,
@@ -1392,25 +1392,25 @@ void File_Mix_Callback(GtkWidget *w, gpointer clientData)
 static GtkWidget *edit_header_dialog = NULL;
 static file_data *edit_header_data;
 
-static void edit_header_help_Callback(GtkWidget *w, gpointer clientData) 
+static void edit_header_help_Callback(GtkWidget *w, gpointer context) 
 {
-  edit_header_dialog_help((snd_state *)clientData);
+  edit_header_dialog_help((snd_state *)context);
 }
 
-static void edit_header_cancel_Callback(GtkWidget *w, gpointer clientData) 
-{
-  gtk_widget_hide(edit_header_dialog);
-}
-
-static void edit_header_delete_Callback(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void edit_header_cancel_Callback(GtkWidget *w, gpointer context) 
 {
   gtk_widget_hide(edit_header_dialog);
 }
 
-static void edit_header_ok_Callback(GtkWidget *w, gpointer clientData) 
+static void edit_header_delete_Callback(GtkWidget *w, GdkEvent *event, gpointer context)
+{
+  gtk_widget_hide(edit_header_dialog);
+}
+
+static void edit_header_ok_Callback(GtkWidget *w, gpointer context) 
 {
   snd_state *ss;
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   ss = sp->state;
   if (!(sp->read_only))
     edit_header_callback(ss, sp, edit_header_data);
@@ -1425,7 +1425,7 @@ void edit_header(snd_info *sp)
    * if any are changed, need save button, cancel button, dismiss (leave unsaved but pending), reflect (change Snd display, not file)
    * this means the Snd-effective header is separate from the in-file header even across saves??
    */
-  GtkWidget *help_button,*cancel_button,*save_button;
+  GtkWidget *help_button, *cancel_button, *save_button;
   snd_state *ss;
   char *str;
   file_info *hdr;

@@ -26,7 +26,7 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes)
 {
   /* io.c checked_write assumes its file descriptors are around */
   /* can't call mus_error here because we need to clean up first in case of error */
-  int bytes_written,kfree;
+  int bytes_written, kfree;
   kfree = disk_kspace(fd);
   if (kfree < 0) 
     {
@@ -59,7 +59,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes)
 #if MUS_LITTLE_ENDIAN
   unsigned char tmp;
   int i;
-  for (i=0; i<bytes; i+=2)
+  for (i = 0; i < bytes; i+=2)
     {
       tmp = buf[i];
       buf[i] = buf[i+1];
@@ -137,8 +137,8 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes)
 
 static int read_midi_sample_dump(char *oldname, char *newname, char *hdr)
 {
-  int fs=-1,fd=-1,err=MUS_NO_ERROR,totalin,happy,chans,srate,inp,outp;
-  int val = 0,bits,block_count,header_count,state,samples,shift1,shift2,offset;
+  int fs=-1, fd=-1, err = MUS_NO_ERROR, totalin, happy, chans, srate, inp, outp;
+  int val = 0, bits, block_count, header_count, state, samples, shift1, shift2, offset;
   int osp;
   unsigned char *buf = NULL;
   chans = 1;
@@ -261,9 +261,9 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
   /* from untext.c */
   /* look for "%sampling rate: nn.nn KHz\n", also get end of to comment (i.e. data location) */
   char str[32];
-  char *buf=NULL;
-  int fd=-1,fs=-1,totalin;
-  int commenting,inp,outp,op,happy,i,j,s0,srate,err=MUS_NO_ERROR;
+  char *buf = NULL;
+  int fd=-1, fs=-1, totalin;
+  int commenting, inp, outp, op, happy, i, j, s0, srate, err = MUS_NO_ERROR;
   float fsrate;
   int osp;
   STARTUP(oldname, newname, TRANS_BUF_SIZE, char);
@@ -290,11 +290,11 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 	    {
 	      if (srate == 0)
 		{
-		  for (i=op+1, j=0;(i<inp) && (j < 13); i++,j++) str[j] = buf[i];
+		  for (i = op+1, j = 0; (i < inp) && (j < 13); i++, j++) str[j] = buf[i];
 		  str[13] = '\0';
 		  if (strcmp(str, "sampling rate") == 0) 
 		    {
-		      for (i=op+15, j=0;j<6; i++,j++) str[j] = buf[i];
+		      for (i = op+15, j = 0; j < 6; i++, j++) str[j] = buf[i];
 		      str[6] = '\0';
 		      sscanf(str, "%f", &fsrate);
 		      srate = (int)(fsrate*1000);
@@ -303,7 +303,7 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 		    {
 		      if (strcmp(str, "Sampling Rate") == 0)
 			{
-			  for (i=op+15, j=0;j<6; i++,j++) str[j] = buf[i];
+			  for (i = op+15, j = 0; j < 6; i++, j++) str[j] = buf[i];
 			  str[6] = '\0';
 			  sscanf(str, "%d", &srate);
 			}
@@ -397,11 +397,11 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
   /* from trans.lisp */
   /* nostalgic code -- 36 bit words, two 16-bit samples, right justified */
   /* or (even more archaeological) 12 bits packed 3 to a 36-bit word */
-  unsigned char *buf=NULL;
-  int fd=-1,fs=-1,totalin,inp,outp,happy,val,err=MUS_NO_ERROR;
+  unsigned char *buf = NULL;
+  int fd=-1, fs=-1, totalin, inp, outp, happy, val, err = MUS_NO_ERROR;
   int osp;
-  float fsrate,fraction;
-  int srateH,srateL,sign,exponent,chans,mode;
+  float fsrate, fraction;
+  int srateH, srateL, sign, exponent, chans, mode;
   STARTUP(oldname, newname, PDP_BUF_SIZE, unsigned char);
   totalin = read(fd, buf, PDP_BUF_SIZE);      
   /* read the PDP-10 float srate, nchans, mode, etc */
@@ -513,10 +513,10 @@ static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
 {
   /* assumed to be in a RIFF file, and that we just read the header via c_read_header */
   /* avg rate gives srate/8 (8 bits per byte) -- can be ignored, can be stereo */
-  int fs=-1,fd=-1,loc,totalin,happy,chans,srate,inp,outp,i,chn,byte,err=MUS_NO_ERROR;
+  int fs=-1, fd=-1, loc, totalin, happy, chans, srate, inp, outp, i, chn, byte, err = MUS_NO_ERROR;
   int *curvals;
   int osp;
-  unsigned char *buf=NULL;
+  unsigned char *buf = NULL;
   STARTUP(oldname, newname, TRANS_BUF_SIZE, unsigned char);
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
@@ -562,7 +562,7 @@ static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
 	  /* each byte becomes 8 samples */
 	  chn = 0;
 	  byte = buf[inp]; inp++;
-	  for (i=0; i<8; i++)
+	  for (i = 0; i < 8; i++)
 	    {
 	      /* are the bits consumed low to high or high to low? assume low to high for now (count i down from 7 to 0 if high to low) */
 	      if (byte & (1<<i)) curvals[chn]++; else curvals[chn]--;
@@ -585,12 +585,12 @@ static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
 static int read_hcom(char *oldname, char *newname, char *hdr)
 {
   short **d;
-  int osp,isp;
-  int dc,di,bits,outp,happy,totalin;
+  int osp, isp;
+  int dc, di, bits, outp, happy, totalin;
   unsigned int curval = 0;
-  int i,sample,size,datum,count,err=MUS_NO_ERROR;
-  unsigned char *buf=NULL;
-  int fd=-1,fs=-1;
+  int i, sample, size, datum, count, err = MUS_NO_ERROR;
+  unsigned char *buf = NULL;
+  int fd=-1, fs=-1;
   STARTUP(oldname, newname, TRANS_BUF_SIZE, unsigned char);
   if (snd_checked_write(fs, (unsigned char *)hdr, 28) == MUS_ERROR)
     {
@@ -605,7 +605,7 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
   d = (short **)CALLOC(size, sizeof(short *));
   read(fd, buf, size*4+2); /* 2 for pad byte + first sample */
   osp = 0;
-  for (i=0; i<size; i++) 
+  for (i = 0; i < size; i++) 
     {
       d[i] = (short *)CALLOC(2, sizeof(short));
       d[i][0] = mus_char_to_bshort((unsigned char *)(buf+osp)); osp+=2;
@@ -613,14 +613,14 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
     }
   sample = mus_char_to_bshort((unsigned char *)(buf+osp)) & 0xff;
   di = 0;
-  totalin=read(fd, buf, TRANS_BUF_SIZE);
+  totalin = read(fd, buf, TRANS_BUF_SIZE);
   osp = 0;
   isp = 0;
   happy = 1;
   outp = 2;
   mus_bshort_to_char((unsigned char *)(hdr+osp), (sample - 128) * 0x100); osp+=2;
   bits = 0;
-  while ((happy) && (count>0))
+  while ((happy) && (count > 0))
     {
       if (isp >= totalin)
 	{
@@ -636,7 +636,7 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
 	{
 	  if (snd_checked_write(fs, (unsigned char *)hdr, TRANS_BUF_SIZE) == MUS_ERROR) 
 	    {
-	      for (i=0; i<size; i++) FREE(d[i]);
+	      for (i = 0; i < size; i++) FREE(d[i]);
 	      FREE(d);
 	      CLEANUP();
 	      RETURN_MUS_WRITE_ERROR(oldname, newname);
@@ -670,7 +670,7 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
 	}
     }
   err = snd_checked_write(fs, (unsigned char *)hdr, outp);
-  for (i=0; i<size; i++) FREE(d[i]);
+  for (i = 0; i < size; i++) FREE(d[i]);
   FREE(d);
   CLEANUP();
   if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
@@ -680,17 +680,17 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
 
 /* -------------------------------- NIST shortpack -------------------------------- */
 
-static unsigned short log2s[] = {1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+static unsigned short log2s[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768};
 
 static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 {
   /* assume all relevant header stuff is ready via c_read_header */
-  int fs=-1,fd=-1,err=MUS_NO_ERROR,totalin,happy,chans,srate,outp,i = 0,k,num,bits = 0,out,els = 0;
-  int isp,osp;
-  unsigned short *ptr = NULL,*stop,*start,*kptr;
+  int fs=-1, fd=-1, err = MUS_NO_ERROR, totalin, happy, chans, srate, outp, i = 0, k, num, bits = 0, out, els = 0;
+  int isp, osp;
+  unsigned short *ptr = NULL, *stop, *start, *kptr;
   short temp = 0;
   unsigned char negative;
-  unsigned char *buf=NULL;
+  unsigned char *buf = NULL;
   chans = mus_sound_chans(oldname);
   srate = mus_sound_srate(oldname);
   mus_bint_to_char((unsigned char *)(hdr+16), srate);
@@ -718,14 +718,14 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 	  num = (int)buf[isp]; 
 	  bits = (int)buf[isp+1];
 	  isp+=2; 
-	  if (isp>=totalin) 
+	  if (isp >= totalin) 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 	      isp = 0;
 	    }
 	  temp = mus_char_to_bshort((unsigned char *)(buf+isp)); 
 	  isp+=2;
-	  if (isp>=totalin) 
+	  if (isp >= totalin) 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 	      isp = 0;
@@ -748,7 +748,7 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 		{
 		  temp = mus_char_to_bshort((unsigned char *)(buf+isp)); 
 		  isp+=2;
-		  if (isp>=totalin) 
+		  if (isp >= totalin) 
 		    {
 		      totalin = read(fd, buf, TRANS_BUF_SIZE); 
 		      isp = 0;
@@ -757,7 +757,7 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 		}
 	    }
 	  kptr = &(log2s[bits - 1]);
-	  for (k = bits + 1; (--k) > 0;)
+	  for (k = bits + 1; (--k) > 0; )
 	    {
 	      if ((temp & *(ptr--)) != 0) out |= *kptr;
 	      kptr--;
@@ -768,7 +768,7 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 		    {
 		      temp = mus_char_to_bshort((unsigned char *)(buf+isp)); 
 		      isp+=2;
-		      if (isp>=totalin) 
+		      if (isp >= totalin) 
 			{
 			  totalin = read(fd, buf, TRANS_BUF_SIZE); 
 			  isp = 0;
@@ -787,7 +787,7 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 	  osp+=2; 
 	  outp+=2;
 	  i++;
-	  if (i == num) num=0;
+	  if (i == num) num = 0;
 	}
       if (isp >= totalin)
 	{
@@ -819,7 +819,7 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 
 /* -------------------------------- Intel ADPCM --------------------------------
  *
- * described in detail Microsoft RIFF docs.  This code assumes bits=4.
+ * described in detail Microsoft RIFF docs.  This code assumes bits = 4.
  * in 'wave' file, these are stored as block_align sized blocks, each with a
  * header storing the current state.  These can be multi-channel, but we're handling
  * only mono until someone complains.  See also Apple Tech note 1081 by Mark Cookson.
@@ -835,8 +835,8 @@ static int stepsizeTable[89] = {7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23,
 
 static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, int type)
 {
-  unsigned int delta,inputbuffer = 0;
-  int step,valpred,vpdiff,index,bufferstep,i,j,happy;
+  unsigned int delta, inputbuffer = 0;
+  int step, valpred, vpdiff, index, bufferstep, i, j, happy;
   bufferstep = 0;
   happy = 1;
   if (type == 0)
@@ -851,14 +851,14 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
       index = indata[1] & 0x7f;
       valpred = (indata[0]*0x100) + (indata[1]&0xff80);
     }
-  i=1;
+  i = 1;
   outdata[0] = valpred;
   while (happy)
     {
       if (bufferstep) 
 	{
 	  delta = inputbuffer & 0xf;
-	  if (j == totalbytes) happy=0;
+	  if (j == totalbytes) happy = 0;
 	} 
       else 
 	{
@@ -883,8 +883,8 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
 
 static int read_dvi_adpcm(char *oldname, char *newname, char *hdr, int type)
 {
-  int fs=-1,fd=-1,loc,totalin,chans,srate,blksiz,samps,samps_read;
-  unsigned char *buf=NULL;
+  int fs=-1, fd=-1, loc, totalin, chans, srate, blksiz, samps, samps_read;
+  unsigned char *buf = NULL;
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
   blksiz = mus_sound_align(oldname);
@@ -940,11 +940,11 @@ static short oki_step_size[49] = { 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41,
      190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658,
      724, 796, 876, 963, 1060, 1166, 1282, 1408, 1552 };
 
-static short oki_adjust[8]={-1,-1,-1,-1,2,4,6,8};
+static short oki_adjust[8] ={-1, -1, -1, -1, 2, 4, 6, 8};
 
 static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat) 
 {
-  short diff,E,SS,samp;
+  short diff, E, SS, samp;
   SS = oki_step_size[stat->step_index];
   E = SS/8;
   if (code & 0x01) E += SS/4;
@@ -963,8 +963,8 @@ static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat)
 
 static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
 {
-  int fs=-1,fd=-1,loc,i,j,totalin,chans,srate,blksiz,samps,samps_read;
-  unsigned char *buf=NULL;
+  int fs=-1, fd=-1, loc, i, j, totalin, chans, srate, blksiz, samps, samps_read;
+  unsigned char *buf = NULL;
   short *buf1;
   struct oki_adpcm_status stat;
   chans = mus_sound_chans(oldname);
@@ -978,7 +978,7 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
     }
   loc = mus_sound_data_location(oldname);
   blksiz = mus_sound_align(oldname);
-  if (blksiz == 0) blksiz=256;
+  if (blksiz == 0) blksiz = 256;
   STARTUP(oldname, newname, blksiz, unsigned char);
   buf1 = (short *)CALLOC(blksiz*2, sizeof(short));
   samps = mus_sound_fact_samples(oldname);
@@ -1000,7 +1000,7 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
     {
       totalin = read(fd, buf, blksiz);
       if (totalin <= 0) break;
-      for (i=0, j=0; i<totalin; i++)
+      for (i = 0, j = 0; i < totalin; i++)
 	{
 	  /* samps_read will be twice totalin because these are 4-bit quantities */
 	  buf1[j++] = oki_adpcm_decode((char)((buf[i]>>4) & 0x0f), &stat);
@@ -1025,8 +1025,8 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
 
 static int read_12bit(char *oldname, char *newname, char *hdr)
 {
-  int loc,chans,samps,totalin,i,j,fs=-1,fd=-1;
-  unsigned char *buf=NULL;
+  int loc, chans, samps, totalin, i, j, fs=-1, fd=-1;
+  unsigned char *buf = NULL;
   short *buf1;
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
@@ -1045,7 +1045,7 @@ static int read_12bit(char *oldname, char *newname, char *hdr)
     {
       totalin = read(fd, buf, (int)(TRANS_BUF_SIZE*1.5));
       if (totalin <= 0) break;
-      for (i=0, j=0; i<totalin; i+=3,j+=2)
+      for (i = 0, j = 0; i < totalin; i+=3, j+=2)
 	{
 	  buf1[j] = (signed short)((buf[i]<<8) + (buf[i+1]&0xf0));
 	  buf1[j+1] = (signed short)((buf[i+2]<<8) + ((buf[i+1]&0xf)<<4));
@@ -1067,13 +1067,13 @@ static int read_12bit(char *oldname, char *newname, char *hdr)
 /* -------------------------------- IFF Fibonacci and Exponential --------------------------------
  */
 
-static int fb[] = {-34,-21,-13,-8,-5,-3,-2,-1,0,1,2,3,5,8,13,21};
-static int ex[] = {-128,-64,-32,-16,-8,-4,-2,-1,0,1,2,4,8,16,32,64};
+static int fb[] = {-34, -21, -13, -8, -5, -3, -2, -1, 0, 1, 2, 3, 5, 8, 13, 21};
+static int ex[] = {-128, -64, -32, -16, -8, -4, -2, -1, 0, 1, 2, 4, 8, 16, 32, 64};
 
 static int read_iff(char *oldname, char *newname, int orig, char *hdr)
 {
-  int loc,chans,samps,totalin,i,j,fs=-1,fd=-1,f1,f2,val;
-  short *buf=NULL;
+  int loc, chans, samps, totalin, i, j, fs=-1, fd=-1, f1, f2, val;
+  short *buf = NULL;
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
   samps = mus_sound_samples(oldname);
@@ -1091,7 +1091,7 @@ static int read_iff(char *oldname, char *newname, int orig, char *hdr)
     {
       totalin = read(fd, hdr, TRANS_BUF_SIZE);
       if (totalin <= 0) break;
-      for (i=0, j=0; i<totalin; i++,j+=2)
+      for (i = 0, j = 0; i < totalin; i++, j+=2)
 	{
 	  f1 = ((unsigned char)hdr[i])&0xf;
 	  f2 = (((unsigned char)hdr[i])>>4)&0xf;
@@ -1132,12 +1132,12 @@ static int read_iff(char *oldname, char *newname, int orig, char *hdr)
 
 static int read_avi(char *oldname, char *newname, char *hdr)
 {
-  int totalin,fs=-1,fd=-1,cksize,num,happy;
+  int totalin, fs=-1, fd=-1, cksize, num, happy;
 #if (!MUS_LITTLE_ENDIAN)
   int i;
   unsigned char *bb;
 #endif
-  short *buf=NULL;
+  short *buf = NULL;
   unsigned char *hdrbuf;
   mus_bint_to_char((unsigned char *)(hdr+16), mus_sound_srate(oldname));
   mus_bint_to_char((unsigned char *)(hdr+20), mus_sound_chans(oldname));
@@ -1172,7 +1172,7 @@ static int read_avi(char *oldname, char *newname, char *hdr)
 		{
 #if (!MUS_LITTLE_ENDIAN)
 		  bb = (unsigned char *)buf;
-		  for (i=0; i<totalin/2; i++,bb+=2) buf[i] = mus_char_to_lshort(bb);
+		  for (i = 0; i < totalin/2; i++, bb+=2) buf[i] = mus_char_to_lshort(bb);
 #endif		  
 		  if (be_snd_checked_write(fs, (unsigned char *)buf, totalin) == MUS_ERROR) 
 		    {
@@ -1202,14 +1202,14 @@ static short power2[15] = {1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x4
 static int quan(int val, short *table, int size)
 {
   int i;
-  for (i=0; i<size; i++)if (val < *table++) break;
+  for (i = 0; i < size; i++)if (val < *table++) break;
   return (i);
 }
 
 static int fmult(int an, int srn)
 {
-  short	anmag,anexp,anmant;
-  short	wanexp,wanmant;
+  short	anmag, anexp, anmant;
+  short	wanexp, wanmant;
   short	retval;
   anmag = (an > 0) ? an : ((-an) & 0x1FFF);
   anexp = quan(anmag, power2, 15) - 6;
@@ -1228,13 +1228,13 @@ static void g72x_init_state(struct g72x_state *state_ptr)
   state_ptr->dms = 0;
   state_ptr->dml = 0;
   state_ptr->ap = 0;
-  for (cnta=0;cnta<2;cnta++)
+  for (cnta = 0; cnta < 2; cnta++)
     {
       state_ptr->a[cnta] = 0;
       state_ptr->pk[cnta] = 0;
       state_ptr->sr[cnta] = 32;
     }
-  for (cnta=0;cnta<6;cnta++) 
+  for (cnta = 0; cnta < 6; cnta++) 
     {
       state_ptr->b[cnta] = 0;
       state_ptr->dq[cnta] = 32;
@@ -1244,9 +1244,9 @@ static void g72x_init_state(struct g72x_state *state_ptr)
 
 static int predictor_zero(struct g72x_state *state_ptr)
 {
-  int i,sezi;
+  int i, sezi;
   sezi = fmult(state_ptr->b[0] >> 2, state_ptr->dq[0]);
-  for (i=1; i<6; i++) sezi += fmult(state_ptr->b[i] >> 2, state_ptr->dq[i]);
+  for (i = 1; i < 6; i++) sezi += fmult(state_ptr->b[i] >> 2, state_ptr->dq[i]);
   return (sezi);
 }
 
@@ -1257,7 +1257,7 @@ static int predictor_pole(struct g72x_state *state_ptr)
 
 static int step_size(struct g72x_state *state_ptr)
 {
-  int y,dif,al;
+  int y, dif, al;
   if (state_ptr->ap >= 256)  return (state_ptr->yu);
   else 
     {
@@ -1272,7 +1272,7 @@ static int step_size(struct g72x_state *state_ptr)
 
 static int reconstruct(int sign, int dqln, int y)
 {
-  short	dql,dex,dqt,dq;
+  short	dql, dex, dqt, dq;
   dql = dqln + (y >> 2);
   if (dql < 0) {return ((sign) ? -0x8000 : 0);} 
   else {
@@ -1286,7 +1286,7 @@ static int reconstruct(int sign, int dqln, int y)
 static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqsez, struct g72x_state *state_ptr)
 {
   int cnt;
-  short	mag,exp,a2p=0,a1ul,pks1,fa1,ylint,thr2,dqthr,ylfrac,thr1,pk0;
+  short	mag, exp, a2p = 0, a1ul, pks1, fa1, ylint, thr2, dqthr, ylfrac, thr1, pk0;
   char tr;
   pk0 = (dqsez < 0) ? 1 : 0;
   mag = dq & 0x7FFF;
@@ -1323,7 +1323,7 @@ static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqs
     if (dqsez != 0) {if (pks1 == 0) state_ptr->a[0] += 192; else state_ptr->a[0] -= 192;}
     a1ul = 15360 - a2p;
     if (state_ptr->a[0] < -a1ul) state_ptr->a[0] = -a1ul; else if (state_ptr->a[0] > a1ul) state_ptr->a[0] = a1ul;
-    for (cnt=0;cnt<6;cnt++) 
+    for (cnt = 0; cnt < 6; cnt++) 
       {
 	if (code_size == 5) state_ptr->b[cnt] -= state_ptr->b[cnt] >> 9;
 	else state_ptr->b[cnt] -= state_ptr->b[cnt] >> 8;
@@ -1334,7 +1334,7 @@ static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqs
 	  }
       }
   }
-  for (cnt=5;cnt>0;cnt--) state_ptr->dq[cnt] = state_ptr->dq[cnt-1];
+  for (cnt = 5; cnt > 0; cnt--) state_ptr->dq[cnt] = state_ptr->dq[cnt-1];
   if (mag == 0) 
     {
       state_ptr->dq[0] = (dq >= 0) ? 0x20 : 0xFC20;
@@ -1388,7 +1388,7 @@ static int g721_decoder(int i, struct g72x_state *state_ptr)
   static short dqlntab[16] = {-2048, 4, 135, 213, 273, 323, 373, 425, 425, 373, 323, 273, 213, 135, 4, -2048};
   static short witab[16] = {-12, 18, 41, 64, 112, 198, 355, 1122, 1122, 355, 198, 112, 64, 41, 18, -12};
   static short fitab[16] = {0, 0, 0, 0x200, 0x200, 0x200, 0x600, 0xE00, 0xE00, 0x600, 0x200, 0x200, 0x200, 0, 0, 0};
-  short	sezi,sei,sez,se,y,sr,dq,dqsez;
+  short	sezi, sei, sez, se, y, sr, dq, dqsez;
   i &= 0x0f;
   sezi = predictor_zero(state_ptr);
   sez = sezi >> 1;
@@ -1407,7 +1407,7 @@ static int g723_24_decoder(int	i, struct g72x_state *state_ptr)
   static short dqlntab[8] = {-2048, 135, 273, 373, 373, 273, 135, -2048};
   static short witab[8] = {-128, 960, 4384, 18624, 18624, 4384, 960, -128};
   static short fitab[8] = {0, 0x200, 0x400, 0xE00, 0xE00, 0x400, 0x200, 0};
-  short	sezi,sei,sez,se,y,sr,dq,dqsez;
+  short	sezi, sei, sez, se, y, sr, dq, dqsez;
   i &= 0x07;
   sezi = predictor_zero(state_ptr);
   sez = sezi >> 1;
@@ -1429,7 +1429,7 @@ static int g723_40_decoder(int i, struct g72x_state *state_ptr)
 			      22272, 16928, 14080, 11456, 8960, 7008, 5728, 4512, 3200, 1856, 1312, 1280, 1248, 768, 448, 448};
   static short fitab[32] = {0, 0, 0, 0, 0, 0x200, 0x200, 0x200, 0x200, 0x200, 0x400, 0x600, 0x800, 0xA00, 0xC00, 0xC00,
 			      0xC00, 0xC00, 0xA00, 0x800, 0x600, 0x400, 0x200, 0x200, 0x200, 0x200, 0x200, 0, 0, 0, 0, 0};
-  short	sezi,sei,se,sez,y,sr,dq,dqsez;
+  short	sezi, sei, se, sez, y, sr, dq, dqsez;
   i &= 0x1f;
   sezi = predictor_zero(state_ptr);
   sez = sezi >> 1;
@@ -1466,10 +1466,10 @@ static int unpack_input(FILE *fin, unsigned char *code, int bits)
 
 static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 {
-  int fs=-1,loc,j,chans,srate,dec_bits=0,err=MUS_NO_ERROR;
+  int fs=-1, loc, j, chans, srate, dec_bits = 0, err = MUS_NO_ERROR;
   FILE *fd;
   unsigned char code;
-  short *buf=NULL;
+  short *buf = NULL;
   struct g72x_state state;
   g72x_init_state(&state);
   chans = mus_sound_chans(oldname);
@@ -1534,7 +1534,7 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 	  j = 0;
 	}
     }
-  if (j>0) err = be_snd_checked_write(fs, (unsigned char *)buf, j*2);
+  if (j > 0) err = be_snd_checked_write(fs, (unsigned char *)buf, j*2);
   close(fs);
   fclose(fd);
   FREE(buf);
@@ -1579,7 +1579,7 @@ int snd_translate(char *oldname, char *newname, int type)
 {
   /* read oldname, translate to newname as 16-bit linear NeXT file */
   /* called from snd-file.c */
-  int orig,err;
+  int orig, err;
   char *hdr = NULL;
   if (MUS_CANT_TRANSLATE == 0) MUS_CANT_TRANSLATE = mus_make_error("mus_cant_translate");
   err = MUS_CANT_TRANSLATE;

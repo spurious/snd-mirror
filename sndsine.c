@@ -36,8 +36,8 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
 
 int main(int argc, char *argv[])
 {
-  int fd,i,k,frames;
-  float phase,incr;
+  int fd, i, k, frames;
+  float phase, incr;
   MUS_SAMPLE_TYPE *obuf[1];
 #if MACOS
   argc = ccommand(&argv);
@@ -51,8 +51,8 @@ int main(int argc, char *argv[])
       phase = 0.0;
       incr = TWO_PI*440.0/22050.0;
       obuf[0] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
-      k=0;
-      for (i=0;i<frames;i++)
+      k = 0;
+      for (i = 0; i < frames; i++)
 	{
 	  obuf[0][k] = MUS_FLOAT_TO_SAMPLE(0.1 * sin(phase)); /* amp = .1 */
 	  phase += incr;
@@ -60,10 +60,10 @@ int main(int argc, char *argv[])
 	  if (k == BUFFER_SIZE)
 	    {
 	      mus_sound_write(fd, 0, BUFFER_SIZE-1, 1, obuf);
-	      k=0;
+	      k = 0;
 	    }
 	}
-      if (k>0) mus_sound_write(fd, 0, k-1, 1, obuf);
+      if (k > 0) mus_sound_write(fd, 0, k-1, 1, obuf);
       mus_sound_close_output(fd, 22050*mus_data_format_to_bytes_per_sample(MUS_BSHORT));
       FREE(obuf[0]);
     }

@@ -2,7 +2,7 @@
 
 static Atom FILE_NAME; /* Sun uses this, SGI uses STRING */
 
-static void massage_selection(Widget w, XtPointer clientData, Atom *selection, Atom *type, XtPointer value, unsigned long *length, int *format)
+static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom *type, XtPointer value, unsigned long *length, int *format)
 {
   unsigned long i;
   char *str;
@@ -10,7 +10,7 @@ static void massage_selection(Widget w, XtPointer clientData, Atom *selection, A
   if ((*type == XA_STRING) || (*type == FILE_NAME))
     {
       str = (char *)CALLOC(*length + 1, sizeof(char));
-      for (i=0;i<(*length);i++)
+      for (i = 0; i<(*length); i++)
 	{
 	  if (((char *)value)[i] == ' ')
 	    {
@@ -20,48 +20,50 @@ static void massage_selection(Widget w, XtPointer clientData, Atom *selection, A
 	  else str[i] = ((char *)value)[i];
 	}
       str[*length] = '\0';
-      sp = snd_open_file(str, (snd_state *)clientData);
+      sp = snd_open_file(str, (snd_state *)context);
       if (sp) select_channel(sp, 0);
       /* value is the file name if dropped icon from filer */
       FREE(str);
     }
 }
 
-static void HandleDrop(Widget w, XtPointer clientData, XtPointer callData) 
+static void HandleDrop(Widget w, XtPointer context, XtPointer info) 
 {
   /* this is called (see InitializeDrop) when a drop occurs */
-  XmDropProcCallbackStruct *cb = (XmDropProcCallbackStruct *)callData;
+  XmDropProcCallbackStruct *cb = (XmDropProcCallbackStruct *)info;
   Arg args[12];
-  int n,i,num_targets,k;
+  int n, i, num_targets, k;
   Atom *targets;
   XmDropTransferEntryRec entries[2];
   XtPointer ss;
   XtVaGetValues(w, XmNuserData, &ss, NULL);
-  if ((cb->dropAction != XmDROP) || (cb->operation != XmDROP_COPY))
+  if ((cb->dropAction != XmDROP) || 
+      (cb->operation != XmDROP_COPY))
     {
       cb->dropSiteStatus = XmINVALID_DROP_SITE;
       return;
     }
   k=-1;
   XtVaGetValues(cb->dragContext, XmNexportTargets, &targets, XmNnumExportTargets, &num_targets, NULL);
-  for (i=0;i<num_targets;i++) 
-    {
-      if ((targets[i] == XA_STRING) || (targets[i] == FILE_NAME))
-	{
-	  k=i; 
-	  break;
-	}
-    }
+  for (i = 0; i < num_targets; i++) 
+    if ((targets[i] == XA_STRING) || 
+	(targets[i] == FILE_NAME))
+      {
+	k = i; 
+	break;
+      }
   if (k == -1)
     {
 #if DEBUGGING
       fprintf(stderr, "failed drop attempt:\n");
-      for (i=0;i<num_targets;i++) 
-	fprintf(stderr, "  target %d = %s\n", i, XGetAtomName(MAIN_DISPLAY(((snd_state *)ss)), targets[i]));
+      for (i = 0; i < num_targets; i++) 
+	fprintf(stderr, "  target %d = %s\n", i, 
+		XGetAtomName(MAIN_DISPLAY(((snd_state *)ss)), 
+			     targets[i]));
 #endif
       cb->dropSiteStatus = XmINVALID_DROP_SITE;
       cb->operation = XmDROP_NOOP;
-      n=0;
+      n = 0;
       XtSetArg(args[n], XmNnumDropTransfers, 0); n++;
       XtSetArg(args[n], XmNtransferStatus, XmTRANSFER_FAILURE); n++;
       XmDropTransferStart(cb->dragContext, args, n);
@@ -69,7 +71,7 @@ static void HandleDrop(Widget w, XtPointer clientData, XtPointer callData)
     }
   entries[0].target = targets[k];
   entries[0].client_data = ss;
-  n=0;
+  n = 0;
   XtSetArg(args[n], XmNdropTransfers, entries); n++;
   XtSetArg(args[n], XmNnumDropTransfers, 1); n++;
   XtSetArg(args[n], XmNtransferProc, massage_selection); n++;
@@ -86,7 +88,7 @@ void InitializeDrop(snd_state *ss)
   targets[0] = XA_STRING;
   FILE_NAME = XInternAtom(MAIN_DISPLAY(ss), "FILE_NAME", FALSE);
   targets[1] = FILE_NAME;
-  n=0;
+  n = 0;
   XtSetArg(args[n], XmNdropSiteOperations, XmDROP_COPY); n++;
   XtSetArg(args[n], XmNimportTargets, targets); n++;
   XtSetArg(args[n], XmNnumImportTargets, 2); n++;

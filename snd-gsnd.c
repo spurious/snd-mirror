@@ -3,22 +3,22 @@
 
 #include "snd.h"
 
-enum {W_pane,W_pane_box,W_ctrls,
-      W_name_form,W_name,W_name_event,W_name_icon,W_name_pix,W_info_label,W_info,W_info_sep,
-      W_play,W_sync,W_combine,
-      W_amp_form,W_amp_event,W_amp,W_amp_label,W_amp_number,W_amp_sep,
-      W_srate_form,W_srate,W_srate_event,W_srate_label,W_srate_number,W_srate_arrow,W_srate_pix,
-      W_expand_form,W_expand,W_expand_event,W_expand_label,W_expand_number,W_expand_button,
-      W_contrast_form,W_contrast,W_contrast_event,W_contrast_label,W_contrast_number,W_contrast_button,
-      W_reverb_form,W_revscl,W_revscl_event,W_revscl_label,W_revscl_number,
-      W_revlen,W_revlen_event,W_revlen_label,W_revlen_number,W_reverb_button,
+enum {W_pane, W_pane_box, W_ctrls,
+      W_name_form, W_name, W_name_event, W_name_icon, W_name_pix, W_info_label, W_info, W_info_sep,
+      W_play, W_sync, W_combine,
+      W_amp_form, W_amp_event, W_amp, W_amp_label, W_amp_number, W_amp_sep,
+      W_srate_form, W_srate, W_srate_event, W_srate_label, W_srate_number, W_srate_arrow, W_srate_pix,
+      W_expand_form, W_expand, W_expand_event, W_expand_label, W_expand_number, W_expand_button,
+      W_contrast_form, W_contrast, W_contrast_event, W_contrast_label, W_contrast_number, W_contrast_button,
+      W_reverb_form, W_revscl, W_revscl_event, W_revscl_label, W_revscl_number,
+      W_revlen, W_revlen_event, W_revlen_label, W_revlen_number, W_reverb_button,
 
-      W_filter_form,W_filter_label,W_filter_order,W_filter_env,W_filter,W_filter_button,W_filter_dB,W_filter_frame,
+      W_filter_form, W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, W_filter_dB, W_filter_frame,
 
-      W_apply_form,W_remember,W_restore,W_apply,W_reset
+      W_apply_form, W_remember, W_restore, W_apply, W_reset
 };
 
-enum {W_amp_adj,W_srate_adj,W_contrast_adj,W_expand_adj,W_revscl_adj,W_revlen_adj,W_filter_adj
+enum {W_amp_adj, W_srate_adj, W_contrast_adj, W_expand_adj, W_revscl_adj, W_revlen_adj, W_filter_adj
 };
 
 
@@ -68,11 +68,11 @@ static GtkObject *w_revlen_adj(snd_info *sp)    {return(((snd_context *)(sp->sgx
 
 /* -------- PIXMAPS -------- */
 
-static GdkPixmap *mini_lock,*speed_r,*speed_l,*blank;
+static GdkPixmap *mini_lock, *speed_r, *speed_l, *blank;
 static int mini_lock_allocated = 0;
 static GdkPixmap *mini_bombs[NUM_BOMBS];
 static GdkPixmap *mini_glasses[NUM_GLASSES];
-static GdkBitmap *lock_mask,*blank_mask,*speed_l_mask,*speed_r_mask,*bomb_mask,*glass_mask;
+static GdkBitmap *lock_mask, *blank_mask, *speed_l_mask, *speed_r_mask, *bomb_mask, *glass_mask;
 
 void snd_file_lock_icon(snd_info *sp, int on)
 {
@@ -194,8 +194,8 @@ static void make_pixmaps(snd_state *ss)
       blank = gdk_pixmap_create_from_xpm_d(wn, &blank_mask, NULL, blank_bits());
       speed_r = gdk_pixmap_create_from_xpm_d(wn, &speed_r_mask, NULL, speed_r_bits());
       speed_l = gdk_pixmap_create_from_xpm_d(wn, &speed_l_mask, NULL, speed_l_bits());
-      for (k=0;k<NUM_BOMBS;k++) mini_bombs[k] = gdk_pixmap_create_from_xpm_d(wn, &bomb_mask, NULL, mini_bomb_bits(k));
-      for (k=0;k<NUM_GLASSES;k++) mini_glasses[k] = gdk_pixmap_create_from_xpm_d(wn, &glass_mask, NULL, mini_glass_bits(k));
+      for (k = 0; k < NUM_BOMBS; k++) mini_bombs[k] = gdk_pixmap_create_from_xpm_d(wn, &bomb_mask, NULL, mini_bomb_bits(k));
+      for (k = 0; k < NUM_GLASSES; k++) mini_glasses[k] = gdk_pixmap_create_from_xpm_d(wn, &glass_mask, NULL, mini_glass_bits(k));
       mini_lock_allocated = 1;
     }
 }
@@ -338,13 +338,13 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   snd_info *sp = (snd_info *)data;
   chan_info *cp;
   snd_state *ss;
-  int i,on;
+  int i, on;
   on = (GTK_TOGGLE_BUTTON(w)->active);
   if (sp->playing) 
     {
       if (sp->cursor_follows_play != DONT_FOLLOW)
 	{
-	  for (i=0; i<sp->nchans; i++)
+	  for (i = 0; i < sp->nchans; i++)
 	    {
 	      cp = sp->chans[i];
 	      cp->original_cursor = cp->cursor;
@@ -362,7 +362,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   cp = any_selected_channel(sp);
   goto_graph(cp);
   if ((!(cp->cursor_on)) && (sp->cursor_follows_play != DONT_FOLLOW))
-    for (i=0; i<sp->nchans; i++)
+    for (i = 0; i < sp->nchans; i++)
       {
 	cp = sp->chans[i];
 	cp->cursor_on = 1;
@@ -477,7 +477,7 @@ static void combine_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer d
 
 static void combine_button_click(GtkWidget *w, gpointer data)
 {
-  int val,on;
+  int val, on;
   snd_info *sp = (snd_info *)data;
   on = (GTK_TOGGLE_BUTTON(w)->active);
   if (on)
@@ -500,10 +500,10 @@ static void name_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
   sp_name_click((snd_info *)data);
 }
 
-static char semitone_one[5]={' ',' ',' ','0','\0'};
-static char ratio_one[5]={' ','1','/','1','\0'};
+static char semitone_one[5] ={' ',' ',' ','0','\0'};
+static char ratio_one[5] ={' ','1','/','1','\0'};
 
-static char amp_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
+static char amp_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
 
 static void set_snd_amp_1(snd_info *sp, Float amp, int setadj)
 {
@@ -526,7 +526,7 @@ static void set_snd_amp_1(snd_info *sp, Float amp, int setadj)
 	  if (scrollval > .9) scrollval = .9;
 	}
     }
-  sfs=prettyf(sp->amp, 2);
+  sfs = prettyf(sp->amp, 2);
   fill_number(sfs, amp_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_snd_amp_number(sp)), amp_number_buffer);
   FREE(sfs);
@@ -577,7 +577,7 @@ static void amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data
 
 /* -------- SRATE CALLBACKS -------- */
 
-static char srate_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
+static char srate_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
 
 void set_snd_srate(snd_info *sp, Float amp)
 {
@@ -609,7 +609,7 @@ static void srate_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data
 
 static void srate_changed_callback(GtkAdjustment *adj, gpointer data)
 {
-  Float scrollval,val;
+  Float scrollval, val;
   snd_info *sp = (snd_info *)data;
   val = srate_changed(exp((GTK_ADJUSTMENT(adj)->value-.45)/.15), srate_number_buffer, sp->speed_style, sp->speed_tones);
   sp->srate = val;
@@ -657,7 +657,7 @@ void toggle_direction_arrow(snd_info *sp, int state)
 
 /* -------- EXPAND CALLBACKS -------- */
 
-static char expand_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
+static char expand_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
 
 static void set_snd_expand_1(snd_info *sp, Float expand, int setadj)
 {
@@ -669,7 +669,7 @@ static void set_snd_expand_1(snd_info *sp, Float expand, int setadj)
   if (expand < .1)
     scrollval = expand * 1.03;
   else scrollval = .45 + .15 * log(expand);
-  sfs=prettyf(sp->expand, 2);
+  sfs = prettyf(sp->expand, 2);
   fill_number(sfs, expand_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_snd_expand_number(sp)), expand_number_buffer);
   FREE(sfs);
@@ -717,10 +717,10 @@ static void expand_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer dat
   else set_snd_expand(sp, 1.0);
 }
 
-static void expand_button_callback(GtkWidget *w, gpointer clientData)
+static void expand_button_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss;
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   ss = sp->state;
   sp->expanding = GTK_TOGGLE_BUTTON(w)->active;
  if (sp->expanding) 
@@ -738,7 +738,7 @@ void toggle_expand_button(snd_info *sp, int state)
 
 /* -------- CONTRAST CALLBACKS -------- */
 
-static char contrast_number_buffer[5]={'0',STR_decimal,'0','0','\0'};
+static char contrast_number_buffer[5] ={'0', STR_decimal,'0','0','\0'};
 
 static void set_snd_contrast_1(snd_info *sp, Float val, int setadj)
 {
@@ -747,7 +747,7 @@ static void set_snd_contrast_1(snd_info *sp, Float val, int setadj)
   GtkObject *adj;
   sp->contrast = val;
   scrollval = val/10.0;
-  sfs=prettyf(sp->contrast, 2);
+  sfs = prettyf(sp->contrast, 2);
   fill_number(sfs, contrast_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_snd_contrast_number(sp)), contrast_number_buffer);
   FREE(sfs);
@@ -793,10 +793,10 @@ static void contrast_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   sp->saved_contrast = sp->contrast;
 }
 
-static void contrast_button_callback(GtkWidget *w, gpointer clientData)
+static void contrast_button_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss;
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   ss = sp->state;
   sp->contrasting = GTK_TOGGLE_BUTTON(w)->active;
  if (sp->contrasting) 
@@ -822,7 +822,7 @@ void set_reverb_labels(const char *new_label)
   snd_info *sp;
   GtkWidget *lab;
   ss = get_global_state();
-  for (i=0; i<ss->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->sgx) && (sp->sgx->snd_widgets))
@@ -833,30 +833,30 @@ void set_reverb_labels(const char *new_label)
     }
 }
 
-static char revscl_number_buffer[7]={'0',STR_decimal,'0','0','0','0','\0'};
+static char revscl_number_buffer[7] ={'0', STR_decimal,'0','0','0','0','\0'};
 
 static void set_snd_revscl_1(snd_info *sp, Float val, int setadj)
 {
   Float scrollval;
-  char *fs,*ps,*sfs;
-  int i,j;
+  char *fs, *ps, *sfs;
+  int i, j;
   GtkObject *adj;
   sp->revscl = val;
   scrollval = pow(val, .333)*.6;
-  sfs=prettyf(sp->revscl, 3);
-  fs=sfs;
+  sfs = prettyf(sp->revscl, 3);
+  fs = sfs;
   ps=(char *)(revscl_number_buffer);
-  j=strlen(fs);
-  if (j>6) j=6;
-  if (j<6) 
+  j = strlen(fs);
+  if (j > 6) j = 6;
+  if (j < 6) 
     {
-      revscl_number_buffer[5]='0';
-      revscl_number_buffer[4]='0'; 
-      revscl_number_buffer[3]='0';
-      revscl_number_buffer[2]='0'; 
-      revscl_number_buffer[1]=STR_decimal;
+      revscl_number_buffer[5] ='0';
+      revscl_number_buffer[4] ='0'; 
+      revscl_number_buffer[3] ='0';
+      revscl_number_buffer[2] ='0'; 
+      revscl_number_buffer[1] = STR_decimal;
     }
-  for (i=0; i<j; i++) (*ps++) = (*fs++);
+  for (i = 0; i < j; i++) (*ps++) = (*fs++);
   gtk_label_set_text(GTK_LABEL(w_snd_revscl_number(sp)), revscl_number_buffer);
   FREE(sfs);
   if (setadj)
@@ -902,7 +902,7 @@ static void revscl_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer d
 }
 
 
-static char revlen_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
+static char revlen_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
 
 static void set_snd_revlen_1(snd_info *sp, Float val, int setadj)
 {
@@ -911,7 +911,7 @@ static void set_snd_revlen_1(snd_info *sp, Float val, int setadj)
   GtkObject *adj;
   sp->revlen = val;
   scrollval = val/5.0;
-  sfs=prettyf(sp->revlen, 2);
+  sfs = prettyf(sp->revlen, 2);
   fill_number(sfs, revlen_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_snd_revlen_number(sp)), revlen_number_buffer);
   FREE(sfs);
@@ -957,10 +957,10 @@ static void revlen_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer d
   sp->saved_revlen = sp->revlen;
 }
 
-static void reverb_button_callback(GtkWidget *w, gpointer clientData)
+static void reverb_button_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss;
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   ss = sp->state;
   sp->reverbing = GTK_TOGGLE_BUTTON(w)->active;
  if (sp->reverbing)
@@ -991,7 +991,7 @@ void sp_display_env(snd_info *sp)
 {
   snd_state *ss;
   axis_context *ax;
-  int height,width;
+  int height, width;
   GtkWidget *drawer;
   if (IS_PLAYER(sp)) return;
   ss = sp->state;
@@ -1011,7 +1011,7 @@ void sp_display_env(snd_info *sp)
 static void filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  int evx,evy;
+  int evx, evy;
   GdkModifierType state;
   if (ev->state & GDK_BUTTON1_MASK)
     {
@@ -1057,9 +1057,9 @@ static void filter_drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer d
   sp_display_env(sp);
 }
 
-static void filter_button_callback(GtkWidget *w, gpointer clientData)
+static void filter_button_callback(GtkWidget *w, gpointer context)
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   sp->filtering = GTK_TOGGLE_BUTTON(w)->active;
 }
 
@@ -1070,9 +1070,9 @@ void toggle_filter_button(snd_info *sp, int state)
   else set_toggle_button(w_snd_filter_button(sp), state, TRUE, (void *)sp);
 }
 
-static void filter_db_callback(GtkWidget *w, gpointer clientData)
+static void filter_db_callback(GtkWidget *w, gpointer context)
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   sp->filter_dBing = GTK_TOGGLE_BUTTON(w)->active;
   sp_display_env(sp);
 }
@@ -1109,16 +1109,16 @@ static void filter_order_callback(GtkWidget *w, gpointer data)
   snd_info *sp = (snd_info *)data;
   order = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w_snd_filter_order(sp)));
   if (order&1) order++;
-  if (order<=0) order = 2;
+  if (order <= 0) order = 2;
   sp->filter_order = order;
   set_snd_filter_order_1(sp, sp->filter_order, FALSE);
 }
 
-static void filter_activate_callback(GtkWidget *w, gpointer clientData)
+static void filter_activate_callback(GtkWidget *w, gpointer context)
 {
   /* make an envelope out of the data */
-  snd_info *sp = (snd_info *)clientData;
-  char *str=NULL;
+  snd_info *sp = (snd_info *)context;
+  char *str = NULL;
   str = gtk_entry_get_text(GTK_ENTRY(w));
   if (sp->filter_env) free_env(sp->filter_env);
   sp->filter_env = string2env(str);
@@ -1135,7 +1135,7 @@ void filter_env_changed(snd_info *sp, env *e)
   char *tmpstr;
   if (!(IS_PLAYER(sp)))
     {
-      tmpstr=env_to_string(e);
+      tmpstr = env_to_string(e);
       gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)), tmpstr);
       if (tmpstr) FREE(tmpstr);
       report_filter_edit(sp);
@@ -1151,7 +1151,7 @@ void color_filter_waveform(snd_state *ss, GdkColor *color)
   snd_info *sp;
   gdk_gc_set_foreground((ss->sgx)->fltenv_data_gc, color);
   (ss->sgx)->filter_waveform_color = color;
-  for (i=0; i<ss->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse)) sp_display_env(sp);
@@ -1168,10 +1168,10 @@ static void apply_button_press_callback(GtkWidget *w, GdkEventButton *ev, gpoint
   last_apply_state = ev->state;
 }
 
-static void apply_button_callback(GtkWidget *w, gpointer clientData)
+static void apply_button_callback(GtkWidget *w, gpointer context)
 {
   /* create temp file of run over current file using the current (saved) ctrls state */
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   snd_state *ss;
   snd_context *sgx;
   sgx = sp->sgx;
@@ -1226,9 +1226,9 @@ void unlock_apply(snd_state *ss, snd_info *sp)
   if (sp) set_background(w_snd_apply(sp), (ss->sgx)->basic_color);
 }
 
-static void remember_button_callback(GtkWidget *w, gpointer clientData) {save_control_panel((snd_info *)clientData);}
-static void restore_button_callback(GtkWidget *w, gpointer clientData) {restore_control_panel((snd_info *)clientData);}
-static void reset_button_callback(GtkWidget *w, gpointer clientData) {reset_control_panel((snd_info *)clientData);}
+static void remember_button_callback(GtkWidget *w, gpointer context) {save_control_panel((snd_info *)context);}
+static void restore_button_callback(GtkWidget *w, gpointer context) {restore_control_panel((snd_info *)context);}
+static void reset_button_callback(GtkWidget *w, gpointer context) {reset_control_panel((snd_info *)context);}
 
 
 /* -------- AMP ENVS ETC -------- */
@@ -1249,7 +1249,7 @@ void reflect_amp_env_completion(snd_info *sp)
   int i;
   GtkWidget *info_sep;
   /* a channel completed an amp env, check to see if all are complete */
-  for (i=0; i<sp->nchans; i++)
+  for (i = 0; i < sp->nchans; i++)
     {
       cp = sp->chans[i];
       if (!(cp->amp_envs)) return;
@@ -1276,9 +1276,9 @@ void reflect_amp_env_in_progress(snd_info *sp)
 #endif
 }
 
-static gint Close_Sound_Dialog(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static gint Close_Sound_Dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   if (sp) snd_close_file(sp, sp->state);
   gtk_widget_hide(sp->sgx->dialog); 
   return(TRUE);
@@ -1289,14 +1289,14 @@ static gint Close_Sound_Dialog(GtkWidget *w, GdkEvent *event, gpointer clientDat
 
 snd_info *add_sound_window(char *filename, snd_state *ss)
 {
-  snd_info *sp,*osp;
+  snd_info *sp, *osp;
   file_info *hdr;
   GtkWidget **sw;
   GtkObject **adjs;
   GtkWidget *tablab;
-  int snd_slot,nchans,make_widgets,i,k,old_chans;
-  char *old_name = NULL,*title;
-  int app_y,app_dy,screen_y,chan_min_y;
+  int snd_slot, nchans, make_widgets, i, k, old_chans;
+  char *old_name = NULL, *title;
+  int app_y, app_dy, screen_y, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
   int samples_per_channel;
   snd_context *sx;
@@ -1351,7 +1351,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
 
   if ((!make_widgets) && (old_chans < nchans))
     {
-      for (i=old_chans; i<nchans; i++) add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS);
+      for (i = old_chans; i < nchans; i++) add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS);
     }
 
   if (make_widgets)
@@ -1391,7 +1391,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       sw[W_name_form] = gtk_hbox_new(FALSE, 0);
       gtk_box_pack_end(GTK_BOX(sw[W_pane_box]), sw[W_name_form], FALSE, FALSE, 0);
       
-      for (i=0; i<nchans; i++) add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
+      for (i = 0; i < nchans; i++) add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
 
       /* controls etc */
 
@@ -1797,7 +1797,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS) 
 	raise_dialog(sx->dialog);
       gtk_widget_show(w_snd_pane(sp));
-      for (k=0;k<nchans;k++) add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
+      for (k = 0; k < nchans; k++) add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
       gtk_label_set_text(GTK_LABEL(sw[W_name]), shortname_indexed(sp));
 
       reset_control_panel(sp);
@@ -1890,7 +1890,7 @@ void sound_show_ctrls(snd_info *sp)
 {
   int height;
   height = widget_height(w_snd_pane(sp));
-  if (height>200)
+  if (height > 200)
     gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), height-150);
   else gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), height/2);
 }
@@ -1911,7 +1911,7 @@ void show_controls(snd_state *ss)
   int i;
   ss->ctrls_height = ss->open_ctrls_height;
   set_view_ctrls_label(STR_Hide_controls);
-  for (i=0; i<ss->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse)) sound_show_ctrls(sp);
@@ -1924,7 +1924,7 @@ void hide_controls(snd_state *ss)
   int i;
   ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
   set_view_ctrls_label(STR_Show_controls);
-  for (i=0; i<ss->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse)) sound_hide_ctrls(sp);

@@ -31,9 +31,9 @@ static int printing = 0;
 static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
-  int print_it,quit = 0,err = 0;
-  char *name,*str = NULL;
-  XmString plab,slab;
+  int print_it, quit = 0, err = 0;
+  char *name, *str = NULL;
+  XmString plab, slab;
   snd_info *nsp = NULL;
   if (printing) 
     ss->stopped_explicitly = 1;
@@ -73,8 +73,8 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(ss, str=XmTextGetString(file_print_name)); break;
-	    case PRINT_ENV: enved_print(str=XmTextGetString(file_print_name)); break;
+	    case PRINT_SND: snd_print(ss, str = XmTextGetString(file_print_name)); break;
+	    case PRINT_ENV: enved_print(str = XmTextGetString(file_print_name)); break;
 	    }
 	  if (str) XtFree(str);
 	}
@@ -101,8 +101,8 @@ void File_Print_Callback(Widget w, XtPointer context, XtPointer info)
 {
   Arg args[20];
   int n;
-  Widget dl,rc;
-  XmString xmstr1,xmstr2,xmstr3,xmstr4,titlestr;
+  Widget dl, rc;
+  XmString xmstr1, xmstr2, xmstr3, xmstr4, titlestr;
   snd_info *nsp;
   snd_state *ss = (snd_state *)context;
   if (ss->print_choice == PRINT_SND)
@@ -148,7 +148,7 @@ void File_Print_Callback(Widget w, XtPointer context, XtPointer info)
 
       rc = sndCreateFormWidget("form", file_print_dialog, NULL, 0);
 
-      n=0;
+      n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;

@@ -2,11 +2,11 @@
 
 /* -------- region browser -------- */
 
-static Widget region_dialog=NULL,region_list,region_grf;
+static Widget region_dialog = NULL, region_list, region_grf;
 static regrow **region_rows = NULL;
 static snd_info *reg_sp = NULL;
 static int current_region = -1;
-static Widget selectw,reg_srtxt,reg_lentxt,reg_chntxt,reg_maxtxt;
+static Widget selectw, reg_srtxt, reg_lentxt, reg_chntxt, reg_maxtxt;
 
 static void region_update_graph(chan_info *cp)
 {
@@ -70,7 +70,7 @@ static void make_region_labels(file_info *hdr)
   set_button_label_bold(reg_srtxt, str);
   sprintf(str, STR_chans, hdr->chans);
   set_button_label_bold(reg_chntxt, str);
-  sprintf(str, STR_length, (float)(hdr->samples)/(float)(hdr->chans * hdr->srate));
+  sprintf(str, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
   set_button_label_bold(reg_lentxt, str);
   sprintf(str, STR_maxamp, region_maxamp(current_region));
   set_button_label_bold(reg_maxtxt, str);
@@ -79,13 +79,13 @@ static void make_region_labels(file_info *hdr)
 
 void update_region_browser(snd_state *ss, int grf_too)
 {
-  int i,len;
+  int i, len;
   region_state *rs;
   chan_info *cp;
   rs = region_report();
   len = rs->len;
-  for (i=0; i<len; i++) make_region_element(rs, i);
-  for (i=len; i<max_regions(ss); i++) XtUnmanageChild(region_rows[i]->rw);
+  for (i = 0; i < len; i++) make_region_element(rs, i);
+  for (i = len; i < max_regions(ss); i++) XtUnmanageChild(region_rows[i]->rw);
   free_region_state(rs);
   if (len == 0) return;
   XtManageChild(region_list);
@@ -219,7 +219,7 @@ static void region_focus_Callback(Widget w, XtPointer context, XtPointer info)
   ss = r->ss;
   unhighlight_region(ss);
   if (!(region_ok(r->pos))) return; /* needed by auto-tester */
-  current_region=r->pos;
+  current_region = r->pos;
   cp = reg_sp->chans[0];
   cp->chan  = 0;
   highlight_region(ss);
@@ -286,10 +286,10 @@ static Widget region_ww;
 
 static void make_region_dialog(snd_state *ss)
 {
-  int n,i;
+  int n, i;
   Arg args[32];
-  Widget formw,last_row,ww,infosep,prtb,editb;
-  XmString xok,xdelete,xhelp,titlestr;
+  Widget formw, last_row, ww, infosep, prtb, editb;
+  XmString xok, xdelete, xhelp, titlestr;
   regrow *r;
   chan_info *cp;
   file_info *hdr;
@@ -354,7 +354,7 @@ static void make_region_dialog(snd_state *ss)
   last_row = NULL;
   
   region_rows = (regrow **)CALLOC(max_regions(ss), sizeof(regrow *));
-  for (i=0; i<max_regions(ss); i++)
+  for (i = 0; i < max_regions(ss); i++)
     {
       r = make_regrow(ss, ww, last_row, region_save_Callback, region_play_Callback, region_focus_Callback);
       region_rows[i] = r;
@@ -522,7 +522,7 @@ static void make_region_dialog(snd_state *ss)
   highlight_region(ss);
   region_update_graph(cp);
   FREE(wwl); 
-  wwl=NULL;
+  wwl = NULL;
 }
 
 void View_Region_Callback(Widget w, XtPointer context, XtPointer info)
@@ -550,7 +550,7 @@ void allocate_region_rows(snd_state *ss, int n)
       r = region_rows[max_regions(ss) - 1];
       last_row = r->rw;
       region_rows = (regrow **)REALLOC(region_rows, n * sizeof(regrow *));
-      for (i=max_regions(ss); i<n; i++)
+      for (i = max_regions(ss); i < n; i++)
 	{
 	  r = make_regrow(ss, region_ww, last_row, region_save_Callback, region_play_Callback, region_focus_Callback);
 	  region_rows[i] = r;

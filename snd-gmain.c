@@ -112,7 +112,7 @@ void add_dialog(snd_state *ss, GtkWidget *dialog)
   int i;
   sx = ss->sgx;
   if (sx->dialogs)
-    for (i=0;i<sx->ndialogs;i++)
+    for (i = 0; i < sx->ndialogs; i++)
       if (sx->dialogs[i] == dialog)
 	return;
   if (sx->dialog_list_size == 0)
@@ -127,7 +127,7 @@ void add_dialog(snd_state *ss, GtkWidget *dialog)
 	{
 	  sx->dialog_list_size *= 2;
 	  sx->dialogs = (GtkWidget **)REALLOC(sx->dialogs, sx->dialog_list_size * sizeof(GtkWidget *));
-	  for (i=sx->ndialogs; i<sx->dialog_list_size; i++) sx->dialogs[i] = NULL;
+	  for (i = sx->ndialogs; i < sx->dialog_list_size; i++) sx->dialogs[i] = NULL;
 	}
     }
   sx->dialogs[sx->ndialogs] = dialog;
@@ -141,7 +141,7 @@ void dismiss_all_dialogs(snd_state *ss)
   sx = ss->sgx;
   if (record_dialog_is_active()) close_recorder_audio();
   if (sx->dialog_list_size > 0)
-    for (i=0; i<sx->ndialogs; i++)
+    for (i = 0; i < sx->ndialogs; i++)
       if (sx->dialogs[i])
 	gtk_widget_hide(sx->dialogs[i]);
 }
@@ -154,7 +154,7 @@ static gint iconify_window(GtkWidget *w, GdkEvent *event, gpointer context)
 }
 #endif
 
-static GdkAtom snd_v,snd_c;
+static GdkAtom snd_v, snd_c;
 
 static void who_called(GtkWidget *w, GdkEvent *event, gpointer context) 
 {
@@ -162,7 +162,7 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
   GdkEventProperty *ev = (GdkEventProperty *)event;
   snd_state *ss = (snd_state *)context;
   GdkAtom type;
-  gint format,nitems;
+  gint format, nitems;
   guchar *version[1];
   if (ev->atom == snd_c)
     {
@@ -197,7 +197,7 @@ static gint stdin_id = 0;
 
 static void GetStdinString (gpointer context, gint fd, GdkInputCondition condition)
 {
-  int bytes,size;
+  int bytes, size;
   char *buf;
   buf = (char *)CALLOC(1024, sizeof(char));
   size = 1024;
@@ -485,7 +485,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   ss->startup_title = copy_string("snd");
 
   set_sound_style(ss, SOUNDS_VERTICAL);
-  for (i=1; i<argc; i++)
+  for (i = 1; i < argc; i++)
     {
       if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "-horizontal") == 0))
 	set_sound_style(ss, SOUNDS_HORIZONTAL);

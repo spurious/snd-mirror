@@ -13,14 +13,14 @@ static int noscm_buffer_size = 0;
 
 static int eval_forever(snd_state *ss, int fd)
 {
-  int bytes,i,j,k,m,n,start,commenting,len,parens,quoting,loop_start;
+  int bytes, i, j, k, m, n, start, commenting, len, parens, quoting, loop_start;
   char *tmp;
   if (!noscm_buffer)
     {
       noscm_buffer = (char *)CALLOC(NOSCM_BUFFER_SIZE, sizeof(char));
       noscm_buffer_size = NOSCM_BUFFER_SIZE;
     }
-  bytes=read(fd, noscm_buffer, noscm_buffer_size);
+  bytes = read(fd, noscm_buffer, noscm_buffer_size);
   if (bytes == 0) return(0);
   noscm_buffer[bytes] = '\0';
   commenting = 0;
@@ -29,7 +29,7 @@ static int eval_forever(snd_state *ss, int fd)
   start = 0;
   loop_start = 0;
 READ_BUFFER:
-  for (i=loop_start;i<bytes;i++)
+  for (i = loop_start; i < bytes; i++)
     {
       if (!quoting)
 	{
@@ -48,8 +48,8 @@ READ_BUFFER:
 	      if (parens == 0) 
 		{
 		  tmp = (char *)CALLOC(i-start+2, sizeof(char));
-		  for (m=0, n=start;n<=i;m++,n++) tmp[m] = noscm_buffer[n];
-		  tmp[m]='\0';
+		  for (m = 0, n = start; n <= i; m++, n++) tmp[m] = noscm_buffer[n];
+		  tmp[m] ='\0';
 		  snd_eval_str(ss, tmp, 1);
 		  FREE(tmp);
 		}
@@ -59,7 +59,7 @@ READ_BUFFER:
   if (parens)
     {
       if (start != 0)
-	for (i=start, j=0;i<bytes;i++,j++) noscm_buffer[j] = noscm_buffer[i];
+	for (i = start, j = 0; i < bytes; i++, j++) noscm_buffer[j] = noscm_buffer[i];
       len = bytes - start;
       if (len == noscm_buffer_size)
 	{
@@ -71,7 +71,7 @@ READ_BUFFER:
       k = read(fd, (char *)(noscm_buffer+len), noscm_buffer_size - len);
       if (k <= 0) 
 	{
-	  snd_error("error reading file: extra ')'?\ncurrent expression started at byte %d\n",start);
+	  snd_error("error reading file: extra ')'?\ncurrent expression started at byte %d\n", start);
 	  return(0); /* this ends the read loops below */
 	}
       bytes = len + k;
@@ -80,7 +80,7 @@ READ_BUFFER:
   return(bytes);
 }
 
-static char noscm_white_space[4]={' ','\t','\n',')'};
+static char noscm_white_space[4] ={' ','\t','\n',')'};
 static char noscm_null_string[1] = {'\0'};
 
 #define RES_SIZE 512
@@ -173,7 +173,7 @@ static void add_symbol(char *name, env *val)
 static lv *find_symbol(char *name) 
 {
   int i;
-  for (i=0;i<env_table_top;i++) 
+  for (i = 0; i < env_table_top; i++) 
     if (strcmp(name, env_table[i]->name) == 0) return(env_table[i]);
   return(NULL);
 }
@@ -237,7 +237,7 @@ env *name_to_env(char *str)
 #define ENV_BUFFER_SIZE 128
 static int env_buffer_size = 0;
 static Float *env_buffer = NULL;
-static char env_white_space[5]={' ','(', ')','\t','\''};
+static char env_white_space[5] ={' ','(', ')','\t','\''};
 
 static env *scan_envelope(char *str)
 {
@@ -258,7 +258,7 @@ static env *scan_envelope(char *str)
       while (tok)
 	{
 	  sscanf(tok, "%f", &f);
-	  env_buffer[i]=(Float)f;
+	  env_buffer[i] =(Float)f;
 	  i++;
 	  if (i == env_buffer_size)
 	    {
@@ -281,7 +281,7 @@ int string2int(char *str) {return(istr(str));}
 static void pass_name_to_envelope_editor(snd_state *ss, char *fullstr) 
 {
   /* fullstr is the incoming "defvar ...)" */
-  char *name,*val,*defv;
+  char *name, *val, *defv;
   env *e;
   defv = strtok(fullstr, noscm_white_space);
   name = strtok(NULL, noscm_white_space);
@@ -540,18 +540,18 @@ static int handle_set(snd_state *ss, char *tok, char **str)
 
 int snd_eval_str(snd_state *ss, char *buf, int count)
 {
-  int i,err = 0;
+  int i, err = 0;
   char *tmp;
   char *tok[10];
   snd_info *sp;
   if (buf == NULL) return(0);
   if (ss->result_printout == PLAIN_MESSAGE) snd_append_command(ss, buf);
   sp = any_selected_sound(ss);
-  for (i=0;i<10;i++) tok[i] = NULL;
+  for (i = 0; i < 10; i++) tok[i] = NULL;
   tmp = buf;
   if (tmp[0] == '(') tmp++;
   /* now a kludge to handle the special defvar case */
-  if ((snd_strlen(tmp) > 7) && (tmp[0]=='d') && (tmp[1]=='e') && (tmp[2]=='f') && (tmp[3]=='v') && (tmp[4]=='a') && (tmp[5]=='r'))
+  if ((snd_strlen(tmp) > 7) && (tmp[0] =='d') && (tmp[1] =='e') && (tmp[2] =='f') && (tmp[3] =='v') && (tmp[4] =='a') && (tmp[5] =='r'))
     {
       pass_name_to_envelope_editor(ss, tmp);
       isym(ss, 0);
@@ -559,7 +559,7 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
   else
     {
       tok[0] = strtok(tmp, noscm_white_space);
-      for (i=1;i<10;i++) 
+      for (i = 1; i < 10; i++) 
 	{
 	  tok[i] = strtok(NULL, noscm_white_space);
 	  if (tok[i] == NULL) break;
@@ -572,8 +572,8 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
 
 static int symit(snd_state *ss, char **str)
 {
-  char *tok,*filename = NULL;
-  int ival,i;
+  char *tok, *filename = NULL;
+  int ival, i;
   chan_info *cp;
   snd_info *sp;
   Float scls[1];
@@ -719,7 +719,7 @@ static int symit(snd_state *ss, char **str)
 	}
       if (strcmp(tok, S_env_sound) == 0) 
 	{
-	  int dur,samp;
+	  int dur, samp;
 	  cp = get_cp(ss, str[5], str[6]);
 	  if (cp)
 	    {
@@ -763,7 +763,7 @@ static int symit(snd_state *ss, char **str)
       if (strcmp(tok, S_find_sound) == 0) 
 	{
 	  filename = sstr(str[1]);
-	  for (i=0;i<ss->max_sounds;i++)
+	  for (i = 0; i < ss->max_sounds; i++)
 	    {
 	      sp = ss->sounds[i];
 	      if ((snd_ok(sp)) && ((strcmp(filename, sp->fullname) == 0) || (strcmp(filename, sp->shortname) == 0)))
@@ -937,7 +937,7 @@ static int symit(snd_state *ss, char **str)
 	  sp = get_sp(ss, str[1]);
 	  if (sp)
 	    {
-	      for (i=0;i<sp->nchans;i++) 
+	      for (i = 0; i < sp->nchans; i++) 
 		{
 		  revert_edits(sp->chans[i], NULL); 
 		  update_graph(sp->chans[i], NULL);
@@ -1226,7 +1226,7 @@ void snd_load_file(char *filename)
   int fd;
   char *str;
   snd_state *ss;
-  str=filename;
+  str = filename;
   ss = get_global_state();
   if ((*str) == '~')
     {

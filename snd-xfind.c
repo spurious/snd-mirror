@@ -2,7 +2,7 @@
 
 /* -------- edit find -------- */
 
-static Widget edit_find_dialog,edit_find_text,cancelB,edit_find_label;
+static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label;
 
 static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -20,7 +20,7 @@ looks for the next sample that is greater than .1.\n\
 static void edit_find_ok_callback(int direction, Widget w, XtPointer context, XtPointer info)
 { /* "Find" is the label here */
 #if HAVE_GUILE
-  char *str,*buf=NULL;
+  char *str, *buf = NULL;
   XmString s1;
   snd_state *ss = (snd_state *)context;
   SCM proc;
@@ -75,17 +75,17 @@ static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer inf
 
 static void make_edit_find_dialog(snd_state *ss)
 {
-  Widget dl,rc,pb;
+  Widget dl, rc, pb;
   Arg args[20];
   int n;
-  XmString xmstr1,xmstr2,xmstr3,titlestr;
+  XmString xmstr1, xmstr2, xmstr3, titlestr;
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  xmstr1=XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
-  xmstr2=XmStringCreate(STR_Next, XmFONTLIST_DEFAULT_TAG);
-  xmstr3=XmStringCreate(STR_Previous, XmFONTLIST_DEFAULT_TAG);
-  titlestr=XmStringCreate(STR_Find, XmFONTLIST_DEFAULT_TAG);
+  xmstr1 = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
+  xmstr2 = XmStringCreate(STR_Next, XmFONTLIST_DEFAULT_TAG);
+  xmstr3 = XmStringCreate(STR_Previous, XmFONTLIST_DEFAULT_TAG);
+  titlestr = XmStringCreate(STR_Find, XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
   XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
   XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;

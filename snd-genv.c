@@ -3,14 +3,14 @@
 /* envelope editor and viewer */
 
 static GtkWidget *enved_dialog = NULL;
-static GtkWidget *applyB,*apply2B,*cancelB,*drawer,*showB,*saveB;
-static GtkWidget *revertB,*undoB,*redoB,*printB,*brktxtL,*brkpixL,*graphB,*fltB,*ampB,*srcB,*rbrow,*clipB,*deleteB;
-static GtkWidget *nameL,*textL,*env_list,*env_list_frame,*env_list_scroller,*dBB,*orderL;
-static GtkWidget *expB,*linB,*lerow,*baseScale,*baseLabel,*baseValue,*selectionB,*mixB,*selrow,*revrow,*unrow,*saverow;
-static GtkObject *baseAdj,*orderAdj;
-static GdkGC *gc,*rgc,*ggc;
+static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB;
+static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
+static GtkWidget *nameL, *textL, *env_list, *env_list_frame, *env_list_scroller, *dBB, *orderL;
+static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *mixB, *selrow, *revrow, *unrow, *saverow;
+static GtkObject *baseAdj, *orderAdj;
+static GdkGC *gc, *rgc, *ggc;
 
-static char *env_names[3] = {STR_amp_env_p,STR_flt_env_p,STR_src_env_p};
+static char *env_names[3] = {STR_amp_env_p, STR_flt_env_p, STR_src_env_p};
 
 static int showing_all_envs = 0; /* edit one env (0), or view all currently defined envs (1) */
 static int apply_to_selection = 0;
@@ -27,7 +27,8 @@ static env* active_env = NULL;   /* env currently being edited */
 static chan_info *axis_cp = NULL;
 static axis_info *gray_ap = NULL;
 
-chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
+chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, 
+			      int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
 {
   /* conjure up minimal context for axis drawer in snd-axis.c */
   if (!axis_cp) 
@@ -46,7 +47,7 @@ chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int e
 
 static void display_env(snd_state *ss, env *e, char *name, GdkGC *cur_gc, int x0, int y0, int width, int height, int dots)
 {
-  axis_context *ax=NULL;  
+  axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ax->wn = drawer->window;
   ax->gc = cur_gc;
@@ -78,12 +79,12 @@ void set_enved_show_sensitive(int val) {set_sensitive(showB, val);}
 
 void make_scrolled_env_list (snd_state *ss)
 {
-  int n,size;
+  int n, size;
   char *str;
   size = enved_all_envs_top();
   gtk_clist_clear(GTK_CLIST(env_list));
   set_background(env_list, (ss->sgx)->highlight_color);
-  for (n=0;n<size;n++) 
+  for (n = 0; n < size; n++) 
     {
       str = enved_all_names(n);
       gtk_clist_append(GTK_CLIST(env_list), &str);
@@ -96,7 +97,8 @@ void alert_enved_amp_env(snd_info *sp)
   ss = sp->state;
   if ((enved_dialog) && (active_channel) && (enved_waving(ss)))
     {
-      if (active_channel->sound == sp) env_redisplay(sp->state);
+      if (active_channel->sound == sp) 
+	env_redisplay(sp->state);
     }
 }
 
@@ -110,26 +112,26 @@ void new_active_channel_alert(snd_state *ss)
     }
 }
 
-static void Dismiss_Enved_Callback(GtkWidget *w, gpointer clientData)
+static void Dismiss_Enved_Callback(GtkWidget *w, gpointer context)
 {
   gtk_widget_hide(enved_dialog);
 }
 
-static void delete_enved_dialog(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void delete_enved_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(enved_dialog);
 }
 
-static void Help_Enved_Callback(GtkWidget *w, gpointer clientData)
+static void Help_Enved_Callback(GtkWidget *w, gpointer context)
 {
-  envelope_editor_dialog_help((snd_state *)clientData);
+  envelope_editor_dialog_help((snd_state *)context);
 }
 
 static int within_selection_src = 0;
 
 static void apply_enved(snd_state *ss)
 {
-  int mix_id=0,i,j,chan;
+  int mix_id = 0, i, j, chan;
   env *max_env = NULL;
   snd_info *sp;
   if (active_env)
@@ -159,7 +161,10 @@ static void apply_enved(snd_state *ss)
 		  set_mix_amp_env(mix_id, NO_SELECTION, active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
 		  active_channel = current_channel(ss);
 		}
-	      else apply_env(active_channel, active_env, 0, current_ed_samples(active_channel), 1.0, apply_to_selection, FROM_ENVED, "Enved: amp", NULL); 
+	      else apply_env(active_channel, active_env, 0, 
+			     current_ed_samples(active_channel), 1.0, 
+			     apply_to_selection, FROM_ENVED, 
+			     "Enved: amp", NULL); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_waving(ss)) env_redisplay(ss);
 	      break;
@@ -168,7 +173,7 @@ static void apply_enved(snd_state *ss)
 	      break;
 	    case SRATE_ENV:
 	      max_env = copy_env(active_env);
-	      for (i=0, j=1;i<max_env->pts;i++,j+=2)
+	      for (i = 0, j = 1; i < max_env->pts; i++, j+=2)
 		if (max_env->data[j] < .01) max_env->data[j] = .01;
 	      within_selection_src = 1;
 	      src_env_or_num(ss, active_channel, max_env, 0.0, FALSE, FROM_ENVED, "Enved: src", apply_to_selection, NULL);
@@ -212,10 +217,10 @@ static void enved_filter_order_callback(GtkWidget *w, gpointer data)
   set_filter_env_order((snd_state *)data, gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(orderL)));
 }
 
-static void text_field_activated(GtkWidget *w, gpointer clientData)
+static void text_field_activated(GtkWidget *w, gpointer context)
 { /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
-  snd_state *ss = (snd_state *)clientData;
-  char *name = NULL,*str;
+  snd_state *ss = (snd_state *)context;
+  char *name = NULL, *str;
   env *e = NULL;
   name = gtk_entry_get_text(GTK_ENTRY(w));
   if ((name) && (*name))
@@ -247,9 +252,9 @@ static void text_field_activated(GtkWidget *w, gpointer clientData)
     }
 }
 
-static void save_button_pressed(GtkWidget *w, gpointer clientData)
+static void save_button_pressed(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   char *name = NULL;
   name = gtk_entry_get_text(GTK_ENTRY(textL));
   if ((!name) || (!(*name))) 
@@ -260,18 +265,18 @@ static void save_button_pressed(GtkWidget *w, gpointer clientData)
   env_redisplay(ss);
 }
 
-static void Apply_Enved_Callback(GtkWidget *w, gpointer clientData)
+static void Apply_Enved_Callback(GtkWidget *w, gpointer context)
 {
   /* apply current envs to currently sync'd channels */
-  apply_enved((snd_state *)clientData);
+  apply_enved((snd_state *)context);
   last_active_channel = active_channel;
 }
 
-static void Undo_and_Apply_Enved_Callback(GtkWidget *w, gpointer clientData)
+static void Undo_and_Apply_Enved_Callback(GtkWidget *w, gpointer context)
 {
   /* undo upto previous amp env, then apply */
   /* this blindly undoes the previous edit (assumed to be an envelope) -- if the user made some other change in the meantime, too bad */
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if ((active_channel) && (active_channel == last_active_channel))
     {
       active_channel->squelch_update = 1;
@@ -352,11 +357,11 @@ static int click_to_delete = 0;
 static void drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
-  int evx,evy;
+  int evx, evy;
   GdkModifierType state;
   TIME_TYPE motion_time;
   axis_info *ap;
-  Float x0,x1,x,y;
+  Float x0, x1, x, y;
   if (ev->state & GDK_BUTTON1_MASK)
     {
       if (ev->is_hint)
@@ -378,19 +383,23 @@ static void drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data
       click_to_delete = 0;
       ap = axis_cp->axis;
       x = ungrf_x(ap, evx);
-      if (env_pos > 0) x0 = active_env->data[env_pos*2-2]; else x0 = 0.0;
-      if (env_pos < active_env->pts) x1 = active_env->data[env_pos*2+2]; else x1 = 1.0;
-      if (x<x0) x=x0;
-      if (x>x1) x=x1;
+      if (env_pos > 0) 
+	x0 = active_env->data[env_pos * 2 - 2]; else 
+	  x0 = 0.0;
+      if (env_pos < active_env->pts) 
+	x1 = active_env->data[env_pos * 2 + 2]; 
+      else x1 = 1.0;
+      if (x < x0) x = x0;
+      if (x > x1) x = x1;
       if (env_pos == 0) x = active_env->data[0];
-      if (env_pos == (active_env->pts-1)) x = active_env->data[(active_env->pts-1)*2];
+      if (env_pos == (active_env->pts-1)) x = active_env->data[(active_env->pts - 1) * 2];
       y = ungrf_y(ap, evy);
       if ((enved_clipping(ss)) || (enved_dBing(ss)))
 	{
-	  if (y<ap->y0) y=ap->y0;
-	  if (y>ap->y1) y=ap->y1;
+	  if (y < ap->y0) y = ap->y0;
+	  if (y > ap->y1) y = ap->y1;
 	}
-      if (enved_dBing(ss)) y=un_dB(ss, y);
+      if (enved_dBing(ss)) y = un_dB(ss, y);
       move_point(active_env, env_pos, x, y);
       enved_display_point_label(ss, x, y);
       env_redisplay(ss);
@@ -407,7 +416,9 @@ static void drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
     {
       pos = hit_env((int)(ev->x), (int)(ev->y), env_window_width, env_window_height);
       gtk_clist_select_row(GTK_CLIST(env_list), pos, 0);
-      if ((pos >= 0) && (pos < enved_all_envs_top())) select_or_edit_env(ss, pos);
+      if ((pos >= 0) && 
+	  (pos < enved_all_envs_top())) 
+	select_or_edit_env(ss, pos);
     }
   else
     {
@@ -427,7 +438,9 @@ static void drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer dat
 {
   if (!showing_all_envs)
     {
-      if ((click_to_delete) && (!env_dragged) && (env_pos != 0)) /* might want to protect last point also */
+      if ((click_to_delete) && 
+	  (!env_dragged) && 
+	  (env_pos != 0)) /* might want to protect last point also */
 	{
 	  delete_point(active_env, env_pos);
 	}
@@ -455,17 +468,17 @@ static void drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
   env_redisplay((snd_state *)data);
 }
 
-static void show_button_pressed(GtkWidget *w, gpointer clientData)
+static void show_button_pressed(GtkWidget *w, gpointer context)
 {
   /* if show all (as opposed to show current), loop through loaded LV_LISTs */
   showing_all_envs = (!showing_all_envs);
   set_button_label(showB, (showing_all_envs) ? STR_edit_env : STR_view_envs);
-  env_redisplay((snd_state *)clientData);
+  env_redisplay((snd_state *)context);
 }
 
-static void selection_button_pressed(GtkWidget *w, gpointer clientData)
+static void selection_button_pressed(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   apply_to_selection = (!apply_to_selection);
   if (apply_to_selection) 
     {
@@ -480,7 +493,7 @@ static void mix_button_pressed(GtkWidget *w, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   int chan = 0;
-  int mxchan,mix_id=NO_SELECTION;
+  int mxchan, mix_id = NO_SELECTION;
   apply_to_mix = (!apply_to_mix);
   if (apply_to_mix) 
     {
@@ -514,44 +527,44 @@ static void mix_button_pressed(GtkWidget *w, gpointer data)
   if ((enved_target(ss) == AMPLITUDE_ENV) && (enved_waving(ss)) && (!showing_all_envs)) env_redisplay(ss);
 }
 
-static void delete_button_pressed(GtkWidget *w, gpointer clientData)
+static void delete_button_pressed(GtkWidget *w, gpointer context)
 {
-  int i,len;
+  int i, len;
   if (selected_env)
     {
       len = enved_all_envs_top();
-      for (i=0;i<len;i++)
+      for (i = 0; i < len; i++)
 	if (selected_env == enved_all_envs(i))
 	  {
-	    delete_envelope((snd_state *)clientData, enved_all_names(i));
+	    delete_envelope((snd_state *)context, enved_all_names(i));
 	    if (enved_all_envs_top() == 0) set_sensitive(deleteB, FALSE);
 	    break;
 	  }
     }
 }
 
-static void revert_button_pressed(GtkWidget *w, gpointer clientData)
+static void revert_button_pressed(GtkWidget *w, gpointer context)
 {
   revert_env_edit();
   if (active_env) active_env = free_env(active_env);
   active_env = enved_next_env();
-  env_redisplay((snd_state *)clientData);
+  env_redisplay((snd_state *)context);
 }
 
-static void undo_button_pressed(GtkWidget *w, gpointer clientData)
+static void undo_button_pressed(GtkWidget *w, gpointer context)
 {
   undo_env_edit();
   if (active_env) active_env = free_env(active_env);
   active_env = enved_next_env();
-  env_redisplay((snd_state *)clientData);
+  env_redisplay((snd_state *)context);
 }
 
-static void redo_button_pressed(GtkWidget *w, gpointer clientData)
+static void redo_button_pressed(GtkWidget *w, gpointer context)
 {
   redo_env_edit();
   if (active_env) active_env = free_env(active_env);
   active_env = enved_next_env();
-  env_redisplay((snd_state *)clientData);
+  env_redisplay((snd_state *)context);
 }
 
 static void reflect_apply_state (snd_state *ss)
@@ -563,23 +576,23 @@ static void reflect_apply_state (snd_state *ss)
   if ((!showing_all_envs) && (enved_waving(ss))) env_redisplay(ss);
 }
 
-static void flt_button_pressed(GtkWidget *w, gpointer clientData)
+static void flt_button_pressed(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   in_set_enved_target(ss, SPECTRUM_ENV);
   reflect_apply_state(ss);
 }
 
-static void amp_button_pressed(GtkWidget *w, gpointer clientData)
+static void amp_button_pressed(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   in_set_enved_target(ss, AMPLITUDE_ENV);
   reflect_apply_state(ss);
 }
 
-static void src_button_pressed(GtkWidget *w, gpointer clientData)
+static void src_button_pressed(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   in_set_enved_target(ss, SRATE_ENV);
   reflect_apply_state(ss);
 }
@@ -589,41 +602,41 @@ void enved_print(char *name)
   print_enved(name, axis_cp, env_window_height);
 }
 
-static void print_button_pressed(GtkWidget *w, gpointer clientData)
+static void print_button_pressed(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   ss->print_choice = PRINT_ENV;
-  File_Print_Callback(w, clientData);
+  File_Print_Callback(w, context);
 }
 
-static void env_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer clientData)
+static void env_browse_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
-  select_or_edit_env((snd_state *)clientData, row);
+  select_or_edit_env((snd_state *)context, row);
 }
 
-static void Graph_Button_Callback(GtkWidget *w, gpointer clientData)
+static void Graph_Button_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData; 
+  snd_state *ss = (snd_state *)context; 
   in_set_enved_waving(ss, GTK_TOGGLE_BUTTON(w)->active);
   env_redisplay(ss);
 }
 
-static void dB_Button_Callback(GtkWidget *w, gpointer clientData)
+static void dB_Button_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData; 
+  snd_state *ss = (snd_state *)context; 
   in_set_enved_dBing(ss, GTK_TOGGLE_BUTTON(w)->active);
   env_redisplay(ss);
 }
 
-static void Clip_Button_Callback(GtkWidget *w, gpointer clientData)
+static void Clip_Button_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData; 
+  snd_state *ss = (snd_state *)context; 
   in_set_enved_clipping(ss, GTK_TOGGLE_BUTTON(w)->active);
 }
 
-static void exp_button_pressed(GtkWidget *w, gpointer clientData)
+static void exp_button_pressed(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData; 
+  snd_state *ss = (snd_state *)context; 
   in_set_enved_exping(ss, (!(enved_exping(ss))));
   if ((active_env) && (!(showing_all_envs)))
     {
@@ -635,9 +648,9 @@ static void exp_button_pressed(GtkWidget *w, gpointer clientData)
   reflect_segment_state(ss);
 }
 
-static void lin_button_pressed(GtkWidget *w, gpointer clientData)
+static void lin_button_pressed(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData; 
+  snd_state *ss = (snd_state *)context; 
   in_set_enved_exping(ss, (!(enved_exping(ss))));
   if ((active_env) && (!(showing_all_envs)))
     {
@@ -656,15 +669,15 @@ static void lin_button_pressed(GtkWidget *w, gpointer clientData)
 
 static void make_base_label(snd_state *ss, Float bval)
 {
-  char *sfs,*buf;
-  int i,len,scale_len;
+  char *sfs, *buf;
+  int i, len, scale_len;
   len = (int)(enved_power(ss) * 4);
   if (len < 32) len = 32;
   sfs = (char *)CALLOC(len, sizeof(char));
   sprintf(sfs, "%f", bval);
   scale_len = (int)(enved_power(ss) + 3);
   buf = (char *)CALLOC(scale_len, sizeof(char));
-  for (i=0;i<scale_len-1;i++) buf[i] = sfs[i];
+  for (i = 0; i < scale_len-1; i++) buf[i] = sfs[i];
   gtk_label_set_text(GTK_LABEL(baseValue), buf);
   FREE(sfs);
   FREE(buf);
@@ -687,8 +700,8 @@ static void base_changed(snd_state *ss, Float val)
 	bval = 1.0;
       else
 	{
-	  if (val>0.5)
-	    bval = pow(1.0 + (10.0 * ((val - 0.5)*2)), enved_power(ss));  
+	  if (val > 0.5)
+	    bval = pow(1.0 + (10.0 * ((val - 0.5) * 2)), enved_power(ss));  
 	  else 
 	    bval = pow((val * 2), enved_power(ss) - 1.0);
 	}
@@ -709,8 +722,8 @@ static void reflect_changed_base(snd_state *ss, Float val)
       else
 	{
 	  if (val <= 1.0)
-	    ival = pow(val, 1.0/(enved_power(ss)-1.0))*0.5;
-	  else ival = (0.5 + ((0.5 * (pow(val, (1.0/(enved_power(ss)))) - 1)) / 10.0));
+	    ival = pow(val, 1.0 / (enved_power(ss) - 1.0)) * 0.5;
+	  else ival = (0.5 + ((0.5 * (pow(val, (1.0 / (enved_power(ss)))) - 1)) / 10.0));
 	}
     }
   GTK_ADJUSTMENT(orderAdj)->value = ival;
@@ -718,15 +731,15 @@ static void reflect_changed_base(snd_state *ss, Float val)
   make_base_label(ss, val);
 }
 
-static void base_changed_callback(GtkAdjustment *adj, gpointer clientData)
+static void base_changed_callback(GtkAdjustment *adj, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   base_changed(ss, adj->value);
 }
 
 void create_envelope_editor (snd_state *ss)
 {
-  GtkWidget *mainform,*helpB,*leftbox,*bottombox,*leftframe,*toprow,*bottomrow,*brkbox;
+  GtkWidget *mainform, *helpB, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow, *brkbox;
   if (!enved_dialog)
     {
       enved_dialog = gtk_dialog_new();
@@ -1083,9 +1096,9 @@ int enved_dialog_is_active(void)
 void set_filter_env_order(snd_state *ss, int order)
 {
   char str[8];
-  if ((order>0) && (order<2000))
+  if ((order > 0) && (order < 2000))
     {
-      if (order&1) 
+      if (order & 1) 
 	in_set_filter_env_order(ss, order+1);
       else in_set_filter_env_order(ss, order);
       if (enved_dialog)
@@ -1142,10 +1155,10 @@ void reflect_mix_in_enved(void)
 static env *find_named_env(SCM name)
 {
   char *env_name;
-  int i,len;
+  int i, len;
   env_name = TO_NEW_C_STRING(name);
   len = enved_all_envs_top();
-  for (i=0;i<len;i++)
+  for (i = 0; i < len; i++)
     if (strcmp(env_name, enved_all_names(i)) == 0)
       {
 	free(env_name);

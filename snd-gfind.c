@@ -2,24 +2,24 @@
 
 /* -------- edit find -------- */
 
-static GtkWidget *edit_find_dialog,*edit_find_text,*cancelB,*edit_find_label;
+static GtkWidget *edit_find_dialog, *edit_find_text, *cancelB, *edit_find_label;
 
-static void edit_find_dismiss(GtkWidget *w, gpointer clientData) 
+static void edit_find_dismiss(GtkWidget *w, gpointer context) 
 { /* "Done" */
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (ss->checking_explicitly)
     ss->stopped_explicitly = 1;
   else gtk_widget_hide(edit_find_dialog);
 } 
 
-static void edit_find_delete(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static void edit_find_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(edit_find_dialog);
 }
 
-static void edit_find_help(GtkWidget *w, gpointer clientData) 
+static void edit_find_help(GtkWidget *w, gpointer context) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Global Find",
 "This search travels through all the current channels\n\
 in parallel until a match is found.  The find\n\
@@ -30,11 +30,11 @@ looks for the next sample that is greater than .1.\n\
 ");
 } 
 
-static void edit_find_find(int direction, GtkWidget *w, gpointer clientData) 
+static void edit_find_find(int direction, GtkWidget *w, gpointer context) 
 { /* "Find" is the label here */
 #if HAVE_GUILE
-  char *str,*buf=NULL;
-  snd_state *ss = (snd_state *)clientData;
+  char *str, *buf = NULL;
+  snd_state *ss = (snd_state *)context;
   SCM proc;
   str = gtk_entry_get_text(GTK_ENTRY(edit_find_text));
   if ((str) && (*str))
@@ -64,14 +64,14 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer clientData)
 #endif  
 } 
 
-static void edit_find_next(GtkWidget *w, gpointer clientData) {edit_find_find(READ_FORWARD, w, clientData);}
-static void edit_find_previous(GtkWidget *w, gpointer clientData) {edit_find_find(READ_BACKWARD, w, clientData);}
+static void edit_find_next(GtkWidget *w, gpointer context) {edit_find_find(READ_FORWARD, w, context);}
+static void edit_find_previous(GtkWidget *w, gpointer context) {edit_find_find(READ_BACKWARD, w, context);}
 
-void Edit_Find_Callback(GtkWidget *w, gpointer clientData)
+void Edit_Find_Callback(GtkWidget *w, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
-  GtkWidget *dl,*rc;
-  GtkWidget *help_button,*next_button,*previous_button;
+  snd_state *ss = (snd_state *)context;
+  GtkWidget *dl, *rc;
+  GtkWidget *help_button, *next_button, *previous_button;
   if (!edit_find_dialog)
     {
       edit_find_dialog = gtk_dialog_new();
