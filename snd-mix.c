@@ -2549,7 +2549,7 @@ void finish_moving_mix_tag(int mix_tag, int x)
       if (!(XEN_TRUE_P(res)))
 	{
 	  char *origin;
-	  origin = mus_format("Mix %d: drag to " OFF_TD, md->id, cs->beg); /* ORIGIN? */
+	  origin = mus_format("set! (%s -mix-%d) " OFF_TD, S_mix_position, md->id, cs->beg);
 	  remix_file(md, origin, false); /* may be no-op */
 	  FREE(origin);
 	  if (md->orig_edit_ctr < (md->cp->edit_ctr - 1))
@@ -3376,7 +3376,7 @@ static void set_mix_speed_1(mix_info *md, void *val)
       md->active_mix_state->speed = ptr->speed;
       md->active_mix_state->len = (off_t)(ceil(md->in_samps / (ptr->speed * ptr->trk_speed)));
     }
-  remix_file(md, ptr->caller, false); /* ORIGIN? */
+  remix_file(md, ptr->caller, false);
 }
 
 static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
@@ -3729,12 +3729,12 @@ static int set_mix_amp_env_1(int n, int chan, env *val, bool remix)
 	      char *env_str = NULL;
 	      if ((cs->amp_envs) && (cs->amp_envs[chan]))
 		{
-		  if (cs->amp_envs[chan]->pts < 8)
+		  if (cs->amp_envs[chan]->pts < 128)
 		    env_str = env_to_string(cs->amp_envs[chan]);
 		  else env_str = copy_string("big env...");
 		}
 	      else env_str = env_to_string(NULL);
-	      origin = mus_format("Mix %d: env[%d]=%s", md->id, chan, env_str); /* ORIGIN? */
+	      origin = mus_format("set! (%s -mix-%d %d) %s", S_mix_amp_env, md->id, chan, env_str); /* mix chan here, not snd chn */
 	      remix_file(md, origin, true);
 	      FREE(origin);
 	      if (env_str) FREE(env_str);
@@ -5592,7 +5592,7 @@ static void set_track_position_1(mix_info *md, void *val)
   cs = md->active_mix_state;
   cs->beg += ptr->change;
   if (cs->beg < 0) cs->beg = 0;
-  remix_file(md, ptr->caller, false);  /* ORIGIN? */ 
+  remix_file(md, ptr->caller, false);
 }
 
 static void reset_bounds(mix_info *md, void *val)
@@ -5621,7 +5621,7 @@ void set_track_position(int id, off_t pos)
       track_position_t *val;
       val = (track_position_t *)CALLOC(1, sizeof(track_position_t));
       val->change = pos - curpos;
-      val->caller = mus_format("Track %d: position=" OFF_TD, id, pos);
+      val->caller = mus_format("set! (%s %d) " OFF_TD, S_track_position, id, pos);
       if ((found_track_amp_env(id)) &&
 	  (track_members(id) > 1))
 	{
@@ -5649,7 +5649,7 @@ static void set_track_channel_position_1(mix_info *md, void *val)
       cs->beg += tc->change;
       if (cs->beg < 0) cs->beg = 0;
     }
-  remix_file(md, tc->caller, false); /* ORIGIN? */
+  remix_file(md, tc->caller, false);
 }
 
 typedef struct {chan_info *cp; off_t beg, end;} track_channel_bounds_t;
@@ -5685,7 +5685,7 @@ static void set_track_channel_position(int id, int chan, off_t pos)
       track_position_t *tc;
       tc = (track_position_t *)CALLOC(1, sizeof(track_position_t));
       tc->change = pos - curpos;
-      tc->caller = mus_format("Track %d[%d]: position=" OFF_TD, id, chan, pos);
+      tc->caller = mus_format("set! (%s %d %d) " OFF_TD, S_track_position, chan, id, pos);
       if ((track_chans(id) > 1) && 
 	  (found_track_amp_env(id)))  /* if amp-env and bounds change, need preset bounds during remix */
 	{
@@ -5756,7 +5756,7 @@ static void set_mix_track(mix_info *md, int trk, bool redisplay)
 	  check_new = true;
 	}
       md->active_mix_state->track = trk;
-      origin = mus_format("Mix %d: track=%d", md->id, trk); /* ORIGIN? */
+      origin = mus_format("set! (%s -mix-%d) %d", S_mix_track, md->id, trk);
       if ((track_p(trk)) && (active_track_color_set(trk)))
 	color_one_mix_from_id(md->id, active_track_color(trk));
       if ((check_old) && 
@@ -5774,7 +5774,7 @@ static void set_mix_track(mix_info *md, int trk, bool redisplay)
 
 static void set_track_track_1(mix_info *md, void *ptr)
 {
-  remix_file(md, (char *)ptr, false); /* ORIGIN? */
+  remix_file(md, (char *)ptr, false);
 }
 
 bool set_track_track(int id, int trk)
@@ -5797,7 +5797,7 @@ bool set_track_track(int id, int trk)
 	      while (tid < trk) tid = make_track(NULL, 0);
 	    }
 	}
-      origin = mus_format("Track %d: track=%d", id, trk);
+      origin = mus_format("set! (%s %d) %d", S_track_track, id, trk);
       set_active_track_track(id, trk);
       remix_track(id, set_track_track_1, (void *)origin);
       FREE(origin);
@@ -5808,7 +5808,7 @@ bool set_track_track(int id, int trk)
 
 static void set_track_amp_1(mix_info *md, void *val)
 {
-  remix_file(md, (char *)val, false); /* ORIGIN? */
+  remix_file(md, (char *)val, false);
 }
 
 static void set_track_amp(int id, Float amp)
@@ -5816,7 +5816,7 @@ static void set_track_amp(int id, Float amp)
   if ((track_p(id)) && (active_track_amp(id) != amp))
     {
       char *origin;
-      origin = mus_format("Track %d: amp=%.3f", id, amp);
+      origin = mus_format("set! (%s %d) %.4f", S_track_amp, id, amp);
       set_active_track_amp(id, amp);
       remix_track(id, set_track_amp_1, (void *)origin);
       FREE(origin);
@@ -5843,7 +5843,7 @@ static void speed_reset_frames(mix_info *md, void *val)
 
 static void set_track_speed_1(mix_info *md, void *val)
 {
-  remix_file(md, (char *)val, false); /* ORIGIN? */
+  remix_file(md, (char *)val, false);
 }
 
 static void set_track_speed(int id, Float speed)
@@ -5851,7 +5851,7 @@ static void set_track_speed(int id, Float speed)
   if ((track_p(id)) && (active_track_speed(id) != speed))
     {
       char *origin;
-      origin = mus_format("Track %d: speed=%.3f", id, speed);
+      origin = mus_format("set! (%s %d) %.4f", S_track_speed, id, speed);
       if ((found_track_amp_env(id)) &&
 	  (track_members(id) > 1))
 	{
@@ -5885,7 +5885,7 @@ static void set_track_speed(int id, Float speed)
 
 static void set_track_amp_env_1(mix_info *md, void *val)
 {
-  remix_file(md, (char *)val, false); /* ORIGIN? */
+  remix_file(md, (char *)val, false);
 }
 
 static void set_track_amp_env(int id, env *e)
@@ -5895,12 +5895,12 @@ static void set_track_amp_env(int id, env *e)
       char *origin, *env_str;
       if (e)
 	{
-	  if (e->pts < 8)
+	  if (e->pts < 128)
 	    env_str = env_to_string(e);
 	  else env_str = copy_string("big env...");
 	}
       else env_str = env_to_string(NULL);
-      origin = mus_format("Track %d: env=%s", id, env_str);
+      origin = mus_format("set! (%s %d) %s", S_track_amp_env, id, env_str);
       set_active_track_amp_env(id, e);
       remix_track(id, set_track_amp_env_1, (void *)origin);
       FREE(origin);
@@ -5937,7 +5937,7 @@ static void set_track_tempo_1(mix_info *md, void *val)
   if (cs->beg != tt->beg)
     {
       cs->beg = tt->beg + (off_t)((cs->beg - tt->beg) * tt->tempo_mult);
-      remix_file(md, tt->caller, false); /* ORIGIN? */
+      remix_file(md, tt->caller, false);
     }
 }
 
@@ -5949,7 +5949,7 @@ static void set_track_tempo(int id, Float tempo)
 	{
 	  char *origin;
 	  track_tempo_t tt;
-	  origin = mus_format("Track %d: tempo=%.3f", id, tempo);
+	  origin = mus_format("set! (%s %d) %.4f", S_track_tempo, id, tempo);
 	  if (found_track_amp_env(id))
 	    {
 	      off_t beg, dur;
@@ -6258,7 +6258,7 @@ static void finish_dragging_track(int track_id, track_graph_t *data)
       cs = md->active_mix_state;
       cs->beg = cs->orig + change;
     }
-  origin = mus_format("Track %d: drag " OFF_TD, track_id, change);
+  origin = mus_format("set! (%s %d) " OFF_TD, S_track_position, track_id, change); /* TODO: change is not correct here */
   for (i = 0; i < trk->lst_ctr; i++)
     {
       int k;
@@ -6266,7 +6266,7 @@ static void finish_dragging_track(int track_id, track_graph_t *data)
       cs = md->states[md->current_state];
       for (k = 0; k < md->in_chans; k++) 
 	cs->as_built->scalers[k] = 0.0;
-      remix_file(md, origin, false); /* ORIGIN? */
+      remix_file(md, origin, false);
     }
   FREE(origin);
   for (i = 0; i < trk->cps_ctr; i++)      /* drag is one edit */
@@ -6427,6 +6427,7 @@ static void track_finish_drag(int track_id, Float amp, track_drag_t field)
   chan_info *cp;
   char *origin = NULL;
   trk = track_mixes(track_id);
+  /* TODO: origin for finish track drag? */
   switch (field)
     {
     case DRAG_AMP:   
@@ -6448,7 +6449,7 @@ static void track_finish_drag(int track_id, Float amp, track_drag_t field)
       cs = md->states[md->current_state];
       for (k = 0; k < md->in_chans; k++) 
 	cs->as_built->scalers[k] = 0.0;
-      remix_file(md, origin, false); /* ORIGIN? */
+      remix_file(md, origin, false);
     }
   if (origin) FREE(origin);
   for (i = 0; i < trk->cps_ctr; i++)      /* drag is one edit */
@@ -7221,7 +7222,7 @@ static int copy_mix(int id, off_t beg)
       cp = md->cp;
       new_md = file_mix_samples(beg, md->in_samps, md->in_filename, cp, md->orig_chan,
 				((md->temporary == DELETE_ME) || (md->temporary == MULTICHANNEL_DELETION)) ? MULTICHANNEL_DELETION : DONT_DELETE_ME,
-				S_copy_mix, true, 0, false);
+				S_copy_mix, true, 0, false); /* ORIGIN */
       if (md->temporary == DELETE_ME) md->temporary = MULTICHANNEL_DELETION;
       edpos = cp->edit_ctr;
       new_id = new_md->id;

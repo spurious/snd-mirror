@@ -472,3 +472,35 @@ repetition to be in reverse."
 				    (expt (/ (- y mn) largest-diff) power))))
 			  new-e))))
     (reverse new-e)))
+
+
+;;; rms-envelope
+
+(define* (rms-envelope file #:key (beg 0.0) (dur #f) (rfreq 30.0) (db #f))
+  ;; based on rmsenv.ins by Bret Battey
+  (let* ((e '())
+	 (incr (/ 1.0 rfreq))
+	 (fsr (mus-sound-srate file))
+	 (incrsamps (inexact->exact (round (* incr fsr))))
+	 (start (inexact->exact (round (* beg fsr))))
+	 (reader (make-sample-reader start file))
+	 (end (if dur (min (inexact->exact (+ start (round (* fsr dur))))
+			   (mus-sound-frames file))
+		  (mus-sound-frames file)))
+	 (rms (make-average incrsamps)))
+    (do ((i 0 (+ i incrsamps)))
+	((>= i end) 
+	 (reverse e))
+      (let ((rms-val 0.0))
+	(do ((j 0 (1+ j)))
+	    ((= j incrsamps))
+	  (let ((val (reader)))
+	    (set! rms-val (average rms (* val val)))))
+	(set! e (cons (exact->inexact (/ i fsr)) e))
+	(set! rms-val (sqrt rms-val))
+	(if db 
+	    (if (< rms-val .00001)
+		(set! e (cons -100.0 e))
+		(set! e (cons (* 20.0 (/ (log rms-val) (log 10.0))))))
+	    (set! e (cons rms-val e)))))))
+

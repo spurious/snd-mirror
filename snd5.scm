@@ -52,36 +52,3 @@
        (lambda (v val) (vct-set! v i val))
        vcts 
        (func num-vcts i)))))
-
-
-#!
-;;; backwards compatibility for those using the -DSTR_OR=\"our\" flag
-(define basic-colour basic-color)
-(define colour->list color->list)
-(define colour-cutoff color-cutoff)
-(define colour-dialog color-dialog)
-(define colour-inverted color-inverted)
-(define colour? color?)
-(define colour-scale color-scale)
-(define cursor-colour cursor-color)
-(define data-colour data-color)
-(define enved-waveform-colour enved-waveform-color)
-(define filter-waveform-colour filter-waveform-color)
-(define foreground-colour foreground-color)
-(define graph-colour graph-color)
-(define highlight-colour highlight-color)
-(define listener-colour listener-color)
-(define listener-text-colour listener-text-color)
-(define make-colour make-color)
-(define mark-colour mark-color)
-(define mix-colour mix-color)
-(define position-colour position-color)
-(define pushed-button-colour pushed-button-color)
-(define sash-colour sash-color)
-(define selected-data-colour selected-data-color)
-(define selected-graph-colour selected-graph-color)
-(define selected-mix-colour selected-mix-color)
-(define selection-colour selection-color)
-(define text-focus-colour text-focus-color)
-(define zoom-colour zoom-color)
-!#

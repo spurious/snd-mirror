@@ -181,14 +181,19 @@ static void apply_enved(void)
 	      if (estr) FREE(estr);
 	      if (origin) FREE(origin);
 	      break;
-	      /* TODO: other enved origins */
 	    case ENVED_SPECTRUM: 
+	      origin = mus_format("%s %s %d%s",
+				  (apply_to_selection) ? S_filter_selection : S_filter_channel,
+				  estr = env_to_string(active_env), enved_filter_order(ss),
+				  (apply_to_selection) ? "" : " 0 #f");
 	      apply_filter(active_channel,
 			   (FIR_p) ? enved_filter_order(ss) : 0,
 			   active_env, FROM_ENVED, 
-			   "Enved: flt", NULL, apply_to_selection, /* TODO: origin */
+			   origin, NULL, apply_to_selection,
 			   NULL, NULL,
 			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, false);
+	      if (estr) FREE(estr);
+	      if (origin) FREE(origin);
 	      break;
 	    case ENVED_SRATE:
 	      /* mus_src no longer protects against 0 srate */

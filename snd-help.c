@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-Oct:  rms-envelope in env.scm.\n\
 18-Oct:  oscope.scm\n\
 15-Oct:  normalize-channel.\n\
 11-Oct:  vct->string\n\
@@ -376,14 +377,6 @@ void about_snd_help(void)
 	 added sndins and gfm directories (Mike Scholz sndlib/clm code)\n\
          controls->channel\n\
 5-Oct:   snd 7.7.\n\
-4-Oct:   moved vct->samples and samples->vct to snd7.scm.\n\
-         added edit-list->function\n\
-         changed transform-samples->vct to transform->vct, region-samples->vct to region->vct,\n\
-	   transform-samples-size to transform-frames. (Old forms are in snd7.scm).\n\
-1-Oct:   grid-density (controls axis tick spacing)\n\
-30-Sep:  mus-audio-mixer-read|write vector arg is now a vct.\n\
-27-Sep:  do? (examp.scm -- do that can be interrupted and continued)\n\
-20-Sep:  show-sonogram-cursor\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

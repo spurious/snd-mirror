@@ -1,5 +1,6 @@
 Snd change log
 
+  28-Oct:    rms-envelope in env.scm.
   18-Oct:    oscope.scm.
   15-Oct:    normalize-channel.
   11-Oct:    vct->string

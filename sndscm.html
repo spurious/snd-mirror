@@ -811,7 +811,7 @@ The effects include:
 <!-- I(change tempo):M(Effects: Expsrc)(effectsdoc) -->
 
 <p>Most of these are either simple calls on Snd functions ("invert" is <code>(<a class=quiet href="extsnd.html#scaleby">scale-by</a> -1)</code>),
-or use functions in the other scm files.  The actual operations follow the sync chain of the
+or use functions in the other scm files.  The actual operations follow the <a class=quiet href="extsnd.html#sync">sync</a> chain of the
 currently active channel.  
 </p>
 <p>One possibly interesting part of new-effects.scm is the implementation of the
@@ -882,6 +882,7 @@ envelope functions that are often useful:
   <em class=emdef>make-power-env</em> e #:key (scaler 1.0) (offset 0.0) duration
   <em class=emdef>power-env-channel</em> pe #:optional (beg 0) dur snd chn edpos (edname "power-env-channel")
   <em class=emdef>envelope-exp</em> e #:optional (power 1.0) (xgrid 100)
+  <em class=emdef>rms-envelope</em> file #:key (beg 0.0) (dur #f) (rfreq 30.0) (db #f)
 </pre>
 <p>These are translated from CLM's env.lisp.
 <code>(envelope-interp x env base)</code> returns value of env at x.
@@ -985,6 +986,7 @@ mechanism as an extension of env-channel.
   (power-env-channel pe1))
 </pre>
 <p><b>envelope-exp</b> interpolates segments into envelope to approximate exponential curves.
+<b>rms-envelope</b> returns an rms envelope of a file; it is based on rmsenv.ins in the CLM package.
 </p>
 <br>
 
@@ -2709,7 +2711,7 @@ Use <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a> instead.
 <tr><td></td><td>
 scales the samples in the given channel between beg and beg + num by scaler.  If the channel argument is omitted,
 <b>scale-sound-by</b> scales the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
-<i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-by, this ignores the sync setting.
+<i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-by, this ignores the <a class=quiet href="extsnd.html#sync">sync</a> setting.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -2721,7 +2723,7 @@ scales the samples in the given channel between beg and beg + num by scaler.  If
 <tr><td></td><td>
 normalizes the samples in the given channel between beg and beg + num to norm.  If the channel argument is omitted,
 <b>scale-sound-to</b> normalizes the entire sound.  <i>beg</i> defaults to 0; <i>num</i> defaults to the length of the channel.
-<i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-to, this ignores the sync setting.
+<i>snd</i> defaults to the selected sound, and <i>chn</i> to the selected channel.  Unlike scale-to, this ignores the <a class=quiet href="extsnd.html#sync">sync</a> setting.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

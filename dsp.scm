@@ -610,6 +610,12 @@
 
 ;;; (Gradshteyn and Ryzhik 1.342)
 
+;;; or take advantage of 1/(1-x):
+;;; (map-channel (lambda (y) (set! i (1+ i)) (/ 0.001 (- 1.0 (* .99 (cos (/ (* i 2.0 3.14159) 100.0)))))))
+;;;   here the .99 controls the number of cosines, like an "index", and it can be matched at
+;;;   run time to keep the amplitude constant via the 0.001 (set above to get a maxamp of .1),
+;;;   and the frequency can be swept without problems.
+
 
 ;;; -------- brighten-slightly
 
