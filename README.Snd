@@ -35,7 +35,7 @@ The configure program has several Snd-related arguments:
    --with-no-gui         make Snd without any graphics support
    --with-static-gsl     try to load GSL statically (for RPM)
    --with-ruby           try to use Ruby as the extension language
-   --with-ruby-prefix    set location of Ruby
+     --with-ruby-prefix  set location of Ruby
    --with-static-xm      include the xm module (rather than loading it dynamically)
    --with-temp-dir       directory to use for temp files
    --with-save-dir       directory to use for saved-state files

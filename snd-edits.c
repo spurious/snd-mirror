@@ -1652,6 +1652,7 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
 	XEN_ERROR(NO_SUCH_FILE,
 		  XEN_LIST_2(C_TO_XEN_STRING(origin),
 			     C_TO_XEN_STRING(ss->catch_message)));
+      else snd_error("%s: no such file: %s\n", origin, tempfile);
     }
 }
 
@@ -3187,7 +3188,10 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 
 void scale_channel(chan_info *cp, Float scaler, int beg, int num, int pos)
 {
-  if ((beg < 0) || (num < 0)) return;
+  if ((beg < 0) || 
+      (num <= 0) ||
+      (beg > cp->samples[pos]))
+    return; 
   if ((beg == 0) && 
       (num >= cp->samples[pos]))
     {
@@ -3475,6 +3479,7 @@ the new data's end."
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(infile_chan), infile_chan, XEN_ARG_8, "set-" S_samples, "an integer");
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || XEN_STRING_P(edname) || XEN_BOOLEAN_P(edname), edname, XEN_ARG_7, "set-" S_samples, "a string");
   beg = XEN_TO_C_INT_OR_ELSE(samp_0, 0);
+  if (beg < 0) return(XEN_FALSE);
   len = XEN_TO_C_INT_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
   override = XEN_TRUE_P(truncate);
