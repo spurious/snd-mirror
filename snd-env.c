@@ -1503,7 +1503,7 @@ static XEN g_define_envelope(XEN name, XEN data, XEN base)
 and 'base' into the envelope editor."
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_define_envelope, "a string");
   XEN_ASSERT_TYPE(XEN_LIST_P(data), data, XEN_ARG_2, S_define_envelope, "a list of breakpoints");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || XEN_FALSE_P(base), base, XEN_ARG_3, S_define_envelope, "a float or #f");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || XEN_FALSE_P(base), base, XEN_ARG_3, S_define_envelope, "a float or " PROC_FALSE);
   ename = XEN_TO_C_STRING(name);
   e = xen_to_env(data);
   if ((e) && (XEN_NUMBER_P(base)))
@@ -1599,7 +1599,7 @@ static XEN g_save_envelopes(XEN filename)
   char *name = NULL;
   FILE *fd;
   XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), 
-		  filename, XEN_ONLY_ARG, S_save_envelopes, "a string or #f");
+		  filename, XEN_ONLY_ARG, S_save_envelopes, "a string or " PROC_FALSE);
   if (XEN_STRING_P(filename)) 
     name = mus_expand_filename(XEN_TO_C_STRING(filename));
   else name = copy_string("envs.save");

@@ -3033,7 +3033,7 @@ static XEN g_reset_controls(XEN snd_n)
 
 static XEN g_selected_channel(XEN snd_n) 
 {
-  #define H_selected_channel "(" S_selected_channel " (snd #f)): currently selected channel in snd (or #f if none)"
+  #define H_selected_channel "(" S_selected_channel " (snd #f)): currently selected channel in snd (or " PROC_FALSE " if none)"
   return(sound_get(snd_n, SP_SELECTED_CHANNEL, S_selected_channel));
 }
 
@@ -3118,7 +3118,7 @@ static XEN g_revert_sound(XEN index)
 
 static XEN g_selected_sound(void)
 {
-  #define H_selected_sound "(" S_selected_sound "): index of currently selected sound (or #f if none)"
+  #define H_selected_sound "(" S_selected_sound "): index of currently selected sound (or " PROC_FALSE " if none)"
   if ((ss->selected_sound != NO_SELECTION) && 
       (snd_ok(ss->sounds[ss->selected_sound])))
     return(C_TO_XEN_INT(ss->selected_sound));

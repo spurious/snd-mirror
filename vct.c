@@ -663,6 +663,7 @@ XEN_ARGIFY_4(vct_move_w, vct_move)
 XEN_ARGIFY_4(vct_subseq_w, vct_subseq)
 XEN_VARGIFY(g_vct_w, g_vct)
 XEN_ARGIFY_2(vct_reverse_w, vct_reverse)
+XEN_NARGIFY_1(g_vct_to_readable_string_w, g_vct_to_readable_string)
 #else
 #define g_make_vct_w g_make_vct
 #define copy_vct_w copy_vct
@@ -686,6 +687,7 @@ XEN_ARGIFY_2(vct_reverse_w, vct_reverse)
 #define vct_subseq_w vct_subseq
 #define g_vct_w g_vct
 #define vct_reverse_w vct_reverse
+#define g_vct_to_readable_string_w g_vct_to_readable_string
 #endif
 
 #if HAVE_RUBY
@@ -922,9 +924,9 @@ void vct_init(void)
   rb_define_method(vct_tag, "reverse",   XEN_PROCEDURE_CAST rb_vct_reverse_cp, -1);
   rb_define_method(vct_tag, "reverse!",  XEN_PROCEDURE_CAST rb_vct_reverse, -1);
   rb_define_method(vct_tag, "first",     XEN_PROCEDURE_CAST rb_vct_first, 0);
-  rb_define_method(vct_tag, "first=",    XEN_PROCEDURE_CAST rb_set_vct_first, 0);
+  rb_define_method(vct_tag, "first=",    XEN_PROCEDURE_CAST rb_set_vct_first, 1);
   rb_define_method(vct_tag, "last",      XEN_PROCEDURE_CAST rb_vct_last, 0);
-  rb_define_method(vct_tag, "last=",     XEN_PROCEDURE_CAST rb_set_vct_last, 0);
+  rb_define_method(vct_tag, "last=",     XEN_PROCEDURE_CAST rb_set_vct_last, 1);
 
 #endif
 
@@ -960,7 +962,7 @@ void vct_init(void)
 #else
   XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w,      2, 0, 0, H_vct_ref);
 #endif
-  XEN_DEFINE_PROCEDURE(S_vct_to_string, g_vct_to_readable_string, 1, 0, 0, H_vct_to_string);
+  XEN_DEFINE_PROCEDURE(S_vct_to_string, g_vct_to_readable_string_w, 1, 0, 0, H_vct_to_string);
   XEN_DEFINE_PROCEDURE(S_vct_setB,      vct_set_w,      3, 0, 0, H_vct_setB);
 
 #if WITH_MODULES

@@ -776,7 +776,9 @@ static VALUE xen_rb_hook_initialize(int argc, VALUE *argv, VALUE hook)
   if (XEN_SYMBOL_P(name))
     name = XEN_SYMBOL_TO_STRING(name);
   if (arity != Qnil)
-    XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_2, c__FUNCTION__, "an integer");
+    {
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_2, c__FUNCTION__, "an integer");
+    }
   else
     arity = INT2NUM(0);
   if (help != Qnil)

@@ -4215,7 +4215,7 @@ static XEN g_set_mix_amp_env(XEN n, XEN chan_1, XEN val_1)
     }
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_amp_env, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_setB S_mix_amp_env, "an integer");
-  XEN_ASSERT_TYPE(XEN_LIST_P(val) || XEN_FALSE_P(val), val, XEN_ARG_3, S_setB S_mix_amp_env, "a list or #f");
+  XEN_ASSERT_TYPE(XEN_LIST_P(val) || XEN_FALSE_P(val), val, XEN_ARG_3, S_setB S_mix_amp_env, "a list or " PROC_FALSE);
   if (e) e = free_env(e); /* somehow there's a memory leak here? */
   if (XEN_LIST_P(val)) e = get_env(val, S_setB S_mix_amp_env);
   res = set_mix_amp_env(XEN_TO_C_INT(n), 
@@ -7083,7 +7083,7 @@ static XEN g_set_track_amp_env(XEN id, XEN e)
   int track_id;
   env *new_e;
   track_id = xen_to_c_track(id, S_setB S_track_amp_env);
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_FALSE_P(e), e, XEN_ARG_2, S_setB S_track_amp_env, "an envelope (a list of breakpoints) or #f");
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_FALSE_P(e), e, XEN_ARG_2, S_setB S_track_amp_env, "an envelope (a list of breakpoints) or " PROC_FALSE);
   new_e = xen_to_env(e);
   set_track_amp_env(track_id, new_e); /* copies env */
   new_e = free_env(new_e);

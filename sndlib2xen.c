@@ -7,6 +7,12 @@
 #else
   #define PRINT_BUFFER_SIZE 512
   #define LABEL_BUFFER_SIZE 64
+  #if HAVE_RUBY
+    #define PROC_FALSE "false"
+  #endif
+  #if HAVE_GUILE
+    #define PROC_FALSE "#f"
+  #endif
 #endif
 
 #include <stddef.h>
@@ -703,10 +709,10 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 
   int fd = -1, df;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_open_output, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(srate), srate, XEN_ARG_2, S_mus_sound_open_output, "an integer or #f");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_3, S_mus_sound_open_output, "an integer or #f");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_format), data_format, XEN_ARG_4, S_mus_sound_open_output, "an integer (data-format id) or #f");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(header_type), header_type, XEN_ARG_5, S_mus_sound_open_output, "an integer (header-type id) or #f");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(srate), srate, XEN_ARG_2, S_mus_sound_open_output, "an integer or " PROC_FALSE);
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_3, S_mus_sound_open_output, "an integer or " PROC_FALSE);
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_format), data_format, XEN_ARG_4, S_mus_sound_open_output, "an integer (data-format id) or " PROC_FALSE);
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(header_type), header_type, XEN_ARG_5, S_mus_sound_open_output, "an integer (header-type id) or " PROC_FALSE);
   XEN_ASSERT_TYPE((XEN_STRING_P(comment) || (XEN_NOT_BOUND_P(comment))), comment, XEN_ARG_6, S_mus_sound_open_output, "a string");
   if (XEN_INTEGER_P(data_format))
     df = XEN_TO_C_INT(data_format);
@@ -745,10 +751,10 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 
   int fd = -1, df;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_reopen_output, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_2, S_mus_sound_reopen_output, "an integer or #f");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_format), data_format, XEN_ARG_3, S_mus_sound_reopen_output, "an integer (data-format id) or #f");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(header_type), header_type, XEN_ARG_4, S_mus_sound_reopen_output, "an integer (header-type id) or #f");
-  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_P(data_loc), data_loc, XEN_ARG_5, S_mus_sound_reopen_output, "an integer or #f");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_2, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_format), data_format, XEN_ARG_3, S_mus_sound_reopen_output, "an integer (data-format id) or " PROC_FALSE);
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(header_type), header_type, XEN_ARG_4, S_mus_sound_reopen_output, "an integer (header-type id) or " PROC_FALSE);
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_P(data_loc), data_loc, XEN_ARG_5, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
   df = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
   if (MUS_DATA_FORMAT_OK(df))
     {

@@ -6520,7 +6520,7 @@ to the help dialog if filename is omitted"
   chan_info *cp;
   char *name = NULL;
   int err;
-  XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), filename, XEN_ARG_1, S_peaks, "a string or #f");
+  XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), filename, XEN_ARG_1, S_peaks, "a string or " PROC_FALSE);
   ASSERT_CHANNEL(S_peaks, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_peaks);
   if (XEN_STRING_P(filename))

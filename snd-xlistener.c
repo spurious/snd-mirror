@@ -1228,7 +1228,7 @@ Widget make_pushbutton_widget(char *name, Widget parent, Arg *args, int n)
 
 static XEN g_listener_selected_text(void)
 {
-  #define H_listener_selection "(" S_listener_selection "): currently selected text in listener or #f"
+  #define H_listener_selection "(" S_listener_selection "): currently selected text in listener or " PROC_FALSE
   XEN res = XEN_FALSE;
   if (listener_text)
     {

@@ -3363,7 +3363,7 @@ void g_init_gxrec(void)
 {
   #define H_recorder_file_hook S_recorder_file_hook " (filename): called when 'Record' is pressed \
 in the recorder dialog.  The currently displayed output filename is passed in as the argument, \
-or #f if no filename has been supplied.  The hook function should return the new filename."
+or " PROC_FALSE " if no filename has been supplied.  The hook function should return the new filename."
 
   XEN_DEFINE_HOOK(recorder_file_hook, S_recorder_file_hook, 1, H_recorder_file_hook);     /* args = displayed output file name */
 }

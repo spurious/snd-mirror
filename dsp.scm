@@ -1763,7 +1763,11 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define* (channel-polynomial coeffs #:optional snd chn)
   (let ((len (frames snd chn)))
-    (vct->channel (vct-polynomial (channel->vct 0 len snd chn) coeffs) 0 len snd chn #f (format #f "channel-polynomial ~A" (vct->string coeffs)))))
+    (vct->channel 
+     (vct-polynomial 
+      (channel->vct 0 len snd chn) 
+      coeffs) 
+     0 len snd chn #f (format #f "channel-polynomial ~A" (vct->string coeffs)))))
 
 ;;; (channel-polynomial (vct 0.0 .5)) = x*.5
 ;;; (channel-polynomial (vct 0.0 1.0 1.0 1.0)) = x*x*x + x*x + x

@@ -2076,12 +2076,12 @@ static XEN g_mark_home(XEN mark_n)
 static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos) 
 {
   #define H_find_mark "(" S_find_mark " samp-or-name (snd #f) (chn #f) (edpos #f)): \
-find the mark in snd's channel chn at samp (if a number) or with the given name (if a string); return the mark id or #f if no mark found."
+find the mark in snd's channel chn at samp (if a number) or with the given name (if a string); return the mark id or " PROC_FALSE " if no mark found."
 
   mark **mps;
   int pos;
   chan_info *cp = NULL;
-  XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, XEN_ARG_1, S_find_mark, "a number or string or #f");
+  XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, XEN_ARG_1, S_find_mark, "a number or string or " PROC_FALSE);
   ASSERT_CHANNEL(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 

@@ -449,7 +449,7 @@ data in the recipient's graph between points low and high in the drawing mode gr
 static XEN g_main_widgets(void)
 {
   #define H_main_widgets "(" S_main_widgets "): top level \
-widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane or #f (5)notebook-outer-pane or #f)"
+widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane (5)notebook-outer-pane)"
 
   XEN main_win;
 #if USE_MOTIF

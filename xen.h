@@ -1010,9 +1010,11 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_ERROR_TYPE(Name)            rb_intern(xen_scheme_constant_to_ruby(Name))
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
-  if (!(Assertion)) \
-    rb_raise(rb_eTypeError, "%s: wrong type arg %d, %s, wanted %s\n", \
-             Caller, Position, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Correct_Type)
+  do { \
+    if (!(Assertion)) \
+      rb_raise(rb_eTypeError, "%s: wrong type arg %d, %s, wanted %s\n", \
+               Caller, Position, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Correct_Type); \
+     } while (0)
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
   rb_raise(rb_eTypeError, "%s: wrong type arg %d, %s, wanted %s\n", \

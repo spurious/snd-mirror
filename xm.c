@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "31-Jan-05"
+#define XM_DATE "28-Mar-05"
 
 /* HISTORY: 
  *
+ *   28-Mar:    fixed some Ruby error strings (#f->false).
  *   31-Jan:    removed Motif 1 support, and Lesstif.
  *   4-Jan:     replace XEN_VECTOR_ELEMENTS usages.
  *   --------
@@ -152,8 +153,10 @@
   /* in snd-0.h: */
   #if HAVE_RUBY
     #define S_setB "set_"
+    #define PROC_FALSE "false"
   #else
     #define S_setB "set! "
+    #define PROC_FALSE "#f"
   #endif
 #endif
 
@@ -3461,7 +3464,7 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unpars
   XmParseTable pt = NULL;
   int len;
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringUnparse", "XmString");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2) || XEN_FALSE_P(arg2), arg2, 2, "XmStringUnparse", "XmStringTag or #f");
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg2) || XEN_FALSE_P(arg2), arg2, 2, "XmStringUnparse", "XmStringTag or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringUnparse", "XmTextType");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmStringUnparse", "XmTextType");
   XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg5) || XEN_FALSE_P(arg5), arg5, 5, "XmStringUnparse", "XmParseTable");
@@ -4730,11 +4733,11 @@ static XEN gxm_XmMainWindowSetAreas(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
   #define H_XmMainWindowSetAreas "void XmMainWindowSetAreas(Widget widget, Widget menu_bar, Widget command_window, Widget horizontal_scrollbar, \
 Widget vertical_scrollbar, Widget work_region) identifies manageable children for each area"
   XEN_ASSERT_TYPE(XEN_MainWindowWidget_P(arg1), arg1, 1, "XmMainWindowSetAreas", "MainWindow Widget");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg2) || XEN_BOOLEAN_P(arg2), arg2, 2, "XmMainWindowSetAreas", "Widget or #f=NULL");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg3) || XEN_BOOLEAN_P(arg3), arg3, 3, "XmMainWindowSetAreas", "Widget or #f=NULL");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg4) || XEN_BOOLEAN_P(arg4), arg4, 4, "XmMainWindowSetAreas", "Widget or #f=NULL");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg5) || XEN_BOOLEAN_P(arg5), arg5, 5, "XmMainWindowSetAreas", "Widget or #f=NULL");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg6) || XEN_BOOLEAN_P(arg6), arg6, 6, "XmMainWindowSetAreas", "Widget or #f=NULL");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg2) || XEN_BOOLEAN_P(arg2), arg2, 2, "XmMainWindowSetAreas", "Widget or " PROC_FALSE "=null");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg3) || XEN_BOOLEAN_P(arg3), arg3, 3, "XmMainWindowSetAreas", "Widget or " PROC_FALSE "=null");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg4) || XEN_BOOLEAN_P(arg4), arg4, 4, "XmMainWindowSetAreas", "Widget or " PROC_FALSE "=null");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg5) || XEN_BOOLEAN_P(arg5), arg5, 5, "XmMainWindowSetAreas", "Widget or " PROC_FALSE "=null");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg6) || XEN_BOOLEAN_P(arg6), arg6, 6, "XmMainWindowSetAreas", "Widget or " PROC_FALSE "=null");
   XmMainWindowSetAreas(XEN_TO_C_Widget(arg1),
 		       (XEN_Widget_P(arg2) ? XEN_TO_C_Widget(arg2) : NULL),
 		       (XEN_Widget_P(arg3) ? XEN_TO_C_Widget(arg3) : NULL),
@@ -12581,7 +12584,7 @@ static XEN gxm_XSetIOErrorHandler(XEN arg1)
 {
   #define H_XSetIOErrorHandler "int (*XSetIOErrorHandler(handler))() sets the fatal I/O error handler. "
   XEN old_val;
-  XEN_ASSERT_TYPE(XEN_FALSE_P(arg1) || XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XSetIOErrorHandler", "#f=NULL or function of 1 arg");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg1) || XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XSetIOErrorHandler", PROC_FALSE "=null or function of 1 arg");
   xm_protect(arg1);
   old_val = xm_XIOErrorHandler;
   xm_XIOErrorHandler = arg1;
@@ -12603,7 +12606,7 @@ static XEN gxm_XSetErrorHandler(XEN arg1)
 {
   #define H_XSetErrorHandler "XSetErrorHandler(proc) causes proc to be called if an error occurs"
   XEN old_val;
-  XEN_ASSERT_TYPE(XEN_FALSE_P(arg1) || XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XSetErrorHandler", "#f=NULL or function of 2 args");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg1) || XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XSetErrorHandler", PROC_FALSE "=null or function of 2 args");
   xm_protect(arg1);
   old_val = xm_XErrorHandler;
   xm_XErrorHandler = arg1;
