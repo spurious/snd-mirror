@@ -3445,13 +3445,14 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
   env_info *ep;
   int id, err = 0;
   env_tick *et;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename) || XEN_INTEGER_P(filename), filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename) || XEN_INTEGER_P(filename) || XEN_NOT_BOUND_P(filename), 
+		  filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_channel_amp_envs, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pts), pts, XEN_ARG_3, S_channel_amp_envs, "an integer");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(peak_func) || XEN_NOT_BOUND_P(peak_func), peak_func, XEN_ARG_4, S_channel_amp_envs, "a procedure");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(done_func) || XEN_NOT_BOUND_P(done_func), done_func, XEN_ARG_5, S_channel_amp_envs, "a procedure");
 
-  if (XEN_INTEGER_P(filename))
+  if ((XEN_INTEGER_P(filename)) || (XEN_NOT_BOUND_P(filename)))
     {
       sp = get_sp(filename);
       if (sp)
@@ -3968,6 +3969,6 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE(S_peak_env_info, g_peak_env_info_w, 0, 3, 0, H_peak_env_info);
   XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, H_write_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
-  XEN_DEFINE_PROCEDURE(S_channel_amp_envs, g_channel_amp_envs_w, 1, 4, 0, H_channel_amp_envs);
+  XEN_DEFINE_PROCEDURE(S_channel_amp_envs, g_channel_amp_envs_w, 0, 5, 0, H_channel_amp_envs);
 }
 

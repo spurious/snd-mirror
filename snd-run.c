@@ -4385,7 +4385,7 @@ static xen_value *fneq_1(ptree *prog, xen_value **args, int constants)
     {
       if (args[1]->type == R_INT) f1 = (Float)(prog->ints[args[1]->addr]); else f1 = prog->dbls[args[1]->addr];
       if (args[2]->type == R_INT) f2 = (Float)(prog->ints[args[2]->addr]); else f2 = prog->dbls[args[2]->addr];
-      return(make_xen_value(R_BOOL, add_dbl_to_ptree(prog, (fabs(f1 - f2) > .001)), R_CONSTANT));
+      return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (fabs(f1 - f2) > .001)), R_CONSTANT));
     }
   if (args[1]->type == R_INT) single_to_float(prog, args, 1);
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);

@@ -2872,97 +2872,97 @@
       
       ;; basic edit tree cases
       (let ((ind (new-sound "test.snd")))
-	(if (not (string=? (display-edits) "
+	(if (not (string=? (display-edits) (string-append "
 EDITS: 0
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, end_mark)
-"))
+")))
 	    (snd-display ";new 0: ~A" (display-edits)))
 	(insert-samples 10 10 (make-vct 10))
-	(if (not (string=? (display-edits) "
+	(if (not (string=? (display-edits) (string-append "
 EDITS: 2
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, end_mark)
 
  (silence 1 9) ; (insert-extend) [1:3]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, cp->sounds[-1][0:8, 0.000000])
    (at 10, end_mark)
 
  (insert 10 10) ; insert-samples [2:4]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, cp->sounds[-1][0:8, 0.000000])
    (at 10, cp->sounds[1][0:9, 1.000000]) [buf: 10] 
    (at 20, end_mark)
-"))
+")))
 	    (snd-display ";new 1: ~A" (display-edits)))
 	(undo)
 	(insert-samples 0 10 (make-vct 10))
-	(if (not (string=? (display-edits) "
+	(if (not (string=? (display-edits) (string-append "
 EDITS: 2
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, end_mark)
 
  (silence 1 9) ; (insert-extend) [1:3]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, cp->sounds[-1][0:8, 0.000000])
    (at 10, end_mark)
 
  (insert 0 10) ; insert-samples [2:4]:
    (at 0, cp->sounds[1][0:9, 1.000000]) [buf: 10] 
-   (at 10, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 10, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 11, cp->sounds[-1][0:8, 0.000000])
    (at 20, end_mark)
-"))
+")))
 	    (snd-display ";new 2: ~A" (display-edits)))
 	(undo 2)
 	(insert-samples 0 10 (make-vct 10))
-	(if (not (string=? (display-edits) "
+	(if (not (string=? (display-edits) (string-append "
 EDITS: 1
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, end_mark)
 
  (insert 0 10) ; insert-samples [1:3]:
    (at 0, cp->sounds[1][0:9, 1.000000]) [buf: 10] 
-   (at 10, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 10, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 11, end_mark)
-"))
+")))
 	    (snd-display ";new 3: ~A" (display-edits)))
 	(undo)
 	(set! (sample 0) .5)
-	(if (not (string=? (display-edits) "
+	(if (not (string=? (display-edits) (string-append "
 EDITS: 1
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, end_mark)
 
  (set 0 1) ; set! sample [1:2]:
    (at 0, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
    (at 1, end_mark)
-"))
+")))
 	    (snd-display ";new 4: ~A" (display-edits)))      
 	(undo)
 	(set! (samples 0 10) (make-vct 10))
-	(if (not (string=? (display-edits) "
+	(if (not (string=? (display-edits) (string-append "
 EDITS: 1
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, end_mark)
 
  (set 0 10) ; set-samples [1:2]:
    (at 0, cp->sounds[1][0:9, 1.000000]) [buf: 10] 
    (at 10, end_mark)
-"))
+")))
 	    (snd-display ";new 5: ~A" (display-edits)))
 	(delete-samples 3 4)
 	(if (not (string=? (display-edits ind 0 2) "
@@ -2986,11 +2986,11 @@ EDITS: 1
 	(insert-samples 2 1 (make-vct 1))
 	(insert-samples 4 1 (make-vct 1))
 	(insert-samples 15 1 (make-vct 1))
-	(if (not (string=? (display-edits) "
+	(if (not (string=? (display-edits) (string-append "
 EDITS: 5
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, end_mark)
 
  (set 0 10) ; set-samples [1:2]:
@@ -3028,7 +3028,7 @@ EDITS: 5
    (at 7, cp->sounds[1][2:9, 1.000000]) [buf: 10] 
    (at 15, cp->sounds[5][0:0, 1.000000]) [buf: 1] 
    (at 16, end_mark)
-"))
+")))
 	    (snd-display ";new 8: ~A" (display-edits)))
 	(delete-samples 2 1)
 	(if (not (string=? (display-edits ind 0 6) "
@@ -4306,11 +4306,16 @@ EDITS: 5
 	    (snd-display ";xramp2 3: ~A" (display-edits ind 0 4)))
 	(undo 2)
 	(xramp-channel 0.75 0.25 0.3)
-	(if (not (string=? (display-edits ind 0 3) "
+	(if (and (not (string=? (display-edits ind 0 3) "
  (ramp 0 11) ; xramp-channel -1.2040 -0.0000 -0.7143 0.9643 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 0.693147, -1.203973 -> -0.000000, off: -1.000000, scl: 1.000000, off2: 0.964286, scl2: -0.714286]) [buf: 11] 
    (at 11, end_mark)
 "))
+		 (not (string=? (display-edits ind 0 3) "
+ (ramp 0 11) ; xramp-channel -1.2040 0.0000 -0.7143 0.9643 0 11 [3:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 0.693147, -1.203973 -> 0.000000, off: -1.000000, scl: 1.000000, off2: 0.964286, scl2: -0.714286]) [buf: 11] 
+   (at 11, end_mark)
+")))
 	    (snd-display ";xramp2 4: ~A" (display-edits ind 0 3)))
 	(undo)
 	(xramp-channel .2 .6 32.0 2 6)
@@ -4647,11 +4652,16 @@ EDITS: 5
 		       (lambda (pos dur)
 			 (lambda (y)
 			   (* outer y)))))
-	(if (not (string=? (display-edits ind 0 4 #f) "
+	(if (and (not (string=? (display-edits ind 0 4 #f) "
  (xen[2] 0 11) ; xen 2 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 1.000000 -> -0.000000, loc: 2, pos: 0, arg: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
+		 (not (string=? (display-edits ind 0 4 #f) "
+ (xen[2] 0 11) ; xen 2 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 1.000000 -> 0.000000, loc: 2, pos: 0, arg: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+")))
 	    (snd-display ";xen 2: ~A" (display-edits ind 0 4 #f)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.045 0.080 0.105 0.120 0.125 0.120 0.105 0.080 0.045 0.000)))
 	    (snd-display ";xen 2: ~A" (channel->vct)))
@@ -5095,7 +5105,9 @@ EDITS: 5
 	  (IF (not (equal? (sample-reader-home vr) (list index 0))) 
 	      (snd-display ";sample-reader-home: ~A ~A?" (sample-reader-home vr) (list index 0)))
 	  (IF (not (string=? (inspect-sample-reader vr)
-			     "snd_fd: 0.000000, /home/bil/cl/oboe.snd[0](forward) beg: 0, at 0 [frag_pos: 0, first: 0, last: 8191], fragment 0"))
+			     (string-append "snd_fd: 0.000000, " 
+					    home-dir 
+					    "/cl/oboe.snd[0](forward) beg: 0, at 0 [frag_pos: 0, first: 0, last: 8191], fragment 0")))
 	      (snd-display ";inspect-sample-reader: ~A" (inspect-sample-reader vr)))
 	  (IF (region-samples->vct -1 1233 r0) (snd-display ";region-samples->vct -1: ~A" (region-samples->vct -1 1233)))
 	  (IF (region-samples->vct 12345678 1 r0) (snd-display ";region-samples->vct inf: ~A" (region-samples->vct 12345678 1)))
@@ -6435,13 +6447,13 @@ EDITS: 5
 
       (with-output-to-file "sndtst" 
 	(lambda ()
-	  (display "#!/home/bil/cl/snd -b
+	  (display (string-append "#!" home-dir "/cl/snd -b
 !#
  (open-sound \"fmv.snd\")
  (scale-by 2.0)
  (save-sound)
  (exit)
-")))
+"))))
       (system "chmod 777 sndtst")
       (system "cp oboe.snd fmv.snd")
       (sleep 1) ; force dates to be different
@@ -7624,9 +7636,13 @@ EDITS: 5
 		      (setfnc initval)
 		      (test-color (cdr lst)))))))
       (if (procedure? test-hook) (test-hook 7))
-      (let* ((c1 (make-color 0 0 1))
+      (let* ((c1 (catch 'no-such-color
+			(lambda () (make-color 0 0 1))
+			(lambda args #f)))
 	     (c2 c1)
-	     (c3 (make-color 0 0 1)))
+	     (c3 (catch 'no-such-color
+			(lambda () (make-color 0 0 1))
+			(lambda args #f))))
 	(IF (not (equal? c1 c2)) (snd-display ";color equal? ~A ~A?" c1 c2))
 	(IF (not (eq? c1 c2)) (snd-display ";color eq? ~A ~A?" c1 c2))
 	(IF (not (equal? c1 c3)) (snd-display ";diff color equal? ~A ~A?" c1 c3))
@@ -7655,35 +7671,38 @@ EDITS: 5
 ;	  (IF (not (feql val0 (list 1.0 0.33330281528954 0.0)))
 ;	      (snd-display ";colormap-ref 0.5: ~A" val0))
 	  (set! (colormap) curmap)))
-      (load "rgb.scm")
-      (test-color
-       (list
-	(list 'basic-color basic-color ivory2)
-	(list 'cursor-color cursor-color red)
-	(list 'data-color data-color black)
-	(list 'enved-waveform-color enved-waveform-color blue)
-	(list 'filter-waveform-color filter-waveform-color blue)
-	(list 'graph-color graph-color white)
-	(list 'highlight-color highlight-color ivory1)
-	(list 'listener-color listener-color alice-blue)
-	(list 'listener-text-color listener-text-color black)
-	(list 'mark-color mark-color red)
-	(list 'mix-color mix-color dark-gray)
-	(list 'selected-mix-color selected-mix-color light-green)
-	(list 'position-color position-color ivory3)
-	(list 'pushed-button-color pushed-button-color lightsteelblue1)
-	(list 'sash-color sash-color light-green)
-	(list 'selected-data-color selected-data-color black)
-	(list 'selected-graph-color selected-graph-color white)
-	(list 'selection-color selection-color lightsteelblue1)
-	(list 'text-focus-color text-focus-color white)
-	(list 'zoom-color zoom-color ivory4)))
-      (let ((ind (open-sound "oboe.snd")))
-	(recolor-widget (cadr (sound-widgets ind)) (make-color 1 0 0))
-	(set! (selected-data-color) light-green)
-	(set! (data-color) blue)
-	(set! (selected-graph-color) black)
-	(close-sound ind))
+      (catch 'no-such-color
+	     (lambda () 
+	       (load "rgb.scm")
+	       (test-color
+		(list
+		 (list 'basic-color basic-color ivory2)
+		 (list 'cursor-color cursor-color red)
+		 (list 'data-color data-color black)
+		 (list 'enved-waveform-color enved-waveform-color blue)
+		 (list 'filter-waveform-color filter-waveform-color blue)
+		 (list 'graph-color graph-color white)
+		 (list 'highlight-color highlight-color ivory1)
+		 (list 'listener-color listener-color alice-blue)
+		 (list 'listener-text-color listener-text-color black)
+		 (list 'mark-color mark-color red)
+		 (list 'mix-color mix-color dark-gray)
+		 (list 'selected-mix-color selected-mix-color light-green)
+		 (list 'position-color position-color ivory3)
+		 (list 'pushed-button-color pushed-button-color lightsteelblue1)
+		 (list 'sash-color sash-color light-green)
+		 (list 'selected-data-color selected-data-color black)
+		 (list 'selected-graph-color selected-graph-color white)
+		 (list 'selection-color selection-color lightsteelblue1)
+		 (list 'text-focus-color text-focus-color white)
+		 (list 'zoom-color zoom-color ivory4)))
+	       (let ((ind (open-sound "oboe.snd")))
+		 (recolor-widget (cadr (sound-widgets ind)) (make-color 1 0 0))
+		 (set! (selected-data-color) light-green)
+		 (set! (data-color) blue)
+		 (set! (selected-graph-color) black)
+		 (close-sound ind)))
+	     (lambda args args))
       ))
 
 
@@ -11063,10 +11082,14 @@ EDITS: 5
 	  (set-track-tempo (track 1) 2.0)
 	  (IF (not (= (track-length (track 1)) (/ (+ 4000 50828) 2)))
 	      (snd-display ";track-tempo: ~D (~D)?" (track-length (track 1)) (/ (+ 4000 50828) 2)))
-	  (set-track-color (track 1) (make-color .8 .8 .8))
+	  (catch 'no-such-color
+		 (lambda () (set-track-color (track 1) (make-color .8 .8 .8)))
+		 (lambda args args))
 	  (set! (mix-track (vector-ref mix-ids 1)) 2)
 	  (set! (mix-track (vector-ref mix-ids 3)) 2)
-	  (set-track-color (track 2) (make-color .2 .8 0))
+	  (catch 'no-such-color 
+		 (lambda () (set-track-color (track 2) (make-color .2 .8 0)))
+		 (lambda args args))
 	  (let ((t2 (track->vct (track 2)))
 		(t3 (mix->vct (vector-ref mix-ids 5))))
 	    (IF (or (fneq (vct-ref t2 1000) (vct-ref t3 1000))
@@ -11774,7 +11797,9 @@ EDITS: 5
 	      (t1 (make-track 2 (list (vector-ref vc 2) (vector-ref vc 6) (vector-ref vc 8)))))
 	  (set-track-amp t0 .5)
 	  (time (transpose-track t1 3))
-	  (set-track-color t1 (make-color 0 0 1))
+	  (catch 'no-such-color
+		 (lambda () (set-track-color t1 (make-color 0 0 1)))
+		 (lambda args args))
 	  (let ((t0e (track-end t0)))
 	    (set-track-position t0 1000)
 	    (IF (not (= (track-position t0) 1000)) (snd-display ";track-position: ~A?" (track-position t0)))
@@ -16977,31 +17002,16 @@ EDITS: 5
 	(zigzag-check "ptree+closure" ind 0)
 	(undo)
 	(ramp-channel 0.0 1.0)
-	(ptree-channel (lambda (y data forward)
-			 (declare (y real) (data vct) (forward boolean))
-			 (* y (vct-ref data 0)))
-		       0 (frames) ind 0 #f #f
-		       (lambda (pos dur)
-			 (vct 0.5)))
+	(cosine-channel-via-ptree 0 (frames) ind 0 #f)
 	(zigzag-check "ptree+ramp" ind 0)
 	(undo 2)
 	(xramp-channel 0.0 1.0 .3)
-	(ptree-channel (lambda (y data forward)
-			 (declare (y real) (data vct) (forward boolean))
-			 (* y (vct-ref data 0)))
-		       0 (frames) ind 0 #f #f
-		       (lambda (pos dur)
-			 (vct 0.5)))
+	(cosine-channel-via-ptree 0 (frames) ind 0 #f)
 	(zigzag-check "ptree+xramp" ind 0)
 	(undo 2)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 1.0 0.0)
-	(ptree-channel (lambda (y data forward)
-			 (declare (y real) (data vct) (forward boolean))
-			 (* y (vct-ref data 0)))
-		       0 (frames) ind 0 #f #f
-		       (lambda (pos dur)
-			 (vct 0.5)))
+	(cosine-channel-via-ptree 0 (frames) ind 0 #f)
 	(zigzag-check "ptree+ramp2" ind 0)
 
 	(undo 3)
@@ -17012,6 +17022,37 @@ EDITS: 5
 		     (lambda (pos dur)
 		       (list 0.5)))
 	(zigzag-check "xen" ind 0)
+
+	;; zero checks
+	(undo 2)
+	(scale-channel 0.0 3 4)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "ptree+zero" ind 0)
+	(undo 2)
+	(pad-channel 2 4)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "ptree+pad" ind 0)
+	(undo 2)
+	(scale-channel 0.0 3 4)
+	(cosine-channel-via-ptree 0 (frames) ind 0 #f)
+	(zigzag-check "ptree+closure+zero" ind 0)
+	(undo 2)
+	(ramp-channel 0.0 1.0)
+	(scale-channel 0.0 2 4)
+	(cosine-channel-via-ptree 0 (frames) ind 0 #f)
+	(zigzag-check "ptree+ramp+zero" ind 0)
+	(undo 3)
+	(scale-channel 0.0 3 4)
+	(xen-channel (lambda (y data forward)
+		       (let ((val (vct-ref data (1+ (vct-ref data 0)))))
+			 (if forward
+			     (vct-set! data 0 (1+ (vct-ref data 0)))
+			     (vct-set! data 0 (1- (vct-ref data 0))))
+			 val))
+		     0 (frames) ind 0 #f #f
+		     (lambda (pos dur)
+		       (vct pos .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0 1.1 1.2 1.3 1.4)))
+	(zigzag-check "xen+zero" ind 0)
 	(close-sound ind))
 
 	(let ((ind (new-sound "test.snd")))
@@ -17032,16 +17073,16 @@ EDITS: 5
 	      (snd-display ";cosine-chan with edits: ~A"
 			   (map sample (list 12 0 25 30 20 21 31 50))))
 	  (if (and (> (optimization) 0)
-		   (not (string=? (display-edits) "
+		   (not (string=? (display-edits) (string-append "
 EDITS: 6
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 1, end_mark)
 
  (silence 0 100) ; insert-silence [1:3]:
    (at 0, cp->sounds[-1][0:99, 0.000000])
-   (at 100, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/test.snd[0]]
+   (at 100, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/test.snd[0]]
    (at 101, end_mark)
 
  (set 0 101) ; map-channel [2:2]:
@@ -17072,7 +17113,7 @@ EDITS: 6
    (at 30, cp->sounds[-1][0:0, 0.000000])
    (at 31, cp->sounds[1][31:100, 1.000000, loc: 0, pos: 31, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 101, end_mark)
-")))
+"))))
 	      (snd-display ";cosine channel edits: ~A"
 			   (display-edits)))
 	  (close-sound ind))
@@ -17086,27 +17127,27 @@ EDITS: 6
 	    (if (fneq mx .1)
 		(snd-display ";scale+ptree+set -> ~A" mx)))
 	  (if (and (> (optimization) 0)
-		   (not (string=? (display-edits) "
+		   (not (string=? (display-edits) (string-append "
 EDITS: 3
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (scale 0 50828) ; scale-channel 0.0000 0 50828 [1:2]:
-   (at 0, cp->sounds[0][0:50827, 0.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 0.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ptree[0] 0 50828) ; ptree 0 0 50828 [2:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 0, pos: 0, arg: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 0, pos: 0, arg: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 100 1) ; set! sample [3:4]:
-   (at 0, cp->sounds[0][0:99, 1.000000, loc: 0, pos: 0, arg: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 1.000000, loc: 0, pos: 0, arg: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 100, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
-   (at 101, cp->sounds[0][101:50827, 1.000000, loc: 0, pos: 101, arg: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 101, cp->sounds[0][101:50827, 1.000000, loc: 0, pos: 101, arg: 0.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
-")))
+"))))
 	      (snd-display ";ptree split: ~A" (display-edits)))
 	  (undo)
 	  (delete-sample 100)
@@ -18382,25 +18423,25 @@ EDITS: 3
 	  (IF (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
 	      (snd-display ";ptree + .1 differs"))
 	  (IF (and (> (optimization) 0)
-		   (not (string=? (display-edits ind-ptree) "
+		   (not (string=? (display-edits ind-ptree) (string-append "
 EDITS: 3
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (scale 0 50828) ; scale-channel 2.0000 0 50828 [1:2]:
-   (at 0, cp->sounds[0][0:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ptree[1] 0 50828) ; ptree 1 0 50828 [2:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 1, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 1, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (scale 0 50828) ; scale-channel 2.0000 0 50828 [3:2]:
-   (at 0, cp->sounds[0][0:50827, 2.000000, loc: 1, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 2.000000, loc: 1, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
-")))
+"))))
 	      (snd-display ";ptree display edits: ~A" (display-edits ind-ptree)))
 	  (revert-sound ind-map)
 	  (revert-sound ind-ptree)
@@ -18414,21 +18455,21 @@ EDITS: 3
 	  (IF (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
 	      (snd-display ";ptree sin (2) differs"))
 	  (IF (and (> (optimization) 0)
-		   (not (string=? (display-edits ind-ptree) "
+		   (not (string=? (display-edits ind-ptree) (string-append "
 EDITS: 2
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ptree[2] 0 50828) ; ptree 2 0 50828 [1:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 2, pos: 0, arg: 1.000000, code: (lambda (y) (* 2.0 (sin y)))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000, loc: 2, pos: 0, arg: 1.000000, code: (lambda (y) (* 2.0 (sin y)))]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 0 50828) ; map-channel [2:2]:
    (at 0, cp->sounds[1][0:50827, 1.000000]) [buf: 50828] 
    (at 50828, end_mark)
-")))
+"))))
 	      (snd-display ";ptree display: ~A" (display-edits ind-ptree)))
 	  
 	  (revert-sound ind-map)
@@ -18462,33 +18503,33 @@ EDITS: 2
 	  (IF (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
 	      (snd-display ";ptree[1000] + .2 differs"))
 	  (IF (and (> (optimization) 0)
-		   (not (string=? (display-edits ind-ptree) "
+		   (not (string=? (display-edits ind-ptree) (string-append "
 EDITS: 3
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ptree[5] 100 100) ; ptree 5 100 100 [1:4]:
-   (at 0, cp->sounds[0][0:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 1.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 1.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (scale 0 50828) ; scale-channel 2.0000 0 50828 [2:4]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ptree[6] 1000 100) ; ptree 6 1000 100 [3:6]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
-")))
+"))))
 	      (snd-display ";ptree[1000] display: ~A" (display-edits ind-ptree)))
 	  
 	  (env-channel '(0 0 1 1 2 0) 2000 1000 ind-map)
@@ -18502,64 +18543,64 @@ EDITS: 3
 	  (IF (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
 	      (snd-display ";ptree[3200] + .2 differs"))
 	  (IF (and (> (optimization) 0)
-		   (not (string=? (display-edits ind-ptree) "
+		   (not (string=? (display-edits ind-ptree) (string-append "
 EDITS: 6
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ptree[5] 100 100) ; ptree 5 100 100 [1:4]:
-   (at 0, cp->sounds[0][0:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 1.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 1.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (scale 0 50828) ; scale-channel 2.0000 0 50828 [2:4]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ptree[6] 1000 100) ; ptree 6 1000 100 [3:6]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ramp 2501 499) ; env-channel (make-env '(0.000 0.000 1.000 1.000 2.000 0.000 ) :base 1.0000 :end 999) 2000 1000 [4:9]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 1100, cp->sounds[0][1100:1999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 2000, cp->sounds[0][2000:2500, 2.000000, -0.000000 -> 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 2501, cp->sounds[0][2501:2999, 2.000000, 0.997996 -> 0.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 3000, cp->sounds[0][3000:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:1999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 2000, cp->sounds[0][2000:2500, 2.000000, -0.000000 -> 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 2501, cp->sounds[0][2501:2999, 2.000000, 0.997996 -> 0.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 3000, cp->sounds[0][3000:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (ptree[7] 4000 100) ; ptree 7 4000 100 [5:11]:
-   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 1100, cp->sounds[0][1100:1999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 2000, cp->sounds[0][2000:2500, 2.000000, -0.000000 -> 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 2501, cp->sounds[0][2501:2999, 2.000000, 0.997996 -> 0.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 3000, cp->sounds[0][3000:3999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 4000, cp->sounds[0][4000:4099, 1.000000, loc: 7, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.3))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 4100, cp->sounds[0][4100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, loc: 5, pos: 0, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc: 6, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:1999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 2000, cp->sounds[0][2000:2500, 2.000000, -0.000000 -> 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 2501, cp->sounds[0][2501:2999, 2.000000, 0.997996 -> 0.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 3000, cp->sounds[0][3000:3999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 4000, cp->sounds[0][4000:4099, 1.000000, loc: 7, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.3))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 4100, cp->sounds[0][4100:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 0 3200) ; map-channel [6:5]:
    (at 0, cp->sounds[1][0:3199, 1.000000]) [buf: 3200] 
-   (at 3200, cp->sounds[0][3200:3999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 4000, cp->sounds[0][4000:4099, 1.000000, loc: 7, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.3))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 4100, cp->sounds[0][4100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 3200, cp->sounds[0][3200:3999, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 4000, cp->sounds[0][4000:4099, 1.000000, loc: 7, pos: 0, arg: 2.000000, code: (lambda (y) (+ y 0.3))]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 4100, cp->sounds[0][4100:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
-")))
+"))))
 	      (snd-display ";ptree[3200] display: ~A" (display-edits ind-ptree)))
 	  (undo 1 ind-ptree)
 	  (let ((reader (make-sample-reader (1- (frames)) ind-ptree 0 -1)))
@@ -18964,17 +19005,17 @@ EDITS: 6
 	  (if (fneq (maxamp ind1 0) mx0) (snd-display ";maxamp cross swap 1: ~A" (maxamp ind1 0)))
 	  (close-sound ind1)
 	  (if (and (> (optimization) 0)
-		   (not (string=? (display-edits) "
+		   (not (string=? (display-edits) (string-append "
 EDITS: 1
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 0 41623) ; swap-channels [1:2]:
-   (at 0, cp->sounds[1][0:41622, 1.000000]) [file: /home/bil/cl/pistol.snd[0]]
+   (at 0, cp->sounds[1][0:41622, 1.000000]) [file: " home-dir "/cl/pistol.snd[0]]
    (at 41623, end_mark)
-")))
+"))))
 	      (snd-display "cross swap state: ~A" (display-edits)))
 	  (close-sound ind0))
 
@@ -19563,55 +19604,55 @@ EDITS: 1
       (IF (not (equal? (edit-fragment 4) '("scale-channel 2.0000 0 50828" "scale" 0 50828))) (snd-display ";save-edit-history 4: ~A?" (edit-fragment 4)))
       (IF (not (equal? (edit-fragment 5) '("pad-channel" "zero" 100 20))) (snd-display ";save-edit-history 5: ~A?" (edit-fragment 5)))
       (let ((str (display-edits)))
-	(IF (not (string=? str "
+	(IF (not (string=? str (string-append "
 EDITS: 5
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 1 1) ; set! sample [1:4]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2, cp->sounds[0][2:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (delete 100 1) ; delete-sample [2:5]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][101:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2, cp->sounds[0][2:99, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][101:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50827, end_mark)
 
  (insert 10 1) ; insert-sample [3:7]:
-   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:9, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2, cp->sounds[0][2:9, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 10, cp->sounds[2][0:0, 1.000000]) [buf: 1] 
-   (at 11, cp->sounds[0][10:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 101, cp->sounds[0][101:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 11, cp->sounds[0][10:99, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 101, cp->sounds[0][101:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (scale 0 50828) ; scale-channel 2.0000 0 50828 [4:7]:
-   (at 0, cp->sounds[0][0:0, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:0, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 2.000000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:9, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2, cp->sounds[0][2:9, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 10, cp->sounds[2][0:0, 2.000000]) [buf: 1] 
-   (at 11, cp->sounds[0][10:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 101, cp->sounds[0][101:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 11, cp->sounds[0][10:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 101, cp->sounds[0][101:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (silence 100 20) ; pad-channel [5:9]:
-   (at 0, cp->sounds[0][0:0, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:0, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 2.000000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:9, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2, cp->sounds[0][2:9, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 10, cp->sounds[2][0:0, 2.000000]) [buf: 1] 
-   (at 11, cp->sounds[0][10:98, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 11, cp->sounds[0][10:98, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 100, cp->sounds[-1][0:19, 0.000000])
-   (at 120, cp->sounds[0][99:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 121, cp->sounds[0][101:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 120, cp->sounds[0][99:99, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
+   (at 121, cp->sounds[0][101:50827, 2.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50848, end_mark)
-"))
+")))
 	    (snd-display ";display-edits: ~A?" str)))
       (save-edit-history "hiho.scm" nind 0)
       (scale-sound-to 1.0 0 (frames nind 0) nind 0)
@@ -19729,27 +19770,27 @@ EDITS: 5
 	(set! (eps-file) old-eps-file)
 	(if (not (string=? (audio-state-file) ".mixer")) (snd-display ";save audio-state-file: ~A" (audio-state-file)))
 	(set! (audio-state-file) old-audio-state-file)
-	(if (not (string=? (display-edits) "
+	(if (not (string=? (display-edits) (string-append "
 EDITS: 2
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 100 32) ; set-samples [1:4]:
-   (at 0, cp->sounds[0][0:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 100, cp->sounds[1][0:31, 1.000000]) [buf: 32] 
-   (at 132, cp->sounds[0][132:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 132, cp->sounds[0][132:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
  (set 1000 10000) ; map-channel [2:6]:
-   (at 0, cp->sounds[0][0:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:99, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 100, cp->sounds[1][0:31, 1.000000]) [buf: 32] 
-   (at 132, cp->sounds[0][132:999, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 132, cp->sounds[0][132:999, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 1000, cp->sounds[2][0:9999, 1.000000]) [buf: 10000] 
-   (at 11000, cp->sounds[0][11000:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 11000, cp->sounds[0][11000:50827, 1.000000]) [file: " home-dir "/cl/oboe.snd[0]]
    (at 50828, end_mark)
-"))
+")))
 	    (snd-display "no save dir edits: ~A" (display-edits)))
 	(delete-file "s61.scm")
 	(close-sound ind))
@@ -22858,6 +22899,11 @@ EDITS: 2
       (ftst '(set! (mus-srate) 22050) 22050.0)
       (etst '(mus-srate 0.0))
       (etst '(set! (mus-srate) "hi"))
+      (btst '(< (mus-random 1.0) 2.0) #t)
+      (btst '(>= (mus-random 1.0) 0.0) #t)
+      (btst '(fneq 1 2) #t)
+      (btst '(fneq 1.0 2) #t)
+      (btst '(sample-reader? (make-sample-reader)) #t)
 
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref v 1)) 1.0)
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-scale! v 2.0) (vct-ref v 1)) 2.0)

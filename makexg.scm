@@ -885,7 +885,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-22 dpy thunk)
-  (dpy "#if HAVE_GTK_TREE_ROW_REFERENCE_GET_TYPE~%")
+  (dpy "#ifdef GTK_CELL_RENDERER_FOCUSED~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -899,6 +899,7 @@
 (hey " *~%")
 (hey " *   other flags:~%")
 (hey " *     HAVE_GDK_DRAW_PIXBUF for gtk+-2.1 additions~%")
+(hey " *     defined(GTK_CELL_RENDERER_FOCUSED) for gtk+-2.2~%")
 
 (let ((ifs '()))
   (for-each
@@ -1085,7 +1086,7 @@
 (hey "#define C_TO_XEN_String(Arg) ((Arg == NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)~%")
 (hey "#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))~%")
 
-(hey "~%#if HAVE_GTK_TREE_ROW_REFERENCE_GET_TYPE~%")
+(hey "~%#ifdef GTK_CELL_RENDERER_FOCUSED~%")
 (hey "  static XEN C_TO_XEN_DRAWABLE_WAS_WINDOW (GdkDrawable* val) {if (val) return(WRAP_FOR_XEN(\"GdkDrawable_\", val)); return(XEN_FALSE);}~%")
 (hey "  static GdkDrawable* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkDrawable *)XEN_TO_C_ULONG(XEN_CADR(val)));}~%")
 (hey "  static int XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(\"GdkDrawable_\", val)));}~%")

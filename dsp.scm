@@ -644,3 +644,148 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (brt (/ (* 2 pi amount) mx)))
     (map-channel (lambda (y)
 		   (* mx (sin (* y brt)))))))
+
+
+;;; -------- Hilbert transform
+
+(define* (make-hilbert-transform #:optional (len 30))
+  (let* ((arrlen (1+ (* 2 len)))
+	 (arr (make-vct arrlen)))
+    (do ((i (- len) (1+ i)))
+	((= i len))
+      (let* ((k (+ i len))
+	     (denom (* pi i))
+	     (num (- 1.0 (cos (* pi i)))))
+	;; might want hamm window over this
+	(if (= i 0)
+	    (vct-set! arr k 0.0)
+	    (vct-set! arr k (/ num denom)))))
+    (make-fir-filter arrlen arr)))
+
+(define (hilbert-transform f in)
+  (fir-filter f in))
+
+#!
+  (let ((h (make-hilbert-transform 15)))
+    (map-channel (lambda (y)
+		   (* 8.0 (hilbert-transform h y)))))
+!#
+
+;;; -------- highpass filter 
+
+(define* (make-highpass fc #:optional (len 30))
+  (let* ((arrlen (1+ (* 2 len)))
+	 (arr (make-vct arrlen)))
+    (do ((i (- len) (1+ i)))
+	((= i len))
+      (let* ((k (+ i len))
+	     (denom (* pi i))
+	     (num (- (sin (* fc i)))))
+	(if (= i 0)
+	    (vct-set! arr k (- 1.0 (/ fc pi)))
+	    (vct-set! arr k (/ num denom)))))
+    (make-fir-filter arrlen arr)))
+
+(define (highpass f in)
+  (fir-filter f in))
+
+#!
+  (let ((hp (make-highpass (* .1 pi))))
+    (map-channel (lambda (y)
+		   (highpass hp y))))
+!#
+
+
+;;; -------- lowpass filter
+
+(define* (make-lowpass fc #:optional (len 30))
+  (let* ((arrlen (1+ (* 2 len)))
+	 (arr (make-vct arrlen)))
+    (do ((i (- len) (1+ i)))
+	((= i len))
+      (let* ((k (+ i len))
+	     (denom (* pi i))
+	     (num (sin (* fc i))))
+	(if (= i 0)
+	    (vct-set! arr k (/ fc pi))
+	    (vct-set! arr k (/ num denom)))))
+    (make-fir-filter arrlen arr)))
+
+(define (lowpass f in)
+  (fir-filter f in))
+
+#!
+  (let ((hp (make-lowpass (* .2 pi))))
+    (map-channel (lambda (y)
+		   (lowpass hp y))))
+!#
+
+;;; -------- bandpass filter
+
+(define* (make-bandpass flo fhi #:optional (len 30))
+  (let* ((arrlen (1+ (* 2 len)))
+	 (arr (make-vct arrlen)))
+    (do ((i (- len) (1+ i)))
+	((= i len))
+      (let* ((k (+ i len))
+	     (denom (* pi i))
+	     (num (- (sin (* fhi i)) (sin (* flo i)))))
+	(if (= i 0)
+	    (vct-set! arr k (/ (- fhi flo) pi))
+	    (vct-set! arr k (/ num denom)))))
+    (make-fir-filter arrlen arr)))
+
+(define (bandpass f in)
+  (fir-filter f in))
+
+#!
+  (let ((hp (make-bandpass (* .1 pi) (* .2 pi))))
+    (map-channel (lambda (y)
+		   (bandpass hp y))))
+!#
+
+;;; -------- bandstop filter
+
+(define* (make-bandstop flo fhi #:optional (len 30))
+  (let* ((arrlen (1+ (* 2 len)))
+	 (arr (make-vct arrlen)))
+    (do ((i (- len) (1+ i)))
+	((= i len))
+      (let* ((k (+ i len))
+	     (denom (* pi i))
+	     (num (- (sin (* flo i)) (sin (* fhi i)))))
+	(if (= i 0)
+	    (vct-set! arr k (- 1.0 (/ (- fhi flo) pi)))
+	    (vct-set! arr k (/ num denom)))))
+    (make-fir-filter arrlen arr)))
+
+(define (bandstop f in)
+  (fir-filter f in))
+
+#!
+  (let ((hp (make-bandstop (* .1 pi) (* .3 pi))))
+    (map-channel (lambda (y)
+		   (bandstop hp y))))
+!#
+
+;;; -------- differentiator
+
+(define* (make-differentiator #:optional (len 30))
+  (let* ((arrlen (1+ (* 2 len)))
+	 (arr (make-vct arrlen)))
+    (do ((i (- len) (1+ i)))
+	((= i len))
+      (let* ((k (+ i len)))
+	(if (= i 0)
+	    (vct-set! arr k 0.0)
+	    (vct-set! arr k (- (/ (cos (* pi i)) i) (/ (sin (* pi i)) (* pi i i)))))))
+    (make-fir-filter arrlen arr)))
+
+(define (differentiator f in)
+  (fir-filter f in))
+
+#!
+  (let ((hp (make-differentiator)))
+    (map-channel (lambda (y)
+		   (differentiator hp y))))
+!#

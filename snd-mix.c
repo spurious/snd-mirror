@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: find why as_one_edit ends up with all-zero peak-amp-env after mix change */
+
 typedef struct {         /* save one mix console state */
   int chans;             /* size of arrays in this struct */
   int edit_ctr;          /* cp edit_ctr at time of creation of this struct */

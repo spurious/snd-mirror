@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: explicit tests of various ed_zero cases
- */
-
 static int dont_edit(chan_info *cp) 
 {
   XEN res = XEN_FALSE;
@@ -2956,7 +2953,7 @@ static mus_sample_t previous_sample_with_ptree_with_closure_on_ramp(snd_fd *sf)
       Float val;
       val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
-      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE)));
     }
 }
 
@@ -2982,7 +2979,7 @@ static Float previous_sample_to_float_with_ptree_with_closure_on_ramp(snd_fd *sf
       Float val;
       val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
-      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
     }
 }
 
@@ -3011,7 +3008,7 @@ static mus_sample_t previous_sample_with_ptree_with_closure_on_ramp2(snd_fd *sf)
       val = sf->data[sf->loc--] * sf->curval * sf->curval2;
       sf->curval -= sf->incr;
       sf->curval2 -= sf->incr2;
-      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE)));
     }
 }
 
@@ -3039,7 +3036,7 @@ static Float previous_sample_to_float_with_ptree_with_closure_on_ramp2(snd_fd *s
       val = sf->data[sf->loc--] * sf->curval * sf->curval2;
       sf->curval -= sf->incr;
       sf->curval2 -= sf->incr2;
-      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
     }
 }
 
@@ -3066,7 +3063,7 @@ static mus_sample_t previous_sample_with_ptree_with_closure_on_xramp(snd_fd *sf)
       Float val;
       val = PREVIOUS_PTREE_XRAMP(sf);
       sf->curval -= sf->incr;
-      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE)));
     }
 }
 
@@ -3092,7 +3089,7 @@ static Float previous_sample_to_float_with_ptree_with_closure_on_xramp(snd_fd *s
       Float val;
       val = PREVIOUS_PTREE_XRAMP(sf);
       sf->curval -= sf->incr;
-      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
     }
 }
 

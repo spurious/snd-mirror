@@ -329,6 +329,7 @@ the cursor is moved to the clicked point.
     <li>asyfm
     <li>cosine-summation, legendre-summation
     <li>brighten-slightly
+    <li>simple FIR filters
   </ul>
 
 <p>These are DSP-related procedures that aren't closely tied to CLM.
@@ -355,6 +356,12 @@ the cursor is moved to the clicked point.
   <em class=def><a name="cosinesummation">cosine-summation</a></em>
   <em class=def><a name="legendresummation">legendre-summation</a></em>
   <em class=def><A NAME="brightenslightly">brighten-slightly</a></em> amount
+  <em class=def><a name="makehilberttransform">make-hilbert-transform</a></em> length
+  <em class=def><a name="makelowpass">make-lowpass</a></em> fc length
+  <em class=def><a name="makehighpass">make-highpass</a></em> fc length
+  <em class=def><a name="makebandpass">make-bandpass</a></em> flo fhi length
+  <em class=def><a name="makebandstop">make-bandstop</a></em> flo fhi length
+  <em class=def><a name="makedifferentiator">make-differentiator</a></em> length
 </pre>
 
 <p><i>dolph</i> is the Dolph-Chebyshev fft data window, taken
@@ -430,6 +437,12 @@ Polynomials driven by a cosine). Three other similar functions are <i>sum-of-n-s
 </p>
 
 <p><i>brighten-slightly</i> is a slight simplification of contrast-enhancement.
+<i>make-hilbert-transform</i> and <i>hilbert-transform</i> provide an FIR filter approach to the Hilbert transform.
+<i>make-lowpass</i> and <i>lowpass</i> provide FIR low pass filtering.
+<i>make-highpass</i> and <i>highpass</i> provide FIR high pass filtering.
+<i>make-bandpass</i> and <i>bandpass</i> provide FIR band pass filtering.
+<i>make-bandstop</i> and <i>bandstop</i> provide FIR notch filtering.
+<i>make-differentiator</i> and <i>differentiator</i> provide an FIR filter-based differentiator.
 </p>
 
 <A NAME="editmenudoc"></a><span class=box><h2>edit-menu.scm</h2></span>

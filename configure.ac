@@ -481,8 +481,6 @@ else
 
 	AC_CHECK_LIB(gdk, gdk_draw_pixbuf, [AC_DEFINE(HAVE_GDK_DRAW_PIXBUF)], ,$GTK_LIBS)
 	# gtk 2.1
-	AC_CHECK_LIB(gtk, gtk_tree_row_reference_get_type, [AC_DEFINE(HAVE_GTK_TREE_ROW_REFERENCE_GET_TYPE)], ,$GTK_LIBS)
-	# gtk 2.2
 
 	if test "$with_html" = yes ; then
 	  AC_PATH_PROG(MOZILLA_CONFIG, mozilla-config, no)

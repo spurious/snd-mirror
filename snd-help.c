@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+7-Jan:   added various simple FIR filters to dsp.scm.\n\
 6-Jan:   xramp-channel for virtual exp envs.\n\
          edpos args for swap-channels.\n\
          map-channel arg for ptree-channel for generalized virtual ops.\n\
