@@ -2485,7 +2485,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	env *e;
 	if (sp->filter_control_envelope) 
 	  sp->filter_control_envelope = free_env(sp->filter_control_envelope);  /* set to null in case get_env throws error */
-	e = get_env(val, caller); /* has some error checks */
+	e = get_env(val, caller); /* has some error checks -- val must be list */
 	if (e)
 	  {
 	    for (i = 0; i < e->pts; i++)

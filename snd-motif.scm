@@ -88,6 +88,8 @@
 
 (define (find-child widget name)
   "(find-child widget name) returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'"
+  ;; unfortunately, if the widget's name has been set for some non-English locale, this
+  ;;   won't work -- we need to add gettext support (see snd.c for an example)
   (call-with-current-continuation
    (lambda (return)
      (for-each-child

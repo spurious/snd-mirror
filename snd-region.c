@@ -942,7 +942,7 @@ int snd_regions(void)
   return(num);
 }
 
-/* (restore-region n chans len srate maxamp name start end filename) */
+/* (restore-region n chans len srate maxamp name start end filename [date-and-length]) */
 
 void save_regions(FILE *fd)
 {
@@ -955,20 +955,24 @@ void save_regions(FILE *fd)
 	{
 	  char *newname;
 	  char *ofile = NULL;
-#if HAVE_RUBY
-	  fprintf(fd, "%s(%d, %d, " OFF_TD ", %d, %.4f, \"%s\", \"%s\", \"%s\", ",
-	          "restore_region", i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
-#else
-	  fprintf(fd, "(%s %d %d " OFF_TD " %d %.4f \"%s\" \"%s\" \"%s\"",
-	          S_restore_region, i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
-#endif
 	  if (r->use_temp_file == REGION_DEFERRED) 
 	    deferred_region_to_temp_file(r);
 	  ofile = shorter_tempnam(save_dir(ss), "snd_save_");
 	  newname = run_save_state_hook(ofile);
 	  FREE(ofile);
 	  copy_file(r->filename, newname);
+#if HAVE_RUBY
+	  fprintf(fd, "%s(%d, %d, " OFF_TD ", %d, %.4f, \"%s\", \"%s\", \"%s\", ",
+	          "restore_region", i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
 	  fprintf(fd, " \"%s\")\n", newname);
+#else
+	  fprintf(fd, "(%s %d %d " OFF_TD " %d %.4f \"%s\" \"%s\" \"%s\"",
+	          S_restore_region, i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
+	  fprintf(fd, " \"%s\" (list %d " OFF_TD "))\n",
+		  newname,
+		  (int)mus_sound_write_date(newname),
+		  mus_sound_length(newname));
+#endif
 	  FREE(newname);
 	}
     }
@@ -1086,7 +1090,7 @@ static XEN snd_no_such_region_error(const char *caller, XEN n)
   return(XEN_FALSE);
 }
 
-static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, XEN name, XEN start, XEN end, XEN filename)
+static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, XEN name, XEN start, XEN end, XEN filename, XEN date)
 {
   /* internal function used by save-state mechanism -- not intended for external use */
   region *r;
@@ -1100,6 +1104,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   XEN_ASSERT_TYPE(XEN_STRING_P(start), start, XEN_ARG_7, S_restore_region, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(end), end, XEN_ARG_8, S_restore_region, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_9, S_restore_region, "a string");
+  check_saved_temp_file("region", filename, date);
   r = (region *)CALLOC(1, sizeof(region));
   regn = XEN_TO_C_INT(pos);
   if (regions[regn]) free_region(regions[regn], COMPLETE_DELETION);
@@ -1514,7 +1519,7 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_9(g_restore_region_w, g_restore_region)
+XEN_ARGIFY_10(g_restore_region_w, g_restore_region)
 XEN_ARGIFY_4(g_insert_region_w, g_insert_region)
 XEN_NARGIFY_0(g_regions_w, g_regions)
 XEN_ARGIFY_2(g_region_frames_w, g_region_frames)
@@ -1557,7 +1562,7 @@ void g_init_regions(void)
 {
   init_region_keywords();
 
-  XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w,     9, 0, 0, "internal func used in save-state, restores a region");
+  XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w,     9, 1, 0, "internal func used in save-state, restores a region");
   XEN_DEFINE_PROCEDURE(S_insert_region,      g_insert_region_w,      0, 4, 0, H_insert_region);
   XEN_DEFINE_PROCEDURE(S_regions,            g_regions_w,            0, 0, 0, H_regions);
   XEN_DEFINE_PROCEDURE(S_region_frames,      g_region_frames_w,      0, 2, 0, H_region_frames);

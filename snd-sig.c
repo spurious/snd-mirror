@@ -3398,39 +3398,37 @@ swap the indicated channels"
   return(XEN_FALSE);
 }
 
-/* TODO: scale-by takes a vector/list(or any random garbage) but not a vct!!?? */
-/* TODO: get rid of vectors from Snd/Clm! */
-
 static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
 {
   int len = 0, i;
   Float *scls;
+  vct *v = NULL;
   if (XEN_NUMBER_P(scalers))
     len = 1;
   else
     {
-      if (XEN_VECTOR_P(scalers))
-	len = XEN_VECTOR_LENGTH(scalers);
+      if (VCT_P(scalers))
+	{
+	  v = TO_VCT(scalers);
+	  len = v->length;
+	}
       else
 	{
 	  if (XEN_LIST_P(scalers))
-	    len = XEN_LIST_LENGTH(scalers);
-	  else XEN_WRONG_TYPE_ARG_ERROR(caller, 1, scalers, "a number, list, vector, geez --anything else!");
+	    {
+	      len = XEN_LIST_LENGTH(scalers);
+	      if (len == 0) 
+		XEN_ERROR(NO_DATA,
+			  XEN_LIST_3(C_TO_XEN_STRING(caller), 
+				     C_TO_XEN_STRING("scalers list empty?"), 
+				     scalers));
+	    }
+	  else XEN_WRONG_TYPE_ARG_ERROR(caller, 1, scalers, "a number, list, or vct");
 	}
     }
-  if (len == 0) 
-    XEN_ERROR(NO_DATA,
-	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
-			 C_TO_XEN_STRING("scalers empty?"), 
-			 scalers));
   scls = (Float *)CALLOC(len, sizeof(Float));
-  if (XEN_VECTOR_P(scalers))
-    {
-      XEN *vdata;
-      vdata = XEN_VECTOR_ELEMENTS(scalers);
-      for (i = 0; i < len; i++) 
-	scls[i] = (Float)XEN_TO_C_DOUBLE(vdata[i]);
-    }
+  if (v)
+    memcpy((void *)scls, (void *)(v->data), len * sizeof(Float));
   else
     {
       if (XEN_LIST_P(scalers))
@@ -3448,7 +3446,7 @@ static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
 static XEN g_scale_to(XEN scalers, XEN snd_n, XEN chn_n)
 {
   #define H_scale_to "(" S_scale_to " (norms 1.0) (snd #f) (chn #f)): \
-normalize snd to norms (following sync); norms can be a float or a vct/vector/list of floats"
+normalize snd to norms (following sync); norms can be a float or a vct/list of floats"
 
   /* chn_n irrelevant if sync */
   chan_info *cp;
@@ -3468,7 +3466,7 @@ normalize snd to norms (following sync); norms can be a float or a vct/vector/li
 static XEN g_scale_by(XEN scalers, XEN snd_n, XEN chn_n)
 {
   #define H_scale_by "(" S_scale_by " scalers (snd #f) (chn #f)): \
-scale snd by scalers (following sync); scalers can be a float or a vct/vector/list of floats"
+scale snd by scalers (following sync); scalers can be a float or a vct/list of floats"
 
   /* chn_n irrelevant if sync */
   chan_info *cp;
@@ -4197,8 +4195,8 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
       else 
 	{
 	  env *ne = NULL;
-	  XEN_ASSERT_TYPE((XEN_VECTOR_P(e) || (XEN_LIST_P(e))), e, XEN_ARG_1, caller, "a list, vector, vct, or env generator");
-	  ne = get_env(e, caller);
+	  XEN_ASSERT_TYPE(XEN_LIST_P(e), e, XEN_ARG_1, caller, "a list, vct, or env generator");
+	  ne = get_env(e, caller); /* arg here must be a list */
 	  apply_filter(cp, len, ne, NOT_FROM_ENVED, caller, over_selection, NULL, NULL, edpos, 5, truncate);
 	  if (ne) free_env(ne); 
 	}

@@ -41,8 +41,9 @@ static void create_snd_error_dialog(bool popup)
   XmStringFree(titlestr);
   if (!(ss->using_schemes))
     {
-      XtVaSetValues(XtNameToWidget(snd_error_dialog, _("OK")), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
-      XtVaSetValues(XtNameToWidget(snd_error_dialog, _("OK")), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+      /* the name "OK" is from Motif, so shouldn't be translated */
+      XtVaSetValues(XtNameToWidget(snd_error_dialog, "OK"), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+      XtVaSetValues(XtNameToWidget(snd_error_dialog, "OK"), XmNbackground, (ss->sgx)->quit_button_color, NULL);
       XtVaSetValues(snd_error_history, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
     }
   set_dialog_widget(ERROR_DIALOG, snd_error_dialog);

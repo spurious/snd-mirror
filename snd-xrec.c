@@ -3165,6 +3165,7 @@ widget_t snd_record_file(void)
       XmStringFree(titlestr);
 
       reset_button = XtNameToWidget(recorder, _("Cancel"));
+      if (!reset_button) reset_button = XtNameToWidget(recorder, "Cancel");
 
       if (!(ss->using_schemes))
 	{

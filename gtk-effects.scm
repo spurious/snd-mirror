@@ -16,6 +16,15 @@
 (if (not (provided? 'snd-rubber.scm)) (load-from-path "rubber.scm"))
 (if (not (provided? 'snd-dsp.scm)) (load-from-path "dsp.scm"))
 
+(if (not (defined? 'g_signal_connect))
+    (define* (g_signal_connect obj name func #:optional data)
+      (g_signal_connect_closure_by_id (GPOINTER obj)
+				      (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
+				      0
+				      (g_cclosure_new func data #f)
+				      #f)))
+;;; SOMEDAY: finish the g_signal_closure cleanup
+
 (define effects-list '()) ; menu labels are updated to show current settings
 
 (define (update-label effects)
@@ -114,35 +123,24 @@
     (gtk_window_set_default_size (GTK_WINDOW new-dialog) -1 -1)
     (gtk_window_set_resizable (GTK_WINDOW new-dialog) #t)
     (gtk_widget_realize new-dialog)
-    (g_signal_connect_closure_by_id (GPOINTER new-dialog)
-				    (g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT new-dialog)))
-				    0 (g_cclosure_new (lambda (w ev data) 
-							(gtk_widget_hide new-dialog)
-							#t) ; this is crucial -- thanks to Kjetil for catching it!
-						      #f #f) #f)
+    (g_signal_connect new-dialog "delete_event" 
+		      (lambda (w ev data) 
+			(gtk_widget_hide new-dialog)
+			#t) ; this is crucial -- thanks to Kjetil for catching it!
+		      #f)
     (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) dismiss-button #t #t 20)
-    (g_signal_connect_closure_by_id (GPOINTER dismiss-button)
-				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT dismiss-button)))
-				    0 (g_cclosure_new (lambda (w data) 
-							(gtk_widget_hide new-dialog))
-						      #f #f) #f)
+    (g_signal_connect dismiss-button "clicked" (lambda (w data) (gtk_widget_hide new-dialog)) #f)
     (gtk_widget_show dismiss-button)
     (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) ok-button #t #t 20)
-    (g_signal_connect_closure_by_id (GPOINTER ok-button)
-				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT ok-button)))
-				    0 (g_cclosure_new ok-callback #f #f) #f)
+    (g_signal_connect ok-button "clicked" ok-callback #f)
     (gtk_widget_show ok-button)
     (if reset-button
 	(begin
 	  (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) reset-button #t #t 20)
-	  (g_signal_connect_closure_by_id (GPOINTER reset-button)
-					  (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT reset-button)))
-					  0 (g_cclosure_new reset-callback #f #f) #f)
+	  (g_signal_connect reset-button "clicked" reset-callback #f)
 	  (gtk_widget_show reset-button)))
     (gtk_box_pack_end (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) help-button #t #t 20)
-    (g_signal_connect_closure_by_id (GPOINTER help-button)
-				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT help-button)))
-				    0 (g_cclosure_new help-callback #f #f) #f)
+    (g_signal_connect help-button "clicked" help-callback #f)
     (gtk_widget_show help-button)
     ;; build rest in (.vbox (GTK_DIALOG new-dialog))
     new-dialog))
@@ -242,22 +240,15 @@
 	       (set! slider (1+ slider))))
 	 (gtk_widget_show scale)
 	 (if use-log
-	     (g_signal_connect_closure_by_id 
-	      (GPOINTER adj)
-	      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj))) 0
-	      (g_cclosure_new (lambda (w d) 
-				(func w d)
-				(change-label label 
-					      (format #f "~A: ~,2F" 
-						      title 
-						      (scale-log-label low (.value (GTK_ADJUSTMENT adj)) high))))
-			      #f #f)
-	      #f)
-	     (g_signal_connect_closure_by_id 
-	      (GPOINTER adj)
-	      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj))) 0
-	      (g_cclosure_new func #f #f)
-	      #f))
+	     (g_signal_connect adj "value_changed"
+			       (lambda (w d) 
+				 (func w d)
+				 (change-label label 
+					       (format #f "~A: ~,2F" 
+						       title 
+						       (scale-log-label low (.value (GTK_ADJUSTMENT adj)) high))))
+			       #f)
+	     (g_signal_connect adj "value_changed" func #f))
 	 adj))
      sliders)))
 
@@ -280,13 +271,7 @@
 	   (gtk_box_pack_start (GTK_BOX rc) button #f #f 4)
 	   (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) on)
 	   (gtk_widget_show button)
-	   (g_signal_connect_closure_by_id 
-	    (GPOINTER button)
-	    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button))) 0
-	    (g_cclosure_new (lambda (w d) 
-			      (target-callback type))
-			    #f #f)
-	    #f)))
+	   (g_signal_connect button "clicked" (lambda (w d) (target-callback type)) #f)))
        (list "entire sound" "selection" "between marks")
        (list 'sound 'selection 'marks)
        (list #t #f #f)))
@@ -299,13 +284,7 @@
 	  (gtk_box_pack_start (GTK_BOX rc) button #t #t 4)
 	  (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) #t)
 	  (gtk_widget_show button)
-	  (g_signal_connect_closure_by_id 
-	   (GPOINTER button)
-	   (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button))) 0
-	   (g_cclosure_new (lambda (w d) 
-			     (truncate-callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w))))
-			   #f #f)
-	    #f)))))
+	  (g_signal_connect button "clicked" (lambda (w d) (truncate-callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w)))) #f)))))
 
 (define (activate-dialog w)
   (gtk_widget_show w)
@@ -334,13 +313,7 @@
   (gtk_menu_shell_append (GTK_MENU_SHELL (main-menu effects-menu)) amp-menu)
   (gtk_widget_show amp-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM amp-menu) amp-cascade)
-  (g_signal_connect_closure_by_id 
-   (GPOINTER amp-menu)
-   (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT amp-menu))) 0
-   (g_cclosure_new (lambda (w d) 
-		     (update-label amp-menu-list))
-		   #f #f)
-   #f)
+  (g_signal_connect amp-menu "activate" (lambda (w d) (update-label amp-menu-list)) #f)
 
   ;; -------- Gain (gain set by gain-amount)
 
@@ -358,64 +331,61 @@
     
     (gtk_menu_shell_append (GTK_MENU_SHELL amp-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
-      (lambda (w d) 
-	(if (not gain-dialog)
-	    (let ((initial-gain-amount 1.0)
-		  (sliders '()))
-	      (set! gain-dialog
-		    (make-effect-dialog 
-		     "Gain"
-		     (lambda (w data) 
-		       "Gain scales amplitude by gain amount."
-		       (let ((with-env (and (not (equal? (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0)))
-					    (scale-envelope (xe-envelope gain-envelope) gain-amount))))
-			 (if (eq? gain-target 'sound)
-			     (if with-env
-				 (env-sound with-env)
-				 (scale-by gain-amount))
-			     (if (eq? gain-target 'selection)
-				 (if (selection?)
-				     (if with-env
-					 (env-selection with-env)
-					 (scale-selection-by gain-amount))
-				     (snd-print "no selection"))
-				 (let ((pts (plausible-mark-samples)))
-				   (if pts
-				       (if with-env
-					   (env-sound with-env (car pts) (- (cadr pts) (car pts)))
-					   (scale-sound-by gain-amount (car pts) (- (cadr pts) (car pts))))))))))
-		     (lambda (w data)
-		       (help-dialog 
-			"Gain"
-			"Move the slider to change the gain scaling amount."))
-		     (lambda (w data)
-		       (set! gain-amount initial-gain-amount)
-		       (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
-		       (set! (.value (GTK_ADJUSTMENT (car sliders))) gain-amount)
-		       (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))))
-	      (set! sliders
-		    (add-sliders gain-dialog
-				 (list (list "gain" 0.0 initial-gain-amount 5.0
-					     (lambda (w data)
-					       (set! gain-amount (.value (GTK_ADJUSTMENT w))))
-					     100))))
-	      (gtk_widget_show gain-dialog)
-	      (set! gain-envelope (xe-create-enved "gain" 
-						   (.vbox (GTK_DIALOG gain-dialog))
-						   #f
-						   '(0.0 1.0 0.0 1.0)))
-	      (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
-	      (add-target (.vbox (GTK_DIALOG gain-dialog)) 
-			  (lambda (target) 
-			    (set! gain-target target))
-			  #f)))
-	(activate-dialog gain-dialog))
-      #f #f)
-     #f)
+    (g_signal_connect child "activate" 
+		      (lambda (w d) 
+			(if (not gain-dialog)
+			    (let ((initial-gain-amount 1.0)
+				  (sliders '()))
+			      (set! gain-dialog
+				    (make-effect-dialog 
+				     "Gain"
+				     (lambda (w data) 
+				       "Gain scales amplitude by gain amount."
+				       (let ((with-env (and (not (equal? (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0)))
+							    (scale-envelope (xe-envelope gain-envelope) gain-amount))))
+					 (if (eq? gain-target 'sound)
+					     (if with-env
+						 (env-sound with-env)
+						 (scale-by gain-amount))
+					     (if (eq? gain-target 'selection)
+						 (if (selection?)
+						     (if with-env
+							 (env-selection with-env)
+							 (scale-selection-by gain-amount))
+						     (snd-print "no selection"))
+						 (let ((pts (plausible-mark-samples)))
+						   (if pts
+						       (if with-env
+							   (env-sound with-env (car pts) (- (cadr pts) (car pts)))
+							   (scale-sound-by gain-amount (car pts) (- (cadr pts) (car pts))))))))))
+				     (lambda (w data)
+				       (help-dialog 
+					"Gain"
+					"Move the slider to change the gain scaling amount."))
+				     (lambda (w data)
+				       (set! gain-amount initial-gain-amount)
+				       (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+				       (set! (.value (GTK_ADJUSTMENT (car sliders))) gain-amount)
+				       (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))))
+			      (set! sliders
+				    (add-sliders gain-dialog
+						 (list (list "gain" 0.0 initial-gain-amount 5.0
+							     (lambda (w data)
+							       (set! gain-amount (.value (GTK_ADJUSTMENT w))))
+							     100))))
+			      (gtk_widget_show gain-dialog)
+			      (set! gain-envelope (xe-create-enved "gain" 
+								   (.vbox (GTK_DIALOG gain-dialog))
+								   #f
+								   '(0.0 1.0 0.0 1.0)))
+			      (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+			      (add-target (.vbox (GTK_DIALOG gain-dialog)) 
+					  (lambda (target) 
+					    (set! gain-target target))
+					  #f)))
+			(activate-dialog gain-dialog))
+		      #f)
+
     (set! amp-menu-list (cons (lambda ()
 				(let ((new-label (format #f "Gain (~1,2F)"  gain-amount)))
 				  (change-label child new-label)))
@@ -429,48 +399,44 @@
 	(normalize-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL amp-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
-      (lambda (w d) 
-	(if (not normalize-dialog)
-	    (let ((initial-normalize-amount 1.0)
-		  (sliders '()))
-	      (set! normalize-dialog 
-		    (make-effect-dialog 
-		     "Normalize"
-		     (lambda (w data) 
-		       (if (eq? normalize-target 'sound)
-			   (scale-to normalize-amount)
-			   (if (eq? normalize-target 'selection)
-			       (if (selection?)
-				   (scale-selection-to normalize-amount)
-				   (snd-print "no selection"))
-			       (let ((pts (plausible-mark-samples)))
-				 (if pts
-				     (scale-sound-to normalize-amount (car pts) (- (cadr pts) (car pts))))))))
-		     (lambda (w data)
-		       (help-dialog 
-			"Normalize"
-			"Normalize scales amplitude to the normalize amount. Move the slider to change the scaling amount."))
-		     (lambda (w data)
-		       (set! normalize-amount initial-normalize-amount)
-		       (set! (.value (GTK_ADJUSTMENT (car sliders))) normalize-amount)
-		       (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))))
-	      (set! sliders
-		    (add-sliders normalize-dialog
-				 (list (list "normalize" 0.0 initial-normalize-amount 1.1
-					     (lambda (w data)
-					       (set! normalize-amount (.value (GTK_ADJUSTMENT w))))
+    (g_signal_connect child "activate"
+		      (lambda (w d) 
+			(if (not normalize-dialog)
+			    (let ((initial-normalize-amount 1.0)
+				  (sliders '()))
+			      (set! normalize-dialog 
+				    (make-effect-dialog 
+				     "Normalize"
+				     (lambda (w data) 
+				       (if (eq? normalize-target 'sound)
+					   (scale-to normalize-amount)
+					   (if (eq? normalize-target 'selection)
+					       (if (selection?)
+						   (scale-selection-to normalize-amount)
+						   (snd-print "no selection"))
+					       (let ((pts (plausible-mark-samples)))
+						 (if pts
+						     (scale-sound-to normalize-amount (car pts) (- (cadr pts) (car pts))))))))
+				     (lambda (w data)
+				       (help-dialog 
+					"Normalize"
+					"Normalize scales amplitude to the normalize amount. Move the slider to change the scaling amount."))
+				     (lambda (w data)
+				       (set! normalize-amount initial-normalize-amount)
+				       (set! (.value (GTK_ADJUSTMENT (car sliders))) normalize-amount)
+				       (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))))
+			      (set! sliders
+				    (add-sliders normalize-dialog
+						 (list (list "normalize" 0.0 initial-normalize-amount 1.1
+							     (lambda (w data)
+							       (set! normalize-amount (.value (GTK_ADJUSTMENT w))))
 					     100))))
-	      (add-target (.vbox (GTK_DIALOG normalize-dialog)) 
-			  (lambda (target) 
-			    (set! normalize-target target))
-			  #f)))
-	(activate-dialog normalize-dialog))
-      #f #f)
-     #f)
+			      (add-target (.vbox (GTK_DIALOG normalize-dialog)) 
+					  (lambda (target) 
+					    (set! normalize-target target))
+					  #f)))
+			(activate-dialog normalize-dialog))
+		      #f)
     (set! amp-menu-list (cons (lambda ()
 				(let ((new-label (format #f "Normalize (~1,2F)"  normalize-amount)))
 				  (change-label child new-label)))
@@ -492,58 +458,49 @@
     (let ((child (gtk_menu_item_new_with_label "Gate")))
       (gtk_menu_shell_append (GTK_MENU_SHELL amp-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect_closure_by_id 
-       (GPOINTER child)
-       (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-       (g_cclosure_new 
-	(lambda (w d) 
-	  (if (not gate-dialog)
-	      ;; if gate-dialog doesn't exist, create it
-	      (let ((initial-gate-amount 0.01)
-		    (sliders '()))
-		(set! gate-dialog
-		      (make-effect-dialog 
-		       "Gate"
-		       (lambda (w data)
-			 (let ((snc (sync)))
-			   (if (> snc 0)
-			       (apply map
-				      (lambda (snd chn)
-					(if (= (sync snd) snc)
-					    (squelch-channel (* gate-amount gate-amount) snd chn)))
-				      (all-chans))
-			       (squelch-channel (* gate-amount gate-amount) (selected-sound) (selected-channel)))))
-		       (lambda (w data)
-			 (help-dialog "Gate"
-				      "Move the slider to change the gate intensity. Higher values gate more of the sound."))
-		       (lambda (w data)
-			 (set! gate-amount initial-gate-amount)
-			 (set! (.value (GTK_ADJUSTMENT (car sliders))) gate-amount)
-			 (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))))
-		(set! sliders
-		      (add-sliders gate-dialog
-				   (list (list "gate" 0.0 initial-gate-amount 0.1
-					       (lambda (w data)
-						 (set! gate-amount (.value (GTK_ADJUSTMENT w))))
-					       1000))))
-		;; now add a toggle button setting omit-silence 
-		(let ((toggle (gtk_check_button_new_with_label "Omit silence")))
-		  (gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG gate-dialog))) toggle #f #f 4)
-		  (gtk_widget_show toggle)
-		  (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON toggle) omit-silence)
-		  (g_signal_connect_closure_by_id 
-		   (GPOINTER toggle)
-		   (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT toggle))) 0
-		   (g_cclosure_new (lambda (w d) 
-				     (set! omit-silence (.active (GTK_TOGGLE_BUTTON toggle))))
-				   #f #f) #f))))
-	  (activate-dialog gate-dialog))
-	#f #f) #f)
+      (g_signal_connect child "activate"
+			(lambda (w d) 
+			  (if (not gate-dialog)
+			      ;; if gate-dialog doesn't exist, create it
+			      (let ((initial-gate-amount 0.01)
+				    (sliders '()))
+				(set! gate-dialog
+				      (make-effect-dialog 
+				       "Gate"
+				       (lambda (w data)
+					 (let ((snc (sync)))
+					   (if (> snc 0)
+					       (apply map
+						      (lambda (snd chn)
+							(if (= (sync snd) snc)
+							    (squelch-channel (* gate-amount gate-amount) snd chn)))
+						      (all-chans))
+					       (squelch-channel (* gate-amount gate-amount) (selected-sound) (selected-channel)))))
+				       (lambda (w data)
+					 (help-dialog "Gate"
+						      "Move the slider to change the gate intensity. Higher values gate more of the sound."))
+				       (lambda (w data)
+					 (set! gate-amount initial-gate-amount)
+					 (set! (.value (GTK_ADJUSTMENT (car sliders))) gate-amount)
+					 (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))))
+				(set! sliders
+				      (add-sliders gate-dialog
+						   (list (list "gate" 0.0 initial-gate-amount 0.1
+							       (lambda (w data)
+								 (set! gate-amount (.value (GTK_ADJUSTMENT w))))
+							       1000))))
+				;; now add a toggle button setting omit-silence 
+				(let ((toggle (gtk_check_button_new_with_label "Omit silence")))
+				  (gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG gate-dialog))) toggle #f #f 4)
+				  (gtk_widget_show toggle)
+				  (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON toggle) omit-silence)
+				  (g_signal_connect toggle "clicked" (lambda (w d) (set! omit-silence (.active (GTK_TOGGLE_BUTTON toggle)))) #f))))
+			  (activate-dialog gate-dialog))
+			#f)
       (set! amp-menu-list (cons (lambda ()
 				  (let ((new-label (format #f "Gate (~1,3F)"  gate-amount)))
 				    (change-label child new-label)))
 				amp-menu-list)))))
-
 
 ;;; DELAY EFFECTS
 ;;;
@@ -554,13 +511,7 @@
   (gtk_menu_shell_append (GTK_MENU_SHELL (main-menu effects-menu)) delay-menu)
   (gtk_widget_show delay-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM delay-menu) delay-cascade)
-  (g_signal_connect_closure_by_id 
-   (GPOINTER delay-menu)
-   (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT delay-menu))) 0
-   (g_cclosure_new (lambda (w d) 
-		     (update-label delay-menu-list))
-		   #f #f)
-   #f)
+  (g_signal_connect delay-menu "activate" (lambda (w d) (update-label delay-menu-list)) #f)
 
   ;; -------- Echo (controlled by delay-time and echo-amount)
 

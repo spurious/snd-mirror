@@ -8107,7 +8107,7 @@ the new data's end."
   return(xen_return_first(vect, edname));
 }
 
-static void check_saved_temp_file(XEN filename, XEN date_and_length)
+void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
 {
   char old_time_buf[TIME_STR_SIZE], new_time_buf[TIME_STR_SIZE];
   char *file;
@@ -8132,17 +8132,17 @@ static void check_saved_temp_file(XEN filename, XEN date_and_length)
 	  if (old_time != new_time)
 	    {
 	      if (old_bytes != new_bytes)
-		buf = mus_format("Saved sound temp file %s: original write date: %s, current: %s, original length: " OFF_TD "bytes, current: " OFF_TD,
-				 file,
+		buf = mus_format("Saved %s temp file %s: original write date: %s, current: %s, original length: " OFF_TD "bytes, current: " OFF_TD,
+				 type, file,
 				 old_time_buf, new_time_buf,
 				 old_bytes, new_bytes);
 	      else 
-		buf = mus_format("Saved sound temp file %s: original write date: %s, current: %s",
-				 file,
+		buf = mus_format("Saved %s temp file %s: original write date: %s, current: %s",
+				 type, file,
 				 old_time_buf, new_time_buf);
 	    }
-	  else buf = mus_format("Saved sound temp file %s: original length: " OFF_TD "bytes, current: " OFF_TD,
-				 file,
+	  else buf = mus_format("Saved %s temp file %s: original length: " OFF_TD "bytes, current: " OFF_TD,
+				 type, file,
 				 old_bytes, new_bytes);
 	  if (buf)
 	    {
@@ -8155,7 +8155,7 @@ static void check_saved_temp_file(XEN filename, XEN date_and_length)
 
 static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd_n, XEN chn_n, XEN origin, XEN date)
 {
-  check_saved_temp_file(filename, date);
+  check_saved_temp_file("sound", filename, date);
   return(g_set_samples(XEN_ZERO, samps, filename, snd_n, chn_n, XEN_TRUE, origin, XEN_ZERO, XEN_FALSE, XEN_FALSE));
 }
 
@@ -8346,7 +8346,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   else
     {
       /* string = filename here */
-      check_saved_temp_file(vect, date);
+      check_saved_temp_file("sound", vect, date);
       file_change_samples(beg, len,
 			  XEN_TO_C_STRING(vect),
 			  cp, 0, DONT_DELETE_ME, LOCK_MIXES,
@@ -8579,7 +8579,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
     }
   else 
     {
-      check_saved_temp_file(vect, date);
+      check_saved_temp_file("sound", vect, date);
       file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, XEN_TO_C_STRING(origin), pos);
     }
   update_graph(cp);

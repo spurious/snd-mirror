@@ -1002,34 +1002,32 @@ static XEN g_mus_audio_mixer_read(XEN dev, XEN field, XEN chan, XEN vals)
   #define H_mus_audio_mixer_read "(" S_mus_audio_mixer_read " device field channel vals): read some portion of the sound card mixer state.\
 The device is the nominal audio device, normally " S_mus_audio_default ". The field describes what info we are requesting: \
 to get the devices max available chans, the field would be " S_mus_audio_channel ". The channel arg, when relevant, specifies \
-which channel we want info on, or how big the 'vals' array is (normally the latter).  The vals array is a vector in which \
-the requested info will be written by " S_mus_audio_mixer_read ".  So, \n\
-  (let ((vals (make-vector 32)))\n\
+which channel we want info on or the 'vals' vct length. \
+The requested info will be written into 'vals': \
+  (let ((vals (make-vct 32)))\n\
     (mus-audio-mixer-read mus-audio-default mus-audio-format 32 vals))\n\
-sets (vector-ref vals 0) to the default device's desired audio sample data format."
+sets (vct-ref vals 0) to the default device's desired audio sample data format."
 
   int val, i, len;
   float *fvals;
-  XEN *vdata;
+  vct *v = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_mixer_read, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(field), field, XEN_ARG_2, S_mus_audio_mixer_read, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_read, "an integer");
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_read, "a vector");
+  XEN_ASSERT_TYPE(VCT_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_read, "a vct");
   if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(XEN_TO_C_INT(dev)))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 1, dev, "~A: invalid device");
   if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(XEN_TO_C_INT(field)))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 2, field, "~A: invalid field");
-  len = XEN_VECTOR_LENGTH(vals);
-  if (len == 0)
-    fvals = (float *)CALLOC(1, sizeof(float));
-  else fvals = (float *)CALLOC(len, sizeof(float));
+  v = TO_VCT(vals);
+  len = v->length;
+  fvals = (float *)CALLOC(len, sizeof(float));
   val = mus_audio_mixer_read(XEN_TO_C_INT(dev),
 			     XEN_TO_C_INT(field),
 			     XEN_TO_C_INT(chan),
 			     fvals);
-  vdata = XEN_VECTOR_ELEMENTS(vals);
   for (i = 0; i < len; i++) 
-    vdata[i] = C_TO_XEN_DOUBLE(fvals[i]);
+    v->data[i] = fvals[i];
   FREE(fvals);
   return(xen_return_first(C_TO_XEN_INT(val), vals));
 }
@@ -1037,28 +1035,22 @@ sets (vector-ref vals 0) to the default device's desired audio sample data forma
 static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
 {
   #define H_mus_audio_mixer_write "(" S_mus_audio_mixer_write " device field channel vals): change some portion of the sound card mixer state"
-  int len, res;
+  int i, len, res;
   float *fvals;
+  vct *v = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_mixer_write, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(field), field, XEN_ARG_2, S_mus_audio_mixer_write, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_write, "an integer");
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_write, "a vector");
+  XEN_ASSERT_TYPE(VCT_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_write, "a vct");
   if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(XEN_TO_C_INT(dev)))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 1, dev, "~A: invalid device");
   if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(XEN_TO_C_INT(field)))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 2, field, "~A: invalid field");
-  len = XEN_VECTOR_LENGTH(vals);
-  if (len == 0)
-    fvals = (float *)CALLOC(1, sizeof(float));
-  else
-    {
-      XEN *vdata;
-      int i;
-      fvals = (float *)CALLOC(len, sizeof(float));
-      vdata = XEN_VECTOR_ELEMENTS(vals);
-      for (i = 0; i < len; i++) 
-	fvals[i] = XEN_TO_C_DOUBLE_OR_ELSE(vdata[i], 0.0);
-    }
+  v = TO_VCT(vals);
+  len = v->length;
+  fvals = (float *)CALLOC(len, sizeof(float));
+  for (i = 0; i < len; i++) 
+    fvals[i] = v->data[i];
   res = mus_audio_mixer_write(XEN_TO_C_INT(dev),
 			      XEN_TO_C_INT(field),
 			      XEN_TO_C_INT(chan),

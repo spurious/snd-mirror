@@ -2397,6 +2397,7 @@ See play.scm and rtio.scm. The most important Sndlib functions for Snd are:</p>
   mus-audio-direction   mus-audio-port     mus-audio-pcm2    mus-audio-treble
   mus-audio-samples-per-channel
 </pre>
+<i>vals</i> should be a vct big enough to handle the returned data (the <i>channel</i> argument normally is the size).
 </td></tr>
 
 <!-- mus-audio-mixer-write -->
@@ -2407,14 +2408,14 @@ See play.scm and rtio.scm. The most important Sndlib functions for Snd are:</p>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 ;;; here we get the microphone volume, then set it to .5
-(define vals (make-vector 32))
+(define vals (<a class=quiet href="#makevct">make-vct</a> 32))
 (<em class=red>mus-audio-mixer-read</em> mus-audio-microphone mus-audio-amp 0 vals)
-(vector-ref vals 0)
-(vector-set! vals 0 .5)
+(<a class=quiet href="#vctref">vct-ref</a> vals 0)
+(<a class=quiet href="#vctset">vct-set!</a> vals 0 .5)
 (<em class=red>mus-audio-mixer-write</em> mus-audio-microphone mus-audio-amp 0 vals)
 ;;; now set the 2 "igain" fields to 1
-(vector-set! vals 0 1.0)
-(vector-set! vals 1 1.0)
+(<a class=quiet href="#vctset">vct-set!</a> vals 0 1.0)
+(<a class=quiet href="#vctset">vct-set!</a> vals 1 1.0)
 (<em class=red>mus-audio-mixer-write</em> mus-audio-mixer mus-audio-igain 2 vals)
 </pre></td></tr></table></td></tr>
 <br>
@@ -4113,10 +4114,10 @@ send channel 1 data to channel 1 of the DAC, and so on).
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (play-mono-as-stereo #:optional snd)
   "(play-mono-as-stereo snd) sends the channel 0 data in 'snd' to all available DAC channels."
-  (let ((vals (make-vector 3))
+  (let ((vals (make-vct 3))
 	(end (frames snd)))
     (mus-audio-mixer-read mus-audio-default mus-audio-channel 3 vals)
-    (let ((chans (max (inexact-&lt;exact (vector-ref vals 0)) 2)))     ; assume stereo is out there
+    (let ((chans (max (inexact-&lt;exact (<a class=quiet href="#vctref">vct-ref</a> vals 0)) 2)))       ; assume stereo is out there
       (do ((chan 0 (1+ chan)))                                      ; get a player for each output channel
 	  ((= chan chans))
 	(let ((player (<em class=red>make-player</em> snd 0)))
@@ -6564,7 +6565,7 @@ To start a parallel editing branch on a given file, you could <code>(save-sound-
 <tr><td></td><td>
 <a href="snd.html#scaling">scale</a> amplitude of <i>snd</i> by <i>scalers</i>.  Unlike most of these functions,
 scale-by follows the 'sync' buttons and affects all currently sync'd 
-channels. <i>scalers</i> can be either a float or a vct.  
+channels. <i>scalers</i> can be either a float, a list, or a vct.  
 In the latter case, the values are used one by one, applying each as 
 scale-by moves through the channels. If 'sync' is off, channel <i>chn</i> 
 is scaled (defaults to the currently selected channel).  <code>(scale-by 2.0)</code> doubles all samples.
@@ -6675,6 +6676,7 @@ normalizes the samples in the given channel between beg and beg + num to norm.  
 (see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i> (following sync as in scale-by).
 <code>(scale-to 0.5)</code> scales the current channel so that its maxamp is 0.5.
 If all the samples are 0.0, scale-to returns #f and does not perform any edit.
+<i>scalers</i> can be a number, a list of numbers, or a vct.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

@@ -1177,10 +1177,10 @@ constants and functions described above into Scheme.
 	val))))
 
 ;;; here we get the microphone volume, then set it to .5
-  (define vals (make-vector 32))
+  (define vals (make-vct 32))
   (<a class=quiet href="extsnd.html#musaudiomixerread">mus-audio-mixer-read</a> mus-audio-microphone mus-audio-amp 0 vals)
-  (vector-ref vals 0)
-  (vector-set! vals 0 .5)
+  (vct-ref vals 0)
+  (vct-set! vals 0 .5)
   (<a class=quiet href="extsnd.html#musaudiomixerwrite">mus-audio-mixer-write</a> mus-audio-microphone mus-audio-amp 0 vals)
 
 ;;; this function plays a sound (we're assuming that we can play 16-bit linear little-endian data)
@@ -1243,14 +1243,14 @@ to make it independent of Snd:
 	    val)))
     (if (= audio-fd -1)
 	;; ask card what it wants -- ALSA with some cards, for example, insists on 10 (virtual) channels and mus-lintn data!
-	(let ((vals (make-vector 32)))
+	(let ((vals (make-vct 32)))
 	  (mus-audio-mixer-read mus-audio-default mus-audio-format 32 vals)
-	  (let ((fmt (inexact-&gt;exact (vector-ref vals 1))))
+	  (let ((fmt (inexact-&gt;exact (vct-ref vals 1))))
 	    (mus-audio-mixer-read mus-audio-default mus-audio-channel 32 vals)
-	    (set! outchans (inexact-&gt;exact (vector-ref vals 0)))
+	    (set! outchans (inexact-&gt;exact (vct-ref vals 0)))
 	    (let ((err (mus-audio-mixer-read mus-audio-default mus-audio-samples-per-channel 2 vals)))
 	      (if (not (= err -1))
-		  (set! pframes (inexact-&gt;exact (vector-ref vals 0))))
+		  (set! pframes (inexact-&gt;exact (vct-ref vals 0))))
 	      (let* ((bps (mus-bytes-per-sample fmt)))
 		(set! outbytes (* bps pframes outchans))
 		(set! audio-fd (catch #t

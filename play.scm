@@ -36,14 +36,14 @@
 	      val))))
     (if (= audio-fd -1)
 	;; ask card what it wants -- ALSA with some cards, for example, insists on 10 (virtual) channels and mus-lintn data!
-	(let ((vals (make-vector 32)))
+	(let ((vals (make-vct 32)))
 	  (mus-audio-mixer-read mus-audio-default mus-audio-format 32 vals)
-	  (let ((fmt (inexact->exact (vector-ref vals 1))))
+	  (let ((fmt (inexact->exact (vct-ref vals 1))))
 	    (mus-audio-mixer-read mus-audio-default mus-audio-channel 32 vals)
-	    (set! outchans (inexact->exact (vector-ref vals 0)))
+	    (set! outchans (inexact->exact (vct-ref vals 0)))
 	    (let ((err (mus-audio-mixer-read mus-audio-default mus-audio-samples-per-channel 2 vals)))
 	      (if (not (= err -1))
-		  (set! pframes (inexact->exact (vector-ref vals 0))))
+		  (set! pframes (inexact->exact (vct-ref vals 0))))
 	      (let* ((bps (mus-bytes-per-sample fmt)))
 		(set! outbytes (* bps pframes outchans))
 		(set! audio-fd (catch #t

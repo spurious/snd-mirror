@@ -134,8 +134,15 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   #endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
-  /* TODO: Guile now has i18n support: i18n.h, i18n.c -- does this include "," in Scheme numbers? */
-  /*       or should this just be documented and left to the individual's ~/.snd stuff? */
+  /* PERHAPS: Guile now has i18n support: i18n.h, i18n.c -- does this include "," in Scheme numbers? */
+  /*
+    (bindtextdomain "snd" "/usr/local/share/locale")
+    (textdomain "snd")
+    (define _ gettext)
+    (display (_ "no selection"))
+
+    but that is limited to Snd's messages
+  */
 #endif
 
   ss = (snd_state *)CALLOC(1, sizeof(snd_state));

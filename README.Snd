@@ -201,6 +201,8 @@ C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
 expect, and postscript.
 
 
+To get the German version at run-time, (setlocale LC_ALL "de_DE").
+
 ----------------------------------------------------------------
 TROUBLES:
 
@@ -653,9 +655,9 @@ So, here's the detailed step-by-step method, thanks to Cris Ewing:
     
     $ make
     
-    $ sudo make-install
+    $ sudo make install
     
-    (you need to sudo make-install, because it will install an snd-executable
+    (you need to sudo make install, because it will install an snd-executable
     in /usr/local/bin)
 
 
