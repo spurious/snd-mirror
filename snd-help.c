@@ -397,8 +397,6 @@ void about_snd_help(void)
 19-Feb:  filter-channel (regularized filter-sound)\n\
 18-Feb:  an enormous number of improvements to the Ruby code and inf-snd.el thanks to Michael Scholz.\n\
            also new: snd-motif.rb.\n\
-16-Feb:  *-control-bounds.\n\
-12-Feb:  gui.scm and many other improvements thanks to Kjetil S. Matheussen.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -788,7 +786,7 @@ void sound_files_help(void)
     Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION, MAUD, Kurzweil 2000,\n\
     Gravis Ultrasound, ASF, PAF, CSL, Comdisco SPW, Goldwave sample, omf, quicktime\n\
     Sonic Foundry, SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,\n\
-    Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85, SY99, and TX16, Covox v8, SPL, AVI, \n\
+    Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85, SY99, and TX16, Covox v8, AVI, \n\
     Impulse tracker, Korg, Akai, Turtle Beach\n\
 \n\n\
   automatically translated to a readable format:\n\

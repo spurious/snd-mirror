@@ -261,7 +261,7 @@ static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
   outp = 24;
   srate = 0;
   op = 0;
-  while (commenting)
+  while ((commenting) && (inp < totalin))
     {
       if (buf[inp] == '%') {op = inp; inp++;}
       else
@@ -305,10 +305,15 @@ static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
 	    }
 	}
     }
+  if (srate == 0) 
+    {
+      CLEANUP();
+      return(MUS_ERROR);
+    }
   i = (outp % 4);
   outp += i;
   mus_bint_to_char((unsigned char *)(hdr + 4), outp);
-  if (srate != 0) mus_bint_to_char((unsigned char *)(hdr + 16), srate);
+  mus_bint_to_char((unsigned char *)(hdr + 16), srate);
   if (snd_checked_write(fs, (unsigned char *)hdr, outp, newname) == MUS_ERROR) 
     {
       CLEANUP();
@@ -1024,77 +1029,6 @@ static int read_12bit(const char *oldname, const char *newname, char *hdr)
 }
 
 
-/*  -------------------------------- AVI --------------------------------
- *
- * data is squirreled away in ##wb data blocks somewhere within a LIST chunk
- * we have to mimic the header reader to find these guys one by one.
- * we assume we've got 16-bit linear little endian data here all in a single sequence of 'wb' blocks.
- * (in the 'rec' case, audio and video data can be interleaved, but that's too bad)
- */
-
-static int read_avi(const char *oldname, const char *newname, char *hdr)
-{
-  int totalin, fs = -1, fd = -1, cksize, num;
-  bool happy;
-#if (!MUS_LITTLE_ENDIAN)
-  int i;
-  unsigned char *bb;
-#endif
-  short *buf = NULL;
-  unsigned char *hdrbuf;
-  mus_bint_to_char((unsigned char *)(hdr + 16), mus_sound_srate(oldname));
-  mus_bint_to_char((unsigned char *)(hdr + 20), mus_sound_chans(oldname));
-  STARTUP(oldname, newname, TRANS_BUF_SIZE, short);
-  if (snd_checked_write(fs, (unsigned char *)hdr, 28, newname) == MUS_ERROR)
-    {
-      CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname, newname);
-    }
-  hdrbuf = (unsigned char *)CALLOC(8, sizeof(unsigned char));
-  lseek(fd, mus_sound_data_location(oldname), SEEK_SET);
-  happy = true;
-  while (happy)
-    {
-      totalin = read(fd, hdrbuf, 8);
-      if (totalin < 0) break;
-      cksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
-      if ((hdrbuf[2] == 'w') && (hdrbuf[3] == 'b'))
-	{
-	  while (cksize > 0)
-	    {
-	      if (TRANS_BUF_SIZE * 2 > cksize)
-		num = cksize;
-	      else num = TRANS_BUF_SIZE * 2;
-	      totalin = read(fd, (unsigned char *)buf, num);
-	      if (totalin < 0) 
-		{
-		  happy = false; 
-		  break;
-		}
-	      else 
-		{
-#if (!MUS_LITTLE_ENDIAN)
-		  bb = (unsigned char *)buf;
-		  for (i = 0; i < totalin / 2; i++, bb += 2) buf[i] = mus_char_to_lshort(bb);
-#endif		  
-		  if (be_snd_checked_write(fs, (unsigned char *)buf, totalin, newname) == MUS_ERROR) 
-		    {
-		      FREE(hdrbuf);
-		      CLEANUP();
-		      RETURN_MUS_WRITE_ERROR(oldname, newname);
-		    }
-		}
-	      cksize -= num;
-	    }
-	}
-      else break;
-    }
-  FREE(hdrbuf);
-  CLEANUP();
-  return(MUS_NO_ERROR);
-}
-
-
 /*  -------------------------------- G721 and G723 from Sun --------------------------------
  * code boiled down considerably here since I have no love of compression schemes.
  */
@@ -1495,7 +1429,6 @@ int snd_translate(const char *oldname, const char *newname, int type)
     case MUS_MUS10: err = read_mus10(oldname, newname, hdr); break;
     case MUS_HCOM: err = read_hcom(oldname, newname, hdr); break;
     case MUS_YAMAHA_TX16W: err = read_12bit(oldname, newname, hdr); break;
-    case MUS_AVI: err = read_avi(oldname, newname, hdr); break;
     case MUS_NVF: err = read_g72x_adpcm(oldname, newname, hdr, 0); break;
     case MUS_RIFF:
       switch (mus_sound_original_format(oldname))
@@ -1552,6 +1485,3 @@ int snd_translate(const char *oldname, const char *newname, int type)
     }
   return(err);
 }
-
-
-

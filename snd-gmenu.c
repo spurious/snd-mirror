@@ -1513,7 +1513,7 @@ static void create_popup_menu(guint button, Tempus time)
   gtk_menu_popup(GTK_MENU(popup_menu), NULL, NULL, NULL, NULL, button, time);
 }
 
-static XEN gtk_popup_hook = XEN_FALSE;
+static XEN gtk_popup_hook;
 
 void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, int chn)
 {

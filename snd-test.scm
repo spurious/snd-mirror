@@ -428,7 +428,7 @@
 	'mus-nist mus-nist 5
 	'mus-raw mus-raw 11
 	'mus-ircam mus-ircam 14
-	'mus-aiff mus-aiff 49
+	'mus-aiff mus-aiff 48
 	'mus-bicsf mus-bicsf 4
 	'mus-voc mus-voc 9
 	'mus-svx mus-svx 8
@@ -1075,14 +1075,14 @@
 	    (list "Fnonull.aif" 1 8000 0.00112499995157123 "AIFC" "mulaw (8 bits)")
 	    (list "Pmiscck.aif" 1 8000 0.00112499995157123 "AIFC" "mulaw (8 bits)")
 	    (list "Pmiscck.wav" 1 8000 0.00112499995157123 "RIFF" "mulaw (8 bits)")
-	    (list "Pnossnd.aif" 1 8000 0.0 "AIFC" "mulaw (8 bits)")
+;	    (list "Pnossnd.aif" 1 8000 0.0 "AIFC" "mulaw (8 bits)")
 	    (list "Poffset.aif" 1 8000 0.00112499995157123 "AIFC" "mulaw (8 bits)")
 	    (list "Porder.aif" 1 8000 0.00112499995157123 "AIFC" "mulaw (8 bits)")
 	    (list "Ptjunk.aif" 1 8000 0.00112499995157123 "AIFC" "mulaw (8 bits)")
 	    (list "Ptjunk.wav" 1 8000 0.00112499995157123 "RIFF" "mulaw (8 bits)")
 	    (list "SINE24-S.WAV" 2 44100 2.0 "RIFF" "little endian int (24 bits)")
-	    (list "a1.asf" 1 16000 0.0 "asf" "unknown")
-	    (list "a2.asf" 1 8000 0.0 "asf" "unknown")
+	    (list "a1.asf" 1 16000 3.73656249046326 "asf" "unknown")
+	    (list "a2.asf" 1 8000 4.63062477111816 "asf" "unknown")
 	    (list "addf8.afsp" 1 8000 2.9760000705719 "Sun" "big endian short (16 bits)")
 	    (list "addf8.d" 1 8000 2.9760000705719 "SPPACK" "big endian short (16 bits)")
 	    (list "addf8.dwd" 1 8000 2.9760000705719 "DiamondWare" "little endian short (16 bits)")
@@ -1098,7 +1098,7 @@
 	    (list "alaw.aifc" 1 44100 0.0367800444364548 "AIFC" "alaw (8 bits)")
 	    (list "alaw.wav" 1 11025 8.70666694641113 "RIFF" "alaw (8 bits)")
 	    (list "astor_basia.mp2" 2 44100 1.02179133892059 "raw (no header)" "big endian short (16 bits)")
-	    (list "c.asf" 1 8000 0.0 "asf" "unknown")
+	    (list "c.asf" 1 8000 21.3681259155273 "asf" "unknown")
 	    (list "ce-c3.w02" 1 33000 3.88848495483398 "TX-16W" "unknown")
 	    (list "ce-c4.w03" 1 33000 2.91618180274963 "TX-16W" "unknown")
 	    (list "ce-d2.w01" 1 33000 3.46439385414124 "TX-16W" "unknown")
@@ -1131,14 +1131,14 @@
 	    (list "inrs-16.snd" 1 8000 2.46399998664856 "INRS" "little endian short (16 bits)")
 	    (list "kirk.wve" 1 8000 1.40799999237061 "PSION" "alaw (8 bits)")
 	    (list "loop.aiff" 1 44100 0.0367120169103146 "AIFC" "big endian short (16 bits)" 12 23)
-	    (list "m.asf" 1 8000 0.0 "asf" "unknown")
-	    (list "mary-sun4.sig" 1 8000 5.95137500762939 "Comdisco SPW signal" "big endian double (64 bits)")
+	    (list "m.asf" 1 8000 64.9646224975586 "asf" "unknown")
+	    (list "mary-sun4.sig" 1 8000 4.47612476348877 "Comdisco SPW signal" "big endian double (64 bits)")
 	    (list "mocksong.wav" 1 11025 7.86956930160522 "RIFF" "little endian short (16 bits)")
 	    (list "mono24.wav" 1 22050 1.98997735977173 "RIFF" "little endian int (24 bits)")
 	    (list "msadpcm.wav" 1 11025 4.43501138687134 "RIFF" "unknown")
 	    (list "n8.snd" 1 44100 0.0367800444364548 "Sun" "signed byte (8 bits)")
 	    (list "nasahal.aif" 1 11025 9.89841270446777 "AIFF" "signed byte (8 bits)")
-	    (list "nasahal.avi" 1 11025 0.0 "AVI" "unknown")
+	    (list "nasahal.avi" 1 11025 10.4327440261841 "AVI" "little endian short (16 bits)")
 	    (list "nasahal.dig" 1 11025 9.89841270446777 "Sound Designer 1" "big endian short (16 bits)")
 	    (list "nasahal.ivc" 2 44100 0.449002265930176 "raw (no header)" "big endian short (16 bits)")
 	    (list "nasahal.pat" 1 11025 3.95410442352295 "Gravis Ultrasound patch" "unsigned byte (8 bits)")
@@ -1205,7 +1205,7 @@
 	    (list "riff-8-u.snd" 1 11025 0.506848096847534 "RIFF" "unsigned byte (8 bits)")
 	    (list "rooster.wve" 1 8000 2.04800009727478 "PSION" "alaw (8 bits)")
 	    (list "sd1-16.snd" 1 44100 0.400544226169586 "Sound Designer 1" "big endian short (16 bits)")
-	    (list "segfault.snd" 16777216 576061440 1.24986669902682e-7 "Sun" "unknown")
+;	    (list "segfault.snd" 16777216 576061440 1.24986669902682e-7 "Sun" "unknown")
 	    (list "sf-16.snd" 1 22050 1.88766443729401 "IRCAM" "big endian short (16 bits)")
 	    (list "si654.adc" 1 16000 6.71362495422363 "ADC/OGI" "big endian short (16 bits)")
 	    (list "smp-16.snd" 1 8000 5.2028751373291 "SMP" "little endian short (16 bits)")
@@ -2283,7 +2283,8 @@
 						   (mus-sound-srate n)
 						   (mus-sound-frames n)))
 					(lambda args (car args)))))
-			(if (not (equal? val vals))
+			(if (and (not (equal? val vals))
+				 (not (eq? val 'mus-error)))
 			    (snd-display ";~A: ~A ~A" n val vals))))
 		    (list (string-append sf-dir "bad_chans.snd")
 			  (string-append sf-dir "bad_srate.snd")
@@ -2838,7 +2839,7 @@
 	    (test-data (string-append sf-dir "ieee-text-16.snd") 1000 10 (vct -0.052 -0.056 -0.069 -0.077 -0.065 -0.049 -0.054 -0.062 -0.066 -0.074))
 	    (test-data (string-append sf-dir "hcom-16.snd") 10000 10 (vct 0.000 0.000 0.000 0.008 0.000 -0.016 -0.016 -0.016 -0.008 0.000))
 	    (test-data (string-append sf-dir "ce-c3.w02") 1000 10 (vct 0.581 0.598 0.596 0.577 0.552 0.530 0.508 0.479 0.449 0.425))
-	    (test-data (string-append sf-dir "nasahal.avi") 20000 10 (vct 0.464 0.189 -0.458 -0.150 0.593 0.439 -0.208 -0.130 0.460 0.429))
+	    (test-data (string-append sf-dir "nasahal.avi") 20000 10 (vct 0.390 0.120 -0.399 -0.131 0.464 0.189 -0.458 -0.150 0.593 0.439))
 	    (test-data (string-append sf-dir "oki.wav") 100 10 (vct 0.396 0.564 0.677 0.779 0.761 0.540 0.209 -0.100 -0.301 -0.265))
 	    
 	    (test-data (string-append sf-dir "trumps22.adp") 5000 10 (vct 0.267 0.278 0.309 0.360 0.383 0.414 0.464 0.475 0.486 0.495))
@@ -3026,7 +3027,9 @@
 	    (close-sound ind))
 	  ))
 
+      (reset-hook! open-raw-sound-hook)
       (add-hook! open-raw-sound-hook (lambda (a b) #t))
+      (reset-hook! bad-header-hook)
       (add-hook! bad-header-hook (lambda (n) #t))
       (let* ((magic-words (list ".snd" "FORM" "AIFF" "AIFC" "COMM" "COMT" "INFO" "INST" "inst" "MARK" "SSND"
 				"FVER" "NONE" "ULAW" "ulaw" "ima4" "raw " "sowt" "in32" "in24" "ni23" "fl32"
@@ -3045,6 +3048,7 @@
 	 (lambda (magic)
 	   (if (file-exists? "test.snd")
 	       (delete-file "test.snd"))
+	   (mus-sound-forget "test.snd")
 	   ;; try random garbage
 	   (with-output-to-file "test.snd"
 	     (lambda ()
@@ -3060,6 +3064,7 @@
 		      (sound? tag))
 		 (snd-display ";open-sound garbage ~A: ~A?" magic tag)))
 	   (delete-file "test.snd")
+	   (mus-sound-forget "test.snd")
 	   ;; try plausible garbage
 	   (with-output-to-file "test.snd"
 	     (lambda ()
@@ -3075,6 +3080,7 @@
 		      (sound? tag))
 		 (snd-display ";open-sound plausible garbage ~A: ~A?" magic tag)))
 	   (delete-file "test.snd")
+	   (mus-sound-forget "test.snd")
 	   ;; write very plausible garbage
 	   (with-output-to-file "test.snd"
 	     (lambda ()
@@ -3093,8 +3099,309 @@
 		 (snd-display ";open-sound very plausible garbage ~A: ~A?" magic tag)))
 	   (set! ctr (1+ ctr)))
 	 magic-words))
+      (if (file-exists? "test.snd") (delete-file "test.snd"))
+      (mus-sound-forget "test.snd")
+
+      (with-output-to-file "test.snd"
+	(lambda ()
+	  (display ".snd")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\034) ; location
+	  (write-char #\000) (write-char #\001) (write-char #\215) (write-char #\030) ; nominal size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\022) ; format
+	  (write-char #\000) (write-char #\000) (write-char #\126) (write-char #\042) ; srate
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\001) ; chans
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; comment
+	  (write-char #\000) (write-char #\001) ; samp 1
+	  ))
+      (if (not (= (mus-sound-data-format "test.snd") mus-bshort))
+	  (snd-display ";next 18: ~A" (mus-sound-data-format "test.snd")))
+      (delete-file "test.snd")
+      (mus-sound-forget "test.snd")
+      (with-output-to-file "test.snd"
+	(lambda ()
+	  (display ".snd")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; location
+	  (write-char #\000) (write-char #\001) (write-char #\215) (write-char #\030) ; nominal size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\022) ; format
+	  (write-char #\000) (write-char #\000) (write-char #\126) (write-char #\042) ; srate
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\001) ; chans
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; comment
+	  (write-char #\000) (write-char #\001) ; samp 1
+	  ))
+      (let ((tag (catch #t
+			(lambda ()
+			  (open-sound "test.snd"))
+			(lambda args (car args)))))
+	(if (and (number? tag)
+		 (sound? tag))
+	    (begin
+	      (snd-display ";open-sound next bad location ~A: ~A?" (data-location tag) tag)
+	      (close-sound tag))))
+      (delete-file "test.snd")
+      (mus-sound-forget "test.snd")
+      (with-output-to-file "test.snd"
+	(lambda ()
+	  (display ".snd")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\034) ; location
+	  (write-char #\000) (write-char #\001) (write-char #\215) (write-char #\030) ; nominal size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\122) ; format
+	  (write-char #\000) (write-char #\000) (write-char #\126) (write-char #\042) ; srate
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\001) ; chans
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; comment
+	  (write-char #\000) (write-char #\001) ; samp 1
+	  ))
+      (let ((tag (catch #t
+			(lambda ()
+			  (open-sound "test.snd"))
+			(lambda args (car args)))))
+	(if (and (number? tag)
+		 (sound? tag))
+	    (begin
+	      (snd-display ";open-sound next bad format ~A: ~A?" (data-format tag) tag)
+	      (close-sound tag))))
+      (delete-file "test.snd")
+      (mus-sound-forget "test.snd")
+
+      (letrec ((make-aifc-file 
+		(lambda (frames auth-lo bits)
+		  (with-output-to-file "test.aif"
+		    (lambda ()
+		      (display "FORM")
+		      (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\146) ; len
+		      (display "AIFCFVER")
+		      (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; version chunk size
+		      (write-char #\242) (write-char #\200) (write-char #\121) (write-char #\100) ; version  
+		      (display "COMM")
+		      (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\046) ; COMM chunk size
+		      (write-char #\000) (write-char #\001) ; 1 chan
+		      (write-char #\000) (write-char #\000) (write-char #\000) (write-char frames) ; frames
+		      (write-char #\000) (write-char bits) ; bits
+		      (write-char #\100) (write-char #\016) (write-char #\254) (write-char #\104) (write-char #\000) 
+		      (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ;
+		      ;; srate as 80-bit float (sheesh)
+		      (display "NONE") ; compression
+		      (write-char #\016) ; pascal string len
+		      (display "not compressed")
+		      (write-char #\000)
+		      (display "AUTH")
+		      (write-char #\000) (write-char #\000) (write-char #\000) (write-char auth-lo) ; AUTH chunk size
+		      (display "bil")
+		      (write-char #\000)
+		      (display "SSND")
+		      (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) ; SSND chunk size
+		      (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; SSND data loc
+		      (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; block size?
+		      (write-char #\000) (write-char #\101) (write-char #\000) (write-char #\100) ; two samples
+		      )))))
+	(if (file-exists? "test.aif") (delete-file "test.aif"))
+	(mus-sound-forget "test.aif")
+	;;correct (make-aifc-file #\002 #\004 #\020)
+	(make-aifc-file #\102 #\004 #\020)
+	(let ((ind (open-sound "test.aif")))
+	  (if (not (= (frames ind) 2)) (snd-display ";bad frames in header: ~A" (frames ind)))
+	  (close-sound ind))
+	(delete-file "test.aif")
+	(mus-sound-forget "test.aif")
+	(make-aifc-file #\002 #\150 #\020)
+	(let ((tag (catch #t
+			  (lambda ()
+			    (open-sound "test.aif"))
+			  (lambda args (car args)))))
+	  (if (and (number? tag)
+		   (sound? tag))
+	      (begin
+		(snd-display ";open-sound aifc no ssnd chunk ~A: ~A?" (data-location tag) tag)
+		(close-sound tag))))
+	(delete-file "test.aif")
+	(mus-sound-forget "test.aif")
+	(make-aifc-file #\002 #\000 #\020)
+	(let ((tag (catch #t
+			  (lambda ()
+			    (open-sound "test.aif"))
+			  (lambda args (car args)))))
+	  (if (and (number? tag)
+		   (sound? tag))
+	      (begin
+		(snd-display ";open-sound aifc 0-len auth chunk ~A: ~A?" (data-location tag) tag)
+		(close-sound tag))))
+	(delete-file "test.aif")
+	(mus-sound-forget "test.aif")
+	(make-aifc-file #\002 #\150 #\120)
+	(let ((tag (catch #t
+			  (lambda ()
+			    (open-sound "test.aif"))
+			  (lambda args (car args)))))
+	  (if (and (number? tag)
+		   (sound? tag))
+	      (begin
+		(snd-display ";open-sound bits 80 ~A: ~A?" (data-format tag) tag)
+		(close-sound tag))))
+	(delete-file "test.aif")
+	(mus-sound-forget "test.aif"))
+      (with-output-to-file "test.aif"
+	(lambda ()
+	  (display "FORM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\176) ; len
+	  (display "AIFCFVER")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; version chunk size
+	  (write-char #\242) (write-char #\200) (write-char #\121) (write-char #\100) ; version  
+	  (display "COMM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\046) ; COMM chunk size
+	  (write-char #\000) (write-char #\001) ; 1 chan
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\002) ; frames
+	  (write-char #\000) (write-char #\020) ; bits
+	  (write-char #\100) (write-char #\016) (write-char #\254) (write-char #\104) (write-char #\000) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; srate as 80-bit float (sheesh)
+	  (display "NONE") ; compression
+	  (write-char #\016) ; pascal string len
+	  (display "not compressed")
+	  (write-char #\000)
+	  (display "AUTH")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; AUTH chunk size
+	  (display "bil")
+	  (write-char #\000)
+	  (display "ANNO")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; AUTH chunk size
+	  (display "cat")
+	  (write-char #\000)
+	  (display "NAME")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; AUTH chunk size
+	  (display "dog")
+	  (write-char #\000)
+	  (display "SSND")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) ; SSND chunk size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; SSND data loc
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; block size?
+	  (write-char #\000) (write-char #\101) (write-char #\000) (write-char #\100) ; two samples
+	  ))
+      (if (not (= (string-length (mus-sound-comment "test.aif")) 15))
+	  (snd-display ";aifc 3 aux comments: ~A?" (mus-sound-comment "test.aif")))
+      (delete-file "test.aif")
+      (mus-sound-forget "test.aif")
+      (with-output-to-file "test.aif"
+	(lambda ()
+	  (display "FORM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\142) ; len
+	  (display "AIFC")
+	  (display "SSND")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) ; SSND chunk size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; SSND data loc
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; block size?
+	  (write-char #\000) (write-char #\101) (write-char #\000) (write-char #\100) ; two samples
+	  (display "COMM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\046) ; COMM chunk size
+	  (write-char #\000) (write-char #\001) ; 1 chan
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\002) ; frames
+	  (write-char #\000) (write-char #\020) ; bits
+	  (write-char #\100) (write-char #\016) (write-char #\254) (write-char #\104) (write-char #\000) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; srate as 80-bit float (sheesh)
+	  (display "NONE") ; compression
+	  (write-char #\016) ; pascal string len
+	  (display "not compressed")
+	  (write-char #\000)
+	  (display "COMT")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) 
+	  (display "bil")
+	  (write-char #\000)
+	  ))
+      (if (not (string=? (substring (mus-sound-comment "test.aif") 0 3) "bil"))
+	  (snd-display ";aifc trailing comt comment: ~A?" (mus-sound-comment "test.aif")))
+      (if (not (= (mus-sound-frames "test.aif") 2))
+	  (snd-display ";aifc trailing comt frames: ~A?" (mus-sound-frames "test.aif")))
+      (let ((ind (open-sound "test.aif")))
+	(if (or (fneq (sample 0) 0.00198)
+		(fneq (sample 1) 0.00195)
+		(fneq (sample 2) 0.0)
+		(fneq (sample 3) 0.0))
+	    (snd-display "aifc trailing comt samps: ~A ~A ~A ~A" (sample 0) (sample 1) (sample 2) (sample 3)))
+	(close-sound ind))
+      (delete-file "test.aif")
+      (mus-sound-forget "test.aif")
+      (with-output-to-file "test.aif"
+	(lambda ()
+	  (display "FORM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\142) ; len
+	  (display "AIFC")
+	  (display "SSND")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) ; SSND chunk size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; SSND data loc
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; block size?
+	  (write-char #\000) (write-char #\101) (write-char #\000) (write-char #\100) ; two samples
+	  (display "COMM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\046) ; COMM chunk size
+	  (write-char #\000) (write-char #\001) ; 1 chan
+	  (write-char #\000) (write-char #\000) (write-char #\100) (write-char #\102) ; frames
+	  (write-char #\000) (write-char #\020) ; bits
+	  (write-char #\100) (write-char #\016) (write-char #\254) (write-char #\104) (write-char #\000) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; srate as 80-bit float (sheesh)
+	  (display "NONE") ; compression
+	  (write-char #\016) ; pascal string len
+	  (display "not compressed")
+	  (write-char #\000)
+	  (display "COMT")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) 
+	  (display "bil")
+	  (write-char #\000)
+	  ))
+      (if (not (string=? (substring (mus-sound-comment "test.aif") 0 3) "bil"))
+	  (snd-display ";aifc trailing comt comment: ~A?" (mus-sound-comment "test.aif")))
+      (if (not (= (mus-sound-frames "test.aif") 2))
+	  (snd-display ";aifc trailing comt (bogus) frames: ~A?" (mus-sound-frames "test.aif")))
+      (let ((ind (open-sound "test.aif")))
+	(if (or (fneq (sample 0) 0.00198)
+		(fneq (sample 1) 0.00195)
+		(fneq (sample 2) 0.0)
+		(fneq (sample 3) 0.0))
+	    (snd-display "aifc trailing comt samps (bogus frame setting): ~A ~A ~A ~A" (sample 0) (sample 1) (sample 2) (sample 3)))
+	(close-sound ind))
+      (delete-file "test.aif")
+      (mus-sound-forget "test.aif")
+      (with-output-to-file "test.aif"
+	(lambda ()
+	  (display "FORM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\142) ; len
+	  (display "AIFC")
+	  (display "SSND")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) ; SSND chunk size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; SSND data loc
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; block size?
+	  (write-char #\000) (write-char #\101) (write-char #\000) (write-char #\100) ; two samples
+	  (display "COMM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\046) ; COMM chunk size
+	  (write-char #\000) (write-char #\001) ; 1 chan
+	  (write-char #\000) (write-char #\000) (write-char #\100) (write-char #\102) ; frames
+	  (write-char #\000) (write-char #\020) ; bits
+	  (write-char #\100) (write-char #\016) (write-char #\254) (write-char #\104) (write-char #\000) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; srate as 80-bit float (sheesh)
+	  (display "NONE") ; compression
+	  (write-char #\016) ; pascal string len
+	  (display "not compressed")
+	  (write-char #\000)
+	  (display "SSND")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) ; SSND chunk size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; SSND data loc
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; block size?
+	  (write-char #\000) (write-char #\101) (write-char #\000) (write-char #\100) ; two samples
+	  ))
+      (let ((tag (catch #t
+			(lambda ()
+			  (open-sound "test.aif"))
+			(lambda args (car args)))))
+	(if (and (number? tag)
+		 (sound? tag))
+	    (begin
+	      (snd-display ";open-sound aifc 2 ssnd chunks ~A: ~A?" (data-location tag) tag)
+	      (close-sound tag))))
+      (delete-file "test.aif")
+      (mus-sound-forget "test.aif")
+      
       (reset-hook! bad-header-hook)
       (reset-hook! open-raw-sound-hook)
+      (if (not (null? (sounds))) (map close-sound (sounds)))
       
       (run-hook after-test-hook 4)
       ))
@@ -41760,6 +42067,8 @@ EDITS: 2
       ))
 
 ;;; -------------------- test 26: Gtk --------------------
+
+;;; (gtk_dialog_new_with_buttons "title" (GTK_WINDOW (cadr (main-widgets))) 0 (list GTK_STOCK_OK GTK_RESPONSE_ACCEPT GTK_STOCK_CANCEL GTK_RESPONSE_REJECT))
 
 (if (or full-test (= snd-test 26) (and keep-going (<= snd-test 26)))
     (begin
