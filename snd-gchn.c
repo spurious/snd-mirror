@@ -470,12 +470,12 @@ static void graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
   set_graph_active(TRUE);
   gtk_widget_grab_focus(w);
   ((cp->sound)->sgx)->mini_active = 0;
-  graph_button_press_callback(cp,(int)(ev->x),(int)(ev->y),ev->state,ev->button);
+  graph_button_press_callback(cp,(int)(ev->x),(int)(ev->y),ev->state,ev->button,ev->time);
 }
 
 static void graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  graph_button_release_callback((chan_info *)data,(int)(ev->x),(int)(ev->y),ev->state,ev->button,ev->time);
+  graph_button_release_callback((chan_info *)data,(int)(ev->x),(int)(ev->y),ev->state,ev->button);
 }
 
 static void graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)

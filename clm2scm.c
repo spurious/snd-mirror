@@ -141,8 +141,13 @@ static int g_scm2int(SCM obj)
 #define SC_filter           "filter"
 #define SC_revout           "revout"
 #define SC_width            "width"
+#define SC_edit             "edit"
+#define SC_synthesize       "synthesize"
+#define SC_analyze          "analyze"
+#define SC_interp           "interp"
+#define SC_overlap          "overlap"
 
-#define NUM_KEYWORDS 56
+#define NUM_KEYWORDS 61
 enum {C_frequency,C_initial_phase,C_wave,C_cosines,C_amplitude,
       C_r,C_ratio,C_size,C_a0,C_a1,C_a2,C_b1,C_b2,C_max_size,
       C_input,C_srate,C_file,C_channel,C_start,
@@ -151,7 +156,8 @@ enum {C_frequency,C_initial_phase,C_wave,C_cosines,C_amplitude,
       C_order,C_x_coeffs,C_y_coeffs,C_envelope,C_base,C_duration,C_offset,C_end,
       C_direction,C_degree,C_distance,C_reverb,C_output,C_fft_size,
       C_expansion,C_length,C_hop,C_ramp,C_jitter,
-      C_type,C_format,C_comment,C_channels,C_filter,C_revout,C_width
+      C_type,C_format,C_comment,C_channels,C_filter,C_revout,C_width,
+      C_edit,C_synthesize,C_analyze,C_interp,C_overlap
 };
 
 static char *keywords[NUM_KEYWORDS] = {SC_frequency,SC_initial_phase,SC_wave,SC_cosines,SC_amplitude,
@@ -162,7 +168,8 @@ static char *keywords[NUM_KEYWORDS] = {SC_frequency,SC_initial_phase,SC_wave,SC_
 				       SC_order,SC_x_coeffs,SC_y_coeffs,SC_envelope,SC_base,SC_duration,SC_offset,SC_end,
 				       SC_direction,SC_degree,SC_distance,SC_reverb,SC_output,SC_fft_size,
 				       SC_expansion,SC_length,SC_hop,SC_ramp,SC_jitter,
-				       SC_type,SC_format,SC_comment,SC_channels,SC_filter,SC_revout,SC_width
+				       SC_type,SC_format,SC_comment,SC_channels,SC_filter,SC_revout,SC_width,
+				       SC_edit,SC_synthesize,SC_analyze,SC_interp,SC_overlap
 };
 static SCM all_keys[NUM_KEYWORDS];
 
@@ -289,8 +296,13 @@ static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *a
 #define SC_filter           ":filter"
 #define SC_revout           ":revout"
 #define SC_width            ":width"
+#define SC_edit             ":edit"
+#define SC_synthesize       ":synthesize"
+#define SC_analyze          ":analyze"
+#define SC_interp           ":interp"
+#define SC_overlap          ":overlap"
 
-#define NUM_KEYWORDS 56
+#define NUM_KEYWORDS 61
 enum {C_frequency,C_initial_phase,C_wave,C_cosines,C_amplitude,
       C_r,C_ratio,C_size,C_a0,C_a1,C_a2,C_b1,C_b2,C_max_size,
       C_input,C_srate,C_file,C_channel,C_start,
@@ -299,7 +311,8 @@ enum {C_frequency,C_initial_phase,C_wave,C_cosines,C_amplitude,
       C_order,C_x_coeffs,C_y_coeffs,C_envelope,C_base,C_duration,C_offset,C_end,
       C_direction,C_degree,C_distance,C_reverb,C_output,C_fft_size,
       C_expansion,C_length,C_hop,C_ramp,C_jitter,
-      C_type,C_format,C_comment,C_channels,C_filter,C_revout,C_width
+      C_type,C_format,C_comment,C_channels,C_filter,C_revout,C_width,
+      C_edit,C_synthesize,C_analyze,C_interp,C_overlap
 };
 
 static char *keywords[NUM_KEYWORDS] = {SC_frequency,SC_initial_phase,SC_wave,SC_cosines,SC_amplitude,
@@ -310,7 +323,8 @@ static char *keywords[NUM_KEYWORDS] = {SC_frequency,SC_initial_phase,SC_wave,SC_
 				       SC_order,SC_x_coeffs,SC_y_coeffs,SC_envelope,SC_base,SC_duration,SC_offset,SC_end,
 				       SC_direction,SC_degree,SC_distance,SC_reverb,SC_output,SC_fft_size,
 				       SC_expansion,SC_length,SC_hop,SC_ramp,SC_jitter,
-				       SC_type,SC_format,SC_comment,SC_channels,SC_filter,SC_revout,SC_width
+				       SC_type,SC_format,SC_comment,SC_channels,SC_filter,SC_revout,SC_width,
+				       SC_edit,SC_synthesize,SC_analyze,SC_interp,SC_overlap
 };
 static SCM all_keys[NUM_KEYWORDS];
 /* what about user-declared keywords? */
@@ -4249,19 +4263,30 @@ static void init_locs(void)
 
 /* ---------------- src ---------------- */
 
+enum {INPUT_FUNCTION,ANALYZE_FUNCTION,EDIT_FUNCTION,SYNTHESIZE_FUNCTION};
+
 static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
   /* if this is called, it's a callback from C, where ptr is a mus_scm object whose vcts[0]
    * field is an SCM procedure to be called, the result being returned back to C.  In the
-   * Scheme world, it's a procedure of one arg, the current read direction
+   * Scheme world, it's a procedure of one arg, the current read direction: 
+   *
+   * funcall1 is input-func for clm.c make args, or the 2nd arg to the gen (mus_src(gen,input))
+   *    it is called in C (*input)(environ,dir)
+   *    environ in mus_scm *gn
+   *      its gn->vcts array [INPUT_FUNCTION] = scm procedure object (if any) else SCM_EOL
+   *      this is set in the gen call if it's passed there, else in the make-gen call
+   * so we get here via *funcall1(gn,dir)
+   *   and make sure gn->vcts[INPUT_FUNCTION] is a procedure, call it with dir as its arg,
+   *   it returns a float which we then return to C
    */
   mus_scm *gn = (mus_scm *)ptr;
-  if ((gn) && (gn->vcts) && (gn->vcts[0]) && (gh_procedure_p(gn->vcts[0])))
+  if ((gn) && (gn->vcts) && (gn->vcts[INPUT_FUNCTION]) && (gh_procedure_p(gn->vcts[INPUT_FUNCTION])))
     /* the gh_procedure_p call can be confused by 0 -> segfault! */
 #if USE_SND
-    return(gh_scm2double(g_call1(gn->vcts[0],gh_int2scm(direction))));
+    return(gh_scm2double(g_call1(gn->vcts[INPUT_FUNCTION],gh_int2scm(direction))));
 #else
-    return(gh_scm2double(gh_call1(gn->vcts[0],gh_int2scm(direction))));
+    return(gh_scm2double(gh_call1(gn->vcts[INPUT_FUNCTION],gh_int2scm(direction))));
 #endif
   else return(0.0);
 }
@@ -4288,7 +4313,7 @@ static SCM g_src(SCM obj, SCM pm, SCM func)
   mus_scm *gn = mus_get_scm(obj);
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_src_p(mus_get_any(obj)))),obj,SCM_ARG1,S_src);
   if (SCM_NFALSEP(scm_real_p(pm))) pm1 = gh_scm2double(pm); else if (!(SCM_UNBNDP(pm))) scm_wrong_type_arg(S_src,2,pm);
-  if (gh_procedure_p(func)) gn->vcts[0] = func;
+  if (gh_procedure_p(func)) gn->vcts[INPUT_FUNCTION] = func;
   return(gh_double2scm(mus_src(mus_get_any(obj),pm1,0)));
 }
 
@@ -4327,7 +4352,7 @@ static SCM g_make_src(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6
     }
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->vcts = (SCM *)CALLOC(1,sizeof(SCM));
-  if (!(SCM_UNBNDP(in_obj))) gn->vcts[0] = in_obj; else gn->vcts[0] = SCM_EOL;
+  if (!(SCM_UNBNDP(in_obj))) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
   gn->nvcts = 1;
   gn->gen = mus_make_src(funcall1,srate,wid,gn);
 #if (!HAVE_GUILE_1_3_0)
@@ -4369,7 +4394,7 @@ static SCM g_granulate(SCM obj, SCM func)
   #define H_granulate "(" S_granulate " gen) -> next sample from granular synthesis generator"
   mus_scm *gn = mus_get_scm(obj);
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_granulate_p(mus_get_any(obj)))),obj,SCM_ARG1,S_granulate);
-  if (gh_procedure_p(func)) gn->vcts[0] = func;
+  if (gh_procedure_p(func)) gn->vcts[INPUT_FUNCTION] = func;
   return(gh_double2scm(mus_granulate(mus_get_any(obj),0)));
 }
 
@@ -4386,21 +4411,6 @@ static SCM g_set_ramp(SCM obj, SCM val)
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_granulate_p(mus_get_any(obj)))),obj,SCM_ARG1,S_mus_set_ramp);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_ramp);
   return(gh_int2scm(mus_set_ramp(mus_get_any(obj),g_scm2int(val))));
-}
-
-static SCM g_hop(SCM obj)
-{
-  #define H_mus_hop "(" S_mus_hop " gen) -> (granulate generator) gen's " S_mus_hop " field"
-  SCM_ASSERT(((mus_scm_p(obj)) && (mus_granulate_p(mus_get_any(obj)))),obj,SCM_ARG1,S_mus_hop);
-  return(gh_int2scm(mus_hop(mus_get_any(obj))));
-}
-
-static SCM g_set_hop(SCM obj, SCM val)
-{
-  #define H_mus_set_hop "(" S_mus_set_hop " gen val) sets (granulate generator) gen's " S_mus_hop " field"
-  SCM_ASSERT(((mus_scm_p(obj)) && (mus_granulate_p(mus_get_any(obj)))),obj,SCM_ARG1,S_mus_set_hop);
-  SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_hop);
-  return(gh_int2scm(mus_set_hop(mus_get_any(obj),g_scm2int(val))));
 }
 
 static SCM g_make_granulate(SCM arglist)
@@ -4452,7 +4462,7 @@ static SCM g_make_granulate(SCM arglist)
     }
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->vcts = (SCM *)CALLOC(1,sizeof(SCM));
-  if (!(SCM_UNBNDP(in_obj))) gn->vcts[0] = in_obj; else gn->vcts[0] = SCM_EOL;
+  if (!(SCM_UNBNDP(in_obj))) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
   gn->nvcts = 1;
   gn->gen = mus_make_granulate(funcall1,expansion,segment_length,segment_scaler,output_hop,ramp_time,jitter,maxsize,gn);
 #if (!HAVE_GUILE_1_3_0)
@@ -4471,8 +4481,6 @@ static void init_spd(void)
   DEFINE_PROC(gh_new_procedure(S_granulate,SCM_FNC g_granulate,1,1,0),H_granulate);
   DEFINE_PROC(gh_new_procedure(S_mus_ramp,SCM_FNC g_ramp,1,0,0),H_mus_ramp);
   DEFINE_PROC(gh_new_procedure(S_mus_set_ramp,SCM_FNC g_set_ramp,2,0,0),H_mus_set_ramp);
-  DEFINE_PROC(gh_new_procedure(S_mus_hop,SCM_FNC g_hop,1,0,0),H_mus_hop);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_hop,SCM_FNC g_set_hop,2,0,0),H_mus_set_hop);
   DEFINE_PROC(gh_new_procedure(S_make_granulate,SCM_FNC g_make_granulate,0,0,1),H_make_granulate);
 }
 
@@ -4496,7 +4504,7 @@ static SCM g_convolve(SCM obj, SCM func)
   #define H_convolve "(" S_convolve " gen &optional input-func) -> next sample from convolution generator"
   mus_scm *gn = mus_get_scm(obj);
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_convolve_p(mus_get_any(obj)))),obj,SCM_ARG1,S_convolve);
-  if (gh_procedure_p(func)) gn->vcts[0] = func;
+  if (gh_procedure_p(func)) gn->vcts[INPUT_FUNCTION] = func;
   return(gh_double2scm(mus_convolve(mus_get_any(obj),0)));
 }
 
@@ -4548,7 +4556,7 @@ static SCM g_make_convolve(SCM arglist)
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->nvcts = 2;
   gn->vcts = (SCM *)CALLOC(2,sizeof(SCM));
-  if (!(SCM_UNBNDP(in_obj))) gn->vcts[0] = in_obj; else gn->vcts[0] = SCM_EOL;
+  if (!(SCM_UNBNDP(in_obj))) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
   gn->vcts[1] = filt;
   gn->gen = mus_make_convolve(funcall1,filter->data,fft_size,filter->length,gn);
 #if (!HAVE_GUILE_1_3_0)
@@ -4589,6 +4597,178 @@ static void init_conv(void)
   DEFINE_PROC(gh_new_procedure(S_convolve,SCM_FNC g_convolve,1,1,0),H_convolve);
   DEFINE_PROC(gh_new_procedure(S_make_convolve,SCM_FNC g_make_convolve,0,0,1),H_make_convolve);
   DEFINE_PROC(gh_new_procedure(S_convolve_files,SCM_FNC g_convolve_files,2,2,0),H_convolve_files);
+}
+
+
+/* ---------------- phase-vocoder ---------------- */
+
+
+static Float pvedit (void *ptr)
+{
+  mus_scm *gn = (mus_scm *)ptr;
+  if ((gn) && (gn->vcts) && (gn->vcts[EDIT_FUNCTION]) && (gh_procedure_p(gn->vcts[EDIT_FUNCTION])))
+#if USE_SND
+    return(gh_scm2double(g_call1(gn->vcts[EDIT_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)))));
+#else
+    return(gh_scm2double(gh_call1(gn->vcts[EDIT_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)))));
+#endif
+  else return(0.0);
+}
+
+static Float pvsynthesize (void *ptr)
+{
+  mus_scm *gn = (mus_scm *)ptr;
+  if ((gn) && (gn->vcts) && (gn->vcts[SYNTHESIZE_FUNCTION]) && (gh_procedure_p(gn->vcts[SYNTHESIZE_FUNCTION])))
+#if USE_SND
+    return(gh_scm2double(g_call1(gn->vcts[SYNTHESIZE_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)))));
+#else
+    return(gh_scm2double(gh_call1(gn->vcts[SYNTHESIZE_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)))));
+#endif
+  else return(0.0);
+}
+
+static Float pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
+{
+  mus_scm *gn = (mus_scm *)ptr;
+  if ((gn) && (gn->vcts) && (gn->vcts[SYNTHESIZE_FUNCTION]) && (gh_procedure_p(gn->vcts[SYNTHESIZE_FUNCTION])))
+    /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
+#if USE_SND
+    return(gh_scm2double(g_call2(gn->vcts[SYNTHESIZE_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)),gn->vcts[INPUT_FUNCTION])));
+#else
+    return(gh_scm2double(gh_call2(gn->vcts[SYNTHESIZE_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)),gn->vcts[INPUT_FUNCTION])));
+#endif
+  else return(0.0);
+}
+
+#define S_phase_vocoder       "phase-vocoder"
+#define S_phase_vocoder_p     "phase-vocoder?"
+#define S_make_phase_vocoder  "make-phase-vocoder"
+
+static SCM g_phase_vocoder_p(SCM obj) 
+{
+  #define H_phase_vocoder_p "(" S_phase_vocoder_p " gen) -> #t if gen is an " S_phase_vocoder " generator, else #f"
+  return(((mus_scm_p(obj)) && (mus_phase_vocoder_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+}
+
+static SCM g_phase_vocoder(SCM obj, SCM func) 
+{
+  #define H_phase_vocoder "(" S_phase_vocoder " gen &optional input-function) -> phase vocoder"
+  mus_scm *gn = mus_get_scm(obj);
+  SCM_ASSERT(((mus_scm_p(obj)) && (mus_phase_vocoder_p(mus_get_any(obj)))),obj,SCM_ARG1,S_phase_vocoder);
+  if (gh_procedure_p(func)) gn->vcts[INPUT_FUNCTION] = func;
+  return(gh_double2scm(mus_phase_vocoder(mus_get_any(obj),0)));
+}
+
+static SCM g_make_phase_vocoder(SCM arglist)
+{
+  #define H_make_phase_vocoder "(" S_make_phase_vocoder " &opt-key input fft-size overlap interp analyze edit synthesize\n\
+   returns a new phase-vocoder generator; input is the input function (if can be set at run-time), analyze, edit,\n\
+   and synthesize are either #f or functions that replace the default innards of the generator, fft-size, overlap\n\
+   and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls."
+
+#if HAVE_GUILE_1_3_0
+  SCM new_phase_vocoder;
+#endif
+  SCM in_obj = SCM_UNDEFINED,edit_obj = SCM_UNDEFINED,synthesize_obj = SCM_UNDEFINED,analyze_obj = SCM_UNDEFINED;
+  mus_scm *gn;
+  SCM args[14],keys[7];
+  int orig_arg[7] = {0,0,0,0,0,0,0};
+  int vals,arglist_len,i;
+  int fft_size = 512,overlap = 4, interp = 128;
+  keys[0] = all_keys[C_input];
+  keys[1] = all_keys[C_fft_size];
+  keys[2] = all_keys[C_overlap];
+  keys[3] = all_keys[C_interp];
+  keys[4] = all_keys[C_analyze];
+  keys[5] = all_keys[C_edit];
+  keys[6] = all_keys[C_synthesize];
+  for (i=0;i<14;i++) args[i] = SCM_UNDEFINED;
+  arglist_len = gh_length(arglist);
+  for (i=0;i<arglist_len;i++) args[i] = gh_list_ref(arglist,gh_int2scm(i));
+  vals = decode_keywords(S_make_phase_vocoder,7,keys,14,args,orig_arg);
+  if (vals > 0)
+    {
+      if (gh_procedure_p(keys[0])) in_obj = keys[0];
+      fft_size = ikeyarg(keys[1],S_make_phase_vocoder,orig_arg[1]+1,args[orig_arg[1]],fft_size);
+      overlap = ikeyarg(keys[2],S_make_phase_vocoder,orig_arg[2]+1,args[orig_arg[2]],overlap);
+      interp = ikeyarg(keys[3],S_make_phase_vocoder,orig_arg[3]+1,args[orig_arg[3]],interp);
+      if (gh_procedure_p(keys[4])) analyze_obj = keys[4];
+      if (gh_procedure_p(keys[5])) edit_obj = keys[5];
+      if (gh_procedure_p(keys[6])) synthesize_obj = keys[6];
+    }
+  gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
+  gn->vcts = (SCM *)CALLOC(4,sizeof(SCM));
+  if (!(SCM_UNBNDP(in_obj))) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
+  if (!(SCM_UNBNDP(edit_obj))) gn->vcts[EDIT_FUNCTION] = edit_obj; else gn->vcts[EDIT_FUNCTION] = SCM_EOL;
+  if (!(SCM_UNBNDP(analyze_obj))) gn->vcts[ANALYZE_FUNCTION] = analyze_obj; else gn->vcts[ANALYZE_FUNCTION] = SCM_EOL;
+  if (!(SCM_UNBNDP(synthesize_obj))) gn->vcts[SYNTHESIZE_FUNCTION] = synthesize_obj; else gn->vcts[SYNTHESIZE_FUNCTION] = SCM_EOL;
+  gn->nvcts = 4;
+  gn->gen = mus_make_phase_vocoder(funcall1,
+				   fft_size,overlap,interp,
+				   (SCM_UNBNDP(analyze_obj) ? NULL : pvanalyze),
+				   (SCM_UNBNDP(edit_obj) ? NULL : pvedit),
+				   (SCM_UNBNDP(synthesize_obj) ? NULL : pvsynthesize),
+				   (void *)gn);
+#if (!HAVE_GUILE_1_3_0)
+  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
+#else
+  SCM_NEWCELL(new_phase_vocoder);
+  SCM_SETCDR(new_phase_vocoder,(SCM)gn);
+  SCM_SETCAR(new_phase_vocoder,mus_scm_tag);
+  return(new_phase_vocoder);
+#endif
+}
+
+/* temporary ! */
+static SCM g_pv_ampinc(SCM pv, SCM ind) {Float *ampinc; ampinc = mus_phase_vocoder_ampinc((void *)gh_scm2ulong(pv)); return(gh_double2scm(ampinc[gh_scm2int(ind)]));}
+static SCM g_set_pv_ampinc(SCM pv, SCM ind, SCM val) {Float *ampinc; ampinc = mus_phase_vocoder_ampinc((void *)gh_scm2ulong(pv)); ampinc[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
+static SCM g_pv_amps(SCM pv, SCM ind) {Float *amps; amps = mus_phase_vocoder_amps((void *)gh_scm2ulong(pv)); return(gh_double2scm(amps[gh_scm2int(ind)]));}
+static SCM g_set_pv_amps(SCM pv, SCM ind, SCM val) {Float *amps; amps = mus_phase_vocoder_amps((void *)gh_scm2ulong(pv)); amps[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
+static SCM g_pv_freqs(SCM pv, SCM ind) {Float *freqs; freqs = mus_phase_vocoder_freqs((void *)gh_scm2ulong(pv)); return(gh_double2scm(freqs[gh_scm2int(ind)]));}
+static SCM g_set_pv_freqs(SCM pv, SCM ind, SCM val) {Float *freqs; freqs = mus_phase_vocoder_freqs((void *)gh_scm2ulong(pv)); freqs[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
+static SCM g_pv_phases(SCM pv, SCM ind) {Float *phases; phases = mus_phase_vocoder_phases((void *)gh_scm2ulong(pv)); return(gh_double2scm(phases[gh_scm2int(ind)]));}
+static SCM g_set_pv_phases(SCM pv, SCM ind, SCM val) {Float *phases; phases = mus_phase_vocoder_phases((void *)gh_scm2ulong(pv)); phases[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
+static SCM g_pv_phaseinc(SCM pv, SCM ind) {Float *phaseinc; phaseinc = mus_phase_vocoder_phaseinc((void *)gh_scm2ulong(pv)); return(gh_double2scm(phaseinc[gh_scm2int(ind)]));}
+static SCM g_set_pv_phaseinc(SCM pv, SCM ind, SCM val) {Float *phaseinc; phaseinc = mus_phase_vocoder_phaseinc((void *)gh_scm2ulong(pv)); phaseinc[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
+static SCM g_pv_lastphase(SCM pv, SCM ind) {Float *lastphase; lastphase = mus_phase_vocoder_lastphase((void *)gh_scm2ulong(pv)); return(gh_double2scm(lastphase[gh_scm2int(ind)]));}
+static SCM g_set_pv_lastphase(SCM pv, SCM ind, SCM val) {Float *lastphase; lastphase = mus_phase_vocoder_lastphase((void *)gh_scm2ulong(pv)); lastphase[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
+
+static SCM g_hop(SCM obj)
+{
+  #define H_mus_hop "(" S_mus_hop " gen) -> gen's " S_mus_hop " field"
+  SCM_ASSERT((mus_scm_p(obj)),obj,SCM_ARG1,S_mus_hop);
+  return(gh_int2scm(mus_hop(mus_get_any(obj))));
+}
+
+static SCM g_set_hop(SCM obj, SCM val)
+{
+  #define H_mus_set_hop "(" S_mus_set_hop " gen val) sets gen's " S_mus_hop " field"
+  SCM_ASSERT((mus_scm_p(obj)),obj,SCM_ARG1,S_mus_set_hop);
+  SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_hop);
+  return(gh_int2scm(mus_set_hop(mus_get_any(obj),g_scm2int(val))));
+}
+
+static void init_pv(void)
+{
+  DEFINE_PROC(gh_new_procedure(S_phase_vocoder_p,SCM_FNC g_phase_vocoder_p,1,0,0),H_phase_vocoder_p);
+  DEFINE_PROC(gh_new_procedure(S_phase_vocoder,SCM_FNC g_phase_vocoder,1,1,0),H_phase_vocoder);
+  DEFINE_PROC(gh_new_procedure(S_make_phase_vocoder,SCM_FNC g_make_phase_vocoder,0,0,1),H_make_phase_vocoder);
+
+  gh_new_procedure2_0("pv-ampinc",g_pv_ampinc);
+  gh_new_procedure3_0("set-pv-ampinc",g_set_pv_ampinc);
+  gh_new_procedure2_0("pv-amps",g_pv_amps);
+  gh_new_procedure3_0("set-pv-amps",g_set_pv_amps);
+  gh_new_procedure2_0("pv-freqs",g_pv_freqs);
+  gh_new_procedure3_0("set-pv-freqs",g_set_pv_freqs);
+  gh_new_procedure2_0("pv-phases",g_pv_phases);
+  gh_new_procedure3_0("set-pv-phases",g_set_pv_phases);
+  gh_new_procedure2_0("pv-phaseinc",g_pv_phaseinc);
+  gh_new_procedure3_0("set-pv-phaseinc",g_set_pv_phaseinc);
+  gh_new_procedure2_0("pv-lastphase",g_pv_lastphase);
+  gh_new_procedure3_0("set-pv-lastphase",g_set_pv_lastphase);
+
+  DEFINE_PROC(gh_new_procedure(S_mus_hop,SCM_FNC g_hop,1,0,0),H_mus_hop);
+  DEFINE_PROC(gh_new_procedure(S_mus_set_hop,SCM_FNC g_set_hop,2,0,0),H_mus_set_hop);
 }
 
 
@@ -4683,6 +4863,7 @@ void init_mus2scm_module(void)
   init_sr();
   init_conv();
   init_spd();
+  init_pv();
 
   DEFINE_PROC(gh_new_procedure(S_mus_mix,SCM_FNC g_mus_mix,2,5,0),H_mus_mix);
 
@@ -4721,7 +4902,7 @@ void init_mus2scm_module(void)
 }
 
 
-#define NUM_CLM_NAMES 243
+#define NUM_CLM_NAMES 246
 static char *clm_names[NUM_CLM_NAMES] = {
 S_all_pass,S_all_pass_p,S_amplitude_modulate,S_array2file,S_array_interp,S_asymmetric_fm,S_asymmetric_fm_p,S_bartlett_window,
 S_blackman2_window,S_blackman3_window,S_blackman4_window,S_buffer2frame,S_buffer2sample,S_buffer_empty_p,S_buffer_full_p,
@@ -4734,7 +4915,7 @@ S_hz_radians,S_iir_filter,S_iir_filter_p,S_in_any,S_in_hz,S_ina,S_inb,S_kaiser_w
 S_locsig_reverb_set,S_locsig_set,S_locsig_p,S_make_all_pass,S_make_asymmetric_fm,S_make_buffer,S_make_comb,S_make_convolve,
 S_make_delay,S_make_env,S_make_fft_window,S_make_file2frame,S_make_file2sample,S_make_filter,S_make_fir_filter,S_make_formant,
 S_make_frame,S_make_frame2file,S_make_granulate,S_make_iir_filter,S_make_locsig,S_make_mixer,S_make_notch,S_make_one_pole,
-S_make_one_zero,S_make_oscil,S_make_ppolar,S_make_pulse_train,S_make_rand,S_make_rand_interp,S_make_readin,S_make_sample2file,
+S_make_one_zero,S_make_oscil,S_make_phase_vocoder,S_make_ppolar,S_make_pulse_train,S_make_rand,S_make_rand_interp,S_make_readin,S_make_sample2file,
 S_make_sawtooth_wave,S_make_sine_summation,S_make_square_wave,S_make_src,S_make_sum_of_cosines,S_make_table_lookup,S_make_triangle_wave,
 S_make_two_pole,S_make_two_zero,S_make_wave_train,S_make_waveshape,S_make_zpolar,S_mixer_multiply,S_mixer_ref,S_mixer_set,
 S_mixer_p,S_multiply_arrays,S_mus_a0,S_mus_a1,S_mus_a2,S_mus_array_print_length,S_mus_b1,S_mus_b2,S_mus_channel,S_mus_channels,
@@ -4745,11 +4926,12 @@ S_mus_set_data,S_mus_set_feedback,S_mus_set_feedforward,S_mus_set_formant_radius
 S_mus_set_length,S_mus_set_location,S_mus_set_phase,S_mus_set_ramp,S_mus_set_rand_seed,S_mus_set_scaler,S_mus_set_srate,S_mus_srate,
 S_mus_xcoeffs,S_mus_ycoeffs,S_notch,S_notch_p,S_one_pole,S_one_pole_p,S_one_zero,S_one_zero_p,S_oscil,S_oscil_bank,S_oscil_p,
 S_out_any,S_outa,S_outb,S_outc,S_outd,S_partials2polynomial,S_partials2wave,S_partials2waveshape,S_parzen_window,S_phasepartials2wave,
-S_poisson_window,S_polynomial,S_pulse_train,S_pulse_train_p,S_radians_degrees,S_radians_hz,S_rand,S_rand_interp,S_rand_interp_p,S_rand_p,
-S_readin,S_readin_p,S_rectangular2polar,S_rectangular_window,S_restart_env,S_riemann_window,S_ring_modulate,S_sample2buffer,S_sample2file,
-S_sample2file_p,S_sample2frame,S_sawtooth_wave,S_sawtooth_wave_p,S_sine_summation,S_sine_summation_p,S_spectrum,S_square_wave,
-S_square_wave_p,S_src,S_src_p,S_sum_of_cosines,S_sum_of_cosines_p,S_sum_of_sines,S_table_lookup,S_table_lookup_p,S_tap,S_triangle_wave,S_triangle_wave_p,
-S_tukey_window,S_two_pole,S_two_pole_p,S_two_zero,S_two_zero_p,S_wave_train,S_wave_train_p,S_waveshape,S_waveshape_p,S_welch_window
+S_phase_vocoder,S_phase_vocoder_p,S_poisson_window,S_polynomial,S_pulse_train,S_pulse_train_p,S_radians_degrees,S_radians_hz,
+S_rand,S_rand_interp,S_rand_interp_p,S_rand_p,S_readin,S_readin_p,S_rectangular2polar,S_rectangular_window,S_restart_env,
+S_riemann_window,S_ring_modulate,S_sample2buffer,S_sample2file,S_sample2file_p,S_sample2frame,S_sawtooth_wave,S_sawtooth_wave_p,
+S_sine_summation,S_sine_summation_p,S_spectrum,S_square_wave,S_square_wave_p,S_src,S_src_p,S_sum_of_cosines,S_sum_of_cosines_p,
+S_sum_of_sines,S_table_lookup,S_table_lookup_p,S_tap,S_triangle_wave,S_triangle_wave_p,S_tukey_window,S_two_pole,S_two_pole_p,
+S_two_zero,S_two_zero_p,S_wave_train,S_wave_train_p,S_waveshape,S_waveshape_p,S_welch_window
 };
 
 int mus_num_commands(void);
@@ -4850,6 +5032,7 @@ static char CLM_help_string[] =
   make-one-pole       (a0 b1)\n\
   make-one-zero       (a0 a1)\n\
   make-oscil          (frequency initial-phase)\n\
+  make-phase-vocoder  (input fftsize overlap interp analyze edit synthesize)\n\
   make-ppolar         (radius frequency)\n\
   make-pulse-train    (frequency amplitude initial-phase)\n\
   make-rand           (frequency amplitude)\n\
@@ -4923,6 +5106,8 @@ static char CLM_help_string[] =
   partials->wave      (synth-data table norm) load table from synth-data\n\
   partials->waveshape (partials norm size) create waveshaping table from partials\n\
   phase-partials->wave(synth-data table norm) load table from synth-data\n\
+  phase-vocoder       (gen input)          phase vocoder generator\n\
+  phase-vocoder?      (gen)                #t if gen is a phase-vocoder generator\n\
   polynomial          (coeffs x)           evaluate polynomial at x\n\
   pulse-train         (gen fm)             pulse-train generator\n\
   pulse-train?        (gen)                #t if gen is pulse-train generator\n\

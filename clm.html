@@ -1534,7 +1534,7 @@ control over the resynthesis pitch:
 	  (fil (open-input "oboe.snd")))
       (let ((ctr 0))
 	(dotimes (i (* 22050 2.3))
-	  (outa i (phase-vocoder pv (lambda () (let ((val (ina ctr fil))) (incf ctr) val)))))))))
+	  (outa i (phase-vocoder pv (lambda (dir) (let ((val (ina ctr fil))) (incf ctr) val)))))))))
 
 (test-pv 0.5)
 </small>

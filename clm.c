@@ -5284,40 +5284,6 @@ int mus_set_ramp(mus_any *ptr, int val)
   return(val);
 }
 
-int mus_hop(mus_any *ptr) 
-{
-  spd_info *gen = (spd_info *)ptr; 
-  if ((gen) && ((gen->core)->type == MUS_GRANULATE)) return(gen->output_hop);
-  return(0);
-}
-
-int mus_set_hop(mus_any *ptr, int val) 
-{
-  spd_info *gen = (spd_info *)ptr; 
-  if ((gen) && ((gen->core)->type == MUS_GRANULATE)) gen->output_hop = val;
-  return(val);
-}
-
-Float mus_increment(mus_any *rd)
-{
-  if (mus_readin_p(rd)) return(((rdin *)rd)->dir);
-  if (mus_file2sample_p(rd)) return(((rdin *)rd)->dir);
-  if (mus_src_p(rd)) return(((sr *)rd)->incr);
-  if (mus_buffer_p(rd)) return(((rblk *)rd)->fill_time);
-  if (mus_granulate_p(rd)) return(((Float)(((spd_info *)rd)->output_hop))/((Float)((spd_info *)rd)->input_hop));
-  return(0);
-}
-
-Float mus_set_increment(mus_any *rd, Float dir)
-{
-  if (mus_readin_p(rd)) ((rdin *)rd)->dir = (int)dir; 
-  if (mus_file2sample_p(rd)) ((rdin *)rd)->dir = (int)dir; 
-  if (mus_src_p(rd)) ((sr *)rd)->incr = dir;
-  if (mus_buffer_p(rd)) {((rblk *)rd)->fill_time = dir; ((rblk *)rd)->empty = (dir == 0.0);}
-  if (mus_granulate_p(rd)) {((spd_info *)rd)->input_hop = (int)(((spd_info *)rd)->output_hop / dir);}
- return(dir);
-}
-
 static mus_any_class GRANULATE_CLASS = {
   MUS_GRANULATE,
   "granulate",
@@ -6267,6 +6233,265 @@ Float mus_apply(mus_any *gen, ...)
   return(0.0);
 }
 
-#if 0
-Float mus_phase_vocoder(
-#endif
+
+/* ---------------- phase-vocoder ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  Float (*input)(void *arg, int direction);
+  void *environ;
+  Float (*analyze)(void *arg, Float (*input)(void *arg1, int direction));
+  Float (*edit)(void *arg);
+  Float (*synthesize)(void *arg);
+  int outctr,interp,filptr,N,D;
+  Float *win,*ampinc,*amps,*freqs,*phases,*phaseinc,*lastphase,*in_data;
+} pv_info;
+
+static char *inspect_pv_info(void *ptr)
+{
+  pv_info *gen = (pv_info *)ptr;
+  char *desc;
+  desc = make_big_desc_buf(ptr,FALSE);
+  if (desc) sprintf(desc,"pv_info outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s, amps: %s, freqs: %s",
+		    gen->outctr,gen->interp,gen->filptr,gen->N,gen->D,
+		    print_array(gen->in_data,gen->N,0),
+		    print_array(gen->amps,gen->N/2,0),
+		    print_array(gen->freqs,gen->N,0));
+  return(desc);
+}
+
+int mus_phase_vocoder_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_PHASE_VOCODER));}
+
+static int phase_vocoder_equalp(void *p1, void *p2) {return(p1 == p2);}
+
+static char *describe_phase_vocoder(void *ptr)
+{
+  char *desc;
+  pv_info *gen = (pv_info *)ptr;
+  desc = make_big_desc_buf(ptr,TRUE);
+  if (desc)
+    {
+      if (mus_phase_vocoder_p((mus_any *)ptr))
+	{
+	  sprintf(desc,"phase_vocoder: outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s",
+		    gen->outctr,gen->interp,gen->filptr,gen->N,gen->D,
+		    print_array(gen->in_data,gen->N,0));
+	}
+      else describe_bad_gen(ptr,desc,"phase_vocoder","a");
+    }
+  return(desc);
+}
+
+static int free_phase_vocoder(void *ptr)
+{
+  pv_info *gen = (pv_info *)ptr;
+  if (gen)
+    {
+      if (gen->in_data) FREE(gen->in_data);
+      if (gen->amps) FREE(gen->amps);
+      if (gen->freqs) FREE(gen->freqs);
+      if (gen->phases) FREE(gen->phases);
+      if (gen->win) FREE(gen->win);
+      if (gen->phaseinc) FREE(gen->phaseinc);
+      if (gen->lastphase) FREE(gen->lastphase);
+      if (gen->ampinc) FREE(gen->ampinc);
+      FREE(gen);
+    }
+  return(0);
+}
+
+static int pv_length(void *ptr) {return(((pv_info *)ptr)->N);}
+static int pv_set_length(void *ptr, int val) {((pv_info *)ptr)->N = val; return(val);}
+
+
+/* stop-gaps -- until I decide how to handle these, I'll kludge up some special names */
+Float *mus_phase_vocoder_ampinc(void *ptr) {return(((pv_info *)ptr)->ampinc);}
+Float *mus_phase_vocoder_amps(void *ptr) {return(((pv_info *)ptr)->amps);}
+Float *mus_phase_vocoder_freqs(void *ptr) {return(((pv_info *)ptr)->freqs);}
+Float *mus_phase_vocoder_phases(void *ptr) {return(((pv_info *)ptr)->phases);}
+Float *mus_phase_vocoder_phaseinc(void *ptr) {return(((pv_info *)ptr)->phaseinc);}
+Float *mus_phase_vocoder_lastphase(void *ptr) {return(((pv_info *)ptr)->lastphase);}
+
+
+int mus_hop(mus_any *ptr) 
+{
+  if (ptr)
+    {
+      if ((ptr->core)->type == MUS_GRANULATE) return(((spd_info *)ptr)->output_hop);
+      else if ((ptr->core)->type == MUS_PHASE_VOCODER) return(((pv_info *)ptr)->D);
+    }
+  return(0);
+}
+
+int mus_set_hop(mus_any *ptr, int val) 
+{
+  if (ptr)
+    {
+      if ((ptr->core)->type == MUS_GRANULATE) ((spd_info *)ptr)->output_hop = val;
+      else if ((ptr->core)->type == MUS_PHASE_VOCODER) ((pv_info *)ptr)->D = val;
+    }
+  return(val);
+}
+
+Float mus_increment(mus_any *rd)
+{
+  if (mus_readin_p(rd)) return(((rdin *)rd)->dir);
+  if (mus_file2sample_p(rd)) return(((rdin *)rd)->dir);
+  if (mus_src_p(rd)) return(((sr *)rd)->incr);
+  if (mus_buffer_p(rd)) return(((rblk *)rd)->fill_time);
+  if (mus_granulate_p(rd)) return(((Float)(((spd_info *)rd)->output_hop))/((Float)((spd_info *)rd)->input_hop));
+  if (mus_phase_vocoder_p(rd)) return(((pv_info *)rd)->interp);
+  return(0);
+}
+
+Float mus_set_increment(mus_any *rd, Float dir)
+{
+  if (mus_readin_p(rd)) ((rdin *)rd)->dir = (int)dir; 
+  if (mus_file2sample_p(rd)) ((rdin *)rd)->dir = (int)dir; 
+  if (mus_src_p(rd)) ((sr *)rd)->incr = dir;
+  if (mus_buffer_p(rd)) {((rblk *)rd)->fill_time = dir; ((rblk *)rd)->empty = (dir == 0.0);}
+  if (mus_granulate_p(rd)) {((spd_info *)rd)->input_hop = (int)(((spd_info *)rd)->output_hop / dir);}
+  if (mus_phase_vocoder_p(rd)) ((pv_info *)rd)->interp = (int)dir;
+  return(dir);
+}
+
+static Float *phase_vocoder_data(void *ptr) {return(((pv_info *)ptr)->in_data);}
+
+static mus_any_class PHASE_VOCODER_CLASS = {
+  MUS_PHASE_VOCODER,
+  "phase_vocoder",
+  &free_phase_vocoder,
+  &describe_phase_vocoder,
+  &inspect_pv_info,
+  &phase_vocoder_equalp,
+  &phase_vocoder_data,0,
+  &pv_length,
+  &pv_set_length,
+  0,0,
+  0,0,
+  0,0
+};
+
+mus_any *mus_make_phase_vocoder(Float (*input)(void *arg,int direction), 
+				int fftsize, int overlap, int interp,
+				Float (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+				Float (*edit)(void *arg), 
+				Float (*synthesize)(void *arg), 
+				void *environ)
+{
+  /* order of args is trying to match src, granulate etc */
+  pv_info *pv;
+  int N2,D,i;
+  Float scl;
+  pv = (pv_info *)CALLOC(1,sizeof(pv_info));
+  if (pv == NULL) 
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_phase_vocoder!");
+  else
+    {
+      pv->core = &PHASE_VOCODER_CLASS;
+      N2 = (int)(fftsize / 2);
+      D = interp;
+      if (D <= 0) D = fftsize / overlap;
+      pv->N = fftsize;
+      pv->D = D;
+      pv->interp = D;
+      pv->outctr = D;
+      pv->filptr = 0;
+      pv->ampinc = (Float *)CALLOC(fftsize,sizeof(Float));
+      pv->freqs = (Float *)CALLOC(fftsize,sizeof(Float));
+      pv->amps = (Float *)CALLOC(N2,sizeof(Float));
+      pv->phases = (Float *)CALLOC(N2,sizeof(Float));
+      pv->lastphase = (Float *)CALLOC(N2,sizeof(Float));
+      pv->phaseinc = (Float *)CALLOC(N2,sizeof(Float));
+      pv->in_data = NULL;
+      pv->input = input;
+      pv->environ = environ;
+      pv->analyze = analyze;
+      pv->edit = edit;
+      pv->synthesize = synthesize;
+      pv->win = mus_make_fft_window(MUS_HAMMING_WINDOW,fftsize,0.0);
+      scl = 2.0 / (0.54 * (Float)fftsize);
+      for (i=0;i<fftsize;i++) pv->win[i] *= scl;
+      return((mus_any *)pv);
+    }
+  return(NULL);
+}
+
+Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg,int direction))
+{
+  pv_info *pv = (pv_info *)ptr;
+  int N2,i,j,buf;
+  Float pscl,kscl,ks,diff,scl;
+  N2 = pv->N / 2;
+  if (pv->outctr >= pv->interp)
+    {
+      if (pv->analyze)
+	(*(pv->analyze))(pv->environ,input);
+      else
+	{
+	  mus_clear_array(pv->freqs,pv->N);
+	  pv->outctr = 0;
+	  if (pv->in_data == NULL)
+	    {
+	      pv->in_data = (Float *)CALLOC(pv->N,sizeof(Float));
+	      if (input)
+		for (i=0;i<pv->N;i++) pv->in_data[i] = (*input)(pv->environ,1);
+	      else for (i=0;i<pv->N;i++) pv->in_data[i] = (*(pv->input))(pv->environ,1);
+	    }
+	  else
+	    {
+	      for (i=0,j=pv->D;j<pv->N;i++,j++) pv->in_data[i] = pv->in_data[j];
+	      if (input)
+		for (i=pv->N - pv->D;i<pv->N;i++) pv->in_data[i] = (*input)(pv->environ,1);
+	      else for (i=pv->N - pv->D;i<pv->N;i++) pv->in_data[i] = (*(pv->input))(pv->environ,1);
+	    }
+	  buf = pv->filptr % pv->N;
+	  for (i=0;i<pv->N;i++)
+	    {
+	      pv->ampinc[buf++] = pv->win[i] * pv->in_data[i];
+	      if (buf >= pv->N) buf = 0;
+	    }
+	  pv->filptr += pv->D;
+	  mus_fft(pv->ampinc,pv->freqs,pv->N,1);
+	  mus_rectangular2polar(pv->ampinc,pv->freqs,N2);
+	}
+      
+      if (pv->edit)
+	(*(pv->edit))(pv->environ);
+      else
+	{
+	  pscl = 1.0 / (Float)(pv->D);
+	  kscl = TWO_PI / (Float)(pv->N);
+	  for (i=0,ks=0.0;i<N2;i++,ks+=kscl)
+	    {
+	      diff = pv->freqs[i] - pv->lastphase[i];
+	      pv->lastphase[i] = pv->freqs[i];
+	      while (diff > M_PI) diff -= TWO_PI;
+	      while (diff < -M_PI) diff += TWO_PI;
+	      pv->freqs[i] = diff*pscl + ks;
+	    }
+	}
+      
+      scl = 1.0 / (Float)(pv->interp);
+      for (i=0;i<N2;i++)
+	{
+	  pv->ampinc[i] = scl * (pv->ampinc[i] - pv->amps[i]);
+	  pv->freqs[i] = scl * (pv->freqs[i] - pv->phaseinc[i]);
+	}
+    }
+  
+  pv->outctr++;
+  if (pv->synthesize)
+    return((*(pv->synthesize))(pv->environ));
+  else
+    {
+      for (i=0;i<N2;i++)
+	{
+	  pv->amps[i] += pv->ampinc[i];
+	  pv->phaseinc[i] += pv->freqs[i];
+	  pv->phases[i] += pv->phaseinc[i];
+	}
+      return(mus_sum_of_sines(pv->amps,pv->phases,N2));
+    }
+}
+

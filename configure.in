@@ -2,7 +2,7 @@ dnl Configuration script for Snd
 dnl Process this file with autoconf to produce a configure script.
 
 dnl this configure/make process tested so far in 
-dnl       linux (rh 5.2, 6.0, 6.1, 6.2), 
+dnl       linux (rh 5.2, 6.0, 6.1, 6.2), Mandrake 7.0, Suse Linux 6.4
 dnl       sgi (irix 5.3, 6.2, 6.3, 6.5), 
 dnl       mklinux (dr3), linuxppc (r4, r5, 2000)
 dnl       sun (solaris 7)

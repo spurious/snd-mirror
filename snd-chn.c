@@ -5731,6 +5731,8 @@ static void no_selection_error(snd_info *sp)
   report_in_minibuffer(sp,"no active selection");
 }
 
+#define NO_CX_ARG_SPECIFIED -1
+
 int keyboard_command (chan_info *cp, int keysym, int state)
 {
   /* we can't use the meta bit in most cases because this is trapped at a higher level for the Menu mnemonics */
