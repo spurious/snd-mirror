@@ -9521,11 +9521,6 @@ int jack_mus_audio_write(int line, char *buf, int bytes)
  
 int jack_mus_audio_close(int line) 
 {
-  jack_deactivate(dac);
-  jack_port_unregister(dac, dac_port);
-  jack_client_close(dac);
-  return(MUS_NO_ERROR);
-
   sj_status=SJ_ABOUTTOSTOP;
   sndjack_num_channels_inuse=0;
   return MUS_NO_ERROR;
