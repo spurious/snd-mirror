@@ -101,7 +101,7 @@
 ;; Set various variables
 ;;##############################################################
 
-;;(set! snd-remember-paths #t)
+;;(set! *snd-remember-paths* #t)
 
 (set! (just-sounds) #t)
 
