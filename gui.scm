@@ -4,99 +4,70 @@
 ;;; -KSM.
 
 
-
-(use-modules (ice-9 optargs))
-
-
+(use-modules (ice-9 optargs)
+	     (ice-9 format)
+	     (srfi srfi-1)
+	     (srfi srfi-2))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; OO  (Goops/cloos syntax is so ugly.)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(if #f
+    (begin
+      (use-modules (oop goops))
+      (define instance?-old instance?)
+      (define define-class-old define-class)
+      (define define-method-old define-method)))
 
-;; Is multiple inheritance a good idea? It was easy to implement, but I might remove it.
 (define-macro (define-class def . body)
-  `(define* ,def
-     (let ((dasmethods '())
-	   (superobjects #f))
-       (var class-name ',(car def))
-       (define (init-superobjects)
-	 (if (not superobjects)
-	     (catch #t
-		    (lambda ()
-		      (set! superobjects dassuperobjects))
-		    (lambda (key . args)
-		      (set! superobjects '())))))
-       (define-method (dir)
-	 (init-superobjects)
-	 (append (map (lambda (md)
-			(car md))
-		      dasmethods)
-		 (map (lambda (superobject)
-			(superobject 'dir))
-		      superobjects)))
-       (define-method (get-method m)
-	 (let ((ass (assq m dasmethods)))
-	   (if ass
-	       (cdr ass)
-	       (begin
-		 (init-superobjects)
-		 (call-with-current-continuation
-		  (lambda (exit)
-		    (for-each (lambda (superobject)
-				(let ((method (superobject 'get-method m)))
-				  (if method
-				      (exit method))))
-			      superobjects)
-		    #f))))))
-       (define-method (instance? dasclass-name)
-	 (if (eq? dasclass-name class-name)
-	     #t
-	     (begin
-	       (init-superobjects)
-	       (call-with-current-continuation
-		(lambda (exit)
-		  (for-each (lambda (superobject)
-			      (if (superobject 'instance? dasclass-name)
-				  (exit #t)))
-			    superobjects)
-		  #f)))))
-       (define (this m . rest)
-	 (let ((func (get-method m)))
-	   (if func
-	       (apply func rest)
-	       (begin
-		 (display "No such method: \"")(display m)(display "\" in class \"")(display ',(car def))(display "\".\n")))))
-       ,@body
-       this)))
+  (if (and #f (symbol? def))
+      `(define-class-old ,def ,@body)
+      `(define* ,def
+	 (letrec ((methods '())
+		  (supers '())
+		  (super #f)
+		  (add-method-do (lambda (name func)
+				   (set! methods (alist-cons name func methods))
+				   func)))
+	   (var class-name ',(car def))
+	   (define-method (dir)
+	     (cons class-name
+		   (append (unzip1 methods)
+			   (map (lambda (super)
+				  (-> super dir))
+				supers))))
+	   (define-method (get-method name)
+	     (or (and-let* ((ass (assq name methods))) 
+			   (cdr ass))
+		 (any (lambda (super) (-> super get-method name))
+		      supers)))
+	   (define-method (instance? dasclass-name)
+	     (or (eq? dasclass-name class-name)
+		 (any (lambda (super) (-> super instance? dasclass-name))
+		      supers)))
+	   (define (this m . rest)
+	     (let ((func (get-method m)))
+	       (if func
+		   (apply func rest)
+		   (format #t "No such method: \"~A\" in class \"~A\".\n" m ',(car def)))))
+	   ,@body
+	   this))))
 
 (define-macro (add-method nameandvars . body)
-  `(set! dasmethods (cons (cons ',(car nameandvars)
-				(lambda ,(cdr nameandvars) ,@body))
-			  dasmethods)))
+  `(add-method-do ',(car nameandvars) (lambda ,(cdr nameandvars) ,@body)))
 
 (define-macro (add-method* nameandvars . body)
-  `(set! dasmethods (cons (cons ',(car nameandvars)
-				(lambda* ,(cdr nameandvars) ,@body))
-			  dasmethods)))
-
-(define-macro (define-method* nameandvars . body)
-  `(define ,(car nameandvars)
-     (let ((func (lambda* ,(cdr nameandvars) ,@body)))
-       (set! dasmethods (cons (cons ',(car nameandvars)
-				    func)
-			      dasmethods))
-       func)))
+  `(add-method-do ',(car nameandvars) (lambda* ,(cdr nameandvars) ,@body)))
 
 (define-macro (define-method nameandvars . body)
   `(define ,(car nameandvars)
-     (let ((func (lambda ,(cdr nameandvars) ,@body)))
-       ;;(display "adding ")(display ,(car nameandvars))(newline)
-       (set! dasmethods (cons (cons ',(car nameandvars)
-				    func)
-			      dasmethods))
-       func)))
+     (add-method ,nameandvars ,@body)))
+
+(define-macro (define-method* nameandvars . body)
+  `(define ,(car nameandvars)
+     (add-method* ,nameandvars ,@body)))
 
 (define-macro (var name initial)
   `(define ,name
@@ -107,29 +78,47 @@
 	     (set! inited #t)))
        ,initial)))
 
-(define object? procedure?)
+(define (object? o)
+  (and (procedure? o)
+       (catch #t
+	      (lambda ()
+		(eq? (-> o instance? (-> o class-name))))
+	      (lambda (key . args)
+		#f))))
 
 (define-macro (instance? object class)
-  `(,object 'instance? ',class))
+  `(-> ,object instance? ',class))
 
 (define-macro (Super . rest)
-  `(define dassuperobjects (list ,@rest)))
+  `(define dassupers
+     (begin
+       (set! supers (list ,@rest))
+       (set! super (car supers)))))
 
+(define-macro (-> object method . args)
+  (if (number? object)
+      `(list-set! ,method ,object ,(car args))
+      `(,object ',method ,@args)))
+
+(define-macro (<- object method)
+  (if (number? object)
+      `(list-ref ,method ,object)
+      `(-> ,object get-method ',method)))
 
 
 #!
-(define-class (initial sum)
+(define-class (<initial> sum)
   (var avar 2)
   (define-method (initial)
     (display "Initial sum: ")(display sum)
     (newline)))
 
-(define-class (initial2 sum)
+(define-class (<initial2> sum)
   (define-method (initial2)
     (display "Initial sum2: ")(display sum)
     (newline)))
 
-(define-class (bank-class sum) (Super (initial sum) (initial2 sum))
+(define-class (<bank> sum) (Super (<initial> sum) (<initial2> sum))
   (define (print-sum)
     (display sum)(newline))
   (define-method (deposit x)
@@ -139,21 +128,23 @@
     (set! sum (- sum x))
     (print-sum)))
 
-(define b (bank-class 5))
-(b 'deposit 3)
-(b 'withdraw 6)
-(b 'class-name)
-(b 'initial)
-(b 'initial2)
-(b 'avar)
-(b 'avar 5)
-(b 'avar)
-(instance? b bank-class)
-(instance? b initial)
-(instance? b initial2)
-(instance? b someother-class)
-(b 'dir)
-(b 'somethingelse)
+(define b (<bank> 5))
+(-> b deposit 3)
+(-> b withdraw 6)
+(define b->withdraw (<- b withdraw))
+(b->withdraw 7)
+(-> b class-name)
+(-> b initial)
+(-> b initial2)
+(-> b avar)
+(-> b avar 5)
+(-> b avar)
+(instance? b <bank>)
+(instance? b <initial>)
+(instance? b <initial2>)
+(instance? b <someother-class>)
+(-> b dir)
+(-> b nosuchmethod)
 !#
 
 
@@ -201,7 +192,6 @@
 
 
 
-
 (define (my-filter proc list)
   (if (null? list)
       '()
@@ -210,13 +200,17 @@
 	  (my-filter proc (cdr list)))))
 
 
+(define (insert! list pos element)
+  (call-with-values (lambda () (split-at! list pos))
+    (lambda (f s)
+      (append! f (cons element s)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Paint (just started)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-class (paint-class parent width height)
+(define-class (<paint> parent width height)
 
   (define pixmap #f)
   (define colors '())
@@ -339,7 +333,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(define-class (checkbutton-class parent name callback #:optional onoff (extraopts '()))
+(define-class (<checkbutton> parent name callback #:optional onoff (extraopts '()))
 
   (define button #f)
 
@@ -355,7 +349,7 @@
 	(XtUnmanageChild button)))
     
   (if use-gtk
-      (let ((dasparent (if (isdialog? parent) (parent 'getbox2) (GTK_BOX parent))))
+      (let ((dasparent (if (isdialog? parent) (-> parent getbox2) (GTK_BOX parent))))
 	(set! button (gtk_check_button_new_with_label name))
 	(gtk_box_pack_end (GTK_BOX dasparent) button #f #f 0)
 	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) onoff)
@@ -367,7 +361,7 @@
 			   (callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w))))
 			 #f #f)
 	 #f))
-      (let* ((dasparent (if (isdialog? parent) (parent 'getbox2) parent)))
+      (let* ((dasparent (if (isdialog? parent) (-> parent getbox2) parent)))
 	(set! button (XtCreateManagedWidget name xmToggleButtonWidgetClass dasparent
 					    (append (list XmNbackground       (basic-color)
 							  ;;XmNlabelString      name
@@ -396,7 +390,7 @@
 ;;; Buttons
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-class (button-class parent name callback)
+(define-class (<button> parent name callback)
 
   (var button #f)
 
@@ -423,7 +417,7 @@
 ;;; Sliders
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-class (slider-class parent
+(define-class (<slider> parent
 			 title
 			 low initial high
 			 func
@@ -433,7 +427,7 @@
   (define slider #f)
 
   (if use-gtk
-      (let* ((vbox (if (isdialog? parent) (parent 'getbox1) parent))
+      (let* ((vbox (if (isdialog? parent) (-> parent getbox1) parent))
 	     (label (gtk_label_new (if use-log
 				       (format #f "~A (~,2F)" title initial)
 				       (format #f "~A" title))))
@@ -472,7 +466,7 @@
 					    (g_cclosure_new (lambda (w d) (func (.value (GTK_ADJUSTMENT adj)))) #f #f)
 					    #f))
 	(set! slider adj))
-      (let* ((mainform (if (isdialog? parent) (parent 'getbox1) parent))
+      (let* ((mainform (if (isdialog? parent) (-> parent getbox1) parent))
 	     (dastitle (XmStringCreate title XmFONTLIST_DEFAULT_TAG))
 	     (new-slider (XtCreateManagedWidget title xmScaleWidgetClass mainform
 						(list XmNorientation   XmHORIZONTAL
@@ -504,9 +498,9 @@
 
 (define (isdialog? dialog)
   (and (object? dialog)
-       (instance? dialog dialog-class)))
+       (instance? dialog <dialog>)))
 
-(define-class (dialog-class label deletefunc . buttons)
+(define-class (<dialog> label deletefunc . buttons)
 
   (define box1 #f)
   (define box2 #f)
@@ -548,7 +542,7 @@
 	  (setbox2! hbox)))
     box2)
 
-  (define-method (setbox2! dashbox)
+  (define (setbox2! dashbox)
     (set! box2 dashbox))
 
   (define-method (getbox1)
@@ -570,7 +564,7 @@
 	  (setbox1! vbox)))
     box1)
 
-  (define-method (setbox1! dasvbox)
+  (define (setbox1! dasvbox)
     (set! box1 dasvbox))
 
   (define-method (hide)
@@ -593,7 +587,7 @@
   (define-method (add-sliders dassliders)
     (set! sliders (map
 		   (lambda (slider-data)
-		     (apply slider-class (cons (getbox1) slider-data)))
+		     (apply <slider> (cons (getbox1) slider-data)))
 		   dassliders))
     
     (if (not use-gtk)
@@ -652,15 +646,15 @@
     
     (for-each
      (lambda (name func wname)
-       (let ((button (button-class (if use-gtk
+       (let ((button (<button> (if use-gtk
 					(.action_area (GTK_DIALOG new-dialog))
 					new-dialog)
 				    name (lambda () (func)))))
 	 (if use-gtk
-	     (gtk_widget_set_name (button 'button) (cadr wname))
+	     (gtk_widget_set_name (-> button button) (cadr wname))
 	     (if (car wname)
 		 (XtVaSetValues
-		  (button 'button)
+		  (-> button button)
 		  (list XmNarmColor   (pushed-button-color)
 			XmNbackground (caddr wname)))))))
      
@@ -679,20 +673,20 @@
 
 
 #!
-(let ((d (dialog-class "gakk"  #f
-		       "Close" (lambda () (display "close"))
-		       "Apply" (lambda () (display "apply"))
-		       "Play" (lambda () (display "play"))
-		       "Stop" (lambda () (display "stop"))
-		       "Help" (lambda () (display "help")))))
-
-  (slider-class d "slider1" 0 1 2 (lambda (val) (display val)(newline)) 100)
-  (slider-class d "slider2" 0 0.2 1 (lambda (val) (display val)(newline)) 1000)
-  (slider-class d "slider3" 0 1 20 (lambda (val) (display val)(newline)) 1)
-  (checkbutton-class d "checkbutton1" (lambda (a) (display a)(newline)))
-  (checkbutton-class d "checkbutton2" (lambda (a) (display a)(newline)))
-  (checkbutton-class d "checkbutton3" (lambda (a) (display a)(newline)))
-  (d 'show))
+(let ((d (<dialog> "gakk"  #f
+		   "Close" (lambda () (display "close"))
+		   "Apply" (lambda () (display "apply"))
+		   "Play" (lambda () (display "play"))
+		   "Stop" (lambda () (display "stop"))
+		   "Help" (lambda () (display "help")))))
+  
+  (<slider> d "slider1" 0 1 2 (lambda (val) (display val)(newline)) 100)
+  (<slider> d "slider2" 0 0.2 1 (lambda (val) (display val)(newline)) 1000)
+  (<slider> d "slider3" 0 1 20 (lambda (val) (display val)(newline)) 1)
+  (<checkbutton> d "checkbutton1" (lambda (a) (display a)(newline)))
+  (<checkbutton> d "checkbutton2" (lambda (a) (display a)(newline)))
+  (<checkbutton> d "checkbutton3" (lambda (a) (display a)(newline)))
+  (-> d show))
 !#
 
 

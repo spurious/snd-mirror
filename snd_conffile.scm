@@ -37,6 +37,8 @@
 
 
 
+
+
 ;; Set various variables. See Snd documentation.
 
 ;;(set! snd-remember-paths #t)
@@ -822,8 +824,7 @@
 				      (get-time-string dastime)))))))
 
 
-
-;; Show the time in the minibuffer when playing (in 10 ms to (try to) avoid stopping the dac)
+;; Show the time in the minibuffer when playing
 
 (add-hook! play-hook
 	   (lambda (samples)
@@ -878,17 +879,17 @@
 (add-hook! after-open-hook
 	   (lambda (snd)
 	     (let ((oldplay (get-nameform-button snd "play")))
-	       (checkbutton-class (get-nameform snd)
-				   "loop"
-				   (lambda (on)
-				     (set! islooping on)
-				     (for-each (lambda (s)
-						 (if (not (= s snd)) (for-each-nameform-button s "loop"
-											       (lambda (b) (checkbutton-set b islooping)))))
-					       (sounds))
-				     (focus-widget (list-ref (channel-widgets snd 0) 0)))
-				   islooping
-				   (if use-gtk '() (list XmNx (car (widget-position oldplay)))))
+	       (<checkbutton> (get-nameform snd)
+			      "loop"
+			      (lambda (on)
+				(set! islooping on)
+				(for-each (lambda (s)
+					    (if (not (= s snd)) (for-each-nameform-button s "loop"
+											  (lambda (b) (checkbutton-set b islooping)))))
+					  (sounds))
+				(focus-widget (list-ref (channel-widgets snd 0) 0)))
+			      islooping
+			      (if use-gtk '() (list XmNx (car (widget-position oldplay)))))
 	       (checkbutton-remove oldplay))
 	     
 	     (if (> (channels snd) 1)
@@ -896,15 +897,15 @@
 	     (set! (sync snd) (get-unique-sync-num))
 	     
 	     (let ((oldsync (get-nameform-button snd "sync")))
-	       (checkbutton-class (get-nameform snd)
-				   "sync"
-				   (lambda (on)
-				     (if on
-					 (set! (sync snd) (get-unique-sync-num))
-					 (set! (sync snd) 0))
-				     (focus-widget (list-ref (channel-widgets snd 0) 0)))
-				   #t
-				   (if use-gtk '() (list XmNx (car (widget-position oldsync)))))
+	       (<checkbutton> (get-nameform snd)
+			      "sync"
+			      (lambda (on)
+				(if on
+				    (set! (sync snd) (get-unique-sync-num))
+				    (set! (sync snd) 0))
+				(focus-widget (list-ref (channel-widgets snd 0) 0)))
+			      #t
+			      (if use-gtk '() (list XmNx (car (widget-position oldsync)))))
 	       (checkbutton-remove oldsync))
 
 	     #f))

@@ -110,10 +110,10 @@
 
 
 
-(define-class (ladspa-class libname plugname)
+(define-class (<ladspa> libname plugname)
 
-  (var descriptor #f)
-  
+  (var descriptor (ladspa-descriptor libname plugname))
+ 
   ;; List of ladspa plugin handles.
   (define handles '())
 
@@ -438,7 +438,6 @@
 
 
   ;; Constructor:
-  (set! descriptor (ladspa-descriptor libname plugname))
   (if (not descriptor)
       (set! this #f)
       (begin
@@ -491,14 +490,13 @@
 	    (lisense (caddr ladspa-analysed))
 	    (isplaying #f)
 	    (onoffbutton #f)
-	    (plugin_enable #f)
 	    (islooping #f)
 	    (isplayingselection #f))
 
 	(define (ShowDialog)
 	  (MakeDialogIfNotMade)
-	  (dialog 'show)
-	  (onoffbutton 'set #t)
+	  (-> dialog show)
+	  (-> onoffbutton set #t)
 	  (enableplugin)
 	  )
 
@@ -513,15 +511,15 @@
 	(define (OK)
 	  (MyStop)
 	  (disableplugin)
-	  (onoffbutton 'set #f)
-	  (ladspa 'apply!))
+	  (-> onoffbutton set #f)
+	  (-> ladspa apply!))
 
 	(define (Cancel)
-	  (onoffbutton 'set #f)
-	  (dialog 'hide)
+	  (-> onoffbutton set #f)
+	  (-> dialog hide)
 	  (disableplugin)
 	  (if (string=? "vst" libraryname)
-	      (ladspa 'close)))
+	      (-> ladspa close)))
 
 	(define (MyPlay)
 	  (if (not (selection-member? (selected-sound)))
@@ -534,16 +532,15 @@
 	  (stop-playing))
 
 	(define (enableplugin)
-	  (if (not (ladspa 'add-dac-hook!))
+	  (if (not (-> ladspa add-dac-hook!))
 	      (begin
 		(display "Unable to use ladspa plugin.")
 		(newline))))
 
 	(define (disableplugin)
-	  (ladspa 'remove-dac-hook!))
+	  (-> ladspa remove-dac-hook!))
 
 	(define (onoff onoroff)
-	  (set! plugin_enable onoroff)
 	  (if onoroff
 	      (enableplugin)
 	      (disableplugin)))
@@ -551,36 +548,34 @@
 	(define (ishint dashint dashint2)
 	  (not (= (logand dashint dashint2 ) 0)))
 
-	(define ismade #f)
-
 	(define (MakeDialogIfNotMade)
-	  (if (not ismade)
-	      (let ((descriptor (ladspa 'descriptor)))
+	  (if (not dialog)
+	      (let ((descriptor (-> ladspa descriptor)))
 
 	    
 		;; Make sure the plugin is disabled before quitting.
 		(add-hook! exit-hook (lambda args
 				       (disableplugin)
 				       (if (string=? "vst" libraryname)
-					   (ladspa 'close))
+					   (-> ladspa close))
 				       #f))
 		
 	    
 		;; Make dialog
 		(set! dialog 
-		      (dialog-class name Cancel
-				    "Close" Cancel
-				    "Apply" OK
-				    "Play" MyPlay
-				    "Stop" MyStop
-				    "Help" Help))
+		      (<dialog> name Cancel
+				"Close" Cancel
+				"Apply" OK
+				"Play" MyPlay
+				"Stop" MyStop
+				"Help" Help))
 		
 		;; Add sliders.
-		(if (not (null? (ladspa 'input-controls)))
+		(if (not (null? (-> ladspa input-controls)))
 		    (dialog 'add-sliders
 			    (map (lambda (portnum)
 				   (let* ((lo (cadr (list-ref (.PortRangeHints descriptor) portnum)))
-					  (init (ladspa 'get-input-control portnum))
+					  (init (-> ladspa get-input-control portnum))
 					  (hi (caddr (list-ref (.PortRangeHints descriptor) portnum)))
 					  (hint (car (list-ref (.PortRangeHints descriptor) portnum)))
 					  (scale (if (ishint hint LADSPA_HINT_INTEGER)
@@ -612,10 +607,10 @@
 					   lo
 					   init
 					   hi
-					   (lambda (val) (ladspa 'input-control-set! portnum val))
+					   (lambda (val) (-> ladspa input-control-set! portnum val))
 					   scale)))
 				 (my-filter (lambda (portnum) (not (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED)))
-					    (ladspa 'input-controls)))
+					    (-> ladspa input-controls)))
 			    ))
 		
 		
@@ -625,30 +620,27 @@
 				   (hi (caddr (list-ref (.PortRangeHints descriptor) portnum)))
 				   (lo (cadr (list-ref (.PortRangeHints descriptor) portnum)))
 				   (portname (list-ref (.PortNames descriptor) portnum))
-				   (ison (> (ladspa 'get-input-control portnum 0))))
-			      (checkbutton-class dialog
-						 portname
-						 (lambda (on)
-						   (ladspa 'input-control-set! portnum (if on hi lo)))
-						 ison)))
+				   (ison (> (-> ladspa get-input-control portnum) 0)))
+			      (<checkbutton> dialog
+					     portname
+					     (lambda (on)
+					       (-> ladspa input-control-set! portnum (if on hi lo)))
+					     ison)))
 			  (my-filter (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
-				     (ladspa 'input-controls)))
-		
+				     (-> ladspa input-controls)))
 		
 	    
 		;; Add on/off button.
-		(set! onoffbutton (checkbutton-class dialog
-						     "On/off"
-						     (lambda (on)
-						       (onoff on))
-						     #t))
-		(set! ismade #t))))
-
+		(set! onoffbutton (<checkbutton> dialog
+						 "On/off"
+						 onoff
+						 #t)))))
+	
 	  
-	(set! ladspa (ladspa-class libraryname effectname))
-	  
+	(set! ladspa (<ladspa> libraryname effectname))
+	
 	(if ladspa
-	    (ladspa-add-effect-menuitem name (lambda () (ShowDialog)))
+	    (ladspa-add-effect-menuitem name ShowDialog)
 	    #t)))
       
     (for-each (lambda (x)
