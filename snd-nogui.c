@@ -268,6 +268,7 @@ int enved_dialog_is_active(void) {return(0);}
 void set_filter_env_order(snd_state *ss, int order) {}
 void enved_reflect_selection(int on) {}
 void reflect_mix_in_enved(void) {}
+void g_init_gxenv(SCM local_doc) {}
 void release_mixmark_widgets(mixmark *m) {}
 void select_mix(snd_state *ss, mixdata *md) {}
 int color_mix(mixdata *md, void *ptr) {return(0);}

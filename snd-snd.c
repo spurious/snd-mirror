@@ -378,8 +378,6 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
   return(j);
 }
 
-#if WITH_PARSE_TREES
-void amp_env_scale_by(chan_info *cp, Float scl);
 void amp_env_scale_by(chan_info *cp, Float scl)
 {
   env_info *old_ep,*new_ep;
@@ -397,12 +395,25 @@ void amp_env_scale_by(chan_info *cp, Float scl)
 	}
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
-      new_ep->fmin = (MUS_SAMPLE_TYPE)(old_ep->fmin * scl);
-      new_ep->fmax = (MUS_SAMPLE_TYPE)(old_ep->fmax * scl);
-      for (i=0;i<new_ep->amp_env_size;i++) 
+      if (scl >= 0.0)
 	{
-	  new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
-	  new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
+	  new_ep->fmin = (MUS_SAMPLE_TYPE)(old_ep->fmin * scl);
+	  new_ep->fmax = (MUS_SAMPLE_TYPE)(old_ep->fmax * scl);
+	  for (i=0;i<new_ep->amp_env_size;i++) 
+	    {
+	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
+	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
+	    }
+	}
+      else
+	{
+	  new_ep->fmax = (MUS_SAMPLE_TYPE)(old_ep->fmin * scl);
+	  new_ep->fmin = (MUS_SAMPLE_TYPE)(old_ep->fmax * scl);
+	  for (i=0;i<new_ep->amp_env_size;i++) 
+	    {
+	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
+	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
+	    }
 	}
       new_ep->completed = 1;
       new_ep->bin = old_ep->bin;
@@ -410,7 +421,6 @@ void amp_env_scale_by(chan_info *cp, Float scl)
       cp->amp_envs[cp->edit_ctr] = new_ep;
     }
 }
-#endif
 
 static char sname[256];
 char *shortname(snd_info *sp)

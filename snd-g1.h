@@ -514,6 +514,9 @@ void reflect_mix_in_enved(void);
 #if HAVE_GUILE_GTK
   void init_enved_widgets(SCM local_doc);
 #endif
+#if HAVE_GUILE
+  void g_init_gxenv(SCM local_doc);
+#endif
 
 
 

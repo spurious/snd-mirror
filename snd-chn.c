@@ -3605,19 +3605,20 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
   FREE(data);
 }
 
-#if WITH_PARSE_TREES
-  void parse_tree_scale_by(chan_info *cp, Float scl);
-  void amp_env_scale_by(chan_info *cp, Float scl);
-#endif
 
 void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int len, int selection)
 {
   /* if selection, sync to current selection, else sync to current sound */
+  /* 3-Oct-00: the scale factors are now embedded in the edit fragments,
+   *   and folded into the MUS_SAMPLE_TO_FLOAT calculcation if possible,
+   *   so scaling of the entire sound (as opposed to a selection) comes
+   *   at no extra cost, happens instantly, and requires no disk space,
+   *   no matter how big the underlying sound.  This also affects scale_to.
+   */
   sync_state *sc;
   sync_info *si;
   int i,chans,nlen;
   Float *scalers = NULL;
-#if WITH_PARSE_TREES
   if (!selection)
     {
       int j;
@@ -3632,21 +3633,22 @@ void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	  update_graph(si->cps[i],NULL);
 	}
       free_sync_info(si);
-      return;
     }
-#endif
-  sc = get_sync_state(ss,sp,cp,0,selection,READ_FORWARD);
-  if (sc == NULL) return;
-  si = sc->si;
-  chans = si->chans;
-  scalers = (Float *)CALLOC(chans,sizeof(Float));
-  if (chans<len) nlen=chans; else nlen=len;
-  for (i=0;i<nlen;i++) scalers[i] = ur_scalers[i];
-  if (chans > len)
-    for (i=len;i<chans;i++) scalers[i] = ur_scalers[len-1];
-  scale_with(ss,sc,scalers,S_scale_by);
-  FREE(scalers);
-  free_sync_state(sc);
+  else
+    {
+      sc = get_sync_state(ss,sp,cp,0,selection,READ_FORWARD);
+      if (sc == NULL) return;
+      si = sc->si;
+      chans = si->chans;
+      scalers = (Float *)CALLOC(chans,sizeof(Float));
+      if (chans<len) nlen=chans; else nlen=len;
+      for (i=0;i<nlen;i++) scalers[i] = ur_scalers[i];
+      if (chans > len)
+	for (i=len;i<chans;i++) scalers[i] = ur_scalers[len-1];
+      scale_with(ss,sc,scalers,S_scale_by);
+      FREE(scalers);
+      free_sync_state(sc);
+    }
 }
 
 Float get_maxamp(snd_info *sp, chan_info *cp)
@@ -3657,6 +3659,8 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
   if (!sp) return(0.0);
   if (!cp) cp = sp->chans[0];
   if (amp_env_maxamp_ok(cp)) return(amp_env_maxamp(cp));
+  val = ed_maxamp(cp);
+  if (val != 0.0) return(val);
   sf = init_sample_read(0,cp,READ_FORWARD);
   ymax = 0.0;
   for (i=0;i<current_ed_samples(cp);i++)
@@ -3666,6 +3670,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
       if (val > ymax) ymax = val;
     }
   free_snd_fd(sf);
+  set_ed_maxamp(cp,ymax);
   return(ymax);
 }
 
@@ -3681,9 +3686,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   Float *scalers;
   Float maxamp,val;
   if ((!selection) && (cp == NULL)) return;
-#if WITH_PARSE_TREES
   if (!selection) si = sync_to_chan(cp);
-#endif
   if (si == NULL)
     {
       sc = get_sync_state(ss,sp,cp,0,selection,READ_FORWARD);
@@ -3706,7 +3709,10 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	  val = get_maxamp(ncp->sound,ncp);
 	  if (val > maxamp) maxamp = val;
 	}
-      if ((data_clipped(ss) == 0) && (scalers[0] == 1.0) && (mus_data_format_to_bytes_per_sample((sp->hdr)->format) < 4)) scalers[0] = 32767.0/32768.0;
+      if ((data_clipped(ss) == 0) && 
+	  (scalers[0] == 1.0) && 
+	  (mus_data_format_to_bytes_per_sample((sp->hdr)->format) < 4)) 
+	scalers[0] = 32767.0/32768.0;
       /* 1.0 = -1.0 in these cases, so we'll get a click  -- added 13-Dec-99 */
       val = scalers[0]/maxamp;
       for (i=0;i<chans;i++) scalers[i] = val;
@@ -3717,11 +3723,13 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	{
 	  ncp = si->cps[i];
 	  val = get_maxamp(ncp->sound,ncp);
-	  if ((data_clipped(ss) == 0) && (scalers[i] == 1.0) && (mus_data_format_to_bytes_per_sample((sp->hdr)->format) < 4)) scalers[i] = 32767.0/32768.0;
+	  if ((data_clipped(ss) == 0) && 
+	      (scalers[i] == 1.0) && 
+	      (mus_data_format_to_bytes_per_sample((sp->hdr)->format) < 4)) 
+	    scalers[i] = 32767.0/32768.0;
 	  scalers[i] /= val;
 	}
     }
-#if WITH_PARSE_TREES
   if (!selection)
     {
       for (i=0;i<si->chans;i++)
@@ -3732,12 +3740,13 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	}
       free_sync_info(si);
       FREE(scalers);
-      return;
     }
-#endif
-  scale_with(ss,sc,scalers,S_scale_to);
-  FREE(scalers);
-  free_sync_state(sc);
+  else
+    {
+      scale_with(ss,sc,scalers,S_scale_to);
+      FREE(scalers);
+      free_sync_state(sc);
+    }
 }
 
 static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c1)
@@ -3777,20 +3786,43 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
   idata0 = data0[0];
   idata1 = data1[0];
   j = 0;
-  for (k=0;k<dur;k++)
+  if ((no_ed_scalers(cp0)) && (no_ed_scalers(cp1)))
     {
-      idata0[j] = next_sample(c1);
-      idata1[j] = next_sample(c0);
-      j++;
-      if (temp_file)
+      for (k=0;k<dur;k++)
 	{
-	  if (j == MAX_BUFFER_SIZE)
+	  idata0[j] = next_sample_unscaled(c1);
+	  idata1[j] = next_sample_unscaled(c0);
+	  j++;
+	  if (temp_file)
 	    {
-	      err = mus_file_write(ofd0,0,j-1,1,data0);
-	      err = mus_file_write(ofd1,0,j-1,1,data1);
-	      j=0;
-	      if (err == -1) break;
-	      if (reporting) progress_report(sp0,"scl",1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
+	      if (j == MAX_BUFFER_SIZE)
+		{
+		  err = mus_file_write(ofd0,0,j-1,1,data0);
+		  err = mus_file_write(ofd1,0,j-1,1,data1);
+		  j=0;
+		  if (err == -1) break;
+		  if (reporting) progress_report(sp0,"scl",1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
+		}
+	    }
+	}
+    }
+  else
+    {
+      for (k=0;k<dur;k++)
+	{
+	  idata0[j] = next_sample(c1);
+	  idata1[j] = next_sample(c0);
+	  j++;
+	  if (temp_file)
+	    {
+	      if (j == MAX_BUFFER_SIZE)
+		{
+		  err = mus_file_write(ofd0,0,j-1,1,data0);
+		  err = mus_file_write(ofd1,0,j-1,1,data1);
+		  j=0;
+		  if (err == -1) break;
+		  if (reporting) progress_report(sp0,"scl",1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
+		}
 	    }
 	}
     }
@@ -4583,17 +4615,37 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	  sf = sfs[i];
 	  idata = data[0];
 	  j = 0;
-	  for (k=0;k<dur;k++)
+	  if (no_ed_scalers(cp))
 	    {
-	      idata[j] = previous_sample(sf);
-	      j++;
-	      if (temp_file)
+	      for (k=0;k<dur;k++)
 		{
-		  if (j == MAX_BUFFER_SIZE)
+		  idata[j] = previous_sample_unscaled(sf);
+		  j++;
+		  if (temp_file)
 		    {
-		      err = mus_file_write(ofd,0,j-1,1,data);
-		      j=0;
-		      if (err == -1) break;
+		      if (j == MAX_BUFFER_SIZE)
+			{
+			  err = mus_file_write(ofd,0,j-1,1,data);
+			  j=0;
+			  if (err == -1) break;
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (k=0;k<dur;k++)
+		{
+		  idata[j] = previous_sample(sf);
+		  j++;
+		  if (temp_file)
+		    {
+		      if (j == MAX_BUFFER_SIZE)
+			{
+			  err = mus_file_write(ofd,0,j-1,1,data);
+			  j=0;
+			  if (err == -1) break;
+			}
 		    }
 		}
 	    }

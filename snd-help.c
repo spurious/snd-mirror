@@ -256,7 +256,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-3-Oct:   WITH_PARSE_TREES experiment (see snd.h).\n\
+4-Oct:   added enved-active-env and enved-selected-env.\n\
+3-Oct:   scale-by and scale-to now use embedded fragment scalers.\n\
 2-Oct:   added audio-input-device.\n\
 27-Sep:  showing-controls -> show-controls. \n\
          data-format and header-type now return just the sndlib int.\n\
@@ -928,11 +929,13 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_dac_size "              256\n\
   " S_data_color "            black\n\
   " S_dot_size "              1 (snd #t) (chn #t)\n\
+  " S_enved_active_env "      '()\n\
   " S_enved_base "            1.0\n\
   " S_enved_clipping "        #f\n\
   " S_enved_dBing "           #f\n\
   " S_enved_exping "          #f\n\
   " S_enved_power "           3.0\n\
+  " S_enved_selected_env "    '()\n\
   " S_enved_target "          " S_amplitude_env "\n\
   " S_enved_waveform_color "  blue\n\
   " S_enved_waving "          #f\n\

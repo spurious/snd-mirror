@@ -19,7 +19,7 @@
 #endif
       
 
-#define NUM_COMMANDS 548
+#define NUM_COMMANDS 550
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -48,8 +48,8 @@ static char *snd_commands[NUM_COMMANDS]={
   S_dismiss_all_dialogs,S_dont_normalize,S_dot_size,S_during_open_hook,
 
   S_edit_fragment,S_edit_header_dialog,S_edit_hook,S_edit_position,S_edits,
-  S_env_selection,S_env_sound,S_enved_base,S_enved_clipping,S_enved_dBing,
-  S_enved_dialog,S_enved_exping,S_enved_power,S_enved_target,
+  S_env_selection,S_env_sound,S_enved_active_env,S_enved_base,S_enved_clipping,S_enved_dBing,
+  S_enved_dialog,S_enved_exping,S_enved_power,S_enved_selected_env,S_enved_target,
   S_enved_waveform_color,S_enved_waving,S_eps_file,S_exit,S_exit_hook,S_expand,S_expand_funcs,S_expand_hop,
   S_expand_length,S_expand_ramp,S_expanding,
 

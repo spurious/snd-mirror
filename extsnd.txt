@@ -1924,6 +1924,7 @@ around this. Here's a slightly more involved example; we define a function
 that finds silences and replaces them with something:
 
 (define map-silence
+  ;; see squelch in effects.scm for a better version
   (lambda (silence replacement)
     (let ((sum-of-squares 0.0)
           (buffer (make-vector 128 0.0))
@@ -2075,12 +2076,14 @@ Edit:Header:
   edit-header-dialog    ()      fire up Edit Header dialog.
 
 Edit:envelope
+  enved-active-env      '()     Envelope editor current envelope (list).
   enved-base            1.0     Envelope editor exponential base value
   enved-clipping        #f      Envelope editor 'clip' button (restricts mouse motion)
   enved-dBing           #f      Envelope editor 'dB' button
   enved-dialog          ()      fire up the Envelope editor dialog.
   enved-exping          #f      Envelope editor 'exp' and 'lin' buttons (type of connecting segments)
   enved-power           3.0     Envelope editor base scale range (9.0^power).
+  enved-selected-env    '()     Envelope editor selected envelope (list).
   enved-target          amplitude-env
                                 Determines how the envelope is applied to the current data
                                   This chooses one of the 'amp', 'flt', and 'src' buttons in the Envelope editor.

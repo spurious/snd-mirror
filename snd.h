@@ -4,14 +4,6 @@
 /* 
  * there are several compile-time options:
  *
- *   WITH_PARSE_TREES
- *                 This is an experimental version that (where possible) embeds edits
- *                 within edit fragments, so you're actually editing an automatically
- *                 generated program, not sound samples; when active, this means that
- *                 the edit is nearly instantaneous on any size file, and takes no
- *                 disk space.  But, it's brand-new... (This currently only works with
- *                 scale-by and scale-to).
- *
  *   USE_GTK, USE_MOTIF, USE_NO_GUI
  *                 Motif is the default; the Gtk+ port is usable, but still has rough edges.
  *                 In the sources, snd-x* refers to Motif specific code, snd-g* is Gtk+ specific.
@@ -183,7 +175,7 @@
   #include "sg.h"
 #endif
 
-#define SND_VERSION "3-Oct-00"
+#define SND_VERSION "4-Oct-00"
 #define SND_RPM_VERSION "4.6"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 6

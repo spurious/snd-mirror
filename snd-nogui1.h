@@ -353,6 +353,9 @@ int enved_dialog_is_active(void);
 void set_filter_env_order(snd_state *ss, int order);
 void enved_reflect_selection(int on);
 void reflect_mix_in_enved(void);
+#if HAVE_GUILE
+  void g_init_gxenv(SCM local_doc);
+#endif
 
 
 /* -------- snd-xmix.c -------- */

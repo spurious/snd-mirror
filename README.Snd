@@ -434,8 +434,8 @@ CCRMA:
   http://www-ccrma.stanford.edu/
 
 Snd:
-  http://www-ccrma.stanford.edu/CCRMA/Software/snd/snd.html
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
+  http://www-ccrma.stanford.edu/software/snd/
   http://snd.sourceforge.net
 
   http://www.cosy.sbg.ac.at/~gwesp/mma-sound.html (Mathematica)

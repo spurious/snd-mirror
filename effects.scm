@@ -21,6 +21,7 @@
 ;;;
 ;;; TODO:
 ;;;      filters & EQs
+;;;         ISO center freqs for a ten band EQ are (reported to be) (16), 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000
 ;;;      chorus (see below -- it works on some files)
 ;;;      noise reduction -- how?
 ;;;      increase/decrease file length -- meaning src or expand?

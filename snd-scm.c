@@ -3,6 +3,7 @@
 
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
  *       mark-moved-hook? selection-creation-hook? sample-color?
+ *       need to redirect scheme display output to snd's listener somehow
  */
 
 #if HAVE_GUILE
@@ -1668,7 +1669,9 @@ static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM s
 	  sf = init_sample_read_any(beg,cp,READ_FORWARD,edpos);
 	  if (sf)
 	    {
-	      for (i=0;i<len;i++) sd->data[chn][i] = next_sample(sf);
+	      if (no_ed_scalers(cp))
+		for (i=0;i<len;i++) sd->data[chn][i] = next_sample_unscaled(sf);
+	      else for (i=0;i<len;i++) sd->data[chn][i] = next_sample(sf);
 	      free_snd_fd(sf);
 	    }
 	}
@@ -3052,15 +3055,14 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
 {
 #if HAVE_GENERALIZED_SET
   scm_set_object_property_x(
-			    gh_cdr(
-				   gh_define(get_name,
-					     scm_make_procedure_with_setter(gh_new_procedure("",SCM_FNC get_func,get_req,get_opt,0),
-									    /* is this safe? -- I want an "unnamed function" */
-									    gh_new_procedure(set_name,SCM_FNC set_func,set_req,set_opt,0)
-									    /* set_name for backwards compatibility */
-									    ))),
-			    local_doc,
-			    gh_str02scm(get_help));
+    gh_cdr(
+      gh_define(get_name,
+	scm_make_procedure_with_setter(
+          gh_new_procedure("",SCM_FNC get_func,get_req,get_opt,0),
+	  gh_new_procedure(set_name,SCM_FNC set_func,set_req,set_opt,0)
+	  ))),
+    local_doc,
+    gh_str02scm(get_help));
   /* still need to trap help output and send it to the listener */
 #else
   DEFINE_PROC(gh_new_procedure(get_name,SCM_FNC get_func,get_req,get_opt,0),get_help);
@@ -3075,13 +3077,14 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
 {
 #if HAVE_GENERALIZED_SET
   scm_set_object_property_x(
-			    gh_cdr(
-				   gh_define(get_name,
-					     scm_make_procedure_with_setter(gh_new_procedure("",SCM_FNC get_func,get_req,get_opt,0),
-									    gh_new_procedure("",SCM_FNC reversed_set_func,set_req,set_opt,0)
-									    ))),
-			    local_doc,
-			    gh_str02scm(get_help));
+    gh_cdr(
+      gh_define(get_name,
+	scm_make_procedure_with_setter(
+          gh_new_procedure("",SCM_FNC get_func,get_req,get_opt,0),
+	  gh_new_procedure("",SCM_FNC reversed_set_func,set_req,set_opt,0)
+	  ))),
+    local_doc,
+    gh_str02scm(get_help));
   /* still need to trap help output and send it to the listener */
 #else
   DEFINE_PROC(gh_new_procedure(get_name,SCM_FNC get_func,get_req,get_opt,0),get_help);
@@ -3524,6 +3527,7 @@ void g_initialize_gh(snd_state *ss)
   g_init_file(local_doc);
   g_init_env(local_doc);
   g_init_recorder(local_doc);
+  g_init_gxenv(local_doc);
 
   /* GOOPS */
   /* scm_init_oop_goops_goopscore_module (); */
@@ -3760,16 +3764,3 @@ char *output_comment(file_info *hdr)
   return(com);
 #endif
 }
-
-#if 0 
-/* uniform arrays: (from xlib.c)
-
-  v = SCM_ARRAY_V (arg);
-  SCM_ASSERT (SCM_NIMP (v) && SCM_TYP7 (v) == scm_tc7_svect, arg, pos, func);
-  vdat = (short *) SCM_CDR (v);
-  SCM_ASSERT (SCM_ARRAY_NDIM (arg) == 2, arg, pos, func);
-  dims = SCM_ARRAY_DIMS (arg);
-  num_data             = dims[0].ubnd - dims[0].lbnd + 1;
-  num_shorts_per_datum = dims[1].ubnd - dims[1].lbnd + 1;
-*/
-#endif

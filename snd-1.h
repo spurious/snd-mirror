@@ -46,9 +46,15 @@ typedef struct {
   char *origin;
   int sfnum;
   int selection_beg, selection_end;    /* added 11-Sep-00: selection needs to follow edit list */
+  Float maxamp;                        /* added 3-Oct-00 */
+#if WITH_PARSE_TREES
+  /* work-in-progress: embedded edit list fragment (composite) functions */
+  MUS_SAMPLE_TYPE (*func)(void *cp, int pos, void *sf,void *env);
+  void *environ;
+#endif
 } ed_list;
 
-typedef struct {
+typedef struct snd_fd {
   ed_list *current_state;
   int *cb;
   int cbi;
@@ -62,6 +68,7 @@ typedef struct {
   int direction;
   struct chan__info *cp;
   struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
+  Float scaler;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -704,8 +711,10 @@ snd_fd *init_sample_read (int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_position);
 __inline__ MUS_SAMPLE_TYPE next_sample(snd_fd *sf);
 __inline__ MUS_SAMPLE_TYPE previous_sample(snd_fd *sf);
-Float next_sample_to_float (snd_fd *sf);
-Float previous_sample_to_float (snd_fd *sf);
+__inline__ MUS_SAMPLE_TYPE next_sample_unscaled(snd_fd *sf);
+__inline__ MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf);
+__inline__ Float next_sample_to_float (snd_fd *sf);
+__inline__ Float previous_sample_to_float (snd_fd *sf);
 void move_to_next_sample(snd_fd *df);
 void move_to_previous_sample(snd_fd *df);
 int read_sample_eof (snd_fd *sf);
@@ -726,6 +735,11 @@ int current_location(snd_fd *sf);
 #endif
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
+
+void parse_tree_scale_by(chan_info *cp, Float scl);
+int no_ed_scalers(chan_info *cp);
+void set_ed_maxamp(chan_info *cp, Float val);
+Float ed_maxamp(chan_info *cp);
 
 
 /* -------- snd-fft.c -------- */
@@ -1086,6 +1100,7 @@ multifile_info *sort_multifile_channels(snd_state *ss, char *filename);
   SCM array_to_list(Float *arr, int i, int len);
 #endif
 void set_speed_style(snd_state *ss, int val);
+void amp_env_scale_by(chan_info *cp, Float scl);
 
 
 

@@ -207,7 +207,7 @@ typedef struct dac__info {
   snd_info *sp;        /* needed to see button callback changes etc */
   chan_info *cp;
   snd_state *ss;
-  int end;
+  int end,no_scalers;
 #if DEBUGGING
   char *desc;
 #endif
@@ -485,6 +485,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
   dp = (dac_info *)CALLOC(1,sizeof(dac_info));
   dp->region = -1;
   dp->a = NULL;
+  dp->no_scalers = no_ed_scalers(cp);
 #if NONINTERLEAVED_AUDIO
   if (sp) dp->audio_chan = sp->index; else dp->audio_chan = cp->chan;
 #else  
@@ -848,7 +849,7 @@ static char *describe_dac(dac_state *dacp, int error_type)
   dac_info *ptr=NULL;
   for (i=0;i<dac_max_sounds;i++) 
     if (play_list[i]) {ptr = play_list[i]; players++;}
-  if (players == 1)
+  if ((players == 1) && (ptr->sp))
     return(ptr->sp->shortname);
   return("");
 }
@@ -1079,6 +1080,7 @@ void play_selection(int background)
 #define JUST_AMP 1
 #define JUST_SPEED 2
 #define ALL_CHANGES 3
+#define NO_CHANGE_AND_NO_SCALING 4
 
 static int choose_dac_op (dac_info *dp, snd_info *sp)
 {
@@ -1092,7 +1094,11 @@ static int choose_dac_op (dac_info *dp, snd_info *sp)
       else
 	{
 	  if ((sp->amp == dp->cur_amp) && (sp->amp == 1.0))
-	    return(NO_CHANGE);
+	    {
+	      if (dp->no_scalers)
+		return(NO_CHANGE_AND_NO_SCALING);
+	      else return(NO_CHANGE);
+	    }
 	  else return(JUST_AMP);
 	}
     }
@@ -1187,6 +1193,11 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  /* simplest case -- no changes at all */
 		  for (j=0;j<frames;j++)
 		    buf[j] += next_sample(dp->chn_fd);
+		  break;
+
+		case NO_CHANGE_AND_NO_SCALING:
+		  for (j=0;j<frames;j++)
+		    buf[j] += next_sample_unscaled(dp->chn_fd);
 		  break;
 
 		case JUST_AMP:

@@ -1,5 +1,10 @@
 #include "snd.h"
 
+/* TODO: settable enved_active_env and enved_selected_env (see end of file)
+ *       make this editor viewable as the "lisp" graph section of each channel
+ *       or make it overlayable on the channel wave/fft/lisp data => edit
+ */
+
 /* envelope editor and viewer */
 
 static Widget enved_dialog = NULL;
@@ -1594,3 +1599,25 @@ void reflect_mix_in_enved(void)
   if (enved_dialog_is_active())
     set_sensitive(mixB,TRUE);
 }
+
+#if HAVE_GUILE
+/* settable? */
+
+static SCM g_enved_active_env(void)
+{
+  #define H_enved_active_env "(" S_enved_active_env ") -> current envelope editor env"
+  return(env2scm(active_env));
+}
+
+static SCM g_enved_selected_env(void)
+{
+  #define H_enved_selected_env "(" S_enved_selected_env ") -> current envelope editor selected env"
+  return(env2scm(selected_env));
+}
+
+void g_init_gxenv(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure0_0(S_enved_active_env,g_enved_active_env),H_enved_active_env);
+  DEFINE_PROC(gh_new_procedure0_0(S_enved_selected_env,g_enved_selected_env),H_enved_selected_env);
+}
+#endif

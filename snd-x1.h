@@ -484,6 +484,9 @@ void set_filter_env_order(snd_state *ss, int order);
 void enved_reflect_selection(int on);
 void color_enved_waveform(Pixel pix);
 void reflect_mix_in_enved(void);
+#if HAVE_GUILE
+  void g_init_gxenv(SCM local_doc);
+#endif
 
 
 /* -------- snd-xmix.c -------- */
