@@ -1886,7 +1886,6 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
 
 static char *edit_list_envelope(mus_any *egen, off_t beg, off_t env_dur, off_t called_dur, off_t chan_dur, Float base)
 {
-  /* TODO: what about Ruby syntax for origin? */
   char *new_origin, *envstr;
   env *newe;
   newe = make_envelope_with_offset_and_scaler(mus_data(egen), mus_env_breakpoints(egen) * 2, mus_offset(egen), mus_scaler(egen));
@@ -1911,8 +1910,6 @@ static char *edit_list_envelope(mus_any *egen, off_t beg, off_t env_dur, off_t c
   free_env(newe);
   return(new_origin);
 }
-
-/* TODO: if env-selection, ignores env in origin? -> ramp-channel? */
 
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection, 
 	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos)

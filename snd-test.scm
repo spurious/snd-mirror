@@ -740,6 +740,9 @@
       (set! (recorder-out-chans) (recorder-out-chans))
       (if (not (equal? (recorder-out-chans)  2 )) 
 	  (snd-display ";recorder-out-chans set def: ~A" (recorder-out-chans)))
+      (set! (recorder-in-chans) (recorder-in-chans))
+      (if (not (equal? (recorder-in-chans)  0 )) 
+	  (snd-display ";recorder-in-chans set def: ~A" (recorder-in-chans)))
       (set! (recorder-srate) (recorder-srate))
       (if (not (equal? (recorder-srate)  22050 )) 
 	  (snd-display ";recorder-srate set def: ~A" (recorder-srate)))
@@ -1009,6 +1012,7 @@
 	'recorder-file (recorder-file) #f 
 	'recorder-max-duration (recorder-max-duration) 1000000.0
 	'recorder-out-chans (recorder-out-chans) 2 
+	'recorder-in-chans (recorder-in-chans) 0
 	'recorder-srate (recorder-srate) 22050 
 	'recorder-trigger (recorder-trigger) 0.0
 	'region-graph-style (region-graph-style) graph-lines
@@ -1583,6 +1587,7 @@
 	  (list 'print-length print-length 12 16)
 	  (list 'recorder-autoload recorder-autoload #f #t)
 	  (list 'recorder-out-chans recorder-out-chans 2 1)
+	  (list 'recorder-in-chans recorder-in-chans 0 1)
 	  (list 'recorder-buffer-size recorder-buffer-size 4096 256)
 	  (list 'recorder-max-duration recorder-max-duration 1000000.0 1000.0)
 	  (list 'recorder-trigger recorder-trigger 0.0 0.1)
@@ -20731,6 +20736,102 @@ EDITS: 5
 	      (snd-display ";delete-all-tracks: ~A" (channel->vct)))
 	  (close-sound ind)))
 
+      (let ((ind (open-sound "oboe.snd"))
+	    (mx (mix-vct (make-vct 100 .1) 1000)))
+	(for-each
+	 (lambda (mtest)
+	   (let ((func (car mtest))
+		 (beg (cadr mtest))
+		 (lock (caddr mtest))
+		 (name (cadddr mtest))
+		 (edpos (edit-position ind 0)))
+	     (func)
+	     (if (not (eq? lock (mix-locked? mx))) (snd-display ";~A mix locked: ~A ~A" name lock (mix-locked? mx)))
+	     (if (not (= beg (mix-position mx))) (snd-display ";~A mix lock beg: ~A ~A" name beg (mix-position mx)))
+	     (set! (edit-position ind 0) edpos)))
+	 (list 
+	  (list (lambda () (pad-channel 0 100)) 1100 #f 'pad0)
+	  (list (lambda () (pad-channel 0 2000)) 3000 #f 'pad20)
+	  (list (lambda () (pad-channel 800 100)) 1100 #f 'pad800)
+	  (list (lambda () (pad-channel 850 100)) 1100 #f 'pad800)
+	  (list (lambda () (pad-channel 990 100)) 1100 #f 'pad990)
+	  (list (lambda () (pad-channel 1010 100)) 1000 #t 'pad1010)
+	  (list (lambda () (pad-channel 1050 10)) 1000 #t 'pad1050)
+	  (list (lambda () (pad-channel 1110 100)) 1000 #f 'pad1110)
+	  (list (lambda () (pad-channel 2000 100)) 1000 #f 'pad2000)
+	  
+	  (list (lambda () (insert-samples 0 100 (make-vct 100 .2))) 1100 #f 'insert0)
+	  (list (lambda () (insert-samples 800 100 (make-vct 100 .2))) 1100 #f 'insert800)
+	  (list (lambda () (insert-samples 990 100 (make-vct 100 .2))) 1100 #f 'insert990)
+	  (list (lambda () (insert-samples 1010 100 (make-vct 100 .2))) 1000 #t 'insert1010)
+	  (list (lambda () (insert-samples 1050 10 (make-vct 100 .2))) 1000 #t 'insert1050)
+	  (list (lambda () (insert-samples 1110 100 (make-vct 100 .2))) 1000 #f 'insert1110)
+	  (list (lambda () (insert-samples 2000 100 (make-vct 100 .2))) 1000 #f 'insert2000)
+	  
+	  (let ((fr (mus-sound-frames "1a.snd")))
+	    (list (lambda () (insert-sound "1a.snd" 0)) (+ fr 1000) #f 'inserts0)
+	    (list (lambda () (insert-sound "1a.snd" 800)) (+ fr 1000) #f 'inserts800)
+	    (list (lambda () (insert-sound "1a.snd" 990)) (+ fr 1000) #f 'inserts990)
+	    (list (lambda () (insert-sound "1a.snd" 1010)) 1000 #t 'inserts1010)
+	    (list (lambda () (insert-sound "1a.snd" 1050)) 1000 #t 'inserts1050)
+	    (list (lambda () (insert-sound "1a.snd" 1110)) 1000 #f 'inserts1110)
+	    (list (lambda () (insert-sound "1a.snd" 2000)) 1000 #f 'inserts2000))
+	  
+	  (list (lambda () (delete-samples 0 100)) 900 #f 'delete0)
+	  (list (lambda () (delete-samples 0 2000)) 1000 #t 'delete20)
+	  (list (lambda () (delete-samples 800 100)) 900 #f 'delete800)
+	  (list (lambda () (delete-samples 850 100)) 900 #f 'delete850)
+	  (list (lambda () (delete-samples 950 40)) 960 #f 'delete950)
+	  (list (lambda () (delete-samples 990 100)) 1000 #t 'delete990)
+	  (list (lambda () (delete-samples 1010 100)) 1000 #t 'delete1010)
+	  (list (lambda () (delete-samples 1050 10)) 1000 #t 'delete1050)
+	  (list (lambda () (delete-samples 1110 100)) 1000 #f 'delete1110)
+	  (list (lambda () (delete-samples 2000 100)) 1000 #f 'delete2000)
+	  
+	  (list (lambda () (set! (samples 0 100) (make-vct 100 .2))) 1000 #f 'set0)
+	  (list (lambda () (set! (samples 0 2000) (make-vct 2000 .2))) 1000 #t 'set0)
+	  (list (lambda () (set! (samples 800 100) (make-vct 100 .2))) 1000 #f 'set800)
+	  (list (lambda () (set! (samples 990 100) (make-vct 100 .2))) 1000 #t 'set990)
+	  (list (lambda () (set! (samples 1010 100) (make-vct 100 .2))) 1000 #t 'set1010)
+	  (list (lambda () (set! (samples 1050 10) (make-vct 100 .2))) 1000 #t 'set1050)
+	  (list (lambda () (set! (samples 1110 100) (make-vct 100 .2))) 1000 #f 'set1110)
+	  (list (lambda () (set! (samples 2000 100) (make-vct 100 .2))) 1000 #f 'set2000)
+	  
+	  (list (lambda () (scale-channel 2.0 0 100)) 1000 #f 'scale0)
+	  (list (lambda () (scale-channel 2.0 0 2000)) 1000 #t 'scale20)
+	  (list (lambda () (scale-channel 2.0 800 100)) 1000 #f 'scale800)
+	  (list (lambda () (scale-channel 2.0 850 100)) 1000 #f 'scale850)
+	  (list (lambda () (scale-channel 2.0 950 40)) 1000 #f 'scale950)
+	  (list (lambda () (scale-channel 2.0 990 100)) 1000 #t 'scale990)
+	  (list (lambda () (scale-channel 2.0 1010 100)) 1000 #t 'scale1010)
+	  (list (lambda () (scale-channel 2.0 1050 10)) 1000 #t 'scale1050)
+	  (list (lambda () (scale-channel 2.0 1110 100)) 1000 #f 'scale1110)
+	  (list (lambda () (scale-channel 2.0 2000 100)) 1000 #f 'scale2000)
+	  
+	  (list (lambda () (env-channel '(0 0 1 1) 0 100)) 1000 #f 'env0)
+	  (list (lambda () (env-channel '(0 0 1 1) 0 2000)) 1000 #t 'env20)
+	  (list (lambda () (env-channel '(0 0 1 1) 800 100)) 1000 #f 'env800)
+	  (list (lambda () (env-channel '(0 0 1 1) 850 100)) 1000 #f 'env850)
+	  (list (lambda () (env-channel '(0 0 1 1) 950 40)) 1000 #f 'env950)
+	  (list (lambda () (env-channel '(0 0 1 1) 990 100)) 1000 #t 'env990)
+	  (list (lambda () (env-channel '(0 0 1 1) 1010 100)) 1000 #t 'env1010)
+	  (list (lambda () (env-channel '(0 0 1 1) 1050 10)) 1000 #t 'env1050)
+	  (list (lambda () (env-channel '(0 0 1 1) 1110 100)) 1000 #f 'env1110)
+	  (list (lambda () (env-channel '(0 0 1 1) 2000 100)) 1000 #f 'env2000)
+	  
+	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 0 100)) 1000 #f 'ptree0)
+	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 0 2000)) 1000 #t 'ptree20)
+	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 800 100)) 1000 #f 'ptree800)
+	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 850 100)) 1000 #f 'ptree850)
+	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 950 40)) 1000 #f 'ptree950)
+	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 990 100)) 1000 #t 'ptree990)
+	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 1010 100)) 1000 #t 'ptree1010)
+	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 1050 10)) 1000 #t 'ptree1050)
+	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 1110 100)) 1000 #f 'ptree1110)
+	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 2000 100)) 1000 #f 'ptree2000)))
+	
+	(close-sound ind))
+      
       (run-hook after-test-hook 9)
       ))
 
@@ -50659,7 +50760,7 @@ EDITS: 2
 		     recorder-out-chans recorder-out-format recorder-out-type recorder-srate recorder-trigger redo region-chans view-regions-dialog
 		     region-graph-style region-frames region-position region-maxamp selection-maxamp region-sample region->vct
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
-		     restore-marks restore-region reverb-control-decay reverb-control-feedback 
+		     restore-marks restore-region reverb-control-decay reverb-control-feedback recorder-in-chans
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
 		     reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples sample-reader-position
 		     samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
@@ -50794,7 +50895,7 @@ EDITS: 2
 			 equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color
 			 recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
 			 recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-out-type
-			 recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback
+			 recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback recorder-in-chans
 			 reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style
 			 reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
 			 selection-color selection-creates-region show-axes show-backtrace show-controls
@@ -51549,7 +51650,7 @@ EDITS: 2
 			      minibuffer-history-length mix-waveform-height region-graph-style position-color
 			      time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
 			      previous-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
-			      recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans
+			      recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans recorder-in-chans
 			      recorder-out-format recorder-out-type recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file
 			      selected-channel selected-data-color selected-graph-color 
 			      selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener

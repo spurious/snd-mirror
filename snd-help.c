@@ -369,7 +369,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-1-Nov:   edit history pane popup menu (popup.scm)\n\
+5-Nov:   recorder-in-chans.\n\
+1-Nov:   edit history pane popup menu (popup.scm).\n\
 28-Oct:  rms-envelope in env.scm.\n\
          removed edpos arg to play-selection.\n\
 18-Oct:  oscope.scm\n\

@@ -3,8 +3,6 @@
 /* SOMEDAY: save mix/track stuff in edit-history saved-state stuff, so they remain as they were upon reload */
 /* TODO: is there some confusion if mix is used in as-one-edit? */
 /* TODO: if mix locked but still in mix dialog, need some indication that everything is inactivated (except "play") */
-/* TODO: if mix section deleted, why isn't mix removed? -- lock check has to precede ripple! (and insert is wrong -- beg to beg, not beg+num */
-/* TODO: if scale full chan, can't mixes be left unlocked? */
 
 typedef struct {
   int chans;
@@ -2880,6 +2878,9 @@ static int lock_affected_mixes_1(mix_info *md, void *ptr)
   cs = md->states[md->current_state];
   if (!(cs->locked))
     {
+      off_t old_beg;
+      old_beg = cs->beg;
+      /* fprintf(stderr,"lock? " OFF_TD " < " OFF_TD " and " OFF_TD " > " OFF_TD "\n",cs->orig ,times->lt_end, cs->end, times->lt_beg); */
       if ((cs->orig < times->lt_end) && (cs->end > times->lt_beg))
 	{
 	  chan_info *cp;
@@ -2888,6 +2889,7 @@ static int lock_affected_mixes_1(mix_info *md, void *ptr)
 	  md->states[md->current_state] = (mix_state *)CALLOC(1, sizeof(mix_state));
 	  cs = md->states[md->current_state];
 	  cs->locked = true;
+	  cs->beg = old_beg;
 	  cp = md->cp;
 	  cs->edit_ctr = cp->edit_ctr;
 	  cs = md->active_mix_state;
@@ -2990,6 +2992,7 @@ static int ripple_mixes_1(mix_info *md, void *ptr)
   data = (mixrip *)ptr;
   cp = data->cp;
   cs = md->active_mix_state;
+  release_pending_mix_states(md);
   if ((cs) && (!(cs->locked)) && (cs->beg > data->beg) && (ready_mix(md)))
     {
       mix_state *ncs;

@@ -5268,6 +5268,8 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
   ed->sound_location = 0;
   check_for_first_edit(cp); /* needed to activate revert menu option */
   amp_env_insert_zeros(cp, beg, num, edpos);
+  lock_affected_mixes(cp, beg, beg);
+  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
   return(true);
 }
@@ -5339,7 +5341,11 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
 	ed->edit_type = INSERTION_EDIT;
 	ed->sound_location = ED_SOUND(cb);
       }
-      lock_affected_mixes(cp, beg, beg + num);
+      /* mixes were rippled by insert_samples_into_list above (ripple_all -> ripple_mixes)
+       *   so the lock should affect those that were split by the insertion, which in current
+       *   terms means we're interested only in 'beg'
+       */
+      lock_affected_mixes(cp, beg, beg);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
     }
@@ -5373,7 +5379,7 @@ static bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
     ed->edit_type = INSERTION_EDIT;
     ed->sound_location = ED_SOUND(cb);
   }
-  lock_affected_mixes(cp, beg, beg + num);
+  lock_affected_mixes(cp, beg, beg);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
   return(true);
@@ -5485,8 +5491,8 @@ bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos)
     {
       if ((beg + num) > len) num = len - beg;
       if (!(prepare_edit_list(cp, len - num, edpos, S_delete_samples))) return(false);
+      lock_affected_mixes(cp, beg, beg + num); /* edit_ctr should be ready, need pre-ripple values for block overlap check */
       cp->edits[cp->edit_ctr] = delete_samples_from_list(beg, num, edpos, cp);
-      lock_affected_mixes(cp, beg, beg + num);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
     }
@@ -9171,7 +9177,7 @@ void g_init_edits(void)
 					    S_setB S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 7);
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE("set-sample",  g_set_sample_w,  2, 3, 0, H_sample);   /* for edit-list->function */
-  XEN_DEFINE_PROCEDURE("set-samples", g_set_samples_w, 3, 7, 0, H_samples);
+  XEN_DEFINE_PROCEDURE("set-samples", g_set_samples_w, 3, 7, 0, H_set_samples);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_snd_to_sample_p,    g_snd_to_sample_p_w,    1, 0, 0, H_snd_to_sample_p);

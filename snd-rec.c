@@ -1,10 +1,27 @@
 /* snd-xrec and snd-grec shared code */
 
 /* TODO: split out the Jack cases */
+/* TODO: test/implement recorder-in-chans setting (0 = current case using audio card to decide) */
 
 #include "snd.h"
 #include "snd-rec.h"
 #include "sndlib-strings.h"
+
+#define S_recorder_autoload     "recorder-autoload"
+#define S_recorder_buffer_size  "recorder-buffer-size"
+#define S_recorder_file         "recorder-file"
+#define S_recorder_gain         "recorder-gain"
+#define S_recorder_in_amp       "recorder-in-amp"
+#define S_recorder_in_chans     "recorder-in-chans"
+#define S_recorder_in_format    "recorder-in-format"
+#define S_recorder_in_device    "recorder-in-device"
+#define S_recorder_max_duration "recorder-max-duration"
+#define S_recorder_out_amp      "recorder-out-amp"
+#define S_recorder_out_chans    "recorder-out-chans"
+#define S_recorder_out_format   "recorder-out-format"
+#define S_recorder_out_type     "recorder-out-type"
+#define S_recorder_srate        "recorder-srate"
+#define S_recorder_trigger      "recorder-trigger"
 
 font_t *get_vu_font(Float size)
 {
@@ -316,6 +333,7 @@ static void init_recorder(void)
   rp->autoload = DEFAULT_RECORDER_AUTOLOAD;
   rp->buffer_size = DEFAULT_RECORDER_BUFFER_SIZE;
   rp->out_chans = DEFAULT_RECORDER_OUT_CHANS;
+  rp->in_chans = DEFAULT_RECORDER_IN_CHANS;
   rp->output_data_format = DEFAULT_RECORDER_OUT_FORMAT;
   rp->in_format = DEFAULT_RECORDER_IN_FORMAT;
   rp->srate = DEFAULT_RECORDER_SRATE;
@@ -390,6 +408,7 @@ void save_recorder_state(FILE *fd)
   if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd, "(set! (%s) %s)\n", S_recorder_autoload, b2s(rp->autoload));
   if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "(set! (%s) %d)\n", S_recorder_buffer_size, rp->buffer_size);
   if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "(set! (%s) %d)\n", S_recorder_out_chans, rp->out_chans);
+  if (rp->in_chans != DEFAULT_RECORDER_IN_CHANS) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_chans, rp->in_chans);
   if (rp->output_data_format != DEFAULT_RECORDER_OUT_FORMAT) 
     fprintf(fd, "(set! (%s) %s)\n", 
 	    S_recorder_out_format, 
@@ -411,6 +430,7 @@ void save_recorder_state(FILE *fd)
   if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd, "set_%s %s\n", TO_PROC_NAME(S_recorder_autoload), b2s(rp->autoload));
   if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_buffer_size), rp->buffer_size);
   if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_out_chans), rp->out_chans);
+  if (rp->in_chans != DEFAULT_RECORDER_IN_CHANS) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_in_chans), rp->in_chans);
   if (rp->output_data_format != DEFAULT_RECORDER_OUT_FORMAT) 
     fprintf(fd, "set_%s %s\n", 
 	    TO_PROC_NAME(S_recorder_out_format), 
@@ -756,6 +776,8 @@ void fire_up_recorder(void)
 		       * the computer wedges if I don't initialize it, why? */
 		      if (rp->monitor_chans > MAX_OUT_CHANS)
 			rp->monitor_chans = MAX_OUT_CHANS;
+
+		      /* this is a user-set field that shouldn't be overwritten (it refers to the output file, not the monitor) */
 		      rp->out_chans = rp->monitor_chans;
 		    }
 		  rp->monitor_data_format = mus_audio_compatible_format(sysdev);
@@ -1618,6 +1640,24 @@ static XEN g_set_recorder_out_chans(XEN val)
   return(C_TO_XEN_INT(rp->out_chans));
 }
 
+static XEN g_recorder_in_chans(void) 
+{
+  init_recorder(); 
+  return(C_TO_XEN_INT(rp->in_chans));
+}
+static XEN g_set_recorder_in_chans(XEN val) 
+{
+  int num;
+  #define H_recorder_in_chans "(" S_recorder_in_chans "): default recorder input channels (1 or 2 usually)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_in_chans, "an integer"); 
+  init_recorder(); 
+  num = XEN_TO_C_INT(val);
+  if (num >= 0)   /* possible 0 => not set, or use audio card to decide */
+    rp->in_chans = num;
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_in_chans, XEN_ONLY_ARG, val, "must be > 0");
+  return(C_TO_XEN_INT(rp->in_chans));
+}
+
 static XEN g_recorder_out_format(void) 
 {
   init_recorder(); 
@@ -1859,6 +1899,8 @@ XEN_NARGIFY_0(g_recorder_in_device_w, g_recorder_in_device)
 XEN_NARGIFY_1(g_set_recorder_in_device_w, g_set_recorder_in_device)
 XEN_NARGIFY_0(g_recorder_out_chans_w, g_recorder_out_chans)
 XEN_NARGIFY_1(g_set_recorder_out_chans_w, g_set_recorder_out_chans)
+XEN_NARGIFY_0(g_recorder_in_chans_w, g_recorder_in_chans)
+XEN_NARGIFY_1(g_set_recorder_in_chans_w, g_set_recorder_in_chans)
 XEN_NARGIFY_0(g_recorder_out_format_w, g_recorder_out_format)
 XEN_NARGIFY_1(g_set_recorder_out_format_w, g_set_recorder_out_format)
 XEN_NARGIFY_0(g_recorder_out_type_w, g_recorder_out_type)
@@ -1895,6 +1937,8 @@ XEN_NARGIFY_1(g_set_vu_size_w, g_set_vu_size)
 #define g_set_recorder_in_device_w g_set_recorder_in_device
 #define g_recorder_out_chans_w g_recorder_out_chans
 #define g_set_recorder_out_chans_w g_set_recorder_out_chans
+#define g_recorder_in_chans_w g_recorder_in_chans
+#define g_set_recorder_in_chans_w g_set_recorder_in_chans
 #define g_recorder_out_format_w g_recorder_out_format
 #define g_set_recorder_out_format_w g_set_recorder_out_format
 #define g_recorder_out_type_w g_recorder_out_type
@@ -1939,6 +1983,9 @@ void g_init_recorder(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_chans, g_recorder_out_chans_w, H_recorder_out_chans,
 				   S_setB S_recorder_out_chans, g_set_recorder_out_chans_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_chans, g_recorder_in_chans_w, H_recorder_in_chans,
+				   S_setB S_recorder_in_chans, g_set_recorder_in_chans_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_format, g_recorder_out_format_w, H_recorder_out_format,
 				   S_setB S_recorder_out_format, g_set_recorder_out_format_w,  0, 0, 1, 0);

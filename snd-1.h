@@ -1353,6 +1353,7 @@ off_t mix_beg(chan_info *cp);
 void reset_mix_graph_parent(chan_info *cp);
 void display_channel_mixes(chan_info *cp);
 void lock_affected_mixes(chan_info *cp, off_t beg, off_t end);
+void lock_or_scale_affected_mixes(chan_info *cp, off_t beg, off_t end, Float scl);
 void release_pending_mixes(chan_info *cp, int edit_ctr);
 void reset_mix_list(chan_info *cp);
 void ripple_mixes(chan_info *cp, off_t beg, off_t change);

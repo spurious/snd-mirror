@@ -734,6 +734,7 @@ static void display_vu_meter(VU *vu)
   Float size;
   state_context *sx;
   recorder_info *rp;
+  if (!vu) return;
   rp = get_recorder_info();
   sx = ss->sgx;
   size = vu->size;
@@ -883,6 +884,7 @@ static VU *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, i
 
 static void set_vu_val (VU *vu, Float val) 
 {
+  if (!vu) return;
   vu->last_val = vu->current_val;
 #if 1
   vu->current_val = val;
@@ -2053,7 +2055,7 @@ static PANE *make_pane(recorder_info *rp, Widget paned_window, int device, int s
   Widget *frames = NULL;
   Widget last_frame, vu_vertical_sep, last_slider = NULL, matrix_frame, button_box, left_frame;
   Widget first_frame[1];
-  int vu_meters, num_gains;
+  int vu_meters, true_inputs, num_gains;
   bool input;
   Position pane_max;
   Float meter_size;
@@ -2064,10 +2066,11 @@ static PANE *make_pane(recorder_info *rp, Widget paned_window, int device, int s
   p = (PANE *)CALLOC(1, sizeof(PANE));
   p->device = device;
   p->system = system;
-  vu_meters = recorder_check_device(system, device, mixer_gains_posted, tone_controls_posted, mixflds, &num_gains, &input);
+  true_inputs = recorder_check_device(system, device, mixer_gains_posted, tone_controls_posted, mixflds, &num_gains, &input);
 
   if (input) 
     {
+      if ((rp->in_chans > 0) && (true_inputs > rp->in_chans)) vu_meters = rp->in_chans; else vu_meters = true_inputs;
       p->in_chans = vu_meters;
       p->out_chans = rp->out_chans;
       /* this determines how many of the left-side buttons we get if chans > 4; if defaults to 2 (snd.c)
@@ -2078,6 +2081,7 @@ static PANE *make_pane(recorder_info *rp, Widget paned_window, int device, int s
     }
   else 
     {
+      vu_meters = true_inputs;
       if (vu_meters < rp->out_chans) vu_meters = rp->out_chans;
       p->out_chans = vu_meters;
       p->in_chans = 1;
@@ -2157,7 +2161,7 @@ static PANE *make_pane(recorder_info *rp, Widget paned_window, int device, int s
       rp->input_channel_active[i] = true;
 #endif
 
-  if (input) overall_input_ctr += p->in_chans;
+  if (input) overall_input_ctr += true_inputs; /* p->in_chans; */
 #if (HAVE_OSS || HAVE_ALSA)
   p->pane_size = pane_max + 20;
 #else

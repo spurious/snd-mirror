@@ -34,6 +34,7 @@
 #define DEFAULT_RECORDER_MAX_DURATION 1000000.0
 #define DEFAULT_RECORDER_OUT_FORMAT MUS_COMPATIBLE_FORMAT
 #define DEFAULT_RECORDER_OUT_CHANS 2
+#define DEFAULT_RECORDER_IN_CHANS 0
 
 #ifdef SUN
   #define DEFAULT_RECORDER_BUFFER_SIZE 4096
@@ -88,7 +89,7 @@ typedef struct {
   bool *chan_in_active;            /* overall_in_chans */
   bool *chan_out_active;           /* (file)_out_chans */
   Float max_duration, trigger;
-  int srate, in_format, output_data_format, out_chans, buffer_size, in_device;
+  int srate, in_format, output_data_format, out_chans, in_chans, buffer_size, in_device;
   bool triggered, triggering, autoload;
   Float **in_amps;                /* overall_in_chans X out_chans */
   Float *out_amps;                /* out_chans (independent of file write: monitor vol) */
