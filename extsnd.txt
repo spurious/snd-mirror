@@ -1320,6 +1320,13 @@ list.
   snd-warning-hook (warning-message)  called upon snd_warning. (or)
                                       If it returns #t, Snd flushes the warning (it assumes you've reported it via the hook).
 
+                                      (define without-warnings
+                                        (lambda (thunk)
+                                          (define no-warning (lambda (msg) #t))
+                                          (add-hook! snd-warning-hook no-warning)
+                                          (thunk)
+                                          (remove-hook! snd-warning-hook no-warning)))
+
   Channel-specific hooks:
 
   edit-hook   (snd chn)

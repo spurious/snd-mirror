@@ -5,6 +5,7 @@
  */
 
 /* TODO: mus_bank (gens scalers *args...) -> loop through gens accumulating scaler * gen(args)
+ *       add phase-vocoder as generator, also zipper
  */
 
 #if defined(HAVE_CONFIG_H)

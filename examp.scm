@@ -2046,7 +2046,7 @@
 	   (nextpct 10.0)       ; how often to print out the percentage complete message
 	   (outlen (ifloor (* time len)))
 	   (out-data (make-vct (max len outlen)))
-	   (in-data (samples->vct (* N 2)))
+	   (in-data (samples->vct 0 (* N 2)))
 	   (in-data-beg 0))
       ;; setup oscillators
       (do ((i 0 (1+ i)))

@@ -504,7 +504,7 @@ static void graph_button_press(Widget w,XtPointer clientData,XEvent *event,Boole
 static void graph_button_release(Widget w,XtPointer clientData,XEvent *event,Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  graph_button_release_callback((chan_info *)clientData,ev->x,ev->y,ev->state,ev->button,ev->time);
+  graph_button_release_callback((chan_info *)clientData,ev->x,ev->y,ev->state,ev->button);
 }
 
 static void graph_button_motion(Widget w,XtPointer clientData,XEvent *event,Boolean *cont) 

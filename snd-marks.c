@@ -1105,7 +1105,7 @@ static void add_syncd_mark(syncdata *sd, mark *mp, chan_info *cp)
 static mark *gather_local_syncd_marks(chan_info *cp, mark *mp, void *usd)
 {
   syncdata *sd = (syncdata *)usd;
-  if (sd->sync == mp->sync)
+  if ((unsigned int)(sd->sync) == mp->sync)
     add_syncd_mark(sd,mp,cp);
   return(NULL);
 }
@@ -1264,7 +1264,7 @@ void move_axis_to_track_mark(chan_info *cp) /* from snd-xchn.c, called when mark
     }
 }
 
-void move_mark(chan_info *cp, mark *mp, int x, int y) /* from mouse drag callback in snd-chn.c, called whenever mark is visible */
+void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in snd-chn.c, called whenever mark is visible */
 {
   int redraw;
   last_mouse_x = x;
@@ -1663,7 +1663,7 @@ static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n)
    at samp (if a number) or with the given name (if a string), returning the mark id"
 
   mark **mps;
-  int i,samp;
+  int i,samp=0;
   char *name = NULL;
   chan_info *cp = NULL;
   SCM_ASSERT((gh_number_p(samp_n) || gh_string_p(samp_n) || (SCM_UNBNDP(samp_n)) || (SCM_FALSEP(samp_n))),samp_n,SCM_ARG1,S_find_mark);

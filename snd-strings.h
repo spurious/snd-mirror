@@ -148,7 +148,6 @@
 #define STR_at                           "at"
 /* 'at' used in the phrase 'y = %f at %d' -- reported results from the Find command */
 #define STR_apply_flushed		 "apply flushed!"
-/* 'flushed' = interrupted, stopped prematurely (output discarded) */
 #define STR_cant_access                  "can't access %s! temp dir is still %s."
 #define STR_cant_create                  "can't create %s: %s"
 #define STR_cant_find			 "can't find %s"
@@ -213,7 +212,7 @@
 #define STR_exp_base		         "exp base:"
 #define STR_expand			 "expand:"
 #define STR_f			 	 "f"
-/* this 'f' => fft display (should be 1 character) */
+/* this 'f' => fft */
 #define STR_file_has_changed             "%s has changed since we last read it!"
 #define STR_file_p			 "file:"
 #define STR_filled			 "filled"
@@ -333,7 +332,7 @@
 #define STR_updated                      "updated %s"
 #define STR_view_envs                    "view envs"
 #define STR_w				 "w"
-/* 'w' => wave (time domain) display (should be 1 character) */
+/* 'w' => wave (time domain) */
 #define STR_wave		         "wave"
 #define STR_wavelet                      "wavelet"
 #define STR_were_getting_short_on_disk_space "disk nearly full: used %d Kbytes leaving %d"

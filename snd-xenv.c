@@ -567,7 +567,7 @@ static void selection_button_pressed(Widget s, XtPointer clientData,XtPointer ca
   if ((enved_target(ss) != SPECTRUM_ENV) && (enved_waving(ss)) && (!showing_all_envs)) env_redisplay(ss);
 }
 
-static void mix_button_pressed(Widget s, XtPointer clientData,XtPointer callData) 
+static void mix_button_pressed(Widget w, XtPointer clientData,XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;

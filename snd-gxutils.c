@@ -35,8 +35,7 @@ static Window compare_window(Display *display, Window window, char *id)
 static Window find_window(Display *display, Window starting_window,char *name, Window (*compare_func)(Display *dpy, Window win, char *id))
 {
   Window rootwindow, window_parent;
-  int i=0;
-  unsigned int num_children=0;
+  unsigned int i=0,num_children=0;
   Window *children=NULL;
   Window window = (compare_func)(display, starting_window, name);
   if (window != (Window)None) return (window);

@@ -3484,9 +3484,8 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
 {
   chan_info *cp0,*cp1;
   snd_info *sp0;
-  int i,k;
   file_info *hdr0 = NULL,*hdr1 = NULL;
-  int j,ofd0 = 0,ofd1 = 0,datumb = 0,temp_file,err=0;
+  int j,k,ofd0 = 0,ofd1 = 0,datumb = 0,temp_file,err=0;
   MUS_SAMPLE_TYPE **data0,**data1;
   MUS_SAMPLE_TYPE *idata0,*idata1;
   int reporting = 0;
@@ -3531,7 +3530,7 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
 	      err = mus_file_write(ofd1,0,j-1,1,data1);
 	      j=0;
 	      if (err == -1) break;
-	      if (reporting) progress_report(ss,sp0,"scl",i+1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
+	      if (reporting) progress_report(ss,sp0,"scl",1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
 	    }
 	}
     }
@@ -3639,11 +3638,12 @@ static int temp_to_snd(snd_exf *data, char *origin)
 {
   sync_state *sc;
   sync_info *si;
-  int i,k,chans,err,new_len,old_len,new_chans,ok;
+  int i,k,chans,err,new_len,old_len,new_chans,ok,orig_chans;
   if (!data) return(-1);
   sc = (sync_state *)(data->sc);
   si = sc->si;
   chans = si->chans;
+  orig_chans = chans;
   for (i=0;i<data->files;i++)
     {
       if (data->old_filenames[i])
@@ -3659,6 +3659,7 @@ static int temp_to_snd(snd_exf *data, char *origin)
     }
   if (data->selection)
     {
+      /* should this balk if there's no active selection? */
       old_len = region_len(0);
       if (data->files == 1)
 	{
@@ -3668,7 +3669,11 @@ static int temp_to_snd(snd_exf *data, char *origin)
 	      if (new_len != -1)
 		{
 		  new_chans = mus_sound_chans(data->new_filenames[0]);
-		  if (chans > new_chans) chans = new_chans;
+		  if (chans != new_chans)
+		    {
+		      snd_warning("temp-to-selection: original chans: %d, new chans: %d",chans,new_chans);
+		      if (chans > new_chans) chans = new_chans;
+		    }
 		  if (old_len == new_len)
 		    {
 		      for (k=0;k<chans;k++)
@@ -3677,6 +3682,7 @@ static int temp_to_snd(snd_exf *data, char *origin)
 		  else
 		    {
 		      ok = delete_selection(origin,DONT_UPDATE_DISPLAY);
+		      if (!ok) snd_warning("temp-to-selection: no active selection? (inserting at sample %d...)",si->begs[0]);
 		      for (k=0;k<chans;k++)
 			{
 			  file_insert_samples(si->begs[k],new_len,data->new_filenames[0],si->cps[k],k,DELETE_ME,origin);
@@ -3685,11 +3691,13 @@ static int temp_to_snd(snd_exf *data, char *origin)
 			}
 		    }
 		}
+	      else snd_warning("temp-to-selection: %s not readable?",data->new_filenames[0]);
 	    }
 	}
       else
 	{
-	  ok = delete_selection(origin,DONT_UPDATE_DISPLAY);
+	  ok = delete_selection(origin,DONT_UPDATE_DISPLAY); /* "ok" means there was a selection that was deleted */
+	  if (!ok) snd_warning("temps-to-selection: no active selection? (inserting at sample %d...)",si->begs[0]);
 	  for (k=0;k<data->files;k++)
 	    {
 	      if (snd_strlen(data->new_filenames[k]) > 0)
@@ -3701,6 +3709,7 @@ static int temp_to_snd(snd_exf *data, char *origin)
 		      if (ok) backup_edit_list(si->cps[k]);
 		      if ((si->cps[k])->marks) ripple_trailing_marks(si->cps[k],si->begs[k],old_len,new_len);
 		    }
+		  else snd_warning("temps-to-selection: %s not readable?",data->new_filenames[k]);
 		}
 	    }
 	}
@@ -3715,12 +3724,15 @@ static int temp_to_snd(snd_exf *data, char *origin)
 	      if (new_len != -1)
 		{
 		  new_chans = mus_sound_chans(data->new_filenames[0]);
-		  if (chans > new_chans) chans = new_chans;
-		  for (k=0;k<chans;k++)
+		  if (chans != new_chans)
 		    {
-		      file_override_samples(new_len,data->new_filenames[0],si->cps[k],k,DELETE_ME,LOCK_MIXES,origin);
+		      snd_warning("temp-to-sound: original chans: %d, new chans: %d",chans,new_chans);
+		      if (chans > new_chans) chans = new_chans;
 		    }
+		  for (k=0;k<chans;k++)
+		    file_override_samples(new_len,data->new_filenames[0],si->cps[k],k,DELETE_ME,LOCK_MIXES,origin);
 		}
+	      else snd_warning("temp-to-sound: %s not readable?",data->new_filenames[0]);
 	    }
 	}
       else
@@ -3732,11 +3744,12 @@ static int temp_to_snd(snd_exf *data, char *origin)
 		  new_len = mus_sound_samples(data->new_filenames[k]);
 		  if (new_len != -1)
 		    file_override_samples(new_len,data->new_filenames[k],si->cps[k],0,DELETE_ME,LOCK_MIXES,origin);
+		  else snd_warning("temps-to-sound: %s not readable?",data->new_filenames[k]);
 		}
 	    }
 	}
     }
-  for (i=0;i<chans;i++)
+  for (i=0;i<orig_chans;i++)
     {
       update_graph(si->cps[i],NULL); 
       sc->sfs[i] = free_snd_fd(sc->sfs[i]);
@@ -5702,7 +5715,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   axis_info *ap;
   snd_state *ss;
   sync_info *si;
-  mark *mk;
+  mark *mk = NULL;
   /* fprintf(stderr,"kbd: %d %d %d ",keysym,state,extended_mode); */
   if (!cp) return(KEYBOARD_NO_ACTION);
   redisplay = CURSOR_IN_VIEW;
@@ -6613,7 +6626,7 @@ static int calculate_syncd_fft(chan_info *cp, void *ptr)
   return(0);
 }
 
-void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button, TIME_TYPE time)
+void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button)
 {
   snd_info *sp;
   snd_state *ss;
@@ -6762,7 +6775,7 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
   select_channel(sp,cp->chan);
   if (mouse_mark)
     {
-      move_mark(cp,mouse_mark,x,y);
+      move_mark(cp,mouse_mark,x);
       dragged = 1;
     }
   else

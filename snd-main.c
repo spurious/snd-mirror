@@ -1,7 +1,7 @@
 #include "snd.h"
 #include <locale.h>
 
-static int remove_temp_files(chan_info *cp, void *ptr)
+static int remove_temp_files(chan_info *cp, void *ignore)
 {
   free_sound_list(cp);
   free_mix_list(cp);
@@ -30,7 +30,7 @@ void snd_exit_cleanly(snd_state *ss)
 #endif
 }
 
-int snd_not_current(snd_info *sp, void *dat)
+int snd_not_current(snd_info *sp, void *ignore)
 {
   /* check for change in update status */
   int needs_update;

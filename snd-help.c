@@ -212,16 +212,6 @@ void news_help(snd_state *ss)
          make-sample-reader snd arg can be filename (to read external files without opening them).\n\
          Guile 1.4 is now the default -- if you are using 1.3.4, include -DHAVE_GUILE_1_3.\n\
          various bugs fixed (thanks to Daniel Aronovitch).\n\
-22-Jun:  version renamed snd-version (old name collides with guile) -- similarly for apropos and help.\n\
-21-Jun:  marks.scm.\n\
-19-Jun:  changes to GC handling for new guile.\n\
-         sync field to marks, and changed much of the Guile interface to marks.\n\
-         edits function now returns a list, not a vector.\n\
-15-Jun:  changed edit|undo-hook procedure to take no args.\n\
-13-Jun:  snd-error, snd-warning.\n\
-         cursor-style (default cursor-cross, also cursor-line).\n\
-         channel-specific edit-hook and undo-hook.\n\
-12-Jun:  experimental multifile-sound support (under FILE_PER_CHAN switch).\n\
 ",
 NULL);
   FREE(info);
@@ -275,7 +265,6 @@ static char view_menu_help_string[] =
      filled polygons.\n\
   Show Marks: display mark locations using a\n\
      long vertical line.\n\
-  Show axes: display x and y axes.\n\
   Show Y=0: display the y=0 line.\n\
   Verbose cursor: show cursor loc and sample value.\n\
   Regions: fire up the region browser.\n\

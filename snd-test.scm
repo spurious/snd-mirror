@@ -7,8 +7,8 @@
 (read-set! keywords 'prefix)
 
 (define tests 1)
-(set! full-test #f)
-(set! snd-test 13)
+(set! full-test #t)
+;(set! snd-test 13)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -2347,7 +2347,7 @@
 	(play-and-wait 0 nind)
 	(revert-sound nind)
 	(enveloped-mix "oboe.snd" 0 '(0 0 1 1 2 0)) (w)
-	(pvoc) (w)
+	(pvoc :pitch 0.5 :time 1.0) (w)
 	(play-and-wait 0 nind)
 	(revert-sound nind)
 	(pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))

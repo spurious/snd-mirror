@@ -401,7 +401,6 @@ static void save_as_ok_callback(Widget w,XtPointer clientData,XtPointer callData
   snd_state *ss = (snd_state *)clientData;
   char *str = NULL,*comment;
   snd_info *sp;
-  int result;
   int type,format,srate;
   str = XmTextGetString(save_as_file_data->srate_text);
   srate = string2int(str);
@@ -413,7 +412,7 @@ static void save_as_ok_callback(Widget w,XtPointer clientData,XtPointer callData
   sp = any_selected_sound(ss);
   if ((str) && (*str))
     {
-      result = check_for_filename_collisions_and_save(ss,sp,str,save_as_dialog_type,srate,type,format,comment);
+      check_for_filename_collisions_and_save(ss,sp,str,save_as_dialog_type,srate,type,format,comment);
       XtFree(str);
     }
   else if (sp) report_in_minibuffer(sp,STR_not_saved_no_name_given);

@@ -595,7 +595,7 @@ static void cepstrum(Float *data, int n)
  * Implementation by C.C.Gumas 1/13/93 (slightly reformatted by bil for snd 30-Jan-99)
  */
 
-static void fast_hwt_first_stage (int n, int local_size, int local_half_size, Float *out, Float *in) 
+static void fast_hwt_first_stage (int local_half_size, Float *out, Float *in) 
 {
   Float tmp0, tmp1;
   int k, j, i;
@@ -635,8 +635,8 @@ static void fast_hwt_stage (int n, int local_size, int local_half_size, Float *o
     {
       if (n == 2) 
 	{
-	  fast_hwt_first_stage (1, local_size, local_half_size, in, out);
-	  fast_hwt_first_stage (1, local_size, local_half_size, &in[local_size], &out[local_size]);  
+	  fast_hwt_first_stage (local_half_size, in, out);
+	  fast_hwt_first_stage (local_half_size, &in[local_size], &out[local_size]);  
 	}
     }
 }
