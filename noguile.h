@@ -31,7 +31,9 @@
 #endif
 
 #define scm_print_state int
-#define scm_sizet int
+
+#define FREE_OBJECT_TYPE         int
+#define MARK_OBJECT_TYPE         SCM
 
 #define scm_apply(a, b, c) 0
 SCM scm_return_first(SCM a, ...);
@@ -54,14 +56,14 @@ SCM scm_return_first(SCM a, ...);
 #define CDR(a) 0
 #define CDDR(a) 0
 #define VECTOR_ELEMENTS(a) ((SCM *)a)
-#define NEW_OBJECT(a, b, c)
+#define NEW_OBJECT(a, b, c, ig1, ig2)
 #define HOOK_PROCEDURES(a) 0
-#define SET_OBJECT_REF(a, b)
+#define SND_SET(a, b)
 #define VARIABLE_REF(a) 0
 
 /* this is the sg.h replacement */
 
-#define RETURN_NEW_OBJECT(Tag, Val) return(0)
+#define RETURN_NEW_OBJECT(Tag, Val, ig1, ig2) return(0)
 #define OBJECT_REF(a) 0
 #define SND_LOOKUP(a) 0
 #define TAG_TYPE int

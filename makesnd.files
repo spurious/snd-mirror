@@ -1,5 +1,5 @@
-SNDLIB_HEADERS = sndlib.h sndlib-strings.h clm.h vct.h sndlib2scm.h clm2scm.h sg.h noguile.h sz.h
-SND_HEADERS = snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h sg.h noguile.h sz.h
+SNDLIB_HEADERS = sndlib.h sndlib-strings.h clm.h vct.h sndlib2scm.h clm2scm.h sg.h noguile.h sz.h sr.h sl.h
+SND_HEADERS = snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h sg.h noguile.h sz.h sr.h sl.h
 SND_X_HEADERS = snd-x0.h snd-x1.h
 SND_G_HEADERS = snd-g0.h snd-g1.h
 SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o vct.o sndlib2scm.o clm2scm.o

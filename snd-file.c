@@ -616,7 +616,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
   if (mcf) FREE(mcf);
   if (sp)
     {
-      SET_OBJECT_REF(memo_sound, TO_SMALL_SCM_INT(sp->index));
+      SND_SET(memo_sound, TO_SMALL_SCM_INT(sp->index));
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = 0;
       ss->active_sounds++;

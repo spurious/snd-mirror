@@ -80,7 +80,7 @@
   #define MIN(a, b) ((a > b) ? (b) : (a))
 #endif
 
-static TAG_TYPE vct_tag = 0;
+static TAG_TYPE vct_tag;
 static int vct_print_length = VCT_PRINT_LENGTH;
 void set_vct_print_length(int len) {vct_print_length = len;}
 
@@ -102,7 +102,7 @@ vct *get_vct(SCM arg)
   return(NULL);
 }
 
-static scm_sizet free_vct(SCM obj)
+static FREE_OBJECT_TYPE free_vct(SCM obj)
 {
   vct *v = (vct *)OBJECT_REF(obj);
   if (v)
@@ -112,9 +112,12 @@ static scm_sizet free_vct(SCM obj)
 	FREE(v->data);
       v->data = NULL;
       free(v);
-      /* SND_SET_VALUE_OF(obj, (SCM)NULL); */
     }
+#if HAVE_RUBY
+  return(NULL);
+#else
   return(sizeof(vct));
+#endif
 }
 
 static int print_vct(SCM obj, SCM port, scm_print_state *pstate)
@@ -166,7 +169,7 @@ SCM make_vct(int len, Float *data)
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 0;
-  RETURN_NEW_OBJECT(vct_tag, new_vct);
+  RETURN_NEW_OBJECT(vct_tag, new_vct, 0, free_vct);
 }
 
 SCM make_vct_wrapper(int len, Float *data)
@@ -176,7 +179,7 @@ SCM make_vct_wrapper(int len, Float *data)
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 1;
-  RETURN_NEW_OBJECT(vct_tag, new_vct);
+  RETURN_NEW_OBJECT(vct_tag, new_vct, 0, free_vct);
 }
 
 static SCM g_make_vct(SCM len)
@@ -602,11 +605,17 @@ static SCM list2vct(SCM lst)
   return(scm_return_first(scv, lst));
 }
 
-static SCM g_vct(SCM args) 
+static SCM g_vct_1(SCM args) 
 {
   #define H_vct "(" S_vct " args -> vct with contents as args"
   return(list2vct(args));
 }
+
+#ifdef VARGIFY
+  VARGIFY(g_vct, g_vct_1)
+#else
+  #define g_vct g_vct_1
+#endif
 
 static SCM array_to_list(Float *arr, int i, int len)
 {
@@ -681,6 +690,9 @@ void init_vct(void)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(vct_tag, PROCEDURE vct_ref, 1, 0, 0);
 #endif
+#endif
+#if HAVE_RUBY
+  vct_tag = rb_define_class("Vct", rb_cObject);
 #endif
 
   local_doc = MAKE_PERMANENT(DOCUMENTATION);

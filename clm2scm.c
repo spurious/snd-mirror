@@ -664,7 +664,7 @@ static void init_simple_stuff(SCM local_doc)
 
 /* ---------------- mus-scm struct ---------------- */
 
-static TAG_TYPE mus_scm_tag = 0;
+static TAG_TYPE mus_scm_tag;
 
 #define MUS_SCM_P(obj) (OBJECT_TYPE_P(obj, mus_scm_tag))
 int mus_scm_p(SCM obj) {return(MUS_SCM_P(obj));}
@@ -680,7 +680,7 @@ static SCM *make_vcts(int size)
   return(vcts);
 }
 
-static SCM mark_mus_scm(SCM obj) 
+static MARK_OBJECT_TYPE mark_mus_scm(SCM obj) 
 {
   int i;
   mus_scm *ms;
@@ -693,20 +693,28 @@ static SCM mark_mus_scm(SCM obj)
 	  scm_gc_mark(ms->vcts[i]);
     }
 #endif
+#if HAVE_RUBY
+  return(NULL);
+#else
   return(FALSE_VALUE);
+#endif
 }
 
 #define DONT_FREE_FRAME -1
 #define FREE_FRAME 1
 
-static scm_sizet free_mus_scm(SCM obj) 
+static FREE_OBJECT_TYPE free_mus_scm(SCM obj) 
 {
   mus_scm *ms;
   ms = TO_MUS_SCM(obj);
   if (ms->nvcts != DONT_FREE_FRAME) mus_free(TO_CLM(obj));
   if (ms->vcts) FREE(ms->vcts);  
   FREE(ms);
+#if HAVE_RUBY
+  return(NULL);
+#else
   return(sizeof(mus_scm));
+#endif
 }
 
 static int print_mus_scm(SCM obj, SCM port, scm_print_state *pstate)
@@ -744,12 +752,15 @@ static void init_mus_scm(void)
   scm_set_smob_apply(mus_scm_tag, PROCEDURE mus_scm_apply, 0, 2, 0);
 #endif
 #endif
+#if HAVE_RUBY
+  mus_scm_tag = rb_define_class("Mus", rb_cObject);
+#endif
 }
 
 SCM mus_scm_to_smob(mus_scm *gn)
 {
   scm_done_malloc(sizeof(mus_scm));
-  RETURN_NEW_OBJECT(mus_scm_tag, gn);
+  RETURN_NEW_OBJECT(mus_scm_tag, gn, mark_mus_scm, free_mus_scm);
 }
 
 #define MUS_DATA_POSITION 0
@@ -757,7 +768,7 @@ SCM mus_scm_to_smob(mus_scm *gn)
 SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
 {
   SCM new_dly;
-  NEW_OBJECT(new_dly, mus_scm_tag, gn);
+  NEW_OBJECT(new_dly, mus_scm_tag, gn, mark_mus_scm, free_mus_scm);
   gn->vcts[MUS_DATA_POSITION] = v;
   return(new_dly);
 }

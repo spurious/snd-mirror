@@ -4837,13 +4837,19 @@ static SCM g_set_wavo_trace(SCM val, SCM snd, SCM chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
 
-static SCM g_transform_size(SCM snd, SCM chn)
+static SCM g_transform_size_1(SCM snd, SCM chn)
 {
   #define H_transform_size "(" S_transform_size " (snd #t) (chn #t)) -> current fft size (256)"
   if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_TRANSFORM_SIZE, S_transform_size));
   return(TO_SCM_INT(transform_size(get_global_state())));
 }
+
+#ifdef ARGIFY_2
+  ARGIFY_2(g_transform_size, g_transform_size_1)
+#else
+  #define g_transform_size g_transform_size_1
+#endif
 
 static SCM g_set_transform_size(SCM val, SCM snd, SCM chn)
 {

@@ -6,6 +6,14 @@
   #include <locale.h>
 #endif
 
+#if HAVE_RUBY
+  #define COMMENT_START "#"
+  #define TO_VAR_NAME(Str) Scheme_constant_to_Ruby(Str)
+#else
+  #define COMMENT_START ";;;"
+  #define TO_VAR_NAME(Str) Str
+#endif
+
 static int remove_temp_files(chan_info *cp, void *ignore)
 {
   free_sound_list(cp);
@@ -69,9 +77,9 @@ static char *show_axes2string(int ax)
 {
   switch (ax)
     {
-    case SHOW_NO_AXES: return("show-no-axes"); break;
-    case SHOW_X_AXIS: return("show-x-axis"); break;
-    default: return("show-all-axes"); break;
+    case SHOW_NO_AXES: return(TO_VAR_NAME("show-no-axes")); break;
+    case SHOW_X_AXIS:  return(TO_VAR_NAME("show-x-axis")); break;
+    default:           return(TO_VAR_NAME("show-all-axes")); break;
     }
 }
 
@@ -79,10 +87,10 @@ static char *zoom_focus_style_name(int choice)
 {
   switch (choice)
     {
-    case ZOOM_FOCUS_LEFT: return(S_zoom_focus_left); break;
-    case ZOOM_FOCUS_RIGHT: return(S_zoom_focus_right); break;
-    case ZOOM_FOCUS_MIDDLE: return(S_zoom_focus_middle); break;
-    default: return(S_zoom_focus_active); break;
+    case ZOOM_FOCUS_LEFT:   return(TO_VAR_NAME(S_zoom_focus_left)); break;
+    case ZOOM_FOCUS_RIGHT:  return(TO_VAR_NAME(S_zoom_focus_right)); break;
+    case ZOOM_FOCUS_MIDDLE: return(TO_VAR_NAME(S_zoom_focus_middle)); break;
+    default:                return(TO_VAR_NAME(S_zoom_focus_active)); break;
     }
 }
 
@@ -90,11 +98,11 @@ static char *transform_normalization_name(int choice)
 {
   switch (choice)
     {
-    case DONT_NORMALIZE_TRANSFORM: return(S_dont_normalize_transform); break;
-    case NORMALIZE_TRANSFORM_BY_CHANNEL:return(S_normalize_transform_by_channel); break;
-    case NORMALIZE_TRANSFORM_BY_SOUND: return(S_normalize_transform_by_sound); break;
-    case NORMALIZE_TRANSFORM_GLOBALLY:return(S_normalize_transform_globally); break;
-    default:return(S_normalize_transform_by_channel); break;
+    case DONT_NORMALIZE_TRANSFORM:      return(TO_VAR_NAME(S_dont_normalize_transform)); break;
+    case NORMALIZE_TRANSFORM_BY_CHANNEL:return(TO_VAR_NAME(S_normalize_transform_by_channel)); break;
+    case NORMALIZE_TRANSFORM_BY_SOUND:  return(TO_VAR_NAME(S_normalize_transform_by_sound)); break;
+    case NORMALIZE_TRANSFORM_GLOBALLY:  return(TO_VAR_NAME(S_normalize_transform_globally)); break;
+    default:                            return(TO_VAR_NAME(S_normalize_transform_by_channel)); break;
     }
 }
 
@@ -102,12 +110,12 @@ static char *graph_style_name(int choice)
 {
   switch (choice)
     {
-    case GRAPH_DOTS: return(S_graph_dots); break;
-    case GRAPH_DOTS_AND_LINES: return(S_graph_dots_and_lines); break;
-    case GRAPH_LOLLIPOPS: return(S_graph_lollipops); break;
-    case GRAPH_FILLED: return(S_graph_filled); break;
+    case GRAPH_DOTS:           return(TO_VAR_NAME(S_graph_dots)); break;
+    case GRAPH_DOTS_AND_LINES: return(TO_VAR_NAME(S_graph_dots_and_lines)); break;
+    case GRAPH_LOLLIPOPS:      return(TO_VAR_NAME(S_graph_lollipops)); break;
+    case GRAPH_FILLED:         return(TO_VAR_NAME(S_graph_filled)); break;
     case GRAPH_LINES: 
-    default: return(S_graph_lines); break;
+    default:                   return(TO_VAR_NAME(S_graph_lines)); break;
     }
 }
 
@@ -115,9 +123,9 @@ static char *transform_graph_type_name(int choice)
 {
   switch (choice)
     {
-    case GRAPH_TRANSFORM_AS_SONOGRAM: return(S_graph_transform_as_sonogram); break;
-    case GRAPH_TRANSFORM_AS_SPECTROGRAM: return(S_graph_transform_as_spectrogram); break;
-    default: return(S_graph_transform_once); break;
+    case GRAPH_TRANSFORM_AS_SONOGRAM:    return(TO_VAR_NAME(S_graph_transform_as_sonogram)); break;
+    case GRAPH_TRANSFORM_AS_SPECTROGRAM: return(TO_VAR_NAME(S_graph_transform_as_spectrogram)); break;
+    default:                             return(TO_VAR_NAME(S_graph_transform_once)); break;
     }
 }
 
@@ -125,8 +133,8 @@ static char *time_graph_type_name(int choice)
 {
   switch (choice)
     {
-    case GRAPH_TIME_AS_WAVOGRAM: return(S_graph_time_as_wavogram); break;
-    default: return(S_graph_time_once); break;
+    case GRAPH_TIME_AS_WAVOGRAM: return(TO_VAR_NAME(S_graph_time_as_wavogram)); break;
+    default:                     return(TO_VAR_NAME(S_graph_time_once)); break;
     }
 }
 
@@ -134,9 +142,9 @@ static char *x_axis_style_name(int choice)
 {
   switch(choice)
     {
-    case X_AXIS_IN_SAMPLES: return(S_x_axis_in_samples); break;
-    case X_AXIS_AS_PERCENTAGE: return(S_x_axis_as_percentage); break;
-    default: return(S_x_axis_in_seconds); break;
+    case X_AXIS_IN_SAMPLES:    return(TO_VAR_NAME(S_x_axis_in_samples)); break;
+    case X_AXIS_AS_PERCENTAGE: return(TO_VAR_NAME(S_x_axis_as_percentage)); break;
+    default:                   return(TO_VAR_NAME(S_x_axis_in_seconds)); break;
     }
 }
 
@@ -144,9 +152,9 @@ static char *speed_control_style_name(int choice)
 {
   switch (choice)
     {
-    case SPEED_CONTROL_AS_RATIO: return(S_speed_control_as_ratio); break;
-    case SPEED_CONTROL_AS_SEMITONE: return(S_speed_control_as_semitone); break;
-    default: return(S_speed_control_as_float); break;
+    case SPEED_CONTROL_AS_RATIO:    return(TO_VAR_NAME(S_speed_control_as_ratio)); break;
+    case SPEED_CONTROL_AS_SEMITONE: return(TO_VAR_NAME(S_speed_control_as_semitone)); break;
+    default:                        return(TO_VAR_NAME(S_speed_control_as_float)); break;
     }
 }
 
@@ -154,9 +162,9 @@ static char *channel_style_name(int choice)
 {
   switch (choice)
     {
-    case CHANNELS_COMBINED: return(S_channels_combined); break;
-    case CHANNELS_SUPERIMPOSED: return(S_channels_superimposed); break;
-    default: return(S_channels_separate); break;
+    case CHANNELS_COMBINED:     return(TO_VAR_NAME(S_channels_combined)); break;
+    case CHANNELS_SUPERIMPOSED: return(TO_VAR_NAME(S_channels_superimposed)); break;
+    default:                    return(TO_VAR_NAME(S_channels_separate)); break;
     }
 }
 
@@ -164,9 +172,9 @@ static char *enved_target_name(int choice)
 {
   switch (choice)
     {
-    case ENVED_SPECTRUM: return(S_enved_spectrum); break;
-    case ENVED_SRATE: return(S_enved_srate); break;
-    default: return(S_enved_amplitude); break;
+    case ENVED_SPECTRUM: return(TO_VAR_NAME(S_enved_spectrum)); break;
+    case ENVED_SRATE:    return(TO_VAR_NAME(S_enved_srate)); break;
+    default:             return(TO_VAR_NAME(S_enved_amplitude)); break;
     }
 }
 
@@ -174,6 +182,21 @@ static char *b2s(int val) {if (val) return("#t"); else return("#f");}
 
 #define white_space "      "
 
+#if HAVE_RUBY
+static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "set-%s(%s)\n", name, val);}
+static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd, "set-%s(\"%s\")\n", name, val);}
+static void pss_sd(FILE *fd, char *name, int val) {fprintf(fd, "set-%s(%d)\n", name, val);}
+static void pss_sf(FILE *fd, char *name, Float val) {fprintf(fd, "set-%s(%.4f)\n", name, val);}
+
+static void psp_ss(FILE *fd, char *name, char *val) {fprintf(fd, "%sset-%s(%s sfile)\n", white_space, name, val);}
+static void psp_sd(FILE *fd, char *name, int val) {fprintf(fd, "%sset-%s(%d sfile)\n", white_space, name, val);}
+static void psp_sf(FILE *fd, char *name, Float val) {fprintf(fd, "%sset-%s(%.4f sfile)\n", white_space, name, val);}
+
+static void pcp_ss(FILE *fd, char *name, char *val, int chan) {fprintf(fd, "%sset-%s(%s sfile %d)\n", white_space, name, val, chan);}
+static void pcp_sd(FILE *fd, char *name, int val, int chan) {fprintf(fd, "%sset-%s(%d sfile %d)\n", white_space, name, val, chan);}
+static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%sset-%s(%.4f sfile %d)\n", white_space, name, val, chan);}
+static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) {fprintf(fd, "%sset-%s((vector %.4f %.4f) sfile %d)\n", white_space, name, val1, val2, chan);}
+#else
 static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
 static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
 static void pss_sd(FILE *fd, char *name, int val) {fprintf(fd, "(set! (%s) %d)\n", name, val);}
@@ -187,6 +210,7 @@ static void pcp_ss(FILE *fd, char *name, char *val, int chan) {fprintf(fd, "%s(s
 static void pcp_sd(FILE *fd, char *name, int val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %d)\n", white_space, name, chan, val);}
 static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %.4f)\n", white_space, name, chan, val);}
 static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) {fprintf(fd, "%s(set! (%s sfile %d) (list %.4f %.4f))\n", white_space, name, chan, val1, val2);}
+#endif
 
 static void save_snd_state_options (snd_state *ss, FILE *fd)
 { /* for save options menu choice (.snd) -- mostly saving snd_state info */
@@ -201,9 +225,9 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 #if HAVE_STRFTIME
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  fprintf(fd, "\n;;; Snd %s (%s) options saved %s\n", SND_RPM_VERSION, SND_VERSION, time_buf);
+  fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", COMMENT_START, SND_RPM_VERSION, SND_VERSION, time_buf);
 #else
-  fprintf(fd, "\n;;; Snd %s (%s)\n", SND_RPM_VERSION, SND_VERSION);
+  fprintf(fd, "\n%s Snd %s (%s)\n", COMMENT_START, SND_RPM_VERSION, SND_VERSION);
 #endif
 
   if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sd(fd, S_transform_size, transform_size(ss));
@@ -308,7 +332,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fneq(eps_left_margin(ss), DEFAULT_EPS_LEFT_MARGIN)) pss_sf(fd, S_eps_left_margin, eps_left_margin(ss));
   save_recorder_state(fd);
 
-  fprintf(fd, ";;; end of snd options\n");
+  fprintf(fd, COMMENT_START " end of snd options\n");
   if (locale)
     {
 #if HAVE_SETLOCALE
@@ -411,8 +435,8 @@ static int save_sound_state (snd_info *sp, void *ptr)
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
   if (PROCEDURE_P(sp->search_proc))
     {
-      fprintf(fd, "      ;;; currently not trying to restore the local search procedure\n");
-      fprintf(fd, "      ;;; %s\n", g_print_1(sp->search_proc, __FUNCTION__));
+      fprintf(fd, "      " COMMENT_START " currently not trying to restore the local search procedure\n");
+      fprintf(fd, "      %s %s\n", COMMENT_START, g_print_1(sp->search_proc, __FUNCTION__));
     }
   for (chan = 0; chan < sp->nchans; chan++)
     {
@@ -691,7 +715,7 @@ static SCM g_save_state(SCM filename)
   return(filename);
 }
 
-static SCM g_save_options(SCM filename)
+static SCM g_save_options_1(SCM filename)
 {
   #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
   char *name = NULL;
@@ -711,13 +735,25 @@ static SCM g_save_options(SCM filename)
   return(filename);
 }
 
-static SCM g_exit(SCM val) 
+#ifdef NARGIFY_1
+  NARGIFY_1(g_save_options, g_save_options_1)
+#else
+  #define g_save_options g_save_options_1
+#endif
+
+static SCM g_exit_1(SCM val) 
 {
   #define H_exit "(" S_exit ") exits Snd"
   if (snd_exit_cleanly(get_global_state(), FALSE))
     snd_exit(TO_C_INT_OR_ELSE(val,1)); 
   return(FALSE_VALUE);
 }
+
+#ifdef ARGIFY_1
+  ARGIFY_1(g_exit, g_exit_1)
+#else
+  #define g_exit g_exit_1
+#endif
 
 static SCM g_mem_report(void) 
 {

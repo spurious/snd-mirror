@@ -16,7 +16,8 @@
 #define scm_catch_body_t void *
 #define scm_catch_handler_t void *
 #define scm_print_state int
-#define scm_sizet int
+#define FREE_OBJECT_TYPE         int
+#define MARK_OBJECT_TYPE         SCM
 
 #define scm_apply(a, b, c) rep_apply(a, b)
 SCM scm_return_first(SCM a, ...);

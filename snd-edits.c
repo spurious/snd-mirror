@@ -2821,7 +2821,7 @@ static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
 
 /* ---------------- sample readers ---------------- */
 
-static TAG_TYPE sf_tag = 0;
+static TAG_TYPE sf_tag;
 int sf_p(SCM obj); /* currently for snd-ladspa.c */
 int sf_p(SCM obj) {return(OBJECT_TYPE_P(obj, sf_tag));}
 #define SAMPLE_READER_P(Obj) OBJECT_TYPE_P(Obj, sf_tag)
@@ -2867,7 +2867,7 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
   return(1);
 }
 
-static scm_sizet free_sf(SCM obj) 
+static FREE_OBJECT_TYPE free_sf(SCM obj) 
 {
   snd_fd *fd = TO_SAMPLE_READER(obj); 
   snd_info *sp = NULL;
@@ -2879,7 +2879,11 @@ static scm_sizet free_sf(SCM obj)
       free_snd_fd(fd);
       if (sp) completely_free_snd_info(sp);
     }
+#if HAVE_RUBY
+  return(NULL);
+#else
   return(sizeof(snd_fd));
+#endif
 }
 
 static SCM g_sample_reader_at_end(SCM obj) 
@@ -2902,7 +2906,7 @@ static SCM g_sample_reader_home(SCM obj)
 SCM g_c_make_sample_reader(snd_fd *fd)
 {
   scm_done_malloc(sizeof(snd_fd));
-  RETURN_NEW_OBJECT(sf_tag, fd);
+  RETURN_NEW_OBJECT(sf_tag, fd, 0, free_sf);
 }
 
 static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos) /* "dir" confuses Mac OS-X Objective-C! */
@@ -2950,7 +2954,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
     {
       fd->local_sp = loc_sp;
       scm_done_malloc(sizeof(snd_fd));
-      RETURN_NEW_OBJECT(sf_tag, fd);
+      RETURN_NEW_OBJECT(sf_tag, fd, 0, free_sf);
     }
   return(FALSE_VALUE);
 }
@@ -2984,7 +2988,7 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
   if (fd)
     {
       scm_done_malloc(sizeof(snd_fd));
-      RETURN_NEW_OBJECT(sf_tag, fd);
+      RETURN_NEW_OBJECT(sf_tag, fd, 0, free_sf);
     }
   return(FALSE_VALUE);
 }
@@ -3760,6 +3764,9 @@ void g_init_edits(SCM local_doc)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(sf_tag, PROCEDURE g_next_sample, 0, 0, 0);
 #endif
+#endif
+#if HAVE_RUBY
+  sf_tag = rb_define_class("SampleReader", rb_cObject);
 #endif
 
   DEFINE_VAR(S_current_edit_position,      AT_CURRENT_EDIT_POSITION,             "current edit position indicator for 'edpos' args");

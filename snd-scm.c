@@ -426,11 +426,10 @@ SCM eval_form_wrapper(void *data)
 
 static SCM eval_file_wrapper(void *data)
 {
-  SCM res;
   last_file_loaded = (char *)data;
-  res = LOAD_SCM_FILE((char *)data);
+  LOAD_SCM_FILE((char *)data);
   last_file_loaded = NULL;
-  return(res);
+  return(UNDEFINED_VALUE);
 }
 
 static SCM g_call0_1(void *arg)
@@ -521,7 +520,7 @@ char *g_print_1(SCM obj, const char *caller)
   char *str1 = NULL;
 #if HAVE_GUILE
 #if HAVE_SCM_OBJECT_TO_STRING
-  return(TO_NEW_C_STRING(scm_object_to_string(obj, UNDEFINED_VALUE))); /* does the GC handle the scm_close_port? */
+  return(TO_NEW_C_STRING(OBJECT_TO_STRING(obj))); 
 #else
   SCM str, val;
   SCM port;
@@ -534,11 +533,14 @@ char *g_print_1(SCM obj, const char *caller)
 #endif
 #endif
 #if HAVE_LIBREP
-  repv stream, val;
+  SCM stream, val;
   stream = Fmake_string_output_stream();
   rep_print_val(stream, obj);
   val = Fget_output_stream_string(stream);
   str1 = TO_C_STRING(val);
+#endif
+#if HAVE_RUBY
+  return(TO_NEW_C_STRING(OBJECT_TO_STRING(obj)));
 #endif
   return(str1);
 }
@@ -692,7 +694,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
   if (str)
     {
       send_error_output_to_stdout = 1;
-#if HAVE_LIBREP
+#if HAVE_LIBREP || HAVE_RUBY
       result = EVAL_STRING(buf);
 #else
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
@@ -966,7 +968,7 @@ are available, but not all are compatible with all header types"
 }
 
 static SCM g_eps_file(void) {return(TO_SCM_STRING(eps_file(state)));}
-static SCM g_set_eps_file(SCM val) 
+static SCM g_set_eps_file_1(SCM val) 
 {
   #define H_eps_file "(" S_eps_file ") -> current eps ('Print' command) file name (snd.eps)"
   ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_eps_file, "a string"); 
@@ -974,6 +976,12 @@ static SCM g_set_eps_file(SCM val)
   set_eps_file(state, TO_NEW_C_STRING(val)); 
   return(TO_SCM_STRING(eps_file(state)));
 }
+
+#ifdef NARGIFY_1
+  NARGIFY_1(g_set_eps_file, g_set_eps_file_1)
+#else
+  #define g_set_eps_file g_set_eps_file_1
+#endif
 
 static SCM g_eps_left_margin(void) {return(TO_SCM_DOUBLE(eps_left_margin(state)));}
 static SCM g_set_eps_left_margin(SCM val) 
@@ -2732,7 +2740,7 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
   /* still need to trap help output and send it to the listener */
 #endif
 #endif
-#if HAVE_LIBREP
+#if HAVE_LIBREP || HAVE_RUBY
   DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
   DEFINE_PROC(set_name, set_func, set_req, set_opt, 0, get_help);
 #endif
@@ -2769,7 +2777,7 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
   NEW_PROCEDURE(set_name, PROCEDURE set_func, set_req, set_opt, 0);
 #endif
 #endif
-#if HAVE_LIBREP
+#if HAVE_LIBREP || HAVE_RUBY
   DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
   DEFINE_PROC(set_name, set_func, set_req, set_opt, 0, get_help);
 #endif
@@ -2881,7 +2889,7 @@ void g_initialize_gh(snd_state *ss)
   NEW_PROCEDURE("g-gc-hook", PROCEDURE g_gc_hook, 0, 0, 0);
   DEFINE_VAR("g-gc-step", 10, "");
   DEFINE_VAR("g-gc-ctr", 0, "");
-  scm_eval_0str("(define (gc-1) (g-gc-hook) (if (> g-gc-step 0) (begin (if (> g-gc-ctr g-gc-step) (begin (set! g-gc-ctr 0) (gc)) (set! g-gc-ctr (1+ g-gc-ctr))))))");
+  EVAL_STRING("(define (gc-1) (g-gc-hook) (if (> g-gc-step 0) (begin (if (> g-gc-ctr g-gc-step) (begin (set! g-gc-ctr 0) (gc)) (set! g-gc-ctr (1+ g-gc-ctr))))))");
   YES_WE_HAVE("gcing");
 #endif
 #if WITH_MCHECK
@@ -2979,7 +2987,7 @@ void g_initialize_gh(snd_state *ss)
 			       "set-" S_default_output_format, PROCEDURE g_set_default_output_format, local_doc, 0, 0, 0, 1);
 
   define_procedure_with_setter(S_eps_file, PROCEDURE g_eps_file, H_eps_file,
-			       "set-" S_eps_file, PROCEDURE g_set_eps_file, local_doc, 0, 0, 0, 1);
+			       "set-" S_eps_file, PROCEDURE g_set_eps_file, local_doc, 0, 0, 1, 0);
 
   define_procedure_with_setter(S_eps_left_margin, PROCEDURE g_eps_left_margin, H_eps_left_margin,
 			       "set-" S_eps_left_margin, PROCEDURE g_set_eps_left_margin, local_doc, 0, 0, 0, 1);
@@ -3433,7 +3441,7 @@ SCM librep_eval_string(char *data)
 
 #if HAVE_MZSCHEME
   
-/* need a way to turn DEFINE_PROC into a tie into a call on C proc */
+/* need a way to turn DEFINE_PROC into a tie into a call on C proc -- see ruby case */
 
 static Scheme_Object *snd_inner(void *closure_data, int argc, Scheme_Object **argv)
 {
@@ -3515,6 +3523,12 @@ char *Scheme_global_variable_to_Ruby(char *name)
     new_name[i] = new_name[i - 1];
   new_name[0] = '$';
   return(new_name);
+}
+
+SCM snd_rb_cdr(SCM val)
+{
+  rb_ary_delete_at(val, 0);
+  return(val);
 }
 
 #endif

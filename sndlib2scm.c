@@ -63,7 +63,7 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
   /* still need to trap help output and send it to the listener */
 #endif
 #endif
-#if HAVE_LIBREP
+#if HAVE_LIBREP || HAVE_RUBY
   DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
   DEFINE_PROC(set_name, set_func, set_req, set_opt, 0, get_help);
 #endif
@@ -378,7 +378,7 @@ static MUS_SAMPLE_TYPE **get_sound_data(SCM arg)
   return(NULL);
 }
 
-static scm_sizet free_sound_data(SCM obj)
+static FREE_OBJECT_TYPE free_sound_data(SCM obj)
 {
   int i;
   sound_data *v = (sound_data *)OBJECT_REF(obj);
@@ -391,7 +391,11 @@ static scm_sizet free_sound_data(SCM obj)
   v->data = NULL;
   v->chans = 0;
   free(v);
+#if HAVE_RUBY
+  return(NULL);
+#else
   return(sizeof(sound_data));
+#endif
 }
 
 static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
@@ -470,7 +474,7 @@ SCM make_sound_data(int chans, int frames)
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
   for (i = 0; i < chans; i++)
     new_sound_data->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(frames, sizeof(MUS_SAMPLE_TYPE));
-  RETURN_NEW_OBJECT(sound_data_tag, new_sound_data);
+  RETURN_NEW_OBJECT(sound_data_tag, new_sound_data, 0, free_snd_data);
 }
 
 static SCM g_make_sound_data(SCM chans, SCM frames)
@@ -1063,6 +1067,9 @@ void mus_sndlib2scm_initialize(void)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(sound_data_tag, PROCEDURE sound_data_apply, 2, 0, 0);
 #endif
+#endif
+#if HAVE_RUBY
+  sound_data_tag = rb_define_class("SoundData", rb_cObject);
 #endif
 
   DEFINE_VAR(S_mus_out_format, MUS_OUT_FORMAT, "sample format for fastest IO");

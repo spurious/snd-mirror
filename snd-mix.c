@@ -3842,7 +3842,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 
 /* ---------------- mix sample readers ---------------- */
 
-static TAG_TYPE mf_tag = 0;
+static TAG_TYPE mf_tag;
 static int mf_p(SCM obj) {return(OBJECT_TYPE_P(obj, mf_tag));}
 #define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)OBJECT_REF(obj))
 #define MIX_SAMPLE_READER_P(Obj) OBJECT_TYPE_P(Obj, mf_tag)
@@ -3889,11 +3889,15 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
   return(1);
 }
 
-static scm_sizet free_mf(SCM obj) 
+static FREE_OBJECT_TYPE free_mf(SCM obj) 
 {
   mix_fd *fd = (mix_fd *)OBJECT_REF(obj); 
   if (fd) free_mix_fd(fd); 
+#if HAVE_RUBY
+  return(NULL);
+#else
   return(sizeof(mix_fd));
+#endif
 }
 
 static SCM g_make_mix_sample_reader(SCM mix_id)
@@ -3909,7 +3913,7 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
   if (mf)
     {
       scm_done_malloc(sizeof(mix_fd));
-      RETURN_NEW_OBJECT(mf_tag, mf);
+      RETURN_NEW_OBJECT(mf_tag, mf, 0, free_mf);
     }
   return(FALSE_VALUE);
 }
@@ -3935,7 +3939,7 @@ static SCM g_free_mix_sample_reader(SCM obj)
 
 /* ---------------- track sample readers ---------------- */
 
-static TAG_TYPE tf_tag = 0;
+static TAG_TYPE tf_tag;
 static int tf_p(SCM obj) {return(OBJECT_TYPE_P(obj, tf_tag));}
 #define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)OBJECT_REF(obj))
 #define TRACK_SAMPLE_READER_P(Obj) OBJECT_TYPE_P(Obj, tf_tag)
@@ -4003,11 +4007,15 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
   return(1);
 }
 
-static scm_sizet free_tf(SCM obj) 
+static FREE_OBJECT_TYPE free_tf(SCM obj) 
 {
   track_fd *fd = (track_fd *)OBJECT_REF(obj); 
   if (fd) free_track_fd(fd); 
+#if HAVE_RUBY
+  return(NULL);
+#else
   return(sizeof(track_fd));
+#endif
 }
 
 static SCM g_make_track_sample_reader(SCM track_id, SCM samp, SCM snd, SCM chn)
@@ -4027,7 +4035,7 @@ returns a reader ready to access track's data associated with snd's channel chn 
   if (tf)
     {
       scm_done_malloc(sizeof(track_fd));
-      RETURN_NEW_OBJECT(tf_tag, tf);
+      RETURN_NEW_OBJECT(tf_tag, tf, 0, free_tf);
     }
   ERROR(NO_SUCH_TRACK,
 	LIST_2(TO_SCM_STRING(S_make_track_sample_reader),
@@ -4205,6 +4213,10 @@ void g_init_mix(SCM local_doc)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(mf_tag, PROCEDURE g_next_mix_sample, 0, 0, 0);
 #endif
+#endif
+#if HAVE_RUBY
+  mf_tag = rb_define_class("MixSampleReader", rb_cObject);
+  tf_tag = rb_define_class("TrackSampleReader", rb_cObject);
 #endif
 
   DEFINE_PROC(S_make_mix_sample_reader, g_make_mix_sample_reader, 1, 0, 0, H_make_mix_sample_reader);

@@ -805,6 +805,7 @@ void clear_listener(void);
   char *Scheme_constant_to_Ruby(char *name);
   char *Scheme_procedure_to_Ruby(char *name);
   char *Scheme_global_variable_to_Ruby(char *name);
+  SCM snd_rb_cdr(SCM val);
 #endif
 
 

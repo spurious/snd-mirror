@@ -22,7 +22,8 @@
 #endif
 
 #define scm_print_state int
-#define scm_sizet int
+#define FREE_OBJECT_TYPE         int
+#define MARK_OBJECT_TYPE         SCM
 
 #define scm_apply(a, b, c)
 SCM scm_return_first(SCM a, ...);
@@ -47,7 +48,7 @@ SCM scm_return_first(SCM a, ...);
 #define VECTOR_ELEMENTS(a)           SCHEME_VEC_ELS(a)
 #define NEW_OBJECT(a, b, c)
 #define HOOK_PROCEDURES(a)
-#define SET_OBJECT_REF(a, b)
+#define SND_SET(a, b)
 
 #define RETURN_NEW_OBJECT(Tag, Val) 0
 #define OBJECT_REF(a) 0

@@ -37,7 +37,7 @@ static SCM g_in(SCM ms, SCM code)
 
 /* color support */
 
-static TAG_TYPE snd_color_tag = 0;
+static TAG_TYPE snd_color_tag;
 
 int snd_color_p(SCM obj)
 {
@@ -57,7 +57,7 @@ snd_color *get_snd_color(SCM arg)
   return(NULL);
 }
 
-static scm_sizet free_snd_color(SCM obj)
+static FREE_OBJECT_TYPE free_snd_color(SCM obj)
 {
   Colormap cmap;
   Display *dpy;
@@ -66,7 +66,11 @@ static scm_sizet free_snd_color(SCM obj)
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   XFreeColors(dpy, cmap, &(v->color), 1, 0);
   free(v);
+#if HAVE_RUBY
+  return(NULL);
+#else
   return(sizeof(snd_color));
+#endif
 }
 
 static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
@@ -149,7 +153,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
 	  LIST_2(TO_SCM_STRING(S_make_color),
 		    LIST_3(r, g, b)));
   new_color->color = tmp_color.pixel;
-  RETURN_NEW_OBJECT(snd_color_tag, new_color);
+  RETURN_NEW_OBJECT(snd_color_tag, new_color, 0, free_snd_color);
 }
 
 SCM pixel2color(COLOR_TYPE pix)
@@ -345,6 +349,9 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(snd_color_tag, PROCEDURE g_color2list, 0, 0, 0);
 #endif
+#endif
+#if HAVE_RUBY
+  snd_color_tag = rb_define_class("SndColor", rb_cObject);
 #endif
 
   DEFINE_PROC(S_in,            g_in, 2, 0, 0,             H_in);

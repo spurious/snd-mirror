@@ -26,7 +26,6 @@
 #define FALSE_VALUE      SCM_BOOL_F
 #define EMPTY_LIST       SCM_EOL
 #define UNDEFINED_VALUE  SCM_UNDEFINED
-#define NEW_OBJECT       SCM_NEWSMOB
 #define VARIABLE_REF     SCM_VARIABLE_REF
 
 #ifndef SCM_EQ_P
@@ -35,19 +34,20 @@
 #endif
 
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-  #define RETURN_NEW_OBJECT(Tag, Val) SCM_RETURN_NEWSMOB(Tag, Val)
+  #define RETURN_NEW_OBJECT(Tag, Val, Ignore1, Ignore2) SCM_RETURN_NEWSMOB(Tag, Val)
 #else
-  #define RETURN_NEW_OBJECT(Tag, Val) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
+  #define RETURN_NEW_OBJECT(Tag, Val, Ignore1, Ignore2) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
 #endif
 #define OBJECT_REF(a) SCM_SMOB_DATA(a)
 /* remember to check the smob type agreement before calling OBJECT_REF! */
+#define NEW_OBJECT(a, b, c, ig1, ig2)  SCM_NEWSMOB(a, b, c)
 
 #if HAVE_SCM_C_DEFINE
-  #define SET_OBJECT_REF(Var, Val) SCM_VARIABLE_SET(Var, Val)
+  #define SND_SET(Var, Val)        SCM_VARIABLE_SET(Var, Val)
   #define SND_LOOKUP(a)            VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), TRUE_VALUE))
   /* can't use scm_c_lookup here because it exits the goddamn program if the name is undefined */
 #else
-  #define SET_OBJECT_REF(Var, Val) SCM_SETCDR(Var, Val)
+  #define SND_SET(Var, Val) SCM_SETCDR(Var, Val)
   #define SND_LOOKUP(a)            scm_symbol_value0(a)
 #endif
 
@@ -60,6 +60,8 @@
 #endif
 
 #define OBJECT_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) && (SND_SMOB_TYPE(Type, Obj)))
+#define FREE_OBJECT_TYPE         scm_sizet
+#define MARK_OBJECT_TYPE         SCM
 
 #define TRUE_P(a)                SCM_EQ_P(a, TRUE_VALUE)
 #define FALSE_P(a)               SCM_EQ_P(a, FALSE_VALUE)
@@ -308,6 +310,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define MAKE_HELPLESS_HOOK(Args)  scm_make_hook(TO_SMALL_SCM_INT(Args))
 #define CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)
 #define HOOKED(a)                 (NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
+#define OBJECT_TO_STRING(Obj)     scm_object_to_string(Obj, UNDEFINED_VALUE)
 
 #ifdef SCM_ASSERT_TYPE
 
