@@ -1949,6 +1949,7 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
       str = copy_string(gtk_entry_get_text(GTK_ENTRY(file_text)));
       if ((str) && (*str))
 	{
+	  if (rp->output_file) FREE(rp->output_file);
 	  rp->output_file = mus_file_full_name(str);
 	  FREE(str);
 	  str=NULL;

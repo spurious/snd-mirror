@@ -993,6 +993,7 @@ void file_unprevlist(char *filename)
 static void file_prevlist(char *filename, char *fullname)
 {
   int k,i,new_size;
+  if (find_prevfile_regrow(filename) != -1) return;
   prevfile_end++;
   if (prevfile_end == prevfile_size)
     {
@@ -1220,7 +1221,7 @@ void update_prevlist(snd_state *ss)
 	}
     }
   prevfile_end = j-1;
-  make_prevfiles_list(ss);
+  if (file_dialog_is_active()) make_prevfiles_list(ss);
 }
 
 

@@ -1881,10 +1881,15 @@ static SCM g_save_marks(SCM snd_n)
 {
   #define H_save_marks "(" S_save_marks " &optional snd) saves snd's marks in <snd's file-name>.marks"
   snd_info *sp;
+  char *str;
+  SCM res;
   ERRSP(S_save_marks,snd_n,1);
   sp = get_sp(snd_n);
   if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_save_marks),snd_n)));
-  RTNSTR(save_marks(sp)); /* memory leak here... */
+  str = save_marks(sp);
+  res = gh_str02scm(str);
+  FREE(str);
+  return(res);
 }
 
 void g_init_marks(SCM local_doc)

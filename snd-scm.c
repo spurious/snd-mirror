@@ -1058,6 +1058,7 @@ static SCM g_set_previous_files_sort(SCM val)
 {
   #define H_previous_files_sort "(" S_previous_files_sort ") -> sort choice in view files (0=unsorted, 1=by name, etc)"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_previous_files_sort); 
+  update_prevlist(state);
   set_previous_files_sort(state,iclamp(0,g_scm2int(val),4));
   update_prevfiles(state);
   RTNINT(previous_files_sort(state));

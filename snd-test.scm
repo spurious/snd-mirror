@@ -32,8 +32,8 @@
 
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 
-(define tests 20)
-(define snd-test -1)
+(define tests 1)
+(define snd-test -2)
 (define full-test #t)
 
 (define include-clm #f)
@@ -4164,7 +4164,7 @@
 		    (list 'spectro-y-scale #f 0.1 set-spectro-y-scale 2.0)
 		    (list 'spectro-z-angle #f 0.0 set-spectro-z-angle 359.0)
 		    (list 'spectro-z-scale #f 0.1 set-spectro-z-scale 0.2)
-		    (list 'speed #t 0.01 set-speed 5.0)
+		    (list 'speed #t 0.1 set-speed 5.0)
 		    (list 'speed-style #f 0 set-speed-style 2)
 		    (list 'speed-tones #f 2 set-speed-tones 100)
 		    (list 'sync #t 0 set-sync 5)

@@ -926,6 +926,7 @@ void make_prevfiles_list (snd_state *ss)
 
 /* play open unlist for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
 
+static GtkWidget *fs1,*fs3;
 void View_Files_Callback(GtkWidget *w,gpointer clientData)
 {
   /* fire up a dialog window with a list of currently open files, 
@@ -939,7 +940,6 @@ void View_Files_Callback(GtkWidget *w,gpointer clientData)
    */
   snd_state *ss = (snd_state *)clientData;
   ww_info *wwl;
-  GtkWidget *s1,*s3;
   GtkWidget *mainform,*curform,*prevform,*updateB,*helpB,*dismissB,*clearB,*sep;
   if (!view_files_dialog)
     {
@@ -994,7 +994,7 @@ void View_Files_Callback(GtkWidget *w,gpointer clientData)
 
       /* current files section: save play current files | files */
       wwl = make_title_row(ss,curform,STR_save,STR_play,STR_current_files,PAD_TITLE_ON_RIGHT,WITHOUT_SORT_BUTTON,WITHOUT_PANED_WINDOW);
-      s1 = wwl->tophbox;
+      fs1 = wwl->tophbox;
       vf_curww = wwl->list; /* different from Motif */
       vf_curlst = wwl->list;
       FREE(wwl); 
@@ -1002,7 +1002,7 @@ void View_Files_Callback(GtkWidget *w,gpointer clientData)
 
       /* previous files section: unlist play previous files | files */
       wwl = make_title_row(ss,prevform,STR_unlist,STR_play,STR_previous_files,PAD_TITLE_ON_LEFT,WITH_SORT_BUTTON,WITHOUT_PANED_WINDOW);
-      s3 = wwl->tophbox;
+      fs3 = wwl->tophbox;
 
       gtk_signal_connect_object(GTK_OBJECT(wwl->byname),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_name),(GtkObject *)ss);
       gtk_signal_connect_object(GTK_OBJECT(wwl->bydate),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_date),(GtkObject *)ss);
@@ -1019,7 +1019,7 @@ void View_Files_Callback(GtkWidget *w,gpointer clientData)
   make_prevfiles_list(ss);
   highlight_selected_sound(ss);
 
-  set_widget_height(s1,widget_height(s3));
+  set_widget_height(fs1,widget_height(fs3));
 }
 
 void start_file_dialog(snd_state *ss, int width, int height)

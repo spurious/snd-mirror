@@ -60,7 +60,9 @@ static void mus_print2snd(char *msg)
 #endif
 {
   int i;
+#if HAVE_LONG_LONGS
   FILE *md;
+#endif
 
 #ifdef SGI
   union fpc_csr f; f.fc_word = get_fpc_csr(); f.fc_struct.flush = 1; set_fpc_csr(f.fc_word);

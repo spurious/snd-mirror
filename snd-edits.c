@@ -508,10 +508,9 @@ void free_edit_list(chan_info *cp)
 	      if (cp->amp_envs[i]) free_amp_env(cp,i);
 	    }
 	  FREE(cp->edits);
-	  FREE(cp->amp_envs);
 	}
       cp->edits = NULL;
-      cp->amp_envs = NULL;
+      if (cp->amp_envs) {FREE(cp->amp_envs); cp->amp_envs = NULL;}
       cp->edit_ctr = -1;
       cp->edit_size = 0;
     }

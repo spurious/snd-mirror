@@ -3175,6 +3175,7 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
       str = XmTextGetString(file_text);
       if ((str) && (*str))
 	{
+	  if (rp->output_file) FREE(rp->output_file);
 	  rp->output_file = mus_file_full_name(str);
 	  XtFree(str);
 	  str=NULL;

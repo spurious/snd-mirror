@@ -778,8 +778,14 @@ GdkGC *copy_GC(chan_info *cp)
 GdkGC *erase_GC(chan_info *cp)
 {
   state_context *sx;
+  snd_info *sp;
+  snd_state *ss;
+  ss = cp->state;
+  sp = cp->sound;
   sx = (cp->state)->sgx;
-  if ((cp->cgx)->selected) return(sx->selected_erase_gc);
+  if (((cp->cgx)->selected) ||
+      ((sp) && (sp->combining == CHANNELS_SUPERIMPOSED) && (sp->index == ss->selected_sound)))
+    return(sx->selected_erase_gc);
   return(sx->erase_gc);
 }
 

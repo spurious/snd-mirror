@@ -1838,7 +1838,11 @@ static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr)
 	  dacp->slice = 1;
 	  return(BACKGROUND_CONTINUE);
 	}
-      else return(BACKGROUND_QUIT);
+      else 
+	{
+	  free_dac_state(dacp);
+	  return(BACKGROUND_QUIT);
+	}
       break;
     case 1:
       fill_dac_buffers(dacp,WRITE_TO_DAC);
@@ -1906,6 +1910,7 @@ void finalize_apply(snd_info *sp)
   sp->playing = 0;
   dac_running = 0;
   free_dac_state(apply_dacp);
+  apply_dacp = NULL;
   if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
 }
 

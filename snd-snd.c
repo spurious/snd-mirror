@@ -1291,6 +1291,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
 {
   snd_info *sp;
   snd_state *ss;
+  char *str;
   int i;
   SCM res = SCM_EOL;
   if (SCM_EQ_P(snd_n,SCM_BOOL_T))
@@ -1328,7 +1329,6 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
     case SP_SELECTED_CHANNEL:      RTNINT(sp->selected_channel);            break;
     case SP_FILE_NAME:             RTNSTR(sp->fullname);                    break;
     case SP_SHORT_FILE_NAME:       RTNSTR(sp->shortname);                   break;
-    case SP_COMMENT:               RTNSTR(mus_sound_comment(sp->fullname)); break;
     case SP_CLOSE:                 snd_close_file(sp,sp->state);            break;
     case SP_SAVE:                  save_edits(sp,NULL);                     break;
     case SP_UPDATE:                snd_update(sp->state,sp);                break;
@@ -1336,6 +1336,12 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
     case SP_SHOW_CONTROLS:         RTNBOOL(control_panel_open(sp));         break;
     case SP_SPEED_TONES:           RTNINT(sp->speed_tones);                 break;
     case SP_SPEED_STYLE:           RTNINT(sp->speed_style);                 break;
+    case SP_COMMENT:
+      str = mus_sound_comment(sp->fullname);
+      res = gh_str02scm(str);
+      FREE(str);
+      return(res);
+      break;
     }
   return(SCM_BOOL_F);
 }
