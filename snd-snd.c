@@ -3261,7 +3261,7 @@ static BACKGROUND_TYPE tick_it(GUI_POINTER pet)
 		 et->filename,
 		 C_TO_XEN_INT(cp->chan),
 		 peak,
-		 __FUNCTION__);
+		 "amp env tick");
       snd_unprotect(et->func);
       snd_unprotect(peak);
       completely_free_snd_info(cp->sound);
@@ -3348,7 +3348,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
       peak = XEN_CALL_2(peak_func,
 			filename,
 			chan,
-			__FUNCTION__);
+			"peak env procedure");
       if (XEN_STRING_P(peak))
 	{
 	  peakname = mus_expand_filename(XEN_TO_C_STRING(peak));

@@ -118,8 +118,8 @@ Guile (on the HAVE_RUBY or --with-ruby switches).
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-5-11.i386.rpm (for Linux), snd-5-11.src.rpm
-(sources), and snd-5-11.ppc.rpm (linuxPPC).  These RPM files have been
+mentioned above: snd-5-12.i386.rpm (for Linux), snd-5-12.src.rpm
+(sources), and snd-5-12.ppc.rpm (linuxPPC).  These RPM files have been
 superseded by Fernando Lopez-Lezcano's set available at
 http://www-ccrma.stanford.edu/software/snd/.
 

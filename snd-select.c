@@ -700,9 +700,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  FREE(ends);
 	  if (mus_file_close(ofd) != 0)
 	    {
-	      snd_error("can't close %d (%s): %s [%s[%d] %s]",
-			ofd, ofile, strerror(errno), 
-			__FILE__, __LINE__, __FUNCTION__);
+	      snd_error("save-selection: can't close %s: %s!", ofile, strerror(errno));
 	      return(MUS_CANT_CLOSE_FILE);
 	    }
 	  alert_new_file();

@@ -1899,9 +1899,7 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 	  /* and save as temp file */
 	  mus_file_write(tempfile, 0, data_size - 1, 1, &(pbuf));
 	  if (mus_file_close(tempfile) != 0)
-	    snd_error("can't close %d (%s)! [%s[%d] %s]", 
-		      tempfile, fname, 
-		      __FILE__, __LINE__, __FUNCTION__);
+	    snd_error("c_convolve: can't close %s!", fname);
 	}
       if (rl0) FREE(rl0);
       if (rl1) FREE(rl1);

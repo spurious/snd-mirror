@@ -2613,8 +2613,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
       wd->p = p;
       wd->gain = gain_ctr + chan;
       if (wd->gain > rp->num_mixer_gains) 
-	snd_error("%s[%d] %s: overflow %d > %d", 
-		  __FILE__, __LINE__, __FUNCTION__,
+	snd_error("make_vertical_gain_sliders: overflow %d > %d", 
 		  wd->gain, rp->num_mixer_gains);
       else gain_sliders[wd->gain] = wd;
       vol = mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field);
@@ -3046,11 +3045,9 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
       XtVaSetValues(record_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       if (mus_file_close(rp->output_file_descriptor) != 0)
-	snd_error("can't close %d (%s): %s [%s[%d] %s]",
-		  rp->output_file_descriptor,
+	snd_error("Record Reset: can't close %s: %s!",
 		  rp->output_file,
-		  strerror(errno),
-		  __FILE__, __LINE__, __FUNCTION__);
+		  strerror(errno));
       rp->output_file_descriptor = -1;
       str = just_filename(rp->output_file);
       record_report(messages, str, " recording cancelled", NULL);
@@ -3114,17 +3111,14 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   XtVaSetValues(record_button, XmNlabelString, s2, NULL);
   XmStringFree(s2);
   if (mus_file_close(rp->output_file_descriptor) != 0)
-    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-	      rp->output_file_descriptor,
+    snd_error("Record Done: can't close %s: %s!",
 	      rp->output_file,
-	      strerror(errno),
-	      __FILE__, __LINE__, __FUNCTION__);
+	      strerror(errno));
   rp->output_file_descriptor = mus_file_reopen_write(rp->output_file);
   if (rp->output_file_descriptor == -1)
-    snd_error("can't update %s: %s [%s[%d] %s]",
+    snd_error("Record Done: can't update %s: %s",
 	      rp->output_file,
-	      strerror(errno),
-	      __FILE__, __LINE__, __FUNCTION__);
+	      strerror(errno));
   mus_header_update_with_fd(rp->output_file_descriptor,
 			    rp->output_header_type,
 			    rp->total_output_frames * rp->out_chans * mus_data_format_to_bytes_per_sample(rp->out_format));

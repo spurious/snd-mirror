@@ -626,18 +626,11 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 	  if (err == -1) break; /* mus_file_write presumably posted an error message */
 	}
       if (mus_file_close(ifd) != 0)
-	snd_error("can't close %d (%s): %s! [%s[%d] %s]",
-		  ifd, r->filename,
-		  strerror(errno),
-		  __FILE__, __LINE__, __FUNCTION__);
+	snd_error("save-region: can't close %s: %s!", r->filename, strerror(errno));
       for (i = 0; i < chans; i++) FREE(bufs[i]);
       FREE(bufs);
-
       if (mus_file_close(ofd) != 0)
-	snd_error("can't close %d (%s): %s! [%s[%d] %s]",
-		  ofd, ofile,
-		  strerror(errno),
-		  __FILE__, __LINE__, __FUNCTION__);
+	snd_error("save-region: can't close %s: %s!", ofile, strerror(errno));
       alert_new_file();
     }
   return(MUS_NO_ERROR);

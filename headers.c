@@ -991,8 +991,7 @@ static int read_aiff_header (int chan, int overall_offset)
 		      }
 		  if (j >= AUX_COMMENTS) 
 		    {
-		      mus_print("%s[%d] %s: ran out of auxiliary comment space",
-				__FILE__, __LINE__, __FUNCTION__); 
+		      mus_print("read_aiff_header: ran out of auxiliary comment space");
 		      j = 0;
 		    }
 		  aux_comment_start[j] = offset + 8;

@@ -882,10 +882,7 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
   if (no_space != GIVE_UP)
     mus_file_write(ofd, 0, len - 1, chans, raw_data);
   if (mus_file_close(ofd) != 0)
-    snd_error("can't close %d (%s): %s! [%s[%d] %s]",
-	      ofd, newname,
-	      strerror(errno),
-	      __FILE__, __LINE__, __FUNCTION__);
+    snd_error("mix save temp: can't close %s: %s!", newname, strerror(errno));
   return(newname);
 }
 

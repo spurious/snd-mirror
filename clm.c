@@ -4819,6 +4819,8 @@ static mus_output_class SAMPLE2FILE_OUTPUT_CLASS = {
 
 int mus_sample2file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SAMPLE2FILE));}
 
+/* TODO: mus_continue_sample2file(filename) picks up other fields from file, then mus_sound_reopen_output */
+
 mus_any *mus_make_sample2file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment)
 {
   rdout *gen;

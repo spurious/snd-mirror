@@ -478,10 +478,9 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      ifd = mus_file_open_read(sd->filename);
 	      if (ifd == -1) 
 		{
-		  snd_error("can't open %s: %s! [%s[%d] %s]",
+		  snd_error("save edits: can't open %s: %s!",
 			    sd->filename,
-			    strerror(errno),
-			    __FILE__, __LINE__, __FUNCTION__); 
+			    strerror(errno));
 		  return;
 		}
 	      idataloc = mus_sound_data_location(sd->filename);

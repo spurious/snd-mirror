@@ -1723,8 +1723,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 		{
 		  el = XEN_CAR(molst);
 		  if (!(XEN_LIST_P(el))) 
-		    snd_error("%s[%d] %s: saved mark data is not a list?? ",
-			      __FILE__, __LINE__, __FUNCTION__);
+		    snd_error("restore-marks: saved mark data is not a list?? ");
 		  else
 		    {
 		      sm = XEN_CADR(el);
@@ -1750,8 +1749,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
     }
   else 
     if (cp->marks) 
-      snd_error("%s[%d] %s: there are marks here already!",
-		__FILE__, __LINE__, __FUNCTION__);
+      snd_error("restore-marks: there are marks here already!");
   return(XEN_FALSE);
 }
 

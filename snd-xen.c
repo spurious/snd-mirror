@@ -120,12 +120,12 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   port = scm_mkstrport(XEN_ZERO, 
 		       scm_make_string(XEN_ZERO, SCM_MAKE_CHAR(0)),
 		       SCM_OPN | SCM_WRTNG,
-		       __FUNCTION__);
+		       "snd error handler");
 #else
   port = scm_mkstrport(XEN_ZERO, 
 		       scm_make_string(XEN_ZERO, XEN_UNDEFINED),
 		       SCM_OPN | SCM_WRTNG,
-		       __FUNCTION__);
+		       "snd error handler");
 #endif
 
 #if DEBUGGING
@@ -135,7 +135,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     lport = scm_mkstrport(XEN_ZERO, 
 			  scm_make_string(XEN_ZERO, SCM_MAKE_CHAR(0)),
 			  SCM_OPN | SCM_WRTNG,
-			  __FUNCTION__);
+			  "snd error handler");
     XEN_DISPLAY(tag, lport);
     XEN_PUTS(": ", lport);
     XEN_DISPLAY(throw_args, lport);
@@ -581,7 +581,7 @@ char *g_print_1(XEN obj) /* don't free return val */
   XEN str; XEN val;
   XEN port;
   str = scm_makstr (0, 0);
-  port = scm_mkstrport (XEN_ZERO, str, SCM_OPN | SCM_WRTNG, __FUNCTION__);
+  port = scm_mkstrport (XEN_ZERO, str, SCM_OPN | SCM_WRTNG, "snd-print");
   scm_prin1(obj, port, 1);
   val = XEN_PORT_TO_STRING(port);
   XEN_CLOSE_PORT(port);

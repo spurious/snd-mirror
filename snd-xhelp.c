@@ -32,8 +32,7 @@ static char *file_to_string(char *filename)
   content = (char *)CALLOC(size + 1, sizeof(char));
   if (content == NULL) return(NULL);
   if ((fread(content, 1, size, file)) != size)
-    snd_error("%s[%d] %s: did not read entire file!\n", 
-	      __FILE__, __LINE__, __FUNCTION__);
+    snd_error("html reader (file_to_string): did not read entire file!");
   snd_fclose(file, filename);
   return(content);
 }

@@ -3139,7 +3139,7 @@ static void draw_graph_cursor(chan_info *cp)
 		     C_TO_XEN_INT(cp->sound->index),
 		     C_TO_XEN_INT(cp->chan),
 		     C_TO_XEN_INT(TIME_AXIS_INFO),
-		     __FUNCTION__);
+		     "cursor-style procedure");
 	  break;
 	}
     }
@@ -3161,7 +3161,7 @@ static void draw_graph_cursor(chan_info *cp)
 		 C_TO_XEN_INT(cp->sound->index),
 		 C_TO_XEN_INT(cp->chan),
 		 C_TO_XEN_INT(TIME_AXIS_INFO),
-		 __FUNCTION__);
+		 "cursor-style procedure");
       break;
     }
   cp->cursor_visible = 1;

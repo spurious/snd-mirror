@@ -14,14 +14,14 @@
 			    #:key (srate *srate*) 
 			          (output *file-name*) 
 				  (channels *channels*)
-				  (explode *explode*)
+				  (explode *explode*) ; TODO: with-sound explode
 				  (header-type *header-type*)
 				  (data-format *data-format*)
 				  (comment #f)
 				  (reverb #f)
 				  (revfile #f)
 				  (reverb-data #f)
-				  (continue-old-file #f)
+				  (continue-old-file #f) ; TODO: with-sound continue-old-file
 				  (statistics #f)
 				  (scaled-to #f)
 				  (play #f)
@@ -42,7 +42,8 @@
        (if reverb (set! *reverb* (make-sample->file (or revfile "test.rev") 1 data-format header-type)))
 
        (let ((start (if statistics (get-internal-real-time)))
-	     (intp #f))
+	     (intp #f)
+	     (cycles 0))
 	 (catch 'interrupted
 		thunk
 		(lambda args 
@@ -56,6 +57,8 @@
 	       (set! *reverb* (make-file->sample (or revfile "test.rev")))
 	       (reverb)))
 	 (mus-close *output*)
+	 (if statistics
+	     (setf cycles (/ (- (get-internal-real-time) start) 100)))
 	 (let ((snd-output (open-sound output)))
 	   (set! (sync snd-output) #t)
 	   (if statistics
@@ -63,11 +66,12 @@
 		(format #f "~A:~%  maxamp: ~A,~%  compute time: ~A"
 			output
 			(maxamp snd-output #t)
-			(/ (- (get-internal-real-time) start) 100))))
+			cycles)))
 	   (if scaled-to
 	       (scale-to scaled-to snd-output)
 	       (if scaled-by
 		   (scale-by scaled-by snd-output)))
+	   (if play (play-and-wait snd-output))
 	   (update-time-graph snd-output))))
 
      (lambda () 

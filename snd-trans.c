@@ -280,8 +280,8 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
     {
       CLEANUP();
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		"can't translate IEEE text file %s:\n  Expected initial \"%%\" but found \"%c\"\n  [snd-trans.c[%d] %s]",
-		oldname, buf[0], __LINE__, __FUNCTION__);
+		"can't translate IEEE text file %s:\n  Expected initial \"%%\" but found \"%c\"\n",
+		oldname, buf[0]);
       return(MUS_ERROR);
     }
   while (commenting)
@@ -431,8 +431,8 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
     {
       CLEANUP();
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		"can't translate Mus10 file %s:\n  mode = %d\n  [snd-trans.c[%d] %s]",
-		oldname, mode, __LINE__, __FUNCTION__);
+		"read_mus10: can't translate Mus10 file %s:\n  mode = %d\n",
+		oldname, mode);
       return(MUS_ERROR);
     }
   /* 4 = SAM 16-bit packing mode, 0 = 12 bit 3 to a word */
@@ -897,9 +897,8 @@ static int read_dvi_adpcm(char *oldname, char *newname, char *hdr, int type)
   if ((chans != 1) || (mus_sound_bits_per_sample(oldname) != 4))
     {
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		"can't translate DVI ADPCM file %s: chans: %d and bits: %d\n  [snd-trans.c[%d] %s]",
-		oldname, chans, mus_sound_bits_per_sample(oldname),
-		__LINE__, __FUNCTION__);
+		"read_dvi_adpcm: can't translate DVI ADPCM file %s: chans: %d and bits: %d\n",
+		oldname, chans, mus_sound_bits_per_sample(oldname));
       return(MUS_ERROR);
     }
   srate = mus_sound_srate(oldname);
@@ -979,9 +978,8 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
   if (chans != 1)
     {
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		"can't translate Oki ADPCM file %s: chans: %d\n  [snd-trans.c[%d] %s]",
-		oldname, chans,
-		__LINE__, __FUNCTION__);
+		"read_oki_adpcm: can't translate Oki ADPCM file %s: chans: %d\n",
+		oldname, chans);
       return(MUS_ERROR);
     }
   loc = mus_sound_data_location(oldname);
@@ -1488,9 +1486,8 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
   if (chans != 1)
     {
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		"can't translate G72x file %s: chans: %d\n  [snd-trans.c[%d] %s]",
-		oldname, chans,
-		__LINE__, __FUNCTION__);
+		"read_g72x_adpcm: can't translate G72x file %s: chans: %d\n",
+		oldname, chans);
       return(MUS_ERROR);
     }
   fs = CREAT(newname, 0666);
@@ -1655,12 +1652,11 @@ int snd_translate(char *oldname, char *newname, int type)
   FREE(hdr);
   if (err == MUS_CANT_TRANSLATE) /* i.e a case we don't even try to handle */
     mus_error(MUS_CANT_TRANSLATE,
-	      "can't translate %s\n  (%s header: %s (0x%x) data format)\n  [snd-trans.c[%d] %s]",
+	      "can't translate %s\n  (%s header: %s (0x%x) data format)\n",
 	      oldname,
 	      mus_header_type_name(type),
 	      any_format_name(oldname),
-	      mus_sound_original_format(oldname),
-	      __LINE__, __FUNCTION__);
+	      mus_sound_original_format(oldname));
   return(err);
 }
 

@@ -4147,7 +4147,7 @@ static int pvedit (void *ptr)
   mus_xen *gn = (mus_xen *)ptr;
   return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[EDIT_FUNCTION], 
 					      gn->vcts[SELF_WRAPPER],
-					      __FUNCTION__)));
+					      "phase-vocoder edit function")));
 }
 
 static Float pvsynthesize (void *ptr)
@@ -4155,7 +4155,7 @@ static Float pvsynthesize (void *ptr)
   mus_xen *gn = (mus_xen *)ptr;
   return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[SYNTHESIZE_FUNCTION], 
 					     gn->vcts[SELF_WRAPPER], 
-					     __FUNCTION__)));
+					     "phase-vocoder synthesis function")));
 }
 
 static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
@@ -4165,7 +4165,7 @@ static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
   return(XEN_TO_C_BOOLEAN(XEN_CALL_2_NO_CATCH(gn->vcts[ANALYZE_FUNCTION], 
 					      gn->vcts[SELF_WRAPPER], 
 					      gn->vcts[INPUT_FUNCTION], 
-					      __FUNCTION__)));
+					      "phase-vocoder analysis function")));
 }
 
 #define S_phase_vocoder       "phase-vocoder"
@@ -4285,8 +4285,8 @@ static XEN g_pv_amps(XEN pv, XEN ind)
 {
   Float *amps; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "pv-amps", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "pv-amps", "an integer");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
   return(C_TO_XEN_DOUBLE(amps[XEN_TO_SMALL_C_INT(ind)]));
@@ -4296,9 +4296,9 @@ static XEN g_set_pv_amps(XEN pv, XEN ind, XEN val)
 {
   Float *amps; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, __FUNCTION__, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "set pv-amps", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "set pv-amps", "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, "set pv-amps", "a number");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
   amps[XEN_TO_SMALL_C_INT(ind)] = XEN_TO_C_DOUBLE(val); 
@@ -4310,7 +4310,7 @@ static XEN g_pv_amps_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, "pv-amps-1", "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
@@ -4321,8 +4321,8 @@ static XEN g_pv_freqs(XEN pv, XEN ind)
 {
   Float *freqs; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "pv-freqs", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "pv-freqs", "an integer");
   gn = CLM_TO_MUS_XEN(pv);
   freqs = mus_phase_vocoder_freqs((void *)(gn->gen));
   return(C_TO_XEN_DOUBLE(freqs[XEN_TO_SMALL_C_INT(ind)]));
@@ -4332,9 +4332,9 @@ static XEN g_set_pv_freqs(XEN pv, XEN ind, XEN val)
 {
   Float *freqs; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, __FUNCTION__, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "set pv-freqs", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "set pv-freqs", "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, "set pv-freqs", "a number");
   gn = CLM_TO_MUS_XEN(pv);
   freqs = mus_phase_vocoder_freqs((void *)(gn->gen)); 
   freqs[XEN_TO_SMALL_C_INT(ind)] = XEN_TO_C_DOUBLE(val);
@@ -4346,7 +4346,7 @@ static XEN g_pv_freqs_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, "pv-freqs-1", "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_freqs((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
@@ -4357,8 +4357,8 @@ static XEN g_pv_phases(XEN pv, XEN ind)
 {
   Float *phases; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "pv-phases", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "pv-phases", "an integer");
   gn = CLM_TO_MUS_XEN(pv);
   phases = mus_phase_vocoder_phases((void *)(gn->gen)); 
   return(C_TO_XEN_DOUBLE(phases[XEN_TO_SMALL_C_INT(ind)]));
@@ -4368,9 +4368,9 @@ static XEN g_set_pv_phases(XEN pv, XEN ind, XEN val)
 {
   Float *phases; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, __FUNCTION__, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "set pv-phases", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "set pv-phases", "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, "set pv-phases", "a number");
   gn = CLM_TO_MUS_XEN(pv);
   phases = mus_phase_vocoder_phases((void *)(gn->gen)); 
   phases[XEN_TO_SMALL_C_INT(ind)] = XEN_TO_C_DOUBLE(val); 
@@ -4382,7 +4382,7 @@ static XEN g_pv_phases_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, "pv-phases-1", "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_phases((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
@@ -4394,8 +4394,8 @@ static XEN g_pv_ampinc(XEN pv, XEN ind)
 {
   Float *ampinc; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "pv-ampinc", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "pv-ampinc", "an integer");
   gn = CLM_TO_MUS_XEN(pv);
   ampinc = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
   return(C_TO_XEN_DOUBLE(ampinc[XEN_TO_SMALL_C_INT(ind)]));
@@ -4405,9 +4405,9 @@ static XEN g_set_pv_ampinc(XEN pv, XEN ind, XEN val)
 {
   Float *ampinc; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, __FUNCTION__, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "set pv-ampinc", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "set pv-ampinc", "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, "set pv-ampinc", "a number");
   gn = CLM_TO_MUS_XEN(pv);
   ampinc = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
   ampinc[XEN_TO_SMALL_C_INT(ind)] = XEN_TO_C_DOUBLE(val); 
@@ -4419,7 +4419,7 @@ static XEN g_pv_ampinc_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, "pv-ampinc-1", "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
@@ -4430,8 +4430,8 @@ static XEN g_pv_phaseinc(XEN pv, XEN ind)
 {
   Float *phaseinc; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "pv-phaseinc", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "pv-phaseinc", "an integer");
   gn = CLM_TO_MUS_XEN(pv);
   phaseinc = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
   return(C_TO_XEN_DOUBLE(phaseinc[XEN_TO_SMALL_C_INT(ind)]));
@@ -4441,9 +4441,9 @@ static XEN g_set_pv_phaseinc(XEN pv, XEN ind, XEN val)
 {
   Float *phaseinc; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, __FUNCTION__, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "set pv-phaseinc", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "set pv-phaseinc", "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, "set pv-phaseinc", "a number");
   gn = CLM_TO_MUS_XEN(pv);
   phaseinc = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
   phaseinc[XEN_TO_SMALL_C_INT(ind)] = XEN_TO_C_DOUBLE(val); 
@@ -4455,7 +4455,7 @@ static XEN g_pv_phaseinc_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, "pv-phaseinc-1", "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
@@ -4466,8 +4466,8 @@ static XEN g_pv_lastphase(XEN pv, XEN ind)
 {
   Float *lastphase; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "pv-lastphase", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "pv-lastphase", "an integer");
   gn = CLM_TO_MUS_XEN(pv);
   lastphase = mus_phase_vocoder_lastphase((void *)(gn->gen)); 
   return(C_TO_XEN_DOUBLE(lastphase[XEN_TO_SMALL_C_INT(ind)]));
@@ -4477,9 +4477,9 @@ static XEN g_set_pv_lastphase(XEN pv, XEN ind, XEN val)
 {
   Float *lastphase; 
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, __FUNCTION__, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, __FUNCTION__, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, "set pv-lastphase", "a phase-vocoder gen");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ind), ind, XEN_ARG_2, "set pv-lastphase", "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, "set pv-lastphase", "a number");
   gn = CLM_TO_MUS_XEN(pv);
   lastphase = mus_phase_vocoder_lastphase((void *)(gn->gen));
   lastphase[XEN_TO_SMALL_C_INT(ind)] = XEN_TO_C_DOUBLE(val); 
@@ -4491,7 +4491,7 @@ static XEN g_pv_lastphase_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, "pv-lastphase-1", "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_lastphase((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));

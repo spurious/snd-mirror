@@ -830,7 +830,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   if (hdr == NULL)
     {
       XEN_ERROR(NO_SUCH_FILE,
-		XEN_LIST_2(C_TO_XEN_STRING(__FUNCTION__),
+		XEN_LIST_2(C_TO_XEN_STRING(filename),
 			   C_TO_XEN_STRING(ss->catch_message)));
       return(NULL);
     }

@@ -185,7 +185,7 @@ Snd does not exit.</p>
 (define <A NAME="unsavededitsp">unsaved-edits?</A>
   (lambda (lst)
     (if (not (null? lst))
-	(if (> (car (edits (car lst))) 0)
+	(if (&gt; (car (edits (car lst))) 0)
 	    (begin
 	      (report-in-minibuffer "there are unsaved edits")
 	      #t)
@@ -202,7 +202,7 @@ exit.  Similar hooks customize actions such as closing
 a sound (close-hook), clicking a mark (mark-click-hook),
 pressing a key (key-press-hook), and so on.</p>
 
-The global variables handle various customizations that aren't callback-oriented.
+<p>The global variables handle various customizations that aren't callback-oriented.
 For example, 
 <A NAME="autoexpl"></a>as panes (sounds) come and go, Snd's overall size may change (this is
 partly determined by the window manager, but is to some extent also
@@ -4372,6 +4372,14 @@ the direction argument between the channel and edit-position:
 <!-- -->The writable header types are mus-next (also named mus-sun), mus-nist (NIST Sphere), mus-aiff (rarely needed), mus-aifc, mus-riff (MS wave),
 <!-- -->mus-ircam, and mus-raw (no header -- it's up to you to remember what's in the file).  For descriptions of the headers,
 <!-- -->see headers.c; for examples, see sf.tar.gz and ccrma-ftp.
+<!-- --><br><br>
+<!-- -->To read or write your own headers (or some header that isn't built-in),
+<!-- -->I'd recommend using <a href="#openrawsoundhook">open-raw-sound-hook</a>:
+<!-- -->when you open the file with the unsupported header,
+<!-- -->Snd will throw up its hands and say "maybe it's a raw (headerless)
+<!-- -->sound"; it will then look at open-raw-sound-hook before trying
+<!-- -->other fallbacks (such as the Raw File Dialog).
+<!-- -->See examp.scm or contrib/dlp/misc.scm for examples (MPEG and OGG).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5110,6 +5118,28 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- run -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndrun">run</a></em> (thunk)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>run</b> is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
+<!-- -->block of code, and the result will usually run 10 to 20 times faster.  In the context of with-sound, run is used
+<!-- -->to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two
+<!-- -->of the speed of CL+run+C in CLM.
+<!-- --><br><br><pre>
+(define (ws-sine freq)
+  (let ((o (make-oscil freq)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 100))
+	 (outa i (oscil o) *output*))))))
+</pre>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- sample -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndsample">sample</a></em> (<i>samp snd chn edpos</i>)</code></span>
@@ -5380,7 +5410,7 @@ the direction argument between the channel and edit-position:
   (set! reader (make-sample-reader 0))
   (scan-again))
 <!-- --></pre></td></tr></table>
-<!-- --><br>Now <code>(my-scan-chan (lambda (y) (> y .1)))</code> finds the first such sample, and
+<!-- --><br>Now <code>(my-scan-chan (lambda (y) (&gt; y .1)))</code> finds the first such sample, and
 <!-- -->subsequent <code>(scan-again)</code> calls continue the search where the last call left off.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>

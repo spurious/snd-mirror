@@ -1234,10 +1234,9 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   ss = cp->state;
   sp = cp->sound;
   if (!(MUS_RUN_P(gen)))
-    return(mus_format("%s can't handle %s generators [%s[%d]: %s]",
+    return(mus_format("clm-channel: %s can't handle %s generators",
 		      caller,
-		      mus_name(gen),
-		      __FILE__, __LINE__, __FUNCTION__));
+		      mus_name(gen)));
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL) return(mus_format("%s: can't read %s[%d] channel data!", caller, sp->short_filename, cp->chan));
   if ((dur + overlap) > MAX_BUFFER_SIZE)
@@ -1344,10 +1343,9 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
     return(NULL);
 
   if ((gen) && (!(MUS_RUN_P(gen))))
-    return(mus_format("%s can't handle %s generators [%s[%d]: %s]",
+    return(mus_format("filter-channel: %s can't handle %s generators",
 		      origin,
-		      mus_name(gen),
-		      __FILE__, __LINE__, __FUNCTION__));
+		      mus_name(gen)));
   ss = ncp->state;
   sp = ncp->sound;
   sc = get_sync_state_1(ss, sp, ncp, 0, over_selection, 

@@ -344,9 +344,7 @@ char *filename_completer(char *text)
       closedir(dpos);
 #else
       if (closedir(dpos) != 0) 
-	snd_error("closedir %s failed! [%s[%d] %s]",
-		  dir_name,
-		  __FILE__, __LINE__, __FUNCTION__);
+	snd_error("filename_completer: closedir %s failed!", dir_name);
 #endif
     }
   if (dir_name) FREE(dir_name);
