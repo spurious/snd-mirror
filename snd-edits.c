@@ -671,8 +671,8 @@ static int tempfiles_size = 0;
 
 void remember_temp(char *filename, int chans)
 {
-  int i;
-  tempfile_ctr *tmp;
+  int i, old_size;
+  tempfile_ctr *tmp = NULL;
   if (tempfiles_size == 0)
     {
       tempfiles_size = 8;
@@ -686,10 +686,11 @@ void remember_temp(char *filename, int chans)
 	  break;
       if (i >= tempfiles_size)
 	{
-	  tempfiles = (tempfile_ctr **)REALLOC(tempfiles, tempfiles_size * sizeof(tempfile_ctr *));
-	  for (i = tempfiles_size; i < (tempfiles_size + 8); i++) tempfiles[i] = NULL;
-	  i = tempfiles_size;
+	  old_size = tempfiles_size;
 	  tempfiles_size += 8;
+	  tempfiles = (tempfile_ctr **)REALLOC(tempfiles, tempfiles_size * sizeof(tempfile_ctr *));
+	  for (i = old_size; i < tempfiles_size; i++) tempfiles[i] = NULL;
+	  i = old_size;
 	}
     }
   tmp = (tempfile_ctr *)CALLOC(1, sizeof(tempfile_ctr));
@@ -2713,8 +2714,12 @@ static char *sf_to_string(snd_fd *fd)
 	    name = (cp->sound)->short_filename;
 	  else name = "unknown source";
 	}
-      mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from %d, at %d>",
-		   fd, name, fd->initial_samp, current_location(fd));
+      if (fd->cb)
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from %d, at %d>",
+		     fd, name, fd->initial_samp, current_location(fd));
+      else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s at eof>",
+			fd, name);
+
     }
   return(desc);
 }
@@ -3398,6 +3403,7 @@ history position to read (defaults to current position)."
   pos = to_c_edit_position(cp, edpos, S_samples, 5);
   beg = beg_to_sample(samp_0, S_samples);
   len = dur_to_samples(samps, beg, cp, pos, 2, S_samples);
+  if (len == 0) return(XEN_FALSE);
   new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf)
@@ -3934,7 +3940,7 @@ void g_init_edits(void)
 					    "set-" S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 0, 5);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
-					    "set-" S_samples, g_set_samples_w, g_set_samples_reversed, 2, 3, 3, 6);
+					    "set-" S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 6);
 
   #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \
 If it returns #t, the file is not saved.  'name' is #f unless \

@@ -384,6 +384,7 @@ static int prompt(snd_info *sp, char *msg, char *preload)
   sp->minibuffer_on = 1;
   sp->minibuffer_temp = 0;
   goto_minibuffer(sp);
+
   return(CURSOR_NO_ACTION); /* make sure verbose cursor doesn't preload our prompt text field with garbage! */
 }
 
@@ -1629,25 +1630,23 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      /* it might be better to remove the menu accelerators -- they are a dubious feature to begin with */
 #endif
 #if HAVE_EXTENSION_LANGUAGE
-	      if (listener_height() > 5)
-		{
-		  char buf[2];
-		  goto_listener();
-		  buf[0] = keysym; buf[1] = 0;
-		  listener_append(ss, buf);
-		}
-	      else 
-		{
-		  if (keysym == snd_K_openparen)
-		    {
-		      ss->mx_sp = sp;
-		      prompt(sp, "M-x:", "(");
-		      sp->macroing = count;
-		      redisplay = KEYBOARD_NO_ACTION;
-		    }
-		  else report_in_minibuffer(sp, "%s%s undefined", (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
-		}
-	      /* should we open the minibuffer in all cases? */
+	      {
+		char buf[2];
+		buf[0] = keysym; 
+		buf[1] = 0;
+		if (listener_height() > 5)
+		  {
+		    goto_listener();
+		    listener_append(ss, buf);
+		  }
+		else 
+		  {
+		    ss->mx_sp = sp;
+		    prompt(sp, "M-x:", buf);
+		    sp->macroing = count;
+		    redisplay = NO_ACTION;
+		  }
+	      }
 #else
 	      report_in_minibuffer(sp, "%s%s undefined", (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
 #endif

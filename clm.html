@@ -739,6 +739,11 @@ One popular kind of vibrato is:
 based on:
   1 + 2(cos(x) + cos(2x) + ... cos(nx)) = 
     sin((n+.5)x) / sin(x/2)
+
+  known as the Dirichlet kernel
+  see "Special Functions", Andrews, Askey, Roy, 5.1.10
+  also cosine-summation in dsp.scm for an extension
+  a similar sum involves cos for sin above, AAR 5.6.2
 </small></pre><br clear=left>
 <br>
 
@@ -1627,7 +1632,8 @@ Synthesis of Complex Audio Spectra by means of Discrete Summation Formulae"
 ratio between successive sidebands, <i>ratio</i> is the ratio between the
 carrier frequency and the spacing between successive sidebands.
 The basic idea is very similar to that used in the
-<a href="#sum-of-cosines">sum-of-cosines</a> generator. 
+<a href="#sum-of-cosines">sum-of-cosines</a> generator. (see "Special Functions", Andrews, Askey, Roy
+chapter 5 for lots of interesting stuff, including the cosine-summation formula used in dsp.scm).
 The output amplitude of this generator is hard to predict; 
 see Moorer's paper for some normalization functions.
 </p>

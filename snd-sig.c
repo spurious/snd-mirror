@@ -1656,7 +1656,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
 	      ep->data_max[j] = max1;
 	    }
 	  if (sbin > 0) pick_one_bin(ep, sbin - 1, ep->samps_per_bin * (sbin - 1), cp, edpos);
-	  pick_one_bin(ep, ebin, ep->samps_per_bin * ebin, cp, edpos);
+	  if (ebin < ep->amp_env_size) pick_one_bin(ep, ebin, ep->samps_per_bin * ebin, cp, edpos);
 	}
       section = 1; /* only for reverse_marks below */
     }

@@ -965,7 +965,6 @@ static void make_command_widget(snd_state *ss, int height)
       XtSetArg(args[n], XmNvalue, listener_prompt(ss)); n++;
       XtSetArg(args[n], XmNpendingDelete, FALSE); n++; /* don't cut selection upon paste */
       XtSetArg(args[n], XmNpositionIndex, XmLAST_POSITION); n++;
-      XtSetArg(args[n], XmNpaneMinimum, height); n++;
       listener_text = XmCreateScrolledText(listener_pane, "lisp-listener", args, n);
       ss->sgx->listener_pane = listener_text;
 
@@ -994,10 +993,6 @@ static void make_command_widget(snd_state *ss, int height)
 	  XmChangeColor(wh, (ss->sgx)->basic_color);
 	  map_over_children(SOUND_PANE(ss), color_sashes, (void *)ss);
 	}
-      XtVaSetValues(listener_pane, XmNpaneMinimum, 60, NULL);
-      XtManageChild(listener_pane);
-      XtVaSetValues(listener_pane, XmNpaneMinimum, 1, NULL);
-
       if (auto_resize(ss))
 	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, TRUE, NULL);
     }
@@ -1034,35 +1029,34 @@ void handle_listener(snd_state *ss, int open)
     {
       if (!listener_text)
 	make_command_widget(ss, 100);
-      else
+      else 
 	{
-	  XtUnmanageChild(listener_pane);
-	  XtVaSetValues(listener_pane, XmNpaneMinimum, 100, NULL);
 	  XtManageChild(listener_pane);
-	  XtVaSetValues(listener_pane, XmNpaneMinimum, 1, NULL);
+	  if (listener_height() < 5)
+	    {
+	      XtUnmanageChild(listener_pane);
+	      XtVaSetValues(listener_pane, XmNpaneMinimum, 100, XmNpaneMaximum, LOTSA_PIXELS, NULL);
+	      XtManageChild(listener_pane);
+	      XtVaSetValues(listener_pane, XmNpaneMinimum, 1, NULL);
+	    }
 	}
-      set_view_listener_label(STR_Hide_listener);
     }
   else
     {
-      set_view_listener_label(STR_Show_listener);
       XtUnmanageChild(listener_pane);
-      XtVaSetValues(listener_pane, XmNpaneMaximum, 1, XmNpaneMinimum, 1, NULL);
-      XtManageChild(listener_pane);
-      XtVaSetValues(listener_pane, XmNpaneMaximum, LOTSA_PIXELS, XmNpaneMinimum, 1, NULL);
     }
 }
 
 int listener_height(void)
 {
-  if (listener_text) 
+  if ((listener_text) && (XtIsManaged(listener_pane)))
     return(widget_height(listener_text)); 
   else return(0);
 }
 
 int listener_width(void)
 {
-  if (listener_text) 
+  if ((listener_text) && (XtIsManaged(listener_pane)))
     return(widget_width(listener_text)); 
   else return(0);
 }

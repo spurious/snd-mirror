@@ -576,3 +576,27 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (set! (asyfm-phase gen) (+ phase input freq))
     result))
 
+
+;;; -------- cosine-summation (a simpler version of sine-summation)
+;;;
+;;; from Andrews, Askey, Roy "Special Functions" 5.1.16
+
+(define (cosine-summation gen)
+  (* (- (/ (- 1.0 (* r r))
+	   (- (+ 1.0 (* r r))
+	      (* (* 2 r)
+		 (oscil gen))))
+	1.0)
+     (/ (- 1.0 (* r r)) ; amplitude normalization (not vital)
+	(* 2 r (+ 1.0 (* r r))))))
+
+
+(define (make-cosine-summation freq r)
+  (make-oscil freq))
+
+	
+	
+
+
+
+

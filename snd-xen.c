@@ -242,8 +242,11 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       if (listener_height() > 5)
 	listener_append_and_prompt(ss, name_buf);
       else 
-	if (!(ss->mx_sp))
-	  snd_error(name_buf);
+	{
+	  if (!(ss->mx_sp))
+	    snd_error(name_buf);
+	  else add_to_error_history(ss, name_buf, FALSE);
+	}
     }
 #endif
   check_for_event(get_global_state());
@@ -1813,6 +1816,7 @@ static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN
   pos = to_c_edit_position(cp, edpos, caller, 6);
   beg = XEN_TO_C_INT_OR_ELSE(samp_0, 0);
   len = XEN_TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
+  if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
   if (len <= 0) 
     XEN_ERROR(IMPOSSIBLE_BOUNDS,
 	      XEN_LIST_3(C_TO_XEN_STRING(caller),

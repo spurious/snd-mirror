@@ -2893,6 +2893,7 @@ void equalize_all_panes(snd_state *ss)
   if (sound_style(ss) == SOUNDS_VERTICAL)
     {
       height = widget_height(SOUND_PANE(ss)) - listener_height();
+      /* TODO: this actually slowly passes all pane space to the listener -- need to hold listener steady while equalizing */
       /* if lisp listener, remove it from this calculation */
       /* all are lined up vertically, so we can just make all chans the same size */
       if (auto_resize(ss))
@@ -2905,7 +2906,7 @@ void equalize_all_panes(snd_state *ss)
       if (chans > 1)
 	{
 	  /* now we try to make room for the sound ctrl bar, each channel, perhaps the menu */
-	  chan_y = (height-(sounds*ss->ctrls_height))/chans - 16;
+	  chan_y = (height-(sounds * ss->ctrls_height))/chans - 16;
 	  /* probably can be 14 or 12 -- seems to be margin related or something */
 	  wid[0] = chan_y;
 	  map_over_sounds(ss, sound_lock_control_panel, NULL);
