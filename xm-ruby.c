@@ -1,11 +1,6 @@
 /* this is so ugly I can't bear to include it in xm.c
  */
 
-static XEN gxm_to_s(XEN obj)
-{
-  return(C_TO_XEN_STRING(xm_obj_to_string(obj)));
-}
-
 #if HAVE_XP
   XEN_NARGIFY_2(gxm_XpStartPage_w, gxm_XpStartPage)
   XEN_NARGIFY_1(gxm_XpEndPage_w, gxm_XpEndPage)
@@ -2563,7 +2558,6 @@ static void define_procedures(void)
 
   XEN_NARGIFY_4(gxm_XSegment_w, gxm_XSegment)
   XEN_NARGIFY_4(gxm_XRectangle_w, gxm_XRectangle)
-  XEN_NARGIFY_1(gxm_to_s_w, gxm_to_s)
   XEN_ARGIFY_6(gxm_XColor_w, gxm_XColor)
   XEN_ARGIFY_6(gxm_XArc_w, gxm_XArc)
   XEN_ARGIFY_7(gxm_XWindowChanges_w, gxm_XWindowChanges)
@@ -2994,7 +2988,6 @@ static void define_structs(void)
 				   XM_PREFIX "set_y2" XM_POSTFIX, gxm_set_y2_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSegment" XM_POSTFIX, gxm_XSegment_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRectangle" XM_POSTFIX, gxm_XRectangle_w, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "->string" XM_POSTFIX, gxm_to_s_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "dashes" XM_POSTFIX, gxm_dashes_w, "",  
 				   XM_PREFIX "set_dashes" XM_POSTFIX, gxm_set_dashes_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "dash_offset" XM_POSTFIX, gxm_dash_offset_w, "", 

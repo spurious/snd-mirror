@@ -309,8 +309,8 @@ typedef struct {
                                                gtk_window_set_default_size(GTK_WINDOW(Widget), -1, -1); \
                                                gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE); }
   #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_resizable(Window, Val)
-  #define SG_SET_SIZE(Widget, Width, Height) if (GTK_IS_DIALOG(Widget)) gtk_window_set_default_size(GTK_WINDOW(Widget), Width, Height)
-  #define SG_SET_POSITION(Widget, X, Y)      if (GTK_IS_DIALOG(Widget)) gtk_window_move(GTK_WINDOW(Widget), X, Y)
+  #define SG_SET_SIZE(Widget, Width, Height) gtk_window_resize(GTK_WINDOW(Widget), Width, Height)
+  #define SG_SET_POSITION(Widget, X, Y)      gtk_window_move(GTK_WINDOW(Widget), X, Y)
   #define SG_LABEL_TEXT(Widget)              (char *)gtk_label_get_text(Widget)
   #define SG_SET_GUTTER_SIZE(Widget, Size)
   #define SG_SET_HANDLE_SIZE(Widget, Size)

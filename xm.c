@@ -4,7 +4,6 @@
  */
 
 /* SOMEDAY: finish selection-oriented Xt callbacks
- * SOMEDAY: callback struct print (and tie makers into Ruby)
  * SOMEDAY: get Xprt to work and test the Xp stuff
  */
 
@@ -278,6 +277,10 @@ static void define_xm_obj(void)
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
+#define XM_TYPE_PTR_NO_C2X_NO_p(Name, XType) \
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+
 #define XM_TYPE_PTR_OBJ(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN_OBJ(#Name, val)); return(XEN_FALSE);} \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
@@ -411,7 +414,7 @@ XM_TYPE_PTR_NO_p(XmComboBoxCallbackStruct, XmComboBoxCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmContainerOutlineCallbackStruct, XmContainerOutlineCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmContainerSelectCallbackStruct, XmContainerSelectCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmNotebookCallbackStruct, XmNotebookCallbackStruct *)
-XM_TYPE_PTR_OBJ(XmNotebookPageInfo, XmNotebookPageInfo *)
+XM_TYPE_PTR_NO_p(XmNotebookPageInfo, XmNotebookPageInfo *)
 XM_TYPE_PTR(XmRenderTable, XmRenderTable)
 XM_TYPE_PTR(XmRendition, XmRendition)
 XM_TYPE_PTR_NO_p(XmSpinBoxCallbackStruct, XmSpinBoxCallbackStruct *)
@@ -423,7 +426,7 @@ XM_TYPE_PTR_NO_p(XmPrintShellCallbackStruct, XmPrintShellCallbackStruct *)
 #endif
 XM_TYPE_PTR_NO_p(XmPopupHandlerCallbackStruct, XmPopupHandlerCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmSelectionCallbackStruct, XmSelectionCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmTransferDoneCallbackStruct, XmTransferDoneCallbackStruct *)
+XM_TYPE_PTR_NO_C2X_NO_p(XmTransferDoneCallbackStruct, XmTransferDoneCallbackStruct *)
 XM_TYPE_PTR(XmTabList, XmTabList) /* opaque */
 XM_TYPE(XmParseMapping, XmParseMapping)
 #endif
@@ -434,7 +437,7 @@ XM_TYPE_PTR_NO_p(XmScaleCallbackStruct, XmScaleCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmScrollBarCallbackStruct, XmScrollBarCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmSelectionBoxCallbackStruct, XmSelectionBoxCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmTextVerifyCallbackStruct, XmTextVerifyCallbackStruct *)
-XM_TYPE_PTR_NO_C2X(XmTextBlock, XmTextBlock)
+XM_TYPE_PTR_NO_C2X_NO_p(XmTextBlock, XmTextBlock)
 XM_TYPE_PTR_NO_p(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
 #if (!XM_DISABLE_DEPRECATED)
   XM_TYPE(XmFontContext, XmFontContext) /* opaque */
@@ -24493,7 +24496,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"12-Aug-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"19-Aug-02\")");
 #endif
       xm_already_inited = 1;
     }

@@ -5414,8 +5414,8 @@ typedef struct {
   mus_any_class *core;
   Float (*feeder)(void *arg, int direction);
   Float x;
-  Float incr;
-  int width;
+  Float incr, width_1;
+  int width, lim;
   int len;
   Float *data, *sinc_table;
   void *environ;
@@ -5577,7 +5577,7 @@ static mus_any_class SRC_CLASS = {
 mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int width, void *environ)
 {
   sr *srp;
-  int i, lim, wid;
+  int i, wid;
   if (fabs(srate) > (Float)(1 << 16))
     mus_error(MUS_ARG_OUT_OF_RANGE, "mus_make_src srate arg invalid: %f", srate);
   else
@@ -5597,13 +5597,14 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 	  srp->environ = environ;
 	  srp->incr = srate;
 	  srp->width = wid;
-	  lim = 2 * wid;
+	  srp->lim = 2 * wid;
 	  srp->len = wid * SRC_SINC_DENSITY;
-	  srp->data = (Float *)clm_calloc(lim + 1, sizeof(Float), "src table");
+	  srp->data = (Float *)clm_calloc(srp->lim + 1, sizeof(Float), "src table");
 	  srp->sinc_table = init_sinc_table(wid);
-	  for (i = wid - 1; i < lim; i++) 
+	  for (i = wid - 1; i < srp->lim; i++) 
 	    srp->data[i] = (*input)(environ, (srate >= 0.0) ? 1 : -1);
 	  /* was i = 0 here but we want the incoming data centered */
+	  srp->width_1 = 1.0 - wid;
 	  return((mus_any *)srp);
 	}
     }
@@ -5613,16 +5614,14 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int direction))
 {
   sr *srp = (sr *)srptr;
-  Float sum, x, zf, srx, factor;
+  Float sum = 0.0, x, zf, srx, factor;
   int fsx, lim, i, k, loc;
   int xi, xs, int_ok;
-  Float xsf;
-  sum = 0.0;
-  fsx = (int)(srp->x);
-  lim = 2 * srp->width;
+  lim = srp->lim;
   srx = srp->incr + sr_change;
-  if (fsx > 0)
+  if (srp->x >= 1.0)
     {
+      fsx = (int)(srp->x);
       /* realign data, reset srp->x */
 #if (!HAVE_MEMMOVE)
       for (i = fsx, loc = 0; i < lim; i++, loc++) 
@@ -5641,6 +5640,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
     }
   /* if (srx == 0.0) srx = 0.01; */ /* can't decide about this ... */
   if (srx < 0.0) srx = -srx;
+  /* tedious timing tests indicate that precalculating this block in the sr_change=0 case saves no time at all */
   if (srx > 1.0) 
     {
       factor = 1.0 / srx;
@@ -5658,8 +5658,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 
   if (int_ok)
     {
-      xsf = zf * (1.0 - srp->x - srp->width);
-      xs = (int)xsf;
+      xs = (int)(zf * (srp->width_1 - srp->x));
       i = 0;
       if (xs < 0)
 	for (; (i < lim) && (xs < 0); i++, xs += xi)
@@ -5670,7 +5669,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   else
     {
       /* this form twice as slow because of float->int conversions */
-      for (i = 0, x = zf * (1.0 - srp->x - srp->width); i < lim; i++, x += zf)
+      for (i = 0, x = zf * (srp->width_1 - srp->x); i < lim; i++, x += zf)
 	{
 	  /* we're moving backwards in the data array, so the sr->x field has to mimic that (hence the '1.0 - srp->x') */
 	  if (x < 0) k = (int)(-x); else k = (int)x;

@@ -2,8 +2,8 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 15
-#define MUS_DATE "13-Aug-02"
+#define MUS_REVISION 16
+#define MUS_DATE "16-Aug-02"
 
 /* 
  * 13-Aug:     added set! (*-ref) for frame, locsig, mixer, locsig-reverb.

@@ -1020,7 +1020,6 @@
 (hey " * ~A: GdkEvent casts~%" (string-append "T" "ODO"))
 (hey " * ~A: struct print, more struct instance creators(?)~%" (string-append "T" "ODO"))
 (hey " * ~A: tie into Snd (snd-motif translation)~%" (string-append "T" "ODO"))
-(hey " * ~A: add unicode handlers from glib -- anything else?~%" (string-append "T" "ODO"))
 (hey " * ~A: unprotect *_remove, unprotect old upon reset callback~%" (string-append "T" "ODO"))
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")

@@ -937,7 +937,6 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
   active_channel->printing = printing;
   if (show_fft)
     {
-      /* TODO: extend enved background spectrum to selection at least (also a squelch choice?) */
       if (!apply_to_selection)
 	{
 	  if ((active_channel->fft) &&

@@ -3084,8 +3084,7 @@ void equalize_all_panes(snd_state *ss)
   if (sound_style(ss) == SOUNDS_VERTICAL)
     {
       height = widget_height(SOUND_PANE(ss)) - listener_height();
-      /* TODO: this actually slowly passes all pane space to the listener -- need to hold listener steady while equalizing */
-      /* if lisp listener, remove it from this calculation */
+      lock_listener_pane();
       /* all are lined up vertically, so we can just make all chans the same size */
       if (auto_resize(ss))
 	{
@@ -3106,6 +3105,7 @@ void equalize_all_panes(snd_state *ss)
 	  map_over_separate_chans(ss, channel_unlock_pane, NULL);
 	  for_each_sound(ss, sound_unlock_control_panel, NULL);
 	}
+      unlock_listener_pane();
       if (!(auto_resize(ss))) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, FALSE, NULL);
     }
   else

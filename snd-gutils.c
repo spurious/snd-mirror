@@ -569,20 +569,14 @@ guint16 widget_width(GtkWidget *w)
   return(x);
 }
 
-#if HAVE_GTK2
-  #define SG_UNSET -1
-#else
-  #define SG_UNSET -2
-#endif
-
 void set_widget_height(GtkWidget *w, guint16 height)
 {
-  SG_SET_SIZE(w, SG_UNSET, height);
+  SG_SET_SIZE(w, widget_width(w), height);
 }
 
 void set_widget_width(GtkWidget *w, guint16 width)
 {
-  SG_SET_SIZE(w, width, SG_UNSET);
+  SG_SET_SIZE(w, width, widget_height(w));
 }
 
 gint16 widget_x(GtkWidget *w)
@@ -601,12 +595,12 @@ gint16 widget_y(GtkWidget *w)
 
 void set_widget_x(GtkWidget *w, gint16 x)
 {
-  SG_SET_POSITION(w, x, SG_UNSET);
+  SG_SET_POSITION(w, x, widget_y(w));
 }
 
 void set_widget_y(GtkWidget *w, gint16 y)
 {
-  SG_SET_POSITION(w, SG_UNSET, y);
+  SG_SET_POSITION(w, widget_x(w), y);
 }
 
 void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
@@ -707,7 +701,7 @@ void sg_set_cursor(GtkWidget *w, int position)
   GtkTextIter pos;
   GtkTextBuffer *buf;
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  gtk_text_buffer_get_iter_at_offset(buf, &pos, position - 1); /* can't put the cursor at the end in gtk2! */
+  gtk_text_buffer_get_iter_at_offset(buf, &pos, position - 1);
   gtk_text_buffer_place_cursor(buf, &pos);
   gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(w), gtk_text_buffer_get_insert(buf));
 }

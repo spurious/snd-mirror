@@ -890,9 +890,6 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   j = 0;
   if (egen == NULL)
     {
-      /* by moving the mus_src code here and taking the stable stuff out of the loop
-       *   this loop can be sped up by about 30%
-       */
       for (k = 0; sr->sample < dur; k++) /* sr->sample tracks input location -- produce output until input exhausted */
 	{
 	  idata[j] = (MUS_FLOAT_TO_SAMPLE(mus_src(sr->gen, 0.0, &src_input_as_needed)));

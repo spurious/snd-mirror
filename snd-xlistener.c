@@ -1238,6 +1238,20 @@ void clear_listener(void)
   dont_check_motion = 0;
 }
 
+void lock_listener_pane(void)
+{
+  int val;
+  val = listener_height();
+  if (val > 0)
+    XtVaSetValues(listener_pane, XmNpaneMinimum, val - 1, XmNpaneMaximum, val + 1, NULL);
+}
+
+void unlock_listener_pane(void)
+{
+  if (XtIsManaged(listener_pane))
+    XtVaSetValues(listener_pane, XmNpaneMinimum, 1, XmNpaneMaximum, LOTSA_PIXELS, NULL);
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_listener_selected_text_w, g_listener_selected_text)
