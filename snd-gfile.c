@@ -94,16 +94,56 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
 }
 
 
+/* some utilities to make gtkextra's file selector look more like gtk's */
+
+static char *last_filename = NULL;
+
+static char *snd_gtk_get_filename(GtkWidget *dialog)
+{
+#if HAVE_GTKEXTRA
+  gchar *path;
+  gchar *file;
+  path = gtk_file_list_get_path(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list));
+  file = gtk_file_list_get_filename(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list));
+  if (last_filename == NULL) last_filename = (char *)CALLOC(256,sizeof(char));
+  sprintf(last_filename,"%s%s",path,file);
+#else
+  last_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(dialog));
+#endif
+  return(last_filename);
+}
+
+static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSignalFunc delete, GtkSignalFunc ok, GtkSignalFunc cancel)
+{
+  GtkWidget *new_dialog;
+#if HAVE_GTKEXTRA
+  new_dialog = (GtkWidget *)gtk_icon_file_selection_new(title);
+  add_dialog(ss,new_dialog);
+  set_background(new_dialog,(ss->sgx)->basic_color);
+  gtk_signal_connect(GTK_OBJECT(new_dialog),"destroy",delete,NULL);
+  gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->ok_button),"clicked",ok,(gpointer)ss);
+  gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->cancel_button),"clicked",cancel,(gpointer)ss);
+  set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->ok_button,ss);
+  set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->cancel_button,ss);
+#else
+  new_dialog = gtk_file_selection_new(title);
+  add_dialog(ss,new_dialog);
+  set_background(new_dialog,(ss->sgx)->basic_color);
+  gtk_signal_connect(GTK_OBJECT(new_dialog),"destroy",delete,NULL);
+  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->ok_button),"clicked",ok,(gpointer)ss);
+  gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->cancel_button),"clicked",cancel,(gpointer)ss);
+  if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(new_dialog),last_filename);
+  gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(new_dialog));
+  set_pushed_button_colors(GTK_FILE_SELECTION(new_dialog)->ok_button,ss);
+  set_pushed_button_colors(GTK_FILE_SELECTION(new_dialog)->cancel_button,ss);
+#endif
+  return(new_dialog);
+}
+
 
 /* -------- Open File Dialog -------- */
 
-#if HAVE_GTKEXTRA
-  static GtkIconFileSel *open_dialog = NULL;
-#else
-  static GtkWidget *open_dialog = NULL;
-#endif
-
-static char *last_filename = NULL;
+static GtkWidget *open_dialog = NULL;
 void alert_new_file(void) {}
 void toggle_just_sounds(int n) {}
 
@@ -111,16 +151,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {
   snd_info *sp;
   snd_state *ss = (snd_state *)data;
-#if HAVE_GTKEXTRA
-  gchar *path;
-  gchar *file;
-  path = gtk_file_list_get_path(GTK_FILE_LIST(open_dialog->file_list));
-  file = gtk_file_list_get_filename(GTK_FILE_LIST(open_dialog->file_list));
-  last_filename = (char *)CALLOC(256,sizeof(char));
-  sprintf(last_filename,"%s%s",path,file);
-#else
-  last_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(open_dialog));
-#endif
+  last_filename = snd_gtk_get_filename(open_dialog);
   gtk_widget_hide(open_dialog);
   if (!(is_directory(last_filename)))
     {
@@ -148,31 +179,10 @@ void make_open_file_dialog(snd_state *ss)
 {
   finish_keyboard_selection();
   if (!open_dialog)
-    {
-#if HAVE_GTKEXTRA
-      open_dialog = gtk_icon_file_selection_new(STR_File);
-      add_dialog(ss,open_dialog);
-      set_background(open_dialog,(ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(open_dialog),"destroy",(GtkSignalFunc)file_open_dialog_delete,NULL);
-      gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(open_dialog)->ok_button),"clicked",file_open_dialog_ok,(gpointer)ss);
-      gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL(open_dialog)->cancel_button),"clicked",file_open_dialog_dismiss,(gpointer)ss);
-      if (last_filename) gtk_file_selection_set_filename(GTK_ICON_FILESEL(open_dialog),last_filename);
-      gtk_file_selection_hide_fileop_buttons(GTK_ICON_FILESEL(open_dialog));
-      set_pushed_button_colors(GTK_ICON_FILESEL(open_dialog)->ok_button,ss);
-      set_pushed_button_colors(GTK_ICON_FILESEL(open_dialog)->cancel_button,ss);
-#else
-      open_dialog = gtk_file_selection_new(STR_File);
-      add_dialog(ss,open_dialog);
-      set_background(open_dialog,(ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(open_dialog),"destroy",(GtkSignalFunc)file_open_dialog_delete,NULL);
-      gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(open_dialog)->ok_button),"clicked",file_open_dialog_ok,(gpointer)ss);
-      gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION(open_dialog)->cancel_button),"clicked",file_open_dialog_dismiss,(gpointer)ss);
-      if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(open_dialog),last_filename);
-      gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(open_dialog));
-      set_pushed_button_colors(GTK_FILE_SELECTION(open_dialog)->ok_button,ss);
-      set_pushed_button_colors(GTK_FILE_SELECTION(open_dialog)->cancel_button,ss);
-#endif
-    }
+    open_dialog = snd_gtk_file_selection_new(ss,STR_File,
+					     (GtkSignalFunc)file_open_dialog_delete,
+					     (GtkSignalFunc)file_open_dialog_ok,
+					     (GtkSignalFunc)file_open_dialog_dismiss);
   gtk_widget_show(open_dialog);
 }
 
@@ -409,6 +419,10 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
   finish_keyboard_selection();
   if (!save_as_dialog)
     {
+
+      /* can't use the gtkextra file selector here because they've hidden "main_vbox" so there's
+       *   no way to add our own widgets to the dialog
+       */
       save_as_dialog = gtk_file_selection_new(STR_save_as_p);
       add_dialog(ss,save_as_dialog);
       set_background(save_as_dialog,(ss->sgx)->basic_color);
@@ -1288,7 +1302,7 @@ static void file_mix_ok_callback(GtkWidget *w,gpointer clientData)
   snd_state *ss = (snd_state *)clientData;
   gtk_widget_hide(file_mix_dialog);
   mix_complete_file(any_selected_sound(ss),
-		    gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_mix_dialog)),
+		    snd_gtk_get_filename(file_mix_dialog),
 		    "File: mix",with_mix_consoles(ss));
 }
 
@@ -1296,17 +1310,10 @@ void File_Mix_Callback(GtkWidget *w,gpointer clientData)
 {
   snd_state *ss = (snd_state *)clientData;
   if (!file_mix_dialog)
-    {
-      file_mix_dialog = gtk_file_selection_new(STR_mix_file_p);
-      add_dialog(ss,file_mix_dialog);
-      set_background(file_mix_dialog,(ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(file_mix_dialog),"destroy",(GtkSignalFunc)file_mix_delete_callback,NULL);
-      gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(file_mix_dialog)->ok_button),"clicked",file_mix_ok_callback,(gpointer)ss);
-      gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION(file_mix_dialog)->cancel_button),"clicked",file_mix_cancel_callback,(gpointer)ss);
-      gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(file_mix_dialog));
-      set_pushed_button_colors(GTK_FILE_SELECTION(file_mix_dialog)->ok_button,ss);
-      set_pushed_button_colors(GTK_FILE_SELECTION(file_mix_dialog)->cancel_button,ss);
-    }
+    file_mix_dialog = snd_gtk_file_selection_new(ss,STR_mix_file_p,
+						 (GtkSignalFunc)file_mix_delete_callback,
+						 (GtkSignalFunc)file_mix_ok_callback,
+						 (GtkSignalFunc)file_mix_cancel_callback);
   gtk_widget_show(file_mix_dialog);
 }
 

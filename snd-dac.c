@@ -692,12 +692,20 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
       if (sp->playing == 0) sp_stopping = 1;
       if (sp->cursor_follows_play != DONT_FOLLOW)
 	handle_cursor(cp,cursor_moveto(cp,cp->original_cursor));
-      if ((sp_stopping) && (sp->cursor_follows_play == FOLLOW_ONCE)) sp->cursor_follows_play = DONT_FOLLOW;
+      if ((sp_stopping) && (sp->cursor_follows_play == FOLLOW_ONCE)) 
+	sp->cursor_follows_play = DONT_FOLLOW;
       /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
     }
   play_list[dp->slot] = NULL;
   play_list_members--;
-  if (toggle) {if ((sp) && (sp->playing <= 0)) reflect_play_stop(sp); else if (dp->region >= 0) reflect_play_region_stop(dp->region);}
+  if (toggle) 
+    {
+      if ((sp) && (sp->playing <= 0)) 
+	reflect_play_stop(sp);
+      else 
+	if (dp->region >= 0) 
+	  reflect_play_region_stop(dp->region);
+    }
   if (dp->slot == max_active_slot) max_active_slot--;
 #if HAVE_GUILE
   if (dp->region >= 0)
@@ -707,7 +715,8 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
       call_stop_playing_hook(sp);
 #endif
   free_dac_info(dp);
-  if ((sp_stopping) && (sp->delete_me)) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
+  if ((sp_stopping) && (sp->delete_me)) 
+    completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
 }
 
 static void stop_playing(dac_info *dp) {stop_playing_with_toggle(dp,TRUE);}
@@ -791,8 +800,13 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int 
 {
   dac_info *dp;
   dp = make_dac_info(cp,sp,fd);
-  dp->end = end; /* if controls are in use (srate for example), this is not right */
-  if (end != NO_END_SPECIFIED) {dp->end -= beg; if (dp->end < 0) dp->end = -(dp->end);}
+  dp->end = end;
+  if (end != NO_END_SPECIFIED) 
+    {
+      dp->end -= beg; 
+      if (dp->end < 0)
+	dp->end = -(dp->end);
+    }
   play_list[slot] = dp;
   dp->slot = slot;
   if (max_active_slot < slot) max_active_slot = slot;
@@ -808,14 +822,14 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int 
 }
 
 typedef struct {
-  int srate;             /* output srate */
-  int channels;          /* total output channels currently active */
-  int frames;            /* samples per channel per output block */
-  int devices;           /* output devices active */
-  int *chans_per_device; /* channels sent to each active device */
-  int out_format;        /* output data format */
-  int slice;             /* background process state (i.e. starting, running, quitting) */
-  int reverb_ring_frames;
+  int srate;               /* output srate */
+  int channels;            /* total output channels currently active */
+  int frames;              /* samples per channel per output block */
+  int devices;             /* output devices active */
+  int *chans_per_device;   /* channels sent to each active device */
+  int out_format;          /* output data format */
+  int slice;               /* background process state (i.e. starting, running, quitting) */
+  int reverb_ring_frames;  /* how long the reverb rings after the end (if reverb, of course) */
   snd_state *ss;
 } dac_state;
 
@@ -912,7 +926,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start
 	  if (start == 0) beg = current_ed_samples(cp)-1; else beg = start;
 	}
     }
-  return(init_dp(slot,cp,sp,init_sample_read(beg,cp,direction),beg,end));
+  return(init_dp(slot,cp,sp,init_sample_read(beg,cp,direction),start,end));
 }
 
 static dac_info *add_region_channel_to_play_list(int region, int chan, int beg, int end)
@@ -1254,7 +1268,11 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	  if (play_list_members == 0)
 	    {
 	      revdecay += frames;
-	      if (revdecay > dacp->reverb_ring_frames) {global_reverbing=0; revdecay=0;}
+	      if (revdecay > dacp->reverb_ring_frames) 
+		{
+		  global_reverbing=0; 
+		  revdecay=0;
+		}
 	    }
 	}
     }
@@ -1319,7 +1337,8 @@ static void make_dac_buffers(dac_state *dacp)
 	  FREE(dac_buffers);
 	}
       dac_buffers = (MUS_SAMPLE_TYPE **)CALLOC(dacp->channels,sizeof(MUS_SAMPLE_TYPE *));
-      for (i=0;i<dacp->channels;i++) dac_buffers[i] = (MUS_SAMPLE_TYPE *)CALLOC(dacp->frames,sizeof(MUS_SAMPLE_TYPE));
+      for (i=0;i<dacp->channels;i++) 
+	dac_buffers[i] = (MUS_SAMPLE_TYPE *)CALLOC(dacp->frames,sizeof(MUS_SAMPLE_TYPE));
       dac_buffer_chans = dacp->channels;
       dac_buffer_size = dacp->frames;
     }
@@ -1332,7 +1351,8 @@ static void make_dac_buffers(dac_state *dacp)
 	  FREE(audio_bytes);
 	}
       audio_bytes = (unsigned char **)CALLOC(dacp->devices,sizeof(unsigned char *));
-      for (i=0;i<dacp->devices;i++) audio_bytes[i] = (unsigned char *)CALLOC(bytes,sizeof(unsigned char));
+      for (i=0;i<dacp->devices;i++) 
+	audio_bytes[i] = (unsigned char *)CALLOC(bytes,sizeof(unsigned char));
       audio_bytes_size = bytes;
       audio_bytes_devices = dacp->devices;
     }

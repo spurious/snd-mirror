@@ -1421,14 +1421,16 @@
 ;;; in this case, src calls granulate which reads the currently selected file.
 ;;; CLM version is in expsrc.ins
 
-(define expsrc 
-  (lambda (rate)
+(define expsrc
+  (lambda (rate . rest)
     (let* ((gr (make-granulate :expansion rate))
 	   ;; this can be improved by messing with make-granulate's hop and length args
 	   (sr (make-src :srate rate))
 	   (vsize 1024)
 	   (vbeg 0)
 	   (v (samples->vct 0 vsize))
+	   (snd (if (> (length rest) 0) (car rest) 0))
+	   (chn (if (> (length rest) 1) (cadr rest) 0))
 	   (inctr 0))
       (lambda (inval)
 	(src sr 0.0
@@ -1441,7 +1443,7 @@
 				  (begin
 				    (set! vbeg (+ vbeg inctr))
 				    (set! inctr 0)
-				    (samples->vct vbeg vsize 0 0 v)))
+				    (samples->vct vbeg vsize snd chn v)))
 			      val)))))))))
 
 ;;; the next (expsnd) changes the tempo according to an envelope; the new duration
@@ -1963,7 +1965,8 @@
 (define pvoc
   (lambda* (#&key
 	   (fftsize 512) (overlap 4) (time 1.0)
-	   (pitch 1.0) (gate 0.0) (hoffset 0.0))
+	   (pitch 1.0) (gate 0.0) (hoffset 0.0)
+	   (snd 0) (chn 0))
     "(pvoc &key fftsize overlap time pitch gate hoffset) applies the phase vocoder
   algorithm to the current sound (i.e. fft analysis, oscil bank resynthesis). 'pitch'
   specifies the pitch transposition ratio, 'time' - specifies the time dilation ratio,
@@ -1996,7 +1999,7 @@
 	   (nextpct 10.0)       ; how often to print out the percentage complete message
 	   (outlen (ifloor (* time len)))
 	   (out-data (make-vct (max len outlen)))
-	   (in-data (samples->vct 0 (* N 2)))
+	   (in-data (samples->vct 0 (* N 2) snd chn))
 	   (in-data-beg 0))
       ;; setup oscillators
       (do ((i 0 (1+ i)))
@@ -2032,7 +2035,7 @@
 		 (if (> filptr (+ in-data-beg N))
 		     (begin
 		       (set! in-data-beg filptr)
-		       (samples->vct in-data-beg (* N 2) 0 0 in-data)))
+		       (samples->vct in-data-beg (* N 2) snd chn in-data)))
 		 ;; no imaginary component input so zero out fdi
 		 (vct-fill! fdi 0.0)
 		 ;; compute the fft

@@ -252,6 +252,7 @@ void news_help(snd_state *ss)
 	    "Recent changes include:\n\
 \n\
 5-Sep:   changed Apply button handling -- control-click now for selection.\n\
+         HAVE_GTKEXTRA to support libgtkextra's icon-oriented file selector.\n\
 31-Aug:  gtk popup menu fixed.\n\
 30-Aug:  new snd.spec thanks to Fernando Lopez-Lezcano.\n\
          snd-emacs errors now go to emacs, play-region notices its wait argument (thanks to Anders Vinjar).\n\

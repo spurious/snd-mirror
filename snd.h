@@ -83,10 +83,7 @@
  *   HAVE_GTKEXTRA If USE_GTK is set, and you want the Gtk+extra version of the file
  *                 selection widget, set this flag (it requires libgtkextra).
  *
- *  Many others are set by configure -- see config.h.in.  The main useful set
- *  chooses which audio system to load (OSS, SGI, etc).  The most problematic
- *  is FSTATFS_ARGS -- if your system supports fstatfs, this macro sets
- *  the number of arguments it takes.
+ *  Many others are set by configure -- see config.h.in.
  */
 
 #if defined(HAVE_CONFIG_H)

@@ -989,6 +989,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 		  }
 	      }
 	  }
+      recolor_graph(cp,FALSE); /* in case selection color left over from previous use */
     }
 #if (XmVERSION > 1)
   if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]),XmNpaneMaximum,LOTSA_PIXELS,NULL);

@@ -1,10 +1,11 @@
 snd change log
 
   5-Sep:     changed Apply button handling -- control-click now for selection.
+             HAVE_GTKEXTRA to support libgtkextra's icon-oriented file selector.
   31-Aug:    gtk popup menu fixed.
   30-Aug:    new snd.spec thanks to Fernando Lopez-Lezcano.
              snd-emacs errors now go to emacs, play-region notices its wait argument (thanks to Anders Vinjar).
-             added sash-color, gtk CLM/Snd connection finally works.
+             sash-color, gtk CLM/Snd connection finally works.
   28-Aug:    more gtk-related bugfixes.
   24-Aug:    drag-and-drop bugfixes.
   23-Aug:    removed -s startup switch.

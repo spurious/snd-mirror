@@ -1,3 +1,6 @@
+/* TODO: apply to selection has two major bugs (see line 780 below)
+ */
+
 #include "snd.h"
 
 /* ---------------- amp envs ---------------- */
@@ -774,6 +777,24 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      break;
 	    case APPLY_TO_SELECTION:
 	      if (region_chans(0) > 1) remember_temp(ap->ofile,region_chans(0));
+
+	      /* TODO: if duration changed, delete original first:
+		  ok = delete_selection(S_src_selection,DONT_UPDATE_DISPLAY);
+		  file_insert_samples(si->begs[i],k,ofile,cp,0,DELETE_ME,S_src_selection);
+		  if (ok) backup_edit_list(cp);
+		  if (cp->marks) ripple_marks(cp,0,0);
+		  
+		  then deactivate_selection?
+	      */
+
+	      /* also!! selection chans may have no relation to sound chans:
+		 sync_info *si = NULL; 
+		 si = region_sync(0); or some version that doesn't set up readers -- we need the channel list here
+                 for (i=0;i<si->chans;i++)
+		   now use si->cps[i] ->sound etc, not sp->chans[i]
+		 free_sync_info(si); does not free sample readers
+	      */
+
 	      for (i=0;i<region_chans(0);i++)
 		file_change_samples(selection_beg(sp->chans[i]),region_len(0),ap->ofile,sp->chans[i],i,
 				    (region_chans(0) > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,"Apply to selection");

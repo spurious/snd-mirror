@@ -410,6 +410,7 @@ if test "$use_guile" = y || test "$use_guile" = yes; then
 
       dnl look for new (1.3.2) guile smob creator
       dnl attempt to use AC_CHECK_LIB here failed because of confusion over multiple versions
+
       if test "`guile -c '(display (string=? (version) "1.3"))'`" = "#t"; then
         echo found old out-of-date version 1.3 Guile library
         AC_DEFINE(HAVE_GUILE_1_3_0,1)
@@ -422,12 +423,6 @@ if test "$use_guile" = y || test "$use_guile" = yes; then
       fi
 
       if test "$with_gtk" = yes; then
-        dnl look for guile-gtk
-
-        dnl GTK_VERSION=$gtk_config_major_version.$gtk_config_minor_version
-        dnl GUILE_GTK_VERSION=guile-gtk-$GTK_VERSION
-        dnl LIBGUILEGTK_VERSION=libguilegtk-$GTK_VERSION.la
-
 	dnl find guile-gtk: taken from guileGL
         AC_PATH_PROG(GUILE_PROG, guile)
         AC_PATH_PROGS(GUILE_GTK_PROG,
@@ -438,7 +433,10 @@ if test "$use_guile" = y || test "$use_guile" = yes; then
           AC_MSG_CHECKING(for guile-gtk libraries)
           GUILE_GTK_LIBS=`$GUILE_PROG -c "(use-modules (gtk config)) (display gtkconf-guilegtk-lib)"`
           AC_MSG_RESULT($GUILE_GTK_LIBS)
-
+dnl	  if test "`guile -c '(use-modules (gtk config)) (display (and (string>? (version) "1.3.4") (string<? gtkconf-guile-gtk-version "0.19")))'`" = "#t"; then
+dnl	    echo Guile 1.4 needs Guile-Gtk 0.19 or later.
+dnl	    dnl should we cancel HAVE_GUILE_GTK here?
+dnl	  fi
           AC_DEFINE(HAVE_GUILE_GTK)
           AC_SUBST(GUILE_GTK_LIBS)
 	fi
