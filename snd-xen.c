@@ -754,7 +754,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       fd = open(SND_CONF, O_RDONLY, 0);
       if (fd != -1)
 	{
-	  close(fd);
+	  snd_close(fd, SND_CONF);
 	  snd_catch_any(eval_file_wrapper, (void *)SND_CONF, "(load " SND_CONF ")");
 	}
     }
@@ -764,7 +764,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       fd = open(str, O_RDONLY, 0);
       if (fd != -1) 
 	{
-	  close(fd);
+	  snd_close(fd, str);
 	  snd_catch_any(eval_file_wrapper, (void *)str, "(load ~/.snd)");
 	}
       if (str) FREE(str);
@@ -1216,7 +1216,7 @@ static int snd_access(char *dir, char *caller)
       XEN_ERROR(NO_SUCH_FILE,
 		XEN_LIST_1(res));
     }
-  else close(err);
+  else snd_close(err, temp);
   remove(temp);
   FREE(temp);
   return(1);
@@ -1839,7 +1839,7 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
   hdr = get_temp_header(fd);
   if (hdr == NULL) 
     {
-      close(fd);
+      snd_close(fd, "sound file");
       return(snd_no_such_file_error(S_close_sound_file, g_fd));
     }
   result = close_temp_file(fd, hdr, bytes, any_selected_sound(state));

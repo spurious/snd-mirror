@@ -30,6 +30,7 @@
 
 ;;; TODO: clipped temps? deliberate data-clipped #t
 ;;; TODO: minibuffer completion via browse-click in help-completion dialog to minibuffer not listener
+;;; TODO: rest of run (optimizer) tests (22)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -14170,29 +14171,11 @@ EDITS: 5
 	    (reverb-amount 0.01)
 	    (base 1.0)
 	    #:allow-other-keys)
-
-    "(fm-violin startime dur frequency amplitude #:key \n\
-   (fm-index 1.0) (amp-env '(0 0  25 1  75 1  100 0)) 
-   (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0) \n\
-   (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) \n\
-   (noise-amount 0.0) (noise-freq 1000.0) (ind-noise-freq 10.0) \n\
-   (ind-noise-amount 0.0) (amp-noise-freq 20.0) \n\
-   (amp-noise-amount 0.0) (gliss-env '(0 0  100 0)) \n\
-   (glissando-amount 0.0) (fm1-env '(0 1  25 .4  75 .6  100 0)) \n\
-   (fm2-env '(0 1  25 .4  75 .6  100 0)) (fm3-rat 4.0) \n\
-   (fm3-env '(0 1  25 .4  75 .6  100 0)) (fm1-rat 1.0) \n\
-   (fm2-rat 3.0) (fm1-index #f) (fm2-index #f) \n\
-   (fm3-index #f) (degree 0) (distance 1.0) \n\
-   (reverb-amount 0.01) (base 1.0)) \n\
-This version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined).\n\
-  (with-sound () (fm-violin 0 1 440 .1))"
-
     (let* ((pi 3.141592653589793)
 	   (beg (floor (* startime (mus-srate))))
 	   (len (floor (* dur (mus-srate))))
 	   (end (+ beg len))
 	   (frq-scl (hz->radians frequency))
-	   (modulate (not (zero? fm-index)))
 	   (maxdev (* frq-scl fm-index))
 	   (logfreq (log frequency))
 	   (sqrtfreq (sqrt frequency))
@@ -14205,20 +14188,20 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 			   (= fm1-rat (floor fm1-rat))
 			   (= fm2-rat (floor fm2-rat))
 			   (= fm3-rat (floor fm3-rat))))
-	   (coeffs (and easy-case modulate
+	   (coeffs (and easy-case
 			(partials->polynomial
 			 (list fm1-rat index1
 			       (floor (/ fm2-rat fm1-rat)) index2
 			       (floor (/ fm3-rat fm1-rat)) index3))))
-	   (norm (or (and easy-case modulate 1.0) index1))
+	   (norm (if easy-case 1.0 index1))
 	   (carrier (make-oscil frequency))
-	   (fmosc1  (and modulate (make-oscil (* fm1-rat frequency))))
-	   (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
-	   (fmosc3  (and modulate (or easy-case (make-oscil (* fm3-rat frequency)))))
+	   (fmosc1 (make-oscil (* fm1-rat frequency)))
+	   (fmosc2 (if easy-case #f (make-oscil (* fm2-rat frequency))))
+	   (fmosc3 (if easy-case #f (make-oscil (* fm3-rat frequency))))
 	   (ampf  (make-env amp-env :scaler amplitude :base base :duration dur))
-	   (indf1 (and modulate (make-env fm1-env norm :duration dur)))
-	   (indf2 (and modulate (or easy-case (make-env fm2-env index2 :duration dur))))
-	   (indf3 (and modulate (or easy-case (make-env fm3-env index3 :duration dur))))
+	   (indf1 (make-env fm1-env norm :duration dur))
+	   (indf2 (if easy-case #f (make-env fm2-env index2 :duration dur)))
+	   (indf3 (if easy-case #f (make-env fm3-env index3 :duration dur)))
 	   (frqf (make-env gliss-env (* glissando-amount frq-scl) :duration dur))
 	   (pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
 	   (ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
@@ -14233,30 +14216,26 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 			#f))
 	   ;(locs (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
 	   (data (make-vct (1+ (- end beg)))))
-      (vct-map! data
-       (lambda () 
-	 (let ((vib 0.0) 
-	       (modulation 0.0)
-	       (fuzz 0.0)
-	       (ind-fuzz 1.0)
-	       (amp-fuzz 1.0))
-	   (if (not (= 0.0 noise-amount))
-	       (set! fuzz (rand fm-noi)))
-	   (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-	   (if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
-	   (if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
-	   (if modulate
-	       (if easy-case
-		   (set! modulation
-			 (* (env indf1) 
-			    (polynomial coeffs (oscil fmosc1 vib)))) ;(* vib fm1-rat)??
-		   (set! modulation
-			 (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-			    (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-			    (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-	   (* (env ampf) amp-fuzz
-	      (oscil carrier (+ vib (* ind-fuzz modulation)))))))
-      data)))
+      (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0))
+	  (vct-map! data
+		    (lambda () 
+		      (let* ((fuzz (if (> noise-amount 0.0) (rand fm-noi) 0.0))
+			     (ind-fuzz (if ind-noi (+ 1.0 (rand-interp ind-noi)) 1.0))
+			     (amp-fuzz (if amp-noi (+ 1.0 (rand-interp amp-noi)) 1.0))
+			     (vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+			     (modulation (if easy-case
+					     (* (env indf1) 
+						(polynomial coeffs (oscil fmosc1 vib)))
+					     (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+						(* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+						(* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
+			(* (env ampf) amp-fuzz
+			   (oscil carrier (+ vib (* ind-fuzz modulation)))))))
+	  (vct-map! data
+		    (lambda () 
+		      (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+			     (modulation (* (env indf1) (polynomial coeffs (oscil fmosc1 vib)))))
+			(* (env ampf) (oscil carrier (+ vib modulation))))))))))
 
 (if (or full-test (= snd-test 22) (and keep-going (<= snd-test 22)))
     (begin
@@ -14359,6 +14338,18 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (etst '(* #f))
       (etst '(* 2.0 "a string"))
       (etst '(* 2.0 1+2i))
+      (itsta '(lambda (y) (* (inexact->exact y) 
+			     (inexact->exact (+ y 1)) 
+			     (inexact->exact y) 
+			     (inexact->exact (+ y 2)) 
+			     (inexact->exact (* y 2) )))
+	     1 12)
+      (itsta '(lambda (y) (+ (inexact->exact y) 
+			     (inexact->exact (+ y 1)) 
+			     (inexact->exact y) 
+			     (inexact->exact (+ y 2)) 
+			     (inexact->exact (* y 2) )))
+	     1 9)
       
       (itst '(+ 2 3) 5)
       (itst '(+ 2) 2)
@@ -15902,6 +15893,8 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (itst '(case 1 ((1) 4) ((2 3) 5) (else 123)) 4)
       (itst '(case 3 ((1) 4) ((2 3) 5) (else 123)) 5)
       (itst '(case 10 ((1) 4) ((2 3) 5) (else 123)) 123)
+      (etst '(case 10 ((1) 4) ((2 3) .5) (else 123)))
+      (etst '(case 10 ((1) 4) ((2 1.3) 5) (else 123)))
 
       (itst '(cond ((> 1 0) 1)) 1)
       (itst '(cond ((> 1 0) 1) ((< 0 1) 2)) 1)
@@ -15999,6 +15992,8 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (ftst '(mus-srate) 22050.0)
       (ftst '(set! (mus-srate) 44100.0) 44100.0)
       (ftst '(set! (mus-srate) 22050) 22050.0)
+      (etst '(mus-srate 0.0))
+      (etst '(set! (mus-srate) "hi"))
 
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref v 1)) 1.0)
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-scale! v 2.0) (vct-ref v 1)) 2.0)
@@ -16090,6 +16085,82 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	    (v (make-vct 3)))
 	(vct-map! v (lambda () (vector-set! vect 0 123.0) 0.0))
 	(if (fneq (vector-ref vect 0) 123.0) (snd-display ";f vect set: ~A" vect)))
+
+      (let ((v (make-vct 3))
+	    (f (make-frame 1)))
+	(vct-map (lambda () (frame-set! f 0 1.0) f) v)
+	(if (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";vct-map 1.0: ~A" v)))
+
+      (let ((v0 (make-vct 3))
+	    (v1 (make-vct 3))
+	    (f (make-frame 2)))
+	(vct-map (lambda () 
+		   (frame-set! f 0 1.0) 
+		   (frame-set! f 1 0.5) 
+		   f)
+		 v0 v1)
+	(if (or (not (vequal v0 (vct 1.0 1.0 1.0)))
+		(not (vequal v1 (vct 0.5 0.5 0.5))))
+	    (snd-display ";vct-map 1.0 0.5: ~A ~A" v0 v1)))
+
+      (let ((v0 (make-vct 3))
+	    (v1 (make-vct 3))
+	    (l (make-locsig 30.0 :channels 2)))
+	(vct-map (lambda () 
+		   (locsig l 0 1.0))
+		 v0 v1)
+	(if (or (not (vequal v0 (vct 0.667 0.667 0.667)))
+		(not (vequal v1 (vct 0.333 0.333 0.333))))
+	    (snd-display ";vct-map locsig: ~A ~A" v0 v1)))
+
+      (let ((v1 (make-vector 3 1.5))
+	    (v2 (make-vector 3 32))
+	    (v3 (make-vct 3)))
+	(vct-map! v3
+		  (lambda ()
+		    (vector-set! v2 0 1)
+		    (vector-set! v1 0 3.14)
+		    (+ (vector-ref v2 0) (vector-ref v1 0))))
+	(if (or (not (vequal v3 (vct 4.14 4.14 4.14)))
+		(not (= (vector-ref v2 0) 1))
+		(not (= (vector-ref v2 1) 32))
+		(fneq (vector-ref v1 0) 3.14)
+		(fneq (vector-ref v1 1) 1.5))
+	    (snd-display "run vector-set: ~A ~A ~A" v1 v2 v3)))
+
+      (let ((rdat (make-vct 16))
+	    (idat (make-vct 16))
+	    (v (make-vct 1)))
+	(do ((i 0 (1+ i)))
+	    ((= i 16))
+	  (vct-set! rdat i 0.0)
+	  (vct-set! idat i 0.0))
+	(vct-set! rdat 3 1.0)
+	(vct-map! v (lambda ()
+		      (mus-fft rdat idat 16 1)
+		      (mus-fft rdat idat 16 -1)
+		      0.0))
+	(if (or (fneq (vct-ref rdat 3) 16.0)
+		(fneq (vct-ref rdat 4) 0.0))
+	    (snd-display ";run vct fft real[3 or 4]: ~A ~A?" (vct-ref rdat 3) (vct-ref rdat 4))))
+
+      (let ((v0 (make-vct 10))
+	    (v1 (make-vct 10))
+	    (v (make-vct 1)))
+	(vct-map! v (lambda ()
+		      (vct-fill! v0 1.0)
+		      (multiply-arrays v0 v1 1)
+		      0.0))
+	(IF (not (vequal v0 (vct 0.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0)))
+	    (snd-display ";run multiply-arrays[0]: ~A?" v0)))
+
+      (let ((v (make-vct 3 1.5))
+	    (v1 (make-vct 1)))
+	(vct-map! v1 (lambda ()
+		      (clear-array v)
+		      1.0))
+	(IF (not (vequal v (vct 0.0 0.0 0.0)))
+	    (snd-display ";run clear-array: ~A" v)))
 
       (let ((ind (open-sound "oboe.snd")))
 	(let ((r (make-sample-reader 2000))

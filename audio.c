@@ -2570,9 +2570,8 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 			  channels = 4; 
 			  break;
 			case MUS_AUDIO_DEFAULT:
-			  if (adat_mode) 
-			    channels = 8; 
-			  else channels = 4; break;
+			  channels = 8; 
+			  break;
 			default:
 			  channels = 0;
 			  break;

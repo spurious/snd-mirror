@@ -851,7 +851,7 @@ static void deferred_region_to_temp_file(region *r)
 		  write(fdo, buffer, bytes);
 		}
 	      FREE(buffer);
-	      close(fdi);
+	      snd_close(fdi, sp0->filename);
 	      for (i = 0; i < r->chans; i++)
 		{
 		  ep = r->amp_envs[i];
@@ -862,7 +862,7 @@ static void deferred_region_to_temp_file(region *r)
 		}
 	      r->maxamp = MUS_SAMPLE_TO_FLOAT(ymax);
 	    }
-	  close(fdo);
+	  snd_close(fdo, r->filename);
 	}
     }
   else

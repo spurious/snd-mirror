@@ -287,7 +287,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
     {
       long long mem;
       fscanf(md, "        total:    used:    free:  shared: buffers:  cached:\nMem:  %lld", &mem);
-      fclose(md);
+      snd_fclose(md, "/proc/meminfo");
       ss->memory_available = mem / 1024;
     }
   else 

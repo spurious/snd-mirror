@@ -94,7 +94,7 @@ static void end_ps_graph(void)
 	       (int)(bby + 10 + eps_bottom_margin(ss)));
   ps_write(pbuf);
   ps_flush(ps_fd);
-  close(ps_fd);
+  snd_close(ps_fd, "eps file");
   if (previous_locale)
     {
 #if HAVE_SETLOCALE

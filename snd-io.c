@@ -337,6 +337,25 @@ int snd_remove(const char *name)
   return(0);
 }
 
+int snd_close(int fd, const char *name)
+{
+  int val;
+  val = close(fd);
+  if (val != 0)
+    snd_warning("can't close %d (%s): %s", fd, name, strerror(errno));
+  return(val);
+}
+
+int snd_fclose(FILE *fd, const char *name)
+{
+  int val;
+  val = fclose(fd);
+  if (val != 0)
+    snd_warning("can't close %s: %s", name, strerror(errno));
+  return(val);
+}
+
+
 /* there are a few special-case multi-channel temp files that need a kind of reference count to handle deletion */
 /* this machinery affects only these special cases, not temp files in general */
 

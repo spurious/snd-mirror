@@ -1107,12 +1107,15 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		  xf -= samples_per_pixel;
 		  ymin = MUS_SAMPLE_MAX;
 		  ymax = MUS_SAMPLE_MIN;
-		  check_for_event(ss);
-		  if ((ap->changed) || (ss->stopped_explicitly))
+		  if (samps > 10000000)
 		    {
-		      ss->stopped_explicitly = 0;
-		      ap->changed = 0;
-		      break;
+		      check_for_event(ss);
+		      if ((ap->changed) || (ss->stopped_explicitly))
+			{
+			  ss->stopped_explicitly = 0;
+			  ap->changed = 0;
+			  break;
+			}
 		    }
 		}
 	    }
@@ -1258,11 +1261,14 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 		  xf -= samples_per_pixel;
 		  ymin = 100.0;
 		  ymax = -100.0;
-		  if ((ap->changed) || (ss->stopped_explicitly))
+		  if (samps > 10000000)
 		    {
-		      ss->stopped_explicitly = 0;
-		      ap->changed = 0;
-		      break;
+		      if ((ap->changed) || (ss->stopped_explicitly))
+			{
+			  ss->stopped_explicitly = 0;
+			  ap->changed = 0;
+			  break;
+			}
 		    }
 		}
 	    }
@@ -1749,7 +1755,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	  rewind(fd);
 	  str = (char *)CALLOC(chars + 1, sizeof(char));
 	  fread(str, 1, chars, fd);
-	  fclose(fd);
+	  snd_fclose(fd, filename);
 	  snd_help(ss, "fft peaks", str);
 	  FREE(str);
 	  if (remove(filename) == -1)

@@ -2695,7 +2695,7 @@ static XEN g_display_edits(XEN snd, XEN chn)
   buf = (char *)CALLOC(len + 1, sizeof(char));
   lseek(fd, 0L, SEEK_SET);
   read(fd, buf, len);
-  close(fd);
+  snd_close(fd, name);
   if (remove(name) == -1)
     snd_error("can't remove %s: %s", name, strerror(errno));
   if (name) FREE(name);

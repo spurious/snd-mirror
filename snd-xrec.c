@@ -3129,12 +3129,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   mus_header_update_with_fd(rp->output_file_descriptor,
 			    rp->output_header_type,
 			    rp->total_output_frames * rp->out_chans * mus_data_format_to_bytes_per_sample(rp->out_format));
-  if (close(rp->output_file_descriptor) != 0)
-    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-	      rp->output_file_descriptor,
-	      rp->output_file,
-	      strerror(errno),
-	      __FILE__, __LINE__, __FUNCTION__);
+  snd_close(rp->output_file_descriptor, rp->output_file);
   rp->output_file_descriptor = -1;
   duration = (Float)rp->total_output_frames / (Float)(rp->srate);
   /* 25-Jun-00: this used to divide by chans, but rp->total_output_frames is in terms of frames (it was named total_out_samps) */

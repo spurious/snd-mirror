@@ -399,12 +399,6 @@ static XEN vct_fill(XEN obj1, XEN obj2)
   return(xen_return_first(obj1, obj2));
 }
 
-#if WITH_RUN
-Float evaluate_ptree_0f2f(void *pt);
-void *form_to_ptree_0f2f(XEN proc);
-void *free_ptree(void *pt);
-#endif
-
 static XEN vct_mapB(XEN obj, XEN proc)
 {
   #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"

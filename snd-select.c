@@ -635,7 +635,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	      if (no_space == GIVE_UP)
 		{
 		  /* has already interacted with user about disk problem */
-		  close(ofd);
+		  snd_close(ofd, ofile);
 		  si = free_sync_info(si);
 		  return(MUS_WRITE_ERROR);
 		}

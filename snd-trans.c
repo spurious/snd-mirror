@@ -1496,20 +1496,20 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
   fd = fopen(oldname, "rb");
   if (fd == NULL) 
     {
-      close(fs); 
+      snd_close(fs, newname); 
       RETURN_MUS_IO_ERROR("fopen", oldname);
     }
   if (snd_checked_write(fs, (unsigned char *)hdr, 28, newname) == MUS_ERROR) 
     {
-      close(fs); 
-      fclose(fd);
+      snd_close(fs, newname); 
+      snd_fclose(fd, oldname);
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
   buf = (short *)CALLOC(TRANS_BUF_SIZE, sizeof(short));
   if (buf == NULL) 
     {
-      close(fs); 
-      fclose(fd); 
+      snd_close(fs, newname); 
+      snd_fclose(fd, oldname); 
       RETURN_MUS_ALLOC_ERROR(oldname, TRANS_BUF_SIZE, "buf");
     }
   fread(buf, 1, loc, fd);
@@ -1532,8 +1532,8 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 	{
 	  if (be_snd_checked_write(fs, (unsigned char *)buf, j * 2, newname) == MUS_ERROR) 
 	    {
-	      close(fs); 
-	      fclose(fd); 
+	      snd_close(fs, newname); 
+	      snd_fclose(fd, oldname); 
 	      FREE(buf); 
 	      RETURN_MUS_WRITE_ERROR(oldname, newname);
 	    }
@@ -1541,8 +1541,8 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 	}
     }
   if (j > 0) err = be_snd_checked_write(fs, (unsigned char *)buf, j * 2, newname);
-  close(fs);
-  fclose(fd);
+  snd_close(fs, newname);
+  snd_fclose(fd, oldname);
   FREE(buf);
   if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);

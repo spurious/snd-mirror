@@ -2109,7 +2109,7 @@ static char *save_marks(snd_info *sp)
 	  for (i = 0; i < sp->nchans; i++)
 	    save_mark_list(fd, sp->chans[i]);
 	  fprintf(fd, ")");
-	  fclose(fd);
+	  snd_fclose(fd, newname);
 	}
       else 
 	report_in_minibuffer_and_save(sp, "%s %s ", newname, strerror(errno));

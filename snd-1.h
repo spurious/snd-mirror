@@ -410,6 +410,8 @@ void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_da
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 snd_io *make_zero_file_state(off_t size);
 int snd_remove(const char *name);
+int snd_close(int fd, const char *name);
+int snd_fclose(FILE *fd, const char *name);
 void remember_temp(char *filename, int chans);
 void forget_temps(void);
 void forget_temp(char *filename, int chan);
@@ -1347,6 +1349,5 @@ void g_init_run(void);
   void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid);
   void run_new_widget_hook(GUI_WIDGET w);
 #endif
-
 #endif
 

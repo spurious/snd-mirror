@@ -34,7 +34,7 @@ static char *file_to_string(char *filename)
   if ((fread(content, 1, size, file)) != size)
     snd_error("%s[%d] %s: did not read entire file!\n", 
 	      __FILE__, __LINE__, __FUNCTION__);
-  fclose(file);
+  snd_fclose(file, filename);
   return(content);
 }
 

@@ -2575,6 +2575,10 @@ functions:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vctlength">vct-length</a></em> (vobj)</code></span></td>
 <!-- --><td>length of data array in vobj.</td></tr>
 <!-- -->
+<!-- vct-map -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctmap1">vct-map</a></em> (thunk v0 &amp;rest v1...)</code></span></td>
+<!-- --><td>map 'thunk' (which should return a frame) into the vct's passed as trailing args.</td></tr>
+<!-- -->
 <!-- vct-map! -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vctmap">vct-map!</a></em> (vobj proc)</code></span></td>
 <!-- --><td><code>vobj[i] = (funcall proc)</code>.</td></tr>
@@ -8703,7 +8707,7 @@ to the selection if "h" is typed in the graph:
 <p><i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
 suitable for use with make-color.  <i>snd-gcs</i> returns a list of Snd's graphics contexts
 (intended for use with the xm module in snd-motif.scm).
-<b>snd-pixel</b> returns the pixel associated with a give color such as basic-color. This
+<b>snd-pixel</b> returns the pixel associated with a given color such as basic-color. This
 is handy in snd-motif.scm where many of the procedures want an X-style Pixel value.
 </p>
 

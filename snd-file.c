@@ -178,10 +178,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
       newname = copy_string(tempname);
       FREE(tempname);
     }
-  if (close(fd) != 0)
-    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-	      fd, newname, strerror(errno),
-	      __FILE__, __LINE__, __FUNCTION__);
+  snd_close(fd, newname);
   err = snd_translate(filename, newname, type);
   if (err == MUS_NO_ERROR)
     {
@@ -755,10 +752,7 @@ int copy_file(char *oldname, char *newname)
   ofd = creat(newname, 0666);
   if (ofd == -1) 
     {
-      if (close(ifd) != 0)
-	snd_error("can't close %d (%s): %s [%s[%d] %s]",
-		  ifd, oldname, strerror(errno),
-		  __FILE__, __LINE__, __FUNCTION__);
+      snd_close(ifd, oldname);
       return(MUS_CANT_OPEN_FILE);
     }
   buf = (char *)CALLOC(8192, sizeof(char));
@@ -768,22 +762,13 @@ int copy_file(char *oldname, char *newname)
       wb = write(ofd, buf, bytes);
       if (wb != bytes) 
 	{
-	  if (close(ofd) != 0)
-	    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-		      ofd, newname, strerror(errno),
-		      __FILE__, __LINE__, __FUNCTION__);
-	  if (close(ifd) != 0)
-	    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-		      ifd, oldname, strerror(errno),
-		      __FILE__, __LINE__, __FUNCTION__);
+	  snd_close(ofd, newname);
+	  snd_close(ifd, oldname);
 	  FREE(buf); 
 	  return(MUS_WRITE_ERROR);
 	}
     }
-  if (close(ifd) != 0)
-    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-	      ifd, oldname, strerror(errno),
-	      __FILE__, __LINE__, __FUNCTION__);
+  snd_close(ifd, oldname);
   total = total >> 10;
   wb = disk_kspace(newname);
   if (wb < 0) 
@@ -793,10 +778,7 @@ int copy_file(char *oldname, char *newname)
       snd_error("disk nearly full: used " OFF_TD " Kbytes leaving " OFF_TD,
 		total, wb);
   FREE(buf);
-  if (close(ofd) != 0)
-    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-	      ofd, newname, strerror(errno),
-	      __FILE__, __LINE__, __FUNCTION__);
+  snd_close(ofd, newname);
   return(MUS_NO_ERROR);
 }
 
@@ -1457,11 +1439,7 @@ void update_prevlist(void)
 		FREE(prevfullnames[i]); 
 		prevfullnames[i] = NULL;
 	      }
-	    else 
-	      if (close(fd) != 0)
-		snd_error("can't close %d (%s): %s [%s[%d] %s]",
-			  fd, prevfullnames[i], strerror(errno),
-			  __FILE__, __LINE__, __FUNCTION__);
+	    else snd_close(fd, prevfullnames[i]);
 	  }
       for (i = 0, j = 0; i <= prevfile_end; i++)
 	if (prevnames[i])

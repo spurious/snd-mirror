@@ -21,10 +21,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 	      size = chans * mus_samples_to_bytes(data_format, 1); /* was 2 samples? 22-Mar-02 */
 	      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 	      write(chan, buf, size);
-	      if (close(chan) != 0)
-		snd_error("can't close %d (%s): %s [%s[%d] %s]",
-			  chan, newname, strerror(errno),
-			  __FILE__, __LINE__, __FUNCTION__);
+	      snd_close(chan, newname);
 	      FREE(buf);
 	      return(snd_open_file(newname, ss, FALSE));
 	    }
@@ -2563,7 +2560,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 		  size = ch * mus_samples_to_bytes(df, 1); /* was 2 samples? 22-Mar-02 */
 		  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 		  write(chan, buf, size);
-		  close(chan);
+		  snd_close(chan, str);
 		  FREE(buf);
 		  sp = snd_open_file(str, ss, FALSE);
 		}
@@ -2989,7 +2986,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
       write(fd, (char *)mbuf, (2 * sizeof(mus_sample_t)));
       write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
       write(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t)));
-      close(fd);
+      snd_close(fd, fullname);
       return(name);
     }
   XEN_ERROR(NO_SUCH_ENVELOPE,
@@ -3017,7 +3014,7 @@ static env_info *get_peak_env_info(char *fullname, int *error)
   bytes = read(fd, (char *)ibuf, (5 * sizeof(int)));
   if (bytes != (5 * sizeof(int)))
     {
-      close(fd);
+      snd_close(fd, fullname);
       (*error) = PEAK_ENV_NO_DATA;
       return(NULL);
     }
@@ -3054,7 +3051,7 @@ static env_info *get_peak_env_info(char *fullname, int *error)
   ep->data_max = (mus_sample_t *)MALLOC(ep->amp_env_size * sizeof(mus_sample_t));
   read(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
   read(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t)));
-  close(fd);
+  snd_close(fd, fullname);
   return(ep);
 }
 

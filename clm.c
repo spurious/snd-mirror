@@ -5,7 +5,6 @@
  *
  * SOMEDAY: restart method? feedback? channels? increment? add-method? mus-copy? filter class (and filter_p) for a0 etc?
  * SOMEDAY: rationalize the methods like mus_increment
- * SOMEDAY: copy method
  */
 
 #if defined(HAVE_CONFIG_H)
