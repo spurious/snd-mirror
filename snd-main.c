@@ -214,6 +214,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 #endif
 
   if (fft_size(ss) != DEFAULT_FFT_SIZE) pss_sd(fd,S_fft_size,fft_size(ss));
+  if (minibuffer_history_length(ss) != DEFAULT_MINIBUFFER_HISTORY_LENGTH) pss_sd(fd,S_minibuffer_history_length,minibuffer_history_length(ss));
 #if HAVE_GUILE
   if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd,S_fft_window,mus_fft_window_name(fft_window(ss)));
   if (fft_style(ss) != DEFAULT_FFT_STYLE) pss_ss(fd,S_fft_style,fft_style_name(fft_style(ss)));

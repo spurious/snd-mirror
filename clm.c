@@ -4568,7 +4568,7 @@ mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_forma
 	  /* clear previous, if any */
 	  if (fd == -1)
 	    mus_error(MUS_CANT_OPEN_FILE,"open(%s) -> %s",gen->file_name,strerror(errno));
-	  else close(fd);
+	  else mus_file_close(fd);
 	  return((mus_any *)gen);
 	}
     }

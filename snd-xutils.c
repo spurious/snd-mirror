@@ -374,6 +374,15 @@ void check_for_event(snd_state *ss)
   ss->checking_explicitly = 0;
 }
 
+int event_pending(snd_state *ss)
+{
+  XtInputMask msk = 0;
+  XtAppContext app;
+  app = MAIN_APP(ss);
+  msk = XtAppPending(app);
+  return(msk & XtIMXEvent);
+}
+
 void color_cursor(snd_state *ss, Pixel color)
 {
   state_context *sx;

@@ -2,7 +2,6 @@
 
 /* TODO   undo-hook is not very useful until we can make channel-specific GUI indications
  * TODO   add more general SCM func mechanism? or add a way to extend the pre-parsed cases
- * TODO   zero file states memory leak?
  *
  * the latter is under the WITH_PARSE_TREES switch.  ed_list has 2 extra fields:
  *      MUS_SAMPLE_TYPE (*func)(struct chan__info *cp, int pos, struct snd__fd *sf,void *env);

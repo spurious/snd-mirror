@@ -364,6 +364,11 @@ void check_for_event(snd_state *ss)
   ss->checking_explicitly = 0;
 }
 
+int event_pending(snd_state *ss)
+{
+  return(gtk_events_pending());
+}
+
 void set_title(snd_state *ss, const char *title)
 {
 #ifndef SND_AS_WIDGET

@@ -390,6 +390,9 @@ when you save a sound via the "save" dialog.</p>
 
   <b><a name="initialy1">initial-y1</a></b>            1.0     Same, but maximum.
 
+  <b><a name="minibufferhistorylength">minibuffer-history-length</a></b>  8  Length of minibuffer M-p/M-n history.  If set, sounds that are currently open 
+                                are not affected, only subsequently opened sounds.
+
   <b><a name="movies">movies</a></b>                #t      If #t, the mix graphs are updated constantly as the 
                                 mouse drags the mix tag.
 
@@ -1207,7 +1210,7 @@ a particular mix object:</p>
 
   <b><a name="sndmixtagy">mix-tag-y</a></b>         (<i>mix</i>)         tag y offset in graph of <i>mix</i> (default 0)
 
-  <b><a name="sndmixtrack">mix-track</a></b>         (<i>mix</i>)         mix track (0 = none).
+  <b><a name="sndmixtrack">mix-track</a></b>         (<i>mix</i>)         mix track (0 = none).  (mix-sync is a synonym for this).
 
   <b><a name="sndmixok">mix?</a></b>              (<i>mix</i>)         #t if <i>mix</i> is active.
 

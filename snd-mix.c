@@ -1,9 +1,7 @@
 #include "snd.h"
 
 /* 
- * TODO if dragging zy don't constantly redisplay mix waveforms
  * TODO enved waveform for mix is off and draws twice at start?
- * TODO mix-track should be mix-sync
  */
 
 
@@ -1894,6 +1892,8 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
       draw_mix_tag(md);
     }
 
+  if ((ss->just_time == 1) && (event_pending(ss))) return(0);
+
   if (sp) 
     {
       if (md->id == ss->selected_mix)
@@ -3622,13 +3622,7 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
 static scm_sizet free_mf(SCM obj) 
 {
   mix_fd *fd = (mix_fd *)GH_VALUE_OF(obj); 
-  if (fd) 
-    {
-#ifdef DEBUGGING
-      snd_warning("Guile's GC is freeing a mix sample reader!");
-#endif
-      free_mix_fd(fd); 
-    }
+  if (fd) free_mix_fd(fd); 
   return(0);
 }
 
@@ -3732,13 +3726,7 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
 static scm_sizet free_tf(SCM obj) 
 {
   track_fd *fd = (track_fd *)GH_VALUE_OF(obj); 
-  if (fd) 
-    {
-#ifdef DEBUGGING
-      snd_warning("Guile's GC is freeing a track sample reader!");
-#endif
-      free_track_fd(fd); 
-    }
+  if (fd) free_track_fd(fd); 
   return(0);
 }
 
@@ -3907,6 +3895,10 @@ void g_init_mix(SCM local_doc)
 
   define_procedure_with_setter(S_mix_track,SCM_FNC g_mix_track,H_mix_track,
 			       "set-" S_mix_track,SCM_FNC g_set_mix_track,
+			       local_doc,0,1,2,0);
+
+  define_procedure_with_setter("mix-sync",SCM_FNC g_mix_track,H_mix_track,
+			       "set-mix-sync",SCM_FNC g_set_mix_track,
 			       local_doc,0,1,2,0);
 
   define_procedure_with_setter(S_mix_tag_y,SCM_FNC g_mix_tag_y,H_mix_tag_y,

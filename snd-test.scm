@@ -32,7 +32,7 @@
 (if (file-exists? "test.errors") (delete-file "test.errors"))
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 
-(define tests 3)
+(define tests 1)
 (define snd-test -1)
 (define full-test #t)
 
@@ -197,6 +197,7 @@
 	'cursor-follows-play (without-errors (cursor-follows-play)) 'no-such-sound
 	'dac-folding (dac-folding) #t
 	'dac-size (dac-size) 256 
+	'minibuffer-history-length (minibuffer-history-length) 8
 	'data-clipped (data-clipped) #f 
 	'default-output-chans (default-output-chans) 1 
 	'default-output-format (default-output-format) 1
@@ -652,6 +653,7 @@
 	  (list 'cursor-follows-play cursor-follows-play #f set-cursor-follows-play #t)
 	  (list 'dac-folding dac-folding #t set-dac-folding #f)
 	  (list 'dac-size dac-size 256 set-dac-size 512)
+	  (list 'minibuffer-history-length minibuffer-history-length 8 set-minibuffer-history-length 16)
 	  (list 'data-clipped data-clipped #f set-data-clipped #t)
 	  (list 'default-output-chans default-output-chans 1 set-default-output-chans 2)
 	  (list 'default-output-format default-output-format 1 set-default-output-format 1)
@@ -3683,11 +3685,12 @@
 		      (if (not (mix-locked md)) (snd-print (format #f ";set-mix-locked: ~A?" (mix-locked md)))))))
 	      (revert-sound zz)
 	      (mix s8-snd 24000)
-	      (revert-sound zz)
 	      (select-all)
-	      (filter-selection '(0 0 .2 1 .5 0 1 0) 40)
-	      (cut)
-	      (mix-region)
+	      (if (selection?) 
+		  (begin
+		    (filter-selection '(0 0 .2 1 .5 0 1 0) 40)
+		    (cut)
+		    (mix-region)))
 	      (close-sound zz))
 	    (let ((s8 (view-sound s8-snd)))
 	      (select-sound s8)

@@ -506,6 +506,7 @@
 #define S_memo_sound                    "memo-sound"
 #define S_menu_hook                     "menu-hook"
 #define S_menu_sensitive                "menu-sensitive"
+#define S_minibuffer_history_length     "minibuffer-history-length"
 #define S_min_dB                        "min-dB"
 #define S_mix                           "mix"
 #define S_mixes                         "mixes"

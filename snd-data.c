@@ -47,6 +47,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       (cp->cgx)->ax = (axis_context *)CALLOC(1,sizeof(axis_context));
       cp->mixes = 0;
       cp->last_sonogram = NULL;
+      cp->temp_sonogram = NULL;
 #if HAVE_HOOKS
       cp->edit_hook = scm_make_hook(SCM_MAKINUM(0));
       snd_protect(cp->edit_hook);
@@ -153,6 +154,7 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->cursor_style = CURSOR_CROSS;
   cp->waiting_to_make_graph = 0;
   if (cp->sonogram_data) free_sono_info(cp);
+  if (cp->temp_sonogram) {FREE(cp->temp_sonogram); cp->temp_sonogram = NULL;} /* special case -- background fft process never got a chance to run */
   if (cp->last_sonogram) {FREE(cp->last_sonogram); cp->last_sonogram = NULL;}
   if (cp->lisp_info) cp->lisp_info = free_lisp_info(cp);
   if (cp->stats) 
@@ -352,6 +354,7 @@ void free_snd_info(snd_info *sp)
     }
   if (sp->hdr) sp->hdr = free_file_info(sp->hdr);
   if (sp->edited_region) clear_region_backpointer(sp);
+  clear_mini_strings(sp);
 }
 
 snd_info *completely_free_snd_info(snd_info *sp)

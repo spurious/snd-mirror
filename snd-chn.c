@@ -438,8 +438,7 @@ int calculate_fft(chan_info *cp, void *ptr)
 	      if (cp->fft_size >= 65536) start_progress_report(cp->sound,NOT_FROM_ENVED);
 	      set_chan_fft_in_progress(cp,BACKGROUND_ADD(ss,safe_fft_in_slices,make_fft_state(cp,1)));
 	    }
-	  else 
-	    set_chan_fft_in_progress(cp,BACKGROUND_ADD(ss,sonogram_in_slices,make_sonogram_state(cp)));
+	  else set_chan_fft_in_progress(cp,BACKGROUND_ADD(ss,sonogram_in_slices,make_sonogram_state(cp)));
 	}
     }
   return(0);
@@ -5002,13 +5001,12 @@ static int cursor_delete_previous(chan_info *cp, int count, char *origin)
 
 static int cursor_insert(chan_info *cp, int count)
 {
-  int i,beg;
+  int i;
   snd_info *sp;
   sync_info *si;
   chan_info **cps;
   si = NULL;
   sp = cp->sound;
-  beg = cp->cursor;
   if (count < 0) count = -count;
   if (sp->syncing != 0)
     {
@@ -5016,12 +5014,12 @@ static int cursor_insert(chan_info *cp, int count)
       cps = si->cps;
       for (i=0;i<si->chans;i++)
 	{
-	  extend_with_zeros(cps[i],beg,count,"C-o"); /* should this be si->begs[i]? */
+	  extend_with_zeros(cps[i],iclamp(0,cp->cursor,current_ed_samples(si->cps[i])-1),count,"C-o");
 	  update_graph(cps[i],NULL);
 	}
       si = free_sync_info(si);
     }
-  else extend_with_zeros(cp,beg,count,"C-o");
+  else extend_with_zeros(cp,cp->cursor,count,"C-o");
   return(CURSOR_UPDATE_DISPLAY);
 }
 
@@ -5544,7 +5542,7 @@ void goto_graph(chan_info *cp)
     }
 }
 
-void snd_minibuffer_activate(snd_info *sp, int keysym)
+void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 {
   snd_state *ss;
   snd_info *nsp;
@@ -5575,6 +5573,17 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
       clear_minibuffer(sp);
       return;
     }
+  if ((with_meta) && ((keysym == snd_K_p) || (keysym == snd_K_P) || (keysym == snd_K_n) || (keysym == snd_K_N)))
+    {
+      restore_mini_string(sp,(keysym == snd_K_p) || (keysym == snd_K_P));
+      goto_minibuffer(sp);
+      return;
+    }
+
+  str = get_minibuffer_string(sp);
+  if ((str) && (*str)) 
+    remember_mini_string(sp,str);
+
 #if HAVE_GUILE
   if (sp->searching)
     {
@@ -5582,7 +5591,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
       /* if not nil, replace previous */
       if (!s_or_r)
 	{
-	  str = get_minibuffer_string(sp);
+	  /* str = get_minibuffer_string(sp); */
 	  if ((str) && (*str))
 	    {
 	      /* check for procedure as arg, or lambda form:
@@ -5598,7 +5607,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 		{
 		  sp->search_proc = proc;
 		  snd_protect(proc);
-		}
+ 		}
 	    }
 	}
       if (active_chan)
@@ -5607,7 +5616,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
     }
 #endif
   
-  str = get_minibuffer_string(sp);
+  /* str = get_minibuffer_string(sp); */
   if ((sp->marking) || (sp->finding_mark))
     {
       if (sp->marking) 

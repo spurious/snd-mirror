@@ -1,7 +1,6 @@
 #include "snd.h"
 
-/* TODO:   To have the emacs/c-shell-style M-p and M-n paste in entries from
- * TODO        a history-list, whether in the listener or in the minibuffer.
+/* TODO:   add minihistory support in listener
  * TODO    bubble args help if tab at end of name? (or click name?)
  */
 
@@ -406,6 +405,8 @@ static char TextTrans2[] =
 	Ctrl <Key>h:	    delete-previous-character()\n\
 	Ctrl <Key>k:	    delete-to-end-of-line()\n\
 	Mod1 <Key>l:	    word-upper(l)\n\
+	Mod1 <Key>n:	    activate()\n\
+	Mod1 <Key>p:	    activate()\n\
         Ctrl <Key>r:        activate()\n\
         Ctrl <Key>s:        activate()\n\
 	Ctrl <Key>t:	    text-transpose()\n\

@@ -312,6 +312,10 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define in_set_dot_size(ss,a) ss->Dot_Size = a
 #define DEFAULT_DOT_SIZE 1
 
+#define minibuffer_history_length(ss) ss->Minibuffer_History_Length
+#define set_minibuffer_history_length(ss,a) ss->Minibuffer_History_Length = a
+#define DEFAULT_MINIBUFFER_HISTORY_LENGTH 8
+
 #define normalize_fft(ss) ss->Normalize_Fft
 #define in_set_normalize_fft(ss,a) ss->Normalize_Fft = a
 #define DEFAULT_NORMALIZE_FFT NORMALIZE_BY_CHANNEL

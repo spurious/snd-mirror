@@ -170,7 +170,7 @@ typedef struct chan__info {
   chan_context *tcgx;      /* when combining chans, all should use chan[0]'s context */
   env_info **amp_envs;
   void *sonogram_data;
-  void *last_sonogram;
+  void *last_sonogram,*temp_sonogram;
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
   int ps_fd;
   int printing;
@@ -249,6 +249,7 @@ typedef struct snd__info {
   /* moved from global to channel-local 4-Aug-00 */
   int speed_style,speed_tones;
   Float reverb_decay,filter_env_xmax;
+  void *minibuffer_history;
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
@@ -311,7 +312,7 @@ typedef struct snd__state {
   char *Save_State_File,*Listener_Prompt;
   Float Enved_Base,Enved_Power,Corruption_Time;
   int Enved_Clipping,Enved_Exping,Enved_Target,Enved_Waving,Enved_dBing,Prefix_Arg,Graphs_Horizontal;
-  int Graph_Cursor,Use_Sinc_Interp,Data_Clipped,Show_Indices,Mix_Tag_Width,Mix_Tag_Height;
+  int Graph_Cursor,Use_Sinc_Interp,Data_Clipped,Show_Indices,Mix_Tag_Width,Mix_Tag_Height,Minibuffer_History_Length;
   Float min_dB,lin_dB;
 #if HAVE_HTML
   int HTML_Width,HTML_Height;
@@ -981,7 +982,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a);
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, char *origin);
 void save_macro_state(FILE *fd);
-void snd_minibuffer_activate(snd_info *sp, int keysym);
+void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta);
 void fftb(chan_info *cp, int on);
 void waveb(chan_info *cp, int on);
 void f_button_callback(chan_info *cp, int on, int with_control);
@@ -1044,6 +1045,10 @@ void set_speed_style(snd_state *ss, int val);
 void amp_env_scale_by(chan_info *cp, Float scl);
 void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num);
 env_info *amp_env_copy(chan_info *cp, int reversed);
+void remember_mini_string(snd_info *sp, char *str);
+void restore_mini_string(snd_info *s, int back);
+void clear_mini_strings(snd_info *sp);
+
 
 
 /* -------- snd-file -------- */

@@ -1617,6 +1617,7 @@ void *make_sonogram_state(chan_info *cp)
   sg->transform_type = cp->transform_type;
   sg->w_choice = cp->wavelet_type;
   sg->minibuffer_needs_to_be_cleared = 0;
+  cp->temp_sonogram = sg; /* background process may never run, so we need a way to find this pointer at cleanup time */
   return((void *)sg);
 }
 
@@ -1651,6 +1652,7 @@ static int set_up_sonogram(sonogram_state *sg)
   sonogram_state *lsg = NULL;
   int i,tempsize,dpys=1;
   cp = sg->cp;
+  cp->temp_sonogram = NULL; /* try to avoid ending up with two pointers to same memory */
   if (cp->ffting == 0) return(2);
   ss = cp->state;
   ap = cp->axis;
@@ -1815,6 +1817,7 @@ static int cleanup_sonogram(sonogram_state *sg)
       set_chan_fft_in_progress(cp,0);
       display_channel_fft_data(cp,cp->sound,cp->state);
       if (cp->last_sonogram) FREE(cp->last_sonogram);
+      cp->temp_sonogram = NULL; /* mild paranoia */
       if (sg->outer == sg->outlim) sg->done = 1;
       sg->old_scale = (sg->scp)->scale;
       cp->last_sonogram = sg;

@@ -1,6 +1,7 @@
 #include "snd.h"
 
 /* TODO   play selection doesn't take src into account (dp->end needs to be local since user can change src as we play)
+ * TODO     this number exists! run_src sets src->sample as counter
  */
 
 /* selection support changed 11-Sep-00 to handle edit list movements */
@@ -66,8 +67,12 @@ int selection_beg(chan_info *cp)
 static void cp_set_selection_beg(chan_info *cp, int beg)
 {
   ed_list *ed;
+  int len;
   ed = cp->edits[cp->edit_ctr];
-  ed->selection_beg = beg;
+  len = current_ed_samples(cp);
+  if (beg < len)
+    ed->selection_beg = beg;
+  else ed->selection_beg = len - 1;
 }
 
 static int cp_selection_end(chan_info *cp, void *begptr) 
@@ -110,8 +115,11 @@ int selection_len(void)
 static void cp_set_selection_len(chan_info *cp, int len)
 {
   ed_list *ed;
+  int cplen;
   ed = cp->edits[cp->edit_ctr];
+  cplen = current_ed_samples(cp);
   ed->selection_end = ed->selection_beg + len - 1;
+  if (ed->selection_end >= cplen) ed->selection_end = cplen - 1;
 }
 
 static int selection_chans_1(chan_info *cp, void *count)
@@ -179,7 +187,14 @@ void deactivate_selection(void)
 void reactivate_selection(chan_info *cp, int beg, int end)
 {
   ed_list *ed;
+  int len;
   ed = cp->edits[cp->edit_ctr];
+  len = current_ed_samples(cp) - 1;
+  if (beg < 0) beg = 0;
+  if (end < 0) end = 0;
+  if (beg > len) beg = len;
+  if (end > len) end = len;
+  if (beg > end) end = beg;
   ed->selection_beg = beg;
   ed->selection_end = end;
   cp->selection_visible = 0;
@@ -247,7 +262,7 @@ static int next_selection_chan(chan_info *cp, void *sidata)
 sync_info *selection_sync(void)
 {
   sync_info *si;
-  if (!(selection_is_active)) return(NULL);
+  if (!(selection_is_active())) return(NULL);
   si = (sync_info *)CALLOC(1,sizeof(sync_info));
   si->chans = selection_chans();
   si->cps = (chan_info **)CALLOC(si->chans,sizeof(chan_info *));
@@ -434,6 +449,7 @@ void make_region_from_selection(void)
   int *ends=NULL;
   int i,happy = 0;
   sync_info *si;
+  if (!(selection_is_active())) return;
   si = selection_sync();
   ends = (int *)CALLOC(si->chans,sizeof(int));
   for (i=0;i<si->chans;i++) 

@@ -812,6 +812,71 @@ void reset_control_panel(snd_info *sp)
 }
 
 
+/* ---------------- MINIBUFFER HISTORY ---------------- */
+
+typedef struct {
+  char **strings;
+  int strings_size,strings_pos,first_time;
+} mini_history;
+  
+void remember_mini_string(snd_info *sp, char *str)
+{
+  mini_history *mh;
+  int i,top;
+  mh = (mini_history *)(sp->minibuffer_history);
+  if (mh == NULL)
+    {
+      mh = (mini_history *)CALLOC(1,sizeof(mini_history));
+      mh->strings_size = minibuffer_history_length(sp->state);
+      mh->strings = (char **)CALLOC(mh->strings_size,sizeof(char *));
+      sp->minibuffer_history = (void *)mh;
+    }
+  top = mh->strings_size - 1;
+  if (mh->strings[top]) FREE(mh->strings[top]);
+  for (i=top;i>0;i--) mh->strings[i] = mh->strings[i-1];
+  mh->strings[0] = copy_string(str);
+  mh->strings_pos = 0;
+  mh->first_time = 1;
+}
+
+void restore_mini_string(snd_info *sp, int back)
+{
+  mini_history *mh;
+  char *str;
+  mh = (mini_history *)(sp->minibuffer_history);
+  if (mh)
+    {
+      if (mh->first_time == 0)
+	{
+	  if (back)
+	    mh->strings_pos++;
+	  else mh->strings_pos--;
+	}
+      mh->first_time = 0;
+      if (mh->strings_pos < 0) mh->strings_pos = 0;
+      if (mh->strings_pos > (mh->strings_size - 1)) mh->strings_pos = mh->strings_size - 1;
+      str = mh->strings[mh->strings_pos];
+      if (str) set_minibuffer_string(sp,str);
+    }
+}
+
+void clear_mini_strings(snd_info *sp)
+{
+  mini_history *mh;
+  int i;
+  mh = (mini_history *)(sp->minibuffer_history);
+  if (mh)
+    {
+      sp->minibuffer_history = NULL;
+      for (i=0;i<mh->strings_size;i++) 
+	if (mh->strings[i])
+	  FREE(mh->strings[i]);
+      FREE(mh->strings);
+      FREE(mh);
+    }
+}
+
+
 /* ---------------- APPLY ---------------- */
 
 void stop_applying(snd_info *sp)

@@ -5,6 +5,7 @@
  *         but would be much faster if we can wait until the amp-env is computed
  * TODO  mark-moved-hook? sample-color?
  * TODO  should snd-out soft-port (examp.scm) be built-in?
+ * TODO  find a better name for abort? -- C-g? ? 
  */
 
 #if HAVE_GUILE
@@ -686,10 +687,22 @@ static SCM g_set_audio_input_device(SCM val)
   RTNINT(audio_input_device(state));
 }
 
+static SCM g_minibuffer_history_length(void) {RTNINT(minibuffer_history_length(state));}
+static SCM g_set_minibuffer_history_length(SCM val) 
+{
+  #define H_minibuffer_history_length "(" S_minibuffer_history_length ") is the minibuffer history length"
+  int len;
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_minibuffer_history_length);
+  len = g_scm2int(val);
+  if (len > 0)
+    set_minibuffer_history_length(state,len);
+  RTNINT(minibuffer_history_length(state));
+}
+
 static SCM g_dac_size(void) {RTNINT(dac_size(state));}
 static SCM g_set_dac_size(SCM val) 
 {
-  #define H_dac_size "(dac-size) is the current DAC buffer size (256)"
+  #define H_dac_size "(" S_dac_size ") is the current DAC buffer size (256)"
   int len;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_dac_size);
   len = g_scm2int(val);
@@ -2229,8 +2242,9 @@ static SCM g_insert_sound(SCM file, SCM ubeg, SCM file_chn, SCM snd_n, SCM chn_n
    of 'file' (or all chans file-chan not given) into snd's channel chn at beg or the cursor position"
 
   chan_info *cp;
+  snd_info *sp;
   char *filename = NULL;
-  int nc,len,fchn,beg=0;
+  int nc,len,fchn,beg=0,i;
   SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_insert_sound);
   ERRB2(ubeg,S_insert_sound);
   ERRB3(file_chn,S_insert_sound);
@@ -2244,14 +2258,14 @@ static SCM g_insert_sound(SCM file, SCM ubeg, SCM file_chn, SCM snd_n, SCM chn_n
       return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_insert_sound),file)));
     }
   len = mus_sound_samples(filename)/nc;
+  if (gh_number_p(ubeg))
+    beg = g_scm2int(ubeg);
+  else beg = cp->cursor;
   if (gh_number_p(file_chn))
     {
       fchn = g_scm2int(file_chn);
       if (fchn < mus_sound_chans(filename))
 	{
-	  if (gh_number_p(ubeg))
-	    beg = g_scm2int(ubeg);
-	  else beg = cp->cursor;
 	  file_insert_samples(beg,len,filename,cp,fchn,DONT_DELETE_ME,S_insert_sound);
 	  update_graph(cp,NULL);
 	  if (filename) FREE(filename);
@@ -2265,12 +2279,15 @@ static SCM g_insert_sound(SCM file, SCM ubeg, SCM file_chn, SCM snd_n, SCM chn_n
     }
   else
     {
-      /* insert all chans of file into chans syncd to snd chn */
-      /* TODO finish insert-sound */
-
-      fprintf(stderr," unimplemented insert-sound option");
-
+      sp = cp->sound;
+      if (sp->nchans < nc) nc = sp->nchans;
+      for (i=0;i<nc;i++)
+	{
+	  file_insert_samples(beg,len,filename,sp->chans[i],i,DONT_DELETE_ME,S_insert_sound);
+	  update_graph(sp->chans[i],NULL);
+	}
       if (filename) FREE(filename);
+      RTNINT(len);
     }
   return(SCM_BOOL_F); /* not reached */
 }
@@ -3260,6 +3277,9 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_audio_input_device,SCM_FNC g_audio_input_device,H_audio_input_device,
 			       "set-" S_audio_input_device,SCM_FNC g_set_audio_input_device,local_doc,0,0,0,1);
 
+  define_procedure_with_setter(S_minibuffer_history_length,SCM_FNC g_minibuffer_history_length,H_minibuffer_history_length,
+			       "set-" S_minibuffer_history_length,SCM_FNC g_set_minibuffer_history_length,local_doc,0,0,0,1);
+
   define_procedure_with_setter(S_dac_size,SCM_FNC g_dac_size,H_dac_size,
 			       "set-" S_dac_size,SCM_FNC g_set_dac_size,local_doc,0,0,0,1);
 
@@ -3643,6 +3663,10 @@ the functions html and ? can be used in place of help to go to the HTML descript
                                   (set! snd-last-file-loaded filename)\
                                   (if %load-verbosely\
                                     (snd-print (format #f \";;; loading ~S\" filename)))))");
+
+  /* These will probably be built-in:
+   * gh_eval_str("(define fit-data fit-data-on-open)");
+   */
 
 #if USE_MOTIF
   scm_add_feature("snd-motif");

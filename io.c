@@ -54,7 +54,7 @@
 #include "sndlib.h"
 
 /* data translations for big/little endian machines
- *   the m_* forms are macros where possible for speed, probably no longer needed -- gcc O3 switch?
+ *   the m_* forms are macros where possible for speed (dating back to 1991 -- probably no longer needed -- gcc O3 switch?)
  */
 
 void mus_bint_to_char(unsigned char *j, int x)
@@ -487,8 +487,11 @@ int mus_file_set_descriptors (int tfd, const char *name, int format, int size, i
   fd->prescaler = 1.0;
   fd->header_type = type;
   fd->chans = chans;
-  fd->name = (char *)CALLOC(strlen(name)+1,sizeof(char));
-  strcpy(fd->name,name);
+  if (name)
+    {
+      fd->name = (char *)CALLOC(strlen(name)+1,sizeof(char));
+      strcpy(fd->name,name);
+    }
   return(MUS_NO_ERROR);
 }
 
@@ -497,7 +500,7 @@ int mus_file_close_descriptors(int tfd)
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);
   fd = io_fds[tfd];
-  if (fd->name) FREE(fd->name);
+  if (fd->name) {FREE(fd->name); fd->name = NULL;}
   FREE(fd);
   io_fds[tfd] = NULL;
   return(MUS_NO_ERROR);

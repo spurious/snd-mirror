@@ -1097,7 +1097,7 @@ static void minibuffer_click_Callback(Widget w,XtPointer clientData,XtPointer ca
   keysym = XKeycodeToKeysym(XtDisplay(w),(int)(ev->keycode),(ev->state & ShiftMask) ? 1 : 0);
   ss = sp->state;
   ss->mx_sp = sp; 
-  snd_minibuffer_activate(sp,keysym);
+  snd_minibuffer_activate(sp,keysym,(ev->state & snd_MetaMask));
 }
 
 static void Apply_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -1563,11 +1563,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNresizeWidth,TRUE); n++;
       XtSetArg(args[n],XmNmarginHeight,1); n++;
       XtSetArg(args[n],XmNshadowThickness,0); n++;
-#ifndef LESSTIF_VERSION
       XtSetArg(args[n],XmNcolumns,30); n++;
-#else
-      XtSetArg(args[n],XmNcolumns,50); n++;
-#endif
       XtSetArg(args[n],XmNhighlightThickness,0); n++;
       sw[W_info] = sndCreateTextFieldWidget(ss,"snd-info",sw[W_name_form],args,n,ACTIVATABLE,add_completer_func(info_completer));
       XtAddCallback(sw[W_info],XmNhelpCallback,W_info_Help_Callback,ss);

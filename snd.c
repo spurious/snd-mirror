@@ -102,6 +102,7 @@ static void mus_print2snd(char *msg)
   ss=(snd_state *)CALLOC(1,sizeof(snd_state));
 
   ss->Fft_Size = DEFAULT_FFT_SIZE;
+  ss->Minibuffer_History_Length = DEFAULT_MINIBUFFER_HISTORY_LENGTH;
   ss->Fft_Window = DEFAULT_FFT_WINDOW;
   ss->Fft_Beta = DEFAULT_FFT_BETA;
   ss->Fft_Style = DEFAULT_FFT_STYLE;

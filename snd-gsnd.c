@@ -1,4 +1,5 @@
 /* TODO  if controls close, drag main sash should keep it closed
+ * TODO  does M-p/M-n stuff work in ginfo?
  */
 
 #include "snd.h"
@@ -261,7 +262,7 @@ static void minibuffer_activate_callback(GtkWidget *w, gpointer data)
   snd_state *ss;
   ss = sp->state;
   ss->mx_sp = sp; 
-  snd_minibuffer_activate(sp,0);
+  snd_minibuffer_activate(sp,0,0); /* TODO: does this make C-g and M-p no-ops? */
   (sp->sgx)->mini_active = 1;
 }
 

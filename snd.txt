@@ -1367,6 +1367,9 @@ The extended commands (preceded by C-x) are:
   C-x:  evaluate expression
   C-z:  smooth using cosine
 
+In addition, within the "minibuffer" the commands M-p and M-n march back and
+forth in the list of saved strings, much as in a shell.
+
 The Control Panel
 
 The control panel is the portion of each sound's display beneath the channel

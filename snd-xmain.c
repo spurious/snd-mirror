@@ -576,6 +576,32 @@ static Pixel get_color(Widget shell,
   return(tmp_color.pixel);
 }
 
+#if 0
+/* background pixmap (can be filled with fancy gradients etc) */
+static Pixmap label;
+static Pixmap bg(snd_state *ss, unsigned int width, unsigned int height)
+{
+  unsigned int depth;
+  Widget w;
+  Display *dp;
+  Drawable wn;
+  XGCValues v;
+  int scr;
+  GC draw_gc;
+  w = MAIN_PANE(ss);
+  dp = MAIN_DISPLAY(ss);
+  wn = XtWindow(w);
+  scr = DefaultScreen(dp);
+  XtVaGetValues(w,XmNdepth,&depth,NULL);
+  label = XCreatePixmap(dp,wn,width,height,depth);
+  v.background = WhitePixel(dp,scr);
+  v.foreground = BlackPixel(dp,scr);
+  draw_gc = XCreateGC(dp,wn,GCForeground | GCBackground,&v);
+  XFillRectangle(dp,label,draw_gc,0,0,width,height);
+  return(label);
+}
+#endif
+
 #ifdef SND_AS_WIDGET
 void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
 {

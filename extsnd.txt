@@ -318,6 +318,9 @@ The main variables affecting Snd's overall behavior are:
 
   initial-y1            1.0     Same, but maximum.
 
+  minibuffer-history-length  8  Length of minibuffer M-p/M-n history.  If set, sounds that are currently open
+                                are not affected, only subsequently opened sounds.
+
   movies                #t      If #t, the mix graphs are updated constantly as the
                                 mouse drags the mix tag.
 

@@ -1,5 +1,6 @@
 snd change log
 
+  7-Nov:     shell (readline) style M-p and M-n in minibuffer with variable minibuffer-history-length (8).
   6-Nov:     various cosmetic changes for the new g++ (Redhat 7.0).
              insert-sound arguments changed (to match mix-sound more closely).
              added TODO.Snd.

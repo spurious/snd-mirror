@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+7-Nov:   shell (readline) style M-p and M-n in minibuffer with variable minibuffer-history-length (8).\n\
 6-Nov:   various cosmetic changes for the new g++ (Redhat 7.0).\n\
          insert-sound arguments changed.\n\
 2-Nov:   insert-selection, mix-selection, delete-selection.\n\
@@ -980,6 +981,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_mark_color "            red\n\
   " S_max_fft_peaks "         100 (snd #t) (chn #t)\n\
   " S_min_dB "               -60.0 (snd #t) (chn #t)\n\
+  " S_minibuffer_history_length " 8\n\
   " S_mix_color "             lightgreen\n\
   " S_mix_tag_width "         6\n\
   " S_mix_tag_height "        14\n\
