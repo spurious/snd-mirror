@@ -269,6 +269,7 @@ void news_help(snd_state *ss)
 	    "\nRecent changes include:\n\
 \n\
 14-Jan:  gsl-error.\n\
+         snd.rb (Ruby code and tests).\n\
 11-Jan:  snd 5.6. flute.scm.\n\
 7-Jan:   mix-channel, insert-channel in extensions.scm.\n\
          event.scm.\n\

@@ -2701,14 +2701,15 @@
 	    (snd-display ";cursor-size: ~A? " (cursor-size)))
 	(set! (cursor-style) cursor-cross)
 	(set! (cursor-size) 15)
-	(set! (cursor-style index 0)
-	      (lambda (snd chn ax)
-		(let* ((point (cursor-position))
-		       (x (car point))
-		       (y (cadr point))
-		       (size (inexact->exact (/ (cursor-size) 2))))
-		  (draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn cursor-context)    
-		  (draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn cursor-context))))
+	(if (not (provided? 'snd-nogui))
+	    (set! (cursor-style index 0)
+		  (lambda (snd chn ax)
+		    (let* ((point (cursor-position))
+			   (x (car point))
+			   (y (cadr point))
+			   (size (inexact->exact (/ (cursor-size) 2))))
+		      (draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn cursor-context)    
+		      (draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn cursor-context)))))
 	(set! (cursor index 0) 20) 
 	(set! (cursor-style) cursor-line)
 	(set! (cursor index) 50)
@@ -7155,10 +7156,11 @@
 	      (snd-display ";set locked mix amp env: ~A" var)))
 	(undo)
 	(if (mix-locked mix-id)
-	    (snd-display ";undo locked mix: ~A" mix-id))
-	(set! (mix-position mix-id) 10)
-	(if (not (= (mix-position mix-id) 10))
-	    (snd-display ";mix-position 10: ~A" (mix-position mix-id)))
+	    (snd-display ";undo locked mix: ~A" mix-id)
+	    (begin
+	      (set! (mix-position mix-id) 10)
+	      (if (not (= (mix-position mix-id) 10))
+		  (snd-display ";mix-position 10: ~A" (mix-position mix-id)))))
 	(close-sound id)))
 
     ))
@@ -7622,8 +7624,7 @@
 	     (ehd (without-errors (edit-header-dialog))))
 	 (open-file-dialog #f)
 	 (mix-file-dialog #f)
-	 (if (and (not (provided? 'snd-gtk))
-		  (not (provided? 'snd-guile-gtk)))
+	 (if (not (provided? 'snd-gtk))
 	     (begin
 	       ;(recorder-dialog) 
 	       (set! (recorder-file) "hiho.snd")
@@ -8225,7 +8226,7 @@
 	;; this basically never gets called -- force-event didn't help
 	(set! (vu-size) oldsize))
 
-      (load "new-effects.scm")
+      (if (provided? 'snd-motif) (load "new-effects.scm"))
 
       (add-hook! menu-hook
 		 (lambda (name option)
@@ -8259,12 +8260,13 @@
 			      (string=? option "Files"))
 			 (set! ctr (+ ctr 1)))
 		     #t))
-	(add-hook! menu-hook
-		   (lambda (name option)
-		     (if (and (string=? name "Effects")
-			      (string=? option "invert"))
-			 (set! ctr (+ ctr 1)))
-		     #t))
+	(if (provided? 'xm)
+	    (add-hook! menu-hook
+		       (lambda (name option)
+			 (if (and (string=? name "Effects")
+				  (string=? option "invert"))
+			     (set! ctr (+ ctr 1)))
+			 #t)))
 
 	(let ((added 0))
 	  (set! (with-background-processes) #t)
@@ -9583,7 +9585,8 @@
          ((= i num) v)
        (vct-set! v i (+ off (* scale (cos (+ angle (* i incr)))))))))
 
-(if (or full-test (= snd-test 15) (and keep-going (<= snd-test 15)))
+(if (and (not (provided? 'snd-nogui)) 
+	 (or full-test (= snd-test 15) (and keep-going (<= snd-test 15))))
     (let ((obi (open-sound (car (match-sound-files (lambda (file) 
 						     (and (not (= (mus-sound-header-type file) mus-raw))
 							  (= (mus-sound-chans file) 1))))))))

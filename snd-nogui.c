@@ -206,7 +206,7 @@ int w_snd_minibuffer(snd_info *sp) {return(0);}
 int w_snd_minibuffer_label(snd_info *sp) {return(0);}
 void make_minibuffer_label(snd_info *sp, char *str) {}
 void goto_minibuffer(snd_info *sp) {}
-void set_minibuffer_string(snd_info *sp, char *str) {fprintf(stderr, "%s", str);}
+void set_minibuffer_string(snd_info *sp, char *str) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
 void set_minibuffer_cursor_position(snd_info *sp, int pos) {}
 char *get_minibuffer_string(snd_info *sp) {return(NULL);}
 void snd_info_cleanup(snd_info *sp) {}
@@ -339,6 +339,11 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
   int snd_slot, nchans, i;
   hdr = make_file_info(filename, ss);
   if (!hdr) return(NULL);
+  if (ss->pending_change) 
+    {
+      filename = ss->pending_change;
+      ss->pending_change = NULL;
+    }
   nchans = hdr->chans;
   if (nchans <= 0) nchans = 1;
   if (nchans > 256)
@@ -434,6 +439,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_mouse_leave_listener_hook " (make-hook 1))\
                (define " S_mouse_enter_text_hook " (make-hook 1))\
                (define " S_mouse_leave_text_hook " (make-hook 1))\
+               (define " S_new_widget_hook " (make-hook 1))\
                (define " S_drop_hook " (make-hook 1))\
                (define " S_menu_hook " (make-hook 2))\
                (define " S_property_changed_hook " (make-hook 1))");
@@ -502,6 +508,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   XEN_EVAL_C_STRING("$mouse_leave_listener_hook = false");
   XEN_EVAL_C_STRING("$mouse_enter_text_hook = false");
   XEN_EVAL_C_STRING("$mouse_leave_text_hook = false");
+  XEN_EVAL_C_STRING("$new_widget_hook = false");
   XEN_EVAL_C_STRING("$drop_hook = false");
   XEN_EVAL_C_STRING("$menu_hook = false");
   XEN_EVAL_C_STRING("$property_changed_hook = false");

@@ -584,6 +584,7 @@ GUILE_LIBS=""
 GUILE_CFLAGS=""
 GUILE_CONFIG_path=""
 GUILE_LIB_path=""
+XM_LIBS=""
 
 if test "$with_guile" = no ; then
   AC_DEFINE(HAVE_GUILE,0)
@@ -613,6 +614,7 @@ if test $GUILE_CONFIG_works = yes; then
         ;;
       *)
         GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}guile-config link`"
+	XM_LIBS="`${GUILE_CONFIG_path}guile-config link`"
 	;;
     esac
   else
@@ -628,6 +630,10 @@ if test $GUILE_CONFIG_works = yes; then
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
   else
     AC_SUBST(GUILE_CFLAGS)
+    if test "$XM_LIBS" = ""; then
+      XM_LIBS="$GUILE_LIBS"
+    fi
+    AC_SUBST(XM_LIBS)
     AC_SUBST(GUILE_LIBS)
     AC_DEFINE(HAVE_GUILE)
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
@@ -931,16 +937,17 @@ dnl on NeXT, this is apparently in libc.h?
 #--------------------------------------------------------------------------------
 
 dnl look for sigsetjmp for segfault trap
-trap_segfault=no
-AC_MSG_CHECKING([for sigsetjmp])
-AC_TRY_LINK([#include <setjmp.h>],
-            [sigjmp_buf hi; sigsetjmp(hi,1)],
-            trap_segfault=yes)
-if test $trap_segfault = yes; then
-  AC_DEFINE(TRAP_SEGFAULT,1)
+if test "$enable_snd_debug" != yes ; then
+  trap_segfault=no
+  AC_MSG_CHECKING([for sigsetjmp])
+  AC_TRY_LINK([#include <setjmp.h>],
+              [sigjmp_buf hi; sigsetjmp(hi,1)],
+              trap_segfault=yes)
+  if test $trap_segfault = yes; then
+    AC_DEFINE(TRAP_SEGFAULT,1)
+  fi
+  AC_MSG_RESULT($trap_segfault)
 fi
-AC_MSG_RESULT($trap_segfault)
-
 
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT

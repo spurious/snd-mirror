@@ -559,6 +559,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   snd_state *ss = (snd_state *)data;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(save_as_file_data->srate_text));
   srate = string2int(str);
+  str = NULL;
   comment = SG_TEXT_CHARS(save_as_file_data->comment_text, 0, -1);
   type = save_as_file_data->current_type;
   format = save_as_file_data->current_format;
@@ -577,7 +578,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
       for (i = 0; i < sp->nchans; i++) 
 	sp->chans[i]->edit_ctr = 0; /* don't trigger close-hook unsaved-edit checks */
       snd_close_file(sp, ss);
-      fullname = mus_expand_filename(str);
+      fullname = mus_expand_filename(last_save_as_filename);
       snd_open_file(fullname, ss, FALSE); /* FALSE = not read_only */
       FREE(fullname);
     }

@@ -377,6 +377,7 @@ void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYP
   env *e;
   spf = (spflt *)((sp->sgx)->flt);
   e = sp->filter_control_env;
+  if ((e == NULL) || (sp->active == 0)) return;
   if ((motion_time - spf->down_time) < 100) return;
   spf->env_dragged = 1;
   spf->click_to_delete = 0;

@@ -2470,7 +2470,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
     }
   add_sound_data(filename, sp, ss, WITH_GRAPH);
   snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->filename))));
-  if (ss->pending_change)
+  if (old_name)
     report_in_minibuffer(sp, "(translated %s)", old_name);
   if (!(ss->using_schemes)) map_over_children(SOUND_PANE(ss), color_sashes, (void *)ss);
   if (!(auto_resize(ss))) equalize_all_panes(ss);

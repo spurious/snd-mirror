@@ -465,7 +465,7 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
   last_remembered_ptr = (int)ptr;
 }
 
-#define MAX_MALLOC (1 << 24)
+#define MAX_MALLOC (1 << 28)
 
 void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)
 {

@@ -443,14 +443,14 @@ static XEN_OBJECT_TYPE xm_obj_tag;
 #if HAVE_GUILE
 static size_t xm_obj_free(XEN obj)
 {
-  free((void *)XEN_OBJECT_REF(obj));
+  FREE((void *)XEN_OBJECT_REF(obj));
   return(sizeof(void *));
 }
 #endif
 #if HAVE_RUBY
 static void *xm_obj_free(XEN obj)
 {
-  free((void *)obj);
+  FREE((void *)obj);
   return(NULL);
 }
 #endif
@@ -24863,7 +24863,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"8-Jan-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"14-Jan-02\")");
 #endif
       xm_already_inited = 1;
     }

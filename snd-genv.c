@@ -217,6 +217,7 @@ void env_redisplay(snd_state *ss)
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = "noname";
 	  display_env(ss, active_env, name, gc, 0, 0, env_window_width, env_window_height, 1, active_env_base);
+	  name = NULL;
 	  if (enved_wave_p(ss))
 	    {
 	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env))
@@ -250,12 +251,11 @@ static void enved_filter_order_callback(GtkWidget *w, gpointer data)
 static void text_field_activated(GtkWidget *w, gpointer context)
 { /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
   snd_state *ss = (snd_state *)context;
-  char *name = NULL, *str;
+  char *str = NULL;
   env *e = NULL;
-  name = (char *)gtk_entry_get_text(GTK_ENTRY(w));
-  if ((name) && (*name))
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
+  if ((str) && (*str))
     {
-      str = name;
       while (isspace((int)(*str))) str++;
       e = name_to_env(str);
       if (!e)

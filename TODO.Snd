@@ -56,6 +56,8 @@ More Ruby examples, translations, etc.
 
 The configure script should be able to use libsndlib if it exists.
 
+snd.rb needs the rest of snd-test.scm translated to Ruby.
+
 
 Known bugs can be listed by searching the sources for "TODO".
 Long-term stuff is marked with "SOMEDAY".

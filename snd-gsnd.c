@@ -223,7 +223,7 @@ void set_minibuffer_cursor_position(snd_info *sp, int pos)
 
 char *get_minibuffer_string(snd_info *sp) 
 {
-  return((char *)gtk_entry_get_text(GTK_ENTRY(w_snd_minibuffer(sp))));
+  return(copy_string((char *)gtk_entry_get_text(GTK_ENTRY(w_snd_minibuffer(sp)))));
 } 
 
 static char stupid[1] ={'\0'};
@@ -1793,7 +1793,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
   add_sound_data(filename, sp, ss, WITH_GRAPH);
 
   snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->filename))));
-  if (ss->pending_change)
+  if (old_name)
     report_in_minibuffer(sp, "(translated %s)", old_name);
   after_open(sp->index);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
