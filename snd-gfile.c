@@ -393,7 +393,7 @@ static void save_as_data_format_callback(GtkWidget *w, gint row, gint column, Gd
 static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
 
 file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, 
-				 int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
+				int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
 {
   GtkWidget *form, *hlab, *dlab, *slab, *clab, *comment_label, *loclab, *hscroll, *dscroll, *scbox, *combox;
   file_data *fdat;
@@ -1582,8 +1582,7 @@ XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 
 void g_initialize_xgfile(void)
 {
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
-				   "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
@@ -1595,7 +1594,7 @@ to popup file info as follows: \n\
         (help-dialog name (finfo name)))))\n\
 See also nb.scm."
 
-#define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label) is called when a file viewer or region label is exited by the mouse"
+  #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label) is called when a file viewer or region label is exited by the mouse"
 
   XEN_DEFINE_HOOK(mouse_enter_label_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   XEN_DEFINE_HOOK(mouse_leave_label_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);

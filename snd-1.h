@@ -224,6 +224,7 @@ typedef struct chan__info {
   int selection_visible, sync, active;
   Locus old_x0, old_x1;
   Float *amp_control; /* an experiment */
+  int last_search_result;
 } chan_info;
 
 typedef struct snd__info {

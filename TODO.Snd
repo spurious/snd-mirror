@@ -16,8 +16,6 @@ A better pitch tracker than spot-freq in examp.scm.
 dB display in VU meters (in the record dialog -- the dB value is ready
 to go, but the VU labels need different numbers).  A nicer VU meter background.
 
-loop syntax filled in (loop.scm).
-
 Translate more CLM instruments to Scheme: 
   singer piano flute fade maraca
 

@@ -630,6 +630,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		  snd_protect(proc);
  		}
 	      free(str);
+	      if (active_chan) active_chan->last_search_result = SEARCH_OK;
 	    }
 	}
       if (active_chan)

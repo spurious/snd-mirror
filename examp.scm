@@ -67,7 +67,6 @@
 ;;; TODO: adaptive notch filter
 ;;; TODO: ins: singer piano flute fade dlocsig
 ;;; TODO: data-file rw case for pvoc.scm
-;;; TODO: C-s wrap-around (as in Emacs)
 ;;; TODO: triggered record
 ;;; TODO: notation following location (as in display-current-window-location)
 ;;;       but this requires some way to converse with cmn that does not require sleep

@@ -95,7 +95,7 @@ char *global_search(snd_state *ss, int direction)
       return(search_message);
     }
 
-  /* here and elsewhere when a new search is begun, even if using the previous seach expression, the
+  /* here and elsewhere when a new search is begun, even if using the previous search expression, the
    *   expression needs to be re-evaluated, since otherwise in a search like:
    *   (define (zero+)
    *     (let ((lastn 0.0))
@@ -173,7 +173,7 @@ char *global_search(snd_state *ss, int direction)
 
 static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 {
-  int i = 0, end, passes = 0;
+  int i = 0, end, start, passes = 0;
   snd_fd *sf = NULL;
   snd_state *ss;
   XEN res = XEN_FALSE;
@@ -184,14 +184,17 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
       return(-1);
     }
   search_in_progress = 1;
-  sf = init_sample_read(cp->cursor + 1, cp, READ_FORWARD);
+  if (cp->last_search_result == SEARCH_OK)
+    start = cp->cursor + 1;
+  else start = 0;
+  sf = init_sample_read(start, cp, READ_FORWARD);
   if (!sf)
     {
       search_in_progress = 0;
       return(-1);
     }
   end = current_ed_samples(cp);
-  for (i = cp->cursor + 1, passes = 0; i < end; i++, passes++)
+  for (i = start, passes = 0; i < end; i++, passes++)
     {
       res = XEN_CALL_1(sp->search_proc, 
 		       C_TO_XEN_DOUBLE((double)(next_sample_to_float(sf))), 
@@ -221,7 +224,7 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 
 static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 {
-  int i = 0, passes = 0;
+  int i = 0, start, passes = 0;
   snd_fd *sf = NULL;
   snd_state *ss;
   XEN res = XEN_FALSE;
@@ -232,13 +235,16 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
       return(-1);
     }
   search_in_progress = 1;
-  sf = init_sample_read(cp->cursor - 1, cp, READ_BACKWARD);
+  if (cp->last_search_result == SEARCH_OK)
+    start = cp->cursor - 1;
+  else start = cp->samples[cp->edit_ctr] - 1;
+  sf = init_sample_read(start, cp, READ_BACKWARD);
   if (!sf)
     {
       search_in_progress = 0;
       return(-1);
     }
-  for (i = cp->cursor - 1, passes = 0; i >= 0; i--, passes++)
+  for (i = start, passes = 0; i >= 0; i--, passes++)
     {
       res = XEN_CALL_1(sp->search_proc, 
 		       C_TO_XEN_DOUBLE((double)(previous_sample_to_float(sf))), 
@@ -305,7 +311,8 @@ int cursor_search(chan_info *cp, int count)
       else samp = cursor_find_backward(sp, cp, -count);
       if (samp == -1) 
 	{ 
-	  report_in_minibuffer(sp, "%s: not found", sp->search_expr);
+	  report_in_minibuffer(sp, "%s: not found%s", sp->search_expr, (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
+	  cp->last_search_result = SEARCH_FAILED;
 	  return(CURSOR_IN_VIEW);
 	}
       else
@@ -316,6 +323,7 @@ int cursor_search(chan_info *cp, int count)
 			       s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2),
 			       s2 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
 			       samp);
+	  cp->last_search_result = SEARCH_OK;
 	  FREE(s1);
 	  FREE(s2);
 	}
