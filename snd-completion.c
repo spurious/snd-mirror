@@ -5,16 +5,24 @@ static char *current_match = NULL;
 
 #if HAVE_GUILE
 #if defined(SCM_MODULE_OBARRAY)
-/* new form searches through Guile's module's hash tables */
-
 static int scan_tab(XEN tab, char *text, int len, int matches)
 {
   int i, j, n, curlen;
   char *sym;
+  XEN handle;
+  XEN ls;
+#ifdef SCM_HASHTABLE_BUCKETS
+  /* new form searches through Guile's module's hash tables */
+  n = SCM_HASHTABLE_N_BUCKETS(tab);
+  for (i = 0; i < n; i++)
+    {
+      ls = SCM_HASHTABLE_BUCKETS(tab)[i];
+#else
   n = XEN_VECTOR_LENGTH(tab);
   for (i = 0; i < n; ++i)
     {
-      XEN ls = XEN_VECTOR_ELEMENTS(tab)[i]; XEN handle;
+      ls = XEN_VECTOR_ELEMENTS(tab)[i];
+#endif
       while (XEN_NOT_NULL_P(ls))
 	{
 	  handle = XEN_CAR(ls);

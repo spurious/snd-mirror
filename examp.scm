@@ -208,8 +208,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	  (mus-sound-srate file)
 	  (mus-header-type-name (mus-sound-header-type file))
 	  (mus-data-format-name (mus-sound-data-format file))
-	  (/ (mus-sound-samples file)
-	     (* (mus-sound-chans file) (mus-sound-srate file)))))
+	  (exact->inexact (/ (mus-sound-samples file)
+			     (* (mus-sound-chans file) (mus-sound-srate file))))))
 
 
 ;;; -------- Correlation --------
@@ -813,7 +813,7 @@ then inverse ffts."
 (define (squelch-vowels)
   "(squelch-vowels) suppresses portions of a sound that look like steady-state"
   (let* ((fft-size 32)
-	 (fft-mid (inexact->exact (/ fft-size 2)))
+	 (fft-mid (inexact->exact (floor (/ fft-size 2))))
 	 (rl (make-vct fft-size))
 	 (im (make-vct fft-size))
 	 (ramper (make-ramp 256)) ; 512 ok too
@@ -1265,7 +1265,7 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 	 (radius (- 1.0 (/ r fftsize)))
 	 (bin (/ (srate) fftsize))
 	 (len (frames))
-	 (outlen (inexact->exact (/ len tempo)))
+	 (outlen (inexact->exact (floor (/ len tempo))))
 	 (hop (inexact->exact (* freq-inc tempo)))
 	 (out-data (make-vct (max len outlen)))
 	 (formants (make-vector freq-inc))

@@ -162,7 +162,7 @@
 	 (log-lo (/ (log (max lo 1.0)) log2))
 	 (log-hi (/ (log hi) log2))
 	 (log-val (/ (log val) log2)))
-    (inexact->exact (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo))))))
+    (inexact->exact (floor (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo)))))))
   
 (define (scale-linear->log lo val hi)
   ;; given user-relative lo..hi and scale-relative val, return user-relative val
@@ -524,7 +524,7 @@
 	     (tempfilename (snd-tempnam))
 	     (new-file (open-sound-file tempfilename 1 (srate snd)))
 	     (reader (make-sample-reader 0 snd chn))
-	     (buffers-per-progress-report (inexact->exact (/ chan-samples (* buffer-size 20)))))
+	     (buffers-per-progress-report (inexact->exact (floor (/ chan-samples (* buffer-size 20))))))
 	
 	(start-progress-report snd)
 	

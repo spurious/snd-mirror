@@ -2045,7 +2045,7 @@ is a physical model of a flute:\n\
 	 (freqs (make-vct max-oscils))
 	 (sweeps (make-vct max-oscils))
 	 (lowest-magnitude .001)
-	 (hop (inexact->exact (/ fftsize 4)))
+	 (hop (inexact->exact (floor (/ fftsize 4))))
 	 (outhop (inexact->exact (floor (* time-scaler hop))))
 	 (ifreq (/ 1.0 outhop))
 	 (ihifreq (hz->radians ifreq))
@@ -2584,7 +2584,7 @@ nil doesnt print anything, which will speed up a bit the process.
   ;; a kind of noise reduction -- on-going average spectrum is squelched to some extent
   ;; obviously aimed at intermittent signal in background noise
   ;; this is based on Perry Cook's Scrubber.m
-  (let* ((freq-inc (inexact->exact (/ fftsize 2)))
+  (let* ((freq-inc (inexact->exact (floor (/ fftsize 2))))
 	 (fdi (make-vct fftsize))
 	 (fdr (make-vct fftsize))
 	 (spectr (make-vct freq-inc 1.0))

@@ -177,9 +177,9 @@
 		(help-dialog 
 		 "Selection info"
 		 (format #f "start ~A, ~,3F~%end: ~A, ~,3F~%duration: ~A, ~,3F~%chans: ~D~%maxamp: ~,3F, rms: ~,3F"
-			 beg (/ beg (srate))
-			 (+ beg len) (/ (+ beg len) (srate))
-			 len (/ len (srate))
+			 beg (exact->inexact (/ beg (srate)))
+			 (+ beg len) (exact->inexact (/ (+ beg len) (srate)))
+			 len (exact->inexact (/ len (srate)))
 			 (selection-chans)
 			 (selection-maxamp)
 			 (let* ((reader (make-sample-reader beg))
@@ -353,7 +353,7 @@
 			(srate snd)
 			(mus-header-type-name (header-type snd))
 			(mus-data-format-name (data-format snd))
-			(/ (frames snd graph-popup-chn) (srate snd))
+			(exact->inexact (/ (frames snd graph-popup-chn) (srate snd)))
 			(maxamp snd #t)
 			(if (comment snd)
 			    (format #f "  comment: ~A~%" (comment snd))

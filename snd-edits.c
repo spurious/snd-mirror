@@ -6074,8 +6074,8 @@ static mus_sample_t previous_sample_with_ptree_xramp_ptree_air(snd_fd *sf)
 
 static void swap_readers(snd_fd *sf)
 {
-  mus_sample_t (*rrun)(struct snd__fd *sf);
-  Float (*rrunf)(struct snd__fd *sf);
+  mus_sample_t (*rrun)(struct snd_fd *sf);
+  Float (*rrunf)(struct snd_fd *sf);
   rrun = sf->run;
   rrunf = sf->runf;
   sf->run = sf->rev_run;

@@ -490,7 +490,7 @@
 	     (tempfilename (snd-tempnam))
 	     (new-file (open-sound-file tempfilename 1 (srate snd)))
 	     (reader (make-sample-reader 0 snd chn))
-	     (buffers-per-progress-report (inexact->exact (/ chan-samples (* buffer-size 20)))))
+	     (buffers-per-progress-report (inexact->exact (floor (/ chan-samples (* buffer-size 20))))))
 	
 	(start-progress-report snd)
 	

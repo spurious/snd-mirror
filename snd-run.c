@@ -7216,6 +7216,7 @@ static void clm_2f(int *args, Int *ints, Float *dbls) {FLOAT_RESULT = MUS_RUN(((
 static char *descr_clm_2f(int *args, Int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, mus_name(((mus_any *)(INT_ARG_1))), 2));} 
 static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
 {
+  /* TODO: if incoming args are int, fixup */
   if (args[0]) FREE(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
   switch (num_args)
@@ -7847,7 +7848,7 @@ static triple *make_indirect_triple(void (*function)(int *arg_addrs, Int *ints, 
   int i, xloc = -1;
   if (args > 0)
     {
-      addrs = (int *)CALLOC(args, sizeof(int));
+      addrs = (int *)CALLOC((args > 3) ? args : 3, sizeof(int));
       xloc = allocate_indirect_args(args);
       xaddrs = indirect_args[xloc];
       addrs[0] = typed_args[0]->addr; /* string result */

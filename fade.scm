@@ -113,7 +113,7 @@
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (freq-inc (inexact->exact (floor (/ fsize 2))))
-	 (bin (inexact->exact (/ (mus-srate) fsize)))
+	 (bin (inexact->exact (floor (/ (mus-srate) fsize))))
 	 (radius (- 1.0 (/ r fsize)))
 	 (spectrum (make-vct freq-inc 1.0))
 	 (ramp-inc (/ 1.0 1024.0))

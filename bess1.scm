@@ -471,12 +471,12 @@
 	(set-flabel amp-label camp)
 	(set-flabel freq-label cfreq)
 	(set-flabel index-label cindex)
-	(XmScaleSetValue tempo-scale (inexact->exact (* 100 (/ (- ctempo low-tempo)
-							       (- high-tempo low-tempo)))))
-	(XmScaleSetValue freq-scale (inexact->exact (* 100 (/ (- cfreq low-freq)
-							      (- high-freq low-freq)))))
+	(XmScaleSetValue tempo-scale (inexact->exact (floor (* 100 (/ (- ctempo low-tempo)
+								      (- high-tempo low-tempo))))))
+	(XmScaleSetValue freq-scale (inexact->exact (floor (* 100 (/ (- cfreq low-freq)
+								     (- high-freq low-freq))))))
 	(XmScaleSetValue amp-scale (inexact->exact (* 100 camp)))
-	(XmScaleSetValue index-scale (inexact->exact (* 100 (/ cindex high-index)))))
+	(XmScaleSetValue index-scale (inexact->exact (floor (* 100 (/ cindex high-index))))))
 
       (XtManageChild radio)
       ;; add scale-change (drag and value-changed) callbacks

@@ -484,7 +484,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let* ((len (frames))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
-	 (fftlen2 (inexact->exact (/ fftlen 2)))
+	 (fftlen2 (inexact->exact (floor (/ fftlen 2))))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl (samples->vct 0 fftlen))
 	 (old-pk (vct-peak rl))
@@ -623,7 +623,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (* val val)))
 
 (define (make-legendre-summation cosines frequency)
-  (make-sum-of-cosines (inexact->exact (/ cosines 2)) frequency))
+  (make-sum-of-cosines (inexact->exact (floor (/ cosines 2))) frequency))
 
 ;(let ((gen (make-legendre-summation 10 100))) (map-chan (lambda (y) (legendre-summation gen))))
 

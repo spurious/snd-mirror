@@ -1544,11 +1544,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	 (size (list-ref meter-data 2))
 	 (dpy (XtDisplay meter))
 	 (win (XtWindow meter))
-	 (major-tick (inexact->exact (/ width 24)))
+	 (major-tick (inexact->exact (floor (/ width 24))))
 	 (minor-tick (inexact->exact (* major-tick .6)))
 	 (ang0 (* 45 64))
 	 (ang1 (* 90 64))
-	 (wid2 (inexact->exact (/ width 2)))
+	 (wid2 (inexact->exact (floor (/ width 2))))
 	 (gc (car (snd-gcs)))
 	 (top (inexact->exact (/ height 3.2)))) ; distance of label from top of meter
     (XSetForeground dpy gc (white-pixel))
@@ -1608,7 +1608,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
   ;; add n level meters to a pane at the top of the Snd window
   (let* ((parent (list-ref (main-widgets) 3))
 	 (height 70)
-	 (width (inexact->exact (/ (cadr (XtGetValues parent (list XmNwidth 0))) n)))
+	 (width (inexact->exact (floor (/ (cadr (XtGetValues parent (list XmNwidth 0))) n))))
 	 (meters (XtCreateManagedWidget "meters" xmFormWidgetClass parent
 	 	   (list XmNpositionIndex 0  ; top pane
 			 XmNbackground    (basic-color)
@@ -1801,7 +1801,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   (lambda (w c i) ; to window end
 	     (set! (cursor) (right-sample)))
 	   (lambda (w c i) ; to mid-window 
-	     (set! (cursor) (inexact->exact (/ (+ (left-sample) (right-sample)) 2))))
+	     (set! (cursor) (inexact->exact (floor (/ (+ (left-sample) (right-sample)) 2)))))
 	   (lambda (w c i) ; move ahead a window
 	     (if (< (right-sample) (frames))
 		 (set! (left-sample) (right-sample))))
@@ -1842,7 +1842,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	       (amp (find-child snd-amp (scroller-name 0)))
 	       (val (cadr (XtGetValues amp (list XmNmaximum 0)))))
 	  (set! scroll-max val)
-	  (set! scroll-mid (inexact->exact (/ scroll-max 2)))
+	  (set! scroll-mid (inexact->exact (floor (/ scroll-max 2))))
 	  (set! scroll-break (inexact->exact (* .15 scroll-max)))
 	  (set! scroll-mult (/ (exp (/ (- scroll-break scroll-mid) (* .2 scroll-max))) scroll-break))
 	  val)))

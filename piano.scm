@@ -97,7 +97,7 @@
     (lambda (amp)
       (set! noise-seed (logand (+ (* noise-seed 1103515245) 12345) #xffffffff))
       ;; (bil) added the logand -- otherwise we get an overflow somewhere
-      (* amp (- (* (modulo (inexact->exact (/ noise-seed 65536)) 65536) 0.0000305185) 1.0)))))
+      (* amp (- (* (modulo (inexact->exact (floor (/ noise-seed 65536))) 65536) 0.0000305185) 1.0)))))
 
 
 ;;;delay line unit generator with length 0 capabilities...

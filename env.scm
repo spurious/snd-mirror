@@ -425,11 +425,11 @@ repetition to be in reverse."
 
 (define* (envelope-exp e #:optional (power 1.0) (xgrid 100))
   (let* ((mn (min-envelope e))
-	 (largest-diff (- (max-envelope e) mn))
+	 (largest-diff (exact->inexact (- (max-envelope e) mn)))
 	 (x-min (car e))
 	 (len (length e))
 	 (x-max (list-ref e (- len 2)))
-	 (x-incr (/ (- x-max x-min) xgrid))
+	 (x-incr (exact->inexact (/ (- x-max x-min) xgrid)))
 	 (new-e '()))
     (do ((x x-min (+ x x-incr)))
 	((>= x x-max))

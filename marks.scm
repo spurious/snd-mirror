@@ -314,8 +314,8 @@
 			    (bps (/ (beats-per-minute snd chn) 60.0))
 			    (sr (srate snd))
 			    (beat (floor (/ (* samp bps) sr)))
-			    (lower (inexact->exact (/ (* beat sr) bps)))
-			    (higher (inexact->exact (/ (* (1+ beat) sr) bps))))
+			    (lower (inexact->exact (floor (/ (* beat sr) bps))))
+			    (higher (inexact->exact (floor (/ (* (1+ beat) sr) bps)))))
 		       (set! (mark-sample mrk)
 			     (if (< (- samp lower) (- higher samp))
 				 lower

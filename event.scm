@@ -177,8 +177,8 @@
 				    (> (abs (- y1 y0)) 10))
 				10
 				2))
-		       (xdiff (inexact->exact (/ (- x1 x0) den)))
-		       (ydiff (inexact->exact (/ (- y1 y0) den))))
+		       (xdiff (inexact->exact (floor (/ (- x1 x0) den))))
+		       (ydiff (inexact->exact (floor (/ (- y1 y0) den)))))
 		  (do ((xn (+ x0 xdiff) (+ xn xdiff))
 		       (yn (+ y0 ydiff) (+ yn ydiff))
 		       (i 0 (1+ i)))

@@ -103,7 +103,7 @@
   ;; but there's no direct way to get the data-format and chans from the file descriptor
   ;; so in this replacement, there are two added args
   (let* ((datum-bytes (mus-data-format-bytes-per-sample format))
-	 (fixup-loc (inexact->exact (/ (* loc datum-bytes) (* 2 chans)))))
+	 (fixup-loc (inexact->exact (floor (/ (* loc datum-bytes) (* 2 chans))))))
     (mus-sound-seek-frame fd loc)))
 
 (define (with-html)

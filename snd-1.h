@@ -93,9 +93,9 @@ typedef struct {
   int edpos, ptree_env_too;
 } ed_list;
 
-typedef struct snd__fd {
-  mus_sample_t (*run)(struct snd__fd *sf);
-  Float (*runf)(struct snd__fd *sf);
+typedef struct snd_fd {
+  mus_sample_t (*run)(struct snd_fd *sf);
+  Float (*runf)(struct snd_fd *sf);
   ed_list *current_state;
   void *cb; /* ed_fragment* */
   off_t loc, first, last;
@@ -103,8 +103,8 @@ typedef struct snd__fd {
   mus_sample_t *data;
   snd_data *current_sound;
   off_t initial_samp; /* only real use (outside descriptions) is in apply-ladspa (sigh...) */
-  struct chan__info *cp;
-  struct snd__info *local_sp;
+  struct chan_info *cp;
+  struct snd_info *local_sp;
   Float fscaler, rscaler;
   int iscaler;
   off_t frag_pos;
@@ -113,8 +113,8 @@ typedef struct snd__fd {
   XEN closure, closure1;
   int protect, protect1;
   double incr2, curval2, incr3, curval3;
-  mus_sample_t (*rev_run)(struct snd__fd *sf);
-  Float (*rev_runf)(struct snd__fd *sf);
+  mus_sample_t (*rev_run)(struct snd_fd *sf);
+  Float (*rev_runf)(struct snd_fd *sf);
   int edit_ctr, dangling_loc;
 } snd_fd;
 
@@ -139,7 +139,7 @@ typedef struct {
   void *x_ticks, *y_ticks;              /* actual type is tick_descriptor local to snd-axis.c */
   axis_context *ax;
   Latus width, height;
-  struct chan__info *cp;
+  struct chan_info *cp;
   Float sy, zy;                         /* as set by user, 0.0 - 1.0 */
   double sx, zx;
   Locus y_offset;
@@ -172,7 +172,7 @@ typedef struct {
   axis_info *axis;
   Float *data;
   char *xlabel;
-  struct chan__info *chan;
+  struct chan_info *chan;
 } fft_info;
 
 typedef struct {
@@ -183,11 +183,11 @@ typedef struct {
   int target_slices;       /* how many slices in full display (current) */
   Float **data;            /* data[total_slices][bins] -> each is a spectral magnitude */
   off_t *begs;             /* associated begin times (for data reuse) */
-  struct chan__info *cp;
+  struct chan_info *cp;
   Float scale;
 } sono_info;
 
-typedef struct chan__info {
+typedef struct chan_info {
   int chan;                /* which chan are we */
   off_t *samples;          /* current length */
   int graph_transform_p;   /* f button state */
@@ -210,8 +210,8 @@ typedef struct chan__info {
   void **ptrees;
   XEN *ptree_inits, *xens;
   fft_info *fft;           /* possibly null fft data */
-  struct snd__info *sound; /* containing sound */
-  struct snd__state *state;
+  struct snd_info *sound; /* containing sound */
+  struct snd_state *state;
   axis_info *axis;         /* time domain axis */
   mark ***marks;           /* current marks, indexed by edit_ctr, then mark_number, then the mark pointer */
   int marks_size;
@@ -257,7 +257,7 @@ typedef struct chan__info {
 #define CURRENT_SAMPLES(Cp) (Cp)->samples[(Cp)->edit_ctr]
 #define CURSOR(Cp) (Cp)->cursors[(Cp)->edit_ctr]
 
-typedef struct snd__info {
+typedef struct snd_info {
   int inuse;
   int index;
   int playing;
@@ -295,7 +295,7 @@ typedef struct snd__info {
   off_t macroing;
   int minibuffer_on, read_only;
   chan_info **chans;
-  struct snd__state *state;
+  struct snd_state *state;
   snd_context *sgx;
   file_info *hdr;             /* header of file that would be affected if we were to save current edits */
   int bomb_ctr;
@@ -317,7 +317,7 @@ typedef struct snd__info {
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
 
-typedef struct snd__state {
+typedef struct snd_state {
   int selected_sound, selected_mix;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
   int active_sounds;
   Latus ctrls_height, open_ctrls_height, channel_min_height;

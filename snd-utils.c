@@ -294,6 +294,12 @@ void snd_exit(int val)
 #endif
 }
 
+#if __GNUC__
+#if WITH_EFENCE && (!DEBUG_MEMORY)
+  #warning compile switches are inconsistent
+#endif
+#endif
+
 #ifdef DEBUG_MEMORY
 
 /* mtrace-style malloc hooks are not very useful here since I don't care

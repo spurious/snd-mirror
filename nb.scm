@@ -71,7 +71,7 @@ It causes a description of the file to popup when the mouse crosses the filename
 		(mus-sound-srate file)
 		(let ((den (* (mus-sound-chans file) (mus-sound-srate file))))
 		  (if (> den 0)
-		      (format #f "~1,3F" (/ (mus-sound-samples file) den))
+		      (format #f "~1,3F" (exact->inexact (/ (mus-sound-samples file) den)))
 		      "unknown"))
 		(mus-header-type-name (mus-sound-header-type file))
 		(mus-data-format-name (mus-sound-data-format file))

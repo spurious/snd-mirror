@@ -12,12 +12,12 @@
 
 typedef struct {
   mus_any *gen;
-  struct dac__info *dp;
+  struct dac_info *dp;
   int speeding;
   Float sr;
 } spd_info;
 
-typedef struct dac__info {
+typedef struct dac_info {
   Float cur_index;
   Float cur_amp;
   Float cur_srate;

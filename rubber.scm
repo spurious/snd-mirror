@@ -274,7 +274,7 @@
 			   (let ((new-samps
 				  (env-add beg next-beg len)))
 			     (if show-details
-				 (add-named-mark beg (format #f "~D:~D" i (inexact->exact (/ len extension)))))
+				 (add-named-mark beg (format #f "~D:~D" i (inexact->exact (floor (/ len extension))))))
 			     (insert-samples beg len new-samps)
 			     (if (> mult 1)
 				 (do ((k 1 (1+ k)))
@@ -290,7 +290,7 @@
 			     (if (>= beg (frames))
 				 (snd-print (format #f "trouble at ~D: ~D of ~D~%" i beg (frames))))
 			     (if show-details
-				 (add-named-mark (1- beg) (format #f "~D:~D" i (inexact->exact (/ len extension)))))
+				 (add-named-mark (1- beg) (format #f "~D:~D" i (inexact->exact (floor (/ len extension))))))
 			     (delete-samples beg len)
 			     (set! changed-len (+ changed-len len))
 			     (let ((end (+ beg len)))
