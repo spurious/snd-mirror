@@ -15036,6 +15036,9 @@ fi
 echo "${ECHO_T}$ac_cv_opt_olimit_ok" >&6
 	if test $ac_cv_opt_olimit_ok = yes; then
 	  CFLAGS="$CFLAGS -OPT:Olimit=0"
+	  if test $LOCAL_LANGUAGE = "None"; then
+	    LIBS="$LIBS -lm"
+          fi
 	fi
         ;;
     alpha*)
@@ -15195,7 +15198,6 @@ echo $ECHO_N "checking for audio system... $ECHO_C" >&6
 echo "$as_me:$LINENO: result: $audio_system" >&5
 echo "${ECHO_T}$audio_system" >&6
 fi
-
 
 
 

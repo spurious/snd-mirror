@@ -57,7 +57,7 @@
 (define tests 1)
 (define snd-test -1)
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #t)
+(define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (define with-exit (< snd-test 0))
@@ -10306,6 +10306,29 @@ EDITS: 5
 	    (snd-display ";mus-bank: ~A?" results))
 	(do ((i 0 (1+ i))) ((= i 10))
 	  (vector-set! results i (mus-bank oscils amps fms (lambda (i) 0.0)))))
+      (let ((amps (make-vct 3))
+	    (oscs (make-vector 3))
+	    (amps1 (make-vct 3))
+	    (oscs1 (make-vector 3))
+	    (v1 (make-vct 10)))
+	(do ((i 0 (1+ i)))
+	    ((= i 3))
+	  (vct-set! amps i (* (1+ i) .1))
+	  (vct-set! amps1 i (* (1+ i) .1))
+	  (vector-set! oscs i (make-oscil :frequency (* (1+ i) 100.0)))
+	  (vector-set! oscs1 i (make-oscil :frequency (* (1+ i) 100.0))))
+	(vct-map! v1 (lambda () (mus-bank oscs amps)))
+	(call-with-current-continuation
+	 (lambda (break)
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (let ((val (+ (* (vct-ref amps1 0) (oscil (vector-ref oscs1 0)))
+			   (* (vct-ref amps1 1) (oscil (vector-ref oscs1 1)))
+			   (* (vct-ref amps1 2) (oscil (vector-ref oscs1 2))))))
+	       (if (fneq (vct-ref v1 i) val)
+		   (begin
+		     (snd-display ";opt'd mus-bank ~A: ~A ~A (~A ~A)" i val (vct-ref v1 i) oscs amps)
+		     (break))))))))
 
       (let ((gen (make-buffer 3)))
 	(if (not (buffer-empty? gen)) (snd-display ";new buf not buffer-empty: ~A?" gen))
@@ -21280,7 +21303,7 @@ EDITS: 6
    (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 
- (ramp 2501 499) ; env-channel (make-env '(0.000 0.000 1.000 1.000 2.000 0.000 ) :base 1.0000 :end 999) 2000 1000 [4:9]:
+ (ramp 2501 499) ; env-channel (make-env '(0.000 0.000 1.000 1.000 2.000 0.000) :base 1.0000 :end 999) 2000 1000 [4:9]:
    (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 100, cp->sounds[0][100:199, 2.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
    (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
@@ -27096,6 +27119,13 @@ EDITS: 2
 	  (if (fneq (vct-ref val 0) 2.0) (snd-display ";run autocorrelate 0: ~A" (vct-ref rla 0)))
 	  (if (fneq (vct-ref val 4) 1.0) (snd-display ";run autocorrelate 4: ~A" (vct-ref rla 4)))))
 
+;      (define lfunc
+;	(let ((ho 3))
+;	  (lambda ()
+;	    ho)))
+;      (let ((ho 123))
+; 	 (let ((val (run-eval '(lambda () (lfunc)))))
+;	   (if (not (= val 3)) (snd-display ";opt 6 case still broken: ~A" val))))
 
       ))))
 
@@ -27474,6 +27504,16 @@ EDITS: 2
 	(close-sound ind))
       (if (defined? 'disable-play) (disable-play))
 
+      (if (and (provided? 'snd-motif)
+	       (defined? 'variable-display))
+	  (let ((wid1 (make-variable-display "do-loop" "i*1" 'text))
+		(wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0)))
+		(wid3 (make-variable-display "do-loop" "i3" 'spectrum))
+		(wid4 (make-variable-display "do-loop" "i4" 'graph)))
+	    (do ((i 0 (1+ i)))
+		((= i 1000))
+	      (variable-display (variable-display (* (variable-display (sin (* (variable-display i wid1) .1)) wid3) .5) wid2) wid4))
+	    (XtUnmanageChild variables-dialog)))
       ))
 (set! (optimization) old-opt-23)
 

@@ -2460,6 +2460,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	              XmNnoResize            #f
 		      XmNtransient           #f
 		      XmNheight              400
+		      XmNwidth               400
 		      XmNbackground          (basic-color))))
 
 	(XtVaSetValues (XmMessageBoxGetChild variables-dialog XmDIALOG_OK_BUTTON)
@@ -2487,40 +2488,45 @@ Reverb-feedback sets the scaler on the feedback.\n\
 (define* (make-variable-display page-name variable-name #:optional (type 'text) (domain (list 0.0 1.0)))
   ;; type = 'text, 'meter, 'graph, 'spectrum, 'scale
   (if (not (Widget? variables-dialog)) (make-variables-dialog))
-  (let ((page (cdr (or (assoc page-name variables-pages)
-		       (let ((new-page (cons page-name 
-					     (XtCreateManagedWidget page-name xmRowColumnWidgetClass variables-notebook
-								    (list XmNorientation XmVERTICAL
-									  XmNbackground  (basic-color))))))
-			 (XtCreateManagedWidget page-name xmPushButtonWidgetClass variables-notebook
-			   (list XmNnotebookChildType XmMAJOR_TAB
-				 XmNbackground        (basic-color)))
-			 (set! variables-pages (cons new-page variables-pages))
-			 new-page))))
-	(var-label (string-append variable-name ":")))
-    (case type
-      ((text)
-	;; add a horizontal pair: label text
-       (let* ((row (XtCreateManagedWidget (string-append variable-name "-row") xmRowColumnWidgetClass page
-		     (list XmNorientation XmHORIZONTAL
-			   XmNbackground  (basic-color))))
-	      (label (XtCreateManagedWidget var-label xmLabelWidgetClass row
-		       (list XmNbackground  (basic-color)))))
-	 (XtCreateManagedWidget (string-append variable-name "-value") xmTextFieldWidgetClass row
-	   (list XmNrightAttachment XmATTACH_FORM
-		 XmNbackground (WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay variables-dialog)))))))
+  ;; rowColumn widget gets confused by drawingareas, so I'll split them out into separate panes
+  (let ((page-info (assoc page-name variables-pages)))
+    (if (not page-info)
+	(let* ((panes (XtCreateManagedWidget page-name xmPanedWindowWidgetClass variables-notebook '()))
+	       (simple-cases (XtCreateManagedWidget page-name xmRowColumnWidgetClass panes
+						    (list XmNorientation XmVERTICAL
+							  XmNpaneMinimum 30
+							  XmNbackground  (basic-color)))))
+	  (set! page-info (cons page-name (list panes simple-cases)))
+	  (XtCreateManagedWidget page-name xmPushButtonWidgetClass variables-notebook
+				 (list XmNnotebookChildType XmMAJOR_TAB
+				       XmNbackground        (basic-color)))
+	  (set! variables-pages (cons page-info variables-pages))))
+    (let* ((row-pane (caddr page-info))
+	   (pane (cadr page-info))
+	   (var-label (string-append variable-name ":")))
+      (case type
+	((text)
+	 ;; add a horizontal pair: label text
+	 (let* ((row (XtCreateManagedWidget (string-append variable-name "-row") xmRowColumnWidgetClass row-pane
+					    (list XmNorientation XmHORIZONTAL
+						  XmNbackground  (basic-color))))
+		(label (XtCreateManagedWidget var-label xmLabelWidgetClass row
+					      (list XmNbackground  (basic-color)))))
+	   (XtCreateManagedWidget (string-append variable-name "-value") xmTextFieldWidgetClass row
+				  (list XmNrightAttachment XmATTACH_FORM
+					XmNbackground (WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay variables-dialog)))))))
 	((scale)
 	 ;; scale bar with red "thermometer"
 	 (let* ((title (XmStringCreate var-label XmFONTLIST_DEFAULT_TAG))
-		(scl (XtCreateManagedWidget variable-name xmScaleWidgetClass page
-		      (list XmNbackground  (basic-color)
-			    XmNslidingMode XmTHERMOMETER
-			    XmNminimum (inexact->exact (* 100 (car domain)))
-			    XmNmaximum (inexact->exact (* 100 (cadr domain)))
-			    XmNdecimalPoints 2
-			    XmNtitleString title
-			    XmNorientation XmHORIZONTAL
-			    XmNshowValue XmNEAR_BORDER))))
+		(scl (XtCreateManagedWidget variable-name xmScaleWidgetClass row-pane
+					    (list XmNbackground  (basic-color)
+						  XmNslidingMode XmTHERMOMETER
+						  XmNminimum (inexact->exact (* 100 (car domain)))
+						  XmNmaximum (inexact->exact (* 100 (cadr domain)))
+						  XmNdecimalPoints 2
+						  XmNtitleString title
+						  XmNorientation XmHORIZONTAL
+						  XmNshowValue XmNEAR_BORDER))))
 	   (XtVaSetValues (find-child scl "Scrollbar") (list XmNtroughColor (red-pixel)))
 	   (XmStringFree title)
 	   scl))
@@ -2528,22 +2534,24 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	 ;; using the level meters in snd-motif.scm
 	 (let* ((height 70)
 		(width 210)
-		(label (XtCreateManagedWidget var-label xmLabelWidgetClass page
+		(label (XtCreateManagedWidget var-label xmLabelWidgetClass row-pane
 					      (list XmNbackground  (basic-color)))))
-	   (make-level-meter page width height '() #f)))
+	   (make-level-meter row-pane width height '() #f)))
 	((graph)
-	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass page '()))
+	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane 
+					     (list XmNpaneMinimum 100)))
 		(snd (make-variable-graph form variable-name 2048 (mus-srate))))
 	   (list snd (channel-data snd 0))))
 	((spectrum)
-	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass page '()))
+	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane
+					     (list XmNpaneMinimum 100)))
 		(snd (make-variable-graph form variable-name 2048 (mus-srate))))
 	   (set! (time-graph? snd 0) #f)
 	   (set! (transform-graph? snd 0) #t)
 	   (list snd (channel-data snd 0))))
-	(else #f))))
+	(else #f)))))
 
-(define (dpy var widget)
+(define (variable-display var widget)
   (if (Widget? widget)
       (if (XmIsTextField widget)
 	  ;; text representation
@@ -2569,6 +2577,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		     (frames (sound-data-length data))
 		     (loc (cursor snd 0)))
 		(sound-data-set! data 0 loc var)
+		(if (time-graph? snd) (update-time-graph snd))
+		(if (transform-graph? snd) (update-transform-graph snd))
 		(if (= (+ loc 1) frames)
 		    (set! (cursor snd 0) 0)
 		    (set! (cursor snd 0) (+ loc 1))))
@@ -2585,13 +2595,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 (define wid1 (make-variable-display "do-loop" "i" 'text))
   (do ((i 0 (1+ i)))
       ((= i 10))
-    (dpy (* (dpy i wid1) 2) wid))
+    (variable-display (* (variable-display i wid1) 2) wid))
 
 (define wid2 (make-variable-display "a-loop" "k*2" 'meter))
 ;(define wid3 (make-variable-display "a-loop" "k" 'scale '(0 40)))
   (do ((k 0 (1+ k)))
       ((= k 11))
-    (dpy (* k .02) wid2))
+    (variable-display (* k .02) wid2))
 !#
 
 

@@ -318,7 +318,7 @@ Here's a more extended example:
       (set! (axis-numbers-font) "9x15")))
 
 (set! (listener-prompt) ":")        ;change listener prompt from the default "&gt;" to ":"
-(show-listener)                     ;include the listener window initially
+(set! (show-listener) #t)           ;include the listener window initially
 (set! (show-indices) #t)            ;include sound index values with the sound name
 
 (define beige (make-color 0.96 0.96 0.86))

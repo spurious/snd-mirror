@@ -871,6 +871,9 @@ dnl should we include -lSgm if motif?
 	AC_MSG_RESULT($ac_cv_opt_olimit_ok)
 	if test $ac_cv_opt_olimit_ok = yes; then
 	  CFLAGS="$CFLAGS -OPT:Olimit=0"
+	  if test $LOCAL_LANGUAGE = "None"; then
+	    LIBS="$LIBS -lm"
+          fi
 	fi
 dnl how to incorporate the TARG:platform arguments? (hinv...)
 dnl what is -IPA?
@@ -939,7 +942,6 @@ AC_SUBST(SO_INSTALL)
 AC_SUBST(SO_LD)
 AC_SUBST(A_LD)
 AC_SUBST(A_LD_FLAGS)
-
 
 #--------------------------------------------------------------------------------
 # statfs special case

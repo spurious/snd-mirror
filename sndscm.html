@@ -2314,6 +2314,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=def><A NAME="uponsaveyourself">upon-save-yourself, upon-take-focus</a></em>
   <em class=def>add-text-to-status-area</em>
   <em class=def><a name="makevariabledisplay">make-variable-display</a></em> page-name variable-name (type 'text) (domain (list 0.0 1.0))
+  <em class=def><a name="variabledisplay">variable-display</a></em> val widget
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -2400,18 +2401,37 @@ whenever Snd receives focus from the window manager.
 </p><p><b>add-text-to-status-area</b> puts a text widget in the notebook's status area
 (the lower left portion of the main Snd window when using the -notebook invocation switch).
 It returns the widget; you can write to it via XmTextFieldSetString.
-</p><p><b>make-variable-display</b> sets up a display point for an arbitrary expression which
-is updated via <b>dpy</b>.  The latter returns its argument, so it acts as a sort of
+</p>
+
+<p><b>make-variable-display</b> sets up a display point for an arbitrary expression which
+is updated via <b>variable-display</b>.  The latter returns its argument, so it acts as a sort of
 probe, picking out any arbitrary point in an instrument and displaying it as the
-instrument is running.  Display points can be organized into "pages" (in the notebook
-widget).  Here's a simple example:
+instrument is running.  Display points can be organized as pages in a notebook
+widget.  Here's a simple example:
 </p>
 <pre>
 (define wid (make-variable-display "do-loop" "i*2" 'text))
 (define wid1 (make-variable-display "do-loop" "i" 'text))
-  (do ((i 0 (1+ i)))
-      ((= i 10))
-    (dpy (* (dpy i wid1) 2) wid))
+(do ((i 0 (1+ i)))
+    ((= i 10))
+  (variable-display (* (variable-display i wid1) 2) wid))
+</pre>
+<p>The 'graph and 'spectrum cases create legitimate Snd channel displays,
+accessible via a sound index (and channel 0); these respond to the
+various channel-related functions such as <a href="extsnd.html#showfftpeaks">show-transform-peaks</a>,
+although you have to give the sound index explicitly:
+</p>
+<pre>
+(define wid2 (make-variable-display "do-loop" "x" 'spectrum))
+(set! (show-transform-peaks (car wid2)) #t)
+</pre>
+<p>Each graph or spectrum display is placed in its own pane (this is a desperate
+kludge), whereas all the others are ordered vertically in a single pane.
+The 'scale choice has an additional argument that gives the range of the
+scale as a list (low high):
+</p>
+<pre>
+(define wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0)))
 </pre>
 <br>
 
@@ -3235,7 +3255,12 @@ want your instruments to respond to C-g within the sample generating loop, use a
 event check can slow down processing, I don't call it on every sample, but you might
 want to do that while developing a new instrument.
 </p>
-
+<p>Toward the end of ws.scm is an example, <b>with-marked-sound</b>, that is just
+like with-sound except that it adds a mark at the start of each note in the output
+sound; the corresponding code in your instrument sets the mark's :ws property
+to contain any info you might find amusing.  You then click the mark to see
+that info.
+</p>
 <br>
 
 <A NAME="xmenveddoc"></a><span class=box><h2>xm-enved.scm, xm-enved.rb</h2></span>

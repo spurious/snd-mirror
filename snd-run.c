@@ -68,7 +68,6 @@
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
  *
- * SOMEDAY: mus-bank?
  * TODO: it's possible for the env-search to find a shadowed var (if opt>5):
  *       (set! (optimization) 6)
  *       (define hi 3.0)
@@ -6636,6 +6635,20 @@ SET_DBL_GEN0(frequency)
 SET_DBL_GEN0(formant_radius)
 
 
+/* ---------------- mus-bank ---------------- */
+/* SOMEDAY: mus_bank inp args */
+
+static char *descr_mus_bank_1f(int *args, Int *ints, Float *dbls) 
+{
+  return(mus_format( FLT_PT " = mus-bank(" PTR_PT ", " PTR_PT ")", args[0], FLOAT_RESULT, args[1], (clm_vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2)));
+}
+static void mus_bank_1f(int *args, Int *ints, Float *dbls) 
+{
+  FLOAT_RESULT = mus_bank(((clm_vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, NULL, NULL, ((vct *)(INT_ARG_2))->length);
+}
+static xen_value *mus_bank_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, mus_bank_1f, descr_mus_bank_1f, args, 2));}
+
+
 /* ---------------- polynomial ---------------- */
 static char *descr_polynomial_1f(int *args, Int *ints, Float *dbls) 
 {
@@ -9585,6 +9598,7 @@ static void init_walkers(void)
   INIT_WALKER(S_buffer2frame, make_walker(buffer2frame_1, NULL, NULL, 1, 2, R_CLM, FALSE, 2, R_CLM, R_CLM));
   INIT_WALKER(S_frame2file, make_walker(frame2file_1, NULL, NULL, 3, 3, R_CLM, FALSE, 3, R_CLM, R_NUMBER, R_CLM));
   INIT_WALKER(S_file2frame, make_walker(file2frame_1, NULL, NULL, 2, 3, R_CLM, FALSE, 3, R_CLM, R_NUMBER, R_CLM));
+  INIT_WALKER(S_mus_bank, make_walker(mus_bank_1, NULL, NULL, 2, 2, R_FLOAT, FALSE, 2, R_CLM_VECTOR, R_VCT));
 
   INIT_WALKER(S_radians_hz, make_walker(mus_radians2hz_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
   INIT_WALKER(S_hz_radians, make_walker(mus_hz2radians_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));

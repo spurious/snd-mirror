@@ -1864,7 +1864,7 @@ is a physical model of a flute:\n\
 	   (env1samples (inexact->exact (floor (* env1dur (mus-srate)))))
 	   (siz (inexact->exact (floor (/ (length partials) 2))))
 	   (oscils (make-vector siz))
-	   (alist (make-vector siz))
+	   (alist (make-vct siz))
 	   (locs (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
 	   (ampfun1 (make-piano-ampfun env1dur))
 	   (ampenv1 (make-env :envelope ampfun1
@@ -1880,7 +1880,7 @@ is a physical model of a flute:\n\
       (do ((i 0 (+ i 2))
 	   (j 0 (1+ j)))
 	  ((= i (length partials)))
-	(vector-set! alist j (list-ref partials (+ i 1)))
+	(vct-set! alist j (list-ref partials (+ i 1)))
 	(vector-set! oscils j (make-oscil :frequency (* (list-ref partials i) frequency))))
       (if (c-g?) (throw 'with-sound-interrupt))
     (run
@@ -1888,15 +1888,11 @@ is a physical model of a flute:\n\
        (do ((i beg (1+ i)))
 	   ((= i end))
 	 (set! sktr (1+ sktr))
-	 (let ((sum 0.0))
-	   (do ((j 0 (1+ j)))
-	       ((= j siz))
-	     (set! sum (+ sum (* (vector-ref alist j)
-				 (oscil (vector-ref oscils j))))))
-	   (locsig locs i (* sum
-			     (if (> sktr env1samples) 
-				 (env ampenv2) 
-				 (env ampenv1)))))))))))
+	 (locsig locs i (* (mus-bank oscils alist)
+			   (if (> sktr env1samples) 
+			       (env ampenv2) 
+			       (env ampenv1))))))))))
+
 
 
 (definstrument (resflt start dur driver 

@@ -982,7 +982,8 @@ static void display_selection_transform_size (chan_info *cp, axis_info *fap)
   if (cp->printing) ps_draw_string(fap, x0, y0, chn_id_str);
 }
 
-snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_length, int with_arrows, int grf_style, widget_t container, int with_events)
+snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_length, 
+				      int with_arrows, int grf_style, widget_t container, int with_events)
 {
   snd_info *sp;
   chan_info *cp;
@@ -6507,6 +6508,7 @@ to a standard Snd channel graph placed in the widget 'container'."
   snd_state *ss;
   snd_info *sp;
   chan_info *cp;
+  axis_info *ap;
   int rate, initial_length;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(container), container, XEN_ARG_1, S_make_variable_graph, "a widget");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_2, S_make_variable_graph, "a string");
@@ -6519,18 +6521,21 @@ to a standard Snd channel graph placed in the widget 'container'."
   sp->read_only = TRUE;
   sp->state = ss;
   sp->index = find_free_sound_slot_for_channel_display(ss);
+  ss->sounds[sp->index] = sp;
+  cp = sp->chans[0];
   if (XEN_STRING_P(name))
     {
       sp->filename = copy_string(XEN_TO_C_STRING(name));
       sp->short_filename = copy_string(sp->filename);
+      ap = cp->axis;
+      if (ap->xlabel) FREE(ap->xlabel);
+      ap->xlabel = copy_string(sp->filename);
     }
   else
     {
       sp->filename = copy_string("variable");
       sp->short_filename = copy_string("var");
     }
-  ss->sounds[sp->index] = sp;
-  cp = sp->chans[0];
   cp->sounds[0] = make_snd_data_buffer_for_simple_channel(initial_length);
   cp->edits[0] = initial_ed_list(0, initial_length - 1);
   return(C_TO_XEN_INT(sp->index));

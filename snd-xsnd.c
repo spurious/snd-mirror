@@ -1,11 +1,5 @@
 #include "snd.h"
 
-/* TODO: if -notebook and show-listener, the listener pane is either closed or obscured */
-/* TODO: if -notebook, the status area is just blank space */
-/* SOMEDAY: user-directable snd/chn display (place current snd-handler in any widget) (reuse?) */
-/* TODO: if background pixmap, icon field is not also set (and probably not during use as well) */
-/* TODO: in all dialogs, some of the buttons (the extras?) don't get the background pixmap? ditto the menus, and effects dialogs */
-
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif

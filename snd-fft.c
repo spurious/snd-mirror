@@ -655,7 +655,7 @@ static char *spectro_xlabel(chan_info *cp)
     case FOURIER: 
       if (cp->fft_log_frequency)
 	return("log freq");
-      else return("frequency");
+      else return(_("frequency"));
       break;
     case WAVELET:         return(wavelet_names[cp->wavelet_type]); break;
     case HAAR:            return(_("Haar spectrum"));              break;

@@ -679,7 +679,12 @@ func (a function of no args) when the new menu is activated."
       if (XEN_INTEGER_P(gpos)) position = XEN_TO_C_INT(gpos);
       err = g_add_to_menu(get_global_state(), 
 			  m,
+#if (SGI) && (!(HAVE_EXTENSION_LANGUAGE)) && (!(defined(__GNUC__)))
+			  /* SGI C-compiler thinks NULL:NULL can't be char*! */
+			  (XEN_FALSE_P(label)) ? "" : XEN_TO_C_STRING(label),
+#else
 			  (XEN_FALSE_P(label)) ? NULL : XEN_TO_C_STRING(label),
+#endif
 			  slot,
 			  position);
       if (err == -1) 
