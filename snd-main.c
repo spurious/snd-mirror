@@ -729,6 +729,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			      else 
 				{
 				  argname = auto_open_file_names[auto_open_ctr];
+				  {
 #if HAVE_RUBY
 				  extern VALUE rb_load_path;
 				  rb_ary_shift(rb_load_path);  /* prepend -I as they appear (kinda unintuitive) */
@@ -740,6 +741,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 				  XEN_EVAL_C_STRING(buf);
   #endif
 #endif
+				  }
 				}
 			    }
 			  else
