@@ -9,7 +9,7 @@
  * 14-July:    clm 3.0!
  *             deprecated mus_ina|b, mus-outa|b|c|d.
  *             mus_make_frame_to_file_with_comment, mus_mixer_scale, mus_make_frame|mixer_with_data.
- *             mus_make_scalar_mixer, mus_mixer_add.
+ *             mus_make_scalar_mixer, mus_mixer_add, mus_continue_frame_to_file.
  * 28-June:    ssb_am + added fm arg (ssb_am_1 is the previous form).
  * 21-June:    wrapper method.
  * 14-June:    ssb_am generator.
@@ -537,6 +537,7 @@ mus_any *mus_make_frame_to_file(const char *filename, int chans, int out_format,
 bool mus_frame_to_file_p(mus_any *ptr);
 mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *data);
 mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
+mus_any *mus_continue_frame_to_file(const char *filename);
 
 mus_any *mus_locsig(mus_any *ptr, off_t loc, Float val);
 mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_interp_t type);
@@ -549,15 +550,15 @@ Float mus_locsig_reverb_set(mus_any *ptr, int chan, Float val);
 void mus_move_locsig(mus_any *ptr, Float degree, Float distance);
 void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_interp_t type);
 
-mus_any *mus_make_src(Float(*input)(void *arg, int direction), Float srate, int width, void *closure);
-Float mus_src(mus_any *srptr, Float sr_change, Float(*input)(void *arg, int direction));
+mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int width, void *closure);
+Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int direction));
 bool mus_src_p(mus_any *ptr);
 Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction));
 Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction));
 
 bool mus_convolve_p(mus_any *ptr);
-Float mus_convolve(mus_any *ptr, Float(*input)(void *arg, int direction));
-mus_any *mus_make_convolve(Float(*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *closure);
+Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction));
+mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *closure);
 Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type);
 void mus_fft(Float *rl, Float *im, int n, int is);
 #if HAVE_FFTW || HAVE_FFTW3
@@ -569,8 +570,8 @@ Float *mus_convolution(Float* rl1, Float* rl2, int n);
 void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file);
 
 bool mus_granulate_p(mus_any *ptr);
-Float mus_granulate(mus_any *ptr, Float(*input)(void *arg, int direction));
-mus_any *mus_make_granulate(Float(*input)(void *arg, int direction), 
+Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction));
+mus_any *mus_make_granulate(Float (*input)(void *arg, int direction), 
 			    Float expansion, Float length, Float scaler, 
 			    Float hop, Float ramp, Float jitter, int max_size, 
 			    int (*edit)(void *closure),
@@ -593,14 +594,14 @@ Float mus_apply(mus_any *gen, ...);
 Float mus_bank(mus_any **gens, Float *scalers, Float *arg1, Float *arg2, int size);
 
 bool mus_phase_vocoder_p(mus_any *ptr);
-mus_any *mus_make_phase_vocoder(Float(*input)(void *arg, int direction), 
-				       int fftsize, int overlap, int interp,
-				       Float pitch,
-				       bool(*analyze)(void *arg, Float(*input)(void *arg1, int direction)),
-				       bool(*edit)(void *arg), 
-				       Float(*synthesize)(void *arg), 
-				       void *closure);
-Float mus_phase_vocoder(mus_any *ptr, Float(*input)(void *arg, int direction));
+mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction), 
+				int fftsize, int overlap, int interp,
+				Float pitch,
+				bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+				int (*edit)(void *arg), /* return value is ignored (int return type is intended to be consistent with granulate) */
+				Float (*synthesize)(void *arg), 
+				void *closure);
+Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction));
 
 Float *mus_phase_vocoder_amp_increments(mus_any *ptr);
 Float *mus_phase_vocoder_amps(mus_any *ptr);
@@ -617,7 +618,7 @@ Float mus_ssb_am_1(mus_any *ptr, Float insig);
 Float mus_ssb_am(mus_any *ptr, Float insig, Float fm);
 
 void mus_clear_sinc_tables(void);
-void *mus_environ(mus_any *rd);
+void *mus_environ(mus_any *gen);
 void *mus_wrapper(mus_any *gen);
 
 /* for internal use */

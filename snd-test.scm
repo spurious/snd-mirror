@@ -16257,6 +16257,7 @@ EDITS: 5
 					     (do ((i 0 (1+ i)))
 						 ((= i len) len)       ; grain length unchanged in this case
 					       (vct-set! grain i (* 2 (vct-ref grain i))))))))
+	      ;; TODO: shouldn't these edit functions return 0?
 	      (rd (make-sample-reader 0)))
 	  (map-channel (lambda (y) (granulate grn (lambda (dir) (rd))))))
 	(let ((mx (maxamp)))

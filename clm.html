@@ -1696,7 +1696,7 @@ handier.</p>
         (<i>jitter</i> 1.0)      ;affects spacing of successive grains
         <i>max-size</i>          ;internal buffer size
         <i>edit</i>              ;grain editing function (Scheme/Ruby, not CL)
-  <a class=def name="granulate">granulate</a> <i>e</i> &amp;optional <i>input-function</i>
+  <a class=def name="granulate">granulate</a> <i>e</i> &amp;optional <i>input-function edit-function</i>
   <a class=def name="granulate?">granulate?</a> <i>e</i>
 </pre>
 
@@ -1796,8 +1796,8 @@ In the following code, we use the edit function to reverse every other grain:
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>PHASE-VOCODER</h4></td></tr></table>
 <pre>
   <a class=def name="make-phase-vocoder">make-phase-vocoder</a> <a class=quiet href="#optional-key">&amp;optional-key</a> <i>input</i> (<i>fftsize</i> 512) (<i>overlap</i> 4) <i>interp</i> (<i>pitch</i> 1.0) <i>analyze edit synthesize</i>
-  <a class=def name="phase-vocoder">phase-vocoder</a> <i>pv input</i>
-  <a class=def name="phase-vocoder?">phase-vocoder?</a> <i>pv</i>
+  <a class=def name="phase-vocoder">phase-vocoder</a> pv <i>input-function analyze-function edit-function synthesize-function</i>
+  <a class=def name="phase-vocoder?">phase-vocoder?</a> pv
 </pre>
 
 <table border cellpadding=4>

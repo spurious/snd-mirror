@@ -5904,26 +5904,19 @@ static mus_any_class FRAME_TO_FILE_CLASS = {
 
 mus_any *mus_make_frame_to_file(const char *filename, int chans, int out_format, int out_type)
 {
-  rdout *gen;
+  rdout *gen = NULL;
   gen = (rdout *)mus_make_sample_to_file(filename, chans, out_format, out_type);
-  if (gen) 
-    {
-      gen->core = &FRAME_TO_FILE_CLASS;
-      return((mus_any *)gen);
-    }
-  return(NULL);
+  if (gen) gen->core = &FRAME_TO_FILE_CLASS;
+  return((mus_any *)gen);
 }
 
+/* TODO check clm2xen for comment arg */
 mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment)
 {
-  rdout *gen;
+  rdout *gen = NULL;
   gen = (rdout *)mus_make_sample_to_file_with_comment(filename, chans, out_format, out_type, comment);
-  if (gen) 
-    {
-      gen->core = &FRAME_TO_FILE_CLASS;
-      return((mus_any *)gen);
-    }
-  return(NULL);
+  if (gen) gen->core = &FRAME_TO_FILE_CLASS;
+  return((mus_any *)gen);
 }
 
 bool mus_frame_to_file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FRAME_TO_FILE));}
@@ -5948,6 +5941,14 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
   return((mus_any *)data);
 }
 
+/* TODO: clm2xen/doc/test */
+mus_any *mus_continue_frame_to_file(const char *filename)
+{
+  rdout *gen = NULL;
+  gen = (rdout *)mus_continue_sample_to_file(filename);
+  if (gen) gen->core = &FRAME_TO_FILE_CLASS;
+  return((mus_any *)gen);
+}
 
 
 /* ---------------- locsig ---------------- */
@@ -7973,7 +7974,7 @@ typedef struct {
   Float (*input)(void *arg, int direction);
   void *closure;
   bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction));
-  bool (*edit)(void *arg);
+  int (*edit)(void *arg);
   Float (*synthesize)(void *arg);
   int outctr, interp, filptr, N, D;
   Float *win, *ampinc, *amps, *freqs, *phases, *phaseinc, *lastphase, *in_data;
@@ -8081,7 +8082,7 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction),
 				int fftsize, int overlap, int interp,
 				Float pitch,
 				bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
-				bool (*edit)(void *arg), 
+				int (*edit)(void *arg), 
 				Float (*synthesize)(void *arg), 
 				void *closure)
 {
