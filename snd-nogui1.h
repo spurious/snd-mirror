@@ -297,7 +297,6 @@ void filter_env_changed(snd_info *sp, env *e);
 void set_play_button(snd_info *sp, int val);
 void play_button_pause(snd_state *ss, int pausing);
 void syncb(snd_info *sp, int on);
-void combineb(snd_info *sp, int val);
 void lock_apply(snd_state *ss, snd_info *sp);
 void unlock_apply(snd_state *ss, snd_info *sp);
 void set_apply_button(snd_info *sp, int val);

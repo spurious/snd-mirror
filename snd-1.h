@@ -739,7 +739,7 @@ void set_spectro_cutoff_and_redisplay(snd_state *ss, Float val);
 void c_convolve(char *fname, Float amp, int filec, int filehdr, int filterc, int filterhdr, int filtersize,
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp);
-void single_fft(chan_info *cp);
+void single_fft(chan_info *cp, int dpy);
 BACKGROUND_TYPE sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
 void clear_transform_edit_ctrs(chan_info *cp);
@@ -881,7 +881,8 @@ env *default_env(Float x1, Float y);
 void *new_env_editor(void);
 void edp_reset(void *spf);
 axis_info *edp_ap(void *spf);
-int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, int width, int height, env *e, int in_dB);
+int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, 
+		      int x, int y, int width, int height, env *e, int in_dB, int with_dots);
 void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE motion_time, env *e, int in_dB, Float xmax);
 int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE time, env *e, int in_dB, Float xmax);
 void edp_handle_release(void *spf, env *e);
@@ -1221,18 +1222,14 @@ off_t mix_length(int n);
 int any_mix_id(void);
 int mix_ok_and_unlocked(int n);
 int set_mix_amp_env(int n, int chan, env *val);
+int set_mix_amp_env_without_edit(int n, int chan, env *val);
 env *mix_amp_env_from_id(int n, int chan);
-void display_mix_amp_envs(snd_state *ss, axis_info *ap, axis_context *ax, int width, int height);
 void reflect_mix_edit(chan_info *input_cp, const char *origin);
-
 void g_init_mix(void);
-
 void color_one_mix_from_id(int mix_id, COLOR_TYPE color);
 COLOR_TYPE mix_to_color_from_id(int ix_id);
-
 snd_info *make_mix_readable_from_id(int id);
 int mix_selected_channel(int id);
-
 void clear_mix_tags(chan_info *cp);
 void move_mix_tag(int mix_tag, int x);
 void finish_moving_mix_tag(int mix_tag, int x);
@@ -1254,6 +1251,9 @@ int mix_input_chans_from_id(int mix_id);
 void set_mix_name_from_id(int mix_id, char *name);
 void set_mix_position_from_id(int mix_id, off_t beg);
 int mix_ok(int n);
+env **mix_panel_envs(int n);
+env *mix_panel_env(int n, int chan);
+
 
 
 /* -------- snd-find.c -------- */

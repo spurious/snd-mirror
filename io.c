@@ -10,8 +10,6 @@
  * int mus_file_reopen_write(const char *arg)
  * int mus_file_close(int fd)
  * int mus_file_probe(const char *arg)
- * int mus_file_set_descriptors (int tfd, char *name, int df, int ds, off_t dl, int chns, int typ)
- * int mus_file_close_descriptors(int tfd)
  * char *mus_file_full_name(char *tok)
  * char *mus_format(const char *format, ...)
  * --------------------------------

@@ -441,7 +441,8 @@ static void autocorrelation(Float *data, int n)
   int i, j, n2;
   n2 = n / 2;
   rl = (Float *)MALLOC(n * sizeof(Float));
-  for (i = 0; i < n; i++) rl[i] = data[i];
+  memcpy((void *)rl, (void *)data, n * sizeof(Float));
+  /* for (i = 0; i < n; i++) rl[i] = data[i]; */
 #if HAVE_FFTW
   fscl = 1.0 / (Float)n;
   mus_fftw(rl, n, 1);
@@ -450,7 +451,7 @@ static void autocorrelation(Float *data, int n)
   for (i = 1, j = n - 1; i < n2; i++, j--) 
     {
       rl[i] = rl[i] * rl[i] + rl[j] * rl[j];
-      rl[j] = rl[i];
+      rl[j] = 0.0;
     }
   mus_fftw(rl, n, -1);
 #else
@@ -486,7 +487,8 @@ static void cepstrum(Float *data, int n)
   fscl = 2.0 / (Float)n;
   rl = (Float *)MALLOC(n * sizeof(Float));
   im = (Float *)CALLOC(n, sizeof(Float));
-  for (i = 0; i < n; i++) rl[i] = data[i];
+  memcpy((void *)rl, (void *)data, n * sizeof(Float));
+  /* for (i = 0; i < n; i++) rl[i] = data[i]; */
   mus_fft(rl, im, n, 1);
   rl[0] *= rl[0];
   n2 = n / 2;
@@ -495,7 +497,7 @@ static void cepstrum(Float *data, int n)
     {
       rl[i] = rl[i] * rl[i] + im[i] * im[i];
       if (rl[i] < lowest)
-	rl[i] = log(lowest);
+	rl[i] = -10.0;
       else rl[i] = log(sqrt(rl[i]));
       rl[j] = rl[i];
     }
@@ -949,7 +951,7 @@ typedef struct {
 
 static void apply_fft(fft_state *fs)
 {
-  int i, j;
+  int i;
   off_t ind0;
   Float *window, *fft_data;
   int data_len;
@@ -995,11 +997,14 @@ static void apply_fft(fft_state *fs)
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
 #if HAVE_FFTW
-      mus_fftw(fft_data, fs->size, 1);
-      fft_data[0] = fabs(fft_data[0]);
-      fft_data[fs->size / 2] = fabs(fft_data[fs->size / 2]);
-      for (i = 1, j = fs->size - 1; i < fs->size / 2; i++, j--) 
-	fft_data[i] = hypot(fft_data[i], fft_data[j]);
+      {
+	int j;
+	mus_fftw(fft_data, fs->size, 1);
+	fft_data[0] = fabs(fft_data[0]);
+	fft_data[fs->size / 2] = fabs(fft_data[fs->size / 2]);
+	for (i = 1, j = fs->size - 1; i < fs->size / 2; i++, j--) 
+	  fft_data[i] = hypot(fft_data[i], fft_data[j]);
+      }
 #else
       {
 	Float *idata;
@@ -1441,11 +1446,11 @@ static void one_fft(fft_state *fs)
   display_fft(fs);
 }
 
-void single_fft(chan_info *cp)
+void single_fft(chan_info *cp, int dpy)
 {
   if (cp->transform_size < 2) return;
   one_fft(make_fft_state(cp, TRUE));
-  display_channel_fft_data(cp, cp->sound, cp->state);
+  if (dpy == 0) display_channel_fft_data(cp, cp->sound, cp->state);
   enved_fft_update();
 }
 
@@ -2099,17 +2104,30 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   switch (trf)
     {
     case FOURIER: 
-      dat = (Float *)CALLOC(v->length, sizeof(Float));
-      mus_fft(v->data, dat, v->length, 1);
-      v->data[0] *= v->data[0];
       n2 = v->length / 2;
-      v->data[n2] *= v->data[n2];
-      for (i = 1, j = v->length - 1; i < n2; i++, j--)
+      if ((XEN_BOUND_P(hint)) && (XEN_TRUE_P(hint)))
 	{
-	  v->data[i] = v->data[i] * v->data[i] + dat[i] * dat[i];
-	  v->data[j] = v->data[i];
+#if HAVE_FFTW
+	  mus_fftw(v->data, v->length, 1);
+	  v->data[0] *= v->data[0];
+	  v->data[n2] *= v->data[n2];
+	  for (i = 1, j = v->length - 1; i < n2; i++, j--) 
+	    v->data[i] = v->data[i] * v->data[i] + v->data[j] * v->data[j];
+#endif
 	}
-      FREE(dat);
+      else
+	{
+	  dat = (Float *)CALLOC(v->length, sizeof(Float));
+	  mus_fft(v->data, dat, v->length, 1);
+	  v->data[0] *= v->data[0];
+	  v->data[n2] *= v->data[n2];
+	  for (i = 1, j = v->length - 1; i < n2; i++, j--)
+	    {
+	      v->data[i] = v->data[i] * v->data[i] + dat[i] * dat[i];
+	      v->data[j] = v->data[i];
+	    }
+	  FREE(dat);
+	}
       break;
 #if HAVE_GSL
     case HANKEL:

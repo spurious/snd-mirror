@@ -249,13 +249,14 @@ axis_info *edp_ap(void *spf)
 #define EXP_SEGLEN 4
 #define MIN_FILTER_GRAPH_HEIGHT 20
 
-int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, int width, int height, env *e, int in_dB)
+int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, 
+		      int x, int y, int width, int height, env *e, int in_dB, int with_dots)
 {
   axis_info *ap;
   env_ed *edp = (env_ed *)spf;
   int i, j, k;
   Float ex0, ey0, ex1, ey1, val;
-  int ix0, ix1, iy0, iy1, size, lx0, lx1, ly0, ly1;
+  int ix0, ix1, iy0, iy1, size = 4, lx0, lx1, ly0, ly1;
   Float curx, xincr;
   int dur;
   if ((e == NULL) || (edp == NULL)) return(FALSE);
@@ -279,14 +280,18 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
     }
   ap = edp->axis;
   ap->ax = ax;
-  init_env_axes(ap, name, 0, 0, width, height, ex0, ex1, ey0, ey1, FALSE);
+  if (with_dots)
+    init_env_axes(ap, name, x, y, width, height, ex0, ex1, ey0, ey1, FALSE);
   ix1 = grf_x(e->data[0], ap);
   iy1 = edp_grf_y_dB(ss, e->data[1], ap, in_dB);
-  if (e->pts < 100)
-    size = ss->enved_point_size;
-  else size = (int)(ss->enved_point_size * 0.4);
-  edp_set_current_point(edp, 0, ix1, iy1);
-  draw_arc(ax, ix1, iy1, size);
+  if (with_dots)
+    {
+      if (e->pts < 100)
+	size = ss->enved_point_size;
+      else size = (int)(ss->enved_point_size * 0.4);
+      edp_set_current_point(edp, 0, ix1, iy1);
+      draw_arc(ax, ix1, iy1, size);
+    }
   if (in_dB)
     {
       for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
@@ -295,8 +300,11 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
 	  iy0 = iy1;
 	  ix1 = grf_x(e->data[i], ap);
 	  iy1 = edp_grf_y_dB(ss, e->data[i + 1], ap, in_dB);
-	  edp_set_current_point(edp, j, ix1, iy1);
-	  draw_arc(ax, ix1, iy1, size);
+	  if (with_dots)
+	    {
+	      edp_set_current_point(edp, j, ix1, iy1);
+	      draw_arc(ax, ix1, iy1, size);
+	    }
 	  /* now try to fill in from the last point to this one */
 	  if ((ix1 - ix0) < (2 * EXP_SEGLEN))
 	    {
@@ -335,8 +343,11 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
 	  iy0 = iy1;
 	  ix1 = grf_x(e->data[i], ap);
 	  iy1 = grf_y(e->data[i + 1], ap);
-	  edp_set_current_point(edp, j, ix1, iy1);
-	  draw_arc(ax, ix1, iy1, size);
+	  if (with_dots)
+	    {
+	      edp_set_current_point(edp, j, ix1, iy1);
+	      draw_arc(ax, ix1, iy1, size);
+	    }
 	  draw_line(ax, ix0, iy0, ix1, iy1);
 	}
     }

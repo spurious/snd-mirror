@@ -246,6 +246,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Jun:  mix panel amp envs are now editable.\n\
 7-Jun:   added fftw support, removed fht.\n\
 6-Jun:   removed --with-big-colormap switch (use -DCOLORMAP_SIZE=64 to get old form).\n\
 4-Jun:   Gtk OpenGL support via the gtkglext library.\n\

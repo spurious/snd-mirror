@@ -321,7 +321,7 @@ int calculate_fft(chan_info *cp, void *ptr)
     {
       ss = cp->state;
       if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
-	single_fft(cp);
+	single_fft(cp, (int)ptr);
       else set_chan_fft_in_progress(cp,
 				    BACKGROUND_ADD(ss,
 						   sonogram_in_slices,
@@ -366,7 +366,7 @@ int update_graph(chan_info *cp, void *ptr)
       return(0);
   if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
-    calculate_fft(cp, NULL);
+    calculate_fft(cp, (void *)1);
   display_channel_data(cp, sp, ss);
   updating = 0;
   return(0);
@@ -4172,7 +4172,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 		  
 		  (cp->state)->checking_explicitly = 1;  /* do not allow UI events to intervene here! */
 		  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
-		    single_fft(cp);
+		    single_fft(cp, 0);
 		  else
 		    {
 		      val = (void *)make_sonogram_state(cp);

@@ -1,7 +1,6 @@
 #include "snd.h"
 
 /* 
- * TODO: make amp env display editable
  * TODO: add a sync button to affect all of track?  Also need a way to display all related mixes at once (panning etc)
  */
 
@@ -200,14 +199,17 @@ static int mix_amp_to_int(Float amp, int chan)
 /* ---------------- AMP ENV ---------------- */
 
 static Widget w_env_frame, w_env;
-static axis_info *axis = NULL;
 static axis_context *ax = NULL;
 static GC cur_gc;
+static void *spfs[8];
 
 static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   XGCValues gv;
+  int chans, chan, mix_id;
+  env **e;
+  env *cur_env;
 
   if (ax == NULL)
     {
@@ -221,10 +223,84 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       ax->gc = cur_gc;
     }
   else clear_window(ax);
-  if (axis == NULL) 
-    axis = (axis_info *)CALLOC(1, sizeof(axis_info));
-  axis->ax = ax;
-  display_mix_amp_envs(ss, axis, ax, widget_width(w), widget_height(w));
+  mix_id = current_mix_id(ss);
+  chans = mix_input_chans_from_id(mix_id);
+  e = mix_panel_envs(mix_id);
+  for (chan = 0; chan < chans; chan++)
+    {
+      edp_display_graph(ss, spfs[chan], "mix env", ax, 
+			(int)(chan * widget_width(w) / chans), 0,
+			widget_width(w) / chans, widget_height(w), 
+			e[chan], FALSE, TRUE);
+      cur_env = mix_amp_env_from_id(mix_id, chan);
+      if (cur_env)
+	{
+	  XSetForeground(MAIN_DISPLAY(ss), ax->gc, (ss->sgx)->enved_waveform_color);
+	  edp_display_graph(ss, spfs[chan], "mix env", ax, 
+			    (int)(chan * widget_width(w) / chans), 0,
+			    widget_width(w) / chans, widget_height(w), 
+			    cur_env, FALSE, FALSE);
+	  XSetForeground(MAIN_DISPLAY(ss), ax->gc, (ss->sgx)->black);
+	}
+    }
+}
+
+static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+  snd_state *ss = (snd_state *)context;
+  XMotionEvent *ev = (XMotionEvent *)event;
+  int mix_id, chans, chan;
+  env *e;
+  Float pos;
+  mix_id = current_mix_id(ss);
+  chans = mix_input_chans_from_id(mix_id);
+  pos = (Float)(ev->x) / (Float)widget_width(w);
+  chan = (int)(pos * chans);
+  e = mix_panel_env(mix_id, chan);
+  edp_handle_point(ss,
+		   spfs[chan],
+		   ev->x, ev->y, ev->time, 
+		   e,
+		   FALSE,
+		   1.0);
+  mix_amp_env_resize(w, ss, NULL);
+}
+
+static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+  snd_state *ss = (snd_state *)context;
+  XButtonEvent *ev = (XButtonEvent *)event;
+  int mix_id, chans, chan;
+  env *e;
+  Float pos;
+  mix_id = current_mix_id(ss);
+  chans = mix_input_chans_from_id(mix_id);
+  pos = (Float)(ev->x) / (Float)widget_width(w);
+  chan = (int)(pos * chans);
+  e = mix_panel_env(mix_id, chan);
+  if (edp_handle_press(ss,
+		       spfs[chan],
+		       ev->x, ev->y, ev->time, 
+		       e,
+		       FALSE,
+		       1.0))
+    mix_amp_env_resize(w, ss, NULL);
+}
+
+static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+  snd_state *ss = (snd_state *)context;
+  XButtonEvent *ev = (XButtonEvent *)event;
+  int mix_id, chans, chan;
+  env *e;
+  Float pos;
+  mix_id = current_mix_id(ss);
+  chans = mix_input_chans_from_id(mix_id);
+  pos = (Float)(ev->x) / (Float)widget_width(w);
+  chan = (int)(pos * chans);
+  e = mix_panel_env(mix_id, chan);
+  edp_handle_release(spfs[chan], e);
+  mix_amp_env_resize(w, ss, NULL);
 }
 
 
@@ -289,6 +365,20 @@ static void name_activated(snd_state *ss)
     }
 }
 
+static void apply_mix_panel_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  /* set all mix amp envs, last one should remix */
+  snd_state *ss = (snd_state *)context;
+  int i, chans, mix_id;
+  env **envs;
+  mix_id = current_mix_id(ss);
+  chans = mix_input_chans_from_id(mix_id);
+  envs = mix_panel_envs(mix_id);
+  for (i = 0; i < chans - 1; i++)
+    set_mix_amp_env_without_edit(mix_id, i, envs[i]);
+  set_mix_amp_env(mix_id, chans - 1, envs[chans - 1]);
+}
+
 static void dismiss_mix_panel_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
@@ -327,7 +417,10 @@ static void help_mix_panel_callback(Widget w, XtPointer context, XtPointer info)
 selected mix.  At the top are the mix id, name, begin and end times, \
 track number, and a play button.  Beneath that are various sliders \
 controlling the speed (sampling rate) of the mix, and the amplitude of each \
-input channel; and finally, a picture of the amplitude envelope(s).");
+input channel; and finally, an editor for the mix's (input) channels. \
+The current mix amp env is not actually changed until you click 'Apply Env'.\
+The editor envelope is drawn in black with dots whereas the current \
+mix amp env (if any) is drawn in blue.");
 }
 
 
@@ -371,7 +464,7 @@ Widget make_mix_panel(snd_state *ss)
 {
   Widget mainform, w_row, last_label, last_number;
   Pixmap speaker_r;
-  XmString xdismiss, xhelp, xtitle, s1;
+  XmString xdismiss, xhelp, xtitle, s1, xapply;
   int n, chans, i;
   Arg args[20];
   XtCallbackList n1, n2;
@@ -382,12 +475,14 @@ Widget make_mix_panel(snd_state *ss)
   if (mix_panel == NULL)
     {
       xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
+      xapply = XmStringCreate("Apply Env", XmFONTLIST_DEFAULT_TAG);
       xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
       xtitle = XmStringCreate(STR_Mix_Panel, XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
+      XtSetArg(args[n], XmNcancelLabelString, xapply); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
       XtSetArg(args[n], XmNdialogTitle, xtitle); n++;
@@ -397,14 +492,17 @@ Widget make_mix_panel(snd_state *ss)
       mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Mix_Panel, args, n);
 
       XtAddCallback(mix_panel, XmNokCallback, dismiss_mix_panel_callback, ss);
+      XtAddCallback(mix_panel, XmNcancelCallback, apply_mix_panel_callback, ss);
       XtAddCallback(mix_panel, XmNhelpCallback, help_mix_panel_callback, ss);
 
       XmStringFree(xhelp);
+      XmStringFree(xapply);
       XmStringFree(xdismiss);
       XmStringFree(xtitle);
 
       if (!(ss->using_schemes))
 	{
+	  XtVaSetValues(XmMessageBoxGetChild(mix_panel, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(mix_panel, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(mix_panel, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	}
@@ -618,6 +716,13 @@ Widget make_mix_panel(snd_state *ss)
 
       XtAddCallback(w_env, XmNresizeCallback, mix_amp_env_resize, ss);
       XtAddCallback(w_env, XmNexposeCallback, mix_amp_env_resize, ss);
+
+      for (i = 0; i < chans; i++) spfs[i] = new_env_editor();
+
+      XtAddEventHandler(w_env, ButtonPressMask, FALSE, mix_drawer_button_press, ss);
+      XtAddEventHandler(w_env, ButtonMotionMask, FALSE, mix_drawer_button_motion, ss);
+      XtAddEventHandler(w_env, ButtonReleaseMask, FALSE, mix_drawer_button_release, ss);
+
       set_dialog_widget(ss, MIX_PANEL_DIALOG, mix_panel);
     }
   else raise_dialog(mix_panel);
@@ -692,9 +797,7 @@ static void update_mix_panel(int mix_id)
 	    }
 	}
       XtVaSetValues(w_env_frame, XmNtopWidget, w_amp_labels[chans - 1], NULL);
-
       mix_amp_env_resize(w_env, (XtPointer)ss, NULL);
-
     }
 }
 

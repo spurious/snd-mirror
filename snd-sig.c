@@ -207,6 +207,175 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
   return(sc);
 }
 
+#if 0
+/* the fht sometimes out-performs fftw's fft -- especially if len is 65536
+ */
+static float *fht_sines = NULL, *fht_cosines = NULL;
+static int fht_last_length = 0;
+#define TWO_PI (2.0 * M_PI)
+
+static void make_sines(int length)
+{
+  int i, j;
+  double freq, incr;
+  if (length != fht_last_length)
+    {
+      if (fht_sines) free(fht_sines);
+      if (fht_cosines) free(fht_cosines);
+      fht_sines = (float *)malloc(length * sizeof(float));
+      fht_cosines = (float *)malloc(length * sizeof(float));
+      fht_last_length = length;
+      incr = TWO_PI / (double)length;
+      for (i = 0, freq = 0.0; i < length; i++, freq += incr) 
+	fht_cosines[i] = cos(freq);
+      for (i = 0, j = length / 4; i < length; i++)
+	{
+	  fht_sines[j++] = fht_cosines[i];
+	  if (j == length) j = 0;
+        }
+    }
+}
+
+void fht(int powerOfFour, float *array)
+{
+  /*  In place Fast Hartley Transform of floating point data in array.
+      Size of data array must be power of four. Lots of sets of four 
+      inline code statements, so it is verbose and repetitive, but fast. 
+      The Fast Hartley Transform algorithm is patented, and is documented
+      in the book "The Hartley Transform", by Ronald N. Bracewell.
+      This routine was converted to C from a BASIC routine in the above book,
+      that routine Copyright 1985, The Board of Trustees of Stanford University 	
+   */
+  /* fht is its own inverse -- run it again to return to original data */
+
+  register int j = 0, i = 0, k = 0, L = 0;
+  int n = 0, n4 = 0, d1 = 0, d2 = 0, d3 = 0, d4 = 0, d5 = 1, d6 = 0, d7 = 0, d8 = 0, d9 = 0;
+  int L1 = 0, L2 = 0, L3 = 0, L4 = 0, L5 = 0, L6 = 0, L7 = 0, L8 = 0;
+  int n_over_d3;
+  float r = 0.0;
+  int a1 = 0, a2 = 0, a3 = 0;
+  float t = 0.0, t1 = 0.0, t2 =0.0, t3 = 0.0, t4 = 0.0, t5 = 0.0, t6 = 0.0, t7 = 0.0, t8 = 0.0;
+  float t9 = 0.0, t0 = 0.0;
+  if (powerOfFour < 1) return;
+  n = (int)(pow(4.0, (double)powerOfFour));
+  make_sines(n);
+  n4 = n / 4;
+  r = 1.414213562;
+  j = 1;
+  i = 0;
+  while (i < n - 1)	
+    {
+      i++;
+      if (i < j)	
+	{
+	  t = array[j - 1];
+	  array[j - 1] = array[i - 1];
+	  array[i - 1] = t;
+    	}
+      k = n4;
+      while ((3 * k) < j)	
+	{
+	  j -= 3 * k;
+	  k /= 4;
+    	}
+      j += k;
+    }
+  for (i = 0; i < n; i += 4) 
+    {
+      t5 = array[i];
+      t6 = array[i + 1];
+      t7 = array[i + 2];
+      t8 = array[i + 3];
+      t1 = t5 + t6;
+      t2 = t5 - t6;
+      t3 = t7 + t8;
+      t4 = t7 - t8;
+      array[i] = t1 + t3;
+      array[i + 1] = t1 - t3;
+      array[i + 2] = t2 + t4;
+      array[i + 3] = t2 - t4;
+    }
+  for (L = 2; L <= powerOfFour; L++)  
+    {
+      d1 = snd_ipow2(L + L - 3);
+      d2 = d1 + d1;
+      d3 = d2 + d2;
+      n_over_d3 = n / 2 / d3;
+      d4 = d2 + d3;
+      d5 = d3 + d3;
+      for (j = 0; j < n; j += d5)	  
+	{
+	  t5 = array[j];
+	  t6 = array[j + d2];
+	  t7 = array[j + d3];
+	  t8 = array[j + d4];
+	  t1 = t5 + t6;
+	  t2 = t5 - t6;
+	  t3 = t7 + t8;
+	  t4 = t7 - t8;
+	  array[j] = t1 + t3;
+	  array[j + d2] = t1 - t3;
+	  array[j + d3] = t2 + t4;
+	  array[j + d4] = t2 - t4;
+	  d6 = j + d1;
+	  d7 = j + d1 + d2;
+	  d8 = j + d1 + d3;
+	  d9 = j + d1 + d4;
+	  t1 = array[d6];
+	  t2 = array[d7] * r;
+	  t3 = array[d8];
+	  t4 = array[d9] * r;
+	  array[d6] = t1 + t2 + t3;
+	  array[d7] = t1 - t3 + t4;
+	  array[d8] = t1 - t2 + t3;
+	  array[d9] = t1 - t3 - t4;
+	  for (k = 1; k < d1; k++)	
+	    {
+	      L1 = j + k;
+	      L2 = L1 + d2;
+	      L3 = L1 + d3;
+	      L4 = L1 + d4;
+	      L5 = j + d2 - k;
+	      L6 = L5 + d2;
+	      L7 = L5 + d3;
+	      L8 = L5 + d4;
+	      a1 = k * n_over_d3;
+	      a2 = 2 * a1;
+	      a3 = 3 * a1;
+	      /* (these never even get close to n so the mod is not needed)
+	      a1 = (int) (k * n_over_d3) % n;
+	      a2 = (a1 + a1) % n;
+	      a3 = (a1 + a2) % n;
+	      */
+	      /* use of table-lookup here speeds up the overall function by a factor of about 8! */
+	      t5 = array[L2] * fht_cosines[a1] + array[L6] * fht_sines[a1];
+	      t6 = array[L3] * fht_cosines[a2] + array[L7] * fht_sines[a2];
+	      t7 = array[L4] * fht_cosines[a3] + array[L8] * fht_sines[a3];
+	      t8 = array[L6] * fht_cosines[a1] - array[L2] * fht_sines[a1];
+	      t9 = array[L7] * fht_cosines[a2] - array[L3] * fht_sines[a2];
+	      t0 = array[L8] * fht_cosines[a3] - array[L4] * fht_sines[a3];
+	      t1 = array[L5] - t9;
+	      t2 = array[L5] + t9;
+	      t3 = - t8 - t0;
+	      t4 = t5 - t7;
+	      array[L5] = t1 + t4;
+	      array[L6] = t2 + t3;
+	      array[L7] = t1 - t4;
+	      array[L8] = t2 - t3;
+	      t1 = array[L1] + t6;
+	      t2 = array[L1] - t6;
+	      t3 = t8 - t0;
+	      t4 = t5 + t7;
+	      array[L1] = t1 + t4;
+	      array[L2] = t2 + t3;
+	      array[L3] = t1 - t4;
+	      array[L4] = t2 - t3;
+	    }
+	}
+    }		  
+}
+#endif
+
 static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XEN edpos, int arg_pos)
 {
   /* if string returned, needs to be freed */
@@ -1147,15 +1316,16 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   snd_fd **sfs;
   snd_fd *sf;
   file_info *hdr = NULL;
-  int j, k, ofd = 0, datumb = 0, temp_file, err = 0;
+  int j, ofd = 0, datumb = 0, temp_file, err = 0;
   mus_sample_t **data;
   mus_sample_t *idata;
   char *ofile = NULL;
   chan_info *cp;
-  int fsize;
+#if HAVE_FFTW
+  int fsize, k;
   Float scale;
   Float *sndrdat = NULL, *fltdat = NULL;
-
+#endif
   if ((!e) && (!ur_a) && (!gen)) 
     return(NULL);
 
@@ -1178,7 +1348,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   if ((!ur_a) && 
       (!gen) && 
       (!over_selection) &&   /* TODO: make fft-filter work with selection */
-      ((order == 0) || (order >= 64)) && 
+      ((order == 0) || (order >= 128)) && 
       /* TODO: and dur < 2^31 */
       ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available))
     {

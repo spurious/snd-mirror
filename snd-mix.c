@@ -28,6 +28,7 @@ typedef struct {
   snd_info *add_snd;           /* readable snd_info struct for mix input */
   int id, x, nx, y, track, selected_chan, tagx, tagy, tag_y, height; 
                                /* number used in snd-scm calls, tag_y only for user set mix_tag_y */
+  env **panel_envs;            /* mix panel version of current amp envs */
 } mix_info;
 
 
@@ -275,6 +276,7 @@ static mix_info *make_mix_info(chan_info *cp)
   md->y = 0;
   md->selected_chan = 0;
   md->height = mix_waveform_height(ss);
+  md->panel_envs = NULL;
   return(md);
 }
 
@@ -302,6 +304,14 @@ static mix_info *free_mix_info(mix_info *md)
 	  md->states = NULL;
 	}
       if (md->current_cs) md->current_cs = free_console_state(md->current_cs);
+      if (md->panel_envs)
+	{
+	  for (i = 0; i < md->in_chans; i++)
+	    if (md->panel_envs[i])
+	      free_env(md->panel_envs[i]);
+	  FREE(md->panel_envs);
+	  md->panel_envs = NULL;
+	}
       FREE(md);
     }
   return(NULL);
@@ -3331,9 +3341,44 @@ env *mix_amp_env_from_id(int n, int chan)
   return(NULL);
 }
 
-int set_mix_amp_env(int n, int chan, env *val)
+env **mix_panel_envs(int n)
 {
   mix_info *md;
+  console_state *cs; 
+  md = md_from_id(n);
+  if (md) 
+    {
+      cs = md->current_cs;
+      if (cs)
+	{
+	  if (md->panel_envs == NULL)
+	    {
+	      int i;
+	      Float flat[4] = {0.0, 1.0, 1.0, 1.0};
+	      md->panel_envs = (env **)CALLOC(md->in_chans, sizeof(env *));
+	      for (i = 0; i < md->in_chans; i++)
+		if ((cs->amp_envs) && (cs->amp_envs[i]))
+		  md->panel_envs[i] = copy_env(cs->amp_envs[i]);
+		else md->panel_envs[i] = make_envelope(flat, 4);
+	    }
+	}
+      return(md->panel_envs);
+    }
+  return(NULL);
+}
+
+env *mix_panel_env(int n, int chan)
+{
+  env **envs;
+  envs = mix_panel_envs(n);
+  if (envs) return(envs[chan]);
+  return(NULL);
+}
+
+static int set_mix_amp_env_1(int n, int chan, env *val, int remix)
+{
+  mix_info *md;
+  env *old_env = NULL, *old_panel_env = NULL;
   console_state *cs;
   md = md_from_id(n);
   if ((md) && (mix_ok_and_unlocked(n)))
@@ -3342,16 +3387,27 @@ int set_mix_amp_env(int n, int chan, env *val)
       if (md->in_chans > chan)
 	{
 	  cs = md->current_cs;
-	  if ((cs->amp_envs) && (cs->amp_envs[chan])) free_env(cs->amp_envs[chan]);
+	  if ((cs->amp_envs) && (cs->amp_envs[chan])) old_env = cs->amp_envs[chan];
 	  if (cs->amp_envs == NULL) cs->amp_envs = (env **)CALLOC(cs->chans, sizeof(env *));
 	  cs->amp_envs[chan] = copy_env(val);
-	  remix_file(md, "set-" S_mix_amp_env);
+	  if ((md->panel_envs) &&
+	      (md->panel_envs[chan]))
+	    {
+	      old_panel_env = md->panel_envs[chan];
+	      md->panel_envs[chan] = copy_env(val);
+	      free_env(old_panel_env);
+	    }
+	  if (old_env) free_env(old_env);
+	  if (remix) remix_file(md, "set-" S_mix_amp_env);
 	  return(0);
 	}
       else return(INVALID_MIX_CHANNEL);
     }
   else return(INVALID_MIX_ID);
 }
+
+int set_mix_amp_env(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, TRUE));}
+int set_mix_amp_env_without_edit(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, FALSE));}
 
 int mix_selected_channel(int id)
 {
@@ -3361,68 +3417,6 @@ int mix_selected_channel(int id)
     return(md->selected_chan);
   return(NO_SELECTION);
 }
-
-static env *flat_env = NULL;
-
-void display_mix_amp_envs(snd_state *ss, axis_info *ap, axis_context *ax, int width, int height)
-{
-  int chans, chan, mix_id;
-  env *e;
-  int i, j;
-  Float ex0, ey0, ex1, ey1, val;
-  int ix0, ix1, iy0, iy1;
-  Float flat[4];
-
-  mix_id = current_mix_id(ss);
-  chans = mix_input_chans_from_id(mix_id);
-
-  for (chan = 0; chan < chans; chan++)
-    {
-      e = mix_amp_env_from_id(mix_id, chan);
-      if (!e)
-	{
-	  if (!flat_env)
-	    {
-	      flat[0] = 0.0; flat[1] = 1.0; flat[2] = 1.0; flat[3] = 1.0;
-	      flat_env = make_envelope(flat, 4);
-	    }
-	  e = flat_env;
-	}
-
-      ex0 = e->data[0];
-      ey0 = e->data[1];
-      ex1 = e->data[(e->pts * 2) - 2];
-      ey1 = ey0;
-      for (i = 3; i < e->pts * 2; i += 2)
-	{
-	  val = e->data[i];
-	  if (ey0 > val) ey0 = val;
-	  if (ey1 < val) ey1 = val;
-	}
-      if (ey0 > 0.0) ey0 = 0.0;
-      if ((ey0 == ey1) && (ey1 == 0.0)) ey1 = 1.0; /* fixup degenerate case */
-      if (ey1 < 1.0) ey1 = 1.0;
-
-      init_env_axes(ap, "mix env",
-		    (int)(chan * width / chans),
-		    (int)ey0,
-		    width/chans, height,
-		    ex0, ex1, ey0, ey1,
-		    FALSE); /* not printing I presume */
-
-      ix1 = local_grf_x(e->data[0], ap);
-      iy1 = local_grf_y(e->data[1], ap);
-      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
-	{
-	  ix0 = ix1;
-	  iy0 = iy1;
-	  ix1 = local_grf_x(e->data[i], ap);
-	  iy1 = local_grf_y(e->data[i + 1], ap);
-	  draw_line(ax, ix0, iy0, ix1, iy1);
-	}
-    }
-}
-
 
 static XEN snd_no_such_mix_error(const char *caller, XEN n)
 {

@@ -5817,6 +5817,7 @@ void mus_fftw(Float *rl, int n, int dir)
       idata = (fftw_real *)CALLOC(n, sizeof(fftw_real));
     }
   memset((void *)idata, 0, n * sizeof(fftw_real));
+  /* if Float (default float) == fftw_real (default double) we could forego the data copy */
   for (i = 0; i < n; i++) {rdata[i] = rl[i];}
   if (dir != -1)
     rfftw_one(rplan, rdata, idata);

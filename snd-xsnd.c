@@ -872,9 +872,9 @@ static void display_filter_env(snd_info *sp)
   if (edp_display_graph(ss, 
 			sp->sgx->flt,
 			"frequency response",
-			ax, width, height, 
+			ax, 0, 0, width, height, 
 			sp->filter_control_env, 
-			sp->filter_control_in_dB))
+			sp->filter_control_in_dB, TRUE))
     {
       ax->gc = (ss->sgx)->fltenv_data_gc;
       display_frequency_response(ss, 
