@@ -350,10 +350,10 @@
 	'welch-window welch-window 2 
 	'cursor-cross cursor-cross 0
 	'cursor-line cursor-line 1
-	'dont-normalize-transform dont-normalize-transform 0
-	'normalize-transform-by-channel normalize-transform-by-channel 1
-	'normalize-transform-by-sound normalize-transform-by-sound 2
-	'normalize-transform-globally normalize-transform-globally 3
+	'dont-normalize dont-normalize 0
+	'normalize-by-channel normalize-by-channel 1
+	'normalize-by-sound normalize-by-sound 2
+	'normalize-globally normalize-globally 3
 	'x-axis-in-samples x-axis-in-samples 1 
 	'x-axis-in-beats x-axis-in-beats 4
 	'x-axis-in-seconds x-axis-in-seconds 0 
@@ -604,7 +604,7 @@
       (IF (not (equal? (selection-creates-region)  #t )) 
 	  (snd-display ";selection-creates-region set def: ~A" (selection-creates-region)))
       (set! (transform-normalization) (transform-normalization))
-      (IF (not (equal? (transform-normalization)  normalize-transform-by-channel)) 
+      (IF (not (equal? (transform-normalization)  normalize-by-channel)) 
 	  (snd-display ";transform-normalization set def: ~A" (transform-normalization)))
       (set! (previous-files-sort) (previous-files-sort))
       (IF (not (equal? (previous-files-sort)  0 )) 
@@ -875,7 +875,7 @@
 	'max-regions (max-regions) 16 
 	'min-dB (min-dB) -60.0 
 	'selection-creates-region (selection-creates-region) #t 
-	'transform-normalization (transform-normalization) normalize-transform-by-channel
+	'transform-normalization (transform-normalization) normalize-by-channel
 	'previous-files-sort (previous-files-sort) 0 
 	'print-length (print-length) 12 
 	'read-only (without-errors (read-only)) 'no-such-sound
@@ -1384,7 +1384,7 @@
 	  (list 'mix-tag-height mix-tag-height 14 set-mix-tag-height 20)
 	  (list 'mix-tag-width mix-tag-width 6 set-mix-tag-width 20)
 	  (list 'selection-creates-region selection-creates-region #t set-selection-creates-region #f)
-	  (list 'transform-normalization transform-normalization normalize-transform-by-channel set-transform-normalization dont-normalize-transform)
+	  (list 'transform-normalization transform-normalization normalize-by-channel set-transform-normalization dont-normalize)
 	  (list 'previous-files-sort previous-files-sort 0 set-previous-files-sort 1)
 	  (list 'print-length print-length 12 set-print-length 16)
 	  (list 'recorder-autoload recorder-autoload #f set-recorder-autoload #t)
@@ -1794,14 +1794,14 @@
 		       ((string=? (mus-data-format-name i) "unknown") i))))
 	(if (< lasth 10) (snd-display "data-format[~A] = ~A" lasth (mus-data-format-name lasth))))
 
-      (set! (transform-normalization) dont-normalize-transform)
-      (IF (not (= (transform-normalization) dont-normalize-transform))
+      (set! (transform-normalization) dont-normalize)
+      (IF (not (= (transform-normalization) dont-normalize))
 	  (snd-display ";set-transform-normalization none -> ~A" (transform-normalization)))
-      (set! (transform-normalization) normalize-transform-globally)
-      (IF (not (= (transform-normalization) normalize-transform-globally))
+      (set! (transform-normalization) normalize-globally)
+      (IF (not (= (transform-normalization) normalize-globally))
 	  (snd-display ";set-transform-normalization globally -> ~A" (transform-normalization)))
-      (set! (transform-normalization) normalize-transform-by-channel)
-      (IF (not (= (transform-normalization) normalize-transform-by-channel))
+      (set! (transform-normalization) normalize-by-channel)
+      (IF (not (= (transform-normalization) normalize-by-channel))
 	  (snd-display ";set-transform-normalization channel -> ~A" (transform-normalization)))
 
       (let* ((ob (view-sound "oboe.snd"))
@@ -1813,10 +1813,10 @@
 	(set! (comment ob) str)
 	(save-sound-as "test.snd" ob mus-aifc)
 	(set! (transform-normalization ob 0) #t)
-	(IF (not (= (transform-normalization ob 0) normalize-transform-by-channel))
+	(IF (not (= (transform-normalization ob 0) normalize-by-channel))
 	    (snd-display ";set-transform-normalization #t -> ~A" (transform-normalization ob 0)))
 	(set! (transform-normalization ob 0) #f)
-	(IF (not (= (transform-normalization ob 0) dont-normalize-transform))
+	(IF (not (= (transform-normalization ob 0) dont-normalize))
 	    (snd-display ";set-transform-normalization #f -> ~A" (transform-normalization ob 0)))
 	(set! (filter-env-in-hz) #t)
 	(let ((ab (open-sound "test.snd")))
@@ -11449,7 +11449,7 @@
 		    (list 'max-regions #f 1 set-max-regions 32)
 		    (list 'min-dB #f -120.0 set-min-dB -30.0)
 		    (list 'selection-creates-region #f #f set-selection-creates-region #t)
-		    (list 'transform-normalization #f dont-normalize-transform set-transform-normalization normalize-transform-globally)
+		    (list 'transform-normalization #f dont-normalize set-transform-normalization normalize-globally)
 		    (list 'previous-files-sort #f 0 set-previous-files-sort 5)
 		    (list 'print-length #f 2 set-print-length 32)
 		    (list 'region-graph-style #f graph-lines set-region-graph-style graph-lollipops)
@@ -12535,7 +12535,7 @@
 	(vct->channel v 0 2000 ind 0)
 	(set! (transform-size) 256)
 	(set! (transform-type) fourier-transform)
-	(set! (transform-normalization) normalize-transform-by-channel)
+	(set! (transform-normalization) normalize-by-channel)
 	(set! (transform-graph-type) graph-once)
 	(set! (zero-pad) 0)
 	(set! (transform-graph?) #t)
@@ -15594,7 +15594,7 @@ EDITS: 5
 				       (make-vct len) 
 				       (lambda () 
 					 (fir-filter flt (read-sample fd)))))))))
-	(set! (transform-normalization) dont-normalize-transform)
+	(set! (transform-normalization) dont-normalize)
 	(set! (transform-type ind 0) ftype)
 	(set! (transform-size ind 0) 16)
 	(set! (transform-graph-type ind 0) graph-once)
@@ -15612,7 +15612,7 @@ EDITS: 5
 				     (make-vct len) 
 				     (lambda () 
 				       (read-sample fd)))))))
-	(set! (transform-normalization) dont-normalize-transform)
+	(set! (transform-normalization) dont-normalize)
 	(set! (transform-type ind 0) ftype)
 	(set! (transform-size ind 0) 256)
 	(set! (transform-graph-type ind 0) graph-once)

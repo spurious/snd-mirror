@@ -88,10 +88,10 @@ if Wavelet_transform != 1 then snd_display sprintf("\n# Wavelet_transform => %d"
 if Welch_window != 2 then snd_display sprintf("\n# Welch_window => %d", Welch_window) end
 if Cursor_cross != 0 then snd_display sprintf("\n# Cursor_cross => %d", Cursor_cross) end
 if Cursor_line != 1 then snd_display sprintf("\n# Cursor_line => %d", Cursor_line) end
-if Dont_normalize_transform != 0 then snd_display sprintf("\n# Dont_normalize_transform => %d", Dont_normalize_transform) end
-if Normalize_transform_by_channel != 1 then snd_display sprintf("\n# Normalize_transform_by_channel => %d", Normalize_transform_by_channel) end
-if Normalize_transform_by_sound != 2 then snd_display sprintf("\n# Normalize_transform_by_sound => %d", Normalize_transform_by_sound) end
-if Normalize_transform_globally != 3 then snd_display sprintf("\n# Normalize_transform_globally => %d", Normalize_transform_globally) end
+if Dont_normalize != 0 then snd_display sprintf("\n# Dont_normalize => %d", Dont_normalize) end
+if Normalize_by_channel != 1 then snd_display sprintf("\n# Normalize_by_channel => %d", Normalize_by_channel) end
+if Normalize_by_sound != 2 then snd_display sprintf("\n# Normalize_by_sound => %d", Normalize_by_sound) end
+if Normalize_globally != 3 then snd_display sprintf("\n# Normalize_globally => %d", Normalize_globally) end
 if X_axis_in_samples != 1 then snd_display sprintf("\n# X_axis_in_samples => %d", X_axis_in_samples) end
 if X_axis_in_beats != 4 then snd_display sprintf("\n# X_axis_in_beats => %d", X_axis_in_beats) end
 if X_axis_in_seconds != 0 then snd_display sprintf("\n# X_axis_in_seconds => %d", X_axis_in_seconds) end
@@ -235,7 +235,7 @@ if max_transform_peaks != 100 then snd_display sprintf("\n# max_transform_peaks:
 if max_regions != 16 then snd_display sprintf("\n# max_regions: %s", max_regions) end
 if min_dB != -60.0 then snd_display sprintf("\n# min_dB: %s", min_dB) end
 if selection_creates_region != true then snd_display sprintf("\n# selection_creates_region: %s", selection_creates_region) end
-if transform_normalization != Normalize_transform_by_channel then snd_display sprintf("\n# transform_normalization: %s", transform_normalization) end
+if transform_normalization != Normalize_by_channel then snd_display sprintf("\n# transform_normalization: %s", transform_normalization) end
 if previous_files_sort != 0 then snd_display sprintf("\n# previous_files_sort: %s", previous_files_sort) end
 if print_length != 12 then snd_display sprintf("\n# print_length: %s", print_length) end
 if recorder_autoload != false then snd_display sprintf("\n# recorder_autoload: %s", recorder_autoload) end
@@ -801,10 +801,10 @@ set_selection_creates_region false
 if selection_creates_region !=  false then snd_display sprintf("\n# selection_creates_region: %s", selection_creates_region) end
 set_selection_creates_region true 
 if selection_creates_region != true then snd_display sprintf("\n# selection_creates_region: %s", selection_creates_region) end
-set_transform_normalization Dont_normalize_transform
-if transform_normalization !=  Dont_normalize_transform then snd_display sprintf("\n# transform_normalization: %s", transform_normalization) end
-set_transform_normalization Normalize_transform_by_channel 
-if transform_normalization != Normalize_transform_by_channel then snd_display sprintf("\n# transform_normalization: %s", transform_normalization) end
+set_transform_normalization Dont_normalize
+if transform_normalization !=  Dont_normalize then snd_display sprintf("\n# transform_normalization: %s", transform_normalization) end
+set_transform_normalization Normalize_by_channel 
+if transform_normalization != Normalize_by_channel then snd_display sprintf("\n# transform_normalization: %s", transform_normalization) end
 set_previous_files_sort 1
 if previous_files_sort !=  1 then snd_display sprintf("\n# previous_files_sort: %s", previous_files_sort) end
 set_previous_files_sort 0 

@@ -238,7 +238,7 @@ char *version_info(void)
   #endif
 #endif
 #if SND_AS_WIDGET
-	  "\n    (compiled as a widget)",
+	  "\n    compiled as a widget",
 #endif
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
 	  "\n    with large file support",
@@ -278,7 +278,12 @@ void news_help(snd_state *ss)
          graph-time-as-wavogram -> graph-as-wavogram\n\
          graph-transform-as-sonogram -> graph-as-sonogram\n\
          graph-transform-as-spectrogram -> graph-as-spectrogram.\n\
+         dont-normalize-transform -> dont-normalize\n\
+         normalize-transform-by-channel -> normalize-by-channel\n\
+         normalize-transform-by-sound -> normalize-by-sound\n\
+         normalize-transform-globally -> normalize-globally\n\
          snd6.scm.\n\
+         ccrma-ftp: old-cmdist.html.\n\
 16-Aug:  added IBM adpcm from Perry Cook's adpcmdec.c.\n\
 15-Aug:  set-channel-drop in snd-motif.scm.\n\
 13-Aug:  snd 6.0.\n\
@@ -679,7 +684,7 @@ The spectrum data is usually normalized to fit\n\
 between 0.0 to 1.0; if you'd rather have un-normalized\n\
 data (the y-axis in this case changes to reflect the\n\
 data values, to some extent), set the variable\n\
-" S_transform_normalization " to " S_dont_normalize_transform ".\n\
+" S_transform_normalization " to " S_dont_normalize ".\n\
 \n\
 The harmonic analysis function is normally the\n\
 Fourier Transform, but others are available,\n\
@@ -914,7 +919,7 @@ FFT Window type (" S_fft_window "):\n\
   " S_dolph_chebyshev_window "\n\
 \n\
 Transform normalization choice (" S_transform_normalization "):\n\
-  " S_dont_normalize_transform " " S_normalize_transform_by_channel " " S_normalize_transform_by_sound " " S_normalize_transform_globally "\n\
+  " S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally "\n\
 \n\
 Zoom Focus style (" S_zoom_focus_style "):\n\
   " S_zoom_focus_left "    " S_zoom_focus_right "   " S_zoom_focus_active " " S_zoom_focus_middle "\n\
@@ -1021,7 +1026,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_mix_tag_height "        14\n\
   " S_mix_tag_y "             0\n\
   " S_mix_waveform_height "   20\n\
-  " S_transform_normalization " " S_normalize_transform_by_channel " (snd #t) (chn #t)\n\
+  " S_transform_normalization " " S_normalize_by_channel " (snd #t) (chn #t)\n\
   " S_position_color "        ivory3\n\
   " S_print_length "          12\n\
   " S_pushed_button_color "   lightsteelblue1\n\

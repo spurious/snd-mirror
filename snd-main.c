@@ -95,11 +95,11 @@ static char *transform_normalization_name(int choice)
 {
   switch (choice)
     {
-    case DONT_NORMALIZE_TRANSFORM:      return(TO_VAR_NAME(S_dont_normalize_transform));       break;
-    case NORMALIZE_TRANSFORM_BY_CHANNEL:return(TO_VAR_NAME(S_normalize_transform_by_channel)); break;
-    case NORMALIZE_TRANSFORM_BY_SOUND:  return(TO_VAR_NAME(S_normalize_transform_by_sound));   break;
-    case NORMALIZE_TRANSFORM_GLOBALLY:  return(TO_VAR_NAME(S_normalize_transform_globally));   break;
-    default:                            return(TO_VAR_NAME(S_normalize_transform_by_channel)); break;
+    case DONT_NORMALIZE:      return(TO_VAR_NAME(S_dont_normalize));       break;
+    case NORMALIZE_BY_CHANNEL:return(TO_VAR_NAME(S_normalize_by_channel)); break;
+    case NORMALIZE_BY_SOUND:  return(TO_VAR_NAME(S_normalize_by_sound));   break;
+    case NORMALIZE_GLOBALLY:  return(TO_VAR_NAME(S_normalize_globally));   break;
+    default:                  return(TO_VAR_NAME(S_normalize_by_channel)); break;
     }
 }
 

@@ -1230,7 +1230,7 @@ static void display_fft(fft_state *fs)
 	  break;
 	}
 
-      if (cp->transform_normalization == DONT_NORMALIZE_TRANSFORM)
+      if (cp->transform_normalization == DONT_NORMALIZE)
 	{
 	  lo = 0;
 	  hi = (int)(fp->current_size / 2);
@@ -1250,8 +1250,8 @@ static void display_fft(fft_state *fs)
 	}
 
       data_max = 0.0;
-      if ((cp->transform_normalization == NORMALIZE_TRANSFORM_BY_SOUND) ||
-	  ((cp->transform_normalization == DONT_NORMALIZE_TRANSFORM) && 
+      if ((cp->transform_normalization == NORMALIZE_BY_SOUND) ||
+	  ((cp->transform_normalization == DONT_NORMALIZE) && 
 	   (sp->nchans > 1) && 
 	   (sp->channel_style == CHANNELS_SUPERIMPOSED)))
 	{
@@ -1290,7 +1290,7 @@ static void display_fft(fft_state *fs)
 	}
 
       if (data_max == 0.0) data_max = 1.0;
-      if (cp->transform_normalization != DONT_NORMALIZE_TRANSFORM)
+      if (cp->transform_normalization != DONT_NORMALIZE)
 	scale = 1.0 / data_max;
       else 
 	{
@@ -1318,14 +1318,14 @@ static void display_fft(fft_state *fs)
 
       if (cp->fft_log_magnitude) 
 	{
-	  if (cp->transform_normalization == DONT_NORMALIZE_TRANSFORM)
+	  if (cp->transform_normalization == DONT_NORMALIZE)
 	    max_val = ((data_max <= cp->lin_dB) ? cp->min_dB : (20.0 * (log10(data_max))));
 	  else max_val = 0.0;
 	  min_val = cp->min_dB;
 	}
       else 
 	{
-	  if (cp->transform_normalization == DONT_NORMALIZE_TRANSFORM)
+	  if (cp->transform_normalization == DONT_NORMALIZE)
 	    {
 	      if (cp->transform_type == FOURIER)
 		min_val = 0.0;
@@ -2295,15 +2295,15 @@ of a moving mark:\n\
   XEN_DEFINE_CONSTANT(S_walsh_transform,     WALSH,           H_walsh_transform);
   XEN_DEFINE_CONSTANT(S_autocorrelation,     AUTOCORRELATION, H_autocorrelation);
 
-  #define H_dont_normalize_transform "The value for " S_transform_normalization " that causes the transform to display raw data"
-  #define H_normalize_transform_by_channel "The value for " S_transform_normalization " that causes the transform to be normalized in each channel independently"
-  #define H_normalize_transform_by_sound "The value for " S_transform_normalization " that causes the transform to be normalized across a sound's channels"
-  #define H_normalize_transform_globally "The value for " S_transform_normalization " that causes the transform to be normalized across all sounds"
+  #define H_dont_normalize "The value for " S_transform_normalization " that causes the transform to display raw data"
+  #define H_normalize_by_channel "The value for " S_transform_normalization " that causes the transform to be normalized in each channel independently"
+  #define H_normalize_by_sound "The value for " S_transform_normalization " that causes the transform to be normalized across a sound's channels"
+  #define H_normalize_globally "The value for " S_transform_normalization " that causes the transform to be normalized across all sounds"
 
-  XEN_DEFINE_CONSTANT(S_dont_normalize_transform,        DONT_NORMALIZE_TRANSFORM,       H_dont_normalize_transform);
-  XEN_DEFINE_CONSTANT(S_normalize_transform_by_channel,  NORMALIZE_TRANSFORM_BY_CHANNEL, H_normalize_transform_by_channel);
-  XEN_DEFINE_CONSTANT(S_normalize_transform_by_sound,    NORMALIZE_TRANSFORM_BY_SOUND,   H_normalize_transform_by_sound);
-  XEN_DEFINE_CONSTANT(S_normalize_transform_globally,    NORMALIZE_TRANSFORM_GLOBALLY,   H_normalize_transform_globally);
+  XEN_DEFINE_CONSTANT(S_dont_normalize,        DONT_NORMALIZE,       H_dont_normalize);
+  XEN_DEFINE_CONSTANT(S_normalize_by_channel,  NORMALIZE_BY_CHANNEL, H_normalize_by_channel);
+  XEN_DEFINE_CONSTANT(S_normalize_by_sound,    NORMALIZE_BY_SOUND,   H_normalize_by_sound);
+  XEN_DEFINE_CONSTANT(S_normalize_globally,    NORMALIZE_GLOBALLY,   H_normalize_globally);
 
   XEN_DEFINE_PROCEDURE(S_transform_samples_size,  g_transform_samples_size_w, 0, 2, 0,H_transform_samples_size);
   XEN_DEFINE_PROCEDURE(S_transform_samples,     g_transform_samples_w, 0, 2, 0,   H_transform_samples);

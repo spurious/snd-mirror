@@ -3673,6 +3673,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define graph-time-as-wavogram 3)");
   XEN_EVAL_C_STRING("(define graph-transform-as-sonogram 1)");
   XEN_EVAL_C_STRING("(define graph-transform-as-spectrogram 2)");
+  XEN_EVAL_C_STRING("(define dont-normalize-transform 0)");
+  XEN_EVAL_C_STRING("(define normalize-transform-by-channel 1)");
+  XEN_EVAL_C_STRING("(define normalize-transform-by-sound 2)");
+  XEN_EVAL_C_STRING("(define normalize-transform-globally 3)");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-remember-paths #f)");

@@ -5977,11 +5977,11 @@ This can be
 <!-- --><span class=defbox><code><em class=def><a name="normalizefft">transform-normalization</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->Transform normalization choice (default: <i>normalize-transform-by-channel</i>)
-<!-- -->If normalize-transform-by-channel or normalize-transform-by-sound, spectral data is 
-<!-- -->normalized to 1.0 before display. If dont-normalize-transform, you get the 
+<!-- -->Transform normalization choice (default: <i>normalize-by-channel</i>)
+<!-- -->If <i>normalize-by-channel</i> or <i>normalize-by-sound</i>, spectral data is 
+<!-- -->normalized to 1.0 before display. If <i>dont-normalize</i>, you get the 
 <!-- -->raw data values, which can reflect amplitude changes -- Snd tries to 
-<!-- -->choose a y axis limit that makes successive displays move smoothly. The other choice is normalize-transform-globally (i.e. across all sounds).
+<!-- -->choose a y axis limit that makes successive displays move smoothly. The other choice is <i>normalize-globally</i> (i.e. across all sounds).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7768,16 +7768,15 @@ run
 
 <p><b>Transform normalization</b> (<a href="#normalizefft">transform-normalization</a>):</p>
 <pre>
-  dont-normalize-transform      normalize-transform-by-channel 
-  normalize-transform-by-sound  normalize-transform-globally
+  dont-normalize     normalize-by-channel    normalize-by-sound    normalize-globally
 </pre><br>
 
 <p><b><a name="fftwindowchoices"></a>FFT Window</b> type (<a href="#lfftwindow">fft-window</a>):</p>
 <pre>
-  rectangular-window hann(ing)-window   welch-window      parzen-window
-  bartlett-window    hamming-window     blackman2-window  blackman3-window
-  blackman4-window   exponential-window riemann-window    kaiser-window
-  cauchy-window      poisson-window     gaussian-window   tukey-window
+  rectangular-window    hann(ing)-window      welch-window         parzen-window
+  bartlett-window       hamming-window        blackman2-window     blackman3-window
+  blackman4-window      exponential-window    riemann-window       kaiser-window
+  cauchy-window         poisson-window        gaussian-window      tukey-window
   dolph-chebyshev-window (if GSL is loaded)
 </pre><br>
 

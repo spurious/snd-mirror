@@ -390,7 +390,7 @@ static void normalize_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  choice = (cb->set) ? NORMALIZE_TRANSFORM_BY_CHANNEL : DONT_NORMALIZE_TRANSFORM;
+  choice = (cb->set) ? NORMALIZE_BY_CHANNEL : DONT_NORMALIZE;
   in_set_transform_normalization(ss, choice);
   for_each_chan_1(ss, chans_transform_normalization, (void *)(&choice));
   for_each_chan(ss, calculate_fft);

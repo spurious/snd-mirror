@@ -1429,7 +1429,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
     {
       col -= AMP_ROOM;
       if ((fft_data) && 
-	  (cp->transform_normalization == DONT_NORMALIZE_TRANSFORM))
+	  (cp->transform_normalization == DONT_NORMALIZE))
 	{
 	  col -= 5;
 	  acol -= 5;
@@ -4460,10 +4460,10 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 	cp->transform_normalization = XEN_TO_SMALL_C_INT(on);
       else
 	if (XEN_FALSE_P(on))
-	  cp->transform_normalization = DONT_NORMALIZE_TRANSFORM;
+	  cp->transform_normalization = DONT_NORMALIZE;
 	else 
 	  if (XEN_TRUE_P(on))
-	    cp->transform_normalization = NORMALIZE_TRANSFORM_BY_CHANNEL;
+	    cp->transform_normalization = NORMALIZE_BY_CHANNEL;
 	  else cp->transform_normalization = DEFAULT_TRANSFORM_NORMALIZATION;
       calculate_fft(cp); 
       return(C_TO_XEN_INT(cp->transform_normalization));
@@ -5540,8 +5540,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_type_reversed, g_set_transfor
 
 static XEN g_transform_normalization(XEN snd, XEN chn)
 {
-  #define H_transform_normalization "(" S_transform_normalization " (snd #t) (chn #t)) -> one of '(" S_dont_normalize_transform " " S_normalize_transform_by_channel " " S_normalize_transform_by_sound " " S_normalize_transform_globally ") \
-decides whether spectral data is normalized before display (default: " S_normalize_transform_by_channel ")"
+  #define H_transform_normalization "(" S_transform_normalization " (snd #t) (chn #t)) -> one of '(" S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally ") \
+decides whether spectral data is normalized before display (default: " S_normalize_by_channel ")"
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_NORMALIZATION, S_transform_normalization));

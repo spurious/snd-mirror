@@ -448,9 +448,9 @@
     (let ((norm (XtCreateManagedWidget "Normalize" xmPushButtonWidgetClass fft-popup every-menu)))
       (XtAddCallback norm XmNactivateCallback
          (lambda (w c i)
-	   (if (= (transform-normalization graph-popup-snd graph-popup-chn) dont-normalize-transform)
-	       (set! (transform-normalization graph-popup-snd (choose-chan)) normalize-transform-by-channel)
-	       (set! (transform-normalization graph-popup-snd (choose-chan)) dont-normalize-transform)))))
+	   (if (= (transform-normalization graph-popup-snd graph-popup-chn) dont-normalize)
+	       (set! (transform-normalization graph-popup-snd (choose-chan)) normalize-by-channel)
+	       (set! (transform-normalization graph-popup-snd (choose-chan)) dont-normalize)))))
 
     (make-simple-popdown-menu 
      "Graph type" 
