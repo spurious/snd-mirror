@@ -509,6 +509,7 @@ the listener?
   <tr><td><em class=def><A NAME="zerophase">zero-phase, rotate-phase</a></em></td><td>phase-based effects</td></tr>
   <tr><td><em class=def>both forms of asymmetric-fm</em></td><td></td></tr>
   <tr><td><em class=def>cosine-summation</em></td><td>sum-of-cosines stuff</td></tr>
+  <tr><td><em class=def>kosine-summation</em></td><td>more sum-of-cosines stuff</td></tr>
   <tr><td><em class=def>legendre-summation</em></td><td></td></tr>
   <tr><td><em class=def>brighten-slightly</em> amount</td><td>add harmonics</td></tr>
   <tr><td><em class=def><a name="makehilberttransform">make-hilbert-transform</a></em> length</td><td>Hilbert transform</td></tr>
@@ -606,6 +607,8 @@ uses the sum-of-cosines generator to produce a band-limited pulse-train whose
 cosine components have a decreasing amplitude (as if it were a sum of Lengendre
 Polynomials driven by a cosine). Three other similar functions are <b>sum-of-n-sines</b>,
 <b>sum-of-n-odd-sines</b>, and <b>sum-of-n-odd-cosines</b>.
+<b>kosine-summation</b> is a variation on <b>cosine-summation</b>; it includes
+a sort of "FM index" parameter (named "k", hence the generator name) to vary the harmonic content at run-time.
 </p>
 
 <p><b>brighten-slightly</b> is a slight simplification of contrast-enhancement.
@@ -1516,6 +1519,10 @@ convenient if they were in one file.
   <em class=def><a name="insertchannel">insert-channel</a></em> filedat beg dur snd chn edpos
   <em class=def><a name="redochannel">redo-channel</a></em> edits snd chn
   <em class=def><a name="undochannel">undo-channel</a></em> edits snd chn
+
+  <em class=def><a name="sineramp">sine-ramp</a></em> a0 a1 beg dur snd chn edpos
+  <em class=def><a name="sineenvchannel">sine-env-channel</a></em> env beg dur snd chn edpos
+  <!-- TODO: document/test sine-env stuff (also test as-one-edit xen) also offset-channel -->
 </pre>
 
 <p><b>channel-property</b> returns the value associated with <i>key</i> in the given channel's

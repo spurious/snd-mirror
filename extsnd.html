@@ -4529,6 +4529,7 @@ Envelope over track (a set of mixes): <a href="extsnd.html#trackampenv">track-am
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
 Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>
+envelope with sinusoidal connections between points: <a href="sndscm.html#sineenvchannel">sine-env-channel</a><br>
 Customizing the envelope editor: <a href="#envedhook">enved-hook</a><br>
 <br>
 </small></blockquote>
@@ -5655,16 +5656,24 @@ Snd uses the peak env values when the graph of the sound covers very large amoun
 If 'env-too' is #f, a background process is launched reading all the sound data through
 'proc'; this can be time-consuming, so if you're viewing a half-hour of sound data,
 it can take awhile for the ptree-channel results to be displayed if 'env-too' is #f.
-<br><br>If the underlying data
+<br><br>
+Here is a simple example that adds a constant to each sample in a file. It needs the
+inner "let" because the define* arguments are hidden from the optimizer.
+<pre>
+(define* (offset-channel amount #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (let ((dc amount))
+    (<em class=red>ptree-channel</em> (lambda (y) (+ y dc)) beg dur snd chn edpos <em class=red>#t</em>)))
+</pre>
+If the underlying data
 has too many previous ptree operations, map-channel is called instead and the new
 data is saved in the normal manner (that is, I don't currently try to chain any number of these operations
-together).  Envelopes have a similar limitation (currently 2 ptrees and 3 envs).
+together).  Envelopes have a similar limitation (currently 2 ptrees and 4 envs).
 <br><br>
 If no 'init-func' is specified, the editing procedure ('proc') should not assume anything about
 the context in which it is called;  in this case, there's no way for 'proc' to know where it starts, or when it is being restarted,
 or which direction it is running, so,
 the following call:
-<br><br><pre>
+<pre>
    (let ((ctr 0)) 
      (<em class=red>ptree-channel</em> (lambda (y) 
                       (set! ctr (1+ ctr)) 
@@ -5673,7 +5682,7 @@ the following call:
 will never reset ctr to 0!  Every time a portion of the data is read by Snd, the samples will be
 higher.  But, the notion of an accessor that returns a different thing each time a sample
 is accessed is not foolish:
-<br><br><pre>
+<pre>
   (<em class=red>ptree-channel</em> (lambda (y) (+ y (random .01))))
 </pre>
 This gives a slightly different take on the sound on each change
@@ -5729,7 +5738,7 @@ original data, so the duration is the envelope size.
 <br><br>
 One major limitation of ptree-channel with an 'init-func' is that <a href="#sndsavestate">save-state</a>
 currently doesn't know how to save the enclosing environment along with the init-func. So,
-<br><br><pre>
+<pre>
   (let ((outer 0.5))
     (<em class=red>ptree-channel</em> (lambda (y data forward)
 		     (declare (y real) (data vct) (forward boolean))
@@ -5760,7 +5769,7 @@ The read direction argument can be ignored if you know you're not going to read 
 The only hidden reverse read is in the src generator where a negative increment can be
 generated in a variety of ways (for example, src driven by oscil).  A one-zero filter
 could in this case be:
-<br><br><pre>
+<pre>
   (<em class=red>ptree-channel</em> (lambda (y data forward)
 		   (declare (y real) (data vct) (forward boolean))
 		   (let ((val (* 0.5 (+ y (vct-ref data 0)))))
@@ -5777,11 +5786,11 @@ to #f if you want to try out a more general virtual operator: 'proc' and 'init-f
 be anything legal in Snd, and the actual forms will be evaluated as virtual ops
 at run-time. This should also work in Ruby, whereas the optimized cases (those that
 depend on the run macro) will work only in Guile.  We could define xen-channel:
-<br><br><pre>
+<pre>
   (define* (<a name="xenchannel">xen-channel</a> proc #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f) (env-too #f) (init-func #f))
     (<em class=red>ptree-channel</em> proc beg dur snd chn edpos env-too init-func #f))
 </pre>Then reverse-channel as a virtual op could be:
-<br><br><pre>
+<pre>
 (<A NAME="virtualreverse">xen-channel</a> (lambda (y data forward)
 	       (if forward
 		   (previous-sample data)
@@ -5791,7 +5800,8 @@ depend on the run macro) will work only in Guile.  We could define xen-channel:
 		   (orig-last (1- (frames))))
 	       (lambda (pos dur)
 		 (make-sample-reader (- orig-last pos) ind 0 -1 edpos))))
-</pre><br><br>Here are a couple more examples:
+</pre>
+Here are a couple more examples:
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -5830,8 +5840,8 @@ depend on the run macro) will work only in Guile.  We could define xen-channel:
 	    (/ (- r1 r0) (- base 1.0))
 	    (/ frag-beg frag-dur))))))
 </pre></td></tr></table><br>
-See also <i>smooth-channel-via-ptree</i> and <i>compand-channel</i> in examp.scm, and
-<a href="#blockchannel">block-channel</a> above.
+See also <i>smooth-channel-via-ptree</i> and <i>compand-channel</i> in examp.scm, 
+<a href="#blockchannel">block-channel</a> above, and <i>sine-env-channel</i> in extensions.scm.
 </td></tr><tr><td colspan=2></td></tr>
 
 

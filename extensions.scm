@@ -12,6 +12,8 @@
 ;;; remember-sound-state
 ;;; mix-channel, insert-channel
 ;;; redo-channel, undo-channel
+;;; sine-ramp, sine-env-channel
+;;; offset-channel
 
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 
@@ -512,4 +514,67 @@ If 'check' is #f, the hooks are removed."
   (if (and snd (not (= (sync snd) 0)) chn)
       (set! (edit-position snd chn) (max 0 (- (edit-position snd chn) edits)))
       (undo edits snd)))
+
+
+;;; -------- sine-ramp sine-env-channel 
+
+(define* (sine-ramp rmp0 rmp1 #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  ;; vct: angle incr off scl
+  (ptree-channel
+   (lambda (y data forward)
+     (declare (y real) (data vct) (forward boolean))
+     (let* ((angle (vct-ref data 0))
+	    (incr (vct-ref data 1))
+	    (val (* y (+ (vct-ref data 2) (* (vct-ref data 3) (+ 0.5 (* 0.5 (cos angle))))))))
+       ;; this could be optimized into offset=off+scl/2 and scl=scl/2, then (* y (+ off (* scl cos)))
+       (if forward
+	   (vct-set! data 0 (+ angle incr))
+	   (vct-set! data 0 (- angle incr)))
+       val))
+   beg dur snd chn edpos #t
+   (lambda (frag-beg frag-dur)
+     (let ((incr (/ pi frag-dur)))
+       (vct (+ (* -1.0 pi) (* frag-beg incr))
+	    incr
+	    rmp0
+	    (- rmp1 rmp0))))))
+
+(define* (sine-env-channel env #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  ;; take breakpoints in env, connect with sinusoids, apply as envelope to channel
+  ;; handled as a sequence of sine-ramps and scales
+  (if (not (null? env))
+      (let ((pts (/ (length env) 2)))
+	(if (= pts 1)
+	    (scale-channel (car env) beg dur snd chn edpos)
+	    (let ((x0 0)
+		  (y0 0)
+		  (x1 (car env))
+		  (y1 (cadr env))
+		  (xrange (- (list-ref env (- (length env) 2)) (car env)))
+		  (ramp-beg beg)
+		  (ramp-dur 0))
+	      (if (not (number? dur)) (set! dur (frames snd chn)))
+	      (as-one-edit 
+	       (lambda ()
+		 (do ((i 1 (1+ i))
+		      (j 2 (+ j 2)))
+		     ((= i pts))
+		   (set! x0 x1)
+		   (set! y0 y1)
+		   (set! x1 (list-ref env j))
+		   (set! y1 (list-ref env (1+ j)))
+		   (set! ramp-dur (inexact->exact (round (* dur (/ (- x1 x0) xrange)))))
+		   (if (= y0 y1)
+		       (scale-channel y0 ramp-beg ramp-dur snd chn edpos)
+		       (sine-ramp y0 y1 ramp-beg ramp-dur snd chn edpos))
+		   (set! ramp-beg (+ ramp-beg ramp-dur))))))))))
+
+;;; (sine-env-channel '(0 0 1 1 2 -.5 3 1))
+
+
+;;; -------- offset-channel 
+
+(define* (offset-channel amount #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (let ((dc amount))
+    (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t)))
 

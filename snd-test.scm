@@ -9672,6 +9672,24 @@ EDITS: 5
 		      op2))
 		   op1))))
 	    (close-sound ind))
+
+	  (let* ((ind (open-sound "oboe.snd"))
+		 (mx (maxamp ind 0)))
+	    (as-one-edit
+	     (lambda ()
+	       (ptree-channel (lambda (y) (* y 2)))
+	       (env-sound '(0 0 1 1))))
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";as-one-edit env+ptree pos: ~A" (edit-position ind 0)))
+	    (if (fneq (maxamp ind 0) .1825) (snd-display ";as-one-edit env+ptree max: ~A" (maxamp ind 0)))
+	    (undo)
+	    (as-one-edit
+	     (lambda ()
+	       (ptree-channel (lambda (y) (* y 2)))
+	       (ptree-channel (lambda (y) (* y 2)))))
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";as-one-edit ptree+ptree pos: ~A" (edit-position ind 0)))
+	    (if (fneq (maxamp ind 0) (* 4 mx)) (snd-display ";as-one-edit ptree+ptree max: ~A ~A" (maxamp ind 0) (* 4 mx)))
+	    (close-sound ind))
+
 	  ))
       )
       (run-hook after-test-hook 5)

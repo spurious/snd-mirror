@@ -378,19 +378,16 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-Dec:  kosine-summation in dsp.scm -- sum-of-cosines with an \"FM index\".\n\
+         sine-ramp and sine-env-channel for envelopes that connect the dots\n\
+           with a sinusoidal curve.\n\
+         offset-channel\n\
 28-Nov:  pan-mix-selection|region|vct in mix.scm.\n\
 26-Nov:  rtio.rb thanks to Michael Scholz.\n\
 25-Nov:  copy-sample-reader, region-sample-reader?, read-region-sample.\n\
          removed free-mix|track-sample-reader (use free-sample-reader).\n\
          sample-reader-position|home|at-end? are generic.\n\
 24-Nov:  snd 7.0.\n\
-20-Nov:  track-tempo.\n\
-17-Nov:  mix-dialog-mix, track-dialog-track, mix-inverted?\n\
-10-Nov:  removed next-mix-sample, next-track-sample.\n\
-         renamed mix-panel to mix-dialog, added track-dialog.\n\
-5-Nov:   Jack audio support thanks to Kjetil S. Matheussen.\n\
-         mix-anchor -> mix-tag-position.\n\
-4-Nov:   copy-mix, copy-track.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

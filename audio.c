@@ -3610,6 +3610,9 @@ static int probe_api(void)
 
 #include <sys/ioctl.h>
 
+#define ALSA_PCM_OLD_HW_PARAMS_API
+#define ALSA_PCM_OLD_SW_PARAMS_API
+
 #if HAVE_ALSA_ASOUNDLIB_H
   #include <alsa/asoundlib.h>
 #else

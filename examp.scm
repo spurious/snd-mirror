@@ -1150,9 +1150,10 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 (define* (compand-channel #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; this is the "regularized version of the compander using ptree-channel
   (ptree-channel (lambda (inval)
-		   (let ((index (+ 8.0 (* 8.0 inval))))
+		   (let ((index (inexact->exact (round (+ 8.0 (* 8.0 inval))))))
 		     (array-interp compand-table index 17)))
 		 beg dur snd chn edpos #t))
+;;; TODO: check compand-channel table indexing
 
 
 

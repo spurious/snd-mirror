@@ -349,807 +349,6 @@ char *run_save_state_hook(char *file)
 }
 
 
-
-
-/* -------- EDIT LISTS --------
- *
- * each channel has a list of lists containing the current edit history and the associated sound temp files or buffers
- * undo: back up current list position
- * redo: push position foward
- * No actual changes are flushed out to the file system until the file is saved.
- *
- * the editing possibilities are insert, change, delete, scaling, zero, [x]ramp[2,3], ptree(xen). 
- * All input goes through these lists (with minor exceptions -- see chn_sample below).
- *
- * The accessors are highly optimized (split into numerous choices) since everything else in Snd
- *   goes through the accessors to get at the data.  My tests indicate that even a lowly old
- *   267 MHz PC (and equivalent Sun) can play stereo 44KHz through the double xramp op (or ptree2!)
- *   without glitches, and on a modern machine the readers scarcely register in loadav.
- *
- * to be more precise (1.7 GHz Pentium):
- *
- *                   float               int
- *    straight     38   0.001         31    0.001 ; 28 20 if buffer
- *    ramp         40   0.001         33    0.001 
- *    ramp2        51   0.001         48    0.001 
- *    ramp3        54   0.001         52    0.001 
- *    ptree        86   0.002         84    0.002 ; y * 0.5
- *    ptreec       133  0.003         131   0.003 ; y * vct-ref
- *    ptree2       168  0.004         159   0.004 
- *    xramp        376  0.009         371   0.009 
- *    cosine       476  0.012         511   0.012 ; cosine-channel-via-ptree
- *    xramp2       682  0.016         672   0.016 
- *    xen          3600 0.087         3650  0.088 
- *
- * so even the xen case is running 10X real-time! There are no glitches in playback,
- *   and only slight hesitation in some redisplays -- where the peak-env is about to kick in.
- *
- * On the aforementioned old Sun:
- *
- *    straight     451  0.011         332   0.008 
- *    ramp         459  0.011         392   0.009 
- *    ramp2        375  0.009         359   0.009 
- *    ramp3        382  0.009         438   0.011 
- *    ptree        714  0.017         1216  0.029 
- *    ptreec       929  0.022         953   0.023 
- *    ptree2       1107 0.027         1140  0.028 
- *    xramp        1004 0.024         840   0.020 
- *    xramp2       2087 0.050         2599  0.063 
- *    cosine       4337 0.105         4088  0.099 
- *    xen          22945 0.554        23205 0.561 
- */
-
-typedef struct {
-  off_t out,       /* running segment location within current overall edited data */
-        beg,       /* index into the associated data => start point of data used in current segment */
-        end;       /* index into the associated data => end point of data used in current segment */
-  Float scl,       /* segment scaler */
-        rmp0,      /* first val of ramp */
-        rmp1,      /* end val of ramp */
-        rmp2, rmp3,  /* ramp2 vals */
-        rmp4, rmp5,  /* ramp3 vals */
-        rmp6, rmp7,  /* ramp4 vals */
-        pscl, pscl1, /* scales the arg to the ptree */
-        scaler,    /* exp-env segment scaler */
-        offset,    /* exp-env segment offset */
-        scaler2, offset2;
-  int   snd,       /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
-        typ,       /* code for accessor choice (ED_SIMPLE etc) */
-        ptree_loc, /* index into the cp->ptrees array */
-        ptree_loc1;
-  off_t ptree_pos, /* segment position within original at time of ptree edit */
-        ptree_dur, /* original (unfragmented) segment length */
-        ptree_pos1, ptree_dur1;
-} ed_fragment;
-
-/* these are the virtual-op accessor choices 
-   (ramp->xramp are flipped in many cases to reduce clutter, a*b=b*a so (a(b))=(b(a))) 
-   ptree zero cases use accessor-internal switch sf->zero
-   complex cases simply return float and use generic conversion to sample
-*/
-enum {ED_SIMPLE, ED_ZERO,
-      
-      /* pure (x)ramp ops */
-      ED_RAMP, ED_RAMP2, ED_RAMP3, ED_RAMP4,
-      ED_XRAMP, ED_XRAMP2, ED_XRAMP_RAMP, 
-      ED_XRAMP_RAMP2, ED_XRAMP2_RAMP,
-      ED_XRAMP_RAMP3, ED_XRAMP2_RAMP2,
-
-      /* single ptree ops */
-      ED_PTREE, ED_PTREE_RAMP, ED_PTREE_XRAMP, ED_PTREE_ZERO, ED_PTREE_RAMP2, ED_PTREE_RAMP3,
-      ED_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP2,
-      ED_RAMP_PTREE, ED_RAMP_PTREE_ZERO, 
-      ED_RAMP2_PTREE, ED_RAMP2_PTREE_ZERO, 
-      ED_RAMP3_PTREE, ED_RAMP3_PTREE_ZERO,
-      ED_XRAMP_PTREE, ED_XRAMP_PTREE_ZERO, 
-      ED_XRAMP2_PTREE, ED_XRAMP2_PTREE_ZERO, 
-      ED_RAMP_PTREE_RAMP, ED_RAMP2_PTREE_RAMP, ED_RAMP_PTREE_RAMP2,
-      ED_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_RAMP, ED_RAMP2_PTREE_XRAMP,
-      ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_ZERO,
-      ED_XRAMP_PTREE_XRAMP, 
-      ED_XRAMP_RAMP2_PTREE, ED_XRAMP_RAMP2_PTREE_ZERO, 
-      ED_XRAMP2_RAMP_PTREE, ED_XRAMP2_RAMP_PTREE_ZERO, 
-      ED_PTREE_XRAMP2_RAMP, ED_PTREE_XRAMP_RAMP2, ED_XRAMP_PTREE_RAMP2, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP,
-      ED_XRAMP2_PTREE_RAMP, 
-      ED_XRAMP_PTREE_XRAMP_RAMP,
-      ED_RAMP_PTREE_XRAMP_RAMP,
-      ED_RAMP_PTREE_XRAMP2, 
-
-      ED_RAMP4_PTREE, ED_RAMP4_PTREE_ZERO, ED_PTREE_RAMP4,
-      ED_RAMP3_PTREE_RAMP, ED_RAMP_PTREE_RAMP3,
-      ED_RAMP2_PTREE_RAMP2,
-      ED_RAMP3_PTREE_XRAMP, ED_XRAMP_PTREE_RAMP3,
-      ED_RAMP2_PTREE_XRAMP2, ED_XRAMP2_PTREE_RAMP2,
-      ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP2, ED_RAMP_PTREE_XRAMP2_RAMP,
-      ED_PTREE_XRAMP_RAMP3, ED_PTREE_XRAMP2_RAMP2,
-      ED_XRAMP_RAMP3_PTREE, ED_XRAMP_RAMP3_PTREE_ZERO, ED_XRAMP2_RAMP2_PTREE, ED_XRAMP2_RAMP2_PTREE_ZERO,
-
-      /* double ptree ops */
-      ED_PTREE2, ED_PTREE2_RAMP, ED_PTREE2_XRAMP, ED_PTREE2_ZERO, ED_PTREE2_RAMP2, ED_PTREE2_RAMP3,
-      ED_PTREE2_XRAMP_RAMP, ED_PTREE2_XRAMP2,
-      ED_RAMP_PTREE2, ED_RAMP_PTREE2_ZERO, 
-      ED_RAMP2_PTREE2, ED_RAMP2_PTREE2_ZERO, 
-      ED_RAMP3_PTREE2, ED_RAMP3_PTREE2_ZERO,
-      ED_XRAMP_PTREE2, ED_XRAMP_PTREE2_ZERO, 
-      ED_XRAMP2_PTREE2, ED_XRAMP2_PTREE2_ZERO, 
-      ED_RAMP_PTREE2_RAMP, ED_RAMP2_PTREE2_RAMP, ED_RAMP_PTREE2_RAMP2,
-      ED_RAMP_PTREE2_XRAMP, ED_XRAMP_PTREE2_RAMP, ED_RAMP2_PTREE2_XRAMP,
-      ED_XRAMP_RAMP_PTREE2, ED_XRAMP_RAMP_PTREE2_ZERO,
-      ED_XRAMP_PTREE2_XRAMP, 
-      ED_XRAMP_RAMP2_PTREE2, ED_XRAMP_RAMP2_PTREE2_ZERO, 
-      ED_XRAMP2_RAMP_PTREE2, ED_XRAMP2_RAMP_PTREE2_ZERO, 
-      ED_PTREE2_XRAMP2_RAMP, ED_PTREE2_XRAMP_RAMP2, ED_XRAMP_PTREE2_RAMP2, ED_XRAMP_RAMP_PTREE2_RAMP, ED_XRAMP_RAMP_PTREE2_XRAMP,
-      ED_XRAMP2_PTREE2_RAMP, 
-      ED_XRAMP_PTREE2_XRAMP_RAMP,
-      ED_RAMP_PTREE2_XRAMP_RAMP,
-      ED_RAMP_PTREE2_XRAMP2, 
-
-      ED_RAMP4_PTREE2, ED_RAMP4_PTREE2_ZERO, ED_PTREE2_RAMP4,
-      ED_RAMP3_PTREE2_RAMP, ED_RAMP_PTREE2_RAMP3,
-      ED_RAMP2_PTREE2_RAMP2,
-      ED_RAMP3_PTREE2_XRAMP, ED_XRAMP_PTREE2_RAMP3,
-      ED_RAMP2_PTREE2_XRAMP2, ED_XRAMP2_PTREE2_RAMP2,
-      ED_XRAMP_RAMP_PTREE2_XRAMP_RAMP, ED_XRAMP_PTREE2_XRAMP_RAMP2, ED_RAMP_PTREE2_XRAMP2_RAMP,
-      ED_PTREE2_XRAMP_RAMP3, ED_PTREE2_XRAMP2_RAMP2,
-      ED_XRAMP_RAMP3_PTREE2, ED_XRAMP_RAMP3_PTREE2_ZERO, ED_XRAMP2_RAMP2_PTREE2, ED_XRAMP2_RAMP2_PTREE2_ZERO,
-
-      /* double ptree split ops */
-      ED_PTREE_RAMP2_PTREE, ED_PTREE_RAMP2_PTREE_ZERO, 
-      ED_PTREE_RAMP_PTREE, ED_PTREE_RAMP_PTREE_ZERO, 
-      ED_PTREE_RAMP3_PTREE, ED_PTREE_RAMP3_PTREE_ZERO,
-      ED_PTREE_XRAMP_PTREE, ED_PTREE_XRAMP_PTREE_ZERO,
-      ED_PTREE_RAMP2_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP2, ED_RAMP_PTREE_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP,
-
-      ED_RAMP2_PTREE_RAMP_PTREE, ED_RAMP2_PTREE_RAMP_PTREE_ZERO,
-      ED_XRAMP_PTREE_RAMP_PTREE, ED_XRAMP_PTREE_RAMP_PTREE_ZERO,
-      ED_RAMP_PTREE_XRAMP_PTREE, ED_RAMP_PTREE_XRAMP_PTREE_ZERO, 
-      ED_PTREE_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_XRAMP_PTREE_RAMP,
-      ED_PTREE_RAMP_PTREE_XRAMP,
-      ED_XRAMP_PTREE_RAMP2_PTREE, ED_XRAMP_PTREE_RAMP2_PTREE_ZERO,
-      ED_RAMP2_PTREE_XRAMP_PTREE, ED_RAMP2_PTREE_XRAMP_PTREE_ZERO, 
-      ED_PTREE_XRAMP_RAMP2_PTREE, ED_PTREE_XRAMP_RAMP2_PTREE_ZERO, ED_PTREE_XRAMP_PTREE_RAMP2,
-      ED_PTREE_RAMP2_PTREE_XRAMP,
-
-      /* xen ops */
-      ED_XEN, ED_XEN_RAMP, ED_XEN_XRAMP, ED_XEN_ZERO, ED_XEN_RAMP2, ED_XEN_RAMP3,
-      ED_RAMP_XEN, ED_RAMP2_XEN, ED_RAMP3_XEN, ED_RAMP_XEN_ZERO, ED_RAMP2_XEN_ZERO, ED_RAMP3_XEN_ZERO,
-      ED_XRAMP_XEN, ED_XRAMP_XEN_ZERO,
-      ED_RAMP_XEN_RAMP, ED_RAMP2_XEN_RAMP, ED_RAMP_XEN_RAMP2,
-      NUM_OPS
-};
-
-/* not implemented yet */
-#define ED_RAMP2_PTREE2_XRAMP_RAMP -1
-#define ED_RAMP2_PTREE_XRAMP_RAMP -1
-#define ED_RAMP2_XEN_RAMP2 -1
-#define ED_RAMP3_PTREE_XRAMP_PTREE -1
-#define ED_RAMP3_PTREE_XRAMP_PTREE_ZERO -1
-#define ED_RAMP3_XEN_RAMP -1
-#define ED_RAMP4_XEN -1
-#define ED_RAMP4_XEN_ZERO -1
-#define ED_RAMP_PTREE2_XRAMP_RAMP2 -1
-#define ED_RAMP_PTREE_RAMP2_PTREE -1
-#define ED_RAMP_PTREE_RAMP2_PTREE_XRAMP -1
-#define ED_RAMP_PTREE_RAMP2_PTREE_ZERO -1
-#define ED_RAMP_PTREE_RAMP3_PTREE -1
-#define ED_RAMP_PTREE_RAMP_PTREE -1
-#define ED_RAMP_PTREE_RAMP_PTREE_ZERO -1
-#define ED_RAMP_PTREE_XRAMP_PTREE_RAMP2 -1
-#define ED_RAMP_PTREE_XRAMP_RAMP2 -1
-#define ED_RAMP_PTREE_XRAMP_RAMP2_PTREE -1
-#define ED_RAMP_PTREE_XRAMP_RAMP2_PTREE_ZERO -1
-#define ED_RAMP_XEN_RAMP3 -1
-#define ED_RAMP_XEN_XRAMP -1
-#define ED_XRAMP2_PTREE_RAMP2_PTREE -1
-#define ED_XRAMP2_PTREE_RAMP2_PTREE_ZERO -1
-#define ED_XRAMP2_PTREE_RAMP_PTREE -1
-#define ED_XRAMP2_PTREE_RAMP_PTREE_ZERO -1
-#define ED_XRAMP2_RAMP_PTREE2_RAMP -1
-#define ED_XRAMP2_RAMP_PTREE_RAMP -1
-#define ED_XRAMP2_XEN -1
-#define ED_XRAMP2_XEN_ZERO -1
-#define ED_XRAMP_PTREE_RAMP2_PTREE_RAMP -1
-#define ED_XRAMP_PTREE_RAMP2_PTREE_XRAMP -1
-#define ED_XRAMP_PTREE_RAMP3_PTREE -1
-#define ED_XRAMP_PTREE_RAMP3_PTREE_ZERO -1
-#define ED_XRAMP_PTREE_RAMP_PTREE_RAMP -1
-#define ED_XRAMP_PTREE_RAMP_PTREE_RAMP2 -1
-#define ED_XRAMP_PTREE_RAMP_PTREE_XRAMP -1
-#define ED_XRAMP_PTREE_XRAMP_PTREE -1
-#define ED_XRAMP_PTREE_XRAMP_PTREE_RAMP -1
-#define ED_XRAMP_PTREE_XRAMP_PTREE_RAMP2 -1
-#define ED_XRAMP_PTREE_XRAMP_PTREE_ZERO -1
-#define ED_XRAMP_PTREE_XRAMP_RAMP2_PTREE -1
-#define ED_XRAMP_PTREE_XRAMP_RAMP2_PTREE_ZERO -1
-#define ED_XRAMP_PTREE_XRAMP_RAMP_PTREE -1
-#define ED_XRAMP_PTREE_XRAMP_RAMP_PTREE_ZERO -1
-#define ED_XRAMP_RAMP2_PTREE2_RAMP -1
-#define ED_XRAMP_RAMP2_PTREE2_XRAMP -1
-#define ED_XRAMP_RAMP2_PTREE_RAMP -1
-#define ED_XRAMP_RAMP2_PTREE_RAMP_PTREE -1
-#define ED_XRAMP_RAMP2_PTREE_RAMP_PTREE_ZERO -1
-#define ED_XRAMP_RAMP2_PTREE_XRAMP -1
-#define ED_XRAMP_RAMP2_PTREE_XRAMP_PTREE -1
-#define ED_XRAMP_RAMP2_PTREE_XRAMP_PTREE_ZERO -1
-#define ED_XRAMP_RAMP2_XEN -1
-#define ED_XRAMP_RAMP2_XEN_RAMP -1
-#define ED_XRAMP_RAMP2_XEN_ZERO -1
-#define ED_XRAMP_RAMP3_XEN -1
-#define ED_XRAMP_RAMP3_XEN_ZERO -1
-#define ED_XRAMP_RAMP_PTREE2_RAMP2 -1
-#define ED_XRAMP_RAMP_PTREE_RAMP2 -1
-#define ED_XRAMP_RAMP_PTREE_RAMP2_PTREE -1
-#define ED_XRAMP_RAMP_PTREE_RAMP2_PTREE_ZERO -1
-#define ED_XRAMP_RAMP_PTREE_RAMP_PTREE_RAMP -1
-#define ED_XRAMP_RAMP_PTREE_XRAMP_PTREE -1
-#define ED_XRAMP_RAMP_PTREE_XRAMP_PTREE_ZERO -1
-#define ED_XRAMP_RAMP_XEN -1
-#define ED_XRAMP_RAMP_XEN_RAMP -1
-#define ED_XRAMP_RAMP_XEN_RAMP2 -1
-#define ED_XRAMP_RAMP_XEN_ZERO -1
-#define ED_XRAMP_XEN_RAMP -1
-#define ED_XRAMP_XEN_RAMP2 -1
-#define ED_XRAMP_XEN_RAMP3 -1
-#define ED_XRAMP_XEN_XRAMP -1
-#define ED_PTREE_XRAMP2_PTREE -1
-#define ED_PTREE_XRAMP2_PTREE_ZERO -1
-#define ED_PTREE_XRAMP_PTREE_XRAMP -1
-#define ED_PTREE_XRAMP2_RAMP_PTREE -1
-#define ED_PTREE_XRAMP2_RAMP_PTREE_ZERO -1
-#define ED_PTREE_XRAMP_RAMP_PTREE_RAMP -1
-#define ED_PTREE_XRAMP_RAMP_PTREE_XRAMP -1
-#define ED_PTREE_XRAMP2_PTREE_RAMP -1
-#define ED_PTREE_XRAMP_PTREE_XRAMP_RAMP -1
-#define ED_PTREE_RAMP_PTREE_XRAMP_RAMP -1
-#define ED_PTREE_RAMP_PTREE_XRAMP2 -1
-#define ED_PTREE_RAMP4_PTREE -1
-#define ED_PTREE_RAMP4_PTREE_ZERO -1
-#define ED_PTREE_RAMP3_PTREE_RAMP -1
-#define ED_PTREE_RAMP_PTREE_RAMP3 -1
-#define ED_PTREE_RAMP2_PTREE_RAMP2 -1
-#define ED_PTREE_RAMP3_PTREE_XRAMP -1
-#define ED_PTREE_XRAMP_PTREE_RAMP3 -1
-#define ED_PTREE_RAMP2_PTREE_XRAMP2 -1
-#define ED_PTREE_XRAMP2_PTREE_RAMP2 -1
-#define ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP -1
-#define ED_PTREE_XRAMP_PTREE_XRAMP_RAMP2 -1
-#define ED_PTREE_RAMP_PTREE_XRAMP2_RAMP -1
-#define ED_PTREE_XRAMP_RAMP3_PTREE -1
-#define ED_PTREE_XRAMP_RAMP3_PTREE_ZERO -1
-#define ED_PTREE_XRAMP2_RAMP2_PTREE -1
-#define ED_PTREE_XRAMP2_RAMP2_PTREE_ZERO -1
-
-#define ED_RAMP_PTREE_RAMP3_PTREE_ZERO -1
-#define ED_RAMP_PTREE_RAMP2_PTREE_RAMP -1
-#define ED_RAMP_PTREE_RAMP_PTREE_RAMP2 -1
-#define ED_RAMP2_PTREE_RAMP_PTREE_RAMP -1
-#define ED_RAMP3_PTREE_RAMP_PTREE -1
-#define ED_RAMP3_PTREE_RAMP_PTREE_ZERO -1
-#define ED_XRAMP_RAMP_PTREE_RAMP_PTREE -1
-#define ED_XRAMP_RAMP_PTREE_RAMP_PTREE_ZERO -1
-#define ED_RAMP_PTREE_XRAMP_RAMP_PTREE -1
-#define ED_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO -1
-#define ED_RAMP_PTREE_XRAMP_PTREE_RAMP -1
-#define ED_RAMP_PTREE_RAMP_PTREE_XRAMP -1
-
-typedef struct {
-  int type, add_ramp, add_xramp, add_ptree, add_xen, ramps, xramps;
-  bool ptree_zero;
-  char *name;
-} fragment_type_info;
-
-static fragment_type_info type_info[NUM_OPS] = {
-  {ED_SIMPLE, ED_RAMP, ED_XRAMP, ED_PTREE, ED_XEN, 0, 0, false, "ed_simple"},
-  {ED_ZERO, ED_ZERO, ED_ZERO, ED_PTREE_ZERO, ED_XEN_ZERO, 0, 0, true, "ed_zero"},
-
-  {ED_RAMP, ED_RAMP2, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_XEN_RAMP, 1, 0, false, "ed_ramp"},
-  {ED_RAMP2, ED_RAMP3, ED_XRAMP_RAMP2, ED_PTREE_RAMP2, ED_XEN_RAMP2, 2, 0, false, "ed_ramp2"},
-  {ED_RAMP3, ED_RAMP4, ED_XRAMP_RAMP3, ED_PTREE_RAMP3, ED_XEN_RAMP3, 3, 0, false, "ed_ramp3"},
-  {ED_RAMP4, -1, -1, ED_PTREE_RAMP4, -1, 4, 0, false, "ed_ramp4"},
-  {ED_XRAMP, ED_XRAMP_RAMP, ED_XRAMP2, ED_PTREE_XRAMP, ED_XEN_XRAMP, 0, 1, false, "ed_xramp"},
-  {ED_XRAMP2, ED_XRAMP2_RAMP, -1, ED_PTREE_XRAMP2, -1, 0, 2, false, "ed_xramp2"},
-  {ED_XRAMP_RAMP, ED_XRAMP_RAMP2, ED_XRAMP2_RAMP, ED_PTREE_XRAMP_RAMP, -1, 1, 1, false, "ed_xramp_ramp"},
-  {ED_XRAMP_RAMP2, ED_XRAMP_RAMP3, ED_XRAMP2_RAMP2, ED_PTREE_XRAMP_RAMP2, -1, 2, 1, false, "ed_xramp_ramp2"},
-  {ED_XRAMP2_RAMP, ED_XRAMP2_RAMP2, -1, ED_PTREE_XRAMP2_RAMP, -1, 1, 2, false, "ed_xramp2_ramp"},
-  {ED_XRAMP_RAMP3, -1, -1, -1 /* ED_PTREE_XRAMP_RAMP3 */, -1, 3, 1, false, "ed_xramp_ramp3"},
-  {ED_XRAMP2_RAMP2, -1, -1, -1 /* ED_PTREE_XRAMP2_RAMP2 */, -1, 2, 2, false, "ed_xramp2_ramp2"},
-
-  {ED_PTREE, ED_RAMP_PTREE, ED_XRAMP_PTREE, ED_PTREE2, -1, 0, 0, false, "ed_ptree"},
-  {ED_PTREE_RAMP, ED_RAMP_PTREE_RAMP, ED_XRAMP_PTREE_RAMP, ED_PTREE2_RAMP, -1, 1, 0, false, "ed_ptree_ramp"},
-  {ED_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP, ED_PTREE2_XRAMP, -1, 0, 1, false, "ed_ptree_xramp"},
-  {ED_PTREE_ZERO, ED_RAMP_PTREE_ZERO, ED_XRAMP_PTREE_ZERO, ED_PTREE2_ZERO, -1, 0, 0, true, "ed_ptree_zero"},
-  {ED_PTREE_RAMP2, ED_RAMP_PTREE_RAMP2, ED_XRAMP_PTREE_RAMP2, ED_PTREE2_RAMP2, -1, 2, 0, false, "ed_ptree_ramp2"},
-  {ED_PTREE_RAMP3, ED_RAMP_PTREE_RAMP3, ED_XRAMP_PTREE_RAMP3, ED_PTREE2_RAMP3, -1, 3, 0, false, "ed_ptree_ramp3"},
-  {ED_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_PTREE2_XRAMP_RAMP, -1, 1, 1, false, "ed_ptree_xramp_ramp"},
-  {ED_PTREE_XRAMP2, ED_RAMP_PTREE_XRAMP2, -1, ED_PTREE2_XRAMP2, -1, 0, 2, false, "ed_ptree_xramp2"},
-  {ED_RAMP_PTREE, ED_RAMP2_PTREE, ED_XRAMP_RAMP_PTREE, ED_PTREE_RAMP_PTREE, -1, 1, 0, false, "ed_ramp_ptree"},
-  {ED_RAMP_PTREE_ZERO, ED_RAMP2_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_RAMP_PTREE_ZERO, -1, 1, 0, true, "ed_ramp_ptree_zero"},
-  {ED_RAMP2_PTREE, ED_RAMP3_PTREE, ED_XRAMP_RAMP2_PTREE, ED_PTREE_RAMP2_PTREE, -1, 2, 0, false, "ed_ramp2_ptree"},
-  {ED_RAMP2_PTREE_ZERO, ED_RAMP3_PTREE_ZERO, ED_XRAMP_RAMP2_PTREE_ZERO, ED_PTREE_RAMP2_PTREE_ZERO, -1, 2, 0, true, "ed_ramp2_ptree_zero"},
-  {ED_RAMP3_PTREE, ED_RAMP4_PTREE, ED_XRAMP_RAMP3_PTREE, ED_PTREE_RAMP3_PTREE, -1, 3, 0, false, "ed_ramp3_ptree"},
-  {ED_RAMP3_PTREE_ZERO, ED_RAMP4_PTREE_ZERO, ED_XRAMP_RAMP3_PTREE_ZERO, ED_PTREE_RAMP3_PTREE_ZERO, -1, 3, 0, true, "ed_ramp3_ptree_zero"},
-  {ED_XRAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_XRAMP2_PTREE, ED_PTREE_XRAMP_PTREE, -1, 0, 1, false, "ed_xramp_ptree"},
-  {ED_XRAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP2_PTREE_ZERO, ED_PTREE_XRAMP_PTREE_ZERO, -1, 0, 1, true, "ed_xramp_ptree_zero"},
-  {ED_XRAMP2_PTREE, ED_XRAMP2_RAMP_PTREE, -1, ED_PTREE_XRAMP2_PTREE, -1, 0, 2, false, "ed_xramp2_ptree"},
-  {ED_XRAMP2_PTREE_ZERO, ED_XRAMP2_RAMP_PTREE_ZERO, -1, ED_PTREE_XRAMP2_PTREE_ZERO, -1, 0, 2, true, "ed_xramp2_ptree_zero"},
-  {ED_RAMP_PTREE_RAMP, ED_RAMP2_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP, -1, 2, 0, false, "ed_ramp_ptree_ramp"},
-  {ED_RAMP2_PTREE_RAMP, ED_RAMP3_PTREE_RAMP, -1, ED_PTREE_RAMP2_PTREE_RAMP, -1, 3, 0, false, "ed_ramp2_ptree_ramp"},
-  {ED_RAMP_PTREE_RAMP2, ED_RAMP2_PTREE_RAMP2, -1, ED_PTREE_RAMP_PTREE_RAMP2, -1, 3, 0, false, "ed_ramp_ptree_ramp2"},
-  {ED_RAMP_PTREE_XRAMP, ED_RAMP2_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, -1 /* ED_PTREE_RAMP_PTREE_XRAMP */, -1, 1, 1, false, "ed_ramp_ptree_xramp"},
-  {ED_XRAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP2_PTREE_RAMP, -1 /* ED_PTREE_XRAMP_PTREE_RAMP */, -1, 1, 1, false, "ed_xramp_ptree_ramp"},
-  {ED_RAMP2_PTREE_XRAMP, ED_RAMP3_PTREE_XRAMP, -1, -1 /* ED_PTREE_RAMP2_PTREE_XRAMP */, -1, 2, 1, false, "ed_ramp2_ptree_xramp"},
-  {ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP2_PTREE, ED_XRAMP2_RAMP_PTREE, -1 /* ED_PTREE_XRAMP_RAMP_PTREE */, -1, 1, 1, false, "ed_xramp_ramp_ptree"},
-  {ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP2_PTREE_ZERO, ED_XRAMP2_RAMP_PTREE_ZERO, -1 /* ED_PTREE_XRAMP_RAMP_PTREE_ZERO */, -1, 1, 1, true, "ed_xramp_ramp_ptree_zero"},
-  {ED_XRAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, -1, ED_PTREE_XRAMP_PTREE_XRAMP, -1, 0, 2, false, "ed_xramp_ptree_xramp"},
-  {ED_XRAMP_RAMP2_PTREE, ED_XRAMP_RAMP3_PTREE, ED_XRAMP2_RAMP2_PTREE, -1 /* ED_PTREE_XRAMP_RAMP2_PTREE */, -1, 2, 1, false, "ed_xramp_ramp2_ptree"},
-  {ED_XRAMP_RAMP2_PTREE_ZERO, ED_XRAMP_RAMP3_PTREE_ZERO, ED_XRAMP2_RAMP2_PTREE_ZERO, -1 /* ED_PTREE_XRAMP_RAMP2_PTREE_ZERO */, -1, 2, 1, true, "ed_xramp_ramp2_ptree_zero"},
-  {ED_XRAMP2_RAMP_PTREE, ED_XRAMP2_RAMP2_PTREE, -1, ED_PTREE_XRAMP2_RAMP_PTREE, -1, 1, 2, false, "ed_xramp2_ramp_ptree"},
-  {ED_XRAMP2_RAMP_PTREE_ZERO, ED_XRAMP2_RAMP2_PTREE_ZERO, -1, ED_PTREE_XRAMP2_RAMP_PTREE_ZERO, -1, 1, 2, true, "ed_xramp2_ramp_ptree_zero"},
-  {ED_PTREE_XRAMP2_RAMP, ED_RAMP_PTREE_XRAMP2_RAMP, -1, ED_PTREE2_XRAMP2_RAMP, -1, 1, 2, false, "ed_ptree_xramp2_ramp"},
-  {ED_PTREE_XRAMP_RAMP2, -1, ED_XRAMP_PTREE_XRAMP_RAMP2, ED_PTREE2_XRAMP_RAMP2, -1, 2, 1, false, "ed_ptree_xramp_ramp2"},
-  {ED_XRAMP_PTREE_RAMP2, -1, ED_XRAMP2_PTREE_RAMP2, -1 /* ED_PTREE_XRAMP_PTREE_RAMP2 */, -1, 2, 1, false, "ed_xramp_ptree_ramp2"},
-  {ED_XRAMP_RAMP_PTREE_RAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, 2, 1, false, "ed_xramp_ramp_ptree_ramp"},
-  {ED_XRAMP_RAMP_PTREE_XRAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, 1, 2, false, "ed_xramp_ramp_ptree_xramp"},
-  {ED_XRAMP2_PTREE_RAMP, -1, -1, ED_PTREE_XRAMP2_PTREE_RAMP, -1, 1, 2, false, "ed_xramp2_ptree_ramp"},
-  {ED_XRAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, 1, 2, false, "ed_xramp_ptree_xramp_ramp"},
-  {ED_RAMP_PTREE_XRAMP_RAMP, -1, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, 2, 1, false, "ed_ramp_ptree_xramp_ramp"},
-  {ED_RAMP_PTREE_XRAMP2, ED_RAMP2_PTREE_XRAMP2, -1, ED_PTREE_RAMP_PTREE_XRAMP2, -1, 1, 2, false, "ed_ramp_ptree_xramp2"},
-  {ED_RAMP4_PTREE, -1, -1, ED_PTREE_RAMP4_PTREE, -1, 4, 0, false, "ed_ramp4_ptree"},
-  {ED_RAMP4_PTREE_ZERO, -1, -1, ED_PTREE_RAMP4_PTREE_ZERO, -1, 4, 0, true, "ed_ramp4_ptree_zero"},
-  {ED_PTREE_RAMP4, -1, -1, ED_PTREE2_RAMP4, -1, 4, 0, false, "ed_ptree_ramp4"},
-  {ED_RAMP3_PTREE_RAMP, -1, -1, ED_PTREE_RAMP3_PTREE_RAMP, -1, 4, 0, false, "ed_ramp3_ptree_ramp"},
-  {ED_RAMP_PTREE_RAMP3, -1, -1, ED_PTREE_RAMP_PTREE_RAMP3, -1, 4, 0, false, "ed_ramp_ptree_ramp3"},
-  {ED_RAMP2_PTREE_RAMP2, -1, -1, ED_PTREE_RAMP2_PTREE_RAMP2, -1, 4, 0, false, "ed_ramp2_ptree_ramp2"},
-  {ED_RAMP3_PTREE_XRAMP, -1, -1, ED_PTREE_RAMP3_PTREE_XRAMP, -1, 3, 1, false, "ed_ramp3_ptree_xramp"},
-  {ED_XRAMP_PTREE_RAMP3, -1, -1, ED_PTREE_XRAMP_PTREE_RAMP3, -1, 3, 1, false, "ed_xramp_ptree_ramp3"},
-  {ED_RAMP2_PTREE_XRAMP2, -1, -1, ED_PTREE_RAMP2_PTREE_XRAMP2, -1, 2, 2, false, "ed_ramp2_ptree_xramp2"},
-  {ED_XRAMP2_PTREE_RAMP2, -1, -1, ED_PTREE_XRAMP2_PTREE_RAMP2, -1, 2, 2, false, "ed_xramp2_ptree_ramp2"},
-  {ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, 2, 2, false, "ed_xramp_ramp_ptree_xramp_ramp"},
-  {ED_XRAMP_PTREE_XRAMP_RAMP2, -1, -1, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP2, -1, 2, 2, false, "ed_xramp_ptree_xramp_ramp2"},
-  {ED_RAMP_PTREE_XRAMP2_RAMP, -1, -1, ED_PTREE_RAMP_PTREE_XRAMP2_RAMP, -1, 2, 2, false, "ed_ramp_ptree_xramp2_ramp"},
-  {ED_PTREE_XRAMP_RAMP3, -1, -1, ED_PTREE2_XRAMP_RAMP3, -1, 3, 1, false, "ed_ptree_xramp_ramp3"},
-  {ED_PTREE_XRAMP2_RAMP2, -1, -1, ED_PTREE2_XRAMP2_RAMP2, -1, 2, 2, false, "ed_ptree_xramp2_ramp2"},
-  {ED_XRAMP_RAMP3_PTREE, -1, -1, ED_PTREE_XRAMP_RAMP3_PTREE, -1, 3, 1, false, "ed_xramp_ramp3_ptree"},
-  {ED_XRAMP_RAMP3_PTREE_ZERO, -1, -1, ED_PTREE_XRAMP_RAMP3_PTREE_ZERO, -1, 3, 1, true, "ed_xramp_ramp3_ptree_zero"},
-  {ED_XRAMP2_RAMP2_PTREE, -1, -1, ED_PTREE_XRAMP2_RAMP2_PTREE, -1, 2, 2, false, "ed_xramp2_ramp2_ptree"},
-  {ED_XRAMP2_RAMP2_PTREE_ZERO, -1, -1, ED_PTREE_XRAMP2_RAMP2_PTREE_ZERO, -1, 2, 2, true, "ed_xramp2_ramp2_ptree_zero"},
-
-  {ED_PTREE2, ED_RAMP_PTREE2, ED_XRAMP_PTREE2, -1, -1, 0, 0, false, "ed_ptree2"},
-  {ED_PTREE2_RAMP, ED_RAMP_PTREE2_RAMP, ED_XRAMP_PTREE2_RAMP, -1, -1, 1, 0, false, "ed_ptree2_ramp"},
-  {ED_PTREE2_XRAMP, ED_RAMP_PTREE2_XRAMP, ED_XRAMP_PTREE2_XRAMP, -1, -1, 0, 1, false, "ed_ptree2_xramp"},
-  {ED_PTREE2_ZERO, ED_RAMP_PTREE2_ZERO, ED_XRAMP_PTREE2_ZERO, -1, -1, 0, 0, true, "ed_ptree2_zero"},
-  {ED_PTREE2_RAMP2, ED_RAMP_PTREE2_RAMP2, ED_XRAMP_PTREE2_RAMP2, -1, -1, 2, 0, false, "ed_ptree2_ramp2"},
-  {ED_PTREE2_RAMP3, ED_RAMP_PTREE2_RAMP3, ED_XRAMP_PTREE2_RAMP3, -1, -1, 3, 0, false, "ed_ptree2_ramp3"},
-  {ED_PTREE2_XRAMP_RAMP, ED_RAMP_PTREE2_XRAMP_RAMP, ED_XRAMP_PTREE2_XRAMP_RAMP, -1, -1, 1, 1, false, "ed_ptree2_xramp_ramp"},
-  {ED_PTREE2_XRAMP2, ED_RAMP_PTREE2_XRAMP2, -1, -1, -1, 0, 2, false, "ed_ptree2_xramp2"},
-  {ED_RAMP_PTREE2, ED_RAMP2_PTREE2, ED_XRAMP_RAMP_PTREE2, -1, -1, 1, 0, false, "ed_ramp_ptree2"},
-  {ED_RAMP_PTREE2_ZERO, ED_RAMP2_PTREE2_ZERO, ED_XRAMP_RAMP_PTREE2_ZERO, -1, -1, 1, 0, true, "ed_ramp_ptree2_zero"},
-  {ED_RAMP2_PTREE2, ED_RAMP3_PTREE2, ED_XRAMP_RAMP2_PTREE2, -1, -1, 2, 0, false, "ed_ramp2_ptree2"},
-  {ED_RAMP2_PTREE2_ZERO, ED_RAMP3_PTREE2_ZERO, ED_XRAMP_RAMP2_PTREE2_ZERO, -1, -1, 2, 0, true, "ed_ramp2_ptree2_zero"},
-  {ED_RAMP3_PTREE2, ED_RAMP4_PTREE2, ED_XRAMP_RAMP3_PTREE2, -1, -1, 3, 0, false, "ed_ramp3_ptree2"},
-  {ED_RAMP3_PTREE2_ZERO, ED_RAMP4_PTREE2_ZERO, ED_XRAMP_RAMP3_PTREE2_ZERO, -1, -1, 3, 0, true, "ed_ramp3_ptree2_zero"},
-  {ED_XRAMP_PTREE2, ED_XRAMP_RAMP_PTREE2, ED_XRAMP2_PTREE2, -1, -1, 0, 1, false, "ed_xramp_ptree2"},
-  {ED_XRAMP_PTREE2_ZERO, ED_XRAMP_RAMP_PTREE2_ZERO, ED_XRAMP2_PTREE2_ZERO, -1, -1, 0, 1, true, "ed_xramp_ptree2_zero"},
-  {ED_XRAMP2_PTREE2, ED_XRAMP2_RAMP_PTREE2, -1, -1, -1, 0, 2, false, "ed_xramp2_ptree2"},
-  {ED_XRAMP2_PTREE2_ZERO, ED_XRAMP2_RAMP_PTREE2_ZERO, -1, -1, -1, 0, 2, true, "ed_xramp2_ptree2_zero"},
-  {ED_RAMP_PTREE2_RAMP, ED_RAMP2_PTREE2_RAMP, ED_XRAMP_RAMP_PTREE2_RAMP, -1, -1, 2, 0, false, "ed_ramp_ptree2_ramp"},
-  {ED_RAMP2_PTREE2_RAMP, ED_RAMP3_PTREE2_RAMP, -1, -1, -1, 3, 0, false, "ed_ramp2_ptree2_ramp"},
-  {ED_RAMP_PTREE2_RAMP2, ED_RAMP2_PTREE2_RAMP2, -1, -1, -1, 3, 0, false, "ed_ramp_ptree2_ramp2"},
-  {ED_RAMP_PTREE2_XRAMP, ED_RAMP2_PTREE2_XRAMP, ED_XRAMP_RAMP_PTREE2_XRAMP, -1, -1, 1, 1, false, "ed_ramp_ptree2_xramp"},
-  {ED_XRAMP_PTREE2_RAMP, -1 /* ED_XRAMP_RAMP_PTREE2_RAMP */, ED_XRAMP2_PTREE2_RAMP, -1, -1, 1, 1, false, "ed_xramp_ptree2_ramp"},
-  {ED_RAMP2_PTREE2_XRAMP, ED_RAMP3_PTREE2_XRAMP, -1, -1, -1, 2, 1, false, "ed_ramp2_ptree2_xramp"},
-  {ED_XRAMP_RAMP_PTREE2, ED_XRAMP_RAMP2_PTREE2, ED_XRAMP2_RAMP_PTREE2, -1, -1, 1, 1, false, "ed_xramp_ramp_ptree2"},
-  {ED_XRAMP_RAMP_PTREE2_ZERO, ED_XRAMP_RAMP2_PTREE2_ZERO, ED_XRAMP2_RAMP_PTREE2_ZERO, -1, -1, 1, 1, false, "ed_xramp_ramp_ptree2_zero"},
-  {ED_XRAMP_PTREE2_XRAMP, -1 /* ED_XRAMP_RAMP_PTREE2_XRAMP */, -1, -1, -1, 0, 2, false, "ed_xramp_ptree2_xramp"},
-  {ED_XRAMP_RAMP2_PTREE2, ED_XRAMP_RAMP3_PTREE2, ED_XRAMP2_RAMP2_PTREE2, -1, -1, 2, 1, false, "ed_xramp_ramp2_ptree2"},
-  {ED_XRAMP_RAMP2_PTREE2_ZERO, ED_XRAMP_RAMP3_PTREE2_ZERO, ED_XRAMP2_RAMP2_PTREE2_ZERO, -1, -1, 2, 1, false, "ed_xramp_ramp2_ptree2_zero"},
-  {ED_XRAMP2_RAMP_PTREE2, ED_XRAMP2_RAMP2_PTREE2, -1, -1, -1, 1, 2, false, "ed_xramp2_ramp_ptree2"},
-  {ED_XRAMP2_RAMP_PTREE2_ZERO, ED_XRAMP2_RAMP2_PTREE2_ZERO, -1, -1, -1, 1, 2, false, "ed_xramp2_ramp_ptree2_zero"},
-  {ED_PTREE2_XRAMP2_RAMP, ED_RAMP_PTREE2_XRAMP2_RAMP, -1, -1, -1, 1, 2, false, "ed_ptree2_xramp2_ramp"},
-  {ED_PTREE2_XRAMP_RAMP2, -1, ED_XRAMP_PTREE2_XRAMP_RAMP2, -1, -1, 2, 1, false, "ed_ptree2_xramp_ramp2"},
-  {ED_XRAMP_PTREE2_RAMP2, -1, ED_XRAMP2_PTREE2_RAMP2, -1, -1, 2, 1, false, "ed_xramp_ptree2_ramp2"},
-  {ED_XRAMP_RAMP_PTREE2_RAMP, -1, -1, -1, -1, 2, 1, false, "ed_xramp_ramp_ptree2_ramp"},
-  {ED_XRAMP_RAMP_PTREE2_XRAMP, -1, -1, -1, -1, 1, 2, false, "ed_xramp_ramp_ptree2_xramp"},
-  {ED_XRAMP2_PTREE2_RAMP, -1, -1, -1, -1, 1, 2, false, "ed_xramp2_ptree2_ramp"},
-  {ED_XRAMP_PTREE2_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE2_XRAMP_RAMP, -1, -1, -1, 1, 2, false, "ed_xramp_ptree2_xramp_ramp"},
-  {ED_RAMP_PTREE2_XRAMP_RAMP, -1, ED_XRAMP_RAMP_PTREE2_XRAMP_RAMP, -1, -1, 2, 1, false, "ed_ramp_ptree2_xramp_ramp"},
-  {ED_RAMP_PTREE2_XRAMP2, ED_RAMP2_PTREE2_XRAMP2, -1, -1, -1, 1, 2, false, "ed_ramp_ptree2_xramp2"},
-  {ED_RAMP4_PTREE2, -1, -1, -1, -1, 4, 0, false, "ed_ramp4_ptree2"},
-  {ED_RAMP4_PTREE2_ZERO, -1, -1, -1, -1, 4, 0, true, "ed_ramp4_ptree2_zero"},
-  {ED_PTREE2_RAMP4, -1, -1, -1, -1, 4, 0, false, "ed_ptree2_ramp4"},
-  {ED_RAMP3_PTREE2_RAMP, -1, -1, -1, -1, 4, 0, false, "ed_ramp3_ptree2_ramp"},
-  {ED_RAMP_PTREE2_RAMP3, -1, -1, -1, -1, 4, 0, false, "ed_ramp_ptree2_ramp3"},
-  {ED_RAMP2_PTREE2_RAMP2, -1, -1, -1, -1, 4, 0, false, "ed_ramp2_ptree2_ramp2"},
-  {ED_RAMP3_PTREE2_XRAMP, -1, -1, -1, -1, 3, 1, false, "ed_ramp3_ptree2_xramp"},
-  {ED_XRAMP_PTREE2_RAMP3, -1, -1, -1, -1, 3, 1, false, "ed_xramp_ptree2_ramp3"},
-  {ED_RAMP2_PTREE2_XRAMP2, -1, -1, -1, -1, 2, 2, false, "ed_ramp2_ptree2_xramp2"},
-  {ED_XRAMP2_PTREE2_RAMP2, -1, -1, -1, -1, 2, 2, false, "ed_xramp2_ptree2_ramp2"},
-  {ED_XRAMP_RAMP_PTREE2_XRAMP_RAMP, -1, -1, -1, -1, 2, 2, false, "ed_xramp_ramp_ptree2_xramp_ramp"},
-  {ED_XRAMP_PTREE2_XRAMP_RAMP2, -1, -1, -1, -1, 2, 2, false, "ed_xramp_ptree2_xramp_ramp2"},
-  {ED_RAMP_PTREE2_XRAMP2_RAMP, -1, -1, -1, -1, 2, 2, false, "ed_ramp_ptree2_xramp2_ramp"},
-  {ED_PTREE2_XRAMP_RAMP3, -1, -1, -1, -1, 3, 1, false, "ed_ptree2_xramp_ramp3"},
-  {ED_PTREE2_XRAMP2_RAMP2, -1, -1, -1, -1, 2, 2, false, "ed_ptree2_xramp2_ramp2"},
-  {ED_XRAMP_RAMP3_PTREE2, -1, -1, -1, -1, 3, 1, false, "ed_xramp_ramp3_ptree2"},
-  {ED_XRAMP_RAMP3_PTREE2_ZERO, -1, -1, -1, -1, 3, 1, true, "ed_xramp_ramp3_ptree2_zero"},
-  {ED_XRAMP2_RAMP2_PTREE2, -1, -1, -1, -1, 2, 2, false, "ed_xramp2_ramp2_ptree2"},
-  {ED_XRAMP2_RAMP2_PTREE2_ZERO, -1, -1, -1, -1, 2, 2, true, "ed_xramp2_ramp2_ptree2_zero"},
-  {ED_PTREE_RAMP2_PTREE, -1, -1 /* ED_XRAMP_PTREE_RAMP2_PTREE */, -1, -1, 2, 0, false, "ed_ptree_ramp2_ptree"},
-  {ED_PTREE_RAMP2_PTREE_ZERO, -1, -1 /* ED_XRAMP_PTREE_RAMP2_PTREE_ZERO */, -1, -1, 2, 0, true, "ed_ptree_ramp2_ptree_zero"},
-  {ED_PTREE_RAMP_PTREE, -1, -1 /* ED_XRAMP_PTREE_RAMP_PTREE */, -1, -1, 1, 0, false, "ed_ptree_ramp_ptree"},
-  {ED_PTREE_RAMP_PTREE_ZERO, -1, -1 /* ED_XRAMP_PTREE_RAMP_PTREE_ZERO */, -1, -1, 1, 0, true, "ed_ptree_ramp_ptree_zero"},
-  {ED_PTREE_RAMP3_PTREE, -1, -1, -1, -1, 3, 0, false, "ed_ptree_ramp3_ptree"},
-  {ED_PTREE_RAMP3_PTREE_ZERO, -1, -1, -1, -1, 3, 0, true, "ed_ptree_ramp3_ptree_zero"},
-  {ED_PTREE_XRAMP_PTREE, -1 /* ED_RAMP_PTREE_XRAMP_PTREE */, -1, -1, -1, 0, 1, false, "ed_ptree_xramp_ptree"},
-  {ED_PTREE_XRAMP_PTREE_ZERO, -1 /* ED_RAMP_PTREE_XRAMP_PTREE_ZERO */, -1, -1, -1, 0, 1, true, "ed_ptree_xramp_ptree_zero"},
-  {ED_PTREE_RAMP2_PTREE_RAMP, -1, -1, -1, -1, 3, 0, false, "ed_ptree_ramp2_ptree_ramp"},
-  {ED_PTREE_RAMP_PTREE_RAMP2, -1, -1, -1, -1, 3, 0, false, "ed_ptree_ramp_ptree_ramp2"},
-  {ED_RAMP_PTREE_RAMP_PTREE_RAMP, -1, -1, -1, -1, 3, 0, false, "ed_ramp_ptree_ramp_ptree_ramp"},
-  {ED_PTREE_RAMP_PTREE_RAMP, ED_RAMP_PTREE_RAMP_PTREE_RAMP, -1, -1, -1, 2, 0, false, "ed_ptree_ramp_ptree_ramp"},
-  {ED_RAMP2_PTREE_RAMP_PTREE, -1, -1, -1, -1, 3, 0, false, "ed_ramp2_ptree_ramp_ptree"},
-  {ED_RAMP2_PTREE_RAMP_PTREE_ZERO, -1, -1, -1, -1, 3, 0, true, "ed_ramp2_ptree_ramp_ptree_zero"},
-  {ED_XRAMP_PTREE_RAMP_PTREE, -1, -1, -1, -1, 1, 1, false, "ed_xramp_ptree_ramp_ptree"},
-  {ED_XRAMP_PTREE_RAMP_PTREE_ZERO, -1, -1, -1, -1, 1, 1, false, "ed_xramp_ptree_ramp_ptree_zero"},
-  {ED_RAMP_PTREE_XRAMP_PTREE, ED_RAMP2_PTREE_XRAMP_PTREE, -1, -1, -1, 1, 1, false, "ed_ramp_ptree_xramp_ptree"},
-  {ED_RAMP_PTREE_XRAMP_PTREE_ZERO, ED_RAMP2_PTREE_XRAMP_PTREE_ZERO, -1, -1, -1, 1, 1, false, "ed_ramp_ptree_xramp_ptree_zero"},
-  {ED_PTREE_XRAMP_RAMP_PTREE, -1, -1, -1, -1, 1, 1, false, "ed_ptree_xramp_ramp_ptree"},
-  {ED_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, -1, -1, 1, 1, false, "ed_ptree_xramp_ramp_ptree_zero"},
-  {ED_PTREE_XRAMP_PTREE_RAMP, -1, -1, -1, -1, 1, 1, false, "ed_ptree_xramp_ptree_ramp"},
-  {ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, -1, -1, 1, 1, false, "ed_ptree_ramp_ptree_xramp"},
-  {ED_XRAMP_PTREE_RAMP2_PTREE, -1, -1, -1, -1, 2, 1, false, "ed_xramp_ptree_ramp2_ptree"},
-  {ED_XRAMP_PTREE_RAMP2_PTREE_ZERO, -1, -1, -1, -1, 2, 1, false, "ed_xramp_ptree_ramp2_ptree_zero"},
-  {ED_RAMP2_PTREE_XRAMP_PTREE, -1, -1, -1, -1, 2, 1, false, "ed_ramp2_ptree_xramp_ptree"},
-  {ED_RAMP2_PTREE_XRAMP_PTREE_ZERO, -1, -1, -1, -1, 2, 1, false, "ed_ramp2_ptree_xramp_ptree_zero"},
-  {ED_PTREE_XRAMP_RAMP2_PTREE, -1, -1, -1, -1, 2, 1, false, "ed_ptree_xramp_ramp2_ptree"},
-  {ED_PTREE_XRAMP_RAMP2_PTREE_ZERO, -1, -1, -1, -1, 2, 1, false, "ed_ptree_xramp_ramp2_ptree_zero"},
-  {ED_PTREE_XRAMP_PTREE_RAMP2, -1, -1, -1, -1, 2, 1, false, "ed_ptree_xramp_ptree_ramp2"},
-  {ED_PTREE_RAMP2_PTREE_XRAMP, -1, -1, -1, -1, 2, 1, false, "ed_ptree_ramp2_ptree_xramp"},
-
-  {ED_XEN, ED_RAMP_XEN, ED_XRAMP_XEN, -1, -1, 0, 0, false, "ed_xen"},
-  {ED_XEN_RAMP, ED_RAMP_XEN_RAMP, -1, -1, -1, 1, 0, false, "ed_xen_ramp"},
-  {ED_XEN_XRAMP, -1, -1, -1, -1, 0, 1, false, "ed_xen_xramp"},
-  {ED_XEN_ZERO, ED_RAMP_XEN_ZERO, ED_XRAMP_XEN_ZERO, -1, -1, 0, 0, true, "ed_xen_zero"},
-  {ED_XEN_RAMP2, ED_RAMP_XEN_RAMP2, -1, -1, -1, 2, 0, false, "ed_xen_ramp2"},
-  {ED_XEN_RAMP3, -1, -1, -1, -1, 3, 0, false, "ed_xen_ramp3"},
-  {ED_RAMP_XEN, ED_RAMP2_XEN, -1, -1, -1, 1, 0, false, "ed_ramp_xen"},
-  {ED_RAMP2_XEN, ED_RAMP3_XEN, -1, -1, -1, 2, 0, false, "ed_ramp2_xen"},
-  {ED_RAMP3_XEN, -1, -1, -1, -1, 3, 0, false, "ed_ramp3_xen"},
-  {ED_RAMP_XEN_ZERO, ED_RAMP2_XEN_ZERO, -1, -1, -1, 1, 0, true, "ed_ramp_xen_zero"},
-  {ED_RAMP2_XEN_ZERO, ED_RAMP3_XEN_ZERO, -1, -1, -1, 2, 0, true, "ed_ramp2_xen_zero"},
-  {ED_RAMP3_XEN_ZERO, -1, -1, -1, -1, 3, 0, true, "ed_ramp3_xen_zero"},
-  {ED_XRAMP_XEN, -1, -1, -1, -1, 0, 1, false, "ed_xramp_xen"},
-  {ED_XRAMP_XEN_ZERO, -1, -1, -1, -1, 0, 1, true, "ed_xramp_xen_zero"},
-  {ED_RAMP_XEN_RAMP, ED_RAMP2_XEN_RAMP, -1, -1, -1, 2, 0, false, "ed_ramp_xen_ramp"},
-  {ED_RAMP2_XEN_RAMP, -1, -1, -1, -1, 3, 0, false, "ed_ramp2_xen_ramp"},
-  {ED_RAMP_XEN_RAMP2, -1, -1, -1, -1, 3, 0, false, "ed_ramp_xen_ramp2"},
-};
-
-
-#define PTREE_OP(Typ) ((Typ) >= ED_PTREE)
-#define XEN_OP(Typ) ((Typ) >= ED_XEN)
-#define PTREE2_OP(Typ) (((Typ) >= ED_PTREE2) && ((Typ) < ED_XEN))
-#define PTREE2_OR_XEN_OP(Typ) ((Typ) >= ED_PTREE2)
-
-static bool ZERO_OP(int type)
-{
-  return(type_info[type].ptree_zero);
-}
-
-static bool RAMP_OP(int type)
-{
-  return(type_info[type].xramps + type_info[type].ramps > 0);
-}
-
-#if 0
-static bool RAMP2_OP(int type)
-{
-  return(type_info[type].xramps + type_info[type].ramps > 1);
-}
-#endif
-
-static bool RAMP3_OP(int type)
-{
-  return(type_info[type].xramps + type_info[type].ramps > 2);
-}
-
-static bool RAMP4_OP(int type)
-{
-  return(type_info[type].xramps + type_info[type].ramps == 4);
-}
-
-#if 0
-static bool XRAMP_OP(int type)
-{
-  return(type_info[type].xramps > 0);
-}
-#endif
-
-static bool XRAMP2_OP(int type)
-{
-  return(type_info[type].xramps == 2);
-}
-
-#define FRAGMENTS(Ed)                       (ed_fragment **)((Ed)->fragments)
-#define FRAGMENT(Ed, Pos)                  ((ed_fragment **)((Ed)->fragments))[Pos]
-#define FRAGMENT_GLOBAL_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->out
-#define FRAGMENT_LOCAL_POSITION(Ed, Pos)   ((ed_fragment **)((Ed)->fragments))[Pos]->beg
-#define FRAGMENT_LOCAL_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->end
-#define FRAGMENT_SCALER(Ed, Pos)           ((ed_fragment **)((Ed)->fragments))[Pos]->scl
-#define FRAGMENT_TYPE(Ed, Pos)             ((ed_fragment **)((Ed)->fragments))[Pos]->typ
-#define FRAGMENT_SOUND(Ed, Pos)            ((ed_fragment **)((Ed)->fragments))[Pos]->snd
-#define FRAGMENT_RAMP_BEG(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->rmp0
-#define FRAGMENT_RAMP_END(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->rmp1
-#define FRAGMENT_RAMP2_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp2
-#define FRAGMENT_RAMP2_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp3
-#define FRAGMENT_RAMP3_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp4
-#define FRAGMENT_RAMP3_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp5
-#define FRAGMENT_RAMP4_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp6
-#define FRAGMENT_RAMP4_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp7
-#define FRAGMENT_XRAMP_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->scaler
-#define FRAGMENT_XRAMP_OFFSET(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->offset
-#define FRAGMENT_XRAMP_SCALER2(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->scaler2
-#define FRAGMENT_XRAMP_OFFSET2(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->offset2
-#define FRAGMENT_PTREE_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->pscl
-#define FRAGMENT_PTREE2_SCALER(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->pscl1
-#define FRAGMENT_PTREE_INDEX(Ed, Pos)      ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_loc
-#define FRAGMENT_PTREE2_INDEX(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_loc1
-#define FRAGMENT_PTREE_DUR(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_dur
-#define FRAGMENT_PTREE2_DUR(Ed, Pos)       ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_dur1
-#define FRAGMENT_PTREE_POSITION(Ed, Pos)   ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_pos
-#define FRAGMENT_PTREE2_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_pos1
-#define FRAGMENT_LENGTH(Ed, Pos)           (FRAGMENT_LOCAL_END(Ed, Pos) - FRAGMENT_LOCAL_POSITION(Ed, Pos) + 1)
-
-#define READER_GLOBAL_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->out
-#define READER_LOCAL_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->beg
-#define READER_LOCAL_END(Sf)        ((ed_fragment *)((Sf)->cb))->end
-#define READER_SCALER(Sf)           ((ed_fragment *)((Sf)->cb))->scl
-#define READER_TYPE(Sf)             ((ed_fragment *)((Sf)->cb))->typ
-#define READER_SOUND(Sf)            ((ed_fragment *)((Sf)->cb))->snd
-#define READER_RAMP_BEG(Sf)         ((ed_fragment *)((Sf)->cb))->rmp0
-#define READER_RAMP_END(Sf)         ((ed_fragment *)((Sf)->cb))->rmp1
-#define READER_RAMP2_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp2
-#define READER_RAMP2_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp3
-#define READER_RAMP3_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp4
-#define READER_RAMP3_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp5
-#define READER_RAMP4_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp6
-#define READER_RAMP4_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp7
-#define READER_XRAMP_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->scaler
-#define READER_XRAMP_OFFSET(Sf)     ((ed_fragment *)((Sf)->cb))->offset
-#define READER_XRAMP_SCALER2(Sf)    ((ed_fragment *)((Sf)->cb))->scaler2
-#define READER_XRAMP_OFFSET2(Sf)    ((ed_fragment *)((Sf)->cb))->offset2
-#define READER_PTREE_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->pscl
-#define READER_PTREE2_SCALER(Sf)    ((ed_fragment *)((Sf)->cb))->pscl1
-#define READER_PTREE_INDEX(Sf)      ((ed_fragment *)((Sf)->cb))->ptree_loc
-#define READER_PTREE2_INDEX(Sf)     ((ed_fragment *)((Sf)->cb))->ptree_loc1
-#define READER_PTREE_DUR(Sf)        ((ed_fragment *)((Sf)->cb))->ptree_dur
-#define READER_PTREE2_DUR(Sf)       ((ed_fragment *)((Sf)->cb))->ptree_dur1
-#define READER_PTREE_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->ptree_pos
-#define READER_PTREE2_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptree_pos1
-#define READER_LENGTH(Sf)           (READER_LOCAL_END(Sf) - READER_LOCAL_POSITION(Sf) + 1)
-
-#define ED_GLOBAL_POSITION(Ed)  (Ed)->out
-#define ED_LOCAL_POSITION(Ed)   (Ed)->beg
-#define ED_LOCAL_END(Ed)        (Ed)->end
-#define ED_SCALER(Ed)           (Ed)->scl
-#define ED_TYPE(Ed)             (Ed)->typ
-#define ED_SOUND(Ed)            (Ed)->snd
-#define ED_RAMP_BEG(Ed)         (Ed)->rmp0
-#define ED_RAMP_END(Ed)         (Ed)->rmp1
-#define ED_RAMP2_BEG(Ed)        (Ed)->rmp2
-#define ED_RAMP2_END(Ed)        (Ed)->rmp3
-#define ED_RAMP3_BEG(Ed)        (Ed)->rmp4
-#define ED_RAMP3_END(Ed)        (Ed)->rmp5
-#define ED_RAMP4_BEG(Ed)        (Ed)->rmp6
-#define ED_RAMP4_END(Ed)        (Ed)->rmp7
-#define ED_XRAMP_SCALER(Ed)     (Ed)->scaler
-#define ED_XRAMP_OFFSET(Ed)     (Ed)->offset
-#define ED_XRAMP_SCALER2(Ed)    (Ed)->scaler2
-#define ED_XRAMP_OFFSET2(Ed)    (Ed)->offset2
-#define ED_PTREE_SCALER(Ed)     (Ed)->pscl
-#define ED_PTREE2_SCALER(Ed)    (Ed)->pscl1
-#define ED_PTREE_INDEX(Ed)      (Ed)->ptree_loc
-#define ED_PTREE2_INDEX(Ed)     (Ed)->ptree_loc1
-#define ED_PTREE_DUR(Ed)        (Ed)->ptree_dur
-#define ED_PTREE2_DUR(Ed)       (Ed)->ptree_dur1
-#define ED_PTREE_POSITION(Ed)   (Ed)->ptree_pos
-#define ED_PTREE2_POSITION(Ed)  (Ed)->ptree_pos1
-#define ED_LENGTH(Ed)           (ED_LOCAL_END(Ed) - ED_LOCAL_POSITION(Ed) + 1)
-
-#define EDIT_LIST_END_MARK -2
-#define EDIT_LIST_ZERO_MARK -1
-
-enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT, XEN_EDIT, EXTEND_EDIT};
-static char *edit_names[11] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "xen", "extend", ""};
-
-static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
-{
-  int len, j, index;
-  snd_data *sd;
-  if (ed == NULL)
-    {
-      fprintf(outp, "\n (NULL FRAGMENT at %d)", i);
-      return;
-    }
-  if (i >= cp->edit_size)
-    {
-      fprintf(outp, "\n (BOGUS FRAGMENT at %d of %d)", i, cp->edit_size);
-      return;
-    }
-  len = ed->size; /* number of fragments in this list */
-  switch (ed->edit_type)
-    {
-    case INSERTION_EDIT:  fprintf(outp, "\n (insert " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                        break;
-    case DELETION_EDIT:   fprintf(outp, "\n (delete " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                        break;
-    case CHANGE_EDIT:     fprintf(outp, "\n (set " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                           break;
-    case SCALED_EDIT:     fprintf(outp, "\n (scale " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                         break;
-    case ZERO_EDIT:       fprintf(outp, "\n (silence " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                       break;
-    case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                          break;
-    case XEN_EDIT:        fprintf(outp, "\n (xen[%d] " OFF_TD " " OFF_TD ") ", ed->ptree_location, ed->beg, ed->len);   break; 
-    case PTREE_EDIT:      fprintf(outp, "\n (ptree[%d] " OFF_TD " " OFF_TD ") ", ed->ptree_location, ed->beg, ed->len); break; 
-    case EXTEND_EDIT:     fprintf(outp, "\n (extend edit list with no-op)");                                            break;
-    case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                                                 break;
-    }
-  if (ed->origin) fprintf(outp, "; %s ", ed->origin);
-  fprintf(outp, "[%d:%d]:", i, len);
-  for (j = 0; j < len; j++)
-    {
-      index = FRAGMENT_SOUND(ed, j);
-      if (index == EDIT_LIST_END_MARK)
-	fprintf(outp, "\n   (at " OFF_TD ", end_mark)", FRAGMENT_GLOBAL_POSITION(ed, j));
-      else
-	{
-	  int typ;
-	  typ = FRAGMENT_TYPE(ed, j);
-	  fprintf(outp, "\n   (at " OFF_TD ", cp->sounds[%d][" OFF_TD ":" OFF_TD ", %.3f",
-		  FRAGMENT_GLOBAL_POSITION(ed, j),
-		  index,
-		  FRAGMENT_LOCAL_POSITION(ed, j),
-		  FRAGMENT_LOCAL_END(ed, j),
-		  FRAGMENT_SCALER(ed, j));
-	  if (RAMP_OP(typ))
-	    {
-	      if (type_info[typ].ramps > 0)
-		fprintf(outp, ", [1]%.3f -> %.3f", 
-			FRAGMENT_RAMP_BEG(ed, j),
-			FRAGMENT_RAMP_END(ed, j));
-	      if (type_info[typ].ramps > 1)
-		fprintf(outp, ", [2]%.3f -> %.3f", 
-			FRAGMENT_RAMP2_BEG(ed, j),
-			FRAGMENT_RAMP2_END(ed, j));
-	      if ((type_info[typ].ramps > 2) || (type_info[typ].xramps == 2))
-		fprintf(outp, ", [3]%.3f -> %.3f", 
-			FRAGMENT_RAMP3_BEG(ed, j),
-			FRAGMENT_RAMP3_END(ed, j));
-	      if ((type_info[typ].ramps == 4) || (type_info[typ].xramps > 0))
-		fprintf(outp, ", [4]%.3f -> %.3f", 
-			FRAGMENT_RAMP4_BEG(ed, j),
-			FRAGMENT_RAMP4_END(ed, j));
-	      if (FRAGMENT_XRAMP_SCALER(ed, j) != 0.0)
-		fprintf(outp, ", off: %.3f, scl: %.3f", 
-			FRAGMENT_XRAMP_OFFSET(ed, j),
-			FRAGMENT_XRAMP_SCALER(ed, j));
-	      if (FRAGMENT_XRAMP_SCALER2(ed, j) != 0.0)
-		fprintf(outp, ", off2: %.3f, scl2: %.3f", 
-			FRAGMENT_XRAMP_OFFSET2(ed, j),
-			FRAGMENT_XRAMP_SCALER2(ed, j));
-	    }
-	  if (PTREE2_OP(typ))
-	    {
-	      fprintf(outp, ", loc2: %d, pos2: " OFF_TD ", scl2: %.3f",
-		      FRAGMENT_PTREE2_INDEX(ed, j),
-		      FRAGMENT_PTREE2_POSITION(ed, j),
-		      FRAGMENT_PTREE2_SCALER(ed, j));
-	    }
-	  if (PTREE_OP(typ))
-	    {
-	      XEN code;
-	      fprintf(outp, ", loc: %d, pos: " OFF_TD ", scl: %.3f",
-		      FRAGMENT_PTREE_INDEX(ed, j),
-		      FRAGMENT_PTREE_POSITION(ed, j),
-		      (float)(MUS_FLOAT_TO_FIX * FRAGMENT_PTREE_SCALER(ed, j)));
-	      if (with_source)
-		{
-		  if (XEN_OP(typ))
-		    {
-		      code = cp->xens[FRAGMENT_PTREE_INDEX(ed, j)];
-#if HAVE_GUILE
-		      if ((code) && (XEN_PROCEDURE_P(code)))
-			fprintf(outp, ", code: %s", XEN_AS_STRING(scm_procedure_source(code)));
-#endif
-		    }
-		  else 
-		    {
-		      code = ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j)]);
-		      if (XEN_LIST_P(code))
-			fprintf(outp, ", code: %s", XEN_AS_STRING(code));
-		    }
-#if HAVE_GUILE
-		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j)];
-		  if (XEN_PROCEDURE_P(code))
-		    fprintf(outp, ", init: %s", XEN_AS_STRING(scm_procedure_source(code)));
-#endif
-		}
-	    }
-	  fprintf(outp, "])");
-	  if (index != EDIT_LIST_ZERO_MARK)
-	    {
-	      sd = cp->sounds[index];
-	      if (sd == NULL) 
-		fprintf(outp, " [nil!]");
-	      else 
-		if (sd->type == SND_DATA_FILE)
-		  fprintf(outp, " [file: %s[%d]]", sd->filename, sd->chan);
-		else 
-		  if (sd->type == SND_DATA_BUFFER)
-		    fprintf(outp, " [buf: " OFF_TD "] ", sd->len / sizeof(mus_sample_t));
-		  else fprintf(outp, " [bogus!]");
-	    }
-	}
-    }
-  fprintf(outp, "\n");
-}
-
-off_t edit_changes_begin_at(chan_info *cp, int edpos)
-{
-  ed_list *ed, *old_ed;
-  int len, old_len, i, min_len;
-  old_ed = cp->edits[edpos - 1];
-  ed = cp->edits[edpos];
-  old_len = old_ed->size;
-  len = ed->size;
-  if (len < old_len) 
-    min_len = len;
-  else min_len = old_len;
-  for (i = 0; i < min_len; i ++)
-    if ((FRAGMENT_GLOBAL_POSITION(ed, i) != FRAGMENT_GLOBAL_POSITION(old_ed, i)) || 
-	(FRAGMENT_SOUND(ed, i) != FRAGMENT_SOUND(old_ed, i)) || 
-	(FRAGMENT_LOCAL_POSITION(ed, i) != FRAGMENT_LOCAL_POSITION(old_ed, i)))
-      return(FRAGMENT_GLOBAL_POSITION(ed, i));
-  return(0);
-}
-
-off_t edit_changes_end_at(chan_info *cp, int edpos)
-{
-  ed_list *ed, *old_ed;
-  int len, old_len;
-  old_ed = cp->edits[edpos - 1];
-  ed = cp->edits[edpos];
-  old_len = old_ed->size - 1;
-  len = ed->size - 1;
-  if (FRAGMENT_SOUND(ed, len) == EDIT_LIST_END_MARK) len--;
-  if (FRAGMENT_SOUND(old_ed, old_len) == EDIT_LIST_END_MARK) old_len--;
-  while ((len >= 0) && (old_len >= 0))
-    {
-      if ((FRAGMENT_SOUND(ed, len) == FRAGMENT_SOUND(old_ed, old_len)) &&
-	  (FRAGMENT_LOCAL_END(ed, len) == FRAGMENT_LOCAL_END(old_ed, old_len)))
-	{
-	  if (FRAGMENT_LOCAL_POSITION(ed, len) != FRAGMENT_LOCAL_POSITION(old_ed, old_len))
-	    return(cp->samples[edpos - 1] - (FRAGMENT_LOCAL_END(ed, len) - FRAGMENT_LOCAL_POSITION(ed, len)));
-	  len--;
-	  old_len--;
-	}
-      else break;
-    }
-  return(0);
-}
-
-static char edbuf[PRINT_BUFFER_SIZE];
-char *edit_to_string(chan_info *cp, int edit)
-{
-  ed_list *ed;
-  ed = cp->edits[edit];
-  /* only for edit list in snd-xchn.c */
-  mus_snprintf(edbuf, PRINT_BUFFER_SIZE, 
-#if HAVE_RUBY
-	       "%s : %s(" OFF_TD ", " OFF_TD ")", 
-#else
-	       "%s : (%s " OFF_TD " " OFF_TD ")", 
-#endif
-	       ed->origin, 
-	       edit_names[ed->edit_type], 
-	       ed->beg, ed->len);
-  return(edbuf);
-}
-
 #if HAVE_RUBY
   #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
   #define PROC_OPEN "("
@@ -1163,14 +362,6 @@ char *edit_to_string(chan_info *cp, int edit)
   #define VECTOR_OPEN "'#("
   #define VECTOR_CLOSE ")"
 #endif
-
-static void display_edits(chan_info *cp, FILE *outp, bool with_source)
-{
-  int i;
-  fprintf(outp, "\nEDITS: %d\n", cp->edit_ctr);
-  for (i = 0; i <= cp->edit_ctr; i++)
-    display_ed_list(cp, outp, i, cp->edits[i], with_source);
-}
 
 #define BUFFER_NOT_FILE_LIMIT 64
 
@@ -1400,6 +591,4095 @@ static int channel_to_file(chan_info *cp, const char *ofile, int edpos)
     }
   FREE(sf);
   return(err);
+}
+
+
+
+/* -------- EDIT LISTS --------
+ *
+ * each channel has a list of lists containing the current edit history and the associated sound temp files or buffers
+ * undo: back up current list position
+ * redo: push position foward
+ * No actual changes are flushed out to the file system until the file is saved.
+ *
+ * the editing possibilities are insert, change, delete, scaling, zero, [x]ramp[2,3], ptree(xen). 
+ * All input goes through these lists (with minor exceptions -- see chn_sample below).
+ *
+ * The accessors are highly optimized (split into numerous choices) since everything else in Snd
+ *   goes through the accessors to get at the data.  My tests indicate that even a lowly old
+ *   267 MHz PC (and equivalent Sun) can play stereo 44KHz through the double xramp op (or ptree2!)
+ *   without glitches, and on a modern machine the readers scarcely register in loadav.
+ *
+ * to be more precise (1.7 GHz Pentium):
+ *
+ *                   float               int
+ *    straight     38   0.001         31    0.001 ; 28 20 if buffer
+ *    ramp         40   0.001         33    0.001 
+ *    ramp2        51   0.001         48    0.001 
+ *    ramp3        54   0.001         52    0.001 
+ *    ptree        86   0.002         84    0.002 ; y * 0.5
+ *    ptreec       133  0.003         131   0.003 ; y * vct-ref
+ *    ptree2       168  0.004         159   0.004 
+ *    xramp        376  0.009         371   0.009 
+ *    cosine       476  0.012         511   0.012 ; cosine-channel-via-ptree
+ *    xramp2       682  0.016         672   0.016 
+ *    xen          3600 0.087         3650  0.088 
+ *
+ * so even the xen case is running 10X real-time! There are no glitches in playback,
+ *   and only slight hesitation in some redisplays -- where the peak-env is about to kick in.
+ *
+ * On the aforementioned old Sun:
+ *
+ *    straight     451  0.011         332   0.008 
+ *    ramp         459  0.011         392   0.009 
+ *    ramp2        375  0.009         359   0.009 
+ *    ramp3        382  0.009         438   0.011 
+ *    ptree        714  0.017         1216  0.029 
+ *    ptreec       929  0.022         953   0.023 
+ *    ptree2       1107 0.027         1140  0.028 
+ *    xramp        1004 0.024         840   0.020 
+ *    xramp2       2087 0.050         2599  0.063 
+ *    cosine       4337 0.105         4088  0.099 
+ *    xen          22945 0.554        23205 0.561 
+ */
+
+typedef struct {
+  off_t out,       /* running segment location within current overall edited data */
+        beg,       /* index into the associated data => start point of data used in current segment */
+        end;       /* index into the associated data => end point of data used in current segment */
+  Float scl,       /* segment scaler */
+        rmp0,      /* first val of ramp */
+        rmp1,      /* end val of ramp */
+        rmp2, rmp3,  /* ramp2 vals */
+        rmp4, rmp5,  /* ramp3 vals */
+        rmp6, rmp7,  /* ramp4 vals */
+        pscl, pscl1, /* scales the arg to the ptree */
+        scaler,    /* exp-env segment scaler */
+        offset,    /* exp-env segment offset */
+        scaler2, offset2;
+  int   snd,       /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
+        typ,       /* code for accessor choice (ED_SIMPLE etc) */
+        ptree_loc, /* index into the cp->ptrees array */
+        ptree_loc1;
+  off_t ptree_pos, /* segment position within original at time of ptree edit */
+        ptree_dur, /* original (unfragmented) segment length */
+        ptree_pos1, ptree_dur1;
+} ed_fragment;
+
+#define FRAGMENTS(Ed)                       (ed_fragment **)((Ed)->fragments)
+#define FRAGMENT(Ed, Pos)                  ((ed_fragment **)((Ed)->fragments))[Pos]
+#define FRAGMENT_GLOBAL_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->out
+#define FRAGMENT_LOCAL_POSITION(Ed, Pos)   ((ed_fragment **)((Ed)->fragments))[Pos]->beg
+#define FRAGMENT_LOCAL_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->end
+#define FRAGMENT_SCALER(Ed, Pos)           ((ed_fragment **)((Ed)->fragments))[Pos]->scl
+#define FRAGMENT_TYPE(Ed, Pos)             ((ed_fragment **)((Ed)->fragments))[Pos]->typ
+#define FRAGMENT_SOUND(Ed, Pos)            ((ed_fragment **)((Ed)->fragments))[Pos]->snd
+#define FRAGMENT_RAMP_BEG(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->rmp0
+#define FRAGMENT_RAMP_END(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->rmp1
+#define FRAGMENT_RAMP2_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp2
+#define FRAGMENT_RAMP2_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp3
+#define FRAGMENT_RAMP3_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp4
+#define FRAGMENT_RAMP3_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp5
+#define FRAGMENT_RAMP4_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp6
+#define FRAGMENT_RAMP4_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp7
+#define FRAGMENT_XRAMP_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->scaler
+#define FRAGMENT_XRAMP_OFFSET(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->offset
+#define FRAGMENT_XRAMP_SCALER2(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->scaler2
+#define FRAGMENT_XRAMP_OFFSET2(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->offset2
+#define FRAGMENT_PTREE_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->pscl
+#define FRAGMENT_PTREE2_SCALER(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->pscl1
+#define FRAGMENT_PTREE_INDEX(Ed, Pos)      ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_loc
+#define FRAGMENT_PTREE2_INDEX(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_loc1
+#define FRAGMENT_PTREE_DUR(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_dur
+#define FRAGMENT_PTREE2_DUR(Ed, Pos)       ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_dur1
+#define FRAGMENT_PTREE_POSITION(Ed, Pos)   ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_pos
+#define FRAGMENT_PTREE2_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_pos1
+#define FRAGMENT_LENGTH(Ed, Pos)           (FRAGMENT_LOCAL_END(Ed, Pos) - FRAGMENT_LOCAL_POSITION(Ed, Pos) + 1)
+
+#define READER_GLOBAL_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->out
+#define READER_LOCAL_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->beg
+#define READER_LOCAL_END(Sf)        ((ed_fragment *)((Sf)->cb))->end
+#define READER_SCALER(Sf)           ((ed_fragment *)((Sf)->cb))->scl
+#define READER_TYPE(Sf)             ((ed_fragment *)((Sf)->cb))->typ
+#define READER_SOUND(Sf)            ((ed_fragment *)((Sf)->cb))->snd
+#define READER_RAMP_BEG(Sf)         ((ed_fragment *)((Sf)->cb))->rmp0
+#define READER_RAMP_END(Sf)         ((ed_fragment *)((Sf)->cb))->rmp1
+#define READER_RAMP2_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp2
+#define READER_RAMP2_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp3
+#define READER_RAMP3_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp4
+#define READER_RAMP3_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp5
+#define READER_RAMP4_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp6
+#define READER_RAMP4_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp7
+#define READER_XRAMP_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->scaler
+#define READER_XRAMP_OFFSET(Sf)     ((ed_fragment *)((Sf)->cb))->offset
+#define READER_XRAMP_SCALER2(Sf)    ((ed_fragment *)((Sf)->cb))->scaler2
+#define READER_XRAMP_OFFSET2(Sf)    ((ed_fragment *)((Sf)->cb))->offset2
+#define READER_PTREE_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->pscl
+#define READER_PTREE2_SCALER(Sf)    ((ed_fragment *)((Sf)->cb))->pscl1
+#define READER_PTREE_INDEX(Sf)      ((ed_fragment *)((Sf)->cb))->ptree_loc
+#define READER_PTREE2_INDEX(Sf)     ((ed_fragment *)((Sf)->cb))->ptree_loc1
+#define READER_PTREE_DUR(Sf)        ((ed_fragment *)((Sf)->cb))->ptree_dur
+#define READER_PTREE2_DUR(Sf)       ((ed_fragment *)((Sf)->cb))->ptree_dur1
+#define READER_PTREE_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->ptree_pos
+#define READER_PTREE2_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptree_pos1
+#define READER_LENGTH(Sf)           (READER_LOCAL_END(Sf) - READER_LOCAL_POSITION(Sf) + 1)
+
+#define ED_GLOBAL_POSITION(Ed)  (Ed)->out
+#define ED_LOCAL_POSITION(Ed)   (Ed)->beg
+#define ED_LOCAL_END(Ed)        (Ed)->end
+#define ED_SCALER(Ed)           (Ed)->scl
+#define ED_TYPE(Ed)             (Ed)->typ
+#define ED_SOUND(Ed)            (Ed)->snd
+#define ED_RAMP_BEG(Ed)         (Ed)->rmp0
+#define ED_RAMP_END(Ed)         (Ed)->rmp1
+#define ED_RAMP2_BEG(Ed)        (Ed)->rmp2
+#define ED_RAMP2_END(Ed)        (Ed)->rmp3
+#define ED_RAMP3_BEG(Ed)        (Ed)->rmp4
+#define ED_RAMP3_END(Ed)        (Ed)->rmp5
+#define ED_RAMP4_BEG(Ed)        (Ed)->rmp6
+#define ED_RAMP4_END(Ed)        (Ed)->rmp7
+#define ED_XRAMP_SCALER(Ed)     (Ed)->scaler
+#define ED_XRAMP_OFFSET(Ed)     (Ed)->offset
+#define ED_XRAMP_SCALER2(Ed)    (Ed)->scaler2
+#define ED_XRAMP_OFFSET2(Ed)    (Ed)->offset2
+#define ED_PTREE_SCALER(Ed)     (Ed)->pscl
+#define ED_PTREE2_SCALER(Ed)    (Ed)->pscl1
+#define ED_PTREE_INDEX(Ed)      (Ed)->ptree_loc
+#define ED_PTREE2_INDEX(Ed)     (Ed)->ptree_loc1
+#define ED_PTREE_DUR(Ed)        (Ed)->ptree_dur
+#define ED_PTREE2_DUR(Ed)       (Ed)->ptree_dur1
+#define ED_PTREE_POSITION(Ed)   (Ed)->ptree_pos
+#define ED_PTREE2_POSITION(Ed)  (Ed)->ptree_pos1
+#define ED_LENGTH(Ed)           (ED_LOCAL_END(Ed) - ED_LOCAL_POSITION(Ed) + 1)
+
+
+/* -------------------------------- fragment accessors --------------------------------
+ *
+ * each fragment has two associated read funcs: run and runf
+ *   run -> mus_sample_t
+ *   runf -> Float
+ *   the following functions are possible run/runf choices, based on the fragment type
+ *     (if fragment has scaler, use next_sample else next_sample_unscaled, etc)
+ * read_sample calls run, read_sample_to_float runf
+ *
+ * all sample accesses go through run/runf
+ *
+ * each type of accessor needs 8 cases: 
+ *   [back | forth] [normal | on_zero] -> [mus_sample_t | float]
+ * on_zero case only needed if input 0 doesn't imply output 0
+ *
+ * to simplify reordering, ramps 1-4 use incrs 1-4, but xramp1 uses 4, then xramp2 uses 3
+ */
+
+/* envelope handlers */
+
+static Float next_ramp_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval;
+  sf->curval += sf->incr;
+  return(val);
+}
+
+static Float previous_ramp_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval;
+  sf->curval -= sf->incr;
+  return(val);
+}
+
+static Float next_ramp2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval * sf->curval2;
+  sf->curval += sf->incr;
+  sf->curval2 += sf->incr2;
+  return(val);
+}
+
+static Float previous_ramp2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval * sf->curval2;
+  sf->curval -= sf->incr;
+  sf->curval2 -= sf->incr2;
+  return(val);
+}
+
+static Float next_ramp2_2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval2 * sf->curval3;
+  sf->curval2 += sf->incr2;
+  sf->curval3 += sf->incr3;
+  return(val);
+}
+
+static Float previous_ramp2_2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval2 * sf->curval3;
+  sf->curval2 -= sf->incr2;
+  sf->curval3 -= sf->incr3;
+  return(val);
+}
+
+static Float next_ramp2_3_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval3 * sf->curval4;
+  sf->curval3 += sf->incr3;
+  sf->curval4 += sf->incr4;
+  return(val);
+}
+
+static Float previous_ramp2_3_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval3 * sf->curval4;
+  sf->curval3 -= sf->incr3;
+  sf->curval4 -= sf->incr4;
+  return(val);
+}
+
+static Float next_ramp1_2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval2;
+  sf->curval2 += sf->incr2;
+  return(val);
+}
+
+static Float previous_ramp1_2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval2;
+  sf->curval2 -= sf->incr2;
+  return(val);
+}
+
+static Float next_ramp1_3_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval3;
+  sf->curval3 += sf->incr3;
+  return(val);
+}
+
+static Float previous_ramp1_4_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval4;
+  sf->curval4 -= sf->incr4;
+  return(val);
+}
+
+static Float next_ramp1_4_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval4;
+  sf->curval4 += sf->incr4;
+  return(val);
+}
+
+static Float previous_ramp1_3_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval3;
+  sf->curval3 -= sf->incr3;
+  return(val);
+}
+
+static Float next_ramp3_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval * sf->curval2 * sf->curval3;
+  sf->curval += sf->incr;
+  sf->curval2 += sf->incr2;
+  sf->curval3 += sf->incr3;
+  return(val);
+}
+
+static Float previous_ramp3_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval * sf->curval2 * sf->curval3;
+  sf->curval -= sf->incr;
+  sf->curval2 -= sf->incr2;
+  sf->curval3 -= sf->incr3;
+  return(val);
+}
+
+static Float next_ramp3_2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval2 * sf->curval3 * sf->curval4;
+  sf->curval2 += sf->incr2;
+  sf->curval3 += sf->incr3;
+  sf->curval4 += sf->incr4;
+  return(val);
+}
+
+static Float previous_ramp3_2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval2 * sf->curval3 * sf->curval4;
+  sf->curval2 -= sf->incr2;
+  sf->curval3 -= sf->incr3;
+  sf->curval4 -= sf->incr4;
+  return(val);
+}
+
+static Float next_ramp4_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval * sf->curval2 * sf->curval3 * sf->curval4;
+  sf->curval += sf->incr;
+  sf->curval2 += sf->incr2;
+  sf->curval3 += sf->incr3;
+  sf->curval4 += sf->incr4;
+  return(val);
+}
+
+static Float previous_ramp4_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval * sf->curval2 * sf->curval3 * sf->curval4;
+  sf->curval -= sf->incr;
+  sf->curval2 -= sf->incr2;
+  sf->curval3 -= sf->incr3;
+  sf->curval4 -= sf->incr4;
+  return(val);
+}
+
+static Float next_xramp_to_float(snd_fd *sf)
+{
+  Float val;
+  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
+  sf->curval4 += sf->incr4;
+  return(val);
+}
+
+static Float previous_xramp_to_float(snd_fd *sf)
+{
+  Float val;
+  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
+  sf->curval4 -= sf->incr4;
+  return(val);
+}
+
+static Float next_xramp1_2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
+  sf->curval3 += sf->incr3;
+  return(val);
+}
+
+static Float previous_xramp1_2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
+  sf->curval3 -= sf->incr3;
+  return(val);
+}
+
+static Float next_xramp_ramp_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
+  sf->curval += sf->incr;
+  sf->curval4 += sf->incr4;
+  return(val);
+}
+
+static Float previous_xramp_ramp_to_float(snd_fd *sf)
+{
+  Float val;
+  val = sf->curval * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
+  sf->curval -= sf->incr;
+  sf->curval4 -= sf->incr4;
+  return(val);
+}
+
+static Float next_xramp2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4))) *
+    (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
+  sf->curval3 += sf->incr3;
+  sf->curval4 += sf->incr4;
+  return(val);
+}
+
+static Float previous_xramp2_to_float(snd_fd *sf)
+{
+  Float val;
+  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4))) *
+    (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
+  sf->curval3 -= sf->incr3;
+  sf->curval4 -= sf->incr4;
+  return(val);
+}
+
+static Float next_xramp2_ramp_to_float(snd_fd *sf) {return(next_ramp_to_float(sf) * next_xramp2_to_float(sf));}
+static Float previous_xramp2_ramp_to_float(snd_fd *sf) {return(previous_ramp_to_float(sf) * previous_xramp2_to_float(sf));}
+static Float next_xramp2_ramp2_to_float(snd_fd *sf) {return(next_ramp2_to_float(sf) * next_xramp2_to_float(sf));}
+static Float previous_xramp2_ramp2_to_float(snd_fd *sf) {return(previous_ramp2_to_float(sf) * previous_xramp2_to_float(sf));}
+static Float next_xramp_ramp2_to_float(snd_fd *sf) {return(next_ramp2_to_float(sf) * next_xramp_to_float(sf));}
+static Float previous_xramp_ramp2_to_float(snd_fd *sf) {return(previous_ramp2_to_float(sf) * previous_xramp_to_float(sf));}
+static Float next_xramp_ramp3_to_float(snd_fd *sf) {return(next_ramp3_to_float(sf) * next_xramp_to_float(sf));}
+static Float previous_xramp_ramp3_to_float(snd_fd *sf) {return(previous_ramp3_to_float(sf) * previous_xramp_to_float(sf));}
+
+static mus_sample_t previous_sound (snd_fd *sf);
+static Float previous_sound_as_float(snd_fd *sf);
+static mus_sample_t next_sound(snd_fd *sf);
+static Float next_sound_as_float(snd_fd *sf);
+
+
+/* ---------------- at end ---------------- */
+static mus_sample_t end_sample(snd_fd *sf) {return(MUS_SAMPLE_0);}
+static Float end_sample_to_float(snd_fd *sf) {return(0.0);}
+
+
+/* ---------------- scaled ---------------- */
+static mus_sample_t next_sample(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc++] * READER_SCALER(sf)));
+}
+
+static mus_sample_t previous_sample(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc--] * READER_SCALER(sf)));
+}
+
+static Float next_sample_to_float(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(sf->data[sf->loc++] * sf->fscaler);
+}
+
+static Float previous_sample_to_float(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(sf->data[sf->loc--] * sf->fscaler);
+}
+
+#if (!SNDLIB_USE_FLOATS)
+static mus_sample_t next_sample_by_int(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound(sf)); else return(sf->data[sf->loc++] * sf->iscaler);
+}
+
+static mus_sample_t previous_sample_by_int(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound(sf)); else return(sf->data[sf->loc--] * sf->iscaler);
+}
+#endif
+
+
+/* ---------------- unscaled ---------------- */
+static mus_sample_t next_sample_unscaled(snd_fd *sf) {if (sf->loc > sf->last) return(next_sound(sf)); else return(sf->data[sf->loc++]);}
+static mus_sample_t previous_sample_unscaled(snd_fd *sf) {if (sf->loc < sf->first) return(previous_sound(sf)); else return(sf->data[sf->loc--]);}
+static Float next_sample_to_float_unscaled(snd_fd *sf) {if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(sf->data[sf->loc++]);}
+static Float previous_sample_to_float_unscaled(snd_fd *sf) {if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(sf->data[sf->loc--]);}
+
+
+/* ---------------- zeros ---------------- */
+static mus_sample_t next_zero_sample(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound(sf));
+  sf->loc++;
+  return(MUS_SAMPLE_0);
+}
+
+static mus_sample_t previous_zero_sample(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound(sf));
+  sf->loc--;
+  return(MUS_SAMPLE_0);
+}
+
+static Float next_zero(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf));
+  sf->loc++;
+  return(0.0);
+}
+
+static Float previous_zero(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf));
+  sf->loc--;
+  return(0.0);
+}
+
+
+/* ---------------- ramp ---------------- */
+static mus_sample_t next_sample_with_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+    return(next_sound(sf));
+  else
+    {
+      mus_sample_t val;
+      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval);
+      sf->curval += sf->incr;
+      return(val);
+    }
+}
+
+static mus_sample_t previous_sample_with_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      mus_sample_t val;
+      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval);
+      sf->curval -= sf->incr;
+      return(val);
+    }
+}
+
+static Float next_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval * MUS_FIX_TO_FLOAT;
+      sf->curval += sf->incr;
+      return(val);
+    }
+}
+
+static Float previous_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else
+    {
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval * MUS_FIX_TO_FLOAT;
+      sf->curval -= sf->incr;
+      return(val);
+    }
+}
+
+/* ---------------- ramp2 ---------------- */
+
+static mus_sample_t next_sample_with_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc++] * next_ramp2_to_float(sf)));
+}
+
+static mus_sample_t previous_sample_with_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc--] * previous_ramp2_to_float(sf)));
+}
+
+static Float next_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp2_to_float(sf)));
+}
+
+static Float previous_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp2_to_float(sf)));
+}
+
+/* ---------------- ramp3 ---------------- */
+
+static mus_sample_t next_sample_with_ramp3(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc++] * next_ramp3_to_float(sf)));
+}
+
+static mus_sample_t previous_sample_with_ramp3(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc--] * previous_ramp3_to_float(sf)));
+}
+
+static Float next_ramp3(snd_fd *sf) 
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp3_to_float(sf)));
+}
+
+static Float previous_ramp3(snd_fd *sf) 
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp3_to_float(sf)));
+}
+
+/* ---------------- ramp4 ---------------- */
+
+static mus_sample_t next_sample_with_ramp4(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc++] * next_ramp4_to_float(sf)));
+}
+
+static mus_sample_t previous_sample_with_ramp4(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc--] * previous_ramp4_to_float(sf)));
+}
+
+static Float next_ramp4(snd_fd *sf) 
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp4_to_float(sf)));
+}
+
+static Float previous_ramp4(snd_fd *sf) 
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp4_to_float(sf)));
+}
+
+/* ---------------- xramp ---------------- */
+
+static Float next_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_to_float(sf)));
+}
+
+static Float previous_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp_to_float(sf)));
+}
+
+/* ---------------- xramp on ramp ---------------- */
+
+static Float next_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp_ramp_to_float(sf)));
+}
+
+static Float previous_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp_ramp_to_float(sf)));
+}
+
+/* ---------------- xramp2 ---------------- */
+
+static Float next_xramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp2_to_float(sf)));
+}
+
+static Float previous_xramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp2_to_float(sf)));
+}
+
+/* ---------------- xramp2 on ramp ---------------- */
+
+static Float next_xramp2_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp2_ramp_to_float(sf)));
+}
+
+static Float previous_xramp2_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp2_ramp_to_float(sf)));
+}
+
+/* ---------------- xramp2 on ramp2 ---------------- */
+
+static Float next_xramp2_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp2_ramp2_to_float(sf)));
+}
+
+static Float previous_xramp2_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp2_ramp2_to_float(sf)));
+}
+
+/* ---------------- xramp on ramp2 ---------------- */
+
+static Float next_xramp_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp_ramp2_to_float(sf)));
+}
+
+static Float previous_xramp_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp_ramp2_to_float(sf)));
+}
+
+/* ---------------- xramp on ramp3 ---------------- */
+
+static Float next_xramp_ramp3(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp_ramp3_to_float(sf)));
+}
+
+static Float previous_xramp_ramp3(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp_ramp3_to_float(sf)));
+}
+
+/* ---------------- ptree ---------------- */
+
+static Float next_ptree_to_float(snd_fd *sf)
+{
+  Float val1 = 0.0;
+  if (!(sf->zero))
+    val1 = READER_PTREE_SCALER(sf) * sf->data[sf->loc];
+  sf->loc++;
+  val1 = evaluate_ptreec(sf->ptree, val1, (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float previous_ptree_to_float(snd_fd *sf)
+{
+  Float val1 = 0.0;
+  if (!(sf->zero))
+    val1 = READER_PTREE_SCALER(sf) * sf->data[sf->loc];
+  sf->loc--;
+  val1 = evaluate_ptreec(sf->ptree, val1, (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float next_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- ptree on ramp -------- */
+
+static Float next_ptree_ramp_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, next_ramp_to_float(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_ramp_to_float(sf));
+}
+
+static Float previous_ptree_ramp_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, previous_ramp_to_float(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_ramp_to_float(sf));
+}
+
+/* -------- ptree on ramp2 -------- */
+
+static Float next_ptree_ramp2_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, next_ramp2_to_float(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_ramp2_to_float(sf));
+}
+
+static Float previous_ptree_ramp2_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, previous_ramp2_to_float(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_ramp2_to_float(sf));
+}
+
+/* -------- ptree on ramp3 -------- */
+
+static Float next_ptree_ramp3_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, next_ramp3_to_float(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_ramp3(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_ramp3_to_float(sf));
+}
+
+static Float previous_ptree_ramp3_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, previous_ramp3_to_float(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_ramp3(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_ramp3_to_float(sf));
+}
+
+/* -------- ptree on ramp4 -------- */
+
+static Float next_ptree_ramp4_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, next_ramp4_to_float(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_ramp4(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_ramp4_to_float(sf));
+}
+
+static Float previous_ptree_ramp4_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, previous_ramp4_to_float(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_ramp4(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_ramp4_to_float(sf));
+}
+
+/* -------- ptree on xramp -------- */
+
+static Float next_ptree_xramp_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp_to_float(sf));
+}
+
+static Float previous_ptree_xramp_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp_to_float(sf));
+}
+
+/* -------- ptree on xramp2 -------- */
+
+static Float next_ptree_xramp2_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_xramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_xramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp2_to_float(sf));
+}
+
+static Float previous_ptree_xramp2_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_xramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_xramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp2_to_float(sf));
+}
+
+
+/* -------- ramp on ptree -------- */
+
+static Float next_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp_to_float(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp_to_float(sf) * previous_ptree_to_float(sf));
+}
+
+
+/* -------- ramp2 on ptree -------- */
+
+static Float next_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp2_to_float(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp2_to_float(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- ramp3 on ptree -------- */
+
+static Float next_ramp3_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp3_to_float(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_ramp3_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp3_to_float(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- ramp4 on ptree -------- */
+
+static Float next_ramp4_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp4_to_float(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_ramp4_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp4_to_float(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- xramp on ptree -------- */
+
+static Float next_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp_to_float(sf) * READER_SCALER(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp_to_float(sf) * READER_SCALER(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- xramp2 on ptree -------- */
+
+static Float next_xramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp2_to_float(sf) * READER_SCALER(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_xramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp2_to_float(sf) * READER_SCALER(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- xramp on ramp on ptree -------- */
+
+static Float next_xramp_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp_ramp_to_float(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_xramp_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp_ramp_to_float(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- xramp on ramp2 on ptree -------- */
+
+static Float next_xramp_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp_ramp2_to_float(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_xramp_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp_ramp2_to_float(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- xramp on ramp3 on ptree -------- */
+
+static Float next_xramp_ramp3_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp_ramp3_to_float(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_xramp_ramp3_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp_ramp3_to_float(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- xramp2 on ramp on ptree -------- */
+
+static Float next_xramp2_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp2_ramp_to_float(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_xramp2_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp2_ramp_to_float(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- xramp2 on ramp2 on ptree -------- */
+
+static Float next_xramp2_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp2_ramp2_to_float(sf) * next_ptree_to_float(sf));
+}
+
+static Float previous_xramp2_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp2_ramp2_to_float(sf) * previous_ptree_to_float(sf));
+}
+
+/* -------- ramp on ptree on ramp -------- */
+
+static Float next_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp1_2_to_float(sf) * next_ptree_ramp_to_float(sf));
+}
+
+static Float previous_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp1_2_to_float(sf) * previous_ptree_ramp_to_float(sf));
+}
+
+/* -------- ramp2 on ptree on ramp -------- */
+
+static Float next_ramp2_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp2_2_to_float(sf) * next_ptree_ramp_to_float(sf));
+}
+
+static Float previous_ramp2_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp2_2_to_float(sf) * previous_ptree_ramp_to_float(sf));
+}
+
+/* -------- ramp3 on ptree on ramp -------- */
+
+static Float next_ramp3_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp3_2_to_float(sf) * next_ptree_ramp_to_float(sf));
+}
+
+static Float previous_ramp3_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp3_2_to_float(sf) * previous_ptree_ramp_to_float(sf));
+}
+
+/* -------- ramp on ptree on ramp2 -------- */
+
+static Float next_ramp_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp1_3_to_float(sf) * next_ptree_ramp2_to_float(sf));
+}
+
+static Float previous_ramp_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp1_3_to_float(sf) * previous_ptree_ramp2_to_float(sf));
+}
+
+/* -------- ramp2 on ptree on ramp2 -------- */
+
+static Float next_ramp2_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp2_3_to_float(sf) * next_ptree_ramp2_to_float(sf));
+}
+
+static Float previous_ramp2_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp2_3_to_float(sf) * previous_ptree_ramp2_to_float(sf));
+}
+
+/* -------- ramp on ptree on ramp3 -------- */
+
+static Float next_ramp_ptree_ramp3(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp1_4_to_float(sf) * next_ptree_ramp3_to_float(sf));
+}
+
+static Float previous_ramp_ptree_ramp3(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp1_4_to_float(sf) * previous_ptree_ramp3_to_float(sf));
+}
+
+/* -------- ramp on ptree on xramp -------- */
+
+static Float next_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp_to_float(sf) * next_ptree_xramp_to_float(sf));
+}
+
+static Float previous_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp_to_float(sf) * previous_ptree_xramp_to_float(sf));
+}
+
+/* -------- ramp on ptree on xramp2 -------- */
+
+static Float next_ramp_ptree_xramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp_to_float(sf) * next_ptree_xramp2_to_float(sf));
+}
+
+static Float previous_ramp_ptree_xramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp_to_float(sf) * previous_ptree_xramp2_to_float(sf));
+}
+
+/* -------- ramp2 on ptree on xramp2 -------- */
+
+static Float next_ramp2_ptree_xramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp2_to_float(sf) * next_ptree_xramp2_to_float(sf));
+}
+
+static Float previous_ramp2_ptree_xramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp2_to_float(sf) * previous_ptree_xramp2_to_float(sf));
+}
+
+/* -------- xramp on ptree on xramp -------- */
+
+static Float next_xramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_xramp1_2_to_float(sf) * next_ptree_xramp_to_float(sf));
+}
+
+static Float previous_xramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_xramp1_2_to_float(sf) * previous_ptree_xramp_to_float(sf));
+}
+
+/* -------- ramp2 on ptree on xramp -------- */
+
+static Float next_ramp2_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp2_to_float(sf) * next_ptree_xramp_to_float(sf));
+}
+
+static Float previous_ramp2_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp2_to_float(sf) * previous_ptree_xramp_to_float(sf));
+}
+
+/* -------- ramp3 on ptree on xramp -------- */
+
+static Float next_ramp3_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp3_to_float(sf) * next_ptree_xramp_to_float(sf));
+}
+
+static Float previous_ramp3_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp3_to_float(sf) * previous_ptree_xramp_to_float(sf));
+}
+
+/* -------- xramp on ptree on ramp -------- */
+
+static Float next_xramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp_to_float(sf) * READER_SCALER(sf) * next_ptree_ramp_to_float(sf));
+}
+
+static Float previous_xramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp_to_float(sf) * READER_SCALER(sf) * previous_ptree_ramp_to_float(sf));
+}
+
+/* -------- xramp2 on ptree on ramp -------- */
+
+static Float next_xramp2_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_xramp2_to_float(sf) * next_ptree_ramp_to_float(sf));
+}
+
+static Float previous_xramp2_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_xramp2_to_float(sf) * previous_ptree_ramp_to_float(sf));
+}
+
+/* -------- xramp2 on ptree on ramp2 -------- */
+
+static Float next_xramp2_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_xramp2_to_float(sf) * next_ptree_ramp2_to_float(sf));
+}
+
+static Float previous_xramp2_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_xramp2_to_float(sf) * previous_ptree_ramp2_to_float(sf));
+}
+
+/* -------- xramp on ramp on ptree on ramp -------- */
+
+static Float next_xramp_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp1_2_to_float(sf) * next_xramp_to_float(sf) * next_ptree_ramp_to_float(sf));
+}
+
+static Float previous_xramp_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp1_2_to_float(sf) * previous_xramp_to_float(sf) * previous_ptree_ramp_to_float(sf));
+}
+
+/* -------- xramp on ramp on ptree on ramp2 -------- */
+
+static Float next_xramp_ramp_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp1_3_to_float(sf) * next_xramp_to_float(sf) * next_ptree_ramp2_to_float(sf));
+}
+
+static Float previous_xramp_ramp_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp1_3_to_float(sf) * previous_xramp_to_float(sf) * previous_ptree_ramp2_to_float(sf));
+}
+
+/* -------- xramp on ramp2 on ptree on ramp -------- */
+
+static Float next_xramp_ramp2_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_xramp_to_float(sf) * next_ramp2_2_to_float(sf) * next_ptree_ramp_to_float(sf));
+}
+
+static Float previous_xramp_ramp2_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_xramp_to_float(sf) * previous_ramp2_2_to_float(sf) * previous_ptree_ramp_to_float(sf));
+}
+
+/* -------- xramp on ramp on ptree on xramp -------- */
+
+static Float next_xramp_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_xramp1_2_to_float(sf) * next_ramp_to_float(sf) * next_ptree_xramp_to_float(sf));
+}
+
+static Float previous_xramp_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_xramp1_2_to_float(sf) * previous_ramp_to_float(sf) * previous_ptree_xramp_to_float(sf));
+}
+
+/* -------- xramp on ptree on ramp2 -------- */
+
+static Float next_xramp_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp_to_float(sf) * READER_SCALER(sf) * next_ptree_ramp2_to_float(sf));
+}
+
+static Float previous_xramp_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp_to_float(sf) * READER_SCALER(sf) * previous_ptree_ramp2_to_float(sf));
+}
+
+/* -------- xramp on ptree on ramp3 -------- */
+
+static Float next_xramp_ptree_ramp3(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp_to_float(sf) * READER_SCALER(sf) * next_ptree_ramp3_to_float(sf));
+}
+
+static Float previous_xramp_ptree_ramp3(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp_to_float(sf) * READER_SCALER(sf) * previous_ptree_ramp3_to_float(sf));
+}
+
+/* -------- ptree on xramp on ramp -------- */
+
+static Float next_ptree_xramp_ramp_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp_ramp_to_float(sf));
+}
+
+static Float previous_ptree_xramp_ramp_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp_ramp_to_float(sf));
+}
+
+/* -------- ramp on ptree on xramp on ramp -------- */
+
+static Float next_ramp_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp1_2_to_float(sf) * next_ptree_xramp_ramp_to_float(sf));
+}
+
+static Float previous_ramp_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp1_2_to_float(sf) * previous_ptree_xramp_ramp_to_float(sf));
+}
+
+/* -------- xramp on ptree on xramp on ramp -------- */
+
+static Float next_xramp_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) 
+    return(next_sound_as_float(sf)); 
+  else return(next_xramp1_2_to_float(sf) * READER_SCALER(sf) * next_ptree_xramp_ramp_to_float(sf));
+}
+
+static Float previous_xramp_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) 
+    return(previous_sound_as_float(sf)); 
+  else return(previous_xramp1_2_to_float(sf) * READER_SCALER(sf) * previous_ptree_xramp_ramp_to_float(sf));
+}
+
+/* -------- ptree on xramp on ramp2 -------- */
+
+static Float next_ptree_xramp_ramp2_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_xramp_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_xramp_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp_ramp2_to_float(sf));
+}
+
+static Float previous_ptree_xramp_ramp2_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_xramp_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_xramp_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp_ramp2_to_float(sf));
+}
+
+/* -------- ptree on xramp on ramp3 -------- */
+
+static Float next_ptree_xramp_ramp3_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_xramp_ramp3_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_xramp_ramp3(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp_ramp3_to_float(sf));
+}
+
+static Float previous_ptree_xramp_ramp3_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_xramp_ramp3_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_xramp_ramp3(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp_ramp3_to_float(sf));
+}
+
+/* -------- ptree on xramp2 on ramp -------- */
+
+static Float next_ptree_xramp2_ramp_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_xramp2_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_xramp2_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp2_ramp_to_float(sf));
+}
+
+static Float previous_ptree_xramp2_ramp_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_xramp2_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_xramp2_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp2_ramp_to_float(sf));
+}
+
+
+/* -------- ramp on ptree on xramp2 on ramp -------- */
+
+static Float next_ramp_ptree_xramp2_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp1_2_to_float(sf) * next_ptree_xramp2_ramp_to_float(sf));
+}
+
+static Float previous_ramp_ptree_xramp2_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp1_2_to_float(sf) * previous_ptree_xramp2_ramp_to_float(sf));
+}
+
+/* -------- ramp2 on ptree on xramp on ramp -------- */
+
+static Float next_ramp2_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp2_2_to_float(sf) * next_ptree_xramp_ramp_to_float(sf));
+}
+
+static Float previous_ramp2_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp2_2_to_float(sf) * previous_ptree_xramp_ramp_to_float(sf));
+}
+
+
+/* -------- ptree on xramp2 on ramp2 -------- */
+
+static Float next_ptree_xramp2_ramp2_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_xramp2_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
+  return(val1);
+}
+
+static Float next_ptree_xramp2_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp2_ramp2_to_float(sf));
+}
+
+static Float previous_ptree_xramp2_ramp2_to_float(snd_fd *sf)
+{
+  Float val1;
+  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_xramp2_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  if (sf->ptree1)
+    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
+  return(val1);
+}
+
+static Float previous_ptree_xramp2_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp2_ramp2_to_float(sf));
+}
+
+/* -------- ramp on ptree on xramp on ramp2 -------- */
+
+static Float next_ramp_ptree_xramp_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp1_3_to_float(sf) * next_ptree_xramp_ramp2_to_float(sf));
+}
+
+static Float previous_ramp_ptree_xramp_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp1_3_to_float(sf) * previous_ptree_xramp_ramp2_to_float(sf));
+}
+
+/* -------- xramp on ptree on xramp on ramp2 -------- */
+
+static Float next_xramp_ptree_xramp_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last) 
+    return(next_sound_as_float(sf)); 
+  else return(READER_SCALER(sf) * next_xramp1_2_to_float(sf) * next_ptree_xramp_ramp2_to_float(sf));
+}
+
+static Float previous_xramp_ptree_xramp_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first) 
+    return(previous_sound_as_float(sf)); 
+  else return(READER_SCALER(sf) * previous_xramp1_2_to_float(sf) * previous_ptree_xramp_ramp2_to_float(sf));
+}
+
+/* -------- xramp on ramp2 on ptree on xramp -------- */
+
+static Float next_xramp_ramp2_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) 
+    return(next_sound_as_float(sf)); 
+  else return(next_ramp2_to_float(sf) * next_xramp1_2_to_float(sf) * next_ptree_xramp_to_float(sf));
+}
+
+static Float previous_xramp_ramp2_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) 
+    return(previous_sound_as_float(sf)); 
+  else return(previous_ramp2_to_float(sf) * previous_xramp1_2_to_float(sf) * previous_ptree_xramp_to_float(sf));
+}
+
+/* -------- xramp2 on ramp on ptree on ramp -------- */
+
+static Float next_xramp2_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) 
+    return(next_sound_as_float(sf)); 
+  else return(next_ramp1_2_to_float(sf) * next_xramp2_to_float(sf) * next_ptree_ramp_to_float(sf));
+}
+
+static Float previous_xramp2_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) 
+    return(previous_sound_as_float(sf)); 
+  else return(previous_ramp1_2_to_float(sf) * previous_xramp2_to_float(sf) * previous_ptree_ramp_to_float(sf));
+}
+
+/* -------- xramp on ramp on ptree on xramp on ramp -------- */
+
+static Float next_xramp_ramp_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last) 
+    return(next_sound_as_float(sf)); 
+  else return(next_ramp1_2_to_float(sf) * next_xramp1_2_to_float(sf) * next_ptree_xramp_ramp_to_float(sf));
+}
+
+static Float previous_xramp_ramp_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first) 
+    return(previous_sound_as_float(sf)); 
+  else return(previous_ramp1_2_to_float(sf) * previous_xramp1_2_to_float(sf) * previous_ptree_xramp_ramp_to_float(sf));
+}
+
+
+/* ---------------- xen ---------------- */
+
+static Float xen_to_float(snd_fd *sf, read_direction_t direction)
+{
+  XEN val, val1;
+  if (sf->zero)
+    val1 = C_TO_XEN_DOUBLE(0.0);
+  else val1 = C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc]);
+  if (direction == READ_FORWARD) sf->loc++; else sf->loc--;
+  val = XEN_CALL_3((XEN)(sf->ptree), val1, sf->closure, (direction == READ_FORWARD) ? XEN_TRUE : XEN_FALSE, "xen-channel");
+  return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
+}
+
+static Float next_xen(snd_fd *sf)
+{
+  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(xen_to_float(sf, READ_FORWARD));
+}
+
+static Float previous_xen(snd_fd *sf)
+{
+  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(xen_to_float(sf, READ_BACKWARD));
+}
+
+/* ---------------- xen on ramp ---------------- */
+
+static Float next_xen_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = sf->data[sf->loc++] * next_ramp_to_float(sf);
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_TRUE, "xen-channel");
+      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float previous_xen_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = sf->data[sf->loc--] * previous_ramp_to_float(sf);
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_FALSE, "xen-channel");
+      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* -------- xen on xramp -------- */
+
+static Float next_xen_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_xramp_to_float(sf)), sf->closure, XEN_TRUE, "xen-channel");
+      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float previous_xen_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf)), sf->closure, XEN_FALSE, "xen-channel");
+      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* -------- xen on ramp2 -------- */
+
+static Float next_xen_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = sf->data[sf->loc++] * next_ramp2_to_float(sf);
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_TRUE, "xen-channel");
+      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float previous_xen_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = sf->data[sf->loc--] * previous_ramp2_to_float(sf);
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_FALSE, "xen-channel");
+      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* -------- xen on ramp3 -------- */
+
+static Float next_xen_ramp3(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = sf->data[sf->loc++] * next_ramp3_to_float(sf);
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_TRUE, "xen-channel");
+      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float previous_xen_ramp3(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = sf->data[sf->loc--] * previous_ramp3_to_float(sf);
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_FALSE, "xen-channel");
+      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* ---------------- ramp on xen ---------------- */
+
+static XEN next_xen_arg(snd_fd *sf)
+{
+  XEN val1;
+  if (sf->zero)
+    val1 = C_TO_XEN_DOUBLE(0.0);
+  else val1 = C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc]);
+  sf->loc++;
+  return(val1);
+}
+
+static Float next_ramp_xen(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), next_xen_arg(sf), sf->closure, XEN_TRUE, "xen-channel");
+      return(next_ramp_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static XEN previous_xen_arg(snd_fd *sf)
+{
+  XEN val1;
+  if (sf->zero)
+    val1 = C_TO_XEN_DOUBLE(0.0);
+  else val1 = C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc]);
+  sf->loc--;
+  return(val1);
+}
+
+static Float previous_ramp_xen(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), previous_xen_arg(sf), sf->closure, XEN_FALSE, "xen-channel");
+      return(previous_ramp_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* ---------------- ramp2 on xen ---------------- */
+
+static Float next_ramp2_xen(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), next_xen_arg(sf), sf->closure, XEN_TRUE, "xen-channel");
+      return(next_ramp2_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float previous_ramp2_xen(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), previous_xen_arg(sf), sf->closure, XEN_FALSE, "xen-channel");
+      return(previous_ramp2_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* ---------------- ramp3 on xen ---------------- */
+
+static Float next_ramp3_xen(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), next_xen_arg(sf), sf->closure, XEN_TRUE, "xen-channel");
+      return(next_ramp3_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float previous_ramp3_xen(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), previous_xen_arg(sf), sf->closure, XEN_FALSE, "xen-channel");
+      return(previous_ramp3_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* ---------------- xramp on xen ---------------- */
+
+static Float next_xramp_xen(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), next_xen_arg(sf), sf->closure, XEN_TRUE, "xen-channel");
+      return(next_xramp_to_float(sf) * READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float previous_xramp_xen(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), previous_xen_arg(sf), sf->closure, XEN_FALSE, "xen-channel");
+      return(previous_xramp_to_float(sf) * READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* -------- ramp on xen on ramp -------- */
+
+static Float next_ramp_xen_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc++] * next_ramp_to_float(sf)), sf->closure, XEN_TRUE, "xen-channel");
+      return(next_ramp1_2_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float previous_ramp_xen_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc--] * previous_ramp_to_float(sf)), sf->closure, XEN_FALSE, "xen-channel");
+      return(previous_ramp1_2_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* -------- ramp2 on xen on ramp -------- */
+
+static Float next_ramp2_xen_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc++] * next_ramp_to_float(sf)), sf->closure, XEN_TRUE, "xen-channel");
+      return(next_ramp2_2_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float previous_ramp2_xen_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc--] * previous_ramp_to_float(sf)), sf->closure, XEN_FALSE, "xen-channel");
+      return(previous_ramp2_2_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* -------- ramp on xen on ramp2 -------- */
+
+static Float next_ramp_xen_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc++] * next_ramp2_to_float(sf)), sf->closure, XEN_TRUE, "xen-channel");
+      return(next_ramp1_3_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float previous_ramp_xen_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else 
+    {
+      XEN xval;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc--] * previous_ramp2_to_float(sf)), sf->closure, XEN_FALSE, "xen-channel");
+      return(previous_ramp1_3_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+/* ---------------- ptree on ramp on ptree ---------------- */
+
+static Float next_split_ptree2_to_float(snd_fd *sf, Float val1, Float val2)
+{
+  return(evaluate_ptreec(sf->ptree1, 
+			 val1 * evaluate_ptreec(sf->ptree, val2, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			 (vct *)XEN_OBJECT_REF(sf->closure1), true));
+}
+
+static Float next_split_ptree_arg(snd_fd *sf)
+{
+  Float val1 = 0.0;
+  if (!(sf->zero))
+    val1 = READER_PTREE_SCALER(sf) * sf->data[sf->loc];
+  sf->loc++;
+  return(val1);
+}
+
+static Float next_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_split_ptree_arg(snd_fd *sf)
+{
+  Float val1 = 0.0;
+  if (!(sf->zero))
+    val1 = READER_PTREE_SCALER(sf) * sf->data[sf->loc];
+  sf->loc--;
+  return(val1);
+}
+
+static Float previous_split_ptree2_to_float(snd_fd *sf, Float val1, Float val2)
+{
+  return(evaluate_ptreec(sf->ptree1, 
+			 val1 * evaluate_ptreec(sf->ptree, val2, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			 (vct *)XEN_OBJECT_REF(sf->closure1), false));
+}
+
+static Float previous_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ptree on ramp2 on ptree ---------------- */
+
+static Float next_ptree_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp2_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ptree_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp2_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ptree on ramp3 on ptree ---------------- */
+
+static Float next_ptree_ramp3_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp3_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ptree_ramp3_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp3_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ptree on ramp on ptree on ramp ---------------- */
+
+static Float next_ptree_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp1_2_to_float(sf), next_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp1_2_to_float(sf), previous_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ptree on xramp on ptree on ramp ---------------- */
+
+static Float next_ptree_xramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp_to_float(sf), sf->data[sf->loc++] * next_ramp_to_float(sf)));
+}
+
+static Float previous_ptree_xramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp_to_float(sf), sf->data[sf->loc--] * previous_ramp_to_float(sf)));
+}
+
+/* ---------------- ptree on ramp on ptree on xramp ---------------- */
+
+static Float next_ptree_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      next_split_ptree2_to_float(sf, next_ramp_to_float(sf), next_xramp_to_float(sf) * next_split_ptree_arg(sf)));
+}
+
+static Float previous_ptree_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), previous_xramp_to_float(sf) * previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ramp on ptree on xramp on ptree ---------------- */
+
+static Float next_ramp_ptree_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ramp_ptree_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- xramp on ptree on ramp on ptree ---------------- */
+
+static Float next_xramp_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_xramp_to_float(sf) * READER_SCALER(sf) *
+	      next_split_ptree2_to_float(sf, next_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_xramp_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_xramp_to_float(sf) * READER_SCALER(sf) *
+	      previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- xramp2 on ptree on ramp on ptree ---------------- */
+
+static Float next_xramp2_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_xramp2_to_float(sf) * READER_SCALER(sf) *
+	      next_split_ptree2_to_float(sf, next_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_xramp2_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_xramp2_to_float(sf) * READER_SCALER(sf) *
+	      previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- xramp on ptree on ramp2 on ptree ---------------- */
+
+static Float next_xramp_ptree_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_xramp_to_float(sf) * READER_SCALER(sf) *
+	      next_split_ptree2_to_float(sf, next_ramp2_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_xramp_ptree_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_xramp_to_float(sf) * READER_SCALER(sf) *
+	      previous_split_ptree2_to_float(sf, previous_ramp2_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ramp on ptree on ramp2 on ptree ---------------- */
+
+static Float next_ramp_ptree_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp1_3_to_float(sf) * next_split_ptree2_to_float(sf, next_ramp2_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ramp_ptree_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp1_3_to_float(sf) * previous_split_ptree2_to_float(sf, previous_ramp2_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ramp on ptree on xramp on ramp on ptree ---------------- */
+
+static Float next_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp1_2_to_float(sf) * next_split_ptree2_to_float(sf, next_xramp_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp1_2_to_float(sf) * previous_split_ptree2_to_float(sf, previous_xramp_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- xramp on ptree on xramp on ramp on ptree ---------------- */
+
+static Float next_xramp_ptree_xramp_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_xramp1_2_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, next_xramp_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_xramp_ptree_xramp_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_xramp1_2_to_float(sf) * previous_split_ptree2_to_float(sf, previous_xramp_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ptree on xramp on ramp2 on ptree ---------------- */
+
+static Float next_ptree_xramp_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) *
+	      next_split_ptree2_to_float(sf, next_xramp_to_float(sf) * next_ramp2_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ptree_xramp_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) *
+	      previous_split_ptree2_to_float(sf, previous_xramp_to_float(sf) * previous_ramp2_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ptree on xramp2 on ramp on ptree ---------------- */
+
+static Float next_ptree_xramp2_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) *
+	      next_split_ptree2_to_float(sf, next_xramp2_to_float(sf) * next_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ptree_xramp2_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) *
+	      previous_split_ptree2_to_float(sf, previous_xramp2_to_float(sf) * previous_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ramp on ptree on ramp on ptree ---------------- */
+
+static Float next_ramp_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp1_2_to_float(sf) * next_split_ptree2_to_float(sf, next_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ramp_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp1_2_to_float(sf) * previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ramp2 on ptree on ramp on ptree ---------------- */
+
+static Float next_ramp2_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp2_2_to_float(sf) * next_split_ptree2_to_float(sf, next_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ramp2_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp2_2_to_float(sf) * previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ramp2 on ptree on ramp2 on ptree ---------------- */
+
+static Float next_ramp2_ptree_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp2_3_to_float(sf) * next_split_ptree2_to_float(sf, next_ramp2_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ramp2_ptree_ramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp2_3_to_float(sf) * previous_split_ptree2_to_float(sf, previous_ramp2_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ramp on ptree on ramp3 on ptree ---------------- */
+
+static Float next_ramp_ptree_ramp3_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp1_4_to_float(sf) * next_split_ptree2_to_float(sf, next_ramp3_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ramp_ptree_ramp3_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp1_4_to_float(sf) * previous_split_ptree2_to_float(sf, previous_ramp3_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ramp3 on ptree on ramp on ptree ---------------- */
+
+static Float next_ramp3_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp3_2_to_float(sf) * next_split_ptree2_to_float(sf, next_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ramp3_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp3_2_to_float(sf) * previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ramp2 on ptree on xramp on ptree ---------------- */
+
+static Float next_ramp2_ptree_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp2_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ramp2_ptree_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp2_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- xramp on ptree on xramp on ptree ---------------- */
+
+static Float next_xramp_ptree_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_xramp1_2_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_xramp_ptree_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_xramp1_2_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ptree on xramp on ptree on xramp ---------------- */
+
+static Float next_ptree_xramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp1_2_to_float(sf), next_xramp_to_float(sf) * next_split_ptree_arg(sf)));
+}
+
+static Float previous_ptree_xramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) *
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp1_2_to_float(sf), previous_xramp_to_float(sf) * previous_split_ptree_arg(sf)));
+}
+
+/* ---------------- ptree on ramp on ptree on ramp2 ---------------- */
+
+static Float next_ptree_ramp_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp1_3_to_float(sf), sf->data[sf->loc++] * next_ramp2_to_float(sf)));
+}
+
+static Float previous_ptree_ramp_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp1_3_to_float(sf), sf->data[sf->loc--] * previous_ramp2_to_float(sf)));
+}
+
+/* ---------------- ptree on xramp on ptree on ramp2 ---------------- */
+
+static Float next_ptree_xramp_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp_to_float(sf), sf->data[sf->loc++] * next_ramp2_to_float(sf)));
+}
+
+static Float previous_ptree_xramp_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp_to_float(sf), sf->data[sf->loc--] * previous_ramp2_to_float(sf)));
+}
+
+/* ---------------- ptree on ramp2 on ptree on xramp ---------------- */
+
+static Float next_ptree_ramp2_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      next_split_ptree2_to_float(sf, next_ramp2_to_float(sf), sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_xramp_to_float(sf)));
+}
+
+static Float previous_ptree_ramp2_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      previous_split_ptree2_to_float(sf, previous_ramp2_to_float(sf), sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf)));
+}
+
+/* ---------------- ptree on ramp2 on ptree on ramp ---------------- */
+
+static Float next_ptree_ramp2_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp2_2_to_float(sf), next_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_ramp2_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp2_2_to_float(sf), previous_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ptree on ramp2 on ptree on ramp2 ---------------- */
+
+static Float next_ptree_ramp2_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp2_3_to_float(sf), next_ramp2_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_ramp2_ptree_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp2_3_to_float(sf), previous_ramp2_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ptree on ramp on ptree on ramp3 ---------------- */
+
+static Float next_ptree_ramp_ptree_ramp3(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp1_4_to_float(sf), next_ramp3_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_ramp_ptree_ramp3(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp1_4_to_float(sf), previous_ramp3_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ptree on ramp3 on ptree on ramp ---------------- */
+
+static Float next_ptree_ramp3_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp3_2_to_float(sf), next_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_ramp3_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp3_2_to_float(sf), previous_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ramp on ptree on ramp on ptree on ramp ---------------- */
+
+static Float next_ramp_ptree_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp1_3_to_float(sf) * next_split_ptree2_to_float(sf, next_ramp1_2_to_float(sf), next_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ramp_ptree_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp1_3_to_float(sf) * previous_split_ptree2_to_float(sf, previous_ramp1_2_to_float(sf), previous_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ptree on xramp2 on ptree on ramp ---------------- */
+
+static Float next_ptree_xramp2_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp2_to_float(sf), next_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_xramp2_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp2_to_float(sf), previous_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ptree on ramp on ptree on xramp2 ---------------- */
+
+static Float next_ptree_ramp_ptree_xramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      next_split_ptree2_to_float(sf, next_ramp_to_float(sf), READER_PTREE_SCALER(sf) * next_xramp2_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_ramp_ptree_xramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), READER_PTREE_SCALER(sf) * previous_xramp2_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ptree on xramp on ramp on ptree on ramp ---------------- */
+
+static Float next_ptree_xramp_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      next_split_ptree2_to_float(sf, next_xramp_to_float(sf) * next_ramp1_2_to_float(sf), next_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_xramp_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      previous_split_ptree2_to_float(sf, previous_xramp_to_float(sf) * previous_ramp1_2_to_float(sf), previous_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ptree on xramp on ramp on ptree on xramp ---------------- */
+
+static Float next_ptree_xramp_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      next_split_ptree2_to_float(sf, next_xramp1_2_to_float(sf) * next_ramp_to_float(sf), READER_PTREE_SCALER(sf) * next_xramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_xramp_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      previous_split_ptree2_to_float(sf, previous_xramp1_2_to_float(sf) * previous_ramp_to_float(sf), READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ptree on ramp on ptree on xramp on ramp ---------------- */
+
+static Float next_ptree_ramp_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp1_2_to_float(sf), next_xramp_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_ramp_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp1_2_to_float(sf), previous_xramp_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ptree on xramp on ptree on xramp on ramp ---------------- */
+
+static Float next_ptree_xramp_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp1_2_to_float(sf), next_xramp_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ptree_xramp_ptree_xramp_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp1_2_to_float(sf), previous_xramp_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- xramp on ptree on ramp on ptree on xramp ---------------- */
+
+static Float next_xramp_ptree_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_xramp1_2_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, next_ramp_to_float(sf), READER_PTREE_SCALER(sf) * next_xramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_xramp_ptree_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_xramp1_2_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ramp on ptree on xramp on ptree on xramp ---------------- */
+
+static Float next_ramp_ptree_xramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp1_2_to_float(sf), READER_PTREE_SCALER(sf) * next_xramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ramp_ptree_xramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp1_2_to_float(sf), READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ramp on ptree on ramp on ptree on xramp ---------------- */
+
+static Float next_ramp_ptree_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp1_2_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, next_ramp_to_float(sf), READER_PTREE_SCALER(sf) * next_xramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ramp_ptree_ramp_ptree_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp1_2_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- ramp on ptree on xramp on ptree on ramp ---------------- */
+
+static Float next_ramp_ptree_xramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp1_2_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp_to_float(sf), next_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_ramp_ptree_xramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp1_2_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp_to_float(sf), previous_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- xramp on ptree on xramp on ptree on ramp ---------------- */
+
+static Float next_xramp_ptree_xramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_xramp1_2_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp_to_float(sf), next_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_xramp_ptree_xramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_xramp1_2_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp_to_float(sf), previous_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+/* ---------------- xramp on ptree on ramp on ptree on ramp ---------------- */
+
+static Float next_xramp_ptree_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_xramp_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, next_ramp1_2_to_float(sf), next_ramp_to_float(sf) * sf->data[sf->loc++]));
+}
+
+static Float previous_xramp_ptree_ramp_ptree_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_xramp_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, previous_ramp1_2_to_float(sf), previous_ramp_to_float(sf) * sf->data[sf->loc--]));
+}
+
+
+/* -------- ptree on xramp on ptree -------- */
+
+static Float next_ptree_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ptree_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* -------- ptree on xramp2 on ptree -------- */
+
+static Float next_ptree_xramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp2_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ptree_xramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp2_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* -------- ramp on ptree on xramp2 on ptree -------- */
+
+static Float next_ramp_ptree_xramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_ramp_to_float(sf) * next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp2_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ramp_ptree_xramp2_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_ramp_to_float(sf) * previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp2_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* -------- ptree on xramp on ramp on ptree -------- */
+
+static Float next_ptree_xramp_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_xramp_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_ptree_xramp_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_xramp_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* -------- xramp on ramp on ptree on ramp on ptree -------- */
+
+static Float next_xramp_ramp_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_xramp_to_float(sf) * next_ramp1_2_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, next_ramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_xramp_ramp_ptree_ramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_xramp_to_float(sf) * previous_ramp1_2_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+/* -------- xramp on ramp on ptree on xramp on ptree -------- */
+
+static Float next_xramp_ramp_ptree_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound_as_float(sf));
+  else return(next_xramp1_2_to_float(sf) * next_ramp_to_float(sf) * 
+	      next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp_to_float(sf), next_split_ptree_arg(sf)));
+}
+
+static Float previous_xramp_ramp_ptree_xramp_ptree(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound_as_float(sf));
+  else return(previous_xramp1_2_to_float(sf) * previous_ramp_to_float(sf) * 
+	      previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp_to_float(sf), previous_split_ptree_arg(sf)));
+}
+
+
+
+/* -------------------------------------------------------------------------------- */
+/* these are the virtual-op accessor choices 
+   (ramp->xramp are flipped in many cases to reduce clutter, a*b=b*a so (a(b))=(b(a))) 
+   ptree zero cases use accessor-internal switch sf->zero
+   complex cases simply return float and use generic conversion to sample
+*/
+
+enum {ED_SIMPLE, ED_ZERO,
+      
+      /* pure (x)ramp ops */
+      ED_RAMP, ED_RAMP2, ED_RAMP3, ED_RAMP4,
+      ED_XRAMP, ED_XRAMP2, ED_XRAMP_RAMP, 
+      ED_XRAMP_RAMP2, ED_XRAMP2_RAMP,
+      ED_XRAMP_RAMP3, ED_XRAMP2_RAMP2,
+
+      /* single ptree ops */
+      ED_PTREE, ED_PTREE_RAMP, ED_PTREE_XRAMP, ED_PTREE_ZERO, ED_PTREE_RAMP2, ED_PTREE_RAMP3,
+      ED_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP2,
+      ED_RAMP_PTREE, ED_RAMP_PTREE_ZERO, 
+      ED_RAMP2_PTREE, ED_RAMP2_PTREE_ZERO, 
+      ED_RAMP3_PTREE, ED_RAMP3_PTREE_ZERO,
+      ED_XRAMP_PTREE, ED_XRAMP_PTREE_ZERO, 
+      ED_XRAMP2_PTREE, ED_XRAMP2_PTREE_ZERO, 
+      ED_RAMP_PTREE_RAMP, ED_RAMP2_PTREE_RAMP, ED_RAMP_PTREE_RAMP2,
+      ED_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_RAMP, ED_RAMP2_PTREE_XRAMP,
+      ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_ZERO,
+      ED_XRAMP_PTREE_XRAMP, 
+      ED_XRAMP_RAMP2_PTREE, ED_XRAMP_RAMP2_PTREE_ZERO, 
+      ED_XRAMP2_RAMP_PTREE, ED_XRAMP2_RAMP_PTREE_ZERO, 
+      ED_PTREE_XRAMP2_RAMP, ED_PTREE_XRAMP_RAMP2, ED_XRAMP_PTREE_RAMP2, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP,
+      ED_XRAMP2_PTREE_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP2, 
+
+      ED_RAMP4_PTREE, ED_RAMP4_PTREE_ZERO, ED_PTREE_RAMP4,
+      ED_RAMP3_PTREE_RAMP, ED_RAMP_PTREE_RAMP3,
+      ED_RAMP2_PTREE_RAMP2, ED_RAMP3_PTREE_XRAMP, ED_XRAMP_PTREE_RAMP3,
+      ED_RAMP2_PTREE_XRAMP2, ED_XRAMP2_PTREE_RAMP2,
+      ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP2, ED_RAMP_PTREE_XRAMP2_RAMP,
+      ED_PTREE_XRAMP_RAMP3, ED_PTREE_XRAMP2_RAMP2,
+      ED_XRAMP_RAMP3_PTREE, ED_XRAMP_RAMP3_PTREE_ZERO, ED_XRAMP2_RAMP2_PTREE, ED_XRAMP2_RAMP2_PTREE_ZERO,
+      ED_XRAMP_RAMP_PTREE_RAMP2, ED_XRAMP_RAMP2_PTREE_RAMP, ED_RAMP_PTREE_XRAMP_RAMP2, ED_XRAMP_RAMP2_PTREE_XRAMP,
+      ED_XRAMP2_RAMP_PTREE_RAMP, ED_RAMP2_PTREE_XRAMP_RAMP,
+
+      /* double ptree ops */
+      ED_PTREE2, ED_PTREE2_RAMP, ED_PTREE2_XRAMP, ED_PTREE2_ZERO, ED_PTREE2_RAMP2, ED_PTREE2_RAMP3,
+      ED_PTREE2_XRAMP_RAMP, ED_PTREE2_XRAMP2,
+      ED_RAMP_PTREE2, ED_RAMP_PTREE2_ZERO, 
+      ED_RAMP2_PTREE2, ED_RAMP2_PTREE2_ZERO, 
+      ED_RAMP3_PTREE2, ED_RAMP3_PTREE2_ZERO,
+      ED_XRAMP_PTREE2, ED_XRAMP_PTREE2_ZERO, 
+      ED_XRAMP2_PTREE2, ED_XRAMP2_PTREE2_ZERO, 
+      ED_RAMP_PTREE2_RAMP, ED_RAMP2_PTREE2_RAMP, ED_RAMP_PTREE2_RAMP2,
+      ED_RAMP_PTREE2_XRAMP, ED_XRAMP_PTREE2_RAMP, ED_RAMP2_PTREE2_XRAMP,
+      ED_XRAMP_RAMP_PTREE2, ED_XRAMP_RAMP_PTREE2_ZERO,
+      ED_XRAMP_PTREE2_XRAMP, 
+      ED_XRAMP_RAMP2_PTREE2, ED_XRAMP_RAMP2_PTREE2_ZERO, 
+      ED_XRAMP2_RAMP_PTREE2, ED_XRAMP2_RAMP_PTREE2_ZERO, 
+      ED_PTREE2_XRAMP2_RAMP, ED_PTREE2_XRAMP_RAMP2, ED_XRAMP_PTREE2_RAMP2, ED_XRAMP_RAMP_PTREE2_RAMP, ED_XRAMP_RAMP_PTREE2_XRAMP,
+      ED_XRAMP2_PTREE2_RAMP, ED_XRAMP_PTREE2_XRAMP_RAMP, ED_RAMP_PTREE2_XRAMP_RAMP, ED_RAMP_PTREE2_XRAMP2, 
+
+      ED_RAMP4_PTREE2, ED_RAMP4_PTREE2_ZERO, ED_PTREE2_RAMP4,
+      ED_RAMP3_PTREE2_RAMP, ED_RAMP_PTREE2_RAMP3,
+      ED_RAMP2_PTREE2_RAMP2, ED_RAMP3_PTREE2_XRAMP, ED_XRAMP_PTREE2_RAMP3,
+      ED_RAMP2_PTREE2_XRAMP2, ED_XRAMP2_PTREE2_RAMP2,
+      ED_XRAMP_RAMP_PTREE2_XRAMP_RAMP, ED_XRAMP_PTREE2_XRAMP_RAMP2, ED_RAMP_PTREE2_XRAMP2_RAMP,
+      ED_PTREE2_XRAMP_RAMP3, ED_PTREE2_XRAMP2_RAMP2,
+      ED_XRAMP_RAMP3_PTREE2, ED_XRAMP_RAMP3_PTREE2_ZERO, ED_XRAMP2_RAMP2_PTREE2, ED_XRAMP2_RAMP2_PTREE2_ZERO,
+      ED_XRAMP_RAMP_PTREE2_RAMP2, ED_XRAMP_RAMP2_PTREE2_RAMP, ED_RAMP_PTREE2_XRAMP_RAMP2,
+      ED_XRAMP_RAMP2_PTREE2_XRAMP, ED_XRAMP2_RAMP_PTREE2_RAMP, ED_RAMP2_PTREE2_XRAMP_RAMP, 
+
+      /* double ptree split ops */
+      ED_PTREE_RAMP2_PTREE, ED_PTREE_RAMP2_PTREE_ZERO, 
+      ED_PTREE_RAMP_PTREE, ED_PTREE_RAMP_PTREE_ZERO, 
+      ED_PTREE_RAMP3_PTREE, ED_PTREE_RAMP3_PTREE_ZERO,
+      ED_PTREE_XRAMP_PTREE, ED_PTREE_XRAMP_PTREE_ZERO,
+      ED_PTREE_RAMP2_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP2, ED_RAMP_PTREE_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP,
+
+      ED_RAMP2_PTREE_RAMP_PTREE, ED_RAMP2_PTREE_RAMP_PTREE_ZERO,
+      ED_XRAMP_PTREE_RAMP_PTREE, ED_XRAMP_PTREE_RAMP_PTREE_ZERO,
+      ED_RAMP_PTREE_XRAMP_PTREE, ED_RAMP_PTREE_XRAMP_PTREE_ZERO, 
+      ED_PTREE_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_XRAMP_PTREE_RAMP,
+      ED_PTREE_RAMP_PTREE_XRAMP,
+
+      ED_RAMP_PTREE_RAMP2_PTREE, ED_RAMP_PTREE_RAMP2_PTREE_ZERO,
+      ED_XRAMP_PTREE_RAMP2_PTREE, ED_XRAMP_PTREE_RAMP2_PTREE_ZERO,
+      ED_RAMP2_PTREE_XRAMP_PTREE, ED_RAMP2_PTREE_XRAMP_PTREE_ZERO, 
+      ED_PTREE_XRAMP_RAMP2_PTREE, ED_PTREE_XRAMP_RAMP2_PTREE_ZERO, 
+      ED_PTREE_XRAMP2_RAMP_PTREE, ED_PTREE_XRAMP2_RAMP_PTREE_ZERO, 
+      ED_PTREE_XRAMP_PTREE_RAMP2, ED_PTREE_RAMP2_PTREE_XRAMP,
+      ED_PTREE_XRAMP2_PTREE, ED_PTREE_XRAMP2_PTREE_ZERO,
+      ED_RAMP_PTREE_RAMP_PTREE, ED_RAMP_PTREE_RAMP_PTREE_ZERO,
+      ED_XRAMP_PTREE_XRAMP_PTREE, ED_XRAMP_PTREE_XRAMP_PTREE_ZERO,
+      ED_PTREE_XRAMP_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO,
+
+      ED_XRAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_PTREE_XRAMP_RAMP_PTREE_ZERO,
+      ED_XRAMP_RAMP_PTREE_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_RAMP_PTREE_ZERO,
+      ED_XRAMP_RAMP_PTREE_XRAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_PTREE_ZERO,
+      ED_XRAMP2_PTREE_RAMP_PTREE, ED_XRAMP2_PTREE_RAMP_PTREE_ZERO,
+      ED_RAMP_PTREE_XRAMP2_PTREE, ED_RAMP_PTREE_XRAMP2_PTREE_ZERO,
+
+      ED_RAMP2_PTREE_RAMP2_PTREE, ED_RAMP2_PTREE_RAMP2_PTREE_ZERO,
+      ED_RAMP_PTREE_RAMP3_PTREE, ED_RAMP_PTREE_RAMP3_PTREE_ZERO,
+      ED_RAMP3_PTREE_RAMP_PTREE, ED_RAMP3_PTREE_RAMP_PTREE_ZERO,
+      ED_PTREE_RAMP2_PTREE_RAMP2, ED_PTREE_RAMP_PTREE_RAMP3, ED_PTREE_RAMP3_PTREE_RAMP,
+
+      ED_XRAMP_PTREE_RAMP_PTREE_RAMP, ED_XRAMP_PTREE_XRAMP_PTREE_RAMP, ED_RAMP_PTREE_XRAMP_PTREE_RAMP,
+      ED_PTREE_RAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_RAMP,
+      ED_PTREE_XRAMP2_PTREE_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, ED_RAMP_PTREE_RAMP_PTREE_XRAMP,
+      ED_XRAMP_PTREE_RAMP_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP_PTREE_XRAMP, ED_PTREE_RAMP_PTREE_XRAMP2,
+
+      /* xen ops */
+      ED_XEN, ED_XEN_RAMP, ED_XEN_XRAMP, ED_XEN_ZERO, ED_XEN_RAMP2, ED_XEN_RAMP3,
+      ED_RAMP_XEN, ED_RAMP2_XEN, ED_RAMP3_XEN, ED_RAMP_XEN_ZERO, ED_RAMP2_XEN_ZERO, ED_RAMP3_XEN_ZERO,
+      ED_XRAMP_XEN, ED_XRAMP_XEN_ZERO,
+      ED_RAMP_XEN_RAMP, ED_RAMP2_XEN_RAMP, ED_RAMP_XEN_RAMP2,
+      NUM_OPS
+};
+
+typedef struct {
+  int type, add_ramp, add_xramp, add_ptree, add_xen, ramps, xramps;
+  bool ptree_zero;
+  char *name;
+  Float (*next)(struct snd_fd *sf);  
+  Float (*previous)(struct snd_fd *sf);  
+} fragment_type_info;
+
+/* this is a kind of state machine for the virtual editor: if, for example, the current
+     op is ed_ramp and we want to add an xramp, we look at the add_xramp field of 
+     ed_ramp's type_info struct, and if it's not -1, the add_xramp field is the
+     new virtual editor op; otherwise the op is collapsed to a change edit.
+     So, to add a new entry, make the accessor, and fill in the fields that
+     can reach it.  Since, for example, ramp->xramp is flipped to xramp->ramp
+     since a(b()) == b(a()) in this case, there can be several ways to reach
+     a given op. Then fix the ramp segments in choose_accessor.  The first
+     struct field is redundant, but makes editing this table much easier. 
+*/
+
+static fragment_type_info type_info[NUM_OPS] = {
+  {ED_SIMPLE, ED_RAMP, ED_XRAMP, ED_PTREE, ED_XEN, 0, 0, false, "ed_simple", NULL, NULL},
+  {ED_ZERO, ED_ZERO, ED_ZERO, ED_PTREE_ZERO, ED_XEN_ZERO, 0, 0, true, "ed_zero", next_zero, previous_zero},
+
+  {ED_RAMP, ED_RAMP2, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_XEN_RAMP, 1, 0, false, "ed_ramp", next_ramp, previous_ramp},
+  {ED_RAMP2, ED_RAMP3, ED_XRAMP_RAMP2, ED_PTREE_RAMP2, ED_XEN_RAMP2, 2, 0, false, "ed_ramp2", next_ramp2, previous_ramp2},
+  {ED_RAMP3, ED_RAMP4, ED_XRAMP_RAMP3, ED_PTREE_RAMP3, ED_XEN_RAMP3, 3, 0, false, "ed_ramp3", next_ramp3, previous_ramp3},
+  {ED_RAMP4, -1, -1, ED_PTREE_RAMP4, -1, 4, 0, false, "ed_ramp4", next_ramp4, previous_ramp4},
+  {ED_XRAMP, ED_XRAMP_RAMP, ED_XRAMP2, ED_PTREE_XRAMP, ED_XEN_XRAMP, 0, 1, false, "ed_xramp", next_xramp, previous_xramp},
+  {ED_XRAMP2, ED_XRAMP2_RAMP, -1, ED_PTREE_XRAMP2, -1, 0, 2, false, "ed_xramp2", next_xramp2, previous_xramp2},
+  {ED_XRAMP_RAMP, ED_XRAMP_RAMP2, ED_XRAMP2_RAMP, ED_PTREE_XRAMP_RAMP, -1, 1, 1, false, "ed_xramp_ramp", next_xramp_ramp, previous_xramp_ramp},
+  {ED_XRAMP_RAMP2, ED_XRAMP_RAMP3, ED_XRAMP2_RAMP2, ED_PTREE_XRAMP_RAMP2, -1, 2, 1, false, "ed_xramp_ramp2", next_xramp_ramp2, previous_xramp_ramp2},
+  {ED_XRAMP2_RAMP, ED_XRAMP2_RAMP2, -1, ED_PTREE_XRAMP2_RAMP, -1, 1, 2, false, "ed_xramp2_ramp", next_xramp2_ramp, previous_xramp2_ramp},
+  {ED_XRAMP_RAMP3, -1, -1, ED_PTREE_XRAMP_RAMP3, -1, 3, 1, false, "ed_xramp_ramp3", next_xramp_ramp3, previous_xramp_ramp3},
+  {ED_XRAMP2_RAMP2, -1, -1, ED_PTREE_XRAMP2_RAMP2, -1, 2, 2, false, "ed_xramp2_ramp2", next_xramp2_ramp2, previous_xramp2_ramp2},
+
+  {ED_PTREE, ED_RAMP_PTREE, ED_XRAMP_PTREE, ED_PTREE2, -1, 0, 0, false, "ed_ptree", next_ptree, previous_ptree},
+  {ED_PTREE_RAMP, ED_RAMP_PTREE_RAMP, ED_XRAMP_PTREE_RAMP, ED_PTREE2_RAMP, -1, 1, 0, false, "ed_ptree_ramp", next_ptree_ramp, previous_ptree_ramp},
+  {ED_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP, ED_PTREE2_XRAMP, -1, 0, 1, false, "ed_ptree_xramp", next_ptree_xramp, previous_ptree_xramp},
+  {ED_PTREE_ZERO, ED_RAMP_PTREE_ZERO, ED_XRAMP_PTREE_ZERO, ED_PTREE2_ZERO, -1, 0, 0, true, "ed_ptree_zero", next_ptree, previous_ptree},
+  {ED_PTREE_RAMP2, ED_RAMP_PTREE_RAMP2, ED_XRAMP_PTREE_RAMP2, ED_PTREE2_RAMP2, -1, 2, 0, false, "ed_ptree_ramp2", next_ptree_ramp2, previous_ptree_ramp2},
+  {ED_PTREE_RAMP3, ED_RAMP_PTREE_RAMP3, ED_XRAMP_PTREE_RAMP3, ED_PTREE2_RAMP3, -1, 3, 0, false, "ed_ptree_ramp3", next_ptree_ramp3, previous_ptree_ramp3},
+  {ED_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_PTREE2_XRAMP_RAMP, -1, 1, 1, false, "ed_ptree_xramp_ramp", next_ptree_xramp_ramp, previous_ptree_xramp_ramp},
+  {ED_PTREE_XRAMP2, ED_RAMP_PTREE_XRAMP2, -1, ED_PTREE2_XRAMP2, -1, 0, 2, false, "ed_ptree_xramp2", next_ptree_xramp2, previous_ptree_xramp2},
+  {ED_RAMP_PTREE, ED_RAMP2_PTREE, ED_XRAMP_RAMP_PTREE, ED_PTREE_RAMP_PTREE, -1, 1, 0, false, "ed_ramp_ptree", next_ramp_ptree, previous_ramp_ptree},
+  {ED_RAMP_PTREE_ZERO, ED_RAMP2_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_RAMP_PTREE_ZERO, -1, 1, 0, true, "ed_ramp_ptree_zero", next_ramp_ptree, previous_ramp_ptree},
+  {ED_RAMP2_PTREE, ED_RAMP3_PTREE, ED_XRAMP_RAMP2_PTREE, ED_PTREE_RAMP2_PTREE, -1, 2, 0, false, "ed_ramp2_ptree", next_ramp2_ptree, previous_ramp2_ptree},
+  {ED_RAMP2_PTREE_ZERO, ED_RAMP3_PTREE_ZERO, ED_XRAMP_RAMP2_PTREE_ZERO, ED_PTREE_RAMP2_PTREE_ZERO, -1, 2, 0, true, "ed_ramp2_ptree_zero", next_ramp2_ptree, previous_ramp2_ptree},
+  {ED_RAMP3_PTREE, ED_RAMP4_PTREE, ED_XRAMP_RAMP3_PTREE, ED_PTREE_RAMP3_PTREE, -1, 3, 0, false, "ed_ramp3_ptree", next_ramp3_ptree, previous_ramp3_ptree},
+  {ED_RAMP3_PTREE_ZERO, ED_RAMP4_PTREE_ZERO, ED_XRAMP_RAMP3_PTREE_ZERO, ED_PTREE_RAMP3_PTREE_ZERO, -1, 3, 0, true, "ed_ramp3_ptree_zero", next_ramp3_ptree, previous_ramp3_ptree},
+  {ED_XRAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_XRAMP2_PTREE, ED_PTREE_XRAMP_PTREE, -1, 0, 1, false, "ed_xramp_ptree", next_xramp_ptree, previous_xramp_ptree},
+  {ED_XRAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP2_PTREE_ZERO, ED_PTREE_XRAMP_PTREE_ZERO, -1, 0, 1, true, "ed_xramp_ptree_zero", next_xramp_ptree, previous_xramp_ptree},
+  {ED_XRAMP2_PTREE, ED_XRAMP2_RAMP_PTREE, -1, ED_PTREE_XRAMP2_PTREE, -1, 0, 2, false, "ed_xramp2_ptree", next_xramp2_ptree, previous_xramp2_ptree},
+  {ED_XRAMP2_PTREE_ZERO, ED_XRAMP2_RAMP_PTREE_ZERO, -1, ED_PTREE_XRAMP2_PTREE_ZERO, -1, 0, 2, true, "ed_xramp2_ptree_zero", next_xramp2_ptree, previous_xramp2_ptree},
+  {ED_RAMP_PTREE_RAMP, ED_RAMP2_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP, -1, 2, 0, false, "ed_ramp_ptree_ramp", next_ramp_ptree_ramp, previous_ramp_ptree_ramp},
+  {ED_RAMP2_PTREE_RAMP, ED_RAMP3_PTREE_RAMP, ED_XRAMP_RAMP2_PTREE_RAMP, ED_PTREE_RAMP2_PTREE_RAMP, -1, 3, 0, false, "ed_ramp2_ptree_ramp", next_ramp2_ptree_ramp, previous_ramp2_ptree_ramp},
+  {ED_RAMP_PTREE_RAMP2, ED_RAMP2_PTREE_RAMP2, ED_XRAMP_RAMP_PTREE_RAMP2, ED_PTREE_RAMP_PTREE_RAMP2, -1, 3, 0, false, "ed_ramp_ptree_ramp2", next_ramp_ptree_ramp2, previous_ramp_ptree_ramp2},
+  {ED_RAMP_PTREE_XRAMP, ED_RAMP2_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_PTREE_RAMP_PTREE_XRAMP, -1, 1, 1, false, "ed_ramp_ptree_xramp", next_ramp_ptree_xramp, previous_ramp_ptree_xramp},
+  {ED_XRAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP2_PTREE_RAMP, ED_PTREE_XRAMP_PTREE_RAMP, -1, 1, 1, false, "ed_xramp_ptree_ramp", next_xramp_ptree_ramp, previous_xramp_ptree_ramp},
+  {ED_RAMP2_PTREE_XRAMP, ED_RAMP3_PTREE_XRAMP, ED_XRAMP_RAMP2_PTREE_XRAMP, ED_PTREE_RAMP2_PTREE_XRAMP, -1, 2, 1, false, "ed_ramp2_ptree_xramp", next_ramp2_ptree_xramp, previous_ramp2_ptree_xramp},
+  {ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP2_PTREE, ED_XRAMP2_RAMP_PTREE, ED_PTREE_XRAMP_RAMP_PTREE, -1, 1, 1, false, "ed_xramp_ramp_ptree", next_xramp_ramp_ptree, previous_xramp_ramp_ptree},
+  {ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP2_PTREE_ZERO, ED_XRAMP2_RAMP_PTREE_ZERO, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, 1, 1, true, "ed_xramp_ramp_ptree_zero", next_xramp_ramp_ptree, previous_xramp_ramp_ptree},
+  {ED_XRAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, -1, ED_PTREE_XRAMP_PTREE_XRAMP, -1, 0, 2, false, "ed_xramp_ptree_xramp", next_xramp_ptree_xramp, previous_xramp_ptree_xramp},
+  {ED_XRAMP_RAMP2_PTREE, ED_XRAMP_RAMP3_PTREE, ED_XRAMP2_RAMP2_PTREE, ED_PTREE_XRAMP_RAMP2_PTREE, -1, 2, 1, false, "ed_xramp_ramp2_ptree", next_xramp_ramp2_ptree, previous_xramp_ramp2_ptree},
+  {ED_XRAMP_RAMP2_PTREE_ZERO, ED_XRAMP_RAMP3_PTREE_ZERO, ED_XRAMP2_RAMP2_PTREE_ZERO, ED_PTREE_XRAMP_RAMP2_PTREE_ZERO, -1, 2, 1, true, "ed_xramp_ramp2_ptree_zero", next_xramp_ramp2_ptree, previous_xramp_ramp2_ptree},
+  {ED_XRAMP2_RAMP_PTREE, ED_XRAMP2_RAMP2_PTREE, -1, ED_PTREE_XRAMP2_RAMP_PTREE, -1, 1, 2, false, "ed_xramp2_ramp_ptree", next_xramp2_ramp_ptree, previous_xramp2_ramp_ptree},
+  {ED_XRAMP2_RAMP_PTREE_ZERO, ED_XRAMP2_RAMP2_PTREE_ZERO, -1, ED_PTREE_XRAMP2_RAMP_PTREE_ZERO, -1, 1, 2, true, "ed_xramp2_ramp_ptree_zero", next_xramp2_ramp_ptree, previous_xramp2_ramp_ptree},
+  {ED_PTREE_XRAMP2_RAMP, ED_RAMP_PTREE_XRAMP2_RAMP, -1, ED_PTREE2_XRAMP2_RAMP, -1, 1, 2, false, "ed_ptree_xramp2_ramp", next_ptree_xramp2_ramp, previous_ptree_xramp2_ramp},
+  {ED_PTREE_XRAMP_RAMP2, ED_RAMP_PTREE_XRAMP_RAMP2, ED_XRAMP_PTREE_XRAMP_RAMP2, ED_PTREE2_XRAMP_RAMP2, -1, 2, 1, false, "ed_ptree_xramp_ramp2", next_ptree_xramp_ramp2, previous_ptree_xramp_ramp2},
+  {ED_XRAMP_PTREE_RAMP2, ED_XRAMP_RAMP_PTREE_RAMP2, ED_XRAMP2_PTREE_RAMP2, ED_PTREE_XRAMP_PTREE_RAMP2, -1, 2, 1, false, "ed_xramp_ptree_ramp2", next_xramp_ptree_ramp2, previous_xramp_ptree_ramp2},
+  {ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP2_PTREE_RAMP, ED_XRAMP2_RAMP_PTREE_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, 2, 1, false, "ed_xramp_ramp_ptree_ramp", next_xramp_ramp_ptree_ramp, previous_xramp_ramp_ptree_ramp},
+  {ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP2_PTREE_XRAMP, -1, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, 1, 2, false, "ed_xramp_ramp_ptree_xramp", next_xramp_ramp_ptree_xramp, previous_xramp_ramp_ptree_xramp},
+  {ED_XRAMP2_PTREE_RAMP, ED_XRAMP2_RAMP_PTREE_RAMP, -1, ED_PTREE_XRAMP2_PTREE_RAMP, -1, 1, 2, false, "ed_xramp2_ptree_ramp", next_xramp2_ptree_ramp, previous_xramp2_ptree_ramp},
+  {ED_XRAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, 1, 2, false, "ed_xramp_ptree_xramp_ramp", next_xramp_ptree_xramp_ramp, previous_xramp_ptree_xramp_ramp},
+  {ED_RAMP_PTREE_XRAMP_RAMP, ED_RAMP2_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, 2, 1, false, "ed_ramp_ptree_xramp_ramp", next_ramp_ptree_xramp_ramp, previous_ramp_ptree_xramp_ramp},
+  {ED_RAMP_PTREE_XRAMP2, ED_RAMP2_PTREE_XRAMP2, -1, ED_PTREE_RAMP_PTREE_XRAMP2, -1, 1, 2, false, "ed_ramp_ptree_xramp2", next_ramp_ptree_xramp2, previous_ramp_ptree_xramp2},
+  {ED_RAMP4_PTREE, -1, -1, -1, -1, 4, 0, false, "ed_ramp4_ptree", next_ramp4_ptree, previous_ramp4_ptree},
+  {ED_RAMP4_PTREE_ZERO, -1, -1, -1, -1, 4, 0, true, "ed_ramp4_ptree_zero", next_ramp4_ptree, previous_ramp4_ptree},
+  {ED_PTREE_RAMP4, -1, -1, ED_PTREE2_RAMP4, -1, 4, 0, false, "ed_ptree_ramp4", next_ptree_ramp4, previous_ptree_ramp4},
+  {ED_RAMP3_PTREE_RAMP, -1, -1, ED_PTREE_RAMP3_PTREE_RAMP, -1, 4, 0, false, "ed_ramp3_ptree_ramp", next_ramp3_ptree_ramp, previous_ramp3_ptree_ramp},
+  {ED_RAMP_PTREE_RAMP3, -1, -1, ED_PTREE_RAMP_PTREE_RAMP3, -1, 4, 0, false, "ed_ramp_ptree_ramp3", next_ramp_ptree_ramp3, previous_ramp_ptree_ramp3},
+  {ED_RAMP2_PTREE_RAMP2, -1, -1, ED_PTREE_RAMP2_PTREE_RAMP2, -1, 4, 0, false, "ed_ramp2_ptree_ramp2", next_ramp2_ptree_ramp2, previous_ramp2_ptree_ramp2},
+  {ED_RAMP3_PTREE_XRAMP, -1, -1, -1, -1, 3, 1, false, "ed_ramp3_ptree_xramp", next_ramp3_ptree_xramp, previous_ramp3_ptree_xramp},
+  {ED_XRAMP_PTREE_RAMP3, -1, -1, -1, -1, 3, 1, false, "ed_xramp_ptree_ramp3", next_xramp_ptree_ramp3, previous_xramp_ptree_ramp3},
+  {ED_RAMP2_PTREE_XRAMP2, -1, -1, -1, -1, 2, 2, false, "ed_ramp2_ptree_xramp2", next_ramp2_ptree_xramp2, previous_ramp2_ptree_xramp2},
+  {ED_XRAMP2_PTREE_RAMP2, -1, -1, -1, -1, 2, 2, false, "ed_xramp2_ptree_ramp2", next_xramp2_ptree_ramp2, previous_xramp2_ptree_ramp2},
+  {ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, -1, -1, 2, 2, false, "ed_xramp_ramp_ptree_xramp_ramp", next_xramp_ramp_ptree_xramp_ramp, previous_xramp_ramp_ptree_xramp_ramp},
+  {ED_XRAMP_PTREE_XRAMP_RAMP2, -1, -1, -1, -1, 2, 2, false, "ed_xramp_ptree_xramp_ramp2", next_xramp_ptree_xramp_ramp2, previous_xramp_ptree_xramp_ramp2},
+  {ED_RAMP_PTREE_XRAMP2_RAMP, -1, -1, -1, -1, 2, 2, false, "ed_ramp_ptree_xramp2_ramp", next_ramp_ptree_xramp2_ramp, previous_ramp_ptree_xramp2_ramp},
+  {ED_PTREE_XRAMP_RAMP3, -1, -1, ED_PTREE2_XRAMP_RAMP3, -1, 3, 1, false, "ed_ptree_xramp_ramp3", next_ptree_xramp_ramp3, previous_ptree_xramp_ramp3},
+  {ED_PTREE_XRAMP2_RAMP2, -1, -1, ED_PTREE2_XRAMP2_RAMP2, -1, 2, 2, false, "ed_ptree_xramp2_ramp2", next_ptree_xramp2_ramp2, previous_ptree_xramp2_ramp2},
+  {ED_XRAMP_RAMP3_PTREE, -1, -1, -1, -1, 3, 1, false, "ed_xramp_ramp3_ptree", next_xramp_ramp3_ptree, previous_xramp_ramp3_ptree},
+  {ED_XRAMP_RAMP3_PTREE_ZERO, -1, -1, -1, -1, 3, 1, true, "ed_xramp_ramp3_ptree_zero", next_xramp_ramp3_ptree, previous_xramp_ramp3_ptree},
+  {ED_XRAMP2_RAMP2_PTREE, -1, -1, -1, -1, 2, 2, false, "ed_xramp2_ramp2_ptree", next_xramp2_ramp2_ptree, previous_xramp2_ramp2_ptree},
+  {ED_XRAMP2_RAMP2_PTREE_ZERO, -1, -1, -1, -1, 2, 2, true, "ed_xramp2_ramp2_ptree_zero", next_xramp2_ramp2_ptree, previous_xramp2_ramp2_ptree},
+  {ED_XRAMP_RAMP_PTREE_RAMP2, -1, -1, -1, -1, 3, 1, false, "ed_xramp_ramp_ptree_ramp2", next_xramp_ramp_ptree_ramp2, previous_xramp_ramp_ptree_ramp2},
+  {ED_XRAMP_RAMP2_PTREE_RAMP, -1, -1, -1, -1, 3, 1, false, "ed_xramp_ramp2_ptree_ramp", next_xramp_ramp2_ptree_ramp, previous_xramp_ramp2_ptree_ramp},
+  {ED_RAMP_PTREE_XRAMP_RAMP2, -1, -1, -1, -1, 3, 1, false, "ed_ramp_ptree_xramp_ramp2", next_ramp_ptree_xramp_ramp2, previous_ramp_ptree_xramp_ramp2},
+  {ED_XRAMP_RAMP2_PTREE_XRAMP, -1, -1, -1, -1, 2, 2, false, "ed_xramp_ramp2_ptree_xramp", next_xramp_ramp2_ptree_xramp, previous_xramp_ramp2_ptree_xramp},
+  {ED_XRAMP2_RAMP_PTREE_RAMP, -1, -1, -1, -1, 2, 2, false, "ed_xramp2_ramp_ptree_ramp", next_xramp2_ramp_ptree_ramp, previous_xramp2_ramp_ptree_ramp},
+  {ED_RAMP2_PTREE_XRAMP_RAMP, -1, -1, -1, -1, 3, 1, false, "ed_ramp2_ptree_xramp_ramp", next_ramp2_ptree_xramp_ramp, previous_ramp2_ptree_xramp_ramp},
+
+  {ED_PTREE2, ED_RAMP_PTREE2, ED_XRAMP_PTREE2, -1, -1, 0, 0, false, "ed_ptree2", next_ptree, previous_ptree},
+  {ED_PTREE2_RAMP, ED_RAMP_PTREE2_RAMP, ED_XRAMP_PTREE2_RAMP, -1, -1, 1, 0, false, "ed_ptree2_ramp", next_ptree_ramp, previous_ptree_ramp},
+  {ED_PTREE2_XRAMP, ED_RAMP_PTREE2_XRAMP, ED_XRAMP_PTREE2_XRAMP, -1, -1, 0, 1, false, "ed_ptree2_xramp", next_ptree_xramp, previous_ptree_xramp},
+  {ED_PTREE2_ZERO, ED_RAMP_PTREE2_ZERO, ED_XRAMP_PTREE2_ZERO, -1, -1, 0, 0, true, "ed_ptree2_zero", next_ptree, previous_ptree},
+  {ED_PTREE2_RAMP2, ED_RAMP_PTREE2_RAMP2, ED_XRAMP_PTREE2_RAMP2, -1, -1, 2, 0, false, "ed_ptree2_ramp2", next_ptree_ramp2, previous_ptree_ramp2},
+  {ED_PTREE2_RAMP3, ED_RAMP_PTREE2_RAMP3, ED_XRAMP_PTREE2_RAMP3, -1, -1, 3, 0, false, "ed_ptree2_ramp3", next_ptree_ramp3, previous_ptree_ramp3},
+  {ED_PTREE2_XRAMP_RAMP, ED_RAMP_PTREE2_XRAMP_RAMP, ED_XRAMP_PTREE2_XRAMP_RAMP, -1, -1, 1, 1, false, "ed_ptree2_xramp_ramp", next_ptree_xramp_ramp, previous_ptree_xramp_ramp},
+  {ED_PTREE2_XRAMP2, ED_RAMP_PTREE2_XRAMP2, -1, -1, -1, 0, 2, false, "ed_ptree2_xramp2", next_ptree_xramp2, previous_ptree_xramp2},
+  {ED_RAMP_PTREE2, ED_RAMP2_PTREE2, ED_XRAMP_RAMP_PTREE2, -1, -1, 1, 0, false, "ed_ramp_ptree2", next_ramp_ptree, previous_ramp_ptree},
+  {ED_RAMP_PTREE2_ZERO, ED_RAMP2_PTREE2_ZERO, ED_XRAMP_RAMP_PTREE2_ZERO, -1, -1, 1, 0, true, "ed_ramp_ptree2_zero", next_ramp_ptree, previous_ramp_ptree},
+  {ED_RAMP2_PTREE2, ED_RAMP3_PTREE2, ED_XRAMP_RAMP2_PTREE2, -1, -1, 2, 0, false, "ed_ramp2_ptree2", next_ramp2_ptree, previous_ramp2_ptree},
+  {ED_RAMP2_PTREE2_ZERO, ED_RAMP3_PTREE2_ZERO, ED_XRAMP_RAMP2_PTREE2_ZERO, -1, -1, 2, 0, true, "ed_ramp2_ptree2_zero", next_ramp2_ptree, previous_ramp2_ptree},
+  {ED_RAMP3_PTREE2, ED_RAMP4_PTREE2, ED_XRAMP_RAMP3_PTREE2, -1, -1, 3, 0, false, "ed_ramp3_ptree2", next_ramp3_ptree, previous_ramp3_ptree},
+  {ED_RAMP3_PTREE2_ZERO, ED_RAMP4_PTREE2_ZERO, ED_XRAMP_RAMP3_PTREE2_ZERO, -1, -1, 3, 0, true, "ed_ramp3_ptree2_zero", next_ramp3_ptree, previous_ramp3_ptree},
+  {ED_XRAMP_PTREE2, ED_XRAMP_RAMP_PTREE2, ED_XRAMP2_PTREE2, -1, -1, 0, 1, false, "ed_xramp_ptree2", next_xramp_ptree, previous_xramp_ptree},
+  {ED_XRAMP_PTREE2_ZERO, ED_XRAMP_RAMP_PTREE2_ZERO, ED_XRAMP2_PTREE2_ZERO, -1, -1, 0, 1, true, "ed_xramp_ptree2_zero", next_xramp_ptree, previous_xramp_ptree},
+  {ED_XRAMP2_PTREE2, ED_XRAMP2_RAMP_PTREE2, -1, -1, -1, 0, 2, false, "ed_xramp2_ptree2", next_xramp2_ptree, previous_xramp2_ptree},
+  {ED_XRAMP2_PTREE2_ZERO, ED_XRAMP2_RAMP_PTREE2_ZERO, -1, -1, -1, 0, 2, true, "ed_xramp2_ptree2_zero", next_xramp2_ptree, previous_xramp2_ptree},
+  {ED_RAMP_PTREE2_RAMP, ED_RAMP2_PTREE2_RAMP, ED_XRAMP_RAMP_PTREE2_RAMP, -1, -1, 2, 0, false, "ed_ramp_ptree2_ramp", next_ramp_ptree_ramp, previous_ramp_ptree_ramp},
+  {ED_RAMP2_PTREE2_RAMP, ED_RAMP3_PTREE2_RAMP, ED_XRAMP_RAMP2_PTREE2_RAMP, -1, -1, 3, 0, false, "ed_ramp2_ptree2_ramp", next_ramp2_ptree_ramp, previous_ramp2_ptree_ramp},
+  {ED_RAMP_PTREE2_RAMP2, ED_RAMP2_PTREE2_RAMP2, ED_XRAMP_RAMP_PTREE2_RAMP2, -1, -1, 3, 0, false, "ed_ramp_ptree2_ramp2", next_ramp_ptree_ramp2, previous_ramp_ptree_ramp2},
+  {ED_RAMP_PTREE2_XRAMP, ED_RAMP2_PTREE2_XRAMP, ED_XRAMP_RAMP_PTREE2_XRAMP, -1, -1, 1, 1, false, "ed_ramp_ptree2_xramp", next_ramp_ptree_xramp, previous_ramp_ptree_xramp},
+  {ED_XRAMP_PTREE2_RAMP, ED_XRAMP_RAMP_PTREE2_RAMP, ED_XRAMP2_PTREE2_RAMP, -1, -1, 1, 1, false, "ed_xramp_ptree2_ramp", next_xramp_ptree_ramp, previous_xramp_ptree_ramp},
+  {ED_RAMP2_PTREE2_XRAMP, ED_RAMP3_PTREE2_XRAMP, ED_XRAMP_RAMP2_PTREE2_XRAMP, -1, -1, 2, 1, false, "ed_ramp2_ptree2_xramp", next_ramp2_ptree_xramp, previous_ramp2_ptree_xramp},
+  {ED_XRAMP_RAMP_PTREE2, ED_XRAMP_RAMP2_PTREE2, ED_XRAMP2_RAMP_PTREE2, -1, -1, 1, 1, false, "ed_xramp_ramp_ptree2", next_xramp_ramp_ptree, previous_xramp_ramp_ptree},
+  {ED_XRAMP_RAMP_PTREE2_ZERO, ED_XRAMP_RAMP2_PTREE2_ZERO, ED_XRAMP2_RAMP_PTREE2_ZERO, -1, -1, 1, 1, true, "ed_xramp_ramp_ptree2_zero", next_xramp_ramp_ptree, previous_xramp_ramp_ptree},
+  {ED_XRAMP_PTREE2_XRAMP, ED_XRAMP_RAMP_PTREE2_XRAMP, -1, -1, -1, 0, 2, false, "ed_xramp_ptree2_xramp", next_xramp_ptree_xramp, previous_xramp_ptree_xramp},
+  {ED_XRAMP_RAMP2_PTREE2, ED_XRAMP_RAMP3_PTREE2, ED_XRAMP2_RAMP2_PTREE2, -1, -1, 2, 1, false, "ed_xramp_ramp2_ptree2", next_xramp_ramp2_ptree, previous_xramp_ramp2_ptree},
+  {ED_XRAMP_RAMP2_PTREE2_ZERO, ED_XRAMP_RAMP3_PTREE2_ZERO, ED_XRAMP2_RAMP2_PTREE2_ZERO, -1, -1, 2, 1, true, "ed_xramp_ramp2_ptree2_zero", next_xramp_ramp2_ptree, previous_xramp_ramp2_ptree},
+  {ED_XRAMP2_RAMP_PTREE2, ED_XRAMP2_RAMP2_PTREE2, -1, -1, -1, 1, 2, false, "ed_xramp2_ramp_ptree2", next_xramp2_ramp_ptree, previous_xramp2_ramp_ptree},
+  {ED_XRAMP2_RAMP_PTREE2_ZERO, ED_XRAMP2_RAMP2_PTREE2_ZERO, -1, -1, -1, 1, 2, true, "ed_xramp2_ramp_ptree2_zero", next_xramp2_ramp_ptree, previous_xramp2_ramp_ptree},
+  {ED_PTREE2_XRAMP2_RAMP, ED_RAMP_PTREE2_XRAMP2_RAMP, -1, -1, -1, 1, 2, false, "ed_ptree2_xramp2_ramp", next_ptree_xramp2_ramp, previous_ptree_xramp2_ramp},
+  {ED_PTREE2_XRAMP_RAMP2, ED_RAMP_PTREE2_XRAMP_RAMP2, ED_XRAMP_PTREE2_XRAMP_RAMP2, -1, -1, 2, 1, false, "ed_ptree2_xramp_ramp2", next_ptree_xramp_ramp2, previous_ptree_xramp_ramp2},
+  {ED_XRAMP_PTREE2_RAMP2, ED_XRAMP_RAMP_PTREE2_RAMP2, ED_XRAMP2_PTREE2_RAMP2, -1, -1, 2, 1, false, "ed_xramp_ptree2_ramp2", next_xramp_ptree_ramp2, previous_xramp_ptree_ramp2},
+  {ED_XRAMP_RAMP_PTREE2_RAMP, ED_XRAMP_RAMP2_PTREE2_RAMP, ED_XRAMP2_RAMP_PTREE2_RAMP, -1, -1, 2, 1, false, "ed_xramp_ramp_ptree2_ramp", next_xramp_ramp_ptree_ramp, previous_xramp_ramp_ptree_ramp},
+  {ED_XRAMP_RAMP_PTREE2_XRAMP, ED_XRAMP_RAMP2_PTREE2_XRAMP, -1, -1, -1, 1, 2, false, "ed_xramp_ramp_ptree2_xramp", next_xramp_ramp_ptree_xramp, previous_xramp_ramp_ptree_xramp},
+  {ED_XRAMP2_PTREE2_RAMP, ED_XRAMP2_RAMP_PTREE2_RAMP, -1, -1, -1, 1, 2, false, "ed_xramp2_ptree2_ramp", next_xramp2_ptree_ramp, previous_xramp2_ptree_ramp},
+  {ED_XRAMP_PTREE2_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE2_XRAMP_RAMP, -1, -1, -1, 1, 2, false, "ed_xramp_ptree2_xramp_ramp", next_xramp_ptree_xramp_ramp, previous_xramp_ptree_xramp_ramp},
+  {ED_RAMP_PTREE2_XRAMP_RAMP, ED_RAMP2_PTREE2_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE2_XRAMP_RAMP, -1, -1, 2, 1, false, "ed_ramp_ptree2_xramp_ramp", next_ramp_ptree_xramp_ramp, previous_ramp_ptree_xramp_ramp},
+  {ED_RAMP_PTREE2_XRAMP2, ED_RAMP2_PTREE2_XRAMP2, -1, -1, -1, 1, 2, false, "ed_ramp_ptree2_xramp2", next_ramp_ptree_xramp2, previous_ramp_ptree_xramp2},
+  {ED_RAMP4_PTREE2, -1, -1, -1, -1, 4, 0, false, "ed_ramp4_ptree2", next_ramp4_ptree, previous_ramp4_ptree},
+  {ED_RAMP4_PTREE2_ZERO, -1, -1, -1, -1, 4, 0, true, "ed_ramp4_ptree2_zero", next_ramp4_ptree, previous_ramp4_ptree},
+  {ED_PTREE2_RAMP4, -1, -1, -1, -1, 4, 0, false, "ed_ptree2_ramp4", next_ptree_ramp4, previous_ptree_ramp4},
+  {ED_RAMP3_PTREE2_RAMP, -1, -1, -1, -1, 4, 0, false, "ed_ramp3_ptree2_ramp", next_ramp3_ptree_ramp, previous_ramp3_ptree_ramp},
+  {ED_RAMP_PTREE2_RAMP3, -1, -1, -1, -1, 4, 0, false, "ed_ramp_ptree2_ramp3", next_ramp_ptree_ramp3, previous_ramp_ptree_ramp3},
+  {ED_RAMP2_PTREE2_RAMP2, -1, -1, -1, -1, 4, 0, false, "ed_ramp2_ptree2_ramp2", next_ramp2_ptree_ramp2, previous_ramp2_ptree_ramp2},
+  {ED_RAMP3_PTREE2_XRAMP, -1, -1, -1, -1, 3, 1, false, "ed_ramp3_ptree2_xramp", next_ramp3_ptree_xramp, previous_ramp3_ptree_xramp},
+  {ED_XRAMP_PTREE2_RAMP3, -1, -1, -1, -1, 3, 1, false, "ed_xramp_ptree2_ramp3", next_xramp_ptree_ramp3, previous_xramp_ptree_ramp3},
+  {ED_RAMP2_PTREE2_XRAMP2, -1, -1, -1, -1, 2, 2, false, "ed_ramp2_ptree2_xramp2", next_ramp2_ptree_xramp2, previous_ramp2_ptree_xramp2},
+  {ED_XRAMP2_PTREE2_RAMP2, -1, -1, -1, -1, 2, 2, false, "ed_xramp2_ptree2_ramp2", next_xramp2_ptree_ramp2, previous_xramp2_ptree_ramp2},
+  {ED_XRAMP_RAMP_PTREE2_XRAMP_RAMP, -1, -1, -1, -1, 2, 2, false, "ed_xramp_ramp_ptree2_xramp_ramp", next_xramp_ramp_ptree_xramp_ramp, previous_xramp_ramp_ptree_xramp_ramp},
+  {ED_XRAMP_PTREE2_XRAMP_RAMP2, -1, -1, -1, -1, 2, 2, false, "ed_xramp_ptree2_xramp_ramp2", next_xramp_ptree_xramp_ramp2, previous_xramp_ptree_xramp_ramp2},
+  {ED_RAMP_PTREE2_XRAMP2_RAMP, -1, -1, -1, -1, 2, 2, false, "ed_ramp_ptree2_xramp2_ramp", next_ramp_ptree_xramp2_ramp, previous_ramp_ptree_xramp2_ramp},
+  {ED_PTREE2_XRAMP_RAMP3, -1, -1, -1, -1, 3, 1, false, "ed_ptree2_xramp_ramp3", next_ptree_xramp_ramp3, previous_ptree_xramp_ramp3},
+  {ED_PTREE2_XRAMP2_RAMP2, -1, -1, -1, -1, 2, 2, false, "ed_ptree2_xramp2_ramp2", next_ptree_xramp2_ramp2, previous_ptree_xramp2_ramp2},
+  {ED_XRAMP_RAMP3_PTREE2, -1, -1, -1, -1, 3, 1, false, "ed_xramp_ramp3_ptree2", next_xramp_ramp3_ptree, previous_xramp_ramp3_ptree},
+  {ED_XRAMP_RAMP3_PTREE2_ZERO, -1, -1, -1, -1, 3, 1, true, "ed_xramp_ramp3_ptree2_zero", next_xramp_ramp3_ptree, previous_xramp_ramp3_ptree},
+  {ED_XRAMP2_RAMP2_PTREE2, -1, -1, -1, -1, 2, 2, false, "ed_xramp2_ramp2_ptree2", next_xramp2_ramp2_ptree, previous_xramp2_ramp2_ptree},
+  {ED_XRAMP2_RAMP2_PTREE2_ZERO, -1, -1, -1, -1, 2, 2, true, "ed_xramp2_ramp2_ptree2_zero", next_xramp2_ramp2_ptree, previous_xramp2_ramp2_ptree},
+  {ED_XRAMP_RAMP_PTREE2_RAMP2, -1, -1, -1, -1, 3, 1, false, "ed_xramp_ramp_ptree2_ramp2", next_xramp_ramp_ptree_ramp2, previous_xramp_ramp_ptree_ramp2},
+  {ED_XRAMP_RAMP2_PTREE2_RAMP, -1, -1, -1, -1, 3, 1, false, "ed_xramp_ramp2_ptree2_ramp", next_xramp_ramp2_ptree_ramp, previous_xramp_ramp2_ptree_ramp},
+  {ED_RAMP_PTREE2_XRAMP_RAMP2, -1, -1, -1, -1, 3, 1, false, "ed_ramp_ptree2_xramp_ramp2", next_ramp_ptree_xramp_ramp2, previous_ramp_ptree_xramp_ramp2},
+  {ED_XRAMP_RAMP2_PTREE2_XRAMP, -1, -1, -1, -1, 2, 2, false, "ed_xramp_ramp2_ptree2_xramp", next_xramp_ramp2_ptree_xramp, previous_xramp_ramp2_ptree_xramp},
+  {ED_XRAMP2_RAMP_PTREE2_RAMP, -1, -1, -1, -1, 2, 2, false, "ed_xramp2_ramp_ptree2_ramp", next_xramp2_ramp_ptree_ramp, previous_xramp2_ramp_ptree_ramp},
+  {ED_RAMP2_PTREE2_XRAMP_RAMP, -1, -1, -1, -1, 3, 1, false, "ed_ramp2_ptree2_xramp_ramp", next_ramp2_ptree_xramp_ramp, previous_ramp2_ptree_xramp_ramp},
+
+  {ED_PTREE_RAMP2_PTREE, ED_RAMP_PTREE_RAMP2_PTREE, ED_XRAMP_PTREE_RAMP2_PTREE, -1, -1, 2, 0, false, "ed_ptree_ramp2_ptree", next_ptree_ramp2_ptree, previous_ptree_ramp2_ptree},
+  {ED_PTREE_RAMP2_PTREE_ZERO, ED_RAMP_PTREE_RAMP2_PTREE_ZERO, ED_XRAMP_PTREE_RAMP2_PTREE_ZERO, -1, -1, 2, 0, true, "ed_ptree_ramp2_ptree_zero", next_ptree_ramp2_ptree, previous_ptree_ramp2_ptree},
+  {ED_PTREE_RAMP_PTREE, ED_RAMP_PTREE_RAMP_PTREE, ED_XRAMP_PTREE_RAMP_PTREE, -1, -1, 1, 0, false, "ed_ptree_ramp_ptree", next_ptree_ramp_ptree, previous_ptree_ramp_ptree},
+  {ED_PTREE_RAMP_PTREE_ZERO, ED_RAMP_PTREE_RAMP_PTREE_ZERO, ED_XRAMP_PTREE_RAMP_PTREE_ZERO, -1, -1, 1, 0, true, "ed_ptree_ramp_ptree_zero", next_ptree_ramp_ptree, previous_ptree_ramp_ptree},
+  {ED_PTREE_RAMP3_PTREE, ED_RAMP_PTREE_RAMP3_PTREE, -1, -1, -1, 3, 0, false, "ed_ptree_ramp3_ptree", next_ptree_ramp3_ptree, previous_ptree_ramp3_ptree},
+  {ED_PTREE_RAMP3_PTREE_ZERO, ED_RAMP_PTREE_RAMP3_PTREE_ZERO, -1, -1, -1, 3, 0, true, "ed_ptree_ramp3_ptree_zero", next_ptree_ramp3_ptree, previous_ptree_ramp3_ptree},
+  {ED_PTREE_XRAMP_PTREE, ED_RAMP_PTREE_XRAMP_PTREE, ED_XRAMP_PTREE_XRAMP_PTREE, -1, -1, 0, 1, false, "ed_ptree_xramp_ptree", next_ptree_xramp_ptree, previous_ptree_xramp_ptree},
+  {ED_PTREE_XRAMP_PTREE_ZERO, ED_RAMP_PTREE_XRAMP_PTREE_ZERO, ED_XRAMP_PTREE_XRAMP_PTREE_ZERO, -1, -1, 0, 1, true, "ed_ptree_xramp_ptree_zero", next_ptree_xramp_ptree, previous_ptree_xramp_ptree},
+  {ED_PTREE_RAMP2_PTREE_RAMP, -1, -1, -1, -1, 3, 0, false, "ed_ptree_ramp2_ptree_ramp", next_ptree_ramp2_ptree_ramp, previous_ptree_ramp2_ptree_ramp},
+  {ED_PTREE_RAMP_PTREE_RAMP2, -1, -1, -1, -1, 3, 0, false, "ed_ptree_ramp_ptree_ramp2", next_ptree_ramp_ptree_ramp2, previous_ptree_ramp_ptree_ramp2},
+  {ED_RAMP_PTREE_RAMP_PTREE_RAMP, -1, -1, -1, -1, 3, 0, false, "ed_ramp_ptree_ramp_ptree_ramp", next_ramp_ptree_ramp_ptree_ramp, previous_ramp_ptree_ramp_ptree_ramp},
+  {ED_PTREE_RAMP_PTREE_RAMP, ED_RAMP_PTREE_RAMP_PTREE_RAMP, ED_XRAMP_PTREE_RAMP_PTREE_RAMP, -1, -1, 2, 0, false, "ed_ptree_ramp_ptree_ramp", next_ptree_ramp_ptree_ramp, previous_ptree_ramp_ptree_ramp},
+  {ED_RAMP2_PTREE_RAMP_PTREE, ED_RAMP3_PTREE_RAMP_PTREE, -1, -1, -1, 3, 0, false, "ed_ramp2_ptree_ramp_ptree", next_ramp2_ptree_ramp_ptree, previous_ramp2_ptree_ramp_ptree},
+  {ED_RAMP2_PTREE_RAMP_PTREE_ZERO, ED_RAMP3_PTREE_RAMP_PTREE_ZERO, -1, -1, -1, 3, 0, true, "ed_ramp2_ptree_ramp_ptree_zero", next_ramp2_ptree_ramp_ptree, previous_ramp2_ptree_ramp_ptree},
+  {ED_XRAMP_PTREE_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_RAMP_PTREE, ED_XRAMP2_PTREE_RAMP_PTREE, -1, -1, 1, 1, false, "ed_xramp_ptree_ramp_ptree", next_xramp_ptree_ramp_ptree, previous_xramp_ptree_ramp_ptree},
+  {ED_XRAMP_PTREE_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_RAMP_PTREE_ZERO, ED_XRAMP2_PTREE_RAMP_PTREE_ZERO, -1, -1, 1, 1, true, "ed_xramp_ptree_ramp_ptree_zero", next_xramp_ptree_ramp_ptree, previous_xramp_ptree_ramp_ptree},
+  {ED_RAMP_PTREE_XRAMP_PTREE, ED_RAMP2_PTREE_XRAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_PTREE, -1, -1, 1, 1, false, "ed_ramp_ptree_xramp_ptree", next_ramp_ptree_xramp_ptree, previous_ramp_ptree_xramp_ptree},
+  {ED_RAMP_PTREE_XRAMP_PTREE_ZERO, ED_RAMP2_PTREE_XRAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_PTREE_ZERO, -1, -1, 1, 1, true, "ed_ramp_ptree_xramp_ptree_zero", next_ramp_ptree_xramp_ptree, previous_ramp_ptree_xramp_ptree},
+  {ED_PTREE_XRAMP_RAMP_PTREE, ED_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_PTREE_XRAMP_RAMP_PTREE, -1, -1, 1, 1, false, "ed_ptree_xramp_ramp_ptree", next_ptree_xramp_ramp_ptree, previous_ptree_xramp_ramp_ptree},
+  {ED_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, 1, 1, true, "ed_ptree_xramp_ramp_ptree_zero", next_ptree_xramp_ramp_ptree, previous_ptree_xramp_ramp_ptree},
+  {ED_PTREE_XRAMP_PTREE_RAMP, ED_RAMP_PTREE_XRAMP_PTREE_RAMP, ED_XRAMP_PTREE_XRAMP_PTREE_RAMP, -1, -1, 1, 1, false, "ed_ptree_xramp_ptree_ramp", next_ptree_xramp_ptree_ramp, previous_ptree_xramp_ptree_ramp},
+  {ED_PTREE_RAMP_PTREE_XRAMP, ED_RAMP_PTREE_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_RAMP_PTREE_XRAMP, -1, -1, 1, 1, false, "ed_ptree_ramp_ptree_xramp", next_ptree_ramp_ptree_xramp, previous_ptree_ramp_ptree_xramp},
+  {ED_RAMP_PTREE_RAMP2_PTREE, ED_RAMP2_PTREE_RAMP2_PTREE, -1, -1, -1, 3, 0, false, "ed_ramp_ptree_ramp2_ptree", next_ramp_ptree_ramp2_ptree, previous_ramp_ptree_ramp2_ptree},
+  {ED_RAMP_PTREE_RAMP2_PTREE_ZERO, ED_RAMP2_PTREE_RAMP2_PTREE_ZERO, -1, -1, -1, 3, 0, true, "ed_ramp_ptree_ramp2_ptree_zero", next_ramp_ptree_ramp2_ptree, previous_ramp_ptree_ramp2_ptree},
+  {ED_XRAMP_PTREE_RAMP2_PTREE, -1, -1, -1, -1, 2, 1, false, "ed_xramp_ptree_ramp2_ptree", next_xramp_ptree_ramp2_ptree, previous_xramp_ptree_ramp2_ptree},
+  {ED_XRAMP_PTREE_RAMP2_PTREE_ZERO, -1, -1, -1, -1, 2, 1, true, "ed_xramp_ptree_ramp2_ptree_zero", next_xramp_ptree_ramp2_ptree, previous_xramp_ptree_ramp2_ptree},
+  {ED_RAMP2_PTREE_XRAMP_PTREE, -1, -1, -1, -1, 2, 1, false, "ed_ramp2_ptree_xramp_ptree", next_ramp2_ptree_xramp_ptree, previous_ramp2_ptree_xramp_ptree},
+  {ED_RAMP2_PTREE_XRAMP_PTREE_ZERO, -1, -1, -1, -1, 2, 1, true, "ed_ramp2_ptree_xramp_ptree_zero", next_ramp2_ptree_xramp_ptree, previous_ramp2_ptree_xramp_ptree},
+  {ED_PTREE_XRAMP_RAMP2_PTREE, -1, -1, -1, -1, 2, 1, false, "ed_ptree_xramp_ramp2_ptree", next_ptree_xramp_ramp2_ptree, previous_ptree_xramp_ramp2_ptree},
+  {ED_PTREE_XRAMP_RAMP2_PTREE_ZERO, -1, -1, -1, -1, 2, 1, true, "ed_ptree_xramp_ramp2_ptree_zero", next_ptree_xramp_ramp2_ptree, previous_ptree_xramp_ramp2_ptree},
+  {ED_PTREE_XRAMP2_RAMP_PTREE, -1, -1, -1, -1, 1, 2, false, "ed_ptree_xramp2_ramp_ptree", next_ptree_xramp2_ramp_ptree, previous_ptree_xramp2_ramp_ptree},
+  {ED_PTREE_XRAMP2_RAMP_PTREE_ZERO, -1, -1, -1, -1, 1, 2, true, "ed_ptree_xramp2_ramp_ptree_zero", next_ptree_xramp2_ramp_ptree, previous_ptree_xramp2_ramp_ptree},
+  {ED_PTREE_XRAMP_PTREE_RAMP2, -1, -1, -1, -1, 2, 1, false, "ed_ptree_xramp_ptree_ramp2", next_ptree_xramp_ptree_ramp2, previous_ptree_xramp_ptree_ramp2},
+  {ED_PTREE_RAMP2_PTREE_XRAMP, -1, -1, -1, -1, 2, 1, false, "ed_ptree_ramp2_ptree_xramp", next_ptree_ramp2_ptree_xramp, previous_ptree_ramp2_ptree_xramp},
+  {ED_PTREE_XRAMP2_PTREE, ED_RAMP_PTREE_XRAMP2_PTREE, -1, -1, -1, 0, 2, false, "ed_ptree_xramp2_ptree", next_ptree_xramp2_ptree, previous_ptree_xramp2_ptree},
+  {ED_PTREE_XRAMP2_PTREE_ZERO, ED_RAMP_PTREE_XRAMP2_PTREE_ZERO, -1, -1, -1, 0, 2, true, "ed_ptree_xramp2_ptree_zero", next_ptree_xramp2_ptree, previous_ptree_xramp2_ptree},
+  {ED_RAMP_PTREE_RAMP_PTREE, ED_RAMP2_PTREE_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_RAMP_PTREE, -1, -1, 2, 0, false, "ed_ramp_ptree_ramp_ptree", next_ramp_ptree_ramp_ptree, previous_ramp_ptree_ramp_ptree},
+  {ED_RAMP_PTREE_RAMP_PTREE_ZERO, ED_RAMP2_PTREE_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_RAMP_PTREE_ZERO, -1, -1, 2, 0, true, "ed_ramp_ptree_ramp_ptree", next_ramp_ptree_ramp_ptree, previous_ramp_ptree_ramp_ptree},
+  {ED_XRAMP_PTREE_XRAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_PTREE, -1, -1, -1, 0, 2, false, "ed_xramp_ptree_xramp_ptree", next_xramp_ptree_xramp_ptree, previous_xramp_ptree_xramp_ptree},
+  {ED_XRAMP_PTREE_XRAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_PTREE_ZERO, -1, -1, -1, 0, 2, true, "ed_xramp_ptree_xramp_ptree", next_xramp_ptree_xramp_ptree, previous_xramp_ptree_xramp_ptree},
+  {ED_PTREE_XRAMP_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP_PTREE_XRAMP, -1, -1, -1, 0, 2, false, "ed_ptree_xramp_ptree_xramp", next_ptree_xramp_ptree_xramp, previous_ptree_xramp_ptree_xramp},
+  {ED_RAMP_PTREE_XRAMP_RAMP_PTREE, -1, -1, -1, -1, 2, 1, false, "ed_ramp_ptree_xramp_ramp_ptree", next_ramp_ptree_xramp_ramp_ptree, previous_ramp_ptree_xramp_ramp_ptree},
+  {ED_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, -1, -1, 2, 1, true, "ed_ramp_ptree_xramp_ramp_ptree_zero", next_ramp_ptree_xramp_ramp_ptree, previous_ramp_ptree_xramp_ramp_ptree},
+  {ED_XRAMP_PTREE_XRAMP_RAMP_PTREE, -1, -1, -1, -1, 1, 2, false, "ed_xramp_ptree_xramp_ramp_ptree", next_xramp_ptree_xramp_ramp_ptree, previous_xramp_ptree_xramp_ramp_ptree},
+  {ED_XRAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, -1, -1, 1, 2, true, "ed_xramp_ptree_xramp_ramp_ptree_zero", next_xramp_ptree_xramp_ramp_ptree, previous_xramp_ptree_xramp_ramp_ptree},
+  {ED_XRAMP_RAMP_PTREE_RAMP_PTREE, -1, -1, -1, -1, 2, 1, false, "ed_xramp_ramp_ptree_ramp_ptree", next_xramp_ramp_ptree_ramp_ptree, previous_xramp_ramp_ptree_ramp_ptree},
+  {ED_XRAMP_RAMP_PTREE_RAMP_PTREE_ZERO, -1, -1, -1, -1, 2, 1, true, "ed_xramp_ramp_ptree_ramp_ptree_zero", next_xramp_ramp_ptree_ramp_ptree, previous_xramp_ramp_ptree_ramp_ptree},
+  {ED_XRAMP_RAMP_PTREE_XRAMP_PTREE, -1, -1, -1, -1, 1, 2, false, "ed_xramp_ramp_ptree_xramp_ptree", next_xramp_ramp_ptree_xramp_ptree, previous_xramp_ramp_ptree_xramp_ptree},
+  {ED_XRAMP_RAMP_PTREE_XRAMP_PTREE_ZERO, -1, -1, -1, -1, 1, 2, true, "ed_xramp_ramp_ptree_xramp_ptree_zero", next_xramp_ramp_ptree_xramp_ptree, previous_xramp_ramp_ptree_xramp_ptree},
+  {ED_XRAMP2_PTREE_RAMP_PTREE, -1, -1, -1, -1, 1, 2, false, "ed_xramp2_ptree_ramp_ptree", next_xramp2_ptree_ramp_ptree, previous_xramp2_ptree_ramp_ptree},
+  {ED_XRAMP2_PTREE_RAMP_PTREE_ZERO, -1, -1, -1, -1, 1, 2, true, "ed_xramp2_ptree_ramp_ptree_zero", next_xramp2_ptree_ramp_ptree, previous_xramp2_ptree_ramp_ptree},
+  {ED_RAMP_PTREE_XRAMP2_PTREE, -1, -1, -1, -1, 1, 2, false, "ed_ramp_ptree_xramp2_ptree", next_ramp_ptree_xramp2_ptree, previous_ramp_ptree_xramp2_ptree},
+  {ED_RAMP_PTREE_XRAMP2_PTREE_ZERO, -1, -1, -1, -1, 1, 2, true, "ed_ramp_ptree_xramp2_ptree_zero", next_ramp_ptree_xramp2_ptree, previous_ramp_ptree_xramp2_ptree},
+
+  {ED_RAMP2_PTREE_RAMP2_PTREE, -1, -1, -1, -1, 4, 0, false, "ed_ramp2_ptree_ramp2_ptree", next_ramp2_ptree_ramp2_ptree, previous_ramp2_ptree_ramp2_ptree},
+  {ED_RAMP2_PTREE_RAMP2_PTREE_ZERO, -1, -1, -1, -1, 4, 0, true, "ed_ramp2_ptree_ramp2_ptree_zero", next_ramp2_ptree_ramp2_ptree, previous_ramp2_ptree_ramp2_ptree},
+  {ED_RAMP_PTREE_RAMP3_PTREE, -1, -1, -1, -1, 4, 0, false, "ed_ramp_ptree_ramp3_ptree", next_ramp_ptree_ramp3_ptree, previous_ramp_ptree_ramp3_ptree},
+  {ED_RAMP_PTREE_RAMP3_PTREE_ZERO, -1, -1, -1, -1, 4, 0, true, "ed_ramp_ptree_ramp3_ptree_zero", next_ramp_ptree_ramp3_ptree, previous_ramp_ptree_ramp3_ptree},
+  {ED_RAMP3_PTREE_RAMP_PTREE, -1, -1, -1, -1, 4, 0, false, "ed_ramp3_ptree_ramp_ptree", next_ramp3_ptree_ramp_ptree, previous_ramp3_ptree_ramp_ptree},
+  {ED_RAMP3_PTREE_RAMP_PTREE_ZERO, -1, -1, -1, -1, 4, 0, true, "ed_ramp3_ptree_ramp_ptree_zero", next_ramp3_ptree_ramp_ptree, previous_ramp3_ptree_ramp_ptree},
+  {ED_PTREE_RAMP2_PTREE_RAMP2, -1, -1, -1, -1, 4, 0, false, "ed_ptree_ramp2_ptree_ramp2", next_ptree_ramp2_ptree_ramp2, previous_ptree_ramp2_ptree_ramp2},
+  {ED_PTREE_RAMP_PTREE_RAMP3, -1, -1, -1, -1, 4, 0, false, "ed_ptree_ramp_ptree_ramp3", next_ptree_ramp_ptree_ramp3, previous_ptree_ramp_ptree_ramp3},
+  {ED_PTREE_RAMP3_PTREE_RAMP, -1, -1, -1, -1, 4, 0, false, "ed_ptree_ramp3_ptree_ramp", next_ptree_ramp3_ptree_ramp, previous_ptree_ramp3_ptree_ramp},
+
+  {ED_XRAMP_PTREE_RAMP_PTREE_RAMP, -1, -1, -1, -1, 2, 1, false, "ed_xramp_ptree_ramp_ptree_ramp", next_xramp_ptree_ramp_ptree_ramp, previous_xramp_ptree_ramp_ptree_ramp},
+  {ED_XRAMP_PTREE_XRAMP_PTREE_RAMP, -1, -1, -1, -1, 1, 2, false, "ed_xramp_ptree_xramp_ptree_ramp", next_xramp_ptree_xramp_ptree_ramp, previous_xramp_ptree_xramp_ptree_ramp},
+  {ED_RAMP_PTREE_XRAMP_PTREE_RAMP, -1, -1, -1, -1, 2, 1, false, "ed_ramp_ptree_xramp_ptree_ramp", next_ramp_ptree_xramp_ptree_ramp, previous_ramp_ptree_xramp_ptree_ramp},
+  {ED_PTREE_RAMP_PTREE_XRAMP_RAMP,  -1, -1, -1, -1, 2, 1, false, "ed_ptree_ramp_ptree_xramp_ramp", next_ptree_ramp_ptree_xramp_ramp, previous_ptree_ramp_ptree_xramp_ramp},
+  {ED_PTREE_XRAMP_PTREE_XRAMP_RAMP,  -1, -1, -1, -1, 1, 2, false, "ed_ptree_xramp_ptree_xramp_ramp", next_ptree_xramp_ptree_xramp_ramp, previous_ptree_xramp_ptree_xramp_ramp},
+  {ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, -1, -1, -1, 2, 1, false, "ed_ptree_xramp_ramp_ptree_ramp", next_ptree_xramp_ramp_ptree_ramp, previous_ptree_xramp_ramp_ptree_ramp},
+  {ED_PTREE_XRAMP2_PTREE_RAMP,  -1, -1, -1, -1, 1, 2, false, "ed_ptree_xramp2_ptree_ramp", next_ptree_xramp2_ptree_ramp, previous_ptree_xramp2_ptree_ramp},
+  {ED_PTREE_XRAMP_RAMP_PTREE_XRAMP,  -1, -1, -1, -1, 1, 2, false, "ed_ptree_xramp_ramp_ptree_xramp", next_ptree_xramp_ramp_ptree_xramp, previous_ptree_xramp_ramp_ptree_xramp},
+  {ED_RAMP_PTREE_RAMP_PTREE_XRAMP, -1, -1, -1, -1, 2, 1, false, "ed_ramp_ptree_ramp_ptree_xramp", next_ramp_ptree_ramp_ptree_xramp, previous_ramp_ptree_ramp_ptree_xramp},
+  {ED_XRAMP_PTREE_RAMP_PTREE_XRAMP,  -1, -1, -1, -1, 1, 2, false, "ed_xramp_ptree_ramp_ptree_xramp", next_xramp_ptree_ramp_ptree_xramp, previous_xramp_ptree_ramp_ptree_xramp},
+  {ED_RAMP_PTREE_XRAMP_PTREE_XRAMP, -1, -1, -1, -1, 1, 2, false, "ed_ramp_ptree_xramp_ptree_xramp", next_ramp_ptree_xramp_ptree_xramp, previous_ramp_ptree_xramp_ptree_xramp},
+  {ED_PTREE_RAMP_PTREE_XRAMP2, -1, -1, -1, -1, 1, 2, false, "ed_ptree_ramp_ptree_xramp2", next_ptree_ramp_ptree_xramp2, previous_ptree_ramp_ptree_xramp2},
+
+  {ED_XEN, ED_RAMP_XEN, ED_XRAMP_XEN, -1, -1, 0, 0, false, "ed_xen", next_xen, previous_xen},
+  {ED_XEN_RAMP, ED_RAMP_XEN_RAMP, -1, -1, -1, 1, 0, false, "ed_xen_ramp", next_xen_ramp, previous_xen_ramp},
+  {ED_XEN_XRAMP, -1, -1, -1, -1, 0, 1, false, "ed_xen_xramp", next_xen_xramp, previous_xen_xramp},
+  {ED_XEN_ZERO, ED_RAMP_XEN_ZERO, ED_XRAMP_XEN_ZERO, -1, -1, 0, 0, true, "ed_xen_zero", next_xen, previous_xen},
+  {ED_XEN_RAMP2, ED_RAMP_XEN_RAMP2, -1, -1, -1, 2, 0, false, "ed_xen_ramp2", next_xen_ramp2, previous_xen_ramp2},
+  {ED_XEN_RAMP3, -1, -1, -1, -1, 3, 0, false, "ed_xen_ramp3", next_xen_ramp3, previous_xen_ramp3},
+  {ED_RAMP_XEN, ED_RAMP2_XEN, -1, -1, -1, 1, 0, false, "ed_ramp_xen", next_ramp_xen, previous_ramp_xen},
+  {ED_RAMP2_XEN, ED_RAMP3_XEN, -1, -1, -1, 2, 0, false, "ed_ramp2_xen", next_ramp2_xen, previous_ramp2_xen},
+  {ED_RAMP3_XEN, -1, -1, -1, -1, 3, 0, false, "ed_ramp3_xen", next_ramp3_xen, previous_ramp3_xen},
+  {ED_RAMP_XEN_ZERO, ED_RAMP2_XEN_ZERO, -1, -1, -1, 1, 0, true, "ed_ramp_xen_zero", next_ramp_xen, previous_ramp_xen},
+  {ED_RAMP2_XEN_ZERO, ED_RAMP3_XEN_ZERO, -1, -1, -1, 2, 0, true, "ed_ramp2_xen_zero", next_ramp2_xen, previous_ramp2_xen},
+  {ED_RAMP3_XEN_ZERO, -1, -1, -1, -1, 3, 0, true, "ed_ramp3_xen_zero", next_ramp3_xen, previous_ramp3_xen},
+  {ED_XRAMP_XEN, -1, -1, -1, -1, 0, 1, false, "ed_xramp_xen", next_xramp_xen, previous_xramp_xen},
+  {ED_XRAMP_XEN_ZERO, -1, -1, -1, -1, 0, 1, true, "ed_xramp_xen_zero", next_xramp_xen, previous_xramp_xen},
+  {ED_RAMP_XEN_RAMP, ED_RAMP2_XEN_RAMP, -1, -1, -1, 2, 0, false, "ed_ramp_xen_ramp", next_ramp_xen_ramp, previous_ramp_xen_ramp},
+  {ED_RAMP2_XEN_RAMP, -1, -1, -1, -1, 3, 0, false, "ed_ramp2_xen_ramp", next_ramp2_xen_ramp, previous_ramp2_xen_ramp},
+  {ED_RAMP_XEN_RAMP2, -1, -1, -1, -1, 3, 0, false, "ed_ramp_xen_ramp2", next_ramp_xen_ramp2, previous_ramp_xen_ramp2},
+};
+
+#define PTREE_OP(Typ) ((Typ) >= ED_PTREE)
+#define XEN_OP(Typ) ((Typ) >= ED_XEN)
+#define PTREE2_OP(Typ) (((Typ) >= ED_PTREE2) && ((Typ) < ED_XEN))
+#define PTREE2_OR_XEN_OP(Typ) ((Typ) >= ED_PTREE2)
+
+static bool ZERO_OP(int type)
+{
+  return(type_info[type].ptree_zero);
+}
+
+static bool RAMP_OP(int type)
+{
+  return(type_info[type].xramps + type_info[type].ramps > 0);
+}
+
+#if DEBUGGING
+static int hit_entry[NUM_OPS];
+static void init_hit_entries(void)
+{
+  int i;
+  for (i = 0; i < NUM_OPS; i++) hit_entry[i] = 0;
+}
+
+static void report_unhit_entries(void)
+{
+  int i;
+  for (i = 0; i < NUM_OPS; i++)
+    if (hit_entry[i] == 0)
+      {
+	if (type_info[i].next)
+	  fprintf(stderr, "accessible ");
+	fprintf(stderr, "%s unhit\n", type_info[i].name);
+      }
+}
+
+static void check_type_info_entry(int op, int expected_ramps, int expected_xramps, bool is_zero)
+{
+  hit_entry[op]++;
+  if (op != type_info[op].type) fprintf(stderr, "%s type: %d %d\n", type_info[op].name, op, type_info[op].type);
+  if (expected_ramps != type_info[op].ramps) fprintf(stderr, "%s ramps: %d %d\n", type_info[op].name, expected_ramps, type_info[op].ramps);
+  if (expected_xramps != type_info[op].xramps) fprintf(stderr, "%s xramps: %d %d\n", type_info[op].name, expected_xramps, type_info[op].xramps);
+  if (op != ED_SIMPLE)
+    {
+      if (type_info[op].next == NULL) fprintf(stderr, "%s no next\n", type_info[op].name);
+      if (type_info[op].previous == NULL) fprintf(stderr, "%s no previous\n", type_info[op].name);
+    }
+  if (is_zero != type_info[op].ptree_zero) fprintf(stderr, "%s zero: %d %d\n", type_info[op].name, is_zero, type_info[op].ptree_zero);  
+  if ((type_info[op].add_ramp != -1) && (type_info[op].add_ramp != op))
+    check_type_info_entry(type_info[op].add_ramp, expected_ramps + 1, expected_xramps, is_zero);
+  if ((type_info[op].add_xramp != -1) && (type_info[op].add_xramp != op))
+    check_type_info_entry(type_info[op].add_xramp, expected_ramps, expected_xramps + 1, is_zero);
+  if (type_info[op].add_ptree != -1) check_type_info_entry(type_info[op].add_ptree, expected_ramps, expected_xramps, is_zero);
+  if (type_info[op].add_xen != -1) check_type_info_entry(type_info[op].add_xen, expected_ramps, expected_xramps, is_zero);
+
+  if ((!(XEN_OP(op))) && (type_info[op].ramps + type_info[op].xramps < 4))
+    {
+      if ((type_info[op].add_ramp == -1) ||
+	  ((type_info[op].add_xramp == -1) && (type_info[op].xramps < 2)))
+	fprintf(stderr, "%d(p) %d(r): empty add.(x)ramp: %s: %d %d\n", 
+		(PTREE2_OP(op)) ? 2 : 1,
+		type_info[op].ramps + type_info[op].xramps,
+		type_info[op].name, type_info[op].add_ramp, type_info[op].add_xramp);
+    }
+}
+#endif
+
+static XEN empty_closure;
+
+static void swap_readers(snd_fd *sf)
+{
+  mus_sample_t (*rrun)(struct snd_fd *sf);
+  Float (*rrunf)(struct snd_fd *sf);
+  rrun = sf->run;
+  rrunf = sf->runf;
+  sf->run = sf->rev_run;
+  sf->runf = sf->rev_runf;
+  sf->rev_run = rrun;
+  sf->rev_runf = rrunf;
+}
+
+void read_sample_change_direction(snd_fd *sf, read_direction_t dir1) /* can't use "dir" on Mac */
+{
+  /* direction reversal can happen in dac(speed arrow), src gen, or user can call next/previous independent of initial dir */
+  swap_readers(sf);
+  sf->direction = dir1;
+  /* can't optimize anything here -- some accessors have state, but how to handle the loc=-1 case? */
+  if ((dir1 == READ_FORWARD) && (sf->loc < 0)) 
+    sf->loc = 0;
+  else read_sample(sf);
+}
+
+Float protected_next_sample_to_float(snd_fd *sf)
+{
+  if (sf->direction == READ_BACKWARD) 
+    read_sample_change_direction(sf, READ_FORWARD);
+  return(read_sample_to_float(sf));
+}
+
+Float protected_previous_sample_to_float(snd_fd *sf)
+{
+  if (sf->direction == READ_FORWARD) 
+    read_sample_change_direction(sf, READ_BACKWARD);
+  return(read_sample_to_float(sf));
+}
+
+static void reader_out_of_data(snd_fd *sf)
+{
+  sf->at_eof = true;
+  sf->run = end_sample;
+  sf->runf = end_sample_to_float;
+  sf->rev_run = end_sample;
+  sf->rev_runf = end_sample_to_float;
+}
+
+static snd_fd *cancel_reader(snd_fd *sf)
+{
+  sf->current_sound = NULL;
+  sf->cbi = 0;
+  reader_out_of_data(sf);
+  return(sf);
+}
+
+static void get_sf_closure(snd_fd *sf)
+{
+  XEN proc;
+  proc = sf->cp->ptree_inits[READER_PTREE_INDEX(sf)];
+  if ((sf->closure) && (sf->closure != empty_closure) && (XEN_BOUND_P(sf->closure)))
+    snd_unprotect_at(sf->protect);
+  sf->closure = empty_closure;
+  if (XEN_PROCEDURE_P(proc))
+    {
+      sf->closure = XEN_CALL_2(proc,
+			       C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
+			       C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
+			       "ptree-channel init func");
+      if (XEN_BOUND_P(sf->closure))
+	sf->protect = snd_protect(sf->closure);
+    }
+}
+
+static void get_sf_closure1(snd_fd *sf)
+{
+  XEN proc;
+  proc = sf->cp->ptree_inits[READER_PTREE2_INDEX(sf)];
+  if ((sf->closure1) && (sf->closure1 != empty_closure) && (XEN_BOUND_P(sf->closure1)))
+    snd_unprotect_at(sf->protect1);
+  sf->closure1 = empty_closure;
+  if (XEN_PROCEDURE_P(proc))
+    {
+      sf->closure1 = XEN_CALL_2(proc,
+				C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE2_POSITION(sf)),
+				C_TO_XEN_OFF_T(READER_PTREE2_DUR(sf)),
+				"ptree-channel init func");
+      if (XEN_BOUND_P(sf->closure1))
+	sf->protect1 = snd_protect(sf->closure1);
+    }
+}
+
+static void setup_ramp(snd_fd *sf, double rmp0, double rmp1)
+{
+  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+    sf->incr = 0.0;
+  else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+  sf->curval = rmp0 + sf->incr * sf->frag_pos;
+}
+
+static void setup_ramp2(snd_fd *sf, double rmp0, double rmp1)
+{
+  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+    sf->incr2 = 0.0;
+  else sf->incr2 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+  sf->curval2 = rmp0 + sf->incr2 * sf->frag_pos;
+}
+
+static void setup_ramp3(snd_fd *sf, double rmp0, double rmp1)
+{
+  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+    sf->incr3 = 0.0;
+  else sf->incr3 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+  sf->curval3 = rmp0 + sf->incr3 * sf->frag_pos;
+}
+
+static void setup_ramp4(snd_fd *sf, double rmp0, double rmp1)
+{
+  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+    sf->incr4 = 0.0;
+  else sf->incr4 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+  sf->curval4 = rmp0 + sf->incr4 * sf->frag_pos;
+}
+
+/* static Float to_float(snd_fd *sf) {return(MUS_SAMPLE_TO_FLOAT(read_sample(sf)));} */
+static mus_sample_t to_sample(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sf)));}
+
+static void choose_accessor(snd_fd *sf)
+{
+  int typ;
+  /* fragment-specific reader choice */
+  /* most cases use floats */
+  typ = READER_TYPE(sf);
+  if (PTREE_OP(typ))
+    {
+      if (XEN_OP(typ))
+	{
+	  sf->ptree = (void *)(sf->cp->xens[READER_PTREE_INDEX(sf)]);
+	  get_sf_closure(sf);
+	}
+      else
+	{
+	  sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+	  get_sf_closure(sf);
+	  if (PTREE2_OP(typ))
+	    {
+	      sf->ptree1 = sf->cp->ptrees[READER_PTREE2_INDEX(sf)];
+	      get_sf_closure1(sf);
+	    }
+	  else sf->ptree1 = NULL;
+	}
+      sf->zero = ZERO_OP(typ);
+    }
+  if ((typ != ED_SIMPLE) && ((type_info[typ].next == NULL) || (type_info[typ].previous == NULL)))
+    {
+      fprintf(stderr,"got %s null accessor\n", type_info[typ].name);
+      abort();
+    }
+  sf->run = to_sample;
+  sf->rev_run = to_sample;
+  sf->runf = type_info[typ].next;
+  sf->rev_runf = type_info[typ].previous;
+  switch (typ)
+    {
+    case ED_ZERO:
+      sf->run = next_zero_sample;
+      sf->rev_run = previous_zero_sample;
+      break;
+    case ED_PTREE: case ED_PTREE_ZERO:
+    case ED_PTREE2: case ED_PTREE2_ZERO:
+    case ED_XEN: case ED_XEN_ZERO:
+      break;
+    case ED_XRAMP:
+    case ED_PTREE_XRAMP_PTREE: case ED_PTREE_XRAMP_PTREE_ZERO:
+    case ED_PTREE_XRAMP:
+    case ED_PTREE2_XRAMP:
+    case ED_XRAMP_PTREE: case ED_XRAMP_PTREE_ZERO:
+    case ED_XRAMP_PTREE2: case ED_XRAMP_PTREE2_ZERO:
+    case ED_XEN_XRAMP:
+    case ED_XRAMP_XEN: case ED_XRAMP_XEN_ZERO:
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_XRAMP2:
+    case ED_PTREE_XRAMP2:
+    case ED_PTREE2_XRAMP2:
+    case ED_XRAMP2_PTREE: case ED_XRAMP2_PTREE_ZERO:
+    case ED_XRAMP2_PTREE2: case ED_XRAMP2_PTREE2_ZERO:
+    case ED_XRAMP_PTREE_XRAMP:
+    case ED_XRAMP_PTREE2_XRAMP:
+    case ED_XRAMP_PTREE_XRAMP_PTREE: case ED_XRAMP_PTREE_XRAMP_PTREE_ZERO:
+    case ED_PTREE_XRAMP2_PTREE: case ED_PTREE_XRAMP2_PTREE_ZERO:
+    case ED_PTREE_XRAMP_PTREE_XRAMP:
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+
+      /* scaler cases */
+    case ED_RAMP:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      sf->run = next_sample_with_ramp;
+      sf->rev_run = previous_sample_with_ramp;
+      break;
+    case ED_RAMP2:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      sf->run = next_sample_with_ramp2;
+      sf->rev_run = previous_sample_with_ramp2;
+      break;
+    case ED_RAMP3:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      sf->run = next_sample_with_ramp3;
+      sf->rev_run = previous_sample_with_ramp3;
+      break;
+    case ED_RAMP4:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      sf->run = next_sample_with_ramp4;
+      sf->rev_run = previous_sample_with_ramp4;
+      break;
+    case ED_RAMP_PTREE: case ED_RAMP_PTREE_ZERO:
+    case ED_RAMP_PTREE2: case ED_RAMP_PTREE2_ZERO:
+    case ED_RAMP_XEN: case ED_RAMP_XEN_ZERO:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      break;
+    case ED_RAMP2_PTREE: case ED_RAMP2_PTREE_ZERO:
+    case ED_RAMP2_PTREE2: case ED_RAMP2_PTREE2_ZERO:
+    case ED_RAMP2_XEN: case ED_RAMP2_XEN_ZERO:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      break;
+    case ED_RAMP3_PTREE: case ED_RAMP3_PTREE_ZERO:
+    case ED_RAMP3_PTREE2: case ED_RAMP3_PTREE2_ZERO:
+    case ED_RAMP3_XEN: case ED_RAMP3_XEN_ZERO:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      break;
+    case ED_XRAMP_RAMP:
+    case ED_RAMP_PTREE_XRAMP:
+    case ED_RAMP_PTREE2_XRAMP:
+    case ED_RAMP_PTREE_XRAMP_PTREE: case ED_RAMP_PTREE_XRAMP_PTREE_ZERO:
+    case ED_XRAMP_RAMP_PTREE: case ED_XRAMP_RAMP_PTREE_ZERO:
+    case ED_XRAMP_RAMP_PTREE2: case ED_XRAMP_RAMP_PTREE2_ZERO:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_XRAMP2_RAMP:
+    case ED_RAMP_PTREE_XRAMP2:
+    case ED_RAMP_PTREE2_XRAMP2:
+    case ED_XRAMP2_RAMP_PTREE: case ED_XRAMP2_RAMP_PTREE_ZERO:
+    case ED_XRAMP2_RAMP_PTREE2: case ED_XRAMP2_RAMP_PTREE2_ZERO:
+    case ED_XRAMP_RAMP_PTREE_XRAMP:
+    case ED_XRAMP_RAMP_PTREE2_XRAMP:
+    case ED_XRAMP_RAMP_PTREE_XRAMP_PTREE: case ED_XRAMP_RAMP_PTREE_XRAMP_PTREE_ZERO:
+    case ED_RAMP_PTREE_XRAMP2_PTREE: case ED_RAMP_PTREE_XRAMP2_PTREE_ZERO:
+    case ED_RAMP_PTREE_XRAMP_PTREE_XRAMP:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_XRAMP_RAMP2:
+    case ED_XRAMP_RAMP2_PTREE: case ED_XRAMP_RAMP2_PTREE_ZERO:
+    case ED_XRAMP_RAMP2_PTREE2: case ED_XRAMP_RAMP2_PTREE2_ZERO:
+    case ED_RAMP2_PTREE_XRAMP:
+    case ED_RAMP2_PTREE2_XRAMP:
+    case ED_RAMP2_PTREE_XRAMP_PTREE: case ED_RAMP2_PTREE_XRAMP_PTREE_ZERO:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_XRAMP_RAMP2_PTREE_XRAMP:
+    case ED_XRAMP_RAMP2_PTREE2_XRAMP:
+    case ED_XRAMP2_RAMP2:
+    case ED_XRAMP_RAMP3:
+    case ED_RAMP4_PTREE: case ED_RAMP4_PTREE_ZERO:
+    case ED_RAMP4_PTREE2: case ED_RAMP4_PTREE2_ZERO:
+    case ED_XRAMP_RAMP3_PTREE: case ED_XRAMP_RAMP3_PTREE_ZERO:
+    case ED_XRAMP_RAMP3_PTREE2: case ED_XRAMP_RAMP3_PTREE2_ZERO:
+    case ED_XRAMP2_RAMP2_PTREE: case ED_XRAMP2_RAMP2_PTREE_ZERO:
+    case ED_XRAMP2_RAMP2_PTREE2: case ED_XRAMP2_RAMP2_PTREE2_ZERO:
+    case ED_RAMP2_PTREE_XRAMP2:
+    case ED_RAMP2_PTREE2_XRAMP2:
+    case ED_RAMP3_PTREE_XRAMP:
+    case ED_RAMP3_PTREE2_XRAMP:
+      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+
+      /* ptree_scaler cases */
+    case ED_PTREE_RAMP:
+    case ED_PTREE2_RAMP:
+    case ED_XEN_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      break;
+    case ED_PTREE_RAMP2:
+    case ED_PTREE2_RAMP2:
+    case ED_XEN_RAMP2:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      break;
+    case ED_PTREE_RAMP3:
+    case ED_PTREE2_RAMP3:
+    case ED_XEN_RAMP3:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      break;
+    case ED_PTREE_RAMP4:
+    case ED_PTREE2_RAMP4:
+    case ED_PTREE_XRAMP_RAMP3:
+    case ED_PTREE2_XRAMP_RAMP3:
+    case ED_PTREE_XRAMP2_RAMP2:
+    case ED_PTREE2_XRAMP2_RAMP2:
+    case ED_XRAMP_PTREE_RAMP3:
+    case ED_XRAMP_PTREE2_RAMP3:
+    case ED_XRAMP2_PTREE_RAMP2:
+    case ED_XRAMP2_PTREE2_RAMP2:
+    case ED_XRAMP_PTREE_XRAMP_RAMP2:
+    case ED_XRAMP_PTREE2_XRAMP_RAMP2:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_RAMP_PTREE_RAMP:
+    case ED_RAMP_PTREE2_RAMP:
+    case ED_RAMP_XEN_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
+      break;
+    case ED_RAMP2_PTREE_RAMP:
+    case ED_RAMP2_PTREE2_RAMP:
+    case ED_RAMP2_XEN_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      break;
+    case ED_RAMP3_PTREE_RAMP:
+    case ED_RAMP3_PTREE2_RAMP:
+    case ED_XRAMP_RAMP2_PTREE_RAMP:
+    case ED_XRAMP_RAMP2_PTREE2_RAMP:
+    case ED_XRAMP2_RAMP_PTREE_RAMP:
+    case ED_XRAMP2_RAMP_PTREE2_RAMP:
+    case ED_XRAMP_RAMP_PTREE_XRAMP_RAMP:
+    case ED_XRAMP_RAMP_PTREE2_XRAMP_RAMP:
+    case ED_RAMP2_PTREE_XRAMP_RAMP:
+    case ED_RAMP2_PTREE2_XRAMP_RAMP:
+    case ED_RAMP_PTREE_XRAMP2_RAMP:
+    case ED_RAMP_PTREE2_XRAMP2_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_RAMP_PTREE_RAMP2:
+    case ED_RAMP_PTREE2_RAMP2:
+    case ED_RAMP_XEN_RAMP2:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_SCALER(sf) * READER_RAMP3_BEG(sf), READER_SCALER(sf) * READER_RAMP3_END(sf));
+      break;
+    case ED_RAMP2_PTREE_RAMP2:
+    case ED_RAMP2_PTREE2_RAMP2:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_SCALER(sf) * READER_RAMP3_BEG(sf), READER_SCALER(sf) * READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_RAMP_PTREE_RAMP3:
+    case ED_RAMP_PTREE2_RAMP3:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_SCALER(sf) * READER_RAMP4_BEG(sf), READER_SCALER(sf) * READER_RAMP4_END(sf));
+      break;
+    case ED_XRAMP_PTREE_RAMP:
+    case ED_XRAMP_PTREE2_RAMP:
+    case ED_PTREE_XRAMP_RAMP:
+    case ED_PTREE2_XRAMP_RAMP:
+    case ED_PTREE_XRAMP_PTREE_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_XRAMP2_PTREE_RAMP:
+    case ED_XRAMP2_PTREE2_RAMP:
+    case ED_PTREE_XRAMP2_RAMP:
+    case ED_PTREE2_XRAMP2_RAMP:
+    case ED_XRAMP_PTREE_XRAMP_RAMP:
+    case ED_XRAMP_PTREE2_XRAMP_RAMP:
+    case ED_XRAMP_PTREE_XRAMP_PTREE_RAMP:
+    case ED_PTREE_XRAMP_PTREE_XRAMP_RAMP:
+    case ED_PTREE_XRAMP2_PTREE_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_XRAMP_RAMP_PTREE_RAMP:
+    case ED_XRAMP_RAMP_PTREE2_RAMP:
+    case ED_RAMP_PTREE_XRAMP_RAMP:
+    case ED_RAMP_PTREE2_XRAMP_RAMP:
+    case ED_RAMP_PTREE_XRAMP_PTREE_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_XRAMP_RAMP_PTREE_RAMP2:
+    case ED_XRAMP_RAMP_PTREE2_RAMP2:
+    case ED_RAMP_PTREE_XRAMP_RAMP2:
+    case ED_RAMP_PTREE2_XRAMP_RAMP2:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_SCALER(sf) * READER_RAMP3_BEG(sf), READER_SCALER(sf) * READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_PTREE_XRAMP_RAMP2:
+    case ED_PTREE2_XRAMP_RAMP2:
+    case ED_XRAMP_PTREE_RAMP2:
+    case ED_XRAMP_PTREE2_RAMP2:
+    case ED_PTREE_XRAMP_PTREE_RAMP2:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+
+      /* ptree2_scaler cases */
+    case ED_PTREE_RAMP_PTREE: case ED_PTREE_RAMP_PTREE_ZERO:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      break;
+    case ED_PTREE_RAMP2_PTREE: case ED_PTREE_RAMP2_PTREE_ZERO:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      break;
+    case ED_PTREE_RAMP3_PTREE: case ED_PTREE_RAMP3_PTREE_ZERO:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      break;
+    case ED_PTREE_XRAMP_RAMP_PTREE: case ED_PTREE_XRAMP_RAMP_PTREE_ZERO:
+    case ED_PTREE_RAMP_PTREE_XRAMP:
+    case ED_XRAMP_PTREE_RAMP_PTREE: case ED_XRAMP_PTREE_RAMP_PTREE_ZERO:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_PTREE_RAMP_PTREE_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_PTREE2_SCALER(sf) * READER_RAMP2_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP2_END(sf));
+      break;
+    case ED_XRAMP_PTREE_RAMP_PTREE_RAMP:
+    case ED_PTREE_RAMP_PTREE_XRAMP_RAMP:
+    case ED_PTREE_XRAMP_RAMP_PTREE_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_PTREE2_SCALER(sf) * READER_RAMP2_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP2_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_PTREE_RAMP_PTREE_RAMP2:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_PTREE2_SCALER(sf) * READER_RAMP3_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP3_END(sf));
+      break;
+    case ED_PTREE_RAMP2_PTREE_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_PTREE2_SCALER(sf) * READER_RAMP2_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      break;
+    case ED_RAMP_PTREE_RAMP_PTREE_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_PTREE2_SCALER(sf) * READER_RAMP2_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_SCALER(sf) * READER_RAMP3_BEG(sf), READER_SCALER(sf) * READER_RAMP3_END(sf));
+      break;
+    case ED_RAMP_PTREE_RAMP_PTREE: case ED_RAMP_PTREE_RAMP_PTREE_ZERO:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
+      break;
+    case ED_RAMP2_PTREE_RAMP_PTREE: case ED_RAMP2_PTREE_RAMP_PTREE_ZERO:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      break;
+    case ED_RAMP_PTREE_RAMP2_PTREE: case ED_RAMP_PTREE_RAMP2_PTREE_ZERO:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_SCALER(sf) * READER_RAMP3_BEG(sf), READER_SCALER(sf) * READER_RAMP3_END(sf));
+      break;
+    case ED_XRAMP_PTREE_RAMP2_PTREE: case ED_XRAMP_PTREE_RAMP2_PTREE_ZERO:
+    case ED_PTREE_XRAMP_RAMP2_PTREE: case ED_PTREE_XRAMP_RAMP2_PTREE_ZERO:
+    case ED_PTREE_RAMP2_PTREE_XRAMP:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+    case ED_PTREE_XRAMP2_RAMP_PTREE: case ED_PTREE_XRAMP2_RAMP_PTREE_ZERO:
+    case ED_XRAMP_PTREE_XRAMP_RAMP_PTREE: case ED_XRAMP_PTREE_XRAMP_RAMP_PTREE_ZERO:
+    case ED_XRAMP2_PTREE_RAMP_PTREE: case ED_XRAMP2_PTREE_RAMP_PTREE_ZERO:
+    case ED_PTREE_XRAMP_RAMP_PTREE_XRAMP:
+    case ED_XRAMP_PTREE_RAMP_PTREE_XRAMP:
+    case ED_PTREE_RAMP_PTREE_XRAMP2:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_RAMP_PTREE_XRAMP_RAMP_PTREE: case ED_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO:
+    case ED_XRAMP_RAMP_PTREE_RAMP_PTREE: case ED_XRAMP_RAMP_PTREE_RAMP_PTREE_ZERO:
+    case ED_RAMP_PTREE_RAMP_PTREE_XRAMP:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_RAMP2_PTREE_RAMP2_PTREE: case ED_RAMP2_PTREE_RAMP2_PTREE_ZERO:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_SCALER(sf) * READER_RAMP3_BEG(sf), READER_SCALER(sf) * READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_RAMP_PTREE_RAMP3_PTREE: case ED_RAMP_PTREE_RAMP3_PTREE_ZERO:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_SCALER(sf) * READER_RAMP4_BEG(sf), READER_SCALER(sf) * READER_RAMP4_END(sf));
+      break;
+    case ED_RAMP3_PTREE_RAMP_PTREE: case ED_RAMP3_PTREE_RAMP_PTREE_ZERO:
+      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_PTREE_RAMP2_PTREE_RAMP2:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_PTREE2_SCALER(sf) * READER_RAMP3_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_PTREE_RAMP3_PTREE_RAMP:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_PTREE2_SCALER(sf) * READER_RAMP2_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
+      break;
+    case ED_PTREE_RAMP_PTREE_RAMP3:
+      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
+      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
+      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
+      setup_ramp4(sf, READER_PTREE2_SCALER(sf) * READER_RAMP4_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP4_END(sf));
+      break;
+
+    case ED_SIMPLE:
+      if (READER_SCALER(sf) == 1.0)
+	{
+	  sf->run = next_sample_unscaled;
+	  sf->rev_run = previous_sample_unscaled;
+	  if (sf->fscaler == 1.0) 
+	    {
+	      sf->runf = next_sample_to_float_unscaled;
+	      sf->rev_runf = previous_sample_to_float_unscaled;
+	    }
+	  else 
+	    {
+	      sf->runf = next_sample_to_float;
+	      sf->rev_runf = previous_sample_to_float;
+	    }
+	}
+      else
+	{
+#if (!SNDLIB_USE_FLOATS)
+	  Float scl;
+	  /* more concerned here with the int->float->int conversions than the multiply */
+	  scl = READER_SCALER(sf);
+	  if (scl == floor(scl))
+	    {
+	      sf->iscaler = (int)floor(scl);
+	      sf->run = next_sample_by_int;
+	      sf->rev_run = previous_sample_by_int;
+	    }
+	  else
+	    {
+	      sf->run = next_sample;
+	      sf->rev_run = previous_sample;
+	    }
+	  sf->runf = next_sample_to_float;
+	  sf->rev_runf = previous_sample_to_float;
+#else
+	  sf->run = next_sample;
+	  sf->runf = next_sample_to_float;
+	  sf->rev_run = previous_sample;
+	  sf->rev_runf = previous_sample_to_float;
+#endif
+	}
+      break;
+    default:
+#if DEBUGGING
+      fprintf(stderr, "choose accessor: %d %s?\n", typ, (typ < NUM_OPS) ? type_info[typ].name : "unknown");
+#endif
+      break;
+    }
+  if (sf->direction == READ_BACKWARD) swap_readers(sf);
+}
+
+
+
+#define EDIT_LIST_END_MARK -2
+#define EDIT_LIST_ZERO_MARK -1
+
+enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT, XEN_EDIT, EXTEND_EDIT};
+static char *edit_names[11] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "xen", "extend", ""};
+
+static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
+{
+  int len, j, index;
+  snd_data *sd;
+  if (ed == NULL)
+    {
+      fprintf(outp, "\n (NULL FRAGMENT at %d)", i);
+      return;
+    }
+  if (i >= cp->edit_size)
+    {
+      fprintf(outp, "\n (BOGUS FRAGMENT at %d of %d)", i, cp->edit_size);
+      return;
+    }
+  len = ed->size; /* number of fragments in this list */
+  switch (ed->edit_type)
+    {
+    case INSERTION_EDIT:  fprintf(outp, "\n (insert " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                        break;
+    case DELETION_EDIT:   fprintf(outp, "\n (delete " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                        break;
+    case CHANGE_EDIT:     fprintf(outp, "\n (set " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                           break;
+    case SCALED_EDIT:     fprintf(outp, "\n (scale " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                         break;
+    case ZERO_EDIT:       fprintf(outp, "\n (silence " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                       break;
+    case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                          break;
+    case XEN_EDIT:        fprintf(outp, "\n (xen[%d] " OFF_TD " " OFF_TD ") ", ed->ptree_location, ed->beg, ed->len);   break; 
+    case PTREE_EDIT:      fprintf(outp, "\n (ptree[%d] " OFF_TD " " OFF_TD ") ", ed->ptree_location, ed->beg, ed->len); break; 
+    case EXTEND_EDIT:     fprintf(outp, "\n (extend edit list with no-op)");                                            break;
+    case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                                                 break;
+    }
+  if (ed->origin) fprintf(outp, "; %s ", ed->origin);
+  fprintf(outp, "[%d:%d]:", i, len);
+  for (j = 0; j < len; j++)
+    {
+      index = FRAGMENT_SOUND(ed, j);
+      if (index == EDIT_LIST_END_MARK)
+	fprintf(outp, "\n   (at " OFF_TD ", end_mark)", FRAGMENT_GLOBAL_POSITION(ed, j));
+      else
+	{
+	  int typ;
+	  typ = FRAGMENT_TYPE(ed, j);
+	  fprintf(outp, "\n   (at " OFF_TD ", cp->sounds[%d][" OFF_TD ":" OFF_TD ", %.3f",
+		  FRAGMENT_GLOBAL_POSITION(ed, j),
+		  index,
+		  FRAGMENT_LOCAL_POSITION(ed, j),
+		  FRAGMENT_LOCAL_END(ed, j),
+		  FRAGMENT_SCALER(ed, j));
+	  if (RAMP_OP(typ))
+	    {
+	      if (type_info[typ].ramps > 0)
+		fprintf(outp, ", [1]%.3f -> %.3f", 
+			FRAGMENT_RAMP_BEG(ed, j),
+			FRAGMENT_RAMP_END(ed, j));
+	      if (type_info[typ].ramps > 1)
+		fprintf(outp, ", [2]%.3f -> %.3f", 
+			FRAGMENT_RAMP2_BEG(ed, j),
+			FRAGMENT_RAMP2_END(ed, j));
+	      if ((type_info[typ].ramps > 2) || (type_info[typ].xramps == 2))
+		fprintf(outp, ", [3]%.3f -> %.3f", 
+			FRAGMENT_RAMP3_BEG(ed, j),
+			FRAGMENT_RAMP3_END(ed, j));
+	      if ((type_info[typ].ramps == 4) || (type_info[typ].xramps > 0))
+		fprintf(outp, ", [4]%.3f -> %.3f", 
+			FRAGMENT_RAMP4_BEG(ed, j),
+			FRAGMENT_RAMP4_END(ed, j));
+	      if (FRAGMENT_XRAMP_SCALER(ed, j) != 0.0)
+		fprintf(outp, ", off: %.3f, scl: %.3f", 
+			FRAGMENT_XRAMP_OFFSET(ed, j),
+			FRAGMENT_XRAMP_SCALER(ed, j));
+	      if (FRAGMENT_XRAMP_SCALER2(ed, j) != 0.0)
+		fprintf(outp, ", off2: %.3f, scl2: %.3f", 
+			FRAGMENT_XRAMP_OFFSET2(ed, j),
+			FRAGMENT_XRAMP_SCALER2(ed, j));
+	    }
+	  if (PTREE2_OP(typ))
+	    {
+	      fprintf(outp, ", loc2: %d, pos2: " OFF_TD ", scl2: %.3f",
+		      FRAGMENT_PTREE2_INDEX(ed, j),
+		      FRAGMENT_PTREE2_POSITION(ed, j),
+		      FRAGMENT_PTREE2_SCALER(ed, j));
+	    }
+	  if (PTREE_OP(typ))
+	    {
+	      XEN code;
+	      fprintf(outp, ", loc: %d, pos: " OFF_TD ", scl: %.3f",
+		      FRAGMENT_PTREE_INDEX(ed, j),
+		      FRAGMENT_PTREE_POSITION(ed, j),
+		      (float)(MUS_FLOAT_TO_FIX * FRAGMENT_PTREE_SCALER(ed, j)));
+	      if (with_source)
+		{
+		  if (XEN_OP(typ))
+		    {
+		      code = cp->xens[FRAGMENT_PTREE_INDEX(ed, j)];
+#if HAVE_GUILE
+		      if ((code) && (XEN_PROCEDURE_P(code)))
+			fprintf(outp, ", code: %s", XEN_AS_STRING(scm_procedure_source(code)));
+#endif
+		    }
+		  else 
+		    {
+		      code = ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j)]);
+		      if (XEN_LIST_P(code))
+			fprintf(outp, ", code: %s", XEN_AS_STRING(code));
+		    }
+#if HAVE_GUILE
+		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j)];
+		  if (XEN_PROCEDURE_P(code))
+		    fprintf(outp, ", init: %s", XEN_AS_STRING(scm_procedure_source(code)));
+#endif
+		}
+	    }
+	  fprintf(outp, "])");
+	  if (index != EDIT_LIST_ZERO_MARK)
+	    {
+	      sd = cp->sounds[index];
+	      if (sd == NULL) 
+		fprintf(outp, " [nil!]");
+	      else 
+		if (sd->type == SND_DATA_FILE)
+		  fprintf(outp, " [file: %s[%d]]", sd->filename, sd->chan);
+		else 
+		  if (sd->type == SND_DATA_BUFFER)
+		    fprintf(outp, " [buf: " OFF_TD "] ", sd->len / sizeof(mus_sample_t));
+		  else fprintf(outp, " [bogus!]");
+	    }
+	}
+    }
+  fprintf(outp, "\n");
+}
+
+off_t edit_changes_begin_at(chan_info *cp, int edpos)
+{
+  ed_list *ed, *old_ed;
+  int len, old_len, i, min_len;
+  old_ed = cp->edits[edpos - 1];
+  ed = cp->edits[edpos];
+  old_len = old_ed->size;
+  len = ed->size;
+  if (len < old_len) 
+    min_len = len;
+  else min_len = old_len;
+  for (i = 0; i < min_len; i ++)
+    if ((FRAGMENT_GLOBAL_POSITION(ed, i) != FRAGMENT_GLOBAL_POSITION(old_ed, i)) || 
+	(FRAGMENT_SOUND(ed, i) != FRAGMENT_SOUND(old_ed, i)) || 
+	(FRAGMENT_LOCAL_POSITION(ed, i) != FRAGMENT_LOCAL_POSITION(old_ed, i)))
+      return(FRAGMENT_GLOBAL_POSITION(ed, i));
+  return(0);
+}
+
+off_t edit_changes_end_at(chan_info *cp, int edpos)
+{
+  ed_list *ed, *old_ed;
+  int len, old_len;
+  old_ed = cp->edits[edpos - 1];
+  ed = cp->edits[edpos];
+  old_len = old_ed->size - 1;
+  len = ed->size - 1;
+  if (FRAGMENT_SOUND(ed, len) == EDIT_LIST_END_MARK) len--;
+  if (FRAGMENT_SOUND(old_ed, old_len) == EDIT_LIST_END_MARK) old_len--;
+  while ((len >= 0) && (old_len >= 0))
+    {
+      if ((FRAGMENT_SOUND(ed, len) == FRAGMENT_SOUND(old_ed, old_len)) &&
+	  (FRAGMENT_LOCAL_END(ed, len) == FRAGMENT_LOCAL_END(old_ed, old_len)))
+	{
+	  if (FRAGMENT_LOCAL_POSITION(ed, len) != FRAGMENT_LOCAL_POSITION(old_ed, old_len))
+	    return(cp->samples[edpos - 1] - (FRAGMENT_LOCAL_END(ed, len) - FRAGMENT_LOCAL_POSITION(ed, len)));
+	  len--;
+	  old_len--;
+	}
+      else break;
+    }
+  return(0);
+}
+
+static char edbuf[PRINT_BUFFER_SIZE];
+char *edit_to_string(chan_info *cp, int edit)
+{
+  ed_list *ed;
+  ed = cp->edits[edit];
+  /* only for edit list in snd-xchn.c */
+  mus_snprintf(edbuf, PRINT_BUFFER_SIZE, 
+#if HAVE_RUBY
+	       "%s : %s(" OFF_TD ", " OFF_TD ")", 
+#else
+	       "%s : (%s " OFF_TD " " OFF_TD ")", 
+#endif
+	       ed->origin, 
+	       edit_names[ed->edit_type], 
+	       ed->beg, ed->len);
+  return(edbuf);
+}
+
+static void display_edits(chan_info *cp, FILE *outp, bool with_source)
+{
+  int i;
+  fprintf(outp, "\nEDITS: %d\n", cp->edit_ctr);
+  for (i = 0; i <= cp->edit_ctr; i++)
+    display_ed_list(cp, outp, i, cp->edits[i], with_source);
 }
 
 void edit_history_to_file(FILE *fd, chan_info *cp)
@@ -1666,13 +4946,24 @@ void backup_edit_list(chan_info *cp)
 {
   int cur, i;
   snd_data *sd;
+  ed_list *old_ed, *new_ed;
   cur = cp->edit_ctr;
   if (cur <= 0) return;
-  cp->edits[cur]->edpos = cp->edits[cur - 1]->edpos;
-  cp->edits[cur]->backed_up = true;
-  free_ed_list(cp->edits[cur - 1], cp);
+  new_ed = cp->edits[cur];
+  old_ed = cp->edits[cur - 1];
+  new_ed->edpos = old_ed->edpos;
+  new_ed->backed_up = true;
+
+  /* make sure backup doesn't clobber our ptrees */
+  /* TODO: gc of un-needed ptrees at edit time (not close time) */
+  /*   it might be enough to save the second tree loc in ptree2 cases, and include it in the block above */
+  if ((old_ed->edit_type == PTREE_EDIT) || (old_ed->edit_type == XEN_EDIT))
+    old_ed->edit_type = ED_SIMPLE;
+  free_ed_list(old_ed, cp);
+  old_ed = NULL;
+
   free_amp_env(cp, cur - 1);
-  cp->edits[cur - 1] = cp->edits[cur];
+  cp->edits[cur - 1] = new_ed;
   cp->amp_envs[cur - 1] = cp->amp_envs[cur];
   if (cp->tracks)
     {
@@ -2396,35 +5687,7 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, loc
 }
 
 
-
 /* -------------------------------- ramp/scale/ptree -------------------------------- */
-
-static bool rampable_ptree2_op(int typ)
-{
-  return(type_info[typ].add_ramp != -1);
-}
-
-static bool xrampable_ptree2_op(int typ)
-{
-  return(type_info[typ].add_xramp != -1);
-}
-
-static bool ramp3able_op(int typ, Float base)
-{
-  /* TODO: if (base == 1.0) return(fragment_type_with_ramp[typ] != -1); else return(fragment_type_with_xramp[typ] != -1); */
-
-  switch (typ)
-    {
-    case ED_RAMP3: 
-    case ED_XRAMP_RAMP2: 
-      return(true);
-      break;
-    case ED_XRAMP2_RAMP:
-      return(base == 1.0);
-      break;
-    }
-  return(false);
-}
 
 bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base)
 {
@@ -2443,41 +5706,11 @@ bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos
       next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);             /* i.e. next loc = current fragment end point */
       /* fragment starts at loc, ends just before next_loc, is of type typ */
       if ((next_loc > beg) &&
-	  ((RAMP4_OP(typ)) ||
-	   (RAMP3_OP(typ) && (!(ramp3able_op(typ, base)))) ||     /* all ramp fields in use */
-	   ((base != 1.0) && (XRAMP2_OP(typ))) ||                 /* both xramp fields in use, so can't add xramp */
-	   (PTREE2_OR_XEN_OP(typ) &&                              /* ptree1 can handle any 3 env possibility */
-	    (((base == 1.0) && (!rampable_ptree2_op(typ))) ||     /* ptree2 or xen + ramp? */
-	     ((base != 1.0) && (!xrampable_ptree2_op(typ)))))))   /* ptree2 or xen + xramp? */
-	{
-	  /* ramp4 here still not ready */
-	  /*
-	  if (((base == 1.0) && (type_info[typ].add_ramp != -1)) ||
-	      ((base != 1.0) && (type_info[typ].add_xramp != -1)))
-	    fprintf(stderr, "rampable?: %s\n", type_info[typ].name);
-	  */
+	  (((base == 1.0) && (type_info[typ].add_ramp == -1)) ||
+	   ((base != 1.0) && (type_info[typ].add_xramp == -1))))
 	return(true);
-	}
-      else
-	{
-	  /*
-	  if (((base == 1.0) && (type_info[typ].add_ramp == -1)) ||
-	      ((base != 1.0) && (type_info[typ].add_xramp == -1)))
-	    fprintf(stderr, "not rampable?: %s\n", type_info[typ].name);
-	  */
-	}
     }
   return(false);
-}
-
-static bool xenable_op(int typ)
-{
-  return(type_info[typ].add_xen != -1);
-}
-
-static bool ptreeable_op(int typ)
-{
-  return(type_info[typ].add_ptree != -1);
 }
 
 bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xen)
@@ -2498,9 +5731,9 @@ bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool i
       /* fragment starts at loc, ends just before next_loc, is of type typ */
       if (next_loc > beg)
 	{
-	  if ((is_xen) && (!(xenable_op(typ))))
+	  if ((is_xen) && (type_info[typ].add_xen == -1))
 	    return(true);
-	  if (!(ptreeable_op(typ)))
+	  if (type_info[typ].add_ptree == -1)
 	    return(true);
 	}
     }
@@ -2985,9 +6218,6 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
 
 /* -------------------------------- sample readers -------------------------------- */
 
-static XEN empty_closure;
-
-static void reader_out_of_data(snd_fd *sf);
 snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
   snd_data *sd;
@@ -3040,2509 +6270,6 @@ off_t current_location(snd_fd *sf)
     return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + sf->current_sound->io->beg + sf->loc);
   return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + sf->loc);
 }
-
-
-
-/* -------------------------------- fragment accessors --------------------------------
- *
- * each fragment has two associated read funcs: run and runf
- *   run -> mus_sample_t
- *   runf -> Float
- *   the following functions are possible run/runf choices, based on the fragment type
- *     (if fragment has scaler, use next_sample else next_sample_unscaled, etc)
- * read_sample calls run, read_sample_to_float runf
- *
- * all sample accesses go through run/runf
- *
- * each type of accessor needs 8 cases: 
- *   [back | forth] [normal | on_zero] -> [mus_sample_t | float]
- * on_zero case only needed if input 0 doesn't imply output 0
- *
- * to simplify reordering, ramps 1-4 use incrs 1-4, but xramp1 uses 4, then xramp2 uses 3
- */
-
-/* envelope handlers */
-
-static Float next_ramp_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval;
-  sf->curval += sf->incr;
-  return(val);
-}
-
-static Float previous_ramp_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval;
-  sf->curval -= sf->incr;
-  return(val);
-}
-
-static Float next_ramp2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2;
-  sf->curval += sf->incr;
-  sf->curval2 += sf->incr2;
-  return(val);
-}
-
-static Float previous_ramp2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2;
-  sf->curval -= sf->incr;
-  sf->curval2 -= sf->incr2;
-  return(val);
-}
-
-static Float next_ramp2_2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval2 * sf->curval3;
-  sf->curval2 += sf->incr2;
-  sf->curval3 += sf->incr3;
-  return(val);
-}
-
-static Float previous_ramp2_2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval2 * sf->curval3;
-  sf->curval2 -= sf->incr2;
-  sf->curval3 -= sf->incr3;
-  return(val);
-}
-
-static Float next_ramp3_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2 * sf->curval3;
-  sf->curval += sf->incr;
-  sf->curval2 += sf->incr2;
-  sf->curval3 += sf->incr3;
-  return(val);
-}
-
-static Float previous_ramp3_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2 * sf->curval3;
-  sf->curval -= sf->incr;
-  sf->curval2 -= sf->incr2;
-  sf->curval3 -= sf->incr3;
-  return(val);
-}
-
-static Float next_ramp4_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2 * sf->curval3 * sf->curval4;
-  sf->curval += sf->incr;
-  sf->curval2 += sf->incr2;
-  sf->curval3 += sf->incr3;
-  sf->curval4 += sf->incr4;
-  return(val);
-}
-
-static Float previous_ramp4_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2 * sf->curval3 * sf->curval4;
-  sf->curval -= sf->incr;
-  sf->curval2 -= sf->incr2;
-  sf->curval3 -= sf->incr3;
-  sf->curval4 -= sf->incr4;
-  return(val);
-}
-
-static Float next_xramp_to_float(snd_fd *sf)
-{
-  Float val;
-  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval4 += sf->incr4;
-  return(val);
-}
-
-static Float previous_xramp_to_float(snd_fd *sf)
-{
-  Float val;
-  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval4 -= sf->incr4;
-  return(val);
-}
-
-static Float next_xramp1_2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
-  sf->curval3 += sf->incr3;
-  return(val);
-}
-
-static Float previous_xramp1_2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
-  sf->curval3 -= sf->incr3;
-  return(val);
-}
-
-static Float next_xramp_ramp_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval += sf->incr;
-  sf->curval4 += sf->incr4;
-  return(val);
-}
-
-static Float previous_xramp_ramp_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval -= sf->incr;
-  sf->curval4 -= sf->incr4;
-  return(val);
-}
-
-static Float next_xramp2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4))) *
-    (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
-  sf->curval3 += sf->incr3;
-  sf->curval4 += sf->incr4;
-  return(val);
-}
-
-static Float previous_xramp2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4))) *
-    (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
-  sf->curval3 -= sf->incr3;
-  sf->curval4 -= sf->incr4;
-  return(val);
-}
-
-static Float next_xramp2_ramp_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval *
-	  (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4))) *
-	  (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
-  sf->curval += sf->incr;
-  sf->curval3 += sf->incr3;
-  sf->curval4 += sf->incr4;
-  return(val);
-}
-
-static Float previous_xramp2_ramp_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval *
-	  (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4))) *
-	  (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
-  sf->curval -= sf->incr;
-  sf->curval3 -= sf->incr3;
-  sf->curval4 -= sf->incr4;
-  return(val);
-}
-
-static Float next_xramp2_ramp2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2 *
-	  (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4))) *
-	  (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
-  sf->curval += sf->incr;
-  sf->curval2 += sf->incr2;
-  sf->curval3 += sf->incr3;
-  sf->curval4 += sf->incr4;
-  return(val);
-}
-
-static Float previous_xramp2_ramp2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2 *
-	  (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4))) *
-	  (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval3)));
-  sf->curval -= sf->incr;
-  sf->curval2 -= sf->incr2;
-  sf->curval3 -= sf->incr3;
-  sf->curval4 -= sf->incr4;
-  return(val);
-}
-
-static Float next_xramp_ramp2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2 *
-    (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval += sf->incr;
-  sf->curval2 += sf->incr2;
-  sf->curval4 += sf->incr4;
-  return(val);
-}
-
-static Float previous_xramp_ramp2_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2 *
-    (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval -= sf->incr;
-  sf->curval2 -= sf->incr2;
-  sf->curval4 -= sf->incr4;
-  return(val);
-}
-
-static Float next_xramp_ramp3_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2 * sf->curval3 *
-    (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval += sf->incr;
-  sf->curval2 += sf->incr2;
-  sf->curval3 += sf->incr3;
-  sf->curval4 += sf->incr4;
-  return(val);
-}
-
-static Float previous_xramp_ramp3_to_float(snd_fd *sf)
-{
-  Float val;
-  val = sf->curval * sf->curval2 * sf->curval3 *
-    (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval -= sf->incr;
-  sf->curval2 -= sf->incr2;
-  sf->curval3 -= sf->incr3;
-  sf->curval4 -= sf->incr4;
-  return(val);
-}
-
-
-static mus_sample_t previous_sound (snd_fd *sf);
-static Float previous_sound_as_float(snd_fd *sf);
-static mus_sample_t next_sound(snd_fd *sf);
-static Float next_sound_as_float(snd_fd *sf);
-
-
-/* ---------------- at end ---------------- */
-static mus_sample_t end_sample(snd_fd *sf) {return(MUS_SAMPLE_0);}
-static Float end_sample_to_float(snd_fd *sf) {return(0.0);}
-
-
-/* ---------------- scaled ---------------- */
-static mus_sample_t next_sample(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc++] * READER_SCALER(sf)));
-}
-
-static mus_sample_t previous_sample(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc--] * READER_SCALER(sf)));
-}
-
-
-static Float next_sample_to_float(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(sf->data[sf->loc++] * sf->fscaler);
-}
-
-static Float previous_sample_to_float(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(sf->data[sf->loc--] * sf->fscaler);
-}
-
-#if (!SNDLIB_USE_FLOATS)
-static mus_sample_t next_sample_by_int(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound(sf)); else return(sf->data[sf->loc++] * sf->iscaler);
-}
-
-static mus_sample_t previous_sample_by_int(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound(sf)); else return(sf->data[sf->loc--] * sf->iscaler);
-}
-#endif
-
-
-/* ---------------- unscaled ---------------- */
-static mus_sample_t next_sample_unscaled(snd_fd *sf) {if (sf->loc > sf->last) return(next_sound(sf)); else return(sf->data[sf->loc++]);}
-static mus_sample_t previous_sample_unscaled(snd_fd *sf) {if (sf->loc < sf->first) return(previous_sound(sf)); else return(sf->data[sf->loc--]);}
-static Float next_sample_to_float_unscaled(snd_fd *sf) {if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(sf->data[sf->loc++]);}
-static Float previous_sample_to_float_unscaled(snd_fd *sf) {if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(sf->data[sf->loc--]);}
-
-
-/* ---------------- zeros ---------------- */
-static mus_sample_t next_zero_sample(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound(sf));
-  sf->loc++;
-  return(MUS_SAMPLE_0);
-}
-
-static mus_sample_t previous_zero_sample(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound(sf));
-  sf->loc--;
-  return(MUS_SAMPLE_0);
-}
-
-static Float next_zero_sample_to_float(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf));
-  sf->loc++;
-  return(0.0);
-}
-
-static Float previous_zero_sample_to_float(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf));
-  sf->loc--;
-  return(0.0);
-}
-
-
-/* ---------------- ramp ---------------- */
-static mus_sample_t next_sample_with_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-    return(next_sound(sf));
-  else
-    {
-      mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval);
-      sf->curval += sf->incr;
-      return(val);
-    }
-}
-
-static mus_sample_t previous_sample_with_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound(sf));
-  else 
-    {
-      mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval);
-      sf->curval -= sf->incr;
-      return(val);
-    }
-}
-
-static Float next_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      val = sf->data[sf->loc++] * sf->curval * MUS_FIX_TO_FLOAT;
-      sf->curval += sf->incr;
-      return(val);
-    }
-}
-
-static Float previous_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else
-    {
-      Float val;
-      val = sf->data[sf->loc--] * sf->curval * MUS_FIX_TO_FLOAT;
-      sf->curval -= sf->incr;
-      return(val);
-    }
-}
-
-
-/* ---------------- ramp2 ---------------- */
-
-static mus_sample_t next_sample_with_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc++] * next_ramp2_to_float(sf)));
-}
-
-static mus_sample_t previous_sample_with_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc--] * previous_ramp2_to_float(sf)));
-}
-
-static Float next_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp2_to_float(sf)));
-}
-
-static Float previous_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp2_to_float(sf)));
-}
-
-
-
-/* ---------------- ramp3 ---------------- */
-
-static mus_sample_t next_sample_with_ramp3(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc++] * next_ramp3_to_float(sf)));
-}
-
-static mus_sample_t previous_sample_with_ramp3(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc--] * previous_ramp3_to_float(sf)));
-}
-
-static Float next_ramp3(snd_fd *sf) 
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp3_to_float(sf)));
-}
-
-static Float previous_ramp3(snd_fd *sf) 
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp3_to_float(sf)));
-}
-
-
-/* ---------------- ramp4 ---------------- */
-
-static mus_sample_t next_sample_with_ramp4(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc++] * next_ramp4_to_float(sf)));
-}
-
-static mus_sample_t previous_sample_with_ramp4(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound(sf)); else return((mus_sample_t)(sf->data[sf->loc--] * previous_ramp4_to_float(sf)));
-}
-
-static Float next_ramp4(snd_fd *sf) 
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp4_to_float(sf)));
-}
-
-static Float previous_ramp4(snd_fd *sf) 
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_ramp4_to_float(sf)));
-}
-
-
-/* ---------------- xramp ---------------- */
-
-static Float next_xramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_to_float(sf)));
-}
-
-static Float previous_xramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp_to_float(sf)));
-}
-
-/* ---------------- xramp on ramp ---------------- */
-
-static Float next_xramp_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp_ramp_to_float(sf)));
-}
-
-static Float previous_xramp_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp_ramp_to_float(sf)));
-}
-
-/* ---------------- xramp2 ---------------- */
-
-static Float next_xramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp2_to_float(sf)));
-}
-
-static Float previous_xramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * READER_SCALER(sf) * previous_xramp2_to_float(sf)));
-}
-
-/* ---------------- xramp2 on ramp ---------------- */
-
-static Float next_xramp2_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp2_ramp_to_float(sf)));
-}
-
-static Float previous_xramp2_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp2_ramp_to_float(sf)));
-}
-
-/* ---------------- xramp2 on ramp2 ---------------- */
-
-static Float next_xramp2_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp2_ramp2_to_float(sf)));
-}
-
-static Float previous_xramp2_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp2_ramp2_to_float(sf)));
-}
-
-/* ---------------- xramp on ramp2 ---------------- */
-
-static Float next_xramp_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp_ramp2_to_float(sf)));
-}
-
-static Float previous_xramp_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp_ramp2_to_float(sf)));
-}
-
-/* ---------------- xramp on ramp3 ---------------- */
-
-static Float next_xramp_ramp3(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_xramp_ramp3_to_float(sf)));
-}
-
-static Float previous_xramp_ramp3(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--] * previous_xramp_ramp3_to_float(sf)));
-}
-
-/* ---------------- ptree ---------------- */
-
-static Float next_ptree_to_float(snd_fd *sf)
-{
-  Float val1 = 0.0;
-  if (!(sf->zero))
-    val1 = READER_PTREE_SCALER(sf) * sf->data[sf->loc];
-  sf->loc++;
-  val1 = evaluate_ptreec(sf->ptree, val1, (vct *)XEN_OBJECT_REF(sf->closure), true);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
-  return(val1);
-}
-
-static Float previous_ptree_to_float(snd_fd *sf)
-{
-  Float val1 = 0.0;
-  if (!(sf->zero))
-    val1 = READER_PTREE_SCALER(sf) * sf->data[sf->loc];
-  sf->loc--;
-  val1 = evaluate_ptreec(sf->ptree, val1, (vct *)XEN_OBJECT_REF(sf->closure), false);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
-  return(val1);
-}
-
-static Float next_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_to_float(sf));
-}
-
-static Float previous_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_to_float(sf));
-}
-
-
-/* -------- ptree on ramp -------- */
-
-static Float next_ptree_ramp_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, next_ramp_to_float(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
-  return(val1);
-}
-
-static Float next_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_ramp_to_float(sf));
-}
-
-static Float previous_ptree_ramp_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, previous_ramp_to_float(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
-  return(val1);
-}
-
-static Float previous_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_ramp_to_float(sf));
-}
-
-/* -------- ptree on ramp2 -------- */
-
-static Float next_ptree_ramp2_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, next_ramp2_to_float(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
-  return(val1);
-}
-
-static Float next_ptree_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_ramp2_to_float(sf));
-}
-
-static Float previous_ptree_ramp2_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, previous_ramp2_to_float(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
-  return(val1);
-}
-
-static Float previous_ptree_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_ramp2_to_float(sf));
-}
-
-/* -------- ptree on ramp3 -------- */
-
-static Float next_ptree_ramp3_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, next_ramp3_to_float(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
-  return(val1);
-}
-
-static Float next_ptree_ramp3(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_ramp3_to_float(sf));
-}
-
-static Float previous_ptree_ramp3_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, previous_ramp3_to_float(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
-  return(val1);
-}
-
-static Float previous_ptree_ramp3(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_ramp3_to_float(sf));
-}
-
-/* -------- ptree on xramp -------- */
-
-static Float next_ptree_xramp_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
-  return(val1);
-}
-
-static Float next_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp_to_float(sf));
-}
-
-static Float previous_ptree_xramp_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
-  return(val1);
-}
-
-static Float previous_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp_to_float(sf));
-}
-
-/* -------- ptree on xramp2 -------- */
-
-static Float next_ptree_xramp2_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_xramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
-  return(val1);
-}
-
-static Float next_ptree_xramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp2_to_float(sf));
-}
-
-static Float previous_ptree_xramp2_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_xramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
-  return(val1);
-}
-
-static Float previous_ptree_xramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp2_to_float(sf));
-}
-
-
-/* -------- ramp on ptree -------- */
-
-static Float next_ramp_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp_to_float(sf) * next_ptree_to_float(sf));
-}
-
-static Float previous_ramp_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp_to_float(sf) * previous_ptree_to_float(sf));
-}
-
-
-/* -------- ramp2 on ptree -------- */
-
-static Float next_ramp2_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp2_to_float(sf) * next_ptree_to_float(sf));
-}
-
-static Float previous_ramp2_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp2_to_float(sf) * previous_ptree_to_float(sf));
-}
-
-/* -------- ramp3 on ptree -------- */
-
-static Float next_ramp3_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_ramp3_to_float(sf) * next_ptree_to_float(sf));
-}
-
-static Float previous_ramp3_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_ramp3_to_float(sf) * previous_ptree_to_float(sf));
-}
-
-/* -------- xramp on ptree -------- */
-
-static Float next_xramp_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp_to_float(sf) * READER_SCALER(sf) * next_ptree_to_float(sf));
-}
-
-static Float previous_xramp_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp_to_float(sf) * READER_SCALER(sf) * previous_ptree_to_float(sf));
-}
-
-/* -------- xramp2 on ptree -------- */
-
-static Float next_xramp2_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp2_to_float(sf) * READER_SCALER(sf) * next_ptree_to_float(sf));
-}
-
-static Float previous_xramp2_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp2_to_float(sf) * READER_SCALER(sf) * previous_ptree_to_float(sf));
-}
-
-/* -------- xramp on ramp on ptree -------- */
-
-static Float next_xramp_ramp_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp_ramp_to_float(sf) * next_ptree_to_float(sf));
-}
-
-static Float previous_xramp_ramp_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp_ramp_to_float(sf) * previous_ptree_to_float(sf));
-}
-
-/* -------- xramp on ramp2 on ptree -------- */
-
-static Float next_xramp_ramp2_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp_ramp2_to_float(sf) * next_ptree_to_float(sf));
-}
-
-static Float previous_xramp_ramp2_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp_ramp2_to_float(sf) * previous_ptree_to_float(sf));
-}
-
-/* -------- xramp2 on ramp on ptree -------- */
-
-static Float next_xramp2_ramp_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(next_xramp2_ramp_to_float(sf) * next_ptree_to_float(sf));
-}
-
-static Float previous_xramp2_ramp_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(previous_xramp2_ramp_to_float(sf) * previous_ptree_to_float(sf));
-}
-
-/* -------- ramp on ptree on ramp -------- */
-
-static Float next_ramp_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val; /* 2 has reader scale, 1 has ptree scale */
-      val = sf->curval2 * next_ptree_ramp_to_float(sf);
-      sf->curval2 += sf->incr2;
-      return(val);
-    }
-}
-
-static Float previous_ramp_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      val = sf->curval2 * previous_ptree_ramp_to_float(sf);
-      sf->curval2 -= sf->incr2;
-      return(val);
-    }
-}
-
-/* -------- ramp2 on ptree on ramp -------- */
-
-static Float next_ramp2_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else
-    {
-      Float val; /* 2 has reader scale, 1 has ptree scale */
-      val = sf->curval2 * sf->curval3 * next_ptree_ramp_to_float(sf);
-      sf->curval2 += sf->incr2;
-      sf->curval3 += sf->incr3;
-      return(val);
-    }
-}
-
-static Float previous_ramp2_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      val = sf->curval2 * sf->curval3 * previous_ptree_ramp_to_float(sf);
-      sf->curval2 -= sf->incr2;
-      sf->curval3 -= sf->incr3;
-      return(val);
-    }
-}
-
-/* -------- ramp on ptree on ramp2 -------- */
-
-static Float next_ramp_ptree_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val; /* 2 has reader scale, 1 has ptree scale */
-      val = sf->curval3 * next_ptree_ramp2_to_float(sf);
-      sf->curval3 += sf->incr3;
-      return(val);
-    }
-}
-
-static Float previous_ramp_ptree_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      val = sf->curval3 * previous_ptree_ramp2_to_float(sf);
-      sf->curval3 -= sf->incr3;
-      return(val);
-    }
-}
-
-/* -------- ramp on ptree on xramp -------- */
-
-static Float next_ramp_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      val = sf->curval;
-      sf->curval += sf->incr;
-      return(val * next_ptree_xramp_to_float(sf));
-    }
-}
-
-static Float previous_ramp_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      val = sf->curval;
-      sf->curval -= sf->incr;
-      return(val * previous_ptree_xramp_to_float(sf));
-    }
-}
-
-/* -------- ramp on ptree on xramp2 -------- */
-
-static Float next_ramp_ptree_xramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      val = sf->curval;
-      sf->curval += sf->incr;
-      return(val * next_ptree_xramp2_to_float(sf));
-    }
-}
-
-static Float previous_ramp_ptree_xramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      val = sf->curval;
-      sf->curval -= sf->incr;
-      return(val * previous_ptree_xramp2_to_float(sf));
-    }
-}
-
-/* -------- xramp on ptree on xramp -------- */
-
-static Float next_xramp_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else return(READER_SCALER(sf) * next_xramp1_2_to_float(sf) * next_ptree_xramp_to_float(sf));
-}
-
-static Float previous_xramp_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else return(READER_SCALER(sf) * previous_xramp1_2_to_float(sf) * previous_ptree_xramp_to_float(sf));
-}
-
-/* -------- ramp2 on ptree on xramp -------- */
-
-static Float next_ramp2_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else return(next_ramp2_to_float(sf) * next_ptree_xramp_to_float(sf));
-}
-
-static Float previous_ramp2_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else return(previous_ramp2_to_float(sf) * previous_ptree_xramp_to_float(sf));
-}
-
-/* -------- xramp on ptree on ramp -------- */
-
-static Float next_xramp_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else return(next_xramp_to_float(sf) * READER_SCALER(sf) * next_ptree_ramp_to_float(sf));
-}
-
-static Float previous_xramp_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else return(previous_xramp_to_float(sf) * READER_SCALER(sf) * previous_ptree_ramp_to_float(sf));
-}
-
-/* -------- xramp2 on ptree on ramp -------- */
-
-static Float next_xramp2_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else return(READER_SCALER(sf) * next_xramp2_to_float(sf) * next_ptree_ramp_to_float(sf));
-}
-
-static Float previous_xramp2_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else return(READER_SCALER(sf) * previous_xramp2_to_float(sf) * previous_ptree_ramp_to_float(sf));
-}
-
-/* -------- xramp on ramp on ptree on ramp -------- */
-
-static Float next_xramp_ramp_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val1;
-      val1 = sf->curval2 * next_xramp_to_float(sf);
-      sf->curval2 += sf->incr2;
-      return(val1 * next_ptree_ramp_to_float(sf));
-    }
-}
-
-static Float previous_xramp_ramp_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val1;
-      val1 = sf->curval2 * previous_xramp_to_float(sf);
-      sf->curval2 -= sf->incr2;
-      return(val1 * previous_ptree_ramp_to_float(sf));
-    }
-}
-
-/* -------- xramp on ramp on ptree on xramp -------- */
-
-static Float next_xramp_ramp_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else return(next_xramp1_2_to_float(sf) * next_ramp_to_float(sf) * next_ptree_xramp_to_float(sf));
-}
-
-static Float previous_xramp_ramp_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else return(previous_xramp1_2_to_float(sf) * previous_ramp_to_float(sf) * previous_ptree_xramp_to_float(sf));
-}
-
-/* -------- xramp on ptree on ramp2 -------- */
-
-static Float next_xramp_ptree_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    return(next_xramp_to_float(sf) * READER_SCALER(sf) * next_ptree_ramp2_to_float(sf));
-}
-
-static Float previous_xramp_ptree_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    return(previous_xramp_to_float(sf) * READER_SCALER(sf) * previous_ptree_ramp2_to_float(sf));
-}
-
-/* -------- ptree on xramp on ramp -------- */
-
-static Float next_ptree_xramp_ramp_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
-  return(val1);
-}
-
-static Float next_ptree_xramp_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp_ramp_to_float(sf));
-}
-
-static Float previous_ptree_xramp_ramp_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_xramp_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
-  return(val1);
-}
-
-static Float previous_ptree_xramp_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp_ramp_to_float(sf));
-}
-
-/* -------- ramp on ptree on xramp on ramp -------- */
-
-static Float next_ramp_ptree_xramp_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      val = sf->curval2;
-      sf->curval2 += sf->incr2;
-      return(val * next_ptree_xramp_ramp_to_float(sf));
-    }
-}
-
-static Float previous_ramp_ptree_xramp_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else
-    {
-      Float val;
-      val = sf->curval2;
-      sf->curval2 -= sf->incr2;
-      return(val * previous_ptree_xramp_ramp_to_float(sf));
-    }
-}
-
-/* -------- xramp on ptree on xramp on ramp -------- */
-
-static Float next_xramp_ptree_xramp_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound_as_float(sf)); 
-  else return(next_xramp1_2_to_float(sf) * READER_SCALER(sf) * next_ptree_xramp_ramp_to_float(sf));
-}
-
-static Float previous_xramp_ptree_xramp_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound_as_float(sf)); 
-  else return(previous_xramp1_2_to_float(sf) * READER_SCALER(sf) * previous_ptree_xramp_ramp_to_float(sf));
-}
-
-/* -------- ptree on xramp on ramp2 -------- */
-
-static Float next_ptree_xramp_ramp2_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_xramp_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
-  return(val1);
-}
-
-static Float next_ptree_xramp_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp_ramp2_to_float(sf));
-}
-
-static Float previous_ptree_xramp_ramp2_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_xramp_ramp2_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
-  return(val1);
-}
-
-static Float previous_ptree_xramp_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp_ramp2_to_float(sf));
-}
-
-/* -------- ptree on xramp2 on ramp -------- */
-
-static Float next_ptree_xramp2_ramp_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_xramp2_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), true));
-  return(val1);
-}
-
-static Float next_ptree_xramp2_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(READER_SCALER(sf) * next_ptree_xramp2_ramp_to_float(sf));
-}
-
-static Float previous_ptree_xramp2_ramp_to_float(snd_fd *sf)
-{
-  Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_xramp2_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
-  if (sf->ptree1)
-    return(evaluate_ptreec(sf->ptree1, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure1), false));
-  return(val1);
-}
-
-static Float previous_ptree_xramp2_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(READER_SCALER(sf) * previous_ptree_xramp2_ramp_to_float(sf));
-}
-
-/* ---------------- xen ---------------- */
-
-static Float xen_to_float(snd_fd *sf, read_direction_t direction)
-{
-  XEN val, val1;
-  if (sf->zero)
-    val1 = C_TO_XEN_DOUBLE(0.0);
-  else val1 = C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc]);
-  if (direction == READ_FORWARD) sf->loc++; else sf->loc--;
-  val = XEN_CALL_3((XEN)(sf->ptree), val1, sf->closure, (direction == READ_FORWARD) ? XEN_TRUE : XEN_FALSE, "xen-channel");
-  return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
-}
-
-static Float next_xen(snd_fd *sf)
-{
-  if (sf->loc > sf->last) return(next_sound_as_float(sf)); else return(xen_to_float(sf, READ_FORWARD));
-}
-
-static Float previous_xen(snd_fd *sf)
-{
-  if (sf->loc < sf->first) return(previous_sound_as_float(sf)); else return(xen_to_float(sf, READ_BACKWARD));
-}
-
-/* ---------------- xen on ramp ---------------- */
-
-static Float next_xen_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      Float val;
-      val = sf->data[sf->loc++] * next_ramp_to_float(sf);
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_TRUE, "xen-channel");
-      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-static Float previous_xen_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      Float val;
-      val = sf->data[sf->loc--] * previous_ramp_to_float(sf);
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_FALSE, "xen-channel");
-      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-/* -------- xen on xramp -------- */
-
-static Float next_xen_xramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_xramp_to_float(sf)), sf->closure, XEN_TRUE, "xen-channel");
-      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-static Float previous_xen_xramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf)), sf->closure, XEN_FALSE, "xen-channel");
-      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-/* -------- xen on ramp2 -------- */
-
-static Float next_xen_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      Float val;
-      val = sf->data[sf->loc++] * next_ramp2_to_float(sf);
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_TRUE, "xen-channel");
-      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-static Float previous_xen_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      Float val;
-      val = sf->data[sf->loc--] * previous_ramp2_to_float(sf);
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_FALSE, "xen-channel");
-      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-/* -------- xen on ramp3 -------- */
-
-static Float next_xen_ramp3(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      Float val;
-      val = sf->data[sf->loc++] * next_ramp3_to_float(sf);
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_TRUE, "xen-channel");
-      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-static Float previous_xen_ramp3(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      Float val;
-      val = sf->data[sf->loc--] * previous_ramp3_to_float(sf);
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_FALSE, "xen-channel");
-      return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-/* ---------------- ramp on xen ---------------- */
-
-static XEN next_xen_arg(snd_fd *sf)
-{
-  XEN val1;
-  if (sf->zero)
-    val1 = C_TO_XEN_DOUBLE(0.0);
-  else val1 = C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc]);
-  sf->loc++;
-  return(val1);
-}
-
-static Float next_ramp_xen(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), next_xen_arg(sf), sf->closure, XEN_TRUE, "xen-channel");
-      return(next_ramp_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-static XEN previous_xen_arg(snd_fd *sf)
-{
-  XEN val1;
-  if (sf->zero)
-    val1 = C_TO_XEN_DOUBLE(0.0);
-  else val1 = C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc]);
-  sf->loc--;
-  return(val1);
-}
-
-static Float previous_ramp_xen(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), previous_xen_arg(sf), sf->closure, XEN_FALSE, "xen-channel");
-      return(previous_ramp_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-/* ---------------- ramp2 on xen ---------------- */
-
-static Float next_ramp2_xen(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), next_xen_arg(sf), sf->closure, XEN_TRUE, "xen-channel");
-      return(next_ramp2_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-static Float previous_ramp2_xen(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), previous_xen_arg(sf), sf->closure, XEN_FALSE, "xen-channel");
-      return(previous_ramp2_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-/* ---------------- ramp3 on xen ---------------- */
-
-static Float next_ramp3_xen(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), next_xen_arg(sf), sf->closure, XEN_TRUE, "xen-channel");
-      return(next_ramp3_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-static Float previous_ramp3_xen(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), previous_xen_arg(sf), sf->closure, XEN_FALSE, "xen-channel");
-      return(previous_ramp3_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-/* ---------------- xramp on xen ---------------- */
-
-static Float next_xramp_xen(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), next_xen_arg(sf), sf->closure, XEN_TRUE, "xen-channel");
-      return(next_xramp_to_float(sf) * READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-static Float previous_xramp_xen(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), previous_xen_arg(sf), sf->closure, XEN_FALSE, "xen-channel");
-      return(previous_xramp_to_float(sf) * READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
-    }
-}
-
-/* -------- ramp on xen on ramp -------- */
-
-static Float next_ramp_xen_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val; /* 2 has reader scale, 1 has ptree scale */
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc++] * sf->curval), sf->closure, XEN_TRUE, "xen-channel");
-      val = sf->curval2 * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0);
-      sf->curval += sf->incr;
-      sf->curval2 += sf->incr2;
-      return(val);
-    }
-}
-
-static Float previous_ramp_xen_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc--] * sf->curval), sf->closure, XEN_FALSE, "xen-channel");
-      val = sf->curval2 * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0);
-      sf->curval -= sf->incr;
-      sf->curval2 -= sf->incr2;
-      return(val);
-    }
-}
-
-/* -------- ramp2 on xen on ramp -------- */
-
-static Float next_ramp2_xen_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val; /* 2 has reader scale, 1 has ptree scale */
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc++] * sf->curval), sf->closure, XEN_TRUE, "xen-channel");
-      val = next_ramp2_2_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0);
-      sf->curval += sf->incr;
-      return(val);
-    }
-}
-
-static Float previous_ramp2_xen_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc--] * sf->curval), sf->closure, XEN_FALSE, "xen-channel");
-      val = previous_ramp2_2_to_float(sf) * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0);
-      sf->curval -= sf->incr;
-      return(val);
-    }
-}
-
-/* -------- ramp on xen on ramp2 -------- */
-
-static Float next_ramp_xen_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val; /* 2 has reader scale, 1 has ptree scale */
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc++] * next_ramp2_to_float(sf)), sf->closure, XEN_TRUE, "xen-channel");
-      val = sf->curval3 * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0);
-      sf->curval3 += sf->incr3;
-      return(val);
-    }
-}
-
-static Float previous_ramp_xen_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val;
-      XEN xval;
-      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(sf->data[sf->loc--] * previous_ramp2_to_float(sf)), sf->closure, XEN_FALSE, "xen-channel");
-      val = sf->curval3 * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0);
-      sf->curval3 -= sf->incr3;
-      return(val);
-    }
-}
-
-/* ---------------- ptree on ramp on ptree ---------------- */
-
-static Float next_split_ptree2_to_float(snd_fd *sf, Float val1, Float val2)
-{
-  return(evaluate_ptreec(sf->ptree1, 
-			 val1 * evaluate_ptreec(sf->ptree, val2, (vct *)XEN_OBJECT_REF(sf->closure), true), 
-			 (vct *)XEN_OBJECT_REF(sf->closure1), true));
-}
-
-static Float next_split_ptree_arg(snd_fd *sf)
-{
-  Float val1 = 0.0;
-  if (!(sf->zero))
-    val1 = READER_PTREE_SCALER(sf) * sf->data[sf->loc];
-  sf->loc++;
-  return(val1);
-}
-
-static Float next_ptree_ramp_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp_to_float(sf), next_split_ptree_arg(sf)));
-}
-
-static Float previous_split_ptree_arg(snd_fd *sf)
-{
-  Float val1 = 0.0;
-  if (!(sf->zero))
-    val1 = READER_PTREE_SCALER(sf) * sf->data[sf->loc];
-  sf->loc--;
-  return(val1);
-}
-
-static Float previous_split_ptree2_to_float(snd_fd *sf, Float val1, Float val2)
-{
-  return(evaluate_ptreec(sf->ptree1, 
-			 val1 * evaluate_ptreec(sf->ptree, val2, (vct *)XEN_OBJECT_REF(sf->closure), false), 
-			 (vct *)XEN_OBJECT_REF(sf->closure1), false));
-}
-
-static Float previous_ptree_ramp_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp_to_float(sf), previous_split_ptree_arg(sf)));
-}
-
-/* ---------------- ptree on ramp2 on ptree ---------------- */
-
-static Float next_ptree_ramp2_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp2_to_float(sf), next_split_ptree_arg(sf)));
-}
-
-static Float previous_ptree_ramp2_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp2_to_float(sf), previous_split_ptree_arg(sf)));
-}
-
-/* ---------------- ptree on ramp3 on ptree ---------------- */
-
-static Float next_ptree_ramp3_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp3_to_float(sf), next_split_ptree_arg(sf)));
-}
-
-static Float previous_ptree_ramp3_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp3_to_float(sf), previous_split_ptree_arg(sf)));
-}
-
-/* ---------------- ptree on ramp on ptree on ramp ---------------- */
-
-static Float next_ptree_ramp_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val1;
-      val1 = sf->curval2; /* has ptree2 scaler */
-      sf->curval2 += sf->incr2;
-      return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, val1, next_ramp_to_float(sf) * sf->data[sf->loc++]));
-    }
-}
-
-static Float previous_ptree_ramp_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val1;
-      val1 = sf->curval2;
-      sf->curval2 -= sf->incr2;
-      return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, val1, previous_ramp_to_float(sf) * sf->data[sf->loc--]));
-    }
-}
-
-/* ---------------- ptree on ramp on ptree on ramp2 ---------------- */
-
-static Float next_ptree_ramp_ptree_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val1;
-      val1 = sf->curval3; 
-      sf->curval3 += sf->incr3;
-      return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, val1, sf->data[sf->loc++] * next_ramp2_to_float(sf)));
-    }
-}
-
-static Float previous_ptree_ramp_ptree_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val1;
-      val1 = sf->curval3;
-      sf->curval3 -= sf->incr3;
-      return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, val1, sf->data[sf->loc--] * previous_ramp2_to_float(sf)));
-    }
-}
-
-/* ---------------- ptree on ramp2 on ptree on ramp ---------------- */
-
-static Float next_ptree_ramp2_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, next_ramp2_2_to_float(sf), next_ramp_to_float(sf) * sf->data[sf->loc++]));
-}
-
-static Float previous_ptree_ramp2_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, previous_ramp2_2_to_float(sf), previous_ramp_to_float(sf) * sf->data[sf->loc--]));
-}
-
-/* ---------------- ramp on ptree on ramp on ptree on ramp ---------------- */
-
-static Float next_ramp_ptree_ramp_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else 
-    {
-      Float val1, val2;
-      val1 = sf->curval2; /* has ptree2 scaler */
-      val2 = sf->curval3; /* has reader scaler */
-      sf->curval2 += sf->incr2;
-      sf->curval3 += sf->incr3;
-      return(val2 * next_split_ptree2_to_float(sf, val1, next_ramp_to_float(sf) * sf->data[sf->loc++]));
-    }
-}
-
-static Float previous_ramp_ptree_ramp_ptree_ramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else 
-    {
-      Float val1, val2;
-      val1 = sf->curval2;
-      val2 = sf->curval3;
-      sf->curval2 -= sf->incr2;
-      sf->curval3 -= sf->incr3;
-      return(val2 * previous_split_ptree2_to_float(sf, val1, previous_ramp_to_float(sf) * sf->data[sf->loc--]));
-    }
-}
-
-/* -------- ptree on xramp on ptree -------- */
-
-static Float next_ptree_xramp_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound_as_float(sf));
-  else return(READER_SCALER(sf) * next_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * next_xramp_to_float(sf), next_split_ptree_arg(sf)));
-}
-
-static Float previous_ptree_xramp_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound_as_float(sf));
-  else return(READER_SCALER(sf) * previous_split_ptree2_to_float(sf, READER_PTREE2_SCALER(sf) * previous_xramp_to_float(sf), previous_split_ptree_arg(sf)));
-}
-
-/* -------------------------------------------------------------------------------- */
-
-
-static void swap_readers(snd_fd *sf)
-{
-  mus_sample_t (*rrun)(struct snd_fd *sf);
-  Float (*rrunf)(struct snd_fd *sf);
-  rrun = sf->run;
-  rrunf = sf->runf;
-  sf->run = sf->rev_run;
-  sf->runf = sf->rev_runf;
-  sf->rev_run = rrun;
-  sf->rev_runf = rrunf;
-}
-
-void read_sample_change_direction(snd_fd *sf, read_direction_t dir1) /* can't use "dir" on Mac */
-{
-  /* direction reversal can happen in dac(speed arrow), src gen, or user can call next/previous independent of initial dir */
-  swap_readers(sf);
-  sf->direction = dir1;
-  /* can't optimize anything here -- some accessors have state, but how to handle the loc=-1 case? */
-  if ((dir1 == READ_FORWARD) && (sf->loc < 0)) 
-    sf->loc = 0;
-  else read_sample(sf);
-}
-
-Float protected_next_sample_to_float(snd_fd *sf)
-{
-  if (sf->direction == READ_BACKWARD) 
-    read_sample_change_direction(sf, READ_FORWARD);
-  return(read_sample_to_float(sf));
-}
-
-Float protected_previous_sample_to_float(snd_fd *sf)
-{
-  if (sf->direction == READ_FORWARD) 
-    read_sample_change_direction(sf, READ_BACKWARD);
-  return(read_sample_to_float(sf));
-}
-
-static void reader_out_of_data(snd_fd *sf)
-{
-  sf->at_eof = true;
-  sf->run = end_sample;
-  sf->runf = end_sample_to_float;
-  sf->rev_run = end_sample;
-  sf->rev_runf = end_sample_to_float;
-}
-
-static snd_fd *cancel_reader(snd_fd *sf)
-{
-  sf->current_sound = NULL;
-  sf->cbi = 0;
-  reader_out_of_data(sf);
-  return(sf);
-}
-
-static void get_sf_closure(snd_fd *sf)
-{
-  XEN proc;
-  proc = sf->cp->ptree_inits[READER_PTREE_INDEX(sf)];
-  if ((sf->closure) && (sf->closure != empty_closure) && (XEN_BOUND_P(sf->closure)))
-    snd_unprotect_at(sf->protect);
-  sf->closure = empty_closure;
-  if (XEN_PROCEDURE_P(proc))
-    {
-      sf->closure = XEN_CALL_2(proc,
-			       C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
-			       C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
-			       "ptree-channel init func");
-      if (XEN_BOUND_P(sf->closure))
-	sf->protect = snd_protect(sf->closure);
-    }
-}
-
-static void get_sf_closure1(snd_fd *sf)
-{
-  XEN proc;
-  proc = sf->cp->ptree_inits[READER_PTREE2_INDEX(sf)];
-  if ((sf->closure1) && (sf->closure1 != empty_closure) && (XEN_BOUND_P(sf->closure1)))
-    snd_unprotect_at(sf->protect1);
-  sf->closure1 = empty_closure;
-  if (XEN_PROCEDURE_P(proc))
-    {
-      sf->closure1 = XEN_CALL_2(proc,
-				C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE2_POSITION(sf)),
-				C_TO_XEN_OFF_T(READER_PTREE2_DUR(sf)),
-				"ptree-channel init func");
-      if (XEN_BOUND_P(sf->closure1))
-	sf->protect1 = snd_protect(sf->closure1);
-    }
-}
-
-static void setup_ramp(snd_fd *sf, double rmp0, double rmp1)
-{
-  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-    sf->incr = 0.0;
-  else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-  sf->curval = rmp0 + sf->incr * sf->frag_pos;
-}
-
-static void setup_ramp2(snd_fd *sf, double rmp0, double rmp1)
-{
-  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-    sf->incr2 = 0.0;
-  else sf->incr2 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-  sf->curval2 = rmp0 + sf->incr2 * sf->frag_pos;
-}
-
-static void setup_ramp3(snd_fd *sf, double rmp0, double rmp1)
-{
-  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-    sf->incr3 = 0.0;
-  else sf->incr3 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-  sf->curval3 = rmp0 + sf->incr3 * sf->frag_pos;
-}
-
-static void setup_ramp4(snd_fd *sf, double rmp0, double rmp1)
-{
-  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-    sf->incr4 = 0.0;
-  else sf->incr4 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-  sf->curval4 = rmp0 + sf->incr4 * sf->frag_pos;
-}
-
-/* static Float to_float(snd_fd *sf) {return(MUS_SAMPLE_TO_FLOAT(read_sample(sf)));} */
-static mus_sample_t to_sample(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sf)));}
-
-static void choose_accessor(snd_fd *sf)
-{
-  int typ;
-  /* fragment-specific reader choice */
-  /* most cases use floats */
-  sf->run = to_sample;
-  sf->rev_run = to_sample;
-  typ = READER_TYPE(sf);
-  if (PTREE_OP(typ))
-    {
-      if (XEN_OP(typ))
-	{
-	  sf->ptree = (void *)(sf->cp->xens[READER_PTREE_INDEX(sf)]);
-	  get_sf_closure(sf);
-	}
-      else
-	{
-	  sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
-	  get_sf_closure(sf);
-	  if (PTREE2_OP(typ))
-	    {
-	      sf->ptree1 = sf->cp->ptrees[READER_PTREE2_INDEX(sf)];
-	      get_sf_closure1(sf);
-	    }
-	  else sf->ptree1 = NULL;
-	}
-      sf->zero = ZERO_OP(typ);
-    }
-  /* TODO: use type_info.next|previous */
-  switch (typ)
-    {
-    case ED_ZERO:
-      sf->run = next_zero_sample;
-      sf->runf = next_zero_sample_to_float;
-      sf->rev_run = previous_zero_sample;
-      sf->rev_runf = previous_zero_sample_to_float;
-      break;
-    case ED_RAMP:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      sf->run = next_sample_with_ramp;
-      sf->runf = next_ramp;
-      sf->rev_run = previous_sample_with_ramp;
-      sf->rev_runf = previous_ramp;
-      break;
-    case ED_XRAMP:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp;
-      sf->rev_runf = previous_xramp;
-      break;
-    case ED_XRAMP2:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_xramp2;
-      sf->rev_runf = previous_xramp2;
-      break;
-    case ED_RAMP2:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      sf->run = next_sample_with_ramp2;
-      sf->runf = next_ramp2;
-      sf->rev_run = previous_sample_with_ramp2;
-      sf->rev_runf = previous_ramp2;
-      break;
-    case ED_XRAMP_RAMP:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp_ramp;
-      sf->rev_runf = previous_xramp_ramp;
-      break;
-    case ED_XRAMP2_RAMP:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_xramp2_ramp;
-      sf->rev_runf = previous_xramp2_ramp;
-      break;
-    case ED_XRAMP_RAMP2:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp_ramp2;
-      sf->rev_runf = previous_xramp_ramp2;
-      break;
-    case ED_XRAMP2_RAMP2:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp2_ramp2;
-      sf->rev_runf = previous_xramp2_ramp2;
-      break;
-    case ED_XRAMP_RAMP3:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp_ramp3;
-      sf->rev_runf = previous_xramp_ramp3;
-      break;
-    case ED_RAMP3:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->run = next_sample_with_ramp3;
-      sf->runf = next_ramp3;
-      sf->rev_run = previous_sample_with_ramp3;
-      sf->rev_runf = previous_ramp3;
-      break;
-    case ED_RAMP4:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->run = next_sample_with_ramp4;
-      sf->runf = next_ramp4;
-      sf->rev_run = previous_sample_with_ramp4;
-      sf->rev_runf = previous_ramp4;
-      break;
-
-    case ED_PTREE:
-    case ED_PTREE_ZERO:
-    case ED_PTREE2:
-    case ED_PTREE2_ZERO:
-      sf->runf = next_ptree;
-      sf->rev_runf = previous_ptree;
-      break;
-    case ED_PTREE_RAMP:
-    case ED_PTREE2_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      sf->runf = next_ptree_ramp;
-      sf->rev_runf = previous_ptree_ramp;
-      break;
-    case ED_PTREE_RAMP2:
-    case ED_PTREE2_RAMP2:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      sf->runf = next_ptree_ramp2;
-      sf->rev_runf = previous_ptree_ramp2;
-      break;
-    case ED_PTREE_RAMP3:
-    case ED_PTREE2_RAMP3:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_ptree_ramp3;
-      sf->rev_runf = previous_ptree_ramp3;
-      break;
-    case ED_PTREE_XRAMP:
-    case ED_PTREE2_XRAMP:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_ptree_xramp;
-      sf->rev_runf = previous_ptree_xramp;
-      break;
-    case ED_PTREE_XRAMP2:
-    case ED_PTREE2_XRAMP2:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_ptree_xramp2;
-      sf->rev_runf = previous_ptree_xramp2;
-      break;
-    case ED_RAMP_PTREE:
-    case ED_RAMP_PTREE_ZERO:
-    case ED_RAMP_PTREE2:
-    case ED_RAMP_PTREE2_ZERO:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      sf->runf = next_ramp_ptree;
-      sf->rev_runf = previous_ramp_ptree;
-      break;
-    case ED_RAMP2_PTREE:
-    case ED_RAMP2_PTREE_ZERO:
-    case ED_RAMP2_PTREE2:
-    case ED_RAMP2_PTREE2_ZERO:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      sf->runf = next_ramp2_ptree;
-      sf->rev_runf = previous_ramp2_ptree;
-      break;
-    case ED_RAMP3_PTREE:
-    case ED_RAMP3_PTREE_ZERO:
-    case ED_RAMP3_PTREE2:
-    case ED_RAMP3_PTREE2_ZERO:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_ramp3_ptree;
-      sf->rev_runf = previous_ramp3_ptree;
-      break;
-    case ED_XRAMP_PTREE:
-    case ED_XRAMP_PTREE_ZERO:
-    case ED_XRAMP_PTREE2:
-    case ED_XRAMP_PTREE2_ZERO:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp_ptree;
-      sf->rev_runf = previous_xramp_ptree;
-      break;
-    case ED_XRAMP2_PTREE:
-    case ED_XRAMP2_PTREE_ZERO:
-    case ED_XRAMP2_PTREE2:
-    case ED_XRAMP2_PTREE2_ZERO:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_xramp2_ptree;
-      sf->rev_runf = previous_xramp2_ptree;
-      break;
-    case ED_RAMP_PTREE_RAMP:
-    case ED_RAMP_PTREE2_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
-      sf->runf = next_ramp_ptree_ramp;
-      sf->rev_runf = previous_ramp_ptree_ramp;
-      break;
-    case ED_RAMP2_PTREE_RAMP:
-    case ED_RAMP2_PTREE2_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_ramp2_ptree_ramp;
-      sf->rev_runf = previous_ramp2_ptree_ramp;
-      break;
-    case ED_RAMP_PTREE_RAMP2:
-    case ED_RAMP_PTREE2_RAMP2:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_SCALER(sf) * READER_RAMP3_BEG(sf), READER_SCALER(sf) * READER_RAMP3_END(sf));
-      sf->runf = next_ramp_ptree_ramp2;
-      sf->rev_runf = previous_ramp_ptree_ramp2;
-      break;
-    case ED_RAMP_PTREE_XRAMP:
-    case ED_RAMP_PTREE2_XRAMP:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      sf->runf = next_ramp_ptree_xramp;
-      sf->rev_runf = previous_ramp_ptree_xramp;
-      break;
-      /* stopped here for ptree2 cases */
-    case ED_XRAMP_PTREE_RAMP:
-    case ED_XRAMP_PTREE2_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp_ptree_ramp;
-      sf->rev_runf = previous_xramp_ptree_ramp;
-      break;
-    case ED_XRAMP2_PTREE_RAMP:
-    case ED_XRAMP2_PTREE2_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_xramp2_ptree_ramp;
-      sf->rev_runf = previous_xramp2_ptree_ramp;
-      break;
-    case ED_XRAMP_PTREE_XRAMP:
-    case ED_XRAMP_PTREE2_XRAMP:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_xramp_ptree_xramp;
-      sf->rev_runf = previous_xramp_ptree_xramp;
-      break;
-    case ED_RAMP2_PTREE_XRAMP:
-    case ED_RAMP2_PTREE2_XRAMP:
-      setup_ramp(sf, READER_RAMP_BEG(sf), READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_ramp2_ptree_xramp;
-      sf->rev_runf = previous_ramp2_ptree_xramp;
-      break;
-    case ED_XRAMP_RAMP_PTREE_RAMP:
-    case ED_XRAMP_RAMP_PTREE2_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp_ramp_ptree_ramp;
-      sf->rev_runf = previous_xramp_ramp_ptree_ramp;
-      break;
-    case ED_XRAMP_RAMP_PTREE_XRAMP:
-    case ED_XRAMP_RAMP_PTREE2_XRAMP:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_xramp_ramp_ptree_xramp;
-      sf->rev_runf = previous_xramp_ramp_ptree_xramp;
-      break;
-    case ED_PTREE_XRAMP_RAMP:
-    case ED_PTREE2_XRAMP_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_ptree_xramp_ramp;
-      sf->rev_runf = previous_ptree_xramp_ramp;
-      break;
-    case ED_PTREE_XRAMP_RAMP2:
-    case ED_PTREE2_XRAMP_RAMP2:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_ptree_xramp_ramp2;
-      sf->rev_runf = previous_ptree_xramp_ramp2;
-      break;
-    case ED_PTREE_XRAMP2_RAMP:
-    case ED_PTREE2_XRAMP2_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_ptree_xramp2_ramp;
-      sf->rev_runf = previous_ptree_xramp2_ramp;
-      break;
-    case ED_XRAMP_PTREE_RAMP2:
-    case ED_XRAMP_PTREE2_RAMP2:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp_ptree_ramp2;
-      sf->rev_runf = previous_xramp_ptree_ramp2;
-      break;
-    case ED_RAMP_PTREE_XRAMP_RAMP:
-    case ED_RAMP_PTREE2_XRAMP_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
-      sf->runf = next_ramp_ptree_xramp_ramp;
-      sf->rev_runf = previous_ramp_ptree_xramp_ramp;
-      break;
-    case ED_XRAMP_PTREE_XRAMP_RAMP:
-    case ED_XRAMP_PTREE2_XRAMP_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_xramp_ptree_xramp_ramp;
-      sf->rev_runf = previous_xramp_ptree_xramp_ramp;
-      break;
-    case ED_RAMP_PTREE_XRAMP2:
-    case ED_RAMP_PTREE2_XRAMP2:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      sf->runf = next_ramp_ptree_xramp2;
-      sf->rev_runf = previous_ramp_ptree_xramp2;
-      break;
-    case ED_XRAMP_RAMP_PTREE:
-    case ED_XRAMP_RAMP_PTREE_ZERO:
-    case ED_XRAMP_RAMP_PTREE2:
-    case ED_XRAMP_RAMP_PTREE2_ZERO:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp_ramp_ptree;
-      sf->rev_runf = previous_xramp_ramp_ptree;
-      break;
-    case ED_XRAMP_RAMP2_PTREE:
-    case ED_XRAMP_RAMP2_PTREE_ZERO:
-    case ED_XRAMP_RAMP2_PTREE2:
-    case ED_XRAMP_RAMP2_PTREE2_ZERO:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp_ramp2_ptree;
-      sf->rev_runf = previous_xramp_ramp2_ptree;
-      break;
-    case ED_XRAMP2_RAMP_PTREE:
-    case ED_XRAMP2_RAMP_PTREE_ZERO:
-    case ED_XRAMP2_RAMP_PTREE2:
-    case ED_XRAMP2_RAMP_PTREE2_ZERO:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_xramp2_ramp_ptree;
-      sf->rev_runf = previous_xramp2_ramp_ptree;
-      break;
-      
-      /* split ptree2 cases */
-
-    case ED_PTREE_XRAMP_PTREE:
-    case ED_PTREE_XRAMP_PTREE_ZERO:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_ptree_xramp_ptree;
-      sf->rev_runf = previous_ptree_xramp_ptree;
-      break;
-    case ED_PTREE_RAMP_PTREE:
-    case ED_PTREE_RAMP_PTREE_ZERO:
-      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
-      sf->runf = next_ptree_ramp_ptree;
-      sf->rev_runf = previous_ptree_ramp_ptree;
-      break;
-    case ED_PTREE_RAMP2_PTREE:
-    case ED_PTREE_RAMP2_PTREE_ZERO:
-      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      sf->runf = next_ptree_ramp2_ptree;
-      sf->rev_runf = previous_ptree_ramp2_ptree;
-      break;
-    case ED_PTREE_RAMP3_PTREE:
-    case ED_PTREE_RAMP3_PTREE_ZERO:
-      setup_ramp(sf, READER_PTREE2_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_ptree_ramp3_ptree;
-      sf->rev_runf = previous_ptree_ramp3_ptree;
-      break;
-    case ED_PTREE_RAMP_PTREE_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_PTREE2_SCALER(sf) * READER_RAMP2_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP2_END(sf));
-      sf->runf = next_ptree_ramp_ptree_ramp;
-      sf->rev_runf = previous_ptree_ramp_ptree_ramp;
-      break;
-    case ED_PTREE_RAMP_PTREE_RAMP2:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_PTREE2_SCALER(sf) * READER_RAMP3_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP3_END(sf));
-      sf->runf = next_ptree_ramp_ptree_ramp2;
-      sf->rev_runf = previous_ptree_ramp_ptree_ramp2;
-      break;
-    case ED_PTREE_RAMP2_PTREE_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_PTREE2_SCALER(sf) * READER_RAMP2_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_ptree_ramp2_ptree_ramp;
-      sf->rev_runf = previous_ptree_ramp2_ptree_ramp;
-      break;
-    case ED_RAMP_PTREE_RAMP_PTREE_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_PTREE2_SCALER(sf) * READER_RAMP2_BEG(sf), READER_PTREE2_SCALER(sf) * READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_SCALER(sf) * READER_RAMP3_BEG(sf), READER_SCALER(sf) * READER_RAMP3_END(sf));
-      sf->runf = next_ramp_ptree_ramp_ptree_ramp;
-      sf->rev_runf = previous_ramp_ptree_ramp_ptree_ramp;
-      break;
-
-      /* xen cases */
-    case ED_XEN:
-    case ED_XEN_ZERO:
-      sf->runf = next_xen;
-      sf->rev_runf = previous_xen;
-      break;
-    case ED_XEN_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      sf->runf = next_xen_ramp;
-      sf->rev_runf = previous_xen_ramp;
-      break;
-    case ED_XEN_RAMP2:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      sf->runf = next_xen_ramp2;
-      sf->rev_runf = previous_xen_ramp2;
-      break;
-    case ED_XEN_RAMP3:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_xen_ramp3;
-      sf->rev_runf = previous_xen_ramp3;
-      break;
-    case ED_XEN_XRAMP:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xen_xramp;
-      sf->rev_runf = previous_xen_xramp;
-      break;
-    case ED_RAMP_XEN:
-    case ED_RAMP_XEN_ZERO:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      sf->runf = next_ramp_xen;
-      sf->rev_runf = previous_ramp_xen;
-      break;
-    case ED_XRAMP_XEN:
-    case ED_XRAMP_XEN_ZERO:
-      setup_ramp4(sf, READER_RAMP4_BEG(sf), READER_RAMP4_END(sf));
-      sf->runf = next_xramp_xen;
-      sf->rev_runf = previous_xramp_xen;
-      break;
-    case ED_RAMP2_XEN:
-    case ED_RAMP2_XEN_ZERO:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      sf->runf = next_ramp2_xen;
-      sf->rev_runf = previous_ramp2_xen;
-      break;
-    case ED_RAMP3_XEN:
-    case ED_RAMP3_XEN_ZERO:
-      setup_ramp(sf, READER_SCALER(sf) * READER_RAMP_BEG(sf), READER_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_RAMP2_BEG(sf), READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_ramp3_xen;
-      sf->rev_runf = previous_ramp3_xen;
-      break;
-    case ED_RAMP_XEN_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
-      sf->runf = next_ramp_xen_ramp;
-      sf->rev_runf = previous_ramp_xen_ramp;
-      break;
-    case ED_RAMP2_XEN_RAMP:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_ramp2_xen_ramp;
-      sf->rev_runf = previous_ramp2_xen_ramp;
-      break;
-    case ED_RAMP_XEN_RAMP2:
-      setup_ramp(sf, READER_PTREE_SCALER(sf) * READER_RAMP_BEG(sf), READER_PTREE_SCALER(sf) * READER_RAMP_END(sf));
-      setup_ramp2(sf, READER_SCALER(sf) * READER_RAMP2_BEG(sf), READER_SCALER(sf) * READER_RAMP2_END(sf));
-      setup_ramp3(sf, READER_RAMP3_BEG(sf), READER_RAMP3_END(sf));
-      sf->runf = next_ramp_xen_ramp2;
-      sf->rev_runf = previous_ramp_xen_ramp2;
-      break;
-
-    case ED_SIMPLE:
-      if (READER_SCALER(sf) == 1.0)
-	{
-	  sf->run = next_sample_unscaled;
-	  sf->rev_run = previous_sample_unscaled;
-	  if (sf->fscaler == 1.0) 
-	    {
-	      sf->runf = next_sample_to_float_unscaled;
-	      sf->rev_runf = previous_sample_to_float_unscaled;
-	    }
-	  else 
-	    {
-	      sf->runf = next_sample_to_float;
-	      sf->rev_runf = previous_sample_to_float;
-	    }
-	}
-      else
-	{
-#if (!SNDLIB_USE_FLOATS)
-	  Float scl;
-	  /* more concerned here with the int->float->int conversions than the multiply */
-	  scl = READER_SCALER(sf);
-	  if (scl == floor(scl))
-	    {
-	      sf->iscaler = (int)floor(scl);
-	      sf->run = next_sample_by_int;
-	      sf->rev_run = previous_sample_by_int;
-	    }
-	  else
-	    {
-	      sf->run = next_sample;
-	      sf->rev_run = previous_sample;
-	    }
-	  sf->runf = next_sample_to_float;
-	  sf->rev_runf = previous_sample_to_float;
-#else
-	  sf->run = next_sample;
-	  sf->runf = next_sample_to_float;
-	  sf->rev_run = previous_sample;
-	  sf->rev_runf = previous_sample_to_float;
-#endif
-	}
-      break;
-    default:
-#if DEBUGGING
-      fprintf(stderr, "choose accessor: %d %s?\n", typ, (typ < NUM_OPS) ? type_info[typ].name : "unknown");
-#endif
-      break;
-    }
-  if (sf->direction == READ_BACKWARD) swap_readers(sf);
-}
-
 
 static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize)
 {
@@ -6313,6 +7040,9 @@ void redo_edit_with_sync(chan_info *cp, int count)
     }
 }
 
+
+
+/* ----------------------- Xen connection -------------------------------- */
 
 static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
 {
@@ -8302,6 +9032,8 @@ XEN_NARGIFY_1(g_make_xen2sample_w, g_make_xen2sample)
 #define g_xen2sample_w g_xen2sample
 #endif
 
+
+
 void g_init_edits(void)
 {
   sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));
@@ -8401,6 +9133,15 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
   XEN2SAMPLE = mus_make_class_tag();
   SND2SAMPLE = mus_make_class_tag();
+
+
+#if DEBUGGING && 0
+  init_hit_entries();
+  check_type_info_entry(ED_SIMPLE, 0, 0, false);
+  check_type_info_entry(ED_ZERO, 0, 0, true);
+  report_unhit_entries();
+#endif
+
 }
 
 /* from Anders:
@@ -8419,14 +9160,19 @@ append the rest?
 */
 
 /* 
-      more ramp4 cases
-        since ramps are basically no-ops, what about ramp-n (i.e expandable array of ramps)?
+      since ramps are basically no-ops, what about ramp-n (i.e expandable array of ramps)?
         would still have n-split cases + associated reader_scaler confusion
 
-      combine accessors for xramp and ramp using sf->zero?
+      embed scaler into xramp somehow?
+         val = (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)))
+         so multiply into offset and scaler fields, but these aren't temps like incr
 
-      split ptree2 (and more xen?) cases
+      more xen cases? (xen2 as well?)
         same on ptree3[zero] -- doesn't seem useful yet (need real-life stats here)
+        ptree3 could piggy-back on ptree2 (about 125 ops currently) -- add to ptree base readers,
+	  add ops, everything else (all accessors/ramp setup etc) remains the same.
+          so ca 50 lines of real code + 300 lines of cases entries to get ptree3
+	xen2 could piggy-back on xen in the same manner
 
       currently mix+tag then scl locks mix -- seems unnecessary (env as well?)
         but remix is needed somewhere -- initial stab at this failed
@@ -8434,12 +9180,28 @@ append the rest?
       filter: need to save segment init state vals, own local reader for base of table and mimic dir in table reader
         filter op itself needs to be reversible -- initial 2 or 3 stabs at this failed (and amp env is a mess as well)
 
-      smooth-channel as built-in ptree use or cramp case in tables (need ptree access without parse step, or xramp switch like ptree_zero)
-        cramp version could use all existing env stuff (peak-amp etc) [cosine-channel]
-
       reverse as pure-top-level (i.e. any split=>make explicit)
         but init_read within reversed fragment needs to get beg correctly etc
 
-      contrast-enhancement from control panel; ptree example for it (similarly ring-am-mod)
-      chebychev-channel offset-channel delay(tap)-channel?
+      contrast-enhancement from control panel; ptree example for it
+        (lambda (y) (sin (+ (* y 0.5 pi) (* index (sin (* y 2.0 pi))))))
+
+      chebychev-channel: 
+	 (coeffs (partials->polynomial (normalize-partials partials)))
+	 (polynomial coeffs y)
+
+      ring-mod with oscil: set initial phase as in sine-ramp init proc, initial phase incr
+        forward: add incr etc:
+        (lambda (y) (* y (sin phase0)))
+      am could be (lambda (y) (* y 0.5 (+ 1.0 (sin phase))))
+
+      add sine tone:
+        (lambda (y) (+ y (sin phase))) -> extsnd.html?
+        so a CLM instrument would need to be reversible and startable at an arbitrary point
+
+      power-env-channel as ptree case (via xramp-channel?), x2-env? db-env?
+
+      xref table for ptree?
+
+      there is still the one-samp -> wrong begin point bug
 */

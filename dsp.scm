@@ -614,6 +614,27 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; (let ((gen (make-cosine-summation 100.0))) (map-channel (lambda (y) (* .2 (cosine-summation gen 0.5)))))
 
 
+;;; -------- kosine-summation
+;;;
+;;; from Askey "Ramanujan and Hypergeometric Series" in Berndt and Rankin "Ramanujan: Essays and Surveys"
+;;;
+;;; this gives a sum of cosines of decreasing amp where the "k" parameter determines
+;;;   the "index" (in FM nomenclature) -- higher k = more cosines; the actual amount
+;;;   of the nth cos involves hypergeometric series (looks like r^n/n! with a million other terms).
+
+(define (kosine-summation gen r k)
+  (* (expt (- (+ 1.0 (* r r))
+	      (* 2 r (oscil gen)))
+	   (- k))
+     (expt (- (+ 1.0 (* r r)) (* 2 r)) k))) ; amplitude normalization
+
+(define make-kosine-summation make-oscil)
+
+;;; (let ((gen (make-kosine-summation 100.0))) (map-channel (lambda (y) (* .2 (kosine-summation gen 0.5 5.0)))))
+;;;
+;;; there is still noticable DC offset if r != 0.5 -- could precompute it and subtract
+
+
 ;;; -------- legendre-summation (sum-of-cosines with descreasing amps)
 ;;;
 ;;; from Andrews, Askey, Roy "Special Functions" p 314

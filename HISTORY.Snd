@@ -1,5 +1,9 @@
 Snd change log
 
+  15-Dec:    kosine-summation in dsp.scm -- sum-of-cosines with an "FM index".
+             sine-ramp and sine-env-channel for envelopes that connect the dots
+                with a sinusoidal curve.
+             offset-channel.
   28-Nov:    pan-mix-selection|region|vct in mix.scm.
   26-Nov:    rtio.rb thanks to Michael Scholz.
   25-Nov:    copy-sample-reader, read-region-sample, region-sample-reader?.
