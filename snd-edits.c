@@ -198,8 +198,10 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      MUS_SAMPLE_TYPE **ibufs;
 	      fprintf(fd,"#(");
 	      ifd = mus_file_open_read(sf->filename);
-	      mus_file_open_descriptors(ifd,mus_sound_data_format(sf->filename),mus_sound_datum_size(sf->filename),mus_sound_data_location(sf->filename));
 	      idataloc = mus_sound_data_location(sf->filename);
+	      mus_file_set_descriptors(ifd,sf->filename,
+				       mus_sound_data_format(sf->filename),mus_sound_datum_size(sf->filename),idataloc,
+				       mus_sound_chans(sf->filename),mus_sound_header_type(sf->filename));
 	      samples = mus_sound_samples(sf->filename);
 	      mus_file_seek(ifd,idataloc,SEEK_SET);
 	      ibufs = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
@@ -584,7 +586,6 @@ snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_in
 
 static snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
 {
-  /* see note under init_sample_read */
   snd_data *sf;
   int *datai;
   int fd;
@@ -592,7 +593,9 @@ static snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   hdr = sd->hdr;
   fd = snd_open_read(cp->state,sd->filename);
   if (fd == -1) return(NULL);
-  mus_file_open_descriptors(fd,hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location);
+  mus_file_set_descriptors(fd,sd->filename,
+			   hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
+			   hdr->chans,hdr->type);
   during_open(fd,sd->filename,SND_COPY_READER);
   datai = make_file_state(fd,hdr,SND_IO_IN_FILE,sd->chan,bufsize);
   sf = (snd_data *)CALLOC(1,sizeof(snd_data));
@@ -1098,7 +1101,9 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
   if (hdr)
     {
       fd = snd_open_read(cp->state,inserted_file);
-      mus_file_open_descriptors(fd,hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location);
+      mus_file_set_descriptors(fd,inserted_file,
+			       hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
+			       hdr->chans,hdr->type);
       during_open(fd,inserted_file,SND_INSERT_FILE);
       datai = make_file_state(fd,hdr,SND_IO_IN_FILE,chan,FILE_BUFFER_SIZE);
       cb[ED_SND] = add_sound_file_to_edit_list(cp,inserted_file,datai,
@@ -1368,7 +1373,9 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
   if (hdr)
     {
       fd = snd_open_read(cp->state,tempfile);
-      mus_file_open_descriptors(fd,hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location);
+      mus_file_set_descriptors(fd,tempfile,
+			       hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
+			       hdr->chans,hdr->type);
       during_open(fd,tempfile,SND_CHANGE_FILE);
       datai = make_file_state(fd,hdr,SND_IO_IN_FILE,chan,FILE_BUFFER_SIZE);
       cb[ED_SND] = add_sound_file_to_edit_list(cp,tempfile,datai,
@@ -1401,7 +1408,9 @@ void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int
       if (num == -1) num = (hdr->samples/hdr->chans);
       prepare_edit_list(cp,num);
       fd = snd_open_read(ss,tempfile);
-      mus_file_open_descriptors(fd,hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location);
+      mus_file_set_descriptors(fd,tempfile,
+			       hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
+			       hdr->chans,hdr->type);
       during_open(fd,tempfile,SND_OVERRIDE_FILE);
       datai = make_file_state(fd,hdr,SND_IO_IN_FILE,chan,FILE_BUFFER_SIZE);
       e = initial_ed_list(0,num-1);
@@ -1843,7 +1852,9 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
   if (err == -1) return(-1);
   if ((ofd = snd_reopen_write(ss,ofile)) == -1) return(-1);
   hdr->data_location = mus_header_data_location(); /* header might have changed size (aiff extras) */
-  mus_file_open_descriptors(ofd,hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location);
+  mus_file_set_descriptors(ofd,ofile,
+			   hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
+			   chans,hdr->type);
   mus_file_set_data_clipped(ofd,data_clipped(ss));
   mus_file_seek(ofd,hdr->data_location,SEEK_SET);
   return(ofd);

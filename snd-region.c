@@ -493,7 +493,7 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
       if ((snd_write_header(ss,ofile,type,srate,r->chans,28,r->chans*r->len,format,comment,comlen,NULL)) == -1) return(SND_CANNOT_WRITE_HEADER);
       oloc = mus_header_data_location();
       if ((ofd = snd_reopen_write(ss,ofile)) == -1) return(SND_CANNOT_OPEN_TEMP_FILE);
-      mus_file_open_descriptors(ofd,format,mus_data_format_to_bytes_per_sample(format),oloc);
+      mus_file_set_descriptors(ofd,ofile,format,mus_data_format_to_bytes_per_sample(format),oloc,r->chans,type);
       mus_file_set_data_clipped(ofd,data_clipped(ss));
       mus_file_seek(ofd,oloc,SEEK_SET);
       if (r->use_temp_file == REGION_ARRAY)
@@ -507,7 +507,9 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
 	  chans = mus_sound_chans(r->filename);
 	  frames = mus_sound_samples(r->filename) / chans;
 	  iloc = mus_sound_data_location(r->filename);
-	  mus_file_open_descriptors(ifd,mus_sound_data_format(r->filename),mus_sound_datum_size(r->filename),iloc);
+	  mus_file_set_descriptors(ifd,r->filename,
+				   mus_sound_data_format(r->filename),mus_sound_datum_size(r->filename),iloc,
+				   chans,mus_sound_header_type(r->filename));
 	  mus_file_seek(ifd,iloc,SEEK_SET);
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
 	  for (i=0;i<chans;i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
@@ -1282,7 +1284,6 @@ void save_regions(snd_state *ss, FILE *fd)
 	{
 	  fprintf(fd,"(%s %d %d %d %d %.4f \"%s\" \"%s\" \"%s\"",
 	          S_restore_region,i,r->chans,r->len,r->srate,r->maxamp,r->name,r->start,r->end);
-	  /* handled as one list for speed in guile -- "uniform vector"? */
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
 	      fprintf(fd,"\n  #(");
@@ -1309,11 +1310,14 @@ void save_regions(snd_state *ss, FILE *fd)
 	      else
 		{
 		  /* read at very low level */
-		  int ifd;
+		  int ifd,iloc;
 		  MUS_SAMPLE_TYPE **ibufs;
 		  ifd = mus_file_open_read(r->filename);
-		  mus_file_open_descriptors(ifd,mus_sound_data_format(r->filename),mus_sound_datum_size(r->filename),mus_sound_data_location(r->filename));
-		  mus_file_seek(ifd,mus_sound_data_location(r->filename),SEEK_SET);
+		  iloc = mus_sound_data_location(r->filename);
+		  mus_file_set_descriptors(ifd,r->filename,
+					   mus_sound_data_format(r->filename),mus_sound_datum_size(r->filename),iloc,
+					   r->chans,mus_sound_header_type(r->filename));
+		  mus_file_seek(ifd,iloc,SEEK_SET);
 		  ibufs = (MUS_SAMPLE_TYPE **)CALLOC(r->chans,sizeof(MUS_SAMPLE_TYPE *));
 		  for (j=0;j<r->chans;j++)
 		    ibufs[j] = (MUS_SAMPLE_TYPE *)CALLOC(r->len,sizeof(MUS_SAMPLE_TYPE));

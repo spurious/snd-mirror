@@ -4061,7 +4061,9 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
 
 	  output_fd = snd_reopen_write(ss,recorder_file(ss));
 	  mus_header_read_with_fd(output_fd);
-	  mus_file_open_descriptors(output_fd,recorder_out_format(ss),mus_data_format_to_bytes_per_sample(recorder_out_format(ss)),mus_header_data_location());
+	  mus_file_set_descriptors(output_fd,recorder_file(ss),
+				   recorder_out_format(ss),mus_data_format_to_bytes_per_sample(recorder_out_format(ss)),mus_header_data_location(),
+				   recorder_out_chans(ss),out_type);
 	  mus_file_set_data_clipped(output_fd,data_clipped(ss));
 	  total_out_frames = 0;
 	  duration_frames = recorder_srate(ss)/4;

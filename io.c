@@ -10,7 +10,7 @@
  * int mus_file_reopen_write(const char *arg)
  * int mus_file_close(int fd)
  * int mus_file_probe(const char *arg)
- * int mus_file_open_descriptors (int tfd, int df, int ds, int dl)
+ * int mus_file_set_descriptors (int tfd, char *name, int df, int ds, int dl, int chns, int typ)
  * int mus_file_close_descriptors(int tfd)
  * see sndplay.c for a short example
  * --------------------------------

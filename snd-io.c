@@ -158,7 +158,9 @@ void snd_file_reset(snd_data *sd, int index)
 	}
       hdr = sd->hdr;
       /* these need to flush active data before hidden close and fixup the datai indices */
-      mus_file_open_descriptors(fd,hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location);
+      mus_file_set_descriptors(fd,sd->filename,
+			       hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
+			       hdr->chans,hdr->type);
       during_open(fd,sd->filename,SND_REOPEN_CLOSED_FILE);
       /* fix up io[SND_IO_FD] and whatever else is clobbered by mus_file_close */
       sd->io[SND_IO_FD] = fd;

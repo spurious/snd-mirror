@@ -76,7 +76,7 @@ static char *b2s(int val) {if (val) return("1"); else return("0");}
 
 char *mus_fft_window_name(int i); /* from clm2scm.c */
 
-void save_snd_state_options (snd_state *ss, FILE *fd)
+static void save_snd_state_options (snd_state *ss, FILE *fd)
 { /* for save options menu choice (.snd) -- mostly saving snd_state info */
   time_t ts;
   char time_buf[64];
@@ -393,3 +393,32 @@ int save_state (snd_state *ss, char *save_state_name)
   return(0);
 }
 
+#if HAVE_GUILE
+#include "sg.h"
+
+static SCM g_save_options(SCM filename)
+{
+  #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
+  char *name = NULL,*urn;
+  FILE *fd;
+  ERRS1(filename,S_save_options);
+  urn = gh_scm2newstr(filename,NULL);
+  name = mus_file_full_name(urn);
+  free(urn);
+  fd = fopen(name,"w");
+  if (name) FREE(name);
+  if (fd) 
+    {
+      save_snd_state_options(get_global_state(),fd);
+      fclose(fd);
+      return(filename);
+    }
+  return(CANNOT_SAVE);
+}
+
+void g_init_main(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure1_0(S_save_options,g_save_options),H_save_options);
+}
+
+#endif

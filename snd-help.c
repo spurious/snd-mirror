@@ -189,6 +189,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+28-Jun:  added channel argument to save-sound-as (for channel extraction).\n\
+         removed OSS-specific set-dsp-reset.\n\
 27-Jun:  update configure for gsl 0.6.\n\
 26-Jun:  as-one-edit now handles mark changes correctly.\n\
          make-sample-reader snd arg can be filename (to read external files without opening them).\n\
@@ -208,8 +210,6 @@ void news_help(snd_state *ss)
 8-Jun:   OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).\n\
 7-Jun:   snd-error-hook, snd-warning-hook.\n\
 5-Jun:   snd 4.3.\n\
-30-May:  transform-size for glfft, glfft.scm, glfft.c.\n\
-29-May:  mix-sound to help with CLM/Snd explode support.\n\
 ",
 NULL);
   FREE(info);

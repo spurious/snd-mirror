@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 10
-#define SNDLIB_REVISION 21
-#define SNDLIB_DATE "20-Jun-00"
+#define SNDLIB_REVISION 22
+#define SNDLIB_DATE "28-Jun-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -426,7 +426,7 @@ void mus_audio_mixer_restore PROTO((const char *file));
 
 /* -------- io.c -------- */
 
-int mus_file_open_descriptors    PROTO((int tfd, int df, int ds, int dl));
+int mus_file_open_descriptors    PROTO((int tfd, int df, int ds, int dl)); /* obsolete -- will be removed someday */
 int mus_file_set_descriptors     PROTO((int tfd, const char *arg, int df, int ds, int dl, int dc, int dt));
 int mus_file_close_descriptors   PROTO((int tfd));
 int mus_file_cleanup_descriptors PROTO((void));

@@ -751,7 +751,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       cp->edit_size = 1;
       cp->sound_size = 1;
       fd = snd_open_read(ss,filename);
-      mus_file_open_descriptors(fd,hdr->format,mus_sound_datum_size(filename),hdr->data_location);
+      mus_file_set_descriptors(fd,filename,hdr->format,mus_sound_datum_size(filename),hdr->data_location,hdr->chans,hdr->type);
       datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,(post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
       cp->sounds[0] = make_snd_data_file(filename,datai,
 					 MUS_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]),

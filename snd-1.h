@@ -537,10 +537,12 @@ void set_channel_style(snd_state *ss, int val);
 
 void snd_exit_cleanly(snd_state *ss);
 int snd_not_current(snd_info *sp, void *dat);
-void save_snd_state_options (snd_state *ss, FILE *fd);
 int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
+#if HAVE_GUILE
+  void g_init_main(SCM local_doc);
+#endif
 
 
 /* --------- snd-error.c -------- */

@@ -767,8 +767,10 @@ static int file_maxamps(char *ifile, Float *vals, int ichans, int format)
   MUS_SAMPLE_TYPE *buffer,*amps;
   MUS_SAMPLE_TYPE **ibufs;
   if ((ifd=mus_file_open_read(ifile)) == -1) return(0);
-  mus_file_open_descriptors(ifd,format,mus_data_format_to_bytes_per_sample(format),mus_sound_data_location(ifile));
   idataloc = mus_sound_data_location(ifile);
+  mus_file_set_descriptors(ifd,ifile,
+			   format,mus_data_format_to_bytes_per_sample(format),idataloc,
+			   ichans,mus_sound_header_type(ifile));
   idatasize = mus_sound_samples(ifile);
   samples = (idatasize / ichans);
   if (samples <= 0) {mus_file_close(ifd); return(0);}

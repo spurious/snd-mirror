@@ -2721,24 +2721,6 @@ static SCM g_save_envelopes(SCM filename)
   return(CANNOT_SAVE);
 }
 
-static SCM g_save_options(SCM filename)
-{
-  #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
-  char *name = NULL;
-  FILE *fd;
-  ERRS1(filename,S_save_options);
-  name = full_filename(filename);
-  fd = fopen(name,"w");
-  if (name) FREE(name);
-  if (fd) 
-    {
-      save_snd_state_options(state,fd);
-      fclose(fd);
-      return(filename);
-    }
-  return(CANNOT_SAVE);
-}
-
 static SCM g_select_sound(SCM snd_n)
 {
   #define H_select_sound "(" S_select_sound " &optional snd) makes snd the selected (active) sound"
@@ -3743,14 +3725,14 @@ static SCM g_view_sound(SCM filename)
   return(SCM_BOOL_F);
 }
 
-static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM srate)
+static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM srate, SCM channel)
 {
-  #define H_save_sound_as "("  S_save_sound_as " filename &optional snd header-type data-format srate)\n\
-   saves snd in filename using the indicated attributes."
+  #define H_save_sound_as "("  S_save_sound_as " filename &optional snd header-type data-format srate channel)\n\
+   saves snd in filename using the indicated attributes.  If channel is specified, only that channel is saved (extracted)."
 
   snd_info *sp;
   file_info *hdr;
-  int ht,df,sr;
+  int ht,df,sr,chan;
   char *fname = NULL;
   ERRS1(newfile,S_save_sound_as);
   sp = get_sp(index);
@@ -3767,7 +3749,17 @@ static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM sra
 	df = hdr->format;
       else df = MUS_OUT_FORMAT;
     }
-  save_edits_2(sp,fname,ht,df,sr,NULL); /* last arg is comment */
+  if (gh_number_p(channel))
+    {
+      chan = g_scm2int(channel);
+      if ((chan >= sp->nchans) || (chan < 0))
+	{
+	  if (fname) FREE(fname);
+	  return(NO_SUCH_CHANNEL);
+	}
+      else chan_save_edits(sp->chans[chan],fname);
+    }
+  else save_edits_2(sp,fname,ht,df,sr,NULL); /* last arg is comment */
   if (fname) FREE(fname);
   return(newfile);
 }
@@ -4423,14 +4415,6 @@ static SCM g_clear_audio_inputs (void)
   return(SCM_BOOL_F);
 }
 
-void set_dsp_reset(int val);
-static SCM g_set_dsp_reset(SCM val) 
-{
-  #define H_set_dsp_reset " sets a stupid flag in OSS -- will go away someday"
-  set_dsp_reset(g_scm2int(val)); 
-  return(val);
-}
-
 static SCM g_dsp_devices(SCM cards, SCM dsps, SCM mixers)
 {
   #define H_dsp_devices "(" S_dsp_devices " cards dsps mixers) is a horrible kludge; it will go away anyday now"
@@ -4544,17 +4528,6 @@ static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SC
       return(SCM_BOOL_T);
     }
   return(SCM_BOOL_F);
-}
-
-static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
-{
-  #define H_key "(" S_key " key modifiers &optional snd chn) simulates typing 'key' with 'modifiers' in snd's channel chn"
-  chan_info *cp;
-  ERRN1(kbd,S_key);
-  ERRN2(buckybits,S_key);
-  cp = get_cp(snd,chn);
-  if (cp == NULL) return(NO_SUCH_CHANNEL);
-  RTNINT(keyboard_command(cp,g_scm2int(kbd),g_scm2int(buckybits)));
 }
 
 static SCM g_add_to_main_menu(SCM label)
@@ -5564,7 +5537,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure2_0(S_set_recorder_out_amp,g_set_recorder_out_amp),H_set_recorder_out_amp);
 #if HAVE_OSS
   DEFINE_PROC(gh_new_procedure0_0(S_clear_audio_inputs,g_clear_audio_inputs),H_clear_audio_inputs);
-  DEFINE_PROC(gh_new_procedure1_0("set-dsp-reset",g_set_dsp_reset),H_set_dsp_reset);
   DEFINE_PROC(gh_new_procedure3_0(S_dsp_devices,g_dsp_devices),H_dsp_devices);
   DEFINE_PROC(gh_new_procedure3_0(S_set_dsp_devices,g_set_dsp_devices),H_set_dsp_devices);
 #endif
@@ -5616,7 +5588,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_1(S_update_sound,g_update_sound),H_update_sound);
   DEFINE_PROC(gh_new_procedure0_1(S_revert_sound,g_revert_sound),H_revert_sound);
   DEFINE_PROC(gh_new_procedure0_1(S_save_sound,g_save_sound),H_save_sound);
-  DEFINE_PROC(gh_new_procedure1_4(S_save_sound_as,g_save_sound_as),H_save_sound_as);
+  DEFINE_PROC(gh_new_procedure1_5(S_save_sound_as,g_save_sound_as),H_save_sound_as);
   DEFINE_PROC(gh_new_procedure1_0(S_preload_directory,g_preload_directory),H_preload_directory);
   DEFINE_PROC(gh_new_procedure1_0(S_preload_file,g_preload_file),H_preload_file);
   DEFINE_PROC(gh_new_procedure1_0(S_sound_files_in_directory,g_sound_files_in_directory),H_sound_files_in_directory);
@@ -5638,7 +5610,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_0(S_activate_listener,g_activate_listener),H_activate_listener);
   DEFINE_PROC(gh_new_procedure0_0(S_graph_ps,g_graph2ps),H_graph2ps);
   DEFINE_PROC(gh_new_procedure1_0(S_save_state,g_save_state),H_save_state);
-  DEFINE_PROC(gh_new_procedure1_0(S_save_options,g_save_options),H_save_options);
   DEFINE_PROC(gh_new_procedure0_1(S_save_envelopes,g_save_envelopes),H_save_envelopes);
   DEFINE_PROC(gh_new_procedure0_3(S_scale_to,g_scale_to),H_scale_to);
   DEFINE_PROC(gh_new_procedure0_3(S_scale_by,g_scale_by),H_scale_by);
@@ -5727,7 +5698,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure2_2(S_filter_sound,g_filter_sound),H_filter_sound);
   DEFINE_PROC(gh_new_procedure2_0(S_filter_selection,g_filter_selection),H_filter_selection);
   DEFINE_PROC(gh_new_procedure0_1(S_call_apply,g_call_apply),H_call_apply);
-  DEFINE_PROC(gh_new_procedure2_2(S_key,g_key),H_key);
   DEFINE_PROC(gh_new_procedure1_0(S_add_to_main_menu,g_add_to_main_menu),H_add_to_main_menu);
   DEFINE_PROC(gh_new_procedure3_0(S_add_to_menu,g_add_to_menu),H_add_to_menu);
   DEFINE_PROC(gh_new_procedure2_0(S_remove_from_menu,g_remove_from_menu),H_remove_from_menu);
@@ -5816,6 +5786,7 @@ void g_initialize_gh(snd_state *ss)
   g_init_edits(local_doc);
   g_init_completions(local_doc);
   g_init_menu(local_doc);
+  g_init_main(local_doc);
 
 #if HAVE_LADSPA
   g_ladspa_to_snd(local_doc);

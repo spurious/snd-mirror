@@ -53,6 +53,7 @@
 ;;; time varying FIR filter
 ;;; map-sound-files, match-sound-files
 ;;; move sound down 8ve using fft
+;;; vct func like list
 
 
 (use-modules (ice-9 debug))
@@ -833,6 +834,14 @@
 	       #f))
 	 #f #f "swap-channels")
 	(string-append (short-file-name) " is not stereo!"))))
+
+;;; a version that uses temp files, and might be a lot faster is:
+(define faster-swap-channels
+  (lambda (snd)
+    (save-sound-as "/tmp/snd_chan0.snd" snd #f #f #f 0)    ;currently the 3 #f args are ignored in this case
+    (save-sound-as "/tmp/snd_chan1.snd" snd #f #f #f 1)
+    (set-samples 0 (frames) "/tmp/snd_chan0.snd" snd 1)    ;temps will be deleted by Snd
+    (set-samples 0 (frames) "/tmp/snd_chan1.snd" snd 0)))
 
 
 ;;; -------- envelope-interp (named envelope-interp in clm's env.lisp)
@@ -2076,6 +2085,43 @@
 ;(map-chan (fltit))
 
 
+;;; Snd's (very simple) spectrum->coefficients procedure is:
+
+(define spectrum->coeffs 
+  (lambda (order spectr)
+    (let* ((coeffs (make-vct order))
+	   (n order)
+	   (m (inexact->exact (floor (/ (+ n 1) 2))))
+	   (am (* 0.5 (+ n 1)))
+	   (q (/ (* 3.14159 2.0) n)))
+      (do ((j 0 (1+ j))
+	   (jj (- n 1) (1- jj)))
+	  ((= j m) coeffs)
+	(let ((xt (* 0.5 (vct-ref spectr 0))))
+	  (do ((i 1 (1+ i)))
+	      ((= i m))
+	    (set! xt (+ xt (* (vct-ref spectr i) (cos (* q i (- am j 1)))))))
+	  (let ((coeff (* 2.0 (/ xt n))))
+	    (vct-set! coeffs j coeff)
+	    (vct-set! coeffs jj coeff)))))))
+
+(define fltit-1
+  (lambda (order spectr) 
+    (let* ((coeffs (spectrum->coeffs order spectr))
+	   (flt (make-fir-filter order coeffs)))
+      (lambda (x)
+	(if x
+	    (fir-filter flt x)
+	    #f)))))
+
+;(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
+;(let ((notched-spectr (make-vct 40)))
+;  (vct-set! notched-spectr 2 1.0)  
+;  (vct-set! notched-spectr 37 1.0)
+;  (map-chan (fltit-1 40 notched-spectr)))
+
+
+
 ;;; -------- map-sound-files, match-sound-files
 ;;;
 ;;; apply a function to each sound in dir
@@ -2156,3 +2202,11 @@
 	(vct-set! im2 j (vct-ref im1 k)))
       (fft rl2 im2 -1)
       (vct->samples 0 (* 2 fftlen) rl2))))
+
+
+;;; -------- vct func like list -- takes any number of args and creates vct
+;;;
+;;;  :(vct 1 2 3)
+;;;  #<vct 1.000 2.000 3.000>
+
+(define vct (lambda args (list->vct args)))

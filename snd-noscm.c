@@ -1125,19 +1125,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_save_control_panel) == 0) {sp = get_sp(ss,str[1]); if (sp) save_control_panel(sp); isym(ss,0); return(0);}
       if (strcmp(tok,S_save_dir) == 0) {ssym(ss,save_dir(ss)); return(0);}
       if (strcmp(tok,S_save_envelopes) == 0) {g_save_envelopes(str[1]); isym(ss,0); return(0);}
-      if (strcmp(tok,S_save_options) == 0) 
-	{
-	  FILE *fd;
-	  fd = fopen(filename = mus_file_full_name(sstr(str[1])),"w");
-	  if (filename) FREE(filename);
-	  if (fd)
-	    {
-	      save_snd_state_options(ss,fd); 
-	      fclose(fd);
-	    }
-	  isym(ss,0); 
-	  return(0);
-	}
       if (strcmp(tok,S_save_region) == 0) 
 	{
 	  ival = istr(str[1]);

@@ -1,5 +1,7 @@
 snd change log
 
+  28-Jun:    added channel argument to save-sound-as (for channel extraction).
+             removed OSS-specific set-dsp-reset.
   27-Jun:    update configure for gsl 0.6.
   26-Jun:    as-one-edit now handles mark changes correctly.
              make-sample-reader snd arg can be filename (to read external files without opening them).

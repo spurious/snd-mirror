@@ -22,7 +22,7 @@
 #define STR_Apply		     	 "Apply"
 #define STR_Autoload_Recording           "Autoload Recording"
 #define STR_Back                         "Back"
-#define STR_Big_Trouble                  "Yow! Big Trouble!"
+#define STR_Big_Trouble                  "Yow!"
 #define STR_Bogus_header_found_for	 "Bogus header found for %s"
 #define STR_Cancel			 "Cancel"
 #define STR_Channel_style                "Channel style"

@@ -913,8 +913,9 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndsaveselection">save-selection</a>    (file <i>header-type data-format srate comment</i>)
                                   save the currently selected data in <i>file</i>.
   <a name="sndsave">save-sound</a>        (<i>snd</i>)         save <i>snd</i>; same as File menu's Save option.
-  <a name="sndsaveas">save-sound-as</a>     (filename <i>snd header-type data-format srate</i>) 
-                                  save <i>snd</i> as <i>filename</i> (same as File Save as option).
+  <a name="sndsaveas">save-sound-as</a>     (filename <i>snd header-type data-format srate channel</i>) 
+                                  save <i>snd</i> as <i>filename</i> (same as File Save as option).  If channel is specified,
+                                  only that channel is saved (extracted).
   <a name="sndsavestate">save-state</a>        (filename)    save current state of Snd in <i>filename</i>.
   <a name="sndscaleby">scale-by</a>          (<i>scalers snd chn</i>)
                                   <a href="snd.html#scaling">scale</a> amplitude of <i>snd</i> by <i>scalers</i>.  Unlike most of these functions,

@@ -57,9 +57,6 @@ env_state *make_env_state(chan_info *cp, int samples)
     {
       es->ep = cp->amp_envs[pos];
       ep = es->ep;
-#if DEBUGGING
-      if (ep->completed) {snd_error("amp-env confusion"); abort();}
-#endif
     }
   else 
     {
@@ -185,6 +182,7 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	{
 	  /* an experiment... */
 	  /* sub sample reads even at the lowest level (io.c -- using dummy chans to subsample) */
+	  /* this actually only helps after the initial read -- the first pass has to read the file into the RAM cache */
 
 	  int fd,subsamp,bin_size,nc,m;
 	  snd_info *sp;
@@ -201,10 +199,13 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	   *   accumulate over 100 bins, and I'm paranoid)
 	   */
 	  fd = mus_file_open_read(sp->fullname);
-	  mus_file_open_descriptors(fd,
-				    mus_sound_data_format(sp->fullname),
-				    mus_sound_datum_size(sp->fullname),
-				    mus_sound_data_location(sp->fullname));
+	  mus_file_set_descriptors(fd,
+				   sp->fullname,
+				   mus_sound_data_format(sp->fullname),
+				   mus_sound_datum_size(sp->fullname),
+				   mus_sound_data_location(sp->fullname),
+				   sp->nchans,
+				   mus_sound_header_type(sp->fullname));
 	  mus_file_seek_frame(fd,ep->bin*ep->samps_per_bin);
 	  mus_file_read_any(fd,0,sp->nchans * subsamp,lm * (bin_size+2),bufs,(MUS_SAMPLE_TYPE *)bufs);
 

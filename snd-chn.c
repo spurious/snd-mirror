@@ -378,7 +378,12 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
       fd = snd_open_read(ss,filename);
       if (fd != -1)
 	{
-	  mus_file_open_descriptors(fd,chdr->format,mus_data_format_to_bytes_per_sample(chdr->format),chdr->data_location);
+	  mus_file_set_descriptors(fd,
+				   filename,chdr->format,
+				   mus_data_format_to_bytes_per_sample(chdr->format),
+				   chdr->data_location,
+				   chdr->chans,
+				   chdr->type);
 	  during_open(fd,filename,SND_OPEN_CHANNEL);
 	  datai = make_file_state(fd,chdr,SND_IO_IN_FILE,chn,FILE_BUFFER_SIZE);
 	  cp->sounds[0] = make_snd_data_file(filename,datai,
@@ -3072,7 +3077,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	      free_sync_state(sc);
 	      return(SND_CANNOT_OPEN_TEMP_FILE);
 	    }
-	  mus_file_open_descriptors(ofd,format,mus_data_format_to_bytes_per_sample(format),oloc);
+	  mus_file_set_descriptors(ofd,ofile,format,mus_data_format_to_bytes_per_sample(format),oloc,si->chans,type);
 	  mus_file_set_data_clipped(ofd,data_clipped(ss));
 	  mus_file_seek(ofd,oloc,SEEK_SET);
 	  data = (MUS_SAMPLE_TYPE **)CALLOC(si->chans,sizeof(MUS_SAMPLE_TYPE *));
@@ -3179,15 +3184,17 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 	      else
 		{
 		  hdr = sp->hdr;
-		  mus_file_open_descriptors(scfd,hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location);
-
+		  mus_file_set_descriptors(scfd,saved_chan_file,
+					   hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
+					   1,hdr->type); /* ??? */
 		  fltfd = mus_file_open_read(filename);
 		  if (fltfd == -1) 
 		    snd_error("open filter file: %s\n",strerror(errno));
 		  else
 		    {
-		      mus_file_open_descriptors(fltfd,dataformat,mus_data_format_to_bytes_per_sample(dataformat),dataloc);
-
+		      mus_file_set_descriptors(fltfd,filename,
+					       dataformat,mus_data_format_to_bytes_per_sample(dataformat),dataloc,
+					       filter_chans,mus_sound_header_type(filename));
 		      if (cp == NULL)
 			filesize = region_len(0);
 		      else filesize = current_ed_samples(ucp);
@@ -7151,6 +7158,17 @@ static SCM g_bind_key(SCM key, SCM state, SCM code, SCM ignore_prefix)
   return(SCM_BOOL_T);
 }
 
+static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
+{
+  #define H_key "(" S_key " key modifiers &optional snd chn) simulates typing 'key' with 'modifiers' in snd's channel chn"
+  chan_info *cp;
+  ERRN1(kbd,S_key);
+  ERRN2(buckybits,S_key);
+  cp = get_cp(snd,chn);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  RTNINT(keyboard_command(cp,g_scm2int(kbd),g_scm2int(buckybits)));
+}
+
 static SCM g_save_macros(void) 
 {
   #define H_save_macros "(" S_save_macros ") saves keyboard macros in Snd's init file (.snd)"
@@ -7772,6 +7790,7 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_prompt_in_minibuffer,SCM_FNC g_prompt_in_minibuffer,1,2,0),H_prompt_in_minibuffer);
   DEFINE_PROC(gh_new_procedure(S_append_to_minibuffer,SCM_FNC g_append_to_minibuffer,1,1,0),H_append_to_minibuffer);
   DEFINE_PROC(gh_new_procedure(S_bind_key,SCM_FNC g_bind_key,3,1,0),H_bind_key);
+  DEFINE_PROC(gh_new_procedure(S_key,g_key,2,2,0),H_key);
   DEFINE_PROC(gh_new_procedure(S_save_macros,SCM_FNC g_save_macros,0,0,0),H_save_macros);
   DEFINE_PROC(gh_new_procedure(S_forward_graph,SCM_FNC g_forward_graph,0,3,0),H_forward_graph);
   DEFINE_PROC(gh_new_procedure(S_backward_graph,SCM_FNC g_backward_graph,0,3,0),H_backward_graph);
