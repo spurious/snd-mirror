@@ -498,37 +498,37 @@ void print_enved(char *output, chan_info *cp, int y0)
   else snd_error("print envelope: eps file name needed");
 }
 
-static SCM g_graph2ps(SCM filename)
+static XEN g_graph2ps(XEN filename)
 {
   #define H_graph2ps "(" S_graph2ps " &optional filename) writes the current Snd displays to an EPS file"
 
   char *error,*file;
-  SCM result;
+  XEN result;
   snd_state *ss;
   ss = get_global_state();
-  if (STRING_P(filename))
-    file = TO_C_STRING(filename);
+  if (XEN_STRING_P(filename))
+    file = XEN_TO_C_STRING(filename);
   else file = eps_file(ss);
   error = snd_print_or_error(ss, file);
   if (error)
     {
-      result = TO_SCM_STRING(error);
+      result = C_TO_XEN_STRING(error);
       FREE(error);
-      ERROR(CANNOT_PRINT,
-	    LIST_3(TO_SCM_STRING(S_graph2ps),
-		      TO_SCM_STRING(file),
+      XEN_ERROR(CANNOT_PRINT,
+	    XEN_LIST_3(C_TO_XEN_STRING(S_graph2ps),
+		      C_TO_XEN_STRING(file),
 		      result));
     }
-  return(TO_SCM_STRING(file));
+  return(C_TO_XEN_STRING(file));
 }
 
-#ifdef ARGIFY_1
-ARGIFY_1(g_graph2ps_w, g_graph2ps)
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_1(g_graph2ps_w, g_graph2ps)
 #else
 #define g_graph2ps_w g_graph2ps
 #endif
 
-void g_init_print(SCM local_doc)
+void g_init_print(XEN local_doc)
 {
-  DEFINE_PROC(S_graph2ps, g_graph2ps_w, 0, 1, 0, H_graph2ps);
+  XEN_DEFINE_PROCEDURE(S_graph2ps, g_graph2ps_w, 0, 1, 0, H_graph2ps);
 }

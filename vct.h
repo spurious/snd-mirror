@@ -36,14 +36,14 @@ typedef struct {
 } vct;
 
 void init_vct(void);
-int vct_p(SCM obj);
-SCM make_vct(int len, Float *data);
-SCM make_vct_wrapper(int len, Float *data);
-vct *get_vct(SCM arg);
+int vct_p(XEN obj);
+XEN make_vct(int len, Float *data);
+XEN make_vct_wrapper(int len, Float *data);
+vct *get_vct(XEN arg);
 void set_vct_print_length(int len);
-int procedure_fits(SCM proc, int args);
+int procedure_fits(XEN proc, int args);
 
-#define TO_VCT(arg) ((vct *)OBJECT_REF(arg))
+#define TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define VCT_P(arg) vct_p(arg)
 
 #endif

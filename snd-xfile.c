@@ -1038,7 +1038,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
       wwi->bysize = XtCreateManagedWidget(STR_size, xmPushButtonWidgetClass, smenu, args, n);
       wwi->byentry = XtCreateManagedWidget(STR_entry, xmPushButtonWidgetClass, smenu, args, n);
       wwi->byproc = XtCreateManagedWidget("proc", xmPushButtonWidgetClass, smenu, args, n);
-      XtSetSensitive(wwi->byproc, PROCEDURE_P(ss->file_sort_proc));
+      XtSetSensitive(wwi->byproc, XEN_PROCEDURE_P(ss->file_sort_proc));
 
       XtManageChild(sbar);
     }
@@ -1103,15 +1103,15 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
   return(wwi);
 }
 
-static SCM mouse_name_enter_hook, mouse_name_leave_hook;
+static XEN mouse_name_enter_hook, mouse_name_leave_hook;
 
-static void mouse_name_leave_or_enter(regrow *r, SCM hook, const char *caller)
+static void mouse_name_leave_or_enter(regrow *r, XEN hook, const char *caller)
 {
   XmString s1;
   char *label = NULL;
 
   if ((r) &&
-      (HOOKED(hook)))
+      (XEN_HOOKED(hook)))
     {
       if (r->parent == CURRENT_FILE_VIEWER)
 	label = get_curfullname(r->pos);
@@ -1134,9 +1134,9 @@ static void mouse_name_leave_or_enter(regrow *r, SCM hook, const char *caller)
 	}
       if (label)
 	g_c_run_progn_hook(hook,
-			   LIST_3(TO_SMALL_SCM_INT(r->parent),
-				     TO_SMALL_SCM_INT(r->pos),
-				     TO_SCM_STRING(label)),
+			   XEN_LIST_3(C_TO_SMALL_XEN_INT(r->parent),
+				     C_TO_SMALL_XEN_INT(r->pos),
+				     C_TO_XEN_STRING(label)),
 			   caller);
     }
 }
@@ -2232,97 +2232,35 @@ Widget edit_header(snd_info *sp)
 }
 
 
-static SCM g_just_sounds(void)
+static XEN g_just_sounds(void)
 {
   #define H_just_sounds "(" S_just_sounds ") reflects the 'just sounds' button in the file chooser dialog"
-  return(TO_SCM_BOOLEAN(just_sounds_state));
+  return(C_TO_XEN_BOOLEAN(just_sounds_state));
 }
 
-static SCM g_set_just_sounds(SCM on) 
+static XEN g_set_just_sounds(XEN on) 
 {
   int n;
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, ARG1, "set-" S_just_sounds, "a boolean");
-  n = TO_C_BOOLEAN_OR_T(on);
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_just_sounds, "a boolean");
+  n = XEN_TO_C_BOOLEAN_OR_TRUE(on);
   if (just_sounds_button)
     XmToggleButtonSetState(just_sounds_button, n, TRUE);
   just_sounds_state = n;
-  return(TO_SCM_BOOLEAN(n));
+  return(C_TO_XEN_BOOLEAN(n));
 }
 
-
-#if DEBUGGING
-static SCM file_data_dialog_widgets(Widget main_widget, file_data *fd)
-{
-  if (main_widget)
-    return(CONS(SND_WRAP(main_widget),
-	     CONS(SND_WRAP(XmMessageBoxGetChild(main_widget, XmDIALOG_OK_BUTTON)),
-	       CONS(SND_WRAP(XmMessageBoxGetChild(main_widget, XmDIALOG_CANCEL_BUTTON)),
-		 CONS(SND_WRAP(XmMessageBoxGetChild(main_widget, XmDIALOG_HELP_BUTTON)),
-		   CONS((fd->header_list) ? SND_WRAP(fd->header_list) : FALSE_VALUE,
-		     CONS((fd->format_list) ? SND_WRAP(fd->format_list) : FALSE_VALUE,
-		       CONS((fd->srate_text) ? SND_WRAP(fd->srate_text) : FALSE_VALUE,
-			 CONS((fd->chans_text) ? SND_WRAP(fd->chans_text) : FALSE_VALUE,
-			   CONS((fd->comment_text) ? SND_WRAP(fd->comment_text) : FALSE_VALUE,
-			     CONS((fd->location_text) ? SND_WRAP(fd->location_text) : FALSE_VALUE,
-                               EMPTY_LIST)))))))))));
-return(EMPTY_LIST);
-}
-
-static SCM g_new_file_dialog_widgets(void)
-{
-  if (new_dialog)
-    return(scm_append(LIST_2(file_data_dialog_widgets(new_dialog, new_dialog_data),
-				LIST_1(SND_WRAP(new_file_name)))));
-  return(EMPTY_LIST);
-}
-
-static SCM g_edit_header_dialog_widgets(void)
-{
-  if (edit_header_dialog)
-    return(file_data_dialog_widgets(edit_header_dialog, edit_header_data));
-  return(EMPTY_LIST);
-}
-
-static SCM g_save_as_dialog_widgets(void)
-{
-  if (save_as_dialog)
-    return(scm_append(LIST_2(file_data_dialog_widgets(save_as_dialog, save_as_file_data),
-				LIST_1(SND_WRAP(file_save_as_file_name)))));
-  return(EMPTY_LIST);
-}
-
-static SCM g_new_file_dialog(void) 
-{
-  if (new_dialog == NULL)
-    new_file_from_menu(get_global_state());
-  return(g_new_file_dialog_widgets());
-}
-#endif
-
-#ifdef ARGIFY_1
-NARGIFY_0(g_just_sounds_w, g_just_sounds)
-ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
-#if DEBUGGING
-NARGIFY_0(g_new_file_dialog_widgets_w, g_new_file_dialog_widgets)
-NARGIFY_0(g_new_file_dialog_w, g_new_file_dialog)
-NARGIFY_0(g_edit_header_dialog_widgets_w, g_edit_header_dialog_widgets)
-NARGIFY_0(g_save_as_dialog_widgets_w, g_save_as_dialog_widgets)
-#endif
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
+XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 #else
 #define g_just_sounds_w g_just_sounds
 #define g_set_just_sounds_w g_set_just_sounds
-#if DEBUGGING
-#define g_new_file_dialog_widgets_w g_new_file_dialog_widgets
-#define g_new_file_dialog_w g_new_file_dialog
-#define g_edit_header_dialog_widgets_w g_edit_header_dialog_widgets
-#define g_save_as_dialog_widgets_w g_save_as_dialog_widgets
-#endif
 #endif
 
-void g_initialize_xgfile(SCM local_doc)
+void g_initialize_xgfile(XEN local_doc)
 {
-  define_procedure_with_setter(S_just_sounds, PROCEDURE g_just_sounds_w, H_just_sounds,
-			       "set-" S_just_sounds, PROCEDURE g_set_just_sounds_w, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_just_sounds, XEN_PROCEDURE_CAST g_just_sounds_w, H_just_sounds,
+			       "set-" S_just_sounds, XEN_PROCEDURE_CAST g_set_just_sounds_w, local_doc, 0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
@@ -2336,14 +2274,7 @@ See also nb.scm."
 
   #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label) is called when a file viewer or region label is exited by the mouse"
 
-  mouse_name_enter_hook = MAKE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
-  mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
-
-#if DEBUGGING
-  DEFINE_PROC("new-file-dialog-widgets", g_new_file_dialog_widgets_w, 0, 0, 0, "");
-  DEFINE_PROC("new-file-dialog", g_new_file_dialog_w, 0, 0, 0, "");
-  DEFINE_PROC("edit-header-dialog-widgets", g_edit_header_dialog_widgets_w, 0, 0, 0, "");
-  DEFINE_PROC("save-as-dialog-widgets", g_save_as_dialog_widgets_w, 0, 0, 0, "");
-#endif
+  XEN_DEFINE_HOOK(mouse_name_enter_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook, local_doc);
+  XEN_DEFINE_HOOK(mouse_name_leave_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook, local_doc);
 }
 

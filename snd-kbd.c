@@ -151,12 +151,12 @@ static int execute_named_macro_1(chan_info *cp, char *name, int count)
 static void execute_named_macro(chan_info *cp, char *name, int count)
 {
   int one_edit, i;
-  SCM form, result = UNDEFINED_VALUE;
+  XEN form; XEN result = XEN_UNDEFINED;
   if (!(execute_named_macro_1(cp, name, count)))
     /* not a macro...*/
     {
       one_edit = cp->edit_ctr + 1;
-      form = TO_SCM_FORM(name);
+      form = C_STRING_TO_XEN_FORM(name);
       for (i = 0; i < count; i++)
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
 	return;
@@ -172,7 +172,7 @@ static void execute_named_macro(chan_info *cp, char *name, int count)
     }
 }
 
-typedef struct {int key; int state; int args; SCM func; int extended;} key_entry;
+typedef struct {int key; int state; int args; XEN func; int extended;} key_entry;
 static key_entry *user_keymap = NULL;
 static int keymap_size = 0;
 static int keymap_top = 0;
@@ -185,27 +185,27 @@ static int in_user_keymap(int key, int state, int extended)
     if ((user_keymap[i].key == key) && 
 	(user_keymap[i].state == state) && 
 	(user_keymap[i].extended == extended) && 
-	(BOUND_P(user_keymap[i].func)))
+	(XEN_BOUND_P(user_keymap[i].func)))
       return(i);
   return(-1);
 }
 
-static SCM g_key_binding(SCM key, SCM state, SCM extended)
+static XEN g_key_binding(XEN key, XEN state, XEN extended)
 {
   #define H_key_binding "(" S_key_binding " key state extended) -> function bound to this key"
   int i;
-  ASSERT_TYPE(INTEGER_P(key), key, ARG1, S_key_binding, "an integer");
-  ASSERT_TYPE(INTEGER_P(state), state, ARG2, S_key_binding, "an integer");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(extended), extended, ARG3, S_key_binding, "a boolean");
-  i = in_user_keymap(TO_SMALL_C_INT(key),
-		     TO_SMALL_C_INT(state),
-		     (TRUE_P(extended)) ? 1 : 0);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_key_binding, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(extended), extended, XEN_ARG_3, S_key_binding, "a boolean");
+  i = in_user_keymap(XEN_TO_SMALL_C_INT(key),
+		     XEN_TO_SMALL_C_INT(state),
+		     (XEN_TRUE_P(extended)) ? 1 : 0);
   if (i >= 0) 
     return(user_keymap[i].func);
-  return(UNDEFINED_VALUE);
+  return(XEN_UNDEFINED);
 }
 
-static void set_keymap_entry(int key, int state, int args, SCM func, int extended)
+static void set_keymap_entry(int key, int state, int args, XEN func, int extended)
 {
   int i;
   i = in_user_keymap(key, state, extended);
@@ -217,7 +217,7 @@ static void set_keymap_entry(int key, int state, int args, SCM func, int extende
 	  if (keymap_top == 0)
 	    {
 	      user_keymap = (key_entry *)CALLOC(keymap_size, sizeof(key_entry));
-	      for (i = 0; i < keymap_size; i++) user_keymap[i].func = UNDEFINED_VALUE;
+	      for (i = 0; i < keymap_size; i++) user_keymap[i].func = XEN_UNDEFINED;
 	    }
 	  else 
 	    {
@@ -226,7 +226,7 @@ static void set_keymap_entry(int key, int state, int args, SCM func, int extende
 		{
 		  user_keymap[i].key = 0; 
 		  user_keymap[i].state = 0; 
-		  user_keymap[i].func = UNDEFINED_VALUE;
+		  user_keymap[i].func = XEN_UNDEFINED;
 		  user_keymap[i].extended = 0;
 		}
 	    }
@@ -239,23 +239,23 @@ static void set_keymap_entry(int key, int state, int args, SCM func, int extende
     }
   else
     {
-      if (PROCEDURE_P(user_keymap[i].func))
+      if (XEN_PROCEDURE_P(user_keymap[i].func))
 	snd_unprotect(user_keymap[i].func);
     }
   user_keymap[i].args = args;
   user_keymap[i].func = func;
-  if (PROCEDURE_P(func)) snd_protect(func);
+  if (XEN_PROCEDURE_P(func)) snd_protect(func);
 }
 
 static int call_user_keymap(int hashedsym, int count)
 {
   int res = KEYBOARD_NO_ACTION;
   /* if guile call the associated scheme code, else see if basic string parser can handle it */
-  if (BOUND_P(user_keymap[hashedsym].func))
+  if (XEN_BOUND_P(user_keymap[hashedsym].func))
     {
       if (user_keymap[hashedsym].args == 0)
-	res = TO_C_INT_OR_ELSE(CALL_0(user_keymap[hashedsym].func, "user key func"), KEYBOARD_NO_ACTION);
-      else res = TO_C_INT_OR_ELSE(CALL_1(user_keymap[hashedsym].func, TO_SCM_INT(count), "user key func"), KEYBOARD_NO_ACTION);
+	res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(user_keymap[hashedsym].func, "user key func"), KEYBOARD_NO_ACTION);
+      else res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(user_keymap[hashedsym].func, C_TO_XEN_INT(count), "user key func"), KEYBOARD_NO_ACTION);
     }
   return(res);
 }
@@ -558,7 +558,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 #if HAVE_OPENDIR
   DIR *dp;
 #endif
-  SCM proc;
+  XEN proc;
   if ((keysym == snd_K_s) || (keysym == snd_K_r)) s_or_r = 1;
   ss = sp->state;
   if (sp != selected_sound(ss)) select_channel(sp, 0);
@@ -599,9 +599,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	       */
 	      if (sp->search_expr) free(sp->search_expr);
 	      sp->search_expr = str;
-	      if (PROCEDURE_P(sp->search_proc))
+	      if (XEN_PROCEDURE_P(sp->search_proc))
 		snd_unprotect(sp->search_proc);
-	      sp->search_proc = UNDEFINED_VALUE;
+	      sp->search_proc = XEN_UNDEFINED;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
 	      if (procedure_ok_with_error(proc, 1, "find", "find", 1))
 		{
@@ -683,7 +683,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      FREE(str1);
 	      break;
 	    case CHANNEL_FILING:
-	      save_channel_edits(active_chan, mcf = mus_expand_filename(str), TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w", 0);
+	      save_channel_edits(active_chan, mcf = mus_expand_filename(str), C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w", 0);
 	      if (mcf) FREE(mcf);
 	      clear_minibuffer(sp);
 	      break;
@@ -746,11 +746,11 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		apply_env(active_chan, e, active_chan->cursor, 
 			  sp->amping, 1.0, sp->reging, NOT_FROM_ENVED,
 			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL,
-			  TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
+			  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
 	      else apply_env(active_chan, e, 0, current_ed_samples(active_chan), 1.0, 
 			     sp->reging, NOT_FROM_ENVED,
 			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL,
-			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
 	      e = free_env(e);
 	    }
 	  sp->reging = 0;
@@ -783,10 +783,10 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
     {
       if (snd_strlen(str) > 0)
 	proc = snd_catch_any(eval_str_wrapper, str, str);
-      else proc = TO_SCM_STRING("");
+      else proc = C_TO_XEN_STRING("");
       snd_protect(proc);
-      if (PROCEDURE_P(sp->prompt_callback))
-	CALL_1(sp->prompt_callback, proc, "prompt callback func");
+      if (XEN_PROCEDURE_P(sp->prompt_callback))
+	XEN_CALL_1(sp->prompt_callback, proc, "prompt callback func");
       snd_unprotect(proc);
       if (str) free(str);
       sp->prompting = 0;
@@ -1145,7 +1145,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = cursor_move(cp, -count * 128); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-q", 0);
+	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-q", 0);
 	      set_play_button(sp, 1); 
 	      redisplay = NO_ACTION; 
 	      break;
@@ -1705,7 +1705,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      if (ext_count == NO_CX_ARG_SPECIFIED)
-		play_selection(IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-x p", 0);
+		play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x p", 0);
 	      else play_region(ss, ext_count, IN_BACKGROUND);
 	      redisplay = NO_ACTION;
 	      break;
@@ -1806,7 +1806,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 }
 
 
-static SCM g_bind_key(SCM key, SCM state, SCM code, SCM extended)
+static XEN g_bind_key(XEN key, XEN state, XEN code, XEN extended)
 {
   #define H_bind_key "(" S_bind_key " key modifiers func (ignore-prefix #f) (extended #f))\n\
 causes 'key' (an integer) \
@@ -1816,58 +1816,58 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 
   int args;
   char *errstr;
-  SCM arity_list, errmsg;
-  ASSERT_TYPE(INTEGER_P(key), key, ARG1, S_bind_key, "an integer");
-  ASSERT_TYPE(INTEGER_P(state), state, ARG2, S_bind_key, "an integer");
-  ASSERT_TYPE((FALSE_P(code) || PROCEDURE_P(code)), code, ARG3, S_bind_key, "#f or a procedure");
-  if (FALSE_P(code))
-    set_keymap_entry(TO_C_INT(key), 
-		     TO_C_INT(state), 
+  XEN arity_list; XEN errmsg;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_bind_key, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_bind_key, "an integer");
+  XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, S_bind_key, "#f or a procedure");
+  if (XEN_FALSE_P(code))
+    set_keymap_entry(XEN_TO_C_INT(key), 
+		     XEN_TO_C_INT(state), 
 		     0,
-		     UNDEFINED_VALUE,
+		     XEN_UNDEFINED,
 		     0);
   else 
     {
-      arity_list = ARITY(code);
-      args = TO_SMALL_C_INT(CAR(arity_list));
+      arity_list = XEN_ARITY(code);
+      args = XEN_TO_SMALL_C_INT(XEN_CAR(arity_list));
       if (args > 1)
 	{
 	  errstr = mus_format("bind-key function arg should take either zero or one args, not %d", args);
-	  errmsg = TO_SCM_STRING(errstr);
+	  errmsg = C_TO_XEN_STRING(errstr);
 	  FREE(errstr);
 	  return(snd_bad_arity_error(S_bind_key, 
 				     errmsg,
 				     code));
 	}
-      set_keymap_entry(TO_C_INT(key), 
-		       TO_C_INT(state), 
+      set_keymap_entry(XEN_TO_C_INT(key), 
+		       XEN_TO_C_INT(state), 
 		       args, 
 		       code,
-		       (TRUE_P(extended)) ? 1 : 0);
+		       (XEN_TRUE_P(extended)) ? 1 : 0);
     }
-  return(TRUE_VALUE);
+  return(XEN_TRUE);
 }
 
-static SCM g_unbind_key(SCM key, SCM state, SCM extended)
+static XEN g_unbind_key(XEN key, XEN state, XEN extended)
 {
   #define H_unbind_key "(" S_unbind_key " key state &optional extended) undoes the effect of a prior bind-key call."
-  return(g_bind_key(key, state, FALSE_VALUE, extended));
+  return(g_bind_key(key, state, XEN_FALSE, extended));
 }
 
-static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
+static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 {
   #define H_key "(" S_key " key modifiers &optional snd chn) simulates typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_P(kbd), kbd, ARG1, S_key, "an integer");
-  ASSERT_TYPE(INTEGER_P(buckybits), buckybits, ARG2, S_key, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd), kbd, XEN_ARG_1, S_key, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(buckybits), buckybits, XEN_ARG_2, S_key, "an integer");
   ASSERT_CHANNEL(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
-  return(TO_SCM_INT(keyboard_command(cp, 
-				     TO_C_INT(kbd), 
-				     TO_C_INT(buckybits))));
+  return(C_TO_XEN_INT(keyboard_command(cp, 
+				     XEN_TO_C_INT(kbd), 
+				     XEN_TO_C_INT(buckybits))));
 }
 
-static SCM g_save_macros(void) 
+static XEN g_save_macros(void) 
 {
   #define H_save_macros "(" S_save_macros ") saves keyboard macros in Snd's init file (.snd)"
   FILE *fd = NULL;
@@ -1876,36 +1876,36 @@ static SCM g_save_macros(void)
   fd = open_snd_init_file(ss);
   if (fd) save_macro_state(fd);
   if ((!fd) || (fclose(fd) != 0))
-    ERROR(CANNOT_SAVE,
-	  LIST_3(TO_SCM_STRING(S_save_macros),
-		    TO_SCM_STRING(ss->init_file),
-		    TO_SCM_STRING(strerror(errno))));
-  return(TO_SCM_STRING(ss->init_file));
+    XEN_ERROR(CANNOT_SAVE,
+	  XEN_LIST_3(C_TO_XEN_STRING(S_save_macros),
+		    C_TO_XEN_STRING(ss->init_file),
+		    C_TO_XEN_STRING(strerror(errno))));
+  return(C_TO_XEN_STRING(ss->init_file));
 }
 
-static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
+static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n)
 {
   #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg callback &optional snd) posts msg in snd's minibuffer \
 then when the user eventually responds, invokes the function callback with the response"
 
   snd_info *sp;
   char *errstr;
-  SCM errmsg;
-  ASSERT_TYPE(STRING_P(msg), msg, ARG1, S_prompt_in_minibuffer, "a string");
-  ASSERT_TYPE((NOT_BOUND_P(callback)) || (BOOLEAN_P(callback)) || PROCEDURE_P(callback), callback, ARG2, S_prompt_in_minibuffer, "#f or a procedure");
+  XEN errmsg;
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_prompt_in_minibuffer, "a string");
+  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(callback)) || (XEN_BOOLEAN_P(callback)) || XEN_PROCEDURE_P(callback), callback, XEN_ARG_2, S_prompt_in_minibuffer, "#f or a procedure");
   ASSERT_SOUND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n));
-  if (PROCEDURE_P(sp->prompt_callback))
+  if (XEN_PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
-  sp->prompt_callback = FALSE_VALUE; /* just in case something goes awry */
-  if (PROCEDURE_P(callback))
+  sp->prompt_callback = XEN_FALSE; /* just in case something goes awry */
+  if (XEN_PROCEDURE_P(callback))
     {
       errstr = procedure_ok(callback, 1, S_prompt_in_minibuffer, "callback", 2);
       if (errstr)
 	{
-	  errmsg = TO_SCM_STRING(errstr);
+	  errmsg = C_TO_XEN_STRING(errstr);
 	  FREE(errstr);
 	  return(snd_bad_arity_error(S_prompt_in_minibuffer, 
 				     errmsg,
@@ -1914,39 +1914,39 @@ then when the user eventually responds, invokes the function callback with the r
       snd_protect(callback);  
     }
   sp->prompt_callback = callback;
-  make_minibuffer_label(sp, TO_C_STRING(msg));
+  make_minibuffer_label(sp, XEN_TO_C_STRING(msg));
   sp->minibuffer_on = 1;
   sp->minibuffer_temp = 0;
   sp->prompting = 1;
   goto_minibuffer(sp);
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
+static XEN g_report_in_minibuffer(XEN msg, XEN snd_n)
 {
   #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg &optional snd) displays msg in snd's minibuffer"
   snd_info *sp;
-  ASSERT_TYPE(STRING_P(msg), msg, ARG1, S_report_in_minibuffer, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_report_in_minibuffer, "a string");
   ASSERT_SOUND(S_report_in_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_report_in_minibuffer, snd_n));
-  report_in_minibuffer(sp, TO_C_STRING(msg));
+  report_in_minibuffer(sp, XEN_TO_C_STRING(msg));
   return(msg);
 }
 
-static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
+static XEN g_append_to_minibuffer(XEN msg, XEN snd_n)
 {
   #define H_append_to_minibuffer "(" S_append_to_minibuffer " msg &optional snd) appends msg to snd's minibuffer"
   snd_info *sp;
   char *str1 = NULL, *expr_str;
-  ASSERT_TYPE(STRING_P(msg), msg, ARG1, S_append_to_minibuffer, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_append_to_minibuffer, "a string");
   ASSERT_SOUND(S_append_to_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_append_to_minibuffer, snd_n));
   expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "%s%s", str1 = get_minibuffer_string(sp), TO_C_STRING(msg));
+  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "%s%s", str1 = get_minibuffer_string(sp), XEN_TO_C_STRING(msg));
   set_minibuffer_string(sp, expr_str);
   FREE(expr_str);
   sp->minibuffer_temp = 1;
@@ -1954,55 +1954,55 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
   return(msg);
 }
 
-static SCM g_forward_graph(SCM count, SCM snd, SCM chn) 
+static XEN g_forward_graph(XEN count, XEN snd, XEN chn) 
 {
   #define H_forward_graph "(" S_forward_graph " &optional (count 1) snd chn) moves the 'selected' graph forward by count"
   int val;
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_forward_graph, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_graph, "an integer");
   ASSERT_CHANNEL(S_forward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_graph);
-  val = TO_C_INT_OR_ELSE(count, 1);
+  val = XEN_TO_C_INT_OR_ELSE(count, 1);
   cp = goto_next_graph(cp, val);
-  return(LIST_2(TO_SMALL_SCM_INT(cp->sound->index),
-		   TO_SMALL_SCM_INT(cp->chan)));
+  return(XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index),
+		   C_TO_SMALL_XEN_INT(cp->chan)));
 }
 
-static SCM g_backward_graph(SCM count, SCM snd, SCM chn) 
+static XEN g_backward_graph(XEN count, XEN snd, XEN chn) 
 {
   #define H_backward_graph "(" S_backward_graph " &optional (count 1) snd chn) moves the 'selected' graph back by count"
   int val;
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, ARG1, S_backward_graph, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_graph, "an integer");
   ASSERT_CHANNEL(S_backward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_graph);
-  val = -(TO_C_INT_OR_ELSE(count, 1));
+  val = -(XEN_TO_C_INT_OR_ELSE(count, 1));
   cp = goto_previous_graph(cp, val);
-  return(LIST_2(TO_SMALL_SCM_INT(cp->sound->index),
-		   TO_SMALL_SCM_INT(cp->chan)));
+  return(XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index),
+		   C_TO_SMALL_XEN_INT(cp->chan)));
 }
 
-static SCM g_c_g_x(void)
+static XEN g_c_g_x(void)
 {
   #define H_c_g_x "(" S_c_g_x ") simulates typing C-g"
   snd_state *ss;
   ss = get_global_state();
   c_g(ss, any_selected_sound(ss));
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-#ifdef ARGIFY_1
-ARGIFY_3(g_forward_graph_w, g_forward_graph)
-ARGIFY_3(g_backward_graph_w, g_backward_graph)
-ARGIFY_3(g_key_binding_w, g_key_binding)
-ARGIFY_4(g_bind_key_w, g_bind_key)
-ARGIFY_3(g_unbind_key_w, g_unbind_key)
-ARGIFY_4(g_key_w, g_key)
-NARGIFY_0(g_save_macros_w, g_save_macros)
-NARGIFY_0(g_c_g_x_w, g_c_g_x)
-ARGIFY_2(g_report_in_minibuffer_w, g_report_in_minibuffer)
-ARGIFY_3(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
-ARGIFY_2(g_append_to_minibuffer_w, g_append_to_minibuffer)
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_3(g_forward_graph_w, g_forward_graph)
+XEN_ARGIFY_3(g_backward_graph_w, g_backward_graph)
+XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
+XEN_ARGIFY_4(g_bind_key_w, g_bind_key)
+XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
+XEN_ARGIFY_4(g_key_w, g_key)
+XEN_NARGIFY_0(g_save_macros_w, g_save_macros)
+XEN_NARGIFY_0(g_c_g_x_w, g_c_g_x)
+XEN_ARGIFY_2(g_report_in_minibuffer_w, g_report_in_minibuffer)
+XEN_ARGIFY_3(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
+XEN_ARGIFY_2(g_append_to_minibuffer_w, g_append_to_minibuffer)
 #else
 #define g_forward_graph_w g_forward_graph
 #define g_backward_graph_w g_backward_graph
@@ -2017,19 +2017,19 @@ ARGIFY_2(g_append_to_minibuffer_w, g_append_to_minibuffer)
 #define g_append_to_minibuffer_w g_append_to_minibuffer
 #endif
 
-void g_init_kbd(SCM local_doc)
+void g_init_kbd(XEN local_doc)
 {
-  DEFINE_PROC(S_forward_graph,           g_forward_graph_w, 0, 3, 0,           H_forward_graph);
-  DEFINE_PROC(S_backward_graph,          g_backward_graph_w, 0, 3, 0,          H_backward_graph);
+  XEN_DEFINE_PROCEDURE(S_forward_graph,           g_forward_graph_w, 0, 3, 0,           H_forward_graph);
+  XEN_DEFINE_PROCEDURE(S_backward_graph,          g_backward_graph_w, 0, 3, 0,          H_backward_graph);
 
-  DEFINE_PROC(S_key_binding,             g_key_binding_w, 2, 1, 0,             H_key_binding);
-  DEFINE_PROC(S_bind_key,                g_bind_key_w, 3, 1, 0,                H_bind_key);
-  DEFINE_PROC(S_unbind_key,              g_unbind_key_w, 2, 1, 0,              H_unbind_key);
-  DEFINE_PROC(S_key,                     g_key_w, 2, 2, 0,                     H_key);
-  DEFINE_PROC(S_save_macros,             g_save_macros_w, 0, 0, 0,             H_save_macros);
-  DEFINE_PROC(S_c_g_x,                   g_c_g_x_w, 0, 0, 0,                   H_c_g_x);  
+  XEN_DEFINE_PROCEDURE(S_key_binding,             g_key_binding_w, 2, 1, 0,             H_key_binding);
+  XEN_DEFINE_PROCEDURE(S_bind_key,                g_bind_key_w, 3, 1, 0,                H_bind_key);
+  XEN_DEFINE_PROCEDURE(S_unbind_key,              g_unbind_key_w, 2, 1, 0,              H_unbind_key);
+  XEN_DEFINE_PROCEDURE(S_key,                     g_key_w, 2, 2, 0,                     H_key);
+  XEN_DEFINE_PROCEDURE(S_save_macros,             g_save_macros_w, 0, 0, 0,             H_save_macros);
+  XEN_DEFINE_PROCEDURE(S_c_g_x,                   g_c_g_x_w, 0, 0, 0,                   H_c_g_x);  
 
-  DEFINE_PROC(S_report_in_minibuffer,    g_report_in_minibuffer_w, 1, 1, 0,    H_report_in_minibuffer);
-  DEFINE_PROC(S_prompt_in_minibuffer,    g_prompt_in_minibuffer_w, 1, 2, 0,    H_prompt_in_minibuffer);
-  DEFINE_PROC(S_append_to_minibuffer,    g_append_to_minibuffer_w, 1, 1, 0,    H_append_to_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,    g_report_in_minibuffer_w, 1, 1, 0,    H_report_in_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,    g_prompt_in_minibuffer_w, 1, 2, 0,    H_prompt_in_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_append_to_minibuffer,    g_append_to_minibuffer_w, 1, 1, 0,    H_append_to_minibuffer);
 }

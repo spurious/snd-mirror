@@ -1,7 +1,7 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 #include "vct.h"
-#include "clm2scm.h"
+#include "clm2xen.h"
 
 void ssnd_help(snd_state *ss, char *subject, ...)
 {
@@ -139,7 +139,7 @@ char *version_info(void)
 	  SND_VERSION,
 	  ": ",
 #if HAVE_GUILE
-	  "\n    Guile ",  TO_C_STRING(scm_version()),
+	  "\n    Guile ",  XEN_TO_C_STRING(scm_version()),
 #else
 #if HAVE_LIBREP
 	  "\n    Librep ", rep_VERSION,
@@ -148,7 +148,7 @@ char *version_info(void)
 	  "\n    mzscheme ", scheme_version(),
 #else
 #if HAVE_RUBY
-	  "\n    Ruby ", TO_C_STRING(EVAL_STRING("RUBY_VERSION")), " (", TO_C_STRING(EVAL_STRING("RUBY_RELEASE_DATE")), ")",
+	  "\n    Ruby ", XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_VERSION")), " (", XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_RELEASE_DATE")), ")",
 #else
 #if (!HAVE_EXTENSION_LANGUAGE)
 	  "\n    without any extension language",
@@ -272,6 +272,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+6-Jul:   sg.h, sl.h, noguile.h, sr.h, sz.h -> xen.h.\n\
+         snd-scm.c, clm2scm.[ch], sndlib2scm.[ch] -> xen for scm.\n\
+         many internal name changes to change scm to xen.\n\
 5-Jul:   Ruby support.\n\
 3-Jul:   added -b (-batch) switch for scripts.\n\
          snd-4 compatibility names are no longer built-in (use snd4.scm).\n\
@@ -2648,7 +2651,7 @@ static char* word_wrap(char *text, int widget_len)
   return(new_text);
 }
 
-SCM g_help(SCM text, int widget_wid)
+XEN g_help(XEN text, int widget_wid)
 {
   #define H_snd_help "(" S_snd_help " arg) returns the documentation associated with its argument. \
 (snd-help make-vct) for example, prints out a brief description of make-vct. \
@@ -2657,61 +2660,61 @@ In the help descriptions, '&optional' marks optional arguments, and \
 '&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm \
 the functions html and ? can be used in place of help to go to the HTML description."
 
-  SCM help_text = FALSE_VALUE, value, local_doc;
+  XEN help_text = XEN_FALSE; XEN value; XEN local_doc;
   char *str = NULL;
 
-  if (EQ_P(text, UNDEFINED_VALUE))                              /* if no arg, describe snd-help */
-    help_text = TO_SCM_STRING(H_snd_help);
+  if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
+    help_text = C_TO_XEN_STRING(H_snd_help);
   else
     {
-      if ((STRING_P(text)) || (SYMBOL_P(text)))            /* arg can be name (string), symbol, or the value */
+      if ((XEN_STRING_P(text)) || (XEN_SYMBOL_P(text)))            /* arg can be name (string), symbol, or the value */
 	{
-	  if (STRING_P(text))
-	    str = TO_C_STRING(text);
-	  else str = SYMBOL_TO_C_STRING(text);
-	  value = SND_LOOKUP(str);
+	  if (XEN_STRING_P(text))
+	    str = XEN_TO_C_STRING(text);
+	  else str = XEN_SYMBOL_TO_C_STRING(text);
+	  value = XEN_NAME_AS_C_STRING_TO_VALUE(str);
 	}
       else value = text;
-      local_doc = TO_SCM_SYMBOL("documentation");
+      local_doc = C_STRING_TO_XEN_SYMBOL("documentation");
 #if HAVE_GUILE
       help_text = scm_object_property(value, local_doc);         /* (object-property ...) */
-      if ((FALSE_P(help_text)) &&
-	  (PROCEDURE_P(value)))
+      if ((XEN_FALSE_P(help_text)) &&
+	  (XEN_PROCEDURE_P(value)))
 	{
 	  help_text = scm_procedure_property(value, local_doc);  /* (procedure-property ...) */
-	  if (FALSE_P(help_text))
+	  if (XEN_FALSE_P(help_text))
 	    help_text = scm_procedure_documentation(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
 	}
-      if ((FALSE_P(help_text)) &&
+      if ((XEN_FALSE_P(help_text)) &&
 	  (str))
-	help_text = scm_object_property(TO_SCM_SYMBOL(str), local_doc);
+	help_text = scm_object_property(C_STRING_TO_XEN_SYMBOL(str), local_doc);
 #endif
     }
   
   /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */
   /*   this means all the H_doc strings in Snd need to omit line-feeds except where necessary (i.e. code) */
 
-  if (STRING_P(help_text))
+  if (XEN_STRING_P(help_text))
     {
-      str = word_wrap(TO_C_STRING(help_text), widget_wid);
-      help_text = TO_SCM_STRING(str);
+      str = word_wrap(XEN_TO_C_STRING(help_text), widget_wid);
+      help_text = C_TO_XEN_STRING(str);
       if (str) FREE(str);
     }
   return(help_text);
 }
 
-static SCM g_listener_help(SCM arg)
+static XEN g_listener_help(XEN arg)
 {
   return(g_help(arg, listener_width()));
 }
 
-#ifdef ARGIFY_1
-ARGIFY_1(g_listener_help_w, g_listener_help)
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_1(g_listener_help_w, g_listener_help)
 #else
 #define g_listener_help_w g_listener_help
 #endif
 
-void g_init_help(SCM local_doc)
+void g_init_help(XEN local_doc)
 {
-  DEFINE_PROC(S_snd_help, g_listener_help_w, 0, 1, 0, H_snd_help);
+  XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 1, 0, H_snd_help);
 }

@@ -12,20 +12,20 @@ static snd_state *state;
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
-  CALL_0((SCM)in_code, "timed callback func");
-  snd_unprotect((SCM)in_code);
+  XEN_CALL_0((XEN)in_code, "timed callback func");
+  snd_unprotect((XEN)in_code);
 #endif
 }
 
-static SCM g_in(SCM ms, SCM code)
+static XEN g_in(XEN ms, XEN code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
-  ASSERT_TYPE(INTEGER_P(ms), ms, ARG1, S_in, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ms), ms, XEN_ARG_1, S_in, "an integer");
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   if (procedure_fits(code, 0))
     {
       XtAppAddTimeOut(MAIN_APP(state), 
-		      TO_C_UNSIGNED_LONG(ms), 
+		      XEN_TO_C_UNSIGNED_LONG(ms), 
 		      (XtTimerCallbackProc)timed_eval, 
 		      (XtPointer)code);
       snd_protect(code);
@@ -37,31 +37,31 @@ static SCM g_in(SCM ms, SCM code)
 
 /* color support */
 
-static TAG_TYPE snd_color_tag;
+static XEN_OBJECT_TYPE snd_color_tag;
 
-int snd_color_p(SCM obj)
+int snd_color_p(XEN obj)
 {
-  return(OBJECT_TYPE_P(obj, snd_color_tag));
+  return(XEN_OBJECT_TYPE_P(obj, snd_color_tag));
 }
 
-static SCM g_color_p(SCM obj) 
+static XEN g_color_p(XEN obj) 
 {
   #define H_color_p "(" S_color_p " obj) -> #t if obj is a col" STR_OR " object"
-  return(TO_SCM_BOOLEAN(COLOR_P(obj)));
+  return(C_TO_XEN_BOOLEAN(COLOR_P(obj)));
 }
 
-snd_color *get_snd_color(SCM arg)
+snd_color *get_snd_color(XEN arg)
 {
   if (COLOR_P(arg))
-    return((snd_color *)OBJECT_REF(arg));
+    return((snd_color *)XEN_OBJECT_REF(arg));
   return(NULL);
 }
 
-static FREE_OBJECT_TYPE free_snd_color(SCM obj)
+static XEN_FREE_OBJECT_TYPE free_snd_color(XEN obj)
 {
   Colormap cmap;
   Display *dpy;
-  snd_color *v = (snd_color *)OBJECT_REF(obj);
+  snd_color *v = (snd_color *)XEN_OBJECT_REF(obj);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   XFreeColors(dpy, cmap, &(v->color), 1, 0);
@@ -73,10 +73,10 @@ static FREE_OBJECT_TYPE free_snd_color(SCM obj)
 #endif
 }
 
-static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
+static int print_snd_color(XEN obj, XEN port, scm_print_state *pstate)
 {
   char *buf = NULL;
-  snd_color *v = (snd_color *)OBJECT_REF(obj);
+  snd_color *v = (snd_color *)XEN_OBJECT_REF(obj);
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
@@ -90,7 +90,7 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
 	  (float)tmp_color.red / 65535.0,
 	  (float)tmp_color.green / 65535.0,
 	  (float)tmp_color.blue / 65535.0);
-  WRITE_STRING(buf, port);
+  XEN_WRITE_STRING(buf, port);
   FREE(buf);
 #if HAVE_SCM_REMEMBER_UPTO_HERE
   scm_remember_upto_here(obj);
@@ -98,35 +98,35 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
   return(1);
 }
 
-static SCM g_color2list(SCM obj)
+static XEN g_color2list(XEN obj)
 {
   #define H_color2list "(" S_color2list " obj) -> col" STR_OR " rgb values as a list of floats"
   snd_color *v;
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-  ASSERT_TYPE(COLOR_P(obj), obj, ARGn, S_color2list, "a color object"); 
-  v = (snd_color *)OBJECT_REF(obj);
+  XEN_ASSERT_TYPE(COLOR_P(obj), obj, XEN_ONLY_ARG, S_color2list, "a color object"); 
+  v = (snd_color *)XEN_OBJECT_REF(obj);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = v->color;
   XQueryColor(dpy, cmap, &tmp_color);
-  return(scm_return_first(LIST_3(TO_SCM_DOUBLE((float)tmp_color.red / 65535.0),
-				    TO_SCM_DOUBLE((float)tmp_color.green / 65535.0),
-				    TO_SCM_DOUBLE((float)tmp_color.blue / 65535.0)),
+  return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE((float)tmp_color.red / 65535.0),
+				    C_TO_XEN_DOUBLE((float)tmp_color.green / 65535.0),
+				    C_TO_XEN_DOUBLE((float)tmp_color.blue / 65535.0)),
 			  obj));
 }
 
-static SCM equalp_snd_color(SCM obj1, SCM obj2)
+static XEN equalp_snd_color(XEN obj1, XEN obj2)
 {
   snd_color *v1, *v2;
-  v1 = (snd_color *)OBJECT_REF(obj1);
-  v2 = (snd_color *)OBJECT_REF(obj2);
-  return(TO_SCM_BOOLEAN(v1->color == v2->color));
+  v1 = (snd_color *)XEN_OBJECT_REF(obj1);
+  v2 = (snd_color *)XEN_OBJECT_REF(obj2);
+  return(C_TO_XEN_BOOLEAN(v1->color == v2->color));
 }
 
-static SCM g_make_snd_color(SCM r, SCM g, SCM b)
+static XEN g_make_snd_color(XEN r, XEN g, XEN b)
 {
   #define H_make_color "(" S_make_color " r g b) -> a col" STR_OR " object with the indicated rgb values"
   Colormap cmap;
@@ -134,10 +134,10 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   Display *dpy;
   snd_color *new_color;
   Float rf, gf, bf;
-  ASSERT_TYPE(NUMBER_P(r), r, ARG1, S_make_color, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, XEN_ARG_1, S_make_color, "a number");
   /* someday accept a list as r */
-  ASSERT_TYPE(NUMBER_P(g), g, ARG2, S_make_color, "a number");
-  ASSERT_TYPE(NUMBER_P(b), b, ARG3, S_make_color, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(g), g, XEN_ARG_2, S_make_color, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, XEN_ARG_3, S_make_color, "a number");
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
@@ -149,14 +149,14 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   tmp_color.green = (unsigned short)(65535 * gf);
   tmp_color.blue = (unsigned short)(65535 * bf);
   if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
-    ERROR(NO_SUCH_COLOR,
-	  LIST_2(TO_SCM_STRING(S_make_color),
-		    LIST_3(r, g, b)));
+    XEN_ERROR(NO_SUCH_COLOR,
+	  XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
+		    XEN_LIST_3(r, g, b)));
   new_color->color = tmp_color.pixel;
-  RETURN_NEW_OBJECT(snd_color_tag, new_color, 0, free_snd_color);
+  XEN_MAKE_AND_RETURN_OBJECT(snd_color_tag, new_color, 0, free_snd_color);
 }
 
-SCM pixel2color(COLOR_TYPE pix)
+XEN pixel2color(COLOR_TYPE pix)
 {
   Colormap cmap;
   XColor tmp_color;
@@ -166,12 +166,12 @@ SCM pixel2color(COLOR_TYPE pix)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = pix;
   XQueryColor(dpy, cmap, &tmp_color);
-  return(g_make_snd_color(TO_SCM_DOUBLE((Float)tmp_color.red / 65535.0),
-			  TO_SCM_DOUBLE((Float)tmp_color.green / 65535.0),
-			  TO_SCM_DOUBLE((Float)tmp_color.blue / 65535.0)));
+  return(g_make_snd_color(C_TO_XEN_DOUBLE((Float)tmp_color.red / 65535.0),
+			  C_TO_XEN_DOUBLE((Float)tmp_color.green / 65535.0),
+			  C_TO_XEN_DOUBLE((Float)tmp_color.blue / 65535.0)));
 }
 
-COLOR_TYPE color2pixel(SCM color)
+COLOR_TYPE color2pixel(XEN color)
 {
   snd_color *v;
   snd_state *ss;
@@ -260,17 +260,17 @@ void recolor_button(GUI_WIDGET w, GUI_POINTER ptr)
     }
 }
 
-static SCM g_load_colormap(SCM colors)
+static XEN g_load_colormap(XEN colors)
 {
   #define H_load_colormap "(" S_load_colormap " col" STR_OR "s) uses the vector col" STR_OR "s to set the current col" STR_OR "map"
   int i, len;
   Pixel *xcs;
   snd_color *v = NULL;
-  SCM *vdata;
-  ASSERT_TYPE(VECTOR_P(colors), colors, ARGn, S_load_colormap, "a vector of color objects");
-  len = VECTOR_LENGTH(colors);
+  XEN *vdata;
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(colors), colors, XEN_ONLY_ARG, S_load_colormap, "a vector of color objects");
+  len = XEN_VECTOR_LENGTH(colors);
   xcs = (Pixel *)CALLOC(len, sizeof(Pixel));
-  vdata = VECTOR_ELEMENTS(colors);
+  vdata = XEN_VECTOR_ELEMENTS(colors);
   for (i = 0; i < len; i++)
     {
       if (COLOR_P(vdata[i]))
@@ -284,23 +284,23 @@ static SCM g_load_colormap(SCM colors)
     }
   x_load_colormap(xcs);
   FREE(xcs);
-  return(TO_SCM_INT(len));
+  return(C_TO_XEN_INT(len));
 }
 
-static SCM g_graph_cursor(void)
+static XEN g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor ") -> current graph cursor shape"
-  return(TO_SCM_INT(in_graph_cursor(state)));
+  return(C_TO_XEN_INT(in_graph_cursor(state)));
 }
 
 #include <X11/cursorfont.h>
-static SCM g_set_graph_cursor(SCM curs)
+static XEN g_set_graph_cursor(XEN curs)
 {
   int val;
-  ASSERT_TYPE(NUMBER_P(curs), curs, ARGn, "set-" S_graph_cursor, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(curs), curs, XEN_ONLY_ARG, "set-" S_graph_cursor, "a number");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
   /*   if you use too high a number here, X dies */
-  val = TO_C_INT(curs);
+  val = XEN_TO_C_INT(curs);
   if ((val >= 0) && (val <= XC_xterm))
     {
       state->Graph_Cursor = val;
@@ -314,15 +314,15 @@ static SCM g_set_graph_cursor(SCM curs)
 /* the docs say the XmNorientation field can be set at any time, but it seems to be ignored except at widget creation */
 #if (XmVERSION > 1)
 #define "set-" S_sounds_horizontal "set-sounds-horizontal"
-static SCM g_set_sounds_horizontal(SCM val)
+static XEN g_set_sounds_horizontal(XEN val)
 {
   int horizontal = 0;
   snd_state *ss;
-  ASSERT_TYPE(BOOLEAN_P(val), val, ARGn, "set-" S_sounds_horizontal, "a boolean");
-  horizontal = (NOT_FALSE_P(val));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, "set-" S_sounds_horizontal, "a boolean");
+  horizontal = (XEN_NOT_FALSE_P(val));
   ss = get_global_state();
   XtVaSetValues(SOUND_PANE(ss), XmNorientation, (horizontal) ? XmHORIZONTAL : XmVERTICAL, NULL);
-  return(TO_SCM_BOOLEAN(horizontal));
+  return(C_TO_XEN_BOOLEAN(horizontal));
 }
 #endif
 #endif
@@ -330,24 +330,24 @@ static SCM g_set_sounds_horizontal(SCM val)
 #if HAVE_THEMES
 
 void make_bg(snd_state *ss, unsigned int width, unsigned int height);
-static SCM g_make_bg(SCM wid, SCM hgt)
+static XEN g_make_bg(XEN wid, XEN hgt)
 {
-  make_bg(get_global_state(), TO_C_INT(wid), TO_C_INT(hgt));
-  return(FALSE_VALUE);
+  make_bg(get_global_state(), XEN_TO_C_INT(wid), XEN_TO_C_INT(hgt));
+  return(XEN_FALSE);
 }
 
 #endif
 
-#ifdef ARGIFY_1
-NARGIFY_2(g_in_w, g_in)
-NARGIFY_3(g_make_snd_color_w, g_make_snd_color)
-NARGIFY_1(g_color_p_w, g_color_p)
-NARGIFY_1(g_color2list_w, g_color2list)
-NARGIFY_1(g_load_colormap_w, g_load_colormap)
-NARGIFY_0(g_graph_cursor_w, g_graph_cursor)
-NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_2(g_in_w, g_in)
+XEN_NARGIFY_3(g_make_snd_color_w, g_make_snd_color)
+XEN_NARGIFY_1(g_color_p_w, g_color_p)
+XEN_NARGIFY_1(g_color2list_w, g_color2list)
+XEN_NARGIFY_1(g_load_colormap_w, g_load_colormap)
+XEN_NARGIFY_0(g_graph_cursor_w, g_graph_cursor)
+XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 #if HAVE_THEMES
-NARGIFY_2(g_make_bg_w, g_make_bg)
+XEN_NARGIFY_2(g_make_bg_w, g_make_bg)
 #endif
 #else
 #define g_in_w g_in
@@ -362,7 +362,7 @@ NARGIFY_2(g_make_bg_w, g_make_bg)
 #endif
 #endif
 
-void g_initialize_xgh(snd_state *ss, SCM local_doc)
+void g_initialize_xgh(snd_state *ss, XEN local_doc)
 {
   state = ss;
 #if HAVE_GUILE
@@ -371,23 +371,23 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   scm_set_smob_free(snd_color_tag, free_snd_color);
   scm_set_smob_equalp(snd_color_tag, equalp_snd_color);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(snd_color_tag, PROCEDURE g_color2list, 0, 0, 0);
+  scm_set_smob_apply(snd_color_tag, XEN_PROCEDURE_CAST g_color2list, 0, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
   snd_color_tag = rb_define_class("SndColor", rb_cObject);
 #endif
 
-  DEFINE_PROC(S_in,            g_in_w, 2, 0, 0,             H_in);
-  DEFINE_PROC(S_make_color,    g_make_snd_color_w, 3, 0, 0, H_make_color);
-  DEFINE_PROC(S_color_p,       g_color_p_w, 1, 0, 0,        H_color_p);
-  DEFINE_PROC(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
-  DEFINE_PROC(S_load_colormap, g_load_colormap_w, 1, 0, 0,  H_load_colormap);
+  XEN_DEFINE_PROCEDURE(S_in,            g_in_w, 2, 0, 0,             H_in);
+  XEN_DEFINE_PROCEDURE(S_make_color,    g_make_snd_color_w, 3, 0, 0, H_make_color);
+  XEN_DEFINE_PROCEDURE(S_color_p,       g_color_p_w, 1, 0, 0,        H_color_p);
+  XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
+  XEN_DEFINE_PROCEDURE(S_load_colormap, g_load_colormap_w, 1, 0, 0,  H_load_colormap);
 
-  define_procedure_with_setter(S_graph_cursor, PROCEDURE g_graph_cursor_w, H_graph_cursor,
-			       "set-" S_graph_cursor, PROCEDURE g_set_graph_cursor_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_graph_cursor, XEN_PROCEDURE_CAST g_graph_cursor_w, H_graph_cursor,
+			       "set-" S_graph_cursor, XEN_PROCEDURE_CAST g_set_graph_cursor_w, local_doc, 0, 0, 1, 0);
 
 #if HAVE_THEMES
-  DEFINE_PROC("make-bg", g_make_bg_w, 2, 0, 0, "make background pixmap");
+  XEN_DEFINE_PROCEDURE("make-bg", g_make_bg_w, 2, 0, 0, "make background pixmap");
 #endif
 }

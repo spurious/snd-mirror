@@ -48,9 +48,9 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->mixes = 0;
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
-      cp->edit_hook = MAKE_HELPLESS_HOOK(0);
+      XEN_DEFINE_HOOK((cp->edit_hook), "edit-hook", 0, NULL, XEN_UNDEFINED);
       snd_protect(cp->edit_hook);
-      cp->undo_hook = MAKE_HELPLESS_HOOK(0);
+      XEN_DEFINE_HOOK((cp->undo_hook), "undo-hook", 0, NULL, XEN_UNDEFINED);
       snd_protect(cp->undo_hook);
     }
   else cp = cip;
@@ -67,7 +67,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
   cp->cursor_size = DEFAULT_CURSOR_SIZE;
-  cp->cursor_proc = UNDEFINED_VALUE;
+  cp->cursor_proc = XEN_UNDEFINED;
   cp->squelch_update = 0;
   cp->show_y_zero = show_y_zero(ss);
   cp->show_marks = show_marks(ss);
@@ -166,10 +166,10 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
   cp->cursor_size = DEFAULT_CURSOR_SIZE;
-  if (PROCEDURE_P(cp->cursor_proc))
+  if (XEN_PROCEDURE_P(cp->cursor_proc))
     {
       snd_unprotect(cp->cursor_proc);
-      cp->cursor_proc = UNDEFINED_VALUE;
+      cp->cursor_proc = XEN_UNDEFINED;
     }
   cp->waiting_to_make_graph = 0;
   if (cp->sonogram_data) free_sono_info(cp);
@@ -196,8 +196,8 @@ static chan_info *free_chan_info(chan_info *cp)
     }
   cp->graph_lisp_p = 0;
   cp->selection_transform_size = 0;
-  CLEAR_HOOK(cp->edit_hook);
-  CLEAR_HOOK(cp->undo_hook);
+  XEN_CLEAR_HOOK(cp->edit_hook);
+  XEN_CLEAR_HOOK(cp->undo_hook);
   return(cp);  /* pointer is left for possible future re-use */
 }
 
@@ -295,8 +295,8 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->contrast_control_amp = DEFAULT_CONTRAST_CONTROL_AMP;
   sp->search_expr = NULL;
   sp->lacp = NULL;
-  sp->search_proc = UNDEFINED_VALUE;
-  sp->prompt_callback = UNDEFINED_VALUE;
+  sp->search_proc = XEN_UNDEFINED;
+  sp->prompt_callback = XEN_UNDEFINED;
   sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   sp->delete_me = 0;
   sp->active = 1;
@@ -346,12 +346,12 @@ void free_snd_info(snd_info *sp)
       free(sp->search_expr); 
       sp->search_expr = NULL;
     }
-  if (PROCEDURE_P(sp->search_proc))
+  if (XEN_PROCEDURE_P(sp->search_proc))
     snd_unprotect(sp->search_proc);
-  sp->search_proc = UNDEFINED_VALUE;
-  if (PROCEDURE_P(sp->prompt_callback))
+  sp->search_proc = XEN_UNDEFINED;
+  if (XEN_PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
-  sp->prompt_callback = UNDEFINED_VALUE;
+  sp->prompt_callback = XEN_UNDEFINED;
   sp->selected_channel = NO_SELECTION;
   sp->short_filename = NULL;                      /* was a pointer into filename */
   if (sp->filename) FREE(sp->filename);
@@ -555,14 +555,14 @@ chan_info *selected_channel(snd_state *ss)
   return(NULL);
 }
 
-static SCM select_sound_hook, select_channel_hook;
+static XEN select_sound_hook, select_channel_hook;
 
 static void select_sound (snd_state *ss, snd_info *sp)
 {
   snd_info *osp = NULL;
-  if (HOOKED(select_sound_hook))
+  if (XEN_HOOKED(select_sound_hook))
     g_c_run_progn_hook(select_sound_hook,
-		       LIST_1(TO_SCM_INT(sp->index)),
+		       XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 		       S_select_sound_hook);
   if (ss->selected_sound != sp->index)
     {
@@ -609,10 +609,10 @@ void select_channel(snd_info *sp, int chan)
 	  if (sp != cp->sound) (cp->sound)->selected_channel = NO_SELECTION;
 	  update_graph(cp, NULL);
 	}
-  if (HOOKED(select_channel_hook))
+  if (XEN_HOOKED(select_channel_hook))
     g_c_run_progn_hook(select_channel_hook,
-		       LIST_2(TO_SCM_INT(sp->index),
-				 TO_SCM_INT(chan)),
+		       XEN_LIST_2(C_TO_XEN_INT(sp->index),
+				 C_TO_XEN_INT(chan)),
 		       S_select_channel_hook);
       ncp = sp->chans[chan];
       reflect_undo_or_redo_in_menu(ncp);
@@ -792,7 +792,7 @@ void display_info(snd_info *sp)
     }
 }
 
-void g_init_data(SCM local_doc)
+void g_init_data(XEN local_doc)
 {
   #define H_select_sound_hook S_select_sound_hook " is called whenever a sound is selected. \
 Its argument is the sound index."
@@ -800,7 +800,7 @@ Its argument is the sound index."
   #define H_select_channel_hook S_select_channel_hook " is called whenever a channel is selected. \
 Its argument is the sound index and the channel number."
 
-  select_sound_hook = MAKE_HOOK(S_select_sound_hook, 1, H_select_sound_hook); /* arg = sound index */
-  select_channel_hook = MAKE_HOOK(S_select_channel_hook, 2, H_select_channel_hook); /* args = sound index, channel */
+  XEN_DEFINE_HOOK(select_sound_hook, S_select_sound_hook, 1, H_select_sound_hook, local_doc);       /* arg = sound index */
+  XEN_DEFINE_HOOK(select_channel_hook, S_select_channel_hook, 2, H_select_channel_hook, local_doc); /* args = sound index, channel */
 }
 

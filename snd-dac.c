@@ -210,20 +210,20 @@ char *reverb_name(void)
 }
 
 /* user hooks into reverb */
-static SCM g_make_reverb = FALSE_VALUE, g_reverb = FALSE_VALUE, g_free_reverb = FALSE_VALUE;
+static XEN g_make_reverb = XEN_FALSE, g_reverb = XEN_FALSE, g_free_reverb = XEN_FALSE;
 
-static SCM g_reverb_procedures(void) 
+static XEN g_reverb_procedures(void) 
 {
-  return(LIST_3(g_reverb, g_make_reverb, g_free_reverb));
+  return(XEN_LIST_3(g_reverb, g_make_reverb, g_free_reverb));
 }
 
-static SCM g_set_reverb_procedures(SCM rev, SCM make_rev, SCM free_rev)
+static XEN g_set_reverb_procedures(XEN rev, XEN make_rev, XEN free_rev)
 {
   #define H_reverb_control_procedures "(" S_reverb_control_procedures ") -> list of the 3 reverb procedures (reverb make-reverb free-reverb)"
   #define H_set_reverb_control_procedures "(" "set-" S_reverb_control_procedures " reverb make-reverb free-reverb) sets the current reverb procedures"
 
   char *errmsg;
-  SCM errstr, bad_func = FALSE_VALUE;
+  XEN errstr; XEN bad_func = XEN_FALSE;
 
   errmsg = procedure_ok(rev, 3, "set-" S_reverb_control_procedures, "reverb", 1);
   if (errmsg == NULL) 
@@ -239,33 +239,33 @@ static SCM g_set_reverb_procedures(SCM rev, SCM make_rev, SCM free_rev)
   else bad_func = rev;
   if (errmsg)
     {
-      errstr = TO_SCM_STRING(errmsg);
+      errstr = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
       return(snd_bad_arity_error(S_reverb_control_procedures, errstr, bad_func));
     }
-  if (PROCEDURE_P(g_reverb)) snd_unprotect(g_reverb);
-  if (PROCEDURE_P(g_make_reverb)) snd_unprotect(g_make_reverb);
-  if (PROCEDURE_P(g_free_reverb)) snd_unprotect(g_free_reverb);
+  if (XEN_PROCEDURE_P(g_reverb)) snd_unprotect(g_reverb);
+  if (XEN_PROCEDURE_P(g_make_reverb)) snd_unprotect(g_make_reverb);
+  if (XEN_PROCEDURE_P(g_free_reverb)) snd_unprotect(g_free_reverb);
 
-  if (NOT_FALSE_P(rev))
+  if (XEN_NOT_FALSE_P(rev))
     {
       g_reverb = rev;
       g_make_reverb = make_rev;
       g_free_reverb = free_rev;
-      if (EQ_P(g_reverb, SND_LOOKUP("snd-nrev")))
+      if (XEN_EQ_P(g_reverb, XEN_NAME_AS_C_STRING_TO_VALUE("snd-nrev")))
 	which_reverb = NREVERB;
       else
 	{
-	  if (EQ_P(g_reverb, SND_LOOKUP("snd-freeverb")))
+	  if (XEN_EQ_P(g_reverb, XEN_NAME_AS_C_STRING_TO_VALUE("snd-freeverb")))
 	    which_reverb = FREEVERB;
 	  else which_reverb = USERVERB;
 	}
     }
   else 
     {
-      g_make_reverb = SND_LOOKUP("make-snd-nrev");
-      g_reverb = SND_LOOKUP("snd-nrev");
-      g_free_reverb = SND_LOOKUP("free-snd-nrev");
+      g_make_reverb = XEN_NAME_AS_C_STRING_TO_VALUE("make-snd-nrev");
+      g_reverb = XEN_NAME_AS_C_STRING_TO_VALUE("snd-nrev");
+      g_free_reverb = XEN_NAME_AS_C_STRING_TO_VALUE("free-snd-nrev");
       which_reverb = NREVERB;
     }
   set_reverb_labels(reverb_name());
@@ -276,46 +276,46 @@ static SCM g_set_reverb_procedures(SCM rev, SCM make_rev, SCM free_rev)
 }
 
 /* user hook into contrast */
-static SCM g_contrast = FALSE_VALUE;
+static XEN g_contrast = XEN_FALSE;
 static int use_g_contrast = 0;
 
-static SCM g_contrast_procedure(void) 
+static XEN g_contrast_procedure(void) 
 {
   return(g_contrast);
 }
 
-static SCM g_set_contrast_procedure(SCM func)
+static XEN g_set_contrast_procedure(XEN func)
 {
   #define H_contrast_control_procedure "(" S_contrast_control_procedure ") -> current contrast procedure"
   #define H_set_contrast_control_procedure "(" "set-" S_contrast_control_procedure " proc) sets the current contrast procedure"
 
   char *errmsg;
-  SCM errstr;
+  XEN errstr;
 
   errmsg = procedure_ok(func, 2, "set-" S_contrast_control_procedure, "contrast", 1);
   if (errmsg)
     {
-      errstr = TO_SCM_STRING(errmsg);
+      errstr = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
       return(snd_bad_arity_error(S_contrast_control_procedure, errstr, func));
     }
 
-  if (PROCEDURE_P(g_contrast)) snd_unprotect(g_contrast);
-  if (NOT_FALSE_P(func))
+  if (XEN_PROCEDURE_P(g_contrast)) snd_unprotect(g_contrast);
+  if (XEN_NOT_FALSE_P(func))
     {
       g_contrast = func;
       use_g_contrast = 1;
     }
   else 
     {
-      g_contrast = SND_LOOKUP("snd-contrast");
+      g_contrast = XEN_NAME_AS_C_STRING_TO_VALUE("snd-contrast");
       use_g_contrast = 0;
     }
   snd_protect(g_contrast);
   return(func);
 }
 
-static SCM play_hook, start_playing_hook, stop_playing_hook, stop_playing_region_hook, stop_playing_channel_hook;
+static XEN play_hook, start_playing_hook, stop_playing_hook, stop_playing_region_hook, stop_playing_channel_hook;
 
 
 
@@ -440,10 +440,10 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
 
 /* ---------------- reverbs ---------------- */
 /*
- * call sequence is a bit convoluted because we want two internal reverb choices + user-defined SCM func choices,
+ * call sequence is a bit convoluted because we want two internal reverb choices + user-defined XEN func choices,
  *   freeverb wants multi-channel inputs,
  *   g_calln is not fast enough to depend on in real time (where we could be running reverb+expand+src+filter)
- * so, wherever possible we call direct, but SCM backups exist as well (for possible explicit call)
+ * so, wherever possible we call direct, but XEN backups exist as well (for possible explicit call)
  */
 
 static void *global_rev = NULL;
@@ -496,28 +496,28 @@ static void freeverb(void *ur, Float *rins, Float *routs, int chans)
 }
 
 #include "vct.h"
-#include "clm2scm.h"
+#include "clm2xen.h"
 
-static SCM g_nrev(SCM ptr, SCM invals, SCM outvals)
+static XEN g_nrev(XEN ptr, XEN invals, XEN outvals)
 {
   vct *inp, *outp;
   inp = TO_VCT(invals);
   outp = TO_VCT(outvals);
-  nrev((void *)SND_UNWRAP(ptr), inp->data, outp->data, outp->length);
+  nrev((void *)XEN_UNWRAP_C_POINTER(ptr), inp->data, outp->data, outp->length);
   return(outvals);
 }
 
-static SCM g_freeverb(SCM ptr, SCM invals, SCM outvals)
+static XEN g_freeverb(XEN ptr, XEN invals, XEN outvals)
 {
   /* actually just a place-holder */
   vct *inp, *outp;
   inp = TO_VCT(invals);
   outp = TO_VCT(outvals);
-  freeverb((void *)SND_UNWRAP(ptr), inp->data, outp->data, outp->length);
+  freeverb((void *)XEN_UNWRAP_C_POINTER(ptr), inp->data, outp->data, outp->length);
   return(outvals);
 }
 
-static SCM v_ins = FALSE_VALUE, v_outs = FALSE_VALUE;
+static XEN v_ins = XEN_FALSE, v_outs = XEN_FALSE;
 
 static Float *r_ins, *r_outs;
 static void free_reverb(void *ur);
@@ -542,12 +542,12 @@ static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
       break;
     case USERVERB:
       {
-	SCM res;
+	XEN res;
 	if (!ur) return;
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-	res = CALL_3(g_reverb, FALSE_VALUE, v_ins, v_outs, __FUNCTION__);
+	res = XEN_CALL_3(g_reverb, XEN_FALSE, v_ins, v_outs, __FUNCTION__);
 #else
-	res = CALL_3(g_reverb, (SCM)ur, v_ins, v_outs, __FUNCTION__);
+	res = XEN_CALL_3(g_reverb, (XEN)ur, v_ins, v_outs, __FUNCTION__);
 #endif
 	if (!(VCT_P(res)))
 	  {
@@ -596,10 +596,10 @@ static void free_rev(void)
     }
 }
 
-static SCM g_free_rev(SCM ptr) 
+static XEN g_free_rev(XEN ptr) 
 {
   free_rev();
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
 static void free_reverb(void *ur)
@@ -612,9 +612,9 @@ static void free_reverb(void *ur)
       break;
     case USERVERB:
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-      CALL_1(g_free_reverb, FALSE_VALUE, "free-reverb");
+      XEN_CALL_1(g_free_reverb, XEN_FALSE, "free-reverb");
 #else
-      CALL_1(g_free_reverb, (SCM)ur, "free-reverb");
+      XEN_CALL_1(g_free_reverb, (XEN)ur, "free-reverb");
 #endif
       break;
     }
@@ -730,16 +730,16 @@ static snd_info *ind2sp(int i)
   return(ss->sounds[i]);
 }
 
-static SCM g_make_nrev(SCM ind, SCM chns) 
+static XEN g_make_nrev(XEN ind, XEN chns) 
 {
-  return(SND_WRAP(make_nrev(ind2sp(TO_SMALL_C_INT(ind)),
-			    TO_SMALL_C_INT(chns))));
+  return(XEN_WRAP_C_POINTER(make_nrev(ind2sp(XEN_TO_SMALL_C_INT(ind)),
+			    XEN_TO_SMALL_C_INT(chns))));
 }
 
-static SCM g_make_freeverb(SCM ind, SCM chns) 
+static XEN g_make_freeverb(XEN ind, XEN chns) 
 {
-  return(SND_WRAP(make_freeverb(ind2sp(TO_SMALL_C_INT(ind)),
-				TO_SMALL_C_INT(chns))));
+  return(XEN_WRAP_C_POINTER(make_freeverb(ind2sp(XEN_TO_SMALL_C_INT(ind)),
+				XEN_TO_SMALL_C_INT(chns))));
 }
 
 static void *make_reverb(snd_info *sp, int chans)
@@ -755,11 +755,11 @@ static void *make_reverb(snd_info *sp, int chans)
       break;
     case USERVERB:
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
-      global_rev = (void *)CALL_2(g_make_reverb,
-				 TO_SMALL_SCM_INT(sp->index),
-				 TO_SMALL_SCM_INT(chans),
+      global_rev = (void *)XEN_CALL_2(g_make_reverb,
+				 C_TO_SMALL_XEN_INT(sp->index),
+				 C_TO_SMALL_XEN_INT(chans),
 				 __FUNCTION__);
-      if (SYMBOL_P((SCM)global_rev))
+      if (XEN_SYMBOL_P((XEN)global_rev))
 	{
 	  report_in_minibuffer(sp, "make-reverb unhappy?");
 	  global_rev = NULL;
@@ -776,19 +776,19 @@ static void *make_reverb(snd_info *sp, int chans)
 static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 {
   if (use_g_contrast)
-    return(amp * TO_C_DOUBLE(CALL_2(g_contrast,
-				   TO_SCM_DOUBLE(dp->contrast_amp * inval),
-				   TO_SCM_DOUBLE(index),
+    return(amp * XEN_TO_C_DOUBLE(XEN_CALL_2(g_contrast,
+				   C_TO_XEN_DOUBLE(dp->contrast_amp * inval),
+				   C_TO_XEN_DOUBLE(index),
 				   __FUNCTION__)));
   return(amp * mus_contrast_enhancement(dp->contrast_amp * inval, index));
 }
 
-static SCM g_mus_contrast(SCM inval, SCM index)
+static XEN g_mus_contrast(XEN inval, XEN index)
 {
 #ifdef SCM_REAL_VALUE
-  return(TO_SCM_DOUBLE(mus_contrast_enhancement(SCM_REAL_VALUE(inval), SCM_REAL_VALUE(index))));
+  return(C_TO_XEN_DOUBLE(mus_contrast_enhancement(SCM_REAL_VALUE(inval), SCM_REAL_VALUE(index))));
 #else
-  return(TO_SCM_DOUBLE(mus_contrast_enhancement(TO_C_DOUBLE(inval), TO_C_DOUBLE(index))));
+  return(C_TO_XEN_DOUBLE(mus_contrast_enhancement(XEN_TO_C_DOUBLE(inval), XEN_TO_C_DOUBLE(index))));
 #endif
 }
 
@@ -1081,30 +1081,30 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
   if (dp->slot == max_active_slot) max_active_slot--;
   if (dp->region >= 0)
     {
-      if (HOOKED(stop_playing_region_hook))
+      if (XEN_HOOKED(stop_playing_region_hook))
 	g_c_run_or_hook(stop_playing_region_hook,
-			LIST_1(TO_SMALL_SCM_INT(dp->region)),
+			XEN_LIST_1(C_TO_SMALL_XEN_INT(dp->region)),
 			S_stop_playing_region_hook);
     }
   else
     {
       if (sp_stopping)
 	{
-	  if (HOOKED(stop_playing_hook))
+	  if (XEN_HOOKED(stop_playing_hook))
 	    g_c_run_or_hook(stop_playing_hook,
-			    LIST_1(TO_SMALL_SCM_INT(sp->index)),
+			    XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
 			    S_stop_playing_hook);
 	}
-      if (HOOKED(stop_playing_channel_hook))
+      if (XEN_HOOKED(stop_playing_channel_hook))
 	g_c_run_or_hook(stop_playing_channel_hook,
-			LIST_2(TO_SMALL_SCM_INT(sp->index),
-			       TO_SMALL_SCM_INT(cp->chan)),
+			XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
+			       C_TO_SMALL_XEN_INT(cp->chan)),
 			S_stop_playing_channel_hook);
       if (sp->index < 0) {free_player(sp); sp = NULL;}
     }
   free_dac_info(dp);
   if ((sp) && (sp_stopping) && (sp->delete_me)) 
-    completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
+    completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-xen.c */
 }
 
 static void stop_playing(dac_info *dp) {stop_playing_with_toggle(dp, TRUE);}
@@ -1297,7 +1297,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 }
 
 
-static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start, int end, SCM edpos, const char *caller, int arg_pos)
+static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start, int end, XEN edpos, const char *caller, int arg_pos)
 {
   /* if not sp, control panel is ignored */
   int slot, beg = 0, direction = READ_FORWARD;
@@ -1359,7 +1359,7 @@ void play_region(snd_state *ss, int region, int background)
   start_dac(ss, region_srate(region), chans, background);
 }
 
-void play_channel(chan_info *cp, int start, int end, int background, SCM edpos, const char *caller, int arg_pos)
+void play_channel(chan_info *cp, int start, int end, int background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays one channel (ignores possible sync) */
   snd_info *sp = NULL;
@@ -1371,7 +1371,7 @@ void play_channel(chan_info *cp, int start, int end, int background, SCM edpos, 
   start_dac(dp->ss, SND_SRATE(sp), 1, background);
 }
 
-void play_sound(snd_info *sp, int start, int end, int background, SCM edpos, const char *caller, int arg_pos)
+void play_sound(snd_info *sp, int start, int end, int background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays one sound (ignores possible sync) */
   int i;
@@ -1379,14 +1379,14 @@ void play_sound(snd_info *sp, int start, int end, int background, SCM edpos, con
       (play_list_members > 0)) 
     return;
   if (!(sp->inuse)) return;
-  if ((HOOKED(start_playing_hook)) &&
-      (TRUE_P(g_c_run_or_hook(start_playing_hook,
-			      LIST_1(TO_SMALL_SCM_INT(sp->index)),
+  if ((XEN_HOOKED(start_playing_hook)) &&
+      (XEN_TRUE_P(g_c_run_or_hook(start_playing_hook,
+			      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
 			      S_start_playing_hook))))
     {
       reflect_play_stop(sp);           /* turns off buttons */
       if (sp->delete_me) 
-	completely_free_snd_info(sp);  /* dummy snd_info struct for (play "filename") in snd-scm.c */
+	completely_free_snd_info(sp);  /* dummy snd_info struct for (play "filename") in snd-xen.c */
       return;
     }
   for (i = 0; i < sp->nchans; i++) 
@@ -1394,7 +1394,7 @@ void play_sound(snd_info *sp, int start, int end, int background, SCM edpos, con
   start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
 }
 
-void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int background, SCM edpos, const char *caller, int arg_pos)
+void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int background, XEN edpos, const char *caller, int arg_pos)
 {
   /* ends can be NULL */
   int i;
@@ -1421,7 +1421,7 @@ void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int ba
   if (sp) start_dac(sp->state, SND_SRATE(sp), chans, background);
 }
 
-void play_selection(int background, SCM edpos, const char *caller, int arg_pos)
+void play_selection(int background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays the current selection */
   int i;
@@ -1540,9 +1540,9 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
     cursor_change = 0;
   else
     {
-      if (HOOKED(play_hook))
+      if (XEN_HOOKED(play_hook))
 	g_c_run_progn_hook(play_hook, 
-			   LIST_1(TO_SCM_INT(frames)),
+			   XEN_LIST_1(C_TO_XEN_INT(frames)),
 			   S_play_hook);
       cursor_time += frames;
       cursor_change = (cursor_time >= CURSOR_UPDATE_INTERVAL);
@@ -2420,15 +2420,15 @@ void initialize_apply(snd_info *sp, int chans, int beg, int dur)
   switch (ss->apply_choice)
     {
     case APPLY_TO_SOUND: 
-      play_sound(sp, beg, beg + dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
+      play_sound(sp, beg, beg + dur, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
       break;
     case APPLY_TO_SELECTION: 
-      play_selection(IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
+      play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
       break;
     case APPLY_TO_CHANNEL: 
       if (sp->selected_channel != NO_SELECTION)
 	curchan = sp->selected_channel;
-      play_channel(sp->chans[curchan], beg, beg + dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
+      play_channel(sp->chans[curchan], beg, beg + dur, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
       break;
     }
 }
@@ -2456,7 +2456,7 @@ int run_apply(int ofd)
 
 /* -------------------------------- scheme connection -------------------------------- */
 
-static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd, SCM end_n, SCM edpos, const char *caller, int arg_pos) 
+static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd, XEN end_n, XEN edpos, const char *caller, int arg_pos) 
 {
   /* all chans if chn_n omitted, arbitrary file if snd_n is name */
   snd_info *sp;
@@ -2466,17 +2466,17 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   int i, samp = 0;
   int end = NO_END_SPECIFIED;
   int *ends = NULL;
-  if (INTEGER_P(end_n)) end = TO_C_INT(end_n);
+  if (XEN_INTEGER_P(end_n)) end = XEN_TO_C_INT(end_n);
 #if USE_NO_GUI
   background = 0;
 #endif
 
-  /* if even samp_n is UNDEFINED_VALUE, start_dac? */
+  /* if even samp_n is XEN_UNDEFINED, start_dac? */
 
-  if (STRING_P(samp_n))
+  if (XEN_STRING_P(samp_n))
     {
       /* filename beg end background syncd ignored */
-      name = mus_expand_filename(TO_C_STRING(samp_n));
+      name = mus_expand_filename(XEN_TO_C_STRING(samp_n));
       if (!(mus_file_probe(name)))
 	{
 	  FREE(name);
@@ -2486,34 +2486,34 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	{
 	  FREE(name);
 	  mus_misc_error(caller, "can't read header", 
-			 LIST_2(samp_n, 
-				TO_SCM_STRING(mus_header_type_name(mus_header_type()))));
+			 XEN_LIST_2(samp_n, 
+				C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
 	}
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
 	{
 	  FREE(name);
 	  mus_misc_error(caller, "can't read data", 
-			 LIST_2(samp_n, 
-				TO_SCM_STRING(mus_header_original_format_name(mus_sound_original_format(name),
+			 XEN_LIST_2(samp_n, 
+				C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(name),
 									      mus_sound_header_type(name)))));
 	}
       sp = make_sound_readable(get_global_state(), name, FALSE);
       sp->short_filename = filename_without_home_directory(name);
       sp->filename = NULL;
       sp->delete_me = 1;
-      samp = TO_C_INT_OR_ELSE(snd_n, 0);
-      if (INTEGER_P(chn_n)) end = TO_C_INT(chn_n);
-      play_sound(sp, samp, end, background, TO_SMALL_SCM_INT(0), caller, arg_pos);
+      samp = XEN_TO_C_INT_OR_ELSE(snd_n, 0);
+      if (XEN_INTEGER_P(chn_n)) end = XEN_TO_C_INT(chn_n);
+      play_sound(sp, samp, end, background, C_TO_SMALL_XEN_INT(0), caller, arg_pos);
       if (name) FREE(name);
     }
   else
     {
-      ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, ARG1, caller, "a number");
+      XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, caller, "a number");
       ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
-      samp = TO_C_INT_OR_ELSE(samp_n, 0);
+      samp = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
       if ((syncd) && (sp->sync != 0))
 	{
 	  si = snd_sync(sp->state, sp->sync);
@@ -2528,7 +2528,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	}
       else
 	{
-	  if (!(INTEGER_P(chn_n)))
+	  if (!(XEN_INTEGER_P(chn_n)))
 	    play_sound(sp, samp, end, background, edpos, caller, arg_pos);
 	  else 
 	    {
@@ -2539,12 +2539,12 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	    }
 	}
     }
-  return(TRUE_VALUE);
+  return(XEN_TRUE);
 }
 
-#define TO_C_BOOLEAN_OR_F(a) ((TRUE_P(a) || ((INTEGER_P(a)) && (TO_SMALL_C_INT(a) == 1))) ? 1 : 0)
+#define TO_C_BOOLEAN_OR_F(a) ((XEN_TRUE_P(a) || ((XEN_INTEGER_P(a)) && (XEN_TO_SMALL_C_INT(a) == 1))) ? 1 : 0)
 
-static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n, SCM edpos) 
+static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos) 
 {
   #define H_play "(" S_play " &optional (start 0) snd chn sync end pos) plays snd or snd's channel chn starting at start. \
 'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played. \
@@ -2556,20 +2556,20 @@ played."
 		  edpos, S_play, 6));
 }
 
-static SCM g_play_selection(SCM wait, SCM edpos) 
+static XEN g_play_selection(XEN wait, XEN edpos) 
 {
   #define H_play_selection "(" S_play_selection " &optional (wait #f) pos) plays the current selection"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(wait), wait, ARG1, S_play_selection, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_1, S_play_selection, "a boolean");
   if (selection_is_active())
     {
       play_selection(!(TO_C_BOOLEAN_OR_F(wait)), edpos, S_play_selection, 2);
-      return(TRUE_VALUE);
+      return(XEN_TRUE);
     }
   snd_no_active_selection_error(S_play_selection);
   return(wait);
 }
 
-static SCM g_play_and_wait(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n, SCM edpos) 
+static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos) 
 {
   #define H_play_and_wait "(" S_play_and_wait " &optional (start 0) snd chn end pos) plays snd or snd's channel chn starting at start \
 and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
@@ -2579,16 +2579,16 @@ and waiting for the play to complete before returning.  'start' can also be a fi
 		  edpos, S_play_and_wait, 6));
 }
 
-static SCM g_stop_playing(SCM snd_n)
+static XEN g_stop_playing(XEN snd_n)
 {
   #define H_stop_playing "(" S_stop_playing " &optional snd) stops play in progress"
   snd_info *sp = NULL;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(snd_n), snd_n, ARG1, S_stop_playing, "an integer");
-  if (INTEGER_P(snd_n)) sp = get_sp(snd_n);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(snd_n), snd_n, XEN_ARG_1, S_stop_playing, "an integer");
+  if (XEN_INTEGER_P(snd_n)) sp = get_sp(snd_n);
   if (sp) 
     stop_playing_sound(sp); 
   else stop_playing_all_sounds();
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
 
@@ -2671,15 +2671,15 @@ void clear_players(void)
 
 /* add-player make-player stop-player start-playing */
 
-static SCM snd_no_such_player_error(const char *caller, SCM index)
+static XEN snd_no_such_player_error(const char *caller, XEN index)
 {
-  ERROR(NO_SUCH_PLAYER,
-	LIST_2(TO_SCM_STRING(caller),
+  XEN_ERROR(NO_SUCH_PLAYER,
+	XEN_LIST_2(C_TO_XEN_STRING(caller),
 	       index));
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM g_make_player(SCM snd, SCM chn)
+static XEN g_make_player(XEN snd, XEN chn)
 {
   #define H_make_player "(" S_make_player " &optional snd chn) prepares snd's channel chn for " S_add_player
   snd_info *true_sp, *new_sp;
@@ -2695,18 +2695,18 @@ static SCM g_make_player(SCM snd, SCM chn)
       FREE(new_sp->sgx); /* no built-in GUI */
       new_sp->sgx = NULL;
       new_sp->chans[cp->chan] = cp;
-      return(TO_SCM_INT(make_player(new_sp, cp)));
+      return(C_TO_XEN_INT(make_player(new_sp, cp)));
     }
   return(snd_no_such_channel_error(S_make_player, snd, chn));  
 }
 
-static SCM g_player_home(SCM snd_chn)
+static XEN g_player_home(XEN snd_chn)
 {
   #define H_player_home "(" S_player_home " player) returns a list of the sound index and channel number associated with player"
   int index;
   chan_info *cp;
-  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, ARG1, S_player_home, "an integer");
-  index = -TO_SMALL_C_INT(snd_chn);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_player_home, "an integer");
+  index = -XEN_TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && 
       (index < players_size) && 
       (players[index]) &&
@@ -2715,31 +2715,31 @@ static SCM g_player_home(SCM snd_chn)
     {
       cp = players[index]->chans[player_chans[index]]; /* trying to get back to the original sound index (not the player index) */
       if ((cp->sound) && (cp->sound->active))
-	return(LIST_2(TO_SMALL_SCM_INT(cp->sound->index),
-		      TO_SMALL_SCM_INT(cp->chan)));
-      else return(LIST_2(NO_SUCH_SOUND,
-			 TO_SMALL_SCM_INT(cp->chan)));
+	return(XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index),
+		      C_TO_SMALL_XEN_INT(cp->chan)));
+      else return(XEN_LIST_2(NO_SUCH_SOUND,
+			 C_TO_SMALL_XEN_INT(cp->chan)));
     }
   return(snd_no_such_player_error(S_player_home, snd_chn));
 }
 
-static SCM g_add_player(SCM snd_chn, SCM start, SCM end, SCM edpos)
+static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
 {
   #define H_add_player "(" S_add_player " &optional player start end pos) starts playing snd's channel chn"
   snd_info *sp = NULL;
   chan_info *cp;
   int index;
-  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, ARG1, S_add_player, "an integer");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(start), start, ARG2, S_add_player, "a number");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(end), end, ARG3, S_add_player, "a number");
-  index = -TO_SMALL_C_INT(snd_chn);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_add_player, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(end), end, XEN_ARG_3, S_add_player, "a number");
+  index = -XEN_TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
     {
       cp = sp->chans[player_chans[index]];
       add_channel_to_play_list(cp, sp,
-			       TO_C_INT_OR_ELSE(start, 0),
-			       TO_C_INT_OR_ELSE(end, NO_END_SPECIFIED),
+			       XEN_TO_C_INT_OR_ELSE(start, 0),
+			       XEN_TO_C_INT_OR_ELSE(end, NO_END_SPECIFIED),
 			       edpos,
 			       S_add_player,
 			       4);
@@ -2748,33 +2748,33 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end, SCM edpos)
   return(snd_chn);
 }
 
-static SCM g_start_playing(SCM Chans, SCM Srate, SCM In_Background)
+static XEN g_start_playing(XEN Chans, XEN Srate, XEN In_Background)
 {
 
-  /* need some way to distinguish SCM from C vars that represent the same thing -- trying Caps here as an experiment */
+  /* need some way to distinguish XEN from C vars that represent the same thing -- trying Caps here as an experiment */
 
   #define H_start_playing "(" S_start_playing " &optional chans srate in-background)"
   int chans, srate;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(Chans), Chans, ARG1, S_start_playing, "an integer");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(Srate), Srate, ARG2, S_start_playing, "a number");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(In_Background), In_Background, ARG3, S_start_playing, "a boolean");
-  chans = TO_C_INT_OR_ELSE(Chans, 1);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Chans), Chans, XEN_ARG_1, S_start_playing, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(Srate), Srate, XEN_ARG_2, S_start_playing, "a number");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, XEN_ARG_3, S_start_playing, "a boolean");
+  chans = XEN_TO_C_INT_OR_ELSE(Chans, 1);
   if (chans <= 0)
     mus_misc_error(S_start_playing, "invalid chans arg", Chans);
-  srate = TO_C_INT_OR_ELSE(Srate, 44100);
+  srate = XEN_TO_C_INT_OR_ELSE(Srate, 44100);
   if (srate <= 0)
     mus_misc_error(S_start_playing, "invalid srate arg", Srate);
-  start_dac(get_global_state(), srate, chans, TO_C_BOOLEAN_OR_T(In_Background));
-  return(FALSE_VALUE);
+  start_dac(get_global_state(), srate, chans, XEN_TO_C_BOOLEAN_OR_TRUE(In_Background));
+  return(XEN_FALSE);
 }
 
-static SCM g_stop_player(SCM snd_chn)
+static XEN g_stop_player(XEN snd_chn)
 {
   #define H_stop_player "(" S_stop_player " player) stops player"
   int index;
   snd_info *sp = NULL;
-  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, ARG1, S_stop_player, "an integer");
-  index = -TO_SMALL_C_INT(snd_chn);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_stop_player, "an integer");
+  index = -XEN_TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
     stop_playing_sound(sp);
@@ -2784,39 +2784,39 @@ static SCM g_stop_player(SCM snd_chn)
 
 /* also the dac filler needs to run on empty buffers in this case? */
 
-static SCM g_player_p(SCM snd_chn)
+static XEN g_player_p(XEN snd_chn)
 {
   #define H_player_p "(" S_player_p " obj) -> is obj an active player"
   int index;
-  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, ARG1, S_player_p, "an integer");
-  index = -TO_SMALL_C_INT(snd_chn);
-  return(TO_SCM_BOOLEAN((index > 0) && 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_player_p, "an integer");
+  index = -XEN_TO_SMALL_C_INT(snd_chn);
+  return(C_TO_XEN_BOOLEAN((index > 0) && 
 			(index < players_size) && 
 			(players[index])));
 }
 
 
-#ifdef ARGIFY_1
-NARGIFY_2(g_make_nrev_w, g_make_nrev)
-NARGIFY_3(g_nrev_w, g_nrev)
-NARGIFY_1(g_free_rev_w, g_free_rev)
-NARGIFY_2(g_mus_contrast_w, g_mus_contrast)
-NARGIFY_2(g_make_freeverb_w, g_make_freeverb)
-NARGIFY_3(g_freeverb_w, g_freeverb)
-NARGIFY_0(g_reverb_procedures_w, g_reverb_procedures)
-NARGIFY_3(g_set_reverb_procedures_w, g_set_reverb_procedures)
-NARGIFY_0(g_contrast_procedure_w, g_contrast_procedure)
-NARGIFY_1(g_set_contrast_procedure_w, g_set_contrast_procedure)
-ARGIFY_6(g_play_w, g_play)
-ARGIFY_2(g_play_selection_w, g_play_selection)
-ARGIFY_6(g_play_and_wait_w, g_play_and_wait)
-ARGIFY_1(g_stop_playing_w, g_stop_playing)
-ARGIFY_2(g_make_player_w, g_make_player)
-ARGIFY_4(g_add_player_w, g_add_player)
-NARGIFY_1(g_player_home_w, g_player_home)
-ARGIFY_3(g_start_playing_w, g_start_playing)
-NARGIFY_1(g_stop_player_w, g_stop_player)
-NARGIFY_1(g_player_p_w, g_player_p)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_2(g_make_nrev_w, g_make_nrev)
+XEN_NARGIFY_3(g_nrev_w, g_nrev)
+XEN_NARGIFY_1(g_free_rev_w, g_free_rev)
+XEN_NARGIFY_2(g_mus_contrast_w, g_mus_contrast)
+XEN_NARGIFY_2(g_make_freeverb_w, g_make_freeverb)
+XEN_NARGIFY_3(g_freeverb_w, g_freeverb)
+XEN_NARGIFY_0(g_reverb_procedures_w, g_reverb_procedures)
+XEN_NARGIFY_3(g_set_reverb_procedures_w, g_set_reverb_procedures)
+XEN_NARGIFY_0(g_contrast_procedure_w, g_contrast_procedure)
+XEN_NARGIFY_1(g_set_contrast_procedure_w, g_set_contrast_procedure)
+XEN_ARGIFY_6(g_play_w, g_play)
+XEN_ARGIFY_2(g_play_selection_w, g_play_selection)
+XEN_ARGIFY_6(g_play_and_wait_w, g_play_and_wait)
+XEN_ARGIFY_1(g_stop_playing_w, g_stop_playing)
+XEN_ARGIFY_2(g_make_player_w, g_make_player)
+XEN_ARGIFY_4(g_add_player_w, g_add_player)
+XEN_NARGIFY_1(g_player_home_w, g_player_home)
+XEN_ARGIFY_3(g_start_playing_w, g_start_playing)
+XEN_NARGIFY_1(g_stop_player_w, g_stop_player)
+XEN_NARGIFY_1(g_player_p_w, g_player_p)
 #else
 #define g_make_nrev_w g_make_nrev
 #define g_nrev_w g_nrev
@@ -2840,26 +2840,26 @@ NARGIFY_1(g_player_p_w, g_player_p)
 #define g_player_p_w g_player_p
 #endif
 
-void g_init_dac(SCM local_doc)
+void g_init_dac(XEN local_doc)
 {
-  DEFINE_PROC(S_reverb_control_procedures, g_reverb_procedures_w, 0, 0, 0, H_reverb_control_procedures);
-  DEFINE_PROC("set-" S_reverb_control_procedures, g_set_reverb_procedures_w, 3, 0, 0, H_set_reverb_control_procedures);
+  XEN_DEFINE_PROCEDURE(S_reverb_control_procedures, g_reverb_procedures_w, 0, 0, 0, H_reverb_control_procedures);
+  XEN_DEFINE_PROCEDURE("set-" S_reverb_control_procedures, g_set_reverb_procedures_w, 3, 0, 0, H_set_reverb_control_procedures);
   /* can't use generalized set here because it's confused by the 3 args -- perhaps a list would be ok */
 
-  define_procedure_with_setter(S_contrast_control_procedure, PROCEDURE g_contrast_procedure_w, H_contrast_control_procedure,
-			       "set-" S_contrast_control_procedure, PROCEDURE g_set_contrast_procedure_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_contrast_control_procedure, XEN_PROCEDURE_CAST g_contrast_procedure_w, H_contrast_control_procedure,
+			       "set-" S_contrast_control_procedure, XEN_PROCEDURE_CAST g_set_contrast_procedure_w, local_doc, 0, 0, 1, 0);
 
-  DEFINE_PROC(S_play,           g_play_w, 0, 6, 0,           H_play);
-  DEFINE_PROC(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
-  DEFINE_PROC(S_play_and_wait,  g_play_and_wait_w, 0, 6, 0,  H_play_and_wait);
-  DEFINE_PROC(S_stop_playing,   g_stop_playing_w, 0, 1, 0,   H_stop_playing);
+  XEN_DEFINE_PROCEDURE(S_play,           g_play_w, 0, 6, 0,           H_play);
+  XEN_DEFINE_PROCEDURE(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
+  XEN_DEFINE_PROCEDURE(S_play_and_wait,  g_play_and_wait_w, 0, 6, 0,  H_play_and_wait);
+  XEN_DEFINE_PROCEDURE(S_stop_playing,   g_stop_playing_w, 0, 1, 0,   H_stop_playing);
 
-  DEFINE_PROC(S_make_player,    g_make_player_w, 0, 2, 0,    H_make_player);
-  DEFINE_PROC(S_add_player,     g_add_player_w, 1, 3, 0,     H_add_player);
-  DEFINE_PROC(S_player_home,    g_player_home_w, 1, 0, 0,    H_player_home);
-  DEFINE_PROC(S_start_playing,  g_start_playing_w, 0, 3, 0,  H_start_playing);
-  DEFINE_PROC(S_stop_player,    g_stop_player_w, 1, 0, 0,    H_stop_player);
-  DEFINE_PROC(S_player_p,       g_player_p_w, 1, 0, 0,       H_player_p);
+  XEN_DEFINE_PROCEDURE(S_make_player,    g_make_player_w, 0, 2, 0,    H_make_player);
+  XEN_DEFINE_PROCEDURE(S_add_player,     g_add_player_w, 1, 3, 0,     H_add_player);
+  XEN_DEFINE_PROCEDURE(S_player_home,    g_player_home_w, 1, 0, 0,    H_player_home);
+  XEN_DEFINE_PROCEDURE(S_start_playing,  g_start_playing_w, 0, 3, 0,  H_start_playing);
+  XEN_DEFINE_PROCEDURE(S_stop_player,    g_stop_player_w, 1, 0, 0,    H_stop_player);
+  XEN_DEFINE_PROCEDURE(S_player_p,       g_player_p_w, 1, 0, 0,       H_player_p);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd) is called when a sound finishes playing."
   #define H_stop_playing_channel_hook S_stop_playing_channel_hook " (snd chn) is called when a channel finishes playing."
@@ -2868,30 +2868,29 @@ void g_init_dac(SCM local_doc)
   #define H_start_playing_hook S_start_playing_hook " (snd) is called when a play request is triggered. \
 If it returns #t, the sound is not played."
 
-  stop_playing_hook =         MAKE_HOOK(S_stop_playing_hook, 1, H_stop_playing_hook);                 /* arg = sound */
-  stop_playing_channel_hook = MAKE_HOOK(S_stop_playing_channel_hook, 2, H_stop_playing_channel_hook); /* args = sound channel */
-  stop_playing_region_hook =  MAKE_HOOK(S_stop_playing_region_hook, 1, H_stop_playing_region_hook);   /* arg = region number */
-  start_playing_hook =        MAKE_HOOK(S_start_playing_hook, 1, H_start_playing_hook);               /* arg = sound */
-  play_hook =                 MAKE_HOOK(S_play_hook, 1, H_play_hook);                                 /* args = size */
+  XEN_DEFINE_HOOK(stop_playing_hook, S_stop_playing_hook, 1, H_stop_playing_hook, local_doc);                         /* arg = sound */
+  XEN_DEFINE_HOOK(stop_playing_channel_hook, S_stop_playing_channel_hook, 2, H_stop_playing_channel_hook, local_doc); /* args = sound channel */
+  XEN_DEFINE_HOOK(stop_playing_region_hook, S_stop_playing_region_hook, 1, H_stop_playing_region_hook, local_doc);    /* arg = region number */
+  XEN_DEFINE_HOOK(start_playing_hook, S_start_playing_hook, 1, H_start_playing_hook, local_doc);                      /* arg = sound */
+  XEN_DEFINE_HOOK(play_hook, S_play_hook, 1, H_play_hook, local_doc);                                                 /* args = size */
 
-
-  g_make_reverb = FALSE_VALUE;
-  g_reverb = FALSE_VALUE;
-  g_free_reverb = FALSE_VALUE;
-  g_contrast = FALSE_VALUE;
-  v_ins = FALSE_VALUE;
-  v_outs = FALSE_VALUE;
-  DEFINE_PROC("make-snd-nrev",     g_make_nrev_w, 2, 0, 0,     "make-snd-nrev is the default reverb make function");
-  DEFINE_PROC("snd-nrev",          g_nrev_w, 3, 0, 0,          "snd-nrev is the default reverb");
-  DEFINE_PROC("free-snd-nrev",     g_free_rev_w, 1, 0, 0,      "free-snd-nrev is the default reverb free function");
-  DEFINE_PROC("snd-contrast",      g_mus_contrast_w, 2, 0, 0,  "snd-contrast is the default contrast function");
-  DEFINE_PROC("make-snd-freeverb", g_make_freeverb_w, 2, 0, 0, "make-snd-freeverb is the freeverb reverb make function");
-  DEFINE_PROC("snd-freeverb",      g_freeverb_w, 3, 0, 0,      "snd-freeverb is the freeverb reverb");
-  DEFINE_PROC("free-snd-freeverb", g_free_rev_w, 1, 0, 0,      "free-snd-freeverb is the freeverb reverb free function");
+  g_make_reverb = XEN_FALSE;
+  g_reverb = XEN_FALSE;
+  g_free_reverb = XEN_FALSE;
+  g_contrast = XEN_FALSE;
+  v_ins = XEN_FALSE;
+  v_outs = XEN_FALSE;
+  XEN_DEFINE_PROCEDURE("make-snd-nrev",     g_make_nrev_w, 2, 0, 0,     "make-snd-nrev is the default reverb make function");
+  XEN_DEFINE_PROCEDURE("snd-nrev",          g_nrev_w, 3, 0, 0,          "snd-nrev is the default reverb");
+  XEN_DEFINE_PROCEDURE("free-snd-nrev",     g_free_rev_w, 1, 0, 0,      "free-snd-nrev is the default reverb free function");
+  XEN_DEFINE_PROCEDURE("snd-contrast",      g_mus_contrast_w, 2, 0, 0,  "snd-contrast is the default contrast function");
+  XEN_DEFINE_PROCEDURE("make-snd-freeverb", g_make_freeverb_w, 2, 0, 0, "make-snd-freeverb is the freeverb reverb make function");
+  XEN_DEFINE_PROCEDURE("snd-freeverb",      g_freeverb_w, 3, 0, 0,      "snd-freeverb is the freeverb reverb");
+  XEN_DEFINE_PROCEDURE("free-snd-freeverb", g_free_rev_w, 1, 0, 0,      "free-snd-freeverb is the freeverb reverb free function");
 
 
 #if HAVE_GUILE
-  EVAL_STRING("(set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)");
-  EVAL_STRING("(set-contrast-control-procedure snd-contrast)");
+  XEN_EVAL_C_STRING("(set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)");
+  XEN_EVAL_C_STRING("(set-contrast-control-procedure snd-contrast)");
 #endif
 }

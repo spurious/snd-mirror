@@ -1,5 +1,8 @@
 snd change log
 
+  6-Jul:     sg.h, sl.h, noguile.h, sr.h, sz.h -> xen.h.
+             snd-scm.c, clm2scm.[ch], sndlib2scm.[ch] -> xen for scm.
+             many internal name changes to change scm to xen.
   5-Jul:     Ruby support.
   3-Jul:     added -b (-batch) switch for scripts.
              snd-4 compatibility names are no longer built-in (use snd4.scm).

@@ -22,14 +22,14 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
   char *str, *buf = NULL;
   XmString s1;
   snd_state *ss = (snd_state *)context;
-  SCM proc;
+  XEN proc;
   str = XmTextGetString(edit_find_text);
   if ((str) && (*str))
     { 
       if (ss->search_expr) XtFree(ss->search_expr);
       ss->search_expr = str;
-      if (PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
-      ss->search_proc = UNDEFINED_VALUE;
+      if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
+      ss->search_proc = XEN_UNDEFINED;
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if (procedure_ok_with_error(proc, 1, "find", "find", 1))
 	{
@@ -42,7 +42,7 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
       XmTextSetString(edit_find_text, NULL);
       FREE(buf);
     }
-  if (PROCEDURE_P(ss->search_proc))
+  if (XEN_PROCEDURE_P(ss->search_proc))
     {
       s1 = XmStringCreate(STR_Stop, XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
@@ -163,36 +163,36 @@ void Edit_Find_Callback(Widget w, XtPointer context, XtPointer info)
 }
 
 #if DEBUGGING
-static SCM g_find_dialog_widgets(void)
+static XEN g_find_dialog_widgets(void)
 {
   if (edit_find_dialog)
-    return(CONS(SND_WRAP(edit_find_dialog),
-	     CONS(SND_WRAP(edit_find_text),
-  	       CONS(SND_WRAP(findnextB),
-		 CONS(SND_WRAP(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)), /* find previous */
-		   CONS(SND_WRAP(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),   /* cancel */
-			EMPTY_LIST))))));
-  return(EMPTY_LIST);
+    return(XEN_CONS(XEN_WRAP_C_POINTER(edit_find_dialog),
+	     XEN_CONS(XEN_WRAP_C_POINTER(edit_find_text),
+  	       XEN_CONS(XEN_WRAP_C_POINTER(findnextB),
+		 XEN_CONS(XEN_WRAP_C_POINTER(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)), /* find previous */
+		   XEN_CONS(XEN_WRAP_C_POINTER(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),   /* cancel */
+			XEN_EMPTY_LIST))))));
+  return(XEN_EMPTY_LIST);
 }
 
-static SCM g_edit_find_dialog(void)
+static XEN g_edit_find_dialog(void)
 {
   Edit_Find_Callback(NULL, (XtPointer *)(get_global_state()), NULL);
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-#ifdef ARGIFY_1
-NARGIFY_0(g_edit_find_dialog_w, g_edit_find_dialog)
-NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_edit_find_dialog_w, g_edit_find_dialog)
+XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
 #else
 #define g_edit_find_dialog_w g_edit_find_dialog
 #define g_find_dialog_widgets_w g_find_dialog_widgets
 #endif
 
-void g_init_gxfind(SCM local_doc)
+void g_init_gxfind(XEN local_doc)
 {
-  DEFINE_PROC("edit-find-dialog", g_edit_find_dialog_w, 0, 0, 0, "");
-  DEFINE_PROC("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("edit-find-dialog", g_edit_find_dialog_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "");
 }
 
 #endif

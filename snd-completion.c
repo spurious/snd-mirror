@@ -8,18 +8,18 @@ static char *current_match = NULL;
 /* -------------------------------- new completion -------------------------------- */
 /* new form searches through Guile's module's hash tables */
 
-static int scan_tab(SCM tab, char *text, int len, int matches)
+static int scan_tab(XEN tab, char *text, int len, int matches)
 {
   int i, j, n, curlen;
   char *sym;
-  n = VECTOR_LENGTH(tab);
+  n = XEN_VECTOR_LENGTH(tab);
   for (i = 0; i < n; ++i)
     {
-      SCM ls = VECTOR_ELEMENTS(tab)[i], handle;
-      while (NOT_NULL_P(ls))
+      XEN ls = XEN_VECTOR_ELEMENTS(tab)[i]; XEN handle;
+      while (XEN_NOT_NULL_P(ls))
 	{
-	  handle = CAR(ls);
-	  sym = SYMBOL_TO_C_STRING(CAR(handle));
+	  handle = XEN_CAR(ls);
+	  sym = XEN_SYMBOL_TO_C_STRING(XEN_CAR(handle));
 	  if (strncmp(text, sym, len) == 0)
 	    {
 	      matches++;
@@ -37,7 +37,7 @@ static int scan_tab(SCM tab, char *text, int len, int matches)
 		      }
 		}
 	    }
-	  ls = CDR(ls);
+	  ls = XEN_CDR(ls);
 	}
     }
   return(matches);
@@ -46,7 +46,7 @@ static int scan_tab(SCM tab, char *text, int len, int matches)
 static int completions(char *text)
 {
   int len, matches = 0;
-  SCM curmod, uses;
+  XEN curmod; XEN uses;
   len = strlen(text);
   curmod = scm_current_module();
   matches = scan_tab(SCM_MODULE_OBARRAY(curmod), 
@@ -54,9 +54,9 @@ static int completions(char *text)
   uses = SCM_MODULE_USES(curmod);
   while (SCM_CONSP(uses))
     {
-      matches = scan_tab(SCM_MODULE_OBARRAY(CAR(uses)), 
+      matches = scan_tab(SCM_MODULE_OBARRAY(XEN_CAR(uses)), 
 			 text, len, matches);
-      uses = CDR(uses);
+      uses = XEN_CDR(uses);
     }
   return(matches);
 }

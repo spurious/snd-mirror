@@ -51,17 +51,17 @@ static Window find_window(Display *display,
   return(window);
 }
 
-static SCM send_netscape(SCM cmd)
+static XEN send_netscape(XEN cmd)
 {
   Window window;
   snd_state *ss;
   Display *dpy;
   char *command, *tmp = NULL;
-  ASSERT_TYPE(STRING_P(cmd), cmd, ARGn, "send-netscape", "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(cmd), cmd, XEN_ONLY_ARG, "send-netscape", "a string");
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
   command = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  tmp = TO_C_STRING(cmd);
+  tmp = XEN_TO_C_STRING(cmd);
   if ((window = find_window(dpy, DefaultRootWindow(dpy), NS_VERSION, compare_window)))
     {
       mus_snprintf(command, PRINT_BUFFER_SIZE, "openURL(file:%s)", tmp);
@@ -80,11 +80,11 @@ static SCM send_netscape(SCM cmd)
         {
 	  mus_snprintf(command, PRINT_BUFFER_SIZE, "netscape file:%s", tmp);
 	  if (execl("/bin/sh", "/bin/sh", "-c", command, NULL) == -1)
-	    return(FALSE_VALUE);
+	    return(XEN_FALSE);
 	}
     }
   FREE(command);
-  return(TRUE_VALUE);
+  return(XEN_TRUE);
 }
 
 static void change_property(snd_state *ss, char *winat, char *name, char *command)
@@ -110,29 +110,29 @@ for example"
     }
 }
 
-static SCM g_change_property(SCM winat, SCM name, SCM command)
+static XEN g_change_property(XEN winat, XEN name, XEN command)
 {
   char *c;
   /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
-  ASSERT_TYPE(STRING_P(winat), name, ARG1, S_change_property, "a string");
-  ASSERT_TYPE(STRING_P(name), name, ARG2, S_change_property, "a string");
-  if (STRING_P(command))
-    c = TO_NEW_C_STRING(command);
+  XEN_ASSERT_TYPE(XEN_STRING_P(winat), name, XEN_ARG_1, S_change_property, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_change_property, "a string");
+  if (XEN_STRING_P(command))
+    c = XEN_TO_NEW_C_STRING(command);
   else
     {
       /* turn it into a string before passing it to change_property */
       c = g_print_1(command, S_change_property);
     }
   change_property(get_global_state(), 
-		  TO_C_STRING(winat), 
-		  TO_C_STRING(name), c);
+		  XEN_TO_C_STRING(winat), 
+		  XEN_TO_C_STRING(name), c);
   if (c) free(c);
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
 #if DEBUGGING
 /* these are intended for auto-testing the user-interface via scheme-generated X events */
-static SCM g_key_event(SCM win, SCM key, SCM state)
+static XEN g_key_event(XEN win, XEN key, XEN state)
 {
   Window window;
   Display *dpy;
@@ -144,7 +144,7 @@ static SCM g_key_event(SCM win, SCM key, SCM state)
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
   ev.type = KeyPress;
-  window = (Window)TO_C_UNSIGNED_LONG(win);
+  window = (Window)XEN_TO_C_UNSIGNED_LONG(win);
   ev.window = window;
   ev.display = dpy;
   ev.root = RootWindow(dpy, DefaultScreen(dpy));
@@ -152,8 +152,8 @@ static SCM g_key_event(SCM win, SCM key, SCM state)
   ev.y = 0;
   ev.x_root = 0;
   ev.y_root = 0;
-  k = (KeySym)TO_C_INT(key);
-  key_state = TO_C_INT(state);
+  k = (KeySym)XEN_TO_C_INT(key);
+  key_state = XEN_TO_C_INT(state);
   if ((k >= snd_K_A) && (k <= snd_K_Z)) 
     key_state |= ShiftMask;
   ev.keycode = XKeysymToKeycode(dpy, k);
@@ -168,10 +168,10 @@ static SCM g_key_event(SCM win, SCM key, SCM state)
       ev.type = KeyRelease;
       err = XSendEvent(dpy, window, False, KeyReleaseMask, (XEvent *)(&ev));
     }
-  return(TO_SCM_INT(err));
+  return(C_TO_XEN_INT(err));
 }
 
-static SCM g_click_event(SCM win, SCM button, SCM state, SCM x, SCM y)
+static XEN g_click_event(XEN win, XEN button, XEN state, XEN x, XEN y)
 {
   Window window;
   Display *dpy;
@@ -181,17 +181,17 @@ static SCM g_click_event(SCM win, SCM button, SCM state, SCM x, SCM y)
   int b;
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
-  window = (Window)TO_C_UNSIGNED_LONG(win);
+  window = (Window)XEN_TO_C_UNSIGNED_LONG(win);
   ev.type = ButtonPress;
   ev.window = window;
   ev.display = dpy;
   ev.root = RootWindow(dpy, DefaultScreen(dpy));
-  ev.x = TO_C_INT(x);
-  ev.y = TO_C_INT(y);
+  ev.x = XEN_TO_C_INT(x);
+  ev.y = XEN_TO_C_INT(y);
   ev.x_root = 0;
   ev.y_root = 0;
-  ev.state = TO_C_INT(state);
-  b = TO_C_INT(button);
+  ev.state = XEN_TO_C_INT(state);
+  b = XEN_TO_C_INT(button);
   switch (b)
     {
     case 1: ev.button = Button1; break;
@@ -209,10 +209,10 @@ static SCM g_click_event(SCM win, SCM button, SCM state, SCM x, SCM y)
       ev.type = ButtonRelease;
       err = XSendEvent(dpy, window, False, ButtonReleaseMask, (XEvent *)(&ev));
     }
-  return(TO_SCM_INT(err));
+  return(C_TO_XEN_INT(err));
 }
 
-static SCM g_drag_event(SCM win, SCM button, SCM state, SCM x0, SCM y0, SCM x1, SCM y1)
+static XEN g_drag_event(XEN win, XEN button, XEN state, XEN x0, XEN y0, XEN x1, XEN y1)
 {
   /* aimed at Snd's selection creation in the graph widget */
   Window window;
@@ -224,17 +224,17 @@ static SCM g_drag_event(SCM win, SCM button, SCM state, SCM x0, SCM y0, SCM x1, 
   int b;
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
-  window = (Window)TO_C_UNSIGNED_LONG(win);
+  window = (Window)XEN_TO_C_UNSIGNED_LONG(win);
   ev.type = ButtonPress;
   ev.window = window;
   ev.display = dpy;
   ev.root = RootWindow(dpy, DefaultScreen(dpy));
-  ev.x = TO_C_INT(x0);
-  ev.y = TO_C_INT(y0);
+  ev.x = XEN_TO_C_INT(x0);
+  ev.y = XEN_TO_C_INT(y0);
   ev.x_root = 0;
   ev.y_root = 0;
-  ev.state = TO_C_INT(state);
-  b = TO_C_INT(button);
+  ev.state = XEN_TO_C_INT(state);
+  b = XEN_TO_C_INT(button);
   switch (b)
     {
     case 1: ev.button = Button1; break;
@@ -253,26 +253,26 @@ static SCM g_drag_event(SCM win, SCM button, SCM state, SCM x0, SCM y0, SCM x1, 
       evm.root = RootWindow(dpy, DefaultScreen(dpy));
       evm.x_root = 0;
       evm.y_root = 0;
-      evm.state = TO_C_INT(state);
+      evm.state = XEN_TO_C_INT(state);
       evm.type = MotionNotify;
       evm.x_root = ev.x;
       evm.y_root = ev.y;
-      evm.x = TO_C_INT(x1);
-      evm.y = TO_C_INT(y1);
+      evm.x = XEN_TO_C_INT(x1);
+      evm.y = XEN_TO_C_INT(y1);
       evm.same_screen = True;
       evm.time = CurrentTime + 300;
       evm.is_hint = NotifyNormal;
       err = XSendEvent(dpy, window, False, ButtonMotionMask, (XEvent *)(&evm));
       ev.type = ButtonRelease;
       ev.time = CurrentTime + 500;
-      ev.x = TO_C_INT(x1);
-      ev.y = TO_C_INT(y1);
+      ev.x = XEN_TO_C_INT(x1);
+      ev.y = XEN_TO_C_INT(y1);
       err = XSendEvent(dpy, window, False, ButtonReleaseMask, (XEvent *)(&ev));
     }
-  return(TO_SCM_INT(err));
+  return(C_TO_XEN_INT(err));
 }
 
-static SCM g_expose_event(SCM win, SCM x, SCM y, SCM width, SCM height)
+static XEN g_expose_event(XEN win, XEN x, XEN y, XEN width, XEN height)
 {
   Window window;
   Display *dpy;
@@ -280,19 +280,19 @@ static SCM g_expose_event(SCM win, SCM x, SCM y, SCM width, SCM height)
   XExposeEvent ev;
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
-  window = (Window)TO_C_UNSIGNED_LONG(win);
+  window = (Window)XEN_TO_C_UNSIGNED_LONG(win);
   ev.type = Expose;
   ev.window = window;
   ev.display = dpy;
-  ev.x = TO_C_INT(x);
-  ev.y = TO_C_INT(y);
-  ev.width = TO_C_INT(width);
-  ev.height = TO_C_INT(height);
+  ev.x = XEN_TO_C_INT(x);
+  ev.y = XEN_TO_C_INT(y);
+  ev.width = XEN_TO_C_INT(width);
+  ev.height = XEN_TO_C_INT(height);
   ev.count = 0;
-  return(TO_SCM_INT(XSendEvent(dpy, window, False, ExposureMask, (XEvent *)(&ev))));
+  return(C_TO_XEN_INT(XSendEvent(dpy, window, False, ExposureMask, (XEvent *)(&ev))));
 }
 
-static SCM g_resize_event(SCM win, SCM width, SCM height)
+static XEN g_resize_event(XEN win, XEN width, XEN height)
 {
   Window window;
   Display *dpy;
@@ -300,16 +300,16 @@ static SCM g_resize_event(SCM win, SCM width, SCM height)
   XResizeRequestEvent ev;
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
-  window = (Window)TO_C_UNSIGNED_LONG(win);
+  window = (Window)XEN_TO_C_UNSIGNED_LONG(win);
   ev.type = ResizeRequest;
   ev.window = window;
   ev.display = dpy;
-  ev.width = TO_C_INT(width);
-  ev.height = TO_C_INT(height);
-  return(TO_SCM_INT(XSendEvent(dpy, window, False, ResizeRedirectMask, (XEvent *)(&ev))));
+  ev.width = XEN_TO_C_INT(width);
+  ev.height = XEN_TO_C_INT(height);
+  return(C_TO_XEN_INT(XSendEvent(dpy, window, False, ResizeRedirectMask, (XEvent *)(&ev))));
 }
 
-static SCM g_force_event(void)
+static XEN g_force_event(void)
 {
   int evs = 0;
 #if USE_MOTIF
@@ -338,35 +338,35 @@ static SCM g_force_event(void)
       evs++;
     }
 #endif
-  return(TO_SCM_INT(evs));
+  return(C_TO_XEN_INT(evs));
 }
 
-static SCM g_widget_window(SCM wid)
+static XEN g_widget_window(XEN wid)
 {
 #if USE_MOTIF
-  return(TO_SCM_UNSIGNED_LONG(XtWindow((Widget)(SND_UNWRAP(wid)))));
+  return(C_TO_XEN_UNSIGNED_LONG(XtWindow((Widget)(XEN_UNWRAP_C_POINTER(wid)))));
 #endif
 #if USE_GTK
-  return(TO_SCM_UNSIGNED_LONG((unsigned long)(((GtkWidget *)(SND_UNWRAP(wid)))->window)));
-  /* this can't be used directly: Gdk-ERROR **: BadWindow (invalid Window parameter) */
+  return(C_TO_XEN_UNSIGNED_LONG((unsigned long)(((GtkWidget *)(XEN_UNWRAP_C_POINTER(wid)))->window)));
+  /* this can't be used directly: Gdk-XEN_ERROR **: BadWindow (invalid Window parameter) */
 #endif
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM g_x_synchronize(SCM on)
+static XEN g_x_synchronize(XEN on)
 {
   snd_state *ss;
   ss = get_global_state();
   XSynchronize(MAIN_DISPLAY(ss),
-	       TO_C_BOOLEAN(on));
+	       XEN_TO_C_BOOLEAN(on));
   return(on);
 }
 
-static SCM g_click_button(SCM button)
+static XEN g_click_button(XEN button)
 {
 #if USE_MOTIF
   Widget w;
-  w = (Widget)(SND_UNWRAP(button));
+  w = (Widget)(XEN_UNWRAP_C_POINTER(button));
   if ((XmIsPushButton(w)) || (XmIsPushButtonGadget(w)))
     { 
       if (XtIsSensitive(w))
@@ -387,13 +387,13 @@ static SCM g_click_button(SCM button)
   return(button);
 }
 
-static SCM g_resize_pane(SCM wid, SCM height)
+static XEN g_resize_pane(XEN wid, XEN height)
 {
 #if USE_MOTIF
   Widget w;
   int hgt;
-  w = (Widget)(SND_UNWRAP(wid));
-  hgt = TO_C_INT(height);
+  w = (Widget)(XEN_UNWRAP_C_POINTER(wid));
+  hgt = XEN_TO_C_INT(height);
   XtUnmanageChild(w);
   XtVaSetValues(w,
 		XmNpaneMinimum, (hgt >= 5) ? (hgt - 5) : 0,
@@ -409,25 +409,25 @@ static SCM g_resize_pane(SCM wid, SCM height)
   return(height);
 }
 
-static SCM g_select_item(SCM wid, SCM pos)
+static XEN g_select_item(XEN wid, XEN pos)
 {
 #if USE_MOTIF
   Widget w;
   int id;
-  w = (Widget)(SND_UNWRAP(wid));
+  w = (Widget)(XEN_UNWRAP_C_POINTER(wid));
   if (!(XmIsList(w)))
     snd_error("not a list");
   else
     {
-      id = TO_C_INT(pos);
+      id = XEN_TO_C_INT(pos);
       XmListSelectPos(w, id + 1, TRUE);
     }
 #endif
 #if USE_GTK
   GtkWidget *w;
   int id;
-  w = (GtkWidget *)SND_UNWRAP(wid);
-  id = TO_C_INT(pos);
+  w = (GtkWidget *)XEN_UNWRAP_C_POINTER(wid);
+  id = XEN_TO_C_INT(pos);
   gtk_clist_select_row(GTK_CLIST(w), id, 0); /* does this trigger the callback? */
 #endif
   return(pos);
@@ -436,21 +436,21 @@ static SCM g_select_item(SCM wid, SCM pos)
 #endif
 
 
-#ifdef ARGIFY_1
-NARGIFY_1(send_netscape_w, send_netscape)
-NARGIFY_3(g_change_property_w, g_change_property)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_1(send_netscape_w, send_netscape)
+XEN_NARGIFY_3(g_change_property_w, g_change_property)
 #if DEBUGGING
-NARGIFY_3(g_key_event_w, g_key_event)
-NARGIFY_5(g_click_event_w, g_click_event)
-NARGIFY_5(g_expose_event_w, g_expose_event)
-NARGIFY_3(g_resize_event_w, g_resize_event)
-NARGIFY_7(g_drag_event_w, g_drag_event)
-NARGIFY_1(g_widget_window_w, g_widget_window)
-NARGIFY_0(g_force_event_w, g_force_event)
-NARGIFY_1(g_x_synchronize_w, g_x_synchronize)
-NARGIFY_1(g_click_button_w, g_click_button)
-NARGIFY_2(g_resize_pane_w, g_resize_pane)
-NARGIFY_2(g_select_item_w, g_select_item)
+XEN_NARGIFY_3(g_key_event_w, g_key_event)
+XEN_NARGIFY_5(g_click_event_w, g_click_event)
+XEN_NARGIFY_5(g_expose_event_w, g_expose_event)
+XEN_NARGIFY_3(g_resize_event_w, g_resize_event)
+XEN_NARGIFY_7(g_drag_event_w, g_drag_event)
+XEN_NARGIFY_1(g_widget_window_w, g_widget_window)
+XEN_NARGIFY_0(g_force_event_w, g_force_event)
+XEN_NARGIFY_1(g_x_synchronize_w, g_x_synchronize)
+XEN_NARGIFY_1(g_click_button_w, g_click_button)
+XEN_NARGIFY_2(g_resize_pane_w, g_resize_pane)
+XEN_NARGIFY_2(g_select_item_w, g_select_item)
 #endif
 #else
 #define send_netscape_w send_netscape
@@ -470,25 +470,25 @@ NARGIFY_2(g_select_item_w, g_select_item)
 #endif
 #endif
 
-void g_init_gxutils(SCM local_doc)
+void g_init_gxutils(XEN local_doc)
 {
-  DEFINE_PROC("send-netscape", send_netscape_w, 1, 0, 0, "");
-  DEFINE_PROC(S_change_property, g_change_property_w, 3, 0, 0, H_change_property);
+  XEN_DEFINE_PROCEDURE("send-netscape", send_netscape_w, 1, 0, 0, "");
+  XEN_DEFINE_PROCEDURE(S_change_property, g_change_property_w, 3, 0, 0, H_change_property);
 #if DEBUGGING
-  DEFINE_PROC("key-event", g_key_event_w, 3, 0, 0, "");
-  DEFINE_PROC("click-event", g_click_event_w, 5, 0, 0, "");
-  DEFINE_PROC("expose-event", g_expose_event_w, 5, 0, 0, "");
-  DEFINE_PROC("resize-event", g_resize_event_w, 3, 0, 0, "");
-  DEFINE_PROC("drag-event", g_drag_event_w, 7, 0, 0, "");
-  DEFINE_PROC("widget-window", g_widget_window_w, 1, 0, 0, "");
-  DEFINE_PROC("force-event", g_force_event_w, 0, 0, 0, "");
-  DEFINE_PROC("x-synchronize", g_x_synchronize_w, 1, 0, 0, "");
-  DEFINE_PROC("click-button", g_click_button_w, 1, 0, 0, "");
-  DEFINE_PROC("resize-pane", g_resize_pane_w, 2, 0, 0, "");
-  DEFINE_PROC("select-item", g_select_item_w, 2, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("key-event", g_key_event_w, 3, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("click-event", g_click_event_w, 5, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("expose-event", g_expose_event_w, 5, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("resize-event", g_resize_event_w, 3, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("drag-event", g_drag_event_w, 7, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("widget-window", g_widget_window_w, 1, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("force-event", g_force_event_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("x-synchronize", g_x_synchronize_w, 1, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("click-button", g_click_button_w, 1, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("resize-pane", g_resize_pane_w, 2, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("select-item", g_select_item_w, 2, 0, 0, "");
 #if USE_MOTIF
   /* gtk version needs to sort out windows/click-events etc */
-  YES_WE_HAVE("snd-events");
+  XEN_YES_WE_HAVE("snd-events");
 #endif
 #endif
 }

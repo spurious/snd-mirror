@@ -628,13 +628,13 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
   return(wwi);
 }
 
-static SCM mouse_name_enter_hook, mouse_name_leave_hook;
+static XEN mouse_name_enter_hook, mouse_name_leave_hook;
 
-static gint mouse_name(SCM hook, GtkWidget *w, const char *caller)
+static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
 {
   char *label = NULL;
   regrow *r;
-  if (HOOKED(hook))
+  if (XEN_HOOKED(hook))
     {
       r = (regrow *)gtk_object_get_user_data(GTK_OBJECT(w));
       if (r)
@@ -651,9 +651,9 @@ static gint mouse_name(SCM hook, GtkWidget *w, const char *caller)
 	  if (label)
 	    {
 	      g_c_run_progn_hook(hook,
-				 LIST_3(TO_SMALL_SCM_INT(r->parent),
-					TO_SMALL_SCM_INT(r->pos),
-					TO_SCM_STRING(label)),
+				 XEN_LIST_3(C_TO_SMALL_XEN_INT(r->parent),
+					C_TO_SMALL_XEN_INT(r->pos),
+					C_TO_XEN_STRING(label)),
 				 caller);
 	    }
 	}
@@ -1502,29 +1502,29 @@ GtkWidget *edit_header(snd_info *sp)
 }
 
 
-static SCM g_just_sounds(void)
+static XEN g_just_sounds(void)
 {
   #define H_just_sounds "not implemented in Gtk+ version of Snd"
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM g_set_just_sounds(SCM on) 
+static XEN g_set_just_sounds(XEN on) 
 {
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-#ifdef ARGIFY_1
-NARGIFY_0(g_just_sounds_w, g_just_sounds)
-ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
+XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 #else
 #define g_just_sounds_w g_just_sounds
 #define g_set_just_sounds_w g_set_just_sounds
 #endif
 
-void g_initialize_xgfile(SCM local_doc)
+void g_initialize_xgfile(XEN local_doc)
 {
-  define_procedure_with_setter(S_just_sounds, PROCEDURE g_just_sounds_w, H_just_sounds,
-			       "set-" S_just_sounds, PROCEDURE g_set_just_sounds_w, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_just_sounds, XEN_PROCEDURE_CAST g_just_sounds_w, H_just_sounds,
+			       "set-" S_just_sounds, XEN_PROCEDURE_CAST g_set_just_sounds_w, local_doc, 0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
@@ -1538,7 +1538,7 @@ See also nb.scm."
 
 #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label) is called when a file viewer or region label is exited by the mouse"
 
-  mouse_name_enter_hook = MAKE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
-  mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
+  XEN_DEFINE_HOOK(mouse_name_enter_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook, local_doc);
+  XEN_DEFINE_HOOK(mouse_name_leave_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook, local_doc);
 }
 

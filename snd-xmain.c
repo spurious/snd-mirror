@@ -297,7 +297,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 }
 
 static Atom snd_v, snd_c;
-static SCM property_changed_hook;
+static XEN property_changed_hook;
 
 static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -316,9 +316,9 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 	  (type != None))
 	if (version[0])
 	  {
-	    if ((!(HOOKED(property_changed_hook))) ||
-		(!(TRUE_P(g_c_run_or_hook(property_changed_hook,
-					      LIST_1(TO_SCM_STRING((char *)(version[0]))),
+	    if ((!(XEN_HOOKED(property_changed_hook))) ||
+		(!(XEN_TRUE_P(g_c_run_or_hook(property_changed_hook,
+					      XEN_LIST_1(C_TO_XEN_STRING((char *)(version[0]))),
 					      S_property_changed_hook)))))
 	    snd_eval_property_str(ss, (char *)(version[0]));
 	    free(version[0]);
@@ -950,8 +950,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 }
 
  
-void g_init_gxmain(SCM local_doc)
+void g_init_gxmain(XEN local_doc)
 {
   #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"
-  property_changed_hook = MAKE_HOOK(S_property_changed_hook, 1, H_property_changed_hook);
+  XEN_DEFINE_HOOK(property_changed_hook, S_property_changed_hook, 1, H_property_changed_hook, local_doc);
 }

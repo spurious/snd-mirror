@@ -1476,159 +1476,159 @@ void set_read_in_progress (snd_state *ss)
 
 
 
-static SCM g_recorder_autoload(void) {return(TO_SCM_BOOLEAN(rp->autoload));}
-static SCM g_set_recorder_autoload(SCM val) 
+static XEN g_recorder_autoload(void) {return(C_TO_XEN_BOOLEAN(rp->autoload));}
+static XEN g_set_recorder_autoload(XEN val) 
 {
   #define H_recorder_autoload "(" S_recorder_autoload ") -> #t if newly recorded sound should be loaded into Snd automatically"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, ARGn, "set-" S_recorder_autoload, "a boolean");
-  set_recorder_autoload(rp, TO_C_BOOLEAN_OR_T(val));
-  return(TO_SCM_BOOLEAN(rp->autoload));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_autoload, "a boolean");
+  set_recorder_autoload(rp, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+  return(C_TO_XEN_BOOLEAN(rp->autoload));
 }
 
-static SCM g_recorder_buffer_size(void) {return(TO_SCM_INT(rp->buffer_size));}
-static SCM g_set_recorder_buffer_size(SCM val) 
+static XEN g_recorder_buffer_size(void) {return(C_TO_XEN_INT(rp->buffer_size));}
+static XEN g_set_recorder_buffer_size(XEN val) 
 {
   int size;
   #define H_recorder_buffer_size "(" S_recorder_buffer_size ") -> ADC buffer size (4096)"
-  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_recorder_buffer_size, "an integer"); 
-  size = TO_C_INT(val);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_buffer_size, "an integer"); 
+  size = XEN_TO_C_INT(val);
   if (size <= 0)
     mus_misc_error("set-" S_recorder_buffer_size, "can't set buffer size <= 0", val);
   rp->buffer_size = size;
   return(val);
 }
 
-static SCM g_recorder_file(void) {return(TO_SCM_STRING(rp->output_file));}
-static SCM g_set_recorder_file(SCM val) 
+static XEN g_recorder_file(void) {return(C_TO_XEN_STRING(rp->output_file));}
+static XEN g_set_recorder_file(XEN val) 
 {
   #define H_recorder_file "(" S_recorder_file ") -> default recorder file name"
-  ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, ARGn, "set-" S_recorder_file, "a string"); 
-  if (FALSE_P(val))
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_file, "a string"); 
+  if (XEN_FALSE_P(val))
     rp->output_file = DEFAULT_RECORDER_FILE;
-  else rp->output_file = TO_NEW_C_STRING(val);
-  return(TO_SCM_STRING(rp->output_file));
+  else rp->output_file = XEN_TO_NEW_C_STRING(val);
+  return(C_TO_XEN_STRING(rp->output_file));
 }
 
-static SCM g_recorder_in_format(void) {return(TO_SCM_INT(rp->in_format));}
-static SCM g_set_recorder_in_format(SCM val) 
+static XEN g_recorder_in_format(void) {return(C_TO_XEN_INT(rp->in_format));}
+static XEN g_set_recorder_in_format(XEN val) 
 {
   #define H_recorder_in_format "(" S_recorder_in_format ") -> default recorder incoming data format (16 bit linear)"
-  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_recorder_in_format, "an integer"); 
-  rp->in_format = TO_C_INT(val);
-  return(TO_SCM_INT(rp->in_format));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_in_format, "an integer"); 
+  rp->in_format = XEN_TO_C_INT(val);
+  return(C_TO_XEN_INT(rp->in_format));
 }
 
-static SCM g_recorder_out_chans(void) {return(TO_SCM_INT(rp->out_chans));}
-static SCM g_set_recorder_out_chans(SCM val) 
+static XEN g_recorder_out_chans(void) {return(C_TO_XEN_INT(rp->out_chans));}
+static XEN g_set_recorder_out_chans(XEN val) 
 {
   #define H_recorder_out_chans "(" S_recorder_out_chans ") -> default recorder output channels (2)"
-  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_recorder_out_chans, "an integer"); 
-  rp->out_chans = TO_C_INT(val);
-  return(TO_SCM_INT(rp->out_chans));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_out_chans, "an integer"); 
+  rp->out_chans = XEN_TO_C_INT(val);
+  return(C_TO_XEN_INT(rp->out_chans));
 }
 
-static SCM g_recorder_out_format(void) {return(TO_SCM_INT(rp->out_format));}
-static SCM g_set_recorder_out_format(SCM val) 
+static XEN g_recorder_out_format(void) {return(C_TO_XEN_INT(rp->out_format));}
+static XEN g_set_recorder_out_format(XEN val) 
 {
   #define H_recorder_out_format "(" S_recorder_out_format ") -> default recorder output data format (16-bit linear)"
-  ASSERT_TYPE(INTEGER_P(val), val, ARGn, "set-" S_recorder_out_format, "an integer"); 
-  rp->out_format = TO_C_INT(val);
-  return(TO_SCM_INT(rp->out_format));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_out_format, "an integer"); 
+  rp->out_format = XEN_TO_C_INT(val);
+  return(C_TO_XEN_INT(rp->out_format));
 }
 
-static SCM g_recorder_srate(void) {return(TO_SCM_INT(rp->srate));}
-static SCM g_set_recorder_srate(SCM val) 
+static XEN g_recorder_srate(void) {return(C_TO_XEN_INT(rp->srate));}
+static XEN g_set_recorder_srate(XEN val) 
 {
   #define H_recorder_srate "(" S_recorder_srate ") -> default recorder sampling rate (22050)"
-  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_recorder_srate, "a number"); 
-  set_recorder_srate(rp, TO_C_INT_OR_ELSE(val, 0));
-  return(TO_SCM_INT(rp->srate));
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_srate, "a number"); 
+  set_recorder_srate(rp, XEN_TO_C_INT_OR_ELSE(val, 0));
+  return(C_TO_XEN_INT(rp->srate));
 }
 
-static SCM g_recorder_trigger(void) {return(TO_SCM_DOUBLE(rp->trigger));}
-static SCM g_set_recorder_trigger(SCM val) 
+static XEN g_recorder_trigger(void) {return(C_TO_XEN_DOUBLE(rp->trigger));}
+static XEN g_set_recorder_trigger(XEN val) 
 {
   Float trigger;
   #define H_recorder_trigger "(" S_recorder_trigger ") -> if doing triggered record, min amp that can trigger recording"
-  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_recorder_trigger, "a number"); 
-  trigger = TO_C_DOUBLE(val);
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_trigger, "a number"); 
+  trigger = XEN_TO_C_DOUBLE(val);
   if (trigger > 1.0) trigger = 1.0;
   if (trigger < 0.0) trigger = 0.0;
   set_recorder_trigger(rp, trigger);
-  return(TO_SCM_DOUBLE(rp->trigger));
+  return(C_TO_XEN_DOUBLE(rp->trigger));
 }
 
-static SCM g_recorder_max_duration(void) {return(TO_SCM_DOUBLE(rp->max_duration));}
-static SCM g_set_recorder_max_duration(SCM val) 
+static XEN g_recorder_max_duration(void) {return(C_TO_XEN_DOUBLE(rp->max_duration));}
+static XEN g_set_recorder_max_duration(XEN val) 
 {
   #define H_recorder_max_duration "(" S_recorder_max_duration ") -> max recorder output file length"
-  ASSERT_TYPE(NUMBER_P(val), val, ARGn, "set-" S_recorder_max_duration, "a number"); 
-  rp->max_duration = TO_C_DOUBLE(val);
-  return(TO_SCM_DOUBLE(rp->max_duration));
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_max_duration, "a number"); 
+  rp->max_duration = XEN_TO_C_DOUBLE(val);
+  return(C_TO_XEN_DOUBLE(rp->max_duration));
 }
 
-static SCM g_recorder_gain (SCM num) 
+static XEN g_recorder_gain (XEN num) 
 {
   #define H_recorder_gain "(" S_recorder_gain " gain) -> recorder input (soundcard) gain"
   int g;
-  ASSERT_TYPE(INTEGER_P(num), num, ARGn, S_recorder_gain, "an integer");
-  g = TO_C_INT(num);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ONLY_ARG, S_recorder_gain, "an integer");
+  g = XEN_TO_C_INT(num);
   if ((g >= 0) && (g < MAX_MIXER_GAINS))
-    return(TO_SCM_DOUBLE(rp->mixer_gains[g]));
-  return(TO_SCM_DOUBLE(0.0));
+    return(C_TO_XEN_DOUBLE(rp->mixer_gains[g]));
+  return(C_TO_XEN_DOUBLE(0.0));
 }
 
-static SCM g_recorder_in_amp (SCM in, SCM out) 
+static XEN g_recorder_in_amp (XEN in, XEN out) 
 {
   #define H_recorder_in_amp "(" S_recorder_in_amp " in out) -> recorder scaler on input in to output out"
   int ic, oc;
-  ASSERT_TYPE(INTEGER_P(in), in, ARG1, S_recorder_in_amp, "an integer");
-  ASSERT_TYPE(INTEGER_P(out), out, ARG2, S_recorder_in_amp, "an integer");
-  ic = TO_C_INT(in);
-  oc = TO_C_INT(out);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_1, S_recorder_in_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_2, S_recorder_in_amp, "an integer");
+  ic = XEN_TO_C_INT(in);
+  oc = XEN_TO_C_INT(out);
   if ((ic >= 0) && (ic < MAX_IN_CHANS) && 
       (oc >= 0) && (oc < MAX_OUT_CHANS))
-    return(TO_SCM_DOUBLE(rp->in_amps[ic][oc]));
-  return(TO_SCM_DOUBLE(0.0));
+    return(C_TO_XEN_DOUBLE(rp->in_amps[ic][oc]));
+  return(C_TO_XEN_DOUBLE(0.0));
 }
 
-static SCM g_recorder_out_amp (SCM num) 
+static XEN g_recorder_out_amp (XEN num) 
 {
   #define H_recorder_out_amp "(" S_recorder_out_amp " out) -> recorder output out scaler"
   int oc;
-  ASSERT_TYPE(INTEGER_P(num), num, ARGn, S_recorder_out_amp, "an integer");
-  oc = TO_C_INT(num);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ONLY_ARG, S_recorder_out_amp, "an integer");
+  oc = XEN_TO_C_INT(num);
   if ((oc >= 0) && (oc < MAX_OUT_CHANS))
-    return(TO_SCM_DOUBLE(rp->out_amps[oc]));
-  return(TO_SCM_DOUBLE(0.0));
+    return(C_TO_XEN_DOUBLE(rp->out_amps[oc]));
+  return(C_TO_XEN_DOUBLE(0.0));
 }
 
-static SCM g_set_recorder_gain (SCM num, SCM amp) 
+static XEN g_set_recorder_gain (XEN num, XEN amp) 
 {
   int ind;
-  ASSERT_TYPE(INTEGER_P(num), num, ARG1, "set-" S_recorder_gain, "an integer");
-  ASSERT_TYPE(NUMBER_P(amp), amp, ARG2, "set-" S_recorder_gain, "a number"); 
-  ind = TO_C_INT(num);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, "set-" S_recorder_gain, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_2, "set-" S_recorder_gain, "a number"); 
+  ind = XEN_TO_C_INT(num);
   if ((ind >= 0) && (ind < MAX_MIXER_GAINS))
     {
-      rp->mixer_gains[ind] = TO_C_DOUBLE(amp);
+      rp->mixer_gains[ind] = XEN_TO_C_DOUBLE(amp);
       reflect_recorder_mixer_gain(ind, rp->mixer_gains[ind]);
     }
   return(amp);
 }
 
-static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp) 
+static XEN g_set_recorder_in_amp (XEN in, XEN out, XEN amp) 
 {
   int in_ind, out_ind;
-  ASSERT_TYPE(INTEGER_P(in), in, ARG1, "set-" S_recorder_in_amp, "an integer");
-  ASSERT_TYPE(INTEGER_P(out), out, ARG2, "set-" S_recorder_in_amp, "an integer");
-  ASSERT_TYPE(NUMBER_P(amp), amp, ARG3, "set-" S_recorder_in_amp, "a number");
-  in_ind = TO_C_INT(in);
-  out_ind = TO_C_INT(out);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_1, "set-" S_recorder_in_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_2, "set-" S_recorder_in_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_3, "set-" S_recorder_in_amp, "a number");
+  in_ind = XEN_TO_C_INT(in);
+  out_ind = XEN_TO_C_INT(out);
   if ((in_ind >= 0) && (in_ind < MAX_IN_CHANS) && 
       (out_ind >= 0) && (out_ind < MAX_OUT_CHANS))
     {
-      rp->in_amps[in_ind][out_ind] = TO_C_DOUBLE(amp);
+      rp->in_amps[in_ind][out_ind] = XEN_TO_C_DOUBLE(amp);
       reflect_recorder_in_amp(in_ind, 
 			      out_ind, 
 			      rp->in_amps[in_ind][out_ind]);
@@ -1636,54 +1636,54 @@ static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp)
   return(amp);
 }
 
-static SCM g_set_recorder_out_amp (SCM num, SCM amp) 
+static XEN g_set_recorder_out_amp (XEN num, XEN amp) 
 {
   int ind;
-  ASSERT_TYPE(INTEGER_P(num), num, ARG1, "set-" S_recorder_out_amp, "an integer");
-  ASSERT_TYPE(NUMBER_P(amp), amp, ARG2, "set-" S_recorder_out_amp, "a number"); 
-  ind = TO_C_INT(num);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, "set-" S_recorder_out_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_2, "set-" S_recorder_out_amp, "a number"); 
+  ind = XEN_TO_C_INT(num);
   if ((ind >= 0) && (ind < MAX_OUT_CHANS))
     {
-      rp->out_amps[ind] = TO_C_DOUBLE(amp); 
+      rp->out_amps[ind] = XEN_TO_C_DOUBLE(amp); 
       reflect_recorder_out_amp(ind,
 			       rp->out_amps[ind]);
     }
   return(amp);
 }
 
-static SCM g_recorder_dialog(void) 
+static XEN g_recorder_dialog(void) 
 {
   #define H_recorder_dialog "(" S_recorder_dialog ") fires up the Recorder"
   snd_record_file(get_global_state()); 
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-#ifdef ARGIFY_1
-NARGIFY_0(g_recorder_autoload_w, g_recorder_autoload)
-ARGIFY_1(g_set_recorder_autoload_w, g_set_recorder_autoload)
-NARGIFY_0(g_recorder_buffer_size_w, g_recorder_buffer_size)
-NARGIFY_1(g_set_recorder_buffer_size_w, g_set_recorder_buffer_size)
-NARGIFY_0(g_recorder_file_w, g_recorder_file)
-NARGIFY_1(g_set_recorder_file_w, g_set_recorder_file)
-NARGIFY_0(g_recorder_in_format_w, g_recorder_in_format)
-NARGIFY_1(g_set_recorder_in_format_w, g_set_recorder_in_format)
-NARGIFY_0(g_recorder_out_chans_w, g_recorder_out_chans)
-NARGIFY_1(g_set_recorder_out_chans_w, g_set_recorder_out_chans)
-NARGIFY_0(g_recorder_out_format_w, g_recorder_out_format)
-NARGIFY_1(g_set_recorder_out_format_w, g_set_recorder_out_format)
-NARGIFY_0(g_recorder_srate_w, g_recorder_srate)
-NARGIFY_1(g_set_recorder_srate_w, g_set_recorder_srate)
-NARGIFY_0(g_recorder_trigger_w, g_recorder_trigger)
-NARGIFY_1(g_set_recorder_trigger_w, g_set_recorder_trigger)
-NARGIFY_0(g_recorder_max_duration_w, g_recorder_max_duration)
-NARGIFY_1(g_set_recorder_max_duration_w, g_set_recorder_max_duration)
-ARGIFY_1(g_recorder_gain_w, g_recorder_gain)
-NARGIFY_2(g_set_recorder_gain_w, g_set_recorder_gain)
-NARGIFY_2(g_recorder_in_amp_w, g_recorder_in_amp)
-NARGIFY_3(g_set_recorder_in_amp_w, g_set_recorder_in_amp)
-NARGIFY_1(g_recorder_out_amp_w, g_recorder_out_amp)
-NARGIFY_2(g_set_recorder_out_amp_w, g_set_recorder_out_amp)
-NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_recorder_autoload_w, g_recorder_autoload)
+XEN_ARGIFY_1(g_set_recorder_autoload_w, g_set_recorder_autoload)
+XEN_NARGIFY_0(g_recorder_buffer_size_w, g_recorder_buffer_size)
+XEN_NARGIFY_1(g_set_recorder_buffer_size_w, g_set_recorder_buffer_size)
+XEN_NARGIFY_0(g_recorder_file_w, g_recorder_file)
+XEN_NARGIFY_1(g_set_recorder_file_w, g_set_recorder_file)
+XEN_NARGIFY_0(g_recorder_in_format_w, g_recorder_in_format)
+XEN_NARGIFY_1(g_set_recorder_in_format_w, g_set_recorder_in_format)
+XEN_NARGIFY_0(g_recorder_out_chans_w, g_recorder_out_chans)
+XEN_NARGIFY_1(g_set_recorder_out_chans_w, g_set_recorder_out_chans)
+XEN_NARGIFY_0(g_recorder_out_format_w, g_recorder_out_format)
+XEN_NARGIFY_1(g_set_recorder_out_format_w, g_set_recorder_out_format)
+XEN_NARGIFY_0(g_recorder_srate_w, g_recorder_srate)
+XEN_NARGIFY_1(g_set_recorder_srate_w, g_set_recorder_srate)
+XEN_NARGIFY_0(g_recorder_trigger_w, g_recorder_trigger)
+XEN_NARGIFY_1(g_set_recorder_trigger_w, g_set_recorder_trigger)
+XEN_NARGIFY_0(g_recorder_max_duration_w, g_recorder_max_duration)
+XEN_NARGIFY_1(g_set_recorder_max_duration_w, g_set_recorder_max_duration)
+XEN_ARGIFY_1(g_recorder_gain_w, g_recorder_gain)
+XEN_NARGIFY_2(g_set_recorder_gain_w, g_set_recorder_gain)
+XEN_NARGIFY_2(g_recorder_in_amp_w, g_recorder_in_amp)
+XEN_NARGIFY_3(g_set_recorder_in_amp_w, g_set_recorder_in_amp)
+XEN_NARGIFY_1(g_recorder_out_amp_w, g_recorder_out_amp)
+XEN_NARGIFY_2(g_set_recorder_out_amp_w, g_set_recorder_out_amp)
+XEN_NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
 #else
 #define g_recorder_autoload_w g_recorder_autoload
 #define g_set_recorder_autoload_w g_set_recorder_autoload
@@ -1712,45 +1712,45 @@ NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
 #define g_recorder_dialog_w g_recorder_dialog
 #endif
 
-void g_init_recorder(SCM local_doc)
+void g_init_recorder(XEN local_doc)
 {
-  define_procedure_with_setter(S_recorder_autoload, PROCEDURE g_recorder_autoload_w, H_recorder_autoload,
-			       "set-" S_recorder_autoload, PROCEDURE g_set_recorder_autoload_w, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_recorder_autoload, XEN_PROCEDURE_CAST g_recorder_autoload_w, H_recorder_autoload,
+			       "set-" S_recorder_autoload, XEN_PROCEDURE_CAST g_set_recorder_autoload_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_recorder_buffer_size, PROCEDURE g_recorder_buffer_size_w, H_recorder_buffer_size,
-			       "set-" S_recorder_buffer_size, PROCEDURE g_set_recorder_buffer_size_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_buffer_size, XEN_PROCEDURE_CAST g_recorder_buffer_size_w, H_recorder_buffer_size,
+			       "set-" S_recorder_buffer_size, XEN_PROCEDURE_CAST g_set_recorder_buffer_size_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_file, PROCEDURE g_recorder_file_w, H_recorder_file,
-			       "set-" S_recorder_file, PROCEDURE g_set_recorder_file_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_file, XEN_PROCEDURE_CAST g_recorder_file_w, H_recorder_file,
+			       "set-" S_recorder_file, XEN_PROCEDURE_CAST g_set_recorder_file_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_in_format, PROCEDURE g_recorder_in_format_w, H_recorder_in_format,
-			       "set-" S_recorder_in_format, PROCEDURE g_set_recorder_in_format_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_in_format, XEN_PROCEDURE_CAST g_recorder_in_format_w, H_recorder_in_format,
+			       "set-" S_recorder_in_format, XEN_PROCEDURE_CAST g_set_recorder_in_format_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_out_chans, PROCEDURE g_recorder_out_chans_w, H_recorder_out_chans,
-			       "set-" S_recorder_out_chans, PROCEDURE g_set_recorder_out_chans_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_out_chans, XEN_PROCEDURE_CAST g_recorder_out_chans_w, H_recorder_out_chans,
+			       "set-" S_recorder_out_chans, XEN_PROCEDURE_CAST g_set_recorder_out_chans_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_out_format, PROCEDURE g_recorder_out_format_w, H_recorder_out_format,
-			       "set-" S_recorder_out_format, PROCEDURE g_set_recorder_out_format_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_out_format, XEN_PROCEDURE_CAST g_recorder_out_format_w, H_recorder_out_format,
+			       "set-" S_recorder_out_format, XEN_PROCEDURE_CAST g_set_recorder_out_format_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_srate, PROCEDURE g_recorder_srate_w, H_recorder_srate,
-			       "set-" S_recorder_srate, PROCEDURE g_set_recorder_srate_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_srate, XEN_PROCEDURE_CAST g_recorder_srate_w, H_recorder_srate,
+			       "set-" S_recorder_srate, XEN_PROCEDURE_CAST g_set_recorder_srate_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_trigger, PROCEDURE g_recorder_trigger_w, H_recorder_trigger,
-			       "set-" S_recorder_trigger, PROCEDURE g_set_recorder_trigger_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_trigger, XEN_PROCEDURE_CAST g_recorder_trigger_w, H_recorder_trigger,
+			       "set-" S_recorder_trigger, XEN_PROCEDURE_CAST g_set_recorder_trigger_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_max_duration, PROCEDURE g_recorder_max_duration_w, H_recorder_max_duration,
-			       "set-" S_recorder_max_duration, PROCEDURE g_set_recorder_max_duration_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_max_duration, XEN_PROCEDURE_CAST g_recorder_max_duration_w, H_recorder_max_duration,
+			       "set-" S_recorder_max_duration, XEN_PROCEDURE_CAST g_set_recorder_max_duration_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_gain, PROCEDURE g_recorder_gain_w, H_recorder_gain,
-			       "set-" S_recorder_gain, PROCEDURE g_set_recorder_gain_w, local_doc, 0, 1, 2, 0);
+  define_procedure_with_setter(S_recorder_gain, XEN_PROCEDURE_CAST g_recorder_gain_w, H_recorder_gain,
+			       "set-" S_recorder_gain, XEN_PROCEDURE_CAST g_set_recorder_gain_w, local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_recorder_in_amp, PROCEDURE g_recorder_in_amp_w, H_recorder_in_amp,
-			       "set-" S_recorder_in_amp, PROCEDURE g_set_recorder_in_amp_w, local_doc, 2, 0, 3, 0);
+  define_procedure_with_setter(S_recorder_in_amp, XEN_PROCEDURE_CAST g_recorder_in_amp_w, H_recorder_in_amp,
+			       "set-" S_recorder_in_amp, XEN_PROCEDURE_CAST g_set_recorder_in_amp_w, local_doc, 2, 0, 3, 0);
 
-  define_procedure_with_setter(S_recorder_out_amp, PROCEDURE g_recorder_out_amp_w, H_recorder_out_amp,
-			       "set-" S_recorder_out_amp, PROCEDURE g_set_recorder_out_amp_w, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_recorder_out_amp, XEN_PROCEDURE_CAST g_recorder_out_amp_w, H_recorder_out_amp,
+			       "set-" S_recorder_out_amp, XEN_PROCEDURE_CAST g_set_recorder_out_amp_w, local_doc, 1, 0, 2, 0);
 
-  DEFINE_PROC(S_recorder_dialog, g_recorder_dialog_w, 0, 0, 0, H_recorder_dialog);
+  XEN_DEFINE_PROCEDURE(S_recorder_dialog, g_recorder_dialog_w, 0, 0, 0, H_recorder_dialog);
 }
 
 #if USE_NO_GUI

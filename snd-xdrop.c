@@ -2,7 +2,7 @@
 
 static Atom FILE_NAME; /* Sun uses this, SGI uses STRING */
 
-static SCM drop_hook;
+static XEN drop_hook;
 
 static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom *type, XtPointer value, unsigned long *length, int *format)
 {
@@ -22,9 +22,9 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 	  else str[i] = ((char *)value)[i];
 	}
       str[*length] = '\0';
-      if ((!(HOOKED(drop_hook))) || 
-	  (!(TRUE_P(g_c_run_or_hook(drop_hook,
-					LIST_1(TO_SCM_STRING(str)),
+      if ((!(XEN_HOOKED(drop_hook))) || 
+	  (!(XEN_TRUE_P(g_c_run_or_hook(drop_hook,
+					XEN_LIST_1(C_TO_XEN_STRING(str)),
 					"drop")))))
 	{
 	  sp = snd_open_file(str, (snd_state *)context, FALSE);
@@ -104,10 +104,10 @@ void InitializeDrop(snd_state *ss)
   XmDropSiteRegister(get_menubar(), args, n); /* won't accept main-shell here, or main-pane! */
 }
 
-void g_init_gxdrop(SCM local_doc)
+void g_init_gxdrop(XEN local_doc)
 {
   #define H_drop_hook S_drop_hook " (filename) is called whenever Snd receives a drag-and-drop \
 event. If the returns #t, the file is not opened by Snd."
 
-  drop_hook = MAKE_HOOK(S_drop_hook, 1, H_drop_hook); /* arg = filename */
+  XEN_DEFINE_HOOK(drop_hook, S_drop_hook, 1, H_drop_hook, local_doc); /* arg = filename */
 }

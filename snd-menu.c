@@ -526,37 +526,42 @@ void set_channel_style(snd_state *ss, int val)
   map_over_chans(ss, update_graph, NULL);
 }
 
-static SCM snd_no_such_menu_error(const char *caller, SCM id)
+static XEN snd_no_such_menu_error(const char *caller, XEN id)
 {
-  ERROR(NO_SUCH_MENU,
-	LIST_2(TO_SCM_STRING(caller),
+  XEN_ERROR(NO_SUCH_MENU,
+	XEN_LIST_2(C_TO_XEN_STRING(caller),
 		  id));
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM output_name_hook;
+static XEN output_name_hook;
 
 static char *output_name(void)
 {
-  if (HOOKED(output_name_hook))
+  if (XEN_HOOKED(output_name_hook))
     {
-      SCM result;
-      SCM procs = HOOK_PROCEDURES (output_name_hook);
-      while (NOT_NULL_P(procs))
+      XEN result;
+      XEN procs = XEN_HOOK_PROCEDURES (output_name_hook);
+#if HAVE_GUILE
+      while (XEN_NOT_NULL_P(procs))
 	{
-	  result = CALL_0(CAR(procs), S_output_name_hook);
-	  if (STRING_P(result)) return(TO_NEW_C_STRING(result));
-	  procs = CDR (procs);
+	  result = XEN_CALL_0(XEN_CAR(procs), S_output_name_hook);
+	  if (XEN_STRING_P(result)) return(XEN_TO_NEW_C_STRING(result));
+	  procs = XEN_CDR (procs);
 	}
+#else
+	  result = XEN_CALL_0(procs, S_output_name_hook);
+	  if (XEN_STRING_P(result)) return(XEN_TO_NEW_C_STRING(result));
+#endif
     }
   return(NULL);
 }
 
-static SCM g_save_state_file(void) 
+static XEN g_save_state_file(void) 
 {
   snd_state *ss;
   ss = get_global_state();
-  return(TO_SCM_STRING(save_state_file(ss)));
+  return(C_TO_XEN_STRING(save_state_file(ss)));
 }
 
 static void set_save_state_file(snd_state *ss, char *name)
@@ -566,17 +571,17 @@ static void set_save_state_file(snd_state *ss, char *name)
   set_sensitive(options_save_state_menu(), (snd_strlen(name) > 0));
 }
 
-static SCM g_set_save_state_file(SCM val) 
+static XEN g_set_save_state_file(XEN val) 
 {
-  #define H_save_state_file "(" S_save_state_file ") -> name of saved state file (\"saved-snd.scm\")"
+  #define H_save_state_file "(" S_save_state_file ") -> name of saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
   snd_state *ss;
-  ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_save_state_file, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_save_state_file, "a string"); 
   ss = get_global_state();
-  set_save_state_file(ss, TO_C_STRING(val));
-  return(TO_SCM_STRING(save_state_file(ss)));
+  set_save_state_file(ss, XEN_TO_C_STRING(val));
+  return(C_TO_XEN_STRING(save_state_file(ss)));
 }
 
-static SCM *menu_functions = NULL;
+static XEN *menu_functions = NULL;
 static int callbacks_size = 0;
 static int callb = 0;
 #define CALLBACK_INCR 16
@@ -589,13 +594,13 @@ static int make_callback_slot(void)
       callbacks_size += CALLBACK_INCR;
       if (callb == 0)
 	{
-	  menu_functions = (SCM *)CALLOC(callbacks_size, sizeof(SCM));
-	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = UNDEFINED_VALUE;
+	  menu_functions = (XEN *)CALLOC(callbacks_size, sizeof(XEN));
+	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = XEN_UNDEFINED;
 	}
       else 
 	{
-	  menu_functions = (SCM *)REALLOC(menu_functions, callbacks_size * sizeof(SCM));
-	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = UNDEFINED_VALUE;
+	  menu_functions = (XEN *)REALLOC(menu_functions, callbacks_size * sizeof(XEN));
+	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = XEN_UNDEFINED;
 	}
     }
   old_callb = callb;
@@ -603,62 +608,62 @@ static int make_callback_slot(void)
   return(old_callb);
 }
 
-static void add_callback(int slot, SCM callback)
+static void add_callback(int slot, XEN callback)
 {
-  if ((BOUND_P(menu_functions[slot])) && 
-      (PROCEDURE_P(menu_functions[slot])))
+  if ((XEN_BOUND_P(menu_functions[slot])) && 
+      (XEN_PROCEDURE_P(menu_functions[slot])))
     snd_unprotect(menu_functions[slot]);
   menu_functions[slot] = callback;
   snd_protect(callback);
 }
 
-static SCM gl_add_to_main_menu(SCM label, SCM callback)
+static XEN gl_add_to_main_menu(XEN label, XEN callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label &optional callback) adds label to the main (top-level) menu, returning its index"
   int val = -1, slot = -1;
   char *err;
-  SCM errm;
-  ASSERT_TYPE(STRING_P(label), label, ARG1, S_add_to_main_menu, "a string");
+  XEN errm;
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_add_to_main_menu, "a string");
   slot = make_callback_slot();
-  if (BOUND_P(callback))
+  if (XEN_BOUND_P(callback))
     {
       err = procedure_ok(callback, 0, S_add_to_main_menu, "menu callback", 2);
       if (err == NULL)
 	add_callback(slot, callback);
       else 
 	{
-	  errm = TO_SCM_STRING(err);
+	  errm = C_TO_XEN_STRING(err);
 	  FREE(err);
 	  return(snd_bad_arity_error(S_add_to_main_menu, errm, callback));
 	}
     }
   val = g_add_to_main_menu(get_global_state(), 
-			   TO_C_STRING(label), 
+			   XEN_TO_C_STRING(label), 
 			   slot);
-  return(TO_SCM_INT(val));
+  return(C_TO_XEN_INT(val));
 }
 
-static SCM gl_add_to_menu(SCM menu, SCM label, SCM callback)
+static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback)
 {
   #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated \
 menu is the index returned by add-to-main-menu, func should be a function of no arguments"
 
   int err = 0, slot, m;
   char *errmsg;
-  SCM errm;
-  ASSERT_TYPE(STRING_P(label), label, ARG2, S_add_to_menu, "a string");
-  ASSERT_TYPE(INTEGER_P(menu), menu, ARG1, S_add_to_menu, "an integer");
-  ASSERT_TYPE(PROCEDURE_P(callback), callback, ARG3, S_add_to_menu, "a procedure");
+  XEN errm;
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_add_to_menu, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_add_to_menu, "an integer");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(callback), callback, XEN_ARG_3, S_add_to_menu, "a procedure");
   errmsg = procedure_ok(callback, 0, S_add_to_menu, "menu callback", 3);
   if (errmsg == NULL)
     {
-      m = TO_C_INT(menu);
+      m = XEN_TO_C_INT(menu);
       if (m < 0)
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
       slot = make_callback_slot();
       err = g_add_to_menu(get_global_state(), 
 			  m,
-			  TO_C_STRING(label),
+			  XEN_TO_C_STRING(label),
 			  slot);
       if (err == -1) 
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
@@ -666,7 +671,7 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
     }
   else 
     {
-      errm = TO_SCM_STRING(errmsg);
+      errm = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
       return(snd_bad_arity_error(S_add_to_menu, errm, callback));
     }
@@ -675,78 +680,78 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
 
 void g_snd_callback(int callb)
 {
-  if ((callb >= 0) && (BOUND_P(menu_functions[callb])))
-    CALL_0(menu_functions[callb], "menu callback func");
+  if ((callb >= 0) && (XEN_BOUND_P(menu_functions[callb])))
+    XEN_CALL_0(menu_functions[callb], "menu callback func");
 }
 
-static SCM gl_remove_from_menu(SCM menu, SCM label)
+static XEN gl_remove_from_menu(XEN menu, XEN label)
 {
   #define H_remove_from_menu "(" S_remove_from_menu " menu label) removes menu item label from menu"
   int val, m;
-  ASSERT_TYPE(STRING_P(label), label, ARG2, S_remove_from_menu, "a string");
-  ASSERT_TYPE(INTEGER_P(menu), menu, ARG1, S_remove_from_menu, "an integer");
-  m = TO_C_INT(menu);
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_remove_from_menu, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_remove_from_menu, "an integer");
+  m = XEN_TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_remove_from_menu, menu));
   val = g_remove_from_menu(m,
-			   TO_C_STRING(label));
-  return(TO_SCM_INT(val));
+			   XEN_TO_C_STRING(label));
+  return(C_TO_XEN_INT(val));
 }
 
-static SCM gl_change_menu_label(SCM menu, SCM old_label, SCM new_label)
+static XEN gl_change_menu_label(XEN menu, XEN old_label, XEN new_label)
 {
   #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label) changes menu's label"
   int val, m;
-  ASSERT_TYPE(STRING_P(old_label), old_label, ARG2, S_change_menu_label, "a string");
-  ASSERT_TYPE(STRING_P(new_label), new_label, ARG3, S_change_menu_label, "a string");
-  ASSERT_TYPE(INTEGER_P(menu), menu, ARG1, S_change_menu_label, "an integer");
-  m = TO_C_INT(menu);
+  XEN_ASSERT_TYPE(XEN_STRING_P(old_label), old_label, XEN_ARG_2, S_change_menu_label, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(new_label), new_label, XEN_ARG_3, S_change_menu_label, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_change_menu_label, "an integer");
+  m = XEN_TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_change_menu_label,	menu));
   val = g_change_menu_label(m,
-			    TO_C_STRING(old_label), 
-			    TO_C_STRING(new_label));
-  return(TO_SCM_INT(val));
+			    XEN_TO_C_STRING(old_label), 
+			    XEN_TO_C_STRING(new_label));
+  return(C_TO_XEN_INT(val));
 }
 
-static SCM gl_menu_sensitive(SCM menu, SCM label)
+static XEN gl_menu_sensitive(XEN menu, XEN label)
 {
   #define H_menu_sensitive "(" S_menu_sensitive " menu label) reflects whether item label in menu is sensitive"
   int val, m;
-  ASSERT_TYPE(INTEGER_P(menu), menu, ARG1, "set-" S_menu_sensitive, "an integer");
-  ASSERT_TYPE(STRING_P(label), label, ARG2, "set-" S_menu_sensitive, "a string");
-  m = TO_C_INT(menu);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, "set-" S_menu_sensitive, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, "set-" S_menu_sensitive, "a string");
+  m = XEN_TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_menu_sensitive, menu));
   val = g_menu_is_sensitive(m,
-			    TO_C_STRING(label));
-  return(TO_SCM_BOOLEAN(val));
+			    XEN_TO_C_STRING(label));
+  return(C_TO_XEN_BOOLEAN(val));
 }
 
-static SCM gl_set_menu_sensitive(SCM menu, SCM label, SCM on)
+static XEN gl_set_menu_sensitive(XEN menu, XEN label, XEN on)
 {
   int val, m;
-  ASSERT_TYPE(INTEGER_P(menu), menu, ARG1, "set-" S_menu_sensitive, "an integer");
-  ASSERT_TYPE(STRING_P(label), label, ARG2, "set-" S_menu_sensitive, "a string");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, ARG3, "set-" S_menu_sensitive, "a boolean");
-  m = TO_C_INT(menu);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, "set-" S_menu_sensitive, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, "set-" S_menu_sensitive, "a string");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_3, "set-" S_menu_sensitive, "a boolean");
+  m = XEN_TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error("set-" S_menu_sensitive, menu));
   val = g_set_menu_sensitive(m,
-			     TO_C_STRING(label), 
-			     TO_C_BOOLEAN_OR_T(on));
-  return(TO_SCM_BOOLEAN(val));
+			     XEN_TO_C_STRING(label), 
+			     XEN_TO_C_BOOLEAN_OR_TRUE(on));
+  return(C_TO_XEN_BOOLEAN(val));
 }
 
-#ifdef ARGIFY_1
-NARGIFY_0(g_save_state_file_w, g_save_state_file)
-NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
-NARGIFY_2(gl_menu_sensitive_w, gl_menu_sensitive)
-NARGIFY_3(gl_set_menu_sensitive_w, gl_set_menu_sensitive)
-ARGIFY_2(gl_add_to_main_menu_w, gl_add_to_main_menu)
-NARGIFY_3(gl_add_to_menu_w, gl_add_to_menu)
-NARGIFY_2(gl_remove_from_menu_w, gl_remove_from_menu)
-NARGIFY_3(gl_change_menu_label_w, gl_change_menu_label)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_save_state_file_w, g_save_state_file)
+XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
+XEN_NARGIFY_2(gl_menu_sensitive_w, gl_menu_sensitive)
+XEN_NARGIFY_3(gl_set_menu_sensitive_w, gl_set_menu_sensitive)
+XEN_ARGIFY_2(gl_add_to_main_menu_w, gl_add_to_main_menu)
+XEN_NARGIFY_3(gl_add_to_menu_w, gl_add_to_menu)
+XEN_NARGIFY_2(gl_remove_from_menu_w, gl_remove_from_menu)
+XEN_NARGIFY_3(gl_change_menu_label_w, gl_change_menu_label)
 #else
 #define g_save_state_file_w g_save_state_file
 #define g_set_save_state_file_w g_set_save_state_file
@@ -758,21 +763,21 @@ NARGIFY_3(gl_change_menu_label_w, gl_change_menu_label)
 #define gl_change_menu_label_w gl_change_menu_label
 #endif
 
-void g_init_menu(SCM local_doc)
+void g_init_menu(XEN local_doc)
 {
   #define H_output_name_hook S_output_name_hook " () is called from the File:New dialog"
-  output_name_hook = MAKE_HOOK(S_output_name_hook, 0, H_output_name_hook);
+  XEN_DEFINE_HOOK(output_name_hook, S_output_name_hook, 0, H_output_name_hook, local_doc);
 
-  define_procedure_with_setter(S_save_state_file, PROCEDURE g_save_state_file_w, H_save_state_file,
-			       "set-" S_save_state_file, PROCEDURE g_set_save_state_file_w,
+  define_procedure_with_setter(S_save_state_file, XEN_PROCEDURE_CAST g_save_state_file_w, H_save_state_file,
+			       "set-" S_save_state_file, XEN_PROCEDURE_CAST g_set_save_state_file_w,
 			       local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_menu_sensitive, PROCEDURE gl_menu_sensitive_w, H_menu_sensitive,
-			       "set-" S_menu_sensitive, PROCEDURE gl_set_menu_sensitive_w,
+  define_procedure_with_setter(S_menu_sensitive, XEN_PROCEDURE_CAST gl_menu_sensitive_w, H_menu_sensitive,
+			       "set-" S_menu_sensitive, XEN_PROCEDURE_CAST gl_set_menu_sensitive_w,
 			       local_doc, 2, 0, 3, 0);
 
-  DEFINE_PROC(S_add_to_main_menu,  gl_add_to_main_menu_w, 1, 1, 0,  H_add_to_main_menu);
-  DEFINE_PROC(S_add_to_menu,       gl_add_to_menu_w, 3, 0, 0,       H_add_to_menu);
-  DEFINE_PROC(S_remove_from_menu,  gl_remove_from_menu_w, 2, 0, 0,  H_remove_from_menu);
-  DEFINE_PROC(S_change_menu_label, gl_change_menu_label_w, 3, 0, 0, H_change_menu_label);
+  XEN_DEFINE_PROCEDURE(S_add_to_main_menu,  gl_add_to_main_menu_w, 1, 1, 0,  H_add_to_main_menu);
+  XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w, 3, 0, 0,       H_add_to_menu);
+  XEN_DEFINE_PROCEDURE(S_remove_from_menu,  gl_remove_from_menu_w, 2, 0, 0,  H_remove_from_menu);
+  XEN_DEFINE_PROCEDURE(S_change_menu_label, gl_change_menu_label_w, 3, 0, 0, H_change_menu_label);
 }

@@ -665,65 +665,65 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
 
 #define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller) \
   get_ap(get_cp(Snd, Chn, Caller), \
-         TO_C_INT_OR_ELSE(Ap, TIME_AXIS_INFO), \
+         XEN_TO_C_INT_OR_ELSE(Ap, TIME_AXIS_INFO), \
          Caller)
 
 
-static SCM g_grf_x(SCM val, SCM snd, SCM chn, SCM ap)
+static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
   ASSERT_CHANNEL(S_x2position, snd, chn, 2);
-  return(TO_SCM_INT(grf_x(TO_C_DOUBLE(val),
+  return(C_TO_XEN_INT(grf_x(XEN_TO_C_DOUBLE(val),
 			  TO_C_AXIS_INFO(snd, chn, ap, S_x2position))));
 }
 
-static SCM g_grf_y(SCM val, SCM snd, SCM chn, SCM ap)
+static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
   ASSERT_CHANNEL(S_y2position, snd, chn, 2);
-  return(TO_SCM_INT(grf_y(TO_C_DOUBLE(val),
+  return(C_TO_XEN_INT(grf_y(XEN_TO_C_DOUBLE(val),
 			  TO_C_AXIS_INFO(snd, chn, ap, S_y2position))));
 }
 
-static SCM g_ungrf_x(SCM val, SCM snd, SCM chn, SCM ap)
+static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
   ASSERT_CHANNEL(S_position2x, snd, chn, 2);
-  return(TO_SCM_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position2x),
-			       TO_C_INT(val))));
+  return(C_TO_XEN_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position2x),
+			       XEN_TO_C_INT(val))));
 }
 
-static SCM g_ungrf_y(SCM val, SCM snd, SCM chn, SCM ap)
+static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
   ASSERT_CHANNEL(S_position2y, snd, chn, 2);
-  return(TO_SCM_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position2y),
-			       TO_C_INT(val))));
+  return(C_TO_XEN_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position2y),
+			       XEN_TO_C_INT(val))));
 }
 
-static SCM g_axis_info(SCM snd, SCM chn, SCM ap_id)
+static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 {
   axis_info *ap;
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, "axis-info");
-  return(CONS(TO_SCM_INT(ap->losamp),
-	  CONS(TO_SCM_INT(ap->hisamp),
-	   CONS(TO_SCM_DOUBLE(ap->x0),
-            CONS(TO_SCM_DOUBLE(ap->y0),
-             CONS(TO_SCM_DOUBLE(ap->x1),
-              CONS(TO_SCM_DOUBLE(ap->y1),
-               CONS(TO_SCM_DOUBLE(ap->xmin),
-                CONS(TO_SCM_DOUBLE(ap->ymin),
-                 CONS(TO_SCM_DOUBLE(ap->xmax),
-                  CONS(TO_SCM_DOUBLE(ap->ymax),
-                   CONS(TO_SCM_INT(ap->x_axis_x0),
-                    CONS(TO_SCM_INT(ap->y_axis_y0),
-                     CONS(TO_SCM_INT(ap->x_axis_x1),
-		      CONS(TO_SCM_INT(ap->y_axis_y1),
-			   EMPTY_LIST)))))))))))))));
+  return(XEN_CONS(C_TO_XEN_INT(ap->losamp),
+	  XEN_CONS(C_TO_XEN_INT(ap->hisamp),
+	   XEN_CONS(C_TO_XEN_DOUBLE(ap->x0),
+            XEN_CONS(C_TO_XEN_DOUBLE(ap->y0),
+             XEN_CONS(C_TO_XEN_DOUBLE(ap->x1),
+              XEN_CONS(C_TO_XEN_DOUBLE(ap->y1),
+               XEN_CONS(C_TO_XEN_DOUBLE(ap->xmin),
+                XEN_CONS(C_TO_XEN_DOUBLE(ap->ymin),
+                 XEN_CONS(C_TO_XEN_DOUBLE(ap->xmax),
+                  XEN_CONS(C_TO_XEN_DOUBLE(ap->ymax),
+                   XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
+                    XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
+                     XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
+		      XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
+			   XEN_EMPTY_LIST)))))))))))))));
 }
 
-#ifdef ARGIFY_1
-ARGIFY_4(g_grf_x_w, g_grf_x)
-ARGIFY_4(g_grf_y_w, g_grf_y)
-ARGIFY_4(g_ungrf_x_w, g_ungrf_x)
-ARGIFY_4(g_ungrf_y_w, g_ungrf_y)
-ARGIFY_3(g_axis_info_w, g_axis_info)
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_4(g_grf_x_w, g_grf_x)
+XEN_ARGIFY_4(g_grf_y_w, g_grf_y)
+XEN_ARGIFY_4(g_ungrf_x_w, g_ungrf_x)
+XEN_ARGIFY_4(g_ungrf_y_w, g_ungrf_y)
+XEN_ARGIFY_3(g_axis_info_w, g_axis_info)
 #else
 #define g_grf_x_w g_grf_x
 #define g_grf_y_w g_grf_y
@@ -732,14 +732,14 @@ ARGIFY_3(g_axis_info_w, g_axis_info)
 #define g_axis_info_w g_axis_info
 #endif
 
-void g_init_axis(SCM local_doc)
+void g_init_axis(XEN local_doc)
 {
-  DEFINE_PROC(S_x2position, g_grf_x_w, 1, 3, 0,     "(" S_x2position " val snd chn ax)");
-  DEFINE_PROC(S_y2position, g_grf_y_w, 1, 3, 0,     "(" S_y2position " val snd chn ax)");
-  DEFINE_PROC(S_position2x, g_ungrf_x_w, 1, 3, 0,   "(" S_position2x " val snd chn ax)");
-  DEFINE_PROC(S_position2y, g_ungrf_y_w, 1, 3, 0,   "(" S_position2y " val snd chn ax)");
+  XEN_DEFINE_PROCEDURE(S_x2position, g_grf_x_w, 1, 3, 0,     "(" S_x2position " val snd chn ax)");
+  XEN_DEFINE_PROCEDURE(S_y2position, g_grf_y_w, 1, 3, 0,     "(" S_y2position " val snd chn ax)");
+  XEN_DEFINE_PROCEDURE(S_position2x, g_ungrf_x_w, 1, 3, 0,   "(" S_position2x " val snd chn ax)");
+  XEN_DEFINE_PROCEDURE(S_position2y, g_ungrf_y_w, 1, 3, 0,   "(" S_position2y " val snd chn ax)");
 
-  DEFINE_PROC(S_axis_info,  g_axis_info_w, 0, 3, 0, "(" S_axis_info " snd chn grf)");
+  XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, "(" S_axis_info " snd chn grf)");
 
 }
 #endif

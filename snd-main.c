@@ -1,6 +1,6 @@
 #include "snd.h"
 #include "vct.h"
-#include "clm2scm.h"
+#include "clm2xen.h"
 
 #if HAVE_LOCALE_H
   #include <locale.h>
@@ -25,16 +25,16 @@ static int remove_temp_files(chan_info *cp, void *ignore)
   void mem_report(void);
 #endif
 
-static SCM exit_hook;
+static XEN exit_hook;
 
 int snd_exit_cleanly(snd_state *ss, int force_exit)
 {  
-  SCM res = FALSE_VALUE;
-  if (HOOKED(exit_hook))
+  XEN res = XEN_FALSE;
+  if (XEN_HOOKED(exit_hook))
     res = g_c_run_or_hook(exit_hook, 
-			  LIST_0,
+			  XEN_EMPTY_LIST,
 			  S_exit_hook);
-  if ((TRUE_P(res)) && (!force_exit)) return(0);
+  if ((XEN_TRUE_P(res)) && (!force_exit)) return(0);
   mus_sound_finalize();
   cleanup_dac();
   map_over_chans(ss, remove_temp_files, NULL);
@@ -433,7 +433,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (tmpstr) FREE(tmpstr);
     }
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
-  if (PROCEDURE_P(sp->search_proc))
+  if (XEN_PROCEDURE_P(sp->search_proc))
     {
       fprintf(fd, "      " COMMENT_START " currently not trying to restore the local search procedure\n");
       fprintf(fd, "      %s %s\n", COMMENT_START, g_print_1(sp->search_proc, __FUNCTION__));
@@ -445,7 +445,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (!(cp->graph_time_p)) pcp_ss(fd, S_graph_time_p, b2s(cp->graph_time_p), chan);
       if (cp->graph_transform_p) pcp_ss(fd, S_graph_transform_p, b2s(cp->graph_transform_p), chan);
       if (cp->graph_lisp_p) pcp_ss(fd, S_graph_lisp_p, b2s(cp->graph_lisp_p), chan);
-      if ((ap->x0 != 0.0) || (ap->x1 != 0.1)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);
+      if (((ap->x0 != 0.0) || (ap->x1 != 0.1)) && (ap->x1 > .0005)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);
       if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
       if (cp->cursor != 0) pcp_sd(fd, S_cursor, cp->cursor, chan);
       if (cp->cursor_size != DEFAULT_CURSOR_SIZE) pcp_sd(fd, S_cursor_size, cp->cursor_size, chan);
@@ -574,29 +574,29 @@ static char *file_extension(char *arg)
   return(dot);
 }
 
-static SCM start_hook;
+static XEN start_hook;
 
 static int dont_start(char *filename)
 {
-  SCM res = FALSE_VALUE;
-  if (HOOKED(start_hook))
+  XEN res = XEN_FALSE;
+  if (XEN_HOOKED(start_hook))
     res = g_c_run_or_hook(start_hook,
-			  LIST_1(TO_SCM_STRING(filename)),
+			  XEN_LIST_1(C_TO_XEN_STRING(filename)),
 			  S_start_hook);
-  return(TRUE_P(res));
+  return(XEN_TRUE_P(res));
 }
 
 static char *startup_filename = NULL;
 static int script_arg = 0, script_argn = 0;
 static char **script_args;
-static SCM g_script_arg(void) {return(TO_SCM_INT(script_arg));}
-static SCM g_set_script_arg(SCM arg) {script_arg = TO_C_INT(arg); return(arg);}
-static SCM g_script_args(void)
+static XEN g_script_arg(void) {return(C_TO_XEN_INT(script_arg));}
+static XEN g_set_script_arg(XEN arg) {script_arg = XEN_TO_C_INT(arg); return(arg);}
+static XEN g_script_args(void)
 {
-  SCM lst = EMPTY_LIST;
+  XEN lst = XEN_EMPTY_LIST;
   int i;
   for (i = script_argn - 1; i >= 0; i--)
-    lst = CONS(TO_SCM_STRING(script_args[i]), lst);
+    lst = XEN_CONS(C_TO_XEN_STRING(script_args[i]), lst);
   return(lst);
 }
 
@@ -694,71 +694,71 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
   return(auto_open_ctr + 1);
 }
 
-static SCM g_save_state(SCM filename) 
+static XEN g_save_state(XEN filename) 
 {
   #define H_save_state "(" S_save_state " filename) saves the current Snd state in filename; (load filename) restores it)"
 
   char *error;
-  SCM result;
-  ASSERT_TYPE(STRING_P(filename), filename, ARGn, S_save_state, "a string");
+  XEN result;
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_state, "a string");
   error = save_state_or_error(get_global_state(), 
-			      TO_C_STRING(filename));
+			      XEN_TO_C_STRING(filename));
   if (error)
     {
-      result = TO_SCM_STRING(error);
+      result = C_TO_XEN_STRING(error);
       FREE(error);
-      ERROR(CANNOT_SAVE,
-	    LIST_3(TO_SCM_STRING(S_save_state),
+      XEN_ERROR(CANNOT_SAVE,
+	    XEN_LIST_3(C_TO_XEN_STRING(S_save_state),
 		      filename,
 		      result));
     }
   return(filename);
 }
 
-static SCM g_save_options(SCM filename)
+static XEN g_save_options(XEN filename)
 {
   #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
   char *name = NULL;
   FILE *fd;
-  ASSERT_TYPE(STRING_P(filename), filename, ARGn, S_save_options, "a string");
-  name = mus_expand_filename(TO_C_STRING(filename));
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_options, "a string");
+  name = mus_expand_filename(XEN_TO_C_STRING(filename));
   fd = fopen(name, "w");
   if (name) FREE(name);
   if (fd) 
     save_snd_state_options(get_global_state(), fd);
   if ((!fd) || 
       (fclose(fd) != 0))
-    ERROR(CANNOT_SAVE, 
-	  LIST_3(TO_SCM_STRING(S_save_options),
+    XEN_ERROR(CANNOT_SAVE, 
+	  XEN_LIST_3(C_TO_XEN_STRING(S_save_options),
 		    filename,
-		    TO_SCM_STRING(strerror(errno))));
+		    C_TO_XEN_STRING(strerror(errno))));
   return(filename);
 }
 
-static SCM g_exit(SCM val) 
+static XEN g_exit(XEN val) 
 {
   #define H_exit "(" S_exit ") exits Snd"
   if (snd_exit_cleanly(get_global_state(), FALSE))
-    snd_exit(TO_C_INT_OR_ELSE(val,1)); 
-  return(FALSE_VALUE);
+    snd_exit(XEN_TO_C_INT_OR_ELSE(val,1)); 
+  return(XEN_FALSE);
 }
 
-static SCM g_mem_report(void) 
+static XEN g_mem_report(void) 
 {
 #if DEBUG_MEMORY
   mem_report(); 
 #endif
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-#ifdef ARGIFY_1
-NARGIFY_1(g_save_options_w, g_save_options)
-NARGIFY_1(g_save_state_w, g_save_state)
-ARGIFY_1(g_exit_w, g_exit)
-NARGIFY_0(g_mem_report_w, g_mem_report)
-NARGIFY_0(g_script_arg_w, g_script_arg)
-NARGIFY_1(g_set_script_arg_w, g_set_script_arg)
-NARGIFY_0(g_script_args_w, g_script_args)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_1(g_save_options_w, g_save_options)
+XEN_NARGIFY_1(g_save_state_w, g_save_state)
+XEN_ARGIFY_1(g_exit_w, g_exit)
+XEN_NARGIFY_0(g_mem_report_w, g_mem_report)
+XEN_NARGIFY_0(g_script_arg_w, g_script_arg)
+XEN_NARGIFY_1(g_set_script_arg_w, g_set_script_arg)
+XEN_NARGIFY_0(g_script_args_w, g_script_args)
 #else
 #define g_save_options_w g_save_options
 #define g_save_state_w g_save_state
@@ -769,23 +769,23 @@ NARGIFY_0(g_script_args_w, g_script_args)
 #define g_script_args_w g_script_args
 #endif
 
-void g_init_main(SCM local_doc)
+void g_init_main(XEN local_doc)
 {
-  DEFINE_PROC(S_save_options, g_save_options_w, 1, 0, 0, H_save_options);
-  DEFINE_PROC(S_save_state,   g_save_state_w, 1, 0, 0,   H_save_state);
-  DEFINE_PROC(S_exit,         g_exit_w, 0, 1, 0,         H_exit);
+  XEN_DEFINE_PROCEDURE(S_save_options, g_save_options_w, 1, 0, 0, H_save_options);
+  XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w, 1, 0, 0,   H_save_state);
+  XEN_DEFINE_PROCEDURE(S_exit,         g_exit_w, 0, 1, 0,         H_exit);
 
-  DEFINE_PROC("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
+  XEN_DEFINE_PROCEDURE("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
 
   #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
-  start_hook = MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
+  XEN_DEFINE_HOOK(start_hook, S_start_hook, 1, H_start_hook, local_doc);                   /* arg = argv filename if any */
 
   #define H_exit_hook S_exit_hook " () is called upon exit. \
 If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
 
-  exit_hook = MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
+  XEN_DEFINE_HOOK(exit_hook, S_exit_hook, 0, H_exit_hook, local_doc);
 
-  define_procedure_with_setter(S_script_arg, PROCEDURE g_script_arg_w, "where we are in the startup arg list",
-			       "et-" S_script_arg, PROCEDURE g_set_script_arg_w, local_doc, 0, 0, 1, 0);
-  DEFINE_PROC(S_script_args, g_script_args_w, 0, 0, 0, "the args passed to Snd at startup");
+  define_procedure_with_setter(S_script_arg, XEN_PROCEDURE_CAST g_script_arg_w, "where we are in the startup arg list",
+			       "et-" S_script_arg, XEN_PROCEDURE_CAST g_set_script_arg_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE(S_script_args, g_script_args_w, 0, 0, 0, "the args passed to Snd at startup");
 }

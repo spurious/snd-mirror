@@ -113,16 +113,16 @@ GtkWidget *popup_info_menu(void) {return(popup_children[W_pop_info]);}
 
 void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w, label);}
 
-static SCM menu_hook;
+static XEN menu_hook;
 static int call_menu_hook(char *name, char *option)
 {
-  SCM res = TRUE_VALUE;
-  if ((name) && (HOOKED(menu_hook)))
+  XEN res = XEN_TRUE;
+  if ((name) && (XEN_HOOKED(menu_hook)))
     res = g_c_run_and_hook(menu_hook, 
-			   LIST_2(TO_SCM_STRING(name), 
-				  TO_SCM_STRING(option)),
+			   XEN_LIST_2(C_TO_XEN_STRING(name), 
+				  C_TO_XEN_STRING(option)),
 			   S_menu_hook);
-  return(TRUE_P(res));
+  return(XEN_TRUE_P(res));
 }
 
 #if HAVE_GUILE
@@ -240,7 +240,7 @@ static void Edit_Redo_Callback(GtkWidget *w, gpointer cD)
 
 static void Edit_Play_Callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_Edit, STR_Play_selection) play_selection(IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "play selection", 0);
+  IF_MENU_HOOK(STR_Edit, STR_Play_selection) play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play selection", 0);
 }
 
 static void Edit_Header_Callback(GtkWidget *w, gpointer cD)
@@ -1401,7 +1401,7 @@ static void Popup_Play_Callback(GtkWidget *w, gpointer cD)
       sp = any_selected_sound(ss);
       if (sp)
 	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "popup play", 0);
+	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "popup play", 0);
 	  set_play_button(sp, 1);
 	}
     }
@@ -1507,18 +1507,18 @@ static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer d
   return(FALSE);
 }
 
-static SCM g_menu_widgets(void)
+static XEN g_menu_widgets(void)
 {
-  return(CONS(SND_WRAP(mw[menu_menu]),
-	  CONS(SND_WRAP(mw[f_cascade_menu]),
-           CONS(SND_WRAP(mw[e_cascade_menu]),
-            CONS(SND_WRAP(mw[v_cascade_menu]),
-             CONS(SND_WRAP(mw[o_cascade_menu]),
-              CONS(SND_WRAP(mw[h_cascade_menu]),
-		   EMPTY_LIST)))))));
+  return(XEN_CONS(XEN_WRAP_C_POINTER(mw[menu_menu]),
+	  XEN_CONS(XEN_WRAP_C_POINTER(mw[f_cascade_menu]),
+           XEN_CONS(XEN_WRAP_C_POINTER(mw[e_cascade_menu]),
+            XEN_CONS(XEN_WRAP_C_POINTER(mw[v_cascade_menu]),
+             XEN_CONS(XEN_WRAP_C_POINTER(mw[o_cascade_menu]),
+              XEN_CONS(XEN_WRAP_C_POINTER(mw[h_cascade_menu]),
+		   XEN_EMPTY_LIST)))))));
 }
 
-static SCM g_test_menus(void)
+static XEN g_test_menus(void)
 {
   guint signal_id;
   int i;
@@ -1539,18 +1539,18 @@ static SCM g_test_menus(void)
 	  gtk_signal_emit_by_name(GTK_OBJECT(added_options[i]), "activate");
       }
   dismiss_all_dialogs(get_global_state());
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-#ifdef ARGIFY_1
-NARGIFY_0(g_test_menus_w, g_test_menus)
-NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_test_menus_w, g_test_menus)
+XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
 #else
 #define g_test_menus_w g_test_menus
 #define g_menu_widgets_w g_menu_widgets
 #endif
 
-void g_init_gxmenu(SCM local_doc)
+void g_init_gxmenu(XEN local_doc)
 {
   #define H_menu_hook S_menu_hook " (name option) is called each time a menu item is \
 selected; its entries should be functions of two arguments, the top menu \
@@ -1565,9 +1565,9 @@ wants to override the default menu action:\n\
           #f)\n\
         #t))) ; #t to make sure other menu items remain active"
 
-  menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
-  DEFINE_PROC("test-menus", PROCEDURE g_test_menus_w, 0, 0, 0, "");
-  DEFINE_PROC(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, "returns top level menu widgets");
+  XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, H_menu_hook, local_doc);
+  XEN_DEFINE_PROCEDURE("test-menus", XEN_PROCEDURE_CAST g_test_menus_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, "returns top level menu widgets");
 }
 
 

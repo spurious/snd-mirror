@@ -169,7 +169,7 @@ static void apply_enved(snd_state *ss)
 			     current_ed_samples(active_channel), 
 			     1.0, apply_to_selection, FROM_ENVED, 
 			     "Enved: amp", NULL,
-			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base); 
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
@@ -178,7 +178,7 @@ static void apply_enved(snd_state *ss)
 			   enved_filter_order(ss), active_env, FROM_ENVED, 
 			   "Enved: flt", apply_to_selection, 
 			   NULL, NULL,
-			   TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
+			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      break;
 	    case ENVED_SRATE:
 	      /* mus_src no longer protects against 0 srate */
@@ -190,7 +190,7 @@ static void apply_enved(snd_state *ss)
 	      src_env_or_num(ss, active_channel, max_env, 0.0, 
 			     FALSE, FROM_ENVED, "Enved: src", 
 			     apply_to_selection, NULL,
-			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base);
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base);
 	      within_selection_src = 0;
 	      max_env = free_env(max_env);
 	      if (enved_wave_p(ss)) env_redisplay(ss);
@@ -1845,49 +1845,49 @@ void reflect_mix_in_enved(void)
     set_sensitive(mixB, TRUE);
 }
 
-static int find_named_env(SCM name)
+static int find_named_env(XEN name)
 {
   int pos;
   char *env_name;
-  if (STRING_P(name))
-    env_name = TO_NEW_C_STRING(name);
-  else env_name = SYMBOL_TO_C_STRING(name);
+  if (XEN_STRING_P(name))
+    env_name = XEN_TO_NEW_C_STRING(name);
+  else env_name = XEN_SYMBOL_TO_C_STRING(name);
   pos = find_env(env_name);
-  if (STRING_P(name)) free(env_name);
+  if (XEN_STRING_P(name)) free(env_name);
   if (pos == -1)
-    ERROR(NO_SUCH_ENVELOPE, 
-	  LIST_1(name));
+    XEN_ERROR(NO_SUCH_ENVELOPE, 
+	  XEN_LIST_1(name));
   return(pos);
 }
 
-static SCM g_enved_active_env(void)
+static XEN g_enved_active_env(void)
 {
   #define H_enved_active_env "(" S_enved_active_env ") -> current envelope editor env"
-  return(env2scm(active_env));
+  return(env_to_xen(active_env));
 }
 
-static SCM g_set_enved_active_env(SCM e)
+static XEN g_set_enved_active_env(XEN e)
 {
-  ASSERT_TYPE(LIST_P(e) || STRING_P(e) || SYMBOL_P(e), e, ARGn, "set-" S_enved_active_env, "a list, symbol, or string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, XEN_ONLY_ARG, "set-" S_enved_active_env, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
-  if ((STRING_P(e)) || (SYMBOL_P(e)))
+  if ((XEN_STRING_P(e)) || (XEN_SYMBOL_P(e)))
     active_env = copy_env(enved_all_envs(find_named_env(e)));
-  else active_env = scm2env(e);
+  else active_env = xen_to_env(e);
   if (enved_dialog) 
     env_redisplay(get_global_state());
   return(e);
 }
 
-static SCM g_enved_selected_env(void)
+static XEN g_enved_selected_env(void)
 {
   #define H_enved_selected_env "(" S_enved_selected_env ") -> current envelope editor selected env"
-  return(env2scm(selected_env));
+  return(env_to_xen(selected_env));
 }
 
-static SCM g_set_enved_selected_env(SCM name)
+static XEN g_set_enved_selected_env(XEN name)
 {
   int pos;
-  ASSERT_TYPE(STRING_P(name) || SYMBOL_P(name), name, ARGn, "set-" S_enved_selected_env, "a string or symbol");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ONLY_ARG, "set-" S_enved_selected_env, "a string or symbol");
   pos = find_named_env(name);
   if (pos >= 0)
     {
@@ -1899,39 +1899,39 @@ static SCM g_set_enved_selected_env(SCM name)
 }
 
 #if DEBUGGING
-static SCM g_enved_dialog_widgets(void)
+static XEN g_enved_dialog_widgets(void)
 {
   if (enved_dialog)
-    return(CONS(SND_WRAP(enved_dialog),
-	    CONS(SND_WRAP(drawer),
-	     CONS(SND_WRAP(orderL),
-	      CONS(SND_WRAP(textL),
-	       CONS(SND_WRAP(applyB),
-		CONS(SND_WRAP(apply2B),
-		 CONS(SND_WRAP(cancelB),
-		  CONS(SND_WRAP(showB),
-		   CONS(SND_WRAP(saveB),
-		    CONS(SND_WRAP(revertB),
-		     CONS(SND_WRAP(undoB),
-		      CONS(SND_WRAP(redoB),
-		       CONS(SND_WRAP(printB),
-			CONS(SND_WRAP(graphB),
-			 CONS(SND_WRAP(fltB),
-			  CONS(SND_WRAP(ampB),
-			   CONS(SND_WRAP(srcB),
-			    CONS(SND_WRAP(clipB),
-			     CONS(SND_WRAP(dBB),
-			      CONS(SND_WRAP(deleteB),
-			       CONS(SND_WRAP(expB),
-				CONS(SND_WRAP(linB),
-				 CONS(SND_WRAP(selectionB),
-				  CONS(SND_WRAP(mixB),
-				   CONS(SND_WRAP(resetB),
-				    CONS(SND_WRAP(screnvlst),
-					 EMPTY_LIST)))))))))))))))))))))))))));
-  return(EMPTY_LIST);
+    return(XEN_CONS(XEN_WRAP_C_POINTER(enved_dialog),
+	    XEN_CONS(XEN_WRAP_C_POINTER(drawer),
+	     XEN_CONS(XEN_WRAP_C_POINTER(orderL),
+	      XEN_CONS(XEN_WRAP_C_POINTER(textL),
+	       XEN_CONS(XEN_WRAP_C_POINTER(applyB),
+		XEN_CONS(XEN_WRAP_C_POINTER(apply2B),
+		 XEN_CONS(XEN_WRAP_C_POINTER(cancelB),
+		  XEN_CONS(XEN_WRAP_C_POINTER(showB),
+		   XEN_CONS(XEN_WRAP_C_POINTER(saveB),
+		    XEN_CONS(XEN_WRAP_C_POINTER(revertB),
+		     XEN_CONS(XEN_WRAP_C_POINTER(undoB),
+		      XEN_CONS(XEN_WRAP_C_POINTER(redoB),
+		       XEN_CONS(XEN_WRAP_C_POINTER(printB),
+			XEN_CONS(XEN_WRAP_C_POINTER(graphB),
+			 XEN_CONS(XEN_WRAP_C_POINTER(fltB),
+			  XEN_CONS(XEN_WRAP_C_POINTER(ampB),
+			   XEN_CONS(XEN_WRAP_C_POINTER(srcB),
+			    XEN_CONS(XEN_WRAP_C_POINTER(clipB),
+			     XEN_CONS(XEN_WRAP_C_POINTER(dBB),
+			      XEN_CONS(XEN_WRAP_C_POINTER(deleteB),
+			       XEN_CONS(XEN_WRAP_C_POINTER(expB),
+				XEN_CONS(XEN_WRAP_C_POINTER(linB),
+				 XEN_CONS(XEN_WRAP_C_POINTER(selectionB),
+				  XEN_CONS(XEN_WRAP_C_POINTER(mixB),
+				   XEN_CONS(XEN_WRAP_C_POINTER(resetB),
+				    XEN_CONS(XEN_WRAP_C_POINTER(screnvlst),
+					 XEN_EMPTY_LIST)))))))))))))))))))))))))));
+  return(XEN_EMPTY_LIST);
 }
-static SCM g_enved_axis_info(void)
+static XEN g_enved_axis_info(void)
 {
   axis_info *ap;
   if (enved_dialog)
@@ -1939,24 +1939,24 @@ static SCM g_enved_axis_info(void)
       if (axis_cp == NULL)
 	enved_reset();
       ap = axis_cp->axis;
-      return(CONS(TO_SCM_INT(ap->x_axis_x0),
-               CONS(TO_SCM_INT(ap->y_axis_y0),
-                 CONS(TO_SCM_INT(ap->x_axis_x1),
-		   CONS(TO_SCM_INT(ap->y_axis_y1),
-		     EMPTY_LIST)))));
+      return(XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
+               XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
+                 XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
+		   XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
+		     XEN_EMPTY_LIST)))));
     }
-  return(EMPTY_LIST);
+  return(XEN_EMPTY_LIST);
 }
 #endif
 
-#ifdef ARGIFY_1
-NARGIFY_0(g_enved_active_env_w, g_enved_active_env)
-NARGIFY_1(g_set_enved_active_env_w, g_set_enved_active_env)
-NARGIFY_0(g_enved_selected_env_w, g_enved_selected_env)
-NARGIFY_1(g_set_enved_selected_env_w, g_set_enved_selected_env)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_enved_active_env_w, g_enved_active_env)
+XEN_NARGIFY_1(g_set_enved_active_env_w, g_set_enved_active_env)
+XEN_NARGIFY_0(g_enved_selected_env_w, g_enved_selected_env)
+XEN_NARGIFY_1(g_set_enved_selected_env_w, g_set_enved_selected_env)
 #if DEBUGGING
-NARGIFY_0(g_enved_dialog_widgets_w, g_enved_dialog_widgets)
-NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
+XEN_NARGIFY_0(g_enved_dialog_widgets_w, g_enved_dialog_widgets)
+XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 #endif
 #else
 #define g_enved_active_env_w g_enved_active_env
@@ -1969,14 +1969,14 @@ NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 #endif
 #endif
 
-void g_init_gxenv(SCM local_doc)
+void g_init_gxenv(XEN local_doc)
 {
-  define_procedure_with_setter(S_enved_active_env, PROCEDURE g_enved_active_env_w, H_enved_active_env,
-			       "set-" S_enved_active_env, PROCEDURE g_set_enved_active_env_w, local_doc, 0, 0, 1, 0);
-  define_procedure_with_setter(S_enved_selected_env, PROCEDURE g_enved_selected_env_w, H_enved_selected_env,
-			       "set-" S_enved_selected_env, PROCEDURE g_set_enved_selected_env_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_enved_active_env, XEN_PROCEDURE_CAST g_enved_active_env_w, H_enved_active_env,
+			       "set-" S_enved_active_env, XEN_PROCEDURE_CAST g_set_enved_active_env_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_enved_selected_env, XEN_PROCEDURE_CAST g_enved_selected_env_w, H_enved_selected_env,
+			       "set-" S_enved_selected_env, XEN_PROCEDURE_CAST g_set_enved_selected_env_w, local_doc, 0, 0, 1, 0);
 #if DEBUGGING
-  DEFINE_PROC("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "");
-  DEFINE_PROC("enved-axis-info",  g_enved_axis_info_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("enved-axis-info",  g_enved_axis_info_w, 0, 0, 0, "");
 #endif
 }

@@ -3,7 +3,7 @@
 #define SND_ERROR_BUFFER_SIZE 1024
 static char *snd_error_buffer = NULL;
 
-static SCM snd_error_hook, snd_warning_hook, mus_error_hook;
+static XEN snd_error_hook, snd_warning_hook, mus_error_hook;
 
 void snd_warning(char *format, ...)
 {
@@ -20,9 +20,9 @@ void snd_warning(char *format, ...)
   vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
-  if ((HOOKED(snd_warning_hook)) &&
-      (NOT_FALSE_P(g_c_run_or_hook(snd_warning_hook, 
-				   LIST_1(TO_SCM_STRING(snd_error_buffer)),
+  if ((XEN_HOOKED(snd_warning_hook)) &&
+      (XEN_NOT_FALSE_P(g_c_run_or_hook(snd_warning_hook, 
+				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
 				   S_snd_warning_hook))))
     return;
   ss = get_global_state();
@@ -65,9 +65,9 @@ void snd_error(char *format, ...)
   vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
-  if ((HOOKED(snd_error_hook)) &&
-      (NOT_FALSE_P(g_c_run_or_hook(snd_error_hook, 
-				   LIST_1(TO_SCM_STRING(snd_error_buffer)),
+  if ((XEN_HOOKED(snd_error_hook)) &&
+      (XEN_NOT_FALSE_P(g_c_run_or_hook(snd_error_hook, 
+				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
 				   S_snd_error_hook))))
     return;
   ss = get_global_state();
@@ -115,47 +115,47 @@ void snd_error(char *format, ...)
 #endif
 }
 
-static SCM g_snd_error(SCM msg)
+static XEN g_snd_error(XEN msg)
 {
   #define H_snd_error "(" S_snd_error " str) reports error message str"
-  ASSERT_TYPE(STRING_P(msg), msg, ARGn, S_snd_error, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
   direct_snd_error_call = 1;
-  snd_error(TO_C_STRING(msg));
+  snd_error(XEN_TO_C_STRING(msg));
   direct_snd_error_call = 0;
   return(msg);
 }
   
-static SCM g_snd_warning(SCM msg)
+static XEN g_snd_warning(XEN msg)
 {
   #define H_snd_warning "(" S_snd_warning " str) reports warning message str"
-  ASSERT_TYPE(STRING_P(msg), msg, ARGn, S_snd_warning, "a string");
-  snd_warning(TO_C_STRING(msg));
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_warning, "a string");
+  snd_warning(XEN_TO_C_STRING(msg));
   return(msg);
 }
  
 int ignore_mus_error(int type, char *msg)
 {
-  SCM result = FALSE_VALUE;
-  if (HOOKED(mus_error_hook))
+  XEN result = XEN_FALSE;
+  if (XEN_HOOKED(mus_error_hook))
     result = g_c_run_or_hook(mus_error_hook, 
-			     LIST_2(TO_SCM_INT(type), 
-				       TO_SCM_STRING(msg)),
+			     XEN_LIST_2(C_TO_XEN_INT(type), 
+				       C_TO_XEN_STRING(msg)),
 			     S_mus_error_hook);
-  return(NOT_FALSE_P(result));
+  return(XEN_NOT_FALSE_P(result));
 }
 
-#ifdef ARGIFY_1
-NARGIFY_1(g_snd_error_w, g_snd_error)
-NARGIFY_1(g_snd_warning_w, g_snd_warning)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_1(g_snd_error_w, g_snd_error)
+XEN_NARGIFY_1(g_snd_warning_w, g_snd_warning)
 #else
 #define g_snd_error_w g_snd_error
 #define g_snd_warning_w g_snd_warning
 #endif
 
-void g_init_errors(SCM local_doc)
+void g_init_errors(XEN local_doc)
 {
-  DEFINE_PROC(S_snd_error, g_snd_error_w, 1, 0, 0, H_snd_error);
-  DEFINE_PROC(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
+  XEN_DEFINE_PROCEDURE(S_snd_error, g_snd_error_w, 1, 0, 0, H_snd_error);
+  XEN_DEFINE_PROCEDURE(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
 
   #define H_mus_error_hook S_mus_error_hook " (error-type error-message) is called upon mus_error. \
 If it returns #t, Snd ignores the error (it assumes you've handled it via the hook)."
@@ -174,8 +174,8 @@ If it returns #t, Snd flushes the warning (it assumes you've reported it via the
       (thunk)\n\
       (remove-hook! snd-warning-hook no-warning)))"
 
-  mus_error_hook =   MAKE_HOOK(S_mus_error_hook, 2, H_mus_error_hook);     /* arg = error-type error-message */
-  snd_error_hook =   MAKE_HOOK(S_snd_error_hook, 1, H_snd_error_hook);     /* arg = error-message */
-  snd_warning_hook = MAKE_HOOK(S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */
+  XEN_DEFINE_HOOK(mus_error_hook, S_mus_error_hook, 2, H_mus_error_hook, local_doc);       /* arg = error-type error-message */
+  XEN_DEFINE_HOOK(snd_error_hook, S_snd_error_hook, 1, H_snd_error_hook, local_doc);       /* arg = error-message */
+  XEN_DEFINE_HOOK(snd_warning_hook, S_snd_warning_hook, 1, H_snd_warning_hook, local_doc); /* arg = error-message */
 }
 

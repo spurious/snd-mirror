@@ -24,10 +24,10 @@ static void mus_error2snd(int type, char *msg)
       if (ss->catch_exists) /* damned thing aborts main program if throw to tag is not caught! */
 	{
 	  if (msg == NULL)
-	    ERROR(MUS_MISC_ERROR,
-		  LIST_1(TO_SCM_STRING((char *)mus_error_to_string(type))));
-	  else ERROR(MUS_MISC_ERROR,
-		     LIST_1(TO_SCM_STRING(msg)));
+	    XEN_ERROR(MUS_MISC_ERROR,
+		  XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_to_string(type))));
+	  else XEN_ERROR(MUS_MISC_ERROR,
+		     XEN_LIST_1(C_TO_XEN_STRING(msg)));
 	}
       /* else we're not called from guile? */
     }
@@ -301,8 +301,8 @@ static repv snd_rep_main(repv arg)
 
   ss->catch_exists = 0;
   g_initialize_gh(ss);
-  ss->search_proc = UNDEFINED_VALUE;
-  ss->file_sort_proc = UNDEFINED_VALUE;
+  ss->search_proc = XEN_UNDEFINED;
+  ss->file_sort_proc = XEN_UNDEFINED;
   mus_error_set_handler(mus_error2snd);
   mus_print_set_handler(mus_print2snd);
 

@@ -484,8 +484,8 @@ static void make_region_dialog(snd_state *ss)
       reg_sp->chans = (chan_info **)CALLOC(1, sizeof(chan_info *));
       reg_sp->sx_scroll_max = 100;
       reg_sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
-      reg_sp->search_proc = UNDEFINED_VALUE;
-      reg_sp->prompt_callback = UNDEFINED_VALUE;
+      reg_sp->search_proc = XEN_UNDEFINED;
+      reg_sp->prompt_callback = XEN_UNDEFINED;
       hdr = reg_sp->hdr;
       hdr->samples = region_len(id);
       hdr->srate = region_srate(id);
@@ -590,48 +590,48 @@ static regrow *region_row(int n)
   return(NULL);
 }
 
-static SCM g_region_dialog(void) 
+static XEN g_region_dialog(void) 
 {
   #define H_region_dialog "(" S_region_dialog ") starts the region dialog"
   snd_state *ss;
   ss = get_global_state();
   if (snd_regions() > 0) 
     View_Region_Callback(MAIN_PANE(ss), (XtPointer)ss, NULL);
-  return(SND_WRAP(region_dialog));
+  return(XEN_WRAP_C_POINTER(region_dialog));
 }
 
 #if DEBUGGING
-SCM g_channel_widgets_1(chan_info *cp);
-static SCM g_region_dialog_widgets(void)
+XEN g_channel_widgets_1(chan_info *cp);
+static XEN g_region_dialog_widgets(void)
 {
   if (region_dialog)
-    return(CONS(SND_WRAP(region_dialog),
-             CONS(SND_WRAP(prtb),
-	       CONS(SND_WRAP(editb),
-		 CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON)),
-		   CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON)),
-		     CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON)),
-		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : EMPTY_LIST)))))));
-  return(EMPTY_LIST);
+    return(XEN_CONS(XEN_WRAP_C_POINTER(region_dialog),
+             XEN_CONS(XEN_WRAP_C_POINTER(prtb),
+	       XEN_CONS(XEN_WRAP_C_POINTER(editb),
+		 XEN_CONS(XEN_WRAP_C_POINTER(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON)),
+		   XEN_CONS(XEN_WRAP_C_POINTER(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON)),
+		     XEN_CONS(XEN_WRAP_C_POINTER(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON)),
+		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : XEN_EMPTY_LIST)))))));
+  return(XEN_EMPTY_LIST);
 }
-static SCM g_region_row_widgets(void)
+static XEN g_region_row_widgets(void)
 {
   int i;
-  SCM lst;
-  lst = EMPTY_LIST;
+  XEN lst;
+  lst = XEN_EMPTY_LIST;
   for (i = region_rows_size - 1; i >= 0; i--)
     if ((region_rows[i]) &&
 	(XtIsManaged(region_rows[i]->nm)))
-      lst = CONS(SND_WRAP(region_rows[i]->nm), lst);
+      lst = XEN_CONS(XEN_WRAP_C_POINTER(region_rows[i]->nm), lst);
   return(lst);
 }
 #endif
 
-#ifdef ARGIFY_1
-NARGIFY_0(g_region_dialog_w, g_region_dialog)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_region_dialog_w, g_region_dialog)
 #if DEBUGGING
-NARGIFY_0(g_region_dialog_widgets_w, g_region_dialog_widgets)
-NARGIFY_0(g_region_row_widgets_w, g_region_row_widgets)
+XEN_NARGIFY_0(g_region_dialog_widgets_w, g_region_dialog_widgets)
+XEN_NARGIFY_0(g_region_row_widgets_w, g_region_row_widgets)
 #endif
 #else
 #define g_region_dialog_w g_region_dialog
@@ -641,12 +641,12 @@ NARGIFY_0(g_region_row_widgets_w, g_region_row_widgets)
 #endif
 #endif
 
-void g_init_gxregion(SCM local_doc)
+void g_init_gxregion(XEN local_doc)
 {
-  DEFINE_PROC(S_region_dialog, g_region_dialog_w, 0, 0, 0,  H_region_dialog);
+  XEN_DEFINE_PROCEDURE(S_region_dialog, g_region_dialog_w, 0, 0, 0,  H_region_dialog);
 
 #if DEBUGGING
-  DEFINE_PROC("region-dialog-widgets", g_region_dialog_widgets_w, 0, 0, 0, "");
-  DEFINE_PROC("region-row-widgets", g_region_row_widgets_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("region-dialog-widgets", g_region_dialog_widgets_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("region-row-widgets", g_region_row_widgets_w, 0, 0, 0, "");
 #endif
 }

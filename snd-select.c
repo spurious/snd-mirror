@@ -694,19 +694,19 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 
 
 
-static SCM g_delete_selection(void)
+static XEN g_delete_selection(void)
 {
   #define H_delete_selection "(" S_delete_selection ") deletes the currently selected portion"
   if (selection_is_active())
     {
       delete_selection(S_delete_selection, UPDATE_DISPLAY);
-      return(TRUE_VALUE);
+      return(XEN_TRUE);
     }
   snd_no_active_selection_error(S_delete_selection);
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
+static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 {
   #define H_insert_selection "(" S_insert_selection ") inserts the currently selected portion start at beg"
   chan_info *cp;
@@ -715,7 +715,7 @@ static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
   if (selection_is_active())
     {
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
-      ASSERT_TYPE(NUMBER_IF_BOUND_P(beg), beg, ARG1, S_insert_selection, "a number");
+      XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
       ss = get_global_state();
       cp = get_cp(snd, chn, S_insert_selection);
       if (cp == NULL) 
@@ -723,15 +723,15 @@ static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
       if (cp == NULL) 
 	return(snd_no_such_channel_error(S_insert_selection, snd, chn));
       err = insert_selection(ss, cp, 
-			     TO_C_INT_OR_ELSE(beg, 0), 
+			     XEN_TO_C_INT_OR_ELSE(beg, 0), 
 			     S_insert_selection);
-      return(TO_SCM_BOOLEAN((err == MUS_NO_ERROR)));
+      return(C_TO_XEN_BOOLEAN((err == MUS_NO_ERROR)));
     }
   snd_no_active_selection_error(S_insert_selection);
   return(beg);
 }
 
-static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
+static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
 {
   #define H_mix_selection "(" S_mix_selection ") mixes the currently selected portion start at beg"
   chan_info *cp;
@@ -739,55 +739,55 @@ static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
   if (selection_is_active())
     {
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
-      ASSERT_TYPE(NUMBER_IF_BOUND_P(beg), beg, ARG1, S_mix_selection, "a number");
+      XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
       ss = get_global_state();
       cp = get_cp(snd, chn, S_mix_selection);
       if (cp == NULL) 
 	cp = selected_channel(ss);
       if (cp == NULL) 
 	return(snd_no_such_channel_error(S_mix_selection, snd, chn));
-      return(TO_SCM_INT(mix_selection(ss, cp, 
-				      TO_C_INT_OR_ELSE(beg, 0), 
+      return(C_TO_XEN_INT(mix_selection(ss, cp, 
+				      XEN_TO_C_INT_OR_ELSE(beg, 0), 
 				      S_mix_selection)));
     }
   snd_no_active_selection_error(S_mix_selection);
   return(beg);
 }
 
-static SCM g_selection_p(void)
+static XEN g_selection_p(void)
 {
   #define H_selection_p "(" S_selection_p ") -> #t if selection is currently active, visible, etc"
-  return(TO_SCM_BOOLEAN(selection_is_active()));
+  return(C_TO_XEN_BOOLEAN(selection_is_active()));
 }
 
-static SCM g_selection_position(SCM snd, SCM chn)
+static XEN g_selection_position(XEN snd, XEN chn)
 {
   #define H_selection_position "(" S_selection_position " &optional snd chn) -> selection start samp"
   chan_info *cp;
   if (selection_is_active())
     {
-      if (NOT_BOUND_P(snd))
-	return(TO_SCM_INT(selection_beg(NULL)));
+      if (XEN_NOT_BOUND_P(snd))
+	return(C_TO_XEN_INT(selection_beg(NULL)));
       else
 	{
 	  ASSERT_CHANNEL(S_selection_position, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_position);
-	  return(TO_SCM_INT(selection_beg(cp)));
+	  return(C_TO_XEN_INT(selection_beg(cp)));
 	}
     }
   snd_no_active_selection_error(S_selection_position);
   return(snd);
 }
 
-static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
+static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
 {
   chan_info *cp;
   sync_info *si = NULL;
   int i, beg;
   ASSERT_CHANNEL("set-" S_selection_position, snd, chn, 2);
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(pos), pos, ARG1, S_selection_position, "a number");
-  beg = TO_C_INT_OR_ELSE(pos, 0);
-  if (NOT_BOUND_P(snd))
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(pos), pos, XEN_ARG_1, S_selection_position, "a number");
+  beg = XEN_TO_C_INT_OR_ELSE(pos, 0);
+  if (XEN_NOT_BOUND_P(snd))
     {
       if (selection_is_active())
 	si = selection_sync();
@@ -814,33 +814,33 @@ static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_selection_position_reversed, g_set_selection_position)
 
-static SCM g_selection_length(SCM snd, SCM chn)
+static XEN g_selection_length(XEN snd, XEN chn)
 {
   #define H_selection_length "(" S_selection_length " &optional snd chn) -> selection length"
   chan_info *cp;
   if (selection_is_active())
     {
-      if (NOT_BOUND_P(snd))
-	return(TO_SCM_INT(selection_len()));
+      if (XEN_NOT_BOUND_P(snd))
+	return(C_TO_XEN_INT(selection_len()));
       else
 	{
 	  ASSERT_CHANNEL(S_selection_length, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_length);
-	  return(TO_SCM_INT(cp_selection_len(cp, NULL)));
+	  return(C_TO_XEN_INT(cp_selection_len(cp, NULL)));
 	}
     }
   snd_no_active_selection_error(S_selection_length);
   return(snd);
 }
 
-static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
+static XEN g_set_selection_length(XEN samps, XEN snd, XEN chn)
 {
   chan_info *cp;
   sync_info *si = NULL;
   int i, len;
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, ARG1, "set-" S_selection_length, "a number");
-  len = TO_C_INT_OR_ELSE(samps, 0);
-  if (NOT_BOUND_P(snd))
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_1, "set-" S_selection_length, "a number");
+  len = XEN_TO_C_INT_OR_ELSE(samps, 0);
+  if (XEN_NOT_BOUND_P(snd))
     {
       if (selection_is_active())
 	si = selection_sync();
@@ -868,22 +868,22 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_selection_length_reversed, g_set_selection_length)
 
-static SCM g_selection_member(SCM snd, SCM chn)
+static XEN g_selection_member(XEN snd, XEN chn)
 {
   #define H_selection_member "(" S_selection_member " &optional snd chn) -> #t if snd's channel chn is a member of the current selection"
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_member, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_member);
-  return(TO_SCM_BOOLEAN(selection_is_active_in_channel(cp)));
+  return(C_TO_XEN_BOOLEAN(selection_is_active_in_channel(cp)));
 }
 
-static SCM g_set_selection_member(SCM on, SCM snd, SCM chn)
+static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 {
   chan_info *cp;
   ASSERT_CHANNEL("set-" S_selection_member, snd, chn, 2);
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, ARG1, "set-" S_selection_member, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_selection_member, "a boolean");
   cp = get_cp(snd, chn, "set-" S_selection_member);
-  if ((NOT_BOUND_P(on)) || (TRUE_P(on)))
+  if ((XEN_NOT_BOUND_P(on)) || (XEN_TRUE_P(on)))
     {
       if (selection_is_active())
 	cp_set_selection_beg(cp, selection_beg(NULL));
@@ -901,7 +901,7 @@ static SCM g_set_selection_member(SCM on, SCM snd, SCM chn)
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_selection_member_reversed, g_set_selection_member)
 
-static SCM g_select_all (SCM snd_n, SCM chn_n)
+static XEN g_select_all (XEN snd_n, XEN chn_n)
 {
   #define H_select_all "(" S_select_all " &optional snd chn) makes a new selection containing all of snd's channel chn"
   chan_info *cp;
@@ -910,11 +910,11 @@ static SCM g_select_all (SCM snd_n, SCM chn_n)
   cp = get_cp(snd_n, chn_n, S_select_all);
   id = select_all(cp);
   if (selection_creates_region(cp->state)) 
-    return(TO_SCM_INT(id));
-  else return(TRUE_VALUE);
+    return(C_TO_XEN_INT(id));
+  else return(XEN_TRUE);
 }
 
-static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM srate, SCM comment, SCM chan)
+static XEN g_save_selection(XEN filename, XEN header_type, XEN data_format, XEN srate, XEN comment, XEN chan)
 {
   #define H_save_selection "(" S_save_selection " filename\n    &optional header-type data-format srate comment chan)\n\
 saves the current selection in filename using the indicated file attributes.  If chan is given, save only that channel."
@@ -922,66 +922,66 @@ saves the current selection in filename using the indicated file attributes.  If
   snd_state *ss;
   int type, format, sr, err, chn;
   char *com = NULL, *fname = NULL;
-  ASSERT_TYPE(STRING_P(filename), filename, ARG1, S_save_selection, "a string");
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(header_type), header_type, ARG2, S_save_selection, "an integer");
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(data_format), data_format, ARG3, S_save_selection, "an integer");
-  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, ARG4, S_save_selection, "a number");
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(chan), chan, ARG6, S_save_selection, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_save_selection, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(header_type), header_type, XEN_ARG_2, S_save_selection, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(data_format), data_format, XEN_ARG_3, S_save_selection, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, XEN_ARG_4, S_save_selection, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chan), chan, XEN_ARG_6, S_save_selection, "an integer");
   if (selection_is_active() == 0)
     return(snd_no_active_selection_error(S_save_selection));
   ss = get_global_state();
-  if (INTEGER_P(header_type)) 
-    type = TO_C_INT(header_type); 
+  if (XEN_INTEGER_P(header_type)) 
+    type = XEN_TO_C_INT(header_type); 
 #if MUS_LITTLE_ENDIAN
   else type = MUS_RIFF;
 #else
   else type = MUS_NEXT;
 #endif
-  format = TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
-  sr = TO_C_INT_OR_ELSE(srate, selection_srate());
-  if (STRING_P(comment)) 
-    com = TO_C_STRING(comment); 
+  format = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
+  sr = XEN_TO_C_INT_OR_ELSE(srate, selection_srate());
+  if (XEN_STRING_P(comment)) 
+    com = XEN_TO_C_STRING(comment); 
   else com = NULL;
-  chn = TO_C_INT_OR_ELSE(chan, SAVE_ALL_CHANS);
-  fname = mus_expand_filename(TO_C_STRING(filename));
+  chn = XEN_TO_C_INT_OR_ELSE(chan, SAVE_ALL_CHANS);
+  fname = mus_expand_filename(XEN_TO_C_STRING(filename));
   ss->catch_message = NULL;
   err = save_selection(ss, fname, type, format, sr, com, chn);
   if (fname) FREE(fname);
   if (err == MUS_NO_ERROR) 
     return(filename);
-  else ERROR(CANNOT_SAVE,
-	     LIST_2(TO_SCM_STRING(S_save_selection),
-		       TO_SCM_STRING(ss->catch_message)));
-  return(TO_SCM_INT(err));
+  else XEN_ERROR(CANNOT_SAVE,
+	     XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
+		       C_TO_XEN_STRING(ss->catch_message)));
+  return(C_TO_XEN_INT(err));
 }
 
-static SCM g_selection_chans(void)
+static XEN g_selection_chans(void)
 {
   #define H_selection_chans "(" S_selection_chans ") -> chans in active selection"
-  return(TO_SCM_INT(selection_chans()));
+  return(C_TO_XEN_INT(selection_chans()));
 }
 
-static SCM g_selection_srate(void)
+static XEN g_selection_srate(void)
 {
   #define H_selection_srate "(" S_selection_srate ") -> selection srate"
-  return(TO_SCM_INT(selection_srate()));
+  return(C_TO_XEN_INT(selection_srate()));
 }
 
-#ifdef ARGIFY_1
-ARGIFY_2(g_selection_position_w, g_selection_position)
-ARGIFY_3(g_set_selection_position_w, g_set_selection_position)
-ARGIFY_2(g_selection_length_w, g_selection_length)
-ARGIFY_3(g_set_selection_length_w, g_set_selection_length)
-ARGIFY_2(g_selection_member_w, g_selection_member)
-ARGIFY_3(g_set_selection_member_w, g_set_selection_member)
-NARGIFY_0(g_selection_p_w, g_selection_p)
-NARGIFY_0(g_selection_chans_w, g_selection_chans)
-NARGIFY_0(g_selection_srate_w, g_selection_srate)
-NARGIFY_0(g_delete_selection_w, g_delete_selection)
-ARGIFY_3(g_insert_selection_w, g_insert_selection)
-ARGIFY_3(g_mix_selection_w, g_mix_selection)
-ARGIFY_2(g_select_all_w, g_select_all)
-ARGIFY_6(g_save_selection_w, g_save_selection)
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_2(g_selection_position_w, g_selection_position)
+XEN_ARGIFY_3(g_set_selection_position_w, g_set_selection_position)
+XEN_ARGIFY_2(g_selection_length_w, g_selection_length)
+XEN_ARGIFY_3(g_set_selection_length_w, g_set_selection_length)
+XEN_ARGIFY_2(g_selection_member_w, g_selection_member)
+XEN_ARGIFY_3(g_set_selection_member_w, g_set_selection_member)
+XEN_NARGIFY_0(g_selection_p_w, g_selection_p)
+XEN_NARGIFY_0(g_selection_chans_w, g_selection_chans)
+XEN_NARGIFY_0(g_selection_srate_w, g_selection_srate)
+XEN_NARGIFY_0(g_delete_selection_w, g_delete_selection)
+XEN_ARGIFY_3(g_insert_selection_w, g_insert_selection)
+XEN_ARGIFY_3(g_mix_selection_w, g_mix_selection)
+XEN_ARGIFY_2(g_select_all_w, g_select_all)
+XEN_ARGIFY_6(g_save_selection_w, g_save_selection)
 #else
 #define g_selection_position_w g_selection_position
 #define g_set_selection_position_w g_set_selection_position
@@ -999,26 +999,26 @@ ARGIFY_6(g_save_selection_w, g_save_selection)
 #define g_save_selection_w g_save_selection
 #endif
 
-void g_init_selection(SCM local_doc)
+void g_init_selection(XEN local_doc)
 {
-  define_procedure_with_reversed_setter(S_selection_position, PROCEDURE g_selection_position_w, H_selection_position,
-					"set-" S_selection_position, PROCEDURE g_set_selection_position_w, PROCEDURE g_set_selection_position_reversed,
+  define_procedure_with_reversed_setter(S_selection_position, XEN_PROCEDURE_CAST g_selection_position_w, H_selection_position,
+					"set-" S_selection_position, XEN_PROCEDURE_CAST g_set_selection_position_w, XEN_PROCEDURE_CAST g_set_selection_position_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  define_procedure_with_reversed_setter(S_selection_length, PROCEDURE g_selection_length_w, H_selection_length,
-					"set-" S_selection_length, PROCEDURE g_set_selection_length_w, PROCEDURE g_set_selection_length_reversed,
+  define_procedure_with_reversed_setter(S_selection_length, XEN_PROCEDURE_CAST g_selection_length_w, H_selection_length,
+					"set-" S_selection_length, XEN_PROCEDURE_CAST g_set_selection_length_w, XEN_PROCEDURE_CAST g_set_selection_length_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  define_procedure_with_reversed_setter(S_selection_member, PROCEDURE g_selection_member_w, H_selection_member,
-					"set-" S_selection_member, PROCEDURE g_set_selection_member_w, PROCEDURE g_set_selection_member_reversed,
+  define_procedure_with_reversed_setter(S_selection_member, XEN_PROCEDURE_CAST g_selection_member_w, H_selection_member,
+					"set-" S_selection_member, XEN_PROCEDURE_CAST g_set_selection_member_w, XEN_PROCEDURE_CAST g_set_selection_member_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  DEFINE_PROC(S_selection_p,      g_selection_p_w, 0, 0, 0,      H_selection_p);
-  DEFINE_PROC(S_selection_chans,  g_selection_chans_w, 0, 0, 0,  H_selection_chans);
-  DEFINE_PROC(S_selection_srate,  g_selection_srate_w, 0, 0, 0,  H_selection_srate);
-  DEFINE_PROC(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
-  DEFINE_PROC(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
-  DEFINE_PROC(S_mix_selection,    g_mix_selection_w, 0, 3, 0,    H_mix_selection);
-  DEFINE_PROC(S_select_all,       g_select_all_w, 0, 2, 0,       H_select_all);
-  DEFINE_PROC(S_save_selection,   g_save_selection_w, 1, 5, 0,   H_save_selection);
+  XEN_DEFINE_PROCEDURE(S_selection_p,      g_selection_p_w, 0, 0, 0,      H_selection_p);
+  XEN_DEFINE_PROCEDURE(S_selection_chans,  g_selection_chans_w, 0, 0, 0,  H_selection_chans);
+  XEN_DEFINE_PROCEDURE(S_selection_srate,  g_selection_srate_w, 0, 0, 0,  H_selection_srate);
+  XEN_DEFINE_PROCEDURE(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
+  XEN_DEFINE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
+  XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w, 0, 3, 0,    H_mix_selection);
+  XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w, 0, 2, 0,       H_select_all);
+  XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w, 1, 5, 0,   H_save_selection);
 }

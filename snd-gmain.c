@@ -124,7 +124,7 @@ static gint iconify_window(GtkWidget *w, GdkEvent *event, gpointer context)
 #endif
 
 static GdkAtom snd_v, snd_c;
-static SCM property_changed_hook;
+static XEN property_changed_hook;
 
 static void who_called(GtkWidget *w, GdkEvent *event, gpointer context) 
 {
@@ -142,9 +142,9 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 	{
 	  if (version[0])
 	    {
-	    if ((!(HOOKED(property_changed_hook))) ||
-		(!(TRUE_P(g_c_run_or_hook(property_changed_hook,
-					  LIST_1(TO_SCM_STRING((char *)(version[0]))),
+	    if ((!(XEN_HOOKED(property_changed_hook))) ||
+		(!(XEN_TRUE_P(g_c_run_or_hook(property_changed_hook,
+					  XEN_LIST_1(C_TO_XEN_STRING((char *)(version[0]))),
 					  S_property_changed_hook)))))
 	      snd_eval_property_str(ss, (char *)(version[0]));
 	      free(version[0]);
@@ -636,27 +636,27 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
 }
 
-static SCM g_parse_rc_file(SCM name)
+static XEN g_parse_rc_file(XEN name)
 {
   snd_state *ss;
-  if (STRING_P(name))
-    gtk_rc_parse(TO_C_STRING(name));
+  if (XEN_STRING_P(name))
+    gtk_rc_parse(XEN_TO_C_STRING(name));
   ss = get_global_state();
   ss->using_schemes = TRUE;
   /* TODO: it seems we should check this flag throughout, as in Motif */
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-#ifdef ARGIFY_1
-NARGIFY_1(g_parse_rc_file_w, g_parse_rc_file)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_1(g_parse_rc_file_w, g_parse_rc_file)
 #else
 #define g_parse_rc_file_w g_parse_rc_file
 #endif
 
-void g_init_gxmain(SCM local_doc)
+void g_init_gxmain(XEN local_doc)
 {
   #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"
-  property_changed_hook = MAKE_HOOK(S_property_changed_hook, 1, H_property_changed_hook);
+  XEN_DEFINE_HOOK(property_changed_hook, S_property_changed_hook, 1, H_property_changed_hook, local_doc);
 
-  DEFINE_PROC("parse-rc-file", g_parse_rc_file_w, 1, 0, 0, "(parse-rc-file name) -> read gtk rc file");
+  XEN_DEFINE_PROCEDURE("parse-rc-file", g_parse_rc_file_w, 1, 0, 0, "(parse-rc-file name) -> read gtk rc file");
 }

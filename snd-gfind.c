@@ -34,13 +34,13 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
 { /* "Find" is the label here */
   char *str, *buf = NULL;
   snd_state *ss = (snd_state *)context;
-  SCM proc;
+  XEN proc;
   str = gtk_entry_get_text(GTK_ENTRY(edit_find_text));
   if ((str) && (*str))
     {
       ss->search_expr = str;
-      if (PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
-      ss->search_proc = UNDEFINED_VALUE;
+      if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
+      ss->search_proc = XEN_UNDEFINED;
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if (procedure_ok_with_error(proc, 1, "find", "find", 1))
 	{
@@ -53,7 +53,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
       gtk_entry_set_text(GTK_ENTRY(edit_find_text), "");
       FREE(buf);
     }
-  if (PROCEDURE_P(ss->search_proc))
+  if (XEN_PROCEDURE_P(ss->search_proc))
     {
       set_button_label(cancelB, STR_Stop);
       str = global_search(ss, direction);
@@ -124,36 +124,36 @@ void Edit_Find_Callback(GtkWidget *w, gpointer context)
 }
 
 #if DEBUGGING
-static SCM g_find_dialog_widgets(void)
+static XEN g_find_dialog_widgets(void)
 {
   if (edit_find_dialog)
-    return(CONS(SND_WRAP(edit_find_dialog),
-	     CONS(SND_WRAP(edit_find_text),
-  	       CONS(SND_WRAP(next_button),
-		 CONS(SND_WRAP(previous_button),
-		   CONS(SND_WRAP(cancelB),
-			EMPTY_LIST))))));
-  return(EMPTY_LIST);
+    return(XEN_CONS(XEN_WRAP_C_POINTER(edit_find_dialog),
+	     XEN_CONS(XEN_WRAP_C_POINTER(edit_find_text),
+  	       XEN_CONS(XEN_WRAP_C_POINTER(next_button),
+		 XEN_CONS(XEN_WRAP_C_POINTER(previous_button),
+		   XEN_CONS(XEN_WRAP_C_POINTER(cancelB),
+			XEN_EMPTY_LIST))))));
+  return(XEN_EMPTY_LIST);
 }
 
-static SCM g_edit_find_dialog(void)
+static XEN g_edit_find_dialog(void)
 {
   Edit_Find_Callback(NULL, (gpointer)(get_global_state()));
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
 
-#ifdef ARGIFY_1
-NARGIFY_0(g_edit_find_dialog_w, g_edit_find_dialog)
-NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_edit_find_dialog_w, g_edit_find_dialog)
+XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
 #else
 #define g_edit_find_dialog_w g_edit_find_dialog
 #define g_find_dialog_widgets_w g_find_dialog_widgets
 #endif
 
-void g_init_gxfind(SCM local_doc)
+void g_init_gxfind(XEN local_doc)
 {
-  DEFINE_PROC("edit-find-dialog", g_edit_find_dialog_w, 0, 0, 0, "");
-  DEFINE_PROC("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("edit-find-dialog", g_edit_find_dialog_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "");
 }
 #endif

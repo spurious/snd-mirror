@@ -704,7 +704,7 @@ If the sndlib.so business won't work for you, build your .so file with the sndli
 included explicitly:
 </p>
 <pre>
-  ld -shared eff.o -o eff.so io.o headers.o audio.o sound.o clm.o vct.o sndlib2scm.o clm2scm.o
+  ld -shared eff.o -o eff.so io.o headers.o audio.o sound.o clm.o vct.o sndlib2xen.o clm2xen.o
 </pre>
 <p>Then in Snd (assume we're on /home/bil/cl),</p>
 <pre>
@@ -1855,10 +1855,14 @@ place of -l.
 
 <p>Ruby is an extension language described as an "object-oriented Perl".
 It provides a different syntax from that of Guile/Scheme.  In Ruby, all
-the "-" are "_", "?" is "_p", "-&gt;" is "2", memo_sound is $memo_sound
-(since it's a global variable), and all the constants are capitalized
+the "-" are "_", "?" is "_p", "-&gt;" is "2", trailing "1" is omitted, hooks and memo_sound have "$" prepended
+(since they are global variables from Ruby's point of view), and all the constants are capitalized
 (e.g. Autocorrelation).  The generalized set! functions are replaced
-by "set-" plus the base name (e.g. set_window_width).
+by "set-" plus the base name (e.g. set_window_width), with arguments
+reordered to place the optional values after the new value.  That is,
+<code>(set! (srate snd) 22050)</code> becomes <code>set_srate(22050, snd)</code>.
+Hooks in Ruby (which have little or nothing to do with Ruby's "hookable variables")
+are just procedures or nil, not lists of procedures as in Guile.
 Here's the Ruby version of the init file given
 above:
 </p>
@@ -1883,6 +1887,19 @@ blue = make_color 0, 0, 1
 set_selected_graph_color beige
 set_selected_data_color blue
 </pre>
+<p>Procedures are created via Proc.new, so to set the open-hook to print the
+file name,
+</p>
+<pre>
+&gt;<em class=typing>$open_hook = Proc.new { |name| print name }</em>
+<em class=listener>#&lt;Proc:0x40221b84&gt;</em>
+&gt;<em class=typing>open_sound "oboe.snd"</em>
+<em class=listener>/home/bil/cl/oboe.snd0</em>
+</pre>
+<p>(The trailing "0" is the result of open_sound -- we should have appended a carriage return
+in the open-hook procedure).  The Guile hook list support procedures aren't included in Ruby --
+simply set the variable to the procedure you want, or nil to clear it.
+</p>
 <br>
 
 <span class=bbox><h3><A NAME="sndwithgmeteor">Snd and gmeteor</a></h3></span>

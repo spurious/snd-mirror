@@ -19,9 +19,9 @@ static int run_global_search (snd_state *ss, gfd *g)
   /* if success, n = winner (as aref index), if eofs, n=-1 */
   int i, j, k;
   Float samp;
-  SCM res;
+  XEN res;
   snd_fd *sf;
-  if (PROCEDURE_P(ss->search_proc))
+  if (XEN_PROCEDURE_P(ss->search_proc))
     {
       for (i = 0; i < g->chans; i++)
 	{
@@ -32,20 +32,20 @@ static int run_global_search (snd_state *ss, gfd *g)
 	      if (g->direction == READ_FORWARD)
 		samp = next_sample_to_float(sf);
 	      else samp = previous_sample_to_float(sf);
-	      res = CALL_1(ss->search_proc, TO_SCM_DOUBLE((double)(samp)), "global search func");
-	      if (TRUE_P(res))
+	      res = XEN_CALL_1(ss->search_proc, C_TO_XEN_DOUBLE((double)(samp)), "global search func");
+	      if (XEN_TRUE_P(res))
 		{
 		  g->n = i;
 		  return(1);
 		}
 	      else
 		{
-		  if (INTEGER_P(res))
+		  if (XEN_INTEGER_P(res))
 		    {
 		      g->n = i; /* channel number */
 		      if (g->direction == READ_FORWARD)
-			g->inc += TO_C_INT(res);
-		      else g->inc -= TO_C_INT(res);
+			g->inc += XEN_TO_C_INT(res);
+		      else g->inc -= XEN_TO_C_INT(res);
 		      return(1);
 		    }
 		}
@@ -177,7 +177,7 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   int i = 0, end, passes = 0;
   snd_fd *sf = NULL;
   snd_state *ss;
-  SCM res = FALSE_VALUE;
+  XEN res = XEN_FALSE;
   ss = sp->state;
   if (ss->search_in_progress) 
     {
@@ -195,10 +195,10 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   end = current_ed_samples(cp);
   for (i = cp->cursor + 1, passes = 0; i < end; i++, passes++)
     {
-      res = CALL_1(sp->search_proc, 
-		  TO_SCM_DOUBLE((double)(next_sample_to_float(sf))), 
+      res = XEN_CALL_1(sp->search_proc, 
+		  C_TO_XEN_DOUBLE((double)(next_sample_to_float(sf))), 
 		  "local search func");
-      if (NOT_FALSE_P(res)) 
+      if (XEN_NOT_FALSE_P(res)) 
 	{
 	  count--; 
 	  if (count == 0) break;
@@ -216,8 +216,8 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   free_snd_fd(sf);
   ss->search_in_progress = 0;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
-  if (INTEGER_P(res))
-    return(i + TO_C_INT(res));
+  if (XEN_INTEGER_P(res))
+    return(i + XEN_TO_C_INT(res));
   return(i);
 }
 
@@ -226,7 +226,7 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   int i = 0, passes = 0;
   snd_fd *sf = NULL;
   snd_state *ss;
-  SCM res = FALSE_VALUE;
+  XEN res = XEN_FALSE;
   ss = sp->state;
   if (ss->search_in_progress) 
     {
@@ -243,10 +243,10 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   sf->direction = READ_BACKWARD;
   for (i = cp->cursor - 1, passes = 0; i >= 0; i--, passes++)
     {
-      res = CALL_1(sp->search_proc, 
-		  TO_SCM_DOUBLE((double)(previous_sample_to_float(sf))), 
+      res = XEN_CALL_1(sp->search_proc, 
+		  C_TO_XEN_DOUBLE((double)(previous_sample_to_float(sf))), 
 		  "local search func");
-      if (NOT_FALSE_P(res)) 
+      if (XEN_NOT_FALSE_P(res)) 
 	{
 	  count--; 
 	  if (count == 0) break;
@@ -264,8 +264,8 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   free_snd_fd(sf);
   ss->search_in_progress = 0;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
-  if (INTEGER_P(res))
-    return(i - TO_C_INT(res));
+  if (XEN_INTEGER_P(res))
+    return(i - XEN_TO_C_INT(res));
   return(i);
 }
 
@@ -295,7 +295,7 @@ int cursor_search(chan_info *cp, int count)
     }
   if (sp->searching)
     {
-      if (!(PROCEDURE_P(sp->search_proc))) return(CURSOR_IN_VIEW); /* no search expr */
+      if (!(XEN_PROCEDURE_P(sp->search_proc))) return(CURSOR_IN_VIEW); /* no search expr */
 
       if (sp->search_expr)
 	{
@@ -334,41 +334,41 @@ int cursor_search(chan_info *cp, int count)
   return(CURSOR_IN_VIEW);
 }
 
-static SCM g_search_procedure(SCM snd)
+static XEN g_search_procedure(XEN snd)
 {
   #define H_search_procedure "(" S_search_procedure " &optional index) -> global or sound-local search function"
   snd_state *ss;
   snd_info *sp;
-  if (BOUND_P(snd))
+  if (XEN_BOUND_P(snd))
     {
       ASSERT_SOUND(S_search_procedure, snd, 1);
       sp = get_sp(snd);
       if (sp)
 	return(sp->search_proc);
-      else return(FALSE_VALUE);
+      else return(XEN_FALSE);
     }
   ss = get_global_state();
   return(ss->search_proc);
 }
 
-static SCM g_set_search_procedure(SCM snd, SCM proc)
+static XEN g_set_search_procedure(XEN snd, XEN proc)
 {
   snd_state *ss;
   snd_info *sp;
   char *error = NULL, *expr = NULL;
-  SCM errstr;
-  if (INTEGER_P(snd)) /* could be the proc arg if no snd */
+  XEN errstr;
+  if (XEN_INTEGER_P(snd)) /* could be the proc arg if no snd */
     {
       ASSERT_SOUND("set-" S_search_procedure, snd, 1);
       sp = get_sp(snd);
       if (sp)
 	{
-	  if (PROCEDURE_P(sp->search_proc))
+	  if (XEN_PROCEDURE_P(sp->search_proc))
 	    snd_unprotect(sp->search_proc);
-	  sp->search_proc = UNDEFINED_VALUE;
-	  if (STRING_P(proc))
+	  sp->search_proc = XEN_UNDEFINED;
+	  if (XEN_STRING_P(proc))
 	    {
-	      expr = TO_NEW_C_STRING(proc);
+	      expr = XEN_TO_NEW_C_STRING(proc);
 	      proc = snd_catch_any(eval_str_wrapper, expr, expr);
 	    }
 	  error = procedure_ok(proc, 1, "find", "find", 1);
@@ -382,7 +382,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	    }
 	  else 
 	    {
-	      errstr = TO_SCM_STRING(error);
+	      errstr = C_TO_XEN_STRING(error);
 	      FREE(error);
 	      return(snd_bad_arity_error("set-" S_search_procedure, errstr, proc));
 	    }
@@ -393,12 +393,12 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
   else 
     {
       ss = get_global_state();
-      if (PROCEDURE_P(ss->search_proc))
+      if (XEN_PROCEDURE_P(ss->search_proc))
 	snd_unprotect(ss->search_proc);
-      ss->search_proc = UNDEFINED_VALUE;
-      if (STRING_P(snd))
+      ss->search_proc = XEN_UNDEFINED;
+      if (XEN_STRING_P(snd))
 	{
-	  expr = TO_NEW_C_STRING(snd);
+	  expr = XEN_TO_NEW_C_STRING(snd);
 	  snd = snd_catch_any(eval_str_wrapper, expr, expr);
 	}
       error = procedure_ok(snd, 1, "find", "find", 1);
@@ -411,7 +411,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	}
       else 
 	{
-	  errstr = TO_SCM_STRING(error);
+	  errstr = C_TO_XEN_STRING(error);
 	  FREE(error);
 	  return(snd_bad_arity_error("set-" S_search_procedure, errstr, snd));
 	}
@@ -419,16 +419,16 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
   return(snd);
 }
 
-#ifdef ARGIFY_1
-ARGIFY_1(g_search_procedure_w, g_search_procedure)
-ARGIFY_2(g_set_search_procedure_w, g_set_search_procedure)
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_1(g_search_procedure_w, g_search_procedure)
+XEN_ARGIFY_2(g_set_search_procedure_w, g_set_search_procedure)
 #else
 #define g_search_procedure_w g_search_procedure
 #define g_set_search_procedure_w g_set_search_procedure
 #endif
 
-void g_init_find(SCM local_doc)
+void g_init_find(XEN local_doc)
 {
-  define_procedure_with_setter(S_search_procedure, PROCEDURE g_search_procedure_w, H_search_procedure,
-			       "set-" S_search_procedure, PROCEDURE g_set_search_procedure_w, local_doc, 0, 1, 1, 1);
+  define_procedure_with_setter(S_search_procedure, XEN_PROCEDURE_CAST g_search_procedure_w, H_search_procedure,
+			       "set-" S_search_procedure, XEN_PROCEDURE_CAST g_set_search_procedure_w, local_doc, 0, 1, 1, 1);
 }

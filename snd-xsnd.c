@@ -1045,7 +1045,7 @@ static void Play_button_Callback(Widget w, XtPointer context, XtPointer info)
       ss = sp->state;
       XtVaSetValues(w,XmNselectColor, ((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)),NULL);
       play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, 
-		 TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
 		 "play button", 0);
     }
 }
@@ -2350,7 +2350,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
       XtAddCallback(sw[W_filter], XmNhelpCallback, W_filter_envelope_Help_Callback, ss);
       XtAddCallback(sw[W_filter], XmNactivateCallback, Filter_activate_Callback, (XtPointer)sp);
 
-      /* APPLY */
+      /* XEN_APPLY */
       n = 0;
       if (need_colors) 
 	{

@@ -26,9 +26,9 @@
 #endif
 
 
-#define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 36
-#define SNDLIB_DATE "2-Jul-01"
+#define SNDLIB_VERSION 13
+#define SNDLIB_REVISION 0
+#define SNDLIB_DATE "5-Jul-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -599,10 +599,6 @@ void mus_header_set_aifc            PROTO((int val)); /* backwards compatibility
 char *mus_header_riff_aux_comment   PROTO((const char *name, int *starts, int *ends));
 char *mus_header_aiff_aux_comment   PROTO((const char *name, int *starts, int *ends));
 
-
-/* -------- sndlib2scm.c -------- */
-
-void mus_sndlib2scm_initialize      PROTO((void));
 
 #ifdef DEBUG_MEMORY
   /* snd-utils.c (only used in conjunction with Snd's memory tracking functions) */

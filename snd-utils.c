@@ -678,28 +678,28 @@ int new_time(char *name)
   return(timer);
 }
 
-static SCM start_time(SCM utag)
+static XEN start_time(XEN utag)
 {
   int tag;
-  tag = TO_C_INT(utag);
+  tag = XEN_TO_C_INT(utag);
   times[tag].start = clock();
   times[tag].in_calls++;
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM stop_time(SCM utag)
+static XEN stop_time(XEN utag)
 {
   int tag;
   long clk;
-  tag = TO_C_INT(utag);
-  if (times[tag].start <= 0) return(FALSE_VALUE);
+  tag = XEN_TO_C_INT(utag);
+  if (times[tag].start <= 0) return(XEN_FALSE);
   clk = clock();
   if (clk >= times[tag].start)
     times[tag].total += (clk - times[tag].start); /* clock() can wrap around! */
   else times[tag].total += clk; /* semi-bogus... */
   times[tag].start = 0;
   times[tag].out_calls++;
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
 static int compare_time(const void *a, const void *b)
@@ -779,19 +779,19 @@ static void report_times_1(FILE *std)
   FREE(ltimes);
 }
 
-static SCM report_times(void)
+static XEN report_times(void)
 {
   report_times_1(stderr);
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-void g_init_timing(SCM local_doc)
+void g_init_timing(XEN local_doc)
 {
 #if HAVE_GUILE
-  /* not DEFINE_PROC here! */
-  NEW_PROCEDURE("start-time", start_time, 1, 0, 0);
-  NEW_PROCEDURE("stop-time", stop_time, 1, 0, 0);
-  NEW_PROCEDURE("report-times", report_times, 0, 0, 0);
+  /* not XEN_DEFINE_PROCEDURE here! */
+  XEN_NEW_PROCEDURE("start-time", start_time, 1, 0, 0);
+  XEN_NEW_PROCEDURE("stop-time", stop_time, 1, 0, 0);
+  XEN_NEW_PROCEDURE("report-times", report_times, 0, 0, 0);
 #endif
 }
 #endif

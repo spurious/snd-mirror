@@ -185,7 +185,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
   return(hdr);
 }
 
-static SCM open_raw_sound_hook;
+static XEN open_raw_sound_hook;
 
 file_info *make_file_info(char *fullname, snd_state *ss)
 {
@@ -222,8 +222,8 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 #endif
       if (type == MUS_RAW)
 	{
-	  SCM res = FALSE_VALUE;
-	  SCM procs, arg1;
+	  XEN res = XEN_FALSE;
+	  XEN procs; XEN arg1;
 	  int len, srate, chans, data_format, data_location, bytes;
 
 	  if (ss->reloading_updated_file)
@@ -238,25 +238,29 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 		  return(NULL);
 		}
 	    }
-	  if (HOOKED(open_raw_sound_hook))
+	  if (XEN_HOOKED(open_raw_sound_hook))
 	    {
-	      procs = HOOK_PROCEDURES (open_raw_sound_hook);
-	      arg1 = TO_SCM_STRING(fullname);
-	      while (NOT_NULL_P(procs))
+#if HAVE_GUILE
+	      procs = XEN_HOOK_PROCEDURES (open_raw_sound_hook);
+	      arg1 = C_TO_XEN_STRING(fullname);
+	      while (XEN_NOT_NULL_P(procs))
 		{
-		  res = CALL_2(CAR(procs), arg1, res, S_open_raw_sound_hook);
-		  procs = CDR (procs);
+		  res = XEN_CALL_2(XEN_CAR(procs), arg1, res, S_open_raw_sound_hook);
+		  procs = XEN_CDR (procs);
 		}
+#else
+	      res = XEN_CALL_2(open_raw_sound_hook, C_TO_XEN_STRING(fullname), XEN_FALSE, S_open_raw_sound_hook);
+#endif
 	    }
-	  if (LIST_P(res)) /* empty list ok here -> accept all current defaults */
+	  if (XEN_LIST_P(res)) /* empty list ok here -> accept all current defaults */
 	    {
-	      len = LIST_LENGTH(res);
+	      len = XEN_LIST_LENGTH(res);
 	      mus_header_raw_defaults(&srate, &chans, &data_format);
-	      if (len > 0) chans = TO_C_INT(CAR(res));
-	      if (len > 1) srate = TO_C_INT(CADR(res));
-	      if (len > 2) data_format = TO_C_INT(LIST_REF(res, 2)); 
-	      if (len > 3) data_location = TO_C_INT(LIST_REF(res, 3)); else data_location = 0;
-	      if (len > 4) bytes = TO_C_INT(LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
+	      if (len > 0) chans = XEN_TO_C_INT(XEN_CAR(res));
+	      if (len > 1) srate = XEN_TO_C_INT(XEN_CADR(res));
+	      if (len > 2) data_format = XEN_TO_C_INT(XEN_LIST_REF(res, 2)); 
+	      if (len > 3) data_location = XEN_TO_C_INT(XEN_LIST_REF(res, 3)); else data_location = 0;
+	      if (len > 4) bytes = XEN_TO_C_INT(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
 	      mus_header_set_raw_defaults(srate, chans, data_format);
 	      mus_sound_override_header(fullname, srate, chans, data_format, 
 					MUS_RAW, data_location,
@@ -549,13 +553,12 @@ static char *memo_file_name(snd_info *sp)
   int len;
   len = strlen(sp->filename);
   newname = (char *)CALLOC(len + 5, sizeof(char));
-  mus_snprintf(newname, len + 5, "%s.scm", sp->filename);
+  mus_snprintf(newname, len + 5, "%s.%s", sp->filename, XEN_FILE_EXTENSION);
   return(newname);
 }
 
 static void read_memo_file(snd_info *sp)
 {
-  /* sp->filename + ".scm" = possible memo file (memo-sound set in this file, snd_open_file_1) */
   char *newname;
   newname = memo_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
@@ -563,42 +566,42 @@ static void read_memo_file(snd_info *sp)
   FREE(newname);
 }
 
-static SCM memo_sound, open_hook, close_hook, just_sounds_hook;
+static XEN memo_sound, open_hook, close_hook, just_sounds_hook;
 
 static int dont_open(char *file)
 {
   char *mcf = NULL;
-  SCM res = FALSE_VALUE, fstr;
-  if (HOOKED(open_hook))
+  XEN res = XEN_FALSE; XEN fstr;
+  if (XEN_HOOKED(open_hook))
     {
       mcf = mus_expand_filename(file);
-      fstr = TO_SCM_STRING(mcf);
+      fstr = C_TO_XEN_STRING(mcf);
       if (mcf) FREE(mcf);
       res = g_c_run_or_hook(open_hook,
-			    LIST_1(fstr),
+			    XEN_LIST_1(fstr),
 			    S_open_hook);
     }
-  return(TRUE_P(res));
+  return(XEN_TRUE_P(res));
 }
 
 static int dont_close(snd_info *sp)
 {
-  SCM res = FALSE_VALUE;
-  if (HOOKED(close_hook))
+  XEN res = XEN_FALSE;
+  if (XEN_HOOKED(close_hook))
     res = g_c_run_or_hook(close_hook,
-			  LIST_1(TO_SMALL_SCM_INT(sp->index)),
+			  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
 			  S_close_hook);
-  return(TRUE_P(res));
+  return(XEN_TRUE_P(res));
 }
 
 static int just_sounds_happy(char *filename)
 {
-  SCM res = TRUE_VALUE;
-  if (HOOKED(just_sounds_hook))
+  XEN res = XEN_TRUE;
+  if (XEN_HOOKED(just_sounds_hook))
     res = g_c_run_or_hook(just_sounds_hook,
-			  LIST_1(TO_SCM_STRING(filename)),
+			  XEN_LIST_1(C_TO_XEN_STRING(filename)),
 			  S_just_sounds_hook);
-  return(TRUE_P(res));
+  return(XEN_TRUE_P(res));
 }
 
 
@@ -616,7 +619,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
   if (mcf) FREE(mcf);
   if (sp)
     {
-      SND_SET_VAR(memo_sound, TO_SMALL_SCM_INT(sp->index));
+      XEN_VARIABLE_SET(memo_sound, C_TO_SMALL_XEN_INT(sp->index));
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = 0;
       ss->active_sounds++;
@@ -763,9 +766,9 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   if (hdr == NULL)
     {
       if (ss->catch_exists)
-	ERROR(NO_SUCH_FILE,
-	      LIST_2(TO_SCM_STRING(__FUNCTION__),
-			TO_SCM_STRING(ss->catch_message)));
+	XEN_ERROR(NO_SUCH_FILE,
+	      XEN_LIST_2(C_TO_XEN_STRING(__FUNCTION__),
+			C_TO_XEN_STRING(ss->catch_message)));
       return(NULL);
     }
   sp = (snd_info *)CALLOC(1, sizeof(snd_info));
@@ -785,8 +788,8 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   sp->reverb_control_p = 0;
   sp->reverb_control_scale = 0.0;
   sp->filter_control_p = 0;
-  sp->search_proc = UNDEFINED_VALUE;
-  sp->prompt_callback = UNDEFINED_VALUE;
+  sp->search_proc = XEN_UNDEFINED;
+  sp->prompt_callback = XEN_UNDEFINED;
   sp->index = TEMP_SOUND_INDEX;
   sp->sgx = NULL;
   len = (hdr->samples) / (hdr->chans);
@@ -1013,7 +1016,7 @@ void view_curfiles_play(snd_state *ss, int pos, int play)
       if (sp->playing) stop_playing_sound(sp);
       if (play)
 	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "current files play", 0);
+	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "current files play", 0);
 	  set_play_button(sp, 1);
 	}
       else set_play_button(sp, 0);
@@ -1072,7 +1075,7 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
 	{
 	  play_sp->short_filename = prevnames[pos];
 	  play_sp->filename = NULL;
-	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "previous files play", 0);
+	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "previous files play", 0);
 	}
       else return(1); /* can't find or setup file */
     }
@@ -1452,20 +1455,20 @@ void make_prevfiles_list_1(snd_state *ss)
 	  qsort((void *)data, prevfile_end + 1, sizeof(heapdata *), less_compare);
 	  break;
 	case 5:
-	  if (PROCEDURE_P(ss->file_sort_proc))
+	  if (XEN_PROCEDURE_P(ss->file_sort_proc))
 	    {
-	      SCM file_list;
+	      XEN file_list;
 	      int j;
 	      char *name;
-	      file_list = EMPTY_LIST;
+	      file_list = XEN_EMPTY_LIST;
 	      for (i = prevfile_end; i >= 0; i--) 
-		file_list = CONS(TO_SCM_STRING(prevfullnames[i]), file_list);
-	      file_list = CALL_1(ss->file_sort_proc, file_list, "previous files sort");
-	      if (LIST_P(file_list))
+		file_list = XEN_CONS(C_TO_XEN_STRING(prevfullnames[i]), file_list);
+	      file_list = XEN_CALL_1(ss->file_sort_proc, file_list, "previous files sort");
+	      if (XEN_LIST_P(file_list))
 		{
-		  for (i = 0; (i < len) && (NOT_NULL_P(file_list)); i++, file_list = CDR(file_list))
+		  for (i = 0; (i < len) && (XEN_NOT_NULL_P(file_list)); i++, file_list = XEN_CDR(file_list))
 		    {
-		      name = TO_C_STRING(CAR(file_list));
+		      name = XEN_TO_C_STRING(XEN_CAR(file_list));
 		      for (j = 0; j < len; j++)
 			if (strcmp(data[j]->a2, name) == 0)
 			  {
@@ -1492,7 +1495,7 @@ void make_prevfiles_list_1(snd_state *ss)
     }
 }
 
-static SCM g_previous_files_sort_procedure(void)
+static XEN g_previous_files_sort_procedure(void)
 {
   #define H_previous_files_sort_procedure "(" S_previous_files_sort_procedure ") -> file sort procedure for the current files viewer"
   snd_state *ss;
@@ -1500,15 +1503,15 @@ static SCM g_previous_files_sort_procedure(void)
   return(ss->file_sort_proc);
 }
 
-static SCM g_set_previous_files_sort_procedure(SCM proc)
+static XEN g_set_previous_files_sort_procedure(XEN proc)
 {
   snd_state *ss;
   char *error = NULL;
-  SCM errstr;
+  XEN errstr;
   ss = get_global_state();
-  if (PROCEDURE_P(ss->file_sort_proc))
+  if (XEN_PROCEDURE_P(ss->file_sort_proc))
     snd_unprotect(ss->file_sort_proc);
-  ss->file_sort_proc = UNDEFINED_VALUE;
+  ss->file_sort_proc = XEN_UNDEFINED;
   error = procedure_ok(proc, 1, "file sort", "sort", 1);
   if (error == NULL)
     {
@@ -1519,7 +1522,7 @@ static SCM g_set_previous_files_sort_procedure(SCM proc)
   else 
     {
       set_file_sort_sensitive(FALSE);
-      errstr = TO_SCM_STRING(error);
+      errstr = C_TO_XEN_STRING(error);
       FREE(error);
       return(snd_bad_arity_error("set-" S_previous_files_sort_procedure, errstr, proc));
     }
@@ -1835,7 +1838,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       /* also what if a sound is write-protected in one window, and not in another? */
       ofile = snd_tempnam(ss); 
       if (save_type == FILE_SAVE_AS)
-	result = save_edits_without_display(sp, ofile, type, format, srate, comment, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
+	result = save_edits_without_display(sp, ofile, type, format, srate, comment, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
       else result = save_selection(ss, ofile, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer(sp, "save as temp: %s: %s", ofile, strerror(errno));
@@ -1868,7 +1871,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	  snd_close_file(collision->sp, ss);
 	}
       if (save_type == FILE_SAVE_AS)
-	result = save_edits_without_display(sp, str, type, format, srate, comment, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
+	result = save_edits_without_display(sp, str, type, format, srate, comment, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
       else result = save_selection(ss, str, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer_and_save(sp, "%s: %s", str, strerror(errno));
@@ -2088,15 +2091,15 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 }
 
 
-static SCM g_add_sound_file_extension(SCM ext)
+static XEN g_add_sound_file_extension(XEN ext)
 {
   #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext)  adds the file extension ext to the list of sound file extensions"
-  ASSERT_TYPE(STRING_P(ext), ext, ARGn, S_add_sound_file_extension, "a string");
-  add_sound_file_extension(TO_C_STRING(ext));
+  XEN_ASSERT_TYPE(XEN_STRING_P(ext), ext, XEN_ONLY_ARG, S_add_sound_file_extension, "a string");
+  add_sound_file_extension(XEN_TO_C_STRING(ext));
   return(ext);
 }
 
-static SCM g_file_write_date(SCM file)
+static XEN g_file_write_date(XEN file)
 {
   #define S_file_write_date "file-write-date"
   #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as current-time:\n\
@@ -2104,15 +2107,15 @@ static SCM g_file_write_date(SCM file)
 Equivalent to Guile (stat:mtime (stat file))"
 
   time_t date;
-  ASSERT_TYPE(STRING_P(file), file, ARGn, S_file_write_date, "a string");
-  date = file_write_date(TO_C_STRING(file));
-  return(scm_return_first(TO_SCM_INT(date), file));
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_file_write_date, "a string");
+  date = file_write_date(XEN_TO_C_STRING(file));
+  return(xen_return_first(C_TO_XEN_INT(date), file));
 }
 
-static SCM g_sound_loop_info(SCM snd)
+static XEN g_sound_loop_info(XEN snd)
 {
   int *res;
-  SCM sres = EMPTY_LIST;
+  XEN sres = XEN_EMPTY_LIST;
   snd_info *sp;
   ASSERT_SOUND(S_sound_loop_info, snd, 1);
   sp = get_sp(snd);
@@ -2121,42 +2124,42 @@ static SCM g_sound_loop_info(SCM snd)
   res = mus_sound_loop_info(sp->filename);
   if (res)
     {
-      sres = LIST_6(TO_SCM_INT(res[0]), TO_SCM_INT(res[1]), TO_SCM_INT(res[2]),
-		       TO_SCM_INT(res[3]), TO_SCM_INT(res[4]), TO_SCM_INT(res[5]));
+      sres = XEN_LIST_6(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
+		       C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]));
       FREE(res);
     }
   return(sres);
 }
 
-static SCM g_set_sound_loop_info(SCM snd, SCM vals)
+static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 {
   #define H_sound_loop_info "(" "set-" S_sound_loop_info " snd vals) sets loop points"
   snd_info *sp;
   char *tmp_file;
   file_info *hdr;
   int type, len = 0;
-  SCM start0 = UNDEFINED_VALUE, end0 = UNDEFINED_VALUE, start1 = UNDEFINED_VALUE, end1 = UNDEFINED_VALUE;
+  XEN start0 = XEN_UNDEFINED; XEN end0 = XEN_UNDEFINED; XEN start1 = XEN_UNDEFINED; XEN end1 = XEN_UNDEFINED;
   ASSERT_SOUND("set-" S_sound_loop_info, snd, 1);
-  ASSERT_TYPE(NOT_BOUND_P(vals) || LIST_P_WITH_LENGTH(vals, len), vals, ARG2, "set-" S_sound_loop_info, "a list");
-  if (NOT_BOUND_P(vals))
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, "set-" S_sound_loop_info, "a list");
+  if (XEN_NOT_BOUND_P(vals))
     {
       vals = snd;
-      sp = get_sp(UNDEFINED_VALUE);
+      sp = get_sp(XEN_UNDEFINED);
     }
   else sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error("set-" S_sound_loop_info, snd));
   hdr = sp->hdr;
-  if (len > 0) start0 = CAR(vals);
-  if (len > 1) end0 = CADR(vals);
-  if (len > 2) start1 = CADDR(vals);
-  if (len > 3) end1 = CADDDR(vals);
+  if (len > 0) start0 = XEN_CAR(vals);
+  if (len > 1) end0 = XEN_CADR(vals);
+  if (len > 2) start1 = XEN_CADDR(vals);
+  if (len > 3) end1 = XEN_CADDDR(vals);
   if (hdr->loops == NULL)
     hdr->loops = (int *)CALLOC(6, sizeof(int));
-  hdr->loops[0] = TO_C_INT_OR_ELSE(start0, 0);
-  hdr->loops[1] = TO_C_INT_OR_ELSE(end0, 0);
-  hdr->loops[2] = TO_C_INT_OR_ELSE(start1, 0);
-  hdr->loops[3] = TO_C_INT_OR_ELSE(end1, 0);
+  hdr->loops[0] = XEN_TO_C_INT_OR_ELSE(start0, 0);
+  hdr->loops[1] = XEN_TO_C_INT_OR_ELSE(end0, 0);
+  hdr->loops[2] = XEN_TO_C_INT_OR_ELSE(start1, 0);
+  hdr->loops[3] = XEN_TO_C_INT_OR_ELSE(end1, 0);
   mus_sound_set_loop_info(sp->filename, hdr->loops);
   type = hdr->type;
   if ((type != MUS_AIFF) && 
@@ -2172,21 +2175,21 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
 			     hdr->format, 
 			     hdr->srate, 
 			     hdr->comment,
-			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
 			     S_sound_loop_info, 0);
   move_file(tmp_file, sp->filename);
   FREE(tmp_file);
   snd_update(sp->state, sp);
-  return(TRUE_VALUE);
+  return(XEN_TRUE);
 }
 
-static SCM g_soundfont_info(SCM snd)
+static XEN g_soundfont_info(XEN snd)
 {
   /* return all soundfont descriptors as list of lists: ((name start loopstart loopend)) */
   #define H_soundfont_info "(" S_soundfont_info " &optional snd) -> list of lists describing snd as a soundfont. \
 each inner list has the form: (name start loopstart loopend)"
 
-  SCM inlist = EMPTY_LIST, outlist = EMPTY_LIST;
+  XEN inlist = XEN_EMPTY_LIST; XEN outlist = XEN_EMPTY_LIST;
   int i, lim;
   snd_info *sp;
   ASSERT_SOUND(S_soundfont_info, snd, 1);
@@ -2200,31 +2203,31 @@ each inner list has the form: (name start loopstart loopend)"
       if (lim > 0)
 	for (i = lim-1; i >= 0; i--)
 	  {
-	    inlist = LIST_4(TO_SCM_STRING(mus_header_sf2_name(i)),
-			       TO_SCM_INT(mus_header_sf2_start(i)),
-			       TO_SCM_INT(mus_header_sf2_loop_start(i)),
-			       TO_SCM_INT(mus_header_sf2_end(i)));
-	    outlist = CONS(inlist, outlist);
+	    inlist = XEN_LIST_4(C_TO_XEN_STRING(mus_header_sf2_name(i)),
+			       C_TO_XEN_INT(mus_header_sf2_start(i)),
+			       C_TO_XEN_INT(mus_header_sf2_loop_start(i)),
+			       C_TO_XEN_INT(mus_header_sf2_end(i)));
+	    outlist = XEN_CONS(inlist, outlist);
 	  }
     }
   return(outlist);
 }
 
-static SCM g_preload_directory(SCM directory) 
+static XEN g_preload_directory(XEN directory) 
 {
   #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
-  ASSERT_TYPE(STRING_P(directory), directory, ARGn, S_preload_directory, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ONLY_ARG, S_preload_directory, "a string");
   add_directory_to_prevlist(get_global_state(), 
-			    TO_C_STRING(directory));
+			    XEN_TO_C_STRING(directory));
   return(directory);
 }
 
-static SCM g_preload_file(SCM file) 
+static XEN g_preload_file(XEN file) 
 {
   #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"
   char *name = NULL;
-  ASSERT_TYPE(STRING_P(file), file, ARGn, S_preload_file, "a string");
-  name = mus_expand_filename(TO_C_STRING(file));
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_preload_file, "a string");
+  name = mus_expand_filename(XEN_TO_C_STRING(file));
   remember_me(get_global_state(), 
 	      filename_without_home_directory(name), 
 	      name);
@@ -2232,39 +2235,39 @@ static SCM g_preload_file(SCM file)
   return(file);
 }
 
-static SCM g_sound_files_in_directory(SCM dirname)
+static XEN g_sound_files_in_directory(XEN dirname)
 {
   #define H_sound_files_in_directory "(" S_sound_files_in_directory " directory) returns a list of sound files in directory"
   dir *dp = NULL;
   char *name = NULL;
   int i;
-  SCM res = EMPTY_LIST;
-  ASSERT_TYPE(STRING_P(dirname), dirname, ARGn, S_sound_files_in_directory, "a string");
-  name = TO_C_STRING(dirname);
+  XEN res = XEN_EMPTY_LIST;
+  XEN_ASSERT_TYPE(XEN_STRING_P(dirname), dirname, XEN_ONLY_ARG, S_sound_files_in_directory, "a string");
+  name = XEN_TO_C_STRING(dirname);
   if (name)
     {
       dp = find_sound_files_in_dir(name);
       if (dp)
 	{
 	  for (i = dp->len - 1; i >= 0; i--)
-	    res = CONS(TO_SCM_STRING(dp->files[i]), res);
+	    res = XEN_CONS(C_TO_XEN_STRING(dp->files[i]), res);
 	  free_dir(dp);
 	}
     }
   return(res);
 }
 
-#ifdef ARGIFY_1
-NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
-NARGIFY_1(g_file_write_date_w, g_file_write_date)
-ARGIFY_1(g_soundfont_info_w, g_soundfont_info)
-NARGIFY_1(g_preload_directory_w, g_preload_directory)
-NARGIFY_1(g_preload_file_w, g_preload_file)
-NARGIFY_1(g_sound_files_in_directory_w, g_sound_files_in_directory)
-ARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
-ARGIFY_2(g_set_sound_loop_info_w, g_set_sound_loop_info)
-NARGIFY_0(g_previous_files_sort_procedure_w, g_previous_files_sort_procedure)
-NARGIFY_1(g_set_previous_files_sort_procedure_w, g_set_previous_files_sort_procedure)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
+XEN_NARGIFY_1(g_file_write_date_w, g_file_write_date)
+XEN_ARGIFY_1(g_soundfont_info_w, g_soundfont_info)
+XEN_NARGIFY_1(g_preload_directory_w, g_preload_directory)
+XEN_NARGIFY_1(g_preload_file_w, g_preload_file)
+XEN_NARGIFY_1(g_sound_files_in_directory_w, g_sound_files_in_directory)
+XEN_ARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
+XEN_ARGIFY_2(g_set_sound_loop_info_w, g_set_sound_loop_info)
+XEN_NARGIFY_0(g_previous_files_sort_procedure_w, g_previous_files_sort_procedure)
+XEN_NARGIFY_1(g_set_previous_files_sort_procedure_w, g_set_previous_files_sort_procedure)
 #else
 #define g_add_sound_file_extension_w g_add_sound_file_extension
 #define g_file_write_date_w g_file_write_date
@@ -2278,19 +2281,19 @@ NARGIFY_1(g_set_previous_files_sort_procedure_w, g_set_previous_files_sort_proce
 #define g_set_previous_files_sort_procedure_w g_set_previous_files_sort_procedure
 #endif
 
-void g_init_file(SCM local_doc)
+void g_init_file(XEN local_doc)
 {
-  DEFINE_PROC(S_add_sound_file_extension,    g_add_sound_file_extension_w, 1, 0, 0,     H_add_sound_file_extension);
-  DEFINE_PROC(S_file_write_date,             g_file_write_date_w, 1, 0, 0,              H_file_write_date);
-  DEFINE_PROC(S_soundfont_info,              g_soundfont_info_w, 0, 1, 0,               H_soundfont_info);
-  DEFINE_PROC(S_preload_directory,           g_preload_directory_w, 1, 0, 0,            H_preload_directory);
-  DEFINE_PROC(S_preload_file,                g_preload_file_w, 1, 0, 0,                 H_preload_file);
-  DEFINE_PROC(S_sound_files_in_directory,    g_sound_files_in_directory_w, 1, 0, 0,     H_sound_files_in_directory);
+  XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,    g_add_sound_file_extension_w, 1, 0, 0,     H_add_sound_file_extension);
+  XEN_DEFINE_PROCEDURE(S_file_write_date,             g_file_write_date_w, 1, 0, 0,              H_file_write_date);
+  XEN_DEFINE_PROCEDURE(S_soundfont_info,              g_soundfont_info_w, 0, 1, 0,               H_soundfont_info);
+  XEN_DEFINE_PROCEDURE(S_preload_directory,           g_preload_directory_w, 1, 0, 0,            H_preload_directory);
+  XEN_DEFINE_PROCEDURE(S_preload_file,                g_preload_file_w, 1, 0, 0,                 H_preload_file);
+  XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 1, 0, 0,     H_sound_files_in_directory);
 
-  define_procedure_with_setter(S_sound_loop_info, PROCEDURE g_sound_loop_info_w, H_sound_loop_info,
-			       "set-" S_sound_loop_info, PROCEDURE g_set_sound_loop_info_w, local_doc, 0, 1, 1, 1);
+  define_procedure_with_setter(S_sound_loop_info, XEN_PROCEDURE_CAST g_sound_loop_info_w, H_sound_loop_info,
+			       "set-" S_sound_loop_info, XEN_PROCEDURE_CAST g_set_sound_loop_info_w, local_doc, 0, 1, 1, 1);
 
-  DEFINE_VAR(S_memo_sound, memo_sound, FALSE_VALUE);
+  XEN_DEFINE_VARIABLE(S_memo_sound, memo_sound, XEN_FALSE);
 
   #define H_open_hook S_open_hook " (filename) is called each time a file is opened (before the actual open). \
 If it returns #t, the file is not opened."
@@ -2301,9 +2304,9 @@ If it returns #t, the file is not closed."
   #define H_just_sounds_hook S_just_sounds_hook " (filename) is called on each file (after the sound file extension check) if the \
 just-sounds button is set. Return #f to filter out filename. "
 
-  open_hook =        MAKE_HOOK(S_open_hook, 1, H_open_hook);                 /* arg = filename */
-  close_hook =       MAKE_HOOK(S_close_hook, 1, H_close_hook);               /* arg = sound index */
-  just_sounds_hook = MAKE_HOOK(S_just_sounds_hook, 1, H_just_sounds_hook);   /* arg = filename */
+  XEN_DEFINE_HOOK(open_hook, S_open_hook, 1, H_open_hook, local_doc);                        /* arg = filename */
+  XEN_DEFINE_HOOK(close_hook, S_close_hook, 1, H_close_hook, local_doc);                     /* arg = sound index */
+  XEN_DEFINE_HOOK(just_sounds_hook, S_just_sounds_hook, 1, H_just_sounds_hook, local_doc);   /* arg = filename */
 
 #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices) is called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
@@ -2311,8 +2314,8 @@ The list (passed to subsequent hook functions as 'current-choice') is interprete
 (list chans srate data-format data-location data-length) where trailing elements can \
 be omitted (location defaults to 0, and length defaults to the file length in bytes)."
 
-  open_raw_sound_hook = MAKE_HOOK(S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
+  XEN_DEFINE_HOOK(open_raw_sound_hook, S_open_raw_sound_hook, 2, H_open_raw_sound_hook, local_doc);    /* args = filename current-result */
 
-  define_procedure_with_setter(S_previous_files_sort_procedure, PROCEDURE g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
-			       "set-" S_previous_files_sort_procedure, PROCEDURE g_set_previous_files_sort_procedure_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_previous_files_sort_procedure, XEN_PROCEDURE_CAST g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
+			       "set-" S_previous_files_sort_procedure, XEN_PROCEDURE_CAST g_set_previous_files_sort_procedure_w, local_doc, 0, 0, 1, 0);
 }

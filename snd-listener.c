@@ -176,12 +176,12 @@ char *listener_prompt_with_cr(snd_state *ss)
 #endif
 #endif
 
-static SCM read_str_wrapper(void *data)
+static XEN read_str_wrapper(void *data)
 {
-  return(TO_SCM_FORM((char *)data));
+  return(C_STRING_TO_XEN_FORM((char *)data));
 }
 
-static SCM read_hook;
+static XEN read_hook;
 
 void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 {
@@ -190,7 +190,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   GUI_TEXT_POSITION_TYPE new_eot = 0, cmd_eot = 0;
   char *str = NULL, *full_str = NULL, *prompt;
   int i, j, slen;
-  SCM form = UNDEFINED_VALUE;
+  XEN form = XEN_UNDEFINED;
   int end_of_text, start_of_text, last_position, current_position, parens;
   full_str = GUI_TEXT(w);
   current_position = GUI_TEXT_INSERTION_POSITION(w);
@@ -198,16 +198,16 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   end_of_text = current_position;
   last_position = GUI_TEXT_END(w);
   
-  if (HOOKED(read_hook))
+  if (XEN_HOOKED(read_hook))
     {
-      SCM result;
+      XEN result;
       str = (char *)CALLOC(last_position - last_prompt + 1, sizeof(char));
       for (i = last_prompt + 1, j = 0; i < last_position; i++, j++) str[j] = full_str[i];
       result = g_c_run_or_hook(read_hook, 
-			       LIST_1(TO_SCM_STRING(str)),
+			       XEN_LIST_1(C_TO_XEN_STRING(str)),
 			       S_read_hook);
       FREE(str);
-      if (TRUE_P(result)) return;
+      if (XEN_TRUE_P(result)) return;
     }
 
   prompt = listener_prompt(ss);
@@ -365,7 +365,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	form = snd_catch_any(read_str_wrapper, (void *)str, str);  /* catch needed else #< in input exits Snd! */
       FREE(str);
       str = NULL;
-      if (BOUND_P(form))
+      if (XEN_BOUND_P(form))
 	snd_report_listener_result(ss, form);
       GUI_UNSET_CURSOR(w, (ss->sgx)->arrow_cursor);
     }
@@ -463,32 +463,32 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 #if HAVE_GUILE && HAVE_CLOCK && HAVE_LONG_LONGS && HAVE_SCM_NUM2LONG_LONG
   {
     int len;
-    SCM stats;
+    XEN stats;
     long long gc_swept = 0, gc_heap = 0, gc_cells = 0;
     Float gc_time;
     stats = scm_gc_stats();
-    if (LIST_P_WITH_LENGTH(stats, len))
+    if (XEN_LIST_P_WITH_LENGTH(stats, len))
       {
 #ifdef SCM_NUM2LONG_LONG
 #define FUNC_NAME __FUNCTION__
 	if (len > 7)
-	  gc_swept = SCM_NUM2LONG_LONG(ARG1, CDR(LIST_REF(stats, 9)));
-	gc_heap = SCM_NUM2LONG_LONG(ARG1, CDR(LIST_REF(stats, 2)));
-	gc_cells = SCM_NUM2LONG_LONG(ARG1, CDR(LIST_REF(stats, 1)));
+	  gc_swept = SCM_NUM2LONG_LONG(XEN_ARG_1, XEN_CDR(XEN_LIST_REF(stats, 9)));
+	gc_heap = SCM_NUM2LONG_LONG(XEN_ARG_1, XEN_CDR(XEN_LIST_REF(stats, 2)));
+	gc_cells = SCM_NUM2LONG_LONG(XEN_ARG_1, XEN_CDR(XEN_LIST_REF(stats, 1)));
 #undef FUNC_NAME
 #else
 	if (len > 7)
-	  gc_swept = scm_num2long_long(CDR(LIST_REF(stats, 9)), (char *)ARG1, __FUNCTION__);
-	gc_heap = scm_num2long_long(CDR(LIST_REF(stats, 2)), (char *)ARG1, __FUNCTION__);
-	gc_cells = scm_num2long_long(CDR(LIST_REF(stats, 1)), (char *)ARG1, __FUNCTION__);
+	  gc_swept = scm_num2long_long(XEN_CDR(XEN_LIST_REF(stats, 9)), (char *)XEN_ARG_1, __FUNCTION__);
+	gc_heap = scm_num2long_long(XEN_CDR(XEN_LIST_REF(stats, 2)), (char *)XEN_ARG_1, __FUNCTION__);
+	gc_cells = scm_num2long_long(XEN_CDR(XEN_LIST_REF(stats, 1)), (char *)XEN_ARG_1, __FUNCTION__);
 #endif
-	gc_time = (float)(TO_C_INT(CDR(LIST_REF(stats, 0)))) / 1000.0;
+	gc_time = (float)(XEN_TO_C_INT(XEN_CDR(XEN_LIST_REF(stats, 0)))) / 1000.0;
 	str = (char *)CALLOC(STATS_BUFFER_SIZE,sizeof(char));
 	if (len > 7)
 	  mus_snprintf(str, STATS_BUFFER_SIZE,
 		  "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %Ld (%Ld gc'd)\n  heap size: %Ld",
 		  gc_time,
-		  TO_C_INT(CDR(LIST_REF(stats, 5))),     /* times */
+		  XEN_TO_C_INT(XEN_CDR(XEN_LIST_REF(stats, 5))),     /* times */
 		  gc_cells,
 		  gc_swept,
 		  gc_heap);
@@ -507,30 +507,30 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 #endif
 }
 
-static SCM g_save_listener(SCM filename)
+static XEN g_save_listener(XEN filename)
 {
   #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
   FILE *fp = NULL;
-  ASSERT_TYPE(STRING_P(filename), filename, ARGn, S_save_listener, "a string");
-  fp = fopen(TO_C_STRING(filename), "w");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_listener, "a string");
+  fp = fopen(XEN_TO_C_STRING(filename), "w");
   if (fp) save_listener_text(fp);
   if ((!fp) || (fclose(fp) != 0))
-    ERROR(CANNOT_SAVE,
-	  LIST_3(TO_SCM_STRING(S_save_listener),
+    XEN_ERROR(CANNOT_SAVE,
+	  XEN_LIST_3(C_TO_XEN_STRING(S_save_listener),
 		    filename,
-		    TO_SCM_STRING(strerror(errno))));
+		    C_TO_XEN_STRING(strerror(errno))));
   return(filename);
 }
 
-#ifdef ARGIFY_1
-NARGIFY_1(g_save_listener_w, g_save_listener)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_1(g_save_listener_w, g_save_listener)
 #else
 #define g_save_listener_w g_save_listener
 #endif
 
-void g_init_listener(SCM local_doc)
+void g_init_listener(XEN local_doc)
 {
-  DEFINE_PROC(S_save_listener, g_save_listener_w, 1, 0, 0, H_save_listener);
+  XEN_DEFINE_PROCEDURE(S_save_listener, g_save_listener_w, 1, 0, 0, H_save_listener);
 
   #define H_read_hook S_read_hook " (text) is called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\
@@ -541,6 +541,6 @@ If it returns #t, Snd assumes you've dealt the text yourself, and does not try t
     (do () ((or (c-g?) res))) \n\
     (reset-hook! read-hook) \n\
     res))"
-
-  read_hook = MAKE_HOOK(S_read_hook, 1, H_read_hook);
+  
+  XEN_DEFINE_HOOK(read_hook, S_read_hook, 1, H_read_hook, local_doc);
 }

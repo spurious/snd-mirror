@@ -1,24 +1,24 @@
-#ifndef CLM2SCM_H
-#define CLM2SCM_H
+#ifndef CLM2XEN_H
+#define CLM2XEN_H
 
 typedef struct {
   mus_any *gen;
-  SCM *vcts; /* one for each accessible Float array (wrapped up here in a vct object) */
+  XEN *vcts; /* one for each accessible Float array (wrapped up here in a vct object) */
   int nvcts;
-} mus_scm;
+} mus_xen;
 
 /* next two macros are "deprecated" */
-#define mus_get_any(arg) (((mus_scm *)OBJECT_REF(arg))->gen)
-#define mus_get_scm(arg) ((mus_scm *)OBJECT_REF(arg))
+#define mus_get_any(arg) (((mus_xen *)XEN_OBJECT_REF(arg))->gen)
+#define mus_xen_get(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
 
-#define TO_MUS_SCM(arg) ((mus_scm *)OBJECT_REF(arg))
-#define TO_CLM(obj) ((mus_any *)((TO_MUS_SCM(obj))->gen))
+#define CLM_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
+#define MUS_XEN_TO_CLM(obj) ((mus_any *)((CLM_TO_MUS_XEN(obj))->gen))
 
-int mus_scm_p(SCM obj);
-mus_any *mus_scm_to_clm(SCM obj);  /* "deprecated" -- use TO_CLM */
-SCM mus_scm_to_smob(mus_scm *gn);
-SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v);
-void init_mus2scm_module(void);
+int mus_xen_p(XEN obj);
+mus_any *mus_xen_to_clm(XEN obj);  /* "deprecated" -- use MUS_XEN_TO_CLM */
+XEN mus_xen_to_object(mus_xen *gn);
+XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);
+void mus_xen_init(void);
 char *mus_fft_window_name(int i);
 
 #define S_bartlett_window        "bartlett-window"

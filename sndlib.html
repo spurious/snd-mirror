@@ -60,9 +60,9 @@ types, and most of the features of the audio hardware. </p>
 <li>audio.c (read and write sound hardware ports)
 <li>sound.c (provide slightly higher level access to the preceding files)
 <li>sndlib.h (header for the preceding files)
-<li>sndlib2scm.c and sndlib-strings.h (tie preceding into Guile)
+<li>sndlib2xen.c and sndlib-strings.h (tie preceding into Guile or Ruby)
 <li>clm.c and clm.h (Music V implementation)
-<li>clm2scm.c, vct.c and vct.h (tie clm.c into Guile)
+<li>clm2xen.c, vct.c and vct.h (tie clm.c into Guile or Ruby)
 <li>old-sndlib.h (old names)
 </ul>
 <p>In version 6 and then to a greater extent in version 10, I changed the exported names to
@@ -367,7 +367,7 @@ MUS_AUDIO_PORT      return list of available devices (e.g. MUS_AUDIO_MICROPHONE)
 <span class=box><h2><A NAME="music5">MusicV</a></h2></span>
 
 <p>clm.c and friends implement all the generators found in CLM, a common lisp
-music V implementation, and clm2scm.c ties these into Guile (Scheme).  The
+music V implementation, and clm2xen.c ties these into Guile (Scheme).  The
 primary clm documentation (which describes both the Scheme and Common Lisp implementations)
 is clm.html found in clm-2.tar.gz alongside sndlib at ccrma-ftp.
 The simplest way to try these out is to load them into Snd; see extsnd.html,
@@ -485,7 +485,7 @@ it through a "mixer" (a matrix, the operation being a matrix multiply).
 </ul>
 
 <p>Before using any of these functions, call init_mus_module.  Errors are reported
-through mus_error which can be redirected or muffled.  See clm2scm.c for an example.
+through mus_error which can be redirected or muffled.  See clm2xen.c for an example.
 </p>
 <br>
 
@@ -1100,7 +1100,7 @@ to and from arrays:</p>
 <span class=box><h2><A NAME="sndlibguile">Sndlib and Guile</a></h2></span>
 
 <p>Much of sndlib is accessible at run time in any program that has Guile;
-the modules sndlib2scm and clm2scm tie most of the library into Scheme
+the modules sndlib2xen and clm2xen tie most of the library into Scheme
 making it possible to call the library functions from Guile.  The documentation
 is scattered around, unfortunately: the clm side is in clm.html and extsnd.html with many
 examples in Snd's <a href="sndscm.html#exampdoc">examp.scm</a>.  Most of these are obvious translations of the
@@ -1244,16 +1244,16 @@ constants and functions described above into Scheme.
 </p>
 <pre>
 guile&gt; (define lib (<em class=red>dynamic-link</em> "/home/bil/sndlib/sndlib.so"))
-guile&gt; (<em class=red>dynamic-call</em> "mus_sndlib2scm_initialize" lib)
+guile&gt; (<em class=red>dynamic-call</em> "mus_sndlib2xen_initialize" lib)
 guile&gt; (mus-sound-srate "/home/bil/cl/oboe.snd")
 22050
-guile&gt; (<em class=red>dynamic-call</em> "init_mus2scm_module" lib)
+guile&gt; (<em class=red>dynamic-call</em> "mus_xen_init" lib)
 guile&gt; (define osc (make-oscil 440))
 guile&gt; (oscil osc)
 0.0
 </pre>
-<p>The first dynamic-call (mus_sndlib2scm_initialize) ties sndlib2scm.c into
-Guile, and the second (init_mus2scm_module) ties clm2scm.c into Guile.
+<p>The first dynamic-call (mus_sndlib2xen_initialize) ties sndlib2xen.c into
+Guile, and the second (mus_xen_init) ties clm2xen.c into Guile.
 I've included sndlib.i in the sndlib tarfile, intended for use with
 swig.  I was able to create a python wrapper, but don't know enough
 (i.e. anything at all) about python.  Presumably, we could 

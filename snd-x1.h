@@ -105,7 +105,7 @@ Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, 
 Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *args, int n, int activatable, int completer);
 Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n);
 
-void g_init_gxlistener(SCM local_doc);
+void g_init_gxlistener(XEN local_doc);
 
 
 
@@ -178,7 +178,7 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int g_remove_from_menu(int which_menu, char *label);
 int g_menu_is_sensitive(int which_menu, char *old_label);
 
-void g_init_gxmenu(SCM local_doc);
+void g_init_gxmenu(XEN local_doc);
 
 
 
@@ -191,7 +191,7 @@ void snd_doit(snd_state *state, int argc, char **argv);
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn);
 #endif
 
-void g_init_gxmain(SCM local_doc);
+void g_init_gxmain(XEN local_doc);
 
 
 
@@ -221,7 +221,7 @@ void set_transform_graph_type(snd_state *ss, int val);
 
 void InitializeDrop(snd_state *ss);
 
-void g_init_gxdrop(SCM local_doc);
+void g_init_gxdrop(XEN local_doc);
 
 
 
@@ -239,12 +239,12 @@ void allocate_region_rows(snd_state *ss, int n);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
 
-void g_init_gxregion(SCM local_doc);
+void g_init_gxregion(XEN local_doc);
 
 
 /* -------- snd-gxutils -------- */
 
-void g_init_gxutils(SCM local_doc);
+void g_init_gxutils(XEN local_doc);
 
 
 
@@ -274,7 +274,7 @@ void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g
 
 void Edit_Find_Callback(Widget w, XtPointer clientData, XtPointer callData);
 #if DEBUGGING
-  void g_init_gxfind(SCM local_doc);
+  void g_init_gxfind(XEN local_doc);
 #endif
 
 
@@ -380,7 +380,7 @@ void cleanup_cw(chan_info *cp);
 int fixup_cp_cgx_ax_wn(chan_info *cp);
 void change_channel_style(snd_info *sp, int new_style);
 
-void g_init_gxchn(SCM local_doc);
+void g_init_gxchn(XEN local_doc);
 
 
 /* -------- snd-xsnd.c -------- */
@@ -476,7 +476,7 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
 void File_Mix_Callback(Widget w, XtPointer clientData, XtPointer callData);
 Widget edit_header(snd_info *sp);
 
-void g_initialize_xgfile(SCM local_doc);
+void g_initialize_xgfile(XEN local_doc);
 
 
 
@@ -510,7 +510,7 @@ void enved_reflect_selection(int on);
 void color_enved_waveform(Pixel pix);
 void reflect_mix_in_enved(void);
 
-void g_init_gxenv(SCM local_doc);
+void g_init_gxenv(XEN local_doc);
 
 
 
@@ -541,17 +541,17 @@ char *ps_rgb(snd_state *ss, int pchan);
 /* -------- snd-xscm.c -------- */
 
 
-int snd_color_p(SCM obj);
+int snd_color_p(XEN obj);
 #define COLOR_P(Obj) snd_color_p(Obj)
-snd_color *get_snd_color(SCM arg);
+snd_color *get_snd_color(XEN arg);
 #define TO_SND_COLOR(Arg) get_snd_color(Arg)
-SCM pixel2color(COLOR_TYPE pix);
-COLOR_TYPE color2pixel(SCM color);
+XEN pixel2color(COLOR_TYPE pix);
+COLOR_TYPE color2pixel(XEN color);
 void recolor_button(GUI_WIDGET w, GUI_POINTER ptr);
 void color_chan_components(COLOR_TYPE color, int which_component);
 void color_unselected_graphs(COLOR_TYPE color);
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr);
-void g_initialize_xgh(snd_state *ss, SCM local_doc);
+void g_initialize_xgh(snd_state *ss, XEN local_doc);
 
 
 

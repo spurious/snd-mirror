@@ -46,7 +46,7 @@ typedef struct {
 typedef struct {
   char *name, *xlabel;
   Float lo, hi;
-  SCM proc;
+  XEN proc;
   int type;
 } added_transform;
 
@@ -75,7 +75,7 @@ static added_transform *new_added_transform(void)
   return(added_transforms[added_transforms_top++]);
 }
 
-static int add_transform(char *name, char *xlabel, Float lo, Float hi, SCM proc)
+static int add_transform(char *name, char *xlabel, Float lo, Float hi, XEN proc)
 {
   added_transform *af;
   snd_protect(proc);
@@ -125,16 +125,16 @@ static Float added_transform_hi(int type)
   return(1.0);
 }
 
-static SCM added_transform_proc(int type)
+static XEN added_transform_proc(int type)
 {
   int i;
   for (i = 0; i < added_transforms_top; i++)
     if (added_transforms[i]->type == type)
       return(added_transforms[i]->proc);
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM before_transform_hook;
+static XEN before_transform_hook;
 static fft_window_state *fft_windows[NUM_CACHED_FFT_WINDOWS];
 
 
@@ -1318,15 +1318,15 @@ static int apply_fft_window(fft_state *fs)
     }
   else 
     {
-      SCM res;
-      if (HOOKED(before_transform_hook))
+      XEN res;
+      if (XEN_HOOKED(before_transform_hook))
 	{
 	  res = g_c_run_progn_hook(before_transform_hook, 
-				   LIST_2(TO_SMALL_SCM_INT(cp->sound->index), 
-					     TO_SMALL_SCM_INT(cp->chan)),
+				   XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index), 
+					     C_TO_SMALL_XEN_INT(cp->chan)),
 				   S_before_transform_hook);
-	  if (NUMBER_P(res))
-	    ind0 = TO_C_INT_OR_ELSE(res, 0) + fs->beg;
+	  if (XEN_NUMBER_P(res))
+	    ind0 = XEN_TO_C_INT_OR_ELSE(res, 0) + fs->beg;
 	  else ind0 = (cp->axis)->losamp + fs->beg;
 	}
       else
@@ -1439,13 +1439,13 @@ static int apply_fft_window(fft_state *fs)
       break;
     default:
       {
-	SCM res, sfd;
+	XEN res, sfd;
 	vct *v;
 	int len, i;
 	sfd = g_c_make_sample_reader(sf);
 	snd_protect(sfd);
-	res = CALL_2(added_transform_proc(cp->transform_type), 
-		    TO_SCM_INT(data_len), 
+	res = XEN_CALL_2(added_transform_proc(cp->transform_type), 
+		    C_TO_XEN_INT(data_len), 
 		    sfd,
 		    "added transform func");
 	snd_protect(res);
@@ -1671,7 +1671,7 @@ void *make_fft_state(chan_info *cp, int simple)
     {
       fs = (fft_state *)(cp->fft_data);
       if ((fs->losamp == ap->losamp) && 
-	  (!(HOOKED(before_transform_hook))) &&
+	  (!(XEN_HOOKED(before_transform_hook))) &&
 	  (fs->size == fftsize) &&
 	  (fs->transform_type == cp->transform_type) &&
 	  (fs->wintype == cp->fft_window) &&
@@ -2220,39 +2220,39 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
     }
 }
 
-static SCM g_autocorrelate(SCM reals)
+static XEN g_autocorrelate(XEN reals)
 {
   #define H_autocorrelate "(" S_autocorrelate " data) returns (in place) the autocorrelation of data (vector or vct)"
   /* assumes length is power of 2 */
   vct *v1 = NULL;
   int n, i;
-  SCM *vdata;
+  XEN *vdata;
   Float *rl;
-  ASSERT_TYPE(((VCT_P(reals)) || (VECTOR_P(reals))), reals, ARGn, S_autocorrelate, "a vct or vector");
+  XEN_ASSERT_TYPE(((VCT_P(reals)) || (XEN_VECTOR_P(reals))), reals, XEN_ONLY_ARG, S_autocorrelate, "a vct or vector");
   if (VCT_P(reals))
     {
-      v1 = (vct *)OBJECT_REF(reals);
+      v1 = (vct *)XEN_OBJECT_REF(reals);
       rl = v1->data;
       n = v1->length;
     }
   else
     {
-      n = VECTOR_LENGTH(reals);
+      n = XEN_VECTOR_LENGTH(reals);
       rl = (Float *)MALLOC(n * sizeof(Float));
-      vdata = VECTOR_ELEMENTS(reals);
-      for (i = 0; i < n; i++) rl[i] = TO_C_DOUBLE(vdata[i]);
+      vdata = XEN_VECTOR_ELEMENTS(reals);
+      for (i = 0; i < n; i++) rl[i] = XEN_TO_C_DOUBLE(vdata[i]);
     }
   autocorrelation(rl, n);
   if (v1 == NULL) 
     {
-      vdata = VECTOR_ELEMENTS(reals);
-      for (i = 0; i < n; i++) vdata[i] = TO_SCM_DOUBLE(rl[i]);
+      vdata = XEN_VECTOR_ELEMENTS(reals);
+      for (i = 0; i < n; i++) vdata[i] = C_TO_XEN_DOUBLE(rl[i]);
       FREE(rl);
     }
   return(reals);
 }
 
-static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
+static XEN g_add_transform(XEN name, XEN xlabel, XEN lo, XEN hi, XEN proc)
 {
   #define H_add_transform "(" S_add_transform " name x-label low high func) adds the transform func \
 to the transform lists; func should be a function of two arguments, the length of the transform \
@@ -2261,27 +2261,27 @@ and a sample-reader to get the data, and should return a vct object containing t
 to be displayed goes from low to high (normally 0.0 to 1.0)"
 
   char *errmsg;
-  SCM errstr;
+  XEN errstr;
   errmsg = procedure_ok(proc, 2, S_add_transform, "transform", 5);
   if (errmsg)
     {
-      errstr = TO_SCM_STRING(errmsg);
+      errstr = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
       return(snd_bad_arity_error(S_add_transform, errstr, proc));
     }
-  ASSERT_TYPE(STRING_P(name), name, ARG1, S_add_transform, "a string");
-  ASSERT_TYPE(STRING_P(xlabel), xlabel, ARG2, S_add_transform, "a string");
-  ASSERT_TYPE(NUMBER_P(lo), lo, ARG3, S_add_transform, "a number");
-  ASSERT_TYPE(NUMBER_P(hi), hi, ARG4, S_add_transform, "a number");
-  ASSERT_TYPE(PROCEDURE_P(proc), proc, ARG5, S_add_transform, "a procedure");
-  return(TO_SMALL_SCM_INT(add_transform(TO_C_STRING(name),
-					TO_C_STRING(xlabel),
-					TO_C_DOUBLE(lo),
-					TO_C_DOUBLE(hi),
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_transform, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(xlabel), xlabel, XEN_ARG_2, S_add_transform, "a string");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(lo), lo, XEN_ARG_3, S_add_transform, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(hi), hi, XEN_ARG_4, S_add_transform, "a number");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_5, S_add_transform, "a procedure");
+  return(C_TO_SMALL_XEN_INT(add_transform(XEN_TO_C_STRING(name),
+					XEN_TO_C_STRING(xlabel),
+					XEN_TO_C_DOUBLE(lo),
+					XEN_TO_C_DOUBLE(hi),
 					proc)));
 }
 
-static SCM g_transform_samples_size(SCM snd, SCM chn)
+static XEN g_transform_samples_size(XEN snd, XEN chn)
 {
   #define H_transform_samples_size "(" S_transform_samples_size " &optional snd chn)\n\
 returns a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
@@ -2293,17 +2293,17 @@ and otherwise returns a list (total-size active-bins active-slices)"
   ASSERT_CHANNEL(S_transform_samples_size, snd, chn, 1);
   cp = get_cp(snd, chn, S_transform_samples_size);
   if (!(cp->graph_transform_p)) 
-    return(INTEGER_ZERO);
+    return(XEN_ZERO);
   if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE) 
-    return(TO_SMALL_SCM_INT(transform_size(cp->state)));
+    return(C_TO_SMALL_XEN_INT(transform_size(cp->state)));
   si = (sono_info *)(cp->sonogram_data);
-  if (si) return(LIST_3(TO_SCM_DOUBLE(spectro_cutoff(cp->state)),
-			   TO_SMALL_SCM_INT(si->active_slices),
-			   TO_SMALL_SCM_INT(si->target_bins)));
-  return(INTEGER_ZERO);
+  if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(spectro_cutoff(cp->state)),
+			   C_TO_SMALL_XEN_INT(si->active_slices),
+			   C_TO_SMALL_XEN_INT(si->target_bins)));
+  return(XEN_ZERO);
 }
 
-static SCM g_transform_sample(SCM bin, SCM slice, SCM snd_n, SCM chn_n)
+static XEN g_transform_sample(XEN bin, XEN slice, XEN snd_n, XEN chn_n)
 {
   #define H_transform_sample "(" S_transform_sample " &optional (bin 0) (slice 0) snd chn)\n\
 returns the current transform sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
@@ -2312,47 +2312,47 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
   fft_info *fp;
   sono_info *si;
   int fbin, fslice;
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(bin), bin, ARG1, S_transform_sample, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(slice), slice, ARG2, S_transform_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(bin), bin, XEN_ARG_1, S_transform_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(slice), slice, XEN_ARG_2, S_transform_sample, "an integer");
   ASSERT_CHANNEL(S_transform_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_transform_sample);
   if (cp->graph_transform_p)
     {
       /* BACK */
-      fbin = TO_C_INT_OR_ELSE(bin, 0);
+      fbin = XEN_TO_C_INT_OR_ELSE(bin, 0);
       fp = cp->fft;
       if ((fp) && 
 	  (fbin < fp->current_size))
 	{
 	  if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE)
-	    return(TO_SCM_DOUBLE(fp->data[fbin]));
+	    return(C_TO_XEN_DOUBLE(fp->data[fbin]));
 	  else 
 	    {
-	      fslice = TO_C_INT_OR_ELSE(slice, 0);
+	      fslice = XEN_TO_C_INT_OR_ELSE(slice, 0);
 	      si = (sono_info *)(cp->sonogram_data);
 	      if ((si) && 
 		  (fbin < si->target_bins) && 
 		  (fslice < si->active_slices))
-		return(TO_SCM_DOUBLE(si->data[fslice][fbin]));
-	      else  ERROR(NO_SUCH_SAMPLE,
-			  LIST_5(TO_SCM_STRING(S_transform_sample),
+		return(C_TO_XEN_DOUBLE(si->data[fslice][fbin]));
+	      else  XEN_ERROR(NO_SUCH_SAMPLE,
+			  XEN_LIST_5(C_TO_XEN_STRING(S_transform_sample),
 				    bin, slice,
 				    snd_n, chn_n));
 	    }
 	}
     }
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }  
 
-static SCM g_transform_samples(SCM snd_n, SCM chn_n)
+static XEN g_transform_samples(XEN snd_n, XEN chn_n)
 {
   #define H_transform_samples "(" S_transform_samples " &optional snd chn) -> current transform data for snd channel chn"
   chan_info *cp;
   fft_info *fp;
   sono_info *si;
   int bins, slices, i, j, len;
-  SCM new_vect, tmp_vect;
-  SCM *vdata, *tdata;
+  XEN new_vect; XEN tmp_vect;
+  XEN *vdata; XEN *tdata;
   ASSERT_CHANNEL(S_transform_samples, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_transform_samples);
   if (cp->graph_transform_p)
@@ -2365,10 +2365,10 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 	  if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE)
 	    {
 	      len = fp->current_size;
-	      new_vect = MAKE_VECTOR(len, TO_SCM_DOUBLE(0.0));
-	      vdata = VECTOR_ELEMENTS(new_vect);
+	      new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
+	      vdata = XEN_VECTOR_ELEMENTS(new_vect);
 	      for (i = 0; i < len; i++) 
-		vdata[i] = TO_SCM_DOUBLE(fp->data[i]);
+		vdata[i] = C_TO_XEN_DOUBLE(fp->data[i]);
 	      return(new_vect);
 	    }
 	  else 
@@ -2378,25 +2378,25 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 		{
 		  slices = si->active_slices;
 		  bins = si->target_bins;
-		  new_vect = MAKE_VECTOR(slices, TO_SCM_DOUBLE(0.0));
-		  vdata = VECTOR_ELEMENTS(new_vect);
+		  new_vect = XEN_MAKE_VECTOR(slices, C_TO_XEN_DOUBLE(0.0));
+		  vdata = XEN_VECTOR_ELEMENTS(new_vect);
 		  for (i = 0; i < slices; i++)
 		    {
-		      tmp_vect = MAKE_VECTOR(bins, TO_SCM_DOUBLE(0.0));
-		      tdata = VECTOR_ELEMENTS(tmp_vect);
+		      tmp_vect = XEN_MAKE_VECTOR(bins, C_TO_XEN_DOUBLE(0.0));
+		      tdata = XEN_VECTOR_ELEMENTS(tmp_vect);
 		      vdata[i] = tmp_vect;
 		      for (j = 0; j < bins; j++)
-			tdata[j] = TO_SCM_DOUBLE(si->data[i][j]);
+			tdata[j] = C_TO_XEN_DOUBLE(si->data[i][j]);
 		    }
 		  return(new_vect);
 		}
 	    }
 	}
     }
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }  
 
-static SCM transform_samples2vct(SCM snd_n, SCM chn_n, SCM v)
+static XEN transform_samples2vct(XEN snd_n, XEN chn_n, XEN v)
 {
   #define H_transform_samples2vct "(" S_transform_samples2vct " &optional snd chn vct-obj)\n\
 returns a vct object (vct-obj if passed), with the current transform data from snd's channel chn"
@@ -2444,24 +2444,24 @@ returns a vct object (vct-obj if passed), with the current transform data from s
 	    }
 	}
     }
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }  
 
-static SCM g_snd_transform(SCM type, SCM data, SCM hint)
+static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 {
   int trf, i, j, hnt, n2;
   vct *v;
   Float *dat;
-  ASSERT_TYPE(INTEGER_P(type), type, ARG1, "snd-transform", "an integer");
-  ASSERT_TYPE(VCT_P(data), data, ARG2, "snd-transform", "a vct");
-  trf = TO_SMALL_C_INT(type);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, "snd-transform", "an integer");
+  XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
+  trf = XEN_TO_SMALL_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
     mus_misc_error("snd-transform", "invalid transform choice", type);
   v = TO_VCT(data);
   switch (trf)
     {
     case FOURIER: 
-      if ((BOUND_P(hint)) && (TO_C_INT(hint) == 1))
+      if ((XEN_BOUND_P(hint)) && (XEN_TO_C_INT(hint) == 1))
 	fht((int)(log(v->length) / log(4.0)), v->data);
       else
 	{
@@ -2487,7 +2487,7 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
 #endif
       break;
     case WAVELET:
-      hnt = TO_SMALL_C_INT(hint);
+      hnt = XEN_TO_SMALL_C_INT(hint);
       if (hnt < NUM_WAVELETS)
 	wavelet_transform(v->data, v->length, wavelet_data[hnt], wavelet_sizes[hnt]);
       break;
@@ -2516,14 +2516,14 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
   return(data);
 }
 
-#ifdef ARGIFY_1
-ARGIFY_2(g_transform_samples_size_w, g_transform_samples_size)
-ARGIFY_2(g_transform_samples_w, g_transform_samples)
-ARGIFY_4(g_transform_sample_w, g_transform_sample)
-ARGIFY_3(transform_samples2vct_w, transform_samples2vct)
-NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
-NARGIFY_5(g_add_transform_w, g_add_transform)
-ARGIFY_3(g_snd_transform_w, g_snd_transform)
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_2(g_transform_samples_size_w, g_transform_samples_size)
+XEN_ARGIFY_2(g_transform_samples_w, g_transform_samples)
+XEN_ARGIFY_4(g_transform_sample_w, g_transform_sample)
+XEN_ARGIFY_3(transform_samples2vct_w, transform_samples2vct)
+XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
+XEN_NARGIFY_5(g_add_transform_w, g_add_transform)
+XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
 #else
 #define g_transform_samples_size_w g_transform_samples_size
 #define g_transform_samples_w g_transform_samples
@@ -2534,7 +2534,7 @@ ARGIFY_3(g_snd_transform_w, g_snd_transform)
 #define g_snd_transform_w g_snd_transform
 #endif
 
-void g_init_fft(SCM local_doc)
+void g_init_fft(XEN local_doc)
 {
   #define H_before_transform_hook S_before_transform_hook " (snd chn) is called just before a transform is calculated.  If it returns \
 an integer, it is used as the starting point of the transform.  The following \
@@ -2548,7 +2548,7 @@ of a moving mark:\n\
       (set! transform-position (mark-sample id))\n\
       (update-transform)))"
 
-  before_transform_hook = MAKE_HOOK(S_before_transform_hook, 2, H_before_transform_hook);  /* args = snd chn */
+  XEN_DEFINE_HOOK(before_transform_hook, S_before_transform_hook, 2, H_before_transform_hook, local_doc);  /* args = snd chn */
 
   #define H_fourier_transform   S_transform_type " value for Fourier transform (sinusoid basis)"
   #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"
@@ -2560,41 +2560,41 @@ of a moving mark:\n\
   #define H_walsh_transform     S_transform_type " value for Walsh transform (step function basis)"
   #define H_autocorrelation     S_transform_type " value for autocorrelation (ifft of spectrum)"
 
-  DEFINE_CONST(S_fourier_transform,   FOURIER,         H_fourier_transform);
-  DEFINE_CONST(S_wavelet_transform,   WAVELET,         H_wavelet_transform);
-  DEFINE_CONST(S_hankel_transform,    HANKEL,          H_hankel_transform);
-  DEFINE_CONST(S_chebyshev_transform, CHEBYSHEV,       H_chebyshev_transform);
-  DEFINE_CONST(S_haar_transform,      HAAR,            H_haar_transform);
-  DEFINE_CONST(S_cepstrum,            CEPSTRUM,        H_cepstrum);
-  DEFINE_CONST(S_hadamard_transform,  HADAMARD,        H_hadamard_transform);
-  DEFINE_CONST(S_walsh_transform,     WALSH,           H_walsh_transform);
-  DEFINE_CONST(S_autocorrelation,     AUTOCORRELATION, H_autocorrelation);
+  XEN_DEFINE_CONSTANT(S_fourier_transform,   FOURIER,         H_fourier_transform);
+  XEN_DEFINE_CONSTANT(S_wavelet_transform,   WAVELET,         H_wavelet_transform);
+  XEN_DEFINE_CONSTANT(S_hankel_transform,    HANKEL,          H_hankel_transform);
+  XEN_DEFINE_CONSTANT(S_chebyshev_transform, CHEBYSHEV,       H_chebyshev_transform);
+  XEN_DEFINE_CONSTANT(S_haar_transform,      HAAR,            H_haar_transform);
+  XEN_DEFINE_CONSTANT(S_cepstrum,            CEPSTRUM,        H_cepstrum);
+  XEN_DEFINE_CONSTANT(S_hadamard_transform,  HADAMARD,        H_hadamard_transform);
+  XEN_DEFINE_CONSTANT(S_walsh_transform,     WALSH,           H_walsh_transform);
+  XEN_DEFINE_CONSTANT(S_autocorrelation,     AUTOCORRELATION, H_autocorrelation);
 
   #define H_graph_transform_once "The value for " S_transform_graph_type " that causes a single transform to be displayed"
   #define H_graph_transform_as_sonogram "The value for " S_transform_graph_type " that causes a snongram to be displayed"
   #define H_graph_transform_as_spectrogram "The value for " S_transform_graph_type " that causes a spectrogram to be displayed"
 
-  DEFINE_CONST(S_graph_transform_once,           GRAPH_TRANSFORM_ONCE,           H_graph_transform_once);
-  DEFINE_CONST(S_graph_transform_as_sonogram,    GRAPH_TRANSFORM_AS_SONOGRAM,    H_graph_transform_as_sonogram);
-  DEFINE_CONST(S_graph_transform_as_spectrogram, GRAPH_TRANSFORM_AS_SPECTROGRAM, H_graph_transform_as_spectrogram);
+  XEN_DEFINE_CONSTANT(S_graph_transform_once,           GRAPH_TRANSFORM_ONCE,           H_graph_transform_once);
+  XEN_DEFINE_CONSTANT(S_graph_transform_as_sonogram,    GRAPH_TRANSFORM_AS_SONOGRAM,    H_graph_transform_as_sonogram);
+  XEN_DEFINE_CONSTANT(S_graph_transform_as_spectrogram, GRAPH_TRANSFORM_AS_SPECTROGRAM, H_graph_transform_as_spectrogram);
 
   #define H_dont_normalize_transform "The value for " S_transform_normalization " that causes the transform to display raw data"
   #define H_normalize_transform_by_channel "The value for " S_transform_normalization " that causes the transform to be normalized in each channel independently"
   #define H_normalize_transform_by_sound "The value for " S_transform_normalization " that causes the transform to be normalized across a sound's channels"
   #define H_normalize_transform_globally "The value for " S_transform_normalization " that causes the transform to be normalized across all sounds"
 
-  DEFINE_CONST(S_dont_normalize_transform,        DONT_NORMALIZE_TRANSFORM,       H_dont_normalize_transform);
-  DEFINE_CONST(S_normalize_transform_by_channel,  NORMALIZE_TRANSFORM_BY_CHANNEL, H_normalize_transform_by_channel);
-  DEFINE_CONST(S_normalize_transform_by_sound,    NORMALIZE_TRANSFORM_BY_SOUND,   H_normalize_transform_by_sound);
-  DEFINE_CONST(S_normalize_transform_globally,    NORMALIZE_TRANSFORM_GLOBALLY,   H_normalize_transform_globally);
+  XEN_DEFINE_CONSTANT(S_dont_normalize_transform,        DONT_NORMALIZE_TRANSFORM,       H_dont_normalize_transform);
+  XEN_DEFINE_CONSTANT(S_normalize_transform_by_channel,  NORMALIZE_TRANSFORM_BY_CHANNEL, H_normalize_transform_by_channel);
+  XEN_DEFINE_CONSTANT(S_normalize_transform_by_sound,    NORMALIZE_TRANSFORM_BY_SOUND,   H_normalize_transform_by_sound);
+  XEN_DEFINE_CONSTANT(S_normalize_transform_globally,    NORMALIZE_TRANSFORM_GLOBALLY,   H_normalize_transform_globally);
 
-  DEFINE_PROC(S_transform_samples_size,  g_transform_samples_size_w, 0, 2, 0,H_transform_samples_size);
-  DEFINE_PROC(S_transform_samples,     g_transform_samples_w, 0, 2, 0,   H_transform_samples);
-  DEFINE_PROC(S_transform_sample,      g_transform_sample_w, 0, 4, 0,    H_transform_sample);
-  DEFINE_PROC(S_transform_samples2vct, transform_samples2vct_w, 0, 3, 0, H_transform_samples2vct);
-  DEFINE_PROC(S_autocorrelate,         g_autocorrelate_w, 1, 0, 0,       H_autocorrelate);
-  DEFINE_PROC(S_add_transform,         g_add_transform_w, 5, 0, 0,       H_add_transform);
+  XEN_DEFINE_PROCEDURE(S_transform_samples_size,  g_transform_samples_size_w, 0, 2, 0,H_transform_samples_size);
+  XEN_DEFINE_PROCEDURE(S_transform_samples,     g_transform_samples_w, 0, 2, 0,   H_transform_samples);
+  XEN_DEFINE_PROCEDURE(S_transform_sample,      g_transform_sample_w, 0, 4, 0,    H_transform_sample);
+  XEN_DEFINE_PROCEDURE(S_transform_samples2vct, transform_samples2vct_w, 0, 3, 0, H_transform_samples2vct);
+  XEN_DEFINE_PROCEDURE(S_autocorrelate,         g_autocorrelate_w, 1, 0, 0,       H_autocorrelate);
+  XEN_DEFINE_PROCEDURE(S_add_transform,         g_add_transform_w, 5, 0, 0,       H_add_transform);
 
-  DEFINE_PROC("snd-transform",         g_snd_transform_w, 2, 1, 0,       "call transform code directly");
+  XEN_DEFINE_PROCEDURE("snd-transform",         g_snd_transform_w, 2, 1, 0,       "call transform code directly");
 }
 

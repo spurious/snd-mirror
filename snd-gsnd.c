@@ -379,7 +379,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
 	set_active_color(w, (ss->sgx)->green); 
       else set_active_color(w, (ss->sgx)->pushed_button_color);
       play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, 
-		 TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
 		 "play button", 0);                        /* should this follow the sync button? */
     }
 }
@@ -1173,7 +1173,7 @@ void color_filter_waveform(snd_state *ss, GdkColor *color)
 }
 
 
-/* -------- APPLY CALLBACKS -------- */
+/* -------- XEN_APPLY CALLBACKS -------- */
 
 static int last_apply_state = 0;
 
@@ -1739,7 +1739,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_widget_show(sw[W_filter_form]);
       
       
-      /* -------- APPLY BUTTONS -------- */
+      /* -------- XEN_APPLY BUTTONS -------- */
       
       sw[W_apply_form] = gtk_hbox_new(FALSE, 2);
       gtk_box_pack_start(GTK_BOX(sw[W_ctrls]), sw[W_apply_form], FALSE, FALSE, 0);

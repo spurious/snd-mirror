@@ -199,13 +199,13 @@ static void hit_help(Widget w, XtPointer context, XtPointer info)
       /* find help relating to selection and post it */
 #ifdef SCM_MODULE_OBARRAY
       {
-	SCM help_text;
-	help_text = g_help(TO_SCM_STRING(selection),
+	XEN help_text;
+	help_text = g_help(C_TO_XEN_STRING(selection),
 			   widget_width(w));
-	if (STRING_P(help_text))
+	if (XEN_STRING_P(help_text))
 	  snd_help(get_global_state(),
 		   selection,
-		   TO_C_STRING(help_text));
+		   XEN_TO_C_STRING(help_text));
       }
 #endif
       XtFree(selection);

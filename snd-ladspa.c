@@ -281,7 +281,7 @@ static void loadLADSPA() {
 
 #define S_init_ladspa "init-ladspa"
 
-static SCM g_init_ladspa() {
+static XEN g_init_ladspa() {
 
 #define H_init_ladspa "This function reinitialises LADSPA. This is not \
 normally necessary as LADSPA automatically initialises itself, however \
@@ -292,45 +292,45 @@ it can be useful when the plugins on the system have changed."
 
   loadLADSPA();
 
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
 /*****************************************************************************/
 
 #define S_list_ladspa "list-ladspa"
 
-static SCM g_list_ladspa() {
+static XEN g_list_ladspa() {
 
 #define H_list_ladspa "This function returns a list of lists containing \
 information of the LADSPA plugins currently available. For each plugin a \
 list containing the plugin-file and plugin-label is included."
 
   long lIndex;
-  SCM scmList, scmPluginList;
+  XEN xenList; XEN xenPluginList;
   LADSPAPluginInfo * psInfo;
 
   if (!g_bLADSPAInitialised)
     loadLADSPA();
 
-  scmList = EMPTY_LIST;
+  xenList = XEN_EMPTY_LIST;
 
   for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) {
     psInfo = g_psLADSPARepository[lIndex];
-    scmPluginList = CONS(TO_SCM_STRING(psInfo->m_pcPackedFilename),
-			    CONS(TO_SCM_STRING((char *)psInfo->m_pcLabel),
-				    EMPTY_LIST));
-    scmList = CONS(scmPluginList, scmList);
+    xenPluginList = XEN_CONS(C_TO_XEN_STRING(psInfo->m_pcPackedFilename),
+			    XEN_CONS(C_TO_XEN_STRING((char *)psInfo->m_pcLabel),
+				    XEN_EMPTY_LIST));
+    xenList = XEN_CONS(xenPluginList, xenList);
   }
 
-  return scmList;
+  return xenList;
 }
 
 /*****************************************************************************/
 
 #define S_analyse_ladspa "analyse-ladspa"
 
-static SCM g_analyse_ladspa(SCM ladspa_plugin_filename,
-			    SCM ladspa_plugin_label) {
+static XEN g_analyse_ladspa(XEN ladspa_plugin_filename,
+			    XEN ladspa_plugin_label) {
 
 #define H_analyse_ladspa "This function returns a list of information about \
 a LADSPA plugin. The plugin is identified by plugin-file and plugin-label \
@@ -344,24 +344,24 @@ LADSPA plugins are supported by Snd at this time."
   long lIndex;
   const LADSPA_Descriptor * psDescriptor;
   char * pcFilename, * pcLabel, * pcTmp;
-  SCM scmList, scmPortData;
+  XEN xenList; XEN xenPortData;
   LADSPA_PortRangeHintDescriptor iHint;
 
   if (!g_bLADSPAInitialised)
     loadLADSPA();
 
-  ASSERT_TYPE(STRING_P(ladspa_plugin_filename),
+  XEN_ASSERT_TYPE(XEN_STRING_P(ladspa_plugin_filename),
 	     ladspa_plugin_filename,
-	     ARG1,
+	     XEN_ARG_1,
 	     S_analyse_ladspa, "a string");
-  ASSERT_TYPE(STRING_P(ladspa_plugin_label),
+  XEN_ASSERT_TYPE(XEN_STRING_P(ladspa_plugin_label),
 	     ladspa_plugin_label,
-	     ARG2,
+	     XEN_ARG_2,
 	     S_analyse_ladspa, "a string");
 
   /* Plugin. */
-  pcTmp = TO_NEW_C_STRING(ladspa_plugin_filename);
-  pcLabel = TO_NEW_C_STRING(ladspa_plugin_label);
+  pcTmp = XEN_TO_NEW_C_STRING(ladspa_plugin_filename);
+  pcLabel = XEN_TO_NEW_C_STRING(ladspa_plugin_label);
   pcFilename = packLADSPAFilename(pcTmp);
   free(pcTmp);
 
@@ -371,49 +371,49 @@ LADSPA plugins are supported by Snd at this time."
 
   if (!psDescriptor) {
     snd_error("Plugin unknown.\n"); /* or we could return UNKNOWN_PLUGIN */
-    return(FALSE_VALUE);
+    return(XEN_FALSE);
   }
 
-  scmList = EMPTY_LIST;
+  xenList = XEN_EMPTY_LIST;
   for (lIndex = psDescriptor->PortCount - 1; lIndex >= 0; lIndex--)
     if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lIndex])
 	&& LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lIndex])) {
 
       iHint = psDescriptor->PortRangeHints[lIndex].HintDescriptor;
 
-      scmPortData = EMPTY_LIST;
+      xenPortData = XEN_EMPTY_LIST;
       if (LADSPA_IS_HINT_TOGGLED(iHint))
-	scmPortData = CONS(TO_SCM_STRING("toggle"), scmPortData);
+	xenPortData = XEN_CONS(C_TO_XEN_STRING("toggle"), xenPortData);
       if (LADSPA_IS_HINT_LOGARITHMIC(iHint))
-	scmPortData = CONS(TO_SCM_STRING("logarithmic"), scmPortData);
+	xenPortData = XEN_CONS(C_TO_XEN_STRING("logarithmic"), xenPortData);
       if (LADSPA_IS_HINT_INTEGER(iHint))
-	scmPortData = CONS(TO_SCM_STRING("integer"), scmPortData);
+	xenPortData = XEN_CONS(C_TO_XEN_STRING("integer"), xenPortData);
       if (LADSPA_IS_HINT_SAMPLE_RATE(iHint))
-	scmPortData = CONS(TO_SCM_STRING("sample_rate"), scmPortData);
+	xenPortData = XEN_CONS(C_TO_XEN_STRING("sample_rate"), xenPortData);
       if (LADSPA_IS_HINT_BOUNDED_ABOVE(iHint))
-	scmPortData = CONS(TO_SCM_STRING("maximum"),
+	xenPortData = XEN_CONS(C_TO_XEN_STRING("maximum"),
 			 
-     CONS(TO_SCM_DOUBLE(psDescriptor->PortRangeHints[lIndex].UpperBound),
-				      scmPortData));
+     XEN_CONS(C_TO_XEN_DOUBLE(psDescriptor->PortRangeHints[lIndex].UpperBound),
+				      xenPortData));
       if (LADSPA_IS_HINT_BOUNDED_BELOW(iHint))
-	scmPortData = CONS(TO_SCM_STRING("minimum"),
-			      CONS(TO_SCM_DOUBLE(psDescriptor->PortRangeHints[lIndex].LowerBound),
-				      scmPortData));
-      scmPortData = CONS(TO_SCM_STRING((char *)psDescriptor->PortNames[lIndex]),
-			    scmPortData);
-      scmList = CONS(scmPortData, scmList);
+	xenPortData = XEN_CONS(C_TO_XEN_STRING("minimum"),
+			      XEN_CONS(C_TO_XEN_DOUBLE(psDescriptor->PortRangeHints[lIndex].LowerBound),
+				      xenPortData));
+      xenPortData = XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->PortNames[lIndex]),
+			    xenPortData);
+      xenList = XEN_CONS(xenPortData, xenList);
     }
 
-  scmList = CONS(TO_SCM_STRING((char *)psDescriptor->Name),
-		    CONS(TO_SCM_STRING((char *)psDescriptor->Maker),
-			    CONS(TO_SCM_STRING((char *)psDescriptor->Copyright),
-				    CONS(scmList, EMPTY_LIST))));
-  return scmList;
+  xenList = XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Name),
+		    XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Maker),
+			    XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Copyright),
+				    XEN_CONS(xenList, XEN_EMPTY_LIST))));
+  return xenList;
 }
 
 /*****************************************************************************/
 
-snd_fd *get_sf(SCM obj);
+snd_fd *get_sf(XEN obj);
 
 //FIXME: We could improve this function to receive a list of plugin
 //configurations for chain processing. Also, is multiple channel
@@ -421,10 +421,10 @@ snd_fd *get_sf(SCM obj);
 
 #define S_apply_ladspa "apply-ladspa"
 
-static SCM g_apply_ladspa(SCM reader,
-			  SCM ladspa_plugin_configuration,
-			  SCM samples,
-			  SCM origin)
+static XEN g_apply_ladspa(XEN reader,
+			  XEN ladspa_plugin_configuration,
+			  XEN samples,
+			  XEN origin)
 {
 #define H_apply_ladspa "This function applies a LADSPA plugin to process a \
 sound. The parameters are soundfile-reader, a ladspa-plugin-configuration, \
@@ -438,7 +438,7 @@ by any arguments. (Information about about parameters can be acquired using anal
   LADSPA_Handle * psHandle;
   unsigned long lSampleRate, lPortIndex, lAt, lBlockSize, lSampleIndex;
   unsigned long lParameterCount;
-  SCM scmParameters;
+  XEN xenParameters;
   LADSPA_PortDescriptor iPortDescriptor;
 
   LADSPA_Data * pfControls;
@@ -467,41 +467,41 @@ by any arguments. (Information about about parameters can be acquired using anal
     loadLADSPA();
 
   /* First parameter should be a file reader. */
-  ASSERT_TYPE(sf_p(reader),
+  XEN_ASSERT_TYPE(sf_p(reader),
 	     reader,
-	     ARG1,
+	     XEN_ARG_1,
 	     S_apply_ladspa, "a sample-reader");
   /* Second parameter should be a list of two strings, then any number
      (inc 0) of numbers. */
   //FIXME: uninformative error.
-  ASSERT_TYPE(LIST_LENGTH(ladspa_plugin_configuration) >= 2,
+  XEN_ASSERT_TYPE(XEN_LIST_LENGTH(ladspa_plugin_configuration) >= 2,
 	     ladspa_plugin_configuration,
-	     ARG2,
+	     XEN_ARG_2,
 	     S_apply_ladspa, "a list");
   //FIXME: uninformative error.
-  ASSERT_TYPE(STRING_P(CAR(ladspa_plugin_configuration)),
+  XEN_ASSERT_TYPE(XEN_STRING_P(XEN_CAR(ladspa_plugin_configuration)),
 	     ladspa_plugin_configuration,
-	     ARG2,
+	     XEN_ARG_2,
 	     S_apply_ladspa, "a string");
   //FIXME: uninformative error.
-  ASSERT_TYPE(STRING_P(CAR(CDR(ladspa_plugin_configuration))),
+  XEN_ASSERT_TYPE(XEN_STRING_P(XEN_CAR(XEN_CDR(ladspa_plugin_configuration))),
 	     ladspa_plugin_configuration,
-	     ARG2,
+	     XEN_ARG_2,
 	     S_apply_ladspa, "a string");
 
   /* Third parameter is the number of samples to process. */
-  ASSERT_TYPE(NUMBER_P(samples),
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samples),
 	     samples,
-	     ARG3,
+	     XEN_ARG_3,
 	     S_apply_ladspa, "a number");
   /* The fourth parameter is a tag to identify the edit. */
-  ASSERT_TYPE(STRING_P(origin),
+  XEN_ASSERT_TYPE(XEN_STRING_P(origin),
 	     origin,
-	     ARG4,
+	     XEN_ARG_4,
 	     S_apply_ladspa, "a string");
 
   /* Get sample count. */
-  num = TO_C_INT(samples);
+  num = XEN_TO_C_INT(samples);
 
   /* Local version of sound descriptor. */
   sf = get_sf(reader);
@@ -513,8 +513,8 @@ by any arguments. (Information about about parameters can be acquired using anal
   sp = (cp->sound);
 
   /* Plugin. */
-  pcTmp = TO_NEW_C_STRING(CAR(ladspa_plugin_configuration));
-  pcLabel = TO_NEW_C_STRING(CAR(CDR(ladspa_plugin_configuration)));
+  pcTmp = XEN_TO_NEW_C_STRING(XEN_CAR(ladspa_plugin_configuration));
+  pcLabel = XEN_TO_NEW_C_STRING(XEN_CAR(XEN_CDR(ladspa_plugin_configuration)));
   pcFilename = packLADSPAFilename(pcTmp);
   free(pcTmp);
 
@@ -525,7 +525,7 @@ by any arguments. (Information about about parameters can be acquired using anal
   if (!psDescriptor) {
     snd_error("Plugin unknown.\n");
     //FIXME: How to report?
-    return(FALSE_VALUE);
+    return(XEN_FALSE);
   }
 
   //FIXME: uninformative errors.
@@ -534,27 +534,27 @@ by any arguments. (Information about about parameters can be acquired using anal
     if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lPortIndex])
 	&& LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lPortIndex]))
       lParameterCount++;
-  ASSERT_TYPE(LIST_LENGTH(ladspa_plugin_configuration) == 2 + lParameterCount,
+  XEN_ASSERT_TYPE(XEN_LIST_LENGTH(ladspa_plugin_configuration) == 2 + lParameterCount,
 	     ladspa_plugin_configuration,
-	     ARG2,
+	     XEN_ARG_2,
 	     S_apply_ladspa, "a list");
   pfControls = MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
   /* Get parameters. */
-  scmParameters = CDR(CDR(ladspa_plugin_configuration));
+  xenParameters = XEN_CDR(XEN_CDR(ladspa_plugin_configuration));
   for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) 
 {
     iPortDescriptor = psDescriptor->PortDescriptors[lPortIndex];
     if (LADSPA_IS_PORT_CONTROL(iPortDescriptor)
 	&& LADSPA_IS_PORT_INPUT(iPortDescriptor)) {
       //FIXME: uninformative error.
-      ASSERT_TYPE(NUMBER_P(CAR(scmParameters)),
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(XEN_CAR(xenParameters)),
 		 ladspa_plugin_configuration,
-		 ARG2,
+		 XEN_ARG_2,
 		 S_apply_ladspa, "a number");
       pfControls[lPortIndex]
-	= (LADSPA_Data)TO_C_DOUBLE(CAR(scmParameters));
-      scmParameters = CDR(scmParameters);
+	= (LADSPA_Data)XEN_TO_C_DOUBLE(XEN_CAR(xenParameters));
+      xenParameters = XEN_CDR(xenParameters);
     }
   }
 
@@ -563,7 +563,7 @@ by any arguments. (Information about about parameters can be acquired using anal
   if (!psHandle) {
     snd_error("Plugin did not instantiate.\n");
     //FIXME: How to report?
-    return(FALSE_VALUE);
+    return(XEN_FALSE);
   }
 
   /* Allocate buffer to work with (data[0] is an audio buffer). */
@@ -608,7 +608,7 @@ by any arguments. (Information about about parameters can be acquired using anal
 			 SND_SRATE(sp),
 			 1,
 			 num,
-			 TO_C_STRING(origin));
+			 XEN_TO_C_STRING(origin));
 
   /* Open the output file, using the header we've been working on. */
   ofd = open_temp_file(ofile, 1, hdr, state);
@@ -677,7 +677,7 @@ by any arguments. (Information about about parameters can be acquired using anal
 		      cp,
 		      0,
 		      DELETE_ME, LOCK_MIXES,
-		      TO_NEW_C_STRING(origin));
+		      XEN_TO_NEW_C_STRING(origin));
 
   update_graph(cp, NULL); /* is this needed? */
 
@@ -685,15 +685,15 @@ by any arguments. (Information about about parameters can be acquired using anal
   FREE(data[0]);
   FREE(data);
 
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
 /*****************************************************************************/
-#ifdef ARGIFY_1
-NARGIFY_2(g_analyse_ladspa_w, g_analyse_ladspa)
-NARGIFY_4(g_apply_ladspa_w, g_apply_ladspa)
-NARGIFY_0(g_init_ladspa_w, g_init_ladspa)
-NARGIFY_0(g_list_ladspa_w, g_list_ladspa)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_2(g_analyse_ladspa_w, g_analyse_ladspa)
+XEN_NARGIFY_4(g_apply_ladspa_w, g_apply_ladspa)
+XEN_NARGIFY_0(g_init_ladspa_w, g_init_ladspa)
+XEN_NARGIFY_0(g_list_ladspa_w, g_list_ladspa)
 #else
 #define g_analyse_ladspa_w g_analyse_ladspa
 #define g_apply_ladspa_w g_apply_ladspa
@@ -701,14 +701,14 @@ NARGIFY_0(g_list_ladspa_w, g_list_ladspa)
 #define g_list_ladspa_w g_list_ladspa
 #endif
 
-void g_ladspa_to_snd(SCM local_doc);
-void g_ladspa_to_snd(SCM local_doc)
+void g_ladspa_to_snd(XEN local_doc);
+void g_ladspa_to_snd(XEN local_doc)
 {
-  DEFINE_PROC(S_analyse_ladspa, g_analyse_ladspa_w, 2, 0, 0, H_analyse_ladspa);
-  DEFINE_PROC(S_apply_ladspa, g_apply_ladspa_w, 4, 0, 0, H_apply_ladspa);
-  DEFINE_PROC(S_init_ladspa, g_init_ladspa_w, 0, 0, 0, H_init_ladspa);
-  DEFINE_PROC(S_list_ladspa, g_list_ladspa_w, 0, 0, 0, H_list_ladspa);
-  YES_WE_HAVE("snd-ladspa");
+  XEN_DEFINE_PROCEDURE(S_analyse_ladspa, g_analyse_ladspa_w, 2, 0, 0, H_analyse_ladspa);
+  XEN_DEFINE_PROCEDURE(S_apply_ladspa, g_apply_ladspa_w, 4, 0, 0, H_apply_ladspa);
+  XEN_DEFINE_PROCEDURE(S_init_ladspa, g_init_ladspa_w, 0, 0, 0, H_init_ladspa);
+  XEN_DEFINE_PROCEDURE(S_list_ladspa, g_list_ladspa_w, 0, 0, 0, H_list_ladspa);
+  XEN_YES_WE_HAVE("snd-ladspa");
 }
 
 /*****************************************************************************/

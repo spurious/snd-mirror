@@ -159,24 +159,8 @@
 #include "sndlib.h"
 #include "clm.h"
 #include "snd-0.h"
-
-#if HAVE_GUILE
-  #include "sg.h"
-#endif
-#if HAVE_LIBREP 
-  #include "sl.h"
-#endif
-#if HAVE_MZSCHEME
-  #include "sz.h"
-#endif
-#if HAVE_RUBY
-  #include "sr.h"
-#endif
-#if (!HAVE_EXTENSION_LANGUAGE)
-  #include "noguile.h"
-#endif
-
-#include "sndlib2scm.h"
+#include "xen.h"
+#include "sndlib2xen.h"
 
 #ifdef USE_MOTIF
   #include "snd-x0.h"

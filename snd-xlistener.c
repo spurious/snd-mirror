@@ -685,21 +685,21 @@ static XtTranslations transTable4 = NULL;
 
 /* -------- text related widgets -------- */
 
-static SCM mouse_enter_text_hook, mouse_leave_text_hook;
+static XEN mouse_enter_text_hook, mouse_leave_text_hook;
 
 static void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  if (HOOKED(mouse_enter_text_hook))
+  if (XEN_HOOKED(mouse_enter_text_hook))
     g_c_run_progn_hook(mouse_enter_text_hook,
-		       LIST_1(SND_WRAP(w)),
+		       XEN_LIST_1(XEN_WRAP_C_POINTER(w)),
 		       S_mouse_enter_text_hook);
 }
 
 static void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  if (HOOKED(mouse_leave_text_hook))
+  if (XEN_HOOKED(mouse_leave_text_hook))
     g_c_run_progn_hook(mouse_leave_text_hook,
-		       LIST_1(SND_WRAP(w)),
+		       XEN_LIST_1(XEN_WRAP_C_POINTER(w)),
 		       S_mouse_leave_text_hook);
 }
 
@@ -897,21 +897,21 @@ static void Command_Help_Callback(Widget w, XtPointer context, XtPointer info)
   listener_dialog_help((snd_state *)context);
 }
 
-static SCM mouse_enter_listener_hook, mouse_leave_listener_hook;
+static XEN mouse_enter_listener_hook, mouse_leave_listener_hook;
 
 static void listener_focus_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  if (HOOKED(mouse_enter_listener_hook))
+  if (XEN_HOOKED(mouse_enter_listener_hook))
     g_c_run_progn_hook(mouse_enter_listener_hook,
-		       LIST_1(SND_WRAP(listener_text)), /* not w */
+		       XEN_LIST_1(XEN_WRAP_C_POINTER(listener_text)), /* not w */
 		       S_mouse_enter_listener_hook);
 }
 
 static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  if (HOOKED(mouse_leave_listener_hook))
+  if (XEN_HOOKED(mouse_leave_listener_hook))
     g_c_run_progn_hook(mouse_leave_listener_hook,
-		       LIST_1(SND_WRAP(listener_text)), /* not w */
+		       XEN_LIST_1(XEN_WRAP_C_POINTER(listener_text)), /* not w */
 		       S_mouse_leave_listener_hook);
 }
 
@@ -1113,39 +1113,39 @@ Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n)
   return(XtCreateManagedWidget(name, xmPanedWindowWidgetClass, parent, args, n));
 }
 
-static SCM g_listener_selected_text(void)
+static XEN g_listener_selected_text(void)
 {
   char *txt;
-  SCM res = FALSE_VALUE;
+  XEN res = XEN_FALSE;
   if (listener_text)
     {
       txt = XmTextGetSelection(listener_text);
       if (txt) 
 	{
-	  res = TO_SCM_STRING(txt);
+	  res = C_TO_XEN_STRING(txt);
 	  XtFree(txt);
 	}
     }
   return(res);
 }
 
-static SCM g_reset_listener_cursor(void)
+static XEN g_reset_listener_cursor(void)
 {
   if (listener_text)
     XUndefineCursor(XtDisplay(listener_text), 
 		    XtWindow(listener_text)); 
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-#ifdef ARGIFY_1
-NARGIFY_0(g_listener_selected_text_w, g_listener_selected_text)
-NARGIFY_0(g_reset_listener_cursor_w, g_reset_listener_cursor)
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_listener_selected_text_w, g_listener_selected_text)
+XEN_NARGIFY_0(g_reset_listener_cursor_w, g_reset_listener_cursor)
 #else
 #define g_listener_selected_text_w g_listener_selected_text
 #define g_reset_listener_cursor_w g_reset_listener_cursor
 #endif
 
-void g_init_gxlistener(SCM local_doc)
+void g_init_gxlistener(XEN local_doc)
 {
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener) is called when the mouse \
 enters the lisp listener pane:\n\
@@ -1156,8 +1156,8 @@ enters the lisp listener pane:\n\
   #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (listener) is called when the mouse \
 leaves the lisp listener pane"
 
-  mouse_enter_listener_hook = MAKE_HOOK(S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
-  mouse_leave_listener_hook = MAKE_HOOK(S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
+  XEN_DEFINE_HOOK(mouse_enter_listener_hook, S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook, local_doc);    /* arg = listener_text widget */
+  XEN_DEFINE_HOOK(mouse_leave_listener_hook, S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook, local_doc);    /* arg = listener_text widget */
 
   #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget) is called when the mouse enters a text widget:\n\
 (add-hook! mouse-enter-text-hook\n\
@@ -1165,12 +1165,11 @@ leaves the lisp listener pane"
     (focus-widget w)))"
 
   #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget) is called when the mouse leaves a text widget"
+  
+  XEN_DEFINE_HOOK(mouse_enter_text_hook, S_mouse_enter_text_hook, 1, H_mouse_enter_text_hook, local_doc);    /* arg = text widget */
+  XEN_DEFINE_HOOK(mouse_leave_text_hook, S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook, local_doc);    /* arg = text widget */
 
-  mouse_enter_text_hook = MAKE_HOOK(S_mouse_enter_text_hook, 1, H_mouse_enter_text_hook);    /* arg = text widget */
-  mouse_leave_text_hook = MAKE_HOOK(S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook);    /* arg = text widget */
-
-  DEFINE_PROC(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, "returns current selection in listener or #f");
-
-  DEFINE_PROC(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, "resets listener cursor to default pointer");
+  XEN_DEFINE_PROCEDURE(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, "returns current selection in listener or #f");
+  XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, "resets listener cursor to default pointer");
 }
 

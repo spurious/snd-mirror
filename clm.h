@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 50
-#define MUS_DATE "26-May-01"
+#define MUS_REVISION 51
+#define MUS_DATE "6-July-01"
 
 /* 
+ * 6-July:     scm -> xen.
  * 26-May:     mus_rand_seed.
  * 22-May:     locsig reverb distance calc was upside down.
  * 18-May:     mus_describe and mus_inspect returned string should not be freed any more.
@@ -37,7 +38,7 @@
  * 22-June:    made mus_bessi0 local again.
  * 1-June:     bugfixes for linuxppc 2000.
  * 19-May:     mus_apply.
- * 8-May:      added "const" and PROCEDURE (for c++), made mus_bessi0 global.
+ * 8-May:      added "const" and XEN_PROCEDURE_CAST (for c++), made mus_bessi0 global.
  * 24-Apr:     changed formant radius to match lisp version (it's now 1-old_radius)
  * 20-Apr:     mus_convolve_files
  * 7-Apr:      src width bug fixed
@@ -189,7 +190,7 @@ enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WIND
 
 #define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) && ((Window) <= MUS_DOLPH_CHEBYSHEV_WINDOW))
 
-#define MUS_RUN(GEN, ARG1, ARG2) ((*((GEN->core)->run))(GEN, ARG1, ARG2))
+#define MUS_RUN(GEN, XEN_ARG_1, XEN_ARG_2) ((*((GEN->core)->run))(GEN, XEN_ARG_1, XEN_ARG_2))
 #define MUS_RUN_P(GEN) 	         ((GEN->core)->run)
 
 

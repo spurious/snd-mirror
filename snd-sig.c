@@ -19,42 +19,42 @@ static void free_sync_state(sync_state *sc)
     }
 }
 
-int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller, int arg_pos)
+int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
 {
   int pos;
-  SCM errstr;
+  XEN errstr;
   char *errmsg = NULL;
   /* need to allow #f here for optargs */
-  ASSERT_TYPE(NOT_BOUND_P(edpos) || INTEGER_P(edpos) || PROCEDURE_P(edpos) || BOOLEAN_P(edpos), edpos, arg_pos, caller, "an integer or a procedure");
-  if (PROCEDURE_P(edpos))
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edpos) || XEN_INTEGER_P(edpos) || XEN_PROCEDURE_P(edpos) || XEN_BOOLEAN_P(edpos), edpos, arg_pos, caller, "an integer or a procedure");
+  if (XEN_PROCEDURE_P(edpos))
     {
       errmsg = procedure_ok(edpos, 2, caller, "edit position", arg_pos);
       if (errmsg)
 	{
-	  errstr = TO_SCM_STRING(errmsg);
+	  errstr = C_TO_XEN_STRING(errmsg);
 	  FREE(errmsg);
 	  snd_bad_arity_error(caller, errstr, edpos);
 	  return(0); /* never called, presumably */
 	}
-      pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(CALL_2(edpos, 
-					       TO_SMALL_SCM_INT(cp->sound->index), 
-					       TO_SMALL_SCM_INT(cp->chan),
+      pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(XEN_CALL_2(edpos, 
+					       C_TO_SMALL_XEN_INT(cp->sound->index), 
+					       C_TO_SMALL_XEN_INT(cp->chan),
 					       caller),
 					 AT_CURRENT_EDIT_POSITION, caller);
     }
-  else pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(edpos, AT_CURRENT_EDIT_POSITION, caller);
+  else pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(edpos, AT_CURRENT_EDIT_POSITION, caller);
   if ((pos == AT_CURRENT_EDIT_POSITION) || (pos < 0) || (pos > cp->edit_size))
     return(cp->edit_ctr);
   return(pos);
 }
 
-int to_c_edit_samples(chan_info *cp, SCM edpos, const char *caller, int arg_pos)
+int to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
 {
   return(cp->samples[to_c_edit_position(cp, edpos, caller, arg_pos)]);
 }
 
 static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, 
-				    int forwards, int prebeg, SCM edpos, const char *caller, int arg_pos)
+				    int forwards, int prebeg, XEN edpos, const char *caller, int arg_pos)
 {
   /* can return NULL if regexpr and no current selection */
   sync_info *si = NULL;
@@ -123,7 +123,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
   return(sc);
 }
 
-static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, SCM edpos, const char *caller, int arg_pos)
+static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, XEN edpos, const char *caller, int arg_pos)
 {
   return(get_sync_state_1(ss, sp, cp, beg, regexpr, forwards, 0, edpos, caller, arg_pos));
 }
@@ -165,7 +165,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
   return(sc);
 }
 
-static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SCM edpos, int arg_pos)
+static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XEN edpos, int arg_pos)
 {
   /* if string returned, needs to be freed */
   /* amp == 0.0 means unnormalized, cp == NULL means current selection */
@@ -658,7 +658,7 @@ src_state *free_src(src_state *sr)
 }
 
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
-		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos, int arg_pos, Float e_base)
+		    int from_enved, const char *origin, int over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
 {
   snd_info *sp = NULL;
   int reporting = 0;
@@ -1158,7 +1158,7 @@ void fht(int powerOfFour, Float *array)
 /* TODO: non-fht(fft) case is centered but straight case is not! */
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
-				   const char *origin, int over_selection, Float *ur_a, mus_any *gen, SCM edpos, int arg_pos)
+				   const char *origin, int over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
 {
   /* if string returned, needs to be freed */
   /* interpret e as frequency response and apply as filter to all sync'd chans */
@@ -1412,7 +1412,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 }
 
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, 
-		  const char *origin, int over_selection, Float *ur_a, mus_any *gen, SCM edpos, int arg_pos)
+		  const char *origin, int over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
 {
   char *error;
   error = apply_filter_or_error(ncp, order, e, from_enved, origin, over_selection, ur_a, gen, edpos, arg_pos);
@@ -1430,7 +1430,7 @@ static MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
   else return(*sf->view_buffered_data--);
 }
 
-static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos, int arg_pos)
+static void reverse_sound(chan_info *ncp, int over_selection, XEN edpos, int arg_pos)
 {
   sync_state *sc;
   sync_info *si;
@@ -1564,7 +1564,7 @@ static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos, int arg
 /*   changed to use mus_env 20-Dec-00 */
 
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
-	       int from_enved, const char *origin, mus_any *gen, SCM edpos, int arg_pos, Float e_base)
+	       int from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
 {
   snd_fd *sf = NULL;
   snd_info *sp;
@@ -1909,9 +1909,9 @@ void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin
 
 
 #include "vct.h"
-#include "clm2scm.h"
+#include "clm2xen.h"
 
-static SCM g_map_chan(SCM proc, SCM s_beg, SCM s_end, SCM org, SCM snd, SCM chn, SCM edpos) 
+static XEN g_map_chan(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos) 
 { 
   #define H_map_chan "(" S_map_chan " func &optional (start 0) end edname snd chn edpos)\n\
 apply func to samples in current channel, edname is the edit history name for this editing operation.\n\
@@ -1923,26 +1923,26 @@ apply func to samples in current channel, edname is the edit history name for th
   int beg, end;
   snd_info *sp;
   snd_fd *sf = NULL;
-  SCM errstr;
+  XEN errstr;
   int kp, len, num, reporting = 0, rpt = 0, rpt4, i, j, cured;
-  SCM res = FALSE_VALUE;
+  XEN res = XEN_FALSE;
   char *errmsg;
   char *filename;
   mus_any *outgen = NULL;
-  SCM *data;
+  XEN *data;
   vct *v;
 
-  if (STRING_P(org)) 
-    caller = TO_C_STRING(org);
+  if (XEN_STRING_P(org)) 
+    caller = XEN_TO_C_STRING(org);
   else caller = S_map_chan;
-  ASSERT_TYPE((PROCEDURE_P(proc)), proc, ARG1, caller, "a procedure");
-  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, ARG2, caller, "a number");
-  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, ARG3, caller, "a number");
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, caller, "a procedure");
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, XEN_ARG_2, caller, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, XEN_ARG_3, caller, "a number");
   ASSERT_CHANNEL(S_map_chan, snd, chn, 5); 
   ss = get_global_state();
   cp = get_cp(snd, chn, caller);
-  beg = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_beg, 0, caller);
-  end = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_end, 0, caller);
+  beg = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_beg, 0, caller);
+  end = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_end, 0, caller);
   if (end == 0) end = to_c_edit_samples(cp, edpos, caller, 7) - 1;
   num = end - beg + 1;
   if (num > 0)
@@ -1950,7 +1950,7 @@ apply func to samples in current channel, edname is the edit history name for th
       errmsg = procedure_ok(proc, 1, caller, "", 1);
       if (errmsg)
 	{
-	  errstr = TO_SCM_STRING(errmsg);
+	  errstr = C_TO_XEN_STRING(errmsg);
 	  FREE(errmsg);
 	  return(snd_bad_arity_error(caller, errstr, proc));
 	}
@@ -1958,32 +1958,32 @@ apply func to samples in current channel, edname is the edit history name for th
       reporting = (num > MAX_BUFFER_SIZE);
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       sf = init_sample_read_any(beg, cp, READ_FORWARD, to_c_edit_position(cp, edpos, caller, 7));
-      if (sf == NULL) return(TRUE_VALUE);
+      if (sf == NULL) return(XEN_TRUE);
       rpt4 = MAX_BUFFER_SIZE / 4;
       filename = snd_tempnam(ss);
       outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
       j = 0;
       for (kp = 0; kp < num; kp++)
 	{
-	  res = CALL_1(proc, 
-		      TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
+	  res = XEN_CALL_1(proc, 
+		      C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
 		      caller);
-	  if (NUMBER_P(res))                         /* one number -> replace current sample */
-	    mus_outa(j++, TO_C_DOUBLE(res), (mus_output *)outgen);
+	  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
+	    mus_outa(j++, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
 	  else
 	    {
-	      if (NOT_FALSE_P(res))                  /* if #f, no output on this pass */
+	      if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
 		{
-		  if (TRUE_P(res))                   /* if #t we halt the entire map */
+		  if (XEN_TRUE_P(res))                   /* if #t we halt the entire map */
 		    break;
 		  else
 		    {
-		      if (VECTOR_P(res))
+		      if (XEN_VECTOR_P(res))
 			{
-			  len = VECTOR_LENGTH(res);
-			  data = VECTOR_ELEMENTS(res);
+			  len = XEN_VECTOR_LENGTH(res);
+			  data = XEN_VECTOR_ELEMENTS(res);
 			  for (i = 0; i < len; i++) 
-			    mus_outa(j++, TO_C_DOUBLE(data[i]), (mus_output *)outgen);
+			    mus_outa(j++, XEN_TO_C_DOUBLE(data[i]), (mus_output *)outgen);
 			}
 		      else
 			{
@@ -1995,11 +1995,11 @@ apply func to samples in current channel, edname is the edit history name for th
 			    }
 			  else
 			    {
-			      if (LIST_P(res))
+			      if (XEN_LIST_P(res))
 				{
-				  len = LIST_LENGTH(res);
-				  for (i = 0; i < len; i++, res = CDR(res)) 
-				    mus_outa(j++, TO_C_DOUBLE(CAR(res)), (mus_output *)outgen);
+				  len = XEN_LIST_LENGTH(res);
+				  for (i = 0; i < len; i++, res = XEN_CDR(res)) 
+				    mus_outa(j++, XEN_TO_C_DOUBLE(XEN_CAR(res)), (mus_output *)outgen);
 				}
 			    }
 			}
@@ -2046,38 +2046,38 @@ apply func to samples in current channel, edname is the edit history name for th
   return(res);
 }
 
-static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn, 
-		     const char *caller, int counting, SCM edpos, int arg_pos)
+static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
+		     const char *caller, int counting, XEN edpos, int arg_pos)
 {
   snd_state *ss;
   chan_info *cp;
   int beg, end;
   snd_info *sp;
   snd_fd *sf;
-  SCM errstr;
+  XEN errstr;
   int kp, len, num, reporting = 0, rpt = 0, rpt4, counts = 0;
-  SCM res;
+  XEN res;
   char *errmsg;
 
-  ASSERT_TYPE((PROCEDURE_P(proc)), proc, ARG1, caller, "a procedure");
-  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, ARG2, caller, "a number");
-  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, ARG3, caller, "a number");
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, caller, "a procedure");
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, XEN_ARG_2, caller, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, XEN_ARG_3, caller, "a number");
   ASSERT_CHANNEL(caller, snd, chn, 4);
   cp = get_cp(snd, chn, caller);
-  beg = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_beg, 0, caller);
-  end = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_end, 0, caller);
+  beg = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_beg, 0, caller);
+  end = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_end, 0, caller);
 
   errmsg = procedure_ok(proc, 1, caller, "", 1);
   if (errmsg)
     {
-      errstr = TO_SCM_STRING(errmsg);
+      errstr = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
       return(snd_bad_arity_error(caller, errstr, proc));
     }
   ss = get_global_state();
   sp = cp->sound;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, to_c_edit_position(cp, edpos, caller, arg_pos));
-  if (sf == NULL) return(TRUE_VALUE);
+  if (sf == NULL) return(XEN_TRUE);
   rpt4 = MAX_BUFFER_SIZE / 4;
   len = to_c_edit_samples(cp, edpos, caller, arg_pos);
   if (end >= len) end = len - 1;
@@ -2089,21 +2089,21 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       for (kp = 0; kp < num; kp++)
 	{
-	  res = CALL_1(proc,
-		      TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
+	  res = XEN_CALL_1(proc,
+		      C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
 		      caller);
-	  if (NOT_FALSE_P(res))
+	  if (XEN_NOT_FALSE_P(res))
 	    {
 	      if ((counting) &&
-		  (TRUE_P(res)))
+		  (XEN_TRUE_P(res)))
 		counts++;
 	      else
 		{
 		  sf = free_snd_fd(sf);
 		  if (reporting) 
 		    finish_progress_report(sp, NOT_FROM_ENVED);
-		  return(LIST_2(res,
-				TO_SCM_INT(kp + beg)));
+		  return(XEN_LIST_2(res,
+				C_TO_XEN_INT(kp + beg)));
 		}
 	    }
 	  if (reporting) 
@@ -2123,19 +2123,19 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
 				   caller, kp + beg);
 	      sf = free_snd_fd(sf);
 	      if (counting)
-		return(TO_SCM_INT(counts));
-	      return(FALSE_VALUE);
+		return(C_TO_XEN_INT(counts));
+	      return(XEN_FALSE);
 	    }
 	}
       if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
     }
   if (sf) sf = free_snd_fd(sf);
   if (counting)
-    return(TO_SCM_INT(counts));
-  return(FALSE_VALUE);
+    return(C_TO_XEN_INT(counts));
+  return(XEN_FALSE);
 }
 
-static SCM g_scan_chan(SCM proc, SCM beg, SCM end, SCM snd, SCM chn, SCM edpos) 
+static XEN g_scan_chan(XEN proc, XEN beg, XEN end, XEN snd, XEN chn, XEN edpos) 
 { 
   #define H_scan_chan "(" S_scan_chan " func &optional (start 0) end snd chn edpos)\n\
 apply func to samples in current channel (or the specified channel) \
@@ -2147,89 +2147,89 @@ if func returns non-#f, the scan stops, and the value is returned to the caller 
   return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, FALSE, edpos, 6));
 }
 
-static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos)
+static XEN g_find(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_find "(" S_find " func &optional (start-samp 0) snd chn edpos) applies func, a function of one argument, \
 the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns #t"
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
   ASSERT_CHANNEL(S_find, snd_n, chn_n, 3);
-  return(g_sp_scan(expr, sample, FALSE_VALUE, snd_n, chn_n, S_find, FALSE, edpos, 5));
+  return(g_sp_scan(expr, sample, XEN_FALSE, snd_n, chn_n, S_find, FALSE, edpos, 5));
 }
 
-static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos)
+static XEN g_count_matches(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_count_matches "(" S_count_matches " func &optional (start-samp 0) snd chn edpos) returns how many \
 samples satisfy func (a function of one argument, the current sample, returning #t upon match)"
 
   ASSERT_CHANNEL(S_count_matches, snd_n, chn_n, 3);
-  return(g_sp_scan(expr, sample, FALSE_VALUE, snd_n, chn_n, S_count_matches, TRUE, edpos, 5));
+  return(g_sp_scan(expr, sample, XEN_FALSE, snd_n, chn_n, S_count_matches, TRUE, edpos, 5));
 }
 
-static SCM g_smooth_sound(SCM beg, SCM num, SCM snd_n, SCM chn_n)
+static XEN g_smooth_sound(XEN beg, XEN num, XEN snd_n, XEN chn_n)
 {
   #define H_smooth_sound "(" S_smooth_sound " start-samp samps &optional snd chn) smooths data from start-samp for samps in snd's channel chn"
   chan_info *cp;
-  ASSERT_TYPE(NUMBER_P(beg), beg, ARG1, S_smooth_sound, "a number");
-  ASSERT_TYPE(NUMBER_P(num), num, ARG2, S_smooth_sound, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_smooth_sound, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_smooth_sound, "a number");
   ASSERT_CHANNEL(S_smooth_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_smooth_sound);
   cos_smooth(cp,
-	     TO_C_INT_OR_ELSE(beg, 0),
-	     TO_C_INT_OR_ELSE(num, 0),
+	     XEN_TO_C_INT_OR_ELSE(beg, 0),
+	     XEN_TO_C_INT_OR_ELSE(num, 0),
 	     FALSE,
 	     S_smooth_sound); 
-  return(TRUE_VALUE);
+  return(XEN_TRUE);
 }
 
-static SCM g_smooth_selection(void)
+static XEN g_smooth_selection(void)
 {
   #define H_smooth_selection "(" S_smooth_selection ") smooths the data in the currently selected portion"
   chan_info *cp;
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_smooth_selection));
-  cp = get_cp(FALSE_VALUE, FALSE_VALUE, S_smooth_selection);
+  cp = get_cp(XEN_FALSE, XEN_FALSE, S_smooth_selection);
   cos_smooth(cp, 0, 0, TRUE, S_smooth_selection);
-  return(TRUE_VALUE);
+  return(XEN_TRUE);
 }
 
-static SCM g_reverse_sound(SCM snd_n, SCM chn_n, SCM edpos)
+static XEN g_reverse_sound(XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_reverse_sound "(" S_reverse_sound " &optional snd chn edpos) reverses snd's channel chn"
   chan_info *cp;
   ASSERT_CHANNEL(S_reverse_sound, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_reverse_sound);
   reverse_sound(cp, FALSE, edpos, 3);
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM g_reverse_selection(void)
+static XEN g_reverse_selection(void)
 {
   #define H_reverse_selection "(" S_reverse_selection ") reverses the data in the currently selected portion"
   chan_info *cp;
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_reverse_selection));
-  cp = get_cp(FALSE_VALUE, FALSE_VALUE, S_reverse_selection);
-  reverse_sound(cp, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
-  return(FALSE_VALUE);
+  cp = get_cp(XEN_FALSE, XEN_FALSE, S_reverse_selection);
+  reverse_sound(cp, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+  return(XEN_FALSE);
 }
 
-static SCM g_insert_silence(SCM beg, SCM num, SCM snd, SCM chn)
+static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
 {
   #define H_insert_silence "(" S_insert_silence " beg num snd chn) inserts num zeros at beg in snd's chn"
   chan_info *cp;
-  ASSERT_TYPE(NUMBER_P(beg), beg, ARG1, S_insert_silence, "a number");
-  ASSERT_TYPE(NUMBER_P(num), num, ARG2, S_insert_silence, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_insert_silence, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_insert_silence, "a number");
   ASSERT_CHANNEL(S_insert_silence, snd, chn, 3);
   cp = get_cp(snd, chn, S_insert_silence);
   cursor_insert(cp,
-		TO_C_INT_OR_ELSE(beg, 0),
-		TO_C_INT_OR_ELSE(num, 0),
+		XEN_TO_C_INT_OR_ELSE(beg, 0),
+		XEN_TO_C_INT_OR_ELSE(num, 0),
 		S_insert_silence);
   return(beg);
 }
 
-static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM dur)
+static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN dur)
 {
   #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1) swaps the indicated channels"
   chan_info *cp0 = NULL, *cp1 = NULL;
@@ -2239,14 +2239,14 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
   env_info *e0, *e1;
   ASSERT_CHANNEL(S_swap_channels, snd0, chn0, 1);
   cp0 = get_cp(snd0, chn0, S_swap_channels);
-  if (INTEGER_P(snd1) && INTEGER_P(chn1)) 
+  if (XEN_INTEGER_P(snd1) && XEN_INTEGER_P(chn1)) 
     {
       ASSERT_CHANNEL(S_swap_channels, snd1, chn1, 3);
       cp1 = get_cp(snd1, chn1, S_swap_channels);
     }
   else
     {
-      if (INTEGER_P(snd1))
+      if (XEN_INTEGER_P(snd1))
 	sp = get_sp(snd1);
       else sp = cp0->sound;
       if (cp0->sound == sp)
@@ -2259,10 +2259,10 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
     }
   if ((cp0) && (cp1))
     {
-      if (INTEGER_P(beg)) 
-	beg0 = TO_C_INT(beg);
-      if (INTEGER_P(dur)) 
-	num = TO_C_INT(dur);
+      if (XEN_INTEGER_P(beg)) 
+	beg0 = XEN_TO_C_INT(beg);
+      if (XEN_INTEGER_P(dur)) 
+	num = XEN_TO_C_INT(dur);
       else
 	{
 	  dur0 = current_ed_samples(cp0);
@@ -2301,62 +2301,62 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
 	  free_snd_fd(c1);
 	}
     }
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM g_fht(SCM data)
+static XEN g_fht(XEN data)
 {
   #define H_fht "(fht vct-obj) returns the Hartley transform of the data in the vct object whose size must be a power of 4"
   vct *v;
   int pow4;
-  ASSERT_TYPE(VCT_P(data), data, ARGn, S_fht, "a vct");
+  XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ONLY_ARG, S_fht, "a vct");
   v = TO_VCT(data);
   pow4 = (int)(snd_round(log(v->length) / (log(4))));
   if (((int)(pow(4.0, pow4))) != v->length) 
     mus_misc_error(S_fht,
 		   "fht data length must be a power of 4",
-		   LIST_3(TO_SCM_INT(v->length),
-			  TO_SCM_DOUBLE((log(v->length) / (log(4)))),
-			  TO_SCM_INT((int)(pow(4.0, pow4)))));
+		   XEN_LIST_3(C_TO_XEN_INT(v->length),
+			  C_TO_XEN_DOUBLE((log(v->length) / (log(4)))),
+			  C_TO_XEN_INT((int)(pow(4.0, pow4)))));
   fht(pow4, v->data);
   return(data);
 }
 
-static Float *load_Floats(SCM scalers, int *result_len)
+static Float *load_Floats(XEN scalers, int *result_len)
 {
   int len, i;
   Float *scls;
-  SCM lst;
-  SCM *vdata;
-  if (VECTOR_P(scalers))
-    len = VECTOR_LENGTH(scalers);
+  XEN lst;
+  XEN *vdata;
+  if (XEN_VECTOR_P(scalers))
+    len = XEN_VECTOR_LENGTH(scalers);
   else
-    if (LIST_P(scalers))
-      len = LIST_LENGTH(scalers);
+    if (XEN_LIST_P(scalers))
+      len = XEN_LIST_LENGTH(scalers);
     else len = 1;
   if (len <= 0) len = 1;
   scls = (Float *)CALLOC(len, sizeof(Float));
-  if (VECTOR_P(scalers))
+  if (XEN_VECTOR_P(scalers))
     {
-      vdata = VECTOR_ELEMENTS(scalers);
+      vdata = XEN_VECTOR_ELEMENTS(scalers);
       for (i = 0; i < len; i++) 
-	scls[i] = (Float)TO_C_DOUBLE(vdata[i]);
+	scls[i] = (Float)XEN_TO_C_DOUBLE(vdata[i]);
     }
   else
-    if (LIST_P(scalers))
+    if (XEN_LIST_P(scalers))
       {
-	for (i = 0, lst = scalers; i < len; i++, lst = CDR(lst)) 
-	  scls[i] = (Float)TO_C_DOUBLE(CAR(lst));
+	for (i = 0, lst = scalers; i < len; i++, lst = XEN_CDR(lst)) 
+	  scls[i] = (Float)XEN_TO_C_DOUBLE(XEN_CAR(lst));
       }
     else
-      if (NUMBER_P(scalers))
-	scls[0] = (Float)TO_C_DOUBLE(scalers);
+      if (XEN_NUMBER_P(scalers))
+	scls[0] = (Float)XEN_TO_C_DOUBLE(scalers);
       else scls[0] = 1.0;
   result_len[0] = len;
   return(scls);
 }
 
-static SCM g_scale_to(SCM scalers, SCM snd_n, SCM chn_n)
+static XEN g_scale_to(XEN scalers, XEN snd_n, XEN chn_n)
 {
   #define H_scale_to "(" S_scale_to " norms &optional snd chn)\n\
 normalizes snd to norms (following sync) norms can be a float or a vector of floats"
@@ -2373,7 +2373,7 @@ normalizes snd to norms (following sync) norms can be a float or a vector of flo
   return(scalers);
 }
 
-static SCM g_scale_by(SCM scalers, SCM snd_n, SCM chn_n)
+static XEN g_scale_by(XEN scalers, XEN snd_n, XEN chn_n)
 {
   #define H_scale_by "(" S_scale_by " scalers &optional snd chn)\n\
 scales snd by scalers (following sync) scalers can be a float or a vector of floats"
@@ -2390,7 +2390,7 @@ scales snd by scalers (following sync) scalers can be a float or a vector of flo
   return(scalers);
 }
 
-static SCM g_scale_selection_to(SCM scalers)
+static XEN g_scale_selection_to(XEN scalers)
 {
   #define H_scale_selection_to "(" S_scale_selection_to " norms &optional chn) normalizes current selected portion to norms"
   int len[1];
@@ -2406,7 +2406,7 @@ static SCM g_scale_selection_to(SCM scalers)
   return(scalers);
 }
 
-static SCM g_scale_selection_by(SCM scalers)
+static XEN g_scale_selection_by(XEN scalers)
 {
   #define H_scale_selection_by "(" S_scale_selection_by " scalers &optional chn) scales current selected portion by scalers"
   int len[1];
@@ -2422,7 +2422,7 @@ static SCM g_scale_selection_by(SCM scalers)
   return(scalers);
 }
 
-static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
+static XEN g_env_selection(XEN edata, XEN base, XEN snd_n, XEN chn_n)
 {
   #define H_env_selection "(" S_env_selection " env &optional (env-base 1.0) snd chn)\n\
 applies envelope 'env' to the currently selected portion of snd's channel chn using 'env-base' to determine how breakpoints are connected"
@@ -2434,28 +2434,28 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_env_selection));
   cp = get_cp(snd_n, chn_n, S_env_selection);
-  if (LIST_P(edata))
+  if (XEN_LIST_P(edata))
     {
       e = get_env(edata, S_env_selection);
       if (e)
 	{
 	  apply_env(cp, e, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, 
-		    NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 
-		    TO_C_DOUBLE_OR_ELSE(base, 1.0));
+		    NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 
+		    XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  free_env(e);
 	  return(edata);
 	}
     }
   else
     {
-      ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, ARG1, S_env_selection, "an env generator or a list");
-      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
+      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = mus_xen_to_clm(edata))), edata, XEN_ARG_1, S_env_selection, "an env generator or a list");
+      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
       return(edata);
     }
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SCM chn_n, SCM edpos)
+static XEN g_env_sound(XEN edata, XEN samp_n, XEN samps, XEN base, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_env_sound "(" S_env_sound " env &optional (start-samp 0) samps (env-base 1.0) snd chn edpos)\n\
 applies amplitude envelope 'env' (a list of breakpoints or a CLM env) to snd's channel chn starting at start-samp, going \
@@ -2465,48 +2465,48 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   env *e;
   int beg = 0, dur;
   mus_any *egen;
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, ARG2, S_env_sound, "a number");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, ARG3, S_env_sound, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_env_sound, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_3, S_env_sound, "a number");
   ASSERT_CHANNEL(S_env_sound, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_env_sound);
-  beg = TO_C_INT_OR_ELSE(samp_n, 0);
-  dur = TO_C_INT_OR_ELSE(samps, 0);
+  beg = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
+  dur = XEN_TO_C_INT_OR_ELSE(samps, 0);
   if (dur == 0) dur = to_c_edit_samples(cp, edpos, S_env_sound, 7);
-  if (LIST_P(edata))
+  if (XEN_LIST_P(edata))
     {
       e = get_env(edata, S_env_sound);
       if (e)
 	{
-	  apply_env(cp, e, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, NULL, edpos, 7, TO_C_DOUBLE_OR_ELSE(base, 1.0));
+	  apply_env(cp, e, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, NULL, edpos, 7, XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  free_env(e);
 	  return(edata);
 	}
     }
   else
     {
-      ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, ARG1, S_env_sound, "an env generator or a list");
+      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = mus_xen_to_clm(edata))), edata, XEN_ARG_1, S_env_sound, "an env generator or a list");
       apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos, 7, 1.0);
       return(edata);
     }
-  return(FALSE_VALUE);
+  return(XEN_FALSE);
 }
 
-static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
+static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
 {
   vct *v1 = NULL, *v2 = NULL;
   int ipow, n, n2, i, isign = 1, need_free = 0;
   Float *rl, *im;
-  SCM *rvdata, *ivdata;
-  ASSERT_TYPE(((VCT_P(reals)) || (VECTOR_P(reals))), reals, ARG1, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
-  ASSERT_TYPE(((VCT_P(imag)) || (VECTOR_P(imag))), imag, ARG2, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
+  XEN *rvdata; XEN *ivdata;
+  XEN_ASSERT_TYPE(((VCT_P(reals)) || (XEN_VECTOR_P(reals))), reals, XEN_ARG_1, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
+  XEN_ASSERT_TYPE(((VCT_P(imag)) || (XEN_VECTOR_P(imag))), imag, XEN_ARG_2, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
   if ((VCT_P(reals)) && (VCT_P(imag)))
     {
-      v1 = (vct *)OBJECT_REF(reals);
-      v2 = (vct *)OBJECT_REF(imag);
+      v1 = (vct *)XEN_OBJECT_REF(reals);
+      v2 = (vct *)XEN_OBJECT_REF(imag);
       n = v1->length;
     }
   else
-    n = VECTOR_LENGTH(reals);
+    n = XEN_VECTOR_LENGTH(reals);
   if (POWER_OF_2_P(n))
     n2 = n;
   else
@@ -2528,16 +2528,16 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       rl = v1->data;
       im = v2->data;
     }
-  if (NUMBER_P(sign)) isign = TO_C_INT_OR_ELSE(sign, 0);
+  if (XEN_NUMBER_P(sign)) isign = XEN_TO_C_INT_OR_ELSE(sign, 0);
   if (isign == 0) isign = 1;
   if (v1 == NULL)
     {
-      rvdata = VECTOR_ELEMENTS(reals);
-      ivdata = VECTOR_ELEMENTS(imag);
+      rvdata = XEN_VECTOR_ELEMENTS(reals);
+      ivdata = XEN_VECTOR_ELEMENTS(imag);
       for (i = 0; i < n; i++)
 	{
-	  rl[i] = TO_C_DOUBLE(rvdata[i]);
-	  im[i] = TO_C_DOUBLE(ivdata[i]);
+	  rl[i] = XEN_TO_C_DOUBLE(rvdata[i]);
+	  im[i] = XEN_TO_C_DOUBLE(ivdata[i]);
 	}
     }
   else
@@ -2556,12 +2556,12 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       mus_fft(rl, im, n2, isign);
       if (v1 == NULL)
 	{
-	  rvdata = VECTOR_ELEMENTS(reals);
-	  ivdata = VECTOR_ELEMENTS(imag);
+	  rvdata = XEN_VECTOR_ELEMENTS(reals);
+	  ivdata = XEN_VECTOR_ELEMENTS(imag);
 	  for (i = 0; i < n; i++)
 	    {
-	      rvdata[i] = TO_SCM_DOUBLE(rl[i]);
-	      ivdata[i] = TO_SCM_DOUBLE(im[i]);
+	      rvdata[i] = C_TO_XEN_DOUBLE(rl[i]);
+	      ivdata[i] = C_TO_XEN_DOUBLE(im[i]);
 	    }
 	}
       else
@@ -2581,9 +2581,9 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       mus_convolution(rl, im, n2);
       if (v1 == NULL)
 	{
-	  rvdata = VECTOR_ELEMENTS(reals);
+	  rvdata = XEN_VECTOR_ELEMENTS(reals);
 	  for (i = 0; i < n; i++)
-	    rvdata[i] = TO_SCM_DOUBLE(rl[i]);
+	    rvdata[i] = C_TO_XEN_DOUBLE(rl[i]);
 	}
       else
 	{
@@ -2600,7 +2600,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   return(reals);
 }
 
-static SCM g_fft(SCM reals, SCM imag, SCM sign)
+static XEN g_fft(XEN reals, XEN imag, XEN sign)
 {
   #define H_fft "(" S_fft " reals imags &optional (sign 1)) ffts the data returning the result in reals. \
 If sign is -1, performs inverse fft"
@@ -2608,34 +2608,34 @@ If sign is -1, performs inverse fft"
   return(g_fft_1(reals, imag, sign, TRUE));
 }
 
-static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n, SCM edpos)
+static XEN g_convolve_with(XEN file, XEN new_amp, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_convolve_with "(" S_convolve_with " file &optional (amp 1.0) snd chn edpos)\n\
 convolves file with snd's channel chn (or the currently sync'd channels), amp is the resultant peak amp"
 
   chan_info *cp;
   Float amp;
-  SCM errstr;
+  XEN errstr;
   char *fname = NULL, *error = NULL;
-  ASSERT_TYPE(STRING_P(file), file, ARG1, S_convolve_with, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_convolve_with, "a string");
   ASSERT_CHANNEL(S_convolve_with, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_convolve_with);
-  if (NUMBER_P(new_amp)) 
-    amp = TO_C_DOUBLE(new_amp);
+  if (XEN_NUMBER_P(new_amp)) 
+    amp = XEN_TO_C_DOUBLE(new_amp);
   else
     {
-      if (FALSE_P(new_amp))
+      if (XEN_FALSE_P(new_amp))
 	amp = 0.0;
       else amp = 1.0;
     }
-  fname = mus_expand_filename(TO_C_STRING(file));
+  fname = mus_expand_filename(XEN_TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
       error = convolve_with_or_error(fname, amp, cp, edpos, 5);
       if (error)
 	{
 	  if (fname) FREE(fname);
-	  errstr = TO_SCM_STRING(error);
+	  errstr = C_TO_XEN_STRING(error);
 	  FREE(error);
 	  mus_misc_error(S_convolve_with, NULL, errstr);
 	}
@@ -2646,10 +2646,10 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
       return(snd_no_such_file_error(S_convolve_with, file));
     }
   if (fname) FREE(fname);
-  return(scm_return_first(file, new_amp));
+  return(xen_return_first(file, new_amp));
 }
 
-static SCM g_snd_spectrum(SCM data, SCM win, SCM len, SCM linear_or_dB)
+static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB)
 {
   #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB)\n\
 return magnitude spectrum of data (vct) in data using fft-window win and fft length len"
@@ -2658,18 +2658,18 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   Float maxa, todb, lowest, val;
   Float *idat, *rdat, *window;
   vct *v;
-  ASSERT_TYPE((VCT_P(data)), data, ARG1, S_snd_spectrum, "a vct");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(win), win, ARG2, S_snd_spectrum, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(len), len, ARG3, S_snd_spectrum, "an integer");
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, ARG4, S_snd_spectrum, "a boolean");
+  XEN_ASSERT_TYPE((VCT_P(data)), data, XEN_ARG_1, S_snd_spectrum, "a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(win), win, XEN_ARG_2, S_snd_spectrum, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(len), len, XEN_ARG_3, S_snd_spectrum, "an integer");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, XEN_ARG_4, S_snd_spectrum, "a boolean");
   v = TO_VCT(data);
   rdat = v->data;
-  n = TO_C_INT_OR_ELSE(len, v->length);
+  n = XEN_TO_C_INT_OR_ELSE(len, v->length);
   if (n <= 0)
     mus_misc_error(S_snd_spectrum, "length <= 0?", len);
   if (n > v->length) n = v->length;
-  if (NOT_FALSE_P(linear_or_dB)) linear = 1; else linear = 0;
-  wtype = TO_C_INT_OR_ELSE(win, MUS_RECTANGULAR_WINDOW);
+  if (XEN_NOT_FALSE_P(linear_or_dB)) linear = 1; else linear = 0;
+  wtype = XEN_TO_C_INT_OR_ELSE(win, MUS_RECTANGULAR_WINDOW);
   if (!(MUS_FFT_WINDOW_OK(wtype)))
     mus_misc_error(S_snd_spectrum, "unknown fft window", win);
   idat = (Float *)CALLOC(n, sizeof(Float));
@@ -2733,36 +2733,36 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
 	for (i = 0; i < n; i++) 
 	  idat[i] *= maxa;
     }
-  return(scm_return_first(make_vct(n, idat), data));
+  return(xen_return_first(make_vct(n, idat), data));
 }
 
-static SCM g_convolve_selection_with(SCM file, SCM new_amp)
+static XEN g_convolve_selection_with(XEN file, XEN new_amp)
 {
   #define H_convolve_selection_with "(" S_convolve_selection_with " file &optional (amp 1.0))\n\
 convolves the current selection with file; amp is the resultant peak amp"
 
   Float amp;
-  SCM errstr;
+  XEN errstr;
   char *fname = NULL, *error;
-  ASSERT_TYPE(STRING_P(file), file, ARG1, S_convolve_selection_with, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_convolve_selection_with, "a string");
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_convolve_selection_with));
-  if (NUMBER_P(new_amp)) 
-    amp = TO_C_DOUBLE(new_amp);
+  if (XEN_NUMBER_P(new_amp)) 
+    amp = XEN_TO_C_DOUBLE(new_amp);
   else
     {
-      if (FALSE_P(new_amp))
+      if (XEN_FALSE_P(new_amp))
 	amp = 0.0;
       else amp = 1.0;
     }
-  fname = mus_expand_filename(TO_C_STRING(file));
+  fname = mus_expand_filename(XEN_TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
-      error = convolve_with_or_error(fname, amp, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
+      error = convolve_with_or_error(fname, amp, NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
       if (error)
 	{
 	  if (fname) FREE(fname);
-	  errstr = TO_SCM_STRING(error);
+	  errstr = C_TO_XEN_STRING(error);
 	  FREE(error);
 	  mus_misc_error(S_convolve_selection_with, NULL, errstr);
 	}
@@ -2773,17 +2773,17 @@ convolves the current selection with file; amp is the resultant peak amp"
       return(snd_no_such_file_error(S_convolve_selection_with, file));
     }
   if (fname) FREE(fname);
-  return(scm_return_first(file, new_amp));
+  return(xen_return_first(file, new_amp));
 }
 
-static SCM g_convolve(SCM reals, SCM imag)
+static XEN g_convolve(XEN reals, XEN imag)
 {
   #define H_convolve "(" S_convolve_arrays " rl1 rl2) convolves vectors or vcts rl1 and rl2, result in rl1 (which needs to be big enough)"
   /* if reals is a string = filename and imag is a Float (or nada), assume user missppelledd convolve-with */
-  if (STRING_P(reals))
-    return(g_convolve_with(reals, imag, FALSE_VALUE, FALSE_VALUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION)));
+  if (XEN_STRING_P(reals))
+    return(g_convolve_with(reals, imag, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION)));
   /* result in reals (which needs to be big enough and zero padded) */
-  else return(g_fft_1(reals, imag, TO_SMALL_SCM_INT(1), FALSE));
+  else return(g_fft_1(reals, imag, C_TO_SMALL_XEN_INT(1), FALSE));
 }
 
 static Float check_src_envelope(env *e, char *caller)
@@ -2795,27 +2795,27 @@ static Float check_src_envelope(env *e, char *caller)
     {
 
       if (e->data[i + 1] == 0.0)
-	mus_misc_error(caller, "src envelope hits 0.0", env2scm(e));
+	mus_misc_error(caller, "src envelope hits 0.0", env_to_xen(e));
       else
 	{
 	  if (e->data[i + 1] < 0.0)
 	    {
 	      if (res <= 0.0)
 		res = -1.0;
-	      else mus_misc_error(caller, "src envelope passes through 0.0", env2scm(e));
+	      else mus_misc_error(caller, "src envelope passes through 0.0", env_to_xen(e));
 	    }
 	  else
 	    {
 	      if (res >= 0)
 		res = 1.0;
-	      else mus_misc_error(caller, "src envelope passes through 0.0", env2scm(e));
+	      else mus_misc_error(caller, "src envelope passes through 0.0", env_to_xen(e));
 	    }
 	}
     }
   return(res);
 }
 
-static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n, SCM edpos)
+static XEN g_src_sound(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_src_sound "(" S_src_sound " ratio-or-env &optional (base 1.0) snd chn edpos)\n\
 sampling-rate converts snd's channel chn by ratio, or following an envelope. Negative ratio reverses the sound"
@@ -2826,13 +2826,13 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
   Float e_ratio = 1.0;
   ASSERT_CHANNEL(S_src_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_src_sound);
-  if (NUMBER_P(ratio_or_env))
-    src_env_or_num(cp->state, cp, NULL, TO_C_DOUBLE(ratio_or_env), 
+  if (XEN_NUMBER_P(ratio_or_env))
+    src_env_or_num(cp->state, cp, NULL, XEN_TO_C_DOUBLE(ratio_or_env), 
 		   TRUE, NOT_FROM_ENVED, S_src_sound,
 		   FALSE, NULL, edpos, 5, 1.0);
   else 
     {
-      if (LIST_P(ratio_or_env))
+      if (XEN_LIST_P(ratio_or_env))
 	{
 	  e = get_env(ratio_or_env, S_src_sound);
 	  e_ratio = check_src_envelope(e, S_src_sound);
@@ -2840,23 +2840,23 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 			 e, e_ratio,
 			 FALSE, NOT_FROM_ENVED, S_src_sound, 
 			 FALSE, NULL, edpos, 5, 
-			 TO_C_DOUBLE_OR_ELSE(base, 1.0));
+			 XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  if (e) free_env(e);
 	}
       else
 	{
-	  ASSERT_TYPE((mus_scm_p(ratio_or_env)) && (mus_env_p(egen = mus_scm_to_clm(ratio_or_env))), 
-		      ratio_or_env, ARG1, S_src_sound, "a number, list, or env generator");
+	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = mus_xen_to_clm(ratio_or_env))), 
+		      ratio_or_env, XEN_ARG_1, S_src_sound, "a number, list, or env generator");
 	  src_env_or_num(cp->state, cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, S_src_sound, 
 			 FALSE, egen, edpos, 5, 1.0);
 	}
     }
-  return(scm_return_first(ratio_or_env, base));
+  return(xen_return_first(ratio_or_env, base));
 }
 
-static SCM g_src_selection(SCM ratio_or_env, SCM base)
+static XEN g_src_selection(XEN ratio_or_env, XEN base)
 {
   #define H_src_selection "(" S_src_selection " ratio-or-env &optional (base 1.0) edpos)\n\
 sampling-rate converts the currently selected data by ratio (which can be an envelope)"
@@ -2866,41 +2866,41 @@ sampling-rate converts the currently selected data by ratio (which can be an env
   chan_info *cp;
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_src_selection));
-  cp = get_cp(FALSE_VALUE, FALSE_VALUE, S_src_selection);
-  if (NUMBER_P(ratio_or_env))
+  cp = get_cp(XEN_FALSE, XEN_FALSE, S_src_selection);
+  if (XEN_NUMBER_P(ratio_or_env))
     src_env_or_num(cp->state, cp, 
 		   NULL, 
-		   TO_C_DOUBLE(ratio_or_env), 
+		   XEN_TO_C_DOUBLE(ratio_or_env), 
 		   TRUE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL, 
-		   TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
+		   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
   else 
     {
-      if (LIST_P(ratio_or_env))
+      if (XEN_LIST_P(ratio_or_env))
 	{
 	  e = get_env(ratio_or_env, S_src_selection);
 	  e_ratio = check_src_envelope(e, S_src_selection);
 	  src_env_or_num(cp->state, cp,
 			 e, e_ratio, FALSE, NOT_FROM_ENVED, S_src_selection, 
 			 TRUE, NULL, 
-			 TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 
-			 TO_C_DOUBLE_OR_ELSE(base, 1.0));
+			 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 
+			 XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  if (e) free_env(e);
 	}
       else
 	{
-	  ASSERT_TYPE((mus_scm_p(ratio_or_env)) && (mus_env_p(egen = mus_scm_to_clm(ratio_or_env))), 
-		      ratio_or_env, ARG1, S_src_selection, "a number, list, or env generator");
+	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = mus_xen_to_clm(ratio_or_env))), 
+		      ratio_or_env, XEN_ARG_1, S_src_selection, "a number, list, or env generator");
 	  src_env_or_num(cp->state, cp, NULL,
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, S_src_selection, 
 			 TRUE, egen, 
-			 TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
+			 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
 	}
     }
-  return(scm_return_first(ratio_or_env, base));
+  return(xen_return_first(ratio_or_env, base));
 }
 
-static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n, SCM edpos)
+static XEN g_filter_sound(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_filter_sound "(" S_filter_sound " filter order &optional snd chn edpos)\n\
 applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct object with the actual coefficients"
@@ -2908,124 +2908,124 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
   chan_info *cp;
   vct *v;
   int len;
-  SCM errstr;
+  XEN errstr;
   env *ne = NULL;
   char *error;
   ASSERT_CHANNEL(S_filter_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_filter_sound);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, ARG2, S_filter_sound, "an integer");
-  if (mus_scm_p(e))
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_sound, "an integer");
+  if (mus_xen_p(e))
     {
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e), edpos, 5);
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_xen_to_clm(e), edpos, 5);
       if (error)
 	{
-	  errstr = TO_SCM_STRING(error);
+	  errstr = C_TO_XEN_STRING(error);
 	  FREE(error);
 	  mus_misc_error(S_filter_sound, NULL, errstr);
 	}
     }
   else
     {
-      len = TO_C_INT_OR_ELSE(order, 0);
+      len = XEN_TO_C_INT_OR_ELSE(order, 0);
       if (len <= 0) 
 	mus_misc_error(S_filter_sound, "order <= 0?", order);
       if (VCT_P(e)) /* the filter coefficients direct */
 	{
 	  v = TO_VCT(e);
 	  if (len > v->length) 
-	    mus_misc_error(S_filter_sound, "order > length coeffs?", LIST_2(order, e));
+	    mus_misc_error(S_filter_sound, "order > length coeffs?", XEN_LIST_2(order, e));
 	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, v->data, NULL, edpos, 5);
 	}
       else 
 	{
-	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, ARG1, S_filter_sound, "a list, vector, vct, or env generator");
+	  XEN_ASSERT_TYPE((XEN_VECTOR_P(e) || (XEN_LIST_P(e))), e, XEN_ARG_1, S_filter_sound, "a list, vector, vct, or env generator");
 	  apply_filter(cp, len,
 		       ne = get_env(e, S_filter_sound),
 		       NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, NULL, edpos, 5);
 	  if (ne) free_env(ne); 
 	}
     }
-  return(scm_return_first(TRUE_VALUE, e));
+  return(xen_return_first(XEN_TRUE, e));
 }
 
-static SCM g_filter_selection(SCM e, SCM order)
+static XEN g_filter_selection(XEN e, XEN order)
 {
   #define H_filter_selection "(" S_filter_selection " filter order) applies filter to current selection"
   chan_info *cp;
   char *error;
   vct *v;
   int len;
-  SCM errstr;
+  XEN errstr;
   env *ne = NULL;
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_filter_selection));
-  cp = get_cp(FALSE_VALUE, FALSE_VALUE, S_filter_selection);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, ARG2, S_filter_selection, "an integer");
-  if (mus_scm_p(e))
+  cp = get_cp(XEN_FALSE, XEN_FALSE, S_filter_selection);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_selection, "an integer");
+  if (mus_xen_p(e))
     {
       error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_selection, 
-				    TRUE, NULL, mus_scm_to_clm(e), 
-				    TO_SCM_INT(AT_CURRENT_EDIT_POSITION) ,0);
+				    TRUE, NULL, mus_xen_to_clm(e), 
+				    C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION) ,0);
       if (error)
 	{
-	  errstr = TO_SCM_STRING(error);
+	  errstr = C_TO_XEN_STRING(error);
 	  FREE(error);
 	  mus_misc_error(S_filter_selection, NULL, errstr);
 	}
     }
   else
     {
-      len = TO_C_INT_OR_ELSE(order, 0);
+      len = XEN_TO_C_INT_OR_ELSE(order, 0);
       if (len <= 0) 
 	mus_misc_error(S_filter_selection, "order <= 0?", order);
       if (VCT_P(e)) /* the filter coefficients direct */
 	{
 	  v = TO_VCT(e);
 	  if (len > v->length) 
-	    mus_misc_error(S_filter_selection, "order > length coeffs?", LIST_2(order, e));
+	    mus_misc_error(S_filter_selection, "order > length coeffs?", XEN_LIST_2(order, e));
 	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, v->data, NULL, 
-		       TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
+		       C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	}
       else 
 	{
-	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, ARG1, S_filter_selection, "a list, vector, vct, or env generator");
+	  XEN_ASSERT_TYPE((XEN_VECTOR_P(e) || (XEN_LIST_P(e))), e, XEN_ARG_1, S_filter_selection, "a list, vector, vct, or env generator");
 	  apply_filter(cp, len,
 		       ne = get_env(e, S_filter_selection),
 		       NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, NULL, 
-		       TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0); 
+		       C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0); 
 	  if (ne) free_env(ne);
 	}
     }
-  return(scm_return_first(TRUE_VALUE, e));
+  return(xen_return_first(XEN_TRUE, e));
 }
 
-#ifdef ARGIFY_1
-ARGIFY_6(g_scan_chan_w, g_scan_chan)
-ARGIFY_7(g_map_chan_w, g_map_chan)
-ARGIFY_5(g_find_w, g_find)
-ARGIFY_5(g_count_matches_w, g_count_matches)
-ARGIFY_4(g_smooth_sound_w, g_smooth_sound)
-NARGIFY_0(g_smooth_selection_w, g_smooth_selection)
-ARGIFY_3(g_reverse_sound_w, g_reverse_sound)
-NARGIFY_0(g_reverse_selection_w, g_reverse_selection)
-ARGIFY_6(g_swap_channels_w, g_swap_channels)
-ARGIFY_4(g_insert_silence_w, g_insert_silence)
-NARGIFY_1(g_fht_w, g_fht)
-ARGIFY_1(g_scale_selection_to_w, g_scale_selection_to)
-ARGIFY_1(g_scale_selection_by_w, g_scale_selection_by)
-ARGIFY_3(g_scale_to_w, g_scale_to)
-ARGIFY_3(g_scale_by_w, g_scale_by)
-ARGIFY_4(g_env_selection_w, g_env_selection)
-ARGIFY_7(g_env_sound_w, g_env_sound)
-ARGIFY_3(g_fft_w, g_fft)
-ARGIFY_4(g_snd_spectrum_w, g_snd_spectrum)
-ARGIFY_2(g_convolve_w, g_convolve)
-ARGIFY_5(g_convolve_with_w, g_convolve_with)
-ARGIFY_2(g_convolve_selection_with_w, g_convolve_selection_with)
-ARGIFY_5(g_src_sound_w, g_src_sound)
-ARGIFY_2(g_src_selection_w, g_src_selection)
-ARGIFY_5(g_filter_sound_w, g_filter_sound)
-ARGIFY_2(g_filter_selection_w, g_filter_selection)
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_6(g_scan_chan_w, g_scan_chan)
+XEN_ARGIFY_7(g_map_chan_w, g_map_chan)
+XEN_ARGIFY_5(g_find_w, g_find)
+XEN_ARGIFY_5(g_count_matches_w, g_count_matches)
+XEN_ARGIFY_4(g_smooth_sound_w, g_smooth_sound)
+XEN_NARGIFY_0(g_smooth_selection_w, g_smooth_selection)
+XEN_ARGIFY_3(g_reverse_sound_w, g_reverse_sound)
+XEN_NARGIFY_0(g_reverse_selection_w, g_reverse_selection)
+XEN_ARGIFY_6(g_swap_channels_w, g_swap_channels)
+XEN_ARGIFY_4(g_insert_silence_w, g_insert_silence)
+XEN_NARGIFY_1(g_fht_w, g_fht)
+XEN_ARGIFY_1(g_scale_selection_to_w, g_scale_selection_to)
+XEN_ARGIFY_1(g_scale_selection_by_w, g_scale_selection_by)
+XEN_ARGIFY_3(g_scale_to_w, g_scale_to)
+XEN_ARGIFY_3(g_scale_by_w, g_scale_by)
+XEN_ARGIFY_4(g_env_selection_w, g_env_selection)
+XEN_ARGIFY_7(g_env_sound_w, g_env_sound)
+XEN_ARGIFY_3(g_fft_w, g_fft)
+XEN_ARGIFY_4(g_snd_spectrum_w, g_snd_spectrum)
+XEN_ARGIFY_2(g_convolve_w, g_convolve)
+XEN_ARGIFY_5(g_convolve_with_w, g_convolve_with)
+XEN_ARGIFY_2(g_convolve_selection_with_w, g_convolve_selection_with)
+XEN_ARGIFY_5(g_src_sound_w, g_src_sound)
+XEN_ARGIFY_2(g_src_selection_w, g_src_selection)
+XEN_ARGIFY_5(g_filter_sound_w, g_filter_sound)
+XEN_ARGIFY_2(g_filter_selection_w, g_filter_selection)
 #else
 #define g_scan_chan_w g_scan_chan
 #define g_map_chan_w g_map_chan
@@ -3055,36 +3055,36 @@ ARGIFY_2(g_filter_selection_w, g_filter_selection)
 #define g_filter_selection_w g_filter_selection
 #endif
 
-void g_init_sig(SCM local_doc)
+void g_init_sig(XEN local_doc)
 {
-  DEFINE_PROC(S_scan_chan,               g_scan_chan_w, 1, 5, 0,               H_scan_chan);
-  DEFINE_PROC(S_map_chan,                g_map_chan_w, 1, 6, 0,                H_map_chan);
-  DEFINE_PROC(S_find,                    g_find_w, 1, 4, 0,                    H_find);
-  DEFINE_PROC(S_count_matches,           g_count_matches_w, 1, 4, 0,           H_count_matches);
+  XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w, 1, 5, 0,               H_scan_chan);
+  XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w, 1, 6, 0,                H_map_chan);
+  XEN_DEFINE_PROCEDURE(S_find,                    g_find_w, 1, 4, 0,                    H_find);
+  XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w, 1, 4, 0,           H_count_matches);
 
-  DEFINE_PROC(S_smooth_sound,            g_smooth_sound_w, 2, 2, 0,            H_smooth_sound);
-  DEFINE_PROC(S_smooth_selection,        g_smooth_selection_w, 0, 0, 0,        H_smooth_selection);
-  DEFINE_PROC(S_reverse_sound,           g_reverse_sound_w, 0, 3, 0,           H_reverse_sound);
-  DEFINE_PROC(S_reverse_selection,       g_reverse_selection_w, 0, 0, 0,       H_reverse_selection);
-  DEFINE_PROC(S_swap_channels,           g_swap_channels_w, 0, 6, 0,           H_swap_channels);
-  DEFINE_PROC(S_insert_silence,          g_insert_silence_w, 2, 2, 0,          H_insert_silence);
-  DEFINE_PROC(S_fht,                     g_fht_w, 1, 0, 0,                     H_fht);
+  XEN_DEFINE_PROCEDURE(S_smooth_sound,            g_smooth_sound_w, 2, 2, 0,            H_smooth_sound);
+  XEN_DEFINE_PROCEDURE(S_smooth_selection,        g_smooth_selection_w, 0, 0, 0,        H_smooth_selection);
+  XEN_DEFINE_PROCEDURE(S_reverse_sound,           g_reverse_sound_w, 0, 3, 0,           H_reverse_sound);
+  XEN_DEFINE_PROCEDURE(S_reverse_selection,       g_reverse_selection_w, 0, 0, 0,       H_reverse_selection);
+  XEN_DEFINE_PROCEDURE(S_swap_channels,           g_swap_channels_w, 0, 6, 0,           H_swap_channels);
+  XEN_DEFINE_PROCEDURE(S_insert_silence,          g_insert_silence_w, 2, 2, 0,          H_insert_silence);
+  XEN_DEFINE_PROCEDURE(S_fht,                     g_fht_w, 1, 0, 0,                     H_fht);
 
-  DEFINE_PROC(S_scale_selection_to,      g_scale_selection_to_w, 0, 1, 0,      H_scale_selection_to);
-  DEFINE_PROC(S_scale_selection_by,      g_scale_selection_by_w, 0, 1, 0,      H_scale_selection_by);
-  DEFINE_PROC(S_scale_to,                g_scale_to_w, 0, 3, 0,                H_scale_to);
-  DEFINE_PROC(S_scale_by,                g_scale_by_w, 0, 3, 0,                H_scale_by);
-  DEFINE_PROC(S_env_selection,           g_env_selection_w, 1, 3, 0,           H_env_selection);
-  DEFINE_PROC(S_env_sound,               g_env_sound_w, 1, 6, 0,               H_env_sound);
-  DEFINE_PROC(S_fft,                     g_fft_w, 2, 1, 0,                     H_fft);
-  DEFINE_PROC(S_snd_spectrum,            g_snd_spectrum_w, 1, 3, 0,            H_snd_spectrum);
-  DEFINE_PROC(S_convolve_arrays,         g_convolve_w, 1, 1, 0,                H_convolve);
-  DEFINE_PROC(S_convolve_with,           g_convolve_with_w, 1, 4, 0,           H_convolve_with);
-  DEFINE_PROC(S_convolve_selection_with, g_convolve_selection_with_w, 1, 1, 0, H_convolve_selection_with);
-  DEFINE_PROC(S_src_sound,               g_src_sound_w, 1, 4, 0,               H_src_sound);
-  DEFINE_PROC(S_src_selection,           g_src_selection_w, 1, 1, 0,           H_src_selection);
-  DEFINE_PROC(S_filter_sound,            g_filter_sound_w, 1, 4, 0,            H_filter_sound);
-  DEFINE_PROC(S_filter_selection,        g_filter_selection_w, 1, 1, 0,        H_filter_selection);
+  XEN_DEFINE_PROCEDURE(S_scale_selection_to,      g_scale_selection_to_w, 0, 1, 0,      H_scale_selection_to);
+  XEN_DEFINE_PROCEDURE(S_scale_selection_by,      g_scale_selection_by_w, 0, 1, 0,      H_scale_selection_by);
+  XEN_DEFINE_PROCEDURE(S_scale_to,                g_scale_to_w, 0, 3, 0,                H_scale_to);
+  XEN_DEFINE_PROCEDURE(S_scale_by,                g_scale_by_w, 0, 3, 0,                H_scale_by);
+  XEN_DEFINE_PROCEDURE(S_env_selection,           g_env_selection_w, 1, 3, 0,           H_env_selection);
+  XEN_DEFINE_PROCEDURE(S_env_sound,               g_env_sound_w, 1, 6, 0,               H_env_sound);
+  XEN_DEFINE_PROCEDURE(S_fft,                     g_fft_w, 2, 1, 0,                     H_fft);
+  XEN_DEFINE_PROCEDURE(S_snd_spectrum,            g_snd_spectrum_w, 1, 3, 0,            H_snd_spectrum);
+  XEN_DEFINE_PROCEDURE(S_convolve_arrays,         g_convolve_w, 1, 1, 0,                H_convolve);
+  XEN_DEFINE_PROCEDURE(S_convolve_with,           g_convolve_with_w, 1, 4, 0,           H_convolve_with);
+  XEN_DEFINE_PROCEDURE(S_convolve_selection_with, g_convolve_selection_with_w, 1, 1, 0, H_convolve_selection_with);
+  XEN_DEFINE_PROCEDURE(S_src_sound,               g_src_sound_w, 1, 4, 0,               H_src_sound);
+  XEN_DEFINE_PROCEDURE(S_src_selection,           g_src_selection_w, 1, 1, 0,           H_src_selection);
+  XEN_DEFINE_PROCEDURE(S_filter_sound,            g_filter_sound_w, 1, 4, 0,            H_filter_sound);
+  XEN_DEFINE_PROCEDURE(S_filter_selection,        g_filter_selection_w, 1, 1, 0,        H_filter_selection);
 
 }
 
