@@ -689,7 +689,8 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
       send_error_output_to_stdout = 1;
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
       send_error_output_to_stdout = 0;
-      if (str) FREE(str);
+      if (stdin_str) FREE(stdin_str);
+      /* same as str here; if c-g! evaluated from stdin, clear_listener is called which frees/nullifies stdin_str */
       stdin_str = NULL;
       str = gl_print(result);
       string_to_stdout(ss, str);

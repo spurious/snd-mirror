@@ -50,9 +50,9 @@
   #include "config.h"
 #endif
 
-#if USE_SND && defined(MAC_OSX)
-  #define OLD_MOTIF USE_MOTIF
+#if USE_SND && defined(MAC_OSX) && USE_MOTIF
   #undef USE_MOTIF
+  #define USE_NO_GUI 1
   /* Xt's Boolean collides with MacTypes.h Boolean, but we want snd.h for other stuff,
    *   so, if Motif is in use, don't load its headers at this time
    */
@@ -66,7 +66,8 @@
 #endif
 
 #if USE_SND && defined(MAC_OSX)
-  #define USE_MOTIF OLD_MOTIF
+  #define USE_MOTIF 1
+  #undef USE_NO_GUI
 #endif
 
 #include <math.h>

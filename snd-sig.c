@@ -85,9 +85,10 @@ int end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller)
 {
   int last;
   last = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(end, cp->samples[edpos] - 1, caller);
-  if (last < 0) XEN_ERROR(NO_SUCH_SAMPLE,
-			  XEN_LIST_2(C_TO_XEN_STRING(caller),
-				     end));
+  if (last < 0) 
+    XEN_ERROR(NO_SUCH_SAMPLE,
+	      XEN_LIST_2(C_TO_XEN_STRING(caller),
+			 end));
   return(last);
 }
 
@@ -335,11 +336,9 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	    {
 	      if (cp == NULL)
 		{
-		  delete_samples(si->begs[ip], sc->dur, si->cps[ip], origin, si->cps[ip]->edit_ctr);
+		  delete_samples(si->begs[ip], sc->dur, ucp, origin, ucp->edit_ctr);
 		  file_insert_samples(si->begs[ip], filtersize + filesize, ofile, ucp, 0, DELETE_ME, origin, ucp->edit_ctr);
-		  reactivate_selection(si->cps[ip], 
-				       si->begs[ip], 
-				       si->begs[ip] + filtersize + filesize);
+		  reactivate_selection(ucp, si->begs[ip], si->begs[ip] + filtersize + filesize);
 		  backup_edit_list(ucp); 
 		  if (ucp->marks) 
 		    ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize + filesize);
@@ -1617,6 +1616,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
   ss = cp->state;
   sp = cp->sound;
   edpos = to_c_edit_position(cp, edp, caller, arg_pos);
+  if (dur > cp->samples[edpos]) dur = cp->samples[edpos];
   if (dur > MAX_BUFFER_SIZE)
     {
       temp_file = 1; 
@@ -1628,7 +1628,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);
     }
   else temp_file = 0;
-  if ((beg == 0) && (dur == current_ed_samples(cp)))
+  if ((beg == 0) && (dur == cp->samples[edpos]))
     ep = amp_env_copy(cp, TRUE, edpos); /* TRUE -> reversed */
   else 
     {
@@ -1640,6 +1640,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
 	  /* now reverse the selection */
 	  sbin = (int)ceil(beg / ep->samps_per_bin);
 	  ebin = (int)floor((beg + dur) / ep->samps_per_bin);
+	  if (ebin > ep->amp_env_size) ebin = ep->amp_env_size;
 	  for (i = sbin, j = ebin - 1; i < j; i++, j--)
 	    {
 #if DEBUGGING

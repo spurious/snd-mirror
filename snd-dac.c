@@ -749,6 +749,11 @@ static void free_dac_state(void)
 
 static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr);
 
+#if DEBUGGING
+static int disable_play = 0;
+static XEN g_disable_play(void) {disable_play = 1; return(XEN_FALSE);}
+#endif
+
 static void start_dac(snd_state *ss, int srate, int channels, int background)
 {
   dac_info *dp;
@@ -793,6 +798,16 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
       snd_dacp->frames = 256; /* just a first guess */
       snd_dacp->devices = 1;  /* just a first guess */
       snd_dacp->reverb_ring_frames = (int)(srate * reverb_control_decay(ss));
+#if DEBUGGING
+      if (disable_play) 
+	{
+	  stop_playing_all_sounds();
+	  play_list_members = 0; 
+	  max_active_slot = -1;
+	  free_dac_state();
+	}
+      else {
+#endif
       if (background == IN_BACKGROUND) 
 	BACKGROUND_ADD(ss, dac_in_background, NULL);
       else
@@ -804,6 +819,9 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 	      /* if ((sp) && (!(sp->inuse))) break; */
 	    }
 	}
+#if DEBUGGING
+      }
+#endif
     }
 }
 
@@ -2403,4 +2421,8 @@ If it returns #t, the sound is not played."
   XEN_DEFINE_HOOK(dac_hook, S_dac_hook, 1, H_dac_hook);                                                    /* args = data as sound_data obj */
   XEN_DEFINE_HOOK(stop_dac_hook, S_stop_dac_hook, 0, H_stop_dac_hook);                                     /* no args */
   XEN_DEFINE_HOOK(stop_playing_selection_hook, S_stop_playing_selection_hook, 0, H_stop_playing_selection_hook); /* no args */
+
+#if DEBUGGING
+  XEN_DEFINE_PROCEDURE("disable-play", g_disable_play, 0, 0, 0, NULL);
+#endif
 }
