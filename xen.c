@@ -693,13 +693,10 @@ VALUE xen_rb_hook_c_new(char *name, int arity, char *help)
 
 static VALUE xen_rb_hook_add_hook(int argc, VALUE *argv, VALUE hook)
 {
-  int arity = FIX2INT(rb_iv_get(hook, "@arity"));
-  char info[64] = "";
   VALUE name, func;
   rb_scan_args(argc, argv, "1&", &name, &func);
-  sprintf(info, "a procedure of %d args, not %d", arity, (int)(NUM2INT(XEN_ARITY(func))));
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, c__FUNCTION__, "a char*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && (XEN_REQUIRED_ARGS(func) == arity), func, XEN_ARG_2, c__FUNCTION__, info);
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func), func, XEN_ARG_2, c__FUNCTION__, "a procedure");
   rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, name, func));
   return hook;
 }
