@@ -504,6 +504,8 @@ from grfsnd.html to your initialization file:
   (lambda (w)
     (focus-widget w)))
 
+See also the cmdist archives for tips from Juan Pampin and others.
+
 
 ---- Motif: ----
 If you installed OpenMotif, then upgraded to RedHat 7.2, Redhat

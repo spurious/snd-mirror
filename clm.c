@@ -6002,6 +6002,8 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
     case MUS_BLACKMAN3_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{              /* (+ 0.35875 (* -0.48829 (cos a)) (* 0.14128 (cos (* a 2))) (* -0.01168 (cos (* a 3)))) */
+	               /* (+ 0.36336 (*  0.48918 (cos a)) (* 0.13660 (cos (* a 2))) (*  0.01064 (cos (* a 3)))) is "Nuttall" window? */
+
 	  cx = cos(angle);
 	  window[j] = (window[i] = (.21747 + (cx * (-.45325 + (cx * (.28256 - (cx * .04672)))))));
 	}

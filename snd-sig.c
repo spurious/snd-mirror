@@ -2716,6 +2716,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 					C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 					caller);
 	      /* leak here -- if reader active and error occurs, we jump out without cleanup */
+	      /* perhaps we want scm_internal_lazy_catch here followed (in error handler) by scm_throw */
 	      if (XEN_NOT_FALSE_P(res))
 		{
 		  if ((counting) &&

@@ -1164,7 +1164,6 @@ corresponding code in extsnd.html.  These include:
   <em class=def><a name="exwindowsamples">window-samples</a></em> <i>snd chn</i>
   <em class=def><a name="exdisplayenergy">display-energy</a></em> snd chn y0 y1
   <em class=def><a name="exwindowrms">window-rms</a></em>
-  <em class=def><A NAME="exnostartupfile">no-startup-file?</a></em> ind file
   <em class=def><A NAME="exfftpeak">fft-peak</a></em> snd chn scale
 </pre>
 <p>
@@ -1179,8 +1178,6 @@ corresponding code in extsnd.html.  These include:
 displayed in the current window for <i>snd</i>'s channel <i>chn</i>.
 <i>display-energy</i> is a graph-hook function to display the time domain data squared.
 <i>window-rms</i> returns the rms of the data in currently selected graph window.
-<i>no-startup-file?</i> is a start-hook function that causes Snd to exit immediately
-if a file is specified on Snd's invocation line, but that file doesn't exist.
 <i>fft-peak</i> is a transform-hook function that returns the peak spectral magnitude.
 </p>
 <pre>

@@ -24,14 +24,16 @@
 (define (mark-name->id name)
   "(mark-name->id name) is like find-mark but searches all currently accessible channels"
   (call-with-current-continuation
-   (lambda (return-early)
-     (do ((i 0 (1+ i)))
-	 ((= i (max-sounds)) 'no-such-mark)
-       (if (sound? i)
-	   (do ((j 0 (1+ j)))
-	       ((= j (channels i)))
-	     (let ((mark (find-mark name i j)))
-	       (if (mark? mark) (return-early mark)))))))))
+   (lambda (return)
+     (map 
+      (lambda (snd)
+	(do ((chn 0 (1+ chn)))
+	    ((= chn (channels snd)))
+	     (let ((mark (find-mark name snd chn)))
+	       (if (mark? mark) 
+		   (return mark)))))
+      (sounds))
+     'no-such-mark)))
 
 
 ;;; -------- move-syncd-marks moves all syncd marks together
@@ -47,20 +49,23 @@
 
 (define (describe-mark id)
   "(describe-mark id) returns a description of the movements of mark id over the channel's edit history"
-  (let ((mark-setting (mark-home id)))
-    (if (eq? mark-setting 'no-such-mark)
+  (let ((mark-setting (catch 'no-such-mark (lambda () (mark-home id)) (lambda args #f))))
+    (if (not mark-setting)
         ;; not an active mark, so go scrounging for it
         ;;   we're looking at every edit of every channel
-        (do ((i 0 (1+ i)))
-            ((or (= i (max-sounds)) (list? mark-setting)))
-          (if (sound? i)
-              (do ((j 0 (1+ j)))
-                  ((or (= j (channels i)) (list? mark-setting)))
-                (let* ((max-edits (apply + (edits i j))))
-                  (do ((k 0 (1+ k)))
-                      ((or (> k max-edits) (list? mark-setting)))
-                    (if (member id (marks i j k))
-                        (set! mark-setting (list i j)))))))))
+	(set! mark-setting (call-with-current-continuation
+			    (lambda (return)
+			      (for-each
+			       (lambda (snd)
+				 (do ((chn 0 (1+ chn)))
+				     ((= chn (channels snd)))
+				   (let* ((max-edits (apply + (edits snd chn))))
+				     (do ((ed 0 (1+ ed)))
+					 ((> ed max-edits))
+				       (if (member id (marks snd chn ed))
+					   (return (list snd chn)))))))
+			       (sounds))
+			      #f))))
     (if (list? mark-setting)
         (let* ((snd (car mark-setting))
                (chn (cadr mark-setting))

@@ -2786,7 +2786,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       (!(ss->graph_hook_active)) &&
       (XEN_HOOKED(graph_hook)))
     {
-      ss->graph_hook_active = 1;
+      ss->graph_hook_active = TRUE;
       res = g_c_run_progn_hook(graph_hook,
 			       XEN_LIST_4(C_TO_SMALL_XEN_INT((cp->sound)->index),
 					  C_TO_SMALL_XEN_INT(cp->chan),
@@ -2794,7 +2794,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 					  C_TO_XEN_DOUBLE((cp->axis)->y1)),
 			       S_graph_hook);
       /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
-      ss->graph_hook_active = 0;
+      ss->graph_hook_active = FALSE;
       if (XEN_TRUE_P(res)) return;
     }
   ap = cp->axis;
@@ -2811,7 +2811,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       with_time = 1;
     }
 
-  cp->graph_lisp_p = (XEN_HOOKED(lisp_graph_hook)); /* is this a good idea? */
+  cp->graph_lisp_p = ((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))); /* is this a good idea? */
   if (cp->graph_lisp_p)
     {
       displays++;
@@ -2985,12 +2985,16 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  ap->hisamp = (off_t)(ap->x1 * (double)SND_SRATE(sp));
 	}
       if ((cp->hookable) &&
+	  (!(ss->lisp_graph_hook_active)) &&
 	  (XEN_HOOKED(lisp_graph_hook)))
 	{
+	  ss->lisp_graph_hook_active = TRUE;
+	  /* inadvertent recursive call here can hang entire computer */
 	  pixel_list = g_c_run_progn_hook(lisp_graph_hook,
 					  XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
 						     C_TO_SMALL_XEN_INT(cp->chan)),
 					  S_lisp_graph_hook);
+	  ss->lisp_graph_hook_active = FALSE;
 	  if (!(XEN_FALSE_P(pixel_list))) snd_protect(pixel_list);
 	}
       if (up != (lisp_grf *)(cp->lisp_info))

@@ -188,21 +188,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
     (sqrt (/ (dot-product data data) len))))
 
 
-(define (no-startup-file? ind file)
-  "(no-startup-file?) is intended as a start-hook procedure; if a file is specified in the \
-Snd invocation, but the file doesn't exist, Snd exits back to the shell"
-  (if (= ind (max-sounds))
-      (begin
-	(write (string-append "can't open " file) (current-error-port))
-	(newline (current-error-port))
-	#t)
-      (if (sound? ind)
-	  #f
-	  (no-startup-file? (+ ind 1) file))))
-
-;(add-hook! start-hook (lambda (file) (if (> (string-length file) 0) (no-startup-file? 0 file) #f)))
-
-
 (define (fft-peak snd chn scale)
   "(fft-peak) returns the peak spectral magnitude"
   (if (and (graph-transform?) 
@@ -397,43 +382,30 @@ this can be confusing if fft normalization is on (the default)"
 
 (define (superimpose-ffts snd chn y0 y1)
   "(superimpose-ffts snd chn y0 y1) superimposes ffts of multiple (syncd) sounds (use with graph-hook)"
-  (define make-one-fft
-    (lambda (samp size snd chn)
-      (let* ((fdr (samples->vct samp size snd chn))
-	     (fdi (make-vct size))
-	     (spectr (make-vct (/ size 2))))
-	(vct-add! spectr (spectrum fdr fdi #f size 2)))))
-  (define min-at-sync 
-    (lambda (snd ind)
-      (if (>= ind (max-sounds)) 
-	  #t
-	  (if (or (= snd ind)
-		  (not (sound? ind))
-		  (and (= (sync snd) (sync ind))
-		       (> ind snd)))
-	      (min-at-sync snd (1+ ind))
-	      #f))))
-  (define collect-ffts 
-    (lambda (samp size snd chn ffts ind)
-      (if (>= ind (max-sounds)) 
-	  ffts
-	  (if (and (sound? ind)
-		   (= (sync snd) (sync ind))
-		   (> (chans ind) chn))
-	      (collect-ffts samp size snd chn (append ffts (list (make-one-fft samp size ind chn))) (1+ ind))
-	      (collect-ffts samp size snd chn ffts (1+ ind))))))
-  (if (and (> (sync snd) 0)
-	   (min-at-sync snd 0))
-      ;; we are sync, and we are the top sound in this sync group
-      (let* ((ls (left-sample snd chn))
-	     (rs (right-sample snd chn))
-	     (pow2 (inexact->exact (ceiling (/ (log (- rs ls)) (log 2)))))
-	     (fftlen (inexact->exact (expt 2 pow2))))
-	(if (> pow2 2)
-	    (graph (collect-ffts ls fftlen snd chn '() snd)
-		   "spectra" 0.0 0.5 #f #f snd chn)))
-      (set! (graph-lisp? snd chn) #f))
-  #f)
+  (let ((maxsync (apply max (map sync (sounds)))))
+    (if (and (> (sync snd) 0)
+	     (= snd (apply min (map (lambda (n) 
+				      (if (= (sync snd) (sync n))
+					  n
+					  (1+ maxsync)))
+				    (sounds)))))
+	(let* ((ls (left-sample snd chn))
+	       (rs (right-sample snd chn))
+	       (pow2 (inexact->exact (ceiling (/ (log (- rs ls)) (log 2)))))
+	       (fftlen (inexact->exact (expt 2 pow2))))
+	  (if (> pow2 2)
+	      (let ((ffts '()))
+		(for-each
+		 (lambda (n)
+		   (if (and (= (sync n) (sync snd))
+			    (> (chans n) chn))
+		       (set! ffts (append ffts (let* ((fdr (samples->vct ls fftlen n chn))
+						      (fdi (make-vct fftlen))
+						      (spectr (make-vct (/ fftlen 2))))
+						 (list (vct-add! spectr (spectrum fdr fdi #f fftlen 2))))))))
+		 (sounds))
+		(graph ffts "spectra" 0.0 0.5 #f #f snd chn)))))
+    #f))
 
 ;(add-hook! graph-hook superimpose-ffts)
 

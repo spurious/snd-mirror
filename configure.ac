@@ -11,7 +11,7 @@ dnl Process this file with autoconf 2.53 to produce a configure script.
 #       w95/98 with cygwin
 #       beos release 5 (intel)
 #       next m68k and next i386
-#       Mac OS-X (Darwin 1.1, 1.3)
+#       Mac OS-X (Darwin 1.1, 1.3, 1.5)
 #       Alpha Linux
 #       FreeBSD 4.2
 #

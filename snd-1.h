@@ -336,7 +336,7 @@ typedef struct snd__state {
   int stopped_explicitly, checking_explicitly, reloading_updated_file;
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
-  int graph_hook_active;
+  int graph_hook_active, lisp_graph_hook_active;
 
   /* user-visible global variables
    *   all of these are accessed through macros in snd-0.h 

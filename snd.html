@@ -175,7 +175,8 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
         <!-- I(move cursor ahead):A(thecursor) --><!-- I(move cursor back):A(thecursor) -->
         <!-- I(define mark):A(marks) -->
 
-
+<hr>
+<br>
 <A NAME="menus"></a>
 <center>
 <table border=8 bordercolor="lightgreen">
@@ -308,6 +309,7 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 </table>
 </center>
 <br>
+<hr>
 <br>
 <span class=box><h2><A NAME="gettingstarted">Getting Started</a></h2></span>
 
@@ -1177,24 +1179,9 @@ return to this state later via the region browser.
 </pre>
 
 <p>If the current selection is active (displayed somewhere in the
-current time domain displays), there are several functions that
+current time domain displays), there are lots of <a href="extsnd.html#sndregions">functions</a> that
 can edit that portion of the current sounds.
-</p>
-<pre>
-  <a href="extsnd.html#sndscaleselectionby">scale-selection-by</a> args
-  <a href="extsnd.html#sndscaleselectionto">scale-selection-to</a> args
-  <a href="extsnd.html#sndsrcselection">src-selection</a> num-or-env
-  <a href="extsnd.html#sndfilterselection">filter-selection</a> coeffs order
-  <a href="extsnd.html#snddeleteselection">delete-selection</a>
-  <a href="extsnd.html#sndinsertselection">insert-selection</a> beg snd chn
-  <a href="extsnd.html#sndmixselection">mix-selection</a> beg snd chn
-  <a href="extsnd.html#sndreverseselection">reverse-selection</a>
-  <a href="extsnd.html#sndenvselection">env-selection</a> env base
-  <a href="extsnd.html#sndsaveselection">save-selection</a> name type format srate comment
-  <a href="extsnd.html#sndconvolveselectionwith">convolve-selection-with</a> filename amp
-  <a href="extsnd.html#sndsmoothselection">smooth-selection</a>
-</pre>
-<p>Also if the 'selection' button is set in the transform options dialog,
+If the 'selection' button is set in the transform options dialog,
 (or equivalently, <a href="extsnd.html#lshowselectiontransform">show-selection-transform</a>
 is #t), the fft display, if any, displays the transform of the selected portion.
 </p>
