@@ -225,7 +225,8 @@ gsl_dht_init_1(gsl_dht * t, double nu, double xmax)
 	}
 	if (prog > 100)
 	  {
-	    check_for_event(get_global_state());
+	    if (with_background_processes(ss))
+	      check_for_event(get_global_state());
 	    prog = 0;
 	    if (reporting) progress_report(sp, "Hankel", 1, 1, (Float)n / (Float)(t->size), NOT_FROM_ENVED);
 	  }
@@ -1501,6 +1502,9 @@ static int apply_fft_window(fft_state *fs)
       abel(fs->hwin, fft_data);
       result = 1;
 #endif
+#if DEBUGGING
+      if ((fs->slice + result) > 8) abort();
+#endif
       break;
     case WAVELET:
       for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
@@ -1886,6 +1890,9 @@ static BACKGROUND_TYPE fft_in_slices(void *fftData)
       return(BACKGROUND_QUIT);
     }
   fs->slice += res;
+#if DEBUGGING
+  if (fs->slice > 8) abort();
+#endif
   return(BACKGROUND_CONTINUE);
 }
 

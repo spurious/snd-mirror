@@ -49,6 +49,24 @@
 	(set! (|height e) height)
 	(|XSendEvent dpy window #f |ResizeRedirectMask e)))))
 
+(define enter-event
+  (let ((e (|XEvent |EnterNotify)))
+    (lambda (widget)
+      (let ((dpy (|XtDisplay widget))
+	    (window (|XtWindow widget)))
+	(set! (|window e) window)
+	(set! (|display e) dpy)
+	(|XSendEvent dpy window #f |EnterWindowMask e)))))
+
+(define leave-event
+  (let ((e (|XEvent |LeaveNotify)))
+    (lambda (widget)
+      (let ((dpy (|XtDisplay widget))
+	    (window (|XtWindow widget)))
+	(set! (|window e) window)
+	(set! (|display e) dpy)
+	(|XSendEvent dpy window #f |LeaveWindowMask e)))))
+
 (define expose-event
   (let ((e (|XEvent |Expose)))
     (lambda (widget x y width height)
@@ -205,3 +223,38 @@
   (if (and (|XmIsTraversable wid)
 	   (not (= (|XmGetVisibility wid) |XmVISIBILITY_FULLY_OBSCURED)))
       (|XmProcessTraversal wid |XmTRAVERSE_CURRENT)))
+
+(define (move-scale scl val)
+  (|XmScaleSetValue scl val)
+  (|XtCallCallbacks scl |XmNvalueChangedCallback
+    (let ((cb (|XmScaleCallbackStruct)))
+      (set! (|value cb) val)
+      (set! (|event cb) (|XEvent))
+      cb)))
+
+
+(define (change-prop winat name command)
+  ;; implements change-property via xm
+  (define (find-window dpy top natom)
+    (let ((res (|XGetWindowProperty dpy top natom 0 1024 #f |XA_STRING)))
+      (if (and (= (car res) |Success) 
+	       (not (equal? (cadr res) (list 'Atom |None))))
+	  top
+	  (let ((vals (|XQueryTree dpy top)))
+	    (if (= (car vals) 0)
+		#f
+		(call-with-current-continuation
+		 (lambda (return)
+		   (for-each 
+		    (lambda (win)
+		      (let ((val (find-window dpy win natom)))
+			(if (|Window? val)
+			    (return val))))
+		    (list-ref vals 3)))))))))
+  (let* ((dpy (|XtDisplay (cadr (main-widgets))))
+	 (natom (|XInternAtom dpy winat #f))
+	 (window (find-window dpy (|DefaultRootWindow dpy) natom)))
+    (if (|Window? window)
+	(begin
+	  (|XChangeProperty dpy window (|XInternAtom dpy name #f) |XA_STRING 8 |PropModeReplace command)
+	  (|XFlush dpy)))))

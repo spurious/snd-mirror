@@ -12,6 +12,9 @@
 ;;;   GdkColor|GC|GCValues|Event* make?
 ;;; TODO: add unicode handlers from glib
 ;;; TODO: unprotect *_remove?
+;;; TODO: GList <-> list; avoid glist altogether since type of data is apparently implicit (also need g_list_free here)
+;;; TODO: check the GtkSignalFunc toolbar stuff (why "loc")
+;;; TODO: mark ptr args that can be null []
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -950,7 +953,7 @@
 (hey "#define XM_TYPE_PTR(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
-(hey "  static int XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));}~%")
+(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */~%")
 (hey "~%")
 (hey "/* type checks for callback wrappers */~%")
 
@@ -1281,7 +1284,7 @@
 	      (let ((argname (cadr arg))
 		    (argtype (car arg)))
 		(if (= (length arg) 2)
-		    (hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%"
+		    (hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%" ; TODO: if NULL ok, mark somehow []?
 			 (no-stars argtype) argname argname ctr name argtype))
 		(set! ctr (1+ ctr))))
 	    args)))
@@ -1634,6 +1637,16 @@
  types)
 (hey "  return(result);~%")
 (hey "}~%~%")
+
+;;; gotta handle GList* by hand -- how to tell the type?
+;(hey "  if (strcmp(ctype, \"GList*\") == 0)~%")
+;(hey "    {~%")
+;(hey "      GList* lst;~%")
+;(hey "      int i, len;~%")
+;(hey "      lst = (GList*)XEN_CADR(val);~%")
+;(hey "      len = g_list_length(lst);~%")
+;(hey "      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_ULONG(g_list_nth_data(lst, i)), result);~%")
+;(hey "    }~%"))
 
 (hey "static XEN xen_list_to_c_array(XEN val, XEN type)~%")
 (hey "{~%")

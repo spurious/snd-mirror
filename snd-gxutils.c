@@ -125,49 +125,18 @@ static XEN g_change_property(XEN winat, XEN name, XEN command)
   return(XEN_FALSE);
 }
 
-#if DEBUGGING
-/* this is intended for auto-testing the user-interface */
-
-static XEN g_move_scale(XEN scale, XEN val)
-{
-#if USE_MOTIF
-  /* weird that Motif does not have a notify arg (or any equivalent anywhere) for XmScaleSetValue */
-  Widget scl;
-  XmScaleCallbackStruct *cbs;
-  cbs = (XmScaleCallbackStruct *)calloc(1, sizeof(XmScaleCallbackStruct));
-  cbs->value = XEN_TO_C_INT(val);
-  cbs->event = (XEvent *)calloc(1, sizeof(XEvent)); /* needed else freed mem troubles -- who is freeing these pointers? */
-  scl = (Widget)XEN_UNWRAP_WIDGET(scale);
-  XmScaleSetValue(scl, cbs->value);
-  XtCallCallbacks(scl, XmNvalueChangedCallback, (XtPointer)cbs);
-#endif
-  return(scale);
-}
-
-#endif
-
-
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(send_netscape_w, send_netscape)
 XEN_NARGIFY_3(g_change_property_w, g_change_property)
-#if DEBUGGING
-XEN_NARGIFY_2(g_move_scale_w, g_move_scale)
-#endif
 #else
 #define send_netscape_w send_netscape
 #define g_change_property_w g_change_property
-#if DEBUGGING
-#define g_move_scale_w g_move_scale
-#endif
 #endif
 
 void g_init_gxutils(void)
 {
   XEN_DEFINE_PROCEDURE("send-netscape", send_netscape_w, 1, 0, 0, "");
   XEN_DEFINE_PROCEDURE(S_change_property, g_change_property_w, 3, 0, 0, H_change_property);
-#if DEBUGGING
-  XEN_DEFINE_PROCEDURE("move-scale", g_move_scale_w, 2, 0, 0, "");
-#endif
 }
 
 #endif

@@ -380,6 +380,7 @@ gpointer get_user_data(GtkObject *obj);
   void sg_text_insert(GtkWidget *w, char *text);
   int sg_cursor_position(GtkWidget *w);
   void sg_select_text(GtkWidget *w, int s0, int s1);
+  void sg_unselect_text(GtkWidget *w);
   void sg_list_append(GtkWidget *w, char *val);
   void sg_list_insert(GtkWidget *w, int row, char *val);
   void sg_list_set_text(GtkWidget *w, int row, char *val);

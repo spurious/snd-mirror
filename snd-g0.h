@@ -42,15 +42,15 @@
 #define GUI_POINTER gpointer
 #define GUI_WIDGET GtkWidget*
 #define GUI_PIXEL GdkColor*
-#define XEN_WRAP_WIDGET(Value)       XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"),    C_TO_XEN_ULONG((unsigned long)Value))
-#define XEN_WRAP_WINDOW(Value)       XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"),    C_TO_XEN_ULONG((unsigned long)Value))
-#define XEN_WRAP_GC(Value)           XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"),        C_TO_XEN_ULONG((unsigned long)Value))
-#define XEN_WRAP_PIXEL(Value)        XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"),     C_TO_XEN_ULONG((unsigned long)Value))
-#define XEN_UNWRAP_WIDGET(Value)     XEN_TO_C_ULONG(XEN_CADR(Value))
-#define XEN_UNWRAP_WINDOW(Value)     XEN_TO_C_ULONG(XEN_CADR(Value))
-#define XEN_UNWRAP_GC(Value)         XEN_TO_C_ULONG(XEN_CADR(Value))
-#define XEN_UNWRAP_PIXEL(Value)      XEN_TO_C_ULONG(XEN_CADR(Value))
-#define XEN_WIDGET_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) &&\
+#define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
+#define XEN_WRAP_WINDOW(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
+#define XEN_WRAP_GC(Value)       ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
+#define XEN_WRAP_PIXEL(Value)    ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
+#define XEN_UNWRAP_WIDGET(Value) (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
+#define XEN_UNWRAP_WINDOW(Value) (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
+#define XEN_UNWRAP_GC(Value)     (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
+#define XEN_UNWRAP_PIXEL(Value)  (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
+#define XEN_WIDGET_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                             (strcmp("GtkWidget_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #if DEBUGGING

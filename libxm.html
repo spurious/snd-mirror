@@ -23,7 +23,7 @@
 <span class=box><h1>xm</h1></span>
 <br>
 <p>libxm provides Guile/Ruby bindings for Xlib, Xt, Xp, Xpm, and Xm (Motif);
-or alternatively Gtk2, gdk, pango, and some of glib.
+or alternatively Gtk2, gdk, gdk-pixbuf, pango, and some of glib.
 You can build it with just X, and so on -- see README.libxm for details.
 There are several example files In the libxm package -- anything with
 the extension "scm".  libxm can be used directly with Guile (or Ruby),
@@ -34,8 +34,16 @@ All libxm names are exactly the same as the C name except that
 a "|" is prepended (in Guile) -- this can be set via the macros
 XM_PREFIX and XM_POSTFIX to whatever you like --
 "x:" or "<" and ">", etc.  In Ruby, I'm prepending "R".
+Some such alteration seems necessary because the bare X names, especially
+of struct fields and constants could collide with common names like
+"value" or "x".  I chose not to try to make these names fit into the
+"Scheme culture" (i.e. adding random dashes and uncapitalizing everything)
+because it is already too hard to keep track of the thousands of names
+in these libraries.  By using the exact C name, ugly embedded caps and all,
+there's no hesitation or uncertainty about what the corresponding libxm name is;
+XmScaleSetValue becomes |XmScaleSetValue, x becomes |x, etc.
 There are several differences between the C versions and the libxm
-versions; these are listed in detail at the start of xm.c.  Briefly,
+versions; these are listed in detail at the start of xm.c and xg.c.  Briefly,
 an Arg list is lisp list of name/value pairs and the "len" arg associated with it is optional;
 ref args are usually returned by proc, and not passed in unless init val is needed;
 array args are passed as lists, and returned as lists;
@@ -65,7 +73,7 @@ For example, load this into guile after loading libxm.so:
 		  (|XtDisplay shell)))))
   (if (not (|XtIsApplicationShell shell))
       (display "not appshell"?))
-  (|XtSetValues shell (list |XmNtitle "Hi!") 1)
+  (|XtSetValues shell (list |XmNtitle "Hi!"))
   (let* ((main-pane 
 	  (|XtVaCreateManagedWidget 
 	    "main-pane" |xmFormWidgetClass shell
@@ -103,6 +111,10 @@ and macros.
 <pre>
   (set! app (car (main-widgets)))
 </pre>
-
+<p>For many examples, see event.scm, snd-motif.scm, popup.scm, new-effects.scm,
+all the contrib/dlp directory, and snd-test.scm in the Snd tarball. There is
+also some further discussion of this stuff in Snd's grfsnd.html (Ruby examples,
+etc).  The Gtk+ bindings depend on version 1.3.13 ("gtk2") or later.
+</p>
 </body>
 </html>

@@ -436,7 +436,7 @@ static void save_as_header_type_callback(GtkTreeSelection *selection, gpointer *
 {
   GtkTreeIter iter;
   gchar *value;
-  int size, i;
+  int i;
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
@@ -459,7 +459,7 @@ static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *
 {
   GtkTreeIter iter;
   gchar *value;
-  int size, i;
+  int i;
   GtkTreeModel *model;
   int dformats = 0;
   char **formats = NULL;
@@ -1320,7 +1320,7 @@ static void raw_data_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
   gchar *value;
-  int size, i;
+  int i;
   GtkTreeModel *model;
   char **names;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;

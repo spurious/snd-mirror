@@ -1586,7 +1586,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeKeyboardControl" XM_POSTFIX, gxm_XChangeKeyboardControl_w, 3, 0, 0, H_XChangeKeyboardControl);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeKeyboardMapping" XM_POSTFIX, gxm_XChangeKeyboardMapping_w, 5, 0, 0, H_XChangeKeyboardMapping);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangePointerControl" XM_POSTFIX, gxm_XChangePointerControl_w, 6, 0, 0, H_XChangePointerControl);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeProperty" XM_POSTFIX, gxm_XChangeProperty_w, 8, 0, 0, H_XChangeProperty);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeProperty" XM_POSTFIX, gxm_XChangeProperty_w, 7, 1, 0, H_XChangeProperty);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeWindowAttributes" XM_POSTFIX, gxm_XChangeWindowAttributes_w, 4, 0, 0, H_XChangeWindowAttributes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckIfEvent" XM_POSTFIX, gxm_XCheckIfEvent_w, 3, 0, 0, H_XCheckIfEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckMaskEvent" XM_POSTFIX, gxm_XCheckMaskEvent_w, 3, 0, 0, H_XCheckMaskEvent);

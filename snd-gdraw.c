@@ -570,7 +570,7 @@ static void list_color_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
   gchar *value;
-  int size, i;
+  int i;
   char **names;
   GtkTreeModel *model;
   snd_state *ss = (snd_state *)gp;

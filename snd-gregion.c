@@ -317,10 +317,9 @@ static GtkWidget *dismiss_button, *help_button, *delete_button;
 
 static void make_region_dialog(snd_state *ss)
 {
-  int i, id;
+  int i;
   regrow *r;
   chan_info *cp;
-  file_info *hdr;
   ww_info *wwl;
   GtkWidget *infobox, *labels, *labbox;
 

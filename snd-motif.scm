@@ -65,7 +65,8 @@
       widget
       (lambda (child)
 	(if (string=? (|XtName child) name)
-	    (return child)))))))
+	    (return child))))
+     (throw 'no-such-widget (list "find-child" name)))))
 
 (define (set-main-color-of-widget w)
   "(set-main-color-of-widget w) sets the background color of widget 'w'"
