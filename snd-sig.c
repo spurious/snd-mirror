@@ -2271,9 +2271,14 @@ static char *run_channel(chan_info *cp, void *upt, int beg, int dur, int edpos)
   MUS_SAMPLE_TYPE *idata;
   char *ofile = NULL;
   snd_fd *sf;
+  char *errstr;
   if ((beg < 0) || (dur <= 0)) return(NULL);
   ss = cp->state;
   sp = cp->sound;
+  errstr = initialize_ptree(upt);
+  if (errstr) 
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_1(C_TO_XEN_STRING(errstr)));
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL) return(mus_format("run-channel: can't read %s[%d] channel data!", sp->short_filename, cp->chan));
   if (dur > MAX_BUFFER_SIZE)
@@ -2401,7 +2406,7 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 	  return(XEN_ZERO);
 	}
 #if DEBUGGING
-      else fprintf(stderr,"can't map %s\n", XEN_TO_C_STRING(XEN_TO_STRING(XEN_CAR(proc_and_list)))); 
+      /* else fprintf(stderr,"can't map %s\n", XEN_TO_C_STRING(XEN_TO_STRING(XEN_CAR(proc_and_list))));  */
 #endif
     }
 #endif
@@ -2567,7 +2572,17 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   num = end - beg + 1;
 #if WITH_RUN
   if (optimization(ss) > 0)
-    pt = form_to_ptree_1f2b(XEN_CAR(proc_and_list));
+    {
+      pt = form_to_ptree_1f2b(proc_and_list);
+      if (pt)
+	{
+	  char *err;
+	  err = initialize_ptree(pt);
+	  if (err) 
+	    XEN_ERROR(MUS_MISC_ERROR,
+		      XEN_LIST_1(C_TO_XEN_STRING(err)));
+	}
+    }
 #if DEBUGGING
   /* if (pt == NULL) fprintf(stderr,"can't scan %s\n", XEN_TO_C_STRING(XEN_TO_STRING(XEN_CAR(proc_and_list)))); */
 #endif

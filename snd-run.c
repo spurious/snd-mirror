@@ -16,16 +16,20 @@
  *   1: allow simple ops (if complex result possible, give up)
  *   2: assume nothing will return a complex number (i.e. user says acos args are between -1 and 1 and so on)
  *   3: if undefined global variable encountered, try to determine eventual type from context;
- *      this is dangerous -- the tree may not recognize trouble until evaluation time
+ *      this is dangerous -- the tree may not recognize trouble until evaluation time.
+ *   4: make more assumptions about non-local variables -- lots of errors will be unnoticed until eval time.
+ *      try to use scm_procedure_source if procedure variable is passed
  *
  *
  * exported:
- *   void *form_to_ptree(XEN code)
- *     parse code, returning pointer to tree (a list) or null if code has something we can't handle
- *     void *form_to_ptree_1f2f(XEN code) -- adds type check that result is Float
- *     void *form_to_ptree_1f2b(XEN code) -- adds type check that result is boolean
+ *      (static void *form_to_ptree(XEN code) parse code, returning pointer to tree (a list) or null if code has something we can't handle)
+ *   void *form_to_ptree_1f2f(XEN code) -- (1 arg) adds type check that result is Float
+ *   void *form_to_ptree_0f2f(XEN code) -- (no args) adds type check that result is Float
+ *   void *form_to_ptree_1f2b(XEN code) -- (1 arg) adds type check that result is boolean
  *   Float evaluate_ptree_1f2f(void *tree, Float arg)
  *     evaluate ptree passing it the single Float arg, returning a Float result
+ *   Float evaluate_ptree_0f2f(void *tree, Float arg)
+ *     evaluate ptree (no args), returning a Float result
  *   Float evaluate_ptree_1f2b(void *tree, Float arg)
  *     evaluate ptree passing it the single Float arg, returning a boolean result
  *   void *free_ptree(void *pt)
@@ -39,21 +43,22 @@
  *   lambda [assuming float arg(s) for now]["declare" for types?]
  *   call-with-current-continuation [as goto with result value][this could fully implemented]
  *   if begin or and not let let* set!
- *   * + - / > < >= <= = max min
+ *   * + - / > < >= <= = max min 1+ 1-
  *   sin cos tan abs log exp expt (no complex...)
  *   acos asin atan sqrt (assuming no complex, so args are assumed to be in float result range -- on optimization switch?)
  *   boolean? exact? inexact? integer? real? number? quote
  *   odd? even? zero? positive? negative? eq? eqv? equal?
  *   round truncate floor ceiling exact->inexact inexact->exact
- *   gcd lcm logand logior logxor lognot ash modulo remainder quotient
+ *   gcd lcm logand logior logxor lognot ash modulo remainder quotient random
  *
- *   vct? make-vct vct-ref vct-set!
+ *   vct? make-vct vct-ref vct-set! vct-map!
  *   sample-reader? read-sample next-sample previous-sample
+ *   oscil env polynomial etc
  *
  * tests in snd-test.scm, test 22
  *
  *
- * TODO: cond[not => of course] case[not symbols] do rationalize[in slib] defined? random
+ * TODO: cond[not => of course] case[not symbols] do rationalize[in slib] defined?
  * TODO: clm sndlib:  R_CLM R_SND -- optargs are main problem here (and repeated code -- everything is wrapped in XEN procs)
  * TODO: snd procs? (need ffi or something to avoid repeating opt args handles etc) snd-print needed at least
  * TODO: define dbl int bool, (proc? -- each could be an independent ptree)
@@ -62,9 +67,8 @@
  * TODO:   R_STR perhaps via table of strings with refcounts (display)
  * TODO: rest of snd-test 22, and overall test
  * TODO: ptree as fragment edit op
- * TODO: lambda with other types? or arity (declare...)
+ * TODO: lambda with other types? (declare...)
  * TODO: run-time var typing?
- * TODO: opt=1 protect complex [0:off, 1:very safe (no possible complex), 2:numerics safe, 3:global references safe (i.e. init undefined)]
  * TODO: callback to Guile (format in particular)
  * TODO: generalized set!
  *
@@ -72,8 +76,9 @@
  * TODO: make-sample-reader
  *
  * NEED TEST:
- *   make-vct vct-ref vct-set! [and (let ((v global-v)...)) gc]
+ *   make-vct vct-ref vct-set! [and (let ((v global-v)...)) gc -- also (define a #f) (let ((a (make-vct 3))) (vct-ref a 1))]
  *   sample-reader? read-sample next-sample previous-sample
+ *   oscil env polynomial random etc
  */
 
 #include "snd.h"
@@ -87,6 +92,15 @@
 #define XEN_SYMBOL_NAME_SET_VALUE(a, b) XEN_VARIABLE_SET(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_TRUE), b)
 
 enum {R_INT, R_FLOAT, R_BOOL, R_VCT, R_READER, R_CLM, R_CHAR, R_STRING, R_VECTOR, R_PENDING};
+
+/* local variables (let vars) global to the closure we are passed are unbound at read-time,
+ *   so we can't get their type from their current value.  It's possible to make plausible
+ *   assumptions about the type however (vct-ref ...), so R_PENDING is used to flag some
+ *   symbol whose type decision is awaiting clarification.  If a type is chosen, the actual
+ *   value is retrieved at eval-time (initialize-globals), and if the type is not the
+ *   one we chose, we give up -- this means in some cases, the user will have to reduce
+ *   his optimization choice or change his code.
+ */
 
 typedef struct {
   void (*function)(int *arg_addrs, int *ints, Float *dbls);
@@ -149,7 +163,7 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
 typedef struct {
   char *name;
   xen_value *v;
-  int global, unclean, undefined;
+  int global, unclean, undefined, unsettable;
 } xen_var;
 
 static char *describe_xen_var(xen_var *var, int *ints, Float *dbls)
@@ -159,10 +173,11 @@ static char *describe_xen_var(xen_var *var, int *ints, Float *dbls)
   if (temp)
     {
       buf = (char *)CALLOC(strlen(var->name) + strlen(temp) + 32, sizeof(char));
-      sprintf(buf, "%s: %s (%s%s)", 
+      sprintf(buf, "%s: %s (%s%s%s)", 
 	      var->name, temp,
 	      (var->global) ? "global" : "local",
-	      (var->unclean) ? " (set!)" : "");
+	      (var->unclean) ? " set" : "",
+	      (var->unsettable) ? " unsettable" : "");
       FREE(temp);
     }
   else buf = copy_string(var->name);
@@ -276,6 +291,7 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
   if (var)
     {
       /* if var->global, reflect new value into outer level version of the variable upon quit */
+#ifdef SCM_VARIABLE_REF
       if ((var->global) &&
 	  (var->unclean))
 	{
@@ -291,6 +307,7 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 	    case R_BOOL:  XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_BOOLEAN(prog->ints[var->v->addr])); break;
 	    }
 	}
+#endif
       if (var->name) FREE(var->name);
       if (var->v) FREE(var->v);
       FREE(var);
@@ -402,10 +419,21 @@ static int add_dbl_to_ptree(ptree *pt, Float value)
   return(cur);
 }
 
+static xen_var *new_xen_var(char *name, xen_value *v)
+{
+  xen_var *var;
+  var = (xen_var *)CALLOC(1, sizeof(xen_var));
+  var->name = copy_string(name);
+  var->v = copy_xen_value(v);
+  var->unclean = FALSE;
+  var->global = FALSE;
+  var->unsettable = FALSE;
+  return(var);
+}
+
 static int add_var_to_ptree(ptree *pt, char *name, xen_value *v)
 {
   int cur;
-  xen_var *var;
   cur = pt->var_ctr;
   if (cur >= pt->vars_size)
     {
@@ -418,12 +446,7 @@ static int add_var_to_ptree(ptree *pt, char *name, xen_value *v)
 	}
       else pt->vars = (xen_var **)CALLOC(pt->vars_size, sizeof(xen_var *));
     }
-  var = (xen_var *)CALLOC(1, sizeof(xen_var));
-  var->name = copy_string(name);
-  var->v = copy_xen_value(v);
-  var->global = FALSE;
-  var->unclean = FALSE;
-  pt->vars[pt->var_ctr++] = var;
+  pt->vars[pt->var_ctr++] = new_xen_var(name, v);
   return(cur);
 }
 
@@ -443,11 +466,8 @@ static int add_outer_var_to_ptree(ptree *pt, char *name, xen_value *v)
 	}
       else pt->global_vars = (xen_var **)CALLOC(pt->global_vars_size, sizeof(xen_var *));
     }
-  var = (xen_var *)CALLOC(1, sizeof(xen_var));
-  var->name = copy_string(name);
-  var->v = copy_xen_value(v);
+  var = new_xen_var(name, v);
   var->global = TRUE;
-  var->unclean = FALSE;
   pt->global_vars[pt->global_var_ctr++] = var;
   return(cur);
 }
@@ -483,97 +503,130 @@ static xen_var *find_pending_var_in_ptree_via_xen_value(ptree *pt, xen_value *v)
 
 static int pending_tag = -1;
 
+static XEN symbol_to_value(ptree *pt, XEN sym, int *local)
+{
+  /* sigh... this is a can of worms */
+  XEN new_val = XEN_UNDEFINED;
+#ifdef SCM_VARIABLE_REF
+  XEN pair = XEN_FALSE;
+  XEN code_env = XEN_FALSE;
+  int believe_it = FALSE;
+  /* fprintf(stderr,"look 0: (%d) %s\n", XEN_PROCEDURE_P(pt->code), XEN_TO_C_STRING(XEN_TO_STRING(pt->code))); */
+  if (XEN_PROCEDURE_P(pt->code))
+    {
+      /* scrounge around in the "eval" environment looking for local version of sym */
+      code_env = SCM_ENV(pt->code);
+      /* fprintf(stderr,"look 0: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(code_env))); */
+      if (XEN_LIST_P(code_env))
+	{
+	  /* now we might have an "eval environment" (an association list) or an "eval closure" (something different...) */
+	  if (XEN_LIST_P(XEN_CAR(XEN_CAR(code_env))))
+	    {
+	      XEN names, values;
+	      int i;
+	      /* fprintf(stderr,"look 1: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(code_env))); */
+	      code_env = XEN_CAR(code_env);
+	      names = XEN_CAR(code_env);
+	      values = XEN_CDR(code_env);
+	      for (i = 0; i < XEN_LIST_LENGTH(names); i++)
+		if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
+		  {
+		    new_val = XEN_LIST_REF(values, i);
+		    /* fprintf(stderr,"%s found 1: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(sym)), XEN_TO_C_STRING(XEN_TO_STRING(new_val))); */
+		    believe_it = TRUE;
+		    (*local) = TRUE;
+		    break;
+		  }
+	    }
+	  else
+	    {
+	      /* fprintf(stderr,"look 2: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(code_env))); */
+	      pair = scm_sloppy_assoc(sym, code_env); /* sloppy = no goddamn error */
+	      if (XEN_TRUE_P(scm_pair_p(pair)))
+		{
+		  new_val = XEN_CDR(pair);
+		  /* whatever it is, it is the current reigning sym */
+		  /* fprintf(stderr,"%s found 2: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(sym)), XEN_TO_C_STRING(XEN_TO_STRING(new_val))); */
+		  believe_it = TRUE;
+		  (*local) = TRUE;
+		}
+	    }
+	}
+    }
+  if ((!believe_it) && (XEN_NOT_BOUND_P(new_val)))
+    {
+      new_val = XEN_SYMBOL_TO_VALUE(sym); /* try the outer environment */
+      (*local) = FALSE;
+      /* fprintf(stderr,"%s found 3: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(sym)), XEN_TO_C_STRING(XEN_TO_STRING(new_val))); */
+    } 
+#endif
+  /* fprintf(stderr,"%s found %d: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(sym)), (*local), XEN_TO_C_STRING(XEN_TO_STRING(new_val))); */
+  return(new_val);
+}
+
 static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
 {
   XEN val;
   xen_var *var;
-  int addr = 0;
+  int var_loc = 0, local_var = FALSE;
   xen_value *v = NULL;
   char varname[256];
+#ifndef SCM_VARIABLE_REF
+  return(NULL);
+#else
   snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(form));
+#endif
   var = find_var_in_ptree(prog, varname);
 
   /* fprintf(stderr,"%s %s at %d\n", (var) ? "found " : "looking for ", varname, (var) ? var->v->addr : -1); */
 
   if (var) return(copy_xen_value(var->v));
-  val = XEN_SYMBOL_TO_VALUE(form);
-  
+  val = symbol_to_value(prog, form, &local_var);
   /* fprintf(stderr,"%s val: %s (%d)\n",varname, XEN_TO_C_STRING(XEN_TO_STRING(val)), XEN_NOT_BOUND_P(val)); */
-  
   /* if val not (yet) available, set up a request for it at eval_ptree time
    *    if we know for sure what it's type will be (i.e. clm gen, reader, etc)
    */
   if (XEN_NUMBER_P(val))
     {
       if ((XEN_EXACT_P(val)) && (XEN_INTEGER_P(val)))
-	addr = add_outer_var_to_ptree(prog,
-				      varname,
-				      v = make_xen_value(R_INT, 
-							 add_int_to_ptree(prog, 
-									  XEN_TO_C_INT(val)), 
-							 FALSE));
-      else 
-	addr = add_outer_var_to_ptree(prog,
-				      varname,
-				      v = make_xen_value(R_FLOAT, 
-							 add_dbl_to_ptree(prog, 
-									  XEN_TO_C_DOUBLE(val)), 
-							 FALSE));
+	v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(val)), FALSE);
+      else v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), FALSE);
     }
   else
     {
       if (XEN_BOOLEAN_P(val))
-	{
-	  addr = add_outer_var_to_ptree(prog,
-					varname,
-					v = make_xen_value(R_BOOL, 
-							   add_int_to_ptree(prog, 
-									    XEN_TO_C_BOOLEAN(val)), 
-							   FALSE));
-	}
+	v = make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_TO_C_BOOLEAN(val)), FALSE);
       else
 	{
 	  if (VCT_P(val))
-	    {
-	      addr = add_outer_var_to_ptree(prog,
-					    varname,
-					    v = make_xen_value(R_VCT, 
-							       add_int_to_ptree(prog, 
-										(int)(get_vct(val))),
-							       FALSE));
-	    }
+	    v = make_xen_value(R_VCT, add_int_to_ptree(prog, (int)(get_vct(val))), FALSE);
 	  else
 	    {
 	      if (sf_p(val))
-		{
-		  addr = add_outer_var_to_ptree(prog,
-						varname,
-						v = make_xen_value(R_READER, 
-								   add_int_to_ptree(prog, 
-										    (int)(get_sf(val))),
-								   FALSE));
-		}
+		v = make_xen_value(R_READER, add_int_to_ptree(prog, (int)(get_sf(val))), FALSE);
 	      else
 		{
 		  if (mus_xen_p(val))
-		    {
-		      addr = add_outer_var_to_ptree(prog,
-						    varname,
-						    v = make_xen_value(R_CLM, 
-								       add_int_to_ptree(prog, 
-											(int)(MUS_XEN_TO_CLM(val))),
-								       FALSE));
-		    }
+		    v = make_xen_value(R_CLM, add_int_to_ptree(prog, (int)(MUS_XEN_TO_CLM(val))), FALSE);
 		}
 	    }
 	}
     }
-  if (v == NULL)
+  if (v)
     {
-      prog->need_init = TRUE;
-      addr = add_outer_var_to_ptree(prog, varname, v = make_xen_value(R_PENDING, pending_tag--, FALSE));
+      var_loc = add_outer_var_to_ptree(prog, varname, v);
+      prog->global_vars[var_loc]->unsettable = local_var;
+      /* actually we might be able to set this, but it's too much trouble to figure out */
     }
-  /* fprintf(stderr,"%s is at %d (%p->%p)\n", varname, v->addr, prog->global_vars[addr], v); */
+  else
+    {
+      /* fprintf(stderr,"need init for %s\n",varname); */
+      prog->need_init = TRUE;
+      v = make_xen_value(R_PENDING, pending_tag--, FALSE);
+      var_loc = add_outer_var_to_ptree(prog, varname, v);
+      prog->global_vars[var_loc]->unsettable = TRUE;
+    }
+  /* fprintf(stderr, "add: %s\n", describe_xen_var(prog->global_vars[var_loc], prog->ints, prog->dbls)); */
   return(v);
 }
 
@@ -648,7 +701,7 @@ static void add_obj_to_gcs(ptree *pt, int type, int addr)
 static xen_var *initialize_globals(ptree *pt)
 {
   /* it's possible the global value won't be defined until run-time (let var outside our form) */
-  int i;
+  int i, local = 0;
   xen_var *var;
   xen_value *v;
   XEN val;
@@ -659,18 +712,9 @@ static xen_var *initialize_globals(ptree *pt)
 	  (var->undefined))
 	{
 	  v = var->v;
-	  val = XEN_NAME_AS_C_STRING_TO_VALUE(var->name);
-	  if ((XEN_NOT_BOUND_P(val)) &&
-	      (XEN_PROCEDURE_P(pt->code)))
-	    {
-	      XEN pair;
-	      /* symbol is not bound in outer environment, so scrounge around in the "eval" environment. */
-	      /* fprintf(stderr,"env %s\n", XEN_TO_C_STRING(XEN_TO_STRING(SCM_ENV(pt->code)))); */
-	      pair = scm_assoc(C_STRING_TO_XEN_SYMBOL(var->name), SCM_ENV(pt->code));
-	      if (XEN_TRUE_P(scm_pair_p(pair))) /* TODO: add XEN_PAIR_P macro */
-		val = XEN_CDR(pair);
-	    }
-	  /* fprintf(stderr,"init %s to %s\n", var->name, XEN_TO_C_STRING(XEN_TO_STRING(val))); */
+	  val = symbol_to_value(pt, C_STRING_TO_XEN_SYMBOL(var->name), &local);
+	  if (XEN_NOT_BOUND_P(val)) return(var);
+	  /* fprintf(stderr,"init %s to %s (type: %d)\n", var->name, XEN_TO_C_STRING(XEN_TO_STRING(val)), v->type); */
 	  switch (v->type)
 	    {
 	    case R_INT:
@@ -694,8 +738,14 @@ static xen_var *initialize_globals(ptree *pt)
 	      pt->ints[v->addr] = (int)get_sf(val);      
 	      break;
 	    case R_CLM: 
-	      if (!(mus_xen_p(val))) return(var);
-	      pt->ints[v->addr] = (int)MUS_XEN_TO_CLM(val);      
+	      /* (let ((v (make-vct 10)) (e1 (make-env '(0 0 1 1) :end 9))) (vct-map! v (lambda () (env e1))) v) */
+	      if (mus_xen_p(val)) 
+		pt->ints[v->addr] = (int)MUS_XEN_TO_CLM(val);
+	      else
+		{
+		  if (XEN_FALSE_P(val))
+		    pt->ints[v->addr] = 0; /* null gen is acceptable */
+		}
 	      break;
 	    }
 	}
@@ -708,24 +758,30 @@ static xen_var *initialize_globals(ptree *pt)
 #define ALL_DONE ints[1]
 #define PTREE ((ptree *)(ints[PTREE_LOC]))
 
+char *initialize_ptree(void *upt)
+{
+  xen_var *trouble;
+  ptree *pt = (ptree *)upt;
+  if (pt->need_init)
+    {
+      trouble = initialize_globals(pt);
+      if (trouble)
+	return(mus_format("can't initialize %s", trouble->name));
+    }
+  return(NULL);
+}
+
 static void eval_ptree(ptree *prog)
 {
-  /* evaluates program, result in prog->result, assumes args already passed in addrs given by prog->addrs */
+  /* evaluates program, result in prog->result, 
+   *   assumes args already passed in addrs given by prog->addrs
+   *   also that globals have been initialized via initialize_ptree
+   */
   triple *curfunc;
   int *ints;
   Float *dbls;
-  xen_var *trouble;
   ints = prog->ints;
   dbls = prog->dbls;
-  if (prog->need_init)
-    {
-      trouble = initialize_globals(prog);
-      if (trouble)
-	{
-	  fprintf(stderr, "can't initialize %s!", trouble->name);
-	  return;
-	}
-    }
   ALL_DONE = FALSE;
   /* evaluate the parse tree */
   while (!ALL_DONE)
@@ -734,7 +790,7 @@ static void eval_ptree(ptree *prog)
       curfunc = prog->program[PC++];
       (*(curfunc->function))(curfunc->args, ints, dbls);
     }
-  PC = prog->initial_pc;
+  PC = prog->initial_pc; /* don't reset closure junk after initial evaluation */
 }
 
 static triple *make_triple(void (*function)(int *arg_addrs, int *ints, Float *dbls),
@@ -1278,7 +1334,7 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 	  FREE(v);
 	}
     }
-  if (var)
+  if ((var) && (!(var->unsettable)))
     {
       v = walk(prog, XEN_CADDR(form), TRUE);
       if (v == NULL) return(NULL);
@@ -1659,6 +1715,43 @@ static xen_value *subtract(ptree *prog, int float_result, xen_value **args, int 
       return(package_n(prog, R_INT, subtract_in, descr_subtract_in, args, num_args));
     }
   return(NULL);
+}
+
+
+/* ---------------- 1+ 1- ---------------- */
+
+static void one_minus_f(int *args, int *ints, Float *dbls) {DBL_RESULT = DBL_ARG_1 - 1.0;}
+static char *descr_one_minus_f(int *args, int *ints, Float *dbls) {return(mus_format("d%d(%.4f) = d%d(%.4f) - 1.0", args[0], DBL_RESULT, args[1], DBL_ARG_1));}
+static void one_minus_i(int *args, int *ints, Float *dbls) {INT_RESULT = INT_ARG_1 - 1;}
+static char *descr_one_minus_i(int *args, int *ints, Float *dbls) {return(mus_format("i%d(%d) = i%d(%d) - 1", args[0], INT_RESULT, args[1], INT_ARG_1));}
+static xen_value *one_minus(ptree *prog, xen_value **args, int constants)
+{
+  if (constants == 1)
+    {
+      if (args[1]->type == R_INT)
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr] - 1), TRUE));
+      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, prog->dbls[args[1]->addr] - 1.0), TRUE));
+    }
+  if (args[1]->type == R_INT)
+    return(package(prog, R_INT, one_minus_i, descr_one_minus_i, args, 1));
+  else return(package(prog, R_FLOAT, one_minus_f, descr_one_minus_f, args, 1));
+}
+
+static void one_plus_f(int *args, int *ints, Float *dbls) {DBL_RESULT = DBL_ARG_1 + 1.0;}
+static char *descr_one_plus_f(int *args, int *ints, Float *dbls) {return(mus_format("d%d(%.4f) = d%d(%.4f) + 1.0", args[0], DBL_RESULT, args[1], DBL_ARG_1));}
+static void one_plus_i(int *args, int *ints, Float *dbls) {INT_RESULT = INT_ARG_1 + 1;}
+static char *descr_one_plus_i(int *args, int *ints, Float *dbls) {return(mus_format("i%d(%d) = i%d(%d) + 1", args[0], INT_RESULT, args[1], INT_ARG_1));}
+static xen_value *one_plus(ptree *prog, xen_value **args, int constants)
+{
+  if (constants == 1)
+    {
+      if (args[1]->type == R_INT)
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr] + 1), TRUE));
+      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, prog->dbls[args[1]->addr] + 1.0), TRUE));
+    }
+  if (args[1]->type == R_INT)
+    return(package(prog, R_INT, one_plus_i, descr_one_plus_i, args, 1));
+  else return(package(prog, R_FLOAT, one_plus_f, descr_one_plus_f, args, 1));
 }
 
 
@@ -3055,6 +3148,26 @@ static xen_value *abs_1(ptree *prog, xen_value **args, int constants)
 }
 
 
+/* ---------------- random ---------------- */
+
+static void random_f(int *args, int *ints, Float *dbls) {DBL_RESULT = DBL_ARG_1 * scm_c_uniform01(scm_c_default_rstate());}
+static char *descr_random_f(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("d%d(%.4f) = random(d%d(%.4f))", args[0], DBL_RESULT, args[1], DBL_ARG_1));
+}
+static void random_i(int *args, int *ints, Float *dbls) {INT_RESULT = scm_c_random(scm_c_default_rstate(), INT_ARG_1);}
+static char *descr_random_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%d) = random(i%d(%d))", args[0], INT_RESULT, args[1], INT_ARG_1));
+}
+static xen_value *random_1(ptree *prog, xen_value **args)
+{
+  if (args[1]->type == R_INT)
+    return(package(prog, R_INT, random_i, descr_random_i, args, 1));
+  return(package(prog, R_FLOAT, random_f, descr_random_f, args, 1));
+}
+
+
 /* ---------------- sample-reader stuff ---------------- */
 
 static xen_value *fixup_if_pending(ptree *pt, xen_value *sf, int new_type)
@@ -3065,8 +3178,8 @@ static xen_value *fixup_if_pending(ptree *pt, xen_value *sf, int new_type)
       var = find_pending_var_in_ptree_via_xen_value(pt, sf);
       if (var == NULL) return(NULL);
       sf->addr = add_int_to_ptree(pt, 0);
-      sf->type = R_READER;
-      var->v->type = R_READER;
+      sf->type = new_type;
+      var->v->type = new_type;
       var->v->addr = sf->addr;
     }
   return(sf);
@@ -3157,19 +3270,130 @@ static xen_value *make_vct_1(ptree *prog, xen_value **args)
 
 /* ---------------- CLM stuff ---------------- */
 
-static char *descr_gen_1f(int *args, int *ints, Float *dbls, char *which) 
+static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_args) 
 {
-  return(mus_format("d%d(%.4f) = %s(i%d(%p), d%d(%.4f))", 
-		    args[0], DBL_RESULT, which, args[1], (mus_any *)(INT_ARG_1), args[2], DBL_ARG_2));
-}
-static char *descr_oscil_1f(int *args, int *ints, Float *dbls) {return(descr_gen_1f(args, ints, dbls, "oscil"));}
-static void oscil_1f(int *args, int *ints, Float *dbls) {DBL_RESULT = mus_oscil(((mus_any *)(INT_ARG_1)), DBL_ARG_2, 0.0);}
-static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args) 
-{
-  if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(NULL);
-  return(package(prog, R_FLOAT, oscil_1f, descr_oscil_1f, args, 2));
+  char *buf, *str;
+  int i;
+  buf = (char *)CALLOC(256, sizeof(char));
+  str = (char *)CALLOC(32, sizeof(char));
+  sprintf(buf,"d%d(%.4f) = %s(i%d(%p)", args[0], DBL_RESULT, which, args[1], (mus_any *)(INT_ARG_1));
+  for (i = 1; i <= num_args; i++)
+    {
+      snprintf(str, 32, ", d%d(%.4f)", args[i + 1], dbls[args[i + 1]]);
+      strcat(buf, str);
+    }
+  strcat(buf, ")");
+  FREE(str);
+  return(buf);
 }
 
+#define GEN_P(Name) \
+  static char *descr_ ## Name ## _0p(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name "?", 0));} \
+  static void Name ## _0p(int *args, int *ints, Float *dbls) {BOOL_RESULT = mus_ ##Name ## _p((mus_any *)(INT_ARG_1));} \
+  static xen_value * Name ## _p(ptree *prog, xen_value **args) \
+  { \
+    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(NULL); \
+    return(package(prog, R_BOOL, Name ## _0p, descr_ ## Name ## _0p, args, 1)); \
+  }
+
+#define GEN3_0(Name) \
+  static char *descr_ ## Name ## _0f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 0));} \
+  static void Name ## _0f(int *args, int *ints, Float *dbls) {DBL_RESULT = mus_ ## Name (((mus_any *)(INT_ARG_1)), 0.0, 0.0);}  
+#define GEN2_0(Name) \
+  static char *descr_ ## Name ## _0f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 0));} \
+  static void Name ## _0f(int *args, int *ints, Float *dbls) {DBL_RESULT = mus_ ## Name (((mus_any *)(INT_ARG_1)), 0.0);}  
+#define GEN1_0(Name) \
+  static char *descr_ ## Name ## _0f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 0));} \
+  static void Name ## _0f(int *args, int *ints, Float *dbls) {DBL_RESULT = mus_ ## Name ((mus_any *)(INT_ARG_1));}  
+#define GEN3_1(Name) \
+  static char *descr_ ## Name ## _1f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 1));} \
+  static void Name ## _1f(int *args, int *ints, Float *dbls) {DBL_RESULT = mus_ ## Name (((mus_any *)(INT_ARG_1)), DBL_ARG_2, 0.0);}
+#define GEN2_1(Name) \
+  static char *descr_ ## Name ## _1f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 1));} \
+  static void Name ## _1f(int *args, int *ints, Float *dbls) {DBL_RESULT = mus_ ## Name (((mus_any *)(INT_ARG_1)), DBL_ARG_2);}  
+#define GEN3_2(Name) \
+  static char *descr_ ## Name ## _2f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 2));} \
+  static void Name ## _2f(int *args, int *ints, Float *dbls) {DBL_RESULT = mus_ ## Name (((mus_any *)(INT_ARG_1)), DBL_ARG_2, DBL_ARG_3);}  
+#define GEN3(Name) \
+  GEN3_0(Name) \
+  GEN3_1(Name) \
+  GEN3_2(Name) \
+  GEN_P(Name) \
+  static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
+  { \
+    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(NULL); \
+    if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
+    if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
+    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
+    if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
+    if (num_args == 3) return(package(prog, R_FLOAT, Name ## _2f, descr_ ## Name ## _2f, args, 3)); \
+    return(NULL); \
+  }
+#define GEN2(Name) \
+  GEN2_0(Name) \
+  GEN2_1(Name) \
+  GEN_P(Name) \
+  static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
+  { \
+    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(NULL); \
+    if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
+    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
+    if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
+    return(NULL); \
+  }
+#define GEN1(Name) \
+  GEN1_0(Name) \
+  GEN_P(Name) \
+  static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
+  { \
+    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(NULL); \
+    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
+    return(NULL); \
+  }
+
+GEN3(oscil)
+GEN1(env)
+GEN3(notch)
+GEN3(comb)
+GEN3(delay)
+GEN3(all_pass)
+GEN2(rand)
+GEN2(rand_interp)
+GEN2(sum_of_cosines)
+GEN2(table_lookup)
+GEN2(sawtooth_wave)
+GEN2(pulse_train)
+GEN2(square_wave)
+GEN2(triangle_wave)
+GEN3(asymmetric_fm)
+GEN2(sine_summation)
+GEN2(one_zero)
+GEN2(one_pole)
+GEN2(two_zero)
+GEN2(two_pole)
+GEN2(formant)
+GEN2(wave_train)
+GEN3(waveshape)
+GEN2(filter)
+GEN2(fir_filter)
+GEN2(iir_filter)
+GEN1(readin)
+
+static char *descr_polynomial_1f(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("d%d(%.4f) = polynomial(i%d(%p), d%d(%.4f)",
+		    args[0], DBL_RESULT, args[1], (vct *)(INT_ARG_1), args[2], DBL_ARG_2));
+}
+static void polynomial_1f(int *args, int *ints, Float *dbls) 
+{
+  DBL_RESULT = mus_polynomial(((vct *)(INT_ARG_1))->data, DBL_ARG_2, ((vct *)(INT_ARG_1))->length);
+}
+static xen_value *polynomial_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if (fixup_if_pending(prog, args[1], R_VCT) == NULL) return(NULL);
+  if (num_args == 2) return(package(prog, R_FLOAT, polynomial_1f, descr_polynomial_1f, args, 2));
+  return(NULL);
+}
 
 
 static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
@@ -3189,10 +3413,11 @@ static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
 
 static xen_value *walk(ptree *prog, XEN form, int need_result)
 {
-  
   /* walk form, storing vars, making program entries for operators etc */
-  /* fprintf(stderr,"walk %s\n", XEN_TO_C_STRING(XEN_TO_STRING(form))); */
   int optimize;
+
+  /* fprintf(stderr,"walk %s\n", XEN_TO_C_STRING(XEN_TO_STRING(form))); */
+
   optimize = optimization(get_global_state());
   if (optimize == 0) return(NULL);
 
@@ -3259,6 +3484,68 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    }
 	}
 
+      if (strcmp(funcname, "polynomial") == 0) return(clean_up(polynomial_1(prog, args, num_args), args, num_args));
+      if ((clms == 1) || (pendings == 1) || (booleans == 1)) /* boolean for gen that is null in the current context */
+	{
+	  if (strcmp(funcname, "oscil") == 0) return(clean_up(oscil_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "notch") == 0) return(clean_up(notch_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "comb") == 0) return(clean_up(comb_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "delay") == 0) return(clean_up(delay_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "all-pass") == 0) return(clean_up(all_pass_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "rand") == 0) return(clean_up(rand_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "rand-interp") == 0) return(clean_up(rand_interp_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "sum-of-cosines") == 0) return(clean_up(sum_of_cosines_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "table-lookup") == 0) return(clean_up(table_lookup_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "sawtooth-wave") == 0) return(clean_up(sawtooth_wave_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "pulse-train") == 0) return(clean_up(pulse_train_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "square-wave") == 0) return(clean_up(square_wave_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "triangle-wave") == 0) return(clean_up(triangle_wave_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "asymmetric-fm") == 0) return(clean_up(asymmetric_fm_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "sine-summation") == 0) return(clean_up(sine_summation_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "one-zero") == 0) return(clean_up(one_zero_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "one-pole") == 0) return(clean_up(one_pole_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "two-zero") == 0) return(clean_up(two_zero_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "two-pole") == 0) return(clean_up(two_pole_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "formant") == 0) return(clean_up(formant_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "wave-train") == 0) return(clean_up(wave_train_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "waveshape") == 0) return(clean_up(waveshape_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "filter") == 0) return(clean_up(filter_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "fir-filter") == 0) return(clean_up(fir_filter_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "iir-filter") == 0) return(clean_up(iir_filter_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "readin") == 0) return(clean_up(readin_1(prog, args, num_args), args, num_args));
+	  if (num_args == 1)
+	    {
+	      /* should these accept any arg? */
+	      if (strcmp(funcname, "env") == 0) return(clean_up(env_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "oscil?") == 0) return(clean_up(oscil_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "env?") == 0) return(clean_up(env_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "notch?") == 0) return(clean_up(notch_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "comb?") == 0) return(clean_up(comb_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "delay?") == 0) return(clean_up(delay_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "all-pass?") == 0) return(clean_up(all_pass_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "rand?") == 0) return(clean_up(rand_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "rand-interp?") == 0) return(clean_up(rand_interp_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "sum-of-cosines?") == 0) return(clean_up(sum_of_cosines_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "table-lookup?") == 0) return(clean_up(table_lookup_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "sawtooth-wave?") == 0) return(clean_up(sawtooth_wave_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "pulse-train?") == 0) return(clean_up(pulse_train_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "square-wave?") == 0) return(clean_up(square_wave_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "triangle-wave?") == 0) return(clean_up(triangle_wave_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "asymmetric-fm?") == 0) return(clean_up(asymmetric_fm_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "sine-summation?") == 0) return(clean_up(sine_summation_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "one-zero?") == 0) return(clean_up(one_zero_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "one-pole?") == 0) return(clean_up(one_pole_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "two-zero?") == 0) return(clean_up(two_zero_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "two-pole?") == 0) return(clean_up(two_pole_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "formant?") == 0) return(clean_up(formant_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "wave-train?") == 0) return(clean_up(wave_train_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "waveshape?") == 0) return(clean_up(waveshape_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "filter?") == 0) return(clean_up(filter_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "fir-filter?") == 0) return(clean_up(fir_filter_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "iir-filter?") == 0) return(clean_up(iir_filter_p(prog, args), args, num_args));
+	      if (strcmp(funcname, "readin?") == 0) return(clean_up(readin_p(prog, args), args, num_args));
+	    }
+	}
       if (num_args == 3)
 	{
 	  if (strcmp(funcname, "vct-set!") == 0) return(clean_up(vct_set_1(prog, args), args, num_args));
@@ -3298,6 +3585,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		  if (strcmp(funcname, "atan") == 0) return(clean_up(atan2_1(prog, args, constants), args, num_args));
 		}
 	    }
+	  if (num_args == 1)
+	    {
+	      if (strcmp(funcname, "1+") == 0) return(clean_up(one_plus(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "1-") == 0) return(clean_up(one_minus(prog, args, constants), args, num_args));
+	    }
 	}
       if (num_args == 2)
 	{
@@ -3312,13 +3604,14 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (num_args == 1)
 	{
 	  if (strcmp(funcname, "not") == 0) return(clean_up(not_p(prog, args, constants), args, num_args));
-	  if ((booleans == 0) && (vcts == 0) && (readers == 0) && (pendings == 0))
+	  if ((booleans == 0) && (vcts == 0) && (readers == 0) && (pendings == 0) && (clms == 0))
 	    {
 	      if (strcmp(funcname, "lognot") == 0) return(clean_up(lognot_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "abs") == 0) return(clean_up(abs_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "sin") == 0) return(clean_up(sin_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "cos") == 0) return(clean_up(cos_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "tan") == 0) return(clean_up(tan_1(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "random") == 0) return(clean_up(random_1(prog, args), args, num_args));
 	      if (optimize > 1)
 		{
 		  if (strcmp(funcname, "atan") == 0) return(clean_up(atan1_1(prog, args, constants), args, num_args));
@@ -3347,11 +3640,6 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      if (strcmp(funcname, "read-sample") == 0) return(clean_up(reader_1(prog, args), args, num_args));
 	    }
 	  if (strcmp(funcname, "make-vct") == 0) return(clean_up(make_vct_1(prog, args), args, num_args));
-	  if ((clms == 1) || (pendings == 1))
-	    {
-	      if (strcmp(funcname, "oscil") == 0) return(clean_up(oscil_1(prog, args, num_args), args, num_args));
-	      /* if (strcmp(funcname, "env") == 0) return(clean_up(env_1(prog, args, num_args), args, num_args)); */
-	    }
 	  if (pendings == 0)
 	    {
 	      /* these are known in advance in this context */
@@ -3381,10 +3669,12 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  var = find_var_in_ptree(prog, funcname);
 	  if (var == NULL)
 	    {
+#ifdef SCM_VARIABLE_REF
 	      XEN val;
 	      val = XEN_SYMBOL_TO_VALUE(function);
 	      if (sf_p(val))
 		v = add_global_var_to_ptree(prog, function);
+#endif
 	    }
 	  else v = var->v;
 	  if (v) 
@@ -3448,14 +3738,47 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
     }
   return(NULL);
 }
+/*
+(define v (make-vct 3))
+(define (ho) .1)
+(vct-map! v ho)
+*/
 
-void *form_to_ptree(XEN code)
+static void *form_to_ptree(XEN code)
 {
   int i;
   ptree *prog;
   xen_var *var;
+  XEN form;
+#ifndef SCM_VARIABLE
+  return(NULL);
+#else
+  form = XEN_CAR(code);
   prog = make_ptree(8);
-  prog->result = walk(prog, code, TRUE);
+  if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
+      (SCM_TYP7(XEN_CADR(code)) != scm_tc7_smob)) /* applicable smobs cause confusion here */
+    prog->code = XEN_CADR(code);                  /* need env before starting to walk the code */
+  else prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
+  if (XEN_SYMBOL_P(form))                         /* try to use the procedure source if it's available */
+    {
+      form = XEN_FALSE;
+      if (optimization(get_global_state()) > 3)
+	{
+	  XEN function, source;
+	  function = XEN_SYMBOL_TO_VALUE(form);
+	  if (XEN_PROCEDURE_P(function))
+	    {
+	      source = scm_procedure_source(function);
+	      fprintf(stderr,"use: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(source)));
+	      if (XEN_LIST_P(source))
+		form = source;
+	    }
+	}
+      if (XEN_FALSE_P(form)) 
+	return(free_ptree((void *)prog));
+    }
+#endif
+  prog->result = walk(prog, form, TRUE);
   if (prog->result)
     {
       add_triple_to_ptree(prog, make_triple(quit, descr_quit, NULL, 0));
@@ -3480,11 +3803,23 @@ void *form_to_ptree(XEN code)
 void *form_to_ptree_1f2f(XEN code)
 {
   ptree *pt;
-  pt = form_to_ptree(XEN_CAR(code));
+  pt = form_to_ptree(code);
   if (pt)
     {
-      pt->code = XEN_CADR(code);
-      if (pt->result->type == R_FLOAT)
+      if ((pt->result->type == R_FLOAT) && (pt->arity == 1))
+	return(pt);
+      free_ptree(pt);
+    }
+  return(NULL);
+}
+
+void *form_to_ptree_0f2f(XEN code)
+{
+  ptree *pt;
+  pt = form_to_ptree(code);
+  if (pt)
+    {
+      if ((pt->result->type == R_FLOAT) && (pt->arity == 0))
 	return(pt);
       free_ptree(pt);
     }
@@ -3497,8 +3832,20 @@ void *form_to_ptree_1f2b(XEN code)
   pt = form_to_ptree(code);
   if (pt)
     {
-      pt->code = XEN_FALSE;
-      if (pt->result->type == R_BOOL)
+      if ((pt->result->type == R_BOOL) && (pt->arity == 1))
+	return(pt);
+      free_ptree(pt);
+    }
+  return(NULL);
+}
+
+void *form_to_ptree_1f2b_without_env(XEN code)
+{
+  ptree *pt;
+  pt = form_to_ptree(XEN_LIST_2(code, XEN_FALSE));
+  if (pt)
+    {
+      if ((pt->result->type == R_BOOL) && (pt->arity == 1))
 	return(pt);
       free_ptree(pt);
     }
@@ -3511,6 +3858,17 @@ Float evaluate_ptree_1f2f(void *upt, Float arg)
   if (pt)
     {
       pt->dbls[pt->args[0]] = arg;
+      eval_ptree(pt);
+      return(pt->dbls[pt->result->addr]);
+    }
+  return(0.0);
+}
+
+Float evaluate_ptree_0f2f(void *upt)
+{
+  ptree *pt = (ptree *)upt;
+  if (pt)
+    {
       eval_ptree(pt);
       return(pt->dbls[pt->result->addr]);
     }

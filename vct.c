@@ -162,7 +162,7 @@ vct *c_make_vct(int len)
   vct *new_vct;
   new_vct = (vct *)MALLOC(sizeof(vct));
   new_vct->length = len;
-  new_vct->data = CALLOC(len, sizeof(Float));
+  new_vct->data = (Float *)CALLOC(len, sizeof(Float));
   new_vct->dont_free = 0;
   return(new_vct);
 }
@@ -397,16 +397,50 @@ static XEN vct_fill(XEN obj1, XEN obj2)
   return(xen_return_first(obj1, obj2));
 }
 
+#if WITH_RUN
+Float evaluate_ptree_0f2f(void *pt);
+void *form_to_ptree_0f2f(XEN proc);
+void *free_ptree(void *pt);
+#endif
+
 static XEN vct_map(XEN obj, XEN proc)
 {
   #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"
   int i;
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 0), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
   v = TO_VCT(obj);
+#if WITH_RUN
+  {
+    void *pt = NULL;
+    if ((optimization(get_global_state())) > 0)
+      {
+	pt = form_to_ptree_0f2f(proc);
+	if (pt)
+	  {
+	    char *err;
+	    err = initialize_ptree(pt);
+	    if (err)
+	      mus_misc_error(S_vct_mapB, "bad variable type?", C_TO_XEN_STRING(err));
+	    for (i = 0; i < v->length; i++) 
+	      v->data[i] = evaluate_ptree_0f2f(pt);
+	    free_ptree(pt);
+	    return(xen_return_first(obj, proc));
+	  }
+#if DEBUGGING
+	/* else fprintf(stderr,"can't vct-map %s\n", XEN_TO_C_STRING(XEN_TO_STRING(XEN_CAR(proc)))); */
+#endif
+      }
+    proc = XEN_CADR(proc);
+    XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 0), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
+    for (i = 0; i < v->length; i++) 
+      v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc, S_vct_mapB));
+  }
+#else
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 0), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
   for (i = 0; i < v->length; i++) 
     v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc, S_vct_mapB));
+#endif
   return(xen_return_first(obj, proc));
 }
 
@@ -774,7 +808,6 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_vct_addB,      vct_add_w, 2, 1, 0,       H_vct_addB);
   XEN_DEFINE_PROCEDURE(S_vct_subtractB, vct_subtract_w, 2, 0, 0,  H_vct_subtractB);
   XEN_DEFINE_PROCEDURE(S_vct_offsetB,   vct_offset_w, 2, 0, 0,    H_vct_offsetB);
-  XEN_DEFINE_PROCEDURE(S_vct_mapB,      vct_map_w, 2, 0, 0,       H_vct_mapB);
   XEN_DEFINE_PROCEDURE(S_vct_doB,       vct_do_w, 2, 0, 0,        H_vct_doB);
   XEN_DEFINE_PROCEDURE(S_vct_peak,      vct_peak_w, 1, 0, 0,      H_vct_peak);
   XEN_DEFINE_PROCEDURE(S_vcts_mapB,     vcts_map_w, 0, 0, 1,      H_vcts_mapB);
@@ -782,6 +815,13 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_vct_moveB,     vct_move_w, 3, 1, 0,      H_vct_moveB);
   XEN_DEFINE_PROCEDURE(S_vct_subseq,    vct_subseq_w, 2, 2, 0,    H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,           g_vct_w, 0, 0, 1,         H_vct);
+#if WITH_RUN
+  XEN_DEFINE_PROCEDURE("vct-map-1",     vct_map_w, 2, 0, 0,       H_vct_mapB);
+  XEN_EVAL_C_STRING("(defmacro vct-map! (v form) `(vct-map-1 ,v (list ',form ,form)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("vct-map!"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_vct_mapB));
+#else
+  XEN_DEFINE_PROCEDURE(S_vct_mapB,      vct_map_w, 2, 0, 0,       H_vct_mapB);
+#endif
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref,

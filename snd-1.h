@@ -1312,9 +1312,12 @@ int end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller);
 /* -------- snd-run.c -------- */
 
 #if WITH_RUN
-void *form_to_ptree(XEN code);
 void *form_to_ptree_1f2b(XEN code);
+void *form_to_ptree_1f2b_without_env(XEN code);
 void *form_to_ptree_1f2f(XEN code);
+char *initialize_ptree(void *upt);
+Float evaluate_ptree_0f2f(void *upt);
+void *form_to_ptree_0f2f(XEN code);
 Float evaluate_ptree_1f2f(void *upt, Float arg);
 int evaluate_ptree_1f2b(void *upt, Float arg);
 void *free_ptree(void *upt);

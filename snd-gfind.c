@@ -41,7 +41,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
       if (ss->search_tree)
 	ss->search_tree = free_ptree(ss->search_tree);
       if (optimization(ss) > 0)
-	ss->search_tree = form_to_ptree_1f2b(C_STRING_TO_XEN_FORM(str));
+	ss->search_tree = form_to_ptree_1f2b_without_env(C_STRING_TO_XEN_FORM(str));
       if (ss->search_tree == NULL)
 	{
 #endif

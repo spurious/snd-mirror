@@ -144,6 +144,12 @@ char *global_search(snd_state *ss, int direction)
     }
 #if WITH_RUN
     }
+  else
+    {
+      char *err;
+      err = initialize_ptree(ss->search_tree);
+      if (err) return(err);
+    }
 #endif
   search_in_progress = 1;
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
@@ -225,20 +231,26 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   end = current_ed_samples(cp);
 #if WITH_RUN
   if (sp->search_tree)
-    for (i = start; i < end; i++)
-      {
+    {
+      char *err;
+      err = initialize_ptree(sp->search_tree);
+      if (err) 
+	{
+	  snd_error("find: %s", err);
+	  return(-1);
+	}
+      for (i = start; i < end; i++)
 	if (evaluate_ptree_1f2b(sp->search_tree, read_sample_to_float(sf)))
 	  {
 	    count--; 
 	    if (count == 0) break;
 	  }
-      }
+    }
   else
     {
 #endif
   for (i = start, passes = 0; i < end; i++, passes++)
     {
-      /* sp search proc as ptree */
       res = XEN_CALL_1(sp->search_proc, 
 		       C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
 		       "local search func");
@@ -292,14 +304,21 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
     }
 #if WITH_RUN
   if (sp->search_tree)
-    for (i = start; i >= 0; i--)
-      {
+    {
+      char *err;
+      err = initialize_ptree(sp->search_tree);
+      if (err) 
+	{
+	  snd_error("find: %s", err);
+	  return(-1);
+	}
+      for (i = start; i >= 0; i--)
 	if (evaluate_ptree_1f2b(sp->search_tree, read_sample_to_float(sf)))
 	  {
 	    count--; 
 	    if (count == 0) break;
 	  }
-      }
+    }
   else
     {
 #endif
@@ -377,7 +396,7 @@ void cursor_search(chan_info *cp, int count)
 	      if (sp->search_tree)
 		sp->search_tree = free_ptree(sp->search_tree);
 	      if (optimization(ss) > 0)
-		sp->search_tree = form_to_ptree_1f2b(C_STRING_TO_XEN_FORM(sp->search_expr));
+		sp->search_tree = form_to_ptree_1f2b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
 	      if (sp->search_tree == NULL)
 		{
 #endif

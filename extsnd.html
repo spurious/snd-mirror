@@ -1043,11 +1043,21 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- optimization -->
-<!-- --><tr><td><code><em class=def><a name="optimization">optimization</a></em></code></td>
-<!-- --><td><code>0</code></td>
+<!-- --><tr><td valign=top><code><em class=def><a name="optimization">optimization</a></em></code></td>
+<!-- --><td valign=top><code>0</code></td>
 <!-- --><td>If non-zero, try to optimize simple lambda forms passed to the searches and so forth.
+<!-- -->This depends partly on the optargs module (not available in the correct form before Guile 1.5),
+<!-- -->only applies to Guile (not Ruby), and is highly experimental.
+<!-- -->The actual values of the optimization switch are:
 <!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- --><table border=1 cellpadding=5>
+<!-- --><tr><td width=50>0:  </td><td> no use of parse trees at all (use the standard Guile parser/evaluator)</td></tr>
+<!-- --><tr><td>1:  </td><td> allow simple ops (if complex result possible, give up)</td></tr>
+<!-- --><tr><td>2:  </td><td>assume nothing will return a complex number</td></tr>
+<!-- --><tr><td>3:  </td><td> if undefined global variable encountered, try to determine eventual type from context</td></tr>
+<!-- --><tr><td>4:  </td><td> make dangerous assumptions about variable types, try to use procedure source</td></tr>
+<!-- --></table><br></td></tr>
 <!-- -->
 <!-- save-dir -->
 <!-- --><tr><td valign=top><code><em class=def><a name="savedir">save-dir</a></em></code></td>

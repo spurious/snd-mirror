@@ -4981,8 +4981,10 @@
 	      (snd-display ";array-interp bad index: ~A" var))))
 
       (let ((gen (make-delay 3))
+	    (gen2 (make-delay 3))
 	    (gen1 (make-delay 4 :initial-contents '(1.0 0.5 0.25 0.0)))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "delay" 
 			 "delay: line[3]: [0.000 0.000 0.000]"
@@ -4990,6 +4992,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (delay gen i)))
+	;(vct-map! v1 (let ((i 0)) (lambda () (let ((val (delay gen2 i))) (set! i (1+ i)) val))))
+	(IF (not (vequal v1 v0)) (snd-display ";map delay: ~A ~A" v0 v1))
 	(IF (not (delay? gen)) (snd-display ";~A not delay?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";delay length: ~D?" (mus-length gen)))
 	(IF (or (fneq (vct-ref v0 1) 0.0) (fneq (vct-ref v0 4) 1.0) (fneq (vct-ref v0 8) 5.0))
@@ -5052,7 +5056,9 @@
 	      (snd-display ";inspect zdelay: ~A" (mus-inspect del)))))
 
       (let ((gen (make-all-pass .4 .6 3))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-all-pass .4 .6 3))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "all_pass"
 			 "all_pass: feedback: 0.600, feedforward: 0.400, line[3]:[0.000 0.000 0.000]"
@@ -5060,6 +5066,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (all-pass gen 1.0)))
+	(vct-map! v1 (lambda () (all-pass gen1 1.0)))
+	(IF (not (vequal v1 v0)) (snd-display ";map all-pass: ~A ~A" v0 v1))
 	(IF (not (all-pass? gen)) (snd-display ";~A not all-pass?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";all-pass length: ~D?" (mus-length gen)))
 	(IF (not (= (mus-order gen) 3)) (snd-display ";all-pass order: ~D?" (mus-order gen)))
@@ -5086,7 +5094,9 @@
 		      (make-all-pass 0.7 0.5 3 :initial-contents '(1.0 1.0 1.0)))
 
       (let ((gen (make-comb .4 3))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-comb .4 3))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "comb"
 			 "comb: scaler: 0.400, line[3]: [0.000 0.000 0.000]"
@@ -5094,6 +5104,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (comb gen 1.0)))
+	(vct-map! v1 (lambda () (comb gen1 1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map comb: ~A ~A" v0 v1))
 	(IF (not (comb? gen)) (snd-display ";~A not comb?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";comb length: ~D?" (mus-length gen)))
 	(IF (not (= (mus-order gen) 3)) (snd-display ";comb order: ~D?" (mus-order gen)))
@@ -5134,7 +5146,9 @@
 	    (snd-display ";comb feedback set: ~A" (mus-feedback del))))
 
       (let ((gen (make-notch .4 3))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-notch .4 3))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "notch"
 			 "notch: scaler: 0.400, line[3]: [0.000 0.000 0.000]"
@@ -5142,6 +5156,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (notch gen 1.0)))
+	(vct-map! v1 (lambda () (notch gen1 1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map notch: ~A ~A" v0 v1))
 	(IF (not (notch? gen)) (snd-display ";~A not notch?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";notch length: ~D?" (mus-length gen)))
 	(IF (not (= (mus-order gen) 3)) (snd-display ";notch order: ~D?" (mus-order gen)))
@@ -5166,7 +5182,9 @@
 		      (make-notch 0.7 3 :initial-contents '(1.0 1.0 1.0)))
 
       (let ((gen (make-one-pole .4 .7))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-one-pole .4 .7))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "one_pole"
 			 "one_pole: a0: 0.400, b1: 0.700, y1: 0.000"
@@ -5174,6 +5192,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (one-pole gen 1.0)))
+	(vct-map! v1 (lambda () (one-pole gen1 1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map one-pole: ~A ~A" v0 v1))
 	(IF (not (one-pole? gen)) (snd-display ";~A not one-pole?" gen))
 	(IF (not (= (mus-order gen) 1)) (snd-display ";one-pole order: ~D?" (mus-order gen)))
 	(IF (fneq (mus-a0 gen) .4) (snd-display ";one-pole a0: ~F?" (mus-a0 gen)))
@@ -5182,7 +5202,9 @@
 	    (snd-display ";one-pole output: ~A" v0)))
 
       (let ((gen (make-one-zero .4 .7))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-one-zero .4 .7))
+	    (v1 (make-vct 10)))
 	(print-and-check gen
 			 "one_zero"
 			 "one_zero: a0: 0.400, a1: 0.700, x1: 0.000"
@@ -5190,6 +5212,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (one-zero gen 1.0)))
+	(vct-map! v1 (lambda () (one-zero gen1 1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map one-zero: ~A ~A" v0 v1))
 	(IF (not (one-zero? gen)) (snd-display ";~A not one-zero?" gen))
 	(IF (not (= (mus-order gen) 1)) (snd-display ";one-zero order: ~D?" (mus-order gen)))
 	(IF (fneq (mus-a0 gen) .4) (snd-display ";one-zero a0: ~F?" (mus-a0 gen)))
@@ -5197,7 +5221,9 @@
 	(IF (fneq (vct-ref v0 1) 1.1) (snd-display ";one-zero output: ~A" v0)))
 
       (let ((gen (make-two-zero .4 .7 .3))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-two-zero .4 .7 .3))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "two_zero"
 			 "two_zero: a0: 0.400, a1: 0.700, a2: 0.300, x1: 0.000, x2: 0.000"
@@ -5205,6 +5231,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (two-zero gen 1.0)))
+	(vct-map! v1 (lambda () (two-zero gen1 1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map two-zero: ~A ~A" v0 v1))
 	(IF (not (two-zero? gen)) (snd-display ";~A not two-zero?" gen))
 	(IF (not (= (mus-order gen) 2)) (snd-display ";two-zero order: ~D?" (mus-order gen)))
 	(IF (fneq (mus-a0 gen) .4) (snd-display ";two-zero a0: ~F?" (mus-a0 gen)))
@@ -5213,7 +5241,9 @@
 	(IF (or (fneq (vct-ref v0 1) 1.1) (fneq (vct-ref v0 8) 1.4)) (snd-display ";two-zero output: ~A" v0)))
 
       (let ((gen (make-two-pole .4 .7 .3))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-two-pole .4 .7 .3))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "two_pole"
 			 "two_pole: a0: 0.400, b1: 0.700, b2: 0.300, y1: 0.000, y2: 0.000"
@@ -5221,6 +5251,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (two-pole gen 1.0)))
+	(vct-map! v1 (lambda () (two-pole gen1 1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map two-pole: ~A ~A" v0 v1))
 	(IF (not (two-pole? gen)) (snd-display ";~A not two-pole?" gen))
 	(IF (not (= (mus-order gen) 2)) (snd-display ";two-pole order: ~D?" (mus-order gen)))
 	(IF (fneq (mus-a0 gen) .4) (snd-display ";two-pole a0: ~F?" (mus-a0 gen)))
@@ -14836,6 +14868,26 @@ EDITS: 5
       (etst '(set! dbl-var 1))
       (etst '(set! bool-var 1))
       (etst '(let ((a 1)) (set! a 3.14)))
+      
+      (itst '(1+ 1) 2)
+      (itst '(1+ 0) 1)
+      (itst '(1+ -1) 0)
+      (ftst '(1+ 2.5) 3.5)
+      (ftsta '(lambda (y) (1+ y)) 2.1 3.1)
+      (itsta '(lambda (y) (1+ (inexact->exact y))) 2.0 3)
+      (etst '(1+ #f))
+      (etst '(1+))
+      (etst '(1+ 1 2 3))
+      
+      (itst '(1- 1) 0)
+      (itst '(1- 0) -1)
+      (itst '(1- -1) -2)
+      (ftst '(1- 2.5) 1.5)
+      (ftsta '(lambda (y) (1- y)) 2.1 1.1)
+      (itsta '(lambda (y) (1- (inexact->exact y))) 2.0 1)
+      (etst '(1- #f))
+      (etst '(1-))
+      (etst '(1- 1 2 3))
 
       (set! dbl-var 32.0)
       (set! int-var 32)
@@ -14974,30 +15026,73 @@ EDITS: 5
 	(set! (optimization) 1) (set! t1 (time-it (map-channel (lambda (y) (* y 2)) 0 1000000 ind1)))
 	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 	    (snd-display ";y * 2 run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	(set! ts (cons (list t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	(set! ts (cons (list "*2     " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
 	(set! (optimization) 0) (set! t0 (time-it (map-channel (lambda (y) (- y 1.0)) 0 1000000 ind0)))
 	(set! (optimization) 1) (set! t1 (time-it (map-channel (lambda (y) (- y 1.0)) 0 1000000 ind1)))
 	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 	    (snd-display ";y - 1 run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	(set! ts (cons (list t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	(set! ts (cons (list "-1     " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
 	(set! (optimization) 0) (set! t0 (time-it (map-channel (lambda (y) (abs (sin y))) 0 1000000 ind0)))
-	(set! (optimization) 1) (set! t1 (time-it (map-channel (lambda (y) (abs (sin y))) 0 1000000 ind1)))
+	(set! (optimization) 3) (set! t1 (time-it (map-channel (lambda (y) (abs (sin y))) 0 1000000 ind1)))
 	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 	    (snd-display ";abs sin run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	(set! ts (cons (list t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	(set! ts (cons (list "abs sin" t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
 	(set! (optimization) 0) (set! t0 (time-it (map-channel (lambda (y) (let ((a (* y 2))) (if (> y 1.0) 1.0 y))) 0 1000000 ind0)))
-	(set! (optimization) 1) (set! t1 (time-it (map-channel (lambda (y) (let ((a (* y 2))) (if (> y 1.0) 1.0 y))) 0 1000000 ind1)))
+	(set! (optimization) 3) (set! t1 (time-it (map-channel (lambda (y) (let ((a (* y 2))) (if (> y 1.0) 1.0 y))) 0 1000000 ind1)))
 	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 	    (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	(set! ts (cons (list t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	(set! ts (cons (list "let if " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
 	(set! (optimization) 0) (set! t0 (time-it (map-channel (let ((v (make-vct 3))) (lambda (y) (vct-set! v 1 .5) (* y (vct-ref v 1)))) 0 1000000 ind0)))
-	(set! (optimization) 1) (set! t1 (time-it (map-channel (let ((v (make-vct 3))) (lambda (y) (vct-set! v 1 .5) (* y (vct-ref v 1)))) 0 1000000 ind1)))
+	(set! (optimization) 3) (set! t1 (time-it (map-channel (let ((v (make-vct 3))) (lambda (y) (vct-set! v 1 .5) (* y (vct-ref v 1)))) 0 1000000 ind1)))
 	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 	    (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	(set! ts (cons (list t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	(set! ts (cons (list "vct-ref" t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	
+	(set! (optimization) 0) 
+	(set! t0 (time-it (let ((osc (make-oscil :frequency 440))
+				(e1 (make-env '(0 0 1 1 2 0) :end 1000000)))
+			    (map-channel (lambda (y) (* (env e1) (oscil osc y))) 0 1000000 ind0))))
+	(set! (optimization) 3) 
+	(set! t1 (time-it (let ((osc (make-oscil :frequency 440))
+				(e1 (make-env '(0 0 1 1 2 0) :end 1000000)))
+			    (map-channel (lambda (y) (* (env e1) (oscil osc y))) 0 1000000 ind1))))
+	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
+	    (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
+	(set! ts (cons (list "osc+env" t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	
 	(close-sound ind0)
 	(close-sound ind1)
-	(snd-display ";timings: ~A" ts))
+	(snd-display ";timings:~{~%       ~A~}~%" ts))
+
+      (let ((v0 (make-vct 10))
+	    (v1 (make-vct 10)))
+	(set! (optimization) 0) (vct-map! v0 (lambda () .1))
+	(set! (optimization) 3) (vct-map! v1 (lambda () .1))
+	(if (or (not (vequal v0 v1)) (fneq (vct-ref v1 0) .1)) (snd-display ";vct-map .1: ~A ~A" v0 v1))
+	(set! dbl-var .1)
+	(set! (optimization) 0) (vct-map! v0 (lambda () dbl-var))
+	(set! (optimization) 3) (vct-map! v1 (lambda () dbl-var))
+	(if (or (not (vequal v0 v1)) (fneq (vct-ref v1 0) .1)) (snd-display ";vct-map dbl-var .1: ~A ~A" v0 v1))
+	(let ((dbl-var .3))
+	  (set! (optimization) 0) (vct-map! v0 (lambda () dbl-var))
+	  (set! (optimization) 3) (vct-map! v1 (lambda () dbl-var))
+	  (if (or (not (vequal v0 v1)) (fneq (vct-ref v1 0) .3)) (snd-display ";vct-map dbl-var .3: ~A ~A" v0 v1)))
+	(let ((dbl-var .3))
+	  (let ((dbl-var .5))
+	    (set! (optimization) 0) (vct-map! v0 (lambda () dbl-var))
+	    (set! (optimization) 3) (vct-map! v1 (lambda () dbl-var))
+	    (if (or (not (vequal v0 v1)) (fneq (vct-ref v1 0) .5)) (snd-display ";vct-map dbl-var .5: ~A ~A" v0 v1))))
+	(let ((dbl-var .3))
+	  (let ((dbl-var .5))
+	    (set! (optimization) 0) (vct-map! v0 (let ((dbl-var .9)) (lambda () dbl-var)))
+	    (set! (optimization) 3) (vct-map! v1 (let ((dbl-var .9)) (lambda () dbl-var)))
+	    (if (or (not (vequal v0 v1)) (fneq (vct-ref v1 0) .9)) (snd-display ";vct-map dbl-var .9: ~A ~A" v0 v1))))
+	(let ((dbl-var .3))
+	  (let ((dbl-var .5))
+	    (set! (optimization) 0) (vct-map! v0 (let ((dbl-var .9)) (lambda () (let ((dbl-var .01)) dbl-var))))
+	    (set! (optimization) 3) (vct-map! v1 (let ((dbl-var .9)) (lambda () (let ((dbl-var .01)) dbl-var))))
+	    (if (or (not (vequal v0 v1)) (fneq (vct-ref v1 0) .01)) (snd-display ";vct-map dbl-var .01: ~A ~A" v0 v1))))
+	)
 
       ))
 
