@@ -44,6 +44,7 @@
  *   HAVE_ALSA     In Linux, OSS is the default audio system; HAVE_ALSA overrides this.
  *   HAVE_SAM_9407 Currently, this driver is only supported as a special case under OSS.
  *                 If the OSS code doesn't work as is, try adding -DHAVE_SAM_9407.
+ *       there are many other similar audio choices (SGI, ESD, etc)
  *
  *   SND_CONF      global initialization file; under CCRMA switch defaults to /etc/snd.conf.
  *
@@ -174,7 +175,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "16-Nov-00"
+#define SND_VERSION "17-Nov-00"
 #define SND_RPM_VERSION "4.8"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 8

@@ -77,9 +77,11 @@
 #undef OPENBSD
 #undef WINDOZE
 #undef AIX
+#undef HAVE_OSS
 #undef HAVE_ALSA
 #undef HAVE_SAM_9407
 #undef MAC_OSX
+#undef ESD
 
 #undef HAVE_GUILE
 #undef HAVE_XPM
@@ -110,6 +112,7 @@
 #undef MUS_SAMPLE_BITS
 #undef GTKEXTRA_VERSION
 #undef HAVE_GTKEXTRA
+#undef ESD_VERSION
 
 #define USE_SND 1
 #endif

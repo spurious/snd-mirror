@@ -1,11 +1,10 @@
-/* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, Be, HPUX, Mac OS-X) */
+/* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, Be, HPUX, Mac OS-X, ESD) */
 
 /* TODO  w95 input, read/write state
  * TODO  sgi/w95/mac? also may have multiple systems/cards
  * TODO  check for Mac OS changes
  * TODO  re-implement BeOS support
  * TODO  when reading device_field, put default input device first, or mark somehow 
- * TODO  add esd support (configure.in has the setup code)
  *
  * ALSA errors should be updated to new form
  */
@@ -13,17 +12,18 @@
 /*
  * layout of this file:
  *    error handlers
- *    SGI new and old audio library (find "- SG")
- *    OSS ("- O") (with Sam 9407 support)
- *    ALSA ("- A")
- *    NeXT ("- NE")
- *    Sun ("- SU") (has switches for OPENBSD, but they're untested)
- *    Mac (Mac OS 8.1) ("- M") (apparently there are important differences in subsequent versions)
- *    Be (release 5 underway) ("- B")
- *    HPUX ("- H")
- *    W95/98 ("- WI")
+ *    SGI new and old audio library
+ *    OSS (with Sam 9407 support)
+ *    ALSA
+ *    NeXT
+ *    Sun (has switches for OPENBSD, but they're untested)
+ *    Mac (Mac OS 8.1) (apparently there are important differences in subsequent versions)
+ *    Be (release 5 underway)
+ *    HPUX
+ *    W95/98
  *    AIX, NEC EWS, SONY NEWS, OS2, AF, NetBSD etc -- untested and incomplete
- *    Mac OS-X ("- OSX")
+ *    Mac OS-X
+ *    ESD
  *    audio describers
  */
 
@@ -1949,17 +1949,17 @@ static int to_oss_format(int snd_format)
 {
   switch (snd_format)
     {
-    case MUS_BYTE: return(AFMT_S8); break;
-    case MUS_BSHORT: return(AFMT_S16_BE); break;
-    case MUS_UBYTE: return(AFMT_U8); break;
-    case MUS_MULAW: return(AFMT_MU_LAW); break;
-    case MUS_ALAW: return(AFMT_A_LAW); break;
-    case MUS_LSHORT: return(AFMT_S16_LE); break;
+    case MUS_BYTE:    return(AFMT_S8);     break;
+    case MUS_BSHORT:  return(AFMT_S16_BE); break;
+    case MUS_UBYTE:   return(AFMT_U8);     break;
+    case MUS_MULAW:   return(AFMT_MU_LAW); break;
+    case MUS_ALAW:    return(AFMT_A_LAW);  break;
+    case MUS_LSHORT:  return(AFMT_S16_LE); break;
     case MUS_UBSHORT: return(AFMT_U16_BE); break;
     case MUS_ULSHORT: return(AFMT_U16_LE); break;
 #ifdef NEW_OSS
-    case MUS_LINT: return(AFMT_S32_LE); break;
-    case MUS_BINT: return(AFMT_S32_BE); break;
+    case MUS_LINT:    return(AFMT_S32_LE); break;
+    case MUS_BINT:    return(AFMT_S32_BE); break;
 #endif
     }
   return(MUS_ERROR);
@@ -9651,6 +9651,303 @@ void mus_audio_set_oss_buffers(int num,int size) {}
 char *mus_audio_moniker(void) {return("Mac OS-X audio");}
 #endif
 
+/* -------------------------------- ESD -------------------------------- */
+
+/* ESD audio IO for Linux                   *
+ * Nick Bailey <nick@bailey-family.org.uk>  *
+ * also n.bailey@elec.gla.ac.uk             */
+
+/* ESD is pretty well undocumented, and I've not looked at snd before, *
+ * but here goes...                                                    *
+ *                                                                     *
+ * History:                                                            *
+ * 14th Nov 2000: copied SUN drivers here and started to hack.  NJB.   *
+ *                                                                     */
+
+#ifdef ESD
+#define AUDIO_OK
+
+#include <esd.h>
+
+static int esd_play_sock = -1;
+static int esd_rec_sock  = -1;
+static char esd_name[] = "Enlightened Sound Daemon";
+static int swap_end, resign; /* How to handle samples on write */
+
+int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
+int mus_audio_systems(void) {return(1);}
+char *mus_audio_system_name(int system) {return esd_name;}
+static char our_name[128];
+char *mus_audio_moniker(void) 
+{
+#ifdef ESD_VERSION
+  sprintf(our_name,"%s: %s",esd_name,ESD_VERSION);
+  return(our_name);
+#else
+  return(esd_name);
+#endif
+}
+
+int mus_audio_api(void) {return(0);}
+
+#define RETURN_ERROR_EXIT(Error_Type,Audio_Line,Ur_Error_Message) \
+  do { char *Error_Message; Error_Message = Ur_Error_Message; \
+    if (esd_play_sock != -1) close(esd_play_sock); \
+    if (esd_rec_sock != -1) close(esd_rec_sock); \
+    if (Error_Message) \
+      {MUS_STANDARD_ERROR(Error_Type,Error_Message); FREE(Error_Message);} \
+    else MUS_STANDARD_ERROR(Error_Type,mus_error_to_string(Error_Type)); \
+    return(MUS_ERROR); \
+  } while (0)
+
+/* No we're laughing.  snd think's its talking to a real piece of hardware
+   so it'll only try to open it once.  We can just use the socket numbers */
+
+/* REVOLTING HACK!  to_esd_format is called from mus_audio_open, and
+   /as a side effect/, sets a flag to tell the write routine whether
+   or not to change the endienness of the audio sample data (afaik,
+   esd can't do this for us).  Same goes for signed-ness.
+   If it gets called from elsewhere, it could be nasty. */
+
+static int to_esd_format(int snd_format)
+{
+  /* Try this on the Macs: it may be esd expects Bigendian on those */
+  switch (snd_format) { /* Only some are supported */
+  case MUS_UBYTE:   swap_end = 0; resign = 0; return ESD_BITS8;
+  case MUS_LSHORT:  swap_end = 0; resign = 0; return ESD_BITS16;
+  case MUS_BSHORT:  swap_end = 1; resign = 0; return ESD_BITS16;
+  case MUS_ULSHORT: swap_end = 0; resign = 1; return ESD_BITS16;
+  case MUS_UBSHORT: swap_end = 1; resign = 1; return ESD_BITS16;
+  }
+  return MUS_ERROR;
+}
+
+int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
+{
+  int esd_prop = ESD_STREAM;
+  int esd_format;
+
+  if ((esd_format = to_esd_format(format)) == MUS_ERROR)
+    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
+		      mus_format("Can't handle format %d (%s) through esd",
+				 format, mus_data_format_name(format)));
+  else
+    esd_prop |= esd_format;
+
+  if (chans < 1 || chans > 2)
+    RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
+		      mus_format("Can't handle format %d channels through esd",
+				 format));
+  else 
+    esd_prop |= chans == 1 ? ESD_MONO : ESD_STEREO;
+
+  esd_play_sock = esd_play_stream(esd_prop, srate,
+				  NULL, "snd playback stream");
+
+  if (esd_play_sock ==  -1)
+    RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,audio_out,
+		      mus_format("Sonorus device %d (%s) not available",
+				 ur_dev,mus_audio_device_name(ur_dev)));
+  else
+    return esd_play_sock;
+}
+
+int mus_audio_write(int line, char *buf, int bytes)
+{
+  int written;
+  char *to = buf;
+
+  /* Esd can't do endianness or signed/unsigned conversion,
+     so it's our problem.  We won't screw up the callers data */
+
+  if (swap_end) {
+    char *from = buf;
+    char *p;
+    int samps = bytes/2;
+    p = to = alloca(bytes);
+    while (samps--) {
+      *p++ = *(from+1);
+      *p++ = *(from);
+      from += 2;
+    }
+  }
+
+  /* Need to do something about sign correction here */
+
+  do {
+    written = write(line, to, bytes);
+    if (written > 0) {
+      bytes -= written;
+      to += written;
+    }
+    else
+      RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR,-1,
+			mus_format("write error: %s",strerror(errno)));
+  } while (bytes > 0);
+  return MUS_NO_ERROR;
+}
+
+int mus_audio_close(int line)
+{
+  esd_close(line);
+  if (esd_play_sock == line) esd_play_sock = -1;
+  else if (esd_rec_sock == line) esd_rec_sock = -1;
+  return MUS_NO_ERROR;
+}
+
+int mus_audio_read(int line, char *buf, int bytes)
+{
+  int bytes_read;
+
+  do {
+    bytes_read = read(line, buf, bytes);
+    if (bytes_read > 0) { /* 0 -> EOF; we'll regard that as an error */
+      bytes -= bytes_read;
+      buf += bytes_read;
+    } else
+      RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR,-1,
+			mus_format("read error: %s",strerror(errno)));
+  } while (bytes > 0);
+  return MUS_NO_ERROR;
+}
+
+int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
+{
+  int esd_prop = ESD_STREAM;
+  int esd_format;
+
+  if ((esd_format = to_esd_format(format)) == MUS_ERROR)
+    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
+		      mus_format("Can't handle format %d (%s) through esd",
+				 format, mus_data_format_name(format)));
+  else
+    esd_prop |= esd_format;
+
+  if (chans < 1 || chans > 2)
+    RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
+		      mus_format("Can't handle format %d channels through esd",
+				 chans));
+  else 
+    esd_prop |= chans == 1 ? ESD_MONO : ESD_STEREO;
+
+  esd_rec_sock = esd_play_stream(esd_prop, srate,
+				  NULL, "snd record stream");
+
+  if (esd_rec_sock ==  -1)
+    RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,audio_out,
+		      mus_format("Device %d (%s) not available",
+				 ur_dev,mus_audio_device_name(ur_dev)));
+  else
+    return esd_rec_sock;
+}
+
+int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val) 
+{
+  /* Not really sure what to do here.  Mixer is at the other end of the
+     socket.  Needs work.  NJB */
+
+    int card=MUS_AUDIO_SYSTEM(ur_dev);
+    int device=MUS_AUDIO_DEVICE(ur_dev);
+
+    if (device==MUS_AUDIO_MIXER) {
+	val[0]=0.0;
+	return MUS_NO_ERROR;
+    }
+
+    if (field==MUS_AUDIO_PORT) {
+	val[0]=1.0;
+	return MUS_NO_ERROR;
+    }
+
+    switch (field) {
+    case MUS_AUDIO_AMP: 
+      /* amplitude value */
+      val[0]=1.0;
+      break;
+    case MUS_AUDIO_SAMPLES_PER_CHANNEL: 
+      val[0]=44100;
+      break;
+    case MUS_AUDIO_CHANNEL: 
+      /* number of channels */
+      val[0]=2.0; 
+      if (chan>1) {
+	val[1]=1.0; 
+	val[2]=2.0; 
+      }
+      break;
+    case MUS_AUDIO_SRATE: 
+      /* supported sample rates */
+      val[0]=44100;
+      if (chan>1) {
+	val[1]=8000; 
+	val[2]=48000; 
+      }
+      break;
+    case MUS_AUDIO_FORMAT:
+      /* supported formats (ugly...) */
+      val[0]=2.0;
+      val[1]=MUS_UBYTE;
+      val[2]=MUS_LSHORT;
+      val[3]=MUS_BSHORT;
+      break;
+
+    case MUS_AUDIO_DIRECTION: /* Needs sorting.  NJB */ 
+      /* 0-->playback, 1-->capture */
+      val[0]=0;
+      break;
+
+    default: 
+      mus_error(MUS_AUDIO_CANT_READ,NULL);
+      return(MUS_ERROR);
+      break;
+    }
+    return(MUS_NO_ERROR);
+}
+
+
+int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val) 
+{
+  /* Ditto */
+  val[0] = 0.0;
+  return MUS_NO_ERROR;
+}
+
+/* pause can be implemented with play.pause and record.pause */
+
+
+void mus_audio_mixer_save (const char *file) 
+{
+}
+
+void mus_audio_save(void)
+{
+}
+
+void mus_audio_mixer_restore (const char *file) 
+{
+}
+
+void mus_audio_restore(void)
+{
+}
+
+void describe_audio_state_1(void)
+{
+  pprint("Enlightened Sound Daemon via socket connexion to default host");
+}
+
+void mus_audio_clear_soundcard_inputs(void)
+{
+}
+
+void mus_audio_set_oss_buffers(int num, int size)
+{
+}
+
+#endif
+
+
+
 /* ------------------------------- STUBS ----------------------------------------- */
 
 #ifndef AUDIO_OK
@@ -9758,12 +10055,4 @@ void reset_audio_c (void)
   reset_db();
 #endif
 }
-#endif
-
-
-#if 0
-#ifdef HAVE_ESD
-#include <esd.h>
-#endif
-
 #endif

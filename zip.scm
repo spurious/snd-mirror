@@ -115,7 +115,9 @@
 			  (lambda () 
 			    (next-sample reader0)) 
 			  (lambda () 
-			    (next-sample reader1))))))))
+			    (next-sample reader1)))))
+      (free-sample-reader reader0)
+      (free-sample-reader reader1))))
 
 ;;; this is also good if the same file is used twice -- sort of like a CD player gone berserk
 

@@ -33,6 +33,7 @@ The configure program has several Snd-related arguments:
    --with-ladspa         include LADSPA plugin support (Linux)
    --with-sample-width=N use N bits of samples (default = 24)
    --with-sndlib         use libsndlib.so if possible
+   --with-esd            use the enlightened sound daemon, if possible
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -165,6 +166,7 @@ The original ALSA support was thanks to Paul Barton-Davis.
 The current ALSA support is thanks to Fernando Lopez-Lezcano and Paul Barton-Davis.
 The Sam 9407 support is thanks to Gerd Rausch.
 The LADSPA support is thanks to Richard W.E. Furse.
+The ESD support is thanks to Nick Bailey.
 
 
 ----------------------------------------------------------------

@@ -2,10 +2,6 @@ A list of some things-to-do in Snd (these are some projects that strike
 me as straightforward -- they don't require intimate knowlege of Snd innards).
 
 
-esd support: configure.in has the code sawfish uses to look for esd,
-  and its src/play-sample.c is an example of using it; audio.c needs
-  a similar section under HAVE_ESD.
-
 w98 sound input (adc) support; this is almost written (audio.c); it mostly
   needs testing.  A larger project would be to tie the "mixer" into 
   audio.c.

@@ -139,7 +139,8 @@
 		  (sqrt (/ sum len))
 		  (let ((val (next-sample reader)))
 		    (rsum (1- leng) (+ sum (* val val)))))))
-	  (rsum len 0.0))
+	  (rsum len 0.0)
+	  (free-sample-reader reader))
 	(throw 'no-active-selection(list "selection-rms")))))
 
 (define region-rms

@@ -563,6 +563,9 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  gtk_paned_add1(GTK_PANED(cw[W_main_window]),cw[W_edscroll]);
 	  gtk_widget_show(cw[W_edscroll]);
 	  gtk_widget_show(cw[W_edhist]);
+
+	  gtk_signal_connect(GTK_OBJECT(cw[W_edscroll]),"key_press_event",GTK_SIGNAL_FUNC(real_graph_key_press),(gpointer)cp);
+	  gtk_signal_connect(GTK_OBJECT(cw[W_edhist]),"key_press_event",GTK_SIGNAL_FUNC(real_graph_key_press),(gpointer)cp);
 	}
       else cw[W_main_window] = main;
 
@@ -632,6 +635,10 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  set_pushed_button_colors(cw[W_w],ss);
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_w]),TRUE);
 	  gtk_signal_connect(GTK_OBJECT(cw[W_w]),"button_press_event",GTK_SIGNAL_FUNC(W_Button_Callback),(gpointer)cp);
+
+	  /* these are needed to keep f/w buttons from flushing all keypress events after being pressed */
+	  gtk_signal_connect(GTK_OBJECT(cw[W_f]),"key_press_event",GTK_SIGNAL_FUNC(real_graph_key_press),(gpointer)cp);
+	  gtk_signal_connect(GTK_OBJECT(cw[W_w]),"key_press_event",GTK_SIGNAL_FUNC(real_graph_key_press),(gpointer)cp);
 	}
       else
 	{

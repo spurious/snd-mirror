@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 15
-#define SNDLIB_DATE "14-Nov-00"
+#define SNDLIB_REVISION 16
+#define SNDLIB_DATE "17-Nov-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -125,6 +125,7 @@
 /* this block needed because not everyone uses configure, and those who don't often have no clue what audio system they're using */
 /*   so, if nothing is set but we're on a system that looks linux-like and we can find the OSS headers, use OSS */
 
+#ifndef ESD
 #ifndef HAVE_OSS
 #ifndef HAVE_ALSA
   #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS) || defined(VAR_LIB_OSS) || defined(__FreeBSD__)
@@ -137,7 +138,7 @@
   #define HAVE_OSS 0
 #endif
 #endif
-
+#endif
 
 
 #if (!defined(M_PI))

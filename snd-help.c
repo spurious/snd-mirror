@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+17-Nov:  esd support thanks to Nick Bailey.\n\
 14-Nov:  un-normalized fft display bugfix.\n\
 13-Nov:  mark-drag-hook.\n\
 11-Nov:  insert-silence.\n\

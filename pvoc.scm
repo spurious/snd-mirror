@@ -165,11 +165,11 @@
 				  #f ;no change to edits
 				  #f ;no change to synthesis
 				  ))
-	  (reader (make-sample-reader 0))
-	  )
+	  (reader (make-sample-reader 0)))
       (map-chan (lambda (val)
 		  (phase-vocoder pv (lambda (dir) 
-				      (next-sample reader))))))))
+				      (next-sample reader)))))
+      (free-sample-reader reader))))
 
 (define test-pv-2
   (lambda (freq)
@@ -182,7 +182,8 @@
 	  (reader (make-sample-reader 0)))
       (map-chan (lambda (val)
 		  (phase-vocoder pv (lambda (dir) 
-				      (next-sample reader))))))))
+				      (next-sample reader)))))
+      (free-sample-reader reader))))
 
 (define test-pv-3
   (lambda (time)
@@ -199,6 +200,7 @@
       (vct-map! data
 		(lambda ()
 		  (phase-vocoder pv (lambda (dir) (next-sample reader)))))
+      (free-sample-reader reader)
       (set-samples 0 len data))))
 
 (define test-pv-4
@@ -219,4 +221,5 @@
 	  )
       (map-chan (lambda (val)
 		  (phase-vocoder pv (lambda (dir) 
-				      (next-sample reader))))))))
+				      (next-sample reader)))))
+      (free-sample-reader reader))))
