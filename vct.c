@@ -42,7 +42,6 @@
  */
 
 /* TODO  offsets for vct-*?
- * TODO  set! for (v i) form? (could this use the apply_2 stuff?)
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -653,15 +652,6 @@ static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
   return(scm_return_first(res,vobj,vnew));
 }
 
-#if HAVE_APPLICABLE_SMOB
-static SCM vct_apply(SCM vobj, SCM arg)
-{
-  /* so if vct obj v (v 3) is the same as (vct-ref v 3) -- just an experiment for now */
-  /*   7-Dec-00 guile has SCM_SMOB_APPLICABLE_P */
-  return(vct_ref(vobj,arg));
-}
-#endif
-
 void init_vct(void)
 {
   SCM local_doc;
@@ -672,7 +662,7 @@ void init_vct(void)
   scm_set_smob_free(vct_tag,free_vct);
   scm_set_smob_equalp(vct_tag,equalp_vct);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(vct_tag,vct_apply,1,0,0);
+  scm_set_smob_apply(vct_tag,vct_ref,1,0,0);
 #endif
 
 #else

@@ -73,8 +73,9 @@
 ;;; locsig using fancier placement choice (Michael Edwards)
 ;;; lisp graph with draggable x axis
 ;;; describe-hook
+;;; easily-fooled autocorrelation-based pitch tracker 
 
-;;; TODO: pitch tracker
+;;; TODO: robust pitch tracker
 ;;; TODO: adaptive notch filter
 ;;; TODO: ins: singer piano flute fade
 ;;; TODO: data-file rw case for pvoc.scm
@@ -343,33 +344,34 @@
 ;;;
 ;;; also zoom spectrum based on y-axis zoom slider
 
-(add-hook! graph-hook 
-	   (lambda (snd chn y0 y1)
-	     (if (and (ffting snd chn) (= (fft-style snd chn) normal-fft))
-		 (begin
-		   (set! (fft-size snd chn)
-			 (expt 2 (ceiling 
-				  (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
-				     (log 2.0)))))
-		   (set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))))
+(define (zoom-spectrum snd chn y0 y1)
+  (if (and (ffting snd chn) (= (fft-style snd chn) normal-fft))
+      (begin
+	(set! (fft-size snd chn)
+	      (expt 2 (ceiling 
+		       (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+			  (log 2.0)))))
+	(set! (spectro-cutoff snd chn) (y-zoom-slider snd chn)))))
+
+;(add-hook! graph-hook zoom-spectrum)
 
 ;;; this version only messes with the fft settings if the time domain is not displayed
 ;;;   it also sets the spectrum display start point based on the x position slider
 ;;;   this can be confusing if fft normalization is on (the default)
 
-(add-hook! graph-hook 
-	   (lambda (snd chn y0 y1)
-	     (if (and (ffting snd chn)
-		      (not (waving snd chn))
-		      (= (fft-style snd chn) normal-fft))
-		 (begin
-		   (set! (fft-size snd chn)
-			 (expt 2 (ceiling 
-				  (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
-				     (log 2.0)))))
-		   (set! (spectro-start snd chn) (x-position-slider snd chn))
-		   (set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))))
+(define (zoom-fft snd chn y0 y1)
+  (if (and (ffting snd chn)
+	   (not (waving snd chn))
+	   (= (fft-style snd chn) normal-fft))
+      (begin
+	(set! (fft-size snd chn)
+	      (expt 2 (ceiling 
+		       (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+			  (log 2.0)))))
+	(set! (spectro-start snd chn) (x-position-slider snd chn))
+	(set! (spectro-cutoff snd chn) (y-zoom-slider snd chn)))))
 
+;(add-hook! graph-hook zoom-fft)
 
 
 ;;; -------- superimpose spectra of sycn'd sounds
@@ -672,7 +674,7 @@
 	    (add-hook! (edit-hook snd i) (upon-edit snd))))
       (clear-unsaved-edits snd))))
 
-(add-hook! after-open-hook auto-save-open-func)
+;(add-hook! after-open-hook auto-save-open-func)
 
 (define auto-save-done
   (lambda (snd)
@@ -682,9 +684,9 @@
       (clear-unsaved-edits snd)
       #f)))
 
-(add-hook! close-hook auto-save-done)
-(add-hook! save-hook (lambda (snd name) (auto-save-done snd)))
-(add-hook! exit-hook (lambda () (map auto-save-done (sounds))))
+;(add-hook! close-hook auto-save-done)
+;(add-hook! save-hook (lambda (snd name) (auto-save-done snd)))
+;(add-hook! exit-hook (lambda () (map auto-save-done (sounds))))
 
 (define auto-save-func
   (lambda ()
@@ -3009,3 +3011,34 @@
     (lambda (n) 
       (snd-print n))
     (reverse (hook->list hook))))
+
+
+;;; -------- easily-fooled autocorrelation-based pitch tracker 
+
+(define spot-freq
+  (lambda args
+    (let* ((s0 (car args))
+	   (snd (if (> (length args) 1) (list-ref args 1) #f))
+	   (chn (if (> (length args) 2) (list-ref args 2) #f))
+	   (pow2 (ceiling (/ (log (/ (srate snd) 20.0)) (log 2))))
+	   (fftlen (inexact->exact (expt 2 pow2)))
+	   (data (autocorrelate (samples->vct s0 fftlen snd chn)))
+	   (cor-peak (vct-peak data)))
+      (call-with-current-continuation
+       (lambda (return)
+	 (do ((i 1 (1+ i)))
+	     ((= i (- fftlen 2)) 0)
+	   (if (and (< (vct-ref data i) (vct-ref data (+ i 1)))
+		    (> (vct-ref data (+ i 1)) (vct-ref data (+ i 2))))
+	       (begin
+		 (let* ((logla (log10 (/ (+ cor-peak (vct-ref data i)) (* 2 cor-peak))))
+			(logca (log10 (/ (+ cor-peak (vct-ref data (+ i 1))) (* 2 cor-peak))))
+			(logra (log10 (/ (+ cor-peak (vct-ref data (+ i 2))) (* 2 cor-peak))))
+			(offset (/ (* 0.5 (- logla logra))
+				   (+ logla logra (* -2.0 logca)))))
+		   (return (/ (srate snd)
+			      (* 2 (+ i 1 offset)))))))))))))
+
+;(add-hook! graph-hook 
+;	   (lambda (snd chn y0 y1) 
+;	     (report-in-minibuffer (format #f "~A" (spot-freq (left-sample))))))

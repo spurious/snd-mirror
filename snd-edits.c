@@ -3144,6 +3144,9 @@ void g_init_edits(SCM local_doc)
   scm_set_smob_print(sf_tag,print_sf);
   scm_set_smob_free(sf_tag,free_sf);
   scm_set_smob_equalp(sf_tag,equalp_sf);
+#if HAVE_APPLICABLE_SMOB
+  scm_set_smob_apply(sf_tag,g_next_sample,0,0,0);
+#endif
 #else
   sf_tag = scm_newsmob(&sf_smobfuns);
 #endif

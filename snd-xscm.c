@@ -711,6 +711,9 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   scm_set_smob_print(snd_color_tag,print_snd_color);
   scm_set_smob_free(snd_color_tag,free_snd_color);
   scm_set_smob_equalp(snd_color_tag,equalp_snd_color);
+#if HAVE_APPLICABLE_SMOB
+  scm_set_smob_apply(snd_color_tag,g_color2list,0,0,0);
+#endif
 #else
   snd_color_tag = scm_newsmob(&snd_color_smobfuns);
 #endif

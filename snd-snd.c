@@ -841,12 +841,13 @@ enum {MINIBUFFER,FILTER_TEXT};
 
 static void remember_string(snd_info *sp, char *str, int which)
 {
-  mini_history *mh;
+  mini_history *mh = NULL;
   int i,top;
   switch (which)
     {
     case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
     case FILTER_TEXT: mh = (mini_history *)(sp->filter_history); break;
+    default: return; break;
     }
   if (mh == NULL)
     {

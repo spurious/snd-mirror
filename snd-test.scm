@@ -13,7 +13,7 @@
 ;;; test 10: marks 
 ;;; test 11: dialogs 
 ;;; test 12: sound file extensions etc 
-;;; test 13: menus, edit lists 
+;;; test 13: menus, edit lists, hooks, etc
 ;;; test 14: all functions
 ;;; test 15: chan-local vars 
 ;;; test 16: define-syntax 
@@ -1219,6 +1219,9 @@
       (bind-key (char->integer #\a) 0 (lambda () (set! a-ctr 3)))
       (key (char->integer #\a) 0) 
       (if (not (= a-ctr 3)) (snd-display (format #f ";bind-key: ~A?" a-ctr)))
+      (let ((str (with-output-to-string (lambda () (display (key-binding (char->integer #\a) 0))))))
+	(if (not (string=? str "#<procedure () (set! a-ctr 3)>"))
+	    (snd-display (format #f ";key-binding: ~A?" str))))
       (unbind-key (char->integer #\a) 0)
       (set! a-ctr 0)
       (key (char->integer #\a) 0) 
@@ -4035,8 +4038,86 @@
 			     ((= j steps))
 			   (vct-set! v (+ j bin) (+ step (vct-ref v (+ j bin)))))))))))
 
+(define (test-hooks)
+  (define (arg0) 32)
+  (define (arg1 n) (+ n 32))
+  (define (arg2 n m) (+ n m 32))
+  (define (arg3 a b c) (+ a b c 32))
+  (define (arg4 a b c d) (+ a b c d 32))
+  (define (arg6 a b c d e f) (+ a b c d e f 32))
 
-;;; ---------------- test 13: menus, edit lists ----------------
+  (defmacro carg0 (hook)
+    `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
+       (if (not (string=? str "(#<procedure arg0 () 32>)"))
+	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
+
+  (defmacro carg1 (hook)
+    `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
+       (if (not (string=? str "(#<procedure arg1 (n) (+ n 32)>)"))
+	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
+
+  (defmacro carg2 (hook)
+    `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
+       (if (not (string=? str "(#<procedure arg2 (n m) (+ n m 32)>)"))
+	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
+  
+  (defmacro carg3 (hook)
+    `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
+       (if (not (string=? str "(#<procedure arg3 (a b c) (+ a b c 32)>)"))
+	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
+
+  (defmacro carg4 (hook)
+    `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
+       (if (not (string=? str "(#<procedure arg4 (a b c d) (+ a b c d 32)>)"))
+	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
+  
+  (defmacro carg6 (hook)
+    `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
+       (if (not (string=? str "(#<procedure arg6 (a b c d e f) (+ a b c d e f 32)>)"))
+	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
+
+  (reset-hook! after-graph-hook) (add-hook! after-graph-hook arg2) (carg2 after-graph-hook) (reset-hook! after-graph-hook)
+  (reset-hook! before-fft-hook) (add-hook! before-fft-hook arg2) (carg2 before-fft-hook) (reset-hook! before-fft-hook)
+  (reset-hook! mix-position-changed-hook) (add-hook! mix-position-changed-hook arg2) (carg2 mix-position-changed-hook) (reset-hook! mix-position-changed-hook)
+  (reset-hook! stop-playing-channel-hook) (add-hook! stop-playing-channel-hook arg2) (carg2 stop-playing-channel-hook) (reset-hook! stop-playing-channel-hook)
+  (reset-hook! save-hook) (add-hook! save-hook arg2) (carg2 save-hook) (reset-hook! save-hook)
+  (reset-hook! mus-error-hook) (add-hook! mus-error-hook arg2) (carg2 mus-error-hook) (reset-hook! mus-error-hook)
+
+  (reset-hook! after-open-hook) (add-hook! after-open-hook arg1) (carg1 after-open-hook) (reset-hook! after-open-hook)
+  (reset-hook! close-hook) (add-hook! close-hook arg1) (carg1 close-hook) (reset-hook! close-hook)
+  (reset-hook! just-sounds-hook) (add-hook! just-sounds-hook arg1) (carg1 just-sounds-hook) (reset-hook! just-sounds-hook)
+  (reset-hook! mark-click-hook) (add-hook! mark-click-hook arg1) (carg1 mark-click-hook) (reset-hook! mark-click-hook)
+  (reset-hook! mark-drag-hook) (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook) (reset-hook! mark-drag-hook)
+  (reset-hook! mix-amp-changed-hook) (add-hook! mix-amp-changed-hook arg1) (carg1 mix-amp-changed-hook) (reset-hook! mix-amp-changed-hook)
+  (reset-hook! mix-speed-changed-hook) (add-hook! mix-speed-changed-hook arg1) (carg1 mix-speed-changed-hook) (reset-hook! mix-speed-changed-hook)
+  (reset-hook! name-click-hook) (add-hook! name-click-hook arg1) (carg1 name-click-hook) (reset-hook! name-click-hook)
+  (reset-hook! open-hook) (add-hook! open-hook arg1) (carg1 open-hook) (reset-hook! open-hook)
+  (reset-hook! output-comment-hook) (add-hook! output-comment-hook arg1) (carg1 output-comment-hook) (reset-hook! output-comment-hook)
+  (reset-hook! multichannel-mix-hook) (add-hook! multichannel-mix-hook arg1) (carg1 multichannel-mix-hook) (reset-hook! multichannel-mix-hook)
+  (reset-hook! play-hook) (add-hook! play-hook arg1) (carg1 play-hook) (reset-hook! play-hook)
+  (reset-hook! snd-error-hook) (add-hook! snd-error-hook arg1) (carg1 snd-error-hook) (reset-hook! snd-error-hook)
+  (reset-hook! snd-warning-hook) (add-hook! snd-warning-hook arg1) (carg1 snd-warning-hook) (reset-hook! snd-warning-hook)
+  (reset-hook! start-hook) (add-hook! start-hook arg1) (carg1 start-hook) (reset-hook! start-hook)
+  (reset-hook! start-playing-hook) (add-hook! start-playing-hook arg1) (carg1 start-playing-hook) (reset-hook! start-playing-hook)
+  (reset-hook! stop-playing-hook) (add-hook! stop-playing-hook arg1) (carg1 stop-playing-hook) (reset-hook! stop-playing-hook)
+  (reset-hook! stop-playing-region-hook) (add-hook! stop-playing-region-hook arg1) (carg1 stop-playing-region-hook) (reset-hook! stop-playing-region-hook)
+
+  (reset-hook! exit-hook) (add-hook! exit-hook arg0) (carg0 exit-hook) (reset-hook! exit-hook)
+  (reset-hook! output-name-hook) (add-hook! output-name-hook arg0) (carg0 output-name-hook) (reset-hook! output-name-hook)
+
+  (reset-hook! during-open-hook) (add-hook! during-open-hook arg3) (carg3 during-open-hook) (reset-hook! during-open-hook)
+  (reset-hook! fft-hook) (add-hook! fft-hook arg3) (carg3 fft-hook) (reset-hook! fft-hook)
+
+  (reset-hook! graph-hook) (add-hook! graph-hook arg4) (carg4 graph-hook) (reset-hook! graph-hook)
+  (reset-hook! key-press-hook) (add-hook! key-press-hook arg4) (carg4 key-press-hook) (reset-hook! key-press-hook)
+
+  (reset-hook! mouse-drag-hook) (add-hook! mouse-drag-hook arg6) (carg6 mouse-drag-hook) (reset-hook! mouse-drag-hook)
+  (reset-hook! mouse-press-hook) (add-hook! mouse-press-hook arg6) (carg6 mouse-press-hook) (reset-hook! mouse-press-hook)
+  (reset-hook! mouse-release-hook) (add-hook! mouse-release-hook arg6) (carg6 mouse-release-hook) (reset-hook! mouse-release-hook)
+
+  )
+  
+;;; ---------------- test 13: menus, edit lists, hooks, seach/key funcs ----------------
 (if (or full-test (= snd-test 13))
     (let ((fd (view-sound "oboe.snd"))
 	  (mb (add-to-main-menu "clm")))
@@ -4123,6 +4204,33 @@
 	(if (not (= ctr 4)) (snd-display (format #f ";ctr after test-menus: ~A? " ctr)))
 	(reset-hook! menu-hook))
 
+      (test-hooks)
+      (let ((ind (open-sound "oboe.snd")))
+	(set! (search-procedure ind) (lambda (n) (> n .1)))
+	(key (char->integer #\a) 4 ind 0)
+	(if (not (= (cursor ind 0) 0))
+	    (snd-display (format #f ";C-a cursor: ~D?" (cursor ind 0))))
+	(key (char->integer #\s) 4 ind 0)
+	(key (char->integer #\s) 4 ind 0)
+	(if (not (= (cursor ind 0) 4423))
+	    (snd-display (format #f ";search-procedure C-s C-s cursor: ~D?" (cursor ind 0))))
+	(let ((str (with-output-to-string (lambda () (display (search-procedure ind))))))
+	  (if (not (string=? str "#<procedure (n) (> n 0.1)>"))
+	      (snd-display (format #f ";search-procedure: ~A?" str))))
+	(reset-hook! (edit-hook ind 0))
+	(add-hook! (edit-hook ind 0) (lambda () (+ snd chn)))
+	(let ((str (with-output-to-string (lambda () (display (hook->list (edit-hook ind 0)))))))
+	  (if (not (string=? str "(#<procedure () (+ snd chn)>)"))
+	      (snd-display (format #f ";edit-hook: ~A?" str))))
+	(reset-hook! (edit-hook ind 0))
+	(reset-hook! (undo-hook ind 0))
+	(add-hook! (undo-hook ind 0) (lambda () (+ snd chn)))
+	(let ((str (with-output-to-string (lambda () (display (hook->list (undo-hook ind 0)))))))
+	  (if (not (string=? str "(#<procedure () (+ snd chn)>)"))
+	      (snd-display (format #f ";undo-hook: ~A?" str))))
+	(reset-hook! (undo-hook ind 0))
+	(close-sound ind)
+	)
       ))
 
 (define test-panel
@@ -5599,7 +5707,7 @@
 
       ))
 
-(if #t (begin
+(if #f (begin
 ;;; ---------------- test 16: define-syntax ----------------
 (if (or full-test (= snd-test 16))
     (let ((hi 32)

@@ -553,6 +553,18 @@ int save_state (snd_state *ss, char *save_state_name)
 
 	  /* TODO: save edit_hook undo_hook */
 
+	  /* the problem here (with saving hooks) is that it is not straightforward to save the function source
+	   *   (with the current print-set! source option, or with an earlier procedure->string function using
+	   *   procedure_environment etc); many types print in this case in ways that are not readable.
+	   *   The functions may depend on globals that are not in loaded files, or that were changed since
+	   *   loading, and trying to map over the current module's obarray, saving each such variable in
+	   *   its current form, is a major undertaking; additionally, what if the user has changed these
+	   *   before restoring -- should the old forms be restored?  Perhaps the new files associated
+	   *   with dumping (libguile/dump.c) will address this issue.  And, things like search functions
+	   *   and hooks might be viewed as temporary to begin with. If the function source is long,
+	   *   some sort of pretty-printer is really needed, but I couldn't get slib's to work.
+	   */
+
 	  for (i=0;i<NUM_HOOKS;i++)
 	    {
 	      hook = SND_LOOKUP(hook_names[i]);

@@ -370,6 +370,7 @@ documents.
         o Dolph-Chebyshev fft data window
         o dht -- slow Hartley transform
         o phase vocoder
+        o easily-fooled autocorrelation-based pitch tracker
    * user-interface
         o XEmacs-like "Buffers" menu
         o make dot size dependent on number of samples being displayed
@@ -541,6 +542,7 @@ ffts
   down-oct
   fft-edit low-freq high-freq
   pvoc #:key (fftsize 512) (overlap 4) (time 1.0) (pitch 1.0) (gate 0.0) (hoffset 0.0) (snd 0) (chn 0)
+  spot-freq
 
 correlate graphs the correlation of snd's 2 channels. To make this happen
 automatically as you move the time domain position slider, (add-hook!
@@ -573,7 +575,21 @@ fft size based on the current time domain window size. The simpler one is:
                    (set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))))
 
 The expt... code is rounding the current window size (right-sample -
-left-sample) up to the nearest power of 2.
+left-sample) up to the nearest power of 2. The spot-freq function is a
+simple first-pass at using autocorrelation for pitch tracking; it's easily
+fooled, but could probably be made relatively robust. The code:
+
+ (let* ((logla (log10 (/ (+ cor-peak (vct-ref data i)) (* 2 cor-peak))))
+        (logca (log10 (/ (+ cor-peak (vct-ref data (+ i 1))) (* 2 cor-peak))))
+        (logra (log10 (/ (+ cor-peak (vct-ref data (+ i 2))) (* 2 cor-peak))))
+        (offset (/ (* 0.5 (- logla logra))
+                   (+ logla logra (* -2.0 logca)))))
+   (return (/ (srate snd)
+              (* 2 (+ i 1 offset)))))
+
+is using Xavier Serra's interpolation technique to find the "true" location
+of the autocorrelation peak. The cor-peak business is making sure the log10
+arguments fall between 0.0 and 1.0.
 
 user-interface
 

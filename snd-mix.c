@@ -3970,6 +3970,9 @@ void g_init_mix(SCM local_doc)
   scm_set_smob_print(mf_tag,print_mf);
   scm_set_smob_free(mf_tag,free_mf);
   scm_set_smob_equalp(mf_tag,equalp_mf);
+#if HAVE_APPLICABLE_SMOB
+  scm_set_smob_apply(mf_tag,g_next_mix_sample,0,0,0);
+#endif
 #else
   mf_tag = scm_newsmob(&mf_smobfuns);
 #endif
@@ -3984,6 +3987,9 @@ void g_init_mix(SCM local_doc)
   scm_set_smob_print(tf_tag,print_tf);
   scm_set_smob_free(tf_tag,free_tf);
   scm_set_smob_equalp(tf_tag,equalp_tf);
+#if HAVE_APPLICABLE_SMOB
+  scm_set_smob_apply(tf_tag,g_next_track_sample,0,0,0);
+#endif
 #else
   tf_tag = scm_newsmob(&tf_smobfuns);
 #endif

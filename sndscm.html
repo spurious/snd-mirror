@@ -435,6 +435,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>Dolph-Chebyshev fft data window
     <li>dht -- slow Hartley transform 
     <li>phase vocoder
+    <li>easily-fooled autocorrelation-based pitch tracker 
   </ul>
 </small>
 <li><a href="#ssuserinterface">user-interface</a>
@@ -650,6 +651,7 @@ It returns the FIR filter coefficients given the filter order and desired spectr
   <b><A NAME="exdownoct">down-oct</a></b>
   <b><a name="exfftedit">fft-edit</a></b> low-freq high-freq
   <b><A NAME="expvoc">pvoc</a></b> #:key (fftsize 512) (overlap 4) (time 1.0) (pitch 1.0) (gate 0.0) (hoffset 0.0) (snd 0) (chn 0)
+  <b><A NAME="exppitcher">spot-freq</a></b>
 </pre>
 <p><i>correlate</i> graphs the correlation of <i>snd</i>'s 2 channels.
 To make this happen automatically as you move the time domain position
@@ -690,7 +692,24 @@ size.  The simpler one is:
 </pre>
 <p>The <i>expt...</i> code is rounding the current window size (right-sample - left-sample)
 up to the nearest power of 2. 
+The <i>spot-freq</i> function is a simple first-pass at using autocorrelation for
+pitch tracking; it's easily fooled, but could probably be made relatively robust.
+The code:
 </p>
+<pre>
+ (let* ((logla (log10 (/ (+ cor-peak (vct-ref data i)) (* 2 cor-peak))))
+	(logca (log10 (/ (+ cor-peak (vct-ref data (+ i 1))) (* 2 cor-peak))))
+	(logra (log10 (/ (+ cor-peak (vct-ref data (+ i 2))) (* 2 cor-peak))))
+	(offset (/ (* 0.5 (- logla logra))
+		   (+ logla logra (* -2.0 logca)))))
+   (return (/ (srate snd)
+	      (* 2 (+ i 1 offset)))))
+</pre>
+<p>is using Xavier Serra's interpolation technique to find the "true" location
+of the autocorrelation peak.  The <i>cor-peak</i> business is making sure the
+log10 arguments fall between 0.0 and 1.0.
+</p>
+
 
 <span class=bbox><h3><A NAME="ssuserinterface">user-interface</a></h3></span>
 

@@ -261,6 +261,9 @@ variables and functions control this:</p>
   <b><a name="color3list">color-&gt;list</a></b>       (obj)         return list (r g b) of color components.
   <b><a name="makecolor">make-color</a></b>        (r g b)       return a color value using the red/green/blue values
 </pre>
+<p>If, for example, blue is a defined color, <code>(blue)</code> is the same as <code>(color->list blue)</code>.
+</p>
+
 <p><small>(British spelling enthusiasts can use "colour" throughout Snd by building it with the CFLAG
  -DSTR_OR=\"our\").</small>
 </p>
@@ -723,7 +726,8 @@ the hook.
 </pre>
 <p><a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
 See also <a href="#menuhook">menu-hook</a> below.
-You can find out what's on a given hook with the following:
+You can find out what's on a given hook with the following (which is mostly adding carriage returns to the
+printout from hook-&gt;list):
 </p>
 <pre>
 (define (describe-hook hook)
@@ -1142,6 +1146,8 @@ edited) sound can be accessed by a normal sample-reader.
 
   <b><a name="tracksamplereaderQ">track-sample-reader?</a></b>(obj)       #t if <i>obj</i> is a <a href="#samplereaders">track-sample-reader</a>.
 </pre>
+<p>The <i>next-sample</i> functions can be omitted: <code>(reader)</code> is the same as <code>(next-sample reader)</code>.
+</p>
 
 <br>
 <span class=cbox><h3><A NAME="sndmarks">Marks</a></h3></span>

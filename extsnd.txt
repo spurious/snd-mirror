@@ -198,6 +198,9 @@ The color object handlers are:
   color->list       (obj)         return list (r g b) of color components.
   make-color        (r g b)       return a color value using the red/green/blue values
 
+If, for example, blue is a defined color, (blue) is the same as (color->list
+blue).
+
 (British spelling enthusiasts can use "colour" throughout Snd by building it
 with the CFLAG -DSTR_OR=\"our\").
 
@@ -637,7 +640,8 @@ functions invoked by the hook.
 
 enved.scm uses several of these hooks to implement an envelope editor in
 lisp. See also menu-hook below. You can find out what's on a given hook with
-the following:
+the following (which is mostly adding carriage returns to the printout from
+hook->list):
 
 (define (describe-hook hook)
   (for-each
@@ -1019,6 +1023,9 @@ sound can be accessed by a normal sample-reader.
   sample-reader?    (obj)         #t if obj is a sample-reader.
 
   track-sample-reader?(obj)       #t if obj is a track-sample-reader.
+
+The next-sample functions can be omitted: (reader) is the same as
+(next-sample reader).
 
 Marks
 
