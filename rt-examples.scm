@@ -135,21 +135,21 @@
 			 "Close" exit
 				"Stop" (<- instrument stop)
 				"Start" (<- instrument play))))
-	   (c-display "amp/fm_index" amp fm_index)
-	   (<slider> d "Fm Frequency" 2 (mus-frequency fm) 1200 (lambda (val) 
-								 (set! (mus-frequency fm) (* mc-ratio val)))
-		     10)
-	   (<slider> d "Carrier Frequency" 50 (mus-frequency carrier) 1200 (lambda (val) 
-							  (set! (mus-frequency carrier) val))
-		     10)
-	   (<slider> d "Index" 0 (-> instrument fm_index) 50.0 (lambda (val) 
-								 (set! (-> instrument fm_index) (* (hz->radians freq) mc-ratio val)))
-		     100)
-	   (<slider> d "Amplitude" 0 (-> instrument amp) 1.0 (lambda (val) 
-							       (set! (-> instrument amp) val))
-		     1000)
-	   (-> instrument play)
-	   (-> d show)))
+     (c-display "amp/fm_index" amp fm_index)
+     (<slider> d "Fm Frequency" 2 (mus-frequency fm) 1200 (lambda (val) 
+							    (set! (mus-frequency fm) (* mc-ratio val)))
+	       10)
+     (<slider> d "Carrier Frequency" 50 (mus-frequency carrier) 1200 (lambda (val) 
+								       (set! (mus-frequency carrier) val))
+	       10)
+     (<slider> d "Index" 0 (-> instrument fm_index) 50.0 (lambda (val) 
+							   (set! (-> instrument fm_index) (* (hz->radians freq) mc-ratio val)))
+	       100)
+     (<slider> d "Amplitude" 0 (-> instrument amp) 1.0 (lambda (val) 
+							 (set! (-> instrument amp) val))
+	       1000)
+     (-> instrument play)
+     (-> d show)))
 
 
 #!
@@ -176,11 +176,11 @@
 
 
 #!
-(define i (instrument))
+(define i (oscilator))
 (set! (-> i vol) 0.6)
 (set! (mus-frequency (-> i osc)) 200)
 (-> i stop)
-#!
+!#
 
 
 
@@ -223,7 +223,7 @@
 
 
 #!
-(define filename "/home/kjetil/t1.wav")
+(define filename "/hom/kjetism/t_98_strekt.wav")
 
 (define p (loopplay filename))
 (-> p stop)

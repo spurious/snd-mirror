@@ -2462,7 +2462,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
       break;
     case R_BOOL:
       {
-	/* these pointer cases here may be pointless, so to speak -- we can't set these guys in run, so how can they be #f? */
+	/* null pointers can only come as explicitly type-declared args in run/run-eval */
 	switch (init_val->type)
 	  {
 	  case R_BOOL:       return(add_triple_to_ptree(pt, va_make_triple(store_b_b, descr_store_b_b, 2, var, init_val))); break;
@@ -2778,7 +2778,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
 {
   /* (lambda (args...) | args etc followed by forms */
   /* as args are declared as vars, put addrs in prog->args list */
-  char *err;
+  char *err = NULL;
   int locals_loc;
   if (got_lambda)
     {
@@ -2791,8 +2791,9 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
       err = declare_args(new_tree, form, R_INT, separate, args, num_args);
       if (err)
 	{
-	  run_warn(err);
-	  FREE(err);
+	  unattach_ptree(new_tree, prog); 
+	  free_embedded_ptree(new_tree);
+	  return(run_warn_with_free(err));
 	}
       else
 	{
@@ -9913,7 +9914,27 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
   */
   if ((xen_to_run_type(arg) != type) &&
       ((!(XEN_NUMBER_P(arg))) || ((type != R_FLOAT) && (type != R_INT))))
-    XEN_WRONG_TYPE_ARG_ERROR("run", 0, arg, type_name(type));
+    {
+      if ((XEN_FALSE_P(arg)) &&
+	  (POINTER_P(type)))
+	{
+	  /* passed null pointer -- probably won't be what caller intends */
+	  switch (type)
+	    {
+	      /* these special cases we handle in set_var (line 2474) */
+	    case R_VCT:          pt->vcts[addr] = NULL;          break;
+	    case R_SOUND_DATA:   pt->sds[addr] = NULL;           break;
+	    case R_CLM:          pt->clms[addr] = NULL;          break;
+	    case R_READER:       pt->readers[addr] = NULL;       break;
+	    case R_MIX_READER:   pt->mix_readers[addr] = NULL;   break;
+	    case R_TRACK_READER: pt->track_readers[addr] = NULL; break;
+	      /* PERHAPS: add vector cases here */
+	    default: XEN_WRONG_TYPE_ARG_ERROR("run", 0, arg, type_name(type)); break;
+	    }
+	  return(addr);
+	}
+      XEN_WRONG_TYPE_ARG_ERROR("run", 0, arg, type_name(type));
+    }
   switch (type)
     {
     case R_FLOAT:        pt->dbls[addr] = (Double)XEN_TO_C_DOUBLE(arg);     break;

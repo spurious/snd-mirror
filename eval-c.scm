@@ -1589,6 +1589,7 @@ int fgetc (FILE
 !#
 
 (define (eval-c-parse-file terms)
+  (define temp #f)
   (set! eval-c-run-nows '())
   (set! eval-c-typelistlist '())
   (set! eval-c-typelist '())
@@ -1596,11 +1597,16 @@ int fgetc (FILE
   (set! eval-c-classlist '())
   (set! eval-c-level 0)
   (set! eval-c-string-is-pointer #f)
+  (set! temp (map eval-c-parse-line terms))
 
   `("#include <stdio.h>"
     "#include <libguile.h>"
     "#include <string.h>"
     "#include <stdlib.h>"
+    "#ifndef SCM_VECTOR_REF"
+    "#define SCM_VECTOR_REF(a,b) scm_vector_ref(a,SCM_MAKINUM(b))"
+    "#endif"
+    "#define scm_is_false(a) ((a) == (SCM_BOOL_F))"
     "#define EC_MAX(a,b) (((a)>(b))?(a):(b))"
     "#define EC_MIN(a,b) (((a)<(b))?(a):(b))"
     "#define MAKE_STRING(a) scm_protect_object(scm_mem2string(a,strlen(a)))"
@@ -1627,7 +1633,7 @@ int fgetc (FILE
     "#define XEN_STRING_P(Arg)           (SCM_STRINGP(Arg))"
     "#endif"
     
-    ,@(map eval-c-parse-line terms)
+    ,@temp
     
     "void das_init(){"
     ,@(map (lambda (x)

@@ -9,27 +9,27 @@
 ;;;  test 6: vcts                               [10966]
 ;;;  test 7: colors                             [11257]
 ;;;  test 8: clm                                [11759]
-;;;  test 9: mix                                [18935]
-;;;  test 10: marks                             [21993]
-;;;  test 11: dialogs                           [22695]
-;;;  test 12: extensions                        [23012]
-;;;  test 13: menus, edit lists, hooks, etc     [23427]
-;;;  test 14: all together now                  [24727]
-;;;  test 15: chan-local vars                   [25792]
-;;;  test 16: regularized funcs                 [27052]
-;;;  test 17: dialogs and graphics              [31419]
-;;;  test 18: enved                             [31494]
-;;;  test 19: save and restore                  [31514]
-;;;  test 20: transforms                        [32988]
-;;;  test 21: new stuff                         [34636]
-;;;  test 22: run                               [35514]
-;;;  test 23: with-sound                        [40744]
-;;;  test 24: user-interface                    [41747]
-;;;  test 25: X/Xt/Xm                           [44908]
-;;;  test 26: Gtk                               [49404]
-;;;  test 27: GL                                [53396]
-;;;  test 28: errors                            [53507]
-;;;  test all done                              [55600]
+;;;  test 9: mix                                [18965]
+;;;  test 10: marks                             [22023]
+;;;  test 11: dialogs                           [22725]
+;;;  test 12: extensions                        [23042]
+;;;  test 13: menus, edit lists, hooks, etc     [23457]
+;;;  test 14: all together now                  [24757]
+;;;  test 15: chan-local vars                   [25822]
+;;;  test 16: regularized funcs                 [27082]
+;;;  test 17: dialogs and graphics              [31449]
+;;;  test 18: enved                             [31524]
+;;;  test 19: save and restore                  [31544]
+;;;  test 20: transforms                        [33018]
+;;;  test 21: new stuff                         [34666]
+;;;  test 22: run                               [35544]
+;;;  test 23: with-sound                        [40962]
+;;;  test 24: user-interface                    [41966]
+;;;  test 25: X/Xt/Xm                           [45127]
+;;;  test 26: Gtk                               [49623]
+;;;  test 27: GL                                [53615]
+;;;  test 28: errors                            [53726]
+;;;  test all done                              [55819]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -12359,6 +12359,31 @@ EDITS: 5
 	(if (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";polynomial empty coeffs: ~A" var)))
       
+      (let ((err 0.0)
+	    (pi 3.141592653589793)
+	    (coeffs (vct 1.0 0.0 -.4999999963 0.0 .0416666418 0.0 -.0013888397 0.0 .0000247609 0.0 -.0000002605))
+	    (pi2 (* pi 0.5)))
+	(letrec ((new-cos
+		  (lambda (x)
+		    (let ((xx (abs x)))
+		      (if (<= xx pi2)
+			  (polynomial coeffs xx)
+			  (let ((nxx (fmod xx (* 2 pi))))
+			    (if (<= nxx pi2)
+				(polynomial coeffs nxx)
+				(if (<= nxx pi)
+				    (- (polynomial coeffs (- pi nxx)))
+				    (if (< nxx (* 1.5 pi))
+					(- (polynomial coeffs (- nxx pi)))
+					(polynomial coeffs (- (* 2 pi) nxx)))))))))))
+	  (do ((i 0 (1+ i))
+	       (x -10.0 (+ x .01)))
+	      ((= i 2000))
+	    (let ((diff (abs (- (cos x) (new-cos x)))))
+	      (if (> diff err)
+		  (set! err diff))))
+	  (if (> err 1.0e-7) (snd-display ";new-cos poly err: ~A" err))))
+
       (let ((v0 (make-vct 10)))
 	(do ((i 0 (1+ i))) ((= i 10))
 	  (vct-set! v0 i i))
@@ -40753,7 +40778,7 @@ EDITS: 2
       
       (let ((val (run-eval '(let ((osc1 (make-oscil 440.0))
 				  (osc2 #f))
-			      (declare (clm osc2))
+			      (declare (osc2 clm))
 			      (and osc1 (not osc2))))))
 	(if (not val) (snd-display ";not osc2: ~A" val)))
       
@@ -40817,13 +40842,13 @@ EDITS: 2
 
       (let ((osc #f))
 	(let ((val (run (lambda ()
-			  (declare (vct osc))
+			  (declare (osc vct))
 			  (not osc)))))
 	  (if (not val) (snd-display ";not v osc: ~A" val))))
       
       (let ((osc #f))
 	(let ((val (run (lambda ()
-			  (declare (vct osc))
+			  (declare (osc vct))
 			  osc))))
 	  (if val (snd-display ";v osc: ~A" val))))
       
@@ -40902,6 +40927,33 @@ EDITS: 2
 	  (close-sound ind)
 	  (if (not (= ok 25)) (clm-print ";ok: ~A" ok))))
       
+      (run-eval '(lambda (g) (declare (g clm)) (if g (clm-print ";lambda clm #f arg"))) #f)
+      (run-eval '(lambda (g g1) (declare (g clm) (g1 clm)) (if (or g g1) (clm-print ";lambda clm #f args 1"))) #f #f)
+      (run-eval '(lambda (g g1) (declare (g clm) (g1 clm)) (if (not (or g g1)) (clm-print ";lambda clm #f args 2"))) #f (make-oscil 344.0))
+      (run-eval '(lambda (g g1) (declare (g clm) (g1 clm)) (if (and g g1) (clm-print ";lambda clm #f args 3"))) #f (make-oscil 344.0))
+      (run-eval '(lambda (g g1) (declare (g clm) (g1 clm)) (if (not g1) (clm-print ";lambda clm #f args 4"))) #f (make-oscil 344.0))
+
+      (run-eval '(lambda (g) (declare (g vct)) (if g (clm-print ";lambda vct #f arg"))) #f)
+      (run-eval '(lambda (g g1) (declare (g vct) (g1 vct)) (if (or g g1) (clm-print ";lambda vct #f args 1"))) #f #f)
+      (run-eval '(lambda (g g1) (declare (g vct) (g1 vct)) (if (not (or g g1)) (clm-print ";lambda vct #f args 2"))) #f (make-vct 3))
+      (run-eval '(lambda (g g1) (declare (g vct) (g1 vct)) (if (and g g1) (clm-print ";lambda vct #f args 3"))) #f (make-vct 3))
+      (run-eval '(lambda (g g1) (declare (g vct) (g1 vct)) (if (not g1) (clm-print ";lambda vct #f args 4"))) #f (make-vct 3))
+
+      (run-eval '(lambda (g) (declare (g sound-data)) (if g (clm-print ";lambda sound-data #f arg"))) #f)
+      (run-eval '(lambda (g g1) (declare (g sound-data) (g1 sound-data)) (if (or g g1) (clm-print ";lambda sound-data #f args 1"))) #f #f)
+      (run-eval '(lambda (g g1) 
+		   (declare (g sound-data) (g1 sound-data)) 
+		   (if (not (or g g1)) (clm-print ";lambda sound-data #f args 2"))) 
+		#f (make-sound-data 3 3))
+      (run-eval '(lambda (g g1) 
+		   (declare (g sound-data) (g1 sound-data)) 
+		   (if (and g g1) (clm-print ";lambda sound-data #f args 3"))) 
+		#f (make-sound-data 3 3))
+      (run-eval '(lambda (g g1) 
+		   (declare (g sound-data) (g1 sound-data)) 
+		   (if (not g1) (clm-print ";lambda sound-data #f args 4"))) 
+		#f (make-sound-data 3 3))
+
       (run-hook after-test-hook 22)
       ))
 

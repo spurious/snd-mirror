@@ -1007,8 +1007,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   (-> rt-engine get-time))
 (define (rte-frames)
   (-> rt-engine frames))
-(define (rte-samplerate
-  (-> rt-engine get-samplerate)))
+(define (rte-samplerate)
+  (-> rt-engine get-samplerate))
 (define (rte-is-running?)
   (not (= 0 (-> rt-engine is_running))))
 (define (rte-info)

@@ -207,22 +207,18 @@
       pix)))
 
 
-(define (c-report text)
-  (if (defined? 'change-window-property)
-      (change-window-property "SND_VERSION" "WM_NAME"
-			      (if (string=? " " text)
-				  (string-append "snd: "
-						 (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
-									   (reverse (cdr (sounds)))))
-						 (short-file-name (car (sounds))))
-				  text))
-      (set! (window-property "SND_VERSION" "WM_NAME")
-	    (if (string=? " " text)
-		(string-append "snd: "
-			       (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
-							 (reverse (cdr (sounds)))))
-			       (short-file-name (car (sounds))))
-		text))))
+(define (c-report das-text)
+  (let ((text (if (string=? " " das-text)
+		  (string-append "snd: "
+				 (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
+							   (reverse (cdr (sounds)))))
+				 (short-file-name (car (sounds))))
+		  das-text)))
+    (if use-gtk
+	(gtk_window_set_title (GTK_WINDOW (cadr (main-widgets))) text)
+	(if (defined? 'change-window-property)
+	    (change-window-property "SND_VERSION" "WM_NAME" text)
+	    (set! (window-property "SND_VERSION" "WM_NAME") text)))))
   
 
 ;; Set cursor-style. Copied from the manual.

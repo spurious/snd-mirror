@@ -20,9 +20,10 @@
  * PERHAPS: user-func for axis-style, (time|transform|lisp|region)-graph-style
  *           -> label, make_axes (describe-ticks = x0 x1), tick_grf_x: (lambda (snd chn ques ...) [:label] [:tick x] [:x0 x0 range] [:x1 x1 range]
  *          or x-axis-label-hook? (lambda (snd chn axis) ...) -> "time" -- x-axis-label exists as settable variable
- * PERHAPS: y-axis-label
+ * PERHAPS: y-axis-label (old/rotate-text.c for Motif side)
  *
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
+ * SOMEDAY: Options:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */

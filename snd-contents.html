@@ -177,8 +177,8 @@ var olData = {childNodes:
  		 {item:new outlineInnerItem("bird: North-American birds", "sndscm.html#birddoc")},
  		 {item:new outlineInnerItem("clm-ins: more CLM instruments", "sndscm.html#clminsdoc")},
  		 {item:new outlineInnerItem("debug: debugging aids", "sndscm.html#debugdoc")},
- 		 {item:new outlineInnerItem("dlocsig", "sndscm.html#dlocsigdoc")},
- 		 {item:new outlineInnerItem("dlp directory", "sndscm.html#dlpdoc")},
+ 		 {item:new outlineInnerItem("dlocsig: moving sound simulation", "sndscm.html#dlocsigdoc")},
+ 		 {item:new outlineInnerItem("dlp directory: tutorial and customization", "sndscm.html#dlpdoc")},
  		 {item:new outlineInnerItem("draw: graphics additions", "sndscm.html#drawdoc")},
  		 {item:new outlineInnerItem("dsp: various DSP-related procedures", "sndscm.html#dspdoc")},
  		 {item:new outlineInnerItem("edit-menu: Edit menu additions", "sndscm.html#editmenudoc")},
@@ -192,7 +192,7 @@ var olData = {childNodes:
  		 {item:new outlineInnerItem("fade: frequency-domain cross-fades", "sndscm.html#fadedoc")},
  		 {item:new outlineInnerItem("fmv: controller for the fm-violin", "sndscm.html#fmvdoc")},
  		 {item:new outlineInnerItem("freeverb: a reverb", "sndscm.html#freeverbdoc")},
- 		 {item:new outlineInnerItem("grani", "sndscm.html#granidoc")},
+ 		 {item:new outlineInnerItem("grani: granular synthesis", "sndscm.html#granidoc")},
  		 {item:new outlineInnerItem("hooks: functions related to hooks", "sndscm.html#hooksdoc")},
  		 {item:new outlineInnerItem("index: snd-help extension", "sndscm.html#indexdoc")},
  		 {item:new outlineInnerItem("inf-snd.el, DotEmacs: Emacs subjob support", "sndscm.html#dotemacs")},
@@ -214,8 +214,9 @@ var olData = {childNodes:
  		 {item:new outlineInnerItem("popup, gtk-popup: Popup menu specializations", "sndscm.html#popupdoc")},
  		 {item:new outlineInnerItem("prc95: Perry Cook's physical model examples", "sndscm.html#prc95doc")},
  		 {item:new outlineInnerItem("pvoc: phase-vocoder", "sndscm.html#pvocdoc")},
- 		 {item:new outlineInnerItem("rgb: colors", "sndscm.html#rgbdoc")},
+ 		 {item:new outlineInnerItem("rgb: color names", "sndscm.html#rgbdoc")},
  		 {item:new outlineInnerItem("rmsgain: RMS-based gain and balance", "sndscm.html#rmsgaindoc")},
+ 		 {item:new outlineInnerItem("rt-examples: hard real-time support", "sndscm.html#rtexdoc")},
  		 {item:new outlineInnerItem("rtio: real-time stuff", "sndscm.html#rtiodoc")},
  		 {item:new outlineInnerItem("rubber: rubber-sound", "sndscm.html#rubberdoc")},
  		 {item:new outlineInnerItem("singer: Perry Cook's vocal-tract physical model", "sndscm.html#singerdoc")},
@@ -226,8 +227,8 @@ var olData = {childNodes:
  		 {item:new outlineInnerItem("snd-test: Snd regression tests", "sndscm.html#sndtestdoc")},
  		 {item:new outlineInnerItem("spectr: instrument steady-state spectra", "sndscm.html#spectrdoc")},
  		 {item:new outlineInnerItem("strad: violin physical model", "sndscm.html#straddoc")},
- 		 {item:new outlineInnerItem("v.scm: fm-violin", "sndscm.html#vdoc")},
- 		 {item:new outlineInnerItem("ws.scm: with-sound", "sndscm.html#wsdoc")},
+ 		 {item:new outlineInnerItem("v: fm-violin", "sndscm.html#vdoc")},
+ 		 {item:new outlineInnerItem("ws: with-sound", "sndscm.html#wsdoc")},
  		 {item:new outlineInnerItem("xm-enved: xm-based envelope editor", "sndscm.html#xmenveddoc")},
  		 {item:new outlineInnerItem("zip: the zipper (a cross-fader)", "sndscm.html#zipdoc")},
  		 {item:new outlineInnerItem("Scheme variables in Snd", "sndscm.html#extsndvarexpl")},
@@ -463,65 +464,66 @@ function initExpMenu() {
   <small><a href="clm.html#appendices" target="snd1">Appendices</a></small>
 <a href="clm.html#clmindex" target="snd1">CLM Index</a>
 <a href="sndscm.html#introduction" target="snd1">Snd Scheme and Ruby files</a>
-  <small><a href="sndscm.html#autosavedoc" target="snd1">autosave.scm: auto-save (edit backup) support</a></small>
-  <small><a href="sndscm.html#bessdoc" target="snd1">bess.scm, bess.rb: FM demo</a></small>
-  <small><a href="sndscm.html#bess1doc" target="snd1">bess1.scm, bess1.rb: FM violin demo</a></small>
-  <small><a href="sndscm.html#birddoc" target="snd1">bird.scm, bird.rb: North-American birds</a></small>
-  <small><a href="sndscm.html#clminsdoc" target="snd1">clm-ins.scm, clm-ins.rb: more CLM instruments</a></small>
-  <small><a href="sndscm.html#debugdoc" target="snd1">debug.scm: debugging aids</a></small>
-  <small><a href="sndscm.html#dlocsigdoc" target="snd1">dlocsig.rb</a></small>
-  <small><a href="sndscm.html#dlpdoc" target="snd1">dlp directory entries</a></small>
-  <small><a href="sndscm.html#drawdoc" target="snd1">draw.scm: graphics additions</a></small>
-  <small><a href="sndscm.html#dspdoc" target="snd1">dsp.scm, dsp.rb: various DSP-related procedures</a></small>
-  <small><a href="sndscm.html#editmenudoc" target="snd1">edit-menu.scm: Edit menu additions</a></small>
-  <small><a href="sndscm.html#dotsnd" target="snd1">edit123.scm, snd_conffile.scm: .snd examples</a></small>
-  <small><a href="sndscm.html#effectsdoc" target="snd1">new-effects.scm, gtk-effects.scm: an Effects menu</a></small>
-  <small><a href="sndscm.html#envdoc" target="snd1">env.scm, env.rb: envelope functions</a></small>
-  <small><a href="sndscm.html#enveddoc" target="snd1">enved.scm: envelope editor</a></small>
-  <small><a href="sndscm.html#eventdoc" target="snd1">event.scm: xm module stuff</a></small>
-  <small><a href="sndscm.html#exampdoc" target="snd1">examp.scm: many examples</a></small>
-  <small><a href="sndscm.html#extensionsdoc" target="snd1">extensions.scm, extensions.rb: extensions of Snd</a></small>
-  <small><a href="sndscm.html#fadedoc" target="snd1">fade.scm: frequency-domain cross-fades</a></small>
-  <small><a href="sndscm.html#fmvdoc" target="snd1">fmv.scm: controller for the fm-violin</a></small>
-  <small><a href="sndscm.html#freeverbdoc" target="snd1">freeverb.scm, freeverb.rb: a reverb</a></small>
-  <small><a href="sndscm.html#granidoc" target="snd1">grani.scm</a></small>
-  <small><a href="sndscm.html#hooksdoc" target="snd1">hooks.scm, hooks.rb: functions related to hooks</a></small>
-  <small><a href="sndscm.html#indexdoc" target="snd1">index.scm, index.rb: snd-help extension</a></small>
+  <small><a href="sndscm.html#autosavedoc" target="snd1">autosave: auto-save (edit backup) support</a></small>
+  <small><a href="sndscm.html#bessdoc" target="snd1">bess: FM demo</a></small>
+  <small><a href="sndscm.html#bess1doc" target="snd1">bess1: FM violin demo</a></small>
+  <small><a href="sndscm.html#birddoc" target="snd1">bird: North-American birds</a></small>
+  <small><a href="sndscm.html#clminsdoc" target="snd1">clm-ins: more CLM instruments</a></small>
+  <small><a href="sndscm.html#debugdoc" target="snd1">debug: debugging aids</a></small>
+  <small><a href="sndscm.html#dlocsigdoc" target="snd1">dlocsig: moving sound simulation</a></small>
+  <small><a href="sndscm.html#dlpdoc" target="snd1">dlp directory entries (customization)</a></small>
+  <small><a href="sndscm.html#drawdoc" target="snd1">draw: graphics additions</a></small>
+  <small><a href="sndscm.html#dspdoc" target="snd1">dsp: various DSP-related procedures</a></small>
+  <small><a href="sndscm.html#editmenudoc" target="snd1">edit-menu: Edit menu additions</a></small>
+  <small><a href="sndscm.html#dotsnd" target="snd1">edit123, snd_conffile: .snd examples</a></small>
+  <small><a href="sndscm.html#effectsdoc" target="snd1">new-effects, gtk-effects: an Effects menu</a></small>
+  <small><a href="sndscm.html#envdoc" target="snd1">env: envelope functions</a></small>
+  <small><a href="sndscm.html#enveddoc" target="snd1">enved: envelope editor</a></small>
+  <small><a href="sndscm.html#eventdoc" target="snd1">event: xm module stuff</a></small>
+  <small><a href="sndscm.html#exampdoc" target="snd1">examp: many examples</a></small>
+  <small><a href="sndscm.html#extensionsdoc" target="snd1">extensions: extensions of Snd</a></small>
+  <small><a href="sndscm.html#fadedoc" target="snd1">fade: frequency-domain cross-fades</a></small>
+  <small><a href="sndscm.html#fmvdoc" target="snd1">fmv: controller for the fm-violin</a></small>
+  <small><a href="sndscm.html#freeverbdoc" target="snd1">freeverb: a reverb</a></small>
+  <small><a href="sndscm.html#granidoc" target="snd1">grani: granular synthesis</a></small>
+  <small><a href="sndscm.html#hooksdoc" target="snd1">hooks: functions related to hooks</a></small>
+  <small><a href="sndscm.html#indexdoc" target="snd1">index: snd-help extension</a></small>
   <small><a href="sndscm.html#dotemacs" target="snd1">inf-snd.el, DotEmacs: Emacs subjob support</a></small>
-  <small><a href="sndscm.html#jcrevdoc" target="snd1">jcrev.scm: John Chowning's reverb</a></small>
-  <small><a href="sndscm.html#ladspadoc" target="snd1">ladspa.scm: Kjetil S. Matheussen's LADSPA previewer.</a></small>
-  <small><a href="sndscm.html#maracadoc" target="snd1">maraca.scm: Perry Cook's maraca physical model</a></small>
-  <small><a href="sndscm.html#marksdoc" target="snd1">marks.scm: functions related to marks</a></small>
-  <small><a href="sndscm.html#maxfdoc" target="snd1">maxf.scm, maxf.rb: Max Mathews resonator</a></small>
-  <small><a href="sndscm.html#mixdoc" target="snd1">mix.scm, mix.rb: functions related to mixes and tracks</a></small>
-  <small><a href="sndscm.html#mixerdoc" target="snd1">mixer.scm: functions related to mixers and frames</a></small>
-  <small><a href="sndscm.html#moogdoc" target="snd1">moog.scm: Moog filter</a></small>
-  <small><a href="sndscm.html#musglyphs" target="snd1">musglyphs.scm: Music notation symbols (from CMN)</a></small>
-  <small><a href="sndscm.html#nbdoc" target="snd1">nb.scm, nb.rb: Popup File info etc</a></small>
-  <small><a href="sndscm.html#noisedoc" target="snd1">noise.scm, noise.rb: CLM's noise.ins</a></small>
-  <small><a href="sndscm.html#oscopedoc" target="snd1">oscope.scm: oscilloscope</a></small>
-  <small><a href="sndscm.html#peakenvdoc" target="snd1">peak-env.scm: peak envelope support</a></small>
-  <small><a href="sndscm.html#pianodoc" target="snd1">piano.scm, piano.rb: piano physical model</a></small>
-  <small><a href="sndscm.html#playdoc" target="snd1">play.scm: play-related functions</a></small>
-  <small><a href="sndscm.html#popupdoc" target="snd1">popup.scm, gtk-popup.scm: Popup menu specializations</a></small>
-  <small><a href="sndscm.html#prc95doc" target="snd1">prc95.scm: Perry Cook's physical model examples</a></small>
-  <small><a href="sndscm.html#pvocdoc" target="snd1">pvoc.scm, pvoc.rb: phase-vocoder</a></small>
-  <small><a href="sndscm.html#rgbdoc" target="snd1">rgb.scm, rgb.rb: colors</a></small>
-  <small><a href="sndscm.html#rmsgaindoc" target="snd1">rmsgain.scm: RMS-based gain and balance</a></small>
-  <small><a href="sndscm.html#rtiodoc" target="snd1">rtio.scm, rtio.rb: real-time stuff</a></small>
-  <small><a href="sndscm.html#rubberdoc" target="snd1">rubber.scm, rubber.rb: rubber-sound</a></small>
-  <small><a href="sndscm.html#singerdoc" target="snd1">singer.scm: Perry Cook's vocal-tract physical model</a></small>
-  <small><a href="sndscm.html#sndwarpdoc" target="snd1">sndwarp.scm: Bret Battey's sndwarp instrument</a></small>
-  <small><a href="sndscm.html#snd4doc" target="snd1">snd4|5|6|7.scm: backwards compatibility</a></small>
-  <small><a href="sndscm.html#sndgldoc" target="snd1">snd-gl.scm: OpenGL examples (gl.c)</a></small>
-  <small><a href="sndscm.html#sndmotifdoc" target="snd1">snd-motif.scm, snd-gtk.scm, snd-xm.rb: Motif/Gtk module (xm.c, xg.c)</a></small>
-  <small><a href="sndscm.html#sndtestdoc" target="snd1">snd-test.scm and event.scm: Snd regression tests</a></small>
-  <small><a href="sndscm.html#spectrdoc" target="snd1">spectr.scm, spectr.rb: instrument steady-state spectra</a></small>
-  <small><a href="sndscm.html#straddoc" target="snd1">strad.scm, strad.rb: violin physical model</a></small>
-  <small><a href="sndscm.html#vdoc" target="snd1">v.scm, v.rb: fm-violin</a></small>
-  <small><a href="sndscm.html#wsdoc" target="snd1">ws.scm, ws.rb: with-sound</a></small>
-  <small><a href="sndscm.html#xmenveddoc" target="snd1">xm-enved.scm, xm-enved.rb: xm-based envelope editor</a></small>
-  <small><a href="sndscm.html#zipdoc" target="snd1">zip.scm: the zipper (a cross-fader)</a></small>
+  <small><a href="sndscm.html#jcrevdoc" target="snd1">jcrev: John Chowning's reverb</a></small>
+  <small><a href="sndscm.html#ladspadoc" target="snd1">ladspa: Kjetil S. Matheussen's LADSPA previewer.</a></small>
+  <small><a href="sndscm.html#maracadoc" target="snd1">maraca: Perry Cook's maraca physical model</a></small>
+  <small><a href="sndscm.html#marksdoc" target="snd1">marks: functions related to marks</a></small>
+  <small><a href="sndscm.html#maxfdoc" target="snd1">maxf: Max Mathews resonator</a></small>
+  <small><a href="sndscm.html#mixdoc" target="snd1">mix: functions related to mixes and tracks</a></small>
+  <small><a href="sndscm.html#mixerdoc" target="snd1">mixer: functions related to mixers and frames</a></small>
+  <small><a href="sndscm.html#moogdoc" target="snd1">moog: Moog filter</a></small>
+  <small><a href="sndscm.html#musglyphs" target="snd1">musglyphs: Music notation symbols (from CMN)</a></small>
+  <small><a href="sndscm.html#nbdoc" target="snd1">nb: Popup File info etc</a></small>
+  <small><a href="sndscm.html#noisedoc" target="snd1">noise: CLM's noise.ins</a></small>
+  <small><a href="sndscm.html#oscopedoc" target="snd1">oscope: oscilloscope</a></small>
+  <small><a href="sndscm.html#peakenvdoc" target="snd1">peak-env: peak envelope support</a></small>
+  <small><a href="sndscm.html#pianodoc" target="snd1">piano: piano physical model</a></small>
+  <small><a href="sndscm.html#playdoc" target="snd1">play: play-related functions</a></small>
+  <small><a href="sndscm.html#popupdoc" target="snd1">popup, gtk-popup: Popup menu specializations</a></small>
+  <small><a href="sndscm.html#prc95doc" target="snd1">prc95: Perry Cook's physical model examples</a></small>
+  <small><a href="sndscm.html#pvocdoc" target="snd1">pvoc: phase-vocoder</a></small>
+  <small><a href="sndscm.html#rgbdoc" target="snd1">rgb: colors</a></small>
+  <small><a href="sndscm.html#rmsgaindoc" target="snd1">rmsgain: RMS-based gain and balance</a></small>
+  <small><a href="sndscm.html#rtexdoc" target="snd1">rt-examples: hard real-time support</a></small>
+  <small><a href="sndscm.html#rtiodoc" target="snd1">rtio: real-time stuff</a></small>
+  <small><a href="sndscm.html#rubberdoc" target="snd1">rubber: rubber-sound</a></small>
+  <small><a href="sndscm.html#singerdoc" target="snd1">singer: Perry Cook's vocal-tract physical model</a></small>
+  <small><a href="sndscm.html#sndwarpdoc" target="snd1">sndwarp: Bret Battey's sndwarp instrument</a></small>
+  <small><a href="sndscm.html#snd4doc" target="snd1">snd4|5|6|7: backwards compatibility</a></small>
+  <small><a href="sndscm.html#sndgldoc" target="snd1">snd-gl: OpenGL examples (gl.c)</a></small>
+  <small><a href="sndscm.html#sndmotifdoc" target="snd1">snd-motif, snd-gtk, snd-xm: Motif/Gtk module (xm.c, xg.c)</a></small>
+  <small><a href="sndscm.html#sndtestdoc" target="snd1">snd-test and event: Snd regression tests</a></small>
+  <small><a href="sndscm.html#spectrdoc" target="snd1">spectr: instrument steady-state spectra</a></small>
+  <small><a href="sndscm.html#straddoc" target="snd1">strad: violin physical model</a></small>
+  <small><a href="sndscm.html#vdoc" target="snd1">v: fm-violin</a></small>
+  <small><a href="sndscm.html#wsdoc" target="snd1">ws: with-sound</a></small>
+  <small><a href="sndscm.html#xmenveddoc" target="snd1">xm-enved: xm-based envelope editor</a></small>
+  <small><a href="sndscm.html#zipdoc" target="snd1">zip: the zipper (a cross-fader)</a></small>
   <small><a href="sndscm.html#extsndvarexpl" target="snd1">A Note on Scheme variables in Snd</a></small>
   <small><a href="sndscm.html#extsndasneededexpl" target="snd1">A Note on "As-Needed" input functions</a></small>
   <small><a href="sndscm.html#extsndcgens" target="snd1">A Note on User-defined Generators in C-CLM</a></small>
