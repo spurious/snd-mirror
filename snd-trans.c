@@ -13,6 +13,9 @@
  *   IBM ADPCM (as per Perry Cook)
  *   Yamaha TX-16 12-bit
  *   NeXT/Sun G721, G723 3 and 5 bit versions (also RIFF) (AIFC cases could be handled if they exist)
+ *
+ *   libavcodec has an amazing number of decoders -- are these useful in this context?
+ *   also libmpcodecs (available with MPlayer)
  */
 
 #include "snd.h"

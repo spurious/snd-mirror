@@ -1410,6 +1410,8 @@
 	    (list "M1F1-float64C-AFsp.aif" 2 8000 2.9366 "AIFC" "big endian double (64 bits)")
 	    (list "MacBoing.wav" 1 11127 0.696 "RIFF" "unsigned byte (8 bits)")
 	    (list "t15.aiff" 2 44100 135.00 "AIFC" "little endian short (16 bits)")
+	    (list "tomf8.aud" 1 8000 2.016000 "INRS" "little endian short (16 bits)")
+	    (list "Xhs001x.nsp" 1 10000 6.017400 "CSL" "little endian short (16 bits)")
 	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16W" "unknown" 23342 40042)))
 
 	  (for-each (lambda (in-name real-name)
@@ -24254,7 +24256,8 @@ EDITS: 5
 		    (begin
 		      (snd-display ";cursor ~A /= ~A?" cl curloc)
 		      (set! curloc (cursor)))))
-	      (let* ((id (add-mark curloc curfd)))
+	      (if (>= curloc (frames curfd)) (set! curloc 0))
+	      (let* ((id (catch #t (lambda () (add-mark curloc curfd)) (lambda args -1))))
 		(if (and (number? id) (not (= id -1)))
 		    (let* ((cl (mark-sample id))
 			   (new-marks (length (marks curfd 0))))

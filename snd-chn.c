@@ -6,7 +6,6 @@
  *
  * SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?)
  *    cursor redraw can check for this, but it gloms up code
- * TODO: if superimposed and if chan 2 data = 0, chan 1's fft gets erased
  *
  * TODO: tick choice based on stuff like beats-in-measure (div 3 7) -> measure numbers (like smpte display?)
  * TODO: overlay of rms env
@@ -15,6 +14,7 @@
  * TODO: bark scale as axis or color as above (fft as well?)
  * TODO: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
  * SOMEDAY: user-addable graph-style?
+ * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
@@ -266,6 +266,7 @@ void set_sound_channel_style(snd_info *sp, channel_style_t val)
 
 bool chan_fft_in_progress(chan_info *cp)
 {
+  /* fft_in_progress is a background process only if sonogram/spectrogram */
   return((bool)((cp->cgx)->fft_in_progress));
 }
 
@@ -3157,28 +3158,12 @@ static void display_channel_data_with_size (chan_info *cp,
 	  ((sp->nchans > 1) && 
 	   (sp->channel_style != CHANNELS_SEPARATE)))
 	make_axes(cp, fap,
-
 		  ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || 
 		   (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
-#if USE_MOTIF
-		  (((cp->chan == (sp->nchans - 1)) || 
+		  (((cp->chan == 0) ||
 		    (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
-
-		  /* Xt documentation says the most recently added work proc runs first, but we're
-		   *   adding fft work procs in channel order, normally, so the channel background
-		   *   clear for the superimposed case needs to happen on the highest-numbered 
-		   *   channel, since it will complete its fft first.  It also needs to notice the
-		   *   selected background, if any of the current sound's channels is selected.
-		   */
-#else
-		  (((cp->chan == 0) || 
-		    (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
-
-		  /* In Gtk+ (apparently) the first proc added is run, not the most recent */
-#endif
 		  ((cp->show_grid) && 
 		   (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM)) ? WITH_GRID : NO_GRID,
-
 		  ((!(cp->fft_log_frequency)) || 
 		   (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)) ? WITH_LINEAR_AXES :
 		  ((cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? WITH_LOG_Y_AXIS : WITH_LOG_X_AXIS));
