@@ -1241,6 +1241,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26~%")
 (hey " *     29-Mar:    support for some ... args.~%")
 (hey " *     22-Mar:    g_source_remove and related changes.~%")
 (hey " *     11-Mar:    gtk 2.3.6 changes.~%")
