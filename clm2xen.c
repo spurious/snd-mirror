@@ -894,11 +894,15 @@ static Float *whatever_to_floats(XEN inp, int size, const char *caller)
 	    }
 	  else
 	    {
-	      if ((XEN_PROCEDURE_P(inp)) && (XEN_REQUIRED_ARGS(inp) == 1))
+	      if (XEN_PROCEDURE_P(inp))
 		{
-		  invals = (Float *)MALLOC(size * sizeof(Float));
-		  for (i = 0; i < size; i++) 
-		    invals[i] = XEN_TO_C_DOUBLE(XEN_CALL_1(inp, C_TO_XEN_INT(i), caller));
+		  if (XEN_REQUIRED_ARGS(inp) == 1)
+		    {
+		      invals = (Float *)MALLOC(size * sizeof(Float));
+		      for (i = 0; i < size; i++) 
+			invals[i] = XEN_TO_C_DOUBLE(XEN_CALL_1(inp, C_TO_XEN_INT(i), caller));
+		    }
+		  else mus_misc_error(caller, "wrong number of args to function (want 1)", inp);
 		}
 	    }
 	}
@@ -3898,7 +3902,12 @@ included an 'input' argument, input-function is ignored."
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_src_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_src, "an src gen");
   gn = CLM_TO_MUS_XEN(obj);
   if (XEN_NUMBER_P(pm)) pm1 = XEN_TO_C_DOUBLE(pm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(pm), pm, XEN_ARG_2, S_src, "a number");
-  if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS(func) == 1)) gn->vcts[INPUT_FUNCTION] = func;
+  if (XEN_PROCEDURE_P(func))
+    {
+      if (XEN_REQUIRED_ARGS(func) == 1)
+	gn->vcts[INPUT_FUNCTION] = func;
+      else mus_misc_error(S_src, "wrong number of args to input function (want 1)", func);
+    }
   return(C_TO_XEN_DOUBLE(mus_src(MUS_XEN_TO_CLM(obj), pm1, 0)));
 }
 
@@ -3925,7 +3934,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
     {
       if (!(XEN_KEYWORD_P(keys[0]))) 
 	{
-	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_src, "a procedure");
+	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_src, "a procedure of 1 arg");
 	  in_obj = keys[0];
 	}
       srate = fkeyarg(keys[1], S_make_src, orig_arg[1] + 1, srate);
@@ -3966,7 +3975,12 @@ static XEN g_granulate(XEN obj, XEN func)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_granulate, "a granulate gen");
   gn = CLM_TO_MUS_XEN(obj);
-  if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS(func) == 1)) gn->vcts[INPUT_FUNCTION] = func;
+  if (XEN_PROCEDURE_P(func))
+    {
+      if (XEN_REQUIRED_ARGS(func) == 1)
+	gn->vcts[INPUT_FUNCTION] = func;
+      else mus_misc_error(S_granulate, "wrong number of args to input function (want 1)", func);
+    }
   return(C_TO_XEN_DOUBLE(mus_granulate(MUS_XEN_TO_CLM(obj), 0)));
 }
 
@@ -4016,7 +4030,7 @@ jitter controls the randomness in that spacing, input can be a file pointer."
     {
       if (!(XEN_KEYWORD_P(keys[0]))) 
 	{
-	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_granulate, "a procedure");
+	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_granulate, "a procedure of 1 arg");
 	  in_obj = keys[0];
 	}
       expansion = fkeyarg(keys[1], S_make_granulate, orig_arg[1] + 1, expansion);
@@ -4064,7 +4078,12 @@ static XEN g_convolve(XEN obj, XEN func)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_convolve_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_convolve, "a convolve gen");
   gn = CLM_TO_MUS_XEN(obj);
-  if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS(func) == 1)) gn->vcts[INPUT_FUNCTION] = func;
+  if (XEN_PROCEDURE_P(func))
+    {
+      if (XEN_REQUIRED_ARGS(func) == 1)
+	gn->vcts[INPUT_FUNCTION] = func;
+      else mus_misc_error(S_convolve, "wrong number of args to input function (want 1)", func);
+    }
   return(C_TO_XEN_DOUBLE(mus_convolve(MUS_XEN_TO_CLM(obj), 0)));
 }
 
@@ -4093,7 +4112,7 @@ returns a new convolution generator which convolves its input with the impulse r
     {
       if (!(XEN_KEYWORD_P(keys[0]))) 
 	{
-	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_convolve, "a procedure");
+	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_convolve, "a procedure of 1 arg");
 	  in_obj = keys[0];
 	}
       if (!(XEN_KEYWORD_P(keys[1]))) 
@@ -4207,7 +4226,12 @@ static XEN g_phase_vocoder(XEN obj, XEN func)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_phase_vocoder, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(obj);
-  if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS(func) == 1)) gn->vcts[INPUT_FUNCTION] = func;
+  if (XEN_PROCEDURE_P(func))
+    {
+      if (XEN_REQUIRED_ARGS(func) == 1)
+	gn->vcts[INPUT_FUNCTION] = func;
+      else mus_misc_error(S_phase_vocoder, "wrong number of args to input function (want 1)", func);
+    }
   return(C_TO_XEN_DOUBLE(mus_phase_vocoder(MUS_XEN_TO_CLM(obj), 0)));
 }
 
@@ -4216,7 +4240,17 @@ static XEN g_make_phase_vocoder(XEN arglist)
   #define H_make_phase_vocoder "(" S_make_phase_vocoder " &opt-key input fft-size overlap interp pitch analyze edit synthesize)\n\
 returns a new phase-vocoder generator; input is the input function (if can be set at run-time), analyze, edit, \
 and synthesize are either #f or functions that replace the default innards of the generator, fft-size, overlap \
-and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls."
+and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls. \
+'analyze', if given, takes 2 args, the generator and the input function; if it returns #t, the default analysis \
+code is also called.  'edit', if given, takes 1 arg, the generator; if it returns #t, the default edit code \
+is run.  'synthesize' is a function of 1 arg, the generator; it is called to get the current vocoder output. \
+\n\
+(make-phase-vocoder #f 512 4 256 1.0 #f #f #f) \n\
+\n\
+(make-phase-vocoder #f 512 4 256 1.0 \n\
+  (lambda (v infunc) (set! incalls (+ incalls 1)) #t) \n\
+  (lambda (v) (set! editcalls (+ editcalls 1)) #t) \n\
+  (lambda (v) (set! outcalls (+ outcalls 1)) 0.0))) \n"
 
   XEN in_obj = XEN_UNDEFINED; XEN edit_obj = XEN_UNDEFINED; XEN synthesize_obj = XEN_UNDEFINED; XEN analyze_obj = XEN_UNDEFINED;
   mus_xen *gn;
@@ -4240,14 +4274,34 @@ and interp set the fftsize, the amount of overlap between ffts, and the time bet
   vals = decode_keywords(S_make_phase_vocoder, 8, keys, 16, args, orig_arg);
   if (vals > 0)
     {
-      if ((XEN_PROCEDURE_P(keys[0])) && (XEN_REQUIRED_ARGS(keys[0]) == 1)) in_obj = keys[0];
+      if (XEN_PROCEDURE_P(keys[0]))
+	{
+	  if (XEN_REQUIRED_ARGS(keys[0]) == 1)
+	    in_obj = keys[0];
+	  else mus_misc_error(S_make_phase_vocoder, "wrong number of args to input function (want 1)", keys[0]);
+	}
       fft_size = ikeyarg(keys[1], S_make_phase_vocoder, orig_arg[1] + 1, fft_size);
       overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2] + 1, overlap);
       interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3] + 1, interp);
       pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4] + 1, pitch);
-      if ((XEN_PROCEDURE_P(keys[5])) && (XEN_REQUIRED_ARGS(keys[5]) == 2)) analyze_obj = keys[5];
-      if ((XEN_PROCEDURE_P(keys[6])) && (XEN_REQUIRED_ARGS(keys[6]) == 1)) edit_obj = keys[6];
-      if ((XEN_PROCEDURE_P(keys[7])) && (XEN_REQUIRED_ARGS(keys[7]) == 1)) synthesize_obj = keys[7];
+      if (XEN_PROCEDURE_P(keys[5]))
+	{
+	  if (XEN_REQUIRED_ARGS(keys[5]) == 2)
+	    analyze_obj = keys[5];
+	  else mus_misc_error(S_make_phase_vocoder, "wrong number of args to analyze function (want 2: pv infunc)", keys[5]);
+	}
+      if (XEN_PROCEDURE_P(keys[6]))
+	{
+	  if (XEN_REQUIRED_ARGS(keys[6]) == 1)
+	    edit_obj = keys[6];
+	  else mus_misc_error(S_make_phase_vocoder, "wrong number of args to edit function (want 1: pv)", keys[6]);
+	}
+      if (XEN_PROCEDURE_P(keys[7]))
+	{
+	  if (XEN_REQUIRED_ARGS(keys[7]) == 1)
+	    synthesize_obj = keys[7];
+	  else mus_misc_error(S_make_phase_vocoder, "wrong number of args to synthesize function (want 1: pv)", keys[7]);
+	}
     }
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->nvcts = 5;

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 14
-#define SNDLIB_REVISION 13
-#define SNDLIB_DATE "5-Dec-01"
+#define SNDLIB_REVISION 14
+#define SNDLIB_DATE "10-Dec-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -622,6 +622,18 @@ int mus_header_no_header            PROTO((const char *name));
 void mus_header_set_aifc            PROTO((int val)); /* backwards compatibility, sort of */
 char *mus_header_riff_aux_comment   PROTO((const char *name, int *starts, int *ends));
 char *mus_header_aiff_aux_comment   PROTO((const char *name, int *starts, int *ends));
+
+
+/* -------- midi.c -------- */
+int mus_midi_open_read              PROTO((const char *name));
+int mus_midi_open_write             PROTO((const char *name));
+int mus_midi_close                  PROTO((int line));
+int mus_midi_read                   PROTO((int line, unsigned char *buffer, int bytes));
+int mus_midi_write                  PROTO((int line, unsigned char *buffer, int bytes));
+char *mus_midi_device_name          PROTO((int sysdev));
+#if HAVE_EXTENSION_LANGUAGE
+  void mus_midi_init                PROTO((void));
+#endif
 
 
 #ifdef DEBUG_MEMORY

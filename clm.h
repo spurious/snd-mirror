@@ -2,7 +2,7 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 57
+#define MUS_REVISION 58
 #define MUS_DATE "10-Dec-01"
 
 /* 

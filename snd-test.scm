@@ -6735,6 +6735,32 @@
 	  (set! (samples 0 len) data))
 	(undo 1)
 	(free-sample-reader reader)
+
+	(let ((incalls 0)
+	      (outcalls 0))
+	  (set! pv (make-phase-vocoder #f
+				       512 4 (inexact->exact (* 128 2.0)) 1.0
+				       (lambda (v infunc)
+					 (set! incalls (+ incalls 1))
+					 #t)
+				       #f ;no change to edits
+				       (lambda (v)
+					 (set! outcalls (+ outcalls 1))
+					 0.0)
+				       ))
+	  (set! reader (make-sample-reader 0))
+	  (let* ((len (inexact->exact (* 2.0 (frames ind))))
+		 (data (make-vct len)))
+	    (vct-map! data
+		      (lambda ()
+			(phase-vocoder pv (lambda (dir) (next-sample reader)))))
+	    (set! (samples 0 len) data))
+	  (undo 1)
+	  (free-sample-reader reader)
+	  (if (or (= incalls 0)
+		  (= outcalls 0))
+	      (snd-display "phase-vocoder incalls: ~A, outcalls: ~A" incalls outcalls)))
+
 	(close-sound ind))
 
       ))
@@ -13952,8 +13978,9 @@ EDITS: 3
 				  (lambda ()
 				    (n (make-oscil) (current-module)))
 				  (lambda args (car args)))))
-		      (if (not (eq? tag 'wrong-type-arg))
-			  (snd-display ";oscil clm ~A: ~A" n tag))))
+		      (if (not (or (eq? tag 'wrong-type-arg)
+				   (eq? tag 'mus-error)))
+			  (snd-display ";clm ~A: ~A" n tag))))
 		  (list all-pass array-interp asymmetric-fm comb contrast-enhancement convolution convolve
 			convolve-files delay dot-product env-interp file->frame file->sample filter fir-filter formant
 			formant-bank frame* frame+ frame->buffer frame->frame frame-ref frame->sample granulate iir-filter ina

@@ -3,7 +3,7 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 
 #--------------------------------------------------------------------------------
 # this configure/make process tested so far in 
-#       linux (rh 5.2, 6.0, 6.1, 6.2, 7.0, 7.1), Mandrake 7.0, Suse Linux 6.4, Debian 2.2
+#       linux (rh 5.2, 6.0, 6.1, 6.2, 7.0, 7.1, 7.2), Mandrake 7.0, Suse Linux 6.4, Debian 2.2
 #       sgi (irix 5.3, 6.2, 6.3, 6.5), 
 #       mklinux (dr3), linuxppc (r4, r5, 2000), Debian ppc linux 2.2
 #       sun (solaris 2.7, 2.8, linux)
@@ -764,12 +764,14 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	AUDIO_LIB="-laudio"
 	AC_SUBST(AUDIO_LIB)
         if test $GUILE_CONFIG_works = no; then
- 	  LIBS="-lc -lm"
+ 	  LIBS="-lc -lm -lmd"
+        else
+	  LIBS="$LIBS -lmd"
+        fi
         LDSO_FLAGS="-shared -all"
 	SO_INSTALL=":"
 	SO_LD=":"
 	A_LD_FLAGS="-non_shared"
-        fi
 dnl should we include -lSgm if motif?
         ;;
     alpha*) 
