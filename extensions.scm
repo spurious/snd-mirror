@@ -13,7 +13,6 @@
 ;;; mix-channel, insert-channel
 ;;; redo-channel, undo-channel
 
-
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 
 

@@ -955,7 +955,7 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num,
   md->in_filename = copy_string(full_original_file);
   reflect_mix_in_menu();
   reflect_mix_in_enved();
-  update_graph(cp);
+  reflect_mix_in_mix_panel(md->id);
   return(md);
 }
 
@@ -971,6 +971,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   mus_sample_t **data;
   mus_sample_t *chandata;
   int in_chans, err = 0;
+  mix_info *md = NULL;
   off_t i, j, len, size;
   file_info *ihdr, *ohdr;
   ss = cp->state;
@@ -1047,13 +1048,9 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
   if (ofile) FREE(ofile);
   if (with_tag)
-    {
-      mix_info *md;
-      md = add_mix(cp, chan, beg, num, mixfile, in_chans, temp);
-      reflect_mix_in_mix_panel(md->id);
-      return(md);
-    }
-  else return(NULL);
+    md = add_mix(cp, chan, beg, num, mixfile, in_chans, temp);
+  update_graph(cp);
+  return(md);
 }
 
 /* next functions canonicalize mixer input -- 
@@ -1101,16 +1098,18 @@ int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int t
   return(id);
 }
 
-int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char *origin, int with_tag)
+static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char *origin, int with_tag, int auto_delete)
 {
   /* no need to save as temp here, but we do need sync info (from menu and keyboard) */
+  /* returns -1 if with_tag is false, -2 if no such file */
   chan_info *cp;
   chan_info **cps = NULL;
   int chans, id = -1;
   off_t len;
   sync_info *si = NULL;
   len = mus_sound_frames(fullname);
-  if (len <= 0) return(-2);
+  if (len < 0) return(-2);
+  if (len == 0) return(-1);
   cp = any_selected_channel(sp);
   if (sp->sync != 0)
     {
@@ -1124,7 +1123,7 @@ int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char *origi
       cps[0] = cp;
       chans = 1;
     }
-  id = mix(beg, len, chans, cps, fullname, DONT_DELETE_ME, origin, with_tag);
+  id = mix(beg, len, chans, cps, fullname, auto_delete, origin, with_tag);
   if (si) 
     si = free_sync_info(si); 
   else 
@@ -1142,7 +1141,7 @@ void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, in
     {
       fullname = mus_expand_filename(str);
       cp = any_selected_channel(sp);
-      err = mix_complete_file(sp, CURSOR(cp), fullname, origin, with_tag);
+      err = mix_complete_file(sp, CURSOR(cp), fullname, origin, with_tag, DONT_DELETE_ME);
       if (err == -2) 
 	report_in_minibuffer_and_save(sp, _("can't mix file: %s, %s"), str, strerror(errno));
       if (fullname) FREE(fullname);
@@ -3503,7 +3502,7 @@ static int set_mix_amp_env_1(int n, int chan, env *val, int remix, int from_gui)
   else return(INVALID_MIX_ID);
 }
 
-int set_mix_amp_env(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, TRUE, FALSE));}
+static int set_mix_amp_env(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, TRUE, FALSE));}
 int set_mix_amp_env_from_gui(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, TRUE, TRUE));}
 int set_mix_amp_env_without_edit(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, FALSE, FALSE));}
 
@@ -3546,7 +3545,7 @@ void mix_at_x_y(snd_state *ss, int data, char *filename, int x, int y)
       if (sample < 0) sample = 0;
       mus_snprintf(origin, PRINT_BUFFER_SIZE, "drop mix %s " OFF_TD, filename, sample);
       fullname = mus_expand_filename(filename);
-      mix_complete_file(sp, sample, fullname, origin, with_mix_tags(ss));
+      mix_complete_file(sp, sample, fullname, origin, with_mix_tags(ss), DONT_DELETE_ME);
       if (fullname) FREE(fullname);
       FREE(origin);
     }
@@ -4029,9 +4028,9 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
 }
 
 
-static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag)
+static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag, XEN auto_delete)
 {
-  #define H_mix "(" S_mix " file (chn-start 0) (file-chan 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ")): \
+  #define H_mix "(" S_mix " file (chn-start 0) (file-chan 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ") (auto-delete #f)): \
 mix file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
 is omitted), returning the new mix's id.  if with-tag is #f, the data is mixed (no draggable tag is created). \
 If file_chn is omitted or #f, file's channels are mixed until snd runs out of channels."
@@ -4039,7 +4038,7 @@ If file_chn is omitted or #f, file's channels are mixed until snd runs out of ch
   chan_info *cp = NULL;
   char *name = NULL;
   int chans, id = -1, file_channel;
-  int with_mixer = TRUE;
+  int with_mixer = TRUE, delete = FALSE;
   snd_state *ss;
   mix_info *md;
   off_t beg;
@@ -4048,6 +4047,7 @@ If file_chn is omitted or #f, file's channels are mixed until snd runs out of ch
   XEN_ASSERT_TYPE(XEN_INTEGER_P(file_chn) || XEN_FALSE_P(file_chn) || (!(XEN_BOUND_P(file_chn))), file_chn, XEN_ARG_3, S_mix, "an integer or #f");
   ASSERT_JUST_CHANNEL(S_mix, snd_n, chn_n, 4);
   XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(tag), tag, XEN_ARG_6, S_mix, "a number");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_mix, "a boolean");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
   if (!(mus_file_probe(name)))
     {
@@ -4063,8 +4063,9 @@ If file_chn is omitted or #f, file's channels are mixed until snd runs out of ch
   beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, CURSOR(cp));
   if (!(XEN_INTEGER_P(file_chn)))
     {
-      id = mix_complete_file(any_selected_sound(ss), beg, name, S_mix, with_mixer);
-      if (id == -1) 
+      if (XEN_BOOLEAN_P(auto_delete)) delete = XEN_TO_C_BOOLEAN(auto_delete);
+      id = mix_complete_file(any_selected_sound(ss), beg, name, S_mix, with_mixer, (delete) ? DELETE_ME : DONT_DELETE_ME);
+      if (id == -2) 
 	{
 	  if (name) FREE(name);
 	  if (ss->catch_message)
@@ -4667,7 +4668,7 @@ XEN_NARGIFY_0(g_selected_mix_w, g_selected_mix)
 XEN_NARGIFY_1(g_set_selected_mix_w, g_set_selected_mix)
 XEN_ARGIFY_3(g_forward_mix_w, g_forward_mix)
 XEN_ARGIFY_3(g_backward_mix_w, g_backward_mix)
-XEN_ARGIFY_6(g_mix_w, g_mix)
+XEN_ARGIFY_7(g_mix_w, g_mix)
 XEN_ARGIFY_6(mix_vct_w, mix_vct)
 XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
 XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
@@ -4809,7 +4810,7 @@ void g_init_mix(void)
 
   XEN_DEFINE_PROCEDURE(S_forward_mix,  g_forward_mix_w, 0, 3, 0,  H_forward_mix);
   XEN_DEFINE_PROCEDURE(S_backward_mix, g_backward_mix_w, 0, 3, 0, H_backward_mix);
-  XEN_DEFINE_PROCEDURE(S_mix,          g_mix_w, 1, 5, 0,          H_mix);
+  XEN_DEFINE_PROCEDURE(S_mix,          g_mix_w, 1, 6, 0,          H_mix);
   XEN_DEFINE_PROCEDURE(S_mix_vct,      mix_vct_w, 1, 5, 0,        H_mix_vct);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,

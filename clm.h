@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 32
-#define MUS_DATE "15-July-03"
+#define MUS_REVISION 33
+#define MUS_DATE "20-July-03"
 
 /* 
+ * 20-July:    more run methods.
  * 15-July:    linear->dB check for 0.0 arg.
  * 27-June:    mus_samples_to_seconds and mus_seconds_to_samples.
  * 9-June:     mus_mix_with_reader_and_writer.
@@ -188,8 +189,8 @@ enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WIND
 
 #define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) &&((Window) <= MUS_DOLPH_CHEBYSHEV_WINDOW))
 
-#define MUS_RUN(GEN, ARG_1, ARG_2) ((*((GEN->core)->run))(GEN, ARG_1, ARG_2))
-#define MUS_RUN_P(GEN) ((GEN->core)->run)
+#define MUS_RUN(GEN, ARG_1, ARG_2) ((*(((GEN)->core)->run))(GEN, ARG_1, ARG_2))
+#define MUS_RUN_P(GEN) (((GEN)->core)->run)
 
 
 #ifdef __cplusplus

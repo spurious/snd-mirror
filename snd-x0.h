@@ -22,6 +22,10 @@
 #include <GL/glx.h>
 #endif
 
+#if (XmVERSION >= 2)
+  #define USE_RENDITIONS 1
+#endif
+
 #if (USE_RENDITIONS)
   #define xm_font_t XmRenderTable
   #define XM_FONT_RESOURCE XmNrenderTable

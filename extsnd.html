@@ -153,6 +153,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#goopsnddoc">goopsnd.scm</a></td>        <td>first look at Goops (Guile Object System) for Snd</td></tr>
 <tr><td><a href="sndscm.html#hooksdoc">hooks.scm</a></td>            <td>functions related to hooks</td></tr>
 <tr><td><a href="sndscm.html#indexdoc">index.scm, index.rb</a></td>  <td>snd-help locators</td></tr>
+<tr><td><a href="sndscm.html#jcrevdoc">jcrev.scm</a></td>            <td>John Chowning's reverb</td></tr>
 <tr><td><a href="sndscm.html#maracadoc">maraca.scm</a></td>          <td>Perry Cook's maraca physical model</td></tr>
 <tr><td><a href="sndscm.html#marksdoc">marks.scm</a></td>            <td>functions related to marks</td></tr>
 <tr><td><a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a></td>     <td>Max Mathews resonator</td></tr>
@@ -3092,7 +3093,7 @@ mix sound, call undo or redo on the outer (resultant, mixed-into) sound.
 <tr><td></td><td>move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id.
 </td></tr>
 
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmix">mix</a></em> (file <i>samp in-chan snd chn with-mix-tags</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmix">mix</a></em> (file <i>samp in-chan snd chn with-mix-tags auto-delet</i>)</code></span></td></tr>
 <tr><td></td><td>
 mix <i>file</i>'s channel <i>in-chan</i> starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 if only the <i>file</i> argument is given, this is equivalent to the File menu's 
@@ -4695,7 +4696,7 @@ To insert a sound: <a href="#sndinsertfile">insert-sound</a>
 
 <!-- insert-samples -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndinsertsamples">insert-samples</a></em> (samp samps data <i>snd chn edpos</i>)</code></span>
+<span class=defbox><code><em class=def><a name="sndinsertsamples">insert-samples</a></em> (samp samps data <i>snd chn edpos auto-delete</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
 insert <i>samps</i> samples of <i>data</i> (normally a vct) starting at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
@@ -4723,7 +4724,7 @@ with one small change: insert-silence forces <i>beg</i> to be within the current
 
 <!-- insert-sound -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndinsertfile">insert-sound</a></em> (file <i>beg in-chan snd chn edpos</i>)</code></span>
+<span class=defbox><code><em class=def><a name="sndinsertfile">insert-sound</a></em> (file <i>beg in-chan snd chn edpos auto-delete</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
 insert channel <i>in-chan</i> of <i>file</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
@@ -6123,7 +6124,7 @@ See also <a href="#selectsoundhook">select-sound-hook</a>.
 
 <!-- set-samples -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndsetsamples">set-samples</a></em> (samp samps data <i>snd chn trunc edname infile-chan edpos</i>)</code></span>
+<span class=defbox><code><em class=def><a name="sndsetsamples">set-samples</a></em> (samp samps data <i>snd chn trunc edname infile-chan edpos auto-delete</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
 set <i>snd</i>'s channel <i>chn</i>'s samples starting from
@@ -7214,7 +7215,6 @@ The 'reset' button.
 The '<a href="snd.html#savcontrols">restore</a>' button (see new-effects.scm).
 </td></tr>
 <tr><td colspan=2></td></tr>
-
 
 <!-- reverb-control-decay -->
 <tr><td colspan=2>

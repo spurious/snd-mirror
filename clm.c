@@ -3803,6 +3803,7 @@ static int equalp_frame(mus_any *p1, mus_any *p2)
   return(TRUE);
 }
 
+static Float run_frame(mus_any *ptr, Float arg1, Float arg2) {return(mus_frame_ref(ptr, (int)arg1));}
 static Float *frame_data(mus_any *ptr) {return(((mus_frame *)ptr)->vals);}
 static Float *set_frame_data(mus_any *ptr, Float *new_data) {((mus_frame *)ptr)->vals = new_data; return(new_data);}
 static int frame_length(mus_any *ptr) {return(((mus_frame *)ptr)->chans);}
@@ -3822,7 +3823,7 @@ static mus_any_class FRAME_CLASS = {
   0, 0, 0, 0,
   0, 0,
   0, 0,
-  0,
+  &run_frame,
   MUS_NOT_SPECIAL, 
   NULL,
   &frame_length,
@@ -3975,6 +3976,7 @@ static int equalp_mixer(mus_any *p1, mus_any *p2)
   return(TRUE);
 }
 
+static Float run_mixer(mus_any *ptr, Float arg1, Float arg2) {return(mus_mixer_ref(ptr, (int)arg1, (int)arg2));}
 static int mixer_length(mus_any *ptr) {return(((mus_mixer *)ptr)->chans);}
 static Float *mixer_data(mus_any *ptr) {return((Float *)(((mus_mixer *)ptr)->vals));}
 
@@ -3991,7 +3993,7 @@ static mus_any_class MIXER_CLASS = {
   0, 0, 0, 0,
   0, 0,
   0, 0,
-  0,
+  &run_mixer,
   MUS_NOT_SPECIAL, 
   NULL,
   &mixer_length,
@@ -4654,6 +4656,7 @@ static Float file2sample_set_increment(mus_any *rd, Float val) {((rdin *)rd)->di
 static char *file2sample_file_name(mus_any *ptr) {return(((rdin *)ptr)->file_name);}
 static Float file_sample(mus_any *ptr, off_t samp, int chan);
 static int file2sample_end(mus_any *ptr);
+static Float run_file2sample(mus_any *ptr, Float arg1, Float arg2) {return(file_sample(ptr, (int)arg1, (int)arg2));}
 
 static mus_any_class FILE2SAMPLE_CLASS = {
   MUS_FILE2SAMPLE,
@@ -4668,7 +4671,7 @@ static mus_any_class FILE2SAMPLE_CLASS = {
   0, 0,
   &file2sample_increment, 
   &file2sample_set_increment,
-  0,
+  &run_file2sample,
   MUS_INPUT,
   NULL,
   &file2sample_channels,
@@ -4903,6 +4906,8 @@ static char *describe_file2frame(mus_any *ptr)
   return(describe_buffer);
 }
 
+static Float run_file2frame(mus_any *ptr, Float arg1, Float arg2) {mus_error(MUS_NO_RUN, "no run method for file->frame"); return(0.0);}
+
 static mus_any_class FILE2FRAME_CLASS = {
   MUS_FILE2FRAME,
   "file2frame",
@@ -4915,7 +4920,7 @@ static mus_any_class FILE2FRAME_CLASS = {
   0, 0, 0, 0,
   0, 0,
   0, 0,
-  0,
+  &run_file2frame,
   MUS_INPUT,
   NULL,
   &file2sample_channels,
@@ -5013,6 +5018,7 @@ static int set_bufferlen(mus_any *ptr, int len) {clm_file_buffer_size = len; ret
 static char *sample2file_file_name(mus_any *ptr) {return(((rdout *)ptr)->file_name);}
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val);
 static int sample2file_end(mus_any *ptr);
+static Float run_sample2file(mus_any *ptr, Float arg1, Float arg2) {mus_error(MUS_NO_RUN, "no run method for sample->file"); return(0.0);}
 
 static mus_any_class SAMPLE2FILE_CLASS = {
   MUS_SAMPLE2FILE,
@@ -5026,7 +5032,7 @@ static mus_any_class SAMPLE2FILE_CLASS = {
   0, 0, 0, 0,
   0, 0,
   0, 0,
-  0,
+  &run_sample2file,
   MUS_OUTPUT,
   NULL,
   &sample2file_channels,
@@ -5255,6 +5261,8 @@ static char *describe_frame2file(mus_any *ptr)
   return(describe_buffer);
 }
 
+static Float run_frame2file(mus_any *ptr, Float arg1, Float arg2) {mus_error(MUS_NO_RUN, "no run method for frame->file"); return(0.0);}
+
 static mus_any_class FRAME2FILE_CLASS = {
   MUS_FRAME2FILE,
   "frame2file",
@@ -5267,7 +5275,7 @@ static mus_any_class FRAME2FILE_CLASS = {
   0, 0, 0, 0,
   0, 0,
   0, 0,
-  0,
+  &run_frame2file,
   MUS_OUTPUT,
   NULL,
   &sample2file_channels,
@@ -5490,6 +5498,8 @@ Float mus_locsig_reverb_set (mus_any *ptr, int chan, Float val)
   return(val);
 }
 
+static Float run_locsig(mus_any *ptr, Float arg1, Float arg2) {mus_locsig(ptr, (off_t)arg1, arg2); return(arg2);}
+
 static mus_any_class LOCSIG_CLASS = {
   MUS_LOCSIG,
   "locsig",
@@ -5503,7 +5513,7 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0, 0, 0,
   0, 0,
   0, 0,
-  0,
+  &run_locsig,
   MUS_OUTPUT,
   NULL,
   &locsig_length,

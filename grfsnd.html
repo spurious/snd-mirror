@@ -47,6 +47,7 @@
     <li><a href="#clmfuncs">CLM functions</a>
     <li><a href="#sndinstruments">Instruments</a>
     </ul>
+  <li><a href="#sndwithcm">Snd and Common Music</a>
   <li><a href="#sndwithmotif">Snd and Motif</a>
   <li><a href="#sndwithgtk">Snd and Gtk</a>
   <li><a href="#sndwithnogui">Snd with no GUI and as script engine</a>
@@ -1221,6 +1222,48 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 <tr><td>zc, zn, za</td><td>clm-ins.scm</td><td>interpolating delay effects</td></tr>
 </table>
 <br><br>
+
+<br><br>
+<span class=bbox><h3><A NAME="sndwithcm">Snd and Common Music</a></h3></span>
+
+<!-- TODO: with-sound as edit -->
+<!-- TODO: get CM definstrument and output methods working -->
+
+<p>It is possible to load Common Music into Snd, but the connection to
+Snd's definstrument macro is not yet as tight as it is in the Common Lisp
+CLM:
+</p>
+<pre>
+&gt; <em class=typing>(load "/home/bil/test/cm-2.4.0/src/cm.scm")</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt; <em class=typing>(load "ws.scm")</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt; <em class=typing>(definstrument (simp beg dur freq amp)
+   (let* ((o (make-oscil freq))
+          (st (inexact-&gt;exact (* beg (mus-srate))))
+          (nd (+ st (inexact-&gt;exact (* dur (mus-srate))))))
+     (run
+       (lambda ()
+         (do ((i st (1+ i)))
+             ((= i nd))
+           (outa i (* amp (oscil o)) *output*))))))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt; <em class=typing>(formals-&gt;defobject '(simp beg dur freq amp))</em>
+<em class=listener>(defobject simp () ((beg #:accessor object-time) dur freq amp) (#:parameters beg dur freq amp))</em>
+&gt; <em class=typing>(defobject simp () ((beg #:accessor object-time) dur freq amp) (#:parameters beg dur freq amp))</em>
+<em class=listener>#&lt;values ()&gt;</em>
+&gt; <em class=typing>(define (random-fn n) (process repeat n output (new simp :beg (now) :dur .1 :freq (between 220 880) :amp .1) wait .25))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt; <em class=typing>(events (random-fn 10) "test.clm" 0 :output "test.snd")</em>
+<em class=listener>"test.clm"</em>
+&gt; <em class=typing>(define hi (init-with-sound :output "test.snd"))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt; <em class=typing>(load "test.clm")</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt; <em class=typing>(finish-with-sound hi)</em>
+<em class=listener>"test.snd"</em>
+</pre>
+
 
 <br><br>
 <span class=bbox><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></span>

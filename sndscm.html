@@ -54,6 +54,7 @@
   <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
   <li><a href="#hooksdoc">hooks.scm: functions related to hooks</a>
   <li><a href="#indexdoc">index.scm, index.rb: snd-help extension</a>
+  <li><a href="#jcrevdoc">jcrev.scm: John Chowning's ancient reverb</a>
   <li><a href="#maracadoc">maraca.scm: Perry Cook's maraca physical model</a>
   <li><a href="#marksdoc">marks.scm: functions related to marks</a>
   <li><a href="#maxfdoc">maxf.scm, maxf.rb: Max Mathews resonator</a>
@@ -1716,6 +1717,63 @@ a list of all Snd-specific hooks; this is used by <b>reset-all-hooks</b> which
 returns all hooks to the empty state. 
 <b>hook-member</b> returns #t if <i>func</i> is already on the hook list.
 </p>
+
+<A NAME="jcrevdoc"></a><span class=box><h2>jcrev.scm</h2></span>
+<p>
+jc-reverb is a reverberator developed by John Chowning a long time ago
+(I can't actually remember when -- before 1976 probably). It "colors" the
+sound much more than <a href="clminsdoc">nrev</a>, and has noticeable echos,
+but I liked the effect a lot.  new-effects.scm has a version of jc-reverb
+that run as a normal snd editing function (via map-channel), whereas the
+jcrev.scm version assumes it is being called within with-sound:
+</p>
+<pre>
+(with-sound (:reverb jc-reverb) 
+  (fm-violin 0 .1 440 .1 :reverb-amount .1))
+</pre>
+<p>It is possible to use the CLM/with-sound reverbs (or any such instrument) as
+an ordinary editing function:
+</p>
+<pre>
+(load "t.scm")
+(if (not (defined? '*output*)) (load-from-path "ws.scm"))
+(define* (clm-reverb-sound reverb-amount reverb #:optional (reverb-data '()) snd)
+  (let ((output (snd-tempnam))
+	(revout (snd-tempnam))
+	(len (+ (frames snd) (srate snd))))
+    (save-sound-as output snd)
+    (scale-by reverb-amount snd)
+    (save-sound-as revout snd)
+    (undo 1 snd)
+    (set! *output* (continue-sample-&gt;file output))
+    (set! (mus-srate) (srate snd))
+    (set! *reverb* (make-file-&gt;sample revout))
+    (apply reverb reverb-data)
+    (mus-close *reverb*)
+    (mus-close *output*)
+    (delete-file revout)
+    (do ((i 0 (1+ i)))
+	((= i (chans snd)))
+      (set-samples 0 len output snd i #f "reverb" i #f (= (chans snd) 1)))))
+
+;;; (clm-reverb-sound .1 (lambda (dur) (jc-reverb #f 1.0 #f dur)))
+</pre>
+<br>
+
+<!-- INDEX reverbexamples:Reverb -->
+<A NAME="reverbexamples"></a>
+<blockquote><small>
+Reverbs in Snd<br>
+freeverb: <a href="#freeverbdoc">freeverb.scm, freeverb.rb</a><br>
+jc-reverb: <a href="#jcrevdoc">jcrev.scm</a><br>
+jl-reverb: <a href="#clminsdoc">clm-ins.scm</a><br>
+nrev: <a href="#clminsdoc">clm-ins.scm</a><br>
+control panel reverb: <a href="snd.html#reverb">Reverb</a><br>
+convolution reverb: <a href="extsnd.html#sndconvolvewith">conrev</a><br>
+plate-reverb: plugins-menu.scm (a LADSPA effect)<br>
+*reverb*: <a href="#wsdoc">with-sound</a><br>
+</small></blockquote>
+<br>
 
 <A NAME="indexdoc"></a><span class=box><h2>index.scm, index.rb</h2></span>
 <pre>
