@@ -179,6 +179,8 @@ static void execute_named_macro(chan_info *cp, char *name, int count)
       snd_report_result(cp->state, result, name);
       if (cp->edit_ctr > one_edit)
 	{
+	  if (cp->state->deferred_regions > 0) 
+	    sequester_deferred_regions(cp, one_edit - 1);
 	  while (cp->edit_ctr > one_edit) backup_edit_list(cp);
 	  if (cp->mixes) backup_mix_list(cp, one_edit);
 	}

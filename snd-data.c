@@ -314,6 +314,10 @@ void free_snd_info(snd_info *sp)
 {
   int i;
   /* leave most for reuse as in free_chan_info */
+  if ((sp->state) && (sp->state->deferred_regions > 0))
+    for (i = 0; i < sp->nchans; i++)
+      if (sp->chans[i]) 
+	sequester_deferred_regions(sp->chans[i], -1);
   sp->active = 0;
   if (sp->sgx)
     {

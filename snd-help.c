@@ -274,6 +274,7 @@ void news_help(snd_state *ss)
 #endif
 	    "Recent changes include:\n\
 \n\
+18-Sep:  backwards incompatible change to save-state of small regions\n\
 17-Sep:  section-scale-by renamed scale-sound-by (more consistent), also scale-sound-to\n\
 14-Sep:  peak-env.scm.\n\
 7-Sep:   define-selection-via-marks in marks.scm.\n\

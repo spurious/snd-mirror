@@ -2202,7 +2202,7 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
 
 static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN dur)
 {
-  #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1) swaps the indicated channels"
+  #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1 beg dur) swaps the indicated channels"
   chan_info *cp0 = NULL, *cp1 = NULL;
   snd_fd *c0, *c1;
   int dur0 = 0, dur1 = 0, beg0 = 0, num, old_squelch0, old_squelch1;

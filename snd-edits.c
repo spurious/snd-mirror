@@ -1086,6 +1086,8 @@ static void prune_edits(chan_info *cp, int edpt)
   int i;
   if (cp->edits[edpt]) 
     {
+      if ((cp->state) && (cp->state->deferred_regions > 0))
+	sequester_deferred_regions(cp, edpt - 1);
       for (i = edpt; i < cp->edit_size; i++) 
 	{
 	  cp->edits[i] = free_ed_list(cp->edits[i]);
@@ -2295,6 +2297,8 @@ static int save_edits_and_update_display(snd_info *sp)
     {
       /* why not free_chan_info here? */
       cp = sp->chans[i];
+      if (ss->deferred_regions > 0)
+	sequester_deferred_regions(cp, -1);
       if (cp->mixes) reset_mix_list(cp);
       if (cp->edits) free_edit_list(cp);
       free_snd_fd(sf[i]);  /* must precede free_sound_list since it accesses the snd_data structs that free_sound_list frees */
@@ -2878,8 +2882,7 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
   if (chn_n >= region_chans(reg_n)) 
     return(snd_no_such_channel_error(S_make_region_sample_reader, XEN_LIST_1(reg), chn));
 
-  fd = init_region_read(get_global_state(), 
-			XEN_TO_C_INT_OR_ELSE(samp_n, 0), 
+  fd = init_region_read(XEN_TO_C_INT_OR_ELSE(samp_n, 0), 
 			reg_n,
 			chn_n,
 			XEN_TO_C_INT_OR_ELSE(dir1, 1));
@@ -3105,6 +3108,8 @@ static int finish_as_one_edit(chan_info *cp, void *ptr)
   need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
   if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */
     {
+      if ((cp->state) && (cp->state->deferred_regions > 0))
+	sequester_deferred_regions(cp, one_edit - 1);
       while (cp->edit_ctr > one_edit) backup_edit_list(cp);
       if ((need_backup) && (cp->mixes)) backup_mix_list(cp, one_edit);
       if (as_one_edit_origin)
@@ -3239,7 +3244,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
     {
       cp = get_cp(snd, chn, S_scale_sound_by);
       samps = XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp));
-      if ((beg == 0) &&
+      if ((samp == 0) &&
 	  (samps >= current_ed_samples(cp)))
 	maxamp = get_maxamp(sp, cp, AT_CURRENT_EDIT_POSITION);
       else maxamp = local_maxamp(cp, samp, samps);
@@ -3255,7 +3260,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
 	{
 	  cp = sp->chans[i];
 	  samps = XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp));
-	  if ((beg == 0) &&
+	  if ((samp == 0) &&
 	      (samps >= current_ed_samples(cp)))
 	    maxamp = get_maxamp(sp, cp, AT_CURRENT_EDIT_POSITION);
 	  else maxamp = local_maxamp(cp, samp, samps);

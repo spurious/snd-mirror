@@ -1,5 +1,6 @@
 snd change log
 
+  18-Sep:    backwards incompatible change to save-state of small regions.
   17-Sep:    section-scale-by renamed scale-sound-by (more consistent), also scale-sound-to.
   14-Sep:    peak-env.scm.
   7-Sep:     define-selection-via-marks in marks.scm. 

@@ -1344,7 +1344,7 @@ static dac_info *add_region_channel_to_play_list(int region, int chan, int beg, 
   slot = find_slot_to_play();
   if (slot == -1) return(NULL);
   play_list_members++;
-  fd = init_region_read(get_global_state(), beg, region, chan, READ_FORWARD);
+  fd = init_region_read(beg, region, chan, READ_FORWARD);
   return(init_dp(slot, fd->cp, NULL, fd, beg, end));
 }
 

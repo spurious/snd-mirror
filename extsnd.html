@@ -3067,7 +3067,8 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- make-region-sample-reader -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="makeregionsamplereader">make-region-sample-reader</a></em> (<i>start reg chn dir</i>)</code></span></td>
 <!-- --></tr><tr><td></td>
-<!-- --><td>create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>
+<!-- --><td>create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>.
+<!-- -->It is not safe to assume this reader will return zeros beyond the region boundaries.
 <!-- --></td></tr>
 <!-- -->
 <!-- make-sample-reader -->

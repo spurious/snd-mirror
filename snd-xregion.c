@@ -487,9 +487,10 @@ static void make_region_dialog(snd_state *ss)
   region_grf = sndCreateFormWidget("grf", wwl->panes, args, n);
 
   XtManageChild(region_dialog);
+  if (widget_width(region_dialog) < 400) set_widget_width(region_dialog, 400);
 
   if (!reg_sp) 
-    { /* just a place holder, I think -- see make_region_readable in snd-clip.c */
+    { 
       id = stack_position_to_id(0);
       reg_sp = (snd_info *)CALLOC(1, sizeof(snd_info));
       reg_sp->nchans = 1;

@@ -454,12 +454,12 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
   regs = snd_regions();
   if (regs > 0)
     {
-      region_stats(vals);
+      vals[0] = region_stats();
       str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, PRINT_BUFFER_SIZE, "\nregions (%d): array: %s + file: %s\n",
-	      regs,
-	      r0 = kmg(vals[0]),
-	      r1 = kmg(vals[1]));
+      mus_snprintf(str, PRINT_BUFFER_SIZE, "\nregions (%d, deferred: %d): %s\n",
+		   regs,
+		   ss->deferred_regions,
+		   r1 = kmg(vals[0]));
       pos = GUI_TEXT_END(stats_form);
       GUI_STATS_TEXT_INSERT(stats_form, pos, str);
       if (r0) free(r0);

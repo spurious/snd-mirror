@@ -33,6 +33,7 @@
   int is_link(char *filename) {return(0);}
   int is_directory(char *filename) {return(0);}
   static int is_empty_file(char *filename) {return(0);}
+  long file_bytes(char *filename) {return(0);}
 #else
 
 int disk_kspace (char *filename)
@@ -73,12 +74,17 @@ int is_directory(char *filename)
   return(0);
 }
 
-static int is_empty_file(char *filename)
+long file_bytes(char *filename) /* using this name to make searches simpler */
 {
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
-    return(statbuf.st_size == 0);
-  return(1);
+    return(statbuf.st_size);
+  return(-1);
+}
+
+static int is_empty_file(char *filename)
+{
+  return(file_bytes(filename) == (long)0);
 }
 #endif
 

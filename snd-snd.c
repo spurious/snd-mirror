@@ -583,6 +583,61 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
     }
 }
 
+env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos)
+{
+  env_info *old_ep, *new_ep = NULL;
+  MUS_SAMPLE_TYPE fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
+  int i, j, cursamp, start, end;
+  old_ep = cp->amp_envs[edpos];
+  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
+  new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+  new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+  new_ep->amp_env_size = old_ep->amp_env_size;
+  new_ep->samps_per_bin = old_ep->samps_per_bin;
+  end = beg + num - 1;
+  start = beg - new_ep->samps_per_bin;
+  for (i = 0, j = 0, cursamp = 0; (i < new_ep->amp_env_size) && (cursamp < end); i++, cursamp += new_ep->samps_per_bin) 
+    {
+      if (cursamp > start)
+	{
+	  /* if segment is entirely in scaled section, just scale it */
+	  if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
+	    {
+	      new_ep->data_max[j] = old_ep->data_max[i];
+	      new_ep->data_min[j] = old_ep->data_min[i];
+	    }
+	  else
+	    {
+	      snd_fd *sf;
+	      int n;
+	      MUS_SAMPLE_TYPE val, ymin, ymax;
+	      /* here we have to read the current bin using the current fragments */
+	      sf = init_sample_read_any(cursamp, cp, READ_FORWARD, edpos);
+	      if (sf == NULL) break;
+	      ymin = MUS_SAMPLE_0;
+	      ymax = MUS_SAMPLE_0;
+	      for (n = 0; n < new_ep->samps_per_bin; n++)
+		{
+		  val = next_sample(sf); /* not scaled again! (sample reader sees scaled version) */
+		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+		}
+	      new_ep->data_max[j] = ymax;
+	      new_ep->data_min[j] = ymin;
+	      free_snd_fd(sf);
+	    }
+	  if (fmin > new_ep->data_min[j]) fmin = new_ep->data_min[j];
+	  if (fmax < new_ep->data_max[j]) fmax = new_ep->data_max[j];
+	  j++;
+	}
+      new_ep->fmin = fmin;
+      new_ep->fmax = fmax;
+      new_ep->completed = 1;
+      new_ep->bin = old_ep->bin;
+      new_ep->top_bin = old_ep->top_bin;
+    }
+  return(new_ep);
+}
+
 env_info *amp_env_copy(chan_info *cp, int reversed, int edpos)
 {
   env_info *old_ep, *new_ep = NULL;

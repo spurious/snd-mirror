@@ -352,7 +352,7 @@ typedef struct snd__state {
   int HTML_Width, HTML_Height;
   char *HTML_Dir, *HTML_Font_Size_List, *HTML_Fixed_Font_Size_List;
 #endif
-  int error_lock;
+  int error_lock, deferred_regions;
 } snd_state;
 
 typedef struct {
@@ -861,16 +861,16 @@ void protect_region(int n, int protect);
 int save_region(snd_state *ss, int n, char *ofile, int data_format);
 void paste_region(int n, chan_info *cp, const char *origin);
 void add_region(int n, chan_info *cp, const char *origin);
-void region_stats(int *vals);
+int region_stats(void);
 int define_region(sync_info *si, int *ends);
-snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction);
+snd_fd *init_region_read (int beg, int n, int chan, int direction);
 void cleanup_region_temp_files(void);
 int snd_regions(void);
 void save_regions(snd_state *ss, FILE *fd);
 void region_edit(snd_state *ss, int reg);
 void clear_region_backpointer(snd_info *sp);
 void save_region_backpointer(snd_info *sp);
-
+void sequester_deferred_regions(chan_info *cp, int edit_top);
 void g_init_regions(void);
 
 
@@ -1082,6 +1082,7 @@ void set_speed_style(snd_state *ss, int val);
 void amp_env_scale_by(chan_info *cp, Float scl);
 void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num);
 env_info *amp_env_copy(chan_info *cp, int reversed, int edpos);
+env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos);
 void remember_mini_string(snd_info *sp, char *str);
 void restore_mini_string(snd_info *s, int back);
 void clear_mini_strings(snd_info *sp);
@@ -1100,6 +1101,7 @@ int disk_kspace (char *filename);
 time_t file_write_date(char *filename);
 int is_link(char *filename);
 int is_directory(char *filename);
+long file_bytes(char *filename);
 file_info *make_file_info(char *fullname, snd_state *ss);
 file_info *free_file_info(file_info *hdr);
 file_info *copy_header(char *fullname, file_info *ohdr);

@@ -622,6 +622,7 @@ XEN snd_report_listener_result(snd_state *ss, XEN form)
   listener_append(ss, "\n");
 #if HAVE_RUBY
   str = gl_print(form, "repl");
+  result = form;
 #else
   result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
   str = gl_print(result, "eval");
@@ -775,9 +776,9 @@ static XEN g_snd_print(XEN msg)
 	}
       else str = gl_print(msg, S_snd_print);
     }
-  check_for_event(ss);
   listener_append(ss, str);
   if (str) free(str);
+  check_for_event(ss);
   return(msg);
 }
 
@@ -3266,7 +3267,7 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE("show-stack", show_stack, 0 ,0, 0, "show stack trace");
 
 #if WITH_MCHECK
-  XEN_NEW_PROCEDURE("mcheck-all", g_mcheck_check_all_w, 0, 0, 0);
+  XEN_NEW_PROCEDURE("mcheck-all", g_mcheck_check_all, 0, 0, 0);
 #endif
 
 #if TIMING
