@@ -281,6 +281,81 @@ static void clear_back_to_prompt(GtkWidget *w)
   sg_text_delete(w, beg, end);
 }
 
+static void sg_text_replace(GtkWidget *w, int beg, int end, char *text)
+{
+  GtkTextIter pos, endpos, pos1;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  gtk_text_buffer_get_iter_at_offset(buf, &pos, beg);
+  gtk_text_buffer_get_iter_at_offset(buf, &endpos, end);
+  gtk_text_buffer_delete(buf, &pos, &endpos);
+  gtk_text_buffer_get_iter_at_offset(buf, &pos1, beg);
+  gtk_text_buffer_insert(buf, &pos1, text, strlen(text));
+}
+
+static void text_transpose(GtkWidget *w)
+{
+  int curpos;
+  char *buf = NULL;
+  char tmp;
+  curpos = sg_cursor_position(w);
+  if (curpos > 1)
+    {
+      buf = sg_get_text(w, curpos - 1, curpos + 1);
+      tmp = buf[0];
+      buf[0] = buf[1];
+      buf[1] = tmp;
+      sg_text_replace(w, curpos - 1, curpos + 1, buf);
+      sg_set_cursor(w, curpos + 2);
+    }
+}
+
+static void word_upper(GtkWidget *w, int cap, int up)
+{
+  int i, j, length, wstart, wend;
+  int curpos, endpos;
+  char *buf = NULL;
+  curpos = sg_cursor_position(w);
+  endpos = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)));
+  if (curpos < endpos)
+    {
+      length = endpos - curpos;
+      buf = sg_get_text(w, curpos, endpos);
+      wstart = 0;
+      wend = length;
+      for (i = 0; i < length; i++)
+	if (!isspace((int)(buf[i])))
+	  {
+	    wstart = i;
+	    break;
+	  }
+      for (i = wstart + 1; i < length; i++)
+	if (isspace((int)(buf[i])))
+	  {
+	    wend = i;
+	    break;
+	  }
+      if (cap)
+	{
+	  buf[0] = toupper(buf[wstart]);
+	  buf[1] = '\0';
+	  sg_text_replace(w, curpos, curpos + 1, buf);
+	}
+      else
+	{
+	  for (i = wstart, j = 0; i < wend; i++, j++)
+	    if (up) 
+	      buf[j] = toupper(buf[i]);
+	    else buf[j] = tolower(buf[i]);
+	  buf[j] = '\0';
+	  sg_text_replace(w, curpos + wstart, curpos + wend, buf);
+	}
+      sg_set_cursor(w, curpos + wend + 1);
+      if (buf) g_free(buf);
+    }
+}
+
+
 static void listener_help(snd_state *ss)
 {
   char *source = NULL;
@@ -383,8 +458,32 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 					    }
 					  else
 					    {
-					      return(FALSE);
-					    }}}}}}}}}}}
+					      if (((event->keyval == snd_K_c) || (event->keyval == snd_K_C)) && (event->state & snd_MetaMask))
+						{
+						  /* M-c (as opposed to M-C) is trapped somewhere else */
+						  word_upper(listener_text, TRUE, FALSE);
+						} 
+					      else
+						{
+						  if (((event->keyval == snd_K_l) || (event->keyval == snd_K_L)) && (event->state & snd_MetaMask))
+						    {
+						      word_upper(listener_text, FALSE, FALSE);
+						    }
+						  else
+						    {
+						      if (((event->keyval == snd_K_u) || (event->keyval == snd_K_U)) && (event->state & snd_MetaMask))
+							{
+							  word_upper(listener_text, FALSE, TRUE);
+							}
+						      else
+							{
+							  if (((event->keyval == snd_K_t) || (event->keyval == snd_K_T)) && (event->state & snd_ControlMask))
+							    {
+							      text_transpose(listener_text);
+							    }
+							  else
+							    return(FALSE);
+							}}}}}}}}}}}}}}
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
   return(FALSE);
 }
@@ -600,14 +699,6 @@ static void make_command_widget(snd_state *ss, int height)
 	gtk_binding_entry_remove(set, GDK_y, GDK_CONTROL_MASK);
 	gtk_binding_entry_add_signal(set, GDK_y, GDK_CONTROL_MASK,
 				     "paste_clipboard", 0);
-
-	/*
-	  TODO: more emacs keybinds from gtk+-2.1.1/gtk/gtktextview.c
-	        C-k should place text in clipboard but gtk_clipboard_set_text has no effect
-		Mod1 <Key>c:	    word-upper(c)\n\
-		Ctrl <Key>t:	    text-transpose()\n\
-		Mod1 <Key>u:	    word-upper(u)\n\
-	*/
       }
 
       g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),

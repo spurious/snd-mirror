@@ -1648,6 +1648,9 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
  *       from next: move back filling
  *   ENV:
  *     TODO: embed exp env calc (new op)
+ *   CHAIN:
+ *     TODO: ramp + ptree, ramp + ramp, ptree + ramp could be chained
+ *           as could ptree+ptree with some cleverness
  */
 void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt)
 {

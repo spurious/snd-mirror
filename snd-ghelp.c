@@ -1,7 +1,3 @@
-/* 
- * TODO  if from glistener, and text selected, complete in listener
- */
-
 #include "snd.h"
 
 static GtkWidget *help_dialog = NULL;

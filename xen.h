@@ -4,7 +4,7 @@
 /* macros for extended language support 
  *
  * Guile:     covers 1.3.4 to present (1.7.0) given the configuration macros in Snd's config.h.in.
- * Ruby:      still a few gaps, tested in 1.6.6, 1.6.7, 1.7.2
+ * Ruby:      still a few gaps, tested in 1.6.6, 1.6.7, 1.6.8, 1.7.2
  * None:      covers all known versions of None
  *
  * (I also have incomplete versions for SCM, MzScheme, and Python if anyone is interested enough to tackle one)
@@ -539,7 +539,11 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define C_TO_SMALL_XEN_INT(a)             INT2FIX(a)
 #define XEN_TO_SMALL_C_INT(a)             FIX2INT(a)
 #define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
-#define C_TO_XEN_ULONG(a)                 UINT2NUM((unsigned long)a)
+#ifdef ULONG2NUM
+  #define C_TO_XEN_ULONG(a)               ULONG2NUM((unsigned long)a)
+#else
+  #define C_TO_XEN_ULONG(a)               UINT2NUM((unsigned long)a)
+#endif
 #if HAVE_RB_NUM2LL
   #define C_TO_XEN_LONG_LONG(a)           C_TO_XEN_ULONG(a)
   #define XEN_TO_C_LONG_LONG(a)           rb_num2ll(a)
@@ -689,7 +693,8 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(Arg)
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
 #define XEN_DOCUMENTATION_SYMBOL        rb_intern("documentation")
-#define XEN_PROTECT_FROM_GC(Var)        rb_define_variable("$protected", &Var)
+#define XEN_PROTECT_FROM_GC(Var)        rb_define_variable("$_xen_" #Var, &Var)
+/* can't use "$protected" here -- subsequent calls cause GC of previous! -- 18-Nov-02 */
 
 #define XEN_ERROR_TYPE(Name)            rb_intern(xen_scheme_constant_to_ruby(Name))
 #define XEN_ERROR(Type, Info)           xen_rb_raise(Type, Info)

@@ -748,6 +748,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
     }
 }
 
+/* TODO: if error occurs while loading Ruby init (or -l) error message is not posted */
 void snd_load_init_file(snd_state *ss, int nog, int noi)
 {
   /* look for ".snd" on the home directory */

@@ -27,7 +27,6 @@
 <span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
 </center>
 
-<!-- TODO: document contrib entries -->
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
 <center><A NAME="introduction"></a>
@@ -36,6 +35,7 @@
   <li><a href="#belldoc">bell.scm: the fm-bell from CLM</a>
   <li><a href="#bessdoc">bess.scm: FM demo</a>
   <li><a href="#birddoc">bird.scm and bird.rb: North-American birds</a>
+  <li><a href="#contribdoc">contrib directory contents</a>
   <li><a href="#drawdoc">draw.scm: graphics additions</a>
   <li><a href="#dspdoc">dsp.scm: various DSP-related procedures</a>
   <li><a href="#editmenudoc">edit-menu.scm: Edit menu additions</a>
@@ -140,6 +140,8 @@ at random), and car3+mod3 putting a sort of formant at the minor third
 opens the DAC, puts up a bunch of scale widgets, and starts two CLM oscils doing
 frequency modulation in semi-real-time (how "real-time" it is depends on how your
 audio setup).  This is a translation to the Sndlib/Libxm system of bess.cl in CLM.
+Michael Scholz has contributed a Ruby translation of this with many improvements:
+bess.rb.
 </p>
 
 
@@ -254,6 +256,36 @@ def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope
 end
 </pre>
 <br>
+
+<A NAME="contribdoc"></a><span class=box><h2>contrib directory entries</h2></span>
+
+<p>The contrib directory contains a variety of useful additions.  These
+include:
+</p>
+<pre>
+  <em class=def>bess.rb</em>                Ruby version of bess.scm (Michael Scholz)
+  <em class=def>dlp/</em>                   User-interface enhancements (Dave Phillips)
+    <em class=def>dp-new-effects.scm</em>     a version of new-effects.scm 
+    <em class=def>misc.scm</em>               loads files for enhanced interface, many new menu options
+    <em class=def>new-icons.scm</em>          icon box entries
+    <em class=def>special-menu.scm</em>       the Special menu (OGG/MP3 etc)
+    <em class=def>mix-menu.scm</em>           the Mix menu
+    <em class=def>panic.scm</em>              the Panic menu (to stop sound output)
+    <em class=def>track-colors.scm</em>       track color choices (for mixing)
+    <em class=def>fft-menu.scm</em>           FFT-based editing
+    <em class=def>new-backgrounds.scm</em>    background choices (granite Snd!)
+    <em class=def>plugins-menu.scm</em>       ladspa menu
+    <em class=def>marks-menu.scm</em>         the Marks menu
+    <em class=def>new-buttons.scm</em>        sets the icon box actions
+    <em class=def>README</em>                 loading info
+  <em class=def>DotEmacs</em>               Emacs init file (Fernando Lopez-Lezcano)
+  <em class=def>edit123.scm</em>            Handy editing sequences (Tom Roth)
+  <em class=def>examp.rb</em>               Ruby version of examp.scm (Michael Scholz)
+  <em class=def>rmsgain.scm</em>            amplitude via rms (Fabio Furlanete)
+  <em class=def>tutorial/</em>              Snd tutorial (Dave Phillips)
+</pre>
+<p>See the individual files and the tutorial for more details.</p>
+
 
 <A NAME="drawdoc"></a><span class=box><h2>draw.scm</h2></span>
 

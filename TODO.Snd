@@ -20,10 +20,15 @@ Gettext support, if there's interest.
 
 A "master volume" control in the recorder.
 
-See the end of snd-motif.scm for user-interface extension projects.
+user-interface extension projects from snd-motif.scm:
+    bess-translations (first case is bess.scm)
+    radar scope style region cue list
+    spatial envelope dialog
+    spectral edit dialog
 
 More Ruby examples, translations, etc. (snd.rb is snd-test.scm 
-  translation in-progress).
+  translation in-progress; Michael Scholz has provided lots of
+  stuff in bess.rb and examp.rb).
 
 The configure script should be able to use libsndlib if it exists.
 

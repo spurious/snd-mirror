@@ -4894,7 +4894,7 @@ static void alsa_describe_audio_state_1(void)
 /* -------------------------------- SUN -------------------------------- */
 /*
  * Thanks to Seppo Ingalsuo for several bugfixes.
- * record case improved after perusal of Snack 1.6/src/jkAudio_sun.c (but it's still not right)
+ * record case improved after perusal of Snack 1.6/src/jkAudio_sun.c
  */
 
 /* apparently input other than 8000 is 16-bit, 8000 is (?) mulaw */

@@ -67,6 +67,11 @@
 	      (centered-points ms))))))
 
 (define map-chan-over-target-with-sync
+  ;; target: 'marks -> beg=closest marked sample, dur=samples to next mark
+  ;;         'sound -> beg=0, dur=all samples in sound
+  ;;         'selection -> beg=selection-position, dur=selection-frames
+  ;;         'cursor -> beg=cursor, dur=samples to end of sound
+  ;; decay is how long to run the effect past the end of the sound
   (lambda (func target origin decay)
     (let* ((snc (sync))
 	   (ms (and (eq? target 'marks)
@@ -75,7 +80,9 @@
 		    0
 		    (if (eq? target 'selection)
 			(selection-position)
-			(car ms))))
+			(if (eq? target 'cursor)
+			    (cursor (selected-sound) (selected-channel))
+			    (car ms)))))
 	   (overlap (if decay
 			(inexact->exact (* (srate) decay))
 			0)))
@@ -85,7 +92,9 @@
 			      (1- (frames snd chn))
 			      (if (eq? target 'selection)
 				  (+ (selection-position) (selection-frames))
-				  (cadr ms)))))
+				  (if (eq? target 'cursor)
+				      (- (frames snd chn) beg)
+				      (cadr ms))))))
 		 (if (= (sync snd) snc)
 		     (map-chan (func dur) 
 			       beg 
