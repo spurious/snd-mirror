@@ -1,5 +1,7 @@
 Snd change log
 
+  19-Mar:    xm-enved.rb and rubber.rb thanks to Michael Scholz.
+             added listener-click-hook with click-for-listener-help in draw.scm.
   17-Mar:    Mac OSX Record implemented.
              piano.rb, rgb.rb, strad.scm, and strad.rb thanks to Michael Scholz.
              moved contrib/* to the main directory.

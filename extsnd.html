@@ -164,17 +164,17 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#pvocdoc">pvoc.scm</a></td>      <td>phase-vocoder examples</td></tr>
 <tr><td><a href="sndscm.html#rgbdoc">rgb.scm, rgb.rb</a></td><td>color definitions</td></tr>
 <tr><td><a href="sndscm.html#rtiodoc">rtio.scm</a></td>      <td>real-time stuff</td></tr>
-<tr><td><a href="sndscm.html#rubberdoc">rubber.scm</a></td>  <td>rubber-sound</td></tr>
+<tr><td><a href="sndscm.html#rubberdoc">rubber.scm, rubber.rb</a></td><td>rubber-sound</td></tr>
 <tr><td><a href="sndscm.html#singerdoc">singer.scm</a></td>  <td>Perry Cook's vocal-tract physical model</td></tr>
 <tr><td><a href="sndscm.html#sndmotifdoc">snd-motif.scm, snd-gtk.scm</a></td><td>Motif/Gtk modules (xm.c, xg.c)</td></tr>
 <tr><td><a href="sndscm.html#sndgldoc">snd-gl.scm</a></td>   <td>OpenGL examples (gl.c)</td></tr>
 <tr><td><a href="sndscm.html#snd4doc">snd4.scm</a></td>      <td>backwards compatibility for version 4</td></tr>
 <tr><td><a href="sndscm.html#snd5doc">snd5.scm</a></td>      <td>backwards compatibility for version 5</td></tr>
 <tr><td><a href="sndscm.html#snd6doc">snd6.scm</a></td>      <td>backwards compatibility for version 6</td></tr>
-<tr><td><a href="sndscm.html#straddoc">strad.scm, strad.rb</a></td><td>string physical model</td></tr>
+<tr><td><a href="sndscm.html#straddoc">strad.scm, strad.rb</a></td><td>string physical model (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm, v.rb</a></td>      <td>fm-violin (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#wsdoc">ws.scm</a></td>          <td>with-sound implementation</td></tr>
-<tr><td><a href="sndscm.html#xmenveddoc">xm-enved.scm</a></td><td>xm-based envelope editor</td></tr>
+<tr><td><a href="sndscm.html#xmenveddoc">xm-enved.scm, xm-enved.rb</a></td><td>xm-based envelope editor</td></tr>
 <tr><td><a href="sndscm.html#zipdoc">zip.scm</a></td>        <td>the zipper (a cross-fader, sort of) (from CLM)</td></tr>
 </table>
 
@@ -1108,6 +1108,16 @@ If it returns a function (of no arguments), that function is called rather than 
 			    (y-&gt;position 0.0 snd chn lisp-graph)
 			    snd chn))))
 </pre></td></tr></table></td></tr>
+<tr><td colspan=3></td></tr>
+
+<!-- listener-click-hook -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="listenerclickhook">listener-click-hook</a></em> (textpos)</code></span><td></td>
+</td></tr>
+<tr><td></td><td colspan=2>
+called when a click occurs in the listener; the argument is the position in the text where the click occurred.
+See click-for-listener-help in draw.scm.
+</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- mark-click-hook -->

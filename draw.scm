@@ -321,3 +321,87 @@ the y-zoom-slider controls the graph amp"
   (add-hook! after-graph-hook display-current-window-location)
   (add-hook! mouse-click-hook click-current-window-location)
   (add-hook! update-hook update-current-window-location))
+
+
+;;; -------- click-for-listener-help
+
+(define click-for-listener-help
+  (let ((help-moved #f)
+	(last-click-time 0))
+    (lambda (pos)
+  
+      (define (char-quit? ch)
+	(or (char-whitespace? ch)
+	    (char=? ch #\()
+	    (char=? ch #\))
+	    (char=? ch #\')))
+
+      ;; find nearest name
+      ;; scan back and forth for non-alphanumeric
+      ;; call snd-help on name and post in help-dialog
+      
+      (let* ((time (get-internal-real-time)) ; look for double-click
+	     (click-time (- time last-click-time)))
+	(set! last-click-time time)
+	(if (< click-time 25) ; .25 secs -- could use XtGetMultiClickTime if xm loaded
+	    (let* ((text (widget-text (list-ref (main-widgets) 4)))
+		   (len (and (string? text) (string-length text)))
+		   (happy #f))
+	      (if (and len (>= pos len)) (set! pos (1- len))) ;click at very bottom of listener is beyond current string end
+	      (if (and len (>= pos 1))                        ;not click in empty listener, etc
+		  (begin
+		    (if (char-quit? (string-ref text pos))
+			(begin                      ;not currently in a name
+			  ;; go looking for plausible name (look left first)
+			  (do ((i (1- pos) (1- i)))
+			      ((or happy (= i 0)))
+			    (if (char-alphabetic? (string-ref text i))
+				(begin
+				  (set! pos i)
+				  (set! happy #t))))
+			  (if (not happy)           ;nothing to the left -- try to the right
+			      (do ((i (1+ pos) (1+ i)))
+				  ((or happy (= i len)))
+				(if (char-alphabetic? (string-ref text i))
+				    (begin
+				      (set! pos i)
+				      (set! happy #t))))))
+			(set! happy #t))
+		    (if happy
+			;; found some portion of a name -- try to get the full thing
+			(let ((start pos)
+			      (end pos))
+			  (set! happy #f)
+			  (do ((i (1- pos) (1- i)))  ;look for start of name
+			      ((or happy (= i 0)))
+			    (if (char-quit? (string-ref text i))
+				(begin
+				  (set! start (+ i 1))
+				  (set! happy #t))))
+			  (set! happy #f)
+			  (do ((i (1+ pos) (1+ i)))  ;look for end of name
+			      ((or happy (and (= i len)
+					      (let () 
+						(set! end i) 
+						(set! happy #t) 
+						#t))))
+			    (if (char-quit? (string-ref text i))
+				(begin
+				  (set! end i)
+				  (set! happy #t))))
+			  (if (and happy
+				   (> end start))
+			      ;; got a name -- look for snd-help, if any
+			      (let* ((name (substring text start end))
+				     (help (snd-help name)))
+				(if (not (string=? name help))
+				    (let ((dialog (help-dialog name (snd-help name))))
+				      (if (not help-moved)
+					  ;; if this is the first call, try to position help dialog out of the way
+					  ;;   this is clunky -- perhaps better would be a tooltip window at the bottom of the listener?
+					  (let ((main-xy (widget-position (cadr (main-widgets))))
+						(main-size (widget-size (cadr (main-widgets)))))
+					    (set! (widget-position (list-ref (dialog-widgets) 14))
+						  (list (+ (car main-xy) (car main-size))
+							(cadr main-xy)))
+					    (set! help-moved #t)))))))))))))))))

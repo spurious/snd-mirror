@@ -248,6 +248,7 @@ static void Delete_region(Widget w, XEvent *ev, char **str, Cardinal *num)
 }
 
 static XmTextPosition down_pos, last_pos;
+static XEN listener_click_hook; 
 
 static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
@@ -266,6 +267,10 @@ static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num)
   XmTextSetCursorPosition(w, pos);
   down_pos = pos;
   last_pos = pos;
+  if (XEN_HOOKED(listener_click_hook))
+    run_hook(listener_click_hook,
+	     XEN_LIST_1(C_TO_XEN_INT((int)pos)),
+	     S_listener_click_hook);
 }
 
 static void B1_move(Widget w, XEvent *event, char **str, Cardinal *num) 
@@ -1335,5 +1340,8 @@ leaves the lisp listener pane"
 
   XEN_DEFINE_PROCEDURE(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, H_listener_selection);
   XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor);
+
+  #define H_listener_click_hook S_listener_click_hook " (pos): called when listener clicked; pos is text pos of click in listener"
+  XEN_DEFINE_HOOK(listener_click_hook,    S_listener_click_hook, 1,    H_listener_click_hook);    /* arg = pos */
 }
 

@@ -253,6 +253,7 @@
 #define S_lisp_graph                    "lisp-graph"
 #define S_lisp_graph_hook               "lisp-graph-hook"
 #define S_lisp_graph_style              "lisp-graph-style"
+#define S_listener_click_hook           "listener-click-hook"
 #define S_listener_color                "listener-color"
 #define S_listener_font                 "listener-font"
 #define S_listener_prompt               "listener-prompt"

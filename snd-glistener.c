@@ -620,6 +620,8 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   return(FALSE);
 }
 
+static XEN listener_click_hook; 
+
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
@@ -636,11 +638,14 @@ static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer
     GtkTextView *view = (GtkTextView *)w;
     gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_TEXT, ev->x, ev->y, &x, &y);
     gtk_text_view_get_iter_at_location(view, &iter, x, y);
-    if (!(gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer (view), &start, &end) &&          
+    if (!(gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer(view), &start, &end) &&          
 	  gtk_text_iter_in_range(&iter, &start, &end)))
-      gtk_text_buffer_place_cursor(gtk_text_view_get_buffer (view), &iter);
+      gtk_text_buffer_place_cursor(gtk_text_view_get_buffer(view), &iter);
+    if (XEN_HOOKED(listener_click_hook))
+      run_hook(listener_click_hook,
+	       XEN_LIST_1(C_TO_XEN_INT((int)gtk_text_iter_get_offset(&iter))),
+	       S_listener_click_hook);
   }
-
   goto_listener();
   return(FALSE);
 }
@@ -994,5 +999,8 @@ leaves the lisp listener pane"
 
   XEN_DEFINE_PROCEDURE(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, H_listener_selection);
   XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor);
+
+  #define H_listener_click_hook S_listener_click_hook " (pos): called when listener clicked; pos is text pos of click in listener"
+  XEN_DEFINE_HOOK(listener_click_hook,    S_listener_click_hook, 1,    H_listener_click_hook);    /* arg = pos */
 }
 

@@ -66,7 +66,7 @@
   <li><a href="#pvocdoc">pvoc.scm: phase-vocoder</a>
   <li><a href="#rgbdoc">rgb.scm, rgb.rb: colors</a>
   <li><a href="#rtiodoc">rtio.scm: real-time stuff</a>
-  <li><a href="#rubberdoc">rubber.scm: rubber-sound</a>
+  <li><a href="#rubberdoc">rubber.scm, rubber.rb: rubber-sound</a>
   <li><a href="#singerdoc">singer.scm: Perry Cook's vocal-tract physical model</a>
   <li><a href="#snd4doc">snd4.scm: Backwards compatibility for version 4</a>
   <li><a href="#snd5doc">snd5.scm: Backwards compatibility for version 5</a>
@@ -74,10 +74,10 @@
   <li><a href="#sndgldoc">snd-gl.scm: OpenGL examples (gl.c)</a>
   <li><a href="#sndmotifdoc">snd-motif.scm, snd-gtk.scm: Motif/Gtk module (xm.c, xg.c)</a>
   <li><a href="#sndtestdoc">snd-test.scm, snd_test.rb, and event.scm: Snd regression tests</a>
-  <li><a href="#straddoc">strad.scm, strad.rb: string physical model</a>
+  <li><a href="#straddoc">strad.scm, strad.rb: string physical model (from CLM)</a>
   <li><a href="#vdoc">v.scm, v.rb: fm-violin</a>
   <li><a href="#wsdoc">ws.scm: with-sound</a>
-  <li><a href="#xmenveddoc">xm-enved.scm</a>
+  <li><a href="#xmenveddoc">xm-enved.scm, xm-enved.rb</a>
   <li><a href="#zipdoc">zip.scm: the zipper (a cross-fader)</a>
   <li><a href="#extsndvarexpl">A Note on Scheme variables in Snd</a>
   <li><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a>
@@ -303,8 +303,15 @@ displays in the upper right corner the overall current sound and where the curre
 This info is implicit in the x sliders, but a redundant graph doesn't hurt.  If you click in that graph,
 the cursor is moved to the clicked point.
 </p>
-<center><img src="uppergrf.png" alt="display-current-window-location"></center>
+<center><img src="uppergrf.png" alt="make-current-window-display"></center>
 <br>
+<p>
+<b>click-for-listener-help</b> is intended as a <a href="extsnd.html#listenerclickhook">listener-click-hook entry</a>.  It posts help about
+the closest entity it can find whenever you double click in the listener.  Unfortunately, the help
+dialog is a bit clunky for a use like this, but the minibuffer has only one line, and
+tooltips are irritating in their own way; perhaps it should post the help at the bottom of
+the listener?
+</p>
 <br>
 
 <A NAME="dspdoc"></a><span class=box><h2>dsp.scm</h2></span>
@@ -2114,7 +2121,7 @@ spectrum.  <i>show-draggable-input-fft</i> is the same, but the X axis
 (the frequency axis in this case) is draggable, as in Snd's FFT display.
 </p>
 
-<A NAME="rubberdoc"></a><span class=box><h2>rubber.scm</h2></span>
+<A NAME="rubberdoc"></a><span class=box><h2>rubber.scm, rubber.rb</h2></span>
 
 <pre>
   <em class=def><a name="rubbersound">rubber-sound</a></em> stretch-factor
@@ -3173,7 +3180,7 @@ So, hi's value is <code>(list 'hiho #f #f "hiho" 3 3.14))</code>.
 </p>
 <br>
 
-<A NAME="xmenveddoc"></a><span class=box><h2>xm-enved.scm</h2></span>
+<A NAME="xmenveddoc"></a><span class=box><h2>xm-enved.scm, xm-enved.rb</h2></span>
 <pre>
   <em class=def><A NAME="xecreateenved">xe-create-enved</a></em> name parent args axis
   <em class=def><A NAME="xeenvelope">xe-envelope</a></em> xe-editor

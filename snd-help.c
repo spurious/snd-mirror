@@ -304,6 +304,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+19-Mar:  xm-enved.rb and rubber.rb thanks to Michael Scholz.\n\
+         added listener-click-hook with click-for-listener-help in draw.scm.\n\
 17-Mar:  Mac OSX Record implemented.\n\
          piano.rb, rgb.rb, strad.scm, and strad.rb thanks to Michael Scholz.\n\
          moved contrib/* to the main directory.\n\
@@ -1076,6 +1078,7 @@ user-interface manipulations.\n\
   " S_graph_hook " (snd chn y0 y1)\n\
   " S_initial_graph_hook " (snd chn dur)\n\
   " S_just_sounds_hook " (filename)\n\
+  " S_listener_click_hook " (text-position)\n\
   " S_lisp_graph_hook "(snd chn)\n\
   " S_mark_click_hook " (id)\n\
   " S_mark_drag_hook " (id)\n\
@@ -2175,8 +2178,8 @@ XEN g_snd_help(XEN text, int widget_wid)
   #define H_snd_help "(" S_snd_help " (arg 'snd-help)): return the documentation associated with its argument. (snd-help 'make-vct) \
 for example, prints out a brief description of make-vct. \
 The argument can be a string, a symbol, or the object itself.  In some cases, only the symbol has the documentation. \
-In the help descriptions, optional arguments are in parens with the default value as the 2nd entry. \
-a ':' as the start of the argument name marks a CLM-style optional keyword arguments.  If you load index.scm \
+In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry. \
+A ':' as the start of the argument name marks a CLM-style optional keyword argument.  If you load index.scm \
 the functions html and ? can be used in place of help to go to the HTML description, \
 and the location of the associated C code will be displayed, if it can be found. \
 If help-hook is not empty, it is invoked with the subject and the snd-help result \

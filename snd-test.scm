@@ -8409,7 +8409,10 @@ EDITS: 5
 	  (if with-gui
 	      (let ((str (widget-text (list-ref (sound-widgets ind) 3))))
 		(IF (not (string=? str "can't write obtest.snd (it is read-only)"))
-		    (snd-display ";read-only report-in-minibuffer: ~A?" str))))
+		    (snd-display ";read-only report-in-minibuffer: ~A?" str))
+		(set! str (widget-text (list-ref (sound-widgets ind) 4))) ; listener
+		(IF (not (string? str))
+		    (snd-display ";widget-text of listener?: ~A?" str))))
 	  (set! (read-only ind) #f)
 	  (revert-sound ind)
 	  (save-sound ind)
@@ -14232,6 +14235,7 @@ EDITS: 5
   (add-hook! drop-hook arg1) (carg1 drop-hook)
   (add-hook! just-sounds-hook arg1) (carg1 just-sounds-hook)
   (add-hook! mark-click-hook arg1) (carg1 mark-click-hook)
+  (add-hook! listener-click-hook arg1) (carg1 listener-click-hook)
   (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook)
   (add-hook! mix-amp-changed-hook arg1) (carg1 mix-amp-changed-hook)
   (add-hook! mix-speed-changed-hook arg1) (carg1 mix-speed-changed-hook)
@@ -33048,12 +33052,15 @@ EDITS: 2
 
 	    (let* ((win (car (main-widgets)))
 		   (vals (gdk_property_get win (gdk_atom_intern "SND_VERSION" #f) GDK_TARGET_STRING 0 1024 0))
-		   (lst (c-array->list (list-ref vals 4) (list-ref vals 3)))
-		   (str (make-string (1- (length lst)))))
-	      (do ((i 0 (1+ i)))
-		  ((= i (1- (length lst))))
-		(string-set! str i (integer->char (list-ref lst i))))
-	      (if (not (string=? (snd-version) str)) (snd-display ";SND_VERSION: ~A ~A" str (snd-version))))
+		   (lst (and vals (list-ref vals 4) (c-array->list (list-ref vals 4) (list-ref vals 3))))
+		   (str (and lst (make-string (1- (length lst))))))
+	      (if str
+		  (do ((i 0 (1+ i)))
+		      ((= i (1- (length lst))))
+		    (string-set! str i (integer->char (list-ref lst i)))))
+	      (if (or (not str) 
+		      (not (string=? (snd-version) str)))
+		  (snd-display ";SND_VERSION: ~A ~A" str (snd-version))))
 
 	    (close-sound ind)
 
@@ -34100,6 +34107,7 @@ EDITS: 2
 			(list draw-mark-hook 'draw-mark-hook)
 			(list just-sounds-hook 'just-sounds-hook)
 			(list mark-click-hook 'mark-click-hook)
+			(list listener-click-hook 'listener-click-hook)
 			(list mark-hook 'mark-hook)
 			(list mark-drag-hook 'mark-drag-hook)
 			(list mix-amp-changed-hook 'mix-amp-changed-hook)
