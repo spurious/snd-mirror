@@ -1,6 +1,7 @@
 ;;; -------- auto-save 
 ;;;
 ;;; this needs to be loaded before any sounds
+;;; TODO: scan sounds upon startup
 
 (define auto-save-interval 60.0) ;seconds between auto-save checks
 

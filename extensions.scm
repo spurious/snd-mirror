@@ -249,7 +249,7 @@
 ;;;   hopefully with a function of one argument, the current selection sample
 ;;;   the value returned by the function becomes the new selection value.
 
-(bind-key (char->integer #\x) 4 
+(bind-key (char->integer #\x) 0
 	  (lambda ()
 	    (if (selection?)
 		(prompt-in-minibuffer "selection eval:" eval-over-selection)

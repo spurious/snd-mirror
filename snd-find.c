@@ -138,54 +138,37 @@ char *global_search(snd_state *ss, int direction)
   return(search_no_luck);
 }
 
-static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
+static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 {
-  /* count > 0 -> search forward, else back */
-  int i, c, inc, passes = 0;
-  Float samp;
-  snd_fd *sf;
+  int i = 0, end, passes = 0;
+  snd_fd *sf = NULL;
   snd_state *ss;
-  SCM res;
+  SCM res = SCM_BOOL_F;
   ss = sp->state;
   if (ss->search_in_progress) 
     {
       report_in_minibuffer(sp, "search in progress");
       return(-1);
     }
-  c = count;
-  if (count > 0) 
-    {
-      i = cp->cursor + 1; 
-      inc = 1;
-    }
-  else 
-    {
-      i = cp->cursor-1;
-      c = -c;
-      inc = -1;
-      end_sample--;
-    }
   ss->search_in_progress = 1;
-  sf = init_sample_read(i, cp, (count > 0) ? READ_FORWARD : READ_BACKWARD);
+  sf = init_sample_read(cp->cursor + 1, cp, READ_FORWARD);
   if (!sf)
     {
       ss->search_in_progress = 0;
       return(-1);
     }
-  if (count > 0) sf->direction = READ_FORWARD; else sf->direction = READ_BACKWARD;
-  while ((c > 0) && (i != end_sample) && (!read_sample_eof(sf)))
+  sf->direction = READ_FORWARD;
+  end = current_ed_samples(cp);
+  for (i = cp->cursor + 1, passes = 0; i < end; i++, passes++)
     {
-      if (count > 0)
-	samp = next_sample_to_float(sf);
-      else samp = previous_sample_to_float(sf);
-      res = CALL1(sp->search_proc, TO_SCM_DOUBLE((double)samp), "local search func");
+      res = CALL1(sp->search_proc, 
+		  TO_SCM_DOUBLE((double)(next_sample_to_float(sf))), 
+		  "local search func");
       if (NOT_FALSE_P(res)) 
 	{
-	  c--; 
-	  if (c == 0) break;
+	  count--; 
+	  if (count == 0) break;
 	}
-      i += inc;
-      passes++;
       if (passes >= 100)
 	{
 	  check_for_event(ss);
@@ -198,9 +181,56 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
   ss->stopped_explicitly = 0;
   free_snd_fd(sf);
   ss->search_in_progress = 0;
-  if (c != 0) return(-1); /* impossible sample number, so => failure */
+  if (count != 0) return(-1); /* impossible sample number, so => failure */
   return(i);
 }
+
+static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
+{
+  int i = 0, passes = 0;
+  snd_fd *sf = NULL;
+  snd_state *ss;
+  SCM res = SCM_BOOL_F;
+  ss = sp->state;
+  if (ss->search_in_progress) 
+    {
+      report_in_minibuffer(sp, "search in progress");
+      return(-1);
+    }
+  ss->search_in_progress = 1;
+  sf = init_sample_read(cp->cursor - 1, cp, READ_BACKWARD);
+  if (!sf)
+    {
+      ss->search_in_progress = 0;
+      return(-1);
+    }
+  sf->direction = READ_BACKWARD;
+  for (i = cp->cursor - 1, passes = 0; i >= 0; i--, passes++)
+    {
+      res = CALL1(sp->search_proc, 
+		  TO_SCM_DOUBLE((double)(previous_sample_to_float(sf))), 
+		  "local search func");
+      if (NOT_FALSE_P(res)) 
+	{
+	  count--; 
+	  if (count == 0) break;
+	}
+      if (passes >= 100)
+	{
+	  check_for_event(ss);
+	  /* if user types C-s during an active search, we risk stomping on our current pointers */
+	  if (!(sp->active)) break;
+	  passes = 0;
+	}
+      if (ss->stopped_explicitly) break;
+    }
+  ss->stopped_explicitly = 0;
+  free_snd_fd(sf);
+  ss->search_in_progress = 0;
+  if (count != 0) return(-1); /* impossible sample number, so => failure */
+  return(i);
+}
+
 
 static void get_find_expression(snd_info *sp, int count)
 {
@@ -229,8 +259,8 @@ int cursor_search(chan_info *cp, int count)
     {
       if (!(PROCEDURE_P(sp->search_proc))) return(CURSOR_IN_VIEW); /* no search expr */
       if (count > 0)
-	samp = cursor_find(sp, cp, count, current_ed_samples(cp));
-      else samp = cursor_find(sp, cp, count, 0);
+	samp = cursor_find_forward(sp, cp, count);
+      else samp = cursor_find_backward(sp, cp, -count);
       if (samp == -1) 
 	{ 
 	  report_in_minibuffer(sp, "%s: not found", sp->search_expr);
@@ -239,15 +269,16 @@ int cursor_search(chan_info *cp, int count)
       else
 	{
 	  report_in_minibuffer(sp, "%s: y = %s at %s (%d)",
-		  sp->search_expr,
-		  s1 = prettyf(sample(samp, cp), 2),
-		  s2 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
-		  samp);
+			       sp->search_expr,
+			       s1 = prettyf(sample(samp, cp), 2),
+			       s2 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
+			       samp);
 	  FREE(s1);
 	  FREE(s2);
 	}
       cursor_moveto(cp, samp);
-      if ((cp->cursor >= (cp->axis)->losamp) && (cp->cursor <= (cp->axis)->hisamp))
+      if ((cp->cursor >= (cp->axis)->losamp) && 
+	  (cp->cursor <= (cp->axis)->hisamp))
 	return(CURSOR_IN_VIEW);
       else return(CURSOR_IN_MIDDLE);
     }

@@ -1132,15 +1132,40 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white."
   return(TO_SCM_INT(color_map(state)));
 }
 
+static SCM snd_access(char *dir, char *caller)
+{
+  int err;
+  char *temp;
+  SCM res;
+  temp = shorter_tempnam(dir, "snd_");
+  err = mus_file_create(temp);
+  if (err == -1)
+    {
+      FREE(temp);
+      temp = mus_format("%s %s is not writable: %s", caller, dir, strerror(errno));
+      res = TO_SCM_STRING(temp);
+      FREE(temp);
+      return(res);
+    }
+  remove(temp);
+  FREE(temp);
+  return(TO_SCM_STRING(dir));
+}
+
 static SCM g_temp_dir(void) {return(TO_SCM_STRING(temp_dir(state)));}
 static SCM g_set_temp_dir(SCM val) 
 {
   #define H_temp_dir "(" S_temp_dir ") -> name of directory for temp files"
+
   ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, SCM_ARGn, "set-" S_temp_dir, "a string"); 
   if (temp_dir(state)) free(temp_dir(state));
   if (FALSE_P(val))
     set_temp_dir(state, snd_strdup(DEFAULT_TEMP_DIR));
-  else set_temp_dir(state, TO_NEW_C_STRING(val));
+  else 
+    {
+      set_temp_dir(state, TO_NEW_C_STRING(val));
+      return(snd_access(temp_dir(state), S_temp_dir));
+    }
   return(TO_SCM_STRING(temp_dir(state)));
 }
 
@@ -1162,7 +1187,7 @@ static SCM g_set_save_dir(SCM val)
   ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_save_dir, "a string"); 
   if (save_dir(state)) free(save_dir(state));
   set_save_dir(state, TO_NEW_C_STRING(val));
-  return(TO_SCM_STRING(save_dir(state)));
+  return(snd_access(save_dir(state), S_save_dir));
 }
 
 static SCM g_trap_segfault(void) {return(TO_SCM_BOOLEAN(trap_segfault(state)));}

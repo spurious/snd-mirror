@@ -959,8 +959,8 @@ static int checked_write(int tfd, char *buf, int chars)
 	  else
 #ifndef MACOS
 	    mus_error(MUS_WRITE_ERROR,
-		      "IO write error (%s %s): %d of %d bytes written for %d (%d %d %d)\n\n  [%s[%d] %s]",
-		      fd->name, strerror(errno),
+		      "IO write error (%s%s%s): %d of %d bytes written for %d (%d %d %d)\n\n  [%s[%d] %s]",
+		      fd->name, (errno) ? " " : "", (errno) ? strerror(errno) : "",
 		      bytes, chars, tfd, fd->bytes_per_sample, fd->data_format, fd->data_location,
 		      __FILE__, __LINE__, __FUNCTION__);
 #else

@@ -499,7 +499,7 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
 	  for (i = 0; i < chans; i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
 
-	  if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(ofd))
+	  if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(ofd, ofile))
 	    snd_warning("not enough space? -- need %d bytes to save region %d",
 			frames * chans * mus_sound_datum_size(r->filename),
 			reg);

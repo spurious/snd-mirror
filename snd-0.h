@@ -55,6 +55,7 @@
     #define HAVE_SLEEP 1
     #define HAVE_SIGNAL 1
     #define HAVE_FSTATFS 1
+    #define HAVE_STATFS 1
     #define HAVE_DIRENT_H 1
     #define HAVE_STRFTIME 1
     #define HAVE_CLOCK 1

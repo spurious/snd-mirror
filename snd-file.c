@@ -28,21 +28,34 @@
   #include <sys/mount.h>
 #endif
 
-#if (!HAVE_FSTATFS)
-  int disk_kspace (int fd) {return(1234567);}
+#if (!HAVE_FSTATFS) && (!HAVE_STATFS)
+  int disk_kspace (int fd, char *filename) {return(1234567);}
   int is_link(char *filename) {return(0);}
   int is_directory(char *filename) {return(0);}
 #else
 
-int disk_kspace (int fd)
+int disk_kspace (int fd, char *filename)
 {
   struct statfs buf;
   int err;
+#if HAVE_STATFS
+  if (filename)
 #if (FSTATFS_ARGS == 4)
-  err = fstatfs(fd, &buf, sizeof(buf), 0);
+    /* SGI case -- applies to both fstatfs and statfs */
+    err = statfs(filename, &buf, sizeof(buf), 0);
 #else
-  err = fstatfs(fd, &buf);
+    err = statfs(filename, &buf);
 #endif
+  else
+#endif
+    {
+      /* this block not currently used, I think */
+#if (FSTATFS_ARGS == 4)
+    err = fstatfs(fd, &buf, sizeof(buf), 0);
+#else
+    err = fstatfs(fd, &buf);
+#endif
+    }
   /* in 32 bit land, the number of bytes can easily go over 2^32, so we'll look at kbytes here */
   if (err == 0) 
     {
@@ -52,6 +65,7 @@ int disk_kspace (int fd)
     }
   return(err);
 }
+
 int is_link(char *filename)
 {
   struct stat statbuf;
@@ -698,7 +712,7 @@ int copy_file(char *oldname, char *newname)
 	      ifd, oldname, strerror(errno),
 	      __FILE__, __LINE__, __FUNCTION__);
   total = total >> 10;
-  wb = disk_kspace(ofd);
+  wb = disk_kspace(ofd, newname);
   if (wb < 0) 
     snd_error(strerror(errno));
   else

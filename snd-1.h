@@ -1085,7 +1085,7 @@ void clear_filter_strings(snd_info *sp);
 
 /* -------- snd-file -------- */
 
-int disk_kspace (int fd);
+int disk_kspace (int fd, char *filename);
 time_t file_write_date(char *filename);
 int is_link(char *filename);
 int is_directory(char *filename);
@@ -1194,7 +1194,7 @@ void g_init_listener(SCM local_doc);
 
 /* -------- snd-mix.c -------- */
 
-int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes);
+int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes, char *filename);
 mix_context *cp_to_mix_context(chan_info *cp);
 mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);

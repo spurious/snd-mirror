@@ -2196,14 +2196,14 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
 {
   int kleft, kused;
   mus_header_update_with_fd(ofd, hdr->type, bytes);
-  kleft = disk_kspace(ofd);
+  kleft = disk_kspace(ofd, hdr->name);
   if (kleft < 0)
     snd_error("close temp file: %s", strerror(errno));
   else
     {
       kused = bytes >> 10;
       if ((kused > kleft) && (sp))
-	report_in_minibuffer_and_save(sp, "disk nearly full: used %d Kbytes leaving %d", kused, kleft);
+	report_in_minibuffer_and_save(sp, "disk nearly full: used %d Kbytes in the last operation, leaving %d", kused, kleft);
     }
   return(mus_file_close(ofd));
 }
