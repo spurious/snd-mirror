@@ -1,5 +1,6 @@
 Snd change log
 
+  12-Apr:    dither-channel.
   5-Apr:     snd 7.3.
   24-Mar:    dialog function consistency changes: added find-dialog, print-dialog
                changed region-dialog to view-regions-dialog, edit-save-as-dialog -> save-selection-dialog

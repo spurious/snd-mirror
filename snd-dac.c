@@ -2366,8 +2366,8 @@ static XEN g_make_player(XEN snd, XEN chn)
   #define H_make_player "(" S_make_player " (snd #f) (chn #f)): \
 make a new player associated with snd's channel chn. \
 A player is a sort of wrapper for a channel of a sound that supports \
-all the control-panel functions.  Once created, you can set these \
-fields, then call add-player to add this channel to the list of \
+all the control panel functions.  Once created, you can set these \
+fields, then call " S_add_player " to add this channel to the list of \
 channels either being played (if a play is in progress) or about \
 to be played (via " S_start_playing ")."
 

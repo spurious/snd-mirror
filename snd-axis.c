@@ -1091,7 +1091,7 @@ static XEN g_draw_axes(XEN args)
 {
   #define H_draw_axes "(" S_draw_axes " wid gc label (x0 0.0) (x1 1.0) (y0 -1.0) (y1 1.0) (style " S_x_axis_in_seconds ") (axes " S_show_all_axes ")): \
 draws axes in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label' \
-going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with x-axis-style \
+going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with " S_x_axis_style " \
 'style' (" S_x_axis_in_seconds " etc); the axes are actually displayed if 'axes' is " S_show_all_axes ".\
 Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   XEN val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes;
@@ -1157,10 +1157,10 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 		      if (len > 8) 
 			{
 			  xaxes = XEN_LIST_REF(args, 8);
-			  XEN_ASSERT_TYPE(XEN_INTEGER_P(xaxes), xaxes, XEN_ARG_8, S_draw_axes, "show-axes choice");
+			  XEN_ASSERT_TYPE(XEN_INTEGER_P(xaxes), xaxes, XEN_ARG_8, S_draw_axes, S_show_axes " choice");
 			  tmp = XEN_TO_C_INT(xaxes);
 			  if (!(SHOW_AXES_OK(tmp)))
-			    XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 8, xaxes, "show-axes choice");
+			    XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 8, xaxes, S_show_axes " choice");
 			  axes = (show_axes_t)XEN_TO_C_INT(xaxes);
 			}}}}}}
   ap = (axis_info *)CALLOC(1, sizeof(axis_info));

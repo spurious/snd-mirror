@@ -479,68 +479,17 @@
   
   ;; -------- Gate (gate set by gate-amount)
   
-  (let ((gate-amount 1.0)
+  (let ((gate-amount 0.01)
 	(gate-dialog #f)
+	(gate-size 128)
 	(omit-silence #f))
-    
-    (define (squelch-one-channel silence snd chn)
-      (let* ((buffer-size 128)
-	     (buffer0 #f)
-	     (tmp #f)
-	     (sum0 0.0)
-	     (buffer1 (make-vct buffer-size))
-	     (chan-samples (frames snd chn))
-	     (pad-samples (+ chan-samples buffer-size))
-	     (tempfilename (snd-tempnam))
-	     (new-file (open-sound-file tempfilename 1 (srate snd)))
-	     (reader (make-sample-reader 0 snd chn))
-	     (buffers-per-progress-report (inexact->exact (floor (/ chan-samples (* buffer-size 20))))))
-	
-	(start-progress-report snd)
-	
-	(do ((i 0 (+ i buffer-size))
-	     (j 0))
-	    ((>= i pad-samples))
-	  (let ((sum 0.0))
-	    (do ((j 0 (+ j 1)))
-		((= j buffer-size))
-	      (let ((val (next-sample reader)))
-		(vct-set! buffer1 j val)
-		(set! sum (+ sum (* val val)))))
-	    (if buffer0
-		(let ((all-zeros #f))
-		  (if (> sum silence)
-		      (if (<= sum0 silence)
-			  (do ((j 0 (+ j 1))
-			       (incr 0.0 (+ incr (/ 1.0 buffer-size))))
-			      ((= j buffer-size))
-			    (vct-set! buffer0 j (* (vct-ref buffer0 j) incr))))
-		      (if (<= sum0 silence)
-			  (begin
-			    (vct-fill! buffer0 0.0)
-			    (set! all-zeros #t))
-			  (do ((j 0 (+ j 1))
-			       (incr 1.0 (- incr (/ 1.0 buffer-size))))
-			      ((= j buffer-size))
-			    (vct-set! buffer0 j (* (vct-ref buffer0 j) incr)))))
-		  (if (not (and omit-silence all-zeros))
-		      (vct->sound-file new-file buffer0 buffer-size)))
-		(set! buffer0 (make-vct buffer-size)))
-	    (set! j (+ j 1))
-	    (if (>= j buffers-per-progress-report)
-		(begin
-		  (set! j 0)
-		  (progress-report (/ i pad-samples) "squelch-one-channel" chn 1 snd)))
-	    (set! tmp buffer0)
-	    (set! buffer0 buffer1)
-	    (set! buffer1 tmp)
-	    (set! sum0 sum)))
-	
-	(finish-progress-report snd)
-	(free-sample-reader reader)
-	(close-sound-file new-file (* chan-samples 4))
-	(set! (samples 0 chan-samples snd chn) tempfilename)))
-    
+
+    (define (squelch-channel amount snd chn)
+      (let ((f0 (make-average gate-size))
+	    (f1 (make-average gate-size :initial-element 1.0)))
+	(map-channel (lambda (y) (* y (average f1 (if (< (average f0 (* y y)) amount) 0.0 1.0))))
+		     0 #f snd chn)))
+
     (let ((child (gtk_menu_item_new_with_label "Gate")))
       (gtk_menu_shell_append (GTK_MENU_SHELL amp-cascade) child)
       (gtk_widget_show child)
@@ -551,7 +500,7 @@
 	(lambda (w d) 
 	  (if (not gate-dialog)
 	      ;; if gate-dialog doesn't exist, create it
-	      (let ((initial-gate-amount 1.0)
+	      (let ((initial-gate-amount 0.01)
 		    (sliders '()))
 		(set! gate-dialog
 		      (make-effect-dialog 
@@ -562,9 +511,9 @@
 			       (apply map
 				      (lambda (snd chn)
 					(if (= (sync snd) snc)
-					    (squelch-one-channel gate-amount snd chn)))
+					    (squelch-channel (* gate-amount gate-amount) snd chn)))
 				      (all-chans))
-			       (squelch-one-channel gate-amount (selected-sound) (selected-channel)))))
+			       (squelch-channel (* gate-amount gate-amount) (selected-sound) (selected-channel)))))
 		       (lambda (w data)
 			 (help-dialog "Gate"
 				      "Move the slider to change the gate intensity. Higher values gate more of the sound."))
@@ -574,10 +523,10 @@
 			 (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))))
 		(set! sliders
 		      (add-sliders gate-dialog
-				   (list (list "gate" 0.0 initial-gate-amount 5.0
+				   (list (list "gate" 0.0 initial-gate-amount 0.1
 					       (lambda (w data)
 						 (set! gate-amount (.value (GTK_ADJUSTMENT w))))
-					       100))))
+					       1000))))
 		;; now add a toggle button setting omit-silence 
 		(let ((toggle (gtk_check_button_new_with_label "Omit silence")))
 		  (gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG gate-dialog))) toggle #f #f 4)
@@ -592,7 +541,7 @@
 	  (activate-dialog gate-dialog))
 	#f #f) #f)
       (set! amp-menu-list (cons (lambda ()
-				  (let ((new-label (format #f "Gate (~1,2F)"  gate-amount)))
+				  (let ((new-label (format #f "Gate (~1,3F)"  gate-amount)))
 				    (change-label child new-label)))
 				amp-menu-list)))))
 

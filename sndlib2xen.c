@@ -279,7 +279,7 @@ Each entry should be either 0 (turn off device) or 1 (turn it on)."
 static XEN g_mus_audio_set_oss_buffers(XEN num, XEN size)
 {
   #define H_mus_audio_set_oss_buffers "(" S_mus_audio_set_oss_buffers " num size): set Linux OSS 'fragment' number and size. \
-If Snd's controls seem sluggish, try (mus-audio-set-oss-buffers 4 12) or even (mus-audio-set-oss-buffers 2 12). \
+If Snd's controls seem sluggish, try (" S_mus_audio_set_oss_buffers " 4 12) or even (" S_mus_audio_set_oss_buffers " 2 12). \
 This reduces the on-card buffering, but may introduce clicks."
 
 #if (HAVE_OSS || HAVE_ALSA)
@@ -645,7 +645,7 @@ static XEN g_mus_sound_open_output(XEN file, XEN srate, XEN chans, XEN data_form
 
   #define H_mus_sound_open_output "(" S_mus_sound_open_output " filename srate chans data-format header-type (comment \"\")): \
 open filename for (low-level) sound output with the given srate and so on; return the file descriptor (an integer). \
-The file size is normally set later via mus-sound-close-output. srate is an integer, comment is a string, \
+The file size is normally set later via " S_mus_sound_close_output ". srate is an integer, comment is a string, \
 data-format is a sndlib format indicator such as " S_mus_bshort ", if #f if defaults to a format compatible with sndlib, \
 header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently only writes 5 or so header types."
 
@@ -1523,8 +1523,8 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_audio_aux_output,     MUS_AUDIO_AUX_OUTPUT,     "aux audio out device");
   XEN_DEFINE_CONSTANT(S_mus_audio_spdif_in,       MUS_AUDIO_SPDIF_IN,       "SPDIF in device");
   XEN_DEFINE_CONSTANT(S_mus_audio_spdif_out,      MUS_AUDIO_SPDIF_OUT,      "SPDIF out device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_direction,      MUS_AUDIO_DIRECTION,      "audio sample flow direction (mus-audio-read)");
-  XEN_DEFINE_CONSTANT(S_mus_audio_samples_per_channel, MUS_AUDIO_SAMPLES_PER_CHANNEL, "samples per channel (mus-audio-read)");
+  XEN_DEFINE_CONSTANT(S_mus_audio_direction,      MUS_AUDIO_DIRECTION,      "audio sample flow direction (" S_mus_audio_read ")");
+  XEN_DEFINE_CONSTANT(S_mus_audio_samples_per_channel, MUS_AUDIO_SAMPLES_PER_CHANNEL, "samples per channel (" S_mus_audio_read ")");
 
   XEN_DEFINE_CONSTANT(S_mus_audio_amp,     MUS_AUDIO_AMP,     "mixer amp field id");
   XEN_DEFINE_CONSTANT(S_mus_audio_srate,   MUS_AUDIO_SRATE,   "mixer srate field id");

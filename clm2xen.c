@@ -524,7 +524,7 @@ static XEN g_spectrum(XEN url, XEN uim, XEN uwin, XEN utype)
 {
   #define H_mus_spectrum "(" S_spectrum " rl im window (type 1)): \
 real and imaginary data in (vcts) rl and im, returns (in rl) the spectrum thereof; \
-window is the data window (a vct as returned by make-fft-window), \
+window is the data window (a vct as returned by " S_make_fft_window "), \
 and type determines how the spectral data is scaled:\n\
   0 = data in dB, \n\
   1 (default) = linear and normalized\n\
@@ -967,7 +967,7 @@ static XEN g_mus_bank(XEN gens, XEN amps, XEN inp, XEN inp2)
   if (gs == NULL)
     {
       if (scls) FREE(scls);
-      return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate mus-bank gens array"));
+      return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate " S_mus_bank " gens array"));
     }
   data = XEN_VECTOR_ELEMENTS(gens);
   for (i = 0; i < size; i++) 
@@ -1069,7 +1069,7 @@ static XEN g_mus_apply(XEN arglist)
 
 /* ---------------- delay ---------------- */
 
-typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS} xclm_delay_t;
+typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_AVERAGE} xclm_delay_t;
 
 static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 {
@@ -1088,9 +1088,10 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   Float initial_element = 0.0;
   switch (choice)
     {
-    case G_DELAY:   caller = S_make_delay;                                       break;
-    case G_COMB:    caller = S_make_comb;     keys[argn++] = kw_scaler; break;
-    case G_NOTCH:   caller = S_make_notch;    keys[argn++] = kw_scaler; break;
+    case G_DELAY:    caller = S_make_delay;                                                               break;
+    case G_AVERAGE:  caller = S_make_average;                                                             break;
+    case G_COMB:     caller = S_make_comb;     keys[argn++] = kw_scaler;                                  break;
+    case G_NOTCH:    caller = S_make_notch;    keys[argn++] = kw_scaler;                                  break;
     case G_ALL_PASS: caller = S_make_all_pass; keys[argn++] = kw_feedback; keys[argn++] = kw_feedforward; break;
     }
   keys[argn++] = kw_size;
@@ -1107,6 +1108,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
       switch (choice)
 	{
 	case G_DELAY: 
+	case G_AVERAGE:
 	  break;
 	case G_COMB: case G_NOTCH:
 	  scaler = mus_optkey_to_float(keys[keyn], caller, orig_arg[keyn], scaler);
@@ -1188,6 +1190,11 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
       if (line) FREE(line);
       XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "~A: invalid delay length");
     }
+  if ((choice == G_AVERAGE) && (max_size != size))
+    {
+      if (line) FREE(line);
+      XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "max_size is irrelevant to the " S_average " generator");
+    }
   if (line == NULL)
     {
       line = (Float *)CALLOC(max_size, sizeof(Float));
@@ -1201,6 +1208,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   switch (choice)
     {
     case G_DELAY: ge = mus_make_delay(size, line, max_size); break;
+    case G_AVERAGE: ge = mus_make_average(size, line); break;
     case G_COMB: ge = mus_make_comb(scaler, size, line, max_size); break;
     case G_NOTCH: ge = mus_make_notch(scaler, size, line, max_size); break;
     case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size); break;
@@ -1220,7 +1228,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 
 static XEN g_make_delay(XEN args) 
 {
-  #define H_make_delay "(" S_make_delay " (:size) (:initial-contents) (:initial-element 0.0) (:max-size)): \
+  #define H_make_delay "(" S_make_delay " :size :initial-contents (:initial-element 0.0) (:max-size)): \
 return a new delay line of size elements. \
 If the delay length will be changing at run-time, max-size sets its maximum length, so\n\
    (" S_make_delay " len :max-size (+ len 10))\n\
@@ -1232,7 +1240,7 @@ initial-contents can be either a list or a vct."
 
 static XEN g_make_comb(XEN args) 
 {
-  #define H_make_comb "(" S_make_comb " (:scaler) (:size) (:initial-contents) (:initial-element 0.0) (:max-size)): \
+  #define H_make_comb "(" S_make_comb " :scaler :size :initial-contents (:initial-element 0.0) :max-size): \
 return a new comb filter (a delay line with a scaler on the feedback) of size elements. \
 If the comb length will be changing at run-time, max-size sets its maximum length. \
 initial-contents can be either a list or a vct."
@@ -1242,7 +1250,7 @@ initial-contents can be either a list or a vct."
 
 static XEN g_make_notch(XEN args) 
 {
-  #define H_make_notch "(" S_make_notch " (:scaler) (:size) (:initial-contents) (:initial-element 0.0) (:max-size)): \
+  #define H_make_notch "(" S_make_notch " :scaler :size :initial-contents (:initial-element 0.0) :max-size): \
 return a new notch filter (a delay line with a scaler on the feedforward) of size elements. \
 If the notch length will be changing at run-time, max-size sets its maximum length. \
 initial-contents can be either a list or a vct."
@@ -1252,12 +1260,20 @@ initial-contents can be either a list or a vct."
 
 static XEN g_make_all_pass(XEN args) 
 {
-  #define H_make_all_pass "(" S_make_all_pass " (:feedback) (:feedforward) (:size) (:initial-contents) (:initial-element 0.0) (:max-size)): \
+  #define H_make_all_pass "(" S_make_all_pass " :feedback :feedforward :size :initial-contents (:initial-element 0.0) :max-size): \
 return a new allpass filter (a delay line with a scalers on both the feedback and the feedforward). \
 If the all-pass length will be changing at run-time, max-size sets its maximum length. \
 initial-contents can be either a list or a vct."
 
   return(g_make_delay_1(G_ALL_PASS, args));
+}
+
+static XEN g_make_average(XEN args) 
+{
+  #define H_make_average "(" S_make_average " :size :initial-contents (:initial-element 0.0)): \
+return a new average generator. initial-contents can be either a list or a vct."
+
+  return(g_make_delay_1(G_AVERAGE, args));
 }
 
 static XEN g_delay(XEN obj, XEN input, XEN pm)
@@ -1304,6 +1320,15 @@ static XEN g_all_pass(XEN obj, XEN input, XEN pm)
   return(C_TO_XEN_DOUBLE(mus_all_pass(XEN_TO_MUS_ANY(obj), in1, pm1)));
 }
 
+static XEN g_average(XEN obj, XEN input)
+{
+  #define H_average "(" S_average " gen (val 0.0)): moving window average."
+  Float in1 = 0.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_average_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_average, "an average generator");
+  if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_average, "a number");
+  return(C_TO_XEN_DOUBLE(mus_average(XEN_TO_MUS_ANY(obj), in1)));
+}
+
 static XEN g_tap(XEN obj, XEN loc)
 {
   #define H_tap "(" S_tap " gen (pm 0.0)): tap the " S_delay " generator offset by pm"
@@ -1335,6 +1360,12 @@ static XEN g_all_pass_p(XEN obj)
 {
   #define H_all_pass_p "(" S_all_pass_p " gen): #t if gen is an all-pass filter"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_all_pass_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+static XEN g_average_p(XEN obj) 
+{
+  #define H_average_p "(" S_average_p " gen): #t if gen is an average generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_average_p(XEN_TO_MUS_ANY(obj)))));
 }
 
 
@@ -1601,7 +1632,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 
 static XEN g_make_table_lookup (XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  #define H_make_table_lookup "(" S_make_table_lookup " (:frequency 440.0) (:initial-phase 0.0) (:wave) (:size)): \
+  #define H_make_table_lookup "(" S_make_table_lookup " (:frequency 440.0) (:initial-phase 0.0) :wave :size): \
 return a new " S_table_lookup " generator.  This is known as an oscillator in other synthesis systems. \
 The default table size is 512; use :size to set some other size, or pass your own vct as the 'wave'.\n\
    (set! gen (make-table-lookup 440.0 :wave (partials->wave '(1 1.0)))\n\
@@ -1923,19 +1954,19 @@ static XEN g_make_smpflt_1(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
 
 static XEN g_make_one_zero(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_one_zero "(" S_make_one_zero " (:a0) (:a1)): return a new " S_one_zero " filter;  a0*x(n) + a1*x(n-1)"
+  #define H_make_one_zero "(" S_make_one_zero " :a0 :a1): return a new " S_one_zero " filter;  a0*x(n) + a1*x(n-1)"
   return(g_make_smpflt_1(G_ONE_ZERO, arg1, arg2, arg3, arg4));
 }
 
 static XEN g_make_one_pole(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_one_pole "(" S_make_one_pole " (:a0) (:b1)): return a new " S_one_pole " filter; a0*x(n) - b1*y(n-1)"
+  #define H_make_one_pole "(" S_make_one_pole " :a0 :b1): return a new " S_one_pole " filter; a0*x(n) - b1*y(n-1)"
   return(g_make_smpflt_1(G_ONE_POLE, arg1, arg2, arg3, arg4));
 }
 
 static XEN g_make_zpolar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_zpolar "(" S_make_zpolar " (:radius) (:frequency)): return a new " S_two_zero " filter \
+  #define H_make_zpolar "(" S_make_zpolar " :radius :frequency): return a new " S_two_zero " filter \
 where the coefficients (a0..a2) are set from the desired zero's radius and center frequency. \
 Use this in conjunction with the " S_two_zero " generator" 
 
@@ -1944,7 +1975,7 @@ Use this in conjunction with the " S_two_zero " generator"
 
 static XEN g_make_ppolar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_ppolar "(" S_make_ppolar " (:radius) (:frequency)): return a new " S_two_pole " filter \
+  #define H_make_ppolar "(" S_make_ppolar " :radius :frequency): return a new " S_two_pole " filter \
 where the coefficients are set from the desired pole's radius and center frequency. \
 Use this in conjunction with the " S_two_pole " generator" 
 
@@ -1996,7 +2027,7 @@ static XEN g_make_smpflt_2(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
 
 static XEN g_make_two_zero(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_two_zero "(" S_make_two_zero " (:a0) (:a1) (:a2)): return a new " S_two_zero " filter; \
+  #define H_make_two_zero "(" S_make_two_zero " :a0 :a1 :a2): return a new " S_two_zero " filter; \
 a0*x(n) + a1*x(n-1) + a2*x(n-2)"
 
   return(g_make_smpflt_2(G_TWO_ZERO, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -2004,7 +2035,7 @@ a0*x(n) + a1*x(n-1) + a2*x(n-2)"
 
 static XEN g_make_two_pole(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_two_pole "(" S_make_two_pole " (:a0) (:b1) (:b2)): return a new " S_two_pole " filter; \
+  #define H_make_two_pole "(" S_make_two_pole " :a0 :b1 :b2): return a new " S_two_pole " filter; \
 a0*x(n) - b1*y(n-1) - b2*y(n-2)"
 
   return(g_make_smpflt_2(G_TWO_POLE, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -2175,7 +2206,7 @@ static XEN g_mus_set_y2(XEN obj, XEN val)
 
 static XEN g_make_formant(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_make_formant "(" S_make_formant " (:radius) (:frequency) (:gain 1.0)): \
+  #define H_make_formant "(" S_make_formant " :radius :frequency (:gain 1.0)): \
 return a new formant generator (a resonator).  radius sets the pole radius (in terms of the 'unit circle'). \
 frequency sets the resonance center frequency (Hz).  gain is an overall amplitude \
 control."
@@ -2555,7 +2586,7 @@ static XEN g_buffer_p(XEN obj)
 
 static XEN g_make_buffer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_buffer "(" S_make_buffer " (:size 512) (:fill-time)): return a new buffer \
+  #define H_make_buffer "(" S_make_buffer " (:size 512) :fill-time): return a new buffer \
 generator, a FIFO for samples. The size argument sets the size of the buffer (not a delay time), \
 and fill-time sets the time to the next request for more samples.  The intended use is in block \
 processing, normally involving overlap-adds."
@@ -2657,7 +2688,7 @@ static XEN g_frame2buffer(XEN obj, XEN val)
 
 static XEN g_make_wave_train(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  #define H_make_wave_train "(" S_make_wave_train " (:frequency 440.0) (:initial-phase 0.0) (:wave) (:size)): \
+  #define H_make_wave_train "(" S_make_wave_train " (:frequency 440.0) (:initial-phase 0.0) :wave :size): \
 return a new wave-train generator (an extension of pulse-train).   Frequency is \
 the repetition rate of the wave found in wave. Successive waves can overlap."
 
@@ -2764,7 +2795,7 @@ static Float *list2partials(XEN harms, int *npartials)
 
 static XEN g_make_waveshape(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  #define H_make_waveshape "(" S_make_waveshape " (:frequency 440.0) (:partials '(1 1)) (:size 512) (:wave)): \
+  #define H_make_waveshape "(" S_make_waveshape " (:frequency 440.0) (:partials '(1 1)) (:size 512) :wave): \
 return a new waveshaping generator (essentially table-lookup driven by a sinewave)\n\
    (make-waveshape :wave (partials->waveshape '(1 1.0)))\n\
 is the same in effect as make-oscil"
@@ -3139,19 +3170,19 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 
 static XEN g_make_filter(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_make_filter "(" S_make_filter " (:order) (:xcoeffs) (:ycoeffs)): return a new direct form FIR/IIR filter"
+  #define H_make_filter "(" S_make_filter " :order :xcoeffs :ycoeffs): return a new direct form FIR/IIR filter, coeff args are vcts"
   return(g_make_filter_1(G_FILTER, arg1, arg2, arg3, arg4, arg5, arg6));
 }
 
 static XEN g_make_fir_filter(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_fir_filter "(" S_make_fir_filter " (:order) (:xcoeffs)): return a new FIR filter"
+  #define H_make_fir_filter "(" S_make_fir_filter " :order :xcoeffs): return a new FIR filter, xcoeffs a vct"
   return(g_make_filter_1(G_FIR_FILTER, arg1, arg2, arg3, arg4, XEN_UNDEFINED, XEN_UNDEFINED));
 }
 
 static XEN g_make_iir_filter(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_iir_filter "(" S_make_iir_filter " (:order) (:ycoeffs)): return a new IIR filter"
+  #define H_make_iir_filter "(" S_make_iir_filter " :order :ycoeffs): return a new IIR filter, ycoeffs a vct"
   return(g_make_filter_1(G_IIR_FILTER, arg1, arg2, arg3, arg4, XEN_UNDEFINED, XEN_UNDEFINED));
 }
 
@@ -3205,7 +3236,7 @@ static XEN g_restart_env(XEN obj)
 
 static XEN g_make_env(XEN arglist)
 {
-  #define H_make_env "(" S_make_env " (:envelope) (:scaler 1.0) (:duration) (:offset 0.0) (:base 1.0) (:end) (:start 0) (:dur)): \
+  #define H_make_env "(" S_make_env " :envelope (:scaler 1.0) :duration (:offset 0.0) (:base 1.0) :end (:start 0) :dur): \
 return a new envelope generator.  'envelope' is a list of break-point pairs. To create the envelope, \
 these points are offset by 'offset', scaled by 'scaler', and mapped over the time interval defined by \
 either 'duration' (seconds) or 'start' and 'end' (samples).  If 'base' is 1.0, the connecting segments \
@@ -3425,7 +3456,7 @@ static XEN g_outd(XEN frame, XEN val, XEN outp)
 
 static XEN g_mus_close(XEN ptr)
 {
-  #define H_mus_close "(" S_mus_close " fd): close the stream (fd) opened by mus-open-read or write"
+  #define H_mus_close "(" S_mus_close " gen): close the IO stream managed by 'gen' (a sample->file generator, for example)"
   XEN_ASSERT_TYPE(MUS_XEN_P(ptr), ptr, XEN_ONLY_ARG, S_mus_close, "an IO gen");
   return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
 }
@@ -3516,7 +3547,7 @@ should be sndlib identifiers:\n\
 static XEN g_continue_sample2file(XEN name)
 {
   #define H_continue_sample2file "(" S_continue_sample2file " filename): return an output generator \
-that reopens an existing sound file 'filename' ready for output via sample->file"
+that reopens an existing sound file 'filename' ready for output via " S_sample2file
 
   mus_xen *gn;
   mus_any *rgen = NULL;
@@ -3732,7 +3763,7 @@ static XEN g_readin(XEN obj)
 
 static XEN g_make_readin(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  #define H_make_readin "(" S_make_readin " (:file) (:channel 0) (:start 0) (:direction 1)): \
+  #define H_make_readin "(" S_make_readin " :file (:channel 0) (:start 0) (:direction 1)): \
 return a new readin (file input) generator reading the sound file 'file' starting at frame \
 'start' in channel 'channel' and reading forward if 'direction' is not -1"
 
@@ -3889,7 +3920,7 @@ static XEN g_locsig_type()
 static XEN g_set_locsig_type(XEN val)
 {
   mus_locsig_interp_t newval;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_locsig_type, "mus-linear or mus-sinusoidal");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_locsig_type, S_mus_linear " or " S_mus_sinusoidal);
   newval = (mus_locsig_interp_t)XEN_TO_C_INT(val);
   if ((newval == MUS_LINEAR) || (newval == MUS_SINUSOIDAL))
     clm_locsig_type = newval;
@@ -3898,7 +3929,7 @@ static XEN g_set_locsig_type(XEN val)
 
 static XEN g_make_locsig(XEN arglist)
 {
-  #define H_make_locsig "(" S_make_locsig " (:degree 0.0) (:distance 1.0) (:reverb 0.0) (:output) (:revout) (:channels 1) (:type mus-linear)): \
+  #define H_make_locsig "(" S_make_locsig " (:degree 0.0) (:distance 1.0) (:reverb 0.0) :output :revout (:channels 1) (:type " S_mus_linear ")): \
 return a new generator for signal placement in n channels.  Channel 0 corresponds to 0 degrees."
 
   XEN out_obj = XEN_UNDEFINED, rev_obj = XEN_UNDEFINED;
@@ -4040,7 +4071,7 @@ static XEN g_src_p(XEN obj)
 
 static XEN g_src(XEN obj, XEN pm, XEN func) 
 {
-  #define H_src "(" S_src " gen (:pm 0.0) (:input-function)): next sampling rate conversion sample. \
+  #define H_src "(" S_src " gen (:pm 0.0) :input-function): next sampling rate conversion sample. \
 'pm' can be used to change the sampling rate on a sample-by-sample basis.  'input-function' \
 is a function of one argument (the current input direction, normally ignored) that is called \
 internally whenever a new sample of input data is needed.  If the associated " S_make_src " \
@@ -4062,7 +4093,7 @@ included an 'input' argument, input-function is ignored."
 
 static XEN g_make_src(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_make_src "(" S_make_src " (:input) (:srate 1.0) (:width 10)): \
+  #define H_make_src "(" S_make_src " :input (:srate 1.0) (:width 10)): \
 return a new sampling-rate conversion generator (using 'warped sinc interpolation'). \
 'srate' is the ratio between the new rate and the old. 'width' is the sine \
 width (effectively the steepness of the low-pass filter), normally between 10 and 100. \
@@ -4158,13 +4189,13 @@ static int grnedit (void *ptr)
 
 static XEN g_make_granulate(XEN arglist)
 {
-  #define H_make_granulate "(" S_make_granulate " (:input) (:expansion 1.0) (:length .15) (:scaler .6) (:hop .05) (:ramp .4) (:jitter 1.0) (:max-size) (:edit)): \
+  #define H_make_granulate "(" S_make_granulate " :input (:expansion 1.0) (:length .15) (:scaler .6) (:hop .05) (:ramp .4) (:jitter 1.0) :max-size :edit): \
 return a new granular synthesis generator.  'length' is the grain length (seconds), 'expansion' is the ratio in timing \
 between the new and old (expansion > 1.0 slows things down), 'scaler' scales the grains \
 to avoid overflows, 'hop' is the spacing (seconds) between successive grains upon output \
 jitter controls the randomness in that spacing, input can be a file pointer. 'edit' can \
 be a function of one arg, the current granulate generator.  It is called just before \
-a grain is added into the output buffer. The current grain is accessible via mus-data. \
+a grain is added into the output buffer. The current grain is accessible via " S_mus_data ". \
 The edit function, if any, should return the length in samples of the grain, or 0."
 
   XEN in_obj = XEN_UNDEFINED;
@@ -4265,7 +4296,7 @@ static XEN g_convolve(XEN obj, XEN func)
 
 static XEN g_make_convolve(XEN arglist)
 {
-  #define H_make_convolve "(" S_make_convolve " (:input) (:filter) (:fft-size)): \
+  #define H_make_convolve "(" S_make_convolve " :input :filter :fft-size): \
 return a new convolution generator which convolves its input with the impulse response 'filter'."
 
   mus_xen *gn;
@@ -4408,7 +4439,7 @@ static XEN g_phase_vocoder(XEN obj, XEN func)
 
 static XEN g_make_phase_vocoder(XEN arglist)
 {
-  #define H_make_phase_vocoder "(" S_make_phase_vocoder " (:input) (:fft-size) (:overlap) (:interp) (:pitch) (:analyze) (:edit) (:synthesize)): \
+  #define H_make_phase_vocoder "(" S_make_phase_vocoder " :input :fft-size :overlap :interp :pitch :analyze :edit :synthesize): \
 return a new phase-vocoder generator; input is the input function (it can be set at run-time), analyze, edit, \
 and synthesize are either #f or functions that replace the default innards of the generator, fft-size, overlap \
 and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls. \
@@ -4594,8 +4625,7 @@ mix infile into outfile starting at outloc in outfile and inloc in infile \
 mixing 'frames' frames into 'outfile'.  frames defaults to the length of infile. If mixer, \
 use it to scale the various channels; if envs (an array of envelope generators), use \
 it in conjunction with mixer to scale/envelope all the various ins and outs. \
-'outfile' can also be a frame->file generator, and 'infile' can be a file->frame \
-generator."
+'outfile' can also be a " S_frame2file " generator, and 'infile' can be a " S_file2frame " generator."
 
   mus_any *outf = NULL, *inf = NULL;
   mus_any *mx1 = NULL;
@@ -4768,15 +4798,18 @@ XEN_VARGIFY(g_make_delay_w, g_make_delay)
 XEN_VARGIFY(g_make_comb_w, g_make_comb)
 XEN_VARGIFY(g_make_notch_w, g_make_notch)
 XEN_VARGIFY(g_make_all_pass_w, g_make_all_pass)
+XEN_VARGIFY(g_make_average_w, g_make_average)
 XEN_ARGIFY_3(g_delay_w, g_delay)
 XEN_ARGIFY_2(g_tap_w, g_tap)
 XEN_ARGIFY_3(g_notch_w, g_notch)
 XEN_ARGIFY_3(g_comb_w, g_comb)
 XEN_ARGIFY_3(g_all_pass_w, g_all_pass)
+XEN_ARGIFY_2(g_average_w, g_average)
 XEN_NARGIFY_1(g_delay_p_w, g_delay_p)
 XEN_NARGIFY_1(g_notch_p_w, g_notch_p)
 XEN_NARGIFY_1(g_comb_p_w, g_comb_p)
 XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
+XEN_NARGIFY_1(g_average_p_w, g_average_p)
 XEN_ARGIFY_6(g_make_sum_of_cosines_w, g_make_sum_of_cosines)
 XEN_ARGIFY_2(g_sum_of_cosines_w, g_sum_of_cosines)
 XEN_NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
@@ -5020,15 +5053,18 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_make_comb_w g_make_comb
 #define g_make_notch_w g_make_notch
 #define g_make_all_pass_w g_make_all_pass
+#define g_make_average_w g_make_average
 #define g_delay_w g_delay
 #define g_tap_w g_tap
 #define g_notch_w g_notch
 #define g_comb_w g_comb
 #define g_all_pass_w g_all_pass
+#define g_average_w g_average
 #define g_delay_p_w g_delay_p
 #define g_notch_p_w g_notch_p
 #define g_comb_p_w g_comb_p
 #define g_all_pass_p_w g_all_pass_p
+#define g_average_p_w g_average_p
 #define g_make_sum_of_cosines_w g_make_sum_of_cosines
 #define g_sum_of_cosines_w g_sum_of_cosines
 #define g_sum_of_cosines_p_w g_sum_of_cosines_p
@@ -5367,15 +5403,18 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_comb,     g_make_comb_w,     0, 0, 1, H_make_comb);
   XEN_DEFINE_PROCEDURE(S_make_notch,    g_make_notch_w,    0, 0, 1, H_make_notch); 
   XEN_DEFINE_PROCEDURE(S_make_all_pass, g_make_all_pass_w, 0, 0, 1, H_make_all_pass);
+  XEN_DEFINE_PROCEDURE(S_make_average,  g_make_average_w,  0, 0, 1, H_make_average);
   XEN_DEFINE_PROCEDURE(S_delay,         g_delay_w,         1, 2, 0, H_delay); 
   XEN_DEFINE_PROCEDURE(S_tap,           g_tap_w,           1, 1, 0, H_tap);
   XEN_DEFINE_PROCEDURE(S_notch,         g_notch_w,         1, 2, 0, H_notch);
   XEN_DEFINE_PROCEDURE(S_comb,          g_comb_w,          1, 2, 0, H_comb);
   XEN_DEFINE_PROCEDURE(S_all_pass,      g_all_pass_w,      1, 2, 0, H_all_pass);
+  XEN_DEFINE_PROCEDURE(S_average,       g_average_w,       1, 1, 0, H_average);
   XEN_DEFINE_PROCEDURE(S_delay_p,       g_delay_p_w,       1, 0, 0, H_delay_p);
   XEN_DEFINE_PROCEDURE(S_notch_p,       g_notch_p_w,       1, 0, 0, H_notch_p);
   XEN_DEFINE_PROCEDURE(S_comb_p,        g_comb_p_w,        1, 0, 0, H_comb_p);
   XEN_DEFINE_PROCEDURE(S_all_pass_p,    g_all_pass_p_w,    1, 0, 0, H_all_pass_p);
+  XEN_DEFINE_PROCEDURE(S_average_p,     g_average_p_w,     1, 0, 0, H_average_p);
 
   #define H_mus_feedback "(" S_mus_feedback " gen): feedback value of gen"
   #define H_mus_feedforward "(" S_mus_feedforward " gen): feedforward term of gen"
@@ -5654,6 +5693,8 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_array_interp,
 	       S_asymmetric_fm,
 	       S_asymmetric_fm_p,
+	       S_average,
+	       S_average_p,
 	       S_bartlett_window,
 	       S_blackman2_window,
 	       S_blackman3_window,
@@ -5729,6 +5770,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_locsig_set,
 	       S_locsig_type,
 	       S_make_all_pass,
+	       S_make_average,
 	       S_make_asymmetric_fm,
 	       S_make_buffer,
 	       S_make_comb,

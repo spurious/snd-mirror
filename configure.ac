@@ -491,6 +491,19 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+          AC_MSG_CHECKING(for XmDropDown)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>
+                 #include <Xm/DropDown.h>],
+		[ Widget w;
+                  w = XmCreateDropDown(NULL, "drop-down", NULL, 0)
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmCreateDropDown)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
           AC_MSG_CHECKING(for XmCreateFontSelector)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(

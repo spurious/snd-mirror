@@ -4,6 +4,7 @@
 
 #include "snd.h"
 #include "snd-rec.h"
+#include "sndlib-strings.h"
 
 FONT_TYPE *get_vu_font(Float size)
 {
@@ -1585,7 +1586,7 @@ static XEN g_recorder_in_device(void)
 }
 static XEN g_set_recorder_in_device(XEN val) 
 {
-  #define H_recorder_in_device "(" S_recorder_in_device "): default recorder input device (mus-audio-line-in or microphone usually)"
+  #define H_recorder_in_device "(" S_recorder_in_device "): default recorder input device (" S_mus_audio_line_in " or " S_mus_audio_microphone " usually)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_in_device, "an integer"); 
   init_recorder(); 
   rp->in_device = XEN_TO_C_INT(val);
@@ -1614,7 +1615,7 @@ static XEN g_recorder_out_format(void)
 static XEN g_set_recorder_out_format(XEN val) 
 {
   int df;
-  #define H_recorder_out_format "(" S_recorder_out_format "): recorder output data format (16-bit linear usually)"
+  #define H_recorder_out_format "(" S_recorder_out_format "): recorder output data format"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_format, "a data format"); 
   init_recorder(); 
   df = XEN_TO_C_INT(val);
@@ -1649,7 +1650,7 @@ static XEN g_recorder_srate(void)
 }
 static XEN g_set_recorder_srate(XEN val) 
 {
-  #define H_recorder_srate "(" S_recorder_srate "): default recorder sampling rate (22050 or 44100 usually)"
+  #define H_recorder_srate "(" S_recorder_srate "): default recorder sampling rate"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_srate, "a number"); 
   init_recorder();
   set_recorder_srate(rp, XEN_TO_C_INT_OR_ELSE(val, 0));

@@ -8621,7 +8621,7 @@ Float xen2sample_read(mus_any *ptr, off_t frame, int chan)
 
 static mus_any_class SND2SAMPLE_CLASS = {
   -1,
-  "snd->sample",
+  S_snd2sample,
   &snd2sample_free,
   &snd2sample_describe,
   &snd2sample_describe,
@@ -8647,7 +8647,7 @@ static mus_any_class SND2SAMPLE_CLASS = {
 
 static mus_any_class XEN2SAMPLE_CLASS = {
   -1,
-  "xen->sample",
+  S_xen2sample,
   &xen2sample_free,
   &xen2sample_describe,
   &xen2sample_describe,
@@ -8957,7 +8957,7 @@ If it returns #t, the file is not saved.  'name' is #f unless the file is being 
 
   XEN_DEFINE_HOOK(save_hook, S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
 
-  #define H_save_state_hook S_save_state_hook " (temp-filename): called each time the save-state \
+  #define H_save_state_hook S_save_state_hook " (temp-filename): called each time the " S_save_state " \
 mechanism is about to create a new temporary file to save some edit history sample values. \
 temp-filename is the current file. \
 If the hook returns a string, it is treated as the new temp filename.  This hook provides a way to \

@@ -130,7 +130,7 @@ static int main_not_alsa(int argc, char *argv[])
 		    }}}}}
   if (name == NULL) 
     {
-      printf("usage: sndplay file\n"); 
+      printf("usage: sndplay file [-start 1.0] [-end 1.0] [-bufsize 256] [-buffers 2x12] [-describe]\n"); 
       exit(0);
     }
 

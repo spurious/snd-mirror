@@ -373,6 +373,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Apr:  dither-channel.\n\
 5-Apr:   snd 7.3\n\
 24-Mar:  dialog function consistency changes: added find-dialog, print-dialog\n\
            changed region-dialog to view-regions-dialog, edit-save-as-dialog -> save-selection-dialog\n\
@@ -389,15 +390,6 @@ void about_snd_help(void)
 4-Mar:   tempo-control-bounds, and all other such variables' global defaults can be set\n\
            including cursor-follows-play.\n\
 3-Mar:   read|write-speex for Speex files and read|write-flac for FLAC files (examp.scm)\n\
-1-Mar:   show-grid.\n\
-         C-_ deletes text in listener to previous command.\n\
-23-Feb:  speed-control-tones, speed-control-style, reverb-control-decay\n\
-           now handled like other control settings\n\
-         removed Options:Speed Style menu\n\
-20-Feb:  snd 7.2\n\
-19-Feb:  filter-channel (regularized filter-sound)\n\
-18-Feb:  an enormous number of improvements to the Ruby code and inf-snd.el thanks to Michael Scholz.\n\
-           also new: snd-motif.rb.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -522,7 +514,7 @@ void env_help(void)
 There is no preset limit on the number of breakpoints.  Envelopes can be defined with define and referred to thereafter by name. \
 Use the envelope editor to draw envelopes with the mouse. \
 \n\n\
-To apply an envelope to a sound, use env-sound or the extended command C-x C-a.  If this command gets a numeric \
+To apply an envelope to a sound, use " S_env_sound " or the extended command C-x C-a.  If this command gets a numeric \
 argument, the envelope is applied from the cursor for that many samples. Otherwise, the envelope is \
 applied to the entire file. \
 \n\n\
@@ -557,8 +549,8 @@ background, so in some cases, notably very large FFTs, you will notice that the 
 often than the time domain. \
 \n\n\
 The spectrum data is usually normalized to fit between 0.0 to 1.0; if you'd rather have un-normalized \
-data (the y-axis in this case changes to reflect the data values, to some extent), set the variable \
-transform-normalization to dont-normalize.",
+data (the y-axis in this case changes to reflect the data values, to some extent), set the \
+variable " S_transform_normalization " to " S_dont_normalize ".",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("FFT"),
 		      snd_xref_urls("FFT"));
@@ -600,7 +592,7 @@ field takes effect only when the reverb is set up (when the DAC is started by cl
 'Contrast enhancement' is my name for a somewhat weird waveshaper or compander.  It \
 phase-modulates a sound, which can in some cases make it sound sharper or brighter. \
 For softer sounds, it causes only an amplitude change.  To scale a soft sound up before \
-being 'contrasted', use the variable contrast-control-amp.  Contrast is on only if the contrast button is set. \
+being 'contrasted', use the variable " S_contrast_control_amp ".  Contrast is on only if the contrast button is set. \
 \n\n\
 The filter is an arbitrary (even) order FIR filter specified by giving the frequency response \
 envelope and filter order in the text windows provided. \
@@ -687,7 +679,7 @@ A set of associated mixes is called a 'track' in Snd, and there's a help menu it
 void track_help(void) 
 {
   snd_help_with_xrefs("Tracks",
-"A track is a list of mixes, each member mix having its track set to the track id.  The make-track \
+"A track is a list of mixes, each member mix having its track set to the track id.  The " S_make_track " \
 function takes the initial mixes, returning the track id (an integer).  The \
 track function returns the list of mixes that are members of the given track.  The rest of the track functions \
 take the track id as their initial argument.  A track has much the same structure as a mix: an amplitude, speed, \
@@ -734,8 +726,8 @@ the Output panel's A button. Then when you're ready to go, click the Record butt
 again to finish the recording. \
 \n\n\
 If the record window's VU meters are too big (or too small) for your screen, you can fool around \
-with the variable vu-size which defaults to 1.0. Similarly the variable vu-font-size tries to \
-change the size of the numbers on the label, and vu-font chooses the family name of the font used. \
+with the variable " S_vu_size " which defaults to 1.0. Similarly the variable " S_vu_font_size " tries to \
+change the size of the numbers on the label, and " S_vu_font " chooses the family name of the font used. \
 \n\n\
 If you go to the main Snd window while the recorder is active and play a sound, the \
 recorder's audio lines are made inactive to try to reduce confusion.  To re-activate \
@@ -1034,7 +1026,7 @@ either push return or the 'save' button. \
 Once you have an envelope in the editor, you can apply it to the current sounds with the 'Apply' or 'Undo&amp;Apply' buttons; the latter \
 first tries to undo the previous edit, then applies the envelope. The envelope can be applied to \
 the amplitude, the spectrum, or the sampling rate. The choice is made via the three buttons marked 'amp', \
-'flt', and 'src'. The filter order is the variable enved-filter-order which defaults to 40. To use fft-filtering (convolution) \
+'flt', and 'src'. The filter order is the variable " S_enved_filter_order " which defaults to 40. To use fft-filtering (convolution) \
 instead, click the 'fir' button, changing its label to 'fft'. If you are displaying the fft graph of the current channel, \
 and the fft is large enough to include the entire sound, and the 'wave' button is set, \
 the spectrum is also displayed in the envelope editor, making it easier to perform accurate (fussy?) filtering operations. \
@@ -1049,7 +1041,7 @@ the currently active sound (the 'wave' button), and whether to clip mouse moveme
 'clip' button).  The 'linear' and 'exp' buttons choose the type of connecting lines, and the 'exp base' slider at \
 the bottom sets the 'base' of the exponential curves, just as in CLM.  If the envelope is being treated as a spectrum ('flt' \
 is selected), the 'wave' button shows the actual frequency response of the filter that will be applied to the waveform \
-by the 'apply' buttons.  Increase the enved-filter-order to \
+by the 'apply' buttons.  Increase the " S_enved_filter_order " to \
 improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling rate, labelled as 1.0.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Envelope"),
@@ -1178,7 +1170,7 @@ As option.  The output header type, data format,  and sampling rate can also be 
 are little-endian where relevant except for 'aifc' output.  If a file by the chosen name already exists \
 it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
 you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
-option, set the resource overwriteCheck to 1 (or the ask-before-overwrite variable to #t). \
+option, set the resource overwriteCheck to 1 (or the " S_ask_before_overwrite " variable to #t). \
 If you give the current file name to Save As,  \
 any current edits will be saved and the current version in Snd will be updated (that is, in this \
 case, the edit tree is not preserved).",
@@ -1319,15 +1311,15 @@ play button plays the file. Click a current file name, and that sound becomes th
 Snd window.  Click a previous file name, and that file is opened in Snd. The 'update' button runs through the previous files \
 list checking for files that have been deleted or moved behind Snd's back. 'Clear' clears the previous files list. \
 \n\n\
-The previous files list can be preloaded via the -p switch to Snd, and by the functions preload-file \
-and preload-directory. By preloading your 'working set' of sounds, you can avoid the bother of picking them up one by one from the \
+The previous files list can be preloaded via the -p switch to Snd, and by the functions " S_preload_file " \
+and " S_preload_directory ". By preloading your 'working set' of sounds, you can avoid the bother of picking them up one by one from the \
 clumsy file selection box. See nb.scm for an extension of this dialog that posts various kinds of information \
 about each file as the mouse passes over it. \
 \n\n\
 The 'sort' label on the right activates a menu of sorting choices; 'name' sorts the \
 previous files list alphabetically, 'date' sorts by date written, 'size' sorts by the \
 number of samples in the sound, and 'entry' sorts by the order the sound appears in the \
-absence of explicit sorting.  The variable previous-files-sort refers to this menu.",
+absence of explicit sorting.  The variable " S_previous_files_sort " refers to this menu.",
 		      WITH_WORD_WRAP,
 		      view_files_xrefs,
 		      NULL);
@@ -1347,8 +1339,8 @@ static void region_help(void)
   snd_help_with_xrefs("Region",
 "A region is a portion of the sound data. When a sound portion is selected, it is (by default) saved \
 as the new region; subsequent edits will not affect the region data. You can disable the region creation \
-by setting the variable selection-creates-region to #f (its default is #t which can slow down editing \
-of very large sounds). Regions can be defined by make-region, by dragging the mouse through a portion \
+by setting the variable " S_selection_creates_region " to #f (its default is #t which can slow down editing \
+of very large sounds). Regions can be defined by " S_make_region ", by dragging the mouse through a portion \
 of the data, or via the Select All menu option. If the mouse drags off the end of the graph, the x axis \
 moves, in a sense dragging the data along to try to keep up with the mouse; the further away the mouse \
 is from the display, the faster the axis moves. A region can also be defined with keyboard commands, \
@@ -1383,7 +1375,7 @@ static void tracking_cursor_help(void)
 {
   snd_help_with_xrefs("Tracking cursor",
 "If you want the cursor to follow along more-or-less in time while \
-playing a sound, set cursor-follows-play to #t. See also 'Cursor'",
+playing a sound, set " S_cursor_follows_play " to #t. See also 'Cursor'",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Tracking cursor"),
 		      snd_xref_urls("Tracking cursor"));
@@ -1430,40 +1422,40 @@ static void colors_help(void)
 {
   snd_help_with_xrefs("Colors",
 "A color in Snd is an object with three fields representing the rgb (red green blue) settings \
-as numbers between 0.0 and 1.0. A color object is created via make-color:\n\
+as numbers between 0.0 and 1.0. A color object is created via " S_make_color ":\n\
 \n\
 >(define blue (make-color 0 0 1))\n\
 \n\
 This declares the Scheme variable \"blue\" and gives it the value of the color whose rgb components \
-include only blue in full force. The X11 color names are defined in rgb.scm. The overall widget background color is basic-color.\n\
+include only blue in full force. The X11 color names are defined in rgb.scm. The overall widget background color is " S_basic_color ".\n\
 \n\
 >(set! (basic-color) blue)\n\
 \n\
 The color variables are:\n\
-basic-color:  main Snd color.\n\
-cursor-color:  cursor color.\n\
-data-color:  color of data in unselected graph.\n\
-doit-button-color:  color of Ok and Apply buttons.\n\
-doit-again-button-color:  color of Undo&Apply buttons.\n\
-enved-waveform-color:  color of waveform displayed in envelope editor.\n\
-filter-control-waveform-color:  color of control panel filter waveform.\n\
-graph-color:  background color of unselected graph.\n\
-help-button-color:  color of Help buttons.\n\
-highlight-color:  highlighting color.\n\
-listener-color:  background color of lisp listener.\n\
-listener-text-color:  text color in lisp listener.\n\
-mark-color:  color of mark indicator.\n\
-mix-color:  color of mix waveforms.\n\
-position-color:  position slider color\n\
-pushed-button-color:  color of pushed button.\n\
-quit-button-color:  color of Dismiss and Cancel buttons.\n\
-reset-button-color:  color of Reset buttons.\n\
-sash-color:  color of paned window sashes.\n\
-selected-data-color:  color of data in currently selected graph.\n\
-selected-graph-color:  background color of currently selected graph.\n\
-selection-color:  color of selected portion of graph.\n\
-text-focus-color:  color of text field when it has focus.\n\
-zoom-color:  zoom slider color.\n\
+" S_basic_color ":  main Snd color.\n\
+" S_cursor_color ":  cursor color.\n\
+" S_data_color ":  color of data in unselected graph.\n\
+" S_doit_button_color ":  color of Ok and Apply buttons.\n\
+" S_doit_again_button_color ":  color of Undo&Apply buttons.\n\
+" S_enved_waveform_color ":  color of waveform displayed in envelope editor.\n\
+" S_filter_control_waveform_color ":  color of control panel filter waveform.\n\
+" S_graph_color ":  background color of unselected graph.\n\
+" S_help_button_color ":  color of Help buttons.\n\
+" S_highlight_color ":  highlighting color.\n\
+" S_listener_color ":  background color of lisp listener.\n\
+" S_listener_text_color ":  text color in lisp listener.\n\
+" S_mark_color ":  color of mark indicator.\n\
+" S_mix_color ":  color of mix waveforms.\n\
+" S_position_color ":  position slider color\n\
+" S_pushed_button_color ":  color of pushed button.\n\
+" S_quit_button_color ":  color of Dismiss and Cancel buttons.\n\
+" S_reset_button_color ":  color of Reset buttons.\n\
+" S_sash_color ":  color of paned window sashes.\n\
+" S_selected_data_color ":  color of data in currently selected graph.\n\
+" S_selected_graph_color ":  background color of currently selected graph.\n\
+" S_selection_color ":  color of selected portion of graph.\n\
+" S_text_focus_color ":  color of text field when it has focus.\n\
+" S_zoom_color ":  zoom slider color.\n\
 ",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Colors"),
@@ -1914,7 +1906,7 @@ In the help descriptions, optional arguments are in parens with the default valu
 A ':' as the start of the argument name marks a CLM-style optional keyword argument.  If you load index.scm \
 the functions html and ? can be used in place of help to go to the HTML description, \
 and the location of the associated C code will be displayed, if it can be found. \
-If help-hook is not empty, it is invoked with the subject and the snd-help result \
+If " S_help_hook " is not empty, it is invoked with the subject and the snd-help result \
 and its value is returned."
 
   XEN help_text = XEN_FALSE; 
@@ -2132,7 +2124,7 @@ void g_init_help(void)
   XEN_DEFINE_PROCEDURE(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls);
   XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog);
 
-  #define H_help_hook S_help_hook "(subject help-string): called from snd-help.  If \
+  #define H_help_hook S_help_hook "(subject help-string): called from " S_snd_help ".  If \
 if returns a string, it replaces 'help-string' (the default help)"
 
   XEN_DEFINE_HOOK(help_hook, S_help_hook, 2, H_help_hook);    /* args = subject help-string */

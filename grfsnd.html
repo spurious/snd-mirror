@@ -687,6 +687,8 @@ sampling rate <i>srate</i>, and <i>len</i> samples (not frames).
 </td></tr>
 <tr><td><a href="clm.html#asymmetric-fm">asymmetric-fm</a></td><td>(gen index <i>fm</i>)</td><td>asymmetric-fm generator</td></tr>
 <tr><td><a href="clm.html#asymmetric-fm?">asymmetric-fm?</a></td><td>(gen)</td><td>#t if gen is asymmetric-fm generator</td></tr>
+<tr><td><a href="clm.html#average">average</a></td><td>(gen input)</td><td>moving window average</td></tr>
+<tr><td><a href="clm.html#average?">average?</a></td><td>(gen)</td><td>#t if gen is an average generator</td></tr>
 <tr><td><a href="clm.html#buffer-&gt;frame">buffer-&gt;frame</a></td><td>(gen frame)</td><td>buffer generator returning frame</td></tr>
 <tr><td><a href="clm.html#buffer-&gt;sample">buffer-&gt;sample</a></td><td>(gen)</td><td>buffer generator returning sample</td></tr>
 <tr><td><a href="clm.html#buffer-empty?">buffer-empty?</a></td><td>(gen)</td><td>#t if buffer has no data</td></tr>
@@ -763,6 +765,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 ;; all the make function arguments are <a href="clm.html#optional-key">optional-key</a> args
 </td></tr>
 <tr><td><a href="clm.html#make-all-pass">make-all-pass</a></td><td colspan=2>(feedback feedforward size initial-contents initial-element max-size)</td></tr>
+<tr><td><a href="clm.html#make-average">make-average</a></td><td colspan=2>(size initial-contents initial-element)</td></tr>
 <tr><td><a href="clm.html#make-asymmetric-fm">make-asymmetric-fm</a></td><td colspan=2>(frequency initial-phase r ratio)</td></tr>
 <tr><td><a href="clm.html#make-buffer">make-buffer</a></td><td colspan=2>(size fill-time)</td></tr>
 <tr><td><a href="clm.html#make-comb">make-comb</a></td><td colspan=2>(scaler size initial-contents initial-element max-size)</td></tr>

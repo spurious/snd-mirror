@@ -5926,9 +5926,9 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_reversed, g_set_fft_window)
 
 static XEN g_transform_type(XEN snd, XEN chn)
 {
-  #define H_transform_type "(" S_transform_type " (snd #f) (chn #f)): transform type; can be one of fourier-transform, \
-wavelet-transform, haar-transform, autocorrelation, walsh-transform, hadamard-transform, cepstrum, or an index corresponding \
-to an added transform."
+  #define H_transform_type "(" S_transform_type " (snd #f) (chn #f)): transform type; can be one of " S_fourier_transform ", \
+" S_wavelet_transform ", " S_haar_transform ", " S_autocorrelation ", " S_walsh_transform ", " S_hadamard_transform ", \
+" S_cepstrum ", or an index corresponding to an added transform."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_TYPE, S_transform_type));
@@ -7196,7 +7196,7 @@ void g_init_chn(void)
 
   #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
   #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
-  #define H_x_axis_in_beats      "The value for " S_x_axis_style " that displays the x axis using beats (also beats-per-minute)"
+  #define H_x_axis_in_beats      "The value for " S_x_axis_style " that displays the x axis using beats (also " S_beats_per_minute ")"
   #define H_x_axis_as_percentage "The value for " S_x_axis_style " that displays the x axis using percentages"
 
   XEN_DEFINE_CONSTANT(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);

@@ -92,6 +92,7 @@
 #endif
 
 #include "sndlib.h"
+#include "sndlib-strings.h"
 
 static bool hdrbuf_is_inited = false;
 
@@ -497,28 +498,28 @@ const char *mus_short_data_format_name(int format)
 {
   switch (format)
     {
-    case MUS_BSHORT:           return("mus-bshort");            break;
-    case MUS_MULAW:            return("mus-mulaw");             break;
-    case MUS_BYTE:             return("mus-byte");              break;
-    case MUS_BFLOAT:           return("mus-bfloat");            break;
-    case MUS_BFLOAT_UNSCALED:  return("mus-bfloat-unscaled");   break;
-    case MUS_BINT:             return("mus-bint");              break;
-    case MUS_ALAW:             return("mus-alaw");              break;
-    case MUS_UBYTE:            return("mus-ubyte");             break;
-    case MUS_B24INT:           return("mus-b24int");            break;
-    case MUS_BDOUBLE:          return("mus-bdouble");           break;
-    case MUS_BDOUBLE_UNSCALED: return("mus-bdouble-unscaled");  break;
-    case MUS_LSHORT:           return("mus-lshort");            break;
-    case MUS_LINT:             return("mus-lint");              break;
-    case MUS_LFLOAT_UNSCALED:  return("mus-lfloat-unscaled");   break;
-    case MUS_LDOUBLE_UNSCALED: return("mus-ldouble-unscaled");  break;
-    case MUS_LFLOAT:           return("mus-lfloat");            break;
-    case MUS_LDOUBLE:          return("mus-ldouble");           break;
-    case MUS_UBSHORT:          return("mus-ubshort");           break;
-    case MUS_ULSHORT:          return("mus-ulshort");           break;
-    case MUS_L24INT:           return("mus-l24int");            break;
-    case MUS_BINTN:            return("mus-bintn");             break;
-    case MUS_LINTN:            return("mus-lintn");             break;
+    case MUS_BSHORT:           return(S_mus_bshort);            break;
+    case MUS_MULAW:            return(S_mus_mulaw);             break;
+    case MUS_BYTE:             return(S_mus_byte);              break;
+    case MUS_BFLOAT:           return(S_mus_bfloat);            break;
+    case MUS_BFLOAT_UNSCALED:  return(S_mus_bfloat_unscaled);   break;
+    case MUS_BINT:             return(S_mus_bint);              break;
+    case MUS_ALAW:             return(S_mus_alaw);              break;
+    case MUS_UBYTE:            return(S_mus_ubyte);             break;
+    case MUS_B24INT:           return(S_mus_b24int);            break;
+    case MUS_BDOUBLE:          return(S_mus_bdouble);           break;
+    case MUS_BDOUBLE_UNSCALED: return(S_mus_bdouble_unscaled);  break;
+    case MUS_LSHORT:           return(S_mus_lshort);            break;
+    case MUS_LINT:             return(S_mus_lint);              break;
+    case MUS_LFLOAT_UNSCALED:  return(S_mus_lfloat_unscaled);   break;
+    case MUS_LDOUBLE_UNSCALED: return(S_mus_ldouble_unscaled);  break;
+    case MUS_LFLOAT:           return(S_mus_lfloat);            break;
+    case MUS_LDOUBLE:          return(S_mus_ldouble);           break;
+    case MUS_UBSHORT:          return(S_mus_ubshort);           break;
+    case MUS_ULSHORT:          return(S_mus_ulshort);           break;
+    case MUS_L24INT:           return(S_mus_l24int);            break;
+    case MUS_BINTN:            return(S_mus_bintn);             break;
+    case MUS_LINTN:            return(S_mus_lintn);             break;
     default:                   return("unknown");               break;
     }
 }

@@ -1939,7 +1939,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
       args = XEN_REQUIRED_ARGS(code);
       if (args > 1)
 	{
-	  errstr = mus_format(_("bind-key function arg should take either zero or one args, not %d"), args);
+	  errstr = mus_format(_(S_bind_key " function arg should take either zero or one args, not %d"), args);
 	  errmsg = C_TO_XEN_STRING(errstr);
 	  FREE(errstr);
 	  return(snd_bad_arity_error(caller, errmsg, code));
@@ -1963,7 +1963,7 @@ the name reported if an error occurs."
 
 static XEN g_unbind_key(XEN key, XEN state, XEN cx_extended)
 {
-  #define H_unbind_key "(" S_unbind_key " key state (extended #f)): undo the effect of a prior bind-key call."
+  #define H_unbind_key "(" S_unbind_key " key state (extended #f)): undo the effect of a prior " S_bind_key " call."
   return(g_bind_key_1(key, state, XEN_FALSE, cx_extended, XEN_UNDEFINED, S_unbind_key));
 }
 

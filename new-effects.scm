@@ -284,7 +284,7 @@
 				      XmNminimum       (inexact->exact (floor (* low scale)))
 				      XmNmaximum       (inexact->exact (floor (* high scale)))
 				      XmNvalue         (inexact->exact (floor (* initial scale)))
-				      XmNdecimalPoints (if (= scale 1000) 3 (if (= scale 100) 2 (if (= scale 10) 1 0)))
+				      XmNdecimalPoints (if (= scale 10000) 4 (if (= scale 1000) 3 (if (= scale 100) 2 (if (= scale 10) 1 0))))
 				      XmNtitleString   title
 				      XmNleftAttachment XmATTACH_FORM
 				      XmNrightAttachment XmATTACH_FORM
@@ -543,73 +543,22 @@
 ;;; -------- Gate (gate set by gate-amount)
 ;;;
   
-  (let ((gate-amount 1.0)
+  (let ((gate-amount 0.01)
 	(gate-label "Gate")
 	(gate-dialog #f)
+	(gate-size 128)
 	(omit-silence #f))
     
-    (define (squelch-one-channel silence snd chn)
-      (let* ((buffer-size 128)
-	     (buffer0 #f)
-	     (tmp #f)
-	     (sum0 0.0)
-	     (buffer1 (make-vct buffer-size))
-	     (chan-samples (frames snd chn))
-	     (pad-samples (+ chan-samples buffer-size))
-	     (tempfilename (snd-tempnam))
-	     (new-file (open-sound-file tempfilename 1 (srate snd)))
-	     (reader (make-sample-reader 0 snd chn))
-	     (buffers-per-progress-report (inexact->exact (floor (/ chan-samples (* buffer-size 20))))))
-	
-	(start-progress-report snd)
-	
-	(do ((i 0 (+ i buffer-size))
-	     (j 0))
-	    ((>= i pad-samples))
-	  (let ((sum 0.0))
-	    (do ((j 0 (+ j 1)))
-		((= j buffer-size))
-	      (let ((val (next-sample reader)))
-		(vct-set! buffer1 j val)
-		(set! sum (+ sum (* val val)))))
-	    (if buffer0
-		(let ((all-zeros #f))
-		  (if (> sum silence)
-		      (if (<= sum0 silence)
-			  (do ((j 0 (+ j 1))
-			       (incr 0.0 (+ incr (/ 1.0 buffer-size))))
-			      ((= j buffer-size))
-			    (vct-set! buffer0 j (* (vct-ref buffer0 j) incr))))
-		      (if (<= sum0 silence)
-			  (begin
-			    (vct-fill! buffer0 0.0)
-			    (set! all-zeros #t))
-			  (do ((j 0 (+ j 1))
-			       (incr 1.0 (- incr (/ 1.0 buffer-size))))
-			      ((= j buffer-size))
-			    (vct-set! buffer0 j (* (vct-ref buffer0 j) incr)))))
-		  (if (not (and omit-silence all-zeros))
-		      (vct->sound-file new-file buffer0 buffer-size)))
-		(set! buffer0 (make-vct buffer-size)))
-	    (set! j (+ j 1))
-	    (if (>= j buffers-per-progress-report)
-		(begin
-		  (set! j 0)
-		  (progress-report (/ i pad-samples) "squelch-one-channel" chn 1 snd)))
-	    (set! tmp buffer0)
-	    (set! buffer0 buffer1)
-	    (set! buffer1 tmp)
-	    (set! sum0 sum)))
-	
-	(finish-progress-report snd)
-	(free-sample-reader reader)
-	(close-sound-file new-file (* chan-samples 4))
-	(set! (samples 0 chan-samples snd chn) tempfilename)))
+    (define (squelch-channel amount snd chn)
+      (let ((f0 (make-average gate-size))
+	    (f1 (make-average gate-size :initial-element 1.0)))
+	(map-channel (lambda (y) (* y (average f1 (if (< (average f0 (* y y)) amount) 0.0 1.0))))
+		     0 #f snd chn)))
     
     (define (post-gate-dialog)
       (if (not (Widget? gate-dialog))
 	  ;; if gate-dialog doesn't exist, create it
-	  (let ((initial-gate-amount 1.0)
+	  (let ((initial-gate-amount 0.01)
 		(sliders '()))
 	    (set! gate-dialog
 		  (make-effect-dialog 
@@ -620,22 +569,22 @@
 			   (apply map
 				  (lambda (snd chn)
 				    (if (= (sync snd) snc)
-					(squelch-one-channel gate-amount snd chn)))
+					(squelch-channel (* gate-amount gate-amount) snd chn)))
 				  (all-chans))
-			   (squelch-one-channel gate-amount (selected-sound) (selected-channel)))))
+			   (squelch-channel (* gate-amount gate-amount) (selected-sound) (selected-channel)))))
 		   
 		   (lambda (w context info)
 		     (help-dialog "Gate"
 				  "Move the slider to change the gate intensity. Higher values gate more of the sound."))
 		   (lambda (w c i)
 		     (set! gate-amount initial-gate-amount)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* gate-amount 100))))))))
+		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* gate-amount 1000))))))))
 	    (set! sliders
 		  (add-sliders gate-dialog
-			       (list (list "gate" 0.0 initial-gate-amount 5.0
+			       (list (list "gate" 0.0 initial-gate-amount 0.1
 					   (lambda (w context info)
-					     (set! gate-amount (/ (.value info) 100.0)))
-					   100))))
+					     (set! gate-amount (/ (.value info) 1000.0)))
+					   1000))))
 	    ;; now add a toggle button setting omit-silence 
 	    ;;  (need to use XtParent here because the containing RowColumn widget is
 	    ;;  hidden in add-sliders -- perhaps it should be returned in the slider list)
@@ -659,7 +608,7 @@
 		       (post-gate-dialog)))
       
       (set! amp-menu-list (cons (lambda ()
-				  (let ((new-label (format #f "Gate (~1,2F)"  gate-amount)))
+				  (let ((new-label (format #f "Gate (~1,4F)"  gate-amount)))
 				    (change-label child new-label)))
 				amp-menu-list))))
   )

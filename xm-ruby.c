@@ -1174,6 +1174,15 @@
   XEN_NARGIFY_1(gxm_XmIsButtonBox_w, gxm_XmIsButtonBox)
   XEN_ARGIFY_4(gxm_XmCreateButtonBox_w, gxm_XmCreateButtonBox)
 #endif
+#if HAVE_XmCreateDropDown
+  XEN_NARGIFY_1(gxm_XmIsDropDown_w, gxm_XmIsDropDown)
+  XEN_NARGIFY_1(gxm_XmDropDownGetValue_w, gxm_XmDropDownGetValue)
+  XEN_NARGIFY_1(gxm_XmDropDownGetList_w, gxm_XmDropDownGetList)
+  XEN_NARGIFY_1(gxm_XmDropDownGetText_w, gxm_XmDropDownGetText)
+  XEN_NARGIFY_1(gxm_XmDropDownGetArrow_w, gxm_XmDropDownGetArrow)
+  XEN_NARGIFY_1(gxm_XmDropDownGetLabel_w, gxm_XmDropDownGetLabel)
+  XEN_ARGIFY_4(gxm_XmCreateDropDown_w, gxm_XmCreateDropDown)
+#endif
 
 #if (!XM_DISABLE_DEPRECATED)
   XEN_NARGIFY_1(gxm_XmStringLength_w, gxm_XmStringLength)
@@ -2478,6 +2487,15 @@ static void define_procedures(void)
 #if HAVE_XmCreateButtonBox
   XM_DEFINE_PROCEDURE(XmIsButtonBox, gxm_XmIsButtonBox_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmCreateButtonBox, gxm_XmCreateButtonBox_w, 3, 1, 0, H_XmCreateButtonBox);
+#endif
+#if HAVE_XmCreateDropDown
+  XM_DEFINE_PROCEDURE(XmIsDropDown, gxm_XmIsDropDown_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDropDownGetValue, gxm_XmDropDownGetValue_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDropDownGetList, gxm_XmDropDownGetList_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDropDownGetText, gxm_XmDropDownGetText_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDropDownGetArrow, gxm_XmDropDownGetArrow_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDropDownGetLabel, gxm_XmDropDownGetLabel_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmCreateDropDown, gxm_XmCreateDropDown_w, 3, 1, 0, H_XmCreateDropDown);
 #endif
 
 #if HAVE_MOTIF

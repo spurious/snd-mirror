@@ -30,7 +30,6 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
-;;; TODO: real Xp tests
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
@@ -1837,6 +1836,26 @@
 	    (if (not (string-=? str "19-Oct 09:46 PDT"))
 		(snd-display ";mus-sound-write-date pistol.snd: ~A?" str)))
 	  
+	  (let ((index (open-sound "oboe.snd"))
+		(long-file-name (let ((name "test"))
+				  (do ((i 0 (1+ i)))
+				      ((= i 33)) ; 40 is about the limit in Linux (256 char limit here from OS, not Snd)
+				    (set! name (string-append name "-test")))
+				  (string-append name ".snd"))))
+	    (save-sound-as long-file-name index)
+	    (close-sound index)
+	    (set! index (open-sound long-file-name))
+	    (if (not (sound? index)) (snd-display ";can't find test...snd"))
+	    (if (or (not (>= (string-length (file-name index)) (string-length long-file-name)))
+		    (not (>= (string-length (short-file-name index)) (string-length long-file-name))))
+		(snd-display ";file-name lengths: ~A ~A ~A"
+			     (string-length (file-name index))
+			     (string-length (short-file-name index))
+			     (string-length long-file-name)))
+	    (close-sound index)
+	    (mus-sound-forget long-file-name)
+	    (delete-file long-file-name))
+
 	  (let* ((fsnd (string-append sf-dir "forest.aiff")))
 	    (if (file-exists? fsnd)
 		(begin
@@ -10446,6 +10465,13 @@ EDITS: 5
 	      (if (not (eq? tag 'bad-arity))
 		  (snd-display ";xen-channel with 1-arg func: ~A ~A" tag (optimization))))
 	    (ptree-channel (lambda (y d f) (* y 2)) 0 (frames) ind 0 #f #f (lambda (p d) (vct 1.0)))
+	    (revert-sound ind)
+	    (scale-by 0.0)
+	    (dither-channel)
+	    (let ((mx (maxamp)))
+	      (if (or (< mx .00003) (> mx .0001))
+		  (snd-display ";dithering: ~A" mx)))
+	    (revert-sound ind)
 	    (close-sound ind))
 
 	  (let ((ind (new-sound  "test.snd" mus-next mus-bfloat 22050 1 "special env tests" 100)))
@@ -11676,6 +11702,69 @@ EDITS: 5
 		(not (= (car (cadddr err)) -1)))
 	    (snd-display ";make-all-pass bad size error message: ~A" err)))
       
+      (let ((gen (make-average 4))
+	    (v0 (make-vct 10))
+	    (gen1 (make-average 4))
+	    (v1 (make-vct 10)))
+	(print-and-check gen 
+			 "average"
+			 "average: 0.000, line[4]:[0.000 0.000 0.000 0.000]"
+			 "dly line[4,4 at 0,0 (external)]: [0.000 0.000 0.000 0.000], xscl: 0.000000, yscl: 0.250000")
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v0 i (average gen 1.0)))
+	(vct-map! v1 (lambda () (if (average? gen1) (average gen1 1.0) -1.0)))
+	(if (not (vequal v1 v0)) (snd-display ";map average: ~A ~A" v0 v1))
+	(if (not (average? gen)) (snd-display ";~A not average?" gen))
+	(if (not (= (mus-length gen) 4)) (snd-display ";average length: ~D?" (mus-length gen)))
+	(if (not (= (mus-order gen) 4)) (snd-display ";average order: ~D?" (mus-order gen)))
+	(if (or (fneq (vct-ref v0 1) 0.5) (fneq (vct-ref v0 4) 1.0) (fneq (vct-ref v0 8) 1.0))
+	    (snd-display ";average output: ~A" v0)))
+
+      (let* ((gen (make-average 8))
+	     (val (average gen)))
+	(if (fneq val 0.0) (snd-display ";empty average: ~A" val))
+	(set! val (average gen 1.0))
+	(if (fneq val 0.125) (snd-display ";average 1: ~A" val))
+	(set! val (average gen 1.0))
+	(if (fneq val 0.25) (snd-display ";average 2: ~A" val))
+	(set! val (average gen 0.5))
+	(if (fneq val 0.3125) (snd-display ";average 2: ~A" val))
+	(do ((i 0 (1+ i))) ((= i 5)) (set! val (average gen 0.0))) 
+	(if (fneq val 0.3125) (snd-display ";average 6: ~A" val))
+	(set! val (average gen 0.0))
+	(if (fneq val 0.1875) (snd-display ";average 7: ~A" val))
+	(set! val (average gen 0.0))
+	(if (fneq val 0.0625) (snd-display ";average 8: ~A" val))
+	(set! val (average gen 0.0))
+	(if (fneq val 0.0) (snd-display ";average 9: ~A" val))
+	)
+      (let* ((gen (make-average 10 :initial-element .5))
+	     (val (average gen 0.5)))
+	(if (fneq val 0.5) (snd-display ";average initial-element: ~A" val)))
+      (let* ((gen (make-average 3 :initial-contents '(1.0 1.0 1.0)))
+	     (val (average gen 1.0)))
+	(if (fneq val 1.0) (snd-display ";average initial-contents: ~A" val)))
+      
+      (test-gen-equal (let ((d1 (make-average 3 :initial-contents '(0.7 0.5 3)))) (average d1 1.0) d1)
+		      (let ((d2 (make-average 3 :initial-contents (vct 0.7 0.5 3)))) (average d2 1.0) d2) 
+		      (let ((d3 (make-average 4 :initial-contents '(0.7 0.5 0.1 4)))) (average d3 1.0) d3))
+      (test-gen-equal (make-average 3 :initial-element 1.0) 
+		      (make-average 3 :initial-element 1.0) 
+		      (make-average 3 :initial-element 0.5))
+      (test-gen-equal (make-average 3 :initial-element 1.0) 
+		      (make-average 3 :initial-element 1.0) 
+		      (make-average 4 :initial-element 1.0))
+      (test-gen-equal (make-average 3 :initial-contents '(1.0 0.0 0.0)) 
+		      (make-average 3 :initial-contents '(1.0 0.0 0.0)) 
+		      (make-average 3 :initial-contents '(1.0 1.0 1.0)))
+      (let ((err (catch #t (lambda () (make-average :size -1)) (lambda args args))))
+	(if (or (not (eq? (car err) 'out-of-range))
+		(not (string=? (cadr err) "make-average"))
+		(not (string=? (caddr err) "size ~A < 0?"))
+		(not (= (car (cadddr err)) -1)))
+	    (snd-display ";make-average bad size error message: ~A" err)))
+
       (let ((gen (make-comb .4 3))
 	    (v0 (make-vct 10))
 	    (gen1 (make-comb .4 3))
@@ -15378,7 +15467,7 @@ EDITS: 5
 	(close-sound ind))
 
       (let ((make-procs (list
-			 make-all-pass make-asymmetric-fm 
+			 make-all-pass make-asymmetric-fm make-average
 			 make-comb (lambda () (make-convolve :filter (vct 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0)))
 			 (lambda () (make-filter :xcoeffs (vct 0 1 2))) (lambda () (make-fir-filter :xcoeffs (vct 0 1 2))) 
 			 make-formant (lambda () (make-frame 3)) make-granulate
@@ -15389,7 +15478,7 @@ EDITS: 5
 			 make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder
 			 (lambda () (make-filter :ycoeffs (vct 0 1 2)))
 			 (lambda () (make-filter :xcoeffs (vct 1 2 3) :ycoeffs (vct 0 1 2)))))
-	    (run-procs (list all-pass asymmetric-fm 
+	    (run-procs (list all-pass asymmetric-fm average
 			     comb convolve delay env 
 			     filter fir-filter formant (lambda (gen ind) (frame-ref gen ind)) granulate
 			     iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (mixer-ref gen a 0)) notch one-pole one-zero oscil two-pole
@@ -15397,7 +15486,7 @@ EDITS: 5
 			     sine-summation square-wave (lambda (gen a) (src gen 0.0 a)) sum-of-cosines table-lookup triangle-wave
 			     two-pole two-zero wave-train waveshape two-zero phase-vocoder
 			     filter filter))
-	    (ques-procs (list all-pass? asymmetric-fm? 
+	    (ques-procs (list all-pass? asymmetric-fm? average?
 			      comb? convolve? delay? env? 
 			      filter? fir-filter? formant? frame? granulate?
 			      iir-filter? locsig? mixer? notch? one-pole? one-zero? oscil? two-pole?
@@ -15405,7 +15494,7 @@ EDITS: 5
 			      sine-summation? square-wave? src? sum-of-cosines? table-lookup? triangle-wave?
 			      two-pole? two-zero? wave-train? waveshape? two-zero? phase-vocoder?
 			      filter? filter?))
-	    (func-names (list 'all-pass 'asymmetric-fm 
+	    (func-names (list 'all-pass 'asymmetric-fm 'average
 			      'comb 'convolve 'delay 'env 
 			      'filter-x 'fir-filter 'formant 'frame 'granulate
 			      'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-zero 'oscil 'two-pole
@@ -15413,7 +15502,7 @@ EDITS: 5
 			      'sine-summation 'square-wave 'src 'sum-of-cosines 'table-lookup 'triangle-wave
 			      'two-pole 'two-zero 'wave-train 'waveshape 'two-zero 'phase-vocoder
 			      'filter-y 'filter-xy))
-	    (gen-args (list 0.0 0.0 
+	    (gen-args (list 0.0 0.0 1.0
 			    0.0 (lambda (dir) 0.0) 0.0 #f
 			    0.0 0.0 0.0 0 (lambda (dir) 0.0)
 			    0.0 0.0 0 0.0 0.0 0.0 0.0 0.0
@@ -29872,6 +29961,7 @@ EDITS: 2
 	(fl (make-fir-filter 4 (vct .5 .5 .5 .5)))
 	(dl (make-delay 32))
 	(ap (make-all-pass .4 .6 32))
+	(av (make-average 4))
 	(sr (make-src :srate .5))
 	(gr (make-granulate :expansion 2.0))
 	)
@@ -32073,6 +32163,8 @@ EDITS: 2
 	    
 	    (btst '(let ((gen (make-all-pass))) (all-pass? gen)) #t)
 	    (btst '(let ((gen (make-all-pass))) (if gen #t #f)) #t)
+	    (btst '(let ((gen (make-average))) (average? gen)) #t)
+	    (btst '(let ((gen (make-average))) (if gen #t #f)) #t)
 	    (btst '(let ((gen (make-asymmetric-fm))) (asymmetric-fm? gen)) #t)
 	    (btst '(let ((gen (make-buffer))) (buffer? gen)) #t)
 	    (btst '(let ((gen (make-comb))) (comb? gen)) #t)
@@ -32122,6 +32214,9 @@ EDITS: 2
 	    (ftst '(let ((gen (make-all-pass))) (all-pass gen)) 0.0)
 	    (ftst '(let ((gen (make-all-pass))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-all-pass))) (gen 0) (gen 0 0) (gen 0.0 0) (gen 0 0.0)) 0.0)
+	    (ftst '(let ((gen (make-average))) (average gen)) 0.0)
+	    (ftst '(let ((gen (make-average))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
+	    (ftst '(let ((gen (make-average))) (gen 0) (gen 0 0) (gen 0.0 0) (gen 0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-asymmetric-fm))) (asymmetric-fm gen)) 0.0)
 	    (ftst '(let ((gen (make-asymmetric-fm))) (gen)) 0.0)
 	    (ftst '(let ((gen (make-buffer))) (buffer->sample gen)) 0.0)
@@ -40513,7 +40608,26 @@ EDITS: 2
 			(let ((tag (catch #t (lambda () (XpGetOneAttribute dpy (list 'XPContext 0) 1 #f)) (lambda args (car args)))))
 			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpGetOneAttribute type check: ~A" tag)))
 			(let ((tag (catch #t (lambda () (XpSetAttributes dpy (list 'XPContext 0) 1 "hi" #f)) (lambda args (car args)))))
-			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpSetAttributes type check: ~A" tag)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpSetAttributes type check: ~A" tag)))
+
+			(let* ((ind (open-sound "oboe.snd"))
+			       (x33 (XOpenDisplay ":33"))
+			       (ctx (XpCreateContext x33 "lp0"))
+			       (screen (XpGetScreenOfContext x33 ctx))
+			       (win (XtWindow (car (channel-widgets)))))
+			  (XpSetContext x33 ctx)
+			  (XpStartJob x33 XPGetData)
+			  (XpGetDocumentData x33 ctx 
+					     (lambda (a b c d e)
+					       (display (format #f "~A ~A~%" a b)))
+					     (lambda (a b c d) #f (display "quit?"))
+					     0)
+			  (XpStartPage x33 win)
+			  (update-time-graph)
+			  (XpEndPage x33)
+			  (XpEndJob x33)
+			  (XpDestroyContext x33 ctx)
+			  (close-sound ind))))
 		  
 		  (let ((tag (catch #t (lambda () (XReconfigureWMWindow dpy win 1 1 #f)) (lambda args (car args)))))
 		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XReconfigureWMWindow type check: ~A" tag)))
@@ -45232,7 +45346,7 @@ EDITS: 2
 		     mus-bytes-per-sample mus-sound-loop-info mus-audio-report mus-audio-sun-outputs
 		     mus-sound-maxamp mus-sound-maxamp-exists? mus-sound-open-input mus-sound-open-output
 		     mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
-		     mus-sound-seek-frame mus-file-prescaler mus-file-data-clipped
+		     mus-sound-seek-frame mus-file-prescaler mus-file-data-clipped average average? make-average
 		     mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
 		     array->file array-interp asymmetric-fm asymmetric-fm?  buffer->frame buffer->sample buffer-empty? buffer?
@@ -45331,7 +45445,7 @@ EDITS: 2
 			 ))
       
       (define make-procs (list
-			  make-all-pass make-asymmetric-fm make-snd->sample make-xen->sample 
+			  make-all-pass make-asymmetric-fm make-snd->sample make-xen->sample make-average
 			  make-buffer make-comb make-convolve make-delay make-env make-fft-window make-file->frame
 			  make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
 			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
@@ -45532,7 +45646,7 @@ EDITS: 2
 					filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
 					mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 					sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? table-lookup? 
-					triangle-wave? two-pole? two-zero? wave-train? waveshape? color? mix-sample-reader? 
+					triangle-wave? two-pole? two-zero? wave-train? waveshape? color? mix-sample-reader? average?
 					sample-reader? track-sample-reader? region-sample-reader? vct? )))
 		      (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
 	    (gc)
@@ -45549,7 +45663,7 @@ EDITS: 2
 			    filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
 			    mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			    sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? table-lookup? 
-			    triangle-wave? two-pole? two-zero? wave-train? waveshape? sound? color? mix-sample-reader? 
+			    triangle-wave? two-pole? two-zero? wave-train? waveshape? sound? color? mix-sample-reader? average?
 			    sample-reader? track-sample-reader? region-sample-reader? vct?))
 	    
 	    (for-each (lambda (n)
@@ -45605,7 +45719,7 @@ EDITS: 2
 					(if (not (eq? tag 'wrong-type-arg))
 					    (snd-display ";clm ~A: ~A ~A [~A]: ~A" n tag arg ctr (procedure-property n 'documentation)))
 					(set! ctr (1+ ctr))))
-				    (list all-pass asymmetric-fm buffer->sample clear-array comb convolve db->linear
+				    (list all-pass asymmetric-fm buffer->sample clear-array comb convolve db->linear average
 					  degrees->radians delay env formant frame->list granulate hz->radians in-hz linear->db
 					  make-all-pass make-asymmetric-fm make-buffer make-comb make-convolve make-delay make-env
 					  make-file->frame make-file->sample make-filter make-fir-filter make-formant make-frame
@@ -45616,7 +45730,7 @@ EDITS: 2
 					  make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-channel mus-channels
 					  mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 					  mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
-					  mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero
+					  mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-average
 					  oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
 					  phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin restart-env
 					  sawtooth-wave sine-summation square-wave src sum-of-cosines table-lookup tap triangle-wave
@@ -45634,13 +45748,13 @@ EDITS: 2
 				       (eq? tag 'bad-arity)
 				       (eq? tag 'mus-error)))
 			      (snd-display ";clm ~A: ~A" n tag))))
-		      (list all-pass array-interp asymmetric-fm comb contrast-enhancement convolution convolve
+		      (list all-pass array-interp asymmetric-fm comb contrast-enhancement convolution convolve average
 			    convolve-files delay dot-product env-interp file->frame file->sample snd->sample xen->sample filter fir-filter formant
 			    formant-bank frame* frame+ frame->buffer frame->frame frame-ref frame->sample granulate iir-filter ina
 			    inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-buffer make-comb make-convolve
 			    make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate
 			    make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
-			    make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave
+			    make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-average
 			    make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave
 			    make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* multiply-arrays mus-bank
 			    notch one-pole one-zero oscil oscil-bank partials->polynomial partials->wave partials->waveshape

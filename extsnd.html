@@ -75,7 +75,7 @@
 <li><a href="index.html">Index</a>
 </ul>
 </td><td>
-<img src="redsamps.png" alt="red samples" hspace=40>
+<img src="redsamps.png" alt="red samples" hspace=20>
 </td></tr></table>
 <br>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>Introduction</h2></td></tr></table>
@@ -5777,6 +5777,8 @@ more like Emacs (which prompts for confirmation first):
 <tr><td colspan=2></td></tr>
 
 
+<!-- TODO: add dither-channel as ptree-op: sum of 2 rands at about 3 lsbs -->
+
 <!-- INDEX ptreechannel:Virtual Edits -->
 <!-- ptree-channel -->
 <tr><td colspan=2>
@@ -5931,11 +5933,17 @@ will never reset ctr to 0!  Every time a portion of the data is read by Snd, the
 higher.  But, the notion of an accessor that returns a different thing each time a sample
 is accessed is not foolish:
 <pre>
-  (<em class=red>ptree-channel</em> (lambda (y) (+ y (random .01))))
+(define* (dither-channel #:optional (amount .00006) beg dur snd chn edpos)
+  "(dither-channel #:optional (amount .00006) beg dur snd chn edpos) adds 'amount' dither to each sample"
+  (let ((dither (* .5 amount)))
+    (<em class=red>ptree-channel</em> 
+      (lambda (y) 
+        (+ y (mus-random dither) (mus-random dither))) 
+      beg dur snd chn edpos #t)))
 </pre>
-This gives a slightly different take on the sound on each change
-of view or redisplay.  But if the details of the noise don't
-matter, this change is also ok -- you're editing a sort
+This gives a slightly different take on the sound each time you look at it or listen to it;
+the dithering is never exactly the same.  But if the details of the noise don't
+matter (presumably the case with dithering), the difference is unproblematic.  You're editing a sort
 of mobile in sound (analogous to mobile sculpture).
 <br><br>
 One major limitation of ptree-channel with an 'init-func' is that <a href="#savestate">save-state</a>
@@ -6092,6 +6100,7 @@ add a constant to every sample: <a href="sndscm.html#offsetchannel">offset-chann
 reverse-channel: <a href="#virtualreverse">xen-channel</a> (extsnd.html)<br>
 ring modulation: ring-modulate-channel (examp.scm)<br>
 delay by n samples (an experiment!): delay-channel in extensions.scm<br>
+dithering: <a href="sndscm.html#ditherchannel">dither-channel</a> (extensions.scm)<br>
 <br>
 </small></blockquote>
 </td></tr></table>
@@ -6188,6 +6197,7 @@ Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href
 reverse a track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
 reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>
 Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a><br>
+reverse via FFT: <a href="#sillyreverse">silly-reverse</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -6204,7 +6214,7 @@ reverse data.  There are some interesting non-causal effects you can get with th
 take a voice sound, reverse it, reverberate it, reverse it again, and you get the original with
 reversed reverb.  As a hack, you can reverse a sound by doing two ffts:
 <pre>
-(define* (silly-reverse #:optional snd)
+(define* (<A NAME="sillyreverse">silly-reverse</a> #:optional snd)
   (let* ((len (<a class=quiet href="#frames">frames</a> snd 0))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
 	 (rl (<a class=quiet href="#channel2vct">channel-&gt;vct</a> 0 fsize snd 0))
@@ -8478,6 +8488,22 @@ More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fou
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snddialogs">Dialogs</a></h3></td></tr></table>
 
+<p>The built-in dialogs, accessible from the main menu, provide the standard, but very clumsy
+ways to open and save sounds, edit envelopes and headers, and set various global variables.
+In addition, many other dialogs are implemented in various Scheme/Ruby files.  
+The following
+functions refer to the built-in dialogs.
+Functions such as <b>color-dialog</b> normally create and start the dialog in question; that is,
+<code>(color-dialog)</code> puts the color dialog on the screen.  If you're trying instead to
+customize the dialog in some way (in your initialization file, for example), you want the
+dialog to be created (so that the various widget children exist), but don't want it to pop
+up on the screen (be 'managed' in X jargon). So, most of the dialog functions have a <i>managed</i> argument
+that defaults to #t.  If #f, the dialog is created, if need be, but not started.
+<b>install-searcher</b> in snd-motif.scm, which adds customized file filtering code
+to the File:Open dialog, first makes sure the dialog exists with <code>(open-file-dialog #f)</code>.
+</p>
+
+
 <!-- -------------------------------- DIALOG TABLE -------------------------------- -->
 <table border=0 cellspacing=10>
 
@@ -8953,7 +8979,92 @@ click its button.
 </td></tr>
 </table>
 
-<hr>
+<!-- INDEX somedialogs:Dialogs -->
+<p>
+<A NAME="somedialogs"></a>
+Here is a partial list of the dialogs scattered around Snd.
+</p>
+
+<table border=3 bordercolor="tan" hspace=20 cellspacing=1 cellpadding=1 style='font-size:small' rules=groups>
+<tbody>
+<tr><td width=10></td><td colspan=4></td><td width=10></td></tr>
+<tr><td></td><td colspan=2>Open file</td><td>File:<a href="snd.html#openfile">Open</a> and File:View</td>
+    <td><a href="#openfiledialog">open-file-dialog</a>, <a href="#openhook">open-hook</a>, <a href="#opensound">open-sound</a></td><td></td></tr>
+  <tr><td></td><td width=40></td><td><a href="sndscm.html#installsearcher">install-searcher</a></td>
+      <td colspan=2>Add colors and a filter to file menu</td><td></td></tr>
+  <tr><td></td><td></td><td><a href="sndscm.html#keepfiledialogopenuponok">keep-file-dialog-open-upon-ok</a></td>
+      <td colspan=2>don't close Open dialog upon "ok"</td><td></td></tr>
+  <tr><td></td><td></td><td><a href="sndscm.html#selectfile">select-file</a></td>
+      <td colspan=2>add a custom file dialog to File menu</td><td></td></tr>
+
+<tr><td></td><td colspan=2>Save sound</td><td>File:<a href="snd.html#savefile">Save as</a></td>
+    <td><a href="#savesounddialog">save-sound-dialog</a>, <a href="#savehook">save-hook</a>, <a href="#savesoundas">save-sound-as</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Mix sound</td><td>File:<a href="snd.html#mixingfiles">Mix</a></td>
+    <td><a href="#mix">mix</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Record</td><td>File:<a href="snd.html#recordfile">Record</a></td>
+    <td><a href="#recorderdialog">recorder-dialog</a>, <a href="#recorderfilehook">recorder-file-hook</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Create a new file</td><td>File:<a href="snd.html#newfile">New</a></td>
+    <td><a href="#newsoundhook">new-sound-hook</a>, <a href="#newsound">new-sound</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Print</td><td>File:<a href="snd.html#printfile">Print</a></td>
+    <td><a href="#printdialog">print-dialog</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Find globally</td><td>Edit:Find</td>
+    <td><a href="#finddialog">find-dialog</a>, <a href="#find">find</a></td><td></td></tr>
+  <tr><td></td><td></td><td>listener completions dialog</td><td></td><td></td><td></td></tr>
+  <tr><td></td><td></td><td><a href="sndscm.html#addfindtolistener">add-find-to-listener</a></td><td></td><td></td><td></td></tr>
+
+<tr><td></td><td colspan=2>Save selection</td><td>Edit:Save selection</td>
+    <td><a href="#saveselectiondialog">save-selection-dialog</a>, <a href="#saveselection">save-selection</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Edit envelope</td><td>Edit:<a href="snd.html#editenvelope">Envelope</a></td>
+    <td><a href="#enveddialog">enved-dialog</a>, <a href="#envedhook">enved-hook</a>, <a href="#defineenvelope">define-envelope</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Edit header</td><td>Edit:<a href="snd.html#editheader">Header</a></td>
+    <td><a href="#editheaderdialog">edit-header-dialog</a>, <a href="#badheaderhook">bad-header-hook</a></td><td></td></tr>
+  <tr><td></td><td></td><td>raw sound confirmation dialog</td><td></td><td></td><td></td></tr>
+  <tr><td></td><td></td><td>bogus header repair dialog</td><td></td><td></td><td></td></tr>
+
+<tr><td></td><td colspan=2>View mixes and tracks</td><td>View:<a href="snd.html#mixdialog">Mixes and View:Tracks</a></td>
+    <td><a href="#viewmixesdialog">view-mixes-dialog</a>, <a href="#viewtracksdialog">view-tracks-dialog</a></td><td></td></tr>
+<tr><td></td><td colspan=2>View regions</td><td>View:<a href="snd.html#regionbrowser">Regions</a></td>
+    <td><a href="#viewregionsdialog">view-regions-dialog</a></td><td></td></tr>
+<tr><td></td><td colspan=2>View previously loaded files</td><td>View:<a href="snd.html#prevfiles">Files</a></td>
+    <td><a href="#viewfilesdialog">view-files-dialog</a></td><td></td></tr>
+  <tr><td></td><td></td><td><a href="sndscm.html#nb">nb</a></td>
+      <td colspan=2>post info about each file as mouse passes over it</td><td></td></tr>
+  <tr><td></td><td></td><td><a href="sndscm.html#makesoundbox">make-sound-box</a></td>
+      <td colspan=2>show available sounds in a box full of icons</td><td></td></tr>
+
+<tr><td></td><td colspan=2>Spectrogram color scheme</td><td>View:<a href="snd.html#colorbrowser">Color</a></td>
+    <td><a href="#colordialog">color-dialog</a>, <a href="#colormap">colormap</a> and its friends</td><td></td></tr>
+<tr><td></td><td colspan=2>Spectrogram viewing angle</td><td>View:<a href="snd.html#orientationbrowser">Orientation</a></td>
+    <td><a href="#orientationdialog">orientation-dialog</a>, <a href="#spectroxangle">spectro-x-angle</a> and its friends</td><td></td></tr>
+<tr><td></td><td colspan=2>Errors</td><td>View:<a href="snd.html#errorhistory">Error history</a></td>
+    <td></td><td></td></tr>
+<tr><td></td><td colspan=2>FFT choices</td><td>Options:<a href="snd.html#viewfft">Transforms</a></td>
+    <td><a href="#transformdialog">transform-dialog</a>, <a href="#lfftsize">transform-size</a> and its friends</td><td></td></tr>
+<tr><td></td><td colspan=2>Help choices</td><td>Help:*</td>
+    <td><a href="#helpdialog">help-dialog</a>, <a href="#sndhelp">snd-help</a>, <a href="#helphook">help-hook</a></td><td></td></tr>
+
+<tr><td></td><td colspan=2>Effects choices</td><td>Effects:*</td>
+    <td><a href="sndscm.html#effectsdoc">effects menu</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Ladspa choices</td><td>Ladspa:*</td>
+    <td><a href="sndscm.html#ladspadoc">install-ladspa-menues</a>, <a href="#ladspadir">ladspa-dir</a>, <a href="grfsnd.html#applyladspa">apply-ladspa</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Rename or delete sound</td><td>File:Rename and File:Delete</td>
+    <td><a href="sndscm.html#adddeleteoption">add-rename-option</a>, <a href="sndscm.html#adddeleteoption">add-delete-option</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Demand a yes or no answer</td><td></td>
+    <td><a href="#yesornop">yes-or-no?</a></td><td></td></tr>
+<tr><td></td><td colspan=2>Font choice</td><td>View:Select font</td>
+    <td><a href="sndscm.html#makefontselectordialog">make-font-selector-dialog</a>, <a href="#axislabelfont">axis-label-font</a> and its friends</td><td></td></tr>
+<tr><td></td><td colspan=2>Color choice</td><td>View:Select file</td>
+    <td><a href="sndscm.html#makecolorselectordialog">make-color-selector-dialog</a>, <a href="#basiccolor">basic-color</a> and its friends</td><td></td></tr>
+<tr><td></td><td colspan=2>Access more controls</td><td>Options:More controls</td>
+    <td><a href="sndscm.html#makehiddencontrolsdialog">make-hidden-controls-dialog</a>, <a href="#expandcontrolramp">expand-control-ramp</a> and its friends</td><td></td></tr>
+<tr><td></td><td colspan=2>Realtime FM violin controls</td><td></td>
+    <td><a href="sndscm.html#createfmvdialog">create-fmv-dialog</a>, the <a href="sndscm.html#vdoc">fm-violin</a></td><td></td></tr>
+<tr><td></td><td colspan=2>with-sound variable display</td><td></td>
+    <td><a href="sndscm.html#makevariabledisplay">make-variable-display</a></td><td></td></tr>
+<tr><td colspan=6></td></tr>
+</tbody>
+</table>
+
 <p>The main menus can be extended, and new menus added with the following functions:</p>
 
 <!-- -------------------------------- MENU TABLE -------------------------------- -->

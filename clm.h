@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 42
-#define MUS_DATE "26-Mar-04"
+#define MUS_REVISION 43
+#define MUS_DATE "12-Apr-04"
 
-/* 
+/*
+ * 12-Apr:     mus_average, mus_average_p, mus_make_average.
  * 17-Mar:     edit function added to mus_granulate.
  *             replaced MUS_DATA_POSITION with MUS_DATA_WRAPPER.
  * 22-Jan:     various "environ" variables renamed for Windows' benefit.
@@ -295,6 +296,10 @@ Float mus_all_pass(mus_any *gen, Float input, Float pm);
 Float mus_all_pass_1(mus_any *gen, Float input);
 mus_any *mus_make_all_pass(Float backward, Float forward, int size, Float *line, int line_size);
 bool mus_all_pass_p(mus_any *ptr);
+
+mus_any *mus_make_average(int size, Float *line);
+bool mus_average_p(mus_any *ptr);
+Float mus_average(mus_any *ptr, Float input);
 
 #define mus_feedforward(Gen) mus_scaler(Gen)
 #define mus_set_feedforward(Gen, Val) mus_set_scaler(Gen, Val)

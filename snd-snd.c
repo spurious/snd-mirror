@@ -1724,7 +1724,7 @@ Cessate apply_controls(Indicium ptr)
 		      if (apply_tick > APPLY_TICKS)
 			{
 			  apply_tick = 0;
-			  progress_report(sp, "apply-controls", 1, 1, (double)(ap->i) / (double)apply_dur, NOT_FROM_ENVED);
+			  progress_report(sp, "apply controls", 1, 1, (double)(ap->i) / (double)apply_dur, NOT_FROM_ENVED);
 			}
 		    }
 		}
@@ -1946,7 +1946,7 @@ static XEN g_select_channel(XEN chn_n)
       select_channel(sp, chan);
       return(chn_n);
     }
-  return(snd_no_such_channel_error(S_select_channel, C_TO_XEN_STRING("selected-sound"), chn_n));
+  return(snd_no_such_channel_error(S_select_channel, C_TO_XEN_STRING(S_selected_sound), chn_n));
 }
 
 static XEN g_find_sound(XEN filename, XEN which)
@@ -3142,7 +3142,7 @@ open file assuming the data matches the attributes indicated unless the file act
 static XEN g_view_sound(XEN filename)
 {
   #define H_view_sound "(" S_view_sound " filename): open a file in read-only mode. \
-You can subsequently make it writable by (set! (read-only) #f)."
+You can subsequently make it writable by (set! (" S_read_only ") #f)."
   char *fname = NULL;
   snd_info *sp = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_view_sound, "a string");
@@ -4701,7 +4701,7 @@ void g_init_snd(void)
   #define H_name_click_hook S_name_click_hook " (snd): called when sound name clicked. \
 If it returns #t, the usual informative minibuffer babbling is squelched."
 
-  #define H_before_apply_hook S_before_apply_hook " (snd): called when 'Apply' is clicked or apply-controls called. \
+  #define H_before_apply_hook S_before_apply_hook " (snd): called when 'Apply' is clicked or " S_apply_controls " is called. \
 If it returns #t, the apply is aborted."
 
   #define H_after_apply_hook S_after_apply_hook " (snd): called when 'Apply' finishes."

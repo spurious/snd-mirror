@@ -261,7 +261,7 @@ static void loadLADSPA() {
     {
       pcLADSPAPath = getenv("LADSPA_PATH");
       if (pcLADSPAPath == NULL) {
-	snd_warning(_("Warning: You have not set ladspa-dir or the environment variable LADSPA_PATH."));
+	snd_warning(_("Warning: You have not set " S_ladspa_dir " or the environment variable LADSPA_PATH."));
 	return;
       }
     }
@@ -531,9 +531,9 @@ static XEN g_apply_ladspa(XEN reader,
 sound. The parameters are soundfile-reader, a ladspa-plugin-configuration, \
 the number of samples to process, and an `origin' for edit lists. The \
 ladspa-plugin-configuration is a list containing the plugin-file and \
-plugin-label for the LADSPA plugin, as provided by list-ladspa, followed \
+plugin-label for the LADSPA plugin, as provided by " S_list_ladspa ", followed \
 by any arguments. The reader argument can also be a list of readers. \
-Information about about parameters can be acquired using analyse-ladspa."
+Information about about parameters can be acquired using " S_analyse_ladspa "."
 
   const LADSPA_Descriptor *psDescriptor;
   char *pcFilename, *pcLabel, *pcTmp;

@@ -784,7 +784,7 @@ char *g_print_1(XEN obj) /* free return val */
   XEN str, val;
   XEN port;
   str = scm_makstr (0, 0);
-  port = scm_mkstrport (XEN_ZERO, str, SCM_OPN | SCM_WRTNG, "snd-print");
+  port = scm_mkstrport (XEN_ZERO, str, SCM_OPN | SCM_WRTNG, S_snd_print);
   scm_prin1(obj, port, 1);
   val = XEN_PORT_TO_STRING(port);
   XEN_CLOSE_PORT(port);
@@ -1105,8 +1105,9 @@ bool listener_print_p(char *msg)
 static XEN g_region_graph_style(void) {return(C_TO_XEN_INT(region_graph_style(ss)));}
 static XEN g_set_region_graph_style(XEN val) 
 {
-  #define H_region_graph_style "(" S_region_graph_style "): graph-style of the region dialog graph. \
-The region-graph-style choices are graph-lines, graph-dots, graph-filled, graph-lollipops, and graph-dots-and-lines."
+  #define H_region_graph_style "(" S_region_graph_style "): graph style of the region dialog graph. \
+The " S_region_graph_style " choices are " S_graph_lines ", " S_graph_dots ", " S_graph_filled ", " S_graph_lollipops ", \
+and " S_graph_dots_and_lines "."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_region_graph_style, "an integer");
   set_region_graph_style((graph_style_t)XEN_TO_C_INT(val));
   reflect_region_graph_style();
@@ -1117,7 +1118,7 @@ static XEN g_ask_before_overwrite(void) {return(C_TO_XEN_BOOLEAN(ask_before_over
 static XEN g_set_ask_before_overwrite(XEN val) 
 {
   #define H_ask_before_overwrite "(" S_ask_before_overwrite "): #t if you want Snd to ask before overwriting a file. \
-If #f, any existing file of the same name will be overwritten without warning when you save or save-as."
+If #f, any existing file of the same name will be overwritten without warning when you save a sound."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_ask_before_overwrite, "a boolean");
   set_ask_before_overwrite(XEN_TO_C_BOOLEAN(val)); 
   return(C_TO_XEN_BOOLEAN(ask_before_overwrite(ss)));
@@ -1126,7 +1127,7 @@ If #f, any existing file of the same name will be overwritten without warning wh
 static XEN g_audio_output_device(void) {return(C_TO_XEN_INT(audio_output_device(ss)));}
 static XEN g_set_audio_output_device(XEN val) 
 {
-  #define H_audio_output_device "(" S_audio_output_device "): the current sndlib default output device (mus-audio-default)"
+  #define H_audio_output_device "(" S_audio_output_device "): the current sndlib default output device (" S_mus_audio_default ")"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_audio_output_device, "an integer"); 
   set_audio_output_device(XEN_TO_C_INT(val)); 
   return(C_TO_XEN_INT(audio_output_device(ss)));
@@ -1135,7 +1136,7 @@ static XEN g_set_audio_output_device(XEN val)
 static XEN g_audio_input_device(void) {return(C_TO_XEN_INT(audio_input_device(ss)));}
 static XEN g_set_audio_input_device(XEN val) 
 {
-  #define H_audio_input_device "(" S_audio_input_device "): the current sndlib default input device (mus-audio-default)"
+  #define H_audio_input_device "(" S_audio_input_device "): the current sndlib default input device (" S_mus_audio_default ")"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_audio_input_device, "an integer"); 
   set_audio_input_device(XEN_TO_C_INT(val)); 
   return(C_TO_XEN_INT(audio_input_device(ss)));
@@ -3348,5 +3349,4 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   scm_c_use_module("snd sndlib");
   scm_c_use_module("snd clm");
 #endif
-
 }

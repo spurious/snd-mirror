@@ -402,7 +402,7 @@ static XEN g_make_graph_data(XEN snd, XEN chn, XEN edpos, XEN lo, XEN hi)
 {
   #define H_make_graph_data "(" S_make_graph_data " (snd #f) (chn #f) (edpos #f) (low #f) (high #f)): \
 return either a vct (if the graph has one trace), or a list of two vcts (the two sides of the envelope graph). \
-'edpos' defaults to the current-edit-position, 'low' defaults to the current window left sample, and \
+'edpos' defaults to the " S_current_edit_position ", 'low' defaults to the current window left sample, and \
 'high' defaults to the current rightmost sample. (graph-data (make-graph-data)) reimplements the time domain graph."
 
   chan_info *cp;
@@ -419,7 +419,7 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
 static XEN g_graph_data(XEN data, XEN snd, XEN chn, XEN ax, XEN lo, XEN hi, XEN style)
 {
   #define H_graph_data "(" S_graph_data " data (snd #f) (chn #f) (context #f) (low #f) (high #f) (graph-style #f)): \
-display 'data' in the time domain graph of snd's channel chn using the graphics context context (normally copy-context), placing the \
+display 'data' in the time domain graph of snd's channel chn using the graphics context context (normally " S_copy_context "), placing the \
 data in the recipient's graph between points low and high in the drawing mode graphic-style."
 
   chan_info *cp;
@@ -495,10 +495,11 @@ static void check_dialog_widget_table(void)
 static XEN g_dialog_widgets(void)
 {
   #define H_dialog_widgets "(" S_dialog_widgets "): dialog widgets (each #f if not yet created): (list \
-(0)color (1)orientation (2)enved (3)error (4)yes_or_no (5)transform \
-(6)file_open (7)file_save_as (8)view_files (9)raw_data (10)new_file \
-(11)file_mix (12)edit_header (13)find (14)help (15)completion (16)mix_dialog \
-(17)print (18)recorder (19)region, (20)info, (21)track_dialog"
+(0 " S_color_dialog ") (1 " S_orientation_dialog ") (2 " S_enved_dialog ") (3 " S_snd_error ") (4 " S_yes_or_no_p ") (5 " S_transform_dialog ") \
+(6 " S_open_file_dialog ") (7 " S_save_sound_dialog ") (8 " S_view_files_dialog ") (9 raw data dialog) (10 new file dialog) \
+(11 " S_mix_file_dialog ") (12 " S_edit_header_dialog ") (13 " S_find_dialog ") (14 " S_help_dialog ") (15 listener completion) \
+(16 " S_view_mixes_dialog ") (17 " S_print_dialog ") (18 " S_recorder_dialog ") (19 " S_view_regions_dialog ") \
+(20 " S_info_dialog ") (21 " S_view_tracks_dialog "))"
 
   check_dialog_widget_table();
   return(XEN_VECTOR_TO_LIST(dialog_widgets));
@@ -731,9 +732,9 @@ static XEN g_focus_widget(XEN wid)
 
 static XEN g_snd_gcs(void)
 {
-  #define H_snd_gcs "(" S_snd_gcs "): a list of Snd graphics contexts (basic selected_basic combined \
-cursor selected_cursor selection selected_selection erase selected_erase mark selected_mark mix \
-fltenv_basic fltenv_data)"
+  #define H_snd_gcs "(" S_snd_gcs "): a list of Snd graphics contexts (list (0 basic) (1 selected_basic) (2 combined) \
+(3 cursor) (4 selected_cursor) (5 selection) (6 selected_selection) (7 erase) (8 selected_erase) (9 mark) (10 selected_mark) (11 mix) \
+(12 fltenv_basic) (13 fltenv_data))"
 
   state_context *sx;
   sx = ss->sgx;

@@ -11,6 +11,7 @@
 
 /* HISTORY: 
  *
+ *   12-Apr:    XmDropDown.
  *   7-Apr:     XmButtonBox.
  *   22-Mar:    added feature 'Xp to indicate that the Xp stuff is included.
  *   8-Mar:     XtAppAddActionHook arity bugfix.
@@ -5166,13 +5167,60 @@ static XEN gxm_XmIsButtonBox(XEN arg)
 #ifndef XmIsDataField
 #define XmIsDatField(w) (XtIsSubclass(w, xmDataFieldWidgetClass))
 #endif
-#ifndef XmIsDropDown
-#define XmIsDropDown(w) (XtIsSubclass(w, xmDropDownWidgetClass))
-#endif
 #ifndef XmIsMultiList
 #define XmIsMultiList(w) (XtIsSubclass(w, xmMultiListWidgetClass))
 #endif
 
+#endif
+
+#if HAVE_XmCreateDropDown
+#include <Xm/DropDown.h>
+static XEN gxm_XmCreateDropDown(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_XmCreateDropDown "Widget XmCreateDropDown(Widget parent, String name, ArgList arglist, Cardinal argcount) \
+The DropDown widget creation function"
+  return(gxm_new_widget("XmCreateDropDown", XmCreateDropDown, arg1, arg2, arg3, arg4));
+}
+
+#ifndef XmIsDropDown
+#define XmIsDropDown(w) (XtIsSubclass(w, xmDropDownWidgetClass))
+#endif
+
+static XEN gxm_XmIsDropDown(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDropDown", "Widget");
+  return(C_TO_XEN_BOOLEAN(XmIsDropDown(XEN_TO_C_Widget(arg))));
+}
+
+static XEN gxm_XmDropDownGetValue(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDropDownGetValue", "Widget");
+  return(C_TO_XEN_STRING((char *)XmDropDownGetValue(XEN_TO_C_Widget(arg))));
+}
+
+static XEN gxm_XmDropDownGetText(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDropDownGetText", "Widget");
+  return(C_TO_XEN_Widget(XmDropDownGetText(XEN_TO_C_Widget(arg))));
+}
+
+static XEN gxm_XmDropDownGetLabel(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDropDownGetLabel", "Widget");
+  return(C_TO_XEN_Widget(XmDropDownGetLabel(XEN_TO_C_Widget(arg))));
+}
+
+static XEN gxm_XmDropDownGetArrow(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDropDownGetArrow", "Widget");
+  return(C_TO_XEN_Widget(XmDropDownGetArrow(XEN_TO_C_Widget(arg))));
+}
+
+static XEN gxm_XmDropDownGetList(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDropDownGetList", "Widget");
+  return(C_TO_XEN_Widget(XmDropDownGetList(XEN_TO_C_Widget(arg))));
+}
 #endif
 
 #if HAVE_XmCreateFontSelector
@@ -18972,6 +19020,14 @@ static void define_procedures(void)
 #if HAVE_XmCreateButtonBox
   XM_DEFINE_PROCEDURE(XmCreateButtonBox, gxm_XmCreateButtonBox, 3, 1, 0, H_XmCreateButtonBox);
 #endif
+#if HAVE_XmCreateDropDown
+  XM_DEFINE_PROCEDURE(XmCreateDropDown, gxm_XmCreateDropDown, 3, 1, 0, H_XmCreateDropDown);
+  XM_DEFINE_PROCEDURE(XmDropDownGetValue, gxm_XmDropDownGetValue, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDropDownGetList, gxm_XmDropDownGetList, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDropDownGetText, gxm_XmDropDownGetText, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDropDownGetArrow, gxm_XmDropDownGetArrow, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDropDownGetLabel, gxm_XmDropDownGetLabel, 1, 0, 0, NULL);
+#endif
 #if HAVE_XmCreateFontSelector
   XM_DEFINE_PROCEDURE(XmCreateFontSelector, gxm_XmCreateFontSelector, 3, 1, 0, H_XmCreateFontSelector);
 #endif
@@ -19189,6 +19245,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmListGetSelectedPos, gxm_XmListGetSelectedPos, 1, 0, 0, H_XmListGetSelectedPos);
 #if HAVE_XmCreateButtonBox
   XM_DEFINE_PROCEDURE(XmIsButtonBox, gxm_XmIsButtonBox, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateDropDown
+  XM_DEFINE_PROCEDURE(XmIsDropDown, gxm_XmIsDropDown, 1, 0, 0, NULL);
 #endif
 
 #if (!XM_DISABLE_DEPRECATED)
@@ -25898,12 +25957,14 @@ static void define_pointers(void)
   /*
   DEFINE_POINTER(xmColumnWidgetClass);
   DEFINE_POINTER(xmDataFieldWidgetClass);
-  DEFINE_POINTER(xmDropDownWidgetClass);
   DEFINE_POINTER(xmMultiListWidgetClass);
   DEFINE_POINTER(xmHierarchyWidgetClass);
   DEFINE_POINTER(xmTabBoxWidgetClass);
   DEFINE_POINTER(xmTabStackWidgetClass);
   */
+#endif
+#if HAVE_XmCreateDropDown
+  DEFINE_POINTER(xmDropDownWidgetClass);
 #endif
 #if HAVE_XmCreateFontSelector
   DEFINE_POINTER(xmFontSelectorWidgetClass);
@@ -26093,7 +26154,7 @@ static bool xm_already_inited = false;
 /* end HAVE_EXTENSION_LANGUAGE */
 
 
-/* SOMEDAY: Motif 2.2.3: MultiList, DropDown, DataField,  Hierarchy, Paned, TabBox, TabStack, Column, 
+/* SOMEDAY: Motif 2.2.3: MultiList, DataField,  Hierarchy, Paned, TabBox, TabStack, Column, 
 
          resource names:
 	 XmNbadActionParameters
@@ -26169,12 +26230,6 @@ static bool xm_already_inited = false;
 	 Boolean XmDataFieldPaste(Widget);
 	 void XmDataFieldSetEditable(Widget, Boolean);
 	 void XmDataFieldSetInsertionPosition(Widget, XmTextPosition);
-	 XmDropDownGetValue(w)
-	 XmCreateDropDown(w,name,args,args_count)
-	 XmDropDownGetLabel(w)
-	 XmDropDownGetArrow(w)
-	 XmDropDownGetText(w)
-	 XmDropDownGetList(w)
 	 void XmHierarchyOpenAllAncestors(Widget);
 	 WidgetList XmHierarchyGetChildNodes(Widget);
 	 XmMultiListGetSelectedRows(w)

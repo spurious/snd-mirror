@@ -55,6 +55,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE2SAMPLE, MUS_FILE2FRAME,
       MUS_SAMPLE2FILE, MUS_FRAME2FILE, MUS_MIXER, MUS_PHASE_VOCODER,
+      MUS_AVERAGE,
       MUS_INITIAL_GEN_TAG};
 
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
@@ -873,7 +874,10 @@ mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
 }
 
 
-/* ---------------- delay, comb, notch, all-pass ---------------- */
+/* TODO: add mus_running_average (sum of last n samples) based on (non-z)delay, also mus_running_squared_average (sum of squared samples) */
+/* TODO: example here using smoother and rms gain stuff */
+
+/* ---------------- delay, comb, notch, all-pass, average ---------------- */
 
 typedef struct {
   mus_any_class *core;
@@ -1036,6 +1040,18 @@ static char *describe_all_pass(mus_any *ptr)
 		    "all_pass: feedback: %.3f, feedforward: %.3f, line[%d]:%s",
 		    gen->yscl, gen->xscl, gen->size, 
 		    str = print_array(gen->line, gen->size, gen->loc));
+  if (str) FREE(str);
+  return(describe_buffer);
+}
+
+static char *describe_average(mus_any *ptr)
+{
+  char *str = NULL;
+  dly *gen = (dly *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+	       "average: %.3f, line[%d]:%s",
+	       gen->xscl * gen->xscl, gen->size, 
+	       str = print_array(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -1291,6 +1307,56 @@ mus_any *mus_make_all_pass (Float backward, Float forward, int size, Float *line
       gen->core = &ALL_PASS_CLASS;
       gen->xscl = forward;
       gen->yscl = backward;
+      return((mus_any *)gen);
+    }
+  return(NULL);
+}
+
+
+bool mus_average_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_AVERAGE));}
+
+Float mus_average(mus_any *ptr, Float input)
+{
+  dly *gen = (dly *)ptr;
+  Float output;
+  output = mus_delay_1(ptr, input);
+  gen->xscl += (input - output);
+  return(gen->xscl * gen->yscl); /* xscl=sum, yscl=1/n */
+}
+
+static Float run_mus_average(mus_any *ptr, Float input, Float unused) {return(mus_average(ptr, input));}
+
+static mus_any_class AVERAGE_CLASS = {
+  MUS_AVERAGE,
+  "average",
+  &free_delay,
+  &describe_average,
+  &inspect_delay,
+  &delay_equalp,
+  &delay_data,
+  &delay_set_data,
+  &delay_length,
+  &set_delay_length,
+  0, 0, 0, 0, 0, 0, /* freq phase scaler */
+  0, 0,
+  &run_mus_average,
+  MUS_DELAY_LINE,
+  NULL, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0
+};
+
+mus_any *mus_make_average(int size, Float *line)
+{
+  dly *gen;
+  gen = (dly *)mus_make_delay(size, line, size);
+  if (gen)
+    {
+      int i;
+      gen->core = &AVERAGE_CLASS;
+      gen->xscl = 0.0;
+      for (i = 0; i < size; i++) gen->xscl += gen->line[i];
+      gen->yscl = 1.0 / (Float)size;
       return((mus_any *)gen);
     }
   return(NULL);
@@ -2696,6 +2762,15 @@ Float mus_filter(mus_any *ptr, Float input)
   return(xout + (gen->state[0] * gen->x[0]));
 }
 
+/* in the common low-order symmetrical coeffs case, we can speed fir_filter
+   up by about 40% by gathering the same-coeff cases before the multiply,
+   but in the current context, the coeffs can change at any time,
+   and I'd rather not slow down the basic case (via a check in the make
+   function and a (*run) specialization) to try to automate it;
+   the extra cases could be handled explicitly by the user, but that
+   goes against all the other such cases, where the optimizations
+   are handled internally (snd-run for example).
+*/
 Float mus_fir_filter(mus_any *ptr, Float input)
 {
   Float xout;

@@ -1574,6 +1574,7 @@ convenient if they were in one file.
   <a class=def name="envexptchannel">env-expt-channel</a> env exponent #:optional (symmetric #t) beg dur snd chn edpos
 
   <a class=def name="offsetchannel">offset-channel</a> amount #:optional beg dur snd chn edpos	
+  <a class=def name="ditherchannel">dither-channel</a> #:optional (amount .00006) beg dur snd chn edpos	
   <a class=def name="contrastchannel">contrast-channel</a> index #:optional beg dur snd chn edpos
   <a class=def name="channelsequal">channels-equal?</a> snd1 chn1 snd2 chn2 allowable-difference	
   <a class=def name="channels=">channels=?</a> snd1 chn1 snd2 chn2 allowable-difference	
@@ -1698,6 +1699,7 @@ start point in the file, and (optionally) the channel of the file to mix:
 <p><b>redo-channel</b> and <b>undo-channel</b> are regularized versions of
 <a href="extsnd.html#redo">redo</a> and <a href="extsnd.html#undo">undo</a>.
 <b>offset-channel</b> adds a constant to a sound, using <a href="extsnd.html#ptreechannel">ptree-channel</a>.
+<b>dither-channel</b> adds "dithering" (noise) which supposedly makes everything copacetic.
 <b>contrast-channel</b> is the CLM <a href="clm.html#contrast-enhancement">contrast-enhancement</a> function,
 equivalent to the control panel Contrast slider.
 <b>channels=?</b> returns #t is the two specified channels are the same within the
@@ -2158,7 +2160,7 @@ its database procedures to associate arbitrary information with files which
 will be posted along with the header info:
 </p>
 <pre>
-  <em class=emdef>nb</em> file note
+  <a class=def NAME="nb">nb</a> file note
   <em class=emdef>unb</em> file
   <em class=emdef>prune-db</em>
 </pre>
@@ -2587,23 +2589,23 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
 <A NAME="sndmotifdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-motif.scm</h2></td></tr></table>
 
 <pre>
-  <em class=emdef>install-searcher</em> proc
+  <A class=def NAME="installsearcher">install-searcher</a> proc
   <em class=emdef>zync</em> 
   <a class=def name="foreachchild">for-each-child</a> w func
   <a class=def NAME="makehiddencontrolsdialog">make-hidden-controls-dialog</a> 
-  <em class=emdef>create-fmv-dialog</em> 
+  <A class=def NAME="createfmvdialog">create-fmv-dialog</A> 
   <em class=emdef>make-pixmap</em> strs
   <em class=emdef>display-scanned-synthesis</em> 
   <A class=def NAME="disablecontrolpanel">disable-control-panel</a> 
   <a class=def name="addmarkpane">add-mark-pane</a> 
-  <em class=emdef>select-file</em> func <i>title dir filter help</i>
+  <A class=def NAME="selectfile">select-file</a> func <i>title dir filter help</i>
   <em class=emdef>snd-clock-icon</em> snd hour
   <a class=def name="makesoundbox">make-sound-box</a> name parent select-func peak-func sounds args
   <em class=emdef>show-sounds-in-directory</em> (dir ".")
   <a class=def name="showsmptelabel">show-smpte-label</a> on-or-off
   <em class=emdef>make-level-meter</em> parent width height
   <em class=emdef>show-disk-space</em>
-  <em class=emdef>keep-file-dialog-open-upon-ok</em>
+  <A class=def NAME="keepfiledialogopenuponok">keep-file-dialog-open-upon-ok</a>
   <A class=def NAME="usepanmixinmixmenu">use-pan-mix-in-mix-menu</a>
   <a class=def name="addampcontrols">add-amp-controls</a>
   <em class=emdef>add-very-useful-icons</em>
@@ -2616,7 +2618,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=emdef>set-channel-drop</em> drop snd chn
   <em class=emdef>show-font-name</em> font
   <em class=emdef>show-widget-font</em>
-  <em class=emdef>add-find-to-listener</em>
+  <A class=def NAME="addfindtolistener">add-find-to-listener</a>
   <A class=def NAME="uponsaveyourself">upon-save-yourself, upon-take-focus</a>
   <em class=emdef>add-text-to-status-area</em>
   <a class=def name="makevariabledisplay">make-variable-display</a> page-name variable-name (type 'text) (range (list 0.0 1.0))
@@ -2624,6 +2626,8 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=emdef>with-minmax-button</em>
   <em class=emdef>set-root-window-color</em> color
   <em class=emdef>notebook-with-top-tabs</em>
+  <A class=def NAME="makefontselectordialog">make-font-selector-dialog</A>
+  <A class=def NAME="makecolorselectordialog">make-color-selector-dialog</A>
 </pre>
 <!-- INDEX variabledisplay:Debugging (instruments) -->
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).

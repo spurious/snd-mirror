@@ -609,7 +609,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	  cp0->edit_hook_checked = false;
 	  cp1->edit_hook_checked = false;
 	  free_file_info(hdr0);
-	  snd_error(_("can't open swap-channels temp file %s: %s\n"), ofile0, strerror(errno));
+	  snd_error(_("can't open " S_swap_channels " temp file %s: %s\n"), ofile0, strerror(errno));
 	  return;
 	}
       datumb = mus_bytes_per_sample(hdr0->format);
@@ -624,7 +624,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	  free_file_info(hdr0);
 	  free_file_info(hdr1);
 	  if (ofile0) FREE(ofile0);
-	  snd_error(_("can't open swap-channels temp file %s: %s\n"), ofile1, strerror(errno));
+	  snd_error(_("can't open " S_swap_channels " temp file %s: %s\n"), ofile1, strerror(errno));
 	  return;
 	}
     }
@@ -1125,7 +1125,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   if ((beg < 0) || ((dur + overlap) <= 0)) return(NULL);
   sp = cp->sound;
   if (!(MUS_RUN_P(gen)))
-    return(mus_format(_("clm-channel: %s can't handle %s generators"),
+    return(mus_format(_(S_clm_channel ": %s can't handle %s generators"),
 		      caller,
 		      mus_name(gen)));
   if (!(editable_p(cp))) return(NULL);
@@ -4217,7 +4217,7 @@ sampling-rate convert the currently selected data by ratio (which can be an enve
 static XEN g_filter_channel(XEN e, XEN order, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN truncate)
 {
   #define H_filter_channel "(" S_filter_channel " env order beg dur snd chn edpos (truncate #t)): \
-the regularized version of filter-sound"
+the regularized version of " S_filter_sound
   chan_info *cp;
   char *errstr = NULL;
   bool truncate_1 = true;

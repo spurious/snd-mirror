@@ -2621,7 +2621,7 @@ static XEN g_previous_files_sort(void) {return(C_TO_XEN_INT(previous_files_sort(
 static XEN g_set_previous_files_sort(XEN val) 
 {
   #define H_previous_files_sort "(" S_previous_files_sort "): sort choice in view files (0 = unsorted, 1 = by name, \
-2 = by write date, 3 = by size, 4 = by directory order, 5 = by previous-files-sort-procedure."
+2 = by write date, 3 = by size, 4 = by directory order, 5 = by " S_previous_files_sort_procedure "."
 
   int choice;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_previous_files_sort, "an integer"); 
@@ -2694,8 +2694,8 @@ If it returns #t, the file is not opened."
   #define H_close_hook S_close_hook " (snd): called each time a file is closed (before the close). \
 If it returns #t, the file is not closed."
 
-  #define H_just_sounds_hook S_just_sounds_hook " (filename): called on each file (after the sound file extension check) if the \
-just-sounds button is set. Return #f to filter out filename. "
+  #define H_just_sounds_hook S_just_sounds_hook " (filename): called on each file (after the sound file extension check) if \
+the " S_just_sounds " button is set. Return #f to filter out filename. "
 
   #define H_bad_header_hook S_bad_header_hook " (filename): called if a file has some bogus-looking header. \
 Return #t to give up on that file."
@@ -2713,8 +2713,8 @@ be omitted (location defaults to 0, and length defaults to the file length in by
 
   XEN_DEFINE_HOOK(open_raw_sound_hook, S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
 
-  #define H_update_hook S_update_hook " (snd): called just before update-sound is called. \
-The update process can  be triggered by a variety of situations, not just by update-sound. \
+  #define H_update_hook S_update_hook " (snd): called just before " S_update_sound " is called. \
+The update process can  be triggered by a variety of situations, not just by " S_update_sound ". \
 The hook is passed the sound's index.  If it returns #t, the update is cancelled (this is not \
 recommended!); if it returns a procedure of one argument, that procedure is called upon \
 completion of the update operation; its argument is the (possibly different) sound index. \
