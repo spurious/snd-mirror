@@ -1,7 +1,9 @@
 
 ;;; Functions to help making various gui-things more convenient and without
 ;;; worrying about whether we use gtk or motif. (see ladspa.scm and snd_conffile.scm for examples of use)
-;;; -KSM.
+;;; -Kjetil S. Matheussen.
+
+
 
 
 (use-modules (ice-9 optargs)
@@ -9,16 +11,26 @@
 	     (srfi srfi-1))
 
 
+;;(use-modules (oop goops))
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; OO  (Goops/cloos syntax is so ugly.)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(if #f
-    (begin
-      (use-modules (oop goops))
-      (define instance?-old instance?)
-      (define define-class-old define-class)
-      (define define-method-old define-method)))
+
+(define instance?-old #f)
+(define define-class-old #f)
+(define define-method-old #f)
+
+(if (defined? 'instance?)
+    (set! instance?-old instance?))
+(if (defined? 'define-class)
+    (set! define-class-old define-class))
+(if (defined? 'define-method)
+    (set! define-method-old define-method))
+
 
 
 
@@ -26,14 +38,14 @@
   (if (and #f (symbol? def))
       `(define-class-old ,def ,@body)
       `(define* ,def
-	 (letrec ((methods (make-hash-table 256))
-		  (supers '())
-		  (super #f)
-		  (add-method-do (lambda (name func)
-				   (hashq-set! methods name func))))
+	 (let* ((methods (make-hash-table 256))
+		(supers '())
+		(super #f)
+		(add-method-do (lambda (name func)
+				 (hashq-set! methods name func))))
 	   (var class-name ',(car def))
 	   (define-method (dir)
-	     (append (cons class-name
+	     (append (cons this->class-name
 			   (hash-fold (lambda (key value s) (cons key s)) '() 
 				      methods))
 		     (map (lambda (super) (-> super dir))
@@ -42,12 +54,12 @@
 	     (or (hashq-ref methods name)
 		 (any (lambda (super) (-> super get-method name))
 		      supers)))
-	   (define-method (instance? dasclass-name)
-	     (or (eq? dasclass-name class-name)
-		 (any (lambda (super) (-> super instance? dasclass-name))
+	   (define-method (instance? class-name)
+	     (or (eq? class-name this->class-name)
+		 (any (lambda (super) (-> super instance? class-name))
 		      supers)))
 	   (define (this m . rest)
-	     (let ((func (get-method m)))
+	     (let ((func (this->get-method m)))
 	       (if func
 		   (apply func rest)
 		   (format #t "No such method: \"~A\" in class \"~A\".\n" m ',(car def)))))
@@ -61,19 +73,19 @@
   `(add-method-do ',(car nameandvars) (lambda* ,(cdr nameandvars) ,@body)))
 
 (define-macro (define-method nameandvars . body)
-  `(define ,(car nameandvars)
+  `(define ,(symbol-append 'this-> (car nameandvars))
      (add-method ,nameandvars ,@body)))
 
 (define-macro (define-method* nameandvars . body)
-  `(define ,(car nameandvars)
+  `(define ,(symbol-append 'this-> (car nameandvars))
      (add-method* ,nameandvars ,@body)))
 
 (define-macro (var name initial)
-  `(define ,name
+  `(define ,(symbol-append 'this-> name)
      (let ((inited #f))
        (if (not inited)
 	   (begin
-	     (add-method* (,name #:optional newval) (if newval (set! ,name newval) ,name))
+	     (add-method (,name . rest) (if (null? rest) ,(symbol-append 'this-> name) (set! ,(symbol-append 'this-> name) (car rest))))
 	     (set! inited #t)))
        ,initial)))
 
@@ -81,7 +93,7 @@
   (and (procedure? o)
        (catch #t
 	      (lambda ()
-		(eq? (-> o instance? (-> o class-name))))
+		(-> o instance? (-> o class-name)))
 	      (lambda (key . args)
 		#f))))
 
@@ -106,48 +118,144 @@
 
 
 #!
-(define-class (<initial> sum)
+(define-class (<super1> sum)
   (var avar 2)
-  (define-method (initial)
-    (display "Initial sum: ")(display sum)
+  (define-method (super1)
+    (display "super1 sum: ")(display sum)
     (newline)))
 
-(define-class (<initial2> sum)
-  (define-method (initial2)
-    (display "Initial sum2: ")(display sum)
+(define-class (<super2> sum)
+  (define-method (super2)
+    (display "super2 sum: ")(display sum)
     (newline)))
 
-(define-class (<bank> sum) (Super (<initial> sum) (<initial2> sum))
-  (define (print-sum)
+(define-class (<bank> sum) (Super (<super1> (+ 1000 sum)) (<super2> (+ 2000 sum)))
+  (define-method (print-sum)
     (display sum)(newline))
   (define-method (deposit x)
     (set! sum (+ sum x))
-    (print-sum))
+    (this->print-sum))
   (define-method (withdraw x)
     (set! sum (- sum x))
-    (print-sum)))
+    (this->print-sum)))
 
 (define b (<bank> 5))
+(begin b)
 (-> b deposit 3)
 (-> b withdraw 6)
 (define b->withdraw (<- b withdraw))
-(define b->withdraw (-> b get-method 'withdraw))
 (begin b->withdraw)
 (b->withdraw 7)
 (-> b class-name)
-(-> b initial)
-(-> b initial2)
+(-> b super1)
+(-> b super2)
 (-> b avar)
 (-> b avar 5)
 (-> b avar)
 (instance? b <bank>)
-(instance? b <initial>)
-(instance? b <initial2>)
+(instance? b <super1>)
+(instance? b <super2>)
 (instance? b <someother-class>)
 (-> b dir)
 (-> b nosuchmethod)
 !#
 
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Array 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class (<array> . rest)
+  (define dasarray (list->vector rest))
+
+  (define-method (get-vector)
+    dasarray)
+  (define-method (set-vector! v)
+    (set! dasarray v))
+  (define-method (get-list)
+    (vector->list dasarray))
+  (define-method (set-list! l)
+    (set! dasarray (list->vector l)))
+  (define-method (reset!)
+    (this->set-list! rest))
+  (define-method (set!! . rest)
+    (this->set-list! rest))
+  (define-method (set! . rest)
+    (let ((i 0))
+      (for-each (lambda (val)
+		  (vector-set! dasarray i val)
+		  (set! i (1+ i)))
+		rest)))
+  (define-method (for-each func)
+    (c-for 0 < (this->length) 1
+	   (lambda (n)
+	     (func n (vector-ref dasarray n)))))
+  (define-method (map! func)
+    (this->for-each (lambda (n el)
+		      (vector-set! dasarray n (func n el)))))
+  (define-method (map func)
+    (let* ((ret '(0))
+	   (tail ret))
+      (this->for-each (lambda (n el)
+			(let ((new (list (func n el))))
+			  (set-cdr! tail new)
+			  (set! tail new))))
+      (cdr ret)))
+  (define-method (length)
+    (vector-length dasarray))
+
+  ;; Need our own dispatcher.
+  (set! this 
+	(let ((oldthis this))
+	  (lambda (n . rest)
+	    (if (integer? n)
+		(if (null? rest)
+		    (vector-ref dasarray n)
+		    (vector-set! dasarray n (car rest)))
+		(apply oldthis (cons n rest)))))))
+
+
+;; Some additional constructors
+(define* (<array-length> len #:optional default)
+  (let ((array (<array>)))
+    (-> array set-vector! (make-vector len default))
+    array))
+
+(define (<array-map> len func)
+  (let ((array (<array-length> len)))
+    (-> array map! (lambda (n el) (func n)))
+    array))
+
+(define* (<array-multidimensional> dimensions #:optional default)
+  (if (null? dimensions)
+      default
+      (<array-map> (car dimensions) (lambda (n)
+				      (<array-multidimensional> (cdr dimensions) default)))))
+
+#!
+(define a (<array> 0 1 2 3 4 5 6 7 8))
+(-> a get-list)
+(a 0 10)
+(a 1 11)
+(a 0)
+(a 1)
+(-> a get-list)
+(-> a set! 9 8 7 6 5)
+(-> a get-list)
+(-> a set!! 9 8 7 6 5)
+(-> a get-list)
+(-> a map list)
+(-> a reset!)
+(-> a get-list)
+(define a (<array-multidimensional> '(5 4)))
+(-> a for-each (lambda (n1 el1) (-> el1 map! (lambda (n2 el2) (+ n1 (/ n2 10))))))
+(-> a map (lambda (n el) (-> el get-list)))
+((a 0) 3)
+((a 3) 2)
+!#
 
 
 
@@ -193,7 +301,19 @@
 
 
 
-;; Snd has its own filter-function overriding the guile filter-function.
+;; C-like for-iterator
+(define (c-for init pred least add proc)
+  (let ((n init))
+    (while (pred n least)
+	   (proc n)
+	   (set! n (+ add n)))))
+#!
+(c-for 2 < 7 1
+       (lambda (n) (display n)(newline)))
+!#
+
+
+;; Snd has its own filter function (a clm function) overriding the guile filter function.
 (define (filter-org pred list)
   (remove (lambda (e) (not (pred e)))
 	  list))
@@ -205,7 +325,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Paint (just started)
+;;; Paint (not usable yet)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-class (<paint> parent width height)
@@ -215,10 +335,28 @@
   (define gc #f)
   (define font #f)
 
+  (define xmin width)
+  (define ymin height)
+  (define xmax 0)
+  (define ymax 0)
+
+  (define (update-minmax x1 y1 x2 y2)
+    (set! xmin (min xmin x1 x2))
+    (set! ymin (min ymin y1 y2))
+    (set! xmax (max xmax x1 x2))
+    (set! ymax (max ymax y1 y2)))
+
+  (define (reset-minmax)
+    (set! xmin width)
+    (set! ymin height)
+    (set! xmax 0)
+    (set! ymax 0))
+
   (define-method (line color x1 y1 x2 y2)
+    (update-minmax x1 y1 x2 y2)
     (gdk_draw_line pixmap color x1 y1 (- x2 x1 -1) (- y2 y1 -1)))
 
-  (define-method (update x1 y1 x2 y2)
+  (define (update-do x1 y1 x2 y2)
     (gdk_draw_pixmap (.window parent)
 		     gc
 		     pixmap
@@ -226,8 +364,15 @@
 		     x1 y1
 		     (- x2 x1 -1) (- y2 y1 -1)))
 
+  (define-method (update)
+    (if (and (>= xmax xmin)
+	     (>= ymax ymin))
+	(update-do xmin ymix xmax ymax))
+    (reset-minmax))
+
   (define-method (update-all)
-    (update 0 0 width height))
+    (reset-minmax)
+    (update-do 0 0 width height))
 
   (set! pixmap (gdk_pixmap_new (.window parent)
 			       width
@@ -305,7 +450,7 @@
 
 (define (menu-set-label menu label)
   (if use-gtk
-      (gtk_label_set_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN menu))) label)
+      (gtk_label_set_text (GTK_LABEL (.child (GTK_BIN menu))) label)
       (let ((str (XmStringCreateLocalized label)))
 	(XtSetValues menu (list XmNlabelString str))
 	(XmStringFree str))))
@@ -370,6 +515,11 @@
 
 
 
+(define (checkbutton-get button)
+  (if use-gtk
+      (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON button))
+      (display "checkbutton-get not implemented for motif.\n")))
+
 (define (checkbutton-set button to)
   (if use-gtk
       (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) to)
@@ -394,19 +544,19 @@
 
   (if use-gtk
       (begin
-	(set! button (gtk_button_new_with_label name))
-	(gtk_box_pack_start (GTK_BOX parent) button #t #t 20)
-	(g_signal_connect_closure_by_id (GPOINTER button)
-					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button)))
+	(set! this->button (gtk_button_new_with_label name))
+	(gtk_box_pack_start (GTK_BOX parent) this->button #t #t 20)
+	(g_signal_connect_closure_by_id (GPOINTER this->button)
+					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT this->button)))
 					0 (g_cclosure_new (lambda (w data) 
 							    (callback))
 							  #f #f) #f)
-	(gtk_widget_show button))
+	(gtk_widget_show this->button))
       (begin
-	(set! button (XtCreateManagedWidget name xmPushButtonWidgetClass parent
+	(set! this->button (XtCreateManagedWidget name xmPushButtonWidgetClass parent
 					     (list XmNbackground (basic-color)
 						   XmNarmColor   (pushed-button-color))))
-	(XtAddCallback button XmNactivateCallback (lambda (w c i)
+	(XtAddCallback this->button XmNactivateCallback (lambda (w c i)
 							    (callback))))))
 
 
@@ -519,7 +669,7 @@
 	  (if use-gtk
 	      (begin
 		(set! hbox (gtk_hbox_new #f 0))
-		(gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG dialog))) hbox #f #f 4)
+		(gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG this->dialog))) hbox #f #f 4)
 		(gtk_widget_show hbox))
 	      (let* ((mainform box1)
 		     (sep (XtCreateManagedWidget "sep" xmSeparatorWidgetClass mainform
@@ -549,14 +699,14 @@
 	  (if use-gtk
 	      (begin
 		(set! vbox (gtk_vbox_new #f 2))
-		(gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG dialog))) vbox #f #f 4)
+		(gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG this->dialog))) vbox #f #f 4)
 		(gtk_widget_show vbox))
-	      (set! vbox (XtCreateManagedWidget "formd" xmRowColumnWidgetClass dialog
+	      (set! vbox (XtCreateManagedWidget "formd" xmRowColumnWidgetClass this->dialog
 						(list XmNleftAttachment      XmATTACH_FORM
 						      XmNrightAttachment     XmATTACH_FORM
 						      XmNtopAttachment       XmATTACH_FORM
 						      XmNbottomAttachment    XmATTACH_WIDGET
-						      XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
+						      XmNbottomWidget        (XmMessageBoxGetChild this->dialog XmDIALOG_SEPARATOR)
 						      XmNbackground          (highlight-color)
 						      XmNorientation         XmVERTICAL))))
 	  (setbox1! vbox)))
@@ -567,33 +717,33 @@
 
   (define-method (hide)
     (if use-gtk
-	(gtk_widget_hide dialog)
-	(XtUnmanageChild dialog))
+	(gtk_widget_hide this->dialog)
+	(XtUnmanageChild this->dialog))
     (focus-widget (list-ref (channel-widgets (selected-sound) 0) 0)))
 
   (define-method (show)
     (if use-gtk
 	(begin
-	  (gtk_widget_show dialog)
-	  (gdk_window_raise (.window dialog)))
-	(if (not (XtIsManaged dialog))
-	    (XtManageChild dialog)
-	    (raise-dialog dialog))))
+	  (gtk_widget_show this->dialog)
+	  (gdk_window_raise (.window this->dialog)))
+	(if (not (XtIsManaged this->dialog))
+	    (XtManageChild this->dialog)
+	    (raise-dialog this->dialog))))
 
 
   ;; Replacement for add-sliders in new-effects.scm/gtk-effects.scm
   (define-method (add-sliders dassliders)
-    (set! sliders (map
-		   (lambda (slider-data)
-		     (apply <slider> (cons (getbox1) slider-data)))
-		   dassliders))
+    (set! this->sliders (map
+			 (lambda (slider-data)
+			   (apply <slider> (cons (this->getbox1) slider-data)))
+			 dassliders))
     
     (if (not use-gtk)
-	(let ((num_inputs (+ 1 (length sliders))))
-	  (set! (widget-size dialog) (list (min 800 (max 400 (* num_inputs 20)))
+	(let ((num_inputs (+ 1 (length this->sliders))))
+	  (set! (widget-size this->dialog) (list (min 800 (max 400 (* num_inputs 20)))
 						   (min 800 (max 120 (* num_inputs 70)))))))
     
-    sliders)
+    this->sliders)
 
 
   (let ((names '())
@@ -659,7 +809,7 @@
      (reverse names) (reverse funcs) (reverse wnames))
     
     ;; build rest in (.vbox (GTK_DIALOG new-dialog))
-    (set! dialog new-dialog)))
+    (set! this->dialog new-dialog)))
     
 
 

@@ -86,18 +86,6 @@
 
 
 
-;; A for function, a simple version of the one in C. I use this one because "do" is evil. ;)
-;; Works like this:
-;; for(n=init;n pred least;n+=add)
-;;   proc(n);
-(define (c-for init pred least add proc)
-  (if (pred init least)
-      (begin
-	(proc init)
-	(c-for (+ add init) pred least add proc))))
-
-;;(c-for 0 < 5 1
-;;       (lambda (n) (display n)(newline)))
 
 
 
@@ -105,8 +93,8 @@
 
   (var descriptor (ladspa-descriptor libname plugname))
  
-  ;; List of ladspa plugin handles.
-  (define handles '())
+  ;; <array> of ladspa plugin handles.
+  (define handles #f)
 
   ;; These are lists of numbers.
   (var input-controls '())
@@ -125,89 +113,85 @@
   (define min_num_audios 0)
 
 
-  ;; List of vcts. All handles use the same vcts.
-  (define ports '())
+  ;; <array> of vcts. All handles use the same vcts.
+  (define ports #f)
 
 
   (define isopened #f)
 
 
   (define* (open #:optional (num_handles 1))
-    (set! ports (map (lambda (port) (if port
-					port
-					(make-vct ladspa-maxbuf)))
-		     ports))
-    (if (= 0 num_handles)
-	#t
-	(let ((handle (ladspa-instantiate descriptor (srate) )))
-	  ;;(display "open called ")(display num_handles)(newline)
-	  (if (not handle)
-	      (begin
-		(close)
-		#f)
-	      (begin
-		(let ((n 0))
-		  (for-each (lambda (x)
-			      (ladspa-connect-port descriptor handle n x)
-			      (set! n (+ n 1)))
-			    ports))
-		(ladspa-activate descriptor handle)
-		(set! handles (cons handle handles))
-		(open (- num_handles 1)))))))
-  
+    (-> ports map! (lambda (n port) (or port 
+					(make-vct ladspa-maxbuf))))
+    (call-with-current-continuation
+     (lambda (return)
+       (set! handles (<array-map> num_handles
+				  (lambda (n)
+				    (let ((handle (ladspa-instantiate this->descriptor (srate) )))
+				      (if (not handle)
+					  (begin
+					    (display "Error: Could not make ladspa handle.\n")
+					    (this->close)
+					    (return #f))
+					  (begin
+					    (-> ports for-each (lambda (n port)
+								 (ladspa-connect-port this->descriptor handle n port)))
+					    (ladspa-activate this->descriptor handle)))
+				      handle))))))
+    #t)
+
 
   ;; Close all handles.
   (define-method (close)
-    ;;(display "close called ")(display (length handles))(newline)
-    (if (not (null? handles))
-	(let ((handle (car handles)))
-	  (ladspa-deactivate descriptor handle)
-	  (ladspa-cleanup descriptor handle)
-	  (set! handles (cdr handles))
-	  (close))))
+    ;;(display "close called ")(display (-> handles length))(newline)
+    (if handles
+	(-> handles for-each (lambda (n handle)
+			       (if handle
+				   (begin
+				     (ladspa-deactivate this->descriptor handle)
+				     (ladspa-cleanup this->descriptor handle))))))
+    (set! handles #f))
+
 
   (define (get-port portnum)
-    (list-ref ports portnum))
+    (ports portnum))
 
-  (define (set-port portnum vct)
-    (let ((n 0))
-      (set! ports (map (lambda (x)
-			 (if (= n portnum) vct x)
-			 (set! n (+ n 1)))
-		       ports)))
-    (ladspa-connect-port descriptor handle portnum vct))
+  (define (set-port! portnum vct)
+    (display "ai: ")(display handle)(newline)
+    (ports portnum vct)
+    (ladspa-connect-port this->descriptor handle portnum vct)) ;; Which handle???
 
   (define (get-num-input-audio-ports)
     (length input-audios))
   (define (get-input-audio-port num)
     (get-port (list-ref input-audios num)))
   (define (set-input-audio-port num vct)
-    (set-port (list-ref input-audios num) vct))
+    (set-port! (list-ref input-audios num) vct))
 
   (define (get-num-output-audio-ports)
     (length output-audios))
   (define (get-output-audio-port num)
     (get-port (list-ref output-audios num)))
   (define (set-output-audio-port num vct)
-    (set-port (list-ref output-audios num) vct))
+    (set-port! (list-ref output-audios num) vct))
 
 
   ;; Warning, len must not be larger than ladspa-maxbuf.
   (define (run len)
-    (for-each (lambda (handle) (ladspa-run descriptor handle len))
-	      handles))
+    (-> handles for-each (lambda (n handle)
+			   (ladspa-run this->descriptor handle len))))
 
 
   (define (set-default-input-controls)
     (for-each (lambda (x)
-		(let ((hint (car (cadr x)))
-		      (lo (cadr (cadr x)))
-		      (hi (caddr (cadr x))))
+		(let ((hint (car (x 1)))
+		      (lo (cadr (x 1)))
+		      (hi (caddr (x 1))))
 		  (define (ishint dashint)
 		    (= (logand hint LADSPA_HINT_DEFAULT_MASK) dashint))
 		  (define (ishint_notdefault dashint)
 		    (not (= (logand hint dashint ) 0)))
-		  (this 'input-control-set! (car x) 
+		  (this 'input-control-set! (x 0) 
 			(cond ((ishint LADSPA_HINT_DEFAULT_0) 0)
 			      ((ishint LADSPA_HINT_DEFAULT_MINIMUM) lo)
 			      ((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
@@ -226,8 +210,8 @@
 			      (else
 			       (/ (+ lo hi) 2))))))
 	      
-	      (map (lambda (x) (list x (list-ref (.PortRangeHints descriptor) x)))
-		   input-controls)))
+	      (map (lambda (x) (<array> x (list-ref (.PortRangeHints this->descriptor) x)))
+		   this->input-controls)))
   
   
   
@@ -246,25 +230,23 @@
 	    (display "Ladspa buffer to small. Can't use ladspa plugin in realtime.")
 	    (display "You can try to reduce the dac-size to fix the problem.")
 	    (newline))
-	  (begin 
-	    (let ((chan 0))
-	      (for-each (lambda (handle)
-			  (if (not no_audio_inputs)
-			      (c-for 0 < min_num_audios 1
-				     (lambda (n)
-				       (if (< (+ chan n) num_chans)
-					   (sound-data->vct sdobj
-							    (+ chan n)
-							    (get-input-audio-port n))))))
-			  (ladspa-run descriptor handle len)
-			  (c-for 0 < min_num_audios 1
-				 (lambda (n)
-				   (if (< (+ chan n) num_chans)
-				       (vct->sound-data (get-output-audio-port n)
-							sdobj
-							(+ chan n)))))
-			  (set! chan (+ chan min_num_audios)))
-			handles)))))
+	  (let ((chan 0))
+	    (-> handles for-each (lambda (handlenum handle)
+				   (if (not no_audio_inputs)
+				       (c-for 0 < min_num_audios 1
+					      (lambda (n)
+						(if (< (+ chan n) num_chans)
+						    (sound-data->vct sdobj
+								     (+ chan n)
+								     (get-input-audio-port n))))))
+				   (ladspa-run this->descriptor handle len)
+				   (c-for 0 < min_num_audios 1
+					  (lambda (n)
+					    (if (< (+ chan n) num_chans)
+						(vct->sound-data (get-output-audio-port n)
+								 sdobj
+								 (+ chan n)))))
+				   (set! chan (+ chan min_num_audios)))))))
     #f)
 
 
@@ -336,12 +318,10 @@
 				 ;; Update hour-glass
 				 (progress-report (/ n length) "doing the ladspa" chans chans snd)
 				 
-				 
 				 ;; Only happens at last iteration.
 				 (if (< len ladspa-maxbuf)
 				     (set! sdobj (make-sound-data chans len))
 				     (set! vct-out (make-vct len)))
-
 
 				 ;; Reading data into soundobject from soundfile.
 				 (if (not no_audio_inputs)
@@ -352,20 +332,19 @@
 						   (vct->sound-data vct-out sdobj ch)
 						   (set! ch (+ ch 1)))
 						 readers)))
-				 
+
 				 ;; Process soundobject
 				 (apply-soundobject sdobj)
 				 
-				 
-				 ;; Writing data from soundobject into temporary file.
+				 ;; Writing data from soundobject into temporary files.
 				 (c-for 0 < chans 1
 					(lambda (ch)
-					  (sound-data->vct sdobj ch vct-out)
-					  (vct->sound-file (list-ref new-files ch)
-							   vct-out
-							   len)))))))))
+					  (mus-sound-write (list-ref new-files ch)
+							   0
+							   len
+							   1
+							   sdobj)))))))))
 	    
-
 	    ;; Close temporary files.
 	    (for-each (lambda (file) (close-sound-file file (* 4 length)))
 		      new-files)
@@ -387,7 +366,7 @@
 
 	    ;; Close plugin.
 	    (if (not (string=? "vst" libname))
-		(close))))))
+		(this->close))))))
 
 
       
@@ -405,11 +384,11 @@
 	      #t)))
       (if (= 0 min_num_audios)
 	  (begin
-	    (display "Ladspa plugin have no output audio ports.")(newline)
+	    (display "Ladspa plugin have no output audio ports.\n")
 	    #f)
 	  (if (not (string=? "vst" libname))
 	      (init-dac-hook-stuff)
-	      (if (null? handles)
+	      (if (not handles)
 		  (init-dac-hook-stuff)
 		  (begin
 		    (add-hook! dac-hook apply-soundobject)
@@ -419,39 +398,39 @@
   (define-method (remove-dac-hook!)
     (remove-hook! dac-hook apply-soundobject)
     (if (not (string=? "vst" libname))    
-	(close)))
+	(this->close)))
 
   (define-method (input-control-set! num val)
-    (vct-set! (list-ref ports num) 0 val))
+    (vct-set! (ports num) 0 val))
 
   (define-method (get-input-control num)
-    (vct-ref (list-ref ports num) 0))
+    (vct-ref (ports num) 0))
 
 
   ;; Constructor:
-  (if (not descriptor)
+  (if (not this->descriptor)
       (set! this #f)
       (begin
 	(let ((n 0))
 	  (for-each (lambda (x)
 		      (if (> (logand x LADSPA_PORT_CONTROL) 0)
 			  (if (> (logand x LADSPA_PORT_INPUT) 0)
-			      (set! input-controls (append input-controls (list n)))
-			      (set! output-controls (append output-controls (list n))))
+			      (set! this->input-controls (append this->input-controls (list n)))
+			      (set! this->output-controls (append this->output-controls (list n))))
 			  (if (> (logand x LADSPA_PORT_INPUT) 0)
 			      (set! input-audios (append input-audios (list n)))
 			      (set! output-audios (append output-audios (list n)))))
 		      (set! n (+ n 1)))
-		    (.PortDescriptors descriptor)))
+		    (.PortDescriptors this->descriptor)))
 	(if (= (length input-audios) 0)
 	    (begin
 	      (set! min_num_audios (length output-audios))
 	      (set! no_audio_inputs #t))
 	    (set! min_num_audios (min (length input-audios) (length output-audios))))
-	(set! ports (map (lambda (x) (if (> (logand x LADSPA_PORT_CONTROL) 0)
-					 (make-vct 1)
-					 #f))
-			 (.PortDescriptors descriptor)))
+	(set! ports (apply <array> (map (lambda (x) (if (> (logand x LADSPA_PORT_CONTROL) 0)
+							(make-vct 1)
+							#f))
+					(.PortDescriptors this->descriptor))))
 	(set-default-input-controls))))
 
 
@@ -497,8 +476,7 @@
 			 (string-append (if dashelp
 					    (caddr dashelp)
 					    lisense)
-					(string #\newline) (string #\newline)
-					"Processing can be stopped by pressing C-g"))))
+					"\n\nProcessing can be stopped by pressing C-g"))))
 	  
 	(define (OK)
 	  (MyStop)
@@ -648,5 +626,6 @@
 
 
 (install-ladspa-menues)
+
 
 
