@@ -296,7 +296,7 @@
       (if (selection-member? snd chan)
 	  chan
 	  (get-startchan snd (+ chan 1))))
-    (if (not (selection?))
+    (if (not (selection-member? (selected-sound)))
 	(select-all graph-popup-snd graph-popup-chn))
     (let* ((snd (selected-sound))
 	   (start (selection-position))
@@ -657,7 +657,7 @@
 
 
 	(define (MyPlay)
-	  (if (not (selection?))
+	  (if (not (selection-member? (selected-sound)))
 	      (select-all graph-popup-snd graph-popup-chn))
 	  (add-hook! stop-playing-selection-hook play-selection)
 	  (play-selection))
