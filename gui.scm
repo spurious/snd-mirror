@@ -32,6 +32,12 @@
 		    #t
 		    #f))
 
+
+(if (not use-gtk)
+    (c-display "Warning, gui.scm might not work very well with Motif anymore."
+	       "You should compile up Snd with the --use-gtk configure option."))
+
+
 (if use-gtk
     (if (not (provided? 'xg))
 	(let ((hxm (dlopen "xm.so")))
@@ -52,6 +58,18 @@
        (load-from-path (symbol->string (symbol-append ',filename '.scm)))))
 
 
+
+(define (c-editor-widget snd)
+  (list-ref (channel-widgets snd 0) 0))
+
+
+;; Copied from gtk-popup.scm
+(define* (c-g_signal_connect obj name func #:optional data)
+  (g_signal_connect_closure_by_id (GPOINTER obj)
+				  (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
+				  0
+				  (g_cclosure_new func data #f)
+				  #f))
 
 (define (c-get-mouse-info snd x y mustcall func)
   (let ((axinfo (axis-info snd 0))
@@ -130,13 +148,6 @@
       ((not (pred n least)))
     (proc n)))
 
-#!
-(define (c-for init pred least add proc)
-  (let ((n init))
-    (while (pred n least)
-	   (proc n)
-	   (set! n (+ add n)))))
-!#
 
 #!
 (c-for 2 < 7 1
@@ -226,30 +237,36 @@ void das_init(){
 
 
 
-;; A function to remove the default motion_notify_event handler for gtk.
+(define c-gc-isoff #f)
 
-(define (c-remove-motionhandler widget)
-(if (not use-gtk)
-    (c-display "c-remove-motionhandler not implemented for motif")
-    (begin
-      (c-eval-c #:compile-options "\`pkg-config --cflags glib-2.0\`"
-"
-#include <libguile.h>
-#include <glib.h>
-#include <glib-object.h>
-SCM das_func(SCM w){
-  gpointer g=(gpointer)scm_num2ulong(SCM_CAR(SCM_CDR(w)),0,\"remove-motionhanders\");
-  g_signal_handler_disconnect(g,g_signal_handler_find(g,
-						      G_SIGNAL_MATCH_ID,
-						      g_signal_lookup(\"motion_notify_event\",G_OBJECT_TYPE(g)),
-						      0,0,0,0));
-  return SCM_UNSPECIFIED;
-}
-void das_init(){
-  scm_c_define_gsubr(\"c-remove-motionhandler\",1,0,0,das_func);
-}
-")
-      (c-remove-motionhandler widget))))
+;; The following functions ensure that gc-off is not called more times than gc-on.
+;; It takes an optional argument which is the number of milliseconds before turning
+;; the garbage collector on again, no matter what. Set this arguement to #f to avoid
+;; automaticly turning the garbage collector on. But that is dangerous.
+(define* (c-gc-off #:optional (timeout 2000))
+  (if (not c-gc-isoff)
+      (begin
+	(gc-off)
+	(set! c-gc-isoff #t)
+	(if timeout
+	    (in timeout
+		(lambda ()
+		  (c-gc-on)))))))
+
+
+;; Ouch, might actually freeze the machine if using jack. Better turn the function off.
+;; (re-mlocking all memory in audio.c without using MCL_FUTURE seems to fix the freezing problem)
+;;(define (c-gc-off)
+;;  #t)
+
+
+(define (c-gc-on)
+  (if c-gc-isoff
+      (begin
+	;;(c-display "gc-on")
+	(gc-on)
+	(set! c-gc-isoff #f))))
+
 
 
 
@@ -599,84 +616,290 @@ void das_init(){
 
 
 ;;##############################################################
-;; Better hook functions.
+;; A hook class.
 ;;##############################################################
-(define (c-make-hook)
-  (cons 'last '()))
-(define (c-add-hook! hook func)
-  (set-cdr! hook (cons (car hook) (cdr hook)))
-  (set-car! hook func))
-(define (c-run-hook hook . args)
-  (if (not (eq? 'last (car hook)))
-      (let ((ret (apply (car hook) args)))
-	(if (eq? 'stop! ret)
-	    ret
-	    (apply c-run-hook (cdr hook) args)))))
+(define-class (<hook>)
+  (define funcs '())
+  (define system-funcs '())
+  (define-method (add! func)
+    (set! funcs (cons func funcs)))
+  (define-method (add-system! func)
+    (set! system-funcs (cons func system-funcs)))
+  (define-method (run . args)
+    (call-with-current-continuation
+     (lambda (return)
+       (for-each (lambda (func)
+		   (if (eq? 'stop! (apply func args))
+		       (return 'stop!)))
+		 (append system-funcs funcs))))))
+
 
 
 
 ;;##############################################################
-;; Mouse-hooks for the channel widgets.
+;; Mouse stuff. All c-code mouse handling in snd is disabled,
+;; and replaced with scheme-code. Selection handling is
+;; handled in snd_conffile.scm.
 ;;##############################################################
 
 (define c-ismoved #f)
 
-(define mouse-button-press-hook (c-make-hook))
-(define mouse-move-hook (c-make-hook))
-(define mouse-drag2-hook (c-make-hook))
-(define mouse-button-release-hook (c-make-hook))
+(define mouse-button-press-hook (<hook>))
+(define mouse-move-hook (<hook>))
+(define mouse-drag2-hook (<hook>))
+(define mouse-button-release-hook (<hook>))
+(define mouse-scroll-hook (<hook>))
+(define selection-changed2-hook (<hook>))
 
-;;(define mouse-click-hook-old mouse-click-hook)
-;;(define mouse-click-hook (c-make-hook 7))
-;;
-;;(add-hook! mouse-click-hook-old
-;;	   (lambda args
-;;	     (c-display args)
-;;	     (if (and #f (not c-ismoved))
-;;		 (apply run-hook (cons mouse-click-hook args)))))
+;; A function to remove all the gtk mousehandlers in snd for a widget.
+(define (c-remove-mousehandlers widget)
+(if (not use-gtk)
+    (c-display "c-remove-motionhandler not implemented for motif")
+    (begin
+      (c-eval-c #:compile-options "\`pkg-config --cflags glib-2.0\`"
+"
+#include <libguile.h>
+#include <glib.h>
+#include <glib-object.h>
+SCM das_func(SCM w){
+  gpointer g=(gpointer)scm_num2ulong(SCM_CAR(SCM_CDR(w)),0,\"remove-motionhanders\");
+  g_signal_handler_disconnect(g,g_signal_handler_find(g,
+						      G_SIGNAL_MATCH_ID,
+						      g_signal_lookup(\"motion_notify_event\",G_OBJECT_TYPE(g)),
+						      0,0,0,0));
+  g_signal_handler_disconnect(g,g_signal_handler_find(g,
+						      G_SIGNAL_MATCH_ID,
+						      g_signal_lookup(\"button_press_event\",G_OBJECT_TYPE(g)),
+						      0,0,0,0));
+  g_signal_handler_disconnect(g,g_signal_handler_find(g,
+						      G_SIGNAL_MATCH_ID,
+						      g_signal_lookup(\"button_release_event\",G_OBJECT_TYPE(g)),
+						      0,0,0,0));
+  g_signal_handler_disconnect(g,g_signal_handler_find(g,
+						      G_SIGNAL_MATCH_ID,
+						      g_signal_lookup(\"scroll_event\",G_OBJECT_TYPE(g)),
+						      0,0,0,0));
+  return SCM_UNSPECIFIED;
+}
+void das_init(){
+  scm_c_define_gsubr(\"c-remove-mousehandlers\",1,0,0,das_func);
+}
+")
+      (c-remove-mousehandlers widget))))
 
 
 (add-hook! after-open-hook
 	   (lambda (snd)
-	     (let ((w (list-ref (channel-widgets snd 0) 0)))
+	     (let ((w (c-editor-widget snd)))
 	       (if (not use-gtk)	     
 		   (begin
 		     (XtAddEventHandler w ButtonPressMask #f 
 					(lambda (w c e f)
-					  (c-run-hook mouse-button-press-hook snd (.x e) (.y e) (.state e))))
+					  (-> mouse-button-press-hook run 
+					      snd (.x e) (.y e) (.state e))))
 		     (XtAddEventHandler w ButtonMotionMask #f 
 					(lambda (w c e f)
-					  (c-run-hook mouse-drag2-hook snd (.x e) (.y e) (.state e))))
+					  (-> mouse-drag2-hook run 
+					      snd (.x e) (.y e) (.state e))))
 		     (XtAddEventHandler w ButtonReleaseMask #f 
 					(lambda (w c e f)
-					  (c-run-hook mouse-button-release-hook snd (.x e) (.y e) (.state e)))))
+					  (-> mouse-button-release-hook run 
+					      snd (.x e) (.y e) (.state e)))))
 		   (let ((ispressed #f))
-		     (g_signal_connect w "button_press_event"
+
+		     (c-remove-mousehandlers w)
+
+		     (c-g_signal_connect w "button_press_event"
+					 (lambda (w e i)
+					   (if (= (.button (GDK_EVENT_BUTTON e)) 3)
+					       (run-hook gtk-popup-hook w e i snd 0)
+					       (begin
+						 (set! ispressed #t)
+						 (set! c-ismoved #f)
+						 (-> mouse-button-press-hook run
+						     snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))))
+		     (c-g_signal_connect w "motion_notify_event"
 				       (lambda (w e i)
-					 (set! ispressed #t)
-					 (set! c-ismoved #f)
-					 (c-run-hook mouse-button-press-hook snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
-		     (g_signal_connect w "motion_notify_event"
-				       (lambda (w e i)
-					 (set! c-ismoved #t)
-					 (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
-							 (cons snd (cdr (gdk_window_get_pointer (.window e))))
-							 (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
-					   
-					   (if (and (not (eq? 'stop! (apply c-run-hook (cons mouse-move-hook args))))
-						    ispressed)
-					       (apply c-run-hook (cons mouse-drag2-hook args))))
-					 #f))
-		     (g_signal_connect w "button_release_event"
-				       (lambda (w e i)
-					 (set! ispressed #f)
-					 (c-run-hook mouse-button-release-hook snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))))))
+					 (if (not (= (.button (GDK_EVENT_BUTTON e)) 3))
+					     (begin
+					       (set! c-ismoved #t)
+					       (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
+							       (cons snd (cdr (gdk_window_get_pointer (.window e))))
+							       (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
+						 (if (and (not (eq? 'stop! (apply (<- mouse-move-hook run) args)))
+							  ispressed)
+						     (apply (<- mouse-drag2-hook run) args)))))))
+		     (c-g_signal_connect w "button_release_event"
+					 (lambda (w e i)
+					   (if (not (= (.button (GDK_EVENT_BUTTON e)) 3))
+					       (begin
+						 (set! ispressed #f)
+						 (-> mouse-button-release-hook run
+						     snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))))
+		     (c-g_signal_connect w "scroll_event"
+					 (lambda (w e i)
+					   (set! ispressed #f)
+					   (-> mouse-scroll-hook run
+					       snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
+		     )))))
 
 
 
-(define mouse-click2-hook (c-make-hook))
 
-;)
+;; Run the mouse-click-hook
+(let ((isdragged #f))
+  (-> mouse-button-press-hook add-system!
+      (lambda (snd x y stat)
+	(set! isdragged #f)))
+  (-> mouse-drag2-hook add-system!
+      (lambda (snd x y stat)
+	(set! isdragged #t)))
+  (-> mouse-scroll-hook add-system!
+      (lambda (snd orgx y stat)
+	(c-get-mouse-info snd orgx y #t
+			  (lambda (ch x y xmax ymax)
+			    (focus-widget (c-editor-widget snd))
+			    (run-hook mouse-click-hook
+				      snd ch (+ stat 4) 0 orgx y time-graph)))))
+  (-> mouse-button-release-hook add-system!
+      (lambda (snd orgx y stat)
+	(if (not isdragged)
+	    (c-get-mouse-info snd orgx y #t
+			      (lambda (ch x y xmax ymax)
+				(focus-widget (c-editor-widget snd))
+				(run-hook mouse-click-hook
+					  snd ch 1 stat orgx y time-graph)))))))
+
+
+;;  Moving marks with the mouse
+(let ((currmark #f))
+
+  (-> mouse-button-press-hook add-system!
+      (lambda (snd orgx orgy stat)
+	(c-get-mouse-info 
+	 snd orgx orgy #f
+	 (lambda (ch x y xmax ymax)
+	   (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch)))))
+		 (pointrange (- (* (srate snd) (position->x 15 snd ch))
+				(* (srate snd) (position->x 0 snd ch)))))
+	     (if (and (> y 7)
+		      (< y 15))
+		 (call-with-current-continuation
+		  (lambda (return)
+		    (for-each
+		     (lambda (mark)
+		       (if (< (abs (- (mark-sample mark) pointpos)) pointrange)
+			   (begin
+			     (set! currmark mark)
+			     (return 'stop!))))
+		     (list-ref (list-ref (marks) snd) ch))))))))))
+
+  (-> mouse-move-hook add-system!
+      (lambda (snd orgx y stat)
+	(if currmark
+	    (begin
+	      (c-get-mouse-info
+	       snd orgx y #t
+	       (lambda (ch x y xmax ymax)
+		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+		   (if (> (mark-sync currmark) 0)
+		       (move-syncd-marks (mark-sync currmark)
+					 (- pointpos (mark-sample currmark)))
+		       (set! (mark-sample currmark) pointpos)))))
+	      'stop!))))
+  
+  (-> mouse-button-release-hook add-system!
+      (lambda (snd orgx y stat)
+	(if currmark
+	    (begin
+	      (c-get-mouse-info 
+	       snd orgx y #t
+	       (lambda (ch x y xmax ymax)
+		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+		   (if (> (mark-sync currmark) 0)
+		       (move-syncd-marks (mark-sync currmark)
+					 (- pointpos (mark-sample currmark)))
+		       (set! (mark-sample currmark) pointpos))
+		   (set! currmark #f))))
+	      'stop!))))
+  )
+
+
+
+
+;;  Moving mixes with the mouse
+(let ((currmixes #f)
+      (offset 0))
+
+  (-> mouse-button-press-hook add-system!
+      (lambda (snd orgx orgy stat)
+	(c-get-mouse-info 
+	 snd orgx orgy #f
+	 (lambda (ch x y xmax ymax)
+	   (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch)))))
+		 (pointrange (- (* (srate snd) (position->x (mix-tag-width) snd ch))
+				(* (srate snd) (position->x 0 snd ch)))))
+	     (call-with-current-continuation
+	      (lambda (return)
+		(c-for-each
+		 (lambda (n mix)
+		   (if (< (abs (- (mix-position mix) pointpos)) pointrange)
+		       (let ((ypos (if (> (mix-tag-y mix) 0) 
+				       (mix-tag-y mix)
+				       (- (* (mix-tag-height) n) 5))))
+			 (if (and (>= y ypos)
+				  (<= y (+ ypos (+ (mix-tag-height) 3))))
+			     (begin
+			       (set! offset (- (mix-position mix) pointpos))
+			       (set! currmixes '())
+			       (if (c-sync? snd)
+				   (for-each (lambda (dasmix)
+					       (if (= (mix-position mix) (mix-position dasmix))
+						   (set! currmixes (cons dasmix currmixes))))
+					     (apply append (mixes snd)))
+				   (set! currmixes (list mix)))
+			       (return 'stop!))))))
+		 (mixes snd ch)))))))))
+
+  (-> mouse-move-hook add-system!
+      (lambda (snd orgx orgy stat)
+	(if currmixes
+	    (begin
+	      (c-get-mouse-info
+	       snd orgx orgy #t
+	       (lambda (ch x y xmax ymax)
+		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+		   ;;(set! (mix-position currmix) (+ offset pointpos))
+		   (draw-line orgx 0 orgx (list-ref (axis-info snd ch) 11)))))
+	      'stop!))))
+  
+  (-> mouse-button-release-hook add-system!
+      (lambda (snd orgx y stat)
+	(if currmixes
+	    (begin
+	      (c-get-mouse-info 
+	       snd orgx y #t
+	       (lambda (ch x y xmax ymax)
+		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+		   (for-each (lambda (mix)
+			       (set! (mix-position mix) (+ offset pointpos)))
+			     currmixes)
+		   (set! currmixes #f))))
+	      'stop!))))
+  
+  )
+
+
+
+;; To avoid irritating non-smoothness, we turn off the garbage collector for 2 seconds.
+(-> mouse-button-press-hook add-system!
+    (lambda (snd orgx orgy stat)
+      (c-gc-off)))
+
+
+
+
+
 
 
 ;;##############################################################
@@ -764,7 +987,7 @@ void das_init(){
   (define maxy 0)
   (define proportion 1)
 
-  (var boxsize 0.02)
+  (var boxsize 0.04)
 
   (define (for-each-node func)
     (let ((prev #f)
@@ -794,6 +1017,18 @@ void das_init(){
 				(< y y2))
 			   (return i))))
        #f)))
+
+  (define (perhaps-make-node x y)
+    (define (square x)
+      (* x x))
+    (define (square-distance x1 y1 x2 y2)
+      (+ (square (- x1 x2)) (square (- y1 y2))))
+    (for-each-node (lambda (i x1 y1 x2 y2)
+		     (let* ((a2 (square-distance x1 y1 x y))
+			    (c2 (square-distance x1 y1 x2 y2))
+			    (hc (/ (sqrt (- (* 4 a2) c2)) 2)))
+		       (c-display hc)))))
+		       
 
   (define (make-lines-and-boxes)
     (set! lines '())
@@ -882,7 +1117,8 @@ void das_init(){
       (if node
 	  (begin
 	    (set! pressednode (list-ref nodes node))
-	    'stop!))))
+	    'stop!)
+	  (perhaps-make-node x y))))
 
   (define-method (mouse-move x y)
     (if pressednode
@@ -1244,7 +1480,7 @@ void das_init(){
     (if use-gtk
 	(gtk_widget_hide this->dialog)
 	(XtUnmanageChild this->dialog))
-    (focus-widget (list-ref (channel-widgets (selected-sound) 0) 0)))
+    (focus-widget (c-editor-widget (selected-sound))))
 
   (define-method (show)
     (if use-gtk
@@ -1290,7 +1526,7 @@ void das_init(){
 					  0 (g_cclosure_new (lambda (w ev data)
 							      (if deletefunc (deletefunc))
 							      (gtk_widget_hide new-dialog)
-							      (focus-widget (list-ref (channel-widgets (selected-sound) 0) 0)))
+							      (focus-widget (c-editor-widget (selected-sound))))
 							    #f #f) #f))
 	(let ((titlestr (XmStringCreate label XmFONTLIST_DEFAULT_TAG)))
 	  (set! new-dialog
@@ -1304,7 +1540,7 @@ void das_init(){
 	  (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i)
 							(if deletefunc (deletefunc))
 							(XtUnmanageChild new-dialog)
-							(focus-widget (list-ref (channel-widgets (selected-sound) 0) 0))))
+							(focus-widget (c-editor-widget (selected-sound)))))
 	  (XmStringFree titlestr)))
     
     

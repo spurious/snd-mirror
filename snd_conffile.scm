@@ -1,15 +1,13 @@
 ;; My config file for snd.
 ;; -Kjetil S. Matheussen.
 
-;; Should work for both gtk and motif.
+;; Should work for gtk and perhaps motif.
 
 
 (use-modules (ice-9 rdelim))
 
 (provide 'snd-snd_conffile.scm)
 
-
-;;(debug-set! stack 2000000)
 
 
 ;;##############################################################
@@ -54,14 +52,18 @@
 ;;##############################################################
 
 
-(if (not (provided? 'snd-snd-hobbit.scm))
-    (load-from-path "snd-hobbit.scm"))
+;;(if (not (provided? 'snd-snd-hobbit.scm))
+;;    (load-from-path "snd-hobbit.scm"))
 
 
 
 (if (not (provided? 'snd-gui.scm))
     (load-from-path "gui.scm"))
 
+
+(if (not use-gtk)
+    (c-display "Motif is currently not much supported in snd_conffile.scm."
+	       "You should compile up Snd using the --use-gtk configure option."))
 
 
 (c-load-from-path rgb)
@@ -337,40 +339,6 @@
 
 
 
-(define c-gc-isoff #f)
-
-;; The following functions ensure that gc-off is not called more times than gc-on.
-;; It takes an optional argument which is the number of milliseconds before turning
-;; the garbage collector on again, no matter what. Set this arguement to #f to avoid
-;; automaticly turning the garbage collector on. But that is dangerous.
-(define* (c-gc-off #:optional (timeout 2000))
-  (if (not c-gc-isoff)
-      (begin
-	(gc-off)
-	(set! c-gc-isoff #t)
-	(if timeout
-	    (in timeout
-		(lambda ()
-		  (c-gc-on)))))))
-
-
-;; Ouch, might actually freeze the machine if using jack. Better turn the function off.
-;; (re-mlocking all memory in audio.c without using MCL_FUTURE seems to fix the freezing problem)
-;;(define (c-gc-off)
-;;  #t)
-
-
-(define (c-gc-on)
-  (if c-gc-isoff
-      (begin
-	;;(c-display "gc-on")
-	(gc-on)
-	(set! c-gc-isoff #f))))
-
-
-
-
-
 
 ;;##############################################################
 ;; Customize the cursor look
@@ -432,20 +400,6 @@
 ;; Seems to work for me at least.
 ;;##############################################################
 
-#!
-(hobbit-compile
- (define (ai)
-   (lambda (b)
-     (c-display b)))
-)
- (c-display ((ai)5))
- (if (procedure? (ai))
-     (c-display "jepp")
-     (c-display "nope"))
-!#
-
-
-
 
 (let ((width 800)
       (height 600))
@@ -454,15 +408,13 @@
   (if use-gtk
       (add-hook! after-open-hook
 		 (lambda (snd)
-		   (let ((w (list-ref (channel-widgets snd 0) 0)))
-		     ;(c-display "1")
-		     (g_signal_connect w "configure_event"
-				       (lambda (w e i)
-					 (let ((event (GDK_EVENT_CONFIGURE e)))
-					   (set! width (.width event))
-					   (set! height (.height event)))))
+		   (let ((w (c-editor-widget snd)))
+		     (c-g_signal_connect w "configure_event"
+					 (lambda (w e i)
+					   (let ((event (GDK_EVENT_CONFIGURE e)))
+					     (set! width (.width event))
+					     (set! height (.height event)))))
 		     )
-		     ;(c-display "2"))
 		   #f)))
   
 
@@ -515,60 +467,23 @@
 ;; Moves cursor and stops playing if clicking buttton 5. (wheel down)
 ;; Moves cursor and starts playing if clicking button 4. (wheel up)
 
-
-(let ((isdragged #f))
-  (c-add-hook! mouse-button-press-hook
-	     (lambda (snd x y stat)
-	       (set! isdragged #f)))
-  (c-add-hook! mouse-drag2-hook
-	     (lambda (snd x y stat)
-	       (set! isdragged #t)))
-  (add-hook! mouse-click-hook
-	     (lambda (snd chn button state x y axis)
-	       (if (and (or (not isdragged)
-			    (= button 4)
-			    (= button 5))
-			(not (= state 260))
-			(= axis time-graph))
-		   (let ((samp (max 0 (inexact->exact (* (srate snd) (position->x x snd chn)))))
-			 (dasspeed (speed-control)))
-		     (c-stop-playing samp)
-		     (cond ((= button 4)
-			    (if (< dasspeed 0)
-				(set! (speed-control) (* -1 dasspeed)))
-			    (c-play samp))
-			   ((= button 5)
-			    (if (> dasspeed 0)
-				(set! (speed-control) (* -1 dasspeed)))
-			    (c-play samp)))))
-	       #f)))
+(add-hook! mouse-click-hook
+	   (lambda (snd chn button state x y axis)
+	     (if (and (not (= state 260))
+		      (= axis time-graph))
+		 (let ((samp (max 0 (inexact->exact (* (srate snd) (position->x x snd chn)))))
+		       (dasspeed (speed-control)))
+		   (c-stop-playing samp)
+		   (cond ((= button 4)
+			  (if (< dasspeed 0)
+			      (set! (speed-control) (* -1 dasspeed)))
+			  (c-play samp))
+			 ((= button 5)
+			  (if (> dasspeed 0)
+			      (set! (speed-control) (* -1 dasspeed)))
+			  (c-play samp)))))
+	     #f))
 	
-
-
-#!
-
-Crash:
-(as-one-edit
- (lambda ()
-   (c-for 0 < 20000 1
-	  (lambda (n)
-	    (set! (sample n) .5)))))
-
-No crash:
-(as-one-edit
- (lambda ()
-   (c-for 0 < 20000 1
-	  (lambda (n)
-	    (set! (sample 10000) .5)))))
-
-No crash:
-(as-one-edit
- (do ((n 0 (1+ n)))
-     ((= n 20000))
-   (set! (sample n) .5)))
-
-
-!#
 
 
 
@@ -597,10 +512,10 @@ No crash:
 		   (c-gc-on)))
       (add-hook! start-playing-hook
 		 (lambda (snd)
-		   (c-gc-off)))
+		   (c-gc-off #f)))
       (add-hook! start-playing-selection-hook
 		 (lambda ()
-		   (c-gc-off)))))
+		   (c-gc-off #f)))))
 
 
 
@@ -906,34 +821,6 @@ Does not work.
 		(eval-string (comment sndf)))
 	      (lambda args #f))))
 
-;(hobbit-compile
-; (let ((str " ")
-;       (chan "2"))
-;   (for-each
-;    (lambda (m)
-;      (set! str chan))
-;    '()))
-; 
-; )
-;
-; (define (ai sndf)
-;  (let ((str (format #f "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%(let ((m #f))~%"))
-;	(chan 0))
-;    (for-each
-;     (lambda (chan-marks)
-;       (c-display chan-marks))
-;       (for-each 
-;	(lambda (m)
-;	  (set! str 
-;		(string-append str 
-;			       (format #f
-;				       "  (set! m (add-mark ~A #f ~D))~%" 
-;				       (mark-sample m)
-;				       chan))))
-;	(set! chan (1+ chan))))
-;     (marks sndf))
-;    (string-append str (format #f "  m)~%"))))
-
 
 (define (marks->string sndf)
   (let ((str (format #f "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%(let ((m #f))~%"))
@@ -978,58 +865,52 @@ Does not work.
 ;; Replace mouse-selection handling. (probably broken for motif)
 ;;##############################################################
 
-(if #t
-    (let ((about-to-move #f)
-	  (selection-starting-point #f)
-	  (stop-handling #f))
+
+(let ((about-to-move #f)
+      (selection-starting-point #f))
 
   (define (mouse-press-callback snd x y state)
-    (c-gc-off) ;; To avoid irritating non-smoothness.
-    (if (not stop-handling)
-	(let* ((chn (selected-channel snd))
-	       (samp (inexact->exact (* (srate snd) (position->x x snd chn)))))
-	  (if (< samp 0) (set! samp 0))
-	  (c-show-times (cursor) #t)
-	  (if (and (= state 4) (selection-member? snd))
+    (let* ((chn (selected-channel snd))
+	   (samp (inexact->exact (* (srate snd) (position->x x snd chn)))))
+      (if (< samp 0) (set! samp 0))
+      (c-show-times (cursor) #t)
+      (if (and (= state 4) (selection-member? snd))
+	  (begin
+	    (if (< samp (+ (/ (selection-frames snd) 2) (selection-position snd)))
+		(set! selection-starting-point (+ (selection-position snd) (selection-frames snd)))
+		(set! selection-starting-point (selection-position snd)))
+	    (mouse-motion-callback snd x y state))
+	  (if (and (= state 1) (selection-member? snd))
 	      (begin
-		(if (< samp (+ (/ (selection-frames snd) 2) (selection-position snd)))
-		    (set! selection-starting-point (+ (selection-position snd) (selection-frames snd)))
-		    (set! selection-starting-point (selection-position snd)))
-		(mouse-motion-callback snd x y state))
-	      (if (and (= state 1) (selection-member? snd))
-		  (begin
-		    (color-samples-allchans (channels) green (selection-position snd) (selection-frames snd))
-		    (set! about-to-move (<array> (selection-position snd) (selection-frames snd))))
-		  (set! selection-starting-point samp)))))
-    #f)
+		(color-samples-allchans (channels) green (selection-position snd) (selection-frames snd))
+		(set! about-to-move (<array> (selection-position snd) (selection-frames snd))))
+	      (set! selection-starting-point samp)))))
 
   (define (mouse-motion-callback snd x y state)
     (let* ((chn (selected-channel snd))
 	   (samp (max 0 (inexact->exact (* (srate snd) (position->x x snd chn))))))
       (if about-to-move
 	  (c-set-selection! snd samp (+ samp (about-to-move 1)))
-	  (if (not stop-handling)
-	      (begin
-		(if (not (selection-member? snd))
-		    (if (< x selection-starting-point)
-			(c-set-selection! snd x selection-starting-point)
-			(c-set-selection! snd selection-starting-point x))
-		    (let* ((selstart (selection-position snd))
-			   (selframes (selection-frames snd))
-			   (newselstart (if (< samp selection-starting-point)
-					    samp
-					    selection-starting-point))
-			   (newselframes (if (< samp selection-starting-point)
-					     (- selection-starting-point samp)
-					     (1+ (- samp selection-starting-point)))))
-		      (if (and (or (not (= selstart newselstart))
-				   (not (= selframes newselframes)))
-			       (not (= samp selection-starting-point)))
-			  (begin
-			    (c-put snd 'region-generation (1+ (c-get snd 'region-generation 0)))
-			    (c-set-selection! snd newselstart (+ newselstart newselframes))))))
-		(c-show-times (cursor) #t)))))
-    #f)
+	  (begin
+	    (if (not (selection-member? snd))
+		(if (< x selection-starting-point)
+		    (c-set-selection! snd x selection-starting-point)
+		    (c-set-selection! snd selection-starting-point x))
+		(let* ((selstart (selection-position snd))
+		       (selframes (selection-frames snd))
+		       (newselstart (if (< samp selection-starting-point)
+					samp
+					selection-starting-point))
+		       (newselframes (if (< samp selection-starting-point)
+					 (- selection-starting-point samp)
+					 (1+ (- samp selection-starting-point)))))
+		  (if (and (or (not (= selstart newselstart))
+			       (not (= selframes newselframes)))
+			   (not (= samp selection-starting-point)))
+		      (begin
+			(c-put snd 'region-generation (1+ (c-get snd 'region-generation 0)))
+			(c-set-selection! snd newselstart (+ newselstart newselframes))))))
+	    (c-show-times (cursor) #t)))))
     
   (define (mouse-release-callback snd x y state)
     (define (nofunc . x)
@@ -1047,8 +928,7 @@ Does not work.
 	    (c-set-selection! snd samp (+ samp (about-to-move 1)))
 	    (set! about-to-move #f))
 	  (begin
-	    (if (and (not stop-handling)
-		     selection-starting-point)
+	    (if selection-starting-point
 		(if (not (= samp selection-starting-point))
 		    (begin
 		      (if (< samp selection-starting-point)
@@ -1058,47 +938,19 @@ Does not work.
 		      (gc))))
 	    (c-show-times (cursor) #t)
 	    (set! selection-starting-point #f))))
-    (c-gc-on)
-    #f)
-  
+    (c-gc-on))
 
-  (add-hook! mix-drag-hook
-	     (lambda (n) 
-	       (set! selection-starting-point #f)
-	       (set! stop-handling #t)
-	       #f))
 
-  (add-hook! mix-release-hook
-	     (lambda (id samps)
-	       (set! stop-handling #f)
-	       #f))
+  (-> mouse-button-press-hook add!
+      mouse-press-callback)
 
-  (add-hook! mark-hook
-	     (lambda (id snd chn reason)
-	       (set! stop-handling  #f)
-	       #f))
+  (-> mouse-drag2-hook add!
+      mouse-motion-callback)
 
-  (add-hook! mark-click-hook
-	     (lambda (id)
-	       (c-display id)))
+  (-> mouse-button-release-hook add!
+      mouse-release-callback)
 
-  (add-hook! mark-drag-hook
-	     (lambda (id)
-	       (set! selection-starting-point #f)
-	       (set! stop-handling #t)
-	       #f))
-
-  (add-hook! after-open-hook
-	     (lambda (snd)
-	       (if use-gtk
-		   (begin
-		     (c-remove-motionhandler (list-ref (channel-widgets snd 0) 0))))))
-	     
-  (c-add-hook! mouse-button-press-hook mouse-press-callback)
-
-  (c-add-hook! mouse-drag2-hook mouse-motion-callback)
-
-  (c-add-hook! mouse-button-release-hook mouse-release-callback)))
+  )
 
 
 
@@ -1215,7 +1067,7 @@ Does not work.
 (define c-last-report-value 0.0)
 
 (define (progress-report pct . various) ;name current-channel channels snd)
-  (let* ((sound-widget (list-ref (channel-widgets (selected-sound) 0) 0))
+  (let* ((sound-widget (editor-widget (selected-sound)))
 	 (widget-width (car (widget-size sound-widget))))
     (if (> (abs (- pct c-last-report-value)) (/ 1 widget-width))
 	(let* ((old-color (foreground-color))
@@ -1258,22 +1110,6 @@ Does not work.
 ;; (without very much (if any) success by the way). Would be extremely nice if Guile could collect garbage in a seperate thread.
 
 
-
-
-
-;(hobbit-compile
-;
-;(define (func1 y)
-;  (lambda (x)
-;    #t))
-;
-;(define func2
-;  (let ((x #f))
-;    (lambda ()
-;      #t)))
-;)
-
-
 (define c-show-times
 
   (let (
@@ -1294,7 +1130,7 @@ Does not work.
 		(y #f))
 	   
 	   (lambda (string level color framepos . force)
-	     (set! sound-widget (list-ref (channel-widgets (selected-sound) 0) 0))
+	     (set! sound-widget (c-editor-widget (selected-sound)))
 	     (set! width (- (car (widget-size sound-widget)) fontwidth))
 	     (set! x (min (- width stringlen) (x->position (/ framepos (srate)))))
 	     (set! dim (lastpainted level))
@@ -1411,23 +1247,6 @@ Does not work.
 
 
 
-
-
-;(set! %load-path (cons "/usr/local/share/guile-hobbit"
-;		       %load-path))
-;
-;(use-modules (hobbit4d link))
-
-(define (c-set-foreground-color! c)
-  (set! (foreground-color) c))
-
-
-;(hobbit-load-from-path "compile/c-show-times")
-
-;(define c-show-times c-show-times2)
-;(dynamic-call "scm_init_c_dash_show_dash_times" (dynamic-link "/home/kjetil/snd-7/compile/libc-show-times.so"))
-
-
 ;; Show the time in the minibuffer when playing
 (let ((samplecount 0))
   (add-hook! play-hook
@@ -1498,6 +1317,8 @@ Does not work.
   (add-hook! after-open-hook
 	     (lambda (snd)
 
+	       (checkbutton-remove (c-get-nameform-button snd "unite"))
+
 	       (let ((oldplay (c-get-nameform-button snd "play")))
 		 (<checkbutton> (c-get-nameform snd)
 				"loop"
@@ -1512,7 +1333,7 @@ Does not work.
 												    (lambda (b) 
 												      (checkbutton-set b c-islooping)))))
 						  (sounds))
-					(focus-widget (list-ref (channel-widgets snd 0) 0))
+					(focus-widget (c-editor-widget snd))
 					(set! not-now #f))))
 				c-islooping
 				(if use-gtk '() (list XmNx (car (widget-position oldplay)))))
@@ -1530,7 +1351,7 @@ Does not work.
 				      (set! (sync snd) (c-get-unique-sync-num))
 				      (set! (sync snd) 0))
 				  
-				  (focus-widget (list-ref (channel-widgets snd 0) 0)))
+				  (focus-widget (c-editor-widget snd)))
 				#t
 				(if use-gtk '() (list XmNx (car (widget-position oldsync)))))
 		 (checkbutton-remove oldsync))
@@ -1594,162 +1415,49 @@ Does not work.
 	       #f)))
 
 
-(c-add-hook! mouse-button-press-hook
-	   (lambda (snd x y stat)
-	     (c-get-mouse-info snd x y #f
-			       (lambda (ch x y xmax ymax)
-				 (let ((ret #f))
-				   (c-for 0 < (chans snd) 1
-					  (lambda (ch)
-					    (let ((nodeline ((c-get snd 'nodelines) ch)))
-					      (let ((a (-> nodeline mouse-press (/ x xmax) (/ y ymax))))
-						(if (eq? a 'stop!)
-						    (begin
-						      (c-gc-off) ;; To avoid irritating non-smoothness.
-						      (set! ret a)))))))
-				   ret)))))
+(-> mouse-button-press-hook add!
+    (lambda (snd x y stat)
+      (c-get-mouse-info snd x y #f
+			(lambda (ch x y xmax ymax)
+			  (let ((ret #f))
+			    (c-for 0 < (chans snd) 1
+				   (lambda (ch)
+				     (let ((nodeline ((c-get snd 'nodelines) ch)))
+				       (let ((a (-> nodeline mouse-press (/ x xmax) (/ y ymax))))
+					 (if (eq? a 'stop!)
+					     (set! ret a))))))
+			    ret)))))
 
-(c-add-hook! mouse-move-hook
-	   (lambda (snd x y stat)
-	     (c-get-mouse-info snd x y #t
-			       (lambda (ch x y xmax ymax)
-				 (let ((ret #f))
-				   (c-for 0 < (chans snd) 1
-					  (lambda (ch)
-					    (let ((nodeline ((c-get snd 'nodelines) ch)))
-					      (let ((a (-> nodeline mouse-move (/ x xmax) (/ y ymax))))
-						(if (not ret)
-						    (set! ret a))))))
-				   ret)))))
+(-> mouse-move-hook add!
+    (lambda (snd x y stat)
+      (c-get-mouse-info snd x y #t
+			(lambda (ch x y xmax ymax)
+			  (let ((ret #f))
+			    (c-for 0 < (chans snd) 1
+				   (lambda (ch)
+				     (let ((nodeline ((c-get snd 'nodelines) ch)))
+				       (let ((a (-> nodeline mouse-move (/ x xmax) (/ y ymax))))
+					 (if (not ret)
+					     (set! ret a))))))
+			    ret)))))
 
-(c-add-hook! mouse-button-release-hook
-	   (lambda (snd x y stat)
-	     (c-get-mouse-info snd x y #t
-			       (lambda (ch x y xmax ymax)
-				 (let ((ret #f))
-				   (c-for 0 < (chans snd) 1
-					  (lambda (ch)
-					    (let ((nodeline ((c-get snd 'nodelines) ch)))
-					      (let ((a (-> nodeline mouse-release (/ x xmax) (/ y ymax))))
-						(if (not ret)
-						    (set! ret a))))))
-				   ret)))))
+(-> mouse-button-release-hook add!
+    (lambda (snd x y stat)
+      (c-get-mouse-info snd x y #t
+			(lambda (ch x y xmax ymax)
+			  (let ((ret #f))
+			    (c-for 0 < (chans snd) 1
+				   (lambda (ch)
+				     (let ((nodeline ((c-get snd 'nodelines) ch)))
+				       (let ((a (-> nodeline mouse-release (/ x xmax) (/ y ymax))))
+					 (if (not ret)
+					     (set! ret a))))))
+			    ret)))))
 ))
 
 
 
 
-;;##############################################################
-;;  Moving marks with the mouse
-;;##############################################################
-
-(let ((currmark #f))
-
-  (c-add-hook! mouse-button-press-hook
-	       (lambda (snd orgx orgy stat)
-		 (c-get-mouse-info 
-		  snd orgx orgy #f
-		  (lambda (ch x y xmax ymax)
-		    (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch)))))
-			  (pointrange (- (* (srate snd) (position->x 15 snd ch))
-					 (* (srate snd) (position->x 0 snd ch)))))
-		      (if (and (> y 7)
-			       (< y 15))
-			  (call-with-current-continuation
-			   (lambda (return)
-			     (for-each
-			      (lambda (mark)
-				(if (< (abs (- (mark-sample mark) pointpos)) pointrange)
-				    (begin
-				      (c-gc-off) ;; To avoid irritating non-smoothness.
-				      (set! currmark mark)
-				      (return 'stop!))))
-			      (list-ref (list-ref (marks) snd) ch))))))))))
-
-  (c-add-hook! mouse-move-hook
-	       (lambda (snd orgx y stat)
-		 (if currmark
-		     (c-get-mouse-info
-		      snd orgx y #t
-		      (lambda (ch x y xmax ymax)
-			(let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
-			  (if (> (mark-sync currmark) 0)
-			      (move-syncd-marks (mark-sync currmark)
-						(- pointpos (mark-sample currmark)))
-			      (set! (mark-sample currmark) pointpos))
-			  'stop!))))))
-
-  (c-add-hook! mouse-button-release-hook
-	       (lambda (snd orgx y stat)
-		 (if currmark
-		     (c-get-mouse-info 
-		      snd orgx y #t
-		      (lambda (ch x y xmax ymax)
-			(let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
-			  (if (> (mark-sync currmark) 0)
-			      (move-syncd-marks (mark-sync currmark)
-						(- pointpos (mark-sample currmark)))
-			      (set! (mark-sample currmark) pointpos))
-			  (set! currmark #f)
-			  'stop!))))))
-)
-
-
-
-
-;;##############################################################
-;;  Moving mixes with the mouse
-;;##############################################################
-
-(if #f
-(let ((currmix #f))
-
-  (c-add-hook! mouse-button-press-hook
-	       (lambda (snd orgx orgy stat)
-		 (c-get-mouse-info 
-		  snd orgx orgy #f
-		  (lambda (ch x y xmax ymax)
-		    (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch)))))
-			  (pointrange (- (* (srate snd) (position->x 15 snd ch))
-					 (* (srate snd) (position->x 0 snd ch))))
-			  (ypointpos (position->y orgy snd ch)))
-		      (c-display y orgy ypointpos snd ch)
-		      (if (and (> ypointpos 0.84)
-			       (< ypointpos 0.92))
-			  (call-with-current-continuation
-			   (lambda (return)
-			     (for-each
-			      (lambda (mix)
-				(if (< (abs (- (mix-position mix) pointpos)) pointrange)
-				    (begin
-				      (c-gc-off) ;; To avoid irritating non-smoothness.
-				      (set! currmix mix)
-				      (return 'stop!))))
-			      (mixes snd ch))))))))))
-
-  (c-add-hook! mouse-move-hook
-	       (lambda (snd orgx y stat)
-		 (if currmix
-		     (c-get-mouse-info
-		      snd orgx y #t
-		      (lambda (ch x y xmax ymax)
-			(let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
-			  (set! (mix-position currmix) pointpos)
-			  'stop!))))))
-
-  (c-add-hook! mouse-button-release-hook
-	       (lambda (snd orgx y stat)
-		 (if currmix
-		     (c-get-mouse-info 
-		      snd orgx y #t
-		      (lambda (ch x y xmax ymax)
-			(let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
-			  (set! (mix-position currmix) pointpos)
-			  (set! currmix #f)
-			  'stop!))))))
-
-  )
-)
 
 
 ;;##############################################################
