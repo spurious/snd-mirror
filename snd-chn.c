@@ -6612,6 +6612,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
       if (!extended_mode)
 	/* -------------------------------- key (or M-key) -------------------------------- */
 	{ /* no control (but possibly meta), not extended mode -- bare alpha chars sent to listener if possible */
+	  /*   (we already checked for possible user key bindings above) */
 	  switch (keysym)
 	    {
 	    case snd_K_0: case snd_K_1: case snd_K_2: case snd_K_3: case snd_K_4:
@@ -6758,8 +6759,16 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    default:
 	      /* try to send unbuckified random keyboard input to the lisp listener */
 
-	      /* TODO: if Meta key here and menu accelerators... */
-	    
+#if USE_MOTIF
+	      /* if meta key, assume for now that it's intended as a menu accelerator (don't send it to the listener) */
+	      /*    in gtk (and apparently some motif's?) we don't even see the accelerator, but in Linux we do */
+	      if ((state & snd_MetaMask) &&
+		  ((keysym == snd_K_f) || (keysym == snd_K_e) || (keysym == snd_K_v) || (keysym == snd_K_o) || (keysym == snd_K_h)))
+		/* here the accelerators are f e v o h (not upper case for some reason -- it's given as 'F' in snd-xmenu.c) */
+		return(KEYBOARD_NO_ACTION);
+	      /* it might be better to remove the menu accelerators -- they are a dubious feature to begin with */
+#endif
+
 	      if (ss->listening != LISTENER_CLOSED)
 		{
 		  if (listener_height() > 5)

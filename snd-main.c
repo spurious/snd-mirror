@@ -1,5 +1,8 @@
 #include "snd.h"
-#include <locale.h>
+
+#if HAVE_LOCALE_H
+  #include <locale.h>
+#endif
 
 static int remove_temp_files(chan_info *cp, void *ignore)
 {

@@ -94,10 +94,15 @@ static SCM g_change_property(SCM winat, SCM name, SCM command)
   /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
   SCM_ASSERT(gh_string_p(winat),name,SCM_ARG1,"change-property");
   SCM_ASSERT(gh_string_p(name),name,SCM_ARG2,"change-property");
-  SCM_ASSERT(gh_string_p(command),command,SCM_ARG3,"change-property");
   w = gh_scm2newstr(winat,NULL);
   n = gh_scm2newstr(name,NULL);
-  c = gh_scm2newstr(command,NULL);
+  if (gh_string_p(command))
+    c = gh_scm2newstr(command,NULL);
+  else
+    {
+      /* turn it into a string before passing it to change_property */
+      c = gh_print_1(command);
+    }
   change_property(get_global_state(),w,n,c);
   if (w) free(w);
   if (n) free(n);

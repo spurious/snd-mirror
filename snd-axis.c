@@ -208,8 +208,12 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	  ap->x_axis_x1 = ap->graph_x0 + (int)(0.9*width);
 	  ap->x_axis_x0 = ap->graph_x0 + (int)(0.2*width);
 	}
-      ap->x_scale = ((double)(ap->x_axis_x1 - ap->x_axis_x0))/((double)(ap->x1 - ap->x0));
-      ap->y_scale = (ap->y_axis_y1 - ap->y_axis_y0)/(ap->y1 - ap->y0);
+      if ((ap->x_axis_x0 == ap->x_axis_x1) || (ap->x0 == ap->x1))
+	ap->x_scale = 0.0;
+      else ap->x_scale = ((double)(ap->x_axis_x1 - ap->x_axis_x0))/((double)(ap->x1 - ap->x0));
+      if ((ap->y_axis_y0 == ap->y_axis_y1) || (ap->y0 == ap->y1))
+	ap->y_scale = 0.0;
+      else ap->y_scale = (ap->y_axis_y1 - ap->y_axis_y0)/(ap->y1 - ap->y0);
       return;
     }
 

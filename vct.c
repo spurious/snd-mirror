@@ -110,9 +110,13 @@ vct *get_vct(SCM arg)
 static scm_sizet free_vct(SCM obj)
 {
   vct *v = (vct *)GH_VALUE_OF(obj);
-  if ((v->dont_free == 0) && (v->data)) FREE(v->data);
-  v->data = NULL;
-  FREE(v);
+  if (v)
+    {
+      if ((v->dont_free == 0) && (v->data)) FREE(v->data);
+      v->data = NULL;
+      FREE(v);
+      GH_SET_VALUE_OF(obj,(SCM)NULL);
+    }
   return(0);
 }
 

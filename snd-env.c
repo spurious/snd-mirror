@@ -1341,14 +1341,15 @@ static SCM g_define_envelope(SCM a, SCM b)
   return(SCM_BOOL_F);
 }
 
-/* TODO: this is ugly -- we should be passing the env var itself, not its name as a string! */
 static SCM g_env_base(SCM name)
 {
-  #define H_env_base "(" S_env_base " name) is the base of the envelope 'name'"
+  #define H_env_base "(" S_env_base " 'env) is the base of the envelope env"
   int i;
   char *urn = NULL;
-  SCM_ASSERT(gh_string_p(name),name,SCM_ARG1,S_env_base);
-  urn = gh_scm2newstr(name,NULL);
+  SCM_ASSERT(gh_symbol_p(name) || gh_string_p(name),name,SCM_ARG1,S_env_base);
+  if (gh_string_p(name))
+    urn = gh_scm2newstr(name,NULL);
+  else urn = gh_scm2newstr(scm_symbol_to_string(name),NULL);
   i = find_env(urn);
   free(urn);
   if (i != -1) 
@@ -1361,9 +1362,11 @@ static SCM g_set_env_base(SCM name, SCM val)
 {
   int i;
   char *urn = NULL;
-  SCM_ASSERT(gh_string_p(name),name,SCM_ARG1,"set-" S_env_base);
+  SCM_ASSERT(gh_symbol_p(name) || gh_string_p(name),name,SCM_ARG1,"set-" S_env_base);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG2,"set-" S_env_base);
-  urn = gh_scm2newstr(name,NULL);
+  if (gh_string_p(name))
+    urn = gh_scm2newstr(name,NULL);
+  else urn = gh_scm2newstr(scm_symbol_to_string(name),NULL);
   i = find_env(urn);
   free(urn);
   if (i != -1) 
@@ -1446,10 +1449,8 @@ void g_init_env(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure0_1(S_save_envelopes,g_save_envelopes),H_save_envelopes);
   DEFINE_PROC(gh_new_procedure2_0(S_define_envelope,g_define_envelope),H_define_envelope);
-
   define_procedure_with_setter(S_env_base,SCM_FNC g_env_base,H_env_base,
 			       "set-" S_env_base,SCM_FNC g_set_env_base,local_doc,1,0,2,0);
-
 }
 
 #endif

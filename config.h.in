@@ -59,6 +59,7 @@
 #undef HAVE_GNU_LIBC_VERSION_H
 #undef HAVE_PWD_H
 #undef HAVE_LADSPA_H
+#undef HAVE_LOCALE_H
 
 #define SIZEOF_INT 0
 #define SIZEOF_CHAR 0

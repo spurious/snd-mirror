@@ -1753,7 +1753,15 @@ such a program changes the SND_COMMAND property, Snd notices and evaluates
 the new value (as a string, as if typed in the Snd lisp listener).  To get
 a response from Snd, use the function change-property(consat,name,command) where
 consat is the property name Snd should search for, name is the property to change, and command is the string
-that replaces the current property value.
+that replaces the current property value.  For example, CLM's communication
+with Snd function sends Snd this string:</p>
+<pre>
+"(change-property \"CLM_VERSION\" \"CLM_COMMAND\" " str ")"
+</pre>
+<p>where <i>str</i> is the form to be evaluated within Snd.  It then waits
+for a change to the CLM_COMMAND property, returning its value to the
+user. The send-snd function itself, similarly, looks for SND_VERSION and
+sets SND_COMMAND to <i>str</i>, which Snd subsequently notices.
 </p>
 <br>
 

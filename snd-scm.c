@@ -406,7 +406,7 @@ char *full_filename(SCM file)
   return(filename);
 }
 
-static char *gh_print_1(SCM obj)
+char *gh_print_1(SCM obj)
 {
   char *str1;
 #if (!HAVE_GUILE_1_3_0)

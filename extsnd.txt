@@ -1429,6 +1429,8 @@ value to val.
 
   dot-size          (snd chn)     size in pixels of dots when graphing with dots (default: 1)
 
+  env-base          (env)        base of env.
+
   env-sound         (envelope samp samps env-base snd chn)
                                   apply (in amplitude) envelope to snd's channel chn starting
                                   at sample samp for samps samples with connecting segments

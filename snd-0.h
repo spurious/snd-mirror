@@ -27,6 +27,7 @@
     /* apparently we can't trust the return value */
   #endif
   #define HAVE_VPRINTF 1
+  #define HAVE_LOCALE_H 1
   #define HAVE_SETLOCALE 1
   #define HAVE_FINITE 1
   #if defined(LINUX) && (!(defined(HAVE_FPU_CONTROL_H)))

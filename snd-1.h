@@ -726,6 +726,7 @@ char *added_transform_name(int type);
   SCM eval_str_wrapper(void *data);
   SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args);
   char *full_filename(SCM file);
+  char *gh_print_1(SCM obj);
   MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position);
   void ERRCP(char *origin, SCM snd, SCM chn, int off);
   void ERRSP(char *origin, SCM snd, int off);

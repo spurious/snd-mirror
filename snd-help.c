@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+11-Dec:  snd 4.9.\n\
 7-Dec:   zero-pad bugfixes.\n\
 29-Nov:  before-fft-hook, string completion from help list.\n\
 28-Nov:  BSD support thanks to Steven Schultz.\n\
@@ -266,7 +267,6 @@ void news_help(snd_state *ss)
 14-Nov:  un-normalized fft display bugfix.\n\
 13-Nov:  mark-drag-hook.\n\
 11-Nov:  insert-silence.\n\
-10-Nov:  snd 4.8.\n\
 ",
 NULL);
   FREE(info);

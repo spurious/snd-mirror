@@ -102,6 +102,11 @@ static axis_context *make_axis_cp(snd_state *ss, GtkWidget *w)
   return(ax);
 }
 
+static Float fp_dB(snd_state *ss, Float py)
+{
+  return((py <= ss->lin_dB) ? 0.0 : (1.0 - ((20.0*(log10(py))) / ss->min_dB)));
+}
+
 static void graph_redisplay(snd_state *ss)
 {
   GdkDrawable *wn;
@@ -138,7 +143,9 @@ static void graph_redisplay(snd_state *ss)
       ix0 = ix1;
       iy0 = iy1;
       ix1 = grf_x(x,axis_cp->axis);
-      iy1 = grf_y(current_graph_fftr[i],axis_cp->axis);
+      if (fft_log_magnitude(ss))
+	iy1 = grf_y(fp_dB(ss,current_graph_fftr[i]),axis_cp->axis);
+      else iy1 = grf_y(current_graph_fftr[i],axis_cp->axis);
       gdk_draw_line(wn,fgc,ix0,iy0,ix1,iy1);
     }
 }
