@@ -1929,9 +1929,6 @@ static XEN g_yes_or_no_p(XEN msg)
 
 static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display)
 {
-  /* TODO: need a way to create the lisp-graph axis-info and draw there even if no call on graph
-   */
-
   #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn force-display)\n\
 displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector. \
 If 'data' is a list of numbers, it is treated as an envelope."

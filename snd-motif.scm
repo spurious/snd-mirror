@@ -20,7 +20,7 @@
 ;;;   also keep-mix-file-dialog-open-upon-ok
 ;;; (add-amp-controls) adds amp sliders to the control panel for multi-channel sounds
 ;;; (add-very-useful-icons) adds some very useful icons
-
+;;; (remove-main-menu menu) removes a top-level menu
 
 (use-modules (ice-9 common-list))
 
@@ -1857,7 +1857,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		      (reset-to-one amp ampn)
 		      (if next-amp
 			  (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_WIDGET
-						   |XmNtopWidget next-amp))
+						   |XmNtopWidget     next-amp))
 			  (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_FORM)))
 		      (|XtManageChild ampc)
 		      (|XtManageChild ampn)
@@ -1886,6 +1886,18 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;(add-amp-controls)
 
 
+;;; -------- remove top level menu
+;;;
+;;; (remove-main-menu 5) removes the Help menu
+
+(define (remove-main-menu menu)
+  (let* ((cascade (|Widget (list-ref (menu-widgets) menu)))
+	 (top (cadr (|XtGetValues cascade (list |XmNsubMenuId 0)))))
+    (|XtUnmanageChild cascade)
+    (|XtUnmanageChild top)))
+
+
+
 ;;; drawnbutton+workproc sound-button example
 ;;; bess-translations
 ;;; midi trigger
@@ -1895,3 +1907,5 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; (create-sound-window (list-ref (main-widgets) 3) "pistol.snd")
 ;;;   will probably want to disable close here, or use replace?
+
+

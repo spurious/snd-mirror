@@ -1,6 +1,9 @@
 /* this is so ugly I can't bear to include it in xm.c
  */
 
+/* TODO: struct tie-ins for Ruby
+ */
+
 #if HAVE_XP
   XEN_NARGIFY_2(gxm_XpStartPage_w, gxm_XpStartPage)
   XEN_NARGIFY_1(gxm_XpEndPage_w, gxm_XpEndPage)

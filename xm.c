@@ -11,7 +11,7 @@
  *       xm-test.scm regression tests
  *       XEvent fields should be settable
  *       check for memory leaks etc
- *       struct tie-ins for Ruby(do these need nargification?)
+ *       struct tie-ins for Ruby
  *       struct accessors for XIconSize (see min_height)?
  */
 

@@ -112,7 +112,7 @@ int g_change_menu_label(int which_menu, char *old_label, char *new_label) {retur
 int g_set_menu_sensitive(int which_menu, char *old_label, int on) {return(0);}
 int g_menu_is_sensitive(int which_menu, char *old_label) {return(0);}
 int g_add_to_main_menu(snd_state *ss, char *label, int slot) {return(0);}
-int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb) {return(0);}
+int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int position) {return(0);}
 int g_remove_from_menu(int which_menu, char *label) {return(0);}
 void reflect_play_stop_in_popup_menu(void) {}
 void dismiss_all_dialogs(snd_state *ss) {}

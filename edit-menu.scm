@@ -1,9 +1,6 @@
 ;;; add some useful options to the Edit menu
 ;;;
 ;;; these used to be in the effects menu
-;;; TODO: make option insensitive if no selection etc (needs access to e_cascade_menu, not edit_menu)
-;;;           e_cascade_menu is the only child of top level menu (menu_menu) named "Edit"
-;;;           and (|XmCascadeButton? wid)  should return #t
 
 
 (use-modules (ice-9 format))
@@ -21,7 +18,7 @@
 
 (define edit-menu 1)
 
-(add-to-menu edit-menu #f #f)
+;(add-to-menu edit-menu #f #f)
 
 
 ;;; -------- selection -> new file
@@ -35,7 +32,7 @@
 	(save-selection new-file-name)
 	(open-sound new-file-name))))
 
-(add-to-menu edit-menu "Selection->new" selection->new)
+(add-to-menu edit-menu "Selection->new" selection->new 8) ;pos=8 puts this in the selection section in the Edit menu
 
 
 ;;; -------- cut selection -> new file
@@ -48,7 +45,7 @@
 	(delete-selection)
 	(open-sound new-file-name))))
 
-(add-to-menu edit-menu "Cut selection->new" cut-selection->new)
+(add-to-menu edit-menu "Cut selection->new" cut-selection->new 9)
 
 ;;; -------- append sound (and append selection for lafs)
 
@@ -60,9 +57,10 @@
   (if (selection?)
       (insert-selection (frames))))
 
-(add-to-menu edit-menu "Append selection" append-selection)
-(add-to-menu edit-menu #f #f)
+(add-to-menu edit-menu "Append selection" append-selection 10)
 
+
+(add-to-menu edit-menu #f #f)
 
 ;;; -------- trim front and back (goes by first or last mark)
 (define (trim-front)
@@ -124,5 +122,30 @@
 
 (add-to-menu edit-menu "Crop" crop)
 
+(if (provided? 'xm)
+    (let* ((edit-cascade (|Widget (list-ref (menu-widgets) 2)))
+	   (edit-menu (cadr (|XtGetValues edit-cascade (list |XmNsubMenuId 0)))))
+
+      (define (for-each-child w func)
+	(func w)
+	(if (|XtIsComposite w)
+	    (for-each 
+	     (lambda (n)
+	       (for-each-child n func))
+	     (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
+      
+      (|XtAddCallback edit-cascade |XmNcascadingCallback 
+	(lambda (w c i)
+	  (for-each-child 
+	   edit-menu
+	   (lambda (child)
+	     (if (or (string=? (|XtName child) "Selection->new")
+		     (string=? (|XtName child) "Cut selection->new")
+		     (string=? (|XtName child) "Append selection"))
+		 (|XtSetSensitive child (selection?))
+		 (if (or (string=? (|XtName child) "Crop")
+			 (string=? (|XtName child) "Trim front")
+			 (string=? (|XtName child) "Trim back"))
+		     (|XtSetSensitive child (> (length (marks (selected-sound) (selected-channel))) 1))))))))))
 
 

@@ -1179,6 +1179,7 @@ static void add_option(GtkWidget *w, int which_menu, char *label, int callb)
 
 static int remove_option(int which_menu, char *label)
 {
+  /* where is the goddamn menu item text? I hate Gtk! */
   int i;
   for (i = 0; i < added_options_pos; i++)
     if ((added_options_menus[i] == which_menu) && 
@@ -1358,7 +1359,7 @@ int g_add_to_main_menu(snd_state *ss, char *label, int slot)
   else return(INVALID_MENU);
 }
 
-int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
+int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int position)
 {
   GtkWidget *m, *menw;
    switch (which_menu)
@@ -1376,21 +1377,18 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
       break;
     }
    if (label)
+     m = gtk_menu_item_new_with_label(label);
+   else m = gtk_menu_item_new();
+   if (position >= 0)
+     gtk_menu_insert(GTK_MENU(menw), m, position);
+   else gtk_menu_append(GTK_MENU(menw), m);
+   set_background(m, (ss->sgx)->basic_color);
+   gtk_widget_show(m);
+   if (label)
      {
-       m = gtk_menu_item_new_with_label(label);
-       gtk_menu_append(GTK_MENU(menw), m);
-       set_background(m, (ss->sgx)->basic_color);
-       gtk_widget_show(m);
        gtk_object_set_user_data(GTK_OBJECT(m), (gpointer)callb);
        gtk_signal_connect(GTK_OBJECT(m), "activate", GTK_SIGNAL_FUNC(SND_Callback), (gpointer)ss);
        add_option(m, which_menu, label, callb);
-     }
-   else
-     {
-       m = gtk_menu_item_new();
-       gtk_menu_append(GTK_MENU(menw), m);
-       set_background(m, (ss->sgx)->basic_color);
-       gtk_widget_show(m);
      }
   return(0);
 }

@@ -1004,117 +1004,33 @@ static void add_option(Widget w, int which_menu, char *label, int callb)
   added_options_pos++;
 }
 
-static int remove_option(int which_menu, char *label)
+static void clobber_menu(Widget w, void *lab)
 {
-  int i;
-  for (i = 0; i < added_options_pos; i++)
-    if ((added_options_menus[i] == which_menu) && 
-	(added_options_names[i]) &&
-	(strcmp(label, added_options_names[i]) == 0) && 
-	(added_options[i]))
-      {
-	XtDestroyWidget(added_options[i]);
-	added_options[i] = NULL;
-	added_options_menus[i] = -1;
-	FREE(added_options_names[i]);
-	added_options_names[i] = NULL;
-	return(0);
-      }
+  char *name, *wname;
+  name = (char *)lab;
+  wname = XtName(w);
+  if ((wname) && (name) && (strcmp(name, wname) == 0))
+    XtUnmanageChild(w);
+}
+
+int g_remove_from_menu(int which_menu, char *label)
+{
+  Widget top_menu;
   switch (which_menu)
     {
-    case FILE_MENU: 
-      if (strcmp(label, STR_Open) == 0) XtUnmanageChild(mw[f_open_menu]); else
-	if (strcmp(label, STR_Close) == 0) XtUnmanageChild(mw[f_close_menu]); else
-	  if (strcmp(label, STR_Save) == 0) XtUnmanageChild(mw[f_save_menu]); else
-            if (strcmp(label, STR_Save_as) == 0) XtUnmanageChild(mw[f_save_as_menu]); else
-	      if (strcmp(label, STR_Revert) == 0) XtUnmanageChild(mw[f_revert_menu]); else
-		if (strcmp(label, STR_Mix) == 0) XtUnmanageChild(mw[f_mix_menu]); else
-		  if (strcmp(label, STR_Update) == 0) XtUnmanageChild(mw[f_update_menu]); else
-		    if (strcmp(label, STR_New) == 0) XtUnmanageChild(mw[f_new_menu]); else
-		      if (strcmp(label, STR_Record) == 0) XtUnmanageChild(mw[f_record_menu]); else
-			if (strcmp(label, STR_View) == 0) XtUnmanageChild(mw[f_view_menu]); else
-			  if (strcmp(label, STR_Print) == 0) XtUnmanageChild(mw[f_print_menu]); else
-			    if (strcmp(label, STR_Exit) == 0) XtUnmanageChild(mw[f_exit_menu]); else 
-			      return(INVALID_MENU);
-      return(FILE_MENU);
-      break;
-    case EDIT_MENU: 
-      if (strcmp(label, STR_Undo) == 0) XtUnmanageChild(mw[e_undo_menu]); else
-	if (strcmp(label, STR_Redo) == 0) XtUnmanageChild(mw[e_redo_menu]); else
-	  if (strcmp(label, STR_Find) == 0) XtUnmanageChild(mw[e_find_menu]); else
-            if (strcmp(label, STR_Delete_Selection) == 0) XtUnmanageChild(mw[e_cut_menu]); else
-	      if (strcmp(label, STR_Insert_Selection) == 0) XtUnmanageChild(mw[e_paste_menu]); else
-		if (strcmp(label, STR_Mix_Selection) == 0) XtUnmanageChild(mw[e_mix_menu]); else
-		  if (strcmp(label, STR_Play_selection) == 0) XtUnmanageChild(mw[e_play_menu]); else
-		    if (strcmp(label, STR_Save_Selection) == 0) XtUnmanageChild(mw[e_save_as_menu]); else
-		      if (strcmp(label, STR_Select_all) == 0) XtUnmanageChild(mw[e_select_all_menu]); else
-			if (strcmp(label, STR_Edit_Envelope) == 0) XtUnmanageChild(mw[e_edenv_menu]); else
-			  if (strcmp(label, STR_Edit_Header) == 0) XtUnmanageChild(mw[e_header_menu]); else 
-			    return(INVALID_MENU);
-      return(EDIT_MENU);
-      break;
-    case VIEW_MENU: 
-      if (strcmp(label, STR_Equalize_Panes) == 0) XtUnmanageChild(mw[v_equalize_panes_menu]); else
-	if (strcmp(label, STR_Show_controls) == 0) XtUnmanageChild(mw[v_ctrls_menu]); else
-	  if (strcmp(label, STR_Show_listener) == 0) XtUnmanageChild(mw[v_listener_menu]); else
-            if (strcmp(label, STR_Mix_Panel) == 0) XtUnmanageChild(mw[v_mix_panel_menu]); else
-	      if (strcmp(label, STR_Regions) == 0) XtUnmanageChild(mw[v_region_menu]); else
-		if (strcmp(label, STR_File) == 0) XtUnmanageChild(mw[v_files_menu]); else
-		  if (strcmp(label, STR_Color) == 0) XtUnmanageChild(mw[v_color_menu]); else
-		    if (strcmp(label, STR_Orientation) == 0) XtUnmanageChild(mw[v_orientation_menu]); else
-		      if (strcmp(label, STR_Graph_style) == 0) XtUnmanageChild(mw[v_graph_style_menu]); else
-			if (strcmp(label, STR_Verbose_cursor) == 0) XtUnmanageChild(mw[v_cursor_menu]); else
-			  if (strcmp(label, STR_Channel_style) == 0) XtUnmanageChild(mw[v_combine_menu]); else
-			    if (strcmp(label, STR_Show_Y0) == 0) XtUnmanageChild(mw[v_zero_menu]); else
-			      if (strcmp(label, STR_X_axis_units) == 0) XtUnmanageChild(mw[v_x_axis_menu]); else
-				if (strcmp(label, STR_Error_History) == 0) XtUnmanageChild(mw[v_error_history_menu]); else
-				  return(INVALID_MENU);
-      return(VIEW_MENU);
-      break;
-    case OPTIONS_MENU: 
-      if (strcmp(label, STR_Transform_Options) == 0) XtUnmanageChild(mw[o_transform_menu]); else
-	if (strcmp(label, STR_Speed_style) == 0) XtUnmanageChild(mw[o_speed_menu]); else
-	  if (strcmp(label, STR_Focus_style) == 0) XtUnmanageChild(mw[o_focus_style_menu]); else
-            if (strcmp(label, STR_Save_options) == 0) XtUnmanageChild(mw[o_save_menu]); else
-	      if (strcmp(label, STR_Save_state) == 0) XtUnmanageChild(mw[o_save_state_menu]); else
-		if (strcmp(label, STR_Show_stats) == 0) XtUnmanageChild(mw[o_stats_menu]); else 
-		  return(INVALID_MENU);
-      return(OPTIONS_MENU);
-      break;
-    case HELP_MENU: 
-      if (strcmp(label, STR_Click_for_help) == 0) XtUnmanageChild(mw[h_click_for_help_menu]); else
-	if (strcmp(label, STR_Overview) == 0) XtUnmanageChild(mw[h_about_snd_menu]); else
-	  if (strcmp(label, STR_FFT) == 0) XtUnmanageChild(mw[h_fft_menu]); else
-            if (strcmp(label, STR_Find) == 0) XtUnmanageChild(mw[h_find_menu]); else
-	      if (strcmp(label, STR_Undo_and_redo) == 0) XtUnmanageChild(mw[h_undo_menu]); else
-		if (strcmp(label, STR_Sync) == 0) XtUnmanageChild(mw[h_sync_menu]); else
-		  if (strcmp(label, STR_Speed) == 0) XtUnmanageChild(mw[h_speed_menu]); else
-		    if (strcmp(label, STR_Expand) == 0) XtUnmanageChild(mw[h_expand_menu]); else
-		      if (strcmp(label, STR_Reverb) == 0) XtUnmanageChild(mw[h_reverb_menu]); else
-			if (strcmp(label, STR_Contrast) == 0) XtUnmanageChild(mw[h_contrast_menu]); else
-			  if (strcmp(label, STR_Envelope) == 0) XtUnmanageChild(mw[h_env_menu]); else
-			    if (strcmp(label, STR_Marks) == 0) XtUnmanageChild(mw[h_marks_menu]); else
-			      if (strcmp(label, STR_Mixing) == 0) XtUnmanageChild(mw[h_mix_menu]); else
-				if (strcmp(label, STR_Format) == 0) XtUnmanageChild(mw[h_sound_files_menu]); else
-				  if (strcmp(label, STR_Customization) == 0) XtUnmanageChild(mw[h_init_file_menu]); else
-				    if (strcmp(label, STR_Recording) == 0) XtUnmanageChild(mw[h_recording_menu]); else
-				      if (strcmp(label, STR_CLM) == 0) XtUnmanageChild(mw[h_clm_menu]); else
-					if (strcmp(label, STR_News) == 0) XtUnmanageChild(mw[h_news_menu]); 
-					else return(INVALID_MENU); 
-      return(HELP_MENU);
-      break;
-    case POPUP_MENU: 
-      if (strcmp(label, STR_Play) == 0) XtUnmanageChild(popup_children[W_pop_play]); else
-	if (strcmp(label, STR_Undo) == 0) XtUnmanageChild(popup_children[W_pop_undo]); else
-	  if (strcmp(label, STR_Redo) == 0) XtUnmanageChild(popup_children[W_pop_redo]); else
-            if (strcmp(label, STR_Save) == 0) XtUnmanageChild(popup_children[W_pop_save]); else
-	      if (strcmp(label, STR_Info) == 0) XtUnmanageChild(popup_children[W_pop_info]); else
-		if (strcmp(label, STR_Equalize_Panes) == 0) XtUnmanageChild(popup_children[W_pop_equalize_panes]); 
-		else return(INVALID_MENU);
-      return(POPUP_MENU);
-      break;
+    case FILE_MENU: top_menu = mw[file_menu]; break;
+    case EDIT_MENU: top_menu = mw[edit_menu]; break;
+    case VIEW_MENU: top_menu = mw[view_menu]; break;
+    case OPTIONS_MENU: top_menu = mw[option_menu]; break;
+    case HELP_MENU: top_menu = mw[help_menu]; break;
+    case POPUP_MENU: top_menu = mw[help_menu]; break;
+    default: 
+      if (which_menu < MAX_MAIN_MENUS)
+	top_menu = added_menus[which_menu]; 
+      else return(INVALID_MENU);
     }
-  return(INVALID_MENU);
+  map_over_children(top_menu, clobber_menu, (void *)label);
+  return(0);
 }
 
 int g_change_menu_label(int which_menu, char *old_label, char *new_label)
@@ -1192,7 +1108,7 @@ int g_add_to_main_menu(snd_state *ss, char *label, int slot)
   else return(INVALID_MENU);
 }
 
-int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
+int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int position)
 {
   Widget m, menw;
   static Arg args[12];
@@ -1213,6 +1129,7 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
     }
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+  if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
   if (label)
     {
       XtSetArg(args[n], XmNuserData, callb); n++;
@@ -1225,11 +1142,6 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
       XtCreateManagedWidget("sep", xmSeparatorWidgetClass, menw, args, n);
     }
   return(0);
-}
-
-int g_remove_from_menu(int which_menu, char *label)
-{
-  return(remove_option(which_menu, label));
 }
 
 

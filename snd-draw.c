@@ -1,11 +1,5 @@
 #include "snd.h"
 
-/* TODO  in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
- *         but to make this work requires the load-side deferred resizing and reshaping
- *         and some way to access the sound-widget parent dialog, since otherwise widget-size is unsettable
- * TODO: in gtk widget position always 0 0, or initial if using gdk_get_window_geometry?
- */
-
 #if (!USE_NO_GUI)
 
 #include "vct.h"

@@ -62,7 +62,7 @@
 ;;; remove-clicks
 ;;; searching examples (zero+, next-peak, find-pitch)
 ;;; sound-data->list
-;;; file->vct and a sort of cue-list, I think, and region-play-list
+;;; file->vct and a sort of cue-list, I think, and region-play-list, region-play-sequence
 
 ;;; TODO: decide how to handle the CLM examples
 ;;; TODO: robust pitch tracker
@@ -2773,10 +2773,22 @@ read, even if not playing.  'files' is a list of files to be played."
   ;; data is list of lists (list (list time reg)...), time in secs
   (for-each
    (lambda (tone)
-     (let ((time (* 1000 (car tone)))
+     (let ((time (inexact->exact (* 1000 (car tone))))
 	   (region (cadr tone)))
        (if (region? region)
 	   (in time (lambda () (play-region region))))))
    data))
 
 ;(region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0 2) (list 1.0 0)))
+
+(define (region-play-sequence data)
+  ;; data is list of region ids which will be played one after the other
+  ;; (region-play-sequence '(0 2 1))
+  (region-play-list
+   (let ((time 0.0))
+     (map 
+      (lambda (id)
+	(let ((cur time))
+	  (set! time (+ time (/ (region-length id) (region-srate id))))
+	  (list cur id)))
+      data))))

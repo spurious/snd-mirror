@@ -643,19 +643,18 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
   return(C_TO_XEN_INT(val));
 }
 
-/* TODO: add position for add-to-menu (end of File menu is not very useful) */
-
-static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback)
+static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback, XEN gpos)
 {
-  #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated \
+  #define H_add_to_menu "(" S_add_to_menu " menu label func position) adds label to menu invoking func when activated \
 menu is the index returned by add-to-main-menu, func should be a function of no arguments"
 
-  int err = 0, slot = -1, m;
+  int err = 0, slot = -1, m, position = -1;
   char *errmsg = NULL;
   XEN errm;
   XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_2, S_add_to_menu, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_add_to_menu, "an integer");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(callback) || XEN_FALSE_P(callback), callback, XEN_ARG_3, S_add_to_menu, "a procedure");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(gpos), gpos, XEN_ARG_4, S_add_to_menu, "an integer");
   if (XEN_PROCEDURE_P(callback))
     errmsg = procedure_ok(callback, 0, S_add_to_menu, "menu callback", 3);
   if (errmsg == NULL)
@@ -664,10 +663,12 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
       if (m < 0)
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
       if (XEN_PROCEDURE_P(callback)) slot = make_callback_slot();
+      if (XEN_INTEGER_P(gpos)) position = XEN_TO_C_INT(gpos);
       err = g_add_to_menu(get_global_state(), 
 			  m,
 			  (XEN_FALSE_P(label)) ? NULL : XEN_TO_C_STRING(label),
-			  slot);
+			  slot,
+			  position);
       if (err == -1) 
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
       if (XEN_PROCEDURE_P(callback)) add_callback(slot, callback);
@@ -752,7 +753,7 @@ XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
 XEN_NARGIFY_2(gl_menu_sensitive_w, gl_menu_sensitive)
 XEN_NARGIFY_3(gl_set_menu_sensitive_w, gl_set_menu_sensitive)
 XEN_ARGIFY_2(gl_add_to_main_menu_w, gl_add_to_main_menu)
-XEN_NARGIFY_3(gl_add_to_menu_w, gl_add_to_menu)
+XEN_ARGIFY_4(gl_add_to_menu_w, gl_add_to_menu)
 XEN_NARGIFY_2(gl_remove_from_menu_w, gl_remove_from_menu)
 XEN_NARGIFY_3(gl_change_menu_label_w, gl_change_menu_label)
 #else
@@ -780,7 +781,7 @@ void g_init_menu(void)
 			       2, 0, 3, 0);
 
   XEN_DEFINE_PROCEDURE(S_add_to_main_menu,  gl_add_to_main_menu_w, 1, 1, 0,  H_add_to_main_menu);
-  XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w, 3, 0, 0,       H_add_to_menu);
+  XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w, 3, 1, 0,       H_add_to_menu);
   XEN_DEFINE_PROCEDURE(S_remove_from_menu,  gl_remove_from_menu_w, 2, 0, 0,  H_remove_from_menu);
   XEN_DEFINE_PROCEDURE(S_change_menu_label, gl_change_menu_label_w, 3, 0, 0, H_change_menu_label);
 }

@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "Recent changes include:\n\
 \n\
 3-Sep:   mix-file-dialog.\n\
+         optional position arg to add-to-menu.\n\
 1-Sep:   zero-phase, rotate-phase in dsp.scm (Scott McNab).\n\
          region-play-list in examp.scm.\n\
 31-Aug:  Snd 5.2.\n\

@@ -1,7 +1,6 @@
 #include "snd.h"
 
-/* TODO need a way to set gtk_entry width
- * TODO need to block signals if coming from scheme (see mix-panel in snd-test)
+/* TODO need to block signals if coming from scheme (see mix-panel in snd-test)
  */
 
 static GtkWidget *mix_panel = NULL;
@@ -394,7 +393,8 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_box_pack_start(GTK_BOX(rc), w_id_label, FALSE, FALSE, 4);
       gtk_widget_show(w_id_label);
 
-      w_id = snd_entry_new(ss, rc, FALSE);  /* min entry width is 150!!! */
+      w_id = snd_entry_new(ss, rc, FALSE);
+      set_widget_width(w_id, 60);
       gtk_signal_connect(GTK_OBJECT(w_id), "activate", GTK_SIGNAL_FUNC(id_activated), (gpointer)ss);
 
       w_name = snd_entry_new(ss, rc, FALSE);

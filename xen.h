@@ -583,7 +583,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_STRING_P(Arg)                (TYPE(Arg) == T_STRING)
 #define XEN_VECTOR_P(Arg)                (TYPE(Arg) == T_ARRAY)
 #define XEN_PROCEDURE_P(Arg)             (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
-#define XEN_ULONG_P(Arg1)                XEN_INTEGER_P(Arg1)  /* TODO: what is ulong type in ruby? */
+#define XEN_ULONG_P(Arg1)                XEN_INTEGER_P(Arg1)
 
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)

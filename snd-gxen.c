@@ -12,12 +12,16 @@ static gint timed_eval(gpointer in_code)
 
 static XEN g_in(XEN ms, XEN code)
 {
+  unsigned long time;
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
+  if (XEN_INTEGER_P(ms))
+    time = XEN_TO_C_UNSIGNED_LONG(ms);
+  else time = (unsigned long)snd_round(XEN_TO_C_DOUBLE(ms));
   if (XEN_REQUIRED_ARGS(code) == 0)
     {
-      gtk_timeout_add((guint32)XEN_TO_C_UNSIGNED_LONG(ms), timed_eval, (gpointer)code);
+      gtk_timeout_add((guint32)time, timed_eval, (gpointer)code);
       snd_protect(code);
     }
   else mus_misc_error(S_in, "2nd argument should be a procedure of no args", code);

@@ -1,9 +1,6 @@
 #include "snd.h"
 #include "vct.h"
 
-/* TODO    colored marks etc (requires 2 pixels for selected/unselected graphs)?
- */
-
 static snd_state *state;
 
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
@@ -16,14 +13,18 @@ static void timed_eval(XtPointer in_code, XtIntervalId *id)
 
 static XEN g_in(XEN ms, XEN code)
 {
+  unsigned long time;
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(ms), ms, XEN_ARG_1, S_in, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
+  if (XEN_INTEGER_P(ms))
+    time = XEN_TO_C_UNSIGNED_LONG(ms);
+  else time = (unsigned long)snd_round(XEN_TO_C_DOUBLE(ms));
   if (XEN_REQUIRED_ARGS(code) == 0)
     {
       XtAppAddTimeOut(MAIN_APP(state), 
-		      XEN_TO_C_UNSIGNED_LONG(ms), 
+		      time,
 		      (XtTimerCallbackProc)timed_eval, 
 		      (XtPointer)code);
       snd_protect(code);
