@@ -11,6 +11,12 @@
 ;;; (snap-mix-to-beat (at-anchor)) forces dragged mix to end up on a beat
 ;;; (delete-all-mixes) removes all mixes
 ;;; (find-mix sample snd chn) returns the id of the mix at the given sample, or #f
+;;; TODO: (save-mix mix filename)
+;;; TODO: (clone-mix mix new-beg snd chn) or (copy-mix...) -- the distinction being that "clone" saves state, copy makes a new (initial) state
+;;;       would be nice here to use same temp file (with tempfile_ctr snd-io.c) = md->in_filename always (no arrays for tagged mixes)
+;;; TODO: add mix-file-name (parallel file-name)
+;;;       snd-mix 375 multichannel_deletion already an option, so we could just change md->temporary 
+;;; TODO: (clone-track track new-beg) or (copy-track...)
 ;;;
 ;;; (track->vct track) place track data in vct
 ;;; (save-track track filename) save track data in file
@@ -177,8 +183,6 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 		     (set! (sync index) old-sync))))))))))
 
 
-  
-
 (define (mix->vct id)
   "(mix->vct id) returns mix's data in vct"
   (if (mix? id)
@@ -191,6 +195,21 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 	(free-mix-sample-reader reader)
 	v)
       (throw 'no-such-mix (list "mix->vct" id))))
+
+(define (mix-maxamp id)
+  (if (mix? id)
+      (let* ((len (mix-frames id))
+	     (peak 0.0)
+	     (reader (make-mix-sample-reader id)))
+	(set! peak (abs (next-mix-sample reader)))
+	(do ((i 1 (1+ i)))
+	    ((= i len))
+	  (let ((val (abs (next-mix-sample reader))))
+	    (if (> val peak)
+		(set! peak val))))
+	(free-mix-sample-reader reader)
+	peak)
+      (throw 'no-such-mix (list "mix-maxamp" id))))
 	  
 
 (define* (snap-mix-to-beat #:optional (at-anchor #f))
@@ -310,22 +329,61 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
       (throw 'no-such-track (list "reverse-track" trk))))
 
 
-;;; TODO: track->vct and save-track need to handle multichannel tracks
-(define (track->vct trk)
-  "(track->vct track) places track data in vct"
-  (let ((len (track-frames trk)))
-    (if (= len 0)
-	#f
-	(vct-map! (make-vct len) (make-track-sample-reader trk)))))
+(define* (track->vct trk #:optional (chan 0))
+  "(track->vct track (chan 0)) places track data in vct"
+  (if (track? trk)
+      (if (< chan (track-chans trk))
+	  (vct-map! (make-vct (track-frames trk chan)) (make-track-sample-reader trk chan))
+	  (throw 'no-such-channel (list "track->vct" chan)))
+      (throw 'no-such-track (list "track->vct" trk))))
 
-(define (save-track trk filename)
-  "(save-track track filename) saves track data (as floats) in file filename"
-  (let ((v (track->vct trk))
-	(fd (open-sound-file filename 1 (srate) ""))) ; chans?
-    (vct->sound-file fd v (vct-length v))
-    (close-sound-file fd (* 4 (vct-length v)))))
-
-
+(define* (save-track trk filename #:optional (chan #t))
+  "(save-track track filename (chan #t)) saves track data (as floats) in file filename"
+  (if (track? trk)
+      (let ((chans (track-chans trk)))
+	(if (or (and (eq? chan #t)
+		     (= chans 1))
+		(and (integer? chan)
+		     (< chan chans)))
+	    (let* ((current-chan (if (eq? chan #t) 0 chan))
+		   (v (track->vct trk current-chan))
+		   (fd (open-sound-file filename 1 (srate) "written by save-track")))
+	      (vct->sound-file fd v (vct-length v))
+	      (close-sound-file fd (* 4 (vct-length v))))
+	    (if (and (eq? chan #t)
+		     (> chans 0))
+		(let* ((fd (open-sound-file filename chans (srate) "written by save-track"))
+		       (len (track-frames trk))
+		       (pos (track-position trk))
+		       (v (make-vct (* chans len))))
+		  (do ((i 0 (1+ i)))
+		      ((= i chans))
+		    (let ((chan-len (track-frames trk i))
+			  (chan-pos (- (track-position trk i) pos))
+			  (reader (make-track-sample-reader trk i))) ; beg is next arg if it's needed
+		      (do ((j 0 (1+ j)))
+			  ((= j chan-len))
+			(vct-set! v (+ i (* chans (+ chan-pos j))) (next-track-sample reader)))))
+		  (vct->sound-file fd v (vct-length v))
+		  (close-sound-file fd (* 4 (vct-length v))))
+		(throw 'no-such-channel (list "save-track" chan)))))
+      (throw 'no-such-track (list "save-track" trk))))
+	  
+(define (track-maxamp id chan)
+  (if (track? id)
+      (let* ((len (track-frames id chan))
+	     (peak 0.0)
+	     (reader (make-track-sample-reader id)))
+	(set! peak (abs (next-track-sample reader)))
+	(do ((i 1 (1+ i)))
+	    ((= i len))
+	  (let ((val (abs (next-track-sample reader))))
+	    (if (> val peak)
+		(set! peak val))))
+	(free-track-sample-reader reader)
+	peak)
+      (throw 'no-such-track (list "track-maxamp" id))))
+	  
 (define (transpose-track trk semitones)
   "(transpose-track track semitones) transposes each mix in track  by semitones"
   (let ((mult (expt 2.0 (/ semitones 12.0))))
@@ -350,8 +408,6 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 
 ;;; (retempo-track '(0 1) 2.0)
 
-  
-;;; TODO: test filter-track
 (define (filter-track track-id fir-filter-coeffs)
   "(filter-track track coeffs) filters track data using FIR filter coeffs: (filter-track track-id '(.1 .2 .3 .3 .2 .1))"
   (if (track? track-id)
@@ -364,8 +420,9 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 		(flt (make-fir-filter order (list->vct fir-filter-coeffs)))
 		(reader (make-track-sample-reader track-id chan 0)))
 	    (map-channel (lambda (y)
-			   (let ((val (next-sample reader)))
-			     (+ y (- (fir-filter flt val) val))))))))
+			   (let ((val (next-track-sample reader)))
+			     (+ y (- (fir-filter flt val) val))))
+			 beg (+ dur order) #f #f #f "filter-track"))))
       (throw 'no-such-track (list "filter-track" track-id))))
 
 

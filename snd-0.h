@@ -190,7 +190,11 @@ typedef enum {WITH_FW_BUTTONS, WITH_ARROWS} fw_button_t;
 
 typedef enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE} enved_target_t;
 typedef enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS} graph_style_t;
-#define GRAPH_STYLE_OK(Grf) ((Grf >= GRAPH_LINES) && (Grf <= GRAPH_LOLLIPOPS))
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define GRAPH_STYLE_OK(Grf) ({ graph_style_t _snd_0_h_0 = Grf; ((_snd_0_h_0 >= GRAPH_LINES) && (_snd_0_h_0 <= GRAPH_LOLLIPOPS)); })
+#else
+  #define GRAPH_STYLE_OK(Grf) ((Grf >= GRAPH_LINES) && (Grf <= GRAPH_LOLLIPOPS))
+#endif
  /* using lollipop rather than the suggested popsicle because 
   *   popsicle is a (capitalized) trade-name in the USA and I want lowercase,
   *   lollipop is about 200 years older as an English word (1724 vs 1923),
@@ -230,7 +234,12 @@ typedef enum {IGNORE_CACHE, REMOVE_FROM_CACHE} cache_remove_t;
 typedef enum {FFT_UNCHANGED, FFT_CHANGED, FFT_CHANGE_LOCKED} fft_change_t;
 typedef enum {WITHOUT_GRAPH, WITH_GRAPH, WITHOUT_INITIAL_GRAPH_HOOK} channel_graph_t;
 
-#define IS_PLAYER(snd) ((snd) && (snd->index < 0))
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define IS_PLAYER(snd) ({ snd_info *_snd_0_h_1 = snd; ((_snd_0_h_1) && (_snd_0_h_1->index < 0)); })
+#else
+  #define IS_PLAYER(snd) ((snd) && (snd->index < 0))
+#endif
+
 #define PLAYER(snd) (-(snd->index))
 typedef enum {NO_PLAYERS, PLAYERS_OK} sp_sound_t;
 

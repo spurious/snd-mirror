@@ -1,6 +1,8 @@
 (use-modules (ice-9 format) (ice-9 common-list))
 
 ;;; TODO: if no selection, unsensitize selection button, similarly for marks
+;;;       this needs a (un)make-selection-hook to handle the button if the dialog is already active
+;;;       mark-hook can handle the other case
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))

@@ -133,7 +133,12 @@ Float interp_env(env *e, Float x)
 #if DEBUGGING && HAVE_GUILE
 static XEN g_interp_env(XEN e, XEN val)
 {
-  return(C_TO_XEN_DOUBLE(interp_env(xen_to_env(e), XEN_TO_C_DOUBLE(val))));
+  Float y;
+  env *temp;
+  temp = xen_to_env(e);
+  y = interp_env(temp, XEN_TO_C_DOUBLE(val));
+  temp = free_env(temp);
+  return(C_TO_XEN_DOUBLE(y));
 }
 #endif
 
@@ -218,12 +223,18 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
 #if DEBUGGING && HAVE_GUILE
 static XEN g_window_env(XEN e, XEN b1, XEN d1, XEN b2, XEN d2)
 {
-  /* (memleak) */
-  return(env_to_xen(window_env(xen_to_env(e),
-			       XEN_TO_C_OFF_T(b1),
-			       XEN_TO_C_OFF_T(d1),
-			       XEN_TO_C_OFF_T(b2),
-			       XEN_TO_C_OFF_T(d2))));
+  XEN res;
+  env *temp1 = NULL, *temp2 = NULL;
+  temp1 = xen_to_env(e);
+  temp2 = window_env(temp1,
+		     XEN_TO_C_OFF_T(b1),
+		     XEN_TO_C_OFF_T(d1),
+		     XEN_TO_C_OFF_T(b2),
+		     XEN_TO_C_OFF_T(d2));
+  res = env_to_xen(temp2);
+  temp1 = free_env(temp1);
+  temp2 = free_env(temp2);
+  return(res);
 }
 #endif
 
@@ -277,8 +288,16 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
 #if DEBUGGING && HAVE_GUILE
 static XEN g_multiply_envs(XEN e1, XEN e2, XEN maxx)
 {
-  /* (memleak) */
-  return(env_to_xen(multiply_envs(xen_to_env(e1), xen_to_env(e2), XEN_TO_C_DOUBLE(maxx))));
+  XEN res;
+  env *temp1 = NULL, *temp2 = NULL, *temp3 = NULL;
+  temp1 = xen_to_env(e1);
+  temp2 = xen_to_env(e2);
+  temp3 = multiply_envs(temp1, temp2, XEN_TO_C_DOUBLE(maxx));
+  res = env_to_xen(temp3);
+  temp1 = free_env(temp1);
+  temp2 = free_env(temp2);
+  temp3 = free_env(temp3);
+  return(res);
 }
 #endif
 
@@ -962,8 +981,7 @@ void do_enved_edit(env *new_env)
     }
   /* clear out current edit list above this edit */
   for (i = env_list_top; i < env_list_size; i++)
-    if (env_list[i]) 
-      env_list[i] = free_env(env_list[i]);
+    env_list[i] = free_env(env_list[i]);
   env_list[env_list_top] = copy_env(new_env);
   env_list_top++;
 }
@@ -1097,7 +1115,7 @@ void alert_envelope_editor(char *name, env *val)
   i = find_env(name);
   if (i != -1)
     {
-      if (all_envs[i]) free_env(all_envs[i]);
+      free_env(all_envs[i]);
       all_envs[i] = val;
     }
   else add_envelope(name, val);
@@ -1737,6 +1755,5 @@ stretch-envelope from env.scm: \n\
   XEN_DEFINE_PROCEDURE("interp-env", g_interp_env, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("window-env", g_window_env, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs, 3, 0, 0, NULL);
-  /* TODO: tests for the env manglers in snd-env */
 #endif
 }

@@ -197,7 +197,6 @@
 	  (XtAddEventHandler drawer ButtonReleaseMask #f 
 			     (lambda (w context ev flag)
 			       (xe-mouse-release editor (.x ev) (.y ev))))
-	  ;;; TODO: gtk side of crosshair cursor
 	  (XtAddEventHandler drawer EnterWindowMask #f
 			     (lambda (w context ev flag)
 			       (XDefineCursor (XtDisplay w) (XtWindow w) arrow-cursor)))
@@ -212,6 +211,8 @@
 	     (x1 (cadr axis-bounds))
 	     (y0 (caddr axis-bounds))
 	     (y1 (cadddr axis-bounds))
+	     (arrow-cursor (gdk_cursor_new GDK_CROSSHAIR))
+	     (old-cursor (gdk_cursor_new GDK_LEFT_PTR))
 	     (editor (list (list x0 y0 x1 y0) ; needs to be in user-coordinates (graph size can change)
 			   drawer 
 			   #f  ; axis pixel locs filled in when drawn
@@ -266,6 +267,21 @@
 									(xe-mouse-drag editor (cadr xy) (caddr xy))))
 								  (if (not (= (logand (.state ev) GDK_BUTTON1_MASK) 0))
 								      (xe-mouse-drag editor (.x ev) (.y ev)))))
+							    #f)
+							  #f #f)
+					#f)
+
+	(g_signal_connect_closure_by_id (GPOINTER drawer)
+					(g_signal_lookup "enter_notify_event" (G_OBJECT_TYPE (GTK_OBJECT drawer)))
+					0 (g_cclosure_new (lambda (w e d)
+							    (gdk_window_set_cursor (.window w) arrow-cursor)
+							    #f)
+							  #f #f)
+					#f)
+	(g_signal_connect_closure_by_id (GPOINTER drawer)
+					(g_signal_lookup "leave_notify_event" (G_OBJECT_TYPE (GTK_OBJECT drawer)))
+					0 (g_cclosure_new (lambda (w e d)
+							    (gdk_window_set_cursor (.window w) old-cursor)
 							    #f)
 							  #f #f)
 					#f)

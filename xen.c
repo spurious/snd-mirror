@@ -95,6 +95,11 @@ void xen_gc_mark(XEN val)
   scm_gc_mark(val);
 }
 
+double xen_to_c_double_or_else(XEN a, double b) {return((XEN_NUMBER_P(a)) ? (scm_num2dbl(a, c__FUNCTION__)) : (b));}
+int xen_to_c_int(XEN a) {return((XEN_TRUE_P(scm_exact_p(a))) ? (int)scm_num2int(a, 0, c__FUNCTION__) : ((int)scm_num2dbl(a, c__FUNCTION__)));}
+bool xen_to_c_boolean_or_true(XEN a) {return((!((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))))));}
+bool xen_integer_p(XEN a) {return((XEN_NOT_FALSE_P(scm_integer_p(a))) && (!(SCM_BIGP(a))));}
+
 void xen_initialize(void)
 {
 #if HAVE_SCM_INIT_GUILE
@@ -572,6 +577,8 @@ XEN xen_rb_str_new2(char *arg)
   return(rb_str_new2((arg) ? arg : ""));
 }
 
+double xen_rb_to_c_double_or_else(XEN a, double b) {return(XEN_NUMBER_P(a) ? NUM2DBL(a) : b);}
+int xen_rb_to_c_int_or_else(XEN a, int b) {return(XEN_INTEGER_P(a) ? FIX2INT(a) : b);}
 #endif
 
 

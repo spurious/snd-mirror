@@ -19,11 +19,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 7
-#define XEN_VERSION "1.7"
+#define XEN_MINOR_VERSION 8
+#define XEN_VERSION "1.8"
 
 /* HISTORY:
  *  
+ *   1-Nov-03:  protect several macros from hidden double evaluations.
  *   29-Sep-03: fixed incorrect assumption in xen_rb_cons (xen.c) that arg2 was list.
  *   8-Sep-03:  removed xen_malloc -- can't remember now why this existed.
  *   19-Aug-03: xen_rb_str_new2 to avoid unwanted side-effects.
@@ -177,7 +178,11 @@
 #define XEN_ARG_9    9
 
 #define XEN_TO_C_DOUBLE(a)            scm_num2dbl(a,  c__FUNCTION__)
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? (scm_num2dbl(a,  c__FUNCTION__)) : (b))
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_h_0_ = a; ((XEN_NUMBER_P(_xen_h_0_)) ? (scm_num2dbl(_xen_h_0_,  c__FUNCTION__)) : (b)); })
+#else
+  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_to_c_double_or_else(a, b)
+#endif
 #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) scm_num2dbl(a, b)
 #if HAVE_SCM_MAKE_REAL
   #define C_TO_XEN_DOUBLE(a)          scm_make_real(a)
@@ -187,7 +192,14 @@
 
 #if HAVE_SCM_NUM2INT
   #if defined(SCM_GUILE_MAJOR_VERSION) || defined(SCM_MAJOR_VERSION)
-    #define XEN_TO_C_INT(a)           ((XEN_TRUE_P(scm_exact_p(a))) ? (int)scm_num2int(a, 0, c__FUNCTION__) : ((int)scm_num2dbl(a, c__FUNCTION__)))
+    #if defined(__GNUC__) && (!(defined(__cplusplus)))
+      #define XEN_TO_C_INT(a) ({XEN _xen_h_1_ = a; \
+                                ((XEN_TRUE_P(scm_exact_p(_xen_h_1_))) ? \
+                                  (int)scm_num2int(_xen_h_1_, 0, c__FUNCTION__) : \
+                                  ((int)scm_num2dbl(_xen_h_1_, c__FUNCTION__))); })
+    #else
+      #define XEN_TO_C_INT(a) xen_to_c_int(a)
+    #endif
   #else
     #define XEN_TO_C_INT(a)           ((int)scm_num2int(a, 0, c__FUNCTION__))
   #endif
@@ -222,7 +234,11 @@
 #define C_TO_XEN_STRING(a)            scm_makfrom0str((const char *)(a))
 
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
-#define XEN_TO_C_BOOLEAN_OR_TRUE(a)   (!((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0)))))
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_TO_C_BOOLEAN_OR_TRUE(a) ({ XEN _xen_h_2_ = a; (!((XEN_FALSE_P(_xen_h_2_) || ((SCM_INUMP(_xen_h_2_)) && (SCM_INUM(_xen_h_2_) == 0))))); })
+#else
+  #define XEN_TO_C_BOOLEAN_OR_TRUE(a) xen_to_c_boolean_or_true(a)
+#endif
 #define XEN_TO_C_BOOLEAN(a)           (!(XEN_FALSE_P(a)))
 
 #if HAVE_SCM_C_EVAL_STRING
@@ -340,8 +356,12 @@
   #define SCM_SYMBOLP(Arg)            gh_symbol_p(Arg)
   #define XEN_INTEGER_P(Arg)          (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
 #else
-  #define XEN_INTEGER_P(Arg)          ((XEN_NOT_FALSE_P(scm_integer_p(Arg))) && (!(SCM_BIGP(Arg))))
   /* we want something here that can be turned into an int without throwing an error (out-of-range for bignum) */
+  #if defined(__GNUC__) && (!(defined(__cplusplus)))
+    #define XEN_INTEGER_P(Arg) ({ XEN _xen_h_3_ = Arg; ((XEN_NOT_FALSE_P(scm_integer_p(_xen_h_3_))) && (!(SCM_BIGP(_xen_h_3_)))); })
+  #else
+    #define XEN_INTEGER_P(Arg) xen_integer_p(Arg)
+  #endif
 #endif
 
 #define XEN_BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
@@ -528,6 +548,10 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 						     char *set_name, XEN (*set_func)(), XEN (*reversed_set_func)(), 
 						     XEN local_doc,
 						     int get_req, int get_opt, int set_req, int set_opt);
+double xen_to_c_double_or_else(XEN a, double b);
+int xen_to_c_int(XEN a);
+bool xen_to_c_boolean_or_true(XEN a);
+bool xen_integer_p(XEN a);
 #endif
 /* end HAVE_GUILE */
 
@@ -607,13 +631,23 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_ZERO                          INT2NUM(0)
 
 #define XEN_TO_C_DOUBLE(a)                NUM2DBL(a)
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b)     (XEN_NUMBER_P(a) ? NUM2DBL(a) : b)
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_h_4_ = a; (XEN_NUMBER_P(_xen_h_4_) ? NUM2DBL(_xen_h_4_) : b); })
+#else
+  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_rb_to_c_double_or_else(a, b)
+#endif
 #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) NUM2DBL(a)
 #define C_TO_XEN_DOUBLE(a)                rb_float_new(a)
 
 #define XEN_TO_C_INT(a)                   rb_num2long(a)
-#define XEN_TO_C_INT_OR_ELSE(a, b)        (XEN_INTEGER_P(a) ? FIX2INT(a) : b)
-#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) (XEN_INTEGER_P(a) ? FIX2INT(a) : b)
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_TO_C_INT_OR_ELSE(a, b) ({ XEN _xen_h_5_ = a; (XEN_INTEGER_P(_xen_h_5_) ? FIX2INT(_xen_h_5_) : b); })
+  #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) ({ XEN _xen_h_6_ = a; (XEN_INTEGER_P(_xen_h_6_) ? FIX2INT(_xen_h_6_) : b); })
+#else
+  #define XEN_TO_C_INT_OR_ELSE(a, b) xen_rb_to_c_int_or_else(a, b)
+  #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_rb_to_c_int_or_else(a, b)
+#endif
+
 #define C_TO_XEN_INT(a)                   INT2NUM(a)
 #define C_TO_SMALL_XEN_INT(a)             INT2FIX(a)
 #define XEN_TO_SMALL_C_INT(a)             FIX2INT(a)
@@ -713,22 +747,34 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
     rb_define_variable("$simple_hook", (VALUE *)(&Var)); \
   }
 
-#define XEN_BOOLEAN_P(Arg)               (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
-#define XEN_NUMBER_P(Arg)                ((TYPE(Arg) == T_FLOAT) || (TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
-#define XEN_DOUBLE_P(Arg)                XEN_NUMBER_P(Arg)
-#define XEN_INTEGER_P(Arg)               ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
-#define XEN_SYMBOL_P(Arg)                SYMBOL_P(Arg)
-#define XEN_STRING_P(Arg)                (TYPE(Arg) == T_STRING)
-#define XEN_VECTOR_P(Arg)                (TYPE(Arg) == T_ARRAY)
-#define XEN_PROCEDURE_P(Arg)             (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
-#define XEN_ULONG_P(Arg1)                XEN_INTEGER_P(Arg1)
-#define XEN_EXACT_P(Arg1)                XEN_INTEGER_P(Arg1)
-#define XEN_OFF_T_P(Arg)                 ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
-#define XEN_HOOK_P(Arg)                  XEN_PROCEDURE_P(Arg)
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_BOOLEAN_P(Arg)    ({ XEN _xen_h_7_ = Arg;        (XEN_TRUE_P(_xen_h_7_) || XEN_FALSE_P(_xen_h_7_)); })
+  #define XEN_NUMBER_P(Arg)     ({ int _xen_h_8_ = TYPE(Arg);  ((_xen_h_8_ == T_FLOAT) || (_xen_h_8_ == T_FIXNUM) || (_xen_h_8_ == T_BIGNUM)); })
+  #define XEN_INTEGER_P(Arg)    ({ int _xen_h_9_ = TYPE(Arg);  ((_xen_h_9_ == T_FIXNUM) || (_xen_h_9_ == T_BIGNUM)); })
+  #define XEN_PROCEDURE_P(Arg)  ({ XEN _xen_h_10_ = Arg;       (XEN_BOUND_P(_xen_h_10_) && (rb_obj_is_kind_of(_xen_h_10_, rb_cProc))); })
+  #define XEN_OFF_T_P(Arg)      ({ int _xen_h_11_ = TYPE(Arg); ((_xen_h_11_ == T_FIXNUM) || (_xen_h_11_ == T_BIGNUM)); })
+  #define XEN_KEYWORD_P(Obj)    ({ XEN _xen_h_12_ = Obj;       (XEN_BOUND_P(_xen_h_12_) && SYMBOL_P(_xen_h_12_)); })
+  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ({ XEN _xen_h_13_ = Arg; ((XEN_LIST_P(_xen_h_13_)) ? (Len = RARRAY(_xen_h_13_)->len) : 0); })
+#else
+  #define XEN_BOOLEAN_P(Arg)    (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
+  #define XEN_NUMBER_P(Arg)     ((TYPE(Arg) == T_FLOAT) || (TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
+  #define XEN_INTEGER_P(Arg)    ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
+  #define XEN_PROCEDURE_P(Arg)  (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
+  #define XEN_OFF_T_P(Arg)      ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
+  #define XEN_KEYWORD_P(Obj)    (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
+  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)
+#endif
+
+#define XEN_STRING_P(Arg)       (TYPE(Arg) == T_STRING)
+#define XEN_VECTOR_P(Arg)       (TYPE(Arg) == T_ARRAY)
+#define XEN_SYMBOL_P(Arg)       SYMBOL_P(Arg)
+#define XEN_DOUBLE_P(Arg)       XEN_NUMBER_P(Arg)
+#define XEN_ULONG_P(Arg1)       XEN_INTEGER_P(Arg1)
+#define XEN_EXACT_P(Arg1)       XEN_INTEGER_P(Arg1)
+#define XEN_HOOK_P(Arg)         XEN_PROCEDURE_P(Arg)
 /* apparently no complex numbers (built-in) in Ruby? */
 
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
-#define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)
 #define XEN_LIST_LENGTH(Arg)             RARRAY(Arg)->len
 #define XEN_EQ_P(a, b)                  ((a) == (b))
 #define XEN_LIST_1(a)                   rb_ary_new3(1, a)
@@ -786,7 +832,6 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 
 #define XEN_ARITY(Func)                 rb_funcall(Func, rb_intern("arity"), 0)
 #define XEN_REQUIRED_ARGS(Func)         xen_rb_required_args(XEN_ARITY(Func))
-#define XEN_KEYWORD_P(Obj)              (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
 #define XEN_KEYWORD_EQ_P(k1, k2)        (k1 == k2)
 #define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(Arg)
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
@@ -1161,6 +1206,10 @@ XEN xen_rb_funcall_0(XEN func);
 int xen_rb_required_args(XEN val);
 XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 XEN xen_rb_str_new2(char *arg);
+void xen_add_help(char *name, const char *help);
+char *xen_help(char *name);
+double xen_rb_to_c_double_or_else(XEN a, double b);
+int xen_rb_to_c_int_or_else(XEN a, int b);
 #endif
 /* end HAVE_RUBY */
 
@@ -1334,18 +1383,31 @@ XEN xen_rb_str_new2(char *arg);
   typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #endif
 
-#define XEN_NOT_TRUE_P(a)                      (!(XEN_TRUE_P(a)))
-#define XEN_NOT_FALSE_P(a)                     (!(XEN_FALSE_P(a)))
-#define XEN_NOT_NULL_P(a)                      (!(XEN_NULL_P(a)))
-#define XEN_BOOLEAN_IF_BOUND_P(Arg)            ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)))
-#define XEN_INTEGER_IF_BOUND_P(Arg)            ((XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
-#define XEN_NUMBER_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
-#define XEN_STRING_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_STRING_P(Arg)))
-#define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
-#define XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
-#define XEN_NUMBER_OR_BOOLEAN_P(Arg)           ((XEN_BOOLEAN_P(Arg))   || (XEN_NUMBER_P(Arg)))
-#define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
-#define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_ULONG_P(Arg)))
+#define XEN_NOT_TRUE_P(a)  (!(XEN_TRUE_P(a)))
+#define XEN_NOT_FALSE_P(a) (!(XEN_FALSE_P(a)))
+#define XEN_NOT_NULL_P(a)  (!(XEN_NULL_P(a)))
+
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_BOOLEAN_IF_BOUND_P(Arg)            ({ XEN _xen_h_14_ = Arg; ((XEN_BOOLEAN_P(_xen_h_14_))   || (XEN_NOT_BOUND_P(_xen_h_14_))); })
+  #define XEN_INTEGER_IF_BOUND_P(Arg)            ({ XEN _xen_h_15_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_15_)) || (XEN_INTEGER_P(_xen_h_15_))); })
+  #define XEN_NUMBER_IF_BOUND_P(Arg)             ({ XEN _xen_h_16_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_16_)) || (XEN_NUMBER_P(_xen_h_16_))); })
+  #define XEN_STRING_IF_BOUND_P(Arg)             ({ XEN _xen_h_17_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_17_)) || (XEN_STRING_P(_xen_h_17_))); })
+  #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ({ XEN _xen_h_18_ = Arg; ((XEN_BOOLEAN_P(_xen_h_18_)) || (XEN_NOT_BOUND_P(_xen_h_18_)) || (XEN_INTEGER_P(_xen_h_18_))); })
+  #define XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  ({ XEN _xen_h_19_ = Arg; ((XEN_BOOLEAN_P(_xen_h_19_)) || (XEN_NOT_BOUND_P(_xen_h_19_)) || (XEN_NUMBER_P(_xen_h_19_))); })
+  #define XEN_NUMBER_OR_BOOLEAN_P(Arg)           ({ XEN _xen_h_20_ = Arg; ((XEN_BOOLEAN_P(_xen_h_20_))   || (XEN_NUMBER_P(_xen_h_20_))); })
+  #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ({ XEN _xen_h_21_ = Arg; ((XEN_BOOLEAN_P(_xen_h_21_))   || (XEN_INTEGER_P(_xen_h_21_))); })
+  #define XEN_ULONG_IF_BOUND_P(Arg)              ({ XEN _xen_h_22_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_22_)) || (XEN_ULONG_P(_xen_h_22_))); })
+#else
+  #define XEN_BOOLEAN_IF_BOUND_P(Arg)            ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)))
+  #define XEN_INTEGER_IF_BOUND_P(Arg)            ((XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
+  #define XEN_NUMBER_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
+  #define XEN_STRING_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_STRING_P(Arg)))
+  #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
+  #define XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
+  #define XEN_NUMBER_OR_BOOLEAN_P(Arg)           ((XEN_BOOLEAN_P(Arg))   || (XEN_NUMBER_P(Arg)))
+  #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
+  #define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_ULONG_P(Arg)))
+#endif
 
 #define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b, c__FUNCTION__)
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
@@ -1367,10 +1429,4 @@ char *xen_version(void);
 void xen_repl(int argc, char **argv);
 void xen_initialize(void);
 void xen_gc_mark(XEN val);
-
-#if HAVE_RUBY
-void xen_add_help(char *name, const char *help);
-char *xen_help(char *name);
-#endif
-
 #endif

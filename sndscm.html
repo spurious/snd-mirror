@@ -1919,9 +1919,8 @@ Max Mathews.
   <em class=def><a name="panmix">pan-mix</a></em> file (frame 0) (env 1.0) snd
   <em class=def><a name="snapmixtobeat">snap-mix-to-beat</a></em> (at-anchor)
   <em class=def><A NAME="deleteallmixes">delete-all-mixes</a></em>
-  <em class=def>delete-all-tracks</em>
-  <em class=def><a name="trackproperty">track-property</a></em> key id
   <em class=def><a name="findmix">find-mix</a></em> sample snd chn
+  <em class=def><A NAME="mixmaxamp">mix-maxamp</a></em> id
 </pre>
 <p>
 <b>mix-sound</b> mixes <i>file</i> (all chans) into the currently selected sound at <i>start</i>.
@@ -1941,19 +1940,24 @@ whether the next click should set the mix amps to zero, or to the
 pre-zero value.
 <b>find-mix</b> returns the identifier of the mix at sample <i>sample</i> (or anywhere in the given channel if 
 <i>sample</i> is not specified), or #f if no mix is found.
+<b>mix-maxamp</b> returns the maxamp in the given mix.
 </p>
 <center><img src="pan.png" alt="picture of panning"></center>
 <pre>
-  <em class=def><a name="track2vct">track-&gt;vct</a></em> track
-  <em class=def><a name="savetrack">save-track</a></em> track filename
+  <em class=def><a name="track2vct">track-&gt;vct</a></em> track (chan 0)
+  <em class=def><a name="savetrack">save-track</a></em> track filename (chan #t)
   <em class=def><a name="transposetrack">transpose-track</a></em> track semitones
-  <em class=def><a name="retempotrack">retempo-track</a></em> track tempo
+  <em class=def><A NAME="retempotrack">retempo-track</a></em> track tempo
   <em class=def><a name="reversetrack">reverse-track</a></em> track
   <em class=def><a name="filtertrack">filter-track</a></em> track coeffs
+  <em class=def>delete-all-tracks</em>
+  <em class=def><a name="trackproperty">track-property</a></em> key id
+  <em class=def><A NAME="trackmaxamp">track-maxamp</a></em> id chan
 </pre>
 <p>
 <b>track-&gt;vct</b> places all the mix samples
 in the track into a vct.  Similarly, <b>save-track</b> places the track's samples into a file.
+If the 'chan' arg is #t, all channels are saved.
 <b>retempo-track</b> affects the time between the successive mix begin points (tempo &gt; 1.0 makes the
 mixes happen more quickly):
 </p>
@@ -1971,6 +1975,7 @@ mixes happen more quickly):
 <b>filter-track</b> applies a filter to each mix sound at the pre-mix point (that is, the
 mixed in sound is filtered, then the mix takes place).
 <b>reverse-track</b> reverses the order in which a track's member mixes occur.
+<b>track-maxamp</b> returns the maxamp in the given track.
 </p>
 
 

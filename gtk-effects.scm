@@ -1520,6 +1520,82 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
 				 (let ((new-label (format #f "Time/pitch scaling (~1,2F ~1,2F)" time-scale pitch-scale)))
 				   (change-label child new-label)))
 			       freq-menu-list)))
+
+;;; -------- Time-varying sample rate conversion (resample)
+;;; (KSM)
+
+  (let ((child (gtk_menu_item_new_with_label "Src-timevar"))
+	(src-timevar-scale 1.0)
+	(src-timevar-dialog #f)
+	(src-timevar-target 'sound)
+	(src-timevar-envelope #f))
+
+    (define (scale-envelope e scl)
+      (if (null? e)
+	  '()
+	  (append (list (car e) (* scl (cadr e)))
+		  (scale-envelope (cddr e) scl))))
+
+    (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
+    (gtk_widget_show child)
+    (g_signal_connect_closure_by_id 
+     (GPOINTER child)
+     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
+     (g_cclosure_new 
+      (lambda (w d) 
+	(if (not src-timevar-dialog)
+	    (let ((initial-src-timevar-scale 1.0)
+		  (sliders '()))
+	      (set! src-timevar-dialog
+		    (make-effect-dialog 
+		     "Src-Timevar"
+		     (lambda (w data) 
+		       (let ((env (scale-envelope (xe-envelope src-timevar-envelope)
+						  src-timevar-scale)))
+			 (if (eq? src-timevar-target 'sound)
+			     (src-sound env)
+			     (if (eq? src-timevar-target 'selection)
+				 (if (selection-member? (selected-sound))
+				     (src-selection env)
+				     (display "no selection"))
+				 (let ((pts (plausible-mark-samples)))
+				   (if pts
+				       (let* ((beg (car pts))
+					      (end (cadr pts))
+					      (len (- end beg)))
+					 (src-channel (make-env env :end len) beg len (selected-sound)))))))))
+		     (lambda (w data)
+		       (help-dialog 
+			"Src-Timevar"
+			"Move the slider to change the src-timevar scaling amount."))
+		     (lambda (w data)
+		       (set! src-timevar-amount initial-src-timevar-scale)
+		       (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
+		       (set! (.value (GTK_ADJUSTMENT (car sliders))) src-timevar-scale)
+		       (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders))))))
+	      (set! sliders
+		    (add-sliders src-timevar-dialog
+				 (list (list "Resample factor" 0.0 initial-src-timevar-scale 10.0
+					     (lambda (w data)
+					       (set! src-timevar-scale (.value (GTK_ADJUSTMENT w))))
+					     100))))
+	      (gtk_widget_show src-timevar-dialog)
+	      (set! src-timevar-envelope (xe-create-enved "src-timevar" 
+							  (.vbox (GTK_DIALOG src-timevar-dialog))
+							  #f
+						   '(0.0 1.0 0.0 1.0)))
+	      (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
+	      (add-target (.vbox (GTK_DIALOG src-timevar-dialog)) 
+			  (lambda (target) 
+			    (set! src-timevar-target target))
+			  #f)))
+	(activate-dialog src-timevar-dialog))
+      #f #f)
+     #f)
+    (set! freq-menu-list (cons (lambda ()
+				(let ((new-label (format #f "Src-Timevar")))
+				  (change-label child new-label)))
+			       freq-menu-list)))
     )
 
 ;;; MODULATION EFFECTS

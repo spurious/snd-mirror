@@ -188,11 +188,16 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 	      MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW
 } mus_fft_window_t;
 
-#define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) &&((Window) <= MUS_DOLPH_CHEBYSHEV_WINDOW))
-
-#define MUS_RUN(GEN, ARG_1, ARG_2) ((*(((GEN)->core)->run))(GEN, ARG_1, ARG_2))
-#define MUS_RUN_P(GEN) (((GEN)->core)->run)
-
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define MUS_FFT_WINDOW_OK(Window) ({ mus_fft_window_t _clm_h_0 = Window; \
+                                       ((_clm_h_0 >= MUS_RECTANGULAR_WINDOW) &&(_clm_h_0 <= MUS_DOLPH_CHEBYSHEV_WINDOW)); })
+  #define MUS_RUN(GEN, ARG_1, ARG_2) ({ mus_any *_clm_h_1 = (mus_any *)(GEN); ((*((_clm_h_1->core)->run))(_clm_h_1, ARG_1, ARG_2)); })
+  #define MUS_RUN_P(GEN) (((GEN)->core)->run)
+#else
+  #define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) &&((Window) <= MUS_DOLPH_CHEBYSHEV_WINDOW))
+  #define MUS_RUN(GEN, ARG_1, ARG_2) ((*(((GEN)->core)->run))(GEN, ARG_1, ARG_2))
+  #define MUS_RUN_P(GEN) (((GEN)->core)->run)
+#endif
 
 #ifdef __cplusplus
 extern "C" {

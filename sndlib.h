@@ -214,7 +214,11 @@ enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_BICSF, MUS_NIST, MUS_IN
       MUS_AIFF, MUS_PAF, MUS_CSL, MUS_FILE_SAMP, MUS_PVF, MUS_SOUNDFORGE, MUS_TWINVQ, MUS_AKAI4,
       MUS_IMPULSETRACKER, MUS_KORG, MUS_MAUI, MUS_SDIF};
 
-#define MUS_HEADER_TYPE_OK(n) (((n) > MUS_UNSUPPORTED) && ((n) <= MUS_MAUI))
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define MUS_HEADER_TYPE_OK(n) ({ int _sndlib_h_0 = n; ((_sndlib_h_0 > MUS_UNSUPPORTED) && (_sndlib_h_0 <= MUS_MAUI)); })
+#else
+  #define MUS_HEADER_TYPE_OK(n) (((n) > MUS_UNSUPPORTED) && ((n) <= MUS_MAUI))
+#endif
 
 enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_UBYTE, MUS_B24INT,
       MUS_BDOUBLE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT,
@@ -223,7 +227,12 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
 /* MUS_LINTN and MUS_BINTN refer to 32 bit ints with 31 bits of "fraction" -- the data is "left justified" */
 /* "unscaled" means the float value is used directly (i.e. not as -1.0 to 1.0, but (probably) -32768.0 to 32768.0) */
 
-#define MUS_DATA_FORMAT_OK(n) (((n) > MUS_UNKNOWN) && ((n) <= MUS_LDOUBLE_UNSCALED))
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define MUS_DATA_FORMAT_OK(n) ({ int _sndlib_h_1 = n; ((_sndlib_h_1 > MUS_UNKNOWN) && (_sndlib_h_1 <= MUS_LDOUBLE_UNSCALED)); })
+#else
+  #define MUS_DATA_FORMAT_OK(n) (((n) > MUS_UNKNOWN) && ((n) <= MUS_LDOUBLE_UNSCALED))
+#endif
+
 #define MUS_LAST_DATA_FORMAT MUS_LDOUBLE_UNSCALED
 
 #if MAC_OSX
@@ -270,7 +279,11 @@ enum {MUS_AUDIO_DEFAULT, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_ADAT_IN, MUS_AUDIO_
 };
 /* Snd's recorder uses MUS_AUDIO_DIRECTION to find the size of this list */
 
-#define MUS_AUDIO_DEVICE_OK(a) (((a) >= MUS_AUDIO_DEFAULT) && ((a) <= MUS_AUDIO_DIRECTION))
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define MUS_AUDIO_DEVICE_OK(a) ({ int _sndlib_h_2 = a; ((_sndlib_h_2 >= MUS_AUDIO_DEFAULT) && (_sndlib_h_2 <= MUS_AUDIO_DIRECTION)); })
+#else
+  #define MUS_AUDIO_DEVICE_OK(a) (((a) >= MUS_AUDIO_DEFAULT) && ((a) <= MUS_AUDIO_DIRECTION))
+#endif
 
 #define MUS_ERROR -1
 

@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: if gtk 2.3: changeover to GtkFileChooser and use its filters to implement the just-sounds button */
+/* use HAVE_GTK_FILE_CHOOSER_DIALOG_NEW */
+
 /* most of these dialogs present a view of the various file header possibilities */
 
 #define NUM_VISIBLE_HEADERS 4

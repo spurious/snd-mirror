@@ -284,7 +284,6 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 		   (add-chan-to-selection beg end s i))))
 	   (sounds))))))
 
-
 ;;; -------- delete selected portion and smooth the splice
 
 (define (delete-selection-and-smooth)

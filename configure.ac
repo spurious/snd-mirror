@@ -525,6 +525,8 @@ else
 
 	AC_CHECK_LIB(gdk, gdk_draw_pixbuf, [AC_DEFINE(HAVE_GDK_DRAW_PIXBUF)], ,$GTK_LIBS)
 	# gtk 2.1
+	AC_CHECK_LIB(gtk, gtk_file_chooser_dialog_new, [AC_DEFINE(HAVE_GTK_FILE_CHOOSER_DIALOG_NEW)], ,$GTK_LIBS)
+	# gtk 2.3
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)
