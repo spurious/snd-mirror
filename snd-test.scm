@@ -4885,7 +4885,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 4) "
- (set 0 11) ; ramp-channel [4:2]:
+ (set 0 11) ; xramp-channel [4:2]:
    (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5662,7 +5662,7 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 32.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 4) "
- (set 0 11) ; ramp-channel [4:2]:
+ (set 0 11) ; xramp-channel [4:2]:
    (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5697,7 +5697,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 4) "
- (set 0 11) ; ramp-channel [4:2]:
+ (set 0 11) ; xramp-channel [4:2]:
    (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5723,7 +5723,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 5) "
- (set 0 11) ; ramp-channel [5:2]:
+ (set 0 11) ; xramp-channel [5:2]:
    (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -29669,13 +29669,13 @@ EDITS: 2
 				(siz (XGetFontProperty fnt XA_POINT_SIZE)))
 			    (IF (or (not (= (cadr wgt) 10))
 				    (not (= (cadr siz) 180)))
-				(snd-display ";XGetFontProperty: ~A ~A" wgt siz)))
-			  (IF (not (= (.descent fnt) 5)) (snd-display ";descent: ~A" (.descent fnt)))
-			  (IF (not (= (.ascent fnt) 18)) (snd-display ";ascent: ~A" (.ascent fnt)))
-			  (IF (not (XCharStruct? (.per_char fnt))) (snd-display ";per_char: ~A" (.per_char fnt)))
-			  (IF (not (XCharStruct? (.max_bounds fnt))) (snd-display ";max_bounds: ~A" (.max_bounds fnt)))
-			  (IF (not (XCharStruct? (.min_bounds fnt))) (snd-display ";min_bounds: ~A" (.min_bounds fnt)))
-			  (IF (not (XFontProp? (car (.properties fnt)))) (snd-display ";properties ~A" (.properties fnt))))
+				(snd-display ";XGetFontProperty: ~A ~A" wgt siz))
+			    (IF (not (= (.descent fnt) 5)) (snd-display ";descent: ~A" (.descent fnt)))
+			    (IF (not (= (.ascent fnt) 18)) (snd-display ";ascent: ~A" (.ascent fnt)))
+			    (IF (not (XCharStruct? (.per_char fnt))) (snd-display ";per_char: ~A" (.per_char fnt)))
+			    (IF (not (XCharStruct? (.max_bounds fnt))) (snd-display ";max_bounds: ~A" (.max_bounds fnt)))
+			    (IF (not (XCharStruct? (.min_bounds fnt))) (snd-display ";min_bounds: ~A" (.min_bounds fnt)))
+			    (IF (not (XFontProp? (car (.properties fnt)))) (snd-display ";properties ~A" (.properties fnt)))))
 		      (XFreeFontSet dpy fs))))
 
 	      (let ((dpy (XtDisplay (cadr (main-widgets))))
@@ -33420,11 +33420,8 @@ EDITS: 2
 (define procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 3)))) procs))
 (define set-procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 3)))) set-procs))
 (define procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 4)))) procs))
-(define set-procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 4)))) set-procs))
 (define procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 5)))) procs))
-(define set-procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 5)))) set-procs))
 (define procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) procs))
-(define set-procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) set-procs))
 (define procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 8)))) procs))
 (define procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
 
@@ -34252,8 +34249,8 @@ EDITS: 2
 	  (check-error-tag 'no-active-selection (lambda () (env-selection '(0 0 1 1))))
 	  (check-error-tag 'no-such-region (lambda () (save-region 1234 "/bad/baddy.snd")))
 	  (make-region 0 100 ind 0)
-	  (check-error-tag 'mus-error (lambda () (save-selection "/bad/baddy.snd")))
-	  (check-error-tag 'mus-error (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
+	  (check-error-tag 'cannot-save (lambda () (save-selection "/bad/baddy.snd")))
+	  (check-error-tag 'cannot-save (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-sound (lambda () (make-track-sample-reader 0 1234 0)))
 	  (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 1234 ind 0)))
 	  (check-error-tag 'no-such-mix (lambda () (make-mix-sample-reader 1234)))
@@ -34580,34 +34577,6 @@ EDITS: 2
 			  :srate -1 0 #f #t '() (make-vector 0) 12345678901234567890))))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
 		     :input -1 0 #f #t '() (make-vector 0) 12345678901234567890))
-
-	      ;; ---------------- set! 4 Args
-	      (for-each 
-	       (lambda (arg1)
-		 (for-each 
-		  (lambda (arg2)
-		    (for-each 
-		     (lambda (arg3)
-		       (for-each 
-			(lambda (arg4)
-			  (for-each 
-			   (lambda (arg5)
-			     (for-each 
-			      (lambda (n)
-				(catch #t
-				       (lambda () (set! (n arg1 arg2 arg3 arg4) arg5))
-				       (lambda args (car args))))
-			      set-procs4))
-			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-				 :wave -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			      :initial-contents -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			   :srate -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			:input -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-		 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-		       :input -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 
 	      ;; ---------------- 5 Args
 	      (for-each 

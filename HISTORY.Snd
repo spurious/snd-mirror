@@ -1,7 +1,7 @@
 Snd change log
 
-  1-Mar:     moog.rb.
-             make-power-env and power-env in env.scm.
+  3-Mar:     contrib/effects.rb from Michael Scholz.
+  1-Mar:     make-power-env and power-env in env.scm.
   28-Feb:    new-effects.scm bugfixes from Michael Scholz.
   21-Feb:    convolve-arrays renamed vct-convolve!.
   20-Feb:    removed transform-samples and region-samples.

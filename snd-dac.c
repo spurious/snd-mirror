@@ -2259,8 +2259,9 @@ static void free_player(snd_info *sp)
 
 void clear_players(void)
 {
-  int i, j;
+  int i, j, k;
   snd_info *sp;
+  dac_info *dp;
   for (i = 0; i < players_size; i++)
     {
       sp = players[i];
@@ -2270,6 +2271,16 @@ void clear_players(void)
 	      (sp->chans[j]->active != 1) ||
 	      (sp->chans[j]->sound == NULL))
 	    {
+	      for (k = 0; k <= max_active_slot; k++)
+		{
+		  dp = play_list[k];
+		  if ((dp) && (sp == dp->sp))
+		    {
+		      play_list[k] = NULL;
+		      play_list_members--;
+		      free_dac_info(dp);
+		    }
+		}
 	      free_player(sp);
 	      break;
 	    }

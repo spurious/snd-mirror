@@ -860,13 +860,13 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
 {
   char *newname;
   snd_state *ss;
-  int format, ofd, no_space, hfd;
+  int format, ofd, no_space, err;
   format = MUS_OUT_FORMAT;
   ss = get_global_state();
   newname = shorter_tempnam(temp_dir(ss), "snd_");
                       /* we're writing our own private version of this thing, so we can use our own formats */
-  hfd = snd_write_header(ss, newname, MUS_NEXT, nominal_srate, chans, 28, len * chans, format, NULL, 0, NULL);
-  if (hfd == -1) return(NULL);
+  err = snd_write_header(ss, newname, MUS_NEXT, nominal_srate, chans, 28, len * chans, format, NULL, 0, NULL);
+  if (err == -1) return(NULL);
   ofd = snd_reopen_write(ss, newname);
   mus_file_open_descriptors(ofd, newname, format, 4, 28, chans, MUS_NEXT);
   /* mus_file_set_data_clipped(ofd, data_clipped(ss)); */

@@ -1775,6 +1775,30 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 (play-and-wait (list-ref (script-args) (+ (script-arg) 1)))
 (exit)
 </pre>
+<p>And here's a script that splits a multi-channel file
+into a bunch of mono files:
+</p>
+<pre>
+#!snd -b
+!#
+(if (= (length (script-args)) 2)
+  (display "usage: split.scm filename\n")
+  (let* ((name (list-ref (script-args) (1+ (script-arg))))
+	 (chns (mus-sound-chans name)))
+    (if (> chns 1)
+	(let ((ind (open-sound name)))
+	  (do ((i 0 (1+ i)))
+	      ((= i chns))
+	    (display (format #f "~A.~D " name i))
+	    (save-sound-as (format #f "~A.~D" name i)
+			   ind
+			   (header-type ind)
+			   (data-format ind)
+			   (srate ind)
+			   i))
+	  (close-sound ind)))))
+(exit)
+</pre>
 <br>
 
 <span class=bbox><h3><A NAME="sndandruby">Snd with Ruby</a></h3></span>

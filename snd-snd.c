@@ -3562,8 +3562,10 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 		  filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_channel_amp_envs, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pts), pts, XEN_ARG_3, S_channel_amp_envs, "an integer");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(peak_func) || XEN_NOT_BOUND_P(peak_func), peak_func, XEN_ARG_4, S_channel_amp_envs, "a procedure");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(done_func) || XEN_NOT_BOUND_P(done_func), done_func, XEN_ARG_5, S_channel_amp_envs, "a procedure");
+  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(peak_func)) && (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(peak_func))) == 2)) ||
+		  (XEN_NOT_BOUND_P(peak_func)), peak_func, XEN_ARG_4, S_channel_amp_envs, "a procedure of 2 args");
+  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(done_func)) && (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(done_func))) == 3)) ||
+		  (XEN_NOT_BOUND_P(done_func)), done_func, XEN_ARG_5, S_channel_amp_envs, "a procedure of 3 args");
 
   if ((XEN_INTEGER_P(filename)) || (XEN_NOT_BOUND_P(filename)))
     {

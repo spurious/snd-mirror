@@ -1043,7 +1043,6 @@ used only to set the file size after the sound has been written.  <i>mus_header_
 the file descriptor (as returned by open), the corresponding lower level calls are:</p>
 <pre>
   int mus_header_read_with_fd (int fd)
-  int mus_header_write_with_fd (int fd, int type, int in_srate, int in_chans, off_t loc, off_t size, int format, char *comment, int len)
   int mus_header_update_with_fd (int fd, int type, int siz)
 </pre>
 

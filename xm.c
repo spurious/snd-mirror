@@ -6,6 +6,7 @@
 /* SOMEDAY: some way to access XtGetApplicationResources */
 
 /* HISTORY: 
+ *   4-Mar:     xm-ruby XM_DEFINE_ACCESSOR quoted SetName bugfix (Michael Scholz).
  *   1-Feb:     XChangeProperty data (arg7) can be list of ints as well as string.
  *   19-Dec:    more Ruby fixups.
  *   6-Nov:     Ruby XmWMProtocols bugfixes thanks to Michael Scholz.

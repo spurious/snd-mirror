@@ -2861,6 +2861,12 @@ its first argument (much like <a href="#with-offset">with-offset</a>):</p>
       (fm-violin 0 .25 660 .1)) ;actual amp is .2
     (fm-violin .5 440 .1))
 </pre>
+<p>If <i>revfile</i> is specfied, but not <i>reverb</i>, the reverb stream is
+written to revfile, but not mixed with the direct signal in any way. 
+Normally the reverb output is not deleted by with-sound; you can set
+*clm-delete-reverb* to t to have it deleted automatically.
+</p>
+
 <p>There is also the parallel macro <A NAME="scaled-to"><em class=def>scaled-to</em></a>.
 These are built on the macro <a name="with-current-sound"><em class=def>with-current-sound</em></a>
 which sets up an embedded with-sound call with all the current with-sound arguments in place
@@ -3279,7 +3285,7 @@ current dynamic value of that variable is *&lt;var&gt;*.
   <a name="*clm-table-size*"><em class=def>*clm-table-size*</em></a>         default table-lookup table size
   <a name="*clm-srate*"><em class=def>*clm-srate*</em></a>              default sampling rate (22050)
   <a name="*clm-channels*"><em class=def>*clm-channels*</em></a>           default output channels (1)
-  <a name="*clm-delete-reverb*"><em class=def>*clm-delete-reverb*</em></a>      should with-sound delete the temporary reverb output (default t)
+  <a name="*clm-delete-reverb*"><em class=def>*clm-delete-reverb*</em></a>      should with-sound delete the temporary reverb output (default nil)
   <a name="*clm-play*"><em class=def>*clm-play*</em></a>               default for play arg in with-sound
   <a name="*clm-clipped*"><em class=def>*clm-clipped*</em></a>            default for clipped arg in with-sound
   <a name="*clm-notehook*"><em class=def>*clm-notehook*</em></a>           default for notehook arg in with-sound

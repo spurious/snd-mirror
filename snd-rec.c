@@ -1347,7 +1347,7 @@ int recorder_start_output_file(snd_state *ss, char *comment)
   comlen *= 4;
   err = snd_write_header(ss, rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 28 + comlen, 0,
 			 rp->out_format, comment, snd_strlen(comment), NULL);
-  if (err)
+  if (err == -1)
     {
       msg = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(msg, PRINT_BUFFER_SIZE, "%s:\n %s", rp->output_file, strerror(errno));

@@ -152,7 +152,7 @@ Extensions to Snd can be found in the contrib directory, and in:
 <tr><td><a href="sndscm.html#maracadoc">maraca.scm</a></td>  <td>Perry Cook's maraca physical model</td></tr>
 <tr><td><a href="sndscm.html#marksdoc">marks.scm</a></td>    <td>functions related to marks</td></tr>
 <tr><td><a href="sndscm.html#mixdoc">mix.scm</a></td>        <td>functions related to mixes and tracks</td></tr>
-<tr><td><a href="sndscm.html#moogdoc">moog.scm, moog.rb</a></td><td>Moog filter (from CLM)</td></tr>
+<tr><td><a href="sndscm.html#moogdoc">moog.scm</a></td>      <td>Moog filter (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#musglyphs">musglyphs.scm</a></td><td>Music notation symbols (from CMN)</td></tr>
 <tr><td><a href="sndscm.html#nbdoc">nb.scm</a></td>          <td>Popup File info etc</td></tr>
 <tr><td><a href="sndscm.html#peakenvdoc">peak-env.scm</a></td><td>peak envelope support</td></tr>
@@ -3781,6 +3781,8 @@ This procedure returns two vcts of length 'size' containing y vals (min and max)
 'peak-file-func' if any is used to get the name of the associated peak_env_info file if the file is very large.
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background.
 If 'file' is a sound index (an integer), pts is an edit-position, and the current amp envs (if any) are returned.
+peak-file-func's args are the file and the channel.  If it returns a string, that is treated as the filename
+to read to get the peak info.  work-proc-func's args are the filename, the channel and the current peak.
 See <b>make-sound-icon</b> in snd-motif.scm for an example.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -5483,6 +5485,9 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
 <a href="#sndundo">undo</a> backs up, and <a href="#sndrevert">revert-sound</a> resets the current
 edit position to the start of the list.
 For more about the edit history list, see <a href="#editlists">Edit Lists</a>.
+<br><br>
+In Ruby, <b>redo</b> is a part of the loop handling, so Snd's redo is renamed redo_edit.
+redo-edit also exists in Scheme, for consistency.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6526,6 +6531,8 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
       (undo edits snd)))
 </pre>
 See also <a href="#undohook">undo-hook</a>.
+Since <b>redo</b> collides with Ruby, causing me to change its name to redo_edit,
+undo can also be accessed under the name undo_edit (in Scheme, undo-edit).
 </td></tr>
 <tr><td colspan=2></td></tr>
 

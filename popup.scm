@@ -525,25 +525,24 @@
 	  lst types))
        every-menu))
 
-    (make-simple-popdown-menu 
-     "Wavelet type"
-     (let ((ctr -1))
-       (map (lambda (name)
-	      (set! ctr (+ ctr 1))
+    (let ((types (list "daub4" "daub6" "daub8" "daub10" "daub12" "daub14" "daub16" "daub18" "daub20" "battle_lemarie" 
+		       "burt_adelson" "beylkin" "coif2" "coif4" "coif6" "sym2" "sym3" "sym4" "sym5" "sym6"))
+	  (vals (list 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19)))
+      (make-simple-popdown-menu 
+       "Wavelet type"
+       (map (lambda (name val)
 	      (list name 
 		    (lambda (w c i)
-		      (set! (wavelet-type graph-popup-snd (choose-chan)) ctr))))
-	    (list "daub4" "daub6" "daub8" "daub10" "daub12" "daub14" "daub16" "daub18" "daub20" "battle_lemarie" 
-		  "burt_adelson" "beylkin" "coif2" "coif4" "coif6" "sym2" "sym3" "sym4" "sym5" "sym6")))
-     fft-popup 
-     (lambda (lst)
-       (let ((ctr 0))
+		      (set! (wavelet-type graph-popup-snd (choose-chan)) val))))
+	    types
+	    vals)
+       fft-popup 
+       (lambda (lst)
 	 (for-each 
-	  (lambda (child)
-	    (XtSetSensitive child (not (= (wavelet-type graph-popup-snd graph-popup-chn) ctr)))
-	    (set! ctr (+ ctr 1)))
-	  lst)))
-     every-menu)
+	  (lambda (child val)
+	    (XtSetSensitive child (not (= (wavelet-type graph-popup-snd graph-popup-chn) val))))
+	  lst vals))
+       every-menu))
 
     (let ((color (XtCreateManagedWidget "Color" xmPushButtonWidgetClass fft-popup every-menu)))
       (XtAddCallback color XmNactivateCallback (lambda (w c i) (color-dialog))))

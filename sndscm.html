@@ -54,7 +54,7 @@
   <li><a href="#maracadoc">maraca.scm: Perry Cook's maraca physical model</a>
   <li><a href="#marksdoc">marks.scm: functions related to marks</a>
   <li><a href="#mixdoc">mix.scm: functions related to mixes and tracks</a>
-  <li><a href="#moogdoc">moog.scm, moog.rb: Moog filter</a>
+  <li><a href="#moogdoc">moog.scm: Moog filter</a>
   <li><a href="#musglyphs">musglyphs.scm: Music notation symbols (from CMN)</a>
   <li><a href="#nbdoc">nb.scm: Popup File info etc</a>
   <li><a href="#peakenvdoc">peak-env.scm: peak envelope support</a>
@@ -438,6 +438,8 @@ Polynomials driven by a cosine). Three other similar functions are <i>sum-of-n-s
 <i>make-bandstop</i> and <i>bandstop</i> provide FIR notch filtering.
 <i>make-differentiator</i> and <i>differentiator</i> provide an FIR filter-based differentiator.
 </p>
+<p>The Ruby version of this is in contrib/examp.rb.
+</p>
 
 <A NAME="editmenudoc"></a><span class=box><h2>edit-menu.scm</h2></span>
 
@@ -535,7 +537,9 @@ adds its update function to the effects-list when it is loaded:
 <p>I can't decide whether it would be useful to describe some of these
 effects in more detail.  The code is mostly straightforward, and
 it's not hard to try them out.
-</p>		   
+</p>	
+<p>The Ruby/Motif version of this is in contrib/effects.rb.
+</p>
 <br>
 
 <A NAME="envdoc"></a><span class=box><h2>env.scm</h2></span>
@@ -1806,12 +1810,12 @@ Most of the "set-" functions also exist in the generalized set! form, for exampl
 <code>(set! (track-position trk) 0)</code>.
 </p>
 
-<A NAME="moogdoc"></a><span class=box><h2>moog.scm, moog.rb</h2></span>
+<A NAME="moogdoc"></a><span class=box><h2>moog.scm</h2></span>
 <pre>
   <em class=def><A NAME="makemoogfilter">make-moog-filter</a></em> frequency Q
   <em class=def><A NAME="moogfilter">moog-filter</a></em> gen input
 </pre>
-<p>moog.scm (moog.rb) is a translation of CLM's moog.lisp (written by Fernando Lopez-Lezcano --
+<p>moog.scm is a translation of CLM's moog.lisp (written by Fernando Lopez-Lezcano --
 http://www-ccrma.stanford.edu/~nando/clm/moog),
 itself a translation of Tim Stilson's original C code.  The functions provide
 a kind of CLM generator view of the filter.  Fernando describes it as a
@@ -1831,6 +1835,8 @@ faster.
 
   (map-chan (moog 1200.0 .7))
 </pre>
+<p>The Ruby version of this is in contrib/examp.rb.
+</p>
 
 <A NAME="musglyphs"></a><span class=box><h2>musglyphs.scm</h2></span>
 
@@ -1871,7 +1877,7 @@ associated with "test.snd".  <code>(prune-db)</code> erases anything associated 
 any files that no longer exist.  (nb.scm will work fine without guile-gdbm; to load
 guile-gdbm, set the variable <b>use-gdbm</b> to #t).
 </p>
-<p>Michael Scholz's translation of this to Ruby is included in contrib/examp.scm.
+<p>Michael Scholz's translation of this to Ruby is included in contrib/examp.rb.
 </p>
 
 <A NAME="peakenvdoc"></a><span class=box><h2>peak-env.scm</h2></span>

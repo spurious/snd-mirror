@@ -272,8 +272,9 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-1-Mar:   moog.rb.\n\
-         make-power-env and power-env in env.scm.\n\
+4-Mar:   redo renamed redo_edit in Ruby version.\n\
+3-Mar:   contrib/effects.rb from Michael Scholz.\n\
+1-Mar:   make-power-env and power-env in env.scm.\n\
 28-Feb:  new-effects.scm bugfixes from Michael Scholz.\n\
 21-Feb:  convolve-arrays renamed vct-convolve!.\n\
 20-Feb:  removed transform-samples and region-samples.\n\

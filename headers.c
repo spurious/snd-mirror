@@ -4771,22 +4771,26 @@ mus_header_write_hook_t *mus_header_write_set_hook(mus_header_write_hook_t *new_
   return(old_hook);
 }
 
-static int mus_header_write_with_fd_and_name(int chan, int type, int in_srate, int in_chans, 
-					     off_t loc, off_t size_in_samples, int format, const char *comment, 
-					     int len, const char *filename)
+int mus_header_write(const char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
 {
+  int chan, err = MUS_NO_ERROR;
   off_t siz;
+  chan = mus_file_create(name);
+  if (chan == -1) 
+    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_write for %s failed: %s", name, strerror(errno)));
   if (mus_header_write_hook)
-    (*mus_header_write_hook)(filename);
+    (*mus_header_write_hook)(name);
   siz = mus_samples_to_bytes(format, size_in_samples);
+
+  /* no mus_error calls within any of the write functions */
   switch (type)
     {
-    case MUS_NEXT: return(mus_header_write_next_header(chan, in_srate, in_chans, loc, siz, format, comment, len)); break;
-    case MUS_AIFC: return(write_aif_header(chan, in_srate, in_chans, siz, format, comment, len, TRUE)); break;
-    case MUS_AIFF: return(write_aif_header(chan, in_srate, in_chans, siz, format, comment, len, FALSE)); break;
-    case MUS_RIFF: return(write_riff_header(chan, in_srate, in_chans, siz, format, comment, len)); break;
-    case MUS_IRCAM: return(write_ircam_header(chan, in_srate, in_chans, format, comment, len)); break;
-    case MUS_NIST: return(write_nist_header(chan, in_srate, in_chans, siz, format)); break;
+    case MUS_NEXT: err = mus_header_write_next_header(chan, in_srate, in_chans, loc, siz, format, comment, len); break;
+    case MUS_AIFC: err = write_aif_header(chan, in_srate, in_chans, siz, format, comment, len, TRUE); break;
+    case MUS_AIFF: err = write_aif_header(chan, in_srate, in_chans, siz, format, comment, len, FALSE); break;
+    case MUS_RIFF: err = write_riff_header(chan, in_srate, in_chans, siz, format, comment, len); break;
+    case MUS_IRCAM: err = write_ircam_header(chan, in_srate, in_chans, format, comment, len); break;
+    case MUS_NIST: err = write_nist_header(chan, in_srate, in_chans, siz, format); break;
     case MUS_RAW: 
       data_location = 0; 
       data_size = mus_bytes_to_samples(format, siz);
@@ -4796,26 +4800,11 @@ static int mus_header_write_with_fd_and_name(int chan, int type, int in_srate, i
       data_format = format;
       break;
     default:
-      return(mus_error(MUS_UNSUPPORTED_HEADER_TYPE,  "mus_header_write: can't write %s header%s%s",
-		       mus_header_type_name(type),
-		       (filename) ? " for " : "", (filename) ? filename : ""));
+      CLOSE(chan);
+      return(mus_error(MUS_UNSUPPORTED_HEADER_TYPE,  "mus_header_write: can't write %s header for %s", mus_header_type_name(type), name));
       break;
     }
-  return(MUS_NO_ERROR);
-}
 
-int mus_header_write_with_fd(int chan, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
-{
-  return(mus_header_write_with_fd_and_name(chan, type, in_srate, in_chans, loc, size_in_samples, format, comment, len, NULL));
-}
-
-int mus_header_write(const char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
-{
-  int chan, err;
-  chan = mus_file_create(name);
-  if (chan == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_write for %s failed: %s", name, strerror(errno)));
-  err = mus_header_write_with_fd_and_name(chan, type, in_srate, in_chans, loc, size_in_samples, format, comment, len, name);
   if (CLOSE(chan) != 0)
     return(mus_error(MUS_CANT_CLOSE_FILE, "mus_header_write: can't close %s: %s", name, strerror(errno)));
   return(err);

@@ -486,8 +486,9 @@ void command_return(widget_t w, snd_state *ss, int last_prompt)
 #endif
       FREE(str);
       str = NULL;
-      if (XEN_BOUND_P(form))
-	snd_report_listener_result(form);
+      snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby,
+					 *   and doesn't seem sensible in Guile
+					 */
       GUI_UNSET_CURSOR(w, (ss->sgx)->arrow_cursor);
     }
   else

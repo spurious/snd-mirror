@@ -3456,6 +3456,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
   XEN_EVAL_C_STRING("(print-enable 'source)");
   XEN_EVAL_C_STRING("(defmacro declare args #f)"); /* for optimizer */
+  XEN_EVAL_C_STRING("(define redo-edit redo)");    /* consistency with Ruby */
+  XEN_EVAL_C_STRING("(define undo-edit undo)");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-remember-paths #f)");
