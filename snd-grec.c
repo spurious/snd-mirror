@@ -9,9 +9,6 @@ typedef struct {
   GdkPixmap *off_label;
   GdkPixmap *on_label;
   GdkPixmap *clip_label;
-  GdkBitmap *off_label_mask;
-  GdkBitmap *on_label_mask;
-  GdkBitmap *clip_label_mask;
   PangoFontDescription *label_font;
   Float size;
 } vu_label;
@@ -31,9 +28,6 @@ typedef struct {
   GdkPixmap *off_label;
   GdkPixmap *on_label;
   GdkPixmap *clip_label;
-  GdkBitmap *off_label_mask;
-  GdkBitmap *on_label_mask;
-  GdkBitmap *clip_label_mask;
 } VU;
 
 typedef struct {
@@ -226,9 +220,9 @@ static void allocate_meter_2(GtkWidget *w, vu_label *vu)
 {
   GdkDrawable *wn;
   wn = w->window;
-  vu->off_label = gdk_pixmap_create_from_xpm_d(wn, &(vu->off_label_mask), NULL, offlabel_bits());
-  vu->on_label = gdk_pixmap_create_from_xpm_d(wn, &(vu->on_label_mask), NULL, onlabel_bits());
-  vu->clip_label = gdk_pixmap_create_from_xpm_d(wn, &(vu->clip_label_mask), NULL, cliplabel_bits());
+  vu->off_label = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, offlabel_bits());
+  vu->on_label = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, onlabel_bits());
+  vu->clip_label = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, cliplabel_bits());
 }
 
 
@@ -452,7 +446,6 @@ static void display_vu_meter(VU *vu)
   Float deg, rdeg, val;
   int nx0, nx1, ny0, ny1, redx, redy, bub0, bub1, i, j;
   GdkPixmap *label = 0;
-  GdkBitmap *mask;
   snd_state *ss;
   Float size;
   state_context *sx;
@@ -479,25 +472,21 @@ static void display_vu_meter(VU *vu)
     {
     case VU_OFF: 
       label = vu->off_label; 
-      mask = vu->off_label_mask; 
       break;
     case VU_CLIPPED: 
       vu->clipped--; 
       if (vu->clipped <= 0) 
 	{
 	  label = vu->on_label; 
-	  mask = vu->on_label_mask;
 	  vu->on_off = VU_ON;
 	} 
       else 
 	{
 	  label = vu->clip_label; 
-	  mask = vu->clip_label_mask;
 	}
       break;
     case VU_ON: 
       label = vu->on_label; 
-      mask = vu->on_label_mask;
       break;
     }
 
@@ -750,7 +739,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
   output = 0;
 #endif
 
-  button = get_user_int_data(GTK_OBJECT(w));
+  button = get_user_int_data(G_OBJECT(w));
   on = GTK_TOGGLE_BUTTON(w)->active;
 
 #if OLD_SGI_AL
@@ -1025,7 +1014,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
       device_buttons[i] = gtk_check_button_new_with_label(name);
       gtk_box_pack_start(GTK_BOX(button_holder), device_buttons[i], TRUE, TRUE, 0);
       gtk_widget_show(device_buttons[i]);
-      set_user_int_data(GTK_OBJECT(device_buttons[i]), i);
+      set_user_int_data(G_OBJECT(device_buttons[i]), i);
       g_signal_connect_closure_by_id(GTK_OBJECT(device_buttons[i]),
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(device_buttons[i]))),
 				     0,

@@ -206,6 +206,7 @@ static int sg_font2height(PangoFontDescription *font)
 GtkWidget *sg_pixmap_new(GdkPixmap *map, GdkBitmap *mask)
 {
   GtkWidget *pixmap, *fixed;
+  /* TODO: change sg_pixmap to use drawing area, not fixed, get rid of all "masks" using gdk_draw_drawable */
   pixmap = gtk_image_new_from_pixmap(map, mask);
   gtk_widget_show(pixmap);
   fixed = gtk_fixed_new();
@@ -571,77 +572,31 @@ void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
   ax->current_font = AXIS_NUMBERS_FONT(ss);
 }
 
-static GtkObject **our_objects;
-static gpointer *our_data;
-static int our_data_size = 0, our_data_ctr = 0;
-
-void set_user_data(GtkObject *obj, gpointer data)
+void set_user_data(GObject *obj, gpointer data)
 {
-  if (our_data_ctr >= our_data_size)
-    {
-      if (our_data_size == 0)
-	{
-	  our_data_size = 256;
-	  our_data = (gpointer *)CALLOC(our_data_size, sizeof(gpointer));
-	  our_objects = (GtkObject **)CALLOC(our_data_size, sizeof(GtkObject *));
-	}
-      else
-	{
-	  int new_size;
-	  new_size = our_data_size + 256;
-	  our_data = (gpointer *)REALLOC(our_data, new_size * sizeof(gpointer));
-	  our_objects = (GtkObject **)REALLOC(our_objects, new_size * sizeof(GtkObject *));
-	  our_data_size = new_size;
-	}
-    }
-  our_data[our_data_ctr] = data;
-  our_objects[our_data_ctr++] = obj;
+  g_object_set_data(obj, "snd-data", data);
 }
 
-gpointer get_user_data(GtkObject *obj)
+gpointer get_user_data(GObject *obj)
 {
-  int i;
-  for (i = 0; i < our_data_size; i++)
-    if (our_objects[i] == obj)
-      return(our_data[i]);
-  return(NULL);
+  return(g_object_get_data(obj, "snd-data"));
 }
 
-static GtkObject **our_int_objects;
-static int *our_int_data;
-static int our_int_data_size = 0, our_int_data_ctr = 0;
-
-void set_user_int_data(GtkObject *obj, int data)
+void set_user_int_data(GObject *obj, int data)
 {
-  if (our_int_data_ctr >= our_int_data_size)
-    {
-      if (our_int_data_size == 0)
-	{
-	  our_int_data_size = 256;
-	  our_int_data = (int *)CALLOC(our_int_data_size, sizeof(int));
-	  our_int_objects = (GtkObject **)CALLOC(our_int_data_size, sizeof(GtkObject *));
-	}
-      else
-	{
-	  int new_size;
-	  new_size = our_int_data_size + 256;
-	  our_int_data = (int *)REALLOC(our_int_data, new_size * sizeof(int));
-	  our_int_objects = (GtkObject **)REALLOC(our_int_objects, new_size * sizeof(GtkObject *));
-	  our_int_data_size = new_size;
-	}
-    }
-  our_int_data[our_int_data_ctr] = data;
-  our_int_objects[our_int_data_ctr++] = obj;
+  int *gdata;
+  gdata = (int *)MALLOC(sizeof(int));
+  gdata[0] = data;
+  g_object_set_data(obj, "snd-data", (gpointer)gdata);
 }
 
-int get_user_int_data(GtkObject *obj)
+int get_user_int_data(GObject *obj)
 {
-  int i;
-  for (i = 0; i < our_int_data_size; i++)
-    if (our_int_objects[i] == obj)
-      return(our_int_data[i]);
-  return(0);
+  gpointer gdata;
+  gdata = g_object_get_data(obj, "snd-data");
+  return(((int *)gdata)[0]);
 }
+
 
 char *sg_get_text(GtkWidget *w, int start, int end)
 {

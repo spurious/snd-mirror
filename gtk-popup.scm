@@ -4,10 +4,12 @@
 ;;;   a popup for each entry/testview widget and there's no way to get rid of it!
 ;;;   perhaps we could find a pointer to its children and hide all of them?)
 
+(use-modules (ice-9 format))
+
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
-	  (snd-error (format #f "popup.scm needs the xg module: ~A" hxm))
+	  (snd-error (format #f "gtk-popup.scm needs the xg module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
 
 (define (change-label w new-label)
@@ -31,7 +33,7 @@
   (g_signal_connect_closure_by_id (list 'gpointer (cadr obj))
 				  (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
 				  0
-				  (g_cclosure_new func data (list 'GClosureNotify 0))
+				  (g_cclosure_new func data #f)
 				  #f))
 
 (define (make-popup-menu top-field-func entries)

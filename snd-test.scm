@@ -23282,6 +23282,18 @@ EDITS: 2
 
 ;;; -------------------- test 25: X/Xt/Xm --------------------
 
+(define (x->snd-color color-name)
+  "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"
+  (let* ((col (XColor))
+	 (dpy (XtDisplay (cadr (main-widgets))))
+	 (scr (DefaultScreen dpy))
+	 (cmap (DefaultColormap dpy scr)))
+    (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
+        (snd-error (format #f "can't allocate ~A" color-name))
+	(make-color (/ (.red col) 65535.0)
+		    (/ (.green col) 65535.0)
+		    (/ (.blue col) 65535.0)))))
+
 (if (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
     (begin
       (if (procedure? test-hook) (test-hook 25))

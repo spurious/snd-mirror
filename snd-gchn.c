@@ -215,7 +215,7 @@ static void sy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   /* see note above -- context may be garbage!! -- this is a huge bug in gtk */
   chan_info *cp;
-  cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
+  cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -227,7 +227,7 @@ static void sy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 static void sx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
-  cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
+  cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -239,7 +239,7 @@ static void sx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 static void zy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
-  cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
+  cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -251,7 +251,7 @@ static void zy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 static void zx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
-  cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
+  cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -263,7 +263,7 @@ static void zx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
-  cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
+  cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -275,7 +275,7 @@ static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 static void gsy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
-  cp = (chan_info *)get_user_data(GTK_OBJECT(adj));
+  cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -365,7 +365,7 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 {
   /* how many args does this thing take?  does it return an int?  what does the int mean? */
   int pdata;
-  pdata = get_user_int_data(GTK_OBJECT(w));
+  pdata = get_user_int_data(G_OBJECT(w));
   if (XEN_HOOKED(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,
 	     XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
@@ -378,7 +378,7 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   int pdata;
-  pdata = get_user_int_data(GTK_OBJECT(w));
+  pdata = get_user_int_data(G_OBJECT(w));
   if (XEN_HOOKED(mouse_leave_graph_hook))
     run_hook(mouse_leave_graph_hook,
 	     XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(pdata)),
@@ -563,7 +563,7 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
   if ((ev->type == GDK_BUTTON_PRESS) && (ev->button == POPUP_BUTTON))
     {
       int pdata;
-      pdata = get_user_int_data(GTK_OBJECT(w));
+      pdata = get_user_int_data(G_OBJECT(w));
       popup_menu_from(w, ev, data, UNPACK_SOUND(pdata), UNPACK_CHANNEL(pdata));
       return(TRUE);
     }
@@ -675,7 +675,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   #endif
 #endif
 #endif
-      set_user_int_data(GTK_OBJECT(cw[W_graph]), PACK_SOUND_AND_CHANNEL(sp->index, cp->chan));
+      set_user_int_data(G_OBJECT(cw[W_graph]), PACK_SOUND_AND_CHANNEL(sp->index, cp->chan));
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph], 2, 3, 0, 2, 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
@@ -739,7 +739,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       adjs[W_sx_adj] = gtk_adjustment_new(0.0, 0.0, 1.00, 0.001, 0.01, .01);
       cw[W_sx] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_sx_adj]));
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_sx], TRUE, TRUE, 0);
-      set_user_data(GTK_OBJECT(adjs[W_sx_adj]), (gpointer)cp);
+      set_user_data(G_OBJECT(adjs[W_sx_adj]), (gpointer)cp);
       g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_sx_adj]),
 				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(adjs[W_sx_adj]))),
 				     0,
@@ -750,7 +750,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       adjs[W_zx_adj] = gtk_adjustment_new(0.0, 0.0, 1.1, 0.001, 0.01, .1);
       cw[W_zx] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_zx_adj]));
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_zx], TRUE, TRUE, 0);
-      set_user_data(GTK_OBJECT(adjs[W_zx_adj]), (gpointer)cp);
+      set_user_data(G_OBJECT(adjs[W_zx_adj]), (gpointer)cp);
       g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_zx_adj]),
 				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(adjs[W_zx_adj]))),
 				     0,
@@ -836,7 +836,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 		       (GtkAttachOptions)(GTK_FILL), 
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 		       0, 0);
-      set_user_data(GTK_OBJECT(adjs[W_zy_adj]), (gpointer)cp);
+      set_user_data(G_OBJECT(adjs[W_zy_adj]), (gpointer)cp);
       g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_zy_adj]),
 				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(adjs[W_zy_adj]))),
 				     0,
@@ -850,7 +850,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 		       (GtkAttachOptions)(GTK_FILL), 
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 		       0, 0);
-      set_user_data(GTK_OBJECT(adjs[W_sy_adj]), (gpointer)cp);
+      set_user_data(G_OBJECT(adjs[W_sy_adj]), (gpointer)cp);
       g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_sy_adj]),
 				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(adjs[W_sy_adj]))),
 				     0,
@@ -866,7 +866,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 			   (GtkAttachOptions)(GTK_FILL), 
 			   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 			   0, 0);
-	  set_user_data(GTK_OBJECT(adjs[W_gsy_adj]), (gpointer)cp);
+	  set_user_data(G_OBJECT(adjs[W_gsy_adj]), (gpointer)cp);
 	  g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_gsy_adj]),
 					 g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(adjs[W_gsy_adj]))),
 					 0,
@@ -880,7 +880,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 			   (GtkAttachOptions)(GTK_FILL), 
 			   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 			   0, 0);
-	  set_user_data(GTK_OBJECT(adjs[W_gzy_adj]), (gpointer)cp);
+	  set_user_data(G_OBJECT(adjs[W_gzy_adj]), (gpointer)cp);
 	  g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_gzy_adj]),
 					 g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(adjs[W_gzy_adj]))),
 					 0,
@@ -1084,22 +1084,32 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
 
 static XEN g_channel_widgets(XEN snd, XEN chn)
 {
-  #define H_channel_widgets "(" S_channel_widgets " snd chn) -> list of widgets ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)"
+  #define H_channel_widgets "(" S_channel_widgets " snd chn) -> list of widgets ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)\
+edhist (8)gsy (9)gzy (10)main (11)sx_adj (12)sy_adj (13)zx_adj (14)zy_adj (15)gsy_adj (16)gzy_adj"
+
+  #define XEN_WRAP_ADJ(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAdjustment_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
+
   chan_info *cp;
   ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
   return(XEN_CONS(XEN_WRAP_WIDGET(channel_graph(cp)),
-	   XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),
-	     XEN_CONS(XEN_WRAP_WIDGET(channel_f(cp)),
-	       XEN_CONS(XEN_WRAP_WIDGET(channel_sx(cp)),
-	         XEN_CONS(XEN_WRAP_WIDGET(channel_sy(cp)),
-	           XEN_CONS(XEN_WRAP_WIDGET(channel_zx(cp)),
-	             XEN_CONS(XEN_WRAP_WIDGET(channel_zy(cp)),
-		       XEN_CONS(XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)),
-			 XEN_CONS(XEN_WRAP_WIDGET(channel_gsy(cp)),
-			   XEN_CONS(XEN_WRAP_WIDGET(channel_gzy(cp)),
-			     XEN_CONS(XEN_WRAP_WIDGET(channel_main_pane(cp)),
-	                       XEN_EMPTY_LIST))))))))))));
+	  XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),
+	   XEN_CONS(XEN_WRAP_WIDGET(channel_f(cp)),
+	    XEN_CONS(XEN_WRAP_WIDGET(channel_sx(cp)),
+	     XEN_CONS(XEN_WRAP_WIDGET(channel_sy(cp)),
+	      XEN_CONS(XEN_WRAP_WIDGET(channel_zx(cp)),
+	       XEN_CONS(XEN_WRAP_WIDGET(channel_zy(cp)),
+		XEN_CONS(XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)),
+		 XEN_CONS(XEN_WRAP_WIDGET(channel_gsy(cp)),
+		  XEN_CONS(XEN_WRAP_WIDGET(channel_gzy(cp)),
+		   XEN_CONS(XEN_WRAP_WIDGET(channel_main_pane(cp)),
+		    XEN_CONS(XEN_WRAP_ADJ(sx_adj(cp)),
+		     XEN_CONS(XEN_WRAP_ADJ(sy_adj(cp)),
+		      XEN_CONS(XEN_WRAP_ADJ(zx_adj(cp)),
+		       XEN_CONS(XEN_WRAP_ADJ(zy_adj(cp)),
+		        XEN_CONS(XEN_WRAP_ADJ(gsy_adj(cp)),
+			 XEN_CONS(XEN_WRAP_ADJ(gzy_adj(cp)),
+                          XEN_EMPTY_LIST))))))))))))))))));
 }
 
 #ifdef XEN_ARGIFY_1

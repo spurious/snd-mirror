@@ -3,10 +3,9 @@
 
 ;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c and xg-ruby.c
 
-;;; TODO: GClosureNotify arg can be #f => NULL
 ;;; TODO: any->gpointer picks out cadr? or get rid of gpointer?
 ;;; TODO: OBJECT_TYPE macros? g_print? (is basically format)
-;;; TODO: settable struct fields (especially GdkColor)
+;;; TODO: rest of settable struct fields
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -47,6 +46,7 @@
 (define structs '())
 (define make-structs '()) ; these have a xg-specific make function
 (define struct-fields '())
+(define settable-struct-fields '())
 ;;; "extra" for pango engine/backend
 (define extra-types '())
 (define extra-funcs '())
@@ -130,6 +130,10 @@
 (define (opt-arg? arg)
   (and (= (length arg) 3)
        (eq? (caddr arg) 'opt)))
+
+(define (settable-field? arg)
+  (and (= (length arg) 3)
+       (eq? (caddr arg) 'set)))
 
 (define (ref-args args)
   (let ((ctr 0))
@@ -235,7 +239,12 @@
 							     (substring given-name 1 (- (string-length given-name) 1))
 							     given-name) 
 						       data)))
-				    (set! data (cons (list type given-name) data)))))
+				    (if (char=? (string-ref given-name 0) #\&)
+					(set! data (cons (list type 
+							       (substring given-name 1 (string-length given-name))
+							       'set)
+							 data))
+					(set! data (cons (list type given-name) data))))))
 			(if reftype (set! type reftype))
 
 			(if (eq? extra 'extra)
@@ -413,7 +422,7 @@
 	(cons "gchar" "CHAR")
 	(cons "char*" "STRING")
 	(cons "gchar*" "STRING")
-	;(cons "guchar*" "STRING") ; added 30-Jul-02 then removed (const char crap)
+	(cons "guchar*" "STRING") ; added 30-Jul-02 then removed then put back...
 	(cons "guint" "ULONG")
 	(cons "guint16" "INT")
 	(cons "gint" "INT")
@@ -570,7 +579,10 @@
 		 (not (string=? type "GtkSignalFunc")))
 	    (begin
 	      (hey "XM_TYPE~A(~A, ~A)~%" 
-		   (if (or (has-stars type) (string=? type "gpointer")) "_PTR" "")
+		   (if (or (has-stars type) 
+			   (string=? type "gpointer")
+			   (string=? type "GClosureNotify"))
+		       "_PTR" "")
 		   (no-stars type) 
 		   type))))))
 
@@ -786,8 +798,11 @@
 	      (set! types (cons (string-append name "*") types)))
 	  (for-each 
 	   (lambda (field)
-	     (if (not (member (cadr field) struct-fields))
-		 (set! struct-fields (cons (cadr field) struct-fields))))
+	     (if (settable-field? field)
+		 (if (not (member (cadr field) settable-struct-fields))
+		     (set! settable-struct-fields (cons (cadr field) settable-struct-fields)))
+		 (if (not (member (cadr field) struct-fields))
+		     (set! struct-fields (cons (cadr field) struct-fields)))))
 	   strs)
 	  (set! structs (cons (list name strs args) structs))))))
 
@@ -1431,9 +1446,11 @@
 		      (let ((argname (cadr arg))
 			    (argtype (car arg)))
 			(if previous-arg (hey-ok ", "))
-			(if (and (not previous-arg)
-				 (> (length data) 4)
-				 (eq? (list-ref data 4) 'const))
+			(if (and ;(not previous-arg)
+			     (or (string=? argtype "char**")
+				 (string=? argtype "gchar*"))
+			     (> (length data) 4)
+			     (eq? (list-ref data 4) 'const))
 			    (hey "(const ~A)" argtype))
 			(set! previous-arg #t)
 			(if (ref-arg? arg)
@@ -1625,6 +1642,9 @@
 (if (not (null? checks-21)) (with-21 say (lambda () (for-each ruby-check (reverse checks-21)))))
 
 (for-each (lambda (field) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
+(for-each (lambda (field) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) settable-struct-fields)
+(for-each (lambda (field) (say "XEN_NARGIFY_2(gxg_set_~A_w, gxg_set_~A)~%" field field)) settable-struct-fields)
+
 (for-each (lambda (struct) 
 	    (let* ((s (find-struct struct)))
 	      (if (> (length (cadr s)) 0)
@@ -1638,7 +1658,6 @@
 (hey "static XEN xen_list_to_c_array(XEN val, XEN type);~%~%")
 
 (hey "  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
-(hey "  #define XGS_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%~%")
 
 (hey "#if HAVE_GUILE~%")
 (say-hey "static void define_functions(void)~%")
@@ -1706,6 +1725,9 @@
 
 (hey "/* ---------------------------------------- structs ---------------------------------------- */~%~%")
 
+(hey "  #define XG_DEFINE_READER(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
+(hey "  #define XG_DEFINE_ACCESSOR(Name, Value, SetName, SetValue, A1, A2, A3, A4) \\~%     XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, XG_FIELD_PRE #SetName XG_POST, SetValue, A1, A2, A3, A4)~%~%")
+
 (define (array->list type)
   (hey "  if (strcmp(ctype, ~S) == 0)~%" (no-stars type))
   (hey "    {~%")
@@ -1764,55 +1786,101 @@
 (hey "  return(XEN_FALSE);~%")
 (hey "}~%~%")
 
-(for-each
- (lambda (field)
-   ;; gather structs that share field
-   ;; if 1 or 2 assert type, if and return,
-   ;;   else if on each, assert 0 at end and xen false
-   (hey "~%")
-   (hey "static XEN gxg_~A(XEN ptr)~%" field)
-   (hey "{~%")
-   (let ((vals '()))
-     (for-each
-      (lambda (struct)
-	(let ((strs (cadr struct)))
-	  ;; cadr of each inner list is field name, car is field type
-	  (for-each
-	   (lambda (str)
-	     (if (string=? (cadr str) field)
-		 (set! vals (cons (list (car struct) (car str)) vals))))
-	   strs)))
-      structs)
-     ;; now vals is list of (struct-type field-type)
-     (if (null? vals)
-	 (hey "~A: not found" field)
-	 (begin
-	   (if (= (length vals) 1)
-	       (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr), ptr, XEN_ONLY_ARG, ~S, ~S);~%" 
-		    (caar vals) field 
-		    (caar vals))
-	       (if (= (length vals) 2)
-		   (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr) || XEN_~A__P(ptr), ptr, XEN_ONLY_ARG, ~S, ~S \" or \" ~S);~%" 
-			(caar vals) (car (cadr vals)) field 
-			(caar vals) (car (cadr vals)))))))
-     (let ((ctr 0))
-       (for-each
-	(lambda (val)
-	  (if (or (> (length vals) 2)
-		  (and (= (length vals) 2)
-		       (= ctr 0)))
-	      (hey "  if (XEN_~A__P(ptr)) " (car val))
-	      (heyc "  "))
-	  (set! ctr (+ ctr 1))
-	  (hey "return(C_TO_XEN_~A((~A)((XEN_TO_C_~A_(ptr))->~A)));~%"
-	       (no-stars (cadr val)) (cadr val) (car val) field))
-      vals))
-     (if (> (length vals) 2)
-	 (hey "  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, ~S, \"pointer to struct with ~A field\");~%"
-			  field field))
-     (hey "}~%")
-     ))
- (reverse struct-fields))
+(define (make-reader field)
+  ;; gather structs that share field
+  ;; if 1 or 2 assert type, if and return,
+  ;;   else if on each, assert 0 at end and xen false
+  (hey "~%")
+  (hey "static XEN gxg_~A(XEN ptr)~%" field)
+  (hey "{~%")
+  (let ((vals '()))
+    (for-each
+     (lambda (struct)
+       (let ((strs (cadr struct)))
+	 ;; cadr of each inner list is field name, car is field type
+	 (for-each
+	  (lambda (str)
+	    (if (string=? (cadr str) field)
+		(set! vals (cons (list (car struct) (car str)) vals))))
+	  strs)))
+     structs)
+    ;; now vals is list of (struct-type field-type)
+    (if (null? vals)
+	(hey "~A: not found" field)
+	(begin
+	  (if (= (length vals) 1)
+	      (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr), ptr, XEN_ONLY_ARG, ~S, ~S);~%" 
+		   (caar vals) field 
+		   (caar vals))
+	      (if (= (length vals) 2)
+		  (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr) || XEN_~A__P(ptr), ptr, XEN_ONLY_ARG, ~S, ~S \" or \" ~S);~%" 
+		       (caar vals) (car (cadr vals)) field 
+		       (caar vals) (car (cadr vals)))))))
+    (let ((ctr 0))
+      (for-each
+       (lambda (val)
+	 (if (or (> (length vals) 2)
+		 (and (= (length vals) 2)
+		      (= ctr 0)))
+	     (hey "  if (XEN_~A__P(ptr)) " (car val))
+	     (heyc "  "))
+	 (set! ctr (+ ctr 1))
+	 (hey "return(C_TO_XEN_~A((~A)((XEN_TO_C_~A_(ptr))->~A)));~%"
+	      (no-stars (cadr val)) (cadr val) (car val) field))
+       vals))
+    (if (> (length vals) 2)
+	(hey "  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, ~S, \"pointer to struct with ~A field\");~%"
+	     field field))
+    (hey "}~%")
+    ))
+
+(define (make-writer field)
+  (hey "~%")
+  (hey "static XEN gxg_set_~A(XEN ptr, XEN val)~%" field)
+  (hey "{~%")
+  (let ((vals '()))
+    (for-each
+     (lambda (struct)
+       (let ((strs (cadr struct)))
+	 ;; cadr of each inner list is field name, car is field type
+	 (for-each
+	  (lambda (str)
+	    (if (string=? (cadr str) field)
+		(set! vals (cons (list (car struct) (car str)) vals))))
+	  strs)))
+     structs)
+    (if (null? vals)
+	(display (format #f "(writer) ~A: not found" field))
+	(begin
+	  (if (= (length vals) 1)
+	      (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr), ptr, XEN_ARG_1, ~S, ~S);~%" 
+		   (caar vals) field 
+		   (caar vals))
+	      (if (= (length vals) 2)
+		  (hey "  XEN_ASSERT_TYPE(XEN_~A__P(ptr) || XEN_~A__P(ptr), ptr, XEN_ARG_1, ~S, ~S \" or \" ~S);~%" 
+		       (caar vals) (car (cadr vals)) field 
+		       (caar vals) (car (cadr vals)))))))
+    (let ((ctr 0))
+      (for-each
+       (lambda (val)
+	 (if (or (> (length vals) 2)
+		 (and (= (length vals) 2)
+		      (= ctr 0)))
+	     (hey "  if (XEN_~A__P(ptr)) " (car val))
+	     (heyc "  "))
+	 (set! ctr (+ ctr 1))
+	 (hey "(XEN_TO_C_~A_(ptr))->~A = XEN_TO_C_~A(val);~%"
+	      (car val) field (no-stars (cadr val))))
+       vals))
+    (if (> (length vals) 2)
+	(hey "  XEN_ASSERT_TYPE(0, ptr, XEN_ARG_1, \"set! ~A\", \"pointer to struct with ~A field\");~%"
+	     field field))
+    (hey "  return(val);~%}~%")
+    ))
+
+(for-each make-reader (reverse struct-fields))
+(for-each make-reader (reverse settable-struct-fields))
+(for-each make-writer (reverse settable-struct-fields))
 
 (for-each
  (lambda (name)
@@ -1859,14 +1927,19 @@
 
 (for-each 
  (lambda (field)
-   (hey "  XGS_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" field field)
-   (say "  XGS_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
+   (hey "  XG_DEFINE_READER(~A, gxg_~A, 1, 0, 0, NULL);~%" field field)
+   (say "  XG_DEFINE_READER(~A, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
  struct-fields)
+
+(for-each 
+ (lambda (field)
+   (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A, \"set_~A\", gxg_set_~A, 1, 0, 2, 0);~%" field field field field)
+   (say "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, \"set_~A\", gxg_set_~A_w, 1, 0, 2, 0);~%" field field field field))
+ settable-struct-fields)
 
 (for-each 
  (lambda (struct)
    (let* ((s (find-struct struct)))
-     ;; XG here, not XGS -- don't want "." prepended
      (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))
      (say "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
  (reverse make-structs))
@@ -2008,8 +2081,6 @@
 (hey "      xg_already_inited = 1;~%")
 (hey "    }~%")
 (hey "}~%")
-
-;(hey "~A~%~A~%" funcs struct-fields)
 
 (close-output-port xg-file)
 (close-output-port xg-ruby-file)

@@ -739,7 +739,7 @@ static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
   regrow *r;
   if (XEN_HOOKED(hook))
     {
-      r = (regrow *)get_user_data(GTK_OBJECT(w));
+      r = (regrow *)get_user_data(G_OBJECT(w));
       if (r)
 	{
 	  if (r->parent == CURRENT_FILE_VIEWER)
@@ -824,7 +824,7 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r, 0),
 				 0);
-  set_user_data(GTK_OBJECT(r->nm), (gpointer)r);
+  set_user_data(G_OBJECT(r->nm), (gpointer)r);
   gtk_widget_show(r->nm);
 
   return(r);

@@ -1463,7 +1463,7 @@ static int callb2option(int callb)
 static void SND_callback(GtkWidget *w, gpointer cD) 
 {
   int callb, opt;
-  callb = get_user_int_data(GTK_OBJECT(w));
+  callb = get_user_int_data(G_OBJECT(w));
   opt = callb2option(callb);
   if (opt != -1)
     {
@@ -1604,7 +1604,7 @@ int g_add_to_main_menu(snd_state *ss, char *label, int slot)
   m = gtk_menu_item_new_with_label(label);
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[menu_menu]), m);
   gtk_widget_show(m);
-  set_user_int_data(GTK_OBJECT(m), slot);
+  set_user_int_data(G_OBJECT(m), slot);
   if (slot >= 0) 
     {
       g_signal_connect_closure_by_id(GTK_OBJECT(m),
@@ -1654,7 +1654,7 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int pos
    gtk_widget_show(m);
    if (label)
      {
-       set_user_data(GTK_OBJECT(m), (gpointer)callb);
+       set_user_data(G_OBJECT(m), (gpointer)callb);
        g_signal_connect_closure_by_id(GTK_OBJECT(m),
 				      g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(m))),
 				      0,
@@ -1840,11 +1840,11 @@ static XEN g_menu_widgets(void)
 {
   #define H_menu_widgets "(" S_menu_widgets ") returns list of top level menu widgets ((0)main (1)file (2)edit (3)view (4)options (5)help)"
   return(XEN_CONS(XEN_WRAP_WIDGET(mw[menu_menu]),
-	  XEN_CONS(XEN_WRAP_WIDGET(mw[f_cascade_menu]),
-           XEN_CONS(XEN_WRAP_WIDGET(mw[e_cascade_menu]),
-            XEN_CONS(XEN_WRAP_WIDGET(mw[v_cascade_menu]),
-             XEN_CONS(XEN_WRAP_WIDGET(mw[o_cascade_menu]),
-              XEN_CONS(XEN_WRAP_WIDGET(mw[h_cascade_menu]),
+	  XEN_CONS(XEN_WRAP_WIDGET(mw[file_menu]),
+           XEN_CONS(XEN_WRAP_WIDGET(mw[edit_menu]),
+            XEN_CONS(XEN_WRAP_WIDGET(mw[view_menu]),
+             XEN_CONS(XEN_WRAP_WIDGET(mw[option_menu]),
+              XEN_CONS(XEN_WRAP_WIDGET(mw[help_menu]),
 	       XEN_EMPTY_LIST)))))));
 }
 

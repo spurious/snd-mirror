@@ -100,18 +100,6 @@
 	     (XmChangeColor n (position-color))
 	     (XmChangeColor n (basic-color)))))))
 
-(define (x->snd-color color-name)
-  "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"
-  (let* ((col (XColor))
-	 (dpy (XtDisplay (cadr (main-widgets))))
-	 (scr (DefaultScreen dpy))
-	 (cmap (DefaultColormap dpy scr)))
-    (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
-        (snd-error (format #f "can't allocate ~A" color-name))
-	(make-color (/ (.red col) 65535.0)
-		    (/ (.green col) 65535.0)
-		    (/ (.blue col) 65535.0)))))
-
 (define (host-name)
   "(host-name) -> name of current machine"
   (let* ((dpy (XtDisplay (cadr (main-widgets))))
@@ -1200,7 +1188,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (if hour
 	  (XtSetValues (list-ref (sound-widgets snd) 8)
 		       (list XmNlabelPixmap (vector-ref clock-pixmaps hour)))
-	  (bomb snd #f))))) ; using bomb simply to clear the icon
+	  (bomb snd #f))))) ; using bomb to clear the icon
 
 
 

@@ -10,13 +10,14 @@
 
 (define effects-list '()) ; menu labels are updated to show current settings
 
-(define effects-menu (add-to-main-menu "Effects" (lambda ()
-						   (define (update-label effects)
-						     (if (not (null? effects))
-							 (begin
-							   ((car effects))
-							   (update-label (cdr effects)))))
-						   (update-label effects-list))))
+(define (update-label effects)
+  (if (not (null? effects))
+      (begin
+	((car effects))
+	(update-label (cdr effects)))))
+
+(define effects-menu (add-to-main-menu "Effects" (lambda () (update-label effects-list))))
+
 (define (all-chans)
   (let ((sndlist '())
 	(chnlist '()))
@@ -334,14 +335,7 @@
                                             (list XmNsubMenuId amp-menu
                                                   XmNbackground (basic-color))))
 
-(XtAddCallback amp-cascade XmNcascadingCallback
-                (lambda (w c i)
-                  (define (update-label effects)
-                    (if (not (null? effects))
-                        (begin
-                          ((car effects))
-                          (update-label (cdr effects)))))
-                  (update-label amp-menu-list)))
+(XtAddCallback amp-cascade XmNcascadingCallback (lambda (w c i) (update-label amp-menu-list)))
 
 ;;; -------- Gain (gain set by gain-amount)
 
@@ -650,14 +644,7 @@
                                             (list XmNsubMenuId delay-menu
                                                   XmNbackground (basic-color))))
 
-(XtAddCallback delay-cascade XmNcascadingCallback
-                (lambda (w c i)
-                  (define (update-label effects)
-                    (if (not (null? effects))
-                        (begin
-                          ((car effects))
-                          (update-label (cdr effects)))))
-                  (update-label delay-menu-list)))
+(XtAddCallback delay-cascade XmNcascadingCallback (lambda (w c i) (update-label delay-menu-list)))
 
 
 ;;; -------- Echo (controlled by delay-time and echo-amount)
@@ -944,14 +931,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                                             (list XmNsubMenuId filter-menu
                                                   XmNbackground (basic-color))))
 
-(XtAddCallback filter-cascade XmNcascadingCallback
-                (lambda (w c i)
-                  (define (update-label effects)
-                    (if (not (null? effects))
-                        (begin
-                          ((car effects))
-                          (update-label (cdr effects)))))
-                  (update-label filter-menu-list)))
+(XtAddCallback filter-cascade XmNcascadingCallback (lambda (w c i) (update-label filter-menu-list)))
 
 ;;; TODO: these filters don't notice the 'marks target yet
 
@@ -1533,14 +1513,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                                             (list XmNsubMenuId freq-menu
                                                   XmNbackground (basic-color))))
 
-(XtAddCallback freq-cascade XmNcascadingCallback
-                (lambda (w c i)
-                  (define (update-label effects)
-                    (if (not (null? effects))
-                        (begin
-                          ((car effects))
-                          (update-label (cdr effects)))))
-                  (update-label freq-menu-list)))
+(XtAddCallback freq-cascade XmNcascadingCallback (lambda (w c i) (update-label freq-menu-list)))
 
 ;;; -------- Adaptive saturation
 ;;;
@@ -1793,14 +1766,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 					    (list XmNsubMenuId mod-menu
 						  XmNbackground (basic-color))))
 				
-(XtAddCallback mod-cascade XmNcascadingCallback
-		(lambda (w c i)
-		  (define (update-label effects)
-		    (if (not (null? effects))
-			(begin
-			  ((car effects))
-			  (update-label (cdr effects)))))
-		  (update-label mod-menu-list)))
+(XtAddCallback mod-cascade XmNcascadingCallback	(lambda (w c i) (update-label mod-menu-list)))
 
 ;;; -------- Amplitude modulation
 ;;;
@@ -1983,23 +1949,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                              (change-label rm-menu-widget new-label)))
                          mod-menu-list))
 
-
-
-
-;              (activate-dialog rm-dialog)
 ;              (set! rm-envelope (xe-create-enved "rm frequency"  fr
 ;                                                   (list XmNheight 200)
 ;                                                   '(0.0 1.0 0.0 1.0)))
 ;              (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0)))
-;            (activate-dialog rm-dialog)))
-;
-;      (let ((child (XtCreateManagedWidget "Ring modulation" xmPushButtonWidgetClass mod-menu
-;                                           (list XmNbackground (basic-color)))))
-;        (XtAddCallback child XmNactivateCallback
-;                        (lambda (w c i)
-;                          (post-rm-dialog)))))
-;
-;    (add-to-menu effects-menu rm-label cp-rm))
 
 
 ;;; REVERBS
@@ -2012,14 +1965,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                                             (list XmNsubMenuId reverb-menu
                                                   XmNbackground (basic-color))))
 
-(XtAddCallback reverb-cascade XmNcascadingCallback
-                (lambda (w c i)
-                  (define (update-label effects)
-                    (if (not (null? effects))
-                        (begin
-                          ((car effects))
-                          (update-label (cdr effects)))))
-                  (update-label reverb-menu-list)))
+(XtAddCallback reverb-cascade XmNcascadingCallback (lambda (w c i) (update-label reverb-menu-list)))
 
 
 ;;; -------- Reverb from Michael McNabb's Nrev 
@@ -2305,14 +2251,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
                                             (list XmNsubMenuId misc-menu
                                                   XmNbackground (basic-color))))
 
-(XtAddCallback misc-cascade XmNcascadingCallback
-                (lambda (w c i)
-                  (define (update-label effects)
-                    (if (not (null? effects))
-                        (begin
-                          ((car effects))
-                          (update-label (cdr effects)))))
-                  (update-label misc-menu-list)))
+(XtAddCallback misc-cascade XmNcascadingCallback (lambda (w c i) (update-label misc-menu-list)))
 
 
 ;;; -------- Place sound

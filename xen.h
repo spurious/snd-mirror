@@ -175,7 +175,7 @@
   #define XEN_TO_C_STRING(STR)        SCM_STRING_CHARS(STR)
   /* this assumes its argument is a XEN string and does not allocate new space */
 #endif
-#define C_TO_XEN_STRING(a)            scm_makfrom0str(a)
+#define C_TO_XEN_STRING(a)            scm_makfrom0str((const char *)(a))
 
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
 #define XEN_TO_C_BOOLEAN_OR_TRUE(a)   ((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? 0 : 1)
