@@ -277,9 +277,6 @@ static XEN vct_length(XEN obj)
   return(C_TO_XEN_INT(v->length));
 }
 
-/* static XEN reckless_vct_ref(XEN obj, XEN pos) {return(C_TO_XEN_DOUBLE(((vct *)XEN_OBJECT_REF(obj))->data[XEN_TO_SMALL_C_INT(pos)]));} */
-/* this is about 4% faster than the checked version */
-
 static XEN vct_ref(XEN obj, XEN pos)
 {
   #define H_vct_ref "(" S_vct_ref " v n): element n of vct v, v[n]"

@@ -1,0 +1,53 @@
+style "default"
+{
+  font_name = "Serif 11"
+
+  fg[NORMAL]      = { 0.0,  0.00, 0.0 }
+  text[NORMAL]    = { 0.0,  0.0,  0.0 }
+  bg[NORMAL]      = { 0.93, 0.93, 0.87 }
+  bg[ACTIVE]      = { 0.80, 0.80, 0.75 }
+  bg[INSENSITIVE] = { 0.93, 0.93, 0.87 }
+  base[NORMAL]    = { 1.00, 1.00, 1.00 }
+  bg[PRELIGHT]    = { 0.70, 0.70, 0.64 }
+  fg[PRELIGHT]    = { 1.0,  0.0,  0.0}
+}
+
+style "default_button" = "default"
+{
+  bg[ACTIVE]   = { 0.79, 0.88, 1.0 }
+  bg[SELECTED] = { 0.79, 0.88, 1.0 }
+}
+
+style "default_menu" = "default"
+{
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }
+}
+
+style "default_pane" = "default"
+{
+  bg[NORMAL] = { 0.56, 0.93, 0.56 }
+  bg[PRELIGHT] = { 0.26, 0.8, 0.26}
+}
+
+style "default_text" = "default"
+{
+  base[ACTIVE]      = { 0.93, 0.93, 0.87 }
+  base[SELECTED]    = { 1.0, 1.0, 1.0 }
+  base[PRELIGHT]    = { 1.0, 1.0, 1.0}
+  bg[ACTIVE]        = { 1.0, 1.0, 1.0 }
+  bg[SELECTED]      = { 1.0, 1.0, 1.0 }
+  bg[PRELIGHT]      = { 1.0, 1.0, 1.0 }
+  text[ACTIVE]      = { 0.0, 0.0, 0.0 }
+  text[SELECTED]    = { 0.0, 0.0, 0.0 }
+  text[PRELIGHT]    = { 0.0, 0.0, 0.0 }
+  base[NORMAL]      = { 0.93, 0.93, 0.87 }
+  base[INSENSITIVE] = { 0.93, 0.93, 0.87 }
+}
+
+class "GtkWidget" style "default"
+class "GtkButton" style "default_button"
+class "GtkMenu" style "default_menu"
+class "GtkMenuBar" style "default_menu"
+class "GtkEntry" style "default_text"
+class "GtkTextView" style "default_text"
+class "GtkPaned" style "default_pane"

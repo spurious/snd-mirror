@@ -249,6 +249,7 @@ char **line_in_bits(void);
 char **cd_bits(void);
 char **mic_bits(void);
 char **speaker_bits(void);
+char **blue_speaker_bits(void);
 void make_icons_transparent(char *basic_color);
 
 
@@ -322,7 +323,6 @@ int label_height(void);
 int mark_name_width(char *txt);
 void clear_window(axis_context *ax);
 void set_background(GtkWidget *w, GdkColor *col);
-void set_backgrounds(GtkWidget *w, GdkColor *col);
 void highlight_color(GtkWidget *w);
 void raise_dialog(GtkWidget *w);
 void set_button_label(GtkWidget *label, const char *str);

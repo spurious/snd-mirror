@@ -175,19 +175,9 @@ void clear_window(axis_context *ax)
   if (ax) gdk_window_clear(ax->wn);
 }
 
-/* TODO: replace remaining set_background(s)s */
 void set_background(GtkWidget *w, GdkColor *col)
 { 
-  return;
   gtk_widget_modify_bg(w, GTK_STATE_NORMAL, col);
-}
-
-void set_backgrounds(GtkWidget *w, GdkColor *col)
-{ 
-  int i;
-  return;
-  for (i = 0; i < 5; i++)
-    gtk_widget_modify_bg(w, (GtkStateType)i, col);
 }
 
 void raise_dialog(GtkWidget *w)
@@ -547,8 +537,6 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *boxer
   gtk_container_add(GTK_CONTAINER(sw), new_text);
   if (editable) gtk_widget_set_events(new_text, GDK_ALL_EVENTS_MASK);
   gtk_widget_show(new_text);
-  set_background((GTK_SCROLLED_WINDOW(sw))->hscrollbar, (ss->sgx)->position_color);
-  set_background((GTK_SCROLLED_WINDOW(sw))->vscrollbar, (ss->sgx)->position_color);
   if (parent)
     gtk_container_add(GTK_CONTAINER(parent), sw);
   if (paner)
@@ -623,7 +611,7 @@ void sg_list_insert(GtkWidget *lst, int row, char *val)
 }
 
 #if 0
-void sg_list_set_text(GtkWidget *lst, int row, char *val)
+static void sg_list_set_text(GtkWidget *lst, int row, char *val)
 {
   GtkTreeIter iter;
   GtkListStore *w;

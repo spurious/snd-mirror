@@ -265,6 +265,12 @@ static gboolean minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpoin
 
 /* -------- PLAY BUTTON -------- */
 
+static void set_button_base(GtkWidget *w, GdkColor *col)
+{
+  gtk_widget_modify_base(w, GTK_STATE_NORMAL, col);
+  gtk_widget_modify_base(w, GTK_STATE_PRELIGHT, col);
+}
+
 void set_play_button(snd_info *sp, bool val)
 {
   if ((sp->sgx) && (!(IS_PLAYER(sp))))
@@ -278,6 +284,7 @@ void set_control_panel_play_button(snd_info *sp, bool val)
 {
   if ((sp) && (sp->sgx) && (PLAY_BUTTON(sp)))
     set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
+  if (!val) set_button_base(PLAY_BUTTON(sp), ss->sgx->white);
 }
 
 static int last_play_state = 0;
@@ -308,12 +315,13 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   if (on) 
     {
       if (sp->cursor_follows_play != DONT_FOLLOW) 
-	gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->green);
-      else gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->pushed_button_color);
+	set_button_base(w, ss->sgx->green);
+      else set_button_base(w, ss->sgx->white);
       play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, 
 		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
 		 "play_button", 0);                        /* should this follow the sync button? */
     }
+  else set_button_base(w, ss->sgx->white);
 }
 
 typedef struct {bool pausing; } pause_data;
@@ -326,11 +334,11 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
     {
       w = PLAY_BUTTON(sp);
       if (pd->pausing)
-	gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->red);
+	set_button_base(w, ss->sgx->red);
       else 
 	if (sp->cursor_follows_play != DONT_FOLLOW)
-	  gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->green); 
-	else gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->pushed_button_color);
+	  set_button_base(w, ss->sgx->green); 
+	else set_button_base(w, ss->sgx->white);
     }
 }
 
@@ -343,18 +351,18 @@ void play_button_pause(bool pausing)
   FREE(pd);
 }
 
-/* TODO: all active play/sync colors need to be normal as well as active, then unset */
 static void set_sync_color(snd_info *sp)
 {
   GtkWidget *syb;
   syb = SYNC_BUTTON(sp);
   switch (sp->sync)
     {
-    case 1: case 0: gtk_widget_modify_bg(syb, GTK_STATE_ACTIVE, ss->sgx->pushed_button_color); break;
-    case 2:         gtk_widget_modify_bg(syb, GTK_STATE_ACTIVE, ss->sgx->green);               break;
-    case 3:         gtk_widget_modify_bg(syb, GTK_STATE_ACTIVE, ss->sgx->yellow);              break;
-    case 4:         gtk_widget_modify_bg(syb, GTK_STATE_ACTIVE, ss->sgx->red);                 break;
-    default:        gtk_widget_modify_bg(syb, GTK_STATE_ACTIVE, ss->sgx->black);               break;
+    case 0:  set_button_base(syb, ss->sgx->white);               break;
+    case 1:  set_button_base(syb, ss->sgx->pushed_button_color); break;
+    case 2:  set_button_base(syb, ss->sgx->green);               break;
+    case 3:  set_button_base(syb, ss->sgx->yellow);              break;
+    case 4:  set_button_base(syb, ss->sgx->red);                 break;
+    default: set_button_base(syb, ss->sgx->black);               break;
     }
 }
 
@@ -391,9 +399,9 @@ static void sync_button_click(GtkWidget *w, gpointer data)
       else sp->sync = 2;
     else sp->sync = 1;
   else sp->sync = 0;
+  set_sync_color(sp);
   if (sp->sync != 0) 
     {
-      set_sync_color(sp);
       cp = sp->lacp;
       if (cp == NULL) cp = any_selected_channel(sp);
       goto_graph(cp);
@@ -1303,7 +1311,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
   if (make_widgets)
     {
       sw[W_pane] = gtk_vpaned_new();
-      set_backgrounds(sw[W_pane], (ss->sgx)->sash_color);
       gtk_container_set_border_width(GTK_CONTAINER(sw[W_pane]), 0);
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{

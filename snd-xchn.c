@@ -521,7 +521,7 @@ static void graph_button_motion(Widget w, XtPointer context, XEvent *event, Bool
 { /* mouse drag */
   XMotionEvent *ev = (XMotionEvent *)event;
 #if DEBUGGING
-  if (ev->send_event == True)
+  if (ev->send_event)
     /* in this case, we're being driven by scheme-generated fake X events (event.scm) */
     graph_button_motion_callback((chan_info *)context, ev->x_root, ev->y_root, ev->time, 0);
 #endif

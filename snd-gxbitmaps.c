@@ -918,6 +918,26 @@ static char *speaker_xpm[] = {
 
 char **speaker_bits(void) {return(speaker_xpm);}
 
+static char *blue_speaker_xpm[] = {
+"12 12 3 1",
+"-      c None s None",
+"o      c red",
+"X	c black",
+"--------XXX-",
+"------XXooX-",
+"----XXooooX-",
+"-XXXooooooX-",
+"-XXoooooooX-",
+"-XXoooooooX-",
+"-XXoooooooX-",
+"-XXoooooooX-",
+"-XXXooooooX-",
+"----XXooooX-",
+"------XXooX-",
+"--------XXX-"};
+
+char **blue_speaker_bits(void) {return(blue_speaker_xpm);}
+
 static char * mic_xpm[] = {
 "12 12 2 1",
 "-      c None s None",
@@ -1001,6 +1021,7 @@ void make_icons_transparent(char *color)
 #endif 
 #if USE_GTK
   speaker_xpm[1] = bg_line;
+  blue_speaker_xpm[1] = bg_line;
   mic_xpm[1] = bg_line;
   cd_xpm[1] = bg_line;
   line_in_xpm[1] = bg_line;

@@ -99,7 +99,6 @@ static void create_help_monolog(void)
 
   gtk_window_set_title(GTK_WINDOW(help_dialog), _("Help"));
   sg_make_resizable(help_dialog);
-  set_background(help_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 20);
   gtk_widget_realize(help_dialog);

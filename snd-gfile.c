@@ -666,7 +666,6 @@ ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_
   /* assuming "formw" is a vbox */
   rlw = gtk_label_new(main_str);
   gtk_box_pack_start(GTK_BOX(formw), rlw, false, false, 0);
-  set_background(rlw, (ss->sgx)->highlight_color);
   gtk_widget_show(rlw);
 
   sep1 = gtk_hseparator_new();
@@ -812,11 +811,9 @@ regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc na
   /* assume "ww" is a vbox widget in this case */
   r->rw = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(ww), r->rw, false, false, 0);
-  set_background(r->rw, (ss->sgx)->zoom_color);
   gtk_widget_show(r->rw);
 
   r->pl = gtk_check_button_new();
-  set_backgrounds(r->pl, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->pl, false, false, 2);
   g_signal_connect_closure_by_id(GTK_OBJECT(r->pl),
 				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(r->pl))),
@@ -827,7 +824,6 @@ regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc na
 
   r->nm = gtk_button_new_with_label("");
   sg_left_justify_button(r->nm);
-  set_backgrounds(r->nm, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
   g_signal_connect_closure_by_id(GTK_OBJECT(r->nm),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(r->nm))),
@@ -949,8 +945,10 @@ static void curfile_unhighlight(void)
       if (vf_selected_file != -1)
 	{
 	  r = cur_name_row[vf_selected_file];
-	  set_backgrounds(r->rw, (ss->sgx)->highlight_color);
-	  set_backgrounds(r->nm, (ss->sgx)->highlight_color);
+	  gtk_widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->basic_color);
+	  gtk_widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->basic_color);
+	  gtk_widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->basic_color);
+	  gtk_widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->basic_color);
 	  vf_selected_file = -1;
 	}
     }
@@ -963,8 +961,10 @@ void curfile_highlight(int i)
     {
       if (vf_selected_file != -1) curfile_unhighlight();
       r = cur_name_row[i];
-      set_backgrounds(r->rw, (ss->sgx)->zoom_color);
-      set_backgrounds(r->nm, (ss->sgx)->zoom_color);
+      gtk_widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      gtk_widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      gtk_widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      gtk_widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
       vf_selected_file = i;
     }
 }
@@ -1124,7 +1124,6 @@ void view_files_callback(GtkWidget *w, gpointer context)
 				     0);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), _("Files"));
       sg_make_resizable(view_files_dialog);
-      set_backgrounds(view_files_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(view_files_dialog), 10);
       gtk_window_resize(GTK_WINDOW(view_files_dialog), 400, 200);
       gtk_widget_realize(view_files_dialog);

@@ -292,7 +292,7 @@ static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev,
 
 static GtkWidget *w_id = NULL, *w_beg = NULL, *w_track = NULL, *mix_play = NULL, *w_id_label = NULL;
 static GtkWidget *w_track_label = NULL, *track_play_pix = NULL, *mix_play_pix = NULL, *track_play = NULL;
-static GdkPixmap *speaker_pix;
+static GdkPixmap *speaker_off_pix, *speaker_on_pix, *mix_speaker_pix, *track_speaker_pix;
 
 static void id_activated(GtkWidget *w, gpointer context)
 {
@@ -338,19 +338,24 @@ bool mix_play_stopped(void) {return(!mix_playing);}
 
 void reflect_mix_play_stop(void)
 {
-  if (mix_play) 
-    set_backgrounds(mix_play, (ss->sgx)->basic_color);
   mix_playing = false;
+  mix_speaker_pix = speaker_off_pix;
+  track_speaker_pix = speaker_off_pix;
+  gdk_draw_drawable(GDK_DRAWABLE(mix_play_pix->window), ss->sgx->basic_gc, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
+  gdk_draw_drawable(GDK_DRAWABLE(track_play_pix->window), ss->sgx->basic_gc, track_speaker_pix, 0, 0, 2, 4, 12, 12);
 }
 
 static void mix_play_callback(GtkWidget *w, gpointer context) 
 {
   if (mix_playing)
-    reflect_mix_play_stop();
+    {
+      reflect_mix_play_stop();
+    }
   else
     {
       mix_playing = true;
-      if (mix_play) set_backgrounds(mix_play, (ss->sgx)->pushed_button_color);
+      mix_speaker_pix = speaker_on_pix;
+      gdk_draw_drawable(GDK_DRAWABLE(mix_play_pix->window), ss->sgx->basic_gc, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
       mix_play_from_id(current_mix_id());
     }
 }
@@ -358,24 +363,27 @@ static void mix_play_callback(GtkWidget *w, gpointer context)
 static void track_play_callback(GtkWidget *w, gpointer context) 
 {
   if (mix_playing)
-    reflect_mix_play_stop();
+    {
+      reflect_mix_play_stop();
+    }
   else
     {
       mix_playing = true;
-      if (track_play) set_backgrounds(track_play, (ss->sgx)->pushed_button_color);
+      track_speaker_pix = speaker_on_pix;
+      gdk_draw_drawable(GDK_DRAWABLE(track_play_pix->window), ss->sgx->basic_gc, track_speaker_pix, 0, 0, 2, 4, 12, 12);
       track_play_from_id(current_mix_id());
     }
 }
 
 static gboolean mix_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  gdk_draw_drawable(GDK_DRAWABLE(mix_play_pix->window), ss->sgx->basic_gc, speaker_pix, 0, 0, 2, 4, 12, 12);
+  gdk_draw_drawable(GDK_DRAWABLE(mix_play_pix->window), ss->sgx->basic_gc, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
   return(false);
 }
 
 static gboolean track_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  gdk_draw_drawable(GDK_DRAWABLE(track_play_pix->window), ss->sgx->basic_gc, speaker_pix, 0, 0, 2, 4, 12, 12);
+  gdk_draw_drawable(GDK_DRAWABLE(track_play_pix->window), ss->sgx->basic_gc, track_speaker_pix, 0, 0, 2, 4, 12, 12);
   return(false);
 }
 
@@ -463,7 +471,6 @@ GtkWidget *make_mix_panel(void)
 				     0);
       gtk_window_set_title(GTK_WINDOW(mix_panel), _("Mix Panel"));
       sg_make_resizable(mix_panel);
-      set_background(mix_panel, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(mix_panel), 6);
       gtk_widget_realize(mix_panel);
       
@@ -561,11 +568,15 @@ GtkWidget *make_mix_panel(void)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_play_callback), NULL, 0),
 				     0);
       gtk_widget_show(mix_play);
+      gtk_widget_modify_bg(mix_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
+      gtk_widget_modify_bg(mix_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
       
-      speaker_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, speaker_bits());
+      speaker_off_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, speaker_bits());
+      speaker_on_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, blue_speaker_bits());
+      mix_speaker_pix = speaker_off_pix;
+      track_speaker_pix = speaker_off_pix;
       mix_play_pix = gtk_drawing_area_new();
       gtk_widget_set_events(mix_play_pix, GDK_EXPOSURE_MASK);
-      set_background(mix_play_pix, (ss->sgx)->basic_color);
       gtk_widget_set_size_request(mix_play_pix, 16, 16);
       gtk_container_add(GTK_CONTAINER(mix_play), mix_play_pix);
       gtk_widget_show(mix_play_pix);
@@ -595,10 +606,11 @@ GtkWidget *make_mix_panel(void)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(track_play_callback), NULL, 0),
 				     0);
       gtk_widget_show(track_play);
+      gtk_widget_modify_bg(track_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
+      gtk_widget_modify_bg(track_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
       
       track_play_pix = gtk_drawing_area_new();
       gtk_widget_set_events(track_play_pix, GDK_EXPOSURE_MASK);
-      set_background(track_play_pix, (ss->sgx)->basic_color);
       gtk_widget_set_size_request(track_play_pix, 16, 16);
       gtk_container_add(GTK_CONTAINER(track_play), track_play_pix);
       gtk_widget_show(track_play_pix);
@@ -611,7 +623,6 @@ GtkWidget *make_mix_panel(void)
       /* SPEED */
       w_speed_form = gtk_hbox_new(false, 2);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->vbox), w_speed_form, false, false, 4);
-      set_background(w_speed_form, (ss->sgx)->basic_color);
       
       w_speed_event = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(w_speed_form), w_speed_event, false, false, 4);
@@ -621,7 +632,6 @@ GtkWidget *make_mix_panel(void)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_click_callback), NULL, 0),
 				     0);
-      set_background(w_speed_event, (ss->sgx)->basic_color);
       
       w_speed_label = gtk_label_new(_("speed:"));
       gtk_container_add(GTK_CONTAINER(w_speed_event), w_speed_label);
@@ -666,7 +676,6 @@ GtkWidget *make_mix_panel(void)
 	{
 	  w_amp_forms[i] = gtk_hbox_new(false, 2);
 	  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->vbox), w_amp_forms[i], false, false, 0);
-	  set_background(w_amp_forms[i], (ss->sgx)->basic_color);
       
 	  w_amp_events[i] = gtk_event_box_new();
 	  gtk_box_pack_start(GTK_BOX(w_amp_forms[i]), w_amp_events[i], false, false, 4);
@@ -676,7 +685,6 @@ GtkWidget *make_mix_panel(void)
 					 0,
 					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_click_callback), NULL, 0),
 					 0);
-	  set_background(w_amp_events[i], (ss->sgx)->basic_color);
       
 	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp %d:"), i);
 	  w_amp_labels[i] = gtk_label_new(amplab);
@@ -715,7 +723,6 @@ GtkWidget *make_mix_panel(void)
       w_env = gtk_drawing_area_new();
       gtk_widget_set_events(w_env, GDK_ALL_EVENTS_MASK);
       gtk_container_add(GTK_CONTAINER(w_env_frame), w_env);
-      set_background(w_env, (ss->sgx)->basic_color);
       gtk_widget_show(w_env);
       g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
 				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),

@@ -26,7 +26,6 @@ static void create_snd_error_dialog(bool popup)
 				 0);
   gtk_window_set_title(GTK_WINDOW(snd_error_dialog), _("Error"));
   sg_make_resizable(snd_error_dialog);
-  set_background(snd_error_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(snd_error_dialog), 10);
   gtk_window_resize(GTK_WINDOW(snd_error_dialog), 400, 300);
   gtk_widget_realize(snd_error_dialog);
@@ -40,6 +39,7 @@ static void create_snd_error_dialog(bool popup)
 				 0);
   gtk_widget_show(ok_button);
   snd_error_history = make_scrolled_text(GTK_DIALOG(snd_error_dialog)->vbox, false, NULL, NULL);
+  gtk_widget_modify_base(snd_error_history, GTK_STATE_NORMAL, ss->sgx->white);
   if (popup) gtk_widget_show(snd_error_dialog);
   set_dialog_widget(ERROR_DIALOG, snd_error_dialog);
 }
@@ -132,7 +132,6 @@ bool snd_yes_or_no_p(const char *format, ...)
 				     0);
       gtk_window_set_title(GTK_WINDOW(yes_or_no_dialog), _("Yow!"));
       sg_make_resizable(yes_or_no_dialog);
-      set_background(yes_or_no_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(yes_or_no_dialog), 4);
       gtk_widget_realize(yes_or_no_dialog);
       gtk_window_resize(GTK_WINDOW(yes_or_no_dialog), 180, 100);

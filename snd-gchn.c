@@ -599,7 +599,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       if (!main)
 	{
 	  cw[W_main_window] = gtk_hpaned_new();
-	  set_backgrounds(cw[W_main_window], (ss->sgx)->sash_color);
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], true, true, 0);
 	  cw[W_edhist] = sg_make_list(_("Edits"), cw[W_main_window], PANED_ADD, (gpointer)cp, 0, NULL,
@@ -638,8 +637,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
 		       0, 0);
-      gtk_widget_modify_bg(cw[W_graph], GTK_STATE_NORMAL, (ss->sgx)->graph_color);
-      gtk_widget_modify_fg(cw[W_graph], GTK_STATE_NORMAL, (ss->sgx)->data_color);
       gtk_widget_show(cw[W_graph]);
       if (with_events)
 	{

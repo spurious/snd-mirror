@@ -696,6 +696,16 @@ static void select_sound(snd_info *sp)
 	    }
 	}
 #endif
+#if USE_GTK
+      {
+	snd_info *osp = NULL;
+	if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
+	if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
+	  gtk_widget_modify_fg(w_snd_name(osp), GTK_STATE_NORMAL, ss->sgx->black);
+	if (sp->selected_channel != NO_SELECTION) 
+	  gtk_widget_modify_fg(w_snd_name(sp), GTK_STATE_NORMAL, ss->sgx->red);
+      }
+#endif
       ss->selected_sound = sp->index;
       highlight_selected_sound();
       reflect_undo_or_redo_in_menu(any_selected_channel(sp));

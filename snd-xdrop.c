@@ -229,7 +229,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
 		      {
 			XtVaSetValues(cb->dragContext, XmNincremental, false, NULL); /* see Motif docs for XmDragContext */
 			ok = (*proc)(cb->dragContext, &_MOTIF_DROP, &(targets[i]), &type_returned, &value, &len, &format, &maxlen, NULL, 0);
-			if (ok == True)
+			if (ok)
 			  current_file = just_filename(atom_to_filename(type_returned, value, len));
 		      }
 		}

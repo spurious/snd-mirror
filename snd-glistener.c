@@ -73,7 +73,6 @@ static void start_completion_dialog(int num_items, char **items)
 				     0);
       gtk_window_set_title(GTK_WINDOW(completion_dialog), _("Completions"));
       sg_make_resizable(completion_dialog);
-      set_background(completion_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(completion_dialog), 4);
       gtk_widget_realize(completion_dialog);
       gtk_window_resize(GTK_WINDOW(completion_dialog), 260, 200);
@@ -149,13 +148,12 @@ void append_listener_text(int end, char *msg)
     }
 }
 
-static void listener_completion(void)
+static void listener_completion(int end)
 {
-  int beg, end, matches = 0;
+  int beg, matches = 0;
   char *old_text, *new_text = NULL, *file_text = NULL;
   bool try_completion = true;
   beg = printout_end + 1;
-  end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
   if (end <= beg) return;
   old_text = sg_get_text(listener_text, beg, end);
   /* now old_text is the stuff typed since the last prompt */
@@ -172,13 +170,6 @@ static void listener_completion(void)
       sg_text_delete(listener_text, beg, end);
       append_listener_text(0, new_text);
       goto_window(listener_text);
-      /*
-      fprintf(stderr,"old: %s (%d %d), new: %s, delete from %d %d\n",
-	      old_text,
-	      beg,end,
-	      new_text,
-	      sg_cursor_position(listener_text) - (end - beg), end - beg);
-      */
       if (new_text) 
 	{
 	  FREE(new_text); 
@@ -497,7 +488,10 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   else
     {
       if (event->keyval == GDK_Tab)
-	listener_completion();
+	{
+	  listener_completion(gtk_text_buffer_get_char_count(LISTENER_BUFFER));
+	  return(true);
+	}
       else
 	{
 	  if (event->keyval == GDK_Return)
@@ -695,8 +689,7 @@ GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background)
   gtk_editable_set_editable(GTK_EDITABLE(text), true);
   gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
   gtk_widget_show(text);
-  if (with_white_background) /* set_background(text, (ss->sgx)->white); */
-    gtk_widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
+  if (with_white_background) gtk_widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
   connect_mouse_to_text(text);
   return(text);
 }

@@ -1540,12 +1540,12 @@ static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom *selection, Atom *t
 				C_TO_XEN_ULONG(*request_id)), /* XtRequestId is XtPointer */
 		     c__FUNCTION__);
   if (XEN_FALSE_P(result))
-    return(False);
+    return(0);
   (*type_return) = XEN_TO_C_Atom(XEN_LIST_REF(result, 0));
   (*value_return) = (XtPointer)XEN_TO_C_ULONG(XEN_LIST_REF(result, 1));
   (*length_return) = (unsigned long)XEN_TO_C_INT(XEN_LIST_REF(result, 2));
   (*format_return) = XEN_TO_C_INT(XEN_LIST_REF(result, 3));
-  return(True);
+  return(1);
 }
 
 static Arg *XEN_TO_C_Args(XEN inargl)
@@ -3659,7 +3659,7 @@ allows applications to access the entries in a font list"
   Boolean b;
   XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(arg1), arg1, 1, "XmFontListInitFontContext", "XmFontList");
   b = XmFontListInitFontContext(&fc, XEN_TO_C_XmFontList(arg1));
-  if (b == False)
+  if (!b)
     return(XEN_FALSE);
   return(C_TO_XEN_XmFontContext(fc));
 }
@@ -4401,7 +4401,7 @@ static XEN gxm_XmWidgetGetBaselines(XEN arg1)
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmWidgetGetBaselines", "Widget");
   b = XmWidgetGetBaselines(XEN_TO_C_Widget(arg1), &ds, &len);
-  if (b == False)
+  if (!b)
     return(XEN_FALSE);
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--)
@@ -4417,7 +4417,7 @@ static XEN gxm_XmWidgetGetDisplayRect(XEN arg1)
   XRectangle *r;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmWidgetGetDisplayRect", "Widget");
   r = (XRectangle *)CALLOC(1, sizeof(XRectangle));
-  if (XmWidgetGetDisplayRect(XEN_TO_C_Widget(arg1), r) == False)
+  if (!(XmWidgetGetDisplayRect(XEN_TO_C_Widget(arg1), r)))
     {
       FREE(r);
       return(XEN_FALSE);
@@ -4619,7 +4619,7 @@ static XEN gxm_XmListGetSelectedPos(XEN arg1)
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_ListWidget_P(arg1), arg1, 1, "XmListGetSelectedPos", "List Widget");
   b = XmListGetSelectedPos(XEN_TO_C_Widget(arg1), &ps, &len);
-  if (b == False)
+  if (!b)
     return(XEN_FALSE);
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--)
@@ -4641,7 +4641,7 @@ static XEN gxm_XmListGetMatchPos(XEN arg1, XEN arg2)
   XEN_ASSERT_TYPE(XEN_ListWidget_P(arg1), arg1, 1, "XmListGetMatchPos", "List Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListGetMatchPos", "XmString");
   b = XmListGetMatchPos(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2), &ps, &len);
-  if (b == False)
+  if (!b)
     return(XEN_FALSE);
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--)
@@ -5217,7 +5217,7 @@ finds the beginning position of a text string"
 			 XEN_TO_C_STRING(arg3), 
 			 (XmTextDirection)XEN_TO_C_INT(arg4), 
 			 &pos);
-  if (res != False)
+  if (res)
     return(C_TO_XEN_INT(pos));
   return(XEN_FALSE);
 }
@@ -13334,7 +13334,7 @@ static Boolean gxm_XtConvertSelectionProc(Widget w, Atom *a1, Atom *a2, Atom *a3
       (*i) = XEN_TO_C_INT(XEN_LIST_REF(val, 4));
       return(XEN_TO_C_BOOLEAN(XEN_CAR(val)));
     }
-  return(False);
+  return(0);
 }
 
 static void gxm_XtLoseSelectionIncrProc(Widget w, Atom *a, XtPointer x) 

@@ -64,8 +64,10 @@ static void unhighlight_region(void)
   if (current_region != -1)
     {
       oldr = region_row(current_region);
-      set_backgrounds(oldr->rw, (ss->sgx)->highlight_color);
-      set_backgrounds(oldr->nm, (ss->sgx)->highlight_color);
+      gtk_widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      gtk_widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      gtk_widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      gtk_widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->basic_color);
     }
 }
 
@@ -75,8 +77,10 @@ static void highlight_region(void)
   if (current_region != -1)
     {
       oldr = region_row(current_region);
-      set_backgrounds(oldr->rw, (ss->sgx)->zoom_color);
-      set_backgrounds(oldr->nm, (ss->sgx)->zoom_color);
+      gtk_widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      gtk_widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      gtk_widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      gtk_widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
     }
 }
 
@@ -301,7 +305,6 @@ static void make_region_dialog(void)
 				 0);
   gtk_window_set_title(GTK_WINDOW(region_dialog), _("Regions"));
   sg_make_resizable(region_dialog);
-  set_backgrounds(region_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width(GTK_CONTAINER(region_dialog), 10);
   gtk_window_resize(GTK_WINDOW(region_dialog), 400, 400);
   gtk_widget_realize(region_dialog);
@@ -360,9 +363,9 @@ static void make_region_dialog(void)
   /* all I want is an opaque label with a background color */
 
   labels = gtk_button_new();
-  set_background(labels, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(infobox), labels, true, true, 2);
   gtk_widget_show(labels);
+  gtk_widget_modify_bg(labels, GTK_STATE_NORMAL, ss->sgx->highlight_color);
   g_signal_connect_closure_by_id(GTK_OBJECT(labels),
 				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(labels))),
 				 0,
@@ -372,6 +375,7 @@ static void make_region_dialog(void)
   labbox = gtk_vbox_new(true, 0);
   gtk_container_add(GTK_CONTAINER(labels), labbox);
   gtk_widget_show(labbox);
+  gtk_widget_modify_bg(labbox, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 
   srate_text = gtk_label_new(_("srate:"));
   sg_left_justify_label(srate_text);
@@ -401,6 +405,8 @@ static void make_region_dialog(void)
 				 0);
   gtk_box_pack_start(GTK_BOX(infobox), edit_button, true, true, 2);
   gtk_widget_show(edit_button);
+  gtk_widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+  gtk_widget_modify_bg(edit_button, GTK_STATE_ACTIVE, ss->sgx->red);
 
   print_button = gtk_button_new_with_label(_("print"));
   g_signal_connect_closure_by_id(GTK_OBJECT(print_button),
@@ -410,6 +416,8 @@ static void make_region_dialog(void)
 				 0);
   gtk_box_pack_start(GTK_BOX(infobox), print_button, true, true, 2);
   gtk_widget_show(print_button);
+  gtk_widget_modify_bg(print_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+  gtk_widget_modify_bg(print_button, GTK_STATE_ACTIVE, ss->sgx->red);
 
   region_grf = wwl->panes;
   gtk_widget_show(region_dialog);

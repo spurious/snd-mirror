@@ -471,6 +471,7 @@ void snd_doit(int argc, char **argv)
   sx = ss->sgx;
   sx->graph_is_active = false;
   set_html_dir(copy_string(DEFAULT_HTML_DIR));
+  set_ask_before_overwrite(false);
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
   sx->white =                 get_color(WHITE_COLOR,           NULL, NULL, true);
@@ -526,7 +527,68 @@ void snd_doit(int argc, char **argv)
     ss->init_file = INIT_FILE_NAME;
 
   set_color_map(DEFAULT_SPECTROGRAM_COLOR);
-  set_ask_before_overwrite(false);
+
+
+  if (mus_file_probe("Snd.gtkrc"))
+    gtk_rc_parse("Snd.gtkrc");
+  else gtk_rc_parse_string ("\n\
+\n\
+# This is the same as Snd.gtkrc\n\
+style \"default\"\n\
+{\n\
+  font_name = \"Serif 11\"\n\
+\n\
+  fg[NORMAL]      = { 0.0,  0.00, 0.0 }\n\
+  text[NORMAL]    = { 0.0,  0.0,  0.0 }\n\
+  bg[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
+  bg[ACTIVE]      = { 0.80, 0.80, 0.75 }\n\
+  bg[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
+  base[NORMAL]    = { 1.00, 1.00, 1.00 }\n\
+  bg[PRELIGHT]    = { 0.70, 0.70, 0.64 }\n\
+  fg[PRELIGHT]    = { 1.0,  0.0,  0.0}\n\
+}\n\
+\n\
+style \"default_button\" = \"default\"\n\
+{\n\
+  bg[ACTIVE]   = { 0.79, 0.88, 1.0 }\n\
+  bg[SELECTED] = { 0.79, 0.88, 1.0 }\n\
+}\n\
+\n\
+style \"default_menu\" = \"default\"\n\
+{\n\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
+}\n\
+\n\
+style \"default_pane\" = \"default\"\n\
+{\n\
+  bg[NORMAL] = { 0.56, 0.93, 0.56 }\n\
+  bg[PRELIGHT] = { 0.26, 0.8, 0.26}\n\
+}\n\
+\n\
+style \"default_text\" = \"default\"\n\
+{\n\
+  base[ACTIVE]      = { 0.93, 0.93, 0.87 }\n\
+  base[SELECTED]    = { 1.0, 1.0, 1.0 }\n\
+  base[PRELIGHT]    = { 1.0, 1.0, 1.0}\n\
+  bg[ACTIVE]        = { 1.0, 1.0, 1.0 }\n\
+  bg[SELECTED]      = { 1.0, 1.0, 1.0 }\n\
+  bg[PRELIGHT]      = { 1.0, 1.0, 1.0 }\n\
+  text[ACTIVE]      = { 0.0, 0.0, 0.0 }\n\
+  text[SELECTED]    = { 0.0, 0.0, 0.0 }\n\
+  text[PRELIGHT]    = { 0.0, 0.0, 0.0 }\n\
+  base[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
+  base[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
+}\n\
+\n\
+class \"GtkWidget\" style \"default\"\n\
+class \"GtkButton\" style \"default_button\"\n\
+class \"GtkMenu\" style \"default_menu\"\n\
+class \"GtkMenuBar\" style \"default_menu\"\n\
+class \"GtkEntry\" style \"default_text\"\n\
+class \"GtkTextView\" style \"default_text\"\n\
+class \"GtkPaned\" style \"default_pane\"\n\
+");
+
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
 
 #ifdef SND_AS_WIDGET
@@ -536,7 +598,6 @@ void snd_doit(int argc, char **argv)
   MAIN_SHELL(ss) = shell;
   gtk_container_add(GTK_CONTAINER(MAIN_SHELL(ss)), MAIN_PANE(ss));
 #endif
-  gtk_widget_modify_bg(MAIN_SHELL(ss), GTK_STATE_NORMAL, ss->sgx->basic_color);
   add_menu();
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
@@ -558,9 +619,6 @@ void snd_doit(int argc, char **argv)
       gtk_widget_show(SOUND_PANE_BOX(ss));
       gtk_widget_show(SOUND_PANE(ss));
     }
-  gtk_widget_modify_bg(SOUND_PANE(ss), GTK_STATE_NORMAL, ss->sgx->basic_color);
-  gtk_widget_modify_bg(SOUND_PANE_BOX(ss), GTK_STATE_NORMAL, ss->sgx->basic_color);
-
   gtk_widget_show(MAIN_PANE(ss));
   gtk_widget_show (MAIN_SHELL(ss));
 
@@ -572,52 +630,6 @@ void snd_doit(int argc, char **argv)
 
   setup_gcs();
   make_icons_transparent(BASIC_COLOR);
-
-  if (mus_file_probe("Snd.gtkrc"))
-    gtk_rc_parse("Snd.gtkrc");
-  else gtk_rc_parse_string ("\n\
-style \"default\"\n\
-{\n\
-  font_name = \"Serif 11\"\n\
-\n\
-  fg[NORMAL]      = { 0.0,  0.00, 0.0 }\n\
-  text[NORMAL]    = { 0.0,  0.0,  0.0 }\n\
-  bg[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
-  bg[ACTIVE]      = { 0.80, 0.80, 0.75 }\n\
-  bg[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
-  base[NORMAL]    = { 1.00, 1.00, 1.00 }\n\
-  bg[PRELIGHT]    = { 0.54, 0.54, 0.51 }\n\
-  fg[PRELIGHT]    = { 1.0,  0.0,  0.0}\n\
-}\n\
-style \"default_button\" = \"default\"\n\
-{\n\
-  bg[ACTIVE]   = { 0.79, 0.88, 1.0 }\n\
-  bg[SELECTED] = { 0.79, 0.88, 1.0 }\n\
-}\n\
-style \"default_menu\" = \"default\"\n\
-{\n\
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
-}\n\
-style \"default_text\" = \"default\"\n\
-{\n\
-  base[ACTIVE]      = { 0.93, 0.93, 0.87 }\n\
-  base[SELECTED]    = { 1.0, 1.0, 1.0 }\n\
-  base[PRELIGHT]    = { 1.0, 1.0, 1.0}\n\
-  bg[ACTIVE]        = { 1.0, 1.0, 1.0 }\n\
-  bg[SELECTED]      = { 1.0, 1.0, 1.0 }\n\
-  bg[PRELIGHT]      = { 1.0, 1.0, 1.0 }\n\
-  text[ACTIVE]      = { 0.0, 0.0, 0.0 }\n\
-  text[SELECTED]    = { 0.0, 0.0, 0.0 }\n\
-  text[PRELIGHT]    = { 0.0, 0.0, 0.0 }\n\
-  base[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
-  base[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
-}\n\
-class \"GtkWidget\" style \"default\"\n\
-class \"GtkButton\" style \"default_button\"\n\
-class \"GtkMenu\" style \"default_menu\"\n\
-class \"GtkEntry\" style \"default_text\"\n\
-class \"GtkTextView\" style \"default_text\"\n\
-");
 
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
   BACKGROUND_ADD(startup_funcs, NULL);

@@ -281,7 +281,7 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
   unsigned char *version[1];
   if (ev->atom == snd_c)
     {
-      if (((XGetWindowProperty(XtDisplay(w), XtWindow(w), snd_c, 0L, (long)BUFSIZ, False,
+      if (((XGetWindowProperty(XtDisplay(w), XtWindow(w), snd_c, 0L, (long)BUFSIZ, 0,
 			       XA_STRING, &type, &format, &nitems, &bytesafter, 
 			       (unsigned char **)version)) == Success) && 
 	  (type != None))
@@ -639,7 +639,7 @@ void snd_doit(int argc, char **argv)
 		    batch = true;
 
   ss->batch_mode = batch;
-  if (batch) XtSetMappedWhenManaged(shell, False);
+  if (batch) XtSetMappedWhenManaged(shell, 0);
   set_html_dir(copy_string(snd_rs.html_dir));
 #if (!SPLINT)
   ss->using_schemes = ((snd_rs.use_schemes) &&

@@ -21,7 +21,7 @@ static Window compare_window(Display *display, Window window, char *id)
   unsigned long nitems, bytesafter;
   unsigned char *version[1];
   Window found = (Window)None;
-  if (((XGetWindowProperty(display, window, XInternAtom (display, id, False), 0L, (long)BUFSIZ, False,
+  if (((XGetWindowProperty(display, window, XInternAtom (display, id, 0), 0L, (long)BUFSIZ, 0,
 			   XA_STRING, &type, &format, &nitems, &bytesafter, 
 			   (unsigned char **)version)) == Success) && 
       (type != None))
@@ -68,7 +68,7 @@ string 'cmd'.  cmd should be a URL."
       mus_snprintf(command, PRINT_BUFFER_SIZE, "openURL(file:%s)", tmp);
       XChangeProperty(dpy, 
 		      window, 
-		      XInternAtom(dpy, NS_COMMAND, False), 
+		      XInternAtom(dpy, NS_COMMAND, 0), 
 		      XA_STRING, 8, 
 		      PropModeReplace, 
 		      (unsigned char *)command, 
@@ -100,7 +100,7 @@ static void change_window_property(char *winat, char *name, char *command)
     {
       XChangeProperty(dpy, 
 		      window, 
-		      XInternAtom(dpy, name, False), 
+		      XInternAtom(dpy, name, 0), 
 		      XA_STRING, 8, 
 		      PropModeReplace, 
 		      (unsigned char *)command, 

@@ -90,7 +90,6 @@ void edit_find_callback(GtkWidget *w, gpointer context)
 				     0);
       gtk_window_set_title(GTK_WINDOW(edit_find_dialog), _("Find"));
       sg_make_resizable(edit_find_dialog);
-      set_background(edit_find_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(edit_find_dialog), 10);
       gtk_window_resize(GTK_WINDOW(edit_find_dialog), 350, 120);
       gtk_widget_realize(edit_find_dialog);

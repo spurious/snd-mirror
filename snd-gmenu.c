@@ -491,7 +491,6 @@ GtkWidget *add_menu(void)
   add_drop(mw[menu_menu]);
   gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), mw[menu_menu], false, true, 0);
   gtk_widget_show(mw[menu_menu]);
-  gtk_widget_modify_bg(mw[menu_menu], GTK_STATE_NORMAL, (ss->sgx)->highlight_color);
 
   /* FILE MENU */
   mw[file_menu] = gtk_menu_item_new_with_label(_("File"));
@@ -1729,7 +1728,6 @@ static void create_popup_menu(guint button, Tempus time)
 			   (selcp->edits[selcp->edit_ctr + 1]));
 	}
       popup_menu = gtk_menu_new();
-      /* TODO: popup menu is wrong color */
       gtk_widget_show(popup_menu);
 
       popup_children[W_pop_play] = gtk_menu_item_new_with_label(_("Play"));

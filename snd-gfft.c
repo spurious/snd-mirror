@@ -425,7 +425,6 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 				     0);
       gtk_window_set_title(GTK_WINDOW(transform_dialog), _("Transform Options"));
       sg_make_resizable(transform_dialog);
-      set_background(transform_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width(GTK_CONTAINER(transform_dialog), 4);
       gtk_widget_realize(transform_dialog);
       gtk_window_resize(GTK_WINDOW(transform_dialog), 400, 500);
@@ -506,7 +505,6 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       buttons = gtk_vbox_new(false, 0);
       gtk_container_add(GTK_CONTAINER(display_frame), buttons);
-      set_background(buttons, (ss->sgx)->position_color);
 
       normal_fft_button = gtk_radio_button_new_with_label(NULL, _("single transform"));
       gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, false, false, 0);
