@@ -70,12 +70,6 @@ static void reposition_file_buffers(snd_data *sd, int index)
   int reclose = 0;
   file_info *hdr;
   if (index < 0) index = 0; /* if reading in reverse, don't fall off the start of the buffer */
-  if (sd->just_zeros)
-    {
-      sd->io[SND_IO_BEG] = index;
-      sd->io[SND_IO_END] = sd->io[SND_IO_BEG] + sd->io[SND_IO_BUFSIZE] - 1;
-      return;
-    }
   if (sd->open == FD_CLOSED)
     {
       /* try to open it with sndlib descriptors */
@@ -188,35 +182,30 @@ int file_state_buffer_size(int *io)
 void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
 {
   /* need to track in-core buffer and file-relative index */
-  MUS_SAMPLE_TYPE *buf, *start, *finish;
   if ((indx < cur_snd->io[SND_IO_BEG]) ||
       (indx > cur_snd->io[SND_IO_END])) 
     reposition_file_buffers(cur_snd, indx);
-  buf = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + indx - cur_snd->io[SND_IO_BEG]);
-  /* only indx is guaranteed to be within the current in-core buffer */
+  sf->loc = indx - cur_snd->io[SND_IO_BEG];
   if (ind0 >= cur_snd->io[SND_IO_BEG])
-    start = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind0 - cur_snd->io[SND_IO_BEG]);
-  else start = cur_snd->buffered_data;
+    sf->first = ind0 - cur_snd->io[SND_IO_BEG];
+  else sf->first = 0;
   if (ind1 <= cur_snd->io[SND_IO_END]) 
-    finish = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind1 - cur_snd->io[SND_IO_BEG]);
-  else finish = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
-  set_snd_fd_buffer(sf, buf, start, finish);
+    sf->last = ind1 - cur_snd->io[SND_IO_BEG];
+  else sf->last = cur_snd->io[SND_IO_BUFSIZE] - 1;
 }
 
 void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
 {
-  MUS_SAMPLE_TYPE *buf, *start, *finish;
   if ((indx > cur_snd->io[SND_IO_END]) || 
       (indx < cur_snd->io[SND_IO_BEG])) 
     reposition_file_buffers(cur_snd, indx - cur_snd->io[SND_IO_BUFSIZE] + 1);
-  buf = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + indx - cur_snd->io[SND_IO_BEG]);
+  sf->loc = indx - cur_snd->io[SND_IO_BEG];
   if (ind1 <= cur_snd->io[SND_IO_END])
-    finish = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind1 - cur_snd->io[SND_IO_BEG]);
-  else finish = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
+    sf->last = ind1 - cur_snd->io[SND_IO_BEG];
+  else sf->last = cur_snd->io[SND_IO_BUFSIZE] - 1;
   if (ind0 >= cur_snd->io[SND_IO_BEG]) 
-    start = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind0 - cur_snd->io[SND_IO_BEG]);
-  else start = cur_snd->buffered_data;
-  set_snd_fd_buffer(sf, buf, start, finish);
+    sf->first = ind0 - cur_snd->io[SND_IO_BEG];
+  else sf->first = 0;
 }
 
 int sf_beg(snd_data *sd)
@@ -231,33 +220,6 @@ int sf_end(snd_data *sd)
   if (sd)
     return(sd->io[SND_IO_END]);
   return(0);
-}
-
-MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp)
-{
-  int copied;
-  MUS_SAMPLE_TYPE val;
-  snd_data *sd = NULL;
-  copied = 0;
-  /* first try to grab the sample without moving any buffers */
-  if ((index >= ur_sd->io[SND_IO_BEG]) && 
-      (index <= ur_sd->io[SND_IO_END])) 
-    return(ur_sd->buffered_data[index - ur_sd->io[SND_IO_BEG]]);
-  /* not in current buffer, so create a new reader and go looking for it */
-  if (ur_sd->inuse) 
-    {
-      sd = copy_snd_data(ur_sd, cp, 4); 
-      copied = 1;
-    } 
-  else sd = ur_sd;
-  sd->inuse = TRUE;
-  if ((index < sd->io[SND_IO_BEG]) || 
-      (index > sd->io[SND_IO_END])) 
-    reposition_file_buffers(sd, index);
-  val = sd->buffered_data[index - sd->io[SND_IO_BEG]];
-  sd->inuse = FALSE; 
-  if (copied) free_snd_data(sd);
-  return(val); 
 }
 
 

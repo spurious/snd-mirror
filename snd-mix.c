@@ -866,7 +866,7 @@ static char *save_as_temp_file(MUS_SAMPLE_TYPE **raw_data, int chans, int len, i
   if (hfd == -1) return(NULL);
   ofd = snd_reopen_write(ss, newname);
   mus_file_open_descriptors(ofd, newname, format, 4, 28, chans, MUS_NEXT);
-  mus_file_set_data_clipped(ofd, data_clipped(ss));
+  /* mus_file_set_data_clipped(ofd, data_clipped(ss)); */
   lseek(ofd, 28, SEEK_SET);
   no_space = disk_space_p(any_selected_sound(ss), len * chans * 4, 0, newname);
   if (no_space != GIVE_UP)
@@ -1034,12 +1034,12 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   else return(NULL);
 }
 
-/* next three functions canonicalize mixer input -- 
+/* next functions canonicalize mixer input -- 
  *   all end up with a filename containing the original to-be-mixed input
  *                     length (per channel samples in input)
  *                     begin sample in output for mix start
  *                     an array of cps for mixing into
- *                     a notion of initial scalers (1.0 or arg to mix_array)
+ *                     a notion of initial scalers
  */
 
 static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, int with_tag)
@@ -1063,27 +1063,6 @@ static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, in
     }
   if (j > 1) call_multichannel_mix_hook(ids, j);
   FREE(ids);
-  return(id);
-}
-
-static int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, 
-		     int nominal_srate, const char *origin, int with_tag)
-{
-  /* always write to tempfile */
-  char *newname;
-  int id = -1;
-  /* TODO: mix_array this seems excessive -- why not just change_samples? */
-  /* void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, const char *origin, int edpos) */
-  /* at least in no tag case this can't be a problem */
-  newname = save_as_temp_file(data, 1, num, nominal_srate);
-  if (newname) 
-    {
-      id = mix(beg, num, 1, out_cps, newname, DELETE_ME, origin, with_tag);
-      if (with_tag == 0) snd_remove(newname);
-      FREE(newname);
-    }
-  else
-    snd_error("can't save mix temp array in file (%s: %s)", newname, strerror(errno));
   return(id);
 }
 
@@ -4329,37 +4308,47 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 
   vct *v;
   int bg;
-  chan_info *cp[1];
-  char *edname = NULL;
-  MUS_SAMPLE_TYPE **data;
-  int i, len, mix_id = -1, with_mixers = 1;
+  chan_info *cp;
+  char *edname = NULL, *newname = NULL;
+  snd_fd *sf;
+  MUS_SAMPLE_TYPE *data;
+  int i, len, mix_id = -1, with_mixer = 1;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_mix_vct, "a vct");
   ASSERT_CHANNEL(S_mix_vct, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_mix_vct, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_tag), with_tag, XEN_ARG_5, S_mix_vct, "a boolean");
   v = TO_VCT(obj);
   len = v->length;
-  cp[0] = get_cp(snd, chn, S_mix_vct);
+  cp = get_cp(snd, chn, S_mix_vct);
   bg = XEN_TO_C_INT_OR_ELSE(beg, 0);
   if (bg < 0)
     mus_misc_error(S_mix_vct, "beg < 0?", beg);
   else
     {
       if (XEN_NOT_BOUND_P(with_tag))
-	with_mixers = with_mix_tags(cp[0]->state);
-      else with_mixers = XEN_TO_C_BOOLEAN_OR_TRUE(with_tag);
-      data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
-      data[0] = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
+	with_mixer = with_mix_tags(cp->state);
+      else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(with_tag);
+      data = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
       for (i = 0; i < len; i++)
-	data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
+	data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
       if (XEN_STRING_P(origin))
 	edname = XEN_TO_C_STRING(origin);
-      mix_id = mix_array(bg, len, data, cp,
-			 SND_SRATE(cp[0]->sound),
-			 (char *)((edname == NULL) ? S_mix_vct : edname),
-			 with_mixers);
-      update_graph(cp[0], NULL);
-      FREE(data[0]);
+      if ((len < MAX_BUFFER_SIZE) && (!with_mixer))
+	{
+	  sf = init_sample_read(bg, cp, READ_FORWARD);
+	  for (i = 0; i < len; i++)
+	    data[i] += read_sample(sf);
+	  free_snd_fd(sf);
+	  change_samples(bg, len, data, cp, LOCK_MIXES, S_mix_vct, cp->edit_ctr);
+	}
+      else
+	{
+	  newname = save_as_temp_file(&data, 1, len, SND_SRATE(cp->sound));
+	  mix_id = mix(bg, len, 1, &cp, newname, DELETE_ME, (char *)((edname == NULL) ? S_mix_vct : edname), with_mixer);
+	  if (!with_mixer) snd_remove(newname);
+	  FREE(newname);
+	}
+      update_graph(cp, NULL);
       FREE(data);
     }
   return(xen_return_first(C_TO_SMALL_XEN_INT(mix_id), obj));

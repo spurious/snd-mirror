@@ -62,7 +62,6 @@ typedef struct {
   int copy;
   int chan;
   int len;
-  int just_zeros;
   int free_me;
 } snd_data;
 
@@ -84,10 +83,8 @@ typedef struct snd__fd {
   /* the rest are private to snd-edits.c */
   ed_list *current_state;
   int *cb;
-  int cbi, direction;
-  MUS_SAMPLE_TYPE *first;
-  MUS_SAMPLE_TYPE *last;
-  MUS_SAMPLE_TYPE *view_buffered_data;
+  int loc, first, last, cbi, direction, at_eof;
+  MUS_SAMPLE_TYPE *data;
   snd_data **sounds;
   snd_data *current_sound;
   int initial_samp;
@@ -394,7 +391,6 @@ int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
 int *free_file_state(int *datai);
 void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd);
-MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp);
 int *make_zero_file_state(int size);
 int snd_remove(const char *name);
 int sf_beg(snd_data *sd);
@@ -658,7 +654,6 @@ void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int 
 void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin, int edpos);
 void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin);
 Float chn_sample(int samp, chan_info *cp, int pos);
-void set_snd_fd_buffer(snd_fd *sf, MUS_SAMPLE_TYPE *buf, MUS_SAMPLE_TYPE *start, MUS_SAMPLE_TYPE *finish);
 snd_fd *free_snd_fd(snd_fd *sf);
 int sf_initial_samp(snd_fd *sf);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
@@ -672,8 +667,8 @@ void read_sample_change_direction(snd_fd *sf, int dir);
 
 #define read_sample(Sf) (*Sf->run)(Sf)
 #define read_sample_to_float(Sf) (*Sf->runf)(Sf)
-Float next_sample_to_float(snd_fd *sf);
-Float previous_sample_to_float(snd_fd *sf);
+Float protected_next_sample_to_float(snd_fd *sf);
+Float protected_previous_sample_to_float(snd_fd *sf);
 Float local_maxamp(chan_info *cp, int beg, int num, int edpos);
 int read_sample_eof (snd_fd *sf);
 void undo_edit_with_sync(chan_info *cp, int count);

@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: lambda -> run to precompile simple forms
+ */
+
 static int search_in_progress = 0;
 typedef struct {int n; int direction; int chans; int inc; chan_info **cps; snd_fd **fds;} gfd;
 
@@ -30,9 +33,7 @@ static int run_global_search (snd_state *ss, gfd *g)
 	    {
 	      if (!((g->cps[i])->sound)) return(-1);
 	      sf = g->fds[i]; 
-	      if (g->direction == READ_FORWARD)
-		samp = next_sample_to_float(sf);
-	      else samp = previous_sample_to_float(sf);
+	      samp = read_sample_to_float(sf);
 	      res = XEN_CALL_1(ss->search_proc,
 			       C_TO_XEN_DOUBLE((double)(samp)), 
 			       "global search func");
@@ -247,7 +248,7 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   for (i = start, passes = 0; i >= 0; i--, passes++)
     {
       res = XEN_CALL_1(sp->search_proc, 
-		       C_TO_XEN_DOUBLE((double)(previous_sample_to_float(sf))), 
+		       C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
 		       "local search func");
       if (XEN_NOT_FALSE_P(res)) 
 	{

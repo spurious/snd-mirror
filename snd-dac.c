@@ -89,7 +89,7 @@ static Float speed(dac_info *dp, Float sr)
 	      for (i = 0; i < move; i++)
 		{
 		  dp->lst = dp->nxt;
-		  dp->nxt = next_sample_to_float(dp->chn_fd);
+		  dp->nxt = protected_next_sample_to_float(dp->chn_fd);
 		}
 	    }
 	}
@@ -104,7 +104,7 @@ static Float speed(dac_info *dp, Float sr)
 	      for (i = 0; i < move; i++)
 		{
 		  dp->lst = dp->nxt;
-		  dp->nxt = previous_sample_to_float(dp->chn_fd);
+		  dp->nxt = protected_previous_sample_to_float(dp->chn_fd);
 		}
 	    }
 	}

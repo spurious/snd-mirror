@@ -82,6 +82,7 @@ static void after_edit(chan_info *cp)
 #define FRAGMENT_SOUND_OFFSET(EDLIST, OFFSET)           EDLIST->fragments[(OFFSET) + ED_SND]
 
 #define EDIT_LIST_END_MARK -2
+#define EDIT_LIST_ZERO_MARK -1
 #define EDIT_ALLOC_SIZE 128
 
 /* ED_SND is either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END_MARK */
@@ -95,7 +96,8 @@ static void after_edit(chan_info *cp)
 #define DELETION_EDIT 1
 #define CHANGE_EDIT 2
 #define INITIALIZE_EDIT 3
-#define PARSED_EDIT 4
+#define SCALED_EDIT 4
+#define ZERO_EDIT 5
 
 #define PACK_EDIT(a, b) ((a) << 16 | (b))
 #define EDIT_TYPE(a) (((a) >> 16) & 0xffff)
@@ -103,7 +105,7 @@ static void after_edit(chan_info *cp)
 /* edit history decoding info */
 /* EDIT_LOCATION is the index in cp->sounds holding the associated data */
 
-static char *edit_names[6] = {"insert","delete","set","init","lambda",""};
+static char *edit_names[7] = {"insert","delete","set","init","lambda","zero", ""};
 
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 {
@@ -116,7 +118,8 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
     case INSERTION_EDIT:  fprintf(outp, "\n (insert %d %d) ", ed->beg, ed->len);         break;
     case DELETION_EDIT:   fprintf(outp, "\n (delete %d %d) ", ed->beg, ed->len);         break;
     case CHANGE_EDIT:     fprintf(outp, "\n (set %d %d) ", ed->beg, ed->len);            break;
-    case PARSED_EDIT:     fprintf(outp, "\n (%s %d %d) ", ed->origin, ed->beg, ed->len); break;
+    case SCALED_EDIT:     fprintf(outp, "\n (scale %d %d) ", ed->beg, ed->len);          break;
+    case ZERO_EDIT:       fprintf(outp, "\n (silence %d %d) ", ed->beg, ed->len);        break;
     case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                  break;
     }
   if (ed->origin) fprintf(outp, "; %s ", ed->origin);
@@ -129,19 +132,14 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 	      FRAGMENT_LOCAL_POSITION(ed, j),
 	      FRAGMENT_LOCAL_END(ed, j),
 	      INT_AS_FLOAT(FRAGMENT_SCALER(ed, j)));
-      if (index != EDIT_LIST_END_MARK)
+      if ((index != EDIT_LIST_END_MARK) && (index != EDIT_LIST_ZERO_MARK))
 	{
 	  sd = cp->sounds[index];
 	  if (sd == NULL) 
 	    fprintf(outp, " [nil!]");
 	  else 
 	    if (sd->type == SND_DATA_FILE)
-	      {
-		if (sd->just_zeros)
-		  fprintf(outp, " [zeros]");
-		else fprintf(outp, " [file: %s[%d]]",
-			     sd->filename, sd->chan);
-	      }
+	      fprintf(outp, " [file: %s[%d]]", sd->filename, sd->chan);
 	    else 
 	      if (sd->type == SND_DATA_BUFFER)
 		fprintf(outp, " [buf: %d] ", sd->len / 4);
@@ -272,11 +270,6 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	}
       else
 	{
-	  if (sd->just_zeros) 
-	    {
-	      fprintf(fd, "#f");
-	      return;
-	    }
 	  if (save_dir(ss))
 	    {
 	      newname = shorter_tempnam(save_dir(ss), "snd_");
@@ -403,11 +396,23 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      edit_data_to_file(fd, ed, cp);
 	      fprintf(fd, " sfile %d)\n", cp->chan);
 	      break;
-	    case PARSED_EDIT: 
-	      /* a parsed edit has to be able to recreate itself completely */
+	    case SCALED_EDIT: 
 	      fprintf(fd, "      (%s sfile %d)\n",
-		      ed->origin,
+		      ed->origin, /* imports scaler */
 		      cp->chan);
+	      break;
+	    case ZERO_EDIT:
+	      fprintf(fd, "      (%s %d %d sfile %d)\n",
+		      S_pad_channel,
+		      ed->beg,
+		      ed->len,
+		      cp->chan);
+	      break;
+	    default:
+	      snd_error("unknown edit branch: %s: %d %d",
+			ed->origin, 
+			EDIT_TYPE(ed->sfnum),
+			EDIT_LOCATION(ed->sfnum));
 	      break;
 	    }
 	}
@@ -774,27 +779,6 @@ snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int 
   sd->copy = FALSE;
   sd->chan = temp_chan;
   sd->len = (hdr->samples) * (mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
-  sd->just_zeros = 0;
-  return(sd);
-}
-
-static snd_data *make_snd_data_zero_file(int size, int *io, int ctr)
-{
-  snd_data *sd;
-  sd = (snd_data *)CALLOC(1, sizeof(snd_data));
-  sd->type = SND_DATA_FILE;
-  sd->buffered_data = file_state_channel_array(io, 0);
-  sd->io = io;
-  sd->filename = NULL;
-  sd->hdr = NULL;
-  sd->temporary = DONT_DELETE_ME;
-  sd->edit_ctr = ctr;
-  sd->open = FD_CLOSED;
-  sd->inuse = FALSE;
-  sd->copy = FALSE;
-  sd->chan = 0;
-  sd->len = size;
-  sd->just_zeros = 1;
   return(sd);
 }
 
@@ -804,13 +788,6 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   int *io;
   int fd;
   file_info *hdr;
-  if (sd->just_zeros)
-    {
-      io = make_zero_file_state(sd->len);
-      sf = make_snd_data_zero_file(sd->len, io, sd->edit_ctr);
-      sf->copy = 1;
-      return(sf);
-    }
   hdr = sd->hdr;
   fd = snd_open_read(cp->state, sd->filename);
   if (fd == -1) 
@@ -835,7 +812,6 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->open = FD_OPEN;
   sf->inuse = FALSE;
   sf->copy = 1;
-  sf->just_zeros = 0;
   return(sf);
 }
 
@@ -854,7 +830,6 @@ static snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   sf->copy = FALSE;
   sf->inuse = FALSE;
   sf->len = len * 4;
-  sf->just_zeros = 0;
   return(sf);
 }
 
@@ -975,15 +950,6 @@ static int add_sound_file_to_edit_list(chan_info *cp, char *name, int *io, file_
 {
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_file(name, io, hdr, temp, cp->edit_ctr, chan);
-  return(cp->sound_ctr);
-}
-
-static int add_zero_file_to_edit_list(chan_info *cp, int size)
-{
-  int *io;
-  prepare_sound_list(cp);
-  io = make_zero_file_state(size);
-  cp->sounds[cp->sound_ctr] = make_snd_data_zero_file(size, io, cp->edit_ctr);
   return(cp->sound_ctr);
 }
 
@@ -1112,13 +1078,12 @@ static void fixup_edlist_endmark(ed_list *new_state, ed_list *current_state, int
 }
 
 static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_list *current_state, 
-				  chan_info *cp, int **cb_back, const char *origin)
+				  chan_info *cp, int **cb_back, const char *origin, float scaler)
 {
   int len, k, old_beg, old_end, old_snd, old_out;
   ed_list *new_state;
   int *cb, *cbback, *ed;
   int old_scl;
-  float one = 1.0;
   if (num <= 0) return(NULL);
   len = current_state->size;
   ed = current_state->fragments;
@@ -1166,8 +1131,8 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
       cb[ED_BEG] = 0;
       cb[ED_END] = num - 1;
       cb[ED_OUT] = samp;
-      cb[ED_SCL] = FLOAT_AS_INT(one); /* trust that insertion collapsed possible "tree" */
     }
+  cb[ED_SCL] = FLOAT_AS_INT(scaler); /* in no-data case, default scaler is 1.0 which may be wrong if padding start */
   if (vals) 
     {
       cb[ED_SND] = add_sound_buffer_to_edit_list(cp, vals, num); 
@@ -1190,26 +1155,14 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
 
 void extend_with_zeros(chan_info *cp, int beg, int num, const char *origin, int edpos)
 {
-  MUS_SAMPLE_TYPE *zeros;
   int len;
   int *cb;
-  ed_list *ed;
   if (num <= 0) return;
   len = cp->samples[edpos];
   prepare_edit_list(cp, len + num);
-  if (num > 1024)
-    {
-      cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, NULL, cp->edits[edpos], cp, &cb, origin);
-      cb[ED_SND] = add_zero_file_to_edit_list(cp, num);
-      ed = cp->edits[cp->edit_ctr];
-      ed->sfnum = PACK_EDIT(INSERTION_EDIT, cb[ED_SND]);
-    }
-  else
-    {
-      zeros = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
-      cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, zeros, cp->edits[edpos], cp, &cb, origin);
-      FREE(zeros);
-    }
+  cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, NULL, cp->edits[edpos], cp, &cb, origin, 0.0);
+  cb[ED_SND] = -1;
+  cp->edits[cp->edit_ctr]->sfnum = PACK_EDIT(ZERO_EDIT, 0);
   reflect_edit_history_change(cp);
   check_for_first_edit(cp); /* needed to activate revert menu option */
 }
@@ -1239,7 +1192,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
     }
   ss = cp->state;
   prepare_edit_list(cp, len + num);
-  cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, NULL, cp->edits[edpos], cp, &cb, origin);
+  cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, NULL, cp->edits[edpos], cp, &cb, origin, 1.0);
   reflect_edit_history_change(cp);
   ss->catch_message = NULL;
   hdr = make_file_info(inserted_file, ss);
@@ -1284,7 +1237,7 @@ static void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *c
       len = current_ed_samples(cp);
     }
   prepare_edit_list(cp, len + num);
-  cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, vals, cp->edits[edpos], cp, &cb, origin);
+  cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, vals, cp->edits[edpos], cp, &cb, origin, 1.0);
   reflect_edit_history_change(cp);
   lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, origin);
@@ -1642,8 +1595,8 @@ static void parse_tree_scale_by(chan_info *cp, Float scl, int pos)
       ed_scl = (float)(scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed, i)));
       FRAGMENT_SCALER(new_ed, i) = FLOAT_AS_INT(ed_scl);
     }
-  new_ed->sfnum = PACK_EDIT(PARSED_EDIT, 0);
-  new_ed->origin = mus_format("scale-channel %.4f 0 %d", scl, len);
+  new_ed->sfnum = PACK_EDIT(SCALED_EDIT, 0);
+  new_ed->origin = mus_format("%s %.4f 0 %d", S_scale_channel, scl, len);
   new_ed->beg = 0;
   new_ed->len = len;
   new_ed->size = old_ed->size;
@@ -1677,8 +1630,8 @@ static void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int
     }
 
   cp->edits[cp->edit_ctr] = new_ed;
-  new_ed->sfnum = PACK_EDIT(PARSED_EDIT, 0);
-  new_ed->origin = mus_format("scale-channel %.4f %d %d", scl, beg, num);
+  new_ed->sfnum = PACK_EDIT(SCALED_EDIT, 0);
+  new_ed->origin = mus_format("%s %.4f %d %d", S_scale_channel, scl, beg, num);
   new_ed->beg = beg;
   new_ed->len = num;
   new_ed->selection_beg = old_ed->selection_beg;
@@ -1692,29 +1645,17 @@ static void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int
 
 Float chn_sample(int samp, chan_info *cp, int pos)
 { /* slow access */
-  ed_list *current_state;
-  snd_data *sd;
-  int len, i, cb, true_cb, index;
-  int *data;
+  snd_fd *sf;
+  Float val = 0.0;
   if (samp < 0) return(0.0);
-  if (samp > cp->samples[pos]) return(0.0);
-  current_state = (ed_list *)(cp->edits[pos]);
-  data = current_state->fragments;
-  len = current_state->size;
-  for (i = 0, cb = 0; i < len; i++, cb += ED_SIZE)
-    if (samp < data[cb + ED_OUT])
-      {
-	true_cb = cb-ED_SIZE;
-	if (data[true_cb + ED_SND] == EDIT_LIST_END_MARK) return(0.0);
-	index = data[true_cb + ED_BEG] + samp - data[true_cb + ED_OUT];
-	sd = cp->sounds[data[true_cb + ED_SND]];
-	if (sd->type == SND_DATA_BUFFER)
-	  return(UNWRAP_SAMPLE(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[index]),
-			       data[true_cb + ED_SCL]));
-	else return(UNWRAP_SAMPLE(MUS_SAMPLE_TO_FLOAT(snd_file_read_sample(sd, index, cp)),
-				  data[true_cb + ED_SCL]));
-      }
-  return(0.0);
+  if (samp >= cp->samples[pos]) return(0.0);
+  sf = init_sample_read(samp, cp, READ_FORWARD);
+  if (sf)
+    {
+      val = read_sample_to_float(sf);
+      free_snd_fd(sf);
+    }
+  return(val);
 }
 
 /* now for optimized sample access -- since everything goes through these lists, we want the access to be fast */
@@ -1750,13 +1691,13 @@ snd_fd *free_snd_fd(snd_fd *sf)
 #if LONG_INT_P
   int current_location(snd_fd *sf) 
   {
-    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf_beg(sf->current_sound) + (int)(((long)(sf->view_buffered_data) - (long)(sf->first)) >> 2));
+    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf_beg(sf->current_sound) + sf->loc);
   }
 #else
   int current_location(snd_fd *sf) 
   {
     /* only used by moving cursor code in snd-dac.c */
-    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf_beg(sf->current_sound) + (((int)(sf->view_buffered_data) - (int)(sf->first)) >> 2));
+    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf_beg(sf->current_sound) + sf->loc);
   }
 #endif
 
@@ -1772,97 +1713,152 @@ snd_fd *free_snd_fd(snd_fd *sf)
 
 static MUS_SAMPLE_TYPE next_sample(snd_fd *sf)
 {
-  if (sf->view_buffered_data > sf->last)
+  if (sf->loc > sf->last)
     return(next_sound(sf));
-  else return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data++, sf->cb[ED_SCL])));
+  else return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(sf->data[sf->loc++], sf->cb[ED_SCL])));
 }
 
 static MUS_SAMPLE_TYPE previous_sample(snd_fd *sf)
 {
-  if (sf->view_buffered_data < sf->first)
+  if (sf->loc < sf->first)
     return(previous_sound(sf));
-  else return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data--, sf->cb[ED_SCL])));
+  else return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(sf->data[sf->loc--], sf->cb[ED_SCL])));
 }
 
 static MUS_SAMPLE_TYPE next_sample_unscaled(snd_fd *sf)
 {
-  if (sf->view_buffered_data > sf->last)
+  if (sf->loc > sf->last)
     return(next_sound(sf));
-  else return(*sf->view_buffered_data++);
+  else return(sf->data[sf->loc++]);
 }
 
 static MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
 {
-  if (sf->view_buffered_data < sf->first)
+  if (sf->loc < sf->first)
     return(previous_sound(sf));
-  else return(*sf->view_buffered_data--);
+  else return(sf->data[sf->loc--]);
 }
 
-static MUS_SAMPLE_TYPE zero_sample(snd_fd *sf)
+static MUS_SAMPLE_TYPE next_zero_sample(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound(sf));
+  sf->loc++;
+  return(MUS_SAMPLE_0);
+}
+
+static MUS_SAMPLE_TYPE previous_zero_sample(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  sf->loc--;
+  return(MUS_SAMPLE_0);
+}
+
+static MUS_SAMPLE_TYPE end_sample(snd_fd *sf)
 {
   return(MUS_SAMPLE_0);
 }
 
-static Float zero_sample_to_float(snd_fd *sf)
+static Float end_sample_to_float(snd_fd *sf)
 {
   return(0.0);
 }
 
-Float next_sample_to_float(snd_fd *sf)
+static Float next_zero_sample_to_float(snd_fd *sf)
 {
-  if (sf->view_buffered_data > sf->last)
+  if (sf->loc > sf->last)
      return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
-  else return((*sf->view_buffered_data++) * sf->fscaler);
+  sf->loc++;
+  return(0.0);
 }
 
-Float previous_sample_to_float(snd_fd *sf)
+static Float previous_zero_sample_to_float(snd_fd *sf)
 {
-  if (sf->view_buffered_data < sf->first)
+  if (sf->loc < sf->first)
     return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
-  else return((*sf->view_buffered_data--) * sf->fscaler);
+  sf->loc--;
+  return(0.0);
+}
+
+static Float next_sample_to_float(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else return((sf->data[sf->loc++]) * sf->fscaler);
+}
+
+static Float previous_sample_to_float(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else return((sf->data[sf->loc--]) * sf->fscaler);
 }
 
 static Float next_sample_to_float_unscaled(snd_fd *sf)
 {
-  if (sf->view_buffered_data > sf->last)
+  if (sf->loc > sf->last)
      return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
-  else return(*sf->view_buffered_data++);
+  else return(sf->data[sf->loc++]);
 }
 
 static Float previous_sample_to_float_unscaled(snd_fd *sf)
 {
-  if (sf->view_buffered_data < sf->first)
+  if (sf->loc < sf->first)
     return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
-  else return(*sf->view_buffered_data--);
+  else return(sf->data[sf->loc--]);
 }
 
 void read_sample_change_direction(snd_fd *sf, int dir)
 {
-  if (dir >= 0)
+  if (dir == READ_FORWARD)
     {
-      sf->run = next_sample;
-      sf->runf = next_sample_to_float;
+      if (sf->fscaler != 0.0)
+	{
+	  sf->run = next_sample;
+	  sf->runf = next_sample_to_float;
+	}
+      else
+	{
+	  sf->run = next_zero_sample;
+	  sf->runf = next_zero_sample_to_float;
+	}
     }
   else
     {
-      sf->run = previous_sample;
-      sf->runf = previous_sample_to_float;
+      if (sf->fscaler != 0.0)
+	{
+	  sf->run = previous_sample;
+	  sf->runf = previous_sample_to_float;
+	}
+      else
+	{
+	  sf->run = previous_zero_sample;
+	  sf->runf = previous_zero_sample_to_float;
+	}
     }
   sf->direction = dir;
 }
 
-void set_snd_fd_buffer(snd_fd *sf, MUS_SAMPLE_TYPE *buf, MUS_SAMPLE_TYPE *start, MUS_SAMPLE_TYPE *finish)
+Float protected_next_sample_to_float(snd_fd *sf)
 {
-  sf->view_buffered_data = buf;
-  sf->first = start;
-  sf->last = finish;
+  if (sf->direction == READ_BACKWARD) 
+    read_sample_change_direction(sf, READ_BACKWARD);
+  return(read_sample_to_float(sf));
+}
+
+Float protected_previous_sample_to_float(snd_fd *sf)
+{
+  if (sf->direction == READ_FORWARD) 
+    read_sample_change_direction(sf, READ_FORWARD);
+  return(read_sample_to_float(sf));
 }
 
 void move_to_next_sample(snd_fd *sf)
 {
-  if (sf->view_buffered_data > sf->last)
+  if (sf->loc > sf->last)
     next_sound(sf);
-  else sf->view_buffered_data++;
+  else sf->loc++;
 }
 
 int sf_initial_samp(snd_fd *sf)
@@ -1870,41 +1866,74 @@ int sf_initial_samp(snd_fd *sf)
   return(sf->initial_samp);
 }
 
+static MUS_SAMPLE_TYPE reader_out_of_data(snd_fd *sf)
+{
+  sf->at_eof = TRUE;
+  sf->run = end_sample;
+  sf->runf = end_sample_to_float;
+  return(MUS_SAMPLE_0);
+}
+
 static snd_fd *cancel_reader(snd_fd *sf)
 {
-  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)1;
-  sf->last = (MUS_SAMPLE_TYPE *)0; /* can I get away with this?? -- we're trying to do something with an empty file here */
-  sf->first = (MUS_SAMPLE_TYPE *)2;
-  /* data > last and data < first are triggers to ignore data and try to move in the fragment list */
+  /* 
+  sf->last = 0;
+  sf->first = 1;
+  */
   sf->current_sound = NULL;
   sf->cbi = 0;
-  sf->run = zero_sample;
-  sf->runf = zero_sample_to_float;
+  reader_out_of_data(sf);
   return(sf);
 }
 
 static void choose_accessor(snd_fd *sf)
 {
   /* fragment-specific reader choice */
-  int no_scaling = 0;
-  no_scaling = (INT_AS_FLOAT(sf->cb[ED_SCL]) == 1.0);
   if (sf->direction == READ_FORWARD)
     {
-      if (no_scaling)
-	sf->run = next_sample_unscaled;
-      else sf->run = next_sample;
-      if ((no_scaling) && (sf->fscaler == 1.0))
-	sf->runf = next_sample_to_float_unscaled;
-      else sf->runf = next_sample_to_float;
+      if (sf->cb[ED_SCL] == 0)
+	{
+	  sf->run = next_zero_sample;
+	  sf->runf = next_zero_sample_to_float;
+	}
+      else
+	{
+	  if (INT_AS_FLOAT(sf->cb[ED_SCL]) == 1.0)
+	    {
+	      sf->run = next_sample_unscaled;
+	      if (sf->fscaler == 1.0) 
+		sf->runf = next_sample_to_float_unscaled;
+	      else sf->runf = next_sample_to_float;
+	    }
+	  else
+	    {
+	      sf->run = next_sample;
+	      sf->runf = next_sample_to_float;
+	    }
+	}
     }
-  else 
+  else
     {
-      if (no_scaling)
-	sf->run = previous_sample_unscaled;
-      else sf->run = previous_sample;
-      if ((no_scaling) && (sf->fscaler == 1.0))
-	sf->runf = previous_sample_to_float_unscaled;
-      else sf->runf = previous_sample_to_float;
+      if (sf->cb[ED_SCL] == 0)
+	{
+	  sf->run = previous_zero_sample;
+	  sf->runf = previous_zero_sample_to_float;
+	}
+      else
+	{
+	  if (INT_AS_FLOAT(sf->cb[ED_SCL]) == 1.0)
+	    {
+	      sf->run = previous_sample_unscaled;
+	      if (sf->fscaler == 1.0) 
+		sf->runf = previous_sample_to_float_unscaled;
+	      else sf->runf = previous_sample_to_float;
+	    }
+	  else
+	    {
+	      sf->run = previous_sample;
+	      sf->runf = previous_sample_to_float;
+	    }
+	}
     }
 }
 
@@ -1942,7 +1971,6 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 
   /*
    * TODO: add ramp fragment reader and virtual envelopes
-   * TODO: add 0 buf return (timed 0, as opposed to fake buf)
    * TODO: fragment change func (with possibility of callback fragment-hook)
    */
 
@@ -1953,6 +1981,7 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
     return(cancel_reader(sf));
   if (samp >= curlen) samp = curlen - 1;
   len = ed->size;
+  sf->sounds = (snd_data **)(cp->sounds);
   for (i = 0, k = 0; i < len; i++, k += ED_SIZE)
     {
       cb = (int *)(ed->fragments + k);
@@ -1964,9 +1993,16 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 	  ind0 = sf->cb[ED_BEG];
 	  indx = sf->cb[ED_BEG] + samp - sf->cb[ED_OUT];
 	  ind1 = sf->cb[ED_END];
-	  sf->sounds = (snd_data **)(cp->sounds);
 	  sf->fscaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
 	  choose_accessor(sf);
+	  if (sf->cb[ED_SCL] == 0)
+	    {
+	      sf->current_sound = NULL;
+	      sf->loc = indx;
+	      sf->first = ind0;
+	      sf->last = ind1;
+	      return(sf);
+	    }
 	  first_snd = sf->sounds[sf->cb[ED_SND]];
 	  if (first_snd->type == SND_DATA_FILE)
 	    {
@@ -1987,6 +2023,7 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 		}
 	      first_snd->inuse = TRUE;
 	      sf->current_sound = first_snd;
+	      sf->data = first_snd->buffered_data;
 	      if (direction == READ_FORWARD)
 		file_buffers_forward(ind0, ind1, indx, sf, first_snd);
 	      else file_buffers_back(ind0, ind1, indx, sf, first_snd);
@@ -1994,9 +2031,10 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 	  else 
 	    {
 	      sf->current_sound = NULL;
-	      sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + indx);
-	      sf->first = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + ind0);
-	      sf->last = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + ind1);
+	      sf->data = first_snd->buffered_data;
+	      sf->first = ind0;
+	      sf->last = ind1;
+	      sf->loc = indx;
 	    }
 	  return(sf);
 	}
@@ -2025,33 +2063,40 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	  sf->current_sound = NULL;
 	  if (prev_snd->copy) prev_snd = free_snd_data(prev_snd);
 	}
-      if (sf->cbi == 0) 
-	{
-	  sf->run = zero_sample;
-	  sf->runf = zero_sample_to_float;
-	  return(MUS_SAMPLE_0); /* can't back up any further */
-	}
+      if (sf->cbi == 0) return(reader_out_of_data(sf));
       sf->cbi--;
       /* now start in the final portion of this block (if a file) */
       sf->cb = (int *)((sf->current_state)->fragments + sf->cbi * ED_SIZE);
       ind0 = sf->cb[ED_BEG];
       ind1 = sf->cb[ED_END];
       sf->fscaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
-      prev_snd = sf->sounds[sf->cb[ED_SND]];
       choose_accessor(sf);
-      if (prev_snd->type == SND_DATA_FILE)
+      if (sf->cb[ED_SCL] == 0)
 	{
-	  if (prev_snd->inuse) 
-	    prev_snd = copy_snd_data(prev_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
-	  prev_snd->inuse = TRUE;
-	  sf->current_sound = prev_snd;
-	  file_buffers_back(ind0, ind1, ind1, sf, prev_snd);
+	  sf->current_sound = NULL;
+	  sf->loc = ind1;
+	  sf->first = ind0;
+	  sf->last = ind1;
 	}
-      else 
+      else
 	{
-	  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(prev_snd->buffered_data + ind1);
-	  sf->first = (MUS_SAMPLE_TYPE *)(prev_snd->buffered_data + ind0);
-	  sf->last = sf->view_buffered_data;
+	  prev_snd = sf->sounds[sf->cb[ED_SND]];
+	  if (prev_snd->type == SND_DATA_FILE)
+	    {
+	      if (prev_snd->inuse) 
+		prev_snd = copy_snd_data(prev_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
+	      sf->data = prev_snd->buffered_data;
+	      prev_snd->inuse = TRUE;
+	      sf->current_sound = prev_snd;
+	      file_buffers_back(ind0, ind1, ind1, sf, prev_snd);
+	    }
+	  else 
+	    {
+	      sf->data = prev_snd->buffered_data;
+	      sf->loc = ind1;
+	      sf->first = ind0;
+	      sf->last = ind1;
+	    }
 	}
     }
   else
@@ -2062,7 +2107,7 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
       indx = sf_beg(sf->current_sound) - 1;
       file_buffers_back(ind0, ind1, indx, sf, sf->current_sound);
     }
-  return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data--, sf->cb[ED_SCL])));
+  return(read_sample(sf));
 }
 
 MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
@@ -2070,12 +2115,7 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
   int ind0, ind1, indx;
   snd_data *nxt_snd;
   int at_end;
-  if (sf->last == (MUS_SAMPLE_TYPE *)0) 
-    {
-      sf->run = zero_sample;
-      sf->runf = zero_sample_to_float;
-      return(MUS_SAMPLE_0); /* common special case */
-    }
+  /* if (sf->last == 0) return(reader_out_of_data(sf)); */
   at_end = ((sf->cb == NULL) || (sf->current_sound == NULL) || (sf->cb[ED_END] <= sf_end(sf->current_sound)));
   if (at_end)
     {
@@ -2087,42 +2127,41 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	  if (nxt_snd->copy) nxt_snd = free_snd_data(nxt_snd);
 	}
       sf->cbi++;
-      if (sf->cbi >= (sf->current_state)->size)
-	{
-          sf->view_buffered_data = (MUS_SAMPLE_TYPE *)1;
-	  sf->last = (MUS_SAMPLE_TYPE *)0;
-	  sf->run = zero_sample;
-	  sf->runf = zero_sample_to_float;
-	  return(MUS_SAMPLE_0);
-	}
+      if (sf->cbi >= (sf->current_state)->size) return(reader_out_of_data(sf));
       sf->cb = (int *)((sf->current_state)->fragments + sf->cbi * ED_SIZE);
       if ((!(sf->cb)) || 
 	  (sf->cb[ED_SND] == EDIT_LIST_END_MARK))
-	{
-          sf->view_buffered_data = (MUS_SAMPLE_TYPE *)1;
-	  sf->last = (MUS_SAMPLE_TYPE *)0;
-	  sf->run = zero_sample;
-	  sf->runf = zero_sample_to_float;
-	  return(MUS_SAMPLE_0);
-	}
+	return(reader_out_of_data(sf));
       ind0 = sf->cb[ED_BEG];
       ind1 = sf->cb[ED_END];
       sf->fscaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
       choose_accessor(sf);
-      nxt_snd = sf->sounds[sf->cb[ED_SND]];
-      if (nxt_snd->type == SND_DATA_FILE)
+      if (sf->cb[ED_SCL] == 0)
 	{
-	  if (nxt_snd->inuse)
-	    nxt_snd = copy_snd_data(nxt_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
-	  nxt_snd->inuse = TRUE;
-	  sf->current_sound = nxt_snd;
-	  file_buffers_forward(ind0, ind1, ind0, sf, nxt_snd);
+	  sf->current_sound = NULL;
+	  sf->loc = ind0;
+	  sf->first = ind0;
+	  sf->last = ind1;
 	}
-      else 
+      else
 	{
-	  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(nxt_snd->buffered_data + ind0);
-	  sf->first = sf->view_buffered_data;
-	  sf->last = (MUS_SAMPLE_TYPE *)(nxt_snd->buffered_data + ind1);
+	  nxt_snd = sf->sounds[sf->cb[ED_SND]];
+	  if (nxt_snd->type == SND_DATA_FILE)
+	    {
+	      if (nxt_snd->inuse)
+		nxt_snd = copy_snd_data(nxt_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
+	      sf->data = nxt_snd->buffered_data;
+	      nxt_snd->inuse = TRUE;
+	      sf->current_sound = nxt_snd;
+	      file_buffers_forward(ind0, ind1, ind0, sf, nxt_snd);
+	    }
+	  else 
+	    {
+	      sf->data = nxt_snd->buffered_data;
+	      sf->loc = ind0;
+	      sf->first = ind0;
+	      sf->last = ind1;
+	    }
 	}
     }
   else
@@ -2132,15 +2171,12 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
       indx = sf_end(sf->current_sound) + 1;
       file_buffers_forward(ind0, ind1, indx, sf, sf->current_sound);
     }
-  return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data++, sf->cb[ED_SCL])));
+  return(read_sample(sf));
 }
 
 int read_sample_eof (snd_fd *sf)
 {
-  if (sf->cb)
-    return((sf->cb[ED_SND] == EDIT_LIST_END_MARK) || 
-	   ((sf->cbi == 0) && (sf->view_buffered_data < sf->first)));
-  else return(sf->view_buffered_data >= sf->last);
+  return(sf->at_eof);
 }
 
 
@@ -2187,7 +2223,7 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
 			    hdr->data_location,
 			    chans,
 			    hdr->type);
-  mus_file_set_data_clipped(ofd, data_clipped(ss));
+  mus_file_set_data_clipped(ofd, data_clipped(ss)); /* TODO: this should only occur on user-requested output */
   lseek(ofd, hdr->data_location, SEEK_SET);
   return(ofd);
 }
@@ -2964,7 +3000,7 @@ static XEN g_next_sample(XEN obj)
 {
   #define H_next_sample "(" S_next_sample " reader) -> next sample from reader"
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_next_sample, "a sample-reader");
-  return(C_TO_XEN_DOUBLE(next_sample_to_float(TO_SAMPLE_READER(obj))));
+  return(C_TO_XEN_DOUBLE(protected_next_sample_to_float(TO_SAMPLE_READER(obj))));
 }
 
 static XEN g_read_sample(XEN obj)
@@ -2978,7 +3014,7 @@ static XEN g_previous_sample(XEN obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader) -> previous sample from reader"
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_previous_sample, "a sample-reader");
-  return(C_TO_XEN_DOUBLE(previous_sample_to_float(TO_SAMPLE_READER(obj))));
+  return(C_TO_XEN_DOUBLE(protected_previous_sample_to_float(TO_SAMPLE_READER(obj))));
 }
 
 static XEN g_free_sample_reader(XEN obj)

@@ -1818,6 +1818,11 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       int local_edpos, len, k, pos, segbeg, segnum, segend, old_squelch;
       int *passes;
       double *rates;
+      env *newe;
+      char *new_origin; /* need a complete origin since this appears as a scaled-edit in 
+			 *   the edit history lists, save_edit_history needs something
+			 *   that can actually recreate the original.
+			 */
       /* base == 0 originally, so it's a step env */
       len = mus_length(egen);
       passes = mus_env_passes(egen);
@@ -1852,7 +1857,14 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	      segnum = passes[k + 1] - passes[k];
 	    }
 	  si->cps[i]->squelch_update = old_squelch;
-	  as_one_edit(si->cps[i], local_edpos + 1, (char *)origin);
+	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
+	  new_origin = mus_format("env-channel (make-env %s :base 0 :end %d) %d %d",
+				  env_to_string(newe), 
+				  (len > 1) ? (passes[len - 2] - 1) : dur,
+				  beg, dur);
+	  free_env(newe);
+	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
+	  FREE(new_origin);
 	}
       free_sync_state(sc);
       if (e) mus_free(egen);
