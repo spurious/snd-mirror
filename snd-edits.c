@@ -8210,13 +8210,14 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_fd, print_sf, sf_to_string)
 
 static snd_fd **dangling_readers = NULL;
 static int dangling_reader_size = 0;
+#define DANGLING_READER_INCREMENT 16
 
 static void list_reader(snd_fd *fd)
 {
   int i, loc = -1;
   if (dangling_reader_size == 0)
     {
-      dangling_reader_size = 32;
+      dangling_reader_size = DANGLING_READER_INCREMENT;
       dangling_readers = (snd_fd **)CALLOC(dangling_reader_size, sizeof(snd_fd *));
       loc = 0;
     }
@@ -8231,7 +8232,7 @@ static void list_reader(snd_fd *fd)
       if (loc == -1)
 	{
 	  loc = dangling_reader_size;
-	  dangling_reader_size += 32;
+	  dangling_reader_size += DANGLING_READER_INCREMENT;
 	  dangling_readers = (snd_fd **)REALLOC(dangling_readers, dangling_reader_size * sizeof(snd_fd *));
 	  for (i = loc; i < dangling_reader_size; i++) dangling_readers[i] = NULL;
 	}
@@ -8305,8 +8306,6 @@ void report_dangling_readers(FILE *fp)
       }
 }
 #endif
-/* TODO: region/mix/track dangle tests, region/mix/track lists -- these can work as long as the deferred pointers are ok */
-/* TODO: many XEN_TO_C_OFF_T_OR_ELSEs should check for no-such-sample etc */
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
 
@@ -8453,9 +8452,29 @@ return a reader ready to access region's channel chn data starting at start-samp
 			XEN_TO_C_INT_OR_ELSE(dir1, READ_FORWARD));
   if (fd)
     {
+      fd->edit_ctr = -2 - reg_n; /* can't use fd->cp because deferred case is pointer to original (not copied) data */
+                                 /* has to be less than -1 because that is the "delete all readers" sign on chan close */
+      list_reader(fd);
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
   return(XEN_FALSE);
+}
+
+void release_region_readers(int reg)
+{
+  int i, regval;
+  snd_fd *fd;
+  regval = -2 - reg;
+  for (i = 0; i < dangling_reader_size; i++)
+    {
+      fd = dangling_readers[i];
+      if ((fd) && 
+	  (fd->edit_ctr == regval))
+	{
+	  reader_out_of_data(fd); /* sf_free would free fd causing infinite trouble later */
+	  dangling_readers[i] = NULL;
+	}
+    }
 }
 
 static XEN g_next_sample(XEN obj)
@@ -9314,7 +9333,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_delete_sample, "a number");
   ASSERT_CHANNEL(S_delete_sample, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_delete_sample);
-  samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
+  samp = beg_to_sample(samp_n, S_delete_sample);
   pos = to_c_edit_position(cp, edpos, S_delete_sample, 4);
   if ((samp < 0) || (samp > CURRENT_SAMPLES(cp)))
     XEN_ERROR(NO_SUCH_SAMPLE,

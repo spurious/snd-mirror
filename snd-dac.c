@@ -2003,7 +2003,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
   if (XEN_STRING_P(samp_n))
     {
       /* filename beg end background syncd ignored */
-      samp = XEN_TO_C_OFF_T_OR_ELSE(snd_n, 0);
+      samp = beg_to_sample(snd_n, caller);
       if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
 			      XEN_LIST_2(C_TO_XEN_STRING(caller),
 					 snd_n));
@@ -2034,7 +2034,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
     {
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, caller, "a number");
       ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
-      samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
+      samp = beg_to_sample(samp_n, caller);
       if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
 			      XEN_LIST_2(C_TO_XEN_STRING(caller),
 					 samp_n));
@@ -2089,7 +2089,7 @@ play snd or snd's channel chn starting at beg for dur samps."
     {
       len = XEN_TO_C_OFF_T(dur);
       if (len <= 0) return(XEN_FALSE);
-      end = C_TO_XEN_OFF_T(XEN_TO_C_OFF_T_OR_ELSE(beg, 0) + len);
+      end = C_TO_XEN_OFF_T(beg_to_sample(beg, S_play_channel) + len);
     }
   return(g_play_1(beg, snd_n, chn_n, TRUE, FALSE, end, edpos, S_play_channel, 5));
 }
@@ -2302,7 +2302,7 @@ The start, end, and edit-position of the portion played can be specified."
 				 snd_chn));
       cp = sp->chans[player_chans[index]];
       dp = add_channel_to_play_list(cp, sp,
-				    XEN_TO_C_OFF_T_OR_ELSE(start, 0),
+				    beg_to_sample(start, S_add_player),
 				    XEN_TO_C_OFF_T_OR_ELSE(end, NO_END_SPECIFIED),
 				    edpos,
 				    S_add_player,

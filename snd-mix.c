@@ -282,12 +282,15 @@ static mix_info *make_mix_info(chan_info *cp)
   return(md);
 }
 
+static void release_dangling_mix_readers(mix_info *md);
+
 static mix_info *free_mix_info(mix_info *md)
 {
   int i;
   snd_state *ss;
   if (md)
     {
+      release_dangling_mix_readers(md);
       ss = md->ss;
       if (md->id == ss->selected_mix) ss->selected_mix = INVALID_MIX_ID;
       if (md->wg) md->wg = free_mix_context(md->wg);
@@ -2726,6 +2729,9 @@ typedef struct {
   mix_fd **fds;
 } track_fd;
 
+static void list_mix_reader(mix_fd *fd);
+static void unlist_mix_reader(mix_fd *fd);
+
 static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* edit-position? direction? */
 {
   track_fd *fd = NULL;
@@ -2763,6 +2769,7 @@ static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* 
 		(md->cp == cp))
 	      {
 		fd->fds[mix] = init_mix_read(md, FALSE);
+		list_mix_reader(fd->fds[mix]);
 		cs = md->current_cs;
 		fd->state[mix] = cs->orig - track_beg;
 		fd->len[mix] = cs->len;
@@ -2782,7 +2789,10 @@ static void free_track_fd_almost(track_fd *fd)
 	{
 	  for (i = 0; i < fd->mixes; i++)
 	    if (fd->fds[i]) 
-	      fd->fds[i] = free_mix_fd(fd->fds[i]);
+	      {
+		unlist_mix_reader(fd->fds[i]);
+		fd->fds[i] = free_mix_fd(fd->fds[i]);
+	      }
 	  FREE(fd->fds);
 	  fd->fds = NULL;
 	}
@@ -3575,7 +3585,7 @@ static XEN g_set_mix_position(XEN n, XEN uval)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(n), n, XEN_ARG_1, S_setB S_mix_position, "a number");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, S_setB S_mix_position, "an integer");
   if (set_mix_position(XEN_TO_C_INT_OR_ELSE(n, 0), 
-		       XEN_TO_C_OFF_T_OR_ELSE(uval, 0),
+		       beg_to_sample(uval, S_setB S_mix_position),
 		       FALSE) == INVALID_MIX_ID)
     return(snd_no_such_mix_error(S_setB S_mix_position, n));
   return(uval);
@@ -3644,7 +3654,7 @@ static XEN g_set_mix_anchor(XEN n, XEN uval)
   cs = md->current_cs;
   if (cs)
     {
-      val = XEN_TO_C_OFF_T_OR_ELSE(uval, 0);
+      val = beg_to_sample(uval, S_setB S_mix_anchor);
       if (val >= 0)
 	{
 	  md->anchor = val;
@@ -3774,7 +3784,7 @@ static XEN g_mix_sound(XEN file, XEN start_samp)
   sp = any_selected_sound(ss);  /* why not as arg?? -- apparently this is assuming CLM with-sound explode */
   if (sp == NULL) mus_misc_error(S_mix_sound, "no sound to mix into!", file);
   filename = mus_expand_filename(XEN_TO_C_STRING(file));
-  beg = XEN_TO_C_OFF_T_OR_ELSE(start_samp, 0);
+  beg = beg_to_sample(start_samp, S_mix_sound);
   ss->catch_message = NULL;
   if (mus_file_probe(filename))
     {
@@ -4042,12 +4052,76 @@ static char *mf_to_string(mix_fd *fd)
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(mix_fd, print_mf, mf_to_string)
 
+static mix_fd **dangling_mix_readers = NULL;
+static int dangling_mix_reader_size = 0;
+#define DANGLING_MIX_READER_INCREMENT 16
+
+static void list_mix_reader(mix_fd *fd)
+{
+  int i, loc = -1;
+  if (dangling_mix_reader_size == 0)
+    {
+      dangling_mix_reader_size = DANGLING_MIX_READER_INCREMENT;
+      dangling_mix_readers = (mix_fd **)CALLOC(dangling_mix_reader_size, sizeof(mix_fd *));
+      loc = 0;
+    }
+  else
+    {
+      for (i = 0; i < dangling_mix_reader_size; i++)
+	if (dangling_mix_readers[i] == NULL)
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = dangling_mix_reader_size;
+	  dangling_mix_reader_size += DANGLING_MIX_READER_INCREMENT;
+	  dangling_mix_readers = (mix_fd **)REALLOC(dangling_mix_readers, dangling_mix_reader_size * sizeof(mix_fd *));
+	  for (i = loc; i < dangling_mix_reader_size; i++) dangling_mix_readers[i] = NULL;
+	}
+    }
+  dangling_mix_readers[loc] = fd;
+}
+
+static void unlist_mix_reader(mix_fd *fd)
+{
+  int i;
+  for (i = 0; i < dangling_mix_reader_size; i++)
+    if (fd == dangling_mix_readers[i])
+      {
+	dangling_mix_readers[i] = NULL;
+	break;
+      }
+}
+
 static void mf_free(mix_fd *fd)
 {
-  if (fd) free_mix_fd(fd); 
+  if (fd) 
+    {
+      unlist_mix_reader(fd);
+      free_mix_fd(fd); 
+    }
 }
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mix_fd, free_mf, mf_free)
+
+static void release_dangling_mix_readers(mix_info *md)
+{
+  int i;
+  mix_fd *fd;
+  for (i = 0; i < dangling_mix_reader_size; i++)
+    {
+      fd = dangling_mix_readers[i];
+      if ((fd) && 
+	  (fd->md == md))
+	{
+	  fd->calc = C_ZERO;
+	  fd->md = NULL;
+	  dangling_mix_readers[i] = NULL;
+	}
+    }
+}
 
 static XEN g_make_mix_sample_reader(XEN mix_id)
 {
@@ -4061,6 +4135,7 @@ static XEN g_make_mix_sample_reader(XEN mix_id)
   mf = init_mix_read(md, FALSE); 
   if (mf)
     {
+      list_mix_reader(mf);
       XEN_MAKE_AND_RETURN_OBJECT(mf_tag, mf, 0, free_mf);
     }
   return(XEN_FALSE);
@@ -4111,38 +4186,39 @@ static char *tf_to_string(track_fd *fd)
   mix_fd *mf = NULL;
   char *desc;
   char toi[16];
-  int i, len;
+  int i, len, happy = FALSE, banner = FALSE, previous = FALSE;
   desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (fd == NULL)
     sprintf(desc, "#<track-sample-reader: null>");
   else
     {
       if ((fd->fds) && (fd->mixes > 0))
-	mf = fd->fds[0];
-      if (mf == NULL)
-	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: inactive>", fd);
-      else
 	{
-	  md = mf->md;
-	  mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: %s chan %d via mixes '(",
-		       fd,
-		       md->in_filename,
-		       (md->cp)->chan);
 	  len = fd->mixes;
-	  if (len > 0)
+	  for (i = 0; i < len; i++)
 	    {
-	      for (i = 0; i < len - 1; i++)
+	      mf = fd->fds[i];
+	      if ((mf) && (mf->md) && (MIX_TYPE_OK(mf->type)))
 		{
-		  mf = fd->fds[i];
-		  mus_snprintf(toi, 16, "%d ", (mf->md)->id);
+		  md = mf->md;
+		  happy = TRUE;
+		  if (!banner)
+		    {
+		      mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: %s chan %d via mixes '(",
+				   fd,
+				   md->in_filename,
+				   (md->cp)->chan);
+		      banner = TRUE;
+		    }
+		  mus_snprintf(toi, 16, "%s%d", (previous) ? " ": "", (mf->md)->id);
+		  previous = TRUE;
 		  strcat(desc, toi);
 		}
-	      mf = fd->fds[len - 1];
-	      mus_snprintf(toi, 16, "%d)>", (mf->md)->id);
-	      strcat(desc, toi);
 	    }
-	  else strcat(desc, ")>");
+	  strcat(desc, ")>");
 	}
+      if (!happy)
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: inactive>", fd);
     }
   return(desc);
 }
@@ -4306,37 +4382,32 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   v = TO_VCT(obj);
   len = v->length;
   cp = get_cp(snd, chn, S_mix_vct);
-  bg = XEN_TO_C_OFF_T_OR_ELSE(beg, 0);
-  if (bg < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mix_vct, 2, beg, "beg ~A < 0?");
+  bg = beg_to_sample(beg, S_mix_vct);
+  if (XEN_NOT_BOUND_P(with_tag))
+    with_mixer = with_mix_tags(cp->state);
+  else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(with_tag);
+  data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
+  for (i = 0; i < len; i++)
+    data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
+  if (XEN_STRING_P(origin))
+    edname = XEN_TO_C_STRING(origin);
+  if ((len < MAX_BUFFER_SIZE) && (!with_mixer))
+    {
+      sf = init_sample_read(bg, cp, READ_FORWARD);
+      for (i = 0; i < len; i++)
+	data[i] += read_sample(sf);
+      free_snd_fd(sf);
+      change_samples(bg, len, data, cp, LOCK_MIXES, S_mix_vct, cp->edit_ctr);
+    }
   else
     {
-      if (XEN_NOT_BOUND_P(with_tag))
-	with_mixer = with_mix_tags(cp->state);
-      else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(with_tag);
-      data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
-      for (i = 0; i < len; i++)
-	data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
-      if (XEN_STRING_P(origin))
-	edname = XEN_TO_C_STRING(origin);
-      if ((len < MAX_BUFFER_SIZE) && (!with_mixer))
-	{
-	  sf = init_sample_read(bg, cp, READ_FORWARD);
-	  for (i = 0; i < len; i++)
-	    data[i] += read_sample(sf);
-	  free_snd_fd(sf);
-	  change_samples(bg, len, data, cp, LOCK_MIXES, S_mix_vct, cp->edit_ctr);
-	}
-      else
-	{
-	  newname = save_as_temp_file(&data, 1, len, SND_SRATE(cp->sound));
-	  mix_id = mix(bg, len, 1, &cp, newname, DELETE_ME, (char *)((edname == NULL) ? S_mix_vct : edname), with_mixer);
-	  if (!with_mixer) snd_remove(newname, TRUE);
-	  FREE(newname);
-	}
-      update_graph(cp);
-      FREE(data);
+      newname = save_as_temp_file(&data, 1, len, SND_SRATE(cp->sound));
+      mix_id = mix(bg, len, 1, &cp, newname, DELETE_ME, (char *)((edname == NULL) ? S_mix_vct : edname), with_mixer);
+      if (!with_mixer) snd_remove(newname, TRUE);
+      FREE(newname);
     }
+  update_graph(cp);
+  FREE(data);
   return(xen_return_first(C_TO_SMALL_XEN_INT(mix_id), obj));
 }
 

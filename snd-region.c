@@ -62,6 +62,7 @@ static void free_region(region *r, int complete)
   /* if not complete, just clear out old data (edited region being saved) */
   if (r)
     {
+      release_region_readers(r->id);
       if ((complete == COMPLETE_DELETION) && (r->editor_copy))
 	{
 	  sp = r->editor_copy; 
@@ -1333,8 +1334,8 @@ selection is used."
     {
       XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_make_region, "a number");
       XEN_ASSERT_TYPE(XEN_NUMBER_P(end), end, XEN_ARG_2, S_make_region, "a number");
-      ibeg = XEN_TO_C_OFF_T_OR_ELSE(beg, 0);
-      iend = XEN_TO_C_OFF_T_OR_ELSE(end, 0);
+      ibeg = beg_to_sample(beg, S_make_region);
+      iend = beg_to_sample(end, S_make_region);
       ss = get_global_state();
       if (XEN_TRUE_P(chn_n))
 	{

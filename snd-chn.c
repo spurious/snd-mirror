@@ -4376,7 +4376,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       break;
     case CP_CURSOR:
       cp->cursor_on = TRUE; 
-      cursor_moveto(cp, XEN_TO_C_OFF_T_OR_ELSE(on, 0));
+      cursor_moveto(cp, beg_to_sample(on, caller));
       return(C_TO_XEN_OFF_T(CURSOR(cp)));
       break;
     case CP_EDPOS_CURSOR:
@@ -4384,7 +4384,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 	int pos;
 	off_t cpos;
 	pos = to_c_edit_position(cp, cp_edpos, caller, 3);
-	cpos = XEN_TO_C_OFF_T_OR_ELSE(on, 0);
+	cpos = beg_to_sample(on, caller);
 	if (pos == cp->edit_ctr)
 	  {
 	    cp->cursor_on = TRUE; 
@@ -4400,11 +4400,11 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       update_graph(cp);
       break;
     case CP_AP_LOSAMP:
-      set_x_axis_x0(cp, XEN_TO_C_OFF_T_OR_ELSE(on, 0)); 
+      set_x_axis_x0(cp, beg_to_sample(on, caller));
       return(on);
       break;
     case CP_AP_HISAMP:
-      set_x_axis_x1(cp, XEN_TO_C_OFF_T_OR_ELSE(on, 1)); 
+      set_x_axis_x1(cp, beg_to_sample(on, caller));
       return(on);
       break;
     case CP_SQUELCH_UPDATE:

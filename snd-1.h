@@ -670,6 +670,7 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, i
 Float chn_sample(off_t samp, chan_info *cp, int pos);
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sf_to_string(snd_fd *fd);
+void release_region_readers(int reg);
 int sf_p(XEN obj);
 snd_fd *get_sf(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);

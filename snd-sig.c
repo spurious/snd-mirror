@@ -3244,10 +3244,7 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_pad_channel, "a number");
   ASSERT_CHANNEL(S_pad_channel, snd, chn, 3);
   cp = get_cp(snd, chn, S_pad_channel);
-  bg = XEN_TO_C_OFF_T_OR_ELSE(beg, 0);
-  if (bg < 0) XEN_ERROR(NO_SUCH_SAMPLE,
-			XEN_LIST_2(C_TO_XEN_STRING(S_pad_channel),
-				   beg));
+  bg = beg_to_sample(beg, S_pad_channel);
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
   extend_with_zeros(cp, 
 		    bg,
