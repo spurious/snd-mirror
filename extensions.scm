@@ -453,7 +453,10 @@ If 'check' is #f, the hooks are removed."
 							   (set! (f snd chn) val))
 							 channel-funcs
 							 (list-ref (cadddr state) chn))
-					       (set! (squelch-update snd chn) #f))))))))
+					       (set! (squelch-update snd chn) #f)
+					       (if (time-graph? snd chn) (update-time-graph snd chn))
+					       (if (transform-graph? snd chn) (update-transform-graph snd chn))
+					       )))))))
     ;; next hooks save the current states info in the saved state file
     (add-hook! open-hook (lambda (filename)
 			   (if (and (null? states)

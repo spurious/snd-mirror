@@ -22,9 +22,9 @@
 	 (delB 0.0)
 	 (file-dur (mus-length *reverb*))
 	 (decay-dur (mus-srate))
-	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
-	 (scl volume)
-	 (len (+ decay-dur file-dur)))
+	 (len (+ decay-dur file-dur))
+	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration (exact->inexact (/ len (mus-srate)))) #f))
+	 (scl volume))
     (ws-interrupt?)
     (if (or amp-env low-pass)
 	(run
@@ -33,7 +33,7 @@
 	       ((= i len))
 	     (let* ((inval (ina i *reverb*))
 		    (allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval))))
-		    (amp (if amp-env (env envA) 1.0)))
+		    (amp (if envA (env envA) 1.0)))
 	       (set! comb-sum-2 comb-sum-1)
 	       (set! comb-sum-1 comb-sum)
 	       (set! comb-sum 

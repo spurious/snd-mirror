@@ -2472,7 +2472,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 
 (define (show-font-name font)
-  "(show-font-name font) shows the Snd-related name and the X-related name of each font in a widget's font list"
+  "(show-font-name font-list) shows the Snd-related name and the X-related name of each font in a font list"
   (define (show-next-font context)
     (let ((next-font (XmFontListGetNextFont context)))
       (if (car next-font)
@@ -2497,7 +2497,7 @@ Reverb-feedback sets the scaler on the feedback.
 	"no fonts?")))
 
 (define (show-widget-font widget)
-  "(show-widget-font) shows what fonts are associated with a widget"
+  "(show-widget-font widget) shows what fonts are associated with a widget"
   (show-font-name (cadr (XtVaGetValues widget (list XmNfontList 0)))))
 
 
@@ -2835,7 +2835,6 @@ Reverb-feedback sets the scaler on the feedback.
 		 new-minmax XmNactivateCallback 
 		 (lambda (w c i)
 		   (let ((mv (find-if (lambda (n) (= (car n) c)) maxed-snds)))
-		     (display mv)
 		     (if mv
 			 (let ((maxed (caddr mv)))
 			   (if maxed

@@ -31,26 +31,14 @@
 ;;; test 28: errors
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
-;;; check: check-for-unsaved-edits cross-synthesis dlocsig
-;;;        explode-sf2 extract-channel(s) fft-edit fft-squelch make-biquad
-;;;        make-identity-mixer map-sound-files mark-context mark-explode mark-loops menu-hook
-;;;        mouse-enter|leave-text-hook mpg mus-audio-error mus-audio-error-name mus-audio-set-oss-buffers
-;;;        notch-out-rumble-and-hiss play-syncd-marks remember-sound-state
-;;;        snap-mark-to-beat snap-mix-to-beat snd-apropos snd-break snd-debug
-;;;        snd-remember-paths snd-trace sound-interp undo-channel undo-edit window-samples
-;;;        zip-sound zipper attract bird one-bird make-birds anoi expfil jl-reverb
-;;;        touch-tone map-envelopes comb-filter osc-formants filtered-env
+;;; check: check-for-unsaved-edits cross-synthesis dlocsig explode-sf2 extract-channel(s) fft-edit fft-squelch mark-explode
+;;;        mpg notch-out-rumble-and-hiss play-syncd-marks snap-mark-to-beat snap-mix-to-beat snd-break snd-debug
+;;;        snd-remember-paths snd-trace sound-interp window-samples zip-sound zipper anoi comb-filter osc-formants filtered-env
 ;;;        zcomb notch-filter formant-filter remove-clicks squelch-vowels snd-out flash-selected-data
-;;;        files-popup-buffer open-next-file-in-directory flecho ring-mod chained-dsps read-ogg
-;;;        write-ogg read-speex write-speex read-flac write-flac window-rms fft-peak
-;;;        make-sound-interp next-peak find-pitch sound-data->list redo-channel make-fm-violin
-;;;        descibe-hook remove-local-hook! *html-reader* html ? prune-db stop-dac delete-all-tracks
-;;;        make-pvocoder pvocoder show-input in-out snd-clock-icon
-;;;        add-tooltip show-all-atoms set-channel-drop
-;;;        show-font-name show-widget-font add-text-to-status-area with-minmax-button set-root-window-color
-;;;        notebook-with-top-tabs *clm-file-name* *clm-channels* *clm-data-format* *clm-delete-reverb*
-;;;        *clm-verbose* *clm-play* *clm-statistics* *clm-reverb* *clm-reverb-data* *clm-reverb-channels*
-;;;        xe-create-enved xe-envelope make-zipper
+;;;        files-popup-buffer open-next-file-in-directory flecho ring-mod read-ogg
+;;;        write-ogg read-speex write-speex read-flac write-flac window-rms
+;;;        make-sound-interp next-peak find-pitch make-fm-violin remove-local-hook! html ? prune-db stop-dac delete-all-tracks
+;;;        make-pvocoder pvocoder in-out xe-create-enved xe-envelope make-zipper
 ;;; need all html example code in autotests
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
@@ -434,6 +422,7 @@
 	'copy-context copy-context 0
 	'cursor-context cursor-context 3
 	'selection-context selection-context 2
+	'mark-context mark-context 4
 	'show-no-axes show-no-axes 0
 	'show-all-axes show-all-axes 1
 	'show-x-axis show-x-axis 2
@@ -1849,6 +1838,7 @@
 	  (if (and m1 (= clmtest 0)) (snd-display ";oboe: mus-sound-maxamp-exists before maxamp: ~A" m1))
 	  (if (not (mus-sound-maxamp-exists? "oboe.snd")) 
 	      (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
+	  (mus-audio-set-oss-buffers 4 12)
 	  
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
 	    (if (not (string=? str "19-Oct 09:46 PDT"))
@@ -6989,6 +6979,8 @@ EDITS: 5
 	      (snd-display ";disk-kspace of bogus file = ~A" (disk-kspace "/baddy/hiho"))))
 	(if (not (= (transform-samples-size) 0)) (snd-display ";transform-samples-size ~A?" (transform-samples-size)))
 	(set! (transform-graph?) #t)
+	(let ((pk (fft-peak index 0 1.0)))
+	  (if (not pk) (snd-display ";fft-peak? ")))
 	(set! (time-graph?) #t)
 	(if (not (string=? (x-axis-label) "time")) (snd-display ";def time x-axis-label: ~A" (x-axis-label)))
 	(set! (x-axis-label index 0 time-graph) "no time")
@@ -11047,42 +11039,7 @@ EDITS: 5
 ;;; mix a scissor-tailed flycatcher call into the current sound
 ;;; see bird.scm for lots more birds
 
-(define (bigbird start dur frequency freqskew amplitude
-		 freq-envelope amp-envelope partials
-		 lpcoeff)
-  (define sum-partials
-    (lambda (lst sum)
-      (if (null? lst)
-	  sum
-	  (sum-partials (cddr lst) (+ sum (cadr lst))))))
-  
-  (define scale-partials
-    (lambda (lst scl newlst)
-      (if (null? lst)
-	  newlst
-	  (scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst))))))))
-  
-  (define normalize-partials
-    (lambda (lst)
-      (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '())))
-  
-  (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
-	 (os (make-oscil :frequency frequency))
-	 (fil (make-one-pole lpcoeff (- 1.0 lpcoeff)))
-	 (coeffs (partials->polynomial (normalize-partials partials)))
-	 (amp-env (make-env amp-envelope amplitude dur))
-	 (len (round (* (srate) dur)))
-	 (beg (round (* (srate) start)))
-	 (sf (make-sample-reader beg))
-	 (out-data (make-vct len)))
-    (vct-map! out-data
-	      (lambda ()
-		(+ (next-sample sf)
-		   (one-pole fil (* (env amp-env)
-				    (polynomial coeffs
-						(oscil os (env gls-env))))))))
-    (free-sample-reader sf)
-    (vct->samples beg len out-data)))
+(load "bird.scm")
 
 (define (scissor begin-time)
   "(scissor beg) is the scissor-tailed flycatcher"
@@ -11090,8 +11047,7 @@ EDITS: 5
     (bigbird begin-time 0.05 1800 1800 .2 
 	     scissorf 
 	     '(0 0  25 1  75 1  100 0) 
-	     '(1 .5  2 1  3 .5  4 .1  5 .01)
-	     1.0)))
+	     '(1 .5  2 1  3 .5  4 .1  5 .01))))
 
 
 ;;; -------- fm-violin
@@ -12914,7 +12870,8 @@ EDITS: 5
       (let ((gen (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))
 	    (v0 (make-vct 10))
 	    (gen1 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))
-	    (v1 (make-vct 10)))
+	    (v1 (make-vct 10))
+	    (gen2 (make-biquad .1 .2 .3 .4 .5)))
 	(print-and-check gen 
 			 "filter"
 			 "filter: order: 3"
@@ -12932,6 +12889,7 @@ EDITS: 5
 	(if (not (filter? gen)) (snd-display ";~A not filter?" gen))
 	(if (not (= (mus-length gen) 3)) (snd-display ";filter length: ~D?" (mus-length gen)))
 	(if (or (fneq (vct-ref v0 1) 0.125) (fneq (vct-ref v0 2) .031)) (snd-display ";filter output: ~A" v0))
+	(if (not (filter? gen2)) (snd-display ";make-biquad: ~A" gen2))
 	(let ((xs (mus-xcoeffs gen))
 	      (ys (mus-ycoeffs gen)))
 	  (if (or (not (equal? xs (list->vct '(.5 .25 .125))))
@@ -16282,7 +16240,7 @@ EDITS: 5
 	(if (not (= (mix-position m1) 321)) (snd-display ";mix-position m1[6]: ~A" (mix-position m1)))
 	(undo)
 	(set! (mix-position m2) 500)
-	(undo)
+	(undo-edit)
 	(ramp-channel 0.0 1.0 3000 100)
 	(catch #t
 	       (lambda ()
@@ -16303,11 +16261,11 @@ EDITS: 5
 	  (if (or (not (= (mix-position m1) 0))
 		  (not (= (mix-position m2) 1)))
 	      (snd-display ";as-one-edit positions: ~A ~A" (mix-position m1) (mix-position m2)))
-	  (undo)
+	  (undo-channel)
 	  (if (or (not (= (mix-position m1) 900000))
 		  (not (= (mix-position m2) 400000)))
 	      (snd-display ";as-one-edit positions after undo: (~A): ~A (~A): ~A" m1 (mix-position m1) m2 (mix-position m2)))
-	  (redo)
+	  (redo-channel)
 	  (if (or (not (= (mix-position m1) 0))
 		  (not (= (mix-position m2) 1)))
 	      (snd-display ";as-one-edit positions after redo: ~A ~A" (mix-position m1) (mix-position m2)))
@@ -16328,7 +16286,7 @@ EDITS: 5
 	  (if (not (= (edit-position ind 1) 1))
 	      (snd-display ";edit-position 1 after stereo mix selection: ~A" (edit-position ind 1)))
 	  (set! (sync ind) #f)
-	  (undo 1 ind 0)
+	  (undo-edit 1 ind 0)
 	  (delete-sample 25 ind 0)
 	  (set! (mix-position (1+ md)) 750)
 	  (if (not (= (edit-position ind 1) 2))
@@ -16589,10 +16547,10 @@ EDITS: 5
 	(delete-mix mix1)
 	(if (fneq (maxamp ind 0) 0.0) (snd-display ";delete-mix maxamp: ~A" (maxamp ind 0)))
 	(if (not (mix-locked? mix1)) (snd-display ";delete mix not locked: ~A ~A" mix1 (mix-locked? mix1)))
-	(undo)
+	(undo-channel 1 ind 0)
 	(if (fneq (maxamp ind 0) 0.5) (snd-display ";undelete-mix maxamp: ~A" (maxamp ind 0)))
 	(if (mix-locked? mix1) (snd-display ";undelete mix locked: ~A ~A" mix1 (mix-locked? mix1)))
-	(redo)
+	(redo-channel 1 ind 0)
 	(if (fneq (maxamp ind 0) 0.0) (snd-display ";redelete-mix maxamp: ~A" (maxamp ind 0)))
 	(if (not (mix-locked? mix1)) (snd-display ";redelete mix not locked: ~A ~A" mix1 (mix-locked? mix1)))
 	(undo 2)
@@ -19206,6 +19164,13 @@ EDITS: 5
 			(if (not (= (mark-sample m11 1) 23)) (snd-display ";mark 11th: ~A" (mark-sample m11 1))))
 		    (if (mark? m12) (snd-display ";found 12th mark: ~A ~A ~A" m12 (mark-sample m12 2) (mark-name m12 2)))))))
 	    (close-sound ind))
+	  (if (string? sf-dir)
+	      (let ((ind (open-sound (string-append sf-dir "forest.aiff"))))
+		(mark-loops)
+		(let ((pos (map mark-sample (marks ind 0))))
+		  (if (not (equal? pos (list 24981 144332)))
+		      (snd-display ";forest marked loops: ~A ~A" (marks ind 0) pos)))
+		(close-sound ind)))
 	  
 	  ))
       (run-hook after-test-hook 10)
@@ -21097,6 +21062,15 @@ EDITS: 5
 	     (if (not (equal? (mixes ind 0) '())) (snd-display ";~A: mixes: ~A" name (mixes ind 0)))))
 	 all-tests)
 	(close-sound ind))
+
+      (add-hook! mouse-enter-text-hook
+		 (lambda (w)
+		   (focus-widget w)))
+      (add-hook! mouse-leave-text-hook
+		 (lambda (w)
+		   (focus-widget w)))
+      (describe-hook mouse-enter-text-hook)
+      (reset-almost-all-hooks)
       
       (run-hook after-test-hook 13)
       ))
@@ -25851,13 +25825,13 @@ EDITS: 3
 			       (50 1 50 59 0.0 0.0 0.0 0) (60 1 60 60 0.0 0.0 0.0 0) (61 1 61 70 1.0 0.0 0.0 0) 
 			       (71 1 71 79 0.0 0.0 0.0 0) (80 1 80 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			     vals "step env 30")
-	    (undo 2)
+	    (undo-channel 2)
 	    (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 4 0 9 1.0 0.0 0.0 0) (14 3 9 9 1.0 0.0 0.0 0) 
 			       (15 1 15 19 0.5 -1.49011614158923e-9 0.444444447755814 1) (20 2 0 0 1.0 0.0 0.0 0) 
 			       (21 1 21 24 0.5 0.666666686534882 1.0 1) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 0) 
 			       (40 1 40 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			     old-vals "undo to delete/insert (over step env)"))
-	  (redo 2)
+	  (redo-channel 2)
 	  (check-edit-tree '((0 1 0 3 1.0 0.0 0.0 0) (4 4 0 9 1.0 0.0 0.0 0) (14 3 9 9 1.0 0.0 0.0 0) 
 			     (15 1 15 19 0.5 -1.49011614158923e-9 0.444444447755814 1) (20 2 0 0 1.0 0.0 0.0 0) 
 			     (21 1 21 24 0.5 0.666666686534882 1.0 1) (25 1 25 27 0.5 0.0 0.0 0) (28 -1 0 11 0.0 0.0 0.0 0) 
@@ -29490,6 +29464,9 @@ EDITS: 2
 		(set! (foreground-color snd chn) old-color)))))))
 
 (define new-font (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+(define apropos-cs "(guile-user): close-sound	#<primitive-procedure close-sound>
+(guile-user): close-sound-file	#<primitive-procedure close-sound-file>
+")
 
 (define show-hiho
   ;; show a red "hiho" in the helvetica bold font on a gray background
@@ -30000,12 +29977,6 @@ EDITS: 2
 				       0))))))
 		  (if (> k 127) (begin (set! k (char->integer #\x)) (set! s 4)))
 		  (if (> (my-random 1.0) .99) (clear-listener))
-;		  (display (format #f "[~A~A~A] " 
-;				   (if (= s 4) "C-" (if (= s 8) "M-" (if (= s 12) "CM-" "")))
-;				   (let ((key (XKeysymToString (list 'KeySym k))))
-;				     (or key
-;					 (number->string k)))
-;				   (if (not (sound? ind)) " (no sound)" "")))
 		  (if (or (= k (char->integer #\e)) (= k (char->integer #\E)))
 		      (snd-simulate-keystroke ind 0 (char->integer #\g) 0))
 		  (snd-simulate-keystroke ind (random (channels ind)) k s)
@@ -30016,6 +29987,39 @@ EDITS: 2
 		  (if (not (sound? ind))
 		      (set! ind (open-sound "test.snd")))))
 	      (close-sound ind))))
+
+      (remember-sound-state)
+      (let ((ind (open-sound "oboe.snd")))
+	(set! (transform-graph? ind 0) #t)
+	(set! (show-transform-peaks ind 0) #t)
+	(set! (show-y-zero ind 0) #t)
+	(close-sound ind))
+      (let ((ind (open-sound "oboe.snd")))
+	(if (or (not (transform-graph? ind 0))
+		(not (show-transform-peaks ind 0))
+		(not (show-y-zero ind 0)))
+	    (snd-display ";remember-sound-state: ~A ~A ~A" (transform-graph? ind 0) (show-transform-peaks ind 0) (show-y-zero ind 0)))
+	(close-sound ind))
+      (reset-almost-all-hooks)
+
+      (let ((help (snd-apropos "close-sound"))
+	    (help1 (snd-apropos 'close-sound)))
+        (if (or (not (string=? help help1))
+                (not (string=? help1 apropos-cs)))
+            (snd-display ";snd-apropos: ~A ~A" help help1)))
+
+      (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 1000.0) (snd-display ";~A is pretty long! ~A" n (mus-sound-duration n)))))
+      (if (string? sf-dir)
+	  (map-sound-files 
+	   (lambda (n)
+	     (catch #t
+		    (lambda ()
+		      (if (> (mus-sound-duration (string-append sf-dir n)) 1000.0) 
+			  (snd-display ";~A is pretty long! ~A" 
+				       n 
+				       (mus-sound-duration (string-append sf-dir n)))))
+		    (lambda args #f)))
+	   sf-dir))
 
       (run-hook after-test-hook 21)
       ))
@@ -34296,7 +34300,6 @@ EDITS: 2
 (load "strad.scm")
 (load "noise.scm")
 (load "clm-ins.scm")
-(load "bird.scm")
 (load "piano.scm")
 (load "play.scm")
 
@@ -34669,6 +34672,7 @@ EDITS: 2
 		  (clarinet 5.75 .3 440 .2 1.0)
 		  (flute 6 .3 440 .2 1.0)
 		  (fm-trumpet 6.5 .25)
+		  (touch-tone 6.75 '(7 2 3 4 9 7 1))
 		  (pins 7.0 1.0 "now.snd" 1.0 :time-scaler 2.0)
 		  
 		  (let ((locust '(0 0 40 1 95 1 100 .5))
@@ -34947,6 +34951,66 @@ EDITS: 2
 	      (variable-display (variable-display (* (variable-display (sin (* (variable-display i wid1) .1)) wid3) .5) wid2) wid4))
 	    (XtUnmanageChild variables-dialog)))
 
+      (if (not (= *clm-srate* (default-output-srate))) (snd-display ";*clm-srate*: ~A ~A" *clm-srate* (default-output-srate)))
+      (if (not (= *clm-channels* (default-output-chans))) (snd-display ";*clm-channels*: ~A ~A" *clm-channels* (default-output-channels)))
+      (if (not (= *clm-header-type* (default-output-type))) (snd-display ";*clm-header-type*: ~A ~A" *clm-header-type* (default-output-type)))
+      (if (not (= *clm-data-format* (default-output-format))) (snd-display ";*clm-data-format*: ~A ~A" *clm-data-format* (default-output-format)))
+      (if (not (= *clm-reverb-channels* 1)) (snd-display ";*clm-reverb-channels*: ~A ~A" *clm-reverb-channels*))
+      (if (not (string=? *clm-file-name* "test.snd")) (snd-display ";*clm-file-name*: ~A" *clm-file-name*))
+      (if *clm-play* (snd-display ";*clm-play*: ~A" *clm-play*))
+      (if *clm-verbose* (snd-display ";*clm-verbose*: ~A" *clm-verbose*))
+      (if *clm-statistics* (snd-display ";*clm-statistics*: ~A" *clm-statistics*))
+      (if *clm-reverb* (snd-display ";*clm-reverb*: ~A" *clm-reverb*))
+      (if (not (null? *clm-reverb-data*)) (snd-display ";*clm-reverb-data*: ~A?" *clm-reverb-data*))
+      (if *clm-delete-reverb* (snd-display ";*clm-delete-reverb*: ~A" *clm-delete-reverb*))
+      
+      (set! *clm-channels* 2)
+      (set! *clm-srate* 44100)
+      (set! *clm-file-name* "test.wav")
+      (set! *clm-verbose* #t)
+      (set! *clm-statistics* #t)
+      (set! *clm-play* #t)
+      (set! *clm-data-format* mus-mulaw)
+      (set! *clm-header-type* mus-riff)
+      (set! *clm-delete-reverb* #t)
+      (set! *clm-reverb* jc-reverb)
+      (set! *clm-reverb-data* '(#t 2.0 (list 0 1 3.0 1 4.0 0)))
+      
+      (with-sound () (fm-violin 0 1 440 .1 :reverb-amount .1))
+      
+      (let ((ind (find-sound "test.wav")))
+	(if (not (sound? ind))
+	    (snd-display ";default output in ws: ~A" (map file-name (sounds)))
+	    (begin
+	      (if (not (= (srate ind) 44100)) (snd-display ";default srate in ws: ~A ~A" (srate ind) *clm-srate*))
+	      (if (not (= (channels ind) 2)) (snd-display ";default chans in ws: ~A ~A" (channels ind) *clm-channels*))
+	      (if (not (= (data-format ind) mus-mulaw)) (snd-display ";default format in ws: ~A ~A" (data-format ind) *clm-data-format*))
+	      (if (not (= (header-type ind) mus-riff)) (snd-display ";default type in ws: ~A ~A" (header-type ind) *clm-header-type*))
+	      (if (not (= (frames ind) 88200)) (snd-display ";reverb+1 sec out in ws: ~A" (frames ind)))
+	      (if (file-exists? "test.rev") (snd-display ";perhaps reverb not deleted in ws?"))
+	      (close-sound ind))))
+      
+      (set! *clm-channels* 1)
+      (set! *clm-srate* 22050)
+      (set! *clm-file-name* "test.snd")
+      (set! *clm-verbose* #f)
+      (set! *clm-statistics* #f)
+      (set! *clm-play* #f)
+      (set! *clm-data-format* mus-bshort)
+      (set! *clm-header-type* mus-next)
+      (set! *clm-delete-reverb* #f)
+      (set! *clm-reverb* #f)
+      (set! *clm-reverb-data* '())
+
+      (with-sound (:reverb jl-reverb)
+	(attract 0 1 0.1 2.0)
+        (expfil 0 2 .2 .01 .1 "oboe.snd" "fyow.snd")
+	(fm-violin 0 .1 660 .1 :reverb-amount .1)
+	)
+
+      (make-birds)
+      (map close-sound (sounds))
+      
       (run-hook after-test-hook 23)
       ))
 (set! (optimization) old-opt-23)
@@ -41292,7 +41356,11 @@ EDITS: 2
 	      (display-scanned-synthesis)
 	      (add-mark-pane)
 	      (let ((ind (open-sound "oboe.snd")))
+		(snd-clock-icon ind 6)
+		(add-tooltip (cadr (channel-widgets)) "the w button")
+		(with-minmax-button ind)
 		(make-channel-drop-site ind 0)
+		(set-channel-drop (lambda (file s c) (snd-print file)) ind 0)
 		(let ((drop-site (find-child (XtParent (XtParent (list-ref (channel-widgets ind 0) 7))) "drop here")))
 		  (if drop-site
 		      (begin
@@ -41851,6 +41919,9 @@ EDITS: 2
 	    (if (not (= (.request_code (XEvent -1)) 0)) (snd-display ";error request_code: ~A" (.request_code (XEvent -1))))
 	    (set! (.pad (XColor)) 1)
 	    
+	    ;; snd-motif stuff
+	    (show-widget-font (list-ref (menu-widgets) 1)))
+	    
 	    (if (defined? 'XShapeQueryExtents)
 		(let* ((dpy (XtDisplay (cadr (main-widgets))))
 		       (win (XtWindow (cadr (main-widgets))))
@@ -42385,9 +42456,10 @@ EDITS: 2
 		    struct-accessor-names))
 		 (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) (make-vector 0) '(Cursor 1))))
 	      (gc))
+	    (show-sounds-in-directory)
+	    ;(show-all-atoms)
 	    ))
-	  )
-      (show-sounds-in-directory)
+
       (run-hook after-test-hook 25)
       ))
 
@@ -45553,7 +45625,7 @@ EDITS: 2
 		     two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
 		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
 		     vct? list->vct vct->list vector->vct vct->vector vct-move!  vct-subseq vct little-endian?
-		     clm-channel env-channel map-channel scan-channel play-channel reverse-channel 
+		     clm-channel env-channel map-channel scan-channel play-channel reverse-channel seconds->samples samples->seconds
 		     smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel
 		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel
 		     snd->sample xen->sample snd->sample? xen->sample? make-snd->sample make-xen->sample 
@@ -45908,7 +45980,7 @@ EDITS: 2
 					  make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-channel mus-channels
 					  mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 					  mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
-					  mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-average
+					  mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-average seconds->samples samples->seconds
 					  oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
 					  phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin restart-env
 					  sawtooth-wave sine-summation square-wave src sum-of-cosines table-lookup tap triangle-wave

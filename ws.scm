@@ -178,9 +178,6 @@ returning you to the true top-level."
 (define *output* #f)
 (define *clm-delete-reverb* #f) ; should with-sound clean up reverb stream
 
-(define (seconds->samples secs) 
-  "(seconds->samples secs) converts secs to samples using the current mus-srate sampling rate"
-  (inexact->exact (round (* secs (mus-srate)))))
 (define (times->samples beg dur) 
   "(times->samples beg dur) converts beg and (+ beg dur) to samples, returning both in a list"
   (list (seconds->samples beg) (seconds->samples (+ beg dur))))

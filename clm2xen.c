@@ -339,6 +339,20 @@ static XEN g_linear_to_db(XEN val)
   return(C_TO_XEN_DOUBLE(mus_linear_to_db(XEN_TO_C_DOUBLE(val))));
 }
 
+static XEN g_seconds_to_samples(XEN val) 
+{
+  #define H_seconds_to_samples "(" S_seconds_to_samples " secs): use " S_mus_srate " to convert seconds to samples"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_seconds_to_samples, "a number");
+  return(C_TO_XEN_OFF_T(mus_seconds_to_samples(XEN_TO_C_DOUBLE(val))));
+}
+
+static XEN g_samples_to_seconds(XEN val) 
+{
+  #define H_samples_to_seconds "(" S_samples_to_seconds " samps): use " S_mus_srate " to convert samples to seconds"
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ONLY_ARG, S_samples_to_seconds, "a number");
+  return(C_TO_XEN_DOUBLE(mus_samples_to_seconds(XEN_TO_C_OFF_T(val))));
+}
+
 /* can't use a variable *srate* directly here because the set! side would not communicate the change to C */
 static XEN g_srate(void) 
 {
@@ -4761,6 +4775,8 @@ XEN_NARGIFY_1(g_radians_to_degrees_w, g_radians_to_degrees)
 XEN_NARGIFY_1(g_degrees_to_radians_w, g_degrees_to_radians)
 XEN_NARGIFY_1(g_db_to_linear_w, g_db_to_linear)
 XEN_NARGIFY_1(g_linear_to_db_w, g_linear_to_db)
+XEN_NARGIFY_1(g_seconds_to_samples_w, g_seconds_to_samples)
+XEN_NARGIFY_1(g_samples_to_seconds_w, g_samples_to_seconds)
 XEN_NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
 XEN_NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
 XEN_NARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
@@ -5016,6 +5032,8 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_degrees_to_radians_w g_degrees_to_radians
 #define g_db_to_linear_w g_db_to_linear
 #define g_linear_to_db_w g_linear_to_db
+#define g_seconds_to_samples_w g_seconds_to_samples
+#define g_samples_to_seconds_w g_samples_to_seconds
 #define g_ring_modulate_w g_ring_modulate
 #define g_amplitude_modulate_w g_amplitude_modulate
 #define g_contrast_enhancement_w g_contrast_enhancement
@@ -5325,6 +5343,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_degrees_to_radians,   g_degrees_to_radians_w,   1, 0, 0, H_degrees_to_radians);
   XEN_DEFINE_PROCEDURE(S_db_to_linear,         g_db_to_linear_w,         1, 0, 0, H_db_to_linear);
   XEN_DEFINE_PROCEDURE(S_linear_to_db,         g_linear_to_db_w,         1, 0, 0, H_linear_to_db);
+  XEN_DEFINE_PROCEDURE(S_seconds_to_samples,   g_seconds_to_samples_w,   1, 0, 0, H_seconds_to_samples);
+  XEN_DEFINE_PROCEDURE(S_samples_to_seconds,   g_samples_to_seconds_w,   1, 0, 0, H_samples_to_seconds);
   XEN_DEFINE_PROCEDURE(S_ring_modulate,        g_ring_modulate_w,        2, 0, 0, H_ring_modulate);
   XEN_DEFINE_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
   XEN_DEFINE_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 2, 0, 0, H_contrast_enhancement);
@@ -5923,8 +5943,10 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_sample_to_file,
 	       S_sample_to_file_p,
 	       S_sample_to_frame,
+	       S_samples_to_seconds,
 	       S_sawtooth_wave,
 	       S_sawtooth_wave_p,
+	       S_seconds_to_samples,
 	       S_sine_summation,
 	       S_sine_summation_p,
 	       S_spectrum,

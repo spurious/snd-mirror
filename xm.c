@@ -7,7 +7,7 @@
 #include <config.h>
 #endif
 
-#define XM_DATE "13-Apr-04"
+#define XM_DATE "16-Apr-04"
 
 /* HISTORY: 
  *
@@ -12165,11 +12165,13 @@ static XEN gxm_XSetIOErrorHandler(XEN arg1)
 {
   #define H_XSetIOErrorHandler "int (*XSetIOErrorHandler(handler))() sets the fatal I/O error handler. "
   XEN old_val;
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XSetIOErrorHandler", "proc of 1 arg");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg1) || XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XSetIOErrorHandler", "#f=NULL or function of 1 arg");
   xm_protect(arg1);
   old_val = xm_XIOErrorHandler;
   xm_XIOErrorHandler = arg1;
-  XSetIOErrorHandler(gxm_XIOErrorHandler);
+  if (XEN_FALSE_P(arg1))
+    XSetIOErrorHandler(NULL);
+  else XSetIOErrorHandler(gxm_XIOErrorHandler);
   if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val); /* hmmm... what if we're gc'd on the way back? */
   return(old_val);
 }
@@ -12185,11 +12187,13 @@ static XEN gxm_XSetErrorHandler(XEN arg1)
 {
   #define H_XSetErrorHandler "XSetErrorHandler(proc) causes proc to be called if an error occurs"
   XEN old_val;
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XSetErrorHandler", "proc of 2 args");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg1) || XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XSetErrorHandler", "#f=NULL or function of 2 args");
   xm_protect(arg1);
   old_val = xm_XErrorHandler;
   xm_XErrorHandler = arg1;
-  XSetErrorHandler(gxm_XErrorHandler);
+  if (XEN_FALSE_P(arg1))
+    XSetErrorHandler(NULL);
+  else XSetErrorHandler(gxm_XErrorHandler);
   if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val); /* hmmm... what if we're gc'd on the way back? */
   return(old_val);
 }

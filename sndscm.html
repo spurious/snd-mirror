@@ -193,7 +193,7 @@ The Ruby version of this file is bird.rb.  Just for comparison, the bird instrum
 in Ruby is:</p>
 <pre>
 def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope)
-  gls_env = make_env(freq_envelope, hz_to_radians(freqskew), dur)
+  gls_env = make_env(freq_envelope, hz2radians(freqskew), dur)
   os = make_oscil(frequency)
   amp_env = make_env(amp_envelope, amplitude, dur)
   beg = (srate() * start).round
@@ -1383,7 +1383,7 @@ Cross fade in frequency domain: <a href="#fadedoc">fade.scm</a><br>
   <a class=def name="exvoiced2unvoiced">voiced-&gt;unvoiced</a> amp fftsize r tempo
   <em class=emdef>cnvtest</em> snd0 snd1 amp
   <em class=emdef>"vector synthesis"</em>	
-  <em class=emdef>chained-dsps</em> beg dur #:rest dsps
+  <em class=emdef>chain-dsps</em> beg dur #:rest dsps
 </pre>
 <p><b>expsrc</b> uses sampling rate conversion (the src gen) and granular synthesis (<a class=quiet href="clm.html#granulate">granulate</a>)
 to lengthen or shorten a sound without changing its pitch.  The same idea is used in the effects menu.
@@ -1618,6 +1618,7 @@ a region).
 </p>
 <p>
 <b>map-sound-files</b> applies <i>func</i> to each sound file in <i>dir</i>.
+The <i>func</i> is passed one argument, the sound file name.
 <b>match-sound-files</b> applies <i>func</i> to each sound file in <i>dir</i> and returns a list of files for which func does not return #f.
 </p>
 <pre>
@@ -1835,7 +1836,6 @@ returns all hooks to the empty state.
 
 <A NAME="indexdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>index.scm, index.rb</h2></td></tr></table>
 <pre>
-  <em class=emdef>*html-reader*</em> "mozilla"
   <em class=emdef>html</em> obj
   <em class=emdef>?</em> obj
 </pre>
@@ -3445,7 +3445,7 @@ def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
   chans = (channels() rescue $rbm_channels);
   beg = (srate * start).round;
   len = (srate * dur).round;
-  frq_scl = hz_to_radians(freq);
+  frq_scl = hz2radians(freq);
   modulate = fm_index.nonzero?;
   maxdev = frq_scl * fm_index;
   vln = (not (index_type == :cello))
@@ -3462,7 +3462,7 @@ def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
 	       (fm2_rat - fm2_rat.floor).zero? and 
 	       (fm3_rat - fm3_rat.floor).zero?);
   coeffs = (easy_case and modulate and 
-	    partials_to_polynomial([fm1_rat, index1, 
+	    partials2polynomial([fm1_rat, index1, 
 				  (fm2_rat / fm1_rat).floor, index2,
 				  (fm3_rat / fm1_rat).floor, index3]));
   norm = ((easy_case and modulate and 1.0) or index1);

@@ -1977,7 +1977,7 @@ data.
   <a class=def name="frame-set!">frame-set!</a> <i>f1 chan val</i>         ;<i>f1</i>[<i>chan</i>] = <i>val</i> (also setf with frame-ref)
 
   <em class=emdef>make-empty-mixer</em> <i>chans</i>         ;create a mixer of 0's
-  <a class=def name="make-identity-mixer">make-identity-mixer</a> <i>chans</i>      ;create a mixer of 1's on the diagonals
+  <a class=def name="make-identity-mixer">make-identity-mixer</a> <i>chans</i>      ;create a mixer of 1's on the diagonal
   <a class=def name="make-mixer">make-mixer</a> <i>chans</i> &amp;rest <i>args</i>    ;create a mixer and load it with args
   <a class=def name="mixer?">mixer?</a> <i>obj</i>                     ;is <i>obj a mixer</i>
   <a class=def name="mixer*">mixer*</a> <i>m1 m2</i> &amp;optional <i>outm</i>    ;matrix multiply of <i>m1</i> and <i>m2</i>, return new mixer (or <i>outm</i>)
@@ -2254,6 +2254,7 @@ a few that look for all the world like generators.</p>
   <a class=def name="db-&gt;linear">db-&gt;linear</a> <i>dB</i>                  convert <i>dB</i> to linear value
   <a class=def name="linear-&gt;db">linear-&gt;db</a> <i>val</i>                 convert <i>val</i> to dB
   <a class=def Name="times-&gt;samples">times-&gt;samples</a> <i>start</i> <i>duration</i>  convert <i>start</i> and <i>duration</i> from seconds to samples (beg+dur in latter case)
+  <a class=def name="samples-&gt;seconds">samples-&gt;seconds</a> <i>samps</i>         convert <i>samps</i> to seconds
   <a class=def name="seconds-&gt;samples">seconds-&gt;samples</a> <i>secs</i>          convert <i>secs</i> to samples
   <a class=def name="degrees-&gt;radians">degrees-&gt;radians</a> <i>degs</i>          convert <i>degs</i> to radians
   <a class=def name="radians-&gt;degrees">radians-&gt;degrees</a> <i>rads</i>          convert <i>rads</i> to degrees
@@ -2812,7 +2813,7 @@ To provide a quick overview, the CL bird instrument is</p>
 </p>
 <pre><small>
 def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope)
-  gls_env = make_env(freq_envelope, hz_to_radians(freqskew), dur)
+  gls_env = make_env(freq_envelope, hz2radians(freqskew), dur)
   os = make_oscil(frequency)
   amp_env = make_env(amp_envelope, amplitude, dur)
   beg = (srate() * start).round

@@ -213,7 +213,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 ;;; -------- Correlation --------
 ;;;
-;;; correlation of channels in a stereo sound (uses window-samples given above)
+;;; correlation of channels in a stereo sound
 
 (define (correlate snd chn y0 y1)
   "(correlate snd chn y0 y1) returns the correlation of snd's 2 channels (intended for use with graph-hook)"
