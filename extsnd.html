@@ -5294,6 +5294,8 @@ Here we're using <i>buffer</i>, a CLM average generator, to track the
 average of the sum of the squares of the last 128 input samples.
 When that average falls below
 the argument <i>silence</i>, we replace the current sample with <i>replacement</i>.
+(It may be easier in complex cases to use with-sound and set-samples, rather than map-chan. 
+See <a href="#setsamples">step-src</a> for example.)
 <br><br>
 It is possible to break out of a map, flushing any edits, via call-with-current-continuation:
 <br><br>
@@ -5724,6 +5726,7 @@ return a list of currently active players.
 return the X axis value that corresponds to the graph (screen pixel) position <i>xpos</i>.
 To find the sample that the mouse is pointing at, given the current mouse position,
 <code>(inexact-&gt;exact (* (srate snd) (position-&gt;x x snd chn)))</code>.
+See gui.scm for examples.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5734,6 +5737,7 @@ To find the sample that the mouse is pointing at, given the current mouse positi
 </td></tr>
 <tr><td></td><td>
 return the Y axis value that corresponds to the graph (screen pixel) position <i>ypos</i>.
+See gui.scm for examples.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6156,7 +6160,7 @@ dithering: <a href="sndscm.html#ditherchannel">dither-channel</a> (extensions.sc
 </td></tr>
 <tr><td></td><td>
 <b>ramp-channel</b> is a slight extension of scale-channel. It scales samples in the given sound/channel
-between beg and beg + dur by a ramp going from rmp0 to rmp1. (<b>ramp-channel</b> underlies the virtual envelope operations).
+between beg and beg + dur by a (linear) ramp going from rmp0 to rmp1. (<b>ramp-channel</b> underlies the virtual envelope operations).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6217,7 +6221,7 @@ In Ruby, <b>redo</b> is a part of the loop handling, so Snd's redo is renamed re
 <tr><td></td><td>
 post <i>msg</i> in <i>snd</i>'s minibuffer.  This is the text widget between the sound's filename and the buttons
 on the right, beneath the graph.  It is intended to mimic Emacs' minibuffer, being useful mainly for short,
-temporary messages.  C-g clears it.
+temporary messages.  C-g clears it.  See also <a href="#promptinminibuffer">prompt-in-minibuffer</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6767,6 +6771,19 @@ it's probably simpler to use <a href="clm.html#with-sound">with-sound</a> (from 
 </td></tr>
 <tr><td></td><td>
 return the brief (no directory) form of <i>snd</i>'s filename.
+<br><br>
+<table border=0><tr><td>
+<pre>
+&gt;<em class=typing>(open-sound "oboe.snd")</em>
+<em class=listener>0</em>
+&gt;<em class=typing>(file-name 0)</em>
+<em class=listener>"/home/bil/cl/oboe.snd"</em>
+&gt;<em class=typing>(short-file-name 0)</em>
+<em class=listener>"oboe.snd"</em>
+</pre>
+</td></tr></table>
+
+
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6791,6 +6808,8 @@ either <code>show-x-axis-unlabelled</code> or <code>show-all-axes-unlabelled</co
 </td></tr>
 <tr><td></td><td>
 If #t, a background grid is displayed (default is #f).
+<br><br>
+<img src="grid.png" alt="grid">
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7619,6 +7638,7 @@ return (list x0 x1) -- current x axis time domain bounds in seconds.
 </td></tr>
 <tr><td></td><td>
 return the graph (screen pixel) position that corresponds to the X axis value <i>x</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
+See draw.scm or gtk-popup.scm for examples.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7727,7 +7747,7 @@ value of y axis zoom slider.  See, for example, <a href="#xdisplayenergy">displa
 fft zero pad size as a multiple of the fft size; <code>(set! (zero-pad) 1)</code>
 gives you half data, half zeros (default: 0) (the data length is 
 determined by the nominal transform-size).  Zero padding causes interpolation 
-of the fft points, making the display smoother.
+of the fft points, making the display look smoother.
 </td></tr>
 
 <tr><td></td><td>
