@@ -34,7 +34,7 @@ char *copy_string(const char *str)
   char *newstr = NULL;
   if (str)
     {
-      newstr = (char *)CALLOC(strlen(str)+1, sizeof(char));
+      newstr = (char *)MALLOC((strlen(str) + 1) * sizeof(char));
       strcpy(newstr, str);
     }
   return(newstr);
@@ -67,7 +67,7 @@ char *filename_without_home_directory(char *name)
   int i, len, last_slash;
   last_slash = 0;
   len = strlen(name);
-  for (i = 0; i < len-1; i++) 
+  for (i = 0; i < len - 1; i++) 
     if (name[i] == '/') 
       last_slash = i + 1;
   return((char *)(name + last_slash));
@@ -105,7 +105,7 @@ char *prettyf(Float num, int tens)
       return(copy_string(prtbuf));
     }
   fullf = (int)num;
-  if ((num-fullf) == 0.0) 
+  if ((num - fullf) == 0.0) 
     {
       if (num < 100.0)
 	sprintf(prtbuf, "%d%c0", fullf, STR_decimal);
@@ -128,7 +128,7 @@ char *prettyf(Float num, int tens)
     }
   sprintf(prtbuf, "%d", fullf);
   len = strlen(prtbuf);
-  newval=(char *)CALLOC(len + tens + 10, sizeof(char));
+  newval = (char *)CALLOC(len + tens + 10, sizeof(char));
   sn = newval;
   sp = prtbuf;
   if ((*sp) == '-') 
@@ -138,9 +138,9 @@ char *prettyf(Float num, int tens)
       sp++; 
       len--;
     }
-  if (len >= (tens+1))
+  if (len >= (tens + 1))
     {
-      for (i = 0; i < len-tens-1; i++) 
+      for (i = 0; i < len - tens - 1; i++) 
 	{
 	  (*sn) =(*sp); 
 	  sn++; 
@@ -155,7 +155,7 @@ char *prettyf(Float num, int tens)
       sn++;
       (*sn) = STR_decimal;
       sn++;
-      for (i = 0; i < abs(len-tens-1); i++) 
+      for (i = 0; i < abs(len - tens - 1); i++) 
 	{
 	  (*sn) = '0';
 	  sn++;

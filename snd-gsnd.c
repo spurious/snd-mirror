@@ -854,10 +854,10 @@ static void set_snd_revscl_1(snd_info *sp, Float val, int setadj)
   if (j > 6) j = 6;
   if (j < 6) 
     {
-      revscl_number_buffer[5] ='0';
-      revscl_number_buffer[4] ='0'; 
-      revscl_number_buffer[3] ='0';
-      revscl_number_buffer[2] ='0'; 
+      revscl_number_buffer[5] = '0';
+      revscl_number_buffer[4] = '0'; 
+      revscl_number_buffer[3] = '0';
+      revscl_number_buffer[2] = '0'; 
       revscl_number_buffer[1] = STR_decimal;
     }
   for (i = 0; i < j; i++) (*ps++) = (*fs++);

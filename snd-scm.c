@@ -2174,7 +2174,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       if ((!NUMBER_P(y0)) || 
 	  (!NUMBER_P(y1)))
 	{
-	  for (i = 1; i < len; i+=2)
+	  for (i = 1; i < len; i += 2)
 	    {
 	      val = lg->data[0][i];
 	      if (ymin > val) ymin = val;

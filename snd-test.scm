@@ -1839,6 +1839,36 @@
   
 	  (close-sound ind1)
 	  (close-sound ind2)))
+
+      (let* ((ind1 (open-sound "oboe.snd"))
+	     (len (frames ind1))
+	     (ctr 0))
+	(map-chan (lambda (n)
+		    (if (= ctr 1) (set! ctr 0) (set! ctr 1))
+		    (if (= ctr 0)
+			(* n 2.0)
+			#f))
+		  0 (frames ind1) "cut 2" ind1 0)
+	(if (> (frames ind1) (+ (* len 2) 1))
+	    (snd-display (format #f ";map-chan cut: ~A ~A?" len (frames ind1))))
+	(revert-sound ind1)
+	(set! ctr 0)
+	(map-chan (lambda (n)
+		    (set! ctr (1+ ctr))
+		    (if (> ctr 3)
+			#t
+			n))
+		  0 (frames ind1) "cut none" ind1 0)
+	(if (> ctr 4)
+	    (snd-display (format #f ";map-chan no-edit count: ~A?" ctr)))
+	(revert-sound ind1)
+	(map-chan (lambda (n)
+		    (vct n (* n 3)))
+		  0 (frames ind1) "cut 2" ind1 0)
+	(if (> (abs (- (frames ind1) (* len 2))) 3)
+	    (snd-display (format #f ";map-chan double: ~A ~A?" len (frames ind1))))
+	
+	(close-sound ind1))
       ))
 
 

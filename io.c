@@ -1252,7 +1252,7 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **
 
 int mus_file_write_zeros(int tfd, int num)
 {
-  int i, lim, curnum, err;
+  int lim, curnum, err;
   io_fd *fd;
   char *charbuf = NULL;
   if (tfd == MUS_DAC_REVERB) return(0);
@@ -1281,7 +1281,7 @@ int mus_file_write_zeros(int tfd, int num)
     }
   lim = num * (fd->bytes_per_sample);
   curnum = min(lim, BUFLIM);
-  for (i = 0; i < curnum; i++) charbuf[i] = 0;
+  /* for (i = 0; i < curnum; i++) charbuf[i] = 0; */ /* using calloc, so surely this is unnecessary? */
   while (curnum > 0)
     {
       err = checked_write(tfd, charbuf, curnum);

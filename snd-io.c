@@ -28,8 +28,15 @@ static void c_io_bufclr (int *io, int *datai, int beg)
 	{
 	  j = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK] + k]);
 	  if (j)
-	    for (i = beg; i < end; i++) 
-	      j[i] = MUS_SAMPLE_0;
+	    {
+#if HAVE_MEMSET
+	      if (beg == 0)
+		memset((void *)j, 0, end * sizeof(MUS_SAMPLE_TYPE));
+	      else
+#endif
+	      for (i = beg; i < end; i++) 
+		j[i] = MUS_SAMPLE_0;
+	    }
 	}
     }
 }
@@ -68,7 +75,7 @@ static void reposition_file_buffers_1(int loc, int *io, int *datai)
       if (bytes > 0) 
 	{
 #if LONG_INT_P
-	  bufs = (MUS_SAMPLE_TYPE **)MALLOC(io[SND_IO_CHANS], sizeof(MUS_SAMPLE_TYPE *));
+	  bufs = (MUS_SAMPLE_TYPE **)MALLOC(io[SND_IO_CHANS] * sizeof(MUS_SAMPLE_TYPE *));
 	  for (i = 0; i < io[SND_IO_CHANS]; i++) 
 	    bufs[i] = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK] + i]);
 	  mus_file_read_chans(io[SND_IO_FD],

@@ -1655,7 +1655,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	    {
 	      for (k = 0; sr->sample < dur; k++) /* sr->sample tracks input location -- produce output until input exhausted */
 		{
-		  idata[j] =(MUS_FLOAT_TO_SAMPLE(run_src(sr, 0.0)));
+		  idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr, 0.0)));
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {

@@ -316,7 +316,7 @@ static int get_callback_slot(void)
       return(0);
     }
   for (i = 0; i < num_inputs; i++)
-    if (BOUND_P(added_input_callbacks[i]))
+    if (NOT_BOUND_P(added_input_callbacks[i]))
       return(i);
   old_len = num_inputs;
   num_inputs += 4;

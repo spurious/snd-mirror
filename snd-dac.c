@@ -520,7 +520,7 @@ static void nrev(void *ur, Float *rins, Float *routs, int chans)
 	           mus_comb(r->combs[4], rin, 0.0) + 
 	           mus_comb(r->combs[5], rin, 0.0), 0.0), 0.0), 0.0)), 0.0);
   for (i = 0; i < chans; i++)
-    routs[i] = mus_all_pass(r->allpasses[i+4], rout, 0.0);
+    routs[i] = mus_all_pass(r->allpasses[i + 4], rout, 0.0);
 }
 
 static void freeverb(void *ur, Float *rins, Float *routs, int chans)
@@ -907,9 +907,9 @@ static Float *sample_linear_env(env *e, int order)
   data = (Float *)CALLOC(order, sizeof(Float));
   last_x = e->data[(e->pts - 1) * 2];
   step = 2 * last_x / ((Float)order - 1);
-  for (i = 0, x = 0.0; i < order/2; i++, x += step) 
+  for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
     data[i] = list_interp(x, e->data, e->pts);
-  for (j = order/2-1, i = order/2; (i < order) && (j >= 0); i++, j--) 
+  for (j = order / 2 - 1, i = order / 2; (i < order) && (j >= 0); i++, j--) 
     data[i] = data[j];
   return(data);
 }
@@ -1900,7 +1900,7 @@ static void make_dac_buffers(dac_state *dacp)
       if (r_ins) FREE(r_ins);
       r_outs = (Float *)CALLOC(dacp->channels, sizeof(Float));
       r_ins = (Float *)CALLOC(dacp->channels, sizeof(Float));
-      if (BOUND_P(v_ins))
+      if (NOT_BOUND_P(v_ins))
 	{
 	  v_ins = make_vct_wrapper(dacp->channels, r_ins);
 	  v_outs = make_vct_wrapper(dacp->channels, r_outs);

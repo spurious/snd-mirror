@@ -373,18 +373,18 @@ static float big_or_little_endian_float (const unsigned char *n, int little)
 
 static int match_four_chars(const unsigned char *head, const unsigned char *match)
 { 
-  int i;
-  for (i = 0; i < 4; i++) 
-    if (head[i] != match[i])
-      return(0);
-  return(1);
+  return((head[0] == match[0]) &&
+	 (head[1] == match[1]) &&
+	 (head[2] == match[2]) &&
+	 (head[3] == match[3]));
 }
   
 static void write_four_chars(unsigned char *head, const unsigned char *match)
 {
-  int i;
-  for (i = 0; i < 4; i++) 
-    head[i] = match[i];
+  head[0] = match[0];
+  head[1] = match[1];
+  head[2] = match[2];
+  head[3] = match[3];
 }
 
 char *mus_header_type_name(int type)

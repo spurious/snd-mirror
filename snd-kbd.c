@@ -943,7 +943,7 @@ static int get_count_1(char *number_buffer, int number_ctr, int dot_seen, chan_i
   if (dot_seen)
     {
       sscanf(number_buffer, "%f", &f);
-      return((int)(f*SND_SRATE(cp->sound)));
+      return((int)(f * SND_SRATE(cp->sound)));
     }
   else
     {

@@ -482,7 +482,15 @@ Float *mus_set_data(mus_any *gen, Float *new_data)
 Float mus_ring_modulate(Float sig1, Float sig2) {return(sig1 * sig2);}
 Float mus_amplitude_modulate(Float carrier, Float sig1, Float sig2) {return(sig1 * (carrier + sig2));}
 Float mus_contrast_enhancement(Float sig, Float index) {return(mus_sin((sig * M_PI_2) + (index * mus_sin(sig * TWO_PI))));}
-void mus_clear_array(Float *arr, int size) {int i; for (i = 0; i < size; i++) arr[i] = 0.0;}
+void mus_clear_array(Float *arr, int size) 
+{
+#if HAVE_MEMSET
+  memset((void *)arr, 0, size * sizeof(Float));
+#else
+  int i; 
+  for (i = 0; i < size; i++) arr[i] = 0.0;
+#endif
+}
 
 Float mus_dot_product(Float *data1, Float *data2, int size)
 {
@@ -1214,14 +1222,18 @@ Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int ta
 {
   int partial, i, k;
   Float amp, freq, angle;
+#if HAVE_MEMSET
+  memset((void *)table, 0, table_size * sizeof(Float));
+#else
   for (i = 0; i < table_size; i++) table[i] = 0.0;
-  for (partial = 0, k = 1; partial < partials; partial++, k+=2)
+#endif
+  for (partial = 0, k = 1; partial < partials; partial++, k += 2)
     {
       amp = partial_data[k];
       if (amp != 0.0)
 	{
 	  freq = (partial_data[partial * 2] * TWO_PI) / (Float)table_size;
-	  for (i = 0, angle = 0.0; i < table_size; i++, angle+=freq) 
+	  for (i = 0, angle = 0.0; i < table_size; i++, angle += freq) 
 	    table[i] += amp * mus_sin(angle);
 	}
     }
@@ -1233,15 +1245,19 @@ Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int ta
 Float *mus_phasepartials2wave(Float *partial_data, int partials, Float *table, int table_size, int normalize)
 {
   int partial, i, k, n;
-  Float amp, freq, angle;
+  Float amp, freq, angle; 
+#if HAVE_MEMSET
+  memset((void *)table, 0, table_size * sizeof(Float));
+#else
   for (i = 0; i < table_size; i++) table[i] = 0.0;
-  for (partial = 0, k = 1, n = 2; partial < partials; partial++, k+=3, n+=3)
+#endif
+  for (partial = 0, k = 1, n = 2; partial < partials; partial++, k += 3, n += 3)
     {
       amp = partial_data[k];
       if (amp != 0.0)
 	{
 	  freq = (partial_data[partial * 3] * TWO_PI) / (Float)table_size;
-	  for (i = 0, angle = partial_data[n]; i < table_size; i++, angle+=freq) 
+	  for (i = 0, angle = partial_data[n]; i < table_size; i++, angle += freq) 
 	    table[i] += amp * mus_sin(angle);
 	}
     }
@@ -2651,11 +2667,11 @@ Float mus_filter (mus_any *ptr, Float input)
   int j;
   xout = 0.0;
   gen->state[0] = input;
-  for (j = gen->order-1; j >= 1; j--) 
+  for (j = gen->order - 1; j >= 1; j--) 
     {
       xout += gen->state[j] * gen->x[j];
       gen->state[0] -= gen->y[j] * gen->state[j];
-      gen->state[j] = gen->state[j-1];
+      gen->state[j] = gen->state[j - 1];
     }
   return(xout + (gen->state[0] * gen->x[0]));
 }
@@ -2670,7 +2686,7 @@ Float mus_fir_filter (mus_any *ptr, Float input)
   for (j = gen->order-1; j >= 1; j--) 
     {
       xout += gen->state[j] * gen->x[j];
-      gen->state[j] = gen->state[j-1];
+      gen->state[j] = gen->state[j - 1];
     }
   return(xout + (gen->state[0] * gen->x[0]));
 }
@@ -2683,7 +2699,7 @@ Float mus_iir_filter (mus_any *ptr, Float input)
   for (j = gen->order-1; j >= 1; j--) 
     {
       gen->state[0] -= gen->y[j] * gen->state[j];
-      gen->state[j] = gen->state[j-1];
+      gen->state[j] = gen->state[j - 1];
     }
   return(gen->state[0]);
 }
@@ -2847,7 +2863,7 @@ Float *mus_make_fir_coeffs(int order, Float *env, Float *aa)
   m = (n + 1) / 2;
   am = 0.5 * (n + 1);
   q = TWO_PI / (Float)n;
-  for (j = 0, jj = n-1; j < m; j++, jj--)
+  for (j = 0, jj = n - 1; j < m; j++, jj--)
     {
       xt = env[0] * 0.5;
       for (i = 1; i < m; i++)
@@ -2875,7 +2891,11 @@ void mus_clear_filter_state(mus_any *gen)
     case MUS_ALL_PASS:
       state = mus_data(gen);
       len = mus_length(gen);
+#if HAVE_MEMSET
+      memset((void *)state, 0, len * sizeof(Float));
+#else
       for (i = 0; i < len; i++) state[i] = 0.0;
+#endif
       break;
     case MUS_ONE_ZERO:
     case MUS_ONE_POLE:
@@ -3036,7 +3056,7 @@ Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *t
   Float *data;
   for (i = 0; i < npartials; i++) sum += partials[i];
   if (sum != 0.0) for (i = 0; i < npartials; i++) partials[i] /= sum;
-  for (i = 2; i < npartials; i+=4)
+  for (i = 2; i < npartials; i += 4)
     {
       partials[i] = (-partials[i]);
       if (npartials > (i + 1)) partials[i + 1] = (-partials[i + 1]);
@@ -3054,7 +3074,7 @@ Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *t
     }
   else data = table;
   maxI2 = 2.0 / (Float)size;
-  for (i = 0, x=-1.0; i < size; i++, x+=maxI2)
+  for (i = 0, x = -1.0; i < size; i++, x += maxI2)
     {
       sum = 0.0;
       temp = 0.0;
@@ -3287,7 +3307,7 @@ static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float sc
     }
   flat = (min_y == max_y);
   if (!flat) val = 1.0 / (max_y - min_y);
-  for (i = 1; i < len; i+=2)
+  for (i = 1; i < len; i += 2)
     {
       if (flat) 
 	tmp = 1.0;
@@ -3384,12 +3404,12 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
 	e->original_data = odata;
       else
 	{
-	  e->original_data = (Float *)CALLOC(npts*2, sizeof(Float));
+	  e->original_data = (Float *)CALLOC(npts * 2, sizeof(Float));
 	  if (e->original_data == NULL) 
 	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env original_data array!");
 	  e->data_allocated = 1;
 	}
-      for (i = 0; i < npts*2; i++) e->original_data[i] = brkpts[i];
+      for (i = 0; i < npts * 2; i++) e->original_data[i] = brkpts[i];
       if (base == 0.0)
 	{
 	  e->style = ENV_STEP;
@@ -4886,8 +4906,12 @@ static Float sample_file(void *ptr, int samp, int chan, Float val)
 	{
 	  flush_buffers(gen);
 	  for (j = 0; j < gen->chans; j++)
+#if HAVE_MEMSET
+	    memset((void *)(gen->obufs[j]), 0, Mus_file_buffer_size * sizeof(MUS_SAMPLE_TYPE));
+#else
 	    for (i = 0; i < Mus_file_buffer_size; i++)
 	      gen->obufs[j][i] = MUS_SAMPLE_0;
+#endif
 	  gen->data_start = samp;
 	  gen->data_end = samp + Mus_file_buffer_size - 1;
 	  gen->out_end = samp;
@@ -6175,7 +6199,7 @@ void mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
       if (rdat[i] < lowest) rdat[i] = 0.0;
       if (idat[i] < lowest) idat[i] = 0.0;
 #endif
-      val = rdat[i]*rdat[i]+idat[i]*idat[i];
+      val = rdat[i] * rdat[i] + idat[i] * idat[i];
       if (val < lowest)
 	rdat[i] = .0001;
       else 
@@ -6607,7 +6631,7 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
 	    {
 	      if (j == Mus_file_buffer_size)
 		{
-		  mus_sound_write(ofd, 0, j-1, out_chans, obufs);
+		  mus_sound_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
 		  mus_sound_seek_frame(ofd, out_start + k);
 		  mus_sound_read(ofd, 0, Mus_file_buffer_size - 1, out_chans, obufs);
@@ -6624,12 +6648,12 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
 	    {
 	      if (j == Mus_file_buffer_size)
 		{
-		  mus_sound_write(ofd, 0, j-1, out_chans, obufs);
+		  mus_sound_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
 		  mus_sound_seek_frame(ofd, out_start + k);
-		  mus_sound_read(ofd, 0, Mus_file_buffer_size-1, out_chans, obufs);
+		  mus_sound_read(ofd, 0, Mus_file_buffer_size - 1, out_chans, obufs);
 		  mus_sound_seek_frame(ofd, out_start + k);
-		  mus_sound_read(ifd, 0, Mus_file_buffer_size-1, in_chans, ibufs);
+		  mus_sound_read(ifd, 0, Mus_file_buffer_size - 1, in_chans, ibufs);
 		}
 	      obufs[0][j] += (MUS_SAMPLE_TYPE)(scaler * ibufs[0][j]);
 	    }
@@ -6639,12 +6663,12 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
 	    {
 	      if (j == Mus_file_buffer_size)
 		{
-		  mus_sound_write(ofd, 0, j-1, out_chans, obufs);
+		  mus_sound_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
 		  mus_sound_seek_frame(ofd, out_start + k);
-		  mus_sound_read(ofd, 0, Mus_file_buffer_size-1, out_chans, obufs);
+		  mus_sound_read(ofd, 0, Mus_file_buffer_size- 1 , out_chans, obufs);
 		  mus_sound_seek_frame(ofd, out_start + k);
-		  mus_sound_read(ifd, 0, Mus_file_buffer_size-1, in_chans, ibufs);
+		  mus_sound_read(ifd, 0, Mus_file_buffer_size - 1, in_chans, ibufs);
 		}
 	      for (i = 0; i < min_chans; i++)
 		for (m = 0; m < in_chans; m++)
@@ -6903,7 +6927,7 @@ Float mus_increment(mus_any *rd)
   if (mus_file2sample_p(rd)) return(((rdin *)rd)->dir);
   if (mus_src_p(rd)) return(((sr *)rd)->incr);
   if (mus_buffer_p(rd)) return(((rblk *)rd)->fill_time);
-  if (mus_granulate_p(rd)) return(((Float)(((grn_info *)rd)->output_hop))/((Float)((grn_info *)rd)->input_hop));
+  if (mus_granulate_p(rd)) return(((Float)(((grn_info *)rd)->output_hop)) / ((Float)((grn_info *)rd)->input_hop));
   if (mus_phase_vocoder_p(rd)) return(((pv_info *)rd)->interp);
   return(0);
 }
@@ -7032,7 +7056,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 	{
 	  pscl = 1.0 / (Float)(pv->D);
 	  kscl = TWO_PI / (Float)(pv->N);
-	  for (i = 0, ks = 0.0; i < N2; i++, ks+=kscl)
+	  for (i = 0, ks = 0.0; i < N2; i++, ks += kscl)
 	    {
 	      diff = pv->freqs[i] - pv->lastphase[i];
 	      pv->lastphase[i] = pv->freqs[i];

@@ -880,7 +880,7 @@ static mix_info *add_mix(chan_info *cp, int chan, int beg, int num,
   md->temporary = temp;
   md->console_state_size = 1;
   md->states = (console_state **)CALLOC(md->console_state_size, sizeof(console_state *));
-  cs = make_console_state(input_chans, cp->edit_ctr, beg, beg+num-1);
+  cs = make_console_state(input_chans, cp->edit_ctr, beg, beg + num - 1);
   md->current_cs = make_console_state(input_chans, cp->edit_ctr, beg, beg+num-1);
   md->states[0] = cs;
   if (chan < input_chans)
@@ -969,7 +969,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
     {
       for (i = 0; i < num; i += MAX_BUFFER_SIZE)
 	{
-	  cursamps = num-i;
+	  cursamps = num - i;
 	  if (cursamps > MAX_BUFFER_SIZE) cursamps = MAX_BUFFER_SIZE;
 	  for (j = 0; j < cursamps; j++)
 	    chandata[j] = next_sample(csf);
@@ -3201,14 +3201,12 @@ void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, i
 	  ix0 = ix1;
 	  iy0 = iy1;
 	  ix1 = local_grf_x(e->data[i], ap);
-	  iy1 = local_grf_y(e->data[i+1], ap);
+	  iy1 = local_grf_y(e->data[i + 1], ap);
 	  draw_line(ax, ix0, iy0, ix1, iy1);
 	}
     }
 }
 
-
-/* -------------------------------- SCM connection -------------------------------- */
 
 static void snd_no_such_mix_error(const char *caller, SCM n)
 {
@@ -3732,7 +3730,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 
   chan_info *cp = NULL;
   char *name = NULL;
-  int chans, id=-1;
+  int chans, id = -1;
   int with_mixer = 1;
   snd_state *ss;
   mix_info *md;
@@ -3920,13 +3918,13 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
       len = fd->mixes;
       if (len > 0)
 	{
-	  for (i = 0; i < len-1; i++)
+	  for (i = 0; i < len - 1; i++)
 	    {
 	      mf = fd->fds[i];
 	      mus_snprintf(desc, 128, "%d ", (mf->md)->id);
 	      scm_puts(desc, port); 
 	    }
-	  mf = fd->fds[len-1];
+	  mf = fd->fds[len - 1];
 	  mus_snprintf(desc, 128, "%d)>",(mf->md)->id);
 	}
       else sprintf(desc, ")>");
@@ -4020,7 +4018,7 @@ static void call_multichannel_mix_hook(int *ids, int n)
   /* create list from ids, pass to hook, if any */
   if (HOOKED(multichannel_mix_hook))
     {
-      for (i = n-1; i >= 0; i--)
+      for (i = n - 1; i >= 0; i--)
 	lst = CONS(TO_SMALL_SCM_INT(ids[i]), lst);
       g_c_run_progn_hook(multichannel_mix_hook,
 			 SCM_LIST1(lst),

@@ -298,7 +298,7 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
   int n;
   Float val;
   if (num < 4) return;
-  for (n = num; n >= 4; n>>= 1)
+  for (n = num; n >= 4; n >>= 1)
     {
       if (n > data1_size)
 	{
@@ -308,7 +308,7 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
 	}
       else for (i = 0; i < n; i++) data1[i] = 0.0;
       jf = (int)(cc_size * (n - 0.5));
-      for (i1 = 0, i = 1, i2=(n>>1); i <= n; i+=2, i1++, i2++)
+      for (i1 = 0, i = 1, i2 = (n >> 1); i <= n; i += 2, i1++, i2++)
 	{
 	  sig = -1;
 	  for (k = 0; k < cc_size; k++)
@@ -532,7 +532,7 @@ static void autocorrelation(Float *data, int n)
   Float fscl;
   int i;
   fscl = 2.0 / (Float)n;
-  rl = (Float *)CALLOC(n, sizeof(Float));
+  rl = (Float *)MALLOC(n * sizeof(Float));
   im = (Float *)CALLOC(n, sizeof(Float));
   for (i = 0; i < n; i++) rl[i] = data[i];
   mus_fft(rl, im, n, 1);
@@ -559,7 +559,7 @@ static void cepstrum(Float *data, int n)
   int i;
   lowest = 0.00000001;
   fscl = 2.0 / (Float)n;
-  rl = (Float *)CALLOC(n, sizeof(Float));
+  rl = (Float *)MALLOC(n * sizeof(Float));
   im = (Float *)CALLOC(n, sizeof(Float));
   for (i = 0; i < n; i++) rl[i] = data[i];
   mus_fft(rl, im, n, 1);
@@ -957,7 +957,7 @@ static int snd_fft_to_spectrum (fft_state *fs)
   fft_data = fs->data;
   if (fs->transform_type == HANKEL) /* we only get here if not HAVE_GSL */
     {
-      for (j = 0; j < fs->size; j+=2)
+      for (j = 0; j < fs->size; j += 2)
 	{
 	  if (fft_data[j]>val) 
 	    val = fft_data[j];
@@ -965,19 +965,15 @@ static int snd_fft_to_spectrum (fft_state *fs)
 	    if ((-fft_data[j] ) > val)
 	      val = (-fft_data[j]);
 	}
-      for (i = 0, j = 0; i < fs->size; j++, i+=2)
-	{
-	  fft_data[j] = fft_data[i] * val;
-	}
+      for (i = 0, j = 0; i < fs->size; j++, i += 2)
+	fft_data[j] = fft_data[i] * val;
     }
   else
     {
       if (fft_data[1] < 0.0001) fft_data[0] = 0.0; else fft_data[0] = fft_data[1];
-      if (fft_data[2] < 0.0001) fft_data[fs->size-1] = 0.0; else fft_data[fs->size-1] = fft_data[2];
-      for (i = 3, j = 1; i < fs->size-3; i+=2, j++)
-	{
-	  fft_data[j] = hypot(fft_data[i], fft_data[i+1]);
-	}
+      if (fft_data[2] < 0.0001) fft_data[fs->size - 1] = 0.0; else fft_data[fs->size - 1] = fft_data[2];
+      for (i = 3, j = 1; i < fs->size - 3; i += 2, j++)
+	fft_data[j] = hypot(fft_data[i], fft_data[i + 1]);
       /* if fft_data[i] == 0 pi/2 else atan2(fft_data[i], fft_data[i+1]) */
     }
   return(1);
@@ -1779,9 +1775,8 @@ void free_sono_info (chan_info *cp)
       if (si->data)
 	{
 	  for (i = 0; i < si->total_slices; i++)
-	    {
-	      if (si->data[i]) FREE(si->data[i]);
-	    }
+	    if (si->data[i]) 
+	      FREE(si->data[i]);
 	  FREE(si->data);
 	}
       FREE(si);
@@ -2160,7 +2155,7 @@ static SCM g_autocorrelate(SCM reals)
   else
     {
       n = VECTOR_LENGTH(reals);
-      rl = (Float *)CALLOC(n, sizeof(Float));
+      rl = (Float *)MALLOC(n * sizeof(Float));
       vdata = SCM_VELTS(reals);
       for (i = 0; i < n; i++) rl[i] = TO_C_DOUBLE(vdata[i]);
     }

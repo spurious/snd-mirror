@@ -106,23 +106,23 @@ void get_current_color(int colormap, int j, int *r, int *g, int *b)
   /* used only by printer to translate to Postscript rgb colors */
   switch (colormap)
     {
-    case GRAY_COLORMAP:      (*r) = gray_colormap[j*3];      (*g) = gray_colormap[j*3+1];      (*b) = gray_colormap[j*3+2];      break;
-    case HSV_COLORMAP:       (*r) = hsv_colormap[j*3];       (*g) = hsv_colormap[j*3+1];       (*b) = hsv_colormap[j*3+2];       break;
-    case HOT_COLORMAP:       (*r) = hot_colormap[j*3];       (*g) = hot_colormap[j*3+1];       (*b) = hot_colormap[j*3+2];       break;
-    case COOL_COLORMAP:      (*r) = cool_colormap[j*3];      (*g) = cool_colormap[j*3+1];      (*b) = cool_colormap[j*3+2];      break;
-    case BONE_COLORMAP:      (*r) = bone_colormap[j*3];      (*g) = bone_colormap[j*3+1];      (*b) = bone_colormap[j*3+2];      break;
-    case COPPER_COLORMAP:    (*r) = copper_colormap[j*3];    (*g) = copper_colormap[j*3+1];    (*b) = copper_colormap[j*3+2];    break;
-    case PINK_COLORMAP:      (*r) = pink_colormap[j*3];      (*g) = pink_colormap[j*3+1];      (*b) = pink_colormap[j*3+2];      break;
-    case JET_COLORMAP:       (*r) = jet_colormap[j*3];       (*g) = jet_colormap[j*3+1];       (*b) = jet_colormap[j*3+2];       break;
-    case PRISM_COLORMAP:     (*r) = prism_colormap[j*3];     (*g) = prism_colormap[j*3+1];     (*b) = prism_colormap[j*3+2];     break;
-    case AUTUMN_COLORMAP:    (*r) = autumn_colormap[j*3];    (*g) = autumn_colormap[j*3+1];    (*b) = autumn_colormap[j*3+2];    break;
-    case WINTER_COLORMAP:    (*r) = winter_colormap[j*3];    (*g) = winter_colormap[j*3+1];    (*b) = winter_colormap[j*3+2];    break;
-    case SPRING_COLORMAP:    (*r) = spring_colormap[j*3];    (*g) = spring_colormap[j*3+1];    (*b) = spring_colormap[j*3+2];    break;
-    case SUMMER_COLORMAP:    (*r) = summer_colormap[j*3];    (*g) = summer_colormap[j*3+1];    (*b) = summer_colormap[j*3+2];    break;
-    case COLORCUBE_COLORMAP: (*r) = colorcube_colormap[j*3]; (*g) = colorcube_colormap[j*3+1]; (*b) = colorcube_colormap[j*3+2]; break;
-    case FLAG_COLORMAP:      (*r) = flag_colormap[j*3];      (*g) = flag_colormap[j*3+1];      (*b) = flag_colormap[j*3+2];      break;
-    case LINES_COLORMAP:     (*r) = lines_colormap[j*3];     (*g) = lines_colormap[j*3+1];     (*b) = lines_colormap[j*3+2];     break;
-    default:                 (*r) = gray_colormap[j*3];      (*g) = gray_colormap[j*3+1];      (*b) = gray_colormap[j*3+2];      break;
+    case GRAY_COLORMAP:      (*r) = gray_colormap[j * 3];      (*g) = gray_colormap[j * 3 + 1];      (*b) = gray_colormap[j * 3 + 2];      break;
+    case HSV_COLORMAP:       (*r) = hsv_colormap[j * 3];       (*g) = hsv_colormap[j * 3 + 1];       (*b) = hsv_colormap[j * 3 + 2];       break;
+    case HOT_COLORMAP:       (*r) = hot_colormap[j * 3];       (*g) = hot_colormap[j * 3 + 1];       (*b) = hot_colormap[j * 3 + 2];       break;
+    case COOL_COLORMAP:      (*r) = cool_colormap[j * 3];      (*g) = cool_colormap[j * 3 + 1];      (*b) = cool_colormap[j * 3 + 2];      break;
+    case BONE_COLORMAP:      (*r) = bone_colormap[j * 3];      (*g) = bone_colormap[j * 3 + 1];      (*b) = bone_colormap[j * 3 + 2];      break;
+    case COPPER_COLORMAP:    (*r) = copper_colormap[j * 3];    (*g) = copper_colormap[j * 3 + 1];    (*b) = copper_colormap[j * 3 + 2];    break;
+    case PINK_COLORMAP:      (*r) = pink_colormap[j * 3];      (*g) = pink_colormap[j * 3 + 1];      (*b) = pink_colormap[j * 3 + 2];      break;
+    case JET_COLORMAP:       (*r) = jet_colormap[j * 3];       (*g) = jet_colormap[j * 3 + 1];       (*b) = jet_colormap[j * 3 + 2];       break;
+    case PRISM_COLORMAP:     (*r) = prism_colormap[j * 3];     (*g) = prism_colormap[j * 3 + 1];     (*b) = prism_colormap[j * 3 + 2];     break;
+    case AUTUMN_COLORMAP:    (*r) = autumn_colormap[j * 3];    (*g) = autumn_colormap[j * 3 + 1];    (*b) = autumn_colormap[j * 3 + 2];    break;
+    case WINTER_COLORMAP:    (*r) = winter_colormap[j * 3];    (*g) = winter_colormap[j * 3 + 1];    (*b) = winter_colormap[j * 3 + 2];    break;
+    case SPRING_COLORMAP:    (*r) = spring_colormap[j * 3];    (*g) = spring_colormap[j * 3 + 1];    (*b) = spring_colormap[j * 3 + 2];    break;
+    case SUMMER_COLORMAP:    (*r) = summer_colormap[j * 3];    (*g) = summer_colormap[j * 3 + 1];    (*b) = summer_colormap[j * 3 + 2];    break;
+    case COLORCUBE_COLORMAP: (*r) = colorcube_colormap[j * 3]; (*g) = colorcube_colormap[j * 3 + 1]; (*b) = colorcube_colormap[j * 3 + 2]; break;
+    case FLAG_COLORMAP:      (*r) = flag_colormap[j * 3];      (*g) = flag_colormap[j * 3 + 1];      (*b) = flag_colormap[j * 3 + 2];      break;
+    case LINES_COLORMAP:     (*r) = lines_colormap[j * 3];     (*g) = lines_colormap[j * 3 + 1];     (*b) = lines_colormap[j * 3 + 2];     break;
+    default:                 (*r) = gray_colormap[j * 3];      (*g) = gray_colormap[j * 3 + 1];      (*b) = gray_colormap[j * 3 + 2];      break;
     }
 }
 

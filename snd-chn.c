@@ -965,7 +965,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   samps = ap->hisamp - ap->losamp + 1;
   if ((x_start == x_end) && (samps > 10)) return(0); /* must be too-tiny graph */
   pixels = x_end - x_start;
-  if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE-1;
+  if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE - 1;
   if ((x_start == x_end) || (samps <= 1))
     samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
   else samples_per_pixel = (Float)(samps - 1) / (Float)pixels;
@@ -1110,7 +1110,7 @@ SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
   samps = hisamp - losamp + 1;
   if ((x_start == x_end) && (samps > 10)) return(SCM_BOOL_F);
   pixels = x_end - x_start;
-  if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE-1;
+  if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE - 1;
   if ((x_start == x_end) || (samps <= 1))
     samples_per_pixel = 0.01;
   else samples_per_pixel = (Float)(samps - 1) / (Float)pixels;
@@ -1766,7 +1766,11 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       ax = copy_context(cp);
       for (slice = 0; slice < si->active_slices; slice++, xf += xfincr)
 	{
+#if HAVE_MEMSET
+	  memset((void *)js, 0, GRAY_SCALES * sizeof(int));
+#else
 	  for (i = 0; i < GRAY_SCALES; i++) js[i] = 0;
+#endif
 	  fdata = si->data[slice];
 	  for (i = 0; i < bins; i++)
 	    {
@@ -1981,7 +1985,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			j = (int)(skew_color((1.0 - binval), color_scale(ss)) * GRAY_SCALES); 
 		      else j = (int)(skew_color(binval, color_scale(ss)) * GRAY_SCALES);
 		      if (j > 0) j--;
-		      if (j >= GRAY_SCALES) j = GRAY_SCALES-1;
+		      if (j >= GRAY_SCALES) j = GRAY_SCALES - 1;
 		      draw_spectro_line(ax, j, xx, yy, 
 					(int)(xval + x0), 
 					(int)(yval + y0));
@@ -3087,7 +3091,7 @@ static int cursor_round(double x)
   Float xfrac;
   xint = (int)x;
   xfrac = x-xint;
-  if (xfrac>.5) return(xint+1);
+  if (xfrac > .5) return(xint + 1);
   return(xint);
 }
 
