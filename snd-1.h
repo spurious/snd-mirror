@@ -939,7 +939,7 @@ bool selection_creation_in_progress(void);
 void cancel_selection_watch(void);
 void add_selection_or_region(int reg, chan_info *cp, const char *origin);
 void insert_selection_from_menu(void);
-void insert_selection_or_region(int reg, chan_info *cp, const char *origin);
+void insert_selection_or_region(int reg, chan_info *cp);
 
 void g_init_selection(void);
   

@@ -377,19 +377,28 @@ static int insert_selection(chan_info *cp, off_t beg, const char *origin)
   return(err);
 }
 
-void insert_selection_or_region(int reg, chan_info *cp, const char *origin)
+void insert_selection_or_region(int reg, chan_info *cp)
 {
   if (cp) 
     {
+      char *origin = NULL;
       if ((reg == 0) && (selection_is_active()))
-	insert_selection(cp, CURSOR(cp), origin);
-      else paste_region(reg, cp, origin);
+	{
+	  origin = mus_format("%s " OFF_TD, S_insert_selection, CURSOR(cp));
+	  insert_selection(cp, CURSOR(cp), origin);
+	}
+      else 
+	{
+	  origin = mus_format("%s " OFF_TD " %d", S_insert_region, CURSOR(cp), reg);
+	  paste_region(reg, cp, origin);
+	}
+      if (origin) FREE(origin);
     }
 }
 
 void insert_selection_from_menu(void)
 {
-  insert_selection_or_region(0, selected_channel(), "Edit: Insert selection");
+  insert_selection_or_region(0, selected_channel());
 }
 
 
@@ -767,7 +776,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
       cp = get_cp(snd, chn, S_insert_selection);
       samp = beg_to_sample(beg, S_insert_selection);
-      buf = mus_format("%s at " OFF_TD, S_insert_selection, samp);
+      buf = mus_format("%s " OFF_TD, S_insert_selection, samp);
       err = insert_selection(cp, samp, buf);
       FREE(buf);
       return(C_TO_XEN_BOOLEAN((err == MUS_NO_ERROR)));

@@ -3,6 +3,8 @@
 /* SOMEDAY: fftw error catcher (memerr = exit) (fftw does not yet support this) */
 /* SOMEDAY: logfreq in spectrogram?  */
 
+/* TODO: check out B Battey's scentroid, autoc, rmsenv, and sndwarp instruments */
+
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3
 #include <fftw3.h>

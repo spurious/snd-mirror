@@ -1794,7 +1794,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  handle_cursor(cp, CURSOR_ON_RIGHT); 
 		  break;
 		case snd_K_I: case snd_K_i: 
-		  insert_selection_or_region((!got_ext_count) ? 0 : ext_count, cp, "C-x i");
+		  insert_selection_or_region((!got_ext_count) ? 0 : ext_count, cp);
 		  break;
 		case snd_K_J: case snd_K_j: 
 		  prompt(sp, _("mark:"), NULL); 

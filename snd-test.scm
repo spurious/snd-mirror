@@ -30342,7 +30342,7 @@ EDITS: 5
    (at 100, cp->sounds[0][101:50827, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 50827, end_mark)
 
- (insert 10 1) ; insert-sample [3:7]:
+ (insert 10 1) ; insert-sample 10 0.5000 [3:7]:
    (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 1.000]) [buf: 1] 
    (at 2, cp->sounds[0][2:9, 1.000]) [file: " cwd "oboe.snd[0]]
@@ -30360,7 +30360,7 @@ EDITS: 5
    (at 101, cp->sounds[0][101:50827, 2.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 
- (silence 100 20) ; pad-channel from 100 for 20 [5:9]:
+ (silence 100 20) ; pad-channel 100 20 [5:9]:
    (at 0, cp->sounds[0][0:0, 2.000]) [file: " cwd "oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 2.000]) [buf: 1] 
    (at 2, cp->sounds[0][2:9, 2.000]) [file: " cwd "oboe.snd[0]]

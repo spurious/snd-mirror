@@ -1144,7 +1144,7 @@ insert region data into snd's channel chn starting at start-samp"
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = beg_to_sample(samp_n, S_insert_region);
-  buf = mus_format("%s %d at " OFF_TD, S_insert_region, rg, samp);
+  buf = mus_format("%s " OFF_TD " %d", S_insert_region, samp, rg);
   paste_region_1(rg, cp, false, samp, buf, 0);
   FREE(buf);
   update_graph(cp);

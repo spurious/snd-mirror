@@ -3284,7 +3284,7 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
 				      beg));
   len = XEN_TO_C_OFF_T(num);
   if (len <= 0) return(XEN_FALSE);
-  buf = mus_format("%s from " OFF_TD " for " OFF_TD, S_insert_silence, start, len);
+  buf = mus_format("%s " OFF_TD " " OFF_TD, S_insert_silence, start, len);
   cursor_insert(cp, start, len, buf);
   FREE(buf);
   return(beg);
@@ -3304,7 +3304,7 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   bg = beg_to_sample(beg, S_pad_channel);
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
   len = XEN_TO_C_OFF_T_OR_ELSE(num, cp->samples[pos] - bg);
-  buf = mus_format("%s from " OFF_TD " for " OFF_TD, S_pad_channel, bg, len);
+  buf = mus_format("%s " OFF_TD " " OFF_TD, S_pad_channel, bg, len);
   if (extend_with_zeros(cp, bg,	len, buf, pos))
     update_graph(cp);
   FREE(buf);

@@ -11,18 +11,6 @@
  * TODO: overlay of rms env
  * TODO: fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
  * TODO: bark scale as axis or color as above (fft as well?)
- *
- * TODO: some way to back up, change something (or remove such a change), then re-run all subsequent edits
- *       perhaps edit_list_to_function -- (edit-list->function [snd chn start end]) -> 
- *          "(lambda (snd chn edpos) ...) ; (lambda* (:optional snd chn edpos) ...)
- *             (scale-by 2.0 ...))" using snd chn, starting at edpos?
- *       or edit + keep current list but recalc temp data?
- *       The function could be built from edit_fragment and eval_string (or in scheme, probably)
- *       or a version of edit_history_to_file that re-executes the edits (save current list past edit_ctr, prune, re-rerun, free?)
- *         this would need to know in advance that the current list should not be pruned
- *         boxes in editlist=save-list-from-here, run-saved-list (and prune from here?)
- *         (mix - change etc for this?)
- *       since "origin" is already in use as a sort of user-supplied comment, perhaps a new edlist char *call
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */

@@ -347,259 +347,6 @@ char *run_save_state_hook(char *file)
 }
 
 
-#if HAVE_RUBY
-  #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
-  #define PROC_OPEN "("
-  #define PROC_SEP ", "
-  #define VECTOR_OPEN "["
-  #define VECTOR_CLOSE "]"
-#else
-  #define TO_PROC_NAME(Str) Str
-  #define PROC_OPEN " "
-  #define PROC_SEP " "
-  #define VECTOR_OPEN "'#("
-  #define VECTOR_CLOSE ")"
-#endif
-
-#define BUFFER_NOT_FILE_LIMIT 64
-
-static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
-{
-  int snd;
-  snd = ed->sound_location; /* sound_location read only here (modulo error reporting) */
-  if (snd < cp->sound_size)
-    {
-      snd_data *sd;
-      char *newname;
-      int i;
-      sd = cp->sounds[snd];
-      if (sd->type == SND_DATA_BUFFER)
-	{
-	  if ((ed->len > BUFFER_NOT_FILE_LIMIT) && (save_dir(ss)))
-	    {
-	      char *ofile = NULL;
-	      ofile = shorter_tempnam(save_dir(ss), "snd_");
-	      newname = run_save_state_hook(ofile);
-	      FREE(ofile);
-	      mus_array_to_file(newname, sd->buffered_data, ed->len, 22050, 1);
-	      fprintf(fd, "\"%s\"", newname);
-	      return(newname);
-	    }
-	  else
-	    {
-	      fprintf(fd, VECTOR_OPEN);
-	      for (i = 0; i < ed->len; i++) 
-		{
-#if SNDLIB_USE_FLOATS
-		  fprintf(fd, "%f" PROC_SEP, sd->buffered_data[i]);
-#else
-		  fprintf(fd, "%d" PROC_SEP, sd->buffered_data[i]);
-#endif
-		}
-	      fprintf(fd, VECTOR_CLOSE);
-	      return(NULL);
-	    }
-	}
-      else
-	{
-	  if (save_dir(ss))
-	    {
-	      char *ofile = NULL;
-	      ofile = shorter_tempnam(save_dir(ss), "snd_");
-	      newname = run_save_state_hook(ofile);
-	      FREE(ofile);
-	      copy_file(sd->filename, newname);
-	      fprintf(fd, "\"%s\"", newname);
-	      return(newname);
-	    }
-	  else
-	    {
-	      /* read at very low level and write to (text) history files as sample list */
-	      int ifd, bufnum;
-	      off_t idataloc, n, samples, cursamples, sample;
-	      mus_sample_t *buffer;
-	      mus_sample_t **ibufs;
-	      fprintf(fd, VECTOR_OPEN);
-	      ifd = mus_file_open_read(sd->filename);
-	      if (ifd == -1) 
-		{
-		  snd_error(_("save edits: can't open %s: %s!"),
-			    sd->filename,
-			    strerror(errno));
-		  return(NULL);
-		}
-	      idataloc = mus_sound_data_location(sd->filename);
-	      mus_file_open_descriptors(ifd,
-					sd->filename,
-					mus_sound_data_format(sd->filename),
-					mus_sound_datum_size(sd->filename),
-					idataloc,
-					mus_sound_chans(sd->filename),
-					mus_sound_header_type(sd->filename));
-	      samples = mus_sound_samples(sd->filename);
-	      lseek(ifd, idataloc, SEEK_SET);
-	      ibufs = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
-	      ibufs[0] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
-	      bufnum = (FILE_BUFFER_SIZE);
-	      sample = 0;
-	      for (n = 0; n < samples; n += bufnum)
-		{
-		  if ((n + bufnum) < samples) cursamples = bufnum; else cursamples = (samples - n);
-		  mus_file_read(ifd, 0, cursamples - 1, 1, ibufs);
-		  buffer = (mus_sample_t *)(ibufs[0]);
-		  for (i = 0; i < cursamples; i++) 
-		    {
-#if SNDLIB_USE_FLOATS
-		      fprintf(fd, "%f" PROC_SEP, MUS_SAMPLE_TO_FLOAT(buffer[i]));
-#else
-		      fprintf(fd, "%d" PROC_SEP, MUS_SAMPLE_TO_INT(buffer[i]));
-#endif
-		      sample++;
-		      if (sample == ed->len) goto ALL_DONE;
-		    }
-		}
-	    ALL_DONE:
-	      mus_file_close(ifd);
-	      fprintf(fd, VECTOR_CLOSE);
-	      FREE(ibufs[0]);
-	      FREE(ibufs);
-	    }
-	}
-    }
-  return(NULL);
-}
-
-
-static int snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length)
-{
-  /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
-  /* used only in this file and snd-chn (for external temps, snd->temp) */
-  int ofd;
-  int i, j, datumb, err = 0;
-  bool reporting = false;
-  off_t len, total = 0;
-  chan_info *cp = NULL;
-  mus_sample_t **obufs;
-  err = MUS_NO_ERROR;
-  ofd = open_temp_file(ofile, chans, hdr);
-  if (ofd == -1) 
-    {
-      if (errno)
-	ss->catch_message = strerror(errno);
-      return(MUS_CANT_OPEN_TEMP_FILE);
-    }
-  mus_file_set_data_clipped(ofd, data_clipped(ss));
-  datumb = mus_bytes_per_sample(hdr->format);
-  obufs = (mus_sample_t **)MALLOC(chans * sizeof(mus_sample_t *));
-  ss->stopped_explicitly = false;
-  for (i = 0; i < chans; i++)
-    obufs[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
-  j = 0;
-  reporting = (length > REPORTING_SIZE);
-  if (reporting) 
-    {
-      cp = sfs[0]->cp;
-      start_progress_report(cp->sound, NOT_FROM_ENVED);
-    }
-  if (chans == 1)
-    {
-      if (length > FILE_BUFFER_SIZE)
-	{
-	  for (len = 0; len < length; len++)
-	    {
-	      obufs[0][j] = read_sample(sfs[0]);
-	      j++;
-	      if (j == FILE_BUFFER_SIZE)
-		{
-		  err = mus_file_write(ofd, 0, j - 1, 1, obufs);
-		  j = 0;
-		  if (err == -1) break;
-		  if (reporting)
-		    {
-		      total += FILE_BUFFER_SIZE;
-		      progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
-		    }
-		  check_for_event();
-		  if (ss->stopped_explicitly)
-		    {
-		      ss->stopped_explicitly = false;
-		      snd_warning(_("file save cancelled by C-g"));
-		      err = MUS_INTERRUPTED;
-		      break;
-		    }
-		}
-	    }
-	}
-      else
-	{
-	  for (len = 0; len < length; len++)
-	    obufs[0][len] = read_sample(sfs[0]);
-	  j = (int)length;
-	}
-    }
-  else
-    {
-      for (len = 0; len < length; len++)
-	{
-	  for (i = 0; i < chans; i++)
-	    obufs[i][j] = read_sample(sfs[i]);
-	  j++;
-	  if (j == FILE_BUFFER_SIZE)
-	    {
-	      err = mus_file_write(ofd, 0, j - 1, chans, obufs);
-	      j = 0;
-	      if (err == -1) break;
-	      if (reporting)
-		{
-		  total += FILE_BUFFER_SIZE;
-		  progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
-		}
-	      check_for_event();
-	      if (ss->stopped_explicitly)
-		{
-		  ss->stopped_explicitly = false;
-		  snd_warning(_("file save cancelled by C-g"));
-		  err = MUS_INTERRUPTED;
-		  break;
-		}
-	    }
-	}
-    }
-  if ((err == MUS_NO_ERROR) && (j > 0))
-    mus_file_write(ofd, 0, j - 1, chans, obufs);
-  if (err == MUS_NO_ERROR)
-    {
-      err = close_temp_file(ofile, ofd, hdr->type, len * chans * datumb, any_selected_sound());
-      alert_new_file();
-    }
-  else err = mus_file_close(ofd);
-  if (reporting) finish_progress_report(cp->sound, NOT_FROM_ENVED);
-  for (i = 0; i < chans; i++) FREE(obufs[i]);
-  FREE(obufs);
-  return(err);
-}
-
-static int channel_to_file(chan_info *cp, const char *ofile, int edpos)
-{
-  snd_info *sp;
-  snd_fd **sf;
-  int err;
-  sp = cp->sound;
-  err = MUS_NO_ERROR;
-  sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
-  sf[0] = init_sample_read_any(0, cp, READ_FORWARD, edpos);
-  if (sf[0] == NULL)
-    err = MUS_ERROR;
-  else
-    {
-      err = snd_make_file(ofile, 1, sp->hdr, sf, cp->samples[edpos]);
-      free_snd_fd(sf[0]);
-    }
-  FREE(sf);
-  return(err);
-}
-
-
 
 /* -------- EDIT LISTS --------
  *
@@ -4534,11 +4281,263 @@ static void display_edits(chan_info *cp, FILE *outp, bool with_source)
     display_ed_list(cp, outp, i, cp->edits[i], with_source);
 }
 
+static int snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length)
+{
+  /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
+  /* used only in this file and snd-chn (for external temps, snd->temp) */
+  int ofd;
+  int i, j, datumb, err = 0;
+  bool reporting = false;
+  off_t len, total = 0;
+  chan_info *cp = NULL;
+  mus_sample_t **obufs;
+  err = MUS_NO_ERROR;
+  ofd = open_temp_file(ofile, chans, hdr);
+  if (ofd == -1) 
+    {
+      if (errno)
+	ss->catch_message = strerror(errno);
+      return(MUS_CANT_OPEN_TEMP_FILE);
+    }
+  mus_file_set_data_clipped(ofd, data_clipped(ss));
+  datumb = mus_bytes_per_sample(hdr->format);
+  obufs = (mus_sample_t **)MALLOC(chans * sizeof(mus_sample_t *));
+  ss->stopped_explicitly = false;
+  for (i = 0; i < chans; i++)
+    obufs[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
+  j = 0;
+  reporting = (length > REPORTING_SIZE);
+  if (reporting) 
+    {
+      cp = sfs[0]->cp;
+      start_progress_report(cp->sound, NOT_FROM_ENVED);
+    }
+  if (chans == 1)
+    {
+      if (length > FILE_BUFFER_SIZE)
+	{
+	  for (len = 0; len < length; len++)
+	    {
+	      obufs[0][j] = read_sample(sfs[0]);
+	      j++;
+	      if (j == FILE_BUFFER_SIZE)
+		{
+		  err = mus_file_write(ofd, 0, j - 1, 1, obufs);
+		  j = 0;
+		  if (err == -1) break;
+		  if (reporting)
+		    {
+		      total += FILE_BUFFER_SIZE;
+		      progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
+		    }
+		  check_for_event();
+		  if (ss->stopped_explicitly)
+		    {
+		      ss->stopped_explicitly = false;
+		      snd_warning(_("file save cancelled by C-g"));
+		      err = MUS_INTERRUPTED;
+		      break;
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  for (len = 0; len < length; len++)
+	    obufs[0][len] = read_sample(sfs[0]);
+	  j = (int)length;
+	}
+    }
+  else
+    {
+      for (len = 0; len < length; len++)
+	{
+	  for (i = 0; i < chans; i++)
+	    obufs[i][j] = read_sample(sfs[i]);
+	  j++;
+	  if (j == FILE_BUFFER_SIZE)
+	    {
+	      err = mus_file_write(ofd, 0, j - 1, chans, obufs);
+	      j = 0;
+	      if (err == -1) break;
+	      if (reporting)
+		{
+		  total += FILE_BUFFER_SIZE;
+		  progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
+		}
+	      check_for_event();
+	      if (ss->stopped_explicitly)
+		{
+		  ss->stopped_explicitly = false;
+		  snd_warning(_("file save cancelled by C-g"));
+		  err = MUS_INTERRUPTED;
+		  break;
+		}
+	    }
+	}
+    }
+  if ((err == MUS_NO_ERROR) && (j > 0))
+    mus_file_write(ofd, 0, j - 1, chans, obufs);
+  if (err == MUS_NO_ERROR)
+    {
+      err = close_temp_file(ofile, ofd, hdr->type, len * chans * datumb, any_selected_sound());
+      alert_new_file();
+    }
+  else err = mus_file_close(ofd);
+  if (reporting) finish_progress_report(cp->sound, NOT_FROM_ENVED);
+  for (i = 0; i < chans; i++) FREE(obufs[i]);
+  FREE(obufs);
+  return(err);
+}
+
+static int channel_to_file(chan_info *cp, const char *ofile, int edpos)
+{
+  snd_info *sp;
+  snd_fd **sf;
+  int err;
+  sp = cp->sound;
+  err = MUS_NO_ERROR;
+  sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
+  sf[0] = init_sample_read_any(0, cp, READ_FORWARD, edpos);
+  if (sf[0] == NULL)
+    err = MUS_ERROR;
+  else
+    {
+      err = snd_make_file(ofile, 1, sp->hdr, sf, cp->samples[edpos]);
+      free_snd_fd(sf[0]);
+    }
+  FREE(sf);
+  return(err);
+}
+
 /* these are used internally by the save-state process */
 #define S_delete_samples_with_origin    "delete-samples-with-origin"
 #define S_change_samples_with_origin    "change-samples-with-origin"
 #define S_insert_samples_with_origin    "insert-samples-with-origin"
 #define S_override_samples_with_origin  "override-samples-with-origin"
+
+
+#if HAVE_RUBY
+  #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
+  #define PROC_OPEN "("
+  #define PROC_SEP ", "
+  #define VECTOR_OPEN "["
+  #define VECTOR_CLOSE "]"
+#else
+  #define TO_PROC_NAME(Str) Str
+  #define PROC_OPEN " "
+  #define PROC_SEP " "
+  #define VECTOR_OPEN "'#("
+  #define VECTOR_CLOSE ")"
+#endif
+
+#define BUFFER_NOT_FILE_LIMIT 64
+
+static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
+{
+  int snd;
+  snd = ed->sound_location; /* sound_location read only here (modulo error reporting) */
+  if (snd < cp->sound_size)
+    {
+      snd_data *sd;
+      char *newname;
+      int i;
+      sd = cp->sounds[snd];
+      if (sd->type == SND_DATA_BUFFER)
+	{
+	  if ((ed->len > BUFFER_NOT_FILE_LIMIT) && (save_dir(ss)))
+	    {
+	      char *ofile = NULL;
+	      ofile = shorter_tempnam(save_dir(ss), "snd_");
+	      newname = run_save_state_hook(ofile);
+	      FREE(ofile);
+	      mus_array_to_file(newname, sd->buffered_data, ed->len, 22050, 1);
+	      fprintf(fd, "\"%s\"", newname);
+	      return(newname);
+	    }
+	  else
+	    {
+	      fprintf(fd, VECTOR_OPEN);
+	      for (i = 0; i < ed->len; i++) 
+		{
+#if SNDLIB_USE_FLOATS
+		  fprintf(fd, "%f" PROC_SEP, sd->buffered_data[i]);
+#else
+		  fprintf(fd, "%d" PROC_SEP, sd->buffered_data[i]);
+#endif
+		}
+	      fprintf(fd, VECTOR_CLOSE);
+	      return(NULL);
+	    }
+	}
+      else
+	{
+	  if (save_dir(ss))
+	    {
+	      char *ofile = NULL;
+	      ofile = shorter_tempnam(save_dir(ss), "snd_");
+	      newname = run_save_state_hook(ofile);
+	      FREE(ofile);
+	      copy_file(sd->filename, newname);
+	      fprintf(fd, "\"%s\"", newname);
+	      return(newname);
+	    }
+	  else
+	    {
+	      /* read at very low level and write to (text) history files as sample list */
+	      int ifd, bufnum;
+	      off_t idataloc, n, samples, cursamples, sample;
+	      mus_sample_t *buffer;
+	      mus_sample_t **ibufs;
+	      fprintf(fd, VECTOR_OPEN);
+	      ifd = mus_file_open_read(sd->filename);
+	      if (ifd == -1) 
+		{
+		  snd_error(_("save edits: can't open %s: %s!"),
+			    sd->filename,
+			    strerror(errno));
+		  return(NULL);
+		}
+	      idataloc = mus_sound_data_location(sd->filename);
+	      mus_file_open_descriptors(ifd,
+					sd->filename,
+					mus_sound_data_format(sd->filename),
+					mus_sound_datum_size(sd->filename),
+					idataloc,
+					mus_sound_chans(sd->filename),
+					mus_sound_header_type(sd->filename));
+	      samples = mus_sound_samples(sd->filename);
+	      lseek(ifd, idataloc, SEEK_SET);
+	      ibufs = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
+	      ibufs[0] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
+	      bufnum = (FILE_BUFFER_SIZE);
+	      sample = 0;
+	      for (n = 0; n < samples; n += bufnum)
+		{
+		  if ((n + bufnum) < samples) cursamples = bufnum; else cursamples = (samples - n);
+		  mus_file_read(ifd, 0, cursamples - 1, 1, ibufs);
+		  buffer = (mus_sample_t *)(ibufs[0]);
+		  for (i = 0; i < cursamples; i++) 
+		    {
+#if SNDLIB_USE_FLOATS
+		      fprintf(fd, "%f" PROC_SEP, MUS_SAMPLE_TO_FLOAT(buffer[i]));
+#else
+		      fprintf(fd, "%d" PROC_SEP, MUS_SAMPLE_TO_INT(buffer[i]));
+#endif
+		      sample++;
+		      if (sample == ed->len) goto ALL_DONE;
+		    }
+		}
+	    ALL_DONE:
+	      mus_file_close(ifd);
+	      fprintf(fd, VECTOR_CLOSE);
+	      FREE(ibufs[0]);
+	      FREE(ibufs);
+	    }
+	}
+    }
+  return(NULL);
+}
 
 void edit_history_to_file(FILE *fd, chan_info *cp)
 {
@@ -4626,7 +4625,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		  fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
 		  break;
 		case EXTEND_EDIT:
-		  /* not currently savable */
+		  /* not currently savable (this is a dummy edit fragment for zero-mix-drag position change) */
 		  break;
 		case SCALED_EDIT: 
 		  fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
@@ -4715,6 +4714,102 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 #endif
   save_mark_list(fd, cp);
 }
+
+/*
+ * TODO: some way to back up, change something (or remove such a change), then re-run all subsequent edits
+ *       perhaps edit_list_to_function -- (edit-list->function [snd chn start end]) -> 
+ *          "(lambda (snd chn edpos) ...) ; (lambda* (:optional snd chn edpos) ...)
+ *             (scale-by 2.0 ...))" using snd chn, starting at edpos?
+ *       or edit + keep current list but recalc temp data?
+ *       The function could be built from edit_fragment and eval_string (or in scheme, probably)
+ *       or a version of edit_history_to_file that re-executes the edits (save current list past edit_ctr, prune, re-rerun, free?)
+ *         this would need to know in advance that the current list should not be pruned
+ *         boxes in editlist=save-list-from-here, run-saved-list (and prune from here?)
+ *         (mix - change etc for this?)
+ *       since "origin" is already in use as a sort of user-supplied comment, perhaps a new edlist char *call
+ *       how to handle cross-sound/channel dependencies (swap-channels, etc), or regions created within the rerun list?
+ *         or as-one-edit, 
+ */
+
+#if HAVE_GUILE
+static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
+{
+  char *function = NULL, *old_function = NULL;
+  int i, edits;
+  ed_list *ed;
+  edits = cp->edit_ctr;
+  while ((edits < (cp->edit_size - 1)) && 
+	 (cp->edits[edits + 1])) 
+    edits++;
+  if ((end_pos > 0) && (end_pos < edits)) edits = end_pos;
+  if (start_pos > edits)
+    return(copy_string("(lambda (snd chn) #f)"));
+  function = copy_string("(lambda (snd chn)");
+  for (i = start_pos; i <= edits; i++)
+    {
+      ed = cp->edits[i];
+      if (ed)
+	{
+	  if (ed->backed_up)
+	    {
+	      /* as-one-edit -- this includes envelopes!? */
+	      function = mus_format("%s (%s snd chn)", function, ed->origin);
+	    }
+	  else
+	    {
+	      old_function = function;
+	      switch (ed->edit_type)
+		{
+		case INSERTION_EDIT: 
+		  /* insert-samples problem: where did the data come from? (channel->vct for example data may have changed)
+		   * apply-controls and several sig (convolve) use delete/insert sequence for selection-relative edits + backup -- as-one-edit origin?
+		   */
+		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  /* this assumes snd chn as trailing op args -- ok for insert-sample|sound|region|selection */
+		  break;
+		case CHANGE_EDIT:
+		  /* similar to insertion, but worse -- src etc */
+		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  break;
+		case DELETION_EDIT:
+		  function = mus_format("%s (%s " OFF_TD " " OFF_TD " snd chn)", function, S_delete_samples, ed->beg, ed->len);
+		  break;
+		case SCALED_EDIT: 
+		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  break;
+		case EXTEND_EDIT:
+		  /* mix drag case */
+		  break;
+		case PTREE_EDIT:
+		  function = mus_format("%s (%s %s " OFF_TD " " OFF_TD " snd chn)",
+					function, S_ptree_channel,
+					XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+					ed->beg, ed->len);
+		  break;
+		case XEN_EDIT:
+		  /* can't be used in secondary call yet -- "wrong number of args to ptree fallback?" */
+		  function = mus_format("%s (xen-channel %s " OFF_TD " " OFF_TD " snd chn)",
+					function,
+					XEN_AS_STRING(XEN_PROCEDURE_SOURCE(cp->xens[ed->ptree_location])),
+					ed->beg, ed->len);
+		  break;
+		case RAMP_EDIT:
+		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  break;
+		case ZERO_EDIT:
+		  function = mus_format("%s (%s " OFF_TD " " OFF_TD " snd chn)", function, S_pad_channel, ed->beg, ed->len);
+		  break;
+		}
+	      if (old_function) {FREE(old_function); old_function = NULL;}
+	    }
+	}
+    }
+  old_function = function;
+  function = mus_format("%s)", function);
+  FREE(old_function);
+  return(function);
+}
+#endif
 
 #define copy_ed_fragment(New_Ed, Old_Ed) memcpy((void *)(New_Ed), (void *)(Old_Ed), sizeof(ed_fragment))
 
@@ -6550,7 +6645,7 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new_ed->maxamp = old_ed->maxamp;
   new_ed->beg = 0;
   new_ed->len = old_ed->len;
-  new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels)); /* TODO: each channel has the swap-channels call -- isn't this redundant upon restore? */
+  new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels)); /* swap = stored change-edit at restore time, so no redundancy here */
   cp1->edits[cp1->edit_ctr] = new_ed;
   if (new_ed->len > 0)
     for (i = 0; i < new_ed->size; i++) 
@@ -8370,6 +8465,7 @@ inserts all of oboe.snd starting at sample 1000."
   chan_info *cp;
   char *filename = NULL;
   int nc, i;
+  char *origin;
   bool delete_file = false;
   off_t beg = 0, len;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_insert_sound, "a string");
@@ -8405,9 +8501,11 @@ inserts all of oboe.snd starting at sample 1000."
       fchn = XEN_TO_C_INT(file_chn);
       if (fchn < mus_sound_chans(filename))
 	{
+	  origin = mus_format("%s \"%s\" " OFF_TD " %d", S_insert_sound, filename, beg, fchn);
 	  if (file_insert_samples(beg, len, filename, cp, fchn, (delete_file) ? DELETE_ME : DONT_DELETE_ME, S_insert_sound,
 				  to_c_edit_position(cp, edpos, S_insert_sound, 6)))
 	    update_graph(cp);
+	  FREE(origin);
 	  if (filename) FREE(filename);
 	  return(C_TO_XEN_OFF_T(len));
 	}
@@ -8424,12 +8522,14 @@ inserts all of oboe.snd starting at sample 1000."
       if (sp->nchans < nc) nc = sp->nchans;
       for (i = 0; i < nc; i++)
 	{
+	  origin = mus_format("%s \"%s\" " OFF_TD " %d", S_insert_sound, filename, beg, i);
 	  if (file_insert_samples(beg, len, filename, sp->chans[i], i, (delete_file) ? DELETE_ME: DONT_DELETE_ME, S_insert_sound,
 				  /* this edit_position cannot be optimized out -- each channel may have
 				   *   a different edit history, but edpos might be -1 throughout etc.
 				   */
 				  to_c_edit_position(sp->chans[i], edpos, S_insert_sound, 6)))
 	    update_graph(sp->chans[i]);
+	  FREE(origin);
 	}
       if (filename) FREE(filename);
       return(C_TO_XEN_OFF_T(len));
@@ -8496,6 +8596,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_insert_sample "(" S_insert_sample " sample value (snd #f) (chn #f) (edpos #f)): insert 'value' at 'sample' in snd's channel chn"
   chan_info *cp;
+  char *origin;
   int pos;
   off_t beg;
   mus_sample_t ival[1];
@@ -8506,18 +8607,21 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   beg = beg_to_sample(samp_n, S_insert_sample);
   pos = to_c_edit_position(cp, edpos, S_insert_sample, 5);
   ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
-  if (insert_samples(beg, 1, ival, cp, S_insert_sample, pos))
-    update_graph(cp);
+  origin = mus_format("%s " OFF_TD " %.4f", S_insert_sample, beg, ival[0]);
+  if (insert_samples(beg, 1, ival, cp, origin, pos))
+    update_graph(cp); 
+  FREE(origin);
   return(val);
 }
 
 static XEN g_insert_samples(XEN samp, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN auto_delete)
 {
   #define H_insert_samples "(" S_insert_samples " start-samp samps data (snd #f) (chn #f) (edpos #f) (auto-delete #f)): \
-insert data (either a vector, vct, or list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
+insert data (either a vct, a list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
 
   chan_info *cp;
   int pos;
+  char *origin;
   bool delete_file = false;
   off_t beg, len = 0;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_1, S_insert_samples, "a number");
@@ -8531,7 +8635,11 @@ insert data (either a vector, vct, or list of samples, or a filename) into snd's
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_insert_samples, "a boolean");
   if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
   if (XEN_STRING_P(vect))
-    file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, (delete_file) ? DELETE_ME : DONT_DELETE_ME, S_insert_samples, pos);
+    {
+      origin = mus_format("%s " OFF_TD " " OFF_TD " \"%s\"", S_insert_samples, beg, len, XEN_TO_C_STRING(vect));
+      file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin, pos);
+      FREE(origin);
+    }
   else
     {
       int ilen;
@@ -8929,6 +9037,23 @@ be a function of 2 args: the sample to read (a long int), and the channel."
 }
 
 
+#if HAVE_GUILE
+#define S_edit_list_to_function "edit-list->function"
+
+static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
+{
+  #define H_edit_list_to_function "(" S_edit_list_to_function " snd chn start end) -> function encapsulating edits"
+  chan_info *cp;
+  int start_pos = 1, end_pos = -1;
+  ASSERT_CHANNEL(S_edit_list_to_function, snd, chn, 1);
+  cp = get_cp(snd, chn, S_edit_list_to_function);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(start), start, XEN_ARG_3, S_edit_list_to_function, "an integer");  
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_4, S_edit_list_to_function, "an integer");  
+  start_pos = XEN_TO_C_INT_OR_ELSE(start, 1);
+  end_pos = XEN_TO_C_INT_OR_ELSE(end, -1);
+  return(XEN_EVAL_C_STRING(edit_list_to_function(cp, start_pos, end_pos)));
+}
+#endif
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_5(g_make_sample_reader_w, g_make_sample_reader)
@@ -9133,6 +9258,10 @@ keep track of which files are in a given saved state batch, and a way to rename 
   check_type_info_entry(ED_SIMPLE, 0, 0, false);
   check_type_info_entry(ED_ZERO, 0, 0, true);
   report_unhit_entries();
+#endif
+
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE(S_edit_list_to_function,    g_edit_list_to_function,    0, 4, 0, H_edit_list_to_function);
 #endif
 
 }
