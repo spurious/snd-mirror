@@ -669,19 +669,6 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
   if (old == PREVIOUS_MIX)
      cs = md->states[md->current_state];
   else cs = md->active_mix_state;
-  
-  /*
-  fprintf(stderr, "\nremix %s: chans %d, speed %.3f, len: " OFF_TD "\n  scalers: ",
-	  (old == PREVIOUS_MIX) ? "previous" : "current", cs->as_built->chans, cs->as_built->speed, cs->as_built->len);
-  for (i = 0; i < cs->as_built->chans; i++) fprintf(stderr, "%.3f ", cs->as_built->scalers[i]);
-  fprintf(stderr, "\n  envs: ");
-  for (i = 0; i < cs->as_built->chans; i++) 
-    if ((cs->as_built->amp_envs) && (cs->as_built->amp_envs[i]))
-      fprintf(stderr, "%s ", env_to_string(cs->as_built->amp_envs[i]));
-    else fprintf(stderr, "#f ");
-  fprintf(stderr, "\n");
-  */
-
   chans = md->in_chans;
   mf = (mix_fd *)CALLOC(1, sizeof(mix_fd));
   mf->type = type;

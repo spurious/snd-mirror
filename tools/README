@@ -18,6 +18,7 @@ gcat				get profiling info
 crossref.c			simple-minded cross referencer
 .gbdinit			gbd stuff
 sed-href			sed script to add silent urls
+snd.supp			Valgrind suppressions
 
 
 Other scripts in the main directory:

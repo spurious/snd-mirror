@@ -861,7 +861,14 @@ static int read_aiff_header(const char *filename, int chan, int overall_offset)
     {
       offset += chunkloc;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
-	return(mus_error(MUS_HEADER_READ_FAILED, "%s, aiff header: chunks confused at " OFF_TD , filename, offset));
+	{
+	  if ((got_comm) && (data_location > 0))
+	    {
+	      mus_print("%s, aiff header: chunks confused at " OFF_TD "; will try to continue", filename, offset);
+	      break;
+	    }
+	  return(mus_error(MUS_HEADER_READ_FAILED, "%s, aiff header: chunks confused at " OFF_TD , filename, offset));
+	}
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
       if ((chunksize == 0) && /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))

@@ -1156,6 +1156,7 @@
 		 (lambda args args))
 	  (test-headers
 	   (list
+	    (list "5_secs.aiff" 1 44100 5.303107 "AIFF" "big endian short (16 bits)")
 	    (list "8svx-8.snd" 1 22050 1.88766443729401 "SVX8" "signed byte (8 bits)")
 	    (list "Fnonull.aif" 1 8000 0.00112499995157123 "AIFC" "mulaw (8 bits)")
 	    (list "Pmiscck.aif" 1 8000 0.00112499995157123 "AIFC" "mulaw (8 bits)")
@@ -10000,6 +10001,8 @@ EDITS: 5
 		  (vct-set! data i (read-sample sf)))
 		data))
 	    
+	    (set! (squelch-update ind) #t)
+
 	    (do ((k 0 (1+ k)))
 		((= k 2))
 	      (revert-sound ind)
@@ -10524,8 +10527,8 @@ EDITS: 5
 				 op3)))
 			  op2))
 		       op1)))))
+	    (set! (squelch-update ind) #f)
 	    (close-sound ind))
-	  
 	  
 	  (let* ((ind (open-sound "oboe.snd"))
 		 (mx (maxamp ind 0)))

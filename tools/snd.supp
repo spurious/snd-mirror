@@ -1,6 +1,7 @@
 # Snd valgrind suppressions file
 # valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp snd
-# first section copied from default: /usr/local/lib/valgrind/default.supp
+# valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=yes snd
+# first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp
 
 # This is a generated file, composed of the following suppression rules:
 #
@@ -590,6 +591,114 @@
    fun:*
 }
 
+# older guile here
+{
+   scm-22
+   Memcheck:Cond
+   fun:heap_segment
+   fun:*
+}
+
+{
+   scm-23
+   Memcheck:Cond
+   fun:scm_gc_sweep
+   fun:*
+}
+
+{
+   scm-24
+   Memcheck:Value4
+   fun:root_mark
+   fun:scm_gc_mark
+   fun:*
+}
+
+{
+   scm-25
+   Memcheck:Value4
+   fun:scm_mark_weak_vector_spines
+   fun:*
+}
+
+{
+   scm-26
+   Memcheck:Cond
+   fun:scm_scan_weak_vectors
+   fun:*
+}
+
+{
+   scm-27
+   Memcheck:Value4
+   fun:scm_scan_weak_vectors
+   fun:*
+}
+
+{
+   scm-28
+   Memcheck:Value4
+   fun:mark_mus_xen
+   fun:scm_gc_mark
+   fun:*
+}
+
+{
+   scm-29
+   Memcheck:Cond
+   fun:mark_dependencies_in_tconc
+   fun:*
+}
+
+{
+   scm-30
+   Memcheck:Value4
+   fun:async_mark
+   fun:*
+}
+
+{
+   scm-31
+   Memcheck:Value4
+   fun:environment_mark
+   fun:*
+}
+
+{
+   scm-32
+   Memcheck:Value4
+   fun:leaf_environment_mark
+   fun:*
+}
+
+{
+   scm-33
+   Memcheck:Value4
+   fun:core_environments_mark
+   fun:*
+}
+
+{
+   scm-34
+   Memcheck:Cond
+   fun:scm_long2num
+   fun:*
+}
+
+{
+   scm-35
+   Memcheck:Cond
+   fun:scm_i_long2big
+   fun:*
+}
+
+{
+   scm-36
+   Memcheck:Cond
+   fun:scm_i_mkbig
+   fun:*
+}
+
 {
    Xt-1
    Memcheck:Overlap
@@ -633,6 +742,16 @@
    fun:*
    obj:/usr/X11R6/lib/libXm.so.3.0.1
    obj:/usr/X11R6/lib/libXm.so.3.0.1
+}
+
+{
+   Xt-6
+   Memcheck:Param
+   write(buf)
+   fun:__write_nocancel
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_X11TransWrite
+   obj:/usr/X11R6/lib/libX11.so.6.2
 }
 
 {
@@ -682,12 +801,32 @@
 }
 
 {
-   Xbug
+   Xbug-1
    Memcheck:Addr1
    obj:/usr/X11R6/lib/libX11.so.6.2
    fun:change_pixmap_background
    fun:make_sound_icons_transparent_again
    fun:g_set_basic_color
+}
+
+{
+   Xbug-2
+   Memcheck:Param
+   write(buf)
+   fun:__GI___libc_write
+   fun:_X11TransWrite
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XFlush
+}
+
+{
+   Xbug-3
+   Memcheck:Param
+   write(buf)
+   fun:__GI___libc_write
+   fun:_X11TransWrite
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XReply
 }
 
 {
@@ -848,6 +987,7 @@
    fun:g_mus_audio_report
 }
 
+# I don't think any of these are actually my bugs -- everything is initialized and so forth in my code
 {
    snd-1
    Memcheck:Value4
@@ -874,3 +1014,187 @@
    fun:scm_gc_mark
    fun:scm_mark_locations
 }
+
+{
+   snd-4
+   Memcheck:Cond
+   fun:rawmemchr
+   fun:_IO_vsscanf
+   fun:__GI_sscanf
+   fun:read_nist_header
+}
+
+{
+   snd-5
+   Memcheck:Cond
+   fun:rawmemchr
+   fun:_IO_vsscanf
+   fun:__GI_sscanf
+   fun:read_nist_header
+}
+
+# ==4291== Syscall param statfs64(buf) contains unaddressable byte(s)
+# ==4291==    at 0x1C051B9F: statfs64 (in /lib/tls/libc-2.3.3.so)
+# ==4291==    by 0x80D4E59: disk_kspace (snd-file.c:63)
+# ==4291==    by 0x80B8215: close_temp_file (snd-io.c:580)
+# ==4291==    by 0x80ED0C0: snd_make_file (snd-edits.c:4387)
+# ==4291==  Address 0x54 is not stack'd, malloc'd or (recently) free'd
+
+{
+   snd-6
+   Memcheck:Param
+   statfs64(buf)
+   fun:statfs64
+   fun:disk_kspace
+   fun:*
+}
+
+# ==4291== Conditional jump or move depends on uninitialised value(s)
+# ==4291==    at 0x80D4E79: disk_kspace (snd-file.c:68)
+# ==4291==    by 0x80B8215: close_temp_file (snd-io.c:580)
+# ==4291==    by 0x80ED0C0: snd_make_file (snd-edits.c:4387)
+# ==4291==    by 0x80F4DB0: save_edits_without_display (snd-edits.c:6915)
+
+{
+   snd-7
+   Memcheck:Cond
+   fun:disk_kspace
+   fun:*
+}
+
+# ==4291== Use of uninitialised value of size 4
+# ==4291==    at 0x80D4EB8: disk_kspace (snd-file.c:70)
+# ==4291==    by 0x80B8215: close_temp_file (snd-io.c:580)
+# ==4291==    by 0x80ED0C0: snd_make_file (snd-edits.c:4387)
+# ==4291==    by 0x80F4DB0: save_edits_without_display (snd-edits.c:6915)
+
+{
+   snd-8
+   Memcheck:Value4
+   fun:disk_kspace
+   fun:*
+}
+
+# ==4291== Use of uninitialised value of size 8
+# ==4291==    at 0x80D4EC1: disk_kspace (snd-file.c:70)
+# ==4291==    by 0x80B8215: close_temp_file (snd-io.c:580)
+# ==4291==    by 0x80ED0C0: snd_make_file (snd-edits.c:4387)
+# ==4291==    by 0x80F4DB0: save_edits_without_display (snd-edits.c:6915)
+
+{
+   snd-9
+   Memcheck:Value8
+   fun:disk_kspace
+   fun:*
+}
+
+{
+   gtk-1
+   Memcheck:Addr1
+   fun:g_option_context_parse
+   fun:gtk_parse_args
+   fun:*
+}
+
+{
+   gtk-2
+   Memcheck:Addr1
+   fun:strcpy
+   fun:free_pending_nulls
+   fun:*
+}
+
+{
+   gtk-3
+   Memcheck:Cond
+   fun:g_strdup
+   fun:*
+}
+
+{
+   gtk-4
+   Memcheck:Cond
+   fun:g_utf8_validate
+   fun:pango_layout_set_text
+   fun:*
+}
+
+{
+   gtk-5
+   Memcheck:Value4
+   fun:g_strdup
+   fun:gtk_label_set_text
+   fun:*
+}
+
+{
+   gtk-6
+   Memcheck:Value4
+   fun:g_strdup
+   fun:gtk_label_recalculate
+   fun:*
+}
+
+{
+   gtk-7
+   Memcheck:Value4
+   fun:ps_set_color
+   fun:*
+}
+
+{
+   gtk-8
+   Memcheck:Value4
+   fun:g_color_to_list
+   fun:*
+}
+
+{
+   gtk-9
+   Memcheck:Value4
+   fun:g_color_to_list
+   fun:*
+}
+
+{
+   gtk-10
+   Memcheck:Addr4
+   fun:gtk_file_filter_set_name
+   fun:*
+}
+
+{
+   gtk-11
+   Memcheck:Addr4
+   fun:gtk_file_filter_add_mime_type
+   fun:*
+}
+
+{
+   gtk-12
+   Memcheck:Addr4
+   fun:gtk_file_filter_add_pattern
+   fun:*
+}
+
+{
+   gtk-13
+   Memcheck:Cond
+   fun:gtk_entry_insert_text
+   fun:*
+}
+
+{
+   ladspa-1
+   Memcheck:Free
+   fun:__builtin_vec_delete
+   fun:*
+   obj:/home/bil/test/ladspa_sdk/plugins/sine.so
+}
+
+# ==6650== 4080 bytes in 255 blocks are definitely lost in loss record 394 of 448
+# ==6650==    at 0x40029B2A: calloc (vg_replace_malloc.c:284)
+# ==6650==    by 0x81CD4AC: make_xen_value (snd-run.c:521)
+# ==6650==    by 0x81D2535: add_global_var_to_ptree (snd-run.c:2094)
+# ==6650==    by 0x8211920: walk (snd-run.c:10240)
+# but I don't immediately see why...

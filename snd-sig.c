@@ -4038,7 +4038,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
 	  for (i = 0; i < n; i++) 
 	    if (idat[i] > 0.0)
 	      idat[i] = todb * log(idat[i] * maxa);
-	    else idat[i] = -90.0;
+	    else idat[i] = -90.0; /* ss->min_dB? or could channel case be less? */
 	}
       else 
 	{
