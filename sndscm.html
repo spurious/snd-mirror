@@ -3142,6 +3142,24 @@ latter is going through the C intermediate file!
 <p>ws.scm also has a scheme version of <a href="clm.html#def-clm-struct">def-clm-struct</a>
 and <a href="clm.html#sound-let">sound-let</a>.  with-sounds and sound-lets can be nested --
 see clm.html for examples.
+<b>def-clm-struct</b> in Snd/Guile provides a way to package up heterogenous data 
+for user-defined generators.  In pure-Scheme it just sets up functions to make
+and access such a list, but in Snd's run macro, it also provides type declarations.
+For example,
+</p>
+<pre>
+(def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
+</pre>
+<p>defines a structure type ("hiho") with 5 fields.  "hiho-s" defaults to the
+string "hiho", "hiho-ii" defaults to 3, and declares that its type will always
+be int (so it can be used without restriction in run), and so on.
+</p>
+<pre>
+(define hi (make-hiho :xx 3.14))
+</pre>
+<p>defines a variable named hi whose value is a hiho structure (a list) with
+all the fields taking their default value except "xx" which is set to 3.14.
+So, hi's value is <code>(list 'hiho #f #f "hiho" 3 3.14))</code>.
 </p>
 <br>
 

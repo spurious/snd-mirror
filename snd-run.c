@@ -786,71 +786,80 @@ typedef struct {
   vct **data;
 } vct_vct;
 
-static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
+static char *describe_xen_value_1(int type, int addr, int *ints, Float *dbls)
 {
-  char *buf = NULL;
-  char *vstr;
-  if (v == NULL) return(copy_string("null xen_value"));
-  if (ints == NULL) return(copy_string("null ints???"));
-  switch (v->type)
+  switch (type)
     {
-    case R_BOOL:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, BOOL_PT, v->addr, B2S(ints[v->addr]));                   break;
-    case R_INT:     buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, INT_PT , v->addr, ints[v->addr]);                        break;
-    case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, CHR_PT , v->addr, (char)(ints[v->addr]));                break;
-    case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); mus_snprintf(buf, 256, STR_PT , v->addr, (char *)(ints[v->addr]));            break;
-    case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, FLT_PT , v->addr, dbls[v->addr]);                        break;
+    case R_BOOL:    return(mus_format(BOOL_PT, addr, B2S(ints[addr])));                  break;
+    case R_INT:     return(mus_format(INT_PT , addr, ints[addr]));                       break;
+    case R_CHAR:    return(mus_format(CHR_PT , addr, (char)(ints[addr])));               break;
+    case R_STRING:  return(mus_format(STR_PT , addr, (char *)(ints[addr])));             break;
+    case R_FLOAT:   return(mus_format(FLT_PT , addr, dbls[addr]));                       break;
     case R_SYMBOL:
-    case R_KEYWORD: buf = (char *)CALLOC(64, sizeof(char)); mus_snprintf(buf, 64, KEY_PT , v->addr, XEN_AS_STRING((XEN)(ints[v->addr])));  break;
-    case R_GOTO:    buf = mus_format("continuation: " INT_PT , v->addr, ints[v->addr]);                                                    break;
+    case R_KEYWORD: return(mus_format(KEY_PT , addr, XEN_AS_STRING((XEN)(ints[addr])))); break;
+    case R_GOTO:    return(mus_format("continuation: " INT_PT , addr, ints[addr]));      break;
     case R_LIST:
     case R_PAIR:
-      buf = (char *)CALLOC(512, sizeof(char)); 
-      if (ints[v->addr] != 0)
-	mus_snprintf(buf, 512, LST_PT, v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); 
-      else sprintf(buf, "i(%d)=0: non-constant cons", v->addr);
+      if (ints[addr] != 0)
+	return(mus_format(LST_PT, addr, XEN_AS_STRING((XEN)(ints[addr])))); 
+      else return(mus_format("i(%d)=0: non-constant cons", addr));
       break;
     case R_FLOAT_VECTOR:
     case R_VCT:
-      if (ints[v->addr])
+      if (ints[addr])
 	{
-	  vstr = vct_to_string((vct *)(ints[v->addr]));
-	  buf = mus_format(VCT_PT, v->addr, vstr);
+	  char *buf = NULL, *vstr = NULL;
+	  vstr = vct_to_string((vct *)(ints[addr]));
+	  buf = mus_format(VCT_PT, addr, vstr);
 	  if (vstr) FREE(vstr);
+	  return(buf);
 	}
-      else buf = copy_string("null");
+      else return(copy_string("null"));
       break;
     case R_READER:
-      if (ints[v->addr])
+      if (ints[addr])
 	{
-	  vstr = sf_to_string((snd_fd *)(ints[v->addr]));
-	  buf = mus_format(RD_PT, v->addr, vstr);
+	  char *buf = NULL, *vstr = NULL;
+	  vstr = sf_to_string((snd_fd *)(ints[addr]));
+	  buf = mus_format(RD_PT, addr, vstr);
 	  if (vstr) FREE(vstr);
+	  return(buf);
 	}
-      else buf = copy_string("null");
+      else return(copy_string("null"));
       break;
     case R_CLM:
-      if (ints[v->addr]) 
-	buf = mus_format(CLM_PT, v->addr, mus_describe((mus_any *)(ints[v->addr])));  
-      else buf = copy_string("null");
+      if (ints[addr]) 
+	return(mus_format(CLM_PT, addr, mus_describe((mus_any *)(ints[addr]))));  
+      else return(copy_string("null"));
       break;
     case R_XCLM:
-      if (ints[v->addr]) 
-	buf = mus_format(CLM_PT, v->addr, mus_describe(MUS_XEN_TO_MUS_ANY(ints[v->addr])));
-      else buf = copy_string("null");
+      if (ints[addr]) 
+	return(mus_format(CLM_PT, addr, mus_describe(MUS_XEN_TO_MUS_ANY(ints[addr]))));
+      else return(copy_string("null"));
       break;
     case R_FUNCTION: 
-      if (ints[v->addr])
-	buf = describe_ptree((ptree *)(ints[v->addr]));
-      else buf = copy_string("internal lambda?");
+      if (ints[addr])
+	return(describe_ptree((ptree *)(ints[addr])));
+      else return(copy_string("internal lambda?"));
       break;
-    case R_INT_VECTOR:  return(mus_format("int vector " PTR_PT , v->addr, (int_vct *)(ints[v->addr])));                                      break;
-    case R_VCT_VECTOR:  return(mus_format("vct vector " PTR_PT , v->addr, (vct_vct *)(ints[v->addr])));                                      break;
-    case R_CLM_VECTOR:  return(mus_format("clm vector " PTR_PT , v->addr, (clm_vct *)(ints[v->addr])));                                      break;
-    case R_UNSPECIFIED: return(copy_string("#<unspecified>"));                                                                               break;
-      /* TODO: describe clm struct */
-    default:            buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "i%d(unknown type: %d)", v->addr, v->type);            break;
+    case R_INT_VECTOR:  return(mus_format("int vector " PTR_PT , addr, (int_vct *)(ints[addr]))); break;
+    case R_VCT_VECTOR:  return(mus_format("vct vector " PTR_PT , addr, (vct_vct *)(ints[addr]))); break;
+    case R_CLM_VECTOR:  return(mus_format("clm vector " PTR_PT , addr, (clm_vct *)(ints[addr]))); break;
+    case R_UNSPECIFIED: return(copy_string("#<unspecified>")); break;
+    default:
+      if (type > R_ANY)
+	return(mus_format("i%d(%s: clm-struct %x)", addr, type_name(type), ints[addr]));
+      else return(mus_format("i%d(unknown type: %d)", addr, type));            
+      break;
     }
-  return(buf);
+  return(NULL);
+}
+
+static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
+{
+  if (v == NULL) return(copy_string("null xen_value"));
+  if (ints == NULL) return(copy_string("null ints???"));
+  return(describe_xen_value_1(v->type, v->addr, ints, dbls));
 }
 
 static int got_lambda = FALSE; /* a temporary kludge?? */
@@ -1284,6 +1293,9 @@ static xen_var *new_xen_var(char *name, xen_value *v)
 static int add_var_to_ptree(ptree *pt, char *name, xen_value *v)
 {
   int cur;
+  /*
+  fprintf(stderr,"add var: %s %s\n", name, describe_xen_value(v, pt->ints, pt->dbls));
+  */
   cur = pt->var_ctr;
   if (cur >= pt->vars_size)
     {
@@ -4939,7 +4951,10 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_CLM_VECTOR: /* SOMEDAY: display clm_vector and vct_vector in some pretty manner */
     case R_VCT_VECTOR:
     case R_INT_VECTOR: return(package(pt, R_BOOL, display_int_vct, descr_display_int_vct, args, 1));   break;
-      /* TODO: clm struct display */
+    default:
+      if (args[1]->type > R_ANY)
+	return(package(pt, R_BOOL, display_lst, descr_display_lst, args, 1));
+      break;
     }
   return(NULL);
 }
@@ -7561,7 +7576,10 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
       vc = (vct *)(pt->ints[v->addr]);
       val = make_vct_wrapper(vc->length, vc->data);
       break;
-      /* TODO: are clm types restorable to xen? */
+    default:
+      if (v->type > R_ANY)
+	val = (XEN)(pt->ints[v->addr]);
+      break;
     }
   if (XEN_BOUND_P(val))
     {
@@ -7876,6 +7894,10 @@ static xen_value *make_fft_window_1(ptree *prog, xen_value **args, int num_args)
 
 static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 {
+  /*
+  fprintf(stderr,"xen to addr %p (%p %p): %s %d %d\n",
+	  pt, pt->ints, pt->dbls, XEN_AS_STRING(arg), type, addr);
+  */
   switch (type)
     {
     case R_FLOAT:   pt->dbls[addr] = (Float)XEN_TO_C_DOUBLE(arg);            break;
@@ -7921,10 +7943,11 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 static int clm_structs = 0;
 static int clm_struct_top = 0;
 static int *clm_struct_offsets = NULL;
+static int *clm_struct_types = NULL;
 static char **clm_struct_names = NULL;
 
 #define S_add_clm_field "add-clm-field"
-static XEN g_add_clm_field(XEN name, XEN offset)
+static XEN g_add_clm_field(XEN name, XEN offset, XEN type) /* type=field type (a symbol or #f) */
 {
   #define H_add_clm_field "def-clm-struct tie-in to run optimizer"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_clm_field, "string");
@@ -7933,6 +7956,7 @@ static XEN g_add_clm_field(XEN name, XEN offset)
     {
       clm_structs = 4;
       clm_struct_offsets = (int *)CALLOC(clm_structs, sizeof(int));
+      clm_struct_types = (int *)CALLOC(clm_structs, sizeof(int));
       clm_struct_names = (char **)CALLOC(clm_structs, sizeof(char *));
     }
   else
@@ -7941,10 +7965,14 @@ static XEN g_add_clm_field(XEN name, XEN offset)
 	{
 	  clm_structs = clm_struct_top + 4;
 	  clm_struct_offsets = (int *)REALLOC(clm_struct_offsets, clm_structs * sizeof(int));
+	  clm_struct_types = (int *)REALLOC(clm_struct_types, clm_structs * sizeof(int));
 	  clm_struct_names = (char **)REALLOC(clm_struct_names, clm_structs * sizeof(char *));
 	}
     }
   clm_struct_offsets[clm_struct_top] = XEN_TO_C_INT(offset);
+  clm_struct_types[clm_struct_top] = R_UNSPECIFIED;
+  if (XEN_SYMBOL_P(type))
+    clm_struct_types[clm_struct_top] = name_to_type(XEN_SYMBOL_TO_C_STRING(type));
   clm_struct_names[clm_struct_top++] = copy_string(XEN_TO_C_STRING(name));
   return(name);
 }
@@ -8050,26 +8078,100 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
   return(addr);
 }
 
-/* TODO: clm def-struct descriptor tied into describe-xen value etc */
+
+static char *descr_clm_struct_ref_r(int *args, int *ints, Float *dbls)
+{
+  return(mus_format("%s = %s(%s)",
+		    describe_xen_value_1(ints[args[3]], args[0], ints, dbls),
+		    clm_struct_names[ints[args[4]]],
+		    (ints[args[1]] == 0) ? "null" : XEN_AS_STRING((XEN)(ints[args[1]]))));
+}
+
+static void clm_struct_ref_r(int *args, int *ints, Float *dbls)
+{
+  XEN lst;
+  lst = (XEN)(ints[args[1]]);
+  if ((lst != 0) && (XEN_LIST_P(lst)))
+    {
+      /*
+      fprintf(stderr,"ref...%d %d %d %d, %d %d %d %d",
+	      args[0], args[1], args[2], args[3],
+	      args[0], ints[args[1]], ints[args[2]], ints[args[3]]);
+      */
+    xen_to_addr(PTREE, 
+		XEN_LIST_REF(lst, 
+			     ints[args[2]]), /* struct field offset into list */
+		ints[args[3]],               /* result type */
+		args[0]);                    /* result address */
+    /* fprintf(stderr,"done\n"); */
+    }
+}
+
+/* TODO: run-time set of clm-def-struct field */
+/* TODO: display snd-test case for clm-struct (and run-time cases from tmp11.scm) */
 static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc)
 {
   /* types can't change within run */
   int run_type, addr, offset;
   XEN lst, lst_ref;
-  if (v == NULL) return(run_warn("clm-struct-ref of null struct"));
+  /*
+  fprintf(stderr,"struct ref %s ",clm_struct_names[struct_loc]);
+  */
+  if (v == NULL) return(run_warn("clm-struct-ref confused"));
+  /*
+    fprintf(stderr, "arg 1 %p: addr: %d type: %s\n", v, v->addr, type_name(v->type));
+  */
   offset = clm_struct_offsets[struct_loc];
   lst = (XEN)(prog->ints[v->addr]);
   if ((lst == 0) || (!(XEN_LIST_P(lst))))
-    return(run_warn("%s struct lost! (%p)", clm_struct_names[struct_loc], lst));
-  lst_ref = XEN_LIST_REF(lst, offset); /* get type at parse time */
-  run_type = xen_to_run_type(lst_ref);
-  addr = find_clm_var(prog, lst, lst_ref, offset, run_type); /* if doesn't exist add to tables, else return holder */
-  if (addr < 0) 
-    return(run_warn("problem with %s (def-clm-struct) value: %s from %s", 
-		    clm_struct_names[struct_loc], 
-		    XEN_AS_STRING(lst_ref),
-		    XEN_AS_STRING(lst)));
-  return(make_xen_value(run_type, addr, R_VARIABLE));
+    {
+      /* run-time list-ref here */
+      run_type = clm_struct_types[struct_loc];
+      if (run_type != R_UNSPECIFIED)
+	{
+	  /* it is up to the caller to stick to the declared type -- no attempt here to check (TODO: why not arg type check in clm_struct_ref?) */
+	  xen_value **new_args;
+	  xen_value *rtn;
+	  int i;
+	  new_args = (xen_value **)CALLOC(5, sizeof(xen_value *));
+	  rtn = add_empty_var_to_ptree(prog, run_type);
+	  new_args[0] = rtn;
+	  new_args[1] = v;
+	  new_args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, offset), R_CONSTANT);
+	  new_args[3] = make_xen_value(R_INT, add_int_to_ptree(prog, run_type), R_CONSTANT);
+	  new_args[4] = make_xen_value(R_INT, add_int_to_ptree(prog, struct_loc), R_CONSTANT);
+	  add_triple_to_ptree(prog, make_triple(clm_struct_ref_r, descr_clm_struct_ref_r, new_args, 5));
+	  /*
+	  fprintf(stderr,"result is %s, arg is %s\n", 
+		  describe_xen_value(new_args[0], prog->ints, prog->dbls),
+		  describe_xen_value(new_args[1], prog->ints, prog->dbls));
+	  */
+	  for (i = 2; i <= 4; i++) FREE(new_args[i]);
+	  FREE(new_args);
+	  return(rtn);
+	}
+      return(run_warn("%s struct field needs type declaration", clm_struct_names[struct_loc]));
+    }
+  else
+    {
+      lst_ref = XEN_LIST_REF(lst, offset); /* get type at parse time */
+      run_type = xen_to_run_type(lst_ref);
+      if ((clm_struct_types[struct_loc] != R_UNSPECIFIED) &&
+	  (run_type != clm_struct_types[struct_loc]))
+	return(run_warn("%s declared type, %s, does not match current type, %s: %s",
+			clm_struct_names[struct_loc],
+			type_name(clm_struct_types[struct_loc]),
+			type_name(run_type),
+			XEN_AS_STRING(lst_ref)));
+      addr = find_clm_var(prog, lst, lst_ref, offset, run_type); /* if doesn't exist add to tables, else return holder */
+      if (addr < 0) 
+	return(run_warn("problem with %s (def-clm-struct) value: %s from %s", 
+			clm_struct_names[struct_loc], 
+			XEN_AS_STRING(lst_ref),
+			XEN_AS_STRING(lst)));
+      return(make_xen_value(run_type, addr, R_VARIABLE));
+    }
+  return(NULL);
 }
 
 static void clm_struct_restore(ptree *prog, xen_var *var)
@@ -8193,11 +8295,12 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      /*
 	      if (args[i + 1] != NULL)
 		{
-		  fprintf(stderr, "arg %d: addr: %d type: %s val: %d\n", i, args[i+1]->addr, type_name(args[i+1]->type), prog->ints[args[i + 1]->addr]);
-		  fprintf(stderr, "%s\n", describe_ptree(prog));
+		  fprintf(stderr, "arg %d: addr: %d type: %s val: %d\n", 
+			  i + 1, args[i + 1]->addr, type_name(args[i + 1]->type), prog->ints[args[i + 1]->addr]);
 		}
 	      else fprintf(stderr,"arg %d null", i);
 	      */
+
 	      if ((args[i + 1] == NULL) ||
 		  (((args[i + 1]->type == R_LIST) || (args[i + 1]->type == R_PAIR)) && (prog->ints[args[i + 1]->addr] == 0)))
 		return(clean_up(NULL, args, num_args)); /* no run_warn here so that reported error includes enclosing form */
@@ -8399,6 +8502,9 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF_WRAPPED(get_lst(prog, args), XEN_CADDR(form)), funcname), args, num_args));
 	  else return(clean_up(run_warn("can't handle this list: ~A", XEN_AS_STRING(form)), args, num_args));
 	}
+      /*
+      fprintf(stderr, "arg 1 %p: addr: %d type: %s\n", args[1], args[1]->addr, type_name(args[1]->type));
+      */
       for (k = 0; k < clm_struct_top; k++)
 	if (strcmp(funcname, clm_struct_names[k]) == 0)
 	  return(clean_up(clm_struct_ref(prog, args[1], k), args, num_args));
@@ -8421,6 +8527,9 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  (XEN_FALSE_P(XEN_PROCEDURE_WITH_SETTER_P(rtnval))))
 	{
 	  XEN func_form;
+	  /*
+	  fprintf(stderr,"try to splice in %s ", funcname);
+	  */
 	  func_form = XEN_PROCEDURE_SOURCE(rtnval);
 	  if ((XEN_LIST_P(func_form)) &&
 	      (XEN_SYMBOL_P(XEN_CAR(func_form))) &&
@@ -8449,22 +8558,30 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 
       return(clean_up(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT), args, num_args));
     }
-  switch (xen_to_run_type(form))
+  else /* not a list */
     {
-    case R_INT:     return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(form)), R_CONSTANT)); break;
-    case R_FLOAT:   return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT)); break;
-    case R_STRING:  return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
-    case R_CHAR:    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
-    case R_BOOL:    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT)); break;
-    case R_LIST:    return(make_xen_value(R_LIST, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
-    case R_PAIR:    return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
-    case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
-      /* TODO: walk returns unannounced clm struct */
-    }
-  if (XEN_SYMBOL_P(form))
-    {
-      prog->need_result = need_result;
-      return(add_global_var_to_ptree(prog, form, &rtnval));
+      int type;
+      type = xen_to_run_type(form);
+      switch (type)
+	{
+	case R_INT:     return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(form)), R_CONSTANT)); break;
+	case R_FLOAT:   return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT)); break;
+	case R_STRING:  return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
+	case R_CHAR:    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
+	case R_BOOL:    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT)); break;
+	case R_LIST:    return(make_xen_value(R_LIST, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+	case R_PAIR:    return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_int_to_ptree(prog, (int)form), R_CONSTANT)); break;
+	default:
+	  if (type > R_ANY)
+	    return(make_xen_value(type, add_int_to_ptree(prog, (int)form), R_CONSTANT));
+	  break;
+	}
+      if (XEN_SYMBOL_P(form))
+	{
+	  prog->need_result = need_result;
+	  return(add_global_var_to_ptree(prog, form, &rtnval));
+	}
     }
   if (!run_warned)
     return(run_warn("can't handle: %s", XEN_AS_STRING(form)));
@@ -8744,7 +8861,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
 
 /* ---------------- internal testing stuff ---------------- */
 
-static XEN g_run_eval(XEN code, XEN arg)
+static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 {
   ptree *pt;
   XEN result = XEN_FALSE;
@@ -8762,8 +8879,19 @@ static XEN g_run_eval(XEN code, XEN arg)
 	FREE(msg);
       }
 #endif
-      if ((XEN_BOUND_P(arg)) && (pt->args))
-	xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
+      if (pt->args)
+	{
+	  if ((XEN_BOUND_P(arg)) && (pt->arity > 0))
+	    {
+	      xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
+	      if ((XEN_BOUND_P(arg1)) && (pt->arity > 1))
+		{
+		  xen_to_addr(pt, arg1, pt->arg_types[1], pt->args[1]);
+		  if ((XEN_BOUND_P(arg2)) && (pt->arity > 2))
+		    xen_to_addr(pt, arg2, pt->arg_types[2], pt->args[2]);
+		}
+	    }
+	}
       eval_ptree(pt);
       result = eval_ptree_to_xen(pt);
       free_ptree((void *)pt);
@@ -9408,11 +9536,11 @@ void g_init_run(void)
   XEN_DEFINE_PROCEDURE("run-internal", g_run, 1, 0, 0, "run macro testing...");
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(run-internal (list ',thunk ,thunk)))");
   XEN_SET_DOCUMENTATION(S_run, H_run);
-  XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 1, 0, "run macro testing...");
+  XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 3, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE("vct-map-2",     g_vct_map, 2, 0, 0,      H_vct_map);
   XEN_EVAL_C_STRING("(defmacro* " S_vct_map " (thunk #:rest args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");
   XEN_SET_DOCUMENTATION(S_vct_map, H_vct_map);
-  XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field, 2, 0, 0, H_add_clm_field);
+  XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field, 2, 1, 0, H_add_clm_field);
   XEN_DEFINE_PROCEDURE(S_add_clm_type, g_add_clm_type, 1, 0, 0, H_add_clm_type);
   XEN_DEFINE_PROCEDURE("describe-walk-info", g_describe_walk_info, 1, 0, 0, "internal debugging aid");
   XEN_DEFINE_PROCEDURE("show-ptree", g_show_ptree, 1, 0, 0, "internal debugging stuff");

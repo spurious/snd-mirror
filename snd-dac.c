@@ -6,16 +6,6 @@
  *   channels can come and go as a play is in progress
  */
 
-#ifndef DEFAULT_NEVER_SPED
-  #define DEFAULT_NEVER_SPED 1
-#endif
-/* the default case is to bypass the sample-rate converter if the user hasn't changed it from 1.0;
- *   since the default src method is sinc-interpolation, this can save tons of cycles during most
- *   normal plays, but introduces a click if the user subsequently moves the speed slider.  To
- *   have the src process running all the time (the default before 5-Feb-01), pass the compiler
- *   -DDEFAULT_NEVER_SPED = 0
- */
-
 /* -------------------------------- per-channel control-panel state -------------------------------- */
 
 typedef struct {
@@ -35,7 +25,6 @@ typedef struct dac__info {
   int expanding, reverbing, filtering; /* these need lots of preparation, so they're noticed only at the start */
   int audio_chan;      /* where channel's output is going (wrap-around if not enough audio output channels) */
   int slot;
-  Float lst, nxt, x;   /* used if linear interp for src */
   Float *a;            /* filter coeffs */
   snd_fd *chn_fd;      /* sample reader */
   spd_info *spd;
@@ -67,46 +56,11 @@ static mus_any *make_flt(dac_info *dp, int order, Float *env)
 /* -------- sample-rate conversion -------- */
 static Float speed(dac_info *dp, Float sr)
 {
-  int move, i;
-  Float result = 0.0;
   if (dp->never_sped)
     return(read_sample_to_float(dp->chn_fd));
-  if (dp->src)
-    result = mus_src(dp->src->gen, sr, &src_input_as_needed);
-  else
-    {
-      if (sr > 0.0) 
-	{
-	  result = dp->lst + dp->x * (dp->nxt - dp->lst);
-	  dp->x += sr;
-	  move = (int)(dp->x);
-	  if (move != 0)
-	    {
-	      dp->x -= move;
-	      for (i = 0; i < move; i++)
-		{
-		  dp->lst = dp->nxt;
-		  dp->nxt = protected_next_sample_to_float(dp->chn_fd);
-		}
-	    }
-	}
-      else
-	{
-	  result = dp->lst + dp->x * (dp->nxt - dp->lst);
-	  dp->x -= sr;
-	  move = (int)(dp->x);
-	  if (move != 0)
-	    {
-	      dp->x -= move;
-	      for (i = 0; i < move; i++)
-		{
-		  dp->lst = dp->nxt;
-		  dp->nxt = protected_previous_sample_to_float(dp->chn_fd);
-		}
-	    }
-	}
-    }
-  return(result);
+  if (dp->src == NULL)
+    dp->src = make_src(dp->ss, 0.0, dp->chn_fd, sr);
+  return(mus_src(dp->src->gen, sr, &src_input_as_needed));
 }
 
 /* -------- granular synthesis -------- */
@@ -133,10 +87,12 @@ static void *make_expand(snd_info *sp, Float initial_ex, dac_info *dp)
   spd = (spd_info *)CALLOC(1, sizeof(spd_info));
   spd->gen = mus_make_granulate(&expand_input_as_needed,
 				initial_ex, sp->expand_control_length,
-				.6, sp->expand_control_hop, sp->expand_control_ramp, .1,
+				.6, /* expand scaler, not currently settable -- dac_set_expand_scaler below */
+				sp->expand_control_hop, sp->expand_control_ramp, 
+				.1, /* jitter, not settable, defaults to 1.0 in clm2xen.c and mus.lisp */
 				max_expand_control_len(sp), (void *)spd);
   spd->dp = dp;
-  spd->speeding = 0;
+  spd->speeding = FALSE;
   spd->sr = 0.0;
   return(spd);
 }
@@ -396,7 +352,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
   dp->region = -1;
   dp->a = NULL;
   dp->audio_chan = cp->chan;
-  dp->never_sped = DEFAULT_NEVER_SPED;
+  dp->never_sped = TRUE;
   if (sp)
     {
       dp->expanding = sp->expand_control_p;
@@ -730,7 +686,7 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_
   if (sp)
     {
       dp->cur_srate = sp->speed_control * sp->speed_control_direction;
-      if (dp->cur_srate != 1.0) dp->never_sped = 0;
+      if (dp->cur_srate != 1.0) dp->never_sped = FALSE;
       dp->cur_amp = AMP_CONTROL(sp, dp);
       dp->cur_index = sp->contrast_control;
       dp->cur_exp = sp->expand_control;
@@ -1186,7 +1142,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		case JUST_SPEED:
 		  /* includes amp changes */
 		  /* sp->speed_control is current UI value, dp->cur_srate is current local value */
-		  dp->never_sped = 0;
+		  dp->never_sped = FALSE;
 		  amp = dp->cur_amp;
 		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  sr = dp->cur_srate;
@@ -1205,7 +1161,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  sr = dp->cur_srate;
 		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (Float)(frames);
-		  if ((sincr != 0.0) || (sr != 1.0)) dp->never_sped = 0;
+		  if ((sincr != 0.0) || (sr != 1.0)) dp->never_sped = FALSE;
 		  ind = dp->cur_index;
 		  indincr = (sp->contrast_control - ind) / (Float)(frames);
 		  rev = dp->cur_rev;
