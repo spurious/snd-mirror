@@ -1,4 +1,3 @@
-
 ;; My config file for snd.
 ;; -Kjetil S. Matheussen.
 
@@ -9,6 +8,8 @@
 
 (provide 'snd-snd_conffile.scm)
 
+
+;;(debug-set! stack 2000000)
 
 
 ;;##############################################################
@@ -52,11 +53,27 @@
 ;; Load various files
 ;;##############################################################
 
+
+(if (not (provided? 'snd-snd-hobbit.scm))
+    (load-from-path "snd-hobbit.scm"))
+
+
+
 (if (not (provided? 'snd-gui.scm))
     (load-from-path "gui.scm"))
 
 
+
 (c-load-from-path rgb)
+
+
+
+
+;;(load-from-path "bird.scm")
+
+
+
+
 
 
 
@@ -130,6 +147,8 @@
 ;;##############################################################
 ;; Documentation for this configuration file.
 ;;##############################################################
+
+
 
 (add-to-menu 4 "--------------------------------" (lambda () #t) 0)
 (add-to-menu 4 "But! How do I..."
@@ -215,6 +234,7 @@
 
 
 
+
 ;;##############################################################
 ;; Various more or less general functions
 ;;##############################################################
@@ -275,6 +295,8 @@
 (define (c-selection?)
   (selection-member? (selected-sound)))
 
+
+
 ;; Returns true if file is allready loaded. Necesarry to unscrew up open-hook handling.
 (define (c-isloaded? filename)
   (member filename (map (lambda (snd) (file-name snd))
@@ -299,8 +321,11 @@
 (define (c-put snd name data)
   (hash-set! (hash-ref c-snd-putgetdata snd) name data))
 
+
 (define* (c-get snd name #:optional default)
   (hash-ref (hash-ref c-snd-putgetdata snd) name default))
+
+
 
 ;; This following command had to be moved nearly to the end of this file, before opening previous files:
 ;(add-hook! after-open-hook
@@ -312,40 +337,37 @@
 
 
 
-;; Functions to turn on and off the garbage collector. Code copied from snd-xen.c
-(define (c-gc-add-onoffs)
-  (c-eval-c
-   "
-#include <libguile.h>
-static SCM g_gc_off(void) {++scm_block_gc; return(SCM_UNSPECIFIED);}
-static SCM g_gc_on(void) {--scm_block_gc; return(SCM_UNSPECIFIED);}
-void das_init(){
-  scm_c_define_gsubr(\"gc-off\",0,0,0,g_gc_off);
-  scm_c_define_gsubr(\"gc-on\",0,0,0,g_gc_on);
-}
-"))
-
-
 (define c-gc-isoff #f)
 
 ;; The following functions ensure that gc-off is not called more times than gc-on.
-(define c-gc-off
-  (let ((loaded #f))
-    (lambda ()
-      (if (not loaded)
-	  (begin
-	    (c-gc-add-onoffs)
-	    (set! loaded #t)))
-      (if (not c-gc-isoff)
-	  (begin
-	    (gc-off)
-	    (set! c-gc-isoff #t))))))
+;; It takes an optional argument which is the number of milliseconds before turning
+;; the garbage collector on again, no matter what. Set this arguement to #f to avoid
+;; automaticly turning the garbage collector on. But that is dangerous.
+(define* (c-gc-off #:optional (timeout 2000))
+  (if (not c-gc-isoff)
+      (begin
+	(gc-off)
+	(set! c-gc-isoff #t)
+	(if timeout
+	    (in timeout
+		(lambda ()
+		  (c-gc-on)))))))
+
+
+;; Ouch, might actually freeze the machine if using jack. Better turn the function off.
+;; (re-mlocking all memory in audio.c without using MCL_FUTURE seems to fix the freezing problem)
+;;(define (c-gc-off)
+;;  #t)
+
 
 (define (c-gc-on)
   (if c-gc-isoff
       (begin
+	;;(c-display "gc-on")
 	(gc-on)
 	(set! c-gc-isoff #f))))
+
+
 
 
 
@@ -368,7 +390,6 @@ void das_init(){
 		 (set! (cursor-color) blue)
 		 ;;(gc)
 		 #f)))
-
 
 ;; Set different color on the cursor when playing selection.
 (if (not c-setting-cursor-color-cause-redraw)
@@ -411,20 +432,41 @@ void das_init(){
 ;; Seems to work for me at least.
 ;;##############################################################
 
+#!
+(hobbit-compile
+ (define (ai)
+   (lambda (b)
+     (c-display b)))
+)
+ (c-display ((ai)5))
+ (if (procedure? (ai))
+     (c-display "jepp")
+     (c-display "nope"))
+!#
+
+
+
+
 (let ((width 800)
       (height 600))
+
 
   (if use-gtk
       (add-hook! after-open-hook
 		 (lambda (snd)
 		   (let ((w (list-ref (channel-widgets snd 0) 0)))
+		     ;(c-display "1")
 		     (g_signal_connect w "configure_event"
 				       (lambda (w e i)
 					 (let ((event (GDK_EVENT_CONFIGURE e)))
 					   (set! width (.width event))
-					   (set! height (.height event))))))
+					   (set! height (.height event)))))
+		     )
+		     ;(c-display "2"))
 		   #f)))
   
+
+
   (add-hook! close-hook
 	     (lambda (snd)
 	       (set! (window-width) width)
@@ -455,6 +497,9 @@ void das_init(){
 
 
 
+
+
+
 ;;##############################################################
 ;; Various mouse handling
 ;;##############################################################
@@ -472,10 +517,10 @@ void das_init(){
 
 
 (let ((isdragged #f))
-  (add-hook! mouse-button-press-hook
+  (c-add-hook! mouse-button-press-hook
 	     (lambda (snd x y stat)
 	       (set! isdragged #f)))
-  (add-hook! mouse-drag2-hook
+  (c-add-hook! mouse-drag2-hook
 	     (lambda (snd x y stat)
 	       (set! isdragged #t)))
   (add-hook! mouse-click-hook
@@ -526,6 +571,7 @@ No crash:
 !#
 
 
+
 ;;##############################################################
 ;; Playing
 ;;##############################################################
@@ -534,6 +580,29 @@ No crash:
 
 ;(define (play-selection-with-play)
 ;  (play (c-selection-position) #f #f #f (+ (c-selection-position) (c-selection-frames))))
+
+
+
+;; Can't play many minutes before memory is used up: (and allocating memory stops the world as well)
+(if (defined? 'c-stop-gc-when-playing)
+    (begin
+      (add-hook! stop-dac-hook
+		 (lambda ()
+		   (c-gc-on)))
+      (add-hook! stop-playing-hook
+		 (lambda (snd)
+		   (c-gc-on)))
+      (add-hook! stop-playing-selection-hook
+		 (lambda ()
+		   (c-gc-on)))
+      (add-hook! start-playing-hook
+		 (lambda (snd)
+		   (c-gc-off)))
+      (add-hook! start-playing-selection-hook
+		 (lambda ()
+		   (c-gc-off)))))
+
+
 
 
 ;; To avoid flickering and eye-uncomfortable cursor-jumps
@@ -565,52 +634,36 @@ No crash:
                         (if (and (= x 0) c-islooping)
                             (c-play-selection))))))
 
-(define (c-play2 snd)
-  (if c-islooping
-      (play)
-      (remove-hook! stop-playing-hook c-play2))
-  #f)
+
+
+
 
 
 (define (c-play pos)
-  ;;(c-display "c-play called " pos)
   (set! c-playstartpos pos)
-  (if c-is-stop-hooks-here
-      (begin
-	(if c-islooping
-	    (add-hook! stop-playing-hook c-play2))
-	(play pos))
-      (play pos #f #f #f #f #f
-	    (lambda (x)
-	      (if (and (= x 0) c-islooping)
-		  (c-play pos))))))
-
-
-(define (c-play2)
-  (play 0 #f #f #f #f #f
+  (play pos #f #f #f #f #f
 	(lambda (x)
-	  (if (= x 0)
-	      (c-play2)))))
+	  (if (and (= x 0) c-islooping)
+	      (c-play pos)))))
+
+
 
 ;; Replace the old space binding with one that starts playing from the current cursor position,
 ;; all channels. And stops playing if allready playing.
 (bind-key (char->integer #\ ) 0 
 	  (lambda ()
 	    (if (dac-is-running)
-		(begin
-		  (if c-is-stop-hooks-here
-		      (begin
-			(remove-hook! stop-playing-selection-hook c-play-selection2)
-			(remove-hook! stop-playing-hook c-play2)))
-		  (c-stop-playing c-playstartpos))
+		(c-stop-playing c-playstartpos)
 		(if (c-selection?)
 		    (c-play-selection)
 		    (c-play (cursor))))))
 
+
+
 ;; Makes the P key a pause button. If playing, stops playing, but doesn't reset the cursor pos.
 ;; If not playing, starts playing from cursor.
 (bind-key (char->integer #\p) 0 
-	  (lambda ()
+	  (lambda x
 	    (if (dac-is-running)
 		(c-stop-playing #f)
 		(c-play (cursor)))))
@@ -637,7 +690,7 @@ No crash:
 				   (/ (+ (c-selection-position) (c-selection-frames)) (srate))))))
 
 
-(define (c-set-x-bounds x1 x2)
+(define (c-set-x-bounds! x1 x2)
   (let* ((all (/ (frames) (srate)))
 	 (n-x1 (max 0 x1))
 	 (n-x2 (min all (+ (- n-x1 x1) x2))))
@@ -656,11 +709,11 @@ No crash:
 	 (n-length (* zoomfactor length))
 	 (n-x2 (/ (+ (* 2 cursor) n-length) 2))
 	 (n-x1 (- n-x2 n-length)))
-    (c-set-x-bounds n-x1 n-x2)))
+    (c-set-x-bounds! n-x1 n-x2)))
 
 ;; -: Zoom out
 (bind-key (char->integer #\-) 0
-	  (lambda ()
+	  (lambda x
 	    (c-zoom c-zoomfactor)))
 
 ;; +: Zoom in
@@ -739,6 +792,7 @@ Does not work.
 
 
 
+
 ;;##############################################################
 ;; Various key-bindings
 ;;##############################################################
@@ -747,6 +801,12 @@ Does not work.
 (bind-key (char->integer #\c) 4
 	  (lambda ()
 	    (exit))
+	  #t)
+
+
+(bind-key (char->integer #\y) 4
+	  (lambda ()
+	    (mix-selection (cursor)))
 	  #t)
 
 
@@ -789,7 +849,8 @@ Does not work.
 
 
 
-					
+
+
 
 ;;##############################################################
 ;; Set some colors
@@ -845,6 +906,35 @@ Does not work.
 		(eval-string (comment sndf)))
 	      (lambda args #f))))
 
+;(hobbit-compile
+; (let ((str " ")
+;       (chan "2"))
+;   (for-each
+;    (lambda (m)
+;      (set! str chan))
+;    '()))
+; 
+; )
+;
+; (define (ai sndf)
+;  (let ((str (format #f "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%(let ((m #f))~%"))
+;	(chan 0))
+;    (for-each
+;     (lambda (chan-marks)
+;       (c-display chan-marks))
+;       (for-each 
+;	(lambda (m)
+;	  (set! str 
+;		(string-append str 
+;			       (format #f
+;				       "  (set! m (add-mark ~A #f ~D))~%" 
+;				       (mark-sample m)
+;				       chan))))
+;	(set! chan (1+ chan))))
+;     (marks sndf))
+;    (string-append str (format #f "  m)~%"))))
+
+
 (define (marks->string sndf)
   (let ((str (format #f "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%(let ((m #f))~%"))
 	(chan 0))
@@ -875,7 +965,7 @@ Does not work.
        (set! chan (1+ chan)))
      (marks sndf))
     (string-append str (format #f "  m)~%"))))
-		   
+
 (add-hook! output-comment-hook (lambda (str) (marks->string (selected-sound)) #f))
 (add-hook! after-open-hook (lambda (snd) (eval-header snd) #f))
 
@@ -885,13 +975,13 @@ Does not work.
 
 
 ;;##############################################################
-;; Fix mouse-selection handling. (probably broken for motif)
+;; Replace mouse-selection handling. (probably broken for motif)
 ;;##############################################################
 
-(if #t (begin
-  (define about-to-move #f)
-  (define selection-starting-point #f)
-  (define stop-handling #f)
+(if #t
+    (let ((about-to-move #f)
+	  (selection-starting-point #f)
+	  (stop-handling #f))
 
   (define (mouse-press-callback snd x y state)
     (c-gc-off) ;; To avoid irritating non-smoothness.
@@ -988,6 +1078,10 @@ Does not work.
 	       (set! stop-handling  #f)
 	       #f))
 
+  (add-hook! mark-click-hook
+	     (lambda (id)
+	       (c-display id)))
+
   (add-hook! mark-drag-hook
 	     (lambda (id)
 	       (set! selection-starting-point #f)
@@ -1000,11 +1094,14 @@ Does not work.
 		   (begin
 		     (c-remove-motionhandler (list-ref (channel-widgets snd 0) 0))))))
 	     
-  (add-hook! mouse-button-press-hook mouse-press-callback)
+  (c-add-hook! mouse-button-press-hook mouse-press-callback)
 
-  (add-hook! mouse-drag2-hook mouse-motion-callback)
+  (c-add-hook! mouse-drag2-hook mouse-motion-callback)
 
-  (add-hook! mouse-button-release-hook mouse-release-callback)))
+  (c-add-hook! mouse-button-release-hook mouse-release-callback)))
+
+
+
 
 
 
@@ -1028,6 +1125,7 @@ Does not work.
 	    (uncolor-samples (selected-sound) (- chans 1))
 	    (color-samples color start end (selected-sound) (- chans 1)))
 	(color-samples-allchans (- chans 1) color start end))))
+
 
 
 (define (c-clear-report-hook snd chn)
@@ -1109,6 +1207,7 @@ Does not work.
 
 
 
+
 ;;##############################################################
 ;; Progress reporting (graphic)
 ;;##############################################################
@@ -1137,6 +1236,9 @@ Does not work.
 (define  (start-progress-report . snd)
   (set! c-last-report-value 0.0)
   (report-in-minibuffer "0.00"))
+
+
+
 (define (finish-progress-report . snd)
   (report-in-minibuffer ""))
 
@@ -1155,7 +1257,24 @@ Does not work.
 ;; This function is often called when playing, so I have tried as much as possible to avoid triggering a garbage collection.
 ;; (without very much (if any) success by the way). Would be extremely nice if Guile could collect garbage in a seperate thread.
 
-(define c-show-times 
+
+
+
+
+;(hobbit-compile
+;
+;(define (func1 y)
+;  (lambda (x)
+;    #t))
+;
+;(define func2
+;  (let ((x #f))
+;    (lambda ()
+;      #t)))
+;)
+
+
+(define c-show-times
 
   (let (
 	 
@@ -1268,9 +1387,9 @@ Does not work.
       (set! stereocombined (and (= (channels) 2) 
 				(= (channel-style (selected-sound)) channels-combined)))
       (set! wanttoupdate (or (not (null? force)) largetimechange))
-      
       (if wanttoupdate
 	  (set! last-time-showed dastime))
+
       (if stereocombined
 	  (begin
 	    (c-dodasprint (get-time-string dastime) 0 red dastime wanttoupdate)
@@ -1289,12 +1408,32 @@ Does not work.
 
 
 
+
+
+
+
+
+;(set! %load-path (cons "/usr/local/share/guile-hobbit"
+;		       %load-path))
+;
+;(use-modules (hobbit4d link))
+
+(define (c-set-foreground-color! c)
+  (set! (foreground-color) c))
+
+
+;(hobbit-load-from-path "compile/c-show-times")
+
+;(define c-show-times c-show-times2)
+;(dynamic-call "scm_init_c_dash_show_dash_times" (dynamic-link "/home/kjetil/snd-7/compile/libc-show-times.so"))
+
+
 ;; Show the time in the minibuffer when playing
 (let ((samplecount 0))
   (add-hook! play-hook
 	     (lambda (samples)
 	       (set! samplecount (+ samplecount (* 40 samples)))
-	       (if (> samplecount (srate (selected-sound)))
+	       (if (or #f (> samplecount (srate (selected-sound))))
 		   (begin
 		     (set! samplecount 0)
 		     (c-show-times (cursor))))
@@ -1304,6 +1443,7 @@ Does not work.
 ;; ..And when updating the graphics.
 ;(define te 0)
 
+
 (add-hook! after-graph-hook
 	   (lambda (snd chn)
 	     ;(set! te (1+ te))
@@ -1311,6 +1451,7 @@ Does not work.
 	     (if (= 0 chn)
 		 (c-show-times (cursor) #t))
 	     #f))
+
 
 
 
@@ -1405,6 +1546,7 @@ Does not work.
 ;; Gain node-line (not finished)
 ;;##############################################################
 
+
 (if #f (begin
 
 (add-hook! after-open-hook
@@ -1412,50 +1554,32 @@ Does not work.
 	     (c-put snd 'nodelines
 		    (<array/map> (channels snd)
 				 (lambda (ch)
-				   (<nodeline> '((0 1.0) (0.5 0.5) (1 1))
-					       (lambda (x1 y1 x2 y2)
-						 (let* ((rx1 (car (x-bounds)))
-							(rx2 (cadr (x-bounds)))
-							(minx (x->position rx1 snd ch))
-							(maxx (x->position rx2 snd ch))
-							(miny (y->position -1 snd ch))
-							(maxy (y->position 1 snd ch)))
-					;(c-display x1 x2 minx maxx)
-						   (draw-line (c-scale x1 0 1 minx maxx)
-							      (c-scale y1 0 1 miny maxy)
-							      (c-scale x2 0 1 minx maxx)
-							      (c-scale y2 0 1 miny maxy))))
-					       (lambda (x y)
-						 (let* ((rx1 (car (x-bounds)))
-							(rx2 (cadr (x-bounds)))
-							(minx (x->position rx1 snd ch))
-							(maxx (x->position rx2 snd ch))
-							(miny (y->position -1 snd ch))
-							(maxy (y->position 1 snd ch))
-							(nx (c-scale x 0 1 minx maxx))
-							(ny (c-scale y 0 1 miny maxy))
-							(bs 5)
-							(nx1 (- nx bs))
-							(ny1 (- ny bs))
-							(nx2 (+ nx bs))
-							(ny2 (+ ny bs)))
-					;(c-display nx1 ny1 nx2 ny2 minx maxx)
-						   (draw-line nx1 ny1 nx2 ny1)
-						   (draw-line nx2 ny1 nx2 ny2)
-						   (draw-line nx2 ny2 nx1 ny2)
-						   (draw-line nx1 ny2 nx1 ny1)))
-					       (lambda (x1 x2)
-						 #t)))))
+				   (define (linepaint x1 y1 x2 y2)
+				     (let* ((rx1 (car (x-bounds)))
+					    (rx2 (cadr (x-bounds)))
+					    (minx (x->position rx1 snd ch))
+					    (maxx (x->position rx2 snd ch))
+					    (miny (y->position 1 snd ch))
+					    (maxy (y->position -1 snd ch)))
+				       (draw-line (c-scale x1 0 1 minx maxx)
+						  (c-scale y1 0 1 miny maxy)
+						  (c-scale x2 0 1 minx maxx)
+						  (c-scale y2 0 1 miny maxy)
+						  snd
+						  ch
+						  mark-context)))
+				   (<nodeline> '((0 0.0) (0.5 0.5) (1 0))
+					       linepaint
+					       (lambda (this)
+						 (-> this paint))))))
 	     #f))
 
 
 (add-hook! after-graph-hook
 	   (lambda (snd ch)
 	     ;;(c-display "snd: " snd)
-	     (let ((old-color (foreground-color))
-		   (nodeline ((c-get snd 'nodelines) ch))
+	     (let ((nodeline ((c-get snd 'nodelines) ch))
 		   (length (/ (frames) (srate))))
-	       (set! (foreground-color) blue)
 	       (let ((minx (car (x-bounds snd ch)))
 		     (maxx (cadr (x-bounds snd ch)))
 		     (miny (car (y-bounds snd ch)))
@@ -1467,15 +1591,165 @@ Does not work.
 		     (c-scale maxy -1 1 0 1)
 		     (/ (/ (window-height) (chans snd)) (window-width))))
 	       (-> nodeline paint)
-	       (set! (foreground-color) old-color)
 	       #f)))
 
-; ((axis-info))
-;(add-hook! mouse-button-press-hook
-;	   (lambda (snd x y stat)
-;	     (let ((nodeline ((c-get snd 'nodelines) ch)))
 
+(c-add-hook! mouse-button-press-hook
+	   (lambda (snd x y stat)
+	     (c-get-mouse-info snd x y #f
+			       (lambda (ch x y xmax ymax)
+				 (let ((ret #f))
+				   (c-for 0 < (chans snd) 1
+					  (lambda (ch)
+					    (let ((nodeline ((c-get snd 'nodelines) ch)))
+					      (let ((a (-> nodeline mouse-press (/ x xmax) (/ y ymax))))
+						(if (eq? a 'stop!)
+						    (begin
+						      (c-gc-off) ;; To avoid irritating non-smoothness.
+						      (set! ret a)))))))
+				   ret)))))
+
+(c-add-hook! mouse-move-hook
+	   (lambda (snd x y stat)
+	     (c-get-mouse-info snd x y #t
+			       (lambda (ch x y xmax ymax)
+				 (let ((ret #f))
+				   (c-for 0 < (chans snd) 1
+					  (lambda (ch)
+					    (let ((nodeline ((c-get snd 'nodelines) ch)))
+					      (let ((a (-> nodeline mouse-move (/ x xmax) (/ y ymax))))
+						(if (not ret)
+						    (set! ret a))))))
+				   ret)))))
+
+(c-add-hook! mouse-button-release-hook
+	   (lambda (snd x y stat)
+	     (c-get-mouse-info snd x y #t
+			       (lambda (ch x y xmax ymax)
+				 (let ((ret #f))
+				   (c-for 0 < (chans snd) 1
+					  (lambda (ch)
+					    (let ((nodeline ((c-get snd 'nodelines) ch)))
+					      (let ((a (-> nodeline mouse-release (/ x xmax) (/ y ymax))))
+						(if (not ret)
+						    (set! ret a))))))
+				   ret)))))
 ))
+
+
+
+
+;;##############################################################
+;;  Moving marks with the mouse
+;;##############################################################
+
+(let ((currmark #f))
+
+  (c-add-hook! mouse-button-press-hook
+	       (lambda (snd orgx orgy stat)
+		 (c-get-mouse-info 
+		  snd orgx orgy #f
+		  (lambda (ch x y xmax ymax)
+		    (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch)))))
+			  (pointrange (- (* (srate snd) (position->x 15 snd ch))
+					 (* (srate snd) (position->x 0 snd ch)))))
+		      (if (and (> y 7)
+			       (< y 15))
+			  (call-with-current-continuation
+			   (lambda (return)
+			     (for-each
+			      (lambda (mark)
+				(if (< (abs (- (mark-sample mark) pointpos)) pointrange)
+				    (begin
+				      (c-gc-off) ;; To avoid irritating non-smoothness.
+				      (set! currmark mark)
+				      (return 'stop!))))
+			      (list-ref (list-ref (marks) snd) ch))))))))))
+
+  (c-add-hook! mouse-move-hook
+	       (lambda (snd orgx y stat)
+		 (if currmark
+		     (c-get-mouse-info
+		      snd orgx y #t
+		      (lambda (ch x y xmax ymax)
+			(let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+			  (if (> (mark-sync currmark) 0)
+			      (move-syncd-marks (mark-sync currmark)
+						(- pointpos (mark-sample currmark)))
+			      (set! (mark-sample currmark) pointpos))
+			  'stop!))))))
+
+  (c-add-hook! mouse-button-release-hook
+	       (lambda (snd orgx y stat)
+		 (if currmark
+		     (c-get-mouse-info 
+		      snd orgx y #t
+		      (lambda (ch x y xmax ymax)
+			(let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+			  (if (> (mark-sync currmark) 0)
+			      (move-syncd-marks (mark-sync currmark)
+						(- pointpos (mark-sample currmark)))
+			      (set! (mark-sample currmark) pointpos))
+			  (set! currmark #f)
+			  'stop!))))))
+)
+
+
+
+
+;;##############################################################
+;;  Moving mixes with the mouse
+;;##############################################################
+
+(if #f
+(let ((currmix #f))
+
+  (c-add-hook! mouse-button-press-hook
+	       (lambda (snd orgx orgy stat)
+		 (c-get-mouse-info 
+		  snd orgx orgy #f
+		  (lambda (ch x y xmax ymax)
+		    (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch)))))
+			  (pointrange (- (* (srate snd) (position->x 15 snd ch))
+					 (* (srate snd) (position->x 0 snd ch))))
+			  (ypointpos (position->y orgy snd ch)))
+		      (c-display y orgy ypointpos snd ch)
+		      (if (and (> ypointpos 0.84)
+			       (< ypointpos 0.92))
+			  (call-with-current-continuation
+			   (lambda (return)
+			     (for-each
+			      (lambda (mix)
+				(if (< (abs (- (mix-position mix) pointpos)) pointrange)
+				    (begin
+				      (c-gc-off) ;; To avoid irritating non-smoothness.
+				      (set! currmix mix)
+				      (return 'stop!))))
+			      (mixes snd ch))))))))))
+
+  (c-add-hook! mouse-move-hook
+	       (lambda (snd orgx y stat)
+		 (if currmix
+		     (c-get-mouse-info
+		      snd orgx y #t
+		      (lambda (ch x y xmax ymax)
+			(let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+			  (set! (mix-position currmix) pointpos)
+			  'stop!))))))
+
+  (c-add-hook! mouse-button-release-hook
+	       (lambda (snd orgx y stat)
+		 (if currmix
+		     (c-get-mouse-info 
+		      snd orgx y #t
+		      (lambda (ch x y xmax ymax)
+			(let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+			  (set! (mix-position currmix) pointpos)
+			  (set! currmix #f)
+			  'stop!))))))
+
+  )
+)
 
 
 ;;##############################################################
@@ -1504,7 +1778,7 @@ Does not work.
 	(let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
 	       (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
 
-	  (c-display "saving:" (selected-sound))
+	  ;;(c-display "saving:" (selected-sound))
 	  (if (selection-member? (selected-sound))
 	      (begin
 		(c-put (selected-sound) 'selection-position (c-selection-position))
@@ -1531,7 +1805,7 @@ Does not work.
 	     (open-current-buffer width height)
 	     (set! (selection-member? #t) #f)
 	     (let ((selpos (c-get (selected-sound) 'selection-position)))
-	       (c-display (selected-sound) selpos)
+	       ;;(c-display (selected-sound) selpos)
 	       (if selpos
 		   (begin
 		     (c-set-selection-position! (selected-sound) selpos)
@@ -1755,5 +2029,10 @@ Does not work.
 			(set! (window-height) 600)))))))
 	;;(set! (auto-resize) #t)
 	(myread))))
+
+
+
+
+
 
 

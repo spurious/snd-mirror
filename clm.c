@@ -28,6 +28,7 @@
 #include "clm-strings.h"
 
 #if HAVE_EXTENSION_LANGUAGE
+  #include "xen.h"
   #include "vct.h"
   #include "clm2xen.h"
 #endif

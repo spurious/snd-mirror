@@ -53,6 +53,36 @@
 
 
 
+(define (c-get-mouse-info snd x y mustcall func)
+  (let ((axinfo (axis-info snd 0))
+	(ch 0)
+	(xmax 0)
+	(ymax 0)
+	(newx 0)
+	(newy 0))
+    (define (set-channel!)
+      (if (>= ch (chans snd))
+	  #f
+	  (begin
+	    (set! axinfo (axis-info snd ch))
+	    (if (and (>= y (list-ref axinfo 13))
+		     (< y (list-ref axinfo 11)))
+		#t
+		(begin
+		  (set! ch (1+ ch))
+		  (set-channel!))))))
+    (let ((legalchannel (set-channel!)))
+      (if (or mustcall
+	      (and legalchannel
+		   (>= x (list-ref axinfo 10))
+		   (< x (list-ref axinfo 12))))
+	  (begin
+	    (set! xmax (- (list-ref axinfo 12) (list-ref axinfo 10)))
+	    (set! ymax (- (list-ref axinfo 11) (list-ref axinfo 13)))
+	    (set! newx (min xmax (max 0 (- x (list-ref axinfo 10)))))
+	    (set! newy (min ymax (max 0 (- y (list-ref axinfo 13)))))
+	    (func (min (- (chans snd) 1) ch) newx newy xmax ymax))))))
+
 ;; Taken from new-effects.scm
 (define yellow-pixel
   (let ((pix #f))
@@ -568,6 +598,21 @@ void das_init(){
 
 
 
+;;##############################################################
+;; Better hook functions.
+;;##############################################################
+(define (c-make-hook)
+  (cons 'last '()))
+(define (c-add-hook! hook func)
+  (set-cdr! hook (cons (car hook) (cdr hook)))
+  (set-car! hook func))
+(define (c-run-hook hook . args)
+  (if (not (eq? 'last (car hook)))
+      (let ((ret (apply (car hook) args)))
+	(if (eq? 'stop! ret)
+	    ret
+	    (apply c-run-hook (cdr hook) args)))))
+
 
 
 ;;##############################################################
@@ -576,13 +621,13 @@ void das_init(){
 
 (define c-ismoved #f)
 
-(define mouse-button-press-hook (make-hook 4))
-(define mouse-move-hook (make-hook 4))
-(define mouse-drag2-hook (make-hook 4))
-(define mouse-button-release-hook (make-hook 4))
+(define mouse-button-press-hook (c-make-hook))
+(define mouse-move-hook (c-make-hook))
+(define mouse-drag2-hook (c-make-hook))
+(define mouse-button-release-hook (c-make-hook))
 
 ;;(define mouse-click-hook-old mouse-click-hook)
-;;(define mouse-click-hook (make-hook 7))
+;;(define mouse-click-hook (c-make-hook 7))
 ;;
 ;;(add-hook! mouse-click-hook-old
 ;;	   (lambda args
@@ -598,37 +643,38 @@ void das_init(){
 		   (begin
 		     (XtAddEventHandler w ButtonPressMask #f 
 					(lambda (w c e f)
-					  (run-hook mouse-button-press-hook snd (.x e) (.y e) (.state e))))
+					  (c-run-hook mouse-button-press-hook snd (.x e) (.y e) (.state e))))
 		     (XtAddEventHandler w ButtonMotionMask #f 
 					(lambda (w c e f)
-					  (run-hook mouse-drag2-hook snd (.x e) (.y e) (.state e))))
+					  (c-run-hook mouse-drag2-hook snd (.x e) (.y e) (.state e))))
 		     (XtAddEventHandler w ButtonReleaseMask #f 
 					(lambda (w c e f)
-					  (run-hook mouse-button-release-hook snd (.x e) (.y e) (.state e)))))
+					  (c-run-hook mouse-button-release-hook snd (.x e) (.y e) (.state e)))))
 		   (let ((ispressed #f))
 		     (g_signal_connect w "button_press_event"
 				       (lambda (w e i)
 					 (set! ispressed #t)
 					 (set! c-ismoved #f)
-					 (run-hook mouse-button-press-hook snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
+					 (c-run-hook mouse-button-press-hook snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
 		     (g_signal_connect w "motion_notify_event"
 				       (lambda (w e i)
 					 (set! c-ismoved #t)
 					 (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
 							 (cons snd (cdr (gdk_window_get_pointer (.window e))))
 							 (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
-					   (apply run-hook (cons mouse-move-hook args))
-					   (if ispressed
-					       (apply run-hook (cons mouse-drag2-hook args))))
+					   
+					   (if (and (not (eq? 'stop! (apply c-run-hook (cons mouse-move-hook args))))
+						    ispressed)
+					       (apply c-run-hook (cons mouse-drag2-hook args))))
 					 #f))
 		     (g_signal_connect w "button_release_event"
 				       (lambda (w e i)
 					 (set! ispressed #f)
-					 (run-hook mouse-button-release-hook snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))))))
+					 (c-run-hook mouse-button-release-hook snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))))))
 
 
 
-(define mouse-click2-hook (make-hook 4))
+(define mouse-click2-hook (c-make-hook))
 
 ;)
 
@@ -705,7 +751,7 @@ void das_init(){
 ;;##############################################################
 
 
-(define-class (<nodeline> dasnodes linefunc boxfunc clearfunc)
+(define-class (<nodeline> dasnodes linefunc changefunc)
 
   (define nodes (map list-copy dasnodes))
 
@@ -735,21 +781,19 @@ void das_init(){
 
   (define (for-each-box func)
     (for-each (lambda (n)
-		(func (n 0) (n 1) (n 2) (n 3)))
+		(func (n 0) (n 1) (n 2) (n 3) (n 4)))
 	      boxes))
 
-  (define-method (find-node x y xrange yrange)
-    (let* ((x05 (- x (/ xrange 2)))
-	   (y05 (- y (/ yrange 2)))
-	   (ret (find (lambda (n)
-			(let ((nx (car n))
-			      (ny (cadr n)))
-			  (and (>= (+ x05 xrange) nx) (<= x05 nx)
-			       (>= (+ y05 yrange) ny) (<= y05 ny))))
-		      nodes)))
-      (if ret
-	  (car ret)
-	  #f)))
+  (define (get-node x y)
+    (call-with-current-continuation
+     (lambda (return)
+       (for-each-box (lambda (i x1 y1 x2 y2)
+		       (if (and (>= x x1)
+				(< x x2)
+				(>= y y1)
+				(< y y2))
+			   (return i))))
+       #f)))
 
   (define (make-lines-and-boxes)
     (set! lines '())
@@ -783,19 +827,20 @@ void das_init(){
 					     lines))))))
 
     (for-each-node (lambda (i x1 y1 x2 y2)
-		     (let ((makebox (lambda (x y)
+		     (let ((makebox (lambda (i x y)
 				      (if (and (<= x maxx) (>= x minx))
 					  (let ((nx (c-scale x minx maxx 0 1))
 						(ny (c-scale y miny maxy 0 1))
 						(ax (* this->boxsize proportion)))
-					    (set! boxes (cons (<array> (- nx ax)
+					    (set! boxes (cons (<array> i
+								       (- nx ax)
 								       (- ny this->boxsize)
 								       (+ nx ax)
 								       (+ ny this->boxsize))
 							      boxes)))))))
 		       (if (= i 1)
-			   (makebox x1 y1))
-		       (makebox x2 y2)))))
+			   (makebox 0 x1 y1))
+		       (makebox i x2 y2)))))
 
 
   (define-method (set-bounds! dasminx dasmaxx dasminy dasmaxy dasproportion)
@@ -811,7 +856,7 @@ void das_init(){
     (for-each (lambda (line)
 		(linefunc (line 0) (line 1) (line 2) (line 3)))
 	      lines)
-    (for-each-box (lambda (x1 y1 x2 y2)
+    (for-each-box (lambda (n x1 y1 x2 y2)
 		    (linefunc x1 y1 x2 y1)
 		    (linefunc x2 y1 x2 y2)
 		    (linefunc x2 y2 x1 y2)
@@ -830,20 +875,30 @@ void das_init(){
 			   (set! newnodes (cons (list y1 y2) newnodes)))))
       (set! nodes (reverse newnodes))))
 
-  (define ispressed #f)
+  (define pressednode #f)
 
   (define-method (mouse-press x y)
-    (c-display x y)
-    (set! ispressed (<array> x y)))
+    (let ((node (get-node x y)))
+      (if node
+	  (begin
+	    (set! pressednode (list-ref nodes node))
+	    'stop!))))
 
   (define-method (mouse-move x y)
-    #t)
+    (if pressednode
+	(begin
+	  (changefunc this)
+	  (set-car! pressednode x)
+	  (set-car! (cdr pressednode) y)
+	  (make-lines-and-boxes)
+	  (this->paint)
+	  'stop!)))
 
   (define-method (mouse-release x y)
-    (if ispressed
+    (if pressednode
 	(begin
-	  (set! ispressed #f))))
-
+	  (set! pressednode #f))))
+  
   )
 		     
 		  
@@ -883,9 +938,6 @@ void das_init(){
 	  submenu))))
 
 
-
- (define (blabb w d)
-   (c-display w))
 
  (define* (menu-add top-menu menu-label callback #:optional position)
   (if (integer? top-menu)
