@@ -67,10 +67,9 @@
  * TODO: rest of snd-test 22, and overall test
  * TODO: ptree as fragment edit op
  * TODO: general evaluate_ptree accessor
- * TODO: ports
- * TODO: timing tests: fade singer
- * TODO: rewrite scm examples to be optimizable
- * TODO: test the local set!s
+ * TODO: timing tests: fade piano pqwvox
+ * TODO: vectors of generators (fade.scm needs this), vcts (pqwvox)
+ * TODO: procedure property 'ptree -> saved ptree
  *
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -96,7 +95,6 @@
 #include "vct.h"
 #include "clm2xen.h"
 
-#define XEN_EXACT_P(Arg) XEN_TRUE_P(scm_exact_p(Arg))
 #define XEN_SYMBOL_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(a, scm_current_module_lookup_closure(), XEN_TRUE))
 #define XEN_SYMBOL_NAME_SET_VALUE(a, b) XEN_VARIABLE_SET(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_TRUE), b)
 #define XEN_AS_STRING(form) XEN_TO_C_STRING(XEN_TO_STRING(form))
@@ -106,42 +104,162 @@
 #define XEN_CDAR(a) XEN_CDR(XEN_CAR(a))
 #define XEN_CDADR(a) XEN_CDR(XEN_CADR(a))
 
-static vct *vector_to_vct(XEN vect)
+
+/* find and set (Guile) variable values */
+static XEN symbol_to_value(XEN code, XEN sym, int *local)
 {
-  int len, i;
-  vct *v;
-  XEN *vdata;
-  len = XEN_VECTOR_LENGTH(vect);
-  if (len == 0) return(NULL);
-  v = c_make_vct(len);
-  vdata = XEN_VECTOR_ELEMENTS(vect);
-  for (i = 0; i < len; i++) 
-    if (XEN_DOUBLE_P(vdata[i]))
-      v->data[i] = (Float)XEN_TO_C_DOUBLE(vdata[i]);
-    else
-      {
-	c_free_vct(v);
-	return(NULL);
-      }
-  return(v);
+  /* sigh... this is a can of worms */
+  XEN new_val = XEN_UNDEFINED;
+  XEN pair = XEN_FALSE, pairs = XEN_FALSE;
+  XEN code_env = XEN_FALSE;
+  XEN names, values;
+  int i, len;
+  int believe_it = FALSE;
+  if (XEN_PROCEDURE_P(code))
+    {
+      /* scrounge around in the "eval" environment looking for local version of sym */
+      code_env = SCM_ENV(code);
+      /* fprintf(stderr,"look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
+      if (XEN_LIST_P(code_env))
+	{
+	  /* now we might have an "eval environment" (an association list) or an "eval closure" (something different...) */
+	  if (XEN_LIST_P(XEN_CAR(XEN_CAR(code_env))))
+	    {
+	      /*  fprintf(stderr,"look 1: %s\n", XEN_AS_STRING(code_env));  */
+	      names = XEN_CAAR(code_env);
+	      values = XEN_CDAR(code_env);
+	      len = XEN_LIST_LENGTH(names);
+	      for (i = 0; i < len; i++)
+		if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
+		  {
+		    new_val = XEN_LIST_REF(values, i);
+		    believe_it = TRUE;
+		    (*local) = 1;
+		    break;
+		  }
+	      if ((!believe_it) && (XEN_NOT_NULL_P(XEN_CDR(code_env))))
+		pairs = XEN_CDR(code_env);
+	    }
+	  else pairs = code_env;
+	  if ((!believe_it) && (XEN_LIST_P(pairs)))
+	    {
+	      /* next portion of context appears to be in trailing association list */
+	      pair = scm_sloppy_assoc(sym, pairs);
+	      if (XEN_TRUE_P(scm_pair_p(pair)))
+		{
+		  new_val = XEN_CDR(pair);
+		  /* whatever it is, it is the current reigning sym */
+		  /* fprintf(stderr,"%s found 12: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val));  */
+		  believe_it = TRUE;
+		  (*local) = 2;
+		}
+	    }
+	  if ((!believe_it) && (XEN_LIST_LENGTH(code_env) > 2))
+	    {
+	      /* getting desperate -- final list of code_env appears to be arg list? */
+	      names = XEN_LIST_REF(code_env, XEN_LIST_LENGTH(code_env) - 2);
+	      /* fprintf(stderr,"check %s\n",XEN_AS_STRING(names));  */
+	      if ((XEN_LIST_P(names)) && (XEN_LIST_P(XEN_CAR(names))))
+		{
+		  /* fprintf(stderr,"look now in: %s\n", XEN_AS_STRING(names)); */
+		  values = XEN_CDR(names);
+		  names = XEN_CAR(names);
+		  len = XEN_LIST_LENGTH(names);
+		  for (i = 0; i < len; i++)
+		    if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
+		      {
+			new_val = XEN_LIST_REF(values, i);
+			/* fprintf(stderr,"%s found 1: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val));  */
+			believe_it = TRUE;
+			(*local) = 3;
+			break;
+		      }
+		}
+	    }
+	}
+    }
+  if ((!believe_it) && (XEN_NOT_BOUND_P(new_val)))
+    {
+      new_val = XEN_SYMBOL_TO_VALUE(sym); /* try the outer environment */
+      (*local) = 0;
+      /* fprintf(stderr,"%s found 3: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val));  */
+    } 
+  /* fprintf(stderr,"%s found: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
+  return(new_val);
 }
 
-static void vct_to_vector(vct *v, XEN vect)
+static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 {
-  int len, i;
-  XEN *vdata;
-  len = XEN_VECTOR_LENGTH(vect);
-  vdata = XEN_VECTOR_ELEMENTS(vect);
-  for (i = 0; i < len; i++) 
-    if (XEN_EXACT_P(vdata[i]))
-      vdata[i] = C_TO_XEN_INT((int)(v->data[i]));
-    else vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
+  XEN pair = XEN_FALSE, pairs = XEN_FALSE;
+  XEN code_env = XEN_FALSE;
+  XEN names, values;
+  int i, len;
+  /* fprintf(stderr,"set %s to %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
+  if (XEN_PROCEDURE_P(code))
+    {
+      /* scrounge around in the "eval" environment looking for local version of sym */
+      code_env = SCM_ENV(code);
+      /* fprintf(stderr,"look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
+      if (XEN_LIST_P(code_env))
+	{
+	  /* now we might have an "eval environment" (an association list) or an "eval closure" (something different...) */
+	  if (XEN_LIST_P(XEN_CAR(XEN_CAR(code_env))))
+	    {
+	      /*  fprintf(stderr,"look 1: %s\n", XEN_AS_STRING(code_env));  */
+	      names = XEN_CAAR(code_env);
+	      values = XEN_CDAR(code_env);
+	      len = XEN_LIST_LENGTH(names);
+	      for (i = 0; i < len; i++)
+		if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
+		  {
+		    XEN_LIST_SET(values, i, new_val);
+		    return(new_val);
+		  }
+	      if (XEN_NOT_NULL_P(XEN_CDR(code_env)))
+		pairs = XEN_CDR(code_env);
+	    }
+	  else pairs = code_env;
+	  if (XEN_LIST_P(pairs))
+	    {
+	      /* next portion of context appears to be in trailing association list */
+	      pair = scm_sloppy_assoc(sym, pairs);
+	      if (XEN_TRUE_P(scm_pair_p(pair)))
+		{
+		  scm_set_cdr_x(pair, new_val);
+		  new_val = XEN_CDR(pair);
+		  return(new_val);
+		}
+	    }
+	  if (XEN_LIST_LENGTH(code_env) > 2)
+	    {
+	      /* getting desperate -- final list of code_env appears to be arg list? */
+	      names = XEN_LIST_REF(code_env, XEN_LIST_LENGTH(code_env) - 2);
+	      /* fprintf(stderr,"check %s\n",XEN_AS_STRING(names));  */
+	      if ((XEN_LIST_P(names)) && (XEN_LIST_P(XEN_CAR(names))))
+		{
+		  /* fprintf(stderr,"look now in: %s\n", XEN_AS_STRING(names)); */
+		  values = XEN_CDR(names);
+		  names = XEN_CAR(names);
+		  len = XEN_LIST_LENGTH(names);
+		  for (i = 0; i < len; i++)
+		    if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
+		      {
+			XEN_LIST_SET(values, i, new_val);
+			return(new_val);
+		      }
+		}
+	    }
+	}
+    }
+  /* fprintf(stderr, "set global\n"); */
+  XEN_VARIABLE_SET(scm_sym2var(sym, scm_current_module_lookup_closure(), XEN_TRUE), new_val);
+  return(new_val);
 }
 
 
-enum {R_INT, R_FLOAT, R_BOOL, R_VCT, R_READER, R_CLM, R_CHAR, R_STRING, R_PENDING, R_GOTO, R_FUNCTION, R_PORT};
-static char *type_names[12] = {"int", "float", "bool", "vct", "reader", "clm", "char", "string", "pending", "continuation", "function", "port"};
-static char* type_name(int id) {if ((id >= R_INT) && (id <= R_PORT)) return(type_names[id]); return("unknown");}
+enum {R_INT, R_FLOAT, R_BOOL, R_VCT, R_READER, R_CLM, R_CHAR, R_STRING, R_PENDING, R_GOTO, R_FUNCTION};
+static char *type_names[11] = {"int", "float", "bool", "vct", "reader", "clm", "char", "string", "pending", "continuation", "function"};
+static char* type_name(int id) {if ((id >= R_INT) && (id <= R_FUNCTION)) return(type_names[id]); return("unknown");}
 
 static int pointer_p(int type)
 {
@@ -222,6 +340,7 @@ static xen_value *make_xen_value_1(int typ, int address, int constant, const cha
 }
 #define make_xen_value(a,b,c) make_xen_value_1(a,b,c,__FUNCTION__,__LINE__)
 #endif
+
 
 #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
 static char optimizer_warning_buffer[OPTIMIZER_WARNING_BUFFER_SIZE];
@@ -324,13 +443,51 @@ typedef struct {
   void *outer_tree;
 } ptree;
 
-static xen_value *fixup_if_pending(ptree *pt, xen_value *sf, int new_type);
-static xen_var *find_var_in_ptree_via_addr(ptree *pt, int dbl, int addr);
-static xen_value *walk(ptree *prog, XEN form, int need_result);
-static xen_value *lambda_form(ptree *prog, XEN form, int separate);
-static void *form_to_ptree(XEN code);
-static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value *accessor_arg, xen_value *new_value);
-static XEN symbol_to_value(ptree *pt, XEN sym, int *local);
+static xen_var *find_var_in_ptree(ptree *pt, char *name)
+{
+  /* search backwards for shadowing */
+  int i;
+  for (i = pt->var_ctr - 1; i >= 0; i--)
+    if ((pt->vars[i]) &&
+	(strcmp(pt->vars[i]->name, name) == 0))
+      return(pt->vars[i]);
+  for (i = 0; i < pt->global_var_ctr; i++)
+    if ((pt->global_vars[i]) &&
+	(strcmp(pt->global_vars[i]->name, name) == 0))
+      return(pt->global_vars[i]);
+  return(NULL);
+}
+
+static xen_var *find_var_in_ptree_via_addr(ptree *pt, int dbl, int addr)
+{
+  /* search backwards for shadowing */
+  int i;
+  for (i = pt->var_ctr - 1; i >= 0; i--)
+    if ((pt->vars[i]) &&
+	(pt->vars[i]->v->addr == addr) &&
+	(dbl == (pt->vars[i]->v->type == R_FLOAT)))
+      return(pt->vars[i]);
+  for (i = 0; i < pt->global_var_ctr; i++)
+    if ((pt->global_vars[i]) &&
+	(pt->global_vars[i]->v->addr == addr) &&
+	(dbl == (pt->global_vars[i]->v->type == R_FLOAT)))
+      return(pt->global_vars[i]);
+  return(NULL);
+}
+
+static xen_var *find_pending_var_in_ptree_via_xen_value(ptree *pt, xen_value *v)
+{
+  int i;
+  xen_var *var;
+  for (i = 0; i < pt->global_var_ctr; i++)
+    {
+      var = pt->global_vars[i];
+      if ((var) &&
+	  (var->v->addr == v->addr)) /* these are unique and unconfusable due to pending_tag below */
+	return(var);
+    }
+  return(NULL);
+}
 
 static char *add_comments(ptree *pt, char *str)
 {
@@ -488,7 +645,7 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
     case R_READER:  if (ints[v->addr]) buf = sf_to_string((snd_fd *)(ints[v->addr])); else buf = copy_string("null");                  break;
     case R_CLM:     if (ints[v->addr]) buf = copy_string(mus_describe((mus_any *)(ints[v->addr])));  else buf = copy_string("null");   break;
     case R_PENDING: return(copy_string("[value pending]"));                                                                            break;
-    case R_GOTO:    return(copy_string("continuation")); /* TODO: describe goto */                                                     break;
+    case R_GOTO:    return(mus_format("continuation: i%d(%d)", v->addr, ints[v->addr]));                                               break;
     case R_FUNCTION: return(describe_ptree((ptree *)(ints[v->addr])));                                                                 break;
     default:        buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "unknown type: %d", v->type);                            break;
     }
@@ -625,7 +782,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->need_init = 0;
 }
 
-static XEN symbol_set_value(ptree *pt, XEN sym, XEN new_val);
 static xen_var *free_xen_var(ptree *prog, xen_var *var)
 {
   XEN val;
@@ -637,11 +793,6 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
       if ((var->global) &&
 	  (var->unclean))
 	{
-	  /*
-	  if (var->v->type == R_FLOAT)
-	    fprintf(stderr,"at end %s set to %.4f from %d\n", var->name, prog->dbls[var->v->addr], var->v->addr);
-	  else fprintf(stderr,"at end %s set to %d from %d\n", var->name, prog->ints[var->v->addr], var->v->addr);
-	  */
 	  if (current_optimization < 5)
 	    switch (var->v->type)
 	      {
@@ -651,7 +802,7 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 	      case R_STRING: XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_STRING((char *)(prog->ints[var->v->addr]))); break;
 	      case R_CHAR:   XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_CHAR((char)(prog->ints[var->v->addr])));     break;
 	      case R_VCT:    
-		val = symbol_to_value(prog, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
+		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		if (XEN_VECTOR_P(val))
 		  vct_to_vector((vct *)(prog->ints[var->v->addr]), val);
 		break;
@@ -659,13 +810,13 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 	  else
 	    switch (var->v->type)
 	      {
-	      case R_FLOAT:  symbol_set_value(prog, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_DOUBLE(prog->dbls[var->v->addr]));           break;
-	      case R_INT:    symbol_set_value(prog, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_INT(prog->ints[var->v->addr]));              break;
-	      case R_BOOL:   symbol_set_value(prog, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));          break;
-	      case R_STRING: symbol_set_value(prog, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_STRING((char *)(prog->ints[var->v->addr]))); break;
-	      case R_CHAR:   symbol_set_value(prog, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_CHAR((char)(prog->ints[var->v->addr])));     break;
+	      case R_FLOAT:  symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_DOUBLE(prog->dbls[var->v->addr]));           break;
+	      case R_INT:    symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_INT(prog->ints[var->v->addr]));              break;
+	      case R_BOOL:   symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));          break;
+	      case R_STRING: symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_STRING((char *)(prog->ints[var->v->addr]))); break;
+	      case R_CHAR:   symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_CHAR((char)(prog->ints[var->v->addr])));     break;
 	      case R_VCT:    
-		val = symbol_to_value(prog, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
+		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		if (XEN_VECTOR_P(val))
 		  vct_to_vector((vct *)(prog->ints[var->v->addr]), val);
 		break;
@@ -725,7 +876,7 @@ void *free_ptree(void *upt)
 	    {
 	      xen_value *v;
 	      v = pt->gcs[i];
-	      if ((v) && (v->gc))
+	      if ((v) && (v->gc) && (pt->ints[v->addr]))
 		{
 		  switch (v->type)
 		    {
@@ -735,6 +886,7 @@ void *free_ptree(void *upt)
 		    case R_CLM:      mus_free((mus_any *)(pt->ints[v->addr]));          break;
 		    default:         FREE((void *)(pt->ints[v->addr]));                 break;
 		    }
+		  pt->ints[v->addr] = 0;
 		  v->gc = 0;
 		  FREE(v);
 		  pt->gcs[i] = NULL;
@@ -879,52 +1031,6 @@ static int add_outer_var_to_ptree(ptree *pt, char *name, xen_value *v)
   return(cur);
 }
 
-static xen_var *find_var_in_ptree(ptree *pt, char *name)
-{
-  /* search backwards for shadowing */
-  int i;
-  for (i = pt->var_ctr - 1; i >= 0; i--)
-    if ((pt->vars[i]) &&
-	(strcmp(pt->vars[i]->name, name) == 0))
-      return(pt->vars[i]);
-  for (i = 0; i < pt->global_var_ctr; i++)
-    if ((pt->global_vars[i]) &&
-	(strcmp(pt->global_vars[i]->name, name) == 0))
-      return(pt->global_vars[i]);
-  return(NULL);
-}
-
-static xen_var *find_var_in_ptree_via_addr(ptree *pt, int dbl, int addr)
-{
-  /* search backwards for shadowing */
-  int i;
-  for (i = pt->var_ctr - 1; i >= 0; i--)
-    if ((pt->vars[i]) &&
-	(pt->vars[i]->v->addr == addr) &&
-	(dbl == (pt->vars[i]->v->type == R_FLOAT)))
-      return(pt->vars[i]);
-  for (i = 0; i < pt->global_var_ctr; i++)
-    if ((pt->global_vars[i]) &&
-	(pt->global_vars[i]->v->addr == addr) &&
-	(dbl == (pt->global_vars[i]->v->type == R_FLOAT)))
-      return(pt->global_vars[i]);
-  return(NULL);
-}
-
-static xen_var *find_pending_var_in_ptree_via_xen_value(ptree *pt, xen_value *v)
-{
-  int i;
-  xen_var *var;
-  for (i = 0; i < pt->global_var_ctr; i++)
-    {
-      var = pt->global_vars[i];
-      if ((var) &&
-	  (var->v->addr == v->addr)) /* these are unique and unconfusable due to pending_tag above */
-	return(var);
-    }
-  return(NULL);
-}
-
 static int add_string_to_ptree(ptree *pt, char *str)
 {
   int i, cur, addr;
@@ -978,157 +1084,6 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
     }
 }
 
-static int pending_tag = -1;
-
-static XEN symbol_to_value(ptree *pt, XEN sym, int *local)
-{
-  /* sigh... this is a can of worms */
-  XEN new_val = XEN_UNDEFINED;
-  XEN pair = XEN_FALSE, pairs = XEN_FALSE;
-  XEN code_env = XEN_FALSE;
-  XEN names, values;
-  int i, len;
-  int believe_it = FALSE;
-  if (XEN_PROCEDURE_P(pt->code))
-    {
-      /* scrounge around in the "eval" environment looking for local version of sym */
-      code_env = SCM_ENV(pt->code);
-      /* fprintf(stderr,"look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
-      if (XEN_LIST_P(code_env))
-	{
-	  /* now we might have an "eval environment" (an association list) or an "eval closure" (something different...) */
-	  if (XEN_LIST_P(XEN_CAR(XEN_CAR(code_env))))
-	    {
-	      /*  fprintf(stderr,"look 1: %s\n", XEN_AS_STRING(code_env));  */
-	      names = XEN_CAAR(code_env);
-	      values = XEN_CDAR(code_env);
-	      len = XEN_LIST_LENGTH(names);
-	      for (i = 0; i < len; i++)
-		if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
-		  {
-		    new_val = XEN_LIST_REF(values, i);
-		    believe_it = TRUE;
-		    (*local) = 1;
-		    break;
-		  }
-	      if ((!believe_it) && (XEN_NOT_NULL_P(XEN_CDR(code_env))))
-		pairs = XEN_CDR(code_env);
-	    }
-	  else pairs = code_env;
-	  if ((!believe_it) && (XEN_LIST_P(pairs)))
-	    {
-	      /* next portion of context appears to be in trailing association list */
-	      pair = scm_sloppy_assoc(sym, pairs);
-	      if (XEN_TRUE_P(scm_pair_p(pair)))
-		{
-		  new_val = XEN_CDR(pair);
-		  /* whatever it is, it is the current reigning sym */
-		  /* fprintf(stderr,"%s found 12: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val));  */
-		  believe_it = TRUE;
-		  (*local) = 2;
-		}
-	    }
-	  if ((!believe_it) && (XEN_LIST_LENGTH(code_env) > 2))
-	    {
-	      /* getting desperate -- final list of code_env appears to be arg list? */
-	      names = XEN_LIST_REF(code_env, XEN_LIST_LENGTH(code_env) - 2);
-	      /* fprintf(stderr,"check %s\n",XEN_AS_STRING(names));  */
-	      if ((XEN_LIST_P(names)) && (XEN_LIST_P(XEN_CAR(names))))
-		{
-		  /* fprintf(stderr,"look now in: %s\n", XEN_AS_STRING(names)); */
-		  values = XEN_CDR(names);
-		  names = XEN_CAR(names);
-		  len = XEN_LIST_LENGTH(names);
-		  for (i = 0; i < len; i++)
-		    if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
-		      {
-			new_val = XEN_LIST_REF(values, i);
-			/* fprintf(stderr,"%s found 1: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val));  */
-			believe_it = TRUE;
-			(*local) = 3;
-			break;
-		      }
-		}
-	    }
-	}
-    }
-  if ((!believe_it) && (XEN_NOT_BOUND_P(new_val)))
-    {
-      new_val = XEN_SYMBOL_TO_VALUE(sym); /* try the outer environment */
-      (*local) = 0;
-      /* fprintf(stderr,"%s found 3: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val));  */
-    } 
-  return(new_val);
-}
-
-static XEN symbol_set_value(ptree *pt, XEN sym, XEN new_val)
-{
-  XEN pair = XEN_FALSE, pairs = XEN_FALSE;
-  XEN code_env = XEN_FALSE;
-  XEN names, values;
-  int i, len;
-  /* fprintf(stderr,"set %s to %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
-  if (XEN_PROCEDURE_P(pt->code))
-    {
-      /* scrounge around in the "eval" environment looking for local version of sym */
-      code_env = SCM_ENV(pt->code);
-      /* fprintf(stderr,"look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
-      if (XEN_LIST_P(code_env))
-	{
-	  /* now we might have an "eval environment" (an association list) or an "eval closure" (something different...) */
-	  if (XEN_LIST_P(XEN_CAR(XEN_CAR(code_env))))
-	    {
-	      /*  fprintf(stderr,"look 1: %s\n", XEN_AS_STRING(code_env));  */
-	      names = XEN_CAAR(code_env);
-	      values = XEN_CDAR(code_env);
-	      len = XEN_LIST_LENGTH(names);
-	      for (i = 0; i < len; i++)
-		if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
-		  {
-		    XEN_LIST_SET(values, i, new_val);
-		    return(new_val);
-		  }
-	      if (XEN_NOT_NULL_P(XEN_CDR(code_env)))
-		pairs = XEN_CDR(code_env);
-	    }
-	  else pairs = code_env;
-	  if (XEN_LIST_P(pairs))
-	    {
-	      /* next portion of context appears to be in trailing association list */
-	      pair = scm_sloppy_assoc(sym, pairs);
-	      if (XEN_TRUE_P(scm_pair_p(pair)))
-		{
-		  scm_set_cdr_x(pair, new_val);
-		  new_val = XEN_CDR(pair);
-		  return(new_val);
-		}
-	    }
-	  if (XEN_LIST_LENGTH(code_env) > 2)
-	    {
-	      /* getting desperate -- final list of code_env appears to be arg list? */
-	      names = XEN_LIST_REF(code_env, XEN_LIST_LENGTH(code_env) - 2);
-	      /* fprintf(stderr,"check %s\n",XEN_AS_STRING(names));  */
-	      if ((XEN_LIST_P(names)) && (XEN_LIST_P(XEN_CAR(names))))
-		{
-		  /* fprintf(stderr,"look now in: %s\n", XEN_AS_STRING(names)); */
-		  values = XEN_CDR(names);
-		  names = XEN_CAR(names);
-		  len = XEN_LIST_LENGTH(names);
-		  for (i = 0; i < len; i++)
-		    if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
-		      {
-			XEN_LIST_SET(values, i, new_val);
-			return(new_val);
-		      }
-		}
-	    }
-	}
-    }
-  /* fprintf(stderr, "set global\n"); */
-  XEN_VARIABLE_SET(scm_sym2var(sym, scm_current_module_lookup_closure(), XEN_TRUE), new_val);
-  return(new_val);
-}
-
 static void add_obj_to_gcs(ptree *pt, int type, int addr)
 {
   xen_value *v;
@@ -1150,6 +1105,8 @@ static void add_obj_to_gcs(ptree *pt, int type, int addr)
   pt->gcs[pt->gc_ctr++] = v;
 }
 
+static int pending_tag = -1;
+
 static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
 {
   XEN val;
@@ -1160,7 +1117,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
   snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(form));
   var = find_var_in_ptree(prog, varname);
   if (var) return(copy_xen_value(var->v));
-  val = symbol_to_value(prog, form, &local_var);
+  val = symbol_to_value(prog->code, form, &local_var);
   /* fprintf(stderr,"add global %s %d %s\n",varname, sf_p(val), XEN_AS_STRING(val)); */
   /* if val not (yet) available, set up a request for it at eval_ptree time
    *    if we know for sure what it's type will be (i.e. clm gen, reader, etc)
@@ -1289,7 +1246,7 @@ static xen_var *initialize_globals(ptree *pt)
 	  (var->undefined))
 	{
 	  v = var->v;
-	  val = symbol_to_value(pt, C_STRING_TO_XEN_SYMBOL(var->name), &local);
+	  val = symbol_to_value(pt->code, C_STRING_TO_XEN_SYMBOL(var->name), &local);
 	  /* fprintf(stderr,"init %s to %s (type: %s)\n", var->name, XEN_AS_STRING(val), type_name(v->type)); */
 	  if (XEN_NOT_BOUND_P(val)) return(var);
 	  switch (v->type)
@@ -1315,7 +1272,6 @@ static xen_var *initialize_globals(ptree *pt)
 	      pt->ints[v->addr] = (int)get_sf(val);  
 	      break;
 	    case R_CLM: 
-	      /* (let ((v (make-vct 10)) (e1 (make-env '(0 0 1 1) :end 9))) (vct-map! v (lambda () (env e1))) v) */
 	      if (mus_xen_p(val)) 
 		pt->ints[v->addr] = (int)MUS_XEN_TO_CLM(val);
 	      else
@@ -1376,13 +1332,23 @@ static void eval_ptree(ptree *prog)
   while (!ALL_DONE)
     {
 #if 0
-      fprintf(stderr, describe_ptree(prog));
+      {
+	char *buf;
+	buf = describe_ptree(prog);
+	fprintf(stderr, buf);
+	FREE(buf);
+      }
       /* sleep(1); */
 #endif
       curfunc = prog->program[PC++];
       (*(curfunc->function))(curfunc->args, ints, dbls);
 #if 0
-      fprintf(stderr, "%d: %s\n", PC, (*(curfunc->descr))(curfunc->args, ints, dbls));
+      {
+	char *buf;
+	buf = (*(curfunc->descr))(curfunc->args, ints, dbls);
+	fprintf(stderr, "%d: %s\n", PC, buf);
+	FREE(buf);
+      }
 #endif
     }
   PC = prog->initial_pc; /* don't reset closure junk after initial evaluation */
@@ -1470,6 +1436,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, int *ints, Float 
 #define FLOAT_ARG_1 dbls[args[1]]
 #define FLOAT_ARG_2 dbls[args[2]]
 #define FLOAT_ARG_3 dbls[args[3]]
+#define FLOAT_ARG_4 dbls[args[4]]
 #define VCT_ARG_1 (vct *)(ints[args[1]])
 #define VCT_ARG_2 (vct *)(ints[args[2]])
 #define STRING_ARG_1 ((char *)(ints[args[1]]))
@@ -1571,6 +1538,8 @@ static void set_var(ptree *pt, xen_value *var, xen_value *init_val)
     }
 }
 
+static xen_value *walk(ptree *prog, XEN form, int need_result);
+
 static xen_value *walk_sequence(ptree *prog, XEN body, int need_result, char *name)
 {
   xen_value *v;
@@ -1590,6 +1559,8 @@ static xen_value *walk_sequence(ptree *prog, XEN body, int need_result, char *na
     }
   return(v);
 }
+
+static xen_value *lambda_form(ptree *prog, XEN form, int separate);
 
 static char *define_form(ptree *prog, XEN form)
 {
@@ -1875,6 +1846,8 @@ static xen_value *let_form(ptree *prog, XEN form, int need_result)
   if (!got_lambda) prog->initial_pc = prog->triple_ctr;
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let", locals_loc));
 }
+
+static xen_value *fixup_if_pending(ptree *pt, xen_value *sf, int new_type);
 
 static xen_value *if_form(ptree *prog, XEN form, int need_result)
 {
@@ -2178,6 +2151,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
   char *trouble;
   vars = XEN_CADR(form);
   done = XEN_CADDR(form);
+  if (XEN_NULL_P(done)) return(run_warn("do: null test")); /* invalid in Scheme */
   body = XEN_CDDDR(form);
   test_form = XEN_CAR(done);
   results = XEN_CDR(done);
@@ -2391,6 +2365,8 @@ static xen_value *and_form(ptree *prog, XEN form)
   return(result);
 }
 
+static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value *accessor_arg, xen_value *new_value);
+
 static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
 {
   /* (set! (mus-phase gen) 0.0) */
@@ -2467,7 +2443,7 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 	  if ((val_type == R_BOOL) &&
 	      (pointer_p(var_type)))
 	    {
- 	      add_triple_to_ptree(prog, va_make_triple(store_i, descr_store_i, 2, var->v, v)); /* TODO: free here? */
+ 	      add_triple_to_ptree(prog, va_make_triple(store_i, descr_store_i, 2, var->v, v));
 	      var->unclean = TRUE;
 	      return(v);
 	    }
@@ -3362,6 +3338,14 @@ static char *descr_eqv_fb(int *args, int *ints, Float *dbls)
 {
   return(mus_format("i%d(%d) = eqv?(d%d(%.4f), d%d(%.4f))", args[0], BOOL_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
+
+static void eq_clm(int *args, int *ints, Float *dbls) {BOOL_RESULT = mus_equalp((mus_any *)(INT_ARG_1), (mus_any *)(INT_ARG_2));}
+static char *descr_eq_clm(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%d) = equal?(i%d(%p), i%d(%p))", 
+		    args[0], BOOL_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2)));
+}
+
 static xen_value *eqv_p(ptree *prog, xen_value **args, int constants)
 {
   if (args[1]->type != args[2]->type)
@@ -3372,9 +3356,12 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int constants)
 	return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->dbls[args[1]->addr] == prog->dbls[args[2]->addr]), R_CONSTANT));
       else return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->ints[args[1]->addr] == prog->ints[args[2]->addr]), R_CONSTANT));
     }
-  if (args[1]->type == R_FLOAT)
-    return(package(prog, R_BOOL, eqv_fb, descr_eqv_fb, args, 2));
-  return(package(prog, R_BOOL, eq_b, descr_eq_b, args, 2));
+  switch (args[1]->type)
+    {
+    case R_FLOAT: return(package(prog, R_BOOL, eqv_fb, descr_eqv_fb, args, 2)); break;
+    case R_CLM:   return(package(prog, R_BOOL, eq_clm, descr_eq_clm, args, 2)); break;
+    default:      return(package(prog, R_BOOL, eq_b, descr_eq_b, args, 2)); break;
+    }
 }
 
 static xen_value *equal_p(ptree *prog, xen_value **args, int constants)
@@ -4314,18 +4301,19 @@ static xen_value *substring_1(ptree *pt, xen_value **args, int num_args, int con
 
 static char *descr_strn(int *args, int *ints, Float *dbls, char *which, int bool_result)
 {
-  int i, n, len = 64;
+  int i, n;
   char *buf, *temp;
   n = ints[args[1]];
-  buf = (char *)CALLOC(32 + 16 * n, sizeof(char));
-  temp = (char *)CALLOC(len, sizeof(char));
+  buf = (char *)CALLOC(1024, sizeof(char));
+  temp = (char *)CALLOC(1024, sizeof(char));
   if (bool_result)
-    sprintf(buf, "i%d(%d) = %s(i%d(\"%s\")", args[0], BOOL_RESULT, which, args[2], (char *)(ints[args[2]]));
-  else sprintf(buf, "i%d(\"%s\") = %s(i%d(\"%s\")", args[0], STRING_RESULT, which, args[2], (char *)(ints[args[2]]));
+    snprintf(buf, 1024, "i%d(%d) = %s(i%d(\"%s\")", args[0], BOOL_RESULT, which, args[2], (char *)(ints[args[2]]));
+  else snprintf(buf, 1024, "i%d(\"%s\") = %s(i%d(\"%s\")", args[0], STRING_RESULT, which, args[2], (char *)(ints[args[2]]));
   for (i = 2; i <= n; i++)
     {
-      sprintf(temp, ", i%d(\"%s\")", args[i + 1], (char *)(ints[args[i + 1]]));
-      strcat(buf, temp);
+      snprintf(temp, 1024, ", i%d(\"%s\")", args[i + 1], (char *)(ints[args[i + 1]]));
+      if ((snd_strlen(buf) + snd_strlen(temp) < 1023))
+	strcat(buf, temp);
     }
   FREE(temp);
   strcat(buf, ")");
@@ -4516,6 +4504,82 @@ static xen_value *number2string_1(ptree *prog, xen_value **args, int num_args, i
   return(NULL);
 }
 
+/* ---------------- user-defined function call ---------------- */
+
+static void funcall_nf(int *args, int *ints, Float *dbls) 
+{
+  int i;
+  ptree *func;
+  xen_value *fres;
+  func = (ptree *)(ints[args[1]]);
+  fres = func->result;
+  for (i = 0; i < func->arity; i++)
+    switch (func->arg_types[i])
+      {
+      case R_FLOAT: 
+	dbls[func->args[i]] = dbls[args[i + 2]]; 
+	break;
+      case R_STRING: 
+	if (ints[func->args[i]]) FREE((char *)(ints[func->args[i]]));
+	ints[func->args[i]] = (int)copy_string((char *)(ints[args[i + 2]])); 
+	break;
+      default:      
+	ints[func->args[i]] = ints[args[i + 2]]; 
+	break;
+      }
+  eval_embedded_ptree(func, ints, dbls);
+  switch (fres->type)
+    {
+    case R_INT:   
+      INT_RESULT = ints[fres->addr];   
+      break;
+    case R_FLOAT: 
+      FLOAT_RESULT = dbls[fres->addr]; 
+      break;
+    case R_STRING: 
+      if (STRING_RESULT) FREE(STRING_RESULT);
+      STRING_RESULT = (char *)(ints[fres->addr]);
+      ints[fres->addr] = 0;
+      break; 
+    default:      
+      INT_RESULT = ints[fres->addr];   
+      break;
+    }
+}
+static char *descr_funcall_nf(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("%d = funcall(i%d(%p) ...)", args[0], args[1], (ptree *)(INT_ARG_1)));
+}
+static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
+{
+  ptree *func;
+  int i;
+  xen_value **new_args;
+  xen_value *fres;
+  func = (ptree *)(prog->ints[sf->addr]);
+  if (func->arity != num_args) return(run_warn("wrong number of args (%d) for func", num_args));
+  fres = func->result;
+  new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
+  for (i = 1; i <= num_args; i++)
+    new_args[i + 1] = args[i];
+  new_args[1] = sf;
+  new_args[0] = add_empty_var_to_ptree(prog, fres->type);
+  args[0] = new_args[0];
+  add_triple_to_ptree(prog, make_triple(funcall_nf, descr_funcall_nf, new_args, num_args + 2));
+  FREE(new_args);
+  return(args[0]);
+}
+
+
+/* ---------------- non-local goto via continuation ---------------- */
+
+static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
+{
+  if (args[0]) FREE(args[0]);
+  args[0] = make_xen_value(R_PENDING, add_int_to_ptree(prog, sf->addr), R_VARIABLE);
+  add_triple_to_ptree(prog, va_make_triple(jump_indirect, descr_jump_indirect, 1, args[0]));
+  return(args[0]);
+}
 
 
 
@@ -4676,7 +4740,6 @@ static void make_vct_v2(int *args, int *ints, Float *dbls)
   vct *v;
   int i;
   v = c_make_vct(INT_ARG_1);
-  /* TODO: cleanup previous? */
   INT_RESULT = (int)v;
   for (i = 0; i < v->length; i++) v->data[i] = FLOAT_ARG_2;
   add_obj_to_gcs(PTREE, R_VCT, args[0]);
@@ -4901,11 +4964,11 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
 
 static char *descr_int_gen0(int *args, int *ints, Float *dbls, char *which)
 {
-  return(mus_format("i%d(%d) = %s(i%d(%p)", args[0], INT_RESULT, which, args[1], (mus_any *)(INT_ARG_1)));
+  return(mus_format("i%d(%d) = %s(i%d(%p)", args[0], INT_RESULT, which, args[1], (void *)(INT_ARG_1)));
 }
-#define INT_GEN0(Name) \
+#define INT_GEN0(Name, Type) \
   static char *descr_ ## Name ## _0i(int *args, int *ints, Float *dbls) {return(descr_int_gen0(args, ints, dbls, #Name));} \
-  static void Name ## _0i(int *args, int *ints, Float *dbls) {INT_RESULT = mus_ ## Name ((mus_any *)(INT_ARG_1));} \
+  static void Name ## _0i(int *args, int *ints, Float *dbls) {INT_RESULT = mus_ ## Name ((Type *)(INT_ARG_1));} \
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args) \
   { \
     if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mus-" #Name ": bad gen")); \
@@ -4957,15 +5020,16 @@ GEN0(b2)
 GEN0(feedforward)
 GEN0(feedback)
 
-INT_GEN0(hop)
-INT_GEN0(channels)
-INT_GEN0(location)
-INT_GEN0(ramp)
-INT_GEN0(position)
-INT_GEN0(order)
-INT_GEN0(type)
-INT_GEN0(length)
-INT_GEN0(cosines)
+INT_GEN0(hop, mus_any)
+INT_GEN0(channels, mus_any)
+INT_GEN0(location, mus_any)
+INT_GEN0(ramp, mus_any)
+INT_GEN0(position, mus_any)
+INT_GEN0(order, mus_any)
+INT_GEN0(type, mus_any)
+INT_GEN0(length, mus_any)
+INT_GEN0(cosines, mus_any)
+INT_GEN0(channel, mus_input)
 
 GEN_P(buffer)
 GEN_P(buffer_empty)
@@ -4979,6 +5043,15 @@ GEN_P(sample2file)
 GEN_P(file2frame)
 GEN_P(frame2file)
 GEN_P(locsig)
+
+static char *descr_move_locsig_2f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, "move-locsig", 2));}
+static void move_locsig_2f(int *args, int *ints, Float *dbls) {mus_move_locsig(((mus_any *)(INT_ARG_1)), FLOAT_ARG_2, FLOAT_ARG_3);}  
+static xen_value *move_locsig_1(ptree *prog, xen_value **args, int num_args)
+{ 
+  if (num_args != 3) return(run_warn("move-locsig: wrong number of args"));
+  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("move-locsig: bad gen"));
+  return(package(prog, R_BOOL, move_locsig_2f, descr_move_locsig_2f, args, 3));
+}
 
 
 static char *descr_str_gen0(int *args, int *ints, Float *dbls, char *which)
@@ -5158,6 +5231,204 @@ static xen_value *file2sample_1(ptree *prog, xen_value **args, int num_args)
   return(run_warn("file->sample: wrong number of args"));
 }
 
+static char *descr_sample2file_4(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("d%d(%.4f) = sample->file(i%d(%p), i%d(%d), i%d(%d), d%d(%.4f))", 
+		    args[0], FLOAT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], FLOAT_ARG_4));
+}
+static void sample2file_4(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_sample2file((mus_any *)(INT_ARG_1), INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);}
+static xen_value *sample2file_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("sample->file: bad gen arg"));
+  if ((args[2]->type != R_INT) || (args[3]->type != R_INT) || (args[4]->type != R_FLOAT))
+    return(run_warn("sample->file: bad arg type"));
+  if (num_args == 4) return(package(prog, R_FLOAT, sample2file_4, descr_sample2file_4, args, 4));
+  return(run_warn("sample->file: wrong number of args"));
+}
+
+
+/* ---------------- locsig ---------------- */
+static char *descr_locsig_3(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%p) = locsig((i%d(%p), i%d(%d), d%d(%.4f))", 
+		    args[0], (void *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
+}
+static void locsig_3(int *args, int *ints, Float *dbls) 
+{
+  /* frame result should not be freed */
+  INT_RESULT = (int)mus_locsig((mus_any *)(INT_ARG_1), INT_ARG_2, FLOAT_ARG_3);
+}
+static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("locsig: bad gen arg"));
+  if (args[2]->type != R_INT) return(run_warn("locsig 2nd arg not int"));
+  if (args[3]->type != R_FLOAT) return(run_warn("locsig 3rd arg not real"));
+  if (num_args == 3) return(package(prog, R_CLM, locsig_3, descr_locsig_3, args, 3));
+  return(run_warn("locsig: wrong number of args"));
+}
+
+
+/* ---------------- env-interp ---------------- */
+static char *descr_env_interp_2(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("d%d(%.4f) = env-interp(d%d(%.4f), i%d(%p))", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], (mus_any *)(INT_ARG_2)));
+}
+static void env_interp_2(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_env_interp(FLOAT_ARG_1, (mus_any *)(INT_ARG_2));}
+static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn("env-interp: bad env"));
+  if (args[1]->type != R_FLOAT) return(run_warn("env-interp 1st arg not real"));
+  if (num_args == 2) return(package(prog, R_FLOAT, env_interp_2, descr_env_interp_2, args, 2));
+  return(run_warn("env-interp: wrong number of args"));
+}
+
+
+/* ---------------- frame->sample ---------------- */
+static char *descr_frame2sample_2(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("d%d(%.4f) = frame->sample(i%d(%p), i%d(%p))", args[0], FLOAT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], (mus_frame *)(INT_ARG_2)));
+}
+static void frame2sample_2(int *args, int *ints, Float *dbls) 
+{
+  FLOAT_RESULT = mus_frame2sample((mus_any *)(INT_ARG_1), (mus_frame *)(INT_ARG_2));
+}
+static xen_value *frame2sample_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("frame->sample: bad frame"));
+  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn("frame->sample: bad mixer"));
+  if (num_args == 2) return(package(prog, R_FLOAT, frame2sample_2, descr_frame2sample_2, args, 2));
+  return(run_warn("frame->sample: wrong number of args"));
+}
+
+/* ---------------- frame->buffer ---------------- */
+static char *descr_frame2buffer_2(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%p) = frame->buffer(i%d(%p), i%d(%p))", 
+		    args[0], (mus_frame *)INT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2)));
+}
+static void frame2buffer_2(int *args, int *ints, Float *dbls) 
+{
+  INT_RESULT = (int)mus_frame2buffer((mus_any *)(INT_ARG_1), (mus_any *)(INT_ARG_2));
+}
+static xen_value *frame2buffer_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("frame->buffer: bad frame"));
+  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn("frame->buffer: bad mixer"));
+  if (num_args == 2) return(package(prog, R_CLM, frame2buffer_2, descr_frame2buffer_2, args, 2));
+  return(run_warn("frame->buffer: wrong number of args"));
+}
+
+
+/* ---------------- frame->file ---------------- */
+static char *descr_frame2file_3(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%p) = frame->file((i%d(%p), i%d(%d), i%d(%p))", 
+		    args[0], (void *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], (mus_frame *)(INT_ARG_4)));
+}
+static void frame2file_3(int *args, int *ints, Float *dbls) 
+{
+  INT_RESULT = (int)mus_frame2file((mus_any *)(INT_ARG_1), INT_ARG_2, (mus_frame *)(INT_ARG_3));
+}
+static xen_value *frame2file_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("frame->file: bad gen arg"));
+  if ((args[3] = fixup_if_pending(prog, args[3], R_CLM)) == NULL) return(run_warn("frame->file: bad frame arg"));
+  if (args[2]->type != R_INT) return(run_warn("frame->file 2nd arg not int"));
+  if (num_args == 3) return(package(prog, R_CLM, frame2file_3, descr_frame2file_3, args, 3));
+  return(run_warn("frame->file: wrong number of args"));
+}
+
+static char *descr_file2frame_3(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%p) = file->frame((i%d(%p), i%d(%d), i%d(%p))", 
+		    args[0], (void *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], (mus_frame *)(INT_ARG_4)));
+}
+static void file2frame_3(int *args, int *ints, Float *dbls) 
+{
+  INT_RESULT = (int)mus_file2frame((mus_any *)(INT_ARG_1), INT_ARG_2, (mus_frame *)(INT_ARG_3));
+}
+static xen_value *file2frame_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("file->frame: bad gen arg"));
+  if ((args[3] = fixup_if_pending(prog, args[3], R_CLM)) == NULL) return(run_warn("file->frame: bad frame arg"));
+  if (args[2]->type != R_INT) return(run_warn("file->frame 2nd arg not int"));
+  if (num_args == 3) return(package(prog, R_CLM, file2frame_3, descr_file2frame_3, args, 3));
+  return(run_warn("file->frame: wrong number of args"));
+}
+
+
+/* ---------------- outa ---------------- */
+#define OUT_GEN(CName, SName) \
+static char *descr_ ## CName ## _3(int *args, int *ints, Float *dbls) \
+{ \
+  return(mus_format("d%d(%.4f) = " #SName "(i%d(%d), d%d(%.4f), i%d(%p))", \
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], (mus_output *)(INT_ARG_3))); \
+} \
+static void CName ## _3(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## CName (INT_ARG_1, FLOAT_ARG_2, (mus_output *)(INT_ARG_3));} \
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
+{ \
+  if (num_args != 3) return(run_warn( #SName ": wrong number of args")); \
+  if ((args[1]->type != R_INT) || (args[2]->type != R_FLOAT)) return(run_warn( #SName ": bad arg type")); \
+  if ((args[3] = fixup_if_pending(prog, args[3], R_CLM)) == NULL) return(run_warn( #SName ": bad writer")); \
+  return(package(prog, R_FLOAT, CName ## _3, descr_ ## CName ## _3, args, 3)); \
+}
+
+OUT_GEN(outa, outa)
+OUT_GEN(outb, outb)
+OUT_GEN(outc, outc)
+OUT_GEN(outd, outd)
+
+static char *descr_out_any_4(int *args, int *ints, Float *dbls)
+{
+  return(mus_format("d%d(%.4f) = out-any(i%d(%d), d%d(%.4f), i%d(%d), i%d(%p))",
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], INT_ARG_3, args[4], (mus_output *)(INT_ARG_4)));
+}
+static void out_any_4(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, INT_ARG_3, (mus_output *)(INT_ARG_4));} 
+static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args != 4) return(run_warn("out-any: wrong number of args"));
+  if ((args[1]->type != R_INT) || (args[2]->type != R_FLOAT) || (args[3]->type != R_INT)) return(run_warn("out-any: bad arg type"));
+  if ((args[4] = fixup_if_pending(prog, args[4], R_CLM)) == NULL) return(run_warn("out-any: bad writer"));
+  return(package(prog, R_FLOAT, out_any_4, descr_out_any_4, args, 4));
+}
+
+
+/* ---------------- ina ---------------- */
+#define IN_GEN(CName, SName) \
+static char *descr_ ## CName ## _2(int *args, int *ints, Float *dbls) \
+{ \
+  return(mus_format("d%d(%.4f) = " #SName "(i%d(%d), i%d(%p))", \
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], (mus_output *)(INT_ARG_2))); \
+} \
+static void CName ## _2(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## CName (INT_ARG_1, (mus_input *)(INT_ARG_2));} \
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
+{ \
+  if (num_args != 2) return(run_warn( #SName ": wrong number of args")); \
+  if (args[1]->type != R_INT) return(run_warn( #SName ":bad arg type")); \
+  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn( #SName ": bad reader")); \
+  return(package(prog, R_FLOAT, CName ## _2, descr_ ## CName ## _2, args, 2)); \
+}
+
+IN_GEN(ina, ina)
+IN_GEN(inb, inb)
+
+static char *descr_in_any_3(int *args, int *ints, Float *dbls)
+{
+  return(mus_format("d%d(%.4f) = in-any(i%d(%d), i%d(%d), i%d(%p))",
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], (mus_output *)(INT_ARG_3)));
+}
+static void in_any_3(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_in_any(INT_ARG_1, INT_ARG_2, (mus_input *)(INT_ARG_3));}
+static xen_value *in_any_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args != 3) return(run_warn("in-any: wrong number of args"));
+  if ((args[1]->type != R_INT) || (args[2]->type != R_INT)) return(run_warn("in-any: bad arg type"));
+  if ((args[3] = fixup_if_pending(prog, args[3], R_CLM)) == NULL) return(run_warn("in-any: bad reader"));
+  return(package(prog, R_FLOAT, in_any_3, descr_in_any_3, args, 3));
+}
+
+
+
+
 /* ---------------- array-interp ---------------- */
 static char *descr_array_interp_1f(int *args, int *ints, Float *dbls) 
 {
@@ -5197,7 +5468,7 @@ static xen_value *vct_peak_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args != 1) return(run_warn("vct-peak: wrong number of args"));
   if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("vct-peak: bad arg"));
-  return(package(prog, R_VCT, vct_peak_v, descr_vct_peak_v, args, 1));
+  return(package(prog, R_FLOAT, vct_peak_v, descr_vct_peak_v, args, 1));
 }
 
 
@@ -5343,7 +5614,7 @@ static char *descr_src_2f(int *args, int *ints, Float *dbls)
 }
 static void src_2f(int *args, int *ints, Float *dbls) 
 {
-  ((mus_xen *)mus_environ((mus_any *)(INT_ARG_1)))->input_ptree = (void *)(INT_ARG_3); \
+  ((mus_xen *)mus_environ((mus_any *)(INT_ARG_1)))->input_ptree = (void *)(INT_ARG_3);
   FLOAT_RESULT = mus_src(((mus_any *)(INT_ARG_1)), FLOAT_ARG_2, src_input);
 }
 static char *descr_src_1f(int *args, int *ints, Float *dbls) 
@@ -5463,73 +5734,9 @@ static xen_value *amplitude_modulate_1(ptree *prog, xen_value **args, int num_ar
   if (args[1]->type == R_INT) single_to_float(prog, args, 1);
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
   if (args[3]->type == R_INT) single_to_float(prog, args, 3);
-  return(package(prog, R_FLOAT, amplitude_modulate_f, descr_amplitude_modulate_f, args, 2));
+  return(package(prog, R_FLOAT, amplitude_modulate_f, descr_amplitude_modulate_f, args, 3));
 }
 
-
-static void funcall_nf(int *args, int *ints, Float *dbls) 
-{
-  int i;
-  ptree *func;
-  xen_value *fres;
-  func = (ptree *)(ints[args[1]]);
-  fres = func->result;
-  for (i = 0; i < func->arity; i++)
-    switch (func->arg_types[i])
-      {
-      case R_FLOAT: 
-	dbls[func->args[i]] = dbls[args[i + 2]]; 
-	break;
-      case R_STRING: 
-	if (ints[func->args[i]]) FREE((char *)(ints[func->args[i]]));
-	ints[func->args[i]] = (int)copy_string((char *)(ints[args[i + 2]])); 
-	break;
-      default:      
-	ints[func->args[i]] = ints[args[i + 2]]; 
-	break;
-      }
-  eval_embedded_ptree(func, ints, dbls);
-  switch (fres->type)
-    {
-    case R_INT:   
-      INT_RESULT = ints[fres->addr];   
-      break;
-    case R_FLOAT: 
-      FLOAT_RESULT = dbls[fres->addr]; 
-      break;
-    case R_STRING: 
-      if (STRING_RESULT) FREE(STRING_RESULT);
-      STRING_RESULT = (char *)(ints[fres->addr]);
-      ints[fres->addr] = 0;
-      break; 
-    default:      
-      INT_RESULT = ints[fres->addr];   
-      break; /* TODO cleanup previous? */
-    }
-}
-static char *descr_funcall_nf(int *args, int *ints, Float *dbls) 
-{
-  return(mus_format("%d = funcall(i%d(%p) ...)", args[0], args[1], (ptree *)(INT_ARG_1)));
-}
-static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
-{
-  ptree *func;
-  int i;
-  xen_value **new_args;
-  xen_value *fres;
-  func = (ptree *)(prog->ints[sf->addr]);
-  if (func->arity != num_args) return(run_warn("wrong number of args (%d) for func", num_args));
-  fres = func->result;
-  new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
-  for (i = 1; i <= num_args; i++)
-    new_args[i + 1] = args[i];
-  new_args[1] = sf;
-  new_args[0] = add_empty_var_to_ptree(prog, fres->type);
-  args[0] = new_args[0];
-  add_triple_to_ptree(prog, make_triple(funcall_nf, descr_funcall_nf, new_args, num_args + 2));
-  FREE(new_args);
-  return(args[0]);
-}
 
 #define SND_STR_OP(CName) \
 static void CName ## _f(int *args, int *ints, Float *dbls) {INT_RESULT = CName(STRING_ARG_1);} \
@@ -5582,7 +5789,7 @@ static xen_value *mus_sound_comment_1(ptree *prog, xen_value **args)
 static void mus_header_type_name_f(int *args, int *ints, Float *dbls) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
-  STRING_RESULT = mus_header_type_name(INT_ARG_1);
+  STRING_RESULT = copy_string(mus_header_type_name(INT_ARG_1));
 }
 static char *descr_mus_header_type_name_f(int *args, int *ints, Float *dbls)
 {
@@ -5597,7 +5804,7 @@ static xen_value *mus_header_type_name_1(ptree *prog, xen_value **args)
 static void mus_data_format_name_f(int *args, int *ints, Float *dbls) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
-  STRING_RESULT = mus_data_format_name(INT_ARG_1);
+  STRING_RESULT = copy_string(mus_data_format_name(INT_ARG_1));
 }
 static char *descr_mus_data_format_name_f(int *args, int *ints, Float *dbls)
 {
@@ -5610,16 +5817,7 @@ static xen_value *mus_data_format_name_1(ptree *prog, xen_value **args)
 }
 
 
-
-
-static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
-{
-  if (args[0]) FREE(args[0]);
-  args[0] = make_xen_value(R_PENDING, add_int_to_ptree(prog, sf->addr), R_VARIABLE);
-  add_triple_to_ptree(prog, va_make_triple(jump_indirect, descr_jump_indirect, 1, args[0]));
-  return(args[0]);
-}
-
+/* ---------------- the code walker ---------------- */
 
 static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
 {
@@ -5960,6 +6158,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (strcmp(funcname, "fir-filter") == 0) return(clean_up(fir_filter_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "iir-filter") == 0) return(clean_up(iir_filter_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "readin") == 0) return(clean_up(readin_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "locsig") == 0) return(clean_up(locsig_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "env-interp") == 0) return(clean_up(env_interp_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "frame->file") == 0) return(clean_up(frame2file_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "file->frame") == 0) return(clean_up(file2frame_1(prog, args, num_args), args, num_args));
 
 	  if (strcmp(funcname, "src") == 0) return(clean_up(src_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "granulate") == 0) return(clean_up(granulate_1(prog, args, num_args), args, num_args));
@@ -5968,7 +6170,19 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 
 	  if (strcmp(funcname, "tap") == 0) return(clean_up(tap_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "file->sample") == 0) return(clean_up(file2sample_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "frame->sample") == 0) return(clean_up(frame2sample_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "frame->buffer") == 0) return(clean_up(frame2buffer_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "sample->file") == 0) return(clean_up(sample2file_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "sample->buffer") == 0) return(clean_up(sample2buffer_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "ina") == 0) return(clean_up(ina_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "inb") == 0) return(clean_up(inb_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "in-any") == 0) return(clean_up(in_any_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "out-any") == 0) return(clean_up(out_any_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "outa") == 0) return(clean_up(outa_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "outb") == 0) return(clean_up(outb_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "outc") == 0) return(clean_up(outc_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "outd") == 0) return(clean_up(outd_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "move-locsig") == 0) return(clean_up(move_locsig_1(prog, args, num_args), args, num_args));
 
 	  if (num_args == 1)
 	    {
@@ -6035,6 +6249,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      
 	      if (strcmp(funcname, "mus-hop") == 0) return(clean_up(mus_hop_0(prog, args), args, num_args));
 	      if (strcmp(funcname, "mus-channels") == 0) return(clean_up(mus_channels_0(prog, args), args, num_args));
+	      if (strcmp(funcname, "mus-channel") == 0) return(clean_up(mus_channel_0(prog, args), args, num_args));
 	      if (strcmp(funcname, "mus-location") == 0) return(clean_up(mus_location_0(prog, args), args, num_args));
 	      if (strcmp(funcname, "mus-ramp") == 0) return(clean_up(mus_ramp_0(prog, args), args, num_args));
 	      if (strcmp(funcname, "mus-position") == 0) return(clean_up(mus_position_0(prog, args), args, num_args));
@@ -6307,6 +6522,8 @@ static void *form_to_ptree(XEN code)
   return(free_ptree((void *)prog));
 }
 
+/* ---------------- various tree-building wrappers ---------------- */
+
 void *form_to_ptree_1f2f(XEN code)
 {
   ptree *pt;
@@ -6358,6 +6575,9 @@ void *form_to_ptree_1f2b_without_env(XEN code)
     }
   return(NULL);
 }
+
+
+/* ---------------- various evaluator wrappers ---------------- */
 
 Float evaluate_ptree_1f2f(void *upt, Float arg)
 {
@@ -6487,16 +6707,10 @@ void g_init_run(void)
 
 void mus_spectrum               PROTO((Float *rdat, Float *idat, Float *window, int n, int type));
 Float *mus_make_fft_window      PROTO((int type, int size, Float beta));
-Float *mus_make_fft_window_with_window PROTO((int type, int size, Float beta, Float *window));
 
  [with size arg] Float mus_array_interp          PROTO((Float *wave, Float phase, int size)); 
 
-int mus_equalp                  PROTO((mus_any *g1, mus_any *g2));
-
 mus_any *mus_buffer2frame       PROTO((mus_any *rb, mus_any *fr));
-mus_any *mus_frame2buffer       PROTO((mus_any *rb, mus_any *fr));
-
-Float mus_env_interp            PROTO((Float x, mus_any *env));
 
 mus_frame *mus_frame_add        PROTO((mus_frame *f1, mus_frame *f2, mus_frame *res));
 mus_frame *mus_frame_multiply   PROTO((mus_frame *f1, mus_frame *f2, mus_frame *res));
@@ -6510,22 +6724,7 @@ Float mus_mixer_set             PROTO((mus_mixer *f, int in, int out, Float val)
 
 mus_frame *mus_frame2frame      PROTO((mus_mixer *f, mus_frame *in, mus_frame *out));
 mus_frame *mus_sample2frame     PROTO((mus_any *f, Float in, mus_frame *out));
-Float mus_frame2sample          PROTO((mus_any *f, mus_frame *in));
 mus_mixer *mus_mixer_multiply   PROTO((mus_mixer *f1, mus_mixer *f2, mus_mixer *res));
-Float mus_in_any                PROTO((int frame, int chan, mus_input *IO));
-Float mus_ina                   PROTO((int frame, mus_input *inp));
-Float mus_inb                   PROTO((int frame, mus_input *inp));
-mus_frame *mus_file2frame       PROTO((mus_any *ptr, int samp, mus_frame *f));
-Float mus_sample2file           PROTO((mus_any *ptr, int samp, int chan, Float val));
-Float mus_out_any               PROTO((int frame, Float val, int chan, mus_output *IO));
-Float mus_outa                  PROTO((int frame, Float val, mus_output *IO));
-Float mus_outb                  PROTO((int frame, Float val, mus_output *IO));
-Float mus_outc                  PROTO((int frame, Float val, mus_output *IO));
-Float mus_outd                  PROTO((int frame, Float val, mus_output *IO));
-mus_frame *mus_frame2file       PROTO((mus_any *ptr, int samp, mus_frame *data));
-mus_frame *mus_locsig           PROTO((mus_any *ptr, int loc, Float val));
-
-void mus_move_locsig            PROTO((mus_any *ptr, Float degree, Float distance));
 
 void mus_convolve_files         PROTO((const char *file1, const char *file2, Float maxamp, const char *output_file));
 Float *mus_set_data             PROTO((mus_any *gen, Float *data));
@@ -6533,7 +6732,7 @@ Float mus_formant_bank          PROTO((Float *amps, mus_any **formants, Float in
 Float mus_set_formant_radius    PROTO((mus_any *ptr, Float val));
 void mus_set_formant_radius_and_frequency PROTO((mus_any *ptr, Float radius, Float frequency));
 void mus_mix                    PROTO((const char *outfile, const char *infile, int out_start, int out_samps, int in_start, mus_mixer *mx, mus_any ***envs));
-mus_random mus_channel
+mus_random
 int mus_file2fltarray           PROTO((const char *filename, int chan, int start, int samples, Float *array));
 int mus_fltarray2file           PROTO((const char *filename, Float *ddata, int len, int srate, int channels));
 
@@ -6574,8 +6773,6 @@ int mus_fltarray2file           PROTO((const char *filename, Float *ddata, int l
   Float *mus_partials2waveshape   PROTO((int npartials, Float *partials, int size, Float *table));
   Float *mus_partials2polynomial  PROTO((int npartials, Float *partials, int kind));
   mus_any *mus_make_env           PROTO((Float *brkpts, int pts, Float scaler, Float offset, Float base, Float duration, int start, int end, Float *odata));
-  int *mus_env_passes             PROTO((mus_any *gen));
-  double *mus_env_rates           PROTO((mus_any *gen));
   mus_frame *mus_make_empty_frame PROTO((int chans));
   mus_frame *mus_make_frame       PROTO((int chans, ...));
   mus_mixer *mus_make_empty_mixer PROTO((int chans));
@@ -6596,25 +6793,3 @@ int mus_fltarray2file           PROTO((const char *filename, Float *ddata, int l
   mus_any *mus_make_phase_vocoder PROTO((Float (*input)(void *arg, int direction), 
 */
 #endif
-#if 0
-/* not done yet in Scheme:
-case
-close-input-port
-close-output-port
-current-input-port
-current-output-port
-display with port arg
-eof-object?
-input-port?
-newline [port]
-open-input-file
-open-output-file
-output-port?
-read [port]
-read-char [port]
-optimize string-append et al
-write obj [port]
-write-char char [port]
-*/
-#endif
-/* and from Snd? */

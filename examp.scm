@@ -61,7 +61,7 @@
 
 ;;; SOMEDAY: robust pitch tracker
 ;;; SOMEDAY: adaptive notch filter
-;;; SOMEDAY: ins: singer piano fade dlocsig
+;;; SOMEDAY: translate piano.ins
 ;;; SOMEDAY: data-file rw case for pvoc.scm
 ;;; SOMEDAY: notation following location (as in display-current-window-location)
 ;;;          but this requires some way to converse with cmn that does not require sleep
@@ -167,8 +167,12 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
       (if (< val .001)
 	  -60.0
 	  (* 20.0 (log10 val))))
-    (vct-do! data (lambda (i)
-		    (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i)))))))
+    (vct-map! data
+	      (let ((i 0))
+		(lambda ()
+		  (let ((val (+ 60.0 (dB (abs (vct-ref data i))))))
+		    (set! i (1+ i))
+		    val))))
     (graph data "dB" 
 	   (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
 	   0.0 60.0
@@ -676,30 +680,24 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
   (let ((len (frames mono-snd)))
     (if (number? pan-env)
 	(let* ((pos (/ pan-env 90.0))
-	       (in-data0 (samples->vct 0 len mono-snd))
-	       (in-data1 (samples->vct 0 len mono-snd))
-	       (out-data0 (samples->vct 0 len stereo-snd 0))
-	       (out-data1 (samples->vct 0 len stereo-snd 1)))
-	  (vct-scale! in-data0 (- 1.0 pos))
-	  (vct-scale! in-data1 pos)
-	  (vct-add! out-data0 in-data0)
-	  (vct-add! out-data1 in-data1)
-	  (vct->samples 0 len out-data0 stereo-snd 0)
-	  (vct->samples 0 len out-data1 stereo-snd 1))
-	(let* ((msf (make-sample-reader 0 mono-snd 0))
-	       (out-data0 (make-vct len))
-	       (out-data1 (make-vct len))
-	       (e (make-env pan-env :end (1- len))))
-	  (vcts-do! out-data0 out-data1
-		    (lambda (num i)
-		      (let ((panval (env e))
-			    (val (next-sample msf)))
-			(list (* val (- 1.0 panval)) (* val panval)))))
-	  (free-sample-reader msf)
-	  (vct-add! out-data0 (samples->vct 0 len stereo-snd 0))
-	  (vct-add! out-data1 (samples->vct 0 len stereo-snd 1))
-	  (vct->samples 0 len out-data0 stereo-snd 0)
-	  (vct->samples 0 len out-data1 stereo-snd 1)))))
+	       (reader0 (make-sample-reader 0 mono-snd))
+	       (reader1 (make-sample-reader 0 mono-snd)))
+	  (map-channel (lambda (y)
+			 (+ y (* pos (read-sample reader1))))
+		       0 len stereo-snd 1)
+	  (map-channel (lambda (y)
+			 (+ y (* (- 1.0 pos) (read-sample reader0))))
+		       0 len stereo-snd 0))
+	(let ((e0 (make-env pan-env :end (1- len)))
+	      (e1 (make-env pan-env :end (1- len)))
+	      (reader0 (make-sample-reader 0 mono-snd))
+	      (reader1 (make-sample-reader 0 mono-snd)))
+	  (map-channel (lambda (y)
+			 (+ y (* (env e1) (read-sample reader1))))
+		       0 len stereo-snd 1)
+	  (map-channel (lambda (y)
+			 (+ y (* (- 1.0 (env e0)) (read-sample reader0))))
+		       0 len stereo-snd 0)))))
 
 
 
@@ -1480,23 +1478,22 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 	   (ind-fuzz 1.0)
 	   (amp-fuzz 1.0)
 	   (out-data (make-vct len)))
-      (do ((i 0 (1+ i)))
-	  ((= i len))
-	(if (not (= 0.0 noise-amount))
-	    (set! fuzz (rand fm-noi)))
-	(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-	(if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
-	(if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
-	(if modulate
-	    (if easy-case
-		(set! modulation
-		      (* (env indf1) 
-			 (polynomial coeffs (oscil fmosc1 vib)))) ;(* vib fm1-rat)??
-		(set! modulation
-		      (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-			 (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-			 (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-	(vct-set! out-data i 
+      (vct-map! out-data
+		(lambda ()
+		  (if (not (= 0.0 noise-amount))
+		      (set! fuzz (rand fm-noi)))
+		  (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+		  (if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
+		  (if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
+		  (if modulate
+		      (if easy-case
+			  (set! modulation
+				(* (env indf1) 
+				   (polynomial coeffs (oscil fmosc1 vib)))) ;(* vib fm1-rat)??
+			  (set! modulation
+				(+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+				   (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+				   (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
 		  (* (env ampf) amp-fuzz
 		     (oscil carrier (+ vib (* ind-fuzz modulation))))))
       (if (= (channels) 2)

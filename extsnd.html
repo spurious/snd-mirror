@@ -127,7 +127,7 @@ various examples of and extensions to Snd can be found in the contrib directory,
 
 <table border=8 bordercolor="lightsteelblue">
 <tr><td width=140><a href="sndscm.html#autosavedoc">autosave.scm</a></td><td>auto-save (edit backup) support</td></tr>
-<tr><td><a href="sndscm.html#belldoc">bell.scm</a></td>       <td>the fm-bell from CLM</td></tr>
+<tr><td><a href="sndscm.html#belldoc">bell.scm</a></td>      <td>the fm-bell from CLM</td></tr>
 <tr><td><a href="sndscm.html#birddoc">bird.scm, bird.rb</a></td><td>various North-American birds (from bird.clm)</td></tr>
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>      <td>graphics additions</td></tr>
 <tr><td><a href="sndscm.html#dspdoc">dsp.scm</a></td>        <td>various DSP-related procedures</td></tr>
@@ -137,7 +137,8 @@ various examples of and extensions to Snd can be found in the contrib directory,
 <tr><td><a href="sndscm.html#enveddoc">enved.scm</a></td>    <td>envelope editor in lisp graph section</td></tr>
 <tr><td><a href="sndscm.html#eventdoc">event.scm</a></td>    <td>xm module stuff for automatic user-interface tests</td></tr>
 <tr><td><a href="sndscm.html#extensionsdoc">extensions.scm</a></td><td>extensions of Snd</td></tr>
-<tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>        <td>the fm-violin tied to real-time gtk graphics</td></tr>
+<tr><td><a href="sndscm.html#fadedoc">fade.scm</a></td>      <td>frequency-domain cross-fades</td></tr>
+<tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>        <td>the fm-violin tied to real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#glfftdoc">glfft.scm</a></td>    <td>OpenGL for spectra (needs work)</td></tr>
 <tr><td><a href="sndscm.html#goopsnddoc">goopsnd.scm</a></td><td>first look at Goops (Guile Object System) for Snd</td></tr>
 <tr><td><a href="sndscm.html#hooksdoc">hooks.scm</a></td>    <td>functions related to hooks</td></tr>
@@ -156,8 +157,10 @@ various examples of and extensions to Snd can be found in the contrib directory,
 <tr><td><a href="sndscm.html#rgbdoc">rgb.scm</a></td>        <td>color definitions</td></tr>
 <tr><td><a href="sndscm.html#rtiodoc">rtio.scm</a></td>      <td>real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#rubberdoc">rubber.scm</a></td>  <td>rubber-sound</td></tr>
+<tr><td><a href="sndscm.html#singerdoc">singer.scm</a></td>  <td>Perry Cook's vocal-tract physical model</td></tr>
 <tr><td><a href="sndscm.html#sndmotifdoc">snd-motif.scm</a></td><td>Motif module (xm.c)</td></tr>
 <tr><td><a href="sndscm.html#snd4doc">snd4.scm</a></td>      <td>backwards compatibility stuff</td></tr>
+<tr><td><a href="sndscm.html#snd5doc">snd5.scm</a></td>      <td>backwards compatibility stuff</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm</a></td>            <td>fm-violin (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#wsdoc">ws.scm</a></td>          <td>with-sound implementation</td></tr>
 <tr><td><a href="sndscm.html#xmenveddoc">xm-enved.scm</a></td><td>xm-based envelope editor</td></tr>
@@ -753,8 +756,8 @@ The lowest level procedures are:
 	(if (&lt; val .001)
 	    -60.0
 	    (* 20.0 (log10 val))))
-      (vct-do! data (lambda (i)
-		      (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i)))))))
+      (vct-map! data (lambda ()
+		       (+ 60.0 (dB (abs (vct-ref data i))))))
       (graph data "dB" 
 	     (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
 	     0.0 60.0
@@ -1062,7 +1065,21 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td></td><td colspan=2><small>Currently, the optimizer is able to speed up Scheme code by factors between
 <!-- -->8 and 20; see snd-run.c for what is implemented, what the major limitations are, and so on.
 <!-- -->If you set the optimization-hook to print out whatever it's argument is, you can
-<!-- -->find out what the optimizer found confusing.
+<!-- -->find out what the optimizer found confusing.  Here are some representative results;
+the first number is the unoptimized time, the second is the optimized time, the third is
+the speed-up ratio:<br><br></td></tr>
+<tr><td></td><td colspan=2>
+<!-- --><table border=1 cellpadding=5>
+<tr><td>singer</td><td>1207</td><td>67</td><td>18</td>
+<td bgcolor="black"><br></td><td>abs sin</td><td>447</td><td>36</td><td>12</td>
+<td bgcolor="black"><br></td><td>jcrev  </td><td>505</td><td>44</td><td>11</td></tr>
+<tr><td>vct-ref</td><td>413</td><td>31</td><td>13</td>
+<td bgcolor="black"><br></td><td>-1     </td><td>269</td><td>21</td><td>13</td>
+<td bgcolor="black"><br></td><td>expsnd </td><td>158</td><td>16</td><td>10</td></tr>
+<tr><td>let if </td><td>372</td><td>36</td><td>10</td>
+<td bgcolor="black"><br></td><td>*2     </td><td>274</td><td>20</td><td>14</td>
+<td bgcolor="black"><br></td><td>fm vln </td><td>201</td><td>17</td><td>12</td></tr>
+</table>
 <!-- --><br><br></small></td></tr>
 <!-- -->
 <!-- save-dir -->
@@ -2547,10 +2564,6 @@ functions:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vctcopy">vct-copy</a></em> (obj)</code></span></td>
 <!-- --><td>return a copy of <i>obj</i>.</td></tr>
 <!-- -->
-<!-- vct-do! -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctdo">vct-do!</a></em> (vobj proc)</code></span></td>
-<!-- --><td><code>vobj[i] = (funcall proc i)</code>.</td></tr>
-<!-- -->
 <!-- vct-fill! -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vctfill">vct-fill!</a></em> (vobj val)</code></span></td>
 <!-- --><td><code>vobj[i] = val</code>, returns vobj.</td></tr>
@@ -2623,14 +2636,6 @@ functions:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndvct2vector">vct-&gt;vector</a></em> (vct)</code></span></td>
 <!-- --><td>return vector object with elements of vct <i>vct</i></td></tr>
 <!-- -->
-<!-- vcts-do! -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsdo">vcts-do!</a></em> (vobj... proc)</code></span></td>
-<!-- --><td><code>vobj[vi][i] = (nth vi (funcall proc num i))</code>.</td></tr>
-<!-- -->
-<!-- vcts-map! -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsmap">vcts-map!</a></em> (vobj... proc)</code></span></td>
-<!-- --><td><code>vobj[vi][i] = (nth vi (funcall proc num))</code>.</td></tr>
-<!-- -->
 <!-- vector-&gt;vct -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndvector2vct">vector-&gt;vct</a></em> (vect)</code></span></td>
 <!-- --><td>return vct object with elements of vector <i>vect</i></td></tr>
@@ -2648,54 +2653,18 @@ there are also several functions that create and fill vcts with data:</p>
   <a href="#samples2vct">samples-&gt;vct</a> (<i>samp samps snd chn v pos</i>)  
   <a href="#transformsamples2vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>)
 </pre>
-<p>There are four slightly
-unusual functions in this family: <i>vct-map!</i>, <i>vct-do!</i>, <i>vcts-map!</i>, and <i>vcts-do!</i>.
-These are essentially providing a do-loop over one or more vcts, calling some 
-Scheme function to get the values to assign into the vct(s).  For example</p>
+<p>There is one slightly
+unusual function in this family: <i>vct-map!</i>.
+This is essentially providing a do-loop (or for-each) over a vct, calling some 
+Scheme function to get the values to assign into the vct.  For example</p>
 <pre>
   (vct-map! out-data (lambda () 
                        (convolve cnv (lambda (dir) 
                                        (read-sample sf)))))
 </pre>
 <p>in the cnvtest function in <a href="sndscm.html#exampdoc">examp.scm</a> is calling the convolve generator and
-assigning the result to each successive member of the out-data vct.  <i>vct-do!</i>
-is the same as <i>vct-map!</i> except that the called function should take one
-argument, the current loop index.  Similarly, <i>vcts-map!</i> and <i>vcts-do!</i>
-take any number of vcts, followed by a trailing function, and map the function's
-results (assumed to be a list that matches the current number of vcts) into the
-vct array.  In the map! case, the function takes one argument, the current number
-of vcts awaiting values; in the do! case, it takes two arguments, the vct
-number and the current loop index.  For example, we could rewrite the cnvtest
-function to take stereo sounds:
-</p>
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define cnvtest
-  (lambda (snd0 snd1 amp0 amp1)
-    (if (and (= (channels snd0) 2)
-	     (= (channels snd1) 2))
-	(let* ((flt-len (frames snd0))
-	       (total-len (+ flt-len (frames snd1)))
-	       (cnv10 (make-convolve :filter (samples-&gt;vct 0 flt-len snd0 0)))
-	       (cnv11 (make-convolve :filter (samples-&gt;vct 0 flt-len snd0 1)))
-	       (sf10 (make-sample-reader 0 snd1 0))
-	       (sf11 (make-sample-reader 0 snd1 1))
-	       (out-data10 (make-vct total-len))
-	       (out-data11 (make-vct total-len)))
-	  (<em class=red>vcts-map!</em> out-data10 out-data11 
-		     (lambda (num)
-		       (list
-			(convolve cnv10 (lambda (dir) (read-sample sf10)))
-			(convolve cnv11 (lambda (dir) (read-sample sf11))))))
-	  (free-sample-reader sf10)
-	  (free-sample-reader sf11)
-	  (vct-scale! out-data10 amp0)
-	  (vct-scale! out-data11 amp1)
-	  (vct-&gt;samples 0 total-len out-data10 snd1 0)
-	  (vct-&gt;samples 0 total-len out-data11 snd1 1))
-	(snd-print "oops -- need stereo input"))))
-</pre></td></tr></table>
-
-<p>We can use vcts to write new sound files:</p>
+assigning the result to each successive member of the out-data vct.
+We can use vcts to write new sound files:</p>
 <pre>
   <em class=def>open-sound-file</em> (name chans srate comment)   ; returns fd
   <em class=def>vct-&gt;sound-file</em> (fd vct vals)                ; writes vals floats to fd
@@ -7199,14 +7168,14 @@ And an example that lets us see the result of filtering the waveform:
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (<em class=red>add-transform</em> "low-pass" "filtered" 0.0 1.0
   (lambda (len fd)
-    (let ((v (make-vct len))
-          (flt (make-fir-filter :order 80 
+    (let ((flt (make-fir-filter :order 80 
                                 :xcoeffs (let ((v1 (make-vct 80)))
                                            (vct-fill! v1 .0125)
                                            v1))))
-     (do ((i 0 (1+ i))) 
-         ((= i len) v)
-      (vct-set! v i (fir-filter flt (read-sample fd)))))))
+      (vct-map! 
+        (make-vct len) 
+        (lambda () 
+          (fir-filter flt (read-sample fd)))))))
 </pre></td></tr></table></td></tr>
 
 <!-- autocorrelate -->

@@ -18,7 +18,7 @@
  */
 
 #if defined(HAVE_CONFIG_H)
-  #include "config.h"
+  #include <config.h>
 #else
   #ifndef HAVE_VPRINTF
     #define HAVE_VPRINTF 1

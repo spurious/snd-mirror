@@ -2,7 +2,7 @@
 #define SND_NOGUI0_H_LOADED
 
 #if defined(HAVE_CONFIG_H)
-  #include "config.h"
+  #include <config.h>
 #endif
 
 #define TIME_TYPE int

@@ -44,7 +44,7 @@
  */
 
 #if defined(HAVE_CONFIG_H)
-  #include "config.h"
+  #include <config.h>
 #endif
 
 #if USE_SND && defined(MAC_OSX) && USE_MOTIF

@@ -33,7 +33,7 @@
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
 #if defined(HAVE_CONFIG_H)
-  #include "config.h"
+  #include <config.h>
   #if (!defined(WORDS_BIGENDIAN))
      #define MUS_LITTLE_ENDIAN 1
   #endif

@@ -4,7 +4,7 @@
 #define SND_X0_H_LOADED
 
 #if defined(HAVE_CONFIG_H)
-  #include "config.h"
+  #include <config.h>
 #endif
 
 #include <Xm/XmAll.h>

@@ -616,7 +616,6 @@ If 'check' is #f, the hooks are removed."
 			 (+ val (next-sample reader)))
 		       start len snd chn edpos "mix-channel")))))
 
-
 (define* (insert-channel file-data #:optional beg dur snd chn edpos)
   "(insert-channel file &optional beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
@@ -634,9 +633,7 @@ If 'check' is #f, the hooks are removed."
     (if (> len 0)
 	(let ((reader (make-sample-reader file-beg file-name file-channel))
 	      (data (make-vct len)))
-	  (do ((i 0 (1+ i)))
-	      ((= i len))
-	    (vct-set! data i (next-sample reader)))
+	  (vct-map! data (lambda () (next-sample reader)))
 	  (insert-samples start len data snd chn edpos)))))
 
 (define* (c-channel func #:optional beg dur snd chn edpos call-data)

@@ -515,11 +515,12 @@ void init_gsl_j0(void)
 	  (mod-incr (* ratio car-incr))
 	  (ampenv (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp :end dur))
 	  (output (make-vct dur)))
-     (do ((i 0 (1+ i)))
-	 ((= i dur))
-       (vct-set! output i (* (env ampenv) (</em><em class=red>j0</em><em class=typing> car-ph)))
-       (set! car-ph (+ car-ph car-incr (* index (</em><em class=red>j0</em><em class=typing> mod-ph))))
-       (set! mod-ph (+ mod-ph mod-incr)))
+     (vct-map! output
+       (lambda ()
+         (let ((val (* (env ampenv) (</em><em class=red>j0</em><em class=typing> car-ph))))
+           (set! car-ph (+ car-ph car-incr (* index (</em><em class=red>j0</em><em class=typing> mod-ph))))
+           (set! mod-ph (+ mod-ph mod-incr))
+	   val)))
      (vct-&gt;samples 0 dur output)))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt;<em class=typing>(bes-fm 22050 440 10.0 1.0 8.0)</em>

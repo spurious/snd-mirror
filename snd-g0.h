@@ -2,7 +2,7 @@
 #define SND_G0_H_LOADED
 
 #if defined(HAVE_CONFIG_H)
-  #include "config.h"
+  #include <config.h>
 #endif
 
 #include <gtk/gtk.h>

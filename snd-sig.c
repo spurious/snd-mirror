@@ -2694,6 +2694,7 @@ apply func to samples in current channel, edname is the edit history name for th
   return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, XEN_FALSE, S_map_chan));
 }
 
+/* TODO: map-sound proc->frame beg dur snd */
 XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org);
 XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org) 
 {

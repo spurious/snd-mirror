@@ -122,9 +122,8 @@
 	       (new-data (make-vct mark-samps))
 	       (gr (make-granulate :expansion (/ mark-samps selection-samps)))
 	       (inctr 0))
-	  (do ((i 0 (1+ i)))
-	      ((= i mark-samps))
-	    (vct-set! new-data i 
+	  (vct-map! new-data
+		    (lambda ()
 		      (+ (next-sample reader)
 			 (granulate gr
 				    (lambda (dir)

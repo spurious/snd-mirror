@@ -1,7 +1,7 @@
 /* sndinfo describes sounds */
 
 #if defined(HAVE_CONFIG_H)
-  #include "config.h"
+  #include <config.h>
 #endif
 
 #include <math.h>

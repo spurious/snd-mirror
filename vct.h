@@ -13,9 +13,6 @@
 #define S_vct_fillB      "vct-fill!"
 #define S_vct_setB       "vct-set!"
 #define S_vct_mapB       "vct-map!"
-#define S_vct_doB        "vct-do!"
-#define S_vcts_mapB      "vcts-map!"
-#define S_vcts_doB       "vcts-do!"
 #define S_vct_peak       "vct-peak"
 #define S_vct_p          "vct?"
 #define S_list2vct       "list->vct"
@@ -47,6 +44,8 @@ XEN mus_array_to_list(Float *arr, int i, int len);
 char *vct_to_string(vct *v);
 vct *c_make_vct(int len);
 vct *c_free_vct(vct *v);
+vct *vector_to_vct(XEN vect);
+void vct_to_vector(vct *v, XEN vect);
 
 #define TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define VCT_P(arg) vct_p(arg)

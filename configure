@@ -13189,6 +13189,9 @@ _ACEOF
 echo "${ECHO_T}$trap_segfault" >&6
 fi
 
+CFLAGS="-I. $CFLAGS"
+# needed since we're looking for <config.h>, I think
+
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure

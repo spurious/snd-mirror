@@ -23,10 +23,9 @@
 			     (list 0 0 .1 1 10 .6 25 .3 50 .15 90 .1 100 0))
 			 amplitude dur))
 	 (out-data (make-vct len)))
-    (do ((i 0 (1+ i)))
-	((= i len))
-      (let ((fmenv (env indf)))
-	(vct-set! out-data i 
+    (vct-map! out-data
+	      (lambda ()
+		(let ((fmenv (env indf)))
 		  (* (env ampf)
 		     (+ (oscil car1 (* fmenv fmInd1 (oscil mod1)))
 			(* .15 (oscil car2 (* fmenv 

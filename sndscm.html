@@ -43,6 +43,7 @@
   <li><a href="#eventdoc">event.scm: xm module stuff</a>
   <li><a href="#exampdoc">examp.scm: many examples</a>
   <li><a href="#extensionsdoc">extensions.scm: various generally useful Snd extensions</a>
+  <li><a href="#fadedoc">fade.scm: frequency-domain cross-fades</a>
   <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
   <li><a href="#glfftdoc">glfft.scm: OpenGL for spectra</a>
   <li><a href="#gmdoc">gm.scm: gmeteor support</a>
@@ -63,7 +64,9 @@
   <li><a href="#rgbdoc">rgb.scm: colors</a>
   <li><a href="#rtiodoc">rtio.scm: real-time stuff</a>
   <li><a href="#rubberdoc">rubber.scm: rubber-sound</a>
+  <li><a href="#singerdoc">singer.scm: Perry Cook's vocal-tract physical model</a>
   <li><a href="#snd4doc">snd4.scm: Backwards compatibility stuff</a>
+  <li><a href="#snd5doc">snd5.scm: Backwards compatibility stuff</a>
   <li><a href="#sndmotifdoc">snd-motif.scm: Motif module (xm.c)</a>
   <li><a href="#sndtestdoc">snd-test.scm, snd.rb, and event.scm: Snd regression tests</a>
   <li><a href="#vdoc">v.scm: fm-violin</a>
@@ -1406,6 +1409,15 @@ start point in the file, and (optionally) the channel of the file to mix.  For e
 <br><br>
 
 
+<A NAME="fadedoc"></a><span class=box><h2>fade.scm</h2></span>
+
+<p>
+The two instruments in fade.scm perform frequency-domain cross-fades, that is, the
+cross-fade is handled by a bank of bandpass filters (formant generators).  The effect
+is sometimes only slightly different from a normal (time-domain) cross-fade, but
+there are some interesting possibilities ("sound evaporation", etc).
+</p>
+
 <A NAME="fmvdoc"></a><span class=box><h2>fmv.scm</h2></span>
 
 <p>fmv.scm implements the fm-violin (v.scm) as a CLM-style generator, making it possible
@@ -2043,6 +2055,28 @@ the smallest, throw away this crossing, 6) sort the remaining crossings by least
 shortened.
 </p>
 
+<A NAME="singerdoc"></a><span class=box><h2>singer.scm</h2></span>
+
+<p>singer.scm is a translation of CLM's singer.ins.  It implements
+a physical model of the vocal tract described in
+</p>
+<pre>
+  Cook, Perry R. "Synthesis of the Singing Voice Using a Physically Parameterized Model of the Human Vocal Tract"
+     Published in the Proceedings of the International Computer Music Conference, Ohio 1989 
+     and as Stanford University Department of Music Technical Report Stan-M-57, August 1989.
+ 
+ ---- "Identification of Control Parameters in an Articulatory Vocal Tract Model, with Applications 
+    to the Synthesis of Singing," Ph.D. Thesis, Stanford University Department of Music Technical Report 
+    Stan-M-68, December 1990.
+
+ ----  "SPASM, a Real-time Vocal Tract Physical Model Controller; and Singer, the Companion Software 
+    Synthesis System", Computer Music Journal, vol 17 no 1 Spring 1993.
+</pre>
+<p>
+There are a couple example calls at the end of the instrument code.
+</p>
+
+
 <A NAME="snd4doc"></a><span class=box><h2>snd4.scm</h2></span>
 
 <p>The Snd-4 compatibilty file contains a number of the procedures
@@ -2145,6 +2179,63 @@ set the variable <b>with-tooltips</b> to #f to turn it off.
 <b>menu-option</b> returns the widget associated with a given menu item name ("Print" for example)
 </p>
 
+<A NAME="snd5doc"></a><span class=box><h2>snd5.scm</h2></span>
+
+<p>The Snd-5 compatibilty file contains a number of the procedures
+that were moved from C to Scheme during Snd-5 development.
+</p>
+<!-- --><table border=0 cellspacing=5>
+<!-- vct-do! -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctdo">vct-do!</a></em> (vobj proc)</code></span></td>
+<!-- --><td><code>vobj[i] = (funcall proc i)</code>.</td></tr>
+<!-- -->
+<!-- vcts-do! -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsdo">vcts-do!</a></em> (vobj... proc)</code></span></td>
+<!-- --><td><code>vobj[vi][i] = (nth vi (funcall proc num i))</code>.</td></tr>
+<!-- -->
+<!-- vcts-map! -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsmap">vcts-map!</a></em> (vobj... proc)</code></span></td>
+<!-- --><td><code>vobj[vi][i] = (nth vi (funcall proc num))</code>.</td></tr>
+<!-- -->
+<!-- --></table>
+
+<p><i>vct-do!</i>
+is the same as <i>vct-map!</i> except that the called function should take one
+argument, the current loop index.  Similarly, <i>vcts-map!</i> and <i>vcts-do!</i>
+take any number of vcts, followed by a trailing function, and map the function's
+results (assumed to be a list that matches the current number of vcts) into the
+vct array.  In the map! case, the function takes one argument, the current number
+of vcts awaiting values; in the do! case, it takes two arguments, the vct
+number and the current loop index.  For example, we could rewrite the cnvtest
+function to take stereo sounds:
+</p>
+<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define cnvtest
+  (lambda (snd0 snd1 amp0 amp1)
+    (if (and (= (channels snd0) 2)
+	     (= (channels snd1) 2))
+	(let* ((flt-len (frames snd0))
+	       (total-len (+ flt-len (frames snd1)))
+	       (cnv10 (make-convolve :filter (samples-&gt;vct 0 flt-len snd0 0)))
+	       (cnv11 (make-convolve :filter (samples-&gt;vct 0 flt-len snd0 1)))
+	       (sf10 (make-sample-reader 0 snd1 0))
+	       (sf11 (make-sample-reader 0 snd1 1))
+	       (out-data10 (make-vct total-len))
+	       (out-data11 (make-vct total-len)))
+	  (<em class=red>vcts-map!</em> out-data10 out-data11 
+		     (lambda (num)
+		       (list
+			(convolve cnv10 (lambda (dir) (read-sample sf10)))
+			(convolve cnv11 (lambda (dir) (read-sample sf11))))))
+	  (free-sample-reader sf10)
+	  (free-sample-reader sf11)
+	  (vct-scale! out-data10 amp0)
+	  (vct-scale! out-data11 amp1)
+	  (vct-&gt;samples 0 total-len out-data10 snd1 0)
+	  (vct-&gt;samples 0 total-len out-data11 snd1 1))
+	(snd-print "oops -- need stereo input"))))
+</pre></td></tr></table>
+<br><br>
 
 <A NAME="sndtestdoc"></a><span class=box><h2>snd-test.scm and event.scm</h2></span>
 <p>
@@ -3574,3 +3665,5 @@ Here are a few simple examples:</p>
 </center>
 </body>
 </html>
+
+

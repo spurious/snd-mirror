@@ -45,6 +45,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     4-Apr:     minor changes for Gtk 2.0.2
  *     13-Mar:    Gtk 2.0.0
  *     12-Mar:    support for GtkDestroyNotify callbacks
  *     27-Feb:    remove gtk_tree_view_column_cell_render, gtk_tree_view_column_cell_focus, 
@@ -60,7 +61,7 @@
  */
 
 #if defined(HAVE_CONFIG_H)
-  #include "config.h"
+  #include <config.h>
 #endif
 
 #include <glib.h>
@@ -34404,14 +34405,6 @@ static XEN gxg_width_chars(XEN ptr)
 }
 #endif
 
-#if (!HAVE_GTK_1)
-static XEN gxg_cursor_gc(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GtkEntry__P(ptr), ptr, XEN_ONLY_ARG, "cursor_gc", "GtkEntry");
-  return(C_TO_XEN_GdkGC_((GdkGC*)((XEN_TO_C_GtkEntry_(ptr))->cursor_gc)));
-}
-#endif
-
 static XEN gxg_dir_list(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "dir_list", "GtkFileSelection");
@@ -37528,7 +37521,6 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "file_list" XG_POST, gxg_file_list, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "dir_list" XG_POST, gxg_dir_list, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "cursor_gc" XG_POST, gxg_cursor_gc, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "width_chars" XG_POST, gxg_width_chars, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "invisible_char" XG_POST, gxg_invisible_char, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "drag_start_y" XG_POST, gxg_drag_start_y, 1, 0, 0, NULL);
@@ -39789,7 +39781,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"18-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"27-Apr-02\")");
 #endif
       xg_already_inited = 1;
     }

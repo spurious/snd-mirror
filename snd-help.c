@@ -204,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+29-Apr:  snd5.scm, singer.scm, fade.scm.\n\
 15-Apr:  snd 5.9.\n\
 12-Apr:  optimization variable, --with-run configure switch, snd-run.c.\n\
 9-Apr:   ramp-channel.\n\
@@ -212,17 +213,6 @@ void news_help(snd_state *ss)
 3-Apr:   read-sample, read-mix-sample, read-track-sample, selection-maxamp.\n\
 1-Apr:   insert-samples and set-samples no longer delete file passed as 'data'.\n\
 29-Mar:  Mac-OSX with Motif (thanks to Charles Nichols).\n\
-28-Mar:  removed movies function.\n\
-27-Mar:  selected-mix, selected-sound, and selected-channel return #f if none selected (not -1)\n\
-24-Mar:  removed ALSA 0.5 support.\n\
-         cosine-summation, legendre-summation in dsp.scm.\n\
-         mus-sound-forget and mus-sound-prune bindings.\n\
-         clear-listener (bound to C-M-g). C-? tries to invoke snd-help.  added help-hook.\n\
-         M-p and M-n now work in the listener (it has a history of previous forms).\n\
-         added bad-type error and removed internal catch from map-chan et al\n\
-         removed cursor-no-action, cursor-update-display\n\
-18-Mar:  squelch-vowels in examp.scm (and ramp gen).\n\
-13-Mar:  snd 5.8.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1353,7 +1343,6 @@ all refer to the same thing.\n\
   " S_vct_p "              (vobj)\n\
   " S_vct_addB "          (vobj1 vobj2)\n\
   " S_vct_copy "          (obj)\n\
-  " S_vct_doB "           (obj proc)\n\
   " S_vct_fillB "         (vobj val)\n\
   " S_vct_length "        (vobj)\n\
   " S_vct_mapB "          (obj proc)\n\
@@ -1366,8 +1355,6 @@ all refer to the same thing.\n\
   " S_vct_setB "          (vobj pos val)\n\
   " S_vct2samples "      (samp samps data snd chn)\n\
   " S_vct2sound_file "   (fd vobj vals)\n\
-  " S_vcts_doB "          (obj ... proc)\n\
-  " S_vcts_mapB "         (obj ... proc)\n\
   " S_vector2vct "       (vect)\n\
   " S_view_sound "        (filename)\n\
   " S_window_height "     ()\n\

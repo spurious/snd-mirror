@@ -41,8 +41,6 @@ DESTDIR =
 .c.o:
 	$(CC) -c $(DEFS) $(GTK_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GTKEXTRA_FLAGS) $(GTKHTML_FLAGS) $<
 
-include makesnd.files
-
 INSTALL = @INSTALL@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 prefix = @prefix@
@@ -51,6 +49,8 @@ bindir = @bindir@
 srcdir = @srcdir@
 mandir = @mandir@
 VPATH = @srcdir@
+
+include $(srcdir)/makesnd.files
 
 main_target: @MAKE_TARGET@
 
@@ -68,7 +68,7 @@ widget: snd_widget.o
 snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES)
 	$(LD) -r $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) -o snd_widget.o
 
-include makesnd.back
+include $(srcdir)/makesnd.back
 
 Makefile: Makefile.in config.status
 	./config.status

@@ -1,7 +1,7 @@
 /* xen support procedures */
 
 #if defined(HAVE_CONFIG_H)
-  #include "config.h"
+  #include <config.h>
 #endif
 
 #include <ctype.h>

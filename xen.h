@@ -17,11 +17,12 @@
 #endif
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 2
-#define XEN_VERSION "1.2"
+#define XEN_MINOR_VERSION 3
+#define XEN_VERSION "1.3"
 
 /* HISTORY:
  *  
+ *   29-Apr-02: added XEN_EXACT_P
  *   2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
  *   22-Sep-01: removed (redundant) UNSIGNED_LONG macros -- use ULONG instead
 */
@@ -157,6 +158,7 @@
 #define XEN_TO_C_ULONG(a)             scm_num2ulong(a, 0, __FUNCTION__)
 #define C_TO_XEN_ULONG(a)             scm_ulong2num((unsigned long)a)
 #define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
+#define XEN_EXACT_P(Arg)              XEN_TRUE_P(scm_exact_p(Arg))
 
 #ifndef SCM_STRING_CHARS
   #define XEN_TO_C_STRING(STR)        SCM_CHARS(STR)
@@ -597,6 +599,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_VECTOR_P(Arg)                (TYPE(Arg) == T_ARRAY)
 #define XEN_PROCEDURE_P(Arg)             (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
 #define XEN_ULONG_P(Arg1)                XEN_INTEGER_P(Arg1)
+#define XEN_EXACT_P(Arg1)                XEN_INTEGER_P(Arg1)
 
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)
@@ -861,6 +864,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_BOUND_P(Arg) 0
 #define XEN_NOT_BOUND_P(Arg) 1
 #define XEN_ZERO 0
+#define XEN_DOUBLE_P(Arg) 0
 
 #define XEN_TO_C_DOUBLE(a) 0.0
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) 0.0
@@ -899,6 +903,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_TO_C_ULONG(a) 0
 #define C_TO_XEN_ULONG(a) 0
 #define XEN_ULONG_P(Arg) 0
+#define XEN_EXACT_P(Arg) 0
 #define XEN_LIST_P(Arg) 0
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) 0
 #define XEN_LIST_LENGTH(Arg) 0

@@ -1012,7 +1012,7 @@
 (hey " *     11-Feb-02: initial version.~%")
 (hey " */~%~%")
 
-(hey "#if defined(HAVE_CONFIG_H)~%  #include \"config.h\"~%#endif~%~%")
+(hey "#if defined(HAVE_CONFIG_H)~%  #include <config.h>~%#endif~%~%")
 
 (hey "#include <glib.h>~%")
 (hey "#include <gdk/gdk.h>~%")

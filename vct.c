@@ -27,9 +27,6 @@
  *   (vct-scale! v1 scl)                   v1[i] *= scl -> v1
  *   (vct-fill! v1 val)                    v1[i] = val -> v1
  *   (vct-map! v1 proc)                    set each element of v1 to value of function proc()
- *   (vct-do! v1 proc)                     set each element of v1 to value of function proc(i)
- *   (vcts-map! v1 v2 ... proc)            set each element of each vs from values of function proc(num)
- *   (vcts-do! v1 v2 ... proc)             set each element of each vs from values of function proc(num, i)
  *   (vct-peak v1)                         max val (abs) in v
  *   (list->vct lst)                       return vct with elements of list lst
  *   (vct->list v1)                        return list with elements of vct v1
@@ -44,7 +41,7 @@
  */
 
 #if defined(HAVE_CONFIG_H)
-  #include "config.h"
+  #include <config.h>
 #endif
 
 #if USE_SND
@@ -448,124 +445,6 @@ static XEN vct_map(XEN obj, XEN proc)
   return(xen_return_first(obj, proc));
 }
 
-#if 0
-static XEN vct_do(XEN obj, XEN proc)
-{
-  #define H_vct_doB "(" S_vct_doB " v proc) -> v with each element set to value of proc: v[i] = (proc i)"
-  int i;
-  vct *v;
-  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_doB, "a vct");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 1), proc, XEN_ARG_2, S_vct_doB, "a procedure of one arg");
-  v = TO_VCT(obj);
-  for (i = 0; i < v->length; i++) 
-    v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(proc, C_TO_SMALL_XEN_INT(i), S_vct_doB));
-  return(xen_return_first(obj, proc));
-}
-#endif
-
-static XEN vcts_map(XEN args)
-{
-  #define H_vcts_mapB "(" S_vcts_mapB " v1 v2 ... proc) sets each element of the vct objects from the list of values returned by (proc vnum)"
-  /* n vcts followed by proc, proc returns n values (list) on each call */
-  int i, vi, vnum, vsize, argnum;
-  vct **v;
-  XEN proc; XEN arg; XEN svi; XEN lst;
-  argnum = XEN_LIST_LENGTH(args);
-  vnum = argnum - 1;
-  if (vnum <= 1)
-    mus_misc_error(S_vcts_mapB, "need at least 2 args", args);
-  v = (vct **)CALLOC(vnum, sizeof(vct *));
-  for (i = 0; i < vnum; i++)
-    {
-      arg = XEN_LIST_REF(args, i);
-      if (!(VCT_P(arg))) 
-	{
-	  FREE(v);
-	  XEN_ASSERT_TYPE(0, arg, i, S_vcts_mapB, "a vct");
-	}
-      v[i] = TO_VCT(arg);
-    }
-  proc = XEN_LIST_REF(args, vnum);
-  if ((!(XEN_PROCEDURE_P(proc))) || (!(XEN_REQUIRED_ARGS(proc) == 1)))
-    {
-      FREE(v);
-      mus_misc_error(S_vcts_mapB,
-		     "last argument must be a function of 1 arg",
-		     args);
-      return(C_TO_SMALL_XEN_INT(0));
-    }
-  svi = C_TO_SMALL_XEN_INT(vnum);
-  vsize = v[0]->length;
-  for (i = 1; i < vnum; i++) 
-    if (vsize > v[i]->length) 
-      vsize = v[i]->length;
-  for (i = 0; i < vsize; i++)
-    {
-      arg = XEN_CALL_1_NO_CATCH(proc, svi, S_vcts_mapB);
-      if (XEN_LIST_P(arg))
-	{
-	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = XEN_CDR(lst))
-	    v[vi]->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-	}
-      else XEN_ERROR(BAD_TYPE,
-		     XEN_LIST_2(C_TO_XEN_STRING(S_vcts_mapB),
-				arg));
-    }
-  FREE(v);
-  return(xen_return_first(C_TO_SMALL_XEN_INT(vnum), args));
-}
-
-static XEN vcts_do(XEN args)
-{
-  #define H_vcts_doB "(" S_vcts_doB " v1 v2 ... proc) sets each element of the vct objects from the list of values returned by (proc vnum i)"
-  /* n vcts followed by proc, proc returns n values (list) on each call */
-  int i, vi, vnum, vsize, argnum;
-  vct **v;
-  XEN proc; XEN arg; XEN svi; XEN lst;
-  argnum = XEN_LIST_LENGTH(args);
-  vnum = argnum - 1;
-  if (vnum <= 1)
-    mus_misc_error(S_vcts_doB, "need at least 2 args", args);
-  v = (vct **)CALLOC(vnum, sizeof(vct *));
-  for (i = 0; i < vnum; i++)
-    {
-      arg = XEN_LIST_REF(args, i);
-      if (!(VCT_P(arg))) 
-	{
-	  FREE(v);
-	  XEN_ASSERT_TYPE(0, arg, i, S_vcts_doB, "a vct");
-	}
-      v[i] = TO_VCT(arg);
-    }
-  proc = XEN_LIST_REF(args, vnum);
-  if ((!(XEN_PROCEDURE_P(proc))) || (!(XEN_REQUIRED_ARGS(proc) == 2)))
-    {
-      FREE(v);
-      mus_misc_error(S_vcts_doB,
-		     "last argument must be a function of 2 args",
-		     args);
-    }
-  vsize = v[0]->length;
-  svi = C_TO_SMALL_XEN_INT(vnum);
-  for (i = 1; i < vnum; i++) 
-    if (vsize > v[i]->length) 
-      vsize = v[i]->length;
-  for (i = 0; i < vsize; i++)
-    {
-      arg = XEN_CALL_2_NO_CATCH(proc, svi, C_TO_SMALL_XEN_INT(i), S_vcts_doB);
-      if (XEN_LIST_P(arg))
-	{
-	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = XEN_CDR(lst))
-	    v[vi]->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-	}
-      else XEN_ERROR(BAD_TYPE,
-		     XEN_LIST_2(C_TO_XEN_STRING(S_vcts_doB),
-				arg));
-    }
-  FREE(v);
-  return(xen_return_first(C_TO_SMALL_XEN_INT(vnum), args));
-}
-
 static XEN vct_peak(XEN obj)
 {
   #define H_vct_peak "(" S_vct_peak " v) -> max of abs of elements of v"
@@ -685,6 +564,39 @@ XEN vct2vector(XEN vobj)
   return(xen_return_first(new_vect, vobj));
 }
 
+vct *vector_to_vct(XEN vect)
+{
+  int len, i;
+  vct *v;
+  XEN *vdata;
+  len = XEN_VECTOR_LENGTH(vect);
+  if (len == 0) return(NULL);
+  v = c_make_vct(len);
+  vdata = XEN_VECTOR_ELEMENTS(vect);
+  for (i = 0; i < len; i++) 
+    if (XEN_DOUBLE_P(vdata[i]))
+      v->data[i] = (Float)XEN_TO_C_DOUBLE(vdata[i]);
+    else
+      {
+	c_free_vct(v);
+	return(NULL);
+      }
+  return(v);
+}
+
+void vct_to_vector(vct *v, XEN vect)
+{
+  int len, i;
+  XEN *vdata;
+  len = XEN_VECTOR_LENGTH(vect);
+  vdata = XEN_VECTOR_ELEMENTS(vect);
+  for (i = 0; i < len; i++) 
+    if (XEN_EXACT_P(vdata[i]))
+      vdata[i] = C_TO_XEN_INT((int)(v->data[i]));
+    else vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
+}
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
 XEN_NARGIFY_1(copy_vct_w, copy_vct)
@@ -703,10 +615,7 @@ XEN_ARGIFY_3(vct_add_w, vct_add)
 XEN_NARGIFY_2(vct_subtract_w, vct_subtract)
 XEN_NARGIFY_2(vct_offset_w, vct_offset)
 XEN_NARGIFY_2(vct_map_w, vct_map)
-  /* XEN_NARGIFY_2(vct_do_w, vct_do) */
 XEN_NARGIFY_1(vct_peak_w, vct_peak)
-XEN_VARGIFY(vcts_map_w, vcts_map)
-XEN_VARGIFY(vcts_do_w, vcts_do)
 XEN_ARGIFY_4(vct_move_w, vct_move)
 XEN_ARGIFY_4(vct_subseq_w, vct_subseq)
 XEN_VARGIFY(g_vct_w, g_vct)
@@ -728,10 +637,7 @@ XEN_VARGIFY(g_vct_w, g_vct)
 #define vct_subtract_w vct_subtract
 #define vct_offset_w vct_offset
 #define vct_map_w vct_map
-  /* #define vct_do_w vct_do */
 #define vct_peak_w vct_peak
-#define vcts_map_w vcts_map
-#define vcts_do_w vcts_do
 #define vct_move_w vct_move
 #define vct_subseq_w vct_subseq
 #define g_vct_w g_vct
@@ -814,10 +720,7 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_vct_addB,      vct_add_w, 2, 1, 0,       H_vct_addB);
   XEN_DEFINE_PROCEDURE(S_vct_subtractB, vct_subtract_w, 2, 0, 0,  H_vct_subtractB);
   XEN_DEFINE_PROCEDURE(S_vct_offsetB,   vct_offset_w, 2, 0, 0,    H_vct_offsetB);
-  /* XEN_DEFINE_PROCEDURE(S_vct_doB,       vct_do_w, 2, 0, 0,        H_vct_doB); */
   XEN_DEFINE_PROCEDURE(S_vct_peak,      vct_peak_w, 1, 0, 0,      H_vct_peak);
-  XEN_DEFINE_PROCEDURE(S_vcts_mapB,     vcts_map_w, 0, 0, 1,      H_vcts_mapB);
-  XEN_DEFINE_PROCEDURE(S_vcts_doB,      vcts_do_w, 0, 0, 1,       H_vcts_doB);
   XEN_DEFINE_PROCEDURE(S_vct_moveB,     vct_move_w, 3, 1, 0,      H_vct_moveB);
   XEN_DEFINE_PROCEDURE(S_vct_subseq,    vct_subseq_w, 2, 2, 0,    H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,           g_vct_w, 0, 0, 1,         H_vct);
@@ -832,12 +735,6 @@ void init_vct(void)
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref,
 				   "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
-  XEN_EVAL_C_STRING("(define (vct-do! v func) \
-                       (vct-map! v (let ((i 0)) \
-                         (lambda () \
-                           (let ((val (func i))) \
-                             (set! i (1+ i)) \
-                             val)))))");
 #endif
 }
 
