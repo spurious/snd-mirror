@@ -54,10 +54,15 @@
 #define ERRVECT2(a,b) SCM_ASSERT((gh_vector_p(a)),a,SCM_ARG2,b)
 #define ERRVECT4(a,b) SCM_ASSERT((gh_vector_p(a)),a,SCM_ARG4,b)
 
+#define ERRSB1(a,b) SCM_ASSERT(((gh_string_p(a)) || (SCM_FALSEP(a)) || (SCM_UNBNDP(a))),a,SCM_ARG1,b)
+#define ERRSB3(a,b) SCM_ASSERT(((gh_string_p(a)) || (SCM_FALSEP(a)) || (SCM_UNBNDP(a))),a,SCM_ARG3,b)
+
 #define RTNBOOL(a) return((a) ? SCM_BOOL_T : SCM_BOOL_F)
 #define RTNINT(a) return(gh_int2scm(a))
 #define RTNFLT(a) return(gh_double2scm(a))
 #define RTNSTR(a) return(gh_str02scm(a))
+
+#define HOOKED(a) (!(SCM_NULLP(SCM_HOOK_PROCEDURES(a))))
 
 #define DEFINE_PROC(a,b) scm_set_procedure_property_x(a,local_doc,gh_str02scm(b))
 

@@ -384,7 +384,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_default_output_srate) == 0) {set_default_output_srate(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_default_output_type) == 0) {set_default_output_type(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_default_output_format) == 0) {set_default_output_format(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_dot_size) == 0) {set_dot_size(ss,istr(str[1])); isym(ss,0); return(0);}
 #if ((USE_MOTIF) && (XmVERSION == 1))
   if (strcmp(tok,S_set_edit_history_width) == 0) {set_edit_history_width(ss,istr(str[1])); isym(ss,0); return(0);}
 #endif
@@ -433,7 +432,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_initial_y0) == 0) {set_initial_y0(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_initial_y1) == 0) {set_initial_y1(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_just_sounds) == 0) {toggle_just_sounds(istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_left_sample) == 0) {set_x_axis_x0(get_cp(ss,str[2],str[3]),istr(str[1])); isym(ss,0);return(0);}
   if (strcmp(tok,S_set_line_size) == 0) {set_line_size(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_min_dB) == 0) {set_min_dB(ss,fstr(str[1])); fsym(ss,ss->min_dB); return(0);}
   if (strcmp(tok,S_set_max_fft_peaks) == 0) {set_max_fft_peaks(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -485,7 +483,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
       isym(ss,0); return(0);
     }
   if (strcmp(tok,S_set_reverbing) == 0) {sp = get_sp(ss,str[2]); if (sp) toggle_reverb_button(sp,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_right_sample) == 0) {set_x_axis_x1(get_cp(ss,str[2],str[3]),istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_save_dir) == 0) {set_save_dir(ss,sstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_save_state_on_exit) == 0) {set_save_state_on_exit(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_save_state_file) == 0) {set_save_state_file(ss,sstr(str[1])); isym(ss,0); return(0);}
@@ -572,55 +569,8 @@ static int handle_set(snd_state *ss, char *tok, char **str)
     }
   if (strcmp(tok,S_set_with_mix_consoles) == 0) {set_with_mix_consoles(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_x_axis_style) == 0) {in_set_x_axis_style(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_x_bounds) == 0) 
-    {
-      cp = get_cp(ss,str[3],str[4]); 
-      if (cp) 
-	{
-	  f0 = fstr(str[1]);
-	  f1 = fstr(str[2]);
-	  if (f1 > f0)
-	    set_x_axis_x0x1(cp,f0,f1);
-	  else display_results(ss,"impossible bounds");
-	}
-      isym(ss,0); 
-      return(0);
-    }
   if (strcmp(tok,S_set_xmax) == 0) {set_xmax(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_xmin) == 0) {set_xmin(ss,fstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_y_bounds) == 0) 
-    {
-      cp = get_cp(ss,str[3],str[4]); 
-      if (cp) 
-	{
-	  if (snd_strlen(str[1]) > 0)
-	    {
-	      f0 = fstr(str[1]);
-	      if (snd_strlen(str[2]) > 0)
-		f1 = fstr(str[2]);
-	      if (f0 < 0.0)
-		f1 = -f0;
-	      else
-		{
-		  f1 = f0;
-		  f0 = -f0;
-		}
-	    }
-	  else
-	    {
-	      /* if no bounds given, use maxamp */
-	      f1 = get_maxamp(cp->state,cp->sound,cp);
-	      if (f1 < 0.0) f1 = -f1;
-	      if (f1 == 0.0) f1 = .001;
-	      f0 = -f1;
-	    }
-	  if (f1 > f0)
-	    set_y_axis_y0y1(cp,f0,f1);
-	  else display_results(ss,"impossible bounds");
-	}
-      isym(ss,0); 
-      return(0);
-    }
   if (strcmp(tok,S_set_ymax) == 0) {set_ymax(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_ymin) == 0) {set_ymin(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_zero_pad) == 0) {set_zero_pad(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -730,13 +680,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_auto_resize) == 0) {isym(ss,auto_resize(ss)); return(0);}
       if (strcmp(tok,S_auto_update) == 0) {isym(ss,auto_update(ss)); return(0);}
       break;
-    case 'b':
-      if (strcmp(tok,S_backward_graph) == 0) {goto_previous_graph(current_channel(ss),prefix_fix(str[1])); isym(ss,0); return(0);}
-      if (strcmp(tok,S_backward_mark) == 0) {goto_mark(current_channel(ss),-prefix_fix(str[1])); isym(ss,0); return(0);}
-      if (strcmp(tok,S_backward_mix) == 0) {goto_mix(current_channel(ss),-prefix_fix(str[1])); isym(ss,0); return(0);}
-      if (strcmp(tok,S_backward_sample) == 0) 
-	{cp = current_channel(ss); if (cp) handle_cursor(cp,cursor_move(cp,-prefix_fix(str[1]))); isym(ss,0); return(0);}
-      break;
     case 'c':
       if (strcmp(tok,S_call_apply) == 0) {sp = get_sp(ss,str[1]); if (sp) run_apply_to_completion(sp); isym(ss,0); return(0);}
 #if HAVE_OSS
@@ -813,7 +756,6 @@ static int symit(snd_state *ss,char **str)
 	  isym(ss,0); 
 	  return(0);
 	}
-      if (strcmp(tok,S_dot_size) == 0) {isym(ss,dot_size(ss)); return(0);}
       if (strcmp(tok,S_delete_sample) == 0) 
 	{
 	  cp = get_cp(ss,str[2],str[3]); 
@@ -927,11 +869,6 @@ static int symit(snd_state *ss,char **str)
 	  return(0);
 	}
       if (strcmp(tok,S_fit_data_on_open) == 0) {isym(ss,fit_data_on_open(ss)); return(0);}
-      if (strcmp(tok,S_forward_graph) == 0) {goto_next_graph(current_channel(ss),prefix_fix(str[1])); isym(ss,0); return(0);}
-      if (strcmp(tok,S_forward_mark) == 0) {goto_mark(current_channel(ss),prefix_fix(str[1])); isym(ss,0); return(0);}
-      if (strcmp(tok,S_forward_mix) == 0) {goto_mix(current_channel(ss),prefix_fix(str[1])); isym(ss,0); return(0);}
-      if (strcmp(tok,S_forward_sample) == 0) 
-	{cp = current_channel(ss); if (cp) handle_cursor(cp,cursor_move(cp,prefix_fix(str[1]))); isym(ss,0); return(0);}
       if (strcmp(tok,S_frames) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) isym(ss,current_ed_samples(cp)); else isym(ss,0); return(0);}
       break;
     case 'g':
@@ -1084,7 +1021,6 @@ static int symit(snd_state *ss,char **str)
 	}
       break;
     case 'p':
-      if (strcmp(tok,S_peaks) == 0) {cp = get_cp(ss,str[2],str[3]); if (cp) display_fft_peaks(cp,sstr(str[1])); isym(ss,0); return(0);}
       if (strcmp(tok,S_play_region) == 0) 
 	{
 	  ival = istr(str[1]);
@@ -1210,7 +1146,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_save_control_panel) == 0) {sp = get_sp(ss,str[1]); if (sp) save_control_panel(sp); isym(ss,0); return(0);}
       if (strcmp(tok,S_save_dir) == 0) {ssym(ss,save_dir(ss)); return(0);}
       if (strcmp(tok,S_save_envelopes) == 0) {g_save_envelopes(ss,str[1]); isym(ss,0); return(0);}
-      if (strcmp(tok,S_save_marks) == 0) {sp = get_sp(ss,str[1]); if (sp) save_marks(sp); isym(ss,0); return(0);}
       if (strcmp(tok,S_save_options) == 0) 
 	{
 	  FILE *fd;
@@ -1536,16 +1471,8 @@ int snd_load_file(snd_state *ss,char *filename)
 
 int dont_open(snd_state *ss, char *file) {return(0);}
 int dont_close(snd_state *ss, snd_info *sp) {return(0);}
-int after_fft(snd_state *ss, chan_info *cp, Float scaler) {return(0);}
-int dont_graph(snd_state *ss, chan_info *cp) {return(0);}
-void after_graph(snd_state *ss, chan_info *cp) {}
 int dont_exit(snd_state *ss) {return(0);}
 int dont_start(snd_state *ss, char *filename) {return(0);}
-int handle_mark_click(snd_state *ss, int id) {return(0);}
-void handle_mouse_release(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
-void handle_mouse_press(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
-void handle_mouse_drag(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y) {}
-int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key, int state) {return(0);}
 void call_stop_playing_hook(snd_info *sp) {}
 void call_stop_playing_region_hook(int n) {}
 int call_start_playing_hook(snd_info *sp) {return(0);}
@@ -1553,7 +1480,6 @@ void call_mix_console_state_changed_hook(mixdata *md) {}
 int call_mix_speed_changed_hook(mixdata *md) {return(0);}
 int call_mix_amp_changed_hook(mixdata *md) {return(0);}
 int call_mix_position_changed_hook(mixdata *md, int samps) {return(0);}
-void call_multichannel_mix_hook(snd_state *ss, int *ids, int n) {}
 void during_open(int fd, char *file, int reason) {}
 void after_open(int index) {}
 int dont_edit(chan_info *cp) {return(0);}

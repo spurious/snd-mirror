@@ -11,6 +11,25 @@
   #endif
 #endif
 
+#if HAVE_GUILE
+static int after_fft(snd_state *ss, chan_info *cp, Float scaler);
+static int dont_graph(snd_state *ss, chan_info *cp);
+static void after_graph(snd_state *ss, chan_info *cp);
+static int handle_mark_click(snd_state *ss, int id);
+static void handle_mouse_release(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state);
+static void handle_mouse_press(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state);
+static void handle_mouse_drag(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y);
+static int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key, int state);
+#else
+static int after_fft(snd_state *ss, chan_info *cp, Float scaler) {return(0);}
+static int dont_graph(snd_state *ss, chan_info *cp) {return(0);}
+static void after_graph(snd_state *ss, chan_info *cp) {}
+static int handle_mark_click(snd_state *ss, int id) {return(0);}
+static void handle_mouse_release(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
+static void handle_mouse_press(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
+static void handle_mouse_drag(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y) {}
+static int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key, int state) {return(0);}
+#endif
 
 static char expr_str[256];
 
@@ -66,7 +85,7 @@ static void g_prompt(snd_info *sp, char *prompt)
 }
 #endif
 
-int set_dot_size(snd_state *ss, int val)
+static int set_dot_size(snd_state *ss, int val)
 {
   if (val>0)  /* -1 here can crash X! */
     {
@@ -86,7 +105,9 @@ static chan_info *virtual_selected_channel(chan_info *cp)
   else return(sp->chans[sp->selected_channel]);
 }
 
-void goto_previous_graph (chan_info *cp, int count)
+static void goto_next_graph (chan_info *cp, int count);
+
+static void goto_previous_graph (chan_info *cp, int count)
 {
   snd_info *sp,*osp;
   snd_state *ss;
@@ -146,7 +167,7 @@ void goto_previous_graph (chan_info *cp, int count)
   /* goto_graph(ncp); */
 }
 
-void goto_next_graph (chan_info *cp, int count)
+static void goto_next_graph (chan_info *cp, int count)
 {
   snd_info *sp,*osp;
   snd_state *ss;
@@ -433,7 +454,7 @@ void apply_y_axis_change (axis_info *ap, chan_info *cp)
     }
 }
 
-void set_x_axis_x0x1 (chan_info *cp, Float x0, Float x1) 
+static void set_x_axis_x0x1 (chan_info *cp, Float x0, Float x1) 
 {
   axis_info *ap;
   ap = cp->axis;
@@ -448,7 +469,7 @@ void set_x_axis_x0x1 (chan_info *cp, Float x0, Float x1)
   apply_x_axis_change(ap,cp,cp->sound); /* this checks sync */
 }
 
-void set_x_axis_x0(chan_info *cp, int left)
+static void set_x_axis_x0(chan_info *cp, int left)
 {
   Float x1x0;
   axis_info *ap;
@@ -467,7 +488,7 @@ void set_x_axis_x0(chan_info *cp, int left)
     }
 }
 
-void set_x_axis_x1(chan_info *cp, int right)
+static void set_x_axis_x1(chan_info *cp, int right)
 {
   Float x1x0;
   axis_info *ap;
@@ -483,7 +504,7 @@ void set_x_axis_x1(chan_info *cp, int right)
     }
 }
 
-void set_y_axis_y0y1 (chan_info *cp, Float y0, Float y1) 
+static void set_y_axis_y0y1 (chan_info *cp, Float y0, Float y1) 
 {
   axis_info *ap;
   ap = cp->axis;
@@ -1304,7 +1325,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if (cp->hookable) after_fft(ss,cp,scale);
 }
 
-int display_fft_peaks(chan_info *ucp, char *filename)
+static int display_fft_peaks(chan_info *ucp, char *filename)
 {
   /* put (sync'd) peak info in help window */
   char *str = NULL,*mcf = NULL;
@@ -2176,7 +2197,7 @@ int cursor_moveto (chan_info *cp, int samp)
   return(cursor_decision(cp));
 }
 
-int cursor_move (chan_info *cp,int samps)
+static int cursor_move (chan_info *cp,int samps)
 {
   return(cursor_moveto(cp,cp->cursor+samps));
 }
@@ -7122,7 +7143,539 @@ static SCM g_save_macros(void)
   return(SCM_BOOL_F);
 }
 
+static SCM g_forward_graph(SCM count, SCM snd, SCM chn) 
+{
+  #define H_forward_graph "(" S_forward_graph " &optional (count 1) snd chn) moves the 'selected' graph forward by count"
+  int val;
+  chan_info *cp;
+  ERRB1(count,S_forward_graph);
+  ERRCP(S_forward_graph,snd,chn,2);
+  cp = get_cp(snd,chn);
+  val = g_scm2intdef(count,1);
+  if (cp) goto_next_graph(cp,val); else return(NO_SUCH_CHANNEL);
+  RTNINT(val);
+}
 
+static SCM g_backward_graph(SCM count, SCM snd, SCM chn) 
+{
+  #define H_backward_graph "(" S_backward_graph " &optional (count 1) snd chn) moves the 'selected' graph back by count"
+  int val;
+  chan_info *cp;
+  ERRB1(count,S_backward_graph);
+  ERRCP(S_backward_graph,snd,chn,2);
+  cp = get_cp(snd,chn);
+  val = -(g_scm2intdef(count,1));
+  if (cp) goto_previous_graph(cp,val); else return(NO_SUCH_CHANNEL);
+  RTNINT(val);
+}
+
+enum {FFTF,WAVEF,LENGTHF,CURSORF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDATE,AP_SX,AP_SY,AP_ZX,AP_ZY,EDITF,CURSOR_STYLE,EDIT_HOOK,UNDO_HOOK};
+
+static SCM cp_iread(SCM snd_n, SCM chn_n, int fld)
+{
+  chan_info *cp;
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  switch(fld)
+    {
+    case EDITF: RTNINT(cp->edit_ctr); break;
+    case FFTF: RTNBOOL(cp->ffting); break;
+    case WAVEF: RTNBOOL(cp->waving); break;
+    case CURSORF: RTNINT(cp->cursor); break;
+    case LENGTHF: RTNINT(current_ed_samples(cp)); break;
+    case MAXAMPF: RTNFLT(get_maxamp(cp->state,cp->sound,cp)); break;
+    case GRAPHINGF: RTNBOOL(cp->lisp_graphing); break;
+    case LOSAMPF: if (cp->axis) RTNINT((cp->axis)->losamp); break;
+    case HISAMPF: if (cp->axis) RTNINT((cp->axis)->hisamp); break;
+    case SQUELCH_UPDATE: RTNBOOL(cp->squelch_update); break;
+    case AP_SX: if (cp->axis) RTNFLT((cp->axis)->sx); break;
+    case AP_SY: if (cp->axis) RTNFLT((cp->axis)->sy); break;
+    case AP_ZX: if (cp->axis) RTNFLT((cp->axis)->zx); break;
+    case AP_ZY: if (cp->axis) RTNFLT((cp->axis)->zy); break;
+    case CURSOR_STYLE: RTNINT(cp->cursor_style); break;
+    case EDIT_HOOK: return(cp->edit_hook); break;
+    case UNDO_HOOK: return(cp->undo_hook); break;
+    }
+  return(SCM_BOOL_F);
+}
+
+static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld)
+{
+  chan_info *cp;
+  int val = 0;
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  switch (fld)
+    {
+    case FFTF: fftb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL); break;
+    case WAVEF: waveb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL); break;
+    case CURSORF: cp->cursor_on = 1; handle_cursor(cp,cursor_moveto(cp,val = g_scm2intdef(on,1))); break;
+    case GRAPHINGF: 
+      cp->lisp_graphing = bool_int_or_one(on); 
+      val = cp->lisp_graphing;
+      update_graph(cp,NULL); 
+      break;
+    case LOSAMPF: set_x_axis_x0(cp,val = g_scm2intdef(on,0)); return(on); break;
+    case HISAMPF: set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on); break;
+    case SQUELCH_UPDATE: cp->squelch_update = bool_int_or_one(on); break;
+    case CURSOR_STYLE: cp->cursor_style = g_scm2intdef(on,0); update_graph(cp,NULL); return(on); break;
+    }
+  RTNBOOL(val);
+}
+
+static SCM g_edit_position(SCM snd_n, SCM chn_n) 
+{
+  #define H_edit_position "(" S_edit_position " &optional snd chn) -> current edit history position in snd's channel chn"
+  ERRCP(S_edit_position,snd_n,chn_n,1);
+  return(cp_iread(snd_n,chn_n,EDITF));
+}
+
+static SCM g_ffting(SCM snd_n, SCM chn_n) 
+{
+  #define H_ffting "(" S_ffting " &optional snd chn) -> #t if fft display is active in snd's channel chn"
+  ERRCP(S_ffting,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,FFTF));
+}
+
+static SCM g_set_ffting(SCM on, SCM snd_n, SCM chn_n) 
+{
+  #define H_set_ffting "(" S_set_ffting " &optional (val #t) snd chn) sets whether snd's channel chn is displaying ffts"
+  ERRB1(on,S_set_ffting); 
+  ERRCP(S_set_ffting,snd_n,chn_n,2);
+  return(cp_iwrite(snd_n,chn_n,on,FFTF));
+}
+
+static SCM g_waving(SCM snd_n, SCM chn_n) 
+{
+  #define H_waving "(" S_waving " &optional snd chn) -> #t if time domain display is active in snd's channel chn"
+  ERRCP(S_waving,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,WAVEF));
+}
+
+static SCM g_set_waving(SCM on, SCM snd_n, SCM chn_n) 
+{
+  #define H_set_waving "(" S_set_waving " &optional (val #t) snd chn) sets whether snd's channel chn is displaying time domain data"
+  ERRB1(on,S_set_waving); 
+  ERRCP(S_set_waving,snd_n,chn_n,2); 
+  return(cp_iwrite(snd_n,chn_n,on,WAVEF));
+}
+
+static SCM g_graphing(SCM snd_n, SCM chn_n) 
+{
+  #define H_graphing "(" S_graphing " &optional snd chn) -> #t if lisp-generated data display is active in snd's channel chn"
+  ERRCP(S_graphing,snd_n,chn_n,1);
+  return(cp_iread(snd_n,chn_n,GRAPHINGF));
+}
+
+static SCM g_set_graphing(SCM on, SCM snd_n, SCM chn_n) 
+{
+  #define H_set_graphing "(" S_set_graphing " &optional (val #t) snd chn) sets whether snd's channel chn is displaying lisp-generated data"
+  ERRB1(on,S_set_graphing); 
+  ERRCP(S_set_graphing,snd_n,chn_n,2); 
+  return(cp_iwrite(snd_n,chn_n,on,GRAPHINGF));
+}
+
+static SCM g_cursor(SCM snd_n, SCM chn_n) 
+{
+  #define H_cursor "(" S_cursor " &optional snd chn) -> current cursor location in snd's channel chn"
+  ERRCP(S_cursor,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,CURSORF));
+}
+
+static SCM g_set_cursor(SCM on, SCM snd_n, SCM chn_n) 
+{
+  #define H_set_cursor "(" S_set_cursor " val &optional snd chn) sets the current cursor location in snd's channel chn"
+  ERRB1(on,S_set_cursor); 
+  ERRCP(S_set_cursor,snd_n,chn_n,2); 
+  return(cp_iwrite(snd_n,chn_n,on,CURSORF));
+}
+
+static SCM g_cursor_style(SCM snd_n, SCM chn_n) 
+{
+  #define H_cursor_style "(" S_cursor_style " &optional snd chn) -> current cursor style in snd's channel chn"
+  ERRCP(S_cursor_style,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,CURSOR_STYLE));
+}
+
+static SCM g_set_cursor_style(SCM on, SCM snd_n, SCM chn_n) 
+{
+  #define H_set_cursor_style "(" S_set_cursor_style " val &optional snd chn) sets the current cursor style in snd's channel chn"
+  ERRB1(on,S_set_cursor_style); 
+  ERRCP(S_set_cursor_style,snd_n,chn_n,2); 
+  return(cp_iwrite(snd_n,chn_n,on,CURSOR_STYLE));
+}
+
+static SCM g_frames(SCM snd_n, SCM chn_n) 
+{
+  #define H_frames "(" S_frames " &optional snd chn) -> number of frames of data in snd's channel chn"
+  ERRCP(S_frames,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,LENGTHF));
+}
+
+static SCM g_maxamp(SCM snd_n, SCM chn_n) 
+{
+  #define H_maxamp "(" S_maxamp " &optional snd chn) -> max amp of data in snd's channel chn"
+  ERRCP(S_maxamp,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,MAXAMPF));
+}
+
+static SCM g_squelch_update(SCM snd_n, SCM chn_n) 
+{
+  #define H_squelch_update "(" S_squelch_update " &optional snd chn) -> #t if updates (redisplays) are off in snd's channel chn"
+  ERRCP(S_squelch_update,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,SQUELCH_UPDATE));
+}
+
+static SCM g_set_squelch_update(SCM on, SCM snd_n, SCM chn_n) 
+{
+  #define H_set_squelch_update "(" S_set_squelch_update " &optional (on #t) snd chn) sets whether updates (redisplays) are off in snd's channel chn"
+  ERRB1(on,S_set_squelch_update); 
+  ERRCP(S_set_squelch_update,snd_n,chn_n,2); 
+  return(cp_iwrite(snd_n,chn_n,on,SQUELCH_UPDATE));
+}
+
+static SCM g_ap_sx(SCM snd_n, SCM chn_n) 
+{
+  #define H_x_position_slider "(" S_x_position_slider " &optional snd chn) -> current x axis position slider of snd channel chn"
+  ERRCP(S_x_position_slider,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,AP_SX));
+}
+
+static SCM g_ap_sy(SCM snd_n, SCM chn_n) 
+{
+  #define H_y_position_slider "(" S_y_position_slider " &optional snd chn) -> current y axis position slider of snd channel chn"
+  ERRCP(S_y_position_slider,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,AP_SY));
+}
+
+static SCM g_ap_zx(SCM snd_n, SCM chn_n) 
+{
+  #define H_x_zoom_slider "(" S_x_zoom_slider " &optional snd chn) -> current x axis zoom slider of snd channel chn"
+  ERRCP(S_x_zoom_slider,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,AP_ZX));
+}
+
+static SCM g_ap_zy(SCM snd_n, SCM chn_n) 
+{
+  #define H_y_zoom_slider "(" S_y_zoom_slider " &optional snd chn) -> current y axis zoom slider of snd channel chn"
+  ERRCP(S_y_zoom_slider,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,AP_ZY));
+}
+
+static SCM g_edit_hook(SCM snd_n, SCM chn_n) 
+{
+  #define H_edit_hook "(" S_edit_hook " &optional snd chn) -> snd's channel chn's edit-hook"
+  ERRCP(S_edit_hook,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,EDIT_HOOK));
+}
+
+static SCM g_undo_hook(SCM snd_n, SCM chn_n) 
+{
+  #define H_undo_hook "(" S_undo_hook " &optional snd chn) -> snd's channel chn's undo-hook"
+  ERRCP(S_undo_hook,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,UNDO_HOOK));
+}
+
+static SCM g_peaks(SCM filename, SCM snd_n, SCM chn_n)
+{
+  #define H_peaks "(" S_peaks " &optional filename snd chn) writes current fft peaks data to filename, or\n\
+   to the help dialog if filename is omitted"
+
+  chan_info *cp;
+  char *name = NULL,*urn;
+  int err;
+  ERRSB1(filename,S_peaks);
+  ERRCP(S_peaks,snd_n,chn_n,2);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  if (gh_string_p(filename))
+    {
+      urn = gh_scm2newstr(filename,NULL);
+      name = mus_file_full_name(urn);
+      free(urn);
+    }
+  else name = NULL;
+  err = display_fft_peaks(cp,name);
+  if (name) FREE(name);
+  if ((gh_string_p(filename)) && (err == 0)) return(filename);
+  return(SCM_BOOL_F);
+}
+
+static SCM g_left_sample(SCM snd_n, SCM chn_n) 
+{
+  #define H_left_sample "(" S_left_sample " &optional snd chn) -> left sample number in time domain window"
+  ERRCP(S_left_sample,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,LOSAMPF));
+}
+
+static SCM g_set_left_sample(SCM on, SCM snd_n, SCM chn_n) 
+{
+  #define H_set_left_sample "(" S_set_left_sample " val &optional snd chn) sets left sample number in time domain window to val"
+  ERRB1(on,S_set_left_sample); 
+  ERRCP(S_set_left_sample,snd_n,chn_n,2); 
+  return(cp_iwrite(snd_n,chn_n,on,LOSAMPF));
+}
+
+static SCM g_right_sample(SCM snd_n, SCM chn_n) 
+{
+  #define H_right_sample "(" S_right_sample " &optional snd chn) -> right sample number in time domain window"
+  ERRCP(S_right_sample,snd_n,chn_n,1); 
+  return(cp_iread(snd_n,chn_n,HISAMPF));
+}
+
+static SCM g_set_right_sample(SCM on, SCM snd_n, SCM chn_n) 
+{
+  #define H_set_right_sample "(" S_set_right_sample " val &optional snd chn) sets right sample number in time domain window to val"
+  ERRB1(on,S_set_right_sample); 
+  ERRCP(S_set_right_sample,snd_n,chn_n,2); 
+  return(cp_iwrite(snd_n,chn_n,on,HISAMPF));
+}
+
+static SCM g_edits(SCM snd_n, SCM chn_n)
+{
+  #define H_edits "(" S_edits " &optional snd chn) returns a vector of undoable and redoable edits in snd's channel chn"
+  chan_info *cp;
+  int i;
+  ERRCP(S_edits,snd_n,chn_n,1);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  for (i=cp->edit_ctr+1;i<cp->edit_size;i++)
+    if (!(cp->edits[i])) break;
+  return(SCM_LIST2(gh_int2scm(cp->edit_ctr),gh_int2scm(i-cp->edit_ctr-1)));
+}
+
+static SCM g_set_x_bounds(SCM beg, SCM end, SCM snd_n, SCM chn_n)
+{
+  #define H_set_x_bounds "(" S_set_x_bounds " x0 x1 &optional snd chn) sets x axis bounds (seconds) for snd's channel chn"
+  chan_info *cp;
+  Float x0,x1;
+  ERRN1(beg,S_set_x_bounds);
+  ERRN2(end,S_set_x_bounds);
+  ERRCP(S_set_x_bounds,snd_n,chn_n,3);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  x0 = gh_scm2double(beg);
+  x1 = gh_scm2double(end);
+  if (x1 > x0)
+    set_x_axis_x0x1(cp,x0,x1);
+  else return(IMPOSSIBLE_BOUNDS);
+  return(SCM_BOOL_F);
+}
+
+static SCM g_set_y_bounds(SCM y0, SCM y1, SCM snd_n, SCM chn_n)
+{
+  #define H_set_y_bounds "(" S_set_y_bounds " &optional y0 y1 snd chn) sets y axis bounds for snd's channel chn.\n\
+   if bounds are omitted, they're set to reflect current max amp"
+
+  chan_info *cp;
+  Float low,hi;
+  ERRB1(y0,S_set_x_bounds);
+  ERRB2(y1,S_set_x_bounds);
+  ERRCP(S_set_y_bounds,snd_n,chn_n,3);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  if (gh_number_p(y0))
+    {
+      low = gh_scm2double(y0);
+      if (gh_number_p(y1))
+	hi = gh_scm2double(y1);
+      else
+	{
+	  if (low < 0.0)
+	    hi = -low;
+	  else
+	    {
+	      hi = low;
+	      low = -low;
+	    }
+	}
+    }
+  else
+    {
+      /* if no bounds given, use maxamp */
+      hi = get_maxamp(cp->state,cp->sound,cp);
+      if (hi < 0.0) hi = -hi;
+      if (hi == 0.0) hi = .001;
+      low = -hi;
+    }
+  if (hi > low)
+    set_y_axis_y0y1(cp,low,hi);
+  else return(IMPOSSIBLE_BOUNDS);
+  return(SCM_BOOL_F);
+}
+
+static SCM g_x_bounds(SCM snd_n, SCM chn_n)
+{
+  #define H_x_bounds "(" S_x_bounds " &optional snd chn) returns a list (x0 x1) giving the current x axis bounds of snd channel chn"
+  chan_info *cp;
+  axis_info *ap;
+  ERRCP(S_x_bounds,snd_n,chn_n,1);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  ap = cp->axis;
+  return(SCM_LIST2(gh_double2scm(ap->x0),gh_double2scm(ap->x1)));
+}
+
+static SCM g_y_bounds(SCM snd_n, SCM chn_n)
+{
+  #define H_y_bounds "(" S_y_bounds " &optional snd chn) returns a list (y0 y1) giving the current y axis bounds of snd channel chn"
+  chan_info *cp;
+  axis_info *ap;
+  ERRCP(S_y_bounds,snd_n,chn_n,1);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  ap = cp->axis;
+  return(SCM_LIST2(gh_double2scm(ap->y0),gh_double2scm(ap->y1)));
+}
+
+static SCM g_dot_size(void) {snd_state *ss; ss = get_global_state(); RTNINT(dot_size(ss));}
+static SCM g_set_dot_size(SCM size) 
+{
+  #define H_dot_size "(" S_dot_size ") -> size in pixels of dots when graphing with dots (1)"
+  #define H_set_dot_size "(" S_set_dot_size " val) sets " S_dot_size
+  snd_state *ss;
+  ERRN1(size,S_set_dot_size); 
+  ss = get_global_state();
+  set_dot_size(ss,g_scm2int(size));
+  RTNINT(dot_size(ss));
+}
+
+static SCM g_forward_sample(SCM count, SCM snd, SCM chn) 
+{
+  #define H_forward_sample "(" S_forward_sample " &optional (count 1) snd chn) moves the cursor forward count samples"
+  chan_info *cp;
+  ERRB1(count,S_forward_sample); 
+  ERRCP(S_forward_sample,snd,chn,2);
+  cp = get_cp(snd,chn);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  handle_cursor(cp,cursor_move(cp,g_scm2intdef(count,1))); 
+  RTNINT(cp->cursor);
+}
+
+static SCM g_backward_sample(SCM count, SCM snd, SCM chn) 
+{
+  #define H_backward_sample "(" S_backward_sample " &optional (count 1) snd chn) moves the cursor back count samples"
+  chan_info *cp;
+  ERRB1(count,S_backward_sample); 
+  ERRCP(S_backward_sample,snd,chn,2);
+  cp = get_cp(snd,chn);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  handle_cursor(cp,cursor_move(cp,-(g_scm2intdef(count,1)))); 
+  RTNINT(cp->cursor);
+}
+
+
+static SCM mouse_press_hook,mark_click_hook;
+static SCM mouse_release_hook,mouse_drag_hook,key_press_hook,fft_hook;
+static SCM graph_hook,after_graph_hook;
+
+
+#if (!HAVE_GUILE_1_3_0)
+static int after_fft(snd_state *ss, chan_info *cp, Float scaler)
+{
+  SCM res = SCM_BOOL_F;
+  if (!(ss->fft_hook_active))
+    {
+      if (HOOKED(fft_hook))
+	{
+	  ss->fft_hook_active = 1;
+	  res = g_c_run_progn_hook(fft_hook,
+				   SCM_LIST3(gh_int2scm((cp->sound)->index),
+					     gh_int2scm(cp->chan),
+					     gh_double2scm(scaler)));
+	  ss->fft_hook_active = 0;
+	}
+    }
+  return(SCM_TRUE_P(res));
+}
+
+static int dont_graph(snd_state *ss, chan_info *cp)
+{
+  SCM res = SCM_BOOL_F;
+  if (!(ss->graph_hook_active))
+    {
+      if (HOOKED(graph_hook))
+	{
+	  ss->graph_hook_active = 1;
+	  res = g_c_run_progn_hook(graph_hook,
+				   SCM_LIST4(gh_int2scm((cp->sound)->index),
+					     gh_int2scm(cp->chan),
+					     gh_double2scm((cp->axis)->y0),
+					     gh_double2scm((cp->axis)->y1)));
+	  /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
+	  ss->graph_hook_active = 0;
+	}
+    }
+  return(SCM_TRUE_P(res));
+}
+
+static void after_graph(snd_state *ss, chan_info *cp)
+{
+  if (HOOKED(after_graph_hook))
+    g_c_run_progn_hook(after_graph_hook,SCM_LIST2(gh_int2scm((cp->sound)->index),gh_int2scm(cp->chan)));
+  /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
+}
+
+static int handle_mark_click(snd_state *ss, int id)
+{
+  SCM res = SCM_BOOL_F;
+  if (HOOKED(mark_click_hook))
+    res = g_c_run_progn_hook(mark_click_hook,SCM_LIST1(gh_int2scm(id)));
+  return(SCM_TRUE_P(res));
+}
+  
+/* mouse/key events within lisp graph */
+
+static void handle_mouse_event(SCM hook, snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state)
+{
+  if (HOOKED(hook))
+    g_c_run_progn_hook(hook,
+		       SCM_LIST6(gh_int2scm(sp->index),
+				 gh_int2scm(cp->chan),
+				 gh_int2scm(button),
+				 gh_int2scm(state),
+				 gh_double2scm(x),
+				 gh_double2scm(y)));
+}
+
+static void handle_mouse_release(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state)
+{
+  handle_mouse_event(mouse_release_hook,ss,sp,cp,x,y,button,state);
+}
+
+static void handle_mouse_press(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state)
+{
+  handle_mouse_event(mouse_press_hook,ss,sp,cp,x,y,button,state);
+}
+
+static void handle_mouse_drag(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y)
+{
+  handle_mouse_event(mouse_drag_hook,ss,sp,cp,x,y,-1,-1);
+}
+
+static int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key, int state)
+{
+  /* return TRUE to keep this key press from being passed to keyboard_command */
+  SCM res = SCM_BOOL_F;
+  if (HOOKED(key_press_hook))
+    res = g_c_run_or_hook(key_press_hook,
+			  SCM_LIST4(gh_int2scm((cp->sound)->index),
+				    gh_int2scm(cp->chan),
+				    gh_int2scm(key),
+				    gh_int2scm(state)));
+  return(SCM_TRUE_P(res));
+}
+
+#else
+static int after_fft(snd_state *ss, chan_info *cp, Float scaler) {return(0);}
+static int dont_graph(snd_state *ss, chan_info *cp) {return(0);}
+static void after_graph(snd_state *ss, chan_info *cp) {}
+static int handle_mark_click(snd_state *ss, int id) {return(0);}
+static void handle_mouse_release(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
+static void handle_mouse_press(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
+static void handle_mouse_drag(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y) {}
+static int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key, int state) {return(0);}
+#endif
 
 void g_init_chn(SCM local_doc)
 {
@@ -7156,6 +7709,63 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_append_to_minibuffer,g_append_to_minibuffer,1,1,0),H_append_to_minibuffer);
   DEFINE_PROC(gh_new_procedure(S_bind_key,g_bind_key,3,1,0),H_bind_key);
   DEFINE_PROC(gh_new_procedure(S_save_macros,g_save_macros,0,0,0),H_save_macros);
+  DEFINE_PROC(gh_new_procedure(S_forward_graph,g_forward_graph,0,3,0),H_forward_graph);
+  DEFINE_PROC(gh_new_procedure(S_backward_graph,g_backward_graph,0,3,0),H_backward_graph);
+  DEFINE_PROC(gh_new_procedure(S_edit_position,g_edit_position,0,2,0),H_edit_position);
+  DEFINE_PROC(gh_new_procedure(S_ffting,g_ffting,0,2,0),H_ffting);
+  DEFINE_PROC(gh_new_procedure(S_set_ffting,g_set_ffting,0,3,0),H_set_ffting);
+  DEFINE_PROC(gh_new_procedure(S_waving,g_waving,0,2,0),H_waving);
+  DEFINE_PROC(gh_new_procedure(S_set_waving,g_set_waving,0,3,0),H_set_waving);
+  DEFINE_PROC(gh_new_procedure(S_graphing,g_graphing,0,2,0),H_graphing);
+  DEFINE_PROC(gh_new_procedure(S_set_graphing,g_set_graphing,0,3,0),H_set_graphing);
+  DEFINE_PROC(gh_new_procedure(S_squelch_update,g_squelch_update,0,2,0),H_squelch_update);
+  DEFINE_PROC(gh_new_procedure(S_set_squelch_update,g_set_squelch_update,0,3,0),H_set_squelch_update);
+  DEFINE_PROC(gh_new_procedure(S_edits,g_edits,0,2,0),H_edits);
+  DEFINE_PROC(gh_new_procedure(S_maxamp,g_maxamp,0,2,0),H_maxamp);
+  DEFINE_PROC(gh_new_procedure(S_peaks,g_peaks,0,3,0),H_peaks);
+  DEFINE_PROC(gh_new_procedure(S_x_bounds,g_x_bounds,0,2,0),H_x_bounds);
+  DEFINE_PROC(gh_new_procedure(S_y_bounds,g_y_bounds,0,2,0),H_y_bounds);
+  DEFINE_PROC(gh_new_procedure(S_set_x_bounds,g_set_x_bounds,2,2,0),H_set_x_bounds);
+  DEFINE_PROC(gh_new_procedure(S_set_y_bounds,g_set_y_bounds,0,4,0),H_set_y_bounds);
+  DEFINE_PROC(gh_new_procedure(S_cursor,g_cursor,0,2,0),H_cursor);
+  DEFINE_PROC(gh_new_procedure(S_set_cursor,g_set_cursor,1,2,0),H_set_cursor);
+  DEFINE_PROC(gh_new_procedure(S_cursor_style,g_cursor_style,0,2,0),H_cursor_style);
+  DEFINE_PROC(gh_new_procedure(S_set_cursor_style,g_set_cursor_style,1,2,0),H_set_cursor_style);
+  DEFINE_PROC(gh_new_procedure(S_left_sample,g_left_sample,0,2,0),H_left_sample);
+  DEFINE_PROC(gh_new_procedure(S_set_left_sample,g_set_left_sample,1,2,0),H_set_left_sample);
+  DEFINE_PROC(gh_new_procedure(S_right_sample,g_right_sample,0,2,0),H_right_sample);
+  DEFINE_PROC(gh_new_procedure(S_set_right_sample,g_set_right_sample,1,2,0),H_set_right_sample);
+  DEFINE_PROC(gh_new_procedure(S_edit_hook,g_edit_hook,0,2,0),H_edit_hook);
+  DEFINE_PROC(gh_new_procedure(S_undo_hook,g_undo_hook,0,2,0),H_undo_hook);
+  DEFINE_PROC(gh_new_procedure(S_x_position_slider,g_ap_sx,0,2,0),H_x_position_slider);
+  DEFINE_PROC(gh_new_procedure(S_y_position_slider,g_ap_sy,0,2,0),H_y_position_slider);
+  DEFINE_PROC(gh_new_procedure(S_x_zoom_slider,g_ap_zx,0,2,0),H_x_zoom_slider);
+  DEFINE_PROC(gh_new_procedure(S_y_zoom_slider,g_ap_zy,0,2,0),H_y_zoom_slider);
+  DEFINE_PROC(gh_new_procedure(S_frames,g_frames,0,2,0),H_frames);
+  DEFINE_PROC(gh_new_procedure(S_dot_size,g_dot_size,0,0,0),H_dot_size);
+  DEFINE_PROC(gh_new_procedure(S_set_dot_size,g_set_dot_size,1,0,0),H_set_dot_size);
+  DEFINE_PROC(gh_new_procedure(S_forward_sample,g_forward_sample,0,3,0),H_forward_sample);
+  DEFINE_PROC(gh_new_procedure(S_backward_sample,g_backward_sample,0,3,0),H_backward_sample);
+
+#if (!HAVE_GUILE_1_3_0)
+  fft_hook = scm_create_hook(S_fft_hook,3);                       /* args = sound channel scaler */
+  graph_hook = scm_create_hook(S_graph_hook,4);                   /* args = sound channel y0 y1 */
+  after_graph_hook = scm_create_hook(S_after_graph_hook,2);       /* args = sound channel */
+  mouse_press_hook = scm_create_hook(S_mouse_press_hook,6);       /* args = sound channel button state x y */
+  mouse_release_hook = scm_create_hook(S_mouse_release_hook,6);   /* args = sound channel button state x y */
+  mouse_drag_hook = scm_create_hook(S_mouse_drag_hook,6);         /* args = sound channel button state x y */
+  key_press_hook = scm_create_hook(S_key_press_hook,4);           /* args = sound channel key state */
+  mark_click_hook = scm_create_hook(S_mark_click_hook,1);         /* arg = id */
+#else
+  fft_hook = gh_define(S_fft_hook,SCM_BOOL_F);
+  graph_hook = gh_define(S_graph_hook,SCM_BOOL_F);
+  after_graph_hook = gh_define(S_after_graph_hook,SCM_BOOL_F);
+  mouse_press_hook = gh_define(S_mouse_press_hook,SCM_BOOL_F);
+  mouse_release_hook = gh_define(S_mouse_release_hook,SCM_BOOL_F);
+  mouse_drag_hook = gh_define(S_mouse_drag_hook,SCM_BOOL_F);
+  key_press_hook = gh_define(S_key_press_hook,SCM_BOOL_F);
+  mark_click_hook = gh_define(S_mark_click_hook,SCM_BOOL_F);
+#endif
 }
 
 #endif

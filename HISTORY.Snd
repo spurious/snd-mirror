@@ -1,6 +1,6 @@
 snd change log
 
-  22-Jun:    version renamed snd-version (old name collides with guile).
+  22-Jun:    version renamed snd-version (old name collides with guile) -- similarly for apropos and help.
   21-Jun:    marks.scm.
   19-Jun:    changes to GC handling for new guile.
              added sync field to marks and changed much of the Guile interface to marks:

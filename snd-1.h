@@ -550,6 +550,9 @@ void snd_warning(char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 void snd_error(char *format, ...);
 void snd_warning(char *format, ...);
 #endif
+#if HAVE_GUILE
+void g_init_errors(SCM local_doc);
+#endif
 
 
 /* -------- snd-completion.c -------- */
@@ -620,7 +623,6 @@ void display_channel_marks (chan_info *cp);
 void release_pending_marks(chan_info *cp, int edit_ctr);
 void ripple_marks(chan_info *cp, int beg, int change);
 void mark_define_region(chan_info *cp,int count);
-char *save_marks(snd_info *sp);
 void save_mark_list(FILE *fd, chan_info *cp);
 void reverse_marks(chan_info *cp, int over_selection);
 void src_marks(chan_info *cp,Float ratio,int old_samps,int new_samps, int beg, int over_selection);
@@ -725,7 +727,6 @@ int current_location(snd_fd *sf);
 
 /* -------- snd-fft.c -------- */
 
-void autocorrelation(Float *data, int n);
 int make_fft_window_1(Float *window, int size, int type, Float beta, int scaled);
 int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize, int srate, Float samps_per_pixel, Float fft_scale);
 int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size);
@@ -743,7 +744,7 @@ BACKGROUND_TYPE safe_fft_in_slices(void *fftData);
 BACKGROUND_TYPE sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
 #if HAVE_GUILE
-  int add_transform(char *name, char *xlabel, Float lo, Float hi, SCM proc);
+  void g_init_fft(SCM local_doc);
 #endif
 
 
@@ -752,10 +753,7 @@ char *added_transform_name(int type);
 #if HAVE_GUILE
   SCM parse_proc(char *buf);
   int ignore_mus_error(int type, char *msg);
-  int ignore_snd_error(char *msg);
-  int ignore_snd_warning(char *msg);
   void g_initialize_gh(snd_state *ss);
-  char *guile_version(void);
   MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position);
   void set_memo_sound(snd_info *sp);
   void ERRCP(char *origin, SCM snd, SCM chn, int off);
@@ -780,31 +778,24 @@ char *added_transform_name(int type);
   env *get_env(SCM e, SCM base, char *origin);
   int bool_int_or_one(SCM n);
   SCM env2scm (env *e);
+  SCM g_c_run_or_hook (SCM hook, SCM args);
+  SCM g_c_run_progn_hook (SCM hook, SCM args);
 #endif
 env *string2env(char *str);
 /* Float string2Float(char *str); */
 int string2int(char *str);
 /* char *string2string(char *str); */
-int after_fft(snd_state *ss, chan_info *cp, Float scale);
-int dont_graph(snd_state *ss, chan_info *cp);
-void after_graph(snd_state *ss, chan_info *cp);
 int dont_close(snd_state *ss, snd_info *sp);
 int dont_open(snd_state *ss, char *file);
 int dont_exit(snd_state *ss);
 int dont_start(snd_state *ss, char *file);
-int handle_mark_click(snd_state *ss,int id);
 void call_stop_playing_hook(snd_info *sp);
 void call_stop_playing_region_hook(int n);
 int call_start_playing_hook(snd_info *sp);
-void handle_mouse_release(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state);
-void handle_mouse_press(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state);
-void handle_mouse_drag(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y);
-int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key, int state);
 void call_mix_console_state_changed_hook(mixdata *md);
 int call_mix_speed_changed_hook(mixdata *md);
 int call_mix_amp_changed_hook(mixdata *md);
 int call_mix_position_changed_hook(mixdata *md, int samps);
-void call_multichannel_mix_hook(snd_state *ss, int *ids, int n);
 void during_open(int fd, char *file, int reason);
 void after_open(int index);
 char *output_comment(snd_state *ss, file_info *hdr);
@@ -953,9 +944,6 @@ int run_apply(snd_info *sp, int ofd);
 void report_in_minibuffer(snd_info *sp, char *message);
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
-int set_dot_size(snd_state *ss, int val);
-void goto_previous_graph (chan_info *cp, int count);
-void goto_next_graph (chan_info *cp, int count);
 int update_graph(chan_info *cp, void *ptr);
 void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss);
 void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed);
@@ -969,10 +957,6 @@ void apply_y_axis_change (axis_info *ap, chan_info *cp);
 void sx_incremented(chan_info *cp, double amount);
 int move_axis(chan_info *cp, axis_info *ap, int x);
 void set_axes(chan_info *cp,Float x0,Float x1,Float y0,Float y1);
-void set_x_axis_x0x1(chan_info *cp, Float x0, Float x1);
-void set_y_axis_y0y1(chan_info *cp, Float y0, Float y1);
-void set_x_axis_x0(chan_info *cp, int left);
-void set_x_axis_x1(chan_info *cp, int right);
 void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_style);
 int key_press_callback(snd_state *ss, snd_info *sp, chan_info *ur_cp, int x, int y, int key_state, int keysym, char *keyname);
 void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, TIME_TYPE time);
@@ -980,10 +964,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TIME_TYPE click_time);
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss);
 void set_max_fft_peaks(snd_state *ss, int n);
-int display_fft_peaks(chan_info *ucp, char *filename);
 void reset_spectro(snd_state *state);
 int cursor_moveto (chan_info *cp,int samp);
-int cursor_move (chan_info *cp,int samps);
 int keyboard_command (chan_info *cp, int keysym, int state);
 #if HAVE_GUILE
   void g_init_chn(SCM local_doc);

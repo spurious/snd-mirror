@@ -409,7 +409,7 @@ void finish_moving_play_mark(chan_info *cp)
 
 
 
-static int ignore_redundant_marks = 1;
+static int ignore_redundant_marks = 0;
 
 static void allocate_marks(chan_info *cp, int edit_ctr)
 {
@@ -853,7 +853,7 @@ static int find_any_marks (chan_info *cp, void *ptr)
   return(0);
 }
 
-char *save_marks(snd_info *sp)
+static char *save_marks(snd_info *sp)
 {
   char *newname = NULL,*str;
   int i;
@@ -1471,6 +1471,7 @@ static int make_mark_graph(chan_info *cp, snd_info *sp, snd_state *ss, int initi
 }
 
 
+/* -------------------------------- SCM connection -------------------------------- */
 #if HAVE_GUILE
 
 #include "sg.h"
@@ -1694,7 +1695,7 @@ static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n)
       update_graph(cp,NULL);
       RTNINT(mark_id(m));
     }
-  else RTNINT(-1);
+  else RTNINT(-1); /* ?? SCM_BOOL_F? or 'redundant-mark? */
 }
 
 static SCM g_delete_mark(SCM id_n) 
@@ -1778,7 +1779,41 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
   return(res1);
 }
 
+static SCM g_forward_mark(SCM count, SCM snd, SCM chn) 
+{
+  #define H_forward_mark "(" S_forward_mark " &optional (count 1) snd chn) moves the cursor forward by count marks"
+  int val; 
+  chan_info *cp;
+  ERRB1(count,S_forward_mark);
+  ERRCP(S_forward_mark,snd,chn,2);
+  cp = get_cp(snd,chn);
+  val = g_scm2intdef(count,1); 
+  if (cp) handle_cursor(cp,goto_mark(cp,val)); else return(NO_SUCH_CHANNEL);
+  RTNINT(val);
+}
 
+static SCM g_backward_mark(SCM count, SCM snd, SCM chn) 
+{
+  #define H_backward_mark "(" S_backward_mark " &optional (count 1) snd chn) moves the cursor back by count marks"
+  int val; 
+  chan_info *cp;
+  ERRB1(count,S_backward_mark);
+  ERRCP(S_backward_mark,snd,chn,2);
+  cp = get_cp(snd,chn);
+  val = -(g_scm2intdef(count,1)); 
+  if (cp) handle_cursor(cp,goto_mark(cp,val)); else return(NO_SUCH_CHANNEL);
+  RTNINT(val);
+}
+
+static SCM g_save_marks(SCM snd_n)
+{
+  #define H_save_marks "(" S_save_marks " &optional snd) saves snd's marks in <snd's file-name>.marks"
+  snd_info *sp;
+  ERRSP(S_save_marks,snd_n,1);
+  sp = get_sp(snd_n);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  RTNSTR(save_marks(sp)); /* memory leak here... */
+}
 
 void g_init_marks(SCM local_doc)
 {
@@ -1797,6 +1832,9 @@ void g_init_marks(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_2(S_delete_marks,g_delete_marks),H_delete_marks);
   DEFINE_PROC(gh_new_procedure1_0(S_syncd_marks,g_syncd_marks),H_syncd_marks);
   DEFINE_PROC(gh_new_procedure1_2(S_find_mark,g_find_mark),H_find_mark);
+  DEFINE_PROC(gh_new_procedure(S_forward_mark,g_forward_mark,0,3,0),H_forward_mark);
+  DEFINE_PROC(gh_new_procedure(S_backward_mark,g_backward_mark,0,3,0),H_backward_mark);
+  DEFINE_PROC(gh_new_procedure0_1(S_save_marks,g_save_marks),H_save_marks);
 }
 
 #endif

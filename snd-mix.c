@@ -993,6 +993,12 @@ static mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp
  *                     a notion of initial scalers (1.0 or arg to mix_array)
  */
 
+#if HAVE_GUILE
+static void call_multichannel_mix_hook(snd_state *ss, int *ids, int n);
+#else
+void call_multichannel_mix_hook(snd_state *ss, int *ids, int n) {}
+#endif
+
 static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, int temp, char *origin, Float scaler, int with_console)
 {
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
@@ -2690,6 +2696,8 @@ env *set_mix_amp_env(int n, int chan, env *val)
   return(val);
 }
 
+
+/* -------------------------------- SCM connection -------------------------------- */
 #if HAVE_GUILE
 #include "sg.h"
 
@@ -3471,6 +3479,25 @@ static SCM g_play_mix(SCM num)
   return(num);
 }
 
+static SCM multichannel_mix_hook;
+
+#if (!HAVE_GUILE_1_3_0)
+static void call_multichannel_mix_hook(snd_state *ss, int *ids, int n)
+{
+  SCM lst = SCM_EOL;
+  int i;
+  /* create list from ids, pass to hook, if any */
+  if (HOOKED(multichannel_mix_hook))
+    {
+      for (i=n-1;i>=0;i--)
+	lst = scm_cons(SCM_MAKINUM(ids[i]),lst);
+      g_c_run_progn_hook(multichannel_mix_hook,SCM_LIST1(lst));
+    }
+}
+#else
+void call_multichannel_mix_hook(snd_state *ss, int *ids, int n) {}
+#endif
+
 
 void g_init_mix(SCM local_doc)
 {
@@ -3541,6 +3568,12 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_forward_mix,g_forward_mix,0,3,0),H_forward_mix);
   DEFINE_PROC(gh_new_procedure(S_backward_mix,g_backward_mix,0,3,0),H_backward_mix);
   DEFINE_PROC(gh_new_procedure(S_mix,g_mix,1,5,0),H_mix);
+
+#if (!HAVE_GUILE_1_3_0)
+  multichannel_mix_hook = scm_create_hook(S_multichannel_mix_hook,1);
+#else
+  multichannel_mix_hook = gh_define(S_multichannel_mix_hook,SCM_BOOL_F);
+#endif
 }
 
 #endif

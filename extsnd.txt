@@ -442,7 +442,6 @@ Snd is currently in flux.
                                   It is possible to use these controls (in "real-time") in your own functions.
                                   See amprt in examp.scm for a simple example.
   append-to-minibuffer (msg snd)  append msg to whatever is in snd's minibuffer.
-  apropos           (name)        return possible completions of name (a string or a symbol.
   as-one-edit       (func)        apply func (a function of no arguments), treating it as
                                   one edit (in all channels) in the edit history mechanism.
 
@@ -620,9 +619,6 @@ Snd is currently in flux.
   graphing          (snd chn)     #t if (lisp) graph data is being displayed.
   graph->ps         ()            create Postscript description of current display (see eps-file).
   header-type       (snd)         return (type . name)
-  help              (obj)         returns (as a string) the help text associated with obj, (help vct-ref).
-                                  For scheme functions, this returns the procedure-documentation, if any.  To go to the
-                                  HTML documentation for a given procedure, load index.scm and use the html function.
   help-dialog       (subject help) fire up the help dialog with title subject and body help.
                                       (help-dialog "xyzzy" "are we having fun?")
   hide-listener     ()            close the lisp listener pane.
@@ -1031,7 +1027,13 @@ Snd is currently in flux.
   show-listener     ()            open the lisp listener pane.
   smooth-selection  ()            apply a smoothing function to the current selection.
   smooth            (beg num snd chn) apply a smoothing function to the indicated data.
+  snd-apropos       (name)        return possible completions of name (a string or a symbol).
   snd-error         (str)         report error message str, return str.
+  snd-help          (obj)         returns (as a string) the help text associated with obj, (snd-help vct-ref).
+                                  For scheme functions, this returns the procedure-documentation, if any.  To go to the
+                                  HTML documentation for a given procedure, load index.scm and use the html function.
+                                  To get a more global help function, (use-modules (ice-9 session)).  This loads Guile's
+                                  help (and apropos) support which uses 'regexps' and so forth.
   snd-print         (str)         display str in lisp listener, return str.  (This is intended
                                   as a debugging aid -- there's still nothing like a lowly print statement).
   snd-spectrum      (data window length linear)
@@ -1383,7 +1385,7 @@ snd-print sends output to the lisp listener window; it is most useful in
 conjunction with the format module:
 
   (use-modules (ice-9 format))
-  (snd-print (format #f ";;~A" (version)))
+  (snd-print (format #f ";;~A" (snd-version)))
 
 There are a number of functions that return information about the sounds
 currently loaded into Snd. Each sound is referred to by an integer, as is

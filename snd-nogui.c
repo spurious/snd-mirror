@@ -324,7 +324,9 @@ void set_recorder_srate(snd_state *ss, int val) {}
 char *ps_rgb(snd_state *ss, int pchan) {return(NULL);}
 #if HAVE_GUILE
 void g_initialize_xgh(snd_state *ss, SCM local_doc) {}
+void g_init_gxutils(void) {}
 #endif
+mix_context *make_mix_context(chan_info *cp) {return(NULL);}
 void update_stats(snd_state *ss) {}
 void update_stats_display(snd_state *ss, int all) {}
 void check_stats_window(snd_state *ss, int val) {}

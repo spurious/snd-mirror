@@ -1,4 +1,4 @@
-# RPM's make file for Snd in Linux with Motif and Guile 1.3.4
+# RPM's make file for Snd in Linux with Motif and Guile
 
 CC = gcc
 CFLAGS = -O3 -DLINUX -I/usr/X11R6/include

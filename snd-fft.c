@@ -80,7 +80,7 @@ static added_transform *new_added_transform(void)
   return(added_transforms[added_transforms_top++]);
 }
 
-int add_transform(char *name, char *xlabel, Float lo, Float hi, SCM proc)
+static int add_transform(char *name, char *xlabel, Float lo, Float hi, SCM proc)
 {
   added_transform *af;
   snd_protect(proc);
@@ -528,7 +528,7 @@ static void walsh_transform(Float *data, int n)
 
 /* -------------------------------- AUTOCORRELATION -------------------------------- */
 
-void autocorrelation(Float *data, int n)
+static void autocorrelation(Float *data, int n)
 {
   Float *rl,*im;
   Float fscl;
@@ -1961,3 +1961,76 @@ void c_convolve (snd_state *ss, char *fname, Float amp, int filec, int filehdr, 
     }
 }
 
+#if HAVE_GUILE
+#include "sg.h"
+
+static SCM g_autocorrelate(SCM reals)
+{
+  #define H_autocorrelate "(" S_autocorrelate " data) returns (in place) the autocorrelation of data (vector or vct)"
+  /* assumes length is power of 2 */
+  vct *v1 = NULL;
+  int n,i;
+  Float *rl;
+  ERRV1(reals,S_autocorrelate);
+  if (vct_p(reals))
+    {
+      v1 = (vct *)GH_VALUE_OF(reals);
+      rl = v1->data;
+      n = v1->length;
+    }
+  else
+    {
+      n = gh_vector_length(reals);
+      rl = (Float *)CALLOC(n,sizeof(Float));
+      for (i=0;i<n;i++) rl[i] = gh_scm2double(gh_vector_ref(reals,gh_int2scm(i)));
+    }
+  autocorrelation(rl,n);
+  if (v1 == NULL) 
+    {
+      for (i=0;i<n;i++) gh_vector_set_x(reals,gh_int2scm(i),gh_double2scm(rl[i]));
+      FREE(rl);
+    }
+  return(reals);
+}
+
+static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
+{
+  #define H_add_transform "(" S_add_transform " name x-label low high func) adds the transform func\n\
+   to the transform lists; func should be a function of two arguments, the length of the transform\n\
+   and a sample-reader to get the data, and should return a vct object containing the transform results.\n\
+   'name' is the transform's name, x-label is its x-axis label, and the relevant returned data\n\
+   to be displayed goes from low to high (normally 0.0 to 1.0)"
+
+  char *str1=NULL,*str2=NULL;
+  SCM res=SCM_BOOL_F;
+  ERRS1(name,S_add_transform);
+  ERRS2(xlabel,S_add_transform);
+  ERRN3(lo,S_add_transform);
+  ERRN4(hi,S_add_transform);
+  str1 = gh_scm2newstr(name,NULL);
+  str2 = gh_scm2newstr(xlabel,NULL);
+  SCM_ASSERT(gh_procedure_p(proc),proc,SCM_ARG5,S_add_transform);
+  if (procedure_ok(proc,2,0,S_add_transform,"func",5))
+    res = gh_int2scm(add_transform(str1,str2,gh_scm2double(lo),gh_scm2double(hi),proc));
+  if (str1) free(str1);
+  if (str2) free(str2);
+  return(res);
+}
+
+
+void g_init_fft(SCM local_doc)
+{
+  gh_define(S_fourier_transform,gh_int2scm(FOURIER));
+  gh_define(S_wavelet_transform,gh_int2scm(WAVELET));
+  gh_define(S_hankel_transform,gh_int2scm(HANKEL));
+  gh_define(S_chebyshev_transform,gh_int2scm(CHEBYSHEV));
+  gh_define(S_cepstrum,gh_int2scm(CEPSTRUM));
+  gh_define(S_hadamard_transform,gh_int2scm(HADAMARD));
+  gh_define(S_walsh_transform,gh_int2scm(WALSH));
+  gh_define(S_autocorrelation,gh_int2scm(AUTOCORRELATION));
+
+  DEFINE_PROC(gh_new_procedure1_0(S_autocorrelate,g_autocorrelate),H_autocorrelate);
+  DEFINE_PROC(gh_new_procedure5_0(S_add_transform,g_add_transform),H_add_transform);
+}
+
+#endif

@@ -27,6 +27,11 @@ static char *snd_itoa(int n)
 #endif
 
 #if HAVE_GUILE
+static char *guile_version(void) 
+{ 
+  return(gh_scm2newstr(scm_version(),NULL));
+}
+
 static char *guile_consistency_check(char *version)
 {
 #if (!HAVE_GUILE_1_3_0)
@@ -180,7 +185,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-22-Jun:  version renamed snd-version (old name collides with guile).\n\
+22-Jun:  version renamed snd-version (old name collides with guile) -- similarly for apropos and help.\n\
 21-Jun:  marks.scm.\n\
 19-Jun:  changes to GC handling for new guile.\n\
          added sync field to marks, and changed much of the Guile interface to marks.\n\

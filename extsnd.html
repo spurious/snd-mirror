@@ -487,7 +487,6 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   It is possible to use these controls (in "real-time") in your own functions.
                                   See amprt in examp.scm for a simple example.
   <a name="sndappendtominibuffer">append-to-minibuffer</a> (msg <i>snd</i>)  append <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
-  <a name="apropos">apropos</a>           (name)        return possible completions of <i>name</i> (a string or a symbol.
   <a name="asoneedit">as-one-edit</a>       (func)        apply <i>func</i> (a function of no arguments), treating it as
                                   one edit (in all channels) in the edit history mechanism.
 
@@ -665,9 +664,6 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndgraphing">graphing</a>          (<i>snd chn</i>)     #t if (lisp) graph data is being displayed.
   <a name="sndgraph2ps">graph-&gt;ps</a>         ()            create Postscript description of current display (see <a href="#epsfile">eps-file</a>).
   <a name="sndheadertype">header-type</a>       (<i>snd</i>)         return (type . name)
-  <a name="sndhelp">help</a>              (obj)         returns (as a string) the help text associated with <i>obj</i>, (help vct-ref).
-                                  For scheme functions, this returns the procedure-documentation, if any.  To go to the
-                                  HTML documentation for a given procedure, load index.scm and use the html function.
   <a name="sndhelpdialog">help-dialog</a>       (subject help) fire up the help dialog with title <i>subject</i> and body <i>help</i>.
                                       (help-dialog "xyzzy" "are we having fun?")
   <a name="sndhidelistener">hide-listener</a>     ()            close the lisp listener pane.
@@ -1076,7 +1072,13 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndshowlistener">show-listener</a>     ()            open the lisp listener pane.
   <a name="sndsmoothselection">smooth-selection</a>  ()            apply a smoothing function to the current selection.
   <a name="sndsmooth">smooth</a>            (beg num <i>snd chn</i>) apply a smoothing function to the indicated data.
+  <a name="sndapropos">snd-apropos</a>       (name)        return possible completions of <i>name</i> (a string or a symbol).
   <a name="snderror">snd-error</a>         (str)         report error message <i>str</i>, return <i>str</i>.
+  <a name="sndhelp">snd-help</a>          (obj)         returns (as a string) the help text associated with <i>obj</i>, (snd-help vct-ref).
+                                  For scheme functions, this returns the procedure-documentation, if any.  To go to the
+                                  HTML documentation for a given procedure, load index.scm and use the html function.
+                                  To get a more global help function, (use-modules (ice-9 session)).  This loads Guile's
+                                  help (and apropos) support which uses 'regexps' and so forth.
   <a name="sndprint">snd-print</a>         (str)         display <i>str</i> in lisp listener, return <i>str</i>.  (This is intended
                                   as a debugging aid -- there's still nothing like a lowly print statement).
   <a name="sndspectrum">snd-spectrum</a>      (data window length <i>linear</i>)
