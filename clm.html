@@ -263,7 +263,7 @@ Lisp functions can occur within the body of the run macro:</p>
     block return return-from let let* loop do do* dotimes declare
     lambda apply loop-finish
     aref elt svref array-total-size array-in-bounds-p array-rank array-dimension
-    integerp numberp floatp realp eq eql
+    integerp numberp floatp realp eq eql arrayp
 </pre>
 <p>The function <a name="clm-print"><em class=def>clm-print</em></a> stands in for Lisp's
 <i>format</i> -- we don't support all of format's
@@ -820,7 +820,7 @@ use this for VOSIM and other related techniques.</p>
   <a name="mus-set-rand-seed"><em class=def>mus-set-rand-seed</em></a> <i>seed</i>
 </pre>
 <p><b>Rand</b> returns a sequence of random numbers between -amplitude and
-amplitude (it produces a sort of step function.
+amplitude (it produces a sort of step function).
 <b>Rand-Interp</b> interpolates between successive
 random numbers. Lisp's function <i>random</i> returns a number between 0.0 and its argument.
 <b>Centered-random</b> returns a number between -<i>amp</i> and <i>amp</i>.
@@ -2038,7 +2038,8 @@ loop to pan between speakers:</p>
 <a name="make-roomsig"><em class=def>make-roomsig</em></a> in <a href="roomsig.cl">roomsig.cl</a>.
 For a moving sound
 source, see Fernando Lopez Lezcano's <a name="dlocsig"><em class=def>dlocsig</em></a>, documented in
-<a href="dlocsig/index.html">dlocsig/index.html</a>.
+<a href="dlocsig/index.html">dlocsig/index.html</a>.  Michael Edwards has provided a
+fancier placement algorithm in panning.lsp.
 </p>
 <br>
 

@@ -129,7 +129,7 @@ Noise reduction.
 
 dB display in VU meters (in the record dialog).  A nicer VU meter background.
 
-loop syntax filled in (loop.scm) (something is wrong with the CVS Guile Goops support).
+loop syntax filled in (loop.scm).
 
 Translate more CLM instruments to Scheme: 
   singer piano flute fade

@@ -71,6 +71,7 @@
 ;;; dht -- slow Hartley transform 
 ;;; accessors for graph-style fields
 ;;; Butterworth filters
+;;; locsig using fancier placement choice (Michael Edwards)
 
 
 ;;; TODO: pitch tracker
@@ -2944,3 +2945,33 @@
 
 ;;; simplest use is (filter-sound (make-butter-low-pass 500.0))
 ;;; see also effects.scm
+
+
+;;; -------- locsig using fancier placement choice
+;;;
+
+(define (make-cpp-locsig . args)
+  (define (get-cpp-scalers degree)
+    (let* ((magic (/ (sqrt 2) 2))
+	   ;; although we (in clm) specify the degree from 0 - 90, for the sake
+	   ;; of the calculation it's from -45 to 45 with 0, not 45, being the
+	   ;; centre. 
+	   ;; (this taken from panning.lsp by Michael Edwards which is based on Curt Roads' suggestions)
+	   (radians (degrees->radians (- 45.0 degree)))
+	   (cos (cos radians))
+	   (sin (sin radians)))
+      (list (* magic (+ cos sin))
+	    (* magic (- cos sin)))))
+  (define* (make-cpp-locsig-internal curloc #:key (degree 0.0) (distance 1.0) #:allow-other-keys)
+    ;; here we're picking the two original arguments that interest us (degree and distance)
+    (let ((new-vals (get-cpp-scalers degree))
+	  (dist (/ 1.0 (max distance 1.0))))
+      (locsig-set! curloc 0 (* dist (car new-vals)))
+      (locsig-set! curloc 1 (* dist (cadr new-vals)))))
+  (let ((locgen (apply make-locsig args)))
+    (if (= (mus-channels locgen) 2)
+	(apply make-cpp-locsig-internal locgen args))
+    locgen))
+
+(define cpp-locsig locsig)
+

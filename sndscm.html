@@ -489,6 +489,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>"frequency division"
     <li>"adaptive saturation"
     <li>spike effect
+    <li>fancier locsig
   </ul>
 </small>
 <li><a href="#sssynthesis">synthesis</a>
@@ -928,6 +929,7 @@ replaces the <i>degree</i> argument with an envelope.
   <b><A NAME="exfreqdiv">freqdiv</a></b> n
   <b><A NAME="exadsat">adsat</a></b> size
   <b><A NAME="exspike">spike</a></b>
+  <b><A NAME="excpplocsig">fancier locsig</a></b>
 </pre>
 <p><i>expsrc</i> uses sampling rate conversion (the src gen) and granular synthesis (granulate)
 to lengthen or shorten a sound without changing its pitch.  The same idea is used in the effects menu.
@@ -963,6 +965,8 @@ Here are some sample calls:
 (freqdiv 8)
 </pre>
 <p>There are lots more sound effects scattered around the Snd distribution.
+The "fancier locsig", to quote Michael Edwards "avoids the 'hole in the middle' problem that occurs when
+trying to centre a signal in the middle of two speakers"; it is based on CLM's panning.lsp.
 </p>
 
 <span class=bbox><h3><A NAME="sssynthesis">synthesis</a></h3></span>

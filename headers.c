@@ -3848,7 +3848,7 @@ static int read_sample_dump_header(int chan)
  * 76: 'SCRS'
  * 80: data starts
  *
- * info from http://www.wotsit.org/music.htm (I forgot to write down the file name)
+ * info from http://www.wotsit.org/ S3m-form.txt
  */
 
 static int read_digiplayer_header(int chan)

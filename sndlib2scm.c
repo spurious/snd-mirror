@@ -721,7 +721,7 @@ static SCM g_read_audio(SCM line, SCM sdata, SCM frames)
   #define H_mus_audio_read "(" S_mus_audio_read " line sdata frames) reads frames of data (channels*frames = samples)\n\
    from the audio line into the sound-data object sdata."
 
-  MUS_SAMPLE_TYPE *inbuf;
+  short *inbuf;
   sound_data *sd;
   int val,inbytes,i,j,k,frms;
   MUS_SAMPLE_TYPE **bufs;
@@ -732,17 +732,17 @@ static SCM g_read_audio(SCM line, SCM sdata, SCM frames)
   bufs = sd->data;
   frms = g_scm2int(frames);
   inbytes = frms * sd->chans * 2;
-  inbuf = (MUS_SAMPLE_TYPE *)CALLOC(frms * sd->chans,sizeof(MUS_SAMPLE_TYPE));
+  inbuf = (short *)CALLOC(frms * sd->chans,sizeof(short));
   val = mus_audio_read(g_scm2int(line),(char *)inbuf,inbytes);
   if (sd->chans == 1)
     {
-      for (k=0;k<frms;k++) bufs[0][k] = inbuf[k];
+      for (k=0;k<frms;k++) bufs[0][k] = MUS_SHORT_TO_SAMPLE(inbuf[k]);
     }
   else
     {
       for (k=0,j=0;k<frms;k++,j+=sd->chans)
 	{
-	  for (i=0;i<sd->chans;i++) bufs[i][k] = inbuf[j+i];
+	  for (i=0;i<sd->chans;i++) bufs[i][k] = MUS_SHORT_TO_SAMPLE(inbuf[j+i]);
 	}
     }
   FREE(inbuf);
