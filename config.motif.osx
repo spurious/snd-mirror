@@ -104,7 +104,6 @@
 /* #undef SND_CONFIG_GET_ID_ARGS */
 #define TRAP_SEGFAULT 1
 /* #undef HAVE_HTML */
-#define WITH_BIG_COLORMAP 1
 /* #undef SND_AS_WIDGET */
 #define Float float
 /* #undef USE_GTK */
