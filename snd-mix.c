@@ -2849,27 +2849,30 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
 	    if (j > samps) samps = j;
 	  }
     }
-  playfd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), 
-				 SND_SRATE(cps[0]->sound), 
-				 chans, 
-				 MUS_COMPATIBLE_FORMAT, 
-				 dac_size(ss));
-  for (i = 0; i < samps; i += 256)
+  if (samps > 0)
     {
-      for (k = 0; k < chans; k++)
-	if (fds[k])
-	  for (j = k; j < 256 * chans; j += chans)
-	    buf[j] = MUS_SAMPLE_TO_SHORT(next_track_sample(fds[k]));
-      mus_audio_write(playfd, (char *)buf, 256 * 2 * chans);
-      check_for_event(ss);
-      if (ss->stopped_explicitly)
+      playfd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), 
+				     SND_SRATE(cps[0]->sound), 
+				     chans, 
+				     MUS_COMPATIBLE_FORMAT, 
+				     dac_size(ss));
+      for (i = 0; i < samps; i += 256)
 	{
-	  ss->stopped_explicitly = 0;
-	  report_in_minibuffer(cps[0]->sound, "stopped");
-	  break;
+	  for (k = 0; k < chans; k++)
+	    if (fds[k])
+	      for (j = k; j < 256 * chans; j += chans)
+		buf[j] = MUS_SAMPLE_TO_SHORT(next_track_sample(fds[k]));
+	  mus_audio_write(playfd, (char *)buf, 256 * 2 * chans);
+	  check_for_event(ss);
+	  if (ss->stopped_explicitly)
+	    {
+	      ss->stopped_explicitly = 0;
+	      report_in_minibuffer(cps[0]->sound, "stopped");
+	      break;
+	    }
 	}
+      mus_audio_close(playfd);
     }
-  mus_audio_close(playfd);
   for (i = 0; i < chans; i++) free_track_fd(fds[i]);
   FREE(fds);
   FREE(buf);
@@ -4035,7 +4038,7 @@ static XEN g_play_track(XEN num, XEN snd, XEN chn)
 {
   #define H_play_track "(" S_play_track " track &optional snd chn) plays track"
   /* just a dummy for testing */
-  chan_info *cp;
+  chan_info *cp = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(num), num, XEN_ARG_1, S_play_track, "an integer");
   /* in this case if snd=#t, play all associated mixes in all chans */
   if (XEN_TRUE_P(snd))
@@ -4043,7 +4046,8 @@ static XEN g_play_track(XEN num, XEN snd, XEN chn)
   else 
     {
       cp = get_cp(snd, chn, S_play_track);
-      play_track(cp->state, &cp, 1, XEN_TO_C_INT_OR_ELSE(num, 0));
+      if (cp)
+	play_track(cp->state, &cp, 1, XEN_TO_C_INT_OR_ELSE(num, 0));
     }
   return(num);
 }

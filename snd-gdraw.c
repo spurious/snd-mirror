@@ -5,21 +5,25 @@
 
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) 
 {
+  if (ax->wn == NULL) return;
   gdk_draw_line(ax->wn, ax->gc, (gint)x0, (gint)y0, (gint)x1, (gint)y1);
 }
 
 void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height)
 {
+  if (ax->wn == NULL) return;
   gdk_draw_rectangle(ax->wn, ax->gc, TRUE, (gint)x0, (gint)y0, (gint)width, (gint)height);
 }
 
 void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
 {
+  if (ax->wn == NULL) return;
   gdk_draw_rectangle(ax->wn, erase_GC(cp), TRUE, (gint)x0, (gint)y0, (gint)width, (gint)height);
 }
 
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
 {
+  if ((ax->wn == NULL) || (ax->current_font == NULL)) return;
   gdk_draw_string(ax->wn, ax->current_font, ax->gc, (gint)x0, (gint)y0, (const gchar *)str);
 }
 

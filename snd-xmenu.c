@@ -1381,13 +1381,6 @@ static XEN g_test_menus(void)
 	(i != f_new_menu) && (i != h_click_for_help_menu) && (i != v_mix_panel_menu))
       XtCallCallbacks(mw[i], XmNactivateCallback, (void *)ss);
 #endif
-#if 0
-  for (i = 0; i < added_options_pos; i++)
-    if ((added_options[i]) && 
-	(XmIsPushButton(mw[i])) &&
-	(XtIsSensitive(mw[i])))
-      XtCallCallbacks(added_options[i], XmNactivateCallback, (void *)ss);
-#endif
   dismiss_all_dialogs(ss);
   return(XEN_FALSE);
 }

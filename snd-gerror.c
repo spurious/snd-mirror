@@ -28,7 +28,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   gtk_window_set_policy(GTK_WINDOW(snd_error_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
   set_background(snd_error_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(snd_error_dialog), 10);
-  gtk_widget_set_usize (GTK_WIDGET(snd_error_dialog), 200, 300);
+  gtk_widget_set_usize (GTK_WIDGET(snd_error_dialog), 400, 300);
   gtk_widget_realize(snd_error_dialog);
 
   ok_button = gtk_button_new_with_label(STR_Ok);

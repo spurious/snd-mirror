@@ -3490,6 +3490,7 @@ static XEN gxm_XmStringCreateLtoR(XEN arg1, XEN arg2)
 
 static XEN gxm_XmStringLtoRCreate(XEN arg1, XEN arg2)
 {
+  #define H_XmStringLtoRCreate "XmString XmStringLtoRCreate(char *text, XmStringCharSet charset)"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringLtoRCreate", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringLtoRCreate", "XmStringCharSet");
   return(C_TO_XEN_XmString(XmStringLtoRCreate(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2))));
@@ -3952,6 +3953,7 @@ static XEN gxm_XmSetFontUnits(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmCvtFromVerticalPixels(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XmCvtFromVerticalPixels "int XmCvtFromVerticalPixels(Screen *screen, int from_val, int to_type)"
   XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmCvtFromVerticalPixels", "Screen*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmCvtFromVerticalPixels", "register");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmCvtFromVerticalPixels", "register");
@@ -3960,6 +3962,7 @@ static XEN gxm_XmCvtFromVerticalPixels(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmCvtFromHorizontalPixels(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XmCvtFromHorizontalPixels "int XmCvtFromHorizontalPixels(Screen *screen, int from_val, int to_type)"
   XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmCvtFromHorizontalPixels", "Screen*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmCvtFromHorizontalPixels", "register");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmCvtFromHorizontalPixels", "register");
@@ -3968,6 +3971,7 @@ static XEN gxm_XmCvtFromHorizontalPixels(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmCvtToVerticalPixels(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XmCvtToVerticalPixels "int XmCvtToVerticalPixels(Screen *screen, int from_val, int from_type)"
   XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmCvtToVerticalPixels", "Screen*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmCvtToVerticalPixels", "register");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmCvtToVerticalPixels", "register");
@@ -3976,6 +3980,7 @@ static XEN gxm_XmCvtToVerticalPixels(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmCvtToHorizontalPixels(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XmCvtToHorizontalPixels "int XmCvtToHorizontalPixels(Screen *screen, int from_val, int from_type)"
   XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmCvtToHorizontalPixels", "Screen*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmCvtToHorizontalPixels", "register");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmCvtToHorizontalPixels", "register");
@@ -4781,6 +4786,7 @@ static XEN gxm_XmCreateLabelGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 #if MOTIF_2
 static XEN gxm_XmCreateIconHeader(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmCreateIconHeader "Widget XmCreateIconHeader(Widget parent, String name, ArgList arglist, Cardinal argcount)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateIconHeader", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateIconHeader", "String");
@@ -4823,6 +4829,9 @@ The IconGadget widget creation function"
 
 static XEN gxm_XmGetIconFileName(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
+  #define H_XmGetIconFileName "String XmGetIconFileName(Screen *screen, String imageInstanceName, String imageClassName, \
+String hostPrefix, unsigned int size)"
+
   XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmGetIconFileName", "Screen*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmGetIconFileName", "String");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmGetIconFileName", "String");
@@ -18329,9 +18338,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldPasteLink" XM_POSTFIX, gxm_XmTextFieldPasteLink, 1, 0, 0, H_XmTextFieldPasteLink);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetCenterline" XM_POSTFIX, gxm_XmTextGetCenterline, 1, 0, 0, H_XmTextGetCenterline);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmToggleButtonGadgetSetValue" XM_POSTFIX, gxm_XmToggleButtonGadgetSetValue, 3, 0, 0, H_XmToggleButtonGadgetSetValue);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetIconFileName" XM_POSTFIX, gxm_XmGetIconFileName, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetIconFileName" XM_POSTFIX, gxm_XmGetIconFileName, 5, 0, 0, H_XmGetIconFileName);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateIconGadget" XM_POSTFIX, gxm_XmCreateIconGadget, 3, 1, 0, H_XmCreateIconGadget);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateIconHeader" XM_POSTFIX, gxm_XmCreateIconHeader, 3, 1, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateIconHeader" XM_POSTFIX, gxm_XmCreateIconHeader, 3, 1, 0, H_XmCreateIconHeader);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmObjectAtPoint" XM_POSTFIX, gxm_XmObjectAtPoint, 3, 0, 0, H_XmObjectAtPoint);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmConvertStringToUnits" XM_POSTFIX, gxm_XmConvertStringToUnits, 4, 0, 0, H_XmConvertStringToUnits);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateGrabShell" XM_POSTFIX, gxm_XmCreateGrabShell, 3, 1, 0, H_XmCreateGrabShell);
@@ -18573,10 +18582,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtCTToXmString" XM_POSTFIX, gxm_XmCvtCTToXmString, 1, 0, 0, H_XmCvtCTToXmString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtXmStringToCT" XM_POSTFIX, gxm_XmCvtXmStringToCT, 1, 0, 0, H_XmCvtXmStringToCT);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmConvertUnits" XM_POSTFIX, gxm_XmConvertUnits, 5, 0, 0, H_XmConvertUnits);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtToHorizontalPixels" XM_POSTFIX, gxm_XmCvtToHorizontalPixels, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtToVerticalPixels" XM_POSTFIX, gxm_XmCvtToVerticalPixels, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtFromHorizontalPixels" XM_POSTFIX, gxm_XmCvtFromHorizontalPixels, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtFromVerticalPixels" XM_POSTFIX, gxm_XmCvtFromVerticalPixels, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtToHorizontalPixels" XM_POSTFIX, gxm_XmCvtToHorizontalPixels, 3, 0, 0, H_XmCvtToHorizontalPixels);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtToVerticalPixels" XM_POSTFIX, gxm_XmCvtToVerticalPixels, 3, 0, 0, H_XmCvtToVerticalPixels);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtFromHorizontalPixels" XM_POSTFIX, gxm_XmCvtFromHorizontalPixels, 3, 0, 0, H_XmCvtFromHorizontalPixels);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtFromVerticalPixels" XM_POSTFIX, gxm_XmCvtFromVerticalPixels, 3, 0, 0, H_XmCvtFromVerticalPixels);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnits" XM_POSTFIX, gxm_XmSetFontUnits, 3, 0, 0, H_XmSetFontUnits);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnit" XM_POSTFIX, gxm_XmSetFontUnit, 2, 0, 0, H_XmSetFontUnit);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetMenuCursor" XM_POSTFIX, gxm_XmSetMenuCursor, 2, 0, 0, H_XmSetMenuCursor);
@@ -18605,7 +18614,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringDirectionCreate" XM_POSTFIX, gxm_XmStringDirectionCreate, 1, 0, 0, H_XmStringDirectionCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringSeparatorCreate" XM_POSTFIX, gxm_XmStringSeparatorCreate, 0, 0, 0, H_XmStringSeparatorCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringSegmentCreate" XM_POSTFIX, gxm_XmStringSegmentCreate, 4, 0, 0, H_XmStringSegmentCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringLtoRCreate" XM_POSTFIX, gxm_XmStringLtoRCreate, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringLtoRCreate" XM_POSTFIX, gxm_XmStringLtoRCreate, 2, 0, 0, H_XmStringLtoRCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateLtoR" XM_POSTFIX, gxm_XmStringCreateLtoR, 2, 0, 0, H_XmStringCreateLtoR);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringInitContext" XM_POSTFIX, gxm_XmStringInitContext, 1, 0, 0, H_XmStringInitContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringFreeContext" XM_POSTFIX, gxm_XmStringFreeContext, 1, 0, 0, H_XmStringFreeContext);

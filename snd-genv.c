@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: add FIR button 
- */
-
 /* envelope editor and viewer */
 
 static GtkWidget *enved_dialog = NULL;

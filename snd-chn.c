@@ -2585,9 +2585,6 @@ static void draw_graph_cursor(chan_info *cp)
   ap = cp->axis;
   if ((cp->cursor < ap->losamp) || (cp->cursor > ap->hisamp)) return;
   ax = cursor_context(cp);
-#if USE_GTK
-  if (ax->wn == NULL) return;
-#endif
   if (cp->cursor_visible)
     {
       switch (cp->cursor_style)

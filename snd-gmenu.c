@@ -1564,13 +1564,6 @@ static XEN g_test_menus(void)
 	if (signal_id >= 1)
 	  gtk_signal_emit_by_name(GTK_OBJECT(mw[i]), "activate");
       }
-  for (i = 0; i < added_options_pos; i++)
-    if ((added_options[i]) && (is_sensitive(added_options[i])))
-      {
-	signal_id = gtk_signal_lookup("activate", GTK_OBJECT_TYPE(added_options[i]));
-	if (signal_id >= 1)
-	  gtk_signal_emit_by_name(GTK_OBJECT(added_options[i]), "activate");
-      }
   dismiss_all_dialogs(get_global_state());
   return(XEN_FALSE);
 }

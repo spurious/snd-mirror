@@ -54,11 +54,9 @@ Unixware 7:            makefile.uw7
 OpenServer 5:          makefile.sco5
 Sun/Solaris:           makefile.solaris
 DEC Alpha:             makefile.alpha
-LinuxPPC:              makefile.linux or makefile.ppcrpm
+LinuxPPC:              makefile.ppcrpm
 Windoze/Cygwin:        makefile.cygwin
 Windoze/MSVC:          makefile.msv (this file assumes you have clisp's cccp, etc)
-Linux, no Guile:       makefile.static
-Snd with no interface: makefile.nogui
 
 In HPUX, fixup the makefile.hpux include and library paths, then:
   make -f makefile.hpux

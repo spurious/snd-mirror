@@ -316,9 +316,14 @@ void set_label(GtkWidget *label, const char *str)
 void check_for_event(snd_state *ss)
 {
   /* this is needed to force label updates and provide interrupts for long computations */
+  int i = 0;
   if (ss->checking_explicitly) return;
   ss->checking_explicitly = 1;
-  while (gtk_events_pending()) gtk_main_iteration();
+  while ((i < 50) && (gtk_events_pending()))
+    {
+      gtk_main_iteration();
+      i++; /* don't hang! */
+    }
   ss->checking_explicitly = 0;
 }
 

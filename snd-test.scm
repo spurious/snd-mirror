@@ -5274,8 +5274,8 @@
 	    (let ((reader-string (format #f "~A" mr)))
 	      (if (not (string=? (substring reader-string 0 22) "#<mix-sample-reader 0x"))
 		  (snd-display ";mix sample reader actually got: [~S]" (substring reader-string 0 22)))
-	      (if (not (string=? (substring reader-string 29) ": /home/bil/cl/pistol.snd via mix 5>"))
-		  (snd-display ";mix sample reader actually got: [~S]" (substring reader-string 29))))
+	      (if (not (string=? (substring reader-string 29 62) ": /home/bil/cl/pistol.snd via mix"))
+		  (snd-display ";mix sample reader actually got: [~S]" (substring reader-string 29 62))))
 	    (do ((i 0 (1+ i)))
 		((= i 99))
 	      (let ((mx (next-mix-sample mr))
@@ -6883,6 +6883,7 @@
 (define sfile 0)
 
 (define* (clone-sound-as new-name #:optional snd)
+  ;; copies any edit-sounds to save-dir!
   (let* ((tmpf (snd-tempnam))
 	 (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
 	 (oldsnd (or snd (selected-sound))))
@@ -8489,7 +8490,8 @@
 		    (inexact->exact (* .8 size))
 		    snd chn)))  
 
-(if (not (provided? 'snd-nogui))
+(if (and (or full-test (= snd-test 17) (and keep-going (<= snd-test 17)))
+	 (not (provided? 'snd-nogui)))
     (begin
       (if (procedure? test-hook) (test-hook 17))
       (load "musglyphs.scm")

@@ -339,8 +339,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fneq(eps_bottom_margin(ss), DEFAULT_EPS_BOTTOM_MARGIN)) pss_sf(fd, S_eps_bottom_margin, eps_bottom_margin(ss));
   if (fneq(eps_left_margin(ss), DEFAULT_EPS_LEFT_MARGIN)) pss_sf(fd, S_eps_left_margin, eps_left_margin(ss));
 
-  /* TODO: what about saving the colors? */
-
   save_recorder_state(fd);
 
   fprintf(fd, XEN_COMMENT_STRING " end of snd options\n");
