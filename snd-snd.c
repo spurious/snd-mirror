@@ -2897,22 +2897,48 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   return(snd);
 }
 
-static env_info *get_peak_env_info(char *fullname)
+enum {PEAK_ENV_NO_ERROR, PEAK_ENV_BAD_HEADER, PEAK_ENV_BAD_FORMAT, PEAK_ENV_BAD_SIZE, PEAK_ENV_NO_FILE, PEAK_ENV_NO_DATA};
+static char *peak_env_error[6] = {"no error", "bad header", "bad format", "bad size", "no file", "no data in file"};
+
+static env_info *get_peak_env_info(char *fullname, int *error)
 {
   env_info *ep;
-  int fd, hdr = 0;
+  int fd, bytes, hdr = 0;
   int ibuf[5];
   MUS_SAMPLE_TYPE mbuf[2];
   fd = mus_file_open_read(fullname);
-  if (fd == -1) return(NULL);
-  read(fd, (char *)ibuf, (5 * sizeof(int)));
+  if (fd == -1) 
+    {
+      (*error) = PEAK_ENV_NO_FILE;
+      return(NULL);
+    }
+  bytes = read(fd, (char *)ibuf, (5 * sizeof(int)));
+  if (bytes != (5 * sizeof(int)))
+    {
+      close(fd);
+      (*error) = PEAK_ENV_NO_DATA;
+      return(NULL);
+    }
   hdr = ibuf[0];
-  if ((((hdr & 0xff) != 0) && ((hdr & 0xff) != 1)) || (!(mus_sample_type_ok(hdr >> 16))) ||
-      (ibuf[1] <= 0) ||
-      (!(POWER_OF_2_P(ibuf[1]))) ||
-      (ibuf[2] <= 0) ||
-      (ibuf[4] > ibuf[1]))
-    return(NULL);
+  (*error) = PEAK_ENV_NO_ERROR;
+  if (((hdr & 0xff) != 0) && ((hdr & 0xff) != 1)) 
+    (*error) = PEAK_ENV_BAD_HEADER;
+  else
+    {
+      if (!(mus_sample_type_ok(hdr >> 16)))
+	(*error) = PEAK_ENV_BAD_FORMAT;
+      else
+	{
+	  if ((ibuf[1] <= 0) || (!(POWER_OF_2_P(ibuf[1]))))
+	    (*error) = PEAK_ENV_BAD_SIZE;
+	  else
+	    {
+	      if ((ibuf[2] <= 0) || (ibuf[4] > ibuf[1]))
+		(*error) = PEAK_ENV_BAD_HEADER;
+	    }
+	}
+    }
+  if ((*error) != PEAK_ENV_NO_ERROR) return(NULL);
   ep = (env_info *)CALLOC(1, sizeof(env_info));
   ep->completed = hdr & 0xff;
   ep->amp_env_size = ibuf[1];
@@ -2935,14 +2961,15 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   #define H_read_peak_env_info_file "(" S_read_peak_env_info_file " snd chn name) reads stored peak-env info from file"
   /* has to happen in initial_graph_hook to precede add_amp_env */
   chan_info *cp;
+  int err = 0;
   char *fullname;
   ASSERT_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_read_peak_env_info_file);
   fullname = mus_expand_filename(XEN_TO_C_STRING(name));
-  cp->amp_envs[0] = get_peak_env_info(fullname);
+  cp->amp_envs[0] = get_peak_env_info(fullname, &err);
   if (fullname) FREE(fullname);
   if (cp->amp_envs[0] == NULL)
-    return(snd_no_such_file_error(S_read_peak_env_info_file, name));
+    mus_misc_error(S_read_peak_env_info_file, peak_env_error[err], name);
   /* assume cp->amp_envs already exists (needs change to snd-chn) */
   return(name);
 }
@@ -3052,7 +3079,7 @@ If 'filename' is a sound index (an integer), pts is an edit-position, and the cu
   env_state *es;
   snd_state *ss;
   env_info *ep;
-  int id;
+  int id, err = 0;
   env_tick *et;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename) || XEN_INTEGER_P(filename), filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_channel_amp_envs, "an integer");
@@ -3115,7 +3142,7 @@ If 'filename' is a sound index (an integer), pts is an edit-position, and the cu
 	  peakname = mus_expand_filename(XEN_TO_C_STRING(peak));
 	  if (mus_file_probe(peakname))
 	    {
-	      ep = get_peak_env_info(peakname);
+	      ep = get_peak_env_info(peakname, &err);
 	      if (ep)
 		{
 		  /* read amp_env data into pts (presumably smaller) */

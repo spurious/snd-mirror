@@ -3476,7 +3476,6 @@ XEN_NARGIFY_1(gxg_selection_text_w, gxg_selection_text)
 XEN_NARGIFY_1(gxg_selection_entry_w, gxg_selection_entry)
 XEN_NARGIFY_1(gxg_file_list_w, gxg_file_list)
 XEN_NARGIFY_1(gxg_dir_list_w, gxg_dir_list)
-XEN_NARGIFY_1(gxg_cursor_gc_w, gxg_cursor_gc)
 XEN_NARGIFY_1(gxg_width_chars_w, gxg_width_chars)
 XEN_NARGIFY_1(gxg_invisible_char_w, gxg_invisible_char)
 XEN_NARGIFY_1(gxg_drag_start_y_w, gxg_drag_start_y)
@@ -7235,7 +7234,6 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "selection_entry" XG_POST, gxg_selection_entry_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "file_list" XG_POST, gxg_file_list_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "dir_list" XG_POST, gxg_dir_list_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "cursor_gc" XG_POST, gxg_cursor_gc_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "width_chars" XG_POST, gxg_width_chars_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "invisible_char" XG_POST, gxg_invisible_char_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "drag_start_y" XG_POST, gxg_drag_start_y_w, 1, 0, 0, NULL);

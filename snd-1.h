@@ -77,9 +77,14 @@ typedef struct {
 } ed_list;
 
 typedef struct snd__fd {
+  /* most of this is local to snd-edits, highly inflammable... */
+  MUS_SAMPLE_TYPE (*run)(struct snd__fd *sf);
+  Float (*runf)(struct snd__fd *sf);
+
+  /* the rest are private to snd-edits.c */
   ed_list *current_state;
   int *cb;
-  int cbi;
+  int cbi, direction;
   MUS_SAMPLE_TYPE *first;
   MUS_SAMPLE_TYPE *last;
   MUS_SAMPLE_TYPE *view_buffered_data;
@@ -88,9 +93,7 @@ typedef struct snd__fd {
   int initial_samp;
   struct chan__info *cp;
   struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
-  Float scaler;
-  MUS_SAMPLE_TYPE (*run)(struct snd__fd *sf);
-  Float (*runf)(struct snd__fd *sf);
+  Float fscaler;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -655,12 +658,14 @@ void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int 
 void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin, int edpos);
 void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin);
 Float chn_sample(int samp, chan_info *cp, int pos);
+void set_snd_fd_buffer(snd_fd *sf, MUS_SAMPLE_TYPE *buf, MUS_SAMPLE_TYPE *start, MUS_SAMPLE_TYPE *finish);
 snd_fd *free_snd_fd(snd_fd *sf);
+int sf_initial_samp(snd_fd *sf);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
 MUS_SAMPLE_TYPE next_sound (snd_fd *sf);
 void scale_channel(chan_info *cp, Float scaler, int beg, int num, int pos);
-
+void move_to_next_sample(snd_fd *sf);
 snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, int dir);

@@ -66,7 +66,7 @@ static void after_edit(chan_info *cp)
 #endif
 #endif
 #define UNWRAP_SAMPLE(X, ED) ((X) * (INT_AS_FLOAT(ED)))
-#define UNWRAP_SAMPLE_TO_FLOAT(X, SF) ((X) * (SF->scaler))
+#define UNWRAP_SAMPLE_TO_FLOAT(X, SF) ((X) * (SF->fscaler))
 
 /* try to make this code easier to read... */
 #define FRAGMENT_GLOBAL_POSITION(EDLIST, FRAGMENT_NUM)  EDLIST->fragments[(FRAGMENT_NUM) * ED_SIZE + ED_OUT]
@@ -153,6 +153,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 
 int no_ed_scalers(chan_info *cp, int edpos)
 {
+  /* used by channel swap in snd-sig.c */
   ed_list *ed;
   int i, len;
   ed = cp->edits[edpos];
@@ -1759,6 +1760,16 @@ snd_fd *free_snd_fd(snd_fd *sf)
   }
 #endif
 
+/* -------- fragment handlers -------- */
+/*
+ * each fragment has two associated read funcs: run and runf
+ *   run -> MUS_SAMPLE_TYPE
+ *   runf -> Float
+ *   the following functions are possible run/runf choices, based on the fragment type
+ *     (if fragment has scaler, use next_sample else next_sample_unscaled, etc)
+ * read_sample calls run, read_sample_to_float runf
+ */
+
 static MUS_SAMPLE_TYPE next_sample(snd_fd *sf)
 {
   if (sf->view_buffered_data > sf->last)
@@ -1801,14 +1812,14 @@ Float next_sample_to_float(snd_fd *sf)
 {
   if (sf->view_buffered_data > sf->last)
      return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
-  else return((*sf->view_buffered_data++) * sf->scaler);
+  else return((*sf->view_buffered_data++) * sf->fscaler);
 }
 
 Float previous_sample_to_float(snd_fd *sf)
 {
   if (sf->view_buffered_data < sf->first)
     return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
-  else return((*sf->view_buffered_data--) * sf->scaler);
+  else return((*sf->view_buffered_data--) * sf->fscaler);
 }
 
 static Float next_sample_to_float_unscaled(snd_fd *sf)
@@ -1837,6 +1848,26 @@ void read_sample_change_direction(snd_fd *sf, int dir)
       sf->run = previous_sample;
       sf->runf = previous_sample_to_float;
     }
+  sf->direction = dir;
+}
+
+void set_snd_fd_buffer(snd_fd *sf, MUS_SAMPLE_TYPE *buf, MUS_SAMPLE_TYPE *start, MUS_SAMPLE_TYPE *finish)
+{
+  sf->view_buffered_data = buf;
+  sf->first = start;
+  sf->last = finish;
+}
+
+void move_to_next_sample(snd_fd *sf)
+{
+  if (sf->view_buffered_data > sf->last)
+    next_sound(sf);
+  else sf->view_buffered_data++;
+}
+
+int sf_initial_samp(snd_fd *sf)
+{
+  return(sf->initial_samp);
 }
 
 static snd_fd *cancel_reader(snd_fd *sf)
@@ -1852,12 +1883,37 @@ static snd_fd *cancel_reader(snd_fd *sf)
   return(sf);
 }
 
+static void choose_accessor(snd_fd *sf)
+{
+  /* fragment-specific reader choice */
+  int no_scaling = 0;
+  no_scaling = (INT_AS_FLOAT(sf->cb[ED_SCL]) == 1.0);
+  if (sf->direction == READ_FORWARD)
+    {
+      if (no_scaling)
+	sf->run = next_sample_unscaled;
+      else sf->run = next_sample;
+      if ((no_scaling) && (sf->fscaler == 1.0))
+	sf->runf = next_sample_to_float_unscaled;
+      else sf->runf = next_sample_to_float;
+    }
+  else 
+    {
+      if (no_scaling)
+	sf->run = previous_sample_unscaled;
+      else sf->run = previous_sample;
+      if ((no_scaling) && (sf->fscaler == 1.0))
+	sf->runf = previous_sample_to_float_unscaled;
+      else sf->runf = previous_sample_to_float;
+    }
+}
+
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position)
 {
   snd_fd *sf;
   snd_info *sp;
   ed_list *ed;
-  int len, i, k, ind0, ind1, indx, curlen, no_scalers = 0;
+  int len, i, k, ind0, ind1, indx, curlen;
   int *cb;
   snd_data *first_snd = NULL;
   if (cp->active == 0) return(NULL);
@@ -1881,34 +1937,15 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
   sf->initial_samp = samp;
   sf->cp = cp;
-  sf->scaler = MUS_SAMPLE_TO_FLOAT(1.0);
-  no_scalers = no_ed_scalers(cp, edit_position);
-  /* fprintf(stderr,"dir: %d, no_scalers: %d, scaler=1.0: %d\n",direction, no_scalers, sf->scaler==1.0); */
-  /* TODO: make run(f) choice fragment-specific rather than global
+  sf->fscaler = MUS_SAMPLE_TO_FLOAT(1.0);
+  sf->direction = direction;
+
+  /*
    * TODO: add ramp fragment reader and virtual envelopes
-   * TODO: if int scaler (or power of 2), use int*int or int>>int for run
-   * TODO: add constant return (0 currently)?
+   * TODO: add 0 buf return (timed 0, as opposed to fake buf)
    * TODO: fragment change func (with possibility of callback fragment-hook)
-   *       could embed extra scalers (as in ap->y_scale of graphs)
    */
-  if (direction == READ_FORWARD)
-    {
-      if (no_scalers)
-	sf->run = next_sample_unscaled;
-      else sf->run = next_sample;
-      if ((no_scalers) && (sf->scaler == 1.0))
-	sf->runf = next_sample_to_float_unscaled;
-      else sf->runf = next_sample_to_float;
-    }
-  else 
-    {
-      if (no_scalers)
-	sf->run = previous_sample_unscaled;
-      else sf->run = previous_sample;
-      if ((no_scalers) && (sf->scaler == 1.0))
-	sf->runf = previous_sample_to_float_unscaled;
-      else sf->runf = previous_sample_to_float;
-    }
+
   sf->current_state = ed;
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
@@ -1928,7 +1965,8 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 	  indx = sf->cb[ED_BEG] + samp - sf->cb[ED_OUT];
 	  ind1 = sf->cb[ED_END];
 	  sf->sounds = (snd_data **)(cp->sounds);
-	  sf->scaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
+	  sf->fscaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
+	  choose_accessor(sf);
 	  first_snd = sf->sounds[sf->cb[ED_SND]];
 	  if (first_snd->type == SND_DATA_FILE)
 	    {
@@ -1998,9 +2036,9 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
       sf->cb = (int *)((sf->current_state)->fragments + sf->cbi * ED_SIZE);
       ind0 = sf->cb[ED_BEG];
       ind1 = sf->cb[ED_END];
-      sf->scaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
+      sf->fscaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
       prev_snd = sf->sounds[sf->cb[ED_SND]];
-
+      choose_accessor(sf);
       if (prev_snd->type == SND_DATA_FILE)
 	{
 	  if (prev_snd->inuse) 
@@ -2053,6 +2091,8 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	{
           sf->view_buffered_data = (MUS_SAMPLE_TYPE *)1;
 	  sf->last = (MUS_SAMPLE_TYPE *)0;
+	  sf->run = zero_sample;
+	  sf->runf = zero_sample_to_float;
 	  return(MUS_SAMPLE_0);
 	}
       sf->cb = (int *)((sf->current_state)->fragments + sf->cbi * ED_SIZE);
@@ -2061,11 +2101,14 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	{
           sf->view_buffered_data = (MUS_SAMPLE_TYPE *)1;
 	  sf->last = (MUS_SAMPLE_TYPE *)0;
+	  sf->run = zero_sample;
+	  sf->runf = zero_sample_to_float;
 	  return(MUS_SAMPLE_0);
 	}
       ind0 = sf->cb[ED_BEG];
       ind1 = sf->cb[ED_END];
-      sf->scaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
+      sf->fscaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
+      choose_accessor(sf);
       nxt_snd = sf->sounds[sf->cb[ED_SND]];
       if (nxt_snd->type == SND_DATA_FILE)
 	{

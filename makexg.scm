@@ -997,6 +997,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     4-Apr:     minor changes for Gtk 2.0.2~%")
 (hey " *     13-Mar:    Gtk 2.0.0~%")
 (hey " *     12-Mar:    support for GtkDestroyNotify callbacks~%")
 (hey " *     27-Feb:    remove gtk_tree_view_column_cell_render, gtk_tree_view_column_cell_focus, ~%")

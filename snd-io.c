@@ -12,20 +12,14 @@
 
 static void c_io_bufclr (int *io, int beg)
 {
-  int i, k, end;
+  int k, end;
   MUS_SAMPLE_TYPE *j;
   end = io[SND_IO_BUFSIZE];
   for (k = 0; k < io[SND_IO_CHANS]; k++)
     {
       j = MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + k]);
       if (j)
-	{
-	  if (beg == 0)
-	    memset((void *)j, 0, end * sizeof(MUS_SAMPLE_TYPE));
-	  else
-	    for (i = beg; i < end; i++) 
-	      j[i] = MUS_SAMPLE_0;
-	}
+	memset((void *)(j + beg), 0, (end - beg) * sizeof(MUS_SAMPLE_TYPE));
     }
 }
 
@@ -37,13 +31,6 @@ static void reposition_file_buffers_1(int loc, int *io)
   int i;
   MUS_SAMPLE_TYPE **bufs;
 #endif
-  if ((loc < io[SND_IO_BEG]) && 
-      ((loc + (int)(.9 * io[SND_IO_BUFSIZE])) > io[SND_IO_BEG]))
-    {
-      if ((loc + 10) > io[SND_IO_BEG]) loc -= (int)(.75 * io[SND_IO_BUFSIZE]);
-      if (loc < 0) loc = 0;
-      if (io[SND_IO_CHANS] == 1) loc = (2 * (int)(loc / 2)); /* does this matter? */
-    }
   frames = io[SND_IO_FRAMES] - loc;
   if (frames > io[SND_IO_BUFSIZE]) frames = io[SND_IO_BUFSIZE];
   if (frames <= 0)                   /* tried to access beyond current end of file */
@@ -201,31 +188,35 @@ int file_state_buffer_size(int *io)
 void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
 {
   /* need to track in-core buffer and file-relative index */
+  MUS_SAMPLE_TYPE *buf, *start, *finish;
   if ((indx < cur_snd->io[SND_IO_BEG]) ||
       (indx > cur_snd->io[SND_IO_END])) 
     reposition_file_buffers(cur_snd, indx);
-  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + indx - cur_snd->io[SND_IO_BEG]);
+  buf = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + indx - cur_snd->io[SND_IO_BEG]);
   /* only indx is guaranteed to be within the current in-core buffer */
   if (ind0 >= cur_snd->io[SND_IO_BEG])
-    sf->first = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind0 - cur_snd->io[SND_IO_BEG]);
-  else sf->first = cur_snd->buffered_data;
+    start = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind0 - cur_snd->io[SND_IO_BEG]);
+  else start = cur_snd->buffered_data;
   if (ind1 <= cur_snd->io[SND_IO_END]) 
-    sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind1 - cur_snd->io[SND_IO_BEG]);
-  else sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
+    finish = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind1 - cur_snd->io[SND_IO_BEG]);
+  else finish = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
+  set_snd_fd_buffer(sf, buf, start, finish);
 }
 
 void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
 {
+  MUS_SAMPLE_TYPE *buf, *start, *finish;
   if ((indx > cur_snd->io[SND_IO_END]) || 
       (indx < cur_snd->io[SND_IO_BEG])) 
     reposition_file_buffers(cur_snd, indx - cur_snd->io[SND_IO_BUFSIZE] + 1);
-  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + indx - cur_snd->io[SND_IO_BEG]);
+  buf = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + indx - cur_snd->io[SND_IO_BEG]);
   if (ind1 <= cur_snd->io[SND_IO_END])
-    sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind1 - cur_snd->io[SND_IO_BEG]);
-  else sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
+    finish = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind1 - cur_snd->io[SND_IO_BEG]);
+  else finish = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
   if (ind0 >= cur_snd->io[SND_IO_BEG]) 
-    sf->first = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind0 - cur_snd->io[SND_IO_BEG]);
-  else sf->first = cur_snd->buffered_data;
+    start = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind0 - cur_snd->io[SND_IO_BEG]);
+  else start = cur_snd->buffered_data;
+  set_snd_fd_buffer(sf, buf, start, finish);
 }
 
 int sf_beg(snd_data *sd)
@@ -338,18 +329,6 @@ int snd_open_read(snd_state *ss, const char *arg)
       if (fd == -1) 
 	snd_error("%s: %s", arg, strerror(errno));
     }
-#if DEBUG_IO
-  {
-    int i;
-    if (fd == -1)
-      fprintf(stderr,"%s: can't read\n",arg);
-    else
-      {
-	for (i = 0; i < fd; i++) fprintf(stderr," ");
-	fprintf(stderr,"read %s: %d\n",arg, fd);
-      }
-  }
-#endif
   return(fd);
 }
 
@@ -385,18 +364,6 @@ int snd_reopen_write(snd_state *ss, const char *arg)
       if (fd == -1) 
 	snd_error("%s: %s", arg, strerror(errno));
     }
-#if DEBUG_IO
-  {
-    int i;
-    if (fd == -1)
-      fprintf(stderr,"%s: can't write\n",arg);
-    else
-      {
-	for (i = 0; i < fd; i++) fprintf(stderr," ");
-	fprintf(stderr,"write %s: %d\n",arg, fd);
-      }
-  }
-#endif
   return(fd);
 }
 

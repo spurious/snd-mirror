@@ -1067,16 +1067,18 @@ static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, in
 }
 
 static int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, 
-	      int in_chans, int out_chans, int nominal_srate, const char *origin, int with_tag)
+		     int nominal_srate, const char *origin, int with_tag)
 {
   /* always write to tempfile */
   char *newname;
   int id = -1;
   /* TODO: mix_array this seems excessive -- why not just change_samples? */
-  newname = save_as_temp_file(data, in_chans, num, nominal_srate);
+  /* void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, const char *origin, int edpos) */
+  /* at least in no tag case this can't be a problem */
+  newname = save_as_temp_file(data, 1, num, nominal_srate);
   if (newname) 
     {
-      id = mix(beg, num, out_chans, out_cps, newname, DELETE_ME, origin, with_tag);
+      id = mix(beg, num, 1, out_cps, newname, DELETE_ME, origin, with_tag);
       if (with_tag == 0) snd_remove(newname);
       FREE(newname);
     }
@@ -2675,34 +2677,30 @@ void goto_mix(chan_info *cp, int count)
       if (count > 0)
 	{
 	  for (i = 0; i < j; i++)
-	    {
-	      if (css[i] > cp->cursor)
-		{
-		  count--;
-		  if (count == 0)
-		    {
-		      cursor_moveto(cp, css[i]);
-		      break;
-		    }
-		}
-	    }
+	    if (css[i] > cp->cursor)
+	      {
+		count--;
+		if (count == 0)
+		  {
+		    cursor_moveto(cp, css[i]);
+		    break;
+		  }
+	      }
 	  if ((count > 0) && (cp->cursor < css[j - 1]))
 	    cursor_moveto(cp, css[j - 1]);
 	}
       else
 	{
 	  for (i = j - 1; i >= 0; i--)
-	    {
-	      if (css[i] < cp->cursor)
-		{
-		  count++;
-		  if (count == 0)
-		    {
-		      cursor_moveto(cp, css[i]);
-		      break;
-		    }
-		}
-	    }
+	    if (css[i] < cp->cursor)
+	      {
+		count++;
+		if (count == 0)
+		  {
+		    cursor_moveto(cp, css[i]);
+		    break;
+		  }
+	      }
 	  if ((count < 0) && (cp->cursor > css[0]))
 	    cursor_moveto(cp, css[0]);
 	}
@@ -4356,7 +4354,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 	data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
       if (XEN_STRING_P(origin))
 	edname = XEN_TO_C_STRING(origin);
-      mix_id = mix_array(bg, len, data, cp, 1, 1,
+      mix_id = mix_array(bg, len, data, cp,
 			 SND_SRATE(cp[0]->sound),
 			 (char *)((edname == NULL) ? S_mix_vct : edname),
 			 with_mixers);

@@ -11377,6 +11377,7 @@
 	(IF (not (vequal (vct-subseq (samples->vct 0 11 ind) 0 9) (vct-subseq (smoother 1.0 0.0 10) 0 9)))
 	    (snd-display ";smooth-sound back: ~A ~A?" (samples->vct 0 11 ind) (smoother 1.0 0.0 10)))
 	(close-sound ind))
+      (if (file-exists? "hi.snd") (delete-file "hi.snd"))
 
       (let* ((ind (open-sound "oboe.snd"))
 	     (len (frames ind)))

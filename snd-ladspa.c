@@ -693,7 +693,7 @@ Information about about parameters can be acquired using analyse-ladspa."
   for (i = 0, j = 0; i < outchans; i++)
     {
       ncp = sf[j]->cp;
-      file_change_samples(sf[j]->initial_samp,
+      file_change_samples(sf_initial_samp(sf[j]),
 			  num,
 			  ofile,
 			  ncp,
