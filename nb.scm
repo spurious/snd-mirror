@@ -2,7 +2,10 @@
 ;;;   if use-gdbm is #t, any data associated with the file in the gdbm database will also be posted
 ;;;   the database name is defined by nb-database
 ;;;   the function (nb file note) adds note to the info currently associated with file
-;;;   to remove a file's info, (forget file)
+;;;   to remove a file's info, (unb file)
+;;;   to clean non-existent file references out of the database, (prune-db)
+
+(use-modules (ice-9 format))
 
 (define use-gdbm #f)
 (define nb-database "nb.db")
@@ -22,12 +25,35 @@
 		       'replace)
 	  (gdbm-close! ptr)))))
 
-(define (forget file)
+(define (unb file)
   (let ((ptr (gdbm-open nb-database 'write)))
     (if (gdbm? ptr)
 	(begin
 	  (gdbm-delete! ptr file)
 	  (gdbm-close! ptr)))))
+
+(define (prune-db)
+  (define (collect-files ptr key files)
+    (if key
+	(collect-files ptr (gdbm-next-key ptr key) (cons key files))
+	files))
+  (define (prune-file ptr files)
+    (if (not (null? files))
+	(begin
+	  (if (not (file-exists? (car files)))
+	      (begin
+		(snd-print (format #f "pruning ~A" (car files)))
+		(gdbm-delete! ptr (car files))))
+	  (prune-file ptr (cdr files)))))
+  (let ((ptr (gdbm-open nb-database 'read)))
+    (if (gdbm? ptr)
+	(let ((files (collect-files ptr (gdbm-first-key ptr) '())))
+	  (gdbm-close! ptr)
+	  (if (not (null? files))
+	      (let ((ptr (gdbm-open nb-database 'write)))
+		(prune-file ptr files)
+		(gdbm-close! ptr)))))))
+
 
 (define curent-file-viewer 0)
 (define previous-file-viewer 1)

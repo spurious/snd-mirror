@@ -4,7 +4,8 @@
  *         if we had label and map_over_children (widget-for-each?), we could dispense with the menu special cases (remove_option)
  *         and if widget_activate_hook, the hooks as well.
  * TODO  in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
- *         but to make this work requires the load-side deferred resizing?
+ *         but to make this work requires the load-side deferred resizing and reshaping
+ *         and some way to access the sound-widget parent dialog, since otherwise widget-size is unsettable
  * TODO: similar split for make_fft_graph [needs sonogram etc??]
  * TODO: need tests for all of these as well, and cursor-position etc [snd-help listing docs]
  * TODO: decide about the "info" functions, fft-info? sync_info + accessors?
@@ -610,6 +611,7 @@ static SCM g_focus_widget(SCM wid)
 {
   SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, S_focus_widget);
   goto_window((GUI_WIDGET)(SND_UNWRAP(wid)));
+  return(wid);
 }
 
 
@@ -657,16 +659,16 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_main_widgets,     SCM_FNC g_main_widgets, 0, 0, 0),    "returns top level widgets");
   DEFINE_PROC(gh_new_procedure(S_dialog_widgets,   SCM_FNC g_dialog_widgets, 0, 0, 0),  "returns a list of dialog widgets");
 
-  define_procedure_with_setter(S_widget_size, SCM_FNC g_widget_size, "(widget-size wid) -> '(width height)",
+  define_procedure_with_setter(S_widget_size, SCM_FNC g_widget_size, "(" S_widget_size " wid) -> '(width height)",
 					"set-" S_widget_size, SCM_FNC g_set_widget_size, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_widget_position, SCM_FNC g_widget_position, "(widget-position wid) -> '(x y)",
+  define_procedure_with_setter(S_widget_position, SCM_FNC g_widget_position, "(" S_widget_position " wid) -> '(x y)",
 					"set-" S_widget_position, SCM_FNC g_set_widget_position, local_doc, 1, 0, 2, 0);
 
-  DEFINE_PROC(gh_new_procedure(S_recolor_widget,  SCM_FNC g_recolor_widget, 2, 0, 0),  "(recolor-widget wid color)");
-  DEFINE_PROC(gh_new_procedure(S_hide_widget,     SCM_FNC g_hide_widget, 1, 0, 0),     "(hide-widget widget)");
-  DEFINE_PROC(gh_new_procedure(S_show_widget,     SCM_FNC g_show_widget, 1, 0, 0),     "(show-widget widget)");
-  DEFINE_PROC(gh_new_procedure(S_focus_widget,    SCM_FNC g_focus_widget, 1, 0, 0),    "(focus-widget widget) causes widget to receive input ('focus')");
+  DEFINE_PROC(gh_new_procedure(S_recolor_widget,  SCM_FNC g_recolor_widget, 2, 0, 0),  "(" S_recolor_widget " wid color)");
+  DEFINE_PROC(gh_new_procedure(S_hide_widget,     SCM_FNC g_hide_widget, 1, 0, 0),     "(" S_hide_widget " widget)");
+  DEFINE_PROC(gh_new_procedure(S_show_widget,     SCM_FNC g_show_widget, 1, 0, 0),     "(" S_show_widget " widget)");
+  DEFINE_PROC(gh_new_procedure(S_focus_widget,    SCM_FNC g_focus_widget, 1, 0, 0),    "(" S_focus_widget " widget) causes widget to receive input ('focus')");
 
 
   /* ---------------- unstable ---------------- */
@@ -684,8 +686,8 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(gh_new_procedure("channel-info",    SCM_FNC g_channel_info, 0, 2, 0),    "(channel-info snd chn)");
   DEFINE_PROC(gh_new_procedure("peak-env-info",   SCM_FNC g_peak_env_info, 0, 3, 0),   "(peak-env-info snd chn pos)");
 
-  DEFINE_PROC(gh_new_procedure(S_add_input,       SCM_FNC g_add_input, 2, 0, 0),       "(add-input file callback) -> id");
-  DEFINE_PROC(gh_new_procedure(S_remove_input,    SCM_FNC g_remove_input, 1, 0, 0),    "(remove-input id)");
+  DEFINE_PROC(gh_new_procedure(S_add_input,       SCM_FNC g_add_input, 2, 0, 0),       "(" S_add_input " file callback) -> id");
+  DEFINE_PROC(gh_new_procedure(S_remove_input,    SCM_FNC g_remove_input, 1, 0, 0),    "(" S_remove_input " id)");
 
   DEFINE_PROC(gh_new_procedure("set-widget-foreground", SCM_FNC g_set_widget_foreground, 2, 0, 0), "(set-widget-foreground widget color)");
 

@@ -83,7 +83,11 @@
 #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA)
   #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-12-*-*-*-*-*-iso8859-1"
   #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-12-*-*-*-*-*-iso8859-1"
+#ifdef CCRMA
+  #define DEFAULT_AXIS_LABEL_FONT "-adobe-times-medium-r-*-*-16-*-*-*-*-*-iso8859-1"
+#else
   #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-16-*-*-*-*-*-iso8859-1"
+#endif
   #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1"
   #define DEFAULT_HELP_TEXT_FONT "8x13"
   #define ICON_TYPE XPM_ICON

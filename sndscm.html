@@ -24,7 +24,7 @@
 <span class=box><h1>Scheme Functions included with Snd</h1></span>
 <br>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
 </center>
 
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
@@ -1491,9 +1491,19 @@ the mouse through the lists, the help dialog posts information about the file
 underneath the mouse.  This uses a slightly fancier file information procedure
 than 'finfo' in examp.scm.  If you have the guile-gdbm package, you can use
 its database procedures to associate arbitrary information with files which
-will be posted along with the header info.
+will be posted along with the header info:
 </p>
-
+<pre>
+  <em class=def><A NAME="nbdb">nb</a></em> file note
+  <em class=def><A NAME="unbdb">unb</a></em> file
+  <em class=def><A NAME="prunedb">prune-db</a></em>
+</pre>
+<p><code>(nb "test.snd" "this is a test")</code> adds the note "this is a test" to
+the data associated with "test.snd".  <code>(unb "test.snd")</code> erases anything
+associated with "test.snd".  <code>(prune-db)</code> erases anything associated with
+any files that no longer exist.  (nb.scm will work fine without guile-gdbm; to load
+guile-gdbm, set the variable <b>use-gdbm</b> to #t).
+</p>
 
 <A NAME="pqwvoxdoc"></a><span class=box><h2>pqwvox.scm</h2></span>
 <pre>
@@ -2604,7 +2614,7 @@ along the lines of:
 	  (mus-a0 d) (mus-a1 d) (mus-x1 d)
 	  (prettified-array (dly-line d))))
 </pre>
-And to get the
+<p>And to get the
 new (lisp-side, non-macro) generator to be callable within the run macro is yet another set
 of headaches (see <a href="clm.html#user-defined-ugs">user-defined generators</a>).
 In CLM-in-Scheme, the first (simpler) fcomb above might be:
@@ -2795,7 +2805,7 @@ static void init_fcomb(void)
 
 
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
 </center>
 </body>
 </html>

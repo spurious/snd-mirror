@@ -1176,7 +1176,10 @@ Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n)
 void g_init_gxlistener(SCM local_doc)
 {
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (snd chn) is called when the mouse \
-enters the lisp listener pane"
+enters the lisp listener pane:\n\
+  (add-hook! mouse-enter-listener-hook\n\
+    (lambda (widget)\n\
+      (focus-widget widget)))"
 
   #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (snd chn) is called when the mouse \
 leaves the lisp listener pane"
