@@ -9,13 +9,20 @@ static gint timed_eval(gpointer in_code)
 
 static XEN g_in(XEN ms, XEN code)
 {
-  #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds"
+  #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds (named call_in in Ruby)"
+  int secs;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
   if (XEN_REQUIRED_ARGS_OK(code, 0))
     {
-      g_timeout_add_full(0, (guint32)XEN_TO_C_INT(ms), timed_eval, (gpointer)code, NULL);
-      snd_protect(code);
+      secs = XEN_TO_C_INT(ms);
+      if (secs < 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_in, XEN_ARG_1, ms, "a positive integer");
+      else
+	{
+	  g_timeout_add_full(0, (guint32)XEN_TO_C_INT(ms), timed_eval, (gpointer)code, NULL);
+	  snd_protect(code);
+	}
     }
   else XEN_BAD_ARITY_ERROR(S_in, 2, code, "should take no args");
   return(ms);

@@ -292,7 +292,6 @@
 /* there is SCM_CONTINUATIONP -- why doesn't scheme have continuation? */
 
 #if HAVE_SCM_C_MAKE_RECTANGULAR
-  /* TODO: this is temporary memory -- need to check all XEN_TO_C_STRING to make sure they're protected */
   #define XEN_TO_C_STRING(Str)        xen_guile_to_c_string_with_eventual_free(Str)
   #define C_TO_XEN_STRING(a)          ((a) ? scm_from_locale_string(a) : XEN_FALSE)
   #define C_TO_XEN_STRINGN(Str, Len)  scm_from_locale_stringn(Str, Len)

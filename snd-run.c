@@ -1989,6 +1989,7 @@ static void add_obj_to_gcs(ptree *pt, int type, int addr)
 static void add_loc_to_protected_list(ptree *pt, int loc)
 {
   int old_size, i;
+  if (loc < 0) return;
   if (pt->gc_protected_ctr >= pt->gc_protected_size)
     {
       old_size = pt->gc_protected_size;
@@ -2002,7 +2003,6 @@ static void add_loc_to_protected_list(ptree *pt, int loc)
 	}
     }
   pt->gc_protected[pt->gc_protected_ctr++] = loc;
-  /* TODO: I think run make-* results are not always unprotected -- need some way to trace them */
 }
 
 static vect *read_int_vector(XEN vectr)

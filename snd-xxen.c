@@ -9,15 +9,24 @@ static void timed_eval(XtPointer in_code, XtIntervalId *id)
 static XEN g_in(XEN ms, XEN code)
 {
   #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds (named call_in in Ruby)"
+  int secs;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
   if (XEN_REQUIRED_ARGS_OK(code, 0))
     {
-      XtAppAddTimeOut(MAIN_APP(ss), 
-		      (unsigned long)XEN_TO_C_INT(ms),
-		      (XtTimerCallbackProc)timed_eval, 
-		      (XtPointer)code);
-      snd_protect(code);
+      secs = XEN_TO_C_INT(ms);
+      if (secs < 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_in, XEN_ARG_1, ms, "a positive integer");
+      else
+	{
+	  XtAppAddTimeOut(MAIN_APP(ss), 
+			  (unsigned long)secs,
+			  (XtTimerCallbackProc)timed_eval, 
+			  (XtPointer)code);
+	  /* this "code" can still be something misleading like an applicable smob */
+	  /*   there's a way to catch that in snd-run.c line 129, but not sure it's the "right thing" here */
+	  snd_protect(code);
+	}
     }
   else XEN_BAD_ARITY_ERROR(S_in, 2, code, "should take no args");
   return(ms);

@@ -562,10 +562,14 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
       sp->playing_mark = NULL;
       if (sp->playing > 0) sp->playing--;
       if (sp->playing == 0) sp_stopping = true;
-      if ((sp->inuse == SOUND_NORMAL) && (sp->cursor_follows_play != DONT_FOLLOW))
-	cursor_moveto_with_window(cp, cp->original_cursor, cp->original_left_sample, cp->original_window_size);
-      if ((sp_stopping) && (sp->cursor_follows_play == FOLLOW_ONCE)) 
-	sp->cursor_follows_play = DONT_FOLLOW;
+      if (sp_stopping)
+	{
+	  if ((sp->inuse == SOUND_NORMAL) && (sp->cursor_follows_play != DONT_FOLLOW))
+	    cursor_moveto_with_window(cp, cp->original_cursor, cp->original_left_sample, cp->original_window_size);
+	  /* this is needed to get the original window/cursor location displayed after playing */
+	  if (sp->cursor_follows_play == FOLLOW_ONCE)
+	    sp->cursor_follows_play = DONT_FOLLOW;
+	}
       /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
     }
   play_list[dp->slot] = NULL;
@@ -736,12 +740,6 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_
   play_list_members++;
   dp = make_dac_info(cp, sp, fd); /* sp == NULL if region */
   dp->end = end;
-  if (end != NO_END_SPECIFIED) 
-    {
-      dp->end -= beg; 
-      if (dp->end < 0)
-	dp->end = -(dp->end);
-    }
   play_list[slot] = dp;
   dp->slot = slot;
   if (max_active_slot < slot) max_active_slot = slot;
@@ -1378,8 +1376,12 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		}
 	      if (dp->end != NO_END_SPECIFIED)
 		{
-		  dp->end -= frames;
-		  if (dp->end < 0) dp->end = 0;
+
+		  /* TODO: tracking cursor is all messed up in gtk! */
+		  /* TODO: $#%@&! paned window for control panel leaks into listener in gtk */
+
+		  if (dp->end <= current_location(dp->chn_fd))
+		    dp->end = 0;
 		}
 	    }
 	}/* fill-case loop through max_active_slot */
@@ -2179,7 +2181,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
       sp->filename = NULL;
       sp->delete_me = (void *)1;
       if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);
-      play_sound_1(sp, samp, end, background, C_TO_XEN_INT(0), caller, arg_pos, stop_proc);
+      play_sound_1(sp, samp, end, background, XEN_ZERO, caller, arg_pos, stop_proc);
       if (name) FREE(name);
     }
   else

@@ -16,7 +16,7 @@ static int gc_last_cleared = -1;
 static int gc_last_set = -1;
 
 #if DEBUGGING
-static char **snd_protect_callers = NULL;
+static char **snd_protect_callers = NULL; /* static char* const *callers? no thanks... */
 #endif
 
 #if DEBUG_MEMORY
@@ -65,8 +65,11 @@ int snd_protect(XEN obj)
   int i, old_size;
   XEN tmp;
   XEN *gcdata;
-  if (XEN_NUMBER_P(obj)) return(-1);
-  if (XEN_EQ_P(obj, XEN_EMPTY_LIST)) return(-1);
+  if ((XEN_NUMBER_P(obj)) || 
+      (XEN_EQ_P(obj, XEN_EMPTY_LIST)) ||
+      (XEN_FALSE_P(obj)) || 
+      (XEN_TRUE_P(obj)))
+    return(-1);
   if (gc_protection_size == 0)
     {
       gc_protection_size = 128;
@@ -77,7 +80,7 @@ int snd_protect(XEN obj)
       gc_last_set = 0;
 #if DEBUGGING
       snd_protect_callers = (char **)calloc(gc_protection_size, sizeof(char *));
-      snd_protect_callers[0] = caller;
+      snd_protect_callers[0] = (char *)caller;
 #endif
     }
   else
@@ -88,7 +91,7 @@ int snd_protect(XEN obj)
 	{
 	  XEN_VECTOR_SET(gc_protection, gc_last_cleared, obj);
 #if DEBUGGING
-	  snd_protect_callers[gc_last_cleared] = caller;
+	  snd_protect_callers[gc_last_cleared] = (char *)caller;
 #endif
 	  gc_last_set = gc_last_cleared;
 	  gc_last_cleared = -1;
@@ -99,7 +102,7 @@ int snd_protect(XEN obj)
 	  {
 	    XEN_VECTOR_SET(gc_protection, i, obj);
 #if DEBUGGING
-	    snd_protect_callers[i] = caller;
+	    snd_protect_callers[i] = (char *)caller;
 #endif
 	    gc_last_set = i;
 #if DEBUG_MEMORY
@@ -118,9 +121,15 @@ int snd_protect(XEN obj)
 	  XEN_VECTOR_SET(tmp, i, DEFAULT_GC_VALUE);
 	}
       XEN_VECTOR_SET(gc_protection, old_size, obj);
+      /* it would be ideal to unprotect the old table, but it's a permanent object in Guile terms */
+      /*   in Ruby, I think we can unprotect it */
+#if HAVE_RUBY
+      XEN_UNPROTECT_FROM_GC(tmp);
+#endif
+
 #if DEBUGGING
       snd_protect_callers = (char **)realloc(snd_protect_callers, gc_protection_size * sizeof(char *));
-      snd_protect_callers[old_size] = caller;
+      snd_protect_callers[old_size] = (char *)caller;
 #endif
       gc_last_set = old_size;
     }

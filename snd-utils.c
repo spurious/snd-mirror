@@ -962,10 +962,31 @@ static XEN g_file_to_string(XEN name)
 }
 #endif
 
+#if DEBUG_MEMORY
+static XEN g_mem_report(void) 
+{
+  mem_report(); 
+  return(XEN_FALSE);
+}
+#endif
+
+#if DEBUG_MEMORY
+#ifdef XEN_ARGIFY_1
+  XEN_NARGIFY_0(g_mem_report_w, g_mem_report)
+#else
+  #define g_mem_report_w g_mem_report
+#endif
+#endif
+
+
 void g_init_utils(void)
 {
   decimal_pt = local_decimal_point();
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE(S_file2string, g_file_to_string, 1, 0, 0, "file contents as string");
+#endif
+
+#if DEBUG_MEMORY
+  XEN_DEFINE_PROCEDURE("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
 #endif
 }

@@ -1058,21 +1058,10 @@ static XEN g_exit(XEN val)
   return(XEN_FALSE);
 }
 
-#if DEBUG_MEMORY
-static XEN g_mem_report(void) 
-{
-  mem_report(); 
-  return(XEN_FALSE);
-}
-#endif
-
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_save_options_w, g_save_options)
 XEN_NARGIFY_1(g_save_state_w, g_save_state)
 XEN_ARGIFY_1(g_exit_w, g_exit)
-#if DEBUG_MEMORY
-  XEN_NARGIFY_0(g_mem_report_w, g_mem_report)
-#endif
 XEN_NARGIFY_0(g_script_arg_w, g_script_arg)
 XEN_NARGIFY_1(g_set_script_arg_w, g_set_script_arg)
 XEN_NARGIFY_0(g_script_args_w, g_script_args)
@@ -1080,9 +1069,6 @@ XEN_NARGIFY_0(g_script_args_w, g_script_args)
 #define g_save_options_w g_save_options
 #define g_save_state_w g_save_state
 #define g_exit_w g_exit
-#if DEBUG_MEMORY
-  #define g_mem_report_w g_mem_report
-#endif
 #define g_script_arg_w g_script_arg
 #define g_set_script_arg_w g_set_script_arg
 #define g_script_args_w g_script_args
@@ -1093,10 +1079,6 @@ void g_init_main(void)
   XEN_DEFINE_PROCEDURE(S_save_options, g_save_options_w, 1, 0, 0, H_save_options);
   XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w,   1, 0, 0, H_save_state);
   XEN_DEFINE_PROCEDURE(S_exit,         g_exit_w,         0, 1, 0, H_exit);
-
-#if DEBUG_MEMORY
-  XEN_DEFINE_PROCEDURE("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
-#endif
 
   #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns #t, snd exits immediately."
   XEN_DEFINE_HOOK(start_hook, S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
