@@ -3330,7 +3330,7 @@ static char *help_urls[HELP_NAMES_SIZE] = {
   "extsnd.html#textfocuscolor",
   "extsnd.html#timegraphstyle",
   "extsnd.html#wavo",
-  "extsnd.html#sndwaving",
+  "extsnd.html#timegraphp",
   "clm.html#times-&gt;samples",
   "extsnd.html#tinyfont",
   "clm.html#to-snd",

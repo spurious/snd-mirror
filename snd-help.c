@@ -378,6 +378,12 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+5-Jan:   envelopes can now have the properties 'envelope-base, 'envelope-type, and\n\
+           'envelope-lambda.  The envelope editor manages these, and define-envelope\n\
+           provides an optional base argument.  The rest of Snd knows about the\n\
+           properties.  The envelope variable itself still evaluates to the list\n\
+           of breakpoints (for backwards compatibility).\n\
+         added dur arg to make-env for duration in samples.\n\
 22-Dec:  selection-changed-hook.\n\
          changed enved-exp? to enved-style for user-defined segment connectors,\n\
            (envelope-linear, envelope-exponential, or a list of 2 procedures, mimicking cursor-style).\n\

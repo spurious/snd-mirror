@@ -132,8 +132,9 @@ static XEN clm_mus_error(int type, char *msg)
 #define SC_interp           "interp"
 #define SC_overlap          "overlap"
 #define SC_pitch            "pitch"
+#define SC_dur              "dur"
 
-#define NUM_KEYWORDS 62
+#define NUM_KEYWORDS 63
 enum {C_frequency, C_initial_phase, C_wave, C_cosines, C_amplitude,
       C_r, C_ratio, C_size, C_a0, C_a1, C_a2, C_b1, C_b2, C_max_size,
       C_input, C_srate, C_file, C_channel, C_start,
@@ -143,7 +144,7 @@ enum {C_frequency, C_initial_phase, C_wave, C_cosines, C_amplitude,
       C_direction, C_degree, C_distance, C_reverb, C_output, C_fft_size,
       C_expansion, C_length, C_hop, C_ramp, C_jitter,
       C_type, C_format, C_comment, C_channels, C_filter, C_revout, C_width,
-      C_edit, C_synthesize, C_analyze, C_interp, C_overlap, C_pitch
+      C_edit, C_synthesize, C_analyze, C_interp, C_overlap, C_pitch, C_dur
 };
 
 static const char *keywords[NUM_KEYWORDS] = 
@@ -156,7 +157,7 @@ static const char *keywords[NUM_KEYWORDS] =
    SC_direction, SC_degree, SC_distance, SC_reverb, SC_output, SC_fft_size,
    SC_expansion, SC_length, SC_hop, SC_ramp, SC_jitter,
    SC_type, SC_format, SC_comment, SC_channels, SC_filter, SC_revout, SC_width,
-   SC_edit, SC_synthesize, SC_analyze, SC_interp, SC_overlap, SC_pitch
+   SC_edit, SC_synthesize, SC_analyze, SC_interp, SC_overlap, SC_pitch, SC_dur
 };
 static XEN all_keys[NUM_KEYWORDS];
 
@@ -3181,7 +3182,7 @@ static XEN g_restart_env(XEN obj)
 
 static XEN g_make_env(XEN arglist)
 {
-  #define H_make_env "(" S_make_env " (:envelope) (:scaler 1.0) (:duration) (:offset 0.0) (:base 1.0) (:end) (:start 0)): \
+  #define H_make_env "(" S_make_env " (:envelope) (:scaler 1.0) (:duration) (:offset 0.0) (:base 1.0) (:end) (:start 0) (:dur)): \
 return a new envelope generator.  'envelope' is a list of break-point pairs. To create the envelope, \
 these points are offset by 'offset', scaled by 'scaler', and mapped over the time interval defined by \
 either 'duration' (seconds) or 'start' and 'end' (samples).  If 'base' is 1.0, the connecting segments \
@@ -3189,12 +3190,12 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[14]; 
-  XEN keys[7];
-  int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
+  XEN args[16]; 
+  XEN keys[8];
+  int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int vals, i, len = 0, arglist_len;
   Float base = 1.0, scaler = 1.0, offset = 0.0, duration = 0.0;
-  off_t start = 0, end = 0;
+  off_t start = 0, end = 0, dur = 0;
   int npts = 0;
   Float *brkpts = NULL, *odata = NULL;
   XEN lst;
@@ -3205,10 +3206,11 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   keys[4] = all_keys[C_base];
   keys[5] = all_keys[C_end];
   keys[6] = all_keys[C_start];
-  for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
+  keys[7] = all_keys[C_dur];
+  for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_decode_keywords(S_make_env, 7, keys, 14, args, orig_arg);
+  vals = mus_decode_keywords(S_make_env, 8, keys, 16, args, orig_arg);
   if (vals > 0)
     {
       scaler = fkeyarg(keys[1], S_make_env, orig_arg[1] + 1, 1.0);
@@ -3217,6 +3219,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       base = fkeyarg(keys[4], S_make_env, orig_arg[4] + 1, 1.0);
       end = okeyarg(keys[5], S_make_env, orig_arg[5] + 1, 0);
       start = okeyarg(keys[6], S_make_env, orig_arg[6] + 1, 0);
+      dur = okeyarg(keys[7], S_make_env, orig_arg[7] + 1, 0);
       /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
       if (!(XEN_KEYWORD_P(keys[0])))
         {
@@ -3244,7 +3247,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_env), 
 			 C_TO_XEN_STRING("no envelope?")));
-  if ((end < 0) || (base < 0.0) || (duration < 0.0) || (start < 0))
+  if ((end < 0) || (base < 0.0) || (duration < 0.0) || (start < 0) || (dur < 0))
     {
       if (brkpts) FREE(brkpts);
       if (odata) FREE(odata);
@@ -3252,8 +3255,19 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       if (base < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 5, keys[4], "base ~A < 0.0?");
       if (duration < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 3, keys[2], "duration ~A < 0.0?");
       if (start < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 7, keys[6], "start ~A < 0?");
+      if (dur < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 8, keys[7], "dur ~A < 0?");
     }
   /* odata = vct->data in this context [vcts[0]] */
+  if (dur > 0)
+    {
+      if ((end > 0) && ((end - start + 1) != dur))
+	XEN_ERROR(MUS_MISC_ERROR,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
+			     C_TO_XEN_STRING("end (~A) and dur (~A) specified, but dur != end-start+1"),
+			     XEN_LIST_2(keys[5], keys[7])));
+      start = 0;
+      end = dur - 1;
+    }
   old_error_handler = mus_error_set_handler(local_mus_error);
   ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, start, end, odata);
   mus_error_set_handler(old_error_handler);

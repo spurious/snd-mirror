@@ -208,27 +208,12 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
   return(normalize_x_axis(local_e));
 }
 
-static env *xen_to_env_with_base(XEN data, XEN base)
-{
-  env *e;
-  e = xen_to_env(data);
-  if ((e) && (XEN_NUMBER_P(base)))
-    {
-      Float b;
-      b = XEN_TO_C_DOUBLE(base);
-      if ((b > 0.0) && (b != 1.0))
-	e->type = ENVELOPE_EXPONENTIAL;
-      e->base = b;
-    }
-  return(e);
-}
-
 #if DEBUGGING && HAVE_GUILE
 static XEN g_window_env(XEN e, XEN b1, XEN d1, XEN b2, XEN d2)
 {
   XEN res;
   env *temp1 = NULL, *temp2 = NULL;
-  temp1 = xen_to_env_with_base(e, envelope_base(e));
+  temp1 = xen_to_env(e);
   temp2 = window_env(temp1,
 		     XEN_TO_C_OFF_T(b1),
 		     XEN_TO_C_OFF_T(d1),
@@ -297,8 +282,8 @@ static XEN g_multiply_envs(XEN e1, XEN e2, XEN maxx)
 {
   XEN res;
   env *temp1 = NULL, *temp2 = NULL, *temp3 = NULL;
-  temp1 = xen_to_env_with_base(e1, envelope_base(e1));
-  temp2 = xen_to_env_with_base(e2, envelope_base(e2));
+  temp1 = xen_to_env(e1);
+  temp2 = xen_to_env(e2);
   temp3 = multiply_envs(temp1, temp2, XEN_TO_C_DOUBLE(maxx));
   res = env_to_xen(temp3);
   temp1 = free_env(temp1);
@@ -459,7 +444,6 @@ double env_editor_ungrf_y_dB(env_editor *edp, int y)
 
 
 #define EXP_SEGLEN 4
-#define MIN_FILTER_GRAPH_HEIGHT 20
 typedef enum {ENVED_ADD_POINT,ENVED_DELETE_POINT,ENVED_MOVE_POINT} enved_point_t;
 static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason);
 
@@ -994,9 +978,12 @@ void delete_envelope(char *name)
     }
 }
 
+/* TODO: save/undo buttons don't turn on if choose env and edit */
+
 void alert_envelope_editor(char *name, env *val)
 {
-  /* whenever an envelope is defined or setf'd, we get notification through this function */
+  /* whenever an envelope is defined, we get notification through this function */
+  /* TODO: but what about set!? */
   int i;
   if (val == NULL) return;
   i = find_env(name);
@@ -1139,14 +1126,10 @@ void save_envelope_editor_state(FILE *fd)
       if (estr)
 	{
 #if HAVE_GUILE
-	  if (all_envs[i]->type == ENVELOPE_EXPONENTIAL)
-	    fprintf(fd, "(%s %s %s %.4f)\n", S_define_envelope, all_names[i], estr, all_envs[i]->base);
-	  else fprintf(fd, "(%s %s %s)\n", S_define_envelope, all_names[i], estr);
+	  fprintf(fd, "(%s %s %s %.4f)\n", S_define_envelope, all_names[i], estr, all_envs[i]->base);
 #endif
 #if HAVE_RUBY
-	  if (all_envs[i]->type == ENVELOPE_EXPONENTIAL)
-	    fprintf(fd, "define_envelope(\"%s\", %s, %.4f)\n", all_names[i], estr, all_envs[i]->base);
-	  else fprintf(fd, "define_envelope(\"%s\", %s)\n", all_names[i], estr);
+	  fprintf(fd, "%s(\"%s\", %s, %.4f)\n", xen_scheme_procedure_to_ruby(S_define_envelope), all_names[i], estr, all_envs[i]->base);
 #endif
 	  FREE(estr);
 	}
@@ -1174,6 +1157,14 @@ env *xen_to_env(XEN res)
 	    }
 	  rtn = make_envelope(data, len);
 	  FREE(data);
+	  if ((rtn) && (XEN_NUMBER_P(envelope_base(res))))
+	    {
+	      Float b;
+	      b = XEN_TO_C_DOUBLE(envelope_base(res));
+	      if ((b > 0.0) && (b != 1.0))
+		rtn->type = ENVELOPE_EXPONENTIAL;
+	      rtn->base = b;
+	    }
 	}
     }
   return(rtn);
@@ -1208,6 +1199,7 @@ env *string2env(char *str)
   XEN res;
   int len = 0;
   res = snd_catch_any(eval_str_wrapper, str, "string->env");
+  /* TODO: what about power-env triples? (xenv + name field as list with power-env chosen) */
   if (XEN_LIST_P_WITH_LENGTH(res, len))
     {
       if ((len % 2) == 0)
@@ -1261,6 +1253,7 @@ env *name_to_env(const char *str)
   /* TODO: xm-enved packaged enved access (widgets and callbacks) */
   int pos;
   pos = find_env(str);
+  /* TODO: if env's value has changed (via set! presumably), update in name_to_env */
   if (pos >= 0) return(copy_env(all_envs[pos]));
 #if HAVE_GUILE
   return(xen_to_env(XEN_NAME_AS_C_STRING_TO_VALUE(str)));
@@ -1285,8 +1278,17 @@ and 'base' into the envelope editor."
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_define_envelope, "a string");
   XEN_ASSERT_TYPE(XEN_LIST_P(data), data, XEN_ARG_2, S_define_envelope, "a list of breakpoints");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || XEN_FALSE_P(base), base, XEN_ARG_3, S_define_envelope, "a float or #f");
-  e = xen_to_env_with_base(data, base);
+  e = xen_to_env(data);
+  if ((e) && (XEN_NUMBER_P(base)))
+    {
+      Float b;
+      b = XEN_TO_C_DOUBLE(base);
+      if ((b > 0.0) && (b != 1.0))
+	e->type = ENVELOPE_EXPONENTIAL;
+      e->base = b;
+    }
   alert_envelope_editor(XEN_TO_C_STRING(name), e);
+  /* TODO: if already defined, define-envelope should just set to new value/properties (current code works) */
   XEN_DEFINE_VARIABLE(XEN_TO_C_STRING(name), temp, data); /* already gc protected */
 #if HAVE_GUILE
   /* add properties */
@@ -1298,10 +1300,7 @@ and 'base' into the envelope editor."
   return(temp);
 }
 
-/* TODO: msg71 etc for env props etc */
-/* TODO: incorporate env props throughout Snd */
-/* TODO: in xenv, if base/type etc changes, remember to change corresponding prop */
-/* TODO: xenv defined envs are "real" vars? */
+/* TODO: incorporate env props throughout Snd (env.scm?) */
 
 #if HAVE_GUILE
 XEN envelope_base(XEN obj) {return(XEN_OBJECT_PROPERTY(obj, envelope_base_sym));}
@@ -1329,46 +1328,47 @@ XEN env_to_xen(env *e)
 void add_or_edit_symbol(char *name, env *val)
 {
   /* called from envelope editor -- pass new definition into scheme */
-#if (!HAVE_RUBY)
-  XEN e;
-#endif
+#if HAVE_RUBY
+  /* TODO: in Ruby, save in xenv doesn't update properties */
+  /* TODO: isn't there a simple way in Ruby to set a variable's value? define a variable? seems dumb to use eval string */
+  /*   C_STRING_TO_XEN_SYMBOL(name) then sym = env_to_xen(val) (or XEN_VARIABLE_SET)?
+   */
   char *buf, *tmpstr = NULL;
   int len;
   tmpstr = env_to_string(val);
   len = snd_strlen(tmpstr) + snd_strlen(name) + 32;
   buf = (char *)CALLOC(len, sizeof(char));
-#if HAVE_RUBY
   mus_snprintf(buf, len, "%s = %s", name, tmpstr);
-#else
-  e = XEN_NAME_AS_C_STRING_TO_VALUE(name);
-  mus_snprintf(buf, len, "(%s %s %s)", 
-	       ((XEN_BOUND_P(e)) && (XEN_LIST_P(e))) ? "set!" : "define",
-	       name, 
-	       tmpstr);
-#endif
   if (tmpstr) FREE(tmpstr);
   snd_catch_any(eval_str_wrapper, buf, buf);
   FREE(buf);
+#else
+  XEN e;
+#if HAVE_SCM_DEFINED_P
+  if (XEN_TRUE_P(scm_defined_p(C_STRING_TO_XEN_SYMBOL(name), XEN_UNDEFINED)))
+#else
+  if (XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(name), XEN_UNDEFINED)))
+#endif
+    {
+      e = scm_sym2var(scm_str2symbol(name), scm_current_module_lookup_closure(), XEN_FALSE);
+      XEN_VARIABLE_SET(e, env_to_xen(val));
+    }
+  else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
+  set_envelope_base(e, C_TO_XEN_DOUBLE(val->base));
+  set_envelope_type(e, C_TO_XEN_INT(val->type));
+#endif
 }
 
 env *get_env(XEN e, const char *origin) /* list in e */
 {
-  Float *buf = NULL;
-  int i, len = 0;
-  env *newenv = NULL;
-  XEN lst;
+  int len = 0;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(e, len), e, XEN_ARG_1, origin, "a list");
   if (len == 0)
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_3(C_TO_XEN_STRING(origin), 
 			 C_TO_XEN_STRING("null env"), 
 			 e));
-  buf = (Float *)CALLOC(len, sizeof(Float));
-  for (i = 0, lst = XEN_COPY_ARG(e); i < len; i++, lst = XEN_CDR(lst)) 
-    buf[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
-  newenv = make_envelope(buf, len);
-  if (buf) FREE(buf);
-  return(newenv);
+  return(xen_to_env(e));
 }
 
 static XEN g_save_envelopes(XEN filename)

@@ -1529,10 +1529,10 @@ convenient if they were in one file.
   <em class=def><a name="sineenvchannel">sine-env-channel</a></em> env #:optional beg dur snd chn edpos
   <em class=def><A NAME="blackman4ramp">blackman4-ramp</A></em> a0 a1 #:optional beg dur snd chn edpos
   <em class=def><A NAME="blackman4envchannel">blackman4-env-channel</A></em> env #:optional beg dur snd chn edpos
-  <em class=def><A NAME="rampsquared">ramp-squared</A></em> a0 a1 #:optional beg dur snd chn edpos
-  <em class=def><A NAME="envsquaredchannel">env-squared-channel</A></em> env #:optional beg dur snd chn edpos
-  <em class=def><A NAME="rampexpt">ramp-expt</A></em> a0 a1 exponent #:optional beg dur snd chn edpos
-  <em class=def><A NAME="envexptchannel">env-expt-channel</A></em> env exponent #:optional beg dur snd chn edpos
+  <em class=def><A NAME="rampsquared">ramp-squared</A></em> a0 a1 #:optional (symmetric #t) beg dur snd chn edpos
+  <em class=def><A NAME="envsquaredchannel">env-squared-channel</A></em> env #:optional (symmetric #t) beg dur snd chn edpos
+  <em class=def><A NAME="rampexpt">ramp-expt</A></em> a0 a1 exponent #:optional (symmetric #t) beg dur snd chn edpos
+  <em class=def><A NAME="envexptchannel">env-expt-channel</A></em> env exponent #:optional (symmetric #t) beg dur snd chn edpos
 
   <em class=def><a name="offsetchannel">offset-channel</a></em> amount #:optional beg dur snd chn edpos	
   <em class=def><a name="contrastchannel">contrast-channel</a></em> index #:optional beg dur snd chn edpos	
@@ -1670,7 +1670,8 @@ and <a href="extsnd.html#envchannel">env-channel</a>.
 connecting the points with a sinusoidal curve.  It uses <a href="extsnd.html#ptreechannel">ptree-channel</a>,
 so it's just as fast as env-channel.  Similarly, <b>blackman4-env-channel</b> connects the dots with
 a sum of cosines, and <b>env-squared-channel</b> connects the dots with an x^2 curve.  For any
-positive exponent, use <b>env-expt-channel</b>.
+positive exponent, use <b>env-expt-channel</b>.  The <i>symmetric</i> argument determines whether the
+up and down moving ramps look symmetrical around a break point.
 </p>
 <br><br>
 

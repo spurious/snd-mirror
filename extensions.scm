@@ -12,7 +12,9 @@
 ;;; remember-sound-state
 ;;; mix-channel, insert-channel
 ;;; redo-channel, undo-channel
-;;; sine-ramp, sine-env-channel
+;;; sine-ramp, sine-env-channel, blackman4-ramp, blackman4-env-channel
+;;; ramp-squared, env-squared-channel
+;;; ramp-expt, env-expt-channel
 ;;; offset-channel
 
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
@@ -517,7 +519,6 @@ If 'check' is #f, the hooks are removed."
 
 
 ;;; -------- any-env-channel
-;;; TODO: test env-squared env-expt et al
 
 (define* (any-env-channel env func #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; take breakpoints in env, connect with func, apply as envelope to channel
@@ -617,7 +618,7 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- ramp-squared, env-squared-channel
 
-(define* (ramp-squared rmp0 rmp1 #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (ramp-squared rmp0 rmp1 #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; vct: start incr off scl
   (ptree-channel
    (lambda (y data forward)
@@ -632,16 +633,22 @@ If 'check' is #f, the hooks are removed."
    beg dur snd chn edpos #t
    (lambda (frag-beg frag-dur)
      (let ((incr (/ 1.0 frag-dur)))
-       (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0))))))
+       (if (and symmetric
+		(< rmp1 rmp0))
+	   (vct (* (- frag-dur frag-beg) incr) (- incr) rmp1 (- rmp0 rmp1))
+	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0)))))))
 
-(define* (env-squared-channel env #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
-  (any-env-channel env ramp-squared beg dur snd chn edpos))
+(define* (env-squared-channel env #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (any-env-channel env 
+		   (lambda (r0 r1 b d s c e)
+		     (ramp-squared r0 r1 symmetric b d s c e))
+		   beg dur snd chn edpos))
 
 ;;; (env-squared-channel '(0 0 1 1 2 -.5 3 1))
 
 ;;; -------- ramp-expt, env-expt-channel
 
-(define* (ramp-expt rmp0 rmp1 exponent #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (ramp-expt rmp0 rmp1 exponent #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; vct: start incr off scl exponent
   ;; a^x = exp(x * log(a))
   (ptree-channel
@@ -657,16 +664,18 @@ If 'check' is #f, the hooks are removed."
    beg dur snd chn edpos #t
    (lambda (frag-beg frag-dur)
      (let ((incr (/ 1.0 frag-dur)))
-       (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0) exponent)))))
+       (if (and symmetric
+		(< rmp1 rmp0))
+	   (vct (* (- frag-dur frag-beg) incr) (- incr) rmp1 (- rmp0 rmp1) exponent)
+	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0) exponent))))))
 
-(define* (env-expt-channel env exponent #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (env-expt-channel env exponent #:optional (symmetric #t) (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   (if (= exponent 1.0)
       (env-channel env beg dur snd chn edpos)
       (any-env-channel env 
 		       (lambda (r0 r1 b d s c e)
-			 (ramp-expt r0 r1 exponent b d s c e))
+			 (ramp-expt r0 r1 exponent symmetric b d s c e))
 		       beg dur snd chn edpos)))
-
 
 
 ;;; -------- offset-channel 

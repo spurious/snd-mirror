@@ -1922,16 +1922,26 @@ XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
 
 void g_init_kbd(void)
 {
-  XEN_DEFINE_PROCEDURE(S_forward_graph,           g_forward_graph_w, 0, 3, 0,           H_forward_graph);
-  XEN_DEFINE_PROCEDURE(S_backward_graph,          g_backward_graph_w, 0, 3, 0,          H_backward_graph);
+  #define H_cursor_in_view "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the view"
+  #define H_cursor_on_left "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the left edge"
+  #define H_cursor_on_right "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the right edge"
+  #define H_cursor_in_middle "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the middle"
+  #define H_keyboard_no_action "The value for an " S_bind_key " function that causes it do nothing upon return"
 
-  XEN_DEFINE_PROCEDURE(S_key_binding,             g_key_binding_w, 2, 1, 0,             H_key_binding);
-  XEN_DEFINE_PROCEDURE(S_bind_key,                g_bind_key_w, 3, 2, 0,                H_bind_key);
-  XEN_DEFINE_PROCEDURE(S_unbind_key,              g_unbind_key_w, 2, 1, 0,              H_unbind_key);
-  XEN_DEFINE_PROCEDURE(S_key,                     g_key_w, 2, 2, 0,                     H_key);
-  XEN_DEFINE_PROCEDURE(S_save_macros,             g_save_macros_w, 0, 1, 0,             H_save_macros);
-  XEN_DEFINE_PROCEDURE(S_c_g_x,                   g_control_g_x_w, 0, 0, 0,             H_control_g_x);  
+  XEN_DEFINE_CONSTANT(S_cursor_in_view,        CURSOR_IN_VIEW,                    H_cursor_in_view);
+  XEN_DEFINE_CONSTANT(S_cursor_on_left,        CURSOR_ON_LEFT,                    H_cursor_on_left);
+  XEN_DEFINE_CONSTANT(S_cursor_on_right,       CURSOR_ON_RIGHT,                   H_cursor_on_right);
+  XEN_DEFINE_CONSTANT(S_cursor_in_middle,      CURSOR_IN_MIDDLE,                  H_cursor_in_middle);
+  XEN_DEFINE_CONSTANT(S_keyboard_no_action,    KEYBOARD_NO_ACTION,                H_keyboard_no_action);
 
-  XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,    g_report_in_minibuffer_w, 1, 1, 0,    H_report_in_minibuffer);
-  XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,    g_prompt_in_minibuffer_w, 1, 3, 0,    H_prompt_in_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_key_binding,          g_key_binding_w,          2, 1, 0, H_key_binding);
+  XEN_DEFINE_PROCEDURE(S_bind_key,             g_bind_key_w,             3, 2, 0, H_bind_key);
+  XEN_DEFINE_PROCEDURE(S_unbind_key,           g_unbind_key_w,           2, 1, 0, H_unbind_key);
+  XEN_DEFINE_PROCEDURE(S_key,                  g_key_w,                  2, 2, 0, H_key);
+  XEN_DEFINE_PROCEDURE(S_save_macros,          g_save_macros_w,          0, 1, 0, H_save_macros);
+  XEN_DEFINE_PROCEDURE(S_c_g_x,                g_control_g_x_w,          0, 0, 0, H_control_g_x);  
+  XEN_DEFINE_PROCEDURE(S_report_in_minibuffer, g_report_in_minibuffer_w, 1, 1, 0, H_report_in_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer, g_prompt_in_minibuffer_w, 1, 3, 0, H_prompt_in_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_forward_graph,        g_forward_graph_w,        0, 3, 0, H_forward_graph);
+  XEN_DEFINE_PROCEDURE(S_backward_graph,       g_backward_graph_w,       0, 3, 0, H_backward_graph);
 }

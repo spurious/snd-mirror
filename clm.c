@@ -3539,6 +3539,11 @@ static mus_any_class ENV_CLASS = {
   0
 };
 
+
+/* make-env (C, scm, lisp) should use :dur, not :end, and should dispense with :start
+ *   perhaps #define mus_make_env_with_dur(Brkpts, Pts, Scaler, Offset, Base, Dur) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, 0, Dur - 1, NULL)
+ */
+
 mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float base, Float duration, off_t start, off_t end, Float *odata)
 {
   int i;
@@ -3623,7 +3628,10 @@ static void set_env_location(mus_any *ptr, off_t val)
   /* doesn't this ignore the original notion of a "start" time? */
   seg *gen = (seg *)ptr;
   off_t passes, ctr = 0;
-  mus_restart_env(ptr);
+  if (gen->pass == val) return;
+  if (gen->pass > val)
+    mus_restart_env(ptr);
+  else ctr = gen->pass;
   gen->pass = val;
   while ((gen->index < gen->size) && 
 	 (ctr < val))

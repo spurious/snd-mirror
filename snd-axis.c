@@ -1252,6 +1252,10 @@ void g_init_axis(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_label, g_x_axis_label_w, H_x_axis_label,
 					    S_setB S_x_axis_label, g_set_x_axis_label_w, g_set_x_axis_label_reversed, 0, 3, 1, 3);
 
+  XEN_DEFINE_CONSTANT(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
+  XEN_DEFINE_CONSTANT(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");
+  XEN_DEFINE_CONSTANT(S_lisp_graph,      LISP_AXIS_INFO,      "lisp graph axis info");
+
   XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, H_axis_info);
 
 #if (!USE_NO_GUI)

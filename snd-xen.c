@@ -3121,23 +3121,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_CONSTANT(S_zoom_focus_active,     ZOOM_FOCUS_ACTIVE, H_zoom_focus_active);
   XEN_DEFINE_CONSTANT(S_zoom_focus_middle,     ZOOM_FOCUS_MIDDLE, H_zoom_focus_middle);
 
-  #define H_cursor_in_view "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the view"
-  #define H_cursor_on_left "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the left edge"
-  #define H_cursor_on_right "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the right edge"
-  #define H_cursor_in_middle "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the middle"
-  #define H_keyboard_no_action "The value for an " S_bind_key " function that causes it do nothing upon return"
-
-  XEN_DEFINE_CONSTANT(S_cursor_in_view,        CURSOR_IN_VIEW,        H_cursor_in_view);
-  XEN_DEFINE_CONSTANT(S_cursor_on_left,        CURSOR_ON_LEFT,        H_cursor_on_left);
-  XEN_DEFINE_CONSTANT(S_cursor_on_right,       CURSOR_ON_RIGHT,       H_cursor_on_right);
-  XEN_DEFINE_CONSTANT(S_cursor_in_middle,      CURSOR_IN_MIDDLE,      H_cursor_in_middle);
-  XEN_DEFINE_CONSTANT(S_keyboard_no_action,    KEYBOARD_NO_ACTION,    H_keyboard_no_action);
-
-  XEN_DEFINE_CONSTANT(S_time_graph,            TIME_AXIS_INFO,        "time domain graph");
-  XEN_DEFINE_CONSTANT(S_transform_graph,       TRANSFORM_AXIS_INFO,   "frequency domain graph");
-  XEN_DEFINE_CONSTANT(S_lisp_graph,            LISP_AXIS_INFO,        "lisp graph");
-
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
 				   S_setB S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
 
