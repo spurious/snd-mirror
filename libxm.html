@@ -23,25 +23,24 @@
 <span class=box><h1>xm</h1></span>
 <br>
 <p>libxm provides Guile/Ruby bindings for Xlib, Xt, Xp, Xpm, and Xm (Motif);
-or alternatively Gtk, gdk, gdk-pixbuf, pango, and some of glib.
+or alternatively Gtk, gdk, gdk-pixbuf, pango, and some of glib;
+and much of OpenGL.
 You can build it with just X, and so on -- see README.libxm for details.
 There are several example files In the libxm package -- anything with
 the extension "scm".  libxm can be used directly with Guile (or Ruby),
-providing a graphical user-interface for scripts and so on.
+providing a graphical user-interface for scripts.
 </p>
 <p>
 All libxm names are exactly the same as the C name except that
-a "|" is prepended (in Guile) -- this can be set via the macros
-XM_PREFIX and XM_POSTFIX to whatever you like --
+a "." is prepended (in Guile) to struct field accessors -- the prefix and postfix can be set via the macros
+XM_PREFIX, XM_FIELD_PREFIX and XM_POSTFIX to whatever you like --
 "x:" or "<" and ">", etc.  In Ruby, I'm prepending "R".
-Some such alteration seems necessary because the bare X names, especially
-of struct fields and constants could collide with common names like
-"value" or "x".  I chose not to try to make these names fit into the
+I chose not to try to make these names fit into the
 "Scheme culture" (i.e. adding random dashes and uncapitalizing everything)
 because it is already too hard to keep track of the thousands of names
 in these libraries.  By using the exact C name, ugly embedded caps and all,
 there's no hesitation or uncertainty about what the corresponding libxm name is;
-XmScaleSetValue becomes |XmScaleSetValue, x becomes |x, etc.
+XmScaleSetValue becomes XmScaleSetValue.
 There are several differences between the C versions and the libxm
 versions; these are listed in detail at the start of xm.c and xg.c.  Briefly,
 an Arg list is lisp list of name/value pairs and the "len" arg associated with it is optional;
@@ -56,43 +55,43 @@ the various "client data" args are optional;
 XtCallbackLists are passed as lists of procedure/data pairs;
 where an explicit NULL is needed as arg, use #f (or '() for list args);
 structs are accessed by the field name and the lisp variable (which contains the struct type) --
-(|pixel color) for example, or (|foreground gcvalue);
-blank structs, where needed, can be created via (|Name) -- (|XColor) or (|XGCValues) for example.
+(.pixel color) for example, or (.foreground gcvalue);
+blank structs, where needed, can be created via (Name) -- (XColor) or (XGCValues) for example.
 </p>
 
 For example, load this into guile after loading libxm.so:
 </p>
 <pre>
-(let* ((shell-app (|XtVaOpenApplication 
-		    "Test" 0 0 0 '() 0 |applicationShellWidgetClass
-		    (list |XmNallowShellResize #t)))
+(let* ((shell-app (XtVaOpenApplication 
+		    "Test" 0 0 0 '() 0 applicationShellWidgetClass
+		    (list XmNallowShellResize #t)))
        (app (cadr shell-app))
        (shell (car shell-app))
-       (black (|BlackPixelOfScreen 
-		(|DefaultScreenOfDisplay 
-		  (|XtDisplay shell)))))
-  (if (not (|XtIsApplicationShell shell))
+       (black (BlackPixelOfScreen 
+		(DefaultScreenOfDisplay 
+		  (XtDisplay shell)))))
+  (if (not (XtIsApplicationShell shell))
       (display "not appshell"?))
-  (|XtSetValues shell (list |XmNtitle "Hi!"))
+  (XtSetValues shell (list XmNtitle "Hi!"))
   (let* ((main-pane 
-	  (|XtVaCreateManagedWidget 
-	    "main-pane" |xmFormWidgetClass shell
-	    (list |XmNforeground       black
-		  |XmNtopAttachment    |XmATTACH_FORM
-		  |XmNbottomAttachment |XmATTACH_FORM
-		  |XmNleftAttachment   |XmATTACH_FORM
-		  |XmNrightAttachment  |XmATTACH_FORM
-		  |XmNallowResize      #t)))
-	 (button (|XtCreateManagedWidget 
-		   "push me" |xmPushButtonWidgetClass main-pane '() 0)))
-    (|XtAddCallback button |XmNactivateCallback 
+	  (XtVaCreateManagedWidget 
+	    "main-pane" xmFormWidgetClass shell
+	    (list XmNforeground       black
+		  XmNtopAttachment    XmATTACH_FORM
+		  XmNbottomAttachment XmATTACH_FORM
+		  XmNleftAttachment   XmATTACH_FORM
+		  XmNrightAttachment  XmATTACH_FORM
+		  XmNallowResize      #t)))
+	 (button (XtCreateManagedWidget 
+		   "push me" xmPushButtonWidgetClass main-pane '() 0)))
+    (XtAddCallback button XmNactivateCallback 
 		    (lambda (widget context event-info)
 		      (display widget)
-		      (display (|reason event-info))
+		      (display (.reason event-info))
 		      (display context))
 		    123)
-    (|XtRealizeWidget shell)
-    (|XtAppMainLoop app)))
+    (XtRealizeWidget shell)
+    (XtAppMainLoop app)))
 </pre>
 <p>To use libxm from some existing program, you need only
 export the caller's XtAppContext and main shell widget (mainly to
@@ -123,35 +122,35 @@ etc).  Here's a Snd-related gtk example:
 (define (create-scale-dialog parent)
   (if (not scale-dialog)
       (begin
-	(set! scale-dialog (|gtk_dialog_new))
-	(|gtk_signal_connect (|GTK_OBJECT scale-dialog) "delete-event"
+	(set! scale-dialog (gtk_dialog_new))
+	(gtk_signal_connect (GTK_OBJECT scale-dialog) "delete-event"
 			     (lambda (w ev info)
-			       (|gtk_widget_hide w)))
-	(|gtk_window_set_title (|GTK_WINDOW scale-dialog) "Scale")
-	(|gtk_widget_realize scale-dialog)
-	(let ((dismiss (|gtk_button_new_with_label "Dismiss"))
-	      (help (|gtk_button_new_with_label "Help")))
-	  (|gtk_box_pack_start (|GTK_BOX (|action_area (|GTK_DIALOG scale-dialog))) dismiss #t #t 4)
-	  (|gtk_box_pack_end (|GTK_BOX (|action_area (|GTK_DIALOG scale-dialog))) help #t #t 4)	
-	  (|gtk_signal_connect (|GTK_OBJECT dismiss) "clicked"
+			       (gtk_widget_hide w)))
+	(gtk_window_set_title (GTK_WINDOW scale-dialog) "Scale")
+	(gtk_widget_realize scale-dialog)
+	(let ((dismiss (gtk_button_new_with_label "Dismiss"))
+	      (help (gtk_button_new_with_label "Help")))
+	  (gtk_box_pack_start (GTK_BOX (action_area (GTK_DIALOG scale-dialog))) dismiss #t #t 4)
+	  (gtk_box_pack_end (GTK_BOX (action_area (GTK_DIALOG scale-dialog))) help #t #t 4)	
+	  (gtk_signal_connect (GTK_OBJECT dismiss) "clicked"
 			       (lambda (w info)
-				 (|gtk_widget_hide scale-dialog)))
-	  (|gtk_signal_connect (|GTK_OBJECT help) "clicked"
+				 (gtk_widget_hide scale-dialog)))
+	  (gtk_signal_connect (GTK_OBJECT help) "clicked"
 			       (lambda (w info)
 				 (help-dialog "Scaler Dialog" "move the slider to affect the volume")))
-	  (|gtk_widget_show dismiss)
-	  (|gtk_widget_show help)
-	  (let* ((adj (|gtk_adjustment_new 0.0 0.0 1.01 0.01 0.01 .01))
-		 (scale (|gtk_hscale_new (|GTK_ADJUSTMENT adj))))
-	    (|gtk_range_set_update_policy (|GTK_RANGE (|GTK_SCALE scale)) |GTK_UPDATE_CONTINUOUS)
-	    (|gtk_scale_set_draw_value (|GTK_SCALE scale) #t)
-	    (|gtk_scale_set_digits (|GTK_SCALE scale) 2)
-	    (|gtk_signal_connect (|GTK_OBJECT adj) "value_changed"
+	  (gtk_widget_show dismiss)
+	  (gtk_widget_show help)
+	  (let* ((adj (gtk_adjustment_new 0.0 0.0 1.01 0.01 0.01 .01))
+		 (scale (gtk_hscale_new (GTK_ADJUSTMENT adj))))
+	    (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS)
+	    (gtk_scale_set_draw_value (GTK_SCALE scale) #t)
+	    (gtk_scale_set_digits (GTK_SCALE scale) 2)
+	    (gtk_signal_connect (GTK_OBJECT adj) "value_changed"
 				 (lambda (wadj info)
-				   (set! current-scaler (|value (|GTK_ADJUSTMENT wadj)))))
-	    (|gtk_box_pack_start (|GTK_BOX (|vbox (|GTK_DIALOG scale-dialog))) scale #f #f 6)
-	    (|gtk_widget_show scale)))))
-  (|gtk_widget_show scale-dialog))
+				   (set! current-scaler (.value (GTK_ADJUSTMENT wadj)))))
+	    (gtk_box_pack_start (GTK_BOX (vbox (GTK_DIALOG scale-dialog))) scale #f #f 6)
+	    (gtk_widget_show scale)))))
+  (gtk_widget_show scale-dialog))
 
 (create-scale-dialog (cadr (main-widgets)))
 </pre>

@@ -3,9 +3,11 @@
 
 /* macros for extended language support 
  *
- * Guile:     ok, covers 1.3.4 to present (1.7.0) given the configuration macros in Snd's config.h.in.
- * Ruby:      ok, still a few gaps, tested in 1.6.6, 1.6.7, 1.7.2
- * None:      ok, covers all known versions of None
+ * Guile:     covers 1.3.4 to present (1.7.0) given the configuration macros in Snd's config.h.in.
+ * Ruby:      still a few gaps, tested in 1.6.6, 1.6.7, 1.7.2
+ * None:      covers all known versions of None
+ *
+ * (I also have incomplete versions for SCM, MzScheme, and Python if anyone is interested enough to tackle one)
  *
  * "xen" from Greek xenos (guest, foreigner)
  */
@@ -532,7 +534,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
 #define C_TO_XEN_ULONG(a)                 UINT2NUM((unsigned long)a)
 #if HAVE_RB_NUM2LL
-  #define C_TO_XEN_LONG_LONG(a)           C_TO_XEN_ULONG /* rb_ll2big(a) ?? */
+  #define C_TO_XEN_LONG_LONG(a)           C_TO_XEN_ULONG(a)
   #define XEN_TO_C_LONG_LONG(a)           rb_num2ll(a)
 #else
   #define C_TO_XEN_LONG_LONG(a)           C_TO_XEN_ULONG(a)

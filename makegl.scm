@@ -391,6 +391,7 @@
 (hey " * ~A: glGet* returning more than one value~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     24-July:   changed Guile prefix (R5RS reserves vertical-bar).~%")
 (hey " *     18-June:   GL 1.1 stubs.~%")
 (hey " *     4-June:    GtkGLext support.~%")
 (hey " *     20-May-02: initial version.~%")
@@ -686,7 +687,7 @@
 
 (hey "/* prefix for all names */~%")
 (hey "#if HAVE_GUILE~%")
-(hey "  #define XL_PRE \"|\"~%")
+(hey "  #define XL_PRE \"\"~%")
 (hey "  #define XL_POST \"\"~%")
 (hey "#else~%")
 (hey "/* for Ruby, XG PRE needs to be uppercase */~%")

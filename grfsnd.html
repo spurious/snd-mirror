@@ -1531,7 +1531,7 @@ included with Snd.  'make xm' should create
 a shared library named xm.so; you can load this at any time into Snd:
 </p>
 <pre>
-&gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-5/xm.so"))</em>
+&gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-6/xm.so"))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(dlinit hxm "init_xm")</em>
 <em class=listener>#t</em>
@@ -1543,50 +1543,50 @@ As a very simple example, here's dialog window with a slider:</p>
 (define current-scaler 1.0)
 
 (define (create-scale-dialog parent)
-  (if (not (|Widget? scale-dialog))
-      (let ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
-	    (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
-	    (titlestr (|XmStringCreate "Scaling" |XmFONTLIST_DEFAULT_TAG)))
+  (if (not (Widget? scale-dialog))
+      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+	    (titlestr (XmStringCreate "Scaling" XmFONTLIST_DEFAULT_TAG)))
 	(set! scale-dialog 
-	      (|XmCreateTemplateDialog parent "Scaling"
-                (list |XmNcancelLabelString   xdismiss
-		      |XmNhelpLabelString     xhelp
-		      |XmNautoUnmanage        #f
-		      |XmNdialogTitle         titlestr
-		      |XmNresizePolicy        |XmRESIZE_GROW
-	              |XmNnoResize            #f
-		      |XmNtransient           #f) ))
-	(|XtAddCallback scale-dialog 
-			|XmNcancelCallback (lambda (w context info)
-					     (|XtUnmanageChild scale-dialog)))
-	(|XtAddCallback scale-dialog 
-			|XmNhelpCallback (lambda (w context info)
+	      (XmCreateTemplateDialog parent "Scaling"
+                (list XmNcancelLabelString   xdismiss
+		      XmNhelpLabelString     xhelp
+		      XmNautoUnmanage        #f
+		      XmNdialogTitle         titlestr
+		      XmNresizePolicy        XmRESIZE_GROW
+	              XmNnoResize            #f
+		      XmNtransient           #f) ))
+	(XtAddCallback scale-dialog 
+			XmNcancelCallback (lambda (w context info)
+					     (XtUnmanageChild scale-dialog)))
+	(XtAddCallback scale-dialog 
+			XmNhelpCallback (lambda (w context info)
 					   (snd-print "move the slider to affect the volume")))
-	(|XmStringFree xhelp)
-	(|XmStringFree xdismiss)
-	(|XmStringFree titlestr)
+	(XmStringFree xhelp)
+	(XmStringFree xdismiss)
+	(XmStringFree titlestr)
 
 	(let* ((mainform 
-		(|XtCreateManagedWidget "formd" |xmFormWidgetClass scale-dialog
-                  (list |XmNleftAttachment      |XmATTACH_FORM
-		        |XmNrightAttachment     |XmATTACH_FORM
-		        |XmNtopAttachment       |XmATTACH_FORM
-		        |XmNbottomAttachment    |XmATTACH_WIDGET
-		        |XmNbottomWidget        (|XmMessageBoxGetChild scale-dialog |XmDIALOG_SEPARATOR))))
+		(XtCreateManagedWidget "formd" xmFormWidgetClass scale-dialog
+                  (list XmNleftAttachment    XmATTACH_FORM
+		        XmNrightAttachment   XmATTACH_FORM
+		        XmNtopAttachment     XmATTACH_FORM
+		        XmNbottomAttachment  XmATTACH_WIDGET
+		        XmNbottomWidget      (XmMessageBoxGetChild scale-dialog XmDIALOG_SEPARATOR))))
 	       (scale
-		(|XtCreateManagedWidget "" |xmScaleWidgetClass mainform
-		  (list |XmNorientation |XmHORIZONTAL
-			|XmNshowValue   #t
-			|XmNvalue       100
-			|XmNmaximum     500
-			|XmNdecimalPoints 2))))
+		(XtCreateManagedWidget "" xmScaleWidgetClass mainform
+		  (list XmNorientation XmHORIZONTAL
+			XmNshowValue   #t
+			XmNvalue       100
+			XmNmaximum     500
+			XmNdecimalPoints 2))))
 
-      (|XtAddCallback scale 
-		      |XmNvalueChangedCallback (lambda (w context info)
-						 (set! current-scaler (/ (|value info) 100.0))))
-      (|XtAddCallback scale |XmNdragCallback (lambda (w context info)
-						 (set! current-scaler (/ (|value info) 100.0)))))))
-  (|XtManageChild scale-dialog))
+      (XtAddCallback scale 
+		      XmNvalueChangedCallback (lambda (w context info)
+						 (set! current-scaler (/ (.value info) 100.0))))
+      (XtAddCallback scale XmNdragCallback (lambda (w context info)
+						 (set! current-scaler (/ (.value info) 100.0)))))))
+  (XtManageChild scale-dialog))
 
 (create-scale-dialog (cadr (main-widgets)))
 </pre>
@@ -1646,26 +1646,26 @@ match-sound-files from extensions.scm):
 <pre>
 (define (install-searcher proc)
   (define (XmString-&gt;string str)
-    (cadr (|XmStringGetLtoR str |XmFONTLIST_DEFAULT_TAG)))
+    (cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
   (define (XmStringTable-&gt;list st len)
-    (|XmStringTableUnparse st len #f |XmCHARSET_TEXT |XmCHARSET_TEXT #f 0 |XmOUTPUT_ALL))
+    (XmStringTableUnparse st len #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
   (define (list-&gt;XmStringTable strs)
-    (|XmStringTableParseStringArray strs (length strs) #f |XmCHARSET_TEXT #f 0 #f))
-  (|XtSetValues (let ((m (open-file-dialog #f)))
+    (XmStringTableParseStringArray strs (length strs) #f XmCHARSET_TEXT #f 0 #f))
+  (XtSetValues (let ((m (open-file-dialog #f)))
                          ; make sure the dialog exists
 		  (list-ref (dialog-widgets) 6))
-		(list |XmNfileSearchProc                             ; set dialog file search procedure
+		(list XmNfileSearchProc                             ; set dialog file search procedure
 		       (lambda (widget info)
-			 (let* ((dir (XmString-&gt;string (|dir info))) ; directory string
+			 (let* ((dir (XmString-&gt;string (dir info))) ; directory string
 				(files (match-sound-files proc dir)) ; list of matching files
 				(fileTable (list-&gt;XmStringTable      ; XmStringTable for XmNfileListItems
                                              (map (lambda (n)        ; every file needs prepended dir
                                                     (string-append dir n)) 
                                                   files))))
-			   (|XtSetValues widget                      ; change the list of files
-					 (list |XmNfileListItems fileTable
-					       |XmNfileListItemCount (length files)
-					       |XmNlistUpdated #t)))))))
+			   (XtSetValues widget                      ; change the list of files
+					 (list XmNfileListItems fileTable
+					       XmNfileListItemCount (length files)
+					       XmNlistUpdated #t)))))))
 
 ;(install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 ;(install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
@@ -1690,35 +1690,35 @@ will be moved into Scheme.  In the meantime, here's the scale-dialog in xg/gtk:
 (define (create-scale-dialog parent)
   (if (not scale-dialog)
       (begin
-	(set! scale-dialog (|gtk_dialog_new))
-	(|gtk_signal_connect (|GTK_OBJECT scale-dialog) "delete-event"
+	(set! scale-dialog (gtk_dialog_new))
+	(gtk_signal_connect (GTK_OBJECT scale-dialog) "delete-event"
 			     (lambda (w ev info)
-			       (|gtk_widget_hide w)))
-	(|gtk_window_set_title (|GTK_WINDOW scale-dialog) "Scale")
-	(|gtk_widget_realize scale-dialog)
-	(let ((dismiss (|gtk_button_new_with_label "Dismiss"))
-	      (help (|gtk_button_new_with_label "Help")))
-	  (|gtk_box_pack_start (|GTK_BOX (|action_area (|GTK_DIALOG scale-dialog))) dismiss #t #t 4)
-	  (|gtk_box_pack_end (|GTK_BOX (|action_area (|GTK_DIALOG scale-dialog))) help #t #t 4)	
-	  (|gtk_signal_connect (|GTK_OBJECT dismiss) "clicked"
+			       (gtk_widget_hide w)))
+	(gtk_window_set_title (GTK_WINDOW scale-dialog) "Scale")
+	(gtk_widget_realize scale-dialog)
+	(let ((dismiss (gtk_button_new_with_label "Dismiss"))
+	      (help (gtk_button_new_with_label "Help")))
+	  (gtk_box_pack_start (GTK_BOX (action_area (GTK_DIALOG scale-dialog))) dismiss #t #t 4)
+	  (gtk_box_pack_end (GTK_BOX (action_area (GTK_DIALOG scale-dialog))) help #t #t 4)	
+	  (gtk_signal_connect (GTK_OBJECT dismiss) "clicked"
 			       (lambda (w info)
-				 (|gtk_widget_hide scale-dialog)))
-	  (|gtk_signal_connect (|GTK_OBJECT help) "clicked"
+				 (gtk_widget_hide scale-dialog)))
+	  (gtk_signal_connect (GTK_OBJECT help) "clicked"
 			       (lambda (w info)
 				 (help-dialog "Scaler Dialog" "move the slider to affect the volume")))
-	  (|gtk_widget_show dismiss)
-	  (|gtk_widget_show help)
-	  (let* ((adj (|gtk_adjustment_new 0.0 0.0 1.01 0.01 0.01 .01))
-		 (scale (|gtk_hscale_new (|GTK_ADJUSTMENT adj))))
-	    (|gtk_range_set_update_policy (|GTK_RANGE (|GTK_SCALE scale)) |GTK_UPDATE_CONTINUOUS)
-	    (|gtk_scale_set_draw_value (|GTK_SCALE scale) #t)
-	    (|gtk_scale_set_digits (|GTK_SCALE scale) 2)
-	    (|gtk_signal_connect (|GTK_OBJECT adj) "value_changed"
+	  (gtk_widget_show dismiss)
+	  (gtk_widget_show help)
+	  (let* ((adj (gtk_adjustment_new 0.0 0.0 1.01 0.01 0.01 .01))
+		 (scale (gtk_hscale_new (GTK_ADJUSTMENT adj))))
+	    (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS)
+	    (gtk_scale_set_draw_value (GTK_SCALE scale) #t)
+	    (gtk_scale_set_digits (GTK_SCALE scale) 2)
+	    (gtk_signal_connect (GTK_OBJECT adj) "value_changed"
 				 (lambda (wadj info)
-				   (set! current-scaler (|value (|GTK_ADJUSTMENT wadj)))))
-	    (|gtk_box_pack_start (|GTK_BOX (|vbox (|GTK_DIALOG scale-dialog))) scale #f #f 6)
-	    (|gtk_widget_show scale)))))
-  (|gtk_widget_show scale-dialog))
+				   (set! current-scaler (.value (GTK_ADJUSTMENT wadj)))))
+	    (gtk_box_pack_start (GTK_BOX (vbox (GTK_DIALOG scale-dialog))) scale #f #f 6)
+	    (gtk_widget_show scale)))))
+  (gtk_widget_show scale-dialog))
 
 (create-scale-dialog (cadr (main-widgets)))
 </pre>
@@ -1762,7 +1762,7 @@ can treat it as a scripting engine.  For example,
 if you have an executable file with:
 </p>
 <pre>
-#!/home/bil/test/snd-5/snd -l
+#!/home/bil/test/snd-6/snd -l
 !#
 (define a-test 32)
 (display "hiho")
@@ -1771,12 +1771,12 @@ if you have an executable file with:
 <p>it can be executed just like any such script.
 </p>
 <pre>
-/home/bil/test/snd-5/ script
+/home/bil/test/snd-6/ script
 hiho
 :a-test
 32
 :(exit)
-/home/bil/test/snd-5/ 
+/home/bil/test/snd-6/ 
 </pre>
 <p>The difference between this use of Snd, and using guile itself
 for scripts is that Snd uses the -l switch where guile would use -s.
@@ -1786,7 +1786,7 @@ Here's an example script that doubles every sample in "oboe.snd" and
 writes the result as "test.snd":
 </p>
 <pre>
-#!/home/bil/test/snd-5/snd -l
+#!/home/bil/test/snd-6/snd -l
 !#
 (open-sound "oboe.snd")
 (scale-by 2.0)
@@ -1802,7 +1802,7 @@ a higher value, Snd will subsequently ignore the intevening arguments
 as it scans the startup arguments (see snd-test.scm for an example).
 </p>
 <pre>
-#!/home/bil/test/snd-5/snd -l
+#!/home/bil/test/snd-6/snd -l
 !#
 (if (= (length (script-args)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...\n")
@@ -2171,39 +2171,39 @@ program:
 </p>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define (draw-it)
-  (|glXMakeCurrent (|XtDisplay (cadr (main-widgets))) 
-		   (|XtWindow (car (channel-widgets)))
+  (glXMakeCurrent (XtDisplay (cadr (main-widgets))) 
+		   (XtWindow (car (channel-widgets)))
 		   (snd-glx-context))
-  (|glEnable |GL_DEPTH_TEST)
-  (|glDepthFunc |GL_LEQUAL)
-  (|glClearDepth 1.0)
-  (|glClearColor 0.0 0.0 0.0 0.0)
-  (|glLoadIdentity)
-  (|gluPerspective 40.0 1.0 10.0 200.0)
-  (|glTranslatef 0.0 0.0 -50.0)
-  (|glRotatef -58.0 0.0 1.0 0.0)
-  (let ((vals (|XtVaGetValues (car (channel-widgets)) (list |XmNwidth 0 |XmNheight 0))))
-    (|glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
-  (|glClear (logior |GL_COLOR_BUFFER_BIT |GL_DEPTH_BUFFER_BIT))
-  (|glBegin |GL_POLYGON)
-  (|glColor3f 0.0 0.0 0.0)   (|glVertex3f -10.0 -10.0 0.0)
-  (|glColor3f 0.7 0.7 0.7)   (|glVertex3f 10.0 -10.0 0.0)
-  (|glColor3f 1.0 1.0 1.0)   (|glVertex3f -10.0 10.0 0.0)
-  (|glEnd)
-  (|glBegin |GL_POLYGON)
-  (|glColor3f 1.0 1.0 0.0)   (|glVertex3f 0.0 -10.0 -10.0)
-  (|glColor3f 0.0 1.0 0.7)   (|glVertex3f 0.0 -10.0 10.0)
-  (|glColor3f 0.0 0.0 1.0)   (|glVertex3f 0.0 5.0 -10.0)
-  (|glEnd)
-  (|glBegin |GL_POLYGON)
-  (|glColor3f 1.0 1.0 0.0)   (|glVertex3f -10.0 6.0 4.0)
-  (|glColor3f 1.0 0.0 1.0)   (|glVertex3f -10.0 3.0 4.0)
-  (|glColor3f 0.0 0.0 1.0)   (|glVertex3f 4.0 -9.0 -10.0)
-  (|glColor3f 1.0 0.0 1.0)   (|glVertex3f 4.0 -6.0 -10.0)
-  (|glEnd)
-  (|glXSwapBuffers (|XtDisplay (cadr (main-widgets))) 
-		   (|XtWindow (car (channel-widgets))))
-  (|glFlush))
+  (glEnable GL_DEPTH_TEST)
+  (glDepthFunc GL_LEQUAL)
+  (glClearDepth 1.0)
+  (glClearColor 0.0 0.0 0.0 0.0)
+  (glLoadIdentity)
+  (gluPerspective 40.0 1.0 10.0 200.0)
+  (glTranslatef 0.0 0.0 -50.0)
+  (glRotatef -58.0 0.0 1.0 0.0)
+  (let ((vals (XtVaGetValues (car (channel-widgets)) (list XmNwidth 0 XmNheight 0))))
+    (glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
+  (glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+  (glBegin GL_POLYGON)
+  (glColor3f 0.0 0.0 0.0)   (glVertex3f -10.0 -10.0 0.0)
+  (glColor3f 0.7 0.7 0.7)   (glVertex3f 10.0 -10.0 0.0)
+  (glColor3f 1.0 1.0 1.0)   (glVertex3f -10.0 10.0 0.0)
+  (glEnd)
+  (glBegin GL_POLYGON)
+  (glColor3f 1.0 1.0 0.0)   (glVertex3f 0.0 -10.0 -10.0)
+  (glColor3f 0.0 1.0 0.7)   (glVertex3f 0.0 -10.0 10.0)
+  (glColor3f 0.0 0.0 1.0)   (glVertex3f 0.0 5.0 -10.0)
+  (glEnd)
+  (glBegin GL_POLYGON)
+  (glColor3f 1.0 1.0 0.0)   (glVertex3f -10.0 6.0 4.0)
+  (glColor3f 1.0 0.0 1.0)   (glVertex3f -10.0 3.0 4.0)
+  (glColor3f 0.0 0.0 1.0)   (glVertex3f 4.0 -9.0 -10.0)
+  (glColor3f 1.0 0.0 1.0)   (glVertex3f 4.0 -6.0 -10.0)
+  (glEnd)
+  (glXSwapBuffers (XtDisplay (cadr (main-widgets))) 
+		   (XtWindow (car (channel-widgets))))
+  (glFlush))
 <!-- --></pre></td></tr></table>
 <br>
 <p>For more examples, see snd-gl.scm.

@@ -1,5 +1,6 @@
 Snd change log
 
+  23-Jul:    first steps toward snd 6.0.
   19-Jul:    contrib/rmsgain.scm thanks to Fabio Furlanete.
 	     with-relative-panes.
   17-Jul:    mix-length -> mix-frames, region-length -> region-frames, selection-length -> selection-frames.

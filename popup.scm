@@ -22,38 +22,38 @@
     (define (for-each-child w func)
       "(for-each-child widget func) applies func to widget and each of its children"
       (func w)
-      (if (|XtIsComposite w)
+      (if (XtIsComposite w)
 	  (for-each 
 	   (lambda (n)
 	     (for-each-child n func))
-	   (cadr (|XtGetValues w (list |XmNchildren 0) 1))))))
+	   (cadr (XtGetValues w (list XmNchildren 0) 1))))))
 
 (define (change-label w new-label)
   "(change-label widget new-label) changes widget's label to be new-label"
-  (let ((str (|XmStringCreateLocalized new-label)))
-    (|XtSetValues w (list |XmNlabelString str))
-    (|XmStringFree str)))
+  (let ((str (XmStringCreateLocalized new-label)))
+    (XtSetValues w (list XmNlabelString str))
+    (XmStringFree str)))
       
 (define (current-label w)
   "(current-label widget) returns widget's label"
-  (let ((xmstr (cadr (|XtGetValues w (list |XmNlabelString 0)))))
-    (cadr (|XmStringGetLtoR xmstr |XmFONTLIST_DEFAULT_TAG))))
+  (let ((xmstr (cadr (XtGetValues w (list XmNlabelString 0)))))
+    (cadr (XmStringGetLtoR xmstr XmFONTLIST_DEFAULT_TAG))))
 
 
 
 (define (make-popup-menu name parent top-args entries)
   "(make-popup-menu name parent top-args entries) creates a popup menu"
-  (let ((menu (|XmCreatePopupMenu parent name top-args)))
+  (let ((menu (XmCreatePopupMenu parent name top-args)))
     (for-each
      (lambda (entry)
        ;; entry is list: name type args optional-callback optional-func
-       (let ((widget (|XtCreateManagedWidget (car entry)
+       (let ((widget (XtCreateManagedWidget (car entry)
 					     (cadr entry)
 					     menu
 					     (caddr entry))))
 	 (if (> (length entry) 3)
 	     (begin
-	       (|XtAddCallback widget |XmNactivateCallback (list-ref entry 3))
+	       (XtAddCallback widget XmNactivateCallback (list-ref entry 3))
 	       (if (> (length entry) 4)
 		   ((list-ref entry 4) widget))))))
      entries)
@@ -63,7 +63,7 @@
 
 (define selection-popup-menu 
   ;; used in graph if pointer is inside selected portion
-  (let ((every-menu (list |XmNbackground (highlight-color)))
+  (let ((every-menu (list XmNbackground (highlight-color)))
 	(stopping #f)
 	(stopping1 #f)
 	(stop-widget #f)
@@ -74,18 +74,18 @@
 		 (if stopping
 		     (begin
 		       (set! stopping #f)
-		       (if (|Widget? stop-widget)
+		       (if (Widget? stop-widget)
 			   (change-label stop-widget "Play"))))))
 
     (make-popup-menu 
      "selection-popup"
      (caddr (main-widgets))
-     (list |XmNpopupEnabled #t
-	   |XmNbackground (highlight-color))
+     (list XmNpopupEnabled #t
+	   XmNbackground (highlight-color))
      (list
-      (list "Selection" |xmLabelWidgetClass      every-menu)
-      (list "sep"       |xmSeparatorWidgetClass  every-menu)
-      (list "Play"      |xmPushButtonWidgetClass every-menu 
+      (list "Selection" xmLabelWidgetClass      every-menu)
+      (list "sep"       xmSeparatorWidgetClass  every-menu)
+      (list "Play"      xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i) 
 	      (if stopping
 		  (begin
@@ -102,7 +102,7 @@
 		    (set! stop-widget w)
 		    (set! stopping #t)
 		    (play-selection)))))
-      (list "Loop play"      |xmPushButtonWidgetClass every-menu ; play over and over
+      (list "Loop play"      xmPushButtonWidgetClass every-menu ; play over and over
 	    (lambda (w c i) 
 	      (if stopping1
 		  (begin
@@ -120,9 +120,9 @@
 		    (set! stopping1 #t)
 		    (add-hook! stop-playing-selection-hook play-selection) ; when one rendition ends, we immediately start another
 		    (play-selection)))))
-      (list "Delete"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (delete-selection)))
-      (list "Zero"      |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by 0.0)))
-      (list "Crop"      |xmPushButtonWidgetClass every-menu
+      (list "Delete"    xmPushButtonWidgetClass every-menu (lambda (w c i) (delete-selection)))
+      (list "Zero"      xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by 0.0)))
+      (list "Crop"      xmPushButtonWidgetClass every-menu
 	    (lambda (w c i)
 	      ;; delete everything except selection
 	      (for-each
@@ -145,15 +145,15 @@
 			      (set! sndlist (cons (list snd i) sndlist)))))
 		      (sounds))
 		 sndlist))))
-      (list "Save as"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (edit-save-as-dialog)))
-      (list "Copy->New" |xmPushButtonWidgetClass every-menu 
+      (list "Save as"   xmPushButtonWidgetClass every-menu (lambda (w c i) (edit-save-as-dialog)))
+      (list "Copy->New" xmPushButtonWidgetClass every-menu 
 	    (let ((selctr 0)) 
 	      (lambda (w c i) 
 		(let ((new-file-name (format #f "newf-~D.snd" selctr)))
 		  (set! selctr (+ selctr 1))
 		  (save-selection new-file-name)
 		  (open-sound new-file-name)))))
-      (list "Cut->New"   |xmPushButtonWidgetClass every-menu 
+      (list "Cut->New"   xmPushButtonWidgetClass every-menu 
 	    (let ((selctr 0)) 
 	      (lambda (w c i) 
 		(let ((new-file-name (format #f "newf-~D.snd" selctr)))
@@ -161,7 +161,7 @@
 		  (save-selection new-file-name)
 		  (delete-selection)
 		  (open-sound new-file-name)))))
-      (list "Snap marks" |xmPushButtonWidgetClass every-menu 
+      (list "Snap marks" xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (for-each 
 	       (lambda (select)
@@ -170,10 +170,10 @@
 		   (apply add-mark pos select)
 		   (apply add-mark (+ pos len) select)))
 	       (selection-members))))
-      (list "Unselect"  |xmPushButtonWidgetClass every-menu (lambda (w c i) (set! (selection-member? #t) #f)))
-      (list "Reverse"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
-      (list "Mix"       |xmPushButtonWidgetClass every-menu (lambda (w c i) (mix-selection (cursor))))
-      (list "Invert"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
+      (list "Unselect"  xmPushButtonWidgetClass every-menu (lambda (w c i) (set! (selection-member? #t) #f)))
+      (list "Reverse"   xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
+      (list "Mix"       xmPushButtonWidgetClass every-menu (lambda (w c i) (mix-selection (cursor))))
+      (list "Invert"    xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
 
 
 ;;; -------- time domain popup
@@ -183,7 +183,7 @@
 
 (define graph-popup-menu 
   ;; used within graph if pointer is not inside selected portion
-  (let ((every-menu (list |XmNbackground (highlight-color)))
+  (let ((every-menu (list XmNbackground (highlight-color)))
 	(stopping #f)
 	(stop-widget #f))
 
@@ -192,19 +192,19 @@
 		 (if stopping
 		     (begin
 		       (set! stopping #f)
-		       (if (|Widget? stop-widget)
+		       (if (Widget? stop-widget)
 			   (change-label stop-widget "Play"))))))
 
     (make-popup-menu 
      "graph-popup"
      (caddr (main-widgets))
-     (list |XmNpopupEnabled #t
-	   |XmNbackground (highlight-color))
+     (list XmNpopupEnabled #t
+	   XmNbackground (highlight-color))
      (list
 
-      (list "Snd"                |xmLabelWidgetClass      every-menu) 
-      (list "sep"                |xmSeparatorWidgetClass  every-menu)
-      (list "Play"               |xmPushButtonWidgetClass every-menu 
+      (list "Snd"                xmLabelWidgetClass      every-menu) 
+      (list "sep"                xmSeparatorWidgetClass  every-menu)
+      (list "Play"               xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i) 
 	      (if stopping
 		  (begin
@@ -217,52 +217,52 @@
 		    (play 0 graph-popup-snd))))
 	    (lambda (wid)
 	      (set! stop-widget wid)))
-      (list "Play channel"       |xmPushButtonWidgetClass every-menu 
+      (list "Play channel"       xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (set! stopping #t)
 	      (change-label stop-widget "Stop")
 	      (play 0 graph-popup-snd graph-popup-chn)))
-      (list "Play from cursor"   |xmPushButtonWidgetClass every-menu 
+      (list "Play from cursor"   xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (set! stopping #t)
 	      (change-label stop-widget "Stop")
 	      (play (cursor graph-popup-snd graph-popup-chn) graph-popup-snd)))
-      (list "Play previous"      |xmPushButtonWidgetClass every-menu
+      (list "Play previous"      xmPushButtonWidgetClass every-menu
 	    (lambda (w c i)
 	      (set! stopping #t)
 	      (change-label stop-widget "Stop")
 	      (play 0 graph-popup-snd graph-popup-chn #f #f (1- (edit-position)))))  ; play version before most-recent edit
-      (list "Play original"      |xmPushButtonWidgetClass every-menu
+      (list "Play original"      xmPushButtonWidgetClass every-menu
 	    (lambda (w c i)
 	      (set! stopping #t)
 	      (change-label stop-widget "Stop")
 	      (play 0 graph-popup-snd graph-popup-chn #f #f 0)))                     ; play unedited version
-      (list "Undo"               |xmPushButtonWidgetClass every-menu 
+      (list "Undo"               xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (undo 1 graph-popup-snd graph-popup-chn)))
-      (list "Redo"               |xmPushButtonWidgetClass every-menu 
+      (list "Redo"               xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (redo 1 graph-popup-snd graph-popup-chn)))
-      (list "Revert"             |xmPushButtonWidgetClass every-menu 
+      (list "Revert"             xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (revert-sound graph-popup-snd)))
-      (list "Save"               |xmPushButtonWidgetClass every-menu 
+      (list "Save"               xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (save-sound graph-popup-snd)))
-      (list "Save as"            |xmPushButtonWidgetClass every-menu 
+      (list "Save as"            xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (select-sound graph-popup-snd)
 	      (file-save-as-dialog)))
-      (list "Close"              |xmPushButtonWidgetClass every-menu 
+      (list "Close"              xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (close-sound graph-popup-snd)))
-      (list "Mix selection"      |xmPushButtonWidgetClass every-menu 
+      (list "Mix selection"      xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (mix-selection (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))
-      (list "Insert selection"   |xmPushButtonWidgetClass every-menu 
+      (list "Insert selection"   xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (insert-selection (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))
-      (list "Replace with selection"   |xmPushButtonWidgetClass every-menu 
+      (list "Replace with selection"   xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (let* ((snd graph-popup-snd)
 		     (chn graph-popup-chn)
@@ -279,16 +279,16 @@
 			(delete-samples beg (- sbeg beg) snd chn)
 			;(snd-warning "replace at ~D would collide with selected portion")
 			)))))
-      (list "Select all"         |xmPushButtonWidgetClass every-menu 
+      (list "Select all"         xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (select-all graph-popup-snd graph-popup-chn)))
-      (list "Unselect"           |xmPushButtonWidgetClass every-menu 
+      (list "Unselect"           xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i) 
 	      (set! (selection-member? #t) #f)))
-      (list "Equalize panes"     |xmPushButtonWidgetClass every-menu 
+      (list "Equalize panes"     xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (equalize-panes)))
-      (list "Info"               |xmPushButtonWidgetClass every-menu 
+      (list "Info"               xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (let ((snd graph-popup-snd))
 		(help-dialog 
@@ -311,10 +311,10 @@
 			(if (= (header-type snd) mus-soundfont)
 			    (format #f "  sounds: ~:{~%     ~S start: ~A, loop: ~A ~A~}" (soundfont-info))
 			    ""))))))
-      (list "Add mark"           |xmPushButtonWidgetClass every-menu 
+      (list "Add mark"           xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (add-mark (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))
-      (list "Delete mark"        |xmPushButtonWidgetClass every-menu 
+      (list "Delete mark"        xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      ;; find mark closest to cursor and delete it
 	      (let* ((ms (marks graph-popup-snd graph-popup-chn))
@@ -336,14 +336,14 @@
 						      (car ms)))))))
 		(if id
 		    (delete-mark id)))))
-      (list "To next mark"       |xmPushButtonWidgetClass every-menu
+      (list "To next mark"       xmPushButtonWidgetClass every-menu
             (lambda (w c i)
               (forward-mark 1 graph-popup-snd graph-popup-chn)))
-      (list "To last mark"       |xmPushButtonWidgetClass every-menu
+      (list "To last mark"       xmPushButtonWidgetClass every-menu
             (lambda (w c i)
               (backward-mark 1 graph-popup-snd graph-popup-chn)))
-      (list "sep"                |xmSeparatorWidgetClass  every-menu)
-      (list "Exit"               |xmPushButtonWidgetClass every-menu 
+      (list "sep"                xmSeparatorWidgetClass  every-menu)
+      (list "Exit"               xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (exit)))
       ))))
@@ -354,7 +354,7 @@
     (for-each-child
      graph-popup-menu
      (lambda (w)
-       (let ((name (|XtName w)))
+       (let ((name (XtName w)))
 	 (if (string=? name "Snd")
 	     (if (> (chans snd) 1)
 		 (change-label w (format #f "~A[~D]" (short-file-name snd) chn))
@@ -363,45 +363,45 @@
 		     (string=? name "Undo")
 		     (string=? name "Revert")
 		     (string=? name "Play previous"))
-		 ((if (> (car eds) 0) |XtManageChild |XtUnmanageChild) w)
+		 ((if (> (car eds) 0) XtManageChild XtUnmanageChild) w)
 		 (if (string=? name "Play channel")
-		     ((if (> (chans snd) 1) |XtManageChild |XtUnmanageChild) w)
+		     ((if (> (chans snd) 1) XtManageChild XtUnmanageChild) w)
 		     (if (string=? name "Equalize panes")
 			 ((if (or (> (chans snd) 1) 
 				  (> (length (sounds)) 1))
-			      |XtManageChild |XtUnmanageChild) w)
+			      XtManageChild XtUnmanageChild) w)
 			 (if (string=? name "Redo")
-			     ((if (> (cadr eds) 0) |XtManageChild |XtUnmanageChild) w)
+			     ((if (> (cadr eds) 0) XtManageChild XtUnmanageChild) w)
 			     (if (or (string=? name "Mix selection")
 				     (string=? name "Insert selection")
 				     (string=? name "Unselect")
 				     (string=? name "Replace with selection"))
-				 ((if (selection?) |XtManageChild |XtUnmanageChild) w)
+				 ((if (selection?) XtManageChild XtUnmanageChild) w)
 				 (if (string=? name "Play from cursor")
-				     ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w)
+				     ((if (> (cursor snd chn) 0) XtManageChild XtUnmanageChild) w)
 				     (if (string=? name "Play original")
-					 ((if (> (car eds) 1) |XtManageChild |XtUnmanageChild) w)
+					 ((if (> (car eds) 1) XtManageChild XtUnmanageChild) w)
 					 (if (or (string=? name "Delete mark")
 						 (string=? name "To next mark")
 						 (string=? name "To last mark"))
-					     ((if (null? (marks snd chn)) |XtUnmanageChild |XtManageChild) w)))))))))))))))
+					     ((if (null? (marks snd chn)) XtUnmanageChild XtManageChild) w)))))))))))))))
 
 
 ;;; -------- fft popup (easier to access than Options:Transform)
 
 (define (make-simple-popdown-menu label popdown-labels parent cascade-func args)
   "(make-simple-popdown-menu label popdown-labels parent cascade-func args)"
-  (let* ((top (|XmCreatePulldownMenu parent label args))
-	 (top-cascade (|XtCreateManagedWidget label |xmCascadeButtonWidgetClass parent
-			(append (list |XmNsubMenuId top)
+  (let* ((top (XmCreatePulldownMenu parent label args))
+	 (top-cascade (XtCreateManagedWidget label xmCascadeButtonWidgetClass parent
+			(append (list XmNsubMenuId top)
 				args)))
 	 (children (map (lambda (poplab)
-			  (let ((child (|XtCreateManagedWidget (car poplab) |xmPushButtonWidgetClass top args)))
-			    (|XtAddCallback child |XmNactivateCallback (cadr poplab))
+			  (let ((child (XtCreateManagedWidget (car poplab) xmPushButtonWidgetClass top args)))
+			    (XtAddCallback child XmNactivateCallback (cadr poplab))
 			    child))
 			popdown-labels)))
       (if cascade-func 
-	  (|XtAddCallback top-cascade |XmNcascadingCallback 
+	  (XtAddCallback top-cascade XmNcascadingCallback 
             (lambda (w c i)
               (cascade-func children))))))
 
@@ -410,7 +410,7 @@
   (for-each-child
    fft-popup-menu
    (lambda (w)
-     (let ((name (|XtName w)))
+     (let ((name (XtName w)))
        (if (string=? name "Peaks")
 	   (change-label w (if (show-transform-peaks snd chn) "No peaks" "Peaks"))
 	   (if (string=? name "dB")
@@ -420,33 +420,33 @@
 
 (define fft-popup-menu 
   ;; used within graph if pointer is in the fft graph
-  (let* ((every-menu (list |XmNbackground (highlight-color)))
-	 (fft-popup (|XmCreatePopupMenu (caddr (main-widgets)) "fft-popup"
-		       (append (list |XmNpopupEnabled #t) every-menu))))
+  (let* ((every-menu (list XmNbackground (highlight-color)))
+	 (fft-popup (XmCreatePopupMenu (caddr (main-widgets)) "fft-popup"
+		       (append (list XmNpopupEnabled #t) every-menu))))
 
     (define (choose-chan)
       (if (= (channel-style graph-popup-snd) channels-separate) graph-popup-chn #t))
     
-    (|XtCreateManagedWidget "Transform" |xmLabelWidgetClass fft-popup every-menu)
-    (|XtCreateManagedWidget "sep" |xmSeparatorWidgetClass fft-popup every-menu)
+    (XtCreateManagedWidget "Transform" xmLabelWidgetClass fft-popup every-menu)
+    (XtCreateManagedWidget "sep" xmSeparatorWidgetClass fft-popup every-menu)
 
-    (let ((peaks (|XtCreateManagedWidget "Peaks" |xmPushButtonWidgetClass fft-popup every-menu)))
-      (|XtAddCallback peaks |XmNactivateCallback
+    (let ((peaks (XtCreateManagedWidget "Peaks" xmPushButtonWidgetClass fft-popup every-menu)))
+      (XtAddCallback peaks XmNactivateCallback
          (lambda (w c i)
 	   (set! (show-transform-peaks graph-popup-snd (choose-chan)) (not (show-transform-peaks graph-popup-snd graph-popup-chn))))))
 
-    (let ((db (|XtCreateManagedWidget "dB" |xmPushButtonWidgetClass fft-popup every-menu)))
-      (|XtAddCallback db |XmNactivateCallback
+    (let ((db (XtCreateManagedWidget "dB" xmPushButtonWidgetClass fft-popup every-menu)))
+      (XtAddCallback db XmNactivateCallback
          (lambda (w c i)
 	   (set! (fft-log-magnitude graph-popup-snd (choose-chan)) (not (fft-log-magnitude graph-popup-snd graph-popup-chn))))))
 
-    (let ((logfreq (|XtCreateManagedWidget "Log freq" |xmPushButtonWidgetClass fft-popup every-menu)))
-      (|XtAddCallback logfreq |XmNactivateCallback
+    (let ((logfreq (XtCreateManagedWidget "Log freq" xmPushButtonWidgetClass fft-popup every-menu)))
+      (XtAddCallback logfreq XmNactivateCallback
          (lambda (w c i)
 	   (set! (fft-log-frequency graph-popup-snd (choose-chan)) (not (fft-log-frequency graph-popup-snd graph-popup-chn))))))
 
-    (let ((norm (|XtCreateManagedWidget "Normalize" |xmPushButtonWidgetClass fft-popup every-menu)))
-      (|XtAddCallback norm |XmNactivateCallback
+    (let ((norm (XtCreateManagedWidget "Normalize" xmPushButtonWidgetClass fft-popup every-menu)))
+      (XtAddCallback norm XmNactivateCallback
          (lambda (w c i)
 	   (if (= (transform-normalization graph-popup-snd graph-popup-chn) dont-normalize-transform)
 	       (set! (transform-normalization graph-popup-snd (choose-chan)) normalize-transform-by-channel)
@@ -465,7 +465,7 @@
        (let ((ctr 0))
 	 (for-each 
 	  (lambda (child)
-	    (|XtSetSensitive child (not (= (transform-graph-type graph-popup-snd graph-popup-chn) ctr)))
+	    (XtSetSensitive child (not (= (transform-graph-type graph-popup-snd graph-popup-chn) ctr)))
 	    (set! ctr (+ ctr 1)))
 	  lst)))
      every-menu)
@@ -483,7 +483,7 @@
      (lambda (lst)
        (for-each 
 	(lambda (child size)
-	  (|XtSetSensitive child (not (= (transform-size graph-popup-snd graph-popup-chn) size))))
+	  (XtSetSensitive child (not (= (transform-size graph-popup-snd graph-popup-chn) size))))
 	lst sizes))
      every-menu))
 
@@ -503,7 +503,7 @@
        (lambda (lst)
 	 (for-each 
 	  (lambda (child window)
-	    (|XtSetSensitive child (not (= (fft-window graph-popup-snd graph-popup-chn) window))))
+	    (XtSetSensitive child (not (= (fft-window graph-popup-snd graph-popup-chn) window))))
 	  lst windows))
        every-menu))
 
@@ -521,7 +521,7 @@
        (lambda (lst)
 	 (for-each 
 	  (lambda (child type)
-	    (|XtSetSensitive child (not (= (transform-type graph-popup-snd graph-popup-chn) type))))
+	    (XtSetSensitive child (not (= (transform-type graph-popup-snd graph-popup-chn) type))))
 	  lst types))
        every-menu))
 
@@ -540,16 +540,16 @@
        (let ((ctr 0))
 	 (for-each 
 	  (lambda (child)
-	    (|XtSetSensitive child (not (= (wavelet-type graph-popup-snd graph-popup-chn) ctr)))
+	    (XtSetSensitive child (not (= (wavelet-type graph-popup-snd graph-popup-chn) ctr)))
 	    (set! ctr (+ ctr 1)))
 	  lst)))
      every-menu)
 
-    (let ((color (|XtCreateManagedWidget "Color" |xmPushButtonWidgetClass fft-popup every-menu)))
-      (|XtAddCallback color |XmNactivateCallback (lambda (w c i) (color-dialog))))
+    (let ((color (XtCreateManagedWidget "Color" xmPushButtonWidgetClass fft-popup every-menu)))
+      (XtAddCallback color XmNactivateCallback (lambda (w c i) (color-dialog))))
 
-    (let ((orient (|XtCreateManagedWidget "Orientation" |xmPushButtonWidgetClass fft-popup every-menu)))
-      (|XtAddCallback orient |XmNactivateCallback (lambda (w c i) (orientation-dialog))))
+    (let ((orient (XtCreateManagedWidget "Orientation" xmPushButtonWidgetClass fft-popup every-menu)))
+      (XtAddCallback orient XmNactivateCallback (lambda (w c i) (orientation-dialog))))
 
     fft-popup))
 
@@ -571,18 +571,18 @@
 	(if (not (find-popup snd chn popups))
 	    (let ((chn-grf (car (channel-widgets snd chn))))
 	      (set! popups (cons (list snd chn) popups))
-	      (|XtAddCallback chn-grf |XmNpopupHandlerCallback 
+	      (XtAddCallback chn-grf XmNpopupHandlerCallback 
 		 (lambda (w data info)
-		   (let* ((e (|event info))
-			  (xe (- (|x_root e) (car (|XtTranslateCoords w 0 0)))))
-		     (if (= |ButtonPress (|type e))
+		   (let* ((e (.event info))
+			  (xe (- (.x_root e) (car (XtTranslateCoords w 0 0)))))
+		     (if (= ButtonPress (.type e))
 			 (begin
 			   ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
 			   (set! graph-popup-snd snd)
 			   (set! graph-popup-chn chn)
 			   
 			   (if (= (channel-style snd) channels-combined)
-			       (let ((ye (|y e))) ; y axis location of mouse-down
+			       (let ((ye (.y e))) ; y axis location of mouse-down
 				 (call-with-current-continuation
 				  (lambda (break)
 				    (do ((i 0 (1+ i)))
@@ -602,14 +602,14 @@
 				 ;; in fft
 				 (begin
 				   (edit-fft-popup-menu snd chn)
-				   (set! (|menuToPost info) fft-popup-menu))
+				   (set! (.menuToPost info) fft-popup-menu))
 				 
 				 (if (and lax
 					  (>= xe (list-ref lax 10))
 					  (<= xe (list-ref lax 12)))
 				     ;; in lisp
 				     ;;   nothing special implemented yet
-				     ;; (set! (|menuToPost info) graph-popup-menu)
+				     ;; (set! (.menuToPost info) graph-popup-menu)
 				     #f ; just a place-holder
 				     
 				     (if (and (selection?)
@@ -619,11 +619,11 @@
 							     (srate snd))))
 						(and (>= xe (x->position beg snd chn))
 						     (<= xe (x->position end snd chn)))))
-					 (set! (|menuToPost info) selection-popup-menu)
+					 (set! (.menuToPost info) selection-popup-menu)
 					 
 					 (begin
 					   (edit-graph-popup-menu graph-popup-snd graph-popup-chn)
-					   (set! (|menuToPost info) graph-popup-menu)))))))))))))))
+					   (set! (.menuToPost info) graph-popup-menu)))))))))))))))
 
     (add-hook! after-open-hook add-popup)
     (for-each 
@@ -637,13 +637,13 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
   (let ((color-pixel
 	 (if (string? new-color) ; assuming X11 color names here
 	     (let* ((shell (cadr (main-widgets)))
-		    (dpy (|XtDisplay shell))
-		    (scr (|DefaultScreen dpy))
-		    (cmap (|DefaultColormap dpy scr))
-		    (col (|XColor)))
-	       (if (= (|XAllocNamedColor dpy cmap new-color col col) 0)
+		    (dpy (XtDisplay shell))
+		    (scr (DefaultScreen dpy))
+		    (cmap (DefaultColormap dpy scr))
+		    (col (XColor)))
+	       (if (= (XAllocNamedColor dpy cmap new-color col col) 0)
 		   (snd-error "can't allocate ~S" new-color)
-		   (|pixel col)))
+		   (.pixel col)))
 	     (if (color? new-color)
 		 new-color
 		 ;; assume a list of rgb vals?
@@ -651,7 +651,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
     (for-each-child
      menu
      (lambda (n)
-       (|XmChangeColor n color-pixel)))))
+       (XmChangeColor n color-pixel)))))
 
 (define (change-selection-popup-color new-color)
   "(change-selection-popup-color new-color) changes the selection popup menu's color: (change-selection-popup-color \"red\")"
@@ -686,26 +686,26 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
   ;;      and in the multiple case, what the drop-down labels are
   ;;  "with-one" is normally #t, but if there's never a simple case (i.e. it's either
   ;;    a drop-down selection or nothing), set "with-one" to #f.
-  (let ((top-one (if with-one (|XtCreateManagedWidget label |xmPushButtonWidgetClass parent args) #f))
+  (let ((top-one (if with-one (XtCreateManagedWidget label xmPushButtonWidgetClass parent args) #f))
 	(children '()))
     (if with-one
-	(|XtAddCallback top-one |XmNactivateCallback (lambda (w c i) (func (car (collector (sounds)))))))
-    (let* ((top-two (|XmCreatePulldownMenu parent label args))
-	   (top-two-cascade (|XtCreateManagedWidget label |xmCascadeButtonWidgetClass parent
-			       (append (list |XmNsubMenuId top-two)
+	(XtAddCallback top-one XmNactivateCallback (lambda (w c i) (func (car (collector (sounds)))))))
+    (let* ((top-two (XmCreatePulldownMenu parent label args))
+	   (top-two-cascade (XtCreateManagedWidget label xmCascadeButtonWidgetClass parent
+			       (append (list XmNsubMenuId top-two)
 				       args))))
-      (|XtAddCallback top-two-cascade |XmNcascadingCallback
+      (XtAddCallback top-two-cascade XmNcascadingCallback
 	(lambda (w c i)
 	  (for-each
 	   (lambda (n)
-	     (|XtUnmanageChild n))
+	     (XtUnmanageChild n))
 	   children)
 	  (let ((current-sounds (collector (sounds))))
 	    (if (< (length children) (length current-sounds)) ; only active if len (collector (sounds)) > 1
 		(do ((i (length children) (1+ i)))
 		    ((= i (length current-sounds)))
-		  (let ((child (|XtCreateManagedWidget "" |xmPushButtonWidgetClass top-two args)))
-		    (|XtAddCallback child |XmNactivateCallback
+		  (let ((child (XtCreateManagedWidget "" xmPushButtonWidgetClass top-two args)))
+		    (XtAddCallback child XmNactivateCallback
 		      (lambda (w c i)
 			(func (or (string=? (current-label w) "all")
 				  (find-sound (current-label w))))))
@@ -718,7 +718,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 		  (let ((child (car cs))
 			(snd (car snds)))
 		    (change-label child (short-file-name snd))
-		    (|XtManageChild child)
+		    (XtManageChild child)
 		    (setup (cdr cs) (cdr snds))))))))
       (list 'Popdown top-one top-two top-two-cascade collector))))
 
@@ -728,9 +728,9 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 			 (show-listener)
 			 (set! (show-listener) #f)
 			 (list-ref (main-widgets) 4))))
-	 (every-menu (list |XmNbackground (highlight-color)))
-	 (listener-popup (|XmCreatePopupMenu listener "listener-popup"
-			   (append (list |XmNpopupEnabled #t) every-menu))))
+	 (every-menu (list XmNbackground (highlight-color)))
+	 (listener-popup (XmCreatePopupMenu listener "listener-popup"
+			   (append (list XmNpopupEnabled #t) every-menu))))
 
     (define (edited snds)
       (remove-if (lambda (n) 
@@ -747,53 +747,53 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 	  snds
 	  '()))
 
-    (|XtCreateManagedWidget "Listener" |xmLabelWidgetClass listener-popup every-menu)
-    (|XtCreateManagedWidget "sep" |xmSeparatorWidgetClass listener-popup every-menu)
+    (XtCreateManagedWidget "Listener" xmLabelWidgetClass listener-popup every-menu)
+    (XtCreateManagedWidget "sep" xmSeparatorWidgetClass listener-popup every-menu)
 
     (let ((listener-popup-menu
 	   (list (make-popdown-entry "Play" listener-popup (lambda (snd) (play 0 snd)) every-menu identity #t)
 
-		 (let ((help-widget (|XtCreateManagedWidget "Help" |xmPushButtonWidgetClass listener-popup every-menu)))
-		   (|XtAddCallback help-widget |XmNactivateCallback
+		 (let ((help-widget (XtCreateManagedWidget "Help" xmPushButtonWidgetClass listener-popup every-menu)))
+		   (XtAddCallback help-widget XmNactivateCallback
 		     (lambda (w c i)
 		       (let* ((selected (listener-selection))
 			      (help (and selected (snd-help selected))))
 			 (if help (help-dialog selected help)))))
 		   help-widget)
 
-		 (let ((open-widget (|XtCreateManagedWidget "Open" |xmPushButtonWidgetClass listener-popup every-menu)))
-		   (|XtAddCallback open-widget |XmNactivateCallback (lambda (w c i) (open-file-dialog)))
+		 (let ((open-widget (XtCreateManagedWidget "Open" xmPushButtonWidgetClass listener-popup every-menu)))
+		   (XtAddCallback open-widget XmNactivateCallback (lambda (w c i) (open-file-dialog)))
 		   open-widget)
 		 
 		 (make-popdown-entry "Close" listener-popup close-sound every-menu identity #t)
 		 (make-popdown-entry "Save" listener-popup save-sound every-menu edited #t)
 		 (make-popdown-entry "Revert" listener-popup revert-sound every-menu edited #t)
 
-		 (let ((panes-widget (|XtCreateManagedWidget "Equalize panes" |xmPushButtonWidgetClass listener-popup every-menu)))
-		   (|XtAddCallback panes-widget |XmNactivateCallback (lambda (w c i) (equalize-panes)))
+		 (let ((panes-widget (XtCreateManagedWidget "Equalize panes" xmPushButtonWidgetClass listener-popup every-menu)))
+		   (XtAddCallback panes-widget XmNactivateCallback (lambda (w c i) (equalize-panes)))
 		   panes-widget)
 
 		 (make-popdown-entry "Focus" listener-popup 
 				     (lambda (us)
 				       (let* ((pane (car (sound-widgets us)))
 					      (old-resize (auto-resize)))
-					 (|XtSetValues (cadr (main-widgets)) (list |XmNallowShellResize #f))
+					 (XtSetValues (cadr (main-widgets)) (list XmNallowShellResize #f))
 					 (for-each 
 					  (lambda (them)
-					    (|XtUnmanageChild (car (sound-widgets them))))
+					    (XtUnmanageChild (car (sound-widgets them))))
 					  (sounds))
-					 (|XtManageChild pane)
-					 (|XtSetValues (cadr (main-widgets)) (list |XmNallowShellResize (auto-resize)))))
+					 (XtManageChild pane)
+					 (XtSetValues (cadr (main-widgets)) (list XmNallowShellResize (auto-resize)))))
 				     every-menu focused #f)
 
-		 (|XtCreateManagedWidget "sep" |xmSeparatorWidgetClass listener-popup every-menu)
-		 (let ((exit-widget (|XtCreateManagedWidget "Exit" |xmPushButtonWidgetClass listener-popup every-menu)))
-		   (|XtAddCallback exit-widget |XmNactivateCallback (lambda (w c i) (exit)))
+		 (XtCreateManagedWidget "sep" xmSeparatorWidgetClass listener-popup every-menu)
+		 (let ((exit-widget (XtCreateManagedWidget "Exit" xmPushButtonWidgetClass listener-popup every-menu)))
+		   (XtAddCallback exit-widget XmNactivateCallback (lambda (w c i) (exit)))
 		   exit-widget))))
 
-      (|XtAddCallback listener |XmNpopupHandlerCallback 
+      (XtAddCallback listener XmNpopupHandlerCallback 
         (lambda (w data info)
-	  (if (= |ButtonPress (|type (|event info))) ; otherwise it's probably Meta-F or whatever 
+	  (if (= ButtonPress (.type (.event info))) ; otherwise it's probably Meta-F or whatever 
 	      (begin
 		(for-each
 		 (lambda (n)
@@ -803,23 +803,23 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 			     (top-two (list-ref n 2))
 			     (top-two-cascade (list-ref n 3))
 			     (len (length ((list-ref n 4) (sounds)))))
-			 (|XtUnmanageChild top-two)
-			 (|XtUnmanageChild top-two-cascade)
-			 (if top-one (|XtUnmanageChild top-one))
+			 (XtUnmanageChild top-two)
+			 (XtUnmanageChild top-two-cascade)
+			 (if top-one (XtUnmanageChild top-one))
 			 (if (> len 1) 
 			     (begin
-			       (|XtManageChild top-two-cascade)
-			       (|XtManageChild top-two)))
+			       (XtManageChild top-two-cascade)
+			       (XtManageChild top-two)))
 			 (if (and top-one
 				  (= len 1))
-			     (|XtManageChild top-one)))
-		       (if (|Widget? n)
-			   (if (string=? (|XtName n) "Equalize panes")
-			       ((if (> (length (sounds)) 1) |XtManageChild |XtUnmanageChild) n)
-			       (if (string=? (|XtName n) "Help")
-				   ((if (listener-selection) |XtManageChild |XtUnmanageChild) n))))))
+			     (XtManageChild top-one)))
+		       (if (Widget? n)
+			   (if (string=? (XtName n) "Equalize panes")
+			       ((if (> (length (sounds)) 1) XtManageChild XtUnmanageChild) n)
+			       (if (string=? (XtName n) "Help")
+				   ((if (listener-selection) XtManageChild XtUnmanageChild) n))))))
 		 listener-popup-menu)
-		(set! (|menuToPost info) listener-popup)))))
+		(set! (.menuToPost info) listener-popup)))))
       listener-popup)))
 
 (add-selection-popup)

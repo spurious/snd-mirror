@@ -1501,7 +1501,8 @@ for details.
 
 <p>goopsnd.scm goofs around with goops, the Guile Object System.  As it stands, it
 might provide simple examples of goops syntax, but I'm not sure it's of any value
-yet.  There are days when it seems to me that there must be something neat we could do here.
+yet. 
+Fabio Furlanete's rmsgain.scm in the contrib directory uses goops.
 </p>
 
 
@@ -2895,12 +2896,12 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 (read and write) via <i>xe-envelope</i>.  For example,
 </p>
 <pre>
-(define outer (add-main-pane "hiho" |xmFormWidgetClass '()))
+(define outer (add-main-pane "hiho" xmFormWidgetClass '()))
 (define editor (xe-create-enved "a name" outer 
-			     (list |XmNleftAttachment   |XmATTACH_FORM
-				   |XmNtopAttachment    |XmATTACH_FORM
-				   |XmNbottomAttachment |XmATTACH_FORM
-				   |XmNrightAttachment  |XmATTACH_FORM)
+			     (list XmNleftAttachment   XmATTACH_FORM
+				   XmNtopAttachment    XmATTACH_FORM
+				   XmNbottomAttachment XmATTACH_FORM
+				   XmNrightAttachment  XmATTACH_FORM)
 			     '(0.0 1.0 0.0 1.0)))))
 (set! (xe-envelope editor) (list 0.0 1.0 1.0 0.5))
 </pre>

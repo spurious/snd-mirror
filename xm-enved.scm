@@ -160,11 +160,11 @@
       (set! xe-mouse-new #f)))
 
 
-  (if (not (member |XmNbackground args))
-      (set! args (append args (list |XmNbackground (graph-color)))))
-  (if (not (member |XmNforeground args))
-      (set! args (append args (list |XmNforeground (data-color)))))
-  (let* ((drawer (|XtCreateManagedWidget name |xmDrawingAreaWidgetClass parent args))
+  (if (not (member XmNbackground args))
+      (set! args (append args (list XmNbackground (graph-color)))))
+  (if (not (member XmNforeground args))
+      (set! args (append args (list XmNforeground (data-color)))))
+  (let* ((drawer (XtCreateManagedWidget name xmDrawingAreaWidgetClass parent args))
 	 (gc (car (snd-gcs)))
 	 (egc (list-ref (snd-gcs) 7))
 	 (x0 (car axis-bounds))
@@ -177,30 +177,30 @@
 		       (list x0 y0 x1 y1)
 		       (list gc egc) 
 		       name)))
-    (|XtAddCallback drawer |XmNresizeCallback 
+    (XtAddCallback drawer XmNresizeCallback 
 		    (lambda (w context info) 
 		      (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
 		      (xe-redraw editor)))
-    (|XtAddCallback drawer |XmNexposeCallback 
+    (XtAddCallback drawer XmNexposeCallback 
 		    (lambda (w context info) 
 		      (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
 		      (xe-redraw editor)))
-    (|XtAddEventHandler drawer |ButtonPressMask #f 
+    (XtAddEventHandler drawer ButtonPressMask #f 
 			(lambda (w context ev flag) 
-			  (xe-mouse-press editor (|x ev) (|y ev))))
-    (|XtAddEventHandler drawer |ButtonMotionMask #f 
+			  (xe-mouse-press editor (.x ev) (.y ev))))
+    (XtAddEventHandler drawer ButtonMotionMask #f 
 			(lambda (w context ev flag)
-			  (xe-mouse-drag editor (|x ev) (|y ev))))
-    (|XtAddEventHandler drawer |ButtonReleaseMask #f 
+			  (xe-mouse-drag editor (.x ev) (.y ev))))
+    (XtAddEventHandler drawer ButtonReleaseMask #f 
 			(lambda (w context ev flag)
-			  (xe-mouse-release editor (|x ev) (|y ev))))
+			  (xe-mouse-release editor (.x ev) (.y ev))))
     editor))
 
 (define (xe-redraw drawer)
   (let* ((cur-env (xe-envelope drawer))
 	 (widget (list-ref drawer 1))
-	 (dpy (|XtDisplay widget))
-	 (wn (|XtWindow widget))
+	 (dpy (XtDisplay widget))
+	 (wn (XtWindow widget))
 	 (ax-pix (list-ref drawer 2))
 	 (ax-inf (list-ref drawer 3))
 	 (gc (car (list-ref drawer 4)))
@@ -209,7 +209,7 @@
 	 (len (and (list? cur-env) (length cur-env))))
     (if (and (list? ax-pix)
 	     (list? cur-env)
-	     (|XtIsManaged widget))
+	     (XtIsManaged widget))
 	(let* ((px0 (list-ref ax-pix 0))
 	       (px1 (list-ref ax-pix 2))
 	       (py0 (list-ref ax-pix 1))
@@ -243,7 +243,7 @@
 
 	  (if (> py0 py1)
 	      (begin
-		(|XClearWindow dpy wn)
+		(XClearWindow dpy wn)
 		(draw-axes widget gc name ix0 ix1 iy0 iy1)
 		(let ((lx #f)
 		      (ly #f))
@@ -251,24 +251,24 @@
 		      ((= i len))
 		    (let ((cx (xe-grfx drawer (list-ref cur-env i)))
 			  (cy (xe-grfy drawer (list-ref cur-env (+ i 1)))))
-		      (|XFillArc dpy wn gc 
+		      (XFillArc dpy wn gc 
 				 (- cx mouse-r)
 				 (- cy mouse-r)
 				 mouse-d mouse-d
 				 0 (* 360 64))
 		      (if lx
-			  (|XDrawLine dpy wn gc lx ly cx cy))
+			  (XDrawLine dpy wn gc lx ly cx cy))
 		      (set! lx cx)
 		      (set! ly cy))))))))))
 
 (if #f (begin
-(define outer (add-main-pane "hiho" |xmFormWidgetClass '()))
+(define outer (add-main-pane "hiho" xmFormWidgetClass '()))
 
 (define editor (xe-create-enved "a name" outer 
-			     (list |XmNleftAttachment   |XmATTACH_FORM
-				   |XmNtopAttachment    |XmATTACH_FORM
-				   |XmNbottomAttachment |XmATTACH_FORM
-				   |XmNrightAttachment  |XmATTACH_FORM)
+			     (list XmNleftAttachment   XmATTACH_FORM
+				   XmNtopAttachment    XmATTACH_FORM
+				   XmNbottomAttachment XmATTACH_FORM
+				   XmNrightAttachment  XmATTACH_FORM)
 			     '(0.0 1.0 0.0 1.0)))
 ))
 

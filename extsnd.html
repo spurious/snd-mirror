@@ -1639,7 +1639,7 @@ the hook.
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>snd-error-hook</em>
   (lambda (msg) 
-    (play "bong.snd") ; or if xm is loaded, (|XBell (|XtDisplay (cadr (main-widgets))) 10)
+    (play "bong.snd") ; or if xm is loaded, (XBell (XtDisplay (cadr (main-widgets))) 10)
     #f))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
@@ -7984,8 +7984,8 @@ run
 <!-- -->in the following manner (this assumes you're using Motif and have the xm module loaded):
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(|XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
-(|XtOverrideTranslations (list-ref (main-widgets) 4) (|XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
+(XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
+(XtOverrideTranslations (list-ref (main-widgets) 4) (XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
 <!-- --></pre></td></tr></table><br></td></tr>
 <!-- -->
 <!-- clear-audio-inputs -->
@@ -8514,7 +8514,7 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white.
 <table border=0 cellspacing=4>
 <tr>
 <td width="20%"><code><em class=def><a name="colorp">color?</a></em> (obj)</code></td>
-<td>#t if <i>obj</i> is a color (this is the same as |Pixel? in xm), (see <a href="#makecolor">make-color</a>).</td></tr>
+<td>#t if <i>obj</i> is a color (this is the same as Pixel? in xm), (see <a href="#makecolor">make-color</a>).</td></tr>
 
 <tr>
 <td><code><em class=def><a name="color3list">color-&gt;list</a></em> (obj)</code></td>
@@ -8916,8 +8916,8 @@ The lowest level procedures are:
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (load-font name)
-  (let ((fs (|XLoadQueryFont (|XtDisplay (cadr (main-widgets))) name)))
-    (and (|XFontStruct? fs) (|fid fs))))
+  (let ((fs (XLoadQueryFont (XtDisplay (cadr (main-widgets))) name)))
+    (and (XFontStruct? fs) (.fid fs))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>

@@ -9,6 +9,7 @@
  * TODO: glGet* returning more than one value
  *
  * HISTORY:
+ *     24-July:   changed Guile prefix (R5RS reserves vertical-bar).
  *     18-June:   GL 1.1 stubs.
  *     4-June:    GtkGLext support.
  *     20-May-02: initial version.
@@ -306,7 +307,7 @@ static void glGetColorTableParameterivEXT( GLenum target, GLenum pname, GLint *p
 
 /* prefix for all names */
 #if HAVE_GUILE
-  #define XL_PRE "|"
+  #define XL_PRE ""
   #define XL_POST ""
 #else
 /* for Ruby, XG PRE needs to be uppercase */
@@ -5295,7 +5296,7 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"17-Jul-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"22-Jul-02\")");
 #endif
       gl_already_inited = 1;
     }

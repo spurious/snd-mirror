@@ -3235,7 +3235,7 @@ static XEN g_snd_global_state(void)
 #if DEBUGGING
 static XEN g_snd_sound_pointer(XEN snd)
 {
-  /* (|XtCallCallbacks (cadr (sound-widgets 0)) |XmNactivateCallback (snd-sound-pointer 0)) */
+  /* (XtCallCallbacks (cadr (sound-widgets 0)) XmNactivateCallback (snd-sound-pointer 0)) */
   snd_state *ss;
   int s;
   ss = get_global_state();
@@ -3650,11 +3650,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_GUILE
-  /* backwards compatibility */
-  XEN_EVAL_C_STRING("(define mix-length mix-frames)");
-  XEN_EVAL_C_STRING("(define region-length region-frames)");
-  XEN_EVAL_C_STRING("(define selection-length selection-frames)");
-
   XEN_EVAL_C_STRING("(defmacro defvar (a b)\
                        `(begin\
                           (define , a , b)\

@@ -63,7 +63,7 @@
  * random access to the data, can't easily read backwards, and most of the compression
  * schemes are proprietary (and appalling), but to translate Mus10/Sam, HCOM, IEEE text, 
  * IBM CVSD, MIDI sample dumps, various adpcm cases, NIST shortpack files, and AVI see snd-trans.c 
- * in the sound editor (snd-5.tar.gz).
+ * in the sound editor (snd-6.tar.gz).
  *
  * If anyone has information on any other header or data formats, I would be most interested in it,
  * but only if it can be included in this file.

@@ -45,7 +45,7 @@
     (begin
 
       (define (post-delete-mix-dialog)
-        (if (not (|Widget? delete-mix-dialog))
+        (if (not (Widget? delete-mix-dialog))
             ;; if delete-mix-dialog doesn't exist, create it
             (let ((initial-delete-mix-number 0)
                   (sliders '()))
@@ -54,18 +54,18 @@
                                         (lambda (w context info)
                                           (cp-delete-mix))
                                         (lambda (w context info)
-                                          (|XtUnmanageChild delete-mix-dialog))
+                                          (XtUnmanageChild delete-mix-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Delete mix"
                                                 "Deletes specified mix."))
                                         (lambda (w c i)
                                           (set! delete-mix-number initial-delete-mix-number)
-                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* delete-mix-number 1)))))))
+                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* delete-mix-number 1)))))))
               (set! sliders
                     (add-sliders delete-mix-dialog
                                  (list (list "mix number" 0 initial-delete-mix-number 250
                                              (lambda (w context info)
-                                               (set! delete-mix-number (/ (|value info) 1)))
+                                               (set! delete-mix-number (/ (.value info) 1)))
                                              1))))))
         (activate-dialog delete-mix-dialog))
 
@@ -126,7 +126,7 @@
     (begin
 
       (define (post-renumber-tracks-dialog)
-        (if (not (|Widget? renumber-tracks-dialog))
+        (if (not (Widget? renumber-tracks-dialog))
             ;; if renumber-tracks-dialog doesn't exist, create it
             (let ((initial-renumber-tracks-number 0)
                   (sliders '()))
@@ -135,18 +135,18 @@
                                         (lambda (w context info)
                                           (cp-renumber-tracks))
                                         (lambda (w context info)
-                                          (|XtUnmanageChild renumber-tracks-dialog))
+                                          (XtUnmanageChild renumber-tracks-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Assign all tracks"
                                                 "Assign all tracks to number specified by the slider."))
                                         (lambda (w c i)
                                           (set! renumber-tracks-number initial-renumber-tracks-number)
-                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* renumber-tracks-number 1)))))))
+                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* renumber-tracks-number 1)))))))
               (set! sliders
                     (add-sliders renumber-tracks-dialog
                                  (list (list "new number" 0 initial-renumber-tracks-number 100
                                              (lambda (w context info)
-                                               (set! renumber-tracks-number (/ (|value info) 1)))
+                                               (set! renumber-tracks-number (/ (.value info) 1)))
                                              1))))))
         (activate-dialog renumber-tracks-dialog))
 
@@ -185,7 +185,7 @@
     (begin
 
       (define (post-delete-track-dialog)
-        (if (not (|Widget? delete-track-dialog))
+        (if (not (Widget? delete-track-dialog))
             ;; if delete-track-dialog doesn't exist, create it
             (let ((initial-delete-track-number 0)
                   (sliders '()))
@@ -194,18 +194,18 @@
                                         (lambda (w context info)
                                           (cp-delete-track))
                                         (lambda (w context info)
-                                          (|XtUnmanageChild delete-track-dialog))
+                                          (XtUnmanageChild delete-track-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Delete track"
                                                 "Deletes the track specified by the slider."))
                                         (lambda (w c i)
                                           (set! delete-track-number initial-delete-track-number)
-                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* delete-track-number 1)))))))
+                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* delete-track-number 1)))))))
               (set! sliders
                     (add-sliders delete-track-dialog
                                  (list (list "track number" 0 initial-delete-track-number 100
                                              (lambda (w context info)
-                                               (set! delete-track-number (/ (|value info) 1)))
+                                               (set! delete-track-number (/ (.value info) 1)))
                                              1))))))
         (activate-dialog delete-track-dialog))
 
@@ -236,7 +236,7 @@
     (begin
 
       (define (post-play-track-dialog)
-        (if (not (|Widget? play-track-dialog))
+        (if (not (Widget? play-track-dialog))
             ;; if play-track-dialog doesn't exist, create it
             (let ((initial-play-track-number 0)
                   (sliders '()))
@@ -245,18 +245,18 @@
                                         (lambda (w context info)
                                           (cp-play-track))
                                         (lambda (w context info)
-                                          (|XtUnmanageChild play-track-dialog))
+                                          (XtUnmanageChild play-track-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Play track"
                                                 "Plays the track specified by the slider."))
                                         (lambda (w c i)
                                           (set! play-track-number initial-play-track-number)
-                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* play-track-number 1)))))))
+                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* play-track-number 1)))))))
               (set! sliders
                     (add-sliders play-track-dialog
                                  (list (list "track number" 0 initial-play-track-number 100
                                              (lambda (w context info)
-                                               (set! play-track-number (/ (|value info) 1)))
+                                               (set! play-track-number (/ (.value info) 1)))
                                              1))))))
         (activate-dialog play-track-dialog))
 
@@ -285,7 +285,7 @@
     (begin
 
       (define (post-reverse-track-dialog)
-        (if (not (|Widget? reverse-track-dialog))
+        (if (not (Widget? reverse-track-dialog))
             ;; if reverse-track-dialog doesn't exist, create it
             (let ((initial-reverse-track-number 0)
                   (sliders '()))
@@ -294,18 +294,18 @@
                                         (lambda (w context info)
                                           (cp-reverse-track))
                                         (lambda (w context info)
-                                          (|XtUnmanageChild reverse-track-dialog))
+                                          (XtUnmanageChild reverse-track-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Reverse track"
                                                 "Reverses the order in which a track's members occur."))
                                         (lambda (w c i)
                                           (set! reverse-track-number initial-reverse-track-number)
-                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* reverse-track-number 1)))))))
+                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* reverse-track-number 1)))))))
               (set! sliders
                     (add-sliders reverse-track-dialog
                                  (list (list "track number" 0 initial-reverse-track-number 100
                                              (lambda (w context info)
-                                               (set! reverse-track-number (/ (|value info) 1)))
+                                               (set! reverse-track-number (/ (.value info) 1)))
                                              1))))))
         (activate-dialog reverse-track-dialog))
 
@@ -335,7 +335,7 @@
     (begin
 
       (define (post-set-track-amp-dialog)
-        (if (not (|Widget? set-track-amp-dialog))
+        (if (not (Widget? set-track-amp-dialog))
             ;; if set-track-amp-dialog doesn't exist, create it
             (let ((initial-set-track-amp-tracknum 0)
                   (initial-set-track-amp-scaler 1.0)
@@ -345,24 +345,24 @@
                                         (lambda (w context info)
                                           (cp-set-track-amp))
                                         (lambda (w context info)
-                                          (|XtUnmanageChild set-track-amp-dialog))
+                                          (XtUnmanageChild set-track-amp-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Set track amplitude"
                                                        "Move the sliders to set the track number and amp scaling."))
                                         (lambda (w c i)
                                           (set! set-track-amp-tracknum initial-set-track-amp-tracknum)
-                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* set-track-amp-tracknum 1))))
+                                          (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* set-track-amp-tracknum 1))))
                                           (set! set-track-amp-scaler initial-set-track-amp-scaler)
-                                          (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* set-track-amp-scaler 100)))))))
+                                          (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (* set-track-amp-scaler 100)))))))
               (set! sliders
                    (add-sliders set-track-amp-dialog
                                  (list (list "track number" 0 initial-set-track-amp-tracknum 100
                                              (lambda (w context info)
-                                               (set! set-track-amp-tracknum (/ (|value info) 1)))
+                                               (set! set-track-amp-tracknum (/ (.value info) 1)))
                                              1)
                                        (list "amp scaler" 0.01 initial-set-track-amp-scaler 2.0
                                              (lambda (w context info)
-                                               (set! set-track-amp-scaler (/ (|value info) 100)))
+                                               (set! set-track-amp-scaler (/ (.value info) 100)))
                                              100))))))
         (activate-dialog set-track-amp-dialog))
 
@@ -391,7 +391,7 @@
     (begin
 
       (define (post-set-track-speed-dialog)
-        (if (not (|Widget? set-track-speed-dialog))
+        (if (not (Widget? set-track-speed-dialog))
             ;; if set-track-speed-dialog doesn't exist, create it
             (let ((initial-set-track-speed-tracknum 0)
                   (initial-set-track-speed-scaler 1.0)
@@ -401,24 +401,24 @@
                                         (lambda (w context info)
                                           (cp-set-track-speed))
                                         (lambda (w context info)
-                                          (|XtUnmanageChild set-track-speed-dialog))
+                                          (XtUnmanageChild set-track-speed-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Set track speed"
                                                        "Move the sliders to set the track number and rate scaling."))
                                         (lambda (w c i)
                                           (set! set-track-speed-tracknum initial-set-track-speed-tracknum)
-                                          (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* set-track-speed-tracknum 1))))
+                                          (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* set-track-speed-tracknum 1))))
                                           (set! set-track-speed-scaler initial-set-track-speed-scaler)
-                                          (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* set-track-speed-scaler 100)))))))
+                                          (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (* set-track-speed-scaler 100)))))))
               (set! sliders
                    (add-sliders set-track-speed-dialog
                                  (list (list "track number" 0 initial-set-track-speed-tracknum 100
                                              (lambda (w context info)
-                                               (set! set-track-speed-tracknum (/ (|value info) 1)))
+                                               (set! set-track-speed-tracknum (/ (.value info) 1)))
                                              1)
                                        (list "rate scaler" 0.01 initial-set-track-speed-scaler 2.0
                                              (lambda (w context info)
-                                               (set! set-track-speed-scaler (/ (|value info) 100)))
+                                               (set! set-track-speed-scaler (/ (.value info) 100)))
                                              100))))))
         (activate-dialog set-track-speed-dialog))
 
@@ -447,7 +447,7 @@
     (begin
 
       (define (post-set-track-tempo-dialog)
-        (if (not (|Widget? set-track-tempo-dialog))
+        (if (not (Widget? set-track-tempo-dialog))
             ;; if set-track-tempo-dialog doesn't exist, create it
             (let ((initial-set-track-tempo-tracknum 0)
                   (initial-set-track-tempo-value 1.0)
@@ -456,24 +456,24 @@
                     (make-effect-dialog set-track-tempo-label
                                         (lambda (w context info)
                                           (cp-set-track-tempo))
-                                        (lambda (w context info) (|XtUnmanageChild set-track-tempo-dialog))
+                                        (lambda (w context info) (XtUnmanageChild set-track-tempo-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Set track tempo"
                                                        "Affects the time between the successive mix begin points (tempo > 1.0 makes the mixes happen more quickly)."))
                                         (lambda (w c i)
                                           (set! set-track-tempo-tracknum initial-set-track-tempo-tracknum)
-                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* set-track-tempo-tracknum 1))))
+                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* set-track-tempo-tracknum 1))))
                                           (set! set-track-tempo-value initial-set-track-tempo-value)
-                                          (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* set-track-tempo-value 100)))))))
+                                          (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* set-track-tempo-value 100)))))))
               (set! sliders
                     (add-sliders set-track-tempo-dialog
                                  (list (list "track number" 0 initial-set-track-tempo-tracknum 100
                                              (lambda (w context info)
-                                               (set! set-track-tempo-tracknum (/ (|value info) 1)))
+                                               (set! set-track-tempo-tracknum (/ (.value info) 1)))
                                              1)
 				       (list "tempo" 0 initial-set-track-tempo-value 100
                                              (lambda (w context info)
-                                               (set! set-track-tempo-value (/ (|value info) 100)))
+                                               (set! set-track-tempo-value (/ (.value info) 100)))
                                              100))))))
 
         (activate-dialog set-track-tempo-dialog))
@@ -502,7 +502,7 @@
     (begin
 
       (define (post-transpose-track-dialog)
-        (if (not (|Widget? transpose-track-dialog))
+        (if (not (Widget? transpose-track-dialog))
             ;; if transpose-track-dialog doesn't exist, create it
             (let ((initial-transpose-track-number 0)
                   (initial-transpose-track-semitones 0)
@@ -511,24 +511,24 @@
                     (make-effect-dialog transpose-track-label
                                         (lambda (w context info)
                                           (cp-transpose-track))
-                                        (lambda (w context info) (|XtUnmanageChild transpose-track-dialog))
+                                        (lambda (w context info) (XtUnmanageChild transpose-track-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Transpose track"
                                                        "A simple track transposition utility."))
                                         (lambda (w c i)
                                           (set! transpose-track-number initial-transpose-track-number)
-                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* transpose-track-number 1))))
+                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* transpose-track-number 1))))
                                           (set! transpose-track-semitones initial-transpose-track-semitones)
-                                          (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact transpose-track-semitones 1))))))
+                                          (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact transpose-track-semitones 1))))))
               (set! sliders
                     (add-sliders transpose-track-dialog
                                  (list (list "transpose-track number" 0 initial-transpose-track-number 100
                                              (lambda (w context info)
-                                               (set! transpose-track-number (/ (|value info) 1)))
+                                               (set! transpose-track-number (/ (.value info) 1)))
                                              1)
                                        (list "transpose-track semitones" -100 initial-transpose-track-semitones 100
                                              (lambda (w context info)
-                                               (set! transpose-track-semitones (|value info)))
+                                               (set! transpose-track-semitones (.value info)))
                                              1))))))
 
         (activate-dialog transpose-track-dialog))
@@ -556,7 +556,7 @@
     (begin
 
       (define (post-save-track-dialog)
-        (if (not (|Widget? save-track-dialog))
+        (if (not (Widget? save-track-dialog))
             ;; if save-track-dialog doesn't exist, create it
             (let ((initial-save-track-number 0)
                   (sliders '()))
@@ -565,18 +565,18 @@
                                         (lambda (w context info)
                                           (cp-save-track))
                                         (lambda (w context info)
-                                          (|XtUnmanageChild save-track-dialog))
+                                          (XtUnmanageChild save-track-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Save track"
                                                 "Save track to track-N.snd soundfile."))
                                         (lambda (w c i)
                                           (set! save-track-number initial-save-track-number)
-                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* save-track-number 1)))))))
+                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* save-track-number 1)))))))
               (set! sliders
                     (add-sliders save-track-dialog
                                  (list (list "track number" 0 initial-save-track-number 100
                                              (lambda (w context info)
-                                               (set! save-track-number (/ (|value info) 1)))
+                                               (set! save-track-number (/ (.value info) 1)))
                                              1))))))
         (activate-dialog save-track-dialog))
 

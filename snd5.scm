@@ -2,6 +2,9 @@
 (use-modules (ice-9 optargs))
 
 (define update-transform update-transform-graph)
+(define mix-length mix-frames)
+(define region-length region-frames)
+(define selection-length selection-frames)
 
 (define* (forward-sample #:optional (count 1) snd chn)
   (set! (cursor snd chn) (+ (cursor snd chn) count)))

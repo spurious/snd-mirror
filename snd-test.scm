@@ -30,7 +30,7 @@
 ;;; test 27: errors
 
 ;;; TODO: GL tests, gtk (xg) tests
-;;; TODO: mix panel env editor (apply button (|XmMessageBoxGetChild mix_panel |XmDIALOG_CANCEL_BUTTON)
+;;; TODO: mix panel env editor (apply button (XmMessageBoxGetChild mix_panel XmDIALOG_CANCEL_BUTTON)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -1820,7 +1820,7 @@
 	(set! (filter-env-in-hz) #t)
 	(let ((ab (open-sound "test.snd")))
 	  (if (and (provided? 'xm) (provided? 'snd-debug))
-	      (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	      (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (if (provided? 'snd-debug)
 	      (begin
 		(if (snd-sound-pointer 12345) (snd-display ";snd-sound-pointer #f: ~A" (snd-sound-pointer 12345)))
@@ -1841,7 +1841,7 @@
 	(set! (filter-env-in-hz) #f)
 	(save-sound-as "test.snd" ob mus-raw)
 	(let ((ab (open-raw-sound "test.snd" 1 22050 mus-bshort)))
-	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-raw)) 
 	      (snd-display ";save-as raw -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-raw)) 
@@ -1850,7 +1850,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-nist mus-bint)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-nist)) 
 	      (snd-display ";save-as nist -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-nist)) 
@@ -1868,7 +1868,7 @@
 	(save-sound-as "test.snd" ob mus-riff mus-lfloat)
 	(reset-hook! output-comment-hook)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-riff)) 
 	      (snd-display ";save-as riff -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-riff)) 
@@ -1887,7 +1887,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-aiff mus-b24int)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-aiff)) 
 	      (snd-display ";save-as aiff -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-aiff)) 
@@ -1900,7 +1900,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-ircam mus-mulaw)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-ircam)) 
 	      (snd-display ";save-as ircam -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-ircam)) 
@@ -1913,7 +1913,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-next mus-alaw)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-next)) 
 	      (snd-display ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-next)) 
@@ -1926,7 +1926,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-next mus-bdouble)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-next)) 
 	      (snd-display ";save-as dbl next -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (data-format ab) mus-bdouble)) 
@@ -1935,7 +1935,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-next mus-bshort)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-next)) 
 	      (snd-display ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-next)) 
@@ -1969,7 +1969,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-next mus-bfloat)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-next)) 
 	      (snd-display ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-next)) 
@@ -1983,7 +1983,7 @@
 	(save-sound-as "test.snd" ob mus-next mus-bshort)
 	(close-sound ob)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
 	  (set! (data-format) mus-lshort)
 	  (IF (not (= ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	  (IF (not (= (data-format) mus-lshort)) (snd-display ";set data-format: ~A?" (mus-data-format-name (data-format))))
@@ -9804,18 +9804,18 @@
      (for-each-child
       top-menu
       (lambda (w)
-	(let ((option-holder (cadr (|XtGetValues w (list |XmNsubMenuId 0)))))
+	(let ((option-holder (cadr (XtGetValues w (list XmNsubMenuId 0)))))
 	  (for-each-child
 	   option-holder
 	   (lambda (menu)
-	     (if (and (|XmIsPushButton menu)
-		      (|XtIsSensitive menu)
-		      (not (member (|XtName menu)
+	     (if (and (XmIsPushButton menu)
+		      (XtIsSensitive menu)
+		      (not (member (XtName menu)
 				   (list "Exit" "New" 
 					 "Save   C-x C-s" 
 					 "Close  C-x k" 
 					 "Click for help" "Mix Panel"))))
-		 (|XtCallCallbacks menu |XmNactivateCallback (snd-global-state)))))))))
+		 (XtCallCallbacks menu XmNactivateCallback (snd-global-state)))))))))
    (cdr (menu-widgets)))
   (dismiss-all-dialogs))
 
@@ -11860,7 +11860,7 @@
 	  (IF (not (equal? (regions) (list id))) (snd-display ";make-region regions: ~A?" (regions))))
 
 	;; need tests for mixes 
-	;; and all the temp|sound -to- sound|temp calls
+	;; and all the tempsound -to- soundtemp calls
 
 	(revert-sound obi)
 	(let ((oldlen (frames obi)))
@@ -18493,16 +18493,16 @@ EDITS: 5
 		(snd-home-key #xFF50))
 
 	    (define (all-help wid)
-	      (if (|Widget? wid)
+	      (if (Widget? wid)
 		  (for-each-child
 		   wid
 		   (lambda (n)
-		     (let ((callable (|XtHasCallbacks n |XmNhelpCallback)))
-		       (if (= callable |XtCallbackHasSome)
-			   (|XtCallCallbacks n |XmNhelpCallback
-				(let ((hlp (|XmAnyCallbackStruct)))
-				  (set! (|reason hlp) |XmCR_HELP)
-				  (set! (|event hlp) (|XEvent))
+		     (let ((callable (XtHasCallbacks n XmNhelpCallback)))
+		       (if (= callable XtCallbackHasSome)
+			   (XtCallCallbacks n XmNhelpCallback
+				(let ((hlp (XmAnyCallbackStruct)))
+				  (set! (.reason hlp) XmCR_HELP)
+				  (set! (.event hlp) (XEvent))
 				  hlp))))))))
 
 	    ;; force-event
@@ -18521,7 +18521,7 @@ EDITS: 5
 	    (for-each all-help (cdr (main-widgets)))
 	    (set! (time-graph-type) graph-time-once)
 	    (set! (transform-graph-type) graph-transform-once)
-	    (|XSynchronize (|XtDisplay (cadr (main-widgets))) #t)
+	    (XSynchronize (XtDisplay (cadr (main-widgets))) #t)
 	    ;; don't touch the mouse during this test!
 
 	    ;; -------- drive channel graph
@@ -18551,8 +18551,8 @@ EDITS: 5
 		(for-each all-help swids)
 		(for-each all-help (channel-widgets))
 		
-		(|XtCallCallbacks minibuffer |XmNfocusCallback (|XmAnyCallbackStruct))
-		(|XtCallCallbacks minibuffer |XmNlosingFocusCallback (|XmAnyCallbackStruct))
+		(XtCallCallbacks minibuffer XmNfocusCallback (XmAnyCallbackStruct))
+		(XtCallCallbacks minibuffer XmNlosingFocusCallback (XmAnyCallbackStruct))
 		(enter-event minibuffer) (force-event)
 		(leave-event minibuffer) (force-event)
 		(take-keyboard-focus (car (channel-widgets)))
@@ -19463,41 +19463,41 @@ EDITS: 5
 		    (zy (list-ref cwids 6))
 		    (gsy (list-ref cwids 8))
 		    (gzy (list-ref cwids 9)))
-		(IF (or (not (|Widget? gsy)) (not (|XtIsManaged gsy))) (snd-display ";unite but no gsy?"))
-		(IF (or (not (|Widget? gzy)) (not (|XtIsManaged gzy))) (snd-display ";unite but no gzy?"))
+		(IF (or (not (Widget? gsy)) (not (XtIsManaged gsy))) (snd-display ";unite but no gsy?"))
+		(IF (or (not (Widget? gzy)) (not (XtIsManaged gzy))) (snd-display ";unite but no gzy?"))
 		(for-each
 		 (lambda (scrl)
-		   (|XtCallCallbacks scrl |XmNvalueChangedCallback
-		      (let ((cb (|XmScrollBarCallbackStruct)))
-			(set! (|value cb) 75)
-			(set! (|event cb) (|XEvent))
+		   (XtCallCallbacks scrl XmNvalueChangedCallback
+		      (let ((cb (XmScrollBarCallbackStruct)))
+			(set! (.value cb) 75)
+			(set! (.event cb) (XEvent))
 			cb))
-		   (|XtCallCallbacks scrl |XmNincrementCallback
-		      (let ((cb (|XmScrollBarCallbackStruct)))
-			(set! (|event cb) (|XEvent))
+		   (XtCallCallbacks scrl XmNincrementCallback
+		      (let ((cb (XmScrollBarCallbackStruct)))
+			(set! (.event cb) (XEvent))
 			cb))
-		   (|XtCallCallbacks scrl |XmNdecrementCallback
-		     (let ((cb (|XmScrollBarCallbackStruct)))
-		       (set! (|event cb) (|XEvent))
+		   (XtCallCallbacks scrl XmNdecrementCallback
+		     (let ((cb (XmScrollBarCallbackStruct)))
+		       (set! (.event cb) (XEvent))
 		       cb))
-		   (|XtCallCallbacks scrl |XmNdragCallback
-		      (let ((cb (|XmScrollBarCallbackStruct)))
-			(set! (|value cb) 65)
-			(set! (|event cb) (|XEvent))
+		   (XtCallCallbacks scrl XmNdragCallback
+		      (let ((cb (XmScrollBarCallbackStruct)))
+			(set! (.value cb) 65)
+			(set! (.event cb) (XEvent))
 			cb)))
 		 (list sx zx zy))
-		(if (and (|Widget? gsy) (|Widget? gzy))
+		(if (and (Widget? gsy) (Widget? gzy))
 		    (for-each
 		     (lambda (scrl)
-		       (|XtCallCallbacks scrl |XmNvalueChangedCallback
-		          (let ((cb (|XmScrollBarCallbackStruct)))
-			    (set! (|value cb) 75)
-			    (set! (|event cb) (|XEvent))
+		       (XtCallCallbacks scrl XmNvalueChangedCallback
+		          (let ((cb (XmScrollBarCallbackStruct)))
+			    (set! (.value cb) 75)
+			    (set! (.event cb) (XEvent))
 			    cb))
-		       (|XtCallCallbacks scrl |XmNdragCallback
-		          (let ((cb (|XmScrollBarCallbackStruct)))
-			    (set! (|value cb) 65)
-			    (set! (|event cb) (|XEvent))
+		       (XtCallCallbacks scrl XmNdragCallback
+		          (let ((cb (XmScrollBarCallbackStruct)))
+			    (set! (.value cb) 65)
+			    (set! (.event cb) (XEvent))
 			    cb)))
 		     (list gsy gzy))))
 	      (click-button (list-ref swids 6) #f)
@@ -19510,7 +19510,7 @@ EDITS: 5
 	      (let* ((ctrls (list-ref swids 2)))
 		(for-each
 		 (lambda (label)
-		   (click-button label #t |ControlMask)
+		   (click-button label #t ControlMask)
 		   (click-button label #t 0))
 		 (map 
 		  (lambda (name)
@@ -19518,10 +19518,10 @@ EDITS: 5
 		  (list "amp-label" "srate-label" "contrast-label" "expand-label" "revlen-label" "revscl-label" )))
 		(for-each
 		 (lambda (scrl)
-		   (|XtCallCallbacks scrl |XmNdragCallback
-		     (let ((cb (|XmScrollBarCallbackStruct)))
-		       (set! (|value cb) 50)
-		       (set! (|event cb) (|XEvent))
+		   (XtCallCallbacks scrl XmNdragCallback
+		     (let ((cb (XmScrollBarCallbackStruct)))
+		       (set! (.value cb) 50)
+		       (set! (.event cb) (XEvent))
 		       cb)))
 		 (map 
 		  (lambda (name)
@@ -19535,7 +19535,7 @@ EDITS: 5
 		  (widget-string fltord "40")
 		  (key-event fltord snd-return-key 0) (force-event))
 		(click-button (find-child ctrls "Reset") #t)
-		(click-button (list-ref swids 4) #t |ControlMask)
+		(click-button (list-ref swids 4) #t ControlMask)
 		(click-button (list-ref swids 4) #f 0)
 		(equalize-panes)
 		(click-button (find-child ctrls "Apply") #t)
@@ -19657,8 +19657,8 @@ EDITS: 5
 		  (let* ((recd (list-ref (dialog-widgets) 18)))
 		    (if recd ; /dev/mixer trouble sometimes here
 			(let* ((record-button (find-child recd "record-button"))
-			       (reset-button (|XmMessageBoxGetChild recd |XmDIALOG_CANCEL_BUTTON))
-			       (dismiss-button (|XmMessageBoxGetChild recd |XmDIALOG_OK_BUTTON))
+			       (reset-button (XmMessageBoxGetChild recd XmDIALOG_CANCEL_BUTTON))
+			       (dismiss-button (XmMessageBoxGetChild recd XmDIALOG_OK_BUTTON))
 			       (panes (find-child recd "rec-panes"))
 			       (file-pane (find-child panes "file-pane"))
 			       (fdata (find-child file-pane "file-data"))
@@ -19668,25 +19668,25 @@ EDITS: 5
 			       (sliders '())
 			       (numbers '()))
 			  (for-each-child recd (lambda (w) 
-						 (if (and (|XmIsPushButton w) 
-							  (string=? (|XtName w) "A")) 
+						 (if (and (XmIsPushButton w) 
+							  (string=? (XtName w) "A")) 
 						     (set! buttons (cons w buttons)))
-						 (if (and (|XmIsPushButton w) 
-							  (string=? (|XtName w) "amp-number")) 
+						 (if (and (XmIsPushButton w) 
+							  (string=? (XtName w) "amp-number")) 
 						     (set! numbers (cons w numbers)))
-						 (if (and (|XmIsScrollBar w) 
-							  (or (string=? (|XtName w) "amp")
-							      (string=? (|XtName w) "trigger-scale")))
+						 (if (and (XmIsScrollBar w) 
+							  (or (string=? (XtName w) "amp")
+							      (string=? (XtName w) "trigger-scale")))
 						     (set! sliders (cons w sliders)))))
-			  (|XmTextSetString file-text "fmv.snd")
+			  (XmTextSetString file-text "fmv.snd")
 			  (for-each (lambda (w) (click-button w #t)) buttons)
 			  (for-each (lambda (w) (click-button w #t)) numbers)
 			  (for-each
 			   (lambda (w)
-			     (|XtCallCallbacks w |XmNdragCallback
-					       (let ((cb (|XmScrollBarCallbackStruct)))
-						 (set! (|value cb) 65)
-						 (set! (|event cb) (|XEvent))
+			     (XtCallCallbacks w XmNdragCallback
+					       (let ((cb (XmScrollBarCallbackStruct)))
+						 (set! (.value cb) 65)
+						 (set! (.event cb) (XEvent))
 						 cb)))
 			   sliders)
 			  (click-button record-button #t)
@@ -19903,15 +19903,15 @@ EDITS: 5
 			(IF (not (> (frames ind) (* 2 fr)))
 			    (snd-display ";apply src length: ~A ~A?" fr (frames ind)))
 			(click-button (find-child (car enved-widgets) "exp:"))
-			(|XtCallCallbacks (find-child (car enved-widgets) "expscl") |XmNdragCallback
-					  (let ((cb (|XmScrollBarCallbackStruct)))
-					    (set! (|value cb) 65)
-					    (set! (|event cb) (|XEvent))
+			(XtCallCallbacks (find-child (car enved-widgets) "expscl") XmNdragCallback
+					  (let ((cb (XmScrollBarCallbackStruct)))
+					    (set! (.value cb) 65)
+					    (set! (.event cb) (XEvent))
 					    cb))
-			(|XtCallCallbacks (find-child (car enved-widgets) "expscl") |XmNvalueChangedCallback
-					  (let ((cb (|XmScrollBarCallbackStruct)))
-					    (set! (|value cb) 65)
-					    (set! (|event cb) (|XEvent))
+			(XtCallCallbacks (find-child (car enved-widgets) "expscl") XmNvalueChangedCallback
+					  (let ((cb (XmScrollBarCallbackStruct)))
+					    (set! (.value cb) 65)
+					    (set! (.event cb) (XEvent))
 					    cb))
 			(click-button show-button) (force-event)
 			(close-sound ind))
@@ -19930,23 +19930,23 @@ EDITS: 5
 			(all-help dialog))
 		      (dialog-widgets))
 
-	    (|XSynchronize (|XtDisplay (cadr (main-widgets))) #f)
+	    (XSynchronize (XtDisplay (cadr (main-widgets))) #f)
 
 	    (if (provided? 'snd-motif)
 	      (let ((move-scroll
 		     (lambda (w val)
 		       (if (and w
-				(|XmScrollBar? w))
-			   (let ((oldvals (|XmScrollBarGetValues w)))
-			     (apply |XmScrollBarSetValues (list w
+				(XmScrollBar? w))
+			   (let ((oldvals (XmScrollBarGetValues w)))
+			     (apply XmScrollBarSetValues (list w
 								(+ (car oldvals) val)
 								(cadr oldvals)
 								(caddr oldvals)
 								(cadddr oldvals)
 								#t))
-			     (let ((newvals (|XmScrollBarGetValues w)))
+			     (let ((newvals (XmScrollBarGetValues w)))
 			       (IF (> (abs (- (car newvals) (car oldvals) val)) 1)
-				   (snd-display ";move ~A ~A: ~A" (|XtName w) val (car newvals)))))
+				   (snd-display ";move ~A ~A: ~A" (XtName w) val (car newvals)))))
 			   (snd-display ";move-scroll ~A?" w)))))
 		(reset-all-hooks)
 		(add-hook! bad-header-hook (lambda (n) #t))
@@ -19972,17 +19972,17 @@ EDITS: 5
 		  (IF (not (> (reverb-control-scale ind) 0.0)) (snd-display ";reverb-control-scale moved: ~A" (reverb-control-scale ind)))
 		  (move-scroll (find-child sctrls "revlen-scroll") 10)
 		  (IF (not (> (reverb-control-length ind) 1.0)) (snd-display ";reverb-control-length moved: ~A" (reverb-control-length ind)))
-		  (|XmToggleButtonSetState (find-child sctrls "dir") #t #t)
+		  (XmToggleButtonSetState (find-child sctrls "dir") #t #t)
 		  (IF (>= (speed-control ind) 0.0) (snd-display ";speed arrow: ~A" (speed-control ind)))
-		  (|XmToggleButtonSetState (find-child sctrls "expoff") #t #t)
+		  (XmToggleButtonSetState (find-child sctrls "expoff") #t #t)
 		  (IF (not (expand-control? ind)) (snd-display ";toggle but expand off?"))
-		  (|XmToggleButtonSetState (find-child sctrls "conoff") #t #t)
+		  (XmToggleButtonSetState (find-child sctrls "conoff") #t #t)
 		  (IF (not (contrast-control? ind)) (snd-display ";toggle but contrast off?"))
-		  (|XmToggleButtonSetState (find-child sctrls "revoff") #t #t)
+		  (XmToggleButtonSetState (find-child sctrls "revoff") #t #t)
 		  (IF (not (reverb-control? ind)) (snd-display ";toggle but reverb off?"))
-		  (|XmToggleButtonSetState (find-child sctrls "fltoff") #t #t)
+		  (XmToggleButtonSetState (find-child sctrls "fltoff") #t #t)
 		  (IF (not (filter-control? ind)) (snd-display ";toggle but filter off?"))
-		  (|XmToggleButtonSetState (find-child sctrls "fltdB") #t #t)
+		  (XmToggleButtonSetState (find-child sctrls "fltdB") #t #t)
 		  (IF (not (filter-control-in-dB ind)) (snd-display ";toggle but filter-in-db off?"))
 		  ;(click-button (cadr (find-child sctrls "expand-label")))
 		  ;(IF (fneq (expand-control ind) 1.0) (snd-display ";click expand: ~A" (expand-control)))
@@ -20002,33 +20002,33 @@ EDITS: 5
 		       (cut (find-child colord "cutoff"))
 		       (scl (find-child colord "ccdscl"))
 		       (ind (open-sound "pistol.snd")))
-		  (|XtManageChild colord)
+		  (XtManageChild colord)
 		  (set! (graph-transform? ind 0) #t)
 		  (set! (transform-graph-type ind 0) graph-transform-as-sonogram)
-		  (if (and inv (|Widget? inv))
+		  (if (and inv (Widget? inv))
 		      (begin
 			(move-scale cut 32)
 			(IF (fneq (color-cutoff) .032)
-			    (snd-display ";moved color-cutoff: ~A ~A" (color-cutoff) (|XmScaleGetValue cut)))
+			    (snd-display ";moved color-cutoff: ~A ~A" (color-cutoff) (XmScaleGetValue cut)))
 			(move-scale scl 32)
 			(IF (fneq (color-scale) .647)
-			    (snd-display ";moved color-scale: ~A ~A" (color-scale) (|XmScaleGetValue scl)))
-			(|XmToggleButtonSetState inv #f #t)
+			    (snd-display ";moved color-scale: ~A ~A" (color-scale) (XmScaleGetValue scl)))
+			(XmToggleButtonSetState inv #f #t)
 			(IF (color-inverted)
 			    (snd-display ";toggle invert off"))
-			(|XmToggleButtonSetState inv #t #t)
+			(XmToggleButtonSetState inv #t #t)
 			(IF (not (color-inverted))
 			    (snd-display ";toggle invert on")))
 		      (snd-display ";can't find color invert button?"))
 		  (let ((lst (find-child colord "colormap-list")))
 		    (do ((i 2 (1+ i)))
 			((= i 15))
-		      (|XmListSelectPos lst i #t)
+		      (XmListSelectPos lst i #t)
 		      (IF (not (= (colormap) (- i 1)))
 			  (snd-display ";color dialog list ~A: ~A" (- i 1) (colormap)))
 		      (update-transform-graph)))
 		  (close-sound ind)
-		  (click-button (|XmMessageBoxGetChild colord |XmDIALOG_CANCEL_BUTTON)) (force-event))
+		  (click-button (XmMessageBoxGetChild colord XmDIALOG_CANCEL_BUTTON)) (force-event))
 
                 ;; ---------------- orientation dialog ----------------
 		(orientation-dialog)
@@ -20042,46 +20042,46 @@ EDITS: 5
 		       (sz (or (find-child orientd "zs") (snd-display ";can't find z scale")))
 		       (hop (or (find-child orientd "hop") (snd-display ";can't find hop"))))
 		  (set! (spectro-x-scale) 2.0)
-		  (click-button (|XmMessageBoxGetChild orientd |XmDIALOG_OK_BUTTON)) (force-event)
+		  (click-button (XmMessageBoxGetChild orientd XmDIALOG_OK_BUTTON)) (force-event)
 		  (IF (fneq (spectro-x-scale) 1.0)
 		      (snd-display ";orientation reset: ~A" (spectro-x-scale)))
 		  (move-scale cut 32)
 		  (IF (fneq (spectro-cutoff) .32)
-		      (snd-display ";moved spectro-cutoff: ~A ~A" (spectro-cutoff) (|XmScaleGetValue cut)))
+		      (snd-display ";moved spectro-cutoff: ~A ~A" (spectro-cutoff) (XmScaleGetValue cut)))
 		  (move-scale ax 32)
 		  (IF (fneq (spectro-x-angle) 32)
-		      (snd-display ";moved spectro-x-angle: ~A ~A" (spectro-x-angle) (|XmScaleGetValue ax)))
+		      (snd-display ";moved spectro-x-angle: ~A ~A" (spectro-x-angle) (XmScaleGetValue ax)))
 		  (move-scale ay 32)
 		  (IF (fneq (spectro-y-angle) 32)
-		      (snd-display ";moved spectro-y-angle: ~A ~A" (spectro-y-angle) (|XmScaleGetValue ay)))
+		      (snd-display ";moved spectro-y-angle: ~A ~A" (spectro-y-angle) (XmScaleGetValue ay)))
 		  (move-scale az 32)
 		  (IF (fneq (spectro-z-angle) 32)
-		      (snd-display ";moved spectro-z-angle: ~A ~A" (spectro-z-angle) (|XmScaleGetValue az)))
+		      (snd-display ";moved spectro-z-angle: ~A ~A" (spectro-z-angle) (XmScaleGetValue az)))
 		  (move-scale sx 32)
 		  (IF (fneq (spectro-x-scale) .32)
-		      (snd-display ";moved spectro-x-scale: ~A ~A" (spectro-x-scale) (|XmScaleGetValue sx)))
+		      (snd-display ";moved spectro-x-scale: ~A ~A" (spectro-x-scale) (XmScaleGetValue sx)))
 		  (move-scale sy 32)
 		  (IF (fneq (spectro-y-scale) .32)
-		      (snd-display ";moved spectro-y-scale: ~A ~A" (spectro-y-scale) (|XmScaleGetValue sy)))
+		      (snd-display ";moved spectro-y-scale: ~A ~A" (spectro-y-scale) (XmScaleGetValue sy)))
 		  (move-scale sz 32)
 		  (IF (fneq (spectro-z-scale) .32)
-		      (snd-display ";moved spectro-z-scale: ~A ~A" (spectro-z-scale) (|XmScaleGetValue sz)))
+		      (snd-display ";moved spectro-z-scale: ~A ~A" (spectro-z-scale) (XmScaleGetValue sz)))
 		  (move-scale hop 12)
 		  (IF (fneq (spectro-hop) 12)
-		      (snd-display ";moved spectro-hop: ~A ~A" (spectro-hop) (|XmScaleGetValue hop)))
-		  (click-button (|XmMessageBoxGetChild orientd |XmDIALOG_OK_BUTTON)) (force-event)
+		      (snd-display ";moved spectro-hop: ~A ~A" (spectro-hop) (XmScaleGetValue hop)))
+		  (click-button (XmMessageBoxGetChild orientd XmDIALOG_OK_BUTTON)) (force-event)
 		  (IF (fneq (spectro-x-scale) 1.0)
 		      (snd-display ";orientation reset: ~A" (spectro-x-scale)))
 		  (set! (widget-position orientd) (list 200 300))
-		  (click-button (|XmMessageBoxGetChild orientd |XmDIALOG_CANCEL_BUTTON)) (force-event)
-		  (IF (|XtIsManaged orientd)
+		  (click-button (XmMessageBoxGetChild orientd XmDIALOG_CANCEL_BUTTON)) (force-event)
+		  (IF (XtIsManaged orientd)
 		      (snd-display ";orientation still active?")))
 
 		;; ---------------- enved dialog ----------------
 		(if (defined? 'enved-axis-info)
 		    (begin
 		      (let* ((envd (list-ref (dialog-widgets) 2)))
-			(|XtManageChild envd)
+			(XtManageChild envd)
 			(let* ((ind2 (open-sound "storm.snd"))
 			       (cwid (car (channel-widgets ind2 0)))
 			       (waveb (find-child envd "wave"))
@@ -20108,16 +20108,16 @@ EDITS: 5
 			    (define (enved-x x) (inexact->exact (+ axis-x0 (* x (- axis-x1 axis-x0)))))
 			    (define (enved-y y) (inexact->exact (- axis-y0 (* y (- axis-y0 axis-y1)))))
 			    (click-event ewid 1 0 (enved-x 0.5) (enved-y 1.0)) (force-event)
-			    (click-button (|XmMessageBoxGetChild envd |XmDIALOG_OK_BUTTON)) (force-event)
+			    (click-button (XmMessageBoxGetChild envd XmDIALOG_OK_BUTTON)) (force-event)
 			    (click-button (find-child envd "Reset")) (force-event)
-			    (click-button (|XmMessageBoxGetChild envd |XmDIALOG_CANCEL_BUTTON)) (force-event)
+			    (click-button (XmMessageBoxGetChild envd XmDIALOG_CANCEL_BUTTON)) (force-event)
 			    (close-sound ind2))))))
 
 		;; ---------------- error dialog ----------------
 		(let ((errord (list-ref (dialog-widgets) 3)))
-		  (|XtManageChild errord)
-		  (click-button (|XmMessageBoxGetChild errord |XmDIALOG_OK_BUTTON)) (force-event)
-		  (IF (|XtIsManaged errord)
+		  (XtManageChild errord)
+		  (click-button (XmMessageBoxGetChild errord XmDIALOG_OK_BUTTON)) (force-event)
+		  (IF (XtIsManaged errord)
 		      (snd-display ";why is error dialog alive?")))
 
 		;; ---------------- yes-or-no dialog ----------------
@@ -20127,8 +20127,8 @@ EDITS: 5
 			 (yesd (list-ref (dialog-widgets) 4)))
 		    (IF (not yesd)
 			(snd-display ";no yes dialog"))
-		    (|XtManageChild yesd)
-		    (click-button (|XmMessageBoxGetChild yesd |XmDIALOG_OK_BUTTON)) (force-event))
+		    (XtManageChild yesd)
+		    (click-button (XmMessageBoxGetChild yesd XmDIALOG_OK_BUTTON)) (force-event))
 		  (set! (with-background-processes) old-val))
 
 		;; ---------------- transform dialog ----------------
@@ -20137,14 +20137,14 @@ EDITS: 5
 		  ;; push all the buttons
 		  (for-each (lambda (name check off2)
 			      (let ((button (find-child transd name)))
-				(if (and button (|Widget? button))
+				(if (and button (Widget? button))
 				    (begin
 				      (if off2
 					  (begin
-					    (|XmToggleButtonSetState button #f #t)
+					    (XmToggleButtonSetState button #f #t)
 					    (IF (check)
 						(snd-display ";toggle ~A off" name))))
-				      (|XmToggleButtonSetState button #t #t)
+				      (XmToggleButtonSetState button #t #t)
 				      (IF (not (check))
 					  (snd-display ";toggle ~A on" name)))
 				    (snd-display ";no ~A togglebutton widget in transform dialog?" name))))
@@ -20163,109 +20163,109 @@ EDITS: 5
 				  #t #t #t))
 		  (move-scale beta 32)
 		  (IF (fneq (fft-window-beta) .32)
-		      (snd-display ";moved fft-beta: ~A ~A" (fft-window-beta) (|XmScaleGetValue beta)))
+		      (snd-display ";moved fft-beta: ~A ~A" (fft-window-beta) (XmScaleGetValue beta)))
 		  ;; click all the lists
 		  (for-each (lambda (name check)
 			      (let ((lst (find-child transd name)))
-				(if (and lst (|Widget? lst))
+				(if (and lst (Widget? lst))
 				    (check lst)
 				    (snd-display ";no ~A list widget in transform dialog?" name))))
 			    (list "type-list" "size-list" "wavelet-list" "window-list")
 			    (list (lambda (w)
-				    (|XmListSelectPos w (+ autocorrelation 1) #t)
+				    (XmListSelectPos w (+ autocorrelation 1) #t)
 				    (IF (not (= (transform-type) autocorrelation))
 					(snd-display ";transform-type autocorrelation: ~A ~A?" (transform-type) autocorrelation))
-				    (|XmListSelectPos w (+ wavelet-transform 1) #t)
+				    (XmListSelectPos w (+ wavelet-transform 1) #t)
 				    (IF (not (= (transform-type) wavelet-transform))
 					(snd-display ";transform-type wavelet-transform: ~A ~A?" (transform-type) wavelet-transform)))
 				  (lambda (w)
-				    (|XmListSelectPos w 7 #t)
+				    (XmListSelectPos w 7 #t)
 				    (IF (not (= (transform-size) 1024))
 					(snd-display ";transform-size ~A ~A" (transform-size) 1024))
-				    (|XmListSelectPos w 2 #t)
+				    (XmListSelectPos w 2 #t)
 				    (IF (not (= (transform-size) 32))
 					(snd-display ";transform-size ~A ~A" (transform-size) 32)))
 				  (lambda (w)
-				    (|XmListSelectPos w 4 #t)
+				    (XmListSelectPos w 4 #t)
 				    (IF (not (= (wavelet-type) 3))
 					(snd-display ";wavelet-type: ~A" (wavelet-type))))
 				  (lambda (w)
-				    (|XmListSelectPos w (+ bartlett-window 1) #t)
+				    (XmListSelectPos w (+ bartlett-window 1) #t)
 				    (IF (not (= (fft-window) bartlett-window))
 					(snd-display ";fft-window bartlett: ~A ~A" (fft-window) bartlett-window))
-				    (|XmListSelectPos w (+ kaiser-window 1) #t)
+				    (XmListSelectPos w (+ kaiser-window 1) #t)
 				    (IF (not (= (fft-window) kaiser-window))
 					(snd-display ";fft-window kaiser: ~A ~A" (fft-window) kaiser-window)))))
-		  (click-button (|XmMessageBoxGetChild transd |XmDIALOG_OK_BUTTON)) (force-event)
-		  (IF (|XtIsManaged transd)
+		  (click-button (XmMessageBoxGetChild transd XmDIALOG_OK_BUTTON)) (force-event)
+		  (IF (XtIsManaged transd)
 		      (snd-display ";why is transform dialog active?")))
 
 		;; ---------------- file:open dialog ----------------
                 (open-file-dialog)
                 (let* ((filed (list-ref (dialog-widgets) 6))
-		       (filename (|XmFileSelectionBoxGetChild filed |XmDIALOG_TEXT))
+		       (filename (XmFileSelectionBoxGetChild filed XmDIALOG_TEXT))
 		       (snd-tab-key #xFF09))
-		  (|XmTextSetString filename "oboe.s")
+		  (XmTextSetString filename "oboe.s")
 		  (key-event filename snd-tab-key 0) (force-event)
-		  (|XmUpdateDisplay filename)
-		  (IF (not (string=? (|XmTextGetString filename) "oboe.snd")) (snd-display "<tab>->~A?" (|XmTextGetString filename)))
-		  (click-button (|XmFileSelectionBoxGetChild filed |XmDIALOG_OK_BUTTON)) (force-event)
+		  (XmUpdateDisplay filename)
+		  (IF (not (string=? (XmTextGetString filename) "oboe.snd")) (snd-display "<tab>->~A?" (XmTextGetString filename)))
+		  (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_OK_BUTTON)) (force-event)
 		  (let ((ind (find-sound "oboe.snd")))
 		    (IF (not (sound? ind))
 			(snd-display "file:open failed?"))
 		    (close-sound ind)))
                 (open-file-dialog)
                 (let* ((filed (list-ref (dialog-widgets) 6)))
-		  (click-button (|XmFileSelectionBoxGetChild filed |XmDIALOG_APPLY_BUTTON)) (force-event)
-		  (click-button (|XmFileSelectionBoxGetChild filed |XmDIALOG_CANCEL_BUTTON)) (force-event)
-		  (IF (|XtIsManaged filed)
+		  (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_APPLY_BUTTON)) (force-event)
+		  (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event)
+		  (IF (XtIsManaged filed)
 		      (snd-display ";file:open cancel failed?")))
 		(open-file-dialog)
                 (let* ((filed (list-ref (dialog-widgets) 6))
 		       (sounds (find-child filed "sound files only"))
 		       (plays (find-child filed "play selected sound"))
-		       (files (|XmFileSelectionBoxGetChild filed |XmDIALOG_LIST)))
-		  (|XmToggleButtonSetState sounds #f #t)
-		  (|XmToggleButtonSetState sounds #t #t)
-		  (|XmListSelectPos files 1 #t)
-		  (|XmToggleButtonSetState plays #t #t)
-		  (click-button (|XmFileSelectionBoxGetChild filed |XmDIALOG_OK_BUTTON)) (force-event)
-		  (let* ((filename (|XmTextGetString (|XmFileSelectionBoxGetChild filed |XmDIALOG_TEXT)))
+		       (files (XmFileSelectionBoxGetChild filed XmDIALOG_LIST)))
+		  (XmToggleButtonSetState sounds #f #t)
+		  (XmToggleButtonSetState sounds #t #t)
+		  (XmListSelectPos files 1 #t)
+		  (XmToggleButtonSetState plays #t #t)
+		  (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_OK_BUTTON)) (force-event)
+		  (let* ((filename (XmTextGetString (XmFileSelectionBoxGetChild filed XmDIALOG_TEXT)))
 			 (ind (find-sound filename)))
 		    (IF (not (sound? ind))
 			(snd-display "chose: ~A but not active?" filename))
-		    (|XmToggleButtonSetState plays #f #t)
+		    (XmToggleButtonSetState plays #f #t)
 		    (close-sound ind)
-		    (click-button (|XmFileSelectionBoxGetChild filed |XmDIALOG_CANCEL_BUTTON)) 
+		    (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) 
 		    (force-event)))
 		(open-file-dialog)
                 (let* ((filed (list-ref (dialog-widgets) 6))
-		       (pattern (|XmFileSelectionBoxGetChild filed |XmDIALOG_FILTER_TEXT))
+		       (pattern (XmFileSelectionBoxGetChild filed XmDIALOG_FILTER_TEXT))
 		       (sounds (find-child filed "sound files only")))
-		  (|XmToggleButtonSetState sounds #t #t)
-		  (|XmToggleButtonSetState sounds #f #t)
-		  (|XmTextSetString pattern "/home/bil/cl/*.snd")
-		  (|XmToggleButtonSetState sounds #t #t)
-		  (|XmToggleButtonSetState sounds #f #t)
-		  (|XmTextSetString pattern "/home/bil/cl/*.wav")
-		  (|XmToggleButtonSetState sounds #t #t)
-		  (click-button (|XmFileSelectionBoxGetChild filed |XmDIALOG_CANCEL_BUTTON)) (force-event))
+		  (XmToggleButtonSetState sounds #t #t)
+		  (XmToggleButtonSetState sounds #f #t)
+		  (XmTextSetString pattern "/home/bil/cl/*.snd")
+		  (XmToggleButtonSetState sounds #t #t)
+		  (XmToggleButtonSetState sounds #f #t)
+		  (XmTextSetString pattern "/home/bil/cl/*.wav")
+		  (XmToggleButtonSetState sounds #t #t)
+		  (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event))
                 (open-file-dialog)
                 (let* ((filed (list-ref (dialog-widgets) 6))
-		       (filename (|XmFileSelectionBoxGetChild filed |XmDIALOG_TEXT))
+		       (filename (XmFileSelectionBoxGetChild filed XmDIALOG_TEXT))
 		       (snd-tab-key #xFF09))
-		  (|XmTextSetString filename "oboe.")
+		  (XmTextSetString filename "oboe.")
 		  (key-event filename snd-tab-key 0) (force-event)
-		  (|XmUpdateDisplay filename)
+		  (XmUpdateDisplay filename)
 		  ;; now the completion help should be active
 		  (let ((helper (list-ref (dialog-widgets) 15)))
 		    (IF (not helper)
 			(snd-display ";help completion inactive?")
 			(let ((choices (find-child (list-ref (dialog-widgets) 15) "completion-help-text")))
-			  (|XmListSelectPos choices 2 #f)
-			  (click-button (|XmMessageBoxGetChild helper |XmDIALOG_OK_BUTTON)) (force-event)
+			  (XmListSelectPos choices 2 #f)
+			  (click-button (XmMessageBoxGetChild helper XmDIALOG_OK_BUTTON)) (force-event)
 			  )))
-		  (click-button (|XmFileSelectionBoxGetChild filed |XmDIALOG_CANCEL_BUTTON)) (force-event))
+		  (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event))
 
                 ;; ---------------- file save-as dialog ----------------
 		(set! (default-output-chans) 1)
@@ -20278,13 +20278,13 @@ EDITS: 5
 		  (scale-by 2.0)
 		  (file-save-as-dialog)
 		  (let* ((saved (list-ref (dialog-widgets) 7))
-			 (ok (|XmFileSelectionBoxGetChild saved |XmDIALOG_OK_BUTTON))
-			 (filetext (|XmFileSelectionBoxGetChild saved |XmDIALOG_TEXT)))
-		    (|XmTextSetString filetext "test.snd")
+			 (ok (XmFileSelectionBoxGetChild saved XmDIALOG_OK_BUTTON))
+			 (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT)))
+		    (XmTextSetString filetext "test.snd")
 		    (click-button ok) (force-event)
 		    (IF (not (file-exists? "test.snd"))
 			(snd-display ";file test.snd not saved?"))
-		    (IF (|XtIsManaged saved)
+		    (IF (XtIsManaged saved)
 			(snd-display "after save, file dialog still active?"))
 		    (let ((ind1 (open-sound "test.snd")))
 		      (IF (not (= (header-type ind1) (header-type ind))) 
@@ -20315,22 +20315,22 @@ EDITS: 5
 			 (formats (find-child saved "data format")) ; list
 			 (srtxt (find-child saved "srate-text")) 
 			 (comtxt (find-child saved "comment-text"))
-			 (cancel (|XmFileSelectionBoxGetChild saved |XmDIALOG_CANCEL_BUTTON))
-			 (ok (|XmFileSelectionBoxGetChild saved |XmDIALOG_OK_BUTTON))
-			 (filter (|XmFileSelectionBoxGetChild saved |XmDIALOG_APPLY_BUTTON))
-			 (filetext (|XmFileSelectionBoxGetChild saved |XmDIALOG_TEXT)))
+			 (cancel (XmFileSelectionBoxGetChild saved XmDIALOG_CANCEL_BUTTON))
+			 (ok (XmFileSelectionBoxGetChild saved XmDIALOG_OK_BUTTON))
+			 (filter (XmFileSelectionBoxGetChild saved XmDIALOG_APPLY_BUTTON))
+			 (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT)))
 		    (do ((i 1 (1+ i)))
 			((= i 7))
-		      (|XmListSelectPos types i #t))
-		    (|XmListSelectPos types 2 #t)
-		    (|XmListSelectPos formats 2 #t)
-		    (|XmTextSetString filetext "test.snd")
-		    (|XmTextSetString srtxt "(* 2 22050)")
-		    (|XmTextSetString comtxt "This is a test of the file save-as dialog")
+		      (XmListSelectPos types i #t))
+		    (XmListSelectPos types 2 #t)
+		    (XmListSelectPos formats 2 #t)
+		    (XmTextSetString filetext "test.snd")
+		    (XmTextSetString srtxt "(* 2 22050)")
+		    (XmTextSetString comtxt "This is a test of the file save-as dialog")
 		    (click-button ok) (force-event)
 		    (IF (not (file-exists? "test.snd"))
 			(snd-display ";file 2 test.snd not saved?"))
-		    (IF (|XtIsManaged saved)
+		    (IF (XtIsManaged saved)
 			(snd-display "after save, file dialog still active?"))
 		    (let ((ind1 (open-sound "test.snd")))
 		      (IF (not (= (header-type ind1) mus-aifc))
@@ -20356,14 +20356,14 @@ EDITS: 5
 		  (if (file-exists? "test.snd") (delete-file "test.snd"))
 		  (file-save-as-dialog)
 		  (let* ((saved (list-ref (dialog-widgets) 7))
-			 (filetext (|XmFileSelectionBoxGetChild saved |XmDIALOG_TEXT))
-			 (cancel (|XmFileSelectionBoxGetChild saved |XmDIALOG_CANCEL_BUTTON))
-			 (filter (|XmFileSelectionBoxGetChild saved |XmDIALOG_APPLY_BUTTON)))
+			 (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT))
+			 (cancel (XmFileSelectionBoxGetChild saved XmDIALOG_CANCEL_BUTTON))
+			 (filter (XmFileSelectionBoxGetChild saved XmDIALOG_APPLY_BUTTON)))
 		    (click-button filter) (force-event)
-		    (IF (string=? (|XmTextGetString filetext) "test.snd")
-			(snd-display ";save-as filter: ~A?" (|XmTextGetString filetext)))
+		    (IF (string=? (XmTextGetString filetext) "test.snd")
+			(snd-display ";save-as filter: ~A?" (XmTextGetString filetext)))
 		    (click-button cancel) (force-event)
-		    (IF (|XtIsManaged saved)
+		    (IF (XtIsManaged saved)
 			(snd-display "after cancel, file dialog still active?"))
 		    (if (file-exists? "test.snd")
 			(snd-display ";cancelled save-as wrote a file?")))
@@ -20376,17 +20376,17 @@ EDITS: 5
 		  (scale-selection-by 2.0)
 		  (edit-save-as-dialog)
 		  (let* ((saved (list-ref (dialog-widgets) 7))
-			 (ok (|XmFileSelectionBoxGetChild saved |XmDIALOG_OK_BUTTON))
-			 (filetext (|XmFileSelectionBoxGetChild saved |XmDIALOG_TEXT))
+			 (ok (XmFileSelectionBoxGetChild saved XmDIALOG_OK_BUTTON))
+			 (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT))
 			 (types (find-child saved "header type")) ; list
 			 (formats (find-child saved "data format"))) ; list
-		    (|XmListSelectPos types 1 #t)
-		    (|XmListSelectPos formats 1 #t)
-		    (|XmTextSetString filetext "test.snd")
+		    (XmListSelectPos types 1 #t)
+		    (XmListSelectPos formats 1 #t)
+		    (XmTextSetString filetext "test.snd")
 		    (click-button ok) (force-event)
 		    (IF (not (file-exists? "test.snd"))
 			(snd-display ";edit test.snd not saved?"))
-		    (IF (|XtIsManaged saved)
+		    (IF (XtIsManaged saved)
 			(snd-display "after save, edit dialog still active?"))
 		    (let ((ind1 (open-sound "test.snd")))
 		      (let* ((r1 (make-sample-reader 2000 ind 0))
@@ -20403,11 +20403,11 @@ EDITS: 5
 		  (if (file-exists? "test.snd") (delete-file "test.snd"))
 		  (edit-save-as-dialog)
 		  (let* ((saved (list-ref (dialog-widgets) 7))
-			 (filetext (|XmFileSelectionBoxGetChild saved |XmDIALOG_TEXT))
-			 (cancel (|XmFileSelectionBoxGetChild saved |XmDIALOG_CANCEL_BUTTON))
-			 (filter (|XmFileSelectionBoxGetChild saved |XmDIALOG_APPLY_BUTTON)))
+			 (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT))
+			 (cancel (XmFileSelectionBoxGetChild saved XmDIALOG_CANCEL_BUTTON))
+			 (filter (XmFileSelectionBoxGetChild saved XmDIALOG_APPLY_BUTTON)))
 		    (click-button cancel) (force-event)
-		    (IF (|XtIsManaged saved)
+		    (IF (XtIsManaged saved)
 			(snd-display "after cancel, edit save-as dialog still active?"))
 		    (if (file-exists? "test.snd")
 			(snd-display ";cancelled edit save-as wrote a file?")))
@@ -20427,12 +20427,12 @@ EDITS: 5
 		       (curform (find-child filed "curform"))
 		       (prevform (find-child filed "prevform"))
 		       (sort-menu (find-child prevform "sort"))
-		       (option-holder (cadr (|XtGetValues sort-menu (list |XmNsubMenuId 0))))
+		       (option-holder (cadr (XtGetValues sort-menu (list XmNsubMenuId 0))))
 		       (rw1 (find-child prevform "rw"))
 		       (sv1 (find-child rw1 "sv"))
 		       (pl1 (find-child rw1 "pl"))
 		       (nm1 (find-child rw1 "nm"))
-		       (name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm1 (list |XmNlabelString 0))) "bold_button_font")))
+		       (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) "bold_button_font")))
 		       (rw2 (find-child curform "rw"))
 		       (sv2 (find-child rw1 "sv"))
 		       (pl2 (find-child rw1 "pl"))
@@ -20442,35 +20442,35 @@ EDITS: 5
 		      (begin
 			(catch #t
 			       (lambda ()
-				 (|XmToggleButtonSetState pl1 #t #t)
-				 (|XmToggleButtonSetState pl1 #f #t)
+				 (XmToggleButtonSetState pl1 #t #t)
+				 (XmToggleButtonSetState pl1 #f #t)
 				 (click-button nm1)
 				 (IF (or (= (length (sounds)) 0)
 					 (not (string=? (short-file-name (car (sounds))) name)))
 				     (snd-display ";click previous: ~A ~A" name (map short-file-name (sounds))))
-				 (|XmToggleButtonSetState sv2 #t #t)		  
-				 (|XmToggleButtonSetState pl2 #t #t)
-				 (|XmToggleButtonSetState sv2 #f #t)
-				 (|XmToggleButtonSetState pl2 #f #t))
+				 (XmToggleButtonSetState sv2 #t #t)		  
+				 (XmToggleButtonSetState pl2 #t #t)
+				 (XmToggleButtonSetState sv2 #f #t)
+				 (XmToggleButtonSetState pl2 #f #t))
 			       (lambda args args))
 			(enter-event nm1)
-			(set! name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm2 (list |XmNlabelString 0))) "bold_button_font")))
+			(set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) "bold_button_font")))
 			(close-sound (car (sounds)))
-			(|XmToggleButtonSetState sv1 #t #t)
+			(XmToggleButtonSetState sv1 #t #t)
 			(for-each-child option-holder
 					(lambda (w)
-					  (if (|XmIsPushButton w)
+					  (if (XmIsPushButton w)
 					      (begin
 						(click-button w #t)
 						(force-event)))))
 			(let ((update (find-child filed "Update")))
 			  (click-button update) (force-event))))
-		  (click-button (|XmMessageBoxGetChild filed |XmDIALOG_CANCEL_BUTTON)) (force-event)     ;clear
-		  (set! name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm2 (list |XmNlabelString 0))) "bold_button_font")))
-		  (click-button (|XmMessageBoxGetChild filed |XmDIALOG_OK_BUTTON)) (force-event)
+		  (click-button (XmMessageBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event)     ;clear
+		  (set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) "bold_button_font")))
+		  (click-button (XmMessageBoxGetChild filed XmDIALOG_OK_BUTTON)) (force-event)
 		  (reset-hook! mouse-enter-label-hook)
 		  (reset-hook! mouse-leave-label-hook)
-		  (IF (|XtIsManaged filed)
+		  (IF (XtIsManaged filed)
 		      (snd-display ";why is view files active?")))
 
 		;; ---------------- raw data dialog ----------------
@@ -20483,15 +20483,15 @@ EDITS: 5
 		    (IF (not (list-ref (dialog-widgets) 9))
 			(snd-display ";raw-data open: ~A" (list-ref (dialog-widgets) 9))
 			(let ((rd (list-ref (dialog-widgets) 9)))
-			  (click-button (|XmMessageBoxGetChild rd |XmDIALOG_CANCEL_BUTTON)) (force-event))))
+			  (click-button (XmMessageBoxGetChild rd XmDIALOG_CANCEL_BUTTON)) (force-event))))
 		  (reset-hook! bad-header-hook)
 		  (if (file-exists? "/home/bil/sf1/bogus.snd")
 		      (let ((ind (open-sound "/home/bil/sf1/bogus.snd")))
 			(let ((rd (list-ref (dialog-widgets) 9)))
-			  (if (|XtIsManaged rd)
+			  (if (XtIsManaged rd)
 			      (begin
-				(click-button (|XmMessageBoxGetChild rd |XmDIALOG_HELP_BUTTON)) (force-event)
-				(click-button (|XmMessageBoxGetChild rd |XmDIALOG_CANCEL_BUTTON)) (force-event))))))
+				(click-button (XmMessageBoxGetChild rd XmDIALOG_HELP_BUTTON)) (force-event)
+				(click-button (XmMessageBoxGetChild rd XmDIALOG_CANCEL_BUTTON)) (force-event))))))
 		  (set! (with-background-processes) old-val))
 		(add-hook! bad-header-hook (lambda (n) #t))
 
@@ -20515,13 +20515,13 @@ EDITS: 5
 		;; ---------------- file:mix dialog ----------------
                 (if (list-ref (dialog-widgets) 11)
 		    (let* ((mixd (list-ref (dialog-widgets) 11))
-			   (filename (|XmFileSelectionBoxGetChild mixd |XmDIALOG_TEXT))
+			   (filename (XmFileSelectionBoxGetChild mixd XmDIALOG_TEXT))
 			   (ind (new-sound "test.snd" mus-next mus-bshort 22050 1 "mixing"))
 			   (ind1 (open-sound "oboe.snd")))
-		      (|XtManageChild mixd)
+		      (XtManageChild mixd)
 		      (set! (cursor ind) 0)
-		      (|XmTextSetString filename "oboe.snd")
-		      (click-button (|XmFileSelectionBoxGetChild mixd |XmDIALOG_OK_BUTTON)) (force-event)
+		      (XmTextSetString filename "oboe.snd")
+		      (click-button (XmFileSelectionBoxGetChild mixd XmDIALOG_OK_BUTTON)) (force-event)
 		      (let* ((r1 (make-sample-reader 0 ind1 0))
 			     (ok (scan-channel (lambda (x)
 						 (let ((val (next-sample r1)))
@@ -20533,9 +20533,9 @@ EDITS: 5
 			    (snd-display ";mix diff: ~A" ok))
 			(free-sample-reader r1))
 		      (close-sound ind1)
-		      (|XtManageChild mixd)
-		      (click-button (|XmFileSelectionBoxGetChild mixd |XmDIALOG_CANCEL_BUTTON)) (force-event)
-		      (IF (|XtIsManaged mixd)
+		      (XtManageChild mixd)
+		      (click-button (XmFileSelectionBoxGetChild mixd XmDIALOG_CANCEL_BUTTON)) (force-event)
+		      (IF (XtIsManaged mixd)
 			  (snd-display ";mix file dialog still active?"))
 		      (close-sound ind))
 		    (snd-display ";no mix file dialog?"))
@@ -20591,14 +20591,14 @@ EDITS: 5
 			 (chtxt (find-child editd "chans-text"))
 			 (loctxt (find-child editd "location-text"))
 			 (comtxt (find-child editd "comment-text")))
-		    (|XmListSelectPos types (type->pos mus-riff) #t)
-		    (|XmListSelectPos formats (format->pos mus-riff mus-lfloat) #t)
-		    (|XmTextSetString srtxt "8")
+		    (XmListSelectPos types (type->pos mus-riff) #t)
+		    (XmListSelectPos formats (format->pos mus-riff mus-lfloat) #t)
+		    (XmTextSetString srtxt "8")
 		    (key-event srtxt snd-tab-key 0) (force-event)
-		    (|XmUpdateDisplay srtxt)
-		    (|XmTextSetString loctxt "44")
-		    (|XmTextSetString comtxt "saved from edit-header dialog")
-		    (click-button (|XmMessageBoxGetChild editd |XmDIALOG_OK_BUTTON)) (force-event)
+		    (XmUpdateDisplay srtxt)
+		    (XmTextSetString loctxt "44")
+		    (XmTextSetString comtxt "saved from edit-header dialog")
+		    (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
 		    (set! ind (find-sound "fmv.snd"))
 		    (IF (not (= (header-type ind) mus-riff))
 			(snd-display ";edit-header -> riff? ~A" (mus-header-type-name (header-type ind))))
@@ -20609,7 +20609,7 @@ EDITS: 5
 		    (IF (or (not (string? (comment ind)))
 			    (not (string=? (comment ind) "saved from edit-header dialog")))
 			(snd-display ";edit header comment: ~A" (comment ind)))
-		    (IF (|XtIsManaged editd)
+		    (IF (XtIsManaged editd)
 			(snd-display "why is edit header dialog active?"))
 		    (close-sound ind)
 		    (set! ind (open-sound "4.aiff"))
@@ -20623,17 +20623,17 @@ EDITS: 5
 		      (for-each
 		       (lambda (typ frm chns sr com backout nominal-length)
 			 (edit-header-dialog)
-			 (IF (not (|XtIsManaged editd))
+			 (IF (not (XtIsManaged editd))
 			     (snd-display "why isn't the edit header dialog active?"))
-			 (|XmListSelectPos types (type->pos typ) #t)
-			 (|XmListSelectPos formats (format->pos typ frm) #t)
-			 (click-button (|XmMessageBoxGetChild editd |XmDIALOG_OK_BUTTON)) (force-event)
+			 (XmListSelectPos types (type->pos typ) #t)
+			 (XmListSelectPos formats (format->pos typ frm) #t)
+			 (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
 			 (set! ind (find-sound "test.aiff"))
 			 (IF (not (= (header-type ind) typ))
 			     (snd-display ";ledit-header type -> ~A ~A" typ (mus-header-type-name (header-type ind))))
 			 (edit-header-dialog)
-			 (|XmTextSetString srtxt (number->string sr))
-			 (click-button (|XmMessageBoxGetChild editd |XmDIALOG_OK_BUTTON)) (force-event)
+			 (XmTextSetString srtxt (number->string sr))
+			 (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
 			 (set! ind (find-sound "test.aiff"))
 			 (IF (not (= (data-format ind) frm))
 			     (snd-display ";ledit-header format -> ~A ~A (~A ~A) [~A]" 
@@ -20644,9 +20644,9 @@ EDITS: 5
 			 (IF (not (= (srate ind) sr))
 			     (snd-display ";ledit-header srate -> ~A ~A" sr (srate ind)))
 			 (edit-header-dialog)
-			 (if com (|XmTextSetString comtxt com))
-			 (|XmTextSetString chtxt (number->string chns))
-			 (click-button (|XmMessageBoxGetChild editd |XmDIALOG_OK_BUTTON)) (force-event)
+			 (if com (XmTextSetString comtxt com))
+			 (XmTextSetString chtxt (number->string chns))
+			 (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
 			 (set! ind (find-sound "test.aiff"))
 			 (if com
 			     (IF (or (not (string? (comment ind)))
@@ -20706,7 +20706,7 @@ EDITS: 5
 			     (* 2 old-length) old-length (* 2 old-length) old-length
 			     #f #f (* 0.5 old-length) (* 0.5 old-length))))
 		    (close-sound ind)
-		    (click-button (|XmMessageBoxGetChild editd |XmDIALOG_CANCEL_BUTTON)) (force-event)))
+		    (click-button (XmMessageBoxGetChild editd XmDIALOG_CANCEL_BUTTON)) (force-event)))
 		(if (file-exists? "test.aiff") (delete-file "test.aiff"))
 
 		;; ---------------- edit:find dialog ----------------
@@ -20716,11 +20716,11 @@ EDITS: 5
 		      (let* ((findd (list-ref (dialog-widgets) 13))
 			     (ind (open-sound "oboe.snd"))
 			     ;; ok = dismiss cancel = previous next = next
-			     (dismiss (|XmMessageBoxGetChild findd |XmDIALOG_OK_BUTTON))
-			     (previous (|XmMessageBoxGetChild findd |XmDIALOG_CANCEL_BUTTON))
+			     (dismiss (XmMessageBoxGetChild findd XmDIALOG_OK_BUTTON))
+			     (previous (XmMessageBoxGetChild findd XmDIALOG_CANCEL_BUTTON))
 			     (next (find-child findd "Next"))
 			     (txt (find-child findd "text")))
-			(|XmTextSetString txt "(lambda (n) (> n .1))")
+			(XmTextSetString txt "(lambda (n) (> n .1))")
 			(click-button next) (force-event)
 			(IF (not (> (sample (cursor)) .1))
 			    (snd-display ";sample at cursor upon edit find > .1: ~A (~A)" (sample (cursor)) (cursor)))
@@ -20728,14 +20728,14 @@ EDITS: 5
 			(click-button previous) (force-event)
 			(click-button dismiss) (force-event)
 			(close-sound ind)
-			(IF (|XtIsManaged findd)
+			(IF (XtIsManaged findd)
 			    (snd-display ";edit find is still active?")))))
 
                 ;; ---------------- help dialog ----------------
 	        (help-dialog "Test" "snd-test here")
                 (let* ((helpd (list-ref (dialog-widgets) 14)))
-		  (click-button (|XmMessageBoxGetChild helpd |XmDIALOG_OK_BUTTON)) (force-event)
-		  (IF (|XtIsManaged helpd)
+		  (click-button (XmMessageBoxGetChild helpd XmDIALOG_OK_BUTTON)) (force-event)
+		  (IF (XtIsManaged helpd)
 		      (snd-display ";help still active?")))
 
 		;; ---------------- mix-panel dialog ----------------
@@ -20760,10 +20760,10 @@ EDITS: 5
 		      (IF (fneq (sample 2001) (+ s2001 .1)) 
 			  (snd-display ";mix-panel at 2001: ~A (~A)?" (sample 2001) s2001))
 		      (select-mix id1)
-		      (IF (not (string=? (|XmTextGetString trktxt) "0"))
-			  (snd-display ";mix initial track: ~A" (|XmTextGetString trktxt)))
-		      (IF (not (string=? (|XmTextGetString idtxt) (number->string id1)))
-			  (snd-display ";mix initial id: ~A" (|XmTextGetString idtxt)))
+		      (IF (not (string=? (XmTextGetString trktxt) "0"))
+			  (snd-display ";mix initial track: ~A" (XmTextGetString trktxt)))
+		      (IF (not (string=? (XmTextGetString idtxt) (number->string id1)))
+			  (snd-display ";mix initial id: ~A" (XmTextGetString idtxt)))
 		      (move-scroll ampscr 20)
 		      (IF (not (> (sample 1001) (+ s1001 .1)))
 			  (snd-display ";amp mix-panel at 1001: ~A (~A)?" (sample 1001) s1001))
@@ -20773,16 +20773,16 @@ EDITS: 5
 		      (move-scroll spdscr 20)
 		      (for-each
 		       (lambda (scrl)
-			 (|XtCallCallbacks scrl |XmNdragCallback
-					   (let ((cb (|XmScrollBarCallbackStruct)))
-					     (set! (|value cb) 50)
-					     (set! (|event cb) (|XEvent))
+			 (XtCallCallbacks scrl XmNdragCallback
+					   (let ((cb (XmScrollBarCallbackStruct)))
+					     (set! (.value cb) 50)
+					     (set! (.event cb) (XEvent))
 					     cb)))
 		       (list spdscr ampscr))
 		      (for-each
 		       (lambda (n)
 			 (click-button n #t 0)
-			 (click-button n #t |ControlMask))
+			 (click-button n #t ControlMask))
 		       (map
 			(lambda (w) (find-child mixd w))
 			(list "speed-label" "amp-label")))
@@ -20794,28 +20794,28 @@ EDITS: 5
 		      (key-event nametxt snd-return-key 0) (force-event)
 		      (widget-string idtxt "2") (force-event)
 		      (key-event idtxt snd-return-key 0) (force-event)
-		      (click-button (|XmMessageBoxGetChild mixd |XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
-		      (IF (|XtIsManaged mixd)
+		      (click-button (XmMessageBoxGetChild mixd XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
+		      (IF (XtIsManaged mixd)
 			  (snd-display ";why is mix-panel dialog alive?"))))
 		  (close-sound ind))
 
 		;; ---------------- print dialog ----------------
 		(let* ((ind (open-sound "oboe.snd"))
 		       (print-menu (menu-option "Print")))
-		  (|XtSetSensitive print-menu #t)
+		  (XtSetSensitive print-menu #t)
 		  (click-button print-menu #t)
 		  (let ((printd (list-ref (dialog-widgets) 17)))
-		    (if (|Widget? printd)
+		    (if (Widget? printd)
 			(begin
-			  (if (not (|XtIsManaged printd)) (|XtManageChild printd))
+			  (if (not (XtIsManaged printd)) (XtManageChild printd))
 			  (let ((txt (find-child printd "text")))
-			  (|XmTextSetString txt "test.eps")
-			  (click-button (|XmMessageBoxGetChild printd |XmDIALOG_OK_BUTTON))
+			  (XmTextSetString txt "test.eps")
+			  (click-button (XmMessageBoxGetChild printd XmDIALOG_OK_BUTTON))
 			  (IF (not (file-exists? "test.eps"))
 			      (snd-display ";print -> test.eps?")
 			      (delete-file "test.eps"))
-			  (click-button (|XmMessageBoxGetChild printd |XmDIALOG_CANCEL_BUTTON))
-			  (IF (|XtIsManaged printd)
+			  (click-button (XmMessageBoxGetChild printd XmDIALOG_CANCEL_BUTTON))
+			  (IF (XtIsManaged printd)
 			      (snd-display ";why is print dialog alive?"))))
 		      (snd-display ";no print dialog?"))
 		  (close-sound ind)))
@@ -20830,11 +20830,11 @@ EDITS: 5
 			 (record (find-child recd "record-button"))
 			 ;; cancel -> reset, ok -> dismiss
 			 )
-		    (if (not (|XtIsManaged recd)) (|XtManageChild recd))
+		    (if (not (XtIsManaged recd)) (XtManageChild recd))
 		    (click-button record) (force-event)
 		    (click-button record) (force-event)
-		    (click-button (|XmMessageBoxGetChild recd |XmDIALOG_CANCEL_BUTTON)) (force-event)
-		    (click-button (|XmMessageBoxGetChild recd |XmDIALOG_OK_BUTTON)) (force-event)
+		    (click-button (XmMessageBoxGetChild recd XmDIALOG_CANCEL_BUTTON)) (force-event)
+		    (click-button (XmMessageBoxGetChild recd XmDIALOG_OK_BUTTON)) (force-event)
 		    )
 		  (set! (with-background-processes) old-val))
 
@@ -20862,29 +20862,29 @@ EDITS: 5
 		       (pl1 (find-child rw1 "pl"))
 		       (nm1 (find-child rw1 "nm"))
 		       (editb (find-child regd "edit"))
-		       (name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm1 (list |XmNlabelString 0))) "bold_button_font"))))
-		  (|XmToggleButtonSetState pl1 #t #t)
-		  (|XmToggleButtonSetState pl1 #f #t)
-		  (|XmToggleButtonSetState sv1 #t #t)
-		  (|XmToggleButtonSetState sv1 #f #t)
+		       (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) "bold_button_font"))))
+		  (XmToggleButtonSetState pl1 #t #t)
+		  (XmToggleButtonSetState pl1 #f #t)
+		  (XmToggleButtonSetState sv1 #t #t)
+		  (XmToggleButtonSetState sv1 #f #t)
 		  (click-button nm1)
-		  (click-button (|XmMessageBoxGetChild regd |XmDIALOG_CANCEL_BUTTON)) (force-event)		  
-		  (let ((name1 (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm1 (list |XmNlabelString 0))) "bold_button_font"))))
+		  (click-button (XmMessageBoxGetChild regd XmDIALOG_CANCEL_BUTTON)) (force-event)		  
+		  (let ((name1 (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) "bold_button_font"))))
 		    (IF (string=? name1 name)
 			(snd-display ";delete in region dialog: ~A?" name)))
 		  (click-button prtb) (force-event)
 		  (let* ((reglist (find-child regd "reglist"))
 			 (ww (find-child reglist "ww")))
-		    (IF (not (|Widget? ww)) (snd-display ";can't find region dialog region list"))
+		    (IF (not (Widget? ww)) (snd-display ";can't find region dialog region list"))
 		    (for-each-child ww 
 				    (lambda (w) 
-				      (if (|XmIsPushButton w)
+				      (if (XmIsPushButton w)
 					  (let ((label (widget-text w)))
 					    (if (and (string? label)
 						     (> (string-length label) 3))
 						(begin
-						  (|XtCallCallbacks w |XmNactivateCallback #f)
-						  (if (|XtIsSensitive downb)
+						  (XtCallCallbacks w XmNactivateCallback #f)
+						  (if (XtIsSensitive downb)
 						      (begin
 							(click-button downb #t) (force-event)
 							(click-button upb #t) (force-event))))))))))
@@ -20896,8 +20896,8 @@ EDITS: 5
 		      (lambda (snd)
 			(if (not (member snd snds)) (close-sound snd)))
 		      new-snds)))
-		  (click-button (|XmMessageBoxGetChild regd |XmDIALOG_OK_BUTTON)) (force-event)		  
-		  (IF (|XtIsManaged regd)
+		  (click-button (XmMessageBoxGetChild regd XmDIALOG_OK_BUTTON)) (force-event)		  
+		  (IF (XtIsManaged regd)
 		      (snd-display ";region dialog is still active?")))
 		(c-g!)
 		))))))
@@ -20915,1439 +20915,1439 @@ EDITS: 5
 	  (begin
 	    ;; ---------------- X tests ----------------
 	    (let ((scr (current-screen))
-		  (dpy (|XtDisplay (cadr (main-widgets)))))
-	      (IF (not (= (|height scr) 1200))
-		  (snd-display ";screen height: ~A" (|height scr)))
-	      (IF (not (= (|width scr) 1600))
-		  (snd-display ";screen width: ~A" (|width scr)))
-	      (let ((ratio (/ (|mwidth scr) (|width scr))))
-		(IF (> (abs (- (* ratio (|height scr)) (|mheight scr))) 2)
-		    (snd-display ";mheight/width: ~A ~A" (|mheight scr) (|mwidth scr))))
-	      (IF (not (= (|ndepths scr) 7))
-		  (snd-display ";screen ndepths: ~A" (|ndepths scr)))
-	      (IF (not (= (cadr (|white_pixel scr)) 16777215))
-		  (snd-display ";screen white_pixel: ~A" (|white_pixel scr)))
-	      (IF (not (= (cadr (|black_pixel scr)) 0))
-		  (snd-display ";screen black_pixel: ~A" (|black_pixel scr)))
-	      (IF (not (eq? (|backing_store scr) #f))
-		  (snd-display ";screen backing_store: ~A" (|backing_store scr)))
-	      (IF (not (= (|min_maps scr) 1))
-		  (snd-display ";screen min_maps: ~A" (|min_maps scr)))
-	      (IF (not (= (|max_maps scr) 1))
-		  (snd-display ";screen max_maps: ~A" (|max_maps scr)))
-	      (IF (not (eq? (|save_unders scr) #f))
-		  (snd-display ";screen save_unders: ~A" (|save_unders scr)))
-	      (IF (not (|GC? (|default_gc scr)))
-		  (snd-display ";screen default_gc: ~A" (|default_gc scr)))
-	      (IF (not (|Window? (|root scr)))
-		  (snd-display ";screen root: ~A" (|root scr)))
-	      (IF (not (|Colormap? (|cmap scr)))
-		  (snd-display ";screen colormap: ~A" (|cmap scr)))
+		  (dpy (XtDisplay (cadr (main-widgets)))))
+	      (IF (not (= (.height scr) 1200))
+		  (snd-display ";screen height: ~A" (.height scr)))
+	      (IF (not (= (.width scr) 1600))
+		  (snd-display ";screen width: ~A" (.width scr)))
+	      (let ((ratio (/ (.mwidth scr) (.width scr))))
+		(IF (> (abs (- (* ratio (.height scr)) (.mheight scr))) 2)
+		    (snd-display ";mheight/width: ~A ~A" (.mheight scr) (.mwidth scr))))
+	      (IF (not (= (.ndepths scr) 7))
+		  (snd-display ";screen ndepths: ~A" (.ndepths scr)))
+	      (IF (not (= (cadr (.white_pixel scr)) 16777215))
+		  (snd-display ";screen white_pixel: ~A" (.white_pixel scr)))
+	      (IF (not (= (cadr (.black_pixel scr)) 0))
+		  (snd-display ";screen black_pixel: ~A" (.black_pixel scr)))
+	      (IF (not (eq? (.backing_store scr) #f))
+		  (snd-display ";screen backing_store: ~A" (.backing_store scr)))
+	      (IF (not (= (.min_maps scr) 1))
+		  (snd-display ";screen min_maps: ~A" (.min_maps scr)))
+	      (IF (not (= (.max_maps scr) 1))
+		  (snd-display ";screen max_maps: ~A" (.max_maps scr)))
+	      (IF (not (eq? (.save_unders scr) #f))
+		  (snd-display ";screen save_unders: ~A" (.save_unders scr)))
+	      (IF (not (GC? (.default_gc scr)))
+		  (snd-display ";screen default_gc: ~A" (.default_gc scr)))
+	      (IF (not (Window? (.root scr)))
+		  (snd-display ";screen root: ~A" (.root scr)))
+	      (IF (not (Colormap? (.cmap scr)))
+		  (snd-display ";screen colormap: ~A" (.cmap scr)))
 	      
-	      (IF (not (equal? (|DisplayOfScreen scr) (|display scr))) 
-		  (snd-display ";DisplayOfScreen: ~A ~A" (|DisplayOfScreen scr) (|display scr)))
-	      (IF (not (equal? (|RootWindowOfScreen scr) (|root scr))) 
-		  (snd-display ";RootWindowOfScreen: ~A ~A" (|RootWindowOfScreen scr) (|root scr)))
-	      (IF (not (equal? (|BlackPixelOfScreen scr) (|black_pixel scr))) 
-		  (snd-display ";BlackPixelOfScreen: ~A ~A" (|BlackPixelOfScreen scr) (|black_pixel scr)))
-	      (IF (not (equal? (|WhitePixelOfScreen scr) (|white_pixel scr))) 
-		  (snd-display ";WhitePixelOfScreen: ~A ~A" (|WhitePixelOfScreen scr) (|white_pixel scr)))
-	      (IF (not (equal? (|DefaultColormapOfScreen scr) (|cmap scr))) 
-		  (snd-display ";DefaultColormapOfScreen: ~A ~A" (|DefaultColormapOfScreen scr) (|cmap scr)))
-	      (IF (not (equal? (|DefaultDepthOfScreen scr) (|root_depth scr))) 
-		  (snd-display ";DefaultDepthOfScreen: ~A ~A" (|DefaultDepthOfScreen scr) (|root_depth scr)))
-	      (IF (not (equal? (|DefaultGCOfScreen scr) (|default_gc scr))) 
-		  (snd-display ";DefaultGCOfScreen: ~A ~A" (|DefaultGCOfScreen scr) (|default_gc scr)))
-	      (IF (not (equal? (|DefaultVisualOfScreen scr) (|root_visual scr))) 
-		  (snd-display ";DefaultVisualOfScreen: ~A ~A" (|DefaultVisualOfScreen scr) (|root_visual scr)))
-	      (IF (not (equal? (|WidthOfScreen scr) (|width scr))) 
-		  (snd-display ";WidthOfScreen: ~A ~A" (|WidthOfScreen scr) (|width scr)))
-	      (IF (not (equal? (|HeightOfScreen scr) (|height scr))) 
-		  (snd-display ";HeightOfScreen: ~A ~A" (|HeightOfScreen scr) (|height scr)))
-	      (IF (not (equal? (|WidthMMOfScreen scr) (|mwidth scr))) 
-		  (snd-display ";WidthMMOfScreen: ~A ~A" (|WidthMMOfScreen scr) (|mwidth scr)))
-	      (IF (not (equal? (|HeightMMOfScreen scr) (|mheight scr))) 
-		  (snd-display ";HeightMMOfScreen: ~A ~A" (|HeightMMOfScreen scr) (|mheight scr)))
-	      (IF (not (equal? (|PlanesOfScreen scr) (|root_depth scr))) 
-		  (snd-display ";PlanesOfScreen: ~A ~A" (|PlanesOfScreen scr) (|root_depth scr)))
-	      (IF (not (equal? (|MinCmapsOfScreen scr) (|min_maps scr))) 
-		  (snd-display ";MinCmapsOfScreen: ~A ~A" (|MinCmapsOfScreen scr) (|min_maps scr)))
-	      (IF (not (equal? (|MaxCmapsOfScreen scr) (|max_maps scr))) 
-		  (snd-display ";MaxCmapsOfScreen: ~A ~A" (|MaxCmapsOfScreen scr) (|max_maps scr)))
-	      (IF (not (equal? (|DoesSaveUnders scr) (|save_unders scr))) 
-		  (snd-display ";DoesSaveUnders: ~A ~A" (|DoesSaveUnders scr) (|save_unders scr)))
-	      (IF (not (equal? (|DoesBackingStore scr) (|backing_store scr))) 
-		  (snd-display ";DoesBackingStore: ~A ~A" (|DoesBackingStore scr) (|backing_store scr)))
-	      (IF (not (equal? (|EventMaskOfScreen scr) (|root_input_mask scr))) 
-		  (snd-display ";EventMaskOfScreen: ~A ~A" (|EventMaskOfScreen scr) (|root_input_mask scr)))
+	      (IF (not (equal? (DisplayOfScreen scr) (.display scr))) 
+		  (snd-display ";DisplayOfScreen: ~A ~A" (DisplayOfScreen scr) (.display scr)))
+	      (IF (not (equal? (RootWindowOfScreen scr) (.root scr))) 
+		  (snd-display ";RootWindowOfScreen: ~A ~A" (RootWindowOfScreen scr) (.root scr)))
+	      (IF (not (equal? (BlackPixelOfScreen scr) (.black_pixel scr))) 
+		  (snd-display ";BlackPixelOfScreen: ~A ~A" (BlackPixelOfScreen scr) (.black_pixel scr)))
+	      (IF (not (equal? (WhitePixelOfScreen scr) (.white_pixel scr))) 
+		  (snd-display ";WhitePixelOfScreen: ~A ~A" (WhitePixelOfScreen scr) (.white_pixel scr)))
+	      (IF (not (equal? (DefaultColormapOfScreen scr) (.cmap scr))) 
+		  (snd-display ";DefaultColormapOfScreen: ~A ~A" (DefaultColormapOfScreen scr) (.cmap scr)))
+	      (IF (not (equal? (DefaultDepthOfScreen scr) (.root_depth scr))) 
+		  (snd-display ";DefaultDepthOfScreen: ~A ~A" (DefaultDepthOfScreen scr) (.root_depth scr)))
+	      (IF (not (equal? (DefaultGCOfScreen scr) (.default_gc scr))) 
+		  (snd-display ";DefaultGCOfScreen: ~A ~A" (DefaultGCOfScreen scr) (.default_gc scr)))
+	      (IF (not (equal? (DefaultVisualOfScreen scr) (.root_visual scr))) 
+		  (snd-display ";DefaultVisualOfScreen: ~A ~A" (DefaultVisualOfScreen scr) (.root_visual scr)))
+	      (IF (not (equal? (WidthOfScreen scr) (.width scr))) 
+		  (snd-display ";WidthOfScreen: ~A ~A" (WidthOfScreen scr) (.width scr)))
+	      (IF (not (equal? (HeightOfScreen scr) (.height scr))) 
+		  (snd-display ";HeightOfScreen: ~A ~A" (HeightOfScreen scr) (.height scr)))
+	      (IF (not (equal? (WidthMMOfScreen scr) (.mwidth scr))) 
+		  (snd-display ";WidthMMOfScreen: ~A ~A" (WidthMMOfScreen scr) (.mwidth scr)))
+	      (IF (not (equal? (HeightMMOfScreen scr) (.mheight scr))) 
+		  (snd-display ";HeightMMOfScreen: ~A ~A" (HeightMMOfScreen scr) (.mheight scr)))
+	      (IF (not (equal? (PlanesOfScreen scr) (.root_depth scr))) 
+		  (snd-display ";PlanesOfScreen: ~A ~A" (PlanesOfScreen scr) (.root_depth scr)))
+	      (IF (not (equal? (MinCmapsOfScreen scr) (.min_maps scr))) 
+		  (snd-display ";MinCmapsOfScreen: ~A ~A" (MinCmapsOfScreen scr) (.min_maps scr)))
+	      (IF (not (equal? (MaxCmapsOfScreen scr) (.max_maps scr))) 
+		  (snd-display ";MaxCmapsOfScreen: ~A ~A" (MaxCmapsOfScreen scr) (.max_maps scr)))
+	      (IF (not (equal? (DoesSaveUnders scr) (.save_unders scr))) 
+		  (snd-display ";DoesSaveUnders: ~A ~A" (DoesSaveUnders scr) (.save_unders scr)))
+	      (IF (not (equal? (DoesBackingStore scr) (.backing_store scr))) 
+		  (snd-display ";DoesBackingStore: ~A ~A" (DoesBackingStore scr) (.backing_store scr)))
+	      (IF (not (equal? (EventMaskOfScreen scr) (.root_input_mask scr))) 
+		  (snd-display ";EventMaskOfScreen: ~A ~A" (EventMaskOfScreen scr) (.root_input_mask scr)))
 
-	      (IF (not (equal? (|XDisplayOfScreen scr) (|display scr))) 
-		  (snd-display ";XDisplayOfScreen: ~A ~A" (|XDisplayOfScreen scr) (|display scr)))
-	      (IF (not (equal? (|XDisplayOfScreen (|XScreenOfDisplay dpy 0)) dpy))
-		  (snd-display ";XScreenOfDisplay ~A ~A" (|XDisplayOfScreen (|XScreenOfDisplay dpy 0)) dpy))
-	      (IF (not (equal? (|XDefaultScreenOfDisplay dpy) scr))
-		  (snd-display ";XDefaultScreenOfDisplay ~A ~A" (|XDefaultScreenOfDisplay dpy) scr))
-	      (IF (not (equal? (|XRootWindowOfScreen scr) (|root scr))) 
-		  (snd-display ";XRootWindowOfScreen: ~A ~A" (|XRootWindowOfScreen scr) (|root scr)))
-	      (IF (not (equal? (|XBlackPixelOfScreen scr) (|black_pixel scr))) 
-		  (snd-display ";XBlackPixelOfScreen: ~A ~A" (|XBlackPixelOfScreen scr) (|black_pixel scr)))
-	      (IF (not (equal? (|XWhitePixelOfScreen scr) (|white_pixel scr))) 
-		  (snd-display ";XWhitePixelOfScreen: ~A ~A" (|XWhitePixelOfScreen scr) (|white_pixel scr)))
-	      (IF (not (equal? (|XDefaultColormapOfScreen scr) (|cmap scr))) 
-		  (snd-display ";XDefaultColormapOfScreen: ~A ~A" (|XDefaultColormapOfScreen scr) (|cmap scr)))
-	      (IF (not (equal? (|XDefaultDepthOfScreen scr) (|root_depth scr))) 
-		  (snd-display ";XDefaultDepthOfScreen: ~A ~A" (|XDefaultDepthOfScreen scr) (|root_depth scr)))
-	      (IF (not (equal? (|XDefaultGCOfScreen scr) (|default_gc scr)))
-		  (snd-display ";XDefaultGCOfScreen: ~A ~A" (|XDefaultGCOfScreen scr) (|default_gc scr)))
-	      (IF (not (equal? (|XDefaultVisualOfScreen scr) (|root_visual scr)))
-		  (snd-display ";XDefaultVisualOfScreen: ~A ~A" (|XDefaultVisualOfScreen scr) (|root_visual scr)))
-	      (IF (not (equal? (|XWidthOfScreen scr) (|width scr)))
-		  (snd-display ";XWidthOfScreen: ~A ~A" (|XWidthOfScreen scr) (|width scr)))
-	      (IF (not (equal? (|XHeightOfScreen scr) (|height scr)))
-		  (snd-display ";XHeightOfScreen: ~A ~A" (|XHeightOfScreen scr) (|height scr)))
-	      (IF (not (equal? (|XWidthMMOfScreen scr) (|mwidth scr))) 
-		  (snd-display ";XWidthMMOfScreen: ~A ~A" (|XWidthMMOfScreen scr) (|mwidth scr)))
-	      (IF (not (equal? (|XHeightMMOfScreen scr) (|mheight scr))) 
-		  (snd-display ";XHeightMMOfScreen: ~A ~A" (|XHeightMMOfScreen scr) (|mheight scr)))
-	      (IF (not (equal? (|XPlanesOfScreen scr) (|root_depth scr))) 
-		  (snd-display ";XPlanesOfScreen: ~A ~A" (|XPlanesOfScreen scr) (|root_depth scr)))
-	      (IF (not (equal? (|XMinCmapsOfScreen scr) (|min_maps scr)))
-		  (snd-display ";XMinCmapsOfScreen: ~A ~A" (|XMinCmapsOfScreen scr) (|min_maps scr)))
-	      (IF (not (equal? (|XMaxCmapsOfScreen scr) (|max_maps scr)))
-		  (snd-display ";XMaxCmapsOfScreen: ~A ~A" (|XMaxCmapsOfScreen scr) (|max_maps scr)))
-	      (IF (not (equal? (|XDoesSaveUnders scr) (|save_unders scr)))
-		  (snd-display ";XDoesSaveUnders: ~A ~A" (|XDoesSaveUnders scr) (|save_unders scr)))
-	      (IF (not (equal? (|XDoesBackingStore scr) (|backing_store scr))) 
-		  (snd-display ";XDoesBackingStore: ~A ~A" (|XDoesBackingStore scr) (|backing_store scr)))
-	      (IF (not (equal? (|XEventMaskOfScreen scr) (|root_input_mask scr)))
-		  (snd-display ";XEventMaskOfScreen: ~A ~A" (|XEventMaskOfScreen scr) (|root_input_mask scr)))
+	      (IF (not (equal? (XDisplayOfScreen scr) (.display scr))) 
+		  (snd-display ";XDisplayOfScreen: ~A ~A" (XDisplayOfScreen scr) (.display scr)))
+	      (IF (not (equal? (XDisplayOfScreen (XScreenOfDisplay dpy 0)) dpy))
+		  (snd-display ";XScreenOfDisplay ~A ~A" (XDisplayOfScreen (XScreenOfDisplay dpy 0)) dpy))
+	      (IF (not (equal? (XDefaultScreenOfDisplay dpy) scr))
+		  (snd-display ";XDefaultScreenOfDisplay ~A ~A" (XDefaultScreenOfDisplay dpy) scr))
+	      (IF (not (equal? (XRootWindowOfScreen scr) (.root scr))) 
+		  (snd-display ";XRootWindowOfScreen: ~A ~A" (XRootWindowOfScreen scr) (.root scr)))
+	      (IF (not (equal? (XBlackPixelOfScreen scr) (.black_pixel scr))) 
+		  (snd-display ";XBlackPixelOfScreen: ~A ~A" (XBlackPixelOfScreen scr) (.black_pixel scr)))
+	      (IF (not (equal? (XWhitePixelOfScreen scr) (.white_pixel scr))) 
+		  (snd-display ";XWhitePixelOfScreen: ~A ~A" (XWhitePixelOfScreen scr) (.white_pixel scr)))
+	      (IF (not (equal? (XDefaultColormapOfScreen scr) (.cmap scr))) 
+		  (snd-display ";XDefaultColormapOfScreen: ~A ~A" (XDefaultColormapOfScreen scr) (.cmap scr)))
+	      (IF (not (equal? (XDefaultDepthOfScreen scr) (.root_depth scr))) 
+		  (snd-display ";XDefaultDepthOfScreen: ~A ~A" (XDefaultDepthOfScreen scr) (.root_depth scr)))
+	      (IF (not (equal? (XDefaultGCOfScreen scr) (.default_gc scr)))
+		  (snd-display ";XDefaultGCOfScreen: ~A ~A" (XDefaultGCOfScreen scr) (.default_gc scr)))
+	      (IF (not (equal? (XDefaultVisualOfScreen scr) (.root_visual scr)))
+		  (snd-display ";XDefaultVisualOfScreen: ~A ~A" (XDefaultVisualOfScreen scr) (.root_visual scr)))
+	      (IF (not (equal? (XWidthOfScreen scr) (.width scr)))
+		  (snd-display ";XWidthOfScreen: ~A ~A" (XWidthOfScreen scr) (.width scr)))
+	      (IF (not (equal? (XHeightOfScreen scr) (.height scr)))
+		  (snd-display ";XHeightOfScreen: ~A ~A" (XHeightOfScreen scr) (.height scr)))
+	      (IF (not (equal? (XWidthMMOfScreen scr) (.mwidth scr))) 
+		  (snd-display ";XWidthMMOfScreen: ~A ~A" (XWidthMMOfScreen scr) (.mwidth scr)))
+	      (IF (not (equal? (XHeightMMOfScreen scr) (.mheight scr))) 
+		  (snd-display ";XHeightMMOfScreen: ~A ~A" (XHeightMMOfScreen scr) (.mheight scr)))
+	      (IF (not (equal? (XPlanesOfScreen scr) (.root_depth scr))) 
+		  (snd-display ";XPlanesOfScreen: ~A ~A" (XPlanesOfScreen scr) (.root_depth scr)))
+	      (IF (not (equal? (XMinCmapsOfScreen scr) (.min_maps scr)))
+		  (snd-display ";XMinCmapsOfScreen: ~A ~A" (XMinCmapsOfScreen scr) (.min_maps scr)))
+	      (IF (not (equal? (XMaxCmapsOfScreen scr) (.max_maps scr)))
+		  (snd-display ";XMaxCmapsOfScreen: ~A ~A" (XMaxCmapsOfScreen scr) (.max_maps scr)))
+	      (IF (not (equal? (XDoesSaveUnders scr) (.save_unders scr)))
+		  (snd-display ";XDoesSaveUnders: ~A ~A" (XDoesSaveUnders scr) (.save_unders scr)))
+	      (IF (not (equal? (XDoesBackingStore scr) (.backing_store scr))) 
+		  (snd-display ";XDoesBackingStore: ~A ~A" (XDoesBackingStore scr) (.backing_store scr)))
+	      (IF (not (equal? (XEventMaskOfScreen scr) (.root_input_mask scr)))
+		  (snd-display ";XEventMaskOfScreen: ~A ~A" (XEventMaskOfScreen scr) (.root_input_mask scr)))
 	      )
 	    
 	    (let* ((scr (current-screen))
-		   (scrn (|XScreenNumberOfScreen scr))
-		   (dpy (|XtDisplay (cadr (main-widgets))))
-		   (vis (|DefaultVisual dpy scrn))
-		   (win (|XtWindow (cadr (main-widgets)))))
+		   (scrn (XScreenNumberOfScreen scr))
+		   (dpy (XtDisplay (cadr (main-widgets))))
+		   (vis (DefaultVisual dpy scrn))
+		   (win (XtWindow (cadr (main-widgets)))))
 
-	      (IF (not (equal? (|RootWindow dpy scrn) (|root scr)))
-		  (snd-display ";RootWindow: ~A ~A" (|RootWindow dpy scrn) (|root scr)))
-	      (IF (not (equal? (|DefaultRootWindow dpy) (|root (|ScreenOfDisplay dpy (|DefaultScreen dpy)))))
-		  (snd-display ";DefaultRootWindow: ~A ~A" (|DefaultRootWindow dpy) (|root (|ScreenOfDisplay dpy (|DefaultScreen dpy)))))
-	      (IF (not (equal? (|DefaultVisual dpy scrn) (|root_visual scr)))
-		  (snd-display ";DefaultVisual: ~A ~A" (|DefaultVisual dpy scrn) (|root_visual scr)))
-	      (IF (not (equal? (|DefaultGC dpy scrn) (|default_gc scr)))
-		  (snd-display ";DefaultGC: ~A ~A" (|DefaultGC dpy scrn) (|default_gc scr)))
-	      (IF (not (equal? (|BlackPixel dpy scrn) (|black_pixel scr)))
-		  (snd-display ";BlackPixel: ~A ~A" (|BlackPixel dpy scrn) (|black_pixel scr)))
-	      (IF (not (equal? (|WhitePixel dpy scrn) (|white_pixel scr)))
-		  (snd-display ";WhitePixel ~A ~A" (|WhitePixel dpy scrn) (|white_pixel scr)))
-	      (IF (not (equal? (|DisplayWidth dpy scrn) (|width scr)))
-		  (snd-display ";DisplayWidth: ~A ~A" (|DisplayWidth dpy scrn) (|width scr)))
-	      (IF (not (equal? (|DisplayHeight dpy scrn) (|height scr)))
-		  (snd-display ";DisplayHeight: ~A ~A" (|DisplayHeight dpy scrn) (|height scr)))
-	      (IF (not (equal? (|DisplayWidthMM dpy scrn) (|mwidth scr)))
-		  (snd-display ";DisplayWidthMM: ~A ~A" (|DisplayWidthMM dpy scrn) (|mwidth scr)))
-	      (IF (not (equal? (|DisplayHeightMM dpy scrn) (|mheight scr)))
-		  (snd-display ";DisplayHeightMM: ~A ~A" (|DisplayHeightMM dpy scrn) (|mheight scr)))
-	      (IF (not (equal? (|DisplayPlanes dpy scrn) (|root_depth scr)))
-		  (snd-display ";DisplayPlanes: ~A ~A" (|DisplayPlanes dpy scrn) (|root_depth scr)))
-	      (IF (not (equal? (|DefaultDepth dpy scrn) (|root_depth scr)))
-		  (snd-display ";DefaultDepth: ~A ~A" (|DefaultDepth dpy scrn) (|root_depth scr)))
-	      (IF (not (equal? (|DefaultColormap dpy scrn) (|cmap scr)))
-		  (snd-display ";DefaultColormap: ~A ~A" (|DefaultColormap dpy scrn) (|cmap scr)))
+	      (IF (not (equal? (RootWindow dpy scrn) (.root scr)))
+		  (snd-display ";RootWindow: ~A ~A" (RootWindow dpy scrn) (.root scr)))
+	      (IF (not (equal? (DefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
+		  (snd-display ";DefaultRootWindow: ~A ~A" (DefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
+	      (IF (not (equal? (DefaultVisual dpy scrn) (.root_visual scr)))
+		  (snd-display ";DefaultVisual: ~A ~A" (DefaultVisual dpy scrn) (.root_visual scr)))
+	      (IF (not (equal? (DefaultGC dpy scrn) (.default_gc scr)))
+		  (snd-display ";DefaultGC: ~A ~A" (DefaultGC dpy scrn) (.default_gc scr)))
+	      (IF (not (equal? (BlackPixel dpy scrn) (.black_pixel scr)))
+		  (snd-display ";BlackPixel: ~A ~A" (BlackPixel dpy scrn) (.black_pixel scr)))
+	      (IF (not (equal? (WhitePixel dpy scrn) (.white_pixel scr)))
+		  (snd-display ";WhitePixel ~A ~A" (WhitePixel dpy scrn) (.white_pixel scr)))
+	      (IF (not (equal? (DisplayWidth dpy scrn) (.width scr)))
+		  (snd-display ";DisplayWidth: ~A ~A" (DisplayWidth dpy scrn) (.width scr)))
+	      (IF (not (equal? (DisplayHeight dpy scrn) (.height scr)))
+		  (snd-display ";DisplayHeight: ~A ~A" (DisplayHeight dpy scrn) (.height scr)))
+	      (IF (not (equal? (DisplayWidthMM dpy scrn) (.mwidth scr)))
+		  (snd-display ";DisplayWidthMM: ~A ~A" (DisplayWidthMM dpy scrn) (.mwidth scr)))
+	      (IF (not (equal? (DisplayHeightMM dpy scrn) (.mheight scr)))
+		  (snd-display ";DisplayHeightMM: ~A ~A" (DisplayHeightMM dpy scrn) (.mheight scr)))
+	      (IF (not (equal? (DisplayPlanes dpy scrn) (.root_depth scr)))
+		  (snd-display ";DisplayPlanes: ~A ~A" (DisplayPlanes dpy scrn) (.root_depth scr)))
+	      (IF (not (equal? (DefaultDepth dpy scrn) (.root_depth scr)))
+		  (snd-display ";DefaultDepth: ~A ~A" (DefaultDepth dpy scrn) (.root_depth scr)))
+	      (IF (not (equal? (DefaultColormap dpy scrn) (.cmap scr)))
+		  (snd-display ";DefaultColormap: ~A ~A" (DefaultColormap dpy scrn) (.cmap scr)))
 	      
-	      (IF (not (equal? (|XRootWindow dpy scrn) (|root scr)))
-		  (snd-display ";XRootWindow: ~A ~A" (|XRootWindow dpy scrn) (|root scr)))
-	      (IF (not (equal? (|XDefaultRootWindow dpy) (|root (|ScreenOfDisplay dpy (|DefaultScreen dpy)))))
-		  (snd-display ";XDefaultRootWindow: ~A ~A" (|XDefaultRootWindow dpy) (|root (|ScreenOfDisplay dpy (|DefaultScreen dpy)))))
-	      (IF (not (equal? (|XDefaultVisual dpy scrn) (|root_visual scr)))
-		  (snd-display ";XDefaultVisual: ~A ~A" (|XDefaultVisual dpy scrn) (|root_visual scr)))
-	      (IF (not (equal? (|XDefaultGC dpy scrn) (|default_gc scr)))
-		  (snd-display ";XDefaultGC: ~A ~A" (|XDefaultGC dpy scrn) (|default_gc scr)))
-	      (IF (not (equal? (|XBlackPixel dpy scrn) (|black_pixel scr)))
-		  (snd-display ";XBlackPixel: ~A ~A" (|XBlackPixel dpy scrn) (|black_pixel scr)))
-	      (IF (not (equal? (|XWhitePixel dpy scrn) (|white_pixel scr)))
-		  (snd-display ";XWhitePixel ~A ~A" (|XWhitePixel dpy scrn) (|white_pixel scr)))
-	      (IF (not (equal? (|XDisplayWidth dpy scrn) (|width scr)))
-		  (snd-display ";XDisplayWidth: ~A ~A" (|XDisplayWidth dpy scrn) (|width scr)))
-	      (IF (not (equal? (|XDisplayHeight dpy scrn) (|height scr)))
-		  (snd-display ";XDisplayHeight: ~A ~A" (|XDisplayHeight dpy scrn) (|height scr)))
-	      (IF (not (equal? (|XDisplayWidthMM dpy scrn) (|mwidth scr)))
-		  (snd-display ";XDisplayWidthMM: ~A ~A" (|XDisplayWidthMM dpy scrn) (|mwidth scr)))
-	      (IF (not (equal? (|XDisplayHeightMM dpy scrn) (|mheight scr)))
-		  (snd-display ";XDisplayHeightMM: ~A ~A" (|XDisplayHeightMM dpy scrn) (|mheight scr)))
-	      (IF (not (equal? (|XDisplayPlanes dpy scrn) (|root_depth scr)))
-		  (snd-display ";XDisplayPlanes: ~A ~A" (|XDisplayPlanes dpy scrn) (|root_depth scr)))
-	      (IF (not (equal? (|XDefaultDepth dpy scrn) (|root_depth scr)))
-		  (snd-display ";XDefaultDepth: ~A ~A" (|XDefaultDepth dpy scrn) (|root_depth scr)))
-	      (IF (not (equal? (|XDefaultColormap dpy scrn) (|cmap scr)))
-		  (snd-display ";XDefaultColormap: ~A ~A" (|XDefaultColormap dpy scrn) (|cmap scr)))
+	      (IF (not (equal? (XRootWindow dpy scrn) (.root scr)))
+		  (snd-display ";XRootWindow: ~A ~A" (XRootWindow dpy scrn) (.root scr)))
+	      (IF (not (equal? (XDefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
+		  (snd-display ";XDefaultRootWindow: ~A ~A" (XDefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
+	      (IF (not (equal? (XDefaultVisual dpy scrn) (.root_visual scr)))
+		  (snd-display ";XDefaultVisual: ~A ~A" (XDefaultVisual dpy scrn) (.root_visual scr)))
+	      (IF (not (equal? (XDefaultGC dpy scrn) (.default_gc scr)))
+		  (snd-display ";XDefaultGC: ~A ~A" (XDefaultGC dpy scrn) (.default_gc scr)))
+	      (IF (not (equal? (XBlackPixel dpy scrn) (.black_pixel scr)))
+		  (snd-display ";XBlackPixel: ~A ~A" (XBlackPixel dpy scrn) (.black_pixel scr)))
+	      (IF (not (equal? (XWhitePixel dpy scrn) (.white_pixel scr)))
+		  (snd-display ";XWhitePixel ~A ~A" (XWhitePixel dpy scrn) (.white_pixel scr)))
+	      (IF (not (equal? (XDisplayWidth dpy scrn) (.width scr)))
+		  (snd-display ";XDisplayWidth: ~A ~A" (XDisplayWidth dpy scrn) (.width scr)))
+	      (IF (not (equal? (XDisplayHeight dpy scrn) (.height scr)))
+		  (snd-display ";XDisplayHeight: ~A ~A" (XDisplayHeight dpy scrn) (.height scr)))
+	      (IF (not (equal? (XDisplayWidthMM dpy scrn) (.mwidth scr)))
+		  (snd-display ";XDisplayWidthMM: ~A ~A" (XDisplayWidthMM dpy scrn) (.mwidth scr)))
+	      (IF (not (equal? (XDisplayHeightMM dpy scrn) (.mheight scr)))
+		  (snd-display ";XDisplayHeightMM: ~A ~A" (XDisplayHeightMM dpy scrn) (.mheight scr)))
+	      (IF (not (equal? (XDisplayPlanes dpy scrn) (.root_depth scr)))
+		  (snd-display ";XDisplayPlanes: ~A ~A" (XDisplayPlanes dpy scrn) (.root_depth scr)))
+	      (IF (not (equal? (XDefaultDepth dpy scrn) (.root_depth scr)))
+		  (snd-display ";XDefaultDepth: ~A ~A" (XDefaultDepth dpy scrn) (.root_depth scr)))
+	      (IF (not (equal? (XDefaultColormap dpy scrn) (.cmap scr)))
+		  (snd-display ";XDefaultColormap: ~A ~A" (XDefaultColormap dpy scrn) (.cmap scr)))
 	      
-	      (IF (not (equal? (|XDefaultVisual dpy scrn) vis))
-		  (snd-display ";|XDefaultVisual: ~A ~A" (|XDefaultVisual dpy scrn) vis))
-	      (IF (not (equal? (|DisplayCells dpy scrn) (|map_entries vis)))
-		  (snd-display ";DisplayCells: ~A ~A" (|DisplayCells dpy scrn) (|map_entries vis)))
-	      (IF (not (equal? (|CellsOfScreen scr) (|map_entries (|DefaultVisualOfScreen scr))))
-		  (snd-display ";CellsOfScreen: ~A ~A" (|CellsOfScreen scr) (|map_entries (|DefaultVisualOfScreen scr))))
-	      (IF (not (equal? (|XDisplayCells dpy scrn) (|map_entries vis)))
-		  (snd-display ";XDisplayCells: ~A ~A" (|XDisplayCells dpy scrn) (|map_entries vis)))
-	      (IF (not (equal? (|XCellsOfScreen scr) (|map_entries (|DefaultVisualOfScreen scr))))
-		  (snd-display ";XCellsOfScreen: ~A ~A" (|XCellsOfScreen scr) (|map_entries (|DefaultVisualOfScreen scr))))
-	      (IF (< (|XNextRequest dpy) (|XLastKnownRequestProcessed dpy))
-		  (snd-display ";XRequests: ~A ~A" (|XNextRequest dpy) (|XLastKnownRequestProcessed dpy)))
-	      (IF (< (|NextRequest dpy) (|LastKnownRequestProcessed dpy))
-		  (snd-display ";Requests: ~A ~A" (|NextRequest dpy) (|LastKnownRequestProcessed dpy)))
-	      (IF (not (= (|XDisplayMotionBufferSize dpy) 256))
-		  (snd-display ";XDisplayMotionBufferSize: ~A" (|XDisplayMotionBufferSize dpy)))
-	      (IF (not (= (|XExtendedMaxRequestSize dpy) 1048575))
-		  (snd-display ";XExtendedMaxRequestSize ~A" (|XExtendedMaxRequestSize dpy)))
-	      (IF (not (= (|XMaxRequestSize dpy) 65535))
-		  (snd-display ";XMaxRequestSize ~A" (|XMaxRequestSize dpy)))
-	      (IF (not (member (list 'Atom 40) (|XListProperties dpy win)))
-		  (snd-display ";XListProperties: ~A" (|XListProperties dpy win)))
-	      (IF (not (member "SHAPE" (|XListExtensions dpy)))
-		  (snd-display ";XListExtensions: ~A" (|XListExtensions dpy)))
-	      (IF (not (= (length (|XListFontsWithInfo dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)) 4))
-		  (snd-display ";XListFontsWithInfo: ~A" (|XListFontsWithInfo dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)))
-	      (IF (not (= (length (|XListFonts dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)) 4))
-		  (snd-display ";XListFonts: ~A" (|XListFonts dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)))
-	      (let ((val (|XListInstalledColormaps dpy win)))
+	      (IF (not (equal? (XDefaultVisual dpy scrn) vis))
+		  (snd-display ";XDefaultVisual: ~A ~A" (XDefaultVisual dpy scrn) vis))
+	      (IF (not (equal? (DisplayCells dpy scrn) (.map_entries vis)))
+		  (snd-display ";DisplayCells: ~A ~A" (DisplayCells dpy scrn) (.map_entries vis)))
+	      (IF (not (equal? (CellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
+		  (snd-display ";CellsOfScreen: ~A ~A" (CellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
+	      (IF (not (equal? (XDisplayCells dpy scrn) (.map_entries vis)))
+		  (snd-display ";XDisplayCells: ~A ~A" (XDisplayCells dpy scrn) (.map_entries vis)))
+	      (IF (not (equal? (XCellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
+		  (snd-display ";XCellsOfScreen: ~A ~A" (XCellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
+	      (IF (< (XNextRequest dpy) (XLastKnownRequestProcessed dpy))
+		  (snd-display ";XRequests: ~A ~A" (XNextRequest dpy) (XLastKnownRequestProcessed dpy)))
+	      (IF (< (NextRequest dpy) (LastKnownRequestProcessed dpy))
+		  (snd-display ";Requests: ~A ~A" (NextRequest dpy) (LastKnownRequestProcessed dpy)))
+	      (IF (not (= (XDisplayMotionBufferSize dpy) 256))
+		  (snd-display ";XDisplayMotionBufferSize: ~A" (XDisplayMotionBufferSize dpy)))
+	      (IF (not (= (XExtendedMaxRequestSize dpy) 1048575))
+		  (snd-display ";XExtendedMaxRequestSize ~A" (XExtendedMaxRequestSize dpy)))
+	      (IF (not (= (XMaxRequestSize dpy) 65535))
+		  (snd-display ";XMaxRequestSize ~A" (XMaxRequestSize dpy)))
+	      (IF (not (member (list 'Atom 40) (XListProperties dpy win)))
+		  (snd-display ";XListProperties: ~A" (XListProperties dpy win)))
+	      (IF (not (member "SHAPE" (XListExtensions dpy)))
+		  (snd-display ";XListExtensions: ~A" (XListExtensions dpy)))
+	      (IF (not (= (length (XListFontsWithInfo dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)) 4))
+		  (snd-display ";XListFontsWithInfo: ~A" (XListFontsWithInfo dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)))
+	      (IF (not (= (length (XListFonts dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)) 4))
+		  (snd-display ";XListFonts: ~A" (XListFonts dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)))
+	      (let ((val (XListInstalledColormaps dpy win)))
 		(IF (or (not val)
 			(null? val)
-			(not (|Colormap? (car val))))
-		    (snd-display ";XListInstalledColormaps: ~A" (|XListInstalledColormaps dpy win))))
-	      (IF (not (string=? (|XKeysymToString (list 'KeySym 80)) "P"))
-		  (snd-display ";XKeysymToString: ~A" (|XKeysymToString (list 'KeySym 80))))
-	      (IF (not (string=? (|XGetAtomName dpy (list 'Atom 40)) "WM_NORMAL_HINTS"))
-		  (snd-display ";XGetAtomName: ~A" (|XGetAtomName dpy (list 'Atom 40))))
+			(not (Colormap? (car val))))
+		    (snd-display ";XListInstalledColormaps: ~A" (XListInstalledColormaps dpy win))))
+	      (IF (not (string=? (XKeysymToString (list 'KeySym 80)) "P"))
+		  (snd-display ";XKeysymToString: ~A" (XKeysymToString (list 'KeySym 80))))
+	      (IF (not (string=? (XGetAtomName dpy (list 'Atom 40)) "WM_NORMAL_HINTS"))
+		  (snd-display ";XGetAtomName: ~A" (XGetAtomName dpy (list 'Atom 40))))
 
-	      (IF (not (= (|bits_per_rgb vis) 8)) (snd-display ";bits_per_rgb: ~A" (|bits_per_rgb vis)))
-	      (IF (not (= (|blue_mask vis) 255)) (snd-display ";blue_mask: ~X" (|blue_mask vis)))
-	      (IF (not (= (|green_mask vis) 65280)) (snd-display ";green_mask: ~X" (|green_mask vis)))
-	      (IF (not (= (|red_mask vis) 16711680)) (snd-display ";red_mask: ~X" (|red_mask vis)))
-	      (IF (not (= |AllPlanes 4294967295)) (snd-display ";AllPlanes: ~A" |AllPlanes))
+	      (IF (not (= (.bits_per_rgb vis) 8)) (snd-display ";bits_per_rgb: ~A" (.bits_per_rgb vis)))
+	      (IF (not (= (.blue_mask vis) 255)) (snd-display ";blue_mask: ~X" (.blue_mask vis)))
+	      (IF (not (= (.green_mask vis) 65280)) (snd-display ";green_mask: ~X" (.green_mask vis)))
+	      (IF (not (= (.red_mask vis) 16711680)) (snd-display ";red_mask: ~X" (.red_mask vis)))
+	      (IF (not (= AllPlanes 4294967295)) (snd-display ";AllPlanes: ~A" AllPlanes))
 	      
-	      (IF (< (|QLength dpy) 0) (snd-display ";QLength: ~A" (|QLength dpy)))
-	      (IF (not (= (|ScreenCount dpy) 1)) (snd-display ";ScreenCount: ~A" (|ScreenCount dpy)))
-	      (IF (not (string=? (|ServerVendor dpy) "The XFree86 Project, Inc")) (snd-display ";ServerVendor: ~A" (|ServerVendor dpy)))
-	      (IF (not (= (|ProtocolRevision dpy) 0)) (snd-display ";ProtocolRevision: ~A" (|ProtocolRevision dpy)))
-	      (IF (not (= (|ProtocolVersion dpy) 11)) (snd-display ";ProtocolVersion: ~A" (|ProtocolVersion dpy)))
-	      (IF (not (number? (|VendorRelease dpy))) (snd-display ";VendorRelease: ~A" (|VendorRelease dpy)))
-	      (IF (not (string=? (|DisplayString dpy) ":0.0")) (snd-display ";DisplayString: ~A" (|DisplayString dpy)))
-	      (IF (not (= (|BitmapUnit dpy) 32)) (snd-display ";BitmapUnit: ~A" (|BitmapUnit dpy)))
-	      (IF (not (= (|BitmapPad dpy) 32)) (snd-display ";BitmapPad: ~A" (|BitmapPad dpy)))
-	      (IF (not (= (|BitmapBitOrder dpy) 0)) (snd-display ";BitmapBitOrder: ~A" (|BitmapBitOrder dpy)))
-	      (IF (not (= (|ImageByteOrder dpy) 0)) (snd-display ";ImageByteOrder: ~A" (|ImageByteOrder dpy)))
-	      (IF (not (= (|DefaultScreen dpy) 0)) (snd-display ";DefaultScreen: ~A" (|DefaultScreen dpy)))
+	      (IF (< (QLength dpy) 0) (snd-display ";QLength: ~A" (QLength dpy)))
+	      (IF (not (= (ScreenCount dpy) 1)) (snd-display ";ScreenCount: ~A" (ScreenCount dpy)))
+	      (IF (not (string=? (ServerVendor dpy) "The XFree86 Project, Inc")) (snd-display ";ServerVendor: ~A" (ServerVendor dpy)))
+	      (IF (not (= (ProtocolRevision dpy) 0)) (snd-display ";ProtocolRevision: ~A" (ProtocolRevision dpy)))
+	      (IF (not (= (ProtocolVersion dpy) 11)) (snd-display ";ProtocolVersion: ~A" (ProtocolVersion dpy)))
+	      (IF (not (number? (VendorRelease dpy))) (snd-display ";VendorRelease: ~A" (VendorRelease dpy)))
+	      (IF (not (string=? (DisplayString dpy) ":0.0")) (snd-display ";DisplayString: ~A" (DisplayString dpy)))
+	      (IF (not (= (BitmapUnit dpy) 32)) (snd-display ";BitmapUnit: ~A" (BitmapUnit dpy)))
+	      (IF (not (= (BitmapPad dpy) 32)) (snd-display ";BitmapPad: ~A" (BitmapPad dpy)))
+	      (IF (not (= (BitmapBitOrder dpy) 0)) (snd-display ";BitmapBitOrder: ~A" (BitmapBitOrder dpy)))
+	      (IF (not (= (ImageByteOrder dpy) 0)) (snd-display ";ImageByteOrder: ~A" (ImageByteOrder dpy)))
+	      (IF (not (= (DefaultScreen dpy) 0)) (snd-display ";DefaultScreen: ~A" (DefaultScreen dpy)))
 
-	      (let* ((col (|XColor))
-		     (col1 (|XColor))
-		     (dpy (|XtDisplay (cadr (main-widgets))))
-		     (scr (|DefaultScreen dpy))
-		     (cmap (|DefaultColormap dpy scr)))
-		(IF (= (|XAllocNamedColor dpy cmap "blue" col col) 0) (snd-display ";XAllocNamedColor blue ~A?" col))
-		(IF (not (= (|red col) 0)) (snd-display ";XAllocNamedColor: ~A" (|red col)))
-		(IF (= (|XAllocColor dpy cmap col) 0) (snd-display ";XAllocColor?"))
-		(IF (not (= (|red col) 0)) (snd-display ";XAllocColor: ~A" (|red col)))
-		(IF (= (|XParseColor dpy cmap "blue" col) 0) (snd-display ";XParseColor?"))
-		(IF (not (= (|red col) 0)) (snd-display ";XParseColor: ~A" (|red col)))
-		(IF (= (|XAllocNamedColor dpy cmap "green" col1 col1) 0) (snd-display ";XAllocNamedColor green ~A?" col1))
-		(|XQueryColor dpy cmap col)
-		(|XQueryColors dpy cmap (list col col1)))
+	      (let* ((col (XColor))
+		     (col1 (XColor))
+		     (dpy (XtDisplay (cadr (main-widgets))))
+		     (scr (DefaultScreen dpy))
+		     (cmap (DefaultColormap dpy scr)))
+		(IF (= (XAllocNamedColor dpy cmap "blue" col col) 0) (snd-display ";XAllocNamedColor blue ~A?" col))
+		(IF (not (= (.red col) 0)) (snd-display ";XAllocNamedColor: ~A" (.red col)))
+		(IF (= (XAllocColor dpy cmap col) 0) (snd-display ";XAllocColor?"))
+		(IF (not (= (.red col) 0)) (snd-display ";XAllocColor: ~A" (.red col)))
+		(IF (= (XParseColor dpy cmap "blue" col) 0) (snd-display ";XParseColor?"))
+		(IF (not (= (.red col) 0)) (snd-display ";XParseColor: ~A" (.red col)))
+		(IF (= (XAllocNamedColor dpy cmap "green" col1 col1) 0) (snd-display ";XAllocNamedColor green ~A?" col1))
+		(XQueryColor dpy cmap col)
+		(XQueryColors dpy cmap (list col col1)))
 
-	      (|XSetAfterFunction dpy (lambda (n) 0))
-	      (|XSetAfterFunction dpy #f)
-	      (IF (not (equal? (|XDisplayKeycodes dpy) (list 1 8 255)))
-		  (snd-display "XDisplayKeycodes: ~A" (|XDisplayKeycodes dpy)))
-	      (let ((str (|XFetchName dpy win)))
+	      (XSetAfterFunction dpy (lambda (n) 0))
+	      (XSetAfterFunction dpy #f)
+	      (IF (not (equal? (XDisplayKeycodes dpy) (list 1 8 255)))
+		  (snd-display "XDisplayKeycodes: ~A" (XDisplayKeycodes dpy)))
+	      (let ((str (XFetchName dpy win)))
 		(IF (not (string=? str "snd"))
 		    (snd-display "XFetchName: ~A" str)))
-	      (|XStoreName dpy win "hiho")
-	      (let ((str (|XFetchName dpy win)))
+	      (XStoreName dpy win "hiho")
+	      (let ((str (XFetchName dpy win)))
 		(IF (not (string=? str "hiho"))
 		    (snd-display "XStoreName: ~A" str)))
-	      (|XStoreName dpy win "snd")
-	      (let ((str (|XGetIconName dpy win)))
+	      (XStoreName dpy win "snd")
+	      (let ((str (XGetIconName dpy win)))
 		(IF (not (string=? str "snd"))
 		    (snd-display "XGetIconName: ~A" str)))
-	      (|XSetIconName dpy win "hiho")
-	      (let ((str (|XGetIconName dpy win)))
+	      (XSetIconName dpy win "hiho")
+	      (let ((str (XGetIconName dpy win)))
 		(IF (not (string=? str "hiho"))
 		    (snd-display "XSetIconName: ~A" str)))
-	      (let ((geo (|XGetGeometry dpy win)))
+	      (let ((geo (XGetGeometry dpy win)))
 		(IF (or (not (= (window-width) (list-ref geo 4)))
 			(not (= (window-height) (list-ref geo 5))))
 		    (snd-display "XGetGeometry: ~A (~A ~A)" geo (window-width) (window-height))))
-	      (let ((focus (|XGetInputFocus dpy)))
+	      (let ((focus (XGetInputFocus dpy)))
 		(IF (or (not (= (car focus) 1))
-			(not (|Window? (cadr focus))))
+			(not (Window? (cadr focus))))
 		    (snd-display ";XGetInputFocus: ~A" focus)))
-	      (let ((vals (|XGetPointerControl dpy)))
+	      (let ((vals (XGetPointerControl dpy)))
 		(IF (not (equal? vals (list 1 2 1 4))) (snd-display "pointer state: ~A" vals))
-		(|XChangePointerControl dpy #f #t 2 1 8)
-		(set! vals (|XGetPointerControl dpy))
+		(XChangePointerControl dpy #f #t 2 1 8)
+		(set! vals (XGetPointerControl dpy))
 		(IF (not (equal? vals (list 1 2 1 8))) (snd-display "set pointer state: ~A" vals))
-		(|XChangePointerControl dpy #f #t 2 1 4))
+		(XChangePointerControl dpy #f #t 2 1 4))
 	      (let ((vals (beep-state)))
 		(IF (not (= (cadr vals) 400)) (snd-display ";beep state: ~A" vals))
 		(set! (beep-state) (list 100 200 100))
 		(set! vals (beep-state))
 		(IF (not (= (cadr vals) 200)) (snd-display ";set beep state: ~A" vals)))
-	      (|XAutoRepeatOff dpy)
-	      (IF (not (= (list-ref (|XGetKeyboardControl dpy) 5) 0)) (snd-display ";AutoRepeatOff?"))
-	      (|XAutoRepeatOn dpy)
-	      (IF (not (= (list-ref (|XGetKeyboardControl dpy) 5) 1)) (snd-display ";AutoRepeatOn?"))
-	      (let ((vals (|XGetPointerMapping dpy 0 3)))
+	      (XAutoRepeatOff dpy)
+	      (IF (not (= (list-ref (XGetKeyboardControl dpy) 5) 0)) (snd-display ";AutoRepeatOff?"))
+	      (XAutoRepeatOn dpy)
+	      (IF (not (= (list-ref (XGetKeyboardControl dpy) 5) 1)) (snd-display ";AutoRepeatOn?"))
+	      (let ((vals (XGetPointerMapping dpy 0 3)))
 		(IF (not (equal? vals (list 1 2 3))) (snd-display ";XGetPointerMapping: ~A" vals)))
-	      (|XGetScreenSaver dpy)
-	      (|XMoveWindow dpy win 100 10)
-	      (|XSync dpy #f)
-	      (|XResizeWindow dpy win 400 400)
-	      (|XSync dpy #f)
-	      (|XMoveResizeWindow dpy win 120 20 500 500)
-	      (|XSync dpy #f)
-	      (let ((attr (|XGetWindowAttributes dpy win)))
-		(IF (> (abs (- (|x attr) 120)) 200) (snd-display ";XMoveWindow x etc: ~A" (|x attr)))
-		(IF (> (abs (- (|y attr) 20)) 200) (snd-display ";XMoveWindow y etc: ~A" (|y attr)))
-		(IF (> (abs (- (|width attr) 500)) 20) (snd-display ";XMoveWindow width etc: ~A" (|width attr)))
-		(IF (> (abs (- (|height attr) 500)) 20) (snd-display ";XMoveWindow height etc: ~A" (|height attr)))
-		(IF (not (= (|border_width attr) 0)) (snd-display ";XGetWindowAttributes border_width: ~A" (|border_width attr)))
-		(IF (not (= (|depth attr) 24)) (snd-display ";XGetWindowAttributes depth: ~A" (|depth attr)))
-		(IF (not (= (|bit_gravity attr) 0)) (snd-display ";XGetWindowAttributes bit_gravity: ~A" (|bit_gravity attr)))
-		(IF (not (= (|win_gravity attr) 1)) (snd-display ";XGetWindowAttributes win_gravity: ~A" (|win_gravity attr)))
-		(IF (|backing_store attr) (snd-display ";XGetWindowAttributes backing_store: ~A" (|backing_store attr)))
-		(IF (|override_redirect attr) (snd-display ";XGetWindowAttributes override_redirect: ~A" (|override_redirect attr)))
-		(IF (|save_under attr) (snd-display ";XGetWindowAttributes save_under: ~A" (|save_under attr)))
-		(IF (not (|map_installed attr)) (snd-display ";XGetWindowAttributes map_installed: ~A" (|map_installed attr)))
-		(IF (not (= (|backing_pixel attr) 0)) (snd-display ";XGetWindowAttributes backing_pixel: ~A" (|backing_pixel attr)))
-		(IF (not (= (|map_state attr) 2)) (snd-display ";XGetWindowAttributes map_state: ~A" (|map_state attr)))
-		(IF (not (= (|your_event_mask attr) #x628033)) (snd-display ";your_event_mask: ~X" (|your_event_mask attr)))
-		(IF (not (= (|all_event_masks attr) #xe28033)) (snd-display ";all_event_masks: ~X" (|all_event_masks attr)))
-		(IF (not (|Screen? (|screen attr))) (snd-display ";XGetWindowAttributes screen: ~A" (|screen attr)))
-		(IF (not (= (|do_not_propagate_mask attr) 0)) (snd-display ";XGetWindowAttributes do_not_propagate_mask: ~A" (|do_not_propagate_mask attr)))
-		(IF (|save_under attr) (snd-display ";XGetWindowAttributes save_under ~A" (|save_under attr)))
-		(IF (not (= (|backing_pixel attr) 0)) (snd-display ";XGetWindowAttributes backing_pixel: ~A" (|backing_pixel attr)))
-		(IF (not (= (|backing_planes attr) |AllPlanes)) (snd-display ";XGetWindowAttributes backing_planes: ~A" (|backing_planes attr)))
-		(IF (not (= (|win_gravity attr) 1)) (snd-display ";XGetWindowAttributes win_gravity: ~A" (|win_gravity attr)))
-		(IF (not (= (|bit_gravity attr) 0)) (snd-display ";XGetWindowAttributes bit_gravity: ~A" (|bit_gravity attr))))
-	      (|XResetScreenSaver dpy)
-	      (IF (< (|XPending dpy) 0) (snd-display ";XPending: ~A" (|XPending dpy)))
-	      (|XNoOp dpy)
-	      (|XQueryBestStipple dpy win 100 100)
-	      (|XQueryBestTile dpy win 100 100)
-	      (|XQueryBestSize dpy 0 win 100 100)
-	      (let ((ext (|XQueryExtension dpy "SHAPE")))
+	      (XGetScreenSaver dpy)
+	      (XMoveWindow dpy win 100 10)
+	      (XSync dpy #f)
+	      (XResizeWindow dpy win 400 400)
+	      (XSync dpy #f)
+	      (XMoveResizeWindow dpy win 120 20 500 500)
+	      (XSync dpy #f)
+	      (let ((attr (XGetWindowAttributes dpy win)))
+		(IF (> (abs (- (.x attr) 120)) 200) (snd-display ";XMoveWindow x etc: ~A" (.x attr)))
+		(IF (> (abs (- (.y attr) 20)) 200) (snd-display ";XMoveWindow y etc: ~A" (.y attr)))
+		(IF (> (abs (- (.width attr) 500)) 20) (snd-display ";XMoveWindow width etc: ~A" (.width attr)))
+		(IF (> (abs (- (.height attr) 500)) 20) (snd-display ";XMoveWindow height etc: ~A" (.height attr)))
+		(IF (not (= (.border_width attr) 0)) (snd-display ";XGetWindowAttributes border_width: ~A" (.border_width attr)))
+		(IF (not (= (.depth attr) 24)) (snd-display ";XGetWindowAttributes depth: ~A" (.depth attr)))
+		(IF (not (= (.bit_gravity attr) 0)) (snd-display ";XGetWindowAttributes bit_gravity: ~A" (.bit_gravity attr)))
+		(IF (not (= (.win_gravity attr) 1)) (snd-display ";XGetWindowAttributes win_gravity: ~A" (.win_gravity attr)))
+		(IF (.backing_store attr) (snd-display ";XGetWindowAttributes backing_store: ~A" (.backing_store attr)))
+		(IF (.override_redirect attr) (snd-display ";XGetWindowAttributes override_redirect: ~A" (.override_redirect attr)))
+		(IF (.save_under attr) (snd-display ";XGetWindowAttributes save_under: ~A" (.save_under attr)))
+		(IF (not (.map_installed attr)) (snd-display ";XGetWindowAttributes map_installed: ~A" (.map_installed attr)))
+		(IF (not (= (.backing_pixel attr) 0)) (snd-display ";XGetWindowAttributes backing_pixel: ~A" (.backing_pixel attr)))
+		(IF (not (= (.map_state attr) 2)) (snd-display ";XGetWindowAttributes map_state: ~A" (.map_state attr)))
+		(IF (not (= (.your_event_mask attr) #x628033)) (snd-display ";your_event_mask: ~X" (.your_event_mask attr)))
+		(IF (not (= (.all_event_masks attr) #xe28033)) (snd-display ";all_event_masks: ~X" (.all_event_masks attr)))
+		(IF (not (Screen? (.screen attr))) (snd-display ";XGetWindowAttributes screen: ~A" (.screen attr)))
+		(IF (not (= (.do_not_propagate_mask attr) 0)) (snd-display ";XGetWindowAttributes do_not_propagate_mask: ~A" (.do_not_propagate_mask attr)))
+		(IF (.save_under attr) (snd-display ";XGetWindowAttributes save_under ~A" (.save_under attr)))
+		(IF (not (= (.backing_pixel attr) 0)) (snd-display ";XGetWindowAttributes backing_pixel: ~A" (.backing_pixel attr)))
+		(IF (not (= (.backing_planes attr) AllPlanes)) (snd-display ";XGetWindowAttributes backing_planes: ~A" (.backing_planes attr)))
+		(IF (not (= (.win_gravity attr) 1)) (snd-display ";XGetWindowAttributes win_gravity: ~A" (.win_gravity attr)))
+		(IF (not (= (.bit_gravity attr) 0)) (snd-display ";XGetWindowAttributes bit_gravity: ~A" (.bit_gravity attr))))
+	      (XResetScreenSaver dpy)
+	      (IF (< (XPending dpy) 0) (snd-display ";XPending: ~A" (XPending dpy)))
+	      (XNoOp dpy)
+	      (XQueryBestStipple dpy win 100 100)
+	      (XQueryBestTile dpy win 100 100)
+	      (XQueryBestSize dpy 0 win 100 100)
+	      (let ((ext (XQueryExtension dpy "SHAPE")))
 		(IF (not (eq? (car ext) #t))
 		    (snd-display ";XQueryExtension: ~A" ext)))
-	      (|XQueryKeymap dpy)
-	      (let ((tree (|XQueryTree dpy win)))
+	      (XQueryKeymap dpy)
+	      (let ((tree (XQueryTree dpy win)))
 		(IF (or (not (= (car tree) 1))
-			(not (equal? (|XRootWindow dpy 0) (cadr tree))))
-		    (snd-display ";XQueryTree: ~A (~A)" tree (|XRootWindow dpy 0))))
+			(not (equal? (XRootWindow dpy 0) (cadr tree))))
+		    (snd-display ";XQueryTree: ~A (~A)" tree (XRootWindow dpy 0))))
 
-	      (IF (< (|XQLength dpy) 0) (snd-display ";XQLength: ~A" (|XQLength dpy)))
-	      (IF (not (= (|XScreenCount dpy) 1)) (snd-display ";XScreenCount: ~A" (|XScreenCount dpy)))
-	      (IF (not (string=? (|XServerVendor dpy) "The XFree86 Project, Inc")) (snd-display ";XServerVendor: ~A" (|XServerVendor dpy)))
-	      (IF (not (= (|XProtocolRevision dpy) 0)) (snd-display ";XProtocolRevision: ~A" (|XProtocolRevision dpy)))
-	      (IF (not (= (|XProtocolVersion dpy) 11)) (snd-display ";XProtocolVersion: ~A" (|XProtocolVersion dpy)))
-	      (IF (not (number? (|XVendorRelease dpy))) (snd-display ";XVendorRelease: ~A" (|XVendorRelease dpy)))
-	      (IF (not (string=? (|XDisplayString dpy) ":0.0")) (snd-display ";XDisplayString: ~A" (|XDisplayString dpy)))
-	      (IF (not (= (|XBitmapUnit dpy) 32)) (snd-display ";XBitmapUnit: ~A" (|XBitmapUnit dpy)))
-	      (IF (not (= (|XBitmapPad dpy) 32)) (snd-display ";XBitmapPad: ~A" (|XBitmapPad dpy)))
-	      (IF (not (= (|XBitmapBitOrder dpy) 0)) (snd-display ";XBitmapBitOrder: ~A" (|XBitmapBitOrder dpy)))
-	      (IF (not (= (|XImageByteOrder dpy) 0)) (snd-display ";XImageByteOrder: ~A" (|XImageByteOrder dpy)))
-	      (IF (not (= (|XDefaultScreen dpy) 0)) (snd-display ";XDefaultScreen: ~A" (|XDefaultScreen dpy)))
-	      (IF (|XGetIconSizes dpy win) (snd-display ";XGetIconSizes: ~A" (|XGetIconSizes dpy win)))
-	      (IF (|XGetStandardColormap dpy win |XA_RGB_DEFAULT_MAP)
-		  (snd-display "XGetStandardColormap: ~A!" (|XGetStandardColormap dpy win |XA_RGB_DEFAULT_MAP)))
-	      (IF (|XGetRGBColormaps dpy win |XA_RGB_DEFAULT_MAP)
-		  (snd-display "XGetRGBColormaps: ~A!" (|XGetRGBColormaps dpy win |XA_RGB_DEFAULT_MAP)))
-	      (let ((cmap (|XAllocStandardColormap)))
+	      (IF (< (XQLength dpy) 0) (snd-display ";XQLength: ~A" (XQLength dpy)))
+	      (IF (not (= (XScreenCount dpy) 1)) (snd-display ";XScreenCount: ~A" (XScreenCount dpy)))
+	      (IF (not (string=? (XServerVendor dpy) "The XFree86 Project, Inc")) (snd-display ";XServerVendor: ~A" (XServerVendor dpy)))
+	      (IF (not (= (XProtocolRevision dpy) 0)) (snd-display ";XProtocolRevision: ~A" (XProtocolRevision dpy)))
+	      (IF (not (= (XProtocolVersion dpy) 11)) (snd-display ";XProtocolVersion: ~A" (XProtocolVersion dpy)))
+	      (IF (not (number? (XVendorRelease dpy))) (snd-display ";XVendorRelease: ~A" (XVendorRelease dpy)))
+	      (IF (not (string=? (XDisplayString dpy) ":0.0")) (snd-display ";XDisplayString: ~A" (XDisplayString dpy)))
+	      (IF (not (= (XBitmapUnit dpy) 32)) (snd-display ";XBitmapUnit: ~A" (XBitmapUnit dpy)))
+	      (IF (not (= (XBitmapPad dpy) 32)) (snd-display ";XBitmapPad: ~A" (XBitmapPad dpy)))
+	      (IF (not (= (XBitmapBitOrder dpy) 0)) (snd-display ";XBitmapBitOrder: ~A" (XBitmapBitOrder dpy)))
+	      (IF (not (= (XImageByteOrder dpy) 0)) (snd-display ";XImageByteOrder: ~A" (XImageByteOrder dpy)))
+	      (IF (not (= (XDefaultScreen dpy) 0)) (snd-display ";XDefaultScreen: ~A" (XDefaultScreen dpy)))
+	      (IF (XGetIconSizes dpy win) (snd-display ";XGetIconSizes: ~A" (XGetIconSizes dpy win)))
+	      (IF (XGetStandardColormap dpy win XA_RGB_DEFAULT_MAP)
+		  (snd-display "XGetStandardColormap: ~A!" (XGetStandardColormap dpy win XA_RGB_DEFAULT_MAP)))
+	      (IF (XGetRGBColormaps dpy win XA_RGB_DEFAULT_MAP)
+		  (snd-display "XGetRGBColormaps: ~A!" (XGetRGBColormaps dpy win XA_RGB_DEFAULT_MAP)))
+	      (let ((cmap (XAllocStandardColormap)))
 		(for-each 
 		 (lambda (func name)
 		   (IF (not (= (func cmap) 0)) (snd-display ";standardcolormap ~A: ~A" name (func cmap))))
-		 (list |base_pixel |visualid |red_max |red_mult |green_max |green_mult |blue_max |blue_mult)
+		 (list .base_pixel .visualid .red_max .red_mult .green_max .green_mult .blue_max .blue_mult)
 		 (list 'base_pixel 'visualid 'red_max 'red_mult 'green_max 'green_mult 'blue_max 'blue_mult))
-		(IF (|colormap cmap) (snd-display ";colormap: ~A" (|colormap cmap))))
-	      (let ((icon (|XAllocIconSize)))
+		(IF (.colormap cmap) (snd-display ";colormap: ~A" (.colormap cmap))))
+	      (let ((icon (XAllocIconSize)))
 		(for-each
 		 (lambda (func name)
 		   (IF (not (= (func icon) 0)) (snd-display ";iconsize ~A: ~A" name (func icon))))
-		 (list |min_width |min_height |max_width |max_height |width_inc |height_inc)
+		 (list .min_width .min_height .max_width .max_height .width_inc .height_inc)
 		 (list 'min_width 'min_height 'max_width 'max_height 'width_inc 'height_inc)))
 			  
-	      (let ((fs (|XCreateFontSet dpy "*-*-*-*-Normal-*-180-100-100-*-*")))
-		(IF (or (not (|XFontSet? fs))
+	      (let ((fs (XCreateFontSet dpy "*-*-*-*-Normal-*-180-100-100-*-*")))
+		(IF (or (not (XFontSet? fs))
 			(= (cadr fs) 0))
 		    (snd-display ";XCreateFontSet: ~A" fs)
-		    (let* ((fnts (|XFontsOfFontSet fs))
+		    (let* ((fnts (XFontsOfFontSet fs))
 			   (fnt (caar fnts)))
-		      (IF (not (|XFontStruct? fnt))
+		      (IF (not (XFontStruct? fnt))
 			  (snd-display ";XFontsOfFontSet: ~A" fnts))
-		      (IF (|XContextualDrawing fs)
-			  (snd-display ";XContextualDrawing: ~A" (|XContextualDrawing fs)))
-		      (IF (|XContextDependentDrawing fs)
-			  (snd-display ";XContextDependentDrawing: ~A" (|XContextDependentDrawing fs)))
-		      (IF (|XDirectionalDependentDrawing fs)
-			  (snd-display ";XDirectionalDependentDrawing: ~A" (|XDirectionalDependentDrawing fs)))
-		      (IF (not (string=? (|XLocaleOfFontSet fs) "en_US"))
-			  (snd-display ";XLocaleOfFontSet: ~A" (|XLocaleOfFontSet fs)))
-		      (IF (not (string=? (|XBaseFontNameListOfFontSet fs) "*-*-*-*-Normal-*-180-100-100-*-*"))
-			  (snd-display ";XBaseFontNameListOfFontSet: ~A" (|XBaseFontNameListOfFontSet fs)))
-		      (let ((wgt (|XGetFontProperty fnt |XA_WEIGHT))
-			    (siz (|XGetFontProperty fnt |XA_POINT_SIZE)))
+		      (IF (XContextualDrawing fs)
+			  (snd-display ";XContextualDrawing: ~A" (XContextualDrawing fs)))
+		      (IF (XContextDependentDrawing fs)
+			  (snd-display ";XContextDependentDrawing: ~A" (XContextDependentDrawing fs)))
+		      (IF (XDirectionalDependentDrawing fs)
+			  (snd-display ";XDirectionalDependentDrawing: ~A" (XDirectionalDependentDrawing fs)))
+		      (IF (not (string=? (XLocaleOfFontSet fs) "en_US"))
+			  (snd-display ";XLocaleOfFontSet: ~A" (XLocaleOfFontSet fs)))
+		      (IF (not (string=? (XBaseFontNameListOfFontSet fs) "*-*-*-*-Normal-*-180-100-100-*-*"))
+			  (snd-display ";XBaseFontNameListOfFontSet: ~A" (XBaseFontNameListOfFontSet fs)))
+		      (let ((wgt (XGetFontProperty fnt XA_WEIGHT))
+			    (siz (XGetFontProperty fnt XA_POINT_SIZE)))
 			(IF (or (not (= (cadr wgt) 10))
 				(not (= (cadr siz) 180)))
 			    (snd-display ";XGetFontProperty: ~A ~A" wgt siz)))
-		      (IF (not (= (|descent fnt) 5)) (snd-display ";descent: ~A" (|descent fnt)))
-		      (IF (not (= (|ascent fnt) 18)) (snd-display ";ascent: ~A" (|ascent fnt)))
-		      (IF (not (|XCharStruct? (|per_char fnt))) (snd-display ";per_char: ~A" (|per_char fnt)))
-		      (IF (not (|XCharStruct? (|max_bounds fnt))) (snd-display ";max_bounds: ~A" (|max_bounds fnt)))
-		      (IF (not (|XCharStruct? (|min_bounds fnt))) (snd-display ";min_bounds: ~A" (|min_bounds fnt)))
-		      (IF (not (|XFontProp? (|properties fnt))) (snd-display ";properties ~A" (|properties fnt)))
-		      (|XFreeFontSet dpy fs))))
+		      (IF (not (= (.descent fnt) 5)) (snd-display ";descent: ~A" (.descent fnt)))
+		      (IF (not (= (.ascent fnt) 18)) (snd-display ";ascent: ~A" (.ascent fnt)))
+		      (IF (not (XCharStruct? (.per_char fnt))) (snd-display ";per_char: ~A" (.per_char fnt)))
+		      (IF (not (XCharStruct? (.max_bounds fnt))) (snd-display ";max_bounds: ~A" (.max_bounds fnt)))
+		      (IF (not (XCharStruct? (.min_bounds fnt))) (snd-display ";min_bounds: ~A" (.min_bounds fnt)))
+		      (IF (not (XFontProp? (.properties fnt))) (snd-display ";properties ~A" (.properties fnt)))
+		      (XFreeFontSet dpy fs))))
 
-	      (let ((dpy (|XtDisplay (cadr (main-widgets))))
-		    (win (|XtWindow (cadr (main-widgets))))
-		    (eKeyPress (|XEvent |KeyPress))
-		    (eButtonPress (|XEvent |ButtonPress))
-		    (eMotionNotify (|XEvent |MotionNotify))
-		    (eEnterNotify (|XEvent |EnterNotify))
-		    (eFocusIn (|XEvent |FocusIn))
-		    (eKeymapNotify (|XEvent |KeymapNotify))
-		    (eExpose (|XEvent |Expose))
-		    (eGraphicsExpose (|XEvent |GraphicsExpose))
-		    (eNoExpose (|XEvent |NoExpose))
-		    (eVisibilityNotify (|XEvent |VisibilityNotify))
-		    (eCreateNotify (|XEvent |CreateNotify))
-		    (eDestroyNotify (|XEvent |DestroyNotify))
-		    (eUnmapNotify (|XEvent |UnmapNotify))
-		    (eMapNotify (|XEvent |MapNotify))
-		    (eMapRequest (|XEvent |MapRequest))
-		    (eReparentNotify (|XEvent |ReparentNotify))
-		    (eConfigureNotify (|XEvent |ConfigureNotify))
-		    (eConfigureRequest (|XEvent |ConfigureRequest))
-		    (eGravityNotify (|XEvent |GravityNotify))
-		    (eResizeRequest (|XEvent |ResizeRequest))
-		    (eCirculateNotify (|XEvent |CirculateNotify))
-		    (eCirculateRequest (|XEvent |CirculateRequest))
-		    (ePropertyNotify (|XEvent |PropertyNotify))
-		    (eSelectionClear (|XEvent |SelectionClear))
-		    (eSelectionRequest (|XEvent |SelectionRequest))
-		    (eSelectionNotify (|XEvent |SelectionNotify))
-		    (eColormapNotify (|XEvent |ColormapNotify))
-		    (eClientMessage (|XEvent |ClientMessage))
-		    (eMappingNotify (|XEvent |MappingNotify)))
+	      (let ((dpy (XtDisplay (cadr (main-widgets))))
+		    (win (XtWindow (cadr (main-widgets))))
+		    (eKeyPress (XEvent KeyPress))
+		    (eButtonPress (XEvent ButtonPress))
+		    (eMotionNotify (XEvent MotionNotify))
+		    (eEnterNotify (XEvent EnterNotify))
+		    (eFocusIn (XEvent FocusIn))
+		    (eKeymapNotify (XEvent KeymapNotify))
+		    (eExpose (XEvent Expose))
+		    (eGraphicsExpose (XEvent GraphicsExpose))
+		    (eNoExpose (XEvent NoExpose))
+		    (eVisibilityNotify (XEvent VisibilityNotify))
+		    (eCreateNotify (XEvent CreateNotify))
+		    (eDestroyNotify (XEvent DestroyNotify))
+		    (eUnmapNotify (XEvent UnmapNotify))
+		    (eMapNotify (XEvent MapNotify))
+		    (eMapRequest (XEvent MapRequest))
+		    (eReparentNotify (XEvent ReparentNotify))
+		    (eConfigureNotify (XEvent ConfigureNotify))
+		    (eConfigureRequest (XEvent ConfigureRequest))
+		    (eGravityNotify (XEvent GravityNotify))
+		    (eResizeRequest (XEvent ResizeRequest))
+		    (eCirculateNotify (XEvent CirculateNotify))
+		    (eCirculateRequest (XEvent CirculateRequest))
+		    (ePropertyNotify (XEvent PropertyNotify))
+		    (eSelectionClear (XEvent SelectionClear))
+		    (eSelectionRequest (XEvent SelectionRequest))
+		    (eSelectionNotify (XEvent SelectionNotify))
+		    (eColormapNotify (XEvent ColormapNotify))
+		    (eClientMessage (XEvent ClientMessage))
+		    (eMappingNotify (XEvent MappingNotify)))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eKeyPress) val)
 		   (if (not (equal? (func eKeyPress) val)) (snd-display ";eKeyPress ~A ~A" name (func eKeyPress))))
-		 (list |type |serial |send_event |display |window |root |subwindow |time |x |y |x_root |y_root |state |keycode |same_screen)
-		 (list |KeyPress 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 (list 'KeyCode 0) #f)
+		 (list .type .serial .send_event .display .window .root .subwindow .time .x .y .x_root .y_root .state .keycode .same_screen)
+		 (list KeyPress 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 (list 'KeyCode 0) #f)
 		 (list 'type 'serial 'send_event 'display 'window 'root 'subwindow 'time 'x 'y 'x_root 'y_root 'state 'keycode 'same_screen))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eButtonPress) val)
 		   (if (not (equal? (func eButtonPress) val)) (snd-display ";eButtonPress ~A ~A" name (func eButtonPress))))
-		 (list |type |serial |send_event |display |window |root |subwindow |time |x |y |x_root |y_root |state |button |same_screen)
-		 (list |ButtonPress 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 0 #f)
+		 (list .type .serial .send_event .display .window .root .subwindow .time .x .y .x_root .y_root .state .button .same_screen)
+		 (list ButtonPress 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 0 #f)
 		 (list 'type 'serial 'send_event 'display 'window 'root 'subwindow 'time 'x 'y 'x_root 'y_root 'state 'button 'same_screen))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eMotionNotify) val)
 		   (if (not (equal? (func eMotionNotify) val)) (snd-display ";eMotionNotify ~A ~A" name (func eMotionNotify))))
-		 (list |type |serial |send_event |display |window |root |subwindow |time |x |y |x_root |y_root |state |is_hint |same_screen)
-		 (list |MotionNotify 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 0 #f)
+		 (list .type .serial .send_event .display .window .root .subwindow .time .x .y .x_root .y_root .state .is_hint .same_screen)
+		 (list MotionNotify 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 0 #f)
 		 (list 'type 'serial 'send_event 'display 'window 'root 'subwindow 'time 'x 'y 'x_root 'y_root 'state 'is_hint 'same_screen))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eEnterNotify) val)
 		   (if (not (equal? (func eEnterNotify) val)) (snd-display ";eEnterNotify ~A ~A" name (func eEnterNotify))))
-		 (list |type |serial |send_event |display |window |root |subwindow |time |x |y |x_root |y_root |mode |detail |same_screen |focus |state)
-		 (list |EnterNotify 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 0 #f #f 0)
+		 (list .type .serial .send_event .display .window .root .subwindow .time .x .y .x_root .y_root .mode .detail .same_screen .focus .state)
+		 (list EnterNotify 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 0 #f #f 0)
 		 (list 'type 'serial 'send_event 'display 'window 'root 'subwindow 'time 'x 'y 'x_root 'y_root 'mode 'detail 'same_screen 'focus 'state))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eFocusIn) val)
 		   (if (not (equal? (func eFocusIn) val)) (snd-display ";eFocusIn ~A ~A" name (func eFocusIn))))
-		 (list |type |serial |send_event |display |window |mode |detail)
-		 (list |FocusIn 0 #f dpy win 0 0)
+		 (list .type .serial .send_event .display .window .mode .detail)
+		 (list FocusIn 0 #f dpy win 0 0)
 		 (list 'type 'serial 'send_event 'display 'window 'mode 'detail))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eKeymapNotify) val)
 		   (if (not (equal? (func eKeymapNotify) val)) (snd-display ";eKeymapNotify ~A ~A" name (func eKeymapNotify))))
-		 (list |type |serial |send_event |display |window |key_vector)
-		 (list |KeymapNotify 0 #f dpy win "hiho")
+		 (list .type .serial .send_event .display .window .key_vector)
+		 (list KeymapNotify 0 #f dpy win "hiho")
 		 (list 'type 'serial 'send_event 'display 'window 'key-vector))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eExpose) val)
 		   (if (not (equal? (func eExpose) val)) (snd-display ";eExpose ~A ~A" name (func eExpose))))
-		 (list |type |serial |send_event |display |window |x |y |width |height |count)
-		 (list |Expose 0 #f dpy win 0 0 0 0 0)
+		 (list .type .serial .send_event .display .window .x .y .width .height .count)
+		 (list Expose 0 #f dpy win 0 0 0 0 0)
 		 (list 'type 'serial 'send_event 'display 'window 'x 'y 'width 'height 'count))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eGraphicsExpose) val)
 		   (if (not (equal? (func eGraphicsExpose) val)) (snd-display ";eGraphicsExpose ~A ~A" name (func eGraphicsExpose))))
-		 (list |type |serial |send_event |display |drawable |x |y |width |height |count |major_code |minor_code)
-		 (list |GraphicsExpose 0 #f dpy win 0 0 0 0 0 0 0)
+		 (list .type .serial .send_event .display .drawable .x .y .width .height .count .major_code .minor_code)
+		 (list GraphicsExpose 0 #f dpy win 0 0 0 0 0 0 0)
 		 (list 'type 'serial 'send_event 'display 'drawable 'x 'y 'width 'height 'count 'major_code 'minor_code))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eNoExpose) val)
 		   (if (not (equal? (func eNoExpose) val)) (snd-display ";eNoExpose ~A ~A" name (func eNoExpose))))
-		 (list |type |serial |send_event |display |drawable |major_code |minor_code)
-		 (list |NoExpose 0 #f dpy win 0 0)
+		 (list .type .serial .send_event .display .drawable .major_code .minor_code)
+		 (list NoExpose 0 #f dpy win 0 0)
 		 (list 'type 'serial 'send_event 'display 'drawable 'major_code 'minor_code))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eVisibilityNotify) val)
 		   (if (not (equal? (func eVisibilityNotify) val)) (snd-display ";eVisibilityNotify ~A ~A" name (func eVisibilityNotify))))
-		 (list |type |serial |send_event |display |window |state)
-		 (list |VisibilityNotify 0 #f dpy win 0)
+		 (list .type .serial .send_event .display .window .state)
+		 (list VisibilityNotify 0 #f dpy win 0)
 		 (list 'type 'serial 'send_event 'display 'window 'state))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eCreateNotify) val)
 		   (if (not (equal? (func eCreateNotify) val)) (snd-display ";eCreateNotify ~A ~A" name (func eCreateNotify))))
-		 (list |type |serial |send_event |display |parent |window |x |y |width |height |border_width |override_redirect)
-		 (list |CreateNotify 0 #f dpy win win 0 0 0 0 0 #f)
+		 (list .type .serial .send_event .display .parent .window .x .y .width .height .border_width .override_redirect)
+		 (list CreateNotify 0 #f dpy win win 0 0 0 0 0 #f)
 		 (list 'type 'serial 'send_event 'display 'parent 'window 'x 'y 'width 'height 'border_width 'override_redirect))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eDestroyNotify) val)
 		   (if (not (equal? (func eDestroyNotify) val)) (snd-display ";eDestroyNotify ~A ~A" name (func eDestroyNotify))))
-		 (list |type |serial |send_event |display |window)
-		 (list |DestroyNotify 0 #f dpy win)
+		 (list .type .serial .send_event .display .window)
+		 (list DestroyNotify 0 #f dpy win)
 		 (list 'type 'serial 'send_event 'display 'window))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eUnmapNotify) val)
 		   (if (not (equal? (func eUnmapNotify) val)) (snd-display ";eUnmapNotify ~A ~A" name (func eUnmapNotify))))
-		 (list |type |serial |send_event |event |display |window |from_configure)
-		 (list |UnmapNotify 0 #f win dpy win #f)
+		 (list .type .serial .send_event .event .display .window .from_configure)
+		 (list UnmapNotify 0 #f win dpy win #f)
 		 (list 'type 'serial 'send_event 'event 'display 'window 'from_configure))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eMapNotify) val)
 		   (if (not (equal? (func eMapNotify) val)) (snd-display ";eMapNotify ~A ~A" name (func eMapNotify))))
-		 (list |type |serial |send_event |event |display |window |override_redirect)
-		 (list |MapNotify 0 #f win dpy win #f)
+		 (list .type .serial .send_event .event .display .window .override_redirect)
+		 (list MapNotify 0 #f win dpy win #f)
 		 (list 'type 'serial 'send_event 'event 'display 'window 'override_redirect))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eMapRequest) val)
 		   (if (not (equal? (func eMapRequest) val)) (snd-display ";eMapRequest ~A ~A" name (func eMapRequest))))
-		 (list |type |serial |send_event |display |window)
-		 (list |MapRequest 0 #f dpy win)
+		 (list .type .serial .send_event .display .window)
+		 (list MapRequest 0 #f dpy win)
 		 (list 'type 'serial 'send_event 'display 'window))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eReparentNotify) val)
 		   (if (not (equal? (func eReparentNotify) val)) (snd-display ";eReparentNotify ~A ~A" name (func eReparentNotify))))
-		 (list |type |serial |send_event |event |display |window |parent |x |y |override_redirect)
-		 (list |ReparentNotify 0 #f win dpy win win 0 0 #f)
+		 (list .type .serial .send_event .event .display .window .parent .x .y .override_redirect)
+		 (list ReparentNotify 0 #f win dpy win win 0 0 #f)
 		 (list 'type 'serial 'send_event 'event 'display 'window 'parent 'x 'y 'override_redirect))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eConfigureNotify) val)
 		   (if (not (equal? (func eConfigureNotify) val)) (snd-display ";eConfigureNotify ~A ~A" name (func eConfigureNotify))))
-		 (list |type |serial |send_event |display |window |x |y |width |height |border_width |above |override_redirect)
-		 (list |ConfigureNotify 0 #f dpy win 0 0 0 0 0 win #f)
+		 (list .type .serial .send_event .display .window .x .y .width .height .border_width .above .override_redirect)
+		 (list ConfigureNotify 0 #f dpy win 0 0 0 0 0 win #f)
 		 (list 'type 'serial 'send_event 'display 'window 'x 'y 'width 'height 'border_width 'above 'override_redirect))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eGravityNotify) val)
 		   (if (not (equal? (func eGravityNotify) val)) (snd-display ";eGravityNotify ~A ~A" name (func eGravityNotify))))
-		 (list |type |serial |send_event |event |display |window |x |y)
-		 (list |GravityNotify 0 #f win dpy win 0 0)
+		 (list .type .serial .send_event .event .display .window .x .y)
+		 (list GravityNotify 0 #f win dpy win 0 0)
 		 (list 'type 'serial 'send_event 'event 'display 'window 'x 'y))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eResizeRequest) val)
 		   (if (not (equal? (func eResizeRequest) val)) (snd-display ";eResizeRequest ~A ~A" name (func eResizeRequest))))
-		 (list |type |serial |send_event |display |window |width |height)
-		 (list |ResizeRequest 0 #f dpy win 0 0)
+		 (list .type .serial .send_event .display .window .width .height)
+		 (list ResizeRequest 0 #f dpy win 0 0)
 		 (list 'type 'serial 'send_event 'display 'window 'width 'height))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eConfigureRequest) val)
 		   (if (not (equal? (func eConfigureRequest) val)) (snd-display ";eConfigureRequest ~A ~A" name (func eConfigureRequest))))
-		 (list |type |serial |send_event |display |parent |window |x |y |width |height |border_width |above |detail |value_mask)
-		 (list |ConfigureRequest 0 #f dpy win win 0 0 0 0 0 win 0 0)
+		 (list .type .serial .send_event .display .parent .window .x .y .width .height .border_width .above .detail .value_mask)
+		 (list ConfigureRequest 0 #f dpy win win 0 0 0 0 0 win 0 0)
 		 (list 'type 'serial 'send_event 'display 'parent 'window 'x 'y 'width 'height 'border_width 'above 'detail 'value_mask))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eCirculateNotify) val)
 		   (if (not (equal? (func eCirculateNotify) val)) (snd-display ";eCirculateNotify ~A ~A" name (func eCirculateNotify))))
-		 (list |type |serial |send_event |display |window |event |place)
-		 (list |CirculateNotify 0 #f dpy win win 0)
+		 (list .type .serial .send_event .display .window .event .place)
+		 (list CirculateNotify 0 #f dpy win win 0)
 		 (list 'type 'serial 'send_event 'display 'window 'event 'place))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eCirculateRequest) val)
 		   (if (not (equal? (func eCirculateRequest) val)) (snd-display ";eCirculateRequest ~A ~A" name (func eCirculateRequest))))
-		 (list |type |serial |send_event |display |window |parent |place)
-		 (list |CirculateRequest 0 #f dpy win win 0)
+		 (list .type .serial .send_event .display .window .parent .place)
+		 (list CirculateRequest 0 #f dpy win win 0)
 		 (list 'type 'serial 'send_event 'display 'window 'parent 'place))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func ePropertyNotify) val)
 		   (if (not (equal? (func ePropertyNotify) val)) (snd-display ";ePropertyNotify ~A ~A" name (func ePropertyNotify))))
-		 (list |type |serial |send_event |display |window |atom |time |state)
-		 (list |PropertyNotify 0 #f dpy win |XA_STRING (list 'Time 0) 0)
+		 (list .type .serial .send_event .display .window .atom .time .state)
+		 (list PropertyNotify 0 #f dpy win XA_STRING (list 'Time 0) 0)
 		 (list 'type 'serial 'send_event 'display 'window 'atom 'time 'state))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eSelectionClear) val)
 		   (if (not (equal? (func eSelectionClear) val)) (snd-display ";eSelectionClear ~A ~A" name (func eSelectionClear))))
-		 (list |type |serial |send_event |display |window |selection |time)
-		 (list |SelectionClear 0 #f dpy win |XA_STRING (list 'Time 0))
+		 (list .type .serial .send_event .display .window .selection .time)
+		 (list SelectionClear 0 #f dpy win XA_STRING (list 'Time 0))
 		 (list 'type 'serial 'send_event 'display 'window 'atom 'time))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eSelectionRequest) val)
 		   (if (not (equal? (func eSelectionRequest) val)) (snd-display ";eSelectionRequest ~A ~A" name (func eSelectionRequest))))
-		 (list |type |serial |send_event |display |owner |requestor |selection |target |property |time)
-		 (list |SelectionRequest 0 #f dpy win win |XA_STRING |XA_STRING |XA_STRING (list 'Time 0))
+		 (list .type .serial .send_event .display .owner .requestor .selection .target .property .time)
+		 (list SelectionRequest 0 #f dpy win win XA_STRING XA_STRING XA_STRING (list 'Time 0))
 		 (list 'type 'serial 'send_event 'display 'owner 'requestor 'selection 'target 'property 'time))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eSelectionNotify) val)
 		   (if (not (equal? (func eSelectionNotify) val)) (snd-display ";eSelectionNotify ~A ~A" name (func eSelectionNotify))))
-		 (list |type |serial |send_event |display |requestor |selection |target |property |time)
-		 (list |SelectionNotify 0 #f dpy win |XA_STRING |XA_STRING |XA_STRING (list 'Time 0))
+		 (list .type .serial .send_event .display .requestor .selection .target .property .time)
+		 (list SelectionNotify 0 #f dpy win XA_STRING XA_STRING XA_STRING (list 'Time 0))
 		 (list 'type 'serial 'send_event 'display 'requestor 'selection 'target 'property 'time))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eColormapNotify) val)
 		   (if (not (equal? (func eColormapNotify) val)) (snd-display ";eColormapNotify ~A ~A" name (func eColormapNotify))))
-		 (list |type |serial |send_event |display |window |colormap |state)
-		 (list |ColormapNotify 0 #f dpy win (|XDefaultColormap dpy (|XScreenNumberOfScreen (|DefaultScreenOfDisplay dpy))) 0)
+		 (list .type .serial .send_event .display .window .colormap .state)
+		 (list ColormapNotify 0 #f dpy win (XDefaultColormap dpy (XScreenNumberOfScreen (DefaultScreenOfDisplay dpy))) 0)
 		 (list 'type 'serial 'send_event 'display 'window 'colormap 'state))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eMappingNotify) val)
 		   (if (not (equal? (func eMappingNotify) val)) (snd-display ";eMappingNotify ~A ~A" name (func eMappingNotify))))
-		 (list |type |serial |send_event |display |window |request |first_keycode |count)
-		 (list |MappingNotify 0 #f dpy win 0 0 0)
+		 (list .type .serial .send_event .display .window .request .first_keycode .count)
+		 (list MappingNotify 0 #f dpy win 0 0 0)
 		 (list 'type 'serial 'send_event 'display 'window 'request 'first_keycode 'count))
 		
 		(for-each
 		 (lambda (func val name)
 		   (set! (func eClientMessage) val)
 		   (if (not (equal? (func eClientMessage) val)) (snd-display ";eClientMessage ~A ~A" name (func eClientMessage))))
-		 (list |type |serial |send_event |display |window |message_type |format |data)
-		 (list |ClientMessage 0 #f dpy win |XA_STRING 8 "gogo")
+		 (list .type .serial .send_event .display .window .message_type .format .data)
+		 (list ClientMessage 0 #f dpy win XA_STRING 8 "gogo")
 		 (list 'type 'serial 'send_event 'display 'window 'message_type 'format 'data))
 		)
 	      
-	      (|XBell dpy 10)
-	      (let ((cmd (|XGetCommand dpy win)))
+	      (XBell dpy 10)
+	      (let ((cmd (XGetCommand dpy win)))
 		(IF (or (not (> (length cmd) 0))
 			(not (string=? (car cmd) "./snd")))
 		    (snd-display ";XGetCommand: ~A" cmd)))
-	      (|XSetCommand dpy win (list "hiho" "away") 2)
-	      (IF (not (equal? (|XGetCommand dpy win) (list "hiho" "away"))) 
-		  (snd-display ";XSetCommand: ~A" (|XGetCommand dpy win)))
-	      (let ((wmp (map (lambda (w) (|XGetAtomName dpy w)) (|XGetWMProtocols dpy win))))
+	      (XSetCommand dpy win (list "hiho" "away") 2)
+	      (IF (not (equal? (XGetCommand dpy win) (list "hiho" "away"))) 
+		  (snd-display ";XSetCommand: ~A" (XGetCommand dpy win)))
+	      (let ((wmp (map (lambda (w) (XGetAtomName dpy w)) (XGetWMProtocols dpy win))))
 		(IF (not (equal? wmp (list "_MOTIF_WM_MESSAGES" "WM_DELETE_WINDOW")))
 		    (snd-display ";XGetWMProtocols: ~A" wmp)))
-	      (IF (not (equal? (|XListDepths dpy 0) (list 24 1 4 8 15 16 32)))
-		  (snd-display ";XListDepths: ~A" (|XListDepths dpy 0)))
-	      (IF (not (equal? (|XListPixmapFormats dpy) '((1 1 32) (4 8 32) (8 8 32) (15 16 32) (16 16 32) (24 32 32) (32 32 32))))
-		  (snd-display ";XListPixmapFormats: ~A" (|XListPixmapFormats dpy)))
+	      (IF (not (equal? (XListDepths dpy 0) (list 24 1 4 8 15 16 32)))
+		  (snd-display ";XListDepths: ~A" (XListDepths dpy 0)))
+	      (IF (not (equal? (XListPixmapFormats dpy) '((1 1 32) (4 8 32) (8 8 32) (15 16 32) (16 16 32) (24 32 32) (32 32 32))))
+		  (snd-display ";XListPixmapFormats: ~A" (XListPixmapFormats dpy)))
 	      
-	      (|XWarpPointer dpy (list 'Window |None) (list 'Window |None) 0 0 10 10 100 100)
-	      (let ((cs (|XQueryBestCursor dpy win 10 10)))
+	      (XWarpPointer dpy (list 'Window None) (list 'Window None) 0 0 10 10 100 100)
+	      (let ((cs (XQueryBestCursor dpy win 10 10)))
 		(IF (not (equal? cs (list 1 32 32))) (snd-display ";XQueryBestCursor: ~A" cs)))
-	      (let ((pt (|XQueryPointer dpy win)))
-		(IF (not (|Window? (cadr pt))) (snd-display ";XQueryPointer: ~A" pt)))
-	      (|XRaiseWindow dpy win)
-	      (|XRotateBuffers dpy 1)
-	      (|XSetWindowBorderWidth dpy win 10)
-	      (|XSetWindowBorder dpy win (cadr (black-pixel)))
-	      (|XSetWindowBackground dpy win (cadr (basic-color)))
-	      (let ((depth (|depth (car (|XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))))
-		(|XSetWindowBorderPixmap dpy win (|XCreatePixmap dpy win 10 10 depth))
-		(|XSetWindowBackgroundPixmap dpy win (|XCreatePixmap dpy win 10 10 depth))
-		(|XSetWindowBorderPixmap dpy win |CopyFromParent)
-		(|XSetWindowBackgroundPixmap dpy win |ParentRelative))
-	      (let ((hints (|XGetWMHints dpy win)))
-		(IF (or (not hints) (not (|XWMHints? hints))) (snd-display ";XGetWMHints?"))
-		(IF (not (= (|flags hints) 7)) (snd-display ";flags wmhints: ~A" (|flags hints)))
-		(IF (not (= (|initial_state hints) 1)) (snd-display ";initial_state wmhints: ~A" (|initial_state hints)))
-		(IF (not (|input hints)) (snd-display ";input wmhints: ~A" (|input hints)))
-		(IF (not (|Pixmap? (|icon_pixmap hints))) (snd-display ";icon_pixmap wmhints: ~A" (|icon_pixmap hints)))
-		(IF (|icon_window hints) (snd-display ";icon_window: ~A" (|icon_window hints)))
-		(IF (not (= (|icon_x hints) -1)) (snd-display ";icon_x wmhints: ~A" (|icon_x hints)))
-		(IF (not (= (|icon_y hints) -1)) (snd-display ";icon_y wmhints: ~A" (|icon_y hints)))
-		(IF (not (equal? (|icon_mask hints) (list 'Pixmap 0))) (snd-display ";icon_mask: ~A" (|icon_mask hints)))
-		(IF (not (number? (|window_group hints))) (snd-display ";window_group: ~A" (|window_group hints)))
-		(IF (not (|XWMHints? (|XAllocWMHints))) (snd-display ";XAllocWMHints: ~A" (|XAllocWMHints)))))
+	      (let ((pt (XQueryPointer dpy win)))
+		(IF (not (Window? (cadr pt))) (snd-display ";XQueryPointer: ~A" pt)))
+	      (XRaiseWindow dpy win)
+	      (XRotateBuffers dpy 1)
+	      (XSetWindowBorderWidth dpy win 10)
+	      (XSetWindowBorder dpy win (cadr (black-pixel)))
+	      (XSetWindowBackground dpy win (cadr (basic-color)))
+	      (let ((depth (.depth (car (XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))))
+		(XSetWindowBorderPixmap dpy win (XCreatePixmap dpy win 10 10 depth))
+		(XSetWindowBackgroundPixmap dpy win (XCreatePixmap dpy win 10 10 depth))
+		(XSetWindowBorderPixmap dpy win CopyFromParent)
+		(XSetWindowBackgroundPixmap dpy win ParentRelative))
+	      (let ((hints (XGetWMHints dpy win)))
+		(IF (or (not hints) (not (XWMHints? hints))) (snd-display ";XGetWMHints?"))
+		(IF (not (= (.flags hints) 7)) (snd-display ";flags wmhints: ~A" (.flags hints)))
+		(IF (not (= (.initial_state hints) 1)) (snd-display ";initial_state wmhints: ~A" (.initial_state hints)))
+		(IF (not (.input hints)) (snd-display ";input wmhints: ~A" (.input hints)))
+		(IF (not (Pixmap? (.icon_pixmap hints))) (snd-display ";icon_pixmap wmhints: ~A" (.icon_pixmap hints)))
+		(IF (.icon_window hints) (snd-display ";icon_window: ~A" (.icon_window hints)))
+		(IF (not (= (.icon_x hints) -1)) (snd-display ";icon_x wmhints: ~A" (.icon_x hints)))
+		(IF (not (= (.icon_y hints) -1)) (snd-display ";icon_y wmhints: ~A" (.icon_y hints)))
+		(IF (not (equal? (.icon_mask hints) (list 'Pixmap 0))) (snd-display ";icon_mask: ~A" (.icon_mask hints)))
+		(IF (not (number? (.window_group hints))) (snd-display ";window_group: ~A" (.window_group hints)))
+		(IF (not (XWMHints? (XAllocWMHints))) (snd-display ";XAllocWMHints: ~A" (XAllocWMHints)))))
 
-	    (IF (not (|IsKeypadKey (list 'KeySym |XK_KP_Space))) (snd-display ";IsKeypadKey kp-space"))
-	    (IF (|IsKeypadKey (list 'KeySym |XK_A)) (snd-display ";IsKeypadKey A"))
-	    (IF (|IsPrivateKeypadKey (list 'KeySym |XK_A)) (snd-display ";IsPrivateKeypadKey A"))
-	    (IF (not (|IsCursorKey (list 'KeySym |XK_Home))) (snd-display ";IsCursorKey Home"))
-	    (IF (|IsCursorKey (list 'KeySym |XK_S)) (snd-display ";IsCursorKey S"))
-	    (IF (not (|IsPFKey (list 'KeySym |XK_KP_F1))) (snd-display ";IsPFKey F1"))
-	    (IF (|IsPFKey (list 'KeySym |XK_S)) (snd-display ";IsPFKey S"))
-	    (IF (not (|IsFunctionKey (list 'KeySym |XK_F1))) (snd-display ";IsFunctionKey F1"))
-	    (IF (|IsFunctionKey (list 'KeySym |XK_S)) (snd-display ";IsFunctionKey S"))
-	    (IF (not (|IsMiscFunctionKey (list 'KeySym |XK_Select))) (snd-display ";IsMiscFunctionKey Select"))
-	    (IF (|IsMiscFunctionKey (list 'KeySym |XK_S)) (snd-display ";IsMiscFunctionKey S"))
-	    (IF (not (|IsModifierKey (list 'KeySym |XK_Shift_L))) (snd-display ";IsModifierKey Shift"))
-	    (IF (|IsModifierKey (list 'KeySym |XK_S)) (snd-display ";IsModifierKey S"))
+	    (IF (not (IsKeypadKey (list 'KeySym XK_KP_Space))) (snd-display ";IsKeypadKey kp-space"))
+	    (IF (IsKeypadKey (list 'KeySym XK_A)) (snd-display ";IsKeypadKey A"))
+	    (IF (IsPrivateKeypadKey (list 'KeySym XK_A)) (snd-display ";IsPrivateKeypadKey A"))
+	    (IF (not (IsCursorKey (list 'KeySym XK_Home))) (snd-display ";IsCursorKey Home"))
+	    (IF (IsCursorKey (list 'KeySym XK_S)) (snd-display ";IsCursorKey S"))
+	    (IF (not (IsPFKey (list 'KeySym XK_KP_F1))) (snd-display ";IsPFKey F1"))
+	    (IF (IsPFKey (list 'KeySym XK_S)) (snd-display ";IsPFKey S"))
+	    (IF (not (IsFunctionKey (list 'KeySym XK_F1))) (snd-display ";IsFunctionKey F1"))
+	    (IF (IsFunctionKey (list 'KeySym XK_S)) (snd-display ";IsFunctionKey S"))
+	    (IF (not (IsMiscFunctionKey (list 'KeySym XK_Select))) (snd-display ";IsMiscFunctionKey Select"))
+	    (IF (IsMiscFunctionKey (list 'KeySym XK_S)) (snd-display ";IsMiscFunctionKey S"))
+	    (IF (not (IsModifierKey (list 'KeySym XK_Shift_L))) (snd-display ";IsModifierKey Shift"))
+	    (IF (IsModifierKey (list 'KeySym XK_S)) (snd-display ";IsModifierKey S"))
 
 	    (let* ((scr (current-screen))
-		   (scrn (|XScreenNumberOfScreen scr))
-		   (dpy (|XtDisplay (cadr (main-widgets))))
-		   (val (|XGCValues))
-		   (wn (|XtWindow (cadr (main-widgets)))))
-	      (set! (|function val) |GXclear)
-	      (IF (not (equal? (|function val) |GXclear))
-		  (snd-display ";function: ~A ~A" (|function val) |GXclear))
-	      (set! (|line_width val) 10)
-	      (IF (not (equal? (|line_width val) 10)) 
-		  (snd-display ";line_width: ~A ~A" (|line_width val) 10))
-	      (set! (|line_style val) |LineSolid)
-	      (IF (not (equal? (|line_style val) |LineSolid)) 
-		  (snd-display ";line_style: ~A ~A" (|line_style val) |LineSolid))
-	      (set! (|background val) (|WhitePixelOfScreen (current-screen)))
-	      (IF (not (equal? (|background val) (|WhitePixelOfScreen (current-screen)))) 
-		  (snd-display ";background: ~A ~A" (|background val) (|WhitePixelOfScreen (current-screen))))
-	      (set! (|foreground val) (|BlackPixelOfScreen (current-screen)))
-	      (IF (not (equal? (|foreground val) (|BlackPixelOfScreen (current-screen)))) 
-		  (snd-display ";foreground: ~A ~A" (|foreground val) (|BlackPixelOfScreen (current-screen))))
+		   (scrn (XScreenNumberOfScreen scr))
+		   (dpy (XtDisplay (cadr (main-widgets))))
+		   (val (XGCValues))
+		   (wn (XtWindow (cadr (main-widgets)))))
+	      (set! (.function val) GXclear)
+	      (IF (not (equal? (.function val) GXclear))
+		  (snd-display ";function: ~A ~A" (.function val) GXclear))
+	      (set! (.line_width val) 10)
+	      (IF (not (equal? (.line_width val) 10)) 
+		  (snd-display ";line_width: ~A ~A" (.line_width val) 10))
+	      (set! (.line_style val) LineSolid)
+	      (IF (not (equal? (.line_style val) LineSolid)) 
+		  (snd-display ";line_style: ~A ~A" (.line_style val) LineSolid))
+	      (set! (.background val) (WhitePixelOfScreen (current-screen)))
+	      (IF (not (equal? (.background val) (WhitePixelOfScreen (current-screen)))) 
+		  (snd-display ";background: ~A ~A" (.background val) (WhitePixelOfScreen (current-screen))))
+	      (set! (.foreground val) (BlackPixelOfScreen (current-screen)))
+	      (IF (not (equal? (.foreground val) (BlackPixelOfScreen (current-screen)))) 
+		  (snd-display ";foreground: ~A ~A" (.foreground val) (BlackPixelOfScreen (current-screen))))
 	      ;; plane_mask?
-	      (set! (|cap_style val) |CapRound)
-	      (IF (not (equal? (|cap_style val) |CapRound)) 
-		  (snd-display ";cap_style: ~A ~A" (|cap_style val) |CapRound))
-	      (set! (|join_style val) |JoinMiter)
-	      (IF (not (equal? (|join_style val) |JoinMiter)) 
-		  (snd-display ";join_style: ~A ~A" (|join_style val) |JoinMiter))
-	      (set! (|fill_style val) |FillSolid)
-	      (IF (not (equal? (|fill_style val) |FillSolid)) 
-		  (snd-display ";fill_style: ~A ~A" (|fill_style val) |FillSolid))
-	      (set! (|fill_rule val) |EvenOddRule)
-	      (IF (not (equal? (|fill_rule val) |EvenOddRule)) 
-		  (snd-display ";fill_rule: ~A ~A" (|fill_rule val) |EvenOddRule))
-	      (set! (|arc_mode val) |ArcChord)
-	      (IF (not (equal? (|arc_mode val) |ArcChord))
-		  (snd-display ";arc_mode: ~A ~A" (|arc_mode val) |ArcChord))
+	      (set! (.cap_style val) CapRound)
+	      (IF (not (equal? (.cap_style val) CapRound)) 
+		  (snd-display ";cap_style: ~A ~A" (.cap_style val) CapRound))
+	      (set! (.join_style val) JoinMiter)
+	      (IF (not (equal? (.join_style val) JoinMiter)) 
+		  (snd-display ";join_style: ~A ~A" (.join_style val) JoinMiter))
+	      (set! (.fill_style val) FillSolid)
+	      (IF (not (equal? (.fill_style val) FillSolid)) 
+		  (snd-display ";fill_style: ~A ~A" (.fill_style val) FillSolid))
+	      (set! (.fill_rule val) EvenOddRule)
+	      (IF (not (equal? (.fill_rule val) EvenOddRule)) 
+		  (snd-display ";fill_rule: ~A ~A" (.fill_rule val) EvenOddRule))
+	      (set! (.arc_mode val) ArcChord)
+	      (IF (not (equal? (.arc_mode val) ArcChord))
+		  (snd-display ";arc_mode: ~A ~A" (.arc_mode val) ArcChord))
 	      ;; tile stipple clip_mask are Pixmaps
-	      (set! (|ts_x_origin val) 1)
-	      (IF (not (equal? (|ts_x_origin val) 1)) 
-		  (snd-display ";ts_x_origin: ~A ~A" (|ts_x_origin val) 1))
-	      (set! (|ts_y_origin val) 1)
-	      (IF (not (equal? (|ts_y_origin val) 1)) 
-		  (snd-display ";ts_y_origin: ~A ~A" (|ts_y_origin val) 1))
+	      (set! (.ts_x_origin val) 1)
+	      (IF (not (equal? (.ts_x_origin val) 1)) 
+		  (snd-display ";ts_x_origin: ~A ~A" (.ts_x_origin val) 1))
+	      (set! (.ts_y_origin val) 1)
+	      (IF (not (equal? (.ts_y_origin val) 1)) 
+		  (snd-display ";ts_y_origin: ~A ~A" (.ts_y_origin val) 1))
 	      ;; font is Font
-	      (set! (|subwindow_mode val) |ClipByChildren)
-	      (IF (not (equal? (|subwindow_mode val) |ClipByChildren)) 
-		  (snd-display ";subwindow_mode: ~A ~A" (|subwindow_mode val) |ClipByChildren))
-	      (set! (|graphics_exposures val) #f)
-	      (IF (not (equal? (|graphics_exposures val) #f)) 
-		  (snd-display ";graphics_exposures: ~A ~A" (|graphics_exposures val) #f))
-	      (set! (|clip_x_origin val) 0)
-	      (IF (not (equal? (|clip_x_origin val) 0)) 
-		  (snd-display ";clip_x_origin: ~A ~A" (|clip_x_origin val) 0))
-	      (set! (|clip_y_origin val) 0)
-	      (IF (not (equal? (|clip_y_origin val) 0)) 
-		  (snd-display ";clip_y_origin: ~A ~A" (|clip_y_origin val) 0))
-	      (set! (|dash_offset val) 1)
-	      (IF (not (equal? (|dash_offset val) 1))
-		  (snd-display ";dash_offset: ~A ~A" (|dash_offset val) 1))
-	      (IF (not (number? (|XConnectionNumber dpy)))
-		  (snd-display ";XConnectionNumber: ~A" (|XConnectionNumber dpy)))
+	      (set! (.subwindow_mode val) ClipByChildren)
+	      (IF (not (equal? (.subwindow_mode val) ClipByChildren)) 
+		  (snd-display ";subwindow_mode: ~A ~A" (.subwindow_mode val) ClipByChildren))
+	      (set! (.graphics_exposures val) #f)
+	      (IF (not (equal? (.graphics_exposures val) #f)) 
+		  (snd-display ";graphics_exposures: ~A ~A" (.graphics_exposures val) #f))
+	      (set! (.clip_x_origin val) 0)
+	      (IF (not (equal? (.clip_x_origin val) 0)) 
+		  (snd-display ";clip_x_origin: ~A ~A" (.clip_x_origin val) 0))
+	      (set! (.clip_y_origin val) 0)
+	      (IF (not (equal? (.clip_y_origin val) 0)) 
+		  (snd-display ";clip_y_origin: ~A ~A" (.clip_y_origin val) 0))
+	      (set! (.dash_offset val) 1)
+	      (IF (not (equal? (.dash_offset val) 1))
+		  (snd-display ";dash_offset: ~A ~A" (.dash_offset val) 1))
+	      (IF (not (number? (XConnectionNumber dpy)))
+		  (snd-display ";XConnectionNumber: ~A" (XConnectionNumber dpy)))
 	      
-	      (let ((gc (|XCreateGC dpy wn (+ |GCFunction |GCForeground |GCBackground |GCLineWidth |GCLineStyle 
-					      |GCCapStyle |GCJoinStyle |GCFillStyle |GCFillRule |GCTileStipXOrigin
-					      |GCTileStipYOrigin |GCSubwindowMode |GCGraphicsExposures |GCClipXOrigin
-					      |GCClipYOrigin |GCDashOffset |GCArcMode)
+	      (let ((gc (XCreateGC dpy wn (+ GCFunction GCForeground GCBackground GCLineWidth GCLineStyle 
+					      GCCapStyle GCJoinStyle GCFillStyle GCFillRule GCTileStipXOrigin
+					      GCTileStipYOrigin GCSubwindowMode GCGraphicsExposures GCClipXOrigin
+					      GCClipYOrigin GCDashOffset GCArcMode)
 				    val)))
 		
-		(IF (not (|GC? gc)) (snd-display ";XCreateGC returned ~A" gc))
-		(|XSetArcMode dpy gc |ArcPieSlice)
-		(|XSetFunction dpy gc |GXcopy)
-		(|XSetLineAttributes dpy gc 3 |LineDoubleDash |CapButt |JoinMiter)
-		(|XSetClipOrigin dpy gc 1 1)
-		(|XSetTSOrigin dpy gc 0 0)
-		(|XSetFillRule dpy gc |WindingRule)
-		(|XSetFillStyle dpy gc |FillStippled)
-		(|XSetForeground dpy gc (|WhitePixelOfScreen (current-screen)))
-		(|XSetBackground dpy gc (|BlackPixelOfScreen (current-screen)))
-		(|XSetGraphicsExposures dpy gc #t)
-		(|XSetSubwindowMode dpy gc |IncludeInferiors)
-		(IF (not (string=? "unix/:7100" (car (|XGetFontPath dpy))))
-		    (snd-display ";XGetFontPath: ~A" (|XGetFontPath dpy)))
-		(let ((owner (|XGetSelectionOwner dpy |XA_PRIMARY)))
-		  (IF (and owner (not (|Window? owner)))
+		(IF (not (GC? gc)) (snd-display ";XCreateGC returned ~A" gc))
+		(XSetArcMode dpy gc ArcPieSlice)
+		(XSetFunction dpy gc GXcopy)
+		(XSetLineAttributes dpy gc 3 LineDoubleDash CapButt JoinMiter)
+		(XSetClipOrigin dpy gc 1 1)
+		(XSetTSOrigin dpy gc 0 0)
+		(XSetFillRule dpy gc WindingRule)
+		(XSetFillStyle dpy gc FillStippled)
+		(XSetForeground dpy gc (WhitePixelOfScreen (current-screen)))
+		(XSetBackground dpy gc (BlackPixelOfScreen (current-screen)))
+		(XSetGraphicsExposures dpy gc #t)
+		(XSetSubwindowMode dpy gc IncludeInferiors)
+		(IF (not (string=? "unix/:7100" (car (XGetFontPath dpy))))
+		    (snd-display ";XGetFontPath: ~A" (XGetFontPath dpy)))
+		(let ((owner (XGetSelectionOwner dpy XA_PRIMARY)))
+		  (IF (and owner (not (Window? owner)))
 		      (snd-display ";XGetSelectionOwner: ~A" owner)))
-		(let ((mods (|XGetModifierMapping dpy)))
-		  (IF (not (|XModifierKeymap? mods))
+		(let ((mods (XGetModifierMapping dpy)))
+		  (IF (not (XModifierKeymap? mods))
 		      (snd-display ";XGetModifierMapping: ~A" mods)))
-		(let ((vis (|XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))
+		(let ((vis (XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))
 		  (IF (or (not vis)
-			  (not (|XVisualInfo? (car vis))))
+			  (not (XVisualInfo? (car vis))))
 		      (snd-display ";XGetVisualInfo: ~A" vis))
-		  (IF (not (= (|depth (car vis)) 24)) (snd-display ";depth vis: ~A" (|depth (car vis))))
-		  (IF (not (= (|screen (car vis)) 0)) (snd-display ";screen vis: ~A" (|screen (car vis))))
-		  (IF (not (= (|class (car vis)) |TrueColor)) (snd-display ";class vis: ~A (~A)" (|class (car vis)) |TrueColor))
-		  (IF (not (= (|colormap_size (car vis)) 256)) (snd-display ";colormap_size vis: ~A" (|colormap_size (car vis))))
-		  (IF (not (|XVisualInfo? (|XMatchVisualInfo dpy 0 24 |TrueColor)))
-		      (snd-display ";XMatchVisualInfo: ~A" (|XMatchVisualInfo dpy 0 24 |TrueColor))))
+		  (IF (not (= (.depth (car vis)) 24)) (snd-display ";depth vis: ~A" (.depth (car vis))))
+		  (IF (not (= (.screen (car vis)) 0)) (snd-display ";screen vis: ~A" (.screen (car vis))))
+		  (IF (not (= (.class (car vis)) TrueColor)) (snd-display ";class vis: ~A (~A)" (.class (car vis)) TrueColor))
+		  (IF (not (= (.colormap_size (car vis)) 256)) (snd-display ";colormap_size vis: ~A" (.colormap_size (car vis))))
+		  (IF (not (XVisualInfo? (XMatchVisualInfo dpy 0 24 TrueColor)))
+		      (snd-display ";XMatchVisualInfo: ~A" (XMatchVisualInfo dpy 0 24 TrueColor))))
 
-		(let ((cursor (|XCreateFontCursor dpy |XC_circle)))
-		  (IF (not (|Cursor? cursor)) 
+		(let ((cursor (XCreateFontCursor dpy XC_circle)))
+		  (IF (not (Cursor? cursor)) 
 		      (snd-display ";XCreateFontCursor: ~A" cursor)
 		      (begin
-			(|XDefineCursor dpy wn cursor)
-			(|XUndefineCursor dpy wn)
-			(let ((old (|XmGetMenuCursor dpy)))
-			  (IF (not (|Cursor? old)) (snd-display ";XmGetMenuCursor: ~A" old))
-			  (|XmSetMenuCursor dpy cursor)
-			  (IF (not (equal? cursor (|XmGetMenuCursor dpy))) (snd-display ";XmSetMenuCursor: ~A ~A" cursor (|XmGetMenuCursor dpy)))
-			  (|XmSetMenuCursor dpy old)))))
+			(XDefineCursor dpy wn cursor)
+			(XUndefineCursor dpy wn)
+			(let ((old (XmGetMenuCursor dpy)))
+			  (IF (not (Cursor? old)) (snd-display ";XmGetMenuCursor: ~A" old))
+			  (XmSetMenuCursor dpy cursor)
+			  (IF (not (equal? cursor (XmGetMenuCursor dpy))) (snd-display ";XmSetMenuCursor: ~A ~A" cursor (XmGetMenuCursor dpy)))
+			  (XmSetMenuCursor dpy old)))))
 
-		(let* ((vals (|XGetGCValues dpy gc (+ |GCFunction |GCForeground |GCBackground |GCLineWidth |GCLineStyle 
-						      |GCCapStyle |GCJoinStyle |GCFillStyle |GCFillRule |GCTileStipXOrigin
-						      |GCTileStipYOrigin |GCSubwindowMode |GCGraphicsExposures |GCClipXOrigin
-						      |GCClipYOrigin |GCDashOffset |GCArcMode)))
+		(let* ((vals (XGetGCValues dpy gc (+ GCFunction GCForeground GCBackground GCLineWidth GCLineStyle 
+						      GCCapStyle GCJoinStyle GCFillStyle GCFillRule GCTileStipXOrigin
+						      GCTileStipYOrigin GCSubwindowMode GCGraphicsExposures GCClipXOrigin
+						      GCClipYOrigin GCDashOffset GCArcMode)))
 		       (val1 (cadr vals)))
 		  (IF (= (car vals) 0)
 		      (snd-display ";XGetGCValues failed"))
 		  
-		  (IF (not (equal? (|function val1) |GXcopy))
-		      (snd-display ";function: ~A ~A" (|function val1) |GXcopy))
-		  (IF (not (equal? (|line_width val1) 3)) 
-		      (snd-display ";line_width: ~A ~A" (|line_width val1) 3))
-		  (IF (not (equal? (|line_style val1) |LineDoubleDash)) 
-		      (snd-display ";line_style: ~A ~A" (|line_style val1) |LineDoubleDash))
-		  (IF (not (equal? (|background val1) (|BlackPixelOfScreen (current-screen)))) 
-		      (snd-display ";background: ~A ~A" (|background val1) (|BlackPixelOfScreen (current-screen))))
-		  (IF (not (equal? (|foreground val1) (|WhitePixelOfScreen (current-screen)))) 
-		      (snd-display ";foreground: ~A ~A" (|foreground val1) (|WhitePixelOfScreen (current-screen))))
-		  (IF (not (equal? (|cap_style val1) |CapButt)) 
-		      (snd-display ";cap_style: ~A ~A" (|cap_style val1) |CapButt))
-		  (IF (not (equal? (|join_style val1) |JoinMiter)) 
-		      (snd-display ";join_style: ~A ~A" (|join_style val1) |JoinMiter))
-		  (IF (not (equal? (|fill_style val1) |FillStippled)) 
-		      (snd-display ";fill_style: ~A ~A" (|fill_style val1) |FillStippled))
-		  (IF (not (equal? (|fill_rule val1) |WindingRule)) 
-		      (snd-display ";fill_rule: ~A ~A" (|fill_rule val1) |WindingRule))
-		  (IF (not (equal? (|arc_mode val1) |ArcPieSlice))
-		      (snd-display ";arc_mode: ~A ~A" (|arc_mode val1) |ArcPieSlice))
-		  (IF (not (equal? (|ts_x_origin val1) 0)) 
-		      (snd-display ";ts_x_origin: ~A ~A" (|ts_x_origin val1) 0))
-		  (IF (not (equal? (|ts_y_origin val1) 0)) 
-		      (snd-display ";ts_y_origin: ~A ~A" (|ts_y_origin val1) 0))
-		  (IF (not (equal? (|subwindow_mode val1) |IncludeInferiors)) 
-		      (snd-display ";subwindow_mode: ~A ~A" (|subwindow_mode val1) |IncludeInferiors))
-		  (IF (not (equal? (|graphics_exposures val1) #t)) 
-		      (snd-display ";graphics_exposures: ~A ~A" (|graphics_exposures val1) #t))
-		  (IF (not (equal? (|clip_x_origin val1) 1)) 
-		      (snd-display ";clip_x_origin: ~A ~A" (|clip_x_origin val1) 1))
-		  (IF (not (equal? (|clip_y_origin val1) 1)) 
-		      (snd-display ";clip_y_origin: ~A ~A" (|clip_y_origin val1) 1))
-		  (IF (not (equal? (|dash_offset val1) 1))
-		      (snd-display ";dash_offset: ~A ~A" (|dash_offset val1) 1))
+		  (IF (not (equal? (.function val1) GXcopy))
+		      (snd-display ";function: ~A ~A" (.function val1) GXcopy))
+		  (IF (not (equal? (.line_width val1) 3)) 
+		      (snd-display ";line_width: ~A ~A" (.line_width val1) 3))
+		  (IF (not (equal? (.line_style val1) LineDoubleDash)) 
+		      (snd-display ";line_style: ~A ~A" (.line_style val1) LineDoubleDash))
+		  (IF (not (equal? (.background val1) (BlackPixelOfScreen (current-screen)))) 
+		      (snd-display ";background: ~A ~A" (.background val1) (BlackPixelOfScreen (current-screen))))
+		  (IF (not (equal? (.foreground val1) (WhitePixelOfScreen (current-screen)))) 
+		      (snd-display ";foreground: ~A ~A" (.foreground val1) (WhitePixelOfScreen (current-screen))))
+		  (IF (not (equal? (.cap_style val1) CapButt)) 
+		      (snd-display ";cap_style: ~A ~A" (.cap_style val1) CapButt))
+		  (IF (not (equal? (.join_style val1) JoinMiter)) 
+		      (snd-display ";join_style: ~A ~A" (.join_style val1) JoinMiter))
+		  (IF (not (equal? (.fill_style val1) FillStippled)) 
+		      (snd-display ";fill_style: ~A ~A" (.fill_style val1) FillStippled))
+		  (IF (not (equal? (.fill_rule val1) WindingRule)) 
+		      (snd-display ";fill_rule: ~A ~A" (.fill_rule val1) WindingRule))
+		  (IF (not (equal? (.arc_mode val1) ArcPieSlice))
+		      (snd-display ";arc_mode: ~A ~A" (.arc_mode val1) ArcPieSlice))
+		  (IF (not (equal? (.ts_x_origin val1) 0)) 
+		      (snd-display ";ts_x_origin: ~A ~A" (.ts_x_origin val1) 0))
+		  (IF (not (equal? (.ts_y_origin val1) 0)) 
+		      (snd-display ";ts_y_origin: ~A ~A" (.ts_y_origin val1) 0))
+		  (IF (not (equal? (.subwindow_mode val1) IncludeInferiors)) 
+		      (snd-display ";subwindow_mode: ~A ~A" (.subwindow_mode val1) IncludeInferiors))
+		  (IF (not (equal? (.graphics_exposures val1) #t)) 
+		      (snd-display ";graphics_exposures: ~A ~A" (.graphics_exposures val1) #t))
+		  (IF (not (equal? (.clip_x_origin val1) 1)) 
+		      (snd-display ";clip_x_origin: ~A ~A" (.clip_x_origin val1) 1))
+		  (IF (not (equal? (.clip_y_origin val1) 1)) 
+		      (snd-display ";clip_y_origin: ~A ~A" (.clip_y_origin val1) 1))
+		  (IF (not (equal? (.dash_offset val1) 1))
+		      (snd-display ";dash_offset: ~A ~A" (.dash_offset val1) 1))
 
-		  (set! (|plane_mask val) 0)
-		  (IF (not (equal? (|plane_mask val) 0)) 
-		      (snd-display ";plane_mask: ~A ~A" (|plane_mask val) 0))
-		  (set! (|tile val) (list 'Pixmap 0))
-		  (IF (not (equal? (|tile val) (list 'Pixmap 0)))
-		      (snd-display ";tile: ~A" (|tile val)))
-		  (set! (|stipple val) (list 'Pixmap 0))
-		  (IF (not (equal? (|stipple val) (list 'Pixmap 0)))
-		      (snd-display ";stipple: ~A" (|stipple val)))
+		  (set! (.plane_mask val) 0)
+		  (IF (not (equal? (.plane_mask val) 0)) 
+		      (snd-display ";plane_mask: ~A ~A" (.plane_mask val) 0))
+		  (set! (.tile val) (list 'Pixmap 0))
+		  (IF (not (equal? (.tile val) (list 'Pixmap 0)))
+		      (snd-display ";tile: ~A" (.tile val)))
+		  (set! (.stipple val) (list 'Pixmap 0))
+		  (IF (not (equal? (.stipple val) (list 'Pixmap 0)))
+		      (snd-display ";stipple: ~A" (.stipple val)))
 
-		  (let* ((dpy (|XtDisplay (cadr (main-widgets))))
-			 (win (|XtWindow (cadr (main-widgets))))
-			 (attr (|XSetWindowAttributes #f (basic-color) #f (highlight-color)))
-			 (newwin (|XCreateWindow dpy win 10 10 100 100 3 
-						 |CopyFromParent |InputOutput (list 'Visual |CopyFromParent)
-						 (logior |CWBackPixel |CWBorderPixel)
+		  (let* ((dpy (XtDisplay (cadr (main-widgets))))
+			 (win (XtWindow (cadr (main-widgets))))
+			 (attr (XSetWindowAttributes #f (basic-color) #f (highlight-color)))
+			 (newwin (XCreateWindow dpy win 10 10 100 100 3 
+						 CopyFromParent InputOutput (list 'Visual CopyFromParent)
+						 (logior CWBackPixel CWBorderPixel)
 						 attr)))
-		    (IF (not (= (|do_not_propagate_mask attr) 0)) (snd-display ";do_not_propagate_mask: ~A" (|do_not_propagate_mask attr)))
-		    (IF (not (= (|event_mask attr) 0)) (snd-display ";event_mask: ~A" (|event_mask attr)))
-		    (IF (not (= (|backing_pixel attr) 0)) (snd-display ";backing_pixel: ~A" (|backing_pixel attr)))
-		    (IF (not (= (|border_pixel attr) 0)) (snd-display ";border_pixel: ~A" (|border_pixel attr)))
-		    (IF (not (= (cadr (|border_pixmap attr)) 0)) (snd-display ";border_pixmap: ~A" (|border_pixmap attr)))
-		    (IF (not (= (|background_pixel attr) 0)) (snd-display ";background_pixel: ~A" (|background_pixel attr)))
-		    (IF (not (= (cadr (|background_pixmap attr)) 0)) (snd-display ";background_pixmap: ~A" (|background_pixmap attr)))
-		    (IF (not (= (|backing_planes attr) 0)) (snd-display ";backing_planes: ~A" (|backing_planes attr)))
-		    (IF (|save_under attr) (snd-display ";save_under: ~A" (|save_under attr)))
-		    (IF (not (= (cadr (|cursor attr)) 0)) (snd-display ";cursor: ~A" (|cursor attr)))
-		    (IF (not (|Window? newwin)) (snd-display ";XCreateWindow: ~A" newwin))
-		    (|XChangeWindowAttributes dpy newwin (logior |CWBackPixel) (|XSetWindowAttributes #f (basic-color)))
-		    (|XDestroyWindow dpy newwin)
-		    (set! newwin (|XCreateSimpleWindow dpy win 10 10 100 100 3 (basic-color) (highlight-color)))
-		    (|XDestroyWindow dpy newwin))
+		    (IF (not (= (.do_not_propagate_mask attr) 0)) (snd-display ";do_not_propagate_mask: ~A" (.do_not_propagate_mask attr)))
+		    (IF (not (= (.event_mask attr) 0)) (snd-display ";event_mask: ~A" (.event_mask attr)))
+		    (IF (not (= (.backing_pixel attr) 0)) (snd-display ";backing_pixel: ~A" (.backing_pixel attr)))
+		    (IF (not (= (.border_pixel attr) 0)) (snd-display ";border_pixel: ~A" (.border_pixel attr)))
+		    (IF (not (= (cadr (.border_pixmap attr)) 0)) (snd-display ";border_pixmap: ~A" (.border_pixmap attr)))
+		    (IF (not (= (.background_pixel attr) 0)) (snd-display ";background_pixel: ~A" (.background_pixel attr)))
+		    (IF (not (= (cadr (.background_pixmap attr)) 0)) (snd-display ";background_pixmap: ~A" (.background_pixmap attr)))
+		    (IF (not (= (.backing_planes attr) 0)) (snd-display ";backing_planes: ~A" (.backing_planes attr)))
+		    (IF (.save_under attr) (snd-display ";save_under: ~A" (.save_under attr)))
+		    (IF (not (= (cadr (.cursor attr)) 0)) (snd-display ";cursor: ~A" (.cursor attr)))
+		    (IF (not (Window? newwin)) (snd-display ";XCreateWindow: ~A" newwin))
+		    (XChangeWindowAttributes dpy newwin (logior CWBackPixel) (XSetWindowAttributes #f (basic-color)))
+		    (XDestroyWindow dpy newwin)
+		    (set! newwin (XCreateSimpleWindow dpy win 10 10 100 100 3 (basic-color) (highlight-color)))
+		    (XDestroyWindow dpy newwin))
 
-		  (|XSetRegion dpy gc (|XPolygonRegion (list (|XPoint 0 0) (|XPoint 10 0) (|XPoint 10 10) (|XPoint 0 10)) 4 |WindingRule))
+		  (XSetRegion dpy gc (XPolygonRegion (list (XPoint 0 0) (XPoint 10 0) (XPoint 10 10) (XPoint 0 10)) 4 WindingRule))
 		  (let ((pix (make-pixmap (cadr (main-widgets)) arrow-strs)))
-		    (IF (not (|Pixmap? pix)) 
+		    (IF (not (Pixmap? pix)) 
 			(snd-display ";make-pixmap?")
 			(begin
-			  (|XSetTile dpy gc pix)
-			  ;(|XSetStipple dpy gc pix) -- needs depth 1 I think
-			  (|XSetState dpy gc (basic-color) (mark-color) |GXcopy 0)
-			  (|XSetPlaneMask dpy gc 0)
-			  (|XSetDashes dpy gc 0 '(3 4 3 1))
-			  (|XSetClipRectangles dpy gc 0 0 (list (|XRectangle 0 0 10 10) (|XRectangle 10 10 100 100)) 2 |Unsorted)
-			  (let ((err (|XWriteBitmapFile dpy "test.data" pix 16 12 -1 -1)))
-			    (IF (not (= |BitmapSuccess err)) (snd-display ";XWriteBitmapFile: ~A" err)))
-			  ;(let ((vals (|XReadBitmapFile dpy (|XtWindow (cadr (main-widgets))) "test.data")))
-			  ;  (if (not (= (car vals |BitmapSuccess))) (snd-display ";XReadBitmapFile: ~A" vals)))
-			  ;(let ((vals (|XReadBitmapFileData "test.data")))
-			  ;  (if (not (= (car vals |BitmapSuccess))) (snd-display ";XReadBitmapFileData: ~A" vals)))
+			  (XSetTile dpy gc pix)
+			  ;(XSetStipple dpy gc pix) -- needs depth 1 I think
+			  (XSetState dpy gc (basic-color) (mark-color) GXcopy 0)
+			  (XSetPlaneMask dpy gc 0)
+			  (XSetDashes dpy gc 0 '(3 4 3 1))
+			  (XSetClipRectangles dpy gc 0 0 (list (XRectangle 0 0 10 10) (XRectangle 10 10 100 100)) 2 Unsorted)
+			  (let ((err (XWriteBitmapFile dpy "test.data" pix 16 12 -1 -1)))
+			    (IF (not (= BitmapSuccess err)) (snd-display ";XWriteBitmapFile: ~A" err)))
+			  ;(let ((vals (XReadBitmapFile dpy (XtWindow (cadr (main-widgets))) "test.data")))
+			  ;  (if (not (= (car vals BitmapSuccess))) (snd-display ";XReadBitmapFile: ~A" vals)))
+			  ;(let ((vals (XReadBitmapFileData "test.data")))
+			  ;  (if (not (= (car vals BitmapSuccess))) (snd-display ";XReadBitmapFileData: ~A" vals)))
 
-			  (let* ((fid (|XLoadFont dpy "cursor"))
-				 (col (|XColor))
-				 (col1 (|XColor))
-				 (scr (|DefaultScreen dpy))
-				 (cmap (|DefaultColormap dpy scr)))
-			    (|XAllocNamedColor dpy cmap "blue" col col)
-			    (|XAllocNamedColor dpy cmap "green" col1 col1)
-			    (let ((vals (|XCreateGlyphCursor dpy fid |None |XC_dot 0 col col1)))
-			      (IF (not (|Cursor? vals)) (snd-display ";XCreateGlyphCursor: ~A" vals)))
-			    (let ((vals (|XCreatePixmapCursor dpy pix |None col col1 5 5)))
-			      (IF (not (|Cursor? vals)) (snd-display ";XCreatePixmapCursor: ~A" vals))
-			      (|XRecolorCursor dpy vals col1 col)))
+			  (let* ((fid (XLoadFont dpy "cursor"))
+				 (col (XColor))
+				 (col1 (XColor))
+				 (scr (DefaultScreen dpy))
+				 (cmap (DefaultColormap dpy scr)))
+			    (XAllocNamedColor dpy cmap "blue" col col)
+			    (XAllocNamedColor dpy cmap "green" col1 col1)
+			    (let ((vals (XCreateGlyphCursor dpy fid None XC_dot 0 col col1)))
+			      (IF (not (Cursor? vals)) (snd-display ";XCreateGlyphCursor: ~A" vals)))
+			    (let ((vals (XCreatePixmapCursor dpy pix None col col1 5 5)))
+			      (IF (not (Cursor? vals)) (snd-display ";XCreatePixmapCursor: ~A" vals))
+			      (XRecolorCursor dpy vals col1 col)))
 			    
 			  )))
-		  (let* ((fid (|XLoadFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
-			 (fnt (|XLoadQueryFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
-			 (chs (|XQueryTextExtents dpy fid "hiho"))
+		  (let* ((fid (XLoadFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
+			 (fnt (XLoadQueryFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
+			 (chs (XQueryTextExtents dpy fid "hiho"))
 			 (struct (list-ref chs 4))
-			 (fnt1 (|XQueryFont dpy fid)))
-		    (IF (not (|Font? fid)) (snd-display ";XLoadFont: ~A" fid))
-		    (IF (not (|XFontStruct? fnt)) (snd-display ";XLoadQueryFont: ~A" fnt))
-		    (IF (not (|XFontStruct? fnt1)) (snd-display ";XQueryFont: ~A" fnt1))
-		    (IF (not (|XCharStruct? struct)) (snd-display ";XQueryTextExtents: ~A" chs))
+			 (fnt1 (XQueryFont dpy fid)))
+		    (IF (not (Font? fid)) (snd-display ";XLoadFont: ~A" fid))
+		    (IF (not (XFontStruct? fnt)) (snd-display ";XLoadQueryFont: ~A" fnt))
+		    (IF (not (XFontStruct? fnt1)) (snd-display ";XQueryFont: ~A" fnt1))
+		    (IF (not (XCharStruct? struct)) (snd-display ";XQueryTextExtents: ~A" chs))
 		    (IF (not (= (list-ref chs 2) 12)) (snd-display ";XQueryTextExtents max ascent: ~A" (list-ref chs 2)))
 		    (IF (not (= (list-ref chs 3) 3)) (snd-display ";XQueryTextExtents max descent: ~A" (list-ref chs 3)))
-		    (IF (not (= (|lbearing struct) 0)) (snd-display ";lbearing: ~A" (|lbearing struct)))
-		    (IF (not (= (|rbearing struct) 23)) (snd-display ";rbearing: ~A" (|rbearing struct)))
-		    (IF (not (= (|width struct) 24)) (snd-display ";width: ~A" (|width struct)))
-		    (IF (not (= (|ascent struct) 10)) (snd-display ";ascent: ~A" (|ascent struct)))
-		    (IF (not (= (|descent struct) 0)) (snd-display ";descent: ~A" (|descent struct)))
-		    (IF (not (= (|attributes struct) 0)) (snd-display ";attributes: ~A" (|attributes struct)))
+		    (IF (not (= (.lbearing struct) 0)) (snd-display ";lbearing: ~A" (.lbearing struct)))
+		    (IF (not (= (.rbearing struct) 23)) (snd-display ";rbearing: ~A" (.rbearing struct)))
+		    (IF (not (= (.width struct) 24)) (snd-display ";width: ~A" (.width struct)))
+		    (IF (not (= (.ascent struct) 10)) (snd-display ";ascent: ~A" (.ascent struct)))
+		    (IF (not (= (.descent struct) 0)) (snd-display ";descent: ~A" (.descent struct)))
+		    (IF (not (= (.attributes struct) 0)) (snd-display ";attributes: ~A" (.attributes struct)))
 		    (let ((fid (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*")))
-		      (if (not (|Font? fid)) (snd-display ";load-font -> ~A" fid)))
+		      (if (not (Font? fid)) (snd-display ";load-font -> ~A" fid)))
 		    )
 		  )))
 	    
-	    (let ((atoms (list |XA_PRIMARY |XA_SECONDARY |XA_ARC |XA_ATOM |XA_BITMAP |XA_CARDINAL |XA_COLORMAP |XA_CURSOR |XA_CUT_BUFFER0
-			       |XA_CUT_BUFFER1 |XA_CUT_BUFFER2 |XA_CUT_BUFFER3 |XA_CUT_BUFFER4 |XA_CUT_BUFFER5 |XA_CUT_BUFFER6
-			       |XA_CUT_BUFFER7 |XA_DRAWABLE |XA_FONT |XA_INTEGER |XA_PIXMAP |XA_POINT |XA_RECTANGLE |XA_RESOURCE_MANAGER
-			       |XA_RGB_COLOR_MAP |XA_RGB_BEST_MAP |XA_RGB_BLUE_MAP |XA_RGB_DEFAULT_MAP |XA_RGB_GRAY_MAP |XA_RGB_GREEN_MAP
-			       |XA_RGB_RED_MAP |XA_STRING |XA_VISUALID |XA_WINDOW |XA_WM_COMMAND |XA_WM_HINTS |XA_WM_CLIENT_MACHINE
-			       |XA_WM_ICON_NAME |XA_WM_ICON_SIZE |XA_WM_NAME |XA_WM_NORMAL_HINTS |XA_WM_SIZE_HINTS |XA_WM_ZOOM_HINTS
-			       |XA_MIN_SPACE |XA_NORM_SPACE |XA_MAX_SPACE |XA_END_SPACE |XA_SUPERSCRIPT_X |XA_SUPERSCRIPT_Y
-			       |XA_SUBSCRIPT_X |XA_SUBSCRIPT_Y |XA_UNDERLINE_POSITION |XA_UNDERLINE_THICKNESS |XA_STRIKEOUT_ASCENT
-			       |XA_STRIKEOUT_DESCENT |XA_ITALIC_ANGLE |XA_X_HEIGHT |XA_QUAD_WIDTH |XA_WEIGHT |XA_POINT_SIZE
-			       |XA_RESOLUTION |XA_COPYRIGHT |XA_NOTICE |XA_FONT_NAME |XA_FAMILY_NAME |XA_FULL_NAME |XA_CAP_HEIGHT
-			       |XA_WM_CLASS |XA_WM_TRANSIENT_FOR))
-		  (atom-names (list '|XA_PRIMARY '|XA_SECONDARY '|XA_ARC '|XA_ATOM '|XA_BITMAP '|XA_CARDINAL '|XA_COLORMAP '|XA_CURSOR '|XA_CUT_BUFFER0
-				    '|XA_CUT_BUFFER1 '|XA_CUT_BUFFER2 '|XA_CUT_BUFFER3 '|XA_CUT_BUFFER4 '|XA_CUT_BUFFER5 '|XA_CUT_BUFFER6
-				    '|XA_CUT_BUFFER7 '|XA_DRAWABLE '|XA_FONT '|XA_INTEGER '|XA_PIXMAP '|XA_POINT '|XA_RECTANGLE '|XA_RESOURCE_MANAGER
-				    '|XA_RGB_COLOR_MAP '|XA_RGB_BEST_MAP '|XA_RGB_BLUE_MAP '|XA_RGB_DEFAULT_MAP '|XA_RGB_GRAY_MAP '|XA_RGB_GREEN_MAP
-				    '|XA_RGB_RED_MAP '|XA_STRING '|XA_VISUALID '|XA_WINDOW '|XA_WM_COMMAND '|XA_WM_HINTS '|XA_WM_CLIENT_MACHINE
-				    '|XA_WM_ICON_NAME '|XA_WM_ICON_SIZE '|XA_WM_NAME '|XA_WM_NORMAL_HINTS '|XA_WM_SIZE_HINTS '|XA_WM_ZOOM_HINTS
-				    '|XA_MIN_SPACE '|XA_NORM_SPACE '|XA_MAX_SPACE '|XA_END_SPACE '|XA_SUPERSCRIPT_X '|XA_SUPERSCRIPT_Y
-				    '|XA_SUBSCRIPT_X '|XA_SUBSCRIPT_Y '|XA_UNDERLINE_POSITION '|XA_UNDERLINE_THICKNESS '|XA_STRIKEOUT_ASCENT
-				    '|XA_STRIKEOUT_DESCENT '|XA_ITALIC_ANGLE '|XA_X_HEIGHT '|XA_QUAD_WIDTH '|XA_WEIGHT '|XA_POINT_SIZE
-				    '|XA_RESOLUTION '|XA_COPYRIGHT '|XA_NOTICE '|XA_FONT_NAME '|XA_FAMILY_NAME '|XA_FULL_NAME '|XA_CAP_HEIGHT
-				    '|XA_WM_CLASS '|XA_WM_TRANSIENT_FOR)))
+	    (let ((atoms (list XA_PRIMARY XA_SECONDARY XA_ARC XA_ATOM XA_BITMAP XA_CARDINAL XA_COLORMAP XA_CURSOR XA_CUT_BUFFER0
+			       XA_CUT_BUFFER1 XA_CUT_BUFFER2 XA_CUT_BUFFER3 XA_CUT_BUFFER4 XA_CUT_BUFFER5 XA_CUT_BUFFER6
+			       XA_CUT_BUFFER7 XA_DRAWABLE XA_FONT XA_INTEGER XA_PIXMAP XA_POINT XA_RECTANGLE XA_RESOURCE_MANAGER
+			       XA_RGB_COLOR_MAP XA_RGB_BEST_MAP XA_RGB_BLUE_MAP XA_RGB_DEFAULT_MAP XA_RGB_GRAY_MAP XA_RGB_GREEN_MAP
+			       XA_RGB_RED_MAP XA_STRING XA_VISUALID XA_WINDOW XA_WM_COMMAND XA_WM_HINTS XA_WM_CLIENT_MACHINE
+			       XA_WM_ICON_NAME XA_WM_ICON_SIZE XA_WM_NAME XA_WM_NORMAL_HINTS XA_WM_SIZE_HINTS XA_WM_ZOOM_HINTS
+			       XA_MIN_SPACE XA_NORM_SPACE XA_MAX_SPACE XA_END_SPACE XA_SUPERSCRIPT_X XA_SUPERSCRIPT_Y
+			       XA_SUBSCRIPT_X XA_SUBSCRIPT_Y XA_UNDERLINE_POSITION XA_UNDERLINE_THICKNESS XA_STRIKEOUT_ASCENT
+			       XA_STRIKEOUT_DESCENT XA_ITALIC_ANGLE XA_X_HEIGHT XA_QUAD_WIDTH XA_WEIGHT XA_POINT_SIZE
+			       XA_RESOLUTION XA_COPYRIGHT XA_NOTICE XA_FONT_NAME XA_FAMILY_NAME XA_FULL_NAME XA_CAP_HEIGHT
+			       XA_WM_CLASS XA_WM_TRANSIENT_FOR))
+		  (atom-names (list 'XA_PRIMARY 'XA_SECONDARY 'XA_ARC 'XA_ATOM 'XA_BITMAP 'XA_CARDINAL 'XA_COLORMAP 'XA_CURSOR 'XA_CUT_BUFFER0
+				    'XA_CUT_BUFFER1 'XA_CUT_BUFFER2 'XA_CUT_BUFFER3 'XA_CUT_BUFFER4 'XA_CUT_BUFFER5 'XA_CUT_BUFFER6
+				    'XA_CUT_BUFFER7 'XA_DRAWABLE 'XA_FONT 'XA_INTEGER 'XA_PIXMAP 'XA_POINT 'XA_RECTANGLE 'XA_RESOURCE_MANAGER
+				    'XA_RGB_COLOR_MAP 'XA_RGB_BEST_MAP 'XA_RGB_BLUE_MAP 'XA_RGB_DEFAULT_MAP 'XA_RGB_GRAY_MAP 'XA_RGB_GREEN_MAP
+				    'XA_RGB_RED_MAP 'XA_STRING 'XA_VISUALID 'XA_WINDOW 'XA_WM_COMMAND 'XA_WM_HINTS 'XA_WM_CLIENT_MACHINE
+				    'XA_WM_ICON_NAME 'XA_WM_ICON_SIZE 'XA_WM_NAME 'XA_WM_NORMAL_HINTS 'XA_WM_SIZE_HINTS 'XA_WM_ZOOM_HINTS
+				    'XA_MIN_SPACE 'XA_NORM_SPACE 'XA_MAX_SPACE 'XA_END_SPACE 'XA_SUPERSCRIPT_X 'XA_SUPERSCRIPT_Y
+				    'XA_SUBSCRIPT_X 'XA_SUBSCRIPT_Y 'XA_UNDERLINE_POSITION 'XA_UNDERLINE_THICKNESS 'XA_STRIKEOUT_ASCENT
+				    'XA_STRIKEOUT_DESCENT 'XA_ITALIC_ANGLE 'XA_X_HEIGHT 'XA_QUAD_WIDTH 'XA_WEIGHT 'XA_POINT_SIZE
+				    'XA_RESOLUTION 'XA_COPYRIGHT 'XA_NOTICE 'XA_FONT_NAME 'XA_FAMILY_NAME 'XA_FULL_NAME 'XA_CAP_HEIGHT
+				    'XA_WM_CLASS 'XA_WM_TRANSIENT_FOR)))
 	      (for-each
 	       (lambda (n name)
-		 (IF (not (|Atom? n))
-		     (snd-display ";Atom: ~A -> ~A" name (|Atom? n))))
+		 (IF (not (Atom? n))
+		     (snd-display ";Atom: ~A -> ~A" name (Atom? n))))
 	       atoms
 	       atom-names))
 
-	    (let ((r (|XRectangle 10 20 100 110)))
-	      (IF (not (= (|width r) 100))
-		  (snd-display ";XRectangle width: ~A" (|width r)))
-	      (IF (not (= (|height r) 110))
-		  (snd-display ";XRectangle height: ~A" (|height r)))
-	      (IF (not (= (|x r) 10))
-		  (snd-display ";XRectangle x: ~A" (|x r)))
-	      (IF (not (= (|y r) 20))
-		  (snd-display ";XRectangle y: ~A" (|y r)))
-	      (set! (|width r) 10)
-	      (IF (not (= (|width r) 10))
-		  (snd-display ";set XRectangle width: ~A" (|width r)))
-	      (set! (|height r) 11)
-	      (IF (not (= (|height r) 11))
-		  (snd-display ";set XRectangle height: ~A" (|height r)))
-	      (set! (|x r) 1)
-	      (IF (not (= (|x r) 1))
-		  (snd-display ";set XRectangle x: ~A" (|x r)))
-	      (set! (|y r) 2)
-	      (IF (not (= (|y r) 2))
-		  (snd-display ";XRectangle y: ~A" (|y r))))
+	    (let ((r (XRectangle 10 20 100 110)))
+	      (IF (not (= (.width r) 100))
+		  (snd-display ";XRectangle width: ~A" (.width r)))
+	      (IF (not (= (.height r) 110))
+		  (snd-display ";XRectangle height: ~A" (.height r)))
+	      (IF (not (= (.x r) 10))
+		  (snd-display ";XRectangle x: ~A" (.x r)))
+	      (IF (not (= (.y r) 20))
+		  (snd-display ";XRectangle y: ~A" (.y r)))
+	      (set! (.width r) 10)
+	      (IF (not (= (.width r) 10))
+		  (snd-display ";set XRectangle width: ~A" (.width r)))
+	      (set! (.height r) 11)
+	      (IF (not (= (.height r) 11))
+		  (snd-display ";set XRectangle height: ~A" (.height r)))
+	      (set! (.x r) 1)
+	      (IF (not (= (.x r) 1))
+		  (snd-display ";set XRectangle x: ~A" (.x r)))
+	      (set! (.y r) 2)
+	      (IF (not (= (.y r) 2))
+		  (snd-display ";XRectangle y: ~A" (.y r))))
 	    
-	    (let ((r (|XArc 10 20 100 110 0 235)))
-	      (IF (not (= (|width r) 100))
-		  (snd-display ";XArc width: ~A" (|width r)))
-	      (IF (not (= (|height r) 110))
-		  (snd-display ";XArc height: ~A" (|height r)))
-	      (IF (not (= (|x r) 10))
-		  (snd-display ";XArc x: ~A" (|x r)))
-	      (IF (not (= (|y r) 20))
-		  (snd-display ";XArc y: ~A" (|y r)))
-	      (IF (not (= (|angle1 r) 0))
-		  (snd-display ";XArc angle1: ~A" (|angle1 r)))
-	      (IF (not (= (|angle2 r) 235))
-		  (snd-display ";XArc angle2: ~A" (|angle2 r)))
-	      (set! (|width r) 10)
-	      (IF (not (= (|width r) 10))
-		  (snd-display ";set XArc width: ~A" (|width r)))
-	      (set! (|height r) 11)
-	      (IF (not (= (|height r) 11))
-		  (snd-display ";set XArc height: ~A" (|height r)))
-	      (set! (|x r) 1)
-	      (IF (not (= (|x r) 1))
-		  (snd-display ";set XArc x: ~A" (|x r)))
-	      (set! (|y r) 2)
-	      (IF (not (= (|y r) 2))
-		  (snd-display ";set XArc y: ~A" (|y r)))
-	      (set! (|angle1 r) 123)
-	      (IF (not (= (|angle1 r) 123))
-		  (snd-display ";set XArc angle1: ~A" (|angle1 r)))
-	      (set! (|angle2 r) 321)
-	      (IF (not (= (|angle2 r) 321))
-		  (snd-display ";set XArc angle2: ~A" (|angle2 r))))
+	    (let ((r (XArc 10 20 100 110 0 235)))
+	      (IF (not (= (.width r) 100))
+		  (snd-display ";XArc width: ~A" (.width r)))
+	      (IF (not (= (.height r) 110))
+		  (snd-display ";XArc height: ~A" (.height r)))
+	      (IF (not (= (.x r) 10))
+		  (snd-display ";XArc x: ~A" (.x r)))
+	      (IF (not (= (.y r) 20))
+		  (snd-display ";XArc y: ~A" (.y r)))
+	      (IF (not (= (.angle1 r) 0))
+		  (snd-display ";XArc angle1: ~A" (.angle1 r)))
+	      (IF (not (= (.angle2 r) 235))
+		  (snd-display ";XArc angle2: ~A" (.angle2 r)))
+	      (set! (.width r) 10)
+	      (IF (not (= (.width r) 10))
+		  (snd-display ";set XArc width: ~A" (.width r)))
+	      (set! (.height r) 11)
+	      (IF (not (= (.height r) 11))
+		  (snd-display ";set XArc height: ~A" (.height r)))
+	      (set! (.x r) 1)
+	      (IF (not (= (.x r) 1))
+		  (snd-display ";set XArc x: ~A" (.x r)))
+	      (set! (.y r) 2)
+	      (IF (not (= (.y r) 2))
+		  (snd-display ";set XArc y: ~A" (.y r)))
+	      (set! (.angle1 r) 123)
+	      (IF (not (= (.angle1 r) 123))
+		  (snd-display ";set XArc angle1: ~A" (.angle1 r)))
+	      (set! (.angle2 r) 321)
+	      (IF (not (= (.angle2 r) 321))
+		  (snd-display ";set XArc angle2: ~A" (.angle2 r))))
 	    
-	    (let ((r (|XPoint 10 20)))
-	      (IF (not (= (|x r) 10))
-		  (snd-display ";XPoint x: ~A" (|x r)))
-	      (IF (not (= (|y r) 20))
-		  (snd-display ";XPoint y: ~A" (|y r)))
-	      (set! (|x r) 1)
-	      (IF (not (= (|x r) 1))
-		  (snd-display ";set XPoint x: ~A" (|x r)))
-	      (set! (|y r) 2)
-	      (IF (not (= (|y r) 2))
-		  (snd-display ";set XPoint y: ~A" (|y r))))
+	    (let ((r (XPoint 10 20)))
+	      (IF (not (= (.x r) 10))
+		  (snd-display ";XPoint x: ~A" (.x r)))
+	      (IF (not (= (.y r) 20))
+		  (snd-display ";XPoint y: ~A" (.y r)))
+	      (set! (.x r) 1)
+	      (IF (not (= (.x r) 1))
+		  (snd-display ";set XPoint x: ~A" (.x r)))
+	      (set! (.y r) 2)
+	      (IF (not (= (.y r) 2))
+		  (snd-display ";set XPoint y: ~A" (.y r))))
 	    
-	    (let ((r (|XSegment 10 20 100 110)))
-	      (IF (not (= (|x1 r) 10))
-		  (snd-display ";XSegment x1: ~A" (|x1 r)))
-	      (IF (not (= (|y1 r) 20))
-		  (snd-display ";XSegment y1: ~A" (|y1 r)))
-	      (IF (not (= (|x2 r) 100))
-		  (snd-display ";XSegment x2: ~A" (|x2 r)))
-	      (IF (not (= (|y2 r) 110))
-		  (snd-display ";XSegment y2: ~A" (|y2 r)))
-	      (set! (|x1 r) 1)
-	      (IF (not (= (|x1 r) 1))
-		  (snd-display ";set XSegment x1: ~A" (|x1 r)))
-	      (set! (|y1 r) 2)
-	      (IF (not (= (|y1 r) 2))
-		  (snd-display ";set XSegment y1: ~A" (|y1 r)))
-	      (set! (|x2 r) 10)
-	      (IF (not (= (|x2 r) 10))
-		  (snd-display ";set XSegment x2: ~A" (|x2 r)))
-	      (set! (|y2 r) 11)
-	      (IF (not (= (|y2 r) 11))
-		  (snd-display ";set XSegment y2: ~A" (|y2 r))))
+	    (let ((r (XSegment 10 20 100 110)))
+	      (IF (not (= (.x1 r) 10))
+		  (snd-display ";XSegment x1: ~A" (.x1 r)))
+	      (IF (not (= (.y1 r) 20))
+		  (snd-display ";XSegment y1: ~A" (.y1 r)))
+	      (IF (not (= (.x2 r) 100))
+		  (snd-display ";XSegment x2: ~A" (.x2 r)))
+	      (IF (not (= (.y2 r) 110))
+		  (snd-display ";XSegment y2: ~A" (.y2 r)))
+	      (set! (.x1 r) 1)
+	      (IF (not (= (.x1 r) 1))
+		  (snd-display ";set XSegment x1: ~A" (.x1 r)))
+	      (set! (.y1 r) 2)
+	      (IF (not (= (.y1 r) 2))
+		  (snd-display ";set XSegment y1: ~A" (.y1 r)))
+	      (set! (.x2 r) 10)
+	      (IF (not (= (.x2 r) 10))
+		  (snd-display ";set XSegment x2: ~A" (.x2 r)))
+	      (set! (.y2 r) 11)
+	      (IF (not (= (.y2 r) 11))
+		  (snd-display ";set XSegment y2: ~A" (.y2 r))))
 
-	    (let ((c (|XColor)))
-	      (set! (|red c) 1)
-	      (IF (not (= (|red c) 1)) (snd-display ";Xcolor red: ~A" (|red c)))
-	      (set! (|green c) 1)
-	      (IF (not (= (|green c) 1)) (snd-display ";Xcolor green: ~A" (|green c)))
-	      (set! (|blue c) 1)
-	      (IF (not (= (|blue c) 1)) (snd-display ";Xcolor blue: ~A" (|blue c)))
-	      (set! (|flags c) |DoRed)
-	      (IF (not (= (|flags c) |DoRed)) (snd-display ";Xcolor flags: ~A" (|flags c)))
-	      (IF (not (= (|pad c) 0)) (snd-display ";pad: ~A" (|pad c)))
-	      (set! (|pixel c) (basic-color))
-	      (IF (not (equal? (|pixel c) (basic-color))) (snd-display ";Xcolor pixel: ~A" (|pixel c))))
+	    (let ((c (XColor)))
+	      (set! (.red c) 1)
+	      (IF (not (= (.red c) 1)) (snd-display ";Xcolor red: ~A" (.red c)))
+	      (set! (.green c) 1)
+	      (IF (not (= (.green c) 1)) (snd-display ";Xcolor green: ~A" (.green c)))
+	      (set! (.blue c) 1)
+	      (IF (not (= (.blue c) 1)) (snd-display ";Xcolor blue: ~A" (.blue c)))
+	      (set! (.flags c) DoRed)
+	      (IF (not (= (.flags c) DoRed)) (snd-display ";Xcolor flags: ~A" (.flags c)))
+	      (IF (not (= (.pad c) 0)) (snd-display ";pad: ~A" (.pad c)))
+	      (set! (.pixel c) (basic-color))
+	      (IF (not (equal? (.pixel c) (basic-color))) (snd-display ";Xcolor pixel: ~A" (.pixel c))))
 
-	    (let ((obj (|XTextItem "hiho" 4 3 (list 'Font 1))))
-	      (IF (not (|XTextItem? obj)) (snd-display ";XTextItem -> ~A" obj))
-	      (IF (not (equal? (|font obj) (list 'Font 1))) (snd-display ";font ~A" (|font obj)))
-	      (set! (|font obj) (list 'Font 2))
-	      (IF (not (equal? (|font obj) (list 'Font 2))) (snd-display ";set font ~A" (|font obj)))
-	      (IF (not (string=? (|chars obj) "hiho")) (snd-display ";chars: ~A" (|chars obj)))
-	      (IF (not (= (|nchars obj) 4)) (snd-display ";chars: ~A" (|nchars obj)))
-	      (set! (|chars obj) "away!")
-	      (set! (|nchars obj) 5)
-	      (IF (not (string=? (|chars obj) "away!")) (snd-display ";set chars: ~A" (|chars obj)))
-	      (IF (not (= (|nchars obj) 5)) (snd-display ";set chars: ~A" (|nchars obj)))
-	      (IF (not (= (|delta obj) 3)) (snd-display ";delta ~A" (|delta obj)))
-	      (set! (|delta obj) 4)
-	      (IF (not (= (|delta obj) 4)) (snd-display ";set delta ~A" (|delta obj)))
+	    (let ((obj (XTextItem "hiho" 4 3 (list 'Font 1))))
+	      (IF (not (XTextItem? obj)) (snd-display ";XTextItem -> ~A" obj))
+	      (IF (not (equal? (.font obj) (list 'Font 1))) (snd-display ";font ~A" (.font obj)))
+	      (set! (.font obj) (list 'Font 2))
+	      (IF (not (equal? (.font obj) (list 'Font 2))) (snd-display ";set font ~A" (.font obj)))
+	      (IF (not (string=? (.chars obj) "hiho")) (snd-display ";chars: ~A" (.chars obj)))
+	      (IF (not (= (.nchars obj) 4)) (snd-display ";chars: ~A" (.nchars obj)))
+	      (set! (.chars obj) "away!")
+	      (set! (.nchars obj) 5)
+	      (IF (not (string=? (.chars obj) "away!")) (snd-display ";set chars: ~A" (.chars obj)))
+	      (IF (not (= (.nchars obj) 5)) (snd-display ";set chars: ~A" (.nchars obj)))
+	      (IF (not (= (.delta obj) 3)) (snd-display ";delta ~A" (.delta obj)))
+	      (set! (.delta obj) 4)
+	      (IF (not (= (.delta obj) 4)) (snd-display ";set delta ~A" (.delta obj)))
 	      )
 
-	    (let ((reg (|XPolygonRegion (list (|XPoint 0 0) (|XPoint 10 0) (|XPoint 10 10) (|XPoint 0 10)) 4 |WindingRule)))
-	      (IF (not (|XPointInRegion reg 4 4)) (snd-display ";XPointInRegion"))
-	      (|XShrinkRegion reg 1 2)
-	      (IF (not (|XPointInRegion reg 4 7)) (snd-display ";t XShrinkRegion"))
-	      (IF (|XPointInRegion reg 4 9) (snd-display ";f XShrinkRegion"))
-	      (|XOffsetRegion reg 1 2)
-	      (IF (not (|XPointInRegion reg 4 9)) (snd-display ";t XOffsetRegion"))
-	      (IF (|XPointInRegion reg 1 9) (snd-display ";f XOffsetRegion"))
-	      (let ((reg2 (|XCreateRegion))
-		    (reg1 (|XPolygonRegion (list (|XPoint 2 2) (|XPoint 10 2) (|XPoint 10 10) (|XPoint 2 10)) 4 |WindingRule)))
-		(IF (|XEqualRegion reg reg1) (snd-display ";f XEqualRegion"))
-		(IF (|XEmptyRegion reg) (snd-display ";f XEmptyRegion"))
-		(|XXorRegion reg reg1 reg2)
-		(let ((box (|XClipBox reg2)))
-		  (IF (or (not (= (|x (cadr box)) 2))
-			  (not (= (|y (cadr box)) 2))
-			  (not (= (|width (cadr box)) 8))
-			  (not (= (|height (cadr box)) 2)))
-		      (snd-display ";XXorRegion: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
-		(|XUnionRegion reg reg1 reg2)
-		(let ((box (|XClipBox reg2)))
-		  (IF (or (not (= (|x (cadr box)) 2))
-			  (not (= (|y (cadr box)) 2))
-			  (not (= (|width (cadr box)) 8))
-			  (not (= (|height (cadr box)) 8)))
-		      (snd-display ";XUnionRegion: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
-		(|XSubtractRegion reg reg1 reg2)
-		(let ((box (|XClipBox reg2)))
-		  (IF (or (not (= (|x (cadr box)) 0))
-			  (not (= (|y (cadr box)) 0))
-			  (not (= (|width (cadr box)) 0))
-			  (not (= (|height (cadr box)) 0)))
-		      (snd-display ";XSubtractRegion: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
-		(|XIntersectRegion reg reg1 reg2)
-		(let ((box (|XClipBox reg2)))
-		  (IF (or (not (= (|x (cadr box)) 2))
-			  (not (= (|y (cadr box)) 4))
-			  (not (= (|width (cadr box)) 8))
-			  (not (= (|height (cadr box)) 6)))
-		  (snd-display ";XIntersectRegion: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
-		(|XUnionRectWithRegion (|XRectangle 1 3 100 100) reg1 reg2)
-		(let ((box (|XClipBox reg2)))
-		  (IF (or (not (= (|x (cadr box)) 1))
-			  (not (= (|y (cadr box)) 2))
-			  (not (= (|width (cadr box)) 100))
-			  (not (= (|height (cadr box)) 101)))
-		      (snd-display ";XUnionRectWithRegion: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
-		(|XRectInRegion reg 0 0 100 100)
-		(let ((box (|XClipBox reg1)))
-		  (IF (or (not (= (|x (cadr box)) 2))
-			  (not (= (|y (cadr box)) 2))
-			  (not (= (|width (cadr box)) 8))
-			  (not (= (|height (cadr box)) 8)))
-		      (snd-display ";XClipBox: ~A ~A ~A ~A" (|x (cadr box)) (|y (cadr box)) (|width (cadr box)) (|height (cadr box)))))
-		(|XDestroyRegion reg1)
+	    (let ((reg (XPolygonRegion (list (XPoint 0 0) (XPoint 10 0) (XPoint 10 10) (XPoint 0 10)) 4 WindingRule)))
+	      (IF (not (XPointInRegion reg 4 4)) (snd-display ";XPointInRegion"))
+	      (XShrinkRegion reg 1 2)
+	      (IF (not (XPointInRegion reg 4 7)) (snd-display ";t XShrinkRegion"))
+	      (IF (XPointInRegion reg 4 9) (snd-display ";f XShrinkRegion"))
+	      (XOffsetRegion reg 1 2)
+	      (IF (not (XPointInRegion reg 4 9)) (snd-display ";t XOffsetRegion"))
+	      (IF (XPointInRegion reg 1 9) (snd-display ";f XOffsetRegion"))
+	      (let ((reg2 (XCreateRegion))
+		    (reg1 (XPolygonRegion (list (XPoint 2 2) (XPoint 10 2) (XPoint 10 10) (XPoint 2 10)) 4 WindingRule)))
+		(IF (XEqualRegion reg reg1) (snd-display ";f XEqualRegion"))
+		(IF (XEmptyRegion reg) (snd-display ";f XEmptyRegion"))
+		(XXorRegion reg reg1 reg2)
+		(let ((box (XClipBox reg2)))
+		  (IF (or (not (= (.x (cadr box)) 2))
+			  (not (= (.y (cadr box)) 2))
+			  (not (= (.width (cadr box)) 8))
+			  (not (= (.height (cadr box)) 2)))
+		      (snd-display ";XXorRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+		(XUnionRegion reg reg1 reg2)
+		(let ((box (XClipBox reg2)))
+		  (IF (or (not (= (.x (cadr box)) 2))
+			  (not (= (.y (cadr box)) 2))
+			  (not (= (.width (cadr box)) 8))
+			  (not (= (.height (cadr box)) 8)))
+		      (snd-display ";XUnionRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+		(XSubtractRegion reg reg1 reg2)
+		(let ((box (XClipBox reg2)))
+		  (IF (or (not (= (.x (cadr box)) 0))
+			  (not (= (.y (cadr box)) 0))
+			  (not (= (.width (cadr box)) 0))
+			  (not (= (.height (cadr box)) 0)))
+		      (snd-display ";XSubtractRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+		(XIntersectRegion reg reg1 reg2)
+		(let ((box (XClipBox reg2)))
+		  (IF (or (not (= (.x (cadr box)) 2))
+			  (not (= (.y (cadr box)) 4))
+			  (not (= (.width (cadr box)) 8))
+			  (not (= (.height (cadr box)) 6)))
+		  (snd-display ";XIntersectRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+		(XUnionRectWithRegion (XRectangle 1 3 100 100) reg1 reg2)
+		(let ((box (XClipBox reg2)))
+		  (IF (or (not (= (.x (cadr box)) 1))
+			  (not (= (.y (cadr box)) 2))
+			  (not (= (.width (cadr box)) 100))
+			  (not (= (.height (cadr box)) 101)))
+		      (snd-display ";XUnionRectWithRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+		(XRectInRegion reg 0 0 100 100)
+		(let ((box (XClipBox reg1)))
+		  (IF (or (not (= (.x (cadr box)) 2))
+			  (not (= (.y (cadr box)) 2))
+			  (not (= (.width (cadr box)) 8))
+			  (not (= (.height (cadr box)) 8)))
+		      (snd-display ";XClipBox: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+		(XDestroyRegion reg1)
 		))
 
-	    (let ((xid (|XUniqueContext))
-		  (dpy (|XtDisplay (cadr (main-widgets)))))
+	    (let ((xid (XUniqueContext))
+		  (dpy (XtDisplay (cadr (main-widgets)))))
 	      (IF (not (eq? (car xid) 'XContext))
 		  (snd-display "XUniqueContext: ~A" xid))
-	      (|XSaveContext dpy  123 xid "hiho")
-	      (let ((val (|XFindContext dpy 123 xid)))
+	      (XSaveContext dpy  123 xid "hiho")
+	      (let ((val (XFindContext dpy 123 xid)))
 		(IF (or (not (= 0 (car val)))
 			(not (string=? (cadr val) "hiho")))
 		    (snd-display "XFindContext: ~A" val)))
-	      (|XDeleteContext dpy 123 xid)
-	      (|XStoreBytes dpy "hiho" 4)
-	      (IF (not (string=? (|XFetchBytes dpy) "hiho")) (snd-display ";XStoreBytes: ~A" (|XFetchBytes dpy)))
-	      (|XStoreBuffer dpy "hiho" 4 1)
-	      (IF (not (string=? (|XFetchBuffer dpy 1) "hiho")) (snd-display ";XStoreBuffer: ~A" (|XFetchBuffer dpy)))
+	      (XDeleteContext dpy 123 xid)
+	      (XStoreBytes dpy "hiho" 4)
+	      (IF (not (string=? (XFetchBytes dpy) "hiho")) (snd-display ";XStoreBytes: ~A" (XFetchBytes dpy)))
+	      (XStoreBuffer dpy "hiho" 4 1)
+	      (IF (not (string=? (XFetchBuffer dpy 1) "hiho")) (snd-display ";XStoreBuffer: ~A" (XFetchBuffer dpy)))
 	      )
 
 
 	    ;; ---------------- Xt tests ----------------
-	    (let ((name (|XtGetApplicationNameAndClass (|XtDisplay (cadr (main-widgets))))))
+	    (let ((name (XtGetApplicationNameAndClass (XtDisplay (cadr (main-widgets))))))
 	      (IF (not (equal? name (list "snd" "Snd")))
 		  (snd-display ";XtGetApplicationNameAndClass: ~A?" name)))
-	    (let ((dpys (|XtGetDisplays (car (main-widgets)))))
-	      (IF (not (|Display? (car dpys)))
+	    (let ((dpys (XtGetDisplays (car (main-widgets)))))
+	      (IF (not (Display? (car dpys)))
 		  (snd-display ";XtGetDisplays: ~A?" dpys)))
-	    (let ((time (|XtGetSelectionTimeout))
-		  (time1 (|XtAppGetSelectionTimeout (car (main-widgets)))))
+	    (let ((time (XtGetSelectionTimeout))
+		  (time1 (XtAppGetSelectionTimeout (car (main-widgets)))))
 	      (IF (or (not (number? time))
 		      (not (= time time1))
 		      (< time 1))
 		  (snd-display ";XtGetSelectionTimeout: ~A ~A?" time time1))
-	      (|XtAppSetSelectionTimeout (car (main-widgets)) 4000)
-	      (IF (not (= (|XtAppGetSelectionTimeout (car (main-widgets))) 4000))
-		  (snd-display ";XtAppSetSelectionTimeout: ~A" (|XtAppGetSelectionTimeout (car (main-widgets)))))
-	      (|XtAppSetSelectionTimeout (car (main-widgets)) time1))
-	    (let ((app (|XtDisplayToApplicationContext (|XtDisplay (cadr (main-widgets)))))
+	      (XtAppSetSelectionTimeout (car (main-widgets)) 4000)
+	      (IF (not (= (XtAppGetSelectionTimeout (car (main-widgets))) 4000))
+		  (snd-display ";XtAppSetSelectionTimeout: ~A" (XtAppGetSelectionTimeout (car (main-widgets)))))
+	      (XtAppSetSelectionTimeout (car (main-widgets)) time1))
+	    (let ((app (XtDisplayToApplicationContext (XtDisplay (cadr (main-widgets)))))
 		  (orig (car (main-widgets)))
-		  (wid (|XtWidgetToApplicationContext (cadr (main-widgets)))))
+		  (wid (XtWidgetToApplicationContext (cadr (main-widgets)))))
 	      (IF (not (equal? app orig))
 		  (snd-display ";XtDisplayToApplicationContext: ~A ~A?" app orig))
 	      (IF (not (equal? app wid))
 		  (snd-display ";XtWidgetToApplicationContext: ~A ~A?" app wid)))
-	    (IF (not (string=? (|XtName (caddr (main-widgets))) "mainpane"))
-		(snd-display ";XtName main pane: ~A" (|XtName (caddr (main-widgets)))))
-	    (IF (not (= (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets)))) 200))
-		(snd-display ";XtGetMultiClickTime: ~A" (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets))))))
-	    (|XtSetMultiClickTime (|XtDisplay (cadr (main-widgets))) 250)
-	    (IF (not (= (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets)))) 250))
-		(snd-display ";XtSetMultiClickTime: ~A" (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets))))))
+	    (IF (not (string=? (XtName (caddr (main-widgets))) "mainpane"))
+		(snd-display ";XtName main pane: ~A" (XtName (caddr (main-widgets)))))
+	    (IF (not (= (XtGetMultiClickTime (XtDisplay (cadr (main-widgets)))) 200))
+		(snd-display ";XtGetMultiClickTime: ~A" (XtGetMultiClickTime (XtDisplay (cadr (main-widgets))))))
+	    (XtSetMultiClickTime (XtDisplay (cadr (main-widgets))) 250)
+	    (IF (not (= (XtGetMultiClickTime (XtDisplay (cadr (main-widgets)))) 250))
+		(snd-display ";XtSetMultiClickTime: ~A" (XtGetMultiClickTime (XtDisplay (cadr (main-widgets))))))
 	    
 	    (let* ((shell (cadr (main-widgets)))
-		   (wid (|XtCreateWidget "wid" |xmFormWidgetClass shell '()))
-		   (wid1 (|XtCreateWidget "wid1" |xmPushButtonWidgetClass wid '()))
-		   (wid2 (|XtVaCreateWidget "wid" |xmFormWidgetClass shell '())))
-	      (IF (|XtIsApplicationShell wid) (snd-display ";XtIsApplicationShell"))
-	      (IF (not (|XtIsApplicationShell shell)) (snd-display ";XtIsApplicationShell of appshell"))
-	      (IF (not (|XtIsComposite wid)) (snd-display ";XtIsComposite"))
-	      (IF (not (|XtIsConstraint wid)) (snd-display ";XtIsConstraint"))
-	      (IF (|XtIsManaged wid) (snd-display ";XtIsManaged"))
-	      (IF (not (|XtIsObject wid)) (snd-display ";XtIsObject"))
-	      (IF (|XtIsOverrideShell wid) (snd-display ";XtIsOverrideShell"))
-	      (IF (|XtIsRealized wid) (snd-display ";XtIsRealized"))
-	      (IF (not (|XtIsRealized shell)) (snd-display ";XtIsRealized main shell"))
-	      (IF (not (|XtIsRectObj wid)) (snd-display ";XtIsRectObj"))
-	      (IF (not (|XtIsSensitive wid)) (snd-display ";XtIsSensitive"))
-	      (IF (not (|XtIsSensitive shell)) (snd-display ";XtIsSensitive of main shell"))
-	      (|XtSetSensitive wid1 #t)
-	      (IF (not (|XtIsSensitive wid1)) (snd-display ";XtIsSensitive of button"))
-	      (IF (|XtIsSessionShell wid) (snd-display ";XtIsSessionShell"))
-	      (IF (|XtIsShell wid) (snd-display ";XtIsShell"))
-	      (IF (not (|XtIsShell shell)) (snd-display ";XtIsShell of main shell"))
-	      (IF (|XtIsTopLevelShell wid) (snd-display ";XtIsTopLevelShell"))
-	      (IF (not (|XtIsTopLevelShell shell)) (snd-display ";XtIsTopLevelShell of main shell"))
-	      (IF (|XtIsTransientShell wid) (snd-display ";XtIsTransientShell"))
-	      (IF (|XtIsVendorShell wid) (snd-display ";XtIsVendorShell"))
-	      (IF (not (|XtIsVendorShell shell)) (snd-display ";XtIsVendorShell of main shell"))
-	      (IF (|XtIsWMShell wid) (snd-display ";XtIsWMShell"))
-	      (IF (not (|XtIsWidget wid)) (snd-display ";XtIsWidget"))
-	      (|XtRealizeWidget wid)
-	      (IF (not (|XtIsRealized wid)) (snd-display ";XtRealizeWidget?"))
-	      (|XtUnrealizeWidget wid)
-	      (|XtDestroyWidget wid1))
-	    (|XtAppWarningMsg (car (main-widgets)) "conversionError" "string" "hi" "oops" '() 0)
-	    (|XtWarningMsg "conversionError" "string" "hi" "oops: %s" (list "hi") 1)
-	    (|XtFree 0) (|XtCalloc 0 0) (|XtMalloc 0) (|XtRealloc 0 0)
-	    (|XtSetLanguageProc 
+		   (wid (XtCreateWidget "wid" xmFormWidgetClass shell '()))
+		   (wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass wid '()))
+		   (wid2 (XtVaCreateWidget "wid" xmFormWidgetClass shell '())))
+	      (IF (XtIsApplicationShell wid) (snd-display ";XtIsApplicationShell"))
+	      (IF (not (XtIsApplicationShell shell)) (snd-display ";XtIsApplicationShell of appshell"))
+	      (IF (not (XtIsComposite wid)) (snd-display ";XtIsComposite"))
+	      (IF (not (XtIsConstraint wid)) (snd-display ";XtIsConstraint"))
+	      (IF (XtIsManaged wid) (snd-display ";XtIsManaged"))
+	      (IF (not (XtIsObject wid)) (snd-display ";XtIsObject"))
+	      (IF (XtIsOverrideShell wid) (snd-display ";XtIsOverrideShell"))
+	      (IF (XtIsRealized wid) (snd-display ";XtIsRealized"))
+	      (IF (not (XtIsRealized shell)) (snd-display ";XtIsRealized main shell"))
+	      (IF (not (XtIsRectObj wid)) (snd-display ";XtIsRectObj"))
+	      (IF (not (XtIsSensitive wid)) (snd-display ";XtIsSensitive"))
+	      (IF (not (XtIsSensitive shell)) (snd-display ";XtIsSensitive of main shell"))
+	      (XtSetSensitive wid1 #t)
+	      (IF (not (XtIsSensitive wid1)) (snd-display ";XtIsSensitive of button"))
+	      (IF (XtIsSessionShell wid) (snd-display ";XtIsSessionShell"))
+	      (IF (XtIsShell wid) (snd-display ";XtIsShell"))
+	      (IF (not (XtIsShell shell)) (snd-display ";XtIsShell of main shell"))
+	      (IF (XtIsTopLevelShell wid) (snd-display ";XtIsTopLevelShell"))
+	      (IF (not (XtIsTopLevelShell shell)) (snd-display ";XtIsTopLevelShell of main shell"))
+	      (IF (XtIsTransientShell wid) (snd-display ";XtIsTransientShell"))
+	      (IF (XtIsVendorShell wid) (snd-display ";XtIsVendorShell"))
+	      (IF (not (XtIsVendorShell shell)) (snd-display ";XtIsVendorShell of main shell"))
+	      (IF (XtIsWMShell wid) (snd-display ";XtIsWMShell"))
+	      (IF (not (XtIsWidget wid)) (snd-display ";XtIsWidget"))
+	      (XtRealizeWidget wid)
+	      (IF (not (XtIsRealized wid)) (snd-display ";XtRealizeWidget?"))
+	      (XtUnrealizeWidget wid)
+	      (XtDestroyWidget wid1))
+	    (XtAppWarningMsg (car (main-widgets)) "conversionError" "string" "hi" "oops" '() 0)
+	    (XtWarningMsg "conversionError" "string" "hi" "oops: %s" (list "hi") 1)
+	    (XtFree 0) (XtCalloc 0 0) (XtMalloc 0) (XtRealloc 0 0)
+	    (XtSetLanguageProc 
 	      (car (main-widgets)) 
 	      (lambda (dpy str data)
 		(snd-display ";YOW: language proc: got ~A ~A" str data))
 	      "who called us?")
-	    (|XtSetLanguageProc (car (main-widgets)) #f "oops")
-	    (|XtSetLanguageProc #f #f "oops")
-	    (|XtMergeArgLists (list 1 2) 2 (list 1) 1)
+	    (XtSetLanguageProc (car (main-widgets)) #f "oops")
+	    (XtSetLanguageProc #f #f "oops")
+	    (XtMergeArgLists (list 1 2) 2 (list 1) 1)
 
 	    (let* ((shell (cadr (main-widgets)))
-		   (dpy (|XtDisplay shell)))
-	      (IF (not (equal? (|XtClass shell) |applicationShellWidgetClass))
-		  (snd-display ";XtClass shell: ~A" (|XtClass shell)))
-	      (IF (not (equal? (|XtSuperclass shell) |topLevelShellWidgetClass))
-		  (snd-display ";XtSuperclass shell: ~A" (|XtClass shell)))
-	      (IF (not (string=? (|XtName shell) "snd"))
-		  (snd-display ";XtName: ~A" (|XtName shell)))
-	      (IF (not (equal? (|XtWindow shell) (|XtWindowOfObject shell)))
-		  (snd-display ";XtWindow: ~A ~A" (|XtWindow shell) (|XtWindowOfObject shell)))
-	      (IF (not (equal? (|XtScreen shell) (|XtScreenOfObject shell)))
-		  (snd-display ";XtScreen: ~A ~A" (|XtScreen shell) (|XtScreenOfObject shell)))
-	      (IF (not (equal? (|XtDisplay shell) (|XtDisplayOfObject shell)))
-		  (snd-display ";XtDisplay: ~A ~A" (|XtDisplay shell) (|XtDisplayOfObject shell)))
-	      (IF (not (|Time? (|XtLastTimestampProcessed dpy)))
-		  (snd-display ";XtLastTimestampProcessed: ~A" (|XtLastTimestampProcessed dpy)))
-	      (IF (not (|XEvent? (|XtLastEventProcessed dpy)))
-		  (snd-display ";XtLastEventProcessed: ~A" (|XtLastEventProcessed dpy)))
-	      (|XtBuildEventMask shell)
-	      (let ((k (|XtConvertCase dpy (|XKeycodeToKeysym dpy |XK_b 0)))
-		    (x (|XConvertCase (|XKeycodeToKeysym dpy |XK_b 0))))
-		(IF (not (|KeySym? (car k)))
+		   (dpy (XtDisplay shell)))
+	      (IF (not (equal? (XtClass shell) applicationShellWidgetClass))
+		  (snd-display ";XtClass shell: ~A" (XtClass shell)))
+	      (IF (not (equal? (XtSuperclass shell) topLevelShellWidgetClass))
+		  (snd-display ";XtSuperclass shell: ~A" (XtClass shell)))
+	      (IF (not (string=? (XtName shell) "snd"))
+		  (snd-display ";XtName: ~A" (XtName shell)))
+	      (IF (not (equal? (XtWindow shell) (XtWindowOfObject shell)))
+		  (snd-display ";XtWindow: ~A ~A" (XtWindow shell) (XtWindowOfObject shell)))
+	      (IF (not (equal? (XtScreen shell) (XtScreenOfObject shell)))
+		  (snd-display ";XtScreen: ~A ~A" (XtScreen shell) (XtScreenOfObject shell)))
+	      (IF (not (equal? (XtDisplay shell) (XtDisplayOfObject shell)))
+		  (snd-display ";XtDisplay: ~A ~A" (XtDisplay shell) (XtDisplayOfObject shell)))
+	      (IF (not (Time? (XtLastTimestampProcessed dpy)))
+		  (snd-display ";XtLastTimestampProcessed: ~A" (XtLastTimestampProcessed dpy)))
+	      (IF (not (XEvent? (XtLastEventProcessed dpy)))
+		  (snd-display ";XtLastEventProcessed: ~A" (XtLastEventProcessed dpy)))
+	      (XtBuildEventMask shell)
+	      (let ((k (XtConvertCase dpy (XKeycodeToKeysym dpy XK_b 0)))
+		    (x (XConvertCase (XKeycodeToKeysym dpy XK_b 0))))
+		(IF (not (KeySym? (car k)))
 		    (snd-display ";XtConvertCase: ~A" k))
 		(IF (not (equal? k x))
 		    (snd-display ";X(t)ConvertCase: ~A ~A" k x)))
-	      (let ((vals (|XtTranslateKeycode dpy (list 'KeyCode |XK_B) 0)))
+	      (let ((vals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
 		(IF (or (not (= (car vals) 0))
-			(not (|KeySym? (cadr vals))))
+			(not (KeySym? (cadr vals))))
 		    (snd-display ";XtTranslateKeycode: ~A" vals))
-		(IF (not (equal? vals (|XtTranslateKey dpy (list 'KeyCode |XK_B) 0)))
-		    (snd-display ";XtTranslateKey: ~A ~A" vals (|XtTranslateKey dpy (list 'KeyCode |XK_B) 0)))
-		(|XtSetKeyTranslator dpy #f)
-		(IF (not (equal? vals (|XtTranslateKeycode dpy (list 'KeyCode |XK_B) 0)))
-		    (snd-display ";XtSetKeyTranslator #f: ~A ~A" vals (|XtTranslateKeycode dpy (list 'KeyCode |XK_B) 0)))
-		(|XtSetKeyTranslator dpy (lambda (d k m)
+		(IF (not (equal? vals (XtTranslateKey dpy (list 'KeyCode XK_B) 0)))
+		    (snd-display ";XtTranslateKey: ~A ~A" vals (XtTranslateKey dpy (list 'KeyCode XK_B) 0)))
+		(XtSetKeyTranslator dpy #f)
+		(IF (not (equal? vals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
+		    (snd-display ";XtSetKeyTranslator #f: ~A ~A" vals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
+		(XtSetKeyTranslator dpy (lambda (d k m)
 					   (IF (not (equal? d dpy)) (snd-display ";d in keyproc: ~A ~A" d dpy))
-					   (|XtTranslateKey d k m)))
-		(let ((newvals (|XtTranslateKeycode dpy (list 'KeyCode |XK_B) 0)))
+					   (XtTranslateKey d k m)))
+		(let ((newvals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
 		  (IF (not (equal? vals newvals)) (snd-display ";XtSetKeyTranslator: ~A ~A" vals newvals)))
-		(|XtSetKeyTranslator dpy #f))
-	      (IF (not (|KeySym? (cadr (|XmTranslateKey dpy |XK_B 0))))
-		  (snd-display ";XmTranslateKey: ~A" (|XmTranslateKey dpy |XK_B 0)))
-	      (let ((kv (|XtKeysymToKeycodeList dpy (list 'KeySym 65509))))
+		(XtSetKeyTranslator dpy #f))
+	      (IF (not (KeySym? (cadr (XmTranslateKey dpy XK_B 0))))
+		  (snd-display ";XmTranslateKey: ~A" (XmTranslateKey dpy XK_B 0)))
+	      (let ((kv (XtKeysymToKeycodeList dpy (list 'KeySym 65509))))
 		(IF (not (equal? (car kv) (list 'KeyCode 66))) 
-		    (snd-display ";XtKeysymToKeycodeList: ~A ~A" kv (|XtKeysymToKeycodeList dpy (list 'KeySym 65509)))))
-	      (|XtInstallAllAccelerators (cadr (main-widgets)) (caddr (main-widgets)))
-	      (|XtInstallAccelerators (cadr (main-widgets)) (caddr (main-widgets)))
-	      (IF (not (equal? (list 0 1 2) (|XtSetArg 0 1 2))) (snd-display ";XtSetArg: ~A" (|XtSetArg 0 1 2)))
-	      (IF (not (|Widget? (|XtGetKeyboardFocusWidget (cadr (main-widgets)))))
-		  (snd-display ";XtGetKeyboardFocusWidget: ~A" (|XtGetKeyboardFocusWidget (cadr (main-widgets)))))
-	      (let ((id (|XtAddTimeOut 10000 (lambda (a b) 0) #f)))
-		(|XtRemoveTimeOut id)
-		(set! id (|XtAppAddTimeOut (car (main-widgets)) 10000 (lambda (a b) 0) #f))
-		(|XtRemoveTimeOut id))
-	      (let ((id (|XtAppAddInput (car (main-widgets)) 1 |XtInputReadMask (lambda (a b c) #f) #f)))
-		(|XtRemoveInput id)
-		(set! id (|XtAddInput 1 |XtInputReadMask (lambda (a b c) #f) #f))
-		(|XtRemoveInput id))
-	      (IF (not (equal? (caddr (main-widgets)) (|XtNameToWidget (cadr (main-widgets)) "mainpane")))
-		  (snd-display ";XtNameToWidget: ~A ~A" (caddr (main-widgets)) (|XtNameToWidget (cadr (main-widgets)) "mainpane")))
-	      (|XtVaCreatePopupShell "hiho" |vendorShellWidgetClass (cadr (main-widgets)) '())
-	      (|XtResolvePathname (|XtDisplay (|Widget (cadr (main-widgets)))) "app-defaults" #f #f #f #f 0 #f)
-	      (|XtFindFile ".snd" #f 0 #f)
-	      (|XtAppLock (car (main-widgets)))
-	      (|XtAppUnlock (car (main-widgets)))
-	      (let ((acts (|XtGetActionList |xmLabelWidgetClass)))
+		    (snd-display ";XtKeysymToKeycodeList: ~A ~A" kv (XtKeysymToKeycodeList dpy (list 'KeySym 65509)))))
+	      (XtInstallAllAccelerators (cadr (main-widgets)) (caddr (main-widgets)))
+	      (XtInstallAccelerators (cadr (main-widgets)) (caddr (main-widgets)))
+	      (IF (not (equal? (list 0 1 2) (XtSetArg 0 1 2))) (snd-display ";XtSetArg: ~A" (XtSetArg 0 1 2)))
+	      (IF (not (Widget? (XtGetKeyboardFocusWidget (cadr (main-widgets)))))
+		  (snd-display ";XtGetKeyboardFocusWidget: ~A" (XtGetKeyboardFocusWidget (cadr (main-widgets)))))
+	      (let ((id (XtAddTimeOut 10000 (lambda (a b) 0) #f)))
+		(XtRemoveTimeOut id)
+		(set! id (XtAppAddTimeOut (car (main-widgets)) 10000 (lambda (a b) 0) #f))
+		(XtRemoveTimeOut id))
+	      (let ((id (XtAppAddInput (car (main-widgets)) 1 XtInputReadMask (lambda (a b c) #f) #f)))
+		(XtRemoveInput id)
+		(set! id (XtAddInput 1 XtInputReadMask (lambda (a b c) #f) #f))
+		(XtRemoveInput id))
+	      (IF (not (equal? (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
+		  (snd-display ";XtNameToWidget: ~A ~A" (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
+	      (XtVaCreatePopupShell "hiho" vendorShellWidgetClass (cadr (main-widgets)) '())
+	      (XtResolvePathname (XtDisplay (Widget (cadr (main-widgets)))) "app-defaults" #f #f #f #f 0 #f)
+	      (XtFindFile ".snd" #f 0 #f)
+	      (XtAppLock (car (main-widgets)))
+	      (XtAppUnlock (car (main-widgets)))
+	      (let ((acts (XtGetActionList xmLabelWidgetClass)))
 		(IF (or (not (= (length acts) 4))
 			(not (string=? (caar acts) "Enter")))
 		    (snd-display ";XtGetActionList: ~A" acts)))
 	      )
 
-	    (let ((pop (|XtCreatePopupShell "hiho" |xmGrabShellWidgetClass (cadr (main-widgets)) '())))
-	      (|XtPopup pop |XtGrabNone)
-	      (|XtPopdown pop))
-	    (|XtSetWarningHandler (lambda (n) 
+	    (let ((pop (XtCreatePopupShell "hiho" xmGrabShellWidgetClass (cadr (main-widgets)) '())))
+	      (XtPopup pop XtGrabNone)
+	      (XtPopdown pop))
+	    (XtSetWarningHandler (lambda (n) 
 				    (IF (not (string=? n "hiho"))
 					(snd-display "XtWarning: ~A" n))))
-	    (|XtWarning "hiho")
-	    (|XtAppSetWarningHandler (car (main-widgets))
+	    (XtWarning "hiho")
+	    (XtAppSetWarningHandler (car (main-widgets))
 				     (lambda (n) 
 				       (IF (not (string=? n "hiho"))
 					   (snd-display "XtWarning: ~A" n))))
-	    (|XtAppWarning (car (main-widgets)) "hiho")
-	    (|XtAppSetWarningMsgHandler (car (main-widgets)) 
+	    (XtAppWarning (car (main-widgets)) "hiho")
+	    (XtAppSetWarningMsgHandler (car (main-widgets)) 
 					(lambda (name type klass def pars num)
 					  (snd-print (format #f ";ignore: ~A ~A ~A~%" name def pars))))
 
 	    (let ((listener (list-ref (main-widgets) 4)))
-	      (|XtCallActionProc listener "text-transpose" (|XEvent) #f 0)
-	      (|XtCallActionProc listener "begin-of-line" (|XEvent) #f 0)
-	      (|XtCallActionProc listener "kill-line" (|XEvent) #f 0)
-	      (|XtCallActionProc listener "yank" (|XEvent) #f 0)
-	      (|XtCallActionProc listener "name-completion" (|XEvent) #f 0)
-	      (|XtCallActionProc listener "listener-completion" (|XEvent) #f 0)
-	      (|XtCallActionProc listener "no-op" (|XEvent) #f 0)
-	      (|XtCallActionProc listener "delete-region" (|XEvent) #f 0)
-	      (let ((BEvent (|XEvent |ButtonPress)))
-		(set! (|x BEvent) 10)
-		(set! (|y BEvent) 10)
-		(|XtCallActionProc listener "b1-press" BEvent #f 0)
-		(|XtCallActionProc listener "b1-release" BEvent #f 0))
-	      (|XtCallActionProc listener "word-upper" (|XEvent) (list "u") 1))
+	      (XtCallActionProc listener "text-transpose" (XEvent) #f 0)
+	      (XtCallActionProc listener "begin-of-line" (XEvent) #f 0)
+	      (XtCallActionProc listener "kill-line" (XEvent) #f 0)
+	      (XtCallActionProc listener "yank" (XEvent) #f 0)
+	      (XtCallActionProc listener "name-completion" (XEvent) #f 0)
+	      (XtCallActionProc listener "listener-completion" (XEvent) #f 0)
+	      (XtCallActionProc listener "no-op" (XEvent) #f 0)
+	      (XtCallActionProc listener "delete-region" (XEvent) #f 0)
+	      (let ((BEvent (XEvent ButtonPress)))
+		(set! (.x BEvent) 10)
+		(set! (.y BEvent) 10)
+		(XtCallActionProc listener "b1-press" BEvent #f 0)
+		(XtCallActionProc listener "b1-release" BEvent #f 0))
+	      (XtCallActionProc listener "word-upper" (XEvent) (list "u") 1))
 
 	    (let ((app (car (main-widgets)))
 		  (str #f))
-	      (|XtSetErrorHandler (lambda (msg) (set! str msg)))
-	      (|XtError "hiho")
+	      (XtSetErrorHandler (lambda (msg) (set! str msg)))
+	      (XtError "hiho")
 	      (IF (or (not (string? str)) (not (string=? str "hiho"))) (snd-display ";XtError: ~A" str))
-	      (|XtAppSetErrorHandler app (lambda (msg) (set! str msg)))
-	      (|XtAppError app "hiho")
+	      (XtAppSetErrorHandler app (lambda (msg) (set! str msg)))
+	      (XtAppError app "hiho")
 	      (IF (or (not (string? str)) (not (string=? str "hiho"))) (snd-display ";XtAppError: ~A" str))
-	      (|XtSetErrorMsgHandler (lambda (name type class def pars numpars) (set! str name)))
-	      (|XtErrorMsg "name" "type" "class" "defp" (list "a") 1)
+	      (XtSetErrorMsgHandler (lambda (name type class def pars numpars) (set! str name)))
+	      (XtErrorMsg "name" "type" "class" "defp" (list "a") 1)
 	      (IF (or (not (string? str)) (not (string=? str "name"))) (snd-display ";XtErrorMsg: ~A" str))
-	      (|XtAppSetErrorMsgHandler app (lambda (name type class def pars numpars) (set! str name)))
-	      (|XtAppErrorMsg app "name" "type" "class" "defp" (list "a") 1)
+	      (XtAppSetErrorMsgHandler app (lambda (name type class def pars numpars) (set! str name)))
+	      (XtAppErrorMsg app "name" "type" "class" "defp" (list "a") 1)
 	      (IF (or (not (string? str)) (not (string=? str "name"))) (snd-display ";XtAppErrorMsg: ~A" str))
 	      )
 
 	    ;; ---------------- XM tests ----------------
-	    (let ((dpy (|XtDisplay (cadr (main-widgets))))
-		  (win (|XtWindow (cadr (main-widgets)))))
-	      (let ((version (list-ref (|XGetWindowProperty dpy win
-							    (|XInternAtom (|XtDisplay (cadr (main-widgets)))
+	    (let ((dpy (XtDisplay (cadr (main-widgets))))
+		  (win (XtWindow (cadr (main-widgets)))))
+	      (let ((version (list-ref (XGetWindowProperty dpy win
+							    (XInternAtom (XtDisplay (cadr (main-widgets)))
 									  "SND_VERSION"
 									  #f)
-							    0 32 #f |XA_STRING)
+							    0 32 #f XA_STRING)
 				       5)))
 		(IF (not (string=? version (snd-version)))
 		    (snd-display ";SND_VERSION: ~A, ~A?" version (snd-version))))
 	      (change-prop "SND_VERSION" "WM_NAME" "hiho")
-	      (IF (not (string=? (|XFetchName dpy win) "hiho")) (snd-display "change-prop: ~A" (|XFetchName dpy win))))
+	      (IF (not (string=? (XFetchName dpy win) "hiho")) (snd-display "change-prop: ~A" (XFetchName dpy win))))
 		       
 	    (let* ((tabs (let ((ctr 0))
 			   (map
 			    (lambda (n)
 			      (set! ctr (+ ctr 1))
-			      (|XmTabCreate n |XmINCHES (IF (= ctr 1) |XmABSOLUTE |XmRELATIVE) |XmALIGNMENT_BEGINNING "."))
+			      (XmTabCreate n XmINCHES (IF (= ctr 1) XmABSOLUTE XmRELATIVE) XmALIGNMENT_BEGINNING "."))
 			    (list 1.5 1.5 1.5 1.5))))
-		   (tablist (|XmTabListInsertTabs #f tabs (length tabs) 0)))
-	      (IF (not (= (|XmTabListTabCount tablist) (length tabs))) 
-		  (snd-display ";tablist len: ~A ~A~%" (|XmTabListTabCount tablist) (length tabs)))
-	      (IF (not (equal? (|XmTabGetValues (|XmTabListGetTab tablist 0)) (list 1.5 5 0 0 ".")))
-		  (snd-display ";XmTabs 0: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 0))))
-	      (IF (not (equal? (|XmTabGetValues (|XmTabListGetTab tablist 2)) (list 1.5 5 1 0 ".")))
-		  (snd-display ";XmTabs 2: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 2))))
-	      (let ((copytab (|XmTabListCopy tablist 0 0)))
-		(IF (not (equal? (|XmTabGetValues (|XmTabListGetTab copytab 0)) (list 1.5 5 0 0 ".")))
-		    (snd-display ";XmTabListCopy 0: ~A" (|XmTabGetValues (|XmTabListGetTab copytab 0))))
-		(let ((another (|XmTabListRemoveTabs copytab (list 0 1)))
-		      (atab (|XmTabCreate 3.0 |XmINCHES |XmABSOLUTE |XmALIGNMENT_BEGINNING ".")))
-		  (IF (not (equal? (|XmTabGetValues (|XmTabListGetTab another 0)) (list 1.5 5 1 0 ".")))
-		      (snd-display ";XmTabListRemoveTabs: ~A" (|XmTabGetValues (|XmTabListGetTab another 0))))
-		  (|XmTabListReplacePositions (|XmTabListCopy tablist 0 0) (list 1) (list atab))
+		   (tablist (XmTabListInsertTabs #f tabs (length tabs) 0)))
+	      (IF (not (= (XmTabListTabCount tablist) (length tabs))) 
+		  (snd-display ";tablist len: ~A ~A~%" (XmTabListTabCount tablist) (length tabs)))
+	      (IF (not (equal? (XmTabGetValues (XmTabListGetTab tablist 0)) (list 1.5 5 0 0 ".")))
+		  (snd-display ";XmTabs 0: ~A" (XmTabGetValues (XmTabListGetTab tablist 0))))
+	      (IF (not (equal? (XmTabGetValues (XmTabListGetTab tablist 2)) (list 1.5 5 1 0 ".")))
+		  (snd-display ";XmTabs 2: ~A" (XmTabGetValues (XmTabListGetTab tablist 2))))
+	      (let ((copytab (XmTabListCopy tablist 0 0)))
+		(IF (not (equal? (XmTabGetValues (XmTabListGetTab copytab 0)) (list 1.5 5 0 0 ".")))
+		    (snd-display ";XmTabListCopy 0: ~A" (XmTabGetValues (XmTabListGetTab copytab 0))))
+		(let ((another (XmTabListRemoveTabs copytab (list 0 1)))
+		      (atab (XmTabCreate 3.0 XmINCHES XmABSOLUTE XmALIGNMENT_BEGINNING ".")))
+		  (IF (not (equal? (XmTabGetValues (XmTabListGetTab another 0)) (list 1.5 5 1 0 ".")))
+		      (snd-display ";XmTabListRemoveTabs: ~A" (XmTabGetValues (XmTabListGetTab another 0))))
+		  (XmTabListReplacePositions (XmTabListCopy tablist 0 0) (list 1) (list atab))
 		  ;; this (replacepositions) is very prone to segfaults -- *very* poorly implemented! 
-		  (|XmTabSetValue atab 6.0)
-		  (|XmTabFree atab)
-		  (|XmTabListFree another))
-		(let ((tabl (|XmStringTableProposeTablist
-			      (list (|XmStringCreateLocalized "a-string") (|XmStringCreateLocalized "another")) 2
+		  (XmTabSetValue atab 6.0)
+		  (XmTabFree atab)
+		  (XmTabListFree another))
+		(let ((tabl (XmStringTableProposeTablist
+			      (list (XmStringCreateLocalized "a-string") (XmStringCreateLocalized "another")) 2
 			      (cadr (main-widgets))
 			      1.0
-			      |XmABSOLUTE)))
-		  (IF (not (|XmTabList? tabl)) (snd-display ";XmStringTableProposeTabList: ~A" tabl))
-		  (|XmTabListFree tabl)))
+			      XmABSOLUTE)))
+		  (IF (not (XmTabList? tabl)) (snd-display ";XmStringTableProposeTabList: ~A" tabl))
+		  (XmTabListFree tabl)))
 
-	      (let* ((tmp (|XmStringCreateLocalized "h"))
-		     (pm (|XmParseMappingCreate (list |XmNincludeStatus |XmINSERT
-						      |XmNsubstitute    tmp
-						      |XmNpattern       "i"
-						      |XmNpatternType   |XmCHARSET_TEXT))))
-		(|XmStringFree tmp)
-		(let ((newstr (|XmStringParseText "hi" #f #f |XmCHARSET_TEXT (list pm) 1 #f)))
-		  (IF (not (string=? (cadr (|XmStringGetLtoR newstr |XmFONTLIST_DEFAULT_TAG)) "hh"))
-		      (snd-display ";XmStringParseText -> ~A" (|XmStringGetLtoR newstr |XmFONTLIST_DEFAULT_TAG))))
-		(let ((vals (|XmParseMappingGetValues pm (list |XmNincludeStatus 0 |XmNsubstitute 0))))
-		  (IF (or (not (= (cadr vals) |XmINSERT))
-			  (not (string=? (cadr (|XmStringGetLtoR (list-ref vals 3) |XmFONTLIST_DEFAULT_TAG)) "h")))
+	      (let* ((tmp (XmStringCreateLocalized "h"))
+		     (pm (XmParseMappingCreate (list XmNincludeStatus XmINSERT
+						      XmNsubstitute    tmp
+						      XmNpattern       "i"
+						      XmNpatternType   XmCHARSET_TEXT))))
+		(XmStringFree tmp)
+		(let ((newstr (XmStringParseText "hi" #f #f XmCHARSET_TEXT (list pm) 1 #f)))
+		  (IF (not (string=? (cadr (XmStringGetLtoR newstr XmFONTLIST_DEFAULT_TAG)) "hh"))
+		      (snd-display ";XmStringParseText -> ~A" (XmStringGetLtoR newstr XmFONTLIST_DEFAULT_TAG))))
+		(let ((vals (XmParseMappingGetValues pm (list XmNincludeStatus 0 XmNsubstitute 0))))
+		  (IF (or (not (= (cadr vals) XmINSERT))
+			  (not (string=? (cadr (XmStringGetLtoR (list-ref vals 3) XmFONTLIST_DEFAULT_TAG)) "h")))
 		      (snd-display ";XmParseMappingGetValues: ~A" vals))
-		  (|XmParseMappingSetValues pm (list |XmNpattern "b")))
-		(|XmParseMappingFree pm))
+		  (XmParseMappingSetValues pm (list XmNpattern "b")))
+		(XmParseMappingFree pm))
 
 	      (let* ((fonts (list "fixed"
 				  "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*"
@@ -22356,179 +22356,179 @@ EDITS: 5
 		     (tags (list "one" "two" "three" "four"))
 		     (colors (list "red" "green" "blue" "orange"))
 		     (pixels
-		      (let* ((dpy (|XtDisplay (cadr (main-widgets))))
-			     (scr (|DefaultScreen dpy))
-			     (cmap (|DefaultColormap dpy scr)))
-			(let ((col (|XColor)))
-			  (|XParseColor dpy cmap "blue" col)
-			  (IF (or (not (= (|red col) 0))
-				  (not (= (|green col) 0))
-				  (not (= (|blue col) 65535)))
-			      (snd-display ";XParseColor: ~A ~A ~A ~A" col (|red col) (|blue col) (|green col)))
-			  (|XLookupColor dpy cmap "red" col (|XColor))
-			  (IF (or (not (= (|red col) 65535))
-				  (not (= (|green col) 0))
-				  (not (= (|blue col) 0)))
-			      (snd-display ";XLookupColor: ~A ~A ~A ~A" col (|red col) (|blue col) (|green col))))
+		      (let* ((dpy (XtDisplay (cadr (main-widgets))))
+			     (scr (DefaultScreen dpy))
+			     (cmap (DefaultColormap dpy scr)))
+			(let ((col (XColor)))
+			  (XParseColor dpy cmap "blue" col)
+			  (IF (or (not (= (.red col) 0))
+				  (not (= (.green col) 0))
+				  (not (= (.blue col) 65535)))
+			      (snd-display ";XParseColor: ~A ~A ~A ~A" col (.red col) (.blue col) (.green col)))
+			  (XLookupColor dpy cmap "red" col (XColor))
+			  (IF (or (not (= (.red col) 65535))
+				  (not (= (.green col) 0))
+				  (not (= (.blue col) 0)))
+			      (snd-display ";XLookupColor: ~A ~A ~A ~A" col (.red col) (.blue col) (.green col))))
 			(map
 			 (lambda (color)
-			   (let ((col (|XColor)))
-			     (if (= (|XAllocNamedColor dpy cmap color col col) 0)
+			   (let ((col (XColor)))
+			     (if (= (XAllocNamedColor dpy cmap color col col) 0)
 				 (snd-error (format #f "can't allocate ~A" color))
-				 (|pixel col))))
+				 (.pixel col))))
 			 colors)))
-		     (rendertable (|XmRenderTableAddRenditions #f 
+		     (rendertable (XmRenderTableAddRenditions #f 
 							       (let ((ctr 0))
 								 (map (lambda (r)
 									(set! ctr (+ ctr 1))
-									(|XmRenditionCreate (cadr (main-widgets))
+									(XmRenditionCreate (cadr (main-widgets))
 											    r
 											    (append
 											     (if (= ctr 1)
-												 (list |XmNtabList tablist)
+												 (list XmNtabList tablist)
 												 '())
-											     (list |XmNrenditionForeground (list-ref pixels (1- ctr))
-												    |XmNfontName (list-ref fonts (1- ctr))
-												     |XmNfontType |XmFONT_IS_FONT))))
+											     (list XmNrenditionForeground (list-ref pixels (1- ctr))
+												    XmNfontName (list-ref fonts (1- ctr))
+												     XmNfontType XmFONT_IS_FONT))))
 								      tags))
 							       (length tags)
-							       |XmMERGE_NEW)))
+							       XmMERGE_NEW)))
 
-		(let* ((dpy (|XtDisplay (cadr (main-widgets))))
-		       (scr (|DefaultScreenOfDisplay dpy))
-		       (p1 (|XmGetPixmap scr "hiho" (car pixels) (cadr pixels))))
-		  (if (not (|Pixmap? p1)) (snd-display ";XmGetPixmap: ~A" p1))
-		  (set! p1 (|XmGetPixmapByDepth scr "hoho" (car pixels) (cadr pixels) (|XDefaultDepth dpy (|XScreenNumberOfScreen scr))))
-		  (if (not (|Pixmap? p1)) (snd-display ";XmGetPixmapByDepth: ~A" p1))
-		  (|XmDestroyPixmap scr p1))
+		(let* ((dpy (XtDisplay (cadr (main-widgets))))
+		       (scr (DefaultScreenOfDisplay dpy))
+		       (p1 (XmGetPixmap scr "hiho" (car pixels) (cadr pixels))))
+		  (if (not (Pixmap? p1)) (snd-display ";XmGetPixmap: ~A" p1))
+		  (set! p1 (XmGetPixmapByDepth scr "hoho" (car pixels) (cadr pixels) (XDefaultDepth dpy (XScreenNumberOfScreen scr))))
+		  (if (not (Pixmap? p1)) (snd-display ";XmGetPixmapByDepth: ~A" p1))
+		  (XmDestroyPixmap scr p1))
 
-		(let ((prop (cadr (|XmRenderTableCvtToProp (cadr (main-widgets)) rendertable))))
+		(let ((prop (cadr (XmRenderTableCvtToProp (cadr (main-widgets)) rendertable))))
 		  (IF (not (string=? (substring prop 0 8) "tag,font"))
 		      (snd-display ";XmRenderTableCvtToProp: ~A" (substring prop 0 8)))
-		  (let ((copy (|XmRenderTableCopy rendertable)))
-		    (if (not (|XmRenderTable? copy)) (snd-display ";XmRenderTableCopy full: ~A" copy))
-		    (if (|XmRenderTableCopy) (snd-display ";XmRenderTableCopy null: ~A" (|XmRenderTableCopy)))
-		    (let ((rtags (|XmRenderTableGetTags copy))
-			  (rends (|XmRenderTableGetRenditions copy (list "one"))))
-		      (IF (|XmRenderTableGetRenditions) (snd-display ";XmRenderTableGetRenditions null: ~A" (|XmRenderTableGetRenditions)))
-		      (set! copy (|XmRenderTableRemoveRenditions copy (list (car rtags))))
-		      (IF (not (equal? (|XmRenderTableGetTags copy) (list "two" "three" "four")))
-			  (snd-display ";XmRenderTableRemoveRenditions: ~A" (|XmRenderTableGetTags copy)))
-		      (let ((another (|XmRenderTableCvtFromProp (cadr (main-widgets)) prop (string-length prop))))
-			(IF (not (|XmRenderTable? another)) (snd-display ";XmRenderTableCvtFromProp: ~A" another))
-			(|XmRenderTableFree another))
+		  (let ((copy (XmRenderTableCopy rendertable)))
+		    (if (not (XmRenderTable? copy)) (snd-display ";XmRenderTableCopy full: ~A" copy))
+		    (if (XmRenderTableCopy) (snd-display ";XmRenderTableCopy null: ~A" (XmRenderTableCopy)))
+		    (let ((rtags (XmRenderTableGetTags copy))
+			  (rends (XmRenderTableGetRenditions copy (list "one"))))
+		      (IF (XmRenderTableGetRenditions) (snd-display ";XmRenderTableGetRenditions null: ~A" (XmRenderTableGetRenditions)))
+		      (set! copy (XmRenderTableRemoveRenditions copy (list (car rtags))))
+		      (IF (not (equal? (XmRenderTableGetTags copy) (list "two" "three" "four")))
+			  (snd-display ";XmRenderTableRemoveRenditions: ~A" (XmRenderTableGetTags copy)))
+		      (let ((another (XmRenderTableCvtFromProp (cadr (main-widgets)) prop (string-length prop))))
+			(IF (not (XmRenderTable? another)) (snd-display ";XmRenderTableCvtFromProp: ~A" another))
+			(XmRenderTableFree another))
 		      )))
 
-		(let ((tabl (|XmStringTableParseStringArray (list "hi" "ho") 2 "hiho" |XmCHARSET_TEXT #f 0 #f)))
-		  (IF (not (|XmString? (car tabl))) (snd-display ";XmStringTableParseStringArray: ~A" tabl))
-		  (let ((strs (|XmStringTableUnparse tabl 2 "hiho" |XmCHARSET_TEXT |XmCHARSET_TEXT #f 0 |XmOUTPUT_ALL)))
+		(let ((tabl (XmStringTableParseStringArray (list "hi" "ho") 2 "hiho" XmCHARSET_TEXT #f 0 #f)))
+		  (IF (not (XmString? (car tabl))) (snd-display ";XmStringTableParseStringArray: ~A" tabl))
+		  (let ((strs (XmStringTableUnparse tabl 2 "hiho" XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
 		    (IF (not (equal? strs (list "hi" "ho"))) (snd-display ";XmStringTableUnparse: ~A" strs)))
-		  (let ((str (|XmStringTableToXmString tabl 2 #f)))
-		    (IF (not (|XmString? str)) (snd-display ";XmStringTableToXmString: ~A" str))
-		    (|XmStringToXmStringTable str #f)
-		    (let ((val (|XmStringUnparse str "hiho" |XmCHARSET_TEXT |XmCHARSET_TEXT #f 0 |XmOUTPUT_ALL)))
+		  (let ((str (XmStringTableToXmString tabl 2 #f)))
+		    (IF (not (XmString? str)) (snd-display ";XmStringTableToXmString: ~A" str))
+		    (XmStringToXmStringTable str #f)
+		    (let ((val (XmStringUnparse str "hiho" XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
 		      (IF (not (string=? val "hiho")) (snd-display ";XmStringUnparse: ~A" val)))
 		    (let* ((ind (open-sound "oboe.snd"))
 			   (grf (car (channel-widgets)))
-			   (dpy (|XtDisplay grf))
-			   (win (|XtWindow grf))
-			   (scr (|DefaultScreenOfDisplay dpy))
-			   (scrn (|XScreenNumberOfScreen scr))
-			   (gv (|XGCValues)))
-		      (if (not (|Font? (current-font ind))) (snd-display ";current-font: ~A" (current-font ind)))
-		      (set! (|foreground gv) (data-color))
-		      (set! (|background gv) (basic-color))
-		      (set! (|function gv) |GXcopy)
-		      (let* ((gc (|XtAllocateGC grf 
-						(|XDefaultDepth dpy scrn) 
-						(logior |GCForeground |GCBackground |GCFunction)
+			   (dpy (XtDisplay grf))
+			   (win (XtWindow grf))
+			   (scr (DefaultScreenOfDisplay dpy))
+			   (scrn (XScreenNumberOfScreen scr))
+			   (gv (XGCValues)))
+		      (if (not (Font? (current-font ind))) (snd-display ";current-font: ~A" (current-font ind)))
+		      (set! (.foreground gv) (data-color))
+		      (set! (.background gv) (basic-color))
+		      (set! (.function gv) GXcopy)
+		      (let* ((gc (XtAllocateGC grf 
+						(XDefaultDepth dpy scrn) 
+						(logior GCForeground GCBackground GCFunction)
 						gv
-						(logior |GCFont |GCDashList)
+						(logior GCFont GCDashList)
 						0))
-			     (str2 (|XmStringCreateLocalized "hiho")))
-			(|XmStringDraw dpy win rendertable str2 gc 10 10 100 
-				       |XmALIGNMENT_END |XmSTRING_DIRECTION_L_TO_R (|XRectangle 0 0 100 100))
-			(|XmStringDrawImage dpy win rendertable str2 gc 10 10 100 
-					    |XmALIGNMENT_END |XmSTRING_DIRECTION_L_TO_R (|XRectangle 0 0 100 100))
-			(|XmStringDrawUnderline dpy win rendertable str2 gc 10 10 100 
-						|XmALIGNMENT_END |XmSTRING_DIRECTION_L_TO_R (|XRectangle 0 0 100 100) str2)
-			(|XtGetGC (cadr (main-widgets)) |GCForeground gv)
-			(|XCopyGC dpy gc |GCFunction gc)
-			(|XCopyArea dpy win win gc 0 0 100 100 0 0)
-			(|XtReleaseGC grf gc))
+			     (str2 (XmStringCreateLocalized "hiho")))
+			(XmStringDraw dpy win rendertable str2 gc 10 10 100 
+				       XmALIGNMENT_END XmSTRING_DIRECTION_L_TO_R (XRectangle 0 0 100 100))
+			(XmStringDrawImage dpy win rendertable str2 gc 10 10 100 
+					    XmALIGNMENT_END XmSTRING_DIRECTION_L_TO_R (XRectangle 0 0 100 100))
+			(XmStringDrawUnderline dpy win rendertable str2 gc 10 10 100 
+						XmALIGNMENT_END XmSTRING_DIRECTION_L_TO_R (XRectangle 0 0 100 100) str2)
+			(XtGetGC (cadr (main-widgets)) GCForeground gv)
+			(XCopyGC dpy gc GCFunction gc)
+			(XCopyArea dpy win win gc 0 0 100 100 0 0)
+			(XtReleaseGC grf gc))
 		      (close-sound ind))
-		    (let ((lc (|XmStringLineCount (|XmStringCreateLocalized "hiho"))))
+		    (let ((lc (XmStringLineCount (XmStringCreateLocalized "hiho"))))
 		      (IF (not (= lc 1)) (snd-display ";XmStringLineCount: ~A" lc)))
-		    (IF (not (|XmStringHasSubstring str (|XmStringCreateLocalized "hi"))) (snd-display ";XmStringHasSubstring?"))
-		    (|XmStringNCopy str 2)
-		    (|XmStringNConcat str (|XmStringCreateLocalized "hiho") 2)
-		    (IF (not (|XmStringByteCompare (|XmStringCreateLocalized "hiho") (|XmStringCreateLocalized "hiho")))
+		    (IF (not (XmStringHasSubstring str (XmStringCreateLocalized "hi"))) (snd-display ";XmStringHasSubstring?"))
+		    (XmStringNCopy str 2)
+		    (XmStringNConcat str (XmStringCreateLocalized "hiho") 2)
+		    (IF (not (XmStringByteCompare (XmStringCreateLocalized "hiho") (XmStringCreateLocalized "hiho")))
 			(snd-display ";XmStringByteCompare?"))))
 
-		(IF (not (equal? (|XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
-		    (snd-display ";tags: ~A~%" (|XmRenderTableGetTags rendertable)))
-		(let* ((rend (|XmRenderTableGetRendition rendertable "one"))
-		       (r (|XmRenditionRetrieve rend
-						(list |XmNrenditionForeground 0
-						      |XmNfontName 0
-						      |XmNfontType 0
-						      |XmNtag 0))))
+		(IF (not (equal? (XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
+		    (snd-display ";tags: ~A~%" (XmRenderTableGetTags rendertable)))
+		(let* ((rend (XmRenderTableGetRendition rendertable "one"))
+		       (r (XmRenditionRetrieve rend
+						(list XmNrenditionForeground 0
+						      XmNfontName 0
+						      XmNfontType 0
+						      XmNtag 0))))
 		  (IF (or (not (string=? (list-ref r 7) "one"))
 			  (not (string=? (list-ref r 3) "fixed")))
 		      (snd-display ";rendertable: ~A" r))
-		  (let* ((str (|XmStringPutRendition (|XmStringCreateLocalized "hiho") "one"))
-			 (ctx (cadr (|XmStringInitContext str)))
-			 (comp (|XmStringPeekNextComponent ctx))
-			 (comp1 (|XmStringPeekNextTriple ctx))
-			 (comp2 (|XmStringGetNextComponent ctx)))
-		    (IF (not (= comp |XmSTRING_COMPONENT_RENDITION_BEGIN)) (snd-display ";XmStringPeekNextComponent: ~A" comp))
+		  (let* ((str (XmStringPutRendition (XmStringCreateLocalized "hiho") "one"))
+			 (ctx (cadr (XmStringInitContext str)))
+			 (comp (XmStringPeekNextComponent ctx))
+			 (comp1 (XmStringPeekNextTriple ctx))
+			 (comp2 (XmStringGetNextComponent ctx)))
+		    (IF (not (= comp XmSTRING_COMPONENT_RENDITION_BEGIN)) (snd-display ";XmStringPeekNextComponent: ~A" comp))
 		    (IF (not (= comp1 comp)) (snd-display ";XmStringPeekNextTriple: ~A" comp1))
 		    (IF (not (= (list-ref comp2 4) comp)) (snd-display ";XmStringGetNextComponent: ~A" comp2)))
-		  (|XmRenditionUpdate rend (list |XmNstrikethruType |XmSINGLE_LINE))
-		  (IF (not (= (cadr (|XmRenditionRetrieve rend (list |XmNstrikethruType 0))) |XmSINGLE_LINE))
-		      (snd-display ";XmRenditionUpdate: ~A ~A" (cadr (|XtGetValues rend (list |XmNstrikethruType 0))) |XmSINGLE_LINE)))
-		(let ((r1 (|XmRenditionCreate (cadr (main-widgets)) "r1" (list |XmNfontName "fixed"))))
-		  (|XmRenditionFree r1))
+		  (XmRenditionUpdate rend (list XmNstrikethruType XmSINGLE_LINE))
+		  (IF (not (= (cadr (XmRenditionRetrieve rend (list XmNstrikethruType 0))) XmSINGLE_LINE))
+		      (snd-display ";XmRenditionUpdate: ~A ~A" (cadr (XtGetValues rend (list XmNstrikethruType 0))) XmSINGLE_LINE)))
+		(let ((r1 (XmRenditionCreate (cadr (main-widgets)) "r1" (list XmNfontName "fixed"))))
+		  (XmRenditionFree r1))
 		
-		(IF (not (equal? (|XmDropSiteQueryStackingOrder (list-ref (main-widgets) 4)) (list #f)))
-		    (snd-display ";XmDropSiteQueryStackingOrder: ~A" (|XmDropSiteQueryStackingOrder (list-ref (main-widgets) 4)) (list #f)))
-		(let ((tab (|XmStringComponentCreate |XmSTRING_COMPONENT_TAB 0 #f))
+		(IF (not (equal? (XmDropSiteQueryStackingOrder (list-ref (main-widgets) 4)) (list #f)))
+		    (snd-display ";XmDropSiteQueryStackingOrder: ~A" (XmDropSiteQueryStackingOrder (list-ref (main-widgets) 4)) (list #f)))
+		(let ((tab (XmStringComponentCreate XmSTRING_COMPONENT_TAB 0 #f))
 		      (row #f)
 		      (table '())
 		      (our-tags tags))
 		  (for-each 
 		   (lambda (word)
-		     (let ((entry (|XmStringGenerate word
+		     (let ((entry (XmStringGenerate word
 						     #f
-						     |XmCHARSET_TEXT
+						     XmCHARSET_TEXT
 						      (car our-tags))))
-		       (IF (|XmStringIsVoid entry) (snd-display ";~A is void?" entry))
-		       (IF (|XmStringEmpty entry) (snd-display ";~A is empty?" entry))
-		       (IF (<= (|XmStringLength entry) 0) (snd-display ";XmStringLength: ~A ~A" entry (|XmStringLength entry)))
-		       (let ((str1 (|XmStringCopy entry))
+		       (IF (XmStringIsVoid entry) (snd-display ";~A is void?" entry))
+		       (IF (XmStringEmpty entry) (snd-display ";~A is empty?" entry))
+		       (IF (<= (XmStringLength entry) 0) (snd-display ";XmStringLength: ~A ~A" entry (XmStringLength entry)))
+		       (let ((str1 (XmStringCopy entry))
 			     (strn #f))
-			 (let ((val (|XmStringCompare entry str1)))
+			 (let ((val (XmStringCompare entry str1)))
 			   (IF (not val) (snd-display ";t XmStringCompare ~A ~A" entry str1)))
-			 (set! strn (|XmStringConcat str1 entry))
-			 (IF (not (> (|XmStringLength strn) (|XmStringLength entry)))
-			     (snd-display ";concat xmstring: ~A ~A" (|XmStringLength strn) (|XmStringLength entry)))
-			 (let ((hgt (|XmStringHeight rendertable entry)))
+			 (set! strn (XmStringConcat str1 entry))
+			 (IF (not (> (XmStringLength strn) (XmStringLength entry)))
+			     (snd-display ";concat xmstring: ~A ~A" (XmStringLength strn) (XmStringLength entry)))
+			 (let ((hgt (XmStringHeight rendertable entry)))
 			   (IF (or (< hgt 5) (> hgt 120)) (snd-display ";~A height: ~A" entry hgt))
-			   (let ((wid (|XmStringWidth rendertable entry)))
+			   (let ((wid (XmStringWidth rendertable entry)))
 			     (IF (or (< wid 3) (> wid 120)) (snd-display ";~A width: ~A" entry wid))
-			     (let ((extent (|XmStringExtent rendertable entry)))
+			     (let ((extent (XmStringExtent rendertable entry)))
 			       (IF (or (not (= (car extent) wid))
 				       (not (= (cadr extent) hgt)))
 				   (snd-display ";XmStringExtent: ~A, wid: ~A, hgt: ~A", extent wid hgt)))))
-			 (let ((hgt (|XmStringBaseline rendertable entry)))
+			 (let ((hgt (XmStringBaseline rendertable entry)))
 			   (IF (or (< hgt 6) (> hgt 120)) (snd-display ";~A baseline: ~A" entry hgt)))
-			 (|XmStringFree strn)
-			 (|XmStringFree str1))
+			 (XmStringFree strn)
+			 (XmStringFree str1))
 
 		       (if row
-			   (let ((tmp (|XmStringConcat row tab)))
-			     (|XmStringFree row)
-			     (set! row (|XmStringConcatAndFree tmp entry)))
+			   (let ((tmp (XmStringConcat row tab)))
+			     (XmStringFree row)
+			     (set! row (XmStringConcatAndFree tmp entry)))
 			   (set! row entry))
 		       (set! our-tags (cdr our-tags))
 		       (if (null? our-tags) 
@@ -22539,32 +22539,32 @@ EDITS: 5
 		   (list "this" "is" "a" "test" "of" "the" "renditions" "and" "rendertables" 
 			 "perhaps" "all" "will" "go" "well" "and" "then" "again" "perhaps" "not"))
 		  (let* ((n (car table))
-			 (c (|XmStringInitContext n))
+			 (c (XmStringInitContext n))
 			 (ctr 0))
 		    (call-with-current-continuation
 		     (lambda (done)
 		       (do ((i 0 (1+ i)))
 			   (#f)
-			 (let ((type (|XmStringGetNextTriple (cadr c))))
-			   (if (= (car type) |XmSTRING_COMPONENT_TEXT)
+			 (let ((type (XmStringGetNextTriple (cadr c))))
+			   (if (= (car type) XmSTRING_COMPONENT_TEXT)
 			       (IF (or (not (= (cadr type) (list-ref (list 0 0 2 0 0 0 4 0 0 0 3 0 0 0 4) i)))
 				       (not (string=? (caddr type) 
 						      (list-ref (list "o" "o" "go" "o" "o" "o" "well" "o" "o" "o" "and" "o" "o" "o" "then") i))))
 				   (snd-display ";component ~A -> ~A" i (cdr type)))
-			       (if (not (= (car type) |XmSTRING_COMPONENT_TAB))
-				   (if (= (car type) |XmSTRING_COMPONENT_END)
+			       (if (not (= (car type) XmSTRING_COMPONENT_TAB))
+				   (if (= (car type) XmSTRING_COMPONENT_END)
 				       (done #f))))))))
-		    (|XmStringFreeContext (cadr c))))))
+		    (XmStringFreeContext (cadr c))))))
 	    
-	    (|XtAppAddActions (car (main-widgets))
+	    (XtAppAddActions (car (main-widgets))
 			      (list (list "try1" (lambda (w e strs)	
 						   (snd-display ";try1: ~A~%" strs)))
 				    (list "try2" (lambda (w e strs)
 						   (snd-display ";try2: ~A~%" strs)))))
-	    (let* ((tab (|XtParseTranslationTable 
+	    (let* ((tab (XtParseTranslationTable 
 			  (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
-		   (pane (add-main-pane "hiho" |xmTextWidgetClass '())))
-	      (|XtOverrideTranslations pane tab))
+		   (pane (add-main-pane "hiho" xmTextWidgetClass '())))
+	      (XtOverrideTranslations pane tab))
 	    
 	    (open-sound "cardinal.snd")
 	    (let*  ((mouse_width 32)
@@ -22585,94 +22585,94 @@ EDITS: 5
 			 #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
 			 #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
 		    (iconw (list-ref (sound-widgets) 8))
-		    (dpy (|XtDisplay iconw))
-		    (win (|XtWindow iconw)))
-	      (|XCreateBitmapFromData dpy win rb 16 12)
-	      (|XCreateBitmapFromData dpy win mouse_bits mouse_width mouse_height)
-	      (|XCreatePixmapFromBitmapData dpy win mouse_bits 32 32 (cadr (white-pixel)) (cadr (black-pixel)) 8))
+		    (dpy (XtDisplay iconw))
+		    (win (XtWindow iconw)))
+	      (XCreateBitmapFromData dpy win rb 16 12)
+	      (XCreateBitmapFromData dpy win mouse_bits mouse_width mouse_height)
+	      (XCreatePixmapFromBitmapData dpy win mouse_bits 32 32 (cadr (white-pixel)) (cadr (black-pixel)) 8))
 
 	    (let* ((grf (car (channel-widgets)))
-		   (dpy (|XtDisplay grf))
-		   (win (|XtWindow grf))
+		   (dpy (XtDisplay grf))
+		   (win (XtWindow grf))
 		   (gc (car (snd-gcs)))
 		   (shell (cadr (main-widgets)))
-		   (scr (|DefaultScreen dpy))
-		   (vis (|DefaultVisual dpy scr))
-		   (depth (cadr (|XtGetValues grf (list |XmNdepth 0))))
-		   (pix (|XCreatePixmap dpy win 10 10 depth))
-		   (rotpix (|XCreatePixmap dpy win 10 10 depth)))
-	      (let ((cmap (|XCreateColormap dpy win vis |AllocNone)))
-		(set! cmap (|XCopyColormapAndFree dpy cmap))
-		(|XFreeColormap dpy cmap)
-		(IF (|XCheckTypedWindowEvent dpy win |ExposureMask) 
-		    (snd-display ";XCheckTypedWindowEvent: ~A" (|XCheckTypedWindowEvent dpy win |ExposureMask)))
-		(IF (|XCheckTypedEvent dpy |ExposureMask) 
-		    (snd-display ";XCheckTypedEvent: ~A" (|XCheckTypedEvent dpy |ExposureMask)))
-		(IF (|XCheckWindowEvent dpy win |ExposureMask)
-		    (snd-display ";XCheckWindowEvent: ~A" (|XCheckWindowEvent dpy win |ExposureMask)))
-;		(IF (|XCheckIfEvent dpy (lambda (d e data) #f) #f)
-;		    (snd-display ";XCheckIfEvent: ~A" (|XCheckIfEvent dpy (lambda (d e data) #f) #f)))
-		(|XCirculateSubwindows dpy win |RaiseLowest)
-		(|XCirculateSubwindowsUp dpy win)
-		(|XCirculateSubwindowsDown dpy win)
-		(let ((wc (|XWindowChanges 10 10 100 100 10 win 0)))
-		  (IF (not (= (|stack_mode wc) 0)) (snd-display ";stack_mode wc: ~A" (|stack_mode wc)))
-		  (IF (not (equal? (|sibling wc) win)) (snd-display ";sibling wc: ~A" (|sibling wc)))
-		  (IF (not (= (|x wc) 10)) (snd-display ";x wc: ~A" (|x wc)))
-		  (IF (not (= (|y wc) 10)) (snd-display ";y wc: ~A" (|y wc)))
-		  (IF (not (= (|width wc) 100)) (snd-display ";width wc: ~A" (|width wc)))
-		  (IF (not (= (|height wc) 100)) (snd-display ";height wc: ~A" (|height wc)))
-		  (IF (not (= (|border_width wc) 10)) (snd-display ";border_width wc: ~A" (|border_width wc))))
-		(let ((xp (|XpmImage 10 10 0 1 0)))
-		  (IF (not (= (|cpp xp) 0)) (snd-display ";cpp xp: ~A" (|cpp xp)))
-		  (IF (not (= (|ncolors xp) 1)) (snd-display ";ncolors xp: ~A" (|ncolors xp))))
+		   (scr (DefaultScreen dpy))
+		   (vis (DefaultVisual dpy scr))
+		   (depth (cadr (XtGetValues grf (list XmNdepth 0))))
+		   (pix (XCreatePixmap dpy win 10 10 depth))
+		   (rotpix (XCreatePixmap dpy win 10 10 depth)))
+	      (let ((cmap (XCreateColormap dpy win vis AllocNone)))
+		(set! cmap (XCopyColormapAndFree dpy cmap))
+		(XFreeColormap dpy cmap)
+		(IF (XCheckTypedWindowEvent dpy win ExposureMask) 
+		    (snd-display ";XCheckTypedWindowEvent: ~A" (XCheckTypedWindowEvent dpy win ExposureMask)))
+		(IF (XCheckTypedEvent dpy ExposureMask) 
+		    (snd-display ";XCheckTypedEvent: ~A" (XCheckTypedEvent dpy ExposureMask)))
+		(IF (XCheckWindowEvent dpy win ExposureMask)
+		    (snd-display ";XCheckWindowEvent: ~A" (XCheckWindowEvent dpy win ExposureMask)))
+;		(IF (XCheckIfEvent dpy (lambda (d e data) #f) #f)
+;		    (snd-display ";XCheckIfEvent: ~A" (XCheckIfEvent dpy (lambda (d e data) #f) #f)))
+		(XCirculateSubwindows dpy win RaiseLowest)
+		(XCirculateSubwindowsUp dpy win)
+		(XCirculateSubwindowsDown dpy win)
+		(let ((wc (XWindowChanges 10 10 100 100 10 win 0)))
+		  (IF (not (= (.stack_mode wc) 0)) (snd-display ";stack_mode wc: ~A" (.stack_mode wc)))
+		  (IF (not (equal? (.sibling wc) win)) (snd-display ";sibling wc: ~A" (.sibling wc)))
+		  (IF (not (= (.x wc) 10)) (snd-display ";x wc: ~A" (.x wc)))
+		  (IF (not (= (.y wc) 10)) (snd-display ";y wc: ~A" (.y wc)))
+		  (IF (not (= (.width wc) 100)) (snd-display ";width wc: ~A" (.width wc)))
+		  (IF (not (= (.height wc) 100)) (snd-display ";height wc: ~A" (.height wc)))
+		  (IF (not (= (.border_width wc) 10)) (snd-display ";border_width wc: ~A" (.border_width wc))))
+		(let ((xp (XpmImage 10 10 0 1 0)))
+		  (IF (not (= (.cpp xp) 0)) (snd-display ";cpp xp: ~A" (.cpp xp)))
+		  (IF (not (= (.ncolors xp) 1)) (snd-display ";ncolors xp: ~A" (.ncolors xp))))
 		)
-	      (|XmObjectAtPoint shell 100 100)
-	      (IF (not (string=? (|XmGetAtomName dpy |XA_STRING) "STRING")) (snd-display ";XmGetAtomName: ~A" (|XmGetAtomName dpy |XA_STRING)))
-	      (IF (not (|XmTargetsAreCompatible dpy (list |XA_STRING) 1 (list |XA_STRING) 1)) (snd-display ";XmTargetsAreCompatible"))
-	      (|XmUpdateDisplay grf)
-	      (let ((lines (|XmWidgetGetBaselines (list-ref (main-widgets) 4))))
+	      (XmObjectAtPoint shell 100 100)
+	      (IF (not (string=? (XmGetAtomName dpy XA_STRING) "STRING")) (snd-display ";XmGetAtomName: ~A" (XmGetAtomName dpy XA_STRING)))
+	      (IF (not (XmTargetsAreCompatible dpy (list XA_STRING) 1 (list XA_STRING) 1)) (snd-display ";XmTargetsAreCompatible"))
+	      (XmUpdateDisplay grf)
+	      (let ((lines (XmWidgetGetBaselines (list-ref (main-widgets) 4))))
 		(IF (not lines) (snd-display ";XmWidgetGetBaselines?"))
 		(IF (< (length lines) 4) (snd-display ";no listener text?? ~A" lines)))
-	      (let ((r (|XmWidgetGetDisplayRect (list-ref (sound-widgets) 8))))
-		(IF (not (|XRectangle? r)) (snd-display ";XmWidgetGetDisplayRect: ~A" r)))
-	      (|XDrawImageString dpy (list 'Window (cadr pix)) gc 0 10 "hiho" 4)
-	      (let* ((data (|XtCalloc (* 11 11 depth) 1))
-		     (before (|XCreateImage dpy vis depth |XYPixmap 0 data 10 10 8 0))
-		     (newimage (|XGetSubImage dpy (list 'Window (cadr pix)) 0 0 10 10 |AllPlanes |XYPixmap before 0 0)))
-		(|XSubImage newimage 0 0 3 3)
-		(IF (not (= (|bytes_per_line newimage) 2)) (snd-display "bytes_per_line: ~A" (|bytes_per_line newimage)))
-		(IF (not (= (|byte_order newimage) 0)) (snd-display "byte_order: ~A" (|byte_order newimage)))
-		(IF (not (= (|bitmap_pad newimage) 8)) (snd-display "bitmap_pad: ~A" (|bitmap_pad newimage)))
-		(IF (not (= (|bitmap_bit_order newimage) 0)) (snd-display "bitmap_bit_order: ~A" (|bitmap_bit_order newimage)))
-		(IF (not (= (|bitmap_unit newimage) 32)) (snd-display "bitmap_unit: ~A" (|bitmap_unit newimage)))
-		(IF (not (= (|obdata newimage) 0)) (snd-display "obdata: ~A" (|obdata newimage)))
-		(IF (not (= (|xoffset newimage) 0)) (snd-display "xoffset: ~A" (|xoffset newimage)))
-		(|XPutPixel before 1 1 (basic-color))
-		(|XGetPixel before 1 1)
-		(|XPutImage dpy (list 'Window (cadr rotpix)) gc before 0 0 0 0 10 10)
-		(|XAddPixel before 1)
-		(IF (> (|bits_per_pixel before) 123) (snd-display ";bits_per_pixel: ~A" (|bits_per_pixel before)))
-		(let ((i1 (|XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 |AllPlanes |XYPixmap))
-		      (attr (|XpmAttributes))
-		      (vals (|XtGetValues (cadr (main-widgets)) (list |XmNcolormap 0 |XmNdepth 0)))
-		      (sym (|XpmColorSymbol "basiccolor" #f (basic-color))))
-		  (set! (|visual attr) vis)
-		  (IF (not (equal? vis (|visual attr))) (snd-display ";visual xpm attr: ~A" (|visual attr)))
-		  (set! (|colorsymbols attr) sym)
-		  (set! (|numsymbols attr) 1)
-		  (IF (not (equal? 1 (|numsymbols attr))) (snd-display ";numsymbols xpm attr: ~A" (|numsymbols attr)))
-		  (set! (|depth attr) (list-ref vals 3))
-		  (IF (not (equal? (list-ref vals 3) (|depth attr))) (snd-display ";depth xpm attr: ~A" (|depth attr)))
-		  (set! (|colormap attr) (list-ref vals 1))
-		  (IF (not (equal? (list-ref vals 1) (|colormap attr))) (snd-display ";colormap xpm attr: ~A" (|colormap attr)))
-		  (set! (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual))
-		  (IF (not (= (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual)))
-		      (snd-display ";valuemask: ~A" (|valuemask attr)))
-		  (IF (not (= (|x_hotspot attr) 0)) (snd-display ";x_hotspot: ~A" (|x_hotspot attr)))
-		  (IF (not (= (|y_hotspot attr) 0)) (snd-display ";y_hotspot: ~A" (|y_hotspot attr)))
-		  (IF (not (= (|npixels attr) 0)) (snd-display ";npixels: ~A" (|npixels attr)))
-		  (let ((err (|XpmCreatePixmapFromData dpy win 
+	      (let ((r (XmWidgetGetDisplayRect (list-ref (sound-widgets) 8))))
+		(IF (not (XRectangle? r)) (snd-display ";XmWidgetGetDisplayRect: ~A" r)))
+	      (XDrawImageString dpy (list 'Window (cadr pix)) gc 0 10 "hiho" 4)
+	      (let* ((data (XtCalloc (* 11 11 depth) 1))
+		     (before (XCreateImage dpy vis depth XYPixmap 0 data 10 10 8 0))
+		     (newimage (XGetSubImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap before 0 0)))
+		(XSubImage newimage 0 0 3 3)
+		(IF (not (= (.bytes_per_line newimage) 2)) (snd-display "bytes_per_line: ~A" (.bytes_per_line newimage)))
+		(IF (not (= (.byte_order newimage) 0)) (snd-display "byte_order: ~A" (.byte_order newimage)))
+		(IF (not (= (.bitmap_pad newimage) 8)) (snd-display "bitmap_pad: ~A" (.bitmap_pad newimage)))
+		(IF (not (= (.bitmap_bit_order newimage) 0)) (snd-display "bitmap_bit_order: ~A" (.bitmap_bit_order newimage)))
+		(IF (not (= (.bitmap_unit newimage) 32)) (snd-display "bitmap_unit: ~A" (.bitmap_unit newimage)))
+		(IF (not (= (.obdata newimage) 0)) (snd-display "obdata: ~A" (.obdata newimage)))
+		(IF (not (= (.xoffset newimage) 0)) (snd-display "xoffset: ~A" (.xoffset newimage)))
+		(XPutPixel before 1 1 (basic-color))
+		(XGetPixel before 1 1)
+		(XPutImage dpy (list 'Window (cadr rotpix)) gc before 0 0 0 0 10 10)
+		(XAddPixel before 1)
+		(IF (> (.bits_per_pixel before) 123) (snd-display ";bits_per_pixel: ~A" (.bits_per_pixel before)))
+		(let ((i1 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
+		      (attr (XpmAttributes))
+		      (vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0)))
+		      (sym (XpmColorSymbol "basiccolor" #f (basic-color))))
+		  (set! (.visual attr) vis)
+		  (IF (not (equal? vis (.visual attr))) (snd-display ";visual xpm attr: ~A" (.visual attr)))
+		  (set! (.colorsymbols attr) sym)
+		  (set! (.numsymbols attr) 1)
+		  (IF (not (equal? 1 (.numsymbols attr))) (snd-display ";numsymbols xpm attr: ~A" (.numsymbols attr)))
+		  (set! (.depth attr) (list-ref vals 3))
+		  (IF (not (equal? (list-ref vals 3) (.depth attr))) (snd-display ";depth xpm attr: ~A" (.depth attr)))
+		  (set! (.colormap attr) (list-ref vals 1))
+		  (IF (not (equal? (list-ref vals 1) (.colormap attr))) (snd-display ";colormap xpm attr: ~A" (.colormap attr)))
+		  (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
+		  (IF (not (= (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual)))
+		      (snd-display ";valuemask: ~A" (.valuemask attr)))
+		  (IF (not (= (.x_hotspot attr) 0)) (snd-display ";x_hotspot: ~A" (.x_hotspot attr)))
+		  (IF (not (= (.y_hotspot attr) 0)) (snd-display ";y_hotspot: ~A" (.y_hotspot attr)))
+		  (IF (not (= (.npixels attr) 0)) (snd-display ";npixels: ~A" (.npixels attr)))
+		  (let ((err (XpmCreatePixmapFromData dpy win 
 						       (list "16 14 6 1"
 							     " 	c None s None"
 							     ".	c gray50"
@@ -22695,559 +22695,559 @@ EDITS: 5
 							     "---XXXXXXXXXXX.-"
 							     "----...........-")
 						       attr)))
-		    (IF (or (not (= (car err) |XpmSuccess))
-			    (not (|Pixmap? (cadr err))))
+		    (IF (or (not (= (car err) XpmSuccess))
+			    (not (Pixmap? (cadr err))))
 			(snd-display ";XpmCreatePixmapFromData: ~A" err)))
 
 		  (let* ((shell (cadr (main-widgets)))
-			 (dpy (|XtDisplay shell))
-			 (button (|XmCreatePushButton shell "button" '()))
-			 (status-and-whatnot (|XpmReadFileToPixmap dpy (|XRootWindowOfScreen (|XtScreen shell)) "bullet.xpm" #f))
+			 (dpy (XtDisplay shell))
+			 (button (XmCreatePushButton shell "button" '()))
+			 (status-and-whatnot (XpmReadFileToPixmap dpy (XRootWindowOfScreen (XtScreen shell)) "bullet.xpm" #f))
 			 (status (car status-and-whatnot))
 			 (pixmap (cadr status-and-whatnot))
 			 (pixmap1 (caddr status-and-whatnot)))
-		    (IF (not (string=? (|XpmGetErrorString |XpmSuccess) "XpmSuccess")) 
-			(snd-display ";XpmGetErrorString: ~A" (|XpmGetErrorString |XpmSuccess)))
-		    (IF (not (= status |XpmSuccess))
-			(snd-display "; XpmError ReadFileToPixmap: ~A" (|XpmGetErrorString status)))
-		    (|XtVaSetValues button (list |XmNlabelType |XmPIXMAP
-						  |XmNlabelPixmap pixmap))
-		    (|XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
-		    (|XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
-		    (let* ((status (|XpmReadFileToXpmImage "bullet.xpm"))
-			   (symb (|XpmColorSymbol "Foreground" "green" (basic-color)))
-			   (attr (|XpmAttributes)))
-		      (if (not (|XpmImage? status))
-			  (snd-display "; XpmError ReadFileToXpmImage: ~A" (|XpmGetErrorString status)))
-		      (set! (|colorsymbols attr) symb)
-		      (set! (|numsymbols attr) 1)
-		      (set! (|valuemask attr) |XpmColorSymbols)
-		      (|XpmCreatePixmapFromXpmImage dpy (|XRootWindowOfScreen (|XtScreen shell)) status attr)
-		      (|XpmCreateXpmImageFromPixmap dpy pixmap pixmap1 attr)
+		    (IF (not (string=? (XpmGetErrorString XpmSuccess) "XpmSuccess")) 
+			(snd-display ";XpmGetErrorString: ~A" (XpmGetErrorString XpmSuccess)))
+		    (IF (not (= status XpmSuccess))
+			(snd-display "; XpmError ReadFileToPixmap: ~A" (XpmGetErrorString status)))
+		    (XtVaSetValues button (list XmNlabelType XmPIXMAP
+						  XmNlabelPixmap pixmap))
+		    (XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
+		    (XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
+		    (let* ((status (XpmReadFileToXpmImage "bullet.xpm"))
+			   (symb (XpmColorSymbol "Foreground" "green" (basic-color)))
+			   (attr (XpmAttributes)))
+		      (if (not (XpmImage? status))
+			  (snd-display "; XpmError ReadFileToXpmImage: ~A" (XpmGetErrorString status)))
+		      (set! (.colorsymbols attr) symb)
+		      (set! (.numsymbols attr) 1)
+		      (set! (.valuemask attr) XpmColorSymbols)
+		      (XpmCreatePixmapFromXpmImage dpy (XRootWindowOfScreen (XtScreen shell)) status attr)
+		      (XpmCreateXpmImageFromPixmap dpy pixmap pixmap1 attr)
 		      (for-each
 		       (lambda (func val name)
 			 (set! (func attr) val)
 			 (if (not (equal? (func attr) val)) (snd-display ";attr ~A ~A" name (func attr))))
-		       (list |valuemask |depth |width |x_hotspot |y_hotspot |cpp |npixels |ncolors)
+		       (list .valuemask .depth .width .x_hotspot .y_hotspot .cpp .npixels .ncolors)
 		       (list 0 0 0 0 0 0 0 0)
 		       (list 'valuemask 'depth 'width 'x_hotspot 'y_hotspot 'cpp 'npixels 'ncolors)))
 		    )
 
-		  (|XDestroyImage i1))
-		(|XDestroyImage before)
-		(|XFreePixmap dpy pix)
-		(|XVisualIDFromVisual vis)
-		(|XLockDisplay dpy)
-		(|XUnlockDisplay dpy)
-		(let ((keys (|XGetKeyboardMapping dpy 40 1)))
+		  (XDestroyImage i1))
+		(XDestroyImage before)
+		(XFreePixmap dpy pix)
+		(XVisualIDFromVisual vis)
+		(XLockDisplay dpy)
+		(XUnlockDisplay dpy)
+		(let ((keys (XGetKeyboardMapping dpy 40 1)))
 		  (IF (not (equal? keys (list (list 'KeySym 100) (list 'KeySym 68))))
 		      (snd-display ";XGetKeyboardMapping: ~A" keys)))
-		(|XGrabServer dpy)
-		(|XUngrabServer dpy)
-		(|XGrabPointer dpy win #t |ButtonPressMask |GrabModeSync |GrabModeSync (list 'Window |None) (list 'Cursor |None) (list 'Time |CurrentTime))
-		(|XUngrabPointer dpy (list 'Time |CurrentTime))
-		(|XGrabKeyboard dpy win #t |GrabModeSync |GrabModeSync (list 'Time |CurrentTime))
-		(|XUngrabKeyboard dpy (list 'Time |CurrentTime))
-		(|XGrabKey dpy |AnyKey |AnyModifier win #t |GrabModeSync |GrabModeSync)
-		(|XUngrabKey dpy |AnyKey |AnyModifier win)
-		(|XGrabButton dpy |AnyButton |AnyModifier win #t |ButtonPressMask |GrabModeSync |GrabModeSync (list 'Window |None) (list 'Cursor |None))
-		(|XUngrabButton dpy |AnyButton |AnyModifier win)
-		(|XtGrabPointer shell #t |ButtonPressMask |GrabModeSync |GrabModeSync (list 'Window |None) (list 'Cursor |None) (list 'Time |CurrentTime))
-		(|XtUngrabPointer shell (list 'Time |CurrentTime))
-		(|XtGrabKeyboard shell #t |GrabModeSync |GrabModeSync (list 'Time |CurrentTime))
-		(|XtUngrabKeyboard shell (list 'Time |CurrentTime))
-		(|XtGrabKey shell (list 'KeyCode |AnyKey) |AnyModifier #t |GrabModeSync |GrabModeSync)
-		(|XtUngrabKey shell (list 'KeyCode |AnyKey) |AnyModifier)
-		(|XtGrabButton shell |AnyButton |AnyModifier #t |ButtonPressMask |GrabModeSync |GrabModeSync (list 'Window |None) (list 'Cursor |None))
-		(|XtUngrabButton shell |AnyButton |AnyModifier)
+		(XGrabServer dpy)
+		(XUngrabServer dpy)
+		(XGrabPointer dpy win #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None) (list 'Time CurrentTime))
+		(XUngrabPointer dpy (list 'Time CurrentTime))
+		(XGrabKeyboard dpy win #t GrabModeSync GrabModeSync (list 'Time CurrentTime))
+		(XUngrabKeyboard dpy (list 'Time CurrentTime))
+		(XGrabKey dpy AnyKey AnyModifier win #t GrabModeSync GrabModeSync)
+		(XUngrabKey dpy AnyKey AnyModifier win)
+		(XGrabButton dpy AnyButton AnyModifier win #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None))
+		(XUngrabButton dpy AnyButton AnyModifier win)
+		(XtGrabPointer shell #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None) (list 'Time CurrentTime))
+		(XtUngrabPointer shell (list 'Time CurrentTime))
+		(XtGrabKeyboard shell #t GrabModeSync GrabModeSync (list 'Time CurrentTime))
+		(XtUngrabKeyboard shell (list 'Time CurrentTime))
+		(XtGrabKey shell (list 'KeyCode AnyKey) AnyModifier #t GrabModeSync GrabModeSync)
+		(XtUngrabKey shell (list 'KeyCode AnyKey) AnyModifier)
+		(XtGrabButton shell AnyButton AnyModifier #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None))
+		(XtUngrabButton shell AnyButton AnyModifier)
 		))
 
 	    (let* ((gc (car (snd-gcs)))
 		   (grf (car (channel-widgets)))
-		   (dpy (|XtDisplay grf))
-		   (win (|XtWindow grf))
+		   (dpy (XtDisplay grf))
+		   (win (XtWindow grf))
 		   (shl (cadr (main-widgets))))
-	      (let ((wid (|XtWindowToWidget dpy win)))
+	      (let ((wid (XtWindowToWidget dpy win)))
 		(IF (not (equal? wid grf))
 		    (snd-display ";XtWindowToWidget: ~A ~A" grf win)))
-	      (IF (not (equal? (|XGetTransientForHint dpy win) (list 0 #f)))
-		  (snd-display ";XGetTransientForHint: ~A" (|XGetTransientForHint dpy win)))
-	      (IF (not (equal? (|XGetErrorText dpy |BadColor #f 9) (list 0 "BadColor")))
-		  (snd-display ";XGetErrorText: ~A" (|XGetErrorText dpy |BadColor #f 9)))
-	      (IF (not (equal? (|XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2) (list 12 10 10 500 400)))
-		  (snd-display ";XGeometry: ~A" (|XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2)))
-	      (IF (< (|XEventsQueued dpy |QueuedAlready) 0)
-		  (snd-display ";XEventsQueued: ~A" (|XEventsQueued dpy |QueuedAlready)))
-	      (let ((coords (|XTranslateCoordinates dpy (|XtWindow shl) win 10 10)))
+	      (IF (not (equal? (XGetTransientForHint dpy win) (list 0 #f)))
+		  (snd-display ";XGetTransientForHint: ~A" (XGetTransientForHint dpy win)))
+	      (IF (not (equal? (XGetErrorText dpy BadColor #f 9) (list 0 "BadColor")))
+		  (snd-display ";XGetErrorText: ~A" (XGetErrorText dpy BadColor #f 9)))
+	      (IF (not (equal? (XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2) (list 12 10 10 500 400)))
+		  (snd-display ";XGeometry: ~A" (XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2)))
+	      (IF (< (XEventsQueued dpy QueuedAlready) 0)
+		  (snd-display ";XEventsQueued: ~A" (XEventsQueued dpy QueuedAlready)))
+	      (let ((coords (XTranslateCoordinates dpy (XtWindow shl) win 10 10)))
 		(IF (not (car coords))
 		    (snd-display ";XTranslateCoordinates: ~A" coords)))
-	      (let ((coords (|XtTranslateCoords shl 10 10)))
+	      (let ((coords (XtTranslateCoords shl 10 10)))
 		(IF (not (number? (car coords)))
 		    (snd-display ";XtTranslateCoords: ~A" coords)))
-	      (IF (not (|XmIsVendorShell shl)) (snd-display ";XmIsVendorShell?"))
-	      (IF (|XmIsPrimitive shl) (snd-display ";XmIsPrimitive?"))
-	      (IF (|XmIsManager shl) (snd-display ";XmIsManager?"))
-	      (IF (|XmIsIconGadget shl) (snd-display ";XmIsIconGadget?"))
-	      (IF (|XmIsGadget shl) (snd-display ";XmIsGadget?"))
-	      (IF (|XmIsIconHeader shl) (snd-display ";XmIsHeader?"))
-	      (IF (|XmIsDropTransfer shl) (snd-display ";XmIsDropTransfer?"))
-	      (IF (|XmIsDropSiteManager shl) (snd-display ";XmIsDropSiteManager?"))
-	      (IF (|XmIsDragContext shl) (snd-display ";XmIsDragContext?"))
-	      (IF (|XmIsDragIconObjectClass shl) (snd-display ";XmIsDragIconObjectClass?"))
-	      (IF (|XmIsMessageBox shl) (snd-display ";XmIsMessageBox?"))
-	      (IF (|XmIsScreen shl) (snd-display ";XmIsScreen?"))
-	      (IF (|XmIsDisplay shl) (snd-display ";XmIsDisplay?"))
+	      (IF (not (XmIsVendorShell shl)) (snd-display ";XmIsVendorShell?"))
+	      (IF (XmIsPrimitive shl) (snd-display ";XmIsPrimitive?"))
+	      (IF (XmIsManager shl) (snd-display ";XmIsManager?"))
+	      (IF (XmIsIconGadget shl) (snd-display ";XmIsIconGadget?"))
+	      (IF (XmIsGadget shl) (snd-display ";XmIsGadget?"))
+	      (IF (XmIsIconHeader shl) (snd-display ";XmIsHeader?"))
+	      (IF (XmIsDropTransfer shl) (snd-display ";XmIsDropTransfer?"))
+	      (IF (XmIsDropSiteManager shl) (snd-display ";XmIsDropSiteManager?"))
+	      (IF (XmIsDragContext shl) (snd-display ";XmIsDragContext?"))
+	      (IF (XmIsDragIconObjectClass shl) (snd-display ";XmIsDragIconObjectClass?"))
+	      (IF (XmIsMessageBox shl) (snd-display ";XmIsMessageBox?"))
+	      (IF (XmIsScreen shl) (snd-display ";XmIsScreen?"))
+	      (IF (XmIsDisplay shl) (snd-display ";XmIsDisplay?"))
 
-	      (|XDrawImageString dpy win gc 10 10 "hiho" 4)
-	      (|XDrawRectangle dpy win gc 0 0 10 10)
-	      (|XDrawString dpy win gc 10 10 "hi" 2)
-	      (|XDrawSegments dpy win gc (list (|XSegment 1 1 2 20) (|XSegment 3 3 40 4)) 2)
-	      (|XDrawRectangles dpy win gc (list (|XRectangle 0 0 10 10) (|XRectangle 20 20 30 30)) 2)
-	      (|XFillRectangles dpy win gc (list (|XRectangle 0 0 10 10) (|XRectangle 20 20 30 30)) 2)
-	      (|XDrawRectangle dpy win gc 10 10 10 10)
-	      (|XFillRectangle dpy win gc 10 10 10 10)
-	      (|XDrawPoints dpy win gc (list (|XPoint 23 23) (|XPoint 109 10)) 2 |CoordModeOrigin)
-	      (|XDrawPoint dpy win gc 10 10)
-	      (|XDrawLines dpy win gc (list (|XPoint 23 23) (|XPoint 109 10)) 2 |CoordModeOrigin)
-	      (|XDrawLine dpy win gc 10 10 20 20)
-	      (|XDrawArcs dpy win gc (list (|XArc 10 10 4 4 0 360) (|XArc 20 20 1 23 0 123)) 2)
-	      (|XFillArcs dpy win gc (list (|XArc 10 10 4 4 0 360) (|XArc 20 20 1 23 0 123)) 2)
-	      (|XDrawArc dpy win gc 0 0 10 10 45 90)
-	      (|XFillArc dpy win gc 0 0 10 10 45 90)
-	      (|XFillPolygon dpy win gc (list (|XPoint 0 0) (|XPoint 0 10) (|XPoint 10 10) (|XPoint 10 0) (|XPoint 0 0)) 5 |Convex |CoordModeOrigin)
-	      (|XClearArea dpy win 10 10 20 20 #f)
-	      (|XClearWindow dpy win))
+	      (XDrawImageString dpy win gc 10 10 "hiho" 4)
+	      (XDrawRectangle dpy win gc 0 0 10 10)
+	      (XDrawString dpy win gc 10 10 "hi" 2)
+	      (XDrawSegments dpy win gc (list (XSegment 1 1 2 20) (XSegment 3 3 40 4)) 2)
+	      (XDrawRectangles dpy win gc (list (XRectangle 0 0 10 10) (XRectangle 20 20 30 30)) 2)
+	      (XFillRectangles dpy win gc (list (XRectangle 0 0 10 10) (XRectangle 20 20 30 30)) 2)
+	      (XDrawRectangle dpy win gc 10 10 10 10)
+	      (XFillRectangle dpy win gc 10 10 10 10)
+	      (XDrawPoints dpy win gc (list (XPoint 23 23) (XPoint 109 10)) 2 CoordModeOrigin)
+	      (XDrawPoint dpy win gc 10 10)
+	      (XDrawLines dpy win gc (list (XPoint 23 23) (XPoint 109 10)) 2 CoordModeOrigin)
+	      (XDrawLine dpy win gc 10 10 20 20)
+	      (XDrawArcs dpy win gc (list (XArc 10 10 4 4 0 360) (XArc 20 20 1 23 0 123)) 2)
+	      (XFillArcs dpy win gc (list (XArc 10 10 4 4 0 360) (XArc 20 20 1 23 0 123)) 2)
+	      (XDrawArc dpy win gc 0 0 10 10 45 90)
+	      (XFillArc dpy win gc 0 0 10 10 45 90)
+	      (XFillPolygon dpy win gc (list (XPoint 0 0) (XPoint 0 10) (XPoint 10 10) (XPoint 10 0) (XPoint 0 0)) 5 Convex CoordModeOrigin)
+	      (XClearArea dpy win 10 10 20 20 #f)
+	      (XClearWindow dpy win))
 
 	    (close-sound)
 	    
-	    (let* ((frm (add-main-pane "hi" |xmFormWidgetClass (list |XmNpaneMinimum 120)))
+	    (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
 		   (browsed 0)
-		   (lst (|XtCreateManagedWidget "lst" |xmListWidgetClass frm
-						(list |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_FORM
-						      |XmNbottomAttachment    |XmATTACH_FORM
-						      |XmNautomaticSelection   |XmNO_AUTO_SELECT
-						      |XmNdoubleClickInterval  100
-						      |XmNitemCount            3
-						      |XmNitems                (list (|XmStringCreate "one" |XmFONTLIST_DEFAULT_TAG)
-										     (|XmStringCreate "two" |XmFONTLIST_DEFAULT_TAG)
-										     (|XmStringCreate "three" |XmFONTLIST_DEFAULT_TAG))
-						      |XmNlistMarginHeight     4
-						      |XmNlistMarginWidth      1
-						      |XmNlistSizePolicy       |XmVARIABLE
-						      |XmNlistSpacing          2
-						      |XmNmatchBehavior        |XmQUICK_NAVIGATE
-						      |XmNprimaryOwnership     |XmOWN_NEVER
-						      |XmNscrollBarDisplayPolicy |XmAS_NEEDED
-						      |XmNselectColor          (basic-color)
-						      |XmNselectionMode        |XmNORMAL_MODE
-						      |XmNselectionPolicy      |XmBROWSE_SELECT))))
-	      (|XtAddCallback lst |XmNbrowseSelectionCallback (lambda (w c i) (set! browsed 123)))
-	      (let ((vals (|XtVaGetValues lst
-					  (list |XmNautomaticSelection 0 |XmNdoubleClickInterval 0 |XmNitemCount 0 |XmNitems 0 |XmNlistMarginHeight 0
-						|XmNlistMarginWidth 0 |XmNlistSizePolicy 0 |XmNlistSpacing 0 |XmNmatchBehavior 0
-						|XmNprimaryOwnership 0  |XmNscrollBarDisplayPolicy 0 |XmNselectColor 0 |XmNselectionMode 0
-						|XmNselectionPolicy 0 |XmNhorizontalScrollBar 0 |XmNselectedItemCount 0 |XmNtopItemPosition 0))))
-		(IF (not (= (list-ref vals 1) |XmNO_AUTO_SELECT)) (snd-display ";XmNautomaticSelection: ~A" (list-ref vals 1)))
+		   (lst (XtCreateManagedWidget "lst" xmListWidgetClass frm
+						(list XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_FORM
+						      XmNbottomAttachment    XmATTACH_FORM
+						      XmNautomaticSelection   XmNO_AUTO_SELECT
+						      XmNdoubleClickInterval  100
+						      XmNitemCount            3
+						      XmNitems                (list (XmStringCreate "one" XmFONTLIST_DEFAULT_TAG)
+										     (XmStringCreate "two" XmFONTLIST_DEFAULT_TAG)
+										     (XmStringCreate "three" XmFONTLIST_DEFAULT_TAG))
+						      XmNlistMarginHeight     4
+						      XmNlistMarginWidth      1
+						      XmNlistSizePolicy       XmVARIABLE
+						      XmNlistSpacing          2
+						      XmNmatchBehavior        XmQUICK_NAVIGATE
+						      XmNprimaryOwnership     XmOWN_NEVER
+						      XmNscrollBarDisplayPolicy XmAS_NEEDED
+						      XmNselectColor          (basic-color)
+						      XmNselectionMode        XmNORMAL_MODE
+						      XmNselectionPolicy      XmBROWSE_SELECT))))
+	      (XtAddCallback lst XmNbrowseSelectionCallback (lambda (w c i) (set! browsed 123)))
+	      (let ((vals (XtVaGetValues lst
+					  (list XmNautomaticSelection 0 XmNdoubleClickInterval 0 XmNitemCount 0 XmNitems 0 XmNlistMarginHeight 0
+						XmNlistMarginWidth 0 XmNlistSizePolicy 0 XmNlistSpacing 0 XmNmatchBehavior 0
+						XmNprimaryOwnership 0  XmNscrollBarDisplayPolicy 0 XmNselectColor 0 XmNselectionMode 0
+						XmNselectionPolicy 0 XmNhorizontalScrollBar 0 XmNselectedItemCount 0 XmNtopItemPosition 0))))
+		(IF (not (= (list-ref vals 1) XmNO_AUTO_SELECT)) (snd-display ";XmNautomaticSelection: ~A" (list-ref vals 1)))
 		(IF (not (= (list-ref vals 3) 100)) (snd-display ";XmNdoubleClickInterval: ~A" (list-ref vals 3)))
 		(IF (not (= (list-ref vals 5) 3)) (snd-display ";XmNitemCount: ~A" (list-ref vals 5)))
-		(IF (not (|XmString? (car (list-ref vals 7)))) (snd-display ";XmNitems: ~A" (list-ref vals 7)))
+		(IF (not (XmString? (car (list-ref vals 7)))) (snd-display ";XmNitems: ~A" (list-ref vals 7)))
 		(IF (not (= (list-ref vals 9) 4)) (snd-display ";XmNlistMarginHeight: ~A" (list-ref vals 9)))
 		(IF (not (= (list-ref vals 11) 1)) (snd-display ";XmNlistMarginWidth: ~A" (list-ref vals 11)))
-		(IF (not (= (list-ref vals 13) |XmVARIABLE)) (snd-display ";XmNlistSizePolicy: ~A" (list-ref vals 13)))
+		(IF (not (= (list-ref vals 13) XmVARIABLE)) (snd-display ";XmNlistSizePolicy: ~A" (list-ref vals 13)))
 		(IF (not (= (list-ref vals 15) 2)) (snd-display ";XmNlistSpacing: ~A" (list-ref vals 15)))
-		(IF (not (= (list-ref vals 17) |XmQUICK_NAVIGATE)) (snd-display ";XmNmatchBehavior: ~A" (list-ref vals 17)))
-		(IF (not (= (list-ref vals 19) |XmOWN_NEVER)) (snd-display ";XmNprimaryOwnership : ~A" (list-ref vals 19)))
-		(IF (not (= (list-ref vals 21) |XmAS_NEEDED)) (snd-display ";XmNscrollBarDisplayPolicy: ~A" (list-ref vals 21)))
-		(IF (not (|Pixel? (list-ref vals 23))) (snd-display ";XmNselectColor: ~A" (list-ref vals 23)))
-		(IF (not (= (list-ref vals 25) |XmNORMAL_MODE)) (snd-display ";XmNselectionMode: ~A" (list-ref vals 25)))
-		(IF (not (= (list-ref vals 27) |XmBROWSE_SELECT)) (snd-display ";XmNselectionPolicy: ~A" (list-ref vals 27)))
+		(IF (not (= (list-ref vals 17) XmQUICK_NAVIGATE)) (snd-display ";XmNmatchBehavior: ~A" (list-ref vals 17)))
+		(IF (not (= (list-ref vals 19) XmOWN_NEVER)) (snd-display ";XmNprimaryOwnership : ~A" (list-ref vals 19)))
+		(IF (not (= (list-ref vals 21) XmAS_NEEDED)) (snd-display ";XmNscrollBarDisplayPolicy: ~A" (list-ref vals 21)))
+		(IF (not (Pixel? (list-ref vals 23))) (snd-display ";XmNselectColor: ~A" (list-ref vals 23)))
+		(IF (not (= (list-ref vals 25) XmNORMAL_MODE)) (snd-display ";XmNselectionMode: ~A" (list-ref vals 25)))
+		(IF (not (= (list-ref vals 27) XmBROWSE_SELECT)) (snd-display ";XmNselectionPolicy: ~A" (list-ref vals 27)))
 		(IF (list-ref vals 29) (snd-display ";XmNhorizontalScrollBar: ~A" (list-ref vals 29)))
 		(IF (not (= (list-ref vals 31) 0)) (snd-display ";XmNselectedItemCount : ~A" (list-ref vals 31)))
 		(IF (not (= (list-ref vals 33) 1)) (snd-display ";XmNtopItemPosition: ~A" (list-ref vals 33)))
 		
 		(let ((tag (catch #t
 				  (lambda ()
-				    (|XmListAddItem frm (|XmStringCreate "four" |XmFONTLIST_DEFAULT_TAG) 0))
+				    (XmListAddItem frm (XmStringCreate "four" XmFONTLIST_DEFAULT_TAG) 0))
 				  (lambda args (car args)))))
 		  (IF (not (eq? tag 'wrong-type-arg))
 		      (snd-display "list type check: ~A" tag)))
 
-		(|XmListAddItem lst (|XmStringCreate "four" |XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
-		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(XmListAddItem lst (XmStringCreate "four" XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
+		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		(IF (not (= (list-ref vals 1) 4)) (snd-display ";XmAddItem len: ~A" (list-ref vals 1)))
-		(IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 3) |XmFONTLIST_DEFAULT_TAG)) "four"))
-		    (snd-display "added item: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 3) |XmFONTLIST_DEFAULT_TAG))))
-		(|XmListAddItems lst (list (|XmStringCreateLocalized "five") (|XmStringCreateLocalized "six")) 2 0)
-		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 3) XmFONTLIST_DEFAULT_TAG)) "four"))
+		    (snd-display "added item: ~A" (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 3) XmFONTLIST_DEFAULT_TAG))))
+		(XmListAddItems lst (list (XmStringCreateLocalized "five") (XmStringCreateLocalized "six")) 2 0)
+		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		(IF (not (= (list-ref vals 1) 6)) (snd-display ";XmAddItems len: ~A" (list-ref vals 1)))
-		(IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 5) |XmFONTLIST_DEFAULT_TAG)) "six"))
-		    (snd-display "added items: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 5) |XmFONTLIST_DEFAULT_TAG))))
+		(IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 5) XmFONTLIST_DEFAULT_TAG)) "six"))
+		    (snd-display "added items: ~A" (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 5) XmFONTLIST_DEFAULT_TAG))))
 		
-		(|XmListDeletePos lst 1)
-		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(XmListDeletePos lst 1)
+		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		(IF (not (= (list-ref vals 1) 5)) (snd-display ";XmListDeletePos len: ~A" (list-ref vals 1)))
-		(IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "two"))
-		    (snd-display "deleted item 1: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG))))
-		(|XmListDeletePositions lst (list 2 4))
-		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG)) "two"))
+		    (snd-display "deleted item 1: ~A" (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG))))
+		(XmListDeletePositions lst (list 2 4))
+		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		(IF (not (= (list-ref vals 1) 3)) (snd-display ";XmListDeletePositions len: ~A" (list-ref vals 1)))
-		(IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG)) "four"))
-		    (snd-display "deleted item 2: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG))))
+		(IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 1) XmFONTLIST_DEFAULT_TAG)) "four"))
+		    (snd-display "deleted item 2: ~A" (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 1) XmFONTLIST_DEFAULT_TAG))))
 		
-		(|XmListAddItemUnselected lst (|XmStringCreate "seven" |XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
-		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(XmListAddItemUnselected lst (XmStringCreate "seven" XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
+		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		(IF (not (= (list-ref vals 1) 4)) (snd-display ";XmListAddItemUnselected len: ~A" (list-ref vals 1)))
-		(IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 3) |XmFONTLIST_DEFAULT_TAG)) "seven"))
-		    (snd-display "added item unselected: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 3) |XmFONTLIST_DEFAULT_TAG))))
-		(|XmListAddItemsUnselected lst (list (|XmStringCreateLocalized "eight") (|XmStringCreateLocalized "nine")) 2 0)
-		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 3) XmFONTLIST_DEFAULT_TAG)) "seven"))
+		    (snd-display "added item unselected: ~A" (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 3) XmFONTLIST_DEFAULT_TAG))))
+		(XmListAddItemsUnselected lst (list (XmStringCreateLocalized "eight") (XmStringCreateLocalized "nine")) 2 0)
+		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		(IF (not (= (list-ref vals 1) 6)) (snd-display ";XmListAddItemsUnselected len: ~A" (list-ref vals 1)))
-		(IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 5) |XmFONTLIST_DEFAULT_TAG)) "nine"))
-		    (snd-display "added items unselected: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 5) |XmFONTLIST_DEFAULT_TAG))))
+		(IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 5) XmFONTLIST_DEFAULT_TAG)) "nine"))
+		    (snd-display "added items unselected: ~A" (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 5) XmFONTLIST_DEFAULT_TAG))))
 		
-		(|XmListDeleteAllItems lst)
-		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(XmListDeleteAllItems lst)
+		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		(IF (not (= (list-ref vals 1) 0)) (snd-display ";XmListDeleteAllItems len: ~A" (list-ref vals 1)))
 		(IF (not (null? (list-ref vals 3)))
 		    (snd-display "deleted all items: ~A" (list-ref vals 3)))
 		
-		(let ((item1 (|XmStringCreate "one" |XmFONTLIST_DEFAULT_TAG))
-		      (item2 (|XmStringCreate "two" |XmFONTLIST_DEFAULT_TAG))
-		      (item3 (|XmStringCreate "three" |XmFONTLIST_DEFAULT_TAG))
-		      (item4 (|XmStringCreate "four" |XmFONTLIST_DEFAULT_TAG))
-		      (item5 (|XmStringCreate "five" |XmFONTLIST_DEFAULT_TAG)))
-		  (|XtVaSetValues lst 
-				  (list |XmNitemCount 5
-					 |XmNitems (list item1 item2 item3 item4 item5))) 
-		  (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(let ((item1 (XmStringCreate "one" XmFONTLIST_DEFAULT_TAG))
+		      (item2 (XmStringCreate "two" XmFONTLIST_DEFAULT_TAG))
+		      (item3 (XmStringCreate "three" XmFONTLIST_DEFAULT_TAG))
+		      (item4 (XmStringCreate "four" XmFONTLIST_DEFAULT_TAG))
+		      (item5 (XmStringCreate "five" XmFONTLIST_DEFAULT_TAG)))
+		  (XtVaSetValues lst 
+				  (list XmNitemCount 5
+					 XmNitems (list item1 item2 item3 item4 item5))) 
+		  (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		  (IF (not (= (list-ref vals 1) 5)) (snd-display ";Xt set items len: ~A" (list-ref vals 1)))
-		  (IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "one"))
-		      (snd-display "set items: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG))))
+		  (IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG)) "one"))
+		      (snd-display "set items: ~A" (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG))))
 		  
-		  (|XmListSelectItem lst item3 #t)
+		  (XmListSelectItem lst item3 #t)
 		  (IF (not (= browsed 123)) (snd-display ";XmListSelectItem callback: ~A" browsed))
-		  (IF (|XmListPosSelected lst 1) (snd-display ";XmList selected pos 1?"))
-		  (IF (not (|XmListPosSelected lst 3)) (snd-display ";XmList didn't select pos 3?"))
-		  (set! vals (|XtVaGetValues lst (list |XmNselectedItemCount 0 |XmNselectedItems 0)))
+		  (IF (XmListPosSelected lst 1) (snd-display ";XmList selected pos 1?"))
+		  (IF (not (XmListPosSelected lst 3)) (snd-display ";XmList didn't select pos 3?"))
+		  (set! vals (XtVaGetValues lst (list XmNselectedItemCount 0 XmNselectedItems 0)))
 		  (IF (not (= (list-ref vals 1) 1)) (snd-display ";selected count: ~A" (list-ref vals 1)))
-		  (set! vals (|XmListGetSelectedPos lst))
+		  (set! vals (XmListGetSelectedPos lst))
 		  (IF (not (= (length vals) 1)) (snd-display ";XmListGetSelectedPos: ~A" vals))
 		  (IF (not (= (car vals) 3)) (snd-display ";XmListGetSelectedPos: ~A" vals))
 		  (set! browsed 0)
-		  (|XmListSelectPos lst 1 #f)
+		  (XmListSelectPos lst 1 #f)
 		  (IF (not (= browsed 0)) (snd-display ";XmListSelectPos callback: ~A" browsed))
-		  (IF (not (|XmListPosSelected lst 1)) (snd-display ";XmList select pos?"))
-		  (IF (not (= (|XmListItemPos lst item3) 3)) (snd-display ";XmListItemPos: ~A" (|XmListItemPos lst item3)))
-		  (IF (not (= (car (|XmListGetMatchPos lst item3)) 3)) (snd-display ";XmListGetMatchPos: ~A" (|XmListGetMatchPos lst item3)))
-		  (IF (not (= (|XmListItemExists lst item3))) (snd-display ";XmListItemExists?"))
+		  (IF (not (XmListPosSelected lst 1)) (snd-display ";XmList select pos?"))
+		  (IF (not (= (XmListItemPos lst item3) 3)) (snd-display ";XmListItemPos: ~A" (XmListItemPos lst item3)))
+		  (IF (not (= (car (XmListGetMatchPos lst item3)) 3)) (snd-display ";XmListGetMatchPos: ~A" (XmListGetMatchPos lst item3)))
+		  (IF (not (= (XmListItemExists lst item3))) (snd-display ";XmListItemExists?"))
 		  
-		  (IF (not (= (|XmListYToPos lst 40) 2)) (snd-display ";XmListYToPos: ~A" (|XmListYToPos lst 40)))
-		  (let ((box (|XmListPosToBounds lst 2)))
+		  (IF (not (= (XmListYToPos lst 40) 2)) (snd-display ";XmListYToPos: ~A" (XmListYToPos lst 40)))
+		  (let ((box (XmListPosToBounds lst 2)))
 		    (IF (not (= (cadr box) 3))
 			(snd-display "XmListPosToBounds: ~A" box)))
-		  (|XmListDeselectPos lst 1)
-		  (IF (|XmListPosSelected lst 1) (snd-display ";XmList deselected pos?"))
-		  (|XmListSelectItem lst item3 #t)
-		  (|XmListDeselectAllItems lst)
-		  (IF (|XmListPosSelected lst 3) (snd-display ";XmList deselect all pos?"))
-		  (|XmListSelectItem lst item3 #f)
-		  (|XmListDeselectItem lst item3)
-		  (IF (|XmListPosSelected lst 3) (snd-display ";XmList deselect item?"))
+		  (XmListDeselectPos lst 1)
+		  (IF (XmListPosSelected lst 1) (snd-display ";XmList deselected pos?"))
+		  (XmListSelectItem lst item3 #t)
+		  (XmListDeselectAllItems lst)
+		  (IF (XmListPosSelected lst 3) (snd-display ";XmList deselect all pos?"))
+		  (XmListSelectItem lst item3 #f)
+		  (XmListDeselectItem lst item3)
+		  (IF (XmListPosSelected lst 3) (snd-display ";XmList deselect item?"))
 		  
-		  (|XmListDeleteItem lst item2)
-		  (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		  (XmListDeleteItem lst item2)
+		  (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		  (IF (not (= (list-ref vals 1) 4)) (snd-display ";XmDeleteItem len: ~A" (list-ref vals 1)))
-		  (IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG)) "three"))
-		      (snd-display "delete item: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG))))
-		  (|XmListDeleteItems lst (list item1 item4))
-		  (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		  (IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 1) XmFONTLIST_DEFAULT_TAG)) "three"))
+		      (snd-display "delete item: ~A" (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 1) XmFONTLIST_DEFAULT_TAG))))
+		  (XmListDeleteItems lst (list item1 item4))
+		  (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		  (IF (not (= (list-ref vals 1) 2)) (snd-display ";XmDeleteItems len: ~A" (list-ref vals 1)))
-		  (IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "three"))
-		      (snd-display "delete items: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG))))
-		  (|XmListDeleteAllItems lst)
-		  (|XtVaSetValues lst 
-				  (list |XmNitemCount 5
-					 |XmNitems (list item1 item2 item3 item4 item5))) 
+		  (IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG)) "three"))
+		      (snd-display "delete items: ~A" (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 1) XmFONTLIST_DEFAULT_TAG))))
+		  (XmListDeleteAllItems lst)
+		  (XtVaSetValues lst 
+				  (list XmNitemCount 5
+					 XmNitems (list item1 item2 item3 item4 item5))) 
 		  
-		  (let ((item6 (|XmStringCreate "six" |XmFONTLIST_DEFAULT_TAG)))
-		    (|XmListReplacePositions lst (list 2) (list item6) 1)
-		    (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
-		    (IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG)) "six"))
+		  (let ((item6 (XmStringCreate "six" XmFONTLIST_DEFAULT_TAG)))
+		    (XmListReplacePositions lst (list 2) (list item6) 1)
+		    (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+		    (IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 1) XmFONTLIST_DEFAULT_TAG)) "six"))
 			(snd-display "replace pos: ~A ~A" 
-				     (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG))
+				     (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 1) XmFONTLIST_DEFAULT_TAG))
 				     (map (lambda (n) 
-					    (|XmStringGetLtoR n |XmFONTLIST_DEFAULT_TAG))
+					    (XmStringGetLtoR n XmFONTLIST_DEFAULT_TAG))
 					  (list-ref vals 3))))
-		    (|XmListReplaceItemsUnselected lst (list item6 item3) 2 (list item2 item6))
-		    (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
-		    (IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 2) |XmFONTLIST_DEFAULT_TAG)) "six"))
+		    (XmListReplaceItemsUnselected lst (list item6 item3) 2 (list item2 item6))
+		    (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+		    (IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 2) XmFONTLIST_DEFAULT_TAG)) "six"))
 			(snd-display "replace items unselected: ~A ~A" 
-				     (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG))
+				     (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 1) XmFONTLIST_DEFAULT_TAG))
 				     (map (lambda (n) 
-					    (|XmStringGetLtoR n |XmFONTLIST_DEFAULT_TAG))
+					    (XmStringGetLtoR n XmFONTLIST_DEFAULT_TAG))
 					  (list-ref vals 3))))
-		    (|XmListReplaceItemsPosUnselected lst (list item6 item3) 2 1)
-		    (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
-		    (IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "six"))
+		    (XmListReplaceItemsPosUnselected lst (list item6 item3) 2 1)
+		    (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+		    (IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG)) "six"))
 			(snd-display "replace items pos: ~A ~A" 
-				     (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG))
+				     (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG))
 				     (map (lambda (n) 
-					    (|XmStringGetLtoR n |XmFONTLIST_DEFAULT_TAG))
+					    (XmStringGetLtoR n XmFONTLIST_DEFAULT_TAG))
 					  (list-ref vals 3))))
-		    (|XmListReplaceItemsPos lst (list item4) 1 1)
-		    (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
-		    (IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "four"))
+		    (XmListReplaceItemsPos lst (list item4) 1 1)
+		    (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+		    (IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG)) "four"))
 			(snd-display "replace items pos: ~A ~A" 
-				     (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG))
+				     (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG))
 				     (map (lambda (n) 
-					    (|XmStringGetLtoR n |XmFONTLIST_DEFAULT_TAG))
+					    (XmStringGetLtoR n XmFONTLIST_DEFAULT_TAG))
 					  (list-ref vals 3))))
-		    (|XmListReplaceItems lst (list item4 item3) 2 (list item2 item6))
-		    (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
-		    (IF (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "two"))
+		    (XmListReplaceItems lst (list item4 item3) 2 (list item2 item6))
+		    (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+		    (IF (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG)) "two"))
 			(snd-display "replace items: ~A ~A" 
-				     (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG))
+				     (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 0) XmFONTLIST_DEFAULT_TAG))
 				     (map (lambda (n) 
-					    (|XmStringGetLtoR n |XmFONTLIST_DEFAULT_TAG))
+					    (XmStringGetLtoR n XmFONTLIST_DEFAULT_TAG))
 					  (list-ref vals 3))))
-		    (|XmListSetPos lst 1)
-		    (IF (not (|XmListSetKbdItemPos lst 1)) (snd-display ";XmListSetKbdItemPos?"))
-		    (|XmListGetKbdItemPos lst)
-		    (|XmListUpdateSelectedList lst)
-		    (|XmListSetPos lst 1)
-		    (|XmListSetHorizPos lst 0)
-		    (|XmListSetBottomPos lst 0)
-		    (|XmListSetBottomItem lst item5)
-		    (|XmListSetAddMode lst #f)
-		    (|XmListSetItem lst item6)))
-		(|XtUnmanageChild frm)))
+		    (XmListSetPos lst 1)
+		    (IF (not (XmListSetKbdItemPos lst 1)) (snd-display ";XmListSetKbdItemPos?"))
+		    (XmListGetKbdItemPos lst)
+		    (XmListUpdateSelectedList lst)
+		    (XmListSetPos lst 1)
+		    (XmListSetHorizPos lst 0)
+		    (XmListSetBottomPos lst 0)
+		    (XmListSetBottomItem lst item5)
+		    (XmListSetAddMode lst #f)
+		    (XmListSetItem lst item6)))
+		(XtUnmanageChild frm)))
 
-	    (let* ((frm (add-main-pane "hi" |xmFormWidgetClass (list |XmNpaneMinimum 120)))
-		   (current-time (list 'Time |CurrentTime))
+	    (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
+		   (current-time (list 'Time CurrentTime))
 		   (calls (make-vector 10 "none"))
-		   (txt (|XtCreateManagedWidget "text" |xmTextWidgetClass frm
-						(list |XmNeditable #t
-						      |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_FORM
-						      |XmNbottomAttachment    |XmATTACH_NONE
-						      |XmNdestinationCallback 
+		   (txt (XtCreateManagedWidget "text" xmTextWidgetClass frm
+						(list XmNeditable #t
+						      XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_FORM
+						      XmNbottomAttachment    XmATTACH_NONE
+						      XmNdestinationCallback 
 						       (list (lambda (w c i) 
 							       (vector-set! calls c "dest")
-							       (IF (< (|destination_data i) 0) (snd-display "destination_data: A~" (|destination_data i)))
-							       (IF (< (|location_data i) 0) (snd-display "location_data: A~" (|location_data i))))
+							       (IF (< (.destination_data i) 0) (snd-display "destination_data: A~" (.destination_data i)))
+							       (IF (< (.location_data i) 0) (snd-display "location_data: A~" (.location_data i))))
 							     1)
-						      |XmNactivateCallback (list (lambda (w c i) (vector-set! calls c "act")) 2)
-						      |XmNfocusCallback (list (lambda (w c i) (vector-set! calls c "focus")) 3)
-						      |XmNlosingFocusCallback (list (lambda (w c i) (vector-set! calls c "losingfocus")) 4)
-						      |XmNgainPrimaryCallback (list (lambda (w c i) (vector-set! calls c "gain")) 5)
-						      |XmNlosePrimaryCallback (list (lambda (w c i) (vector-set! calls c "lose")) 6)
-						      |XmNmodifyVerifyCallback 
+						      XmNactivateCallback (list (lambda (w c i) (vector-set! calls c "act")) 2)
+						      XmNfocusCallback (list (lambda (w c i) (vector-set! calls c "focus")) 3)
+						      XmNlosingFocusCallback (list (lambda (w c i) (vector-set! calls c "losingfocus")) 4)
+						      XmNgainPrimaryCallback (list (lambda (w c i) (vector-set! calls c "gain")) 5)
+						      XmNlosePrimaryCallback (list (lambda (w c i) (vector-set! calls c "lose")) 6)
+						      XmNmodifyVerifyCallback 
 						       (list (lambda (w c i) 
 							       (vector-set! calls c "modify")
-							       (IF (< (|currInsert i) 0) (snd-display "currInsert: A~" (|currInsert i)))
-							       (IF (< (|newInsert i) 0) (snd-display "newInsert: A~" (|newInsert i)))
-							       (IF (string? (|doit i)) (snd-display "doit: A~" (|doit i)))
-							       (IF (< (|startPos i) 0) (snd-display "startPos: A~" (|startPos i)))
-							       (IF (< (|endPos i) 0) (snd-display "endPos: A~" (|endPos i))))
+							       (IF (< (.currInsert i) 0) (snd-display "currInsert: A~" (.currInsert i)))
+							       (IF (< (.newInsert i) 0) (snd-display "newInsert: A~" (.newInsert i)))
+							       (IF (string? (.doit i)) (snd-display "doit: A~" (.doit i)))
+							       (IF (< (.startPos i) 0) (snd-display "startPos: A~" (.startPos i)))
+							       (IF (< (.endPos i) 0) (snd-display "endPos: A~" (.endPos i))))
 							     7)
-						      |XmNmotionVerifyCallback (list (lambda (w c i) (vector-set! calls c "motion")) 8)
-						      |XmNvalueChangedCallback (list (lambda (w c i) (vector-set! calls c "value")) 9)))))
+						      XmNmotionVerifyCallback (list (lambda (w c i) (vector-set! calls c "motion")) 8)
+						      XmNvalueChangedCallback (list (lambda (w c i) (vector-set! calls c "value")) 9)))))
 	      (letrec ((transfer-proc
 			(lambda (w c info)
-			  (let* ((dpy (|XtDisplay w))
-				 (TARGETS (|XmInternAtom dpy "TARGETS" #f))
-				 (CB_TARGETS (|XmInternAtom dpy "_MOTIF_CLIPBOARD_TARGETS" #f)))
-			    (if (equal? (|target info) |XA_STRING)
+			  (let* ((dpy (XtDisplay w))
+				 (TARGETS (XmInternAtom dpy "TARGETS" #f))
+				 (CB_TARGETS (XmInternAtom dpy "_MOTIF_CLIPBOARD_TARGETS" #f)))
+			    (if (equal? (.target info) XA_STRING)
 				(begin
-				  (|XmTextInsert w (|XmTextGetInsertionPosition w) (->string (|value info)))
-				  (|XmTransferDone (|transfer_id info) |XmTRANSFER_DONE_SUCCEED))
-				(if (and (or (equal? (|target info) TARGETS)
-					     (equal? (|target info) CB_TARGETS))
-					 (equal? (|type info) |XA_ATOM))
-				    (let ((targets (->Atoms (|value info) (|length info)))
+				  (XmTextInsert w (XmTextGetInsertionPosition w) (->string (.value info)))
+				  (XmTransferDone (.transfer_id info) XmTRANSFER_DONE_SUCCEED))
+				(if (and (or (equal? (.target info) TARGETS)
+					     (equal? (.target info) CB_TARGETS))
+					 (equal? (.type info) XA_ATOM))
+				    (let ((targets (->Atoms (.value info) (.length info)))
 					  (happy #f))
 				      (for-each
 				       (lambda (targ)
-					 (if (equal? targ |XA_STRING)
+					 (if (equal? targ XA_STRING)
 					     (set! happy #t)))
 				       targets)
 				      (if happy
-					  (|XmTransferValue (|transfer_id info) 
-							    |XA_STRING
+					  (XmTransferValue (.transfer_id info) 
+							    XA_STRING
 							     transfer-proc
 							     #f
-							     (|XtLastTimestampProcessed dpy)))))))))
-		       (txtf (|XtVaCreateManagedWidget "textfield" |xmTextFieldWidgetClass frm
-						       (list |XmNeditable #t
-							     |XmNleftAttachment      |XmATTACH_FORM
-							     |XmNrightAttachment     |XmATTACH_FORM
-							     |XmNtopAttachment       |XmATTACH_WIDGET
-							     |XmNtopWidget           txt
-							     |XmNbottomAttachment    |XmATTACH_FORM))))
+							     (XtLastTimestampProcessed dpy)))))))))
+		       (txtf (XtVaCreateManagedWidget "textfield" xmTextFieldWidgetClass frm
+						       (list XmNeditable #t
+							     XmNleftAttachment      XmATTACH_FORM
+							     XmNrightAttachment     XmATTACH_FORM
+							     XmNtopAttachment       XmATTACH_WIDGET
+							     XmNtopWidget           txt
+							     XmNbottomAttachment    XmATTACH_FORM))))
 							      
-	      (let ((vals (|XtVaGetValues txt (list |XmNrenderTable 0 |XmNselectionArray 0))))
-		(IF (not (|XmRenderTable? (list-ref vals 1))) (snd-display ";XmNrenderTable: ~A" (list-ref vals 1)))
+	      (let ((vals (XtVaGetValues txt (list XmNrenderTable 0 XmNselectionArray 0))))
+		(IF (not (XmRenderTable? (list-ref vals 1))) (snd-display ";XmNrenderTable: ~A" (list-ref vals 1)))
 		(IF (not (list? (list-ref vals 3))) (snd-display ";XmNselectionArray: ~A" (list-ref vals 3))))
-	      (IF (not (|XmTextGetEditable txt)) (snd-display ";XmTextGetEditable?"))
-	      (IF (not (|XmTextFieldGetEditable txtf)) (snd-display ";XmTextFieldGetEditable?"))
-	      (|XmTextSetEditable txt #f)
-	      (|XmTextFieldSetEditable txtf #f)
-	      (IF (|XmTextGetEditable txt) (snd-display ";XmTextSetEditable?"))
-	      (IF (|XmTextFieldGetEditable txtf) (snd-display ";XmTextFieldSetEditable?"))
-	      (|XmTextSetEditable txt #t)
-	      (|XmTextFieldSetEditable txtf #t)
-	      (|XmTextSetString txt "0123456789")
-	      (|XmTextFieldSetString txtf "0123456789")
-	      (let ((val (|XmTextGetString txt))
-		    (valf (|XmTextFieldGetString txtf))
-		    (val1 (cadr (|XtVaGetValues txt (list |XmNvalue 0))))
-		    (val1f (cadr (|XtVaGetValues txtf (list |XmNvalue 0)))))
+	      (IF (not (XmTextGetEditable txt)) (snd-display ";XmTextGetEditable?"))
+	      (IF (not (XmTextFieldGetEditable txtf)) (snd-display ";XmTextFieldGetEditable?"))
+	      (XmTextSetEditable txt #f)
+	      (XmTextFieldSetEditable txtf #f)
+	      (IF (XmTextGetEditable txt) (snd-display ";XmTextSetEditable?"))
+	      (IF (XmTextFieldGetEditable txtf) (snd-display ";XmTextFieldSetEditable?"))
+	      (XmTextSetEditable txt #t)
+	      (XmTextFieldSetEditable txtf #t)
+	      (XmTextSetString txt "0123456789")
+	      (XmTextFieldSetString txtf "0123456789")
+	      (let ((val (XmTextGetString txt))
+		    (valf (XmTextFieldGetString txtf))
+		    (val1 (cadr (XtVaGetValues txt (list XmNvalue 0))))
+		    (val1f (cadr (XtVaGetValues txtf (list XmNvalue 0)))))
 		(IF (not (string=? val "0123456789")) (snd-display ";XmTextSetString: ~A" val))
 		(IF (not (string=? valf "0123456789")) (snd-display ";XmTextFieldSetString: ~A" valf))
 		(IF (not (string=? val1 "0123456789")) (snd-display ";text value: ~A" val1))
 		(IF (not (string=? val1f "0123456789")) (snd-display ";text field value: ~A" val)))
-	      (let ((val (|XmTextGetSubstring txt 2 3))
-		    (valf (|XmTextFieldGetSubstring txtf 2 3)))
+	      (let ((val (XmTextGetSubstring txt 2 3))
+		    (valf (XmTextFieldGetSubstring txtf 2 3)))
 		(IF (not (string=? val "234")) (snd-display ";XmTextGetSubstring: ~A" val))
 		(IF (not (string=? valf "234")) (snd-display ";XmTextFieldGetSubstring: ~A" valf)))
-	      (|XmTextSetSelection txt 2 5 current-time)
-	      (let ((val (|XmTextGetSelection txt)))
+	      (XmTextSetSelection txt 2 5 current-time)
+	      (let ((val (XmTextGetSelection txt)))
 		(IF (not (string=? val "234")) (snd-display ";XmTextGetSelection: ~A" val)))
-	      (|XmTextClearSelection txt current-time)
-	      (let ((val (|XmTextGetSelection txt)))
+	      (XmTextClearSelection txt current-time)
+	      (let ((val (XmTextGetSelection txt)))
 		(IF val (snd-display ";XmTextClearSelection: ~A" val)))
-	      (|XmTextFieldSetSelection txtf 2 5 current-time)
+	      (XmTextFieldSetSelection txtf 2 5 current-time)
 	      (let ((tag (catch #t
 				(lambda ()
-				  (|XmTextFieldSetSelection txt 2 3 current-time))
+				  (XmTextFieldSetSelection txt 2 3 current-time))
 				(lambda args (car args)))))
 		(IF (not (eq? tag 'wrong-type-arg))
 		    (snd-display "text field type check: ~A" tag)))
 	      (let ((tag (catch #t
 				(lambda ()
-				  (|XmTextSetSelection frm 2 3 current-time))
+				  (XmTextSetSelection frm 2 3 current-time))
 				(lambda args (car args)))))
 		(IF (not (eq? tag 'wrong-type-arg))
 		    (snd-display "text type check: ~A" tag)))
-	      (let ((valf (|XmTextFieldGetSelection txtf)))
+	      (let ((valf (XmTextFieldGetSelection txtf)))
 		(IF (not (string=? valf "234")) (snd-display ";XmTextFieldGetSelection: ~A" valf)))
-	      (|XmTextFieldClearSelection txtf current-time)
-	      (let ((valf (|XmTextFieldGetSelection txtf)))
+	      (XmTextFieldClearSelection txtf current-time)
+	      (let ((valf (XmTextFieldGetSelection txtf)))
 		(IF valf (snd-display ";XmTextFieldClearSelection: ~A" valf)))
-	      (let ((val (|XmTextGetInsertionPosition txt))
-		    (valf (|XmTextFieldGetInsertionPosition txtf)))
+	      (let ((val (XmTextGetInsertionPosition txt))
+		    (valf (XmTextFieldGetInsertionPosition txtf)))
 		(IF (not (= val 5)) (snd-display ";XmTextGetInsertionPosition: ~A" val))
 		(IF (not (= valf 5)) (snd-display ";XmTextFieldGetInsertionPosition: ~A" val)))
 	      
-	      (|XmTextSetSelection txt 2 5 current-time)
-	      (|XmTextCut txt current-time)
-	      (let ((val (|XmTextGetString txt)))
+	      (XmTextSetSelection txt 2 5 current-time)
+	      (XmTextCut txt current-time)
+	      (let ((val (XmTextGetString txt)))
 		(IF (not (string=? val "0156789")) (snd-display ";XmTextCut: ~A" val)))
-	      (|XmTextPaste txt) 
-	      (let ((val (|XmTextGetString txt)))
+	      (XmTextPaste txt) 
+	      (let ((val (XmTextGetString txt)))
 		(IF (not (string=? val "0123456789")) (snd-display ";XmTextPaste: ~A" val)))
-	      (|XmTextFieldSetSelection txtf 2 5 current-time)
-	      (|XmTextFieldCut txtf current-time)
-	      (let ((val (|XmTextFieldGetString txtf)))
+	      (XmTextFieldSetSelection txtf 2 5 current-time)
+	      (XmTextFieldCut txtf current-time)
+	      (let ((val (XmTextFieldGetString txtf)))
 		(IF (not (string=? val "0156789")) (snd-display ";XmTextFieldCut: ~A" val)))
-	      (|XmTextFieldPaste txtf) 
-	      (let ((val (|XmTextFieldGetString txtf)))
+	      (XmTextFieldPaste txtf) 
+	      (let ((val (XmTextFieldGetString txtf)))
 		(IF (not (string=? val "0123456789")) (snd-display ";XmTextFieldPaste: ~A" val)))
 	      
-	      (|XmTextSetSelection txt 1 2 current-time)
-	      (IF (not (equal? (|XmTextGetSelectionPosition txt) (list #t 1 2)))
-		  (snd-display ";XmTextGetSelectionPosition: ~A" (|XmTextGetSelectionPosition txt)))
-	      (|XmTextCopy txt current-time)
-	      (|XmTextSetInsertionPosition txt 8)
-	      (|XmTextPaste txt)
-	      (let ((dest (|XmGetDestination (|XtDisplay (cadr (main-widgets))))))
+	      (XmTextSetSelection txt 1 2 current-time)
+	      (IF (not (equal? (XmTextGetSelectionPosition txt) (list #t 1 2)))
+		  (snd-display ";XmTextGetSelectionPosition: ~A" (XmTextGetSelectionPosition txt)))
+	      (XmTextCopy txt current-time)
+	      (XmTextSetInsertionPosition txt 8)
+	      (XmTextPaste txt)
+	      (let ((dest (XmGetDestination (XtDisplay (cadr (main-widgets))))))
 		(IF (not (equal? txt dest)) (snd-display ";XmGetDestination: ~A (~A)" dest txt)))
-	      (|XmRedisplayWidget txt)
-	      (let ((val (|XmTextGetString txt)))
+	      (XmRedisplayWidget txt)
+	      (let ((val (XmTextGetString txt)))
 		(IF (not (string=? val "01234567189")) (snd-display ";XmTextCopy and Paste: ~A" val)))
-	      (|XmTextFieldSetSelection txtf 1 2 current-time)
-	      (IF (not (equal? (|XmTextFieldGetSelectionPosition txtf) (list #t 1 2)))
-		  (snd-display ";XmTextFieldGetSelectionPosition: ~A" (|XmTextFieldGetSelectionPosition txtf)))
-	      (|XmTextFieldCopy txtf current-time)
-	      (|XmTextFieldSetInsertionPosition txtf 8)
-	      (|XmTextFieldPaste txtf)
-	      (let ((val (|XmTextGetString txtf)))
+	      (XmTextFieldSetSelection txtf 1 2 current-time)
+	      (IF (not (equal? (XmTextFieldGetSelectionPosition txtf) (list #t 1 2)))
+		  (snd-display ";XmTextFieldGetSelectionPosition: ~A" (XmTextFieldGetSelectionPosition txtf)))
+	      (XmTextFieldCopy txtf current-time)
+	      (XmTextFieldSetInsertionPosition txtf 8)
+	      (XmTextFieldPaste txtf)
+	      (let ((val (XmTextGetString txtf)))
 		(IF (not (string=? val "01234567189")) (snd-display ";XmTextFieldCopy and Paste: ~A" val)))
 	      
-	      (|XmTextSetMaxLength txt 1234)
-	      (IF (not (= (|XmTextGetMaxLength txt) 1234)) (snd-display ";XmTextGetMaxLength: ~A" (|XmTextGetMaxLength txt)))
-	      (|XmTextFieldSetMaxLength txtf 1234)
-	      (IF (not (= (|XmTextFieldGetMaxLength txtf) 1234)) (snd-display ";XmTextFieldGetMaxLength: ~A" (|XmTextFieldGetMaxLength txtf)))
+	      (XmTextSetMaxLength txt 1234)
+	      (IF (not (= (XmTextGetMaxLength txt) 1234)) (snd-display ";XmTextGetMaxLength: ~A" (XmTextGetMaxLength txt)))
+	      (XmTextFieldSetMaxLength txtf 1234)
+	      (IF (not (= (XmTextFieldGetMaxLength txtf) 1234)) (snd-display ";XmTextFieldGetMaxLength: ~A" (XmTextFieldGetMaxLength txtf)))
 	      
-	      (|XmTextSetCursorPosition txt 1)
-	      (IF (not (= (|XmTextGetCursorPosition txt) 1)) (snd-display ";XmTextGetCursorPosition: ~A" (|XmTextGetCursorPosition txt)))
-	      (|XmTextFieldSetCursorPosition txtf 1)
-	      (IF (not (= (|XmTextFieldGetCursorPosition txtf) 1)) (snd-display ";XmTextFieldGetCursorPosition: ~A" (|XmTextFieldGetCursorPosition txtf)))
+	      (XmTextSetCursorPosition txt 1)
+	      (IF (not (= (XmTextGetCursorPosition txt) 1)) (snd-display ";XmTextGetCursorPosition: ~A" (XmTextGetCursorPosition txt)))
+	      (XmTextFieldSetCursorPosition txtf 1)
+	      (IF (not (= (XmTextFieldGetCursorPosition txtf) 1)) (snd-display ";XmTextFieldGetCursorPosition: ~A" (XmTextFieldGetCursorPosition txtf)))
 	      
-	      (|XmTextReplace txt 0 2 "ab")
-	      (let ((val (|XmTextGetString txt)))
+	      (XmTextReplace txt 0 2 "ab")
+	      (let ((val (XmTextGetString txt)))
 		(IF (not (string=? val "ab234567189")) (snd-display ";XmTextReplace: ~A" val)))
-	      (|XmTextFieldReplace txtf 0 2 "ab")
-	      (let ((val (|XmTextFieldGetString txtf)))
+	      (XmTextFieldReplace txtf 0 2 "ab")
+	      (let ((val (XmTextFieldGetString txtf)))
 		(IF (not (string=? val "ab234567189")) (snd-display ";XmTextFieldReplace: ~A" val)))
 	      
-	      (|XmTextDisableRedisplay txt)
-	      (let ((pos (|XmTextFindString txt 0 "67" |XmTEXT_FORWARD)))
+	      (XmTextDisableRedisplay txt)
+	      (let ((pos (XmTextFindString txt 0 "67" XmTEXT_FORWARD)))
 		(IF (or (not pos)
 			(not (= pos 6)))
 		    (snd-display ";XmTextFindString ~A" pos)))
-	      (|XmTextEnableRedisplay txt)
-	      (let ((base (|XmTextGetBaseline txt))
-		    (center (|XmTextGetCenterline txt)))
-		(IF (or (< base 0) (not (= center 0))) (snd-display ";XmTextGetCenter|Baseline: ~A ~A" base center)))
+	      (XmTextEnableRedisplay txt)
+	      (let ((base (XmTextGetBaseline txt))
+		    (center (XmTextGetCenterline txt)))
+		(IF (or (< base 0) (not (= center 0))) (snd-display ";XmTextGetCenterBaseline: ~A ~A" base center)))
 	      
-	      (let ((pos (|XmTextGetLastPosition txt)))
+	      (let ((pos (XmTextGetLastPosition txt)))
 		(IF (not (= pos 11)) (snd-display ";XmTextGetLastPosition: ~A" pos)))
-	      (let ((pos (|XmTextFieldGetLastPosition txtf)))
+	      (let ((pos (XmTextFieldGetLastPosition txtf)))
 		(IF (not (= pos 11)) (snd-display ";XmTextFieldGetLastPosition: ~A" pos)))
-	      (let ((pos (|XmTextGetTopCharacter txt)))
+	      (let ((pos (XmTextGetTopCharacter txt)))
 		(IF (not (= pos 0)) (snd-display ";XmTextGetTopCharacter: ~A" pos)))
-	      (let ((pos (|XmTextPosToXY txt 0)))
+	      (let ((pos (XmTextPosToXY txt 0)))
 		(IF (not (number? (cadr pos))) (snd-display ";XmTextPosToXY: ~A" pos)))
-	      (let ((pos (|XmTextFieldPosToXY txtf 0)))
+	      (let ((pos (XmTextFieldPosToXY txtf 0)))
 		(IF (not (number? (cadr pos))) (snd-display ";XmTextFieldPosToXY: ~A" pos)))
 	      
-	      (|XmTextSetSelection txt 0 2 current-time)
-	      (|XmTextRemove txt)
-	      (let ((val (|XmTextGetString txt)))
+	      (XmTextSetSelection txt 0 2 current-time)
+	      (XmTextRemove txt)
+	      (let ((val (XmTextGetString txt)))
 		(IF (not (string=? val "234567189")) (snd-display ";XmTextRemove: ~A" val)))
-	      (|XmTextFieldSetSelection txtf 0 2 current-time)
-	      (|XmTextFieldRemove txtf)
-	      (let ((val (|XmTextFieldGetString txtf)))
+	      (XmTextFieldSetSelection txtf 0 2 current-time)
+	      (XmTextFieldRemove txtf)
+	      (let ((val (XmTextFieldGetString txtf)))
 		(IF (not (string=? val "234567189")) (snd-display ";XmTextFieldRemove: ~A" val)))
 
-	      (|XmTextInsert txt 0 "hi")
-	      (let ((val (|XmTextGetString txt)))
+	      (XmTextInsert txt 0 "hi")
+	      (let ((val (XmTextGetString txt)))
 		(IF (not (string=? val "hi234567189")) (snd-display ";XmTextInsert: ~A" val)))
-	      (|XmTextFieldInsert txtf 0 "hi")
-	      (let ((val (|XmTextFieldGetString txtf)))
+	      (XmTextFieldInsert txtf 0 "hi")
+	      (let ((val (XmTextFieldGetString txtf)))
 		(IF (not (string=? val "hi234567189")) (snd-display ";XmTextFieldInsert: ~A" val)))
 	      
-	      (|XmTextScroll txt 1)
-	      (|XmTextScroll txt -1)
-	      (let ((pos (|XmTextGetTopCharacter txt)))
+	      (XmTextScroll txt 1)
+	      (XmTextScroll txt -1)
+	      (let ((pos (XmTextGetTopCharacter txt)))
 		(IF (not (= pos 0)) (snd-display ";XmTextGetTopCharacter after scroll: ~A" pos)))
-	      (|XmTextShowPosition txt 0)
-	      (|XmTextFieldShowPosition txtf 0)
-	      (|XmTextSetTopCharacter txt 0)
-	      (|XmTextXYToPos txt 10 10)
-	      (|XmTextFieldXYToPos txtf 10 10)
+	      (XmTextShowPosition txt 0)
+	      (XmTextFieldShowPosition txtf 0)
+	      (XmTextSetTopCharacter txt 0)
+	      (XmTextXYToPos txt 10 10)
+	      (XmTextFieldXYToPos txtf 10 10)
 	      
-	      (|XmTextSetHighlight txt 3 6 |XmHIGHLIGHT_SELECTED)
-	      (|XmTextFieldSetHighlight txtf 3 6 |XmHIGHLIGHT_SELECTED)
-	      (|XmTextFieldGetBaseline txtf)
-	      (|XmTextSetAddMode txt #t)
-	      (IF (not (|XmTextGetAddMode txt)) (snd-display ";XmTextSetAddMode?"))
-	      (|XmTextFieldSetAddMode txtf #t)
-	      (IF (not (|XmTextFieldGetAddMode txtf)) (snd-display ";XmTextFieldSetAddMode?"))
+	      (XmTextSetHighlight txt 3 6 XmHIGHLIGHT_SELECTED)
+	      (XmTextFieldSetHighlight txtf 3 6 XmHIGHLIGHT_SELECTED)
+	      (XmTextFieldGetBaseline txtf)
+	      (XmTextSetAddMode txt #t)
+	      (IF (not (XmTextGetAddMode txt)) (snd-display ";XmTextSetAddMode?"))
+	      (XmTextFieldSetAddMode txtf #t)
+	      (IF (not (XmTextFieldGetAddMode txtf)) (snd-display ";XmTextFieldSetAddMode?"))
 	      
 	      (IF (not (string=? (vector-ref calls 1) "dest")) (snd-display ";destination callback: ~A" (vector-ref calls 1)))
 	      ;(IF (not (string=? (vector-ref calls 3) "focus")) (snd-display ";focus callback: ~A" (vector-ref calls 3)))
@@ -23258,277 +23258,277 @@ EDITS: 5
 	      (IF (not (string=? (vector-ref calls 8) "motion")) (snd-display ";motion callback: ~A" (vector-ref calls 8)))
 	      (IF (not (string=? (vector-ref calls 9) "value")) (snd-display ";value callback: ~A" (vector-ref calls 9)))
 
-	      (let ((txtf1 (|XtVaCreateManagedWidget "textfield" |xmTextFieldWidgetClass frm
-						       (list |XmNeditable #t
-							     |XmNleftAttachment      |XmATTACH_FORM
-							     |XmNrightAttachment     |XmATTACH_FORM
-							     |XmNtopAttachment       |XmATTACH_WIDGET
-							     |XmNtopWidget           txt
-							     |XmNbottomAttachment    |XmATTACH_FORM
-							     |XmNdestinationCallback
+	      (let ((txtf1 (XtVaCreateManagedWidget "textfield" xmTextFieldWidgetClass frm
+						       (list XmNeditable #t
+							     XmNleftAttachment      XmATTACH_FORM
+							     XmNrightAttachment     XmATTACH_FORM
+							     XmNtopAttachment       XmATTACH_WIDGET
+							     XmNtopWidget           txt
+							     XmNbottomAttachment    XmATTACH_FORM
+							     XmNdestinationCallback
 							      (list (lambda (w c info)
-								      (let* ((dpy (|XtDisplay w))
-									     (TARGETS (|XmInternAtom dpy "TARGETS" #f)))
-									(|XmTransferValue (|transfer_id info) 
+								      (let* ((dpy (XtDisplay w))
+									     (TARGETS (XmInternAtom dpy "TARGETS" #f)))
+									(XmTransferValue (.transfer_id info) 
 											  TARGETS 
 											  transfer-proc
 											  #f
-											  (|XtLastTimestampProcessed dpy))))
+											  (XtLastTimestampProcessed dpy))))
 								    #f)))))
 		(focus-widget txtf1)
-		(|XmTextFieldPaste txtf1)
-		(IF (not (|Widget? (|XmGetTabGroup txtf1))) (snd-display ";XmGetTabGroup: ~A " (|XmGetTabGroup txtf1)))
-		(let ((fw (|XmGetFocusWidget (cadr (main-widgets)))))
+		(XmTextFieldPaste txtf1)
+		(IF (not (Widget? (XmGetTabGroup txtf1))) (snd-display ";XmGetTabGroup: ~A " (XmGetTabGroup txtf1)))
+		(let ((fw (XmGetFocusWidget (cadr (main-widgets)))))
 		  (IF (not (equal? fw txtf1))
 		      (snd-display ";XmGetFocusWidget: ~A" fw)))
-		(|XtRemoveAllCallbacks txtf1 |XmNdestinationCallback))
-	      (|XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
-	      (|XtAugmentTranslations txt (|XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
-	      (|XtCallActionProc txt "hiho" (|XEvent) #f 0)
-	      (|XtUninstallTranslations txt)
-	      (|XtUnmanageChild frm)))
+		(XtRemoveAllCallbacks txtf1 XmNdestinationCallback))
+	      (XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
+	      (XtAugmentTranslations txt (XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
+	      (XtCallActionProc txt "hiho" (XEvent) #f 0)
+	      (XtUninstallTranslations txt)
+	      (XtUnmanageChild frm)))
 
 	    (let* ((shell (cadr (main-widgets)))
-		   (dpy (|XtDisplay shell))
-		   (win (|XtWindow shell))
-		   (err (|XmClipboardRegisterFormat dpy "SND_DATA" 8)))
-	      (if (not (= err |ClipboardSuccess)) 
+		   (dpy (XtDisplay shell))
+		   (win (XtWindow shell))
+		   (err (XmClipboardRegisterFormat dpy "SND_DATA" 8)))
+	      (if (not (= err ClipboardSuccess)) 
 		  (snd-display "XmClipboardRegisterFormat: ~A" err)
-		  (let ((vals (|XmClipboardStartCopy dpy win
-						     (|XmStringCreateLocalized "SND_DATA") 
-						     (list 'Time |CurrentTime) 
+		  (let ((vals (XmClipboardStartCopy dpy win
+						     (XmStringCreateLocalized "SND_DATA") 
+						     (list 'Time CurrentTime) 
 						     shell
 						     (lambda (w id pid reason)
-						       (let ((status (|XmClipboardCopyByName dpy win id "copy this" 10 123))))))))
-		    (IF (not (= (car vals) |ClipboardSuccess))
+						       (let ((status (XmClipboardCopyByName dpy win id "copy this" 10 123))))))))
+		    (IF (not (= (car vals) ClipboardSuccess))
 			(snd-display ";XmClipboardStartCopy: ~A" vals)
 			(let ((data-id (cadr vals)))
-			  (set! err (|XmClipboardCopy dpy win data-id "SND_DATA" "copy this" 10 0))
-			  (IF (not (= (car err) |ClipboardSuccess)) (snd-display ";XmClipboardCopy: ~A" err))
+			  (set! err (XmClipboardCopy dpy win data-id "SND_DATA" "copy this" 10 0))
+			  (IF (not (= (car err) ClipboardSuccess)) (snd-display ";XmClipboardCopy: ~A" err))
 			  (let ((item-id (cadr err)))
-			    (set! err (|XmClipboardEndCopy dpy win data-id))
-			    (IF (not (= err |ClipboardSuccess)) (snd-display (format "copy ~A" err)))
-			    (IF (not (= (cadr (|XmClipboardInquireLength dpy win "SND_DATA")) 10))
-				(snd-display "clip len: ~A" (|XmClipboardInquireLength dpy win "SND_DATA")))
-			    (let ((pend (|XmClipboardInquirePendingItems dpy win "SND_DATA")))
-			      (IF (not (= (car pend) |ClipboardSuccess)) (snd-display ";XmClipboardInquirePendingItems: ~A" pend)))
-			    (let ((formats (|XmClipboardInquireCount dpy win)))
+			    (set! err (XmClipboardEndCopy dpy win data-id))
+			    (IF (not (= err ClipboardSuccess)) (snd-display (format "copy ~A" err)))
+			    (IF (not (= (cadr (XmClipboardInquireLength dpy win "SND_DATA")) 10))
+				(snd-display "clip len: ~A" (XmClipboardInquireLength dpy win "SND_DATA")))
+			    (let ((pend (XmClipboardInquirePendingItems dpy win "SND_DATA")))
+			      (IF (not (= (car pend) ClipboardSuccess)) (snd-display ";XmClipboardInquirePendingItems: ~A" pend)))
+			    (let ((formats (XmClipboardInquireCount dpy win)))
 			      (IF (= (cadr formats) 0) (snd-display ";XmClipboardInquireCount: ~A" formats))
-			      (let ((data (|XmClipboardInquireFormat dpy win 1 10)))
-				(let ((clip (|XmClipboardRetrieve dpy win "SND_DATA" 10)))
+			      (let ((data (XmClipboardInquireFormat dpy win 1 10)))
+				(let ((clip (XmClipboardRetrieve dpy win "SND_DATA" 10)))
 				  (IF (not (string=? (cadr clip) "copy this")) (snd-display ";XmClipboardRetrieve: ~A" clip))
-				  (|XmClipboardWithdrawFormat dpy win item-id))))))))))
+				  (XmClipboardWithdrawFormat dpy win item-id))))))))))
 
-	    (let* ((frm (add-main-pane "hi" |xmFormWidgetClass (list |XmNpaneMinimum 120)))
-		   (current-time (list 'Time |CurrentTime))
-		   (box (|XtCreateManagedWidget "box" |xmContainerWidgetClass frm '()))
-		   (tgl (|XtCreateManagedWidget "tgl" |xmToggleButtonWidgetClass frm
-						(list |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_FORM
-						      |XmNbottomAttachment    |XmATTACH_NONE)))
-		   (tgg (|XtCreateManagedWidget "tgg" |xmToggleButtonGadgetClass frm
-						(list |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_WIDGET
-						      |XmNtopWidget           tgl
-						      |XmNbottomAttachment    |XmATTACH_NONE)))
-		   (mnw (|XtCreateManagedWidget "mnw" |xmMainWindowWidgetClass frm
-						(list |XmNcommandWindow       box
-						      |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_WIDGET
-						      |XmNtopWidget           tgg
-						      |XmNbottomAttachment    |XmATTACH_NONE)))
-		   (spn (|XtCreateManagedWidget "spn" |xmSimpleSpinBoxWidgetClass frm
-						(list |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_WIDGET
-						      |XmNtopWidget           mnw
-						      |XmNbottomAttachment    |XmATTACH_NONE)))
-		   (cmd (|XtCreateManagedWidget "cmd" |xmCommandWidgetClass frm
-						(list |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_WIDGET
-						      |XmNtopWidget           spn
-						      |XmNbottomAttachment    |XmATTACH_NONE)))
-		   (scl (|XtCreateManagedWidget "scl" |xmScaleWidgetClass frm
-						(list |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_WIDGET
-						      |XmNtopWidget           cmd
-						      |XmNbottomAttachment    |XmATTACH_NONE)))
-		   (notes (|XtCreateManagedWidget "notes" |xmNotebookWidgetClass frm
-						(list |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_WIDGET
-						      |XmNtopWidget           scl
-						      |XmNbottomAttachment    |XmATTACH_NONE)))
+	    (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
+		   (current-time (list 'Time CurrentTime))
+		   (box (XtCreateManagedWidget "box" xmContainerWidgetClass frm '()))
+		   (tgl (XtCreateManagedWidget "tgl" xmToggleButtonWidgetClass frm
+						(list XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_FORM
+						      XmNbottomAttachment    XmATTACH_NONE)))
+		   (tgg (XtCreateManagedWidget "tgg" xmToggleButtonGadgetClass frm
+						(list XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNtopWidget           tgl
+						      XmNbottomAttachment    XmATTACH_NONE)))
+		   (mnw (XtCreateManagedWidget "mnw" xmMainWindowWidgetClass frm
+						(list XmNcommandWindow       box
+						      XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNtopWidget           tgg
+						      XmNbottomAttachment    XmATTACH_NONE)))
+		   (spn (XtCreateManagedWidget "spn" xmSimpleSpinBoxWidgetClass frm
+						(list XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNtopWidget           mnw
+						      XmNbottomAttachment    XmATTACH_NONE)))
+		   (cmd (XtCreateManagedWidget "cmd" xmCommandWidgetClass frm
+						(list XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNtopWidget           spn
+						      XmNbottomAttachment    XmATTACH_NONE)))
+		   (scl (XtCreateManagedWidget "scl" xmScaleWidgetClass frm
+						(list XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNtopWidget           cmd
+						      XmNbottomAttachment    XmATTACH_NONE)))
+		   (notes (XtCreateManagedWidget "notes" xmNotebookWidgetClass frm
+						(list XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNtopWidget           scl
+						      XmNbottomAttachment    XmATTACH_NONE)))
 
-		   (cmb (|XtCreateManagedWidget "cmb" |xmComboBoxWidgetClass frm
-						(list |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_WIDGET
-						      |XmNtopWidget           notes
-						      |XmNbottomAttachment    |XmATTACH_FORM)))
+		   (cmb (XtCreateManagedWidget "cmb" xmComboBoxWidgetClass frm
+						(list XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNtopWidget           notes
+						      XmNbottomAttachment    XmATTACH_FORM)))
 		   (toggled 0))
-	      (|XtCreateManagedWidget "one" |xmPushButtonWidgetClass notes '())
-	      (|XtCreateManagedWidget "two" |xmPushButtonWidgetClass notes '())
-	      (let ((info (cadr (|XmNotebookGetPageInfo notes 1))))
-		(IF (not (= (|page_number info) 1)) (snd-display "page_number: ~A" (|page_number info)))
-		(IF (|page_widget info) (snd-display "page_widget: ~A" (|page_widget info)))
-		(IF (|status_area_widget info) (snd-display "status_area_widget: ~A" (|status_area_widget info)))
-		(IF (not (|Widget? (|major_tab_widget info))) (snd-display "major_tab_widget: ~A" (|major_tab_widget info)))
-		(IF (|minor_tab_widget info) (snd-display "minor_tab_widget: ~A" (|minor_tab_widget info))))
+	      (XtCreateManagedWidget "one" xmPushButtonWidgetClass notes '())
+	      (XtCreateManagedWidget "two" xmPushButtonWidgetClass notes '())
+	      (let ((info (cadr (XmNotebookGetPageInfo notes 1))))
+		(IF (not (= (.page_number info) 1)) (snd-display "page_number: ~A" (.page_number info)))
+		(IF (.page_widget info) (snd-display "page_widget: ~A" (.page_widget info)))
+		(IF (.status_area_widget info) (snd-display "status_area_widget: ~A" (.status_area_widget info)))
+		(IF (not (Widget? (.major_tab_widget info))) (snd-display "major_tab_widget: ~A" (.major_tab_widget info)))
+		(IF (.minor_tab_widget info) (snd-display "minor_tab_widget: ~A" (.minor_tab_widget info))))
 
-	      (|XmMainWindowSetAreas mnw #f box #f #f spn)
-	      (IF (not (|Widget? (|XmMainWindowSep1 mnw))) (snd-display ";XmMainWindowSep1: ~A" (|XmMainWindowSep1 mnw)))
-	      (IF (not (|Widget? (|XmMainWindowSep2 mnw))) (snd-display ";XmMainWindowSep2: ~A" (|XmMainWindowSep2 mnw)))
-	      (IF (not (|Widget? (|XmMainWindowSep3 mnw))) (snd-display ";XmMainWindowSep3: ~A" (|XmMainWindowSep3 mnw)))
+	      (XmMainWindowSetAreas mnw #f box #f #f spn)
+	      (IF (not (Widget? (XmMainWindowSep1 mnw))) (snd-display ";XmMainWindowSep1: ~A" (XmMainWindowSep1 mnw)))
+	      (IF (not (Widget? (XmMainWindowSep2 mnw))) (snd-display ";XmMainWindowSep2: ~A" (XmMainWindowSep2 mnw)))
+	      (IF (not (Widget? (XmMainWindowSep3 mnw))) (snd-display ";XmMainWindowSep3: ~A" (XmMainWindowSep3 mnw)))
 	      
-	      (|XmSimpleSpinBoxAddItem spn (|XmStringCreateLocalized "hiho") 0)
-	      (|XmSimpleSpinBoxAddItem spn (|XmStringCreateLocalized "away") 0)
-	      (|XmSimpleSpinBoxDeletePos spn 0)
-	      (let ((vals (|XtVaGetValues spn (list |XmNvalues 0))))
-		(|XmSimpleSpinBoxSetItem spn (car (cadr vals))))
-	      (|XmSimpleSpinBoxAddItem spn (|XmStringCreateLocalized "another") 0)
-	      (let ((vals (|XtGetValues spn (list |XmNeditable 0 |XmNtextField 0))))
+	      (XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "hiho") 0)
+	      (XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "away") 0)
+	      (XmSimpleSpinBoxDeletePos spn 0)
+	      (let ((vals (XtVaGetValues spn (list XmNvalues 0))))
+		(XmSimpleSpinBoxSetItem spn (car (cadr vals))))
+	      (XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "another") 0)
+	      (let ((vals (XtGetValues spn (list XmNeditable 0 XmNtextField 0))))
 		(IF (not (list-ref vals 1)) (snd-display ";XmNeditable spin box"))
-		(IF (not (|Widget? (list-ref vals 3))) (snd-display ";XmNtextField: ~A" (list-ref vals 3))))
+		(IF (not (Widget? (list-ref vals 3))) (snd-display ";XmNtextField: ~A" (list-ref vals 3))))
 	      
-	      (|XtAddCallback tgl |XmNvalueChangedCallback (lambda (w c i) (set! toggled 123)) #f)
-	      (|XmToggleButtonSetState tgl #f #f)
-	      (|XmToggleButtonGadgetSetState tgg #f #f)
+	      (XtAddCallback tgl XmNvalueChangedCallback (lambda (w c i) (set! toggled 123)) #f)
+	      (XmToggleButtonSetState tgl #f #f)
+	      (XmToggleButtonGadgetSetState tgg #f #f)
 	      (IF (not (= toggled 0)) (snd-display ";toggle calledback: ~A?" toggled))
-	      (IF (|XmToggleButtonGetState tgl) (snd-display ";XmToggleButtonSetState #f"))
-	      (IF (|XmToggleButtonGadgetGetState tgg) (snd-display ";XmToggleButtonGadgetSetState #f"))
-	      (|XtVaSetValues tgl (list |XmNtoggleMode |XmTOGGLE_INDETERMINATE))
-	      (|XmToggleButtonSetValue tgl |XmINDETERMINATE #t)
-	      (|XmToggleButtonGadgetSetValue tgg |XmINDETERMINATE #t)
+	      (IF (XmToggleButtonGetState tgl) (snd-display ";XmToggleButtonSetState #f"))
+	      (IF (XmToggleButtonGadgetGetState tgg) (snd-display ";XmToggleButtonGadgetSetState #f"))
+	      (XtVaSetValues tgl (list XmNtoggleMode XmTOGGLE_INDETERMINATE))
+	      (XmToggleButtonSetValue tgl XmINDETERMINATE #t)
+	      (XmToggleButtonGadgetSetValue tgg XmINDETERMINATE #t)
 	      (IF (not (= toggled 123)) (snd-display ";toggle not calledback: ~A?" toggled))
 	      
-	      (|XmCommandAppendValue cmd (|XmStringCreateLocalized "hiho"))
-	      (|XmCommandError cmd (|XmStringCreateLocalized "hiho"))
-	      (IF (not (|Widget? (|XmCommandGetChild cmd |XmDIALOG_COMMAND_TEXT)))
-		  (snd-display ";XmCommandGetChild: ~A" (|XmCommandGetChild cmd |XmDIALOG_COMMAND_TEXT)))
-	      (|XmCommandSetValue cmd (|XmStringCreateLocalized "hiho"))
+	      (XmCommandAppendValue cmd (XmStringCreateLocalized "hiho"))
+	      (XmCommandError cmd (XmStringCreateLocalized "hiho"))
+	      (IF (not (Widget? (XmCommandGetChild cmd XmDIALOG_COMMAND_TEXT)))
+		  (snd-display ";XmCommandGetChild: ~A" (XmCommandGetChild cmd XmDIALOG_COMMAND_TEXT)))
+	      (XmCommandSetValue cmd (XmStringCreateLocalized "hiho"))
 	      
-	      (let ((one (|XmStringCreateLocalized "one"))
-		    (two (|XmStringCreateLocalized "two"))
-		    (three (|XmStringCreateLocalized "three")))
-		(|XmComboBoxAddItem cmb one 0 #f)
-		(|XmComboBoxAddItem cmb two 0 #f)
-		(|XmComboBoxAddItem cmb three 0 #f)
-		(|XmComboBoxDeletePos cmb 1)
-		(|XmComboBoxSelectItem cmb three)
-		(|XmComboBoxSetItem cmb three) ; hunh??
-		(|XmComboBoxUpdate cmb)
-		(let ((vals (cadr (|XtGetValues cmb (list |XmNitems 0)))))
+	      (let ((one (XmStringCreateLocalized "one"))
+		    (two (XmStringCreateLocalized "two"))
+		    (three (XmStringCreateLocalized "three")))
+		(XmComboBoxAddItem cmb one 0 #f)
+		(XmComboBoxAddItem cmb two 0 #f)
+		(XmComboBoxAddItem cmb three 0 #f)
+		(XmComboBoxDeletePos cmb 1)
+		(XmComboBoxSelectItem cmb three)
+		(XmComboBoxSetItem cmb three) ; hunh??
+		(XmComboBoxUpdate cmb)
+		(let ((vals (cadr (XtGetValues cmb (list XmNitems 0)))))
 		  (IF (not (equal? vals (list two three))) (snd-display ";XmComboBox: ~A" vals))))
 
-	      (|XmContainerCut box current-time)
-	      (|XmContainerCopy box current-time)
-	      (|XmContainerPaste box)
+	      (XmContainerCut box current-time)
+	      (XmContainerCopy box current-time)
+	      (XmContainerPaste box)
 	      
-	      (|XmScaleSetValue scl 25)
-	      (IF (not (= (|XmScaleGetValue scl) 25)) (snd-display ";XmScaleSetValue: ~A" (|XmScaleGetValue scl)))
-	      (IF (|XmGetTearOffControl (car (menu-widgets))) (snd-display ";XmGetTearOffControl: ~A" (|XmGetTearOffControl (car (menu-widgets)))))
-	      (let ((children (cadr (|XtGetValues scl (list |XmNchildren 0)))))
+	      (XmScaleSetValue scl 25)
+	      (IF (not (= (XmScaleGetValue scl) 25)) (snd-display ";XmScaleSetValue: ~A" (XmScaleGetValue scl)))
+	      (IF (XmGetTearOffControl (car (menu-widgets))) (snd-display ";XmGetTearOffControl: ~A" (XmGetTearOffControl (car (menu-widgets)))))
+	      (let ((children (cadr (XtGetValues scl (list XmNchildren 0)))))
 		(for-each 
 		 (lambda (w)
-		   (let ((name (|XtName w)))
-		     (if (and (|XmIsSeparatorGadget w)
+		   (let ((name (XtName w)))
+		     (if (and (XmIsSeparatorGadget w)
 			      (or (string=? name "BigTic")
 				  (string=? name "MedTic")
 				  (string=? name "SmallTic")))
-			 (|XtDestroyWidget w))))
+			 (XtDestroyWidget w))))
 		 children))
-	      (|XmScaleSetTicks scl 5 2 0 10 5 0)
+	      (XmScaleSetTicks scl 5 2 0 10 5 0)
 	      )
 	    
 	    (let* ((shell (cadr (main-widgets)))
-		   (dpy (|XtDisplay shell))
-		   (screen (|XDefaultScreenOfDisplay dpy))
-		   (vals (|XtGetValues shell 
-				       (list |XmNscreen 0 |XmNtitleEncoding 0 |XmNbuttonFontList 0 |XmNaudibleWarning 0
-					     |XmNpreeditType 0 |XmNtextRenderTable 0 |XmNtitle 0 |XmNwindowGroup 0 
-					     |XmNargv 0 |XmNcolormap 0))))
+		   (dpy (XtDisplay shell))
+		   (screen (XDefaultScreenOfDisplay dpy))
+		   (vals (XtGetValues shell 
+				       (list XmNscreen 0 XmNtitleEncoding 0 XmNbuttonFontList 0 XmNaudibleWarning 0
+					     XmNpreeditType 0 XmNtextRenderTable 0 XmNtitle 0 XmNwindowGroup 0 
+					     XmNargv 0 XmNcolormap 0))))
 	      (IF (not (equal? screen (list-ref vals 1))) (snd-display ";XmNscreen: ~A ~A" (list-ref vals 1) screen))
-	      (IF (not (|Atom? (list-ref vals 3))) (snd-display ";XmNtitleEncoding: ~A" (list-ref vals 3)))
-	      (IF (not (|XmFontList? (list-ref vals 5))) (snd-display ";XmNbuttonFontList: ~A" (list-ref vals 5)))
+	      (IF (not (Atom? (list-ref vals 3))) (snd-display ";XmNtitleEncoding: ~A" (list-ref vals 3)))
+	      (IF (not (XmFontList? (list-ref vals 5))) (snd-display ";XmNbuttonFontList: ~A" (list-ref vals 5)))
 	      (IF (not (list-ref vals 7)) (snd-display ";XmNaudibleWarning: ~A" (list-ref vals 7)))
 	      (IF (or (not (string? (list-ref vals 9)))
 		      (not (string=? (list-ref vals 9) "OverTheSpot,OffTheSpot,Root,OnTheSpot")))
 		  (snd-display ";XmNpreeditType: ~A" (list-ref vals 9)))
-	      (IF (not (|XmRenderTable? (list-ref vals 11))) (snd-display ";XmNtextRenderTable: ~A" (list-ref vals 11)))
+	      (IF (not (XmRenderTable? (list-ref vals 11))) (snd-display ";XmNtextRenderTable: ~A" (list-ref vals 11)))
 	      (IF (not (string=? (list-ref vals 13) "snd")) (snd-display ";XmNtitle: ~A" (list-ref vals 13)))
-	      (IF (not (|Window? (list-ref vals 15))) (snd-display ";XmNwindowgroup: ~A" (list-ref vals 15)))
+	      (IF (not (Window? (list-ref vals 15))) (snd-display ";XmNwindowgroup: ~A" (list-ref vals 15)))
 	      (IF (or (not (list? (list-ref vals 17)))
 		      (not (string=? (car (list-ref vals 17)) "./snd")))
 		  (snd-display ";XmNargv: ~A" (list-ref vals 17)))
-	      (IF (not (|Colormap? (list-ref vals 19))) (snd-display ";XmNcolormap: ~A" (list-ref vals 19)))
+	      (IF (not (Colormap? (list-ref vals 19))) (snd-display ";XmNcolormap: ~A" (list-ref vals 19)))
 	      )
 
-	    (|XmSetColorCalculation #f)
-	    (let* ((dpy (|XtDisplay (cadr (main-widgets))))
-		   (scr1 (|DefaultScreen dpy))
-		   (cmap (|DefaultColormap dpy scr1))
-		   (screen (|XDefaultScreenOfDisplay dpy))
-		   (scr (|XmGetXmScreen (|XDefaultScreenOfDisplay dpy)))
-		   (old-h (cadr (|XtVaGetValues scr (list |XmNhorizontalFontUnit 0))))
-		   (old-v (cadr (|XtVaGetValues scr (list |XmNverticalFontUnit 0)))))
-	      (IF (not (|XmIsScreen scr)) (snd-display ";XmIsScreen: ~A" scr))
-	      (let ((colors (|XmGetColors screen cmap (basic-color))))
-		(IF (not (|Pixel? (car colors)))
+	    (XmSetColorCalculation #f)
+	    (let* ((dpy (XtDisplay (cadr (main-widgets))))
+		   (scr1 (DefaultScreen dpy))
+		   (cmap (DefaultColormap dpy scr1))
+		   (screen (XDefaultScreenOfDisplay dpy))
+		   (scr (XmGetXmScreen (XDefaultScreenOfDisplay dpy)))
+		   (old-h (cadr (XtVaGetValues scr (list XmNhorizontalFontUnit 0))))
+		   (old-v (cadr (XtVaGetValues scr (list XmNverticalFontUnit 0)))))
+	      (IF (not (XmIsScreen scr)) (snd-display ";XmIsScreen: ~A" scr))
+	      (let ((colors (XmGetColors screen cmap (basic-color))))
+		(IF (not (Pixel? (car colors)))
 		    (snd-display "colors: ~A " colors))
 		(let ((color-proc (lambda (bg)
 				    (list (white-pixel) (black-pixel) (white-pixel) (black-pixel)))))
-		  (|XmSetColorCalculation color-proc)
-		  (IF (not (equal? (|XmGetColorCalculation) color-proc))
-		      (snd-display ";XmSetColorcalulcation ~A" (|XmGetColorCalculation)))))
-	      (|XmSetFontUnits dpy 8 10)
-	      (IF (or (not (= (cadr (|XtVaGetValues scr (list |XmNhorizontalFontUnit 0))) 8))
-		      (not (= (cadr (|XtVaGetValues scr (list |XmNverticalFontUnit 0))) 10)))
-		  (snd-display ";XmSetFontUnits: ~A" (|XtVaGetValues scr (list |XmNhorizontalFontUnit 0 |XmNverticalFontUnit 0))))
-	      (let ((vals (|XtVaGetValues scr 
-					  (list |XmNbitmapConversionModel 0 |XmNdarkThreshold 0 |XmNfont 0 |XmNunpostBehavior 0))))
-		(IF (not (= (list-ref vals 1) |XmMATCH_DEPTH)) (snd-display ";XmNbitmapConversionModel: ~A" (list-ref vals 1)))
+		  (XmSetColorCalculation color-proc)
+		  (IF (not (equal? (XmGetColorCalculation) color-proc))
+		      (snd-display ";XmSetColorcalulcation ~A" (XmGetColorCalculation)))))
+	      (XmSetFontUnits dpy 8 10)
+	      (IF (or (not (= (cadr (XtVaGetValues scr (list XmNhorizontalFontUnit 0))) 8))
+		      (not (= (cadr (XtVaGetValues scr (list XmNverticalFontUnit 0))) 10)))
+		  (snd-display ";XmSetFontUnits: ~A" (XtVaGetValues scr (list XmNhorizontalFontUnit 0 XmNverticalFontUnit 0))))
+	      (let ((vals (XtVaGetValues scr 
+					  (list XmNbitmapConversionModel 0 XmNdarkThreshold 0 XmNfont 0 XmNunpostBehavior 0))))
+		(IF (not (= (list-ref vals 1) XmMATCH_DEPTH)) (snd-display ";XmNbitmapConversionModel: ~A" (list-ref vals 1)))
 		(IF (not (= (list-ref vals 3) 0)) (snd-display ";XmNdarkThreshold: ~A" (list-ref vals 3)))
-		(IF (not (|XFontStruct? (list-ref vals 5))) (snd-display ";XmNfont: ~A" (list-ref vals 5)))
-		(IF (not (= (list-ref vals 7) |XmUNPOST_AND_REPLAY)) (snd-display ";XmNunpostBehavior: ~A" (list-ref vals 7)))
+		(IF (not (XFontStruct? (list-ref vals 5))) (snd-display ";XmNfont: ~A" (list-ref vals 5)))
+		(IF (not (= (list-ref vals 7) XmUNPOST_AND_REPLAY)) (snd-display ";XmNunpostBehavior: ~A" (list-ref vals 7)))
 		))
-	    (let ((dpy (|XtDisplay (cadr (main-widgets)))))
-	      (let* ((dp (|XmGetXmDisplay dpy))
-		     (vals (|XtVaGetValues dp
-					   (list |XmNdragInitiatorProtocolStyle 0 |XmNenableThinThickness 0))))
-		(IF (not (|XmIsDisplay dp)) (snd-display ";XmIsDisplay: ~A" dp))
-		(IF (not (= (list-ref vals 1) |XmDRAG_PREFER_RECEIVER)) (snd-display ";XmNdragInitiatorProtocolStyle: ~A" (list-ref vals 1)))
+	    (let ((dpy (XtDisplay (cadr (main-widgets)))))
+	      (let* ((dp (XmGetXmDisplay dpy))
+		     (vals (XtVaGetValues dp
+					   (list XmNdragInitiatorProtocolStyle 0 XmNenableThinThickness 0))))
+		(IF (not (XmIsDisplay dp)) (snd-display ";XmIsDisplay: ~A" dp))
+		(IF (not (= (list-ref vals 1) XmDRAG_PREFER_RECEIVER)) (snd-display ";XmNdragInitiatorProtocolStyle: ~A" (list-ref vals 1)))
 		(IF (not (list-ref vals 3)) (snd-display ";XmNenableThinThickness?"))
-		(|XtAddCallback dp |XmNdragStartCallback (lambda (w c i) #f)))
+		(XtAddCallback dp XmNdragStartCallback (lambda (w c i) #f)))
 	      
-	      (IF (not (string=? (|XmCvtXmStringToCT (|XmStringCreateLocalized "hiho")) "hiho"))
-		  (snd-display "XmCvtXmStringToCT: ~A" (|XmCvtXmStringToCT (|XmStringCreateLocalized "hiho"))))
-	      (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmINCHES)))
+	      (IF (not (string=? (XmCvtXmStringToCT (XmStringCreateLocalized "hiho")) "hiho"))
+		  (snd-display "XmCvtXmStringToCT: ~A" (XmCvtXmStringToCT (XmStringCreateLocalized "hiho"))))
+	      (let ((val (XmConvertStringToUnits (XDefaultScreenOfDisplay dpy) "3.14 in" XmHORIZONTAL XmINCHES)))
 		(IF (not (= val 3)) (snd-display ";XmConvertStringToUnits in->in ~A" val)))
-	      (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmPOINTS)))
+	      (let ((val (XmConvertStringToUnits (XDefaultScreenOfDisplay dpy) "3.14 in" XmHORIZONTAL XmPOINTS)))
 		(IF (not (= val 225)) (snd-display ";XmConvertStringToUnits in->pts ~A" val)))
-	      (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmCENTIMETERS)))
+	      (let ((val (XmConvertStringToUnits (XDefaultScreenOfDisplay dpy) "3.14 in" XmHORIZONTAL XmCENTIMETERS)))
 		(IF (not (= val 7)) (snd-display ";XmConvertStringToUnits in->cm ~A" val)))
-	      (let ((val (|XmConvertUnits (cadr (main-widgets)) |XmHORIZONTAL |XmCENTIMETERS 7 |XmMILLIMETERS)))
+	      (let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmMILLIMETERS)))
 		(IF (not (= val 70)) (snd-display ";XmConvertUnits cm->mm ~A" val)))
-	      (let ((val (|XmConvertUnits (cadr (main-widgets)) |XmHORIZONTAL |XmCENTIMETERS 7 |XmPIXELS)))
+	      (let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmPIXELS)))
 		(IF (not (= val 278)) (snd-display ";XmConvertUnits cm->pix ~A" val)))
-	      (|XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
-	      (|XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
-	      (|XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
-	      (|XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
-	      (|XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" '())
-	      (|XmVaCreateSimpleOptionMenu (caddr (main-widgets)) "hiho" 
-					   (|XmStringCreateLocalized "away") 
-					   (|XKeycodeToKeysym dpy |XK_b 0)
+	      (XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
+	      (XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
+	      (XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
+	      (XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
+	      (XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" '())
+	      (XmVaCreateSimpleOptionMenu (caddr (main-widgets)) "hiho" 
+					   (XmStringCreateLocalized "away") 
+					   (XKeycodeToKeysym dpy XK_b 0)
 					   0  (lambda (w c i) #f) '())
 	      
-	      (IF (not (|XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display ";XmIsMotifWMRunning?"))
+	      (IF (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display ";XmIsMotifWMRunning?"))
 	      (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 	      (zync)
 	      (make-hidden-controls-dialog)
@@ -23557,15 +23557,15 @@ EDITS: 5
 					       chn))
 				     (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
 				     '())))
-		(|XmContainerRelayout container)
-		(let ((vals (|XtVaGetValues container 
-			      (list |XmNlargeCellHeight 0 |XmNcollapsedStatePixmap 0 |XmNdetailOrder 0 |XmNdetailTabList 0
-				    |XmNselectedObjects 0 |XmNconvertCallback 0 |XmNdestinationCallback 0 |XmNselectionCallback 0))))
+		(XmContainerRelayout container)
+		(let ((vals (XtVaGetValues container 
+			      (list XmNlargeCellHeight 0 XmNcollapsedStatePixmap 0 XmNdetailOrder 0 XmNdetailTabList 0
+				    XmNselectedObjects 0 XmNconvertCallback 0 XmNdestinationCallback 0 XmNselectionCallback 0))))
 		  (IF (not (= (list-ref vals 1) 0)) (snd-display ";XmNlargeCellHeight: ~A" (list-ref vals 1)))
-		  (IF (not (|Pixmap? (list-ref vals 3))) (snd-display ";XmNcollapsedStatePixmap: ~A" (list-ref vals 3)))
+		  (IF (not (Pixmap? (list-ref vals 3))) (snd-display ";XmNcollapsedStatePixmap: ~A" (list-ref vals 3)))
 		  (let ((func (lambda (w) 0)))
-		    (|XtSetValues container (list |XmNinsertPosition func))
-		    (let ((func1 (cadr (|XtGetValues container (list |XmNinsertPosition 0)))))
+		    (XtSetValues container (list XmNinsertPosition func))
+		    (let ((func1 (cadr (XtGetValues container (list XmNinsertPosition 0)))))
 		      (IF (not (equal? func func1)) (snd-display ";XmNinsertPosition: ~A ~A" func func1))))))
 	      
 	      (show-smpte-label)
@@ -23574,200 +23574,200 @@ EDITS: 5
 	      (close-sound))
 
 	    (let* ((shell (cadr (main-widgets)))
-		   (dpy (|XtDisplay shell))
-		   (prop (|XmInternAtom dpy "TESTING" #f))
-		   (proto1 (|XmInternAtom dpy "TEST1" #f))
-		   (proto2 (|XmInternAtom dpy "TEST2" #f))
+		   (dpy (XtDisplay shell))
+		   (prop (XmInternAtom dpy "TESTING" #f))
+		   (proto1 (XmInternAtom dpy "TEST1" #f))
+		   (proto2 (XmInternAtom dpy "TEST2" #f))
 		   (val 0))
-	      (IF (not (|Atom? prop)) (snd-display ";XmInternAtom: ~A" prop))
-	      (IF (not (string=? (|XmGetAtomName dpy prop) "TESTING")) (snd-display ";XmGetAtomName: ~A" (|XmGetAtomName dpy prop)))
-	      (|XmAddProtocols shell prop (list proto1 proto2))
-	      (|XmDeactivateProtocol shell prop proto2)
-	      (|XmRemoveProtocols shell prop (list proto2))
-	      (|XmAddProtocolCallback shell prop proto1 (lambda (w c i) (set! val c)) 123)
-	      (|XmActivateProtocol shell prop proto1)
-	      (let ((e (|XEvent |ClientMessage))
-		    (window (|XtWindow shell)))
-		(set! (|window e) window)
-		(set! (|display e) dpy)
-		(set! (|format e) 8)
-		(set! (|message_type e) |XA_STRING)
-		(set! (|data e) "hiho")
-		(|XSendEvent dpy window #f 0 e))
-	      (|XmRemoveProtocols shell prop (list proto1)))
-	    (|XmCascadeButtonHighlight (|XmCreateCascadeButton (cadr (main-widgets)) "cascade" '()) #f)
-	    ;(|XmCascadeButtonGadgetHighlight (|XmCreateCascadeButtonGadget (cadr (main-widgets)) "gadget" '()) #f)
+	      (IF (not (Atom? prop)) (snd-display ";XmInternAtom: ~A" prop))
+	      (IF (not (string=? (XmGetAtomName dpy prop) "TESTING")) (snd-display ";XmGetAtomName: ~A" (XmGetAtomName dpy prop)))
+	      (XmAddProtocols shell prop (list proto1 proto2))
+	      (XmDeactivateProtocol shell prop proto2)
+	      (XmRemoveProtocols shell prop (list proto2))
+	      (XmAddProtocolCallback shell prop proto1 (lambda (w c i) (set! val c)) 123)
+	      (XmActivateProtocol shell prop proto1)
+	      (let ((e (XEvent ClientMessage))
+		    (window (XtWindow shell)))
+		(set! (.window e) window)
+		(set! (.display e) dpy)
+		(set! (.format e) 8)
+		(set! (.message_type e) XA_STRING)
+		(set! (.data e) "hiho")
+		(XSendEvent dpy window #f 0 e))
+	      (XmRemoveProtocols shell prop (list proto1)))
+	    (XmCascadeButtonHighlight (XmCreateCascadeButton (cadr (main-widgets)) "cascade" '()) #f)
+	    ;(XmCascadeButtonGadgetHighlight (XmCreateCascadeButtonGadget (cadr (main-widgets)) "gadget" '()) #f)
 
 	    (let ((shell (cadr (main-widgets)))
 		  (resource-list
-	       (list |XmNaccelerator |XmNacceleratorText |XmNaccelerators |XmNactivateCallback |XmNadjustLast |XmNadjustMargin |XmNalignment 
-		     |XmNallowOverlap |XmNallowResize |XmNallowShellResize |XmNancestorSensitive |XmNanimationMask |XmNanimationPixmap 
-		     |XmNanimationPixmapDepth |XmNanimationStyle |XmNapplyCallback |XmNapplyLabelString |XmNargc |XmNargv |XmNarmCallback 
-		     |XmNarmColor |XmNarmPixmap |XmNarrowDirection |XmNattachment |XmNaudibleWarning |XmNautoShowCursorPosition |XmNautoUnmanage 
-		     |XmNautomaticSelection |XmNbackground |XmNbackgroundPixmap |XmNbaseHeight |XmNbaseWidth |XmNbitmap |XmNblendModel |XmNblinkRate 
-		     |XmNborderColor |XmNborderColor |XmNborderPixmap |XmNborderWidth |XmNbottomAttachment |XmNbottomOffset |XmNbottomPosition 
-		     |XmNbottomShadowColor |XmNbottomShadowPixmap |XmNbottomWidget |XmNbrowseSelectionCallback |XmNbuttonAcceleratorText 
-		     |XmNbuttonAccelerators |XmNbuttonCount |XmNbuttonMnemonicCharSets |XmNbuttonMnemonics |XmNbuttonSet |XmNbuttonType 
-		     |XmNbuttons |XmNcancelButton |XmNcancelCallback |XmNcancelLabelString |XmNcascadePixmap |XmNcascadingCallback 
-		     |XmNchildHorizontalAlignment |XmNchildHorizontalSpacing |XmNchildPlacement |XmNchildVerticalAlignment |XmNchildren 
-		     |XmNclientData |XmNclipWindow |XmNcolormap |XmNcolumns |XmNcommand |XmNcommandChangedCallback |XmNcommandEnteredCallback 
-		     |XmNcommandWindow |XmNcommandWindowLocation |XmNconvertProc |XmNcreatePopupChildProc |XmNcursorBackground 
-		     |XmNcursorForeground |XmNcursorPosition |XmNcursorPositionVisible |XmNdarkThreshold |XmNdecimalPoints 
-		     |XmNdecrementCallback |XmNdefaultActionCallback |XmNdefaultButton |XmNdefaultButtonShadowThickness 
-		     |XmNdefaultButtonType |XmNdefaultCopyCursorIcon |XmNdefaultInvalidCursorIcon |XmNdefaultLinkCursorIcon 
-		     |XmNdefaultMoveCursorIcon |XmNdefaultNoneCursorIcon |XmNdefaultPosition |XmNdefaultSourceCursorIcon 
-		     |XmNdefaultValidCursorIcon |XmNdeleteResponse |XmNdepth |XmNdestroyCallback |XmNdialogStyle |XmNdialogTitle 
-		     |XmNdialogType |XmNdirListItemCount |XmNdirListItems |XmNdirListLabelString |XmNdirMask |XmNdirSearchProc 
-		     |XmNdirSpec |XmNdirectory |XmNdirectoryValid |XmNdisarmCallback |XmNdoubleClickInterval |XmNdragCallback 
-		     |XmNdragDropFinishCallback |XmNdragInitiatorProtocolStyle |XmNdragMotionCallback |XmNdragOperations |XmNdragProc 
-		     |XmNdragReceiverProtocolStyle |XmNdropFinishCallback |XmNdropProc |XmNdropRectangles |XmNdropSiteActivity 
-		     |XmNdropSiteEnterCallback |XmNdropSiteLeaveCallback |XmNdropSiteOperations |XmNdropSiteType |XmNdropStartCallback 
-		     |XmNdropTransfers |XmNeditMode |XmNeditable |XmNentryAlignment |XmNentryBorder |XmNentryCallback |XmNentryClass 
-		     |XmNentryVerticalAlignment |XmNexportTargets |XmNexposeCallback |XmNextendedSelectionCallback |XmNfile 
-		     |XmNfileListItemCount |XmNfileListItems |XmNfileListLabelString |XmNfileSearchProc |XmNfileTypeMask |XmNfillOnArm 
-		     |XmNfillOnSelect |XmNfilterLabelString |XmNfocusCallback |XmNfont |XmNforeground |XmNforegroundThreshold 
-		     |XmNfractionBase |XmNgainPrimaryCallback |XmNgeometry |XmNheight |XmNheightInc |XmNhelpCallback |XmNhelpLabelString 
-		     |XmNhighlight |XmNhighlightColor |XmNhighlightOnEnter |XmNhighlightPixmap |XmNhighlightThickness |XmNhistoryItemCount 
-		     |XmNhistoryItems |XmNhistoryMaxItems |XmNhistoryVisibleItemCount |XmNhorizontalFontUnit |XmNhorizontalScrollBar 
-		     |XmNhorizontalSpacing |XmNhotX |XmNhotY |XmNiconMask |XmNiconName |XmNiconNameEncoding |XmNiconPixmap |XmNiconWindow 
-		     |XmNiconX |XmNiconY |XmNiconic |XmNimportTargets |XmNincrement |XmNincrementCallback |XmNincremental |XmNindicatorOn 
-		     |XmNindicatorSize |XmNindicatorType |XmNinitialDelay |XmNinitialFocus |XmNinitialResourcesPersistent |XmNinitialState 
-		     |XmNinput |XmNinputCallback |XmNinputMethod |XmNinsertPosition |XmNinvalidCursorForeground |XmNisAligned 
-		     |XmNisHomogeneous |XmNitemCount |XmNitems |XmNkeyboardFocusPolicy |XmNlabelInsensitivePixmap |XmNlabelPixmap 
-		     |XmNlabelString |XmNlabelType |XmNleftAttachment |XmNleftOffset |XmNleftPosition |XmNleftWidget 
-		     |XmNlightThreshold |XmNlineSpace |XmNlistItemCount |XmNlistItems |XmNlistLabelString |XmNlistMarginHeight 
-		     |XmNlistMarginWidth |XmNlistSizePolicy |XmNlistSpacing |XmNlistUpdated |XmNlistVisibleItemCount |XmNlosePrimaryCallback
-		     |XmNlosingFocusCallback |XmNmainWindowMarginHeight |XmNmainWindowMarginWidth |XmNmapCallback |XmNmappedWhenManaged 
-		     |XmNmappingDelay |XmNmargin |XmNmarginBottom |XmNmarginHeight |XmNmarginLeft |XmNmarginRight |XmNmarginTop 
-		     |XmNmarginWidth |XmNmask |XmNmaxAspectX |XmNmaxAspectY |XmNmaxHeight |XmNmaxLength |XmNmaxWidth |XmNmaximum 
-		     |XmNmenuAccelerator |XmNmenuBar |XmNmenuCursor |XmNmenuHelpWidget |XmNmenuHistory |XmNmenuPost |XmNmessageAlignment 
-		     |XmNmessageString |XmNmessageWindow |XmNminAspectX |XmNminAspectY |XmNminHeight |XmNminWidth |XmNminimizeButtons 
-		     |XmNminimum |XmNmnemonic |XmNmnemonicCharSet |XmNmodifyVerifyCallback |XmNmotionVerifyCallback |XmNmoveOpaque 
-		     |XmNmultiClick |XmNmultipleSelectionCallback |XmNmustMatch |XmNmwmDecorations |XmNmwmFunctions |XmNmwmInputMode 
-		     |XmNmwmMenu |XmNnavigationType |XmNnoMatchCallback |XmNnoMatchString |XmNnoResize |XmNnoneCursorForeground 
-		     |XmNnumChildren |XmNnumColumns |XmNnumDropRectangles |XmNnumDropTransfers |XmNnumExportTargets |XmNnumImportTargets 
-		     |XmNoffsetX |XmNoffsetY |XmNokCallback |XmNokLabelString |XmNoperationChangedCallback |XmNoperationCursorIcon 
-		     |XmNoptionLabel |XmNoptionMnemonic |XmNorientation |XmNoverrideRedirect |XmNpacking |XmNpageDecrementCallback 
-		     |XmNpageIncrement |XmNpageIncrementCallback |XmNpaneMaximum |XmNpaneMinimum |XmNpattern |XmNpendingDelete 
-		     |XmNpixmap |XmNpopdownCallback |XmNpopupCallback |XmNpopupEnabled |XmNpositionIndex |XmNpostFromButton 
-		     |XmNpreeditType |XmNprocessingDirection |XmNpromptString |XmNpushButtonEnabled |XmNqualifySearchDataProc 
-		     |XmNradioAlwaysOne |XmNradioBehavior |XmNrecomputeSize |XmNrefigureMode |XmNrepeatDelay |XmNresizable |XmNresize 
-		     |XmNresizeCallback |XmNresizeHeight |XmNresizePolicy |XmNresizeWidth |XmNrightAttachment |XmNrightOffset 
-		     |XmNrightPosition |XmNrightWidget |XmNrowColumnType |XmNrows |XmNrubberPositioning |XmNsashHeight |XmNsashIndent 
-		     |XmNsashShadowThickness |XmNsashWidth |XmNsaveUnder |XmNscaleHeight |XmNscaleMultiple |XmNscaleWidth |XmNscreen 
-		     |XmNscrollBarDisplayPolicy |XmNscrollBarPlacement |XmNscrollHorizontal |XmNscrollLeftSide |XmNscrollTopSide 
-		     |XmNscrollVertical |XmNscrolledWindowMarginHeight |XmNscrolledWindowMarginWidth |XmNscrollingPolicy 
-		     |XmNselectColor |XmNselectInsensitivePixmap |XmNselectPixmap |XmNselectThreshold |XmNselectedItemCount 
-		     |XmNselectedItems |XmNselection |XmNselectionArray |XmNselectionArrayCount |XmNselectionLabelString |XmNselectionPolicy 
-		     |XmNsensitive |XmNseparatorOn |XmNseparatorType |XmNset |XmNshadow |XmNshadowThickness |XmNshadowType |XmNshowArrows 
-		     |XmNshowAsDefault |XmNshowSeparator |XmNshowValue |XmNsimpleCallback |XmNsingleSelectionCallback |XmNskipAdjust 
-		     |XmNsliderSize |XmNsliderVisual |XmNslidingMode |XmNsource |XmNsourceCursorIcon |XmNsourcePixmapIcon |XmNspacing 
-		     |XmNspotLocation |XmNstateCursorIcon |XmNstring |XmNsubMenuId |XmNsymbolPixmap |XmNtearOffMenuActivateCallback
-		     |XmNtearOffMenuDeactivateCallback |XmNtearOffModel |XmNtextAccelerators |XmNtextColumns |XmNtextString
-		     |XmNtextTranslations |XmNtitle |XmNtitleEncoding |XmNtitleString |XmNtoBottomCallback |XmNtoTopCallback 
-		     |XmNtop |XmNtopAttachment |XmNtopCharacter |XmNtopItemPosition |XmNtopLevelEnterCallback |XmNtopLevelLeaveCallback 
-		     |XmNtopOffset |XmNtopPosition |XmNtopShadowColor |XmNtopShadowPixmap |XmNtopWidget |XmNtransferProc |XmNtransferStatus 
-		     |XmNtransient |XmNtransientFor |XmNtranslations |XmNtraversalOn |XmNtraverseObscuredCallback |XmNtroughColor 
-		     |XmNunitType |XmNunmapCallback |XmNunpostBehavior |XmNuseAsyncGeometry |XmNuserData |XmNvalidCursorForeground 
-		     |XmNvalue |XmNvalueChangedCallback |XmNverifyBell |XmNverticalFontUnit |XmNverticalScrollBar |XmNverticalSpacing 
-		     |XmNvisibleItemCount |XmNvisibleWhenOff |XmNvisual |XmNvisualPolicy |XmNwidth |XmNwidthInc |XmNwinGravity 
-		     |XmNwindow |XmNwindowGroup |XmNwmTimeout |XmNwordWrap |XmNworkWindow |XmNx |XmNy |XmNarrowLayout |XmNarrowOrientation 
-		     |XmNarrowSensitivity |XmNarrowSize |XmNarrowSpacing |XmNautoDragModel |XmNbackPageBackground |XmNbackPageForeground 
-		     |XmNbackPageNumber |XmNbackPagePlacement |XmNbackPageSize |XmNbindingPixmap |XmNbindingType |XmNbindingWidth 
-		     |XmNbitmapConversionModel |XmNbuttonRenderTable |XmNcollapsedStatePixmap |XmNcolorAllocationProc 
-		     |XmNcolorCalculationProc |XmNcomboBoxType |XmNconvertCallback |XmNdecimal |XmNdefaultArrowSensitivity 
-		     |XmNdefaultButtonEmphasis |XmNdefaultVirtualBindings |XmNdestinationCallback |XmNdetail |XmNdetailColumnHeading 
-		     |XmNdetailColumnHeadingCount |XmNdetailCount |XmNdetailOrder |XmNdetailOrderCount |XmNdetailShadowThickness 
-		     |XmNdetailTabList |XmNdirTextLabelString |XmNdragStartCallback |XmNenableBtn1Transfer |XmNenableButtonTab 
-		     |XmNenableDragIcon |XmNenableEtchedInMenu |XmNenableMultiKeyBindings |XmNenableThinThickness |XmNenableToggleColor 
-		     |XmNenableToggleVisual |XmNenableUnselectableDrag |XmNenableWarp |XmNendJobCallback |XmNentryParent 
-		     |XmNentryViewType |XmNexpandedStatePixmap |XmNfileFilterStyle |XmNfirstPageNumber |XmNfontName |XmNfontType 
-		     |XmNframeChildType |XmNframeShadowThickness |XmNgrabStyle |XmNincludeStatus |XmNincrementValue 
-		     |XmNindeterminateInsensitivePixmap |XmNindeterminatePixmap |XmNinnerMarginHeight |XmNinnerMarginWidth 
-		     |XmNinputPolicy |XmNinsensitiveStippleBitmap |XmNinvokeParseProc |XmNlabelRenderTable |XmNlargeCellHeight 
-		     |XmNlargeCellWidth |XmNlargeIcon |XmNlargeIconMask |XmNlargeIconPixmap |XmNlastPageNumber |XmNlayoutDirection 
-		     |XmNlayoutType |XmNlist |XmNloadModel |XmNmajorTabSpacing |XmNmatchBehavior |XmNmaxX |XmNmaxY |XmNmaximumValue 
-		     |XmNminX |XmNminY |XmNminimumValue |XmNminorTabSpacing |XmNmotifVersion |XmNnoFontCallback |XmNnoRenditionCallback 
-		     |XmNnotebookChildType |XmNnumValues |XmNoutlineButtonPolicy |XmNoutlineChangedCallback |XmNoutlineColumnWidth 
-		     |XmNoutlineIndentation |XmNoutlineLineStyle |XmNoutlineState |XmNpageChangedCallback |XmNpageNumber 
-		     |XmNpageSetupCallback |XmNpathMode |XmNpatternType |XmNpdmNotificationCallback |XmNpopupHandlerCallback 
-		     |XmNposition |XmNpositionMode |XmNpositionType |XmNpreeditCaretCallback |XmNpreeditDoneCallback 
-		     |XmNpreeditDrawCallback |XmNpreeditStartCallback |XmNprimaryOwnership |XmNrenderTable |XmNrenditionBackground 
-		     |XmNrenditionForeground |XmNscrolledWindowChildType |XmNselectedItem |XmNselectedObjectCount |XmNselectedObjects 
-		     |XmNselectedPosition |XmNselectedPositionCount |XmNselectedPositions |XmNselectionCallback |XmNselectionMode 
-		     |XmNselectionTechnique |XmNsliderMark |XmNsmallCellHeight |XmNsmallCellWidth |XmNsmallIcon |XmNsmallIconMask 
-		     |XmNsmallIconPixmap |XmNsnapBackMultiple |XmNspatialIncludeModel |XmNspatialResizeModel |XmNspatialSnapModel 
-		     |XmNspatialStyle |XmNspinBoxChildType |XmNstartJobCallback |XmNstrikethruType |XmNsubstitute |XmNtabList 
-		     |XmNtag |XmNtearOffTitle |XmNtextField |XmNtextRenderTable |XmNtoggleMode |XmNtotalLines |XmNunderlineType 
-		     |XmNunselectColor |XmNuseColorObj |XmNvalues |XmNverifyPreedit |XmNviewType |XmNvisualEmphasis |XmNwrap 
-		     |XmNlabelFontList |XmNbuttonFontList |XmNtextFontList |XmNwhichButton |XmNchildType |XmNstringDirection 
-		     |XmNfontList |XmNdefaultFontList |XmNshellUnitType)))
+	       (list XmNaccelerator XmNacceleratorText XmNaccelerators XmNactivateCallback XmNadjustLast XmNadjustMargin XmNalignment 
+		     XmNallowOverlap XmNallowResize XmNallowShellResize XmNancestorSensitive XmNanimationMask XmNanimationPixmap 
+		     XmNanimationPixmapDepth XmNanimationStyle XmNapplyCallback XmNapplyLabelString XmNargc XmNargv XmNarmCallback 
+		     XmNarmColor XmNarmPixmap XmNarrowDirection XmNattachment XmNaudibleWarning XmNautoShowCursorPosition XmNautoUnmanage 
+		     XmNautomaticSelection XmNbackground XmNbackgroundPixmap XmNbaseHeight XmNbaseWidth XmNbitmap XmNblendModel XmNblinkRate 
+		     XmNborderColor XmNborderColor XmNborderPixmap XmNborderWidth XmNbottomAttachment XmNbottomOffset XmNbottomPosition 
+		     XmNbottomShadowColor XmNbottomShadowPixmap XmNbottomWidget XmNbrowseSelectionCallback XmNbuttonAcceleratorText 
+		     XmNbuttonAccelerators XmNbuttonCount XmNbuttonMnemonicCharSets XmNbuttonMnemonics XmNbuttonSet XmNbuttonType 
+		     XmNbuttons XmNcancelButton XmNcancelCallback XmNcancelLabelString XmNcascadePixmap XmNcascadingCallback 
+		     XmNchildHorizontalAlignment XmNchildHorizontalSpacing XmNchildPlacement XmNchildVerticalAlignment XmNchildren 
+		     XmNclientData XmNclipWindow XmNcolormap XmNcolumns XmNcommand XmNcommandChangedCallback XmNcommandEnteredCallback 
+		     XmNcommandWindow XmNcommandWindowLocation XmNconvertProc XmNcreatePopupChildProc XmNcursorBackground 
+		     XmNcursorForeground XmNcursorPosition XmNcursorPositionVisible XmNdarkThreshold XmNdecimalPoints 
+		     XmNdecrementCallback XmNdefaultActionCallback XmNdefaultButton XmNdefaultButtonShadowThickness 
+		     XmNdefaultButtonType XmNdefaultCopyCursorIcon XmNdefaultInvalidCursorIcon XmNdefaultLinkCursorIcon 
+		     XmNdefaultMoveCursorIcon XmNdefaultNoneCursorIcon XmNdefaultPosition XmNdefaultSourceCursorIcon 
+		     XmNdefaultValidCursorIcon XmNdeleteResponse XmNdepth XmNdestroyCallback XmNdialogStyle XmNdialogTitle 
+		     XmNdialogType XmNdirListItemCount XmNdirListItems XmNdirListLabelString XmNdirMask XmNdirSearchProc 
+		     XmNdirSpec XmNdirectory XmNdirectoryValid XmNdisarmCallback XmNdoubleClickInterval XmNdragCallback 
+		     XmNdragDropFinishCallback XmNdragInitiatorProtocolStyle XmNdragMotionCallback XmNdragOperations XmNdragProc 
+		     XmNdragReceiverProtocolStyle XmNdropFinishCallback XmNdropProc XmNdropRectangles XmNdropSiteActivity 
+		     XmNdropSiteEnterCallback XmNdropSiteLeaveCallback XmNdropSiteOperations XmNdropSiteType XmNdropStartCallback 
+		     XmNdropTransfers XmNeditMode XmNeditable XmNentryAlignment XmNentryBorder XmNentryCallback XmNentryClass 
+		     XmNentryVerticalAlignment XmNexportTargets XmNexposeCallback XmNextendedSelectionCallback XmNfile 
+		     XmNfileListItemCount XmNfileListItems XmNfileListLabelString XmNfileSearchProc XmNfileTypeMask XmNfillOnArm 
+		     XmNfillOnSelect XmNfilterLabelString XmNfocusCallback XmNfont XmNforeground XmNforegroundThreshold 
+		     XmNfractionBase XmNgainPrimaryCallback XmNgeometry XmNheight XmNheightInc XmNhelpCallback XmNhelpLabelString 
+		     XmNhighlight XmNhighlightColor XmNhighlightOnEnter XmNhighlightPixmap XmNhighlightThickness XmNhistoryItemCount 
+		     XmNhistoryItems XmNhistoryMaxItems XmNhistoryVisibleItemCount XmNhorizontalFontUnit XmNhorizontalScrollBar 
+		     XmNhorizontalSpacing XmNhotX XmNhotY XmNiconMask XmNiconName XmNiconNameEncoding XmNiconPixmap XmNiconWindow 
+		     XmNiconX XmNiconY XmNiconic XmNimportTargets XmNincrement XmNincrementCallback XmNincremental XmNindicatorOn 
+		     XmNindicatorSize XmNindicatorType XmNinitialDelay XmNinitialFocus XmNinitialResourcesPersistent XmNinitialState 
+		     XmNinput XmNinputCallback XmNinputMethod XmNinsertPosition XmNinvalidCursorForeground XmNisAligned 
+		     XmNisHomogeneous XmNitemCount XmNitems XmNkeyboardFocusPolicy XmNlabelInsensitivePixmap XmNlabelPixmap 
+		     XmNlabelString XmNlabelType XmNleftAttachment XmNleftOffset XmNleftPosition XmNleftWidget 
+		     XmNlightThreshold XmNlineSpace XmNlistItemCount XmNlistItems XmNlistLabelString XmNlistMarginHeight 
+		     XmNlistMarginWidth XmNlistSizePolicy XmNlistSpacing XmNlistUpdated XmNlistVisibleItemCount XmNlosePrimaryCallback
+		     XmNlosingFocusCallback XmNmainWindowMarginHeight XmNmainWindowMarginWidth XmNmapCallback XmNmappedWhenManaged 
+		     XmNmappingDelay XmNmargin XmNmarginBottom XmNmarginHeight XmNmarginLeft XmNmarginRight XmNmarginTop 
+		     XmNmarginWidth XmNmask XmNmaxAspectX XmNmaxAspectY XmNmaxHeight XmNmaxLength XmNmaxWidth XmNmaximum 
+		     XmNmenuAccelerator XmNmenuBar XmNmenuCursor XmNmenuHelpWidget XmNmenuHistory XmNmenuPost XmNmessageAlignment 
+		     XmNmessageString XmNmessageWindow XmNminAspectX XmNminAspectY XmNminHeight XmNminWidth XmNminimizeButtons 
+		     XmNminimum XmNmnemonic XmNmnemonicCharSet XmNmodifyVerifyCallback XmNmotionVerifyCallback XmNmoveOpaque 
+		     XmNmultiClick XmNmultipleSelectionCallback XmNmustMatch XmNmwmDecorations XmNmwmFunctions XmNmwmInputMode 
+		     XmNmwmMenu XmNnavigationType XmNnoMatchCallback XmNnoMatchString XmNnoResize XmNnoneCursorForeground 
+		     XmNnumChildren XmNnumColumns XmNnumDropRectangles XmNnumDropTransfers XmNnumExportTargets XmNnumImportTargets 
+		     XmNoffsetX XmNoffsetY XmNokCallback XmNokLabelString XmNoperationChangedCallback XmNoperationCursorIcon 
+		     XmNoptionLabel XmNoptionMnemonic XmNorientation XmNoverrideRedirect XmNpacking XmNpageDecrementCallback 
+		     XmNpageIncrement XmNpageIncrementCallback XmNpaneMaximum XmNpaneMinimum XmNpattern XmNpendingDelete 
+		     XmNpixmap XmNpopdownCallback XmNpopupCallback XmNpopupEnabled XmNpositionIndex XmNpostFromButton 
+		     XmNpreeditType XmNprocessingDirection XmNpromptString XmNpushButtonEnabled XmNqualifySearchDataProc 
+		     XmNradioAlwaysOne XmNradioBehavior XmNrecomputeSize XmNrefigureMode XmNrepeatDelay XmNresizable XmNresize 
+		     XmNresizeCallback XmNresizeHeight XmNresizePolicy XmNresizeWidth XmNrightAttachment XmNrightOffset 
+		     XmNrightPosition XmNrightWidget XmNrowColumnType XmNrows XmNrubberPositioning XmNsashHeight XmNsashIndent 
+		     XmNsashShadowThickness XmNsashWidth XmNsaveUnder XmNscaleHeight XmNscaleMultiple XmNscaleWidth XmNscreen 
+		     XmNscrollBarDisplayPolicy XmNscrollBarPlacement XmNscrollHorizontal XmNscrollLeftSide XmNscrollTopSide 
+		     XmNscrollVertical XmNscrolledWindowMarginHeight XmNscrolledWindowMarginWidth XmNscrollingPolicy 
+		     XmNselectColor XmNselectInsensitivePixmap XmNselectPixmap XmNselectThreshold XmNselectedItemCount 
+		     XmNselectedItems XmNselection XmNselectionArray XmNselectionArrayCount XmNselectionLabelString XmNselectionPolicy 
+		     XmNsensitive XmNseparatorOn XmNseparatorType XmNset XmNshadow XmNshadowThickness XmNshadowType XmNshowArrows 
+		     XmNshowAsDefault XmNshowSeparator XmNshowValue XmNsimpleCallback XmNsingleSelectionCallback XmNskipAdjust 
+		     XmNsliderSize XmNsliderVisual XmNslidingMode XmNsource XmNsourceCursorIcon XmNsourcePixmapIcon XmNspacing 
+		     XmNspotLocation XmNstateCursorIcon XmNstring XmNsubMenuId XmNsymbolPixmap XmNtearOffMenuActivateCallback
+		     XmNtearOffMenuDeactivateCallback XmNtearOffModel XmNtextAccelerators XmNtextColumns XmNtextString
+		     XmNtextTranslations XmNtitle XmNtitleEncoding XmNtitleString XmNtoBottomCallback XmNtoTopCallback 
+		     XmNtop XmNtopAttachment XmNtopCharacter XmNtopItemPosition XmNtopLevelEnterCallback XmNtopLevelLeaveCallback 
+		     XmNtopOffset XmNtopPosition XmNtopShadowColor XmNtopShadowPixmap XmNtopWidget XmNtransferProc XmNtransferStatus 
+		     XmNtransient XmNtransientFor XmNtranslations XmNtraversalOn XmNtraverseObscuredCallback XmNtroughColor 
+		     XmNunitType XmNunmapCallback XmNunpostBehavior XmNuseAsyncGeometry XmNuserData XmNvalidCursorForeground 
+		     XmNvalue XmNvalueChangedCallback XmNverifyBell XmNverticalFontUnit XmNverticalScrollBar XmNverticalSpacing 
+		     XmNvisibleItemCount XmNvisibleWhenOff XmNvisual XmNvisualPolicy XmNwidth XmNwidthInc XmNwinGravity 
+		     XmNwindow XmNwindowGroup XmNwmTimeout XmNwordWrap XmNworkWindow XmNx XmNy XmNarrowLayout XmNarrowOrientation 
+		     XmNarrowSensitivity XmNarrowSize XmNarrowSpacing XmNautoDragModel XmNbackPageBackground XmNbackPageForeground 
+		     XmNbackPageNumber XmNbackPagePlacement XmNbackPageSize XmNbindingPixmap XmNbindingType XmNbindingWidth 
+		     XmNbitmapConversionModel XmNbuttonRenderTable XmNcollapsedStatePixmap XmNcolorAllocationProc 
+		     XmNcolorCalculationProc XmNcomboBoxType XmNconvertCallback XmNdecimal XmNdefaultArrowSensitivity 
+		     XmNdefaultButtonEmphasis XmNdefaultVirtualBindings XmNdestinationCallback XmNdetail XmNdetailColumnHeading 
+		     XmNdetailColumnHeadingCount XmNdetailCount XmNdetailOrder XmNdetailOrderCount XmNdetailShadowThickness 
+		     XmNdetailTabList XmNdirTextLabelString XmNdragStartCallback XmNenableBtn1Transfer XmNenableButtonTab 
+		     XmNenableDragIcon XmNenableEtchedInMenu XmNenableMultiKeyBindings XmNenableThinThickness XmNenableToggleColor 
+		     XmNenableToggleVisual XmNenableUnselectableDrag XmNenableWarp XmNendJobCallback XmNentryParent 
+		     XmNentryViewType XmNexpandedStatePixmap XmNfileFilterStyle XmNfirstPageNumber XmNfontName XmNfontType 
+		     XmNframeChildType XmNframeShadowThickness XmNgrabStyle XmNincludeStatus XmNincrementValue 
+		     XmNindeterminateInsensitivePixmap XmNindeterminatePixmap XmNinnerMarginHeight XmNinnerMarginWidth 
+		     XmNinputPolicy XmNinsensitiveStippleBitmap XmNinvokeParseProc XmNlabelRenderTable XmNlargeCellHeight 
+		     XmNlargeCellWidth XmNlargeIcon XmNlargeIconMask XmNlargeIconPixmap XmNlastPageNumber XmNlayoutDirection 
+		     XmNlayoutType XmNlist XmNloadModel XmNmajorTabSpacing XmNmatchBehavior XmNmaxX XmNmaxY XmNmaximumValue 
+		     XmNminX XmNminY XmNminimumValue XmNminorTabSpacing XmNmotifVersion XmNnoFontCallback XmNnoRenditionCallback 
+		     XmNnotebookChildType XmNnumValues XmNoutlineButtonPolicy XmNoutlineChangedCallback XmNoutlineColumnWidth 
+		     XmNoutlineIndentation XmNoutlineLineStyle XmNoutlineState XmNpageChangedCallback XmNpageNumber 
+		     XmNpageSetupCallback XmNpathMode XmNpatternType XmNpdmNotificationCallback XmNpopupHandlerCallback 
+		     XmNposition XmNpositionMode XmNpositionType XmNpreeditCaretCallback XmNpreeditDoneCallback 
+		     XmNpreeditDrawCallback XmNpreeditStartCallback XmNprimaryOwnership XmNrenderTable XmNrenditionBackground 
+		     XmNrenditionForeground XmNscrolledWindowChildType XmNselectedItem XmNselectedObjectCount XmNselectedObjects 
+		     XmNselectedPosition XmNselectedPositionCount XmNselectedPositions XmNselectionCallback XmNselectionMode 
+		     XmNselectionTechnique XmNsliderMark XmNsmallCellHeight XmNsmallCellWidth XmNsmallIcon XmNsmallIconMask 
+		     XmNsmallIconPixmap XmNsnapBackMultiple XmNspatialIncludeModel XmNspatialResizeModel XmNspatialSnapModel 
+		     XmNspatialStyle XmNspinBoxChildType XmNstartJobCallback XmNstrikethruType XmNsubstitute XmNtabList 
+		     XmNtag XmNtearOffTitle XmNtextField XmNtextRenderTable XmNtoggleMode XmNtotalLines XmNunderlineType 
+		     XmNunselectColor XmNuseColorObj XmNvalues XmNverifyPreedit XmNviewType XmNvisualEmphasis XmNwrap 
+		     XmNlabelFontList XmNbuttonFontList XmNtextFontList XmNwhichButton XmNchildType XmNstringDirection 
+		     XmNfontList XmNdefaultFontList XmNshellUnitType)))
 
 	      (for-each
 	       (lambda (n)
 		 (if (not (string? n)) (snd-display ";resource ~A is not a string?" n))
-		 (|XtVaGetValues shell (list n 0)))
+		 (XtVaGetValues shell (list n 0)))
 	       resource-list)
 
 	      (let* ((create-procs (list
-			            |XmCreateMenuShell |XmCreateSimpleCheckBox |XmCreateSimpleRadioBox
-			            |XmCreateSimpleOptionMenu |XmCreateSimplePulldownMenu |XmCreateSimplePopupMenu
-			            |XmCreateSimpleMenuBar |XmCreateMainWindow |XmCreateScrolledList |XmCreateList
-			            |XmCreateLabel |XmCreateLabelGadget |XmCreateToggleButton |XmCreateToggleButtonGadget
-			            |XmCreateGrabShell |XmCreateFrame |XmCreateFormDialog |XmCreateForm |XmCreateText
-			            |XmCreateScrolledText |XmCreateFileSelectionDialog |XmCreateFileSelectionBox
-			            |XmCreateTextField |XmCreateSimpleSpinBox |XmCreateDrawnButton |XmCreateSpinBox
-			            |XmCreateDrawingArea |XmCreateSeparator |XmCreateDragIcon |XmCreateSeparatorGadget
-			            |XmCreatePromptDialog |XmCreateSelectionDialog |XmCreateSelectionBox
-			            |XmCreateScrolledWindow |XmCreateDialogShell |XmCreateScrollBar |XmCreateScale
-			            |XmCreateContainer |XmCreatePulldownMenu |XmCreatePopupMenu |XmCreateMenuBar
-			            |XmCreateOptionMenu |XmCreateRadioBox |XmCreateWorkArea |XmCreateRowColumn
-			            |XmCreateCommandDialog |XmCreateCommand |XmCreateDropDownList |XmCreateDropDownComboBox
-			            |XmCreateComboBox |XmCreatePushButton |XmCreatePushButtonGadget |XmCreateCascadeButton
-			            |XmCreateCascadeButtonGadget |XmCreateBulletinBoardDialog |XmCreateBulletinBoard
-			            |XmCreatePanedWindow |XmCreateNotebook |XmCreateArrowButton |XmCreateArrowButtonGadget
-			            |XmCreateTemplateDialog |XmCreateWorkingDialog |XmCreateWarningDialog
-			            |XmCreateQuestionDialog |XmCreateInformationDialog |XmCreateErrorDialog
-			            |XmCreateMessageDialog |XmCreateMessageBox |XmCreateIconGadget))
+			            XmCreateMenuShell XmCreateSimpleCheckBox XmCreateSimpleRadioBox
+			            XmCreateSimpleOptionMenu XmCreateSimplePulldownMenu XmCreateSimplePopupMenu
+			            XmCreateSimpleMenuBar XmCreateMainWindow XmCreateScrolledList XmCreateList
+			            XmCreateLabel XmCreateLabelGadget XmCreateToggleButton XmCreateToggleButtonGadget
+			            XmCreateGrabShell XmCreateFrame XmCreateFormDialog XmCreateForm XmCreateText
+			            XmCreateScrolledText XmCreateFileSelectionDialog XmCreateFileSelectionBox
+			            XmCreateTextField XmCreateSimpleSpinBox XmCreateDrawnButton XmCreateSpinBox
+			            XmCreateDrawingArea XmCreateSeparator XmCreateDragIcon XmCreateSeparatorGadget
+			            XmCreatePromptDialog XmCreateSelectionDialog XmCreateSelectionBox
+			            XmCreateScrolledWindow XmCreateDialogShell XmCreateScrollBar XmCreateScale
+			            XmCreateContainer XmCreatePulldownMenu XmCreatePopupMenu XmCreateMenuBar
+			            XmCreateOptionMenu XmCreateRadioBox XmCreateWorkArea XmCreateRowColumn
+			            XmCreateCommandDialog XmCreateCommand XmCreateDropDownList XmCreateDropDownComboBox
+			            XmCreateComboBox XmCreatePushButton XmCreatePushButtonGadget XmCreateCascadeButton
+			            XmCreateCascadeButtonGadget XmCreateBulletinBoardDialog XmCreateBulletinBoard
+			            XmCreatePanedWindow XmCreateNotebook XmCreateArrowButton XmCreateArrowButtonGadget
+			            XmCreateTemplateDialog XmCreateWorkingDialog XmCreateWarningDialog
+			            XmCreateQuestionDialog XmCreateInformationDialog XmCreateErrorDialog
+			            XmCreateMessageDialog XmCreateMessageBox XmCreateIconGadget))
 		     (parent (list-ref (main-widgets) 3))
-		     (str (|XmStringCreateLocalized "yow"))
-		     (args (list |XmNheight 100 |XmNwidth 100 |XmNlabelString str))
+		     (str (XmStringCreateLocalized "yow"))
+		     (args (list XmNheight 100 XmNwidth 100 XmNlabelString str))
 		     (ques (list
-			         |XmMenuShell? #f #f #f #f
-			         #f #f |XmMainWindow? #f |XmList?
-			         |XmLabel? |XmLabelGadget? |XmToggleButton?
-			         |XmToggleButtonGadget? |XmGrabShell? |XmFrame? #f |XmForm?
-			         |XmText? #f #f |XmFileSelectionBox?
-			         |XmTextField? #f |XmDrawnButton? #f |XmDrawingArea?
-			         |XmSeparator? #f |XmSeparatorGadget? #f #f
-			         |XmSelectionBox? |XmScrolledWindow? |XmDialogShell? |XmScrollBar?
-			         |XmScale? |XmContainer? #f #f #f
-			         #f #f #f |XmRowColumn? #f
-			         |XmCommand? #f #f |XmComboBox? |XmPushButton?
-			         |XmPushButtonGadget? |XmCascadeButton? |XmCascadeButtonGadget? #f
-			         |XmBulletinBoard? |XmPanedWindow? |XmNotebook? |XmArrowButton? |XmArrowButtonGadget?
-			         #f #f #f #f #f #f #f #f |XmIconGadget?))
+			         XmMenuShell? #f #f #f #f
+			         #f #f XmMainWindow? #f XmList?
+			         XmLabel? XmLabelGadget? XmToggleButton?
+			         XmToggleButtonGadget? XmGrabShell? XmFrame? #f XmForm?
+			         XmText? #f #f XmFileSelectionBox?
+			         XmTextField? #f XmDrawnButton? #f XmDrawingArea?
+			         XmSeparator? #f XmSeparatorGadget? #f #f
+			         XmSelectionBox? XmScrolledWindow? XmDialogShell? XmScrollBar?
+			         XmScale? XmContainer? #f #f #f
+			         #f #f #f XmRowColumn? #f
+			         XmCommand? #f #f XmComboBox? XmPushButton?
+			         XmPushButtonGadget? XmCascadeButton? XmCascadeButtonGadget? #f
+			         XmBulletinBoard? XmPanedWindow? XmNotebook? XmArrowButton? XmArrowButtonGadget?
+			         #f #f #f #f #f #f #f #f XmIconGadget?))
 		     (is (list   
-                               |XmIsMenuShell #f #f #f #f
-		               #f #f |XmIsMainWindow #f |XmIsList
-		               |XmIsLabel |XmIsLabelGadget |XmIsToggleButton
-		               |XmIsToggleButtonGadget |XmIsGrabShell |XmIsFrame #f |XmIsForm
-		               |XmIsText #f #f |XmIsFileSelectionBox
-		               |XmIsTextField #f |XmIsDrawnButton #f |XmIsDrawingArea
-		               |XmIsSeparator #f |XmIsSeparatorGadget #f #f
-		               |XmIsSelectionBox |XmIsScrolledWindow |XmIsDialogShell |XmIsScrollBar
-		               |XmIsScale |XmIsContainer #f #f #f
-		               #f #f #f |XmIsRowColumn #f
-		               |XmIsCommand #f #f |XmIsComboBox |XmIsPushButton
-		               |XmIsPushButtonGadget |XmIsCascadeButton |XmIsCascadeButtonGadget #f
-		               |XmIsBulletinBoard |XmIsPanedWindow |XmIsNotebook |XmIsArrowButton |XmIsArrowButtonGadget
-		               #f #f #f #f #f #f #f #f |XmIsIconGadget)))
+                               XmIsMenuShell #f #f #f #f
+		               #f #f XmIsMainWindow #f XmIsList
+		               XmIsLabel XmIsLabelGadget XmIsToggleButton
+		               XmIsToggleButtonGadget XmIsGrabShell XmIsFrame #f XmIsForm
+		               XmIsText #f #f XmIsFileSelectionBox
+		               XmIsTextField #f XmIsDrawnButton #f XmIsDrawingArea
+		               XmIsSeparator #f XmIsSeparatorGadget #f #f
+		               XmIsSelectionBox XmIsScrolledWindow XmIsDialogShell XmIsScrollBar
+		               XmIsScale XmIsContainer #f #f #f
+		               #f #f #f XmIsRowColumn #f
+		               XmIsCommand #f #f XmIsComboBox XmIsPushButton
+		               XmIsPushButtonGadget XmIsCascadeButton XmIsCascadeButtonGadget #f
+		               XmIsBulletinBoard XmIsPanedWindow XmIsNotebook XmIsArrowButton XmIsArrowButtonGadget
+		               #f #f #f #f #f #f #f #f XmIsIconGadget)))
 		(for-each 
 		 (lambda (n q qq)
 		   (let ((wid (n parent "hiho" args)))
-		     (IF (not (string=? (|XtName wid) "hiho"))
-			 (snd-display ";~A name: ~A" wid (|XtName wid)))
-		     (IF (not (|Widget? wid))
+		     (IF (not (string=? (XtName wid) "hiho"))
+			 (snd-display ";~A name: ~A" wid (XtName wid)))
+		     (IF (not (Widget? wid))
 			 (snd-display ";~A not a widget?" wid))
 		     (IF (and q (not (q wid)))
 			 (snd-display ";~A is not ~A?" wid q))
@@ -23775,265 +23775,265 @@ EDITS: 5
 			 (snd-display ";~A is not ~A" wid qq))
 		     (for-each
 		      (lambda (n)
-			(|XtVaGetValues wid (list n 0)))
+			(XtVaGetValues wid (list n 0)))
 		      resource-list)
 		     ))
 		 create-procs ques is)))
       
-	    (IF (not (|XEvent? (|XEvent)))
-		(snd-display ";xevent type trouble! ~A -> ~A" (|XEvent) (|XEvent? (|XEvent))))
-	    (IF (not (|XGCValues? (|XGCValues)))
-		(snd-display ";xgcvalues type trouble! ~A -> ~A" (|XGCValues) (|XGCValues? (|XGCValues))))
+	    (IF (not (XEvent? (XEvent)))
+		(snd-display ";xevent type trouble! ~A -> ~A" (XEvent) (XEvent? (XEvent))))
+	    (IF (not (XGCValues? (XGCValues)))
+		(snd-display ";xgcvalues type trouble! ~A -> ~A" (XGCValues) (XGCValues? (XGCValues))))
 
 	    (let* ((xm-procs 
 		    ;; these can't be called in this context:
-		    ;;   |XtProcessEvent |XtAppProcessEvent |XtMainLoop |XtAppMainLoop |XtAppAddActions |XtAddActions 
-		    ;;   |XtNextEvent |XtAppNextEvent |XtPeekEvent |XtAppPeekEvent |XtMalloc |XtCalloc |XtRealloc |XtFree |XFree 
-		    ;;   |freeXPoints |moveXPoints |vector->XPoints |XNextEvent |XPutBackEvent |XmParseMappingCreate |XmParseMappingSetValues 
-		    ;;   |XReadBitmapFile |XReadBitmapFileData |XmTransferStartRequest |XmTransferSendRequest |XmTransferDone 
+		    ;;   XtProcessEvent XtAppProcessEvent XtMainLoop XtAppMainLoop XtAppAddActions XtAddActions 
+		    ;;   XtNextEvent XtAppNextEvent XtPeekEvent XtAppPeekEvent XtMalloc XtCalloc XtRealloc XtFree XFree 
+		    ;;   freeXPoints moveXPoints vector->XPoints XNextEvent XPutBackEvent XmParseMappingCreate XmParseMappingSetValues 
+		    ;;   XReadBitmapFile XReadBitmapFileData XmTransferStartRequest XmTransferSendRequest XmTransferDone 
 		    (list
-		         |XpStartPage |XpEndPage |XpCancelPage |XpStartJob |XpEndJob |XpCancelJob |XpStartDoc |XpEndDoc
-		         |XpCancelDoc |XpRehashPrinterList |XpCreateContext |XpSetContext |XpGetContext |XpDestroyContext
-		         |XpGetLocaleNetString |XpNotifyPdm |XpSendAuth |XpGetImageResolution |XpGetAttributes |XpSetAttributes
-		         |XpGetOneAttribute |XpGetScreenOfContext |XpFreePrinterList |XpQueryVersion |XpQueryExtension
-		         |XpQueryScreens |XpGetPdmStartParams |XpGetAuthParams |XpSendOneTicket |XpGetPageDimensions
-		         |XpSetImageResolution |XpGetPrinterList |XpSelectInput |XpInputSelected |XpPutDocumentData
-		         |XpGetDocumentData |XtSetArg |XtManageChildren |XtManageChild |XtUnmanageChildren |XtUnmanageChild
-		         |XtDispatchEvent |XtCallAcceptFocus |XtIsSubclass |XtIsObject |XtIsManaged |XtIsRealized
-		         |XtIsSensitive |XtOwnSelection |XtOwnSelectionIncremental |XtMakeResizeRequest |XtTranslateCoords
-		         |XtKeysymToKeycodeList |XtParseTranslationTable |XtParseAcceleratorTable |XtOverrideTranslations |XtAugmentTranslations
-		         |XtInstallAccelerators |XtInstallAllAccelerators |XtUninstallTranslations |XtAppAddActionHook
-		         |XtRemoveActionHook |XtGetActionList |XtCallActionProc |XtRegisterGrabAction |XtSetMultiClickTime
-		         |XtGetMultiClickTime |XtGetActionKeysym |XtTranslateKeycode |XtTranslateKey |XtSetKeyTranslator
-		         |XtRegisterCaseConverter |XtConvertCase |XtAddEventHandler |XtRemoveEventHandler |XtAddRawEventHandler
-		         |XtRemoveRawEventHandler |XtInsertEventHandler |XtInsertRawEventHandler |XtDispatchEventToWidget
-		         |XtBuildEventMask |XtAddGrab |XtRemoveGrab |XtAddExposureToRegion |XtSetKeyboardFocus
-		         |XtGetKeyboardFocusWidget |XtLastEventProcessed |XtLastTimestampProcessed |XtAddTimeOut
-		         |XtAppAddTimeOut |XtRemoveTimeOut |XtAddInput |XtAppAddInput |XtRemoveInput |XtPending |XtAppPending
-		         |XtRealizeWidget |XtUnrealizeWidget |XtDestroyWidget |XtSetSensitive |XtNameToWidget |XtWindowToWidget
-		         |XtMergeArgLists |XtVaCreateArgsList |XtDisplay |XtDisplayOfObject |XtScreen |XtScreenOfObject
-		         |XtWindow |XtWindowOfObject |XtName |XtSuperclass |XtClass |XtParent |XtAddCallback |XtRemoveCallback
-		         |XtAddCallbacks |XtRemoveCallbacks |XtRemoveAllCallbacks |XtCallCallbacks |XtCallCallbackList
-		         |XtHasCallbacks |XtCreatePopupShell |XtVaCreatePopupShell |XtPopup |XtPopupSpringLoaded
-		         |XtCallbackNone |XtCallbackNonexclusive |XtCallbackExclusive |XtPopdown |XtCallbackPopdown
-		         |XtCreateWidget |XtCreateManagedWidget |XtVaCreateWidget |XtVaCreateManagedWidget
-		         |XtCreateApplicationShell |XtAppCreateShell |XtVaAppCreateShell |XtToolkitInitialize
-		         |XtSetLanguageProc |XtDisplayInitialize |XtOpenApplication |XtVaOpenApplication |XtAppInitialize
-		         |XtVaAppInitialize |XtInitialize |XtOpenDisplay |XtCreateApplicationContext
-		         |XtDestroyApplicationContext |XtInitializeWidgetClass |XtWidgetToApplicationContext
-		         |XtDisplayToApplicationContext |XtCloseDisplay |XtSetValues |XtVaSetValues |XtGetValues |XtVaGetValues
-		         |XtAppSetErrorMsgHandler |XtSetErrorMsgHandler |XtAppSetWarningMsgHandler |XtSetWarningMsgHandler
-		         |XtAppErrorMsg |XtErrorMsg |XtAppWarningMsg |XtWarningMsg |XtAppSetErrorHandler |XtSetErrorHandler
-		         |XtAppSetWarningHandler |XtSetWarningHandler |XtAppError |XtError |XtAppWarning |XtWarning
-		         |XtAddWorkProc |XtAppAddWorkProc |XtRemoveWorkProc |XtGetGC |XtAllocateGC |XtDestroyGC |XtReleaseGC
-		         |XtFindFile |XtResolvePathname |XtDisownSelection |XtGetSelectionValue
-		         |XtGetSelectionValues |XtAppSetSelectionTimeout |XtSetSelectionTimeout |XtAppGetSelectionTimeout
-		         |XtGetSelectionTimeout |XtGetSelectionRequest |XtGetSelectionValueIncremental
-		         |XtGetSelectionValuesIncremental |XtCreateSelectionRequest |XtSendSelectionRequest
-		         |XtCancelSelectionRequest |XtGrabKey |XtUngrabKey
-		         |XtGrabKeyboard |XtUngrabKeyboard |XtGrabButton |XtUngrabButton |XtGrabPointer |XtUngrabPointer
-		         |XtGetApplicationNameAndClass |XtGetDisplays |XtToolkitThreadInitialize |XtAppLock |XtAppUnlock |XtIsRectObj |XtIsWidget
-		         |XtIsComposite |XtIsConstraint |XtIsShell |XtIsOverrideShell |XtIsWMShell |XtIsVendorShell
-		         |XtIsTransientShell |XtIsTopLevelShell |XtIsApplicationShell |XtIsSessionShell |XtMapWidget
-		         |XtUnmapWidget |XLoadQueryFont |XQueryFont |XGetMotionEvents |XDeleteModifiermapEntry
-		         |XGetModifierMapping |XInsertModifiermapEntry |XNewModifiermap |XCreateImage |XGetImage
-		         |XGetSubImage |XOpenDisplay |XFetchBytes |XFetchBuffer |XGetAtomName |XDisplayName |XUniqueContext
-		         |XKeysymToString |XSynchronize |XSetAfterFunction |XInternAtom |XCopyColormapAndFree |XCreateColormap
-		         |XCreatePixmapCursor |XCreateGlyphCursor |XCreateFontCursor |XLoadFont |XCreateGC |XFlushGC
-		         |XCreatePixmap |XCreateBitmapFromData |XCreatePixmapFromBitmapData |XCreateSimpleWindow
-		         |XGetSelectionOwner |XCreateWindow |XListInstalledColormaps |XListFonts |XListFontsWithInfo
-		         |XGetFontPath |XListExtensions |XListProperties |XKeycodeToKeysym |XLookupKeysym
-		         |XGetKeyboardMapping 
-                         |XStringToKeysym 
-			 |XMaxRequestSize |XExtendedMaxRequestSize
-		         |XDisplayMotionBufferSize |XVisualIDFromVisual
-		         |XInitThreads |XLockDisplay |XUnlockDisplay |XRootWindow |XDefaultRootWindow |XRootWindowOfScreen
-		         |XDefaultVisual |XDefaultVisualOfScreen |XDefaultGC |XDefaultGCOfScreen |XBlackPixel |XWhitePixel
-		         |XAllPlanes |XBlackPixelOfScreen |XWhitePixelOfScreen |XNextRequest |XLastKnownRequestProcessed
-		         |XServerVendor |XDisplayString |XDefaultColormap |XDefaultColormapOfScreen |XDisplayOfScreen
-		         |XScreenOfDisplay |XDefaultScreenOfDisplay |XEventMaskOfScreen |XScreenNumberOfScreen
-		         |XSetErrorHandler |XSetIOErrorHandler |XListPixmapFormats |XListDepths |XReconfigureWMWindow
-		         |XGetWMProtocols |XSetWMProtocols |XIconifyWindow |XWithdrawWindow |XGetCommand |XGetWMColormapWindows
-		         |XFreeStringList |XSetTransientForHint |XActivateScreenSaver
-		         |XAllocColor |XAllocColorCells |XAllocColorPlanes |XAllocNamedColor
-		         |XAllowEvents |XAutoRepeatOff |XAutoRepeatOn |XBell |XBitmapBitOrder |XBitmapPad |XBitmapUnit
-		         |XCellsOfScreen |XChangeActivePointerGrab |XChangeGC |XChangeKeyboardControl |XChangeKeyboardMapping
-		         |XChangePointerControl |XChangeProperty |XChangeWindowAttributes ; |XCheckIfEvent
-		         |XCheckMaskEvent |XCheckTypedEvent |XCheckTypedWindowEvent |XCheckWindowEvent |XCirculateSubwindows
-		         |XCirculateSubwindowsDown |XCirculateSubwindowsUp |XClearArea |XClearWindow |XCloseDisplay
-		         |XConfigureWindow |XConnectionNumber |XConvertSelection |XCopyArea |XCopyGC |XCopyPlane |XDefaultDepth
-		         |XDefaultDepthOfScreen |XDefaultScreen |XDefineCursor |XDeleteProperty |XDestroyWindow
-		         |XDestroySubwindows |XDoesBackingStore |XDoesSaveUnders |XDisableAccessControl |XDisplayCells
-		         |XDisplayHeight |XDisplayHeightMM |XDisplayKeycodes |XDisplayPlanes |XDisplayWidth |XDisplayWidthMM
-		         |XDrawArc |XDrawArcs |XDrawImageString |XDrawLine |XDrawLines |XDrawLinesDirect |XDrawPoint
-		         |XDrawPoints |XDrawRectangle |XDrawRectangles |XDrawSegments |XDrawString |XDrawText
-		         |XEnableAccessControl |XEventsQueued |XFetchName |XFillArc |XFillArcs |XFillPolygon |XFillRectangle
-		         |XFillRectangles |XFlush |XForceScreenSaver |XFreeColormap |XFreeColors |XFreeCursor
-		         |XFreeExtensionList |XFreeFont |XFreeFontInfo |XFreeFontNames |XFreeFontPath |XFreeGC
-		         |XFreeModifiermap |XFreePixmap |XGeometry |XGetErrorText |XGetFontProperty
-		         |XGetGCValues |XGCValues |XEvent |XGetGeometry |XGetIconName |XGetInputFocus |XGetKeyboardControl
-		         |XGetPointerControl |XGetPointerMapping |XGetScreenSaver |XGetTransientForHint |XGetWindowProperty
-		         |XGetWindowAttributes |XGrabButton |XGrabKey |XGrabKeyboard |XGrabPointer |XGrabServer
-		         |XHeightMMOfScreen |XHeightOfScreen |XIfEvent |XImageByteOrder |XInstallColormap |XKeysymToKeycode
-		         |XKillClient |XLookupColor |XLowerWindow |XMapRaised |XMapSubwindows |XMapWindow |XMaskEvent
-		         |XMaxCmapsOfScreen |XMinCmapsOfScreen |XMoveResizeWindow |XMoveWindow |XNoOp |XParseColor
-		         |XParseGeometry |XPeekEvent |XPeekIfEvent |XPending |XPlanesOfScreen |XProtocolRevision
-		         |XProtocolVersion |XPutImage |XQLength |XQueryBestCursor |XQueryBestSize |XQueryBestStipple
-		         |XQueryBestTile |XQueryColor |XQueryColors |XQueryExtension |XQueryKeymap |XQueryPointer
-		         |XQueryTextExtents |XQueryTree |XRaiseWindow |XRebindKeysym |XRecolorCursor |XRefreshKeyboardMapping
-		         |XReparentWindow |XResetScreenSaver |XResizeWindow
-		         |XRestackWindows |XRotateBuffers |XRotateWindowProperties |XScreenCount |XSelectInput |XSendEvent
-		         |XSetAccessControl |XSetArcMode |XSetBackground |XSetClipMask |XSetClipOrigin |XSetClipRectangles
-		         |XSetCloseDownMode |XSetCommand |XSetDashes |XSetFillRule |XSetFillStyle |XSetFont |XSetFontPath
-		         |XSetForeground |XSetFunction |XSetGraphicsExposures |XSetIconName |XSetInputFocus |XSetLineAttributes
-		         |XSetModifierMapping |XSetPlaneMask |XSetPointerMapping |XSetScreenSaver |XSetSelectionOwner
-		         |XSetState |XSetStipple |XSetSubwindowMode |XSetTSOrigin |XSetTile |XSetWindowBackground
-		         |XSetWindowBackgroundPixmap |XSetWindowBorder |XSetWindowBorderPixmap |XSetWindowBorderWidth
-		         |XSetWindowColormap |XStoreBuffer |XStoreBytes |XStoreColor |XStoreColors |XStoreName
-		         |XStoreNamedColor |XSync |XTextExtents |XTextWidth |XTranslateCoordinates |XUndefineCursor
-		         |XUngrabButton |XUngrabKey |XUngrabKeyboard |XUngrabPointer |XUngrabServer |XUninstallColormap
-		         |XUnloadFont |XUnmapSubwindows |XUnmapWindow |XVendorRelease |XWarpPointer |XWidthMMOfScreen
-		         |XWidthOfScreen |XWindowEvent |XWriteBitmapFile |XSupportsLocale |XSetLocaleModifiers |XCreateFontSet
-		         |XFreeFontSet |XFontsOfFontSet |XBaseFontNameListOfFontSet |XLocaleOfFontSet |XContextDependentDrawing
-		         |XDirectionalDependentDrawing |XContextualDrawing |XFilterEvent |XAllocIconSize
-		         |XAllocStandardColormap |XAllocWMHints |XClipBox |XCreateRegion |XDefaultString |XDeleteContext
-		         |XDestroyRegion |XEmptyRegion |XEqualRegion |XFindContext |XGetIconSizes |XGetRGBColormaps
-		         |XGetStandardColormap |XGetVisualInfo |XGetWMHints |XIntersectRegion |XConvertCase |XLookupString
-		         |XMatchVisualInfo |XOffsetRegion |XPointInRegion |XPolygonRegion |XRectInRegion |XSaveContext
-		         |XSetRGBColormaps |XSetWMHints |XSetRegion |XSetStandardColormap |XShrinkRegion |XSubtractRegion
-		         |XUnionRectWithRegion |XUnionRegion |XXorRegion |DefaultScreen |DefaultRootWindow |QLength
-		         |ScreenCount |ServerVendor |ProtocolVersion |ProtocolRevision |VendorRelease |DisplayString
-		         |BitmapUnit |BitmapBitOrder |BitmapPad |ImageByteOrder |NextRequest |LastKnownRequestProcessed
-		         |DefaultScreenOfDisplay |DisplayOfScreen |RootWindowOfScreen |BlackPixelOfScreen |WhitePixelOfScreen
-		         |DefaultColormapOfScreen |DefaultDepthOfScreen |DefaultGCOfScreen |DefaultVisualOfScreen
-		         |WidthOfScreen |HeightOfScreen |WidthMMOfScreen |HeightMMOfScreen |PlanesOfScreen |CellsOfScreen
-		         |MinCmapsOfScreen |MaxCmapsOfScreen |DoesSaveUnders |DoesBackingStore |EventMaskOfScreen |RootWindow
-		         |DefaultVisual |DefaultGC |BlackPixel |WhitePixel |DisplayWidth |DisplayHeight |DisplayWidthMM
-		         |DisplayHeightMM |DisplayPlanes |DisplayCells |DefaultColormap |ScreenOfDisplay |DefaultDepth
-		         |IsKeypadKey |IsPrivateKeypadKey |IsCursorKey |IsPFKey |IsFunctionKey |IsMiscFunctionKey
-		         |IsModifierKey |XmCreateMessageBox |XmCreateMessageDialog |XmCreateErrorDialog
-		         |XmCreateInformationDialog |XmCreateQuestionDialog |XmCreateWarningDialog |XmCreateWorkingDialog
-		         |XmCreateTemplateDialog |XmMessageBoxGetChild |XmCreateArrowButtonGadget |XmCreateArrowButton
-		         |XmCreateNotebook |XmNotebookGetPageInfo |XmPrintSetup |XmPrintToFile |XmPrintPopupPDM
-		         |XmRedisplayWidget |XmTransferSetParameters |XmTransferValue |XmCreateComboBox
-		         |XmCreateDropDownComboBox |XmCreateDropDownList |XmComboBoxAddItem |XmComboBoxDeletePos
-		         |XmComboBoxSelectItem |XmComboBoxSetItem |XmComboBoxUpdate |XmCreateContainer
-		         |XmContainerGetItemChildren |XmContainerRelayout |XmContainerReorder |XmContainerCut |XmContainerCopy
-		         |XmContainerPaste |XmContainerCopyLink |XmContainerPasteLink |XmCreateSpinBox
-		         |XmSpinBoxValidatePosition |XmCreateSimpleSpinBox |XmSimpleSpinBoxAddItem |XmSimpleSpinBoxDeletePos
-		         |XmSimpleSpinBoxSetItem |XmDropSiteRegistered |XmTextFieldCopyLink |XmTextFieldPasteLink
-		         |XmTextGetCenterline |XmToggleButtonGadgetSetValue |XmCreateIconGadget
-		         |XmCreateIconHeader |XmObjectAtPoint |XmConvertStringToUnits |XmCreateGrabShell
-		         |XmToggleButtonSetValue |XmTextPasteLink |XmTextCopyLink |XmScaleSetTicks |XmInternAtom |XmGetAtomName
-		         |XmCreatePanedWindow |XmCreateBulletinBoard |XmCreateBulletinBoardDialog |XmCreateCascadeButtonGadget
-		         |XmCascadeButtonGadgetHighlight |XmAddProtocols |XmRemoveProtocols |XmAddProtocolCallback
-		         |XmRemoveProtocolCallback |XmActivateProtocol |XmDeactivateProtocol |XmSetProtocolHooks
-		         |XmCreateCascadeButton |XmCascadeButtonHighlight |XmCreatePushButtonGadget |XmCreatePushButton
-		         |XmCreateCommand |XmCommandGetChild |XmCommandSetValue |XmCommandAppendValue |XmCommandError
-		         |XmCreateCommandDialog |XmMenuPosition |XmCreateRowColumn |XmCreateWorkArea |XmCreateRadioBox
-		         |XmCreateOptionMenu |XmOptionLabelGadget |XmOptionButtonGadget |XmCreateMenuBar |XmCreatePopupMenu
-		         |XmCreatePulldownMenu |XmGetPostedFromWidget |XmGetTearOffControl |XmAddToPostFromList
-		         |XmRemoveFromPostFromList |XmScaleSetValue |XmScaleGetValue |XmCreateScale
-		         |XmClipboardStartCopy |XmClipboardCopy |XmClipboardEndCopy |XmClipboardCancelCopy
-		         |XmClipboardWithdrawFormat |XmClipboardCopyByName |XmClipboardUndoCopy |XmClipboardLock
-		         |XmClipboardUnlock |XmClipboardStartRetrieve |XmClipboardEndRetrieve |XmClipboardRetrieve
-		         |XmClipboardInquireCount |XmClipboardInquireFormat |XmClipboardInquireLength
-		         |XmClipboardInquirePendingItems |XmClipboardRegisterFormat |XmGetXmScreen |XmCreateScrollBar
-		         |XmScrollBarGetValues |XmScrollBarSetValues |XmCreateDialogShell |XmScrolledWindowSetAreas
-		         |XmCreateScrolledWindow |XmScrollVisible |XmGetDragContext |XmGetXmDisplay |XmSelectionBoxGetChild
-		         |XmCreateSelectionBox |XmCreateSelectionDialog |XmCreatePromptDialog |XmDragStart |XmDragCancel
-		         |XmTargetsAreCompatible |XmCreateSeparatorGadget |XmCreateDragIcon |XmCreateSeparator
-		         |XmCreateDrawingArea |XmCreateDrawnButton |XmDropSiteRegister |XmDropSiteUnregister
-		         |XmDropSiteStartUpdate |XmDropSiteUpdate |XmDropSiteEndUpdate |XmDropSiteRetrieve
-		         |XmDropSiteQueryStackingOrder |XmDropSiteConfigureStackingOrder |XmDropTransferStart
-		         |XmDropTransferAdd |XmTextFieldGetString |XmTextFieldGetSubstring |XmTextFieldGetLastPosition
-		         |XmTextFieldSetString |XmTextFieldReplace |XmTextFieldInsert |XmTextFieldSetAddMode
-		         |XmTextFieldGetAddMode |XmTextFieldGetEditable |XmTextFieldSetEditable |XmTextFieldGetMaxLength
-		         |XmTextFieldSetMaxLength |XmTextFieldGetCursorPosition |XmTextFieldGetInsertionPosition
-		         |XmTextFieldSetCursorPosition |XmTextFieldSetInsertionPosition |XmTextFieldGetSelectionPosition
-		         |XmTextFieldGetSelection |XmTextFieldRemove |XmTextFieldCopy |XmTextFieldCut |XmTextFieldPaste
-		         |XmTextFieldClearSelection |XmTextFieldSetSelection |XmTextFieldXYToPos |XmTextFieldPosToXY
-		         |XmTextFieldShowPosition |XmTextFieldSetHighlight |XmTextFieldGetBaseline |XmCreateTextField
-		         |XmFileSelectionBoxGetChild |XmFileSelectionDoSearch |XmCreateFileSelectionBox
-		         |XmCreateFileSelectionDialog |XmTextSetHighlight |XmCreateScrolledText |XmCreateText
-		         |XmTextGetSubstring |XmTextGetString |XmTextGetLastPosition |XmTextSetString |XmTextReplace
-		         |XmTextInsert |XmTextSetAddMode |XmTextGetAddMode |XmTextGetEditable |XmTextSetEditable
-		         |XmTextGetMaxLength |XmTextSetMaxLength |XmTextGetTopCharacter |XmTextSetTopCharacter
-		         |XmTextGetCursorPosition |XmTextGetInsertionPosition |XmTextSetInsertionPosition
-		         |XmTextSetCursorPosition |XmTextRemove |XmTextCopy |XmTextCut |XmTextPaste |XmTextGetSelection
-		         |XmTextSetSelection |XmTextClearSelection |XmTextGetSelectionPosition |XmTextXYToPos |XmTextPosToXY
-		         |XmTextGetSource |XmTextSetSource |XmTextShowPosition |XmTextScroll |XmTextGetBaseline
-		         |XmTextDisableRedisplay |XmTextEnableRedisplay |XmTextFindString |XmCreateForm |XmCreateFormDialog
-		         |XmCreateFrame |XmToggleButtonGadgetGetState |XmToggleButtonGadgetSetState |XmCreateToggleButtonGadget
-		         |XmToggleButtonGetState |XmToggleButtonSetState |XmCreateToggleButton |XmCreateLabelGadget
-		         |XmCreateLabel |XmIsMotifWMRunning |XmListAddItem |XmListAddItems |XmListAddItemsUnselected
-		         |XmListAddItemUnselected |XmListDeleteItem |XmListDeleteItems |XmListDeletePositions |XmListDeletePos
-		         |XmListDeleteItemsPos |XmListDeleteAllItems |XmListReplaceItems |XmListReplaceItemsPos
-		         |XmListReplaceItemsUnselected |XmListReplaceItemsPosUnselected |XmListReplacePositions
-		         |XmListSelectItem |XmListSelectPos |XmListDeselectItem |XmListDeselectPos |XmListDeselectAllItems
-		         |XmListSetPos |XmListSetBottomPos |XmListSetItem |XmListSetBottomItem |XmListSetAddMode
-		         |XmListItemExists |XmListItemPos |XmListGetKbdItemPos |XmListSetKbdItemPos |XmListYToPos
-		         |XmListPosToBounds |XmListGetMatchPos |XmListGetSelectedPos |XmListSetHorizPos
-		         |XmListUpdateSelectedList |XmListPosSelected |XmCreateList |XmCreateScrolledList |XmTranslateKey
-		         |XmMainWindowSetAreas |XmMainWindowSep1 |XmMainWindowSep2 |XmMainWindowSep3 |XmCreateMainWindow
-		         |XmInstallImage |XmUninstallImage |XmGetPixmap |XmGetPixmapByDepth |XmDestroyPixmap |XmUpdateDisplay
-		         |XmWidgetGetBaselines |XmRegisterSegmentEncoding |XmMapSegmentEncoding
-		         |XmCvtCTToXmString |XmCvtXmStringToCT |XmConvertUnits |XmSetFontUnits |XmSetFontUnit |XmSetMenuCursor
-		         |XmGetMenuCursor |XmCreateSimpleMenuBar |XmCreateSimplePopupMenu |XmCreateSimplePulldownMenu
-		         |XmCreateSimpleOptionMenu |XmCreateSimpleRadioBox |XmCreateSimpleCheckBox |XmVaCreateSimpleMenuBar
-		         |XmVaCreateSimplePopupMenu |XmVaCreateSimplePulldownMenu |XmVaCreateSimpleOptionMenu
-		         |XmVaCreateSimpleRadioBox |XmVaCreateSimpleCheckBox |XmTrackingEvent |XmTrackingLocate
-		         |XmSetColorCalculation |XmGetColorCalculation |XmGetColors |XmChangeColor |XmStringCreate
-		         |XmStringCreateSimple |XmStringCreateLocalized |XmStringDirectionCreate |XmStringSeparatorCreate
-		         |XmStringSegmentCreate |XmStringCreateLtoR |XmStringInitContext
-		         |XmStringFreeContext |XmStringGetNextComponent |XmStringPeekNextComponent |XmStringGetNextSegment
-		         |XmStringGetLtoR |XmFontListEntryCreate |XmFontListEntryCreate_r |XmFontListCreate_r
-		         |XmStringConcatAndFree |XmStringIsVoid |XmStringPeekNextTriple |XmStringGetNextTriple
-		         |XmStringComponentCreate |XmStringUnparse |XmStringParseText |XmStringToXmStringTable
-		         |XmStringTableToXmString |XmStringTableUnparse |XmStringTableParseStringArray
-		         |XmDirectionToStringDirection |XmStringDirectionToDirection |XmStringGenerate |XmStringPutRendition
-		         |XmParseMappingGetValues |XmParseMappingFree |XmParseTableFree |XmStringTableProposeTablist
-		         |XmTabSetValue |XmTabGetValues |XmTabFree |XmTabCreate |XmTabListTabCount |XmTabListRemoveTabs
-		         |XmTabListReplacePositions |XmTabListGetTab |XmTabListCopy |XmTabListInsertTabs
-		         |XmRenderTableCvtFromProp |XmRenderTableCvtToProp |XmRenditionUpdate |XmRenditionRetrieve
-		         |XmRenditionFree |XmRenditionCreate |XmRenderTableGetRenditions |XmRenderTableGetRendition
-		         |XmRenderTableGetTags |XmRenderTableFree |XmRenderTableCopy |XmRenderTableRemoveRenditions
-		         |XmRenderTableAddRenditions |XmFontListEntryFree |XmFontListEntryGetFont |XmFontListEntryGetTag
-		         |XmFontListAppendEntry |XmFontListNextEntry |XmFontListRemoveEntry |XmFontListEntryLoad
-		         |XmFontListCreate |XmFontListFree |XmFontListAdd |XmFontListCopy
-		         |XmFontListInitFontContext |XmFontListGetNextFont |XmFontListFreeFontContext |XmStringConcat
-		         |XmStringNConcat |XmStringCopy |XmStringNCopy |XmStringByteCompare |XmStringCompare |XmStringLength
-		         |XmStringEmpty |XmStringHasSubstring |XmStringFree |XmStringBaseline |XmStringWidth |XmStringHeight
-		         |XmStringExtent |XmStringLineCount |XmStringDraw |XmStringDrawImage |XmStringDrawUnderline
-		         |XmGetDestination |XmIsTraversable |XmGetVisibility |XmGetTabGroup |XmGetFocusWidget
-		         |XmProcessTraversal |XmCreateMenuShell |XmIsMessageBox
-		         |XmIsArrowButtonGadget |XmIsArrowButton |XmIsNotebook |XmIsPrintShell |XmIsComboBox |XmIsContainer
-		         |XmIsGrabShell |XmIsIconGadget |XmIsIconHeader |XmIsPanedWindow |XmIsBulletinBoard |XmIsPrimitive
-		         |XmIsCascadeButtonGadget |XmIsCascadeButton |XmIsPushButtonGadget |XmIsPushButton |XmIsCommand
-		         |XmIsRowColumn |XmIsScale |XmIsScreen |XmIsScrollBar |XmIsDialogShell |XmIsScrolledWindow |XmIsDisplay
-		         |XmIsSelectionBox |XmIsDragContext |XmIsSeparatorGadget |XmIsDragIconObjectClass
-		         |XmIsSeparator |XmIsDrawingArea |XmIsDrawnButton |XmIsDropSiteManager |XmIsDropTransfer |XmIsTextField
-		         |XmIsFileSelectionBox |XmIsText |XmIsForm |XmIsFrame |XmIsGadget |XmIsToggleButtonGadget
-		         |XmIsToggleButton |XmIsLabelGadget |XmIsLabel |XmIsVendorShell |XmIsList |XmIsMainWindow |XmIsManager
-		         |XmIsMenuShell |XpmCreatePixmapFromData |XpmCreateDataFromPixmap |XpmReadFileToPixmap
-		         |XpmReadPixmapFile |XpmWriteFileFromPixmap |XpmWritePixmapFile |XpmCreatePixmapFromXpmImage
-		         |XpmCreateXpmImageFromPixmap |XGetPixel |XDestroyImage |XPutPixel |XSubImage |XAddPixel
-		         |XtAppContext? |XtRequestId?  |XtWorkProcId? |XtInputId?  |XtIntervalId? |Screen?  |XEvent?
-		         |XRectangle? |XArc? |XPoint?  |XSegment?  |XColor? |Atom? |Colormap?
-		         |XModifierKeymap? |Depth?  |Display? |Drawable?  |Font? |GC?  |KeySym? |Pixel?  |Pixmap? |Region?
-		         |Time? |Visual? |Window?  |XFontProp? |XFontSet?  |XFontStruct? |XGCValues?  |XImage?  |XVisualInfo?
-		         |XWMHints? |XWindowAttributes? |XWindowChanges?  |KeyCode? |XContext?  |XCharStruct? |XTextItem?
-		         |XStandardColormap?  |Substitution?  |XPContext?  |Widget?  |XmStringContext? |WidgetClass? |XmString?
-		         |XmToggleButton?  |XmDrawingArea? |XmPushButton?  |XmTextField?  |XmFileSelectionBox?  |XmText?
-		         |XmFrame? |XmLabel? |XmList?  |XmArrowButton?  |XmScrollBar? |XmCommand? |XmScale?  |XmRowColumn?
-		         |XmTab? |XmNotebook?  |XmPrintShell?  |XmComboBox? |XmContainer? |XmIconHeader?
-		         |XmGrabShell? |XmRendition? |XmRenderTable?  |XmIconGadget?  |XmTabList? |XmParseMapping?
-		         |XmPanedWindow?  |XmScrolledWindow? |XmCascadeButton?  |XmForm?  |XmBulletinBoard? |XmScreen?
-		         |XmDialogShell? |XmDisplay?  |XmSelectionBox?  |XmDragContext?  |XmDragIconObjectClass?  |XmSeparator?
-		         |XmDropSiteManager? |XmDropTransfer?  |XmVendorShell?  |XmMainWindow? |XmMessageBox?  |XmManager?
-		         |XmMenuShell?  |XmLabelGadget?  |XmPushButtonGadget?  |XmSeparatorGadget?  |XmArrowButtonGadget?
-		         |XmCascadeButtonGadget?  |XmToggleButtonGadget?  |XmDrawnButton?  |XmPrimitive? |XmFontList?
-		         |XmFontContext?  |XmFontListEntry? |XmTextSource?  |XpmAttributes?  |XpmImage?  |XpmColorSymbol?
+		         XpStartPage XpEndPage XpCancelPage XpStartJob XpEndJob XpCancelJob XpStartDoc XpEndDoc
+		         XpCancelDoc XpRehashPrinterList XpCreateContext XpSetContext XpGetContext XpDestroyContext
+		         XpGetLocaleNetString XpNotifyPdm XpSendAuth XpGetImageResolution XpGetAttributes XpSetAttributes
+		         XpGetOneAttribute XpGetScreenOfContext XpFreePrinterList XpQueryVersion XpQueryExtension
+		         XpQueryScreens XpGetPdmStartParams XpGetAuthParams XpSendOneTicket XpGetPageDimensions
+		         XpSetImageResolution XpGetPrinterList XpSelectInput XpInputSelected XpPutDocumentData
+		         XpGetDocumentData XtSetArg XtManageChildren XtManageChild XtUnmanageChildren XtUnmanageChild
+		         XtDispatchEvent XtCallAcceptFocus XtIsSubclass XtIsObject XtIsManaged XtIsRealized
+		         XtIsSensitive XtOwnSelection XtOwnSelectionIncremental XtMakeResizeRequest XtTranslateCoords
+		         XtKeysymToKeycodeList XtParseTranslationTable XtParseAcceleratorTable XtOverrideTranslations XtAugmentTranslations
+		         XtInstallAccelerators XtInstallAllAccelerators XtUninstallTranslations XtAppAddActionHook
+		         XtRemoveActionHook XtGetActionList XtCallActionProc XtRegisterGrabAction XtSetMultiClickTime
+		         XtGetMultiClickTime XtGetActionKeysym XtTranslateKeycode XtTranslateKey XtSetKeyTranslator
+		         XtRegisterCaseConverter XtConvertCase XtAddEventHandler XtRemoveEventHandler XtAddRawEventHandler
+		         XtRemoveRawEventHandler XtInsertEventHandler XtInsertRawEventHandler XtDispatchEventToWidget
+		         XtBuildEventMask XtAddGrab XtRemoveGrab XtAddExposureToRegion XtSetKeyboardFocus
+		         XtGetKeyboardFocusWidget XtLastEventProcessed XtLastTimestampProcessed XtAddTimeOut
+		         XtAppAddTimeOut XtRemoveTimeOut XtAddInput XtAppAddInput XtRemoveInput XtPending XtAppPending
+		         XtRealizeWidget XtUnrealizeWidget XtDestroyWidget XtSetSensitive XtNameToWidget XtWindowToWidget
+		         XtMergeArgLists XtVaCreateArgsList XtDisplay XtDisplayOfObject XtScreen XtScreenOfObject
+		         XtWindow XtWindowOfObject XtName XtSuperclass XtClass XtParent XtAddCallback XtRemoveCallback
+		         XtAddCallbacks XtRemoveCallbacks XtRemoveAllCallbacks XtCallCallbacks XtCallCallbackList
+		         XtHasCallbacks XtCreatePopupShell XtVaCreatePopupShell XtPopup XtPopupSpringLoaded
+		         XtCallbackNone XtCallbackNonexclusive XtCallbackExclusive XtPopdown XtCallbackPopdown
+		         XtCreateWidget XtCreateManagedWidget XtVaCreateWidget XtVaCreateManagedWidget
+		         XtCreateApplicationShell XtAppCreateShell XtVaAppCreateShell XtToolkitInitialize
+		         XtSetLanguageProc XtDisplayInitialize XtOpenApplication XtVaOpenApplication XtAppInitialize
+		         XtVaAppInitialize XtInitialize XtOpenDisplay XtCreateApplicationContext
+		         XtDestroyApplicationContext XtInitializeWidgetClass XtWidgetToApplicationContext
+		         XtDisplayToApplicationContext XtCloseDisplay XtSetValues XtVaSetValues XtGetValues XtVaGetValues
+		         XtAppSetErrorMsgHandler XtSetErrorMsgHandler XtAppSetWarningMsgHandler XtSetWarningMsgHandler
+		         XtAppErrorMsg XtErrorMsg XtAppWarningMsg XtWarningMsg XtAppSetErrorHandler XtSetErrorHandler
+		         XtAppSetWarningHandler XtSetWarningHandler XtAppError XtError XtAppWarning XtWarning
+		         XtAddWorkProc XtAppAddWorkProc XtRemoveWorkProc XtGetGC XtAllocateGC XtDestroyGC XtReleaseGC
+		         XtFindFile XtResolvePathname XtDisownSelection XtGetSelectionValue
+		         XtGetSelectionValues XtAppSetSelectionTimeout XtSetSelectionTimeout XtAppGetSelectionTimeout
+		         XtGetSelectionTimeout XtGetSelectionRequest XtGetSelectionValueIncremental
+		         XtGetSelectionValuesIncremental XtCreateSelectionRequest XtSendSelectionRequest
+		         XtCancelSelectionRequest XtGrabKey XtUngrabKey
+		         XtGrabKeyboard XtUngrabKeyboard XtGrabButton XtUngrabButton XtGrabPointer XtUngrabPointer
+		         XtGetApplicationNameAndClass XtGetDisplays XtToolkitThreadInitialize XtAppLock XtAppUnlock XtIsRectObj XtIsWidget
+		         XtIsComposite XtIsConstraint XtIsShell XtIsOverrideShell XtIsWMShell XtIsVendorShell
+		         XtIsTransientShell XtIsTopLevelShell XtIsApplicationShell XtIsSessionShell XtMapWidget
+		         XtUnmapWidget XLoadQueryFont XQueryFont XGetMotionEvents XDeleteModifiermapEntry
+		         XGetModifierMapping XInsertModifiermapEntry XNewModifiermap XCreateImage XGetImage
+		         XGetSubImage XOpenDisplay XFetchBytes XFetchBuffer XGetAtomName XDisplayName XUniqueContext
+		         XKeysymToString XSynchronize XSetAfterFunction XInternAtom XCopyColormapAndFree XCreateColormap
+		         XCreatePixmapCursor XCreateGlyphCursor XCreateFontCursor XLoadFont XCreateGC XFlushGC
+		         XCreatePixmap XCreateBitmapFromData XCreatePixmapFromBitmapData XCreateSimpleWindow
+		         XGetSelectionOwner XCreateWindow XListInstalledColormaps XListFonts XListFontsWithInfo
+		         XGetFontPath XListExtensions XListProperties XKeycodeToKeysym XLookupKeysym
+		         XGetKeyboardMapping 
+                         XStringToKeysym 
+			 XMaxRequestSize XExtendedMaxRequestSize
+		         XDisplayMotionBufferSize XVisualIDFromVisual
+		         XInitThreads XLockDisplay XUnlockDisplay XRootWindow XDefaultRootWindow XRootWindowOfScreen
+		         XDefaultVisual XDefaultVisualOfScreen XDefaultGC XDefaultGCOfScreen XBlackPixel XWhitePixel
+		         XAllPlanes XBlackPixelOfScreen XWhitePixelOfScreen XNextRequest XLastKnownRequestProcessed
+		         XServerVendor XDisplayString XDefaultColormap XDefaultColormapOfScreen XDisplayOfScreen
+		         XScreenOfDisplay XDefaultScreenOfDisplay XEventMaskOfScreen XScreenNumberOfScreen
+		         XSetErrorHandler XSetIOErrorHandler XListPixmapFormats XListDepths XReconfigureWMWindow
+		         XGetWMProtocols XSetWMProtocols XIconifyWindow XWithdrawWindow XGetCommand XGetWMColormapWindows
+		         XFreeStringList XSetTransientForHint XActivateScreenSaver
+		         XAllocColor XAllocColorCells XAllocColorPlanes XAllocNamedColor
+		         XAllowEvents XAutoRepeatOff XAutoRepeatOn XBell XBitmapBitOrder XBitmapPad XBitmapUnit
+		         XCellsOfScreen XChangeActivePointerGrab XChangeGC XChangeKeyboardControl XChangeKeyboardMapping
+		         XChangePointerControl XChangeProperty XChangeWindowAttributes ; XCheckIfEvent
+		         XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent XCheckWindowEvent XCirculateSubwindows
+		         XCirculateSubwindowsDown XCirculateSubwindowsUp XClearArea XClearWindow XCloseDisplay
+		         XConfigureWindow XConnectionNumber XConvertSelection XCopyArea XCopyGC XCopyPlane XDefaultDepth
+		         XDefaultDepthOfScreen XDefaultScreen XDefineCursor XDeleteProperty XDestroyWindow
+		         XDestroySubwindows XDoesBackingStore XDoesSaveUnders XDisableAccessControl XDisplayCells
+		         XDisplayHeight XDisplayHeightMM XDisplayKeycodes XDisplayPlanes XDisplayWidth XDisplayWidthMM
+		         XDrawArc XDrawArcs XDrawImageString XDrawLine XDrawLines XDrawLinesDirect XDrawPoint
+		         XDrawPoints XDrawRectangle XDrawRectangles XDrawSegments XDrawString XDrawText
+		         XEnableAccessControl XEventsQueued XFetchName XFillArc XFillArcs XFillPolygon XFillRectangle
+		         XFillRectangles XFlush XForceScreenSaver XFreeColormap XFreeColors XFreeCursor
+		         XFreeExtensionList XFreeFont XFreeFontInfo XFreeFontNames XFreeFontPath XFreeGC
+		         XFreeModifiermap XFreePixmap XGeometry XGetErrorText XGetFontProperty
+		         XGetGCValues XGCValues XEvent XGetGeometry XGetIconName XGetInputFocus XGetKeyboardControl
+		         XGetPointerControl XGetPointerMapping XGetScreenSaver XGetTransientForHint XGetWindowProperty
+		         XGetWindowAttributes XGrabButton XGrabKey XGrabKeyboard XGrabPointer XGrabServer
+		         XHeightMMOfScreen XHeightOfScreen XIfEvent XImageByteOrder XInstallColormap XKeysymToKeycode
+		         XKillClient XLookupColor XLowerWindow XMapRaised XMapSubwindows XMapWindow XMaskEvent
+		         XMaxCmapsOfScreen XMinCmapsOfScreen XMoveResizeWindow XMoveWindow XNoOp XParseColor
+		         XParseGeometry XPeekEvent XPeekIfEvent XPending XPlanesOfScreen XProtocolRevision
+		         XProtocolVersion XPutImage XQLength XQueryBestCursor XQueryBestSize XQueryBestStipple
+		         XQueryBestTile XQueryColor XQueryColors XQueryExtension XQueryKeymap XQueryPointer
+		         XQueryTextExtents XQueryTree XRaiseWindow XRebindKeysym XRecolorCursor XRefreshKeyboardMapping
+		         XReparentWindow XResetScreenSaver XResizeWindow
+		         XRestackWindows XRotateBuffers XRotateWindowProperties XScreenCount XSelectInput XSendEvent
+		         XSetAccessControl XSetArcMode XSetBackground XSetClipMask XSetClipOrigin XSetClipRectangles
+		         XSetCloseDownMode XSetCommand XSetDashes XSetFillRule XSetFillStyle XSetFont XSetFontPath
+		         XSetForeground XSetFunction XSetGraphicsExposures XSetIconName XSetInputFocus XSetLineAttributes
+		         XSetModifierMapping XSetPlaneMask XSetPointerMapping XSetScreenSaver XSetSelectionOwner
+		         XSetState XSetStipple XSetSubwindowMode XSetTSOrigin XSetTile XSetWindowBackground
+		         XSetWindowBackgroundPixmap XSetWindowBorder XSetWindowBorderPixmap XSetWindowBorderWidth
+		         XSetWindowColormap XStoreBuffer XStoreBytes XStoreColor XStoreColors XStoreName
+		         XStoreNamedColor XSync XTextExtents XTextWidth XTranslateCoordinates XUndefineCursor
+		         XUngrabButton XUngrabKey XUngrabKeyboard XUngrabPointer XUngrabServer XUninstallColormap
+		         XUnloadFont XUnmapSubwindows XUnmapWindow XVendorRelease XWarpPointer XWidthMMOfScreen
+		         XWidthOfScreen XWindowEvent XWriteBitmapFile XSupportsLocale XSetLocaleModifiers XCreateFontSet
+		         XFreeFontSet XFontsOfFontSet XBaseFontNameListOfFontSet XLocaleOfFontSet XContextDependentDrawing
+		         XDirectionalDependentDrawing XContextualDrawing XFilterEvent XAllocIconSize
+		         XAllocStandardColormap XAllocWMHints XClipBox XCreateRegion XDefaultString XDeleteContext
+		         XDestroyRegion XEmptyRegion XEqualRegion XFindContext XGetIconSizes XGetRGBColormaps
+		         XGetStandardColormap XGetVisualInfo XGetWMHints XIntersectRegion XConvertCase XLookupString
+		         XMatchVisualInfo XOffsetRegion XPointInRegion XPolygonRegion XRectInRegion XSaveContext
+		         XSetRGBColormaps XSetWMHints XSetRegion XSetStandardColormap XShrinkRegion XSubtractRegion
+		         XUnionRectWithRegion XUnionRegion XXorRegion DefaultScreen DefaultRootWindow QLength
+		         ScreenCount ServerVendor ProtocolVersion ProtocolRevision VendorRelease DisplayString
+		         BitmapUnit BitmapBitOrder BitmapPad ImageByteOrder NextRequest LastKnownRequestProcessed
+		         DefaultScreenOfDisplay DisplayOfScreen RootWindowOfScreen BlackPixelOfScreen WhitePixelOfScreen
+		         DefaultColormapOfScreen DefaultDepthOfScreen DefaultGCOfScreen DefaultVisualOfScreen
+		         WidthOfScreen HeightOfScreen WidthMMOfScreen HeightMMOfScreen PlanesOfScreen CellsOfScreen
+		         MinCmapsOfScreen MaxCmapsOfScreen DoesSaveUnders DoesBackingStore EventMaskOfScreen RootWindow
+		         DefaultVisual DefaultGC BlackPixel WhitePixel DisplayWidth DisplayHeight DisplayWidthMM
+		         DisplayHeightMM DisplayPlanes DisplayCells DefaultColormap ScreenOfDisplay DefaultDepth
+		         IsKeypadKey IsPrivateKeypadKey IsCursorKey IsPFKey IsFunctionKey IsMiscFunctionKey
+		         IsModifierKey XmCreateMessageBox XmCreateMessageDialog XmCreateErrorDialog
+		         XmCreateInformationDialog XmCreateQuestionDialog XmCreateWarningDialog XmCreateWorkingDialog
+		         XmCreateTemplateDialog XmMessageBoxGetChild XmCreateArrowButtonGadget XmCreateArrowButton
+		         XmCreateNotebook XmNotebookGetPageInfo XmPrintSetup XmPrintToFile XmPrintPopupPDM
+		         XmRedisplayWidget XmTransferSetParameters XmTransferValue XmCreateComboBox
+		         XmCreateDropDownComboBox XmCreateDropDownList XmComboBoxAddItem XmComboBoxDeletePos
+		         XmComboBoxSelectItem XmComboBoxSetItem XmComboBoxUpdate XmCreateContainer
+		         XmContainerGetItemChildren XmContainerRelayout XmContainerReorder XmContainerCut XmContainerCopy
+		         XmContainerPaste XmContainerCopyLink XmContainerPasteLink XmCreateSpinBox
+		         XmSpinBoxValidatePosition XmCreateSimpleSpinBox XmSimpleSpinBoxAddItem XmSimpleSpinBoxDeletePos
+		         XmSimpleSpinBoxSetItem XmDropSiteRegistered XmTextFieldCopyLink XmTextFieldPasteLink
+		         XmTextGetCenterline XmToggleButtonGadgetSetValue XmCreateIconGadget
+		         XmCreateIconHeader XmObjectAtPoint XmConvertStringToUnits XmCreateGrabShell
+		         XmToggleButtonSetValue XmTextPasteLink XmTextCopyLink XmScaleSetTicks XmInternAtom XmGetAtomName
+		         XmCreatePanedWindow XmCreateBulletinBoard XmCreateBulletinBoardDialog XmCreateCascadeButtonGadget
+		         XmCascadeButtonGadgetHighlight XmAddProtocols XmRemoveProtocols XmAddProtocolCallback
+		         XmRemoveProtocolCallback XmActivateProtocol XmDeactivateProtocol XmSetProtocolHooks
+		         XmCreateCascadeButton XmCascadeButtonHighlight XmCreatePushButtonGadget XmCreatePushButton
+		         XmCreateCommand XmCommandGetChild XmCommandSetValue XmCommandAppendValue XmCommandError
+		         XmCreateCommandDialog XmMenuPosition XmCreateRowColumn XmCreateWorkArea XmCreateRadioBox
+		         XmCreateOptionMenu XmOptionLabelGadget XmOptionButtonGadget XmCreateMenuBar XmCreatePopupMenu
+		         XmCreatePulldownMenu XmGetPostedFromWidget XmGetTearOffControl XmAddToPostFromList
+		         XmRemoveFromPostFromList XmScaleSetValue XmScaleGetValue XmCreateScale
+		         XmClipboardStartCopy XmClipboardCopy XmClipboardEndCopy XmClipboardCancelCopy
+		         XmClipboardWithdrawFormat XmClipboardCopyByName XmClipboardUndoCopy XmClipboardLock
+		         XmClipboardUnlock XmClipboardStartRetrieve XmClipboardEndRetrieve XmClipboardRetrieve
+		         XmClipboardInquireCount XmClipboardInquireFormat XmClipboardInquireLength
+		         XmClipboardInquirePendingItems XmClipboardRegisterFormat XmGetXmScreen XmCreateScrollBar
+		         XmScrollBarGetValues XmScrollBarSetValues XmCreateDialogShell XmScrolledWindowSetAreas
+		         XmCreateScrolledWindow XmScrollVisible XmGetDragContext XmGetXmDisplay XmSelectionBoxGetChild
+		         XmCreateSelectionBox XmCreateSelectionDialog XmCreatePromptDialog XmDragStart XmDragCancel
+		         XmTargetsAreCompatible XmCreateSeparatorGadget XmCreateDragIcon XmCreateSeparator
+		         XmCreateDrawingArea XmCreateDrawnButton XmDropSiteRegister XmDropSiteUnregister
+		         XmDropSiteStartUpdate XmDropSiteUpdate XmDropSiteEndUpdate XmDropSiteRetrieve
+		         XmDropSiteQueryStackingOrder XmDropSiteConfigureStackingOrder XmDropTransferStart
+		         XmDropTransferAdd XmTextFieldGetString XmTextFieldGetSubstring XmTextFieldGetLastPosition
+		         XmTextFieldSetString XmTextFieldReplace XmTextFieldInsert XmTextFieldSetAddMode
+		         XmTextFieldGetAddMode XmTextFieldGetEditable XmTextFieldSetEditable XmTextFieldGetMaxLength
+		         XmTextFieldSetMaxLength XmTextFieldGetCursorPosition XmTextFieldGetInsertionPosition
+		         XmTextFieldSetCursorPosition XmTextFieldSetInsertionPosition XmTextFieldGetSelectionPosition
+		         XmTextFieldGetSelection XmTextFieldRemove XmTextFieldCopy XmTextFieldCut XmTextFieldPaste
+		         XmTextFieldClearSelection XmTextFieldSetSelection XmTextFieldXYToPos XmTextFieldPosToXY
+		         XmTextFieldShowPosition XmTextFieldSetHighlight XmTextFieldGetBaseline XmCreateTextField
+		         XmFileSelectionBoxGetChild XmFileSelectionDoSearch XmCreateFileSelectionBox
+		         XmCreateFileSelectionDialog XmTextSetHighlight XmCreateScrolledText XmCreateText
+		         XmTextGetSubstring XmTextGetString XmTextGetLastPosition XmTextSetString XmTextReplace
+		         XmTextInsert XmTextSetAddMode XmTextGetAddMode XmTextGetEditable XmTextSetEditable
+		         XmTextGetMaxLength XmTextSetMaxLength XmTextGetTopCharacter XmTextSetTopCharacter
+		         XmTextGetCursorPosition XmTextGetInsertionPosition XmTextSetInsertionPosition
+		         XmTextSetCursorPosition XmTextRemove XmTextCopy XmTextCut XmTextPaste XmTextGetSelection
+		         XmTextSetSelection XmTextClearSelection XmTextGetSelectionPosition XmTextXYToPos XmTextPosToXY
+		         XmTextGetSource XmTextSetSource XmTextShowPosition XmTextScroll XmTextGetBaseline
+		         XmTextDisableRedisplay XmTextEnableRedisplay XmTextFindString XmCreateForm XmCreateFormDialog
+		         XmCreateFrame XmToggleButtonGadgetGetState XmToggleButtonGadgetSetState XmCreateToggleButtonGadget
+		         XmToggleButtonGetState XmToggleButtonSetState XmCreateToggleButton XmCreateLabelGadget
+		         XmCreateLabel XmIsMotifWMRunning XmListAddItem XmListAddItems XmListAddItemsUnselected
+		         XmListAddItemUnselected XmListDeleteItem XmListDeleteItems XmListDeletePositions XmListDeletePos
+		         XmListDeleteItemsPos XmListDeleteAllItems XmListReplaceItems XmListReplaceItemsPos
+		         XmListReplaceItemsUnselected XmListReplaceItemsPosUnselected XmListReplacePositions
+		         XmListSelectItem XmListSelectPos XmListDeselectItem XmListDeselectPos XmListDeselectAllItems
+		         XmListSetPos XmListSetBottomPos XmListSetItem XmListSetBottomItem XmListSetAddMode
+		         XmListItemExists XmListItemPos XmListGetKbdItemPos XmListSetKbdItemPos XmListYToPos
+		         XmListPosToBounds XmListGetMatchPos XmListGetSelectedPos XmListSetHorizPos
+		         XmListUpdateSelectedList XmListPosSelected XmCreateList XmCreateScrolledList XmTranslateKey
+		         XmMainWindowSetAreas XmMainWindowSep1 XmMainWindowSep2 XmMainWindowSep3 XmCreateMainWindow
+		         XmInstallImage XmUninstallImage XmGetPixmap XmGetPixmapByDepth XmDestroyPixmap XmUpdateDisplay
+		         XmWidgetGetBaselines XmRegisterSegmentEncoding XmMapSegmentEncoding
+		         XmCvtCTToXmString XmCvtXmStringToCT XmConvertUnits XmSetFontUnits XmSetFontUnit XmSetMenuCursor
+		         XmGetMenuCursor XmCreateSimpleMenuBar XmCreateSimplePopupMenu XmCreateSimplePulldownMenu
+		         XmCreateSimpleOptionMenu XmCreateSimpleRadioBox XmCreateSimpleCheckBox XmVaCreateSimpleMenuBar
+		         XmVaCreateSimplePopupMenu XmVaCreateSimplePulldownMenu XmVaCreateSimpleOptionMenu
+		         XmVaCreateSimpleRadioBox XmVaCreateSimpleCheckBox XmTrackingEvent XmTrackingLocate
+		         XmSetColorCalculation XmGetColorCalculation XmGetColors XmChangeColor XmStringCreate
+		         XmStringCreateSimple XmStringCreateLocalized XmStringDirectionCreate XmStringSeparatorCreate
+		         XmStringSegmentCreate XmStringCreateLtoR XmStringInitContext
+		         XmStringFreeContext XmStringGetNextComponent XmStringPeekNextComponent XmStringGetNextSegment
+		         XmStringGetLtoR XmFontListEntryCreate XmFontListEntryCreate_r XmFontListCreate_r
+		         XmStringConcatAndFree XmStringIsVoid XmStringPeekNextTriple XmStringGetNextTriple
+		         XmStringComponentCreate XmStringUnparse XmStringParseText XmStringToXmStringTable
+		         XmStringTableToXmString XmStringTableUnparse XmStringTableParseStringArray
+		         XmDirectionToStringDirection XmStringDirectionToDirection XmStringGenerate XmStringPutRendition
+		         XmParseMappingGetValues XmParseMappingFree XmParseTableFree XmStringTableProposeTablist
+		         XmTabSetValue XmTabGetValues XmTabFree XmTabCreate XmTabListTabCount XmTabListRemoveTabs
+		         XmTabListReplacePositions XmTabListGetTab XmTabListCopy XmTabListInsertTabs
+		         XmRenderTableCvtFromProp XmRenderTableCvtToProp XmRenditionUpdate XmRenditionRetrieve
+		         XmRenditionFree XmRenditionCreate XmRenderTableGetRenditions XmRenderTableGetRendition
+		         XmRenderTableGetTags XmRenderTableFree XmRenderTableCopy XmRenderTableRemoveRenditions
+		         XmRenderTableAddRenditions XmFontListEntryFree XmFontListEntryGetFont XmFontListEntryGetTag
+		         XmFontListAppendEntry XmFontListNextEntry XmFontListRemoveEntry XmFontListEntryLoad
+		         XmFontListCreate XmFontListFree XmFontListAdd XmFontListCopy
+		         XmFontListInitFontContext XmFontListGetNextFont XmFontListFreeFontContext XmStringConcat
+		         XmStringNConcat XmStringCopy XmStringNCopy XmStringByteCompare XmStringCompare XmStringLength
+		         XmStringEmpty XmStringHasSubstring XmStringFree XmStringBaseline XmStringWidth XmStringHeight
+		         XmStringExtent XmStringLineCount XmStringDraw XmStringDrawImage XmStringDrawUnderline
+		         XmGetDestination XmIsTraversable XmGetVisibility XmGetTabGroup XmGetFocusWidget
+		         XmProcessTraversal XmCreateMenuShell XmIsMessageBox
+		         XmIsArrowButtonGadget XmIsArrowButton XmIsNotebook XmIsPrintShell XmIsComboBox XmIsContainer
+		         XmIsGrabShell XmIsIconGadget XmIsIconHeader XmIsPanedWindow XmIsBulletinBoard XmIsPrimitive
+		         XmIsCascadeButtonGadget XmIsCascadeButton XmIsPushButtonGadget XmIsPushButton XmIsCommand
+		         XmIsRowColumn XmIsScale XmIsScreen XmIsScrollBar XmIsDialogShell XmIsScrolledWindow XmIsDisplay
+		         XmIsSelectionBox XmIsDragContext XmIsSeparatorGadget XmIsDragIconObjectClass
+		         XmIsSeparator XmIsDrawingArea XmIsDrawnButton XmIsDropSiteManager XmIsDropTransfer XmIsTextField
+		         XmIsFileSelectionBox XmIsText XmIsForm XmIsFrame XmIsGadget XmIsToggleButtonGadget
+		         XmIsToggleButton XmIsLabelGadget XmIsLabel XmIsVendorShell XmIsList XmIsMainWindow XmIsManager
+		         XmIsMenuShell XpmCreatePixmapFromData XpmCreateDataFromPixmap XpmReadFileToPixmap
+		         XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
+		         XpmCreateXpmImageFromPixmap XGetPixel XDestroyImage XPutPixel XSubImage XAddPixel
+		         XtAppContext? XtRequestId?  XtWorkProcId? XtInputId?  XtIntervalId? Screen?  XEvent?
+		         XRectangle? XArc? XPoint?  XSegment?  XColor? Atom? Colormap?
+		         XModifierKeymap? Depth?  Display? Drawable?  Font? GC?  KeySym? Pixel?  Pixmap? Region?
+		         Time? Visual? Window?  XFontProp? XFontSet?  XFontStruct? XGCValues?  XImage?  XVisualInfo?
+		         XWMHints? XWindowAttributes? XWindowChanges?  KeyCode? XContext?  XCharStruct? XTextItem?
+		         XStandardColormap?  Substitution?  XPContext?  Widget?  XmStringContext? WidgetClass? XmString?
+		         XmToggleButton?  XmDrawingArea? XmPushButton?  XmTextField?  XmFileSelectionBox?  XmText?
+		         XmFrame? XmLabel? XmList?  XmArrowButton?  XmScrollBar? XmCommand? XmScale?  XmRowColumn?
+		         XmTab? XmNotebook?  XmPrintShell?  XmComboBox? XmContainer? XmIconHeader?
+		         XmGrabShell? XmRendition? XmRenderTable?  XmIconGadget?  XmTabList? XmParseMapping?
+		         XmPanedWindow?  XmScrolledWindow? XmCascadeButton?  XmForm?  XmBulletinBoard? XmScreen?
+		         XmDialogShell? XmDisplay?  XmSelectionBox?  XmDragContext?  XmDragIconObjectClass?  XmSeparator?
+		         XmDropSiteManager? XmDropTransfer?  XmVendorShell?  XmMainWindow? XmMessageBox?  XmManager?
+		         XmMenuShell?  XmLabelGadget?  XmPushButtonGadget?  XmSeparatorGadget?  XmArrowButtonGadget?
+		         XmCascadeButtonGadget?  XmToggleButtonGadget?  XmDrawnButton?  XmPrimitive? XmFontList?
+		         XmFontContext?  XmFontListEntry? XmTextSource?  XpmAttributes?  XpmImage?  XpmColorSymbol?
 			  ))
 		   (xm-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) xm-procs))
 		   (xm-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) xm-procs))
@@ -24127,63 +24127,63 @@ EDITS: 5
 			   :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 		    ))
 
-	      (let ((struct-accessors (list  |pixel |red |green |blue |flags |pad |x |y |width |height |angle1 |angle2
-				|x1 |y1 |x2 |y2 |dashes |dash_offset |clip_mask |clip_y_origin |clip_x_origin |graphics_exposures
-				|subwindow_mode |font |ts_y_origin |ts_x_origin |stipple |tile |arc_mode |fill_rule |fill_style
-				|join_style |cap_style |line_style |line_width |background |foreground |plane_mask |function |delta
-				|nchars |chars |name |depth |visual |mwidth |mheight |ndepths |depths |root_depth |root_visual
-				|default_gc |cmap |white_pixel |black_pixel |max_maps |min_maps |backing_store |save_unders |root_input_mask
-				|lbearing |rbearing |ascent |descent |attributes |card32 |fid |properties |min_bounds |max_bounds |per_char
-				|input |initial_state |icon_pixmap |icon_window |icon_x |icon_y |icon_mask |window_group |visualid
-				|class  |red_mask |green_mask |blue_mask |bits_per_rgb |map_entries |nvisuals |visuals |bits_per_pixel
-				|background_pixmap |background_pixel |border_pixmap |border_pixel |bit_gravity |win_gravity |backing_planes
-				|backing_pixel |save_under |event_mask |do_not_propagate_mask |cursor |map_installed |map_state |all_event_masks
-				|your_event_mask |screen |xoffset |byte_order |bitmap_unit |bitmap_bit_order |bitmap_pad |bytes_per_line
-				|obdata |sibling |stack_mode |red_max |red_mult |green_max |green_mult |blue_max |blue_mult |base_pixel
-				|killid |data |min_height |max_height |min_width |max_width |height_inc |width_inc |page_number
-				|page_widget |status_area_widget |major_tab_widget |minor_tab_widget |source_data |location_data |parm
-				|parm_format |parm_length |parm_type |transfer_id |destination_data |remaining |item_or_text |auto_selection_type
-				|new_outline_state |prev_page_number |prev_page_widget |rendition |render_table |last_page |crossed_boundary
-				|client_data |status |font_name |tag |traversal_destination |dragProtocolStyle |direction |reason
-				|timeStamp |operation |operations |dropSiteStatus |dropAction |iccHandle |completionStatus |dragContext
-				|animate |length |click_count |widget |item_position |callbackstruct
-				|set |item |item_length |selected_items |selected_item_count |selected_item_positions |selection_type
-				|mask |mask_length |dir |dir_length |pattern |pattern_length |position |currInsert |newInsert |startPos
-				|endPos |text |request_code |error_code |first_keycode |request |resourceid |format |message_type |new
-				|property |display |target |requestor |owner |selection |atom |place |value_mask |above |from_configure
-				|event |override_redirect |border_width |parent |minor_code |major_code |drawable |count |key_vector |focus
-				|detail |mode |is_hint |button |same_screen |keycode |state |y_root |x_root |root |time |subwindow |window
-				|send_event |serial |type |value |doit |colormap |menuToPost |postIt |valuemask |ncolors |cpp
-				|numsymbols |colorsymbols |npixels |y_hotspot |x_hotspot))
+	      (let ((struct-accessors (list  .pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2
+				.x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures
+				.subwindow_mode .font .ts_y_origin .ts_x_origin .stipple .tile .arc_mode .fill_rule .fill_style
+				.join_style .cap_style .line_style .line_width .background .foreground .plane_mask .function .delta
+				.nchars .chars .name .depth .visual .mwidth .mheight .ndepths .depths .root_depth .root_visual
+				.default_gc .cmap .white_pixel .black_pixel .max_maps .min_maps .backing_store .save_unders .root_input_mask
+				.lbearing .rbearing .ascent .descent .attributes .card32 .fid .properties .min_bounds .max_bounds .per_char
+				.input .initial_state .icon_pixmap .icon_window .icon_x .icon_y .icon_mask .window_group .visualid
+				.class  .red_mask .green_mask .blue_mask .bits_per_rgb .map_entries .nvisuals .visuals .bits_per_pixel
+				.background_pixmap .background_pixel .border_pixmap .border_pixel .bit_gravity .win_gravity .backing_planes
+				.backing_pixel .save_under .event_mask .do_not_propagate_mask .cursor .map_installed .map_state .all_event_masks
+				.your_event_mask .screen .xoffset .byte_order .bitmap_unit .bitmap_bit_order .bitmap_pad .bytes_per_line
+				.obdata .sibling .stack_mode .red_max .red_mult .green_max .green_mult .blue_max .blue_mult .base_pixel
+				.killid .data .min_height .max_height .min_width .max_width .height_inc .width_inc .page_number
+				.page_widget .status_area_widget .major_tab_widget .minor_tab_widget .source_data .location_data .parm
+				.parm_format .parm_length .parm_type .transfer_id .destination_data .remaining .item_or_text .auto_selection_type
+				.new_outline_state .prev_page_number .prev_page_widget .rendition .render_table .last_page .crossed_boundary
+				.client_data .status .font_name .tag .traversal_destination .dragProtocolStyle .direction .reason
+				.timeStamp .operation .operations .dropSiteStatus .dropAction .iccHandle .completionStatus .dragContext
+				.animate .length .click_count .widget .item_position .callbackstruct
+				.set .item .item_length .selected_items .selected_item_count .selected_item_positions .selection_type
+				.mask .mask_length .dir .dir_length .pattern .pattern_length .position .currInsert .newInsert .startPos
+				.endPos .text .request_code .error_code .first_keycode .request .resourceid .format .message_type .new
+				.property .display .target .requestor .owner .selection .atom .place .value_mask .above .from_configure
+				.event .override_redirect .border_width .parent .minor_code .major_code .drawable .count .key_vector .focus
+				.detail .mode .is_hint .button .same_screen .keycode .state .y_root .x_root .root .time .subwindow .window
+				.send_event .serial .type .value .doit .colormap .menuToPost .postIt .valuemask .ncolors .cpp
+				.numsymbols .colorsymbols .npixels .y_hotspot .x_hotspot))
 
-		    (struct-accessor-names (list  '|pixel '|red '|green '|blue '|flags '|pad '|x '|y '|width '|height '|angle1 '|angle2
-				'|x1 '|y1 '|x2 '|y2 '|dashes '|dash_offset '|clip_mask '|clip_y_origin '|clip_x_origin '|graphics_exposures
-				'|subwindow_mode '|font '|ts_y_origin '|ts_x_origin '|stipple '|tile '|arc_mode '|fill_rule '|fill_style
-				'|join_style '|cap_style '|line_style '|line_width '|background '|foreground '|plane_mask '|function '|delta
-				'|nchars '|chars '|name '|depth '|visual '|mwidth '|mheight '|ndepths '|depths '|root_depth '|root_visual
-				'|default_gc '|cmap '|white_pixel '|black_pixel '|max_maps '|min_maps '|backing_store '|save_unders '|root_input_mask
-				'|lbearing '|rbearing '|ascent '|descent '|attributes '|card32 '|fid '|properties '|min_bounds '|max_bounds '|per_char
-				'|input '|initial_state '|icon_pixmap '|icon_window '|icon_x '|icon_y '|icon_mask '|window_group '|visualid
-				'|class  '|red_mask '|green_mask '|blue_mask '|bits_per_rgb '|map_entries '|nvisuals '|visuals '|bits_per_pixel
-				'|background_pixmap '|background_pixel '|border_pixmap '|border_pixel '|bit_gravity '|win_gravity '|backing_planes
-				'|backing_pixel '|save_under '|event_mask '|do_not_propagate_mask '|cursor '|map_installed '|map_state '|all_event_masks
-				'|your_event_mask '|screen '|xoffset '|byte_order '|bitmap_unit '|bitmap_bit_order '|bitmap_pad '|bytes_per_line
-				'|obdata '|sibling '|stack_mode '|red_max '|red_mult '|green_max '|green_mult '|blue_max '|blue_mult '|base_pixel
-				'|killid '|data '|min_height '|max_height '|min_width '|max_width '|height_inc '|width_inc '|page_number
-				'|page_widget '|status_area_widget '|major_tab_widget '|minor_tab_widget '|source_data '|location_data '|parm
-				'|parm_format '|parm_length '|parm_type '|transfer_id '|destination_data '|remaining '|item_or_text '|auto_selection_type
-				'|new_outline_state '|prev_page_number '|prev_page_widget '|rendition '|render_table '|last_page '|crossed_boundary
-				'|client_data '|status '|font_name '|tag '|traversal_destination '|dragProtocolStyle '|direction '|reason
-				'|timeStamp '|operation '|operations '|dropSiteStatus '|dropAction '|iccHandle '|completionStatus '|dragContext
-				'|animate '|length '|click_count '|widget '|item_position '|callbackstruct
-				'|set '|item '|item_length '|selected_items '|selected_item_count '|selected_item_positions '|selection_type
-				'|mask '|mask_length '|dir '|dir_length '|pattern '|pattern_length '|position '|currInsert '|newInsert '|startPos
-				'|endPos '|text '|request_code '|error_code '|first_keycode '|request '|resourceid '|format '|message_type '|new
-				'|property '|display '|target '|requestor '|owner '|selection '|atom '|place '|value_mask '|above '|from_configure
-				'|event '|override_redirect '|border_width '|parent '|minor_code '|major_code '|drawable '|count '|key_vector '|focus
-				'|detail '|mode '|is_hint '|button '|same_screen '|keycode '|state '|y_root '|x_root '|root '|time '|subwindow '|window
-				'|send_event '|serial '|type '|value '|doit '|colormap '|menuToPost '|postIt '|valuemask '|ncolors '|cpp
-				'|numsymbols '|colorsymbols '|npixels '|y_hotspot '|x_hotspot)))
+		    (struct-accessor-names (list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2
+				'.x1 '.y1 '.x2 '.y2 '.dashes '.dash_offset '.clip_mask '.clip_y_origin '.clip_x_origin '.graphics_exposures
+				'.subwindow_mode '.font '.ts_y_origin '.ts_x_origin '.stipple '.tile '.arc_mode '.fill_rule '.fill_style
+				'.join_style '.cap_style '.line_style '.line_width '.background '.foreground '.plane_mask '.function '.delta
+				'.nchars '.chars '.name '.depth '.visual '.mwidth '.mheight '.ndepths '.depths '.root_depth '.root_visual
+				'.default_gc '.cmap '.white_pixel '.black_pixel '.max_maps '.min_maps '.backing_store '.save_unders '.root_input_mask
+				'.lbearing '.rbearing '.ascent '.descent '.attributes '.card32 '.fid '.properties '.min_bounds '.max_bounds '.per_char
+				'.input '.initial_state '.icon_pixmap '.icon_window '.icon_x '.icon_y '.icon_mask '.window_group '.visualid
+				'.class  '.red_mask '.green_mask '.blue_mask '.bits_per_rgb '.map_entries '.nvisuals '.visuals '.bits_per_pixel
+				'.background_pixmap '.background_pixel '.border_pixmap '.border_pixel '.bit_gravity '.win_gravity '.backing_planes
+				'.backing_pixel '.save_under '.event_mask '.do_not_propagate_mask '.cursor '.map_installed '.map_state '.all_event_masks
+				'.your_event_mask '.screen '.xoffset '.byte_order '.bitmap_unit '.bitmap_bit_order '.bitmap_pad '.bytes_per_line
+				'.obdata '.sibling '.stack_mode '.red_max '.red_mult '.green_max '.green_mult '.blue_max '.blue_mult '.base_pixel
+				'.killid '.data '.min_height '.max_height '.min_width '.max_width '.height_inc '.width_inc '.page_number
+				'.page_widget '.status_area_widget '.major_tab_widget '.minor_tab_widget '.source_data '.location_data '.parm
+				'.parm_format '.parm_length '.parm_type '.transfer_id '.destination_data '.remaining '.item_or_text '.auto_selection_type
+				'.new_outline_state '.prev_page_number '.prev_page_widget '.rendition '.render_table '.last_page '.crossed_boundary
+				'.client_data '.status '.font_name '.tag '.traversal_destination '.dragProtocolStyle '.direction '.reason
+				'.timeStamp '.operation '.operations '.dropSiteStatus '.dropAction '.iccHandle '.completionStatus '.dragContext
+				'.animate '.length '.click_count '.widget '.item_position '.callbackstruct
+				'.set '.item '.item_length '.selected_items '.selected_item_count '.selected_item_positions '.selection_type
+				'.mask '.mask_length '.dir '.dir_length '.pattern '.pattern_length '.position '.currInsert '.newInsert '.startPos
+				'.endPos '.text '.request_code '.error_code '.first_keycode '.request '.resourceid '.format '.message_type '.new
+				'.property '.display '.target '.requestor '.owner '.selection '.atom '.place '.value_mask '.above '.from_configure
+				'.event '.override_redirect '.border_width '.parent '.minor_code '.major_code '.drawable '.count '.key_vector '.focus
+				'.detail '.mode '.is_hint '.button '.same_screen '.keycode '.state '.y_root '.x_root '.root '.time '.subwindow '.window
+				'.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt '.valuemask '.ncolors '.cpp
+				'.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot)))
 
 		;; ---------------- 0 Args
 		(for-each 
@@ -24238,7 +24238,7 @@ EDITS: 5
       (if (and (provided? 'snd-gtk)
 	       (provided? 'xg))
 	  (begin
-	    (IF (not (|GTK_IS_WIDGET (cadr (main-widgets)))) (snd-display ";GTK_IS_WIDGET?"))
+	    (IF (not (GTK_IS_WIDGET (cadr (main-widgets)))) (snd-display ";GTK_IS_WIDGET?"))
 	    ))))
 
 

@@ -7,11 +7,11 @@ mipsel, hppa, ia64, arm, sparc, s390, and m68k."
 
 To build Snd, get the sources from
 
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz
 
-  gzip -d snd-5.tar.gz
-  tar xf snd-5.tar
-  cd snd-5
+  gzip -d snd-6.tar.gz
+  tar xf snd-6.tar
+  cd snd-6
   ./configure
   make
   make install
@@ -118,8 +118,8 @@ Guile (on the HAVE_RUBY or --with-ruby switches).
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-5-12.i386.rpm (for Linux), snd-5-12.src.rpm
-(sources), and snd-5-12.ppc.rpm (linuxPPC).  These RPM files have been
+mentioned above: snd-6-12.i386.rpm (for Linux), snd-6-12.src.rpm
+(sources), and snd-6-12.ppc.rpm (linuxPPC).  These RPM files have been
 superseded by Fernando Lopez-Lezcano's set available at
 http://www-ccrma.stanford.edu/software/snd/.
 
@@ -586,7 +586,7 @@ CCRMA:
   http://www-ccrma.stanford.edu/planetccrma/software/
 
 Snd:
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz
   http://www-ccrma.stanford.edu/software/snd/
   http://sourceforge.net/projects/snd/
 

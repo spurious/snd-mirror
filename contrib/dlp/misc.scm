@@ -33,25 +33,25 @@
 (check-for-unsaved-edits #t)
 (add-hook! after-open-hook show-disk-space)
 
-;(define wd (make-pixmap (|Widget (cadr (main-widgets))) rough))
-;(for-each-child (|Widget (cadr (main-widgets))) (lambda (w) (|XtSetValues w (list |XmNbackgroundPixmap wd))))
+;(define wd (make-pixmap (cadr (main-widgets)) rough))
+;(for-each-child (cadr (main-widgets)) (lambda (w) (XtSetValues w (list XmNbackgroundPixmap wd))))
 
-(define wd (make-pixmap (|Widget (cadr (main-widgets))) rough))
+(define wd (make-pixmap (cadr (main-widgets)) rough))
 
 ;(define (paint-all widget)
 ;  (for-each-child
-;    (|Widget widget)
+;    widget
 ;    (lambda (w)
-;      (|XtSetValues w (list |XmNbackgroundPixmap wd)))))
+;      (XtSetValues w (list XmNbackgroundPixmap wd)))))
 
 (define (paint-all widget)
    (for-each-child
-     (|Widget widget)
+     widget
      (lambda (w)
-       (if (not (or (|XmIsPushButton w)))
-;                    (|XmIsArrowButton w)))
-;                    (|XmIsToggleButton w)))
-           (|XtSetValues w (list |XmNbackgroundPixmap wd))))))
+       (if (not (or (XmIsPushButton w)))
+;                    (XmIsArrowButton w)))
+;                    (XmIsToggleButton w)))
+           (XtSetValues w (list XmNbackgroundPixmap wd))))))
 
 (paint-all (cadr (main-widgets)))
 (for-each
@@ -104,7 +104,7 @@
 
 ;(add-hook! after-open-hook
 ;           (lambda (snd)
-;             (|XtUnmanageChild (find-child (|Widget (list-ref (sound-widgets snd) 2)) "play"))))
+;             (XtUnmanageChild (find-child (list-ref (sound-widgets snd) 2) "play"))))
 
 
 ;;;
@@ -117,7 +117,7 @@
   (add-to-menu 0 "Delete" ; add Delete option to File menu
 	       (lambda ()
 		 ;; close current sound and delete it (after requesting confirmation)
-		 (if (selected-sound)
+		 (if (>= (selected-sound) 0)
 		     (let ((filename (file-name)))
 		       (close-sound)
 		       (if (yes-or-no? (format #f "delete ~S?" filename))
@@ -132,84 +132,84 @@
 	;; open dialog to get new name, save-as that name, open
 	(if (not rename-dialog)
 	    ;; make a standard dialog
-	    (let* ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
-		   (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
-		   (xok (|XmStringCreate "DoIt" |XmFONTLIST_DEFAULT_TAG))
-		   (titlestr (|XmStringCreate "Rename" |XmFONTLIST_DEFAULT_TAG))
-		   (new-dialog (|XmCreateTemplateDialog
-				 (|Widget (cadr (main-widgets))) "Rename"
-				 (list |XmNcancelLabelString   xdismiss
-				       |XmNhelpLabelString     xhelp
-				       |XmNokLabelString       xok
-				       |XmNautoUnmanage        #f
-				       |XmNdialogTitle         titlestr
-				       |XmNresizePolicy        |XmRESIZE_GROW
-				       |XmNnoResize            #f
-				       |XmNbackground          (basic-color)
-				       |XmNtransient           #f))))
+	    (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+		   (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+		   (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
+		   (titlestr (XmStringCreate "Rename" XmFONTLIST_DEFAULT_TAG))
+		   (new-dialog (XmCreateTemplateDialog
+				 (cadr (main-widgets)) "Rename"
+				 (list XmNcancelLabelString   xdismiss
+				       XmNhelpLabelString     xhelp
+				       XmNokLabelString       xok
+				       XmNautoUnmanage        #f
+				       XmNdialogTitle         titlestr
+				       XmNresizePolicy        XmRESIZE_GROW
+				       XmNnoResize            #f
+				       XmNbackground          (basic-color)
+				       XmNtransient           #f))))
 	      (for-each
 	       (lambda (button)
-		 (|XtVaSetValues
-		   (|XmMessageBoxGetChild new-dialog button)
-		   (list |XmNarmColor   (pushed-button-color)
-			 |XmNbackground (basic-color))))
-	       (list |XmDIALOG_HELP_BUTTON |XmDIALOG_CANCEL_BUTTON |XmDIALOG_OK_BUTTON))
+		 (XtVaSetValues
+		   (XmMessageBoxGetChild new-dialog button)
+		   (list XmNarmColor   (pushed-button-color)
+			 XmNbackground (basic-color))))
+	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
     
-	      (|XtAddCallback new-dialog |XmNcancelCallback 
-			      (lambda (w c i) (|XtUnmanageChild w)))
+	      (XtAddCallback new-dialog XmNcancelCallback 
+			      (lambda (w c i) (XtUnmanageChild w)))
 	      
-	      (|XtAddCallback new-dialog |XmNhelpCallback 
+	      (XtAddCallback new-dialog XmNhelpCallback 
 			      (lambda (w c i)
 				(help-dialog "Rename" "Give a new file name to rename the currently selected sound.")))
 
-	      (|XtAddCallback new-dialog |XmNokCallback 
+	      (XtAddCallback new-dialog XmNokCallback 
 			      (lambda (w c i)
-				(let ((new-name (|XmTextFieldGetString rename-text)))
+				(let ((new-name (XmTextFieldGetString rename-text)))
 				  (if (and (string? new-name)
 					   (> (string-length new-name) 0)
-					   (selected-sound))
+					   (>= (selected-sound) 0))
 				      (let ((current-name (file-name)))
 					(save-sound-as new-name)
 					(close-sound)
 					(rename-file current-name new-name)
 					(open-sound new-name)
-					(|XtUnmanageChild w))))))
-	      (|XmStringFree xhelp)
-	      (|XmStringFree xok)
-	      (|XmStringFree xdismiss)
-	      (|XmStringFree titlestr)
+					(XtUnmanageChild w))))))
+	      (XmStringFree xhelp)
+	      (XmStringFree xok)
+	      (XmStringFree xdismiss)
+	      (XmStringFree titlestr)
 	      (set! rename-dialog new-dialog)
-	      (let* ((mainform (|XtCreateManagedWidget "formd" |xmRowColumnWidgetClass rename-dialog
-				     (list |XmNleftAttachment      |XmATTACH_FORM
-					   |XmNrightAttachment     |XmATTACH_FORM
-					   |XmNtopAttachment       |XmATTACH_FORM
-					   |XmNbottomAttachment    |XmATTACH_WIDGET
-					   |XmNbottomWidget        (|XmMessageBoxGetChild rename-dialog |XmDIALOG_SEPARATOR)
-					   |XmNorientation         |XmVERTICAL
-					   |XmNbackground          (basic-color))))
-		     (label (|XtCreateManagedWidget "new name:" |xmLabelWidgetClass mainform
-				     (list |XmNleftAttachment      |XmATTACH_FORM
-					   |XmNrightAttachment     |XmATTACH_NONE
-					   |XmNtopAttachment       |XmATTACH_FORM
-					   |XmNbottomAttachment    |XmATTACH_FORM
-					   |XmNbackground          (basic-color)))))
+	      (let* ((mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass rename-dialog
+				     (list XmNleftAttachment      XmATTACH_FORM
+					   XmNrightAttachment     XmATTACH_FORM
+					   XmNtopAttachment       XmATTACH_FORM
+					   XmNbottomAttachment    XmATTACH_WIDGET
+					   XmNbottomWidget        (XmMessageBoxGetChild rename-dialog XmDIALOG_SEPARATOR)
+					   XmNorientation         XmVERTICAL
+					   XmNbackground          (basic-color))))
+		     (label (XtCreateManagedWidget "new name:" xmLabelWidgetClass mainform
+				     (list XmNleftAttachment      XmATTACH_FORM
+					   XmNrightAttachment     XmATTACH_NONE
+					   XmNtopAttachment       XmATTACH_FORM
+					   XmNbottomAttachment    XmATTACH_FORM
+					   XmNbackground          (basic-color)))))
 		(set! rename-text 
-		      (|XtCreateManagedWidget "newname" |xmTextFieldWidgetClass mainform
-				     (list |XmNleftAttachment      |XmATTACH_WIDGET
-					   |XmNleftWidget          label
-					   |XmNrightAttachment     |XmATTACH_FORM
-					   |XmNtopAttachment       |XmATTACH_FORM
-					   |XmNbottomAttachment    |XmATTACH_FORM
-					   |XmNbackground          (basic-color))))
-		(|XtAddEventHandler rename-text |EnterWindowMask #f
+		      (XtCreateManagedWidget "newname" xmTextFieldWidgetClass mainform
+				     (list XmNleftAttachment      XmATTACH_WIDGET
+					   XmNleftWidget          label
+					   XmNrightAttachment     XmATTACH_FORM
+					   XmNtopAttachment       XmATTACH_FORM
+					   XmNbottomAttachment    XmATTACH_FORM
+					   XmNbackground          (basic-color))))
+		(XtAddEventHandler rename-text EnterWindowMask #f
 				    (lambda (w context ev flag)
-				      (|XmProcessTraversal w |XmTRAVERSE_CURRENT)
-				      (|XtSetValues w (list |XmNbackground (white-pixel)))))
-		(|XtAddEventHandler rename-text |LeaveWindowMask #f
+				      (XmProcessTraversal w XmTRAVERSE_CURRENT)
+				      (XtSetValues w (list XmNbackground (white-pixel)))))
+		(XtAddEventHandler rename-text LeaveWindowMask #f
 				    (lambda (w context ev flag)
-				      (|XtSetValues w (list |XmNbackground (basic-color))))))))
-	(if (not (|XtIsManaged rename-dialog))
-	    (|XtManageChild rename-dialog)
+				      (XtSetValues w (list XmNbackground (basic-color))))))))
+	(if (not (XtIsManaged rename-dialog))
+	    (XtManageChild rename-dialog)
 	    (raise-dialog rename-dialog)))
       8)))
 
@@ -230,14 +230,14 @@
   ;; new-color can be the color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-color)
   (let ((color-pixel
          (if (string? new-color) ; assuming X11 color names here
-             (let* ((shell (|Widget (cadr (main-widgets))))
-                    (dpy (|XtDisplay shell))
-                    (scr (|DefaultScreen dpy))
-                    (cmap (|DefaultColormap dpy scr))
-                    (col (|XColor)))
-               (if (= (|XAllocNamedColor dpy cmap new-color col col) 0)
+             (let* ((shell (cadr (main-widgets)))
+                    (dpy (XtDisplay shell))
+                    (scr (DefaultScreen dpy))
+                    (cmap (DefaultColormap dpy scr))
+                    (col (XColor)))
+               (if (= (XAllocNamedColor dpy cmap new-color col col) 0)
                    (snd-error "can't allocate ~S" new-color)
-                   (|pixel col)))
+                   (.pixel col)))
 	     (if (color? new-color)
 		 new-color
 		 ;; assume a list of rgb vals?
@@ -245,20 +245,20 @@
     (for-each-child
      selection-popup-menu
      (lambda (n)
-       (|XmChangeColor n color-pixel)))))
+       (XmChangeColor n color-pixel)))))
 (change-selection-popup-color "coral")
 
 (define (change-fft-popup-color new-color)
   (let ((color-pixel
          (if (string? new-color) ; assuming X11 color names here
-             (let* ((shell (|Widget (cadr (main-widgets))))
-                    (dpy (|XtDisplay shell))
-                    (scr (|DefaultScreen dpy))
-                    (cmap (|DefaultColormap dpy scr))
-                    (col (|XColor)))
-               (if (= (|XAllocNamedColor dpy cmap new-color col col) 0)
+             (let* ((shell (cadr (main-widgets)))
+                    (dpy (XtDisplay shell))
+                    (scr (DefaultScreen dpy))
+                    (cmap (DefaultColormap dpy scr))
+                    (col (XColor)))
+               (if (= (XAllocNamedColor dpy cmap new-color col col) 0)
                    (snd-error "can't allocate ~S" new-color)
-                   (|pixel col)))
+                   (.pixel col)))
              (if (color? new-color)
 		 new-color
 		 ;; assume a list of rgb vals?
@@ -266,7 +266,7 @@
     (for-each-child
      fft-popup-menu
      (lambda (n)
-       (|XmChangeColor n color-pixel)))))
+       (XmChangeColor n color-pixel)))))
 (change-fft-popup-color "orange")
 
 ;(change-listener-popup-color "red")
@@ -308,7 +308,7 @@
 
 (define (replace-with-selection)
   (let ((beg (cursor))
-        (len (selection-frames)))
+        (len (selection-length)))
     (delete-samples beg len)
     (insert-selection beg)))
 

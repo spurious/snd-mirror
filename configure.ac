@@ -1,7 +1,7 @@
 dnl Configuration script for Snd
 dnl Process this file with autoconf 2.53 to produce a configure script.
 
-AC_INIT(snd, 5.13, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz)
+AC_INIT(snd, 6.0, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
@@ -580,9 +580,11 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
       GL_LIBS="-lGLU -lGL"
       if test "$with_gtk" = yes; then
         GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
+        GL_FLAGS="$GL_FLAGS -I/usr/local/include/gtkglext-0.x"
         AC_CHECK_LIB(m, gdk_window_get_gl_config, [AC_DEFINE(HAVE_GTK_GL_EXT_0_1)], , $GL_LIBS)
 	AC_CHECK_LIB(m, gdk_gl_font_use_gdk_font, [AC_DEFINE(HAVE_GDK_GL_FONT_USE_GDK_FONT)], , $GL_LIBS)
 	AC_CHECK_LIB(m, gtk_widget_gl_make_current, [AC_DEFINE(HAVE_GTK_WIDGET_GL_MAKE_CURRENT)], , $GL_LIBS)
+	AC_CHECK_LIB(m, gdk_gl_context_copy, [AC_DEFINE(HAVE_GDK_GL_CONTEXT_COPY)], , $GL_LIBS)
       fi
     fi
   else

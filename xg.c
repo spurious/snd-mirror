@@ -19,14 +19,14 @@
  *    (xm-version) -> date string.
  *    (c-array->list arr len) derefs each member of arr, returning lisp list
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
- *    (|GdkCursor #:optional type ref_count) -> GdkCursor struct
- *    (|GdkPoint #:optional x y) -> GdkPoint struct
- *    (|GdkRectangle #:optional x y width height) -> GdkRectangle struct
- *    (|GdkSegment #:optional x1 y1 x2 y2) -> GdkSegment struct
- *    (|GdkSpan #:optional x y width) -> GdkSpan struct
- *    (|GtkTextIter) -> GtkTextIter struct
- *    (|GtkTextMark) -> GtkTextMark struct
- *    (|GtkTextChildAnchor) -> GtkTextChildAnchor struct
+ *    (GdkCursor #:optional type ref_count) -> GdkCursor struct
+ *    (GdkPoint #:optional x y) -> GdkPoint struct
+ *    (GdkRectangle #:optional x y width height) -> GdkRectangle struct
+ *    (GdkSegment #:optional x1 y1 x2 y2) -> GdkSegment struct
+ *    (GdkSpan #:optional x y width) -> GdkSpan struct
+ *    (GtkTextIter) -> GtkTextIter struct
+ *    (GtkTextMark) -> GtkTextMark struct
+ *    (GtkTextChildAnchor) -> GtkTextChildAnchor struct
  *
  * omitted functions and macros:
  *     anything with a va_list or GtkArg* argument.  "..." args are ignored.
@@ -45,7 +45,8 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
- *     19-Jul:    XG_FIELD_PRE for change from using vertical-tab (reserved in R5RS)
+ *     24-Jul:    changed Guile prefix (R5RS reserves vertical-bar).
+ *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)
  *     2-Jun:     removed deprecated and broken stuff (see include-deprecated switch in makexg.scm)
  *     4-Apr:     minor changes for Gtk 2.0.2
  *     13-Mar:    Gtk 2.0.0
@@ -118,8 +119,8 @@ static void define_xm_obj(void)
 
 /* prefix for all names */
 #if HAVE_GUILE
-  #define XG_PRE "|"
-  #define XG_FIELD_PRE "|"
+  #define XG_PRE ""
+  #define XG_FIELD_PRE "."
   #define XG_POST ""
 #else
 /* for Ruby, XG PRE needs to be uppercase */
@@ -34131,7 +34132,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"19-Jul-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"22-Jul-02\")");
 #endif
       xg_already_inited = 1;
     }

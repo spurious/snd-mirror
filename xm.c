@@ -14,6 +14,7 @@
  */
 
 /* HISTORY: 
+ *   24-Jul:    removed "|" prefix, use "." as default struct field prefix (in R5RS, "|" is reserved).
  *   19-Jul:    XM_FIELD_PREFIX for change from using vertical-bar (reserved in R5RS).
  *   17-Jun:    removed XtSetWMColormapWindows.
  *   29-Apr:    minor 64-bit fixups.
@@ -94,9 +95,9 @@
 
 /* prefix for all names */
 #if HAVE_GUILE
-  #define XM_PREFIX "|"
+  #define XM_PREFIX ""
   #define XM_POSTFIX ""
-  #define XM_FIELD_PREFIX "|"
+  #define XM_FIELD_PREFIX "."
 #else
 /* for Ruby, XM PREFIX needs to be uppercase */
   #define XM_PREFIX "R"
@@ -128,38 +129,38 @@
  */
 
 /* --------------------------------------------------------------------------------
- * a sample program (using "|" as prefix)
+ * a sample program
 
-(let* ((shell-app (|XtVaOpenApplication 
-		    "Test" 0 0 0 '() 0 |applicationShellWidgetClass
-		    (list |XmNallowShellResize #t)))
+(let* ((shell-app (XtVaOpenApplication 
+		    "Test" 0 0 0 '() 0 applicationShellWidgetClass
+		    (list XmNallowShellResize #t)))
        (app (cadr shell-app))
        (shell (car shell-app))
-       (black (|BlackPixelOfScreen 
-		(|DefaultScreenOfDisplay 
-		  (|XtDisplay shell)))))
-  (if (not (|XtIsApplicationShell shell))
+       (black (BlackPixelOfScreen 
+		(DefaultScreenOfDisplay 
+		  (XtDisplay shell)))))
+  (if (not (XtIsApplicationShell shell))
       (display "not appshell"?))
-  (|XtSetValues shell (list |XmNtitle "Hi!"))
+  (XtSetValues shell (list XmNtitle "Hi!"))
   (let* ((main-pane 
-	  (|XtVaCreateManagedWidget 
-	    "main-pane" |xmFormWidgetClass shell
-	    (list |XmNforeground       black
-		  |XmNtopAttachment    |XmATTACH_FORM
-		  |XmNbottomAttachment |XmATTACH_FORM
-		  |XmNleftAttachment   |XmATTACH_FORM
-		  |XmNrightAttachment  |XmATTACH_FORM
-		  |XmNallowResize      #t)))
-	 (button (|XtCreateManagedWidget 
-		   "push me" |xmPushButtonWidgetClass main-pane '() 0)))
-    (|XtAddCallback button |XmNactivateCallback 
+	  (XtVaCreateManagedWidget 
+	    "main-pane" xmFormWidgetClass shell
+	    (list XmNforeground       black
+		  XmNtopAttachment    XmATTACH_FORM
+		  XmNbottomAttachment XmATTACH_FORM
+		  XmNleftAttachment   XmATTACH_FORM
+		  XmNrightAttachment  XmATTACH_FORM
+		  XmNallowResize      #t)))
+	 (button (XtCreateManagedWidget 
+		   "push me" xmPushButtonWidgetClass main-pane '() 0)))
+    (XtAddCallback button XmNactivateCallback 
 		    (lambda (widget context event-info)
 		      (display widget)
-		      (display (|reason event-info))
+		      (display (.reason event-info))
 		      (display context))
 		    123)
-    (|XtRealizeWidget shell)
-    (|XtAppMainLoop app)))
+    (XtRealizeWidget shell)
+    (XtAppMainLoop app)))
  */
 
 
@@ -208,7 +209,7 @@
  *    <name> -> empty struct of type <name>
  *
  * Structs are accessed by the field name and the lisp variable (which contains the struct type)
- *   (|pixel color) for example, or (|foreground gcvalue)
+ *   (.pixel color) for example, or (.foreground gcvalue)
  */
  
 
@@ -1877,7 +1878,7 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
     case XM_TAB_LIST:	      return(C_TO_XEN_XmTabList((XmTabList)value));
 #endif
     case XM_WIDGET:	      return(C_TO_XEN_Widget((Widget)value));
-    case XM_WIDGET_LIST:      /* (|XtGetValues c1 (list |XmNchildren 0) 1) */
+    case XM_WIDGET_LIST:      /* (XtGetValues c1 (list XmNchildren 0) 1) */
 #if MOTIF_2
       if (strcmp(name, XmNchildren) == 0)
 	XtSetArg(a[0], XmNnumChildren, &len);             /* Composite */
@@ -2012,7 +2013,7 @@ static XEN C_TO_XEN_Args(Widget w, Arg *args, int len)
   return(lst);
 }
 
-/* (|XtGetValues c1 (list |XmNx 0) 1) */
+/* (XtGetValues c1 (list XmNx 0) 1) */
 
 static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
 {
@@ -9842,7 +9843,7 @@ static XEN gxm_XGetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XGetPointerMapping "int XGetPointerMapping(display, ignored, len) returns the current mapping of the pointer."
   /* DIFF: XGetPointerMapping ignores arg2, returns list
-   * (|XGetPointerMapping (|XtDisplay (cadr (main-widgets))) 0 3)
+   * (XGetPointerMapping (XtDisplay (cadr (main-widgets))) 0 3)
    */
   int i, len, loc, rtn;
   unsigned char *map;
@@ -13382,7 +13383,7 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 {
   #define H_XtResolvePathname "String XtResolvePathname(display, type, filename, suffix, path, substitutions, num_substitutions, predicate)"
   /* DIFF: XtResolvePathname args use #f for NULL
-   *       (|XtResolvePathname (|XtDisplay (|Widget (cadr (main-widgets)))) "app-defaults" #f #f #f #f 0 #f)
+   *       (XtResolvePathname (XtDisplay (cadr (main-widgets))) "app-defaults" #f #f #f #f 0 #f)
    */
   char *str;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtResolvePathname", "Display*");
@@ -14252,7 +14253,7 @@ applicationShellWidgetClass ,and the specified args and num_args and returns the
 		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
 }
 
-/* (define appres (|XtVaOpenApplication "hioh" 0 0 0 0 0 |applicationShellWidgetClass (list |XmNallowShellResize 1))) */
+/* (define appres (XtVaOpenApplication "hioh" 0 0 0 0 0 applicationShellWidgetClass (list XmNallowShellResize 1))) */
 
 static XEN gxm_XtDisplayInitialize(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {

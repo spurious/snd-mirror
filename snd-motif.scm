@@ -39,12 +39,12 @@
 
 (define (current-screen)
   "(current-screen) returns the current X screen number of the current display"
-  (|DefaultScreenOfDisplay 
-    (|XtDisplay (cadr (main-widgets)))))
+  (DefaultScreenOfDisplay 
+    (XtDisplay (cadr (main-widgets)))))
 
-(define (white-pixel)  (|WhitePixelOfScreen (current-screen)))
-(define (black-pixel)  (|BlackPixelOfScreen (current-screen)))
-(define (screen-depth) (|DefaultDepthOfScreen (current-screen)))
+(define (white-pixel)  (WhitePixelOfScreen (current-screen)))
+(define (black-pixel)  (BlackPixelOfScreen (current-screen)))
+(define (screen-depth) (DefaultDepthOfScreen (current-screen)))
 
 
 ;;; -------- apply func to every widget belonging to w (and w) --------
@@ -52,11 +52,11 @@
 (define (for-each-child w func)
   "(for-each-child w func) applies func to w and each of its children"
   (func w)
-  (if (|XtIsComposite w)
+  (if (XtIsComposite w)
       (for-each 
        (lambda (n)
 	 (for-each-child n func))
-       (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
+       (cadr (XtGetValues w (list XmNchildren 0) 1)))))
 
 (define (find-child widget name)
   "(find-child widget name) returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'"
@@ -65,23 +65,23 @@
      (for-each-child
       widget
       (lambda (child)
-	(if (string=? (|XtName child) name)
+	(if (string=? (XtName child) name)
 	    (return child))))
      (throw 'no-such-widget (list "find-child" name)))))
 
 (define (display-widget-tree widget)
   "display hierarchy of widgets beneath 'widget'"
   (define (display-widget w spaces)
-    (let ((name (|XtName w)))
+    (let ((name (XtName w)))
       (if (or (not (string? name))
 	      (= (string-length name) 0))
 	  (set! name "<unnamed>"))
       (display (format #f "~A~A~%" spaces name))
-      (if (|XtIsComposite w)
+      (if (XtIsComposite w)
 	  (for-each 
 	   (lambda (n)
 	     (display-widget n (string-append spaces "  ")))
-	   (cadr (|XtGetValues w (list |XmNchildren 0) 1))))))
+	   (cadr (XtGetValues w (list XmNchildren 0) 1))))))
   (display-widget widget ""))
 
 (define (set-main-color-of-widget w)
@@ -89,28 +89,28 @@
   (for-each-child 
    w
    (lambda (n)
-     (if (|XtIsWidget n)
-	 (if (|XmIsScrollBar n)
-	     (|XmChangeColor n (position-color))
-	     (|XmChangeColor n (basic-color)))))))
+     (if (XtIsWidget n)
+	 (if (XmIsScrollBar n)
+	     (XmChangeColor n (position-color))
+	     (XmChangeColor n (basic-color)))))))
 
 (define (x->snd-color color-name)
   "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"
-  (let* ((col (|XColor))
-	 (dpy (|XtDisplay (cadr (main-widgets))))
-	 (scr (|DefaultScreen dpy))
-	 (cmap (|DefaultColormap dpy scr)))
-    (if (= (|XAllocNamedColor dpy cmap color-name col col) 0)
+  (let* ((col (XColor))
+	 (dpy (XtDisplay (cadr (main-widgets))))
+	 (scr (DefaultScreen dpy))
+	 (cmap (DefaultColormap dpy scr)))
+    (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
         (snd-error (format #f "can't allocate ~A" color-name))
-	(make-color (/ (|red col) 65535.0)
-		    (/ (|green col) 65535.0)
-		    (/ (|blue col) 65535.0)))))
+	(make-color (/ (.red col) 65535.0)
+		    (/ (.green col) 65535.0)
+		    (/ (.blue col) 65535.0)))))
 
 (define (host-name)
   "(host-name) -> name of current machine"
-  (let* ((dpy (|XtDisplay (cadr (main-widgets))))
-	 (win (|XtWindow (cadr (main-widgets))))
-	 (host (|XGetWindowProperty dpy win (|XInternAtom (|XtDisplay (cadr (main-widgets))) "WM_CLIENT_MACHINE" #f) 0 32 #f |XA_STRING)))
+  (let* ((dpy (XtDisplay (cadr (main-widgets))))
+	 (win (XtWindow (cadr (main-widgets))))
+	 (host (XGetWindowProperty dpy win (XInternAtom (XtDisplay (cadr (main-widgets))) "WM_CLIENT_MACHINE" #f) 0 32 #f XA_STRING)))
     (and host (list-ref host 5))))
 
 
@@ -136,26 +136,26 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 	 (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
 	matches)))
   (define (XmString->string str)
-    (cadr (|XmStringGetLtoR str |XmFONTLIST_DEFAULT_TAG)))
+    (cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
   (define (XmStringTable->list st len)
-    (|XmStringTableUnparse st len #f |XmCHARSET_TEXT |XmCHARSET_TEXT #f 0 |XmOUTPUT_ALL))
+    (XmStringTableUnparse st len #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
   (define (list->XmStringTable strs)
-    (|XmStringTableParseStringArray strs (length strs) #f |XmCHARSET_TEXT #f 0 #f))
-  (|XtSetValues (let ((m (open-file-dialog #f)))
+    (XmStringTableParseStringArray strs (length strs) #f XmCHARSET_TEXT #f 0 #f))
+  (XtSetValues (let ((m (open-file-dialog #f)))
 		  (list-ref (dialog-widgets) 6))
-		(list |XmNfileSearchProc
+		(list XmNfileSearchProc
 		       (lambda (widget info)
-			 (let* ((dir (XmString->string (|dir info)))
+			 (let* ((dir (XmString->string (.dir info)))
 				(files (match-sound-files proc dir))
 				(fileTable (list->XmStringTable 
 					    (map (lambda (n) 
 						   (string-append dir n)) 
 						 files))))
-			   (|XtSetValues widget
-					 (list |XmNfileListItems fileTable
-					       |XmNfileListItemCount (length files)
-					       |XmNlistUpdated #t))
-			   (for-each (lambda (n) (|XmStringFree n)) fileTable))))))
+			   (XtSetValues widget
+					 (list XmNfileListItems fileTable
+					       XmNfileListItemCount (length files)
+					       XmNlistUpdated #t))
+			   (for-each (lambda (n) (XmStringFree n)) fileTable))))))
 
 
 ;;; here's a fancier version that gets rid of the useless directory list,
@@ -164,32 +164,32 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 (define install-searcher-with-colors
   (let* ((dialog (let ((m (open-file-dialog #f)))
 		   (list-ref (dialog-widgets) 6)))
-	 ;; (|XtGetValues dialog (|XmNfileSearchProc 0)) to get the default
+	 ;; (XtGetValues dialog (XmNfileSearchProc 0)) to get the default
 	 (shell (cadr (main-widgets)))
 	 (tags (list "one" "two" "three" "four"))
 	 (colors (list "black" "red" "blue" "orange"))
-	 (pixels (let* ((dpy (|XtDisplay shell))
-			(scr (|DefaultScreen dpy))
-			(cmap (|DefaultColormap dpy scr)))
+	 (pixels (let* ((dpy (XtDisplay shell))
+			(scr (DefaultScreen dpy))
+			(cmap (DefaultColormap dpy scr)))
 		   (map
 		    (lambda (color)
-		      (let ((col (|XColor)))
-			(if (= (|XAllocNamedColor dpy cmap color col col) 0)
+		      (let ((col (XColor)))
+			(if (= (XAllocNamedColor dpy cmap color col col) 0)
 			    (snd-error (format #f "can't allocate ~A" color))
-			    (|pixel col))))
+			    (.pixel col))))
 		    colors)))
-	 (rendertable (|XmRenderTableAddRenditions 
+	 (rendertable (XmRenderTableAddRenditions 
 			#f 
 			(map (lambda (tag pix)
-			       (|XmRenditionCreate 
+			       (XmRenditionCreate 
 				 (cadr (main-widgets))
 				 tag
-				 (list |XmNrenditionForeground pix
-				       |XmNfontName "9x15"
- 				       |XmNfontType |XmFONT_IS_FONT)))
+				 (list XmNrenditionForeground pix
+				       XmNfontName "9x15"
+ 				       XmNfontType XmFONT_IS_FONT)))
 			     tags pixels)
 			(length tags)
-			|XmMERGE_NEW)))
+			XmMERGE_NEW)))
     (lambda (proc)
       (define match-sound-files
 	(lambda args
@@ -202,11 +202,11 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 	     (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
 	    matches)))
       (define (XmString->string str)
-	(cadr (|XmStringGetLtoR str |XmFONTLIST_DEFAULT_TAG)))
-      (|XtSetValues dialog
-		(list |XmNfileSearchProc
+	(cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
+      (XtSetValues dialog
+		(list XmNfileSearchProc
 		       (lambda (widget info)
-			 (let* ((dir (XmString->string (|dir info)))  ; may need filter text here?
+			 (let* ((dir (XmString->string (.dir info)))  ; may need filter text here?
 				(files (sort (map 
 					      (lambda (n) 
 						(string-append dir n)) 
@@ -214,8 +214,8 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 					     string<?))               ; alphabetical order
 				(fileTable (map
 					    (lambda (n)
-					      (|XmStringGenerate 
-						n #f |XmCHARSET_TEXT 
+					      (XmStringGenerate 
+						n #f XmCHARSET_TEXT 
 						(if (= (mus-sound-chans n) 1)
 						    "one"
 						    (if (= (mus-sound-chans n) 2)
@@ -224,16 +224,16 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 							    "four"
 							    "three")))))
 					    files)))
-			   (|XtSetValues widget
-					 (list |XmNfileListItems fileTable
-					       |XmNfileListItemCount (length files)
-					       |XmNlistUpdated #t))
-			   (for-each (lambda (n) (|XmStringFree n)) fileTable)))))
-      (|XtUnmanageChild (|XmFileSelectionBoxGetChild dialog |XmDIALOG_DIR_LIST))
-      (|XtUnmanageChild (|XmFileSelectionBoxGetChild dialog |XmDIALOG_DIR_LIST_LABEL))
-      (|XtSetValues (|XmFileSelectionBoxGetChild dialog |XmDIALOG_LIST)
-		    (list |XmNrenderTable rendertable))
-      (|XmFileSelectionDoSearch dialog #f))))
+			   (XtSetValues widget
+					 (list XmNfileListItems fileTable
+					       XmNfileListItemCount (length files)
+					       XmNlistUpdated #t))
+			   (for-each (lambda (n) (XmStringFree n)) fileTable)))))
+      (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST))
+      (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST_LABEL))
+      (XtSetValues (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
+		    (list XmNrenderTable rendertable))
+      (XmFileSelectionDoSearch dialog #f))))
     
 ;(install-searcher-with-colors (lambda (file) #t))
 
@@ -246,11 +246,11 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
   (let* ((dialog (let ((m (open-file-dialog #f)))
 		   (list-ref (dialog-widgets) 6))))
     (lambda ()
-      (|XtRemoveAllCallbacks dialog |XmNokCallback) ; remove built-in version
-      (|XtAddCallback dialog |XmNokCallback
+      (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
+      (XtAddCallback dialog XmNokCallback
 		      (lambda (widget context info)
 			;; same as built-in "ok" callback, but does not "unmanage" the dialog
-			(let ((filename (cadr (|XmStringGetLtoR (|value info) |XmFONTLIST_DEFAULT_TAG))))
+			(let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
 			  (if (not (file-is-directory? filename))
 			      (let ((snd (open-sound filename)))
 				(select-channel 0))
@@ -261,11 +261,11 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
   (let* ((dialog (let ((m (mix-file-dialog #f)))
 		   (list-ref (dialog-widgets) 11))))
     (lambda ()
-      (|XtRemoveAllCallbacks dialog |XmNokCallback) ; remove built-in version
-      (|XtAddCallback dialog |XmNokCallback
+      (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
+      (XtAddCallback dialog XmNokCallback
 		      (lambda (widget context info)
 			;; same as built-in "ok" callback, but does not "unmanage" the dialog
-			(let ((filename (cadr (|XmStringGetLtoR (|value info) |XmFONTLIST_DEFAULT_TAG))))
+			(let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
 			  (if (not (file-is-directory? filename))
 			      (mix-sound filename (cursor))
 			      (snd-error (format #f "~S is a directory" filename))))))
@@ -284,7 +284,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 	(do ((chn 0 (1+ chn)))
 	    ((= chn (chans snd)))
 	  (let ((zy (list-ref (channel-widgets snd chn) 6)))
-	    (|XtRemoveCallback zy |XmNdragCallback (car calls))
+	    (XtRemoveCallback zy XmNdragCallback (car calls))
 	    (set! calls (cdr calls))))))
   (set! (sound-property 'dragger snd) #f)
   #f)
@@ -295,12 +295,12 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 	  (do ((chn 0 (1+ chn)))
 	      ((= chn (chans snd)))
 	    (let* ((zy (list-ref (channel-widgets snd chn) 6))
-		   (zy-div (- 100.0 (cadr (|XtGetValues zy (list |XmNsliderSize 0))))))
+		   (zy-div (- 100.0 (cadr (XtGetValues zy (list XmNsliderSize 0))))))
 	      (set! calls
-		    (cons (|XtAddCallback zy
-					  |XmNdragCallback 
+		    (cons (XtAddCallback zy
+					  XmNdragCallback 
 					   (lambda (w data info)
-					     (let ((v (/ (|value info) zy-div)))
+					     (let ((v (/ (.value info) zy-div)))
 					       (do ((i 0 (1+ i)))
 						   ((= i (chans snd)))
 						 (if (not (= i chn))
@@ -333,17 +333,17 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;;; -------- add our own pane to the channel section --------
 
 (define (add-channel-pane snd chn name type args)
-  (|XtCreateManagedWidget name type (|XtParent (|XtParent (list-ref (channel-widgets snd chn) 7))) args))
+  (XtCreateManagedWidget name type (XtParent (XtParent (list-ref (channel-widgets snd chn) 7))) args))
 
 ;;; -------- add our own pane to the sound section (underneath the controls in this case) --------
 
 (define (add-sound-pane snd name type args)
-  (|XtCreateManagedWidget name type (car (sound-widgets snd)) args))
+  (XtCreateManagedWidget name type (car (sound-widgets snd)) args))
 
 ;;; -------- add our own pane to the overall Snd window (underneath the listener in this case) --------
 
 (define (add-main-pane name type args)
-  (|XtCreateManagedWidget name type (or (list-ref (main-widgets) 5) (list-ref (main-widgets) 3)) args))
+  (XtCreateManagedWidget name type (or (list-ref (main-widgets) 5) (list-ref (main-widgets) 3)) args))
 
 ;;; -------- add a widget at the top of the listener
 
@@ -351,30 +351,30 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
   (let* ((listener (find-child (cadr (main-widgets)) "lisp-listener"))
 	 ;; this is the listener text widget, hopefully
 	 ;;   its parent is the scrolled window, its parent is the form widget filling the listener pane
-	 (listener-scroll (|XtParent listener))
-	 (listener-form (|XtParent listener-scroll)))
+	 (listener-scroll (XtParent listener))
+	 (listener-form (XtParent listener-scroll)))
     ;; to insert the new widget at the top of the listener pane we need to detach the
     ;;   listener scrolled window etc -- assume here that the "args" list does not
     ;;   include any ATTACH_* arguments
-    (|XtUnmanageChild listener-scroll)
-    (let ((top-widget (|XtCreateManagedWidget name type listener-form
+    (XtUnmanageChild listener-scroll)
+    (let ((top-widget (XtCreateManagedWidget name type listener-form
 					      (append 
-					       (list |XmNleftAttachment   |XmATTACH_FORM
-						     |XmNrightAttachment  |XmATTACH_FORM
-						     |XmNtopAttachment    |XmATTACH_FORM)
+					       (list XmNleftAttachment   XmATTACH_FORM
+						     XmNrightAttachment  XmATTACH_FORM
+						     XmNtopAttachment    XmATTACH_FORM)
 					       args))))
-      (|XtVaSetValues listener-scroll (list |XmNtopAttachment |XmATTACH_WIDGET
-					    |XmNtopWidget     top-widget))
-      (|XtManageChild listener-scroll)
+      (XtVaSetValues listener-scroll (list XmNtopAttachment XmATTACH_WIDGET
+					    XmNtopWidget     top-widget))
+      (XtManageChild listener-scroll)
       top-widget)))
 
 ;(add-channel-pane "new-pane" 
-;		  |xmDrawingAreaWidgetClass 
-;		  (list |XmNbackground (graph-color)
-;			|XmNforeground (data-color)))
+;		  xmDrawingAreaWidgetClass 
+;		  (list XmNbackground (graph-color)
+;			XmNforeground (data-color)))
 
 (define (remove-menu-bar-menu which)
-  (|XtUnmanageChild (list-ref (menu-widgets) which)))
+  (XtUnmanageChild (list-ref (menu-widgets) which)))
 
 
 ;;; -------- disable control panel --------
@@ -384,25 +384,25 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
     (for-each-child 
      swc 
      (lambda (n) 
-       (if (and (not (string=? (|XtName n) "snd-name-form")) 
-		(not (string=? (|XtName (|XtParent n)) "snd-name-form")))
-	   (|XtUnmanageChild n))))
-    (|XtSetValues swc (list |XmNpaneMaximum 18 
-			    |XmNpaneMinimum 18))
+       (if (and (not (string=? (XtName n) "snd-name-form")) 
+		(not (string=? (XtName (XtParent n)) "snd-name-form")))
+	   (XtUnmanageChild n))))
+    (XtSetValues swc (list XmNpaneMaximum 18 
+			    XmNpaneMinimum 18))
     (remove-from-menu 2 "Show controls")
-    (|XtManageChild swc)))
+    (XtManageChild swc)))
 
 
 
 ;;; -------- bring possibly-obscured dialog to top
 
 (define (raise-dialog w)
-  (if (and (|Widget? w) 
-	   (|XtIsManaged w))
-      (let ((parent (|XtParent w)))
-	(if (and (|Widget? parent)
-		 (|XtIsSubclass parent |xmDialogShellWidgetClass))
-	    (|XtPopup parent |XtGrabNone)))))
+  (if (and (Widget? w) 
+	   (XtIsManaged w))
+      (let ((parent (XtParent w)))
+	(if (and (Widget? parent)
+		 (XtIsSubclass parent xmDialogShellWidgetClass))
+	    (XtPopup parent XtGrabNone)))))
 
 
 
@@ -425,55 +425,55 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (for-each
      (lambda (ctl)
        (set! ((caddr ctl) #t) (cadr ctl))
-       (|XtSetValues (car ctl) 
-		     (list |XmNvalue (inexact->exact (* (cadr ctl) 100)))))
+       (XtSetValues (car ctl) 
+		     (list XmNvalue (inexact->exact (* (cadr ctl) 100)))))
      hidden-controls))
-  (if (not (|Widget? hidden-controls-dialog))
-      (let ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
-	    (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
-	    (titlestr (|XmStringCreate "More Controls" |XmFONTLIST_DEFAULT_TAG))
-	    (xreset (|XmStringCreate "Reset" |XmFONTLIST_DEFAULT_TAG)))
+  (if (not (Widget? hidden-controls-dialog))
+      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+	    (titlestr (XmStringCreate "More Controls" XmFONTLIST_DEFAULT_TAG))
+	    (xreset (XmStringCreate "Reset" XmFONTLIST_DEFAULT_TAG)))
 	(set! hidden-controls-dialog 
-	      (|XmCreateTemplateDialog (cadr (main-widgets)) "More Controls"
-                (list |XmNcancelLabelString   xreset
-		      |XmNokLabelString       xdismiss
-		      |XmNhelpLabelString     xhelp
-		      |XmNautoUnmanage        #f
-		      |XmNdialogTitle         titlestr
-		      |XmNresizePolicy        |XmRESIZE_GROW
-	              |XmNnoResize            #f
-		      |XmNtransient           #f
-		      |XmNbackground          (basic-color))))
+	      (XmCreateTemplateDialog (cadr (main-widgets)) "More Controls"
+                (list XmNcancelLabelString   xreset
+		      XmNokLabelString       xdismiss
+		      XmNhelpLabelString     xhelp
+		      XmNautoUnmanage        #f
+		      XmNdialogTitle         titlestr
+		      XmNresizePolicy        XmRESIZE_GROW
+	              XmNnoResize            #f
+		      XmNtransient           #f
+		      XmNbackground          (basic-color))))
 
 	(for-each
 	 (lambda (button)
-	   (|XtVaSetValues (|XmMessageBoxGetChild hidden-controls-dialog button)
-			   (list |XmNarmColor   (pushed-button-color)
-				 |XmNbackground (basic-color))))
-	 (list |XmDIALOG_HELP_BUTTON |XmDIALOG_CANCEL_BUTTON |XmDIALOG_OK_BUTTON))
+	   (XtVaSetValues (XmMessageBoxGetChild hidden-controls-dialog button)
+			   (list XmNarmColor   (pushed-button-color)
+				 XmNbackground (basic-color))))
+	 (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
 
-	(|XtAddCallback hidden-controls-dialog 
-			|XmNokCallback (lambda (w context info)
-					 (|XtUnmanageChild hidden-controls-dialog)))
-	(|XtAddCallback hidden-controls-dialog 
-			|XmNhelpCallback (lambda (w context info)
+	(XtAddCallback hidden-controls-dialog 
+			XmNokCallback (lambda (w context info)
+					 (XtUnmanageChild hidden-controls-dialog)))
+	(XtAddCallback hidden-controls-dialog 
+			XmNhelpCallback (lambda (w context info)
 					   (help-dialog "More Controls" hidden-controls-help)))
-	(|XtAddCallback hidden-controls-dialog
-			|XmNcancelCallback (lambda (w context info)
+	(XtAddCallback hidden-controls-dialog
+			XmNcancelCallback (lambda (w context info)
 					     (reset-all-sliders)))
-	(|XmStringFree xhelp)
-	(|XmStringFree xdismiss)
-	(|XmStringFree titlestr)
-	(|XmStringFree xreset)
+	(XmStringFree xhelp)
+	(XmStringFree xdismiss)
+	(XmStringFree titlestr)
+	(XmStringFree xreset)
 
 	(let* ((mainform 
-		(|XtCreateManagedWidget "formd" |xmRowColumnWidgetClass hidden-controls-dialog
-                  (list |XmNleftAttachment      |XmATTACH_FORM
-		        |XmNrightAttachment     |XmATTACH_FORM
-		        |XmNtopAttachment       |XmATTACH_FORM
-		        |XmNbottomAttachment    |XmATTACH_WIDGET
-		        |XmNbottomWidget        (|XmMessageBoxGetChild hidden-controls-dialog |XmDIALOG_SEPARATOR)
-                        |XmNorientation         |XmVERTICAL))))
+		(XtCreateManagedWidget "formd" xmRowColumnWidgetClass hidden-controls-dialog
+                  (list XmNleftAttachment      XmATTACH_FORM
+		        XmNrightAttachment     XmATTACH_FORM
+		        XmNtopAttachment       XmATTACH_FORM
+		        XmNbottomAttachment    XmATTACH_WIDGET
+		        XmNbottomWidget        (XmMessageBoxGetChild hidden-controls-dialog XmDIALOG_SEPARATOR)
+                        XmNorientation         XmVERTICAL))))
 	  (for-each
 	   (lambda (lst)
 	     (let* ((name (car lst))
@@ -481,27 +481,27 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		    (high (caddr lst))
 		    (initial (list-ref lst 3))
 		    (func (list-ref lst 4))
-		    (title (|XmStringCreate name |XmFONTLIST_DEFAULT_TAG))
-		    (slider (|XtCreateManagedWidget name |xmScaleWidgetClass mainform
-			       (list |XmNorientation   |XmHORIZONTAL
-				     |XmNshowValue     #t
-				     |XmNminimum       (inexact->exact (* low 100))
-				     |XmNmaximum       (inexact->exact (* high 100))
-				     |XmNvalue         (inexact->exact (* initial 100))
-				     |XmNdecimalPoints 2
-				     |XmNtitleString   title
-				     |XmNborderWidth   1
-				     |XmNbackground    (basic-color)))))
-	       (|XmStringFree title)
+		    (title (XmStringCreate name XmFONTLIST_DEFAULT_TAG))
+		    (slider (XtCreateManagedWidget name xmScaleWidgetClass mainform
+			       (list XmNorientation   XmHORIZONTAL
+				     XmNshowValue     #t
+				     XmNminimum       (inexact->exact (* low 100))
+				     XmNmaximum       (inexact->exact (* high 100))
+				     XmNvalue         (inexact->exact (* initial 100))
+				     XmNdecimalPoints 2
+				     XmNtitleString   title
+				     XmNborderWidth   1
+				     XmNbackground    (basic-color)))))
+	       (XmStringFree title)
 	       (set! hidden-controls (cons (list slider initial func) hidden-controls))
-	       (|XtAddCallback slider
-			       |XmNvalueChangedCallback 
+	       (XtAddCallback slider
+			       XmNvalueChangedCallback 
 				(lambda (w context info)
-				  (set! (func #t) (/ (|value info) 100.0))))
-	       (|XtAddCallback slider
-			       |XmNdragCallback 
+				  (set! (func #t) (/ (.value info) 100.0))))
+	       (XtAddCallback slider
+			       XmNdragCallback 
 				(lambda (w context info)
-				  (set! (func #t) (/ (|value info) 100.0))))))
+				  (set! (func #t) (/ (.value info) 100.0))))))
 	   (list (list "expand-hop" 0.01 1.0 0.05  expand-control-hop)
 		 (list "expand-length" 0.01 .5 0.15 expand-control-length)
 		 (list "expand-ramp" 0.01 .5 0.4 expand-control-ramp)
@@ -510,8 +510,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		 (list "reverb-feedback" 0.0 1.25 1.09 reverb-control-feedback))))
 	(add-to-menu 3 "Hidden controls"
 		     (lambda ()
-		       (if (not (|XtIsManaged hidden-controls-dialog))
-			   (|XtManageChild hidden-controls-dialog)
+		       (if (not (XtIsManaged hidden-controls-dialog))
+			   (XtManageChild hidden-controls-dialog)
 			   (raise-dialog hidden-controls-dialog)))))))
 
 
@@ -525,60 +525,60 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (define amplitude 0.2)
   (define running #f)
   (define audio-fd #f)
-  (if (not (|Widget? fmv-dialog))
-      (let ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
-	    (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
-	    (titlestr (|XmStringCreate "Scaling" |XmFONTLIST_DEFAULT_TAG)))
+  (if (not (Widget? fmv-dialog))
+      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+	    (titlestr (XmStringCreate "Scaling" XmFONTLIST_DEFAULT_TAG)))
 	(set! fmv-dialog 
-	      (|XmCreateTemplateDialog (cadr (main-widgets)) "fm-violin"
-                (list |XmNcancelLabelString   xdismiss
-		      |XmNhelpLabelString     xhelp
-		      |XmNautoUnmanage        #f
-		      |XmNdialogTitle         titlestr
-		      |XmNresizePolicy        |XmRESIZE_GROW
-	              |XmNnoResize            #f
-		      |XmNbackground          (basic-color)
-		      |XmNtransient           #f) ))
-	(|XtAddCallback fmv-dialog 
-			|XmNcancelCallback (lambda (w context info)
+	      (XmCreateTemplateDialog (cadr (main-widgets)) "fm-violin"
+                (list XmNcancelLabelString   xdismiss
+		      XmNhelpLabelString     xhelp
+		      XmNautoUnmanage        #f
+		      XmNdialogTitle         titlestr
+		      XmNresizePolicy        XmRESIZE_GROW
+	              XmNnoResize            #f
+		      XmNbackground          (basic-color)
+		      XmNtransient           #f) ))
+	(XtAddCallback fmv-dialog 
+			XmNcancelCallback (lambda (w context info)
 					     (if running
 						 (set! running #f))
-					     (|XtUnmanageChild fmv-dialog)))
-	(|XtAddCallback fmv-dialog 
-			|XmNhelpCallback (lambda (w context info)
+					     (XtUnmanageChild fmv-dialog)))
+	(XtAddCallback fmv-dialog 
+			XmNhelpCallback (lambda (w context info)
 					   (snd-print "move the slider to affect the volume")))
-	(|XmStringFree xhelp)
-	(|XmStringFree xdismiss)
-	(|XmStringFree titlestr)
+	(XmStringFree xhelp)
+	(XmStringFree xdismiss)
+	(XmStringFree titlestr)
 	(let* ((mainform 
-		(|XtCreateManagedWidget "formd" |xmRowColumnWidgetClass fmv-dialog
-                  (list |XmNleftAttachment      |XmATTACH_FORM
-		        |XmNrightAttachment     |XmATTACH_FORM
-		        |XmNtopAttachment       |XmATTACH_FORM
-		        |XmNbottomAttachment    |XmATTACH_WIDGET
-		        |XmNbottomWidget        (|XmMessageBoxGetChild fmv-dialog |XmDIALOG_SEPARATOR)
-			|XmNbackground          (basic-color)
-			|XmNorientation         |XmHORIZONTAL)))
+		(XtCreateManagedWidget "formd" xmRowColumnWidgetClass fmv-dialog
+                  (list XmNleftAttachment      XmATTACH_FORM
+		        XmNrightAttachment     XmATTACH_FORM
+		        XmNtopAttachment       XmATTACH_FORM
+		        XmNbottomAttachment    XmATTACH_WIDGET
+		        XmNbottomWidget        (XmMessageBoxGetChild fmv-dialog XmDIALOG_SEPARATOR)
+			XmNbackground          (basic-color)
+			XmNorientation         XmHORIZONTAL)))
 	       (button 
-		(|XtCreateManagedWidget "play" |xmToggleButtonWidgetClass mainform
-		  (list |XmNbackground  (basic-color))))
+		(XtCreateManagedWidget "play" xmToggleButtonWidgetClass mainform
+		  (list XmNbackground  (basic-color))))
 					
 	       (scale
-		(|XtCreateManagedWidget "" |xmScaleWidgetClass mainform
-		  (list |XmNorientation |XmHORIZONTAL
-			|XmNshowValue   #t
-			|XmNbackground  (basic-color)
-			|XmNvalue       (inexact->exact (* amplitude 100))
-			|XmNmaximum     100
-			|XmNdecimalPoints 2))))
-      (|XtAddCallback scale 
-		      |XmNvalueChangedCallback 
+		(XtCreateManagedWidget "" xmScaleWidgetClass mainform
+		  (list XmNorientation XmHORIZONTAL
+			XmNshowValue   #t
+			XmNbackground  (basic-color)
+			XmNvalue       (inexact->exact (* amplitude 100))
+			XmNmaximum     100
+			XmNdecimalPoints 2))))
+      (XtAddCallback scale 
+		      XmNvalueChangedCallback 
 		       (lambda (w context info)
-			 (set! amplitude (/ (|value info) 100.0))))
-      (|XtAddCallback scale |XmNdragCallback 
+			 (set! amplitude (/ (.value info) 100.0))))
+      (XtAddCallback scale XmNdragCallback 
 		      (lambda (w context info)
-			(set! amplitude (/ (|value info) 100.0))))
-      (|XtAddCallback button |XmNvalueChangedCallback 
+			(set! amplitude (/ (.value info) 100.0))))
+      (XtAddCallback button XmNvalueChangedCallback 
 		      (lambda (w context info)
 			(if running
 			    (set! running #f)
@@ -599,7 +599,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				      (sound-data-set! data 0 k (v)))
 				    (mus-audio-write audio-fd data size))
 				  (set! running #f)))))))))
-  (|XtManageChild fmv-dialog))
+  (XtManageChild fmv-dialog))
 
 
 
@@ -627,22 +627,22 @@ Reverb-feedback sets the scaler on the feedback.\n\
 "-------X----------"))
 
 (define (make-pixmap widget strs) ; strs is list of strings as in arrow-strs above
-  (let* ((attr (|XpmAttributes))
-	 (symb (|XpmColorSymbol "basiccolor" #f (basic-color)))
-	 (dpy (|XtDisplay widget))
-	 (win (|XtWindow widget))
-	 (scr (|DefaultScreen dpy))
-	 (depth (cadr (|XtGetValues widget (list |XmNdepth 0))))
-	 (colormap (cadr (|XtGetValues widget (list |XmNcolormap 0)))))
-    (set! (|depth attr) depth)
-    (set! (|colormap attr) colormap)
-    (set! (|visual attr) (|DefaultVisual dpy scr))
-    (set! (|colorsymbols attr) symb)
-    (set! (|numsymbols attr) 1)
-    (set! (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual))
-    (cadr (|XpmCreatePixmapFromData dpy win strs attr))))
+  (let* ((attr (XpmAttributes))
+	 (symb (XpmColorSymbol "basiccolor" #f (basic-color)))
+	 (dpy (XtDisplay widget))
+	 (win (XtWindow widget))
+	 (scr (DefaultScreen dpy))
+	 (depth (cadr (XtGetValues widget (list XmNdepth 0))))
+	 (colormap (cadr (XtGetValues widget (list XmNcolormap 0)))))
+    (set! (.depth attr) depth)
+    (set! (.colormap attr) colormap)
+    (set! (.visual attr) (DefaultVisual dpy scr))
+    (set! (.colorsymbols attr) symb)
+    (set! (.numsymbols attr) 1)
+    (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
+    (cadr (XpmCreatePixmapFromData dpy win strs attr))))
 
-; (|XtSetValues (list-ref (sound-widgets) 8) (list |XmNlabelPixmap (make-pixmap (cadr (main-widgets)) arrow-strs))))
+; (XtSetValues (list-ref (sound-widgets) 8) (list XmNlabelPixmap (make-pixmap (cadr (main-widgets)) arrow-strs))))
 
 ;;; if you have a nice background pixmap, you can map it over all of Snd with:
 #!
@@ -653,7 +653,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (for-each-child 
     widget
     (lambda (w) 
-      (|XtSetValues w (list |XmNbackgroundPixmap wd)))))
+      (XtSetValues w (list XmNbackgroundPixmap wd)))))
 
 (paint-all (cadr (main-widgets)))
 (for-each
@@ -670,9 +670,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
    #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
 
 (define (bitmap->pixmap widget bits width height)
-  (|XCreateBitmapFromData (|XtDisplay widget) (|XtWindow widget) bits width height))
+  (XCreateBitmapFromData (XtDisplay widget) (XtWindow widget) bits width height))
 
-; (|XtSetValues (list-ref (sound-widgets) 8) (list |XmNlabelPixmap (bitmap->pixmap (list-ref (sound-widgets) 8) iconw right-arrow 16 12)))
+; (XtSetValues (list-ref (sound-widgets) 8) (list XmNlabelPixmap (bitmap->pixmap (list-ref (sound-widgets) 8) iconw right-arrow 16 12)))
 
 
 
@@ -688,7 +688,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 (define (display-scanned-synthesis)
 
   (define (add-main-pane name type args)
-    (|XtCreateManagedWidget name type (list-ref (main-widgets) 3) args))
+    (XtCreateManagedWidget name type (list-ref (main-widgets) 3) args))
 
   (define compute-uniform-circular-string
     ;; copied from dsp.scm to simplify life
@@ -729,38 +729,38 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	 (app (car (main-widgets)))
 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
-	 (scan-outer (add-main-pane "Scanned Synthesis" |xmFormWidgetClass
-				    (list |XmNbackground (basic-color)
-					  |XmNpaneMinimum 320)))
-	 (scan-row (|XtCreateManagedWidget "row" |xmRowColumnWidgetClass scan-outer
-					   (list |XmNbackground       (basic-color)
-						 |XmNorientation      |XmVERTICAL
-						 |XmNleftAttachment   |XmATTACH_FORM
-						 |XmNtopAttachment    |XmATTACH_FORM
-						 |XmNbottomAttachment |XmATTACH_FORM
-						 |XmNrightAttachment  |XmATTACH_POSITION
-						 |XmNrightPosition    32)))
+	 (scan-outer (add-main-pane "Scanned Synthesis" xmFormWidgetClass
+				    (list XmNbackground (basic-color)
+					  XmNpaneMinimum 320)))
+	 (scan-row (XtCreateManagedWidget "row" xmRowColumnWidgetClass scan-outer
+					   (list XmNbackground       (basic-color)
+						 XmNorientation      XmVERTICAL
+						 XmNleftAttachment   XmATTACH_FORM
+						 XmNtopAttachment    XmATTACH_FORM
+						 XmNbottomAttachment XmATTACH_FORM
+						 XmNrightAttachment  XmATTACH_POSITION
+						 XmNrightPosition    32)))
 
 	 ;; the graph
-	 (scan-pane (|XtCreateManagedWidget "draw" |xmDrawingAreaWidgetClass scan-outer
-					    (list |XmNbackground       (graph-color)
-						  |XmNforeground       (data-color)
-						  |XmNleftAttachment   |XmATTACH_WIDGET
-						  |XmNleftWidget       scan-row
-						  |XmNtopAttachment    |XmATTACH_FORM
-						  |XmNbottomAttachment |XmATTACH_FORM
-						  |XmNrightAttachment  |XmATTACH_FORM)))
+	 (scan-pane (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass scan-outer
+					    (list XmNbackground       (graph-color)
+						  XmNforeground       (data-color)
+						  XmNleftAttachment   XmATTACH_WIDGET
+						  XmNleftWidget       scan-row
+						  XmNtopAttachment    XmATTACH_FORM
+						  XmNbottomAttachment XmATTACH_FORM
+						  XmNrightAttachment  XmATTACH_FORM)))
 
 	 ;; the controllers
-	 (scan-start (|XtCreateManagedWidget "Start" |xmPushButtonWidgetClass scan-row
-					     (list |XmNbackground (basic-color)
-						   |XmNarmColor   (pushed-button-color))))
-	 (scan-continue (|XtCreateManagedWidget "Continue" |xmPushButtonWidgetClass scan-row
-						(list |XmNbackground (basic-color)
-						      |XmNarmColor   (pushed-button-color))))
-	 (scan-stop (|XtCreateManagedWidget "Stop" |xmPushButtonWidgetClass scan-row
-					    (list |XmNbackground (basic-color)
-						  |XmNarmColor   (pushed-button-color))))
+	 (scan-start (XtCreateManagedWidget "Start" xmPushButtonWidgetClass scan-row
+					     (list XmNbackground (basic-color)
+						   XmNarmColor   (pushed-button-color))))
+	 (scan-continue (XtCreateManagedWidget "Continue" xmPushButtonWidgetClass scan-row
+						(list XmNbackground (basic-color)
+						      XmNarmColor   (pushed-button-color))))
+	 (scan-stop (XtCreateManagedWidget "Stop" xmPushButtonWidgetClass scan-row
+					    (list XmNbackground (basic-color)
+						  XmNarmColor   (pushed-button-color))))
 	 
 	 (size 128)
 	 (gx0 (make-vct size))	   
@@ -780,12 +780,12 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (if (and (> ax1 ax0)
 	       (> ay1 ay0))
 	  (let ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
-		(dpy (|XtDisplay scan-pane))
-		(wn (|XtWindow scan-pane))
+		(dpy (XtDisplay scan-pane))
+		(wn (XtWindow scan-pane))
 		(xincr (/ (- ax1 ax0) size)))
 	    (if pts1
-		(|XDrawLinesDirect dpy wn egc pts1 size 0)
-		(|XFillRectangle dpy wn egc ; erase previous graph
+		(XDrawLinesDirect dpy wn egc pts1 size 0)
+		(XFillRectangle dpy wn egc ; erase previous graph
 				 (+ ax0 2)
 				 ay0
 				 (- ax1 ax0 2)
@@ -796,10 +796,10 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		((= i size))
 	      (vector-set! vect j (inexact->exact xi))
 	      (vector-set! vect (+ j 1) (y->grfy (vct-ref gx0 i) diff)))
-	    (if pts1 (|freeXPoints pts1))
-	    (set! pts0 (|vector->XPoints vect))
+	    (if pts1 (freeXPoints pts1))
+	    (set! pts0 (vector->XPoints vect))
 	    (set! pts1 pts0)
-	    (|XDrawLinesDirect dpy wn gc pts0 size 0))))
+	    (XDrawLinesDirect dpy wn gc pts0 size 0))))
 
     (define (redraw-graph)
       (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0))
@@ -816,8 +816,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
       #f)
 
     (define (stop-synthesis)
-      (if (|XtWorkProcId? work-proc)
-	  (|XtRemoveWorkProc work-proc))
+      (if (XtWorkProcId? work-proc)
+	  (XtRemoveWorkProc work-proc))
       (set! work-proc 0))
 
     (define (start-synthesis)
@@ -829,78 +829,78 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	  ((= i 12))
 	(let ((val (sin (/ (* 2 pi i) 12.0))))
 	  (vct-set! gx1 (+ i (- (/ size 4) 6)) val)))
-      (set! work-proc (|XtAppAddWorkProc app tick-synthesis)))
+      (set! work-proc (XtAppAddWorkProc app tick-synthesis)))
 
     (define (continue-synthesis)
       (stop-synthesis)
-      (set! work-proc (|XtAppAddWorkProc app tick-synthesis)))
+      (set! work-proc (XtAppAddWorkProc app tick-synthesis)))
 
     ;; controller callbacks
     (for-each 
      (lambda (data)
-       (let* ((title (|XmStringCreate (car data) |XmFONTLIST_DEFAULT_TAG))
-	      (button (|XtCreateManagedWidget (car data) |xmScaleWidgetClass scan-row
-					      (list |XmNbackground    (basic-color)
-						    |XmNorientation   |XmHORIZONTAL
-						    |XmNshowValue     #t
-						    |XmNminimum       (list-ref data 1)
-						    |XmNmaximum       (list-ref data 2)
-						    |XmNvalue         (list-ref data 3)
-						    |XmNdecimalPoints (list-ref data 4)
-						    |XmNtitleString   title))))
-	 (|XtAddCallback button |XmNdragCallback (lambda (w c i) ((list-ref data 5) (|value i))))
-	 (|XtAddCallback button |XmNvalueChangedCallback (lambda (w c i) ((list-ref data 5) (|value i))))
-	 (|XmStringFree title)))
+       (let* ((title (XmStringCreate (car data) XmFONTLIST_DEFAULT_TAG))
+	      (button (XtCreateManagedWidget (car data) xmScaleWidgetClass scan-row
+					      (list XmNbackground    (basic-color)
+						    XmNorientation   XmHORIZONTAL
+						    XmNshowValue     #t
+						    XmNminimum       (list-ref data 1)
+						    XmNmaximum       (list-ref data 2)
+						    XmNvalue         (list-ref data 3)
+						    XmNdecimalPoints (list-ref data 4)
+						    XmNtitleString   title))))
+	 (XtAddCallback button XmNdragCallback (lambda (w c i) ((list-ref data 5) (.value i))))
+	 (XtAddCallback button XmNvalueChangedCallback (lambda (w c i) ((list-ref data 5) (.value i))))
+	 (XmStringFree title)))
      (list (list "mass" 1 200 100 2 (lambda (val) (set! mass (/ val 100.0))))
 	   (list "spring" 1 100 10 2 (lambda (val) (set! xspring (/ val 100.0))))
 	   (list "damping" 0 100 0 4 (lambda (val) (set! damp (/ val 10000.0))))))
 
-    (let* ((scan-size (|XtCreateManagedWidget "srow" |xmFormWidgetClass scan-row
-					      (list  |XmNbackground (basic-color))))
-	   (scan-label (|XtCreateManagedWidget "Size:" |xmLabelWidgetClass scan-size
-					       (list |XmNbackground       (basic-color)
-						     |XmNleftAttachment   |XmATTACH_FORM
-						     |XmNtopAttachment    |XmATTACH_FORM
-						     |XmNbottomAttachment |XmATTACH_FORM
-						     |XmNrightAttachment  |XmATTACH_NONE)))
-	   (scan-text (|XtCreateManagedWidget "stext" |xmTextFieldWidgetClass scan-size
-					      (list |XmNbackground       (basic-color)
-						    |XmNvalue            (number->string size)
-						    |XmNleftAttachment   |XmATTACH_WIDGET
-						    |XmNleftWidget       scan-label
-						    |XmNtopAttachment    |XmATTACH_FORM
-						    |XmNbottomAttachment |XmATTACH_FORM
-						    |XmNrightAttachment  |XmATTACH_FORM))))
+    (let* ((scan-size (XtCreateManagedWidget "srow" xmFormWidgetClass scan-row
+					      (list  XmNbackground (basic-color))))
+	   (scan-label (XtCreateManagedWidget "Size:" xmLabelWidgetClass scan-size
+					       (list XmNbackground       (basic-color)
+						     XmNleftAttachment   XmATTACH_FORM
+						     XmNtopAttachment    XmATTACH_FORM
+						     XmNbottomAttachment XmATTACH_FORM
+						     XmNrightAttachment  XmATTACH_NONE)))
+	   (scan-text (XtCreateManagedWidget "stext" xmTextFieldWidgetClass scan-size
+					      (list XmNbackground       (basic-color)
+						    XmNvalue            (number->string size)
+						    XmNleftAttachment   XmATTACH_WIDGET
+						    XmNleftWidget       scan-label
+						    XmNtopAttachment    XmATTACH_FORM
+						    XmNbottomAttachment XmATTACH_FORM
+						    XmNrightAttachment  XmATTACH_FORM))))
 
-      (|XtAddEventHandler scan-text |EnterWindowMask #f
+      (XtAddEventHandler scan-text EnterWindowMask #f
 			  (lambda (w context ev flag)
-			    (|XmProcessTraversal w |XmTRAVERSE_CURRENT)
-			    (|XtSetValues w (list |XmNbackground (white-pixel)))))
-      (|XtAddEventHandler scan-text |LeaveWindowMask #f
+			    (XmProcessTraversal w XmTRAVERSE_CURRENT)
+			    (XtSetValues w (list XmNbackground (white-pixel)))))
+      (XtAddEventHandler scan-text LeaveWindowMask #f
 			  (lambda (w context ev flag)
-			    (|XtSetValues w (list |XmNbackground (basic-color)))))
-      (|XtAddCallback scan-text |XmNactivateCallback 
+			    (XtSetValues w (list XmNbackground (basic-color)))))
+      (XtAddCallback scan-text XmNactivateCallback 
 		      (lambda (w c i)
 			(stop-synthesis)
-			(set! size (string->number (cadr (|XtGetValues scan-text (list |XmNvalue 0)))))
+			(set! size (string->number (cadr (XtGetValues scan-text (list XmNvalue 0)))))
 			(set! gx0 (make-vct size))	   
 			(set! gx1 (make-vct size))	   
 			(set! gx2 (make-vct size))
 			(set! vect (make-vector (* size 2))))))
 
-    (|XtAddCallback scan-pane |XmNresizeCallback (lambda (w context info) (redraw-graph)))
-    (|XtAddCallback scan-pane |XmNexposeCallback (lambda (w context info) (redraw-graph)))
-    (|XtAddEventHandler scan-pane |ButtonPressMask #f
+    (XtAddCallback scan-pane XmNresizeCallback (lambda (w context info) (redraw-graph)))
+    (XtAddCallback scan-pane XmNexposeCallback (lambda (w context info) (redraw-graph)))
+    (XtAddEventHandler scan-pane ButtonPressMask #f
 			(lambda (w context ev flag)
-			  (if (not (|XtWorkProcId? work-proc))
-			      (if (= (|button ev) 2)
+			  (if (not (XtWorkProcId? work-proc))
+			      (if (= (.button ev) 2)
 				  (continue-synthesis)
 				  (start-synthesis))
 			      (stop-synthesis))))
 
-    (|XtAddCallback scan-start |XmNactivateCallback (lambda (w c i) (start-synthesis)))
-    (|XtAddCallback scan-continue |XmNactivateCallback (lambda (w c i) (continue-synthesis)))
-    (|XtAddCallback scan-stop |XmNactivateCallback (lambda (w c i) (stop-synthesis)))
+    (XtAddCallback scan-start XmNactivateCallback (lambda (w c i) (start-synthesis)))
+    (XtAddCallback scan-continue XmNactivateCallback (lambda (w c i) (continue-synthesis)))
+    (XtAddCallback scan-stop XmNactivateCallback (lambda (w c i) (stop-synthesis)))
 
     #t ; for slightly prettier listener output
     ))
@@ -910,8 +910,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (for-each-child 
    (cadr (main-widgets))  ; this is Snd's outermost shell
    (lambda (n)
-     (if (string=? (|XtName n) "Scanned Synthesis")
-	 (|XtUnmanageChild n)))))
+     (if (string=? (XtName n) "Scanned Synthesis")
+	 (XtUnmanageChild n)))))
 
 
 
@@ -962,61 +962,61 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (define (deactivate-channel snd chn)
     (let ((current-mark-list-length (mark-list-length snd chn)))
       (if (and (> current-mark-list-length 0)
-	       (|Widget? (mark-list snd chn)))
+	       (Widget? (mark-list snd chn)))
 	  (for-each
 	   (lambda (n)
-	     (|XtUnmanageChild n))
-	   (cadr (|XtGetValues (mark-list snd chn) (list |XmNchildren 0) 1))))))
+	     (XtUnmanageChild n))
+	   (cadr (XtGetValues (mark-list snd chn) (list XmNchildren 0) 1))))))
   
   (define (make-mark-list snd chn)
     (let ((current-mark-list-length (mark-list-length snd chn)))
       (deactivate-channel snd chn)
-      (if (not (|Widget? (mark-list snd chn)))
-	  (let* ((mark-box (add-channel-pane snd chn "mark-box" |xmFormWidgetClass
-			          (list |XmNbackground       (basic-color)
-				        |XmNorientation      |XmVERTICAL
-				        |XmNpaneMinimum      100
-				        |XmNbottomAttachment |XmATTACH_FORM)))
-		 (mark-label (|XtCreateManagedWidget "Marks" |xmLabelWidgetClass mark-box
-			          (list |XmNbackground       (highlight-color)
-				        |XmNleftAttachment   |XmATTACH_FORM
-				        |XmNrightAttachment  |XmATTACH_FORM
-				        |XmNalignment        |XmALIGNMENT_CENTER
-				        |XmNtopAttachment    |XmATTACH_FORM)))
-		 (mark-scroller (|XtCreateManagedWidget "mark-scroller" |xmScrolledWindowWidgetClass mark-box
-			          (list |XmNbackground       (basic-color)
-				        |XmNscrollingPolicy  |XmAUTOMATIC
-				        |XmNscrollBarDisplayPolicy |XmSTATIC
-				        |XmNleftAttachment   |XmATTACH_FORM
-				        |XmNrightAttachment  |XmATTACH_FORM
-				        |XmNtopAttachment    |XmATTACH_WIDGET
-				        |XmNtopWidget        mark-label
-				        |XmNbottomAttachment |XmATTACH_FORM)))
-		 (mlist (|XtCreateManagedWidget "mark-list"  |xmRowColumnWidgetClass mark-scroller
-			          (list |XmNorientation      |XmVERTICAL
-				        |XmNtopAttachment    |XmATTACH_FORM
-				        |XmNbottomAttachment |XmATTACH_FORM
-				        |XmNspacing          0))))
+      (if (not (Widget? (mark-list snd chn)))
+	  (let* ((mark-box (add-channel-pane snd chn "mark-box" xmFormWidgetClass
+			          (list XmNbackground       (basic-color)
+				        XmNorientation      XmVERTICAL
+				        XmNpaneMinimum      100
+				        XmNbottomAttachment XmATTACH_FORM)))
+		 (mark-label (XtCreateManagedWidget "Marks" xmLabelWidgetClass mark-box
+			          (list XmNbackground       (highlight-color)
+				        XmNleftAttachment   XmATTACH_FORM
+				        XmNrightAttachment  XmATTACH_FORM
+				        XmNalignment        XmALIGNMENT_CENTER
+				        XmNtopAttachment    XmATTACH_FORM)))
+		 (mark-scroller (XtCreateManagedWidget "mark-scroller" xmScrolledWindowWidgetClass mark-box
+			          (list XmNbackground       (basic-color)
+				        XmNscrollingPolicy  XmAUTOMATIC
+				        XmNscrollBarDisplayPolicy XmSTATIC
+				        XmNleftAttachment   XmATTACH_FORM
+				        XmNrightAttachment  XmATTACH_FORM
+				        XmNtopAttachment    XmATTACH_WIDGET
+				        XmNtopWidget        mark-label
+				        XmNbottomAttachment XmATTACH_FORM)))
+		 (mlist (XtCreateManagedWidget "mark-list"  xmRowColumnWidgetClass mark-scroller
+			          (list XmNorientation      XmVERTICAL
+				        XmNtopAttachment    XmATTACH_FORM
+				        XmNbottomAttachment XmATTACH_FORM
+				        XmNspacing          0))))
 	    (set-main-color-of-widget mark-scroller)
-	    (|XtSetValues mark-box (list |XmNpaneMinimum 1))
+	    (XtSetValues mark-box (list XmNpaneMinimum 1))
 	    (set! (mark-list snd chn) (list snd chn mlist))))
       (let ((new-marks (marks snd chn)))
 	(if (> (length new-marks) current-mark-list-length)
 	    (let* ((lst (mark-list snd chn)))
 	      (do ((i current-mark-list-length (1+ i)))
 		  ((= i (length new-marks)))
-		(let ((tf (|XtCreateWidget "field" |xmTextFieldWidgetClass lst
-					   (list |XmNbackground (basic-color)))))
-		  (|XtAddCallback tf |XmNfocusCallback
+		(let ((tf (XtCreateWidget "field" xmTextFieldWidgetClass lst
+					   (list XmNbackground (basic-color)))))
+		  (XtAddCallback tf XmNfocusCallback
 				  (lambda (w c i)
-				    (|XtSetValues w (list |XmNbackground (white-pixel)))))
-		  (|XtAddCallback tf |XmNlosingFocusCallback
+				    (XtSetValues w (list XmNbackground (white-pixel)))))
+		  (XtAddCallback tf XmNlosingFocusCallback
 				  (lambda (w c i)
-				    (|XtSetValues w (list |XmNbackground (basic-color)))))
-		  (|XtAddCallback tf |XmNactivateCallback
+				    (XtSetValues w (list XmNbackground (basic-color)))))
+		  (XtAddCallback tf XmNactivateCallback
 				  (lambda (w c i)
-				    (let* ((id (cadr (|XtGetValues w (list |XmNuserData 0))))
-					   (txt (cadr (|XtGetValues w (list |XmNvalue 0))))
+				    (let* ((id (cadr (XtGetValues w (list XmNuserData 0))))
+					   (txt (cadr (XtGetValues w (list XmNvalue 0))))
 					   (samp (if (and (string? txt) 
 							  (> (string-length txt) 0))
 						     (string->number txt)
@@ -1024,7 +1024,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				      (if samp
 					  (set! (mark-sample id) samp)
 					  (delete-mark id))
-				      (|XtSetValues w (list |XmNbackground (basic-color))))))))))
+				      (XtSetValues w (list XmNbackground (basic-color))))))))))
 	(set! (mark-list-length snd chn) (length new-marks))
 	(let* ((lst (mark-list snd chn)))
 	  (call-with-current-continuation
@@ -1032,13 +1032,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	     (for-each
 	      (lambda (n)
 		(if (null? new-marks) (quit #f))
-		(if (|XmIsTextField n)
+		(if (XmIsTextField n)
 		    (begin
-		      (|XtSetValues n (list |XmNvalue (number->string (mark-sample (car new-marks)))
-					    |XmNuserData (car new-marks)))
-		      (|XtManageChild n)
+		      (XtSetValues n (list XmNvalue (number->string (mark-sample (car new-marks)))
+					    XmNuserData (car new-marks)))
+		      (XtManageChild n)
 		      (set! new-marks (cdr new-marks)))))
-	      (cadr (|XtGetValues lst (list |XmNchildren 0) 1)))))))
+	      (cadr (XtGetValues lst (list XmNchildren 0) 1)))))))
       #f))
 
   (define (remark id snd chn reason)
@@ -1053,8 +1053,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (define (open-remarks snd)
     (do ((i 0 (1+ i)))
 	((= i (chans snd)))
-      (add-hook! (after-edit-hook snd i) (lambda () (if (|Widget? (mark-list snd i)) (make-mark-list snd i))))
-      (add-hook! (undo-hook snd i) (lambda () (if (|Widget? (mark-list snd i)) (make-mark-list snd i))))))
+      (add-hook! (after-edit-hook snd i) (lambda () (if (Widget? (mark-list snd i)) (make-mark-list snd i))))
+      (add-hook! (undo-hook snd i) (lambda () (if (Widget? (mark-list snd i)) (make-mark-list snd i))))))
 
   (add-hook! mark-hook remark)
   (add-hook! close-hook unremark)
@@ -1110,53 +1110,53 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	     (filter (if (> (length args) 3) (list-ref args 3) "*"))
 	     (help (if (> (length args) 4) (list-ref args 4) #f))
 	     (dialog (or (find-free-dialog file-selector-dialogs)
-		 	 (let ((new-dialog (|XmCreateFileSelectionDialog 
+		 	 (let ((new-dialog (XmCreateFileSelectionDialog 
 					     (cadr (main-widgets)) 
 					     title
-					     (list |XmNbackground (basic-color)))))
-			   (|XtAddCallback new-dialog |XmNhelpCallback
+					     (list XmNbackground (basic-color)))))
+			   (XtAddCallback new-dialog XmNhelpCallback
 					    (lambda (w c i)
 					      (let ((lst (find-dialog w file-selector-dialogs)))
 						(if (list-ref lst 4)
 						    (help-dialog (list-ref lst 3) (list-ref lst 4))))))
-			   (|XtAddCallback new-dialog |XmNokCallback 
+			   (XtAddCallback new-dialog XmNokCallback 
 					   (lambda (w c i)
 					     (let ((lst (find-dialog w file-selector-dialogs)))
-					       ((list-ref lst 2) (cadr (|XmStringGetLtoR (|value i) |XmFONTLIST_DEFAULT_TAG)))
+					       ((list-ref lst 2) (cadr (XmStringGetLtoR (.value i) XmFONTLIST_DEFAULT_TAG)))
 					       (list-set! lst 1 #f)
-					       (|XtUnmanageChild w))))
-			   (|XtAddCallback new-dialog |XmNcancelCallback
+					       (XtUnmanageChild w))))
+			   (XtAddCallback new-dialog XmNcancelCallback
 					   (lambda (w c i)
 					     (let ((lst (find-dialog w file-selector-dialogs)))
 					       (list-set! lst 1 #f)
-					       (|XtUnmanageChild w))))
+					       (XtUnmanageChild w))))
 			  (set! file-selector-dialogs (cons (list new-dialog #t func title help) file-selector-dialogs))
 			  (set-main-color-of-widget new-dialog)
-			  (|XtSetValues (|XmFileSelectionBoxGetChild new-dialog |XmDIALOG_DIR_LIST) 
-					(list |XmNbackground (white-pixel)))
-			  (|XtSetValues (|XmFileSelectionBoxGetChild new-dialog |XmDIALOG_LIST) 
-					(list |XmNbackground (white-pixel)))
-			  (|XtSetValues (|XtNameToWidget new-dialog "Cancel")
-					(list |XmNarmColor (pushed-button-color)))
-			  (|XtSetValues (|XtNameToWidget new-dialog "Help")
-					(list |XmNarmColor (pushed-button-color)))
-			  (|XtSetValues (|XtNameToWidget new-dialog "OK")
-					(list |XmNarmColor (pushed-button-color)))
+			  (XtSetValues (XmFileSelectionBoxGetChild new-dialog XmDIALOG_DIR_LIST) 
+					(list XmNbackground (white-pixel)))
+			  (XtSetValues (XmFileSelectionBoxGetChild new-dialog XmDIALOG_LIST) 
+					(list XmNbackground (white-pixel)))
+			  (XtSetValues (XtNameToWidget new-dialog "Cancel")
+					(list XmNarmColor (pushed-button-color)))
+			  (XtSetValues (XtNameToWidget new-dialog "Help")
+					(list XmNarmColor (pushed-button-color)))
+			  (XtSetValues (XtNameToWidget new-dialog "OK")
+					(list XmNarmColor (pushed-button-color)))
 			  new-dialog))))
 	(if (not help)
-	    (|XtUnmanageChild (|XmFileSelectionBoxGetChild dialog |XmDIALOG_HELP_BUTTON))
-	    (|XtManageChild (|XmFileSelectionBoxGetChild dialog |XmDIALOG_HELP_BUTTON)))
-	(let ((dirstr (|XmStringCreateLocalized dir))
-	      (patstr (|XmStringCreateLocalized filter))
-	      (titlestr (|XmStringCreateLocalized title)))
-	  (|XtSetValues dialog
-			(list |XmNdirectory dirstr
-			      |XmNpattern patstr
-			      |XmNdialogTitle titlestr))
-	  (|XmStringFree dirstr)
-	  (|XmStringFree patstr)
-	  (|XmStringFree titlestr)
-	  (|XtManageChild dialog))))))
+	    (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_HELP_BUTTON))
+	    (XtManageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_HELP_BUTTON)))
+	(let ((dirstr (XmStringCreateLocalized dir))
+	      (patstr (XmStringCreateLocalized filter))
+	      (titlestr (XmStringCreateLocalized title)))
+	  (XtSetValues dialog
+			(list XmNdirectory dirstr
+			      XmNpattern patstr
+			      XmNdialogTitle titlestr))
+	  (XmStringFree dirstr)
+	  (XmStringFree patstr)
+	  (XmStringFree titlestr)
+	  (XtManageChild dialog))))))
 
 ; (select-file (lambda (n) (snd-print n)))
 
@@ -1169,31 +1169,31 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 (define snd-clock-icon
   (let* ((shell (list-ref (main-widgets) 1))
-	 (dpy (|XtDisplay shell))
-	 (win (|XtWindow shell))
+	 (dpy (XtDisplay shell))
+	 (win (XtWindow shell))
 	 (clock-pixmaps (make-vector 12))
 	 (dgc (car (snd-gcs))))
     (do ((i 0 (1+ i)))
 	((= i 12))
       ;; it's actually possible to simply redraw on one pixmap, but updates are unpredictable
-      (let* ((pix (|XCreatePixmap dpy win 16 16 (screen-depth)))
+      (let* ((pix (XCreatePixmap dpy win 16 16 (screen-depth)))
 	     (pixwin (list 'Window (cadr pix)))) ; C-style cast to Window for X graphics procedures
 	(vector-set! clock-pixmaps i pix)
-	(|XSetForeground dpy dgc (basic-color))
-	(|XFillRectangle dpy pixwin dgc 0 0 16 16)
-	(|XSetForeground dpy dgc (white-pixel))
-	(|XFillArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
-	(|XSetForeground dpy dgc (black-pixel))
-	(|XDrawArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
-	(|XDrawLine dpy pixwin dgc 8 8
+	(XSetForeground dpy dgc (basic-color))
+	(XFillRectangle dpy pixwin dgc 0 0 16 16)
+	(XSetForeground dpy dgc (white-pixel))
+	(XFillArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
+	(XSetForeground dpy dgc (black-pixel))
+	(XDrawArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
+	(XDrawLine dpy pixwin dgc 8 8
 			(+ 8 (inexact->exact (* 7 (sin (* i (/ 3.1416 6.0))))))
 			(- 8 (inexact->exact (* 7 (cos (* i (/ 3.1416 6.0)))))))))
-    (|XSetBackground dpy dgc (graph-color))
-    (|XSetForeground dpy dgc (data-color))
+    (XSetBackground dpy dgc (graph-color))
+    (XSetForeground dpy dgc (data-color))
     (lambda (snd hour)
       (if hour
-	  (|XtSetValues (list-ref (sound-widgets snd) 8)
-			(list |XmNlabelPixmap (vector-ref clock-pixmaps hour)))
+	  (XtSetValues (list-ref (sound-widgets snd) 8)
+			(list XmNlabelPixmap (vector-ref clock-pixmaps hour)))
 	  (bomb snd #f))))) ; using bomb simply to clear the icon
 
 
@@ -1229,7 +1229,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   (x lx (+ x xinc)))
 	  ((= i len))
 	(set! y (y->grfy (vector-ref pts i) range))
-	(|XDrawLine dpy wn gc lx ly (inexact->exact x) y)
+	(XDrawLine dpy wn gc lx ly (inexact->exact x) y)
 	(set! lx (inexact->exact x))
 	(set! ly y)))))
 
@@ -1237,20 +1237,20 @@ Reverb-feedback sets the scaler on the feedback.\n\
   ;; make box of sound file icons
 
   ;; graphics stuff (fonts etc)
-  (let*  ((gv (|XGCValues))
+  (let*  ((gv (XGCValues))
 	  (shell (list-ref (main-widgets) 1))
-	  (button-fontstruct (|XLoadQueryFont (|XtDisplay shell) "6x12"))
+	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) "6x12"))
 	  (button-fontlist
-	   (let* ((e1 (|XmFontListEntryCreate "smallest" |XmFONT_IS_FONT button-fontstruct))
-		  (f1 (|XmFontListAppendEntry #f e1)))
-	     (|XmFontListEntryFree e1)
+	   (let* ((e1 (XmFontListEntryCreate "smallest" XmFONT_IS_FONT button-fontstruct))
+		  (f1 (XmFontListAppendEntry #f e1)))
+	     (XmFontListEntryFree e1)
 	     f1)))
-    (set! (|foreground gv) (data-color))
-    (set! (|background gv) (basic-color))
-    (set! (|font gv) (|fid button-fontstruct))
-    (let ((gc (|XCreateGC (|XtDisplay shell) 
-			  (|XtWindow shell) 
-			  (logior |GCForeground |GCBackground |GCFont) gv))
+    (set! (.foreground gv) (data-color))
+    (set! (.background gv) (basic-color))
+    (set! (.font gv) (.fid button-fontstruct))
+    (let ((gc (XCreateGC (XtDisplay shell) 
+			  (XtWindow shell) 
+			  (logior GCForeground GCBackground GCFont) gv))
 	  (sound-buttons '()))
 
       ;; button data list handlers
@@ -1290,30 +1290,30 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		   (gc (sound-button-gc data))
 		   (name (sound-button-filename data)))	     
 	      (let* ((secs (format #f "~,1F" (mus-sound-duration (sound-button-filename data))))
-		     (size (|XTextWidth button-fontstruct secs (string-length secs))))
+		     (size (XTextWidth button-fontstruct secs (string-length secs))))
 		(if (<= size width) 
-		    (|XDrawString dpy wn gc (- width size) height secs (string-length secs))))
+		    (XDrawString dpy wn gc (- width size) height secs (string-length secs))))
 	      (thumbnail-graph dpy wn gc mins width height)
 	      (thumbnail-graph dpy wn gc maxes width height))))
 
       (define (make-sound-icon filename parent peak-func gc width height args)
 	(define (cast-to-window n) (list 'Window (cadr n)))
-	(let* ((dpy (|XtDisplay parent))
-	       (win (|XtWindow parent))
-	       (pix (|XCreatePixmap dpy win width height (screen-depth)))
-	       (str (|XmStringCreateLocalized filename))
+	(let* ((dpy (XtDisplay parent))
+	       (win (XtWindow parent))
+	       (pix (XCreatePixmap dpy win width height (screen-depth)))
+	       (str (XmStringCreateLocalized filename))
 	       (data (list gc filename #f (channel-amp-envs filename 0 width peak-func))))
-	  (|XSetForeground dpy gc (basic-color))
-	  (|XFillRectangle dpy (cast-to-window pix) gc 0 0 width height)
-	  (|XSetForeground dpy gc (data-color))
+	  (XSetForeground dpy gc (basic-color))
+	  (XFillRectangle dpy (cast-to-window pix) gc 0 0 width height)
+	  (XSetForeground dpy gc (data-color))
 	  (make-sound-button-pixmap dpy (cast-to-window pix) data width height)
-	  (let ((icon (|XtCreateManagedWidget filename |xmIconGadgetClass parent
-			(append (list |XmNbackground      (basic-color)
-				      |XmNforeground      (data-color)
-				      |XmNlabelString     str
-				      |XmNfontList        button-fontlist
-				      |XmNlargeIconPixmap pix
-				      |XmNsmallIconPixmap pix)
+	  (let ((icon (XtCreateManagedWidget filename xmIconGadgetClass parent
+			(append (list XmNbackground      (basic-color)
+				      XmNforeground      (data-color)
+				      XmNlabelString     str
+				      XmNfontList        button-fontlist
+				      XmNlargeIconPixmap pix
+				      XmNsmallIconPixmap pix)
 				args))))
 	    (set! (sound-button data) icon)
 	    (set! sound-buttons (cons data sound-buttons))
@@ -1326,15 +1326,15 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	;; peak-func (if any) tells icon where to find peak-env-info-file (if any)
 	;; sounds is list of sound file names
 	;; args is list of resource settings for each icon
-	(let ((container (|XtCreateManagedWidget name |xmContainerWidgetClass parent
-			   (list |XmNlayoutType     |XmSPATIAL
-				 |XmNbackground     (white-pixel)
-				 |XmNentryViewType  |XmANY_ICON
-				 |XmNlargeCellWidth 80))))
-	  (|XtAddCallback container |XmNselectionCallback 
+	(let ((container (XtCreateManagedWidget name xmContainerWidgetClass parent
+			   (list XmNlayoutType     XmSPATIAL
+				 XmNbackground     (white-pixel)
+				 XmNentryViewType  XmANY_ICON
+				 XmNlargeCellWidth 80))))
+	  (XtAddCallback container XmNselectionCallback 
 	    (lambda (w c i)
-	      (if (= (|auto_selection_type i) |XmAUTO_BEGIN) ; just click to select for now
-		  (select-func (|XtName (car (|selected_items i)))))))
+	      (if (= (.auto_selection_type i) XmAUTO_BEGIN) ; just click to select for now
+		  (select-func (XtName (car (.selected_items i)))))))
 	  (for-each
 	   (lambda (file)
 	     (make-sound-icon file
@@ -1376,10 +1376,10 @@ Reverb-feedback sets the scaler on the feedback.\n\
 (define smpte-frames-per-second 24.0)
 
 (define draw-smpte-label
-  (let* ((dpy (|XtDisplay (cadr (main-widgets))))
-	 (fs (|XLoadQueryFont dpy (axis-numbers-font)))
-	 (width (+ 8 (|XTextWidth fs "00:00:00:00" 11)))
-	 (height (+ 8 (caddr (|XTextExtents fs "0" 1)))))
+  (let* ((dpy (XtDisplay (cadr (main-widgets))))
+	 (fs (XLoadQueryFont dpy (axis-numbers-font)))
+	 (width (+ 8 (XTextWidth fs "00:00:00:00" 11)))
+	 (height (+ 8 (caddr (XTextExtents fs "0" 1)))))
 
     (define (smpte-label samp sr)
       (define (round-down val) (inexact->exact (truncate val)))
@@ -1408,11 +1408,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	      (fill-rectangle x (+ y height) width 2 snd chn)
 	      (fill-rectangle x y 2 height snd chn)
 	      (fill-rectangle (+ x width -2) y 2 height snd chn)
-	      (|XSetFont dpy
+	      (XSetFont dpy
 			 (if (= chn (selected-channel snd))
 			     (cadr (snd-gcs))
 			     (car (snd-gcs)))
-			 (|fid fs))
+			 (.fid fs))
 	      (draw-string smpte (+ x 4) (+ y height -4) snd chn)))))))
 
 (define show-smpte-label
@@ -1437,38 +1437,38 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (lambda ()
       (if (not pix)
 	  (let* ((shell (cadr (main-widgets)))
-		 (dpy (|XtDisplay shell))
-		 (scr (|DefaultScreen dpy))
-		 (cmap (|DefaultColormap dpy scr))
-		 (col (|XColor)))
-	       (if (= (|XAllocNamedColor dpy cmap "red" col col) 0)
+		 (dpy (XtDisplay shell))
+		 (scr (DefaultScreen dpy))
+		 (cmap (DefaultColormap dpy scr))
+		 (col (XColor)))
+	       (if (= (XAllocNamedColor dpy cmap "red" col col) 0)
 		   (snd-error "can't allocate red!")
-		   (set! pix (|pixel col)))))
+		   (set! pix (.pixel col)))))
       pix)))
 
 (define (make-level-meter parent width height args)
-  (let* ((frame (|XtCreateManagedWidget "meter-frame" |xmFrameWidgetClass parent
-		  (append (list |XmNshadowType       |XmSHADOW_ETCHED_IN
-				|XmNwidth            width
-				|XmNheight           height
-				|XmNshadowThickness  (if (> width 500) 6 3))
+  (let* ((frame (XtCreateManagedWidget "meter-frame" xmFrameWidgetClass parent
+		  (append (list XmNshadowType       XmSHADOW_ETCHED_IN
+				XmNwidth            width
+				XmNheight           height
+				XmNshadowThickness  (if (> width 500) 6 3))
 			  args)))
-	 (meter (|XtCreateManagedWidget "meter" |xmDrawingAreaWidgetClass frame
-		  (list |XmNbackground       (white-pixel)
-			|XmNforeground       (black-pixel)
-			|XmNtopAttachment    |XmATTACH_FORM
-			|XmNbottomAttachment |XmATTACH_FORM
-			|XmNleftAttachment   |XmATTACH_FORM
-			|XmNrightAttachment  |XmATTACH_FORM)))
+	 (meter (XtCreateManagedWidget "meter" xmDrawingAreaWidgetClass frame
+		  (list XmNbackground       (white-pixel)
+			XmNforeground       (black-pixel)
+			XmNtopAttachment    XmATTACH_FORM
+			XmNbottomAttachment XmATTACH_FORM
+			XmNleftAttachment   XmATTACH_FORM
+			XmNrightAttachment  XmATTACH_FORM)))
 	 (context (list meter 0.0 1.0 0.0 0.0 width height)))
-    (|XtAddCallback meter |XmNexposeCallback 
+    (XtAddCallback meter XmNexposeCallback 
 		    (lambda (w c i) 
 		      (display-level c)) 
 		    context)
-    (|XtAddCallback meter |XmNresizeCallback 
+    (XtAddCallback meter XmNresizeCallback 
 		    (lambda (w c i) 
-		      (list-set! c 5 (cadr (|XtGetValues w (list |XmNwidth 0))))
-		      (list-set! c 6 (cadr (|XtGetValues w (list |XmNheight 0))))
+		      (list-set! c 5 (cadr (XtGetValues w (list XmNwidth 0))))
+		      (list-set! c 6 (cadr (XtGetValues w (list XmNheight 0))))
 		      (display-level c))
 		    context)
     context))
@@ -1481,8 +1481,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	 (width (list-ref meter-data 5))
 	 (height (list-ref meter-data 6))
 	 (size (list-ref meter-data 2))
-	 (dpy (|XtDisplay meter))
-	 (win (|XtWindow meter))
+	 (dpy (XtDisplay meter))
+	 (win (XtWindow meter))
 	 (major-tick (inexact->exact (/ width 24)))
 	 (minor-tick (inexact->exact (* major-tick .6)))
 	 (ang0 (* 45 64))
@@ -1490,14 +1490,14 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	 (wid2 (inexact->exact (/ width 2)))
 	 (gc (car (snd-gcs)))
 	 (top (inexact->exact (/ height 3.2)))) ; distance of label from top of meter
-    (|XSetForeground dpy gc (white-pixel))
-    (|XFillRectangle dpy win gc 0 0 width height)
-    (|XSetForeground dpy gc (black-pixel))
-    (|XDrawArc dpy win gc 0 top width width ang0 ang1)
-    (|XDrawArc dpy win gc 0 (- top 1) width width ang0 ang1)
+    (XSetForeground dpy gc (white-pixel))
+    (XFillRectangle dpy win gc 0 0 width height)
+    (XSetForeground dpy gc (black-pixel))
+    (XDrawArc dpy win gc 0 top width width ang0 ang1)
+    (XDrawArc dpy win gc 0 (- top 1) width width ang0 ang1)
     (if (> width 100)
-	(|XDrawArc dpy win gc 0 (- top 2) width width ang0 ang1))
-    (|XDrawArc dpy win gc 4 (+ top 4) (- width 8) (- width 8) ang0 ang1)
+	(XDrawArc dpy win gc 0 (- top 2) width width ang0 ang1))
+    (XDrawArc dpy win gc 4 (+ top 4) (- width 8) (- width 8) ang0 ang1)
     (do ((i 0 (1+ i)))
 	((= i 5))
       (let* ((rdeg (degrees->radians (- 45 (* i 22.5))))
@@ -1507,8 +1507,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	     (y0 (inexact->exact (- (+ wid2 top) (* wid2 cosr))))
 	     (x1 (inexact->exact (+ wid2 (* (+ wid2 major-tick) sinr))))
 	     (y1 (inexact->exact (- (+ wid2 top) (* (+ wid2 major-tick) cosr)))))
-	(|XDrawLine dpy win gc x0 y0 x1 y1)
-	(|XDrawLine dpy win gc (+ x0 1) y0 (+ x1 1) y1)
+	(XDrawLine dpy win gc x0 y0 x1 y1)
+	(XDrawLine dpy win gc (+ x0 1) y0 (+ x1 1) y1)
 	(if (< i 4)
 	    (do ((j 1 (1+ j)))
 		((= j 6))
@@ -1519,7 +1519,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		     (y0 (inexact->exact (- (+ wid2 top) (* wid2 cosr))))
 		     (x1 (inexact->exact (+ wid2 (* (+ wid2 minor-tick) sinr))))
 		     (y1 (inexact->exact (- (+ wid2 top) (* (+ wid2 minor-tick) cosr)))))
-		(|XDrawLine dpy win gc x0 y0 x1 y1))))))
+		(XDrawLine dpy win gc x0 y0 x1 y1))))))
     (let* ((needle-speed 0.25)
 	   (bubble-speed 0.025)
 	   (bubble-size (* 15 64))
@@ -1528,42 +1528,42 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   (rdeg (degrees->radians deg))
 	   (nx1 (inexact->exact (+ wid2 (* (+ wid2 major-tick) (sin rdeg)))))
 	   (ny1 (inexact->exact (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg))))))
-      (|XDrawLine dpy win gc wid2 (+ top wid2) nx1 ny1)
+      (XDrawLine dpy win gc wid2 (+ top wid2) nx1 ny1)
       (list-set! meter-data 3 val)
       (if (> val red-deg)
 	  (list-set! meter-data 4 val)
 	  (list-set! meter-data 4 (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
       (if (> (list-ref meter-data 4) .01)
 	  (begin
-	    (|XSetForeground dpy gc (red-pixel))
+	    (XSetForeground dpy gc (red-pixel))
 	    (let* ((redx (inexact->exact (* (list-ref meter-data 4) 90 64)))
 		   (redy (min redx bubble-size)))
 	      (do ((i 0 (1+ i)))
 		  ((= i 4))
-		(|XDrawArc dpy win gc i (+ top i) (- width (* i 2)) (- width (* i 2)) (- (* 135 64) redx) redy))
-	      (|XSetForeground dpy gc (black-pixel))))))))
+		(XDrawArc dpy win gc i (+ top i) (- width (* i 2)) (- width (* i 2)) (- (* 135 64) redx) redy))
+	      (XSetForeground dpy gc (black-pixel))))))))
 
 (define (with-level-meters n)
   ;; add n level meters to a pane at the top of the Snd window
   (let* ((parent (list-ref (main-widgets) 3))
 	 (height 70)
-	 (width (inexact->exact (/ (cadr (|XtGetValues parent (list |XmNwidth 0))) n)))
-	 (meters (|XtCreateManagedWidget "meters" |xmFormWidgetClass parent
-	 	   (list |XmNpositionIndex 0  ; top pane
-			 |XmNbackground    (basic-color)
-			 |XmNfractionBase  (* n 10)
-			 |XmNpaneMinimum   height)))
+	 (width (inexact->exact (/ (cadr (XtGetValues parent (list XmNwidth 0))) n)))
+	 (meters (XtCreateManagedWidget "meters" xmFormWidgetClass parent
+	 	   (list XmNpositionIndex 0  ; top pane
+			 XmNbackground    (basic-color)
+			 XmNfractionBase  (* n 10)
+			 XmNpaneMinimum   height)))
 	 (meter-list '()))
     (do ((i 0 (1+ i)))
 	((= i n))
       (set! meter-list 
 	 (cons (make-level-meter meters width height
-				 (list |XmNtopAttachment    |XmATTACH_FORM
-				       |XmNbottomAttachment |XmATTACH_FORM
-				       |XmNleftAttachment   |XmATTACH_POSITION
-				       |XmNleftPosition     (* i 10)
-				       |XmNrightAttachment  |XmATTACH_POSITION
-				       |XmNrightPosition    (* (+ 1 i) 10))) 
+				 (list XmNtopAttachment    XmATTACH_FORM
+				       XmNbottomAttachment XmATTACH_FORM
+				       XmNleftAttachment   XmATTACH_POSITION
+				       XmNleftPosition     (* i 10)
+				       XmNrightAttachment  XmATTACH_POSITION
+				       XmNrightPosition    (* (+ 1 i) 10))) 
 	       meter-list)))
     (add-hook! dac-hook 
 	       (lambda (sdobj)
@@ -1579,7 +1579,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		    (reverse meter-list)))))
     (add-hook! stop-dac-hook
 	       (lambda () ; drain away the bubble
-		 (|XtAppAddWorkProc (car (main-widgets))
+		 (XtAppAddWorkProc (car (main-widgets))
 				    (let ((ctr 0))
 				      (lambda (ignored)
 					(for-each 
@@ -1589,7 +1589,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 					 meter-list)
 					(set! ctr (+ ctr 1))
 					(> ctr 200))))))
-    (|XtSetValues meters (list |XmNpaneMinimum 1))
+    (XtSetValues meters (list XmNpaneMinimum 1))
     meter-list))
 
 
@@ -1603,30 +1603,30 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (lambda args
     (let* ((snd (if (> (length args) 0) (car args) (selected-sound)))
 	   (chn (selected-channel snd))
-	   (widget (add-channel-pane snd chn "drop here" |xmDrawingAreaWidgetClass
-		     (list |XmNbackground (white-pixel)
-                           |XmNleftAttachment      |XmATTACH_FORM
-		           |XmNrightAttachment     |XmATTACH_FORM
-		           |XmNtopAttachment       |XmATTACH_FORM
-		           |XmNbottomAttachment    |XmATTACH_FORM))))
-      (|XmDropSiteRegister
+	   (widget (add-channel-pane snd chn "drop here" xmDrawingAreaWidgetClass
+		     (list XmNbackground (white-pixel)
+                           XmNleftAttachment      XmATTACH_FORM
+		           XmNrightAttachment     XmATTACH_FORM
+		           XmNtopAttachment       XmATTACH_FORM
+		           XmNbottomAttachment    XmATTACH_FORM))))
+      (XmDropSiteRegister
 	widget 
-	(list |XmNdropSiteOperations |XmDROP_COPY
-	      |XmNimportTargets      (list |XA_STRING) ; list of Atoms we can deal with -- in this case, just strings
-	      |XmNnumImportTargets   1
-	      |XmNdropProc 
+	(list XmNdropSiteOperations XmDROP_COPY
+	      XmNimportTargets      (list XA_STRING) ; list of Atoms we can deal with -- in this case, just strings
+	      XmNnumImportTargets   1
+	      XmNdropProc 
 	       (lambda (w c i)
 		 ;; i is the callback data (XmDropProcCallbackStruct), c is always #f
-		 (if (or (not (= (|dropAction i) |XmDROP))
-			 (not (= (|operation i) |XmDROP_COPY)))
-		     (set! (|dropSiteStatus i) |XmINVALID_DROP_SITE)
+		 (if (or (not (= (.dropAction i) XmDROP))
+			 (not (= (.operation i) XmDROP_COPY)))
+		     (set! (.dropSiteStatus i) XmINVALID_DROP_SITE)
 		     (begin
-		       (set! (|operation i) |XmDROP_COPY) ; tell system drop has succeeded
-		       (|XmDropTransferStart 
-			 (|dragContext i)
-			 (list |XmNdropTransfers (list (list |XA_STRING w)) ; list of lists of Atoms/our-data
-			       |XmNnumDropTransfers 1
-			       |XmNtransferProc 
+		       (set! (.operation i) XmDROP_COPY) ; tell system drop has succeeded
+		       (XmDropTransferStart 
+			 (.dragContext i)
+			 (list XmNdropTransfers (list (list XA_STRING w)) ; list of lists of Atoms/our-data
+			       XmNnumDropTransfers 1
+			       XmNtransferProc 
 				(lambda (w context selection type val len fmt)
 				  ;; the actual in-coming string (properly terminated in xm.c) is 'value'
 				  (snd-print (format #f "got: ~A ~A ~A ~A ~A ~A ~A~%"
@@ -1651,10 +1651,10 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (define (show-label data id)
       (if (sound? (car data))
 	  (let* ((space (kmg (disk-kspace (file-name (car data)))))
-		 (str (|XmStringCreateLocalized space)))
-	    (|XtSetValues (cadr data) (list |XmNlabelString str))
-	    (|XmStringFree str)
-	    (|XtAppAddTimeOut (caddr data) 10000 show-label data))))
+		 (str (XmStringCreateLocalized space)))
+	    (XtSetValues (cadr data) (list XmNlabelString str))
+	    (XmStringFree str)
+	    (XtAppAddTimeOut (caddr data) 10000 show-label data))))
     (lambda (snd)
       "(show-disk-space) adds a label to the minibuffer area showing the current free space (for use with after-open-hook)"
       (let ((previous-label (find-if (lambda (n) (= (car n) snd)) labelled-snds)))
@@ -1662,22 +1662,22 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	    (let* ((app (car (main-widgets)))
 		   (widgets (sound-widgets snd))
 		   (minibuffer (list-ref widgets 3))
-		   (name-form (|XtParent minibuffer))
+		   (name-form (XtParent minibuffer))
 		   (space (kmg (disk-kspace (file-name snd))))
-		   (str (|XmStringCreateLocalized space))
-		   (new-label (|XtCreateManagedWidget "space:" |xmLabelWidgetClass name-form 
-				(list |XmNbackground      (basic-color)
-				      |XmNleftAttachment  |XmATTACH_WIDGET
-				      |XmNleftWidget      minibuffer
-				      |XmNlabelString     str
-				      |XmNrightAttachment |XmATTACH_NONE
-				      |XmNtopAttachment   |XmATTACH_FORM))))
-	      (|XmStringFree str)
-	      (|XtSetValues minibuffer (list |XmNrightAttachment |XmATTACH_WIDGET
-					     |XmNrightWidget new-label))
+		   (str (XmStringCreateLocalized space))
+		   (new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
+				(list XmNbackground      (basic-color)
+				      XmNleftAttachment  XmATTACH_WIDGET
+				      XmNleftWidget      minibuffer
+				      XmNlabelString     str
+				      XmNrightAttachment XmATTACH_NONE
+				      XmNtopAttachment   XmATTACH_FORM))))
+	      (XmStringFree str)
+	      (XtSetValues minibuffer (list XmNrightAttachment XmATTACH_WIDGET
+					     XmNrightWidget new-label))
 	      (set! previous-label (list snd new-label app))
 	      (set! labelled-snds (cons previous-label labelled-snds))))
-	(|XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label)))))
+	(XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label)))))
 
 ;(add-hook! after-open-hook show-disk-space)
 
@@ -1685,21 +1685,21 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; -------- add-very-useful-icons adds some very useful icons
 
 (define (add-very-useful-icons)
-  (let ((tools (add-main-pane "tools" |xmRowColumnWidgetClass
-		  (list |XmNbackground (black-pixel)
-			|XmNpaneMinimum 48
-			|XmNpaneMaximum 48
-			|XmNorientation |XmHORIZONTAL))))
+  (let ((tools (add-main-pane "tools" xmRowColumnWidgetClass
+		  (list XmNbackground (black-pixel)
+			XmNpaneMinimum 48
+			XmNpaneMaximum 48
+			XmNorientation XmHORIZONTAL))))
     (load-from-path "icons.scm")
     (for-each 
      (lambda (icon callback)
        (let ((button
-	      (|XtCreateManagedWidget "button" |xmPushButtonWidgetClass tools
-		(list |XmNlabelPixmap (make-pixmap tools icon)
-		      |XmNlabelType   |XmPIXMAP
-		      |XmNwidth       32
-		      |XmNheight      32))))
-	 (|XtAddCallback button |XmNactivateCallback callback)))
+	      (XtCreateManagedWidget "button" xmPushButtonWidgetClass tools
+		(list XmNlabelPixmap (make-pixmap tools icon)
+		      XmNlabelType   XmPIXMAP
+		      XmNwidth       32
+		      XmNheight      32))))
+	 (XtAddCallback button XmNactivateCallback callback)))
      (list burger syringe media tut fortune bob1 caesar xmas1 umbrela chess3 compress xdbx icl8)
      (list (lambda (w c i) ; ahead one
 	     (set! (cursor) (min (1- (frames)) (1+ (cursor)))))
@@ -1753,7 +1753,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	       (ctrls (list-ref wids 2))
 	       (snd-amp (find-child ctrls "snd-amp"))
 	       (amp (find-child snd-amp (scroller-name 0)))
-	       (val (cadr (|XtGetValues amp (list |XmNmaximum 0)))))
+	       (val (cadr (XtGetValues amp (list XmNmaximum 0)))))
 	  (set! scroll-max val)
 	  (set! scroll-mid (inexact->exact (/ scroll-max 2)))
 	  (set! scroll-break (inexact->exact (* .15 scroll-max)))
@@ -1771,69 +1771,69 @@ Reverb-feedback sets the scaler on the feedback.\n\
   
   (define (amp-callback w c i)
     ;; c is (list number-widget snd chan)
-    (let* ((amp (amp-scroller->amp (|value i)))
-	   (ampstr (|XmStringCreateLocalized (format #f "~,2F" amp)))
+    (let* ((amp (amp-scroller->amp (.value i)))
+	   (ampstr (XmStringCreateLocalized (format #f "~,2F" amp)))
 	   (snd (cadr c))
 	   (top-chn (- (chans snd) 1))
 	   (chn (- top-chn (caddr c))))
-      (|XtSetValues (car c) (list |XmNlabelString ampstr))
-      (|XmStringFree ampstr)
+      (XtSetValues (car c) (list XmNlabelString ampstr))
+      (XmStringFree ampstr)
       (if (> (caddr c) 0)
 	  (set! (amp-control snd chn) amp))))
   
   (define (reset-to-one scroller number)
-    (|XtSetValues scroller (list |XmNvalue scroll-mid))
-    (let ((ampstr (|XmStringCreateLocalized "1.00")))
-      (|XtSetValues number (list |XmNlabelString ampstr))
-      (|XmStringFree ampstr)))
+    (XtSetValues scroller (list XmNvalue scroll-mid))
+    (let ((ampstr (XmStringCreateLocalized "1.00")))
+      (XtSetValues number (list XmNlabelString ampstr))
+      (XmStringFree ampstr)))
   
   (define (make-amp-control snd chan parent)
-    (let* ((s1 (|XmStringCreateLocalized "amp:"))
+    (let* ((s1 (XmStringCreateLocalized "amp:"))
 	   (smax (scrollbar-max))
-	   (label (|XtCreateManagedWidget (label-name chan) |xmPushButtonWidgetClass parent
-					  (list |XmNbackground       (basic-color)
-						|XmNalignment        |XmALIGNMENT_BEGINNING
-						|XmNtopAttachment    |XmATTACH_FORM
-						|XmNbottomAttachment |XmATTACH_NONE
-						|XmNleftAttachment   |XmATTACH_FORM
-						|XmNrightAttachment  |XmATTACH_NONE
-					        |XmNlabelString      s1
-						|XmNmarginHeight     1
-						|XmNrecomputeSize    #f
-						|XmNshadowThickness  0
-						|XmNhighlightThickness 0
-						|XmNfillOnArm        #f)))
-	   (s2 (|XmStringCreateLocalized "1.00"))
-	   (number (|XtCreateManagedWidget (number-name chan) |xmLabelWidgetClass parent
-					   (list |XmNbackground       (basic-color)
-						 |XmNalignment        |XmALIGNMENT_BEGINNING
-						 |XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
-						 |XmNtopWidget        label
-						 |XmNbottomAttachment |XmATTACH_NONE
-						 |XmNleftAttachment   |XmATTACH_WIDGET
-						 |XmNleftWidget       label
-						 |XmNrightAttachment  |XmATTACH_NONE
-						 |XmNlabelString      s2
-						 |XmNmarginHeight     1
-						 |XmNrecomputeSize    #f)))
-	   (scroll (|XtCreateManagedWidget (scroller-name chan) |xmScrollBarWidgetClass parent
-					   (list |XmNbackground       (position-color)
-						 |XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
-						 |XmNtopWidget        label
-						 |XmNbottomAttachment |XmATTACH_NONE
-						 |XmNheight           16
-						 |XmNleftAttachment   |XmATTACH_WIDGET
-						 |XmNleftWidget       number
-						 |XmNrightAttachment  |XmATTACH_FORM
-						 |XmNorientation      |XmHORIZONTAL
-						 |XmNmaximum          smax
-						 |XmNvalue            scroll-mid
-						 |XmNdragCallback     (list amp-callback (list number snd chan))
-						 |XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
-      (|XtAddCallback label |XmNactivateCallback (lambda (w c i)
+	   (label (XtCreateManagedWidget (label-name chan) xmPushButtonWidgetClass parent
+					  (list XmNbackground       (basic-color)
+						XmNalignment        XmALIGNMENT_BEGINNING
+						XmNtopAttachment    XmATTACH_FORM
+						XmNbottomAttachment XmATTACH_NONE
+						XmNleftAttachment   XmATTACH_FORM
+						XmNrightAttachment  XmATTACH_NONE
+					        XmNlabelString      s1
+						XmNmarginHeight     1
+						XmNrecomputeSize    #f
+						XmNshadowThickness  0
+						XmNhighlightThickness 0
+						XmNfillOnArm        #f)))
+	   (s2 (XmStringCreateLocalized "1.00"))
+	   (number (XtCreateManagedWidget (number-name chan) xmLabelWidgetClass parent
+					   (list XmNbackground       (basic-color)
+						 XmNalignment        XmALIGNMENT_BEGINNING
+						 XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
+						 XmNtopWidget        label
+						 XmNbottomAttachment XmATTACH_NONE
+						 XmNleftAttachment   XmATTACH_WIDGET
+						 XmNleftWidget       label
+						 XmNrightAttachment  XmATTACH_NONE
+						 XmNlabelString      s2
+						 XmNmarginHeight     1
+						 XmNrecomputeSize    #f)))
+	   (scroll (XtCreateManagedWidget (scroller-name chan) xmScrollBarWidgetClass parent
+					   (list XmNbackground       (position-color)
+						 XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
+						 XmNtopWidget        label
+						 XmNbottomAttachment XmATTACH_NONE
+						 XmNheight           16
+						 XmNleftAttachment   XmATTACH_WIDGET
+						 XmNleftWidget       number
+						 XmNrightAttachment  XmATTACH_FORM
+						 XmNorientation      XmHORIZONTAL
+						 XmNmaximum          smax
+						 XmNvalue            scroll-mid
+						 XmNdragCallback     (list amp-callback (list number snd chan))
+						 XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
+      (XtAddCallback label XmNactivateCallback (lambda (w c i)
 						   (reset-to-one scroll number)))
-      (|XmStringFree s1)
-      (|XmStringFree s2)
+      (XmStringFree s1)
+      (XmStringFree s2)
       label))
   
   (define (amp-controls-reflect-chans snd)
@@ -1842,12 +1842,12 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   (snd-amp (find-child ctrls "snd-amp"))
 	   (chns (chans snd)))
       
-      (if (|Widget? snd-amp)
-	  (let ((height (cadr (|XtGetValues ctrls (list |XmNheight 0))))
-		(panemin (cadr (|XtGetValues ctrls (list |XmNpaneMinimum 0))))
-		(panemax (cadr (|XtGetValues ctrls (list |XmNpaneMaximum 0)))))
+      (if (Widget? snd-amp)
+	  (let ((height (cadr (XtGetValues ctrls (list XmNheight 0))))
+		(panemin (cadr (XtGetValues ctrls (list XmNpaneMinimum 0))))
+		(panemax (cadr (XtGetValues ctrls (list XmNpaneMaximum 0)))))
 	    (scrollbar-max)
-	    (|XtUnmanageChild ctrls)
+	    (XtUnmanageChild ctrls)
 	    (let ((existing-controls (or (sound-property 'amp-controls snd) 1)))
 	      (if (< existing-controls chns)
 		  (begin
@@ -1863,9 +1863,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		(let ((ampc (find-child snd-amp (label-name i)))
 		      (ampn (find-child snd-amp (number-name i)))
 		      (amp (find-child snd-amp (scroller-name i))))
-		  (|XtUnmanageChild ampc)
-		  (|XtUnmanageChild ampn)
-		  (|XtUnmanageChild amp)))
+		  (XtUnmanageChild ampc)
+		  (XtUnmanageChild ampn)
+		  (XtUnmanageChild amp)))
 	      (do ((i 0 (1+ i)))
 		  ((= i chns))
 		(let ((ampc (find-child snd-amp (label-name i)))
@@ -1876,16 +1876,16 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				    #f)))
 		  (reset-to-one amp ampn)
 		  (if next-amp
-		      (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_WIDGET
-					       |XmNtopWidget     next-amp))
-		      (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_FORM)))
-		  (|XtManageChild ampc)
-		  (|XtManageChild ampn)
-		  (|XtManageChild amp))))
+		      (XtSetValues ampc (list XmNtopAttachment XmATTACH_WIDGET
+					       XmNtopWidget     next-amp))
+		      (XtSetValues ampc (list XmNtopAttachment XmATTACH_FORM)))
+		  (XtManageChild ampc)
+		  (XtManageChild ampn)
+		  (XtManageChild amp))))
 	    
-	    (|XtSetValues ctrls (list |XmNpaneMinimum height |XmNpaneMaximum height))
-	    (|XtManageChild ctrls)
-	    (|XtSetValues ctrls (list |XmNpaneMinimum panemin |XmNpaneMaximum panemax))))))
+	    (XtSetValues ctrls (list XmNpaneMinimum height XmNpaneMaximum height))
+	    (XtManageChild ctrls)
+	    (XtSetValues ctrls (list XmNpaneMinimum panemin XmNpaneMaximum panemax))))))
   
   (define (amp-controls-clear snd)
     (if (> (chans snd) 1)
@@ -1913,9 +1913,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 (define (remove-main-menu menu)
   "(remove-main-menu menu) removes the specified top-level menu: (remove-main-menu 5) removes the Help menu"
   (let* ((cascade (list-ref (menu-widgets) menu))
-	 (top (cadr (|XtGetValues cascade (list |XmNsubMenuId 0)))))
-    (|XtUnmanageChild cascade)
-    (|XtUnmanageChild top)))
+	 (top (cadr (XtGetValues cascade (list XmNsubMenuId 0)))))
+    (XtUnmanageChild cascade)
+    (XtUnmanageChild top)))
 
 
 ;;; -------- add delete and rename options to the file menu
@@ -1941,39 +1941,39 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	;; open dialog to get new name, save-as that name, open
 	(if (not rename-dialog)
 	    ;; make a standard dialog
-	    (let* ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
-		   (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
-		   (xok (|XmStringCreate "DoIt" |XmFONTLIST_DEFAULT_TAG))
-		   (titlestr (|XmStringCreate "Rename" |XmFONTLIST_DEFAULT_TAG))
-		   (new-dialog (|XmCreateTemplateDialog
+	    (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+		   (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+		   (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
+		   (titlestr (XmStringCreate "Rename" XmFONTLIST_DEFAULT_TAG))
+		   (new-dialog (XmCreateTemplateDialog
 				 (cadr (main-widgets)) "Rename"
-				 (list |XmNcancelLabelString   xdismiss
-				       |XmNhelpLabelString     xhelp
-				       |XmNokLabelString       xok
-				       |XmNautoUnmanage        #f
-				       |XmNdialogTitle         titlestr
-				       |XmNresizePolicy        |XmRESIZE_GROW
-				       |XmNnoResize            #f
-				       |XmNbackground          (basic-color)
-				       |XmNtransient           #f))))
+				 (list XmNcancelLabelString   xdismiss
+				       XmNhelpLabelString     xhelp
+				       XmNokLabelString       xok
+				       XmNautoUnmanage        #f
+				       XmNdialogTitle         titlestr
+				       XmNresizePolicy        XmRESIZE_GROW
+				       XmNnoResize            #f
+				       XmNbackground          (basic-color)
+				       XmNtransient           #f))))
 	      (for-each
 	       (lambda (button)
-		 (|XtVaSetValues
-		   (|XmMessageBoxGetChild new-dialog button)
-		   (list |XmNarmColor   (pushed-button-color)
-			 |XmNbackground (basic-color))))
-	       (list |XmDIALOG_HELP_BUTTON |XmDIALOG_CANCEL_BUTTON |XmDIALOG_OK_BUTTON))
+		 (XtVaSetValues
+		   (XmMessageBoxGetChild new-dialog button)
+		   (list XmNarmColor   (pushed-button-color)
+			 XmNbackground (basic-color))))
+	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
     
-	      (|XtAddCallback new-dialog |XmNcancelCallback 
-			      (lambda (w c i) (|XtUnmanageChild w)))
+	      (XtAddCallback new-dialog XmNcancelCallback 
+			      (lambda (w c i) (XtUnmanageChild w)))
 	      
-	      (|XtAddCallback new-dialog |XmNhelpCallback 
+	      (XtAddCallback new-dialog XmNhelpCallback 
 			      (lambda (w c i)
 				(help-dialog "Rename" "give a new file name to rename the currently selected sound")))
 
-	      (|XtAddCallback new-dialog |XmNokCallback 
+	      (XtAddCallback new-dialog XmNokCallback 
 			      (lambda (w c i)
-				(let ((new-name (|XmTextFieldGetString rename-text)))
+				(let ((new-name (XmTextFieldGetString rename-text)))
 				  (if (and (string? new-name)
 					   (> (string-length new-name) 0)
 					   (selected-sound))
@@ -1982,54 +1982,54 @@ Reverb-feedback sets the scaler on the feedback.\n\
 					(close-sound)
 					(rename-file current-name new-name)
 					(open-sound new-name)
-					(|XtUnmanageChild w))))))
+					(XtUnmanageChild w))))))
 
-	      (|XmStringFree xhelp)
-	      (|XmStringFree xok)
-	      (|XmStringFree xdismiss)
-	      (|XmStringFree titlestr)
+	      (XmStringFree xhelp)
+	      (XmStringFree xok)
+	      (XmStringFree xdismiss)
+	      (XmStringFree titlestr)
 	      (set! rename-dialog new-dialog)
 
-	      (let* ((mainform (|XtCreateManagedWidget "formd" |xmRowColumnWidgetClass rename-dialog
-				     (list |XmNleftAttachment   |XmATTACH_FORM
-					   |XmNrightAttachment  |XmATTACH_FORM
-					   |XmNtopAttachment    |XmATTACH_FORM
-					   |XmNbottomAttachment |XmATTACH_WIDGET
-					   |XmNbottomWidget     (|XmMessageBoxGetChild rename-dialog |XmDIALOG_SEPARATOR)
-					   |XmNorientation      |XmVERTICAL
-					   |XmNbackground       (basic-color))))
-		     (label (|XtCreateManagedWidget "new name:" |xmLabelWidgetClass mainform
-				     (list |XmNleftAttachment   |XmATTACH_FORM
-					   |XmNrightAttachment  |XmATTACH_NONE
-					   |XmNtopAttachment    |XmATTACH_FORM
-					   |XmNbottomAttachment |XmATTACH_FORM
-					   |XmNbackground       (basic-color)))))
+	      (let* ((mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass rename-dialog
+				     (list XmNleftAttachment   XmATTACH_FORM
+					   XmNrightAttachment  XmATTACH_FORM
+					   XmNtopAttachment    XmATTACH_FORM
+					   XmNbottomAttachment XmATTACH_WIDGET
+					   XmNbottomWidget     (XmMessageBoxGetChild rename-dialog XmDIALOG_SEPARATOR)
+					   XmNorientation      XmVERTICAL
+					   XmNbackground       (basic-color))))
+		     (label (XtCreateManagedWidget "new name:" xmLabelWidgetClass mainform
+				     (list XmNleftAttachment   XmATTACH_FORM
+					   XmNrightAttachment  XmATTACH_NONE
+					   XmNtopAttachment    XmATTACH_FORM
+					   XmNbottomAttachment XmATTACH_FORM
+					   XmNbackground       (basic-color)))))
 		(set! rename-text 
-		      (|XtCreateManagedWidget "newname" |xmTextFieldWidgetClass mainform
-				     (list |XmNleftAttachment   |XmATTACH_WIDGET
-					   |XmNleftWidget       label
-					   |XmNrightAttachment  |XmATTACH_FORM
-					   |XmNtopAttachment    |XmATTACH_FORM
-					   |XmNbottomAttachment |XmATTACH_FORM
-					   |XmNbackground       (basic-color))))
-		(|XtAddEventHandler rename-text |EnterWindowMask #f
+		      (XtCreateManagedWidget "newname" xmTextFieldWidgetClass mainform
+				     (list XmNleftAttachment   XmATTACH_WIDGET
+					   XmNleftWidget       label
+					   XmNrightAttachment  XmATTACH_FORM
+					   XmNtopAttachment    XmATTACH_FORM
+					   XmNbottomAttachment XmATTACH_FORM
+					   XmNbackground       (basic-color))))
+		(XtAddEventHandler rename-text EnterWindowMask #f
 				    (lambda (w context ev flag)
-				      (|XmProcessTraversal w |XmTRAVERSE_CURRENT)
-				      (|XtSetValues w (list |XmNbackground (white-pixel)))))
-		(|XtAddEventHandler rename-text |LeaveWindowMask #f
+				      (XmProcessTraversal w XmTRAVERSE_CURRENT)
+				      (XtSetValues w (list XmNbackground (white-pixel)))))
+		(XtAddEventHandler rename-text LeaveWindowMask #f
 				    (lambda (w context ev flag)
-				      (|XtSetValues w (list |XmNbackground (basic-color))))))))
-	(if (not (|XtIsManaged rename-dialog))
-	    (|XtManageChild rename-dialog)
+				      (XtSetValues w (list XmNbackground (basic-color))))))))
+	(if (not (XtIsManaged rename-dialog))
+	    (XtManageChild rename-dialog)
 	    (raise-dialog rename-dialog)))
       8)))
 
 
 (define (change-label widget new-label)
   "(change-label widget new-label) changes widget's label to new-label"
-  (let ((str (|XmStringCreateLocalized new-label)))
-    (|XtSetValues widget (list |XmNlabelString str))
-    (|XmStringFree str)))
+  (let ((str (XmStringCreateLocalized new-label)))
+    (XtSetValues widget (list XmNlabelString str))
+    (XmStringFree str)))
 
 ;;; this deletes the play button
 ;(add-hook! after-open-hook
@@ -2037,8 +2037,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;	     (let* ((ctrls (list-ref (sound-widgets snd) 2))
 ;		    (play-button (find-child ctrls "play"))
 ;		    (sync-button (find-child ctrls "sync")))
-;	     (|XtUnmanageChild play-button)
-;	     (|XtVaSetValues sync-button (list |XmNrightAttachment |XmATTACH_FORM)))))
+;	     (XtUnmanageChild play-button)
+;	     (XtVaSetValues sync-button (list XmNrightAttachment XmATTACH_FORM)))))
 
 
 ;;; -------- mark-sync-color
@@ -2048,24 +2048,24 @@ Reverb-feedback sets the scaler on the feedback.\n\
 (define (mark-sync-color new-color)
   (define get-color
     (lambda (color-name)
-      (let* ((col (|XColor))
-	     (dpy (|XtDisplay (cadr (main-widgets))))
-	     (scr (|DefaultScreen dpy))
-	     (cmap (|DefaultColormap dpy scr)))
-	(if (= (|XAllocNamedColor dpy cmap color-name col col) 0)
+      (let* ((col (XColor))
+	     (dpy (XtDisplay (cadr (main-widgets))))
+	     (scr (DefaultScreen dpy))
+	     (cmap (DefaultColormap dpy scr)))
+	(if (= (XAllocNamedColor dpy cmap color-name col col) 0)
 	    (snd-error (format #f "can't allocate ~A" color-name))
-	    (|pixel col)))))
+	    (.pixel col)))))
 
   (let* ((mark-gc (list-ref (snd-gcs) 9))
 	 (selected-mark-gc (list-ref (snd-gcs) 10))
-	 (dpy (|XtDisplay (cadr (main-widgets))))
-	 (original-mark-color (|Pixel (logxor (cadr (mark-color)) 
+	 (dpy (XtDisplay (cadr (main-widgets))))
+	 (original-mark-color (Pixel (logxor (cadr (mark-color)) 
 					      (cadr (graph-color)))))
-	 (original-selected-mark-color (|Pixel (logxor (cadr (mark-color)) 
+	 (original-selected-mark-color (Pixel (logxor (cadr (mark-color)) 
 						       (cadr (selected-graph-color)))))
-	 (new-mark-color (|Pixel (logxor (cadr (graph-color)) 
+	 (new-mark-color (Pixel (logxor (cadr (graph-color)) 
 					 (cadr (get-color new-color)))))
-	 (new-selected-mark-color (|Pixel (logxor (cadr (selected-graph-color))
+	 (new-selected-mark-color (Pixel (logxor (cadr (selected-graph-color))
 						  (cadr (get-color new-color))))))
     (if (not (hook-empty? draw-mark-hook)) 
 	(reset-hook! draw-mark-hook))
@@ -2073,11 +2073,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	       (lambda (id)
 		 (if (> (mark-sync id) 0)
 		     (begin
-		       (|XSetForeground dpy mark-gc new-mark-color)
-		       (|XSetForeground dpy selected-mark-gc new-selected-mark-color))
+		       (XSetForeground dpy mark-gc new-mark-color)
+		       (XSetForeground dpy selected-mark-gc new-selected-mark-color))
 		     (begin
-		       (|XSetForeground dpy mark-gc original-mark-color)
-		       (|XSetForeground dpy selected-mark-gc original-selected-mark-color)))
+		       (XSetForeground dpy mark-gc original-mark-color)
+		       (XSetForeground dpy selected-mark-gc original-selected-mark-color)))
 		 #f))))
 
 
@@ -2099,48 +2099,48 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (define (stop-tooltip)
       (if tool-proc
 	  (begin
-	    (|XtRemoveTimeOut tool-proc)
+	    (XtRemoveTimeOut tool-proc)
 	    (set! tool-proc #f)))
       (if quit-proc
 	  (begin
-	    (|XtRemoveTimeOut quit-proc)
+	    (XtRemoveTimeOut quit-proc)
 	    (set! quit-proc #f)))
-      (if (and tooltip-shell (|XtIsManaged tooltip-shell))
-	  (|XtUnmanageChild tooltip-shell)))
+      (if (and tooltip-shell (XtIsManaged tooltip-shell))
+	  (XtUnmanageChild tooltip-shell)))
 
     (define (start-tooltip ev)
       (if (and with-tooltips 
 	       (not tool-proc))
-	  (set! tool-proc (|XtAppAddTimeOut 
+	  (set! tool-proc (XtAppAddTimeOut 
 			    (car (main-widgets))
 			    timeout 
 			    (lambda (data id)
 			      (if (not tooltip-shell)
 				  (begin
-				    (set! tooltip-shell (|XtCreatePopupShell 
+				    (set! tooltip-shell (XtCreatePopupShell 
 							  tip 
-							  |overrideShellWidgetClass 
+							  overrideShellWidgetClass 
 							  (cadr (main-widgets)) 
 							  '()))
 				    (set! tooltip-label
-					  (|XtCreateManagedWidget 
+					  (XtCreateManagedWidget 
 					    tip
-					    |xmLabelWidgetClass 
+					    xmLabelWidgetClass 
 					    tooltip-shell
-					    (list |XmNbackground (highlight-color)))))
+					    (list XmNbackground (highlight-color)))))
 				  (change-label tooltip-label tip))
-			      (let ((loc (|XtTranslateCoords widget (|x ev) (|y ev))))
-				(|XtVaSetValues tooltip-shell (list |XmNx (car loc) |XmNy (cadr loc))))
-			      (|XtManageChild tooltip-shell)
-			      (set! quit-proc (|XtAppAddTimeOut
+			      (let ((loc (XtTranslateCoords widget (.x ev) (.y ev))))
+				(XtVaSetValues tooltip-shell (list XmNx (car loc) XmNy (cadr loc))))
+			      (XtManageChild tooltip-shell)
+			      (set! quit-proc (XtAppAddTimeOut
 						(car (main-widgets))
 						quittime
 						(lambda (data id)
-						  (|XtUnmanageChild tooltip-shell)
+						  (XtUnmanageChild tooltip-shell)
 						  (set! quit-proc #f)))))))))
 
-    (|XtAddEventHandler widget |EnterWindowMask #f (lambda (w c ev flag) (start-tooltip ev)))
-    (|XtAddEventHandler widget |LeaveWindowMask #f (lambda (w c ev flag) (stop-tooltip)))))
+    (XtAddEventHandler widget EnterWindowMask #f (lambda (w c ev flag) (start-tooltip ev)))
+    (XtAddEventHandler widget LeaveWindowMask #f (lambda (w c ev flag) (stop-tooltip)))))
 
 
 (define (menu-option name)
@@ -2152,11 +2152,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	(for-each-child
 	 top-menu
 	 (lambda (w)
-	   (let ((option-holder (cadr (|XtGetValues w (list |XmNsubMenuId 0)))))
+	   (let ((option-holder (cadr (XtGetValues w (list XmNsubMenuId 0)))))
 	     (for-each-child
 	      option-holder
 	      (lambda (menu)
-		(if (string=? name (|XtName menu))
+		(if (string=? name (XtName menu))
 		    (return menu))))))))
       (cdr (menu-widgets)))
      (throw 'no-such-menu (list "menu-option" name)))))
@@ -2171,37 +2171,37 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; SOMEDAY: spectral edit dialog
 
 #!
-(let ((dpy (|XtDisplay (cadr (main-widgets)))))
-  (if (not (member "XpExtension" (|XListExtensions dpy)))
-      (snd-display ";XListExtensions does not include Xp: ~A" (|XListExtensions dpy))
-      (if (not (car (|XpQueryExtension dpy)))
+(let ((dpy (XtDisplay (cadr (main-widgets)))))
+  (if (not (member "XpExtension" (XListExtensions dpy)))
+      (snd-display ";XListExtensions does not include Xp: ~A" (XListExtensions dpy))
+      (if (not (car (XpQueryExtension dpy)))
 	  (snd-display "Xp unhappy?")
-	  (let ((printer (|XmPrintSetup (cadr (main-widgets))
-					(|DefaultScreenOfDisplay (|XtDisplay (cadr (main-widgets))))
+	  (let ((printer (XmPrintSetup (cadr (main-widgets))
+					(DefaultScreenOfDisplay (XtDisplay (cadr (main-widgets))))
 					"Print"
 					'())))
-	    (if (|Widget? printer)
+	    (if (Widget? printer)
 		(begin
-		  (|XtAddCallback printer |XmNendJobCallback (lambda (w c i)
+		  (XtAddCallback printer XmNendJobCallback (lambda (w c i)
 							       (snd-display "end print")))
-		  (|XtAddCallback printer |XmNstartJobCallback (lambda (w c i)
+		  (XtAddCallback printer XmNstartJobCallback (lambda (w c i)
 								 (snd-display "start print")))
-		  (|XtAddCallback printer |XmNpageSetupCallback (lambda (w c i)
-								  (snd-display "page setup: ~A" (|last_page i))))
-		  (|XtAddCallback printer |XmNpdmNotificationCallback (lambda (w c i)
-									(snd-display "notification: ~A, ~A" (|reason i) (|detail i))))
-		  ;(|XmPrintPopupPDM printer (cadr (main-widgets)))
-		  (|XmPrintToFile (|XtDisplay (cadr (main-widgets))) 
+		  (XtAddCallback printer XmNpageSetupCallback (lambda (w c i)
+								  (snd-display "page setup: ~A" (.last_page i))))
+		  (XtAddCallback printer XmNpdmNotificationCallback (lambda (w c i)
+									(snd-display "notification: ~A, ~A" (.reason i) (.detail i))))
+		  ;(XmPrintPopupPDM printer (cadr (main-widgets)))
+		  (XmPrintToFile (XtDisplay (cadr (main-widgets))) 
 				  "test.data" 
 				  (lambda (dpy context status data)
 				    (snd-display "print finished"))
 				  #f)
 		  ; these are called through the XmPrint mechanism, I think
-		  ;(|XpStartJob dpy |XPSpool)
-		  ;(|XpStartPage dpy (|XtWindow (cadr (main-widgets))))
-		  ;(|XmRedisplayWidget (cadr (main-widgets)))
-		  ;(|XpEndPage dpy)
-		  ;(|XpEndJob dpy)
+		  ;(XpStartJob dpy XPSpool)
+		  ;(XpStartPage dpy (XtWindow (cadr (main-widgets))))
+		  ;(XmRedisplayWidget (cadr (main-widgets)))
+		  ;(XpEndPage dpy)
+		  ;(XpEndJob dpy)
 		  )
 		(snd-display "can't get print shell")))))
 !#

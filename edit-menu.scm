@@ -142,32 +142,32 @@
 ;;; -------- add these to the Edit menu, if possible
 
 (if (provided? 'xm)
-    (let* ((edit-cascade (|Widget (list-ref (menu-widgets) 2)))
-	   (edit-menu (cadr (|XtGetValues edit-cascade (list |XmNsubMenuId 0)))))
+    (let* ((edit-cascade (Widget (list-ref (menu-widgets) 2)))
+	   (edit-menu (cadr (XtGetValues edit-cascade (list XmNsubMenuId 0)))))
 
       (define (for-each-child w func)
 	(func w)
-	(if (|XtIsComposite w)
+	(if (XtIsComposite w)
 	    (for-each 
 	     (lambda (n)
 	       (for-each-child n func))
-	     (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
+	     (cadr (XtGetValues w (list XmNchildren 0) 1)))))
       
-      (|XtAddCallback edit-cascade |XmNcascadingCallback 
+      (XtAddCallback edit-cascade XmNcascadingCallback 
 	(lambda (w c i)
 	  (for-each-child 
 	   edit-menu
 	   (lambda (child)
-	     (if (or (string=? (|XtName child) "Selection->new")
-		     (string=? (|XtName child) "Cut selection->new")
-		     (string=? (|XtName child) "Append selection"))
-		 (|XtSetSensitive child (selection?))
-		 (if (string=? (|XtName child) "Crop")
-		     (|XtSetSensitive child (and (selected-sound)
+	     (if (or (string=? (XtName child) "Selection->new")
+		     (string=? (XtName child) "Cut selection->new")
+		     (string=? (XtName child) "Append selection"))
+		 (XtSetSensitive child (selection?))
+		 (if (string=? (XtName child) "Crop")
+		     (XtSetSensitive child (and (selected-sound)
 						 (> (length (marks (selected-sound) (selected-channel))) 1)))
-		     (if (or (string=? (|XtName child) "Trim front")
-			     (string=? (|XtName child) "Trim back"))
-			 (|XtSetSensitive child (and (selected-sound)
+		     (if (or (string=? (XtName child) "Trim front")
+			     (string=? (XtName child) "Trim back"))
+			 (XtSetSensitive child (and (selected-sound)
 						     (>= (length (marks (selected-sound) (selected-channel))) 1))))))))))))
 
 
