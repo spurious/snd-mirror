@@ -69,9 +69,9 @@ typedef struct {
 
 typedef struct {
   off_t out, beg, end;
-  Float scl, rmp0, rmp1;
+  Float scl, rmp0, rmp1, pscl;
   int snd, typ, ptree_loc;
-  off_t ptree_pos;
+  off_t ptree_pos, ptree_dur;
 } ed_fragment;
 
 typedef struct {
@@ -82,7 +82,7 @@ typedef struct {
   int edit_type, sound_location, ptree_location;
   off_t selection_beg, selection_end;  /* selection needs to follow edit list */
   Float maxamp, selection_maxamp;
-  int edpos;
+  int edpos, ptree_env_too;
 } ed_list;
 
 typedef struct snd__fd {
@@ -1085,8 +1085,8 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 void *make_apply_state_with_implied_beg_and_dur(void *xp);
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
-void amp_env_ptree(chan_info *cp, void *pt, int pos);
-void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos);
+void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func);
+void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func);
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);

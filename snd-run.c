@@ -5733,16 +5733,6 @@ static xen_value *make_vct_1(ptree *prog, xen_value **args, int num_args)
   return(args[0]);
 }
 
-static vct *c_vct_copy(vct *vc)
-{
-  vct *v;
-  int len;
-  len = vc->length;
-  v = c_make_vct(len);
-  memcpy((void *)(v->data), (void *)(vc->data), (len * sizeof(Float)));
-  return(v);
-}
-
 static void vct_copy_v(int *args, int *ints, Float *dbls) 
 {
   vct *v;

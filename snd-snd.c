@@ -733,10 +733,11 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
     }
 }
 
-void amp_env_ptree(chan_info *cp, void *pt, int pos)
+void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func)
 {
   env_info *old_ep, *new_ep;
   int i;
+  vct *vlo = NULL, *vhi = NULL;
   mus_sample_t fmin, fmax, dmin, dmax;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
@@ -755,10 +756,33 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos)
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       fmin = MUS_SAMPLE_MAX;
       fmax = MUS_SAMPLE_MIN;
+      if (XEN_PROCEDURE_P(init_func))
+	{
+	  /* probably faster to copy locally than protect from GC */
+	  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
+							     C_TO_XEN_OFF_T(0),
+							     C_TO_XEN_OFF_T(new_ep->amp_env_size),
+							     "ptree-channel fallback init func"))));
+	  vhi = c_vct_copy(vlo);
+	}
       for (i = 0; i < new_ep->amp_env_size; i++) 
 	{
-	  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
-	  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
+	  if (vlo)
+	    {
+	      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, 
+								 MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]),
+								 vlo,
+								 TRUE));
+	      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, 
+								 MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i]),
+								 vhi,
+								 TRUE));
+	    }
+	  else
+	    {
+	      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
+	      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
+	    }
 	  if (dmin <= dmax)
 	    {
 	      new_ep->data_min[i] = dmin;
@@ -772,6 +796,8 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos)
 	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
 	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
 	}
+      if (vlo) FREE(vlo);
+      if (vhi) FREE(vhi);
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = TRUE;
@@ -781,11 +807,12 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos)
     }
 }
 
-void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos)
+void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func)
 {
   env_info *old_ep, *new_ep = NULL;
   mus_sample_t fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0, dmin, dmax;
-  int i;
+  int i, closure = FALSE;
+  vct *vlo = NULL, *vhi = NULL;
   off_t cursamp, start, end;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
@@ -804,6 +831,7 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       end = beg + num - 1;
       start = beg - new_ep->samps_per_bin;
+      if (XEN_PROCEDURE_P(init_func)) closure = TRUE;
       for (i = 0, cursamp = 0; i < new_ep->amp_env_size; i++, cursamp += new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
@@ -815,8 +843,30 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 	    {
 	      if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
 		{
-		  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
-		  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
+		  if (closure)
+		    {
+		      if (vlo == NULL)
+			{
+			  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
+									     C_TO_XEN_OFF_T((Float)(cursamp - beg) / (Float)(num)),
+									     C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
+									     "ptree-channel fallback init func"))));
+			  vhi = c_vct_copy(vlo);
+			}
+		      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, 
+									 MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]),
+									 vlo,
+									 TRUE));
+		      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, 
+									 MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i]),
+									 vhi,
+									 TRUE));
+		    }
+		  else
+		    {
+		      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
+		      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
+		    }
 		  if (dmin <= dmax)
 		    {
 		      new_ep->data_min[i] = dmin;
@@ -833,6 +883,8 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
 	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
 	}
+      if (vlo) FREE(vlo);
+      if (vhi) FREE(vhi);
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = TRUE;

@@ -12,6 +12,7 @@
  *   vct *get_vct(XEN arg)                 given XEN arg, return vct object
  *   void set_vct_print_length(int val)    set vct print length (default 10)
  *   XEN vct_to_vector(XEN vct)            return vector of vct contents
+ *   vct *c_vct_copy(vct *vc)              return copy of vc
  *
  * Scheme side:
  *   (make-vct len &opt (filler 0.0))      make new vct
@@ -169,6 +170,16 @@ vct *c_free_vct(vct *v)
 {
   vct_free(v);
   return(NULL);
+}
+
+vct *c_vct_copy(vct *vc)
+{
+  vct *v;
+  int len;
+  len = vc->length;
+  v = c_make_vct(len);
+  memcpy((void *)(v->data), (void *)(vc->data), (len * sizeof(Float)));
+  return(v);
 }
 
 XEN make_vct(int len, Float *data)

@@ -268,13 +268,13 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Dec:  added contrib/inf-snd.el from Michael Scholz.\n\
 9-Dec:   added init-func arg to ptree-channel.\n\
 1-Dec:   removed Chebyshev and Hankel transforms.\n\
          def-clm-struct support in run completed.\n\
          new-sound-hook, sound-let (ws.scm).\n\
          -nostdin switch for CLM/Snd communication.\n\
 22-Nov:  added contrib/v.rb thanks to Michael Scholz.\n\
-13-Nov:  snd 6.3.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -1,5 +1,6 @@
 Snd change log
 
+  10-Dec:    added contrib/inf-snd.el from Michael Scholz.
   9-Dec:     added init-func arg to ptree-channel.
   1-Dec:     removed Chebyshev and Hankel transforms.
              def-clm-struct support in run completed.

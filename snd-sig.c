@@ -2588,10 +2588,11 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
   outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
   j = 0;
   ss->stopped_explicitly = FALSE;
-  v = XEN_CALL_1(init_func,
-		   C_TO_XEN_OFF_T(0),
-		   "ptree-channel fallback init func");
-
+  v = XEN_CALL_2(init_func,
+		 C_TO_XEN_OFF_T(0),
+		 C_TO_XEN_OFF_T(num),
+		 "ptree-channel fallback init func");
+  snd_protect(v);
   for (kp = 0; kp < num; kp++)
     {
       res = XEN_CALL_3(proc, 
@@ -2603,6 +2604,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
       if (ss->stopped_explicitly) 
 	break;
     }
+  snd_unprotect(v);
   if (outgen) mus_free(outgen);
   if (sf) sf = free_snd_fd(sf);
   if (ss->stopped_explicitly) 
@@ -2669,29 +2671,14 @@ for the gory details."
 
   if (XEN_PROCEDURE_P(init_func))
     {
-      if (XEN_REQUIRED_ARGS(init_func) != 1)
+      if (XEN_REQUIRED_ARGS(init_func) != 2)
 	XEN_ERROR(BAD_ARITY,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
-			     C_TO_XEN_STRING("init-func must take 1 arg")));
-
-      if (XEN_TRUE_P(env_too))
-
-	/* SOMEDAY: ptree-channel with init-func: if env-too, set it up as well */
-	/*   snd-snd.c amp_env_ptree, pass in init_func, call evaluate_ptree_1f1b1b2f etc */
-
-	XEN_ERROR(XEN_ERROR_TYPE("ptree-channel-gives-up"),
-		  XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
-			     C_TO_XEN_STRING("can't optimize peak-envs yet if init-func passed")));
-
+			     C_TO_XEN_STRING("init-func must take 2 args")));
       pt = form_to_ptree_3_f(proc_and_list);
       if ((pt != NULL) && (!(ramp_or_ptree_fragments_in_use(cp, beg, dur, pos))))
-	{
-	  ptree_channel(cp, pt, beg, dur, pos, (XEN_TRUE_P(env_too)) ? pt : NULL, init_func);
-	}
-      else
-	{
-	  g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
-	}
+	ptree_channel(cp, pt, beg, dur, pos, (XEN_TRUE_P(env_too)) ? pt : NULL, init_func);
+      else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
       return(proc_and_list);
     }
 

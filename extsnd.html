@@ -5083,7 +5083,11 @@ the direction argument between the channel and edit-position:
 <!-- -->the same function is applied to the peak env values to get the new version of the peak env data.  
 <!-- -->The default is #f, and should be #t only if the old max and min values as processed through 'proc'
 <!-- -->will be the new max and min values. 
-<!-- -->If the underlying data
+<!-- -->Snd uses the peak env values when the graph of the sound covers very large amounts of data.
+<!-- -->If 'env-too' is #f, a background process is launched reading all the sound data through
+<!-- -->'proc'; this can be time-consuming, so if you're viewing a half-hour of sound data,
+<!-- -->it can take awhile for the ptree-channel results to be displayed if 'env-too' is #f.
+<!-- --><br><br>If the underlying data
 <!-- -->has any envelope ramps or previous ptree operations, map-channel is called instead and the new
 <!-- -->data is saved in the normal manner (that is, I don't currently try to chain these operations
 <!-- -->together).  
@@ -5097,7 +5101,7 @@ the direction argument between the channel and edit-position:
      (<em class=red>ptree-channel</em> (lambda (y) 
                       (set! ctr (1+ ctr)) 
                       (* ctr .0001))))
-<!-- --></pre><br><br>
+<!-- --></pre>
 <!-- -->will never reset ctr to 0!  So every time the segment is read by Snd, the samples will be
 <!-- -->higher -- this is probably not what you want.  'init-func' provides a way around this
 <!-- -->limitation.  The following example is a ptree-channel version of cosine-channel given under
@@ -5107,21 +5111,22 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (cosine-channel-via-ptree #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
-  ;; vct: angle (we can use the global version of incr because it is not set anywhere)
-  (let* ((samps (or dur (frames snd chn)))
-	 (incr (/ pi samps)))
-    (<em class=red>ptree-channel</em>
-     (lambda (y data forward)
-       (declare (y real) (data vct) (forward boolean))
-       (let* ((angle (vct-ref data 0))
-	      (val (* y (cos angle))))
-	 (if forward
-	     (vct-set! data 0 (+ angle incr))
-	     (vct-set! data 0 (- angle incr)))
-	 val))
-     beg dur snd chn edpos #f
-     (lambda (frag-beg)
-       (vct (+ (* -0.5 pi) (* frag-beg incr)))))))
+  ;; vct: angle increment
+  (<em class=red>ptree-channel</em>
+   (lambda (y data forward)
+     (declare (y real) (data vct) (forward boolean))
+     (let* ((angle (vct-ref data 0))
+	    (incr (vct-ref data 1))
+	    (val (* y (cos angle))))
+       (if forward
+	   (vct-set! data 0 (+ angle incr))
+	   (vct-set! data 0 (- angle incr)))
+       val))
+   beg dur snd chn edpos #t
+   (lambda (frag-beg frag-dur)
+     (let ((incr (/ pi frag-dur)))
+       (vct (+ (* -0.5 pi) (* frag-beg incr))
+	    incr)))))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -5140,7 +5145,7 @@ the direction argument between the channel and edit-position:
 <!-- -->reader, 'proc' is called passing it the current underlying sample, the vct of 'init-func',
 <!-- -->and the read direction.
 <!-- --><br><br>
-<!-- -->There are several limitations on ptree-channel with an 'init-func'.  One is that <a href="#sndsavestate">save-state</a>
+<!-- -->One major limitation of ptree-channel with an 'init-func' is that <a href="#sndsavestate">save-state</a>
 <!-- -->currently doesn't know how to save the enclosing environment along with the init-func. So,
 <!-- -->for example,
 <!-- --><br><br><pre>
@@ -5149,13 +5154,55 @@ the direction argument between the channel and edit-position:
 		     (declare (y real) (data vct) (forward boolean))
 		     (* y (vct-ref data 0)))
 		   0 #f ind 0 #f #f
-		   (lambda (pos)
+		   (lambda (pos dur)
 		     (vct outer))))
-<!-- --></pre><br><br>
-<!-- -->will not save the "outer" declaration in the saved state file.  You can fix this up by hand,
-<!-- -->of course, but it's not very elegant.
-<!-- -->Also, for the moment, 'env-too' must be false if 'init-func' is specified -- this is temporary.
+<!-- --></pre>
+<!-- -->will not save the "outer" declaration in the saved state file. 
+<!-- -->This is a general problem with save-state; there's no obvious way in Guile to
+<!-- -->save the current closure as text.
+<!-- -->You can fix the saved state file by hand (it is just Scheme code, of course),
+<!-- -->but that's not a very elegant solution.
+<!-- -->The second argument to the init-func only comes into play when 'env-too' is #t.
+<!-- -->In this case, 'proc' is being evaluated over the peak env data, rather than the
+<!-- -->original data, so the duration is the envelope size, in this case.
+<!-- --><br><br>
+<!-- -->Here are a couple more examples:
 <!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define* (ptree-scale scl #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "ptree-channel version of scale-channel"
+  (let ((local-scl scl)) ; needed by the run macro -- it can't find define* args
+    (<em class=red>ptree-channel</em>
+      (lambda (y) 
+        (* local-scl y)) 
+      beg dur snd chn edpos #t)))
+
+(define* (ptree-xramp r0 r1 ubase #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  "exponential version of ramp-channel"
+  (let* ((base (if (&gt; r0 r1) (/ 1.0 ubase) ubase)))
+    (<em class=red>ptree-channel</em>
+     (lambda (y data forward)
+       (declare (y real) (data vct) (forward boolean))
+       (let* ((lr0 (vct-ref data 0))
+	      (lbase (vct-ref data 1))
+	      (incr (vct-ref data 2))
+	      (scl (vct-ref data 3))
+	      (power (vct-ref data 4))
+	      (val (* y (+ lr0 (* scl (- (expt lbase power) 1.0))))))
+	 (if forward
+	     (vct-set! data 4 (+ power incr))
+	     (vct-set! data 4 (- power incr)))
+	 val))
+     beg dur snd chn edpos #t
+     (lambda (frag-beg frag-dur)
+       ;; r0, base, incr, (/ (- r1 r0) (- base 1.0)), current power
+       (vct r0
+	    base
+	    (/ 1.0 frag-dur)
+	    (/ (- r1 r0) (- base 1.0))
+	    (/ frag-beg frag-dur))))))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
@@ -8398,7 +8445,10 @@ run
 <!-- --><span class=defbox><code><em class=def><a name="sndsavestate">save-state</a></em> (filename)</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->save current state of Snd in <i>filename</i>.  The saved-state file is a Scheme (or Ruby) program that when loaded
-<!-- -->into Snd, recreates the state of Snd (as far as possible) at the point of the save. [<em class=error>cannot-save</em>].
+<!-- -->into Snd, recreates the state of Snd (as far as possible) at the point of the save.  There are a variety of
+<!-- -->limitations to this process; the worst is that save-state does not try to save hook values or global variable values --
+<!-- -->see also <a href="#ptreechannel">ptree-channel</a> in this regard.
+<!-- -->[<em class=error>cannot-save</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
