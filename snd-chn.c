@@ -6411,8 +6411,8 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   mouse_down_time = time;
   select_channel(sp,cp->chan);
   dragged = 0;
-  mouse_mark = hit_mark(cp,x,y);
-  if (!(mouse_mark)) play_mark = hit_triangle(cp,x,y);
+  mouse_mark = hit_mark(cp,x,y,key_state);
+  if (mouse_mark == NULL) play_mark = hit_triangle(cp,x,y);
   click_within_graph = within_graph(cp,x,y);
   if (click_within_graph == FFT) 
     {
@@ -6558,7 +6558,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
       /* lisp graph dragged? */
       if (mouse_mark)
 	{
-	  finish_moving_mark(cp);
+	  finish_moving_mark(cp,mouse_mark);
 	  mouse_mark = NULL;
 	  dragged = 0;
 	}

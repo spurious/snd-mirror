@@ -3705,7 +3705,7 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld)
     {
     case MARK_SAMPLE: 
       m->samp = g_scm2int(val);
-      finish_moving_mark(cp[0]); /* update and re-sort current mark list */
+      sort_marks(cp[0]); /* update and re-sort current mark list */
       update_graph(cp[0],NULL);
       break;
     case MARK_SYNC: 

@@ -1,12 +1,12 @@
 /* TODO: 
- *       drag via mark (drag portion between marks?) (C-click?)
+ *       drag via mark (drag portion between marks?) (C-click?) -- need sync case and mix-style graphics updates
  *       shift-click to sync?
  *       doc topic marks for drag
- *       sync colors? could use 6-7 bits of id+table (or local mark context(
+ *       sync colors? could use 6-7 bits of id+table (or local mark context)
  *       play-syncd-marks (scm -- pause arg here?)
- *       mark-moved-hook? mark-clicked-hook?
+ *       mark-moved-hook?
  *       mark fixups -- test negative src env mark fixups (probably broken)
- *       apply from mark?
+ *       control panel apply from mark?
  *       syncd play when syncd triangle dragged?
  *       reverse (or any fixup) if syncd mark, but unsyncd chans -- should other marks move or break sync chain?
  */
@@ -352,7 +352,10 @@ static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
   else return(mp);
 }
 
-mark *hit_mark(chan_info *cp, int x, int y)
+static int mark_control_clicked = 0; /* C-click of mark -> drag data as mark is dragged */
+static int mark_initial_sample = 0;
+
+mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 {
   mark *mp;
   mdata *md;
@@ -368,6 +371,8 @@ mark *hit_mark(chan_info *cp, int x, int y)
 	  md->y = y;
 	  mp = map_over_marks(cp,hit_mark_1,(void *)md,READ_FORWARD);
 	  FREE(md);
+	  mark_control_clicked = (key_state & snd_ControlMask);
+	  if (mp) mark_initial_sample = mp->samp;
 	  return(mp);
 	}
     }
@@ -415,14 +420,14 @@ mark *hit_triangle(chan_info *cp, int x, int y)
 }
 
 
-static int watching_mouse = 0;
+static int watching_mouse = 0; /* this is tracking axis moves */
 static int last_mouse_x = 0;
-static mark *moving_mark = NULL;
+static mark *moving_mark = NULL; /* used only while "off-screen" during axis moves */
 
 static void start_mark_watching(chan_info *cp, mark *mp)
 {
   moving_mark = mp;
-  StartMarkWatch(cp);
+  StartMarkWatch(cp); /* snd-x|gchn.c */
   watching_mouse = 1;
 }
 
@@ -464,6 +469,25 @@ static void move_mark_1(chan_info *cp, mark *mp, int x)
   if (redraw) draw_mark(cp,ap,mp);
 }
 
+static int compare_mark_samps(const void *mp1, const void *mp2)
+{
+  mark *m1,*m2;
+  m1 = (mark *)(*((mark **)mp1));
+  m2 = (mark *)(*((mark **)mp2));
+  if (m1->samp < m2->samp) return(-1);
+  if (m1->samp == m2->samp) return(0);
+  return(1);
+}
+
+void sort_marks(chan_info *cp)
+{
+  mark **mps;
+  int ed;
+  ed = cp->edit_ctr;
+  mps = cp->marks[ed];
+  qsort((void *)mps,cp->mark_ctr[ed]+1,sizeof(mark *),compare_mark_samps);
+}
+
 static void move_syncd_mark(chan_info *cp, mark *m, int x)
 {
   int old_samp,diff,i,j,samps;
@@ -495,7 +519,7 @@ static void move_syncd_mark(chan_info *cp, mark *m, int x)
 	  for (i=0;i<sd->mark_ctr;i++)
 	    if (sd->chans[i])
 	      {
-		finish_moving_mark(sd->chans[i]); /* resort marks in case movement scrambled them */
+		sort_marks(sd->chans[i]); /* resort marks in case movement scrambled them */
 		for (j=i+1;j<sd->mark_ctr;j++)    /* only sort each channel once */
 		  if (sd->chans[j] == sd->chans[i])
 		    sd->chans[j] = NULL;
@@ -505,7 +529,7 @@ static void move_syncd_mark(chan_info *cp, mark *m, int x)
     }
 }
 
-void move_mark_2(chan_info *cp)
+void move_axis_to_track_mark(chan_info *cp) /* from snd-xchn.c, called when mark is not visible (moving axes) */
 {
   if (moving_mark)
     {
@@ -515,12 +539,50 @@ void move_mark_2(chan_info *cp)
     }
 }
 
-void move_mark(chan_info *cp, mark *mp, int x, int y)
+void move_mark(chan_info *cp, mark *mp, int x, int y) /* from mouse drag callback in snd-chn.c, called whenever mark is visible */
 {
   last_mouse_x = x;
   if (mp->sync)
     move_syncd_mark(cp,mp,x);
   else move_mark_1(cp,mp,x);
+  if (mark_control_clicked)
+    {
+      /* drag data as well --- upon mouse release, establish edit (deletion or insertion of zeros) */
+      /* mark_initial_sample is where we were when the drag started, end at mp->samp */
+    }
+}
+
+void finish_moving_mark(chan_info *cp, mark *m) /* button release called from snd-chn.c */
+{
+  int num,mark_final_sample,id;
+  mark *new_m;
+  MUS_SAMPLE_TYPE *zeros;
+  if (watching_mouse) cancel_mark_watch(cp);
+  sort_marks(cp);
+  if (mark_control_clicked)
+    {
+      /* edit -- mark_initial_sample is where we were when the drag started, ended at m->samp */
+      mark_final_sample = m->samp;
+      num = mark_final_sample - mark_initial_sample;
+      m->samp = mark_initial_sample;
+      if (num > 0)
+	{
+	  id = mark_id(m);
+	  zeros = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
+	  insert_samples(mark_initial_sample,num,zeros,cp,"mark dragged");
+	  FREE(zeros);
+	  /* at this point, old mark pointer is irrelevant (it lives in the previous edit history list) */
+	  /*   but since the ripple didn't touch it, we need to move it forward to reflect the insertion */
+	  new_m = map_over_marks(cp,find_mark_id_1,(void *)id,READ_FORWARD);
+	  new_m->samp += num;
+	}
+      else 
+	{
+	  if (num < 0)
+	    delete_samples(mark_final_sample,-num,cp,"mark dragged");
+	}
+      if (num != 0) update_graph(cp,NULL);
+    }
 }
 
 void play_syncd_mark(chan_info *cp, mark *m)
@@ -565,26 +627,6 @@ void finish_moving_play_mark(chan_info *cp)
   sp->srate = 1.0;
 }
 
-static int compare_mark_samps(const void *mp1, const void *mp2)
-{
-  mark *m1,*m2;
-  m1 = (mark *)(*((mark **)mp1));
-  m2 = (mark *)(*((mark **)mp2));
-  if (m1->samp < m2->samp) return(-1);
-  if (m1->samp == m2->samp) return(0);
-  return(1);
-}
-
-void finish_moving_mark(chan_info *cp)
-{
-  /* make sure marks are in order still */
-  mark **mps;
-  int ed;
-  if (watching_mouse) cancel_mark_watch(cp);
-  ed = cp->edit_ctr;
-  mps = cp->marks[ed];
-  qsort((void *)mps,cp->mark_ctr[ed]+1,sizeof(mark *),compare_mark_samps);
-}
 
 
 static int ignore_redundant_marks = 1;

@@ -200,12 +200,6 @@ void news_help(snd_state *ss)
          added 'sync' arg to play and play-and-wait.\n\
 22-May:  set-reverb-funcs, set-contrast-func, set-expand-funcs.\n\
          snd-gxutils for better communication with netscape.\n\
-18-May:  new error symbols for many functions: 'no-such-sound etc.\n\
-         removed vax float support.\n\
-16-May:  stop-playing-region-hook and 2nd wait arg to play-region.\n\
-15-May:  index.scm.\n\
-12-May:  mus-error-hook.\n\
-8-May:   help function\n\
 ",
 NULL);
   FREE(info);

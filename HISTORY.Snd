@@ -6,7 +6,6 @@ snd change log
                added mark-sync, set-mark-sync, syncd-marks
                mark-sample, set-mark-sample, mark-name, set-mark-name no longer take (useless) snd/chn args.
                mark->sound added returns '(sound channel) (holders of mark)
-               mark-history returns '(sound channel ((edit-pos samp) ...))
                syncd marks can be moved together, played, etc
              edits function now returns a list, not a vector
   15-Jun:    changed edit|undo-hook procedure to take no args.

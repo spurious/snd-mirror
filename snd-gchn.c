@@ -943,7 +943,7 @@ static BACKGROUND_TYPE WatchMouse(gpointer cp)
 {
   if (watch_mouse_button)
     {
-      move_mark_2((chan_info *)cp);
+      move_axis_to_track_mark((chan_info *)cp);
       return(BACKGROUND_CONTINUE);
     }
   else return(BACKGROUND_QUIT);
