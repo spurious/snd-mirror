@@ -410,7 +410,7 @@ typedef struct snd_state {
   bool Auto_Resize, Auto_Update;
   int Max_Regions, Max_Transform_Peaks;
   int Audio_Output_Device, Audio_Input_Device;
-  bool Show_Backtrace, Emacs_Style_Save_As, With_GL, With_Relative_Panes;
+  bool Show_Backtrace, With_GL, With_Relative_Panes;
   int Print_Length, Dac_Size, Previous_Files_Sort;
   bool Dac_Combines_Channels, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
@@ -1288,6 +1288,8 @@ char **set_header_positions_from_type(file_data *fdat, int header_type, int data
 void set_fallback_srate(int sr);
 void set_fallback_chans(int ch);
 void set_fallback_format(int fr);
+
+void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog);
 
 void g_init_file(void);
 void initialize_format_lists(void);

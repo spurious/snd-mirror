@@ -272,7 +272,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Enved_Target = DEFAULT_ENVED_TARGET;
   ss->Dac_Size = DEFAULT_DAC_SIZE;
   ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
-  ss->Emacs_Style_Save_As = DEFAULT_EMACS_STYLE_SAVE_AS;
   ss->Auto_Update_Interval = DEFAULT_AUTO_UPDATE_INTERVAL;
   ss->Cursor_Update_Interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
   ss->Cursor_Location_Offset = DEFAULT_CURSOR_LOCATION_OFFSET;

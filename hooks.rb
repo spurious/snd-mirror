@@ -207,6 +207,7 @@ need a String or Symbol, not %s"
   $mark_drag_triangle_hook      = Hook.new("$mark_drag_triangle_hook", 4)
   $start_playing_selection_hook = Hook.new("$start_playing_selection_hook", 0)
   $selection_changed_hook       = Hook.new("$selection_changed_hook", 0)
+  $after_save_as_hook           = Hook.new("$after_save_as_hook", 3)
   # unless --with-no-gui
   $recorder_file_hook           = Hook.new("$recorder_file_hook", 1)
   # if --with-gtk
@@ -308,6 +309,7 @@ if defined? $after_graph_hook
                $mark_drag_triangle_hook,
                $start_playing_selection_hook,
                $selection_changed_hook,
+               $after_save_as_hook,
                unless $".member? "snd-nogui"
                  $recorder_file_hook
                end,

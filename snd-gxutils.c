@@ -98,6 +98,8 @@ string 'cmd'.  cmd should be a URL."
   return(C_TO_XEN_BOOLEAN(send_netscape(html_program(ss), XEN_TO_C_STRING(cmd))));
 }
 
+/* TODO: change_window_property is flakey in gtk if not run with --sync (and is X dependent) */
+
 static void change_window_property(char *winat, char *name, char *command)
 {
   Window window;

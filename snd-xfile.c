@@ -691,6 +691,7 @@ void alert_new_file(void)
  * to the current state/file (different from emacs) -- this keeps mix console intact
  * across backups and so on, and seems more useful to me than switching to the new file.
  * changed again 12-Nov-01 to make this choice settable via emacs-style-save-as.
+ * changed again 6-Dec-04 -- need a hook here since gtk changes constantly
  */
 
 static file_data *save_as_file_data = NULL;
@@ -714,19 +715,10 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
       report_in_minibuffer(sp, _("not saved (no file name given)"));
   if (comment) FREE(comment);
   XtUnmanageChild(save_as_dialog);
-  if ((sp) && (str) && (emacs_style_save_as(ss)) &&
+  if ((sp) && (str) && 
       (save_as_dialog_type == FILE_SAVE_AS) && 
       (need_update))
-    {
-      int i;
-      char *fullname;
-      for (i = 0; i < sp->nchans; i++) 
-	sp->chans[i]->edit_ctr = 0; /* don't trigger close-hook unsaved-edit checks */
-      snd_close_file(sp);
-      fullname = mus_expand_filename(str);
-      snd_open_file(fullname, false); /* false = not read_only */
-      FREE(fullname);
-    }
+    run_after_save_as_hook(sp, str, true); /* true => from dialog */
   if (str) XtFree(str);
 } 
 

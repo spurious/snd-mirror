@@ -417,10 +417,6 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 #define set_dac_combines_channels(a) ss->Dac_Combines_Channels = a
 #define DEFAULT_DAC_COMBINES_CHANNELS true
 
-#define emacs_style_save_as(ss) ss->Emacs_Style_Save_As
-#define set_emacs_style_save_as(a) ss->Emacs_Style_Save_As = a
-#define DEFAULT_EMACS_STYLE_SAVE_AS false
-
 #define max_regions(ss) ss->Max_Regions
 #define in_set_max_regions(a) ss->Max_Regions = a
 #define DEFAULT_MAX_REGIONS 16

@@ -232,7 +232,6 @@ XEN_NARGIFY_1(gxg_gdk_keyval_is_lower_w, gxg_gdk_keyval_is_lower)
 XEN_NARGIFY_1(gxg_gdk_keyval_to_unicode_w, gxg_gdk_keyval_to_unicode)
 XEN_NARGIFY_1(gxg_gdk_unicode_to_keyval_w, gxg_gdk_unicode_to_keyval)
 XEN_NARGIFY_0(gxg_gdk_pango_context_get_w, gxg_gdk_pango_context_get)
-XEN_NARGIFY_2(gxg_gdk_pango_context_set_colormap_w, gxg_gdk_pango_context_set_colormap)
 XEN_NARGIFY_5(gxg_gdk_pango_layout_line_get_clip_region_w, gxg_gdk_pango_layout_line_get_clip_region)
 XEN_NARGIFY_5(gxg_gdk_pango_layout_get_clip_region_w, gxg_gdk_pango_layout_get_clip_region)
 XEN_NARGIFY_1(gxg_gdk_pango_attr_stipple_new_w, gxg_gdk_pango_attr_stipple_new)
@@ -2226,7 +2225,7 @@ XEN_NARGIFY_1(gxg_gtk_widget_get_root_window_w, gxg_gtk_widget_get_root_window)
 XEN_NARGIFY_2(gxg_gtk_widget_get_clipboard_w, gxg_gtk_widget_get_clipboard)
 #endif
 
-#ifdef GTK_CELL_RENDERER_FOCUSED
+#if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION
 XEN_NARGIFY_0(gxg_gdk_get_display_arg_name_w, gxg_gdk_get_display_arg_name)
 XEN_NARGIFY_0(gxg_gdk_notify_startup_complete_w, gxg_gdk_notify_startup_complete)
 XEN_ARGIFY_4(gxg_gtk_tree_view_column_cell_get_position_w, gxg_gtk_tree_view_column_cell_get_position)
@@ -2656,7 +2655,6 @@ XEN_NARGIFY_2(gxg_gtk_cell_view_set_displayed_row_w, gxg_gtk_cell_view_set_displ
 XEN_NARGIFY_1(gxg_gtk_cell_view_get_displayed_row_w, gxg_gtk_cell_view_get_displayed_row)
 XEN_NARGIFY_3(gxg_gtk_cell_view_get_size_of_row_w, gxg_gtk_cell_view_get_size_of_row)
 XEN_NARGIFY_2(gxg_gtk_cell_view_set_background_color_w, gxg_gtk_cell_view_set_background_color)
-XEN_NARGIFY_1(gxg_gtk_cell_view_set_cell_data_w, gxg_gtk_cell_view_set_cell_data)
 XEN_NARGIFY_1(gxg_gtk_cell_view_get_cell_renderers_w, gxg_gtk_cell_view_get_cell_renderers)
 XEN_NARGIFY_2(gxg_gdk_window_set_focus_on_map_w, gxg_gdk_window_set_focus_on_map)
 XEN_NARGIFY_1(gxg_gdk_window_enable_synchronized_configure_w, gxg_gdk_window_enable_synchronized_configure)
@@ -2839,7 +2837,6 @@ XEN_NARGIFY_2(gxg_gtk_selection_data_targets_include_image_w, gxg_gtk_selection_
 #endif
 
 #if HAVE_GDK_PANGO_RENDERER_NEW
-XEN_NARGIFY_5(gxg_gdk_display_add_client_message_filter_full_w, gxg_gdk_display_add_client_message_filter_full)
 XEN_NARGIFY_7(gxg_gdk_draw_glyphs_transformed_w, gxg_gdk_draw_glyphs_transformed)
 XEN_NARGIFY_4(gxg_gdk_draw_trapezoids_w, gxg_gdk_draw_trapezoids)
 XEN_NARGIFY_0(gxg_gdk_pango_renderer_get_type_w, gxg_gdk_pango_renderer_get_type)
@@ -2854,6 +2851,24 @@ XEN_NARGIFY_1(gxg_gtk_button_get_image_w, gxg_gtk_button_get_image)
 XEN_NARGIFY_3(gxg_gtk_dialog_set_alternative_button_order_from_array_w, gxg_gtk_dialog_set_alternative_button_order_from_array)
 XEN_NARGIFY_2(gxg_gtk_label_set_angle_w, gxg_gtk_label_set_angle)
 XEN_NARGIFY_1(gxg_gtk_label_get_angle_w, gxg_gtk_label_get_angle)
+XEN_NARGIFY_2(gxg_gtk_menu_set_screen_w, gxg_gtk_menu_set_screen)
+XEN_NARGIFY_3(gxg_pango_attr_underline_color_new_w, gxg_pango_attr_underline_color_new)
+XEN_NARGIFY_3(gxg_pango_attr_strikethrough_color_new_w, gxg_pango_attr_strikethrough_color_new)
+XEN_NARGIFY_0(gxg_pango_render_part_get_type_w, gxg_pango_render_part_get_type)
+XEN_NARGIFY_0(gxg_pango_renderer_get_type_w, gxg_pango_renderer_get_type)
+XEN_NARGIFY_4(gxg_pango_renderer_draw_layout_w, gxg_pango_renderer_draw_layout)
+XEN_NARGIFY_4(gxg_pango_renderer_draw_layout_line_w, gxg_pango_renderer_draw_layout_line)
+XEN_NARGIFY_5(gxg_pango_renderer_draw_glyphs_w, gxg_pango_renderer_draw_glyphs)
+XEN_NARGIFY_6(gxg_pango_renderer_draw_rectangle_w, gxg_pango_renderer_draw_rectangle)
+XEN_NARGIFY_5(gxg_pango_renderer_draw_error_underline_w, gxg_pango_renderer_draw_error_underline)
+XEN_NARGIFY_8(gxg_pango_renderer_draw_trapezoid_w, gxg_pango_renderer_draw_trapezoid)
+XEN_NARGIFY_5(gxg_pango_renderer_draw_glyph_w, gxg_pango_renderer_draw_glyph)
+XEN_NARGIFY_1(gxg_pango_renderer_activate_w, gxg_pango_renderer_activate)
+XEN_NARGIFY_1(gxg_pango_renderer_deactivate_w, gxg_pango_renderer_deactivate)
+XEN_NARGIFY_2(gxg_pango_renderer_part_changed_w, gxg_pango_renderer_part_changed)
+XEN_NARGIFY_3(gxg_pango_renderer_set_color_w, gxg_pango_renderer_set_color)
+XEN_NARGIFY_2(gxg_pango_renderer_get_color_w, gxg_pango_renderer_get_color)
+XEN_NARGIFY_2(gxg_pango_renderer_set_matrix_w, gxg_pango_renderer_set_matrix)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -3058,6 +3073,7 @@ XEN_NARGIFY_1(gxg_GTK_MENU_TOOL_BUTTON_w, gxg_GTK_MENU_TOOL_BUTTON)
 
 #if HAVE_GDK_PANGO_RENDERER_NEW
 XEN_NARGIFY_1(gxg_GDK_PANGO_RENDERER_w, gxg_GDK_PANGO_RENDERER)
+XEN_NARGIFY_1(gxg_PANGO_RENDERER_w, gxg_PANGO_RENDERER)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_IS_COLORMAP_w, gxg_GDK_IS_COLORMAP)
@@ -3244,7 +3260,8 @@ XEN_NARGIFY_1(gxg_GTK_IS_MENU_TOOL_BUTTON_w, gxg_GTK_IS_MENU_TOOL_BUTTON)
 #endif
 
 #if HAVE_GDK_PANGO_RENDERER_NEW
-XEN_NARGIFY_1(gxg_GTK_IS_PANGO_RENDERER_w, gxg_GTK_IS_PANGO_RENDERER)
+XEN_NARGIFY_1(gxg_GDK_IS_PANGO_RENDERER_w, gxg_GDK_IS_PANGO_RENDERER)
+XEN_NARGIFY_1(gxg_PANGO_IS_RENDERER_w, gxg_PANGO_IS_RENDERER)
 #endif
 
 XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
@@ -3734,7 +3751,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_keyval_to_unicode, gxg_gdk_keyval_to_unicode_w, 1, 0, 0, H_gdk_keyval_to_unicode);
   XG_DEFINE_PROCEDURE(gdk_unicode_to_keyval, gxg_gdk_unicode_to_keyval_w, 1, 0, 0, H_gdk_unicode_to_keyval);
   XG_DEFINE_PROCEDURE(gdk_pango_context_get, gxg_gdk_pango_context_get_w, 0, 0, 0, H_gdk_pango_context_get);
-  XG_DEFINE_PROCEDURE(gdk_pango_context_set_colormap, gxg_gdk_pango_context_set_colormap_w, 2, 0, 0, H_gdk_pango_context_set_colormap);
   XG_DEFINE_PROCEDURE(gdk_pango_layout_line_get_clip_region, gxg_gdk_pango_layout_line_get_clip_region_w, 5, 0, 0, H_gdk_pango_layout_line_get_clip_region);
   XG_DEFINE_PROCEDURE(gdk_pango_layout_get_clip_region, gxg_gdk_pango_layout_get_clip_region_w, 5, 0, 0, H_gdk_pango_layout_get_clip_region);
   XG_DEFINE_PROCEDURE(gdk_pango_attr_stipple_new, gxg_gdk_pango_attr_stipple_new_w, 1, 0, 0, H_gdk_pango_attr_stipple_new);
@@ -5728,7 +5744,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_clipboard, gxg_gtk_widget_get_clipboard_w, 2, 0, 0, H_gtk_widget_get_clipboard);
 #endif
 
-#ifdef GTK_CELL_RENDERER_FOCUSED
+#if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION
   XG_DEFINE_PROCEDURE(gdk_get_display_arg_name, gxg_gdk_get_display_arg_name_w, 0, 0, 0, H_gdk_get_display_arg_name);
   XG_DEFINE_PROCEDURE(gdk_notify_startup_complete, gxg_gdk_notify_startup_complete_w, 0, 0, 0, H_gdk_notify_startup_complete);
   XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_get_position, gxg_gtk_tree_view_column_cell_get_position_w, 2, 2, 0, H_gtk_tree_view_column_cell_get_position);
@@ -6158,7 +6174,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_cell_view_get_displayed_row, gxg_gtk_cell_view_get_displayed_row_w, 1, 0, 0, H_gtk_cell_view_get_displayed_row);
   XG_DEFINE_PROCEDURE(gtk_cell_view_get_size_of_row, gxg_gtk_cell_view_get_size_of_row_w, 3, 0, 0, H_gtk_cell_view_get_size_of_row);
   XG_DEFINE_PROCEDURE(gtk_cell_view_set_background_color, gxg_gtk_cell_view_set_background_color_w, 2, 0, 0, H_gtk_cell_view_set_background_color);
-  XG_DEFINE_PROCEDURE(gtk_cell_view_set_cell_data, gxg_gtk_cell_view_set_cell_data_w, 1, 0, 0, H_gtk_cell_view_set_cell_data);
   XG_DEFINE_PROCEDURE(gtk_cell_view_get_cell_renderers, gxg_gtk_cell_view_get_cell_renderers_w, 1, 0, 0, H_gtk_cell_view_get_cell_renderers);
   XG_DEFINE_PROCEDURE(gdk_window_set_focus_on_map, gxg_gdk_window_set_focus_on_map_w, 2, 0, 0, H_gdk_window_set_focus_on_map);
   XG_DEFINE_PROCEDURE(gdk_window_enable_synchronized_configure, gxg_gdk_window_enable_synchronized_configure_w, 1, 0, 0, H_gdk_window_enable_synchronized_configure);
@@ -6341,7 +6356,6 @@ static void define_functions(void)
 #endif
 
 #if HAVE_GDK_PANGO_RENDERER_NEW
-  XG_DEFINE_PROCEDURE(gdk_display_add_client_message_filter_full, gxg_gdk_display_add_client_message_filter_full_w, 5, 0, 0, H_gdk_display_add_client_message_filter_full);
   XG_DEFINE_PROCEDURE(gdk_draw_glyphs_transformed, gxg_gdk_draw_glyphs_transformed_w, 7, 0, 0, H_gdk_draw_glyphs_transformed);
   XG_DEFINE_PROCEDURE(gdk_draw_trapezoids, gxg_gdk_draw_trapezoids_w, 4, 0, 0, H_gdk_draw_trapezoids);
   XG_DEFINE_PROCEDURE(gdk_pango_renderer_get_type, gxg_gdk_pango_renderer_get_type_w, 0, 0, 0, H_gdk_pango_renderer_get_type);
@@ -6356,6 +6370,24 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_dialog_set_alternative_button_order_from_array, gxg_gtk_dialog_set_alternative_button_order_from_array_w, 3, 0, 0, H_gtk_dialog_set_alternative_button_order_from_array);
   XG_DEFINE_PROCEDURE(gtk_label_set_angle, gxg_gtk_label_set_angle_w, 2, 0, 0, H_gtk_label_set_angle);
   XG_DEFINE_PROCEDURE(gtk_label_get_angle, gxg_gtk_label_get_angle_w, 1, 0, 0, H_gtk_label_get_angle);
+  XG_DEFINE_PROCEDURE(gtk_menu_set_screen, gxg_gtk_menu_set_screen_w, 2, 0, 0, H_gtk_menu_set_screen);
+  XG_DEFINE_PROCEDURE(pango_attr_underline_color_new, gxg_pango_attr_underline_color_new_w, 3, 0, 0, H_pango_attr_underline_color_new);
+  XG_DEFINE_PROCEDURE(pango_attr_strikethrough_color_new, gxg_pango_attr_strikethrough_color_new_w, 3, 0, 0, H_pango_attr_strikethrough_color_new);
+  XG_DEFINE_PROCEDURE(pango_render_part_get_type, gxg_pango_render_part_get_type_w, 0, 0, 0, H_pango_render_part_get_type);
+  XG_DEFINE_PROCEDURE(pango_renderer_get_type, gxg_pango_renderer_get_type_w, 0, 0, 0, H_pango_renderer_get_type);
+  XG_DEFINE_PROCEDURE(pango_renderer_draw_layout, gxg_pango_renderer_draw_layout_w, 4, 0, 0, H_pango_renderer_draw_layout);
+  XG_DEFINE_PROCEDURE(pango_renderer_draw_layout_line, gxg_pango_renderer_draw_layout_line_w, 4, 0, 0, H_pango_renderer_draw_layout_line);
+  XG_DEFINE_PROCEDURE(pango_renderer_draw_glyphs, gxg_pango_renderer_draw_glyphs_w, 5, 0, 0, H_pango_renderer_draw_glyphs);
+  XG_DEFINE_PROCEDURE(pango_renderer_draw_rectangle, gxg_pango_renderer_draw_rectangle_w, 6, 0, 0, H_pango_renderer_draw_rectangle);
+  XG_DEFINE_PROCEDURE(pango_renderer_draw_error_underline, gxg_pango_renderer_draw_error_underline_w, 5, 0, 0, H_pango_renderer_draw_error_underline);
+  XG_DEFINE_PROCEDURE(pango_renderer_draw_trapezoid, gxg_pango_renderer_draw_trapezoid_w, 8, 0, 0, H_pango_renderer_draw_trapezoid);
+  XG_DEFINE_PROCEDURE(pango_renderer_draw_glyph, gxg_pango_renderer_draw_glyph_w, 5, 0, 0, H_pango_renderer_draw_glyph);
+  XG_DEFINE_PROCEDURE(pango_renderer_activate, gxg_pango_renderer_activate_w, 1, 0, 0, H_pango_renderer_activate);
+  XG_DEFINE_PROCEDURE(pango_renderer_deactivate, gxg_pango_renderer_deactivate_w, 1, 0, 0, H_pango_renderer_deactivate);
+  XG_DEFINE_PROCEDURE(pango_renderer_part_changed, gxg_pango_renderer_part_changed_w, 2, 0, 0, H_pango_renderer_part_changed);
+  XG_DEFINE_PROCEDURE(pango_renderer_set_color, gxg_pango_renderer_set_color_w, 3, 0, 0, H_pango_renderer_set_color);
+  XG_DEFINE_PROCEDURE(pango_renderer_get_color, gxg_pango_renderer_get_color_w, 2, 0, 0, H_pango_renderer_get_color);
+  XG_DEFINE_PROCEDURE(pango_renderer_set_matrix, gxg_pango_renderer_set_matrix_w, 2, 0, 0, H_pango_renderer_set_matrix);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);
@@ -6560,6 +6592,7 @@ static void define_functions(void)
 
 #if HAVE_GDK_PANGO_RENDERER_NEW
   XG_DEFINE_PROCEDURE(GDK_PANGO_RENDERER, gxg_GDK_PANGO_RENDERER_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_RENDERER, gxg_PANGO_RENDERER_w, 1, 0, 0, NULL);
 #endif
 
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
@@ -6752,7 +6785,8 @@ static void define_functions(void)
 #endif
 
 #if HAVE_GDK_PANGO_RENDERER_NEW
-  XG_DEFINE_PROCEDURE(GTK_IS_PANGO_RENDERER, gxg_GTK_IS_PANGO_RENDERER_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_PANGO_RENDERER, gxg_GDK_IS_PANGO_RENDERER_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_IS_RENDERER, gxg_PANGO_IS_RENDERER_w, 1, 0, 0, NULL);
 #endif
 
 }

@@ -769,7 +769,7 @@ static char *last_save_as_filename = NULL;
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
 {
   char *comment = NULL;
-  int i, type, format, srate, chans;
+  int type, format, srate, chans;
   bool need_update = false;
   off_t location, samples;
   int hide_me = 0;
@@ -786,18 +786,10 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   hide_me = (int)g_object_get_data(G_OBJECT(w), "hide-me");
   if (hide_me == 0)
     gtk_widget_hide(save_as_dialog);
-  if ((sp) && (last_save_as_filename) && (emacs_style_save_as(ss)) &&
+  if ((sp) && (last_save_as_filename) &&
       (save_as_dialog_type == FILE_SAVE_AS) && 
       (need_update))
-    {
-      char *fullname;
-      for (i = 0; i < sp->nchans; i++) 
-	sp->chans[i]->edit_ctr = 0; /* don't trigger close-hook unsaved-edit checks */
-      snd_close_file(sp);
-      fullname = mus_expand_filename(last_save_as_filename);
-      snd_open_file(fullname, false); /* false = not read_only */
-      FREE(fullname);
-    }
+    run_after_save_as_hook(sp, last_save_as_filename, true); /* true => from dialog */
 } 
 
 static void save_as_cancel_callback(GtkWidget *w, gpointer data)

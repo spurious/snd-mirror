@@ -120,6 +120,7 @@
 (define checks-256 '())
 (define check-types-256 '())
 (define ulongs-256 '())
+(define ints-256 '())
 
 (define all-types '())
 (define all-check-types '())
@@ -153,7 +154,7 @@
 	"GtkViewport*" "PangoAnalysis*" "PangoAttrList**" "PangoFontDescription**" "PangoFontMap*" "PangoRectangle*"
 	"gchar***" "gfloat*" "gint8*" "gsize" "gssize" "guint16*" "guint8*" "gunichar*" "GtkFileChooserButton*"
 	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoScript*" "GtkMenuToolButton*"
-	"GtkClipboardImageReceivedFunc"
+	"GtkClipboardImageReceivedFunc" "PangoMatrix*" "GdkTrapezoid*" "GdkPangoRenderer*" "PangoRenderPart"
 	))
 
 (define no-xen-p 
@@ -1246,6 +1247,14 @@
 	(set! ints-254 (cons name ints-254))
 	(set! names (cons (cons name 'int) names)))))
 
+(define* (CINT-256 name #:optional type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-256~%" name)
+      (begin
+	(set! ints-256 (cons name ints-256))
+	(set! names (cons (cons name 'int) names)))))
+
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
   (if (assoc name names)
       (no-way "~A CCAST~%" name)
@@ -1460,7 +1469,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-22 dpy thunk)
-  (dpy "#ifdef GTK_CELL_RENDERER_FOCUSED~%")
+  (dpy "#if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -1533,7 +1542,7 @@
 (hey " *~%")
 (hey " *   compile-time flags:~%")
 (hey " *     HAVE_GDK_DRAW_PIXBUF for gtk 2.1 additions~%")
-(hey " *     GTK_CELL_RENDERER_FOCUSED for gtk 2.2~%")
+(hey " *     HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION for gtk 2.2~%")
 (hey " *     HAVE_GTK_FILE_CHOOSER_DIALOG_NEW for gtk 2.3~%")
 (hey " *     HAVE_GTK_EXPANDER_GET_USE_MARKUP for gtk 2.3.1~%")
 (hey " *     HAVE_GTK_MENU_SHELL_CANCEL for gtk 2.3.2~%")
@@ -1581,8 +1590,8 @@
 (hey " *~%")
 (hey " * HISTORY:~%")
 (hey " *     6-Dec:     added check for lost callback context.~%")
-(hey " *                tightened pointer checking considerably (#f only acceptable if explicit in xgdata.scm).~%")
-(hey " *                gtk 2.5.6 changes,~%")
+(hey " *                tightened type (pointer) checking considerably (#f only acceptable if explicit @ used in xgdata.scm).~%")
+(hey " *                gtk 2.5.6 and pango 1.7.0 changes.~%")
 (hey " *     3-Dec:     changed GPOINTER cast func to accept non-lists.~%")
 (hey " *     15-Nov:    gtk 2.5.5 changes.~%")
 (hey " *     29-Oct:    gtk 2.5.4 changes.~%")
@@ -1778,7 +1787,7 @@
 (hey "#define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)~%")
 (hey "#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))~%")
 
-(hey "~%#ifdef GTK_CELL_RENDERER_FOCUSED~%")
+(hey "~%#if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION~%")
 (hey "  static GdkDrawable* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkDrawable *)XEN_TO_C_ULONG(XEN_CADR(val)));}~%")
 (hey "  static bool XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(\"GdkDrawable_\", val)));}~%")
 (hey "  #define Drawable_was_Window GdkDrawable~%")
@@ -2476,12 +2485,15 @@
 (if (not (null? funcs-255)) (with-255 hey (lambda () (for-each handle-func (reverse funcs-255)))))
 (if (not (null? funcs-256)) (with-256 hey (lambda () (for-each handle-func (reverse funcs-256)))))
 
+
+(hey "#define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))~%~%")
+
 (define cast-it
  (lambda (cast)
    (let ((cast-name (car cast))
 	 (cast-type (cadr cast)))
      (hey "static XEN gxg_~A(XEN obj)" (no-arg cast-name))
-     (hey " {return((XEN_LIST_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(~S), XEN_CADR(obj)) : XEN_FALSE);}~%" (no-stars cast-type)))))
+     (hey " {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(~S), XEN_CADR(obj)) : XEN_FALSE);}~%" (no-stars cast-type)))))
 
 (hey "static XEN gxg_GPOINTER(XEN obj)")
 (hey " {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(\"gpointer\"), (XEN_LIST_P(obj)) ? XEN_CADR(obj) : obj));}~%")
@@ -2496,9 +2508,10 @@
 (if (not (null? casts-256)) (with-256 hey (lambda () (for-each cast-it (reverse casts-256)))))
 
 ;;; checks have to use the built-in macros, not local symbol-based type checks
+
 (define (make-check func)
   (hey "static XEN gxg_~A(XEN obj)" (no-arg (car func)))
-  (hey " {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && ~A((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}~%" (no-arg (car func))))
+  (hey " {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && ~A((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}~%" (no-arg (car func))))
 
 (for-each make-check (reverse checks))
 (if (not (null? checks-21)) (with-21 hey (lambda () (for-each make-check (reverse checks-21)))))
@@ -3093,6 +3106,8 @@
     (with-251 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-251)))))
 (if (not (null? ints-254))
     (with-254 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-254)))))
+(if (not (null? ints-256))
+    (with-256 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-256)))))
 
 
 (for-each 

@@ -409,13 +409,6 @@ or a save dialog is opened. (<code>mus-next</code> stands for the NeXT/Sun sound
 </td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- emacs-style-save-as -->
-<tr><td colspan=2><code><a class=def name="emacssytlesaveas">emacs-style-save-as</a></code></td>
-<td><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>After File:Save-as dialog option, should Snd remain with the current file (#f) or go to the new file (#t).
-</td></tr>
-<tr><td colspan=3></td></tr>
-
 <!-- eps-bottom-margin -->
 <tr><td colspan=2><code><a class=def name="epsbottommargin">eps-bottom-margin</a></code></td>
 <td><code>0.0</code></td></tr>
@@ -788,6 +781,17 @@ See also <i>C-x b support</i> in examp.scm, <i>remember-sound-state</i> in exten
 examples in snd-motif.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
+
+<!-- after-save-as-hook -->
+<tr><td colspan=2>
+<code><a class=def name="aftersaveashook">after-save-as-hook</a> (index filename from-dialog)</code></td><td>
+</td></tr>
+<tr><td></td><td colspan=2>
+called after File:Save as.  See emacs-style-save-as in snd7.scm -- it closes the current sound and
+opens the newly created one, to mimic Emacs.
+</td></tr>
+<tr><td colspan=3></td></tr>
+
 
 <!-- after-save-state-hook -->
 <tr><td colspan=2>
@@ -6525,7 +6529,7 @@ save the control panel state: <a href="#savecontrols">save-controls</a><br>
 save currently defined envelopes (envelope editor): <a href="#saveenvelopes">save-envelopes</a><br>
 start the file save dialog: <a href="#savesounddialog">save-sound-dialog</a><br>
 start the selection save dialog: <a href="#saveselectiondialog">save-selection-dialog</a><br>
-use Emacs-style save-as behavior: <a href="#emacssytlesaveas">emacs-style-save-as</a><br>
+use Emacs-style save-as behavior: <a href="sndscm.html#emacsstylesaveas">emacs-style-save-as</a><br>
 save the current listener text: <a href="#savelistener">save-listener</a><br>
 save keyboard macros: <a href="#savemacros">save-macros</a><br>
 save marks: <a href="#savemarks">save-marks</a><br>

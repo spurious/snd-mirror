@@ -314,4 +314,21 @@
 		((= i (chans snd)))
 	      (scale-channel (/ norm mx) beg dur snd i))))))
 
+(define (after-save-as-hook-replace-sound snd filename from-dialog)
+  (if from-dialog
+      (begin
+	(revert-sound snd) ; avoid close-hook confusion
+	(close-sound snd)
+	(open-sound filename))))
 
+(define emacs-style-save-as
+  (make-procedure-with-setter
+   (lambda ()
+     (and (not (hook-empty? after-save-as-hook))
+	  (member after-save-as-hook-replace-sound (hook->list after-save-as-hook))))
+   (lambda (val)
+     (if val
+	 (if (not (member after-save-as-hook-replace-sound (hook->list after-save-as-hook)))
+	     (add-hook! after-save-as-hook after-save-as-hook-replace-sound))
+	 (if (member after-save-as-hook-replace-sound (hook->list after-save-as-hook))
+	     (remove-hook! after-save-as-hook after-save-as-hook-replace-sound))))))

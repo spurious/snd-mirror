@@ -612,9 +612,6 @@
       (set! (cursor-style) (cursor-style))
       (if (not (equal? (cursor-style)  cursor-cross )) 
 	  (snd-display ";cursor-style set def: ~A" (cursor-style)))
-      (set! (emacs-style-save-as) (emacs-style-save-as))
-      (if (not (equal? (emacs-style-save-as)  #f)) 
-	  (snd-display ";emacs-style-save-as set def: ~A" (emacs-style-save-as)))
       (set! (enved-base) (enved-base))
       (if (fneq (enved-base)  1.0 )
 	  (snd-display ";enved-base set def: ~A" (enved-base)))
@@ -953,7 +950,6 @@
 	'cursor-size (cursor-size) 15
 	'cursor-style (cursor-style) cursor-cross
 	'dac-combines-channels (dac-combines-channels) #t
-	'emacs-style-save-as (emacs-style-save-as) #f
 	'dac-size (dac-size) 256 
 	'minibuffer-history-length (minibuffer-history-length) 8
 	'data-clipped (data-clipped) #f 
@@ -22300,6 +22296,7 @@ EDITS: 5
   (add-hook! mouse-enter-label-hook arg3) (carg3 mouse-enter-label-hook)
   (add-hook! mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook)
   (add-hook! initial-graph-hook arg3) (carg3 initial-graph-hook)
+  (add-hook! after-save-as-hook arg3) (carg3 after-save-as-hook)
   
   (add-hook! graph-hook arg4) (carg4 graph-hook)
   (add-hook! key-press-hook arg4) (carg4 key-press-hook)
@@ -50145,11 +50142,11 @@ EDITS: 2
 			 (_PangoFontMetrics_2 (pango_font_get_metrics _PangoFont_ _PangoLanguage_))
 			 (_PangoFontDescription_ (pango_font_describe _PangoFont_))
 			 (vals2 (pango_context_list_families _PangoContext_))
-			 (_GList_ (pango_itemize _PangoContext_ "hiho" 0 0 _PangoAttrList_ _PangoAttrIterator_))
-			 (_GList_1 (pango_reorder_items _GList_)))
+			 (_GList_ (pango_itemize _PangoContext_ "hiho" 0 0 _PangoAttrList_ _PangoAttrIterator_)))
+;			 (_GList_1 (pango_reorder_items _GList_))
 		    (pango_glyph_string_set_size _PangoGlyphString_ 10)
 		    (pango_glyph_string_extents _PangoGlyphString_ _PangoFont_ _PangoRectangle_1 _PangoRectangle_2)
-		    (gdk_pango_context_set_colormap _PangoContext_ (gdk_colormap_get_system))
+;		    (gdk_pango_context_set_colormap _PangoContext_ (gdk_colormap_get_system))
 		    (pango_font_description_unset_fields _PangoFontDescription_ _PangoFontMask)
 		    (pango_layout_context_changed _PangoLayout_)
 		    (pango_layout_line_ref _PangoLayoutLine_)
@@ -50481,7 +50478,7 @@ EDITS: 2
 		(if (not (GTK_IS_CELL_VIEW cell1)) (snd-display ";not cell view? ~A" cell1))
 		(gtk_cell_view_set_model (GTK_CELL_VIEW cell1) (GTK_TREE_MODEL store))
 		(gtk_cell_view_set_background_color (GTK_CELL_VIEW cell1) (basic-color))
-					;(gtk_cell_view_set_cell_data (GTK_CELL_VIEW cell1)) ; what the hell?
+					;(gtk_cell_view_set_cell_data (GTK_CELL_VIEW cell1))
 		(gtk_cell_view_get_cell_renderers (GTK_CELL_VIEW cell1))))
 
 	    (let* ((_PangoLanguage_ (pango_language_from_string "de"))
@@ -50761,7 +50758,7 @@ EDITS: 2
 		     delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
 		     draw-lines draw-string edit-header-dialog edit-fragment edit-position edit-tree edits env-selection
 		     env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
-		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin emacs-style-save-as
+		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin 
 		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp
 		     expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
 		     transform-graph-type fft-window transform-graph? view-files-dialog mix-file-dialog file-name fill-polygon
@@ -50917,7 +50914,7 @@ EDITS: 2
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			 expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
 			 fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
-			 transform-graph? filter-control-in-dB filter-control-envelope enved-filter-order enved-filter emacs-style-save-as
+			 transform-graph? filter-control-in-dB filter-control-envelope enved-filter-order enved-filter 
 			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
@@ -51673,7 +51670,7 @@ EDITS: 2
 			(list enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite
 			      auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
 			      channel-style color-cutoff color-dialog color-inverted color-scale
-			      cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans emacs-style-save-as
+			      cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans 
 			      default-output-format default-output-srate default-output-type enved-envelope enved-base
 			      enved-clip? enved-in-dB enved-dialog enved-style  enved-power enved-target
 			      enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
@@ -51708,6 +51705,7 @@ EDITS: 2
 			    (list before-transform-hook 'before-transform-hook)
 			    (list mix-release-hook 'mix-release-hook)
 			    (list save-hook 'save-hook)
+			    (list after-save-as-hook 'after-save-as-hook)
 			    (list save-state-hook 'save-state-hook)
 			    (list new-sound-hook 'new-sound-hook)
 			    (list mus-error-hook 'mus-error-hook)

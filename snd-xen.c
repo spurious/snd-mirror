@@ -1225,22 +1225,6 @@ This pertains to the M-p and M-n commands."
   return(C_TO_XEN_INT(minibuffer_history_length(ss)));
 }
 
-/* TODO: replace emacs-style-save-as with after-save-as-hook:
-   (lambda (snd new-filename) ...) 
-     #f = stay with new, just save under new name
-     #t = emacs-style-save-as = save and go to new
-     #f + anything else (for example keep old and open new... )
-*/
-
-static XEN g_emacs_style_save_as(void) {return(C_TO_XEN_BOOLEAN(emacs_style_save_as(ss)));}
-static XEN g_set_emacs_style_save_as(XEN val) 
-{
-  #define H_emacs_style_save_as "(" S_emacs_style_save_as "): #t if File:Save-as dialog option should move to the new file (default: #f)"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_emacs_style_save_as, "a boolean");
-  set_emacs_style_save_as(XEN_TO_C_BOOLEAN(val)); 
-  return(C_TO_XEN_BOOLEAN(emacs_style_save_as(ss)));
-}
-
 static XEN g_auto_resize(void) {return(C_TO_XEN_BOOLEAN(auto_resize(ss)));}
 static XEN g_set_auto_resize(XEN val) 
 {
@@ -2691,8 +2675,6 @@ XEN_NARGIFY_0(g_audio_input_device_w, g_audio_input_device)
 XEN_NARGIFY_1(g_set_audio_input_device_w, g_set_audio_input_device)
 XEN_NARGIFY_0(g_minibuffer_history_length_w, g_minibuffer_history_length)
 XEN_NARGIFY_1(g_set_minibuffer_history_length_w, g_set_minibuffer_history_length)
-XEN_NARGIFY_0(g_emacs_style_save_as_w, g_emacs_style_save_as)
-XEN_NARGIFY_1(g_set_emacs_style_save_as_w, g_set_emacs_style_save_as)
 XEN_NARGIFY_0(g_auto_resize_w, g_auto_resize)
 XEN_NARGIFY_1(g_set_auto_resize_w, g_set_auto_resize)
 XEN_NARGIFY_0(g_auto_update_w, g_auto_update)
@@ -2859,8 +2841,6 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define g_set_audio_input_device_w g_set_audio_input_device
 #define g_minibuffer_history_length_w g_minibuffer_history_length
 #define g_set_minibuffer_history_length_w g_set_minibuffer_history_length
-#define g_emacs_style_save_as_w g_emacs_style_save_as
-#define g_set_emacs_style_save_as_w g_set_emacs_style_save_as
 #define g_auto_resize_w g_auto_resize
 #define g_set_auto_resize_w g_set_auto_resize
 #define g_auto_update_w g_auto_update
@@ -3084,9 +3064,6 @@ void g_initialize_gh(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_minibuffer_history_length, g_minibuffer_history_length_w, H_minibuffer_history_length,
 				   S_setB S_minibuffer_history_length, g_set_minibuffer_history_length_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_emacs_style_save_as, g_emacs_style_save_as_w, H_emacs_style_save_as,
-				   S_setB S_emacs_style_save_as, g_set_emacs_style_save_as_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_resize, g_auto_resize_w, H_auto_resize,
 				   S_setB S_auto_resize, g_set_auto_resize_w,  0, 0, 1, 0);

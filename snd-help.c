@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+7-Dec:   after-save-as-hook, replacing emacs-style-save-as (see snd7.scm).\n\
 3-Dec:   mark-tag-width|height.\n\
 17-Nov:  snd 7.9\n\
 16-Nov:  moved the 'Apply' button and friends from the Controls pane to a popup menu.\n\

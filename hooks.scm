@@ -17,7 +17,7 @@
 	mark-hook previous-files-select-hook dac-hook stop-dac-hook stop-playing-selection-hook after-apply-hook draw-mark-hook
 	bad-header-hook save-state-hook new-sound-hook color-hook orientation-hook listener-click-hook mix-click-hook after-save-state-hook
 	mouse-enter-text-hook mouse-leave-text-hook optimization-hook mix-drag-hook mark-drag-triangle-hook
-	start-playing-selection-hook recorder-file-hook selection-changed-hook))
+	start-playing-selection-hook recorder-file-hook selection-changed-hook after-save-as-hook))
 
 (define (reset-all-hooks)
   "(reset-all-hooks) removes all Snd hook functions"

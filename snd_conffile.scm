@@ -4,15 +4,10 @@
 ;; Should work for gtk and perhaps motif.
 
 
-(define (atleast1.6.4?)
-  (let ((version (map string->number (string-split (version) #\.))))
-    (or (> (car version) 1)
-	(and (= 1 (car version))
-	     (or (> (cadr version) 6)
-		 (and (= 6 (cadr version))
-		      (>= (caddr version) 4)))))))
 
-(if (not (atleast1.6.4?))
+(if (or (< (string->number (major-version)) 1)
+	(and (string=? "1" (major-version))
+	     (< (string->number (minor-version)) 4)))
     (begin
       (display "Warning, snd_conffile.scm has not been tested with earlier versions of Guile than 1.6.4.")(newline)
       (display "In case of problems, please upgrade Guile to the latest version, and recompile Snd.")(newline)))
@@ -333,11 +328,7 @@
 
 (define* (c-set-selection! snd ch start end #:optional (dassync (c-sync? snd)))
   (c-set-selection-position! snd ch start dassync)
-  (c-set-selection-frames! snd ch (- end start -1) dassync)
-  ;;  (-> (c-p snd) selection-is-changed)
-  )
-
-
+  (c-set-selection-frames! snd ch (- end start -1) dassync))
 
 ;; Like (selection?) but only for the selected sound.
 (define (c-selection?)
@@ -556,23 +547,14 @@
   (define playtype 'song)
 
   (define (get-selection-start)
-    (if (selection-member? snd)
-	(if (< (speed-control snd) 0)
-	    (+ (selection-position snd) (selection-frames snd))
-	    (selection-position snd))
-	(if (< (speed-control snd) 0)
-	    (1- (frames snd))
-	    0)))
-
+    (if (< (speed-control snd) 0)
+	(+ (selection-position snd) (selection-frames snd))
+	(selection-position snd)))
   (define (get-selection-end)
-    (if (selection-member? snd)
-	(if (< (speed-control snd) 0)
-	    (selection-position snd)
-	    (+ (selection-position snd) (selection-frames snd)))
-	(if (< (speed-control snd) 0)
-	    0
-	    (1- (frames snd)))))
-
+    (if (< (speed-control snd) 0)
+	(selection-position snd)
+	(+ (selection-position snd) (selection-frames snd))))
+  
   (define-method (play pos)
     (define (das-play)
       (play 0 #f #f #f #f #f das-callback))
@@ -640,15 +622,9 @@
     (thunk)
     (this->continue))
 
-  (define-method (selection-is-changed)
-    (if (this->isplaying)
-	(begin
-	  (set! (cursor-follows-play) #f)
-	  (stop-playing)
-	  (this->continue (get-selection-start))
-	  (set! (cursor-follows-play) #t))))
-
   )
+
+
 
 (add-hook! after-open-hook
 	   (lambda (snd)
@@ -1069,7 +1045,6 @@ Does not work.
 		      (gc))))
 	    (c-show-times (cursor) #t)
 	    (set! selection-starting-point #f))))
-    (-> (c-p snd) selection-is-changed)
     (c-gc-on))
 
 
@@ -1846,7 +1821,7 @@ Does not work.
 
 
 
-
+#!
 ;; Automatically open saved-as files.
 (let ((save-dialog (save-sound-dialog)))
   (g_signal_connect  (.ok_button (GTK_FILE_SELECTION save-dialog)) "clicked"
@@ -1858,7 +1833,7 @@ Does not work.
   (gtk_widget_hide save-dialog)
 )
 
-
+!#
 
 
 ;;##############################################################

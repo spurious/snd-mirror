@@ -735,6 +735,8 @@ else
 
 	AC_CHECK_LIB(m, gdk_draw_pixbuf, [AC_DEFINE(HAVE_GDK_DRAW_PIXBUF)], ,$GTK_LIBS)
 	# gtk 2.1
+	AC_CHECK_LIB(m, gtk_tree_view_column_cell_get_position, [AC_DEFINE(HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION)], ,$GTK_LIBS)
+	# gtk 2.2
 	AC_CHECK_LIB(m, gtk_file_chooser_dialog_new, [AC_DEFINE(HAVE_GTK_FILE_CHOOSER_DIALOG_NEW)], ,$GTK_LIBS)
 	# gtk 2.3
 	AC_CHECK_LIB(m, gtk_expander_get_use_markup, [AC_DEFINE(HAVE_GTK_EXPANDER_GET_USE_MARKUP)], ,$GTK_LIBS)

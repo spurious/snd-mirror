@@ -3385,6 +3385,7 @@ Omitted arguments take their value from the sound being saved.\n\
       outcom = output_comment(hdr);
       err = save_edits_without_display(sp, fname, ht, df, sr, outcom, to_c_edit_position(sp->chans[0], edpos, S_save_sound_as, 7));
       if (outcom) FREE(outcom);
+      if (err == MUS_NO_ERROR) run_after_save_as_hook(sp, fname, false); /* true => from dialog */
     }
   if (err != MUS_NO_ERROR)
     {

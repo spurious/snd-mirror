@@ -1373,6 +1373,25 @@ snd_info *snd_update(snd_info *sp)
   return(sp);
 }
 
+static XEN after_save_as_hook;
+
+void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog)
+{
+  if (XEN_HOOKED(after_save_as_hook))
+    {
+      char *fullname;
+      fullname = mus_expand_filename(already_saved_as_name);
+      run_progn_hook(after_save_as_hook,
+		     XEN_LIST_3(C_TO_XEN_INT(sp->index),
+				C_TO_XEN_STRING(fullname),
+				C_TO_XEN_BOOLEAN(from_save_as_dialog)),
+		     S_after_save_as_hook);
+      FREE(fullname);
+    }
+}
+
+
+
 /* View:Files lists */
 
 static int prevfile_size = 0;
@@ -2754,10 +2773,14 @@ the " S_just_sounds " button is set. Return #f to filter out filename. "
   #define H_bad_header_hook S_bad_header_hook " (filename): called if a file has some bogus-looking header. \
 Return #t to give up on that file."
 
-  XEN_DEFINE_HOOK(open_hook, S_open_hook, 1, H_open_hook);                        /* arg = filename */
-  XEN_DEFINE_HOOK(close_hook, S_close_hook, 1, H_close_hook);                     /* arg = sound index */
-  XEN_DEFINE_HOOK(just_sounds_hook, S_just_sounds_hook, 1, H_just_sounds_hook);   /* arg = filename */
-  XEN_DEFINE_HOOK(bad_header_hook, S_bad_header_hook, 1, H_bad_header_hook);      /* arg = filename */
+  #define H_after_save_as_hook " (saved-sound-index save-as-full-filename from-save-as-dialog): called \
+upon File:Save as completion."
+
+  XEN_DEFINE_HOOK(open_hook, S_open_hook, 1, H_open_hook);                            /* arg = filename */
+  XEN_DEFINE_HOOK(close_hook, S_close_hook, 1, H_close_hook);                         /* arg = sound index */
+  XEN_DEFINE_HOOK(just_sounds_hook, S_just_sounds_hook, 1, H_just_sounds_hook);       /* arg = filename */
+  XEN_DEFINE_HOOK(bad_header_hook, S_bad_header_hook, 1, H_bad_header_hook);          /* arg = filename */
+  XEN_DEFINE_HOOK(after_save_as_hook, S_after_save_as_hook, 3, H_after_save_as_hook); /* args: index filename from-dialog */
 
   #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices): called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
