@@ -1185,10 +1185,10 @@ static void set_sync_color(snd_info *sp)
   switch (sp->sync)
     {
     case 1: case 0: XtVaSetValues(syb, XmNselectColor, (ss->sgx)->pushed_button_color, NULL); break;
-    case 2: XtVaSetValues(syb, XmNselectColor, (ss->sgx)->green, NULL); break;
-    case 3: XtVaSetValues(syb, XmNselectColor, (ss->sgx)->yellow, NULL); break;
-    case 4: XtVaSetValues(syb, XmNselectColor, (ss->sgx)->red, NULL); break;
-    default: XtVaSetValues(syb, XmNselectColor, (ss->sgx)->black, NULL); break;
+    case 2:         XtVaSetValues(syb, XmNselectColor, (ss->sgx)->green, NULL);               break;
+    case 3:         XtVaSetValues(syb, XmNselectColor, (ss->sgx)->yellow, NULL);              break;
+    case 4:         XtVaSetValues(syb, XmNselectColor, (ss->sgx)->red, NULL);                 break;
+    default:        XtVaSetValues(syb, XmNselectColor, (ss->sgx)->black, NULL);               break;
     }
 }
 

@@ -2172,8 +2172,8 @@ program:
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define (draw-it)
   (glXMakeCurrent (XtDisplay (cadr (main-widgets))) 
-		   (XtWindow (car (channel-widgets)))
-		   (snd-glx-context))
+		  (XtWindow (car (channel-widgets)))
+		  (snd-glx-context))
   (glEnable GL_DEPTH_TEST)
   (glDepthFunc GL_LEQUAL)
   (glClearDepth 1.0)
@@ -2202,7 +2202,7 @@ program:
   (glColor3f 1.0 0.0 1.0)   (glVertex3f 4.0 -6.0 -10.0)
   (glEnd)
   (glXSwapBuffers (XtDisplay (cadr (main-widgets))) 
-		   (XtWindow (car (channel-widgets))))
+		  (XtWindow (car (channel-widgets))))
   (glFlush))
 <!-- --></pre></td></tr></table>
 <br>

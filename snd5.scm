@@ -1,6 +1,11 @@
 ;;; backwards compatibility within Snd-5 versions
 (use-modules (ice-9 optargs))
 
+(define (Pixel pix) (if (list? pix) pix (list 'Pixel pix)))
+(define (Widget wid) (if (list? wid) wid (list 'Widget wid)))
+(define (GC gc) (if (list? gc) gc (list 'GC gc)))
+(define (XtAppContext app) (if (list? app) app (list 'XtAppContext app)))
+
 (define update-transform update-transform-graph)
 (define mix-length mix-frames)
 (define region-length region-frames)

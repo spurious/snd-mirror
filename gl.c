@@ -387,9 +387,6 @@ XL_TYPE_1(Font, Font)
 #define XEN_TO_C_GLushort(Arg) (GLushort)(XEN_TO_C_INT(Arg))
 #define XEN_GLushort_P(Arg) XEN_INTEGER_P(Arg)
 XL_TYPE_PTR_1(GLubyte_, GLubyte*)
-#define C_TO_XEN_GLubyte(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GLubyte(Arg) (GLubyte)(XEN_TO_C_INT(Arg))
-#define XEN_GLubyte_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GLsizei(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLsizei(Arg) (GLsizei)(XEN_TO_C_INT(Arg))
 #define XEN_GLsizei_P(Arg) XEN_INTEGER_P(Arg)
@@ -411,6 +408,9 @@ XL_TYPE_PTR_1(GLvoid_, GLvoid*)
 #define C_TO_XEN_GLbyte(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLbyte(Arg) (GLbyte)(XEN_TO_C_INT(Arg))
 #define XEN_GLbyte_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_GLubyte(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GLubyte(Arg) (GLubyte)(XEN_TO_C_INT(Arg))
+#define XEN_GLubyte_P(Arg) XEN_INTEGER_P(Arg)
 XL_TYPE_PTR(void_, void*)
 XL_TYPE_PTR_1(GLuint_, GLuint*)
 XL_TYPE_PTR_1(GLboolean_, GLboolean*)
@@ -749,14 +749,6 @@ static XEN gxg_glPolygonStipple(XEN mask)
   XEN_ASSERT_TYPE(XEN_GLubyte__P(mask), mask, 1, "glPolygonStipple", "GLubyte*");
   glPolygonStipple(XEN_TO_C_GLubyte_(mask));
   return(XEN_FALSE);
-}
-
-static XEN gxg_glGetPolygonStipple(XEN mask)
-{
-  #define H_glGetPolygonStipple "void glGetPolygonStipple(GLubyte* [mask])"
-  GLubyte ref_mask;
-  glGetPolygonStipple(&ref_mask);
-  return(XEN_LIST_1(C_TO_XEN_GLubyte(ref_mask)));
 }
 
 static XEN gxg_glEdgeFlag(XEN flag)
@@ -4053,7 +4045,6 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(glPolygonMode, gxg_glPolygonMode, 2, 0, 0, H_glPolygonMode);
   GL_DEFINE_PROCEDURE(glPolygonOffset, gxg_glPolygonOffset, 2, 0, 0, H_glPolygonOffset);
   GL_DEFINE_PROCEDURE(glPolygonStipple, gxg_glPolygonStipple, 1, 0, 0, H_glPolygonStipple);
-  GL_DEFINE_PROCEDURE(glGetPolygonStipple, gxg_glGetPolygonStipple, 0, 1, 0, H_glGetPolygonStipple);
   GL_DEFINE_PROCEDURE(glEdgeFlag, gxg_glEdgeFlag, 1, 0, 0, H_glEdgeFlag);
   GL_DEFINE_PROCEDURE(glScissor, gxg_glScissor, 4, 0, 0, H_glScissor);
   GL_DEFINE_PROCEDURE(glClipPlane, gxg_glClipPlane, 2, 0, 0, H_glClipPlane);
@@ -5297,7 +5288,7 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"24-Jul-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"25-Jul-02\")");
 #endif
       gl_already_inited = 1;
     }

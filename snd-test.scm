@@ -30,7 +30,7 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
-;;; TODO: GL tests, gtk (xg) tests
+;;; TODO: GL tests (test/gl/Mesa-4.0.2/samples/), gtk (xg) tests
 ;;; TODO: mix panel env editor (apply button (XmMessageBoxGetChild mix_panel XmDIALOG_CANCEL_BUTTON)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
@@ -24253,6 +24253,99 @@ EDITS: 5
 	  (begin
 	    (load "snd-gl.scm")
 	    (gl-info)
+	    (let ((gl-procs 
+		   (list
+		    glXChooseVisual glXCopyContext glXCreateContext glXCreateGLXPixmap glXDestroyContext glXDestroyGLXPixmap glXGetConfig
+		    glXGetCurrentContext glXGetCurrentDrawable glXIsDirect glXMakeCurrent glXQueryExtension glXQueryVersion glXSwapBuffers
+		    glXUseXFont glXWaitGL glXWaitX glXGetClientString glXQueryServerString glXQueryExtensionsString glClearIndex glClearColor
+		    glClear glIndexMask glColorMask glAlphaFunc glBlendFunc glLogicOp glCullFace glFrontFace glPointSize glLineWidth glLineStipple
+		    glPolygonMode glPolygonOffset glPolygonStipple glEdgeFlag glScissor glClipPlane glGetClipPlane
+		    glDrawBuffer glReadBuffer glEnable glDisable glIsEnabled glEnableClientState glDisableClientState glGetBooleanv
+		    glGetDoublev glGetFloatv glGetIntegerv glPushAttrib glPopAttrib glPushClientAttrib glPopClientAttrib glRenderMode
+		    glGetError glGetString glFinish glFlush glHint glClearDepth glDepthFunc glDepthMask glDepthRange glClearAccum glAccum
+		    glMatrixMode glOrtho glFrustum glViewport glPushMatrix glPopMatrix glLoadIdentity glLoadMatrixd glLoadMatrixf
+		    glMultMatrixd glMultMatrixf glRotated glRotatef glScaled glScalef glTranslated glTranslatef glIsList glDeleteLists
+		    glGenLists glNewList glEndList glCallList glCallLists glListBase glBegin glEnd glVertex2d glVertex2f glVertex2i glVertex2s
+		    glVertex3d glVertex3f glVertex3i glVertex3s glVertex4d glVertex4f glVertex4i glVertex4s glNormal3b glNormal3d glNormal3f
+		    glNormal3i glNormal3s glIndexd glIndexf glIndexi glIndexs glIndexub glColor3b glColor3d glColor3f glColor3i glColor3s
+		    glColor3ub glColor3ui glColor3us glColor4b glColor4d glColor4f glColor4i glColor4s glColor4ub glColor4ui glColor4us glTexCoord1d
+		    glTexCoord1f glTexCoord1i glTexCoord1s glTexCoord2d glTexCoord2f glTexCoord2i glTexCoord2s glTexCoord3d glTexCoord3f glTexCoord3i
+		    glTexCoord3s glTexCoord4d glTexCoord4f glTexCoord4i glTexCoord4s glRasterPos2d glRasterPos2f glRasterPos2i glRasterPos2s
+		    glRasterPos3d glRasterPos3f glRasterPos3i glRasterPos3s glRasterPos4d glRasterPos4f glRasterPos4i glRasterPos4s glRectd
+		    glRectf glRecti glRects glVertexPointer glNormalPointer glColorPointer glIndexPointer glTexCoordPointer glEdgeFlagPointer
+		    glGetPointerv glArrayElement glDrawArrays glDrawElements glInterleavedArrays glShadeModel glLightf glLighti glGetLightfv
+		    glGetLightiv glLightModelf glLightModeli glMaterialf glMateriali glGetMaterialfv glGetMaterialiv glColorMaterial glPixelZoom
+		    glPixelStoref glPixelStorei glPixelTransferf glPixelTransferi glGetPixelMapfv glGetPixelMapuiv glGetPixelMapusv glBitmap
+		    glReadPixels glDrawPixels glCopyPixels glStencilFunc glStencilMask glStencilOp glClearStencil glTexGend glTexGenf glTexGeni
+		    glGetTexGendv glGetTexGenfv glGetTexGeniv glTexEnvf glTexEnvi glGetTexEnvfv glGetTexEnviv glTexParameterf glTexParameteri
+		    glGetTexParameterfv glGetTexParameteriv glGetTexLevelParameterfv glGetTexLevelParameteriv glTexImage1D glTexImage2D
+		    glGenTextures glDeleteTextures glBindTexture glAreTexturesResident glIsTexture glTexSubImage1D glTexSubImage2D glCopyTexImage1D
+		    glCopyTexImage2D glCopyTexSubImage1D glCopyTexSubImage2D glMap1d glMap1f glMap2d glMap2f glGetMapdv glGetMapfv glGetMapiv
+		    glEvalCoord1d glEvalCoord1f glEvalCoord2d glEvalCoord2f glMapGrid1d glMapGrid1f glMapGrid2d glMapGrid2f glEvalPoint1
+		    glEvalPoint2 glEvalMesh1 glEvalMesh2 glFogf glFogi glFeedbackBuffer glPassThrough glSelectBuffer glInitNames glLoadName
+		    glPushName glPopName glDrawRangeElements glTexImage3D glTexSubImage3D glCopyTexSubImage3D glColorTable glColorSubTable
+		    glCopyColorSubTable glCopyColorTable glGetColorTableParameterfv glGetColorTableParameteriv glBlendEquation glBlendColor
+		    glHistogram glResetHistogram glGetHistogram glGetHistogramParameterfv glGetHistogramParameteriv glMinmax glResetMinmax
+		    glGetMinmax glGetMinmaxParameterfv glGetMinmaxParameteriv glConvolutionFilter1D glConvolutionFilter2D glConvolutionParameterf
+		    glConvolutionParameteri glCopyConvolutionFilter1D glCopyConvolutionFilter2D glSeparableFilter2D gluBeginPolygon gluBuild1DMipmaps
+		    gluBuild2DMipmaps gluDeleteTess gluEndPolygon gluErrorString gluGetString gluGetTessProperty gluLookAt gluNewTess gluNextContour
+		    gluOrtho2D gluPerspective gluPickMatrix gluProject gluScaleImage gluTessBeginContour gluTessBeginPolygon gluTessEndContour
+		    gluTessEndPolygon gluTessNormal gluTessProperty gluTessVertex gluUnProject glActiveTextureARB glClientActiveTextureARB
+		    glMultiTexCoord1dARB glMultiTexCoord1dvARB glMultiTexCoord1fARB glMultiTexCoord1fvARB glMultiTexCoord1iARB glMultiTexCoord1ivARB
+		    glMultiTexCoord1sARB glMultiTexCoord1svARB glMultiTexCoord2dARB glMultiTexCoord2dvARB glMultiTexCoord2fARB glMultiTexCoord2fvARB
+		    glMultiTexCoord2iARB glMultiTexCoord2ivARB glMultiTexCoord2sARB glMultiTexCoord2svARB glMultiTexCoord3dARB glMultiTexCoord3dvARB
+		    glMultiTexCoord3fARB glMultiTexCoord3fvARB glMultiTexCoord3iARB glMultiTexCoord3ivARB glMultiTexCoord3sARB glMultiTexCoord3svARB
+		    glMultiTexCoord4dARB glMultiTexCoord4dvARB glMultiTexCoord4fARB glMultiTexCoord4fvARB glMultiTexCoord4iARB glMultiTexCoord4ivARB
+		    glMultiTexCoord4sARB glMultiTexCoord4svARB)))
+
+	      ;; ---------------- 1 Arg
+	      (for-each 
+	       (lambda (arg)
+		 (for-each 
+		  (lambda (n)
+		    (catch #t
+			   (lambda () (n arg))
+			   (lambda args (car args))))
+		  gl-procs))
+	       (list (list 0 1) (sqrt -1.0)))
+	      )
+
+	    (let ((ind (open-sound "oboe.snd")))
+	      (glXMakeCurrent (XtDisplay (cadr (main-widgets))) 
+			      (XtWindow (car (channel-widgets)))
+			      (snd-glx-context))
+	      (glEnable GL_DEPTH_TEST)
+	      (glDepthFunc GL_LEQUAL)
+	      (glClearDepth 1.0)
+	      (glClearColor 0.0 0.0 0.0 0.0)
+	      (glLoadIdentity)
+	      (gluPerspective 40.0 1.0 10.0 200.0)
+	      (glTranslatef 0.0 0.0 -50.0)
+	      (glRotatef -58.0 0.0 1.0 0.0)
+	      (let ((vals (XtVaGetValues (car (channel-widgets)) (list XmNwidth 0 XmNheight 0))))
+		(glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
+	      (glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+	      (glBegin GL_POLYGON)
+	      (glColor3f 0.0 0.0 0.0)   (glVertex3f -10.0 -10.0 0.0)
+	      (glColor3f 0.7 0.7 0.7)   (glVertex3f 10.0 -10.0 0.0)
+	      (glColor3f 1.0 1.0 1.0)   (glVertex3f -10.0 10.0 0.0)
+	      (glEnd)
+	      (glBegin GL_POLYGON)
+	      (glColor3f 1.0 1.0 0.0)   (glVertex3f 0.0 -10.0 -10.0)
+	      (glColor3f 0.0 1.0 0.7)   (glVertex3f 0.0 -10.0 10.0)
+	      (glColor3f 0.0 0.0 1.0)   (glVertex3f 0.0 5.0 -10.0)
+	      (glEnd)
+	      (glBegin GL_POLYGON)
+	      (glColor3f 1.0 1.0 0.0)   (glVertex3f -10.0 6.0 4.0)
+	      (glColor3f 1.0 0.0 1.0)   (glVertex3f -10.0 3.0 4.0)
+	      (glColor3f 0.0 0.0 1.0)   (glVertex3f 4.0 -9.0 -10.0)
+	      (glColor3f 1.0 0.0 1.0)   (glVertex3f 4.0 -6.0 -10.0)
+	      (glEnd)
+	      (glXSwapBuffers (XtDisplay (cadr (main-widgets))) 
+			      (XtWindow (car (channel-widgets))))
+	      (glFlush)
+	      (close-sound ind))
+
 	    ))))
 
 

@@ -57,7 +57,7 @@
 (CFNC "void glPolygonMode GLenum face GLenum mode")
 (CFNC "void glPolygonOffset GLfloat factor GLfloat units")
 (CFNC "void glPolygonStipple GLubyte* mask")
-(CFNC "void glGetPolygonStipple GLubyte* [mask]")
+;(CFNC "void glGetPolygonStipple GLubyte* [mask]") ; mask is of unknown size (1 = segfault, code looks like it uses 128)
 (CFNC "void glEdgeFlag GLboolean flag")
 ;(CFNC "void glEdgeFlagv GLboolean* flag")
 (CFNC "void glScissor GLint x GLint y GLsizei width GLsizei height")

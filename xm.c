@@ -3,19 +3,17 @@
  *   for tests and examples see snd-motif.scm and snd-test.scm
  */
 
-/* WARNING: vertical-bar has to go (r5rs limitation) so the default prefix will change soon */
-
 /* SOMEDAY: finish selection-oriented Xt callbacks
  * SOMEDAY: XmVaCreateSimple* (need special arglist handlers)
  * SOMEDAY: callback struct print (and tie makers into Ruby)
  * SOMEDAY: finish the -> converters
- * SOMEDAY: add_resource
  * SOMEDAY: get Xprt to work and test the Xp stuff
  */
 
 /* HISTORY: 
- *   24-Jul:    removed "|" prefix, use "." as default struct field prefix (in R5RS, "|" is reserved).
- *   19-Jul:    XM_FIELD_PREFIX for change from using vertical-bar (reserved in R5RS).
+ *   26-Jul:    removed wrappers Widget Pixel GC and XtAppContext.
+ *   24-Jul:    removed "|" prefix, use "." as default struct field prefix.
+ *   19-Jul:    XM_FIELD_PREFIX for change from using vertical-bar ("|" is reserved in R5RS).
  *   17-Jun:    removed XtSetWMColormapWindows.
  *   29-Apr:    minor 64-bit fixups.
  *   29-Mar:    XmParseProc.
@@ -682,17 +680,6 @@ enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_STRING_TA
 };
 
 static int resource_type(char *resource);
-
-/* ADD: Widget w -> bare Widget (pointer) wrapped for xm */
-/* ADD: XtAppContext app -> bare XtAppContext (pointer) wrapped for xm */
-/* ADD: XGCValues -> new blank XGCValues struct (may need more of these) */
-/* ADD: GC -> cast ulong to GC */
-/* ADD: Pixel -> cast ulong to Pixel */
-
-static XEN gxm_Widget(XEN w) {if (XEN_LIST_P(w)) return(w); else return(C_TO_XEN_Widget((Widget)XEN_TO_C_ULONG(w)));}
-static XEN gxm_XtAppContext(XEN w) {if (XEN_LIST_P(w)) return(w); else return(C_TO_XEN_XtAppContext((XtAppContext)XEN_TO_C_ULONG(w)));}
-static XEN gxm_Pixel(XEN w) {if (XEN_LIST_P(w)) return(w); else return(C_TO_XEN_Pixel((Pixel)XEN_TO_C_ULONG(w)));}
-static XEN gxm_GC(XEN w) {if (XEN_LIST_P(w)) return(w); else return(C_TO_XEN_GC((GC)XEN_TO_C_ULONG(w)));}
 
 static XEN C_TO_XEN_Widgets(Widget *array, int len)
 {
@@ -17296,7 +17283,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtIsSessionShell, gxm_XtIsSessionShell, 1, 0, 0, H_XtIsSessionShell);
   XM_DEFINE_PROCEDURE(XtMapWidget, gxm_XtMapWidget, 1, 0, 0, H_XtMapWidget);
   XM_DEFINE_PROCEDURE(XtUnmapWidget, gxm_XtUnmapWidget, 1, 0, 0, H_XtUnmapWidget);
-  XM_DEFINE_PROCEDURE(XtAppContext, gxm_XtAppContext, 1, 0, 0, "wraps bare XtAppContext pointer for xm");
 #endif
   XM_DEFINE_PROCEDURE(XLoadQueryFont, gxm_XLoadQueryFont, 2, 0, 0, H_XLoadQueryFont);
   XM_DEFINE_PROCEDURE(XQueryFont, gxm_XQueryFont, 2, 0, 0, H_XQueryFont);
@@ -18284,9 +18270,6 @@ static void define_procedures(void)
       ADD: XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap? XPContext?
   */
 #if HAVE_MOTIF
-  XM_DEFINE_PROCEDURE(Pixel, gxm_Pixel, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(GC, gxm_GC, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Widget, gxm_Widget, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XtAppContext?, XEN_XtAppContext_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XtRequestId?, XEN_XtRequestId_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XtWorkProcId?, XEN_XtWorkProcId_p, 1, 0, 0, NULL);
@@ -21877,7 +21860,7 @@ static void hash_resource(char *name, int type)
   if (hd_ctr >= XM_HASH_SIZE) fprintf(stderr, "overflowed hash table!");
 }
 
-static int resource_type (char *name)
+static int resource_type(char *name)
 {
   int i, start, end, ind;
   ind = (int)(name[0]) - 97;

@@ -1506,7 +1506,7 @@ int mus_audio_oss_buffer_size(void)
     return(FRAGMENTS * (1 << FRAGMENT_SIZE));
   else return(16 * 4096); 
 #if 0
-/* TODO: need to readback the default setting, not assume it (preferably without screwing up ongoing playback) */
+/* TODO: test the fragment readback code */
 #ifdef SNDCTL_DSP_GETOSPACE
   /* 2048 * 64 -- these are bytes */
   audio_buf_info abi;

@@ -6585,7 +6585,9 @@ void g_init_chn(void)
   #define H_graph_hook S_graph_hook " (snd chn y0 y1) is called each time a graph is about to be updated. If it returns #t, the display is not updated."
   #define H_after_graph_hook S_after_graph_hook " (snd chn) is called after a graph is updated."
   #define H_lisp_graph_hook S_lisp_graph_hook " (snd chn) is called just before the lisp graph is updated. If it returns a list \
-of pixels, these are used in order by the list of graphs (if any), rather than Snd's default set."
+of pixels, these are used in order by the list of graphs (if any), rather than Snd's default set; \
+this makes it possible to use different colors for the various graphs. \
+If it returns a function (of no arguments), that function is called rather than the standard graph routine."
   #define H_mouse_press_hook S_mouse_press_hook " (snd chn button state x y) is called upon mouse button press within the lisp graph."
   #define H_mouse_click_hook S_mouse_click_hook " (snd chn button state x y axis) is called upon button click."
   #define H_mouse_release_hook S_mouse_release_hook " (snd chn button state x y) is called upon mouse button release within the lisp graph."

@@ -714,7 +714,7 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="badheaderhook">bad-header-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
-<!-- -->called if a file has some bogus-looking header. Return #t to give up on that file. <code>(add-hook! bad-header-hook (lambda (n) #t))</code>
+<!-- -->called if a file has some bogus-looking header. Return #t to give up on that file. <br><br><code>(add-hook! bad-header-hook (lambda (n) #t))</code>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -723,7 +723,7 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="beforeapplyhook">before-apply-hook</a></em> (snd)</code></span><td align=right><b>or</b></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
-<!-- -->called when 'Apply' is clicked or apply-controls called.
+<!-- -->called when 'Apply' is clicked or apply-controls is called.
 <!-- -->If it returns #t, the apply is aborted.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
@@ -1440,7 +1440,7 @@ the hook.
 <!-- -->be omitted (location defaults to 0, and length defaults to the file length in bytes).
 <!-- -->If there is more than one function on the hook list, functions after the first get the
 <!-- -->on-going list result (if any) as the <i>current-choices</i> argument (the empty list is the default).
-<!-- --><code>(add-hook! open-raw-sound-hook (lambda (file choices) (list 1 44100 mus-lshort)))</code>
+<!-- --><br><br><code>(add-hook! open-raw-sound-hook (lambda (file choices) (list 1 44100 mus-lshort)))</code><br><br>
 <!-- -->Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
@@ -4612,8 +4612,8 @@ the direction argument between the channel and edit-position:
 		  old-y)
 	    replacement))))))
 
-(map-chan (map-silence .01 0.0))  ; squelch background noise
-(map-chan (map-silence .001 #f))   ; remove silences altogether
+(<em class=red>map-chan</em> (map-silence .01 0.0))  ; squelch background noise
+(<em class=red>map-chan</em> (map-silence .001 #f))   ; remove silences altogether
 <!-- --></pre></td></tr></table>
 <!-- --><br>
 <!-- -->In case it isn't obvious, we're using <i>buffer</i> to hold a running
@@ -4638,7 +4638,7 @@ the direction argument between the channel and edit-position:
 <!-- -->It is also possible to stop, then continue map-chan:<br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define go-on #f)
-(map-chan (lambda (y) 
+(<em class=red>map-chan</em> (lambda (y) 
             (call-with-current-continuation 
               (lambda (stop) 
                 (if (&gt; y 1.0)
@@ -5397,7 +5397,7 @@ the direction argument between the channel and edit-position:
 	 (lambda ()
 	   (apply for-each 
 		  (lambda (snd chn)
-		    (let ((result (scan-chan proc beg end snd chn edpos)))
+		    (let ((result (<em class=red>scan-chan</em> proc beg end snd chn edpos)))
 		      (if result (throw 'done (append result (list snd chn))))))
 		  (all-chans)))
 	 (lambda args (cadr args))))
@@ -5416,7 +5416,7 @@ the direction argument between the channel and edit-position:
 <!-- -->into a previous call will not work.  That is,<br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (let ((not-a-good-idea #f))
-  (scan-channel (lambda (y)
+  (<em class=red>scan-channel</em> (lambda (y)
                   (call-with-current-continuation
 	            (lambda (call)
 		      (set! not-a-good-idea call)))
@@ -8319,7 +8319,7 @@ and returns the new file's index"</em>
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndversion">snd-version</a></em> ()</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->Snd version (a string).
+<!-- -->Snd version (a string, normally a date). <b>version</b> is a Guile function.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

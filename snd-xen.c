@@ -299,7 +299,6 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 #else
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
-  /* TODO: this (Ruby Snd evaluator) needs to catch errors */
   return((*body)(body_data));
 }
 #endif
