@@ -726,6 +726,7 @@ char *mus_sound_comment(const char *name)
 	}
       return(NULL);
     }
+  if (end > mus_sound_length(name)) return(NULL);
   len = end - start + 1;
   if (len > 0)
     {

@@ -1521,6 +1521,7 @@ on-going list result (if any) as the <i>current-choices</i> argument (the empty 
 Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
 The raw header defaults are stereo, 44100 Hz, big endian short data; these values can be changed in the
 Raw File Dialog, or by calling open-raw-sound with explicit arguments.
+If the hook returns #t, the open-sound returns without opening.
 </td></tr>
 <tr><td colspan=3></td></tr>
 

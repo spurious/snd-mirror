@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 41
-#define MUS_DATE "17-Mar-04"
+#define MUS_REVISION 42
+#define MUS_DATE "26-Mar-04"
 
 /* 
  * 17-Mar:     edit function added to mus_granulate.

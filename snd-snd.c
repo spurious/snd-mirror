@@ -3122,7 +3122,7 @@ open file assuming the data matches the attributes indicated unless the file act
   if (!(mus_file_probe(fname)))
     {
       if (fname) FREE(fname);
-      return(snd_no_such_file_error(S_open_raw_sound, args[orig_arg[0] - 1]));
+      return(snd_no_such_file_error(S_open_raw_sound, keys[0]));
     }
   mus_header_set_raw_defaults(os, oc, ofr);
   ss->reloading_updated_file = -1;
@@ -3224,7 +3224,7 @@ Omitted arguments take their value from the sound being saved.\n\
 			 C_TO_XEN_STRING(mus_header_type_name(ht)),
 			 C_TO_XEN_STRING(mus_data_format_name(df))));
   if (chan >= sp->nchans)
-    return(snd_no_such_channel_error(S_save_sound_as, index, args[orig_arg[5] - 1]));
+    return(snd_no_such_channel_error(S_save_sound_as, index, keys[5]));
   ss->catch_message = NULL;
   fname = mus_expand_filename(file);
   if (chan >= 0)
@@ -3297,18 +3297,18 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
       len = mus_optkey_to_off_t(keys[6], S_new_sound, orig_arg[6], len);
     }
   if (!(MUS_HEADER_TYPE_OK(ht)))
-    XEN_OUT_OF_RANGE_ERROR(S_new_sound, 2, args[orig_arg[1] - 1], "~A: invalid header type");
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[1], keys[1], "~A: invalid header type");
   if (!(MUS_DATA_FORMAT_OK(df)))
-    XEN_OUT_OF_RANGE_ERROR(S_new_sound, 3, args[orig_arg[2] - 1], "~A: invalid data format");
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[2], keys[2], "~A: invalid data format");
   if (!(mus_header_writable(ht, df)))
     mus_misc_error(S_new_sound, _("can't write this combination of data format and header type"), 
-		   XEN_LIST_2(args[orig_arg[1] - 1], args[orig_arg[2] - 1]));
+		   XEN_LIST_2(keys[1], keys[2]));
   if (sr <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_new_sound, 4, args[orig_arg[3] - 1], "srate ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[3], keys[3], "srate ~A <= 0?");
   if (ch <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_new_sound, 5, args[orig_arg[4] - 1], "channels ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[4], keys[4], "channels ~A <= 0?");
   if (len < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_new_sound, 7, args[orig_arg[6] - 1], "size ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[6], keys[6], "size ~A < 0?");
   if (file)
     str = mus_expand_filename(file);
   else str = snd_tempnam();
@@ -3322,8 +3322,8 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
 	{
 	  if (str) {FREE(str); str = NULL;}
 	  if (ss->catch_message)
-	    mus_misc_error(S_new_sound, ss->catch_message, args[orig_arg[0] - 1]);
-	  else mus_misc_error(S_new_sound, strerror(errno), args[orig_arg[0] - 1]);
+	    mus_misc_error(S_new_sound, ss->catch_message, keys[0]);
+	  else mus_misc_error(S_new_sound, strerror(errno), keys[0]);
 	}
       chan = snd_reopen_write(str);
       lseek(chan, mus_header_data_location(), SEEK_SET);
@@ -3341,7 +3341,9 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
 
 static XEN g_speed_control_style(XEN snd)
 {
-  #define H_speed_control_style "(" S_speed_control_style " (snd)): speed control panel interpretation choice (" S_speed_control_as_float ")"
+  #define H_speed_control_style "(" S_speed_control_style " (snd)): speed control panel interpretation \
+choice: " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone "."
+
   return(sound_get_global(snd, SP_SPEED_STYLE, S_speed_control_style));
 }
 
@@ -4312,9 +4314,9 @@ for " S_vct2sound_file " and " S_close_sound_file "."
       comment = mus_optkey_to_string(keys[3], S_open_sound_file, orig_arg[3], comment);
     }
   if (chans <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_open_sound_file, 2, args[orig_arg[1] - 1], "channels ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_open_sound_file, orig_arg[1], keys[1], "channels ~A <= 0?");
   if (srate <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_open_sound_file, 3, args[orig_arg[2] - 1], "srate ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_open_sound_file, orig_arg[2], keys[2], "srate ~A <= 0?");
   if (file)
     filename = mus_expand_filename(file);
   else 
@@ -4347,7 +4349,7 @@ for " S_vct2sound_file " and " S_close_sound_file "."
 		  XEN_LIST_2(C_TO_XEN_STRING(S_open_sound_file),
 			     C_TO_XEN_STRING(ss->catch_message)));
       else
-	return(snd_no_such_file_error(S_open_sound_file, args[orig_arg[0] - 1]));
+	return(snd_no_such_file_error(S_open_sound_file, keys[0]));
     }
   mus_file_set_data_clipped(result, data_clipped(ss));
   set_temp_fd(result, hdr);

@@ -102,7 +102,7 @@ static void *clm_calloc(int num, int size, const char* what)
   return(mem);
 }
 
-static void init_sine (void)
+static void init_sine(void)
 {
   int i;
   Float phase, incr;
@@ -2690,12 +2690,14 @@ static char *inspect_flt(mus_any *ptr)
   return(describe_buffer);
 }
 
-Float mus_filter (mus_any *ptr, Float input)
+Float mus_filter(mus_any *ptr, Float input)
 {
   flt *gen = (flt *)ptr;
   Float xout;
   int j;
   xout = 0.0;
+  if (!(gen->y)) return(mus_fir_filter(ptr, input));  
+  if (!(gen->x)) return(mus_iir_filter(ptr, input));
   gen->state[0] = input;
   for (j = gen->order - 1; j >= 1; j--) 
     {
@@ -2706,7 +2708,7 @@ Float mus_filter (mus_any *ptr, Float input)
   return(xout + (gen->state[0] * gen->x[0]));
 }
 
-Float mus_fir_filter (mus_any *ptr, Float input)
+Float mus_fir_filter(mus_any *ptr, Float input)
 {
   Float xout;
   int j;
@@ -2721,7 +2723,7 @@ Float mus_fir_filter (mus_any *ptr, Float input)
   return(xout + (gen->state[0] * gen->x[0]));
 }
 
-Float mus_iir_filter (mus_any *ptr, Float input)
+Float mus_iir_filter(mus_any *ptr, Float input)
 {
   int j;
   flt *gen = (flt *)ptr;
@@ -2738,7 +2740,13 @@ static Float run_filter(mus_any *ptr, Float input, Float unused) {return(mus_fil
 static Float run_fir_filter(mus_any *ptr, Float input, Float unused) {return(mus_fir_filter(ptr, input));}
 static Float run_iir_filter(mus_any *ptr, Float input, Float unused) {return(mus_iir_filter(ptr, input));}
 
-bool mus_filter_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILTER));}
+bool mus_filter_p(mus_any *ptr) 
+{
+  return((ptr) && 
+	 (((ptr->core)->type == MUS_FILTER) || 
+	  ((ptr->core)->type == MUS_FIR_FILTER) ||
+	  ((ptr->core)->type == MUS_IIR_FILTER)));
+}
 bool mus_fir_filter_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FIR_FILTER));}
 bool mus_iir_filter_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_IIR_FILTER));}
 static Float *filter_data(mus_any *ptr) {return(((flt *)ptr)->state);}

@@ -326,7 +326,10 @@ file_info *make_file_info(const char *fullname)
 	  else 
 	    {
 	      char *str;
+	      bool just_quit = false;
+	      if (XEN_TRUE_P(res)) just_quit = true;
 	      if (res_loc != -1) snd_unprotect_at(res_loc);
+	      if (just_quit) return(NULL);
 	      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_home_directory(fullname));
 	      hdr = raw_data_dialog_to_file_info(fullname, str);

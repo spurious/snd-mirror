@@ -1084,7 +1084,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, argn = 0, len = 0, arglist_len, keyn, max_size = -1;
-  int size = 1, size_key = 0;
+  int size = 1;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
   XEN initial_contents = XEN_UNDEFINED; 
@@ -1125,10 +1125,9 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	}
       size = mus_optkey_to_int(keys[keyn], caller, orig_arg[keyn], size);
       if (size < 0)
-	XEN_OUT_OF_RANGE_ERROR(caller, size_key + 1, keys[size_key], "size ~A < 0?");
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "size ~A < 0?");
       if (size > MAX_TABLE_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(caller, size_key + 1, keys[size_key], "size ~A too large");
-      size_key = keyn;
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "size ~A too large");
       keyn++;
       if (!(XEN_KEYWORD_P(keys[keyn])))
 	{
@@ -1177,7 +1176,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	      if (max_size > MAX_TABLE_SIZE)
 		{
 		  if (line) FREE(line);
-		  XEN_OUT_OF_RANGE_ERROR(caller, keyn + 1, keys[keyn], "max-size ~A too large");
+		  XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "max-size ~A too large");
 		}
 	    }
 	  else
@@ -1378,7 +1377,7 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
       phase = mus_optkey_to_float(keys[2], S_make_sum_of_cosines, orig_arg[2], phase);
     }
   if (cosines <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, 1, keys[0], "cosines ~A <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, orig_arg[0], keys[0], "cosines ~A <= 0?");
   ge = mus_make_sum_of_cosines(cosines, freq, phase);
   if (ge)
     {
@@ -1635,9 +1634,9 @@ is the same in effect as " S_make_oscil "."
       v = mus_optkey_to_vct(keys[2], S_make_table_lookup, orig_arg[2], NULL);
       table_size = mus_optkey_to_int(keys[3], S_make_table_lookup, orig_arg[3], table_size);
       if (table_size <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, 4, keys[3], "size ~A <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size ~A <= 0?");
       if (table_size > MAX_TABLE_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, 4, keys[3], "size ~A too large");
+	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size ~A too large");
       if (v)
 	{
 	  table = copy_vct_data(v);
@@ -2690,9 +2689,9 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       v = mus_optkey_to_vct(keys[2], S_make_wave_train, orig_arg[2], NULL);
       wsize = mus_optkey_to_int(keys[3], S_make_wave_train, orig_arg[3], wsize);
       if (wsize <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, 4, keys[3], "size ~A <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A <= 0?");
       if (wsize > MAX_TABLE_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, 4, keys[3], "size ~A too large");
+	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A too large");
       if (v)
         {
 	  wave = copy_vct_data(v);
@@ -2796,7 +2795,7 @@ is the same in effect as make-oscil"
       freq = mus_optkey_to_float(keys[0], S_make_waveshape, orig_arg[0], freq);
       wsize = mus_optkey_to_int(keys[2], S_make_waveshape, orig_arg[2], wsize);
       if (wsize <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, 3, keys[2], "table size ~A <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[2], keys[2], "table size ~A <= 0?");
       v = mus_optkey_to_vct(keys[3], S_make_waveshape, orig_arg[3], NULL);
       if (v)
         {
@@ -3081,7 +3080,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 	}
     }
   if (order < 0)
-    XEN_OUT_OF_RANGE_ERROR(caller, 1, keys[0], "order ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[0], keys[0], "order ~A < 0?");
   if (choice == G_FILTER)
     {
       if (y == NULL)
@@ -3277,11 +3276,11 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     {
       if (brkpts) FREE(brkpts);
       if (odata) FREE(odata);
-      if (end < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 6, keys[5], "end ~A < 0?");
-      if (base < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 5, keys[4], "base ~A < 0.0?");
-      if (duration < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 3, keys[2], "duration ~A < 0.0?");
-      if (start < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 7, keys[6], "start ~A < 0?");
-      if (dur < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 8, keys[7], "dur ~A < 0?");
+      if (end < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[5], keys[5], "end ~A < 0?");
+      if (base < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[4], keys[4], "base ~A < 0.0?");
+      if (duration < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[2], keys[2], "duration ~A < 0.0?");
+      if (start < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[6], keys[6], "start ~A < 0?");
+      if (dur < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[7], keys[7], "dur ~A < 0?");
     }
   /* odata = vct->data in this context [vcts[0]] */
   if (dur > 0)
@@ -3763,7 +3762,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
       direction = mus_optkey_to_int(keys[3], S_make_readin, orig_arg[3], direction);
     }
   if (channel < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_readin, 2, keys[1], "channel ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[1], keys[1], "channel ~A < 0?");
   if (!(mus_file_probe(file)))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin),
@@ -3775,7 +3774,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
 			 C_TO_XEN_STRING(file),
 			 C_TO_XEN_STRING("chans <= 0")));
   if (channel >= mus_sound_chans(file))
-    XEN_OUT_OF_RANGE_ERROR(S_make_readin, 2, keys[1], "channel ~A > available chans?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[1], keys[1], "channel ~A > available chans?");
   ge = mus_make_readin(file, channel, start, direction);
   if (ge)
     {
@@ -4088,9 +4087,9 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
       srate = mus_optkey_to_float(keys[1], S_make_src, orig_arg[1], srate);
       wid = mus_optkey_to_int(keys[2], S_make_src, orig_arg[2], wid);
     }
-  if (srate < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 2, keys[1], "srate ~A < 0.0?");
-  if (wid < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width ~A < 0?");
-  if (wid > 2000) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width ~A > 2000?");
+  if (srate < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[1], keys[1], "srate ~A < 0.0?");
+  if (wid < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A < 0?");
+  if (wid > 2000) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A > 2000?");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   /* mus_make_src assumes it can invoke the input function! */
   gn->nvcts = MAX_VCTS;
@@ -4204,12 +4203,13 @@ The edit function, if any, should return the length in samples of the grain, or 
       maxsize = mus_optkey_to_int(keys[7], S_make_granulate, orig_arg[7], maxsize);
       edit_obj = mus_optkey_to_procedure(keys[8], S_make_granulate, orig_arg[8], XEN_UNDEFINED, 1, "granulate edit procedure takes 1 arg");
     }
-  if (expansion <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 2, keys[1], "expansion ~A <= 0.0?");
-  if (segment_length <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, keys[2], "segment-length ~A <= 0.0?");
-  if (segment_scaler == 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 4, keys[3], "segment-scaler: ~A?");
-  if (output_hop < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 5, keys[4], "hop ~A < 0?");
+  if (expansion <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[1], keys[1], "expansion ~A <= 0.0?");
+  if (segment_length <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[2], keys[2], "segment-length ~A <= 0.0?");
+  if (segment_scaler == 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[3], keys[3], "segment-scaler: ~A?");
+  if (output_hop < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[4], keys[4], "hop ~A < 0?");
+  if ((ramp_time < 0.0) || (ramp_time > 0.5)) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[5], keys[5], "ramp ~A must be between 0.0 and 0.5");
   if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
-    XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, XEN_LIST_2(keys[2], keys[4]), "segment_length + output_hop = ~A: too large!");
+    XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[2], XEN_LIST_2(keys[2], keys[4]), "segment_length + output_hop = ~A: too large!");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   old_error_handler = mus_error_set_handler(local_mus_error);
   ge = mus_make_granulate(funcall1, expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
@@ -4445,13 +4445,13 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
       in_obj = mus_optkey_to_procedure(keys[0], S_make_phase_vocoder, orig_arg[0], XEN_UNDEFINED, 1, "phase-vocoder input procedure takes 1 arg");
       fft_size = mus_optkey_to_int(keys[1], S_make_phase_vocoder, orig_arg[1], fft_size);
       if (fft_size <= 1) 
-	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 2, keys[1], "fft size ~A <= 1?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size ~A <= 1?");
       overlap = mus_optkey_to_int(keys[2], S_make_phase_vocoder, orig_arg[2], overlap);
       if (overlap <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 3, keys[2], "overlap ~A <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[2], keys[2], "overlap ~A <= 0?");
       interp = mus_optkey_to_int(keys[3], S_make_phase_vocoder, orig_arg[3], interp);
       if (interp <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 4, keys[3], "interp ~A <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[3], keys[3], "interp ~A <= 0?");
       pitch = mus_optkey_to_float(keys[4], S_make_phase_vocoder, orig_arg[4], pitch);
       analyze_obj = mus_optkey_to_procedure(keys[5], S_make_phase_vocoder, orig_arg[5], XEN_UNDEFINED, 2, "phase-vocoder analyze procedure takes 2 args");
       edit_obj = mus_optkey_to_procedure(keys[6], S_make_phase_vocoder, orig_arg[6], XEN_UNDEFINED, 1, "phase-vocoder edit procedure takes 1 arg");

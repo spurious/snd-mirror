@@ -3025,6 +3025,77 @@
 		(snd-display ";ramp env by .1: ~A" (channel->vct)))
 	    (close-sound ind))
 	  ))
+
+      (add-hook! open-raw-sound-hook (lambda (a b) #t))
+      (add-hook! bad-header-hook (lambda (n) #t))
+      (let* ((magic-words (list ".snd" "FORM" "AIFF" "AIFC" "COMM" "COMT" "INFO" "INST" "inst" "MARK" "SSND"
+				"FVER" "NONE" "ULAW" "ulaw" "ima4" "raw " "sowt" "in32" "in24" "ni23" "fl32"
+				"FL32" "fl64" "twos" "ALAW" "alaw" "APPL" "CLM " "RIFF" "RIFX" "WAVE" "fmt "
+				"data" "fact" "clm " "NIST" "8SVX" "16SV" "Crea" "tive" "SOUN" "D SA" "MPLE"
+				"BODY" "VHDR" "CHAN" "ANNO" "NAME" "2BIT" "HCOM" "FSSD" "%//\n" "%---" "ALaw"
+				"Soun" "MAUD" "MHDR" "MDAT" "mdat" "MThd" "sfbk" "sdta" "shdr" "pdta"
+				"LIST" "GF1P" "ATCH" "$SIG" "NAL_" "GOLD" " SAM" "SRFS" "Diam" "ondW" "CSRE"
+				"SND " "SNIN" "SNDT" "DDSF" "FSMu" "UWFD" "LM89" "SY80" "SY85" "SCRS" "DSPL"
+				"AVI " "strf" "movi" "PRAM" " paf" "fap " "DS16" "HEDR" "HDR8" "SDA_" "SDAB"
+				"SD_B" "NOTE" "file" "=sam" "SU7M" "SU7R" "PVF1" "PVF2" "AUTH" "riff" "TWIN"
+				"IMPS" "SMP1" "Maui" "SDIF" "NVF "))
+	     (len (length magic-words))
+	     (ctr 0))
+	(for-each
+	 (lambda (magic)
+	   (if (file-exists? "test.snd")
+	       (delete-file "test.snd"))
+	   ;; try random garbage
+	   (with-output-to-file "test.snd"
+	     (lambda ()
+	       (display magic)
+	       (do ((i 0 (1+ i)))
+		   ((= i 128))
+		 (write (random 1.0)))))
+	   (let ((tag (catch #t
+			     (lambda ()
+			       (open-sound "test.snd"))
+			     (lambda args (car args)))))
+	     (if (and (number? tag)
+		      (sound? tag))
+		 (snd-display ";open-sound garbage ~A: ~A?" magic tag)))
+	   (delete-file "test.snd")
+	   ;; try plausible garbage
+	   (with-output-to-file "test.snd"
+	     (lambda ()
+	       (display magic)
+	       (do ((i 0 (1+ i)))
+		   ((= i 128))
+		 (write (random 128)))))
+	   (let ((tag (catch #t
+			     (lambda ()
+			       (open-sound "test.snd"))
+			     (lambda args (car args)))))
+	     (if (and (number? tag)
+		      (sound? tag))
+		 (snd-display ";open-sound plausible garbage ~A: ~A?" magic tag)))
+	   (delete-file "test.snd")
+	   ;; write very plausible garbage
+	   (with-output-to-file "test.snd"
+	     (lambda ()
+	       (display magic)
+	       (do ((i 1 (1+ i)))
+		   ((= i 12))
+		 (if (< (+ ctr i) len)
+		     (display (list-ref magic-words (+ ctr i)))
+		     (display (list-ref magic-words i))))))
+	   (let ((tag (catch #t
+			     (lambda ()
+			       (open-sound "test.snd"))
+			     (lambda args (car args)))))
+	     (if (and (number? tag)
+		      (sound? tag))
+		 (snd-display ";open-sound very plausible garbage ~A: ~A?" magic tag)))
+	   (set! ctr (1+ ctr)))
+	 magic-words))
+      (reset-hook! bad-header-hook)
+      (reset-hook! open-raw-sound-hook)
+      
       (run-hook after-test-hook 4)
       ))
 
@@ -11263,6 +11334,12 @@ EDITS: 5
       (test-gen-equal (make-all-pass 0.7 0.5 3 :initial-contents '(1.0 0.0 0.0)) 
 		      (make-all-pass 0.7 0.5 3 :initial-contents '(1.0 0.0 0.0)) 
 		      (make-all-pass 0.7 0.5 3 :initial-contents '(1.0 1.0 1.0)))
+      (let ((err (catch #t (lambda () (make-all-pass :feedback .2 :feedforward .1 :size -1)) (lambda args args))))
+	(if (or (not (eq? (car err) 'out-of-range))
+		(not (string=? (cadr err) "make-all-pass"))
+		(not (string=? (caddr err) "size ~A < 0?"))
+		(not (= (car (cadddr err)) -1)))
+	    (snd-display ";make-all-pass bad size error message: ~A" err)))
       
       (let ((gen (make-comb .4 3))
 	    (v0 (make-vct 10))
@@ -14964,6 +15041,82 @@ EDITS: 5
 				       0.0739 0.0847 0.0946 0.1036 0.1113 0.1177 0.1228 0.1266 0.1290 0.1301)))
 		(snd-display ";moog output: ~A" vals))))
 	(close-sound ind))
+
+      (let ((make-procs (list
+			 make-all-pass make-asymmetric-fm 
+			 make-comb (lambda () (make-convolve :filter (vct 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0)))
+			 (lambda () (make-filter :xcoeffs (vct 0 1 2))) (lambda () (make-fir-filter :xcoeffs (vct 0 1 2))) 
+			 make-formant (lambda () (make-frame 3)) make-granulate
+			 (lambda () (make-iir-filter :xcoeffs (vct 0 1 2))) make-locsig (lambda () (make-mixer 3 3)) 
+			 make-notch make-one-pole make-one-zero make-oscil make-ppolar
+			 make-pulse-train make-rand make-rand-interp make-sawtooth-wave
+			 make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave
+			 make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder
+			 (lambda () (make-filter :ycoeffs (vct 0 1 2)))
+			 (lambda () (make-filter :xcoeffs (vct 1 2 3) :ycoeffs (vct 0 1 2)))))
+	    (run-procs (list all-pass asymmetric-fm 
+			     comb convolve delay env 
+			     filter fir-filter formant (lambda (gen ind) (frame-ref gen ind)) granulate
+			     iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (mixer-ref gen a 0)) notch one-pole one-zero oscil two-pole
+			     pulse-train rand rand-interp sawtooth-wave
+			     sine-summation square-wave (lambda (gen a) (src gen 0.0 a)) sum-of-cosines table-lookup triangle-wave
+			     two-pole two-zero wave-train waveshape two-zero phase-vocoder
+			     filter filter))
+	    (ques-procs (list all-pass? asymmetric-fm? 
+			      comb? convolve? delay? env? 
+			      filter? fir-filter? formant? frame? granulate?
+			      iir-filter? locsig? mixer? notch? one-pole? one-zero? oscil? two-pole?
+			      pulse-train? rand? rand-interp? sawtooth-wave?
+			      sine-summation? square-wave? src? sum-of-cosines? table-lookup? triangle-wave?
+			      two-pole? two-zero? wave-train? waveshape? two-zero? phase-vocoder?
+			      filter? filter?))
+	    (func-names (list 'all-pass 'asymmetric-fm 
+			      'comb 'convolve 'delay 'env 
+			      'filter-x 'fir-filter 'formant 'frame 'granulate
+			      'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-zero 'oscil 'two-pole
+			      'pulse-train 'rand 'rand-interp 'sawtooth-wave
+			      'sine-summation 'square-wave 'src 'sum-of-cosines 'table-lookup 'triangle-wave
+			      'two-pole 'two-zero 'wave-train 'waveshape 'two-zero 'phase-vocoder
+			      'filter-y 'filter-xy))
+	    (gen-args (list 0.0 0.0 
+			    0.0 (lambda (dir) 0.0) 0.0 #f
+			    0.0 0.0 0.0 0 (lambda (dir) 0.0)
+			    0.0 0.0 0 0.0 0.0 0.0 0.0 0.0
+			    0.0 0.0 0.0 0.0
+			    0.0 0.0 (lambda (dir) 0.0) 0.0 0.0 0.0
+			    0.0 0.0 0.0 0.0 0.0 (lambda (dir) 0.0)
+			    0.0 0.0))
+	    (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-bank mus-channel mus-channels mus-cosines mus-data
+				 mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
+				 mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
+				 mus-ycoeffs))
+	    (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-x1 'mus-x2 'mus-y1 'mus-y2 'mus-bank 'mus-channel 
+				 'mus-channels 'mus-cosines 'mus-data
+				 'mus-feedback 'mus-feedforward 'mus-formant-radius 'mus-frequency 'mus-hop 'mus-increment 'mus-length
+				 'mus-location 'mus-mix 'mus-order 'mus-phase 'mus-ramp 'mus-random 'mus-run 'mus-scaler 'mus-xcoeffs
+				 'mus-ycoeffs)))
+	(for-each
+	 (lambda (make run ques arg name)
+	   (let ((gen (make)))
+	     (if (not (ques gen)) (snd-display ";~A: ~A -> ~A?" name make gen))
+	     (let ((tag (catch #t (lambda () (if arg (run gen arg) (run gen))) (lambda args args))))
+	       (if (and (not (number? tag)) 
+			(not (frame? tag)))
+		   (snd-display ";~A: ~A ~A ~A: ~A" name run gen arg tag)))
+	     (for-each
+	      (lambda (func genname)
+		(let ((tag (catch #t (lambda () (func gen)) (lambda args (car args)))))
+		  (if (and (not (symbol? tag))
+			   (procedure-with-setter? func)
+			   (or (not (eq? genname 'mus-data))
+			       (vct? tag)))
+		      (let ((tag1 (catch #t (lambda () (set! (func gen) tag)) (lambda args (car args)))))
+			(if (and (symbol? tag1)
+				 (not (eq? tag1 'mus-error)))
+			    (snd-display ";~A set ~A ~A ~A -> ~A" name genname gen tag tag1))))))
+	      generic-procs generic-names)))
+	 make-procs run-procs ques-procs gen-args func-names))
+      
       (run-hook after-test-hook 8)
       ))
 
@@ -42810,6 +42963,8 @@ EDITS: 2
 	    (check-error-tag 'wrong-type-arg (lambda () (make-iir-filter :order 32 :ycoeffs (make-vct 4))))
 	    (check-error-tag 'out-of-range (lambda () (make-table-lookup :size 123456789)))
 	    (check-error-tag 'out-of-range (lambda () (make-src :srate -0.5)))
+	    (check-error-tag 'out-of-range (lambda () (make-granulate :ramp -0.5)))
+	    (check-error-tag 'out-of-range (lambda () (make-granulate :ramp 1.5)))
 	    (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :channels 0)))
 	    (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :srate 0)))
 	    (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :size -1)))
