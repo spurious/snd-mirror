@@ -308,7 +308,7 @@
 	    (= (syncd-sounds cursync) 1))
 	(let ((data (make-vector 1)))
 	  (vector-set! data 0 (snd-tempnam))
-	  (save-sound-as (vector-ref data 0) (selected-sound) type format #f #f edpos)
+	  (save-sound-as (vector-ref data 0) (selected-sound) type format :edit-position edpos)
 	  data)
 	(snd-error "re-implemented sound-to-temp doesn't handle sync bit correctly yet."))))
 
@@ -319,7 +319,7 @@
     (do ((i 0 (1+ i))) 
 	((= i chns)) 
       (vector-set! data i (snd-tempnam))
-      (save-selection (vector-ref data i) type format #f #f i))
+      (save-selection (vector-ref data i) type format :channel i))
     data))
 
   
@@ -334,7 +334,7 @@
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
 	    (vector-set! data i (snd-tempnam))
-	    (save-sound-as (vector-ref data i) (selected-sound) type format #f i edpos))
+	    (save-sound-as (vector-ref data i) (selected-sound) type format :channel i :edit-position edpos))
 	  data)
 	(snd-error "re-implemented sound-to-temps doesn't handle sync bit correctly yet."))))
 

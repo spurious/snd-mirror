@@ -1,5 +1,6 @@
 #include "snd.h"
 #include "sndlib-strings.h"
+#include "clm2xen.h"
 
 #define REGION_FILE 1
 #define REGION_DEFERRED 0
@@ -1322,24 +1323,49 @@ selection is used."
   return(C_INT_TO_XEN_REGION(id));
 }
 
-static XEN g_save_region (XEN n, XEN filename, XEN type, XEN format, XEN comment) 
-{
-  #define H_save_region "(" S_save_region " region filename (type #f) (format #f) (comment #f)): save region in filename \
-using data format (default depends on machine), header type (" S_mus_next " by default), and comment"
+static XEN kw_header_type, kw_data_format, kw_comment, kw_file;
 
-  char *name = NULL, *com = NULL;
-  int res = MUS_NO_ERROR, rg, data_format, header_type;
+static void init_region_keywords(void)
+{
+  kw_header_type = XEN_MAKE_KEYWORD("header-type");
+  kw_data_format = XEN_MAKE_KEYWORD("data-format");
+  kw_comment = XEN_MAKE_KEYWORD("comment");
+  kw_file = XEN_MAKE_KEYWORD("file");
+}
+
+static XEN g_save_region (XEN n, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+{
+  #define H_save_region "(" S_save_region " region :file :header-type :data-format :comment): save region in file \
+using data format (default depends on machine byte order), header type (" S_mus_next "), and comment"
+
+  char *name = NULL, *com = NULL, *file = NULL;
+  int res = MUS_NO_ERROR, rg, data_format = MUS_OUT_FORMAT, header_type = MUS_NEXT;
+  XEN args[8]; 
+  XEN keys[4];
+  int orig_arg[4] = {0, 0, 0, 0};
+  int vals;
+  keys[0] = kw_file;
+  keys[1] = kw_header_type;
+  keys[2] = kw_data_format;
+  keys[3] = kw_comment;
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
   XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_save_region, "a region id");
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_2, S_save_region, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(type), type, XEN_ARG_3, S_save_region, "an integer (mus-next etc)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(format), format, XEN_ARG_4, S_save_region, "an integer (mus-bshort etc)");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(comment), comment, XEN_ARG_5, S_save_region, "a string");
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_save_region, n));
-  data_format = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(format, MUS_OUT_FORMAT, S_save_region);
-  header_type = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(type, MUS_NEXT, S_save_region);
-  name = mus_expand_filename(XEN_TO_C_STRING(filename));
+  vals = mus_optkey_unscramble(S_save_region, 4, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      file = mus_optkey_to_string(keys[0], S_save_region, orig_arg[0], NULL);
+      header_type = mus_optkey_to_int(keys[1], S_save_region, orig_arg[1], header_type);
+      data_format = mus_optkey_to_int(keys[2], S_save_region, orig_arg[2], data_format);
+      com = mus_optkey_to_string(keys[3], S_save_region, orig_arg[3], NULL);
+    }
+  if (file == NULL) 
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
+			 C_TO_XEN_STRING("no output file?")));
+  name = mus_expand_filename(file);
   ss->catch_message = NULL;
   if (!(mus_header_writable(header_type, data_format))) 
     {
@@ -1352,14 +1378,13 @@ using data format (default depends on machine), header type (" S_mus_next " by d
 	  else header_type = MUS_RAW;
 	}
     }
-  if (XEN_STRING_P(comment)) com = XEN_TO_C_STRING(comment);
   res = save_region_1(name, header_type, data_format, region_srate(rg), rg, com);
   if (name) FREE(name);
   if (res != MUS_NO_ERROR)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
 			 C_TO_XEN_STRING(ss->catch_message)));
-  return(filename); /* parallel save-selection */
+  return(args[orig_arg[0] - 1]); /* -> filename, parallel save-selection */
 }
 
 static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n, XEN tid)
@@ -1462,7 +1487,7 @@ XEN_ARGIFY_1(g_region_frames_w, g_region_frames)
 XEN_ARGIFY_1(g_region_srate_w, g_region_srate)
 XEN_ARGIFY_1(g_region_chans_w, g_region_chans)
 XEN_ARGIFY_1(g_region_maxamp_w, g_region_maxamp)
-XEN_ARGIFY_5(g_save_region_w, g_save_region)
+XEN_ARGIFY_9(g_save_region_w, g_save_region)
 XEN_ARGIFY_1(g_forget_region_w, g_forget_region)
 XEN_ARGIFY_2(g_play_region_w, g_play_region)
 XEN_ARGIFY_4(g_make_region_w, g_make_region)
@@ -1494,6 +1519,8 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 
 void g_init_regions(void)
 {
+  init_region_keywords();
+
   XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w,     9, 0, 0, "internal func used in save-state, restores a region");
   XEN_DEFINE_PROCEDURE(S_insert_region,      g_insert_region_w,      0, 4, 0, H_insert_region);
   XEN_DEFINE_PROCEDURE(S_regions,            g_regions_w,            0, 0, 0, H_regions);
@@ -1501,7 +1528,7 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_region_srate,       g_region_srate_w,       0, 1, 0, H_region_srate);
   XEN_DEFINE_PROCEDURE(S_region_chans,       g_region_chans_w,       0, 1, 0, H_region_chans);
   XEN_DEFINE_PROCEDURE(S_region_maxamp,      g_region_maxamp_w,      0, 1, 0, H_region_maxamp);
-  XEN_DEFINE_PROCEDURE(S_save_region,        g_save_region_w,        2, 3, 0, H_save_region);
+  XEN_DEFINE_PROCEDURE(S_save_region,        g_save_region_w,        2, 7, 0, H_save_region);
   XEN_DEFINE_PROCEDURE(S_forget_region,      g_forget_region_w,      0, 1, 0, H_forget_region);
   XEN_DEFINE_PROCEDURE(S_play_region,        g_play_region_w,        0, 2, 0, H_play_region);
   XEN_DEFINE_PROCEDURE(S_make_region,        g_make_region_w,        0, 4, 0, H_make_region);

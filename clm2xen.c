@@ -68,115 +68,24 @@ static XEN clm_mus_error(int type, char *msg)
 }
 
 
-/* ---------------- keywords ---------------- */
+/* ---------------- optional-key ---------------- */
 
-#define SC_frequency        "frequency"
-#define SC_initial_phase    "initial-phase"
-#define SC_wave             "wave"
-#define SC_cosines          "cosines"
-#define SC_amplitude        "amplitude"
-#define SC_ratio            "ratio"
-#define SC_size             "size"
-#define SC_a0               "a0"
-#define SC_a1               "a1"
-#define SC_a2               "a2"
-#define SC_b1               "b1"
-#define SC_b2               "b2"
-#define SC_input            "input"
-#define SC_srate            "srate"
-#define SC_file             "file"
-#define SC_channel          "channel"
-#define SC_start            "start"
-#define SC_initial_contents "initial-contents"
-#define SC_initial_element  "initial-element"
-#define SC_scaler           "scaler"
-#define SC_feedforward      "feedforward"
-#define SC_feedback         "feedback"
-#define SC_max_size         "max-size"
-#define SC_radius           "radius"
-#define SC_gain             "gain"
-#define SC_partials         "partials"
-#define SC_r                "r"
-#define SC_a                "a"
-#define SC_n                "n"
-#define SC_fill_time        "fill-time"
-#define SC_order            "order"
-#define SC_x_coeffs         "xcoeffs"
-#define SC_y_coeffs         "ycoeffs"
-#define SC_envelope         "envelope"
-#define SC_base             "base"
-#define SC_duration         "duration"
-#define SC_offset           "offset"
-#define SC_end              "end"
-#define SC_direction        "direction"
-#define SC_degree           "degree"
-#define SC_distance         "distance"
-#define SC_reverb           "reverb"
-#define SC_output           "output"
-#define SC_fft_size         "fft-size"
-#define SC_expansion        "expansion"
-#define SC_length           "length"
-#define SC_hop              "hop"
-#define SC_ramp             "ramp"
-#define SC_jitter           "jitter"
-#define SC_type             "type"
-#define SC_format           "format"
-#define SC_comment          "comment"
-#define SC_channels         "channels"
-#define SC_filter           "filter"
-#define SC_revout           "revout"
-#define SC_width            "width"
-#define SC_edit             "edit"
-#define SC_synthesize       "synthesize"
-#define SC_analyze          "analyze"
-#define SC_interp           "interp"
-#define SC_overlap          "overlap"
-#define SC_pitch            "pitch"
-#define SC_dur              "dur"
-
-#define NUM_KEYWORDS 63
-enum {C_frequency, C_initial_phase, C_wave, C_cosines, C_amplitude,
-      C_r, C_ratio, C_size, C_a0, C_a1, C_a2, C_b1, C_b2, C_max_size,
-      C_input, C_srate, C_file, C_channel, C_start,
-      C_initial_contents, C_initial_element, C_scaler, C_feedforward, C_feedback,
-      C_radius, C_gain, C_partials, C_fill_time, C_a, C_n,
-      C_order, C_x_coeffs, C_y_coeffs, C_envelope, C_base, C_duration, C_offset, C_end,
-      C_direction, C_degree, C_distance, C_reverb, C_output, C_fft_size,
-      C_expansion, C_length, C_hop, C_ramp, C_jitter,
-      C_type, C_format, C_comment, C_channels, C_filter, C_revout, C_width,
-      C_edit, C_synthesize, C_analyze, C_interp, C_overlap, C_pitch, C_dur
-};
-
-static const char *keywords[NUM_KEYWORDS] = 
-  {SC_frequency, SC_initial_phase, SC_wave, SC_cosines, SC_amplitude,
-   SC_r, SC_ratio, SC_size, SC_a0, SC_a1, SC_a2, SC_b1, SC_b2, SC_max_size,
-   SC_input, SC_srate, SC_file, SC_channel, SC_start,
-   SC_initial_contents, SC_initial_element, SC_scaler, SC_feedforward, SC_feedback,
-   SC_radius, SC_gain, SC_partials, SC_fill_time, SC_a, SC_n,
-   SC_order, SC_x_coeffs, SC_y_coeffs, SC_envelope, SC_base, SC_duration, SC_offset, SC_end,
-   SC_direction, SC_degree, SC_distance, SC_reverb, SC_output, SC_fft_size,
-   SC_expansion, SC_length, SC_hop, SC_ramp, SC_jitter,
-   SC_type, SC_format, SC_comment, SC_channels, SC_filter, SC_revout, SC_width,
-   SC_edit, SC_synthesize, SC_analyze, SC_interp, SC_overlap, SC_pitch, SC_dur
-};
-static XEN all_keys[NUM_KEYWORDS];
-
-static void init_keywords(void)
-{
-  int i;
-  for (i = 0; i < NUM_KEYWORDS; i++) 
-    all_keys[i] = XEN_MAKE_KEYWORD((char *)(keywords[i]));
-}
-
-/* SOMEDAY: user-defined keys, export all the optkey support (sndins) */
-
-int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig)
+int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, int *orig)
 {
   /* implement the &optional-key notion in CLM */
-  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, i;
+  /* "keys" holds the keywords the calling function accepts, 
+   *   upon return, if a key was given in the arglist or its position had a value, the corresponding value is in its keys location
+   * "nkeys is the size of "keys"
+   * "args" contains the original arguments passed to the function in order
+   *   it shoud be of size nkeys * 2, and any trailing (unspecified) args should be XEN_UNDEFINED
+   * "orig" should be of size nkeys, and will contain upon return the 1-based location of the original keyword value argument
+   *  (it is intended for error reports)
+   */
+  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, i, nargs;
   bool keying = false, key_found = false;
   XEN key;
   arg_ctr = 0;
+  nargs = nkeys * 2;
   while ((arg_ctr < nargs) && 
 	 (XEN_BOUND_P(args[arg_ctr])))
     {
@@ -188,7 +97,7 @@ int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN
 	  if (arg_ctr >= nkeys)
 	    mus_misc_error(caller, "extra trailing args?", args[arg_ctr]);
 	  keys[arg_ctr] = args[arg_ctr];
-	  orig[arg_ctr] = arg_ctr;
+	  orig[arg_ctr] = arg_ctr + 1;
 	  arg_ctr++;
 	  key_start = arg_ctr;
 	  rtn_ctr++;
@@ -208,7 +117,7 @@ int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN
 	      if (XEN_KEYWORD_EQ_P(keys[i], key))
 		{
 		  keys[i] = args[arg_ctr + 1];
-		  orig[i] = arg_ctr + 1;
+		  orig[i] = arg_ctr + 2;
 		  arg_ctr += 2;
 		  rtn_ctr++;
 		  key_found = true;
@@ -218,6 +127,7 @@ int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN
 	    {
 	      /* either there's a redundant keyword pair or a keyword that 'caller' doesn't recognize */
 	      mus_misc_error(caller, "redundant or invalid key found", key);
+	      /* normally (all local cases) the error returns */
 	      arg_ctr += 2;
 	    }
 	}
@@ -225,48 +135,157 @@ int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN
   return(rtn_ctr);
 }
 
-static Float fkeyarg (XEN key, const char *caller, int n, Float def)
+/* backwards compatibility */
+int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig) 
+{
+  return(mus_optkey_unscramble(caller, nkeys, keys, args, orig));
+}
+
+Float mus_optkey_to_float(XEN key, const char *caller, int n, Float def)
 {
   if (!(XEN_KEYWORD_P(key)))
     {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a number or keyword");
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a number");
       return(XEN_TO_C_DOUBLE_WITH_CALLER(key, caller));
     }
   return(def);
 }
 
-static int ikeyarg (XEN key, const char *caller, int n, int def)
+int mus_optkey_to_int(XEN key, const char *caller, int n, int def)
 {
   if (!(XEN_KEYWORD_P(key)))
     {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "an integer or keyword");
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "an integer");
       return(XEN_TO_C_INT_OR_ELSE_WITH_CALLER(key, def, caller));
     }
   return(def);
 }
 
-static off_t okeyarg (XEN key, const char *caller, int n, off_t def)
+off_t mus_optkey_to_off_t(XEN key, const char *caller, int n, off_t def)
 {
   if (!(XEN_KEYWORD_P(key)))
     {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a sample number or keyword");
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a sample number");
       return(XEN_TO_C_OFF_T_OR_ELSE(key, def));
     }
   return(def);
 }
 
-#if 0
-static mus_any *mkeyarg(XEN key, const char *caller, int n, mus_any *def)
+char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def)
 {
-  /* from Michael Scholz's sndins.c */
-  if (!(XEN_KEYWORD_P(key))) 
+  if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
-      XEN_ASSERT_TYPE(MUS_XEN_P(key), key, n, caller, "a clm generator or keyword");
-      return(XEN_TO_MUS_ANY(key));
+      XEN_ASSERT_TYPE(XEN_STRING_P(key), key, n, caller, "a string");
+      return(XEN_TO_C_STRING(key));
     }
   return(def);
 }
-#endif
+
+vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def)
+{
+  if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
+    {
+      XEN_ASSERT_TYPE(VCT_P(key), key, n, caller, "a vct");
+      return(TO_VCT(key));
+    }
+  return(def);
+}
+
+XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err)
+{
+  if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
+    {
+      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key), key, n, caller, "a procedure");
+      if (XEN_REQUIRED_ARGS(key) != required_args)
+	XEN_BAD_ARITY_ERROR(caller, n, key, err);
+      return(key);
+    }
+  return(def);
+}
+
+/* mus_optkey_to_mus_any is below where MUS_XEN_P et al are defined */
+
+
+/* ---------------- clm keywords ---------------- */
+
+static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
+  kw_r, kw_ratio, kw_size, kw_a0, kw_a1, kw_a2, kw_b1, kw_b2, kw_max_size,
+  kw_input, kw_srate, kw_file, kw_channel, kw_start,
+  kw_initial_contents, kw_initial_element, kw_scaler, kw_feedforward, kw_feedback,
+  kw_radius, kw_gain, kw_partials, kw_fill_time, kw_a, kw_n,
+  kw_order, kw_x_coeffs, kw_y_coeffs, kw_envelope, kw_base, kw_duration, kw_offset, kw_end,
+  kw_direction, kw_degree, kw_distance, kw_reverb, kw_output, kw_fft_size,
+  kw_expansion, kw_length, kw_hop, kw_ramp, kw_jitter,
+  kw_type, kw_format, kw_comment, kw_channels, kw_filter, kw_revout, kw_width,
+  kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_dur;
+
+static void init_keywords(void)
+{
+  /* keywords are GC-protected by Guile; in Ruby there's rb_intern of the symbol -- is it safe? */
+  kw_frequency = XEN_MAKE_KEYWORD("frequency");
+  kw_initial_phase = XEN_MAKE_KEYWORD("initial-phase");
+  kw_wave = XEN_MAKE_KEYWORD("wave");
+  kw_cosines = XEN_MAKE_KEYWORD("cosines");
+  kw_amplitude = XEN_MAKE_KEYWORD("amplitude");
+  kw_r = XEN_MAKE_KEYWORD("r");
+  kw_ratio = XEN_MAKE_KEYWORD("ratio");
+  kw_size = XEN_MAKE_KEYWORD("size");
+  kw_a0 = XEN_MAKE_KEYWORD("a0");
+  kw_a1 = XEN_MAKE_KEYWORD("a1");
+  kw_a2 = XEN_MAKE_KEYWORD("a2");
+  kw_b1 = XEN_MAKE_KEYWORD("b1");
+  kw_b2 = XEN_MAKE_KEYWORD("b2");
+  kw_max_size = XEN_MAKE_KEYWORD("max-size");
+  kw_input = XEN_MAKE_KEYWORD("input");
+  kw_srate = XEN_MAKE_KEYWORD("srate");
+  kw_file = XEN_MAKE_KEYWORD("file");
+  kw_channel = XEN_MAKE_KEYWORD("channel");
+  kw_start = XEN_MAKE_KEYWORD("start");
+  kw_initial_contents = XEN_MAKE_KEYWORD("initial-contents");
+  kw_initial_element = XEN_MAKE_KEYWORD("initial-element");
+  kw_scaler = XEN_MAKE_KEYWORD("scaler");
+  kw_feedforward = XEN_MAKE_KEYWORD("feedforward");
+  kw_feedback = XEN_MAKE_KEYWORD("feedback");
+  kw_radius = XEN_MAKE_KEYWORD("radius");
+  kw_gain = XEN_MAKE_KEYWORD("gain");
+  kw_partials = XEN_MAKE_KEYWORD("partials");
+  kw_fill_time = XEN_MAKE_KEYWORD("fill-time");
+  kw_a = XEN_MAKE_KEYWORD("a");
+  kw_n = XEN_MAKE_KEYWORD("n");
+  kw_order = XEN_MAKE_KEYWORD("order");
+  kw_x_coeffs = XEN_MAKE_KEYWORD("xcoeffs");
+  kw_y_coeffs = XEN_MAKE_KEYWORD("ycoeffs");
+  kw_envelope = XEN_MAKE_KEYWORD("envelope");
+  kw_base = XEN_MAKE_KEYWORD("base");
+  kw_duration = XEN_MAKE_KEYWORD("duration");
+  kw_offset = XEN_MAKE_KEYWORD("offset");
+  kw_end = XEN_MAKE_KEYWORD("end");
+  kw_direction = XEN_MAKE_KEYWORD("direction");
+  kw_degree = XEN_MAKE_KEYWORD("degree");
+  kw_distance = XEN_MAKE_KEYWORD("distance");
+  kw_reverb = XEN_MAKE_KEYWORD("reverb");
+  kw_output = XEN_MAKE_KEYWORD("output");
+  kw_fft_size = XEN_MAKE_KEYWORD("fft-size");
+  kw_expansion = XEN_MAKE_KEYWORD("expansion");
+  kw_length = XEN_MAKE_KEYWORD("length");
+  kw_hop = XEN_MAKE_KEYWORD("hop");
+  kw_ramp = XEN_MAKE_KEYWORD("ramp");
+  kw_jitter = XEN_MAKE_KEYWORD("jitter");
+  kw_type = XEN_MAKE_KEYWORD("type");
+  kw_format = XEN_MAKE_KEYWORD("format");
+  kw_comment = XEN_MAKE_KEYWORD("comment");
+  kw_channels = XEN_MAKE_KEYWORD("channels");
+  kw_filter = XEN_MAKE_KEYWORD("filter");
+  kw_revout = XEN_MAKE_KEYWORD("revout");
+  kw_width = XEN_MAKE_KEYWORD("width");
+  kw_edit = XEN_MAKE_KEYWORD("edit");
+  kw_synthesize = XEN_MAKE_KEYWORD("synthesize");
+  kw_analyze = XEN_MAKE_KEYWORD("analyze");
+  kw_interp = XEN_MAKE_KEYWORD("interp");
+  kw_overlap = XEN_MAKE_KEYWORD("overlap");
+  kw_pitch = XEN_MAKE_KEYWORD("pitch");
+  kw_dur = XEN_MAKE_KEYWORD("dur");
+}
 
 
 
@@ -711,6 +730,17 @@ XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v) /* global for user-defined ge
   XEN_MAKE_AND_RETURN_OBJECT(mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
 }
 
+mus_any *mus_optkey_to_mus_any(XEN key, const char *caller, int n, mus_any *def)
+{
+  /* from Michael Scholz's sndins.c */
+  if (!(XEN_KEYWORD_P(key))) 
+    {
+      XEN_ASSERT_TYPE(MUS_XEN_P(key), key, n, caller, "a clm generator or keyword");
+      return(XEN_TO_MUS_ANY(key));
+    }
+  return(def);
+}
+
 
 
 /* ---------------- generic functions ---------------- */
@@ -976,14 +1006,14 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN keys[2];
   int orig_arg[2] = {0, 0};
   Float freq = 440.0, phase = 0.0;
-  keys[0] = all_keys[C_frequency];
-  keys[1] = all_keys[C_initial_phase];
+  keys[0] = kw_frequency;
+  keys[1] = kw_initial_phase;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; 
-  vals = mus_decode_keywords(S_make_oscil, 2, keys, 4, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_oscil, 2, keys, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_oscil, orig_arg[0] + 1, freq);
-      phase = fkeyarg(keys[1], S_make_oscil, orig_arg[1] + 1, phase);
+      freq = mus_optkey_to_float(keys[0], S_make_oscil, orig_arg[0], freq);
+      phase = mus_optkey_to_float(keys[1], S_make_oscil, orig_arg[1], phase);
     }
   ge = mus_make_oscil(freq, phase);
   if (ge)
@@ -1063,18 +1093,18 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   switch (choice)
     {
     case G_DELAY:   caller = S_make_delay;                                       break;
-    case G_COMB:    caller = S_make_comb;     keys[argn++] = all_keys[C_scaler]; break;
-    case G_NOTCH:   caller = S_make_notch;    keys[argn++] = all_keys[C_scaler]; break;
-    case G_ALL_PASS: caller = S_make_all_pass; keys[argn++] = all_keys[C_feedback]; keys[argn++] = all_keys[C_feedforward]; break;
+    case G_COMB:    caller = S_make_comb;     keys[argn++] = kw_scaler; break;
+    case G_NOTCH:   caller = S_make_notch;    keys[argn++] = kw_scaler; break;
+    case G_ALL_PASS: caller = S_make_all_pass; keys[argn++] = kw_feedback; keys[argn++] = kw_feedforward; break;
     }
-  keys[argn++] = all_keys[C_size];
-  keys[argn++] = all_keys[C_initial_contents];
-  keys[argn++] = all_keys[C_initial_element];
-  keys[argn++] = all_keys[C_max_size];
+  keys[argn++] = kw_size;
+  keys[argn++] = kw_initial_contents;
+  keys[argn++] = kw_initial_element;
+  keys[argn++] = kw_max_size;
   for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_decode_keywords(caller, argn, keys, argn * 2, args, orig_arg);
+  vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
   if (vals > 0)
     {
       keyn = 0;
@@ -1083,17 +1113,17 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	case G_DELAY: 
 	  break;
 	case G_COMB: case G_NOTCH:
-	  scaler = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, scaler);
+	  scaler = mus_optkey_to_float(keys[keyn], caller, orig_arg[keyn], scaler);
 	  keyn++;
 	  break;
 	case G_ALL_PASS:
-	  feedback = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, feedback);
+	  feedback = mus_optkey_to_float(keys[keyn], caller, orig_arg[keyn], feedback);
 	  keyn++;
-	  feedforward = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, feedforward);
+	  feedforward = mus_optkey_to_float(keys[keyn], caller, orig_arg[keyn], feedforward);
 	  keyn++;
 	  break;
 	}
-      size = ikeyarg(keys[keyn], caller, orig_arg[keyn] + 1, size);
+      size = mus_optkey_to_int(keys[keyn], caller, orig_arg[keyn], size);
       if (size < 0)
 	XEN_OUT_OF_RANGE_ERROR(caller, size_key + 1, keys[size_key], "size ~A < 0?");
       if (size > MAX_TABLE_SIZE)
@@ -1132,7 +1162,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  else 
 	    {
 	      if (line) FREE(line);
-	      XEN_ASSERT_TYPE(XEN_NUMBER_P(keys[keyn]), keys[keyn], orig_arg[keyn] + 1, caller, "a number");
+	      XEN_ASSERT_TYPE(XEN_NUMBER_P(keys[keyn]), keys[keyn], orig_arg[keyn], caller, "a number");
 	    }
 	}
       keyn++;
@@ -1153,7 +1183,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  else
 	    {
 	      if (line) FREE(line);
-	      XEN_ASSERT_TYPE(XEN_NUMBER_P(keys[keyn]), keys[keyn], orig_arg[keyn] + 1, caller, "a number");
+	      XEN_ASSERT_TYPE(XEN_NUMBER_P(keys[keyn]), keys[keyn], orig_arg[keyn], caller, "a number");
 	    }
 	}
     }
@@ -1336,16 +1366,16 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
   int cosines = 1;
   Float freq = 440.0;
   Float phase = 0.0;
-  keys[0] = all_keys[C_cosines];
-  keys[1] = all_keys[C_frequency];
-  keys[2] = all_keys[C_initial_phase];
+  keys[0] = kw_cosines;
+  keys[1] = kw_frequency;
+  keys[2] = kw_initial_phase;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; 
-  vals = mus_decode_keywords(S_make_sum_of_cosines, 3, keys, 6, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_sum_of_cosines, 3, keys, args, orig_arg);
   if (vals > 0)
     {
-      cosines = ikeyarg(keys[0], S_make_sum_of_cosines, orig_arg[0] + 1, cosines);
-      freq = fkeyarg(keys[1], S_make_sum_of_cosines, orig_arg[1] + 1, freq);
-      phase = fkeyarg(keys[2], S_make_sum_of_cosines, orig_arg[2] + 1, phase);
+      cosines = mus_optkey_to_int(keys[0], S_make_sum_of_cosines, orig_arg[0], cosines);
+      freq = mus_optkey_to_float(keys[1], S_make_sum_of_cosines, orig_arg[1], freq);
+      phase = mus_optkey_to_float(keys[2], S_make_sum_of_cosines, orig_arg[2], phase);
     }
   if (cosines <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, 1, keys[0], "cosines ~A <= 0?");
@@ -1385,14 +1415,14 @@ static XEN g_make_noi(bool rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   int vals;
   Float freq = 440.0;
   Float base = 1.0;
-  keys[0] = all_keys[C_frequency];
-  keys[1] = all_keys[C_amplitude];
+  keys[0] = kw_frequency;
+  keys[1] = kw_amplitude;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
-  vals = mus_decode_keywords((rand_case) ? S_make_rand : S_make_rand_interp, 2, keys, 4, args, orig_arg);
+  vals = mus_optkey_unscramble((rand_case) ? S_make_rand : S_make_rand_interp, 2, keys, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[0] + 1, freq);
-      base = fkeyarg(keys[1], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[1] + 1, base);
+      freq = mus_optkey_to_float(keys[0], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[0], freq);
+      base = mus_optkey_to_float(keys[1], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[1], base);
     }
   if (rand_case)
     ge = mus_make_rand(freq, base);
@@ -1591,26 +1621,25 @@ is the same in effect as " S_make_oscil "."
   int orig_arg[4] = {0, 0, 0, 0};
   Float freq = 440.0, phase = 0.0;
   Float *table = NULL;
-  vct *v;
-  keys[0] = all_keys[C_frequency];
-  keys[1] = all_keys[C_initial_phase];
-  keys[2] = all_keys[C_wave];
-  keys[3] = all_keys[C_size];
+  vct *v = NULL;
+  keys[0] = kw_frequency;
+  keys[1] = kw_initial_phase;
+  keys[2] = kw_wave;
+  keys[3] = kw_size;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
-  vals = mus_decode_keywords(S_make_table_lookup, 4, keys, 8, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_table_lookup, 4, keys, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_table_lookup, orig_arg[0] + 1, freq);
-      phase = fkeyarg(keys[1], S_make_table_lookup, orig_arg[1] + 1, phase);
-      table_size = ikeyarg(keys[3], S_make_table_lookup, orig_arg[3] + 1, table_size);
+      freq = mus_optkey_to_float(keys[0], S_make_table_lookup, orig_arg[0], freq);
+      phase = mus_optkey_to_float(keys[1], S_make_table_lookup, orig_arg[1], phase);
+      v = mus_optkey_to_vct(keys[2], S_make_table_lookup, orig_arg[2], NULL);
+      table_size = mus_optkey_to_int(keys[3], S_make_table_lookup, orig_arg[3], table_size);
       if (table_size <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, 4, keys[3], "size ~A <= 0?");
       if (table_size > MAX_TABLE_SIZE)
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, 4, keys[3], "size ~A too large");
-      if (!(XEN_KEYWORD_P(keys[2])))
+      if (v)
 	{
-	  XEN_ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2] + 1, S_make_table_lookup, "a vct");
-	  v = TO_VCT(keys[2]);
 	  table = copy_vct_data(v);
 	  table_size = v->length;
 	}
@@ -1673,16 +1702,16 @@ static XEN g_make_sw(xclm_wave_t type, Float def_phase, XEN arg1, XEN arg2, XEN 
       case G_TRIANGLE_WAVE: caller = S_make_triangle_wave; break;
       case G_PULSE_TRAIN: caller = S_make_pulse_train; break;
     }
-  keys[0] = all_keys[C_frequency];
-  keys[1] = all_keys[C_amplitude];
-  keys[2] = all_keys[C_initial_phase];
+  keys[0] = kw_frequency;
+  keys[1] = kw_amplitude;
+  keys[2] = kw_initial_phase;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; 
-  vals = mus_decode_keywords(caller, 3, keys, 6, args, orig_arg);
+  vals = mus_optkey_unscramble(caller, 3, keys, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], caller, orig_arg[0] + 1, freq);
-      base = fkeyarg(keys[1], caller, orig_arg[1] + 1, base);
-      phase = fkeyarg(keys[2], caller, orig_arg[2] + 1, phase);
+      freq = mus_optkey_to_float(keys[0], caller, orig_arg[0], freq);
+      base = mus_optkey_to_float(keys[1], caller, orig_arg[1], base);
+      phase = mus_optkey_to_float(keys[2], caller, orig_arg[2], phase);
     }
   switch (type)
     {
@@ -1811,18 +1840,18 @@ return a new " S_asymmetric_fm " generator."
   Float phase = 0.0;
   Float r = 1.0;
   Float ratio = 1.0;
-  keys[0] = all_keys[C_frequency];
-  keys[1] = all_keys[C_initial_phase];
-  keys[2] = all_keys[C_r];
-  keys[3] = all_keys[C_ratio];
+  keys[0] = kw_frequency;
+  keys[1] = kw_initial_phase;
+  keys[2] = kw_r;
+  keys[3] = kw_ratio;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
-  vals = mus_decode_keywords(S_make_asymmetric_fm, 4, keys, 8, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_asymmetric_fm, 4, keys, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_asymmetric_fm, orig_arg[0] + 1, freq);
-      phase = fkeyarg(keys[1], S_make_asymmetric_fm, orig_arg[1] + 1, phase);
-      r = fkeyarg(keys[2], S_make_asymmetric_fm, orig_arg[2] + 1, r);
-      ratio = fkeyarg(keys[3], S_make_asymmetric_fm, orig_arg[3] + 1, ratio);
+      freq = mus_optkey_to_float(keys[0], S_make_asymmetric_fm, orig_arg[0], freq);
+      phase = mus_optkey_to_float(keys[1], S_make_asymmetric_fm, orig_arg[1], phase);
+      r = mus_optkey_to_float(keys[2], S_make_asymmetric_fm, orig_arg[2], r);
+      ratio = mus_optkey_to_float(keys[3], S_make_asymmetric_fm, orig_arg[3], ratio);
     }
   ge = mus_make_asymmetric_fm(freq, phase, r, ratio);
   if (ge)
@@ -1869,16 +1898,16 @@ static XEN g_make_smpflt_1(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
   Float a1 = 0.0;
   switch (choice)
     {
-    case G_ONE_ZERO: keys[0] = all_keys[C_a0]; keys[1] = all_keys[C_a1]; break;
-    case G_ONE_POLE: keys[0] = all_keys[C_a0]; keys[1] = all_keys[C_b1]; break;
-    default: keys[0] = all_keys[C_radius]; keys[1] = all_keys[C_frequency]; break;
+    case G_ONE_ZERO: keys[0] = kw_a0; keys[1] = kw_a1; break;
+    case G_ONE_POLE: keys[0] = kw_a0; keys[1] = kw_b1; break;
+    default: keys[0] = kw_radius; keys[1] = kw_frequency; break;
     }
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
-  vals = mus_decode_keywords(smpflts[choice], 2, keys, 4, args, orig_arg);
+  vals = mus_optkey_unscramble(smpflts[choice], 2, keys, args, orig_arg);
   if (vals > 0)
     {
-      a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, a0);
-      a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1] + 1, a1);
+      a0 = mus_optkey_to_float(keys[0], smpflts[choice], orig_arg[0], a0);
+      a1 = mus_optkey_to_float(keys[1], smpflts[choice], orig_arg[1], a1);
     }
   switch (choice)
     {
@@ -1940,23 +1969,23 @@ static XEN g_make_smpflt_2(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
   Float a2 = 0.0;
   if (choice == G_TWO_ZERO)
     {
-      keys[0] = all_keys[C_a0];
-      keys[1] = all_keys[C_a1];
-      keys[2] = all_keys[C_a2];
+      keys[0] = kw_a0;
+      keys[1] = kw_a1;
+      keys[2] = kw_a2;
     }
   else
     {
-      keys[0] = all_keys[C_a0];
-      keys[1] = all_keys[C_b1];
-      keys[2] = all_keys[C_b2];
+      keys[0] = kw_a0;
+      keys[1] = kw_b1;
+      keys[2] = kw_b2;
     }
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = mus_decode_keywords(smpflts[choice], 3, keys, 6, args, orig_arg);
+  vals = mus_optkey_unscramble(smpflts[choice], 3, keys, args, orig_arg);
   if (vals > 0)
     {
-      a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, a0);
-      a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1] + 1, a1);
-      a2 = fkeyarg(keys[2], smpflts[choice], orig_arg[2] + 1, a2);
+      a0 = mus_optkey_to_float(keys[0], smpflts[choice], orig_arg[0], a0);
+      a1 = mus_optkey_to_float(keys[1], smpflts[choice], orig_arg[1], a1);
+      a2 = mus_optkey_to_float(keys[2], smpflts[choice], orig_arg[2], a2);
     }
   if (choice == G_TWO_ZERO)
     gen = mus_make_two_zero(a0, a1, a2);
@@ -2163,16 +2192,16 @@ control."
   XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   Float freq = 0.0, radius = 0.0, gain = 1.0;
-  keys[0] = all_keys[C_radius];
-  keys[1] = all_keys[C_frequency];
-  keys[2] = all_keys[C_gain];
+  keys[0] = kw_radius;
+  keys[1] = kw_frequency;
+  keys[2] = kw_gain;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = mus_decode_keywords(S_make_formant, 3, keys, 6, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_formant, 3, keys, args, orig_arg);
   if (vals > 0)
     {
-      radius = fkeyarg(keys[0], S_make_formant, orig_arg[0] + 1, radius);
-      freq = fkeyarg(keys[1], S_make_formant, orig_arg[1] + 1, freq);
-      gain = fkeyarg(keys[2], S_make_formant, orig_arg[2] + 1, gain);
+      radius = mus_optkey_to_float(keys[0], S_make_formant, orig_arg[0], radius);
+      freq = mus_optkey_to_float(keys[1], S_make_formant, orig_arg[1], freq);
+      gain = mus_optkey_to_float(keys[2], S_make_formant, orig_arg[2], gain);
     }
   ge = mus_make_formant(radius, freq, gain);
   if (ge)
@@ -2545,14 +2574,14 @@ processing, normally involving overlap-adds."
   Float *buf;
   int siz = DEFAULT_TABLE_SIZE;
   Float filltime = 0.0;
-  keys[0] = all_keys[C_size];
-  keys[1] = all_keys[C_fill_time];
+  keys[0] = kw_size;
+  keys[1] = kw_fill_time;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
-  vals = mus_decode_keywords(S_make_buffer, 2, keys, 4, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_buffer, 2, keys, args, orig_arg);
   if (vals > 0)
     {
-      siz = ikeyarg(keys[0], S_make_buffer, orig_arg[0] + 1, siz);
-      filltime = fkeyarg(keys[1], S_make_buffer, orig_arg[1] + 1, 0.0);
+      siz = mus_optkey_to_int(keys[0], S_make_buffer, orig_arg[0], siz);
+      filltime = mus_optkey_to_float(keys[1], S_make_buffer, orig_arg[1], 0.0);
     }
   if ((siz <= 0) || (siz > MAX_TABLE_SIZE))
     return(XEN_FALSE);
@@ -2644,29 +2673,28 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   int orig_arg[4] = {0, 0, 0, 0};
   int vals, wsize = DEFAULT_TABLE_SIZE;
   bool need_free = false;
-  vct *v;
+  vct *v = NULL;
   Float freq = 440.0;
   Float phase = 0.0;
   Float *wave = NULL;
-  keys[0] = all_keys[C_frequency];
-  keys[1] = all_keys[C_initial_phase];
-  keys[2] = all_keys[C_wave];
-  keys[3] = all_keys[C_size];
+  keys[0] = kw_frequency;
+  keys[1] = kw_initial_phase;
+  keys[2] = kw_wave;
+  keys[3] = kw_size;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
-  vals = mus_decode_keywords(S_make_wave_train, 4, keys, 8, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_wave_train, 4, keys, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_wave_train, orig_arg[0] + 1, freq);
-      phase = fkeyarg(keys[1], S_make_wave_train, orig_arg[1] + 1, phase);
-      wsize = ikeyarg(keys[3], S_make_wave_train, orig_arg[3] + 1, wsize);
+      freq = mus_optkey_to_float(keys[0], S_make_wave_train, orig_arg[0], freq);
+      phase = mus_optkey_to_float(keys[1], S_make_wave_train, orig_arg[1], phase);
+      v = mus_optkey_to_vct(keys[2], S_make_wave_train, orig_arg[2], NULL);
+      wsize = mus_optkey_to_int(keys[3], S_make_wave_train, orig_arg[3], wsize);
       if (wsize <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, 4, keys[3], "size ~A <= 0?");
       if (wsize > MAX_TABLE_SIZE)
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, 4, keys[3], "size ~A too large");
-      if (!(XEN_KEYWORD_P(keys[2])))
+      if (v)
         {
-	  XEN_ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2] + 1, S_make_wave_train, "a vct");
-	  v = TO_VCT(keys[2]);
 	  wave = copy_vct_data(v);
 	  wsize = v->length;
         }
@@ -2753,22 +2781,31 @@ is the same in effect as make-oscil"
   int orig_arg[4] = {0, 0, 0, 0};
   int vals, wsize = 0, npartials = 0;
   bool partials_allocated = false;
-  vct *v;
+  vct *v = NULL;
   Float freq = 440.0;
   Float *wave = NULL, *partials = NULL;
   wsize = DEFAULT_TABLE_SIZE;
-  keys[0] = all_keys[C_frequency];
-  keys[1] = all_keys[C_partials];
-  keys[2] = all_keys[C_size];
-  keys[3] = all_keys[C_wave];
+  keys[0] = kw_frequency;
+  keys[1] = kw_partials;
+  keys[2] = kw_size;
+  keys[3] = kw_wave;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
-  vals = mus_decode_keywords(S_make_waveshape, 4, keys, 8, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_waveshape, 4, keys, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_waveshape, orig_arg[0] + 1, freq);
+      freq = mus_optkey_to_float(keys[0], S_make_waveshape, orig_arg[0], freq);
+      wsize = mus_optkey_to_int(keys[2], S_make_waveshape, orig_arg[2], wsize);
+      if (wsize <= 0)
+	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, 3, keys[2], "table size ~A <= 0?");
+      v = mus_optkey_to_vct(keys[3], S_make_waveshape, orig_arg[3], NULL);
+      if (v)
+        {
+	  wave = copy_vct_data(v);
+	  wsize = v->length;
+	}
       if (!(XEN_KEYWORD_P(keys[1])))
         {
-	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1] + 1, S_make_waveshape, "a list");
+	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_waveshape, "a list");
 	  partials = list2partials(keys[1], &npartials);
 	  if (partials == NULL)
 	    XEN_ERROR(NO_DATA, 
@@ -2777,35 +2814,6 @@ is the same in effect as make-oscil"
 				 keys[1]));
 	  partials_allocated = true;
         }
-      if (!(XEN_KEYWORD_P(keys[2])))
-	{
-	  if (XEN_NUMBER_P(keys[2]))
-	    wsize = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(keys[2], 0, S_make_waveshape);
-	  else
-	    {
-	      if (partials_allocated) {FREE(partials); partials = NULL;}
-	      XEN_ASSERT_TYPE(0, keys[2], orig_arg[2] + 1, S_make_waveshape, "a number");
-	    }
-	}
-      if (!(XEN_KEYWORD_P(keys[3])))
-        {
-	  if (VCT_P(keys[3]))
-	    {
-	      v = TO_VCT(keys[3]);
-	      wave = copy_vct_data(v);
-	      wsize = v->length;
-	    }
-          else 
-	    {
-	      if (partials_allocated) {FREE(partials); partials = NULL;}
-	      XEN_ASSERT_TYPE(0, keys[3], orig_arg[3] + 1, S_make_waveshape, "a vct");
-	    }
-        }
-    }
-  if (wsize <= 0)
-    {
-      if (partials_allocated) {FREE(partials); partials = NULL;}
-      XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, 3, keys[2], "size ~A <= 0?");
     }
   if (wave == NULL) 
     {
@@ -2934,22 +2942,22 @@ return a new sine summation synthesis generator."
   int vals, i, arglist_len;
   Float freq = 440.0, phase = 0.0, a=.5, ratio = 1.0;
   int n = 1;
-  keys[0] = all_keys[C_frequency];
-  keys[1] = all_keys[C_initial_phase];
-  keys[2] = all_keys[C_n];
-  keys[3] = all_keys[C_a];
-  keys[4] = all_keys[C_ratio];
+  keys[0] = kw_frequency;
+  keys[1] = kw_initial_phase;
+  keys[2] = kw_n;
+  keys[3] = kw_a;
+  keys[4] = kw_ratio;
   for (i = 0; i < 10; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_decode_keywords(S_make_sine_summation, 5, keys, 10, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_sine_summation, 5, keys, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_sine_summation, orig_arg[0] + 1, freq);
-      phase = fkeyarg(keys[1], S_make_sine_summation, orig_arg[1] + 1, phase);
-      n = ikeyarg(keys[2], S_make_sine_summation, orig_arg[2] + 1, n);
-      a = fkeyarg(keys[3], S_make_sine_summation, orig_arg[3] + 1, a);
-      ratio = fkeyarg(keys[4], S_make_sine_summation, orig_arg[4] + 1, ratio);
+      freq = mus_optkey_to_float(keys[0], S_make_sine_summation, orig_arg[0], freq);
+      phase = mus_optkey_to_float(keys[1], S_make_sine_summation, orig_arg[1], phase);
+      n = mus_optkey_to_int(keys[2], S_make_sine_summation, orig_arg[2], n);
+      a = mus_optkey_to_float(keys[3], S_make_sine_summation, orig_arg[3], a);
+      ratio = mus_optkey_to_float(keys[4], S_make_sine_summation, orig_arg[4], ratio);
     }
   ge = mus_make_sine_summation(freq, phase, n, a, ratio);
   if (ge)
@@ -3043,17 +3051,17 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
   int vals, order = 0;
   char *caller;
   if (choice == G_FILTER) caller = S_make_filter; else if (choice == G_FIR_FILTER) caller = S_make_fir_filter; else caller = S_make_iir_filter;
-  keys[0] = all_keys[C_order];
-  keys[1] = all_keys[C_x_coeffs];
-  keys[2] = all_keys[C_y_coeffs];
+  keys[0] = kw_order;
+  keys[1] = kw_x_coeffs;
+  keys[2] = kw_y_coeffs;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = mus_decode_keywords(caller, 3, keys, 6, args, orig_arg);
+  vals = mus_optkey_unscramble(caller, 3, keys, args, orig_arg);
   if (vals > 0)
     {
-      order = ikeyarg(keys[0], caller, orig_arg[0] + 1, 0);
+      order = mus_optkey_to_int(keys[0], caller, orig_arg[0], 0);
       if (!(XEN_KEYWORD_P(keys[1])))
         {
-	  XEN_ASSERT_TYPE(VCT_P(keys[1]), keys[1], orig_arg[1] + 1, caller, "a vct");
+	  XEN_ASSERT_TYPE(VCT_P(keys[1]), keys[1], orig_arg[1], caller, "a vct");
 	  if (choice == G_IIR_FILTER)
 	    {
 	      ywave = keys[1];
@@ -3067,7 +3075,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
         }
       if (!(XEN_KEYWORD_P(keys[2])))
 	{
-	  XEN_ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2] + 1, caller, "a vct");
+	  XEN_ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2], caller, "a vct");
 	  ywave = keys[2];
 	  y = TO_VCT(ywave);
 	}
@@ -3217,31 +3225,31 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   int npts = 0;
   Float *brkpts = NULL, *odata = NULL;
   XEN lst;
-  keys[0] = all_keys[C_envelope];
-  keys[1] = all_keys[C_scaler];
-  keys[2] = all_keys[C_duration];
-  keys[3] = all_keys[C_offset];
-  keys[4] = all_keys[C_base];
-  keys[5] = all_keys[C_end];
-  keys[6] = all_keys[C_start];
-  keys[7] = all_keys[C_dur];
+  keys[0] = kw_envelope;
+  keys[1] = kw_scaler;
+  keys[2] = kw_duration;
+  keys[3] = kw_offset;
+  keys[4] = kw_base;
+  keys[5] = kw_end;
+  keys[6] = kw_start;
+  keys[7] = kw_dur;
   for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_decode_keywords(S_make_env, 8, keys, 16, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_env, 8, keys, args, orig_arg);
   if (vals > 0)
     {
-      scaler = fkeyarg(keys[1], S_make_env, orig_arg[1] + 1, 1.0);
-      duration = fkeyarg(keys[2], S_make_env, orig_arg[2] + 1, 0.0);
-      offset = fkeyarg(keys[3], S_make_env, orig_arg[3] + 1, 0.0);
-      base = fkeyarg(keys[4], S_make_env, orig_arg[4] + 1, 1.0);
-      end = okeyarg(keys[5], S_make_env, orig_arg[5] + 1, 0);
-      start = okeyarg(keys[6], S_make_env, orig_arg[6] + 1, 0);
-      dur = okeyarg(keys[7], S_make_env, orig_arg[7] + 1, 0);
+      scaler = mus_optkey_to_float(keys[1], S_make_env, orig_arg[1], 1.0);
+      duration = mus_optkey_to_float(keys[2], S_make_env, orig_arg[2], 0.0);
+      offset = mus_optkey_to_float(keys[3], S_make_env, orig_arg[3], 0.0);
+      base = mus_optkey_to_float(keys[4], S_make_env, orig_arg[4], 1.0);
+      end = mus_optkey_to_off_t(keys[5], S_make_env, orig_arg[5], 0);
+      start = mus_optkey_to_off_t(keys[6], S_make_env, orig_arg[6], 0);
+      dur = mus_optkey_to_off_t(keys[7], S_make_env, orig_arg[7], 0);
       /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
       if (!(XEN_KEYWORD_P(keys[0])))
         {
-	  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(keys[0], len), keys[0], orig_arg[0] + 1, S_make_env, "a list");
+	  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(keys[0], len), keys[0], orig_arg[0], S_make_env, "a list");
 	  if (len == 0)
 	    XEN_ERROR(NO_DATA,
 		      XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
@@ -3741,22 +3749,18 @@ return a new readin (file input) generator reading the sound file 'file' startin
   int vals;
   int channel = 0, direction = 1;
   off_t start = 0;
-  keys[0] = all_keys[C_file];
-  keys[1] = all_keys[C_channel];
-  keys[2] = all_keys[C_start];
-  keys[3] = all_keys[C_direction];
+  keys[0] = kw_file;
+  keys[1] = kw_channel;
+  keys[2] = kw_start;
+  keys[3] = kw_direction;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
-  vals = mus_decode_keywords(S_make_readin, 4, keys, 8, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_readin, 4, keys, args, orig_arg);
   if (vals > 0)
     {
-      if (!(XEN_KEYWORD_P(keys[0])))
-        {
-	  XEN_ASSERT_TYPE(XEN_STRING_P(keys[0]), keys[0], orig_arg[0] + 1, S_make_readin, "a string");
-	  file = XEN_TO_C_STRING(keys[0]);
-	}
-      channel = ikeyarg(keys[1], S_make_readin, orig_arg[1] + 1, channel);
-      start = okeyarg(keys[2], S_make_readin, orig_arg[2] + 1, start);
-      direction = ikeyarg(keys[3], S_make_readin, orig_arg[3] + 1, direction);
+      file = mus_optkey_to_string(keys[0], S_make_readin, orig_arg[0], NULL);
+      channel = mus_optkey_to_int(keys[1], S_make_readin, orig_arg[1], channel);
+      start = mus_optkey_to_off_t(keys[2], S_make_readin, orig_arg[2], start);
+      direction = mus_optkey_to_int(keys[3], S_make_readin, orig_arg[3], direction);
     }
   if (channel < 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_readin, 2, keys[1], "channel ~A < 0?");
@@ -3911,22 +3915,22 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   mus_locsig_interp_t type;
   Float degree = 0.0, distance = 1.0, reverb = 0.0;
   type = clm_locsig_type;
-  keys[0] = all_keys[C_degree];
-  keys[1] = all_keys[C_distance];
-  keys[2] = all_keys[C_reverb];
-  keys[3] = all_keys[C_output];  
-  keys[4] = all_keys[C_revout];
-  keys[5] = all_keys[C_channels];
-  keys[6] = all_keys[C_type];
+  keys[0] = kw_degree;
+  keys[1] = kw_distance;
+  keys[2] = kw_reverb;
+  keys[3] = kw_output;  
+  keys[4] = kw_revout;
+  keys[5] = kw_channels;
+  keys[6] = kw_type;
   for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_decode_keywords(S_make_locsig, 7, keys, 14, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_locsig, 7, keys, args, orig_arg);
   if (vals > 0)
     {
-      degree = fkeyarg(keys[0], S_make_locsig, orig_arg[0] + 1, degree);
-      distance = fkeyarg(keys[1], S_make_locsig, orig_arg[1] + 1, distance);
-      reverb = fkeyarg(keys[2], S_make_locsig, orig_arg[2] + 1, reverb);
+      degree = mus_optkey_to_float(keys[0], S_make_locsig, orig_arg[0], degree);
+      distance = mus_optkey_to_float(keys[1], S_make_locsig, orig_arg[1], distance);
+      reverb = mus_optkey_to_float(keys[2], S_make_locsig, orig_arg[2], reverb);
       if (!(XEN_KEYWORD_P(keys[3]))) 
 	{
 	  if ((MUS_XEN_P(keys[3])) && (mus_output_p(XEN_TO_MUS_ANY(keys[3]))))
@@ -3938,7 +3942,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	    }
 	  else 
 	    {
-	      XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(keys[3])) || (XEN_BOOLEAN_P(keys[3])), keys[3], orig_arg[3] + 1, S_make_locsig, "an output gen");
+	      XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(keys[3])) || (XEN_BOOLEAN_P(keys[3])), keys[3], orig_arg[3], S_make_locsig, "an output gen");
 	      keys[3] = XEN_UNDEFINED;
 	    }
 	}
@@ -3952,14 +3956,14 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	    }
 	  else 
 	    {
-	      XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(keys[4])) || (XEN_BOOLEAN_P(keys[4])), keys[4], orig_arg[4] + 1, S_make_locsig, "a reverb output gen");
+	      XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(keys[4])) || (XEN_BOOLEAN_P(keys[4])), keys[4], orig_arg[4], S_make_locsig, "a reverb output gen");
 	      keys[4] = XEN_UNDEFINED;
 	    }
 	}
-      out_chans = ikeyarg(keys[5], S_make_locsig, orig_arg[5] + 1, out_chans);
-      type = (mus_locsig_interp_t)ikeyarg(keys[6], S_make_locsig, orig_arg[6] + 1, type);
-      XEN_ASSERT_TYPE(out_chans > 0, keys[5], orig_arg[5] + 1, S_make_locsig, "int > 0");
-      XEN_ASSERT_TYPE((type == MUS_LINEAR) || (type == MUS_SINUSOIDAL), keys[6], orig_arg[6] + 1, S_make_locsig, "mus-linear or mus-sinusoidal");
+      out_chans = mus_optkey_to_int(keys[5], S_make_locsig, orig_arg[5], out_chans);
+      type = (mus_locsig_interp_t)mus_optkey_to_int(keys[6], S_make_locsig, orig_arg[6], type);
+      XEN_ASSERT_TYPE(out_chans > 0, keys[5], orig_arg[5], S_make_locsig, "int > 0");
+      XEN_ASSERT_TYPE((type == MUS_LINEAR) || (type == MUS_SINUSOIDAL), keys[6], orig_arg[6], S_make_locsig, "mus-linear or mus-sinusoidal");
     }
   ge = mus_make_locsig(degree, distance, reverb, out_chans, outp, revp, type);
   if (ge)
@@ -4073,20 +4077,16 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   Float srate = 1.0;
-  keys[0] = all_keys[C_input];
-  keys[1] = all_keys[C_srate];
-  keys[2] = all_keys[C_width];
+  keys[0] = kw_input;
+  keys[1] = kw_srate;
+  keys[2] = kw_width;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = mus_decode_keywords(S_make_src, 3, keys, 6, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_src, 3, keys, args, orig_arg);
   if (vals > 0)
     {
-      if (!(XEN_KEYWORD_P(keys[0]))) 
-	{
-	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_src, "a procedure of 1 arg");
-	  in_obj = keys[0];
-	}
-      srate = fkeyarg(keys[1], S_make_src, orig_arg[1] + 1, srate);
-      wid = ikeyarg(keys[2], S_make_src, orig_arg[2] + 1, wid);
+      in_obj = mus_optkey_to_procedure(keys[0], S_make_src, orig_arg[0], XEN_UNDEFINED, 1, "src input procedure takes 1 arg");
+      srate = mus_optkey_to_float(keys[1], S_make_src, orig_arg[1], srate);
+      wid = mus_optkey_to_int(keys[2], S_make_src, orig_arg[2], wid);
     }
   if (srate < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 2, keys[1], "srate ~A < 0.0?");
   if (wid < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width ~A < 0?");
@@ -4166,33 +4166,29 @@ jitter controls the randomness in that spacing, input can be a file pointer."
   int vals, i, arglist_len, maxsize = 0;
   Float expansion = 1.0, segment_length = .15, segment_scaler = .6, ramp_time = .4, output_hop = .05;
   Float jitter = 1.0;
-  keys[0] = all_keys[C_input];
-  keys[1] = all_keys[C_expansion];
-  keys[2] = all_keys[C_length];
-  keys[3] = all_keys[C_scaler];
-  keys[4] = all_keys[C_hop];
-  keys[5] = all_keys[C_ramp];
-  keys[6] = all_keys[C_jitter];
-  keys[7] = all_keys[C_max_size];
+  keys[0] = kw_input;
+  keys[1] = kw_expansion;
+  keys[2] = kw_length;
+  keys[3] = kw_scaler;
+  keys[4] = kw_hop;
+  keys[5] = kw_ramp;
+  keys[6] = kw_jitter;
+  keys[7] = kw_max_size;
   for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_decode_keywords(S_make_granulate, 8, keys, 16, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_granulate, 8, keys, args, orig_arg);
   if (vals > 0)
     {
-      if (!(XEN_KEYWORD_P(keys[0]))) 
-	{
-	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_granulate, "a procedure of 1 arg");
-	  in_obj = keys[0];
-	}
-      expansion = fkeyarg(keys[1], S_make_granulate, orig_arg[1] + 1, expansion);
-      segment_length = fkeyarg(keys[2], S_make_granulate, orig_arg[2] + 1, segment_length);
-      segment_scaler = fkeyarg(keys[3], S_make_granulate, orig_arg[3] + 1, segment_scaler);
-      output_hop = fkeyarg(keys[4], S_make_granulate, orig_arg[4] + 1, output_hop);
-      ramp_time = fkeyarg(keys[5], S_make_granulate, orig_arg[5] + 1, ramp_time);
-      jitter = fkeyarg(keys[6], S_make_granulate, orig_arg[6] + 1, jitter);
-      XEN_ASSERT_TYPE((jitter >= 0.0) && (jitter < 100.0), keys[6], orig_arg[6] + 1, S_make_granulate, "0.0 .. 100.0");
-      maxsize = ikeyarg(keys[7], S_make_granulate, orig_arg[7] + 1, maxsize);
+      in_obj = mus_optkey_to_procedure(keys[0], S_make_granulate, orig_arg[0], XEN_UNDEFINED, 1, "granulate input procedure takes 1 arg");
+      expansion = mus_optkey_to_float(keys[1], S_make_granulate, orig_arg[1], expansion);
+      segment_length = mus_optkey_to_float(keys[2], S_make_granulate, orig_arg[2], segment_length);
+      segment_scaler = mus_optkey_to_float(keys[3], S_make_granulate, orig_arg[3], segment_scaler);
+      output_hop = mus_optkey_to_float(keys[4], S_make_granulate, orig_arg[4], output_hop);
+      ramp_time = mus_optkey_to_float(keys[5], S_make_granulate, orig_arg[5], ramp_time);
+      jitter = mus_optkey_to_float(keys[6], S_make_granulate, orig_arg[6], jitter);
+      XEN_ASSERT_TYPE((jitter >= 0.0) && (jitter < 100.0), keys[6], orig_arg[6], S_make_granulate, "0.0 .. 100.0");
+      maxsize = mus_optkey_to_int(keys[7], S_make_granulate, orig_arg[7], maxsize);
     }
   if (expansion <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 2, keys[1], "expansion ~A <= 0.0?");
   if (segment_length <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, keys[2], "segment-length ~A <= 0.0?");
@@ -4258,27 +4254,19 @@ return a new convolution generator which convolves its input with the impulse re
   vct *filter = NULL;
   XEN filt = XEN_UNDEFINED, in_obj = XEN_UNDEFINED;
   int fft_size = 0;
-  keys[0] = all_keys[C_input];
-  keys[1] = all_keys[C_filter];
-  keys[2] = all_keys[C_fft_size];
+  keys[0] = kw_input;
+  keys[1] = kw_filter;
+  keys[2] = kw_fft_size;
   for (i = 0; i < 6; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_decode_keywords(S_make_convolve, 3, keys, 6, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_convolve, 3, keys, args, orig_arg);
   if (vals > 0)
     {
-      if (!(XEN_KEYWORD_P(keys[0]))) 
-	{
-	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_convolve, "a procedure of 1 arg");
-	  in_obj = keys[0];
-	}
-      if (!(XEN_KEYWORD_P(keys[1]))) 
-	{
-	  XEN_ASSERT_TYPE(VCT_P(keys[1]), keys[1], orig_arg[1] + 1, S_make_convolve, "a vct");
-	  filt = keys[1];
-	  filter = TO_VCT(filt);
-	}
-      fft_size = ikeyarg(keys[2], S_make_convolve, orig_arg[2] + 1, fft_size);
+      in_obj = mus_optkey_to_procedure(keys[0], S_make_convolve, orig_arg[0], XEN_UNDEFINED, 1, "convolve input procedure takes 1 arg");
+      filter = mus_optkey_to_vct(keys[1], S_make_convolve, orig_arg[1], NULL);
+      if (filter) filt = keys[1];
+      fft_size = mus_optkey_to_int(keys[2], S_make_convolve, orig_arg[2], fft_size);
     }
   if (filter == NULL)
     XEN_ERROR(NO_DATA,
@@ -4419,54 +4407,34 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   int vals, arglist_len, i;
   int fft_size = 512, overlap = 4, interp = 128;
   Float pitch = 1.0;
-  keys[0] = all_keys[C_input];
-  keys[1] = all_keys[C_fft_size];
-  keys[2] = all_keys[C_overlap];
-  keys[3] = all_keys[C_interp];
-  keys[4] = all_keys[C_pitch];
-  keys[5] = all_keys[C_analyze];
-  keys[6] = all_keys[C_edit];
-  keys[7] = all_keys[C_synthesize];
+  keys[0] = kw_input;
+  keys[1] = kw_fft_size;
+  keys[2] = kw_overlap;
+  keys[3] = kw_interp;
+  keys[4] = kw_pitch;
+  keys[5] = kw_analyze;
+  keys[6] = kw_edit;
+  keys[7] = kw_synthesize;
   for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_decode_keywords(S_make_phase_vocoder, 8, keys, 16, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_phase_vocoder, 8, keys, args, orig_arg);
   if (vals > 0)
     {
-      if (XEN_PROCEDURE_P(keys[0]))
-	{
-	  if (XEN_REQUIRED_ARGS(keys[0]) == 1)
-	    in_obj = keys[0];
-	  else XEN_BAD_ARITY_ERROR(S_make_phase_vocoder, 1, keys[0], "input function wants 1 arg");
-	}
-      fft_size = ikeyarg(keys[1], S_make_phase_vocoder, orig_arg[1] + 1, fft_size);
+      in_obj = mus_optkey_to_procedure(keys[0], S_make_phase_vocoder, orig_arg[0], XEN_UNDEFINED, 1, "phase-vocoder input procedure takes 1 arg");
+      fft_size = mus_optkey_to_int(keys[1], S_make_phase_vocoder, orig_arg[1], fft_size);
       if (fft_size <= 1) 
 	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 2, keys[1], "fft size ~A <= 1?");
-      overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2] + 1, overlap);
+      overlap = mus_optkey_to_int(keys[2], S_make_phase_vocoder, orig_arg[2], overlap);
       if (overlap <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 3, keys[2], "overlap ~A <= 0?");
-      interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3] + 1, interp);
+      interp = mus_optkey_to_int(keys[3], S_make_phase_vocoder, orig_arg[3], interp);
       if (interp <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 4, keys[3], "interp ~A <= 0?");
-      pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4] + 1, pitch);
-      if (XEN_PROCEDURE_P(keys[5]))
-	{
-	  if (XEN_REQUIRED_ARGS(keys[5]) == 2)
-	    analyze_obj = keys[5];
-	  else XEN_BAD_ARITY_ERROR(S_make_phase_vocoder, 6, keys[5], "analyze function wants 2 args: pv infunc");
-	}
-      if (XEN_PROCEDURE_P(keys[6]))
-	{
-	  if (XEN_REQUIRED_ARGS(keys[6]) == 1)
-	    edit_obj = keys[6];
-	  else XEN_BAD_ARITY_ERROR(S_make_phase_vocoder, 7, keys[6], "edit function wants 1 arg");
-	}
-      if (XEN_PROCEDURE_P(keys[7]))
-	{
-	  if (XEN_REQUIRED_ARGS(keys[7]) == 1)
-	    synthesize_obj = keys[7];
-	  else XEN_BAD_ARITY_ERROR(S_make_phase_vocoder, 8, keys[7], "synthesize function wants 1 arg");
-	}
+      pitch = mus_optkey_to_float(keys[4], S_make_phase_vocoder, orig_arg[4], pitch);
+      analyze_obj = mus_optkey_to_procedure(keys[5], S_make_phase_vocoder, orig_arg[5], XEN_UNDEFINED, 2, "phase-vocoder analyze procedure takes 2 args");
+      edit_obj = mus_optkey_to_procedure(keys[6], S_make_phase_vocoder, orig_arg[6], XEN_UNDEFINED, 1, "phase-vocoder edit procedure takes 1 arg");
+      synthesize_obj = mus_optkey_to_procedure(keys[7], S_make_phase_vocoder, orig_arg[7], XEN_UNDEFINED, 1, "phase-vocoder synthesize procedure takes 1 arg");
     }
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   old_error_handler = mus_error_set_handler(local_mus_error);

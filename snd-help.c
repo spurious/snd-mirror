@@ -373,6 +373,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-Mar:  exported mus_optkey_* from sndlib and began incorporating optkey args into Snd.\n\
 10-Mar:  make-font-selector-dialog and make-color-selector-dialog in snd-gtk\n\
          replaced snd-motif.rb with snd-xm.rb (thanks to Michael Scholz).\n\
 4-Mar:   tempo-control-bounds, and all other such variables' global defaults can be set\n\
@@ -389,11 +390,6 @@ void about_snd_help(void)
            also new: snd-motif.rb.\n\
 16-Feb:  *-control-bounds.\n\
 12-Feb:  gui.scm and many other improvements thanks to Kjetil S. Matheussen.\n\
-11-Feb:  added optional truncate arg to file-selection\n\
-9-Feb:   channels-equal? and channels=? in extensions.scm\n\
-         play-sine, play-sines, open-play-oputput in play.scm.\n\
-         notch-channel and notch-selection in dsp.scm\n\
-6-Feb:   expand-control-jitter.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -2101,10 +2097,10 @@ XEN_ARGIFY_4(g_help_dialog_w, g_help_dialog)
 
 void g_init_help(void)
 {
-  XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w,  0, 2, 0, H_snd_help);
-  XEN_DEFINE_PROCEDURE(S_snd_url, g_snd_url_w,         1, 0, 0, H_snd_url);
-  XEN_DEFINE_PROCEDURE(S_snd_urls, g_snd_urls_w,       0, 0, 0, H_snd_urls);
-  XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w, 2, 2, 0, H_help_dialog);
+  XEN_DEFINE_PROCEDURE(S_snd_help,    g_listener_help_w,  0, 2, 0, H_snd_help);
+  XEN_DEFINE_PROCEDURE(S_snd_url,     g_snd_url_w,        1, 0, 0, H_snd_url);
+  XEN_DEFINE_PROCEDURE(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls);
+  XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog);
 
   #define H_help_hook S_help_hook "(subject help-string): called from snd-help.  If \
 if returns a string, it replaces 'help-string' (the default help)"

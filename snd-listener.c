@@ -284,6 +284,7 @@ static XEN read_hook;
 static int current_listener_position = -1, listener_positions_size = 0;
 static int *listener_positions = NULL;
 
+#if (!USE_NO_GUI)
 static void add_listener_position(int pos)
 {
   int i;
@@ -315,6 +316,7 @@ static void add_listener_position(int pos)
     }
   listener_positions[current_listener_position] = pos;
 }
+#endif
 
 void backup_listener_to_previous_command(void)
 {
@@ -634,7 +636,7 @@ XEN_NARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
 
 void g_init_listener(void)
 {
-  XEN_DEFINE_PROCEDURE(S_save_listener, g_save_listener_w, 1, 0, 0, H_save_listener);
+  XEN_DEFINE_PROCEDURE(S_save_listener,  g_save_listener_w,  1, 0, 0, H_save_listener);
   XEN_DEFINE_PROCEDURE(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_listener, g_show_listener_w, H_show_listener,

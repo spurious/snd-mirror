@@ -1328,9 +1328,9 @@ leaves the lisp listener pane"
   XEN_DEFINE_HOOK(mouse_enter_text_hook, S_mouse_enter_text_hook, 1, H_mouse_enter_text_hook);    /* arg = text widget */
   XEN_DEFINE_HOOK(mouse_leave_text_hook, S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook);    /* arg = text widget */
 
-  XEN_DEFINE_PROCEDURE(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, H_listener_selection);
-  XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor);
-  XEN_DEFINE_PROCEDURE("goto-listener-end", g_goto_listener_end_w, 0, 0, 0, "move cursor and scroll to bottom of listener pane");
+  XEN_DEFINE_PROCEDURE(S_listener_selection,    g_listener_selected_text_w, 0, 0, 0, H_listener_selection);
+  XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w,  0, 0, 0, H_reset_listener_cursor);
+  XEN_DEFINE_PROCEDURE("goto-listener-end",     g_goto_listener_end_w,      0, 0, 0, "move cursor and scroll to bottom of listener pane");
 
   #define H_listener_click_hook S_listener_click_hook " (pos): called when listener clicked; pos is text pos of click in listener"
   XEN_DEFINE_HOOK(listener_click_hook,    S_listener_click_hook, 1,    H_listener_click_hook);    /* arg = pos */

@@ -1273,10 +1273,10 @@ XEN_ARGIFY_4(g_set_x_axis_label_w, g_set_x_axis_label)
 
 void g_init_axis(void)
 {
-  XEN_DEFINE_PROCEDURE(S_x2position, g_grf_x_w, 1, 3, 0,     H_x2position);
-  XEN_DEFINE_PROCEDURE(S_y2position, g_grf_y_w, 1, 3, 0,     H_y2position);
-  XEN_DEFINE_PROCEDURE(S_position2x, g_ungrf_x_w, 1, 3, 0,   H_position2x);
-  XEN_DEFINE_PROCEDURE(S_position2y, g_ungrf_y_w, 1, 3, 0,   H_position2y);
+  XEN_DEFINE_PROCEDURE(S_x2position, g_grf_x_w,   1, 3, 0, H_x2position);
+  XEN_DEFINE_PROCEDURE(S_y2position, g_grf_y_w,   1, 3, 0, H_y2position);
+  XEN_DEFINE_PROCEDURE(S_position2x, g_ungrf_x_w, 1, 3, 0, H_position2x);
+  XEN_DEFINE_PROCEDURE(S_position2y, g_ungrf_y_w, 1, 3, 0, H_position2y);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_label, g_x_axis_label_w, H_x_axis_label,
 					    S_setB S_x_axis_label, g_set_x_axis_label_w, g_set_x_axis_label_reversed, 0, 3, 1, 3);

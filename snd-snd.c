@@ -1,5 +1,6 @@
 #include "snd.h"
 #include "sndlib-strings.h"
+#include "clm2xen.h"
 
 /* SOMEDAY: draggable (focusable) freq axis in filter control */
 
@@ -3068,28 +3069,60 @@ open filename (as if opened from File:Open menu option), and return the new soun
   return(XEN_FALSE);
 }
 
-static XEN g_open_raw_sound(XEN filename, XEN chans, XEN srate, XEN format)
+static XEN kw_header_type, kw_data_format, kw_file, kw_srate, kw_channel, kw_sound, kw_edit_position, kw_channels, kw_size, kw_comment;
+
+static void init_sound_keywords(void)
 {
-  #define H_open_raw_sound "(" S_open_raw_sound " filename chans srate format): \
-open filename assuming the data matches the attributes indicated unless the file actually has a header"
-  char *fname = NULL;
+  kw_header_type = XEN_MAKE_KEYWORD("header-type");
+  kw_data_format = XEN_MAKE_KEYWORD("data-format");
+  kw_file = XEN_MAKE_KEYWORD("file");
+  kw_srate = XEN_MAKE_KEYWORD("srate");
+  kw_channel = XEN_MAKE_KEYWORD("channel");
+  kw_sound = XEN_MAKE_KEYWORD("sound");
+  kw_edit_position = XEN_MAKE_KEYWORD("edit-position");
+  kw_channels = XEN_MAKE_KEYWORD("channels");
+  kw_size = XEN_MAKE_KEYWORD("size");
+  kw_comment = XEN_MAKE_KEYWORD("comment");
+}
+
+static XEN g_open_raw_sound(XEN arglist)
+{
+  #define H_open_raw_sound "(" S_open_raw_sound " :file :channels :srate :data-format): \
+open file assuming the data matches the attributes indicated unless the file actually has a header"
+  char *fname = NULL, *file = NULL;
   snd_info *sp;
   int os, oc, ofr;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_open_raw_sound, "a string");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(srate), srate, XEN_ARG_2, S_open_raw_sound, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_3, S_open_raw_sound, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(format), format, XEN_ARG_4, S_open_raw_sound, "an integer");
-  fname = mus_expand_filename(XEN_TO_C_STRING(filename));
+  XEN args[8]; 
+  XEN keys[4];
+  int orig_arg[4] = {0, 0, 0, 0};
+  int vals, i, arglist_len;
+  keys[0] = kw_file;
+  keys[1] = kw_channels;
+  keys[2] = kw_srate;
+  keys[3] = kw_data_format;
+  mus_header_raw_defaults(&os, &oc, &ofr);
+  for (i = 0; i < 8; i++) args[i] = XEN_UNDEFINED;
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  vals = mus_optkey_unscramble(S_save_sound_as, 4, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      file = mus_optkey_to_string(keys[0], S_open_raw_sound, orig_arg[0], NULL);
+      oc = mus_optkey_to_int(keys[1], S_open_raw_sound, orig_arg[1], oc);
+      os = mus_optkey_to_int(keys[2], S_open_raw_sound, orig_arg[2], os);
+      ofr = mus_optkey_to_int(keys[3], S_open_raw_sound, orig_arg[3], ofr);
+    }
+  if (file == NULL) 
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_open_raw_sound),
+			 C_TO_XEN_STRING("no output file?")));
+  fname = mus_expand_filename(file);
   if (!(mus_file_probe(fname)))
     {
       if (fname) FREE(fname);
-      return(snd_no_such_file_error(S_open_raw_sound, filename));
+      return(snd_no_such_file_error(S_open_raw_sound, args[orig_arg[0] - 1]));
     }
-
-  mus_header_raw_defaults(&os, &oc, &ofr);
-  mus_header_set_raw_defaults(XEN_TO_C_INT_OR_ELSE(srate, os),
-			      XEN_TO_C_INT_OR_ELSE(chans, oc),
-			      XEN_TO_C_INT_OR_ELSE(format, ofr));
+  mus_header_set_raw_defaults(os, oc, ofr);
   ss->reloading_updated_file = -1;
   ss->catch_message = NULL;
   sp = snd_open_file(fname, false);
@@ -3123,66 +3156,77 @@ You can subsequently make it writable by (set! (read-only) #f)."
   return(XEN_FALSE);
 }
 
-static XEN g_save_sound_as(XEN newfile, XEN index, XEN type, XEN format, XEN srate, XEN channel, XEN edpos)
+static XEN g_save_sound_as(XEN arglist)
 {
-  #define H_save_sound_as "("  S_save_sound_as " filename (snd #f) (header-type #f) (data-format #f) (srate #f) (channel #f) (edpos #f)): \
-save snd in filename using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
-Any argument can be #f which causes its value to be taken from the sound being saved.\n\
+  #define H_save_sound_as "("  S_save_sound_as " :file :sound :header-type :data-format :srate :channel :edit-position): \
+save sound in file using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
+Omitted arguments take their value from the sound being saved.\n\
   (save-sound-as \"test.snd\" index mus-next mus-bshort)"
 
   snd_info *sp;
-  chan_info *cp;
   file_info *hdr;
-  int ht, df, sr, chan, err;
-  char *fname = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(newfile), newfile, XEN_ARG_1, S_save_sound_as, "a string");
+  int ht = -1, df = -1, sr = -1, chan = -1, err;
+  char *fname = NULL, *file = NULL;
+  XEN args[14]; 
+  XEN keys[7];
+  int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
+  int vals, i, arglist_len;
+  XEN edpos = XEN_UNDEFINED, index = XEN_UNDEFINED;
+  keys[0] = kw_file;
+  keys[1] = kw_sound;
+  keys[2] = kw_header_type;
+  keys[3] = kw_data_format;
+  keys[4] = kw_srate;
+  keys[5] = kw_channel;
+  keys[6] = kw_edit_position;
+  for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  vals = mus_optkey_unscramble(S_save_sound_as, 7, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      file = mus_optkey_to_string(keys[0], S_save_sound_as, orig_arg[0], NULL);
+      if (!(XEN_KEYWORD_P(keys[1]))) index = keys[1];
+      ht = mus_optkey_to_int(keys[2], S_save_sound_as, orig_arg[2], ht);
+      df = mus_optkey_to_int(keys[3], S_save_sound_as, orig_arg[3], df);
+      sr = mus_optkey_to_int(keys[4], S_save_sound_as, orig_arg[4], sr);
+      chan = mus_optkey_to_int(keys[5], S_save_sound_as, orig_arg[5], chan);
+      if (!(XEN_KEYWORD_P(keys[6]))) edpos = keys[6];
+    }
+  if (file == NULL) 
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as),
+			 C_TO_XEN_STRING("no output file?")));
   ASSERT_SOUND(S_save_sound_as, index, 2);
   sp = get_sp(index, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_sound_as, index));
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(type), type, XEN_ARG_3, S_save_sound_as, "an integer (a header type id)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(format), format, XEN_ARG_4, S_save_sound_as, "an integer (a data format id)");
-  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, XEN_ARG_5, S_save_sound_as, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(channel), channel, XEN_ARG_6, S_save_sound_as, "an integer");
-  fname = mus_expand_filename(XEN_TO_C_STRING(newfile));
   hdr = sp->hdr;
-  ht = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(type, hdr->type, S_save_sound_as);
-  sr = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(srate, hdr->srate, S_save_sound_as);
-  ss->catch_message = NULL;
-  if (XEN_INTEGER_P(format)) 
-    df = XEN_TO_C_INT(format);
-  else    
-    {
-      if (mus_header_writable(ht, hdr->format))
-	df = hdr->format;
-      else df = MUS_OUT_FORMAT;
-    }
+  if (ht == -1) ht = hdr->type;
   if (!(mus_header_writable(ht, -2)))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
 			 C_TO_XEN_STRING(_("can't write this header type:")),
 			 C_TO_XEN_STRING(mus_header_type_name(ht))));
-  if (!(mus_header_writable(ht, df)))
+  if (sr == -1) sr = hdr->srate;
+  if (df == -1) 
+    {
+      df = hdr->format;
+      if (!mus_header_writable(ht, df)) 
+	df = MUS_OUT_FORMAT;
+    }
+  if (!mus_header_writable(ht, df))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
 			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
 			 C_TO_XEN_STRING(mus_header_type_name(ht)),
 			 C_TO_XEN_STRING(mus_data_format_name(df))));
-  if (XEN_INTEGER_P(channel))
-    {
-      chan = XEN_TO_C_INT(channel);
-      if ((chan >= sp->nchans) || 
-	  (chan < 0))
-	{
-	  if (fname) FREE(fname);
-	  return(snd_no_such_channel_error(S_save_sound_as, index, channel));
-	}
-      else 
-	{
-	  cp = sp->chans[chan];
-	  err = save_channel_edits(cp, fname, edpos, S_save_sound_as, 7);
-	}
-    }
+  if (chan >= sp->nchans)
+    return(snd_no_such_channel_error(S_save_sound_as, index, args[orig_arg[5] - 1]));
+  ss->catch_message = NULL;
+  fname = mus_expand_filename(file);
+  if (chan >= 0)
+    err = save_channel_edits(sp->chans[chan], fname, edpos, S_save_sound_as, 7);
   else 
     {
       char *outcom;
@@ -3192,6 +3236,9 @@ Any argument can be #f which causes its value to be taken from the sound being s
     }
   if (err != MUS_NO_ERROR)
     {
+      XEN errstr;
+      errstr = C_TO_XEN_STRING(fname);
+      if (fname) {FREE(fname); fname = NULL;}
       if (ss->catch_message)
 	XEN_ERROR(CANNOT_SAVE,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as),
@@ -3199,93 +3246,92 @@ Any argument can be #f which causes its value to be taken from the sound being s
       else
 	XEN_ERROR(CANNOT_SAVE,
 		  XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
-			     C_TO_XEN_STRING(fname),
+			     errstr,
 			     C_TO_XEN_STRING(strerror(errno))));
     }
   if (fname) FREE(fname);
-  return(newfile);
+  return(args[orig_arg[0] - 1]);
 }
 
-static XEN g_new_sound(XEN name, XEN type, XEN format, XEN srate, XEN chans, XEN comment, XEN initial_length) 
+/* XEN name, XEN type, XEN format, XEN srate, XEN chans, XEN comment, XEN initial_length */
+static XEN g_new_sound(XEN arglist)
 {
-  #define H_new_sound "(" S_new_sound " (name #f) (type #f) (format #f) (srate #f) (chans #f) (comment #f) (initial-length #f)): \
+  #define H_new_sound "(" S_new_sound " :file :header-type :data-format :srate :channels :comment :size): \
 create a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used. \
-The 'initial-length' argument sets the number of samples (zeros) in the newly created sound. \n\
+The 'size' argument sets the number of samples (zeros) in the newly created sound. \n\
   (new-sound \"test.snd\" mus-next mus-bshort 22050 1 \"no comment\" 22050)"
 
   snd_info *sp = NULL; 
   int ht, df, sr, ch, err;
   int chan;
   off_t size, len = 1;
-  unsigned char* buf;
-  char *str = NULL, *com = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_1, S_new_sound, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(type), type, XEN_ARG_2, S_new_sound, "an integer (a header type id)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(format), format, XEN_ARG_3, S_new_sound, "an integer (a data format id)");
-  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, XEN_ARG_4, S_new_sound, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chans), chans, XEN_ARG_5, S_new_sound, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(comment) || XEN_FALSE_P(comment) || XEN_NOT_BOUND_P(comment), comment, XEN_ARG_6, S_new_sound, "a string or #f");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(initial_length), initial_length, XEN_ARG_7, S_new_sound, "an integer");
-
-  if (XEN_STRING_P(name))
-    str = mus_expand_filename(XEN_TO_C_STRING(name));
+  char *str = NULL, *com = NULL, *file = NULL;
+  XEN args[14]; 
+  XEN keys[7];
+  int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
+  int vals, i, arglist_len;
+  keys[0] = kw_file;
+  keys[1] = kw_header_type;
+  keys[2] = kw_data_format;
+  keys[3] = kw_srate;
+  keys[4] = kw_channels;
+  keys[5] = kw_comment;
+  keys[6] = kw_size;
+  for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  vals = mus_optkey_unscramble(S_new_sound, 7, keys, args, orig_arg);
+  ht = default_output_type(ss);
+  df = default_output_format(ss);
+  sr = default_output_srate(ss);
+  ch = default_output_chans(ss);
+  if (vals > 0)
+    {
+      file = mus_optkey_to_string(keys[0], S_new_sound, orig_arg[0], NULL);
+      ht = mus_optkey_to_int(keys[1], S_new_sound, orig_arg[1], ht);
+      df = mus_optkey_to_int(keys[2], S_new_sound, orig_arg[2], df);
+      sr = mus_optkey_to_int(keys[3], S_new_sound, orig_arg[3], sr);
+      ch = mus_optkey_to_int(keys[4], S_new_sound, orig_arg[4], ch);
+      com = mus_optkey_to_string(keys[5], S_new_sound, orig_arg[5], NULL);
+      len = mus_optkey_to_off_t(keys[6], S_new_sound, orig_arg[6], len);
+    }
+  if (!(MUS_HEADER_TYPE_OK(ht)))
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, 2, args[orig_arg[1] - 1], "~A: invalid header type");
+  if (!(MUS_DATA_FORMAT_OK(df)))
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, 3, args[orig_arg[2] - 1], "~A: invalid data format");
+  if (!(mus_header_writable(ht, df)))
+    mus_misc_error(S_new_sound, _("can't write this combination of data format and header type"), 
+		   XEN_LIST_2(args[orig_arg[1] - 1], args[orig_arg[2] - 1]));
+  if (sr <= 0)
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, 4, args[orig_arg[3] - 1], "srate ~A <= 0?");
+  if (ch <= 0)
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, 5, args[orig_arg[4] - 1], "channels ~A <= 0?");
+  if (len < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_new_sound, 7, args[orig_arg[6] - 1], "size ~A < 0?");
+  if (file)
+    str = mus_expand_filename(file);
   else str = snd_tempnam();
   if (snd_overwrite_ok(str))
     {
+      unsigned char* buf;
       mus_sound_forget(str);
-      ht = XEN_TO_C_INT_OR_ELSE(type, default_output_type(ss));
-      if (MUS_HEADER_TYPE_OK(ht))
+      ss->catch_message = NULL;
+      err = snd_write_header(str, ht, sr, ch, 0, len * ch, df, com, snd_strlen(com), NULL);
+      if (err == -1)
 	{
-	  df = XEN_TO_C_INT_OR_ELSE(format, default_output_format(ss));
-	  if (MUS_DATA_FORMAT_OK(df))
-	    {
-	      if (mus_header_writable(ht, df))
-		{
-		  sr = XEN_TO_C_INT_OR_ELSE(srate, default_output_srate(ss));
-		  ch = XEN_TO_C_INT_OR_ELSE(chans, default_output_chans(ss));
-		  if (ch <= 0)
-		    {
-		      if (str) FREE(str);
-		      XEN_OUT_OF_RANGE_ERROR(S_new_sound, 5, chans, "chans ~A <= 0?");
-		    }
-		  if (XEN_STRING_P(comment))
-		    com = XEN_TO_C_STRING(comment);
-		  ss->catch_message = NULL;
-		  if (XEN_INTEGER_P(initial_length)) len = XEN_TO_C_OFF_T(initial_length);
-		  err = snd_write_header(str, ht, sr, ch, 0, len * ch, df, com, snd_strlen(com), NULL);
-		  if (err == -1)
-		    {
-		      if (str) FREE(str);
-		      if (ss->catch_message)
-			mus_misc_error(S_new_sound, ss->catch_message, name);
-		      else mus_misc_error(S_new_sound, strerror(errno), name);
-		    }
-		  chan = snd_reopen_write(str);
-		  lseek(chan, mus_header_data_location(), SEEK_SET);
-		  size = ch * mus_samples_to_bytes(df, len);
-		  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-		  write(chan, buf, size);
-		  snd_close(chan, str);
-		  FREE(buf);
-		  sp = sound_is_silence(snd_open_file(str, false));
-		}
-	      else 
-		{
-		  if (str) FREE(str);
-		  mus_misc_error(S_new_sound, _("can't write this combination of data format and header type"), XEN_LIST_2(type, format));
-		}
-	    }
-	  else 
-	    {
-	      if (str) FREE(str);
-	      XEN_OUT_OF_RANGE_ERROR(S_new_sound, 3, format, "~A: invalid data format");
-	    }
+	  if (str) {FREE(str); str = NULL;}
+	  if (ss->catch_message)
+	    mus_misc_error(S_new_sound, ss->catch_message, args[orig_arg[0] - 1]);
+	  else mus_misc_error(S_new_sound, strerror(errno), args[orig_arg[0] - 1]);
 	}
-      else
-	{
-	  if (str) FREE(str);
-	  XEN_OUT_OF_RANGE_ERROR(S_new_sound, 2, type, "~A: invalid header type");
-	}
+      chan = snd_reopen_write(str);
+      lseek(chan, mus_header_data_location(), SEEK_SET);
+      size = ch * mus_samples_to_bytes(df, len);
+      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
+      write(chan, buf, size);
+      snd_close(chan, str);
+      FREE(buf);
+      sp = sound_is_silence(snd_open_file(str, false));
     }
   if (str) FREE(str);
   if (sp) return(C_TO_XEN_INT(sp->index));
@@ -4204,11 +4250,11 @@ XEN_ARGIFY_1(g_close_sound_w, g_close_sound)
 XEN_ARGIFY_1(g_update_sound_w, g_update_sound)
 XEN_ARGIFY_1(g_save_sound_w, g_save_sound)
 XEN_NARGIFY_1(g_open_sound_w, g_open_sound)
-XEN_NARGIFY_4(g_open_raw_sound_w, g_open_raw_sound)
+XEN_VARGIFY(g_open_raw_sound_w, g_open_raw_sound)
 XEN_NARGIFY_1(g_view_sound_w, g_view_sound)
-XEN_ARGIFY_7(g_new_sound_w, g_new_sound)
+XEN_VARGIFY(g_new_sound_w, g_new_sound)
 XEN_ARGIFY_1(g_revert_sound_w, g_revert_sound)
-XEN_ARGIFY_7(g_save_sound_as_w, g_save_sound_as)
+XEN_VARGIFY(g_save_sound_as_w, g_save_sound_as)
 XEN_ARGIFY_4(g_apply_controls_w, g_apply_controls)
 XEN_ARGIFY_1(g_filter_control_envelope_w, g_filter_control_envelope)
 XEN_ARGIFY_2(g_set_filter_control_envelope_w, g_set_filter_control_envelope)
@@ -4412,6 +4458,8 @@ XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 
 void g_init_snd(void)
 {
+  init_sound_keywords();
+
   #define H_name_click_hook S_name_click_hook " (snd): called when sound name clicked. \
 If it returns #t, the usual informative minibuffer babbling is squelched."
 
@@ -4432,10 +4480,6 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_CONSTANT(S_channels_combined,     CHANNELS_COMBINED,     H_channels_combined);
   XEN_DEFINE_CONSTANT(S_channels_superimposed, CHANNELS_SUPERIMPOSED, H_channels_superimposed);
 
-  XEN_DEFINE_PROCEDURE(S_sound_p, g_sound_p_w, 0, 1, 0, H_sound_p);
-  XEN_DEFINE_PROCEDURE(S_bomb, g_bomb_w, 0, 2, 0, H_bomb);
-  XEN_DEFINE_PROCEDURE(S_find_sound, g_find_sound_w, 1, 1, 0, H_find_sound);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_channels,      g_channels_w,      H_channels,      S_setB S_channels,      g_set_channels_w,       0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_chans,         g_channels_w,      H_channels,      S_setB S_chans,         g_set_channels_w,       0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_srate,         g_srate_w,         H_srate,         S_setB S_srate,         g_set_srate_w,          0, 1, 1, 1);
@@ -4445,36 +4489,39 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_header_type,   g_header_type_w,   H_header_type,   S_setB S_header_type,   g_set_header_type_w,    0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_comment,       g_comment_w,       H_comment,       S_setB S_comment,       g_set_comment_w,        0, 1, 1, 1);
 
+  XEN_DEFINE_PROCEDURE(S_sound_p,               g_sound_p_w,          0, 1, 0, H_sound_p);
+  XEN_DEFINE_PROCEDURE(S_bomb,                  g_bomb_w,             0, 2, 0, H_bomb);
+  XEN_DEFINE_PROCEDURE(S_find_sound,            g_find_sound_w,       1, 1, 0, H_find_sound);
   XEN_DEFINE_PROCEDURE(S_file_name,             g_file_name_w,        0, 1, 0, H_file_name);
   XEN_DEFINE_PROCEDURE(S_short_file_name,       g_short_file_name_w,  0, 1, 0, H_short_file_name);
   XEN_DEFINE_PROCEDURE(S_save_controls,         g_save_controls_w,    0, 1, 0, H_save_controls);
   XEN_DEFINE_PROCEDURE(S_restore_controls,      g_restore_controls_w, 0, 1, 0, H_restore_controls);
   XEN_DEFINE_PROCEDURE(S_reset_controls,        g_reset_controls_w,   0, 1, 0, H_reset_controls);
+  XEN_DEFINE_PROCEDURE(S_select_sound,          g_select_sound_w,     0, 1, 0, H_select_sound);
+  XEN_DEFINE_PROCEDURE(S_select_channel,        g_select_channel_w,   0, 1, 0, H_select_channel);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_sound, g_selected_sound_w, H_selected_sound, S_setB S_selected_sound, g_select_sound_w,  0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_sound, g_selected_sound_w, H_selected_sound, 
+				   S_setB S_selected_sound, g_select_sound_w,  0, 0, 0, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_channel, g_selected_channel_w, H_selected_channel, 
 				   S_setB S_selected_channel, g_set_selected_channel_w,  0, 1, 0, 2);
-  XEN_DEFINE_PROCEDURE(S_select_sound, g_select_sound_w, 0, 1, 0, H_select_sound);
-  XEN_DEFINE_PROCEDURE(S_select_channel, g_select_channel_w, 0, 1, 0, H_select_channel);
 
-  XEN_DEFINE_PROCEDURE(S_start_progress_report, g_start_progress_report_w,   0, 1, 0, H_start_progress_report);
-  XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w, 0, 1, 0, H_finish_progress_report);
-  XEN_DEFINE_PROCEDURE(S_progress_report,      g_progress_report_w,          1, 4, 0, H_progress_report);
-
-  XEN_DEFINE_PROCEDURE(S_close_sound,          g_close_sound_w, 0, 1, 0,          H_close_sound);
-  XEN_DEFINE_PROCEDURE(S_update_sound,         g_update_sound_w, 0, 1, 0,         H_update_sound);
-  XEN_DEFINE_PROCEDURE(S_save_sound,           g_save_sound_w, 0, 1, 0,           H_save_sound);
-  XEN_DEFINE_PROCEDURE(S_open_sound,           g_open_sound_w, 1, 0, 0,           H_open_sound);
-  XEN_DEFINE_PROCEDURE(S_open_raw_sound,       g_open_raw_sound_w, 4, 0, 0,       H_open_raw_sound);
-  XEN_DEFINE_PROCEDURE(S_view_sound,           g_view_sound_w, 1, 0, 0,           H_view_sound);
-  XEN_DEFINE_PROCEDURE(S_new_sound,            g_new_sound_w, 0, 7, 0,            H_new_sound);
-  XEN_DEFINE_PROCEDURE(S_revert_sound,         g_revert_sound_w, 0, 1, 0,         H_revert_sound);
-  XEN_DEFINE_PROCEDURE(S_save_sound_as,        g_save_sound_as_w, 1, 6, 0,        H_save_sound_as);
-  XEN_DEFINE_PROCEDURE(S_apply_controls,       g_apply_controls_w, 0, 4, 0,       H_apply_controls);
-
+  XEN_DEFINE_PROCEDURE(S_start_progress_report,  g_start_progress_report_w,   0, 1, 0, H_start_progress_report);
+  XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w,  0, 1, 0, H_finish_progress_report);
+  XEN_DEFINE_PROCEDURE(S_progress_report,        g_progress_report_w,         1, 4, 0, H_progress_report);
+  XEN_DEFINE_PROCEDURE(S_close_sound,            g_close_sound_w,             0, 1, 0, H_close_sound);
+  XEN_DEFINE_PROCEDURE(S_update_sound,           g_update_sound_w,            0, 1, 0, H_update_sound);
+  XEN_DEFINE_PROCEDURE(S_save_sound,             g_save_sound_w,              0, 1, 0, H_save_sound);
+  XEN_DEFINE_PROCEDURE(S_open_sound,             g_open_sound_w,              1, 0, 0, H_open_sound);
+  XEN_DEFINE_PROCEDURE(S_open_raw_sound,         g_open_raw_sound_w,          0, 0, 1, H_open_raw_sound);
+  XEN_DEFINE_PROCEDURE(S_view_sound,             g_view_sound_w,              1, 0, 0, H_view_sound);
+  XEN_DEFINE_PROCEDURE(S_new_sound,              g_new_sound_w,               0, 0, 1, H_new_sound);
+  XEN_DEFINE_PROCEDURE(S_revert_sound,           g_revert_sound_w,            0, 1, 0, H_revert_sound);
+  XEN_DEFINE_PROCEDURE(S_save_sound_as,          g_save_sound_as_w,           0, 0, 1, H_save_sound_as);
+  XEN_DEFINE_PROCEDURE(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope,
-					    S_setB S_filter_control_envelope, g_set_filter_control_envelope_w, g_set_filter_control_envelope_reversed, 0, 1, 1, 1);
+					    S_setB S_filter_control_envelope, g_set_filter_control_envelope_w, g_set_filter_control_envelope_reversed, 
+					    0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_follows_play, g_cursor_follows_play_w, H_cursor_follows_play,
 					    S_setB S_cursor_follows_play, g_set_cursor_follows_play_w, g_set_cursor_follows_play_reversed, 0, 1, 1, 1);
@@ -4572,10 +4619,12 @@ If it returns #t, the apply is aborted."
 					    g_set_reverb_control_scale_bounds_reversed, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_feedback, g_reverb_control_feedback_w, H_reverb_control_feedback,
-					    S_setB S_reverb_control_feedback, g_set_reverb_control_feedback_w, g_set_reverb_control_feedback_reversed, 0, 1, 1, 1);
+					    S_setB S_reverb_control_feedback, g_set_reverb_control_feedback_w, g_set_reverb_control_feedback_reversed, 
+					    0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_lowpass, g_reverb_control_lowpass_w, H_reverb_control_lowpass,
-					    S_setB S_reverb_control_lowpass, g_set_reverb_control_lowpass_w, g_set_reverb_control_lowpass_reversed, 0, 1, 1, 1);
+					    S_setB S_reverb_control_lowpass, g_set_reverb_control_lowpass_w, g_set_reverb_control_lowpass_reversed, 
+					    0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_amp_control, g_amp_control_w, H_amp_control,
 					    S_setB S_amp_control, g_set_amp_control_w, g_set_amp_control_reversed, 0, 2, 1, 2);

@@ -1,5 +1,6 @@
 Snd change log
 
+  15-Mar:    exported mus_optkey_* from sndlib and began incorporating optkey args into Snd.
   10-Mar:    make-font-selector-dialog and make-color-selector-dialog in snd-gtk
              replaced snd-motif.rb with snd-xm.rb (thanks to Michael Scholz).
   4-Mar:     tempo-control-bounds, and all other such variables' global defaults can be set

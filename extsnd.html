@@ -196,7 +196,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#rtiodoc">rtio.scm, rtio.rb</a></td>     <td>real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#rubberdoc">rubber.scm, rubber.rb</a></td><td>rubber-sound</td></tr>
 <tr><td><a href="sndscm.html#singerdoc">singer.scm</a></td>          <td>Perry Cook's vocal-tract physical model</td></tr>
-<tr><td><a href="sndscm.html#sndmotifdoc">snd-motif.scm, snd-gtk.scm</a></td><td>Motif/Gtk modules (xm.c, xg.c)</td></tr>
+<tr><td><a href="sndscm.html#sndmotifdoc">snd-motif.scm, snd-gtk.scm, snd-xm.rb</a></td><td>Motif/Gtk modules (xm.c, xg.c)</td></tr>
 <tr><td><a href="sndscm.html#sndgldoc">snd-gl.scm</a></td>           <td>OpenGL examples (gl.c)</td></tr>
 <tr><td><a href="sndscm.html#snd4doc">snd4|5|6|7.scm</a></td>        <td>backwards compatibility</td></tr>
 <tr><td><a href="sndscm.html#spectrdoc">spectr.scm, spectr.rb</a></td><td>instrument steady state spectra</td></tr>
@@ -2061,10 +2061,15 @@ thing.  If you want to refer to the currently selected sound, either use #f
 as the sound index or <a href="#selectedsound">selected-sound</a>.
 </p>
 
+<p>Some functions take <a href="clm.html#optional-key">optional-key</a> arguments, as in CLM.
+These are marked "&amp;optional-key" below, followed by the keywords themselves. As in CLM,
+the keywords can be omitted.
+</p>
+
 <p>In many cases, the <i>snd</i>, <i>chn</i>, and <i>reg</i> arguments
-can be #t (for backwards compatibility, a few of them default to #t).
-#t means "all" in this case; if <i>snd</i> is #t, all sounds are included,
-so, for example, <code>(<a class=quiet href="#expandcontrol">expand-control</a> #t)</code> returns a list of the current
+can be #t which
+means "all"; if <i>snd</i> is #t, all sounds are included.
+<code>(<a class=quiet href="#expandcontrol">expand-control</a> #t)</code> returns a list of the current
 control panel expansion settings of all sounds, and
 <code>(set! (<a class=quiet href="#transformgraphp">transform-graph?</a> #t #t) #t)</code>
 turns on the fft display in all channels of all sounds.
@@ -2204,9 +2209,9 @@ This is the <a class=quiet href="#regularizedargs">regularized</a> version of <a
 <tr><td colspan=2><code><a class=def name="vct2samples">vct-&gt;samples</a> (samp samps data (snd #f) (chn #f))</code></td></tr>
 <tr><td></td><td>A synonym for <a href="#setsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
 sample and a vct as the second argument.  This is too confusing!  Use <a href="#vct2channel">vct-&gt;channel</a> instead.
-<pre>(define v (<a class=quiet href="#samples2vct">samples-&gt;vct</a>))
-(<a class=quiet href="#vctscale">vct-scale!</a> v 2.0)
-(vct-&gt;samples v)</pre></td></tr>
+<code>
+(vct-&gt;samples (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#samples2vct">samples-&gt;vct</a>) 2.0))
+</code></td></tr>
 
 <!-- vct->sound-data -->
 <tr><td colspan=2><code><em class=emdef>vct-&gt;sound-data</em> (v sd (chan 0))</code></td></tr>
@@ -2864,7 +2869,7 @@ files; I'm not sure these have any real use after all.
 <table border=0 cellspacing=10>
 
 <!-- makesnd2sample -->
-<tr><td colspan=2><code><a class=def name="makesnd2sample">make-snd-&gt;sample</a> ((snd #f) (edpos #f))</code></td></tr>
+<tr><td colspan=2><code><a class=def name="makesnd2sample">make-snd-&gt;sample</a> (<i>snd edpos</i>)</code></td></tr>
 <tr><td width=50><br></td>
 <td>create a Snd data reader for CLM's in-any, file-&gt;sample, etc.
 </td></tr>
@@ -2877,10 +2882,11 @@ of two arguments, the sample and the channel (much as in <a href="clm.html#ina">
 </td></tr>
 
 <!-- snd2sample -->
-<tr><td colspan=2><code><a class=def name="snd2sample">snd-&gt;sample</a> (gen frame (chan 0))</code></td></tr>
+<tr><td colspan=2><code><a class=def name="snd2sample">snd-&gt;sample</a> (gen frame <i>chan</i>)</code></td></tr>
 <tr><td><br></td>
-<td>Equivalent to file-&gt;sample, but not actually necessary.  If *reverb* is a snd-&gt;sample generator, for example,
-ina and file-&gt;sample, as well as snd-&gt;sample will call the snd-&gt;sample function.
+<td>Return the next sample from the data accessed by <i>gen</i>, similar to file-&gt;sample.
+If *reverb* is a snd-&gt;sample generator, for example,
+<a class=quiet href="clm.html#ina">ina</a> and <a class=quiet href="clm.html#file-&gt;sample">file-&gt;sample</a> actually call snd-&gt;sample.
 </td></tr>
 
 <!-- snd2samplep -->
@@ -2890,9 +2896,9 @@ ina and file-&gt;sample, as well as snd-&gt;sample will call the snd-&gt;sample 
 </td></tr>
 
 <!-- xen2sample -->
-<tr><td colspan=2><code><a class=def name="xen2sample">xen-&gt;sample</a> (gen frame (chan 0))</code></td></tr>
+<tr><td colspan=2><code><a class=def name="xen2sample">xen-&gt;sample</a> (gen frame <i>chan</i>)</code></td></tr>
 <tr><td><br></td>
-<td>Equivalent to file-&gt;sample, but not actually necessary. 
+<td>Similar to snd-&gt;sample, but the accessor is a xen-&gt;sample generator.
 </td></tr>
 
 <!-- xen2samplep -->
@@ -3164,7 +3170,7 @@ sets mix 123's channel 0 amplitude scaler to .5.
 </td></tr>
 
 <!-- copy-mix -->
-<tr><td colspan=2><code><a class=def name="copymix">copy-mix</a> (mix (beg copied-mix-beg))</code></td></tr>
+<tr><td colspan=2><code><a class=def name="copymix">copy-mix</a> (mix <i>beg</i>)</code></td></tr>
 <tr><td></td><td>copy <i>mix</i>, placing the copy at <i>beg</i> which defaults to the copied mix's position.  The new mix's track is set to 0.
 </td></tr>
 
@@ -3380,7 +3386,7 @@ with it.  Tracks can be nested indefinitely, so multi-level phrase operations ar
 <table border=0 cellspacing=10>
 
 <!-- copy-track -->
-<tr><td colspan=2><code><a class=def name="copytrack">copy-track</a> (track (beg copied-track-beg))</code></td></tr>
+<tr><td colspan=2><code><a class=def name="copytrack">copy-track</a> (track <i>beg</i>)</code></td></tr>
 <tr><td></td><td>copy <i>track</i>, placing the copy at <i>beg</i> which defaults to the copied track's position.  The new track's track is set to 0.
 </td></tr>
 
@@ -3661,13 +3667,22 @@ deleted.
 </td></tr>
 
 <!-- save-region -->
-<tr><td colspan=2><code><a class=def name="saveregion">save-region</a> (reg filename <i>type format comment</i>) </code></td></tr>
+<tr><td colspan=2><code><a class=def name="saveregion">save-region</a> (reg <a href="clm.html#optional-key">&amp;optional-key</a> :file (:header-type mus-next) :data-format :comment) </code></td></tr>
 <tr><td></td><td>
-save region <i>reg</i> in <i>filename</i> in data format <i>format</i> (default is mus-bshort), header type <i>type</i> (default
-is mus-next), with header comment <i>comment</i>.  Return filename.
+save region <i>reg</i> in <i>file</i> in data format (default is mus-bshort), header type (default
+is mus-next), and comment.  Return the output filename.  The arguments after <i>reg</i> are <a href="clm.html#optional-key">optional-key</a>
+args (that is, they are normal keyword arguments, but the keywords are optional).  The following calls are equivalent:
+<pre>
+(save-region 2 "reg0.snd")
+(save-region 2 :file "reg0.snd" :header-type mus-next)
+(save-region 2 "reg0.snd" mus-next mus-bfloat "a comment")
+(save-region 2 :file "reg0.snd" :comment "a comment" :data-format mus-bfloat)
+</pre>
 </td></tr>
 
 </table>
+
+<br>
 <!-- INDEX regionstuff:Regions -->
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
@@ -3749,9 +3764,9 @@ reverse the selection.
 </td></tr>
 
 <!-- save-selection -->
-<tr><td colspan=2><code><a class=def name="saveselection">save-selection</a> (file <i>header-type data-format srate comment chan</i>)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="saveselection">save-selection</a> (<a href="clm.html#optional-key">&amp;optional-key</a> :file (:header-type mus-next) :data-format :srate :comment :channel)</code></td></tr>
 <tr><td></td><td>
-save the selection in <i>file</i>.  If <i>chan</i> is given, save only that channel.
+save the selection in <i>file</i>.  If <i>channel</i> is given, save only that channel.
 See popup.scm for an example.
 </td></tr>
 <tr><td></td><td>
@@ -5391,19 +5406,18 @@ actual dB value calculated to -140.0 or -180.0 (depending on which function is c
 
 <!-- new-sound -->
 <tr><td colspan=2>
-<code><a class=def name="newsound">new-sound</a> (<i>name header-type data-format srate chans comment initial-length</i>)</code>
+<code><a class=def name="newsound">new-sound</a> (<a href="clm.html#optional-key">&amp;optional-key</a> :file :header-type :data-format :srate :channels :comment :size)</code>
 </td></tr>
 <tr><td></td><td>
-create a new (empty) sound named <i>name</i>.  The following function opens a new (blank) sound,
+create a new sound named <i>file</i>.  The following function opens a new sound,
 extends it to 'dur' samples, and initializes all samples to 'val':
 <br><br><pre>
 (define (init-sound val dur)
-  (let ((ind (<em class=red>new-sound</em> "test.snd")))
-    (<a class=quiet href="#insertsilence">insert-silence</a> 0 dur)
+  (let ((ind (<em class=red>new-sound</em> "test.snd" :size dur)))
     (<a class=quiet href="#mapchan">map-chan</a> (lambda (y) val))
     ind))
 </pre>
-If the <i>type</i> and other 
+If the <i>header-type</i> and other 
 arguments are not specified, they
 default to the current <a href="#defaultoutputtype">default-output-type</a> and 
 related settings. Data formats are (b=big-endian, l=little, u=unsigned):
@@ -5423,11 +5437,11 @@ To be informed whenever a new sound is created, use <a href="#newsoundhook">new-
 
 <!-- open-raw-sound -->
 <tr><td colspan=2>
-<code><a class=def name="openrawsound">open-raw-sound</a> (name chans srate format)</code>
+<code><a class=def name="openrawsound">open-raw-sound</a> (<a href="clm.html#optional-key">&amp;optional-key</a> :file :channels :srate :data-format)</code>
 </td></tr>
 <tr><td></td><td>
-open <i>name</i> as a raw (no header) sound in the layout specified.
-If the file has a header, it is not ignored (use (set! (<a class=quiet href="#dataformat">data-format</a> ...))
+open <i>file</i> as a raw (no header) sound in the layout specified.
+If the file has a header, it is not ignored (use <code>(set! (<a class=quiet href="#dataformat">data-format</a> ...))</code>
 and friends if you want to ignore the header).
 <br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -6335,17 +6349,17 @@ save the current fft peak info: <a href="#peaks">peaks</a><br>
 
 <!-- save-sound-as -->
 <tr><td colspan=2>
-<code><a class=def name="savesoundas">save-sound-as</a> (filename <i>snd header-type data-format srate channel edpos</i>)</code>
+<code><a class=def name="savesoundas">save-sound-as</a> (<a href="clm.html#optional-key">&amp;optional-key</a> :file :sound :header-type :data-format :srate :channel :edit-position)</code>
 </td></tr>
 <tr><td></td><td>
-save <i>snd</i> as <i>filename</i> (same as File Save as option).  If channel is specified,
-only that channel is saved (extracted).  <i>edpos</i>, if given, specifies which edit history position to save.
-Any argument can be #f (the default for an optional argument)
-which causes its value to be taken from the sound being saved. 
+save <i>sound</i> as <i>file</i> (same as File Save as option).  If channel is specified,
+only that channel is saved (extracted).  <i>edit-position</i>, if given, specifies which edit history position to save.
+Any omitted argument's value
+is taken from the sound being saved. 
 To start a parallel editing branch on a given file, you could <code>(save-sound-as "test.snd") (<a class=quiet href="#opensound">open-sound</a> "test.snd")</code>.  To define an explicit channel extraction function:<br>
 <pre>
 (define (<a name="extractchannel">extract-channel</a> filename snd chn)
-  (<em class=red>save-sound-as</em> filename snd #f #f #f chn))
+  (<em class=red>save-sound-as</em> filename snd :channel chn))
 </pre>
 </td></tr>
 <tr><td colspan=2></td></tr>

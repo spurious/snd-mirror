@@ -1050,8 +1050,8 @@ XEN_NARGIFY_0(g_script_args_w, g_script_args)
 void g_init_main(void)
 {
   XEN_DEFINE_PROCEDURE(S_save_options, g_save_options_w, 1, 0, 0, H_save_options);
-  XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w, 1, 0, 0,   H_save_state);
-  XEN_DEFINE_PROCEDURE(S_exit,         g_exit_w, 0, 1, 0,         H_exit);
+  XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w,   1, 0, 0, H_save_state);
+  XEN_DEFINE_PROCEDURE(S_exit,         g_exit_w,         0, 1, 0, H_exit);
 
 #if DEBUG_MEMORY
   XEN_DEFINE_PROCEDURE("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");

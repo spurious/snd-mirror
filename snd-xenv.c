@@ -1641,7 +1641,7 @@ void g_init_gxenv(void)
 				   S_setB S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "internal testing function");
-  XEN_DEFINE_PROCEDURE("enved-axis-info",  g_enved_axis_info_w, 0, 0, 0, "internal testing function");
-  XEN_DEFINE_PROCEDURE("apply-enved",  g_apply_enved_w, 0, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("enved-axis-info",      g_enved_axis_info_w,      0, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("apply-enved",          g_apply_enved_w,          0, 0, 0, "internal testing function");
 #endif
 }

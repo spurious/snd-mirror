@@ -4858,7 +4858,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp, S_setB S_mix_amp, g_set_mix_amp_w, 1, 1, 2, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env, S_setB S_mix_amp_env, g_set_mix_amp_env_w, 1, 1, 2, 1);
 
-  XEN_DEFINE_PROCEDURE(S_mix_tag_xy, g_mix_tag_xy_w,     1, 0, 0, H_mix_tag_xy);
+  XEN_DEFINE_PROCEDURE(S_mix_tag_xy,   g_mix_tag_xy_w,   1, 0, 0, H_mix_tag_xy);
   XEN_DEFINE_PROCEDURE(S_mix_chans,    g_mix_chans_w,    1, 0, 0, H_mix_chans);
   XEN_DEFINE_PROCEDURE(S_mix_p,        g_mix_p_w,        1, 0, 0, H_mix_p);
   XEN_DEFINE_PROCEDURE(S_mix_home,     g_mix_home_w,     1, 0, 0, H_mix_home);

@@ -892,7 +892,7 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
 
 #define XEN_ARITY(Func)                 rb_funcall(Func, rb_intern("arity"), 0)
 #define XEN_REQUIRED_ARGS(Func)         xen_rb_required_args(XEN_ARITY(Func))
-#define XEN_KEYWORD_EQ_P(k1, k2)        (k1 == k2)
+#define XEN_KEYWORD_EQ_P(k1, k2)        ((k1) == (k2))
 #define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(Arg)
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
 #define XEN_DOCUMENTATION_SYMBOL        rb_intern("documentation")

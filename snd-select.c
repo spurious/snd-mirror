@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "clm2xen.h"
 
 static XEN selection_changed_hook;
 
@@ -973,23 +974,54 @@ If sync is set, all chans are included.  The new region id is returned (if " S_s
   else return(XEN_TRUE);
 }
 
-static XEN g_save_selection(XEN filename, XEN header_type, XEN data_format, XEN srate, XEN comment, XEN chan)
+static XEN kw_header_type, kw_data_format, kw_comment, kw_file, kw_srate, kw_channel;
+
+static void init_selection_keywords(void)
 {
-  #define H_save_selection "(" S_save_selection " filename (header-type #f) (data-format #f) (srate #f) (comment #f) (chan #f)): \
-save the current selection in filename using the indicated file attributes.  If chan is given, save only that channel."
-  int type, format, sr, err, chn;
-  char *com = NULL, *fname = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_save_selection, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(header_type), header_type, XEN_ARG_2, S_save_selection, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(data_format), data_format, XEN_ARG_3, S_save_selection, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, XEN_ARG_4, S_save_selection, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chan), chan, XEN_ARG_6, S_save_selection, "an integer");
+  kw_header_type = XEN_MAKE_KEYWORD("header-type");
+  kw_data_format = XEN_MAKE_KEYWORD("data-format");
+  kw_comment = XEN_MAKE_KEYWORD("comment");
+  kw_file = XEN_MAKE_KEYWORD("file");
+  kw_srate = XEN_MAKE_KEYWORD("srate");
+  kw_channel = XEN_MAKE_KEYWORD("channel");
+}
+
+static XEN g_save_selection(XEN arglist)
+{
+  #define H_save_selection "(" S_save_selection " :file :header-type :data-format :srate :comment :channel): \
+save the current selection in file using the indicated file attributes.  If channel is given, save only that channel."
+  int type = MUS_NEXT, format = MUS_OUT_FORMAT, sr = 0, err, chn = 0;
+  char *com = NULL, *fname = NULL, *file = NULL;
+
+  XEN args[12]; 
+  XEN keys[6];
+  int orig_arg[6] = {0, 0, 0, 0, 0, 0};
+  int vals, i, arglist_len;
   if (!(selection_is_active()))
     return(snd_no_active_selection_error(S_save_selection));
-  if (XEN_INTEGER_P(header_type)) 
-    type = XEN_TO_C_INT(header_type); 
-  else type = MUS_NEXT;
-  format = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
+  keys[0] = kw_file;
+  keys[1] = kw_header_type;
+  keys[2] = kw_data_format;
+  keys[3] = kw_srate;
+  keys[4] = kw_comment;
+  keys[5] = kw_channel;
+  for (i = 0; i < 12; i++) args[i] = XEN_UNDEFINED;
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  vals = mus_optkey_unscramble(S_save_selection, 6, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      file = mus_optkey_to_string(keys[0], S_save_selection, orig_arg[0], NULL);
+      type = mus_optkey_to_int(keys[1], S_save_selection, orig_arg[1], type);
+      format = mus_optkey_to_int(keys[2], S_save_selection, orig_arg[2], format);
+      sr = mus_optkey_to_int(keys[3], S_save_selection, orig_arg[3], selection_srate());
+      com = mus_optkey_to_string(keys[4], S_save_selection, orig_arg[4], NULL);
+      chn = mus_optkey_to_int(keys[5], S_save_selection, orig_arg[5], SAVE_ALL_CHANS);
+    }
+  if (file == NULL) 
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
+			 C_TO_XEN_STRING("no output file?")));
   if (!(mus_header_writable(type, -2)))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
@@ -1001,12 +1033,7 @@ save the current selection in filename using the indicated file attributes.  If 
 			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
 			 C_TO_XEN_STRING(mus_header_type_name(type)),
 			 C_TO_XEN_STRING(mus_data_format_name(format))));
-  sr = XEN_TO_C_INT_OR_ELSE(srate, selection_srate());
-  if (XEN_STRING_P(comment)) 
-    com = XEN_TO_C_STRING(comment); 
-  else com = NULL;
-  chn = XEN_TO_C_INT_OR_ELSE(chan, SAVE_ALL_CHANS);
-  fname = mus_expand_filename(XEN_TO_C_STRING(filename));
+  fname = mus_expand_filename(file);
   ss->catch_message = NULL;
   err = save_selection(fname, type, format, sr, com, chn);
   if (fname) FREE(fname);
@@ -1014,7 +1041,7 @@ save the current selection in filename using the indicated file attributes.  If 
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING(ss->catch_message)));
-  return(filename);
+  return(args[orig_arg[0] - 1]);
 }
 
 static XEN g_selection_chans(void)
@@ -1053,7 +1080,7 @@ XEN_NARGIFY_0(g_delete_selection_w, g_delete_selection)
 XEN_ARGIFY_3(g_insert_selection_w, g_insert_selection)
 XEN_ARGIFY_4(g_mix_selection_w, g_mix_selection)
 XEN_ARGIFY_2(g_select_all_w, g_select_all)
-XEN_ARGIFY_6(g_save_selection_w, g_save_selection)
+XEN_VARGIFY(g_save_selection_w, g_save_selection)
 #else
 #define g_selection_position_w g_selection_position
 #define g_set_selection_position_w g_set_selection_position
@@ -1074,6 +1101,8 @@ XEN_ARGIFY_6(g_save_selection_w, g_save_selection)
 
 void g_init_selection(void)
 {
+  init_selection_keywords();
+
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_position, g_selection_position_w, H_selection_position,
 					    S_setB S_selection_position, g_set_selection_position_w, g_set_selection_position_reversed,
 					    0, 2, 1, 2);
@@ -1094,7 +1123,7 @@ void g_init_selection(void)
   XEN_DEFINE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
   XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
   XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
-  XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w,   1, 5, 0, H_save_selection);
+  XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
 
   #define H_selection_changed_hook S_selection_changed_hook " (): called whenever some portion of sound is \
 either selected or unselected"

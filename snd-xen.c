@@ -3285,7 +3285,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pushed_button_color, g_pushed_button_color_w, H_pushed_button_color,
 				   S_setB S_pushed_button_color, g_set_pushed_button_color_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_color_p,   g_color_p_w, 1, 0, 0, H_color_p);
+  XEN_DEFINE_PROCEDURE(S_color_p, g_color_p_w, 1, 0, 0, H_color_p);
 #endif
 
 

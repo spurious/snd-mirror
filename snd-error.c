@@ -150,7 +150,7 @@ XEN_NARGIFY_1(g_snd_warning_w, g_snd_warning)
 
 void g_init_errors(void)
 {
-  XEN_DEFINE_PROCEDURE(S_snd_error, g_snd_error_w, 1, 0, 0, H_snd_error);
+  XEN_DEFINE_PROCEDURE(S_snd_error,   g_snd_error_w,   1, 0, 0, H_snd_error);
   XEN_DEFINE_PROCEDURE(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
 
   #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
