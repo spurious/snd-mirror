@@ -1,4 +1,4 @@
-/* tie CLM module into Guile/Scheme */
+/* tie CLM module into Guile/Scheme or Ruby */
 
 /* This module uses the Float array support in vct.c -- it needs to be loaded with vct.o.
  * every generator that has embedded arrays handles these through an extra layer of

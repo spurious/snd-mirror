@@ -5,6 +5,10 @@
 
 static snd_state *state = NULL;
 
+/* TODO Ruby: snd-help and friends, backtrace upon error, find from the minibuffer, and many cute methods.
+ *            sndlib configuration
+ */
+
 
 /* -------- protect XEN vars from GC -------- */
 
@@ -295,6 +299,7 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 #else
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
+  return(XEN_FALSE);
 }
 #endif
 
@@ -409,7 +414,7 @@ XEN eval_form_wrapper(void *data)
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
   return(XEN_FALSE);
 #else
-  return(XEN_EVAL_FORM(data));
+  return(XEN_EVAL_FORM((XEN)data));
 #endif
 }
 
@@ -2696,8 +2701,8 @@ XEN g_c_run_progn_hook (XEN hook, XEN args, const char *caller)
   return(xen_return_first(result, args));
 #else
   if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-    return(XEN_APPLY(hook, args, caller));
-  else return(XEN_CALL_0(hook, caller));
+    return(XEN_APPLY(XEN_VARIABLE_REF(hook), args, caller));
+  else return(XEN_CALL_0(XEN_VARIABLE_REF(hook), caller));
 #endif
 }
 
@@ -2718,8 +2723,8 @@ XEN g_c_run_or_hook (XEN hook, XEN args, const char *caller)
   return(xen_return_first(result, args));
 #else
   if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-    return(XEN_APPLY(hook, args, caller));
-  else return(XEN_CALL_0(hook, caller));
+    return(XEN_APPLY(XEN_VARIABLE_REF(hook), args, caller));
+  else return(XEN_CALL_0(XEN_VARIABLE_REF(hook), caller));
 #endif
 }
 
@@ -2739,8 +2744,8 @@ XEN g_c_run_and_hook (XEN hook, XEN args, const char *caller)
   return(xen_return_first(result, args));
 #else
   if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-    return(XEN_APPLY(hook, args, caller));
-  else return(XEN_CALL_0(hook, caller));
+    return(XEN_APPLY(XEN_VARIABLE_REF(hook), args, caller));
+  else return(XEN_CALL_0(XEN_VARIABLE_REF(hook), caller));
 #endif
 }
 
@@ -2749,8 +2754,8 @@ void during_open(int fd, char *file, int reason)
   if (XEN_HOOKED(during_open_hook))
     g_c_run_progn_hook(during_open_hook,
 		       XEN_LIST_3(C_TO_XEN_INT(fd),
-			      C_TO_XEN_STRING(file),
-			      C_TO_XEN_INT(reason)),
+				  C_TO_XEN_STRING(file),
+				  C_TO_XEN_INT(reason)),
 		       S_during_open_hook);
 }
 
@@ -2777,12 +2782,12 @@ char *output_comment(file_info *hdr)
       while (XEN_NOT_NULL_P (procs))
 	{
 	  result = XEN_CALL_1(XEN_CAR(procs),
-			 C_TO_XEN_STRING(com),
-			 S_output_comment_hook);
+			      C_TO_XEN_STRING(com),
+			      S_output_comment_hook);
 #else
-	  result = XEN_CALL_1(procs,
-			 C_TO_XEN_STRING(com),
-			 S_output_comment_hook);
+	  result = XEN_CALL_1(XEN_VARIABLE_REF(procs),
+			      C_TO_XEN_STRING(com),
+			      S_output_comment_hook);
 #endif
 	  tmpstr = XEN_TO_NEW_C_STRING(result);
 	  if (tmpstr)
@@ -3591,10 +3596,10 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_equalize_panes,      g_equalize_panes_w, 0, 1, 0,      H_equalize_panes);
   XEN_DEFINE_PROCEDURE(S_open_sound_file,     g_open_sound_file_w, 0, 4, 0,     H_open_sound_file);
   XEN_DEFINE_PROCEDURE(S_close_sound_file,    g_close_sound_file_w, 2, 0, 0,    H_close_sound_file);
-  XEN_DEFINE_PROCEDURE(S_vct2sound_file,      vct2soundfile, 3, 0, 0,           H_vct2sound_file);
+  XEN_DEFINE_PROCEDURE(S_vct2sound_file,      vct2soundfile_w, 3, 0, 0,         H_vct2sound_file);
   XEN_DEFINE_PROCEDURE(S_graph,               g_graph_w, 1, 8, 0,               H_graph);
-  XEN_DEFINE_PROCEDURE(S_samples2vct,         samples2vct, 0, 6, 0,             H_samples2vct);
-  XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data, 0, 7, 0,      H_samples2sound_data);
+  XEN_DEFINE_PROCEDURE(S_samples2vct,         samples2vct_w, 0, 6, 0,           H_samples2vct);
+  XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data_w, 0, 7, 0,    H_samples2sound_data);
   XEN_DEFINE_PROCEDURE(S_start_progress_report, g_start_progress_report_w, 0, 1, 0, H_start_progress_report);
   XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w, 0, 1, 0, H_finish_progress_report);
   XEN_DEFINE_PROCEDURE(S_progress_report,     g_progress_report_w, 1, 4, 0,     H_progress_report);

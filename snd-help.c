@@ -2641,9 +2641,14 @@ XEN g_help(XEN text, int widget_wid)
 The argument can be a string, a symbol, or the object itself.  In some cases, only the symbol has the documentation. \
 In the help descriptions, '&optional' marks optional arguments, and \
 '&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm \
-the functions html and ? can be used in place of help to go to the HTML description."
+the functions html and ? can be used in place of help to go to the HTML description, \
+and the location of the associated C code will be displayed, if it can be found."
 
-  XEN help_text = XEN_FALSE; XEN value;
+  XEN help_text = XEN_FALSE; XEN value; XEN loc_val = XEN_UNDEFINED;
+#if HAVE_GUILE
+  XEN snd_urls; 
+  char *estr;
+#endif
   char *str = NULL;
 
   if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
@@ -2670,6 +2675,33 @@ the functions html and ? can be used in place of help to go to the HTML descript
       if ((XEN_FALSE_P(help_text)) &&
 	  (str))
 	help_text = scm_object_property(C_STRING_TO_XEN_SYMBOL(str), XEN_DOCUMENTATION_SYMBOL);
+      if (XEN_STRING_P(help_text))
+        {
+	  /* look for C code location (if index.scm has been loaded) */
+	  snd_urls = XEN_NAME_AS_C_STRING_TO_VALUE("snd-names-and-urls");
+	  if (XEN_LIST_P(snd_urls)) 
+	    {
+	      estr = (char *)CALLOC(128, sizeof(char));
+	      sprintf(estr, "(c? \"%s\")", (str) ? str : (XEN_TO_C_STRING(XEN_TO_STRING(value))));
+	      loc_val = XEN_EVAL_C_STRING(estr);
+	      FREE(estr);
+	      if ((XEN_LIST_P(loc_val)) &&
+		  (XEN_LIST_LENGTH(loc_val) == 3))
+		{ 
+		  str = word_wrap(XEN_TO_C_STRING(help_text), widget_wid);
+		  estr = (char *)CALLOC(snd_strlen(str) + 128, sizeof(char));
+		  sprintf(estr, "%s (%s[%d]:%s)", 
+			  str, 
+			  XEN_TO_C_STRING(XEN_CAR(loc_val)),
+			  XEN_TO_C_INT(XEN_CADR(loc_val)),
+			  XEN_TO_C_STRING(XEN_CADDR(loc_val)));
+		  help_text = C_TO_XEN_STRING(estr);
+		  if (str) FREE(str);
+		  if (estr) FREE(estr);
+		  return(help_text);
+		}
+	    }
+	}
 #endif
     }
   

@@ -143,6 +143,7 @@
 #undef HAVE_SCM_C_EVAL_STRING
 #undef HAVE_SCM_NUM2INT
 #undef HAVE_SCM_LIST_N
+#undef HAVE_SCM_STR2SYMBOL
 
 #define USE_SND 1
 #endif

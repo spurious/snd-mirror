@@ -1444,13 +1444,13 @@ static XEN sp_iread(XEN snd_n, int fld, char *caller)
   if (XEN_TRUE_P(snd_n))
     {
       ss = get_global_state();
-      for (i = 0; i < ss->max_sounds; i++)
+      for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
 	    res = XEN_CONS(sp_iread(C_TO_SMALL_XEN_INT(i), fld, caller), res);
 	}
-      return(XEN_REVERSE_LIST(res));
+      return(res);
     }
   ASSERT_SOUND(caller, snd_n, 1);
   sp = get_sp(snd_n);
@@ -2296,13 +2296,13 @@ static XEN sp_fread(XEN snd_n, int fld, char *caller)
   if (XEN_TRUE_P(snd_n))
     {
       ss = get_global_state();
-      for (i = 0; i < ss->max_sounds; i++)
+      for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
 	    res = XEN_CONS(sp_fread(C_TO_SMALL_XEN_INT(i), fld, caller), res);
 	}
-      return(XEN_REVERSE_LIST(res));
+      return(res);
     }
   ASSERT_SOUND(caller, snd_n, 1);
   sp = get_sp(snd_n);
@@ -2683,6 +2683,7 @@ static int dont_babble_info(snd_info *sp)
 #if (!USE_NO_GUI)
 static XEN g_sound_widgets(XEN snd)
 {
+  #define H_sound_widgets "(" S_sound_widgets " snd) -> list of widgets (pane name ctrls minibuffer play filter-env combine name-label name-icon)"
   /* perhaps this belongs in snd-xsnd where we can grab every widget */
   snd_info *sp;
   ASSERT_SOUND("sound_widgets", snd, 1);
@@ -2723,6 +2724,7 @@ static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
 
 static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 {
+  #define H_write_peak_env_info_file "(" S_write_peak_env_info_file " snd chn name) saves current peak-env info in file"
   chan_info *cp;
   char *fullname = NULL;
   env_info *ep;
@@ -2771,6 +2773,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 
 static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
 {
+  #define H_read_peak_env_info_file "(" S_read_peak_env_info_file " snd chn name) reads stored peak-env info from file"
   /* has to happen in initial_graph_hook to precede add_amp_env */
   chan_info *cp;
   char *fullname;
@@ -3190,7 +3193,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   XEN_DEFINE_PROCEDURE(S_peak_env_info, g_peak_env_info_w, 0, 3, 0, H_peak_env_info);
 
 
-  XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, "(" S_write_peak_env_info_file " snd chn filename)");
-  XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file,  3, 0, 0, "(" S_read_peak_env_info_file " snd chn filename)");
+  XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, H_write_peak_env_info_file);
+  XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
 }
 

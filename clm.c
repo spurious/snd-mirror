@@ -436,7 +436,7 @@ Float *mus_data(mus_any *gen)
 /* every case that implements the data or set data functions needs to include
  * a var-allocated flag, since all such memory has to be handled via vct objects
  * in guile; a subsequent free by the enclosing object could leave a dangling
- * pointer in guile -- see clm2scm.c
+ * pointer in guile -- see clm2xen.c
  */
 
 Float *mus_set_data(mus_any *gen, Float *new_data)
@@ -478,8 +478,8 @@ Float mus_polynomial(Float *coeffs, Float x, int ncoeffs)
   Float sum;
   int i;
   if (ncoeffs <= 0) return(x);
-  sum = coeffs[ncoeffs-1];
-  for (i = ncoeffs-2; i >= 0; i--) sum = (sum * x) + coeffs[i];
+  sum = coeffs[ncoeffs - 1];
+  for (i = ncoeffs - 2; i >= 0; i--) sum = (sum * x) + coeffs[i];
   return(sum);
 }
 
@@ -3218,7 +3218,7 @@ static void dmagify_env(seg *e, Float *data, int pts, int dur, Float scaler)
       e->passes[j] = (int)curpass;
       if (j == 0) 
 	passes = e->passes[0]; 
-      else passes = e->passes[j] - e->passes[j-1];
+      else passes = e->passes[j] - e->passes[j - 1];
       if (e->style == ENV_STEP)
 	e->rates[j] = e->offset + (scaler * y0);
       else

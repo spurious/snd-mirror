@@ -5,7 +5,7 @@
   ;; sndlib (for dubious historical reasons) packs the sound card number into the same parameter as the device number
   (logior (ash card 16) device))
 
-;; for simplicity the C->Scheme code in sndlib2scm.c for mus-audio-read|write
+;; for simplicity the C->Scheme code in sndlib2xen.c for mus-audio-read|write
 ;;   assumes you're asking the sound device to deal with shorts (16-bit quantities).
 ;;   This could be changed, but see the Snd recorder for a cautionary tale...
 

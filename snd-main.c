@@ -617,10 +617,17 @@ static int dont_start(char *filename)
 static char *startup_filename = NULL;
 static int script_arg = 0, script_argn = 0;
 static char **script_args;
-static XEN g_script_arg(void) {return(C_TO_XEN_INT(script_arg));}
+
+static XEN g_script_arg(void) 
+{
+  #define H_script_arg "(" S_script_arg ") -> where we are in the startup arg list"
+  return(C_TO_XEN_INT(script_arg));
+}
+
 static XEN g_set_script_arg(XEN arg) {script_arg = XEN_TO_C_INT(arg); return(arg);}
 static XEN g_script_args(void)
 {
+  #define H_script_args "(" S_script_args ") -> the args passed to Snd at startup as a list of strings"
   XEN lst = XEN_EMPTY_LIST;
   int i;
   for (i = script_argn - 1; i >= 0; i--)
@@ -813,7 +820,7 @@ If it returns #t, Snd does not exit.  This can be used to check for unsaved edit
 
   XEN_DEFINE_HOOK(exit_hook, S_exit_hook, 0, H_exit_hook);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, "where we are in the startup arg list",
-			       "et-" S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE(S_script_args, g_script_args_w, 0, 0, 0, "the args passed to Snd at startup");
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, H_script_arg,
+			       "set-" S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);
 }

@@ -795,7 +795,6 @@ int snd_regions(void)
 
 void save_regions(snd_state *ss, FILE *fd)
 {
-  /* TODO region save in Ruby */
   int i, j, k;
   region *r;
   char *newname;
@@ -804,11 +803,20 @@ void save_regions(snd_state *ss, FILE *fd)
       r = regions[i];
       if (r)
 	{
+#if HAVE_RUBY
+	  fprintf(fd, "%s(%d, %d, %d, %d, %.4f, \"%s\", \"%s\", \"%s\", ",
+	          S_restore_region, i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
+#else
 	  fprintf(fd, "(%s %d %d %d %d %.4f \"%s\" \"%s\" \"%s\"",
 	          S_restore_region, i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
+#endif
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
+#if HAVE_RUBY
+	      fprintf(fd, "\n  [");
+#else
 	      fprintf(fd, "\n  #(");
+#endif
 	      for (j = 0; j < r->chans; j++)
 		{
 		  for (k = 0; k < r->frames; k++)
@@ -818,7 +826,11 @@ void save_regions(snd_state *ss, FILE *fd)
 		    fprintf(fd, "%d ", r->data[j][k]);
 #endif
 		}
+#if HAVE_RUBY
+	      fprintf(fd, "], ");
+#else
 	      fprintf(fd, ")");
+#endif
 	    }
 	  else /* file data */
 	    {
@@ -827,6 +839,9 @@ void save_regions(snd_state *ss, FILE *fd)
 		  newname = shorter_tempnam(save_dir(ss), "snd_save_");
 		  copy_file(r->filename, newname);
 		  fprintf(fd, " \"%s\"", newname);
+#if HAVE_RUBY
+		  fprintf(fd, ",");
+#endif
 		  FREE(newname);
 		}
 	      else
@@ -848,7 +863,11 @@ void save_regions(snd_state *ss, FILE *fd)
 		  for (j = 0; j < r->chans; j++)
 		    ibufs[j] = (MUS_SAMPLE_TYPE *)CALLOC(r->frames, sizeof(MUS_SAMPLE_TYPE));
 		  mus_file_read(ifd, 0, r->frames - 1, r->chans, ibufs);
+#if HAVE_RUBY
+		  fprintf(fd, "\n  [");
+#else
 		  fprintf(fd, "\n  #(");
+#endif
 		  for (j = 0; j < r->chans; j++)
 		    {
 		      for (k = 0; k < r->frames; k++) 
@@ -858,7 +877,11 @@ void save_regions(snd_state *ss, FILE *fd)
 			fprintf(fd, "%d ", ibufs[j][k]);
 #endif
 		    }
+#if HAVE_RUBY
+		  fprintf(fd, "], ");
+#else
 		  fprintf(fd, ")");
+#endif
 		  mus_file_close(ifd);
 		  for (j = 0; j < r->chans; j++) FREE(ibufs[j]);
 		  FREE(ibufs);

@@ -1383,21 +1383,21 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
       while (XEN_NOT_NULL_P(procs))
 	{
 	  result = XEN_APPLY(XEN_CAR(procs), 
-			 XEN_LIST_5(env_list,
-				   C_TO_SMALL_XEN_INT(pos),
-				   C_TO_XEN_DOUBLE(x),
-				   C_TO_XEN_DOUBLE(y),
-				   C_TO_SMALL_XEN_INT(reason)),
-			 S_enved_hook);
+			     XEN_LIST_5(env_list,
+					C_TO_SMALL_XEN_INT(pos),
+					C_TO_XEN_DOUBLE(x),
+					C_TO_XEN_DOUBLE(y),
+					C_TO_SMALL_XEN_INT(reason)),
+			     S_enved_hook);
 	  procs = XEN_CDR (procs);
 #else
-	  result = XEN_APPLY(procs, 
-			 XEN_LIST_5(env_list,
-				   C_TO_SMALL_XEN_INT(pos),
-				   C_TO_XEN_DOUBLE(x),
-				   C_TO_XEN_DOUBLE(y),
-				   C_TO_SMALL_XEN_INT(reason)),
-			 S_enved_hook);
+	  result = XEN_APPLY(XEN_VARIABLE_REF(procs), 
+			     XEN_LIST_5(env_list,
+					C_TO_SMALL_XEN_INT(pos),
+					C_TO_XEN_DOUBLE(x),
+					C_TO_XEN_DOUBLE(y),
+					C_TO_SMALL_XEN_INT(reason)),
+			     S_enved_hook);
 #endif
 
 	  if ((XEN_NOT_FALSE_P(result)) && 

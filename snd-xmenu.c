@@ -1332,6 +1332,7 @@ void add_popup_handler(Widget w)
 
 static XEN g_menu_widgets(void)
 {
+  #define H_menu_widgets "(" S_menu_widgets ") returns list of top level menu widgets (main file edit view options help)"
   return(XEN_CONS(XEN_WRAP_C_POINTER(mw[menu_menu]),
 	  XEN_CONS(XEN_WRAP_C_POINTER(mw[f_cascade_menu]),
            XEN_CONS(XEN_WRAP_C_POINTER(mw[e_cascade_menu]),
@@ -1387,5 +1388,5 @@ wants to override the default menu action:\n\
 
   XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, H_menu_hook);
   XEN_DEFINE_PROCEDURE("test-menus", g_test_menus_w, 0, 0, 0, "");
-  XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, "returns top level menu widgets");
+  XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
 }

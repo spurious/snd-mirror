@@ -54,6 +54,8 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
 
 static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
 {
+  #define H_draw_line "(" S_draw_line " x0 y0 x1 y1 snd chn ax) draws a line"
+
   ASSERT_CHANNEL(S_draw_line, snd, chn, 5);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_draw_line, "a number");
@@ -69,6 +71,8 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
 
 static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
 {
+  #define H_draw_dot "(" S_draw_dot " x0 y0 size snd chn ax) draws a dot"
+ 
   ASSERT_CHANNEL(S_draw_dot, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_dot, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_draw_dot, "a number");
@@ -82,6 +86,8 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
 
 static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN chn, XEN ax)
 {
+  #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height snd chn ax) draws a filled rectangle"
+
   ASSERT_CHANNEL(S_fill_rectangle, snd, chn, 5);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_fill_rectangle, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_fill_rectangle, "a number");
@@ -97,6 +103,8 @@ static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN 
 
 static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 {
+  #define H_draw_string "(" S_draw_string " text x0 y0 snd chn ax) draws a string"
+
   ASSERT_CHANNEL(S_draw_string, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_1, S_draw_string, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_2, S_draw_string, "a number");
@@ -136,6 +144,8 @@ static POINT *TO_C_POINTS(XEN pts, const char *caller)
 static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
+  #define H_draw_lines "(" S_draw_lines " lines snd chn ax) draws a vector of lines"
+
   POINT *pack_pts;
   axis_context *ax1;
   ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
@@ -152,6 +162,8 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
+  #define H_draw_dots "(" S_draw_dots " positions dot-size snd chn ax) draws a vector of dots"
+ 
   POINT *pack_pts;
   axis_context *ax1;
   ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
@@ -168,6 +180,8 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
 
 static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 { 
+  #define H_fill_polygon "(" S_fill_polygon " points snd chn ax) draws a filled polygon"
+
   POINT *pack_pts;
   axis_context *ax;
   ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
@@ -186,6 +200,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 static XEN g_make_bezier(XEN args)
 {
   #define S_make_bezier "make-bezier"
+  #define H_make_bezier "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points"
   /* XDrawBezier from cmn's glfed.c (where it was assuming PostScript coordinates) */
   int ax, ay, bx, by, cx, cy, i;
   float incr, val;
@@ -236,6 +251,8 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN ax)
 
 static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
 {
+  #define H_foreground_color "(" S_foreground_color " snd chn ax) -> current drawing color"
+
   chan_info *cp;
   ASSERT_CHANNEL("set-" S_foreground_color, snd, chn, 2);
   XEN_ASSERT_TYPE(COLOR_P(color), color, XEN_ARG_1, "set-" S_foreground_color, "a color object");
@@ -317,6 +334,7 @@ static void handle_input(XtPointer context, int *fd, XtInputId *id)
 
 static XEN g_load_font(XEN font)
 {
+  #define H_load_font "(" S_load_font " <name>) -> font-id"
   XFontStruct *fs = NULL;
   snd_state *ss;
   XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
@@ -340,6 +358,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 
 static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
+  #define H_current_font "(" S_current_font " snd chn ax) -> current font id"
   axis_context *ax;
   chan_info *cp;
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
@@ -371,6 +390,7 @@ static void handle_input(gpointer context, gint fd, GdkInputCondition condition)
 
 static XEN g_load_font(XEN font)
 {
+  #define H_load_font "(" S_load_font " <name>) -> font-id"
   GdkFont *fs = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
   fs = gdk_font_load(XEN_TO_C_STRING(font));
@@ -392,6 +412,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 
 static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
+  #define H_current_font "(" S_current_font " snd chn ax) -> current font id"
   axis_context *ax;
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer");
@@ -420,6 +441,7 @@ static XEN g_set_current_font_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN g_add_input(XEN file, XEN callback)
 {
+  #define H_add_input "(" S_add_input " file callback) -> id adds file to the set being watched for input, calling callback if any is received"
   snd_state *ss;
   int loc;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(file), file, XEN_ARG_1, S_add_input, "an integer");
@@ -435,6 +457,7 @@ static XEN g_add_input(XEN file, XEN callback)
 
 static XEN g_remove_input(XEN id)
 {
+  #define H_remove_input "(" S_remove_input " id) removes id from the set of files watched for input"
   int index;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_remove_input, "an integer");
   index = XEN_TO_C_INT(id);
@@ -512,6 +535,7 @@ static BACKGROUND_TYPE call_idler(GUI_POINTER code)
 
 static XEN g_add_idler(XEN code)
 {
+  #define H_add_idler "(" S_add_idler " code) -> id causing code to run as a background process"
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   if (!(procedure_fits(code, 0)))
     mus_misc_error(S_add_idler, "argument should be a procedure of no args", code);
@@ -523,6 +547,7 @@ static XEN g_add_idler(XEN code)
 
 static XEN g_remove_idler(XEN id)
 {
+  #define H_remove_idler "(" S_remove_idler " id) removes background process"
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id), id, XEN_ONLY_ARG, S_remove_idler, "a wrapped object");
   BACKGROUND_REMOVE(forget_idler(XEN_UNDEFINED, (BACKGROUND_FUNCTION_TYPE)(XEN_UNWRAP_C_POINTER(id))));
@@ -594,6 +619,7 @@ in the drawing mode graphic-style."
 
 static XEN g_main_widgets(void)
 {
+  #define H_main_widgets "(" S_main_widgets ") -> top level widgets (list main-app main-shell main-pane sound-pane)"
   snd_state *ss;
   XEN main_win;
   ss = get_global_state();
@@ -614,6 +640,12 @@ static XEN dialog_widgets;
 
 static XEN g_dialog_widgets(void)
 {
+  #define H_dialog_widgets "(" S_dialog_widgets ") -> dialogs (each #f if not yet created) (list \
+color orientation enved error yes_or_no transform \
+file_open file_save_as view_files raw_data new_file \
+file_mix edit_header find help completion mix_panel \
+print recorder region stats listener"
+
   if (!(XEN_VECTOR_P(dialog_widgets)))
     {
       dialog_widgets = XEN_MAKE_VECTOR(NUM_DIALOGS, XEN_FALSE);
@@ -636,6 +668,7 @@ void set_dialog_widget(int which, GUI_WIDGET wid)
 
 static XEN g_widget_position(XEN wid)
 {
+  #define H_widget_position "(" S_widget_position " wid) -> '(x y)"
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_widget_position, "a wrapped object");  
   w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
@@ -667,6 +700,7 @@ static XEN g_set_widget_position(XEN wid, XEN xy)
 
 static XEN g_widget_size(XEN wid)
 {
+  #define H_widget_size "(" S_widget_size " wid) -> '(width height)"
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_widget_size, "a wrapped object"); 
   w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
@@ -698,6 +732,7 @@ static XEN g_set_widget_size(XEN wid, XEN wh)
 
 static XEN g_widget_text(XEN wid)
 {
+  #define H_widget_text "(" S_widget_text " wid) -> text)"
   GUI_WIDGET w;
   char *text = NULL;
   XEN res = XEN_FALSE;
@@ -769,6 +804,7 @@ static XEN g_set_widget_text(XEN wid, XEN text)
 
 static XEN g_recolor_widget(XEN wid, XEN color)
 {
+  #define H_recolor_widget "(" S_recolor_widget " wid color) resets widget color"
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ARG_1, S_recolor_widget, "a wrapped object");  
   XEN_ASSERT_TYPE(COLOR_P(color), color, XEN_ARG_2, S_recolor_widget, "a color object"); 
@@ -790,6 +826,7 @@ static XEN g_recolor_widget(XEN wid, XEN color)
 
 static XEN g_set_widget_foreground(XEN wid, XEN color)
 {
+  #define H_set_widget_foreground "(set-widget-foreground widget color)"
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ARG_1, "set-widget-foreground", "a wrapped object");  
   XEN_ASSERT_TYPE(COLOR_P(color), color, XEN_ARG_2, "set-widget-foreground", "a color object"); 
@@ -810,6 +847,7 @@ static XEN g_set_widget_foreground(XEN wid, XEN color)
 
 static XEN g_hide_widget(XEN wid)
 {
+  #define H_hide_widget "(" S_hide_widget " widget) undisplays widget"
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_hide_widget, "a wrapped object");  
   w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
@@ -829,6 +867,7 @@ static XEN g_hide_widget(XEN wid)
 
 static XEN g_show_widget(XEN wid)
 {
+  #define H_show_widget "(" S_show_widget " widget) displays widget"
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_show_widget, "a wrapped object");  
   w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
@@ -848,6 +887,7 @@ static XEN g_show_widget(XEN wid)
 
 static XEN g_focus_widget(XEN wid)
 {
+  #define H_focus_widget "(" S_focus_widget " widget) causes widget to receive input ('focus')"
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_focus_widget, "a wrapped object");
   w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
@@ -894,6 +934,7 @@ typedef struct {
 
 static XEN g_make_pixmap(XEN vals)
 {
+  #define H_make_pixmap "(make-pixmap strs)"
   snd_state *ss;
   char **bits;
   int rows, i;
@@ -944,6 +985,7 @@ static XEN g_make_pixmap(XEN vals)
 
 static XEN g_colormap_ref(XEN map, XEN pos)
 {
+  #define H_colormap_ref "(colormap-ref map position) -> (list r g b)"
   unsigned short r, g, b;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(map), map, XEN_ARG_1, "colormap-ref", "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, "colormap-ref", "an integer");
@@ -1036,46 +1078,46 @@ void g_init_draw(void)
   XEN_DEFINE_CONSTANT(S_cursor_context,       CHAN_CGC,       "graphics context for the cursor");
   XEN_DEFINE_CONSTANT(S_selection_context,    CHAN_SELGC,     "graphics context to draw in the selection color");
 
-  XEN_DEFINE_PROCEDURE(S_draw_line,        g_draw_line_w, 4, 3, 0,       "(" S_draw_line " x0 y0 x1 y1 snd chn ax)");
-  XEN_DEFINE_PROCEDURE(S_draw_dot,         g_draw_dot_w, 2, 4, 0,        "(" S_draw_dot " x0 y0 size snd chn ax)");
-  XEN_DEFINE_PROCEDURE(S_draw_lines,       g_draw_lines_w, 1, 3, 0,      "(" S_draw_lines " lines snd chn ax)");
-  XEN_DEFINE_PROCEDURE(S_draw_dots,        g_draw_dots_w, 1, 4, 0,       "(" S_draw_dots " positions dot-size snd chn ax)");
-  XEN_DEFINE_PROCEDURE(S_draw_string,      g_draw_string_w, 3, 3, 0,     "(" S_draw_string " text x0 y0 snd chn ax)");
-  XEN_DEFINE_PROCEDURE(S_fill_rectangle,   g_fill_rectangle_w, 4, 3, 0,  "(" S_fill_rectangle " x0 y0 width height snd chn ax)");
-  XEN_DEFINE_PROCEDURE(S_fill_polygon,     g_fill_polygon_w, 1, 3, 0,    "(" S_fill_polygon " points snd chn ax)");
+  XEN_DEFINE_PROCEDURE(S_draw_line,        g_draw_line_w, 4, 3, 0,       H_draw_line);
+  XEN_DEFINE_PROCEDURE(S_draw_dot,         g_draw_dot_w, 2, 4, 0,        H_draw_dot);
+  XEN_DEFINE_PROCEDURE(S_draw_lines,       g_draw_lines_w, 1, 3, 0,      H_draw_lines); 
+  XEN_DEFINE_PROCEDURE(S_draw_dots,        g_draw_dots_w, 1, 4, 0,       H_draw_dots);
+  XEN_DEFINE_PROCEDURE(S_draw_string,      g_draw_string_w, 3, 3, 0,     H_draw_string);
+  XEN_DEFINE_PROCEDURE(S_fill_rectangle,   g_fill_rectangle_w, 4, 3, 0,  H_fill_rectangle);
+  XEN_DEFINE_PROCEDURE(S_fill_polygon,     g_fill_polygon_w, 1, 3, 0,    H_fill_polygon);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_foreground_color, g_foreground_color_w, "(" S_foreground_color " snd chn ax) -> current drawing color",
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_foreground_color, g_foreground_color_w, H_foreground_color,
 					"set-" S_foreground_color, g_set_foreground_color_w, g_set_foreground_color_reversed,
 					0, 3, 1, 3);
 
-  XEN_DEFINE_PROCEDURE(S_load_font,        g_load_font_w, 1, 0, 0,        "(" S_load_font " <name>) -> font-id");
+  XEN_DEFINE_PROCEDURE(S_load_font,        g_load_font_w, 1, 0, 0,       H_load_font);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_current_font, g_current_font_w, "(" S_current_font " snd chn ax) -> current font id",
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_current_font, g_current_font_w, H_current_font,
 					"set-" S_current_font, g_set_current_font_w, g_set_current_font_reversed,
 					0, 3, 1, 3);
 
-  XEN_DEFINE_PROCEDURE(S_main_widgets,     g_main_widgets_w, 0, 0, 0,    "returns top level widgets");
-  XEN_DEFINE_PROCEDURE(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0,  "returns a list of dialog widgets");
+  XEN_DEFINE_PROCEDURE(S_main_widgets,     g_main_widgets_w, 0, 0, 0,    H_main_widgets);
+  XEN_DEFINE_PROCEDURE(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0,  H_dialog_widgets);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_size, g_widget_size_w, "(" S_widget_size " wid) -> '(width height)",
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_size, g_widget_size_w, H_widget_size,
 					"set-" S_widget_size, g_set_widget_size_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_position, g_widget_position_w, "(" S_widget_position " wid) -> '(x y)",
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_position, g_widget_position_w, H_widget_position,
 					"set-" S_widget_position, g_set_widget_position_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_text, g_widget_text_w, "(" S_widget_text " wid) -> text)",
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_text, g_widget_text_w, H_widget_text,
 					"set-" S_widget_text, g_set_widget_text_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_recolor_widget,  g_recolor_widget_w, 2, 0, 0,  "(" S_recolor_widget " wid color)");
-  XEN_DEFINE_PROCEDURE(S_hide_widget,     g_hide_widget_w, 1, 0, 0,     "(" S_hide_widget " widget)");
-  XEN_DEFINE_PROCEDURE(S_show_widget,     g_show_widget_w, 1, 0, 0,     "(" S_show_widget " widget)");
-  XEN_DEFINE_PROCEDURE(S_focus_widget,    g_focus_widget_w, 1, 0, 0,    "(" S_focus_widget " widget) causes widget to receive input ('focus')");
+  XEN_DEFINE_PROCEDURE(S_recolor_widget,  g_recolor_widget_w, 2, 0, 0,  H_recolor_widget);
+  XEN_DEFINE_PROCEDURE(S_hide_widget,     g_hide_widget_w, 1, 0, 0,     H_hide_widget);
+  XEN_DEFINE_PROCEDURE(S_show_widget,     g_show_widget_w, 1, 0, 0,     H_show_widget);
+  XEN_DEFINE_PROCEDURE(S_focus_widget,    g_focus_widget_w, 1, 0, 0,    H_focus_widget);
 
-  XEN_DEFINE_PROCEDURE(S_add_idler,       g_add_idler_w, 1, 0, 0,       "(" S_add_idler " code) -> id");
-  XEN_DEFINE_PROCEDURE(S_remove_idler,    g_remove_idler_w, 1, 0, 0,    "(" S_remove_idler " id)");
+  XEN_DEFINE_PROCEDURE(S_add_idler,       g_add_idler_w, 1, 0, 0,       H_add_idler);
+  XEN_DEFINE_PROCEDURE(S_remove_idler,    g_remove_idler_w, 1, 0, 0,    H_remove_idler);
 
   XEN_DEFINE_PROCEDURE(S_make_graph_data, g_make_graph_data_w, 0, 5, 0, H_make_graph_data);
-  XEN_DEFINE_PROCEDURE(S_graph_data, g_graph_data_w, 1, 6, 0, H_graph_data);
+  XEN_DEFINE_PROCEDURE(S_graph_data,      g_graph_data_w, 1, 6, 0,      H_graph_data);
 
 
   /* ---------------- unstable ---------------- */
@@ -1088,16 +1130,16 @@ void g_init_draw(void)
   XEN_DEFINE_CONSTANT("combined-context",     CHAN_TMPGC,     "graphics context for superimposed graphics");
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_add_input,       g_add_input_w, 2, 0, 0,       "(" S_add_input " file callback) -> id");
-  XEN_DEFINE_PROCEDURE(S_remove_input,    g_remove_input_w, 1, 0, 0,    "(" S_remove_input " id)");
+  XEN_DEFINE_PROCEDURE(S_add_input,       g_add_input_w, 2, 0, 0,       H_add_input);
+  XEN_DEFINE_PROCEDURE(S_remove_input,    g_remove_input_w, 1, 0, 0,    H_remove_input);
 
-  XEN_DEFINE_PROCEDURE("set-widget-foreground", g_set_widget_foreground_w, 2, 0, 0, "(set-widget-foreground widget color)");
-  XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points");
+  XEN_DEFINE_PROCEDURE("set-widget-foreground", g_set_widget_foreground_w, 2, 0, 0, H_set_widget_foreground);
+  XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
 
-  XEN_DEFINE_PROCEDURE(S_make_pixmap, g_make_pixmap_w, 1, 0, 0, "(make-pixmap strs)");
+  XEN_DEFINE_PROCEDURE(S_make_pixmap, g_make_pixmap_w, 1, 0, 0, H_make_pixmap);
   XEN_DEFINE_PROCEDURE("set-pixmap", g_set_pixmap_w, 2, 0, 0, "(set-pixmap widget pixmap)");
 
-  XEN_DEFINE_PROCEDURE("colormap-ref", g_colormap_ref_w, 2, 0, 0, "(colormap-ref map position) -> (list r g b)");
+  XEN_DEFINE_PROCEDURE("colormap-ref", g_colormap_ref_w, 2, 0, 0, H_colormap_ref);
   XEN_DEFINE_CONSTANT("colormap-size", COLORMAP_SIZE, "colormap size");
 }
 #endif

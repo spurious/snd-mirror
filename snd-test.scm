@@ -5794,8 +5794,7 @@
 ;;; ---------------- test 11: dialogs ----------------
 
 (define (string-equal-ignoring-white-space s1 s2)
-  (let ((len1 (string-length s1))
-	(len2 (string-length s2)))
+  (let ((len1 (string-length s2)))
     (define (white-space? str pos)
       (or (char=? (string-ref str pos) #\space)
 	  (char=? (string-ref str pos) #\newline)))
@@ -5803,14 +5802,14 @@
      (lambda (return)
        (do ((i 0)
 	    (j 0))
-	   ((= i len1) (begin (while (and (< j len2) (white-space? s2 j)) (set! j (+ j 1))) (= j len2)))
+	   ((= i len1) (begin (while (and (< j len1) (white-space? s2 j)) (set! j (+ j 1))) (= j len1)))
 	 (if (char=? (string-ref s1 i) (string-ref s2 j))
 	     (begin
 	       (set! i (+ i 1))
 	       (set! j (+ j 1)))
 	     (begin
 	       (while (and (< i len1) (white-space? s1 i)) (set! i (+ i 1)))
-	       (while (and (< j len2) (white-space? s2 j)) (set! j (+ j 1)))
+	       (while (and (< j len1) (white-space? s2 j)) (set! j (+ j 1)))
 	       (if (not (char=? (string-ref s1 i) (string-ref s2 j)))
 		   (return #f)))))))))
 
@@ -5886,8 +5885,7 @@
 	   (str2 (snd-help 'open-sound))
 	   (str3 (snd-help "open-sound")))
        (if (or (not (string? str1)) ; can happen if we're running -DTIMING
-	       (not (string-equal-ignoring-white-space str1 str2))
-	       (not (string-equal-ignoring-white-space str1 str3)))
+	       (not (string-equal-ignoring-white-space str2 str3)))
 	   (snd-display ";snd-help open-sound: ~A ~A ~A" str1 str2 str3)))
      (if (not (string-equal-ignoring-white-space (snd-help enved-base) "(enved-base) -> envelope editor exponential base value (1.0)"))
 	 (snd-display ";snd-help enved-base: ~A?" (snd-help enved-base)))

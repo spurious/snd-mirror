@@ -154,10 +154,11 @@
   #define XEN_TO_C_STRING(STR)        SCM_CHARS(STR)
 #else
   #define XEN_TO_C_STRING(STR)        SCM_STRING_CHARS(STR)
-  /* this assumes its argument is an XEN string and does not allocate new space */
+  /* this assumes its argument is a XEN string and does not allocate new space */
 #endif
 #define C_TO_XEN_STRING(a)            scm_makfrom0str(a)
 #define XEN_TO_NEW_C_STRING(a)        gh_scm2newstr(a, NULL)
+/* is it safe now to use strdup(SCM_SYMBOL_CHARS(a) here? */
 
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
 #define XEN_TO_C_BOOLEAN_OR_TRUE(a)   ((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? 0 : 1)
@@ -169,7 +170,12 @@
   #define C_STRING_TO_XEN_FORM(Str)   scm_read_0str(Str)
 #endif
 
-#define C_STRING_TO_XEN_SYMBOL(a)     gh_symbol2scm(a)
+#if HAVE_SCM_STR2SYMBOL
+  #define C_STRING_TO_XEN_SYMBOL(a)   scm_str2symbol(a)
+#else
+  #define C_STRING_TO_XEN_SYMBOL(a)   gh_symbol2scm(a)
+#endif
+
 #ifdef SCM_SYMBOL_CHARS
   #define XEN_EVAL_FORM(Form)         scm_eval((XEN)(Form), scm_interaction_environment())
   /* was scm_eval_x but I'm not sure that's safe */
@@ -178,7 +184,11 @@
   #define XEN_EVAL_FORM(Form)         scm_eval((XEN)(Form))
   #define XEN_SYMBOL_TO_C_STRING(a)   gh_symbol2newstr(a, NULL)
 #endif
-#define XEN_TO_STRING(Obj)            scm_object_to_string(Obj, XEN_UNDEFINED)
+#if HAVE_SCM_OBJECT_TO_STRING
+  #define XEN_TO_STRING(Obj)          scm_object_to_string(Obj, XEN_UNDEFINED)
+#else
+  #define XEN_TO_STRING(Obj)          scm_strprint_obj(Obj)
+#endif
 
 /* (need a way to pass an uninterpreted pointer from C to XEN then back to C) */
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
@@ -293,7 +303,6 @@
 #define XEN_LIST_REF(Lst, Num)        scm_list_ref(Lst, C_TO_SMALL_XEN_INT(Num))
 #define XEN_CONS(Arg1, Arg2)          scm_cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3)  scm_cons2(Arg1, Arg2, Arg3)
-#define XEN_REVERSE_LIST(Lst)         scm_reverse(Lst)
 #if HAVE_SCM_LIST_N
   #define XEN_LIST_1(a)                   scm_list_1(a)
   #define XEN_LIST_2(a, b)                scm_list_2(a, b)
@@ -496,6 +505,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   rb_define_global_function(xen_scheme_procedure_to_ruby(Name), Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg))
+/* TODO snd_rb_record_help(Name, Doc) as hash? then lookup in snd_help */
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
@@ -552,12 +562,12 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_CONS(Arg1, Arg2)            xen_rb_cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3)    xen_rb_cons2(Arg1, Arg2, Arg3)
 #define XEN_LIST_REF(Lst, Num)          rb_ary_entry(Lst, Num)
-#define XEN_REVERSE_LIST(a)             rb_ary_reverse(a)
 
 #define XEN_HOOK_PROCEDURES(a)          a
 #define XEN_CLEAR_HOOK(a)               a = Qnil
 #define XEN_HOOKED(a)                   a != Qnil
 #define XEN_VARIABLE_SET(a, b)          a = b
+#define XEN_VARIABLE_REF(a)             a
 
 #define XEN_VECTOR_ELEMENTS(a)          RARRAY(a)->ptr
 #define XEN_VECTOR_LENGTH(Arg)          RARRAY(Arg)->len
@@ -726,12 +736,12 @@ XEN xen_rb_funcall_0(XEN func);
 /* ------------------------------ MZSCHEME ------------------------------ */
 
 /* this compiles/loads/runs, and partly even works, but...
- *   need setter procs, hooks, calls, memo-sound set/ref
+ *   need setter procs, calls
  *   object print methods are ignored?
  *   wrapped ptrs
  *   error handling for apply et al, arity checks (scheme_arity -> (list mina maxa))
  *   keywords
- *   untested: reverse-list (gc concerns here), list-ref
+ *   list-ref
  *   documentation via snd-help, configure.ac, name completion?
  */
 
@@ -821,25 +831,30 @@ XEN xen_rb_funcall_0(XEN func);
   do { \
     XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
     XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-     } while (0)
+  } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
     XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
     XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-     } while (0)
+  } while (0)
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help)  scheme_add_global_constant(Name, C_TO_XEN_INT(Value), xen_get_env())
-#define XEN_DEFINE_VARIABLE(Name, Var, Value)   scheme_add_global(Name, C_TO_XEN_INT(Value), xen_get_env())
-/* this is wrong(? -- see below) */
+
+#define XEN_DEFINE_VARIABLE(Name, Var, Value) \
+  do { \
+     scheme_add_global(Name, XEN_FALSE, xen_get_env()); \
+     Var = C_TO_XEN_STRING(Name); \
+   } while (0)
 
 #define XEN_DEFINE_HOOK(Var, Name, Arity, Help) \
-{ \
-  scheme_register_extension_global((void *)&Var, sizeof(XEN)); \
-  Var = XEN_EMPTY_LIST; \
-}
+  do { \
+     scheme_add_global(Name, XEN_FALSE, xen_get_env()); \
+     Var = C_STRING_TO_XEN_SYMBOL(Name); \
+   } while (0)
 
-#define XEN_VARIABLE_SET(a, b)
+#define XEN_VARIABLE_REF(Var)            scheme_lookup_global(Var, xen_get_env())
+#define XEN_VARIABLE_SET(Var, Value)     xen_mzscheme_set_variable(Var, Value)
 
 #define XEN_EQ_P(a, b)                   scheme_eq(a, b)
 #define XEN_BOOLEAN_P(Arg)               SCHEME_BOOLP(Arg)
@@ -869,7 +884,6 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_CONS(Arg1, Arg2)             scheme_make_pair(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3)     scheme_make_pair(Arg1, scheme_make_pair(Arg2, Arg3))
 #define XEN_LIST_REF(Lst, Num)           xen_mzscheme_list_ref(Lst, Num)
-#define XEN_REVERSE_LIST(a)              xen_mzscheme_reverse_list(a)
 
 #define XEN_VECTOR_ELEMENTS(a)           SCHEME_VEC_ELS(a)
 #define XEN_VECTOR_LENGTH(Arg)           SCHEME_VEC_SIZE(Arg)
@@ -878,9 +892,9 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_MAKE_VECTOR(Num, Fill)       scheme_make_vector(Num, Fill)
 #define XEN_VECTOR_TO_LIST(Vect)         scheme_vector_to_list(Vect)
 
-#define XEN_HOOKED(a)                    XEN_NOT_NULL_P(a)
-#define XEN_CLEAR_HOOK(Arg)              Arg = XEN_EMPTY_LIST
-#define XEN_HOOK_PROCEDURES(a)           a
+#define XEN_HOOKED(a)                    XEN_NOT_FALSE_P(XEN_VARIABLE_REF(a))
+#define XEN_CLEAR_HOOK(Arg)              XEN_VARIABLE_SET(Arg, XEN_FALSE)
+#define XEN_HOOK_PROCEDURES(a)           XEN_VARIABLE_REF(a)
 
 #define XEN_CHAR_P(Arg)                  SCHEME_CHARP(Arg)
 #define XEN_TO_C_CHAR(Arg)               SCHEME_CHAR_VAL(Arg)
@@ -1020,9 +1034,13 @@ XEN xen_rb_funcall_0(XEN func);
 
 int xen_mzscheme_get_unsigned_int_val(XEN obj);
 Scheme_Env *xen_get_env(void);
-XEN xen_mzscheme_reverse_list(XEN lst);
 XEN xen_mzscheme_list_ref(XEN lst, int loc);
 XEN xen_mzscheme_eval_string_with_error(char *str);
+void xen_mzscheme_set_variable(XEN var, XEN value);
+
+#ifdef __cplusplus
+  Scheme_Object *scheme_arity(Scheme_Object *p);
+#endif
 
 #endif
 /* end MZSCHEME */
@@ -1150,7 +1168,6 @@ XEN xen_mzscheme_eval_string_with_error(char *str);
 #define XEN_YES_WE_HAVE(Feature)
 #define XEN_DOCUMENTATION_SYMBOL 0
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
-#define XEN_REVERSE_LIST(a) a
 #define XEN_PROTECT_FROM_GC(a) 0
 #define XEN_LOAD_FILE(a) 0
 #define XEN_ERROR_TYPE(Typ) XEN_FALSE

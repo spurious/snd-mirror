@@ -3540,13 +3540,13 @@ static XEN cp_iread(XEN snd_n, XEN chn_n, int fld, char *caller)
   if (XEN_TRUE_P(snd_n))
     {
       ss = get_global_state();
-      for (i = 0; i < ss->max_sounds; i++)
+      for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
 	    res = XEN_CONS(cp_iread(C_TO_SMALL_XEN_INT(i), chn_n, fld, caller), res);
 	}
-      return(XEN_REVERSE_LIST(res));
+      return(res);
     }
   else
     {
@@ -3555,9 +3555,9 @@ static XEN cp_iread(XEN snd_n, XEN chn_n, int fld, char *caller)
 	  sp = get_sp(snd_n);
 	  if (sp == NULL)
 	    return(snd_no_such_sound_error(caller, snd_n));
-	  for (i = 0; i < sp->nchans; i++)
+	  for (i = sp->nchans - 1; i >= 0; i--)
 	    res = XEN_CONS(cp_iread(snd_n, C_TO_SMALL_XEN_INT(i), fld, caller), res);
-	  return(XEN_REVERSE_LIST(res));
+	  return(res);
 	}
       else
 	{
@@ -3636,22 +3636,22 @@ static XEN cp_iwrite(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
   if (XEN_TRUE_P(snd_n))
     {
       ss = get_global_state();
-      for (i = 0; i < ss->max_sounds; i++)
+      for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
 	    res = XEN_CONS(cp_iwrite(C_TO_SMALL_XEN_INT(i), chn_n, on, fld, caller), res);
 	}
-      return(XEN_REVERSE_LIST(res));
+      return(res);
     }
   if (XEN_TRUE_P(chn_n))
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
-      for (i = 0; i < sp->nchans; i++)
+      for (i = sp->nchans - 1; i >= 0; i--)
 	res = XEN_CONS(cp_iwrite(snd_n, C_TO_SMALL_XEN_INT(i), on, fld, caller), res);
-      return(XEN_REVERSE_LIST(res));
+      return(res);
     }
   ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, caller);
@@ -3907,22 +3907,22 @@ static XEN cp_fread(XEN snd_n, XEN chn_n, int fld, char *caller)
   if (XEN_TRUE_P(snd_n))
     {
       ss = get_global_state();
-      for (i = 0; i < ss->max_sounds; i++)
+      for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
 	    res = XEN_CONS(cp_fread(C_TO_SMALL_XEN_INT(i), chn_n, fld, caller), res);
 	}
-      return(XEN_REVERSE_LIST(res));
+      return(res);
     }
   if (XEN_TRUE_P(chn_n))
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
-      for (i = 0; i < sp->nchans; i++)
+      for (i = sp->nchans - 1; i >= 0; i--)
 	res = XEN_CONS(cp_fread(snd_n, C_TO_SMALL_XEN_INT(i), fld, caller), res);
-      return(XEN_REVERSE_LIST(res));
+      return(res);
     }
   ASSERT_CHANNEL(caller, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, caller);
@@ -3960,22 +3960,22 @@ static XEN cp_fwrite(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
   if (XEN_TRUE_P(snd_n))
     {
       ss = get_global_state();
-      for (i = 0; i < ss->max_sounds; i++)
+      for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
 	    res = XEN_CONS(cp_fwrite(C_TO_SMALL_XEN_INT(i), chn_n, on, fld, caller), res);
 	}
-      return(XEN_REVERSE_LIST(res));
+      return(res);
     }
   if (XEN_TRUE_P(chn_n))
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
-      for (i = 0; i < sp->nchans; i++)
+      for (i = sp->nchans - 1; i >= 0; i--)
 	res = XEN_CONS(cp_fwrite(snd_n, C_TO_SMALL_XEN_INT(i), on, fld, caller), res);
-      return(XEN_REVERSE_LIST(res));
+      return(res);
     }
   ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, caller);
@@ -5366,6 +5366,7 @@ static XEN g_channel_widgets_1(chan_info *cp)
 
 static XEN g_channel_widgets(XEN snd, XEN chn)
 {
+  #define H_channel_widgets "(" S_channel_widgets " snd chn) -> list of widgets (graph w f sx sy zx zy edhist)"
   ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
   return(g_channel_widgets_1(get_cp(snd, chn, S_channel_widgets)));
 }
@@ -5613,7 +5614,7 @@ void g_init_chn(void)
   cp_edpos = XEN_UNDEFINED;
 
 #if (!USE_NO_GUI)
-  XEN_DEFINE_PROCEDURE(S_channel_widgets,         g_channel_widgets_w, 0, 2, 0,         "returns channel widgets");
+  XEN_DEFINE_PROCEDURE(S_channel_widgets,         g_channel_widgets_w, 0, 2, 0,         H_channel_widgets);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w, 0, 2, 0,                   H_edits);

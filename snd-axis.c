@@ -671,6 +671,7 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
 
 static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
+  #define H_x2position "(" S_x2position " val snd chn ax) -> x pixel loc of val"
   ASSERT_CHANNEL(S_x2position, snd, chn, 2);
   return(C_TO_XEN_INT(grf_x(XEN_TO_C_DOUBLE(val),
 			  TO_C_AXIS_INFO(snd, chn, ap, S_x2position))));
@@ -678,6 +679,7 @@ static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
+#define H_y2position "(" S_y2position " val snd chn ax) -> y pixel loc of val"
   ASSERT_CHANNEL(S_y2position, snd, chn, 2);
   return(C_TO_XEN_INT(grf_y(XEN_TO_C_DOUBLE(val),
 			  TO_C_AXIS_INFO(snd, chn, ap, S_y2position))));
@@ -685,6 +687,7 @@ static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
+  #define H_position2x "(" S_position2x " val snd chn ax) -> x in axis of pixel val"
   ASSERT_CHANNEL(S_position2x, snd, chn, 2);
   return(C_TO_XEN_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position2x),
 			       XEN_TO_C_INT(val))));
@@ -692,6 +695,7 @@ static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
+  #define H_position2y "(" S_position2y " val snd chn ax) -> y in axis of pixel val"
   ASSERT_CHANNEL(S_position2y, snd, chn, 2);
   return(C_TO_XEN_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position2y),
 			       XEN_TO_C_INT(val))));
@@ -699,6 +703,7 @@ static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 {
+  #define H_axis_info "(" S_axis_info " snd chn grf) -> (list losamp hisamp x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1)"
   axis_info *ap;
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, "axis-info");
   return(XEN_CONS(C_TO_XEN_INT(ap->losamp),
@@ -734,12 +739,12 @@ XEN_ARGIFY_3(g_axis_info_w, g_axis_info)
 
 void g_init_axis(void)
 {
-  XEN_DEFINE_PROCEDURE(S_x2position, g_grf_x_w, 1, 3, 0,     "(" S_x2position " val snd chn ax)");
-  XEN_DEFINE_PROCEDURE(S_y2position, g_grf_y_w, 1, 3, 0,     "(" S_y2position " val snd chn ax)");
-  XEN_DEFINE_PROCEDURE(S_position2x, g_ungrf_x_w, 1, 3, 0,   "(" S_position2x " val snd chn ax)");
-  XEN_DEFINE_PROCEDURE(S_position2y, g_ungrf_y_w, 1, 3, 0,   "(" S_position2y " val snd chn ax)");
+  XEN_DEFINE_PROCEDURE(S_x2position, g_grf_x_w, 1, 3, 0,     H_x2position);
+  XEN_DEFINE_PROCEDURE(S_y2position, g_grf_y_w, 1, 3, 0,     H_y2position);
+  XEN_DEFINE_PROCEDURE(S_position2x, g_ungrf_x_w, 1, 3, 0,   H_position2x);
+  XEN_DEFINE_PROCEDURE(S_position2y, g_ungrf_y_w, 1, 3, 0,   H_position2y);
 
-  XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, "(" S_axis_info " snd chn grf)");
+  XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, H_axis_info);
 
 }
 #endif

@@ -87,7 +87,6 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), c
 	  ))),
     local_doc,
     C_TO_XEN_STRING(get_help));
-  /* still need to trap help output and send it to the listener */
 #endif
 }
 
@@ -117,7 +116,6 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 	  ))),
     local_doc,
     C_TO_XEN_STRING(get_help));
-  /* still need to trap help output and send it to the listener */
   XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0);
 #endif
 }
@@ -290,6 +288,7 @@ char *xen_version(void)
 
 #if HAVE_READLINE
   #include <readline/readline.h>
+  #include <readline/history.h>
 #endif
 
 static XEN xen_rb_report_error(XEN nada, XEN err_info)
@@ -397,7 +396,7 @@ static char *xen_rb_list_to_s(XEN lst)
   len = XEN_LIST_LENGTH(lst);
   for (i = 0; i < len; i++)
     {
-      strcat(lstbuf, XEN_TO_NEW_C_STRING(XEN_TO_STRING(XEN_LIST_REF(lst, i))));
+      strcat(lstbuf, XEN_TO_C_STRING(XEN_TO_STRING(XEN_LIST_REF(lst, i))));
       strcat(lstbuf, " ");
     }
   return(lstbuf);
@@ -518,22 +517,19 @@ XEN xen_mzscheme_list_ref(XEN lst, int loc)
   return(XEN_CAR(lst));
 }
 
-XEN xen_mzscheme_reverse_list(XEN lst)
-{
-  XEN last = XEN_EMPTY_LIST;
-  while (!(XEN_NULL_P(lst)))
-    {
-      last = XEN_CONS(XEN_CAR(lst), last);
-      lst = XEN_CDR(lst);
-    }
-  return(last);
-}
-
 void *xen_malloc(int size)
 {
   return(scheme_malloc(size));
 }
 
+void xen_mzscheme_set_variable(XEN var, XEN value)
+{
+  char *str;
+  str = (char *)calloc(128, sizeof(char));
+  sprintf(str, "(set! %s %d)", XEN_TO_C_STRING(var), XEN_TO_C_INT(value));
+  XEN_EVAL_C_STRING(str);
+  free(str);
+}
 
 /* the following taken bodily from mzscheme/plt/src/mzscheme/dynsrc/oe.c */
 
