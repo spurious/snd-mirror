@@ -1,6 +1,7 @@
 snd change log
 
-  20-May:    removed glfft.c and glfft.scm, added snd-gxl-context on -DHAVE_GL switch (configure --with-gl)
+  20-May:    removed glfft.c and glfft.scm
+             added snd-gxl-context on -DHAVE_GL switch (configure --with-gl)
              added gl.c, makegl.scm, gldata.scm. (GL example in grfsnd.html).
   15-May:    update-hook.
   13-May:    snd 5.10.

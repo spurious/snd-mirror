@@ -84,6 +84,7 @@ void mus_error(int error, const char *format, ...)
     fprintf(stderr, format);
   else fprintf(stderr, "error: %d %s\n", error, format);
 #endif
+  /* it was a big mistake not to return the error code here! Too late to change... */
 }
 
 static mus_print_handler_t *mus_print_handler = NULL;
@@ -772,9 +773,7 @@ int mus_sound_open_input (const char *arg)
       mus_file_open_descriptors(fd, arg, sf->data_format, sf->datum_size, sf->data_location, sf->chans, sf->header_type);
       lseek(fd, sf->data_location, SEEK_SET);
     }
-  else mus_error(MUS_CANT_OPEN_FILE, "can't open %s: %s\n  [%s[%d] %s]",
-		 arg, strerror(errno),
-		 __FILE__, __LINE__, __FUNCTION__);
+  else mus_error(MUS_CANT_OPEN_FILE, "mus_sound_open_input can't open %s: %s", arg, strerror(errno));
   return(fd);
 }
 
@@ -1091,10 +1090,7 @@ int mus_file_to_array(const char *filename, int chan, int start, int samples, mu
   if (chan >= chans) 
     {
       mus_sound_close_input(ifd);      
-      mus_error(MUS_NO_SUCH_CHANNEL, 
-		"can't read %s channel %d to array (file has %d chans)\n [%s[%d] %s]",
-		filename, chan, chans,
-		__FILE__, __LINE__, __FUNCTION__);
+      mus_error(MUS_NO_SUCH_CHANNEL, "mus_file_to_array can't read %s channel %d (file has %d chans)", filename, chan, chans);
       return(MUS_ERROR);
     }
   bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));

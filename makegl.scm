@@ -266,6 +266,8 @@
 	(cons "constchar*" "STRING")
 	))
 
+(define glu-1-2 '("GLUtesselator*" "gluBeginPolygon" "gluDeleteTess" "gluEndPolygon" "gluNextContour" "gluTessVertex"))
+
 (define (type-it type)
   (let ((typ (assoc type direct-types))
 	(g2 '()))
@@ -294,11 +296,18 @@
 		    (hey "#define XEN_~A_P(Arg) 1~%" (no-stars (car typ)))
 		    (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))
 	(if (not (string=? type "Display*"))
-	    (hey "XL_TYPE~A(~A, ~A)~%" 
-		 (if (has-stars type) "_PTR" "")
-		 (no-stars type)
-		 type)
-	    (hey "XL_TYPE(Display, Display*)~%")))))
+	    (begin
+	      (if (member type glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+	      (hey "XL_TYPE~A~A(~A, ~A)~%" 
+		   (if (has-stars type) "_PTR" "")
+		   (if (member type (list "int*" "Pixmap" "Font" "GLubyte*" 
+					  "GLubyte*" "GLdouble*" "GLfloat*" "GLvoid*" 
+					  "GLuint*" "GLboolean*" "GLint*" "GLshort*"))
+		       "_1" "")
+		   (no-stars type)
+		   type)
+	      (if (member type glu-1-2) (hey "#endif~%")))
+	    (hey "XL_TYPE_1(Display, Display*)~%")))))
 
 (define* (CFNC data #:optional spec spec-name)
   (let ((name (cadr-str data))
@@ -388,9 +397,15 @@
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "#define XL_TYPE_1(Name, XType) \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
+(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
 (hey "~%")
 (hey "#define XL_TYPE_PTR(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
+(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */~%")
+(hey "#define XL_TYPE_PTR_1(Name, XType) \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */~%")
 
@@ -442,6 +457,7 @@
 	       (heyc " "))
 	     (set! line-len arg-start))))
 
+     (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
      (if (and (> (length data) 4)
 	      (eq? (list-ref data 4) 'if))
 	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref data 5)))))
@@ -542,7 +558,9 @@
 
        (if (> refargs 0)
 	   (let* ((previous-arg using-result))
-	     (hey "));~%")
+	     (if (not (string=? return-type "void")) 
+		 (heyc ")"))
+	     (hey ");~%")
 	     (if using-result (heyc "  "))
 	     (hey "  return(XEN_LIST_~D(" (+ refargs (if using-result 1 0)))
 	     (if using-result (heyc "result"))
@@ -564,6 +582,7 @@
        )
 
      (hey "}~%")
+     (if (member name glu-1-2) (hey "#endif~%"))
      (hey "~%")
      )))
 
@@ -578,6 +597,7 @@
 	 (args (- cargs refargs))
 	 (if-fnc (and (> (length func) 4)
 		      (eq? (list-ref func 4) 'if))))
+    (if (member (car func) glu-1-2) (say "#ifdef GLU_VERSION_1_2~%"))
     (if if-fnc
 	(say "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
     (say "XEN_~A(gxg_~A_w, gxg_~A)~%" 
@@ -587,7 +607,8 @@
 		 (format #f "NARGIFY_~D" cargs)))
 	 (car func) (car func))
     (if if-fnc
-	(say "#endif~%"))))
+	(say "#endif~%"))
+    (if (member (car func) glu-1-2) (say "#endif~%"))))
 	 
 (for-each argify-func (reverse funcs))
 
@@ -600,18 +621,22 @@
   (let* ((cargs (length (caddr func)))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 (args (- cargs refargs)))
+    (if (member (car func) glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
     (hey "  XEN_DEFINE_PROCEDURE(XL_PRE ~S XL_POST, gxg_~A, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
 		     (if (>= cargs 10) 0 refargs) ; optional ignored
 		     (if (>= cargs 10) 1 0)
 		     (car func))
+    (if (member (car func) glu-1-2) (hey "#endif~%"))
+    (if (member (car func) glu-1-2) (say "#ifdef GLU_VERSION_1_2~%"))
     (say "  XEN_DEFINE_PROCEDURE(XL_PRE ~S XL_POST, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
 		     (if (>= cargs 10) 0 refargs) ; optional ignored
 		     (if (>= cargs 10) 1 0)
 		     (car func))
+    (if (member (car func) glu-1-2) (say "#endif_2~%"))
     ))
 
 (for-each defun (reverse funcs))

@@ -3056,7 +3056,7 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
       str = just_filename(rp->output_file);
       record_report(messages, str, " recording cancelled", NULL);
       FREE(str);
-      snd_remove(rp->output_file);
+      snd_remove(rp->output_file, TRUE);
     }
   else                            /* reset or restart */
     { 

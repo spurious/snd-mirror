@@ -1462,8 +1462,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	    }
 	  else
 	    {
-	      remove(ap->ofile);
-	      mus_sound_forget(ap->ofile);
+	      snd_remove(ap->ofile, TRUE);
 	    }
 	  FREE(ap->ofile);
 	  ap->ofile = NULL;

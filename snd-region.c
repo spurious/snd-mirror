@@ -88,7 +88,7 @@ static void free_region(region *r, int complete)
 	{
 	  if (r->filename)
 	    {
-	      snd_remove(r->filename);
+	      snd_remove(r->filename, TRUE);
 	      FREE(r->filename);
 	    }
 	  r->filename = NULL;
@@ -979,7 +979,7 @@ void cleanup_region_temp_files(void)
 	  (r->use_temp_file == REGION_FILE) && 
 	  (r->filename))
 	{
-	  snd_remove(r->filename);
+	  snd_remove(r->filename, TRUE);
 	  r->filename = NULL;
 	}
     }
@@ -1084,7 +1084,7 @@ void clear_region_backpointer(snd_info *sp)
       r = (region *)(sp->edited_region);
       if (r)
 	{
-	  snd_remove(r->editor_name);
+	  snd_remove(r->editor_name, TRUE);
 	  FREE(r->editor_name);
 	  r->editor_name = NULL;
 	  r->editor_copy = NULL;

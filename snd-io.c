@@ -282,27 +282,14 @@ int snd_write_header(snd_state *ss, const char *name, int type, int srate, int c
   return(fd);
 }
 
-static char *snd_remove_with_error(const char *name)
+int snd_remove(const char *name, int forget)
 {
   int err = 0;
-  mus_sound_forget(name); /* no error here if not in sound tables */
+  if (forget) mus_sound_forget(name); /* no error here if not in sound tables */
   err = remove(name);
   if (err == -1)
-    return(mus_format("can't remove %s: %s", name, strerror(errno)));
-  return(NULL);
-}
-
-int snd_remove(const char *name)
-{
-  char *errstr;
-  errstr = snd_remove_with_error(name);
-  if (errstr)
-    {
-      snd_warning(errstr);
-      FREE(errstr);
-      return(-1);
-    }
-  return(0);
+    snd_warning("can't remove %s: %s", name, strerror(errno));
+  return(err);
 }
 
 int snd_close(int fd, const char *name)
@@ -385,7 +372,7 @@ void forget_temp(char *filename, int chan)
 	      }
 	  if (happy == 0)
 	    {
-	      snd_remove(tmp->name);
+	      snd_remove(tmp->name, TRUE);
 	      FREE(tmp->name);
 	      FREE(tmp->ticks);
 	      FREE(tmp);
@@ -419,7 +406,7 @@ void forget_temps(void)
     {
       tmp = tempfiles[i];
       if (tmp) 
-	snd_remove(tmp->name);
+	snd_remove(tmp->name, TRUE);
     }
 }
 
@@ -524,7 +511,7 @@ snd_data *free_snd_data(snd_data *sd)
 	      if (sd->open == FD_OPEN) close_file_state_fd(sd->io);
 	      sd->io = free_file_state(sd->io);
 	      if (sd->temporary == DELETE_ME) 
-		snd_remove(sd->filename);
+		snd_remove(sd->filename, TRUE);
 	    }
 	  if (sd->filename) FREE(sd->filename);
 	  sd->filename = NULL;

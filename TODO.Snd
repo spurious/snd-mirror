@@ -26,8 +26,7 @@ gtk_signal_connect(GTK_OBJECT(client),"die",GTK_SIGNAL_FUNC(exit_cleanly),NULL);
 
 Gettext support, if there's interest. 
 
-A "master volume" control in the recorder.  Also a running spectrogram display --
-see snd-motif.scm for an ugly first pass.
+A "master volume" control in the recorder.
 
 A data file mechanism for the phase vocoder (i.e. save/reuse analysis pass).
 

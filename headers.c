@@ -143,9 +143,7 @@ int mus_header_initialize (void)
       if ((hdrbuf == NULL) || (aux_comment_start == NULL) || (aux_comment_end == NULL) ||
 	  (loop_modes == NULL) || (loop_starts == NULL) || (loop_ends == NULL))
 	{
-	  mus_error(MUS_MEMORY_ALLOCATION_FAILED,
-		    "header buffer allocation trouble\n  [%s[%d] %s]",
-		    __FILE__, __LINE__, __FUNCTION__);
+	  mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_header_initialize: buffer allocation failed");
 	  return(MUS_ERROR);
 	}
     }
@@ -664,11 +662,9 @@ static int sndlib_format_to_next(int format)
     case MUS_L24INT:           return(42); break;
     case MUS_UBYTE:            return(43); break;
     default: 
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		"can't write NeXT/Sun data format: %d (%s)\n  [%s[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT, "write_next[Sun]_header: can't write data format: %d (%s)",
 		format,
-		any_data_format_name(format),
-		__FILE__, __LINE__, __FUNCTION__); 
+		any_data_format_name(format));
       return(MUS_ERROR); 
       break;
     }
@@ -882,10 +878,7 @@ static int read_aiff_header (int chan, int overall_offset)
       offset += chunkloc;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "AIFF header chunks confused at " OFF_TD "\n  [%s[%d] %s]",
-		    offset,
-		    __FILE__, __LINE__, __FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED, "read_aiff_header: chunks confused at " OFF_TD , offset);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
@@ -1099,11 +1092,9 @@ static int sndlib_format_to_aiff_bits(int format)
     case MUS_BDOUBLE: case MUS_LDOUBLE:                                    return(64); break;
     case MUS_BYTE: case MUS_UBYTE: case MUS_MULAW: case MUS_ALAW:          return(8);  break;
     default: 
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		"can't write AIFF data format: %d (%s)\n  [%s[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT, "write_aiff_header: can't write data format: %d (%s)",
 		format,
-		any_data_format_name(format),
-		__FILE__, __LINE__, __FUNCTION__);
+		any_data_format_name(format));
       return(MUS_ERROR);
       break;
     }
@@ -1616,11 +1607,9 @@ static int write_riff_header (int chan, int wsrate, int wchans, int siz, int for
       mus_lshort_to_char((unsigned char *)(hdrbuf + 34), 64); 
       break;
     default: 
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		"can't write RIFF data format: %d (%s)\n  [%s[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT, "write_riff_header: can't write data format: %d (%s)",
 		format,
-		any_data_format_name(format),
-		__FILE__, __LINE__, __FUNCTION__);
+		any_data_format_name(format));
       return(MUS_ERROR);
       break;
     }
@@ -1862,10 +1851,7 @@ static int read_avi_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "AVI header chunks confused at %d\n  [%s[%d] %s]",
-		    offset,
-		    __FILE__, __LINE__, __FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED, "read_avi_header: chunks confused at %d", offset);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
@@ -2029,10 +2015,7 @@ static int read_soundfont_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "SoundFont header chunks confused at %d\n  [%s[%d] %s]",
-		    offset,
-		    __FILE__, __LINE__, __FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED, "read_soundfont_header: chunks confused at %d", offset);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
@@ -2219,9 +2202,7 @@ static int read_nist_header (int chan)
 	    {
 	      header_type = MUS_RAW; 
 	      data_format = MUS_UNSUPPORTED; 
-	      mus_error(MUS_UNSUPPORTED_HEADER_TYPE,
-			"invalid NIST header (field length = %d)?\n  [%s[%d] %s]",
-			nm, __FILE__, __LINE__, __FUNCTION__);
+	      mus_error(MUS_UNSUPPORTED_HEADER_TYPE, "read_nist_header: unreadable field (length = %d)?", nm);
 	      return(MUS_ERROR);
 	    }
 	  name[nm] = 0;
@@ -2364,10 +2345,7 @@ static int read_bicsf_header (int chan)
 	  offset += chunkloc;
 	  if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	    {
-	      mus_error(MUS_HEADER_READ_FAILED,
-			"Bicsf header chunks confused at %d\n  [%s[%d] %s]",
-			offset,
-			__FILE__, __LINE__, __FUNCTION__);
+	      mus_error(MUS_HEADER_READ_FAILED, "read_bicsf_header: chunks confused at %d", offset);
 	      return(MUS_ERROR);
 	    }
 	  chunkname = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
@@ -2472,9 +2450,7 @@ static int read_ircam_header (int chan)
       offset += bloc;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "IRCAM header chunks confused at %d\n  [%s[%d] %s]",
-		    offset, __FILE__, __LINE__, __FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED, "read_ircam_header: chunks confused at %d", offset);
 	  return(MUS_ERROR);
 	}
       bcode = big_or_little_endian_short((unsigned char *)hdrbuf, little);
@@ -2503,11 +2479,9 @@ static int sndlib_format_to_ircam(int format)
     case MUS_BINT:   return(0x40004); break;
     case MUS_BFLOAT: return(4);       break;
     default: 
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		"IRCAM unsupported sound data format type: %d (%s)\n  [%s[%d] %s]",
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT, "read_ircam_header: unsupported data format: %d (%s)",
 		format,
-		any_data_format_name(format),
-		__FILE__, __LINE__, __FUNCTION__);
+		any_data_format_name(format));
       return(MUS_ERROR);
       break;
     }
@@ -2589,10 +2563,7 @@ static int read_8svx_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "IFF header chunks confused at %d\n  [%s[%d] %s]",
-		    offset,
-		    __FILE__, __LINE__, __FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED, "read_8svx_header: chunks confused at %d", offset);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
@@ -2758,9 +2729,7 @@ static int read_voc_header(int chan)
 		    }
 		  if (seek_and_read(chan, (unsigned char *)hdrbuf, curbase + len + 4, HDRBUFSIZ) <= 0)
 		    {
-		      mus_error(MUS_HEADER_READ_FAILED,
-				"VOC header mangled?\n  [%s[%d] %s]",
-				__FILE__, __LINE__, __FUNCTION__);
+		      mus_error(MUS_HEADER_READ_FAILED, "read_voc_header: ran off end of file");
 		      return(MUS_ERROR);
 		    }
 		  curbase += len;
@@ -2860,9 +2829,7 @@ static int read_avr_header(int chan)
     }
   if (seek_and_read(chan, (unsigned char *)hdrbuf, 64, 64) <= 0)
     {
-      mus_error(MUS_HEADER_READ_FAILED,
-		"AVR header mangled?\n  [%s[%d] %s]",
-		__FILE__, __LINE__, __FUNCTION__);
+      mus_error(MUS_HEADER_READ_FAILED, "read_avr_header: ran off end of file");
       return(MUS_ERROR);
     }
   comment_start = 64;
@@ -3149,9 +3116,7 @@ static int read_esps_header (int chan)
 	    {
 	      if (seek_and_read(chan, (unsigned char *)hdrbuf, curbase + n, 32) <= 0)
 		{
-		  mus_error(MUS_HEADER_READ_FAILED,
-			    "ESPS header mangled?\n  [%s[%d] %s]",
-			    __FILE__, __LINE__, __FUNCTION__);
+		  mus_error(MUS_HEADER_READ_FAILED, "read_esps_header: ran off end of file");
 		  return(MUS_ERROR);
 		}
 	      n = 0;
@@ -3247,10 +3212,7 @@ static int read_maud_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "MAUD header bogus chunk at %d\n  [%s[%d] %s]",
-		    offset,
-		    __FILE__, __LINE__, __FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED, "read_maud_header: chunks confused at %d", offset);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
@@ -3336,10 +3298,7 @@ static int read_csl_header (int chan)
       offset += chunkloc;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 64) <= 0)
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "CSL header bogus chunk at %d\n  [%s[%d] %s]",
-		    offset,
-		    __FILE__, __LINE__, __FUNCTION__);
+	  mus_error(MUS_HEADER_READ_FAILED, "read_csl_header: chunks confused at %d", offset);
 	  return(MUS_ERROR);
 	}
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
@@ -4521,19 +4480,15 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
   /* if it's a 0 length file we need to get out */
   if (bytes < 0) 
     {
-      mus_error(MUS_HEADER_READ_FAILED,
-		"%s%sread header failed: %s!\n  [%s[%d] %s]",
+      mus_error(MUS_HEADER_READ_FAILED,	"%s%sread header failed: %s",
 		(filename) ? filename : "", (filename) ? ": " : "",
-		strerror(errno),
-		__FILE__, __LINE__, __FUNCTION__);
+		(errno) ? strerror(errno) : "bytes read < 0?");
       return(MUS_ERROR);
     }
   if (bytes == 0) 
     {
-      mus_error(MUS_HEADER_READ_FAILED,
-		"%s%sattempt to read header of an empty file!\n  [%s[%d] %s]",
-		(filename) ? filename : "", (filename) ? ": " : "",
-		__FILE__, __LINE__, __FUNCTION__);
+      mus_error(MUS_HEADER_READ_FAILED,	"%s%sattempt to read header of empty file",
+		(filename) ? filename : "", (filename) ? ": " : "");
       return(MUS_ERROR);
     }
   if (bytes < 4) 
@@ -4546,11 +4501,9 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
     {
       if (bytes < 24) 
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "%s%sNeXT header truncated? read only %d bytes\n  [%s[%d] %s]",
+	  mus_error(MUS_HEADER_READ_FAILED, "%s%sNeXT header truncated? found only %d bytes",
 		    (filename) ? filename : "", (filename) ? ": " : "",
-		    bytes,
-		    __FILE__, __LINE__, __FUNCTION__);
+		    bytes);
 	  return(MUS_ERROR);
 	}
       header_type = MUS_NEXT;
@@ -4561,11 +4514,9 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       /* next 4 bytes are apparently the file size or something equally useless */
       if (bytes < 12) 
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "%s%sAIFF header truncated? read only %d bytes\n  [%s[%d] %s]",
+	  mus_error(MUS_HEADER_READ_FAILED, "%s%sAIFF header truncated? found only %d bytes",
 		    (filename) ? filename : "", (filename) ? ": " : "",
-		    bytes,
-		    __FILE__, __LINE__, __FUNCTION__);
+		    bytes);
 	  return(MUS_ERROR);
 	}
       if (match_four_chars((unsigned char *)(hdrbuf + 8), I_AIFF))
@@ -4596,9 +4547,7 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
 	  return(read_csl_header(chan));
 	}
 
-      mus_print("%s%sunrecognized \"FORM\" (i.e. AIFF) header\n  [%s[%d] %s]",
-		(filename) ? filename : "", (filename) ? ": " : "",
-		__FILE__, __LINE__, __FUNCTION__);
+      mus_print("%s%sunrecognized \"FORM\" (i.e. AIFF) header",	(filename) ? filename : "", (filename) ? ": " : "");
       return(MUS_ERROR); /* i.e. unknown FORM header */
     }
   if ((match_four_chars((unsigned char *)hdrbuf, I_RIFF)) ||
@@ -4606,11 +4555,9 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
     {
       if (bytes < 12) 
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "%s%sRIFF header truncated? read only %d bytes\n  [%s[%d] %s]",
+	  mus_error(MUS_HEADER_READ_FAILED, "%s%sRIFF header truncated? found only %d bytes",
 		    (filename) ? filename : "", (filename) ? ": " : "",
-		    bytes,
-		    __FILE__, __LINE__, __FUNCTION__);
+		    bytes);
 	  return(MUS_ERROR);
 	}
       if (match_four_chars((unsigned char *)(hdrbuf + 8), I_WAVE))
@@ -4628,9 +4575,7 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
 	  header_type = MUS_AVI;
 	  return(read_avi_header(chan));
 	}
-      mus_print("%s%sunrecognized \"RIFF\" (i.e. 'wave') header\n  [%s[%d] %s]",
-		(filename) ? filename : "", (filename) ? ": " : "",
-		__FILE__, __LINE__, __FUNCTION__);
+      mus_print("%s%sunrecognized \"RIFF\" (i.e. 'wave') header", (filename) ? filename : "", (filename) ? ": " : "");
       return(MUS_ERROR); /* unknown RIFF header */
     }
   if ((equal_big_or_little_endian((unsigned char *)hdrbuf, I_IRCAM_VAX)) || 
@@ -4640,11 +4585,9 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
     {
       if (bytes < 24) 
 	{
-	  mus_error(MUS_HEADER_READ_FAILED,
-		    "%s%sIRCAM header truncated? read only %d bytes\n  [%s[%d] %s]",
+	  mus_error(MUS_HEADER_READ_FAILED, "%s%sIRCAM header truncated? found only %d bytes",
 		    (filename) ? filename : "", (filename) ? ": " : "",
-		    bytes,
-		    __FILE__, __LINE__, __FUNCTION__);
+		    bytes);
 	  return(MUS_ERROR);
 	}
       header_type = MUS_IRCAM;
@@ -4947,18 +4890,13 @@ int mus_header_read(const char *name)
   chan = mus_file_open_read(name);
   if (chan == -1) 
     {
-      mus_error(MUS_CANT_OPEN_FILE,
-		"can't open %s: %s",
-		name, strerror(errno));
+      mus_error(MUS_CANT_OPEN_FILE, "mus_header_read: can't open %s: %s", name, strerror(errno));
       return(MUS_ERROR);
     }
   err = mus_header_read_with_fd_and_name(chan, name);
   if (close(chan) != 0)
     {
-      mus_error(MUS_CANT_CLOSE_FILE,
-		"can't close file %d, %s: %s\n  [%s[%d] %s]",
-		chan, name, strerror(errno),
-		__FILE__, __LINE__, __FUNCTION__); 
+      mus_error(MUS_CANT_CLOSE_FILE, "mus_header_read: can't close %s: %s", name, strerror(errno));
       return(MUS_ERROR);
     }
 
@@ -4994,11 +4932,9 @@ static int mus_header_write_with_fd_and_name(int chan, int type, int in_srate, i
       break;
     default:
       {
-	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,
-		  "%s%scan't write %s headers\n  [%s[%d] %s]",
-		  (filename) ? filename : "", (filename) ? ": " : "",
+	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,  "mus_header_write: can't write %s header%s%s",
 		  mus_header_type_name(type),
-		  __FILE__, __LINE__, __FUNCTION__);
+		  (filename) ? " for " : "", (filename) ? filename : "");
 	return(MUS_ERROR);
 	break;
       }
@@ -5017,19 +4953,13 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
   chan = mus_file_create(name);
   if (chan == -1) 
     {
-      mus_error(MUS_CANT_OPEN_FILE,
-		"can't write header of %s: %s\n  [%s[%d] %s]",
-		name, strerror(errno),
-		__FILE__, __LINE__, __FUNCTION__);
+      mus_error(MUS_CANT_OPEN_FILE, "mus_header_write for %s failed: %s", name, strerror(errno));
       return(MUS_ERROR);
     }
   err = mus_header_write_with_fd_and_name(chan, type, in_srate, in_chans, loc, size_in_samples, format, comment, len, name);
   if (close(chan) != 0)
     {
-      mus_error(MUS_CANT_CLOSE_FILE,
-		"can't close file %d, %s: %s\n  [%s[%d] %s]",
-		chan, name, strerror(errno),
-		__FILE__, __LINE__, __FUNCTION__); 
+      mus_error(MUS_CANT_CLOSE_FILE, "mus_header_write: can't close %s: %s", name, strerror(errno));
       return(MUS_ERROR);
     }
   return(err);
@@ -5049,10 +4979,7 @@ int mus_header_update_with_fd(int chan, int type, off_t size)
     case MUS_RAW: break;
     default:
       {
-	mus_error(MUS_UNSUPPORTED_HEADER_TYPE,
-		  "Sndlib can't update %s headers\n  [%s[%d] %s]",
-		  mus_header_type_name(type),
-		  __FILE__, __LINE__, __FUNCTION__);
+	mus_error(MUS_UNSUPPORTED_HEADER_TYPE, "mus_header_update: can't update %s headers", mus_header_type_name(type));
 	return(MUS_ERROR);
 	break;
       }
@@ -5067,10 +4994,7 @@ int mus_header_update(const char *name, int type, off_t size, int wsrate, int fo
   chan = mus_file_reopen_write(name);
   if (chan == -1) 
     {
-      mus_error(MUS_CANT_OPEN_FILE,
-		"can't update header of %s: %s\n  [%s[%d] %s]",
-		name, strerror(errno),
-		__FILE__, __LINE__, __FUNCTION__);
+      mus_error(MUS_CANT_OPEN_FILE, "mus_header_update for %s failed: %s", name, strerror(errno));
       return(MUS_ERROR);
     }
   siz = mus_samples_to_bytes(format, size);
@@ -5098,10 +5022,7 @@ int mus_header_update(const char *name, int type, off_t size, int wsrate, int fo
     }
   if (close(chan) != 0)
     {
-      mus_error(MUS_CANT_CLOSE_FILE,
-		"can't close file %d, %s: %s\n  [%s[%d] %s]",
-		chan, name, strerror(errno),
-		__FILE__, __LINE__, __FUNCTION__); 
+      mus_error(MUS_CANT_CLOSE_FILE, "mus_header_update can't close %s: %s", name, strerror(errno));
       return(MUS_ERROR);
     }
   return(err);
@@ -5132,10 +5053,7 @@ int mus_header_change_chans(const char *filename, int new_chans)
 	  fd = mus_file_reopen_write(filename);
 	  if (fd == -1) 
 	    {
-	      mus_error(MUS_CANT_OPEN_FILE,
-			"can't change chans in header of %s: %s\n  [%s[%d] %s]",
-			filename, strerror(errno),
-			__FILE__, __LINE__, __FUNCTION__);
+	      mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_chans for %s failed: %s", filename, strerror(errno));
 	      return(MUS_ERROR);
 	    }
 	  switch (header_type)
@@ -5188,10 +5106,7 @@ int mus_header_change_srate(const char *filename, int new_srate)
 	  fd = mus_file_reopen_write(filename);
 	  if (fd == -1) 
 	    {
-	      mus_error(MUS_CANT_OPEN_FILE,
-			"can't change srate in header of %s: %s\n  [%s[%d] %s]",
-			filename, strerror(errno),
-			__FILE__, __LINE__, __FUNCTION__);
+	      mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_srate for %s failed: %s", filename, strerror(errno));
 	      return(MUS_ERROR);
 	    }
 	  switch (header_type)
@@ -5290,10 +5205,7 @@ int mus_header_change_format(const char *filename, int new_format)
 	  fd = mus_file_reopen_write(filename);
 	  if (fd == -1) 
 	    {
-	      mus_error(MUS_CANT_OPEN_FILE,
-			"can't change data format in header of %s: %s\n  [%s[%d] %s]",
-			filename, strerror(errno),
-			__FILE__, __LINE__, __FUNCTION__);
+	      mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_format for %s failed: %s", filename, strerror(errno));
 	      return(MUS_ERROR);
 	    }
 	  switch (header_type)
@@ -5380,10 +5292,7 @@ int mus_header_change_location(const char *filename, off_t new_location)
 	  fd = mus_file_reopen_write(filename);
 	  if (fd == -1) 
 	    {
-	      mus_error(MUS_CANT_OPEN_FILE,
-			"can't change data location in header of %s: %s\n  [%s[%d] %s]",
-			filename, strerror(errno),
-			__FILE__, __LINE__, __FUNCTION__);
+	      mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_location for %s failed: %s", filename, strerror(errno));
 	      return(MUS_ERROR);
 	    }
 	  switch (header_type)	  
@@ -5966,9 +5875,7 @@ int mus_header_no_header(const char *filename)
   chan = mus_file_open_read(filename);
   if (chan == -1) 
     {
-      mus_error(MUS_CANT_OPEN_FILE,
-		"can't open %s: %s",
-		filename, strerror(errno));
+      mus_error(MUS_CANT_OPEN_FILE, "mus_header: can't open %s: %s", filename, strerror(errno));
       return(MUS_ERROR);
     }
   bytes = read(chan, hdrbuf, INITIAL_READ_SIZE);

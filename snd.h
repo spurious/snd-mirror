@@ -20,9 +20,9 @@
  *                   see ftp://ftp.netlab.co.jp/pub/lang/ruby/
  *                 This part of Snd is brand-new and has many bugs/omissions/etc.
  *
- *   HAVE_GL       define to include support for OpenGL.
+ *   HAVE_GL       include support for OpenGL.
  *
- *   HAVE_LADSPA   define if you have LADSPA and want support for it included in Snd.
+ *   HAVE_LADSPA   include support for LADSPA.
  *
  *   SNDLIB_USE_FLOATS and MUS_SAMPLE_BITS
  *                 These determine the internal representation of sample values. The default
@@ -150,7 +150,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "20-May-02"
+#define SND_VERSION "22-May-02"
 #define SND_RPM_VERSION "5.11"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 11

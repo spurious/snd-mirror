@@ -105,13 +105,25 @@ void in_set_transform_graph_type(snd_state *ss, int uval)
 }
 
 static int map_chans_show_mix_waveforms(chan_info *cp, void *ptr) {cp->show_mix_waveforms = (*((int *)ptr)); return(0);}
-static void set_show_mix_waveforms(snd_state *ss, int val) {in_set_show_mix_waveforms(ss, val); map_over_chans(ss, map_chans_show_mix_waveforms, (void *)(&val));}
+static void set_show_mix_waveforms(snd_state *ss, int val) 
+{
+  in_set_show_mix_waveforms(ss, val); 
+  map_over_chans(ss, map_chans_show_mix_waveforms, (void *)(&val));
+}
 
 static int map_chans_show_axes(chan_info *cp, void *ptr) {cp->show_axes = (*((int *)ptr)); update_graph(cp, NULL); return(0);}
-static void set_show_axes(snd_state *ss, int val) {in_set_show_axes(ss, val); map_over_chans(ss, map_chans_show_axes, (void *)(&val));}
+static void set_show_axes(snd_state *ss, int val) 
+{
+  in_set_show_axes(ss, val); 
+  map_over_chans(ss, map_chans_show_axes, (void *)(&val));
+}
 
 static int map_chans_graphs_horizontal(chan_info *cp, void *ptr) {cp->graphs_horizontal = (*((int *)ptr)); update_graph(cp, NULL); return(0);}
-static void set_graphs_horizontal(snd_state *ss, int val) {in_set_graphs_horizontal(ss, val); map_over_chans(ss, map_chans_graphs_horizontal, (void *)(&val));}
+static void set_graphs_horizontal(snd_state *ss, int val) 
+{
+  in_set_graphs_horizontal(ss, val);
+  map_over_chans(ss, map_chans_graphs_horizontal, (void *)(&val));
+}
 
 static int map_chans_fft_window(chan_info *cp, void *ptr) 
 {
@@ -119,7 +131,11 @@ static int map_chans_fft_window(chan_info *cp, void *ptr)
   if (cp->fft) (cp->fft)->window = (*((int *)ptr));
   return(0);
 }
-void in_set_fft_window(snd_state *ss, int val) {in_set_fft_window_1(ss, val); map_over_chans(ss, map_chans_fft_window, (void *)(&val));}
+void in_set_fft_window(snd_state *ss, int val) 
+{
+  in_set_fft_window_1(ss, val); 
+  map_over_chans(ss, map_chans_fft_window, (void *)(&val));
+}
 
 void map_chans_field(snd_state *ss, int field, Float val)
 {
@@ -1755,8 +1771,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	  snd_fclose(fd, filename);
 	  snd_help(ss, "fft peaks", str);
 	  FREE(str);
-	  if (remove(filename) == -1)
-	    snd_error("can't remove %s: %s", filename, strerror(errno));
+	  err = snd_remove(filename, FALSE);
 	  FREE(filename);
 	}
     }
@@ -1923,14 +1938,6 @@ void reset_spectro(snd_state *state)
   set_spectro_z_angle(state, DEFAULT_SPECTRO_Z_ANGLE);
   set_spectro_x_angle(state, DEFAULT_SPECTRO_X_ANGLE);
   set_spectro_y_angle(state, DEFAULT_SPECTRO_Y_ANGLE);
-#if 0
-  set_color_map(state, -1);
-  set_color_cutoff(state, DEFAULT_COLOR_CUTOFF);
-  set_color_scale(state, DEFAULT_COLOR_SCALE);
-  set_color_inverted(state, DEFAULT_COLOR_INVERTED);
-  set_wavo_hop(state, DEFAULT_WAVO_HOP);
-  set_wavo_trace(state, DEFAULT_WAVO_TRACE);
-#endif
 }
 
 static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
@@ -1949,6 +1956,86 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
   si = (sono_info *)(cp->sonogram_data);
   if ((si) && (si->scale > 0.0))
     {
+#if HAVE_GL && DEBUGGING
+      float x1, y1;
+      int **js;
+      scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
+      fp = cp->fft;
+      fap = fp->axis;
+      fwidth = (fap->x_axis_x1 - fap->x_axis_x0);
+      fheight = (fap->y_axis_y0 - fap->y_axis_y1);
+      bins = (int)(si->target_bins * cp->spectro_cutoff);
+      if (bins <= 0) bins = 1;
+      js = (int **)CALLOC(si->active_slices, sizeof(int *));
+      for (i = 0; i < si->active_slices; i++)
+	js[i] = (int *)CALLOC(bins, sizeof(int));
+      for (i = 0; i < si->active_slices; i++)
+	for (j = 0; j < bins; j++)
+	  {
+	    if (color_inverted(ss)) 
+	      xx = (int)(skew_color((1.0 - si->data[i][j] / scl), color_scale(ss)) * COLORMAP_SIZE); 
+	    else xx = (int)(skew_color(si->data[i][j] / scl, color_scale(ss)) * COLORMAP_SIZE);
+	    if (xx > 0) xx--; else xx = 0;
+	    js[i][j] = xx;
+	  }
+      glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
+      glEnable(GL_DEPTH_TEST);
+      glDepthFunc(GL_LEQUAL); 
+      glClearDepth(1.0);
+      glClearColor(1.0, 1.0, 1.0, 1.0);
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      /* init:
+	 (set! (spectro-x-angle) 120.0)
+	 (set! (spectro-y-angle) 140.0)
+	 (set! (spectro-z-angle) 180.0)
+	 (set! (spectro-x-scale) 1.0)
+	 (set! (spectro-y-scale) 1.0)
+	 (set! (spectro-z-scale) 1.0)
+      */
+      glRotatef(cp->spectro_x_angle, 1.0, 0.0, 0.0);
+      glRotatef(cp->spectro_y_angle, 0.0, 1.0, 0.0);
+      glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
+      glScalef(cp->spectro_x_scale, cp->spectro_z_scale, cp->spectro_y_scale);
+      glViewport(fap->x_axis_x0, 0, fwidth, fheight);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      xincr = 1.0 / (float)(si->active_slices);
+      yincr = 1.0 / (float)bins;
+      for (x0 = -0.5, slice = 0; slice < si->active_slices - 1; slice++, x0 += xincr)
+	{
+	  fdata = si->data[slice];
+	  for (i = 0, y0 = -0.5; i < bins - 1; i++, y0 += yincr)
+	    {
+	      unsigned short r, g, b;
+	      glBegin(GL_POLYGON);
+	      x1 = x0 + xincr;
+	      y1 = y0 + yincr;
+
+	      get_current_color(color_map(ss), js[slice][i], &r, &g, &b);
+	      glColor3us(r, g, b);
+	      glVertex3f(x0, (si->data[slice][i] / scl) - 0.5, y0);
+
+	      get_current_color(color_map(ss), js[slice + 1][i], &r, &g, &b);
+	      glColor3us(r, g, b);
+	      glVertex3f(x1, (si->data[slice + 1][i] / scl) - 0.5, y0);
+
+	      get_current_color(color_map(ss), js[slice + 1][i + 1], &r, &g, &b);
+	      glColor3us(r, g, b);
+	      glVertex3f(x1, (si->data[slice + 1][i + 1] / scl) - 0.5, y1);
+
+	      get_current_color(color_map(ss), js[slice][i + 1], &r, &g, &b);
+	      glColor3us(r, g, b);
+	      glVertex3f(x0, (si->data[slice][i + 1] /scl) - 0.5, y1);
+
+	      glEnd();
+	    }
+	}
+      glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
+      glFlush();
+      for (i = 0; i < si->active_slices; i++) FREE(js[i]);
+      FREE(js);
+      return;
+#endif
       if (cp->printing) ps_allocate_grf_points();
       scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
       fp = cp->fft;
@@ -1967,7 +2054,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		    cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		    matrix);
       ax = copy_context(cp);
-      if (color_map(ss) == -1)
+      if (color_map(ss) == BLACK_AND_WHITE)
 	{
 	  for (slice = 0, xoff = fap->x_axis_x0, yoff = fap->y_axis_y0; 
 	       slice < si->active_slices;
@@ -2103,7 +2190,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		matrix);
   ax = copy_context(cp);
-  if (color_map(ss) == -1)
+  if (color_map(ss) == BLACK_AND_WHITE)
     {
       for (xoff = ap->x_axis_x0, yoff = ap->y_axis_y0; 
 	   yoff > ap->y_axis_y1; 

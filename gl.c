@@ -53,9 +53,15 @@
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
   static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+#define XL_TYPE_1(Name, XType) \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
 #define XL_TYPE_PTR(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */
+#define XL_TYPE_PTR_1(Name, XType) \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */
 
@@ -63,11 +69,11 @@
 /* ---------------------------------------- types ---------------------------------------- */
 
 XL_TYPE_PTR(XVisualInfo_, XVisualInfo*)
-XL_TYPE(Display, Display*)
+XL_TYPE_1(Display, Display*)
 #define C_TO_XEN_int(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_int(Arg) (int)(XEN_TO_C_INT(Arg))
 #define XEN_int_P(Arg) XEN_INTEGER_P(Arg)
-XL_TYPE_PTR(int_, int*)
+XL_TYPE_PTR_1(int_, int*)
 XL_TYPE(GLXContext, GLXContext)
 #define C_TO_XEN_ulong(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_ulong(Arg) (ulong)(XEN_TO_C_ULONG(Arg))
@@ -76,9 +82,9 @@ XL_TYPE(GLXContext, GLXContext)
 #define XEN_TO_C_Bool(Arg) (Bool)(XEN_TO_C_BOOLEAN(Arg))
 #define XEN_Bool_P(Arg) XEN_BOOLEAN_P(Arg)
 XL_TYPE(GLXPixmap, GLXPixmap)
-XL_TYPE(Pixmap, Pixmap)
+XL_TYPE_1(Pixmap, Pixmap)
 XL_TYPE(Window, Window)
-XL_TYPE(Font, Font)
+XL_TYPE_1(Font, Font)
 #define C_TO_XEN_char_(Arg) C_TO_XEN_STRING(Arg)
 #define XEN_TO_C_char_(Arg) (char_)(XEN_TO_C_STRING(Arg))
 #define XEN_char__P(Arg) XEN_STRING_P(Arg)
@@ -106,38 +112,39 @@ XL_TYPE(Font, Font)
 #define C_TO_XEN_GLushort(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLushort(Arg) (GLushort)(XEN_TO_C_INT(Arg))
 #define XEN_GLushort_P(Arg) XEN_INTEGER_P(Arg)
-XL_TYPE_PTR(GLubyte_, GLubyte*)
+XL_TYPE_PTR_1(GLubyte_, GLubyte*)
+#define C_TO_XEN_GLubyte(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GLubyte(Arg) (GLubyte)(XEN_TO_C_INT(Arg))
+#define XEN_GLubyte_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GLsizei(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLsizei(Arg) (GLsizei)(XEN_TO_C_INT(Arg))
 #define XEN_GLsizei_P(Arg) XEN_INTEGER_P(Arg)
-XL_TYPE_PTR(GLdouble_, GLdouble*)
+XL_TYPE_PTR_1(GLdouble_, GLdouble*)
+#define C_TO_XEN_GLdouble(Arg) C_TO_XEN_DOUBLE(Arg)
+#define XEN_TO_C_GLdouble(Arg) (GLdouble)(XEN_TO_C_DOUBLE(Arg))
+#define XEN_GLdouble_P(Arg) XEN_NUMBER_P(Arg)
 #define C_TO_XEN_constchar_(Arg) C_TO_XEN_STRING((char *)(Arg))
 #define XEN_TO_C_constchar_(Arg) (constchar_)(XEN_TO_C_STRING(Arg))
 #define XEN_constchar__P(Arg) XEN_STRING_P(Arg)
 #define C_TO_XEN_GLclampd(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_GLclampd(Arg) (GLclampd)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_GLclampd_P(Arg) XEN_NUMBER_P(Arg)
-#define C_TO_XEN_GLdouble(Arg) C_TO_XEN_DOUBLE(Arg)
-#define XEN_TO_C_GLdouble(Arg) (GLdouble)(XEN_TO_C_DOUBLE(Arg))
-#define XEN_GLdouble_P(Arg) XEN_NUMBER_P(Arg)
-XL_TYPE_PTR(GLfloat_, GLfloat*)
-XL_TYPE_PTR(GLvoid_, GLvoid*)
+XL_TYPE_PTR_1(GLfloat_, GLfloat*)
+XL_TYPE_PTR_1(GLvoid_, GLvoid*)
 #define C_TO_XEN_GLshort(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLshort(Arg) (GLshort)(XEN_TO_C_INT(Arg))
 #define XEN_GLshort_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GLbyte(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLbyte(Arg) (GLbyte)(XEN_TO_C_INT(Arg))
 #define XEN_GLbyte_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GLubyte(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GLubyte(Arg) (GLubyte)(XEN_TO_C_INT(Arg))
-#define XEN_GLubyte_P(Arg) XEN_INTEGER_P(Arg)
-XL_TYPE_PTR(GLuint_, GLuint*)
-XL_TYPE_PTR(GLboolean_, GLboolean*)
-XL_TYPE_PTR(GLUtesselator_, GLUtesselator*)
 XL_TYPE_PTR(void_, void*)
-XL_TYPE_PTR(GLint_, GLint*)
-XL_TYPE_PTR(GLshort_, GLshort*)
-XL_TYPE_PTR(void__, void**)
+XL_TYPE_PTR_1(GLuint_, GLuint*)
+XL_TYPE_PTR_1(GLboolean_, GLboolean*)
+#ifdef GLU_VERSION_1_2
+XL_TYPE_PTR(GLUtesselator_, GLUtesselator*)
+#endif
+XL_TYPE_PTR_1(GLint_, GLint*)
+XL_TYPE_PTR_1(GLshort_, GLshort*)
 
 
 /* ---------------------------------------- functions ---------------------------------------- */
@@ -466,10 +473,10 @@ static XEN gxg_glPolygonStipple(XEN mask)
 
 static XEN gxg_glGetPolygonStipple(XEN mask)
 {
-  #define H_glGetPolygonStipple "void glGetPolygonStipple(GLubyte* mask)"
-  XEN_ASSERT_TYPE(XEN_GLubyte__P(mask), mask, 1, "glGetPolygonStipple", "GLubyte*");
-  glGetPolygonStipple(XEN_TO_C_GLubyte_(mask));
-  return(XEN_FALSE);
+  #define H_glGetPolygonStipple "void glGetPolygonStipple(GLubyte* [mask])"
+  GLubyte ref_mask;
+  glGetPolygonStipple(&ref_mask);
+  return(XEN_LIST_1(C_TO_XEN_GLubyte(ref_mask)));
 }
 
 static XEN gxg_glEdgeFlag(XEN flag)
@@ -502,11 +509,11 @@ static XEN gxg_glClipPlane(XEN plane, XEN equation)
 
 static XEN gxg_glGetClipPlane(XEN plane, XEN equation)
 {
-  #define H_glGetClipPlane "void glGetClipPlane(GLenum plane, GLdouble* equation)"
+  #define H_glGetClipPlane "void glGetClipPlane(GLenum plane, GLdouble* [equation])"
+  GLdouble ref_equation;
   XEN_ASSERT_TYPE(XEN_GLenum_P(plane), plane, 1, "glGetClipPlane", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLdouble__P(equation), equation, 2, "glGetClipPlane", "GLdouble*");
-  glGetClipPlane(XEN_TO_C_GLenum(plane), XEN_TO_C_GLdouble_(equation));
-  return(XEN_FALSE);
+  glGetClipPlane(XEN_TO_C_GLenum(plane), &ref_equation);
+  return(XEN_LIST_1(C_TO_XEN_GLdouble(ref_equation)));
 }
 
 static XEN gxg_glDrawBuffer(XEN mode)
@@ -562,6 +569,42 @@ static XEN gxg_glDisableClientState(XEN cap)
   XEN_ASSERT_TYPE(XEN_GLenum_P(cap), cap, 1, "glDisableClientState", "GLenum");
   glDisableClientState(XEN_TO_C_GLenum(cap));
   return(XEN_FALSE);
+}
+
+static XEN gxg_glGetBooleanv(XEN pname, XEN params)
+{
+  #define H_glGetBooleanv "void glGetBooleanv(GLenum pname, GLboolean* [params])"
+  GLboolean ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 1, "glGetBooleanv", "GLenum");
+  glGetBooleanv(XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLboolean(ref_params)));
+}
+
+static XEN gxg_glGetDoublev(XEN pname, XEN params)
+{
+  #define H_glGetDoublev "void glGetDoublev(GLenum pname, GLdouble* [params])"
+  GLdouble ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 1, "glGetDoublev", "GLenum");
+  glGetDoublev(XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLdouble(ref_params)));
+}
+
+static XEN gxg_glGetFloatv(XEN pname, XEN params)
+{
+  #define H_glGetFloatv "void glGetFloatv(GLenum pname, GLfloat* [params])"
+  GLfloat ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 1, "glGetFloatv", "GLenum");
+  glGetFloatv(XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
+}
+
+static XEN gxg_glGetIntegerv(XEN pname, XEN params)
+{
+  #define H_glGetIntegerv "void glGetIntegerv(GLenum pname, GLint* [params])"
+  GLint ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 1, "glGetIntegerv", "GLenum");
+  glGetIntegerv(XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
 }
 
 static XEN gxg_glPushAttrib(XEN mask)
@@ -1690,6 +1733,15 @@ static XEN gxg_glEdgeFlagPointer(XEN stride, XEN ptr)
   return(XEN_FALSE);
 }
 
+static XEN gxg_glGetPointerv(XEN pname, XEN params)
+{
+  #define H_glGetPointerv "void glGetPointerv(GLenum pname, void** [params])"
+  void* ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 1, "glGetPointerv", "GLenum");
+  glGetPointerv(XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_void_(ref_params)));
+}
+
 static XEN gxg_glArrayElement(XEN i)
 {
   #define H_glArrayElement "void glArrayElement(GLint i)"
@@ -1757,6 +1809,26 @@ static XEN gxg_glLighti(XEN light, XEN pname, XEN param)
   return(XEN_FALSE);
 }
 
+static XEN gxg_glGetLightfv(XEN light, XEN pname, XEN params)
+{
+  #define H_glGetLightfv "void glGetLightfv(GLenum light, GLenum pname, GLfloat* [params])"
+  GLfloat ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(light), light, 1, "glGetLightfv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetLightfv", "GLenum");
+  glGetLightfv(XEN_TO_C_GLenum(light), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
+}
+
+static XEN gxg_glGetLightiv(XEN light, XEN pname, XEN params)
+{
+  #define H_glGetLightiv "void glGetLightiv(GLenum light, GLenum pname, GLint* [params])"
+  GLint ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(light), light, 1, "glGetLightiv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetLightiv", "GLenum");
+  glGetLightiv(XEN_TO_C_GLenum(light), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
+}
+
 static XEN gxg_glLightModelf(XEN pname, XEN param)
 {
   #define H_glLightModelf "void glLightModelf(GLenum pname, GLfloat param)"
@@ -1793,6 +1865,26 @@ static XEN gxg_glMateriali(XEN face, XEN pname, XEN param)
   XEN_ASSERT_TYPE(XEN_GLint_P(param), param, 3, "glMateriali", "GLint");
   glMateriali(XEN_TO_C_GLenum(face), XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
   return(XEN_FALSE);
+}
+
+static XEN gxg_glGetMaterialfv(XEN face, XEN pname, XEN params)
+{
+  #define H_glGetMaterialfv "void glGetMaterialfv(GLenum face, GLenum pname, GLfloat* [params])"
+  GLfloat ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(face), face, 1, "glGetMaterialfv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetMaterialfv", "GLenum");
+  glGetMaterialfv(XEN_TO_C_GLenum(face), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
+}
+
+static XEN gxg_glGetMaterialiv(XEN face, XEN pname, XEN params)
+{
+  #define H_glGetMaterialiv "void glGetMaterialiv(GLenum face, GLenum pname, GLint* [params])"
+  GLint ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(face), face, 1, "glGetMaterialiv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetMaterialiv", "GLenum");
+  glGetMaterialiv(XEN_TO_C_GLenum(face), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
 }
 
 static XEN gxg_glColorMaterial(XEN face, XEN mode)
@@ -1847,6 +1939,33 @@ static XEN gxg_glPixelTransferi(XEN pname, XEN param)
   XEN_ASSERT_TYPE(XEN_GLint_P(param), param, 2, "glPixelTransferi", "GLint");
   glPixelTransferi(XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
   return(XEN_FALSE);
+}
+
+static XEN gxg_glGetPixelMapfv(XEN map, XEN values)
+{
+  #define H_glGetPixelMapfv "void glGetPixelMapfv(GLenum map, GLfloat* [values])"
+  GLfloat ref_values;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(map), map, 1, "glGetPixelMapfv", "GLenum");
+  glGetPixelMapfv(XEN_TO_C_GLenum(map), &ref_values);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_values)));
+}
+
+static XEN gxg_glGetPixelMapuiv(XEN map, XEN values)
+{
+  #define H_glGetPixelMapuiv "void glGetPixelMapuiv(GLenum map, GLuint* [values])"
+  GLuint ref_values;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(map), map, 1, "glGetPixelMapuiv", "GLenum");
+  glGetPixelMapuiv(XEN_TO_C_GLenum(map), &ref_values);
+  return(XEN_LIST_1(C_TO_XEN_GLuint(ref_values)));
+}
+
+static XEN gxg_glGetPixelMapusv(XEN map, XEN values)
+{
+  #define H_glGetPixelMapusv "void glGetPixelMapusv(GLenum map, GLushort* [values])"
+  GLushort ref_values;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(map), map, 1, "glGetPixelMapusv", "GLenum");
+  glGetPixelMapusv(XEN_TO_C_GLenum(map), &ref_values);
+  return(XEN_LIST_1(C_TO_XEN_GLushort(ref_values)));
 }
 
 static XEN gxg_glBitmap(XEN width, XEN height, XEN xorig, XEN yorig, XEN xmove, XEN ymove, XEN bitmap)
@@ -1972,6 +2091,36 @@ static XEN gxg_glTexGeni(XEN coord, XEN pname, XEN param)
   return(XEN_FALSE);
 }
 
+static XEN gxg_glGetTexGendv(XEN coord, XEN pname, XEN params)
+{
+  #define H_glGetTexGendv "void glGetTexGendv(GLenum coord, GLenum pname, GLdouble* [params])"
+  GLdouble ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(coord), coord, 1, "glGetTexGendv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetTexGendv", "GLenum");
+  glGetTexGendv(XEN_TO_C_GLenum(coord), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLdouble(ref_params)));
+}
+
+static XEN gxg_glGetTexGenfv(XEN coord, XEN pname, XEN params)
+{
+  #define H_glGetTexGenfv "void glGetTexGenfv(GLenum coord, GLenum pname, GLfloat* [params])"
+  GLfloat ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(coord), coord, 1, "glGetTexGenfv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetTexGenfv", "GLenum");
+  glGetTexGenfv(XEN_TO_C_GLenum(coord), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
+}
+
+static XEN gxg_glGetTexGeniv(XEN coord, XEN pname, XEN params)
+{
+  #define H_glGetTexGeniv "void glGetTexGeniv(GLenum coord, GLenum pname, GLint* [params])"
+  GLint ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(coord), coord, 1, "glGetTexGeniv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetTexGeniv", "GLenum");
+  glGetTexGeniv(XEN_TO_C_GLenum(coord), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
+}
+
 static XEN gxg_glTexEnvf(XEN target, XEN pname, XEN param)
 {
   #define H_glTexEnvf "void glTexEnvf(GLenum target, GLenum pname, GLfloat param)"
@@ -1992,6 +2141,26 @@ static XEN gxg_glTexEnvi(XEN target, XEN pname, XEN param)
   return(XEN_FALSE);
 }
 
+static XEN gxg_glGetTexEnvfv(XEN target, XEN pname, XEN params)
+{
+  #define H_glGetTexEnvfv "void glGetTexEnvfv(GLenum target, GLenum pname, GLfloat* [params])"
+  GLfloat ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetTexEnvfv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetTexEnvfv", "GLenum");
+  glGetTexEnvfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
+}
+
+static XEN gxg_glGetTexEnviv(XEN target, XEN pname, XEN params)
+{
+  #define H_glGetTexEnviv "void glGetTexEnviv(GLenum target, GLenum pname, GLint* [params])"
+  GLint ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetTexEnviv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetTexEnviv", "GLenum");
+  glGetTexEnviv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
+}
+
 static XEN gxg_glTexParameterf(XEN target, XEN pname, XEN param)
 {
   #define H_glTexParameterf "void glTexParameterf(GLenum target, GLenum pname, GLfloat param)"
@@ -2010,6 +2179,50 @@ static XEN gxg_glTexParameteri(XEN target, XEN pname, XEN param)
   XEN_ASSERT_TYPE(XEN_GLint_P(param), param, 3, "glTexParameteri", "GLint");
   glTexParameteri(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), XEN_TO_C_GLint(param));
   return(XEN_FALSE);
+}
+
+static XEN gxg_glGetTexParameterfv(XEN target, XEN pname, XEN params)
+{
+  #define H_glGetTexParameterfv "void glGetTexParameterfv(GLenum target, GLenum pname, GLfloat* [params])"
+  GLfloat ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetTexParameterfv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetTexParameterfv", "GLenum");
+  glGetTexParameterfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
+}
+
+static XEN gxg_glGetTexParameteriv(XEN target, XEN pname, XEN params)
+{
+  #define H_glGetTexParameteriv "void glGetTexParameteriv(GLenum target, GLenum pname, GLint* [params])"
+  GLint ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetTexParameteriv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetTexParameteriv", "GLenum");
+  glGetTexParameteriv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
+}
+
+static XEN gxg_glGetTexLevelParameterfv(XEN target, XEN level, XEN pname, XEN params)
+{
+  #define H_glGetTexLevelParameterfv "void glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, \
+GLfloat* [params])"
+  GLfloat ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetTexLevelParameterfv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLint_P(level), level, 2, "glGetTexLevelParameterfv", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 3, "glGetTexLevelParameterfv", "GLenum");
+  glGetTexLevelParameterfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
+}
+
+static XEN gxg_glGetTexLevelParameteriv(XEN target, XEN level, XEN pname, XEN params)
+{
+  #define H_glGetTexLevelParameteriv "void glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, \
+GLint* [params])"
+  GLint ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetTexLevelParameteriv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLint_P(level), level, 2, "glGetTexLevelParameteriv", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 3, "glGetTexLevelParameteriv", "GLenum");
+  glGetTexLevelParameteriv(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
 }
 
 static XEN gxg_glTexImage1D(XEN target, XEN level, XEN internalFormat, XEN width, XEN border, XEN format, XEN type, XEN pixels)
@@ -2044,19 +2257,6 @@ GLsizei height, GLint border, GLenum format, GLenum type, GLvoid* pixels)"
   XEN_ASSERT_TYPE(XEN_GLvoid__P(pixels), pixels, 9, "glTexImage2D", "GLvoid*");
   glTexImage2D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), 
                XEN_TO_C_GLint(border), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(pixels));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_glGetTexImage(XEN target, XEN level, XEN format, XEN type, XEN pixels)
-{
-  #define H_glGetTexImage "void glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, \
-GLvoid* pixels)"
-  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetTexImage", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLint_P(level), level, 2, "glGetTexImage", "GLint");
-  XEN_ASSERT_TYPE(XEN_GLenum_P(format), format, 3, "glGetTexImage", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 4, "glGetTexImage", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLvoid__P(pixels), pixels, 5, "glGetTexImage", "GLvoid*");
-  glGetTexImage(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(pixels));
   return(XEN_FALSE);
 }
 
@@ -2289,6 +2489,36 @@ GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat* points)"
   glMap2f(XEN_TO_C_GLenum(target), XEN_TO_C_GLfloat(u1), XEN_TO_C_GLfloat(u2), XEN_TO_C_GLint(ustride), XEN_TO_C_GLint(uorder), 
           XEN_TO_C_GLfloat(v1), XEN_TO_C_GLfloat(v2), XEN_TO_C_GLint(vstride), XEN_TO_C_GLint(vorder), XEN_TO_C_GLfloat_(points));
   return(XEN_FALSE);
+}
+
+static XEN gxg_glGetMapdv(XEN target, XEN query, XEN v)
+{
+  #define H_glGetMapdv "void glGetMapdv(GLenum target, GLenum query, GLdouble* [v])"
+  GLdouble ref_v;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetMapdv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(query), query, 2, "glGetMapdv", "GLenum");
+  glGetMapdv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(query), &ref_v);
+  return(XEN_LIST_1(C_TO_XEN_GLdouble(ref_v)));
+}
+
+static XEN gxg_glGetMapfv(XEN target, XEN query, XEN v)
+{
+  #define H_glGetMapfv "void glGetMapfv(GLenum target, GLenum query, GLfloat* [v])"
+  GLfloat ref_v;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetMapfv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(query), query, 2, "glGetMapfv", "GLenum");
+  glGetMapfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(query), &ref_v);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_v)));
+}
+
+static XEN gxg_glGetMapiv(XEN target, XEN query, XEN v)
+{
+  #define H_glGetMapiv "void glGetMapiv(GLenum target, GLenum query, GLint* [v])"
+  GLint ref_v;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetMapiv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(query), query, 2, "glGetMapiv", "GLenum");
+  glGetMapiv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(query), &ref_v);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_v)));
 }
 
 static XEN gxg_glEvalCoord1d(XEN u)
@@ -2639,15 +2869,26 @@ GLsizei width)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_glGetColorTable(XEN target, XEN format, XEN type, XEN table)
+static XEN gxg_glGetColorTableParameterfv(XEN target, XEN pname, XEN params)
 {
-  #define H_glGetColorTable "void glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid* table)"
-  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetColorTable", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLenum_P(format), format, 2, "glGetColorTable", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 3, "glGetColorTable", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLvoid__P(table), table, 4, "glGetColorTable", "GLvoid*");
-  glGetColorTable(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(table));
-  return(XEN_FALSE);
+  #define H_glGetColorTableParameterfv "void glGetColorTableParameterfv(GLenum target, GLenum pname, \
+GLfloat* [params])"
+  GLfloat ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetColorTableParameterfv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetColorTableParameterfv", "GLenum");
+  glGetColorTableParameterfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
+}
+
+static XEN gxg_glGetColorTableParameteriv(XEN target, XEN pname, XEN params)
+{
+  #define H_glGetColorTableParameteriv "void glGetColorTableParameteriv(GLenum target, GLenum pname, \
+GLint* [params])"
+  GLint ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetColorTableParameteriv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetColorTableParameteriv", "GLenum");
+  glGetColorTableParameteriv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
 }
 
 static XEN gxg_glBlendEquation(XEN mode)
@@ -2701,6 +2942,26 @@ GLvoid* values)"
   return(XEN_FALSE);
 }
 
+static XEN gxg_glGetHistogramParameterfv(XEN target, XEN pname, XEN params)
+{
+  #define H_glGetHistogramParameterfv "void glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat* [params])"
+  GLfloat ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetHistogramParameterfv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetHistogramParameterfv", "GLenum");
+  glGetHistogramParameterfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
+}
+
+static XEN gxg_glGetHistogramParameteriv(XEN target, XEN pname, XEN params)
+{
+  #define H_glGetHistogramParameteriv "void glGetHistogramParameteriv(GLenum target, GLenum pname, GLint* [params])"
+  GLint ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetHistogramParameteriv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetHistogramParameteriv", "GLenum");
+  glGetHistogramParameteriv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
+}
+
 static XEN gxg_glMinmax(XEN target, XEN internalformat, XEN sink)
 {
   #define H_glMinmax "void glMinmax(GLenum target, GLenum internalformat, GLboolean sink)"
@@ -2730,6 +2991,26 @@ GLvoid* values)"
   XEN_ASSERT_TYPE(XEN_GLvoid__P(values), values, 5, "glGetMinmax", "GLvoid*");
   glGetMinmax(XEN_TO_C_GLenum(target), XEN_TO_C_GLboolean(reset), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(types), XEN_TO_C_GLvoid_(values));
   return(XEN_FALSE);
+}
+
+static XEN gxg_glGetMinmaxParameterfv(XEN target, XEN pname, XEN params)
+{
+  #define H_glGetMinmaxParameterfv "void glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat* [params])"
+  GLfloat ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetMinmaxParameterfv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetMinmaxParameterfv", "GLenum");
+  glGetMinmaxParameterfv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
+}
+
+static XEN gxg_glGetMinmaxParameteriv(XEN target, XEN pname, XEN params)
+{
+  #define H_glGetMinmaxParameteriv "void glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint* [params])"
+  GLint ref_params;
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetMinmaxParameteriv", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetMinmaxParameteriv", "GLenum");
+  glGetMinmaxParameteriv(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
 }
 
 static XEN gxg_glConvolutionFilter1D(XEN target, XEN internalformat, XEN width, XEN format, XEN type, XEN image)
@@ -2812,18 +3093,6 @@ GLint x, GLint y, GLsizei width, GLsizei height)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_glGetConvolutionFilter(XEN target, XEN format, XEN type, XEN image)
-{
-  #define H_glGetConvolutionFilter "void glGetConvolutionFilter(GLenum target, GLenum format, GLenum type, \
-GLvoid* image)"
-  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetConvolutionFilter", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLenum_P(format), format, 2, "glGetConvolutionFilter", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 3, "glGetConvolutionFilter", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLvoid__P(image), image, 4, "glGetConvolutionFilter", "GLvoid*");
-  glGetConvolutionFilter(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(image));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_glSeparableFilter2D(XEN target, XEN internalformat, XEN width, XEN height, XEN format, XEN type, XEN row, XEN column)
 {
   #define H_glSeparableFilter2D "void glSeparableFilter2D(GLenum target, GLenum internalformat, GLsizei width, \
@@ -2841,21 +3110,7 @@ GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_glGetSeparableFilter(XEN target, XEN format, XEN type, XEN row, XEN column, XEN span)
-{
-  #define H_glGetSeparableFilter "void glGetSeparableFilter(GLenum target, GLenum format, GLenum type, \
-GLvoid* row, GLvoid* column, GLvoid* span)"
-  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetSeparableFilter", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLenum_P(format), format, 2, "glGetSeparableFilter", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 3, "glGetSeparableFilter", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLvoid__P(row), row, 4, "glGetSeparableFilter", "GLvoid*");
-  XEN_ASSERT_TYPE(XEN_GLvoid__P(column), column, 5, "glGetSeparableFilter", "GLvoid*");
-  XEN_ASSERT_TYPE(XEN_GLvoid__P(span), span, 6, "glGetSeparableFilter", "GLvoid*");
-  glGetSeparableFilter(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(row), XEN_TO_C_GLvoid_(column), 
-                       XEN_TO_C_GLvoid_(span));
-  return(XEN_FALSE);
-}
-
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluBeginPolygon(XEN tess)
 {
   #define H_gluBeginPolygon "void gluBeginPolygon(GLUtesselator* tess)"
@@ -2863,6 +3118,7 @@ static XEN gxg_gluBeginPolygon(XEN tess)
   gluBeginPolygon(XEN_TO_C_GLUtesselator_(tess));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxg_gluBuild1DMipmaps(XEN target, XEN internalFormat, XEN width, XEN format, XEN type, XEN data)
 {
@@ -2893,6 +3149,7 @@ GLsizei height, GLenum format, GLenum type, void* data)"
                                           XEN_TO_C_GLsizei(height), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_void_(data))));
 }
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluDeleteTess(XEN tess)
 {
   #define H_gluDeleteTess "void gluDeleteTess(GLUtesselator* tess)"
@@ -2900,7 +3157,9 @@ static XEN gxg_gluDeleteTess(XEN tess)
   gluDeleteTess(XEN_TO_C_GLUtesselator_(tess));
   return(XEN_FALSE);
 }
+#endif
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluEndPolygon(XEN tess)
 {
   #define H_gluEndPolygon "void gluEndPolygon(GLUtesselator* tess)"
@@ -2908,6 +3167,7 @@ static XEN gxg_gluEndPolygon(XEN tess)
   gluEndPolygon(XEN_TO_C_GLUtesselator_(tess));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxg_gluErrorString(XEN error)
 {
@@ -2957,6 +3217,7 @@ static XEN gxg_gluNewTess(void)
   return(C_TO_XEN_GLUtesselator_(gluNewTess()));
 }
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluNextContour(XEN tess, XEN type)
 {
   #define H_gluNextContour "void gluNextContour(GLUtesselator* tess, GLenum type)"
@@ -2965,6 +3226,7 @@ static XEN gxg_gluNextContour(XEN tess, XEN type)
   gluNextContour(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLenum(type));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxg_gluOrtho2D(XEN left, XEN right, XEN bottom, XEN top)
 {
@@ -3091,6 +3353,7 @@ static XEN gxg_gluTessProperty(XEN tess, XEN which, XEN data)
   return(XEN_FALSE);
 }
 
+#ifdef GLU_VERSION_1_2
 static XEN gxg_gluTessVertex(XEN tess, XEN location, XEN data)
 {
   #define H_gluTessVertex "void gluTessVertex(GLUtesselator* tess, GLdouble* location, GLvoid* data)"
@@ -3100,6 +3363,7 @@ static XEN gxg_gluTessVertex(XEN tess, XEN location, XEN data)
   gluTessVertex(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLdouble_(location), XEN_TO_C_GLvoid_(data));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxg_gluUnProject(XEN winX, XEN winY, XEN winZ, XEN model, XEN proj, XEN view, XEN objX, XEN objY, XEN objZ)
 {
@@ -3686,11 +3950,11 @@ static XEN gxg_glEdgeFlagPointerEXT(XEN stride, XEN count, XEN ptr)
 
 static XEN gxg_glGetPointervEXT(XEN pname, XEN params)
 {
-  #define H_glGetPointervEXT "void glGetPointervEXT(GLenum pname, void** params)"
+  #define H_glGetPointervEXT "void glGetPointervEXT(GLenum pname, void** [params])"
+  void* ref_params;
   XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 1, "glGetPointervEXT", "GLenum");
-  XEN_ASSERT_TYPE(XEN_void___P(params), params, 2, "glGetPointervEXT", "void**");
-  glGetPointervEXT(XEN_TO_C_GLenum(pname), XEN_TO_C_void__(params));
-  return(XEN_FALSE);
+  glGetPointervEXT(XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_void_(ref_params)));
 }
 
 static XEN gxg_glArrayElementEXT(XEN i)
@@ -3767,37 +4031,26 @@ GLenum format, GLenum type, GLvoid* data)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_glGetColorTableEXT(XEN target, XEN format, XEN type, XEN table)
-{
-  #define H_glGetColorTableEXT "void glGetColorTableEXT(GLenum target, GLenum format, GLenum type, GLvoid* table)"
-  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetColorTableEXT", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLenum_P(format), format, 2, "glGetColorTableEXT", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 3, "glGetColorTableEXT", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLvoid__P(table), table, 4, "glGetColorTableEXT", "GLvoid*");
-  glGetColorTableEXT(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(table));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_glGetColorTableParameterfvEXT(XEN target, XEN pname, XEN params)
 {
   #define H_glGetColorTableParameterfvEXT "void glGetColorTableParameterfvEXT(GLenum target, GLenum pname, \
-GLfloat* params)"
+GLfloat* [params])"
+  GLfloat ref_params;
   XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetColorTableParameterfvEXT", "GLenum");
   XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetColorTableParameterfvEXT", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLfloat__P(params), params, 3, "glGetColorTableParameterfvEXT", "GLfloat*");
-  glGetColorTableParameterfvEXT(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), XEN_TO_C_GLfloat_(params));
-  return(XEN_FALSE);
+  glGetColorTableParameterfvEXT(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLfloat(ref_params)));
 }
 
 static XEN gxg_glGetColorTableParameterivEXT(XEN target, XEN pname, XEN params)
 {
   #define H_glGetColorTableParameterivEXT "void glGetColorTableParameterivEXT(GLenum target, GLenum pname, \
-GLint* params)"
+GLint* [params])"
+  GLint ref_params;
   XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "glGetColorTableParameterivEXT", "GLenum");
   XEN_ASSERT_TYPE(XEN_GLenum_P(pname), pname, 2, "glGetColorTableParameterivEXT", "GLenum");
-  XEN_ASSERT_TYPE(XEN_GLint__P(params), params, 3, "glGetColorTableParameterivEXT", "GLint*");
-  glGetColorTableParameterivEXT(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), XEN_TO_C_GLint_(params));
-  return(XEN_FALSE);
+  glGetColorTableParameterivEXT(XEN_TO_C_GLenum(target), XEN_TO_C_GLenum(pname), &ref_params);
+  return(XEN_LIST_1(C_TO_XEN_GLint(ref_params)));
 }
 
 #if HAVE_GUILE
@@ -3839,11 +4092,11 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glPolygonMode" XL_POST, gxg_glPolygonMode, 2, 0, 0, H_glPolygonMode);
   XEN_DEFINE_PROCEDURE(XL_PRE "glPolygonOffset" XL_POST, gxg_glPolygonOffset, 2, 0, 0, H_glPolygonOffset);
   XEN_DEFINE_PROCEDURE(XL_PRE "glPolygonStipple" XL_POST, gxg_glPolygonStipple, 1, 0, 0, H_glPolygonStipple);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetPolygonStipple" XL_POST, gxg_glGetPolygonStipple, 1, 0, 0, H_glGetPolygonStipple);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetPolygonStipple" XL_POST, gxg_glGetPolygonStipple, 0, 1, 0, H_glGetPolygonStipple);
   XEN_DEFINE_PROCEDURE(XL_PRE "glEdgeFlag" XL_POST, gxg_glEdgeFlag, 1, 0, 0, H_glEdgeFlag);
   XEN_DEFINE_PROCEDURE(XL_PRE "glScissor" XL_POST, gxg_glScissor, 4, 0, 0, H_glScissor);
   XEN_DEFINE_PROCEDURE(XL_PRE "glClipPlane" XL_POST, gxg_glClipPlane, 2, 0, 0, H_glClipPlane);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetClipPlane" XL_POST, gxg_glGetClipPlane, 2, 0, 0, H_glGetClipPlane);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetClipPlane" XL_POST, gxg_glGetClipPlane, 1, 1, 0, H_glGetClipPlane);
   XEN_DEFINE_PROCEDURE(XL_PRE "glDrawBuffer" XL_POST, gxg_glDrawBuffer, 1, 0, 0, H_glDrawBuffer);
   XEN_DEFINE_PROCEDURE(XL_PRE "glReadBuffer" XL_POST, gxg_glReadBuffer, 1, 0, 0, H_glReadBuffer);
   XEN_DEFINE_PROCEDURE(XL_PRE "glEnable" XL_POST, gxg_glEnable, 1, 0, 0, H_glEnable);
@@ -3851,6 +4104,10 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glIsEnabled" XL_POST, gxg_glIsEnabled, 1, 0, 0, H_glIsEnabled);
   XEN_DEFINE_PROCEDURE(XL_PRE "glEnableClientState" XL_POST, gxg_glEnableClientState, 1, 0, 0, H_glEnableClientState);
   XEN_DEFINE_PROCEDURE(XL_PRE "glDisableClientState" XL_POST, gxg_glDisableClientState, 1, 0, 0, H_glDisableClientState);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetBooleanv" XL_POST, gxg_glGetBooleanv, 1, 1, 0, H_glGetBooleanv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetDoublev" XL_POST, gxg_glGetDoublev, 1, 1, 0, H_glGetDoublev);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetFloatv" XL_POST, gxg_glGetFloatv, 1, 1, 0, H_glGetFloatv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetIntegerv" XL_POST, gxg_glGetIntegerv, 1, 1, 0, H_glGetIntegerv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glPushAttrib" XL_POST, gxg_glPushAttrib, 1, 0, 0, H_glPushAttrib);
   XEN_DEFINE_PROCEDURE(XL_PRE "glPopAttrib" XL_POST, gxg_glPopAttrib, 0, 0, 0, H_glPopAttrib);
   XEN_DEFINE_PROCEDURE(XL_PRE "glPushClientAttrib" XL_POST, gxg_glPushClientAttrib, 1, 0, 0, H_glPushClientAttrib);
@@ -3970,6 +4227,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glIndexPointer" XL_POST, gxg_glIndexPointer, 3, 0, 0, H_glIndexPointer);
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexCoordPointer" XL_POST, gxg_glTexCoordPointer, 4, 0, 0, H_glTexCoordPointer);
   XEN_DEFINE_PROCEDURE(XL_PRE "glEdgeFlagPointer" XL_POST, gxg_glEdgeFlagPointer, 2, 0, 0, H_glEdgeFlagPointer);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetPointerv" XL_POST, gxg_glGetPointerv, 1, 1, 0, H_glGetPointerv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glArrayElement" XL_POST, gxg_glArrayElement, 1, 0, 0, H_glArrayElement);
   XEN_DEFINE_PROCEDURE(XL_PRE "glDrawArrays" XL_POST, gxg_glDrawArrays, 3, 0, 0, H_glDrawArrays);
   XEN_DEFINE_PROCEDURE(XL_PRE "glDrawElements" XL_POST, gxg_glDrawElements, 4, 0, 0, H_glDrawElements);
@@ -3977,16 +4235,23 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glShadeModel" XL_POST, gxg_glShadeModel, 1, 0, 0, H_glShadeModel);
   XEN_DEFINE_PROCEDURE(XL_PRE "glLightf" XL_POST, gxg_glLightf, 3, 0, 0, H_glLightf);
   XEN_DEFINE_PROCEDURE(XL_PRE "glLighti" XL_POST, gxg_glLighti, 3, 0, 0, H_glLighti);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetLightfv" XL_POST, gxg_glGetLightfv, 2, 1, 0, H_glGetLightfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetLightiv" XL_POST, gxg_glGetLightiv, 2, 1, 0, H_glGetLightiv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glLightModelf" XL_POST, gxg_glLightModelf, 2, 0, 0, H_glLightModelf);
   XEN_DEFINE_PROCEDURE(XL_PRE "glLightModeli" XL_POST, gxg_glLightModeli, 2, 0, 0, H_glLightModeli);
   XEN_DEFINE_PROCEDURE(XL_PRE "glMaterialf" XL_POST, gxg_glMaterialf, 3, 0, 0, H_glMaterialf);
   XEN_DEFINE_PROCEDURE(XL_PRE "glMateriali" XL_POST, gxg_glMateriali, 3, 0, 0, H_glMateriali);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetMaterialfv" XL_POST, gxg_glGetMaterialfv, 2, 1, 0, H_glGetMaterialfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetMaterialiv" XL_POST, gxg_glGetMaterialiv, 2, 1, 0, H_glGetMaterialiv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glColorMaterial" XL_POST, gxg_glColorMaterial, 2, 0, 0, H_glColorMaterial);
   XEN_DEFINE_PROCEDURE(XL_PRE "glPixelZoom" XL_POST, gxg_glPixelZoom, 2, 0, 0, H_glPixelZoom);
   XEN_DEFINE_PROCEDURE(XL_PRE "glPixelStoref" XL_POST, gxg_glPixelStoref, 2, 0, 0, H_glPixelStoref);
   XEN_DEFINE_PROCEDURE(XL_PRE "glPixelStorei" XL_POST, gxg_glPixelStorei, 2, 0, 0, H_glPixelStorei);
   XEN_DEFINE_PROCEDURE(XL_PRE "glPixelTransferf" XL_POST, gxg_glPixelTransferf, 2, 0, 0, H_glPixelTransferf);
   XEN_DEFINE_PROCEDURE(XL_PRE "glPixelTransferi" XL_POST, gxg_glPixelTransferi, 2, 0, 0, H_glPixelTransferi);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetPixelMapfv" XL_POST, gxg_glGetPixelMapfv, 1, 1, 0, H_glGetPixelMapfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetPixelMapuiv" XL_POST, gxg_glGetPixelMapuiv, 1, 1, 0, H_glGetPixelMapuiv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetPixelMapusv" XL_POST, gxg_glGetPixelMapusv, 1, 1, 0, H_glGetPixelMapusv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glBitmap" XL_POST, gxg_glBitmap, 7, 0, 0, H_glBitmap);
   XEN_DEFINE_PROCEDURE(XL_PRE "glReadPixels" XL_POST, gxg_glReadPixels, 7, 0, 0, H_glReadPixels);
   XEN_DEFINE_PROCEDURE(XL_PRE "glDrawPixels" XL_POST, gxg_glDrawPixels, 5, 0, 0, H_glDrawPixels);
@@ -3998,13 +4263,21 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexGend" XL_POST, gxg_glTexGend, 3, 0, 0, H_glTexGend);
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexGenf" XL_POST, gxg_glTexGenf, 3, 0, 0, H_glTexGenf);
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexGeni" XL_POST, gxg_glTexGeni, 3, 0, 0, H_glTexGeni);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetTexGendv" XL_POST, gxg_glGetTexGendv, 2, 1, 0, H_glGetTexGendv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetTexGenfv" XL_POST, gxg_glGetTexGenfv, 2, 1, 0, H_glGetTexGenfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetTexGeniv" XL_POST, gxg_glGetTexGeniv, 2, 1, 0, H_glGetTexGeniv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexEnvf" XL_POST, gxg_glTexEnvf, 3, 0, 0, H_glTexEnvf);
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexEnvi" XL_POST, gxg_glTexEnvi, 3, 0, 0, H_glTexEnvi);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetTexEnvfv" XL_POST, gxg_glGetTexEnvfv, 2, 1, 0, H_glGetTexEnvfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetTexEnviv" XL_POST, gxg_glGetTexEnviv, 2, 1, 0, H_glGetTexEnviv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexParameterf" XL_POST, gxg_glTexParameterf, 3, 0, 0, H_glTexParameterf);
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexParameteri" XL_POST, gxg_glTexParameteri, 3, 0, 0, H_glTexParameteri);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetTexParameterfv" XL_POST, gxg_glGetTexParameterfv, 2, 1, 0, H_glGetTexParameterfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetTexParameteriv" XL_POST, gxg_glGetTexParameteriv, 2, 1, 0, H_glGetTexParameteriv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetTexLevelParameterfv" XL_POST, gxg_glGetTexLevelParameterfv, 3, 1, 0, H_glGetTexLevelParameterfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetTexLevelParameteriv" XL_POST, gxg_glGetTexLevelParameteriv, 3, 1, 0, H_glGetTexLevelParameteriv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexImage1D" XL_POST, gxg_glTexImage1D, 8, 0, 0, H_glTexImage1D);
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexImage2D" XL_POST, gxg_glTexImage2D, 9, 0, 0, H_glTexImage2D);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetTexImage" XL_POST, gxg_glGetTexImage, 5, 0, 0, H_glGetTexImage);
   XEN_DEFINE_PROCEDURE(XL_PRE "glGenTextures" XL_POST, gxg_glGenTextures, 2, 0, 0, H_glGenTextures);
   XEN_DEFINE_PROCEDURE(XL_PRE "glDeleteTextures" XL_POST, gxg_glDeleteTextures, 2, 0, 0, H_glDeleteTextures);
   XEN_DEFINE_PROCEDURE(XL_PRE "glBindTexture" XL_POST, gxg_glBindTexture, 2, 0, 0, H_glBindTexture);
@@ -4020,6 +4293,9 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glMap1f" XL_POST, gxg_glMap1f, 6, 0, 0, H_glMap1f);
   XEN_DEFINE_PROCEDURE(XL_PRE "glMap2d" XL_POST, gxg_glMap2d, 0, 0, 1, H_glMap2d);
   XEN_DEFINE_PROCEDURE(XL_PRE "glMap2f" XL_POST, gxg_glMap2f, 0, 0, 1, H_glMap2f);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetMapdv" XL_POST, gxg_glGetMapdv, 2, 1, 0, H_glGetMapdv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetMapfv" XL_POST, gxg_glGetMapfv, 2, 1, 0, H_glGetMapfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetMapiv" XL_POST, gxg_glGetMapiv, 2, 1, 0, H_glGetMapiv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glEvalCoord1d" XL_POST, gxg_glEvalCoord1d, 1, 0, 0, H_glEvalCoord1d);
   XEN_DEFINE_PROCEDURE(XL_PRE "glEvalCoord1f" XL_POST, gxg_glEvalCoord1f, 1, 0, 0, H_glEvalCoord1f);
   XEN_DEFINE_PROCEDURE(XL_PRE "glEvalCoord2d" XL_POST, gxg_glEvalCoord2d, 2, 0, 0, H_glEvalCoord2d);
@@ -4049,35 +4325,46 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glColorSubTable" XL_POST, gxg_glColorSubTable, 6, 0, 0, H_glColorSubTable);
   XEN_DEFINE_PROCEDURE(XL_PRE "glCopyColorSubTable" XL_POST, gxg_glCopyColorSubTable, 5, 0, 0, H_glCopyColorSubTable);
   XEN_DEFINE_PROCEDURE(XL_PRE "glCopyColorTable" XL_POST, gxg_glCopyColorTable, 5, 0, 0, H_glCopyColorTable);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTable" XL_POST, gxg_glGetColorTable, 4, 0, 0, H_glGetColorTable);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTableParameterfv" XL_POST, gxg_glGetColorTableParameterfv, 2, 1, 0, H_glGetColorTableParameterfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTableParameteriv" XL_POST, gxg_glGetColorTableParameteriv, 2, 1, 0, H_glGetColorTableParameteriv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glBlendEquation" XL_POST, gxg_glBlendEquation, 1, 0, 0, H_glBlendEquation);
   XEN_DEFINE_PROCEDURE(XL_PRE "glBlendColor" XL_POST, gxg_glBlendColor, 4, 0, 0, H_glBlendColor);
   XEN_DEFINE_PROCEDURE(XL_PRE "glHistogram" XL_POST, gxg_glHistogram, 4, 0, 0, H_glHistogram);
   XEN_DEFINE_PROCEDURE(XL_PRE "glResetHistogram" XL_POST, gxg_glResetHistogram, 1, 0, 0, H_glResetHistogram);
   XEN_DEFINE_PROCEDURE(XL_PRE "glGetHistogram" XL_POST, gxg_glGetHistogram, 5, 0, 0, H_glGetHistogram);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetHistogramParameterfv" XL_POST, gxg_glGetHistogramParameterfv, 2, 1, 0, H_glGetHistogramParameterfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetHistogramParameteriv" XL_POST, gxg_glGetHistogramParameteriv, 2, 1, 0, H_glGetHistogramParameteriv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glMinmax" XL_POST, gxg_glMinmax, 3, 0, 0, H_glMinmax);
   XEN_DEFINE_PROCEDURE(XL_PRE "glResetMinmax" XL_POST, gxg_glResetMinmax, 1, 0, 0, H_glResetMinmax);
   XEN_DEFINE_PROCEDURE(XL_PRE "glGetMinmax" XL_POST, gxg_glGetMinmax, 5, 0, 0, H_glGetMinmax);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetMinmaxParameterfv" XL_POST, gxg_glGetMinmaxParameterfv, 2, 1, 0, H_glGetMinmaxParameterfv);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetMinmaxParameteriv" XL_POST, gxg_glGetMinmaxParameteriv, 2, 1, 0, H_glGetMinmaxParameteriv);
   XEN_DEFINE_PROCEDURE(XL_PRE "glConvolutionFilter1D" XL_POST, gxg_glConvolutionFilter1D, 6, 0, 0, H_glConvolutionFilter1D);
   XEN_DEFINE_PROCEDURE(XL_PRE "glConvolutionFilter2D" XL_POST, gxg_glConvolutionFilter2D, 7, 0, 0, H_glConvolutionFilter2D);
   XEN_DEFINE_PROCEDURE(XL_PRE "glConvolutionParameterf" XL_POST, gxg_glConvolutionParameterf, 3, 0, 0, H_glConvolutionParameterf);
   XEN_DEFINE_PROCEDURE(XL_PRE "glConvolutionParameteri" XL_POST, gxg_glConvolutionParameteri, 3, 0, 0, H_glConvolutionParameteri);
   XEN_DEFINE_PROCEDURE(XL_PRE "glCopyConvolutionFilter1D" XL_POST, gxg_glCopyConvolutionFilter1D, 5, 0, 0, H_glCopyConvolutionFilter1D);
   XEN_DEFINE_PROCEDURE(XL_PRE "glCopyConvolutionFilter2D" XL_POST, gxg_glCopyConvolutionFilter2D, 6, 0, 0, H_glCopyConvolutionFilter2D);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetConvolutionFilter" XL_POST, gxg_glGetConvolutionFilter, 4, 0, 0, H_glGetConvolutionFilter);
   XEN_DEFINE_PROCEDURE(XL_PRE "glSeparableFilter2D" XL_POST, gxg_glSeparableFilter2D, 8, 0, 0, H_glSeparableFilter2D);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetSeparableFilter" XL_POST, gxg_glGetSeparableFilter, 6, 0, 0, H_glGetSeparableFilter);
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluBeginPolygon" XL_POST, gxg_gluBeginPolygon, 1, 0, 0, H_gluBeginPolygon);
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluBuild1DMipmaps" XL_POST, gxg_gluBuild1DMipmaps, 6, 0, 0, H_gluBuild1DMipmaps);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluBuild2DMipmaps" XL_POST, gxg_gluBuild2DMipmaps, 7, 0, 0, H_gluBuild2DMipmaps);
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluDeleteTess" XL_POST, gxg_gluDeleteTess, 1, 0, 0, H_gluDeleteTess);
+#endif
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluEndPolygon" XL_POST, gxg_gluEndPolygon, 1, 0, 0, H_gluEndPolygon);
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluErrorString" XL_POST, gxg_gluErrorString, 1, 0, 0, H_gluErrorString);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluGetString" XL_POST, gxg_gluGetString, 1, 0, 0, H_gluGetString);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluGetTessProperty" XL_POST, gxg_gluGetTessProperty, 3, 0, 0, H_gluGetTessProperty);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluLookAt" XL_POST, gxg_gluLookAt, 9, 0, 0, H_gluLookAt);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluNewTess" XL_POST, gxg_gluNewTess, 0, 0, 0, H_gluNewTess);
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluNextContour" XL_POST, gxg_gluNextContour, 2, 0, 0, H_gluNextContour);
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluOrtho2D" XL_POST, gxg_gluOrtho2D, 4, 0, 0, H_gluOrtho2D);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluPerspective" XL_POST, gxg_gluPerspective, 4, 0, 0, H_gluPerspective);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluPickMatrix" XL_POST, gxg_gluPickMatrix, 5, 0, 0, H_gluPickMatrix);
@@ -4089,7 +4376,9 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessEndPolygon" XL_POST, gxg_gluTessEndPolygon, 1, 0, 0, H_gluTessEndPolygon);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessNormal" XL_POST, gxg_gluTessNormal, 4, 0, 0, H_gluTessNormal);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessProperty" XL_POST, gxg_gluTessProperty, 3, 0, 0, H_gluTessProperty);
+#ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessVertex" XL_POST, gxg_gluTessVertex, 3, 0, 0, H_gluTessVertex);
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluUnProject" XL_POST, gxg_gluUnProject, 9, 0, 0, H_gluUnProject);
   XEN_DEFINE_PROCEDURE(XL_PRE "glActiveTextureARB" XL_POST, gxg_glActiveTextureARB, 1, 0, 0, H_glActiveTextureARB);
   XEN_DEFINE_PROCEDURE(XL_PRE "glClientActiveTextureARB" XL_POST, gxg_glClientActiveTextureARB, 1, 0, 0, H_glClientActiveTextureARB);
@@ -4143,7 +4432,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glIndexPointerEXT" XL_POST, gxg_glIndexPointerEXT, 4, 0, 0, H_glIndexPointerEXT);
   XEN_DEFINE_PROCEDURE(XL_PRE "glTexCoordPointerEXT" XL_POST, gxg_glTexCoordPointerEXT, 5, 0, 0, H_glTexCoordPointerEXT);
   XEN_DEFINE_PROCEDURE(XL_PRE "glEdgeFlagPointerEXT" XL_POST, gxg_glEdgeFlagPointerEXT, 3, 0, 0, H_glEdgeFlagPointerEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetPointervEXT" XL_POST, gxg_glGetPointervEXT, 2, 0, 0, H_glGetPointervEXT);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetPointervEXT" XL_POST, gxg_glGetPointervEXT, 1, 1, 0, H_glGetPointervEXT);
   XEN_DEFINE_PROCEDURE(XL_PRE "glArrayElementEXT" XL_POST, gxg_glArrayElementEXT, 1, 0, 0, H_glArrayElementEXT);
   XEN_DEFINE_PROCEDURE(XL_PRE "glDrawArraysEXT" XL_POST, gxg_glDrawArraysEXT, 3, 0, 0, H_glDrawArraysEXT);
   XEN_DEFINE_PROCEDURE(XL_PRE "glBlendEquationEXT" XL_POST, gxg_glBlendEquationEXT, 1, 0, 0, H_glBlendEquationEXT);
@@ -4151,9 +4440,8 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glPointParameterfvEXT" XL_POST, gxg_glPointParameterfvEXT, 2, 0, 0, H_glPointParameterfvEXT);
   XEN_DEFINE_PROCEDURE(XL_PRE "glColorTableEXT" XL_POST, gxg_glColorTableEXT, 6, 0, 0, H_glColorTableEXT);
   XEN_DEFINE_PROCEDURE(XL_PRE "glColorSubTableEXT" XL_POST, gxg_glColorSubTableEXT, 6, 0, 0, H_glColorSubTableEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTableEXT" XL_POST, gxg_glGetColorTableEXT, 4, 0, 0, H_glGetColorTableEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTableParameterfvEXT" XL_POST, gxg_glGetColorTableParameterfvEXT, 3, 0, 0, H_glGetColorTableParameterfvEXT);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTableParameterivEXT" XL_POST, gxg_glGetColorTableParameterivEXT, 3, 0, 0, H_glGetColorTableParameterivEXT);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTableParameterfvEXT" XL_POST, gxg_glGetColorTableParameterfvEXT, 2, 1, 0, H_glGetColorTableParameterfvEXT);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTableParameterivEXT" XL_POST, gxg_glGetColorTableParameterivEXT, 2, 1, 0, H_glGetColorTableParameterivEXT);
 }
 
 #endif
@@ -5059,7 +5347,7 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"18-May-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"21-May-02\")");
 #endif
       gl_already_inited = 1;
     }

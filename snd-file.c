@@ -53,7 +53,7 @@ int disk_kspace (char *filename)
     {
       if (buf.f_bsize == 1024) return(buf.f_bfree);
       else if (buf.f_bsize == 512) return(buf.f_bfree >> 1);
-      else return((int)(buf.f_bsize * ((Float)(buf.f_bfree) / 1024.0)));
+      else return((int)(buf.f_bsize * ((double)(buf.f_bfree) / 1024.0)));
     }
   return(err);
 }
@@ -194,7 +194,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
 	    }
 	}
     }
-  else snd_remove(newname);
+  else snd_remove(newname, TRUE);
   if (newname) FREE(newname);
   if (loops) FREE(loops);
   return(hdr);
@@ -792,7 +792,7 @@ int move_file(char *oldfile, char *newfile)
 	{
 	  err = copy_file(oldfile, newfile);
 	  if (!err) 
-	    snd_remove(oldfile);
+	    snd_remove(oldfile, TRUE);
 	}
     }
   if (err != 0)

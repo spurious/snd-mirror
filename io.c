@@ -673,19 +673,13 @@ off_t mus_file_seek(int tfd, off_t offset, int origin)
       (tfd < 0) || 
       (io_fds[tfd] == NULL))
     {
-      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-		"no file descriptor %d " OFF_TD " %d\n  [%s[%d] %s]",
-		tfd, offset, origin,
-		__FILE__, __LINE__, __FUNCTION__);
+      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek: no file descriptor");
       return(MUS_ERROR);
     }
   fd = io_fds[tfd];
   if (fd->data_format == MUS_UNKNOWN) 
     {
-      mus_error(MUS_NOT_A_SOUND_FILE,
-		"invalid stream: %s %d, " OFF_TD ", %d\n  [%s[%d] %s]",
-		fd->name, tfd, offset, origin,
-		__FILE__, __LINE__, __FUNCTION__);
+      mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek: invalid data format for %s", fd->name);
       return(MUS_ERROR);
     }
   siz = fd->bytes_per_sample;
@@ -729,33 +723,25 @@ off_t mus_file_seek_frame(int tfd, off_t frame)
   if ((tfd == MUS_DAC_CHANNEL) || (tfd == MUS_DAC_REVERB)) return(0);
   if (io_fds == NULL) 
     {
-      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-		"no file descriptors!\n  [%s[%d] %s]",
-		__FILE__, __LINE__, __FUNCTION__); 
+      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frame: no file descriptors!");
       return(MUS_ERROR);
     }
   if (tfd < 0)
     {
-      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-		"file descriptor = %d?\n  [%s[%d] %s]",
-		tfd, __FILE__, __LINE__, __FUNCTION__); 
+      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frame: file descriptor = %d?", tfd);
       return(MUS_ERROR);
     }
   if ((tfd >= io_fd_size) || 
       (io_fds[tfd] == NULL))
     {
       mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-		"file descriptors not realloc'd? (tfd: %d, io_fd_size: %d)\n  [%s[%d] %s]",
-		tfd, io_fd_size,
-		__FILE__, __LINE__, __FUNCTION__);
+		"mus_file_seek_frame: file descriptors not realloc'd? (tfd: %d, io_fd_size: %d)", tfd, io_fd_size);
       return(MUS_ERROR);
     }
   fd = io_fds[tfd];
   if (fd->data_format == MUS_UNKNOWN) 
     {
-      mus_error(MUS_NOT_A_SOUND_FILE,
-		"invalid stream: %s %d, " OFF_TD "\n  [%s[%d] %s]",
-		fd->name, tfd, frame, __FILE__, __LINE__, __FUNCTION__);
+      mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek_frame: invalid data format for %s", fd->name);
       return(MUS_ERROR);
     }
   return(lseek(tfd, fd->data_location + (fd->chans * frame * fd->bytes_per_sample), SEEK_SET));
@@ -886,17 +872,13 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
     {
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	{
-	  mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-		    "no file descriptors!\n  [%s[%d] %s]",
-		    __FILE__, __LINE__, __FUNCTION__); 
+	  mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_read: no file descriptors!");
 	  return(MUS_ERROR);
 	}
       fd = io_fds[tfd];
       if (fd->data_format == MUS_UNKNOWN) 
 	{
-	  mus_error(MUS_FILE_CLOSED,
-		    "attempt to read closed file %s\n  [%s[%d] %s]",
-		    fd->name, __FILE__, __LINE__, __FUNCTION__); 
+	  mus_error(MUS_FILE_CLOSED, "mus_read: invalid data format for %s", fd->name);
 	  return(MUS_ERROR);
 	}
       format = fd->data_format;
@@ -932,9 +914,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
       charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
       if (charbuf == NULL) 
 	{
-	  mus_error(MUS_MEMORY_ALLOCATION_FAILED,
-		    "IO buffer allocation trouble\n  [%s[%d] %s]",
-		    __FILE__, __LINE__, __FUNCTION__); 
+	  mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_read: IO buffer allocation failed");
 	  return(MUS_ERROR);
 	}
     }
@@ -1193,9 +1173,7 @@ static int checked_write(int tfd, char *buf, int chars)
 	{
 	  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	    {
-	      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-			"no file descriptors!\n  [%s[%d] %s]",
-			__FILE__, __LINE__, __FUNCTION__); 
+	      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!");
 	      return(MUS_ERROR);
 	    }
 	  fd = io_fds[tfd];
@@ -1206,15 +1184,13 @@ static int checked_write(int tfd, char *buf, int chars)
 	  else
 #ifndef MACOS
 	    mus_error(MUS_WRITE_ERROR,
-		      "IO write error (%s%s%s): %d of %d bytes written for %d (%d %d " OFF_TD ")\n\n  [%s[%d] %s]",
+		      "mus_write: write error for %s%s%s: only %d of %d bytes written",
 		      fd->name, (errno) ? " " : "", (errno) ? strerror(errno) : "",
-		      bytes, chars, tfd, fd->bytes_per_sample, fd->data_format, fd->data_location,
-		      __FILE__, __LINE__, __FUNCTION__);
+		      bytes, chars);
 #else
 	    mus_error(MUS_WRITE_ERROR,
-		      "IO write error (%s): %d of %d bytes written for %d (%d %d %d %d)\n\n  [%s[%d] %s]",
-		      fd->name, bytes, chars, tfd, (int)buf, fd->bytes_per_sample, fd->data_format, fd->data_location,
-		      __FILE__, __LINE__, __FUNCTION__);
+		      "mus_write: write error for %s: only %d of %d bytes written",
+		      fd->name, bytes, chars);
 #endif
 	  return(MUS_ERROR);
 	}
@@ -1237,25 +1213,19 @@ off_t mus_file_write_zeros(int tfd, off_t num)
   if (tfd == MUS_DAC_REVERB) return(0);
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
     {
-      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-		"no file descriptors!\n  [%s[%d] %s]",
-		__FILE__, __LINE__, __FUNCTION__); 
+      mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_write_zeros: no file descriptors!");
       return(MUS_ERROR);
     }
   fd = io_fds[tfd];
   if (fd->data_format == MUS_UNKNOWN) 
     {
-      mus_error(MUS_FILE_CLOSED,
-		"attempt to write closed file %s\n  [%s[%d] %s]",
-		fd->name, __FILE__, __LINE__, __FUNCTION__); 
+      mus_error(MUS_FILE_CLOSED, "mus_file_write_zeros: invalid data format for %s", fd->name);
       return(MUS_ERROR);
     }
   charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
   if (charbuf == NULL) 
     {
-      mus_error(MUS_MEMORY_ALLOCATION_FAILED,
-		"IO buffer allocation trouble\n  [%s[%d] %s]",
-		__FILE__, __LINE__, __FUNCTION__); 
+      mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_file_write_zeros: IO buffer allocation failed");
       return(MUS_ERROR);
     }
   lim = num * (fd->bytes_per_sample);
@@ -1289,17 +1259,13 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
       if (tfd == MUS_DAC_REVERB) return(0);
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	{
-	  mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-		    "no file descriptors!\n  [%s[%d] %s]",
-		    __FILE__, __LINE__, __FUNCTION__);
+	  mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!");
 	  return(MUS_ERROR);
 	}
       fd = io_fds[tfd];
       if (fd->data_format == MUS_UNKNOWN) 
 	{
-	  mus_error(MUS_FILE_CLOSED,
-		    "attempt to write closed file %s\n  [%s[%d] %s]",
-		    fd->name, __FILE__, __LINE__, __FUNCTION__); 
+	  mus_error(MUS_FILE_CLOSED, "mus_write: invalid data format for %s", fd->name);
 	  return(MUS_ERROR);
 	}
 
@@ -1315,9 +1281,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
       charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
       if (charbuf == NULL) 
 	{
-	  mus_error(MUS_MEMORY_ALLOCATION_FAILED,
-		    "IO buffer allocation trouble\n  [%s[%d] %s]",
-		    __FILE__, __LINE__, __FUNCTION__);
+	  mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_write: IO buffer allocation failed");
 	  return(MUS_ERROR);
 	}
     }

@@ -332,7 +332,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 				  sp->short_filename, ucp->chan, 
 				  saved_chan_file, strerror(errno)));
 	    }
-	  snd_remove(saved_chan_file);
+	  snd_remove(saved_chan_file, TRUE);
 	  FREE(saved_chan_file);
 
 	  if (ok)
@@ -347,7 +347,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		      backup_edit_list(ucp); 
 		      ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize + filesize);
 		    }
-		  else snd_remove(ofile);
+		  else snd_remove(ofile, TRUE);
 		  update_graph(ucp, NULL); 
 		}
 	      else file_override_samples(filtersize + filesize, ofile, ucp, 0, DELETE_ME, LOCK_MIXES, origin);
@@ -1987,7 +1987,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	{
 	  ss->stopped_explicitly = 0;
 	  if (temp_file) 
-	    snd_remove(ofile);
+	    snd_remove(ofile, TRUE);
 	}
       else
 	{
@@ -2513,7 +2513,7 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 		    backup_edit_list(cp);
 		  ripple_trailing_marks(cp, beg, num, j);
 		}
-	      else snd_remove(filename);
+	      else snd_remove(filename, TRUE);
 	    }
 	  update_graph(cp, NULL);
 	}

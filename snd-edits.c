@@ -992,7 +992,7 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
   snd_state *ss;
   if (num <= 0) /* can't happen!? */
     {
-      if ((inserted_file) && (auto_delete == DELETE_ME)) snd_remove(inserted_file);
+      if ((inserted_file) && (auto_delete == DELETE_ME)) snd_remove(inserted_file, TRUE);
       if ((inserted_file) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(inserted_file, chan);
       return;
     }
@@ -1241,7 +1241,7 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
   snd_state *ss;
   if (num <= 0) /* not sure this can happen */
     {
-      if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile);
+      if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile, TRUE);
       if ((tempfile) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(tempfile, chan);
       return;
     }
@@ -1297,7 +1297,7 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, i
   snd_state *ss;
   if (num == 0) /* not sure this can happen */
     {
-      if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile);
+      if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile, TRUE);
       if ((tempfile) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(tempfile, chan);
       return;
     }
@@ -2691,8 +2691,7 @@ static XEN g_display_edits(XEN snd, XEN chn)
   lseek(fd, 0L, SEEK_SET);
   read(fd, buf, len);
   snd_close(fd, name);
-  if (remove(name) == -1)
-    snd_error("can't remove %s: %s", name, strerror(errno));
+  snd_remove(name, FALSE);
   if (name) FREE(name);
   res = C_TO_XEN_STRING(buf);
   FREE(buf);
