@@ -66,7 +66,7 @@
 
 /* ---------------- ALSA ---------------- */
 
-#if (HAVE_ALSA) && defined(SND_RAWMIDI_NONBLOCK)
+#if HAVE_ALSA
 
 #include <sys/ioctl.h>
 #if HAVE_ALSA_ASOUNDLIB_H
@@ -74,6 +74,8 @@
 #else
   #include <sys/asoundlib.h>
 #endif
+
+#ifdef SND_RAWMIDI_NONBLOCK
 
 #define MIDI_OK
 #define DEV_BUFSIZE 64  /* what is this for? */
@@ -230,6 +232,7 @@ char *mus_midi_describe(void)
   return(buf);
 }
 
+#endif
 #endif
 
 
