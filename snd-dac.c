@@ -155,10 +155,12 @@ static SCM g_set_expand_funcs(SCM expnd, SCM make_expnd, SCM free_expnd)
 #if (!HAVE_GUILE_1_3_0)
   static void call_stop_playing_hook(snd_info *sp);
   static void call_stop_playing_region_hook(int n);
+  static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp);
   static int call_start_playing_hook(snd_info *sp);
 #else
   static void call_stop_playing_hook(snd_info *sp) {}
   static void call_stop_playing_region_hook(int n) {}
+  static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp) {}
   static int call_start_playing_hook(snd_info *sp) {return(0);}
 #endif
 
@@ -197,13 +199,13 @@ typedef struct dac__info {
                        /* in non-interleaved case, the out-going channel */
   int slot;
   Float lst,nxt,x;     /* used if linear interp for src */
-  Float *a;
-  snd_fd *chn_fd;
+  Float *a;            /* filter coeffs */
+  snd_fd *chn_fd;      /* sample reader */
   spd_info *spd;
   mus_any *flt;
-  int region;           /* to reset region-browser play button upon completion */
+  int region;          /* to reset region-browser play button upon completion */
   src_state *src;
-  snd_info *sp;         /* needed to see button callback changes etc */
+  snd_info *sp;        /* needed to see button callback changes etc */
   chan_info *cp;
   snd_state *ss;
   int end;
@@ -710,9 +712,12 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
 #if HAVE_GUILE
   if (dp->region >= 0)
     call_stop_playing_region_hook(dp->region); 
-  else 
-    if (sp_stopping)
-      call_stop_playing_hook(sp);
+  else
+    {
+      if (sp_stopping)
+	call_stop_playing_hook(sp);
+      call_stop_playing_channel_hook(sp,cp);
+    }
 #endif
   free_dac_info(dp);
   if ((sp_stopping) && (sp->delete_me)) 
@@ -844,7 +849,7 @@ static void free_dac_state(dac_state *dacp)
 
 static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr);
 
-static dac_state *start_dac(snd_state *ss, int srate, int channels, int background)
+static void start_dac(snd_state *ss, int srate, int channels, int background)
 {
   dac_state *dacp = NULL;
   dac_info *dp;
@@ -896,7 +901,6 @@ static dac_state *start_dac(snd_state *ss, int srate, int channels, int backgrou
 	    }
 	}
     }
-  return(dacp);
 }
 
 
@@ -1040,14 +1044,12 @@ void play_selection(int background)
   /* just plays the current selection */
   int i;
   int *ends;
-  snd_state *ss;
   sync_info *si = NULL;
   if (selection_is_current())
     {
       si = region_sync(0);
       if (si)
 	{
-	  ss = get_global_state();
 	  ends = (int *)CALLOC(si->chans,sizeof(int));
 	  for (i=0;i<si->chans;i++) ends[i] = si->begs[i] + region_len(0);
 #if DEBUGGING
@@ -1291,7 +1293,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 				  dev_bufs,
 				  (char *)(audio_bytes[i]),
 				  data_clipped(ss));
-	    buf += dacp->chans_per_device[i];
+	    dev_bufs += dacp->chans_per_device[i];
 	  }
       for (i=0;i<dacp->devices;i++)
 	if (dev_fd[i] != -1)
@@ -1501,7 +1503,8 @@ static int start_audio_output_1 (dac_state *dacp)
       /* allocate devices for playback */
       alloc_chans = 0;
       alloc_devs = 0;
-      for (d=0;d<ALSA_MAX_DEVICES;d++) {out_dev[d] = -1; dev_fd[d] = -1;}
+      for (d=0;d<ALSA_MAX_DEVICES;d++) out_dev[d] = -1; 
+      for (d=0;d<MAX_DEVICES;d++) dev_fd[d] = -1;
       if (feed_first_device == 0) 
 	{
 	  /* see if widest device can accomodate all channels */
@@ -1991,13 +1994,19 @@ static SCM g_stop_playing(SCM snd_n)
   return(SCM_BOOL_F);
 }
 
-static SCM start_playing_hook,stop_playing_hook,stop_playing_region_hook;
+static SCM start_playing_hook,stop_playing_hook,stop_playing_region_hook,stop_playing_channel_hook;
 
 #if (!HAVE_GUILE_1_3_0)
 static void call_stop_playing_hook(snd_info *sp)
 {
   if (HOOKED(stop_playing_hook))
     g_c_run_or_hook(stop_playing_hook,SCM_LIST1(gh_int2scm(sp->index)));
+}
+
+static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp)
+{
+  if (HOOKED(stop_playing_channel_hook))
+    g_c_run_or_hook(stop_playing_channel_hook,SCM_LIST2(gh_int2scm(sp->index),gh_int2scm(cp->chan)));
 }
 
 static void call_stop_playing_region_hook(int n)
@@ -2029,13 +2038,13 @@ void g_init_dac(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_play_and_wait,SCM_FNC g_play_and_wait,0,5,0),H_play_and_wait);
   DEFINE_PROC(gh_new_procedure0_1(S_stop_playing,SCM_FNC g_stop_playing),H_stop_playing);
 #if (!HAVE_GUILE_1_3_0)
-  stop_playing_hook = scm_create_hook(S_stop_playing_hook,1);     /* arg = sound */
-  /* TODO: this is wrong -- it should carry along the channel argument, if any, as well */
-  /*       but that means the snd-dac needs to remember what it got as well */
-  stop_playing_region_hook = scm_create_hook(S_stop_playing_region_hook,1);     /* arg = region number */
-  start_playing_hook = scm_create_hook(S_start_playing_hook,1);   /* arg = sound */
+  stop_playing_hook = scm_create_hook(S_stop_playing_hook,1);                     /* arg = sound */
+  stop_playing_channel_hook = scm_create_hook(S_stop_playing_channel_hook,2);     /* args = sound channel */
+  stop_playing_region_hook = scm_create_hook(S_stop_playing_region_hook,1);       /* arg = region number */
+  start_playing_hook = scm_create_hook(S_start_playing_hook,1);                   /* arg = sound */
 #else
   stop_playing_hook = gh_define(S_stop_playing_hook,SCM_BOOL_F);
+  stop_playing_channel_hook = gh_define(S_stop_playing_channel_hook,SCM_BOOL_F);
   stop_playing_region_hook = gh_define(S_stop_playing_region_hook,SCM_BOOL_F);
   start_playing_hook = gh_define(S_start_playing_hook,SCM_BOOL_F);
 #endif

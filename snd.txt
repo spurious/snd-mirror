@@ -226,11 +226,14 @@ auto-update is #t (default is #f), Snd automatically updates any such file
 (this is also useful if you're editing the same file in two separate panes).
 
 In the file selection dialog, there's a button marked 'Sound files only'.
-This can be set by default (see Dialogs). If it is set, only files that
-appear to be sound files are included in the directory listing. Currently
-Snd uses the file extension to decide whether it is a sound file -- the
-initial extensions are "snd", "wav", "aiff", "aif", "au", "aifc", "voc", and
-"wve". To add an extension to this list, use add-sound-file-extension.
+This can be set by default (see set-just-sounds). If it is set, only files
+that appear to be sound files are included in the directory listing.
+Currently Snd uses the file extension to decide whether it is a sound file
+-- the initial extensions are "snd", "wav", "aiff", "aif", "au", "aifc",
+"voc", and "wve". To add an extension to this list, use
+add-sound-file-extension. You can also apply an arbitrary Scheme function to
+each such filename, making as fancy a filter as you like (see
+just-sounds-hook).
 
 Snd can handle the following file and data types:
 

@@ -1,4 +1,4 @@
-/* TODO: apply to selection has two major bugs (see line 780 below)
+/* TODO: apply to selection has one major bug (see line 780 below)
  */
 
 #include "snd.h"
@@ -666,7 +666,7 @@ void *make_apply_state(void *xp)
 
 #define APPLY_TICKS 4
 
-static int apply_dur,apply_tick = 0, apply_reporting = 0, apply_trust_dur = 1, orig_dur;
+static int apply_dur,apply_tick = 0, apply_reporting = 0, orig_dur;
 
 BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 {
@@ -675,6 +675,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   snd_context *sgx;
   snd_info *sp;
   chan_info *cp;
+  sync_info *si;
   Float ratio,mult_dur;
   int i,len,over_selection,curchan=0,added_dur=0;
   sp = ap->sp;
@@ -719,7 +720,6 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
       if (apply_reporting) 
 	start_progress_report(sp,NOT_FROM_ENVED);
       ap->i = 0;
-      if ((sp->expanding) || (sp->srate != 1.0) || (sp->reverbing)) apply_trust_dur = 0;
       ap->slice++;
       return(BACKGROUND_CONTINUE);
       break;
@@ -787,19 +787,14 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		  then deactivate_selection?
 	      */
 
-	      /* also!! selection chans may have no relation to sound chans:
-		 sync_info *si = NULL; 
-		 si = region_sync(0); or some version that doesn't set up readers -- we need the channel list here
-                 for (i=0;i<si->chans;i++)
-		   now use si->cps[i] ->sound etc, not sp->chans[i]
-		 free_sync_info(si); does not free sample readers
-	      */
-
-	      for (i=0;i<region_chans(0);i++)
-		file_change_samples(selection_beg(sp->chans[i]),region_len(0),ap->ofile,sp->chans[i],i,
-				    (region_chans(0) > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,"Apply to selection");
-	      for (i=0;i<region_chans(0);i++)
-		update_graph(sp->chans[i],NULL);
+	      si = region_sync(0);
+	      for (i=0;i<si->chans;i++)
+		{
+		  file_change_samples(si->begs[i],apply_dur,ap->ofile,si->cps[i],i,
+				    (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,"Apply to selection");
+		  update_graph(si->cps[i],NULL);
+		}
+	      free_sync_info(si); 
 	      break;
 	    }
 	  report_in_minibuffer(sp,"");
@@ -2058,7 +2053,7 @@ static SCM g_filter_env(SCM snd_n)
 
 static SCM g_call_apply(SCM snd, SCM choice)
 {
-  #define H_call_apply "(" S_call_apply " &optional snd) is equivalent to clicking the control panel 'Apply' button"
+  #define H_call_apply "(" S_call_apply " &optional snd choice) is equivalent to clicking the control panel 'Apply' button"
   snd_info *sp;
   snd_state *ss;
   ERRSP(S_call_apply,snd,1);

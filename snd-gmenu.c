@@ -1,11 +1,5 @@
 #include "snd.h"
 
-/* DIFFS: click for help is called tipquery or something like that (and isn't implemented)
- *        no normalize menus (not using paned windows here, so no use for them)
- */
-/* TODO: finish guile-gtk connection (popup and decide about inner cascades)
- */
-
 static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer data);
 
 enum {menu_menu,
@@ -293,15 +287,10 @@ GtkWidget *get_menubar(void) {return(mw[menu_menu]);}
 GtkWidget *add_menu(snd_state *ss)
 {
   /* this mainly passes the global data pointer (ss) to all the menu-related callbacks */
-
-  /* TODO: SND_AS_WIDGET here?
-   *       figure out why accelerator doesn't get displayed
-   */
-
-  GtkAccelGroup *accel_group;
-  accel_group = gtk_accel_group_new();
-
 #ifndef SND_AS_WIDGET
+  GtkAccelGroup *accel_group;
+
+  accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(MAIN_SHELL(ss)),accel_group);
 #endif
 
@@ -310,15 +299,12 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)),mw[menu_menu],FALSE,TRUE,0);
   gtk_widget_show(mw[menu_menu]);
 
-  /* gtk_signal_connect(GTK_OBJECT(mw[menu_menu]),"button_press_event",GTK_SIGNAL_FUNC(middle_button_press),(gpointer)ss); */
 
   /* FILE MENU */
   mw[file_menu] = gtk_menu_item_new_with_label(STR_File);
   gtk_menu_bar_append(GTK_MENU_BAR(mw[menu_menu]),mw[file_menu]);
   set_background(mw[file_menu],(ss->sgx)->highlight_color);
   gtk_widget_show(mw[file_menu]);
-  gtk_widget_add_accelerator(mw[file_menu],"activate",accel_group,GDK_F,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
-  /* why doesn't this show up?? */
 
   mw[f_cascade_menu] = gtk_menu_new();
   set_background(mw[f_cascade_menu],(ss->sgx)->basic_color);
@@ -407,7 +393,6 @@ GtkWidget *add_menu(snd_state *ss)
   set_background(mw[f_exit_menu],(ss->sgx)->basic_color);
   gtk_widget_show(mw[f_exit_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[f_exit_menu]),"activate",GTK_SIGNAL_FUNC(File_Exit_Callback),(gpointer)ss);
-
 
   /* EDIT MENU */
   mw[edit_menu] = gtk_menu_item_new_with_label(STR_Edit);
@@ -724,7 +709,6 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_widget_show(mw[o_transform_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[o_transform_menu]),"activate",GTK_SIGNAL_FUNC(Options_Transform_Callback),(gpointer)ss);
 
-
   mw[o_speed_menu] = gtk_menu_item_new_with_label(STR_Speed_style);
   gtk_menu_append(GTK_MENU(mw[o_cascade_menu]),mw[o_speed_menu]);
   set_background(mw[o_speed_menu],(ss->sgx)->basic_color);
@@ -925,6 +909,22 @@ GtkWidget *add_menu(snd_state *ss)
 
   gtk_widget_add_events (MAIN_SHELL(ss),gtk_widget_get_events(MAIN_SHELL(ss)) | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
   gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)),"button_press_event",GTK_SIGNAL_FUNC(middle_button_press),(gpointer)ss); 
+
+#ifndef SND_AS_WIDGET
+  gtk_menu_set_accel_group(GTK_MENU(mw[f_cascade_menu]),accel_group);
+  gtk_widget_add_accelerator(mw[f_open_menu],"activate",accel_group,GDK_O,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[f_close_menu],"activate",accel_group,GDK_C,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[f_save_menu],"activate",accel_group,GDK_S,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[f_save_as_menu],"activate",accel_group,GDK_A,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[f_revert_menu],"activate",accel_group,GDK_R,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[f_mix_menu],"activate",accel_group,GDK_M,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[f_update_menu],"activate",accel_group,GDK_U,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[f_new_menu],"activate",accel_group,GDK_N,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[f_view_menu],"activate",accel_group,GDK_V,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[f_print_menu],"activate",accel_group,GDK_P,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[e_find_menu],"activate",accel_group,GDK_F,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(mw[o_transform_menu],"activate",accel_group,GDK_T,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+#endif
 
   return(mw[menu_menu]);
 }

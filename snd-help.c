@@ -251,6 +251,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+6-Sep:   added gtk menu accelerators, stop-playing-channel-hook, just-sounds-hook.\n\
 5-Sep:   changed Apply button handling -- control-click now for selection.\n\
          HAVE_GTKEXTRA to support libgtkextra's icon-oriented file selector.\n\
 31-Aug:  gtk popup menu fixed.\n\
@@ -267,13 +268,6 @@ void news_help(snd_state *ss)
            this is a non-backwards-compatible change.\n\
 17-Aug:  recorder work (one serious bug fixed).\n\
 14-Aug:  snd 4.5.\n\
-10-Aug:  extsnd.html re-organized.\n\
-         wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,fft-size,show-fft-peaks,zero-pad,fft-window,\n\
-           verbose-cursor,fft-log-frequency,fft-log-magnitude,min-dB,fft-beta,wavelet-type,fft-style,transform-type,\n\
-           normalize-fft,show-mix-consoles,show-mix-waveforms,graph-style,dot-size,show-axes,graphs-horizontal,\n\
-           spectro-x|y|z-angle|scale,spectro-hop,spectro-cutoff,spectro-start can be treated as channel-local.\n\
-         reverb-decay,speed-tones,speed-style can be treated as sound-local.\n\
-         Snd builds and runs in Mac OS-X.\n\
 ",
 NULL);
   FREE(info);
@@ -1057,9 +1051,11 @@ user-interface manipulations.\n\
   " S_after_graph_hook "(snd chn)\n\
   " S_exit_hook "\n\
   " S_start_hook "\n\
+  " S_stop_playing_channel_hook "\n\
   " S_stop_playing_hook "\n\
   " S_stop_playing_region_hook "\n\
   " S_start_playing_hook "\n\
+  " S_just_sounds_hook "\n\
   " S_mark_click_hook "\n\
   " S_mix_amp_changed_hook "\n\
   " S_mix_speed_changed_hook "\n\

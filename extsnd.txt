@@ -404,6 +404,14 @@ functions invoked by the hook.
   key-press-hook (snd chn key state)  called upon key press while mouse is in lisp graph. (or)
                                         If it returns #t, the key press is not passed to the main handler.
                                         state refers to the control, meta, and shift keys.
+  just-sounds-hook (filename)         called on each file (after the sound file extension check) if the
+                                        just-sounds button is set. Return #f to filter out filename.
+
+                                      (add-hook! just-sounds-hook
+                                        (lambda (name) ;display only stereo files in file selection dialog
+                                          (and (not (= (mus-sound-header-type name) mus-raw)) ;any unrecognized file is considered "raw"
+                                               (= (mus-sound-chans name) 2))))
+
   mark-click-hook (id)                called when a mark is clicked, return #t to squelch message.
 
                                       (add-hook! mark-click-hook
@@ -450,6 +458,7 @@ functions invoked by the hook.
                                         If it returns #t, snd exits immediately.
   start-playing-hook (snd)            called when a play request is triggered. (or)
                                         If it returns #t, snd does not play.
+  stop-playing-channel-hook (snd chn) called when a sound finishes playing. (or)
   stop-playing-hook (snd)             called when a sound finishes playing. (or)
   stop-playing-region-hook (n)        called when a region finishes playing. (or)
   snd-error-hook (error-message)      called upon snd_error. (or)
@@ -2061,7 +2070,7 @@ Help:
                                       (help-dialog "xyzzy" "are we having fun?")
 
   help-text-font                help dialog text font
-  html-dir                      If XmHTML widget is in use, the directory to search for documentation.
+  html-dir                      If an HTML widget is in use, the directory to search for documentation.
 
 View:Listener:
   activate-listener     ()      make listener active, even if not open.

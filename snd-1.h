@@ -711,7 +711,7 @@ void redo_edit(chan_info *cp, int count);
 #define PREVIOUS_SAMPLE(val,sf)  do {if (sf->data < sf->first) val=previous_sound(sf); else val=(*sf->data--);} while (0)
 
 int chan_save_edits(chan_info *cp, char *ofile);
-int save_edits(snd_info *sp, void *ptr);
+void save_edits(snd_info *sp, void *ptr);
 int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, char *comment);
 void revert_edits(chan_info *cp, void *ptr);
 void set_snd_IO_error(int err);
@@ -826,7 +826,7 @@ void selection_off(chan_info *cp);
 int save_region(snd_state *ss, int n, char *ofile, int data_format);
 int delete_selection(char *origin, int regraph);
 void paste_region(int n, chan_info *cp, char *origin);
-int add_region(int n, chan_info *cp, char *origin);
+void add_region(int n, chan_info *cp, char *origin);
 void finish_keyboard_selection(void);
 int cancel_keyboard_selection(void);
 void start_selection (chan_info *cp,int x);
@@ -963,7 +963,7 @@ void sx_incremented(chan_info *cp, double amount);
 int move_axis(chan_info *cp, axis_info *ap, int x);
 void set_axes(chan_info *cp,Float x0,Float x1,Float y0,Float y1);
 void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_style);
-int key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym, char *keyname);
+int key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym);
 void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, TIME_TYPE time);
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button);
 void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TIME_TYPE click_time);
@@ -1239,7 +1239,7 @@ void close_recorder_audio(void);
 #if HAVE_GUILE
   void g_init_recorder(SCM local_doc);
 #endif
-int fire_up_recorder(snd_state *ss);
+void fire_up_recorder(snd_state *ss);
 
 
 /* -------- snd.c -------- */

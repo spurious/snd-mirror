@@ -366,6 +366,10 @@ void init_sound_file_extensions(void)
   add_sound_file_extension("wve");
 }
 
+#if HAVE_GUILE
+  static int just_sounds_happy(char *filename);
+#endif
+
 dir *find_sound_files_in_dir (char *name)
 {
 #if (!HAVE_OPENDIR)
@@ -391,7 +395,10 @@ dir *find_sound_files_in_dir (char *name)
 		    {
 		      if (strcmp(dot,sound_file_extensions[i]) == 0)
 			{
-			  add_snd_file_to_dir_list(dp,dirp->d_name);
+#if HAVE_GUILE
+			  if (just_sounds_happy(dirp->d_name))
+#endif
+			    add_snd_file_to_dir_list(dp,dirp->d_name);
 			  break;
 			}
 		    }
@@ -586,7 +593,7 @@ static void read_memo_file(snd_info *sp)
 #if HAVE_GUILE
 #include "sg.h"
 
-static SCM memo_sound,open_hook,close_hook;
+static SCM memo_sound,open_hook,close_hook,just_sounds_hook;
 
 #if  (!HAVE_GUILE_1_3_0)
 static int dont_open(snd_state *ss, char *file)
@@ -621,11 +628,22 @@ static int dont_close(snd_state *ss, snd_info *sp)
   return(SCM_TRUE_P(res));
 }
 
+static int just_sounds_happy(char *filename)
+{
+  SCM res = SCM_BOOL_T;
+  if (HOOKED(just_sounds_hook))
+    res = g_c_run_or_hook(just_sounds_hook,SCM_LIST1(gh_str02scm(filename)));
+  return(SCM_TRUE_P(res));
+}
+
 #else
+  /* HAVE_GUILE_1_3_0 */
   static int dont_open(snd_state *ss, char *file) {return(0);}
   static int dont_close(snd_state *ss, snd_info *sp) {return(0);}
+  static int just_sounds_happy(char *filename) {return(1);}
 #endif
 #else
+  /* no guile */
   static int dont_open(snd_state *ss, char *file) {return(0);}
   static int dont_close(snd_state *ss, snd_info *sp) {return(0);}
 #endif
@@ -2083,7 +2101,6 @@ static SCM g_sound_files_in_directory(SCM dirname)
   return(vect);
 }
 
-
 void g_init_file(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure1_0(S_add_sound_file_extension,g_add_sound_file_extension),H_add_sound_file_extension);
@@ -2102,9 +2119,11 @@ void g_init_file(SCM local_doc)
 #if (!HAVE_GUILE_1_3_0)
   open_hook = scm_create_hook(S_open_hook,1);                     /* arg = filename */
   close_hook = scm_create_hook(S_close_hook,1);                   /* arg = sound index */
+  just_sounds_hook = scm_create_hook(S_just_sounds_hook,1);       /* arg = filename */
 #else
   open_hook = gh_define(S_open_hook,SCM_BOOL_F);
   close_hook = gh_define(S_close_hook,SCM_BOOL_F);
+  just_sounds_hook = gh_define(S_just_sounds_hook,SCM_BOOL_F);
 #endif
 }
 #endif

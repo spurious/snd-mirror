@@ -1322,7 +1322,6 @@
 		  (> (abs (- (* 0.1 (cadr amps)) (cadr newamps))) .05)
 		  (fneq (caddr amps) (caddr newamps))
 		  (fneq (cadddr amps) (cadddr newamps)))
-	      ;; this is currently broken in Snd
 	      (snd-print (format #f ";apply selection amp:~%  ~A ->~%  ~A?" amps newamps)))
 	  (close-sound obind)))
       ))

@@ -2228,7 +2228,7 @@ int chan_save_edits(chan_info *cp, char *ofile)
   return(snd_io_error);
 }
 
-int save_edits(snd_info *sp, void *ptr)
+void save_edits(snd_info *sp, void *ptr)
 {
   int i,need_save,err;
   time_t current_write_date;
@@ -2254,7 +2254,7 @@ int save_edits(snd_info *sp, void *ptr)
 	    {
 	      sprintf(edit_buf,"%s changed on disk! Save anyway?",sp->shortname);
 	      err = snd_yes_or_no_p(sp->state,edit_buf);
-	      if (err == 0) return(0);
+	      if (err == 0) return;
 	    }
 	  err = save_edits_1(sp);
 	  if (err)
@@ -2277,7 +2277,6 @@ int save_edits(snd_info *sp, void *ptr)
       sprintf(edit_buf,"can't write %s (it is read-only)",sp->shortname);
       report_in_minibuffer(sp,edit_buf);
     }
-  return(0);
 }
 
 void revert_edits(chan_info *cp, void *ptr)

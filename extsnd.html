@@ -466,6 +466,14 @@ the hook.
   <a name="ffthook">fft-hook</a> (snd chn scaler)           called just after an FFT (or spectrum) is calculated.
   <a name="graphhook">graph-hook</a> (snd chn y0 y1)          called each time a graph is updated or redisplayed.
                                         If it returns #t, the display is not updated.
+  <a name="justsoundshook">just-sounds-hook</a> (filename)         called on each file (after the sound file extension check) if the
+                                        just-sounds button is set. Return #f to filter out <i>filename</i>.
+<small>
+                                      (add-hook! just-sounds-hook 
+                                        (lambda (name) ;display only stereo files in file selection dialog
+                                          (and (not (= (mus-sound-header-type name) mus-raw)) ;any unrecognized file is considered "raw"
+                                               (= (mus-sound-chans name) 2))))
+</small>
   <a name="keypresshook">key-press-hook</a> (snd chn key state)  called upon key press while mouse is in lisp graph. (<b>or</b>)
                                         If it returns #t, the key press is not passed to the main handler.
                                         <i>state</i> refers to the control, meta, and shift keys.
@@ -515,6 +523,7 @@ the hook.
                                         If it returns #t, snd exits immediately.
   <a name="startplayinghook">start-playing-hook</a> (snd)            called when a play request is triggered. (<b>or</b>)
                                         If it returns #t, snd does not play.
+  <a name="stopplayingchannelhook">stop-playing-channel-hook</a> (snd chn) called when a sound finishes playing. (<b>or</b>)
   <a name="stopplayinghook">stop-playing-hook</a> (snd)             called when a sound finishes playing. (<b>or</b>)
   <a name="stopplayingregionhook">stop-playing-region-hook</a> (n)        called when a region finishes playing. (<b>or</b>)
   <a name="snderrorhook">snd-error-hook</a> (error-message)      called upon snd_error. (<b>or</b>)

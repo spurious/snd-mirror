@@ -1,5 +1,6 @@
 snd change log
 
+  6-Sep:     added gtk menu accelerators, stop-playing-channel-hook, just-sounds-hook.
   5-Sep:     changed Apply button handling -- control-click now for selection.
              HAVE_GTKEXTRA to support libgtkextra's icon-oriented file selector.
   31-Aug:    gtk popup menu fixed.

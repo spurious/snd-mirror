@@ -6,7 +6,7 @@
  *        added amp in control panel (chans separate -- requires snd-dac support)
  *        special lisp graph effects
  *        own fft peaks info
- *        own filter in file box
+ *        own filter in file box (but only Motif supports a user-definable filter)
  */
 
 #include "snd.h"
@@ -716,7 +716,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   snd_color_tag = scm_newsmob(&snd_color_smobfuns);
 #endif
 #if HAVE_HTML
-  scm_add_feature("snd-xmhtml");
+  scm_add_feature("snd-html");
   DEFINE_PROC(gh_new_procedure0_0(S_html_dir,g_html_dir),H_html_dir);
   DEFINE_PROC(gh_new_procedure1_0(S_set_html_dir,g_set_html_dir),H_set_html_dir);
 #endif

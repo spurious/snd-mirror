@@ -249,17 +249,14 @@ not trying to support this anymore.
 
 
 Gtk+:
-Gtk+ is not as sophisticated as Motif, and the port is still brand-new, so
+Gtk+ is not as sophisticated as Motif, and the port is still somewhat new, so
 there are a number of differences and rough-edges in that version of Snd.
 The primary differences are 1) Gtk+ paned-window widget only accepts two
-panes.  This means that set-sized boxes are used throughout rather than
+panes.  This means that simple boxes are used throughout rather than
 panes. 2) Gtk+ colors are a bottomless pit; colors may or may not work
 right.  3) Gtk+ file selection dialog's filter is restricted to a simple
 string using "*" -- the just-sounds button of Motif, and the associated
-sound file extension list are omitted. 4) The record dialog is a mess --
-I've run out of steam for the time being... For other remaining problems
-see snd-g*.[c,h] (the Gtk+ Snd code) -- each has a TODO list at the
-top; any help with these would be greatly appreciated!!
+sound file extension list are omitted.
 
 (I've tried snd+gtk in Linux, Sun, and SGI).
 

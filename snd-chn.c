@@ -6758,7 +6758,7 @@ void draw_graph_border(chan_info *cp)
     }
 }
 
-int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym, char *keyname)
+int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 {
   /* called by every key-intercepting widget in the entire sound pane */
   chan_info *cp;

@@ -541,11 +541,8 @@ static void ss_graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boole
   keysym = XKeycodeToKeysym(XtDisplay(w),(int)(ev->keycode),(key_state & ShiftMask) ? 1 : 0);
   sp = any_selected_sound(ss);
   if (sp)
-    key_press_callback(any_selected_channel(sp),
-		       ev->x,ev->y,ev->state,keysym,
-		       XKeysymToString(keysym));
-  else
-    snd_append_command(ss,XKeysymToString(keysym));
+    key_press_callback(any_selected_channel(sp),ev->x,ev->y,ev->state,keysym);
+  else snd_append_command(ss,XKeysymToString(keysym));
 }
 
 static Pixel get_color(Widget shell,

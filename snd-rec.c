@@ -518,7 +518,7 @@ void set_record_size (int new_size)
 
 #if (HAVE_ALSA || HAVE_OSS)
 
-int fire_up_recorder(snd_state *ss)
+void fire_up_recorder(snd_state *ss)
 {
   int i, j;
   float val[64];
@@ -605,7 +605,7 @@ int fire_up_recorder(snd_state *ss)
       if (in_count == 0) 
 	{
 	  recorder_error("no inputs?: ");
-	  return(-1);
+	  return;
 	}
 
       /* open all input devices */
@@ -619,8 +619,11 @@ int fire_up_recorder(snd_state *ss)
 	      if ((int)direction == 1)
 		{
 		  size = mus_data_format_to_bytes_per_sample(rp->input_formats[sys]);
-		  rp->input_ports[sys] = mus_audio_open_input(sysdev,rp->srate,rp->input_channels[sys],rp->input_formats[sys],
-							rp->input_buffer_sizes[sys]*rp->input_channels[sys]*size);
+		  rp->input_ports[sys] = mus_audio_open_input(sysdev,
+							      rp->srate,
+							      rp->input_channels[sys],
+							      rp->input_formats[sys],
+							      rp->input_buffer_sizes[sys]*rp->input_channels[sys]*size);
 		  if (rp->input_ports[sys] == -1)
 		    {
 		      recorder_error("open device: ");
@@ -633,7 +636,7 @@ int fire_up_recorder(snd_state *ss)
 			      rp->input_ports[sys] = -1;
 			    }
 			}
-		      return(-1);
+		      return;
 		    }
 		}
 	    }
@@ -661,8 +664,11 @@ int fire_up_recorder(snd_state *ss)
 		    }
 		  rp->monitor_data_format = mus_audio_compatible_format(sysdev);
 		  size = mus_data_format_to_bytes_per_sample(rp->monitor_data_format);
-		  rp->monitor_port = mus_audio_open_output(sysdev,rp->srate,rp->monitor_chans,rp->monitor_data_format,
-						     rp->buffer_size*rp->monitor_chans*size);
+		  rp->monitor_port = mus_audio_open_output(sysdev,
+							   rp->srate,
+							   rp->monitor_chans,
+							   rp->monitor_data_format,
+							   rp->buffer_size*rp->monitor_chans*size);
 		  if (rp->monitor_port != -1) 
 		    {
 		      if (!rp->output_bufs)
@@ -720,23 +726,29 @@ int fire_up_recorder(snd_state *ss)
       if (err)
 	{
 	  recorder_error("no inputs?: ");
-	  return(-1);
+	  return;
 	}
       /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
       for (i=0;i<rp->systems;i++)
 	{
-	  rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,rp->srate,rp->input_channels[i],
-					      rp->in_format,rp->buffer_size);
+	  rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,
+						    rp->srate,
+						    rp->input_channels[i],
+						    rp->in_format,
+						    rp->buffer_size);
 	  if (rp->input_ports[i] == -1) /* perhaps not full-duplex */
 	    {
-	      rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,rp->srate,rp->input_channels[i],
-						  rp->in_format,rp->buffer_size);
+	      rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,
+							rp->srate,
+							rp->input_channels[i],
+							rp->in_format,
+							rp->buffer_size);
 	    }
 	}
       if (rp->input_ports[0] == -1)
 	{
 	  recorder_error("open device: ");
-	  return(-1);
+	  return;
 	}
       rp->taking_input = 1;
       /* rp->monitor_port = 0; */
@@ -754,12 +766,11 @@ int fire_up_recorder(snd_state *ss)
       else rp->monitoring = 1;
     }
   set_read_in_progress(ss);
-  return(0);
 }
 
 #else /* not ALSA or OSS */
 
-int fire_up_recorder(snd_state *ss)
+void fire_up_recorder(snd_state *ss)
 {
   int i;
 #if NEW_SGI_AL
@@ -890,31 +901,46 @@ int fire_up_recorder(snd_state *ss)
   if (err)
     {
       recorder_error("no inputs?: ");
-      return(-1);
+      return;
     }
 
 #if NEW_SGI_AL
-  rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,rp->srate,rp->input_channels[0],
-				  rp->in_format,rp->buffer_size);
+  rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,
+					    rp->srate,
+					    rp->input_channels[0],
+					    rp->in_format,
+					    rp->buffer_size);
 #else
   #if OLD_SGI_AL
-    rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | cur_dev,rp->srate,rp->input_channels[0],
-				    rp->in_format,rp->buffer_size);
+    rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | cur_dev,
+					      rp->srate,
+					      rp->input_channels[0],
+					      rp->in_format,
+					      rp->buffer_size);
   #else
     #ifdef SUN
-    rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,rp->srate,rp->input_channels[0],
-				    rp->in_format,rp->buffer_size);
+    rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,
+					      rp->srate,
+					      rp->input_channels[0],
+					      rp->in_format,
+					      rp->buffer_size);
     #else
     /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
 
     for (i=0;i<rp->systems;i++)
       {
-	rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,rp->srate,rp->input_channels[i],
-					rp->in_format,rp->buffer_size);
+	rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,
+						  rp->srate,
+						  rp->input_channels[i],
+						  rp->in_format,
+						  rp->buffer_size);
 	if (rp->input_ports[i] == -1) /* perhaps not full-duplex */
 	  {
-	    rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,rp->srate,rp->input_channels[i],
-					    rp->in_format,rp->buffer_size);
+	    rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,
+						      rp->srate,
+						      rp->input_channels[i],
+						      rp->in_format,
+						      rp->buffer_size);
 	  }
       }
     #endif
@@ -923,7 +949,7 @@ int fire_up_recorder(snd_state *ss)
   if (rp->input_ports[0] == -1)
     {
       recorder_error("open device: ");
-      return(-1);
+      return;
     }
   rp->taking_input = 1;
 #if ((HAVE_OSS) || defined(SUN))
@@ -935,8 +961,11 @@ int fire_up_recorder(snd_state *ss)
    */
 
 #else
-  rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,rp->srate,rp->monitor_chans,
-				 rp->out_format,rp->buffer_size);
+  rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
+					   rp->srate,
+					   rp->monitor_chans,
+					   rp->out_format,
+					   rp->buffer_size);
 #endif
   if (rp->monitor_port == -1)
     {
@@ -945,7 +974,6 @@ int fire_up_recorder(snd_state *ss)
     }
   else rp->monitoring = 1;
   set_read_in_progress(ss);
-  return(0);
 }
 #endif
 
@@ -1217,7 +1245,11 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	  cur_size = sz * rp->input_channels[i] / active_in_chans;
 	  mus_audio_read(rp->input_ports[i],rp->raw_input_bufs[i],cur_size*in_datum_size);
 	  mus_file_read_buffer(ifmt,0,1,sz,input_bufs,rp->raw_input_bufs[i]);
-	  for (k=0,m=offset;m<sz;m+=active_in_chans) {for (n=0;n<rp->input_channels[i];n++) rp->all_systems_input_buf[m+n] = rp->one_system_input_buf[k++];}
+	  for (k=0,m=offset;m<sz;m+=active_in_chans) 
+	    {
+	      for (n=0;n<rp->input_channels[i];n++) 
+		rp->all_systems_input_buf[m+n] = rp->one_system_input_buf[k++];
+	    }
 	  offset += rp->input_channels[i];
 	}
     }

@@ -43,13 +43,13 @@ typedef struct {
   int chans;
   int len;
   int beg;
-  int srate;        /* for file save (i.e. region->file) */
+  int srate;               /* for file save (i.e. region->file) */
   int header_type;         /* for file save */
   int save;
   snd_info *rsp;
   region_context **rgx;
   char *name,*start,*end;
-  char *filename;  /* if region data is stored in a temp file */
+  char *filename;          /* if region data is stored in a temp file */
   int use_temp_file;       /* REGION_ARRAY = data is in 'data' arrays, else in temp file 'filename' */
   Float maxamp;
   snd_info *editor_copy;
@@ -722,9 +722,10 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
 
 static int paste_fix_region(int n) {if (n > regions_size) return(0); return(n);}
 static Float paste_fix_scaler(int n, chan_info *cp) {if (n > regions_size) return((Float)n/(Float)SND_SRATE(cp->sound)); return(1.0);}
+/* these are a horrible kludge: user has typed the amplitude scaler as a float before the paste request */
 
 void paste_region(int n, chan_info *cp,char *origin) {paste_region_1(paste_fix_region(n),cp,FALSE,cp->cursor,paste_fix_scaler(n,cp),origin);}
-int add_region(int n, chan_info *cp, char *origin) {return(paste_region_1(paste_fix_region(n),cp,TRUE,cp->cursor,paste_fix_scaler(n,cp),origin));}
+void add_region(int n, chan_info *cp, char *origin) {paste_region_1(paste_fix_region(n),cp,TRUE,cp->cursor,paste_fix_scaler(n,cp),origin);}
 static int mix_region(int n, chan_info *cp, int beg, Float scaler) {return(paste_region_1(n,cp,TRUE,beg,scaler,S_mix_region));}
 
 /* we're drawing the selection in one channel, but others may be sync'd to it */

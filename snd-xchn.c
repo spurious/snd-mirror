@@ -1084,9 +1084,7 @@ void graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont)
   snd_info *sp = (snd_info *)clientData;
   key_state = ev->state;
   keysym = XKeycodeToKeysym(XtDisplay(w),(int)(ev->keycode),(key_state & ShiftMask) ? 1 : 0);
-  key_press_callback(any_selected_channel(sp),
-		     ev->x,ev->y,ev->state,keysym,
-		     XKeysymToString(keysym));
+  key_press_callback(any_selected_channel(sp),ev->x,ev->y,ev->state,keysym);
 }
  
 static void cp_graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont) 
@@ -1098,9 +1096,7 @@ static void cp_graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boole
   chan_info *cp = (chan_info *)clientData;
   key_state = ev->state;
   keysym = XKeycodeToKeysym(XtDisplay(w),(int)(ev->keycode),(key_state & ShiftMask) ? 1 : 0);
-  key_press_callback(cp,
-		     ev->x,ev->y,ev->state,keysym,
-		     XKeysymToString(keysym));
+  key_press_callback(cp,ev->x,ev->y,ev->state,keysym);
 }
  
 void cleanup_cw(chan_info *cp)

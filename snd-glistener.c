@@ -320,9 +320,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
-  if ((ev->type == GDK_BUTTON_PRESS) && (ev->button == 2))
-    create_popup_menu(ss,ev->button,ev->time);
-  else (ss->sgx)->graph_is_active = 0;
+  (ss->sgx)->graph_is_active = 0;
 }
 
 static void sndCreateCommandWidget(snd_state *ss, int height)

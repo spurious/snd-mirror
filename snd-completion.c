@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 750
+#define NUM_COMMANDS 752
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -65,6 +65,8 @@ static char *snd_commands[NUM_COMMANDS]={
 
   S_id_region,S_in,S_initial_x0,S_initial_x1,S_initial_y0,S_initial_y1,S_insert_region,S_insert_sample,
   S_insert_samples,S_insert_sound,
+
+  S_just_sounds_hook,
 
   S_key,S_key_press_hook,S_keyboard_no_action,
 
@@ -171,7 +173,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_spectro_z_angle,S_spectro_z_scale,S_spectrogram,S_spectrum_env,S_speed,S_speed_as_float,S_speed_as_ratio,S_speed_as_semitone,
   S_speed_style,S_speed_tones,S_squelch_update,S_srate,S_srate_env,
   S_src_selection,S_src_sound,S_start_hook,S_start_playing_hook,S_start_progress_report,
-  S_stop_playing,S_stop_playing_hook,S_stop_playing_region_hook,S_string_length,
+  S_stop_playing,S_stop_playing_channel_hook,S_stop_playing_hook,S_stop_playing_region_hook,S_string_length,
   S_swap_channels,S_syncd_marks,S_syncing,
 
   S_temp_dir,S_temp_filenames,S_temp_to_selection,S_temp_to_sound,S_temps_to_selection,S_temps_to_sound,S_text_focus_color,
