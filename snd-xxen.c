@@ -368,8 +368,8 @@ void g_initialize_xgh(snd_state *ss)
 #endif
 #endif
 #if HAVE_RUBY
-  rb_define_method(snd_color_tag, "to_s", print_snd_color, 0);
-  rb_define_method(snd_color_tag, "eql?", equalp_snd_color, 1);
+  rb_define_method(snd_color_tag, "to_s", XEN_PROCEDURE_CAST print_snd_color, 0);
+  rb_define_method(snd_color_tag, "eql?", XEN_PROCEDURE_CAST equalp_snd_color, 1);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_in,            g_in_w, 2, 0, 0,             H_in);

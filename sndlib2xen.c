@@ -1162,12 +1162,12 @@ void mus_sndlib2xen_initialize(void)
 #if HAVE_RUBY
   rb_include_module(sound_data_tag, rb_mComparable);
   rb_include_module(sound_data_tag, rb_mEnumerable);
-  rb_define_method(sound_data_tag, "to_s", print_sound_data, 0);
-  rb_define_method(sound_data_tag, "eql?", equalp_sound_data, 1);
-  rb_define_method(sound_data_tag, "each", sound_data_each, 0);
-  rb_define_method(sound_data_tag, "<=>", sound_data_compare, 1);
-  rb_define_method(sound_data_tag, "[]", sound_data_ref, 2);
-  rb_define_method(sound_data_tag, "[]=", sound_data_set, 3);
+  rb_define_method(sound_data_tag, "to_s", XEN_PROCEDURE_CAST print_sound_data, 0);
+  rb_define_method(sound_data_tag, "eql?", XEN_PROCEDURE_CAST equalp_sound_data, 1);
+  rb_define_method(sound_data_tag, "each", XEN_PROCEDURE_CAST sound_data_each, 0);
+  rb_define_method(sound_data_tag, "<=>", XEN_PROCEDURE_CAST sound_data_compare, 1);
+  rb_define_method(sound_data_tag, "[]", XEN_PROCEDURE_CAST sound_data_ref, 2);
+  rb_define_method(sound_data_tag, "[]=", XEN_PROCEDURE_CAST sound_data_set, 3);
   /* TODO: more sound data method tie-ins */
 #endif
 

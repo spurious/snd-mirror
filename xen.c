@@ -373,9 +373,9 @@ static XEN xen_rb_rep(XEN ig)
 
 static XEN xen_rb_rescue(XEN val)
 {
-  return(rb_rescue(xen_rb_rep,
+  return(rb_rescue(XEN_PROCEDURE_CAST xen_rb_rep,
 		   XEN_FALSE,
-		   xen_rb_report_error,
+		   XEN_PROCEDURE_CAST xen_rb_report_error,
 		   XEN_FALSE));
 }
 
@@ -384,7 +384,7 @@ void xen_repl(int argc, char **argv)
   int status = 0;
   while (1)
     {
-      rb_protect(xen_rb_rescue,
+      rb_protect(XEN_PROCEDURE_CAST xen_rb_rescue,
 		 XEN_FALSE,
 		 &status);
       if (status != 0)
@@ -449,7 +449,7 @@ XEN xen_rb_obj_as_string(XEN obj)
 {
   int status = 0;
   XEN result;
-  result = rb_protect(rb_obj_as_string,
+  result = rb_protect(XEN_PROCEDURE_CAST rb_obj_as_string,
 		      obj,
 		      &status);
   if (status != 0)
@@ -466,7 +466,7 @@ XEN xen_rb_apply(XEN func, XEN args)
 {
   XEN val;
   int status = 0;
-  val = rb_protect(xen_rb_apply_1,
+  val = rb_protect(XEN_PROCEDURE_CAST xen_rb_apply_1,
 		   XEN_LIST_2(func, args),
 		   &status);
   if (status != 0)
@@ -486,7 +486,7 @@ XEN xen_rb_funcall_0(XEN func)
 {
   XEN val;
   int status = 0;
-  val = rb_protect(xen_rb_funcall_0_inner,
+  val = rb_protect(XEN_PROCEDURE_CAST xen_rb_funcall_0_inner,
 		   func,
 		   &status);
   if (status != 0)

@@ -190,8 +190,8 @@ enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WIND
 
 #define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) && ((Window) <= MUS_DOLPH_CHEBYSHEV_WINDOW))
 
-#define MUS_RUN(GEN, XEN_ARG_1, XEN_ARG_2) ((*((GEN->core)->run))(GEN, XEN_ARG_1, XEN_ARG_2))
-#define MUS_RUN_P(GEN) 	         ((GEN->core)->run)
+#define MUS_RUN(GEN, ARG_1, ARG_2) ((*((GEN->core)->run))(GEN, ARG_1, ARG_2))
+#define MUS_RUN_P(GEN) 	              ((GEN->core)->run)
 
 
 BEGIN_DECLS

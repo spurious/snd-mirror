@@ -412,7 +412,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_OK 1
 
 /* this basically is working but:
- *   untested: name as str to val (i.e. XEN_NAME_AS_C_STRING_TO_VALUE)
+ *   broken: name as str to val (i.e. XEN_NAME_AS_C_STRING_TO_VALUE) (should this use XEN_EVAL_C_STRING?)
  */
 
 #define XEN                  VALUE
@@ -433,6 +433,12 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_ARG_6 6
 #define XEN_ARG_7 7
 #define XEN_ARG_8 8
+
+#ifdef __cplusplus
+  #define XEN_PROCEDURE_CAST (XEN (*)())
+#else
+  #define XEN_PROCEDURE_CAST
+#endif
 
 #define XEN_MARK_OBJECT_TYPE              void *
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(Data_Wrap_Struct(Tag, Mark, Free, Val))
@@ -504,21 +510,21 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
-      rb_define_global_function(xen_scheme_procedure_to_ruby(Name), Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg)); \
+      rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg)); \
       xen_add_help(xen_scheme_procedure_to_ruby(Name), Doc); \
     } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
-    XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
-    XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
+    XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
+    XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
     xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
     } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
-    XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
-    XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
+    XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
+    XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
     xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
     } while (0)
 

@@ -1858,9 +1858,9 @@ It provides a different syntax from that of Guile/Scheme.  In Ruby, all
 the "-" are "_", "-&gt;" is "2", hooks and memo_sound have "$" prepended
 (since they are global variables from Ruby's point of view), and all the constants are capitalized
 (e.g. Autocorrelation).  The generalized set! functions are replaced
-by "set-" plus the base name (e.g. set_window_width), with arguments
-reordered to place the optional values after the new value.  That is,
-<code>(set! (srate snd) 22050)</code> becomes <code>set_srate(22050, snd)</code>.
+by "set_" plus the base name (e.g. set_window_width), with arguments
+reordered in some cases to place the optional values after the new value.  That is,
+<code>(set! (sync snd) 1)</code> becomes <code>set_sync(1, snd)</code>.
 Hooks in Ruby (which have little or nothing to do with Ruby's "hookable variables")
 are just procedures or nil, not lists of procedures as in Guile.
 Here's the Ruby version of the init file given
@@ -1948,10 +1948,28 @@ $mouse_enter_graph_hook = Proc.new {|snd, chn|
                                    }
 
 $mouse_enter_listener_hook = Proc.new { |widget| 
-                                        begin
                                         focus_widget widget 
-                                        end
                                       }
+</pre>
+<p>Here's one more example, a translation of display-energy in draw.scm:
+</p>
+<pre>
+def display_energy(snd, chn)
+  ls = left_sample
+  rs = right_sample
+  data1 = make_graph_data(snd, chn)
+  data = data1
+  if not vct? data
+    data = data1[1]
+  end
+  len = vct_length data
+  sr = srate snd
+  y_max = y_zoom_slider(snd, chn)
+  vct_multiply!(data, data)
+  graph(data, "energy", ls / sr, rs / sr, 0.0, y_max * y_max, snd, chn, false)
+  end
+
+# $lisp_graph_hook = Proc.new {|snd,chn| display_energy(snd,chn)}
 </pre>
 <p>In the listener, everything is line-oriented (that is, I'm not trying to
 catch incomplete expressions).  And it appears that in Ruby, variables defined

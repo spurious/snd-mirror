@@ -778,13 +778,13 @@ void init_vct(void)
 #if HAVE_RUBY
   rb_include_module(vct_tag, rb_mComparable);
   rb_include_module(vct_tag, rb_mEnumerable);
-  rb_define_method(vct_tag, "to_s", print_vct, 0);
-  rb_define_method(vct_tag, "eql?", equalp_vct, 1);
-  rb_define_method(vct_tag, "[]", vct_ref, 1);
-  rb_define_method(vct_tag, "[]=", vct_set, 2);
-  rb_define_method(vct_tag, "length", vct_length, 0);
-  rb_define_method(vct_tag, "each", vct_each, 0);
-  rb_define_method(vct_tag, "<=>", vct_compare, 1);
+  rb_define_method(vct_tag, "to_s", XEN_PROCEDURE_CAST print_vct, 0);
+  rb_define_method(vct_tag, "eql?", XEN_PROCEDURE_CAST equalp_vct, 1);
+  rb_define_method(vct_tag, "[]", XEN_PROCEDURE_CAST vct_ref, 1);
+  rb_define_method(vct_tag, "[]=", XEN_PROCEDURE_CAST vct_set, 2);
+  rb_define_method(vct_tag, "length", XEN_PROCEDURE_CAST vct_length, 0);
+  rb_define_method(vct_tag, "each", XEN_PROCEDURE_CAST vct_each, 0);
+  rb_define_method(vct_tag, "<=>", XEN_PROCEDURE_CAST vct_compare, 1);
   /* many more could be added */
 #endif
 

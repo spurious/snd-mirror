@@ -4288,8 +4288,8 @@ void g_init_mix(void)
 #endif
 #endif
 #if HAVE_RUBY
-  rb_define_method(mf_tag, "to_s", print_mf, 0);
-  rb_define_method(tf_tag, "to_s", print_tf, 0);
+  rb_define_method(mf_tag, "to_s", XEN_PROCEDURE_CAST print_mf, 0);
+  rb_define_method(tf_tag, "to_s", XEN_PROCEDURE_CAST print_tf, 0);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 0, 0, H_make_mix_sample_reader);

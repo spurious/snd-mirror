@@ -3832,7 +3832,7 @@ void g_init_edits(void)
 #endif
 #endif
 #if HAVE_RUBY
-  rb_define_method(sf_tag, "to_s", print_sf, 0);
+  rb_define_method(sf_tag, "to_s", XEN_PROCEDURE_CAST print_sf, 0);
 #endif
 
   XEN_DEFINE_CONSTANT(S_current_edit_position,      AT_CURRENT_EDIT_POSITION,             "current edit position indicator for 'edpos' args");
