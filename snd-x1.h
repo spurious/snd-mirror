@@ -454,7 +454,7 @@ void set_file_browser_play_button(char *name, int state);
 void set_file_sort_sensitive(bool sensitive);
 void highlight_selected_sound(void);
 void view_files_callback(Widget w, XtPointer context, XtPointer info);
-Widget start_file_dialog(int width, int height);
+Widget start_file_dialog(void);
 bool file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(const char *filename, const char *title);
 Widget edit_header(snd_info *sp);
@@ -512,7 +512,12 @@ void reflect_mix_play_stop(void);
 void reflect_no_mix_in_mix_dialog(void);
 void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
 void reflect_undo_in_mix_dialog(void);
+void reflect_track_in_track_dialog(int track_id);
+void reflect_undo_in_track_dialog(void);
+void reflect_no_track_in_track_dialog(void);
+void reflect_track_play_stop(void);
 void g_init_gxmix(void);
+
 
 
 /* -------- snd-xrec.c -------- */

@@ -1338,10 +1338,9 @@ void view_files_callback(GtkWidget *w, gpointer context)
   highlight_selected_sound();
 }
 
-GtkWidget *start_file_dialog(int width, int height)
+GtkWidget *start_file_dialog(void)
 {
   view_files_callback(NULL, NULL);
-  if (width > 0) set_widget_size(view_files_dialog, width, height);
   return(view_files_dialog);
 }
 

@@ -2,6 +2,19 @@
 
 /* TODO: transparent pixmaps */
 
+#if 0
+#define APPLY_BUTTON_COLOR    "doit_button"
+#define REMEMBER_BUTTON_COLOR "doit_again_button"
+#define RESET_BUTTON_COLOR    "reset_button"
+#define RESTORE_BUTTON_COLOR  "quit_button"
+#else
+#define APPLY_BUTTON_COLOR    "panel_button"
+#define REMEMBER_BUTTON_COLOR "panel_button"
+#define RESET_BUTTON_COLOR    "panel_button"
+#define RESTORE_BUTTON_COLOR  "panel_button"
+#endif
+
+
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_info_label, W_info, W_info_sep,
       W_play, W_sync, W_unite,
@@ -1804,7 +1817,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_apply_form], false, false, 0);
       
       sw[W_apply] = gtk_button_new_with_label(_("Apply"));
-      gtk_widget_set_name(sw[W_apply], "doit_button");
+      gtk_widget_set_name(sw[W_apply], APPLY_BUTTON_COLOR);
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_apply], true, true, 0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_apply]),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_apply]))),
@@ -1819,7 +1832,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_widget_show(sw[W_apply]);
       
       sw[W_remember] = gtk_button_new_with_label(_("Remember"));
-      gtk_widget_set_name(sw[W_remember], "doit_again_button");
+      gtk_widget_set_name(sw[W_remember], REMEMBER_BUTTON_COLOR);
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_remember], true, true, 0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_remember]),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_remember]))),
@@ -1829,7 +1842,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_widget_show(sw[W_remember]);
       
       sw[W_restore] = gtk_button_new_with_label(_("Restore"));
-      gtk_widget_set_name(sw[W_restore], "quit_button");
+      gtk_widget_set_name(sw[W_restore], RESTORE_BUTTON_COLOR);
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_restore], true, true, 0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_restore]),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_restore]))),
@@ -1839,7 +1852,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_widget_show(sw[W_restore]);
       
       sw[W_reset] = gtk_button_new_with_label(_("Reset"));
-      gtk_widget_set_name(sw[W_reset], "reset_button");
+      gtk_widget_set_name(sw[W_reset], RESET_BUTTON_COLOR);
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_reset], true, true, 0);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_reset]),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_reset]))),

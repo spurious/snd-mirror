@@ -316,7 +316,7 @@ void curfile_highlight(int i);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(void);
 void set_file_sort_sensitive(bool sensitive);
-int start_file_dialog(int width, int height);
+int start_file_dialog(void);
 bool file_dialog_is_active(void);
 int edit_header(snd_info *sp);
 void make_open_file_dialog(bool read_only, bool managed);

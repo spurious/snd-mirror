@@ -1857,13 +1857,9 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
   highlight_selected_sound();
 }
 
-Widget start_file_dialog(int width, int height)
+Widget start_file_dialog(void)
 {
   view_files_callback(NULL, NULL, NULL);
-  if (width > 0) XtVaSetValues(view_files_dialog, 
-			       XmNwidth, (Dimension)width, 
-			       XmNheight, (Dimension)height, 
-			       NULL);
   return(view_files_dialog);
 }
 

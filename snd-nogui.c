@@ -237,7 +237,7 @@ void set_file_sort_sensitive(bool sensitive) {}
 void view_curfiles_set_row_name(int pos) {}
 void set_file_browser_play_button(char *name, int state) {}
 void highlight_selected_sound(void) {}
-int start_file_dialog(int width, int height) {return(0);}
+int start_file_dialog(void) {return(0);}
 bool file_dialog_is_active(void) {return(false);}
 int edit_header(snd_info *sp) {return(0);}
 void make_edit_save_as_dialog(void) {}

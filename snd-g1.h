@@ -450,6 +450,10 @@ bool mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 void reflect_no_mix_in_mix_dialog(void);
 void reflect_undo_in_mix_dialog(void);
+void reflect_track_in_track_dialog(int track_id);
+void reflect_undo_in_track_dialog(void);
+void reflect_no_track_in_track_dialog(void);
+void reflect_track_play_stop(void);
 void g_init_gxmix(void);
 
 
@@ -530,7 +534,7 @@ void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(void);
 void set_file_sort_sensitive(bool sensitive);
 void view_files_callback(GtkWidget *w, gpointer info);
-GtkWidget *start_file_dialog(int width, int height);
+GtkWidget *start_file_dialog(void);
 bool file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(const char *filename, const char *title);
 snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment);

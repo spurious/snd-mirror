@@ -8,6 +8,19 @@
   #define TOGGLE_MARGIN 0
 #endif
 
+#if 0
+/* these strike me as hokey-looking */
+#define APPLY_BUTTON_COLOR    (Pixel)((ss->sgx)->doit_button_color)
+#define REMEMBER_BUTTON_COLOR (Pixel)((ss->sgx)->doit_again_button_color)
+#define RESET_BUTTON_COLOR    (Pixel)((ss->sgx)->reset_button_color)
+#define RESTORE_BUTTON_COLOR  (Pixel)((ss->sgx)->quit_button_color)
+#else
+#define APPLY_BUTTON_COLOR    (Pixel)((ss->sgx)->position_color)
+#define REMEMBER_BUTTON_COLOR (Pixel)((ss->sgx)->position_color)
+#define RESET_BUTTON_COLOR    (Pixel)((ss->sgx)->position_color)
+#define RESTORE_BUTTON_COLOR  (Pixel)((ss->sgx)->position_color)
+#endif
+
 enum {W_pane,
       W_name_form, W_amp_form,
       W_amp, W_amp_label, W_amp_number, W_amp_separator,
@@ -1053,7 +1066,7 @@ static void apply_callback(Widget w, XtPointer context, XtPointer info)
     {
       stop_applying(sp);
       if (!(ss->using_schemes)) 
-	XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->doit_button_color));
+	XmChangeColor(APPLY_BUTTON(sp), APPLY_BUTTON_COLOR);
       sp->applying = false;
     }
   else
@@ -1097,7 +1110,7 @@ void unlock_apply(snd_info *sp)
 {
   for_each_sound(unlockapply, (void *)sp);
   if ((sp) && (!(ss->using_schemes)) && (sp->index >= 0))
-    XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->doit_button_color));
+    XmChangeColor(APPLY_BUTTON(sp), APPLY_BUTTON_COLOR);
 }
 
 #if WITH_RELATIVE_PANES
@@ -2424,7 +2437,8 @@ snd_info *add_sound_window(char *filename, bool read_only)
       n = 0;
       if (need_colors) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_button_color); n++;
+	  XtSetArg(args[n], XmNbackground, APPLY_BUTTON_COLOR); n++;
+	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	  XtSetArg(args[n], XmNfillOnArm, true); n++;
 	}
@@ -2441,7 +2455,8 @@ snd_info *add_sound_window(char *filename, bool read_only)
       n = 0;
       if (need_colors) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_again_button_color); n++;
+	  XtSetArg(args[n], XmNbackground, REMEMBER_BUTTON_COLOR); n++;
+	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	  XtSetArg(args[n], XmNfillOnArm, true); n++;
 	}
@@ -2459,7 +2474,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       n = 0;
       if (need_colors) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->quit_button_color); n++;
+	  XtSetArg(args[n], XmNbackground, RESTORE_BUTTON_COLOR); n++;
 	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	  XtSetArg(args[n], XmNfillOnArm, true); n++;
@@ -2478,7 +2493,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       n = 0;
       if (need_colors) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->reset_button_color); n++;
+	  XtSetArg(args[n], XmNbackground, RESET_BUTTON_COLOR); n++;
 	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	  XtSetArg(args[n], XmNfillOnArm, true); n++;

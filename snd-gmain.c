@@ -631,6 +631,7 @@ style \"zoom_slider\" = \"default_slider\"\n\
 widget \"*.zx_slider\" style \"zoom_slider\"\n\
 widget \"*.zy_slider\" style \"zoom_slider\"\n\
 widget \"*.gzy_slider\" style \"zoom_slider\"\n\
+widget \"*.panel_button\" style \"zoom_slider\"\n\
 \n\
 style \"listener\" = \"default\"\n\
 {\n\

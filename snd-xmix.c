@@ -49,6 +49,7 @@ static int amp_to_int_1(Widget amp_number, Float amp)
 }
 
 
+/* ---------------- mix dialog ---------------- */
 
 static Widget mix_dialog = NULL;
 static bool mix_dialog_slider_dragging = false;
@@ -918,17 +919,17 @@ void reflect_no_mix_in_mix_dialog(void)
 }
 
 
-/* -------------------------------- TRACK DIALOG -------------------------------- */
+/* -------------------------------- track dialog -------------------------------- */
 
-/* TODO: all these funcs + mix list of track (and color?)
+/* TODO: mix list of track (and color?)
    TODO: tie in various auto-updates
+   TODO: track play stopped reset icon color
+   TODO: speed change->amp env, pos change->amp env? (drag), amp-env itself
+   TODO: multimix drag of any kind doesn't erase initial state correctly
+   TODO: track amp env not tied in yet
  */
-static void start_track_dialog_slider_drag(int id) {}
-static void dialog_set_track_speed(int id, Float val, bool dragging) {}
-static void dialog_set_track_amp(int id, Float val, bool dragging) {}
-static void dialog_track_play(int id) {}
-static void update_track_dialog(int track_id);
 
+static void update_track_dialog(int track_id);
 
 static Widget track_dialog = NULL;
 static bool track_dialog_slider_dragging = false;
@@ -941,11 +942,11 @@ static void change_track_speed(int track_id, Float val)
 {
   chan_info *cp;
   cp = track_channel(track_id, 0);
-  dialog_set_track_speed(track_id,
+  track_dialog_set_speed(track_id,
 			 srate_changed(val,
 				       speed_number_buffer,
-				       cp->sound->speed_control_style,
-				       cp->sound->speed_control_tones),
+				       (cp) ? cp->sound->speed_control_style : speed_control_style(ss),
+				       (cp) ? cp->sound->speed_control_tones : speed_control_tones(ss)),
 			 track_dialog_slider_dragging);
   set_label(w_track_speed_number, speed_number_buffer);
 }
@@ -966,7 +967,7 @@ static void track_speed_drag_callback(Widget w, XtPointer context, XtPointer inf
   int ival;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!track_dialog_slider_dragging) start_track_dialog_slider_drag(track_dialog_id);
+  if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
   track_dialog_slider_dragging = true;
   change_track_speed(track_dialog_id, exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
@@ -982,10 +983,10 @@ static void track_speed_valuechanged_callback(Widget w, XtPointer context, XtPoi
 static Widget w_track_amp_number, w_track_amp_label, w_track_amp;
 static Float current_track_amp = 1.0;
 
-static void change_track_amp(int track_id, int chan, Float val)
+static void change_track_amp(int track_id, Float val)
 {
   char *sfs;
-  dialog_set_track_amp(track_id, val, track_dialog_slider_dragging);
+  track_dialog_set_amp(track_id, val, track_dialog_slider_dragging);
   sfs = prettyf(val, 2);
   fill_number(sfs, amp_number_buffer);
   set_label(w_track_amp_number, amp_number_buffer);
@@ -994,31 +995,27 @@ static void change_track_amp(int track_id, int chan, Float val)
 
 static void track_amp_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  int chan;
-  XtVaGetValues(w, XmNuserData, &chan, NULL);
-  change_track_amp(track_dialog_id, chan, 1.0);
+  change_track_amp(track_dialog_id, 1.0);
   XtVaSetValues(w_track_amp, XmNvalue, SCROLLBAR_MID, NULL);
 }
 
 static void track_amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  int ival, chan;
-  XtVaGetValues(w, XmNuserData, &chan, NULL);
+  int ival;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!track_dialog_slider_dragging) start_track_dialog_slider_drag(track_dialog_id);
+  if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
   track_dialog_slider_dragging = true;
-  change_track_amp(track_dialog_id, chan, int_amp_to_Float(ival));
+  change_track_amp(track_dialog_id, int_amp_to_Float(ival));
 }
 
 static void track_amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  int ival, chan;
+  int ival;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
-  XtVaGetValues(w, XmNuserData, &chan, NULL);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   track_dialog_slider_dragging = false;
-  change_track_amp(track_dialog_id, chan, int_amp_to_Float(ival));
+  change_track_amp(track_dialog_id, int_amp_to_Float(ival));
 }
 
 static int track_amp_to_int(Float amp)
@@ -1109,7 +1106,15 @@ static void track_track_activated(void)
   val = XmTextGetString(w_track_track);
   if (val)
     {
-      set_track_track(track_dialog_id, string2int(val));
+      int id;
+      id = string2int(val);
+      if (id != track_dialog_id)
+	{
+	  if (!(set_track_track(track_dialog_id, id)))
+	    {
+	      /* TODO: post error and undo */
+	    }
+	}
       XtFree(val);
     }
 }
@@ -1204,7 +1209,7 @@ static void track_dialog_play_callback(Widget w, XtPointer context, XtPointer in
     {
       track_playing = true;
       if ((w_track_track_play) && (!(ss->using_schemes))) XmChangeColor(w_track_track_play, (ss->sgx)->pushed_button_color);
-      dialog_track_play(track_dialog_id);
+      track_dialog_play(track_dialog_id);
     }
 }
 
@@ -1688,8 +1693,6 @@ void reflect_no_track_in_track_dialog(void)
       (XtIsManaged(track_dialog)))
     XtUnmanageChild(track_dialog);
 }
-
-
 
 
 /* -------------------------------- XEN CONNECTION -------------------------------- */

@@ -2094,10 +2094,8 @@ static XEN g_transform_dialog(XEN managed)
 
 static XEN g_file_dialog(void) 
 {
-  widget_t w;
   #define H_file_dialog "(" S_file_dialog "): start the View Previous Files dialog"
-  w = start_file_dialog(0, 0);
-  return(XEN_WRAP_WIDGET(w));
+  return(XEN_WRAP_WIDGET(start_file_dialog()));
 }
 
 static XEN g_edit_header_dialog(XEN snd_n) 
