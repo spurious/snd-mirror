@@ -1,9 +1,11 @@
 snd change log
 
+  3-Jul:     added -b (-batch) switch for scripts.
+             snd-4 compatibility names are no longer built-in (use snd4.scm).
   1-Jul:     gtk+extra 0.99.15.
              snd-trace in extensions.scm.
   28-Jun:    find enhancements (see snd.html and examp.scm); find-pitch.
-             colormap-ref.
+             colormap-ref, colormap-size.
   26-Jun:    sound-files-in-directory returns a list, not a vector (to be consistent with CLM).
   25-Jun:    gcc 3.0.
 	     added type and comment args to save-region, and moved format arg after type (to be consistent with other such calls).

@@ -462,9 +462,9 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 /* colormaps */
 
 static int sono_size = -1;
-static Pixel grays[GRAY_SCALES];
+static Pixel grays[COLORMAP_SIZE];
 static int grays_allocated = -1;
-static XRectangle *sono_data[GRAY_SCALES];
+static XRectangle *sono_data[COLORMAP_SIZE];
 static GC colormap_GC;
 
 void initialize_colormap(snd_state *ss)
@@ -507,13 +507,13 @@ void allocate_sono_rects(snd_state *ss, int size)
   else allocate_color_map(ss, 0);
   if (size > sono_size)
     {
-      for (i = 0; i < GRAY_SCALES; i++)
+      for (i = 0; i < COLORMAP_SIZE; i++)
 	{
 	  if ((sono_size > 0) && (sono_data[i])) 
 	    FREE(sono_data[i]); 
 	  sono_data[i] = NULL;
 	}
-      for (i = 0; i < GRAY_SCALES; i++)
+      for (i = 0; i < COLORMAP_SIZE; i++)
 	sono_data[i] = (XRectangle *)CALLOC(size, sizeof(XRectangle));
       sono_size = size;
     }
@@ -536,9 +536,9 @@ void allocate_color_map(snd_state *ss, int colormap)
       scr = DefaultScreen(dpy);
       cmap = DefaultColormap(dpy, scr);
       /* 8-bit color displays can't handle all these colors, apparently, so we have to check status */
-      if (grays_allocated != -1) XFreeColors(dpy, cmap, grays, GRAY_SCALES, 0);
+      if (grays_allocated != -1) XFreeColors(dpy, cmap, grays, COLORMAP_SIZE, 0);
       j = 0;
-      for (i = 0; i < GRAY_SCALES; i++)
+      for (i = 0; i < COLORMAP_SIZE; i++)
 	{
 	  tmp_color.red = curmap[j++];
 	  tmp_color.green = curmap[j++];
@@ -565,7 +565,7 @@ void allocate_color_map(snd_state *ss, int colormap)
 void x_load_colormap(Pixel *colors)
 {
   int i;
-  for (i = 0; i < GRAY_SCALES; i++) 
+  for (i = 0; i < COLORMAP_SIZE; i++) 
     grays[i] = colors[i];
 }
 

@@ -1693,7 +1693,7 @@ static Float skew_color(Float x, Float base)
   return((pow(base, x) - 1.0) / (base - 1.0));
 }
 
-static int js[GRAY_SCALES];
+static int js[COLORMAP_SIZE];
 
 static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 { /* colormap allocated in snd-fft via allocate_sono_rects in snd-xchn */
@@ -1757,7 +1757,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       ax = copy_context(cp);
       for (slice = 0; slice < si->active_slices; slice++, xf += xfincr)
 	{
-	  memset((void *)js, 0, GRAY_SCALES * sizeof(int));
+	  memset((void *)js, 0, COLORMAP_SIZE * sizeof(int));
 	  fdata = si->data[slice];
 	  for (i = 0; i < bins; i++)
 	    {
@@ -1767,8 +1767,8 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if (binval >= color_cutoff(ss))
 		{
 		  if (color_inverted(ss)) 
-		    j = (int)(skew_color((1.0 - binval), color_scale(ss)) * GRAY_SCALES); 
-		  else j = (int)(skew_color(binval, color_scale(ss)) * GRAY_SCALES);
+		    j = (int)(skew_color((1.0 - binval), color_scale(ss)) * COLORMAP_SIZE); 
+		  else j = (int)(skew_color(binval, color_scale(ss)) * COLORMAP_SIZE);
 		  if (j > 0) j--; else j = 0;
 		  if (cp->fft_log_frequency)
 		    set_sono_rectangle(js[j], j, (Locus)xf, hidata[i + 1], rectw, hidata[i] - hidata[i + 1]);
@@ -1782,7 +1782,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  js[j]++;
 		}
 	    }
-	  for (i = 0; i < GRAY_SCALES; i++)
+	  for (i = 0; i < COLORMAP_SIZE; i++)
 	    if (js[i] > 0) 
 	      draw_sono_rectangles(ax, i, js[i]);
 	  if (cp->printing)
@@ -1848,12 +1848,14 @@ void reset_spectro(snd_state *state)
   set_spectro_z_angle(state, DEFAULT_SPECTRO_Z_ANGLE);
   set_spectro_x_angle(state, DEFAULT_SPECTRO_X_ANGLE);
   set_spectro_y_angle(state, DEFAULT_SPECTRO_Y_ANGLE);
+#if 0
   set_color_map(state, -1);
   set_color_cutoff(state, DEFAULT_COLOR_CUTOFF);
   set_color_scale(state, DEFAULT_COLOR_SCALE);
   set_color_inverted(state, DEFAULT_COLOR_INVERTED);
   set_wavo_hop(state, DEFAULT_WAVO_HOP);
   set_wavo_trace(state, DEFAULT_WAVO_TRACE);
+#endif
 }
 
 static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
@@ -1969,10 +1971,10 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  if (binval >= color_cutoff(ss))
 		    {
 		      if (color_inverted(ss)) 
-			j = (int)(skew_color((1.0 - binval), color_scale(ss)) * GRAY_SCALES); 
-		      else j = (int)(skew_color(binval, color_scale(ss)) * GRAY_SCALES);
+			j = (int)(skew_color((1.0 - binval), color_scale(ss)) * COLORMAP_SIZE); 
+		      else j = (int)(skew_color(binval, color_scale(ss)) * COLORMAP_SIZE);
 		      if (j > 0) j--;
-		      if (j >= GRAY_SCALES) j = GRAY_SCALES - 1;
+		      if (j >= COLORMAP_SIZE) j = COLORMAP_SIZE - 1;
 		      draw_spectro_line(ax, j, xx, yy, 
 					(int)(xval + x0), 
 					(int)(yval + y0));
@@ -2080,10 +2082,10 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if ((binval >= color_cutoff(ss)) && (xx != -1))
 		{
 		  if (color_inverted(ss)) 
-		    j = (int)(skew_color((1.0 - binval), color_scale(ss)) * GRAY_SCALES); 
-		  else j = (int)(skew_color(binval, color_scale(ss)) * GRAY_SCALES);
+		    j = (int)(skew_color((1.0 - binval), color_scale(ss)) * COLORMAP_SIZE); 
+		  else j = (int)(skew_color(binval, color_scale(ss)) * COLORMAP_SIZE);
 		  if (j > 0) j--;
-		  if (j >= GRAY_SCALES) j = GRAY_SCALES - 1;
+		  if (j >= COLORMAP_SIZE) j = COLORMAP_SIZE - 1;
 		  draw_spectro_line(ax, j, xx, yy, 
 				    (int)(xval + x0), 
 				    (int)(yval + y0));

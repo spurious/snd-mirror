@@ -236,11 +236,12 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td><code>-separate</code></td>               <td>layout sounds each in a separate window (lisp listener in main window)</td></tr>
 <tr><td><code>--help</code></td>                  <td>print some help, version info, and exit</td></tr>
 <tr><td><code>--version</code></td>               <td>print version info</td></tr>
-<tr><td><code>-noglob</code></td>                 <td>don't read SND_CONF, if any</td></tr>
+<tr><td><code>-noglob</code></td>                 <td>don't read SND_CONF (/etc/snd.conf), if any</td></tr>
 <tr><td><code>-noinit</code></td>                 <td>don't read ~/.snd, if any</td></tr>
 <tr><td><code>-p -preload &lt;dir&gt;</code></td> <td>preload sound files in directory &lt;dir&gt; (for example, snd -p .)</td></tr>
 <tr><td><code>-l -load &lt;file&gt;</code></td>   <td>load guile (scheme) code in &lt;file&gt; (for example, snd -l test.scm)</td></tr>
 <tr><td><code>-e -eval expr</code></td>           <td>evaluate expr</td></tr>
+<tr><td><code>-b -batch &lt;file&gt;</code></td>  <td>load guile (scheme) code in &lt;file&gt; as a batch (no GUI) job</td></tr>
 </table>
 
 <p>
@@ -1842,9 +1843,9 @@ Say we save this as the file "comments".</p>
 !#
 </pre>
 <p>
-This scripting mechanism actually will work in any version of Snd,
-but it's slightly more elegant in the "No GUI" case because the Snd
-window doesn't pop up.
+This scripting mechanism actually will work in any version of Snd;
+to keep the Snd window from popping up, use the -b (-batch) switch in
+place of -l.
 </p>
 
 <br>

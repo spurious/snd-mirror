@@ -56,9 +56,9 @@
 #define WITH_FW_BUTTONS 0
 
 #ifdef WITH_BIG_COLORMAP
-  #define GRAY_SCALES 512
+  #define COLORMAP_SIZE 512
 #else
-  #define GRAY_SCALES 64
+  #define COLORMAP_SIZE 64
 #endif
 
 #define ACTIVATABLE 1

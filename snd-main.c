@@ -607,11 +607,15 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 	    {
 	      if ((strcmp("-l", argname) == 0) ||
 		  (strcmp("-load", argname) == 0) ||
+		  (strcmp("-b", argname) == 0) ||
+		  (strcmp("-batch", argname) == 0) ||
 		  ((file_extension(argname)) && 
 		   (strcmp(file_extension(argname), "scm") == 0)))
 		{
 		  if ((strcmp("-l", argname) == 0) || 
-		      (strcmp("-load", argname) == 0)) 
+		      (strcmp("-load", argname) == 0) ||
+		      (strcmp("-b", argname) == 0) || 
+		      (strcmp("-batch", argname) == 0))
 		    auto_open_ctr++;
 		  if ((auto_open_ctr >= args) ||
 		      (auto_open_file_names[auto_open_ctr] == NULL))

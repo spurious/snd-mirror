@@ -27,13 +27,12 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
-(define tests 100)
-(define snd-test 14)
+(define tests 1)
+(define snd-test -1)
 (define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 23)
 (define with-exit (< snd-test 0))
-(define lotsa-memory #t)
 
 (if (provided? 'gcing) (set! g-gc-step 100))
 
@@ -986,6 +985,7 @@
 	    (list "wood24.aiff" 1 44100 0.0367800444364548 "AIFF" "big endian int (24 bits)")
 	    (list "woodblock.aiff" 1 44100 0.0367800444364548 "AIFF" "big endian short (16 bits)")
 	    (list "woodflt.snd" 1 44100 0.0367800444364548 "Sun" "big endian float (32 bits)")
+	    (list "RealDrums.sf2" 1 44100 6.39725637435913 "SoundFont" "little endian short (16 bits)")
 	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16" "unsupported")))))
     )
 
@@ -3000,7 +3000,7 @@
 
       (with-output-to-file "sndtst" 
 	(lambda ()
-	  (display "#!/home/bil/cl/snd -l
+	  (display "#!/home/bil/cl/snd -b
 !#
 (use-modules (ice-9 format))
 (if (= (length (script-args)) 2) ;i.e. (\"-l\" \"script\")
@@ -3021,7 +3021,7 @@
 
       (with-output-to-file "sndtst" 
 	(lambda ()
-	  (display "#!/home/bil/cl/snd -l
+	  (display "#!/home/bil/cl/snd -b
 !#
 (open-sound \"fmv.snd\")
 (scale-by 2.0)
@@ -7207,14 +7207,12 @@
 	       (revert-sound cfd)
 	       (if (not (null? (cdr open-files))) (revert-sound (cadr open-files)))))
 	  
-	    (if lotsa-memory
+	    (if (> (frames) 1) 
 		(begin
-		  (if (> (frames) 1) 
-		      (begin
-			(make-region 0 (frames))
-			(convolve-selection-with "fyow.snd" .5)
-			(play-and-wait)))
-		  (convolve-with "fyow.snd" .25)))
+		  (make-region 0 (frames))
+		  (convolve-selection-with "fyow.snd" .5)
+		  (play-and-wait)))
+	    (convolve-with "fyow.snd" .25)
 	    (insert-sound "oboe.snd")
 	    (reset-hook! graph-hook)
 	    (reset-hook! transform-hook)
@@ -7274,7 +7272,7 @@
 	      (if (rs 0.5) (if (> (frames cfd) 0) (src-sound (make-env '(0 .5 1 1.5) :end (1- (frames cfd))) 1.0 cfd)))
 	      (if (rs 0.5) (revert-sound cfd))
 	      (if (rs 0.5) (filter-sound '(0 1 .2 0 .5 1 1 0) 20 cfd))      ; FIR direct form
-	      (if lotsa-memory (if (rs 0.5) (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048 cfd))) ; convolution
+	      (if (rs 0.5) (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048 cfd))
 	      (if (rs 0.5) (env-sound '(0 0 .5 1 1 0) 0 (frames cfd) 1.0 cfd))
 	      (if (rs 0.5)
 		  (begin

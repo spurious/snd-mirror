@@ -1017,5 +1017,6 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC("set-pixmap", g_set_pixmap, 2, 0, 0, "(set-pixmap widget pixmap)");
 
   DEFINE_PROC("colormap-ref", g_colormap_ref, 2, 0, 0, "(colormap-ref map position) -> (list r g b)");
+  DEFINE_VAR("colormap-size", COLORMAP_SIZE, "colormap size");
 }
 #endif

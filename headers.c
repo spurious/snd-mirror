@@ -1948,7 +1948,7 @@ static int read_soundfont_header (int chan)
   soundfont_entries = 0;
   data_format = MUS_LSHORT;
   srate = 0;
-  chans = 1; /* to hell with soundfont stereo */
+  chans = 1; 
   happy = 1;
   data_size = 0;
   data_location = 0;
@@ -1993,24 +1993,25 @@ static int read_soundfont_header (int chan)
 		       * 40: pitch (60 = middle C)
 		       * 41: detune (cents)
 		       * 42: link (to other channel if any?)
-		       * 44: type (1 = mono, 2 = mono right, 4 = mono left, others apparently for ROM presets?)
+		       * 44: type (1 = mono, 2 = mono right, 4 = mono left, others (0x8000) apparently for ROM presets?)
 		       */
 		      while (i < cksize)
 			{
 			  read(chan, hdrbuf, 46);
 			  i += 46;
 			  type = mus_char_to_lshort((unsigned char *)(hdrbuf + 44));
-			  if ((type != 1) || 
-			      (mus_char_to_lint((unsigned char *)(hdrbuf + 24)) == 0)) 
-			    break;
-			  if (srate == 0) 
-			    srate = mus_char_to_lint((unsigned char *)(hdrbuf + 36));
-			  soundfont_entry((char *)(hdrbuf),
-					  mus_char_to_lint((unsigned char *)(hdrbuf + 20)),
-					  this_end = mus_char_to_lint((unsigned char *)(hdrbuf + 24)),
-					  mus_char_to_lint((unsigned char *)(hdrbuf + 28)),
-					  mus_char_to_lint((unsigned char *)(hdrbuf + 32)));
-			  if (this_end > last_end) last_end = this_end;
+			  if ((type == 1) &&
+			      (mus_char_to_lint((unsigned char *)(hdrbuf + 24)) > 0)) 
+			    {
+			      if (srate == 0) 
+				srate = mus_char_to_lint((unsigned char *)(hdrbuf + 36));
+			      soundfont_entry((char *)(hdrbuf),
+					      mus_char_to_lint((unsigned char *)(hdrbuf + 20)),
+					      this_end = mus_char_to_lint((unsigned char *)(hdrbuf + 24)),
+					      mus_char_to_lint((unsigned char *)(hdrbuf + 28)),
+					      mus_char_to_lint((unsigned char *)(hdrbuf + 32)));
+			      if (this_end > last_end) last_end = this_end;
+			    }
 			}
 		      happy = (!data_location);
 		    }
@@ -5604,3 +5605,5 @@ const char *mus_header_original_format_name(int format, int type)
   return(NULL);
 }
 
+/* ogg vorbis file may start with OggS
+ */

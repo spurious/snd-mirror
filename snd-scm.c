@@ -1954,6 +1954,9 @@ static SCM g_yes_or_no_p(SCM msg)
 
 static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM snd_n, SCM chn_n, SCM force_display)
 {
+  /* TODO: need a way to create the lisp-graph axis-info and draw there even if no call on graph
+   */
+
   #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn force-display)\n\
 displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector. \
 If 'data' is a list of numbers, it is treated as an envelope."
@@ -3305,100 +3308,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   /* not sure about these two */
   EVAL_STRING("(define scale-sound-to scale-to)");
   EVAL_STRING("(define scale-sound-by scale-by)");
-
-#if (!DEBUGGING)
-  /* backwards compatibility (22-May-01) */
-  EVAL_STRING("(begin\
-               (define smooth            smooth-sound)\
-               (define cut               delete-selection)\
-               (define call-apply        apply-controls)\
-               (define (open-alternate-sound file) (close-sound) (open-sound file))\
-               (define normalize-view    equalize-panes)\
-               (define save-control-panel save-controls)\
-               (define restore-control-panel restore-controls)\
-               (define reset-control-panel reset-controls)\
-               (define mark->sound       mark-home)\
-               (define (mix-sound-index m) (car (mix-home m)))\
-               (define (mix-sound-channel m) (cadr (mix-home m)))\
-               (define amp               amp-control)\
-               (define contrast          contrast-control)\
-               (define contrast-amp      contrast-control-amp)\
-               (define contrast-func     contrast-control-procedure)\
-               (define contrasting       contrast-control?)\
-               (define expand            expand-control)\
-               (define expand-hop        expand-control-hop)\
-               (define expand-length     expand-control-length)\
-               (define expand-ramp       expand-control-ramp)\
-               (define expanding         expand-control?)\
-               (define filtering         filter-control?)\
-               (define filter-order      filter-control-order)\
-               (define filter-env        filter-control-env)\
-               (define filter-dBing      filter-control-in-dB)\
-               (define reverb-decay      reverb-control-decay)\
-               (define reverb-feedback   reverb-control-feedback)\
-               (define reverb-funcs      reverb-control-procedures)\
-               (define reverb-length     reverb-control-length)\
-               (define reverb-lowpass    reverb-control-lowpass)\
-               (define reverb-scale      reverb-control-scale)\
-               (define reverbing         reverb-control?)\
-               (define speed             speed-control)\
-               (define speed-as-float    speed-control-as-float)\
-               (define speed-as-ratio    speed-control-as-ratio)\
-               (define speed-as-semitone speed-control-as-semitone)\
-               (define speed-style       speed-control-style)\
-               (define speed-tones       speed-control-tones)\
-               (define filter-env-order  enved-filter-order)\
-               (define enved-dBing       enved-in-dB)\
-               (define enved-exping      enved-exp?)\
-               (define enved-waving      enved-wave?)\
-               (define enved-clipping    enved-clip?)\
-               (define amplitude-env     enved-amplitude)\
-               (define srate-env         enved-srate)\
-               (define spectrum-env      enved-spectrum)\
-               (define (hide-listener) (set! (show-listener) #f))\
-               (define activate-listener show-listener)\
-               (define dac-folding       dac-combines-channels)\
-               (define focus-left        zoom-focus-left)\
-               (define focus-right       zoom-focus-right)\
-               (define focus-middle      zoom-focus-middle)\
-               (define focus-active      zoom-focus-active)\
-               (define x-to-one          x-axis-as-percentage)\
-               (define x-in-seconds      x-axis-in-seconds)\
-               (define x-in-samples      x-axis-in-samples)\
-               (define graphing          graph-lisp?)\
-               (define waving            graph-time?)\
-               (define ffting            graph-transform?)\
-               (define fft-graph         transform-graph)\
-               (define fft-beta          fft-window-beta)\
-               (define fft-hook          transform-hook)\
-               (define fft-size          transform-size)\
-               (define fft-style         transform-graph-type)\
-               (define before-fft-hook   before-transform-hook)\
-               (define max-fft-peaks     max-transform-peaks)\
-               (define show-fft-peaks    show-transform-peaks)\
-               (define normal-fft        graph-transform-once)\
-               (define sonogram          graph-transform-as-sonogram)\
-               (define spectrogram       graph-transform-as-spectrogram)\
-               (define normalize-by-channel normalize-transform-by-channel)\
-               (define normalize-by-sound normalize-transform-by-sound)\
-               (define normalize-globally normalize-transform-globally)\
-               (define normalize-transform transform-normalization)\
-               (define dont-normalize    dont-normalize-transform)\
-               (define update-fft        update-transform)\
-               (define update-graph      update-time-graph)\
-               (define wavo              time-graph-type)\
-               (define yes-or-no-p       yes-or-no?)\
-               (define corruption-time   auto-update-interval)\
-               (define uniting \
-                 (make-procedure-with-setter \
-                   (lambda arg \
-                     (apply channel-style arg)) \
-                   (lambda args \
-                     (if (= (length args) 1)\
- 	                 (set! (channel-style) (car args))\
-     	                 (set! (channel-style (car args)) (cadr args))))))\
-               )");
-#endif
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   EVAL_STRING("(define snd-last-file-loaded #f)");

@@ -272,10 +272,12 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+3-Jul:   added -b (-batch) switch for scripts.\n\
+         snd-4 compatibility names are no longer built-in (use snd4.scm).\n\
 1-Jul:   gtk+extra 0.99.15.\n\
          snd-trace in extensions.scm.\n\
 28-Jun:  find enhancements (see snd.html and examp.scm); find-pitch.\n\
-         colormap-ref.\n\
+         colormap-ref, colormap-size.\n\
 26-Jun:  sound-files-in-directory returns a list, not a vector (to be consistent with CLM).\n\
 24-Jun:  added type and comment args to save-region,\n\
            and moved format arg after type (to be consistent with other such calls).\n\

@@ -1,7 +1,5 @@
 ;;; examples of extensions to Snd's graphics
 
-;;; TODO: lisp|time-graph colormap usage
-
 (define red (make-color 1 0 0))
 
 ;;; this version uses draw-lines which is unnecessary
@@ -123,6 +121,33 @@
       (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
 
 ;(add-hook! lisp-graph-hook display-energy)
+
+
+(define (samples-via-colormap snd chn)
+  ;; displays time domain graph using current colormap (just an example of colormap-ref)
+  (let* ((left (left-sample snd chn))
+	 (right (right-sample snd chn))
+	 (old-color (foreground-color snd chn))
+	 (data (make-graph-data snd chn))
+	 (samps (- right left))
+	 (x0 (x->position (/ left (srate))))
+	 (y0 (y->position (vct-ref data 0)))
+	 (colors (make-vector colormap-size #f)))
+    (do ((i (+ left 1) (1+ i))
+	 (j 1 (1+ j)))
+	((= i right))
+      (let* ((x1 (x->position (/ i (srate))))
+	     (y1 (y->position (vct-ref data j)))
+	     (ref (inexact->exact (* colormap-size (abs (vct-ref data j)))))
+	     (color (or (vector-ref colors ref)
+			(let ((new-color (apply make-color (colormap-ref (colormap) ref))))
+			  (vector-set! colors ref new-color)
+			  new-color))))
+	(set! (foreground-color snd chn) color)
+	(draw-line x0 y0 x1 y1)
+	(set! x0 x1)
+	(set! y0 y1)))
+    (set! (foreground-color snd chn) old-color)))
 
 
 

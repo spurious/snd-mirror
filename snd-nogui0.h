@@ -7,7 +7,7 @@
 
 #define TIME_TYPE int
 #define POINT_BUFFER_SIZE 4096
-#define GRAY_SCALES 1
+#define COLORMAP_SIZE 1
 
 #define BACKGROUND_TYPE int
 #define BACKGROUND_QUIT TRUE

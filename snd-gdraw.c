@@ -426,9 +426,9 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 /* should I use the RGB stuff in gdk rather than colormaps? */
 
 static int sono_size = -1;
-static GdkColor *grays[GRAY_SCALES];
+static GdkColor *grays[COLORMAP_SIZE];
 static int grays_allocated = -1;
-static GdkRectangle *sono_data[GRAY_SCALES];
+static GdkRectangle *sono_data[COLORMAP_SIZE];
 static GdkGC *colormap_GC;
 
 void initialize_colormap(snd_state *ss)
@@ -476,13 +476,13 @@ void allocate_sono_rects(snd_state *ss, int size)
   else allocate_color_map(ss, 0);
   if (size > sono_size)
     {
-      for (i = 0; i < GRAY_SCALES; i++)
+      for (i = 0; i < COLORMAP_SIZE; i++)
 	{
 	  if ((sono_size > 0) && (sono_data[i])) 
 	    FREE(sono_data[i]); 
 	  sono_data[i] = NULL;
 	}
-      for (i = 0; i < GRAY_SCALES; i++)
+      for (i = 0; i < COLORMAP_SIZE; i++)
 	{
 	  sono_data[i] = (GdkRectangle *)CALLOC(size, sizeof(GdkRectangle));
 	}
@@ -501,10 +501,10 @@ void allocate_color_map(snd_state *ss, int colormap)
       curmap = snd_colormap(colormap);
       cmap = gdk_colormap_get_system();
       if (grays_allocated != -1) 
-	for (i = 0; i < GRAY_SCALES; i++) 
+	for (i = 0; i < COLORMAP_SIZE; i++) 
 	  gdk_color_free(grays[i]);
       j = 0;
-      for (i = 0; i < GRAY_SCALES; i++)
+      for (i = 0; i < COLORMAP_SIZE; i++)
 	{
 	  tmp_color.red = curmap[j++];
 	  tmp_color.green = curmap[j++];
@@ -519,7 +519,7 @@ void allocate_color_map(snd_state *ss, int colormap)
 void x_load_colormap(GdkColor **colors)
 {
   int i;
-  for (i = 0; i < GRAY_SCALES; i++) grays[i] = colors[i];
+  for (i = 0; i < COLORMAP_SIZE; i++) grays[i] = colors[i];
 }
 
 

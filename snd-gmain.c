@@ -166,7 +166,7 @@ static RETSIGTYPE segv(int ignored)
 
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
-static int noglob = 0, noinit = 0;
+static int noglob = 0, noinit = 0, batch = 0;
 static gint stdin_id = 0;
 
 static void GetStdinString (gpointer context, gint fd, GdkInputCondition condition)
@@ -479,6 +479,10 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 	    else
 	      if (strcmp(argv[i], "-noinit") == 0)
 		noinit = 1;
+	      else
+		if ((strcmp(argv[i], "-b") == 0) || 
+		    (strcmp(argv[i], "-batch") == 0))
+		  batch = 1;
 
   ss->using_schemes = 0;
   set_auto_resize(ss, AUTO_RESIZE_DEFAULT);
@@ -603,7 +607,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       gtk_widget_show(SOUND_PANE(ss));
     }
   gtk_widget_show(MAIN_PANE(ss));
-  gtk_widget_show (MAIN_SHELL(ss));
+  if (!batch) gtk_widget_show (MAIN_SHELL(ss));
 #ifndef SND_AS_WIDGET
   ss->sgx->mainwindow = ss->sgx->mainshell->window;
 #else

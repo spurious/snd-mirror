@@ -339,7 +339,7 @@ static RETSIGTYPE segv(int ignored)
 
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
-static int noglob = 0, noinit = 0;
+static int noglob = 0, noinit = 0, batch = 0;
 static XtInputId stdin_id = 0;
 
 static void GetStdinString (XtPointer context, int *fd, XtInputId *id)
@@ -648,6 +648,12 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 	    else
 	      if (strcmp(argv[i], "-noinit") == 0)
 		noinit = 1;
+	      else
+		if ((strcmp(argv[i], "-b") == 0) || 
+		    (strcmp(argv[i], "-batch") == 0))
+		  batch = 1;
+
+  if (batch) XtSetMappedWhenManaged(shell, False);
 
 #if HAVE_HTML
   set_html_width(ss, snd_rs.html_width);
