@@ -69,7 +69,7 @@
 #include <X11/cursorfont.h>
 #include <stdio.h>
 
-/* compile-time flags are HAVE_XPM  HAVE_MOTIF  HAVE_XP  HAVE_GUILE|HAVE_RUBY  XM_DISABLE_DEPRECATED LESSTIF_VERSION */
+/* compile-time flags are HAVE_XPM  HAVE_MOTIF  HAVE_XP  HAVE_GUILE|HAVE_RUBY  XM_DISABLE_DEPRECATED  LESSTIF_VERSION */
 
 /* if the loader complains about XtIsSubClass, define NEED_XtIsSubClass */
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
@@ -191,11 +191,9 @@
  *
  * added:
  *
- *    Widget w -> bare Widget (pointer) wrapped for xm 
- *    XtAppContext app -> bare XtAppContext (pointer) wrapped for xm 
  *    XGCValues -> a blank XGCValues struct (for XCreateGC etc)
  *    XColor &optional pixel red green blue flags pad
- *    XArc XRectangle XPoint XSegment XEvent Pixel GC XWindowChanges XSetWindowAttributes
+ *    XArc XRectangle XPoint XSegment XEvent XWindowChanges XSetWindowAttributes
  *    XTextItem XpmImage XpmColorSymbol
  *    XDrawLinesDirect same as XDrawLines but takes (opaque) ptr to XPoint array
  *    vector->XPoints vect packages point data in vector as (opaque) array of XPoints 
@@ -24496,7 +24494,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"17-Jun-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"12-Aug-02\")");
 #endif
       xm_already_inited = 1;
     }

@@ -1132,7 +1132,7 @@ static Float *env2array(int order, env *e)
 {
   Float *fdata = NULL;
   Float x;
-  int i, j, lim;
+  int i, j, lim, size;
   Float last_x, step;
   if (!e) return(NULL);
   /* get the frequency envelope and design the FIR filter */
@@ -1140,8 +1140,9 @@ static Float *env2array(int order, env *e)
   last_x = e->data[(e->pts - 1) * 2];
   step = 2.0 * last_x / (Float)(order - 1);
   lim = order / 2;
+  size = e->pts * 2;
   for (i = 0, x = 0.0; i < lim; i++, x += step) 
-    fdata[i] = list_interp(x, e->data, e->pts); /* not mus_env here since it's likely the points fall between the order-related samples */
+    fdata[i] = list_interp(x, e->data, size); /* not mus_env here since it's likely the points fall between the order-related samples */
   for (j = order / 2 - 1, i = order / 2; 
        (i < order) && (j >= 0); 
        i++, j--) 

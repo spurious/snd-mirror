@@ -348,29 +348,43 @@ static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
   return(amp * mus_contrast_enhancement(dp->contrast_amp * inval, index));
 }
 
+static int li_loc = 0;
+static Float *li_e = NULL;
+static Float li_x = -1.0;
 
-Float list_interp(Float x, Float *e, int pts)
+Float list_interp(Float x, Float *e, int size)
 {
-  if (pts == 0) return(0.0);
-  if ((x <= e[0]) || (pts == 1)) return(e[1]);
-  if (e[2] > x)
+  int loc, lim;
+  if ((li_e == e) && (x >= li_x))
     {
-      if (e[1] == e[3]) return(e[1]);
-      return(e[1] + (x - e[0]) * (e[3] - e[1]) / (e[2] - e[0]));
+      if (li_loc >= size - 2) return(e[size - 1]);
+      loc = li_loc;
     }
-  return(list_interp(x, (Float *)(e + 2), pts - 1));
+  else 
+    {
+      loc = 0;
+      if (size == 0) return(0.0);
+    }
+  lim = size - 2;
+  while ((loc < lim) && (e[loc + 2] <= x)) loc += 2;
+  li_e = e;
+  li_loc = loc;
+  li_x = x;
+  if ((loc == lim) || (e[loc + 1] == e[loc + 3]) || (x <= e[loc])) return(e[loc + 1]);
+  return(e[loc + 1] + (x - e[loc]) * (e[loc + 3] - e[loc + 1]) / (e[loc + 2] - e[loc]));
 }
 
 static Float *sample_linear_env(env *e, int order)
 {
   Float *data;
   Float last_x, step, x;
-  int i, j;
+  int i, j, size;
   data = (Float *)CALLOC(order, sizeof(Float));
   last_x = e->data[(e->pts - 1) * 2];
   step = 2 * last_x / ((Float)order - 1);
+  size = e->pts * 2;
   for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
-    data[i] = list_interp(x, e->data, e->pts);
+    data[i] = list_interp(x, e->data, size);
   for (j = order / 2 - 1, i = order / 2; (i < order) && (j >= 0); i++, j--) 
     data[i] = data[j];
   return(data);

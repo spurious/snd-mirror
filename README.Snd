@@ -32,22 +32,40 @@ The configure program has several Snd-related arguments:
    --with-doubles        use doubles throughout (default is floats)
    --with-float-samples  represent samples internally as floats (default: ints)
    --with-sample-width=N use N bits of samples (default = 24). N = 32 or so is 
-                         not recommended because it does not leave you any 
-                         "head room" during mixes. N < 16 isn't supported.
+                           not recommended because it does not leave you any 
+                           "head room" during mixes. N < 16 isn't supported.
 
    --with-gl             include support for OpenGL (default = no)
      --with-just-gl      same but omit Guile bindings in gl.c (default = no)
+                           The gl module is only useful if you want to write
+                           Scheme code to add your own OpenGL graphics to Snd.
+                           --with-just-gl will give you the GL spectrograms
+                           without any extras.
+
    --with-html           include the XmHTML or mozilla browser library
-                           (mozilla is used with Gtk, XmHTML with Motif)
+                           (mozilla is used with Gtk, XmHTML with Motif).
+                           This affects only the Help dialog.
+
    --with-ladspa         include LADSPA plugin support (Linux)
    --with-static-xm      include the xm module (rather than loading it dynamically)
-			   this option affects xm.c for Motif, xg.c for Gtk
+			   this option affects xm.c for Motif, xg.c for Gtk.
+                           You'll need this (or need to make xm and load xm.so
+                           at runtime) if you want to use Dave Phillips'
+                           extensions described in the tutorial.
+         
    --with-static-gsl     try to load GSL statically (for RPM)
-                           GSL is loaded in any case, if it is available
+                           GSL is loaded in any case, if it is available.
+                           This affects only the Hankel transform and the
+                           Dolph-Chebyshev window.  FFT's are currently
+                           handled by FFTW, if it is available, otherwise
+                           built-in (somewhat slow) code.
 
    --with-snd-as-widget  make Snd a loadable widget, not a standalone program
+
    --with-ruby           try to use Ruby as the extension language
      --with-ruby-prefix  set location of Ruby
+   --with-guile          use Guile, not Ruby (the default)
+
    --with-temp-dir       directory to use for temp files
    --with-save-dir       directory to use for saved-state files
    --with-run            Guile optimizer (default = yes)
@@ -77,8 +95,13 @@ Guile 1.4).  If you don't have Guile or Ruby, Snd can still be built, but it's
 severely limited in what it can do (there is a configure switch
 --with-guile=no, and there's the compiler switch HAVE_EXTENSION_LANGUAGE).
 
-One switch that might be of interest is --disable-largefile. This
-turns off the Large File System support (if it is available at all).
+
+Here at CCRMA, the system Snd is built:
+
+  ./configure --with-alsa --with-gsl --with-temp-dir=/zap --with-static-xm --with-ladspa --with-gl
+
+but I'd recommend --with-just-gl elsewhere (the various GL implementations
+are different enough that gl.c can be a pain to build).
 
 
 ----------------------------------------------------------------
@@ -93,6 +116,7 @@ anymore, but Guile 1.6 will apparently never arrive. In the meantime,
 you can get a 1.6 facsimile from
 
   ftp://alpha.gnu.org/gnu/guile/guile-1.5.6.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/guile-1.5.6.tar.gz
 
 To include guile in Snd, either use the configure script (which should
 be able to find the guile library automatically), or go to the
@@ -121,7 +145,7 @@ There are RPM packages of Snd available at the ccrma-ftp site
 mentioned above: snd-6-12.i386.rpm (for Linux), snd-6-12.src.rpm
 (sources), and snd-6-12.ppc.rpm (linuxPPC).  These RPM files have been
 superseded by Fernando Lopez-Lezcano's set available at
-http://www-ccrma.stanford.edu/software/snd/.
+http://www-ccrma.stanford.edu/planetccrma/software/
 
 
 ----------------------------------------------------------------

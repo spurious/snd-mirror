@@ -303,7 +303,7 @@ XEN show_stack(void) {return(XEN_FALSE);}
  * MALLOC, REALLOC, and FREE.
  */
 
-static int mem_size = 0;
+static int mem_size = 0, mem_top = -1;
 static int *pointers = NULL, *sizes = NULL, *locations = NULL;
 static char **functions = NULL, **files = NULL;
 static int *lines = NULL;
@@ -411,12 +411,14 @@ static void forget_pointer(void *ptr, const char *func, const char *file, int li
       last_remembered_ptr = -1;
       return;
     }
-  for (i = 0; i < mem_size; i++)
+  for (i = mem_top; i >= 0; i--)
     if (pointers[i] == (int)ptr)
       {
 	pointers[i] = 0;
 	stacks[i] = NULL;
 	last_forgotten = i;
+	if (i == mem_top)
+	  while ((mem_top >= 0) && (pointers[mem_top] == 0)) mem_top--;
 	return;
       }
   fprintf(stderr, "forget %p ", ptr); mem_report(); abort();
@@ -476,6 +478,7 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
   if (encloser) stacks[loc] = encloser;
   last_remembered = loc;
   last_remembered_ptr = (int)ptr;
+  if (mem_top < loc) mem_top = loc;
 }
 
 #define MAX_MALLOC (1 << 28)

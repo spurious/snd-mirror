@@ -2576,9 +2576,9 @@ if test "${with_static_gsl+set}" = set; then
 
 fi;
 
-# Check whether --with-xm or --without-xm was given.
-if test "${with_xm+set}" = set; then
-  withval="$with_xm"
+# Check whether --with-static-xm or --without-static-xm was given.
+if test "${with_static_xm+set}" = set; then
+  withval="$with_static_xm"
 
 fi;
 
