@@ -145,9 +145,6 @@ int set_peaks_font(snd_state *ss, char *font) {ss->Peaks_Font = copy_string(font
 int set_bold_peaks_font(snd_state *ss, char *font) {ss->Bold_Peaks_Font = copy_string(font); return(0);}
 int set_axis_label_font(snd_state *ss, char *font) {ss->Axis_Label_Font = copy_string(font); return(0);}
 int set_axis_numbers_font(snd_state *ss, char *font) {ss->Axis_Numbers_Font = copy_string(font); return(0);}
-void activate_numbers_font(axis_context *ax, snd_state *ss) {}
-void activate_label_font(axis_context *ax, snd_state *ss) {}
-void activate_button_font(axis_context *ax, snd_state *ss) {}
 int label_width(snd_state *ss, char *txt) {return(0);}
 int number_width(snd_state *ss, char *num) {return(0);}
 int number_height(snd_state *ss) {return(0);}

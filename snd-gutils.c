@@ -136,25 +136,6 @@ int set_axis_numbers_font(snd_state *ss, char *font)
   return(FALSE);
 }
 
-
-void activate_numbers_font(axis_context *ax, snd_state *ss)
-{
-  gtk_widget_modify_font(ax->w, AXIS_NUMBERS_FONT(ss));
-  ax->current_font = AXIS_NUMBERS_FONT(ss);
-}
-   
-void activate_button_font(axis_context *ax, snd_state *ss)
-{
-  gtk_widget_modify_font(ax->w, (ss->sgx)->button_fnt);
-  ax->current_font = (ss->sgx)->button_fnt;
-}
-
-void activate_label_font(axis_context *ax, snd_state *ss)
-{
-  gtk_widget_modify_font(ax->w, AXIS_LABEL_FONT(ss));
-  ax->current_font = AXIS_LABEL_FONT(ss);
-}
-
 static int sg_text_width(char *txt, PangoFontDescription *font)
 {
   PangoLayout *layout = NULL;

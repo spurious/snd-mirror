@@ -185,6 +185,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, int show)
   /* fields are samp and name */
   int len, top, cx, y0, y1;
   axis_context *ax;
+  snd_state *ss;
   XEN res = XEN_FALSE;
   ax = mark_context(cp);
   if (XEN_HOOKED(draw_mark_hook))
@@ -205,7 +206,15 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, int show)
   cx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), ap);
   if (mp->name)
     {
-      activate_button_font(ax, cp->state);
+      ss = get_global_state();
+#if USE_MOTIF
+      ax->current_font = ((ss->sgx)->button_fontstruct)->fid;
+      XSetFont(ax->dp, ax->gc, ((ss->sgx)->button_fontstruct)->fid);
+#else
+  #if USE_GTK
+      ax->current_font = (ss->sgx)->button_fnt;
+  #endif
+#endif
       len = mark_name_width(cp->state, mp->name);
       draw_string(ax, (int)(cx - 0.5 * len), y1 + 6, mp->name, strlen(mp->name));
     }

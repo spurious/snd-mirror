@@ -576,7 +576,14 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #endif
   if (include_x_label)
     {
-      activate_label_font(ax, ss);
+#if USE_MOTIF
+      ax->current_font = ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid;
+      XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid);
+#else
+  #if USE_GTK
+      ax->current_font = AXIS_LABEL_FONT(ss);
+  #endif
+#endif
 #if HAVE_GL
       if (ap->use_gl)
 	{
@@ -633,7 +640,16 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
     }
   if ((include_y_tick_labels) || 
       (include_x_tick_labels))
-    activate_numbers_font(ax, ss);
+#if USE_MOTIF
+    {
+      ax->current_font = ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid;
+      XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid);
+    }
+#else
+  #if USE_GTK
+    ax->current_font = AXIS_NUMBERS_FONT(ss);
+  #endif
+#endif
   if (printing) 
     {
       if (show_x_axis)
@@ -1027,9 +1043,9 @@ static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 		          XEN_EMPTY_LIST))))))))))))))))));
 }
 
-#if USE_MOTIF
 /* this is intended for use with the xm package */
 
+#if (!USE_NO_GUI)
 static XEN g_draw_axes(XEN args)
 {
   #define H_draw_axes "(draw-axes wid gc label x0 x1 y0 y1 style axes) draws axes \
@@ -1039,7 +1055,12 @@ going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with x
 depends on 'axes'. Returns actual (pixel) axis bounds.  Defaults are label time, \
 x0 0.0, x1 1.0, y0 -1.0, y1 1.0, style x-axis-in-seconds, axes #t."
   XEN val;
-  Widget w; GC gc; char *xlabel; 
+#if USE_MOTIF
+  Widget w; GC gc; 
+#else
+  GtkWidget *w; GdkGC *gc;
+#endif
+  char *xlabel; 
   double x0 = 0.0; double x1 = 1.0; 
   Float y0 = -1.0; Float y1 = 1.0; 
   int x_style = X_AXIS_IN_SECONDS; int axes = 1;
@@ -1048,8 +1069,13 @@ x0 0.0, x1 1.0, y0 -1.0, y1 1.0, style x-axis-in-seconds, axes #t."
   int len;
   len = XEN_LIST_LENGTH(args);
   XEN_ASSERT_TYPE((len >= 3) && (len < 10), args, XEN_ONLY_ARG, S_draw_axes, "3 required and 6 optional args");
+#if USE_MOTIF
   w = (Widget)(XEN_UNWRAP_WIDGET(XEN_LIST_REF(args, 0)));
   gc = (GC)(XEN_UNWRAP_GC(XEN_LIST_REF(args, 1)));
+#else
+  w = (GtkWidget *)(XEN_UNWRAP_WIDGET(XEN_LIST_REF(args, 0)));
+  gc = (GdkGC *)(XEN_UNWRAP_GC(XEN_LIST_REF(args, 1)));
+#endif
   xlabel = XEN_TO_C_STRING(XEN_LIST_REF(args, 2));
   if (len > 3) x0 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 3));
   if (len > 4) x1 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 4));
@@ -1060,8 +1086,13 @@ x0 0.0, x1 1.0, y0 -1.0, y1 1.0, style x-axis-in-seconds, axes #t."
   ap = (axis_info *)CALLOC(1, sizeof(axis_info));
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ap->ax = ax;
+#if USE_MOTIF
   ax->dp = XtDisplay(w);
   ax->wn = XtWindow(w);
+#else
+  ax->wn = w->window;
+  ax->w = w;
+#endif  
   ap->xmin = x0;
   ap->xmax = x1;
   ap->ymin = y0;
@@ -1114,7 +1145,7 @@ void g_init_axis(void)
 
   XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, H_axis_info);
 
-#if USE_MOTIF
+#if (!USE_NO_GUI)
   XEN_DEFINE_PROCEDURE(S_draw_axes,  g_draw_axes, 0, 0, 1,   H_draw_axes);
 #endif
 }

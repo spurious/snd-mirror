@@ -187,27 +187,6 @@ int set_axis_numbers_font(snd_state *ss, char *font)
   return(FALSE);
 }
 
-
-void activate_numbers_font(axis_context *ax, snd_state *ss)
-{
-  ax->current_font = ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid;
-  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid);
-}
-   
-void activate_button_font(axis_context *ax, snd_state *ss)
-{
-  state_context *sgx;
-  sgx = ss->sgx;
-  ax->current_font = (sgx->button_fontstruct)->fid;
-  XSetFont(ax->dp, ax->gc, (sgx->button_fontstruct)->fid);
-}
-
-void activate_label_font(axis_context *ax, snd_state *ss)
-{
-  ax->current_font = ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid;
-  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid);
-}
-
 int label_width(snd_state *ss, char *txt)
 {
   if (txt)

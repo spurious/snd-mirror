@@ -6,6 +6,7 @@
 ;;; TODO: GClosureNotify arg can be #f => NULL
 ;;; TODO: any->gpointer picks out cadr? or get rid of gpointer?
 ;;; TODO: OBJECT_TYPE macros? g_print? (is basically format)
+;;; TODO: settable struct fields (especially GdkColor)
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -864,7 +865,7 @@
    funcs))
 
 (hey " *~%")
-(hey " * reference args are ignored if passed, resultant values are returned in a list.~%")
+(hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
 (hey " * 'xg is added to *features*~%")
 (hey " *~%")
@@ -903,7 +904,6 @@
 (hey " * HISTORY:~%")
 (hey " *     28-Oct:    gtk 2.1 additions.~%")
 (hey " *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks~%")
-(hey " *     23-Oct:    gtk_init and friends ref args ignored~%")
 (hey " *     31-Jul:    removed GTK 1.n support~%")
 (hey " *     24-Jul:    changed Guile prefix (R5RS reserves vertical-bar).~%")
 (hey " *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)~%")
@@ -1222,13 +1222,13 @@
 	     (hey "}~%")))))
    callbacks))
 
-(hey "~%static void gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
+(hey "~%static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
 (hey "{~%")
-(hey "  XEN_CALL_3(XEN_CAR((XEN)data),~%")
-(hey "             C_TO_XEN_GtkWidget_(w),~%")
-(hey "             C_TO_XEN_GdkEventAny_(ev),~%")
-(hey "             XEN_CADR((XEN)data),~%")
-(hey "             __FUNCTION__);~%")
+(hey "  return(XEN_TO_C_BOOLEAN(XEN_CALL_3(XEN_CAR((XEN)data),~%")
+(hey "                          C_TO_XEN_GtkWidget_(w),~%")
+(hey "                          C_TO_XEN_GdkEventAny_(ev),~%")
+(hey "                          XEN_CADR((XEN)data),~%")
+(hey "                          __FUNCTION__)));~%")
 (hey "}~%~%")
 
 (hey "~%~%/* ---------------------------------------- functions ---------------------------------------- */~%~%")
@@ -1559,6 +1559,36 @@
 (if (not (null? extra-checks)) (with-extra say-hey (lambda () (for-each make-check (reverse extra-checks)))))
 (if (not (null? checks-21)) (with-21 say-hey (lambda () (for-each make-check (reverse checks-21)))))
 
+(hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
+
+(hey "static XEN gxg_vector2GdkPoints(XEN arg1)~%")
+(hey "{~%")
+(hey "  #define H_vector2GdkPoints \"(vector->GdkPoints vect) packages point data in vect as (opaque) array of GdkPoints\"~%")
+(hey "  int i, j, len;~%")
+(hey "  XEN *velts;~%")
+(hey "  GdkPoint *pt;~%")
+(hey "  XEN_ASSERT_TYPE(XEN_VECTOR_P(arg1), arg1, XEN_ONLY_ARG, \"vector->GdkPoints\", \"vector of x,y values\");~%")
+(hey "  len = XEN_VECTOR_LENGTH(arg1) / 2;~%")
+(hey "  if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, \"vector->GdkPoints\", \"positive integer\");~%")
+(hey "  velts = XEN_VECTOR_ELEMENTS(arg1);~%")
+(hey "  pt = (GdkPoint *)CALLOC(len, sizeof(GdkPoint));~%")
+(hey "  for (i = 0, j = 0; i < len; i++, j += 2)~%")
+(hey "    {~%")
+(hey "      pt[i].x = XEN_TO_C_INT(velts[j]);~%")
+(hey "      pt[i].y = XEN_TO_C_INT(velts[j + 1]);~%")
+(hey "    }~%")
+(hey "  return(C_TO_XEN_ULONG((unsigned long)pt));~%")
+(hey "}~%")
+(hey "~%")
+(hey "static XEN gxg_freeGdkPoints(XEN arg1)~%")
+(hey "{~%")
+(hey "  #define H_freeGdkPoints \"(freeGdkPoints vect) frees an (opaque) GdkPoint array created by vector->Gdkpoints\"~%")
+(hey "  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ONLY_ARG, \"freeGdkPoints\", \"opaque GdkPoint array\");~%")
+(hey "  FREE((void *)(XEN_TO_C_ULONG(arg1)));~%")
+(hey "  return(XEN_FALSE);~%")
+(hey "}~%")
+
+
 
 ;;; ---------------- Ruby step 1 ----------------
 (say "/* Ruby connection for xg.c */~%~%")
@@ -1618,8 +1648,13 @@
 (say-hey "  xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);~%")
 (say-hey "  XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);~%~%")
 
+
+;;; TODO: special xg funcs in Ruby
 (hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list, 2, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
+(hey "  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints, 1, 0, 0, H_freeGdkPoints);~%")
+(hey "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints, 1, 0, 0, H_vector2GdkPoints);~%")
+
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))

@@ -58,7 +58,7 @@
   <li><a href="#nbdoc">nb.scm: Popup File info etc</a>
   <li><a href="#peakenvdoc">peak-env.scm: peak envelope support</a>
   <li><a href="#playdoc">play.scm: play-related functions</a>
-  <li><a href="#popupdoc">popup.scm: Popup menu specializations</a>
+  <li><a href="#popupdoc">popup.scm and gtk-popup.scm: Popup menu specializations</a>
   <li><a href="#pqwvoxdoc">pqwvox.scm: phase-quadrature waveshaping</a>
   <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
   <li><a href="#pvocdoc">pvoc.scm: phase-vocoder</a>
@@ -1884,12 +1884,13 @@ decide which one to send to the DAC.
 
 
 
-<A NAME="popupdoc"></a><span class=box><h2>popup.scm</h2></span>
+<A NAME="popupdoc"></a><span class=box><h2>popup.scm and gtk-popup.scm</h2></span>
 <pre>
   <em class=def><a name="addselectionpopup">add-selection-popup</a></em> 
   <em class=def><a name="addlistenerpopup">add-listener-popup</a></em> 
 </pre>
 <p>
+gtk-popup.scm is the Gtk/xg version; popup.scm is Motif/xm based.
 <b>add-selection-popup</b> creates a selection-oriented popup menu that is
 posted if you click button3 in the selected portion, as well as a time-domain popup
 menu, and an fft-specific menu.

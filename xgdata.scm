@@ -203,9 +203,10 @@
 (CFNC "gint gdk_drawable_get_depth GdkDrawable* drawable")
 (CFNC "void gdk_draw_point GdkDrawable* drawable GdkGC* gc gint x gint y")
 (CFNC "void gdk_draw_line GdkDrawable* drawable GdkGC* gc gint x1 gint y1 gint x2 gint y2")
-(CFNC "void gdk_draw_rectangle GdkDrawable* drawable GdkGC* gc gint filled gint x gint y gint width gint height")
-(CFNC "void gdk_draw_arc GdkDrawable* drawable GdkGC* gc gint filled gint x gint y gint width gint height gint angle1 gint angle2")
-(CFNC "void gdk_draw_polygon GdkDrawable* drawable GdkGC* gc gint filled GdkPoint* points gint npoints")
+(CFNC "void gdk_draw_rectangle GdkDrawable* drawable GdkGC* gc gboolean filled gint x gint y gint width gint height")
+(CFNC "void gdk_draw_arc GdkDrawable* drawable GdkGC* gc gboolean filled gint x gint y gint width gint height gint angle1 gint angle2")
+(CFNC "void gdk_draw_polygon GdkDrawable* drawable GdkGC* gc gboolean filled GdkPoint* points gint npoints")
+;;; the "filled" arg is declared gint in gdkdrawable.h, but treated as a boolean in x11/gdkdrawable.c
 (CFNC "void gdk_draw_drawable GdkDrawable* drawable GdkGC* gc GdkDrawable* src gint xsrc gint ysrc gint xdest gint ydest gint width gint height")
 (CFNC "void gdk_draw_image GdkDrawable* drawable GdkGC* gc GdkImage* image gint xsrc gint ysrc gint xdest gint ydest gint width gint height")
 (CFNC "void gdk_draw_points GdkDrawable* drawable GdkGC* gc GdkPoint* points gint npoints")

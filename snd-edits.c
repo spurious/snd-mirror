@@ -47,7 +47,7 @@ void free_sound_list(chan_info *cp)
 
 static void release_pending_sounds(chan_info *cp, int edit_ctr)
 {
-  /* look for buffers or open temp files that are no longer reachable after pruning the edit tree */
+  /* look for buffers or temp files that are no longer reachable after pruning the edit tree */
   int i;
   snd_data *sf;
   if ((cp) && (cp->sounds))
@@ -163,17 +163,6 @@ static void prepare_edit_list(chan_info *cp, off_t len)
   sp = cp->sound;
   stop_amp_env(cp);
   if ((sp) && (sp->playing)) stop_playing_sound(sp);
-#if DEBUGGING
-  if ((cp->marks != NULL) && 
-      ((cp->edit_ctr >= cp->marks_size) ||
-       ((cp->marks[cp->edit_ctr] == NULL) &&
-	(cp->mark_size[cp->edit_ctr] != 0))))
-    {
-      fprintf(stderr,"mark stack trouble: size: %d, edit: %d, ptr: %p (%d)\n", 
-	      cp->marks_size, cp->edit_ctr, cp->marks, cp->mark_size[cp->edit_ctr]);
-      abort();
-    }
-#endif
   cp->edit_ctr++;
   if (cp->edit_ctr >= cp->edit_size)
     {
@@ -647,22 +636,7 @@ static void ripple_out(ed_fragment **list, int beg, off_t num, int len)
   for (i = beg; i < len; i++) list[i]->out += num;
 }
 
-#if 0
-static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
-{
-  new_ed->out = old_ed->out;
-  new_ed->beg = old_ed->beg;
-  new_ed->end = old_ed->end;
-  new_ed->scl = old_ed->scl;
-  new_ed->rmp0 = old_ed->rmp0;
-  new_ed->rmp1 = old_ed->rmp1;
-  new_ed->snd = old_ed->snd;
-  new_ed->typ = old_ed->typ;
-  new_ed->loc = old_ed->loc;
-}
-#else
 #define copy_ed_fragment(New_Ed, Old_Ed) memcpy((void *)(New_Ed), (void *)(Old_Ed), sizeof(ed_fragment))
-#endif
 
 static void copy_ed_blocks(ed_fragment **new_list, ed_fragment **old_list, int new_beg, int old_beg, int num_lists)
 {
@@ -771,7 +745,6 @@ void backup_edit_list(chan_info *cp)
 	sd = cp->sounds[i];
 	if ((sd) && (sd->edit_ctr == cur)) sd->edit_ctr--;
       }
-  /* marks backup added 23-Jun-00 */
   backup_mark_list(cp, cur);
   cp->edit_ctr--;
   reflect_edit_history_change(cp);

@@ -1,7 +1,8 @@
 ;;; translated from popup.scm
 ;;;
 ;;; no attempt here to set widget colors, no listener popup menu (gtk predefines
-;;;   a popup for each entry/testview widget and there's no way to get rid of it!)
+;;;   a popup for each entry/testview widget and there's no way to get rid of it!
+;;;   perhaps we could find a pointer to its children and hide all of them?)
 
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xm.so")))
@@ -21,7 +22,9 @@
   "(current-label widget) returns widget's label"
   (if (GTK_IS_LABEL w)
       (gtk_label_get_text (GTK_LABEL w) new-label)
-      (gtk_label_get_text (GTK_LABEL (.child (GTK_BIN w))) new-label)))
+      (if (and (GTK_IS_BIN w)
+	       (GTK_IS_LABEL (.child (GTK_BIN w))))
+	  (gtk_label_get_text (GTK_LABEL (.child (GTK_BIN w))) new-label))))
 !#
 
 (define* (g_signal_connect obj name func #:optional data)

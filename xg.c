@@ -7,7 +7,7 @@
  *   other flags:
  *     HAVE_GDK_DRAW_PIXBUF for gtk+-2.1 additions
  *
- * reference args are ignored if passed, resultant values are returned in a list.
+ * reference args initial values are usually ignored, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
  * 'xg is added to *features*
  *
@@ -40,7 +40,6 @@
  * HISTORY:
  *     28-Oct:    gtk 2.1 additions.
  *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks
- *     23-Oct:    gtk_init and friends ref args ignored
  *     31-Jul:    removed GTK 1.n support
  *     24-Jul:    changed Guile prefix (R5RS reserves vertical-bar).
  *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)
@@ -1156,13 +1155,13 @@ static void gxg_clip_clear(GtkClipboard* clipboard, gpointer func_data)
              __FUNCTION__);
 }
 
-static void gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)
+static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)
 {
-  XEN_CALL_3(XEN_CAR((XEN)data),
-             C_TO_XEN_GtkWidget_(w),
-             C_TO_XEN_GdkEventAny_(ev),
-             XEN_CADR((XEN)data),
-             __FUNCTION__);
+  return(XEN_TO_C_BOOLEAN(XEN_CALL_3(XEN_CAR((XEN)data),
+                          C_TO_XEN_GtkWidget_(w),
+                          C_TO_XEN_GdkEventAny_(ev),
+                          XEN_CADR((XEN)data),
+                          __FUNCTION__)));
 }
 
 
@@ -1857,46 +1856,46 @@ gint y2)"
 }
 static XEN gxg_gdk_draw_rectangle(XEN drawable, XEN gc, XEN filled, XEN x, XEN y, XEN width, XEN height)
 {
-  #define H_gdk_draw_rectangle "void gdk_draw_rectangle(GdkDrawable* drawable, GdkGC* gc, gint filled, \
+  #define H_gdk_draw_rectangle "void gdk_draw_rectangle(GdkDrawable* drawable, GdkGC* gc, gboolean filled, \
 gint x, gint y, gint width, gint height)"
   XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_draw_rectangle", "GdkDrawable*");
   XEN_ASSERT_TYPE(XEN_GdkGC__P(gc), gc, 2, "gdk_draw_rectangle", "GdkGC*");
-  XEN_ASSERT_TYPE(XEN_gint_P(filled), filled, 3, "gdk_draw_rectangle", "gint");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(filled), filled, 3, "gdk_draw_rectangle", "gboolean");
   XEN_ASSERT_TYPE(XEN_gint_P(x), x, 4, "gdk_draw_rectangle", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(y), y, 5, "gdk_draw_rectangle", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(width), width, 6, "gdk_draw_rectangle", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(height), height, 7, "gdk_draw_rectangle", "gint");
-  gdk_draw_rectangle(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkGC_(gc), XEN_TO_C_gint(filled), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
+  gdk_draw_rectangle(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkGC_(gc), XEN_TO_C_gboolean(filled), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
                      XEN_TO_C_gint(width), XEN_TO_C_gint(height));
   return(XEN_FALSE);
 }
 static XEN gxg_gdk_draw_arc(XEN drawable, XEN gc, XEN filled, XEN x, XEN y, XEN width, XEN height, XEN angle1, XEN angle2)
 {
-  #define H_gdk_draw_arc "void gdk_draw_arc(GdkDrawable* drawable, GdkGC* gc, gint filled, gint x, gint y, \
-gint width, gint height, gint angle1, gint angle2)"
+  #define H_gdk_draw_arc "void gdk_draw_arc(GdkDrawable* drawable, GdkGC* gc, gboolean filled, gint x, \
+gint y, gint width, gint height, gint angle1, gint angle2)"
   XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_draw_arc", "GdkDrawable*");
   XEN_ASSERT_TYPE(XEN_GdkGC__P(gc), gc, 2, "gdk_draw_arc", "GdkGC*");
-  XEN_ASSERT_TYPE(XEN_gint_P(filled), filled, 3, "gdk_draw_arc", "gint");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(filled), filled, 3, "gdk_draw_arc", "gboolean");
   XEN_ASSERT_TYPE(XEN_gint_P(x), x, 4, "gdk_draw_arc", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(y), y, 5, "gdk_draw_arc", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(width), width, 6, "gdk_draw_arc", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(height), height, 7, "gdk_draw_arc", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(angle1), angle1, 8, "gdk_draw_arc", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(angle2), angle2, 9, "gdk_draw_arc", "gint");
-  gdk_draw_arc(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkGC_(gc), XEN_TO_C_gint(filled), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
+  gdk_draw_arc(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkGC_(gc), XEN_TO_C_gboolean(filled), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
                XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_gint(angle1), XEN_TO_C_gint(angle2));
   return(XEN_FALSE);
 }
 static XEN gxg_gdk_draw_polygon(XEN drawable, XEN gc, XEN filled, XEN points, XEN npoints)
 {
-  #define H_gdk_draw_polygon "void gdk_draw_polygon(GdkDrawable* drawable, GdkGC* gc, gint filled, GdkPoint* points, \
-gint npoints)"
+  #define H_gdk_draw_polygon "void gdk_draw_polygon(GdkDrawable* drawable, GdkGC* gc, gboolean filled, \
+GdkPoint* points, gint npoints)"
   XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_draw_polygon", "GdkDrawable*");
   XEN_ASSERT_TYPE(XEN_GdkGC__P(gc), gc, 2, "gdk_draw_polygon", "GdkGC*");
-  XEN_ASSERT_TYPE(XEN_gint_P(filled), filled, 3, "gdk_draw_polygon", "gint");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(filled), filled, 3, "gdk_draw_polygon", "gboolean");
   XEN_ASSERT_TYPE(XEN_GdkPoint__P(points), points, 4, "gdk_draw_polygon", "GdkPoint*");
   XEN_ASSERT_TYPE(XEN_gint_P(npoints), npoints, 5, "gdk_draw_polygon", "gint");
-  gdk_draw_polygon(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkGC_(gc), XEN_TO_C_gint(filled), XEN_TO_C_GdkPoint_(points), 
+  gdk_draw_polygon(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkGC_(gc), XEN_TO_C_gboolean(filled), XEN_TO_C_GdkPoint_(points), 
                    XEN_TO_C_gint(npoints));
   return(XEN_FALSE);
 }
@@ -20989,6 +20988,36 @@ static XEN gxg_GDK_IS_SCREEN(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) &
 static XEN gxg_GDK_IS_DISPLAY(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GDK_IS_DISPLAY((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 #endif
 
+
+
+/* ---------------------------------------- special functions ---------------------------------------- */
+
+static XEN gxg_vector2GdkPoints(XEN arg1)
+{
+  #define H_vector2GdkPoints "(vector->GdkPoints vect) packages point data in vect as (opaque) array of GdkPoints"
+  int i, j, len;
+  XEN *velts;
+  GdkPoint *pt;
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(arg1), arg1, XEN_ONLY_ARG, "vector->GdkPoints", "vector of x,y values");
+  len = XEN_VECTOR_LENGTH(arg1) / 2;
+  if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, "vector->GdkPoints", "positive integer");
+  velts = XEN_VECTOR_ELEMENTS(arg1);
+  pt = (GdkPoint *)CALLOC(len, sizeof(GdkPoint));
+  for (i = 0, j = 0; i < len; i++, j += 2)
+    {
+      pt[i].x = XEN_TO_C_INT(velts[j]);
+      pt[i].y = XEN_TO_C_INT(velts[j + 1]);
+    }
+  return(C_TO_XEN_ULONG((unsigned long)pt));
+}
+
+static XEN gxg_freeGdkPoints(XEN arg1)
+{
+  #define H_freeGdkPoints "(freeGdkPoints vect) frees an (opaque) GdkPoint array created by vector->Gdkpoints"
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ONLY_ARG, "freeGdkPoints", "opaque GdkPoint array");
+  FREE((void *)(XEN_TO_C_ULONG(arg1)));
+  return(XEN_FALSE);
+}
 static XEN c_array_to_xen_list(XEN val, XEN clen);
 static XEN xen_list_to_c_array(XEN val, XEN type);
 
@@ -21005,6 +21034,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array, 2, 0, 0, NULL);
 
+  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints, 1, 0, 0, H_freeGdkPoints);
+  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints, 1, 0, 0, H_vector2GdkPoints);
   XG_DEFINE_PROCEDURE(g_type_name, gxg_g_type_name, 1, 0, 0, H_g_type_name);
   XG_DEFINE_PROCEDURE(g_type_qname, gxg_g_type_qname, 1, 0, 0, H_g_type_qname);
   XG_DEFINE_PROCEDURE(g_type_from_name, gxg_g_type_from_name, 1, 0, 0, H_g_type_from_name);
@@ -30386,7 +30417,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"30-Oct-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"31-Oct-02\")");
 #endif
       xg_already_inited = 1;
     }

@@ -156,7 +156,7 @@ various examples of and extensions to Snd can be found in the contrib directory,
 <tr><td><a href="sndscm.html#nbdoc">nb.scm</a></td>          <td>Popup File info etc</td></tr>
 <tr><td><a href="sndscm.html#peakenvdoc">peak-env.scm</a></td><td>peak envelope support</td></tr>
 <tr><td><a href="sndscm.html#playdoc">play.scm</a></td><td>play-related functions</td></tr>
-<tr><td><a href="sndscm.html#popupdoc">popup.scm</a></td>    <td>Popup menu specializations</td></tr>
+<tr><td><a href="sndscm.html#popupdoc">popup.scm, gtk-popup.scm</a></td>    <td>Popup menu specializations</td></tr>
 <tr><td><a href="sndscm.html#pqwvoxdoc">pqwvox.scm</a></td>  <td>phase-quadrature waveshaping (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm</a></td>    <td>Perry Cook's physical model examples (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#pvocdoc">pvoc.scm</a></td>      <td>phase-vocoder examples</td></tr>
@@ -8724,7 +8724,7 @@ The four "-widgets" procedure return lists of possibly useful widgets:
 <p>I've only included the ones I needed immediately (for autotesting), but all Snd widgets are potentially (and easily)
 accessible; if you need access to one that
 isn't included, let me know.  <i>dialog-widgets</i> entries will be #f for any dialogs that have not
-yet been created.
+yet been created.  In gtk, the first element of the main-widgets list is the top level shell's window.
 </p>
 <pre>
   (recolor-widget (cadr (sound-widgets)) (make-color 1 0 0))
@@ -8821,7 +8821,7 @@ The lowest level procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="drawaxes">draw-axes</a></em> (wid gc <i>label x0 x1 y0 y1 style axes</i>)</code></span></td></tr>
 <!-- -->
 <!-- --><tr><td width=50></td><td>
-<!-- -->(Motif only currently) draws axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
+<!-- -->draws axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
 <!-- -->going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
 <!-- --><i>style</i> (x-axis-in-seconds etc); whether the axes are actually displayed or just implied
 <!-- -->depends on <i>axes</i>. Returns a list of the actual (pixel) axis bounds.  See, for example,  the scanned-synthesis display code in snd-motif.scm.
