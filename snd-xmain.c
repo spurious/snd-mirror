@@ -571,6 +571,7 @@ static Pixel get_color(Widget shell, char *rs_color, char *defined_color, char *
   dpy = XtDisplay(shell);
   scr = DefaultScreen(dpy);
   cmap = DefaultColormap(dpy, scr);
+  /* I suppose we could use XQueryColors and search for the closest available, or try yet again to get XCreateColormap to behave itself */
   if ((!XAllocNamedColor(dpy, cmap, rs_color, &tmp_color, &ignore)) &&
       (!XAllocNamedColor(dpy, cmap, defined_color, &tmp_color, &ignore)) &&
       ((!fallback_color) || 
@@ -705,6 +706,7 @@ void snd_doit(int argc, char **argv)
 #endif
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
+
 #if (HAVE_GL) && (!SND_AS_WIDGET)
   {
     /* this taken from glxmotif.c from xjournal/sgi */
@@ -751,35 +753,35 @@ void snd_doit(int argc, char **argv)
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
   sx->white =                 get_color(shell, snd_rs.white_color,           WHITE_COLOR,           NULL, NULL, true);
   sx->black =                 get_color(shell, snd_rs.black_color,           BLACK_COLOR,           NULL, NULL, false);
-  sx->light_blue =            get_color(shell, snd_rs.light_blue_color,      LIGHT_BLUE_COLOR,      NULL, NULL, true);
-  sx->lighter_blue =          get_color(shell, snd_rs.lighter_blue_color,    LIGHTER_BLUE_COLOR,    NULL, NULL, true);
+  sx->light_blue =            get_color(shell, snd_rs.light_blue_color,      LIGHT_BLUE_COLOR,      "blue", NULL, true);
+  sx->lighter_blue =          get_color(shell, snd_rs.lighter_blue_color,    LIGHTER_BLUE_COLOR,    "blue", NULL, true);
   sx->red =                   get_color(shell, snd_rs.red_color,             RED_COLOR,             NULL, NULL, false);
   sx->green =                 get_color(shell, snd_rs.green_color,           GREEN_COLOR,           NULL, NULL, false);
   sx->yellow =                get_color(shell, snd_rs.yellow_color,          YELLOW_COLOR,          NULL, NULL, true);
   sx->highlight_color =       get_color(shell, snd_rs.highlight_color,       HIGHLIGHT_COLOR,       "gray90", NULL, true);
   sx->basic_color =           get_color(shell, snd_rs.basic_color,           BASIC_COLOR,           "gray80", "gray", true);
-  sx->position_color =        get_color(shell, snd_rs.position_color,        POSITION_COLOR,        "gray60", "gray", false);
+  sx->position_color =        get_color(shell, snd_rs.position_color,        POSITION_COLOR,        "gray60", "blue", false);
   sx->zoom_color =            get_color(shell, snd_rs.zoom_color,            ZOOM_COLOR,            "gray20", "gray", false);
   sx->cursor_color =          get_color(shell, snd_rs.cursor_color,          CURSOR_COLOR,          NULL, NULL, false);
   sx->selection_color =       get_color(shell, snd_rs.selection_color,       SELECTION_COLOR,       "gray80", NULL, false);
-  sx->mix_color =             get_color(shell, snd_rs.mix_color,             MIX_COLOR,             NULL, NULL, false);
-  sx->enved_waveform_color =  get_color(shell, snd_rs.enved_waveform_color,  ENVED_WAVEFORM_COLOR,  NULL, NULL, false);
-  sx->filter_control_waveform_color = get_color(shell, snd_rs.filter_control_waveform_color, FILTER_CONTROL_WAVEFORM_COLOR, NULL, NULL, false);
+  sx->mix_color =             get_color(shell, snd_rs.mix_color,             MIX_COLOR,             "red", NULL, false);
+  sx->enved_waveform_color =  get_color(shell, snd_rs.enved_waveform_color,  ENVED_WAVEFORM_COLOR,  "red", NULL, false);
+  sx->filter_control_waveform_color = get_color(shell, snd_rs.filter_control_waveform_color, FILTER_CONTROL_WAVEFORM_COLOR, "blue", NULL, false);
   sx->listener_color =        get_color(shell, snd_rs.listener_color,        LISTENER_COLOR,        NULL, NULL, true);
-  sx->listener_text_color =   get_color(shell, snd_rs.listener_text_color,   LISTENER_TEXT_COLOR,   NULL, NULL, true);
+  sx->listener_text_color =   get_color(shell, snd_rs.listener_text_color,   LISTENER_TEXT_COLOR,   NULL, NULL, false);
   sx->graph_color =           get_color(shell, snd_rs.graph_color,           GRAPH_COLOR,           NULL, NULL, true);
   sx->selected_graph_color =  get_color(shell, snd_rs.selected_graph_color,  SELECTED_GRAPH_COLOR,  NULL, NULL, true);
   sx->data_color =            get_color(shell, snd_rs.data_color,            DATA_COLOR,            NULL, NULL, false);
   sx->selected_data_color =   get_color(shell, snd_rs.selected_data_color,   SELECTED_DATA_COLOR,   NULL, NULL, false);
-  sx->mark_color =            get_color(shell, snd_rs.mark_color,            MARK_COLOR,            NULL, NULL, false);
+  sx->mark_color =            get_color(shell, snd_rs.mark_color,            MARK_COLOR,            "red", NULL, false);
   sx->sash_color =            get_color(shell, snd_rs.sash_color,            SASH_COLOR,            NULL, NULL, false);
-  sx->pushed_button_color =   get_color(shell, snd_rs.pushed_button_color,   PUSHED_BUTTON_COLOR,   NULL, NULL, false);
+  sx->pushed_button_color =   get_color(shell, snd_rs.pushed_button_color,   PUSHED_BUTTON_COLOR,   "blue", NULL, false);
   sx->text_focus_color =      get_color(shell, snd_rs.text_focus_color,      TEXT_FOCUS_COLOR,      NULL, NULL, true);
-  sx->help_button_color =     get_color(shell, snd_rs.help_button_color,     HELP_BUTTON_COLOR,     NULL, NULL, true);
-  sx->quit_button_color =     get_color(shell, snd_rs.quit_button_color,     QUIT_BUTTON_COLOR,     NULL, NULL, true);
-  sx->reset_button_color =    get_color(shell, snd_rs.reset_button_color,    RESET_BUTTON_COLOR,    NULL, NULL, true);
-  sx->doit_button_color =     get_color(shell, snd_rs.doit_button_color,     DOIT_BUTTON_COLOR,     NULL, NULL, true);
-  sx->doit_again_button_color = get_color(shell, snd_rs.doit_again_button_color, DOIT_AGAIN_BUTTON_COLOR, NULL, NULL, true);
+  sx->help_button_color =     get_color(shell, snd_rs.help_button_color,     HELP_BUTTON_COLOR,     "green", NULL, true);
+  sx->quit_button_color =     get_color(shell, snd_rs.quit_button_color,     QUIT_BUTTON_COLOR,     "blue", NULL, true);
+  sx->reset_button_color =    get_color(shell, snd_rs.reset_button_color,    RESET_BUTTON_COLOR,    "red", NULL, true);
+  sx->doit_button_color =     get_color(shell, snd_rs.doit_button_color,     DOIT_BUTTON_COLOR,     "red", NULL, true);
+  sx->doit_again_button_color = get_color(shell, snd_rs.doit_again_button_color, DOIT_AGAIN_BUTTON_COLOR, "red", NULL, true);
 
   sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
   sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);

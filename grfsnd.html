@@ -1212,7 +1212,7 @@ a shared library named xm.so; you can load this at any time into Snd:
 <p>and now we have access to all of X and Motif.  Alternatively, use the
 configure switch --with-static-xm, and the xm module will be included
 in the base Snd image.
-Here's dialog window with a slider:</p>
+Here's a dialog window with a slider:</p>
 <pre>
 (define scale-dialog #f)
 (define current-scaler 1.0)
@@ -1412,8 +1412,8 @@ a GtkWidget, so we have to cast a GtkAdjustment back to its original type.
 <!-- INDEX sndwithnogui:Scripting -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithnogui">Snd with no GUI and scripting</a></h3></td></tr></table>
 
-<p>If Snd is built without a graphical user interface (either by specifying
---with-no-gui to configure, or by setting the USE_NO_GUI compile-time flag),
+<p>If Snd is built without a graphical user interface (by specifying
+--with-no-gui to configure),
 it runs Guile's "repl" (read-eval-print loop), or Ruby's equivalent, with input from stdin.  All
 the non-interface related functions are available, so you can do things
 like:
@@ -1718,13 +1718,8 @@ In Ruby you make a symbol by prepending ":", so Guile's
 catch incomplete expressions).  And it appears that in Ruby, variables defined
 within a file are considered local to that file(?).
 The save state mechanism is incomplete, but the basic stuff works.
-Unimplemented (or untested) are:
-backtrace upon error, 
-env lookup from the env name,
-and
-many cute methods.  The RubyInline module might serve as a run-macro replacement.
-I'm slowly translating snd-test.scm to Ruby: see snd_test.rb.  bird.rb is the
-Ruby version of bird.scm. My very informal timing tests indicate that
+The RubyInline module might serve as a run-macro replacement.
+My very informal timing tests indicate that
 Guile and Ruby run at the same speed.
 Michael Scholz has translated many of the Scheme files to Ruby -- see
 any of the .rb files.
@@ -1967,9 +1962,8 @@ sets SND_COMMAND to <i>str</i>, which Snd subsequently notices.
 
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgl">Snd and OpenGL</a></h3></td></tr></table>
 
-<p>Snd can be used in conjunction with OpenGL.  If it is compiled with
-the switch -DHAVE_GL, and loaded with -lGLU -lGL (normally this can be
-handled via the configure switch --with-gl), the top level Snd shell
+<p>Snd can be used in conjunction with OpenGL.  If it is configured
+with the switch --with-gl or --with-just-gl, the top level Snd shell
 is setup to handle OpenGL graphics; the GLXContext is (snd-glx-context).
 The GL-to-Scheme bindings are in gl.c, and follow the same name and type
 conventions of the Motif bindings in xm.c.

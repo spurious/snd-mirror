@@ -373,6 +373,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+16-Mar:  def-optkey-fun in ws.scm.\n\
 15-Mar:  exported mus_optkey_* from sndlib and began incorporating optkey args into Snd.\n\
          region-position and optional channel arg to region-frames suggested by Matt Wright\n\
 10-Mar:  make-font-selector-dialog and make-color-selector-dialog in snd-gtk\n\
