@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* TODO: this dialog is needlessly ugly -- fix the button box */
+/* TODO: this dialog is needlessly ugly -- fix the button box and restore special colors */
 
 /* envelope editor and viewer */
 
@@ -97,7 +97,6 @@ void make_scrolled_env_list (void)
   char *str;
   size = enved_all_envs_top();
   gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(env_list))));
-  set_background(env_list, (ss->sgx)->basic_color);
   for (n = 0; n < size; n++) 
     {
       str = enved_all_names(n);
@@ -847,7 +846,6 @@ GtkWidget *create_envelope_editor (void)
 				     0);
       gtk_window_set_title(GTK_WINDOW(enved_dialog), _("Edit Envelope"));
       sg_make_resizable(enved_dialog);
-      set_background(enved_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width(GTK_CONTAINER(enved_dialog), 4);
       gtk_widget_realize(enved_dialog);
       gtk_window_resize(GTK_WINDOW(enved_dialog), 500, 500);
@@ -907,7 +905,6 @@ GtkWidget *create_envelope_editor (void)
 
       mainform = gtk_hbox_new(false, 0); /* buttons + graph */
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->vbox), mainform, true, true, 0);
-      set_background(mainform, (ss->sgx)->basic_color);
 
       leftframe = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(mainform), leftframe, false, false, 0);
@@ -925,8 +922,8 @@ GtkWidget *create_envelope_editor (void)
       drawer = gtk_drawing_area_new();
       gtk_box_pack_start(GTK_BOX(mainform), drawer, true, true, 0);
       gtk_widget_set_events(drawer, GDK_ALL_EVENTS_MASK);
-      set_background(drawer, (ss->sgx)->white);
-      set_foreground(drawer, (ss->sgx)->black);
+      gtk_widget_modify_bg(drawer, GTK_STATE_NORMAL, (ss->sgx)->white);
+      gtk_widget_modify_fg(drawer, GTK_STATE_NORMAL, (ss->sgx)->black);
       gtk_widget_show(drawer);
 
       showB = gtk_button_new_with_label(_("view envs"));
@@ -1119,7 +1116,6 @@ GtkWidget *create_envelope_editor (void)
       blank = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, blank_bits());
       brkpixL = gtk_drawing_area_new();
       gtk_widget_set_events(brkpixL, GDK_EXPOSURE_MASK);
-      set_background(brkpixL, (ss->sgx)->basic_color);
       gtk_widget_set_size_request(brkpixL, 16, 16);
       gtk_box_pack_start(GTK_BOX(toprow), brkpixL, false, false, 0);
       gtk_widget_show(brkpixL);
@@ -1130,7 +1126,6 @@ GtkWidget *create_envelope_editor (void)
 				     0);
       
       brktxtL = gtk_label_new(NULL);
-      set_background(brktxtL, (ss->sgx)->basic_color);
       gtk_box_pack_start(GTK_BOX(toprow), brktxtL, false, false, 0);
       gtk_widget_show(brktxtL);
 

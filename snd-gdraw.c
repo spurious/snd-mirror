@@ -651,7 +651,6 @@ void view_color_callback(GtkWidget *w, gpointer context)
 				     0);
       gtk_window_set_title(GTK_WINDOW(ccd->dialog), _("Color Editor"));
       sg_make_resizable(ccd->dialog);
-      set_background(ccd->dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(ccd->dialog), 4);
       gtk_widget_realize(ccd->dialog);
       gtk_window_resize(GTK_WINDOW(ccd->dialog), 260, 200);
@@ -1027,7 +1026,6 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     0);
       gtk_window_set_title(GTK_WINDOW(oid->dialog), _("Spectrogram Orientation"));
       sg_make_resizable(oid->dialog);
-      set_background(oid->dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width(GTK_CONTAINER(oid->dialog), 4);
       gtk_widget_realize(oid->dialog);
       gtk_window_resize(GTK_WINDOW(oid->dialog), 260, 300);

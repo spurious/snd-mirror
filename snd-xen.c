@@ -297,7 +297,6 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   XEN stack;
   char *name_buf = NULL;
   bool need_comma = false;
-
   if ((XEN_SYMBOL_P(tag)) &&
       (strcmp(XEN_SYMBOL_TO_C_STRING(tag), "snd-top-level") == 0))
     return(throw_args); /* not an error -- just a way to exit the current context */
@@ -488,8 +487,6 @@ static XEN snd_internal_stack_catch (XEN tag,
 				     void *handler_data)
 { /* declaration from libguile/throw */
   XEN result;
-
-
   if (ss->catch_exists < 0) ss->catch_exists = 0;
   ss->catch_exists++;
   /* one function can invoke, for example, a hook that will call back here setting up a nested catch */
@@ -2393,7 +2390,7 @@ static XEN g_set_selected_graph_color (XEN color)
 #if USE_MOTIF
       XtVaSetValues(channel_graph(cp), XmNbackground, XEN_UNWRAP_PIXEL(color), NULL);
 #else
-      set_background_and_redraw(channel_graph(cp), XEN_UNWRAP_PIXEL(color));
+      set_background(channel_graph(cp), XEN_UNWRAP_PIXEL(color));
 #endif
     }
   return(color);
@@ -2427,6 +2424,28 @@ static XEN g_basic_color(void)
   return(XEN_WRAP_PIXEL((ss->sgx)->basic_color));
 }
 
+void recolor_everything(widget_t w, void *ptr)
+{
+#if USE_GTK
+  if (GTK_IS_WIDGET(w)) 
+    {
+      set_background(w, (GdkColor *)ptr);
+      if (GTK_IS_CONTAINER(w))
+	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything, (gpointer)ptr);
+    }
+#endif
+#if USE_MOTIF
+  Pixel curcol;
+  if (XtIsWidget(w))
+    {
+      XtVaGetValues(w, XmNbackground, &curcol, NULL);
+      if (curcol == (Pixel)ptr)
+	XmChangeColor(w, (ss->sgx)->basic_color);
+    }
+#endif
+}
+
+
 static XEN g_set_basic_color(XEN color) 
 {
   color_t old_color;
@@ -2435,6 +2454,9 @@ static XEN g_set_basic_color(XEN color)
   (ss->sgx)->basic_color = XEN_UNWRAP_PIXEL(color); 
 #if USE_MOTIF
   map_over_children(MAIN_SHELL(ss), recolor_everything, (void *)old_color);
+#endif
+#if USE_GTK
+  gtk_container_foreach(GTK_CONTAINER(MAIN_SHELL(ss)), recolor_everything, (gpointer)old_color);
 #endif
 
 #if HAVE_XPM && USE_MOTIF

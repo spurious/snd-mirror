@@ -141,7 +141,6 @@ static GtkWidget *snd_gtk_file_selection_new(char *title, GtkSignalFunc gdelete,
 {
   GtkWidget *new_dialog;
   new_dialog = gtk_file_selection_new(title);
-  set_background(new_dialog, (ss->sgx)->basic_color);
   g_signal_connect_closure_by_id(GTK_OBJECT(new_dialog),
 				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(new_dialog))),
 				 0,
@@ -586,7 +585,6 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
   if (!save_as_dialog)
     {
       save_as_dialog = gtk_file_selection_new(_("save as:"));
-      set_background(save_as_dialog, (ss->sgx)->basic_color);
       g_signal_connect_closure_by_id(GTK_OBJECT(save_as_dialog),
 				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(save_as_dialog))),
 				     0,
@@ -716,20 +714,14 @@ ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_
     {
       sbar = gtk_menu_bar_new();
       gtk_box_pack_end(GTK_BOX(wwi->tophbox), sbar, false, false, 0);
-      set_background(sbar, (ss->sgx)->basic_color);
       gtk_widget_show(sbar);
 
       smenu = gtk_menu_new();
       wwi->byname = gtk_menu_item_new_with_label(_("name"));
-      set_background(wwi->byname, (ss->sgx)->basic_color);
       wwi->bydate = gtk_menu_item_new_with_label(_("date"));
-      set_background(wwi->bydate, (ss->sgx)->basic_color);
       wwi->bysize = gtk_menu_item_new_with_label(_("size"));
-      set_background(wwi->bysize, (ss->sgx)->basic_color);
       wwi->byentry = gtk_menu_item_new_with_label(_("entry"));
-      set_background(wwi->byentry, (ss->sgx)->basic_color);
       wwi->byproc = gtk_menu_item_new_with_label(_("proc"));
-      set_background(wwi->byproc, (ss->sgx)->basic_color);
 
       gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->byname);
       gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->bydate);
@@ -745,7 +737,6 @@ ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_
       byproc = wwi->byproc;
 
       sitem = gtk_menu_item_new_with_label(_("sort"));
-      set_background(sitem, (ss->sgx)->basic_color);
       gtk_widget_show(sitem);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
       gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
@@ -758,10 +749,8 @@ ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_
     }
 
   wwi->list = gtk_vbox_new(false, 0);
-  set_background(wwi->list, (ss->sgx)->basic_color);
 
   cww = gtk_scrolled_window_new(NULL, NULL);
-  set_background(cww, (ss->sgx)->basic_color);
   gtk_box_pack_start(GTK_BOX(formw), cww, true, true, 0);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cww), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(cww), wwi->list);
@@ -1327,7 +1316,6 @@ static void make_raw_data_dialog(void)
 				 0);
   gtk_window_set_title(GTK_WINDOW(raw_data_dialog), _("No Header on File"));
   sg_make_resizable(raw_data_dialog);
-  set_background(raw_data_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width(GTK_CONTAINER(raw_data_dialog), 10);
   gtk_window_resize(GTK_WINDOW(raw_data_dialog), 350, 260);
   gtk_widget_realize(raw_data_dialog);
@@ -1494,7 +1482,6 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
 				     0);
       gtk_window_set_title(GTK_WINDOW(new_dialog), title);
       sg_make_resizable(new_dialog);
-      set_background(new_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(new_dialog), 10);
       gtk_window_resize(GTK_WINDOW(new_dialog), 400, 250);
       gtk_widget_realize(new_dialog);
@@ -1617,7 +1604,6 @@ GtkWidget *edit_header(snd_info *sp)
 				     0);
       /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), _("Edit Header")); */
       sg_make_resizable(edit_header_dialog);
-      set_background(edit_header_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(edit_header_dialog), 10);
       gtk_window_resize(GTK_WINDOW(edit_header_dialog), 360, 250);
       gtk_widget_realize(edit_header_dialog);
@@ -1646,6 +1632,7 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_widget_show(cancel_button);
       gtk_widget_show(save_button);
       gtk_widget_show(help_button);
+
       edit_header_data = make_file_data_panel(GTK_DIALOG(edit_header_dialog)->vbox, _("Edit Header"), true, 
 					      hdr->type, hdr->format, true, false, true);
       set_dialog_widget(EDIT_HEADER_DIALOG, edit_header_dialog);

@@ -212,7 +212,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
       XSetFont(ax->dp, ax->gc, ((ss->sgx)->peaks_fontstruct)->fid);
 #else
   #if USE_GTK
-      ax->current_font = (ss->sgx)->peaks_fnt;
+      ax->current_font = PEAKS_FONT(ss);
   #endif
 #endif
       len = mark_name_width(mp->name);

@@ -323,12 +323,7 @@ int mark_name_width(char *txt);
 void clear_window(axis_context *ax);
 void set_background(GtkWidget *w, GdkColor *col);
 void set_backgrounds(GtkWidget *w, GdkColor *col);
-void set_active_color(GtkWidget *w, GdkColor *col);
-void set_background_and_redraw(GtkWidget *w, GdkColor *col);
-void set_foreground(GtkWidget *w, GdkColor *col);
-void set_text_background(GtkWidget *w, GdkColor *col);
 void highlight_color(GtkWidget *w);
-void white_color(GtkWidget *w);
 void raise_dialog(GtkWidget *w);
 void set_button_label(GtkWidget *label, const char *str);
 void set_label(GtkWidget *label, const char *str);
@@ -493,7 +488,6 @@ void g_init_gxenv(void);
 
 void color_chan_components(color_t color, slider_choice_t which_component);
 void color_unselected_graphs(color_t color);
-void recolor_everything(widget_t w, void *ptr);
 void g_init_gxen(void);
 
 

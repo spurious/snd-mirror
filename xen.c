@@ -85,11 +85,6 @@ char *xen_version(void)
   return(buf);
 }
 
-void *xen_malloc(int size)
-{
-  return((void *)malloc(size));
-}
-
 void xen_repl(int argc, char **argv)
 {
   scm_shell(argc, argv); 
@@ -238,11 +233,6 @@ char *xen_help(char *name)
 void xen_initialize(void)
 {
   ruby_init();
-}
-
-void *xen_malloc(int size)
-{
-  return((void *)(ALLOC_N(char, size)));
 }
 
 void xen_gc_mark(XEN val)
@@ -590,11 +580,6 @@ XEN xen_rb_str_new2(char *arg)
 char *xen_version(void)
 {
   return("no embedded language");
-}
-
-void *xen_malloc(int size)
-{
-  return(malloc(size));
 }
 
 void xen_repl(int argc, char **argv)

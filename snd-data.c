@@ -666,7 +666,6 @@ static XEN select_channel_hook;
 
 static void select_sound(snd_info *sp)
 {
-  snd_info *osp = NULL;
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
   if (XEN_HOOKED(select_sound_hook))
     run_hook(select_sound_hook,
@@ -674,28 +673,29 @@ static void select_sound(snd_info *sp)
 	     S_select_sound_hook);
   if (ss->selected_sound != sp->index)
     {
-#if (!USE_GTK)
+#if USE_MOTIF
       if (!ss->using_schemes)
-#endif
 	{
+	  snd_info *osp = NULL;
 	  if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
 	  if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
 	    {
-	      highlight_color(w_snd_name(osp));
-#if ((USE_MOTIF) && (XmVERSION > 1))
+	      XmChangeColor(w_snd_name(osp), (ss->sgx)->highlight_color);
+#if (XmVERSION > 1)
 	      if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 		XmChangeColor((osp->sgx)->tab, (ss->sgx)->graph_color);
 #endif
 	    }
 	  if (sp->selected_channel != NO_SELECTION) 
 	    {
-	      white_color(w_snd_name(sp));
-#if ((USE_MOTIF) && (XmVERSION > 1))
+	      XmChangeColor(w_snd_name(sp), (ss->sgx)->white);
+#if (XmVERSION > 1)
 	      if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 		XmChangeColor((sp->sgx)->tab, (ss->sgx)->selected_graph_color);
 #endif
 	    }
 	}
+#endif
       ss->selected_sound = sp->index;
       highlight_selected_sound();
       reflect_undo_or_redo_in_menu(any_selected_channel(sp));

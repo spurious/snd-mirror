@@ -114,6 +114,7 @@ static void create_help_monolog(void)
   gtk_widget_show(ok_button);
 
   help_text = make_scrolled_text(GTK_DIALOG(help_dialog)->vbox, false, NULL, NULL);
+  gtk_widget_modify_base(help_text, GTK_STATE_NORMAL, ss->sgx->white);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(help_text), 10);
   gtk_widget_show(help_dialog);
   set_dialog_widget(HELP_DIALOG, help_dialog);

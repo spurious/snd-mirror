@@ -158,6 +158,10 @@ typedef struct {
 #define SOUND_PANE_BOX(a) (a->sgx)->soundpanebox
 #define AXIS_NUMBERS_FONT(a) (a->sgx)->axis_numbers_fnt
 #define AXIS_LABEL_FONT(a) (a->sgx)->axis_label_fnt
+#define LISTENER_FONT(a) (a->sgx)->listener_fnt
+#define TINY_FONT(a) (a->sgx)->tiny_fnt
+#define PEAKS_FONT(a) (a->sgx)->peaks_fnt
+#define BOLD_PEAKS_FONT(a) (a->sgx)->bold_peaks_fnt
 #define color_t GdkColor *
 #define KEY_TO_NAME(key) gdk_keyval_name(key)
 

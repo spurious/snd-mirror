@@ -70,17 +70,6 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   return(XEN_WRAP_PIXEL(tmp_color.pixel));
 }
 
-void recolor_everything(widget_t w, void *ptr)
-{
-  Pixel curcol;
-  if (XtIsWidget(w))
-    {
-      XtVaGetValues(w, XmNbackground, &curcol, NULL);
-      if (curcol == (Pixel)ptr)
-	XmChangeColor(w, (ss->sgx)->basic_color);
-    }
-}
-
 void color_unselected_graphs(color_t color)
 {
   int i, j;

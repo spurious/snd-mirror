@@ -233,9 +233,6 @@ void set_main_color_of_widget (Widget w, void *userptr)
     }
 }
 
-void highlight_color(Widget w) {XmChangeColor(w, (ss->sgx)->highlight_color);}
-void white_color(Widget w) {XmChangeColor(w, (ss->sgx)->white);}
-
 void set_label(Widget label, const char *str)
 {
   XmString s1;

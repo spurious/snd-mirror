@@ -55,12 +55,6 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   return(XEN_WRAP_PIXEL(ccolor));
 }
 
-void recolor_everything(widget_t w, void *ptr)
-{
-  if (GTK_IS_WIDGET(w)) 
-    set_background_and_redraw(w, (GdkColor *)ptr);
-}
-
 void color_unselected_graphs(color_t color)
 {
   int i, j;
@@ -74,7 +68,7 @@ void color_unselected_graphs(color_t color)
 	  {
 	    cp = sp->chans[j];
 	    if ((cp) && ((i != ss->selected_sound) || (j != sp->selected_channel)))
-	      set_background_and_redraw(channel_graph(cp), color);
+	      set_background(channel_graph(cp), color);
 	  }
     }
 }
@@ -95,13 +89,13 @@ void color_chan_components(color_t color, slider_choice_t which_component)
 	      {
 		if (which_component == COLOR_POSITION)
 		  {
-		    set_background_and_redraw(channel_sx(cp), color);
-		    set_background_and_redraw(channel_sy(cp), color);
+		    set_background(channel_sx(cp), color);
+		    set_background(channel_sy(cp), color);
 		  }
 		else
 		  {
-		    set_background_and_redraw(channel_zx(cp), color);
-		    set_background_and_redraw(channel_zy(cp), color);
+		    set_background(channel_zx(cp), color);
+		    set_background(channel_zy(cp), color);
 		  }
 	      }
 	  }

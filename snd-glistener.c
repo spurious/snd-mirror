@@ -94,6 +94,7 @@ static void start_completion_dialog(int num_items, char **items)
 				     0);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
+  
       first_time = true;
       completion_list = sg_make_list(_("Completions"), 
 				     GTK_DIALOG(completion_dialog)->vbox,
@@ -655,6 +656,7 @@ static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 
 static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
+  gtk_widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->white);
   if (XEN_HOOKED(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -664,6 +666,7 @@ static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 
 static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
+  gtk_widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
   if (XEN_HOOKED(mouse_leave_text_hook))
     run_hook(mouse_leave_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -691,8 +694,9 @@ GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background)
   text = gtk_entry_new();
   gtk_editable_set_editable(GTK_EDITABLE(text), true);
   gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
-  if (with_white_background) set_background(text, (ss->sgx)->white);
   gtk_widget_show(text);
+  if (with_white_background) /* set_background(text, (ss->sgx)->white); */
+    gtk_widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
   connect_mouse_to_text(text);
   return(text);
 }
@@ -711,7 +715,10 @@ static void make_command_widget(int height)
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
       listener_text = make_scrolled_text(frame, true, NULL, NULL);
 
-      if (ss->sgx->listener_fnt) gtk_widget_modify_font(listener_text, ss->sgx->listener_fnt);
+      if (LISTENER_FONT(ss)) gtk_widget_modify_font(listener_text, LISTENER_FONT(ss));
+      gtk_widget_modify_base(listener_text, GTK_STATE_NORMAL, (ss->sgx)->listener_color);
+      gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, (ss->sgx)->listener_text_color);
+
       {
 	/* sigh... activate Emacs key bindings to some extent */
 	/*   these appear to be set in gtk+-2.1.1/gtk/gtkrc.key.emacs */
@@ -855,7 +862,6 @@ static void make_command_widget(int height)
 				     0);
       ss->sgx->listener_pane = listener_text;
       sg_text_insert(listener_text, listener_prompt(ss));
-      set_text_background(listener_text, (ss->sgx)->listener_color);
     }
 }
 
@@ -868,7 +874,7 @@ void color_listener(GdkColor *pix)
 {
   (ss->sgx)->listener_color = pix;
   if (listener_text) 
-    set_text_background(listener_text, (ss->sgx)->listener_color);
+    gtk_widget_modify_base(listener_text, GTK_STATE_NORMAL, (ss->sgx)->listener_color);
 }
 
 void color_listener_text(GdkColor *pix)

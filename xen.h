@@ -13,11 +13,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 6
-#define XEN_VERSION "1.6"
+#define XEN_MINOR_VERSION 7
+#define XEN_VERSION "1.7"
 
 /* HISTORY:
  *  
+ *   8-Sep-03:  removed xen_malloc -- can't remember now why this existed.
  *   19-Aug-03: xen_rb_str_new2 to avoid unwanted side-effects.
  *   12-Aug-03: various changes for ISO C99.
  *   30-Jul-03: use new SCM_VECTOR_REF/SET macros if they're defined.
@@ -1356,7 +1357,6 @@ XEN c_to_xen_off_t(off_t val);
 char *xen_version(void);
 void xen_repl(int argc, char **argv);
 void xen_initialize(void);
-void *xen_malloc(int size);
 void xen_gc_mark(XEN val);
 
 #if HAVE_RUBY

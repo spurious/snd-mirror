@@ -64,7 +64,6 @@ void snd_error(char *format, ...)
 {
 #if HAVE_VPRINTF
   va_list ap;
-  snd_info *sp;
   if (snd_error_buffer == NULL) 
     snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
@@ -79,11 +78,13 @@ void snd_error(char *format, ...)
 				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
 				   S_snd_error_hook))))
     return;
+#if USE_NO_GUI
+  fprintf(stderr, snd_error_buffer);
+#else
   if ((ss) && (ss->sgx))
     {
-      if ((DEBUGGING) || (USE_NO_GUI) || (ss->batch_mode))
+      if ((DEBUGGING) || (ss->batch_mode))
 	fprintf(stderr, snd_error_buffer);
-
 #ifdef SND_AS_WIDGET
       if (snd_error_display) 
 	snd_error_display(snd_error_buffer);
@@ -91,16 +92,19 @@ void snd_error(char *format, ...)
 	{
 	  /* don't break (unlikely) existing code? */
 #endif
-      add_to_error_history(snd_error_buffer, true);
-      sp = selected_sound();
-      ss->catch_message = snd_error_buffer;
-      if ((direct_snd_error_call) ||
-	  (ss->catch_exists == 0))
-	{
-	  if ((sp) && (sp->active))
-	    report_in_minibuffer(sp, snd_error_buffer);
-	  else post_error_dialog(snd_error_buffer);
-	}
+	  {
+	    snd_info *sp;
+	    add_to_error_history(snd_error_buffer, true);
+	    sp = selected_sound();
+	    ss->catch_message = snd_error_buffer;
+	    if ((direct_snd_error_call) ||
+		(ss->catch_exists == 0))
+	      {
+		if ((sp) && (sp->active))
+		  report_in_minibuffer(sp, snd_error_buffer);
+		else post_error_dialog(snd_error_buffer);
+	      }
+	  }
 #ifdef SND_AS_WIDGET
 	}
 #endif
@@ -110,6 +114,8 @@ void snd_error(char *format, ...)
       fprintf(stderr, snd_error_buffer);
       fputc('\n', stderr);
     }
+#endif
+  /* end USE_NO_GUI */
 #else
   fprintf(stderr, "error...");
   fputc('\n', stderr);

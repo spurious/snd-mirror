@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: transparent pixmaps */
+
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_info_label, W_info, W_info_sep,
       W_play, W_sync, W_unite,
@@ -183,7 +185,6 @@ void goto_minibuffer(snd_info *sp)
   if (sp) 
     {
       (sp->sgx)->mini_active = true;
-      set_text_background(MINIBUFFER_TEXT(sp), (ss->sgx)->white);
       goto_window(MINIBUFFER_TEXT(sp));
     }
 }
@@ -249,10 +250,7 @@ static gboolean minibuffer_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoin
 {
   snd_info *sp = (snd_info *)data;
   if ((sp) && (sp->inuse == SOUND_NORMAL))
-    {
-      set_text_background(w, (ss->sgx)->white);
-      (sp->sgx)->mini_active = true;
-    }
+    (sp->sgx)->mini_active = true;
   return(false);
 }
 
@@ -260,11 +258,7 @@ static gboolean minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpoin
 {
   snd_info *sp = (snd_info *)data;
   if ((sp) && (sp->inuse == SOUND_NORMAL))
-    {
-      /* weird -- I'm getting this event sent to an inactive sound?? */
-      set_text_background(w, (ss->sgx)->basic_color);
-      (sp->sgx)->mini_active = false;
-    }
+    (sp->sgx)->mini_active = false;
   return(false);
 }
 
@@ -314,8 +308,8 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   if (on) 
     {
       if (sp->cursor_follows_play != DONT_FOLLOW) 
-	set_active_color(w, (ss->sgx)->green); 
-      else set_active_color(w, (ss->sgx)->pushed_button_color);
+	gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->green);
+      else gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->pushed_button_color);
       play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, 
 		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
 		 "play_button", 0);                        /* should this follow the sync button? */
@@ -332,11 +326,11 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
     {
       w = PLAY_BUTTON(sp);
       if (pd->pausing)
-	set_active_color(w, (ss->sgx)->red);
+	gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->red);
       else 
-	if (sp->cursor_follows_play != DONT_FOLLOW) 
-	  set_active_color(w, (ss->sgx)->green); 
-	else set_active_color(w, (ss->sgx)->pushed_button_color);
+	if (sp->cursor_follows_play != DONT_FOLLOW)
+	  gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->green); 
+	else gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->pushed_button_color);
     }
 }
 
@@ -349,17 +343,18 @@ void play_button_pause(bool pausing)
   FREE(pd);
 }
 
+/* TODO: all active play/sync colors need to be normal as well as active, then unset */
 static void set_sync_color(snd_info *sp)
 {
   GtkWidget *syb;
   syb = SYNC_BUTTON(sp);
   switch (sp->sync)
     {
-    case 1: case 0: set_active_color(syb, (ss->sgx)->pushed_button_color); break;
-    case 2: set_active_color(syb, (ss->sgx)->green); break;
-    case 3: set_active_color(syb, (ss->sgx)->yellow); break;
-    case 4: set_active_color(syb, (ss->sgx)->red); break;
-    default: set_active_color(syb, (ss->sgx)->black); break;
+    case 1: case 0: gtk_widget_modify_bg(syb, GTK_STATE_ACTIVE, ss->sgx->pushed_button_color); break;
+    case 2:         gtk_widget_modify_bg(syb, GTK_STATE_ACTIVE, ss->sgx->green);               break;
+    case 3:         gtk_widget_modify_bg(syb, GTK_STATE_ACTIVE, ss->sgx->yellow);              break;
+    case 4:         gtk_widget_modify_bg(syb, GTK_STATE_ACTIVE, ss->sgx->red);                 break;
+    default:        gtk_widget_modify_bg(syb, GTK_STATE_ACTIVE, ss->sgx->black);               break;
     }
 }
 
@@ -1135,7 +1130,6 @@ static void apply_button_callback(GtkWidget *w, gpointer context)
   if (sp->applying) 
     {
       stop_applying(sp);
-      set_background(APPLY_BUTTON(sp), (ss->sgx)->basic_color);
       sp->applying = false;
     }
   else
@@ -1148,7 +1142,6 @@ static void apply_button_callback(GtkWidget *w, gpointer context)
 	  else ss->apply_choice = APPLY_TO_CHANNEL;
 	}
       sp->applying = true;
-      set_background(APPLY_BUTTON(sp), (ss->sgx)->pushed_button_color);
       sgx->apply_in_progress = BACKGROUND_ADD(apply_controls, (Indicium)(make_apply_state_with_implied_beg_and_dur(sp)));
     }
 }
@@ -1177,8 +1170,6 @@ static void unlockapply(snd_info *sp, void *up)
 void unlock_apply(snd_info *sp)
 {
   for_each_sound(unlockapply, (void *)sp);
-  if (sp) 
-    set_background(APPLY_BUTTON(sp), (ss->sgx)->basic_color);
 }
 
 static void remember_button_callback(GtkWidget *w, gpointer context) {save_controls((snd_info *)context);}
@@ -1317,7 +1308,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  sx->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	  set_background(sx->dialog, (ss->sgx)->basic_color);
 	  sg_make_resizable(sx->dialog);
 	  gtk_container_add(GTK_CONTAINER(sx->dialog), sw[W_pane]);
 	  gtk_widget_show(sx->dialog);
@@ -1359,7 +1349,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       sw[W_name_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_name_event], false, false, 5);
       gtk_widget_show(sw[W_name_event]);
-      set_background(sw[W_name_event], (ss->sgx)->highlight_color);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_name_event]),
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_name_event]))),
 				     0,
@@ -1372,7 +1361,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       sw[W_name_pix] = gtk_drawing_area_new();
       gtk_widget_set_events(sw[W_name_pix], GDK_EXPOSURE_MASK);
-      set_background(sw[W_name_pix], (ss->sgx)->basic_color);
       gtk_widget_set_size_request(sw[W_name_pix], 16, 16);
       gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_name_pix], false, false, 0);
       gtk_widget_show(sw[W_name_pix]);
@@ -1413,9 +1401,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(minibuffer_mouse_leave), (gpointer)sp, 0),
 				     0);
 
-      set_background(sw[W_info], (ss->sgx)->basic_color);
-      set_text_background(sw[W_info], (ss->sgx)->basic_color);
-      
       /* now fill from other end */
       
       sw[W_play] = gtk_check_button_new_with_label(_("play"));
@@ -1472,7 +1457,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       sw[W_amp_form] = gtk_hbox_new(false, 2);
       gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_amp_form], false, false, 0);
-      set_background(sw[W_amp_form], (ss->sgx)->basic_color);
       
       sw[W_amp_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_amp_form]), sw[W_amp_event], false, false, 4);
@@ -1482,7 +1466,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(amp_click_callback), (gpointer)sp, 0),
 				     0);
-      set_background(sw[W_amp_event], (ss->sgx)->basic_color);
       
       sw[W_amp_label] = gtk_label_new(_("amp:"));
       gtk_container_add(GTK_CONTAINER(sw[W_amp_event]), sw[W_amp_label]);
@@ -1514,7 +1497,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       sw[W_srate_form] = gtk_hbox_new(false, 2);
       gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_srate_form], false, false, 0);
-      set_background(sw[W_srate_form], (ss->sgx)->basic_color);
       
       sw[W_srate_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_srate_form]), sw[W_srate_event], false, false, 4);
@@ -1524,7 +1506,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(srate_click_callback), (gpointer)sp, 0),
 				     0);
-      set_background(sw[W_srate_event], (ss->sgx)->basic_color);
       
       sw[W_srate_label] = gtk_label_new(_("speed:"));
       gtk_container_add(GTK_CONTAINER(sw[W_srate_event]), sw[W_srate_label]);
@@ -1557,7 +1538,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       sw[W_srate_pix] = gtk_drawing_area_new();
       gtk_widget_set_events(sw[W_srate_pix], GDK_ALL_EVENTS_MASK);
       gtk_box_pack_start(GTK_BOX(sw[W_srate_form]), sw[W_srate_pix], false, false, 2);
-      set_background(sw[W_srate_pix], (ss->sgx)->basic_color);
       gtk_widget_set_size_request(sw[W_srate_pix], 18, 16);
       gtk_widget_show(sw[W_srate_pix]);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_srate_pix]),
@@ -1578,7 +1558,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       sw[W_expand_form] = gtk_hbox_new(false, 2);
       gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_expand_form], false, false, 0);
-      set_background(sw[W_expand_form], (ss->sgx)->basic_color);
       
       sw[W_expand_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_expand_form]), sw[W_expand_event], false, false, 4);
@@ -1588,7 +1567,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(expand_click_callback), (gpointer)sp, 0),
 				     0);
-      set_background(sw[W_expand_event], (ss->sgx)->basic_color);
       
       sw[W_expand_label] = gtk_label_new(_("expand:"));
       gtk_container_add(GTK_CONTAINER(sw[W_expand_event]), sw[W_expand_label]);
@@ -1629,7 +1607,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       sw[W_contrast_form] = gtk_hbox_new(false, 2);
       gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_contrast_form], false, false, 0);
-      set_background(sw[W_contrast_form], (ss->sgx)->basic_color);
       
       sw[W_contrast_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_contrast_form]), sw[W_contrast_event], false, false, 4);
@@ -1639,7 +1616,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(contrast_click_callback), (gpointer)sp, 0),
 				     0);
-      set_background(sw[W_contrast_event], (ss->sgx)->basic_color);
       
       sw[W_contrast_label] = gtk_label_new(_("contrast:"));
       gtk_container_add(GTK_CONTAINER(sw[W_contrast_event]), sw[W_contrast_label]);
@@ -1680,7 +1656,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       sw[W_reverb_form] = gtk_hbox_new(false, 2);
       gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_reverb_form], false, false, 0);
-      set_background(sw[W_reverb_form], (ss->sgx)->basic_color);
       
       sw[W_revscl_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revscl_event], false, false, 4);
@@ -1690,7 +1665,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(revscl_click_callback), (gpointer)sp, 0),
 				     0);
-      set_background(sw[W_revscl_event], (ss->sgx)->basic_color);
       
       sw[W_revscl_label] = gtk_label_new(_("reverb:"));
       gtk_container_add(GTK_CONTAINER(sw[W_revscl_event]), sw[W_revscl_label]);
@@ -1723,7 +1697,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(revlen_click_callback), (gpointer)sp, 0),
 				     0);
-      set_background(sw[W_revlen_event], (ss->sgx)->basic_color);
       
       sw[W_revlen_label] = gtk_label_new(_("len:"));
       gtk_container_add(GTK_CONTAINER(sw[W_revlen_event]), sw[W_revlen_label]);
@@ -1764,7 +1737,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       sw[W_filter_form] = gtk_hbox_new(false, 2);
       gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_filter_form], false, false, 0);
-      set_background(sw[W_filter_form], (ss->sgx)->basic_color);
       
       sw[W_filter_label] = gtk_label_new(_("filter:"));
       gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_label], false, false, 4);
@@ -1813,7 +1785,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       sw[W_apply_form] = gtk_hbox_new(false, 2);
       gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_apply_form], false, false, 0);
-      set_background(sw[W_apply_form], (ss->sgx)->basic_color);
       
       sw[W_apply] = gtk_button_new_with_label(_("Apply"));
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_apply], true, true, 0);
@@ -1867,7 +1838,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       sw[W_filter_env] = gtk_drawing_area_new();
       gtk_widget_set_events(sw[W_filter_env], GDK_ALL_EVENTS_MASK);
       gtk_container_add(GTK_CONTAINER(sw[W_filter_frame]), sw[W_filter_env]);
-      set_background(sw[W_filter_env], (ss->sgx)->basic_color);
       gtk_widget_show(sw[W_filter_env]);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_filter_env]),
 				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_filter_env]))),
@@ -1913,12 +1883,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_label_set_text(GTK_LABEL(sw[W_name]), shortname_indexed(sp));
 
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
-	{
-	  gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], sp->short_filename);
-	  set_text_background(gtk_notebook_get_tab_label(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), 
-							 sw[W_pane]), 
-			      (ss->sgx)->basic_color);
-	}
+	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], sp->short_filename);
       else reset_controls(sp); /* segfault here in notebook case! */
     }
 

@@ -208,8 +208,6 @@ int number_height(void);
 int label_height(void);
 int mark_name_width(char *txt);
 void clear_window(axis_context *ax);
-void highlight_color(int w);
-void white_color(int w);
 void set_title(const char *title);
 void check_for_event(void);
 bool event_pending(void);

@@ -292,7 +292,11 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->deferred_regions = 0;
   init_recorder();
 
+#if USE_NO_GUI
+  ss->catch_exists = 1; /* scm_shell */
+#else
   ss->catch_exists = 0;
+#endif
   g_initialize_gh();
   ss->search_proc = XEN_UNDEFINED;
   ss->file_sort_proc = XEN_UNDEFINED;

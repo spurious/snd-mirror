@@ -299,6 +299,7 @@ void news_help(void)
 	    "\nRecent changes include:\n\
 \n\
 8-Sep:   added show-all-axes-unlabelled and show-x-axis-unlabelled.\n\
+         removed parse-rc-file, added support for Snd.gtkrc.\n\
 2-Sep:   removed bold-button-font and boldbuttonFont resource.\n\
 29-Aug:  gcc complex trig replaces GSL if it's available.\n\
 21-Aug:  added snd->sample and xen->sample (Snd-specific) generators to redirect\n\

@@ -146,8 +146,6 @@ int number_height(void) {return(0);}
 int label_height(void) {return(0);}
 int mark_name_width(char *txt) {return(0);}
 void clear_window(axis_context *ax) {}
-void highlight_color(int w) {}
-void white_color(int w) {}
 void set_title(const char *title) {}
 void goto_window(int text) {}
 void check_for_event(void) {}
@@ -435,6 +433,7 @@ void snd_doit(int argc, char **argv)
                (define (" S_graph_data " . args) #f)\
                (define (" S_make_graph_data " . args) #f)\
                (define (" S_widget_text " . args) \"\")\
+               (define " S_x_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
@@ -550,5 +549,3 @@ void snd_doit(int argc, char **argv)
 
   xen_repl(1, argv);
 }
-
-/* TODO: this is segfaulting in snd-test test 1 graph-transform? */

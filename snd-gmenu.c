@@ -491,6 +491,7 @@ GtkWidget *add_menu(void)
   add_drop(mw[menu_menu]);
   gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), mw[menu_menu], false, true, 0);
   gtk_widget_show(mw[menu_menu]);
+  gtk_widget_modify_bg(mw[menu_menu], GTK_STATE_NORMAL, (ss->sgx)->highlight_color);
 
   /* FILE MENU */
   mw[file_menu] = gtk_menu_item_new_with_label(_("File"));
@@ -623,6 +624,7 @@ GtkWidget *add_menu(void)
   ml[f_sep_menu] = NULL;
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[f_cascade_menu]), mw[f_sep_menu]);
   gtk_widget_show(mw[f_sep_menu]);
+  gtk_widget_modify_bg(mw[f_sep_menu], GTK_STATE_NORMAL, ss->sgx->black);
 
   mw[f_exit_menu] = gtk_menu_item_new_with_label(_("Exit"));
   ml[f_exit_menu] = _("Exit");
@@ -683,6 +685,7 @@ GtkWidget *add_menu(void)
   ml[e_select_sep_menu] = NULL;
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[e_cascade_menu]), mw[e_select_sep_menu]);
   gtk_widget_show(mw[e_select_sep_menu]);
+  gtk_widget_modify_bg(mw[e_select_sep_menu], GTK_STATE_NORMAL, ss->sgx->black);
 
   mw[e_cut_menu] = gtk_menu_item_new_with_label(_("Delete Selection"));
   ml[e_cut_menu] = _("Delete Selection");
@@ -754,6 +757,7 @@ GtkWidget *add_menu(void)
   ml[e_edit_sep_menu] = NULL;
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[e_cascade_menu]), mw[e_edit_sep_menu]);
   gtk_widget_show(mw[e_edit_sep_menu]);
+  gtk_widget_modify_bg(mw[e_edit_sep_menu], GTK_STATE_NORMAL, ss->sgx->black);
 
   mw[e_edenv_menu] = gtk_menu_item_new_with_label(_("Edit Envelope"));
   ml[e_edenv_menu] = _("Edit Envelope");
@@ -878,7 +882,7 @@ GtkWidget *add_menu(void)
   ml[v_sep2_menu] = NULL;
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_cascade_menu]), mw[v_sep2_menu]);
   gtk_widget_show(mw[v_sep2_menu]);
-
+  gtk_widget_modify_bg(mw[v_sep2_menu], GTK_STATE_NORMAL, (ss->sgx)->black);
 
 
   mw[v_graph_style_menu] = gtk_menu_item_new_with_label(_("Graph style"));
@@ -1725,6 +1729,8 @@ static void create_popup_menu(guint button, Tempus time)
 			   (selcp->edits[selcp->edit_ctr + 1]));
 	}
       popup_menu = gtk_menu_new();
+      /* TODO: popup menu is wrong color */
+      gtk_widget_show(popup_menu);
 
       popup_children[W_pop_play] = gtk_menu_item_new_with_label(_("Play"));
       pl[W_pop_play] = _("Play");
@@ -1781,7 +1787,6 @@ static void create_popup_menu(guint button, Tempus time)
       set_sensitive(popup_children[W_pop_info], (ss->active_sounds > 0));
       gtk_widget_show(popup_children[W_pop_info]);
     }
-  gtk_widget_show(popup_menu);
   gtk_menu_popup(GTK_MENU(popup_menu), NULL, NULL, NULL, NULL, button, time);
 }
 

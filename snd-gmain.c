@@ -40,7 +40,7 @@
 #define ENVED_POINT_SIZE 10
 #define NOTEBOOK_BINDING_WIDTH 20
 
-#define TINY_FONT "Monospace 8"
+#define DEFAULT_TINY_FONT "Monospace 8"
 #define DEFAULT_PEAKS_FONT "Serif 10"
 #define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 10"
 #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
@@ -501,9 +501,9 @@ void snd_doit(int argc, char **argv)
   sx->pushed_button_color =   get_color(PUSHED_BUTTON_COLOR,   NULL, NULL, false);
   sx->text_focus_color =      get_color(TEXT_FOCUS_COLOR,      NULL, NULL, false);
 
-  if ((!(set_tiny_font(TINY_FONT))) &&
+  if ((!(set_tiny_font(DEFAULT_TINY_FONT))) &&
       (!(set_tiny_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font: %s"), TINY_FONT);
+    fprintf(stderr, _("can't find font: %s"), DEFAULT_TINY_FONT);
 
   if ((!(set_axis_label_font(DEFAULT_AXIS_LABEL_FONT))) &&
       (!(set_axis_label_font(FALLBACK_FONT))))
@@ -527,56 +527,97 @@ void snd_doit(int argc, char **argv)
 
   set_color_map(DEFAULT_SPECTROGRAM_COLOR);
   set_ask_before_overwrite(false);
-
-  sx->mainpane = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
+  MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
 
 #ifdef SND_AS_WIDGET
-  sx->mainshell = parent;
-  shell = sx->mainpane;
+  MAIN_SHELL(ss) = parent;
+  shell = MAIN_PANE(ss);
 #else
-  sx->mainshell = shell;
+  MAIN_SHELL(ss) = shell;
   gtk_container_add(GTK_CONTAINER(MAIN_SHELL(ss)), MAIN_PANE(ss));
-  set_background(MAIN_SHELL(ss), (ss->sgx)->basic_color);
 #endif
-
-  set_background(MAIN_PANE(ss), (ss->sgx)->basic_color);
-
+  gtk_widget_modify_bg(MAIN_SHELL(ss), GTK_STATE_NORMAL, ss->sgx->basic_color);
   add_menu();
-
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
-      sx->soundpane = gtk_vpaned_new();
-      set_backgrounds(sx->soundpane, (ss->sgx)->sash_color);
+      SOUND_PANE(ss) = gtk_vpaned_new();
       gtk_container_set_border_width(GTK_CONTAINER(SOUND_PANE(ss)), 0);
       gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), SOUND_PANE(ss));
-
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
-	  sx->soundpanebox = gtk_notebook_new();
-	  set_background(sx->soundpanebox, sx->basic_color);
-	  gtk_notebook_set_tab_pos(GTK_NOTEBOOK(sx->soundpanebox), GTK_POS_RIGHT);
+	  SOUND_PANE_BOX(ss) = gtk_notebook_new();
+	  gtk_notebook_set_tab_pos(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), GTK_POS_RIGHT);
 	}
       else 
 	{
 	  if (sound_style(ss) == SOUNDS_HORIZONTAL)
-	    sx->soundpanebox = gtk_hbox_new(false, 0);
-	  else sx->soundpanebox = gtk_vbox_new(false, 0);
+	    SOUND_PANE_BOX(ss) = gtk_hbox_new(false, 0);
+	  else SOUND_PANE_BOX(ss) = gtk_vbox_new(false, 0);
 	}
-      gtk_paned_add1(GTK_PANED(SOUND_PANE(ss)), sx->soundpanebox);
-      gtk_widget_show(sx->soundpanebox);
+      gtk_paned_add1(GTK_PANED(SOUND_PANE(ss)), SOUND_PANE_BOX(ss));
+      gtk_widget_show(SOUND_PANE_BOX(ss));
       gtk_widget_show(SOUND_PANE(ss));
     }
+  gtk_widget_modify_bg(SOUND_PANE(ss), GTK_STATE_NORMAL, ss->sgx->basic_color);
+  gtk_widget_modify_bg(SOUND_PANE_BOX(ss), GTK_STATE_NORMAL, ss->sgx->basic_color);
+
   gtk_widget_show(MAIN_PANE(ss));
   gtk_widget_show (MAIN_SHELL(ss));
 
 #ifndef SND_AS_WIDGET
-  ss->sgx->mainwindow = ss->sgx->mainshell->window;
+  MAIN_WINDOW(ss) = MAIN_SHELL(ss)->window;
 #else
-  ss->sgx->mainwindow = gtk_widget_get_parent_window (ss->sgx->mainshell);
+  MAIN_WINDOW(ss) = gtk_widget_get_parent_window(MAIN_SHELL(ss));
 #endif
 
   setup_gcs();
   make_icons_transparent(BASIC_COLOR);
+
+  if (mus_file_probe("Snd.gtkrc"))
+    gtk_rc_parse("Snd.gtkrc");
+  else gtk_rc_parse_string ("\n\
+style \"default\"\n\
+{\n\
+  font_name = \"Serif 11\"\n\
+\n\
+  fg[NORMAL]      = { 0.0,  0.00, 0.0 }\n\
+  text[NORMAL]    = { 0.0,  0.0,  0.0 }\n\
+  bg[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
+  bg[ACTIVE]      = { 0.80, 0.80, 0.75 }\n\
+  bg[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
+  base[NORMAL]    = { 1.00, 1.00, 1.00 }\n\
+  bg[PRELIGHT]    = { 0.54, 0.54, 0.51 }\n\
+  fg[PRELIGHT]    = { 1.0,  0.0,  0.0}\n\
+}\n\
+style \"default_button\" = \"default\"\n\
+{\n\
+  bg[ACTIVE]   = { 0.79, 0.88, 1.0 }\n\
+  bg[SELECTED] = { 0.79, 0.88, 1.0 }\n\
+}\n\
+style \"default_menu\" = \"default\"\n\
+{\n\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
+}\n\
+style \"default_text\" = \"default\"\n\
+{\n\
+  base[ACTIVE]      = { 0.93, 0.93, 0.87 }\n\
+  base[SELECTED]    = { 1.0, 1.0, 1.0 }\n\
+  base[PRELIGHT]    = { 1.0, 1.0, 1.0}\n\
+  bg[ACTIVE]        = { 1.0, 1.0, 1.0 }\n\
+  bg[SELECTED]      = { 1.0, 1.0, 1.0 }\n\
+  bg[PRELIGHT]      = { 1.0, 1.0, 1.0 }\n\
+  text[ACTIVE]      = { 0.0, 0.0, 0.0 }\n\
+  text[SELECTED]    = { 0.0, 0.0, 0.0 }\n\
+  text[PRELIGHT]    = { 0.0, 0.0, 0.0 }\n\
+  base[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
+  base[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
+}\n\
+class \"GtkWidget\" style \"default\"\n\
+class \"GtkButton\" style \"default_button\"\n\
+class \"GtkMenu\" style \"default_menu\"\n\
+class \"GtkEntry\" style \"default_text\"\n\
+class \"GtkTextView\" style \"default_text\"\n\
+");
 
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
   BACKGROUND_ADD(startup_funcs, NULL);
@@ -604,23 +645,6 @@ void snd_doit(int argc, char **argv)
 #endif
 }
 
-static XEN g_parse_rc_file(XEN name)
-{
-  if (XEN_STRING_P(name))
-    gtk_rc_parse(XEN_TO_C_STRING(name));
-  return(name);
-}
-
-#ifdef XEN_ARGIFY_1
-XEN_NARGIFY_1(g_parse_rc_file_w, g_parse_rc_file)
-#else
-#define g_parse_rc_file_w g_parse_rc_file
-#endif
-
 void g_init_gxmain(void)
 {
-  #define H_window_property_changed_hook S_window_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
-  XEN_DEFINE_HOOK(window_property_changed_hook, S_window_property_changed_hook, 1, H_window_property_changed_hook);
-
-  XEN_DEFINE_PROCEDURE("parse-rc-file", g_parse_rc_file_w, 1, 0, 0, "(parse-rc-file name) -> read gtk rc file");
 }

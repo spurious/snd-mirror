@@ -100,7 +100,7 @@ void make_scrolled_env_list(void)
     XtVaSetValues(screnvlst, XmNbackground, (ss->sgx)->highlight_color, NULL); 
   strs = (XmString *)CALLOC(size, sizeof(XmString)); 
   for (n = 0; n < size; n++) 
-    strs[n] = XmStringCreate(enved_all_names(n), (use_listener_font) ? "listener_font" : XmFONTLIST_DEFAULT_TAG);
+    strs[n] = XmStringCreate(enved_all_names(n), (char *)((use_listener_font) ? "listener_font" : XmFONTLIST_DEFAULT_TAG));
   XtVaSetValues(screnvlst, 
 		XmNitems, strs, 
 		XmNitemCount, size, 

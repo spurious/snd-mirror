@@ -638,8 +638,8 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
 		       0, 0);
-      set_background(cw[W_graph], (ss->sgx)->graph_color);
-      set_foreground(cw[W_graph], (ss->sgx)->data_color);
+      gtk_widget_modify_bg(cw[W_graph], GTK_STATE_NORMAL, (ss->sgx)->graph_color);
+      gtk_widget_modify_fg(cw[W_graph], GTK_STATE_NORMAL, (ss->sgx)->data_color);
       gtk_widget_show(cw[W_graph]);
       if (with_events)
 	{
@@ -764,8 +764,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 
 	  cw[W_f] = gtk_arrow_new(GTK_ARROW_UP, GTK_SHADOW_ETCHED_OUT);
 	  gtk_container_add(GTK_CONTAINER(cw[W_up_ev]), cw[W_f]);
-	  /* set_background(cw[W_f], (ss->sgx)->zoom_color); */
-	  /* gtk_window_resize(GTK_WINDOW(cw[W_f]), 14, 14); */
 	  gtk_widget_show(cw[W_f]);
 
 	  cw[W_down_ev] = gtk_event_box_new();
@@ -774,8 +772,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 
 	  cw[W_w] = gtk_arrow_new(GTK_ARROW_DOWN, GTK_SHADOW_ETCHED_OUT);
 	  gtk_container_add(GTK_CONTAINER(cw[W_down_ev]), cw[W_w]);
-	  /* set_background(cw[W_w], (ss->sgx)->zoom_color); */
-	  /* gtk_window_resize(GTK_WINDOW(cw[W_w]), 14, 14); */
 	  gtk_widget_show(cw[W_w]);
 	}
 
@@ -863,15 +859,9 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   return(0);
 }
 
-static void set_graph_font(chan_info *cp, PangoFontDescription *fnt)
-{
-  cp->cgx->ax->current_font = fnt;
-  gtk_widget_modify_font(cp->cgx->ax->w, fnt);
-}
-
-void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, (ss->sgx)->tiny_fnt);}
-void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (ss->sgx)->peaks_fnt);}
-void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (ss->sgx)->bold_peaks_fnt);}
+void set_tiny_numbers_font(chan_info *cp) {cp->cgx->ax->current_font = TINY_FONT(ss);}
+void set_peak_numbers_font(chan_info *cp) {cp->cgx->ax->current_font = PEAKS_FONT(ss);}
+void set_bold_peak_numbers_font(chan_info *cp) {cp->cgx->ax->current_font = BOLD_PEAKS_FONT(ss);}
 
 color_t get_foreground_color(chan_info *cp, axis_context *ax)
 {

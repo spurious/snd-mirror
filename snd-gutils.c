@@ -10,7 +10,7 @@ bool set_tiny_font(char *font)
     {
       if (tiny_font(ss)) FREE(tiny_font(ss));
       in_set_tiny_font(copy_string(font));
-      sgx->tiny_fnt = fs;
+      TINY_FONT(ss) = fs;
       return(true);
     }
   return(false);
@@ -24,7 +24,7 @@ bool set_listener_font(char *font)
     {
       if (listener_font(ss)) FREE(listener_font(ss));
       in_set_listener_font(copy_string(font));
-      (ss->sgx)->listener_fnt = fs;
+      LISTENER_FONT(ss) = fs;
       return(true);
     }
   return(false);
@@ -38,7 +38,7 @@ bool set_peaks_font(char *font)
     {
       if (peaks_font(ss)) FREE(peaks_font(ss));
       in_set_peaks_font(copy_string(font));
-      (ss->sgx)->peaks_fnt = fs;
+      PEAKS_FONT(ss) = fs;
       return(true);
     }
   return(false);
@@ -52,7 +52,7 @@ bool set_bold_peaks_font(char *font)
     {
       if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
       in_set_bold_peaks_font(copy_string(font));
-      (ss->sgx)->bold_peaks_fnt = fs;
+      BOLD_PEAKS_FONT(ss) = fs;
       return(true);
     }
   return(false);
@@ -66,7 +66,7 @@ bool set_axis_label_font(char *font)
     {
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
       in_set_axis_label_font(copy_string(font));
-      (ss->sgx)->axis_label_fnt = fs;
+      AXIS_LABEL_FONT(ss) = fs;
 #if HAVE_GL
       reload_label_font();
 #endif
@@ -83,7 +83,7 @@ bool set_axis_numbers_font(char *font)
     {
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
       in_set_axis_numbers_font(copy_string(font));
-      (ss->sgx)->axis_numbers_fnt = fs;
+      AXIS_NUMBERS_FONT(ss) = fs;
 #if HAVE_GL
       reload_number_font();
 #endif
@@ -119,7 +119,7 @@ int label_width(char *txt)
 int mark_name_width(char *txt)
 {
   if (txt)
-    return(sg_text_width(txt, (ss->sgx)->peaks_fnt));
+    return(sg_text_width(txt, PEAKS_FONT(ss)));
   return(0);
 }
 
@@ -175,79 +175,19 @@ void clear_window(axis_context *ax)
   if (ax) gdk_window_clear(ax->wn);
 }
 
+/* TODO: replace remaining set_background(s)s */
 void set_background(GtkWidget *w, GdkColor *col)
 { 
-  GtkStyle *style;
-  style = gtk_style_copy(gtk_widget_get_style(w));
-  style->bg[GTK_STATE_NORMAL].pixel = col->pixel;
-  style->bg[GTK_STATE_NORMAL].red = col->red;
-  style->bg[GTK_STATE_NORMAL].green = col->green;
-  style->bg[GTK_STATE_NORMAL].blue = col->blue;
-  gtk_widget_set_style(w, style);
+  return;
+  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, col);
 }
 
 void set_backgrounds(GtkWidget *w, GdkColor *col)
 { 
-  GtkStyle *style;
   int i;
-  style = gtk_style_copy(gtk_widget_get_style(w));
+  return;
   for (i = 0; i < 5; i++)
-    {
-      style->bg[i].pixel = col->pixel;
-      style->bg[i].red = col->red;
-      style->bg[i].green = col->green;
-      style->bg[i].blue = col->blue;
-    }
-  gtk_widget_set_style(w, style);
-}
-
-void set_active_color(GtkWidget *w, GdkColor *col)
-{ 
-  GtkStyle *style;
-  style = gtk_style_copy(gtk_widget_get_style(w));
-  style->bg[GTK_STATE_ACTIVE].pixel = col->pixel;
-  style->bg[GTK_STATE_ACTIVE].red = col->red;
-  style->bg[GTK_STATE_ACTIVE].green = col->green;
-  style->bg[GTK_STATE_ACTIVE].blue = col->blue;
-  gtk_widget_set_style(w, style);
-}
-
-void set_background_and_redraw(GtkWidget *w, GdkColor *col) 
-{
-  set_background(w, col);
-  gtk_widget_queue_draw(w); /* force_update(w) ? */
-}
-
-void set_foreground(GtkWidget *w, GdkColor *col)
-{ 
-  GtkStyle *style;
-  style = gtk_style_copy(gtk_widget_get_style(w));
-  style->fg[GTK_STATE_NORMAL].pixel = col->pixel;
-  style->fg[GTK_STATE_NORMAL].red = col->red;
-  style->fg[GTK_STATE_NORMAL].green = col->green;
-  style->fg[GTK_STATE_NORMAL].blue = col->blue;
-  gtk_widget_set_style(w, style);
-}
-
-void set_text_background(GtkWidget *w, GdkColor *col)
-{ 
-  GtkStyle *style;
-  style = gtk_style_copy(gtk_widget_get_style(w));
-  style->base[GTK_STATE_NORMAL].pixel = col->pixel;
-  style->base[GTK_STATE_NORMAL].red = col->red;
-  style->base[GTK_STATE_NORMAL].green = col->green;
-  style->base[GTK_STATE_NORMAL].blue = col->blue;
-  gtk_widget_set_style(w, style);
-}
-
-void highlight_color(GtkWidget *w)
-{
-  set_background(w, (ss->sgx)->highlight_color);
-}
-
-void white_color(GtkWidget *w)
-{
-  set_background(w, (ss->sgx)->white);
+    gtk_widget_modify_bg(w, (GtkStateType)i, col);
 }
 
 void raise_dialog(GtkWidget *w)

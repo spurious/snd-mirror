@@ -287,8 +287,6 @@ void map_over_children (Widget w, void (*func)(Widget w, void *ptr), void *userp
 void clear_window(axis_context *ax);
 void raise_dialog(Widget w);
 void set_main_color_of_widget (Widget w, void *userptr);
-void highlight_color(Widget w);
-void white_color(Widget w);
 void set_button_label(Widget label, const char *str);
 void set_label(Widget label, const char *str);
 void set_title(const char *title);
@@ -530,7 +528,6 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info);
 void recolor_button(widget_t w, void *ptr);
 void color_chan_components(color_t color, slider_choice_t which_component);
 void color_unselected_graphs(color_t color);
-void recolor_everything(widget_t w, void *ptr);
 void g_init_gxen(void);
 
 #endif

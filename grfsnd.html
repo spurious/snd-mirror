@@ -215,13 +215,7 @@ greencolor (a few buttons),
 yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
 </p>
 
-<p>In the GTK version, you can load a gtkrc file, overriding all Snd defaults, with
-<b>parse-rc-file</b>:
-</p>
-<pre>
-  (parse-rc-file "/home/bil/test/gtk+-1.2.9/gtk/testgtkrc")
-</pre>
-<p>I've never used this.  If it's broken, please let me know!
+<p>In the GTK version, you can use Snd.gtkrc ro override all the Snd defaults.
 </p>
 
         <!-- I(print file):O(epsFile resource)(epsresource) -->
@@ -307,10 +301,15 @@ Here's a more elaborate initialization file:
 (set! (window-width) 800)           ;these set the initial window size
 (set! (window-height) 500)
 
-(if (provided? 'snd-motif)          ;if using Motif, set some fonts
+(if (provided? 'snd-motif)          ;Motif and Gtk use different font naming conventions
     (begin
+      (set! (listener-font) "9x15")
       (set! (axis-label-font) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
-      (set! (axis-numbers-font) "9x15")))
+      (set! (axis-numbers-font) "9x15"))
+    (begin
+      (set! (listener-font) "Monospace 10")
+      (set! (axis-label-font) "Serif 14")
+      (set! (axis-numbers-font) "Monospace 10")))
 
 (set! (listener-prompt) ":")        ;change listener prompt from the default "&gt;" to ":"
 (set! (show-listener) #t)           ;include the listener window initially

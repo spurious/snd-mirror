@@ -153,7 +153,7 @@ bool snd_yes_or_no_p(const char *format, ...)
 				     0);
       gtk_widget_show(yes_button);
       gtk_widget_show(no_button);
-
+  
       yn_label = gtk_label_new(yes_buf);
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(yes_or_no_dialog)->vbox), yn_label);
 
