@@ -87,8 +87,8 @@
 #include "snd-strings.h"
 
 #define SND_VERSION "24-Sep-03"
-#define SND_RPM_VERSION "6.12"
+#define SND_RPM_VERSION "6.13"
 #define SND_MAJOR_VERSION 6
-#define SND_MINOR_VERSION 12
+#define SND_MINOR_VERSION 13
 
 #endif

@@ -1282,6 +1282,7 @@ bool snd_topic_help(const char *topic)
   return(false);
 }
 
+/* TODO: for many related items, need url (sndscm) or save original */
 /* TODO: perhaps pass out the url lists as well? */
 /* TODO: regexp access to help lists, tables */
 /* TODO: regexp to g_snd_url (for index.rb) */

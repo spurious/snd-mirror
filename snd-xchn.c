@@ -567,12 +567,33 @@ static void history_select_callback(Widget w, XtPointer context, XtPointer info)
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   chan_info *cp = (chan_info *)context;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-  undo_edit_with_sync(cp, cp->edit_ctr - cbs->item_position + 1);
-  goto_graph(cp);
-}
+#if WITH_RELATIVE_PANES
+  if (cp->sound->channel_style != CHANNELS_SEPARATE)
+    {
+      int row, k;
+      snd_info *sp;
+      chan_info *ncp = NULL;
+      sp = cp->sound;
+      row = cbs->item_position - 1;
+      for (k = 1; k < sp->nchans; k++)
+	if (sp->chans[k]->edhist_base > row)
+	  {
+	    ncp = sp->chans[k - 1];
+	    break;
+	  }
+      if (ncp == NULL) ncp = sp->chans[sp->nchans - 1];
+      undo_edit_with_sync(ncp, ncp->edit_ctr - row + ncp->edhist_base);
+      goto_graph(ncp);
+      /* TODO: in superimposed case, edhist select goto goes to chan 0? */
+    }
+  else 
 #endif
+    {
+      undo_edit_with_sync(cp, cp->edit_ctr - cbs->item_position + 1);
+      goto_graph(cp);
+    }
+}
 
-#if (XmVERSION > 1)
 #if WITH_RELATIVE_PANES
 #include <Xm/SashP.h>
 
@@ -580,28 +601,73 @@ static void history_select_callback(Widget w, XtPointer context, XtPointer info)
 static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
 {
   snd_info *sp;
+  chan_info *ncp;
   int i, eds, items = 0;
   XmString *edits;
-  eds = cp->edit_ctr;
-  while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
   XmListDeleteAllItems(lst);
   sp = cp->sound;
-  edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
-  edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
-  for (i = 1; i <= eds; i++) 
-    edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues(lst, 
-		XmNitems, edits, 
-		XmNitemCount, eds + 1, 
-		NULL);
-  for (i = 0; i <= eds; i++) 
-    XmStringFree(edits[i]);
-  FREE(edits);
-  XmListSelectPos(lst, cp->edit_ctr + 1, false);
-  XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
-  if (items <= eds)
-    XtVaSetValues(lst, XmNtopItemPosition, eds - items + 2, NULL);
-  if (from_graph) goto_graph(cp);
+  /* TODO: combined edhists in gtk */
+  if (sp->channel_style != CHANNELS_SEPARATE)
+    {
+      int k, all_eds = 0, ed, filelen;
+      char *title;
+      for (k = 0; k < sp->nchans; k++)
+	{
+	  ncp = sp->chans[k];
+	  eds = ncp->edit_ctr;
+	  while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
+	  all_eds += eds;
+	}
+      all_eds += 3 * sp->nchans;
+      edits = (XmString *)CALLOC(all_eds, sizeof(XmString));
+      filelen = 16 + strlen(sp->filename);
+      title = (char *)CALLOC(filelen, sizeof(char));
+      for (k = 0, ed = 0; k < sp->nchans; k++)
+	{
+	  ncp = sp->chans[k];
+	  ncp->edhist_base = ed;
+	  sprintf(title, "chan %d: %s", k + 1, sp->filename);
+	  edits[ed++] = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
+	  eds = ncp->edit_ctr;
+	  while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
+	  for (i = 1; i <= eds; i++) 
+	    edits[ed++] = XmStringCreate(edit_to_string(ncp, i), XmFONTLIST_DEFAULT_TAG);
+	  if (k < sp->nchans - 1)
+	    edits[ed++] = XmStringCreate("______________________________", XmFONTLIST_DEFAULT_TAG);
+	}
+      FREE(title);
+      XtVaSetValues(lst, 
+		    XmNitems, edits, 
+		    XmNitemCount, ed, 
+		    NULL);
+      for (i = 0; i < ed; i++) 
+	XmStringFree(edits[i]);
+      FREE(edits);
+      XmListSelectPos(lst, cp->edhist_base + cp->edit_ctr + 1, false);
+      XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
+      if (from_graph) goto_graph(cp);
+    }
+  else
+    {
+      eds = cp->edit_ctr;
+      while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
+      edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
+      edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
+      for (i = 1; i <= eds; i++) 
+	edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
+      XtVaSetValues(lst, 
+		    XmNitems, edits, 
+		    XmNitemCount, eds + 1, 
+		    NULL);
+      for (i = 0; i <= eds; i++) 
+	XmStringFree(edits[i]);
+      FREE(edits);
+      XmListSelectPos(lst, cp->edit_ctr + 1, false);
+      XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
+      if (items <= eds)
+	XtVaSetValues(lst, XmNtopItemPosition, eds - items + 2, NULL);
+      if (from_graph) goto_graph(cp);
+    }
 }
 
 static void watch_edit_history_sash(Widget w, XtPointer closure, XtPointer info)
@@ -630,19 +696,30 @@ void reflect_edit_history_change(chan_info *cp)
   /* new edit so it is added, and any trailing lines removed */
 #if (XmVERSION > 1)
   chan_context *cx;
+  snd_info *sp;
   Widget lst;
   if (cp->in_as_one_edit) return;
   cx = cp->cgx;
   if (cx)
     {
+      sp = cp->sound;
       lst = EDIT_HISTORY_LIST(cp);
 #if WITH_RELATIVE_PANES
-      if ((lst) && (widget_width(lst) > 1)) remake_edit_history(lst, cp, true);
+      if ((lst) && (widget_width(lst) > 1))
+	remake_edit_history(lst, cp, true);
+      else
+	{
+	  if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
+	    {
+	      lst = EDIT_HISTORY_LIST(sp->chans[0]);
+	      if ((lst) && (widget_width(lst) > 1))
+		remake_edit_history(lst, sp->chans[0], true);
+	    }
+	}
 #else
       /* old form */
       if (lst)
 	{
-	  snd_info *sp;
 	  int i, eds, items = 0;
 	  XmString *edits;
 	  eds = cp->edit_ctr;
@@ -663,7 +740,6 @@ void reflect_edit_history_change(chan_info *cp)
 		}
 	      else
 		{
-		  sp = cp->sound;
 		  edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
 		  edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
 		  for (i = 1; i <= eds; i++) 
@@ -713,11 +789,55 @@ void reflect_edit_counter_change(chan_info *cp)
 	      XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr, NULL);
 	  goto_graph(cp);
 	}
+#if WITH_RELATIVE_PANES
+      else
+	{
+	  snd_info *sp;
+	  sp = cp->sound;
+	  if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
+	    {
+	      lst = EDIT_HISTORY_LIST(sp->chans[0]);
+	      if ((lst) && (widget_width(lst) > 1))
+		XmListSelectPos(lst, cp->edit_ctr + 1 + cp->edhist_base, false);
+	    }
+	}
+#endif
     }
 #endif
 }
 
-static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont);
+/* for combined cases, the incoming chan_info pointer is always chan[0], 
+ * but the actual channel depends on placement if mouse oriented.
+ * virtual_selected_channel(cp) (snd-chn.c) retains the current selected channel
+ */
+
+void graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+  XKeyEvent *ev = (XKeyEvent *)event;
+  KeySym keysym;
+  int key_state;
+  snd_info *sp = (snd_info *)context;
+  key_state = ev->state;
+  keysym = XKeycodeToKeysym(XtDisplay(w),
+			    (int)(ev->keycode),
+			    (key_state & ShiftMask) ? 1 : 0);
+  key_press_callback(any_selected_channel(sp), ev->x, ev->y, ev->state, keysym);
+}
+ 
+static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+  /* called by every key-intercepting widget in the entire sound pane */
+  XKeyEvent *ev = (XKeyEvent *)event;
+  KeySym keysym;
+  int key_state;
+  chan_info *cp = (chan_info *)context;
+  if ((cp == NULL) || (cp->sound == NULL)) return; /* can't happen */
+  key_state = ev->state;
+  keysym = XKeycodeToKeysym(XtDisplay(w),
+			    (int)(ev->keycode),
+			    (key_state & ShiftMask) ? 1 : 0);
+  key_press_callback(cp, ev->x, ev->y, ev->state, keysym);
+}
 
 int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Widget main, fw_button_t button_style, bool with_events)
 {
@@ -1123,39 +1243,6 @@ GC erase_GC(chan_info *cp)
   return(sx->erase_gc);
 }
 
-/* for combined cases, the incoming chan_info pointer is always chan[0], 
- * but the actual channel depends on placement if mouse oriented.
- * virtual_selected_channel(cp) (snd-chn.c) retains the current selected channel
- */
-
-void graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
-{
-  XKeyEvent *ev = (XKeyEvent *)event;
-  KeySym keysym;
-  int key_state;
-  snd_info *sp = (snd_info *)context;
-  key_state = ev->state;
-  keysym = XKeycodeToKeysym(XtDisplay(w),
-			    (int)(ev->keycode),
-			    (key_state & ShiftMask) ? 1 : 0);
-  key_press_callback(any_selected_channel(sp), ev->x, ev->y, ev->state, keysym);
-}
- 
-static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
-{
-  /* called by every key-intercepting widget in the entire sound pane */
-  XKeyEvent *ev = (XKeyEvent *)event;
-  KeySym keysym;
-  int key_state;
-  chan_info *cp = (chan_info *)context;
-  if ((cp == NULL) || (cp->sound == NULL)) return; /* can't happen */
-  key_state = ev->state;
-  keysym = XKeycodeToKeysym(XtDisplay(w),
-			    (int)(ev->keycode),
-			    (key_state & ShiftMask) ? 1 : 0);
-  key_press_callback(cp, ev->x, ev->y, ev->state, keysym);
-}
- 
 void cleanup_cw(chan_info *cp)
 {
   chan_context *cx;
@@ -1194,6 +1281,13 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
       if (new_style != old_style)
 	{
 	  sp->channel_style = new_style;
+	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
+	    {
+	      Widget lst;
+	      lst = EDIT_HISTORY_LIST(sp->chans[0]);
+	      if ((lst) && (widget_width(lst) > 1))
+		remake_edit_history(lst, sp->chans[0], true);
+	    }
 	  if (old_style == CHANNELS_COMBINED)
 	    {
 	      hide_gz_scrollbars(sp);

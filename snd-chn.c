@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* SOMEDAY: if united chans, select chan should set edit_history to reflect selected chan (label also to show which is affected) */
-/*    one problem here is select callback that uses context to find chan_info */
-/* SOMEDAY: if superimposed, how to see edit history pane of >1 chan (more panes? arrows?) */
-/*    even if switch available, see above... */
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
 

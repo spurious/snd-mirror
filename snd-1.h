@@ -249,7 +249,7 @@ typedef struct chan_info {
   graph_style_t time_graph_style, lisp_graph_style, transform_graph_style;
   Latus dot_size;
   fft_normalize_t transform_normalization;
-  int transform_type, spectro_hop;
+  int transform_type, spectro_hop, edhist_base;
   bool show_mix_waveforms, graphs_horizontal;
   void *mix_md;
   XEN edit_hook;
