@@ -1,4 +1,5 @@
 /* TODO: should this implement all the GUI-specific scm functions? (make-color etc)
+ * TODO: what about the emacs connection (does it need the SIG business?)
  */
 
 #include "snd.h"

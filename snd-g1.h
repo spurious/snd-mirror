@@ -346,7 +346,6 @@ void set_pushed_button_colors(GtkWidget *w, snd_state *ss);
 void highlight_color(snd_state *ss, GtkWidget *w);
 void white_color(snd_state *ss, GtkWidget *w);
 void raise_dialog(GtkWidget *w);
-void raise_widget(GtkWidget *w);
 void set_button_label_bold(GtkWidget *button,const char *str);
 void set_button_label(GtkWidget *label,const char *str);
 void set_label(GtkWidget *label,const char *str);
@@ -379,7 +378,6 @@ void set_widget_x(GtkWidget *w, int x);
 void set_widget_y(GtkWidget *w, int y);
 void set_widget_size(GtkWidget *w, int width, int height);
 void set_widget_position(GtkWidget *w, int x, int y);
-void set_pixmap(GtkWidget *w, GdkPixmap *pix, GdkBitmap *mask);
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc);
 
 

@@ -47,6 +47,7 @@ MAKE_TARGET="snd"
 #   --with-sample-width=N use N bits of samples (default = 24)
 #   --with-sndlib         try to use libsndlib.so
 #   --with-esd            use Enlightened Sound Daemon
+#   --with-no-gui         make Snd without any graphics support
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,[  --with-esd		  use ESD])

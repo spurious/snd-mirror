@@ -285,7 +285,6 @@ int mark_name_width(snd_state *ss, char *txt);
 void map_over_children (Widget w, void (*func)(Widget w,void *ptr), void *userptr);
 void clear_window(axis_context *ax);
 void raise_dialog(Widget w);
-void raise_widget(Widget w);
 void set_main_color_of_widget (Widget w,void *userptr);
 void highlight_color(snd_state *ss, Widget w);
 void white_color(snd_state *ss, Widget w);
@@ -323,7 +322,6 @@ void set_widget_x(Widget w, int x);
 void set_widget_y(Widget w, int y);
 void set_widget_size(Widget w, int width, int height);
 void set_widget_position(Widget w, int x, int y);
-void set_pixmap(Widget w, Pixmap pix, void *ignore);
 void fixup_axis_context(axis_context *ax, Widget w, GC gc);
 Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc);
 

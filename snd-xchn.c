@@ -363,10 +363,12 @@ static void W_graph_Help_Callback(Widget w,XtPointer clientData,XtPointer callDa
   click_for_graph_help((snd_state *)clientData);
 }
 
+#if (XmVERSION > 1)
 static void W_History_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   click_for_history_help((snd_state *)clientData);
 }
+#endif
 
 static void W_sx_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
@@ -557,6 +559,7 @@ static void show_gz_scrollbars(snd_info *sp)
 
 /* edit history support */
 
+#if (XmVERSION > 1)
 static void edit_select_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   /* undo/redo to reach selected position */
@@ -565,6 +568,7 @@ static void edit_select_Callback(Widget w,XtPointer clientData,XtPointer callDat
   ev = (XButtonEvent *)(cbs->event);
   edit_select_callback((chan_info *)clientData,cbs->item_position-1,(ev->state & snd_ControlMask));
 }
+#endif
 
 void reflect_edit_history_change(chan_info *cp)
 {

@@ -204,7 +204,7 @@ void map_over_children (Widget w, void (*func)(Widget,void *), void *userptr)
 {
   /* apply func to each child in entire tree beneath top widget */
   /* taken from Douglas Young, "Motif Debugging and Performance Tuning" Prentice-Hall 1995 */
-  /* used mostly to get colors right in non-scheme environments with "convenience" widgets */
+  /* used mostly to get colors right in non-SGI environments with "convenience" widgets */
   unsigned int i;
   if (w)
     {
@@ -241,6 +241,7 @@ void raise_dialog(Widget w)
     }
 }
 
+#if 0
 void raise_widget(Widget w)
 {
   /* try to change stacking order (form widgets in drawingarea; overlap covers desired console) */
@@ -250,6 +251,7 @@ void raise_widget(Widget w)
   request->stack_mode = 0; /* Above */
   XtMakeGeometryRequest(w,request,NULL);
 }
+#endif
 
 void set_main_color_of_widget (Widget w,void *userptr)
 {
@@ -552,11 +554,6 @@ void set_widget_y(Widget w, int y)
 void set_widget_position(Widget w, int x, int y)
 {
   XtVaSetValues(w,XmNx,(Dimension)x,XmNy,(Dimension)y,NULL);
-}
-
-void set_pixmap(Widget w, Pixmap pix, void *ignore)
-{
-  XtVaSetValues(w,XmNlabelPixmap,pix,NULL);
 }
 
 void fixup_axis_context(axis_context *ax, Widget w, GC gc)

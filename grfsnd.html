@@ -53,6 +53,7 @@
     </ul>
   <li><a href="#sndwithmotif">Snd and Motif</a>
   <li><a href="#sndwithgtk">Snd and Gtk</a>
+  <li><a href="#sndwithnogui">Snd with no GUI</a>
   <li><a href="#sndwithgmeteor">Snd and gmeteor</a>
   <li><a href="#sndandladspa">Snd and LADSPA</a>
   <li><a href="#sndandx">Driving Snd remotely</a>
@@ -1178,6 +1179,7 @@ The CLM (common lisp) version might be something like:</p>
   mus-array-print-length ()                        how many array elements to print in mus_describe
   <a href="clm.html#mus-b1">mus-b1</a>              (gen)                        b1 field (simple filters)
   <a href="clm.html#mus-b2">mus-b2</a>              (gen)                        b2 field (simple filters)
+  mus-bank            (gens amps <i>args1 args2</i>)
   <a href="clm.html#mus-channel">mus-channel</a>         (gen)                        channel of gen
   <a href="clm.html#mus-channels">mus-channels</a>        (gen)                        channels of gen
   <a href="clm.html#mus-cosines">mus-cosines</a>         (gen)                        cosines of sum-of-cosines gen
@@ -1678,6 +1680,28 @@ option named "one":</p>
 </pre>
 <p>See <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a> for more examples.</p>
 <br>
+
+<span class=bbox><h3><A NAME="sndwithnogui">Snd with no GUI</a></h3></span>
+
+<p>If Snd is built without a graphical user interface (either by specifying
+--with-no-gui to configure, or by setting the USE_NO_GUI compile-time flag),
+it runs Guile's "repl" (read-eval-print loop) with input from stdin.  All
+the non-interface related functions are available, so you can do things
+like:
+</p>
+<pre>
+<em class=listener>snd&gt;</em><em class=typing> (new-sound "new.snd")</em>
+<em class=listener>0</em>
+<em class=listener>snd&gt;</em><em class=typing> (load "v.scm")</em>
+<em class=listener>snd&gt;</em><em class=typing> (fm-violin 0 1 440 .1)</em>
+<em class=listener>-1</em>
+<em class=listener>snd&gt;</em><em class=typing> (frames 0)</em>
+<em class=listener>22050</em>
+<em class=listener>snd&gt;</em><em class=typing> (play)</em>
+<em class=listener>#t</em>
+<em class=listener>snd&gt;</em><em class=typing> (exit)</em>
+</pre>
+
 
 <span class=bbox><h3><A NAME="sndwithgmeteor">Snd and gmeteor</a></h3></span>
 

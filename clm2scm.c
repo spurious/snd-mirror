@@ -13,7 +13,6 @@
  */
 
 /* TODO:   add vct-wrappers for other internal arrays?
- * TODO:   mus-bank added (and current oscil-bank etc folded into it)
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -953,6 +952,7 @@ static SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
 #define S_mus_describe       "mus-describe"
 #define S_mus_name           "mus-name"
 #define S_mus_run            "mus-run"
+#define S_mus_bank           "mus-bank"
 
 static SCM g_inspect(SCM gen)
 {
@@ -1080,12 +1080,81 @@ static SCM g_set_data(SCM gen, SCM val)
   return(scm_return_first(SCM_BOOL_F,gen,val));
 }
 
+static Float *whatever_to_floats(SCM inp, int size, int *free_invals)
+{
+  Float *invals = NULL;
+  int i;
+  vct *v;
+  Float inval;
+  if ((SCM_UNBNDP(inp)) || (gh_boolean_p(inp))) return(NULL);
+  if (gh_vector_p(inp))
+    {
+      invals = (Float *)CALLOC(size,sizeof(Float));
+      (*free_invals) = 1;
+      for (i=0;i<size;i++) invals[i] = gh_scm2double(gh_vector_ref(inp,gh_int2scm(i)));
+    }
+  else
+    {
+      if (vct_p(inp))
+	{
+	  v = get_vct(inp);
+	  invals = v->data;
+	}
+      else
+	{
+	  invals = (Float *)CALLOC(size,sizeof(Float));
+	  (*free_invals) = 1;
+	  if (SCM_NFALSEP(scm_real_p(inp))) 
+	    {
+	      inval = gh_scm2double(inp);
+	      for (i=0;i<size;i++) invals[i] = inval;
+	    }
+	  else
+	    {
+	      if (gh_procedure_p(inp))
+		{
+#if USE_SND
+		  for (i=0;i<size;i++) invals[i] = gh_scm2double(g_call1(inp,gh_int2scm(i)));
+#else
+		  for (i=0;i<size;i++) invals[i] = gh_scm2double(gh_call1(inp,gh_int2scm(i)));
+#endif
+		}
+	    }
+	}
+    }
+  return(invals);
+}
+
+
+static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
+{
+  #define H_mus_bank "(" S_mus_bank " gens amps &optional args1 args2) -> sum of (* (amps i) ((gens i) (args1 i) (args2 i)))"
+  /* amps and inp1/inp2 can be a Float, a vct object, a function, or a vector of Floats */
+  Float outval = 0.0;
+  int i,size,free_scls=0,free_invals=0, free_invals2=0;
+  Float *scls=NULL,*invals=NULL,*invals2=NULL;
+  mus_any **gs;
+  size = gh_vector_length(gens);
+  invals = whatever_to_floats(inp,size,&free_invals);
+  invals2 = whatever_to_floats(inp2,size,&free_invals2);
+  scls = whatever_to_floats(amps,size,&free_scls);
+  gs = (mus_any **)CALLOC(size,sizeof(mus_any *));
+  for (i=0;i<size;i++) gs[i] = mus_get_any(gh_vector_ref(gens,gh_int2scm(i)));
+  outval = mus_bank(gs,scls,invals,invals2,size);
+  if ((scls) && (free_scls)) FREE(scls);
+  if ((invals) && (free_invals)) FREE(invals);
+  if ((invals2) && (free_invals2)) FREE(invals2);
+  if (gs) FREE(gs);
+  return(gh_double2scm(outval));
+}
+
 static void init_generic_funcs(void)
 {
   DEFINE_PROC(gh_new_procedure1_0(S_mus_inspect,g_inspect),H_mus_inspect);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_describe,g_describe),H_mus_describe);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_name,g_name),H_mus_name);
   DEFINE_PROC(gh_new_procedure1_2(S_mus_run,g_run),H_mus_run);
+  DEFINE_PROC(gh_new_procedure2_2(S_mus_bank,g_mus_bank),H_mus_bank);
 
   define_procedure_with_setter(S_mus_phase,SCM_FNC g_phase,H_mus_phase,
 			       S_mus_set_phase,SCM_FNC g_set_phase,local_doc,1,0,2,0);
@@ -1103,94 +1172,6 @@ static void init_generic_funcs(void)
 			       S_mus_set_data,SCM_FNC g_set_data,local_doc,1,0,2,0);
 }
 
-/* someday this should use a run pointer */
-static SCM g_mus_bank1(SCM amps, SCM gens, SCM inp, int type, char *caller)
-{
-  /* amps and inp can be a Float, a vct object, or a vector of Floats */
-  Float outval = 0.0,inval = 0.0, scl = 1.0;
-  int i,size,free_scls=0,free_invals=0;
-  Float *scls=NULL,*invals=NULL;
-  vct *v;
-  SCM_ASSERT(gh_vector_p(gens),gens,SCM_ARG2,caller);
-  size = gh_vector_length(gens);
-  if (gh_vector_p(inp))
-    {
-      invals = (Float *)CALLOC(size,sizeof(Float));
-      free_invals=1;
-      for (i=0;i<size;i++) invals[i] = gh_scm2double(gh_vector_ref(inp,gh_int2scm(i)));
-    }
-  else
-    {
-      if (vct_p(inp))
-	{
-	  v = get_vct(inp);
-	  invals = v->data;
-	}
-      else
-	{
-	  invals = (Float *)CALLOC(size,sizeof(Float));
-	  free_invals=1;
-	  if (SCM_NFALSEP(scm_real_p(inp))) 
-	    {
-	      inval = gh_scm2double(inp);
-	      for (i=0;i<size;i++) invals[i] = inval;
-	    }
-	  else
-	    {
-	      if (gh_procedure_p(inp))
-		{
-#if USE_SND
-		  for (i=0;i<size;i++) invals[i] = gh_scm2double(g_call1(inp,gh_int2scm(i)));
-#else
-		  for (i=0;i<size;i++) invals[i] = gh_scm2double(gh_call1(inp,gh_int2scm(i)));
-#endif
-		}
-	      else scm_wrong_type_arg(caller,3,inp);
-	    }
-	}
-    }
-  if (gh_vector_p(amps))
-    {
-      scls = (Float *)CALLOC(size,sizeof(Float));
-      free_scls=1;
-      for (i=0;i<size;i++) scls[i] = gh_scm2double(gh_vector_ref(amps,gh_int2scm(i)));
-    }
-  else
-    {
-      if (vct_p(amps))
-	{
-	  v = get_vct(amps);
-	  scls = v->data;
-	}
-      else
-	{
-	  scls = (Float *)CALLOC(size,sizeof(Float));
-	  free_scls=1;
-	  if (SCM_NFALSEP(scm_real_p(amps))) 
-	    {
-	      scl = gh_scm2double(amps);
-	      for (i=0;i<size;i++) scls[i] = scl;
-	    }
-	  else
-	    {
-	      if (gh_procedure_p(amps))
-		{
-#if USE_SND
-		  for (i=0;i<size;i++) scls[i] = gh_scm2double(g_call1(amps,gh_int2scm(i)));
-#else
-		  for (i=0;i<size;i++) scls[i] = gh_scm2double(gh_call1(amps,gh_int2scm(i)));
-#endif
-		}
-	      else scm_wrong_type_arg(caller,1,amps);
-	    }
-	}
-    }
-  for (i=0;i<size;i++)
-    outval += (scls[i] * MUS_RUN(mus_get_any(gh_vector_ref(gens,gh_int2scm(i))),invals[i],0.0));
-  if (free_scls) FREE(scls);
-  if (free_invals) FREE(invals);
-  return(gh_double2scm(outval));
-}
 
 
 /* ---------------- oscil ---------------- */
@@ -1238,7 +1219,8 @@ static SCM g_oscil_bank(SCM amps, SCM gens, SCM inp, SCM size)
 {
   /* size currently ignored */
   #define H_oscil_bank "(" S_oscil_bank " scls gens fms) -> sum a bank of " S_oscil "s: scls[i]*" S_oscil "(gens[i],fms[i])"
-  return(g_mus_bank1(amps,gens,inp,MUS_OSCIL,S_oscil_bank));
+  SCM_ASSERT(gh_vector_p(gens),gens,SCM_ARG2,S_oscil_bank);
+  return(g_mus_bank(gens,amps,inp,SCM_UNDEFINED));
 }
 
 static SCM g_oscil_p(SCM os) 
@@ -2487,7 +2469,8 @@ static SCM g_formant(SCM gen, SCM input)
 static SCM g_formant_bank(SCM amps, SCM gens, SCM inp)
 {
   #define H_formant_bank "(" S_formant_bank " scls gens inval) -> sum a bank of " S_formant "s: scls[i]*" S_formant "(gens[i],inval)"
-  return(g_mus_bank1(amps,gens,inp,MUS_FORMANT,S_formant_bank));
+  SCM_ASSERT(gh_vector_p(gens),gens,SCM_ARG2,S_formant_bank);
+  return(g_mus_bank(gens,amps,inp,SCM_UNDEFINED));
 }
 
 static SCM g_formant_p(SCM os) 
@@ -4845,7 +4828,7 @@ void init_mus2scm_module(void)
 }
 
 
-#define NUM_CLM_NAMES 229
+#define NUM_CLM_NAMES 230
 static char *clm_names[NUM_CLM_NAMES] = {
 S_all_pass,S_all_pass_p,S_amplitude_modulate,S_array2file,S_array_interp,S_asymmetric_fm,S_asymmetric_fm_p,S_bartlett_window,
 S_blackman2_window,S_blackman3_window,S_blackman4_window,S_buffer2frame,S_buffer2sample,S_buffer_empty_p,S_buffer_full_p,
@@ -4861,7 +4844,7 @@ S_make_frame,S_make_frame2file,S_make_granulate,S_make_iir_filter,S_make_locsig,
 S_make_one_zero,S_make_oscil,S_make_phase_vocoder,S_make_ppolar,S_make_pulse_train,S_make_rand,S_make_rand_interp,S_make_readin,S_make_sample2file,
 S_make_sawtooth_wave,S_make_sine_summation,S_make_square_wave,S_make_src,S_make_sum_of_cosines,S_make_table_lookup,S_make_triangle_wave,
 S_make_two_pole,S_make_two_zero,S_make_wave_train,S_make_waveshape,S_make_zpolar,S_mixer_multiply,S_mixer_ref,S_mixer_set,
-S_mixer_p,S_multiply_arrays,S_mus_a0,S_mus_a1,S_mus_a2,S_mus_array_print_length,S_mus_b1,S_mus_b2,S_mus_channel,S_mus_channels,
+S_mixer_p,S_multiply_arrays,S_mus_a0,S_mus_a1,S_mus_a2,S_mus_array_print_length,S_mus_b1,S_mus_b2,S_mus_bank,S_mus_channel,S_mus_channels,
 S_mus_close,S_mus_cosines,S_mus_data,S_mus_describe,S_mus_feedback,S_mus_feedforward,S_mus_fft,S_mus_formant_radius,S_mus_frequency,
 S_mus_hop,S_mus_increment,S_mus_input_p,S_mus_inspect,S_mus_length,S_mus_location,S_mus_mix,S_mus_order,S_mus_output_p,S_mus_phase,
 S_mus_ramp,S_mus_random,S_mus_run,S_mus_scaler,S_mus_set_rand_seed,S_mus_srate,
@@ -5003,6 +4986,7 @@ static char CLM_help_string[] =
   mus-array-print-length ()                how many array elements to print in mus_describe\n\
   mus-b1              (gen)                b1 field (simple filters)\n\
   mus-b2              (gen)                b2 field (simple filters)\n\
+  mus-bank            (gens amps &optional args1 args2)\n\
   mus-channel         (gen)                channel of gen\n\
   mus-channels        (gen)                channels of gen\n\
   mus-cosines         (gen)                cosines of sum-of-cosines gen\n\

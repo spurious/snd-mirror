@@ -307,13 +307,13 @@ void raise_dialog(GtkWidget *w)
   gdk_window_raise(w->window);
 }
 
+#if 0
 void raise_widget(GtkWidget *w)
 {
   gtk_widget_show(w);
   gdk_window_raise(w->window);
 }
 
-#if 0
 void set_button_label_normal(GtkWidget *button,const char *str)
 {
   GtkStyle *style;
@@ -556,11 +556,6 @@ void set_widget_size(GtkWidget *w, int width, int height)
 void set_widget_position(GtkWidget *w, int x, int y)
 {
   gtk_widget_set_uposition(w,x,y);
-}
-
-void set_pixmap(GtkWidget *w, GdkPixmap *pix, GdkBitmap *mask)
-{
-  gtk_pixmap_set(GTK_PIXMAP(w),pix,mask);
 }
 
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)

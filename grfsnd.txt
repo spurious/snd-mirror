@@ -20,6 +20,7 @@ related documentationsnd.html   extsnd.html   clm.html   sndlib.html    sndscm.h
              + CLM functions
         o Snd and Motif
         o Snd and Gtk
+        o Snd with no GUI
         o Snd and gmeteor
         o Snd and LADSPA
         o Driving Snd remotely
@@ -1069,6 +1070,7 @@ See clm.html for full details. Optional args are in italics.
   mus-array-print-length ()                        how many array elements to print in mus_describe
   mus-b1              (gen)                        b1 field (simple filters)
   mus-b2              (gen)                        b2 field (simple filters)
+  mus-bank            (gens amps args1 args2)
   mus-channel         (gen)                        channel of gen
   mus-channels        (gen)                        channels of gen
   mus-cosines         (gen)                        cosines of sum-of-cosines gen
@@ -1558,6 +1560,24 @@ Or to add a new top level menu named "my menu" with an option named "one":
   (gtk-widget-show one-menu)
 
 See snd-gtk.scm for more examples.
+
+Snd with no GUI
+
+If Snd is built without a graphical user interface (either by specifying
+--with-no-gui to configure, or by setting the USE_NO_GUI compile-time flag),
+it runs Guile's "repl" (read-eval-print loop) with input from stdin. All the
+non-interface related functions are available, so you can do things like:
+
+snd> (new-sound "new.snd")
+0
+snd> (load "v.scm")
+snd> (fm-violin 0 1 440 .1)
+-1
+snd> (frames 0)
+22050
+snd> (play)
+#t
+snd> (exit)
 
 Snd and gmeteor
 

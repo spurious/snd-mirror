@@ -204,7 +204,7 @@ void snd_exit(int val)
 #endif
 }
 
-/* check_balance stolen from scmwm-0.9/utilities/scwmrepl/scwmrepl.c */
+/* check_balance stolen from scwm-0.9/utilities/scwmrepl/scwmrepl.c */
 
 int check_balance(char *expr, int start, int end) 
 {
