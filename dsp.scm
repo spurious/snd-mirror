@@ -1486,37 +1486,17 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; end of JOS stuff
 
 
-;;; -------- ssb-am and friends
-
-(define* (make-ssb-am freq-1 #:optional (order 40))
-  (let* ((freq freq-1)
-	 (carrier-freq (abs freq-1))
-	 (cos-carrier (make-oscil carrier-freq (* .5 pi)))
-	 (sin-carrier (make-oscil carrier-freq))
-	 (dly (make-delay order))
-	 (hlb (make-hilbert-transform order)))
-    (lambda (y)
-      (let ((ccos (oscil cos-carrier))
-	    (csin (oscil sin-carrier))
-	    (yh (hilbert-transform hlb y))
-	    (yd (delay dly y)))
-	(if (> freq 0.0)
-	    (- (* ccos yd) ; shift up
-	       (* csin yh))
-	    (+ (* ccos yd) ; shift down
-	       (* csin yh)))))))
-
-(define (ssb-am gen y) (gen y))
+;;; -------- ssb-am friends
 
 (define* (map-ssb-am freq #:optional (order 40)) ; higher order = better cancellation
   (let* ((gen (make-ssb-am freq order)))
     (map-channel (lambda (y) (ssb-am gen y)))))
 
-
 (define (hz->2pi freq) (/ (* 2 pi freq) (srate)))
 
-(define* (ssb-bank old-freq new-freq pairs #:optional (order 40) (bw 50.0))
-  (let* ((ssbs (make-vector pairs))
+(define* (ssb-bank old-freq new-freq pairs-1 #:optional (order 40) (bw 50.0))
+  (let* ((pairs pairs-1) ; for run's benefit
+	 (ssbs (make-vector pairs))
 	 (bands (make-vector pairs))
 	 (factor (/ (- new-freq old-freq) old-freq))
 	 (mx (maxamp)))
@@ -1543,4 +1523,16 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	      sum)))
 	 (scale-by (/ mx nmx)))))))
 
-;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically
+
+;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically (bw/pairs choices also automated)
+
+#!
+(define* (repitch-sound old-freq new-freq)
+  (ssb-bank old-freq new-freq 10))
+
+(define* (retime-sound new-time)
+  (let* ((old-time (/ (frames) (srate)))
+	 (factor (/ new-time old-time)))
+    (ssb-bank 557 (* 557 factor) 10)
+    (src-sound (/ 1.0 factor))))
+!#

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 52
-#define MUS_DATE "9-June-04"
+#define MUS_REVISION 53
+#define MUS_DATE "14-June-04"
 
 /*
+ * 14-June:    ssb_am generator.
  * 9-June:     mus_edot_product.
  * 7-June:     removed mus-x1|x2|y1|y2 generic functions.
  * 24-May:     distribution arg to make-rand, make-rand-interp.
@@ -82,7 +83,6 @@
  * 26-May:     mus_rand_seed.
  * 22-May:     locsig reverb distance calc was upside down.
  * 18-May:     mus_describe and mus_inspect returned string should not be freed any more.
-   (previous version was not usable in gdb and was unneeded due to mus_snprintf)
  * 7-May:      filled in some leftover equal_p methods.
  * 1-Apr:      mus_make_file2sample_with_comment and mus_length for file->sample/sample->file.
  *             mus_file_buffer_size.
@@ -610,6 +610,10 @@ Float *mus_phase_vocoder_phase_increments(mus_any *ptr);
 Float *mus_phase_vocoder_previous_phases(mus_any *ptr);
 int mus_phase_vocoder_outctr(mus_any *ptr);
 int mus_phase_vocoder_set_outctr(mus_any *ptr, int val);
+
+mus_any *mus_make_ssb_am(Float freq, int order);
+bool mus_ssb_am_p(mus_any *ptr);
+Float mus_ssb_am(mus_any *ptr, Float insig);
 
 void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *rd);

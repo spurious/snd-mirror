@@ -367,11 +367,11 @@ and any def-clm-struct name.
   <tr><td><a href="#notch">notch</a></td><td>notch filter</td></tr>
   <tr><td><a href="#one-pole">one-pole</a></td><td>one pole filter</td></tr>
   <tr><td><a href="#one-zero">one-zero</a></td><td>one zero filter</td></tr>
+  <tr><td><a href="#oscil">oscil</a></td><td>sine wave and FM</td></tr>
 </table>
 </td>
 <td>
 <table border=0>
-  <tr><td><a href="#oscil">oscil</a></td><td>sine wave and FM</td></tr>
   <tr><td><a href="#out-any">out-any</a></td><td>sound output</td></tr>
   <tr><td><a href="#phase-vocoder">phase-vocoder</a></td><td>vocoder analysis and resynthesis</td></tr>
   <tr><td><a href="#pulse-train">pulse-train</a></td><td>pulse train</td></tr>
@@ -381,6 +381,7 @@ and any def-clm-struct name.
   <tr><td><a href="#sine-summation">sine-summation</a></td><td>sine summation synthesis</td></tr>
   <tr><td><a href="#square-wave">square-wave</a></td><td>square wave</td></tr>
   <tr><td><a href="#src">src</a></td><td>sampling rate conversion</td></tr>
+  <tr><td><a href="#ssb-am">ssb-am</a></td><td>single sideband amplitude modulation</td></tr>
   <tr><td><a href="#sum-of-cosines">sum-of-cosines</a></td><td>band-limited pulse train</td></tr>
   <tr><td><a href="#sum-of-sines">sum-of-sines</a></td><td>sum of sines</td></tr>
   <tr><td><a href="#table-lookup">table-lookup</a></td><td>interpolated table lookup</td></tr>
@@ -888,6 +889,35 @@ based on:
   known as the conjugate Dirichlet kernel
 </small></pre><br clear=left>
 <br>
+
+<!-- TOPIC ssb-am -->
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SSB-AM</h4></td></tr></table>
+<pre>
+  <a class=def name="make-ssb-am">make-ssb-am</a> <a class=quiet href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>order</i> 40)
+  <a class=def name="ssb-am">ssb-am</a> <i>gen</i> &amp;optional (<i>insig</i> 0.0)
+  <a class=def name="ssb-am?">ssb-am?</a> <i>gen</i>
+</pre>
+<p><b>ssb-am</b> provides single sideband suppressed carrier ampitude modulation.
+</p>
+<table border align=left hspace=40 cellpadding=4>
+<tr><td colspan=2><center>ssb-am methods</center></td></tr>
+<tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
+<tr><td><em class=gen>mus-phase</em></td><td>phase (of embedded sin osc) in radians</td></tr>
+<tr><td><em class=gen>mus-order</em></td><td>embedded delay line size</td></tr>
+<tr><td><em class=gen>mus-cosines</em></td><td>1</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>same as mus-order</td></tr>
+<tr><td><em class=gen>mus-interp-type</em></td><td><code>mus-interp-none</code></td></tr>
+<tr><td><em class=gen>mus-xcoeffs</em></td><td>embedded Hilbert transform FIR filter coeffs</td></tr>
+<tr><td><em class=gen>mus-data</em></td><td>embedded filter state</td></tr>
+</table>
+<pre><small>
+based on:
+  cos(freq) * delay(insig) +/- sin(freq) * hilbert(insig) 
+  which shifts insig spectrum by freq 
+  and cancels upper/lower sidebands
+</small></pre><br clear=left>
+<br>
+
 
 <!-- TOPIC wave-train -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>WAVE-TRAIN</h4></td></tr></table>

@@ -538,7 +538,6 @@ the listener?
   <tr><td><A class=def NAME="anyrandom">any-random</A></td><td>random numbers of arbitrary distribution using rejection method</td></tr>
   <tr><td><em class=emdef>channel-variance</em> etc</td><td> miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
   <tr><td><em class=emdef>map-ssb-am</em></td><td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
-  <tr><td><a class=def name="makessbam">make-ssb-am</a></td><td>single-sideband carrier-suppressed amplitude modulation</td></tr>
   <tr><td><a class=def name="ssbbank">ssb-bank</a></td><td>time/pitch changes using ssb-am gens</td></tr>
 </table>
 
@@ -670,7 +669,7 @@ DFT" are included:
 </p>
 
 <p>The ssb-* functions provide single-sideband amplitude modulation, and pitch/time changes
-based on that generator.  The generator associated with <b>make-ssb-am</b> is <a name="ssb-am">ssb-am</a>.
+based on the ssb-am generator.  
 If you run ssb-am on some input signal, the result is that that signal is shifted in pitch by
 the <i>freq</i> amount.  The higher the <i>order</i>, the better the low frequency cancellation
 is (amplitude modulation creates symmetrical sidebands, one of which is cancelled by the ssb-am
@@ -692,8 +691,6 @@ followed by sampling rate conversion back to the original pitch:
   (<em class=red>ssb-bank</em> 557 (* factor 557) 7 40 40)
   (src-sound (/ 1.0 factor)))
 </pre>
-
-</p>
 
 <p><b>any-random</b> provides the same output as <a href="clm.html#rand">rand</a> if the latter's
 envelope (distribution function) argument is used, but using a slightly different method

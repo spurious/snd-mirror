@@ -11634,6 +11634,26 @@ EDITS: 5
 	 (set! freq (+ freq incr))
 	 (* .5 val))))))
 
+(define* (make-ssb-am-1 freq-1 #:optional (order 40))
+  (let* ((freq freq-1)
+	 (carrier-freq (abs freq-1))
+	 (cos-carrier (make-oscil carrier-freq (* .5 pi)))
+	 (sin-carrier (make-oscil carrier-freq))
+	 (dly (make-delay order))
+	 (hlb (make-hilbert-transform order)))
+    (lambda (y)
+      (let ((ccos (oscil cos-carrier))
+	    (csin (oscil sin-carrier))
+	    (yh (hilbert-transform hlb y))
+	    (yd (delay dly y)))
+	(if (> freq 0.0)
+	    (- (* ccos yd) ; shift up
+	       (* csin yh))
+	    (+ (* ccos yd) ; shift down
+	       (* csin yh)))))))
+
+(define (ssb-am-1 gen y) (gen y))
+
 (define (rough-spectrum ind)
   (let ((r (make-sample-reader 0 ind 0))
 	(spect (make-vct 10))
@@ -14773,6 +14793,7 @@ EDITS: 5
 	       (if (not (= (mus-interp-type tbl1) type)) (snd-display ";tbl interp-type (~A): ~A" type (mus-interp-type tbl1)))))))
        (list 
 	(list mus-interp-none (vct 0.000 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 1.000))
+;	(list mus-interp-none (vct 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000))
 	(list mus-interp-linear (vct 0.000 0.200 0.400 0.600 0.800 1.000 0.800 0.600 0.400 0.200))
 	(list mus-interp-lagrange (vct 0.000 0.120 0.280 0.480 0.720 1.000 0.960 0.840 0.640 0.360))
 	(list mus-interp-hermite (vct 0.000 0.168 0.424 0.696 0.912 1.000 0.912 0.696 0.424 0.168))))
@@ -16628,6 +16649,72 @@ EDITS: 5
 		(snd-display ";moog output: ~A" vals))))
 	(close-sound ind))
 
+      (let ((gen (make-ssb-am 440.0))
+	    (v0 (make-vct 10))
+	    (gen1 (make-ssb-am 440.0))
+	    (v1 (make-vct 10)))
+	(print-and-check gen 
+			 "ssb-am"
+			 "ssb-am: shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 40"
+			 "ssbam: shift_up: true, sin: osc freq: 0.125379, phase: 0.000000, cos: osc freq: 0.125379, phase: 1.570796, delay: dly line[40,40 at 0,0 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], xscl: 0.000000, yscl: 0.000000, type: step, hilbert: flt order: 80, state (local): [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], x: [-0.000 -0.001 -0.000 -0.002 -0.000 -0.002 -0.000 -0.003...], y: nil")
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v0 i (ssb-am gen 0.0)))
+	(vct-map! v1 (lambda () (if (ssb-am? gen1) (ssb-am gen1 0.0) -1.0)))
+	(if (not (vequal v0 v1)) (snd-display ";map ssb-am: ~A ~A" v0 v1))
+	(if (not (ssb-am? gen)) (snd-display ";~A not ssb-am?" gen))
+	(if (fneq (mus-phase gen) 1.253787) (snd-display ";ssb-am phase: ~F?" (mus-phase gen)))
+	(if (fneq (mus-frequency gen) 440.0) (snd-display ";ssb-am frequency: ~F?" (mus-frequency gen)))
+	(if (not (= (mus-order gen) 40)) (snd-display ";ssb-am order: ~F?" (mus-order gen)))
+	(if (not (= (mus-cosines gen) 1)) (snd-display ";ssb-am cosines: ~D?" (mus-cosines gen)))
+	(if (not (= (mus-length gen) 40)) (snd-display ";ssb-am length: ~D?" (mus-length gen)))
+	(if (not (= (mus-interp-type gen) mus-interp-none)) (snd-display ";ssb-am interp type: ~D?" (mus-interp-type gen)))
+	)
+      
+      (test-gen-equal (make-ssb-am 440.0) (make-ssb-am 440.0) (make-ssb-am 500.0))
+
+      (let ((o1 (make-ssb-am 400.0))
+	    (o2 (make-ssb-am-1 400.0)))
+	(call-with-current-continuation
+	 (lambda (break)
+	   (do ((i 0 (1+ i)))
+	       ((= i 100))
+	     (let* ((inval (sin (* .1 i)))
+		    (o1o (ssb-am o1 inval))
+		    (o2o (ssb-am-1 o2 inval)))
+	       (if (fneq o1o o2o)
+		   (begin
+		     (snd-display ";ssb-am (up): ~A ~A at ~A" o1o o2o i)
+		     (break))))))))
+      
+      (let ((o1 (make-ssb-am -100.0))
+	    (o2 (make-ssb-am-1 -100.0)))
+	(call-with-current-continuation
+	 (lambda (break)
+	   (do ((i 0 (1+ i)))
+	       ((= i 100))
+	     (let* ((inval (random 1.0))
+		    (o1o (ssb-am o1 inval))
+		    (o2o (ssb-am-1 o2 inval)))
+	       (if (fneq o1o o2o)
+		   (begin
+		     (snd-display ";ssb-am (down): ~A ~A at ~A" o1o o2o i)
+		     (break))))))))
+      
+      (let ((o1 (make-ssb-am 1000.0 100))
+	    (o2 (make-ssb-am-1 1000.0 100)))
+	(call-with-current-continuation
+	 (lambda (break)
+	   (do ((i 0 (1+ i)))
+	       ((= i 100))
+	     (let* ((inval (random 1.0))
+		    (o1o (ssb-am o1 inval))
+		    (o2o (ssb-am-1 o2 inval)))
+	       (if (fneq o1o o2o)
+		   (begin
+		     (snd-display ";ssb-am (down): ~A ~A at ~A" o1o o2o i)
+		     (break))))))))
+      
       (let ((make-procs (list
 			 make-all-pass make-asymmetric-fm make-average
 			 make-comb (lambda () (make-convolve :filter (vct 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0)))
@@ -16637,7 +16724,7 @@ EDITS: 5
 			 make-notch make-one-pole make-one-zero make-oscil make-ppolar
 			 make-pulse-train make-rand make-rand-interp make-sawtooth-wave
 			 make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
-			 make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder
+			 make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder make-ssb-am
 			 (lambda () (make-filter :ycoeffs (vct 0 1 2)))
 			 (lambda () (make-filter :xcoeffs (vct 1 2 3) :ycoeffs (vct 0 1 2)))))
 	    (run-procs (list all-pass asymmetric-fm average
@@ -16646,7 +16733,7 @@ EDITS: 5
 			     iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (mixer-ref gen a 0)) notch one-pole one-zero oscil two-pole
 			     pulse-train rand rand-interp sawtooth-wave
 			     sine-summation square-wave (lambda (gen a) (src gen 0.0 a)) sum-of-cosines sum-of-sines table-lookup triangle-wave
-			     two-pole two-zero wave-train waveshape two-zero phase-vocoder
+			     two-pole two-zero wave-train waveshape two-zero phase-vocoder ssb-am
 			     filter filter))
 	    (ques-procs (list all-pass? asymmetric-fm? average?
 			      comb? convolve? delay? env? 
@@ -16654,7 +16741,7 @@ EDITS: 5
 			      iir-filter? locsig? mixer? notch? one-pole? one-zero? oscil? two-pole?
 			      pulse-train? rand? rand-interp? sawtooth-wave?
 			      sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? triangle-wave?
-			      two-pole? two-zero? wave-train? waveshape? two-zero? phase-vocoder?
+			      two-pole? two-zero? wave-train? waveshape? two-zero? phase-vocoder? ssb-am?
 			      filter? filter?))
 	    (func-names (list 'all-pass 'asymmetric-fm 'average
 			      'comb 'convolve 'delay 'env 
@@ -16662,7 +16749,7 @@ EDITS: 5
 			      'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-zero 'oscil 'two-pole
 			      'pulse-train 'rand 'rand-interp 'sawtooth-wave
 			      'sine-summation 'square-wave 'src 'sum-of-cosines 'sum-of-sines 'table-lookup 'triangle-wave
-			      'two-pole 'two-zero 'wave-train 'waveshape 'two-zero 'phase-vocoder
+			      'two-pole 'two-zero 'wave-train 'waveshape 'two-zero 'phase-vocoder 'ssb-am
 			      'filter-y 'filter-xy))
 	    (gen-args (list 0.0 0.0 1.0
 			    0.0 (lambda (dir) 0.0) 0.0 #f
@@ -16670,7 +16757,7 @@ EDITS: 5
 			    0.0 0.0 0 0.0 0.0 0.0 0.0 0.0
 			    0.0 0.0 0.0 0.0
 			    0.0 0.0 (lambda (dir) 0.0) 0.0 0.0 0.0 0.0
-			    0.0 0.0 0.0 0.0 0.0 (lambda (dir) 0.0)
+			    0.0 0.0 0.0 0.0 0.0 (lambda (dir) 0.0) 0.0
 			    0.0 0.0))
 	    (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data
 				 mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
@@ -18685,9 +18772,9 @@ EDITS: 5
 		      (fneq (sample 99) 0.2)
 		      (fneq (sample 100) 0.2)
 		      (fneq (sample 200) 0.4)
-		      (fneqerr (sample 300) 0.6 .002)
-		      (fneqerr (sample 400) 0.801 .005)
-		      (fneqerr (sample 450) 0.900 .005))
+		      (fneqerr (sample 300) 0.6 .003)
+		      (fneqerr (sample 400) 0.801 .01)
+		      (fneqerr (sample 450) 0.900 .01))
 		  (snd-display ";mix-speed lengthens track + track-amp-env: ~A"
 			       (map sample (list 0 50 99 100 200 300 400 450))))
 	      (undo)
@@ -21187,7 +21274,7 @@ EDITS: 5
 
 (if (provided? 'snd-ladspa)
 (define* (ladspa-it library label #:rest plugin-parameters)
-  ;; (ladspa-it "cmt" "delay_5s" .3 .5)
+  ;; (ladspa-it "delay" "delay_5s" .3 .5)
   (init-ladspa)
   (let* ((descriptor (ladspa-descriptor library label))
 	 (handle (ladspa-instantiate descriptor (srate)))
@@ -21418,11 +21505,11 @@ EDITS: 5
 	  (reset-hook! new-widget-hook))
 	
 	(if (provided? 'snd-ladspa)
-	    (if (file-exists? "/home/bil/test/cmt/plugins")
+	    (if (file-exists? "/home/bil/test/ladspa_sdk/plugins")
 		(begin
-		  (set! (ladspa-dir) "/home/bil/test/cmt/plugins")
+		  (set! (ladspa-dir) "/home/bil/test/ladspa_sdk/plugins")
 		  (init-ladspa)
-		  (let* ((ptr (ladspa-descriptor "cmt" "delay_5s"))
+		  (let* ((ptr (ladspa-descriptor "delay" "delay_5s"))
 			 (label (.Label ptr))
 			 (name (.Name ptr))
 			 (copy (.Copyright ptr))
@@ -21435,50 +21522,63 @@ EDITS: 5
 			 (descs (.PortDescriptors ptr)))
 		    (if (not (string=? label "delay_5s")) 
 			(snd-display ";ladspa .Label: ~A" label))
-		    (if (not (string=? name "Echo Delay Line (Maximum Delay 5s)")) 
+		    (if (not (string=? name "Simple Delay Line")) 
 			(snd-display ";ladspa .Name: ~A" name))
-		    (if (not (string=? maker "CMT (http://www.ladspa.org/cmt, plugin by Richard W.E. Furse)")) 
+		    (if (not (string=? maker "Richard Furse (LADSPA example plugins)"))
 			(snd-display ";ladspa .Maker: ~A" maker))
-		    (if (not (string=? copy "(C)2000, Richard W.E. Furse. GNU General Public Licence Version 2 applies.")) 
+		    (if (not (string=? copy "None"))
 			(snd-display ";ladspa .Copyright: ~A" copy))
-		    (if (not (= id 1056)) (snd-display ";ladspa .UniqueID: ~A" id))
+		    (if (not (= id 1043)) (snd-display ";ladspa .UniqueID: ~A" id))
 		    (if (not (= count 4)) (snd-display ";ladspa .PortCount: ~A" count))
 		    (if (not (= props 4)) (snd-display ";ladspa .Properties: ~A" prop))
 		    (if (not (equal? names (list "Delay (Seconds)" "Dry/Wet Balance" "Input" "Output")))
 			(snd-display ";ladspa .PortNames: ~A" names))
-		    (if (not (equal? hints (list (list 3 0.0 5.0) (list 3 0.0 1.0) (list 0 0.0 0.0) (list 0 0.0 0.0))))
+		    (if (not (equal? hints (list (list 579 0.0 5.0) (list 195 0.0 1.0) (list 0 0.0 0.0) (list 0 0.0 0.0))))
 			(snd-display ";ladspa .PortRangeHints: ~A" hints))
 		    (if (not (equal? descs (list 5 5 9 10)))
 			(snd-display ";ladspa .PortDescriptors: ~A" descs))
 		    (if (not (= (logand (cadr (.PortDescriptors ptr)) LADSPA_PORT_INPUT) 1))
 			(snd-display ";ladspa port hint: ~A" (logand (cadr (.PortDescriptors ptr)) LADSPA_PORT_INPUT))))
-		  (apply-ladspa (make-sample-reader 0) (list "cmt" "delay_5s" .3 .5) 1000 "delayed")
-		  (if (not (equal? (analyze-ladspa "cmt" "delay_5s")
-				   (list "Echo Delay Line (Maximum Delay 5s)" "CMT (http://www.ladspa.org/cmt, plugin by Richard W.E. Furse)" "(C)2000, Richard W.E. Furse. GNU General Public Licence Version 2 applies." (list "Dry/Wet Balance" "minimum" 0.0 "maximum" 1.0) (list "Delay (Seconds)" "minimum" 0.0 "maximum" 5.0))))
-		      (snd-display ";analyze-ladspa: ~A" (analyze-ladspa "cmt" "delay_5s")))
-		  (ladspa-it "cmt" "delay_5s" .3 .5)
+		  (apply-ladspa (make-sample-reader 0) (list "delay" "delay_5s" .3 .5) 1000 "delayed")
+		  (if (not (equal? (analyze-ladspa "delay" "delay_5s")
+				   (list "Simple Delay Line" "Richard Furse (LADSPA example plugins)" "None" (list "Dry/Wet Balance" "minimum" 0.0 "maximum" 1.0) (list "Delay (Seconds)" "minimum" 0.0 "maximum" 5.0))))
+		      (snd-display ";analyze-ladspa: ~A" (analyze-ladspa "delay" "delay_5s")))
+		  (ladspa-it "delay" "delay_5s" .3 .5)
+		  (if (provided? 'xm)
+		      (let ((w (list-ref (menu-widgets) 5)))
+			(if (list? w)
+			    (if (not (XmIsRowColumn w))
+				(let ((option-holder (cadr (XtGetValues w (list XmNsubMenuId 0)))))
+				  (for-each-child
+				   option-holder
+				   (lambda (menu)
+				     (if (and (XmIsPushButton menu)
+					      (XtIsSensitive menu)
+					      (string=? (XtName menu) "Plugins"))
+					 (XtCallCallbacks menu XmNactivateCallback (snd-global-state))))))))))
+		  (dismiss-all-dialogs)
 		  (let ((tag (catch #t 
 				    (lambda () 
-				      (apply-ladspa (make-sample-reader 0) (list "cmt" "delay_4s" .3 .5) 1000 "delayed"))
+				      (apply-ladspa (make-sample-reader 0) (list "delay" "delay_4s" .3 .5) 1000 "delayed"))
 				    (lambda args args))))
 		    (if (not (eq? (car tag) 'no-such-plugin))
 			(snd-display ";apply-ladspa bad plugin: ~A" tag)))
 		  (let ((tag (catch #t 
 				    (lambda () 
-				      (apply-ladspa (list (make-sample-reader 0) (make-sample-reader 0)) (list "cmt" "delay_5s" .3 .5) 1000 "delayed"))
+				      (apply-ladspa (list (make-sample-reader 0) (make-sample-reader 0)) (list "delay" "delay_5s" .3 .5) 1000 "delayed"))
 				    (lambda args args))))
 		    (if (not (eq? (car tag) 'plugin-error))
 			(snd-display ";apply-ladspa reader mismatch: ~A" tag)))
 		  (let ((vals (list-ladspa)))
 		    (if (not (list-p vals))
 			(snd-display ";ladspa list: ~A" vals))
-		    (let ((descr (analyse-ladspa "cmt" "delay_5s")))
+		    (let ((descr (analyse-ladspa "delay" "delay_5s")))
 		      (if (or (not (list-p descr))
 			      (not (string? (car descr)))
-			      (not (string=? (car descr) "Echo Delay Line (Maximum Delay 5s)")))
+			      (not (string=? (car descr) "Simple Delay Line")))
 			  (snd-display ";analyse-ladspa: ~A" descr))))
 		  (let ((tag (catch #t 
-				    (lambda () (analyse-ladspa "cmt" "delay_no_delay"))
+				    (lambda () (analyse-ladspa "delay" "delay_no_delay"))
 				    (lambda args (car args)))))
 		    (if (not (eq? tag 'no-such-plugin)) (snd-display ";analyse-ladspa tag: ~A" tag)))
 		  (let ((tag (catch #t
@@ -31620,6 +31720,7 @@ EDITS: 2
 	(av (make-average 4))
 	(sr (make-src :srate .5))
 	(gr (make-granulate :expansion 2.0))
+	(sb (make-ssb-am 440.0))
 	)
     (run
      (lambda ()
@@ -31669,6 +31770,9 @@ EDITS: 2
        (if (not (= (mus-hop gr) 1234)) (display ";gr hop messed up"))
        (set! (mus-length gr) 1234)
        (if (not (= (mus-length gr) 1234)) (display ";gr length messed up"))
+       (if (fneq (mus-frequency sb) 440.0) (snd-display ";sb freq?"))
+       (set! (mus-frequency sb) 220.0)
+       (if (fneq (mus-frequency sb) 220.0) (snd-display ";sb freq messed up"))
        
        ;;       (set! (mus-length #f) 123)
        ;; this should be allowable at parse time
@@ -33847,6 +33951,7 @@ EDITS: 2
 	    (btst '(let ((gen (make-src))) (src? gen)) #t)
 	    (btst '(let ((gen (make-sum-of-cosines))) (sum-of-cosines? gen)) #t)
 	    (btst '(let ((gen (make-sum-of-sines))) (sum-of-sines? gen)) #t)
+	    (btst '(let ((gen (make-ssb-am))) (ssb-am? gen)) #t)
 	    (btst '(let ((gen (make-table-lookup))) (table-lookup? gen)) #t)
 	    (btst '(let ((gen (make-triangle-wave))) (triangle-wave? gen)) #t)
 	    (btst '(let ((gen (make-two-pole))) (two-pole? gen)) #t)
@@ -33932,6 +34037,8 @@ EDITS: 2
 	    (ftst '(let ((gen (make-sum-of-cosines))) (gen)) 1.0)
 	    (ftst '(let ((gen (make-sum-of-sines))) (sum-of-sines gen)) 0.0)
 	    (ftst '(let ((gen (make-sum-of-sines))) (gen)) 0.0)
+	    (ftst '(let ((gen (make-ssb-am))) (ssb-am gen)) 0.0)
+	    (ftst '(let ((gen (make-ssb-am))) (gen)) 0.0)
 	    (ftst '(let ((gen (make-table-lookup))) (table-lookup gen)) 0.0)
 	    (ftst '(let ((gen (make-table-lookup))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-triangle-wave))) (triangle-wave gen)) 0.0)
@@ -47267,7 +47374,7 @@ EDITS: 2
 		     make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
 		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
-		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
+		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-ssb-am make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer?
 		     multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-channel mus-channels
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
@@ -47277,8 +47384,8 @@ EDITS: 2
 		     partials->wave partials->waveshape phase-partials->wave polynomial pulse-train pulse-train?
 		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin?  rectangular->polar
 		     restart-env ring-modulate sample->buffer sample->file sample->file? sample->frame sawtooth-wave
-		     sawtooth-wave? sine-summation sine-summation? spectrum square-wave square-wave? src src? sum-of-cosines sum-of-sines 
-		     sum-of-cosines? sum-of-sines? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
+		     sawtooth-wave? sine-summation sine-summation? spectrum square-wave square-wave? src src? sum-of-cosines sum-of-sines ssb-am
+		     sum-of-cosines? sum-of-sines? ssb-am? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
 		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
 		     vct? list->vct vct->list vector->vct vct->vector vct-move!  vct-subseq vct little-endian?
@@ -47388,7 +47495,7 @@ EDITS: 2
 			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 			  make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
-			  make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder
+			  make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder make-ssb-am
 			  make-color make-player make-track make-region make-snd->sample make-xen->sample 
 			  ))
       
@@ -47584,7 +47691,7 @@ EDITS: 2
 					filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
 					mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 					sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? 
-					triangle-wave? two-pole? two-zero? wave-train? waveshape? color? mix-sample-reader? average?
+					triangle-wave? two-pole? two-zero? wave-train? waveshape? color? mix-sample-reader? average? ssb-am?
 					sample-reader? track-sample-reader? region-sample-reader? vct? )))
 		      (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
 	    (gc)
@@ -47601,7 +47708,7 @@ EDITS: 2
 			    filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
 			    mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			    sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? 
-			    triangle-wave? two-pole? two-zero? wave-train? waveshape? sound? color? mix-sample-reader? average?
+			    triangle-wave? two-pole? two-zero? wave-train? waveshape? sound? color? mix-sample-reader? average? ssb-am?
 			    sample-reader? track-sample-reader? region-sample-reader? vct?))
 	    
 	    (for-each (lambda (n)
@@ -47664,7 +47771,7 @@ EDITS: 2
 					  make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
 					  make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin
 					  make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines 
-					  make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train
+					  make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-ssb-am
 					  make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels
 					  mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 					  mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
@@ -47672,7 +47779,7 @@ EDITS: 2
 					  oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
 					  phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin restart-env
 					  sawtooth-wave sine-summation square-wave src sum-of-cosines sum-of-sines table-lookup tap triangle-wave
-					  two-pole two-zero wave-train waveshape))))
+					  two-pole two-zero wave-train waveshape ssb-am))))
 		      (list (current-module) (sqrt -1.0)))
 	    (gc)
 	    
@@ -47698,7 +47805,7 @@ EDITS: 2
 			    notch one-pole one-zero oscil oscil-bank partials->polynomial partials->wave partials->waveshape
 			    phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
 			    ring-modulate sample->buffer sample->frame sawtooth-wave sine-summation square-wave src sum-of-cosines sum-of-sines 
-			    sine-bank table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ))
+			    sine-bank table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ssb-am make-ssb-am))
 	    
 	    (for-each (lambda (n)
 			(let ((tag

@@ -5054,6 +5054,61 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 }
 
 
+/* -------- ssb-am -------- */
+
+static XEN g_ssb_am_p(XEN obj) 
+{
+  #define H_ssb_am_p "(" S_ssb_am_p " gen): #t if gen is a " S_ssb_am
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_ssb_am_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+static XEN g_make_ssb_am(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_make_ssb_am "(" S_make_ssb_am " (:frequency 440.0) (:order 40)): \
+return a new " S_ssb_am " generator."
+
+  mus_xen *gn;
+  mus_any *ge;
+  XEN args[4]; 
+  XEN keys[2];
+  int orig_arg[2] = {0, 0};
+  int vals;
+  int order = 40;
+  Float freq = 440.0;
+  keys[0] = kw_frequency;
+  keys[1] = kw_order;
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
+  vals = mus_optkey_unscramble(S_make_ssb_am, 2, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      freq = mus_optkey_to_float(keys[0], S_make_ssb_am, orig_arg[0], freq);
+      order = mus_optkey_to_int(keys[1], S_make_ssb_am, orig_arg[1], order);
+    }
+  if (order <= 0)
+    XEN_OUT_OF_RANGE_ERROR(S_make_ssb_am, orig_arg[1], keys[1], "order ~A <= 0?");
+  ge = mus_make_ssb_am(freq, order);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      gn->nvcts = 0;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
+}
+
+static XEN g_ssb_am(XEN obj, XEN insig)
+{
+  #define H_ssb_am "(" S_ssb_am " gen (insig 0.0)): get the next sample from " S_ssb_am " gen"
+
+  Float insig1 = 0.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_ssb_am_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_ssb_am, "an ssb_am gen");
+  if (XEN_NUMBER_P(insig)) insig1 = XEN_TO_C_DOUBLE(insig); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(insig), insig, XEN_ARG_2, S_ssb_am, "a number");
+  return(C_TO_XEN_DOUBLE(mus_ssb_am(XEN_TO_MUS_ANY(obj), insig1)));
+}
+
+
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_srate_w, g_srate)
 XEN_NARGIFY_1(g_set_srate_w, g_set_srate)
@@ -5311,6 +5366,9 @@ XEN_NARGIFY_1(g_pv_phase_increments_w, g_pv_phase_increments)
 XEN_NARGIFY_1(g_mus_hop_w, g_mus_hop)
 XEN_NARGIFY_2(g_mus_set_hop_w, g_mus_set_hop)
 XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
+XEN_ARGIFY_4(g_make_ssb_am_w, g_make_ssb_am)
+XEN_ARGIFY_2(g_ssb_am_w, g_ssb_am)
+XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
 #else
 #define g_srate_w g_srate
 #define g_set_srate_w g_set_srate
@@ -5568,6 +5626,9 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_mus_hop_w g_mus_hop
 #define g_mus_set_hop_w g_mus_set_hop
 #define g_mus_mix_w g_mus_mix
+#define g_make_ssb_am_w g_make_ssb_am
+#define g_ssb_am_w g_ssb_am
+#define g_ssb_am_p_w g_ssb_am_p
 #endif
 
 #if WITH_MODULES
@@ -5770,11 +5831,9 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines_p,    g_sum_of_cosines_p_w,    1, 0, 0, H_sum_of_cosines_p);
   #define H_mus_cosines "(" S_mus_cosines " gen): number of cosines produced by gen"
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_cosines, g_mus_hop_w, H_mus_cosines, S_setB S_mus_cosines, g_mus_set_hop_w, 1, 0, 2, 0);
-
   XEN_DEFINE_PROCEDURE(S_make_sum_of_sines,   g_make_sum_of_sines_w,   0, 6, 0, H_make_sum_of_sines); 
   XEN_DEFINE_PROCEDURE(S_sum_of_sines,        g_sum_of_sines_w,        1, 1, 0, H_sum_of_sines);
   XEN_DEFINE_PROCEDURE(S_sum_of_sines_p,      g_sum_of_sines_p_w,      1, 0, 0, H_sum_of_sines_p);
-
 
   XEN_DEFINE_PROCEDURE(S_table_lookup_p,     g_table_lookup_p_w,     1, 0, 0, H_table_lookup_p);
   XEN_DEFINE_PROCEDURE(S_make_table_lookup,  g_make_table_lookup_w,  0, 0, 1, H_make_table_lookup);
@@ -6013,6 +6072,10 @@ the closer the radius is to 1.0, the narrower the resonance."
 
   XEN_DEFINE_PROCEDURE(S_mus_mix, g_mus_mix_w, 2, 5, 0, H_mus_mix);
 
+  XEN_DEFINE_PROCEDURE(S_make_ssb_am,   g_make_ssb_am_w,   0, 4, 0, H_make_ssb_am); 
+  XEN_DEFINE_PROCEDURE(S_ssb_am,        g_ssb_am_w,        1, 1, 0, H_ssb_am);
+  XEN_DEFINE_PROCEDURE(S_ssb_am_p,      g_ssb_am_p_w,      1, 0, 0, H_ssb_am_p);
+
   XEN_YES_WE_HAVE("clm");
 
 #if WITH_MODULES
@@ -6141,6 +6204,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_sine_summation,
 	       S_make_square_wave,
 	       S_make_src,
+	       S_make_ssb_am,
 	       S_make_sum_of_cosines,
 	       S_make_sum_of_sines,
 	       S_make_table_lookup,
@@ -6266,6 +6330,8 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_square_wave_p,
 	       S_src,
 	       S_src_p,
+	       S_ssb_am,
+	       S_ssb_am_p,
 	       S_sum_of_cosines,
 	       S_sum_of_cosines_p,
 	       S_sum_of_sines,

@@ -919,6 +919,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="extsnd.html#makesnd_to_sample">make-snd-&gt;sample</a></td><td colspan=2>((index #f))</td></tr>
 <tr><td><a href="clm.html#make-square-wave">make-square-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-src">make-src</a></td><td colspan=2>(input srate width)</td></tr>
+<tr><td><a href="clm.html#make-ssb-am">make-ssb-am</a></td><td colspan=2>(frequency order)</td></tr>
 <tr><td><a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a></td><td colspan=2>(cosines frequency initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-sum-of-sines">make-sum-of-sines</a></td><td colspan=2>(sines frequency initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-table-lookup">make-table-lookup</a></td><td colspan=2>(frequency initial-phase wave size)</td></tr>
@@ -1037,6 +1038,8 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#square-wave?">square-wave?</a></td><td>(gen)</td><td>#t if gen is square-wave generator</td></tr>
 <tr><td><a href="clm.html#src">src</a></td><td>(gen <i>fm input-function</i>)</td><td>sample rate converter</td></tr>
 <tr><td><a href="clm.html#src?">src?</a></td><td>(gen)</td><td>#t if gen is sample-rate converter</td></tr>
+<tr><td><a href="clm.html#ssb-am">ssb-am</a></td><td>(gen <i>insig</i>)</td><td>ssb-am</td></tr>
+<tr><td><a href="clm.html#ssb-am?">ssb-am?</a></td><td>(gen)</td><td>#t if gen is ssb-am generator</td></tr>
 <tr><td><a href="clm.html#sum-of-cosines">sum-of-cosines</a></td><td>(gen <i>fm</i>)</td><td>sum-of-cosines (<a class=quiet href="clm.html#pulse-train">pulse-train</a>) generator</td></tr>
 <tr><td><a href="clm.html#sum-of-cosines?">sum-of-cosines?</a></td><td>(gen)</td><td>#t if gen is sum-of-cosines generator</td></tr>
 <tr><td><a href="clm.html#sum-of-sines">sum-of-sines</a></td><td>(gen <i>fm</i>)</td><td>sum-of-sines</td></tr>
