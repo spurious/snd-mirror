@@ -25,9 +25,6 @@ int help_text_width(const char *txt, int start, int end)
 
 /* ---------------- MOTIF 2 ---------------- */
 
-/* TODO: help completion, help search mechanism (via help strings I guess) */
-/* TODO: back/forth buttons for help history */
-
 #define HELP_ROWS 10
 #define HELP_XREFS 8
 #define HELP_COLUMNS 56
@@ -49,13 +46,12 @@ static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *con
     {
       if ((outer_with_wrap) && (abs(curwid - old_help_text_width) > 10))
 	{
-	  char *cur_help;
-	  char *new_help = NULL;
-	  cur_help = XmTextGetString(help_text);
-	  new_help = word_wrap(original_help_text, curwid);
-	  XmTextSetString(help_text, new_help);
-	  if (new_help) FREE(new_help);
-	  if (cur_help) XtFree(cur_help);
+	  char *cur_help_str, *new_help_str = NULL;
+	  cur_help_str = XmTextGetString(help_text);
+	  new_help_str = word_wrap(original_help_text, curwid);
+	  XmTextSetString(help_text, new_help_str);
+	  if (new_help_str) FREE(new_help_str);
+	  if (cur_help_str) XtFree(cur_help_str);
 	  old_help_text_width = curwid;
 	}
     }
@@ -148,31 +144,12 @@ static char *find_highlighted_text(XmString xs)
 }
 
 static Widget related_items = NULL;
-
-static void related_help(int urls, ...)
-{
-  int i;
-  XmString *strs = NULL;
-  va_list ap;
-  if (related_items)
-    {
-      strs = (XmString *)CALLOC(urls, sizeof(XmString));
-      va_start(ap, urls);
-      for (i = 0; i < urls; i++)
-	strs[i] = parse_crossref((const char *)(va_arg(ap, char *)));
-      va_end(ap);
-      XtVaSetValues(related_items, XmNitems, strs, XmNitemCount, urls, NULL);
-      for (i = 0; i < urls; i++)
-	XmStringFree(strs[i]);
-      FREE(strs);
-    }
-}
-
 static char *help_completer(char *text) {return(NULL);}
 
 static bool new_help(const char *pattern)
 {
   char *url;
+  char **xrefs;
   url = snd_url(pattern);
   if (url)
     {
@@ -181,14 +158,19 @@ static bool new_help(const char *pattern)
       xstr = g_snd_help(C_TO_XEN_STRING(pattern), 0);
       if (XEN_STRING_P(xstr))
 	{
-	  char *parsed_pattern = NULL;
-	  snd_help(pattern, XEN_TO_C_STRING(xstr), true);
-	  parsed_pattern = (char *)CALLOC(strlen(pattern) + 3, sizeof(char));
-	  parsed_pattern[0] = '{';
-	  strcat(parsed_pattern, pattern);
-	  strcat(parsed_pattern, "}");
-	  related_help(1, parsed_pattern);
-	  FREE(parsed_pattern);
+	  xrefs = help_name_to_xrefs(pattern);
+	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), true, xrefs);
+	  if (xrefs) FREE(xrefs);
+	  return(true);
+	}
+    }
+  if (!(snd_topic_help(pattern)))
+    {
+      xrefs = help_name_to_xrefs(pattern);
+      if (xrefs)
+	{
+	  snd_help_with_xrefs(pattern, "(no help found)", true, xrefs);
+	  FREE(xrefs);
 	  return(true);
 	}
     }
@@ -203,7 +185,42 @@ static void help_browse_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   red_text = find_highlighted_text(cbs->item);
   if (red_text)
-    get_related_help(red_text);
+    {
+      name_to_html_viewer(red_text);
+      FREE(red_text);
+    }
+  else
+    {
+      red_text = (char *)XmStringUnparse(cbs->item, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+      if (red_text) 
+	{
+	  new_help(red_text);
+	  XtFree(red_text);
+	}
+    }
+}
+
+static void help_double_click_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  /* double-click item in "related items" list */
+  char *red_text = NULL;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsList(w), w);
+  red_text = find_highlighted_text(cbs->selected_items[0]);
+  if (red_text)
+    {
+      name_to_html_viewer(red_text);
+      FREE(red_text);
+    }
+  else
+    {
+      red_text = (char *)XmStringUnparse(cbs->selected_items[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+      if (red_text)
+	{
+	  name_to_html_viewer(red_text);
+	  XtFree(red_text);
+	}
+    }
 }
 
 static Widget help_search = NULL;
@@ -389,7 +406,7 @@ static void create_help_monolog(void)
   related_items = XmCreateScrolledList(inner_holder, "help-list", args, n);
   XtManageChild(related_items);
   XtAddCallback(related_items, XmNbrowseSelectionCallback, help_browse_callback, NULL);
-  /* XmNdefaultActionCallback for double click */
+  XtAddCallback(related_items, XmNdefaultActionCallback, help_double_click_callback, NULL);
   
   XtManageChild(help_dialog);
   
@@ -464,10 +481,10 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
   original_help_text = (char *)helpstr;
   if (with_wrap)
     {
-      char *new_help = NULL;
-      new_help = word_wrap(helpstr, widget_width(help_text));
-      XmTextSetString(help_text, new_help);
-      if (new_help) FREE(new_help);
+      char *new_help_str = NULL;
+      new_help_str = word_wrap(helpstr, widget_width(help_text));
+      XmTextSetString(help_text, new_help_str);
+      if (new_help_str) FREE(new_help_str);
     }
   else XmTextSetString(help_text, (char *)helpstr);
   if (!XtIsManaged(help_dialog)) 

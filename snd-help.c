@@ -1,5 +1,112 @@
 #include "snd.h"
 
+#if USE_MOTIF
+  #include <X11/IntrinsicP.h>
+  #if HAVE_XPM
+    #include <X11/xpm.h>
+  #endif
+#endif
+
+#if HAVE_GNU_LIBC_VERSION_H
+  #include <gnu/libc-version.h>
+#endif
+#if (HAVE_GSL_GSL_VERSION_H) && (!(defined(GSL_VERSION)))
+  #include <gsl/gsl_version.h>
+#endif
+
+#if HAVE_LADSPA
+  #include <ladspa.h>
+#endif
+
+#if HAVE_FFTW3
+  #include <fftw3.h>
+#else
+  #if HAVE_FFTW
+    #include <fftw.h>
+  #endif
+#endif
+
+static char **snd_itoa_strs = NULL;
+static int snd_itoa_ctr = 0, snd_itoa_size = 0;
+static char *snd_itoa(int n)
+{
+  char *str;
+  if (snd_itoa_strs == NULL)
+    {
+      snd_itoa_size = 32;
+      snd_itoa_strs = (char **)CALLOC(snd_itoa_size, sizeof(char *));
+    }
+  else
+    {
+      if (snd_itoa_ctr >= snd_itoa_size)
+	{
+	  int i;
+	  snd_itoa_size += 32;
+	  snd_itoa_strs = (char **)REALLOC(snd_itoa_strs, snd_itoa_size * sizeof(char *));
+	  for (i = snd_itoa_ctr; i < snd_itoa_size; i++) snd_itoa_strs[i] = NULL;
+	}
+    }
+  str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", n);
+  snd_itoa_strs[snd_itoa_ctr++] = str;
+  return(str);
+}
+
+static void free_snd_itoa(void)
+{
+  int i;
+  for (i = 0; i < snd_itoa_ctr; i++)
+    if (snd_itoa_strs[i]) 
+      {
+	FREE(snd_itoa_strs[i]);
+	snd_itoa_strs[i] = NULL;
+      }
+  snd_itoa_ctr = 0;
+}
+
+static char *sndlib_consistency_check(void)
+{
+#if SNDLIB_USE_FLOATS
+  if (mus_sample_bits() > 0) 
+    return(" Snd built expecting float samples, but sndlib uses int!"); 
+#else
+  char *buf;
+  if (mus_sample_bits() == 0)
+    return(" Snd built expecting int samples, but sndlib uses float!"); 
+  else
+    if (mus_sample_bits() != MUS_SAMPLE_BITS)
+      {
+	buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char)); /* memory leak here is the least of our worries... */
+	mus_snprintf(buf, LABEL_BUFFER_SIZE, " Snd expects %d bit int samples, but sndlib uses %d bits!",
+		     MUS_SAMPLE_BITS,
+		     mus_sample_bits());
+	if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = buf;
+	return(buf);
+      }
+#endif  
+  return("");
+}
+
+static char* vstrcat(char *arg1, ...)
+{
+  char *buf;
+  va_list ap;
+  int len = 0;
+  char *str;
+  len = strlen(arg1);
+  va_start(ap, arg1);
+  while ((str = va_arg(ap, char *)))
+    len += strlen(str);
+  va_end(ap);
+  buf = (char *)CALLOC(len + 32, sizeof(char));
+  strcat(buf, arg1);
+  va_start(ap, arg1);
+  while ((str = va_arg(ap, char *)))
+    strcat(buf, str);
+  va_end(ap);
+  return(buf);
+}
+
 static char *main_snd_xrefs[11] = {
   "{CLM}: sound synthesis",
   "{CM}: algorithmmic composition",
@@ -30,65 +137,6 @@ static void main_snd_help(const char *subject, ...)
   FREE(newstr);
 }  
 
-static char *snd_itoa(int n)
-{
-  char *str;
-  str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", n);
-  return(str);
-}
-
-#if USE_MOTIF
-  #include <X11/IntrinsicP.h>
-  #if HAVE_XPM
-    #include <X11/xpm.h>
-  #endif
-#endif
-
-static char *sndlib_consistency_check(void)
-{
-#if SNDLIB_USE_FLOATS
-  if (mus_sample_bits() > 0) 
-    return(" Snd built expecting float samples, but sndlib uses int!"); 
-#else
-  char *buf;
-  if (mus_sample_bits() == 0)
-    return(" Snd built expecting int samples, but sndlib uses float!"); 
-  else
-    if (mus_sample_bits() != MUS_SAMPLE_BITS)
-      {
-	buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char)); /* memory leak here is the least of our worries... */
-	mus_snprintf(buf, LABEL_BUFFER_SIZE, " Snd expects %d bit int samples, but sndlib uses %d bits!",
-		     MUS_SAMPLE_BITS,
-		     mus_sample_bits());
-	return(buf);
-      }
-#endif  
-  return("");
-}
-
-#if HAVE_GNU_LIBC_VERSION_H
-  #include <gnu/libc-version.h>
-#endif
-#if (HAVE_GSL_GSL_VERSION_H) && (!(defined(GSL_VERSION)))
-  #include <gsl/gsl_version.h>
-#endif
-
-#if HAVE_LADSPA
-  #include <ladspa.h>
-#endif
-
-static char* vstrcat(char *buf, ...)
-{
-  va_list ap;
-  char *str;
-  va_start(ap, buf);
-  while ((str = va_arg(ap, char *)))
-    strcat(buf, str);
-  va_end(ap);
-  return(buf);
-}
-
 static char *xm_version(void)
 {
   char *version = NULL;
@@ -111,6 +159,7 @@ static char *xm_version(void)
 		   "xg",
 #endif
 		   XEN_TO_C_STRING(xm_val));
+      if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
   return("");
@@ -133,6 +182,7 @@ static char *gl_version(void)
     {
       version = (char *)CALLOC(32, sizeof(char));
       mus_snprintf(version, 32, "\n    gl: %s", XEN_TO_C_STRING(gl_val));
+      if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
   return("");
@@ -166,23 +216,16 @@ static char *glx_version(void)
     }
   else mus_snprintf(version, 128, "gtkGL not supported?");
 #endif
+  if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
   return(version);
 }
 #endif
 
-#if HAVE_FFTW3
-  #include <fftw3.h>
-#else
-  #if HAVE_FFTW
-    #include <fftw.h>
-  #endif
-#endif
-
 char *version_info(void)
 {
-  char *buf;
-  buf = (char *)CALLOC(2048, sizeof(char));
-  vstrcat(buf,
+  char *result;
+  snd_itoa_ctr = 0;
+  result = vstrcat(
 	  _("This is Snd version "),
 	  SND_RPM_VERSION,
 	  " of ",
@@ -309,7 +352,8 @@ char *version_info(void)
                           gnu_get_libc_release(),
 #endif
 	  "\n", NULL);
-  return(buf);
+  free_snd_itoa();
+  return(result);
 }
 
 void about_snd_help(void)
@@ -1196,17 +1240,26 @@ static char *topic_url(const char *topic)
   return(NULL);
 }
 
-#define NUM_XREFS 23
+#define NUM_XREFS 28
 static char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
-  "Src", "Find", "Undo", "Redo"};
+  "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key"};
 
 static char **xref_tables[NUM_XREFS] = {
   Marking_xrefs, Mixing_xrefs, Regions_xrefs, Selections_xrefs, Cursors_xrefs, Tracking_cursors_xrefs,
   Deletions_xrefs, Envelopes_xrefs, Filters_xrefs, Searching_xrefs, Insertions_xrefs, Maxamps_xrefs,
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
-  Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs};
+  Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
+  sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs};
+
+typedef void (*help_func)(void);
+static help_func help_funcs[NUM_XREFS] = {
+  &marks_help, &mix_help, NULL, NULL, NULL, NULL,
+  &delete_help, &env_help, &filter_help, &find_help, &insert_help, NULL,
+  &play_help, NULL, &save_help, NULL, &resample_help, &fft_help, &reverb_help,
+  &resample_help, &find_help, &undo_help, &undo_help,
+  &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help};
 
 char **snd_xrefs(const char *topic)
 {
@@ -1217,18 +1270,73 @@ char **snd_xrefs(const char *topic)
   return(NULL);
 }
 
+bool snd_topic_help(const char *topic)
+{
+  int i;
+  for (i = 0; i < NUM_XREFS; i++)
+    if (STRCMP(topic, xrefs[i]) == 0)
+      {
+	(*help_funcs[i])();
+	return(true);
+      }
+  return(false);
+}
+
 /* TODO: perhaps pass out the url lists as well? */
-/* TODO: if general topic (or menu label) in help text widget, go to topic */
 /* TODO: regexp access to help lists, tables */
 /* TODO: regexp to g_snd_url (for index.rb) */
 
 char *snd_url(const char *name)
 {
   int i;
-  for (i = 0; i < help_names_size; i++)
+  for (i = 0; i < HELP_NAMES_SIZE; i++)
     if (STRCMP(help_names[i], name) == 0)
       return(help_urls[i]);
   return(NULL);
+}
+
+static bool strings_might_match(const char *a, const char *b, int len)
+{
+  int i;
+  for (i = 0; i < len; i++)
+    {
+      if (a[i] != b[i]) return(false);
+#if HAVE_RUBY
+      if (a[i] == '_') return(true);
+#else
+      if (a[i] == '-') return(true);
+#endif
+    }
+  return(true);
+}
+
+char **help_name_to_xrefs(const char *name)
+{
+  char **xrefs = NULL;
+  int i, xref_ctr = 0, xrefs_size = 0, name_len, cur_len;
+  name_len = strlen(name);
+  for (i = 0; i < HELP_NAMES_SIZE; i++)
+    if (name[0] == help_names[i][0])
+      {
+	cur_len = strlen(help_names[i]);
+	if (strings_might_match(name, help_names[i], (name_len < cur_len) ? name_len : cur_len))
+	  {
+	    if (xref_ctr >= (xrefs_size - 1)) /* need trailing NULL to mark end of table */
+	      {
+		xrefs_size += 8;
+		if (xref_ctr == 0)
+		  xrefs = (char **)CALLOC(xrefs_size, sizeof(char *));
+		else
+		  {
+		    int k;
+		    xrefs = (char **)REALLOC(xrefs, xrefs_size * sizeof(char *));
+		    for (k = xref_ctr; k < xrefs_size; k++) xrefs[k] = NULL;
+		  }
+	      }
+	    xrefs[xref_ctr++] = help_names[i];
+	  }
+      }
+  return(xrefs);
 }
 
 char* word_wrap(const char *text, int widget_len)
@@ -1358,7 +1466,7 @@ static char *html_directory(void)
   return(NULL);
 }
 
-void get_related_help(char *red_text)
+void name_to_html_viewer(char *red_text)
 {
   char *path, *dir_path, *url;
   dir_path = html_directory();

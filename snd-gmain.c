@@ -572,7 +572,7 @@ style \"default_pane\" = \"default\"\n\
 style \"default_entry\" = \"default\"\n\
 {\n\
   base[ACTIVE]      = { 0.93, 0.93, 0.87 }\n\
-  base[SELECTED]    = { 1.0, 1.0, 1.0 }\n\
+  base[SELECTED]    = { 0.80, 0.80, 0.75 }\n\
   base[PRELIGHT]    = { 1.0, 1.0, 1.0}\n\
   base[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
   base[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\

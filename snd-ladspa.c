@@ -306,7 +306,8 @@ static char *ladspa_xrefs[6] = {
 
 #if USE_MOTIF
 static void ladspa_help_callback(Widget w, XtPointer info, XtPointer context)
-#else
+#endif
+#if USE_GTK
 static void ladspa_help_callback(GtkWidget *w, gpointer info)
 #endif
 {
@@ -382,7 +383,8 @@ it can be useful when the plugins on the system have changed."
     m = XtCreateManagedWidget(_("Plugins"), xmPushButtonWidgetClass, help_menu, args, n);
     XtAddCallback(m, XmNactivateCallback, ladspa_help_callback, NULL);
   }
-#else
+#endif
+#if USE_GTK
   {
     GtkWidget *m, *help_menu;
     help_menu = get_help_menu_widget(); /* this is the cascade menu */

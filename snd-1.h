@@ -508,8 +508,9 @@ void resample_help(void);
 void filter_help(void);
 void insert_help(void);
 void delete_help(void);
-void get_related_help(char *red_text);
-
+void name_to_html_viewer(char *red_text);
+bool snd_topic_help(const char *topic);
+char **help_name_to_xrefs(const char *name);
 
 
 /* -------- snd-menu.c -------- */

@@ -687,7 +687,7 @@ static void print_button_pressed(GtkWidget *w, gpointer context)
 static void env_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
+  gchar *value = NULL;
   int size, n;
   char *str;
   GtkTreeModel *model;
@@ -700,9 +700,11 @@ static void env_browse_callback(GtkTreeSelection *selection, gpointer *gp)
       if (strcmp(str, value) == 0)
 	{
 	  select_or_edit_env(n);
+	  g_free(value);
 	  return;
 	}
     }
+  if (value) g_free(value);
 }
 
 static void graph_button_callback(GtkWidget *w, gpointer context)

@@ -200,7 +200,7 @@ static void gfft_wavelet(int row)
 static void wavelet_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
+  gchar *value = NULL;
   int i;
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
@@ -209,8 +209,10 @@ static void wavelet_browse_callback(GtkTreeSelection *selection, gpointer *gp)
     if (strcmp(value, WAVELETS[i]) == 0)
       {
 	gfft_wavelet(i);
+	g_free(value);
 	return;
       }
+  if (value) g_free(value);
 }
 
 static void gfft_window(int row)
@@ -227,7 +229,7 @@ static void gfft_window(int row)
 static void window_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
+  gchar *value = NULL;
   int i;
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
@@ -236,8 +238,10 @@ static void window_browse_callback(GtkTreeSelection *selection, gpointer *gp)
     if (strcmp(value, FFT_WINDOWS[i]) == 0)
       {
 	gfft_window(i);
+	g_free(value);
 	return;
       }
+  if (value) g_free(value);
 }
 
 static void chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (*((int *)ptr));}
@@ -253,7 +257,7 @@ static void gfft_transform(int row)
 static void transform_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
+  gchar *value = NULL;
   int i;
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
@@ -262,8 +266,10 @@ static void transform_browse_callback(GtkTreeSelection *selection, gpointer *gp)
     if (strcmp(value, TRANSFORM_TYPES[i]) == 0)
       {
 	gfft_transform(i);
+	g_free(value);
 	return;
       }
+  if (value) g_free(value);
 }
 
 static void normal_fft_callback(GtkWidget *w, gpointer context)

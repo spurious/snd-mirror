@@ -2,9 +2,6 @@
 
 /* error handlers -- these include the error dialog (in case no sound is active) and an error history list */
 
-/* TODO: context-sensitive error help (via xrefs etc) -- if available add a help button (tie into history as well?) */
-/* most snd_errors/warnings involve file system junk -- how to tie help into xen_error? */
-
 static Widget snd_error_dialog = NULL;
 static Widget snd_error_history = NULL;
 

@@ -578,7 +578,7 @@ void set_color_scale(Float val)
 static void list_color_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
+  gchar *value = NULL;
   int i;
   char **names;
   GtkTreeModel *model;
@@ -590,8 +590,10 @@ static void list_color_callback(GtkTreeSelection *selection, gpointer *gp)
       {
 	in_set_color_map(i);
 	for_each_chan(update_graph_setting_fft_changed);
+	g_free(value);
 	return;
       }
+  if (value) g_free(value);
   check_color_hook();
 }
 

@@ -1,5 +1,6 @@
 #include "snd.h"
 
+bool send_netscape(const char *html_viewer, const char *url) {return(false);}
 void check_menu_labels(int key, int state, bool extended) {}
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events) {return(0);}
 int snd_help(const char *subject, const char *help, bool with_wrap) {fprintf(stdout, help); return(0);}

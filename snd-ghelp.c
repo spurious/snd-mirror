@@ -1,8 +1,9 @@
 #include "snd.h"
 
 /* SOMEDAY: blue list title bgs */
-/* SOMEDAY: selection in help text -> new help */
 /* SOMEDAY: highlight bracketed help text in red fg */
+/* SOMEDAY: gtk help related list double click callback -- how to get double click notification? */
+
 
 static GtkWidget *help_dialog = NULL;
 static void dismiss_help_dialog(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}
@@ -35,20 +36,6 @@ int help_text_width(const char *txt, int start, int end)
   return(0);
 }
 
-static void related_help(int urls, ...)
-{
-  int i;
-  va_list ap;
-  if (related_items)
-    {
-      gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(related_items))));
-      va_start(ap, urls);
-      for (i = 0; i < urls; i++)
-	sg_list_append(related_items, (char *)(va_arg(ap, char *)));
-      va_end(ap);
-    }
-}
-
 static int old_help_text_width = 0;
 static bool outer_with_wrap = false;
 
@@ -62,8 +49,8 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
     {
       if ((outer_with_wrap) && (abs(curwid - old_help_text_width) > 10))
 	{
-	  char *cur_help = NULL;
-	  char *new_help = NULL;
+	  char *cur_help_str = NULL;
+	  char *new_help_str = NULL;
 	  int end;
 	  GtkTextIter s, e;
 	  GtkTextBuffer *buf;
@@ -71,12 +58,12 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
 	  end = gtk_text_buffer_get_char_count(buf);
 	  gtk_text_buffer_get_iter_at_offset(buf, &s, 0);
 	  gtk_text_buffer_get_iter_at_offset(buf, &e, end);
-	  cur_help = gtk_text_buffer_get_text(buf, &s, &e, true);
-	  new_help = word_wrap(original_help_text, curwid);
+	  cur_help_str = gtk_text_buffer_get_text(buf, &s, &e, true);
+	  new_help_str = word_wrap(original_help_text, curwid);
 	  gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
-	  sg_text_insert(help_text, new_help);
-	  if (new_help) FREE(new_help);
-	  if (cur_help) g_free(cur_help);
+	  sg_text_insert(help_text, new_help_str);
+	  if (new_help_str) FREE(new_help_str);
+	  if (cur_help_str) g_free(cur_help_str);
 	  old_help_text_width = curwid;
 	}
     }
@@ -86,6 +73,7 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
 static bool new_help(const char *pattern)
 {
   char *url;
+  char **xrefs;
   url = snd_url(pattern);
   if (url)
     {
@@ -94,8 +82,19 @@ static bool new_help(const char *pattern)
       xstr = g_snd_help(C_TO_XEN_STRING(pattern), 0);
       if (XEN_STRING_P(xstr))
 	{
-	  snd_help(pattern, XEN_TO_C_STRING(xstr), true);
-	  related_help(1, pattern);
+	  xrefs = help_name_to_xrefs(pattern);
+	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), true, xrefs);
+	  if (xrefs) FREE(xrefs);
+	  return(true);
+	}
+    }
+  if (!(snd_topic_help(pattern)))
+    {
+      xrefs = help_name_to_xrefs(pattern);
+      if (xrefs)
+	{
+	  snd_help_with_xrefs(pattern, "(no help found)", true, xrefs);
+	  FREE(xrefs);
 	  return(true);
 	}
     }
@@ -105,7 +104,7 @@ static bool new_help(const char *pattern)
 static void help_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
+  gchar *value = NULL;
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
@@ -127,12 +126,39 @@ static void help_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 		    topic = (char *)CALLOC(end - start + 1, sizeof(char));
 		    for (i = start, k = 0; i < end; i++, k++)
 		      topic[k] = value[i];
-		    get_related_help(topic);
+		    name_to_html_viewer(topic);
+		    FREE(topic);
+		    g_free(value);
 		    return;
 		  }
 	      }
 	  }
+      /* arrive here if no '{}' */
+      if (value)
+	{
+	  new_help(value);
+	  g_free(value);
+	}
     }
+}
+
+static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  /* this needs to be bool return false -- otherwise, apparently, the mouse-drag->selection never gets turned off! */
+  GtkTextIter start, end;
+  #define HELP_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text))
+  if (gtk_text_buffer_get_selection_bounds(HELP_BUFFER, &start, &end))
+    {
+      char *txt;
+      txt = gtk_text_buffer_get_text(HELP_BUFFER, &start, &end, true);
+      if (txt)
+	{
+	  new_help(txt);
+	  g_free(txt);
+	}
+    }
+
+  return(false);
 }
 
 static void search_activated(GtkWidget *w, gpointer context)
@@ -175,7 +201,13 @@ static void create_help_monolog(void)
   gtk_widget_show(frame);
 
   help_text = make_scrolled_text(frame, false, NULL, NULL);
+  gtk_widget_add_events(help_text, GDK_BUTTON_RELEASE);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(help_text), 10);
+  g_signal_connect_closure_by_id(GTK_OBJECT(help_text),
+				 g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(help_text))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(text_release_callback), NULL, 0),
+				 0);
 
   related_items = sg_make_list(_("related topics"), 
 			       GTK_DIALOG(help_dialog)->vbox, 

@@ -379,6 +379,10 @@ void snd_record_file(void);
 bool record_dialog_is_active(void);
 
 
+/* -------- snd-gxutils.c -------- */
+bool send_netscape(const char *html_viewer, const char *url);
+
+
 #endif
 
 

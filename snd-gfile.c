@@ -298,11 +298,12 @@ static void prune_file_list(GtkFileSelection *filer)
     {
       while (more_files)
 	{
-	  gchar *name;
+	  gchar *name = NULL;
 	  gtk_tree_model_get(tree_model, &iter, 0, &name, -1);
 	  if (!(sound_file_p(name)))
 	    more_files = gtk_list_store_remove(list_store, &iter);
 	  else more_files = gtk_tree_model_iter_next(tree_model, &iter);
+	  g_free(name);
 	}
     }
 }
@@ -495,7 +496,7 @@ static void gfile_header_type(file_data *fd, int row)
 static void save_as_header_type_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
+  gchar *value = NULL;
   int i;
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
@@ -504,14 +505,16 @@ static void save_as_header_type_callback(GtkTreeSelection *selection, gpointer *
     if (strcmp(value, header_short_names[i]) == 0)
       {
 	gfile_header_type((file_data *)gp, i);
+	g_free(value);
 	return;
       }
+  if (value) g_free(value);
 }
 
 static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
+  gchar *value = NULL;
   int i;
   GtkTreeModel *model;
   int dformats = 0;
@@ -527,6 +530,7 @@ static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *
 	fd->format_pos = i;
 	fd->current_format = data_format_from_position(fd->header_pos, i);
       }
+  if (value) g_free(value);
 }
 
 file_data *make_file_data_panel(GtkWidget *parent, char *name, 
@@ -1369,7 +1373,7 @@ static char **data_format_names(void)
 static void raw_data_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
+  gchar *value = NULL;
   int i;
   GtkTreeModel *model;
   char **names;
@@ -1383,8 +1387,10 @@ static void raw_data_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 	mus_header_raw_defaults(&sr, &oc, &fr);
 	fr = i + 1;
 	mus_header_set_raw_defaults(sr, oc, fr);
+	g_free(value);
 	return;
       }
+  if (value) g_free(value);
 }
 
 static void raw_data_help_callback(GtkWidget *w, gpointer context) 

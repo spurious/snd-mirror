@@ -381,9 +381,9 @@
 		(setf help-names (reverse help-names))
 		(setf help-urls (reverse help-urls))
 		(let ((len (length help-names)))
-		  (format sfil "static int help_names_size = ~D;~%" len)
+		  (format sfil "#define HELP_NAMES_SIZE ~D~%" len)
 		  (format sfil "#if HAVE_GUILE~%")
-		  (format sfil "static char *help_names[~D] = {~%  " len)
+		  (format sfil "static char *help_names[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and name in (cdr help-names) do
 		    (if (= (mod ctr 4) 0)
@@ -391,7 +391,7 @@
 		      (format sfil ", ~S" name)))
 		  (format sfil "};~%")
 		  (format sfil "#endif~%#if HAVE_RUBY~%")
-		  (format sfil "static char *help_names[~D] = {~%  " len)
+		  (format sfil "static char *help_names[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and name in (cdr help-names) do
 		    (if (= (mod ctr 4) 0)
@@ -399,7 +399,7 @@
 		      (format sfil ", ~S" (scm->rb name))))
 		  (format sfil "};~%#endif~%")
 		  (format sfil "#if (!HAVE_GUILE) && (!HAVE_RUBY)~%static char **help_names = NULL;~%#endif~%")
-		  (format sfil "static char *help_urls[~D] = {~%  " len)
+		  (format sfil "static char *help_urls[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and url in (cdr help-urls) do
 		    (if (= (mod ctr 4) 0)

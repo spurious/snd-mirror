@@ -9,7 +9,7 @@ static int printout_end;
 static void list_completions_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
+  gchar *value = NULL;
   GtkTreeModel *model;
   GtkTreeSelection *tree;
   int beg, end, i, j, old_len, new_len;
@@ -40,6 +40,7 @@ static void list_completions_callback(GtkTreeSelection *selection, gpointer *gp)
   append_listener_text(0, (char *)(value - 1 + old_len - i));
   if (old_text) g_free(old_text);
   gtk_widget_hide(completion_dialog);
+  if (value) g_free(value);
 }
 
 static void dismiss_completion_callback(GtkWidget *w, gpointer context)
