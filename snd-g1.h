@@ -94,6 +94,9 @@ void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
 void snd_append_char(snd_state *ss, char *msg);
 void snd_append_command(snd_state *ss, char *msg);
+#if HAVE_HOOKS
+  void g_init_gxlistener(SCM local_doc);
+#endif
 
 
 
@@ -295,6 +298,10 @@ GdkGC *erase_GC(chan_info *cp);
 void cleanup_cw(chan_info *cp);
 int channel_unlock_pane(chan_info *cp, void *ptr);
 void change_channel_style(snd_info *sp, int new_style);
+#if HAVE_HOOKS
+  void g_init_gxchn(SCM local_doc);
+#endif
+
 
 
 /* -------- snd-gfind.c -------- */

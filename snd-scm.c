@@ -2867,9 +2867,11 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_gxmenu(local_doc);
   #if (!USE_NO_GUI)
     g_init_gxmain(local_doc);
+    g_init_gxlistener(local_doc);
+    g_init_gxchn(local_doc);
   #endif
 #endif
-#if DEBUGGING && (!USE_NO_GUI)
+#if (!USE_NO_GUI)
   g_init_draw(local_doc);
 #endif
 
@@ -2887,9 +2889,7 @@ If more than one hook function, results are concatenated. If none, the current c
                     (define-envelope (symbol->string ', a) , b)))");
   /* this is trying to keep track of envelopes for the envelope editor */
 
-  gh_eval_str("(define (snd-apropos val) (snd-print (with-output-to-string (lambda () (apropos val)))))");
-  /* this doesn't work with Guile's help procedure due to a bug the latter */
-
+  gh_eval_str("(define (" S_snd_apropos " val) (snd-print (with-output-to-string (lambda () (apropos val)))))");
   gh_eval_str("(read-set! keywords 'prefix)");
   gh_eval_str("(print-enable 'source)");  /* added 13-Feb-01 */
 

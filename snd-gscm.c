@@ -29,15 +29,16 @@ static SCM g_region_dialog(void)
 
 static gint timed_eval(gpointer in_code)
 {
-  SCM code = (SCM)in_code;
-  if ((code) && (gh_procedure_p(code))) g_call0(code);
+  g_call0((SCM)in_code);
   return(0);
 }
 
 static SCM g_in(SCM ms, SCM code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
-  gtk_timeout_add((guint32)SCM_UNWRAP(ms), timed_eval, (gpointer)code);
+  SCM_ASSERT(gh_number_p(ms), ms, SCM_ARG1, S_in);
+  SCM_ASSERT(gh_procedure_p(code), code, SCM_ARG2, S_in);
+  gtk_timeout_add((guint32)TO_C_UNSIGNED_LONG(ms), timed_eval, (gpointer)code);
   return(ms);
 }
 

@@ -886,6 +886,24 @@ static void Command_Help_Callback(Widget w, XtPointer context, XtPointer info)
   listener_dialog_help((snd_state *)context);
 }
 
+#if HAVE_HOOKS
+static SCM mouse_enter_listener_hook, mouse_leave_listener_hook;
+
+static void listener_focus_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  if (HOOKED(mouse_enter_listener_hook))
+    g_c_run_progn_hook(mouse_enter_listener_hook,
+		       SCM_LIST1(SND_WRAP(listener_text))); /* not w */
+}
+
+static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  if (HOOKED(mouse_leave_listener_hook))
+    g_c_run_progn_hook(mouse_leave_listener_hook,
+		       SCM_LIST1(SND_WRAP(listener_text))); /* not w */
+}
+#endif
+
 static void sndCreateCommandWidget(snd_state *ss, int height)
 {
   Arg args[32];
@@ -942,6 +960,10 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtAddCallback(listener_text, XmNhelpCallback, Command_Help_Callback, ss);
       FREE(n1);
       lisp_window = XtParent(listener_text);
+#if HAVE_HOOKS
+      XtAddEventHandler(lisp_window, EnterWindowMask, FALSE, listener_focus_callback, NULL);
+      XtAddEventHandler(lisp_window, LeaveWindowMask, FALSE, listener_unfocus_callback, NULL);
+#endif
       
       if (!(ss->using_schemes))
 	{
@@ -958,8 +980,8 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
 void goto_listener(void) 
 {
   goto_window(listener_text);
-  XmTextSetCursorPosition(listener_text, XmTextGetLastPosition(listener_text)+1);
-  XmTextSetInsertionPosition(listener_text, XmTextGetLastPosition(listener_text)+1);
+  XmTextSetCursorPosition(listener_text, XmTextGetLastPosition(listener_text) + 1);
+  XmTextSetInsertionPosition(listener_text, XmTextGetLastPosition(listener_text) + 1);
 }
 
 void color_listener(Pixel pix)
@@ -1149,3 +1171,18 @@ Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n)
   return(w);
 }
 
+#if HAVE_HOOKS
+
+void g_init_gxlistener(SCM local_doc)
+{
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (snd chn) is called when the mouse \
+enters the lisp listener pane"
+
+  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (snd chn) is called when the mouse \
+leaves the lisp listener pane"
+
+  mouse_enter_listener_hook = MAKE_HOOK(S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
+  mouse_leave_listener_hook = MAKE_HOOK(S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
+}
+
+#endif

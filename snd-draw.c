@@ -1,12 +1,13 @@
 #include "snd.h"
 
-/* TODO:   hide-widget show-widget widget-label set-widget-label
- *                in the label case, w-name is set-button-label in motif, set-label in gtk
- * TODO    in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
+/* TODO: widget-label set-widget-label: w-name is set-button-label in motif, set-label in gtk
+ *         if we had label and map_over_children (widget-for-each?), we could dispense with the menu special cases (remove_option)
+ *         and if widget_activate_hook, the hooks as well.
+ * TODO  in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
+ *         but to make this work requires the load-side deferred resizing?
  * TODO: similar split for make_fft_graph [needs sonogram etc??]
  * TODO: need tests for all of these as well, and cursor-position etc [snd-help listing docs]
  * TODO: decide about the "info" functions, fft-info? sync_info + accessors?
- * TODO: mouse-enter|leave-graph-hook? enter|leave-listener?  surely mouse enter listener should activate it??
  */
 
 #if HAVE_GUILE && (!USE_NO_GUI)
@@ -56,6 +57,10 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
 
 static SCM g_draw_line(SCM x0, SCM y0, SCM x1, SCM y1, SCM snd, SCM chn, SCM ax)
 {
+  SCM_ASSERT(gh_number_p(x0), x0, SCM_ARG1, S_draw_line);
+  SCM_ASSERT(gh_number_p(y0), y0, SCM_ARG2, S_draw_line);
+  SCM_ASSERT(gh_number_p(x1), x1, SCM_ARG3, S_draw_line);
+  SCM_ASSERT(gh_number_p(y1), y1, SCM_ARG4, S_draw_line);
   draw_line(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line),
 	    TO_C_INT(x0),
 	    TO_C_INT(y0),
@@ -66,6 +71,9 @@ static SCM g_draw_line(SCM x0, SCM y0, SCM x1, SCM y1, SCM snd, SCM chn, SCM ax)
 
 static SCM g_draw_dot(SCM x0, SCM y0, SCM size, SCM snd, SCM chn, SCM ax)
 {
+  SCM_ASSERT(gh_number_p(x0), x0, SCM_ARG1, S_draw_dot);
+  SCM_ASSERT(gh_number_p(y0), y0, SCM_ARG2, S_draw_dot);
+  SCM_ASSERT(gh_number_p(size), size, SCM_ARG3, S_draw_dot);
   draw_arc(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dot),
 	   TO_C_INT(x0),
 	   TO_C_INT(y0),
@@ -75,6 +83,10 @@ static SCM g_draw_dot(SCM x0, SCM y0, SCM size, SCM snd, SCM chn, SCM ax)
 
 static SCM g_fill_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM chn, SCM ax)
 {
+  SCM_ASSERT(gh_number_p(x0), x0, SCM_ARG1, S_fill_rectangle);
+  SCM_ASSERT(gh_number_p(y0), y0, SCM_ARG2, S_fill_rectangle);
+  SCM_ASSERT(gh_number_p(width), width, SCM_ARG3, S_fill_rectangle);
+  SCM_ASSERT(gh_number_p(height), height, SCM_ARG4, S_fill_rectangle);
   fill_rectangle(TO_C_AXIS_CONTEXT(snd, chn, ax, S_fill_rectangle),
 		 TO_C_INT(x0),
 		 TO_C_INT(y0),
@@ -85,6 +97,10 @@ static SCM g_fill_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM 
 
 static SCM g_erase_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM chn, SCM ax)
 {
+  SCM_ASSERT(gh_number_p(x0), x0, SCM_ARG1, S_erase_rectangle);
+  SCM_ASSERT(gh_number_p(y0), y0, SCM_ARG2, S_erase_rectangle);
+  SCM_ASSERT(gh_number_p(width), width, SCM_ARG3, S_erase_rectangle);
+  SCM_ASSERT(gh_number_p(height), height, SCM_ARG4, S_erase_rectangle);
   erase_rectangle(get_cp(snd, chn, S_erase_rectangle),
 		  TO_C_AXIS_CONTEXT(snd, chn, ax, S_erase_rectangle),
 		  TO_C_INT(x0),
@@ -96,6 +112,9 @@ static SCM g_erase_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM
 
 static SCM g_draw_string(SCM text, SCM x0, SCM y0, SCM snd, SCM chn, SCM ax)
 {
+  SCM_ASSERT(gh_string_p(text), text, SCM_ARG1, S_draw_string);
+  SCM_ASSERT(gh_number_p(x0), x0, SCM_ARG2, S_draw_string);
+  SCM_ASSERT(gh_number_p(y0), y0, SCM_ARG3, S_draw_string);
   draw_string(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_string),
 	      TO_C_INT(x0),
 	      TO_C_INT(y0),
@@ -254,6 +273,7 @@ static SCM g_peak_env_info(SCM snd, SCM chn, SCM pos)
 		     TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(ep->fmax)),
 		     VCT_WRAP(ep->amp_env_size, ep->data_min),
 		     VCT_WRAP(ep->amp_env_size, ep->data_max)));
+  /* don't throw an error here since the env may be in progress */
   return(SCM_LIST0);
 }
 
@@ -359,7 +379,7 @@ static SCM g_load_font(SCM font)
   GdkFont *fs = NULL;
   SCM_ASSERT(gh_string_p(font), font, SCM_ARG1, S_load_font);
   fs = gdk_font_load(TO_C_STRING(font));
-  if (fs) return(SCM_WRAP(fs));
+  if (fs) return(SND_WRAP(fs));
   return(SCM_BOOL_F);
 }
 
@@ -367,8 +387,9 @@ static SCM g_set_current_font(SCM id, SCM snd, SCM chn, SCM ax_id)
 {
   axis_context *ax;
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, "set-" S_current_font);
-  gdk_gc_set_font(ax->gc, (GdkFont *)SCM_UNWRAP(id));
-  ax->current_font = (GdkFont *)SCM_UNWRAP(id);
+  SCM_ASSERT(SND_WRAPPED(id), id, SCM_ARG1, "set-" S_current_font);
+  gdk_gc_set_font(ax->gc, (GdkFont *)SND_UNWRAP(id));
+  ax->current_font = (GdkFont *)SND_UNWRAP(id);
   return(id);
 }
 
@@ -376,7 +397,7 @@ static SCM g_current_font(SCM snd, SCM chn, SCM ax_id)
 {
   axis_context *ax;
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
-  return(SCM_WRAP(ax->current_font));
+  return(SND_WRAP(ax->current_font));
 }
 
 #endif
@@ -474,13 +495,13 @@ static SCM g_main_widgets(void)
   ss = get_global_state();
   return(scm_cons(
 #if USE_MOTIF
-		  SCM_WRAP(MAIN_APP(ss)),
+		  SND_WRAP(MAIN_APP(ss)),
 #else
-		  SCM_WRAP(MAIN_WINDOW(ss)),
+		  SND_WRAP(MAIN_WINDOW(ss)),
 #endif
-          scm_cons(SCM_WRAP(MAIN_SHELL(ss)),
-           scm_cons(SCM_WRAP(MAIN_PANE(ss)),
-            scm_cons(SCM_WRAP(SOUND_PANE(ss)),
+          scm_cons(SND_WRAP(MAIN_SHELL(ss)),
+           scm_cons(SND_WRAP(MAIN_PANE(ss)),
+            scm_cons(SND_WRAP(SOUND_PANE(ss)),
                      SCM_EOL)))));
 }
 
@@ -505,20 +526,20 @@ void set_dialog_widget(int which, GUI_WIDGET wid)
     dialog_widgets = scm_permanent_object(gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F));
   gh_vector_set_x(dialog_widgets, 
 		  TO_SMALL_SCM_INT(which), 
-		  SCM_WRAP(wid));
+		  SND_WRAP(wid));
 }
-
-/* TODO: these widget handlers need to check that their argument really is (nominally at least) a widget */
 
 static SCM g_widget_position(SCM wid)
 {
-  return(SCM_LIST2(TO_SCM_INT(widget_x((GUI_WIDGET)(SCM_UNWRAP(wid)))),
-		   TO_SCM_INT(widget_y((GUI_WIDGET)(SCM_UNWRAP(wid))))));
+  SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, S_widget_position);  
+  return(SCM_LIST2(TO_SCM_INT(widget_x((GUI_WIDGET)(SND_UNWRAP(wid)))),
+		   TO_SCM_INT(widget_y((GUI_WIDGET)(SND_UNWRAP(wid))))));
 }
 
 static SCM g_set_widget_position(SCM wid, SCM xy)
 {
-  set_widget_position((GUI_WIDGET)(SCM_UNWRAP(wid)),
+  SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, "set-" S_widget_position);  
+  set_widget_position((GUI_WIDGET)(SND_UNWRAP(wid)),
 		      TO_C_INT(SCM_CAR(xy)),
 		      TO_C_INT(SCM_CADR(xy)));
   return(wid);
@@ -526,13 +547,15 @@ static SCM g_set_widget_position(SCM wid, SCM xy)
 
 static SCM g_widget_size(SCM wid)
 {
-  return(SCM_LIST2(TO_SCM_INT(widget_width((GUI_WIDGET)(SCM_UNWRAP(wid)))),
-		   TO_SCM_INT(widget_height((GUI_WIDGET)(SCM_UNWRAP(wid))))));
+  SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, S_widget_size);  
+  return(SCM_LIST2(TO_SCM_INT(widget_width((GUI_WIDGET)(SND_UNWRAP(wid)))),
+		   TO_SCM_INT(widget_height((GUI_WIDGET)(SND_UNWRAP(wid))))));
 }
 
 static SCM g_set_widget_size(SCM wid, SCM wh)
 {
-  set_widget_size((GUI_WIDGET)(SCM_UNWRAP(wid)),
+  SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, "set-" S_widget_size);  
+  set_widget_size((GUI_WIDGET)(SND_UNWRAP(wid)),
 		  TO_C_INT(SCM_CAR(wh)),
 		  TO_C_INT(SCM_CADR(wh)));
   return(wid);
@@ -540,19 +563,22 @@ static SCM g_set_widget_size(SCM wid, SCM wh)
 
 static SCM g_recolor_widget(SCM wid, SCM color)
 {
-  SCM_ASSERT(snd_color_p(color), color, SCM_ARG1, "recolor_widget"); 
+  SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, S_recolor_widget);  
+  SCM_ASSERT(snd_color_p(color), color, SCM_ARG2, S_recolor_widget); 
 #if USE_MOTIF
-  XmChangeColor((GUI_WIDGET)(SCM_UNWRAP(wid)), color2pixel(color));
+  XmChangeColor((GUI_WIDGET)(SND_UNWRAP(wid)), color2pixel(color));
 #else
-  set_background((GUI_WIDGET)(SCM_UNWRAP(wid)), color2pixel(color));
+  set_background((GUI_WIDGET)(SND_UNWRAP(wid)), color2pixel(color));
 #endif
   return(color);
 }
 
 static SCM g_set_widget_foreground(SCM wid, SCM color)
 {
+  SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, "set-widget-foreground");  
+  SCM_ASSERT(snd_color_p(color), color, SCM_ARG2, "set-widget-foreground"); 
 #if USE_MOTIF
-  XtVaSetValues((GUI_WIDGET)(SCM_UNWRAP(wid)), XmNforeground, color2pixel(color), NULL);
+  XtVaSetValues((GUI_WIDGET)(SND_UNWRAP(wid)), XmNforeground, color2pixel(color), NULL);
 #endif
   return(color);
 }
@@ -560,24 +586,31 @@ static SCM g_set_widget_foreground(SCM wid, SCM color)
 
 static SCM g_hide_widget(SCM wid)
 {
+  SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, S_hide_widget);  
 #if USE_MOTIF
-  XtUnmanageChild((GUI_WIDGET)(SCM_UNWRAP(wid)));
+  XtUnmanageChild((GUI_WIDGET)(SND_UNWRAP(wid)));
 #else
-  gtk_widget_hide((GUI_WIDGET)(SCM_UNWRAP(wid)));
+  gtk_widget_hide((GUI_WIDGET)(SND_UNWRAP(wid)));
 #endif
   return(wid);
 }
 
 static SCM g_show_widget(SCM wid)
 {
+  SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, S_show_widget);  
 #if USE_MOTIF
-  XtManageChild((GUI_WIDGET)(SCM_UNWRAP(wid)));
+  XtManageChild((GUI_WIDGET)(SND_UNWRAP(wid)));
 #else
-  gtk_widget_show((GUI_WIDGET)(SCM_UNWRAP(wid)));
+  gtk_widget_show((GUI_WIDGET)(SND_UNWRAP(wid)));
 #endif
   return(wid);
 }
 
+static SCM g_focus_widget(SCM wid)
+{
+  SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, S_focus_widget);
+  goto_window((GUI_WIDGET)(SND_UNWRAP(wid)));
+}
 
 
 #if USE_MOTIF
@@ -586,7 +619,7 @@ static SCM g_main_shell(void)
 {
   snd_state *ss;
   ss = get_global_state();
-  return(SCM_WRAP(MAIN_SHELL(ss)));
+  return(SND_WRAP(MAIN_SHELL(ss)));
 }
 
 #endif
@@ -631,7 +664,9 @@ void g_init_draw(SCM local_doc)
 					"set-" S_widget_position, SCM_FNC g_set_widget_position, local_doc, 1, 0, 2, 0);
 
   DEFINE_PROC(gh_new_procedure(S_recolor_widget,  SCM_FNC g_recolor_widget, 2, 0, 0),  "(recolor-widget wid color)");
-
+  DEFINE_PROC(gh_new_procedure(S_hide_widget,     SCM_FNC g_hide_widget, 1, 0, 0),     "(hide-widget widget)");
+  DEFINE_PROC(gh_new_procedure(S_show_widget,     SCM_FNC g_show_widget, 1, 0, 0),     "(show-widget widget)");
+  DEFINE_PROC(gh_new_procedure(S_focus_widget,    SCM_FNC g_focus_widget, 1, 0, 0),    "(focus-widget widget) causes widget to receive input ('focus')");
 
 
   /* ---------------- unstable ---------------- */
@@ -648,16 +683,11 @@ void g_init_draw(SCM local_doc)
 
   DEFINE_PROC(gh_new_procedure("channel-info",    SCM_FNC g_channel_info, 0, 2, 0),    "(channel-info snd chn)");
   DEFINE_PROC(gh_new_procedure("peak-env-info",   SCM_FNC g_peak_env_info, 0, 3, 0),   "(peak-env-info snd chn pos)");
-  /* also graph-info in snd-axis.c */
 
-  DEFINE_PROC(gh_new_procedure("add-input",       SCM_FNC g_add_input, 2, 0, 0),       "(add-input file callback) -> id");
-  DEFINE_PROC(gh_new_procedure("remove-input",    SCM_FNC g_remove_input, 1, 0, 0),    "(remove-input id)");
+  DEFINE_PROC(gh_new_procedure(S_add_input,       SCM_FNC g_add_input, 2, 0, 0),       "(add-input file callback) -> id");
+  DEFINE_PROC(gh_new_procedure(S_remove_input,    SCM_FNC g_remove_input, 1, 0, 0),    "(remove-input id)");
 
   DEFINE_PROC(gh_new_procedure("set-widget-foreground", SCM_FNC g_set_widget_foreground, 2, 0, 0), "(set-widget-foreground widget color)");
-
-  DEFINE_PROC(gh_new_procedure("hide-widget",     SCM_FNC g_hide_widget, 1, 0, 0),    "(hide-widget widget)");
-  DEFINE_PROC(gh_new_procedure("show-widget",     SCM_FNC g_show_widget, 1, 0, 0),    "(show-widget widget)");
-
 
   /* ---------------- backwards compatibility ---------------- */
 #if USE_MOTIF

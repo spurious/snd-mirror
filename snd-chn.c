@@ -5377,7 +5377,7 @@ static SCM g_channel_widgets(SCM snd, SCM chn)
 {
   chan_info *cp;
   cp = get_cp(snd, chn, S_channel_widgets);
-  return(scm_cons(SCM_WRAP(channel_graph(cp)),
+  return(scm_cons(SND_WRAP(channel_graph(cp)),
 		  SCM_EOL));
 }
 #endif

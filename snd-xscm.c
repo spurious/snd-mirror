@@ -35,15 +35,16 @@ static SCM g_region_dialog(void)
 
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
-  SCM code = (SCM)in_code;
-  if ((code) && (gh_procedure_p(code))) g_call0(code);
+  g_call0((SCM)in_code);
 }
 
 static SCM g_in(SCM ms, SCM code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
+  SCM_ASSERT(gh_number_p(ms), ms, SCM_ARG1, S_in);
+  SCM_ASSERT(gh_procedure_p(code), code, SCM_ARG2, S_in);
   XtAppAddTimeOut(MAIN_APP(state), 
-		  SCM_UNWRAP(ms), 
+		  TO_C_UNSIGNED_LONG(ms), 
 		  (XtTimerCallbackProc)timed_eval, 
 		  (XtPointer)code);
   return(ms);

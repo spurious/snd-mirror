@@ -524,7 +524,7 @@ static SCM g_nrev(SCM ptr, SCM invals, SCM outvals)
   vct *inp, *outp;
   inp = get_vct(invals);
   outp = get_vct(outvals);
-  nrev((void *)SCM_UNWRAP(ptr), inp->data, outp->data, outp->length);
+  nrev((void *)SND_UNWRAP(ptr), inp->data, outp->data, outp->length);
   return(outvals);
 }
 
@@ -534,7 +534,7 @@ static SCM g_freeverb(SCM ptr, SCM invals, SCM outvals)
   vct *inp, *outp;
   inp = get_vct(invals);
   outp = get_vct(outvals);
-  freeverb((void *)SCM_UNWRAP(ptr), inp->data, outp->data, outp->length);
+  freeverb((void *)SND_UNWRAP(ptr), inp->data, outp->data, outp->length);
   return(outvals);
 }
 
@@ -750,13 +750,13 @@ static snd_info *ind2sp(int i)
 
 static SCM g_make_nrev(SCM ind, SCM chns) 
 {
-  return(SCM_WRAP(make_nrev(ind2sp(TO_SMALL_C_INT(ind)),
+  return(SND_WRAP(make_nrev(ind2sp(TO_SMALL_C_INT(ind)),
 			    TO_SMALL_C_INT(chns))));
 }
 
 static SCM g_make_freeverb(SCM ind, SCM chns) 
 {
-  return(SCM_WRAP(make_freeverb(ind2sp(TO_SMALL_C_INT(ind)),
+  return(SND_WRAP(make_freeverb(ind2sp(TO_SMALL_C_INT(ind)),
 				TO_SMALL_C_INT(chns))));
 }
 #endif

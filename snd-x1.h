@@ -106,7 +106,9 @@ Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n);
 #if OVERRIDE_TOGGLE
   void override_form_translation(Widget w);
 #endif
-
+#if HAVE_HOOKS
+  void g_init_gxlistener(SCM local_doc);
+#endif
 
 
 /* -------- snd-xmenu.c -------- */
@@ -371,6 +373,9 @@ void graph_key_press(Widget w, XtPointer clientData, XEvent *event, Boolean *con
 void cleanup_cw(chan_info *cp);
 int fixup_cp_cgx_ax_wn(chan_info *cp);
 void change_channel_style(snd_info *sp, int new_style);
+#if HAVE_HOOKS
+  void g_init_gxchn(SCM local_doc);
+#endif
 
 
 /* -------- snd-xsnd.c -------- */

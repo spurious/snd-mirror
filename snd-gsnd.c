@@ -127,15 +127,12 @@ void x_bomb(snd_info *sp, int on)
 static int inc_bomb(snd_info *sp, void *ptr)
 {
   int *buf;
-  if (sp)
+  if ((sp) && (sp->need_update))
     {
-      if (sp->need_update)
-	{
-	  buf = (int *)ptr;
-	  buf[0]++;
-	  show_bomb_icon(sp, sp->bomb_ctr);
-	  sp->bomb_ctr++;
-	}
+      buf = (int *)ptr;
+      buf[0]++;
+      show_bomb_icon(sp, sp->bomb_ctr);
+      sp->bomb_ctr++;
     }
   return(0);
 }
@@ -174,7 +171,8 @@ static void snd_file_glasses_icon(snd_info *sp, int on, int glass)
   w = w_snd_name_pix(sp);
   if (on)
     {
-      if (mini_glasses[glass]) gtk_pixmap_set(GTK_PIXMAP(w), mini_glasses[glass], glass_mask);
+      if (mini_glasses[glass]) 
+	gtk_pixmap_set(GTK_PIXMAP(w), mini_glasses[glass], glass_mask);
     }
   else
     {
@@ -194,8 +192,10 @@ static void make_pixmaps(snd_state *ss)
       blank = gdk_pixmap_create_from_xpm_d(wn, &blank_mask, NULL, blank_bits());
       speed_r = gdk_pixmap_create_from_xpm_d(wn, &speed_r_mask, NULL, speed_r_bits());
       speed_l = gdk_pixmap_create_from_xpm_d(wn, &speed_l_mask, NULL, speed_l_bits());
-      for (k = 0; k < NUM_BOMBS; k++) mini_bombs[k] = gdk_pixmap_create_from_xpm_d(wn, &bomb_mask, NULL, mini_bomb_bits(k));
-      for (k = 0; k < NUM_GLASSES; k++) mini_glasses[k] = gdk_pixmap_create_from_xpm_d(wn, &glass_mask, NULL, mini_glass_bits(k));
+      for (k = 0; k < NUM_BOMBS; k++) 
+	mini_bombs[k] = gdk_pixmap_create_from_xpm_d(wn, &bomb_mask, NULL, mini_bomb_bits(k));
+      for (k = 0; k < NUM_GLASSES; k++) 
+	mini_glasses[k] = gdk_pixmap_create_from_xpm_d(wn, &glass_mask, NULL, mini_glass_bits(k));
       mini_lock_allocated = 1;
     }
 }
@@ -273,7 +273,9 @@ static gint minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpointer d
   snd_state *ss;
   ss = sp->state;
   if (((sp->sgx)->mini_active == 0) || 
-      (((event->keyval == snd_K_s) || (event->keyval == snd_K_r)) && (event->state & snd_ControlMask)))
+      (((event->keyval == snd_K_s) || 
+	(event->keyval == snd_K_r)) && 
+       (event->state & snd_ControlMask)))
     {
       cp = current_channel(ss);
       if (cp) graph_key_press(channel_graph(cp), event, (gpointer)cp); 
@@ -343,13 +345,11 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   if (sp->playing) 
     {
       if (sp->cursor_follows_play != DONT_FOLLOW)
-	{
-	  for (i = 0; i < sp->nchans; i++)
-	    {
-	      cp = sp->chans[i];
-	      cp->original_cursor = cp->cursor;
-	    }
-	}
+	for (i = 0; i < sp->nchans; i++)
+	  {
+	    cp = sp->chans[i];
+	    cp->original_cursor = cp->cursor;
+	  }
       stop_playing_sound_no_toggle(sp);
     }
   if (sp->cursor_follows_play != FOLLOW_ALWAYS)         /* can be set in init file */
@@ -361,7 +361,8 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   set_file_browser_play_button(sp->shortname, on);
   cp = any_selected_channel(sp);
   goto_graph(cp);
-  if ((!(cp->cursor_on)) && (sp->cursor_follows_play != DONT_FOLLOW))
+  if ((!(cp->cursor_on)) && 
+      (sp->cursor_follows_play != DONT_FOLLOW))
     for (i = 0; i < sp->nchans; i++)
       {
 	cp = sp->chans[i];
@@ -522,7 +523,7 @@ static void set_snd_amp_1(snd_info *sp, Float amp, int setadj)
 	scrollval = amp * .867;
       else 
 	{
-	  scrollval = (log(amp)*0.2 + 0.5);
+	  scrollval = (log(amp) * 0.2 + 0.5);
 	  if (scrollval > .9) scrollval = .9;
 	}
     }
@@ -611,7 +612,7 @@ static void srate_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   Float scrollval, val;
   snd_info *sp = (snd_info *)data;
-  val = srate_changed(exp((GTK_ADJUSTMENT(adj)->value-.45)/.15), srate_number_buffer, sp->speed_style, sp->speed_tones);
+  val = srate_changed(exp((GTK_ADJUSTMENT(adj)->value-.45) / .15), srate_number_buffer, sp->speed_style, sp->speed_tones);
   sp->srate = val;
   if (val > 0.0)
     scrollval = .45 + .15 * log(val);
@@ -692,7 +693,7 @@ static Float get_snd_expand(Float scrollval)
 {
   if (scrollval < .1)
     return(scrollval * .9697);
-  else return(exp((scrollval - 0.45)/.15));
+  else return(exp((scrollval - 0.45) / .15));
 }
 
 static void expand_changed_callback(GtkAdjustment *adj, gpointer data)
@@ -746,7 +747,7 @@ static void set_snd_contrast_1(snd_info *sp, Float val, int setadj)
   char *sfs;
   GtkObject *adj;
   sp->contrast = val;
-  scrollval = val/10.0;
+  scrollval = val / 10.0;
   sfs = prettyf(sp->contrast, 2);
   fill_number(sfs, contrast_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_snd_contrast_number(sp)), contrast_number_buffer);
@@ -842,7 +843,7 @@ static void set_snd_revscl_1(snd_info *sp, Float val, int setadj)
   int i, j;
   GtkObject *adj;
   sp->revscl = val;
-  scrollval = pow(val, .333)*.6;
+  scrollval = pow(val, .333) * .6;
   sfs = prettyf(sp->revscl, 3);
   fs = sfs;
   ps=(char *)(revscl_number_buffer);
@@ -876,7 +877,7 @@ void set_snd_revscl(snd_info *sp, Float amp)
 
 static Float get_snd_revscl(Float scrollval)
 {
-  return(pow(scrollval*1.666, 3.0));
+  return(pow(scrollval * 1.666, 3.0));
 }
 
 static void revscl_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -910,7 +911,7 @@ static void set_snd_revlen_1(snd_info *sp, Float val, int setadj)
   char *sfs;
   GtkObject *adj;
   sp->revlen = val;
-  scrollval = val/5.0;
+  scrollval = val / 5.0;
   sfs = prettyf(sp->revlen, 2);
   fill_number(sfs, revlen_number_buffer);
   gtk_label_set_text(GTK_LABEL(w_snd_revlen_number(sp)), revlen_number_buffer);
@@ -1016,9 +1017,7 @@ static void filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpoint
   if (ev->state & GDK_BUTTON1_MASK)
     {
       if (ev->is_hint)
-	{
-	  gdk_window_get_pointer(ev->window, &evx, &evy, &state);
-	}
+	gdk_window_get_pointer(ev->window, &evx, &evy, &state);
       else
 	{
 	  evx = (int)(ev->x);
@@ -1154,7 +1153,8 @@ void color_filter_waveform(snd_state *ss, GdkColor *color)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse)) sp_display_env(sp);
+      if ((sp) && (sp->inuse)) 
+	sp_display_env(sp);
     }
 }
 
@@ -1204,7 +1204,8 @@ static void apply_button_callback(GtkWidget *w, gpointer context)
 
 static int lockapply(snd_info *sp, void *up) 
 {
-  if (sp != up) set_sensitive(w_snd_apply(sp), FALSE);
+  if (sp != up) 
+    set_sensitive(w_snd_apply(sp), FALSE);
   return(0);
 }
 
@@ -1223,7 +1224,8 @@ static int unlockapply(snd_info *sp, void *up)
 void unlock_apply(snd_state *ss, snd_info *sp)
 {
   map_over_sounds(ss, unlockapply, (void *)sp);
-  if (sp) set_background(w_snd_apply(sp), (ss->sgx)->basic_color);
+  if (sp) 
+    set_background(w_snd_apply(sp), (ss->sgx)->basic_color);
 }
 
 static void remember_button_callback(GtkWidget *w, gpointer context) {save_control_panel((snd_info *)context);}
@@ -1260,10 +1262,6 @@ void reflect_amp_env_completion(snd_info *sp)
   info_sep = w_snd_minibuffer_sep(sp);
   if (info_sep) gtk_widget_show(info_sep);
   alert_enved_amp_env(sp);
-#if DEBUGGING
-  /* this finishes timing the amp env creation process, started below by start_timing -- it will print millisecs to stderr */
-  /* stop_timing(); */
-#endif
 }
 
 void reflect_amp_env_in_progress(snd_info *sp)
@@ -1271,9 +1269,6 @@ void reflect_amp_env_in_progress(snd_info *sp)
   GtkWidget *info_sep;
   info_sep = w_snd_minibuffer_sep(sp);
   if (info_sep) gtk_widget_hide(info_sep);
-#if DEBUGGING
-  /* start_timing(); */
-#endif
 }
 
 static gint Close_Sound_Dialog(GtkWidget *w, GdkEvent *event, gpointer context)
@@ -1310,17 +1305,21 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       ss->pending_change = NULL;
     }
   nchans = hdr->chans;
-  samples_per_channel = hdr->samples/nchans;
+  samples_per_channel = hdr->samples / nchans;
 
   app_y = widget_y(MAIN_SHELL(ss));
   app_dy = widget_height(MAIN_SHELL(ss));
   screen_y = gdk_screen_height();
-  app_dy = (screen_y - app_y - app_dy - 20*nchans);
+  app_dy = (screen_y - app_y - app_dy - 20 * nchans);
   chan_min_y = app_dy/nchans;
-  if (chan_min_y > (ss->channel_min_height)) chan_min_y = ss->channel_min_height; else if (chan_min_y < 5) chan_min_y = 5;
+  if (chan_min_y > (ss->channel_min_height)) 
+    chan_min_y = ss->channel_min_height; 
+  else 
+    if (chan_min_y < 5) 
+      chan_min_y = 5;
 
   snd_slot = find_free_sound_slot(ss, nchans); /* expands sound list if needed */
-  if (ss->sounds[snd_slot]) /* we're trying to re-use an old, inactive set of widgets and whatnot */
+  if (ss->sounds[snd_slot])                    /* we're trying to re-use an old, inactive set of widgets and whatnot */
     {
       osp = ss->sounds[snd_slot];
       old_chans = osp->allocated_chans;
@@ -1351,7 +1350,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
 
   if ((!make_widgets) && (old_chans < nchans))
     {
-      for (i = old_chans; i < nchans; i++) add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS);
+      for (i = old_chans; i < nchans; i++) 
+	add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS);
     }
 
   if (make_widgets)
@@ -1391,7 +1391,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       sw[W_name_form] = gtk_hbox_new(FALSE, 0);
       gtk_box_pack_end(GTK_BOX(sw[W_pane_box]), sw[W_name_form], FALSE, FALSE, 0);
       
-      for (i = 0; i < nchans; i++) add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
+      for (i = 0; i < nchans; i++) 
+	add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
 
       /* controls etc */
 
@@ -1797,7 +1798,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS) 
 	raise_dialog(sx->dialog);
       gtk_widget_show(w_snd_pane(sp));
-      for (k = 0; k < nchans; k++) add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
+      for (k = 0; k < nchans; k++) 
+	add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
       gtk_label_set_text(GTK_LABEL(sw[W_name]), shortname_indexed(sp));
 
       reset_control_panel(sp);
@@ -1805,7 +1807,9 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	{
 	  gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], sp->shortname);
-	  set_text_background(gtk_notebook_get_tab_label(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane]), (ss->sgx)->basic_color);
+	  set_text_background(gtk_notebook_get_tab_label(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), 
+							 sw[W_pane]), 
+			      (ss->sgx)->basic_color);
 	}
     }
 
@@ -1817,7 +1821,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       FREE(title);
     }
 
-  if (sp->nchans == 1) gtk_widget_hide(sw[W_combine]);
+  if (sp->nchans == 1) 
+    gtk_widget_hide(sw[W_combine]);
   add_sound_data(filename, sp, ss);
 
   snd_file_lock_icon(sp, (ss->viewing || (cant_write(sp->fullname)))); /* sp->read_only not set yet */
@@ -1891,8 +1896,8 @@ void sound_show_ctrls(snd_info *sp)
   int height;
   height = widget_height(w_snd_pane(sp));
   if (height > 200)
-    gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), height-150);
-  else gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), height/2);
+    gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), height - 150);
+  else gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), height / 2);
 }
 
 void sound_hide_ctrls(snd_info *sp)
@@ -1914,7 +1919,8 @@ void show_controls(snd_state *ss)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse)) sound_show_ctrls(sp);
+      if ((sp) && (sp->inuse)) 
+	sound_show_ctrls(sp);
     }
 }
 
@@ -1927,13 +1933,15 @@ void hide_controls(snd_state *ss)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse)) sound_hide_ctrls(sp);
+      if ((sp) && (sp->inuse)) 
+	sound_hide_ctrls(sp);
     }
 }
 
 void sound_check_control_panel(snd_info *sp, int height)
 {
-  if (((sp->sgx)->controls_fixed == 0) && (height > 50))
+  if (((sp->sgx)->controls_fixed == 0) && 
+      (height > 50))
     {
       (sp->sgx)->controls_fixed = 1;
       sound_hide_ctrls(sp);
@@ -1964,6 +1972,7 @@ void finish_progress_report(snd_info *sp, int from_enved)
 
 void start_progress_report(snd_info *sp, int from_enved)
 {
-  if (!(from_enved)) snd_file_glasses_icon(sp, TRUE, 0);
+  if (!(from_enved)) 
+    snd_file_glasses_icon(sp, TRUE, 0);
 }
 

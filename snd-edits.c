@@ -2880,6 +2880,7 @@ replacing current data with the function results; origin is the edit-history nam
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   SCM_ASSERT(sf_p(reader), reader, SCM_ARG1, S_loop_samples);
+  SCM_ASSERT(SND_WRAPPED(proc), proc, SCM_ARG2, S_loop_samples);
   SCM_ASSERT(gh_number_p(calls), calls, SCM_ARG3, S_loop_samples);
   SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG4, S_loop_samples);
   num = TO_C_INT_OR_ELSE(calls, 0);
@@ -2888,12 +2889,13 @@ replacing current data with the function results; origin is the edit-history nam
   ss = cp->state;
   if (!(SCM_UNBNDP(environ))) 
     {
-      envp = (void *)SCM_UNWRAP(environ);
-      func_env = (g_plug_env)SCM_UNWRAP(proc);
+      SCM_ASSERT(SND_WRAPPED(environ), environ, SCM_ARG5, S_loop_samples);
+      envp = (void *)SND_UNWRAP(environ);
+      func_env = (g_plug_env)SND_UNWRAP(proc);
     }
   else
     {
-      func = (g_plug)SCM_UNWRAP(proc);
+      func = (g_plug)SND_UNWRAP(proc);
       envp = NULL;
     }
   ofile = snd_tempnam(ss);

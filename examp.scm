@@ -75,6 +75,8 @@
 ;;; describe-hook
 ;;; easily-fooled autocorrelation-based pitch tracker 
 ;;; local hook
+;;; pointer focus within Snd
+
 
 ;;; TODO: robust pitch tracker
 ;;; TODO: adaptive notch filter
@@ -3083,4 +3085,10 @@
     (let ((result (thunk)))
       (list->hook hook old-hook-procs)
       result)))
+
+
+;;; -------- pointer focus within Snd
+
+;(add-hook! mouse-enter-graph-hook (lambda (snd chn) (focus-widget (car (channel-widgets snd chn)))))
+;(add-hook! mouse-enter-listener-hook (lambda (widget) (focus-widget widget)))
 

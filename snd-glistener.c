@@ -2,6 +2,7 @@
 
 /* TODO  make completions list mouse sensitive as in Motif version
  *        -> use click(select) callback!
+ * TODO  completions seem to be broken in gtk?
  */
 
 static GtkWidget *listener_text = NULL;
@@ -325,6 +326,27 @@ static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer dat
   (ss->sgx)->graph_is_active = 0;
 }
 
+#if HAVE_HOOKS
+static SCM mouse_enter_listener_hook, mouse_leave_listener_hook;
+
+static gint listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev)
+{
+  /* should this take a 3rd arg? it seems to work both ways! */
+  if (HOOKED(mouse_enter_listener_hook))
+    g_c_run_progn_hook(mouse_enter_listener_hook,
+		       SCM_LIST1(SND_WRAP(listener_text)));
+  return(0);
+}
+
+static gint listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev)
+{
+  if (HOOKED(mouse_leave_listener_hook))
+    g_c_run_progn_hook(mouse_leave_listener_hook,
+		       SCM_LIST1(SND_WRAP(listener_text)));
+  return(0);
+}
+#endif
+
 static void sndCreateCommandWidget(snd_state *ss, int height)
 {
   GtkWidget *hscrollbar, *vscrollbar, *frame;
@@ -352,6 +374,10 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       gtk_text_set_line_wrap(GTK_TEXT(listener_text), FALSE);
       gtk_signal_connect(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(listener_button_press), (gpointer)ss);
+#if HAVE_HOOKS
+      gtk_signal_connect(GTK_OBJECT(listener_text), "enter_notify_event", GTK_SIGNAL_FUNC(listener_focus_callback), NULL);
+      gtk_signal_connect(GTK_OBJECT(listener_text), "leave_notify_event", GTK_SIGNAL_FUNC(listener_unfocus_callback), NULL);
+#endif
 
       gtk_widget_show(listener_text);
       gtk_text_insert(GTK_TEXT(listener_text),
@@ -438,3 +464,18 @@ void handle_listener(snd_state *ss, int new_state)
 int listener_height(void) {if (listener_text) return(widget_height(listener_text)); else return(0);}
 int listener_width(void) {if (listener_text) return(widget_width(listener_text)); else return(0);}
 
+#if HAVE_HOOKS
+
+void g_init_gxlistener(SCM local_doc)
+{
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (snd chn) is called when the mouse \
+enters the lisp listener pane"
+
+  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (snd chn) is called when the mouse \
+leaves the lisp listener pane"
+
+  mouse_enter_listener_hook = MAKE_HOOK(S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
+  mouse_leave_listener_hook = MAKE_HOOK(S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
+}
+
+#endif

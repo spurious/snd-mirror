@@ -514,14 +514,38 @@ static void Channel_Resize_Callback(Widget w, XtPointer context, XtPointer info)
   else update_graph(cp, NULL);
 }
 
+#if HAVE_HOOKS
+static SCM mouse_enter_graph_hook, mouse_leave_graph_hook;
+#endif
+
+#define UNPACK_SOUND(a) (a >> 16)
+#define UNPACK_CHANNEL(a) (a & 0xff)
+#define PACK_SOUND_AND_CHANNEL(a, b) ((a << 16) | b)
+
 static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   snd_state *ss = (snd_state *)context;
+#if HAVE_HOOKS
+  int data;
+  XtVaGetValues(w, XmNuserData, &data, NULL);
+  if (HOOKED(mouse_enter_graph_hook))
+    g_c_run_progn_hook(mouse_enter_graph_hook,
+		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(data)),
+				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(data))));
+#endif
   XDefineCursor(XtDisplay(w), XtWindow(w), (ss->sgx)->graph_cursor);
 }
 
 static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
+#if HAVE_HOOKS
+  int data;
+  XtVaGetValues(w, XmNuserData, &data, NULL);
+  if (HOOKED(mouse_leave_graph_hook))
+    g_c_run_progn_hook(mouse_leave_graph_hook,
+		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(data)),
+				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(data))));
+#endif
   XUndefineCursor(XtDisplay(w), XtWindow(w));
 }
 
@@ -956,6 +980,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, cw[W_left_scrollers]); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNuserData, PACK_SOUND_AND_CHANNEL(sp->index, cp->chan)); n++;
       /* this collides with W_gzy below, but a consistent version came up with half a window blank */
       XtSetArg(args[n], XmNnavigationType, XmNONE); n++;
       cw[W_graph] = sndCreateDrawingAreaWidget("chn-graph", cw[W_main_window], args, n);
@@ -1320,3 +1345,19 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
   ((cp->cgx)->ax)->wn = XtWindow((cp->cgx)->chan_widgets[W_graph]); 
   return(1);
 }
+
+#if HAVE_HOOKS
+
+void g_init_gxchn(SCM local_doc)
+{
+  #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn) is called when the mouse \
+enters the drawing area (graph pane) of the given channel."
+
+  #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn) is called when the mouse \
+leaves the drawing area (graph pane) of the given channel."
+
+  mouse_enter_graph_hook = MAKE_HOOK(S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
+  mouse_leave_graph_hook = MAKE_HOOK(S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */
+}
+
+#endif

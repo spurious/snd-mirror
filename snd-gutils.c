@@ -165,7 +165,6 @@ void map_over_children (GtkWidget *w, void (*func)(GtkWidget *w, gpointer ptr), 
 {
   /* apply func to each child in entire tree beneath top widget */
   /* used mostly to get colors right in non-scheme environments with "convenience" widgets */
-  /* (also to make mix consoles handle key press correctly despite non-traversable widgets) */
 
   if (w)
     {
@@ -174,20 +173,6 @@ void map_over_children (GtkWidget *w, void (*func)(GtkWidget *w, gpointer ptr), 
 	gtk_container_foreach(GTK_CONTAINER(w), func, (gpointer)userptr);
     }
 }
-
-#if 0
-static int unset_key_focus_1(GtkWidget *w, void *ptr)
-{
-  GTK_WIDGET_UNSET_FLAGS(w, GTK_CAN_FOCUS);
-  return(0);
-}
-
-void unset_key_focus(GtkWidget *w)
-{
-  unset_key_focus_1(w, NULL);
-  map_over_children(w, unset_key_focus_1, NULL);
-}
-#endif
 
 void set_background(GtkWidget *w, GdkColor *col)
 { 

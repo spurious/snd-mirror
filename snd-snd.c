@@ -2547,7 +2547,8 @@ static int dont_babble_info(snd_info *sp)
   SCM res = SCM_BOOL_F, ind;
   ind = TO_SMALL_SCM_INT(sp->index);
   if (HOOKED(name_click_hook))
-    res = g_c_run_or_hook(name_click_hook, SCM_LIST1(ind));
+    res = g_c_run_or_hook(name_click_hook, 
+			  SCM_LIST1(ind));
   return(SCM_TRUE_P(res));
 #else
   return(0);
@@ -2559,9 +2560,9 @@ static SCM g_sound_widgets(SCM snd)
 {
   snd_info *sp;
   sp = get_sp(snd);
-  return(scm_cons(SCM_WRAP(w_snd_pane(sp)),
-	  scm_cons(SCM_WRAP(w_snd_name(sp)),
-           scm_cons(SCM_WRAP(w_snd_ctrls(sp)),
+  return(scm_cons(SND_WRAP(w_snd_pane(sp)),
+	  scm_cons(SND_WRAP(w_snd_name(sp)),
+           scm_cons(SND_WRAP(w_snd_ctrls(sp)),
                     SCM_EOL))));
 }
 #endif

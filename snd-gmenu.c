@@ -119,7 +119,9 @@ static int call_menu_hook(char *name, char *option)
 {
   SCM res = SCM_BOOL_T;
   if ((name) && (HOOKED(menu_hook)))
-    res = g_c_run_and_hook(menu_hook, SCM_LIST2(TO_SCM_STRING(name), TO_SCM_STRING(option)));
+    res = g_c_run_and_hook(menu_hook, 
+			   SCM_LIST2(TO_SCM_STRING(name), 
+				     TO_SCM_STRING(option)));
   return(SCM_TRUE_P(res));
 }
 #define IF_MENU_HOOK(NAME, OPTION) if (call_menu_hook(NAME, OPTION))
@@ -1182,17 +1184,17 @@ static int remove_option(int which_menu, char *label)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
-    {
-      if ((added_options_menus[i] == which_menu) && (strcmp(label, added_options_names[i]) == 0) && (added_options[i]))
-	{
-	  gtk_widget_destroy(added_options[i]);
-	  added_options[i] = NULL;
-	  added_options_menus[i] = -1;
-	  FREE(added_options_names[i]);
-	  added_options_names[i] = NULL;
-	  return(0);
-	}
-    }
+    if ((added_options_menus[i] == which_menu) && 
+	(strcmp(label, added_options_names[i]) == 0) && 
+	(added_options[i]))
+      {
+	gtk_widget_destroy(added_options[i]);
+	added_options[i] = NULL;
+	added_options_menus[i] = -1;
+	FREE(added_options_names[i]);
+	added_options_names[i] = NULL;
+	return(0);
+      }
   switch (which_menu)
     {
     case 0: if (strcmp(label, STR_Open) == 0) gtk_widget_hide(mw[f_open_menu]); else
@@ -1274,17 +1276,16 @@ int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
-    {
-      if ((added_options_menus[i] == which_menu) && 
-	  (strcmp(old_label, added_options_names[i]) == 0) && 
-	  (added_options[i]))
-	{
-	  set_button_label(added_options[i], new_label);
-	  if (added_options_names[i]) FREE(added_options_names[i]);
-	  added_options_names[i] = copy_string(new_label);
-	  return(0);
-	}
-    }
+    if ((added_options_menus[i] == which_menu) && 
+	(strcmp(old_label, added_options_names[i]) == 0) && 
+	(added_options[i]))
+      {
+	set_button_label(added_options[i], new_label);
+	if (added_options_names[i]) 
+	  FREE(added_options_names[i]);
+	added_options_names[i] = copy_string(new_label);
+	return(0);
+      }
   return(-1);
 }
 
@@ -1292,14 +1293,10 @@ int gh_menu_is_sensitive(int which_menu, char *old_label)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
-    {
-      if ((added_options_menus[i] == which_menu) && 
-	  (strcmp(old_label, added_options_names[i]) == 0) && 
-	  (added_options[i]))
-	{
-	  return(is_sensitive(added_options[i]));
-	}
-    }
+    if ((added_options_menus[i] == which_menu) && 
+	(strcmp(old_label, added_options_names[i]) == 0) && 
+	(added_options[i]))
+      return(is_sensitive(added_options[i]));
   return(0);
 }
 
@@ -1307,15 +1304,13 @@ int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
-    {
-      if ((added_options_menus[i] == which_menu) && 
-	  (strcmp(old_label, added_options_names[i]) == 0) && 
-	  (added_options[i]))
-	{
-	  set_sensitive(added_options[i], on);
-	  return(0);
-	}
-    }
+    if ((added_options_menus[i] == which_menu) && 
+	(strcmp(old_label, added_options_names[i]) == 0) && 
+	(added_options[i]))
+      {
+	set_sensitive(added_options[i], on);
+	return(0);
+      }
   return(-1);
 }
 
@@ -1495,12 +1490,12 @@ static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer d
 
 static SCM g_menu_widgets(void)
 {
-  return(scm_cons(SCM_WRAP(mw[menu_menu]),
-	  scm_cons(SCM_WRAP(mw[f_cascade_menu]),
-           scm_cons(SCM_WRAP(mw[e_cascade_menu]),
-            scm_cons(SCM_WRAP(mw[v_cascade_menu]),
-             scm_cons(SCM_WRAP(mw[o_cascade_menu]),
-              scm_cons(SCM_WRAP(mw[h_cascade_menu]),
+  return(scm_cons(SND_WRAP(mw[menu_menu]),
+	  scm_cons(SND_WRAP(mw[f_cascade_menu]),
+           scm_cons(SND_WRAP(mw[e_cascade_menu]),
+            scm_cons(SND_WRAP(mw[v_cascade_menu]),
+             scm_cons(SND_WRAP(mw[o_cascade_menu]),
+              scm_cons(SND_WRAP(mw[h_cascade_menu]),
 		       SCM_EOL)))))));
 }
 

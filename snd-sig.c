@@ -2867,7 +2867,8 @@ static SCM g_temp_filenames(SCM data)
   int i;
   SCM *vlst;
   SCM lst;
-  program_data = (snd_exf *)(SCM_UNWRAP(data));
+  SCM_ASSERT(SND_WRAPPED(data), data, SCM_ARG1, S_temp_filenames);
+  program_data = (snd_exf *)(SND_UNWRAP(data));
   lst = gh_make_vector(TO_SCM_INT(program_data->files), SCM_BOOL_F);
   vlst = SCM_VELTS(lst);
   for (i = 0; i < program_data->files; i++)
@@ -2892,7 +2893,7 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file)
       format = TO_C_INT_OR_ELSE(df, MUS_UNSUPPORTED);
       program_data = snd_to_temp(cp, selection, one_file, type, format);
       if (program_data)
-	return(SCM_WRAP(program_data));
+	return(SND_WRAP(program_data));
     }
   return(SCM_BOOL_F);
 }
@@ -2937,7 +2938,8 @@ using data returned by the latter and origin as the edit history entry for the e
   snd_exf *program_data;
   SCM_ASSERT(gh_string_p(new_name), new_name, SCM_ARG2, S_temp_to_sound);
   SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_temp_to_sound);
-  program_data = (snd_exf *)(SCM_UNWRAP(data));
+  SCM_ASSERT(SND_WRAPPED(data), data, SCM_ARG1, S_temp_to_sound);
+  program_data = (snd_exf *)(SND_UNWRAP(data));
   program_data->new_filenames[0] = TO_NEW_C_STRING(new_name);
   temp_to_snd(program_data, TO_C_STRING(origin));
   return(SCM_BOOL_T);
@@ -2951,9 +2953,10 @@ using data returned by the latter and origin as the edit history entry for the e
   snd_exf *program_data;
   int i, len;
   SCM *vdata;
+  SCM_ASSERT(SND_WRAPPED(data), data, SCM_ARG1, S_temps_to_sound);
   SCM_ASSERT((gh_vector_p(new_names)), new_names, SCM_ARG2, S_temps_to_sound);
   SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_temps_to_sound);
-  program_data = (snd_exf *)(SCM_UNWRAP(data));
+  program_data = (snd_exf *)(SND_UNWRAP(data));
   len = (int)gh_vector_length(new_names);
   vdata = SCM_VELTS(new_names);
   for (i = 0; i < len; i++)

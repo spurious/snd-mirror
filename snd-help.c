@@ -13,7 +13,7 @@ void ssnd_help(snd_state *ss, char *subject, ...)
   len = 0;
   while ((helpstr = va_arg(ap, char *)))
     {
-      len += strlen(helpstr);
+      len += snd_strlen(helpstr);
       if (len >= size)
 	{
 	  size = len + 1024;
@@ -50,7 +50,7 @@ static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
   len = 0;
   while ((helpstr = va_arg(ap, char *)))
     {
-      len += strlen(helpstr);
+      len += snd_strlen(helpstr);
       if (len >= size)
 	{
 	  size = len + 1024;
@@ -272,7 +272,11 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-7-Mar:   mouse-enter|leave-label-hook, listener-text-color, axis-info, nb.scm\n\
+9-Mar:   removed *.txt\n\
+         mouse-enter|leave-graph|listener-hook.\n\
+         show-widget, hide-widget, focus-widget.\n\
+7-Mar:   mouse-enter|leave-label-hook, listener-text-color, axis-info.\n\
+         nb.scm\n\
 5-Mar:   removed all the guile-gtk-specific procedures (this is being rewritten)\n\
          added cursor-size, cursor-style can be a procedure, cursor-position.\n\
                time-graph, fft-graph, lisp-graph, cursor-context, copy-context.\n\
@@ -2664,16 +2668,18 @@ static char* word_wrap(char *text, int widget_len)
 
 SCM g_help(SCM text, int widget_wid)
 {
-  SCM help_text = SCM_BOOL_F, value, local_doc;
-  char *str = NULL;
-
-  if (SCM_EQ_P(text,SCM_UNDEFINED))                              /* if no arg, describe snd-help */
-    help_text = TO_SCM_STRING("snd-help returns the documentation associated with its argument. \
+  #define H_snd_help "(" S_snd_help " arg) returns the documentation associated with its argument. \
 (snd-help make-vct) for example, prints out a brief description of make-vct. \
 The argument can be a string, a symbol, or the object itself.  In some cases, only the symbol has the documentation. \
 In the help descriptions, '&optional' marks optional arguments, and \
 '&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm \
-the functions html and ? can be used in place of help to go to the HTML description.");
+the functions html and ? can be used in place of help to go to the HTML description."
+
+  SCM help_text = SCM_BOOL_F, value, local_doc;
+  char *str = NULL;
+
+  if (SCM_EQ_P(text,SCM_UNDEFINED))                              /* if no arg, describe snd-help */
+    help_text = TO_SCM_STRING(H_snd_help);
   else
     {
       if ((gh_string_p(text)) || (gh_symbol_p(text)))            /* arg can be name (string), symbol, or the value */
@@ -2723,11 +2729,11 @@ the functions html and ? can be used in place of help to go to the HTML descript
 
 static SCM g_listener_help(SCM arg)
 {
-  return(g_help(arg,listener_width()));
+  return(g_help(arg, listener_width()));
 }
 
 void g_init_help(SCM local_doc)
 {
-  gh_new_procedure0_1("snd-help",g_listener_help);
+  DEFINE_PROC(gh_new_procedure(S_snd_help, SCM_FNC g_listener_help, 0, 1, 0), H_snd_help);
 }
 #endif

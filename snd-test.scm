@@ -22,6 +22,9 @@
 ;;; test 19: save and restore
 ;;; test 20: transforms
 
+;;; TODO: mouse-enter|leave hook
+;;; TODO: most of the new drawing and widget funcs
+
 (use-modules (ice-9 format) (ice-9 debug))
 
 (define tests 1)
@@ -173,6 +176,11 @@
 	'enved-add-point enved-add-point 0
 	'enved-delete-point enved-delete-point 1
 	'enved-move-point enved-move-point 2
+	'time-graph time-graph 0
+	'fft-graph fft-graph 1
+	'lisp-graph lisp-graph 2
+	'copy-context copy-context 0
+	'cursor-context cursor-context 3
 	)))
     )
 
@@ -659,6 +667,20 @@
 	  (snd-display (format #f ";name-click-hook: ~A?" name-click-hook)))
       (if (or (not (hook? enved-hook)) (not (hook-empty? enved-hook)))
 	  (snd-display (format #f ";enved-hook: ~A?" enved-hook)))
+      (if (or (not (hook? mouse-enter-label-hook)) (not (hook-empty? mouse-enter-label-hook)))
+	  (snd-display (format #f ";mouse-enter-label-hook: ~A?" mouse-enter-label-hook)))
+      (if (or (not (hook? mouse-enter-graph-hook)) (not (hook-empty? mouse-enter-graph-hook)))
+	  (snd-display (format #f ";mouse-enter-graph-hook: ~A?" mouse-enter-graph-hook)))
+      (if (or (not (hook? mouse-enter-listener-hook)) (not (hook-empty? mouse-enter-listener-hook)))
+	  (snd-display (format #f ";mouse-enter-listener-hook: ~A?" mouse-enter-listener-hook)))
+      (if (or (not (hook? mouse-leave-label-hook)) (not (hook-empty? mouse-leave-label-hook)))
+	  (snd-display (format #f ";mouse-leave-label-hook: ~A?" mouse-leave-label-hook)))
+      (if (or (not (hook? mouse-leave-graph-hook)) (not (hook-empty? mouse-leave-graph-hook)))
+	  (snd-display (format #f ";mouse-leave-graph-hook: ~A?" mouse-leave-graph-hook)))
+      (if (or (not (hook? mouse-leave-listener-hook)) (not (hook-empty? mouse-leave-listener-hook)))
+	  (snd-display (format #f ";mouse-leave-listener-hook: ~A?" mouse-leave-listener-hook)))
+      (if (or (not (hook? property-changed-hook)) (not (hook-empty? property-changed-hook)))
+	  (snd-display (format #f ";property-changed-hook: ~A?" property-changed-hook)))
 
       (set! (show-controls) #t)
       (enved-dialog) 
@@ -4131,6 +4153,8 @@
   (reset-hook! stop-playing-channel-hook) (add-hook! stop-playing-channel-hook arg2) (carg2 stop-playing-channel-hook) (reset-hook! stop-playing-channel-hook)
   (reset-hook! save-hook) (add-hook! save-hook arg2) (carg2 save-hook) (reset-hook! save-hook)
   (reset-hook! mus-error-hook) (add-hook! mus-error-hook arg2) (carg2 mus-error-hook) (reset-hook! mus-error-hook)
+  (reset-hook! mouse-enter-graph-hook) (add-hook! mouse-enter-graph-hook arg2) (carg2 mouse-enter-graph-hook) (reset-hook! mouse-enter-graph-hook)
+  (reset-hook! mouse-leave-graph-hook) (add-hook! mouse-leave-graph-hook arg2) (carg2 mouse-leave-graph-hook) (reset-hook! mouse-leave-graph-hook)
 
   (reset-hook! after-open-hook) (add-hook! after-open-hook arg1) (carg1 after-open-hook) (reset-hook! after-open-hook)
   (reset-hook! close-hook) (add-hook! close-hook arg1) (carg1 close-hook) (reset-hook! close-hook)
@@ -4150,12 +4174,17 @@
   (reset-hook! start-playing-hook) (add-hook! start-playing-hook arg1) (carg1 start-playing-hook) (reset-hook! start-playing-hook)
   (reset-hook! stop-playing-hook) (add-hook! stop-playing-hook arg1) (carg1 stop-playing-hook) (reset-hook! stop-playing-hook)
   (reset-hook! stop-playing-region-hook) (add-hook! stop-playing-region-hook arg1) (carg1 stop-playing-region-hook) (reset-hook! stop-playing-region-hook)
+  (reset-hook! mouse-enter-listener-hook) (add-hook! mouse-enter-listener-hook arg1) (carg1 mouse-enter-listener-hook) (reset-hook! mouse-enter-listener-hook)
+  (reset-hook! mouse-leave-listener-hook) (add-hook! mouse-leave-listener-hook arg1) (carg1 mouse-leave-listener-hook) (reset-hook! mouse-leave-listener-hook)
+  (reset-hook! property-changed-hook) (add-hook! property-changed-hook arg1) (carg1 property-changed-hook) (reset-hook! property-changed-hook)
 
   (reset-hook! exit-hook) (add-hook! exit-hook arg0) (carg0 exit-hook) (reset-hook! exit-hook)
   (reset-hook! output-name-hook) (add-hook! output-name-hook arg0) (carg0 output-name-hook) (reset-hook! output-name-hook)
 
   (reset-hook! during-open-hook) (add-hook! during-open-hook arg3) (carg3 during-open-hook) (reset-hook! during-open-hook)
   (reset-hook! fft-hook) (add-hook! fft-hook arg3) (carg3 fft-hook) (reset-hook! fft-hook)
+  (reset-hook! mouse-enter-label-hook) (add-hook! mouse-enter-label-hook arg3) (carg3 mouse-enter-label-hook) (reset-hook! mouse-enter-label-hook)
+  (reset-hook! mouse-leave-label-hook) (add-hook! mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook) (reset-hook! mouse-leave-label-hook)
 
   (reset-hook! graph-hook) (add-hook! graph-hook arg4) (carg4 graph-hook) (reset-hook! graph-hook)
   (reset-hook! key-press-hook) (add-hook! key-press-hook arg4) (carg4 key-press-hook) (reset-hook! key-press-hook)

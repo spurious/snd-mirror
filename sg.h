@@ -92,13 +92,15 @@
 #define TO_SCM_INT(a) scm_long2num((long)a)
 #define TO_SMALL_SCM_INT(a) SCM_MAKINUM(a)
 #define TO_SMALL_C_INT(a) SCM_INUM(a)
+#define TO_C_UNSIGNED_LONG(a) gh_scm2ulong(a)
 #define TO_SCM_STRING(a) scm_makfrom0str(a)
 #define TO_NEW_C_STRING(a) gh_scm2newstr(a, NULL)
 #define TO_SCM_BOOLEAN(a) ((a) ? SCM_BOOL_T : SCM_BOOL_F)
 #define TO_SCM_SYMBOL(a) gh_symbol2scm(a)
 
-#define SCM_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
-#define SCM_UNWRAP(a) gh_scm2ulong(a)
+#define SND_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
+#define SND_UNWRAP(a) gh_scm2ulong(a)
+#define SND_WRAPPED(a) gh_number_p(a)
 /* these work as long as SCM is long */
 /*   (need a way to pass an uninterpreted pointer from C to SCM then back to C) */
 

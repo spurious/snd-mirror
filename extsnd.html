@@ -346,18 +346,20 @@ The font variables are:
 </p>
 
 <table cell-padding=0 cellspacing=0>
-<tr><td><code><em class=def><a name="widgetposition">widget-position</a></em> (widget)</code></td>
+<tr><td><code><em class=def>widget-position</em> (widget)</code></td>
 <td>return a list giving the widget x and y positions</td></tr>
-<tr><td valign=top><code><em class=def><a name="widgetsize">widget-size</a></em> (widget)</code></td>
+<tr><td valign=top><code><em class=def>widget-size</em> (widget)</code></td>
 <td>return a list giving the widget width and height.  The corresponding set! forms also take a list:<br>
 <code>(set! (widget-position (cadr (main-widgets))) (list 300 100))</code></td></tr>
 <tr><td><code><em class=def><a name="recolorwidget">recolor-widget</a></em> (widget color)</code></td></tr>
-
-<tr><td><code><em class=def><a name="mainwidgets">main-widgets</a></em></code></td><td> ()</td></tr>
-<tr><td><code><em class=def><a name="menuwidgets">menu-widgets</a></em></code></td><td> ()</td></tr>
-<tr><td><code><em class=def><a name="soundwidgets">sound-widgets</a></em></code></td><td> (snd)</td></tr>
-<tr><td><code><em class=def><a name="channelwidgets">channel-widgets</a></em></code></td><td> (snd chn)</td></tr>
-<tr><td><code><em class=def><a name="dialogwidgets">dialog-widgets</a></em></code></td><td> ()</td></tr>
+<tr><td><code><em class=def><a name="showwidget">show-widget</a></em> (widget)</code></td></tr>
+<tr><td><code><em class=def><a name="hidewidget">hide-widget</a></em> (widget)</code></td></tr>
+<tr><td colspan=2><br></td></tr>
+<tr><td><code><em class=def><a name="mainwidgets">main-widgets</a></em> ()</code></td><td></td></tr>
+<tr><td><code><em class=def><a name="menuwidgets">menu-widgets</a></em> ()</code></td><td></td></tr>
+<tr><td><code><em class=def><a name="soundwidgets">sound-widgets</a></em> (snd)</code></td><td></td></tr>
+<tr><td><code><em class=def><a name="channelwidgets">channel-widgets</a></em> (snd chn)</code></td><td></td></tr>
+<tr><td><code><em class=def><a name="dialogwidgets">dialog-widgets</a></em> ()</code></td><td></td></tr>
 </table>
 
 <p>
@@ -1011,7 +1013,8 @@ the "speed" control is not at 1.0, try setting this variable to #f.
 <td>The current Snd window height in pixels.
 This is the same as <br>
 <code>(cadr (<a href="widgetsize">widget-size</a> (cadr (<a href="mainwidgets">main-widgets</a>))))</code><br>
-The four "window-" functions are probably obsolete now.
+except at startup when the window-height function and friends defer the set until after the main widgets
+have been created.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1024,7 +1027,7 @@ The four "window-" functions are probably obsolete now.
 <tr><td valign=top><code><em class=def><a name="windowx">window-x</a></em></code></td>
 <td valign=top><code>-1</code></td>
 <td>The current Snd window left side in pixels.
-This is the same as <br>
+This is (usually) the same as <br>
 <code>(car (<a href="widgetposition">widget-position</a> (cadr (<a href="mainwidgets">main-widgets</a>))))</code><br>
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -1344,6 +1347,31 @@ If #t, the actual remix is the hook's responsibility.
 <tr><td colspan=2></td></tr>
 
 <tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span>
+</td></tr>
+
+<tr><td></td><td>
+called upon mouse motion (with button pressed) within lisp graph.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="mouseentergraphhook">mouse-enter-graph-hook</a></em> (snd chn) </code></span>
+</td></tr>
+
+<tr><td></td><td>
+called when the mouse enters a channel's drawing area (graph pane).
+</td></tr>
+
+<tr><td colspan=2 align=center>
+<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(add-hook! <em class=red>mouse-enter-graph-hook</em>
+  (lambda (snd chn) 
+    (snd-print (format #f "~A[~A]" (short-file-name snd) chn))))
+</pre></td></tr></table></td></tr>
+<tr><td colspan=2></td></tr>
+
+<tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="mouseenterlabelhook">mouse-enter-label-hook</a></em> (type position name) </code></span>
 </td></tr>
 
@@ -1365,11 +1393,39 @@ to popup file info as follows:
 <tr><td colspan=2></td></tr>
 
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span>
+<span class=defbox><code><em class=def><a name="mouseenterlistenerhook">mouse-enter-listener-hook</a></em> (snd chn) </code></span>
 </td></tr>
 
 <tr><td></td><td>
-called upon mouse motion (with button pressed) within lisp graph.
+called when the mouse enters the lisp listener pane. This hook, along with the parallel graph hook
+makes it possible to set up Snd to behave internally like a window manager with pointer-focus.  That is, to
+ensure that the pane under the mouse is the one that receives keyboard input, we could define the following
+hook procedures:
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+<tr><td colspan=2 align=center>
+<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(add-hook! <em class=red>mouse-enter-graph-hook</em>
+  (lambda (snd chn)
+    (focus-widget (car (channel-widgets snd chn)))))
+
+(add-hook! <em class=red>mouse-enter-listener-hook</em>
+  (lambda (widget)
+    (focus-widget widget)))
+</pre></td></tr></table></td></tr>
+
+<tr><td></td><td>
+I much prefer this style of operation.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="mouseleavegraphhook">mouse-leave-graph-hook</a></em> (snd chn) </code></span>
+</td></tr>
+
+<tr><td></td><td>
+called when the mouse leaves a channel's drawing area (graph pane). 
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -1379,6 +1435,15 @@ called upon mouse motion (with button pressed) within lisp graph.
 
 <tr><td></td><td>
 called when the mouse exits one of the labels covered by mouse-enter-label-hook.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="mousleavelistenerhook">mouse-leave-listener-hook</a></em> (snd chn) </code></span>
+</td></tr>
+
+<tr><td></td><td>
+called when the mouse leaves the lisp listener pane.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -3630,7 +3695,7 @@ current size of sound array (grows as required).
 <tr><td colspan=2></td></tr>
 
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="memosound">memo-sound</a></em> (<em class=narg>snd chn</em>)</code></span>
+<span class=defbox><code><em class=def><a name="mindb">min-db</a></em> (<em class=narg>snd chn</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
 Sets the minimum dB value displayed in various graphs (default: -60.0).
@@ -5784,12 +5849,12 @@ We can use bind-key to turn the keyboard into a sort of extended piano:
 
 <tr><td colspan=2 align=center>
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(bind-key (char-&gt;integer #\o) 0 
+(<em class=red>bind-key</em> (char-&gt;integer #\o) 0 
   (lambda () 
     (play "oboe.snd") 
     keyboard-no-action))
 
-(bind-key (char-&gt;integer #\p) 0 
+(<em class=red>bind-key</em> (char-&gt;integer #\p) 0 
   (lambda () 
     (play "pistol.snd") 
     keyboard-no-action))
@@ -5802,7 +5867,7 @@ forward two samples in the graph each time we type "l":
 
 <tr><td colspan=2 align=center>
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(bind-key (char-&gt;integer #\l) 0 
+(<em class=red>bind-key</em> (char-&gt;integer #\l) 0 
   (lambda () 
     (set! (left-sample 0 0) (+ 2 (left-sample 0 0))) 
     cursor-update-display))
@@ -5926,6 +5991,20 @@ shift: 1, control: 4, meta: 8
 <span class=defbox><code><em class=def><a name="keybinding">key-binding</a></em> (key state)</code></span></td></tr>
 <tr><td></td><td>
 the (user-defined, not built-in) procedure currently bound to key+state.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="memosound">memo-sound</a></em></code></span></td></tr>
+<tr><td></td><td>
+When a sound file is opened, Snd looks for a file with the same 
+name but with an appended ".scm" extension.  If such a file is found, 
+it is loaded automatically.  The variable <i>memo-sound</i> is set to 
+the newly opened sound's index.  This supports the "snd-memo" feature 
+in CLM, but can be used independently of CLM to store marks, selections,
+or whatever that you want associated with a particular sound. Confusingly
+enough, this is a Scheme variable, unlike all the others -- that is, you
+refer to it directly, not as a procedure call.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
