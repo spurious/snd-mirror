@@ -130,7 +130,6 @@ void update_region_browser(snd_state *ss, int grf_too) {}
 int region_browser_is_active(void) {return(0);}
 void delete_region_and_update_browser(snd_state *ss, int n) {}
 void reflect_play_region_stop(int n) {}
-void set_region_protect(int reg, int protect) {}
 int region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(snd_state *ss) {}

@@ -746,10 +746,8 @@ minibuffer when you click the file name.</p>
 the currently active files in Snd, and
 the other of <A NAME="prevfiles">previously active files</a>.  The currently selected
 sound is highlighted.
-The save button saves current edits, if any; the
-play button plays the file; and the
-unlist button removes a file from the
-previous files list. 
+The
+play button plays the file.
 Click a current file name, and
 that sound becomes the selected sound in the main
 Snd window.  Click a previous file name, and 
@@ -959,10 +957,9 @@ midpoint of the current window.</p>
 channel has a cursor (a big "+"), a set of marks, and a list of
 edits that have not yet been saved.  Most operations take place
 at the cursor.  Operations can be applied simultaneously to
-any other channels or sounds by using the 'sync' button.  And
-as in Emacs, there is a notion of a region ('selection'), and
-a list of saved regions.  Operations can be applied
-either to a sample, a region, a channel, a sound, or any number of
+any other channels or sounds by using the 'sync' button.
+Operations can be applied
+either to a sample, a selected portion, a channel, a sound, or any number of
 sounds at the same time.  Where an operation has an obvious
 analog in text editing, I've tried to use the associated Emacs command.
 To delete the sample at the cursor, for example, use C-d.</p>
@@ -1127,14 +1124,14 @@ file.
 <br>
 <span class=bbox><h3><A NAME="regions">Regions</a></h3></span>
 
-<p>A region is a (saved) portion of the sound
+<p>A region is a portion of the sound
 data.  Although I'm not completely consistent in this document, 
 the word "selection" is used to refer to the currently selected
 (and highlighted) portion of the data; an operation such as
 filter-selection affects the underlying data.  A "region" on
 the other hand, refers to the saved (copied) version of (the original form of) that
 data that can be inserted or mixed elsewhere.
-That is, when a portion is selected, it is saved as the new
+That is, when a portion is selected, it is (by default) saved as the new
 region; subsequent edits 
 will not affect the region data.
 You can disable the region creation by setting the variable
@@ -1163,15 +1160,15 @@ commands continue the definition.</p>
 	<!-- I(define selection):M(Edit: Select All)(selectall) -->
 
 <A NAME="regionbrowser"></a><p>Once defined, the copied region
-is added to a stack of currently
-available regions (the stack size is normally 16 -- see <a href="extsnd.html#maxregions">max-regions</a>).
+is added to a list of currently
+available regions (the maximum list size is normally 16 -- see <a href="extsnd.html#maxregions">max-regions</a>).
 The currently available regions can be view from the
 View menu's Region browser:</p>
 
 <img src="regions.png" alt="picture of region browser" align=left hspace=20>
 
-<p>The 'save' button here protects the region from deletion
-as the region stack grows.  'Print' produces a Postscript
+<p>
+The 'print' button produces a Postscript
 rendition of the current graph contents, using the default
 eps output name. 'play' plays the region.  The graphical
 display 
@@ -1286,7 +1283,7 @@ file which can be sent to directly a printer or saved for later use.</p>
 call the Edit menu's Delete selection option.  Any region
 can be pasted or mixed in using C-x q and C-x i with a
 numeric argument (the region number); the current selection
-(region 0) can be pasted in
+can be pasted in
 by clicking the middle mouse button.  The
 associated keyboard commands are:</p>
 <pre>
@@ -1552,8 +1549,7 @@ simultaneous renditions of the sound.  The various 'play'
 buttons scattered around Snd on the other hand, interrupt
 the current play if you click them during a run.  C-g stops
 any current playing.  If no numeric argument is supplied,
-C-x p plays the currently active selection; to get region 0
-use C-u 0 C-x p.  C-g stops any playing in progress.
+C-x p plays the currently active selection.
 </p>
 
 

@@ -891,6 +891,24 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 		  (argc > 8) ? argv[8] : XEN_UNDEFINED)); \
   }
 
+#define XEN_ARGIFY_10(OutName, InName) \
+  static int OutName ## _Req = 0; \
+  static int OutName ## _Opt = 10; \
+  static int OutName ## _Rst = -1; \
+  static XEN OutName(int argc, XEN *argv, XEN self) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
+		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
+		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
+		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
+		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
+		  (argc > 5) ? argv[5] : XEN_UNDEFINED, \
+		  (argc > 6) ? argv[6] : XEN_UNDEFINED, \
+		  (argc > 7) ? argv[7] : XEN_UNDEFINED, \
+		  (argc > 8) ? argv[8] : XEN_UNDEFINED, \
+		  (argc > 9) ? argv[9] : XEN_UNDEFINED)); \
+  }
+
 #define XEN_NARGIFY_0(OutName, InName) \
   static int OutName ## _Req = 0; \
   static int OutName ## _Opt = 0; \
@@ -1044,6 +1062,21 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 		  (argc > 6) ? argv[6] : XEN_UNDEFINED, \
 		  (argc > 7) ? argv[7] : XEN_UNDEFINED, \
 		  (argc > 8) ? argv[8] : XEN_UNDEFINED)); \
+  }
+
+#define XEN_ARGIFY_10(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv, XEN self) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
+		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
+		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
+		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
+		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
+		  (argc > 5) ? argv[5] : XEN_UNDEFINED, \
+		  (argc > 6) ? argv[6] : XEN_UNDEFINED, \
+		  (argc > 7) ? argv[7] : XEN_UNDEFINED, \
+		  (argc > 8) ? argv[8] : XEN_UNDEFINED, \
+		  (argc > 9) ? argv[9] : XEN_UNDEFINED)); \
   }
 
 #define XEN_NARGIFY_0(OutName, InName) static XEN OutName(void) {return(InName());}

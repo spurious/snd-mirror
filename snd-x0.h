@@ -194,7 +194,6 @@ typedef struct {
   Widget ww;
   Widget list;
   Widget plw;
-  Widget svw;
   Widget dbline;
   Widget bydate;
   Widget bysize;

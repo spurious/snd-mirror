@@ -335,13 +335,13 @@ static mix_info *free_mix_info(mix_info *md)
       if (md->wg) md->wg = free_mix_context(md->wg);
       mix_infos[md->id] = NULL;
       if (md->temporary == DELETE_ME) 
-	snd_remove(md->in_filename, TRUE);
+	snd_remove(md->in_filename, REMOVE_FROM_CACHE);
       else
 	{
 	  if (md->temporary == MULTICHANNEL_DELETION) /* n-chan selection via C-x q for example */
 	    {
 	      if (!(map_over_mixes(look_for_mix_tempfile, (void *)(md->in_filename))))
-		snd_remove(md->in_filename, TRUE);
+		snd_remove(md->in_filename, REMOVE_FROM_CACHE);
 	    }
 	}
       if (md->name) {FREE(md->name); md->name = NULL;}
@@ -848,7 +848,7 @@ static mix_fd *free_mix_fd(mix_fd *mf)
 static int remove_temporary_mix_file(mix_info *md, void *ptr)
 {
   if (md->temporary == DELETE_ME) 
-    snd_remove(md->in_filename, TRUE);
+    snd_remove(md->in_filename, REMOVE_FROM_CACHE);
   return(0);
 }
 
@@ -929,8 +929,8 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
 
 static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, 
 			char *full_original_file, 
-			int input_chans, int temp)
-{ /* temp -> delete original file also */
+			int input_chans, int auto_delete)
+{ 
   mix_info *md;
   char *namebuf;
   console_state *cs;
@@ -941,7 +941,7 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num,
   namebuf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   mus_snprintf(namebuf, LABEL_BUFFER_SIZE, "mix%d", md->id);
   md->name = namebuf;
-  md->temporary = temp;
+  md->temporary = auto_delete;
   md->console_state_size = 1;
   md->states = (console_state **)CALLOC(md->console_state_size, sizeof(console_state *));
   cs = make_console_state(input_chans, cp->edit_ctr, beg, beg + num - 1);
@@ -959,7 +959,7 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num,
   return(md);
 }
 
-static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info *cp, int chan, int temp, const char *origin, int with_tag)
+static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info *cp, int chan, int auto_delete, const char *origin, int with_tag)
 {
   /* open mixfile, current data, write to new temp file mixed, close others, open and use new as change case */
   /* used for clip-region temp file incoming and C-q in snd-chn.c (i.e. mix in file) so sync not relevant */
@@ -1006,7 +1006,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
     {
       free_file_info(ihdr);
       mus_file_close(ofd);
-      snd_remove(ofile, TRUE);
+      snd_remove(ofile, REMOVE_FROM_CACHE);
       FREE(ofile);
       return(NULL);
     }
@@ -1048,7 +1048,12 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
   if (ofile) FREE(ofile);
   if (with_tag)
-    md = add_mix(cp, chan, beg, num, mixfile, in_chans, temp);
+    md = add_mix(cp, chan, beg, num, mixfile, in_chans, auto_delete);
+  else
+    {
+      if (auto_delete == DELETE_ME)
+	snd_remove(mixfile, REMOVE_FROM_CACHE);
+    }
   update_graph(cp);
   return(md);
 }
@@ -1261,7 +1266,7 @@ static void remix_file(mix_info *md, const char *origin)
 	  free_mix_fd(add);
 	  free_mix_fd(sub);
 	  free_file_info(ohdr);
-	  snd_remove(ofile, TRUE);
+	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	  FREE(ofile);
 	  return;
 	  break;
@@ -4038,7 +4043,7 @@ If file_chn is omitted or #f, file's channels are mixed until snd runs out of ch
   chan_info *cp = NULL;
   char *name = NULL;
   int chans, id = -1, file_channel;
-  int with_mixer = TRUE, delete = FALSE;
+  int with_mixer = TRUE, delete_file = FALSE;
   snd_state *ss;
   mix_info *md;
   off_t beg;
@@ -4061,10 +4066,10 @@ If file_chn is omitted or #f, file's channels are mixed until snd runs out of ch
   else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(tag);
   cp = get_cp(snd_n, chn_n, S_mix);
   beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, CURSOR(cp));
+  if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
   if (!(XEN_INTEGER_P(file_chn)))
     {
-      if (XEN_BOOLEAN_P(auto_delete)) delete = XEN_TO_C_BOOLEAN(auto_delete);
-      id = mix_complete_file(any_selected_sound(ss), beg, name, S_mix, with_mixer, (delete) ? DELETE_ME : DONT_DELETE_ME);
+      id = mix_complete_file(any_selected_sound(ss), beg, name, S_mix, with_mixer, (delete_file) ? DELETE_ME : DONT_DELETE_ME);
       if (id == -2) 
 	{
 	  if (name) FREE(name);
@@ -4100,7 +4105,7 @@ If file_chn is omitted or #f, file's channels are mixed until snd runs out of ch
 				name,
 				cp, 
 				file_channel,
-				DONT_DELETE_ME, 
+				(delete_file) ? DELETE_ME : DONT_DELETE_ME, 
 				S_mix,
 				with_mixer);
 	  if (md) 
@@ -4535,7 +4540,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
     {
       newname = save_as_temp_file(&data, 1, len, SND_SRATE(cp->sound));
       mix_id = mix(bg, len, 1, &cp, newname, DELETE_ME, (char *)((edname == NULL) ? S_mix_vct : edname), with_mixer);
-      if (!with_mixer) snd_remove(newname, TRUE);
+      if (!with_mixer) snd_remove(newname, REMOVE_FROM_CACHE);
       FREE(newname);
     }
   update_graph(cp);

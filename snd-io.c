@@ -270,7 +270,7 @@ int snd_write_header(snd_state *ss, const char *name, int type, int srate, int c
 int snd_remove(const char *name, int forget)
 {
   int err = 0;
-  if (forget) mus_sound_forget(name); /* no error here if not in sound tables */
+  if (forget == REMOVE_FROM_CACHE) mus_sound_forget(name); /* no error here if not in sound tables */
   err = remove(name);
   if (err == -1)
     snd_warning(_("can't remove file %s: %s"), name, strerror(errno));
@@ -357,7 +357,7 @@ static void forget_temp(const char *filename, int chan)
 	      }
 	  if (!happy)
 	    {
-	      snd_remove(tmp->name, TRUE);
+	      snd_remove(tmp->name, REMOVE_FROM_CACHE);
 	      FREE(tmp->name);
 	      FREE(tmp->ticks);
 	      FREE(tmp);
@@ -389,7 +389,7 @@ void forget_temps(void)
   int i;
   for (i = 0; i < tempfiles_size; i++)
     if (tempfiles[i])
-      snd_remove(tempfiles[i]->name, TRUE);
+      snd_remove(tempfiles[i]->name, REMOVE_FROM_CACHE);
 }
 
 snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, int temp, int ctr, int temp_chan)
@@ -517,7 +517,7 @@ snd_data *free_snd_data(snd_data *sd)
 		  sd->io = NULL;
 		}
 	      if (sd->temporary == DELETE_ME) 
-		snd_remove(sd->filename, TRUE);
+		snd_remove(sd->filename, REMOVE_FROM_CACHE);
 	    }
 	  if (sd->filename) FREE(sd->filename);
 	  sd->filename = NULL;

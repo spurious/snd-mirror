@@ -1750,7 +1750,7 @@ Cessate apply_controls(Indicium ptr)
 	    }
 	  else
 	    {
-	      snd_remove(ap->ofile, TRUE);
+	      snd_remove(ap->ofile, REMOVE_FROM_CACHE);
 	    }
 	  FREE(ap->ofile);
 	  ap->ofile = NULL;

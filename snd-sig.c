@@ -518,7 +518,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 				  sp->short_filename, ucp->chan, 
 				  saved_chan_file, strerror(errno)));
 	    }
-	  snd_remove(saved_chan_file, TRUE);
+	  snd_remove(saved_chan_file, REMOVE_FROM_CACHE);
 	  FREE(saved_chan_file);
 
 	  if (ok)
@@ -533,7 +533,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		      backup_edit_list(ucp); 
 		      ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize + filesize);
 		    }
-		  else snd_remove(ofile, TRUE);
+		  else snd_remove(ofile, REMOVE_FROM_CACHE);
 		  update_graph(ucp); 
 		}
 	      else file_override_samples(filtersize + filesize, ofile, ucp, 0, DELETE_ME, LOCK_MIXES, origin);
@@ -2063,7 +2063,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
 	{
 	  ss->stopped_explicitly = FALSE;
 	  if (temp_file) 
-	    snd_remove(ofile, TRUE);
+	    snd_remove(ofile, REMOVE_FROM_CACHE);
 	}
       else
 	{
@@ -2580,7 +2580,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 				  if (outgen) mus_free(outgen);
 				  if (sf) sf = free_snd_fd(sf);
 				  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-				  snd_remove(filename, TRUE);
+				  snd_remove(filename, REMOVE_FROM_CACHE);
 				  FREE(filename);
 				  XEN_ERROR(BAD_TYPE,
 					    XEN_LIST_3(C_TO_XEN_STRING(caller),
@@ -2625,7 +2625,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		    backup_edit_list(cp);
 		  ripple_trailing_marks(cp, beg, num, j);
 		}
-	      else snd_remove(filename, TRUE);
+	      else snd_remove(filename, REMOVE_FROM_CACHE);
 	    }
 	  update_graph(cp);
 	}

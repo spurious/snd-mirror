@@ -135,6 +135,8 @@
 		     fallback)
 		   #t))))
 
+(if (not (defined? 'mix-property)) (load "mix.scm"))
+
 (if (defined? 'sync-multichannel-mixes)
     (define mix-panel-applies-to-track sync-multichannel-mixes))
 (if (defined? 'track-position)
@@ -149,8 +151,6 @@
     (define set-track-tempo retempo-track))
 (if (defined? 'env-track)
     (define set-track-amp-env env-track))
-
-(if (not (defined? 'mix-property)) (load "mix.scm"))
 
 (define mix-name
   (make-procedure-with-setter
@@ -170,3 +170,4 @@
       (mixes))
      (throw 'no-such-mix (list "mix-name->id" name)))))
 
+(define (protect-region n) (snd-error "protect-region has been removed"))

@@ -2,7 +2,7 @@
 #define SND_X1_H
 
 typedef struct {
-  Widget rw, nm, pl, sv;
+  Widget rw, nm, pl;
   int pos, parent;
   snd_state *ss;
 } regrow;
@@ -225,7 +225,6 @@ void update_region_browser(snd_state *ss, int grf_too);
 int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
 void reflect_play_region_stop(int n);
-void set_region_protect(int reg, int protect);
 void view_region_callback(Widget w, XtPointer context, XtPointer info);
 int region_dialog_is_active(void);
 void allocate_region_rows(int n);
@@ -440,9 +439,8 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed);
 void make_file_save_as_dialog(snd_state *ss);
 void make_edit_save_as_dialog(snd_state *ss);
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
-ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *second_str, char *main_str, int pad, int with_sort, int with_pane);
-regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row, 
-		    XtCallbackProc first_callback, XtCallbackProc second_callback, XtCallbackProc third_callback);
+ww_info *make_title_row(snd_state *ss, Widget formw, char *top_str, char *main_str, int pad, int with_sort, int with_pane);
+regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback);
 void make_prevfiles_list (snd_state *ss);
 void make_curfiles_list (snd_state *ss);
 void curfile_highlight(snd_state *ss, int i);

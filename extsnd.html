@@ -3297,8 +3297,6 @@ As regions are defined, the new ones are pushed on a stack, and if enough region
 exist, old ones are pushed off (and deleted) to make room.
 Each region has a unique id returned by make-region and shown beside the region name in the Region Browser.
 Most of the region arguments default to the current region (the top of the regions stack).
-The selection is usually based on region 0,
-although in fact there's no necessary connection between them.
 </p>
 
 <!-- -------------------------------- REGION TABLE -------------------------------- -->
@@ -3344,12 +3342,6 @@ mix (subsequent channels simply increment this number).
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplayregion">play-region</a></em> (<i>reg wait</i>)</code></span></td></tr>
 <tr><td></td><td>
 play region <i>reg</i>; if wait is #t, play to the end before returning. (See play.scm).
-</td></tr>
-
-<!-- protect-region -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndprotectregion">protect-region</a></em> (reg protect)</code></span></td></tr>
-<tr><td></td><td>protect or unprotect region <i>reg</i> from deletion (removal from the region stack).  A protected region won't be pushed
-off the region stack.
 </td></tr>
 
 <!-- region-chans -->

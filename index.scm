@@ -821,7 +821,6 @@ and if one is found, and the Snd documentation can be found, calls (html-program
     (list "print-length" "extsnd.html#printlength" "snd-xen.c")
     (list "progress-report" "extsnd.html#progressreport" "snd-snd.c")
     (list "prompt-in-minibuffer" "extsnd.html#sndpromptinminibuffer" "snd-kbd.c")
-    (list "protect-region" "extsnd.html#sndprotectregion" "snd-region.c")
     (list "ptree-channel" "extsnd.html#ptreechannel" "snd-sig.c")
     (list "pulse-train" "clm.html#pulse-train" "clm2xen.c")
     (list "pulse-train?" "clm.html#pulse-train?" "clm2xen.c")

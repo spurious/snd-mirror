@@ -385,7 +385,6 @@ typedef struct {
 
 typedef struct {
   int len;
-  int *save;
   char **name;
 } region_state;
 
@@ -840,7 +839,6 @@ file_info *fixup_region_data(chan_info *cp, int chan, int n);
 region_state *region_report(void);
 void free_region_state (region_state *r);
 int remove_region_from_stack(int pos);
-void protect_region(int n, int protect);
 int save_region(snd_state *ss, int n, char *ofile, int data_format);
 void paste_region(int n, chan_info *cp, const char *origin);
 void add_region(int n, chan_info *cp, const char *origin);
@@ -1116,7 +1114,6 @@ snd_info *snd_update(snd_state *ss, snd_info *sp);
 char *view_curfiles_name(int pos);
 void view_curfiles_play(snd_state *ss, int pos, int play);
 void view_curfiles_select(snd_state *ss, int pos);
-void view_curfiles_save(snd_state *ss, int pos);
 void view_prevfiles_select(snd_state *ss, int pos);
 int view_prevfiles_play(snd_state *ss, int pos, int play);
 char *get_prevname(int n);

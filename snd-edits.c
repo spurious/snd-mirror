@@ -2,6 +2,11 @@
 
 #define NO_SUCH_DIRECTION XEN_ERROR_TYPE("no-such-direction")
 
+/* these are used internally by the save-state process */
+#define S_delete_samples_with_origin    "delete-samples-with-origin"
+#define S_change_samples_with_origin    "change-samples-with-origin"
+#define S_insert_samples_with_origin    "insert-samples-with-origin"
+
 static int dont_edit(chan_info *cp) 
 {
   XEN res = XEN_FALSE;
@@ -8106,7 +8111,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   lseek(fd, 0L, SEEK_SET);
   read(fd, buf, len);
   snd_close(fd, name);
-  snd_remove(name, FALSE);
+  snd_remove(name, IGNORE_CACHE);
   if (name) FREE(name);
   res = C_TO_XEN_STRING(buf);
   FREE(buf);
@@ -9072,7 +9077,7 @@ the new data's end."
   chan_info *cp;
   mus_sample_t *ivals;
   off_t len = 0, beg, curlen;
-  int override = 0, inchan = 0, pos, delete = FALSE;
+  int override = 0, inchan = 0, pos, delete_file = FALSE;
   char *fname, *caller;
   if (XEN_STRING_P(edname))
     caller = XEN_TO_C_STRING(edname);
@@ -9095,11 +9100,11 @@ the new data's end."
       curlen = CURRENT_SAMPLES(cp);
       fname = XEN_TO_C_STRING(vect);
       inchan = XEN_TO_C_INT_OR_ELSE(infile_chan, 0);
-      if (XEN_BOOLEAN_P(auto_delete)) delete = XEN_TO_C_BOOLEAN(auto_delete);
+      if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
       if ((beg == 0) && 
 	  ((len > curlen) || override))
-	file_override_samples(len, fname, cp, inchan, (delete) ? DELETE_ME : DONT_DELETE_ME, LOCK_MIXES, caller);
-      else file_change_samples(beg, len, fname, cp, inchan, (delete) ? DELETE_ME : DONT_DELETE_ME, LOCK_MIXES, caller, pos);
+	file_override_samples(len, fname, cp, inchan, (delete_file) ? DELETE_ME : DONT_DELETE_ME, LOCK_MIXES, caller);
+      else file_change_samples(beg, len, fname, cp, inchan, (delete_file) ? DELETE_ME : DONT_DELETE_ME, LOCK_MIXES, caller, pos);
     }
   else
     {
@@ -9322,7 +9327,7 @@ inserts all of oboe.snd starting at sample 1000."
   chan_info *cp;
   snd_info *sp;
   char *filename = NULL;
-  int nc, fchn, i, delete = FALSE;
+  int nc, fchn, i, delete_file = FALSE;
   off_t beg = 0, len;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_insert_sound, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ubeg), ubeg, XEN_ARG_2, S_insert_sound, "a number");
@@ -9330,7 +9335,7 @@ inserts all of oboe.snd starting at sample 1000."
   ASSERT_CHANNEL(S_insert_sound, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_insert_sound);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_insert_sound, "a boolean");
-  if (XEN_BOOLEAN_P(auto_delete)) delete = XEN_TO_C_BOOLEAN(auto_delete);
+  if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
   filename = mus_expand_filename(XEN_TO_C_STRING(file));
   nc = mus_sound_chans(filename);
   if (nc <= 0)
@@ -9356,7 +9361,7 @@ inserts all of oboe.snd starting at sample 1000."
       fchn = XEN_TO_C_INT(file_chn);
       if (fchn < mus_sound_chans(filename))
 	{
-	  file_insert_samples(beg, len, filename, cp, fchn, (delete) ? DELETE_ME : DONT_DELETE_ME, S_insert_sound,
+	  file_insert_samples(beg, len, filename, cp, fchn, (delete_file) ? DELETE_ME : DONT_DELETE_ME, S_insert_sound,
 			      to_c_edit_position(cp, edpos, S_insert_sound, 6));
 	  update_graph(cp);
 	  if (filename) FREE(filename);
@@ -9374,7 +9379,7 @@ inserts all of oboe.snd starting at sample 1000."
       if (sp->nchans < nc) nc = sp->nchans;
       for (i = 0; i < nc; i++)
 	{
-	  file_insert_samples(beg, len, filename, sp->chans[i], i, (delete) ? DELETE_ME: DONT_DELETE_ME, S_insert_sound,
+	  file_insert_samples(beg, len, filename, sp->chans[i], i, (delete_file) ? DELETE_ME: DONT_DELETE_ME, S_insert_sound,
 			      /* this edit_position cannot be optimized out -- each channel may have
 			       *   a different edit history, but edpos might be -1 throughout etc.
 			       */
@@ -9468,7 +9473,7 @@ insert data (either a vector, vct, or list of samples, or a filename) into snd's
 
   chan_info *cp;
   mus_sample_t *ivals;
-  int pos, delete = FALSE;
+  int pos, delete_file = FALSE;
   off_t beg, len = 0;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_1, S_insert_samples, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, S_insert_samples, "a number");
@@ -9479,9 +9484,9 @@ insert data (either a vector, vct, or list of samples, or a filename) into snd's
   if (len <= 0) return(samps);
   pos = to_c_edit_position(cp, edpos, S_insert_samples, 6);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_insert_samples, "a boolean");
-  if (XEN_BOOLEAN_P(auto_delete)) delete = XEN_TO_C_BOOLEAN(auto_delete);
+  if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
   if (XEN_STRING_P(vect))
-    file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, (delete) ? DELETE_ME : DONT_DELETE_ME, S_insert_samples, pos);
+    file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, (delete_file) ? DELETE_ME : DONT_DELETE_ME, S_insert_samples, pos);
   else
     {
       int ilen;

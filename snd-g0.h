@@ -141,7 +141,6 @@ typedef struct {
   GtkWidget *ww;
   GtkWidget *list;
   GtkWidget *plw;
-  GtkWidget *svw;
   GtkWidget *dbline;
   GtkWidget *bydate;
   GtkWidget *bysize;

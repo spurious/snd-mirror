@@ -188,7 +188,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
 	  ss->pending_change = copy_string(newname);
 	}
     }
-  else snd_remove(newname, TRUE);
+  else snd_remove(newname, REMOVE_FROM_CACHE);
   if (newname) FREE(newname);
   if (loops) FREE(loops);
   return(hdr);
@@ -809,7 +809,7 @@ int move_file(char *oldfile, char *newfile)
 	{
 	  err = copy_file(oldfile, newfile);
 	  if (!err) 
-	    snd_remove(oldfile, TRUE);
+	    snd_remove(oldfile, REMOVE_FROM_CACHE);
 	}
     }
   if (err != 0)
@@ -1316,13 +1316,6 @@ void view_curfiles_select(snd_state *ss, int pos)
       equalize_sound_panes(ss, sp, sp->chans[0], FALSE);
       /* goto_graph(sp->chans[0]); */
     }
-}
-
-void view_curfiles_save(snd_state *ss, int pos)
-{
-  snd_info *sp;
-  sp = find_sound(ss, curnames[pos], 0);
-  if (sp) save_edits(sp, NULL);
 }
 
 static XEN previous_files_select_hook;

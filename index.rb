@@ -712,7 +712,6 @@ Snd_names_and_urls =
     ["print_length", "extsnd.html#printlength", "snd-xen.c"],
     ["progress_report", "extsnd.html#progressreport", "snd-snd.c"],
     ["prompt_in_minibuffer", "extsnd.html#sndpromptinminibuffer", "snd-kbd.c"],
-    ["protect_region", "extsnd.html#sndprotectregion", "snd-region.c"],
     ["ptree_channel", "extsnd.html#ptreechannel", "snd-sig.c"],
     ["pulse_train", "clm.html#pulse-train", "clm2xen.c"],
     ["pulse_train?", "clm.html#pulse-train?", "clm2xen.c"],

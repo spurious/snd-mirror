@@ -108,7 +108,6 @@ void update_region_browser(snd_state *ss, int grf_too)
       regrow *r;
       r = region_row(i);
       set_button_label_bold(r->nm, rs->name[i]);
-      set_toggle_button(r->sv, rs->save[i], FALSE, (void *)r);
       set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
       gtk_widget_show(r->rw);
     }
@@ -269,23 +268,6 @@ static void region_play_callback(GtkWidget *w, gpointer context)
   else stop_playing_region(stack_position_to_id(r->pos));
 }
 
-static void region_save_callback(GtkWidget *w, gpointer context)
-{
-  regrow *r = (regrow *)context;
-  protect_region(r->pos, GTK_TOGGLE_BUTTON(r->sv)->active);
-}
-
-void set_region_protect(int id, int protect)
-{
-  regrow *r;
-  protect_region(id, protect);
-  if (region_rows)
-    {
-      r = region_row(id_to_stack_position(id));
-      if ((r) && (r->sv)) set_toggle_button(r->sv, protect, FALSE, (void *)r);
-    }
-}
-
 static void region_print_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
@@ -358,7 +340,7 @@ static void make_region_dialog(snd_state *ss)
   gtk_widget_show(help_button);
   gtk_widget_show(dismiss_button);
 
-  wwl = make_title_row(ss, GTK_DIALOG(region_dialog)->vbox, _("save"), _("play"), _("regions"), DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
+  wwl = make_title_row(ss, GTK_DIALOG(region_dialog)->vbox, _("play"), _("regions"), DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
   region_list = wwl->list;
 
   infobox = gtk_vbox_new(FALSE, 0);
@@ -369,10 +351,7 @@ static void make_region_dialog(snd_state *ss)
   region_rows_size = max_regions(ss);
   for (i = 0; i < max_regions(ss); i++)
     {
-      r = make_regrow(ss, region_list, 
-		      (void (*)())region_save_callback, 
-		      (void (*)())region_play_callback, 
-		      (void (*)())region_focus_callback);
+      r = make_regrow(ss, region_list, (void (*)())region_play_callback, (void (*)())region_focus_callback);
       region_rows[i] = r;
       r->pos = i;
       r->ss = ss;
@@ -523,10 +502,7 @@ static regrow *region_row(int n)
       if (region_rows[n] == NULL)
 	{
 	  ss = get_global_state();
-	  r = make_regrow(ss, region_list, 
-			  (void (*)())region_save_callback, 
-			  (void (*)())region_play_callback, 
-			  (void (*)())region_focus_callback);
+	  r = make_regrow(ss, region_list, (void (*)())region_play_callback, (void (*)())region_focus_callback);
 	  region_rows[n] = r;
 	  r->pos = n;
 	  r->ss = ss;

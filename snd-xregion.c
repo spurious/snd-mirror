@@ -114,10 +114,8 @@ void update_region_browser(snd_state *ss, int grf_too)
     {
       regrow *r;
       r = region_row(i);
-      ASSERT_WIDGET_TYPE(XmIsToggleButton(r->sv), r->sv);
       ASSERT_WIDGET_TYPE(XmIsToggleButton(r->pl), r->pl);
       set_button_label_bold(r->nm, rs->name[i]);
-      XmToggleButtonSetState(r->sv, (Boolean)(rs->save[i]), FALSE);
       XmToggleButtonSetState(r->pl, FALSE, FALSE);
       XtManageChild(r->rw);
     }
@@ -264,25 +262,6 @@ static void region_play_callback(Widget w, XtPointer context, XtPointer info)
   else stop_playing_region(stack_position_to_id(r->pos));
 }
 
-static void region_save_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  regrow *r = (regrow *)context;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  protect_region(stack_position_to_id(r->pos), cb->set);
-}
-
-void set_region_protect(int id, int protect)
-{
-  regrow *r;
-  protect_region(id, protect);
-  if (region_rows)
-    {
-      r = region_row(id_to_stack_position(id));
-      if ((r) && (r->sv)) XmToggleButtonSetState(r->sv, (Boolean)protect, FALSE);
-    }
-}
-
 static void region_print_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
@@ -349,7 +328,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(region_dialog, XmDIALOG_SEPARATOR)); n++;
   formw = XtCreateManagedWidget("formw", xmFormWidgetClass, region_dialog, args, n);
 
-  wwl = make_title_row(ss, formw, _("save"), _("play"), _("regions"), DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
+  wwl = make_title_row(ss, formw, _("play"), _("regions"), DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
   ww = wwl->ww;
   region_ww = ww;
   region_list = wwl->list;
@@ -360,7 +339,7 @@ static void make_region_dialog(snd_state *ss)
   region_rows_size = max_regions(ss);
   for (i = 0; i < max_regions(ss); i++)
     {
-      r = make_regrow(ss, ww, last_row, region_save_callback, region_play_callback, region_focus_callback);
+      r = make_regrow(ss, ww, last_row, region_play_callback, region_focus_callback);
       region_rows[i] = r;
       r->pos = i;
       r->ss = ss;
@@ -545,7 +524,7 @@ static regrow *region_row(int n)
 	  ss = get_global_state();
 	  r = make_regrow(ss, region_ww, 
 			  (n > 0) ? (region_rows[n - 1]->rw) : NULL, 
-			  region_save_callback, region_play_callback, region_focus_callback);
+			  region_play_callback, region_focus_callback);
 	  region_rows[n] = r;
 	  r->pos = n;
 	  r->ss = ss;

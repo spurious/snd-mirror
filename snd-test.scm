@@ -30,7 +30,6 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
-;;; TODO: test auto-delete in mix insert-sound insert-samples set-samples (latter has rev arg)
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 syncase) (ice-9 session))
@@ -17723,7 +17722,6 @@ EDITS: 5
 	    (forward-mix (choose-fd))
 	    (backward-mix (choose-fd))
 	    
-	    (without-errors (protect-region (list-ref (regions) 2) #t))
 	    (without-errors (play-region (list-ref (regions) 2) #t))
 	    (without-errors (mix-region))
 	    (play-and-wait)
@@ -29447,7 +29445,31 @@ EDITS: 2
 	(with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1) (with-mix () "with-mix" 0 (fm-violin 0 .1 550 .3)))
 	(check-with-mix 6 .1 1.1 .398 "()" "((fm-violin 0 0.1 550 0.3))" old-date #f))
       
-      
+      (let ((ind (open-sound "oboe.snd")))
+	(with-sound (:output "test1.snd" :to-snd #f) (fm-violin 0 .1 440 .1))
+	(set-samples 0 2205 "test1.snd" ind 0 #f "set-samples auto-delete test" 0 #f #t)
+	(if (not (file-exists? "test1.snd")) (snd-display ";oops: auto-delete test1.snd?"))
+	(undo 1 ind)
+	(with-sound (:output "test2.snd" :to-snd #f) (fm-violin 0 .1 440 .1))
+	(insert-sound "test2.snd" 0 0 ind 0 #f #t)
+	(if (file-exists? "test1.snd") (snd-display ";auto-delete set-samples?"))
+	(undo 1 ind)
+	(with-sound (:output "test3.snd" :to-snd #f) (fm-violin 0 .1 440 .1))
+	(insert-samples 0 2205 "test3.snd" ind 0 #f #t)  
+	(if (file-exists? "test2.snd") (snd-display ";auto-delete insert-sound?"))
+	(undo 1 ind)
+	(with-sound (:output "test4.snd" :to-snd #f) (fm-violin 0 .1 440 .1))
+	(mix "test4.snd" 0 0 ind 0 #f #t)
+	(if (file-exists? "test3.snd") (snd-display ";auto-delete insert-samples?"))
+	(undo 1 ind)
+	(delete-sample 100)
+	(if (file-exists? "test4.snd") (snd-display ";auto-delete mix?"))
+	(with-sound (:output "test5.snd" :to-snd #f) (fm-violin 0 .1 440 .1))
+	(mix "test5.snd" 0 0 ind 0 #t #t)
+	(revert-sound ind)
+	(close-sound ind)
+	(if (file-exists? "test5.snd") (snd-display ";auto-delete mix (with-tag)?")))
+        
       (if (and (provided? 'snd-motif)
 	       (defined? 'variable-display))
 	  (let ((wid1 (make-variable-display "do-loop" "i*1" 'text))
@@ -31931,12 +31953,10 @@ EDITS: 2
 			   (sort-menu (find-child prevform "sort"))
 			   (option-holder (cadr (XtGetValues sort-menu (list XmNsubMenuId 0))))
 			   (rw1 (find-child prevform "rw"))
-			   (sv1 (find-child rw1 "sv"))
 			   (pl1 (find-child rw1 "pl"))
 			   (nm1 (find-child rw1 "nm"))
 			   (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) "bold_button_font")))
 			   (rw2 (find-child curform "rw"))
-			   (sv2 (find-child rw2 "sv"))
 			   (pl2 (find-child rw2 "pl"))
 			   (nm2 (find-child rw2 "nm")))
 					;(add-hook! mouse-enter-label-hook (lambda (a b c) (snd-display ";~A ~A ~A" a b c)))
@@ -31946,7 +31966,6 @@ EDITS: 2
 		      (leave-event nm2) (force-event)
 		      (click-button pl1) (force-event)
 		      (click-button pl2) (force-event)
-		      (click-button sv1) (force-event)
 		      (if (not (hook-empty? initial-graph-hook))
 			  (begin
 			    (catch #t
@@ -31957,15 +31976,12 @@ EDITS: 2
 				     (if (or (= (length (sounds)) 0)
 					     (not (string=? (short-file-name (car (sounds))) name)))
 					 (snd-display ";click previous: ~A ~A" name (map short-file-name (sounds))))
-				     (XmToggleButtonSetState sv2 #t #t)		  
 				     (XmToggleButtonSetState pl2 #t #t)
-				     (XmToggleButtonSetState sv2 #f #t)
 				     (XmToggleButtonSetState pl2 #f #t))
 				   (lambda args args))
 			    (enter-event nm1) (force-event)
 			    (set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) "bold_button_font")))
 			    (close-sound (car (sounds)))
-			    (XmToggleButtonSetState sv1 #t #t)
 			    (for-each-child option-holder
 					    (lambda (w)
 					      (if (XmIsPushButton w)
@@ -32416,15 +32432,12 @@ EDITS: 2
 			 (upb (find-child grf "up"))
 			 (frm (find-child regd "formw"))
 			 (rw1 (find-child frm "rw"))
-			 (sv1 (find-child rw1 "sv"))
 			 (pl1 (find-child rw1 "pl"))
 			 (nm1 (find-child rw1 "nm"))
 			 (editb (find-child regd "edit"))
 			 (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) "bold_button_font"))))
 		    (XmToggleButtonSetState pl1 #t #t)
 		    (XmToggleButtonSetState pl1 #f #t)
-		    (XmToggleButtonSetState sv1 #t #t)
-		    (XmToggleButtonSetState sv1 #f #t)
 		    (click-button nm1)
 		    (click-button (XmMessageBoxGetChild regd XmDIALOG_CANCEL_BUTTON)) (force-event)		  
 		    (let ((name1 (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) "bold_button_font"))))
@@ -34243,27 +34256,27 @@ EDITS: 2
 			(if (not (equal? old-font (current-font ind 0)))
 			    (snd-display ";set current-font with ind/0: ~A ~A" old-font (current-font ind 0)))
 			(set! (current-font) old-font))
-		      
 		      (let* ((font (cadr (XtVaGetValues (list-ref (sound-widgets ind) 3) 
 							(list XmNfontList 0))))
 			     (context (XmFontListInitFontContext font))
 			     (next-font (XmFontListGetNextFont context)))
 			(if (car next-font)
 			    (if (XFontStruct? (caddr next-font))
-				(let ((snd-name (cadr next-font))
-				      (x-name (XGetAtomName 
-					       (XtDisplay (cadr (main-widgets)))
-					       (list 'Atom (cadr (XGetFontProperty (caddr next-font) 
-										   XA_FULL_NAME))))))
-				  (if (or (not (string=? snd-name "bold_button_font"))
-					  (not (string=? x-name "Times Bold")))
+				(let* ((snd-name (cadr next-font))
+				       (xfont (XGetFontProperty (caddr next-font) XA_FULL_NAME))
+				       (x-name (and (car xfont)
+						    (XGetAtomName 
+						     (XtDisplay (cadr (main-widgets)))
+						     (list 'Atom (cadr xfont))))))
+				  (if (or (not (string=? snd-name "FONTLIST_DEFAULT_TAG_STRING"))
+					  (string? x-name))
 				      (snd-display ";mini font: ~A ~A" snd-name x-name)))
 				(snd-display ";mini-font not fontstruct: ~A" next-font))
 			    (snd-display ";mini-font no good: ~A" next-font))
 			(XmFontListFreeFontContext context)
 			(set! context (XmFontListInitFontContext font))
 			(let ((entry (XmFontListNextEntry context)))
-			  (if (not (string=? (XmFontListEntryGetTag entry) "bold_button_font"))
+			  (if (not (string=? (XmFontListEntryGetTag entry) "FONTLIST_DEFAULT_TAG_STRING"))
 			      (snd-display ";fontlistentry ~A" (XmFontListEntryGetTag entry)))
 			  (if (not (XFontStruct? (XmFontListEntryGetFont entry)))
 			      (snd-display ";fontlistentry font: ~A" (XmFontListEntryGetFont entry)))
@@ -36919,7 +36932,7 @@ EDITS: 2
 		     transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog
 		     peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player?
 		     position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample
-		     print-length progress-report prompt-in-minibuffer protect-region pushed-button-color read-only
+		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
 		     recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog

@@ -2,7 +2,7 @@
 #define SND_G1_H
 
 typedef struct {
-  GtkWidget *rw, *nm, *pl, *sv;
+  GtkWidget *rw, *nm, *pl;
   int pos, parent;
   snd_state *ss;
 } regrow;
@@ -217,7 +217,6 @@ void update_region_browser(snd_state *ss, int grf_too);
 void reflect_play_region_stop(int n);
 int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
-void set_region_protect(int reg, int protect);
 void view_region_callback(GtkWidget *w, gpointer info);
 void allocate_region_rows(int n);
 int region_dialog_is_active(void);
@@ -519,8 +518,8 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, in
 				int header_type, int data_format, int with_loc, int comment_as_entry, int with_samples);
 void make_file_save_as_dialog(snd_state *ss);
 void make_edit_save_as_dialog(snd_state *ss);
-ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *second_str, char *main_str, int pad, int with_sort, int with_pane);
-regrow *make_regrow(snd_state *ss, GtkWidget *ww, GtkSignalFunc first_callback, GtkSignalFunc second_callback, GtkSignalFunc third_callback);
+ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *top_str, char *main_str, int pad, int with_sort, int with_pane);
+regrow *make_regrow(snd_state *ss, GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback);
 void make_cur_name_row(int old_size, int new_size);
 void make_prev_name_row(int old_size, int new_size);
 void make_prevfiles_list (snd_state *ss);

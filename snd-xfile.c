@@ -1100,11 +1100,11 @@ void make_edit_save_as_dialog(snd_state *ss)
  * the region and file browsers share much widgetry -- they are supposed to look the same
  */
 
-ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *second_str, char *main_str, int pad, int with_sort, int with_pane)
+ww_info *make_title_row(snd_state *ss, Widget formw, char *top_str, char *main_str, int pad, int with_sort, int with_pane)
 {
   int n;
   Arg args[32];
-  Widget plw, svw, rlw, sep1;
+  Widget plw, rlw, sep1;
   Widget smenu, sbar;
   ww_info *wwi;
 
@@ -1178,25 +1178,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
       XtSetArg(args[n], XmNtopWidget, sep1); n++;
     }
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  svw = XtCreateManagedWidget(first_str, xmLabelWidgetClass, formw, args, n);
-  wwi->svw = svw;
-
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, svw); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  if (with_pane == WITH_PANED_WINDOW)
-    {
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
-    }
-  else
-    {
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sep1); n++;
-    }
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  plw = XtCreateManagedWidget(second_str, xmLabelWidgetClass, formw, args, n);
+  plw = XtCreateManagedWidget(top_str, xmLabelWidgetClass, formw, args, n);
   wwi->plw = plw;
 
   if (with_sort == WITH_SORT_BUTTON)
@@ -1266,7 +1248,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
 	}
     }
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, svw); n++;
+  XtSetArg(args[n], XmNtopWidget, plw); n++;
   if (pad == DONT_PAD_TITLE)
     {
       if (with_pane == WITH_PANED_WINDOW)
@@ -1340,14 +1322,13 @@ static void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolea
   mouse_leave_label_or_enter((regrow *)context, mouse_leave_label_hook, S_mouse_leave_label_hook);
 }
 
-regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row, 
-		    XtCallbackProc first_callback, XtCallbackProc second_callback, XtCallbackProc third_callback)
+regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback)
 {
   int n;
   Arg args[32];
   regrow *r;
   XmString s1;
-  XtCallbackList n1, n2, n3;
+  XtCallbackList n1, n3;
 
   s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
   r = (regrow *)CALLOC(1, sizeof(regrow));
@@ -1370,21 +1351,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
   XtSetArg(args[n], XmNlabelString, s1); n++;
-  XtSetArg(args[n], XmNvalueChangedCallback, n1 = make_callback_list(first_callback, (XtPointer)r)); n++;
-  if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-  XtSetArg(args[n], XmNmarginWidth, 8); n++;
-  r->sv = make_togglebutton_widget("sv", r->rw, args, n);
-
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, r->sv); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-  XtSetArg(args[n], XmNlabelString, s1); n++;
-  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(second_callback, (XtPointer)r)); n++;
+  XtSetArg(args[n], XmNvalueChangedCallback, n1 = make_callback_list(play_callback, (XtPointer)r)); n++;
   if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
   XtSetArg(args[n], XmNmarginWidth, 8); n++;
   r->pl = make_togglebutton_widget("pl", r->rw, args, n);
@@ -1403,7 +1370,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n], XM_FONT_RESOURCE, BOLD_BUTTON_FONT(ss)); n++;
   XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
   XtSetArg(args[n], XmNwidth, 300); n++;
-  XtSetArg(args[n], XmNactivateCallback, n3 = make_callback_list(third_callback, (XtPointer)r)); n++;
+  XtSetArg(args[n], XmNactivateCallback, n3 = make_callback_list(name_callback, (XtPointer)r)); n++;
   r->nm = XtCreateManagedWidget("nm", xmPushButtonWidgetClass, r->rw, args, n);
   XmStringFree(s1);
 
@@ -1411,7 +1378,6 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtAddEventHandler(r->nm, LeaveWindowMask, FALSE, mouse_leave_label, (XtPointer)r);
 
   FREE(n1);
-  FREE(n2);
   FREE(n3);
   return(r);
 }
@@ -1479,13 +1445,6 @@ static void view_files_update_callback(Widget w, XtPointer context, XtPointer in
   if (file_dialog_is_active()) make_prevfiles_list((snd_state *)context);
 }
 
-static void view_curfiles_save_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  regrow *r = (regrow *)context;
-  view_curfiles_save(r->ss, r->pos);
-  XmToggleButtonSetState(r->sv, FALSE, FALSE);
-}
-
 void set_file_browser_play_button(char *name, int state)
 {
   int i, list;
@@ -1545,13 +1504,6 @@ static void view_curfiles_select_callback(Widget w, XtPointer context, XtPointer
   view_curfiles_select(r->ss, r->pos);
 }
 
-static void view_prevfiles_unlist_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  regrow *r = (regrow *)context;
-  file_unprevlist(get_prevname(r->pos));
-  make_prevfiles_list(r->ss);
-}
-
 static void view_prevfiles_play_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* open and play -- close at end or when button off toggled */
@@ -1595,15 +1547,13 @@ void make_curfiles_list (snd_state *ss)
       r = cur_name_row[i];
       if (r == NULL)
 	{
-	  r = make_regrow(ss, vf_curww, last_row, 
-			  view_curfiles_save_callback, view_curfiles_play_callback, view_curfiles_select_callback);
+	  r = make_regrow(ss, vf_curww, last_row, view_curfiles_play_callback, view_curfiles_select_callback);
 	  cur_name_row[i] = r;
 	  r->pos = i;
 	  r->ss = ss;
 	  r->parent = CURRENT_FILE_VIEWER;
 	}
       set_button_label_bold(r->nm, view_curfiles_name(r->pos));
-      XmToggleButtonSetState(r->sv, FALSE, FALSE);
       XmToggleButtonSetState(r->pl, FALSE, FALSE);
       if (!(XtIsManaged(r->rw))) XtManageChild(r->rw);
       last_row = r->rw;
@@ -1666,15 +1616,13 @@ void make_prevfiles_list (snd_state *ss)
 	{
 	  if (!((r = prev_name_row[i])))
 	    {
-	      r = make_regrow(ss, vf_prevww, last_row, 
-			      view_prevfiles_unlist_callback, view_prevfiles_play_callback, view_prevfiles_select_callback);
+	      r = make_regrow(ss, vf_prevww, last_row, view_prevfiles_play_callback, view_prevfiles_select_callback);
 	      prev_name_row[i] = r;
 	      r->pos = i;
 	      r->ss = ss;
 	      r->parent = PREVIOUS_FILE_VIEWER;
 	    }
 	  set_button_label_bold(r->nm, get_prevname(r->pos));
-	  XmToggleButtonSetState(r->sv, FALSE, FALSE);
 	  XmToggleButtonSetState(r->pl, FALSE, FALSE);
 	  if (!(XtIsManaged(r->rw))) XtManageChild(r->rw);
 	  last_row = r->rw;
@@ -1697,7 +1645,7 @@ void set_file_sort_sensitive(int sensitive)
     XtSetSensitive(byproc, sensitive);
 }
 
-/* play open unlist for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
+/* play open for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
 
 void view_files_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -1801,7 +1749,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
 
 
       /* current files section: save play current files | files */
-      wwl = make_title_row(ss, curform, _("save"), _("play"), _("current files"),
+      wwl = make_title_row(ss, curform, _("play"), _("current files"),
 			   PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       vf_curww = wwl->ww;
       vf_curlst = wwl->list;
@@ -1813,17 +1761,15 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
 	{                    /* not curfile_end here since it is tracking currently active files before this dialog is created */
 	  init_curfiles(4);
 	  cur_name_row = (regrow **)CALLOC(4, sizeof(regrow *));
-	  r = make_regrow(ss, vf_curww, NULL, 
-			  view_curfiles_save_callback, view_curfiles_play_callback, view_curfiles_select_callback);
+	  r = make_regrow(ss, vf_curww, NULL, view_curfiles_play_callback, view_curfiles_select_callback);
 	  cur_name_row[0] = r;
 	  r->pos = 0;
 	  r->ss = ss;
 	  r->parent = CURRENT_FILE_VIEWER;
 	}
 
-      /* previous files section: unlist play previous files | files */
-      wwl = make_title_row(ss, prevform, _("unlist"), _("play"), _("previous files"),
-			   PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
+      /* previous files section: play previous files | files */
+      wwl = make_title_row(ss, prevform, _("play"), _("previous files"), PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       XtAddCallback(wwl->byname, XmNactivateCallback, sort_prevfiles_by_name, ss);
       XtAddCallback(wwl->bydate, XmNactivateCallback, sort_prevfiles_by_date, ss);
       XtAddCallback(wwl->bysize, XmNactivateCallback, sort_prevfiles_by_size, ss);
@@ -1841,8 +1787,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  init_prevfiles(4);
 	  prev_name_row = (regrow **)CALLOC(4, sizeof(regrow *));
-	  r = make_regrow(ss, vf_prevww, NULL, 
-			  view_prevfiles_unlist_callback, view_prevfiles_play_callback, view_prevfiles_select_callback);
+	  r = make_regrow(ss, vf_prevww, NULL, view_prevfiles_play_callback, view_prevfiles_select_callback);
 	  prev_name_row[0] = r;
 	  r->pos = 0;
 	  r->ss = ss;

@@ -299,6 +299,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+22-Jul:  removed protect-region.\n\
 18-Jul:  removed button-font and buttonFont resource, help-text-font and helpTextFont.\n\
 10-Jul:  record->raw file segfault bugfix (thanks to Russell Aspinwall).\n\
 1-July:  added optional 'nth' arg to find-sound.\n\

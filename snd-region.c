@@ -40,7 +40,6 @@ typedef struct {
   off_t frames;
   int srate;                /* for file save (i.e. region->file) */
   int header_type;          /* for file save */
-  int save;
   snd_info *rsp;
   char *name, *start, *end; /* for region browser */
   char *filename;           /* if region data is stored in a temp file */
@@ -87,7 +86,7 @@ static void free_region(region *r, int complete)
 	{
 	  if (r->filename)
 	    {
-	      snd_remove(r->filename, TRUE);
+	      snd_remove(r->filename, REMOVE_FROM_CACHE);
 	      FREE(r->filename);
 	    }
 	  r->filename = NULL;
@@ -438,12 +437,10 @@ region_state *region_report(void)
       }
   rs->len = len;
   if (len == 0) return(rs);
-  rs->save = (int *)CALLOC(len, sizeof(int));
   rs->name = (char **)CALLOC(len, sizeof(char *));
   for (i = 0; i < len; i++)
     {
       r = regions[i];
-      rs->save[i] = r->save;
       reg_buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
       mus_snprintf(reg_buf, LABEL_BUFFER_SIZE, "%d: %s (%s:%s)", r->id, r->name, r->start, r->end);
       rs->name[i] = reg_buf;
@@ -460,7 +457,6 @@ void free_region_state (region_state *r)
 	if (r->name[i]) 
 	  FREE(r->name[i]);
       if (r->name) FREE(r->name);
-      if (r->save) FREE(r->save);
       FREE(r);
     }
 }
@@ -478,22 +474,13 @@ int remove_region_from_stack(int pos) /* region browser */
   return(check_regions());
 }
 
-void protect_region(int pos, int protect) /* region browser */
-{
-  if ((pos >= 0) && 
-      (pos < regions_size) &&
-      (regions[pos]))
-    regions[pos]->save = protect;
-}
-
 static void stack_region(snd_state *ss, region *r) 
 {
   int i, okr = -1;
   /* leave protected regions alone -- search for highest unprotected region */
   for (i = max_regions(ss) - 1; i >= 0; i--) 
     {
-      if ((!(regions[i])) || 
-	  (!((regions[i])->save))) 
+      if (!(regions[i]))
 	{
 	  okr = i; 
 	  break;
@@ -936,7 +923,7 @@ void cleanup_region_temp_files(void)
 	  (r->use_temp_file == REGION_FILE) && 
 	  (r->filename))
 	{
-	  snd_remove(r->filename, TRUE);
+	  snd_remove(r->filename, REMOVE_FROM_CACHE);
 	  r->filename = NULL;
 	}
     }
@@ -1041,7 +1028,7 @@ void clear_region_backpointer(snd_info *sp)
       r = (region *)(sp->edited_region);
       if (r)
 	{
-	  snd_remove(r->editor_name, TRUE);
+	  snd_remove(r->editor_name, REMOVE_FROM_CACHE);
 	  FREE(r->editor_name);
 	  r->editor_name = NULL;
 	  r->editor_copy = NULL;
@@ -1252,21 +1239,6 @@ static XEN g_play_region (XEN n, XEN wait)
     return(snd_no_such_region_error(S_play_region, n));
   play_region(get_global_state(), rg, !wt);
   return(n);
-}
-
-static XEN g_protect_region (XEN n, XEN protect) 
-{
-  #define H_protect_region "(" S_protect_region " (reg 0) (val #t)): \
-if val is #t protect region n from being pushed off the end of the region list, else unprotect it"
-
-  int rg;
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_protect_region, "a region id");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(protect), protect, XEN_ARG_2, S_protect_region, "a boolean");
-  rg = XEN_REGION_TO_C_INT(n);
-  if (!(region_ok(rg)))
-    return(snd_no_such_region_error(S_protect_region, n));
-  set_region_protect(rg, XEN_TO_C_BOOLEAN_OR_TRUE(protect)); 
-  return(protect);
 }
 
 static XEN g_regions(void) 
@@ -1489,7 +1461,6 @@ XEN_ARGIFY_1(g_region_chans_w, g_region_chans)
 XEN_ARGIFY_1(g_region_maxamp_w, g_region_maxamp)
 XEN_ARGIFY_5(g_save_region_w, g_save_region)
 XEN_ARGIFY_1(g_forget_region_w, g_forget_region)
-XEN_NARGIFY_2(g_protect_region_w, g_protect_region)
 XEN_ARGIFY_2(g_play_region_w, g_play_region)
 XEN_ARGIFY_4(g_make_region_w, g_make_region)
 XEN_ARGIFY_4(g_mix_region_w, g_mix_region)
@@ -1508,7 +1479,6 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 #define g_region_maxamp_w g_region_maxamp
 #define g_save_region_w g_save_region
 #define g_forget_region_w g_forget_region
-#define g_protect_region_w g_protect_region
 #define g_play_region_w g_play_region
 #define g_make_region_w g_make_region
 #define g_mix_region_w g_mix_region
@@ -1530,7 +1500,6 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_region_maxamp,      g_region_maxamp_w, 0, 1, 0,      H_region_maxamp);
   XEN_DEFINE_PROCEDURE(S_save_region,        g_save_region_w, 2, 3, 0,        H_save_region);
   XEN_DEFINE_PROCEDURE(S_forget_region,      g_forget_region_w, 0, 1, 0,      H_forget_region);
-  XEN_DEFINE_PROCEDURE(S_protect_region,     g_protect_region_w, 2, 0, 0,     H_protect_region);
   XEN_DEFINE_PROCEDURE(S_play_region,        g_play_region_w, 0, 2, 0,        H_play_region);
   XEN_DEFINE_PROCEDURE(S_make_region,        g_make_region_w, 0, 4, 0,        H_make_region);
   XEN_DEFINE_PROCEDURE(S_mix_region,         g_mix_region_w, 0, 4, 0,         H_mix_region);

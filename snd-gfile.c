@@ -670,7 +670,7 @@ void set_file_sort_sensitive(int sensitive)
     set_sensitive(byproc, sensitive);
 }
 
-ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *second_str, char *main_str, int pad, int with_sort, int with_pane)
+ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *top_str, char *main_str, int pad, int with_sort, int with_pane)
 {
   GtkWidget *rlw, *sep1, *cww, *phbox;
   GtkWidget *smenu, *sbar, *sitem;
@@ -715,12 +715,8 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
   gtk_box_pack_start(GTK_BOX(formw), wwi->tophbox, FALSE, FALSE, 4);
   gtk_widget_show(wwi->tophbox);
 
-  wwi->svw = gtk_label_new(first_str); 
-  gtk_box_pack_start(GTK_BOX(wwi->tophbox), wwi->svw, FALSE, FALSE, (pad == PAD_TITLE_ON_LEFT) ? 5 : 2);
-  gtk_widget_show(wwi->svw);
-
-  wwi->plw = gtk_label_new(second_str);
-  gtk_box_pack_start(GTK_BOX(wwi->tophbox), wwi->plw, FALSE, FALSE, 2);
+  wwi->plw = gtk_label_new(top_str); 
+  gtk_box_pack_start(GTK_BOX(wwi->tophbox), wwi->plw, FALSE, FALSE, (pad == PAD_TITLE_ON_LEFT) ? 5 : 2);
   gtk_widget_show(wwi->plw);
 
   if (with_sort == WITH_SORT_BUTTON)
@@ -820,8 +816,7 @@ static gint label_leave_callback(GtkWidget *w, GdkEventCrossing *ev)
 }
 
 
-regrow *make_regrow(snd_state *ss, GtkWidget *ww,
-		    GtkSignalFunc first_callback, GtkSignalFunc second_callback, GtkSignalFunc third_callback)
+regrow *make_regrow(snd_state *ss, GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback)
 {
   regrow *r;
   r = (regrow *)CALLOC(1, sizeof(regrow));
@@ -833,23 +828,13 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   set_background(r->rw, (ss->sgx)->zoom_color);
   gtk_widget_show(r->rw);
 
-  r->sv = gtk_check_button_new();
-  set_backgrounds(r->rw, (ss->sgx)->highlight_color);
-  gtk_box_pack_start(GTK_BOX(r->rw), r->sv, FALSE, FALSE, 2);
-  g_signal_connect_closure_by_id(GTK_OBJECT(r->sv),
-				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(r->sv))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(first_callback), (gpointer)r, 0),
-				 0);
-  gtk_widget_show(r->sv);
-
   r->pl = gtk_check_button_new();
   set_backgrounds(r->pl, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->pl, FALSE, FALSE, 2);
   g_signal_connect_closure_by_id(GTK_OBJECT(r->pl),
 				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(r->pl))),
 				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(second_callback), (gpointer)r, 0),
+				 g_cclosure_new(GTK_SIGNAL_FUNC(play_callback), (gpointer)r, 0),
 				 0);
   gtk_widget_show(r->pl);
 
@@ -860,7 +845,7 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   g_signal_connect_closure_by_id(GTK_OBJECT(r->nm),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(r->nm))),
 				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(third_callback), (gpointer)r, 0),
+				 g_cclosure_new(GTK_SIGNAL_FUNC(name_callback), (gpointer)r, 0),
 				 0);
   g_signal_connect_closure_by_id(GTK_OBJECT(r->nm),
 				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(r->nm))),
@@ -946,13 +931,6 @@ static void view_files_update_callback(GtkWidget *w, gpointer context)
   if (file_dialog_is_active()) make_prevfiles_list((snd_state *)context);
 }
 
-static void view_curfiles_save_callback(GtkWidget *w, gpointer context) 
-{
-  regrow *r = (regrow *)context;
-  view_curfiles_save(r->ss, r->pos);
-  set_toggle_button(r->sv, FALSE, FALSE, (void *)r);
-}
-
 void set_file_browser_play_button(char *name, int state)
 {
   int i, list;
@@ -1010,13 +988,6 @@ static void view_curfiles_select_callback(GtkWidget *w, gpointer context)
   view_curfiles_select(r->ss, r->pos);
 }
 
-static void view_prevfiles_unlist_callback(GtkWidget *w, gpointer context) 
-{
-  regrow *r = (regrow *)context;
-  file_unprevlist(get_prevname(r->pos));
-  make_prevfiles_list(r->ss);
-}
-
 static void view_prevfiles_play_callback(GtkWidget *w, gpointer context) 
 {
   /* open and play -- close at end or when button off toggled */
@@ -1057,17 +1028,13 @@ void make_curfiles_list (snd_state *ss)
       r = cur_name_row[i];
       if (r == NULL)
 	{
-	  r = make_regrow(ss, vf_curww, 
-			  (void (*)())view_curfiles_save_callback, 
-			  (void (*)())view_curfiles_play_callback, 
-			  (void (*)())view_curfiles_select_callback);
+	  r = make_regrow(ss, vf_curww, (void (*)())view_curfiles_play_callback, (void (*)())view_curfiles_select_callback);
 	  cur_name_row[i] = r;
 	  r->pos = i;
 	  r->ss = ss;
 	  r->parent = CURRENT_FILE_VIEWER;
 	}
       set_button_label_bold(r->nm, view_curfiles_name(r->pos));
-      set_toggle_button(r->sv, FALSE, FALSE, (void *)r);
       set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
       gtk_widget_show(r->rw);
     }
@@ -1133,17 +1100,13 @@ void make_prevfiles_list (snd_state *ss)
 	{
 	  if (!((r = prev_name_row[i])))
 	    {
-	      r = make_regrow(ss, vf_prevww, 
-			      (void (*)())view_prevfiles_unlist_callback,
-			      (void (*)())view_prevfiles_play_callback, 
-			      (void (*)())view_prevfiles_select_callback);
+	      r = make_regrow(ss, vf_prevww, (void (*)())view_prevfiles_play_callback, (void (*)())view_prevfiles_select_callback);
 	      prev_name_row[i] = r;
 	      r->pos = i;
 	      r->ss = ss;
 	      r->parent = PREVIOUS_FILE_VIEWER;
 	    }
 	  set_button_label_bold(r->nm, get_prevname(r->pos));
-	  set_toggle_button(r->sv, FALSE, FALSE, (void *)r);
 	  set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
 	  gtk_widget_show(r->rw);
 	}
@@ -1157,7 +1120,7 @@ void make_prevfiles_list (snd_state *ss)
   if (!(GTK_WIDGET_VISIBLE(vf_prevlst))) gtk_widget_show(vf_prevlst);
 }
 
-/* play open unlist for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
+/* play open for prevfile, play select for curfile, preload process for prevfile (snd-clm) */
 
 static GtkWidget *fs1, *fs3;
 void view_files_callback(GtkWidget *w, gpointer context)
@@ -1241,15 +1204,15 @@ void view_files_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(prevform);
 
       /* current files section: save play current files | files */
-      wwl = make_title_row(ss, curform, _("save"), _("play"), _("current files"), PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
+      wwl = make_title_row(ss, curform, _("play"), _("current files"), PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       fs1 = wwl->tophbox;
       vf_curww = wwl->list; /* different from Motif */
       vf_curlst = wwl->list;
       FREE(wwl); 
       wwl = NULL;
 
-      /* previous files section: unlist play previous files | files */
-      wwl = make_title_row(ss, prevform, _("unlist"), _("play"), _("previous files"), PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
+      /* previous files section: play previous files | files */
+      wwl = make_title_row(ss, prevform, _("play"), _("previous files"), PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       fs3 = wwl->tophbox;
 
       g_signal_connect_closure_by_id(GTK_OBJECT(wwl->byname), 
