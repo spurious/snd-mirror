@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 39
-#define MUS_DATE "5-Jan-04"
+#define MUS_REVISION 40
+#define MUS_DATE "22-Jan-04"
 
 /* 
+ * 22-Jan:     various "environ" variables renamed for Windows' benefit.
  * 5-Jan-04:   env_interp bugfix.
  * --------
  * 29-Sep:     removed length arg from spectrum in clm2xen.
@@ -161,7 +162,7 @@ typedef struct mus_any_class {
   Float (*set_increment)(mus_any *ptr, Float val);
   Float (*run)(mus_any *gen, Float arg1, Float arg2);
   mus_clm_extended_t extended_type;
-  void* (*environ)(mus_any *gen);
+  void* (*closure)(mus_any *gen);
   int (*channels)(mus_any *ptr);
   Float (*offset)(mus_any *ptr);
   Float (*set_offset)(mus_any *ptr, Float val);
@@ -513,7 +514,7 @@ Float mus_locsig_reverb_set(mus_any *ptr, int chan, Float val);
 void mus_move_locsig(mus_any *ptr, Float degree, Float distance);
 void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_locsig_interp_t type);
 
-mus_any *mus_make_src(Float(*input)(void *arg, int direction), Float srate, int width, void *environ);
+mus_any *mus_make_src(Float(*input)(void *arg, int direction), Float srate, int width, void *closure);
 Float mus_src(mus_any *srptr, Float sr_change, Float(*input)(void *arg, int direction));
 bool mus_src_p(mus_any *ptr);
 Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction));
@@ -521,7 +522,7 @@ Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction));
 
 bool mus_convolve_p(mus_any *ptr);
 Float mus_convolve(mus_any *ptr, Float(*input)(void *arg, int direction));
-mus_any *mus_make_convolve(Float(*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *environ);
+mus_any *mus_make_convolve(Float(*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *closure);
 Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type);
 void mus_fft(Float *rl, Float *im, int n, int is);
 #if HAVE_FFTW || HAVE_FFTW3
@@ -536,7 +537,7 @@ bool mus_granulate_p(mus_any *ptr);
 Float mus_granulate(mus_any *ptr, Float(*input)(void *arg, int direction));
 mus_any *mus_make_granulate(Float(*input)(void *arg, int direction), 
 				       Float expansion, Float length, Float scaler, 
-				       Float hop, Float ramp, Float jitter, int max_size, void *environ);
+				       Float hop, Float ramp, Float jitter, int max_size, void *closure);
 off_t mus_ramp(mus_any *ptr);
 off_t mus_set_ramp(mus_any *ptr, off_t val);
 off_t mus_hop(mus_any *ptr);
@@ -560,7 +561,7 @@ mus_any *mus_make_phase_vocoder(Float(*input)(void *arg, int direction),
 				       bool(*analyze)(void *arg, Float(*input)(void *arg1, int direction)),
 				       bool(*edit)(void *arg), 
 				       Float(*synthesize)(void *arg), 
-				       void *environ);
+				       void *closure);
 Float mus_phase_vocoder(mus_any *ptr, Float(*input)(void *arg, int direction));
 
 Float *mus_phase_vocoder_amp_increments(mus_any *ptr);

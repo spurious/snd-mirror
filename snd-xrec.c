@@ -1703,7 +1703,7 @@ static Widget make_recorder_slider(PANE *p, AMP *a, Widget last_slider, bool inp
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNfillOnArm, false); n++;
-  a->number = make_pushbutton_widget ("amp-number", p->pane, args, n);
+  a->number = make_pushbutton_widget ("recorder-amp-number", p->pane, args, n);
   /* this could be the snd-xsnd control panel case as well */
   XtAddCallback(a->number, XmNactivateCallback, record_amp_click_callback, a);
   XmStringFree(s1);
@@ -1726,7 +1726,7 @@ static Widget make_recorder_slider(PANE *p, AMP *a, Widget last_slider, bool inp
   XtSetArg(args[n], XmNvalue, amp_to_slider(global_amp(a))); n++;
   XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(record_amp_drag_callback, (XtPointer)a)); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(record_amp_valuechanged_callback, (XtPointer)a)); n++;
-  a->slider = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, p->pane, args, n);
+  a->slider = XtCreateManagedWidget("recorder-amp", xmScrollBarWidgetClass, p->pane, args, n);
 
   {
     if (!new_actions_table)

@@ -408,7 +408,7 @@ void syncb(snd_info *sp, int on);
 void set_snd_amp(snd_info *sp, Float val);
 void set_snd_expand(snd_info *sp, Float val);
 void set_snd_contrast(snd_info *sp, Float val);
-void set_snd_srate(snd_info *sp, Float val);
+void set_snd_speed(snd_info *sp, Float val);
 void set_snd_revlen(snd_info *sp, Float val);
 void set_snd_revscl(snd_info *sp, Float val);
 void set_snd_filter_order(snd_info *sp, int order);
@@ -419,6 +419,7 @@ void toggle_reverb_button(snd_info *sp, bool state);
 void toggle_filter_button(snd_info *sp, bool state);
 void toggle_direction_arrow(snd_info *sp, bool state);
 void set_filter_in_dB(snd_info *sp, bool val);
+void set_filter_in_hz(snd_info *sp, bool val);
 void filter_env_changed(snd_info *sp, env *e);
 void color_filter_waveform(GdkColor *color);
 void lock_apply(snd_info *sp);
@@ -487,7 +488,6 @@ bool enved_dialog_is_active(void);
 void enved_reflect_selection(bool on);
 void set_enved_filter_order(int order);
 void color_enved_waveform(GdkColor *pix);
-void enved_fft_update(void);
 void g_init_gxenv(void);
 
 

@@ -378,6 +378,9 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+26-Jan:  changed filter-control-env to filter-control-envelope, \n\
+           filter-waveform-color to filter-control-waveform-color,\n\
+           also filter-env-in-hz to filter-control-in-hz as a sound-local variable\n\
 13-Jan:  Motif version of draw-string now adds in the font height to y0 (to mimic Gtk version).\n\
 12-Jan:  removed enved-selected-env, changed enved-active-env to enved-envelope.\n\
 9-Jan:   snd 7.1\n\

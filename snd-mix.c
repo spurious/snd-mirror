@@ -2117,7 +2117,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
   ms->lastpj = j;
 }
 
-static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, off_t newend, chan_info *cp, Float srate, axis_info *ap, bool draw)
+static int prepare_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, off_t newend, double srate, axis_info *ap)
 {
   /* need min and max readers */
   mix_fd *min_fd, *max_fd;
@@ -2149,14 +2149,14 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
     }
   else 
     {
-      xstart = (double)(newbeg) / (double)srate;
+      xstart = (double)(newbeg) / srate;
       ymin = 100.0;
       ymax = -100.0;
     }
   if (hi < newend)
     xend = ap->x1;
-  else xend = (double)(newend) / (double)srate;
-  xstep = (double)(max_fd->samps_per_bin) / (double)srate;
+  else xend = (double)(newend) / srate;
+  xstep = (double)(max_fd->samps_per_bin) / srate;
   lastx = local_grf_x(xstart, ap);
   for (j = 0; xstart < xend; xstart += xstep)
     {
@@ -2179,12 +2179,6 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
 	  if (low < ymin) ymin = low;
 	}
     }
-  if (draw)
-    draw_both_grf_points(cp->dot_size,
-			 set_mix_waveform_context(cp, md),
-			 j,
-			 cp->time_graph_style);
-  else draw_both_grf_points(cp->dot_size, erase_context(cp), j, cp->time_graph_style);
   free_mix_fd(min_fd);
   free_mix_fd(max_fd);
   return(j);
@@ -2201,13 +2195,9 @@ static void draw_mix_tag(mix_info *md)
   width = mix_tag_width(ss);
   height = mix_tag_height(ss);
   ax = mark_context(cp);
-  if (md->tagx > 0)  /* erase old */
-    fill_rectangle(ax,
-		   md->tagx - width, md->tagy - height / 2,
-		   width, height);
-  fill_rectangle(ax, /* draw new */
-		 md->x - width, md->y - height / 2,
-		 width, height);
+  if (md->tagx > 0)
+    fill_rectangle(ax, md->tagx - width, md->tagy - height / 2, width, height); /* erase old */
+  fill_rectangle(ax, md->x - width, md->y - height / 2, width, height);         /* draw new */
   set_tiny_numbers_font(cp);
   if (cp->printing) ps_set_tiny_numbers_font();
   mus_snprintf(lab, 16, "%d", md->id);
@@ -2219,66 +2209,42 @@ static void draw_mix_tag(mix_info *md)
   md->tagy = md->y;
 }
 
-static Cessator watch_mix_proc = 0;    /* work proc if mouse outside graph causing axes to move */
-
-static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool draw)
+static int prepare_mix_waveform(mix_info *md, mix_state *cs, axis_info *ap, Float scl, int yoff, double cur_srate, bool peak_env_ok, bool *two_sided)
 {
   off_t i, newbeg, newend, endi;
-  Float scl;
   int j = 0;
   off_t samps;
   Locus xi;
   bool widely_spaced;
-  axis_info *ap;
-  snd_info *sp;
-  int yoff;
   Float samples_per_pixel, xf;
   double x, incr, initial_x;
   Float ina, ymin, ymax;
   off_t lo, hi;
   mix_fd *add = NULL;
   int x_start, x_end;
-  double start_time, cur_srate;
+  double start_time;
   newbeg = cs->beg;
   newend = newbeg + cs->len;
-  sp = cp->sound;
-  ap = cp->axis;
   lo = ap->losamp;
   hi = ap->hisamp;
   if ((newend <= lo) || (newbeg >= hi)) return(0);
-  scl = md->height;
   if ((ap->y_axis_y0 - ap->y_axis_y1) < scl) return(0);
-  if (sp) 
-    cur_srate = (double)SND_SRATE(sp);
-  else cur_srate = (double)SND_SRATE((md->cp)->sound);
   start_time = (double)(ap->losamp) / cur_srate;
   x_start = ap->x_axis_x0;
   x_end = ap->x_axis_x1;
   if (newend > hi) newend = hi;
   samps = ap->hisamp - ap->losamp + 1;
   samples_per_pixel = (Float)((double)(samps - 1) / (Float)(x_end - x_start));
-  yoff = md->y;
 
-  if ((draw) && (!(watch_mix_proc)))
-    {
-      int xx;
-      xx = local_grf_x((double)(newbeg + md->active_mix_state->tag_position) / cur_srate, ap);
-      md->x = xx;
-      draw_mix_tag(md);
-    }
-
-  if ((ss->just_time) && (event_pending())) return(0);
-
-  if (sp) set_mix_waveform_context(cp, md);
   if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
     {
-      add = init_mix_read(md, CURRENT_MIX, 0);
-      if (!add) return(0);
-      if (lo > newbeg) 
+      if (newbeg < lo) /* TODO: if axis dragged backwards by mix tag, tag does not follow changing axis correctly */
 	{
-	  for (i = newbeg; i < lo; i++) next_mix_sample(add);
+	  add = init_mix_read(md, CURRENT_MIX, lo - newbeg);
 	  newbeg = lo;
 	}
+      else add = init_mix_read(md, CURRENT_MIX, 0);
+      if (!add) return(0);
       if (samples_per_pixel < 1.0)
 	{
 	  incr = 1.0 / samples_per_pixel;
@@ -2299,34 +2265,23 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool
 	    set_grf_point((Locus)x, j, (Locus)(yoff - scl * ina));
 	  else set_grf_point(local_grf_x(x, ap), j, (Locus)(yoff - scl * ina));
 	}
-      if (sp)
-	{
-	  if (draw)
-	    draw_grf_points(cp->dot_size,
-			    set_mix_waveform_context(cp, md),
-			    j, ap, 
-			    ungrf_y(ap, yoff), 
-			    cp->time_graph_style);
-	  else draw_grf_points(cp->dot_size, 
-			       erase_context(cp), 
-			       j, ap, 
-			       ungrf_y(ap, yoff), 
-			       cp->time_graph_style);
-	}
+      (*two_sided) = false;
     }
   else
     {
-      if ((cp->sound) && (mix_input_amp_env_usable(md, samples_per_pixel)))
-	j = display_mix_amp_env(md, scl, yoff, newbeg, newend, cp, (Float)cur_srate, ap, draw);
+      (*two_sided) = true;
+      if ((peak_env_ok) && (mix_input_amp_env_usable(md, samples_per_pixel)))
+	j = prepare_mix_amp_env(md, scl, yoff, newbeg, newend, (double)cur_srate, ap);
       else
 	{
-	  add = init_mix_read(md, CURRENT_MIX, 0);
-	  if (!add) return(0);
-	  if (lo > newbeg) 
+	  if (newbeg < lo)
 	    {
-	      for (i = newbeg; i < lo; i++) next_mix_sample(add);
+	      add = init_mix_read(md, CURRENT_MIX, lo - newbeg);
 	      newbeg = lo;
 	    }
+	  else add = init_mix_read(md, CURRENT_MIX, 0);
+	  if (!add) return(0);
+
 	  j = 0;      /* graph point counter */
 	  x = ap->x0;
 	  xi = local_grf_x(x, ap);
@@ -2362,17 +2317,91 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool
 		  xf -= samples_per_pixel;
 		}
 	    }
-	  if (sp)
-	    {
-	      if (draw)
-		draw_both_grf_points(cp->dot_size, set_mix_waveform_context(cp, md), j, cp->time_graph_style);
-	      else draw_both_grf_points(cp->dot_size, erase_context(cp), j, cp->time_graph_style);
-	    }
 	}
     }
-  if (sp) copy_context(cp);
   if (add) free_mix_fd(add);
   return(j);
+}
+
+int prepare_mix_id_waveform(int mix_id, axis_info *ap, bool *two_sided)
+{
+  mix_info *md;
+  mix_state *cs;
+  Float scl, x0, x1, y0, y1;
+  off_t old_lo, old_hi;
+  double cur_srate;
+  int pts;
+  md = md_from_id(mix_id);
+  scl = ap->y_axis_y0 - ap->y_axis_y1;
+  old_lo = ap->losamp;
+  old_hi = ap->hisamp;
+  x0 = ap->x0;
+  x1 = ap->x1;
+  y0 = ap->y0;
+  y1 = ap->y1;
+  cur_srate = (double)SND_SRATE(md->cp->sound);
+  cs = md->active_mix_state;
+  ap->losamp = cs->beg;
+  ap->hisamp = cs->beg + cs->len;
+  ap->x0 = (double)(ap->losamp) / cur_srate;
+  ap->x1 = (double)(ap->hisamp) / cur_srate;
+  ap->y0 = -1.0;
+  ap->y1 = 1.0;
+  init_axis_scales(ap);
+  pts = prepare_mix_waveform(md, cs, ap, scl * .5, scl * .5, cur_srate, true, two_sided);
+  ap->x0 = x0;
+  ap->x1 = x1;
+  ap->y0 = y0;
+  ap->y1 = y1;
+  ap->losamp = old_lo;
+  ap->hisamp = old_hi;
+  init_axis_scales(ap);
+  return(pts);
+}
+
+static Cessator watch_mix_proc = 0;    /* work proc if mouse outside graph causing axes to move */
+
+static void display_mix_waveform(chan_info *cp, mix_info *md, bool draw)
+{
+  int j = 0;
+  mix_state *cs;
+  axis_info *ap;
+  snd_info *sp;
+  double cur_srate;
+  bool two_sided = false;
+  sp = cp->sound;
+  ap = cp->axis;
+  cs = md->active_mix_state;
+  if (sp)
+    cur_srate = (double)SND_SRATE(sp);
+  else cur_srate = (double)SND_SRATE((md->cp)->sound);
+  if ((ss->just_time) && (event_pending())) return;
+  j = prepare_mix_waveform(md, cs, ap, md->height, md->y, cur_srate, (bool)sp, &two_sided);
+  if (j == 0) return;
+  if ((draw) && (!(watch_mix_proc)))
+    {
+      int xx;
+      xx = local_grf_x((double)(cs->beg + cs->tag_position) / cur_srate, ap);
+      md->x = xx;
+      draw_mix_tag(md);
+    }
+  if (sp) 
+    {
+      set_mix_waveform_context(cp, md);
+      if (two_sided)
+	{
+	  if (draw)
+	    draw_both_grf_points(cp->dot_size, set_mix_waveform_context(cp, md), j, cp->time_graph_style);
+	  else draw_both_grf_points(cp->dot_size, erase_context(cp), j, cp->time_graph_style);
+	}
+      else
+	{
+	  if (draw)
+	    draw_grf_points(cp->dot_size, set_mix_waveform_context(cp, md), j, ap, ungrf_y(ap, md->y), cp->time_graph_style);
+	  else draw_grf_points(cp->dot_size, erase_context(cp), j, ap, ungrf_y(ap, md->y), cp->time_graph_style);
+	}
+      copy_context(cp);
+    }
 }
 
 
@@ -3065,13 +3094,13 @@ int previous_mix_id(int id)
 static void draw_mix_waveform(mix_info *md) 
 {
   if (md->cp->show_mix_waveforms)
-    display_mix_waveform(md->cp, md, md->active_mix_state, true);
+    display_mix_waveform(md->cp, md, true);
 }
 
 static void erase_mix_waveform(mix_info *md) 
 {
   if (md->cp->show_mix_waveforms)
-    display_mix_waveform(md->cp, md, md->active_mix_state, false);
+    display_mix_waveform(md->cp, md, false);
 }
 
 
@@ -3331,7 +3360,7 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
       if (val != 0.0)
 	{
 	  cs = md->active_mix_state;
-	  new_speed = srate_changed(val, srcbuf, speed_control_style(ss), speed_control_tones(ss)); 
+	  new_speed = speed_changed(val, srcbuf, speed_control_style(ss), speed_control_tones(ss), 16); 
 	  trk_speed = gather_track_speed(cs->track);
 	  new_final_speed = new_speed * trk_speed;
 	  if ((!from_gui) &&
@@ -7968,6 +7997,4 @@ void g_init_track(void)
    SOMEDAY: timing grid
    TODO: axis movement stops if track drag motion stops when outside axis?
    TODO: initial dpy leaves start|end points unerased?
-
-   TODO: vct-map! and backtrace troubles in new guile
 */

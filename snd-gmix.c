@@ -19,10 +19,11 @@ static bool speed_pressed = false, speed_dragged = false;
 static Float set_mix_speed_label(snd_info *sp, Float uval)
 {
   Float val;
-  val = srate_changed(uval,
+  val = speed_changed(uval,
 		      speed_number_buffer,
 		      sp->speed_control_style,
-		      sp->speed_control_tones);
+		      sp->speed_control_tones,
+		      5);
   gtk_label_set_text(GTK_LABEL(w_speed_number), speed_number_buffer);
   return(val);
 }
@@ -184,6 +185,25 @@ static axis_context *ax = NULL;
 static GdkGC *cur_gc;
 static env_editor *spfs[8];
 static int last_clicked_env_chan;
+static bool with_mix_background_wave = false;
+
+static void show_mix_background_wave(int mix_id, int chan)
+{
+  env_editor *e;
+  int pts;
+  bool two_sided = false;
+  e = spfs[chan];
+  if (e == NULL) return;
+  pts = prepare_mix_id_waveform(mix_id, e->axis, &two_sided);
+  if (pts > 0)
+    {
+      gdk_gc_set_foreground(ax->gc, (ss->sgx)->enved_waveform_color);
+      if (two_sided)
+	draw_both_grf_points(1, ax, pts, GRAPH_LINES);
+      else draw_grf_points(1, ax, pts, e->axis, ungrf_y(e->axis, 0.0), GRAPH_LINES);
+      gdk_gc_set_foreground(ax->gc, (ss->sgx)->black);
+    }
+}
 
 static void mix_amp_env_resize(GtkWidget *w)
 {
@@ -209,7 +229,6 @@ static void mix_amp_env_resize(GtkWidget *w)
   e = mix_dialog_envs(mix_dialog_id);
   for (chan = 0; chan < chans; chan++)
     {
-      spfs[chan]->in_dB = false;
       spfs[chan]->with_dots = true;
       env_editor_display_env(spfs[chan], e[chan], ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
 			     widget_width(w) / chans, widget_height(w), false);
@@ -222,6 +241,8 @@ static void mix_amp_env_resize(GtkWidget *w)
 				 widget_width(w) / chans, widget_height(w), false);
 	  gdk_gc_set_foreground(ax->gc, (ss->sgx)->black);
 	}
+      if (with_mix_background_wave)
+	show_mix_background_wave(mix_dialog_id, chan);
     }
 }
 
@@ -389,7 +410,7 @@ static gboolean track_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer
 }
 
 
-/* -------- play -------- */
+/* -------- mix play -------- */
 static bool mix_playing = false;
 bool mix_play_stopped(void) {return(!mix_playing);}
 
@@ -459,6 +480,30 @@ static void mix_pan_callback(GtkWidget *w, gpointer context)
   mix_dialog_set_mix_inverted(mix_dialog_id, inverted);
 }
 
+static void mix_dB_callback(GtkWidget *w, gpointer context) 
+{
+  int i;
+  for (i = 0; i < CHANS_ALLOCATED; i++)
+    if (spfs[i])
+      spfs[i]->in_dB = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+  mix_amp_env_resize(w_env);
+}
+
+static void mix_clip_callback(GtkWidget *w, gpointer context) 
+{
+  int i;
+  for (i = 0; i < CHANS_ALLOCATED; i++)
+    if (spfs[i])
+      spfs[i]->clip_p = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+  mix_amp_env_resize(w_env);
+}
+
+static void mix_wave_callback(GtkWidget *w, gpointer context) 
+{
+  with_mix_background_wave = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+  mix_amp_env_resize(w_env);
+}
+
 static void apply_mix_dialog(GtkWidget *w, gpointer context)
 {
   /* set all mix amp envs, last one should remix */
@@ -520,6 +565,7 @@ static void mix_dialog_help_callback(GtkWidget *w, gpointer context)
 GtkWidget *make_mix_dialog(void)
 {
   GtkWidget *dismiss_button, *help_button, *rc, *mix_frame, *track_frame, *rc_top, *rc1;
+  GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row;
   char amplab[LABEL_BUFFER_SIZE];
   int i;
   if (mix_dialog == NULL)
@@ -790,6 +836,10 @@ GtkWidget *make_mix_dialog(void)
       w_amp_forms = (GtkWidget **)CALLOC(CHANS_ALLOCATED, sizeof(GtkWidget *));
       w_amp_adjs = (GtkObject **)CALLOC(CHANS_ALLOCATED, sizeof(GtkObject *));
 
+      for (i = 0; i < CHANS_ALLOCATED; i++) spfs[i] = new_env_editor();
+      speed_number_buffer[1] = local_decimal_point();
+      amp_number_buffer[1] = local_decimal_point();
+
       for (i = 0; i < CHANS_ALLOCATED; i++)
 	{
 	  w_amp_forms[i] = gtk_hbox_new(false, 2);
@@ -840,10 +890,51 @@ GtkWidget *make_mix_dialog(void)
 	  gtk_widget_show(w_amp_forms[i]);
 	}
 
-      /* GRAPH */
+      lo_hbox = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->vbox), lo_hbox, true, true, 5);
+      gtk_widget_show(lo_hbox);
+
+      /* GRAPH (frame) */
       w_env_frame = gtk_frame_new(NULL);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->vbox), w_env_frame, true, true, 10);
-      
+      gtk_box_pack_start(GTK_BOX(lo_hbox), w_env_frame, true, true, 10);
+
+      /* GRAPH (buttons) */
+      w_dB_frame = gtk_frame_new(NULL);
+      gtk_box_pack_end(GTK_BOX(lo_hbox), w_dB_frame, false, false, 2);
+      gtk_widget_show(w_dB_frame);
+
+      w_dB_row = gtk_vbox_new(false, 0);
+      gtk_container_add(GTK_CONTAINER(w_dB_frame), w_dB_row);
+      gtk_widget_show(w_dB_row);	
+
+      w_clip = gtk_check_button_new_with_label(_("clip"));
+      g_signal_connect_closure_by_id(GTK_OBJECT(w_clip),
+				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_clip))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_clip_callback), NULL, 0),
+				     0);
+      gtk_box_pack_start(GTK_BOX(w_dB_row), w_clip, false, false, 0);
+      gtk_widget_show(w_clip);
+
+      w_wave = gtk_check_button_new_with_label(_("wave"));
+      g_signal_connect_closure_by_id(GTK_OBJECT(w_wave),
+				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_wave))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_wave_callback), NULL, 0),
+				     0);
+      gtk_box_pack_start(GTK_BOX(w_dB_row), w_wave, false, false, 0);
+      gtk_widget_show(w_wave);
+
+      w_dB = gtk_check_button_new_with_label(_("dB"));
+      g_signal_connect_closure_by_id(GTK_OBJECT(w_dB),
+				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_dB))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_dB_callback), NULL, 0),
+				     0);
+      gtk_box_pack_start(GTK_BOX(w_dB_row), w_dB, false, false, 0);
+      gtk_widget_show(w_dB);
+
+      /* GRAPH (drawing area) */
       w_env = gtk_drawing_area_new();
       gtk_widget_set_events(w_env, GDK_ALL_EVENTS_MASK);
       gtk_container_add(GTK_CONTAINER(w_env_frame), w_env);
@@ -878,10 +969,7 @@ GtkWidget *make_mix_dialog(void)
 
       gtk_widget_show(mix_dialog);
       set_dialog_widget(MIX_DIALOG, mix_dialog);
-
-      for (i = 0; i < CHANS_ALLOCATED; i++) spfs[i] = new_env_editor();
-      speed_number_buffer[1] = local_decimal_point();
-      amp_number_buffer[1] = local_decimal_point();
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_clip), true);
     }
   else 
     {
@@ -998,10 +1086,11 @@ static Float reflect_track_speed(Float uval)
   chan_info *cp;
   if (!(track_p(track_dialog_id))) return(1.0);
   cp = track_channel(track_dialog_id, 0);
-  val = srate_changed(uval,
+  val = speed_changed(uval,
 		      track_speed_number_buffer,
 		      (cp) ? cp->sound->speed_control_style : speed_control_style(ss),
-		      (cp) ? cp->sound->speed_control_tones : speed_control_tones(ss));
+		      (cp) ? cp->sound->speed_control_tones : speed_control_tones(ss),
+		      5);
   gtk_label_set_text(GTK_LABEL(w_track_speed_number), track_speed_number_buffer);
   if (val > 0.0)
     GTK_ADJUSTMENT(w_track_speed_adj)->value = .45 + .15 * log(val);
@@ -1228,7 +1317,6 @@ static void track_amp_env_resize(GtkWidget *w)
     }
   else clear_window(track_ax);
   e = track_dialog_env(track_dialog_id);
-  track_spf->in_dB = false;
   track_spf->with_dots = true;
   env_editor_display_env(track_spf, e, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), false);
   cur_env = track_dialog_track_amp_env(track_dialog_id);
@@ -1246,7 +1334,6 @@ static gboolean track_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpoi
   env *e;
   if (!(track_p(track_dialog_id))) return(false);
   e = track_dialog_env(track_dialog_id);
-  track_spf->in_dB = false;
   if (env_editor_button_press(track_spf, (int)(ev->x), (int)(ev->y), ev->time, e))
     track_amp_env_resize(w);
   return(false);
@@ -1278,7 +1365,6 @@ static gboolean track_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpo
 	  y = (int)(ev->y);
 	}
       e = track_dialog_env(track_dialog_id);
-      track_spf->in_dB = false;
       env_editor_button_motion(track_spf, x, y, ev->time, e);
       track_amp_env_resize(w);
     }

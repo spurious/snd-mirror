@@ -245,7 +245,6 @@ void set_enved_revert_sensitive(bool val) {}
 void set_enved_undo_sensitive(bool val) {}
 void set_enved_save_sensitive(bool val) {}
 void set_enved_show_sensitive(bool val) {}
-void enved_fft_update(void) {}
 void make_scrolled_env_list (void) {}
 void new_active_channel_alert(void) {}
 void env_redisplay(void) {}
@@ -307,11 +306,12 @@ void set_transform_graph_type(graph_type_t val) {in_set_transform_graph_type(val
 void set_snd_amp(snd_info *sp, Float val) {sp->amp_control = val;}
 void set_snd_expand(snd_info *sp, Float val) {if (val > MINIMUM_EXPAND_CONTROL) sp->expand_control = val; else sp->expand_control = MINIMUM_EXPAND_CONTROL;}
 void set_snd_contrast(snd_info *sp, Float val) {sp->contrast_control = val;}
-void set_snd_srate(snd_info *sp, Float val) {sp->speed_control = val;}
+void set_snd_speed(snd_info *sp, Float val) {sp->speed_control = val;}
 void set_snd_revlen(snd_info *sp, Float val) {sp->reverb_control_length = val;}
 void set_snd_revscl(snd_info *sp, Float val) {sp->reverb_control_scale = val;}
 void set_snd_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
 void set_filter_in_dB(snd_info *sp, bool val) {sp->filter_control_in_dB = val;}
+void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
 
 void reflect_recorder_mixer_gain(int ind, Float val) {}
 void reflect_recorder_out_amp(int ind, Float val) {}
@@ -446,7 +446,7 @@ void snd_doit(int argc, char **argv)
                (define " S_listener_text_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_enved_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_enved_filter " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_filter_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_filter_control_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_highlight_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_selected_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\

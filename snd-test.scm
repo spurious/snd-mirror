@@ -31,7 +31,6 @@
 ;;; test 28: errors
 
 ;;; TODO: recorder-file-hook, enved-style tests
-
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
@@ -58,7 +57,7 @@
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
-(set! (show-backtrace) #f)
+(set! (show-backtrace) #t)
 
 (define debugging-device-channels 8)
 
@@ -118,7 +117,7 @@
 (defmacro time (a) 
   `(let ((start (get-internal-real-time))) 
      ,a 
-     (let ((val (/ (- (get-internal-real-time) start) 100)))
+     (let ((val (exact->inexact (/ (- (get-internal-real-time) start) 100))))
        (set! times (cons (list ',a val) times)))))
 
 ;(show-ptree #t)
@@ -626,9 +625,6 @@
       (set! (fft-window) (fft-window))
       (if (not (equal? (fft-window)  6 )) 
 	  (snd-display ";fft-window set def: ~A" (fft-window)))
-      (set! (filter-env-in-hz) (filter-env-in-hz))
-      (if (not (equal? (filter-env-in-hz)  #f)) 
-	  (snd-display ";filter-env-in-hz set def: ~A" (filter-env-in-hz)))
       (set! (graph-cursor) (graph-cursor))
       (if (not (equal? (graph-cursor)  34)) 
 	  (snd-display ";graph-cursor set def: ~A" (graph-cursor)))
@@ -917,8 +913,8 @@
 	'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
 	'filter-control-in-dB (without-errors (filter-control-in-dB)) 'no-such-sound
 	'filter-control-coeffs (without-errors (filter-control-coeffs)) 'no-such-sound
-	'filter-control-env (without-errors (filter-control-env)) 'no-such-sound
-	'filter-env-in-hz (filter-env-in-hz) #f
+	'filter-control-envelope (without-errors (filter-control-envelope)) 'no-such-sound
+	'filter-control-in-hz (without-errors (filter-control-in-hz)) 'no-such-sound
 	'filter-control-order (without-errors (filter-control-order)) 'no-such-sound
 	'filter-control? (without-errors (filter-control?)) 'no-such-sound
 	'graph-cursor (graph-cursor) 34
@@ -1462,10 +1458,10 @@
 	  (list 'fft-window fft-window 6 5)
 	  (list 'transform-graph? transform-graph? #f #t)
 	  (list 'filter-control-in-dB filter-control-in-dB #f #t)
-	  (list 'filter-control-env filter-control-env (list 0.0 1.0 1.0 1.0) (list 0.0 1.0 1.0 0.0))
+	  (list 'filter-control-envelope filter-control-envelope (list 0.0 1.0 1.0 1.0) (list 0.0 1.0 1.0 0.0))
 	  (list 'enved-filter enved-filter #t #f)
 	  (list 'enved-filter-order enved-filter-order 40 20)
-	  (list 'filter-env-in-hz filter-env-in-hz #f #t)
+	  (list 'filter-control-in-hz filter-control-in-hz #f #t)
 	  (list 'filter-control-order filter-control-order 20 40)
 	  (list 'filter-control? filter-control? #f #t)
 	  (list 'graph-cursor graph-cursor 34 33)
@@ -2041,7 +2037,7 @@
 					       (localtime (current-time))))))
 	    (set! (comment ob) str)
 	    (save-sound-as "test.snd" ob mus-aifc mus-bdouble)
-	    (set! (filter-env-in-hz) #t)
+	    (set! (filter-control-in-hz) #t)
 	    (let ((ab (open-sound "test.snd")))
 	      (if (and (provided? 'xm) (provided? 'snd-debug))
 		  (XtCallCallbacks (cadr (sound-widgets ab)) XmNactivateCallback (snd-sound-pointer ab)))
@@ -2062,7 +2058,7 @@
 	      (close-sound ab))
 	    (if (not (equal? old-comment (mus-sound-comment "oboe.snd")))
 		(snd-display ";set-comment overwrote current ~A ~A" old-comment (mus-sound-comment "oboe.snd")))
-	    (set! (filter-env-in-hz) #f)
+	    (set! (filter-control-in-hz) #f)
 	    (save-sound-as "test.snd" ob mus-raw)
 	    (let ((ab (open-raw-sound "test.snd" 1 22050 mus-bshort)))
 	      (if (and (provided? 'xm) (provided? 'snd-debug)) 
@@ -7076,7 +7072,7 @@ EDITS: 5
 		    (undo 1 obind)
 		    (set! (filter-control? obind) #t)
 		    (set! (filter-control-order obind) 40)
-		    (set! (filter-control-env obind) '(0 0 1 .5 1 0))
+		    (set! (filter-control-envelope obind) '(0 0 1 .5 1 0))
 		    (apply-controls obind)
 		    (let ((fltamp (maxamp obind))
 			  (fltdur (frames obind)))
@@ -7383,18 +7379,18 @@ EDITS: 5
 		    (fneq (list-ref mx 2) .2)
 		    (fneq (list-ref mx 3) .2))
 		(snd-display ";scale to with vector: ~A" mx)))
-	  (set! (filter-control-env ind) '(0 0 1 1))
-	  (if (not (feql '(0.0 0.0 1.0 1.0) (filter-control-env ind))) 
-	      (snd-display ";set filter-control-env: ~A?" (filter-control-env ind)))
+	  (set! (filter-control-envelope ind) '(0 0 1 1))
+	  (if (not (feql '(0.0 0.0 1.0 1.0) (filter-control-envelope ind))) 
+	      (snd-display ";set filter-control-envelope: ~A?" (filter-control-envelope ind)))
 	  (set! (filter-control-order ind) 20)
 	  (if (not (vequal (filter-control-coeffs ind)
 			   (vct -0.007 0.010 -0.025 0.029 -0.050 0.055 -0.096 0.109 -0.268 0.241 
 				0.241 -0.268 0.109 -0.096 0.055 -0.050 0.029 -0.025 0.010 -0.007)))
 	      (snd-display ";highpass coeffs: ~A" (filter-control-coeffs ind)))
-	  (set! (filter-control-env ind) (filter-control-env ind))
-	  (if (not (feql '(0.0 0.0 1.0 1.0) (filter-control-env ind))) 
-	      (snd-display ";set filter-control-env to self: ~A?" (filter-control-env ind)))
-	  (set! (filter-control-env ind) '(0 1 1 0))
+	  (set! (filter-control-envelope ind) (filter-control-envelope ind))
+	  (if (not (feql '(0.0 0.0 1.0 1.0) (filter-control-envelope ind))) 
+	      (snd-display ";set filter-control-envelope to self: ~A?" (filter-control-envelope ind)))
+	  (set! (filter-control-envelope ind) '(0 1 1 0))
 	  (if (not (vequal (filter-control-coeffs ind)
 			   (vct 0.003 0.002 0.004 0.002 0.007 0.003 0.014 0.012 0.059 0.394 
 				0.394 0.059 0.012 0.014 0.003 0.007 0.002 0.004 0.002 0.003)))
@@ -10341,7 +10337,7 @@ EDITS: 5
 		 (list 'cursor-color cursor-color red)
 		 (list 'data-color data-color black)
 		 (list 'enved-waveform-color enved-waveform-color blue)
-		 (list 'filter-waveform-color filter-waveform-color blue)
+		 (list 'filter-control-waveform-color filter-control-waveform-color blue)
 		 (list 'graph-color graph-color white)
 		 (list 'highlight-color highlight-color ivory1)
 		 (list 'listener-color listener-color alice-blue)
@@ -14177,7 +14173,7 @@ EDITS: 5
 	    (gen1 (make-src :srate 2.0))
 	    (gen2 (make-src :srate 0.0)) ; make sure this is allowed
 	    (v1 (make-vct 10))
-	    (rd1 (make-readin "oboe.snd" 0 2000)))
+	    (rd1a (make-readin "oboe.snd" 0 2000)))
 	(print-and-check gen 
 			 "src"
 			 "src: width: 10, x: 0.000, incr: 2.000, sinc table len: 10000"
@@ -14185,7 +14181,7 @@ EDITS: 5
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (src gen 0.0 (lambda (dir) (readin rd)))))
-	(vct-map! v1 (lambda () (if (src? gen1) (src gen1 0.0 (lambda (dir) (readin rd1))))))
+	(vct-map! v1 (lambda () (if (src? gen1) (src gen1 0.0 (lambda (dir) (readin rd1a))))))
 	(if (not (vequal v0 v1)) (snd-display ";run src: ~A ~A" v0 v1))
 	(if (not (src? gen)) (snd-display ";~A not scr?" gen))
 	(if (or (fneq (vct-ref v0 1) .001) (fneq (vct-ref v0 7) .021)) (snd-display ";src output: ~A" v0))
@@ -14218,7 +14214,7 @@ EDITS: 5
 	    (rd (make-readin "oboe.snd" 0 4000))
 	    (gen1 (make-granulate :expansion 2.0))
 	    (v1 (make-vct 1000))
-	    (rd1 (make-readin "oboe.snd" 0 4000)))
+	    (rd1b (make-readin "oboe.snd" 0 4000)))
 	(print-and-check gen 
 			 "granulate"
 			 "granulate: expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060"
@@ -14226,7 +14222,7 @@ EDITS: 5
 	(do ((i 0 (1+ i)))
 	    ((= i 1000))
 	  (vct-set! v0 i (granulate gen (lambda (dir) (readin rd)))))
-	(vct-map! v1 (lambda () (if (granulate? gen1) (granulate gen1 (lambda (dir) (readin rd1))))))
+	(vct-map! v1 (lambda () (if (granulate? gen1) (granulate gen1 (lambda (dir) (readin rd1b))))))
 	(let ((worst (abs (- (vct-peak v0) (vct-peak v1)))))
 	  (if (> worst .01) (snd-display ";run granulate: ~A" worst)))
 	(let ((genx gen1))
@@ -15301,7 +15297,7 @@ EDITS: 5
 	      (begin
 		(mix-dialog)
 		(let* ((mixd (list-ref (dialog-widgets) 16))
-		       (spdscr (find-child mixd "speed"))
+		       (spdscr (find-child mixd "mix-speed"))
 		       (dragged #f))
 		  (add-hook! mix-drag-hook (lambda (n) (set! dragged n)))
 		  (XtCallCallbacks spdscr XmNvalueChangedCallback
@@ -15697,7 +15693,7 @@ EDITS: 5
 		(let* ((mixd (list-ref (dialog-widgets) 16))
 		       (nxt (find-child mixd "Next"))
 		       (prev (find-child mixd "Previous"))
-		       (tplay (find-child mixd "track-play")))
+		       (tplay (find-child mixd "mix-track-play")))
 		  (click-button tplay) (force-event)
 		  (if (or (not (XtIsSensitive nxt))
 			  (XtIsSensitive prev))
@@ -17444,10 +17440,10 @@ EDITS: 5
 			     (break))))))))
 	      (free-sample-reader rd1)
 	      (free-sample-reader rd11)))
-	  (let ((mx1 (mix-vct (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 95 ind 0))
-		(mx2 (mix-vct (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 195 ind 1)))
-	    (let ((mx1rd (make-mix-sample-reader mx1 2))
-		  (mx2rd (make-mix-sample-reader mx2 4)))
+	  (let ((mx1m (mix-vct (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 95 ind 0))
+		(mx2m (mix-vct (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 195 ind 1)))
+	    (let ((mx1rd (make-mix-sample-reader mx1m 2))
+		  (mx2rd (make-mix-sample-reader mx2m 4)))
 	      (mx1rd)
 	      (mx1rd)
 	      (let ((val1 (mx1rd))
@@ -17466,8 +17462,8 @@ EDITS: 5
 				   (sample-reader? mx11rd) (sample-reader? mx22rd)
 				   (track-sample-reader? mx11rd) (track-sample-reader? mx22rd)
 				   (region-sample-reader? mx11rd) (region-sample-reader? mx22rd)))
-		  (if (or (not (equal? (sample-reader-home mx11rd) mx1))
-			  (not (equal? (sample-reader-home mx22rd) mx2)))
+		  (if (or (not (equal? (sample-reader-home mx11rd) mx1m))
+			  (not (equal? (sample-reader-home mx22rd) mx2m)))
 		      (snd-display ";copy mix reader home: ~A ~A" (sample-reader-home mx11rd) (sample-reader-home mx22rd)))
 		  (if (or (sample-reader-at-end? mx11rd) (sample-reader-at-end? mx22rd))
 		      (snd-display ";copy mix reader end?: ~A ~A" (sample-reader-at-end? mx11rd) (sample-reader-at-end? mx22rd)))
@@ -17500,8 +17496,8 @@ EDITS: 5
 		  (free-sample-reader mx1rd)
 		  (free-sample-reader mx11rd))))
 	    (let ((trk (make-track)))
-	      (set! (mix-track mx1) trk)
-	      (set! (mix-track mx2) trk)
+	      (set! (mix-track mx1m) trk)
+	      (set! (mix-track mx2m) trk)
 	      (let ((mx1rd (make-track-sample-reader trk 0 2))
 		    (mx2rd (make-track-sample-reader trk 1 4)))
 		(mx1rd)
@@ -17642,8 +17638,8 @@ EDITS: 5
 		      (snd-display ";mix-vct exp + track null (90): ~A" data)))
 		(revert-sound ind)
 		(set! mx (mix-vct (make-vct 100 1.0) 100))
-		(let* ((mx1 (mix-vct (make-vct 100 1.0) 200))
-		       (trk1 (make-track mx mx1)))
+		(let* ((mx1r (mix-vct (make-vct 100 1.0) 200))
+		       (trk1 (make-track mx mx1r)))
 		  (set! (track-amp-env trk1) xrmx2)
 		  (let ((data (channel->vct 190 10)))
 		    (if (not (vequal data (vct 0.542 0.547 0.552 0.557 0.562 0.567 0.572 0.576 0.581 0.586)))
@@ -17654,10 +17650,10 @@ EDITS: 5
 		  (close-sound ind)))))
 	
 	  (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 2 "stereo mix with exp env tests" 1000)))
-	    (let* ((mx0 (mix-vct (make-vct 10 1.0) 100 ind 0))
-		   (mx1 (mix-vct (make-vct 10 1.0) 100 ind 1))
-		   (trk (make-track mx0 mx1)))
-	      (set! (mix-inverted? mx1) #t)
+	    (let* ((mx0t (mix-vct (make-vct 10 1.0) 100 ind 0))
+		   (mx1t (mix-vct (make-vct 10 1.0) 100 ind 1))
+		   (trk (make-track mx0t mx1t)))
+	      (set! (mix-inverted? mx1t) #t)
 	      (set! (track-amp-env trk) xrmx)
 	      (let ((data (channel->vct 100 10 ind 0)))
 		(if (not (vequal data (vct 0.000 0.015 0.037 0.070 0.118 0.189 0.293 0.446 0.670 1.000)))
@@ -20903,8 +20899,8 @@ EDITS: 5
 		(set! (filter-control?) #t)
 		(set! (filter-control-order) 40) 
 		(test-panel filter-control-order 'filter-control-order)
-		(set! (filter-control-env) '(0 0 .1 1 .2 0 1 0)) 
-		(filter-control-env) 
+		(set! (filter-control-envelope) '(0 0 .1 1 .2 0 1 0)) 
+		(filter-control-envelope) 
 		(apply-controls) 
 		(play-and-wait)
 		(set! (amp-control) 1.5) 
@@ -21162,6 +21158,7 @@ EDITS: 5
 		(list 'fft-window fft-window #f 0 dolph-chebyshev-window)
 		(list 'transform-graph? transform-graph? #t #f #t)
 		(list 'filter-control-in-dB filter-control-in-dB #t #f #t)
+		(list 'filter-control-in-hz filter-control-in-hz #t #f #t)
 		(list 'filter-control-order filter-control-order #t 2 (if (<= tests 10) 400 40))
 		(list 'filter-control? filter-control? #t #f #t)
 		(list 'graph-cursor graph-cursor #f 0 35)
@@ -23587,7 +23584,7 @@ EDITS: 5
 	     (load "s61.scm")
 	     (set! ind (find-sound "oboe.snd"))
 	     (if (fneq (maxamp ind) val)
-		 (snd-display ";saved ~A max: ~A" name (maxamp ind)))
+		 (snd-display ";saved ~A max: ~A ~A" name (maxamp ind) val))
 	     (revert-sound ind))
 	   (list (lambda (ind)
 		   (ptree-channel (lambda (y) (* y .5))))
@@ -26965,6 +26962,8 @@ EDITS: 1
       (run-hook before-test-hook 17)
       (if (not (file-exists? "cmn-glyphs.lisp"))
 	  (copy-file (string-append home-dir "/cl/cmn-glyphs.lisp") (string-append (getcwd) "/cmn-glyphs.lisp")))
+      (if (not (file-exists? "loop.scm"))
+	  (copy-file (string-append home-dir "/cl/loop.scm") (string-append (getcwd) "/loop.scm")))
       (load "musglyphs.scm")
       (load "draw.scm")
       (add-hook! after-graph-hook display-previous-edits)
@@ -31099,7 +31098,7 @@ EDITS: 2
 		     (set! tst (not (st3-two svar))) ;#t
 		     (set! (st3-one svar) #\f)
 		     (set! (st3-two svar) #t)))
-	      (if (not (char=? tst1 #\c)) (snd-display ";run st3-one (#\c): ~A ~A" tst1 (st3-one svar)))
+	      (if (not (char=? tst1 #\c)) (snd-display ";run st3-one (#c): ~A ~A" tst1 (st3-one svar)))
 	      (if (not tst) (snd-display ";run st3-two (#t): ~A ~A" tst (st3-two svar))))
 	    
 	    ;; restore tests
@@ -34797,7 +34796,7 @@ EDITS: 2
 		 (map 
 		  (lambda (name)
 		    (find-child ctrls name))
-		  (list "amp-label" "srate-label" "contrast-label" "expand-label" "revlen-label" "revscl-label" )))
+		  (list "amp-label" "speed-label" "contrast-label" "expand-label" "revlen-label" "revscl-label" )))
 		(for-each
 		 (lambda (scrl)
 		   (XtCallCallbacks scrl XmNdragCallback
@@ -35031,7 +35030,7 @@ EDITS: 2
 		   (filter-grf (list-ref swids 5)))
 	      (set! (show-controls ind) #t)
 	      (set! (filter-control-order ind) 20)
-	      (let ((fe (filter-control-env ind)))
+	      (let ((fe (filter-control-envelope ind)))
 		(if (not (equal? fe '(0.0 1.0 1.0 1.0)))
 		    (snd-display ";filter-env (initial): ~A?" fe))
 		(if (not (vequal (filter-control-coeffs ind)
@@ -35075,7 +35074,7 @@ EDITS: 2
 							      (string=? (XtName w) "/")))
 						     (set! buttons (cons w buttons)))
 						 (if (and (XmIsPushButton w) 
-							  (string=? (XtName w) "amp-number")) 
+							  (string=? (XtName w) "recorder-amp-number")) 
 						     (set! numbers (cons w numbers)))
 						 (if (and (XmIsScrollBar w) 
 							  (or (string=? (XtName w) "amp")
@@ -36249,9 +36248,9 @@ EDITS: 2
 			     (begtxt (find-child mixd "mix-times"))
 			     (trktxt (find-child mixd "mix-track"))
 			     (playb (find-child mixd "mix-play"))
-			     (spdscr (find-child mixd "speed"))
-			     (ampscr (find-child mixd "amp"))
-			     (ampenv (find-child mixd "amp-env-window")))
+			     (spdscr (find-child mixd "mix-speed"))
+			     (ampscr (find-child mixd "mix-amp"))
+			     (ampenv (find-child mixd "mix-amp-env-window")))
 			(if (fneq (sample 1001) (+ s1001 .1)) 
 			    (snd-display ";mix-dialog at 1001: ~A (~A)?" (sample 1001) s1001))
 			(if (fneq (sample 2001) (+ s2001 .1)) 
@@ -36283,7 +36282,7 @@ EDITS: 2
 			   (click-button n #t ControlMask))
 			 (map
 			  (lambda (w) (find-child mixd w))
-			  (list "speed-label" "amp-label")))
+			  (list "mix-speed-label" "mix-amp-label")))
 			(if (XmDrawingArea? ampenv)
 			    (let* ((xy (widget-size ampenv))
 				   (x0 (inexact->exact (floor (/ (car xy) 2))))
@@ -36326,9 +36325,9 @@ EDITS: 2
 			     (begtxt (find-child trackd "track-times"))
 			     (trktxt (find-child trackd "track-track"))
 			     (playb (find-child trackd "track-play"))
-			     (spdscr (find-child trackd "speed"))
-			     (ampscr (find-child trackd "amp"))
-			     (ampenv (find-child trackd "amp-env-window")))
+			     (spdscr (find-child trackd "track-speed"))
+			     (ampscr (find-child trackd "track-amp"))
+			     (ampenv (find-child trackd "track-amp-env-window")))
 			(set! (track-dialog-track) id3)
 			(if (not (= (track-dialog-track) id3)) (snd-display ";track-dialog-track: ~A ~A" id3 (track-dialog-track)))
 			(if (not (string=? (XmTextGetString trktxt) "0"))
@@ -36352,7 +36351,7 @@ EDITS: 2
 			   (click-button n #t ControlMask))
 			 (map
 			  (lambda (w) (find-child trackd w))
-			  (list "speed-label" "amp-label")))
+			  (list "track-speed-label" "track-amp-label")))
 			(if (XmDrawingArea? ampenv)
 			    (let* ((xy (widget-size ampenv))
 				   (x0 (inexact->exact (floor (/ (car xy) 2))))
@@ -36833,7 +36832,7 @@ EDITS: 2
 		    (begin
 		      (set! lmapk (XInsertModifiermapEntry lmapk (list 'KeyCode 50) ShiftMapIndex))
 		      (set! lmapk (XDeleteModifiermapEntry lmapk (list 'KeyCode 50) ShiftMapIndex))
-		      (XFreeModifiermap lmapk) ;prone to segfault in X
+;		      (XFreeModifiermap lmapk) ;prone to segfault in X
 		      )))
 	      (if (not (= (XExtendedMaxRequestSize dpy) 1048575))
 		  (snd-display ";XExtendedMaxRequestSize ~A" (XExtendedMaxRequestSize dpy)))
@@ -40979,8 +40978,8 @@ EDITS: 2
 		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-length expand-control-ramp
 		     expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
 		     transform-graph-type fft-window transform-graph? file-dialog mix-file-dialog file-name fill-polygon
-		     fill-rectangle filter-sound filter-control-in-dB filter-control-env enved-filter-order enved-filter
-		     filter-env-in-hz filter-control-order filter-selection filter-waveform-color filter-control? find
+		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
+		     filter-control-in-hz filter-control-order filter-selection filter-control-waveform-color filter-control? find
 		     find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
 		     frames free-sample-reader graph 
 		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
@@ -41097,8 +41096,8 @@ EDITS: 2
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			 expand-control expand-control-hop expand-control-length expand-control-ramp expand-control?
 			 fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
-			 transform-graph? filter-control-in-dB filter-control-env enved-filter-order enved-filter emacs-style-save-as
-			 filter-env-in-hz filter-control-order filter-waveform-color filter-control?  foreground-color
+			 transform-graph? filter-control-in-dB filter-control-envelope enved-filter-order enved-filter emacs-style-save-as
+			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
 			 mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
@@ -41188,8 +41187,8 @@ EDITS: 2
 			      (snd-display ";snd no-such-sound ~A: ~A" n tag))))
 		      (list amp-control bomb apply-controls channels chans close-sound comment contrast-control
 			    contrast-control-amp contrast-control? data-format data-location data-size expand-control expand-control-hop
-			    expand-control-length expand-control-ramp expand-control? file-name filter-control-in-dB
-			    filter-control-env filter-control-order filter-control?  finish-progress-report frames header-type
+			    expand-control-length expand-control-ramp expand-control? file-name filter-control-in-dB filter-control-in-hz
+			    filter-control-envelope filter-control-order filter-control?  finish-progress-report frames header-type
 			    progress-report read-only reset-controls restore-controls reverb-control-decay reverb-control-feedback
 			    reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? save-controls
 			    select-sound short-file-name sound-loop-info soundfont-info speed-control speed-control-style
@@ -41207,7 +41206,7 @@ EDITS: 2
 				  (list amp-control bomb apply-controls channels chans close-sound comment contrast-control
 					contrast-control-amp contrast-control? data-format data-location data-size expand-control
 					expand-control-hop expand-control-length expand-control-ramp expand-control? file-name
-					filter-control-in-dB filter-control-env filter-control-order filter-control?
+					filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
 					finish-progress-report frames header-type read-only reset-controls restore-controls
 					reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
 					reverb-control-scale reverb-control? save-controls select-sound short-file-name
@@ -41228,8 +41227,8 @@ EDITS: 2
 					(set! ctr (+ ctr 1))))
 				    (list amp-control channels chans comment contrast-control contrast-control-amp
 					  contrast-control? data-format data-location data-size expand-control expand-control-hop
-					  expand-control-length expand-control-ramp expand-control? filter-control-in-dB
-					  filter-control-env filter-control-order filter-control? frames header-type read-only
+					  expand-control-length expand-control-ramp expand-control? filter-control-in-dB filter-control-in-hz
+					  filter-control-envelope filter-control-order filter-control? frames header-type read-only
 					  reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
 					  reverb-control-scale reverb-control? sound-loop-info soundfont-info speed-control
 					  speed-control-style speed-control-tones srate channel-style sync))))
@@ -41249,7 +41248,7 @@ EDITS: 2
 					  (set! ctr (+ ctr 1))))
 				      (list amp-control contrast-control contrast-control-amp contrast-control?  expand-control
 					    expand-control-hop expand-control-length expand-control-ramp expand-control?
-					    filter-control-in-dB filter-control-env filter-control-order filter-control?
+					    filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
 					    reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
 					    reverb-control-scale reverb-control? speed-control speed-control-style speed-control-tones
 					    channel-style sync))))
@@ -41789,7 +41788,7 @@ EDITS: 2
 			    (if (not (eq? tag 'wrong-type-arg))
 				(snd-display ";~D: misc procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list enved-filter-order enved-filter filter-env-in-hz filter-waveform-color ask-before-overwrite
+			(list enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite
 			      auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
 			      channel-style color-cutoff color-dialog color-inverted color-scale
 			      cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans emacs-style-save-as
@@ -41989,8 +41988,8 @@ EDITS: 2
 	      (check-error-tag 'out-of-range (lambda () (set! (min-dB ind 0) 0.0)))
 	      (check-error-tag 'out-of-range (lambda () (start-playing 1 -22)))
 	      (check-error-tag 'out-of-range (lambda () (start-playing 1 0)))
-	      (check-error-tag 'out-of-range (lambda () (set! (filter-control-env ind) (list 0.0 1.0 0.1 -0.1 1.0 0.0))))
-	      (check-error-tag 'out-of-range (lambda () (set! (filter-control-env ind) (list 0.0 1.0 0.1 1.1 1.0 0.0))))
+	      (check-error-tag 'out-of-range (lambda () (set! (filter-control-envelope ind) (list 0.0 1.0 0.1 -0.1 1.0 0.0))))
+	      (check-error-tag 'out-of-range (lambda () (set! (filter-control-envelope ind) (list 0.0 1.0 0.1 1.1 1.0 0.0))))
 	      (check-error-tag 'out-of-range (lambda () (apply-controls ind 123)))
 	      (check-error-tag 'out-of-range (lambda () (vct->sound-file 123 (make-vct 3) 4)))
 	      (check-error-tag 'out-of-range (lambda () (vct->sound-file 123 (make-vct 3) -4)))
@@ -42030,7 +42029,7 @@ EDITS: 2
 	      (check-error-tag 'no-such-file (lambda () (mix "/baddy/hiho")))
 	      (check-error-tag 'no-such-channel (lambda () (mix "oboe.snd" 0 2)))
 	      (check-error-tag 'no-such-file (lambda () (mix-sound "/baddy/hiho" 0)))
-	      (check-error-tag 'no-data (lambda () (set! (filter-control-env ind) '())))
+	      (check-error-tag 'no-data (lambda () (set! (filter-control-envelope ind) '())))
 	      (check-error-tag 'out-of-range (lambda () (set! (data-format ind) 123)))
 	      (check-error-tag 'out-of-range (lambda () (set! (header-type ind) 123)))
 	      (check-error-tag 'no-such-channel (lambda () (set! (selected-channel ind) 123)))
@@ -42645,12 +42644,12 @@ EDITS: 2
 
 (let ((gc-lst (gc-stats)))
   (display (format #f ";timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})" 
-	       (/ (- (get-internal-real-time) overall-start-time) internal-time-units-per-second) 
-	       (/ (cdr (list-ref gc-lst 0)) internal-time-units-per-second) ; was 1000 -- off by a factor of 10 for years...
+	       (exact->inexact (/ (- (get-internal-real-time) overall-start-time) internal-time-units-per-second))
+	       (exact->inexact (/ (cdr (list-ref gc-lst 0)) internal-time-units-per-second))
 	       (list (list-ref gc-lst 1) 
 		     (list-ref gc-lst 5)
 		     (if (> (length gc-lst) 9)
-			 (list-ref gc-lst 9)
+			 (list-ref gc-lst 8)
 			 #f)))))
 
 (if (not (null? times))
@@ -42663,7 +42662,7 @@ EDITS: 2
 (do ((i 0 (1+ i)))
     ((= i (+ total-tests 1)))
   (if (number? (vector-ref timings i))
-      (display (format #f " [~D: ~A]" i (/ (vector-ref timings i) internal-time-units-per-second)))))
+      (display (format #f " [~D: ~A]" i (exact->inexact (/ (vector-ref timings i) internal-time-units-per-second))))))
 
 (if (and (string? test14-file)
 	 (file-exists? test14-file))

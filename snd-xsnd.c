@@ -16,13 +16,13 @@
 enum {W_pane,
       W_name_form, W_amp_form,
       W_amp, W_amp_label, W_amp_number, W_amp_separator,
-      W_srate, W_srate_label, W_srate_number, W_srate_arrow,
+      W_speed, W_speed_label, W_speed_number, W_speed_arrow,
       W_expand, W_expand_label, W_expand_number, W_expand_button,
       W_contrast, W_contrast_label, W_contrast_number, W_contrast_button,
       W_revscl, W_revscl_label, W_revscl_number,
       W_revlen, W_revlen_label, W_revlen_number, W_reverb_button,
       W_remember, W_restore, W_apply, W_reset,
-      W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, W_filter_dB, W_filter_frame,
+      W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, W_filter_dB, W_filter_hz, W_filter_frame,
       W_filter_order_down, W_filter_order_up,
       W_name, W_name_icon, W_info_label, W_info,
       W_info_sep,
@@ -30,7 +30,7 @@ enum {W_pane,
       W_control_panel
 };
 
-#define NUM_SND_WIDGETS 48
+#define NUM_SND_WIDGETS 49
 
 Widget unite_button(snd_info *sp) {return((sp->sgx)->snd_widgets[W_unite]);}
 Widget filter_graph(snd_info *sp) {return((sp->sgx)->snd_widgets[W_filter_env]);}
@@ -42,14 +42,14 @@ Widget w_snd_name(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_name]);}
 #define PLAY_BUTTON(Sp)          (Sp->sgx)->snd_widgets[W_play]
 #define NAME_ICON(Sp)            (Sp->sgx)->snd_widgets[W_name_icon]
 #define AMP_SCROLLBAR(Sp)        (Sp->sgx)->snd_widgets[W_amp]
-#define SRATE_SCROLLBAR(Sp)      (Sp->sgx)->snd_widgets[W_srate]
-#define SRATE_ARROW(Sp)          (Sp->sgx)->snd_widgets[W_srate_arrow]
+#define SPEED_SCROLLBAR(Sp)      (Sp->sgx)->snd_widgets[W_speed]
+#define SPEED_ARROW(Sp)          (Sp->sgx)->snd_widgets[W_speed_arrow]
 #define EXPAND_SCROLLBAR(Sp)     (Sp->sgx)->snd_widgets[W_expand]
 #define CONTRAST_SCROLLBAR(Sp)   (Sp->sgx)->snd_widgets[W_contrast]
 #define REVSCL_SCROLLBAR(Sp)     (Sp->sgx)->snd_widgets[W_revscl]
 #define REVLEN_SCROLLBAR(Sp)     (Sp->sgx)->snd_widgets[W_revlen]
 #define AMP_LABEL(Sp)            (Sp->sgx)->snd_widgets[W_amp_number]
-#define SRATE_LABEL(Sp)          (Sp->sgx)->snd_widgets[W_srate_number]
+#define SPEED_LABEL(Sp)          (Sp->sgx)->snd_widgets[W_speed_number]
 #define EXPAND_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_expand_number]
 #define EXPAND_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_expand_button]
 #define CONTRAST_LABEL(Sp)       (Sp->sgx)->snd_widgets[W_contrast_number]
@@ -62,6 +62,7 @@ Widget w_snd_name(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_name]);}
 #define FILTER_COEFFS_TEXT(Sp)   (Sp->sgx)->snd_widgets[W_filter]
 #define FILTER_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_filter_button]
 #define FILTER_DB_BUTTON(Sp)     (Sp->sgx)->snd_widgets[W_filter_dB]
+#define FILTER_HZ_BUTTON(Sp)     (Sp->sgx)->snd_widgets[W_filter_hz]
 #define MINIBUFFER_SEPARATOR(Sp) (Sp->sgx)->snd_widgets[W_info_sep]
 #define MINIBUFFER_LABEL(Sp)     (Sp->sgx)->snd_widgets[W_info_label]
 #define MINIBUFFER_TEXT(Sp)      (Sp->sgx)->snd_widgets[W_info]
@@ -124,10 +125,6 @@ static void name_click_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 static char number_one[5] = {'1', STR_decimal, '0', '0', '\0'};
-static char number_zero[5] = {'0', STR_decimal, '0', '0', '\0'};
-static char semitone_one[5] = {' ', ' ', ' ', '0', '\0'};
-static char ratio_one[5] = {' ', '1', '/', '1', '\0'};
-
 static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
 
 static int snd_amp_to_int(Float amp)
@@ -211,19 +208,19 @@ static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
 #define SPEED_SCROLLBAR_MID (0.45 * SCROLLBAR_MAX)
 #define SPEED_SCROLLBAR_BREAK (0.15 * SCROLLBAR_MAX)
 
-static char srate_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
+static char speed_number_buffer[6] = {'1', STR_decimal, '0', '0', ' ', '\0'};
 
 XmString initial_speed_label(void)
 {
   switch (speed_control_style(ss))
     {
-    case SPEED_CONTROL_AS_RATIO:    return(XmStringCreate(ratio_one, XmFONTLIST_DEFAULT_TAG));    break;
-    case SPEED_CONTROL_AS_SEMITONE: return(XmStringCreate(semitone_one, XmFONTLIST_DEFAULT_TAG)); break;
-    default:                        return(XmStringCreate(number_one, XmFONTLIST_DEFAULT_TAG));   break;
+    case SPEED_CONTROL_AS_RATIO:    return(XmStringCreate("  1/1", XmFONTLIST_DEFAULT_TAG));    break;
+    case SPEED_CONTROL_AS_SEMITONE: return(XmStringCreate("    0", XmFONTLIST_DEFAULT_TAG)); break;
+    default:                        return(XmStringCreate(" 1.00", XmFONTLIST_DEFAULT_TAG));   break;
     }
 }
 
-static int snd_srate_to_int(Float val)
+static int snd_speed_to_int(Float val)
 {
   int ival;
   if (val > 0.0)
@@ -236,27 +233,28 @@ static int snd_srate_to_int(Float val)
   else return(0);
 }
 
-static int snd_srate_changed(snd_info *sp, int ival)
+static int snd_speed_changed(snd_info *sp, int ival)
 {
-  sp->speed_control = srate_changed(exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK),
-				    srate_number_buffer,
+  sp->speed_control = speed_changed(exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK),
+				    speed_number_buffer,
 				    sp->speed_control_style,
-				    sp->speed_control_tones);
-  set_label(SRATE_LABEL(sp), srate_number_buffer);
+				    sp->speed_control_tones,
+				    6);
+  set_label(SPEED_LABEL(sp), speed_number_buffer);
   return(ival);
 }
 
-void set_snd_srate(snd_info *sp, Float val)
+void set_snd_speed(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->speed_control = val;
-  else XtVaSetValues(SRATE_SCROLLBAR(sp),
+  else XtVaSetValues(SPEED_SCROLLBAR(sp),
 		     XmNvalue,
-		     snd_srate_changed(sp, snd_srate_to_int(mus_fclamp(-20.0, val, 20.0))),
+		     snd_speed_changed(sp, snd_speed_to_int(mus_fclamp(-20.0, val, 20.0))),
 		     NULL);
 }
 
-static void srate_click_callback(Widget w, XtPointer context, XtPointer info) 
+static void speed_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
@@ -265,24 +263,39 @@ static void srate_click_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
-    val = snd_srate_to_int(sp->last_speed_control); 
+    val = snd_speed_to_int(sp->last_speed_control); 
   else val = (int)SPEED_SCROLLBAR_MID;
-  snd_srate_changed(sp, val);
-  XtVaSetValues(SRATE_SCROLLBAR(sp), XmNvalue, val, NULL);
+  snd_speed_changed(sp, val);
+#if HAVE_SCM_MAKE_RATIO
+  if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
+    snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
+#endif
+  XtVaSetValues(SPEED_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
 
-static void srate_drag_callback(Widget w, XtPointer context, XtPointer info) 
+static void speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
+#if HAVE_SCM_MAKE_RATIO
+  snd_info *sp = (snd_info *)context;
+#endif
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  snd_srate_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
+  snd_speed_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
+#if HAVE_SCM_MAKE_RATIO
+  if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
+    snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
+#endif
 }
 
-static void srate_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
+static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  snd_srate_changed(sp, cb->value);
+  snd_speed_changed(sp, cb->value);
+#if HAVE_SCM_MAKE_RATIO
+  if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
+    snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
+#endif
   sp->last_speed_control = sp->saved_speed_control;
   sp->saved_speed_control = sp->speed_control;
 }
@@ -291,7 +304,7 @@ void toggle_direction_arrow(snd_info *sp, bool state)
 {
   if (IS_PLAYER(sp))
     sp->speed_control_direction = ((state) ? -1 : 1);
-  else XmToggleButtonSetState(SRATE_ARROW(sp), (Boolean)state, true);
+  else XmToggleButtonSetState(SPEED_ARROW(sp), (Boolean)state, true);
 }
 
 
@@ -681,11 +694,15 @@ static void display_filter_env(snd_info *sp)
   XClearWindow(ax->dp, ax->wn);
   edp->in_dB = sp->filter_control_in_dB;
   edp->with_dots = true;
-  env_editor_display_env(edp, sp->filter_control_env, ax, _("frequency response"), 0, 0, width, height, false);
+  if (sp->filter_control_in_hz)
+    sp->filter_control_xmax = (Float)(SND_SRATE(sp) / 2);
+  else sp->filter_control_xmax = 1.0;
+  if (sp->filter_control_envelope == NULL) sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
+  env_editor_display_env(edp, sp->filter_control_envelope, ax, _("frequency response"), 0, 0, width, height, false);
   if (edp->edited)
     {
       ax->gc = (ss->sgx)->fltenv_data_gc;
-      display_frequency_response(sp->filter_control_env, 
+      display_frequency_response(sp->filter_control_envelope, 
 				 (SOUND_ENV_EDITOR(sp))->axis, ax, 
 				 sp->filter_control_order, 
 				 sp->filter_control_in_dB);
@@ -713,7 +730,7 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
 #endif
   edp = (env_editor *)(sp->sgx->flt);
   edp->in_dB = sp->filter_control_in_dB;
-  env_editor_button_motion(edp, ev->x, ev->y, ev->time, sp->filter_control_env);
+  env_editor_button_motion(edp, ev->x, ev->y, ev->time, sp->filter_control_envelope);
   display_filter_env(sp);
   sp->filter_control_changed = true;
 }
@@ -729,7 +746,7 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
 #endif
   edp = (env_editor *)(sp->sgx->flt);
   edp->in_dB = sp->filter_control_in_dB;
-  if (env_editor_button_press(edp, ev->x, ev->y, ev->time, sp->filter_control_env))
+  if (env_editor_button_press(edp, ev->x, ev->y, ev->time, sp->filter_control_envelope))
     display_filter_env(sp);
 }
 
@@ -737,9 +754,9 @@ static void filter_drawer_button_release(Widget w, XtPointer context, XEvent *ev
 {
   char *tmpstr = NULL;
   snd_info *sp = (snd_info *)context;
-  env_editor_button_release(SOUND_ENV_EDITOR(sp), sp->filter_control_env);
+  env_editor_button_release(SOUND_ENV_EDITOR(sp), sp->filter_control_envelope);
   display_filter_env(sp);
-  set_filter_text(sp, tmpstr = env_to_string(sp->filter_control_env));
+  set_filter_text(sp, tmpstr = env_to_string(sp->filter_control_envelope));
   if (tmpstr) FREE(tmpstr);
   sp->filter_control_changed = true;
 }
@@ -765,6 +782,35 @@ void set_filter_in_dB(snd_info *sp, bool val)
   if (!(IS_PLAYER(sp)))
     {
       XmToggleButtonSetState(FILTER_DB_BUTTON(sp), (Boolean)val, false);
+      display_filter_env(sp);
+    }
+}
+
+static void new_in_hz(snd_info *sp, bool val)
+{
+  sp->filter_control_in_hz = val;
+  if (val)
+    sp->filter_control_xmax = (Float)(SND_SRATE(sp) / 2);
+  else sp->filter_control_xmax = 1.0;
+  if (sp->filter_control_envelope) free_env(sp->filter_control_envelope);
+  sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
+}
+
+static void filter_hz_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_info *sp = (snd_info *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
+  new_in_hz(sp, cb->set);
+  display_filter_env(sp);
+}
+
+void set_filter_in_hz(snd_info *sp, bool val)
+{
+  new_in_hz(sp, val);
+  if (!(IS_PLAYER(sp)))
+    {
+      XmToggleButtonSetState(FILTER_HZ_BUTTON(sp), (Boolean)val, false);
       display_filter_env(sp);
     }
 }
@@ -822,11 +868,11 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   str = XmTextGetString(w);
   if ((str) && (*str)) remember_filter_string(sp, str);
 
-  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
-  sp->filter_control_env = string2env(str);
+  if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
+  sp->filter_control_envelope = string2env(str);
   if (str) XtFree(str);
-  if (!(sp->filter_control_env)) /* maybe user cleared text field? */
-    sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
+  if (!(sp->filter_control_envelope)) /* maybe user cleared text field? */
+    sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
   str = XmTextGetString(FILTER_ORDER_TEXT(sp));
   if ((str) && (*str))
     {
@@ -1917,7 +1963,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XtAddEventHandler(sw[W_amp], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
-      /* SRATE */
+      /* SPEED */
       s1 = XmStringCreate(_("speed:"), XmFONTLIST_DEFAULT_TAG);
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
@@ -1932,9 +1978,9 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      sw[W_srate_label] = make_pushbutton_widget ("srate-label", sw[W_amp_form], args, n);
-      XtAddEventHandler(sw[W_srate_label], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_srate_label], XmNactivateCallback, srate_click_callback, (XtPointer)sp);
+      sw[W_speed_label] = make_pushbutton_widget ("speed-label", sw[W_amp_form], args, n);
+      XtAddEventHandler(sw[W_speed_label], KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(sw[W_speed_label], XmNactivateCallback, speed_click_callback, (XtPointer)sp);
       XmStringFree(s1);
 
       n = 0;
@@ -1942,15 +1988,15 @@ snd_info *add_sound_window(char *filename, bool read_only)
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_srate_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, sw[W_speed_label]); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, sw[W_srate_label]); n++;
+      XtSetArg(args[n], XmNleftWidget, sw[W_speed_label]); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++; 
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-      sw[W_srate_number] = XtCreateManagedWidget ("srate-number", xmLabelWidgetClass, sw[W_amp_form], args, n);
+      sw[W_speed_number] = XtCreateManagedWidget ("speed-number", xmLabelWidgetClass, sw[W_amp_form], args, n);
       XmStringFree(s1);
 
       n = 0;
@@ -1959,15 +2005,15 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_srate_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, sw[W_speed_label]); n++;
       XtSetArg(args[n], XmNindicatorOn, false); n++;
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
       XtSetArg(args[n], XmNmarginHeight, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       XtSetArg(args[n], XmNmarginTop, 0); n++;
       XtSetArg(args[n], XmNtopOffset, 0); n++;
-      sw[W_srate_arrow] = make_togglebutton_widget("dir", sw[W_amp_form], args, n);
-      form = sw[W_srate_arrow];
+      sw[W_speed_arrow] = make_togglebutton_widget("dir", sw[W_amp_form], args, n);
+      form = sw[W_speed_arrow];
       if (!spd_ok)
 	{
 	  rb = XCreateBitmapFromData(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), (const char *)speed_r_bits1, 16, 12);
@@ -1982,26 +2028,26 @@ snd_info *add_sound_window(char *filename, bool read_only)
 	  spd_ok = true;
 	}
       XtVaSetValues(form, XmNselectPixmap, spd_l, XmNlabelPixmap, spd_r, NULL);
-      XtAddEventHandler(sw[W_srate_arrow], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_srate_arrow], XmNvalueChangedCallback, play_arrow_callback, (XtPointer)sp);
+      XtAddEventHandler(sw[W_speed_arrow], KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(sw[W_speed_arrow], XmNvalueChangedCallback, play_arrow_callback, (XtPointer)sp);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_srate_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, sw[W_speed_label]); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, sw[W_srate_number]); n++;
+      XtSetArg(args[n], XmNleftWidget, sw[W_speed_number]); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNrightWidget, sw[W_srate_arrow]); n++;
+      XtSetArg(args[n], XmNrightWidget, sw[W_speed_arrow]); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNvalue, (int)SPEED_SCROLLBAR_MID); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
-      XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(srate_drag_callback, (XtPointer)sp)); n++;
-      XtSetArg(args[n], XmNvalueChangedCallback, n4 = make_callback_list(srate_valuechanged_callback, (XtPointer)sp)); n++;
-      sw[W_srate] = XtCreateManagedWidget("speed-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
-      XtAddEventHandler(sw[W_srate], KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(speed_drag_callback, (XtPointer)sp)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n4 = make_callback_list(speed_valuechanged_callback, (XtPointer)sp)); n++;
+      sw[W_speed] = XtCreateManagedWidget("speed-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
+      XtAddEventHandler(sw[W_speed], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;
       /* EXPAND */
@@ -2009,7 +2055,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_srate_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, sw[W_speed_label]); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2103,7 +2149,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreate(number_zero, XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("0.00", XmFONTLIST_DEFAULT_TAG);
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2395,7 +2441,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreate(_("dB"), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate(_("hz"), XmFONTLIST_DEFAULT_TAG);
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, sw[W_filter_button]); n++;
@@ -2403,6 +2449,24 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, sw[W_filter_button]); n++;
+      XtSetArg(args[n], XmNlabelString, s1); n++; 
+      XtSetArg(args[n], XmNvalue, sp->filter_control_in_hz); n++;
+      if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
+      sw[W_filter_hz] = make_togglebutton_widget("flthz", sw[W_amp_form], args, n);
+      XtAddEventHandler(sw[W_filter_hz], KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(sw[W_filter_hz], XmNvalueChangedCallback, filter_hz_callback, (XtPointer)sp);
+      XmStringFree(s1);
+
+      n = 0;
+      s1 = XmStringCreate(_("dB"), XmFONTLIST_DEFAULT_TAG);
+      if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, sw[W_filter_hz]); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNrightWidget, sw[W_filter_hz]); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++; 
       XtSetArg(args[n], XmNvalue, sp->filter_control_in_dB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
@@ -2661,7 +2725,7 @@ void snd_info_cleanup(snd_info *sp)
 	  XtVaSetValues(SYNC_BUTTON(sp), XmNset, false, NULL);
 	  XtVaSetValues(EXPAND_BUTTON(sp), XmNset, false, NULL);
 	  XtVaSetValues(CONTRAST_BUTTON(sp), XmNset, false, NULL);
-	  XtVaSetValues(SRATE_ARROW(sp), XmNset, false, NULL);
+	  XtVaSetValues(SPEED_ARROW(sp), XmNset, false, NULL);
 	  XtVaSetValues(FILTER_BUTTON(sp), XmNset, false, NULL);
 	  XtVaSetValues(REVERB_BUTTON(sp), XmNset, false, NULL);
 	  XmToggleButtonSetState(unite_button(sp), false, false);
@@ -2835,7 +2899,7 @@ void color_filter_waveform(Pixel color)
   int i;
   snd_info *sp;
   XSetForeground(MAIN_DISPLAY(ss), (ss->sgx)->fltenv_data_gc, color);
-  (ss->sgx)->filter_waveform_color = color;
+  (ss->sgx)->filter_control_waveform_color = color;
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
@@ -3137,9 +3201,8 @@ void g_init_gxsnd(void)
   char dpoint;
   dpoint = local_decimal_point();
   number_one[1] = dpoint;
-  number_zero[1] = dpoint;
   amp_number_buffer[1] = dpoint;
-  srate_number_buffer[1] = dpoint;
+  speed_number_buffer[1] = dpoint;
   expand_number_buffer[1] = dpoint;
   contrast_number_buffer[1] = dpoint;
   revscl_number_buffer[1] = dpoint;

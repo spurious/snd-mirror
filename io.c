@@ -445,7 +445,7 @@ void mus_set_rt_audio_p (int rt)
 
 typedef struct {
   char *name;
-  int data_format, bytes_per_sample, true_fd, chans, header_type;
+  int data_format, bytes_per_sample, chans, header_type;
   bool data_clipped;
   off_t data_location;
   float prescaler;

@@ -24,6 +24,8 @@ static bool dont_save(snd_info *sp, const char *newname)
 
 static void after_edit(chan_info *cp)
 {
+  reflect_edit_history_change(cp);
+  reflect_enved_spectra_change(cp);
   if (XEN_HOOKED(cp->after_edit_hook))
     run_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
 }
@@ -179,6 +181,7 @@ static void prune_edits(chan_info *cp, int edpt)
       release_pending_mixes(cp, edpt);
       release_pending_sounds(cp, edpt);
       release_dangling_readers(cp, edpt);
+      release_dangling_enved_spectra(cp, edpt);
       reflect_no_more_redo_in_menu();
     }
 }
@@ -5071,7 +5074,6 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, 
   ED_TYPE(cb) = ED_ZERO;
   ed->edit_type = ZERO_EDIT;
   ed->sound_location = 0;
-  reflect_edit_history_change(cp);
   check_for_first_edit(cp); /* needed to activate revert menu option */
   amp_env_insert_zeros(cp, beg, num, edpos);
   after_edit(cp);
@@ -5100,7 +5102,6 @@ bool extend_edit_list(chan_info *cp, const char *origin, int edpos)
   new_ed->selection_end = old_ed->selection_end;
   new_ed->maxamp = old_ed->maxamp;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
-  reflect_edit_history_change(cp);
   cp->amp_envs[cp->edit_ctr] = amp_env_copy(cp, false, edpos);
   after_edit(cp);
   return(true);
@@ -5121,7 +5122,6 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
     }
   if (!(prepare_edit_list(cp, len + num, edpos, origin))) return(false);
   cp->edits[cp->edit_ctr] = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
-  reflect_edit_history_change(cp);
   ss->catch_message = NULL;
   hdr = make_file_info(inserted_file);
   if (hdr)
@@ -5178,7 +5178,6 @@ static bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
     ed->edit_type = INSERTION_EDIT;
     ed->sound_location = ED_SOUND(cb);
   }
-  reflect_edit_history_change(cp);
   lock_affected_mixes(cp, beg, beg + num);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
@@ -5291,7 +5290,6 @@ bool delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
       if ((beg + num) > len) num = len - beg;
       if (!(prepare_edit_list(cp, len - num, edpos, origin))) return(false);
       cp->edits[cp->edit_ctr] = delete_samples_from_list(beg, num, edpos, cp, origin);
-      reflect_edit_history_change(cp);
       lock_affected_mixes(cp, beg, beg + num);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
@@ -5373,7 +5371,6 @@ bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 	}
       cp->edits[cp->edit_ctr] = change_samples_in_list(beg, num, edpos, cp, &cb, origin);
       if (new_len > prev_len) reflect_sample_change_in_axis(cp);
-      reflect_edit_history_change(cp);
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
       fd = snd_open_read(tempfile);
       mus_file_open_descriptors(fd,
@@ -5439,7 +5436,6 @@ bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, f
       e->edit_type = CHANGE_EDIT;
       e->sound_location = FRAGMENT_SOUND(e, 0);
       e->edpos = cp->edit_ctr - 1;
-      reflect_edit_history_change(cp);
       reflect_sample_change_in_axis(cp);
       ripple_all(cp, 0, 0);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
@@ -5476,7 +5472,6 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, loc
   ED_SOUND(cb) = add_sound_buffer_to_edit_list(cp, vals, (int)num); 
   ed->edit_type = CHANGE_EDIT;
   ed->sound_location = ED_SOUND(cb);
-  reflect_edit_history_change(cp);
   if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
@@ -5716,7 +5711,6 @@ bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool
   new_ed->selection_end = old_ed->selection_end;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
-  reflect_edit_history_change(cp);
   if (!in_as_one_edit) update_graph(cp);
   after_edit(cp);
   return(true);
@@ -5878,7 +5872,6 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   new_ed->selection_end = old_ed->selection_end;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
-  reflect_edit_history_change(cp);
   after_edit(cp);
   return(true);
 }
@@ -6006,7 +5999,6 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
   new_ed->selection_end = old_ed->selection_end;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
-  reflect_edit_history_change(cp);
   after_edit(cp);
   update_graph(cp);
   return(true);
@@ -6451,8 +6443,6 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   ripple_all(cp0, 0, 0);
   ripple_all(cp1, 0, 0);
   swap_marks(cp0, cp1);
-  reflect_edit_history_change(cp0);
-  reflect_edit_history_change(cp1);
   if (cp0->samples[cp0->edit_ctr] != cp0->samples[cp0->edit_ctr - 1])
     reflect_sample_change_in_axis(cp0);
   if (cp1->samples[cp1->edit_ctr] != cp1->samples[cp1->edit_ctr - 1])
@@ -6721,6 +6711,7 @@ void revert_edits(chan_info *cp, void *ptr)
   update_track_lists(cp, old_ctr - 1);
   update_graph(cp);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
+  reflect_enved_spectra_change(cp);
   if (XEN_HOOKED(cp->undo_hook))
     run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
 }
@@ -6748,6 +6739,7 @@ void undo_edit(chan_info *cp, int count)
       update_track_lists(cp, 0);
       update_graph(cp);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
+      reflect_enved_spectra_change(cp);
       if (XEN_HOOKED(cp->undo_hook))
 	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
     }
@@ -6806,6 +6798,7 @@ void redo_edit(chan_info *cp, int count)
 	  update_track_lists(cp, 0);
 	  update_graph(cp);
 	  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
+	  reflect_enved_spectra_change(cp);
 	}
       if (XEN_HOOKED(cp->undo_hook))
 	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
@@ -7147,6 +7140,7 @@ static void check_dangling_readers(snd_fd *fd)
 #endif
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
+/* sf_free is original, free_sf is wrapped form */
 
 static XEN g_sample_reader_at_end(XEN obj) 
 {

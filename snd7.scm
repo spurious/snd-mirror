@@ -13,3 +13,5 @@
 
 (define enved-active-env enved-envelope)
 (define enved-selected-env enved-envelope)
+(define filter-control-env filter-control-envelope)
+(define filter-waveform-color filter-control-waveform-color)

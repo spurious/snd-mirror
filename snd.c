@@ -216,7 +216,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Region_Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Enved_Filter_Order = DEFAULT_ENVED_FILTER_ORDER;
-  ss->Filter_Env_In_Hz = DEFAULT_FILTER_ENV_IN_HZ;
+  ss->Filter_Control_In_Hz = DEFAULT_FILTER_CONTROL_IN_HZ;
   ss->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
   if (DEFAULT_TEMP_DIR != (char *)NULL) ss->Temp_Dir = copy_string(DEFAULT_TEMP_DIR); else ss->Temp_Dir = NULL;
   if (DEFAULT_SAVE_DIR != (char *)NULL) ss->Save_Dir = copy_string(DEFAULT_SAVE_DIR); else ss->Save_Dir = NULL;

@@ -241,18 +241,6 @@ static void env_redisplay_1(bool printing)
 void env_redisplay(void) {env_redisplay_1(false);}
 void env_redisplay_with_print(void) {env_redisplay_1(true);}
 
-void enved_fft_update(void)
-{
-  if ((enved_dialog_is_active()) &&
-      (!(showing_all_envs)))
-    {
-      if ((enved_wave_p(ss)) &&
-	  (enved_target(ss) == ENVED_SPECTRUM) && 
-	  (active_env))
-	enved_show_background_waveform(axis, gray_ap, apply_to_selection, true, false);
-    }
-}
-
 static void enved_reset(void)
 {
   set_enved_clip_p(DEFAULT_ENVED_CLIP_P);
@@ -526,9 +514,8 @@ static void selection_button_pressed(Widget s, XtPointer context, XtPointer info
     XmChangeColor(selectionB, 
 		  (apply_to_selection) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
   set_sensitive(apply2B, true);
-  if ((enved_target(ss) != ENVED_SPECTRUM) && 
-      (enved_wave_p(ss)) && 
-      (!showing_all_envs)) 
+  if ((enved_wave_p(ss)) && 
+      (!showing_all_envs))
     env_redisplay();
 }
 
@@ -811,6 +798,7 @@ static void FIR_click_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   FIR_p = (!FIR_p);
   set_label(w, (FIR_p) ? "fir" : "fft");
+  if (enved_wave_p(ss)) env_redisplay();
 }
 
 Widget create_envelope_editor(void)

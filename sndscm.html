@@ -740,14 +740,14 @@ envelope functions that are often useful:
 </p>
 <pre>
   <em class=emdef>envelope-interp</em> x env <i>base</i>
-  <a class=def name="windowenvelope">window-envelope</a> beg end env
+  <em class=emdef>window-envelope</em> beg end env
   <em class=emdef>map-envelopes</em> func env1 env2
   <em class=emdef>multiply-envelopes</em> env1 env2
   <em class=emdef>add-envelopes</em> env1 env2
   <a class=def name="maxenvelope">max-envelope</a> env
   <em class=emdef>min-envelope</em> env
   <em class=emdef>integrate-envelope</em> env
-  <a class=def name="stretchenvelope">stretch-envelope</a> env old-attack new-attack <i>old-decay new-decay</i>
+  <em class=emdef>stretch-envelope</em> env old-attack new-attack <i>old-decay new-decay</i>
   <em class=emdef>envelope-last-x</em> env
   <a class=def name="scaleenvelope">scale-envelope</a> env scl <i>(offset 0.0)</i>
   <a class=def name="reverseenvelope">reverse-envelope</a> env
@@ -1122,7 +1122,7 @@ size.  The simpler one is:
 (add-hook! graph-hook 
 	   (lambda (snd chn y0 y1)
 	     (if (and (<a class=quiet href="extsnd.html#sndffting">transform-graph?</a> snd chn) 
-                      (= (<a class=quiet href="extsnd.html#lfftstyle">transform-graph-type</a> snd chn) graph-once))
+                      (= (<a class=quiet href="extsnd.html#lfftstyle">transform-graph-type</a> snd chn) <a class=quiet href="extsnd.html#lfftstyle">graph-once</a>))
 		 (begin
 		   (set! (<a class=quiet href="extsnd.html#lfftsize">transform-size</a> snd chn)
 			 (expt 2 (ceiling 
@@ -1527,8 +1527,8 @@ convenient if they were in one file.
 
   <a class=def name="mixchannel">mix-channel</a> filedat #:optional beg dur snd chn edpos
   <a class=def name="insertchannel">insert-channel</a> filedat #:optional beg dur snd chn edpos
-  <a class=def name="redochannel">redo-channel</a> #:optional (edits 1) snd chn
-  <a class=def name="undochannel">undo-channel</a> #:optional (edits 1) snd chn
+  <em class=emdef>redo-channel</em> #:optional (edits 1) snd chn
+  <em class=emdef>undo-channel</em> #:optional (edits 1) snd chn
 
   <a class=def name="anyenvchannel">any-env-channel</a> env func #:optional beg dur snd chn edpos
   <a class=def name="sineramp">sine-ramp</a> a0 a1 #:optional beg dur snd chn edpos
@@ -2084,7 +2084,7 @@ functions (e.g. draw-bass-clef) becomes a Snd/Scheme procedure of the form
 at position (100 100) of size 50; since the <i>style</i> argument defaults to
 #f, the clef is displayed as a filled polygon; use #t to get an outline of
 the clef instead.  You need CMN, or at least the CMN file cmn-glyphs.lisp
-before loading this file.
+before loading this file, and Rick Taube's loop.scm (from Common Music).
 </p>
 <img src="sndcmn.png" alt="Snd with music symbols">
 <br>

@@ -806,8 +806,8 @@ bool xen_integer_p(XEN a);
 #define XEN_HOOK_PROCEDURES(a)          ((xen_rb_is_hook_p(a)) ? xen_rb_hook_to_a(a) : ((XEN_NULL_P(a)) ? Qnil : XEN_LIST_1(a)))
 #define XEN_CLEAR_HOOK(a)               ((xen_rb_is_hook_p(a)) ? xen_rb_hook_reset_hook(a) : (a = Qnil))
 #define XEN_HOOKED(a)                   XEN_NOT_NULL_P(XEN_HOOK_PROCEDURES(a))
-#define XEN_VARIABLE_SET(a, b)          a = b
-#define XEN_VARIABLE_REF(a)             a
+#define XEN_VARIABLE_SET(a, b)          rb_gv_set(xen_scheme_global_variable_to_ruby(a), b)
+#define XEN_VARIABLE_REF(a)             rb_gv_get(xen_scheme_global_variable_to_ruby(a))
 
 #define XEN_VECTOR_ELEMENTS(a)          RARRAY(a)->ptr
 #define XEN_VECTOR_LENGTH(Arg)          RARRAY(Arg)->len

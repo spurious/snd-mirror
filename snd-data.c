@@ -122,20 +122,13 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
 static chan_info *free_chan_info(chan_info *cp)
 {
   /* this does not free the associated widgets -- they are merely unmanaged */
-#if DEBUGGING
-  if (cp->edit_hook_checked) 
-    {
-      fprintf(stderr, "%s[%d] edit hook set", (cp->sound) ? (cp->sound->short_filename) : "some sound", cp->chan);
-      /* XEN_ERROR(NO_SUCH_EDIT, XEN_LIST_1(C_TO_XEN_STRING("yow"))); */
-    }
-#endif
   cp->active = false;
   /* need an indication right away that this channel is being deleted -- during free_snd_info (close-sound),
    *   an error may occur (an edit list temp file might have vanished for example), and normally Snd
    *   attempts to post an error message in the sound's minibuffer.  To force this out, we have to
    *   call XmUpdate or equivalent, which can cause all the sound's channels to attempt to redisplay;
    *   since the one causing the error is half-deallocated, trouble can ensue.  So both the channel
-   *   and the sound have "active" flags that are 1 only when everything is ship-shape.
+   *   and the sound have "active" flags that are true only when everything is ship-shape.
    */
   chan_info_cleanup(cp);
   cp->squelch_update = true;
@@ -153,6 +146,7 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
   if (cp->ptrees) free_ptree_list(cp);
+  if (cp->enved_spectra) free_enved_spectra(cp);
   free_mark_list(cp, -1);
   free_mixes(cp);
   cp->sound = NULL;  /* a backpointer */
@@ -236,6 +230,8 @@ void initialize_control_panel(snd_info *sp)
   sp->reverb_control_decay = reverb_control_decay(ss);
   sp->speed_control_tones = speed_control_tones(ss);
   sp->speed_control_style = speed_control_style(ss);
+  sp->speed_control_numerator = 1;
+  sp->speed_control_denominator = 1;
   sp->last_reverb_control_scale = 0.0;
   sp->saved_reverb_control_scale = 0.0;
   sp->reverb_control_length = DEFAULT_REVERB_CONTROL_LENGTH;
@@ -243,6 +239,10 @@ void initialize_control_panel(snd_info *sp)
   sp->saved_reverb_control_length = 0.0;
   sp->filter_control_order = DEFAULT_FILTER_CONTROL_ORDER;
   sp->filter_control_in_dB = DEFAULT_FILTER_CONTROL_IN_DB;
+  sp->filter_control_in_hz = DEFAULT_FILTER_CONTROL_IN_HZ;
+  if (sp->filter_control_in_hz)
+    sp->filter_control_xmax = (Float)(SND_SRATE(sp) / 2);
+  else sp->filter_control_xmax = 1.0;
   sp->filter_control_changed = false;
   sp->contrast_control_amp = DEFAULT_CONTRAST_CONTROL_AMP;
   sp->saved_controls = NULL;
@@ -288,10 +288,6 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->marking = 0;
   sp->filing = NOT_FILING;
   sp->minibuffer_on = MINI_OFF;
-  if (filter_env_in_hz(ss))
-    sp->filter_control_env_xmax = (Float)(hdr->srate / 2);
-  else sp->filter_control_env_xmax = 1.0;
-  sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   sp->selected_channel = NO_SELECTION;
   sp->playing = 0;
   sp->applying = false;
@@ -373,7 +369,7 @@ void free_snd_info(snd_info *sp)
   sp->short_filename = NULL;                      /* was a pointer into filename */
   if (sp->filename) FREE(sp->filename);
   sp->filename = NULL;
-  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
+  if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
   if (sp->saved_controls) free_controls(sp);
   sp->delete_me = NULL;
   if (sp->name_string) FREE(sp->name_string);

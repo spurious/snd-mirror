@@ -743,7 +743,7 @@ static void make_sonogram_axes(chan_info *cp)
 typedef struct {
   int size;
   mus_fft_window_t wintype;
-  graph_type_t old_style;
+  graph_type_t graph_type;
   bool done;
   void *chan;
   Float *window;
@@ -761,6 +761,42 @@ typedef struct {
 #if (!HAVE_DECL_HYPOT)
 static double hypot(double r, double i) {return(sqrt(r * r + i * i));}
 #endif
+
+void fourier_spectrum(snd_fd *sf, Float *fft_data, int fft_size, int data_len, Float *window)
+{
+  int i;
+  if (window)
+    {
+      for (i = 0; i < data_len; i++)
+	fft_data[i] = window[i] * read_sample_to_float(sf);
+    }
+  else
+    {
+      for (i = 0; i < data_len; i++)
+	fft_data[i] = read_sample_to_float(sf);
+    }
+  if (data_len < fft_size) 
+    memset((void *)(fft_data + data_len), 0, (fft_size - data_len) * sizeof(Float));
+#if HAVE_FFTW || HAVE_FFTW3
+  {
+    int j;
+    mus_fftw(fft_data, fft_size, 1);
+    fft_data[0] = fabs(fft_data[0]);
+    fft_data[fft_size / 2] = fabs(fft_data[fft_size / 2]);
+    for (i = 1, j = fft_size - 1; i < fft_size / 2; i++, j--) 
+      fft_data[i] = hypot(fft_data[i], fft_data[j]);
+  }
+#else
+  {
+    Float *idata;
+    idata = (Float *)CALLOC(fft_size, sizeof(Float));
+    mus_fft(fft_data, idata, fft_size, 1);
+    for (i = 0; i < fft_size; i++) 
+      fft_data[i] = hypot(fft_data[i], idata[i]);
+    FREE(idata);
+  }
+#endif
+}
 
 static void apply_fft(fft_state *fs)
 {
@@ -802,30 +838,7 @@ static void apply_fft(fft_state *fs)
   switch (cp->transform_type)
     {
     case FOURIER:
-      window = fs->window;
-      for (i = 0; i < data_len; i++)
-	fft_data[i] = window[i] * read_sample_to_float(sf);
-      if (data_len < fs->size) 
-	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
-#if HAVE_FFTW || HAVE_FFTW3
-      {
-	int j;
-	mus_fftw(fft_data, fs->size, 1);
-	fft_data[0] = fabs(fft_data[0]);
-	fft_data[fs->size / 2] = fabs(fft_data[fs->size / 2]);
-	for (i = 1, j = fs->size - 1; i < fs->size / 2; i++, j--) 
-	  fft_data[i] = hypot(fft_data[i], fft_data[j]);
-      }
-#else
-      {
-	Float *idata;
-	idata = (Float *)CALLOC(fs->size, sizeof(Float));
-	mus_fft(fft_data, idata, fs->size, 1);
-	for (i = 0; i < fs->size; i++) 
-	  fft_data[i] = hypot(fft_data[i], idata[i]);
-	FREE(idata);
-      }
-#endif
+      fourier_spectrum(sf, fft_data, fs->size, data_len, fs->window);
       break;
     case WAVELET:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
@@ -1124,7 +1137,7 @@ static fft_state *make_fft_state(chan_info *cp, bool simple)
 	  (fs->lfreq == cp->fft_log_frequency) &&
 	  (fs->pad_zero == cp->zero_pad) &&
 	  (fs->cutoff == cp->spectro_cutoff) &&
-	  (fs->old_style == cp->transform_graph_type) &&
+	  (fs->graph_type == cp->transform_graph_type) &&
 	  (fs->wavelet_choice == cp->wavelet_type) &&
 	  (fs->edit_ctr == cp->edit_ctr))
 	reuse_old = true;
@@ -1145,7 +1158,7 @@ static fft_state *make_fft_state(chan_info *cp, bool simple)
       fs->edit_ctr = cp->edit_ctr;
       fs->wavelet_choice = cp->wavelet_type;
       fs->transform_type = cp->transform_type;
-      fs->old_style = cp->transform_graph_type;
+      fs->graph_type = cp->transform_graph_type;
       fs->beta = cp->fft_window_beta;
     }
   fs->done = reuse_old;
@@ -1250,7 +1263,6 @@ void single_fft(chan_info *cp, bool dpy)
   if (cp->transform_size < 2) return;
   one_fft(make_fft_state(cp, true));
   if (!dpy) display_channel_fft_data(cp);
-  enved_fft_update();
 }
 
 
@@ -1284,7 +1296,7 @@ typedef struct {
   int msg_ctr;
   int edit_ctr;
   Float old_scale;
-  graph_type_t old_style;
+  graph_type_t graph_type;
   int transform_type, w_choice;
   bool old_logxing;
   bool minibuffer_needs_to_be_cleared;
@@ -1447,10 +1459,10 @@ static int set_up_sonogram(sonogram_state *sg)
 	  si->active_slices = si->target_slices;
 	  sg->old_scale = lsg->old_scale;
 	  si->scale = sg->old_scale;
-	  if ((lsg->old_style != cp->transform_graph_type) ||
+	  if ((lsg->graph_type != cp->transform_graph_type) ||
 	      (lsg->old_logxing != cp->fft_log_frequency))
 	    make_sonogram_axes(cp);                    /* may need to fixup frequency axis labels */
-	  sg->old_style = cp->transform_graph_type;
+	  sg->graph_type = cp->transform_graph_type;
 	  sg->old_logxing = cp->fft_log_frequency;
 	  return(2);                                   /* so skip the ffts! */
 	}

@@ -3991,8 +3991,8 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
    * Scheme world, it's a procedure of one arg, the current read direction: 
    *
    * funcall1 is input-func for clm.c make args, or the 2nd arg to the gen (mus_src(gen, input))
-   *    it is called in C (*input)(environ, dir)
-   *    environ in mus_xen *gn
+   *    it is called in C (*input)(closure, dir)
+   *    closure in mus_xen *gn
    *      its gn->vcts array [INPUT_FUNCTION] = scm procedure object (if any) else EMPTY_LIST
    *      this is set in the gen call if it's passed there, else in the make-gen call
    * so we get here via *funcall1(gn, dir)
@@ -4312,11 +4312,11 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
 /* ---------------- phase-vocoder ---------------- */
 
 /* pvedit pvanalyze pvsynthesize:
- * these three functions provide a path for the call (clm.c) (*(pv->edit))(pv->environ)
+ * these three functions provide a path for the call (clm.c) (*(pv->edit))(pv->closure)
  *   which is calling a user-supplied edit function within the particular phase-vocoder
- *   generator's context.  "environ" is an uninterpreted void pointer passed in by the
+ *   generator's context.  "closure" is an uninterpreted void pointer passed in by the
  *   user, and passed here as the edit function argument.  In this file, pv->edit is
- *   &pvedit, and (void *)ptr is environ; in make_phase_vocoder we set environ to be
+ *   &pvedit, and (void *)ptr is closure; in make_phase_vocoder we set closure to be
  *   the mus_xen object that shadows the phase-vocoder generator, with two special
  *   pointers in the vcts field: vcts[EDIT_FUNCTION] is the (Scheme-side) function
  *   passed by the user, and vcts[SELF_WRAPPER] is a pointer to the (Scheme-relevant)

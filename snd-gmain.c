@@ -24,7 +24,7 @@
 #define RED_COLOR            "red"
 #define YELLOW_COLOR         "yellow"
 #define TEXT_FOCUS_COLOR     "white"
-#define FILTER_WAVEFORM_COLOR "blue"
+#define FILTER_CONTROL_WAVEFORM_COLOR "blue"
 #define PUSHED_BUTTON_COLOR  "lightsteelblue1"
 #define SASH_COLOR           "lightgreen"
 
@@ -231,7 +231,7 @@ static void setup_gcs(void)
 
   sx->fltenv_data_gc = gdk_gc_new(wn);
   gdk_gc_set_background(sx->fltenv_data_gc, sx->basic_color);
-  gdk_gc_set_foreground(sx->fltenv_data_gc, sx->filter_waveform_color);
+  gdk_gc_set_foreground(sx->fltenv_data_gc, sx->filter_control_waveform_color);
   gdk_gc_set_function(sx->fltenv_data_gc, GDK_COPY);
 
   initialize_colormap();
@@ -497,7 +497,7 @@ void snd_doit(int argc, char **argv)
   sx->selection_color =       get_color(SELECTION_COLOR,       "gray80", NULL, false);
   sx->mix_color =             get_color(MIX_COLOR,             NULL, NULL, false);
   sx->enved_waveform_color =  get_color(ENVED_WAVEFORM_COLOR,  NULL, NULL, false);
-  sx->filter_waveform_color = get_color(FILTER_WAVEFORM_COLOR, NULL, NULL, false);
+  sx->filter_control_waveform_color = get_color(FILTER_CONTROL_WAVEFORM_COLOR, NULL, NULL, false);
   sx->listener_color =        get_color(LISTENER_COLOR,        NULL, NULL, true);
   sx->listener_text_color =   get_color(LISTENER_TEXT_COLOR,   NULL, NULL, true);
   sx->graph_color =           get_color(GRAPH_COLOR,           NULL, NULL, true);

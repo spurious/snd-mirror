@@ -454,7 +454,7 @@
 		     (lambda (w data)
 		       (help-dialog 
 			"Normalize"
-			"Normalize scales amplitude to the normalize amount.\n\ Move the slider to change the scaling amount."))
+			"Normalize scales amplitude to the normalize amount.\n Move the slider to change the scaling amount."))
 		     (lambda (w data)
 		       (set! normalize-amount initial-normalize-amount)
 		       (set! (.value (GTK_ADJUSTMENT (car sliders))) normalize-amount)
@@ -887,7 +887,7 @@ the modulation frequency, and the echo amplitude."))
 			       (filter-selection (make-butter-band-pass band-pass-freq band-pass-bw)))))
 		     (lambda (w data)
 		       (help-dialog "Band-pass filter"
-				    "Butterworth band-pass filter.\n\ Move the sliders to change the center frequency and bandwidth."))
+				    "Butterworth band-pass filter.\n Move the sliders to change the center frequency and bandwidth."))
 		     (lambda (w data)
 		       (set! band-pass-freq initial-band-pass-freq)
 		       (set! (.value (GTK_ADJUSTMENT (list-ref sliders 0))) (scale-log->linear 20 band-pass-freq 22050))
@@ -945,7 +945,7 @@ the modulation frequency, and the echo amplitude."))
 			       (filter-selection (make-butter-band-reject notch-freq notch-bw)))))
 		     (lambda (w data)
 		       (help-dialog "Band-reject filter"
-				    "Butterworth band-reject filter.\n\ Move the sliders to change the center frequency and bandwidth."))
+				    "Butterworth band-reject filter.\n Move the sliders to change the center frequency and bandwidth."))
 		     (lambda (w data)
 		       (set! notch-freq initial-notch-freq)
 		       (set! (.value (GTK_ADJUSTMENT (list-ref sliders 0))) (scale-log->linear 20 notch-freq 22050))
@@ -1000,7 +1000,7 @@ the modulation frequency, and the echo amplitude."))
 			       (filter-selection (make-butter-high-pass high-pass-freq)))))
 		     (lambda (w data)
 		       (help-dialog "High-pass filter"
-				    "Butterworth high-pass filter.\n\ Move the slider to change the high-pass cutoff frequency."))
+				    "Butterworth high-pass filter.\n Move the slider to change the high-pass cutoff frequency."))
 		     (lambda (w data)
 		       (set! high-pass-freq initial-high-pass-freq)
 		       (set! (.value (GTK_ADJUSTMENT (list-ref sliders 0))) (scale-log->linear 20 high-pass-freq 22050))
@@ -1048,7 +1048,7 @@ the modulation frequency, and the echo amplitude."))
 			       (filter-selection (make-butter-low-pass low-pass-freq)))))
 		     (lambda (w data)
 		       (help-dialog "Low-pass filter"
-				    "Butterworth low-pass filter.\n\ Move the slider to change the low-pass cutoff frequency."))
+				    "Butterworth low-pass filter.\n Move the slider to change the low-pass cutoff frequency."))
 		     (lambda (w data)
 		       (set! low-pass-freq initial-low-pass-freq)
 		       (set! (.value (GTK_ADJUSTMENT (list-ref sliders 0))) (scale-log->linear 20 low-pass-freq 22050))
@@ -1403,7 +1403,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 		     (lambda (w data)
 		       (help-dialog "Sample rate conversion"
 				    "Move the slider to change the sample rate.\n\
-Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
+Values greater than 1.0 speed up file play,\n negative values reverse it."))
 		     (lambda (w data)
 		       (set! src-amount initial-src-amount)
 		       (set! (.value (GTK_ADJUSTMENT (car sliders))) src-amount)
@@ -1974,7 +1974,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		     (lambda (w data)
 		       (help-dialog "Convolution"
 				    "Very simple convolution. Move the sliders to set the numbers of the soundfiles\
-to be convolved and the amount for the amplitude scaler.\n\ Output will be scaled to floating-point values, resulting\
+to be convolved and the amount for the amplitude scaler.\n Output will be scaled to floating-point values, resulting\
 in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output.\n\
 The convolution data file typically defines a natural reverberation source, and the output from this effect\
 can provide very striking reverb effects. You can find convolution data files on sites listed at\

@@ -6216,7 +6216,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_channel_properties_reversed, g_set_channel_prop
 
 static XEN g_edits(XEN snd_n, XEN chn_n)
 {
-  #define H_edits "(" S_edits " (snd #f) (chn #f)): a list of undoable and redoable edits in snd's channel chn"
+  #define H_edits "(" S_edits " (snd #f) (chn #f)): -> (list undoable-edits redoable-edits) in snd's channel chn"
   chan_info *cp;
   int i;
   ASSERT_CHANNEL(S_edits, snd_n, chn_n, 1);

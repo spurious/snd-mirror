@@ -168,45 +168,8 @@
 	 (apply (setter sound-comment) (list #f snd))
 	 (apply (setter sound-comment) (list snd val))))))
 
-(use-modules (ice-9 syncase))
-(define-syntax progn
-  (syntax-rules ()
-    ((progn) #f)
-    ((progn <body> ...)
-     (begin <body> ...)) ; but "begin" isn't guaranteed to return its last form?
-    ))
-(define-syntax loop
-  ;; how to handle multiple, unordered phrases?
-  (syntax-rules (for from below to by downto do)
-    ((loop for <counter> from <start> below <finish> do <body> ...)
-     (do ((<counter> <start> (+ <counter> 1)))
-	 ((>= <counter> <finish>) #f)
-       <body> ...))
-    ((loop for <counter> from <start> below <finish> by <step> do <body> ...)
-     (do ((<counter> <start> (+ <counter> <step>)))
-	 ((>= <counter> <finish>))
-       <body> ...))
-    ((loop for <counter> from <start> to <finish> do <body> ...)
-     (do ((<counter> <start> (+ <counter> 1)))
-	 ((> <counter> <finish>) #f)
-       <body> ...))
-    ((loop for <counter> from <start> to <finish> by <step> do <body> ...)
-     (do ((<counter> <start> (+ <counter> <step>)))
-	 ((> <counter> <finish>) #f)
-       <body> ...))
-    ((loop for <counter> from <start> downto <finish> do <body> ...)
-     (do ((<counter> <start> (- <counter> 1)))
-	 ((< <counter> <finish>) #f)
-       <body> ...))
-    ((loop for <counter> from <start> do <body> ...)
-     (do ((<counter> <start> (+ <counter> 1)))
-	 (() #f)
-       <body> ...))
-    ;; across in on, func as step? (#'cddr)
-    ))
-
-;(load-from-path "support.scm") ; Rick Taube's loop etc
-;(load-from-path "iter.scm")
+(load "loop.scm") ; Rick's loop implementation (cm/src/loop.scm)
+(define progn begin)
 
 (load-from-path "cmn-glyphs.lisp")
 

@@ -3,13 +3,11 @@
 /* enved-in-dB should be enved-in-dB? (similarly filter-control-in-dB?),
    also ask-before-overwrite, auto-resize, data-clipped, dac-is-running,
    dac-combines-channels, cursor-follows-play, emacs-style-save-as,
-   filter-env-in-hz, selection-creates-region, squelch-update,
+   filter-control-in-hz, selection-creates-region, squelch-update,
    verbose-cursor, with-background-processes, with-mix-tags,
    with-relative-panes, with-gl, mus-file-data-clipped -- too many!
  */
-/* filter-control-env -> envelope, similarly filter-env-in-hz (axis?)
-   mix-amp-env track-amp-env
- */
+/* mix-amp-env track-amp-env */
 
 #define ENVED_DOT_SIZE 10
 
@@ -20,10 +18,11 @@
            use enved-proc if ENVELOPE_LAMBDA in display and everywhere else
 */
 /* TODO: add env name field to mix/track enveds (undo/redo? lin/exp/proc?) */
-/* TODO: add waveform display to mix/track enveds */
 /* TODO: xm-enved packaged enved access (widgets and callbacks) */
-/* TODO: clip/dB buttons in mix/track dialogs (exp scale?) */
+/* TODO: clip/dB/wave buttons in track dialogs (exp scale?) */
 /* TODO: incorporate env props throughout Snd (env.scm?) */
+
+/* TODO: in ruby, view envs gets the env val, but edit env doesn't?? */
 
 
 #if HAVE_GUILE
@@ -458,6 +457,7 @@ env_editor *new_env_editor(void)
   edp->click_to_delete = false;
   edp->edited = false;
   edp->clip_p = true;
+  edp->in_dB = false;
   return(edp);
 }
 
@@ -1046,6 +1046,165 @@ void alert_envelope_editor(char *name, env *val)
 
 /* TODO: bring out snd/chn or mix/track? (per chan) -- how to show track wave? (display_mix_waveform in snd-mix) */
 
+
+typedef struct {
+  int size;
+  Float *data;
+  Float scale;
+} enved_fft;
+
+typedef struct {
+  int size;
+  enved_fft **ffts;
+} enved_ffts;
+
+static enved_fft *free_enved_fft(enved_fft *ef)
+{
+  if (ef)
+    {
+      if (ef->data) FREE(ef->data);
+      ef->data = NULL;
+      FREE(ef);
+    }
+  return(NULL);
+}
+
+void free_enved_spectra(chan_info *cp)
+{
+  if (cp->enved_spectra)
+    {
+      enved_ffts *efs;
+      int i;
+      efs = (enved_ffts *)(cp->enved_spectra);
+      for (i = 0; i < efs->size; i++)
+	efs->ffts[i] = free_enved_fft(efs->ffts[i]);
+      FREE(efs->ffts);
+      FREE(efs);
+      cp->enved_spectra = NULL;
+    }
+}
+
+void release_dangling_enved_spectra(chan_info *cp, int edpt)
+{
+  if (cp->enved_spectra)
+    {
+      enved_ffts *efs;
+      int i;
+      efs = (enved_ffts *)(cp->enved_spectra);
+      if (edpt < efs->size)
+	for (i = edpt; i < efs->size; i++)
+	  efs->ffts[i] = free_enved_fft(efs->ffts[i]);
+    }
+}
+
+void reflect_enved_spectra_change(chan_info *cp)
+{
+  if ((cp->enved_spectra) && 
+      (cp == current_channel()) &&
+      (enved_target(ss) == ENVED_SPECTRUM))
+    env_redisplay();
+}
+
+static enved_fft *new_enved_fft(chan_info *cp)
+{
+  enved_ffts *efs;
+  if (cp->enved_spectra == NULL)
+    cp->enved_spectra = (void *)CALLOC(1, sizeof(enved_ffts));
+  efs = (enved_ffts *)(cp->enved_spectra);
+  if (efs->size <= cp->edit_ctr)
+    {
+      if (efs->ffts)
+	{
+	  int i, old_size;
+	  old_size = efs->size;
+	  efs->ffts = (enved_fft **)REALLOC(efs->ffts, (cp->edit_ctr + 1) * sizeof(enved_fft *));
+	  for (i = old_size; i < cp->edit_ctr; i++) efs->ffts[i] = NULL;
+	}
+      else efs->ffts = (enved_fft **)CALLOC(cp->edit_ctr + 1, sizeof(enved_fft *));
+      efs->size = cp->edit_ctr + 1;
+    }
+  if (efs->ffts[cp->edit_ctr] == NULL)
+    efs->ffts[cp->edit_ctr] = (enved_fft *)CALLOC(1, sizeof(enved_fft));
+  return(efs->ffts[cp->edit_ctr]);
+}
+
+#define DEFAULT_ENVED_MAX_FFT_SIZE 1048576
+static int enved_max_fft_size = DEFAULT_ENVED_MAX_FFT_SIZE;
+
+static enved_fft *make_enved_spectrum(chan_info *cp)
+{
+  enved_fft *ef;
+  ef = new_enved_fft(cp);
+  if ((ef) && (ef->size == 0)) /* otherwise it is presumably already available */
+    {
+      int i, fsize, data_len;
+      Float data_max = 0.0;
+      snd_fd *sf;
+      sf = init_sample_read(0, cp, READ_FORWARD);
+      if (sf == NULL) return(NULL);
+      data_len = (int)(CURRENT_SAMPLES(cp)); /* known to be int here (size check below) */
+      if (data_len == 0) return(NULL);
+      fsize = snd_2pow2(data_len);
+      if (fsize <= enved_max_fft_size)
+	{
+	  ef->size = fsize;
+	  ef->data = (Float *)MALLOC(fsize * sizeof(Float));
+	}
+      fourier_spectrum(sf, ef->data, ef->size, data_len, NULL);
+      free_snd_fd(sf);
+      for (i = 0; i < ef->size; i++) 
+	if (ef->data[i] > data_max) 
+	  data_max = ef->data[i];
+      if (data_max > 0.0) ef->scale = data_max;
+    }
+  return(ef);
+}
+
+static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
+{
+  if (ef)
+    {
+      Float incr, x = 0.0;
+      int i = 0, j = 0, hisamp;
+      Float samples_per_pixel, xf = 0.0, ina, ymax;
+      ap->losamp = 0;
+      ap->hisamp = ef->size - 1;
+      ap->y0 = 0.0;
+      ap->y1 = ef->scale;
+      ap->x0 = 0.0;
+      ap->x1 = SND_SRATE(cp->sound) / 2;
+      init_axis_scales(ap);
+      hisamp = (int)(ef->size / 2);
+      incr = (Float)SND_SRATE(cp->sound) / (Float)(ef->size);
+      samples_per_pixel = (Float)((double)hisamp / (Float)(ap->x_axis_x1 - ap->x_axis_x0));
+      if (samples_per_pixel < 4.0)
+	{
+	  for (i = 0, x = 0.0; i < hisamp; i++, x += incr)
+	    set_grf_point(grf_x(x, ap), i, grf_y(ef->data[i], ap));
+	  draw_grf_points(1, ap->ax, i, ap, 0.0, GRAPH_LINES);
+	}
+      else
+	{
+	  ymax = -1.0;
+	  while (i < hisamp)
+	    {
+	      ina = ef->data[i++];
+	      if (ina > ymax) ymax = ina;
+	      xf += 1.0;
+	      if (xf > samples_per_pixel)
+		{
+		  set_grf_point(grf_x(x, ap), j++, grf_y(ymax, ap));
+		  x += (incr * samples_per_pixel); 
+		  xf -= samples_per_pixel;
+		  ymax = -1.0;
+		}
+	    }
+	  draw_grf_points(1, ap->ax, j, ap, 0.0, GRAPH_LINES);
+	}
+    }
+}
+
+
 void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, bool printing)
 {
   int srate, pts = 0;
@@ -1055,7 +1214,6 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
   axis_info *active_ap = NULL;
   chan_info *active_channel = NULL;
   if (!(any_selected_sound())) return;
-  set_grf_points(-1, 0, 0, 0); /* this is a kludge to handle one-sided graphs (snd-xchn.c) */
   gray_ap->x_axis_x0 = ap->x_axis_x0;
   gray_ap->x_axis_x1 = ap->x_axis_x1;
   gray_ap->y_axis_y0 = ap->y_axis_y0;
@@ -1066,23 +1224,11 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
   active_channel->printing = printing;
   if (show_fft)
     {
-      if (!apply_to_selection) /* TODO: fft selection if necessary */
-	{
-	  /* TODO: make this fft happen automatically */
-	  /* TODO: if click fft->flt, erase flt freq respo, else add */
-	  if ((active_channel->fft) &&
-	      (active_channel->transform_size >= CURRENT_SAMPLES(active_channel)))
-	    {
-	      gray_ap->losamp = 0;
-	      gray_ap->hisamp = active_channel->transform_size - 1;
-	      gray_ap->y0 = 0.0;
-	      gray_ap->y1 = 1.0;
-	      gray_ap->x0 = 0.0;
-	      gray_ap->x1 = SND_SRATE(active_channel->sound) / 2;
-	      init_axis_scales(gray_ap);
-	      make_fft_graph(active_channel, gray_ap, gray_ap->ax, WITHOUT_HOOK);
-	    }
-	}
+      if (enved_max_fft_size < transform_size(ss)) enved_max_fft_size = transform_size(ss);
+      if (enved_max_fft_size < active_channel->transform_size) enved_max_fft_size = active_channel->transform_size;
+      if ((!apply_to_selection) &&
+	  (CURRENT_SAMPLES(active_channel) <= enved_max_fft_size))
+	display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
     }
   else
     {
@@ -1361,10 +1507,6 @@ and 'base' into the envelope editor."
       e->base = b;
     }
   alert_envelope_editor(XEN_TO_C_STRING(name), e);
-
-  /* TODO: if already defined, define-envelope should just set to new value/properties (current code works) */
-  /* TODO: define_envelope doesn't seem to work in Ruby? define_envelope("hiho", [0, 0, 1, 1], 32.0) */
-
   XEN_DEFINE_VARIABLE(XEN_TO_C_STRING(name), temp, data); /* already gc protected */
 #if HAVE_GUILE
   /* add properties */
@@ -1403,19 +1545,19 @@ void add_or_edit_symbol(char *name, env *val)
   /* called from envelope editor -- pass new definition into scheme */
 #if HAVE_RUBY
   /* TODO: in Ruby, save in xenv doesn't update properties */
-  /* TODO: isn't there a simple way in Ruby to set a variable's value? define a variable? seems dumb to use eval string */
-  /*   C_STRING_TO_XEN_SYMBOL(name) then sym = env_to_xen(val) (or XEN_VARIABLE_SET)?
-   */
+  XEN_VARIABLE_SET(name, env_to_xen(val));
+#if 0
   char *buf, *tmpstr = NULL;
   int len;
   if (!val) return;
   tmpstr = env_to_string(val);
   len = snd_strlen(tmpstr) + snd_strlen(name) + 32;
   buf = (char *)CALLOC(len, sizeof(char));
-  mus_snprintf(buf, len, "%s = %s", name, tmpstr);
+  mus_snprintf(buf, len, "%s = %s", name, tmpstr); /* this is wrong anyway -- should use xen_scheme_global_variable_to_ruby */
   if (tmpstr) FREE(tmpstr);
   snd_catch_any(eval_str_wrapper, buf, buf);
   FREE(buf);
+#endif
 #else
   XEN e;
   if (!val) return;
@@ -1624,7 +1766,6 @@ choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
   n = (enved_target_t)XEN_TO_C_INT(val);
   if ((n < ENVED_AMPLITUDE) || (n > ENVED_SRATE))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
-
   set_enved_target(n); 
   return(C_TO_XEN_INT((int)enved_target(ss)));
 }

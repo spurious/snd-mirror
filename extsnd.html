@@ -22,6 +22,9 @@
 </style>
 </head>
 
+<!-- SOMEDAY: we could use onmouseover to post the help string for each function (see edits below) -->
+<!-- SOMEDAY:   similar status string in Snd listener -->
+
 <body bgcolor=white>
 
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
@@ -204,7 +207,7 @@ Snd does not exit.</p>
 (define <A NAME="unsavededitsp">unsaved-edits?</A>
   (lambda (lst)
     (if (not (null? lst))
-	(if (&gt; (car (<a class=quiet href="#sndedits">edits</a> (car lst))) 0)
+	(if (&gt; (car (<a class=quiet href="#sndedits" onmouseout="window.status='';return true;" onmouseover="window.status='(edits snd chn) -> (list undoable-edits redoable-edits)';return true">edits</a> (car lst))) 0)
 	    (begin
 	      (<a class=quiet href="#sndreportinminibuffer">report-in-minibuffer</a> "there are unsaved edits")
 	      #t)
@@ -409,13 +412,6 @@ See also the <a href="grfsnd.html#epsresource">epsFile</a> resource.
 <tr><td colspan=2><code><a class=def name="epssize">eps-size</a></code></td>
 <td><code>1.0</code></td></tr>
 <tr><td></td><td colspan=2>scaler used in snd.eps (Print command) for overall picture size.  
-</td></tr>
-<tr><td colspan=3></td></tr>
-
-<!-- filter-env-in-hz -->
-<tr><td colspan=2><code><a class=def name="filterenvinhz">filter-env-in-hz</a></code></td>
-<td><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>If #t, filter env (sound control panel) x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -711,8 +707,8 @@ and filled graphs:
     (if (&gt; (<a class=quiet href="#channels">channels</a> snd) 1)
         (begin
           (set! (<a class=quiet href="#sndsyncing">sync</a> snd) (1+ snd)) ; 0 = #f
-          (set! (<a class=quiet href="#channelstyle">channel-style</a> snd) channels-combined)
-          (set! (<a class=quiet href="#graphstyle">graph-style</a> snd) graph-filled)))))
+          (set! (<a class=quiet href="#channelstyle">channel-style</a> snd) <a class=quiet href="#channelstyle">channels-combined</a>)
+          (set! (<a class=quiet href="#graphstyle">graph-style</a> snd) <a class=quiet href="#graphstyle">graph-filled</a>)))))
 </pre></td></tr></table>
 <br>
 See also <i>C-x b support</i> in examp.scm, <i>remember-sound-state</i> in extensions.scm, enved.scm, and various
@@ -859,7 +855,7 @@ This provides an opportunity to set sndlib prescaling values:
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>during-open-hook</em>
   (lambda (fd name reason)
-    (if (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> name) mus-raw)
+    (if (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#sndheadertype">mus-raw</a>)
         (<a href="#musfileprescaler">(set! (mus-file-prescaler</a> fd) 500.0)))))
 </pre></td></tr></table></td></tr>
 
@@ -1008,7 +1004,7 @@ just-sounds button is set. Return #f to filter out <i>filename</i>.
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>just-sounds-hook</em>
   (lambda (name) ;display only stereo files in file selection dialog
-    (and (not (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> name) mus-raw))
+    (and (not (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#sndheadertype">mus-raw</a>))
          ;;any unrecognized file is considered "raw"
          (= (<a class=quiet href="#soundchans">mus-sound-chans</a> name) 2))))
 </pre></td></tr></table></td></tr>
@@ -1047,8 +1043,8 @@ If it returns a function (of no arguments), that function is called rather than 
 	   (lambda (snd chn)
 	     (lambda ()
 	       (<a class=quiet href="#drawstring">draw-string</a> "hi" 
-			    (<a class=quiet href="#x2position">x-&gt;position</a> 0.5 snd chn lisp-graph) 
-			    (<a class=quiet href="#y2position">y-&gt;position</a> 0.0 snd chn lisp-graph)
+			    (<a class=quiet href="#x2position">x-&gt;position</a> 0.5 snd chn <a class=quiet href="#y2position">lisp-graph</a>) 
+			    (<a class=quiet href="#y2position">y-&gt;position</a> 0.0 snd chn <a class=quiet href="#y2position">lisp-graph</a>)
 			    snd chn))))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
@@ -1237,7 +1233,7 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (click-to-center snd chn button state x y axis)
   ;; if mouse click in time domain graph, set cursor as normally, but also center the window
-  (if (= axis time-graph)
+  (if (= axis <a class=quiet href="#y2position">time-graph</a>)
       (let ((samp (inexact-&gt;exact (* (<a class=quiet href="#sndsrate">srate</a> snd) (<a class=quiet href="#position2x">position-&gt;x</a> x snd chn)))))
 	(set! (<a class=quiet href="#sndcursor">cursor</a> snd chn) samp)
 	(set! (<a class=quiet href="#sndrightsample">right-sample</a> snd chn) 
@@ -1251,7 +1247,7 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
 ;;; this example disables button 2 -&gt; insert selection
 (add-hook! mouse-click-hook
   (lambda (snd chn button state x y axis)
-    (and (= axis time-graph) (= button 2))))
+    (and (= axis <a class=quiet href="#y2position">time-graph</a>) (= button 2))))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1459,7 +1455,7 @@ If it returns a string (a filename), that file is opened instead of the original
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>open-hook</em>
   (lambda (filename)
-    (if (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> filename) mus-raw)
+    (if (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> filename) <a class=quiet href="#sndheadertype">mus-raw</a>)
         ;; check for "OggS" first word, if found, translate to something Snd can read
 	(if (call-with-input-file filename 
 	      (lambda (fd)
@@ -1490,7 +1486,7 @@ Its result can be a list describing the raw file's attributes (thereby bypassing
 be omitted (location defaults to 0, and length defaults to the file length in bytes).
 If there is more than one function on the hook list, functions after the first get the
 on-going list result (if any) as the <i>current-choices</i> argument (the empty list is the default).
-<br><br><code>(add-hook! open-raw-sound-hook (lambda (file choices) (list 1 44100 mus-lshort)))</code><br><br>
+<br><br><code>(add-hook! open-raw-sound-hook (lambda (file choices) (list 1 44100 <a class=quiet href="#snddataformat">mus-lshort</a>)))</code><br><br>
 Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
 The raw header defaults are stereo, 44100 Hz, big endian short data; these values can be changed in the
 Raw File Dialog, or by calling open-raw-sound with explicit arguments.
@@ -1857,7 +1853,7 @@ called just after an FFT (or spectrum) is calculated.
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (fft-peak snd chn scale)
   (if (and (<a class=quiet href="#sndffting">transform-graph?</a>) 
-           (= (<a class=quiet href="#lfftstyle">transform-graph-type</a>) graph-once))
+           (= (<a class=quiet href="#lfftstyle">transform-graph-type</a>) <a class=quiet href="#lfftstyle">graph-once</a>))
       (<a class=quiet href="#sndreportinminibuffer">report-in-minibuffer</a> 
         (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak">vct-peak</a> (<a class=quiet href="#transformsamples2vct">transform-samples-&gt;vct</a> snd chn))) 
                            (<a class=quiet href="#lfftsize">transform-size</a> snd chn))))))
@@ -2686,7 +2682,8 @@ copy sound-data: <a href="#sounddata2vct">sound-data-&gt;vct</a><br>
 
 <!-- free-sample-reader -->
 <tr><td colspan=2><code><a class=def name="freesamplereader">free-sample-reader</a> (obj)</code></td></tr>
-<tr><td></td><td>release sample-reader <i>obj</i> (any kind of reader).</td></tr>
+<tr><td></td><td>release sample-reader <i>obj</i> (any kind of reader).  You never need to call this
+function because the garbage collector handles the sample-reader object, but it doesn't hurt anything.</td></tr>
 
 <!-- make-mix-sample-reader -->
 <tr><td colspan=2><code><a class=def name="makemixsamplereader">make-mix-sample-reader</a> (mix <i>beg</i>)</code></td></tr>
@@ -4106,7 +4103,7 @@ The following code sets the 'unite' button if the current sound has more than 4 
 (add-hook! after-open-hook 
   (lambda (snd)
     (if (&gt; (<a class=quiet href="#chans">chans</a> snd) 4)
-        (set! (<em class=red>channel-style</em> snd) channels-combined))))
+        (set! (<em class=red>channel-style</em> snd) <a class=quiet href="#channelstyle">channels-combined</a>))))
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -4404,7 +4401,7 @@ If you encounter a sound that is clipping crazily, try changing these settings.
 Some NeXT/Sun (au) header files using the data format for byte-wide data
 assume the byte is unsigned, whereas most others assume it is signed.  Sndlib
 treats it as signed by default, so to make one of the unsigned-byte files playable,
-<br><br><code>(set! (data-format) mus-ubyte)</code>.<br><br>
+<br><br><code>(set! (data-format) <a class=quiet href="#snddataformat">mus-ubyte</a>)</code>.<br><br>
 Float data is another source of confusion;
 there is apparently no agreement on whether the data is between -1.0 and 1.0, or -32768.0 and 32767.0 or anything else.
 In this case, Snd assumes -1.0 to 1.0 (except in one special case involving IRCAM headers), and you may have to set y-bounds to see the actual data.
@@ -5367,7 +5364,7 @@ and friends if you want to ignore the header).
   (lambda (mpgfile rawfile chans)
     "(<a class=quiet href="sndscm.html#exmpg">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
     (system (format #f "mpg123 -s ~A &gt; ~A" mpgfile rawfile))
-    (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (little-endian?) mus-lshort mus-bshort))))
+    (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (little-endian?) mus-lshort <a class=quiet href="#snddataformat">mus-bshort</a>))))
 </pre></td></tr></table>
 <br>There's a more elaborate version of this function in examp.scm.  See also <a href="#openrawsoundhook">open-raw-sound-hook</a>.
 </td></tr>
@@ -5467,7 +5464,7 @@ This code binds the "p" key to play all channels of the current sound from the c
 (<a class=quiet href="#sndbindkey">bind-key</a> (char-&gt;integer #\p) 0 
   (lambda () 
     (<em class=red>play</em> (<a class=quiet href="#sndcursor">cursor</a>))
-    keyboard-no-action))
+    <a class=quiet href="#sndbindkey">keyboard-no-action</a>))
 </pre></td></tr></table><br>
 The following code plays from the cursor with a moving ("tracking") cursor:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -6216,7 +6213,7 @@ save <i>snd</i>; same as File menu's Save option. <a href="#savehook">save-hook<
 <A NAME="saveexamples"></a>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-To save all sounds: <code>(for-each save-sound (<a class=quiet href="#sounds">sounds</a>))</code>.<br>
+To save all sounds: <code>(for-each save-sound (sounds))</code>.<br>
 To save a sound under a different name: <a href="#sndsaveas">save-sound-as</a><br>
 To extract one channel of a sound: <a href="#sndsaveas">save-sound-as</a><br>
 To save a sound in a different format or header: <a href="#sndsaveas">save-sound-as</a><br>
@@ -7639,6 +7636,16 @@ The <a href="snd.html#filtercontrol">filter</a> coefficients (read-only currentl
 <tr><td colspan=2></td></tr>
 
 
+<!-- filter-control-envelope -->
+<tr><td colspan=2>
+<code><a class=def name="sndfilterenv">filter-control-envelope</a> (<em class=targ>snd</em>)</code>
+</td></tr>
+<tr><td></td><td>
+The <a href="snd.html#filtercontrol">filter</a> (frequency reponse) envelope (a list of breakpoints).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- filter-control-in-dB -->
 <tr><td colspan=2>
 <code><a class=def name="sndfilterdbing">filter-control-in-dB</a> (<em class=targ>snd</em>)</code>
@@ -7650,14 +7657,12 @@ graph is displayed in dB.
 <tr><td colspan=2></td></tr>
 
 
-<!-- filter-control-env -->
-<tr><td colspan=2>
-<code><a class=def name="sndfilterenv">filter-control-env</a> (<em class=targ>snd</em>)</code>
+<!-- filter-control-in-hz -->
+<tr><td colspan=2><code><a class=def name="filtercontrolinhz">filter-control-in-hz</a> (<em class=targ>snd</em>)</code></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>If #t, filter frequency response envelope (sound control panel) x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
 </td></tr>
-<tr><td></td><td>
-The <a href="snd.html#filtercontrol">filter</a> envelope (a list of breakpoints).
-</td></tr>
-<tr><td colspan=2></td></tr>
+<tr><td colspan=3></td></tr>
 
 
 <!-- filter-control-order -->
@@ -7667,6 +7672,16 @@ The <a href="snd.html#filtercontrol">filter</a> envelope (a list of breakpoints)
 <tr><td></td><td>
 The <a href="snd.html#filtercontrol">filter</a> order.  This affects how much computing
 is needed to run the filter, and how close the filter can get to the desired frequency envelope.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- filter-control-waveform-color -->
+<tr><td colspan=2>
+<code><a class=def name="filterwaveformcolor">filter-control-waveform-color</a></code>
+</td></tr>
+<tr><td></td><td>
+The control panel filter frequency response waveform color.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8280,7 +8295,7 @@ as the default:
 (define (enved-fft)
   (set! (<em class=red>enved-filter)</em> #f)
   (set! (<a class=quiet href="#envedwaving">enved-wave?</a>) #t)
-  (set! (<a class=quiet href="#envedtarget">enved-target</a>) enved-spectrum)
+  (set! (<a class=quiet href="#envedtarget">enved-target</a>) <a class=quiet href="#envedtarget">enved-spectrum</a>)
   (add-hook! after-open-hook (lambda (snd)
 			       (set! (<a class=quiet href="#lfftsize">transform-size</a> snd) 
 				     (expt 2 (ceiling (/ (log (max 1 (<a class=quiet href="#sndframes">frames</a> snd)))
@@ -8481,8 +8496,8 @@ If it returns a string, that becomes the output filename.
 (add-hook! <em class=red>recorder-file-hook</em>
   (lambda (name)
     (let* ((header (<a class=quiet href="#recorderouttype">recorder-out-type</a>))
-	   (extension (if (or (= header mus-aifc) (= header mus-aiff)) ".aif"
-			  (if (= header mus-next) ".snd"
+	   (extension (if (or (= header <a class=quiet href="#sndheadertype">mus-aifc</a>) (= header <a class=quiet href="#sndheadertype">mus-aiff</a>)) ".aif"
+			  (if (= header <a class=quiet href="#sndheadertype">mus-next</a>) ".snd"
 			      ".wav"))))
       (if name
 	  (let ((len (string-length name)))
@@ -8752,12 +8767,12 @@ If <i>origin</i> is included, it is the name reported if an error occurs.  The u
           (lambda () 
             "C-a prints hi in listener"
             (<a class=quiet href="#sndprint">snd-print</a> \"hi\") 
-            cursor-in-view))
+            <a class=quiet href="#sndbindkey">cursor-in-view</a>))
 
 (<em class=red>bind-key</em> (char-&gt;integer #\p) 0 
           (lambda () 
             "p moves cursor to left edge of window"
-            cursor-on-left)
+            <a class=quiet href="#sndbindkey">cursor-on-left</a>)
           #f "#\\p-&gt;cursor-on-left")
 
 (<em class=red>bind-key</em> (char-&gt;integer #\v) 4
@@ -8765,7 +8780,7 @@ If <i>origin</i> is included, it is the name reported if an error occurs.  The u
             "C-v redefined to behave as in Emacs (move ahead window)"
 	    (if (&lt; (<a class=quiet href="#sndrightsample">right-sample</a>) (<a class=quiet href="#sndframes">frames</a>))
 		(set! (<a class=quiet href="#sndleftsample">left-sample</a>) (<a class=quiet href="#sndrightsample">right-sample</a>)))
-	    keyboard-no-action))
+	    <a class=quiet href="#sndbindkey">keyboard-no-action</a>))
 </pre></td></tr></table></td></tr>
 <tr><td></td><td>
 
@@ -8801,12 +8816,12 @@ setting how how many samples to jump for the C-p and C-n keys.  We can implement
 (<em class=red>bind-key</em> (char-&gt;integer #\o) 0 
   (lambda () 
     (<a class=quiet href="#sndplay">play</a> "oboe.snd") 
-    keyboard-no-action))
+    <a class=quiet href="#sndbindkey">keyboard-no-action</a>))
 
 (<em class=red>bind-key</em> (char-&gt;integer #\p) 0 
   (lambda () 
     (<a class=quiet href="#sndplay">play</a> "pistol.snd") 
-    keyboard-no-action))
+    <a class=quiet href="#sndbindkey">keyboard-no-action</a>))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
@@ -8819,7 +8834,7 @@ forward two samples in the graph each time we type "l":
 (<em class=red>bind-key</em> (char-&gt;integer #\l) 0 
   (lambda () 
     (set! (<a class=quiet href="#sndleftsample">left-sample</a> 0 0) (+ 2 (<a class=quiet href="#sndleftsample">left-sample</a> 0 0))) 
-    keyboard-no-action))
+    <a class=quiet href="#sndbindkey">keyboard-no-action</a>))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
@@ -8831,14 +8846,14 @@ Or, more useful perhaps, have C-c set the cursor at a particular sample:
 (<em class=red>bind-key</em> (char-&gt;integer #\c) 4
   (lambda (arg)
     (set! (<a class=quiet href="#sndcursor">cursor</a>) arg) 
-    cursor-in-middle))
+    <a class=quiet href="#sndbindkey">cursor-in-middle</a>))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
 The key codes can usually be found in the X header file X11R6/include/X11/keysymdef.h
 The "Page Up" key is given as 0xFF55, which in Scheme would be #xff55 (65365).
 <pre>
-  (<a class=quiet href="#sndbindkey">bind-key</a> #xff55 0 (lambda () (<a class=quiet href="#sndprint">snd-print</a> "Page up") keyboard-no-action))
+  (<a class=quiet href="#sndbindkey">bind-key</a> #xff55 0 (lambda () (<a class=quiet href="#sndprint">snd-print</a> "Page up") <a class=quiet href="#sndbindkey">keyboard-no-action</a>))
 </pre>
 Similarly, the End key if #xFF57, so we could bind it to cause the full sound to be displayed:
 <pre>
@@ -9303,7 +9318,7 @@ prints the names of all the stereo AIFC files it finds:
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (for-each
   (lambda (filename)
-    (if (and (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> filename) mus-aifc)
+    (if (and (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> filename) <a class=quiet href="#sndheadertype">mus-aifc</a>)
              (= (<a class=quiet href="#soundchans">mus-sound-chans</a> filename) 2))
         (<a class=quiet href="#sndprint">snd-print</a> (format #f "~%~A" filename))))
   (<em class=red>sound-files-in-directory</em>))
@@ -9380,7 +9395,7 @@ return a list giving the widget width and height (pixels).  Can be set. See nb.s
   bartlett-window       hamming-window        blackman2-window     blackman3-window
   blackman4-window      exponential-window    riemann-window       kaiser-window
   cauchy-window         poisson-window        gaussian-window      tukey-window
-  dolph-chebyshev-window (if GSL is loaded)
+  dolph-chebyshev-window
 </pre><br>
 
 <p><b>Zoom Focus</b> style (<a href="#zoomfocusstyle">zoom-focus-style</a>):</p>
@@ -9614,7 +9629,7 @@ are:</p>
 <tr><td><code><em class=emdef>enved-waveform-color</em></code></td>
     <td><code>blue</code></td>
     <td>color of waveform displayed in envelope editor.</td></tr>
-<tr><td><code><a class=def name="filterwaveformcolor">filter-waveform-color</a></code></td>
+<tr><td><code><em class=emdef>filter-control-waveform-color</em></code></td>
     <td><code>blue</code></td>
     <td>color of control panel filter waveform.</td></tr>
 <tr><td><code><a class=def name="graphcolor">graph-color</a></code></td>
@@ -9632,7 +9647,7 @@ are:</p>
 <tr><td><code><em class=emdef>listener-text-color</em></code></td>
     <td><code>black</code></td>
     <td>text color in lisp listener.</td></tr>
-<tr><td><code><em class=emdef><a name="markcolor">mark-color</a></em></code></td>
+<tr><td><code><a class=def name="markcolor">mark-color</a></code></td>
     <td><code>red</code></td>
     <td>color of mark indicator.</td></tr>
 <tr><td><code><em class=emdef>mix-color</em></code></td>
@@ -9851,7 +9866,7 @@ could be defined as:
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (x-&gt;position-1 x snd chn)
-  (let* ((axinfo (<em class=red>axis-info</em> snd chn time-graph))
+  (let* ((axinfo (<em class=red>axis-info</em> snd chn <a class=quiet href="#y2position">time-graph</a>))
 	 (x0 (list-ref axinfo 2))
 	 (x1 (list-ref axinfo 4))
 	 (axis-left (list-ref axinfo 10))

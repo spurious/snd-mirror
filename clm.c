@@ -457,7 +457,7 @@ Float mus_set_increment(mus_any *gen, Float val)
 void *mus_environ(mus_any *gen)
 {
   if (check_gen(gen, "mus-environ"))
-    return((*(gen->core->environ))(gen));
+    return((*(gen->core->closure))(gen));
   return(NULL);
 }
 
@@ -5573,7 +5573,7 @@ typedef struct {
   int width, lim;
   int len;
   Float *data, *sinc_table;
-  void *environ;
+  void *closure;
 } sr;
 
 static char *inspect_sr(mus_any *ptr)
@@ -5684,7 +5684,7 @@ static char *describe_src(mus_any *ptr)
 
 static off_t src_length(mus_any *ptr) {return(((sr *)ptr)->width);}
 static Float run_src_gen(mus_any *srptr, Float sr_change, Float unused) {return(mus_src(srptr, sr_change, NULL));}
-static void *src_environ(mus_any *rd) {return(((sr *)rd)->environ);}
+static void *src_closure(mus_any *rd) {return(((sr *)rd)->closure);}
 static Float src_increment(mus_any *rd) {return(((sr *)rd)->incr);}
 static Float src_set_increment(mus_any *rd, Float val) {((sr *)rd)->incr = val; return(val);}
 static Float *src_sinc_table(mus_any *rd) {return(((sr *)rd)->sinc_table);}
@@ -5705,13 +5705,13 @@ static mus_any_class SRC_CLASS = {
   &src_set_increment,
   &run_src_gen,
   MUS_NOT_SPECIAL,
-  &src_environ,
+  &src_closure,
   0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
 
-mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int width, void *environ)
+mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int width, void *closure)
 {
   sr *srp;
   int i, wid;
@@ -5731,7 +5731,7 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 	  srp->core = &SRC_CLASS;
 	  srp->x = 0.0;
 	  srp->feeder = input;
-	  srp->environ = environ;
+	  srp->closure = closure;
 	  srp->incr = srate;
 	  srp->width = wid;
 	  srp->lim = 2 * wid;
@@ -5739,7 +5739,7 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 	  srp->data = (Float *)clm_calloc(srp->lim + 1, sizeof(Float), "src table");
 	  srp->sinc_table = init_sinc_table(wid);
 	  for (i = wid - 1; i < srp->lim; i++) 
-	    srp->data[i] = (*input)(environ, (srate >= 0.0) ? 1 : -1);
+	    srp->data[i] = (*input)(closure, (srate >= 0.0) ? 1 : -1);
 	  /* was i = 0 here but we want the incoming data centered */
 	  srp->width_1 = 1.0 - wid;
 	  return((mus_any *)srp);
@@ -5770,8 +5770,8 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 	  for (i = lim; i < fsx; i++)
 	    {
 	      if (input)
-		(*input)(srp->environ, (srx >= 0.0) ? 1 : -1);
-	      else (*(srp->feeder))(srp->environ, (srx >= 0.0) ? 1 : -1);
+		(*input)(srp->closure, (srx >= 0.0) ? 1 : -1);
+	      else (*(srp->feeder))(srp->closure, (srx >= 0.0) ? 1 : -1);
 	    }
 	  fsx = lim;
 	}
@@ -5786,8 +5786,8 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
       for (i = loc; i < lim; i++) 
 	{
 	  if (input)
-	    srp->data[i] = (*input)(srp->environ, (srx >= 0.0) ? 1 : -1);
-	  else srp->data[i] = (*(srp->feeder))(srp->environ, (srx >= 0.0) ? 1 : -1);
+	    srp->data[i] = (*input)(srp->closure, (srx >= 0.0) ? 1 : -1);
+	  else srp->data[i] = (*(srp->feeder))(srp->closure, (srx >= 0.0) ? 1 : -1);
 	}
     }
   /* if (srx == 0.0) srx = 0.01; */ /* can't decide about this ... */
@@ -5856,8 +5856,8 @@ Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction))
       for (i = loc; i < lim; i++) 
 	{
 	  if (input)
-	    srp->data[i] = (*input)(srp->environ, 1);
-	  else srp->data[i] = (*(srp->feeder))(srp->environ, 1);
+	    srp->data[i] = (*input)(srp->closure, 1);
+	  else srp->data[i] = (*(srp->feeder))(srp->closure, 1);
 	}
     }
   else srp->x = 2.0;
@@ -5891,8 +5891,8 @@ Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction))
       for (i = loc; i < lim; i++) 
 	{
 	  if (input)
-	    srp->data[i] = (*input)(srp->environ, 1);
-	  else srp->data[i] = (*(srp->feeder))(srp->environ, 1);
+	    srp->data[i] = (*input)(srp->closure, 1);
+	  else srp->data[i] = (*(srp->feeder))(srp->closure, 1);
 	}
       srp->x = 0.0;
     }
@@ -5933,7 +5933,7 @@ typedef struct {
   int block_len;
   int in_data_len;
   int in_data_start;
-  void *environ;
+  void *closure;
 } grn_info;
 
 static char *inspect_grn_info(mus_any *ptr)
@@ -5993,7 +5993,7 @@ static Float grn_scaler(mus_any *ptr) {return(((grn_info *)ptr)->amp);}
 static Float grn_set_scaler(mus_any *ptr, Float val) {((grn_info *)ptr)->amp = val; return(val);}
 static Float grn_frequency(mus_any *ptr) {return(((Float)((grn_info *)ptr)->output_hop) / (Float)sampling_rate);}
 static Float grn_set_frequency(mus_any *ptr, Float val) {((grn_info *)ptr)->output_hop = (int)((Float)sampling_rate * val); return(val);}
-static void *grn_environ(mus_any *rd) {return(((grn_info *)rd)->environ);}
+static void *grn_closure(mus_any *rd) {return(((grn_info *)rd)->closure);}
 static Float grn_increment(mus_any *rd) {return(((Float)(((grn_info *)rd)->output_hop)) / ((Float)((grn_info *)rd)->input_hop));}
 static Float grn_set_increment(mus_any *rd, Float val) {((grn_info *)rd)->input_hop = (int)(((grn_info *)rd)->output_hop / val); return(val);}
 static off_t grn_hop(mus_any *ptr) {return(((grn_info *)ptr)->output_hop);}
@@ -6028,7 +6028,7 @@ static mus_any_class GRANULATE_CLASS = {
   &grn_set_increment,
   &run_granulate,
   MUS_NOT_SPECIAL,
-  &grn_environ,
+  &grn_closure,
   0,
   0, 0, 0, 0, 0, 0, 
   &grn_hop, &grn_set_hop, 
@@ -6038,7 +6038,7 @@ static mus_any_class GRANULATE_CLASS = {
 
 mus_any *mus_make_granulate(Float (*input)(void *arg, int direction), 
 			    Float expansion, Float length, Float scaler, 
-			    Float hop, Float ramp, Float jitter, int max_size, void *environ)
+			    Float hop, Float ramp, Float jitter, int max_size, void *closure)
 {
   grn_info *spd;
   int outlen;
@@ -6072,7 +6072,7 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   spd->in_data = (Float *)clm_calloc(spd->in_data_len, sizeof(Float), "granulate in data");
   spd->in_data_start = spd->in_data_len;
   spd->rd = input;
-  spd->environ = environ;
+  spd->closure = closure;
   return((mus_any *)spd);
 }
 
@@ -6100,8 +6100,8 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 	{
 	  extra = start - len;
 	  if (input)
-	    for (i = 0; i < extra; i++) (*input)(spd->environ, 1);
-	  else for (i = 0; i < extra; i++) (*(spd->rd))(spd->environ, 1);
+	    for (i = 0; i < extra; i++) (*input)(spd->closure, 1);
+	  else for (i = 0; i < extra; i++) (*(spd->rd))(spd->closure, 1);
 	  start = len;
 	}
       if (start < len)
@@ -6110,8 +6110,8 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 	    spd->in_data[i] = spd->in_data[k];
 	}
       if (input)
-	for (i = (len - start); i < len; i++) spd->in_data[i] = (*input)(spd->environ, 1);
-      else for (i = (len - start); i < len; i++) spd->in_data[i] = (*(spd->rd))(spd->environ, 1);
+	for (i = (len - start); i < len; i++) spd->in_data[i] = (*input)(spd->closure, 1);
+      else for (i = (len - start); i < len; i++) spd->in_data[i] = (*(spd->rd))(spd->closure, 1);
       spd->in_data_start = spd->input_hop;
 
       amp = 0.0;
@@ -6599,7 +6599,7 @@ typedef struct {
   Float (*feeder)(void *arg, int direction);
   int fftsize, fftsize2, ctr, filtersize;
   Float *rl1, *rl2, *buf, *filter; 
-  void *environ;
+  void *closure;
 } conv;
 
 static char *inspect_conv(mus_any *ptr)
@@ -6646,7 +6646,7 @@ static int free_convolve(mus_any *ptr)
 
 static off_t conv_length(mus_any *ptr) {return(((conv *)ptr)->fftsize);}
 static Float run_convolve(mus_any *ptr, Float unused1, Float unused2) {return(mus_convolve(ptr, NULL));}
-static void *conv_environ(mus_any *rd) {return(((conv *)rd)->environ);}
+static void *conv_closure(mus_any *rd) {return(((conv *)rd)->closure);}
 
 static mus_any_class CONVOLVE_CLASS = {
   MUS_CONVOLVE,
@@ -6663,7 +6663,7 @@ static mus_any_class CONVOLVE_CLASS = {
   0, 0,
   &run_convolve,
   MUS_NOT_SPECIAL,
-  &conv_environ,
+  &conv_closure,
   0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
@@ -6681,8 +6681,8 @@ Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction))
 	  gen->buf[i] = gen->buf[j]; 
 	  gen->buf[j] = 0.0;
 	  if (input)
-	    gen->rl1[i] = (*input)(gen->environ, 1);
-	  else gen->rl1[i] = (*(gen->feeder))(gen->environ, 1);
+	    gen->rl1[i] = (*input)(gen->closure, 1);
+	  else gen->rl1[i] = (*(gen->feeder))(gen->closure, 1);
 	  gen->rl1[j] = 0.0;
 	  gen->rl2[i] = 0.0;
 	  gen->rl2[j] = 0.0;
@@ -6703,13 +6703,13 @@ Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction))
 
 bool mus_convolve_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_CONVOLVE));}
 
-mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *environ)
+mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *closure)
 {
   conv *gen = NULL;
   gen = (conv *)clm_calloc(1, sizeof(conv), "convolve");
   gen->core = &CONVOLVE_CLASS;
   gen->feeder = input;
-  gen->environ = environ;
+  gen->closure = closure;
   gen->filter = filter;
   gen->filtersize = filtersize;
   gen->fftsize = fftsize;
@@ -7170,7 +7170,7 @@ typedef struct {
   mus_any_class *core;
   Float pitch;
   Float (*input)(void *arg, int direction);
-  void *environ;
+  void *closure;
   bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction));
   bool (*edit)(void *arg);
   Float (*synthesize)(void *arg);
@@ -7234,7 +7234,7 @@ static off_t pv_hop(mus_any *ptr) {return(((pv_info *)ptr)->D);}
 static off_t pv_set_hop(mus_any *ptr, off_t val) {((pv_info *)ptr)->D = (int)val; return(val);}
 static Float pv_frequency(mus_any *ptr) {return(((pv_info *)ptr)->pitch);}
 static Float pv_set_frequency(mus_any *ptr, Float val) {((pv_info *)ptr)->pitch = val; return(val);}
-static void *pv_environ(mus_any *rd) {return(((pv_info *)rd)->environ);}
+static void *pv_closure(mus_any *rd) {return(((pv_info *)rd)->closure);}
 
 Float *mus_phase_vocoder_amp_increments(mus_any *ptr) {return(((pv_info *)ptr)->ampinc);}
 Float *mus_phase_vocoder_amps(mus_any *ptr) {return(((pv_info *)ptr)->amps);}
@@ -7267,7 +7267,7 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   &pv_set_increment,
   &run_phase_vocoder,
   MUS_NOT_SPECIAL,
-  &pv_environ,
+  &pv_closure,
   0,
   0, 0, 0, 0, 0, 0, 
   &pv_hop, &pv_set_hop, 
@@ -7281,7 +7281,7 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction),
 				bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
 				bool (*edit)(void *arg), 
 				Float (*synthesize)(void *arg), 
-				void *environ)
+				void *closure)
 {
   /* order of args is trying to match src, granulate etc
    *   the inclusion of pitch and interp provides built-in time/pitch scaling which is 99% of phase-vocoder use
@@ -7309,7 +7309,7 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction),
   pv->phaseinc = (Float *)clm_calloc(N2, sizeof(Float), "pvoc phaseinc");
   pv->in_data = NULL;
   pv->input = input;
-  pv->environ = environ;
+  pv->closure = closure;
   pv->analyze = analyze;
   pv->edit = edit;
   pv->synthesize = synthesize;
@@ -7332,7 +7332,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
   if (pv->outctr >= pv->interp)
     {
       if ((pv->analyze == NULL) || 
-	  ((*(pv->analyze))(pv->environ, input)))
+	  ((*(pv->analyze))(pv->closure, input)))
 	{
 	  mus_clear_array(pv->freqs, pv->N);
 	  pv->outctr = 0;
@@ -7340,15 +7340,15 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 	    {
 	      pv->in_data = (Float *)clm_calloc(pv->N, sizeof(Float), "pvoc indata");
 	      if (input)
-		for (i = 0; i < pv->N; i++) pv->in_data[i] = (*input)(pv->environ, 1);
-	      else for (i = 0; i < pv->N; i++) pv->in_data[i] = (*(pv->input))(pv->environ, 1);
+		for (i = 0; i < pv->N; i++) pv->in_data[i] = (*input)(pv->closure, 1);
+	      else for (i = 0; i < pv->N; i++) pv->in_data[i] = (*(pv->input))(pv->closure, 1);
 	    }
 	  else
 	    {
 	      for (i = 0, j = pv->D; j < pv->N; i++, j++) pv->in_data[i] = pv->in_data[j];
 	      if (input)
-		for (i = pv->N - pv->D; i < pv->N; i++) pv->in_data[i] = (*input)(pv->environ, 1);
-	      else for (i = pv->N - pv->D; i < pv->N; i++) pv->in_data[i] = (*(pv->input))(pv->environ, 1);
+		for (i = pv->N - pv->D; i < pv->N; i++) pv->in_data[i] = (*input)(pv->closure, 1);
+	      else for (i = pv->N - pv->D; i < pv->N; i++) pv->in_data[i] = (*(pv->input))(pv->closure, 1);
 	    }
 	  buf = pv->filptr % pv->N;
 	  for (i = 0; i < pv->N; i++)
@@ -7380,7 +7380,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 	}
       
       if ((pv->edit == NULL) || 
-	  ((*(pv->edit))(pv->environ)))
+	  ((*(pv->edit))(pv->closure)))
 	{
 	  pscl = 1.0 / (Float)(pv->D);
 	  kscl = TWO_PI / (Float)(pv->N);
@@ -7404,7 +7404,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
   
   pv->outctr++;
   if (pv->synthesize)
-    return((*(pv->synthesize))(pv->environ));
+    return((*(pv->synthesize))(pv->closure));
   else
     {
       for (i = 0; i < N2; i++)

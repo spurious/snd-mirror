@@ -193,7 +193,7 @@ effect in Gtk.
 <tr><td>doitbuttoncolor</td>     <td>color of Apply or Ok buttons</td>          <td><code><a href="extsnd.html#doitbuttoncolor">doit-button-color</a></code></td></tr>
 <tr><td>doitagainbuttoncolor</td><td>color of Undo&amp;Apply buttons</td>       <td><code><a href="extsnd.html#doitagainbuttoncolor">doit-again-button-color</a></code></td></tr>
 <tr><td>envedwaveformcolor</td>  <td>color of envelope editor waveform</td>     <td><code><a href="extsnd.html#envedwaveformcolor">enved-waveform-color</a></code></td></tr>
-<tr><td>filterwaveformcolor</td> <td>color of control panel filter waveform</td><td><code><a href="extsnd.html#filterwaveformcolor">filter-waveform-color</a></code></td></tr>
+<tr><td>filterwaveformcolor</td> <td>color of control panel filter waveform</td><td><code><a href="extsnd.html#filterwaveformcolor">filter-control-waveform-color</a></code></td></tr>
 <tr><td>graphcolor</td>          <td>unselected channels' graph background</td> <td><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
 <tr><td>helpbuttoncolor</td>     <td>color of Help buttons</td>                 <td><code><a href="extsnd.html#helpbuttoncolor">help-button-color</a></code></td></tr>
 <tr><td>highlightcolor</td>      <td>highlighting here and there</td>           <td><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
@@ -360,7 +360,7 @@ Here's a more elaborate initialization file:
 (add-hook! after-open-hook          ;if sound has many chans, use just one pane for all
   (lambda (snd)
     (if (&gt; (<a class=quiet href="extsnd.html#chans">chans</a> snd) 4)
-        (set! (<a class=quiet href="extsnd.html#channelstyle">channel-style</a> snd) channels-combined))))
+        (set! (<a class=quiet href="extsnd.html#channelstyle">channel-style</a> snd) <a class=quiet href="extsnd.html#channelstyle">channels-combined</a>))))
 
 (set! (<a class=quiet href="extsnd.html#optimization">optimization</a>) 6)             ;turn on full optimization (live dangerously...)
 (set! (<a class=quiet href="extsnd.html#selectioncreatesregion">selection-creates-region</a>) #f) ;turn off automatic region creation

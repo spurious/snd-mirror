@@ -284,6 +284,7 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define DEFAULT_FILTER_CONTROL_P false
 #define DEFAULT_FILTER_CONTROL_ORDER 20
 #define DEFAULT_FILTER_CONTROL_IN_DB false
+#define DEFAULT_FILTER_CONTROL_IN_HZ false
 #define DEFAULT_REVERB_CONTROL_P false
 #define DEFAULT_REVERB_CONTROL_FEEDBACK 1.09
 #define DEFAULT_REVERB_CONTROL_LENGTH 1.0
@@ -515,10 +516,6 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 
 #define set_selection_creates_region(a) ss->Selection_Creates_Region = a
 #define DEFAULT_SELECTION_CREATES_REGION true
-
-#define filter_env_in_hz(ss) ss->Filter_Env_In_Hz
-#define set_filter_env_in_hz(a) ss->Filter_Env_In_Hz = a
-#define DEFAULT_FILTER_ENV_IN_HZ false
 
 #define zoom_focus_style(ss) ss->Zoom_Focus_Style
 #define set_zoom_focus_style(a) ss->Zoom_Focus_Style = a

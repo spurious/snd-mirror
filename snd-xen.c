@@ -1186,15 +1186,6 @@ The number of seconds between update checks is set by " S_auto_update_interval "
   return(C_TO_XEN_BOOLEAN(auto_update(ss)));
 }
 
-static XEN g_filter_env_in_hz(void) {return(C_TO_XEN_BOOLEAN(filter_env_in_hz(ss)));}
-static XEN g_set_filter_env_in_hz(XEN val) 
-{
-  #define H_filter_env_in_hz "(" S_filter_env_in_hz "): #t if filter env x axis should be in Hz"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_filter_env_in_hz, "a boolean");
-  set_filter_env_in_hz(XEN_TO_C_BOOLEAN(val)); 
-  return(C_TO_XEN_BOOLEAN(filter_env_in_hz(ss)));
-}
-
 static XEN g_color_cutoff(void) {return(C_TO_XEN_DOUBLE(color_cutoff(ss)));}
 static XEN g_set_color_cutoff(XEN val) 
 {
@@ -2251,17 +2242,17 @@ static XEN g_enved_waveform_color(void)
   return(XEN_WRAP_PIXEL((ss->sgx)->enved_waveform_color));
 }
 
-static XEN g_set_filter_waveform_color (XEN color) 
+static XEN g_set_filter_control_waveform_color (XEN color) 
 {
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_filter_waveform_color, "a color");
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_filter_control_waveform_color, "a color");
   color_filter_waveform(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
 
-static XEN g_filter_waveform_color(void) 
+static XEN g_filter_control_waveform_color(void) 
 {
-  #define H_filter_waveform_color "(" S_filter_waveform_color "): color of the filter waveform"
-  return(XEN_WRAP_PIXEL((ss->sgx)->filter_waveform_color));
+  #define H_filter_control_waveform_color "(" S_filter_control_waveform_color "): color of the filter waveform"
+  return(XEN_WRAP_PIXEL((ss->sgx)->filter_control_waveform_color));
 }
 
 static XEN g_set_selection_color (XEN color) 
@@ -2726,8 +2717,6 @@ XEN_NARGIFY_0(g_auto_resize_w, g_auto_resize)
 XEN_NARGIFY_1(g_set_auto_resize_w, g_set_auto_resize)
 XEN_NARGIFY_0(g_auto_update_w, g_auto_update)
 XEN_NARGIFY_1(g_set_auto_update_w, g_set_auto_update)
-XEN_NARGIFY_0(g_filter_env_in_hz_w, g_filter_env_in_hz)
-XEN_NARGIFY_1(g_set_filter_env_in_hz_w, g_set_filter_env_in_hz)
 XEN_NARGIFY_0(g_color_cutoff_w, g_color_cutoff)
 XEN_NARGIFY_1(g_set_color_cutoff_w, g_set_color_cutoff)
 XEN_NARGIFY_0(g_color_inverted_w, g_color_inverted)
@@ -2809,8 +2798,8 @@ XEN_NARGIFY_0(g_listener_text_color_w, g_listener_text_color)
 XEN_NARGIFY_1(g_set_listener_text_color_w, g_set_listener_text_color)
 XEN_NARGIFY_0(g_enved_waveform_color_w, g_enved_waveform_color)
 XEN_NARGIFY_1(g_set_enved_waveform_color_w, g_set_enved_waveform_color)
-XEN_NARGIFY_0(g_filter_waveform_color_w, g_filter_waveform_color)
-XEN_NARGIFY_1(g_set_filter_waveform_color_w, g_set_filter_waveform_color)
+XEN_NARGIFY_0(g_filter_control_waveform_color_w, g_filter_control_waveform_color)
+XEN_NARGIFY_1(g_set_filter_control_waveform_color_w, g_set_filter_control_waveform_color)
 XEN_NARGIFY_0(g_highlight_color_w, g_highlight_color)
 XEN_NARGIFY_1(g_set_highlight_color_w, g_set_highlight_color)
 XEN_NARGIFY_0(g_cursor_color_w, g_cursor_color)
@@ -2897,8 +2886,6 @@ XEN_NARGIFY_2(g_fmod_w, g_fmod)
 #define g_set_auto_resize_w g_set_auto_resize
 #define g_auto_update_w g_auto_update
 #define g_set_auto_update_w g_set_auto_update
-#define g_filter_env_in_hz_w g_filter_env_in_hz
-#define g_set_filter_env_in_hz_w g_set_filter_env_in_hz
 #define g_color_cutoff_w g_color_cutoff
 #define g_set_color_cutoff_w g_set_color_cutoff
 #define g_color_inverted_w g_color_inverted
@@ -2980,8 +2967,8 @@ XEN_NARGIFY_2(g_fmod_w, g_fmod)
 #define g_set_listener_text_color_w g_set_listener_text_color
 #define g_enved_waveform_color_w g_enved_waveform_color
 #define g_set_enved_waveform_color_w g_set_enved_waveform_color
-#define g_filter_waveform_color_w g_filter_waveform_color
-#define g_set_filter_waveform_color_w g_set_filter_waveform_color
+#define g_filter_control_waveform_color_w g_filter_control_waveform_color
+#define g_set_filter_control_waveform_color_w g_set_filter_control_waveform_color
 #define g_highlight_color_w g_highlight_color
 #define g_set_highlight_color_w g_set_highlight_color
 #define g_cursor_color_w g_cursor_color
@@ -3126,9 +3113,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_update, g_auto_update_w, H_auto_update,
 				   S_setB S_auto_update, g_set_auto_update_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_env_in_hz, g_filter_env_in_hz_w, H_filter_env_in_hz,
-				   S_setB S_filter_env_in_hz, g_set_filter_env_in_hz_w,  0, 0, 1, 0);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_cutoff, g_color_cutoff_w, H_color_cutoff,
 				   S_setB S_color_cutoff, g_set_color_cutoff_w,  0, 0, 1, 0);
 
@@ -3251,8 +3235,8 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_waveform_color, g_enved_waveform_color_w, H_enved_waveform_color,
 				   S_setB S_enved_waveform_color, g_set_enved_waveform_color_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_waveform_color, g_filter_waveform_color_w, H_filter_waveform_color,
-				   S_setB S_filter_waveform_color, g_set_filter_waveform_color_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_control_waveform_color, g_filter_control_waveform_color_w, H_filter_control_waveform_color,
+				   S_setB S_filter_control_waveform_color, g_set_filter_control_waveform_color_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_highlight_color, g_highlight_color_w, H_highlight_color,
 				   S_setB S_highlight_color, g_set_highlight_color_w,  0, 0, 1, 0);

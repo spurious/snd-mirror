@@ -827,7 +827,23 @@ the slider beneath the window list is highlighted and can be used
 to choose the desired member of that family of windows.
 </p>
 
-<img src="ftrans.png" alt="transform dialog" align=left hspace=20>
+<img src="ftrans.png" alt="transform dialog" usemap="#fftdialog" align=left hspace=20 onMouseOver="showCoords(e)">
+<map name="fftdialog">
+  <area shape=rect coords="0,0,500,20" href="extsnd.html#sndtransforms" alt="transforms">
+  <area shape=rect coords="0,20,170,200" href="extsnd.html#ltransformtype" alt="transform types">
+  <area shape=rect coords="0,200,170,380" href="extsnd.html#wavelettype" alt="wavelet types">
+  <area shape=rect coords="170,20,320,200" href="extsnd.html#lfftsize" alt="transform sizes">
+  <area shape=rect coords="170,200,320,330" href="extsnd.html#lfftwindow" alt="transform windows">
+  <area shape=rect coords="170,320,320,380" href="extsnd.html#fftbeta" alt="transform window family">  
+  <area shape=rect coords="320,60,420,86" href="extsnd.html#transformgraphtype" alt="normal transform graphing choice">
+  <area shape=rect coords="320,86,420,112" href="extsnd.html#transformgraphtype" alt="sonogram transform graphing choice">
+  <area shape=rect coords="320,112,420,138" href="extsnd.html#transformgraphtype" alt="spectrogram transform graphing choice">
+  <area shape=rect coords="320,138,420,164" href="extsnd.html#showfftpeaks" alt="transform peaks">
+  <area shape=rect coords="320,164,420,190" href="extsnd.html#fftlogmagnitude" alt="log magnitude fft">
+  <area shape=rect coords="320,190,420,216" href="extsnd.html#fftlogfrequency" alt="log frequency fft">
+  <area shape=rect coords="320,216,420,242" href="extsnd.html#normalizefft" alt="transform normalizations">
+  <area shape=rect coords="320,242,420,270" href="extsnd.html#lshowselectiontransform" alt="show selection transform">
+</map>
 
 <p>The FFT is taken from the start (the left edge) of the
 current window and is updated as the window bounds change.
@@ -837,7 +853,7 @@ window size:</p>
 (add-hook! <a href="extsnd.html#graphhook">graph-hook</a>
   (lambda (snd chn y0 y1)
     (if (and (<a href="extsnd.html#sndffting">transform-graph?</a>) 
-             (= (<a href="extsnd.html#lfftstyle">transform-graph-type</a>) graph-once))
+             (= (<a href="extsnd.html#lfftstyle">transform-graph-type</a>) <a class=quiet href="extsnd.html#lfftstyle">graph-once</a>))
       (set! (<a href="extsnd.html#lfftsize">transform-size)</a>
         (expt 2 (ceiling (/ (log (- (<a class=quiet href="extsnd.html#sndrightsample">right-sample</a>) 
                                     (<a class=quiet href="extsnd.html#sndleftsample">left-sample</a>))) 
@@ -903,7 +919,7 @@ spectrogram variables to their default values.
 <A NAME="wavogram"></a>"wavogram", mimics the spectrogram in the time domain.
 The same rotation commands apply to this display,
 with the additional variable <a href="extsnd.html#wavohop">wavo-hop</a> which sets the
-density of the traces.  To get this display <code>(set! (<a href="extsnd.html#wavo">time-graph-type</a>) graph-as-wavogram)</code>.  It is
+density of the traces.  To get this display <code>(set! (<a href="extsnd.html#wavo">time-graph-type</a>) <a class=quiet href="extsnd.html#wavo">graph-as-wavogram</a>)</code>.  It is
 important to set the length of each trace
 so that successive peaks line up.  The
 trace length in samples is set by the variable <a href="extsnd.html#wavotrace">wavo-trace</a>,
@@ -2022,7 +2038,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-i</td><td>display cursor info</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#sndreportinminibuffer">report-in-minibuffer</a> (format #f "cursor at ~A" (<a class=quiet href="extsnd.html#sndsample">sample</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>)))))</small></code></td></tr>
 <tr><td>C-j</td><td>go to mark</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#sndforwardmark">forward-mark</a> arg))</small></code></td></tr>
 <tr><td>C-k</td><td>delete one line's worth of samples</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#snddeletesamples">delete-samples</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (* 128 arg)))</small></code></td></tr>
-<tr><td>C-l</td><td>position window so cursor is in the middle</td><td><code><small>(lambda () cursor-in-middle)</small></code></td></tr>
+<tr><td>C-l</td><td>position window so cursor is in the middle</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#sndbindkey">cursor-in-middle</a>)</small></code></td></tr>
 <tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#sndaddmark">add-mark</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>)))</small></code></td></tr>
 <tr><td>C-n</td><td>move cursor ahead one 'line'</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (+ (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (* 128 arg))))</small></code></td></tr>
 <tr><td>M-n</td><td colspan=2>move ahead one form in history</td></tr>
@@ -2047,11 +2063,11 @@ all the samples between the cursor and the next mark.</p>
         <!-- I(cut selection):K(C-w)(cw) --><!-- I(define selection):K(C-[space], C-x c)(cxc) -->
 
 <tr><td>C-x a</td><td>apply envelope to selection</td><td><code><small>(lambda () (prompt "env:" env-selection))</small></code></td></tr>
-<tr><td>C-x b</td><td>position window so cursor is on left</td><td><code><small>(lambda () cursor-on-left)</small></code></td></tr>
+<tr><td>C-x b</td><td>position window so cursor is on left</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#sndbindkey">cursor-on-left</a>)</small></code></td></tr>
 <tr><td valign=top>C-x c</td><td>define selection from cursor to nth mark</td><td></td></tr>
 <tr><td>C-x d</td><td>get temp dir name</td><td><code><small>(lambda (arg) (prompt "temp dir:" (lambda (val) (set! (<a class=quiet href="extsnd.html#tempdir">temp-dir</a>) val))))</small></code></td></tr>
 <tr><td>C-x e</td><td>execute keyboard macro</td><td></td></tr>
-<tr><td>C-x f</td><td>position window so cursor is on right</td><td><code><small>(lambda () cursor-on-right)</small></code></td></tr>
+<tr><td>C-x f</td><td>position window so cursor is on right</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#sndbindkey">cursor-on-right</a>)</small></code></td></tr>
 <tr><td>C-x i</td><td>insert region</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#sndinsertregion">insert-region</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) arg)) ;insert-selection if no arg</small></code></td></tr>
 <tr><td valign=top>C-x j</td><td valign=top>go to named mark</td><td>
 <code><small><pre>
@@ -2231,7 +2247,7 @@ button is set.
 specified by giving the frequency response 
 envelope 
 and filter order in the text windows provided.
-The envelope X axis goes from 0 to half the sampling rate -- see <a href="extsnd.html#filterenvinhz">filter-env-in-hz</a>.
+The envelope X axis goes from 0 to half the sampling rate -- see <a href="extsnd.html#filtercontrolinhz">filter-control-in-hz</a>.
 If you raise the control pane from its default height, 
 a graph is revealed beneath the filter text field;
 this is an envelope editor like the envelope editor dialog

@@ -222,6 +222,7 @@ typedef struct chan_info {
   int ptree_ctr;
   void **ptrees;
   XEN *ptree_inits, *xens;
+  void *enved_spectra;
   fft_info *fft;           /* possibly null fft data */
   struct snd_info *sound; /* containing sound */
   axis_info *axis;         /* time domain axis */
@@ -288,10 +289,10 @@ typedef struct snd_info {
   bool expand_control_p;
   bool contrast_control_p;
   bool reverb_control_p;
-  bool filter_control_p, filter_control_in_dB;
+  bool filter_control_p, filter_control_in_dB, filter_control_in_hz;
   Float amp_control;
   Float speed_control;
-  int speed_control_direction, speed_control_tones;
+  int speed_control_direction, speed_control_tones, speed_control_numerator, speed_control_denominator;
   speed_style_t speed_control_style;
   Float last_speed_control, last_amp_control, last_expand_control, last_contrast_control;
   Float last_reverb_control_length, last_reverb_control_scale;
@@ -300,10 +301,10 @@ typedef struct snd_info {
   Float expand_control, expand_control_length, expand_control_ramp, expand_control_hop;
   Float contrast_control, contrast_control_amp;
   Float reverb_control_length, reverb_control_scale, reverb_control_feedback, reverb_control_lowpass;
-  Float reverb_control_decay, filter_control_env_xmax;
+  Float reverb_control_decay, filter_control_xmax;
   int filter_control_order;
   bool filter_control_changed;
-  env *filter_control_env;
+  env *filter_control_envelope;
   int selected_channel;
   char *filename;
   char *short_filename;
@@ -381,7 +382,7 @@ typedef struct snd_state {
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   bool Verbose_Cursor, Trap_Segfault;
   int Enved_Filter_Order;
-  bool Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
+  bool Filter_Control_In_Hz;  /* for spectral envelopes from the envelope editor */
   Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size;
   char *Vu_Font;
   Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
@@ -825,6 +826,7 @@ Float fft_beta_max(mus_fft_window_t win);
 void cp_free_fft_state(chan_info *cp);
 void autocorrelation(Float *data, int n);
 void set_fft_info_xlabel(chan_info *cp, char *new_label);
+void fourier_spectrum(snd_fd *sf, Float *data, int fft_size, int data_len, Float *window);
 
 
 
@@ -990,6 +992,9 @@ void add_or_edit_symbol(char *name, env *val);
 env* name_to_env(const char *str);
 env *position_to_env(int pos);
 void delete_envelope(char *name);
+void free_enved_spectra(chan_info *cp);
+void release_dangling_enved_spectra(chan_info *cp, int edpt);
+void reflect_enved_spectra_change(chan_info *cp);
 
 XEN env_to_xen (env *e);
 env *xen_to_env(XEN res);
@@ -1147,7 +1152,7 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
 char *shortname(snd_info *sp);
 char *shortname_indexed(snd_info *sp);
 void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed);
-Float srate_changed(Float ival, char *srcbuf, speed_style_t style, int tones);
+Float speed_changed(Float ival, char *srcbuf, speed_style_t style, int tones, int srcbuf_size);
 void sp_name_click(snd_info *sp);
 void free_controls(snd_info *sp);
 void save_controls(snd_info *sp);
@@ -1164,6 +1169,9 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen)
 void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, bool is_xen);
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples);
+#if HAVE_SCM_MAKE_RATIO
+  void snd_rationalize(Float a, int *num, int *den);
+#endif
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
@@ -1323,6 +1331,7 @@ void clear_mix_y(chan_info *cp);
 void move_mix_tag(int mix_tag, int x);
 void finish_moving_mix_tag(int mix_tag, int x);
 int hit_mix(chan_info *cp, int x, int y);
+int prepare_mix_id_waveform(int mix_id, axis_info *ap, bool *two_sided);
 chan_info *mix_dialog_mix_channel(int mix_id);
 int mix_dialog_set_mix_amp_env_without_edit(int n, int chan, env *val);
 void mix_dialog_mix_play(int mix_id);

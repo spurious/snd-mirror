@@ -717,7 +717,11 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
 #endif
   if (sp)
     {
+#if HAVE_RUBY
+      XEN_VARIABLE_SET(S_memo_sound, C_TO_SMALL_XEN_INT(sp->index));
+#else
       XEN_VARIABLE_SET(memo_sound, C_TO_SMALL_XEN_INT(sp->index));
+#endif
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = false;
       ss->active_sounds++;

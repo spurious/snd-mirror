@@ -30,23 +30,29 @@ static int scan_tab(XEN tab, char *text, int len, int matches)
 #endif
       while (XEN_NOT_NULL_P(ls))
 	{
-	  handle = XEN_CAR(ls);
-	  sym = XEN_SYMBOL_TO_C_STRING(XEN_CAR(handle));
-	  if (strncmp(text, sym, len) == 0)
+	  handle = XEN_CAR(XEN_CAR(ls));
+	  if (XEN_SYMBOL_P(handle)) /* can be a number: (2.0 . #<variable...>) */
 	    {
-	      matches++;
-	      add_possible_completion(sym);
-	      if (current_match == NULL)
-		current_match = copy_string(sym);
-	      else 
+	      sym = XEN_SYMBOL_TO_C_STRING(handle);
+	      if (sym)
 		{
-		  curlen = snd_strlen(current_match);
-		  for (j = 0; j < curlen; j++)
-		    if (current_match[j] != sym[j])
-		      {
-			current_match[j] = '\0';
-			break;
-		      }
+		  if (strncmp(text, sym, len) == 0)
+		    {
+		      matches++;
+		      add_possible_completion(sym);
+		      if (current_match == NULL)
+			current_match = copy_string(sym);
+		      else 
+			{
+			  curlen = snd_strlen(current_match);
+			  for (j = 0; j < curlen; j++)
+			    if (current_match[j] != sym[j])
+			      {
+				current_match[j] = '\0';
+				break;
+			      }
+			}
+		    }
 		}
 	    }
 	  ls = XEN_CDR(ls);

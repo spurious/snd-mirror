@@ -30,7 +30,7 @@
 #define RED_COLOR            "red"
 #define YELLOW_COLOR         "yellow"
 #define TEXT_FOCUS_COLOR     "white"
-#define FILTER_WAVEFORM_COLOR "blue"
+#define FILTER_CONTROL_WAVEFORM_COLOR "blue"
 #define PUSHED_BUTTON_COLOR  "lightsteelblue1"
 #define SASH_COLOR           "lightgreen"
 
@@ -101,7 +101,7 @@ typedef struct {
   char *mark_color;
   char *pushed_button_color;
   char *enved_waveform_color;
-  char *filter_waveform_color;
+  char *filter_control_waveform_color;
   char *sash_color;
   char *white_color;
   char *black_color;
@@ -156,7 +156,7 @@ static XtResource resources[] = {
   {"lighterbluecolor", "Ligterbluecolor", XmRString, sizeof(char *), XtOffset(sndres *, lighter_blue_color), XmRString, (XtPointer)LIGHTER_BLUE_COLOR},
   {"yellowcolor", "Yellowcolor", XmRString, sizeof(char *), XtOffset(sndres *, yellow_color), XmRString, (XtPointer)YELLOW_COLOR},
   {"envedwaveformcolor", "Envedwaveformcolor", XmRString, sizeof(char *), XtOffset(sndres *, enved_waveform_color), XmRString, (XtPointer)ENVED_WAVEFORM_COLOR},
-  {"filterwaveformcolor", "Filterwaveformcolor", XmRString, sizeof(char *), XtOffset(sndres *, filter_waveform_color), XmRString, (XtPointer)FILTER_WAVEFORM_COLOR},
+  {"filterwaveformcolor", "Filterwaveformcolor", XmRString, sizeof(char *), XtOffset(sndres *, filter_control_waveform_color), XmRString, (XtPointer)FILTER_CONTROL_WAVEFORM_COLOR},
   {"graphcolor", "Graphcolor", XmRString, sizeof(char *), XtOffset(sndres *, graph_color), XmRString, (XtPointer)GRAPH_COLOR},
   {"selectedgraphcolor", "Selectedgraphcolor", XmRString, sizeof(char *), XtOffset(sndres *, selected_graph_color), XmRString, (XtPointer)SELECTED_GRAPH_COLOR},
   {"datacolor", "Datacolor", XmRString, sizeof(char *), XtOffset(sndres *, data_color), XmRString, (XtPointer)DATA_COLOR},
@@ -747,7 +747,7 @@ void snd_doit(int argc, char **argv)
   sx->selection_color =       get_color(shell, snd_rs.selection_color,       SELECTION_COLOR,       "gray80", NULL, false);
   sx->mix_color =             get_color(shell, snd_rs.mix_color,             MIX_COLOR,             NULL, NULL, false);
   sx->enved_waveform_color =  get_color(shell, snd_rs.enved_waveform_color,  ENVED_WAVEFORM_COLOR,  NULL, NULL, false);
-  sx->filter_waveform_color = get_color(shell, snd_rs.filter_waveform_color, FILTER_WAVEFORM_COLOR, NULL, NULL, false);
+  sx->filter_control_waveform_color = get_color(shell, snd_rs.filter_control_waveform_color, FILTER_CONTROL_WAVEFORM_COLOR, NULL, NULL, false);
   sx->listener_color =        get_color(shell, snd_rs.listener_color,        LISTENER_COLOR,        NULL, NULL, true);
   sx->listener_text_color =   get_color(shell, snd_rs.listener_text_color,   LISTENER_TEXT_COLOR,   NULL, NULL, true);
   sx->graph_color =           get_color(shell, snd_rs.graph_color,           GRAPH_COLOR,           NULL, NULL, true);
@@ -950,7 +950,7 @@ void snd_doit(int argc, char **argv)
 
   gv.function = GXcopy;
   gv.background = sx->basic_color;
-  gv.foreground = sx->filter_waveform_color;
+  gv.foreground = sx->filter_control_waveform_color;
   sx->fltenv_data_gc = XCreateGC(dpy, wn, GCBackground | GCForeground | GCFunction, &gv);
 
   initialize_colormap();

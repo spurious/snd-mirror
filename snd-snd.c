@@ -1119,13 +1119,25 @@ void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
     }
 }
 
-
+#if HAVE_SCM_MAKE_RATIO
+void snd_rationalize(Float a, int *num, int *den)
+{
+  XEN ratio;
+  int gloc;
+  ratio = scm_rationalize(scm_inexact_to_exact(C_TO_XEN_DOUBLE(a)), 
+			  scm_inexact_to_exact(C_TO_XEN_DOUBLE(a * .02)));
+  gloc = snd_protect(ratio);
+  (*num) = XEN_TO_C_INT(scm_numerator(ratio));
+  (*den) = XEN_TO_C_INT(scm_denominator(ratio));
+  /* fprintf(stderr,"%f: %d/%d\n", a, (*num), (*den)); */
+  snd_unprotect_at(gloc);
+}
+#endif
 
 
 /* -------- control panel speed -------- */
 
-static char src_txt_buf[8];
-
+#if (!HAVE_SCM_MAKE_RATIO)
 #define TOTAL_RATS 77
 
 static char *rat_names[] = {
@@ -1143,29 +1155,40 @@ static Float rat_values[] = {
   1.25, 1.3333334, 1.5, 1.6, 1.6666666, 1.75, 2.0, 2.25, 2.4, 2.5, 2.6666667, 3.0, 3.2, 3.3333333, 3.5, 4.0, 
   4.5, 4.8, 5.0, 5.3333335, 6.0, 6.4, 6.6666665, 7.0, 8.0, 9.0, 9.6, 10.0, 10.666667, 12.0, 12.8, 13.333333, 
   14.0, 16.0, 18.0, 19.2, 20.0};
+#endif
 
-Float srate_changed(Float val, char *srcbuf, speed_style_t style, int tones)
+Float speed_changed(Float val, char *srcbuf, speed_style_t style, int tones, int srcbuf_size)
 {
   char *sfs;
+  char numbuf[16];
   int semi, i, j;
   switch (style)
     {
-    case SPEED_CONTROL_AS_RATIO: 
+    case SPEED_CONTROL_AS_RATIO:
+#if HAVE_SCM_MAKE_RATIO
+      {
+	int num, den;
+	snd_rationalize(val, &num, &den);
+	mus_snprintf(srcbuf, srcbuf_size, "%d/%d", num, den);
+	return((Float)num / (Float)den);
+      }
+#else
       for (i = 1; i < TOTAL_RATS; i++)
 	if (rat_values[i] > val) 
 	  break;
-      sprintf(srcbuf, "%s", rat_names[i - 1]);
+      mus_snprintf(srcbuf, srcbuf_size, "%s", rat_names[i - 1]);
       return(rat_values[i - 1]);
+#endif
       break;
     case SPEED_CONTROL_AS_SEMITONE: 
       /* find closest semitone to val */
       semi = snd_round(log(val) * ((Float)tones / log(2.0)));
       /* space until (-) num (-52 to 52 is its range if 12-tone) */
-      for (i = 0; i < 3; i++) srcbuf[i] = ' '; 
-      sprintf(src_txt_buf, "%d", semi);
-      j = strlen(src_txt_buf) - 1;
+      for (i = 0; i < srcbuf_size; i++) srcbuf[i] = ' '; 
+      mus_snprintf(numbuf, 16, "%d", semi);
+      j = strlen(numbuf) - 1;
       for (i = 3; (i >= 0) && (j >= 0); i--, j--) 
-	srcbuf[i] = src_txt_buf[j];
+	srcbuf[i] = numbuf[j];
       return(pow(2.0, ((Float)semi / (Float)tones)));
       break;
     default: 
@@ -1279,7 +1302,7 @@ void sp_name_click(snd_info *sp)
 /* ---------------- save and restore control panel buttons ----------------*/
 
 typedef struct {
-  Float amp, srate, contrast, expand, revscl, revlen;
+  Float amp, speed, contrast, expand, revscl, revlen;
   env *filter_env;
   bool expand_on, contrast_on, reverb_on, filter_on, direction;
   int filter_order;
@@ -1307,7 +1330,7 @@ void save_controls(snd_info *sp)
       cs = (ctrl_state *)(sp->saved_controls);
     }
   cs->amp = sp->amp_control;
-  cs->srate = sp->speed_control;
+  cs->speed = sp->speed_control;
   cs->expand = sp->expand_control;
   cs->revscl = sp->reverb_control_scale;
   cs->revlen = sp->reverb_control_length;
@@ -1317,10 +1340,10 @@ void save_controls(snd_info *sp)
   cs->contrast_on = sp->contrast_control_p;
   cs->filter_on = sp->filter_control_p;
   cs->filter_order = sp->filter_control_order;
-  if (sp->filter_control_env) 
+  if (sp->filter_control_envelope) 
     {
       if (cs->filter_env) cs->filter_env = free_env(cs->filter_env);
-      cs->filter_env = copy_env(sp->filter_control_env);
+      cs->filter_env = copy_env(sp->filter_control_envelope);
     }
   if (sp->speed_control_direction == 1) 
     cs->direction = false; 
@@ -1336,7 +1359,7 @@ void restore_controls(snd_info *sp)
       sp->saved_controls = (ctrl_state *)CALLOC(1, sizeof(ctrl_state));
       cs = (ctrl_state *)(sp->saved_controls);
       cs->amp = DEFAULT_AMP_CONTROL;
-      cs->srate = DEFAULT_SPEED_CONTROL;
+      cs->speed = DEFAULT_SPEED_CONTROL;
       cs->direction = false; /* false = forward, true = backward (this is the button's view) */
       cs->expand = DEFAULT_EXPAND_CONTROL;
       cs->expand_on = DEFAULT_EXPAND_CONTROL_P;
@@ -1355,15 +1378,15 @@ void restore_controls(snd_info *sp)
   toggle_filter_button(sp, cs->filter_on);
   toggle_direction_arrow(sp, cs->direction);
   set_snd_amp(sp, cs->amp);
-  set_snd_srate(sp, cs->srate);
+  set_snd_speed(sp, cs->speed);
   set_snd_contrast(sp, cs->contrast);
   set_snd_expand(sp, cs->expand);
   set_snd_revscl(sp, cs->revscl);
   set_snd_revlen(sp, cs->revlen);
-  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env); 
+  if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope); 
   if (cs->filter_env) 
-    sp->filter_control_env = copy_env(cs->filter_env);
-  else sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
+    sp->filter_control_envelope = copy_env(cs->filter_env);
+  else sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
   set_snd_filter_order(sp, cs->filter_order);
 }
 
@@ -1375,14 +1398,14 @@ void reset_controls(snd_info *sp)
   toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_P);
   toggle_direction_arrow(sp, false);
   set_snd_amp(sp, DEFAULT_AMP_CONTROL);
-  set_snd_srate(sp, DEFAULT_SPEED_CONTROL);
+  set_snd_speed(sp, DEFAULT_SPEED_CONTROL);
   set_snd_contrast(sp, DEFAULT_CONTRAST_CONTROL);
   set_snd_expand(sp, DEFAULT_EXPAND_CONTROL);
   set_snd_revscl(sp, DEFAULT_REVERB_CONTROL_SCALE);
   set_snd_revlen(sp, DEFAULT_REVERB_CONTROL_LENGTH);
   set_snd_filter_order(sp, DEFAULT_FILTER_CONTROL_ORDER);
-  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
-  sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
+  if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
+  sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
 }
 
 
@@ -1867,6 +1890,13 @@ static void set_speed_tones(int val)
 static void map_sounds_speed_style(snd_info *sp, void *val) 
 {
   sp->speed_control_style = (*((speed_style_t *)val)); 
+#if HAVE_SCM_MAKE_RATIO
+  if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
+    snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
+#endif
+  if (control_panel_open(sp))
+    set_snd_speed(sp, sp->speed_control);
+  /* TODO: src as ratio? mix|track-speed? ramp/env? both base+points, track tempo? */
 }
 
 void set_speed_style(speed_style_t val) 
@@ -1981,7 +2011,7 @@ typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP
 	      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS,
 	      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
 	      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
-	      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE
+	      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE, SP_FILTER_HZING
 } sp_field_t;
 
 static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
@@ -2013,6 +2043,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
     case SP_REVERBING:           return(C_TO_XEN_BOOLEAN(sp->reverb_control_p));       break;
     case SP_FILTERING:           return(C_TO_XEN_BOOLEAN(sp->filter_control_p));       break;
     case SP_FILTER_DBING:        return(C_TO_XEN_BOOLEAN(sp->filter_control_in_dB));   break;
+    case SP_FILTER_HZING:        return(C_TO_XEN_BOOLEAN(sp->filter_control_in_hz));   break;
     case SP_FILTER_ORDER:        return(C_TO_XEN_INT(sp->filter_control_order));       break;
     case SP_SRATE:               return(C_TO_XEN_INT((sp->hdr)->srate));               break;
     case SP_DATA_FORMAT:         return(C_TO_XEN_INT((sp->hdr)->format));              break;
@@ -2052,7 +2083,15 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
     case SP_EXPAND_LENGTH:       return(C_TO_XEN_DOUBLE(sp->expand_control_length));   break;
     case SP_EXPAND_RAMP:         return(C_TO_XEN_DOUBLE(sp->expand_control_ramp));     break;
     case SP_EXPAND_HOP:          return(C_TO_XEN_DOUBLE(sp->expand_control_hop));      break;
-    case SP_SPEED:           
+    case SP_SPEED:
+#if HAVE_SCM_MAKE_RATIO
+      if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
+	{
+	  if (sp->speed_control_direction == -1)
+	    return(scm_make_ratio(C_TO_XEN_INT(-sp->speed_control_numerator), C_TO_XEN_INT(sp->speed_control_denominator)));
+	  else return(scm_make_ratio(C_TO_XEN_INT(sp->speed_control_numerator), C_TO_XEN_INT(sp->speed_control_denominator)));
+	}
+#endif
       if (sp->speed_control_direction == -1) 
 	return(C_TO_XEN_DOUBLE((-(sp->speed_control)))); 
       else return(C_TO_XEN_DOUBLE(sp->speed_control)); 
@@ -2063,13 +2102,13 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
     case SP_REVERB_LOW_PASS:     return(C_TO_XEN_DOUBLE(sp->reverb_control_lowpass));  break;
     case SP_REVERB_DECAY:        return(C_TO_XEN_DOUBLE(sp->reverb_control_decay));    break;
     case SP_FILTER_COEFFS: 
-      if (sp->filter_control_env)
+      if (sp->filter_control_envelope)
 	{
 	  int len;
 	  Float *coeffs, *data;
 	  len = sp->filter_control_order;
 	  coeffs = (Float *)CALLOC(len, len * sizeof(Float));
-	  data = sample_linear_env(sp->filter_control_env, len);
+	  data = sample_linear_env(sp->filter_control_envelope, len);
 	  mus_make_fir_coeffs(len, data, coeffs);
 	  FREE(data);
 	  return(make_vct(len, coeffs));
@@ -2129,6 +2168,9 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
     case SP_FILTER_DBING:   
       set_filter_in_dB(sp, XEN_TO_C_BOOLEAN(val));
       break;
+    case SP_FILTER_HZING:   
+      set_filter_in_hz(sp, XEN_TO_C_BOOLEAN(val));
+      break;
     case SP_FILTER_ORDER:
       set_snd_filter_order(sp, XEN_TO_C_INT(val));
       break;
@@ -2152,6 +2194,10 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       break;
     case SP_SPEED_STYLE:
       sp->speed_control_style = (speed_style_t)XEN_TO_C_INT(val); /* range checked already */
+#if HAVE_SCM_MAKE_RATIO
+      if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
+	snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
+#endif
       break;
     case SP_SRATE:
       if (!(IS_PLAYER(sp))) 
@@ -2306,12 +2352,35 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(C_TO_XEN_DOUBLE(sp->expand_control_hop));
       break;
     case SP_SPEED: 
+#if HAVE_SCM_MAKE_RATIO
+      if ((sp->speed_control_style == SPEED_CONTROL_AS_RATIO) &&
+	  (SCM_FRACTIONP(val)))
+	{
+	  sp->speed_control_numerator = XEN_TO_C_INT(scm_numerator(val));
+	  sp->speed_control_denominator = XEN_TO_C_INT(scm_denominator(val));
+	  fval = (Float)(sp->speed_control_numerator) / (Float)(sp->speed_control_denominator);
+	  if (sp->speed_control_numerator < 0)
+	    {
+	      sp->speed_control_direction = -1;
+	      sp->speed_control_numerator = -sp->speed_control_numerator;
+	    }
+	  else sp->speed_control_direction = 1;
+	  set_snd_speed(sp, fabs(fval));
+	  sp->speed_control = fabs(fval); /* not redundant */
+	  toggle_direction_arrow(sp, (sp->speed_control_direction == -1));
+	  return(val);
+	}
+#endif
       fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
       if (fval != 0.0)
 	{
 	  int direction;
 	  if (fval > 0.0) direction = 1; else direction = -1;
-	  set_snd_srate(sp, direction * fval); 
+	  set_snd_speed(sp, fabs(fval)); 
+#if HAVE_SCM_MAKE_RATIO
+	  if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
+	    snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
+#endif
 	  toggle_direction_arrow(sp, (direction == -1));
 	  if (sp->speed_control_direction == -1) 
 	    return(C_TO_XEN_DOUBLE((-(sp->speed_control)))); 
@@ -2612,6 +2681,20 @@ static XEN g_set_filter_control_in_dB(XEN on, XEN snd_n)
 }
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_in_dB_reversed, g_set_filter_control_in_dB)
+
+static XEN g_filter_control_in_hz(XEN snd_n) 
+{
+  #define H_filter_control_in_hz "(" S_filter_control_in_hz " (snd #f)): #t if snd's filter envelope x axis should be in hz (control panel filter)"
+  return(sound_get(snd_n, SP_FILTER_HZING, S_filter_control_in_hz));
+}
+
+static XEN g_set_filter_control_in_hz(XEN on, XEN snd_n) 
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_filter_control_in_hz, "a boolean");
+  return(sound_set(snd_n, on, SP_FILTER_HZING, S_setB S_filter_control_in_hz));
+}
+
+WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_in_hz_reversed, g_set_filter_control_in_hz)
 
 static XEN g_filter_control_coeffs(XEN snd_n) 
 {
@@ -3292,17 +3375,17 @@ static XEN g_set_reverb_control_decay(XEN val, XEN snd)
 
 WITH_REVERSED_ARGS(g_set_reverb_control_decay_reversed, g_set_reverb_control_decay)
 
-static XEN g_set_filter_control_env(XEN edata, XEN snd_n)
+static XEN g_set_filter_control_envelope(XEN edata, XEN snd_n)
 {
   snd_info *sp;
   env *e;
   int i;
-  ASSERT_SOUND(S_setB S_filter_control_env, snd_n, 2);
+  ASSERT_SOUND(S_setB S_filter_control_envelope, snd_n, 2);
   sp = get_sp(snd_n, PLAYERS_OK);
   if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
-    return(snd_no_such_sound_error(S_setB S_filter_control_env, snd_n));
-  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);  /* set to null in case get_env throws error */
-  e = get_env(edata, S_setB S_filter_control_env);
+    return(snd_no_such_sound_error(S_setB S_filter_control_envelope, snd_n));
+  if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);  /* set to null in case get_env throws error */
+  e = get_env(edata, S_setB S_filter_control_envelope);
   if (e)
     {
       for (i = 0; i < e->pts; i++)
@@ -3310,26 +3393,26 @@ static XEN g_set_filter_control_env(XEN edata, XEN snd_n)
 	    (e->data[i * 2 + 1] < 0.0))
 	  {
 	    free_env(e);
-	    XEN_OUT_OF_RANGE_ERROR(S_setB S_filter_control_env, 1, edata, "y values ~A < 0.0 or > 1.0");
+	    XEN_OUT_OF_RANGE_ERROR(S_setB S_filter_control_envelope, 1, edata, "y values ~A < 0.0 or > 1.0");
 	  }
-      sp->filter_control_env = e;
-      filter_env_changed(sp, sp->filter_control_env);
+      sp->filter_control_envelope = e;
+      filter_env_changed(sp, sp->filter_control_envelope);
     }
   return(edata);
 }
 
-static XEN g_filter_control_env(XEN snd_n)
+static XEN g_filter_control_envelope(XEN snd_n)
 {
-  #define H_filter_control_env "(" S_filter_control_env " (snd #f)): snd's filter envelope (in the control panel)"
+  #define H_filter_control_envelope "(" S_filter_control_envelope " (snd #f)): snd's filter envelope (in the control panel)"
   snd_info *sp = NULL;
-  ASSERT_SOUND(S_filter_control_env, snd_n, 1);
+  ASSERT_SOUND(S_filter_control_envelope, snd_n, 1);
   sp = get_sp(snd_n, PLAYERS_OK);
   if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
-    return(snd_no_such_sound_error(S_filter_control_env, snd_n));
-  return(env_to_xen(sp->filter_control_env)); 
+    return(snd_no_such_sound_error(S_filter_control_envelope, snd_n));
+  return(env_to_xen(sp->filter_control_envelope)); 
 }
 
-WITH_REVERSED_ARGS(g_set_filter_control_env_reversed, g_set_filter_control_env)
+WITH_REVERSED_ARGS(g_set_filter_control_envelope_reversed, g_set_filter_control_envelope)
 
 static XEN g_apply_controls(XEN snd, XEN choice, XEN beg, XEN dur)
 {
@@ -3857,8 +3940,8 @@ XEN_ARGIFY_7(g_new_sound_w, g_new_sound)
 XEN_ARGIFY_1(g_revert_sound_w, g_revert_sound)
 XEN_ARGIFY_7(g_save_sound_as_w, g_save_sound_as)
 XEN_ARGIFY_4(g_apply_controls_w, g_apply_controls)
-XEN_ARGIFY_1(g_filter_control_env_w, g_filter_control_env)
-XEN_ARGIFY_2(g_set_filter_control_env_w, g_set_filter_control_env)
+XEN_ARGIFY_1(g_filter_control_envelope_w, g_filter_control_envelope)
+XEN_ARGIFY_2(g_set_filter_control_envelope_w, g_set_filter_control_envelope)
 XEN_ARGIFY_1(g_cursor_follows_play_w, g_cursor_follows_play)
 XEN_ARGIFY_2(g_set_cursor_follows_play_w, g_set_cursor_follows_play)
 XEN_ARGIFY_1(g_show_controls_w, g_show_controls)
@@ -3881,6 +3964,8 @@ XEN_ARGIFY_1(g_filter_control_p_w, g_filter_control_p)
 XEN_ARGIFY_2(g_set_filter_control_p_w, g_set_filter_control_p)
 XEN_ARGIFY_1(g_filter_control_in_dB_w, g_filter_control_in_dB)
 XEN_ARGIFY_2(g_set_filter_control_in_dB_w, g_set_filter_control_in_dB)
+XEN_ARGIFY_1(g_filter_control_in_hz_w, g_filter_control_in_hz)
+XEN_ARGIFY_2(g_set_filter_control_in_hz_w, g_set_filter_control_in_hz)
 XEN_ARGIFY_1(g_filter_control_coeffs_w, g_filter_control_coeffs)
 XEN_ARGIFY_1(g_filter_control_order_w, g_filter_control_order)
 XEN_ARGIFY_2(g_set_filter_control_order_w, g_set_filter_control_order)
@@ -3959,8 +4044,8 @@ XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 #define g_revert_sound_w g_revert_sound
 #define g_save_sound_as_w g_save_sound_as
 #define g_apply_controls_w g_apply_controls
-#define g_filter_control_env_w g_filter_control_env
-#define g_set_filter_control_env_w g_set_filter_control_env
+#define g_filter_control_envelope_w g_filter_control_envelope
+#define g_set_filter_control_envelope_w g_set_filter_control_envelope
 #define g_cursor_follows_play_w g_cursor_follows_play
 #define g_set_cursor_follows_play_w g_set_cursor_follows_play
 #define g_show_controls_w g_show_controls
@@ -3983,6 +4068,8 @@ XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 #define g_set_filter_control_p_w g_set_filter_control_p
 #define g_filter_control_in_dB_w g_filter_control_in_dB
 #define g_set_filter_control_in_dB_w g_set_filter_control_in_dB
+#define g_filter_control_in_hz_w g_filter_control_in_hz
+#define g_set_filter_control_in_hz_w g_set_filter_control_in_hz
 #define g_filter_control_coeffs_w g_filter_control_coeffs
 #define g_filter_control_order_w g_filter_control_order
 #define g_set_filter_control_order_w g_set_filter_control_order
@@ -4088,8 +4175,8 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE(S_apply_controls,       g_apply_controls_w, 0, 4, 0,       H_apply_controls);
 
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_env, g_filter_control_env_w, H_filter_control_env,
-					    S_setB S_filter_control_env, g_set_filter_control_env_w, g_set_filter_control_env_reversed, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope,
+					    S_setB S_filter_control_envelope, g_set_filter_control_envelope_w, g_set_filter_control_envelope_reversed, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_follows_play, g_cursor_follows_play_w, H_cursor_follows_play,
 					    S_setB S_cursor_follows_play, g_set_cursor_follows_play_w, g_set_cursor_follows_play_reversed, 0, 1, 1, 1);
@@ -4127,6 +4214,9 @@ If it returns #t, the apply is aborted."
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_in_dB, g_filter_control_in_dB_w, H_filter_control_in_dB,
 					    S_setB S_filter_control_in_dB, g_set_filter_control_in_dB_w, g_set_filter_control_in_dB_reversed, 0, 1, 1, 1);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_in_hz, g_filter_control_in_hz_w, H_filter_control_in_hz,
+					    S_setB S_filter_control_in_hz, g_set_filter_control_in_hz_w, g_set_filter_control_in_hz_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE(S_filter_control_coeffs, g_filter_control_coeffs_w, 0, 1, 0, H_filter_control_coeffs);
   

@@ -355,11 +355,11 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
       if (dp->filtering)
 	{
 	  sp->filter_control_changed = false;
-	  if (!(sp->filter_control_env)) 
+	  if (!(sp->filter_control_envelope)) 
 	    dp->filtering = false;
 	  else
 	    {
-	      data = sample_linear_env(sp->filter_control_env, sp->filter_control_order);
+	      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
 	      dp->flt = make_flt(dp, sp->filter_control_order, data);
 	      FREE(data);
 	    }
@@ -1246,7 +1246,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  revincr = (sp->reverb_control_scale - rev) / (Float)(frames);
 		  if ((dp->filtering) && (sp->filter_control_changed))
 		    {
-		      data = sample_linear_env(sp->filter_control_env, sp->filter_control_order);
+		      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
 		      mus_make_fir_coeffs(sp->filter_control_order, data, dp->a); /* since dp->a is used directly, this might work */
 		      FREE(data);
 		      sp->filter_control_changed = false;
@@ -2275,7 +2275,7 @@ static void free_player(snd_info *sp)
     }
   FREE(sp->filename);
   FREE(sp->chans);
-  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
+  if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
   FREE(sp);
 }
 
@@ -2369,7 +2369,7 @@ static XEN g_player_home(XEN snd_chn)
 static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
 {
   #define H_add_player "(" S_add_player " player (start 0) (end len) (pos -1)): \
-add snd's channel chn to the play list; the play begins when " S_start_playing " is called. \
+add a player to the play list; the play begins when " S_start_playing " is called. \
 The start, end, and edit-position of the portion played can be specified."
 
   snd_info *sp = NULL;

@@ -217,18 +217,6 @@ static void env_redisplay_1(bool printing)
 void env_redisplay(void) {env_redisplay_1(false);}
 void env_redisplay_with_print(void) {env_redisplay_1(true);}
 
-void enved_fft_update(void)
-{
-  if ((enved_dialog_is_active()) &&
-      (!(showing_all_envs)))
-    {
-      if ((enved_wave_p(ss)) &&
-	  (enved_target(ss) == ENVED_SPECTRUM) && 
-	  (active_env))
-	enved_show_background_waveform(axis, gray_ap, apply_to_selection, true, false);
-    }
-}
-
 static void enved_filter_order_callback(GtkWidget *w, gpointer data)
 {
   set_enved_filter_order(gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(orderL)));
@@ -474,8 +462,7 @@ static void selection_button_pressed(GtkWidget *w, gpointer context)
   apply_to_selection = (!apply_to_selection);
   gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
   set_sensitive(apply2B, true);
-  if ((enved_target(ss) != ENVED_SPECTRUM) && 
-      (enved_wave_p(ss)) && 
+  if ((enved_wave_p(ss)) && 
       (!showing_all_envs)) 
     env_redisplay();
 }
@@ -753,6 +740,7 @@ static void fir_button_pressed(GtkWidget *w, gpointer context)
 {
   FIR_p = (!FIR_p);
   set_button_label(firB, (FIR_p) ? "fir" : "fft");
+  if (enved_wave_p(ss)) env_redisplay();
 }
 
 #define BB_MARGIN 3
