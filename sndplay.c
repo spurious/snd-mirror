@@ -142,17 +142,7 @@ int main(int argc, char *argv[])
 #else
 		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT,srate,chans,MUS_COMPATIBLE_FORMAT,outbytes);
 #endif
-		  if (afd == -1) 
-		    {
-		      fprintf(stderr,"%s: %s\n",name,mus_audio_error_name(mus_audio_error()));
-#ifdef BEOS
-		      if ((mus_audio_error() == MUS_AUDIO_FORMAT_NOT_AVAILABLE) || 
-			  (mus_audio_error() == MUS_AUDIO_CHANNELS_NOT_AVAILABLE) || 
-			  (mus_audio_error() == MUS_AUDIO_SRATE_NOT_AVAILABLE))
-			fprintf(stderr,"(Be can only play stereo 16-bit linear 44100 (or 22050) Hz files)\n");
-#endif		  
-		      break;
-		    }
+		  if (afd == -1) break;
 		}
 	      mus_audio_write(afd,(char *)obuf,outbytes);
 	      mus_sound_read(fd,0,BUFFER_SIZE-1,chans,bufs);
@@ -200,11 +190,7 @@ int main(int argc, char *argv[])
 		{
 		  afd0 = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DEFAULT,srate,2,MUS_COMPATIBLE_FORMAT,outbytes);
 		  afd1 = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | MUS_AUDIO_DEFAULT,srate,2,MUS_COMPATIBLE_FORMAT,outbytes);
-		  if ((afd0 == -1) || (afd1 == -1))
-		    {
-		      fprintf(stderr,"%s: %s\n",name,mus_audio_error_name(mus_audio_error()));
-		      break;
-		    }
+		  if ((afd0 == -1) || (afd1 == -1)) break;
 		}
 	      mus_audio_write(afd0,(char *)obuf0,outbytes);
 	      mus_audio_write(afd1,(char *)obuf1,outbytes);
@@ -219,7 +205,5 @@ int main(int argc, char *argv[])
 	  FREE(obuf1);
 	}
     }
-  else
-    fprintf(stderr,"%s: %s\n",name,mus_audio_error_name(mus_audio_error()));
   return(0);
 }

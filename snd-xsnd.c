@@ -195,9 +195,6 @@ void make_minibuffer_label(snd_info *sp ,char *str)
 }
 
 
-#define SND_TXT_BUF_SIZE 256
-static char snd_txt_buf[SND_TXT_BUF_SIZE];
-
 int sound_unlock_ctrls(snd_info *sp, void *ptr)
 {
   XtManageChild(w_snd_ctrls(sp));
@@ -1261,14 +1258,8 @@ static void snd_file_glasses_icon(snd_info *sp, int on, int glass)
 void snd_file_lock_icon(snd_info *sp, int on) {}
 void snd_file_bomb_icon(snd_info *sp, int on) 
 {
-  char *buf;
   if (on)
-    {
-      buf = (char *)CALLOC(256,sizeof(char));
-      sprintf(buf,"%s has changed since we last read it!",sp->shortname);
-      report_in_minibuffer(sp,buf);
-      FREE(buf);
-    }
+    report_in_minibuffer(sp,"%s has changed since we last read it!",sp->shortname);
 }
 static void snd_file_glasses_icon(snd_info *sp, int on, int glass) {}
 void x_bomb(snd_info *sp, int on) {}
@@ -2418,10 +2409,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   add_sound_data(filename,sp,ss);
   snd_file_lock_icon(sp,(ss->viewing || (cant_write(sp->fullname)))); /* sp->read_only not set yet */
   if (ss->pending_change)
-    {
-      sprintf(snd_txt_buf,"(translated %s)",old_name);
-      report_in_minibuffer(sp,snd_txt_buf);
-    }
+    report_in_minibuffer(sp,"(translated %s)",old_name);
   if (!(ss->using_schemes)) map_over_children(SOUND_PANE(ss),color_sashes,(void *)ss);
   if (!(auto_resize(ss))) normalize_all_sounds(ss);
   

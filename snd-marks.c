@@ -493,7 +493,6 @@ void delete_mark_samp(int samp, chan_info *cp)
   int i,j,ed,edm;
   mark *mp;
   mark **mps;
-  char *buf;
   axis_info *ap;
   if ((cp) && (cp->marks))
     {
@@ -522,10 +521,7 @@ void delete_mark_samp(int samp, chan_info *cp)
 	    }
 	}
     }
-  buf = (char *)CALLOC(64,sizeof(char));
-  sprintf(buf,"no mark at sample %d",samp);
-  report_in_minibuffer(cp->sound,buf);
-  FREE(buf);
+  report_in_minibuffer(cp->sound,"no mark at sample %d",samp);
 }
 
 static void delete_mark_id(int id, chan_info *cp)
@@ -533,7 +529,6 @@ static void delete_mark_id(int id, chan_info *cp)
   int i,j,ed,edm;
   mark *mp;
   mark **mps;
-  char *buf;
   axis_info *ap;
   if ((cp) && (cp->marks))
     {
@@ -562,10 +557,7 @@ static void delete_mark_id(int id, chan_info *cp)
 	    }
 	}
     }
-  buf = (char *)CALLOC(64,sizeof(char));
-  sprintf(buf,"no mark with id: %d",id);
-  report_in_minibuffer(cp->sound,buf);
-  FREE(buf);
+  report_in_minibuffer(cp->sound,"no mark with id: %d",id);
 }
 
 static void delete_marks (chan_info *cp)
@@ -896,7 +888,7 @@ static int find_any_marks (chan_info *cp, void *ptr)
 
 static char *save_marks(snd_info *sp)
 {
-  char *newname = NULL,*str;
+  char *newname = NULL;
   int i;
   FILE *fd;
   if ((sp) && (map_over_sound_chans(sp,find_any_marks,NULL)))
@@ -910,12 +902,7 @@ static char *save_marks(snd_info *sp)
 	  fclose(fd);
 	}
       else 
-	{
-	  str = (char *)CALLOC(128,sizeof(char));
-	  sprintf(str,"%s %s ",newname,strerror(errno));
-	  report_in_minibuffer(sp,str);
-	  FREE(str);
-	}
+	report_in_minibuffer(sp,"%s %s ",newname,strerror(errno));
     }
   return(newname);
 }

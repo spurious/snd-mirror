@@ -469,8 +469,9 @@ static void load_gtk_rc_file ()
   if (access (path, R_OK)) 
     {
 #if DEBUGGING
-      mus_error (0, "No GTK rc file for snd at %s\n", path);
+      fprintf(stderr,"No GTK rc file for snd at %s\n", path);
       /* I take it this is a purely aesthetic "error"? */
+      /* (can't use add_to_error_history here since state context is not setup yet) */
 #endif
       return;
     }

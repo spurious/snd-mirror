@@ -131,54 +131,6 @@ char *prettyf(Float num, int tens)
   return(newval);
 }
 
-int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
-{
-  int kfree,kneeded,kother,go_on;
-  kfree = disk_kspace(fd);
-  if (kfree < 0) {sprintf(prtbuf,strerror(errno)); report_in_minibuffer(sp,prtbuf); return(NO_PROBLEM);}
-  kneeded = bytes >> 10;
-  if (kfree < kneeded)
-    {
-      if (other_bytes > 0)
-	{
-	  kother = other_bytes >> 10;
-	  if (kother > kfree)
-	    {
-	      sprintf(prtbuf,"only %d bytes left on disk, changing to 16-bit temp output",kfree<<10);
-	      report_in_minibuffer(sp,prtbuf);
-	      return(HUNKER_DOWN);
-	    }
-	}
-      sprintf(prtbuf,"only %d bytes left on disk; continue?",kfree<<10);
-      go_on = snd_yes_or_no_p(sp->state,prtbuf);
-      if (!go_on) return(GIVE_UP);
-      report_in_minibuffer(sp,"ok -- here we go...");
-      return(BLIND_LEAP);
-    }
-  return(NO_PROBLEM);
-}
-
-int snd_checked_write(snd_state *ss, int fd, unsigned char *buf, int bytes)
-{
-  /* io.c checked_write assumes its file descriptors are around */
-  int bytes_written,kfree;
-  kfree = disk_kspace(fd);
-  if (kfree < 0) {snd_error(strerror(errno)); return(-1);}
-  if (kfree < (bytes>>10))
-    {
-      sprintf(prtbuf,"only %d bytes left on disk, can't write %d",kfree<<10,bytes);
-      snd_yes_or_no_p(ss,prtbuf);
-      return(-1);
-    }
-  bytes_written = write(fd,buf,bytes);
-  if (bytes_written != bytes)
-    {
-      snd_error("write failed: %s",strerror(errno));
-      return(-1);
-    }
-  return(bytes_written);
-}
-
 void fill_number(char *fs, char *ps)
 {
   int i,j;

@@ -202,20 +202,23 @@ static void set_spectro_start(snd_state *ss, Float val)
 
 static char expr_str[256];
 
-void report_in_minibuffer(snd_info *sp, char *message)
+void report_in_minibuffer(snd_info *sp, char *format, ...)
 {
-  set_minibuffer_string(sp,message);
+  char *buf;
+#if HAVE_VPRINTF
+  va_list ap;
+  buf = (char *)CALLOC(256,sizeof(char));
+  va_start(ap,format);
+  vsprintf(buf,format,ap);
+  va_end(ap);
+#else
+  buf = (char *)CALLOC(256,sizeof(char));
+  sprintf(buf,"%s...[you need vprintf]",format);
+#endif
+  set_minibuffer_string(sp,buf);
   sp->minibuffer_temp = 1;
+  FREE(buf);
   /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
-}
-
-static void append_to_minibuffer(snd_info *sp, char *message)
-{
-  char *str=NULL;
-  sprintf(expr_str,"%s%s",str=get_minibuffer_string(sp),message);
-  set_minibuffer_string(sp,expr_str);
-  sp->minibuffer_temp = 1;
-  if (str) free(str);
 }
 
 void clear_minibuffer_prompt(snd_info *sp)
@@ -243,17 +246,6 @@ static int prompt(snd_info *sp, char *msg, char *preload)
   return(CURSOR_NO_ACTION); /* make sure verbose cursor doesn't preload our prompt text field with garbage! */
 }
 
-#if HAVE_GUILE
-static void g_prompt(snd_info *sp, char *prompt)
-{
-  make_minibuffer_label(sp,prompt);
-  sp->minibuffer_on = 1;
-  sp->minibuffer_temp = 0;
-  sp->prompting = 1;
-  goto_minibuffer(sp);
-}
-#endif
-
 static int map_chans_dot_size(chan_info *cp, void *ptr) {cp->dot_size = (int)ptr; return(0);}
 
 static void set_dot_size(snd_state *ss, int val)
@@ -262,7 +254,9 @@ static void set_dot_size(snd_state *ss, int val)
     {
       in_set_dot_size(ss,val);
       map_over_chans(ss,map_chans_dot_size,(void *)val);
-      if ((graph_style(ss) == GRAPH_DOTS) || (graph_style(ss) == GRAPH_DOTS_AND_LINES) || (graph_style(ss) == GRAPH_LOLLIPOPS))
+      if ((graph_style(ss) == GRAPH_DOTS) || 
+	  (graph_style(ss) == GRAPH_DOTS_AND_LINES) || 
+	  (graph_style(ss) == GRAPH_LOLLIPOPS))
 	map_over_chans(ss,update_graph,NULL);
     }
 }
@@ -1578,12 +1572,8 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
       if (mcf) FREE(mcf);
       if (fd == NULL) 
 	{
-	  str = (char *)CALLOC(256,sizeof(char));
-	  sprintf(str,"cant write %s: %s",filename,strerror(errno));
-	  report_in_minibuffer(sp,str);
+	  report_in_minibuffer(sp,"can't write %s: %s",filename,strerror(errno));
 	  err = 1;
-	  FREE(str);
-	  str = NULL;
 	}
       else tmp_file = 0;
     }
@@ -2134,7 +2124,9 @@ static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first
 
 static void draw_graph_cursor(chan_info *cp);
 
-static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_state *ss, int width, int height, int offset, int just_fft, int just_lisp)
+static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_state *ss, 
+					    int width, int height, int offset, 
+					    int just_fft, int just_lisp)
 {
   int with_fft,with_lisp,displays,points;
   axis_info *ap = NULL;
@@ -2244,7 +2236,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	}
     }
 
-  if (!just_lisp)
+  if ((!just_lisp) && (!(ss->just_time)))
     {
       if (with_fft)
 	{
@@ -2263,7 +2255,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
                     /* In Gtk+ (apparently) the first proc added is run, not the most recent */
 #endif
 
-	  if ((!cp->waving) || (just_fft))
+        if ((!cp->waving) || (just_fft))
 	    { /* make_graph does this -- sets losamp needed by fft to find its starting point */
 	      ap->losamp = (int)(ap->x0*(double)SND_SRATE(sp));
 	      ap->hisamp = (int)(ap->x1*(double)SND_SRATE(sp));
@@ -2280,7 +2272,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 
   if (!just_fft)
     {
-      if (with_lisp)
+      if ((with_lisp) && (!(ss->just_time)))
 	{
 	  make_axes(cp,uap,
 		    X_IN_LENGTH,
@@ -2841,7 +2833,6 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
   snd_info *sp;
   snd_fd **sfs;
   snd_fd *sf;
-  char *cgbuf;
   int kp,j,ip,len,num,reporting = 0,rpt = 0,rpt4;
   MUS_SAMPLE_TYPE val;
   SCM res;
@@ -2901,12 +2892,9 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 			{
 			  ss->stopped_explicitly = 0;
 			  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
-			  cgbuf = (char *)CALLOC(128,sizeof(char));
 			  if (si->chans == 1)
-			    sprintf(cgbuf,"C-G stopped %s at sample %d",origin,kp+beg);
-			  else sprintf(cgbuf,"C-G stopped %s in %s chan %d at sample %d",origin,sp->shortname,cp->chan+1,kp+beg);
-			  report_in_minibuffer(sp,cgbuf);
-			  FREE(cgbuf);
+			    report_in_minibuffer(sp,"C-G stopped %s at sample %d",origin,kp+beg);
+			  else report_in_minibuffer(sp,"C-G stopped %s in %s chan %d at sample %d",origin,sp->shortname,cp->chan+1,kp+beg);
 			  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);
 			  free_sync_state(sc); 
 			  return(SCM_BOOL_F);
@@ -2932,7 +2920,6 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   int kp,ip,pos = 0,len,num,reporting = 0,rpt = 0,rpt4;
   MUS_SAMPLE_TYPE val;
   SCM res=SCM_UNDEFINED,args,gh_chans,zero;
-  char *cgbuf;
   sp = cp->sound;
   switch (chan_choice)
     {
@@ -3012,10 +2999,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   free_sync_state(sc); 
   if (ss->stopped_explicitly)
     {
-      cgbuf = (char *)CALLOC(128,sizeof(char));
-      sprintf(cgbuf,"C-G stopped %s at sample %d",origin,kp+beg);
-      report_in_minibuffer(sp,cgbuf);
-      FREE(cgbuf);
+      report_in_minibuffer(sp,"C-G stopped %s at sample %d",origin,kp+beg);
       ss->stopped_explicitly = 0;
     }
   else
@@ -3237,8 +3221,6 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE *vals;
   SCM res=SCM_UNDEFINED,args,gh_chans,resval;
-  char *cgbuf;
-
   sp = cp->sound;
   switch (chan_choice)
     {
@@ -3331,10 +3313,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   if (ss->stopped_explicitly)
     {
       ss->stopped_explicitly = 0;
-      cgbuf = (char *)CALLOC(128,sizeof(char));
-      sprintf(cgbuf,"C-G stopped map at sample %d",kp+beg);
-      report_in_minibuffer(sp,cgbuf);
-      FREE(cgbuf);
+      report_in_minibuffer(sp,"C-G stopped map at sample %d",kp+beg);
     }
   else
     {
@@ -3406,7 +3385,7 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 	    {
 	      scfd = mus_file_open_read(saved_chan_file);
 	      if (scfd == -1) 
-		snd_error("open saved chan file: %s\n",strerror(errno));
+		snd_error("open saved chan file %s: %s\n",saved_chan_file,strerror(errno));
 	      else
 		{
 		  hdr = sp->hdr;
@@ -3415,7 +3394,7 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 					   1,hdr->type); /* ??? */
 		  fltfd = mus_file_open_read(filename);
 		  if (fltfd == -1) 
-		    snd_error("open filter file: %s\n",strerror(errno));
+		    snd_error("open filter file %s: %s\n",filename,strerror(errno));
 		  else
 		    {
 		      mus_file_set_descriptors(fltfd,filename,
@@ -5215,8 +5194,7 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 	    }
 	  if ((!regexpr) && (chan_dur == 1))
 	    {
-	      sprintf(expr_str,"%s = %s",sp->eval_expr,s1 = prettyf(val,2));
-	      report_in_minibuffer(sp,expr_str);
+	      report_in_minibuffer(sp,"%s = %s",sp->eval_expr,s1 = prettyf(val,2));
 	      FREE(s1);
 	    }
 	}
@@ -5582,14 +5560,10 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	  m = add_mark(sp->marking-1,str,active_chan);
 	  if (m)
 	    {
-	      sprintf(expr_str,"%s placed at sample %d",str,sp->marking-1);
+	      report_in_minibuffer(sp,"%s placed at sample %d",str,sp->marking-1);
 	      draw_mark(active_chan,active_chan->axis,m);
 	    }
-	  else
-	    {
-	      sprintf(expr_str,"There is already a mark at sample %d",sp->marking-1);
-	    }
-	  report_in_minibuffer(sp,expr_str);
+	  else report_in_minibuffer(sp,"There is already a mark at sample %d",sp->marking-1);
 	  sp->marking = 0;
 	}	
       else 
@@ -5657,8 +5631,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	      else 
 		{
 		  tok = dir_from_tempnam(ss);
-		  sprintf(expr_str,"can't access %s! temp dir is still %s",newdir,tok);
-		  report_in_minibuffer(sp,expr_str);
+		  report_in_minibuffer(sp,"can't access %s! temp dir is still %s",newdir,tok);
 		  if (newdir) FREE(newdir);
 		  if (tok) free(tok);
 		}
@@ -5682,11 +5655,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 		    }
 		  clear_minibuffer(sp);
 		}
-	      else 
-		{
-		  sprintf(expr_str,"can't read %s's header",str);
-		  report_in_minibuffer(sp,expr_str);
-		}
+	      else report_in_minibuffer(sp,"can't read %s's header",str);
 	      FREE(str1);
 	      break;
 #if HAVE_GUILE
@@ -6168,8 +6137,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 #endif
 	    default:
-	      sprintf(expr_str,"C-%s undefined",key_to_name(keysym));
-	      report_in_minibuffer(sp,expr_str);
+	      report_in_minibuffer(sp,"C-%s undefined",key_to_name(keysym));
 	      break;
 	    }
 	}
@@ -6221,8 +6189,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_Up: zx_incremented(cp,1.0+state_amount(state)); break;
 	    case snd_K_Down: zx_incremented(cp,1.0/(1.0+state_amount(state))); break;
 	    default:
-	      sprintf(expr_str,"C-x C-%s undefined",key_to_name(keysym));
-	      report_in_minibuffer(sp,expr_str);
+	      report_in_minibuffer(sp,"C-x C-%s undefined",key_to_name(keysym));
 	      break;
 	    }
 	}
@@ -6366,8 +6333,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		      sp->macroing = count;
 		      redisplay = KEYBOARD_NO_ACTION;
 		    }
-		  sprintf(expr_str,"%s undefined",key_to_name(keysym));
-		  report_in_minibuffer(sp,expr_str);
+		  report_in_minibuffer(sp,"%s undefined",key_to_name(keysym));
 		}
 	      /* should we open the minibuffer in all cases? */
 	      break;
@@ -6494,8 +6460,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      searching = 1; 
 	      break;
 	    default:
-	      sprintf(expr_str,"C-x %s undefined",key_to_name(keysym));
-	      report_in_minibuffer(sp,expr_str);
+	      report_in_minibuffer(sp,"C-x %s undefined",key_to_name(keysym));
 	      break;
 	    }
 	}
@@ -6824,7 +6789,6 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   axis_info *ap;
   mark *old_mark;
   int actax,samps;
-  char *des;
   sp = cp->sound;
   ss = cp->state;
   if (sp->combining == CHANNELS_COMBINED) cp = which_channel(sp,y);
@@ -6886,12 +6850,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      if (mouse_mark)
 			{
 			  if (handle_mark_click(mark_id(mouse_mark)) == FALSE)
-			    {
-			      des = (char *)CALLOC(64,sizeof(char));
-			      sprintf(des,"mark %d at sample %d",mark_id(mouse_mark),mouse_mark->samp);
-			      report_in_minibuffer(sp,des);
-			      FREE(des);
-			    }
+			    report_in_minibuffer(sp,"mark %d at sample %d",mark_id(mouse_mark),mouse_mark->samp);
 			}
 		    }
 		}
@@ -6899,11 +6858,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	  else
 	    {
 	      if (actax == FFT_MAIN)
-		{
-		  des = describe_fft_point(cp,x,y);
-		  report_in_minibuffer(sp,des);
-		  FREE(des);
-		}
+		report_in_minibuffer(sp,describe_fft_point(cp,x,y));
 	      else
 		if (actax == LISP)
 		  handle_mouse_release(sp,cp,ungrf_x((cp->lisp_info)->axis,x),ungrf_y((cp->lisp_info)->axis,y),button,key_state);
@@ -6957,7 +6912,6 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
   TIME_TYPE mouse_time,time_interval;
   int samps;
   Float old_cutoff;
-  char *des;
   /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
   mouse_time = time;
   if ((mouse_time - mouse_down_time) < (click_time/2)) return;
@@ -7042,11 +6996,7 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 		      return;
 		    }
 		  if ((cp->verbose_cursor) && (within_graph(cp,x,y) == FFT_MAIN))
-		    {
-		      des = describe_fft_point(cp,x,y);
-		      report_in_minibuffer(cp->sound,des);
-		      FREE(des);
-		    }
+		    report_in_minibuffer(cp->sound,describe_fft_point(cp,x,y));
 		}
 	    }
 	}
@@ -7505,7 +7455,11 @@ static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
     }
   else sp->prompt_callback = SCM_BOOL_F;
   str = gh_scm2newstr(msg,NULL);
-  g_prompt(sp,str);
+  make_minibuffer_label(sp,str);
+  sp->minibuffer_on = 1;
+  sp->minibuffer_temp = 0;
+  sp->prompting = 1;
+  goto_minibuffer(sp);
   free(str);
   return(SCM_BOOL_F);
 }
@@ -7529,14 +7483,16 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
 {
   #define H_append_to_minibuffer "(" S_append_to_minibuffer " msg &optional snd) appends msg to snd's minibuffer"
   snd_info *sp;
-  char *str;
+  char *str=NULL,*str1=NULL;
   SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_append_to_minibuffer);
   ERRSP(S_append_to_minibuffer,snd_n,2);
   sp = get_sp(snd_n);
   if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_append_to_minibuffer),snd_n)));
-  str = gh_scm2newstr(msg,NULL);
-  append_to_minibuffer(sp,str);
-  free(str);
+  sprintf(expr_str,"%s%s",str1 = get_minibuffer_string(sp),str = gh_scm2newstr(msg,NULL));
+  set_minibuffer_string(sp,expr_str);
+  sp->minibuffer_temp = 1;
+  if (str1) free(str1);
+  if (str) free(str);
   return(msg);
 }
 

@@ -22,7 +22,13 @@ int help_dialog_is_active(void);
 void add_to_error_history(snd_state *ss, char *msg);
 void post_error_dialog(snd_state *ss, char *msg);
 void show_snd_errors(snd_state *ss);
-int snd_yes_or_no_p(snd_state *ss,char *question);
+
+#ifdef __GNUC__
+  int snd_yes_or_no_p(snd_state *ss, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+#else
+  int snd_yes_or_no_p(snd_state *ss, const char *format, ...);
+#endif
+
 #if HAVE_GUILE_GTK
   void init_error_widgets(SCM local_doc);
 #endif

@@ -674,7 +674,7 @@
 #define S_selection_position            "selection-position"
 #define S_selection_color               "selection-col" STR_OR
 #define S_selection_length              "selection-length"
-#define S_selection_member              "selection-member"
+#define S_selection_member              "selection-member?"
 #define S_selection_to_temp             "selection-to-temp"
 #define S_selection_to_temps            "selection-to-temps"
 #define S_selectionQ                    "selection?"

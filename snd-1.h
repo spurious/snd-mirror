@@ -271,6 +271,7 @@ typedef struct snd__state {
   char *search_expr,*startup_title;
 #if HAVE_GUILE
   SCM search_proc;
+  int catch_exists;
 #endif
   int search_in_progress;
   int using_schemes;
@@ -280,7 +281,7 @@ typedef struct snd__state {
   int max_sounds;
   snd_info *mx_sp;
   char *pending_change;
-  int print_choice,apply_choice;
+  int print_choice,apply_choice,just_time;
   int stopped_explicitly,checking_explicitly;
   int result_printout,listening,init_window_width,init_window_height,init_window_x,init_window_y;
   int open_hook_active,close_hook_active,fft_hook_active,graph_hook_active,exit_hook_active,start_hook_active,save_hook_active;
@@ -968,7 +969,11 @@ void stop_amp_env(chan_info *cp);
 int chan_fft_in_progress(chan_info *cp);
 int force_fft_clear(chan_info *cp, void *ptr);
 void chan_info_cleanup(chan_info *cp);
-void report_in_minibuffer(snd_info *sp, char *message);
+#ifdef __GNUC__
+  void report_in_minibuffer(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+#else
+  void report_in_minibuffer(snd_info *sp, char *format, ...);
+#endif
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
 int update_graph(chan_info *cp, void *ptr);
@@ -1173,8 +1178,6 @@ Float cube (Float a);
 char *prettyf(Float num, int tens);
 char *shorter_tempnam(char *dir,char *prefix);
 char *snd_tempnam(snd_state *ss);
-int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes);
-int snd_checked_write(snd_state *ss, int fd, unsigned char *buf, int bytes);
 void fill_number(char *fs, char *ps);
 void snd_exit(int val);
 int check_balance(char *expr, int start, int end);
@@ -1247,7 +1250,7 @@ int cursor_search(chan_info *cp, int count);
 
 /* -------- snd-trans.c -------- */
 
-int snd_translate(snd_state *ss, char *oldname, char *newname);
+int snd_translate(char *oldname, char *newname, int type);
 
 
 /* -------- snd-rec.c -------- */

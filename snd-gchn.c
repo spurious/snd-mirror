@@ -208,32 +208,50 @@ void resize_zy(chan_info *cp)
 
 static void W_sy_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
 {
-  sy_changed(1.0 - adj->value,(chan_info *)(clientData));
+  chan_info *cp = (chan_info *)clientData;
+  START_JUST_TIME(cp);
+  sy_changed(1.0 - adj->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_sx_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
 {
-  sx_changed(adj->value,(chan_info *)(clientData));
+  chan_info *cp = (chan_info *)clientData;
+  START_JUST_TIME(cp);
+  sx_changed(adj->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_zy_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
 {
-  zy_changed(1.0 - adj->value,(chan_info *)clientData);
+  chan_info *cp = (chan_info *)clientData;
+  START_JUST_TIME(cp);
+  zy_changed(1.0 - adj->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_zx_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
 {
-  zx_changed(adj->value,(chan_info *)clientData);
+  chan_info *cp = (chan_info *)clientData;
+  START_JUST_TIME(cp);
+  zx_changed(adj->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_gzy_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
 {
-  gzy_changed(1.0 - adj->value,(chan_info *)clientData);
+  chan_info *cp = (chan_info *)clientData;
+  START_JUST_TIME(cp);
+  gzy_changed(1.0 - adj->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_gsy_ValueChanged_Callback(GtkAdjustment *adj, gpointer clientData)
 {
-  gsy_changed(1.0 - adj->value,(chan_info *)clientData);
+  chan_info *cp = (chan_info *)clientData;
+  START_JUST_TIME(cp);
+  gsy_changed(1.0 - adj->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static gint F_Button_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)

@@ -84,6 +84,6 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define CANNOT_SAVE gh_symbol2scm("cannot-save")
 #define IMPOSSIBLE_BOUNDS gh_symbol2scm("impossible-bounds")
 #define NO_ACTIVE_SELECTION gh_symbol2scm("no-active-selection")
-#define MUS_ERROR gh_symbol2scm("mus-error")
+#define MUS_MISC_ERROR gh_symbol2scm("mus-error")
 
 #endif

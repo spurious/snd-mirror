@@ -1815,13 +1815,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
 
   snd_file_lock_icon(sp,(ss->viewing || (cant_write(sp->fullname)))); /* sp->read_only not set yet */
   if (ss->pending_change)
-    {
-      char *snd_txt_buf;
-      snd_txt_buf = (char *)CALLOC(256,sizeof(char));
-      sprintf(snd_txt_buf,"(translated %s)",old_name);
-      report_in_minibuffer(sp,snd_txt_buf);
-      FREE(snd_txt_buf);
-    }
+    report_in_minibuffer(sp,"(translated %s)",old_name);
 #if HAVE_GUILE
   after_open(sp->index);
 #endif

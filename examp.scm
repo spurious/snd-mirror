@@ -773,7 +773,7 @@
 	(let ((beg (selection-position))
 	      (len (selection-length)))
 	  (apply map (lambda (snd chn)
-		       (if (selection-member snd chn)
+		       (if (selection-member? snd chn)
 			   (let ((smooth-beg (max 0 (- beg 16))))
 			     (delete-samples beg len snd chn)
 			     (smooth smooth-beg 32 snd chn))))
@@ -801,7 +801,7 @@
 	(let* ((beg (selection-position))
 	       (len (selection-length)))
 	  (apply map (lambda (snd chn)
-		       (if (selection-member snd chn)
+		       (if (selection-member? snd chn)
 			   (let ((new-data (make-vct len))
 				 (old-data (samples->vct beg len snd chn)))
 			     (do ((k 0 (1+ k))) ;here we're applying our function to each sample in the currently selected portion
@@ -2280,7 +2280,7 @@
 	(catch 'return ; could also use call-with-current-continuation
 	  (lambda ()
 	    (apply map (lambda (snd chn)
-			 (if (and (selection-member snd chn)
+			 (if (and (selection-member? snd chn)
 				  (or (null? not-this)
 				      (not (= snd (car not-this)))
 				      (not (= chn (cadr not-this)))))
@@ -2520,3 +2520,20 @@
 
 ;(title-with-date)
 ;  -- this line starts the new window title handler which runs until Snd is exited or retitle-time is set to 0
+
+
+;;; -------- selection-members
+;;;
+;;; returns a list of lists of (snd chn): channels in current selection
+
+(define selection-members
+  (lambda ()
+    (let ((sndlist '()))
+      (if (selection?)
+	  (map (lambda (snd)
+		 (do ((i (1- (channels snd)) (1- i)))
+		     ((< i 0))
+		   (if (selection-member? snd i)
+		       (set! sndlist (cons (list snd i) sndlist)))))
+	       (sounds)))
+      sndlist)))

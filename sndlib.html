@@ -121,11 +121,15 @@ of the header type and the data format:</p>
   char *mus_header_type_name(int type)      /* "AIFF" etc */
   char *mus_data_format_name(int format)    /* "16-bit big endian linear" etc */
 </pre>
-<p>In all cases if an error occurs, -1 is returned; for information about
-the error use:</p>
+<p>In all cases if an error occurs, -1 is returned, and some sort of error message
+is printed; to customize error handling, use mus_set_error_handler and mus_set_print_handler.</p>
 <pre>
-  int mus_audio_error(void)                 /* returns error code indicated by preceding audio call */
-  char *mus_audio_error_name(int err)       /* gives string decription of error code */
+  mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handler);
+  mus_print_handler_t *mus_print_set_handler(mus_print_handler_t *new_print_handler);
+</pre>
+<p>To decode the error indication, use:</p>
+<pre>
+  char *mus_error_to_string(int err);
 </pre>
 
 <p>Header data is cached internally, so the actual header is read
@@ -209,8 +213,7 @@ which moves to the indicated frame.
 <h2><a name="hardware">Hardware</a></h2>
 
 <p>The following functions provide access to audio harware.  If an
-error occurs, they return -1, and the mus_audio_error functions
-can be used to find out what went wrong.</p>
+error occurs, they return -1. </p>
 <pre>
   int mus_audio_initialize(void)
   void mus_audio_save(void)
@@ -295,13 +298,7 @@ the gain of the signal before it reaches the analog-to-digital converter),</p>
 can also return a description of the currently available audio
 hardware.</p>
 
-<p>If a requested operation is not implemented, -1 is returned, and
-SNDLIB_AUDIO_ERROR is set to MUS_AUDIO_CANT_READ or MUS_AUDIO_CANT_WRITE.  If an error occurs
-during the requested operation, -1 is returned, and SNDLIB_AUDIO_ERROR
-is set to MUS_AUDIO_READ_ERROR or MUS_AUDIO_WRITE_ERROR.  If some operation cannot
-be performed on the current hardware, -1 is returned and SNDLIB_AUDIO_ERROR
-tries to indicate what portion of the requested operation is
-impossible (MUS_AUDIO_SRATE_NOT_AVAILABLE, MUS_AUDIO_FORMAT_NOT_AVAILABLE, and so on).</p>
+<p>If a requested operation is not implemented or something goes wrong, -1 is returned.</p>
 
 <h4>Systems</h4>
 <p>Each separate sound card is called a system, accessible via the <i>device</i>
@@ -567,8 +564,6 @@ int main(int argc, char *argv[])
       free(bufs);
       free(obuf);
     }
-  else
-    fprintf(stderr,"%s: %s ",argv[1],mus_audio_error_name(mus_audio_error()));
   return(0);
 }
 
@@ -604,18 +599,14 @@ int main(int argc, char *argv[])
 	  for (i=0;i&lt;10;i++) /* grab 10 buffers of input */
 	    {
 	      err = mus_audio_read(afd,(char *)ibuf,BUFFER_SIZE*2);
-	      if (err != MUS_AUDIO_NO_ERROR) {fprintf(stderr,mus_audio_error_name(mus_audio_error())); break;}
+	      if (err != MUS_NO_ERROR) break;
 	      write(fd,ibuf,BUFFER_SIZE*2);
 	    }
 	  mus_audio_close(afd);
 	}
-      else 
-	fprintf(stderr,mus_audio_error_name(mus_audio_error()));
       mus_sound_close_output(fd,BUFFER_SIZE*10*2);
       free(ibuf);
     }
-  else
-    fprintf(stderr,"%s: %s ",argv[1],strerror(errno));
   return(0);
 }
 </small>
@@ -1150,8 +1141,6 @@ constants and functions described above into Scheme.
   mus-sound-comment (filename)             header comment, if any
   data-format-bytes-per-sample (format)    bytes per sample
 
-  mus-audio-error ()                       returns error code indicated by preceding audio call
-  mus-audio-error-name(err)                string decription of error code
   mus-audio-describe ()                    describe audio hardware state
   mus-audio-report ()                      return audio hardware state as a string
   mus-audio-set-oss-buffers (num size)     in Linux (OSS) sets the number and size of the OSS "fragments"

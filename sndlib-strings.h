@@ -92,8 +92,6 @@
 #define S_mus_sound_comment             "mus-sound-comment"
 #define S_mus_data_format_bytes_per_sample "mus-data-format-bytes-per-sample"
 #define S_mus_sound_loop_info           "mus-sound-loop-info"
-#define S_mus_audio_error               "mus-audio-error"
-#define S_mus_audio_error_name          "mus-audio-error-name"
 #define S_mus_audio_report              "mus-audio-report"
 #define S_mus_audio_sun_outputs         "mus-audio-sun-outputs"
 #define S_mus_sound_max_amp             "mus-sound-max-amp"

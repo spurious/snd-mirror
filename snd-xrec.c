@@ -139,7 +139,7 @@ static void record_report(Widget text, ...)
 void recorder_error(char *msg)
 {
   if (recorder)
-    record_report(messages,msg,mus_audio_error_name(mus_audio_error()),NULL);
+    record_report(messages,msg,NULL);
 }
 
 #if HAVE_XPM
@@ -1243,7 +1243,7 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
 	  rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | p->device,
 					  rp->srate,rp->input_channels[0],rp->in_format,rp->buffer_size);
 	  if (rp->input_ports[0] == -1)
-	    record_report(messages,recorder_device_name(p->device),": ",mus_audio_error_name(mus_audio_error()),NULL);
+	    record_report(messages,recorder_device_name(p->device),NULL);
 	  else
 	    {
 	      rp->taking_input = 1;
@@ -1261,7 +1261,7 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
 						 rp->srate,rp->monitor_chans,rp->out_format,rp->buffer_size);
 		  if (rp->monitor_port == -1)
 		    {
-		      record_report(messages,"open output: ",mus_audio_error_name(mus_audio_error()),NULL);
+		      record_report(messages,"open output",NULL);
 		      rp->monitoring = 0;
 		    }
 		  else rp->monitoring = 1;

@@ -76,16 +76,7 @@ time_t file_write_date(char *filename)
 
 file_info *make_file_info_1(char *fullname, snd_state *ss)
 {
-  int fd;
   file_info *hdr;
-  fd = open(fullname,O_RDONLY,0);
-  if (fd == -1)
-    {
-      snd_error("%s: %s",fullname,strerror(errno));
-      return(NULL);
-    }
-  else
-    close(fd);  
   hdr = (file_info *)CALLOC(1,sizeof(file_info));
   hdr->name = copy_string(fullname);
   hdr->type = mus_sound_header_type(fullname);
@@ -135,20 +126,15 @@ file_info *copy_header(char *fullname, file_info *ohdr)
   return(hdr);
 }
 
-static file_info *translate_file(char *filename, snd_state *ss)
+static file_info *translate_file(char *filename, snd_state *ss, int type)
 {
   char *newname,*tempname;
   file_info *hdr = NULL;
   int err,len,fd;
   len = strlen(filename);
   newname = (char *)CALLOC(len+5,sizeof(char));
-  strcpy(newname,filename);
+  sprintf(newname,"%s.snd",filename);
   /* too many special cases to do anything smart here -- I'll just tack on '.snd' */
-  newname[len]='.';
-  newname[len+1]='s';
-  newname[len+2]='n';
-  newname[len+3]='d';
-  newname[len+4]='\0';
   /* before calling the translator we need to check for write-access to the current directory,
    * and if none, try to find a temp directory we can write to
    */
@@ -167,11 +153,11 @@ static file_info *translate_file(char *filename, snd_state *ss)
       free(tempname);
     }
   close(fd);
-  err = snd_translate(ss,filename,newname);
-  if (err == 0)
+  err = snd_translate(filename,newname,type);
+  if (err == MUS_NO_ERROR)
     {
       err = mus_header_read(newname);
-      if (err == 0)
+      if (err == MUS_NO_ERROR)
 	{
 	  hdr = make_file_info_1(newname,ss);
 	  if (hdr) ss->pending_change = newname;
@@ -183,33 +169,37 @@ static file_info *translate_file(char *filename, snd_state *ss)
 file_info *make_file_info(char *fullname, snd_state *ss)
 {
   file_info *hdr = NULL;
-  int type,format,fd;
-  fd = open(fullname,O_RDONLY,0);
-  if (fd != -1)
+  int type=MUS_UNSUPPORTED,format=MUS_UNKNOWN;
+  if (mus_file_probe(fullname))
     {
-      close(fd);  
       type = mus_sound_header_type(fullname);
-      format = mus_sound_data_format(fullname);
-      if ((mus_sound_srate(fullname) <= 0) || (mus_sound_srate(fullname) > 100000000) ||
-	  (mus_sound_chans(fullname) >= 256) || (mus_sound_chans(fullname) <= 0))
+      if (type == MUS_ERROR) 
+	type = mus_header_type();
+      else
 	{
-	  if ((type != MUS_MIDI_SAMPLE_DUMP) && (type != MUS_IEEE) &&
-	      (type != MUS_MUS10) && (type != MUS_HCOM))
-	    return(get_reasonable_file_info(fullname,ss,make_file_info_1(fullname,ss)));
+	  if ((mus_sound_srate(fullname) <= 0) || (mus_sound_srate(fullname) > 100000000) ||
+	      (mus_sound_chans(fullname) >= 256) || (mus_sound_chans(fullname) <= 0))
+	    {
+	      type = mus_header_type();
+	      if ((type != MUS_MIDI_SAMPLE_DUMP) && (type != MUS_IEEE) &&
+		  (type != MUS_MUS10) && (type != MUS_HCOM))
+		return(get_reasonable_file_info(fullname,ss,make_file_info_1(fullname,ss)));
+	    }
 	}
-      if (format == MUS_UNSUPPORTED) hdr = translate_file(fullname,ss);
       if (type == MUS_RAW)
+	return(get_raw_file_info(fullname,ss));
+      else
 	{
-	  /* need type format chans srate (latter 2 need to over-ride current for hdr build below) */
-	  return(get_raw_file_info(fullname,ss));
+	  format = mus_sound_data_format(fullname);
+	  if ((format == MUS_UNSUPPORTED) || (format == MUS_UNKNOWN))
+	    hdr = translate_file(fullname,ss,type);
+	  else hdr = make_file_info_1(fullname,ss);
 	}
-      hdr = make_file_info_1(fullname,ss);
     }
-  if (hdr == NULL)
+  else
     {
-      if (errno != 0)
-	snd_error("can't find %s: %s",fullname,strerror(errno));
-      else snd_error("can't find %s",fullname);
+      snd_error("can't find %s: %s",fullname,strerror(errno));
+      return(NULL);
     }
   return(hdr);
 }
@@ -769,12 +759,17 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   /* conjure up just enough Snd structure to make this sound readable by the edit-tree readers */
   snd_info *sp;
   chan_info *cp;
-  file_info *hdr;
+  file_info *hdr=NULL;
   snd_data *sd;
   int *datai;
   int i,fd,len;
-  hdr = make_file_info_1(filename,ss);
-  if (!hdr) return(NULL);
+  if (mus_file_probe(filename))
+    hdr = make_file_info_1(filename,ss);
+  if (!hdr) 
+    {
+      snd_error("can't find %s: %s",filename,strerror(errno));
+      return(NULL);
+    }
   sp = (snd_info *)CALLOC(1,sizeof(snd_info));
   sp->nchans = mus_sound_chans(filename);
   sp->allocated_chans = sp->nchans;
@@ -792,7 +787,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   sp->reverbing = 0;
   sp->revscl = 0.0;
   sp->filtering = 0;
-  sp->index = -2;
+  sp->index = TEMP_SOUND_INDEX;
   sp->sgx = NULL;
   len = (hdr->samples)/(hdr->chans);
   for (i=0;i<sp->nchans;i++)
@@ -887,25 +882,18 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 
 void snd_update(snd_state *ss, snd_info *sp)
 {
-  char *buf;
   int app_x,app_y;
   if (sp->edited_region) return;
   if ((snd_probe_file(sp->fullname)) == FILE_DOES_NOT_EXIST)
     {
       /* user deleted file while editing it? */
-      buf = (char *)CALLOC(256,sizeof(char));
-      sprintf(buf,"%s no longer exists!",sp->shortname);
-      report_in_minibuffer(sp,buf);
-      FREE(buf);
+      report_in_minibuffer(sp,"%s no longer exists!",sp->shortname);
       return;
     }
   app_x = widget_width(MAIN_SHELL(ss));
   app_y = widget_height(MAIN_SHELL(ss));
   sp = snd_update_1(ss,sp,sp->fullname);
-  buf = (char *)CALLOC(64,sizeof(char));
-  sprintf(buf,"updated %s",sp->shortname);
-  report_in_minibuffer(sp,buf);
-  FREE(buf);
+  report_in_minibuffer(sp,"updated %s",sp->shortname);
   set_widget_size(MAIN_SHELL(ss),app_x,app_y);
 }
 
@@ -1601,7 +1589,7 @@ static int check_for_same_name(snd_info *sp1, void *ur_info)
 int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment)
 {
   same_name_info *collision = NULL;
-  char *file_string,*fullname,*ofile;
+  char *fullname,*ofile;
   int err,result = 0;
   if (sp) clear_minibuffer(sp);
   alert_new_file();
@@ -1618,11 +1606,8 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
        */
       if (sp->read_only)
 	{
-	  file_string = (char *)CALLOC(256,sizeof(char));
-	  sprintf(file_string,"can't save-as %s (%s is write-protected)",fullname,sp->shortname);
-	  report_in_minibuffer(sp,file_string);
+	  report_in_minibuffer(sp,"can't save-as %s (%s is write-protected)",fullname,sp->shortname);
 	  FREE(fullname);
-	  FREE(file_string);
 	  return(-1);
 	}
       /* it's possible also that the same-named file is open in several windows -- for now we'll ignore that */
@@ -1632,12 +1617,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	result = save_edits_2(sp,ofile,type,format,srate,comment);
       else result = save_selection(ss,ofile,type,format,srate,comment);
       if (result != MUS_NO_ERROR)
-	{
-	  file_string = (char *)CALLOC(256,sizeof(char));
-	  sprintf(file_string,"save as temp: %s: %s",ofile,strerror(errno));
-	  report_in_minibuffer(sp,file_string);
-	  FREE(file_string);
-	}
+	report_in_minibuffer(sp,"save as temp: %s: %s",ofile,strerror(errno));
       else err = snd_copy_file(ofile,sp->fullname);
       snd_update(ss,sp);
       free(ofile);
@@ -1657,22 +1637,21 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	  /* we don't need to check for overwrites at this point */
 	  if (collision->edits > 0)
 	    {
-	      file_string = (char *)CALLOC(256,sizeof(char));
-	      sprintf(file_string,"%s has unsaved edits.\nClobber them and overwrite %s?",str,str);
-	      if (!(snd_yes_or_no_p(ss,file_string))) {FREE(fullname); FREE(collision); FREE(file_string); return(-1);}
-	      FREE(file_string);
+	      if (!(snd_yes_or_no_p(ss,"%s has unsaved edits.\nClobber them and overwrite %s?",str,str)))
+		{
+		  FREE(fullname); 
+		  FREE(collision); 
+		  return(-1);
+		}
 	    }
 	  snd_close_file(collision->sp,ss);
 	}
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_2(sp,str,type,format,srate,comment);
       else result = save_selection(ss,str,type,format,srate,comment);
-      file_string = (char *)CALLOC(256,sizeof(char));
       if (result != MUS_NO_ERROR)
-	sprintf(file_string,"%s: %s",str,strerror(errno));
-      else sprintf(file_string,"%s saved as %s",(save_type == FILE_SAVE_AS) ? sp->shortname : "selection",str);
-      report_in_minibuffer(sp,file_string);
-      FREE(file_string);
+	report_in_minibuffer(sp,"%s: %s",str,strerror(errno));
+      else report_in_minibuffer(sp,"%s saved as %s",(save_type == FILE_SAVE_AS) ? sp->shortname : "selection",str);
       if (collision->sp) snd_open_file(fullname,ss);
       FREE(fullname);
       FREE(collision);
@@ -1771,11 +1750,11 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	  if (auto_update(ss)) map_over_sounds(ss,snd_not_current,NULL);
 	}
       else 
-	snd_error("can't open %s",sp->shortname);
+	snd_error("can't open %s: %s",sp->shortname,strerror(errno));
       mus_header_set_aiff_loop_info(NULL);
     }
   else 
-    snd_error("can't write %s",sp->shortname);
+    snd_error("can't write %s: %s",sp->shortname,strerror(errno));
 }
 
 

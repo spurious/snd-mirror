@@ -20,20 +20,26 @@ static void mus_error2snd(int type, char *msg)
 {
 #if HAVE_GUILE
   if (!(ignore_mus_error(type,msg)))
-#endif
-  if (type != MUS_UNSUPPORTED_HEADER_TYPE)
-    /* but this is sometimes an error... */
     {
-      if (type != MUS_NO_ERROR)
-	{
-	  snd_error(msg);
-#if HAVE_GUILE
-	  /* mus_audio_error? */
-	  scm_throw(MUS_ERROR,SCM_LIST2(gh_int2scm(type),gh_str02scm(msg)));
 #endif
+      snd_error(msg);
+#if HAVE_GUILE
+      if (ss->catch_exists) /* damned thing exits if catch is not active!! */
+	{
+	  if (msg == NULL)
+	    scm_throw(MUS_MISC_ERROR,SCM_LIST1(gh_str02scm((char *)mus_error_to_string(type))));
+	  else scm_throw(MUS_MISC_ERROR,SCM_LIST1(gh_str02scm(msg)));
 	}
-      else fprintf(stderr,msg); /* scm_misc_error here causes segfaults for some reason */
     }
+#endif
+}
+
+static void mus_print2snd(char *msg)
+{
+  add_to_error_history(get_global_state(),msg,FALSE);
+#if DEBUGGING
+  fprintf(stderr,msg);
+#endif
 }
 
 #ifdef SGI
@@ -224,10 +230,12 @@ static void mus_error2snd(int type, char *msg)
 #if NONINTERLEAVED_AUDIO
   ss->audio_hw_channels = DEFAULT_AUDIO_HW_CHANNELS;
 #endif
+  ss->just_time = 0;
 
   init_recorder();
 
 #if HAVE_GUILE
+  ss->catch_exists = 0;
   g_initialize_gh(ss);
   ss->search_proc = SCM_UNDEFINED;
 #endif
@@ -235,6 +243,7 @@ static void mus_error2snd(int type, char *msg)
   check_snd_commands();
 #endif
   mus_error_set_handler(mus_error2snd);
+  mus_print_set_handler(mus_print2snd);
 
 #ifdef SND_AS_WIDGET
   return(ss);

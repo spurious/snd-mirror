@@ -1,9 +1,9 @@
 #include "snd.h"
 
 void snd_help(snd_state *ss, char *subject, char *help) {}
-void add_to_error_history(snd_state *ss, char *msg) {}
+void add_to_error_history(snd_state *ss, char *msg, int popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}
-int snd_yes_or_no_p(snd_state *ss,char *question) {return(0);}
+int snd_yes_or_no_p(snd_state *ss, char *format, ...) {return(0);}
 void draw_line (axis_context *ax,int x0,int y0,int x1,int y1) {}
 void fill_rectangle (axis_context *ax,int x0, int y0, int width, int height) {}
 void fill_polygon(axis_context *ax,int points, ...) {}

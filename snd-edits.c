@@ -22,8 +22,6 @@
   static int dont_save(snd_state *ss, snd_info *sp, char *newname) {return(0);}
 #endif
 
-static char edit_buf[256];
-
 /* each block in an edit-list list describes one fragment of the current sound */
 #define ED_OUT 0
 #define ED_SND 1
@@ -197,9 +195,13 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      fprintf(fd,"#(");
 	      ifd = mus_file_open_read(sf->filename);
 	      idataloc = mus_sound_data_location(sf->filename);
-	      mus_file_set_descriptors(ifd,sf->filename,
-				       mus_sound_data_format(sf->filename),mus_sound_datum_size(sf->filename),idataloc,
-				       mus_sound_chans(sf->filename),mus_sound_header_type(sf->filename));
+	      mus_file_set_descriptors(ifd,
+				       sf->filename,
+				       mus_sound_data_format(sf->filename),
+				       mus_sound_datum_size(sf->filename),
+				       idataloc,
+				       mus_sound_chans(sf->filename),
+				       mus_sound_header_type(sf->filename));
 	      samples = mus_sound_samples(sf->filename);
 	      mus_file_seek(ifd,idataloc,SEEK_SET);
 	      ibufs = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
@@ -1109,9 +1111,13 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
   if (hdr)
     {
       fd = snd_open_read(cp->state,inserted_file);
-      mus_file_set_descriptors(fd,inserted_file,
-			       hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
-			       hdr->chans,hdr->type);
+      mus_file_set_descriptors(fd,
+			       inserted_file,
+			       hdr->format,
+			       mus_data_format_to_bytes_per_sample(hdr->format),
+			       hdr->data_location,
+			       hdr->chans,
+			       hdr->type);
       during_open(fd,inserted_file,SND_INSERT_FILE);
       datai = make_file_state(fd,hdr,SND_IO_IN_FILE,chan,FILE_BUFFER_SIZE);
       cb[ED_SND] = add_sound_file_to_edit_list(cp,inserted_file,datai,
@@ -1238,7 +1244,6 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
 void delete_samples(int beg, int num, chan_info *cp, char *origin)
 {
   int k,len;
-  char *errstr;
   if (num <= 0) return;
   if (dont_edit(cp)) return;
   len = current_ed_samples(cp);
@@ -1254,12 +1259,9 @@ void delete_samples(int beg, int num, chan_info *cp, char *origin)
     }
   else
     {
-      errstr = (char *)CALLOC(64,sizeof(char));
       if (num == 1)
-	sprintf(errstr,"can't delete sample %d (current len=%d)",beg,len);
-      else sprintf(errstr,"can't delete samples %d to %d (current len=%d)",beg,beg+num-1,len);
-      report_in_minibuffer(cp->sound,errstr);
-      FREE(errstr);
+	report_in_minibuffer(cp->sound,"can't delete sample %d (current len=%d)",beg,len);
+      else report_in_minibuffer(cp->sound,"can't delete samples %d to %d (current len=%d)",beg,beg+num-1,len);
     }
 }
 
@@ -1381,9 +1383,13 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
   if (hdr)
     {
       fd = snd_open_read(cp->state,tempfile);
-      mus_file_set_descriptors(fd,tempfile,
-			       hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
-			       hdr->chans,hdr->type);
+      mus_file_set_descriptors(fd,
+			       tempfile,
+			       hdr->format,
+			       mus_data_format_to_bytes_per_sample(hdr->format),
+			       hdr->data_location,
+			       hdr->chans,
+			       hdr->type);
       during_open(fd,tempfile,SND_CHANGE_FILE);
       datai = make_file_state(fd,hdr,SND_IO_IN_FILE,chan,FILE_BUFFER_SIZE);
       cb[ED_SND] = add_sound_file_to_edit_list(cp,tempfile,datai,
@@ -1416,9 +1422,13 @@ void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int
       if (num == -1) num = (hdr->samples/hdr->chans);
       prepare_edit_list(cp,num);
       fd = snd_open_read(ss,tempfile);
-      mus_file_set_descriptors(fd,tempfile,
-			       hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
-			       hdr->chans,hdr->type);
+      mus_file_set_descriptors(fd,
+			       tempfile,
+			       hdr->format,
+			       mus_data_format_to_bytes_per_sample(hdr->format),
+			       hdr->data_location,
+			       hdr->chans,
+			       hdr->type);
       during_open(fd,tempfile,SND_OVERRIDE_FILE);
       datai = make_file_state(fd,hdr,SND_IO_IN_FILE,chan,FILE_BUFFER_SIZE);
       e = initial_ed_list(0,num-1);
@@ -1848,9 +1858,13 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
   if (err == -1) return(-1);
   if ((ofd = snd_reopen_write(ss,ofile)) == -1) return(-1);
   hdr->data_location = mus_header_data_location(); /* header might have changed size (aiff extras) */
-  mus_file_set_descriptors(ofd,ofile,
-			   hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
-			   chans,hdr->type);
+  mus_file_set_descriptors(ofd,
+			   ofile,
+			   hdr->format,
+			   mus_data_format_to_bytes_per_sample(hdr->format),
+			   hdr->data_location,
+			   chans,
+			   hdr->type);
   mus_file_set_data_clipped(ofd,data_clipped(ss));
   mus_file_seek(ofd,hdr->data_location,SEEK_SET);
   return(ofd);
@@ -1859,7 +1873,6 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
 int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
 {
   int kleft,kused;
-  char *prtbuf;
   mus_header_update_with_fd(ofd,hdr->type,bytes);
   kleft = disk_kspace(ofd);
   if (kleft < 0)
@@ -1868,12 +1881,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
     {
       kused = bytes>>10;
       if ((kused > kleft) && (sp))
-	{
-	  prtbuf = (char *)CALLOC(64,sizeof(char));
-	  sprintf(prtbuf,"disk nearly full: used %d Kbytes leaving %d",kused,kleft);
-	  report_in_minibuffer(sp,prtbuf);
-	  FREE(prtbuf);
-	}
+	report_in_minibuffer(sp,"disk nearly full: used %d Kbytes leaving %d",kused,kleft);
     }
   snd_close(ofd);
   return(0);
@@ -2076,8 +2084,7 @@ static int save_edits_1(snd_info *sp)
     }
   sf = (snd_fd **)CALLOC(sp->nchans,sizeof(snd_fd *));
   for (i=0;i<sp->nchans;i++) sf[i] = init_sample_read(0,sp->chans[i],READ_FORWARD);
-  sprintf(edit_buf,"saving %s",sp->shortname);
-  report_in_minibuffer(sp,edit_buf);
+  report_in_minibuffer(sp,"saving %s",sp->shortname);
   sphdr = sp->hdr;
 #if FILE_PER_CHAN
   if (sp->chan_type == FILE_PER_CHANNEL)
@@ -2147,9 +2154,8 @@ static int save_edits_1(snd_info *sp)
   reflect_file_revert_in_label(sp);
   reflect_file_save_in_menu(ss);
   if (err)
-    sprintf(edit_buf,"write failed: %s, edits saved in: %s",strerror(saved_errno),ofile);
-  else sprintf(edit_buf,"wrote %s",sp->fullname); 
-  report_in_minibuffer(sp,edit_buf);
+    report_in_minibuffer(sp,"write failed: %s, edits saved in: %s",strerror(saved_errno),ofile);
+  else report_in_minibuffer(sp,"wrote %s",sp->fullname); 
   if (ofile) {free(ofile); ofile=NULL;}
   if (auto_update(ss)) map_over_sounds(ss,snd_not_current,NULL);
   return(MUS_NO_ERROR); /* don't erase our error message for the special write-permission problem */
@@ -2203,8 +2209,7 @@ int chan_save_edits(chan_info *cp, char *ofile)
     {
       if (sp->read_only)
 	{
-	  sprintf(edit_buf,"can't save channel as %s (%s is write-protected)",ofile,sp->shortname);
-	  report_in_minibuffer(sp,edit_buf);
+	  report_in_minibuffer(sp,"can't save channel as %s (%s is write-protected)",ofile,sp->shortname);
 	  return(MUS_WRITE_ERROR);
 	}
       /* here we're overwriting the current (possibly multi-channel) file with one of its channels */
@@ -2215,10 +2220,7 @@ int chan_save_edits(chan_info *cp, char *ofile)
       free_snd_fd(sf[0]);
       FREE(sf);
       if (err != MUS_NO_ERROR)
-	{
-	  sprintf(edit_buf,"save channel as temp: %s: %s)",nfile,strerror(errno));
-	  report_in_minibuffer(sp,edit_buf);
-	}
+	report_in_minibuffer(sp,"save channel as temp: %s: %s)",nfile,strerror(errno));
       else err = snd_copy_file(nfile,ofile);
       reflect_save_as_in_edit_history(cp,ofile);
       snd_update(ss,sp);
@@ -2259,31 +2261,22 @@ void save_edits(snd_info *sp, void *ptr)
 	  current_write_date = file_write_date(sp->fullname);
 	  if (current_write_date != sp->write_date)
 	    {
-	      sprintf(edit_buf,"%s changed on disk! Save anyway?",sp->shortname);
-	      err = snd_yes_or_no_p(sp->state,edit_buf);
+	      err = snd_yes_or_no_p(sp->state,"%s changed on disk! Save anyway?",sp->shortname);
 	      if (err == 0) return;
 	    }
 	  err = save_edits_1(sp);
 	  if (err)
-	    {
-	      sprintf(edit_buf,"%s: %s",sp->fullname,strerror(errno));
-	      report_in_minibuffer(sp,edit_buf);
-	    }
+	    report_in_minibuffer(sp,"%s: %s",sp->fullname,strerror(errno));
 	  else
 	    {
 	      if (sp->edited_region) save_region_backpointer(sp);
 	    }
 	}
       else
-	{
-	  report_in_minibuffer(sp,"(no changes need to be saved)");
-	}
+	report_in_minibuffer(sp,"(no changes need to be saved)");
     }
   else
-    {
-      sprintf(edit_buf,"can't write %s (it is read-only)",sp->shortname);
-      report_in_minibuffer(sp,edit_buf);
-    }
+    report_in_minibuffer(sp,"can't write %s (it is read-only)",sp->shortname);
 }
 
 void revert_edits(chan_info *cp, void *ptr)

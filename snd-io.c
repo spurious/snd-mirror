@@ -157,9 +157,13 @@ void snd_file_reset(snd_data *sd, int index)
 	}
       hdr = sd->hdr;
       /* these need to flush active data before hidden close and fixup the datai indices */
-      mus_file_set_descriptors(fd,sd->filename,
-			       hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
-			       hdr->chans,hdr->type);
+      mus_file_set_descriptors(fd,
+			       sd->filename,
+			       hdr->format,
+			       mus_data_format_to_bytes_per_sample(hdr->format),
+			       hdr->data_location,
+			       hdr->chans,
+			       hdr->type);
       during_open(fd,sd->filename,SND_REOPEN_CLOSED_FILE);
       /* fix up io[SND_IO_FD] and whatever else is clobbered by mus_file_close */
       sd->io[SND_IO_FD] = fd;
@@ -224,7 +228,7 @@ int snd_open_read(snd_state *ss, char *arg)
     {
       fd = too_many_files_cleanup(ss);
       if (fd != -1) fd = open(arg,O_RDONLY,0);
-      if (fd == -1) snd_error(strerror(errno));
+      if (fd == -1) snd_error("%s: %s",arg,strerror(errno));
     }
   return(fd);
 }
@@ -237,7 +241,6 @@ int snd_probe_file(char *name)
 
 int snd_overwrite_ok(snd_state *ss, char *ofile)
 {
-  char *buf;
   int fil,rtn = 1;
   if (ask_before_overwrite(ss))
     {
@@ -249,10 +252,7 @@ int snd_overwrite_ok(snd_state *ss, char *ofile)
       if (fil != -1) 
 	{
 	  close(fil);
-	  buf = (char *)CALLOC(256,sizeof(char));
-	  sprintf(buf,"%s exists. Overwrite?",ofile);
-	  rtn = snd_yes_or_no_p(ss,buf);
-	  FREE(buf);
+	  rtn = snd_yes_or_no_p(ss,"%s exists. Overwrite?",ofile);
 	}
     }
   return(rtn);

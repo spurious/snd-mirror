@@ -5,7 +5,7 @@
 static Widget snd_error_dialog = NULL;
 static Widget snd_error_history = NULL;
 
-static void create_snd_error_dialog(snd_state *ss)
+static void create_snd_error_dialog(snd_state *ss, int popup)
 {
   Arg args[32];
   int n;
@@ -38,7 +38,7 @@ static void create_snd_error_dialog(snd_state *ss)
   XtManageChild(snd_error_history);
 
 #if MANAGE_DIALOG
-  XtManageChild(snd_error_dialog);
+  if (popup) XtManageChild(snd_error_dialog);
 #endif
 
   if (!(ss->using_schemes)) map_over_children(snd_error_dialog,set_main_color_of_widget,(void *)ss);
@@ -50,7 +50,7 @@ static void create_snd_error_dialog(snd_state *ss)
     }
 }
 
-void add_to_error_history(snd_state *ss, char *msg)
+void add_to_error_history(snd_state *ss, char *msg, int popup)
 {
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
   char *tim,*buf;
@@ -58,9 +58,9 @@ void add_to_error_history(snd_state *ss, char *msg)
 #endif
   int pos;
   if (!snd_error_dialog) 
-    create_snd_error_dialog(ss);
+    create_snd_error_dialog(ss,popup);
   else
-    if (!(XtIsManaged(snd_error_dialog)))
+    if ((popup) && (!(XtIsManaged(snd_error_dialog))))
       XtManageChild(snd_error_dialog);
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
   tim = (char *)CALLOC(TIME_STR_SIZE,sizeof(char));
@@ -92,7 +92,7 @@ void add_to_error_history(snd_state *ss, char *msg)
 void post_error_dialog(snd_state *ss, char *msg)
 {
   XmString error_msg;
-  if (!snd_error_dialog) create_snd_error_dialog(ss);
+  if (!snd_error_dialog) create_snd_error_dialog(ss,TRUE);
   error_msg = XmStringCreateLtoR(msg,XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(snd_error_dialog,XmNmessageString,error_msg,NULL);
   if (!(XtIsManaged(snd_error_dialog))) XtManageChild(snd_error_dialog);
@@ -115,12 +115,24 @@ static int yes_or_no = 0;
 static void YesCallback(Widget w,XtPointer clientData,XtPointer callData) {yes_or_no = 1;}
 static void NoCallback(Widget w,XtPointer clientData,XtPointer callData) {yes_or_no = 0;}
 
-int snd_yes_or_no_p(snd_state *ss,char *question)
+int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 {
   static Widget yes_or_no_dialog = NULL;
   Arg args[20];
   int n;
   XmString titlestr,error_msg,xmstr1,xmstr2;
+
+  char *yes_buf;
+#if HAVE_VPRINTF
+  va_list ap;
+  yes_buf = (char *)CALLOC(256,sizeof(char));
+  va_start(ap,format);
+  vsprintf(yes_buf,format,ap);
+  va_end(ap);
+#else
+  yes_buf = (char *)CALLOC(256,sizeof(char));
+  sprintf(yes_buf,"%s...[you need vprintf]",format);
+#endif
   yes_or_no = 0;
   if (!yes_or_no_dialog)
     {
@@ -156,11 +168,12 @@ int snd_yes_or_no_p(snd_state *ss,char *question)
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
     }
-  error_msg = XmStringCreateLtoR(question,XmFONTLIST_DEFAULT_TAG);
+  error_msg = XmStringCreateLtoR(yes_buf,XmFONTLIST_DEFAULT_TAG);
   if (!(XtIsManaged(yes_or_no_dialog))) XtManageChild(yes_or_no_dialog);
   XtVaSetValues(yes_or_no_dialog,XmNmessageString,error_msg,NULL);
   while (XtIsManaged(yes_or_no_dialog)) check_for_event(ss);
   XmStringFree(error_msg);
+  FREE(yes_buf);
   return(yes_or_no);
 }
   

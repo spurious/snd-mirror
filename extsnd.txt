@@ -1092,7 +1092,7 @@ These are specific to the current selection (these can return the error
   scale-selection-to(scalers)     normalize the current selection to scalers which can be either a float,
                                     or a vector of floats
   selection-length  ()            selection frames
-  selection-member  (snd chn)     #t if snd's chn is member of active selection.
+  selection-member? (snd chn)     #t if snd's chn is member of active selection.
   selection-position ()            selection begin sample number (used to be called selection-beg).
   selection-to-temp (type format) write out selected data as a temp file (see external programs)
   selection-to-temps(type format) write out selected data as temp files (see external programs)
@@ -1387,7 +1387,9 @@ value to val.
                                   If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given,
                                   play until end of sound. If 'end' is given (as a sample number), the
                                   actual end point may be off by a few samples; Snd only checks on
-                                  dac-buffer boundaries (normally around 256 samples).
+                                  dac-buffer boundaries (normally around 256 samples).  samp can
+                                  also be a filename (a string).  In this case, snd can be the start
+                                  sample (default 0), and chn can be the end sample (default end-of-file).
                                   [no-such-file, no-such-sound]
   play-and-wait     (samp snd chn sync end)
                                   play snd's channel chn starting from sample samp and wait

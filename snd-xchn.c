@@ -260,7 +260,10 @@ int channel_lock_pane(chan_info *cp, void *ptr)
 
 static void W_sy_Drag_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  sy_changed(((XmScrollBarCallbackStruct *)callData)->value,(chan_info *)(clientData));
+  chan_info *cp = (chan_info *)(clientData);
+  START_JUST_TIME(cp);
+  sy_changed(((XmScrollBarCallbackStruct *)callData)->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_sy_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -270,7 +273,10 @@ static void W_sy_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer c
 
 static void W_sx_Drag_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  sx_changed(((XmScrollBarCallbackStruct *)callData)->value,(chan_info *)(clientData));
+  chan_info *cp = (chan_info *)(clientData);
+  START_JUST_TIME(cp);
+  sx_changed(((XmScrollBarCallbackStruct *)callData)->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_sx_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -292,7 +298,10 @@ static void W_sx_Decrement_Callback(Widget w,XtPointer clientData,XtPointer call
 
 static void W_zy_Drag_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  zy_changed(((XmScrollBarCallbackStruct *)callData)->value,(chan_info *)clientData);
+  chan_info *cp = (chan_info *)(clientData);
+  START_JUST_TIME(cp);
+  zy_changed(((XmScrollBarCallbackStruct *)callData)->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_zy_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -302,7 +311,10 @@ static void W_zy_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer c
 
 static void W_zx_Drag_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  zx_changed(((XmScrollBarCallbackStruct *)callData)->value,(chan_info *)clientData);
+  chan_info *cp = (chan_info *)(clientData);
+  START_JUST_TIME(cp);
+  zx_changed(((XmScrollBarCallbackStruct *)callData)->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_zx_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -312,7 +324,10 @@ static void W_zx_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer c
 
 static void W_gzy_Drag_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  gzy_changed(((XmScrollBarCallbackStruct *)callData)->value,(chan_info *)clientData);
+  chan_info *cp = (chan_info *)(clientData);
+  START_JUST_TIME(cp);
+  gzy_changed(((XmScrollBarCallbackStruct *)callData)->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_gzy_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -322,7 +337,10 @@ static void W_gzy_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer 
 
 static void W_gsy_Drag_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  gsy_changed(((XmScrollBarCallbackStruct *)callData)->value,(chan_info *)clientData);
+  chan_info *cp = (chan_info *)(clientData);
+  START_JUST_TIME(cp);
+  gsy_changed(((XmScrollBarCallbackStruct *)callData)->value,cp);
+  END_JUST_TIME(cp);
 }
 
 static void W_gsy_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer callData) 

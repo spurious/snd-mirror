@@ -225,8 +225,21 @@ static char *describe_dac_info(dac_info *dp)
 }
 #endif
 
-#define ADD_NEXT_SAMPLE(val,sf)  do {if (sf->data > sf->last) val += next_sound(sf); else val += (*sf->data++);} while(0)
-#define SCALE_NEXT_SAMPLE(val,sf,amp)  do {if (sf->data > sf->last) val += (MUS_SAMPLE_TYPE)(amp*next_sound(sf)); else val += (MUS_SAMPLE_TYPE)(amp*(*sf->data++));} while(0)
+#define ADD_NEXT_SAMPLE(val,sf) \
+  do { \
+      if (sf->data > sf->last) \
+        val += next_sound(sf); \
+      else val += (*sf->data++); \
+     } \
+  while(0)
+
+#define SCALE_NEXT_SAMPLE(val,sf,amp) \
+  do { \
+      if (sf->data > sf->last) \
+	val += (MUS_SAMPLE_TYPE)(amp*next_sound(sf)); \
+      else val += (MUS_SAMPLE_TYPE)(amp*(*sf->data++)); \
+     } \
+  while(0)
 
 
 /* -------- filter -------- */
@@ -1371,7 +1384,7 @@ int mus_audio_compatible_format(int dev)
   float val[32];
   int ival[32];
   err = mus_audio_mixer_read(dev,MUS_AUDIO_FORMAT,32,val);
-  if (err != -1)
+  if (err != MUS_ERROR)
     {
       for (i=0;i<=val[0];i++) ival[i] = (int)(val[i]);
       for (i=1;i<=ival[0];i++)
@@ -1435,17 +1448,16 @@ static void scan_audio_devices(void)
       /* scan all cards and build a list of available output devices */
       for (card=0;card<cards;card++) 
 	{
-	  if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card), MUS_AUDIO_PORT, ALSA_MAX_DEVICES, val)) != 0) 
+	  if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card), MUS_AUDIO_PORT, ALSA_MAX_DEVICES, val)) != MUS_NO_ERROR) 
 	    {
-	      snd_error("%s[%d] %s: mus_audio_mixer_read: %s ", __FILE__, __LINE__, __FUNCTION__,
-			mus_audio_error_name(mus_audio_error()));
+	      snd_error("%s[%d] %s: mus_audio_mixer_read", __FILE__, __LINE__, __FUNCTION__);
 	    }
 	  devs = (int)(val[0]);
 	  /* scan all devices in the card */
 	  for (d=0;d<devs;d++) 
 	    {
 	      dev = (int)(val[d+1]);
-	      if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card)|dev, MUS_AUDIO_DIRECTION, 0, &direction)) != 0) 
+	      if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card)|dev, MUS_AUDIO_DIRECTION, 0, &direction)) != MUS_NO_ERROR) 
 		{
 		  snd_error("%s: can't read direction, ignoring device %d", __FUNCTION__, dev);
 		  direction = 0;
@@ -1468,7 +1480,7 @@ static void scan_audio_devices(void)
 	  alsa_available_chans[d] = 0;
 	  alsa_min_chans[d] = 0;
 	  alsa_max_chans[d] = 0;
-	  if ((err = mus_audio_mixer_read(alsa_devices[d], MUS_AUDIO_CHANNEL, 2, val)) == 0) 
+	  if ((err = mus_audio_mixer_read(alsa_devices[d], MUS_AUDIO_CHANNEL, 2, val)) == MUS_NO_ERROR) 
 	    {
 	      alsa_available_chans[d] = (int)(val[0]);
 	      alsa_min_chans[d] = (int)(val[1]);
@@ -1610,7 +1622,7 @@ static int start_audio_output_1 (dac_state *dacp)
 		{
 		  mus_audio_close(alsa_devices[out_dev[i]]);
 		}
-	      snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
+	      snd_error("can't play");
 	      dac_running = 0;
 	      unlock_recording_audio();
 	      if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
@@ -1646,7 +1658,7 @@ static int start_audio_output_1 (dac_state *dacp)
 	  if (mus_audio_systems() > 1)
 	    {
 	      dev_fd[0] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss),dacp->srate,2,dacp->out_format,dac_size(ss));
-	      if (dev_fd[0] != -1) 
+	      if (dev_fd[0] != MUS_ERROR) 
 		dev_fd[1] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | audio_output_device(ss),dacp->srate,2,dacp->out_format,dac_size(ss));
 	    }
 	  else
@@ -1656,13 +1668,13 @@ static int start_audio_output_1 (dac_state *dacp)
 	       * out the line in port, but this possibility confuses LinuxPPC (OSS-Free)
 	       */
 	      dev_fd[0] = mus_audio_open_output(MUS_AUDIO_AUX_OUTPUT,dacp->srate,2,dacp->out_format,dac_size(ss));
-	      if (dev_fd[0] != -1) 
+	      if (dev_fd[0] != MUS_ERROR) 
 		dev_fd[1] = mus_audio_open_output(audio_output_device(ss),dacp->srate,2,dacp->out_format,dac_size(ss));
 	    }
-	  if (dev_fd[1] == -1)
+	  if (dev_fd[1] == MUS_ERROR)
 	    {
 	      mus_audio_close(dev_fd[0]);
-	      dev_fd[0] = -1;
+	      dev_fd[0] = MUS_ERROR;
 	    }
 	  else oss_available_chans = 4;
 	}
@@ -1672,11 +1684,11 @@ static int start_audio_output_1 (dac_state *dacp)
 	  if (dac_folding(ss)) snd_warning("folding %d chans into %d ",dacp->channels,oss_available_chans);
 	  dacp->channels = oss_available_chans;
 	}
-      if (dev_fd[0] == -1)
+      if (dev_fd[0] == MUS_ERROR)
 	dev_fd[0] = mus_audio_open_output(audio_output_device(ss),dacp->srate,dacp->channels,dacp->out_format,dac_size(ss));
-      if (dev_fd[0] == -1)
+      if (dev_fd[0] == MUS_ERROR)
 	{
-	  snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
+	  snd_error("can't play");
 	  dac_running = 0;
 	  unlock_recording_audio();
 	  if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
@@ -1705,9 +1717,9 @@ static int start_audio_output_1 (dac_state *dacp)
   if (dacp->channels > 2)
     {
       err = mus_audio_mixer_read(audio_output_device(ss),MUS_AUDIO_CHANNEL,0,val);
-      if (err != -1) 
+      if (err != MUS_ERROR) 
 	available_chans = (int)(val[0]);
-      else snd_error("can't get audio output chans? (%d, %s) ",audio_output_device(ss),mus_audio_error_name(mus_audio_error()));
+      else snd_error("can't get audio output chans? (%d) ",audio_output_device(ss));
     }
   for (i=0;i<MAX_DEVICES;i++) dev_fd[i] = -1;
   dacp->out_format = MUS_COMPATIBLE_FORMAT;
@@ -1716,16 +1728,16 @@ static int start_audio_output_1 (dac_state *dacp)
       if (dac_folding(ss)) snd_warning("folding %d chans into %d ",dacp->channels,available_chans);
       dacp->channels = available_chans;
     }
-  if (dev_fd[0] == -1)
+  if (dev_fd[0] == MUS_ERROR)
     dev_fd[0] = mus_audio_open_output(audio_output_device(ss),dacp->srate,dacp->channels,dacp->out_format,dac_size(ss));
-  if (dev_fd[0] == -1)
+  if (dev_fd[0] == MUS_ERROR)
     {
-      snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
       dac_running = 0;
       unlock_recording_audio();
       if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
       max_active_slot = -1;
       free_dac_state(dacp); 
+      snd_error("can't play");
       return(FALSE);
     }
   dacp->devices = 1;
@@ -1913,6 +1925,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 
   if (gh_string_p(samp_n))
     {
+      /* filename beg end background syncd ignored */
       urn = gh_scm2newstr(samp_n,NULL);
       name = mus_file_full_name(urn);
       free(urn);
@@ -1921,7 +1934,9 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       sp->shortname = filename_without_home_directory(name);
       sp->fullname = NULL;
       sp->delete_me = 1;
-      play_sound(sp,0,end,background);
+      samp = g_scm2intdef(snd_n,0);
+      if (SCM_INUMP(chn_n)) end = SCM_INUM(chn_n);
+      play_sound(sp,samp,end,background);
       if (name) FREE(name);
     }
   else
@@ -2047,8 +2062,11 @@ snd_info *player(int index)
 
 static void free_player(snd_info *sp)
 {
-  players[PLAYER(sp)] = NULL;
-  player_chans[PLAYER(sp)] = 0;
+  if (players)
+    {
+      players[PLAYER(sp)] = NULL;
+      player_chans[PLAYER(sp)] = 0;
+    }
   FREE(sp->fullname);
   FREE(sp->chans);
   FREE(sp);

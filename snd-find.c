@@ -240,18 +240,16 @@ int cursor_search(chan_info *cp, int count)
       else samp = cursor_find(sp,cp,count,0);
       if (samp == -1) 
 	{ 
-	  sprintf(search_no_luck,"%s: not found",sp->search_expr);
-	  report_in_minibuffer(sp,search_no_luck);
+	  report_in_minibuffer(sp,"%s: not found",sp->search_expr);
 	  return(CURSOR_IN_VIEW);
 	}
       else
 	{
-	  sprintf(search_no_luck,"%s: y = %s at %s (%d)",
+	  report_in_minibuffer(sp,"%s: y = %s at %s (%d)",
 		  sp->search_expr,
 		  s1 = prettyf(sample(samp,cp),2),
 		  s2 = prettyf((double)samp/(double)SND_SRATE(sp),2),
 		  samp);
-	  report_in_minibuffer(sp,search_no_luck);
 	  FREE(s1);
 	  FREE(s2);
 	}

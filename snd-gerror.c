@@ -15,7 +15,7 @@ static void delete_snd_error(GtkWidget *w,GdkEvent *event,gpointer clientData)
   gtk_widget_hide(snd_error_dialog);
 }
 
-static void create_snd_error_dialog(snd_state *ss)
+static void create_snd_error_dialog(snd_state *ss, int popup)
 {
   GtkWidget *ok_button,*table;
   GtkWidget *hscrollbar;
@@ -54,10 +54,10 @@ static void create_snd_error_dialog(snd_state *ss)
 
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(snd_error_dialog)->vbox),table);
   gtk_widget_show(table);
-  gtk_widget_show(snd_error_dialog);
+  if (popup) gtk_widget_show(snd_error_dialog);
 }
 
-void add_to_error_history(snd_state *ss, char *msg)
+void add_to_error_history(snd_state *ss, char *msg, int popup)
 {
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
   char *tim,*buf;
@@ -65,9 +65,9 @@ void add_to_error_history(snd_state *ss, char *msg)
 #endif
   int pos;
   if (!snd_error_dialog) 
-    create_snd_error_dialog(ss);
+    create_snd_error_dialog(ss,popup);
   else
-    if (!(GTK_WIDGET_VISIBLE(snd_error_dialog)))
+    if ((popup) && (!(GTK_WIDGET_VISIBLE(snd_error_dialog))))
       gtk_widget_show(snd_error_dialog);
   gtk_text_freeze(GTK_TEXT(snd_error_history));
   pos = gtk_text_get_length(GTK_TEXT(snd_error_history));
@@ -89,8 +89,8 @@ void add_to_error_history(snd_state *ss, char *msg)
 
 void post_error_dialog(snd_state *ss, char *msg)
 {
-  if (!snd_error_dialog) create_snd_error_dialog(ss); else raise_dialog(snd_error_dialog);
-  add_to_error_history(ss,msg);
+  if (!snd_error_dialog) create_snd_error_dialog(ss,TRUE); else raise_dialog(snd_error_dialog);
+  add_to_error_history(ss,msg,TRUE);
 }
 
 void show_snd_errors(snd_state *ss)
@@ -112,9 +112,22 @@ static void YesCallback(GtkWidget *w,gpointer clientData) {gtk_widget_hide(yes_o
 static void NoCallback(GtkWidget *w,gpointer clientData) {gtk_widget_hide(yes_or_no_dialog); yes_or_no=0;}
 static void delete_yes_or_no_dialog(GtkWidget *w,GdkEvent *event,gpointer clientData) {gtk_widget_hide(yes_or_no_dialog); yes_or_no=1;}
 
-int snd_yes_or_no_p(snd_state *ss,char *question)
+int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 {
   GtkWidget *yes_button,*no_button;
+
+  char *yes_buf;
+#if HAVE_VPRINTF
+  va_list ap;
+  yes_buf = (char *)CALLOC(256,sizeof(char));
+  va_start(ap,format);
+  vsprintf(yes_buf,format,ap);
+  va_end(ap);
+#else
+  yes_buf = (char *)CALLOC(256,sizeof(char));
+  sprintf(yes_buf,"%s...[you need vprintf]",format);
+#endif
+
   yes_or_no = 0;
   if (!yes_or_no_dialog)
     {
@@ -139,14 +152,15 @@ int snd_yes_or_no_p(snd_state *ss,char *question)
       gtk_widget_show(yes_button);
       gtk_widget_show(no_button);
 
-      yn_label = gtk_label_new(question);
+      yn_label = gtk_label_new(yes_buf);
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(yes_or_no_dialog)->vbox),yn_label);
 
       gtk_widget_show(yn_label);
     }
-  else gtk_label_set_text(GTK_LABEL(yn_label),question);
+  else gtk_label_set_text(GTK_LABEL(yn_label),yes_buf);
   gtk_widget_show(yes_or_no_dialog);
   while (GTK_WIDGET_VISIBLE(yes_or_no_dialog)) check_for_event(ss);
+  FREE(yes_buf);
   return(yes_or_no);
 }
 

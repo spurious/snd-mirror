@@ -8,9 +8,9 @@ void snd_help(snd_state *ss, char *subject, char *help);
 
 /* -------- snd-xerror.c -------- */
 
-void add_to_error_history(snd_state *ss, char *msg);
+void add_to_error_history(snd_state *ss, char *msg, int popup);
 void post_error_dialog(snd_state *ss, char *msg);
-int snd_yes_or_no_p(snd_state *ss,char *question);
+int snd_yes_or_no_p(snd_state *ss, char *format, ...);
 
 
 /* -------- snd-xdraw.c -------- */

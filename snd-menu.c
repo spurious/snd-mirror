@@ -304,16 +304,10 @@ void exit_from_menu(snd_state *ss)
 
 void save_options_from_menu(snd_state *ss)
 {
-  char *buf = NULL;
   if (save_options(ss) == 0)
     {
       if (any_selected_sound(ss))
-	{
-	  buf = (char *)CALLOC(128,sizeof(char));
-	  sprintf(buf,"saved options in %s",ss->init_file);
-	  report_in_minibuffer(any_selected_sound(ss),buf);
-	  FREE(buf);
-	}
+	report_in_minibuffer(any_selected_sound(ss),"saved options in %s",ss->init_file);
     }
   else 
     snd_error("cant write %s: %s",ss->init_file,strerror(errno));
@@ -321,18 +315,12 @@ void save_options_from_menu(snd_state *ss)
 
 void save_state_from_menu(snd_state *ss)
 {
-  char *buf = NULL;
   if (save_state_file(ss))
     {
       if (save_state(ss,save_state_file(ss)) == 0)
 	{
 	  if (any_selected_sound(ss))
-	    {
-	      buf = (char *)CALLOC(128,sizeof(char));
-	      sprintf(buf,"saved state in %s",save_state_file(ss));
-	      report_in_minibuffer(any_selected_sound(ss),buf);
-	      FREE(buf);
-	    }
+	    report_in_minibuffer(any_selected_sound(ss),"saved state in %s",save_state_file(ss));
 	}
     }
 }

@@ -4,6 +4,25 @@
 #if HAVE_GUILE
 
 #include "sndlib2scm.h"
+static snd_state *state = NULL;
+
+/* if error occurs that in sndlib, mus-error wants to throw to user-defined catch
+ *   of any exists, but if the sndlib function was not called by the user, 
+ *   an attempt to throw to a non-existent catch tag exits the main program!!
+ */
+static SCM snd_internal_stack_catch (SCM tag,
+				     scm_catch_body_t body,
+				     void *body_data,
+				     scm_catch_handler_t handler,
+				     void *handler_data)
+{ /* declaration from libguile/throw */
+  SCM result;
+  state->catch_exists = 1;
+  result = scm_internal_stack_catch(tag,body,body_data,handler,handler_data);
+  state->catch_exists = 0;
+  return(result);
+}
+
 
 static SCM gc_protection;
 static int gc_protection_size = 0;
@@ -102,7 +121,6 @@ void ERRCP(char *origin, SCM snd, SCM chn, int off)
     scm_wrong_type_arg(origin,off+1,chn);
 }
 
-static snd_state *state = NULL;
 static int g_error_occurred = 0;
 
 #define MAX_ERROR_STRING_LENGTH 512
@@ -152,42 +170,51 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 
   if ((gh_list_p(throw_args)) && (gh_length(throw_args) > 0))
     {
-      scm_display(gh_car(throw_args), port);
-      scm_puts(": ", port);
-      if (gh_length(throw_args) > 1)
+      if (SCM_EQ_P(tag,MUS_MISC_ERROR))
 	{
-	  if (SCM_EQ_P(tag,NO_SUCH_FILE))
+	  scm_display(tag,port);
+	  scm_puts(": ", port);
+	  scm_display(throw_args,port);
+	}
+      else 
+	{
+	  scm_display(gh_car(throw_args), port);
+	  scm_puts(": ", port);
+	  if (gh_length(throw_args) > 1)
 	    {
-	      scm_display(tag,port);
-	      scm_puts(" \"",port);
-	      scm_display(gh_cadr(throw_args),port);
-	      scm_puts("\"",port);
-	    }
-	  else
-	    {
-	      if ((SCM_EQ_P(tag,NO_SUCH_SOUND)) || (SCM_EQ_P(tag,NO_SUCH_MIX)) || (SCM_EQ_P(tag,NO_SUCH_MARK)) ||
-		  (SCM_EQ_P(tag,NO_SUCH_MENU)) || (SCM_EQ_P(tag,NO_SUCH_REGION)) ||
-		  (SCM_EQ_P(tag,NO_SUCH_CHANNEL)) || (SCM_EQ_P(tag,NO_SUCH_EDIT)) || (SCM_EQ_P(tag,MUS_ERROR)) ||
-		  (SCM_EQ_P(tag,IMPOSSIBLE_BOUNDS)) || (SCM_EQ_P(tag,NO_SUCH_SAMPLE)))
+	      if (SCM_EQ_P(tag,NO_SUCH_FILE))
 		{
 		  scm_display(tag,port);
-		  scm_puts(" ",port);
-		  scm_display(gh_cdr(throw_args),port);
+		  scm_puts(" \"",port);
+		  scm_display(gh_cadr(throw_args),port);
+		  scm_puts("\"",port);
 		}
 	      else
 		{
-		  stmp = gh_cadr(throw_args);
-		  if (gh_string_p(stmp)) 
-		    scm_display_error_message(stmp, gh_caddr(throw_args), port);
-		  else scm_display(tag, port);
+		  if ((SCM_EQ_P(tag,NO_SUCH_SOUND)) || (SCM_EQ_P(tag,NO_SUCH_MIX)) || (SCM_EQ_P(tag,NO_SUCH_MARK)) ||
+		      (SCM_EQ_P(tag,NO_SUCH_MENU)) || (SCM_EQ_P(tag,NO_SUCH_REGION)) ||
+		      (SCM_EQ_P(tag,NO_SUCH_CHANNEL)) || (SCM_EQ_P(tag,NO_SUCH_EDIT)) ||
+		      (SCM_EQ_P(tag,IMPOSSIBLE_BOUNDS)) || (SCM_EQ_P(tag,NO_SUCH_SAMPLE)))
+		    {
+		      scm_display(tag,port);
+		      scm_puts(" ",port);
+		      scm_display(gh_cdr(throw_args),port);
+		    }
+		  else
+		    {
+		      stmp = gh_cadr(throw_args);
+		      if (gh_string_p(stmp)) 
+			scm_display_error_message(stmp, gh_caddr(throw_args), port);
+		      else scm_display(tag, port);
 #if (!HAVE_GUILE_1_3)
-		  stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
-		  if (SCM_NFALSEP(stack)) scm_display_backtrace(stack,port,SCM_UNDEFINED,SCM_UNDEFINED);
+		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
+		      if (SCM_NFALSEP(stack)) scm_display_backtrace(stack,port,SCM_UNDEFINED,SCM_UNDEFINED);
 #endif
+		    }
 		}
 	    }
+	  else scm_display(tag,port);
 	}
-      else scm_display(tag,port);
     }
   else 
     {
@@ -283,7 +310,7 @@ static SCM g_call0_1(void *arg)
 
 SCM g_call0(SCM proc) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
 {
-  return(scm_internal_stack_catch(SCM_BOOL_T,g_call0_1,(void *)proc,snd_catch_scm_error,NULL));
+  return(snd_internal_stack_catch(SCM_BOOL_T,g_call0_1,(void *)proc,snd_catch_scm_error,NULL));
 }
 
 static SCM g_call1_1(void *arg)
@@ -296,7 +323,7 @@ SCM g_call1(SCM proc,SCM arg)
   SCM args[2];
   args[0] = proc;
   args[1] = arg;
-  return(scm_internal_stack_catch(SCM_BOOL_T,g_call1_1,(void *)args,snd_catch_scm_error,NULL));
+  return(snd_internal_stack_catch(SCM_BOOL_T,g_call1_1,(void *)args,snd_catch_scm_error,NULL));
 }
 
 static SCM g_call_any_1(void *arg)
@@ -309,7 +336,7 @@ static SCM g_call_any(SCM proc, SCM arglist)
   SCM args[2];
   args[0] = proc;
   args[1] = arglist;
-  return(scm_internal_stack_catch(SCM_BOOL_T,g_call_any_1,(void *)args,snd_catch_scm_error,NULL));
+  return(snd_internal_stack_catch(SCM_BOOL_T,g_call_any_1,(void *)args,snd_catch_scm_error,NULL));
 }
 
 static SCM g_call2_1(void *arg)
@@ -323,7 +350,7 @@ SCM g_call2(SCM proc,SCM arg1,SCM arg2)
   args[0] = proc;
   args[1] = arg1;
   args[2] = arg2;
-  return(scm_internal_stack_catch(SCM_BOOL_T,g_call2_1,(void *)args,snd_catch_scm_error,NULL));
+  return(snd_internal_stack_catch(SCM_BOOL_T,g_call2_1,(void *)args,snd_catch_scm_error,NULL));
 }
 
 static SCM g_call3_1(void *arg)
@@ -338,7 +365,7 @@ SCM g_call3(SCM proc,SCM arg1,SCM arg2,SCM arg3)
   args[1] = arg1;
   args[2] = arg2;
   args[3] = arg3;
-  return(scm_internal_stack_catch(SCM_BOOL_T,g_call3_1,(void *)args,snd_catch_scm_error,NULL));
+  return(snd_internal_stack_catch(SCM_BOOL_T,g_call3_1,(void *)args,snd_catch_scm_error,NULL));
 }
 
 int bool_int_or_one(SCM n)
@@ -429,7 +456,7 @@ SCM array_to_list(Float *arr, int i, int len)
 SCM parse_proc(char *buf)
 {
   SCM result;
-  result = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,parse_proc_handler,buf);
+  result = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,parse_proc_handler,buf);
   if (g_error_occurred)
     {
       g_error_occurred = 0;
@@ -446,7 +473,7 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
   char *str = NULL;
   for (ctr=0;ctr<count;ctr++)
     {
-      result = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
+      result = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
       if (g_error_occurred)
 	{
 	  g_error_occurred = 0;
@@ -476,7 +503,7 @@ void snd_eval_listener_str(snd_state *ss, char *buf)
   SCM result;
   char *str;
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
-  result = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
+  result = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
   if (g_error_occurred)
     g_error_occurred = 0;
   else
@@ -495,7 +522,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
   char *str = NULL;
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   send_error_output_to_stdout = 1;
-  result = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
+  result = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
   send_error_output_to_stdout = 0;
   if (g_error_occurred)
     g_error_occurred = 0;
@@ -520,7 +547,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       if (fd != -1)
 	{
 	  close(fd);
-	  scm_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,SND_CONF,snd_catch_scm_error,NULL);
+	  snd_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,SND_CONF,snd_catch_scm_error,NULL);
 	}
     }
 #endif
@@ -531,7 +558,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       if (fd != -1) 
 	{
 	  close(fd);
-	  scm_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str,snd_catch_scm_error,NULL);
+	  snd_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str,snd_catch_scm_error,NULL);
 	}
       if (str) FREE(str);
     }
@@ -546,10 +573,10 @@ void snd_load_file(char *filename)
       /* try tacking on .scm */
       str1 = (char *)CALLOC(snd_strlen(str) + 5,sizeof(char));
       sprintf(str1,"%s.scm",str);
-      scm_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str1,snd_catch_scm_error,NULL);
+      snd_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str1,snd_catch_scm_error,NULL);
       FREE(str1);
     }
-  else scm_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str,snd_catch_scm_error,NULL);
+  else snd_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str,snd_catch_scm_error,NULL);
   if (str) FREE(str);
 }
 
@@ -2185,7 +2212,7 @@ static SCM g_insert_sound(SCM file, SCM file_chn, SCM snd_n, SCM chn_n)
 Float string2Float(char *str) 
 {
   SCM res;
-  res = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
+  res = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
   if (gh_number_p(res))
     return(gh_scm2double(res));
   else snd_error("%s is not a number",str);
@@ -2196,7 +2223,7 @@ Float string2Float(char *str)
 int string2int(char *str) 
 {
   SCM res;
-  res = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
+  res = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
   if (gh_number_p(res))
     return(g_scm2int(res));
   else snd_error("%s is not a number",str);
@@ -2207,7 +2234,7 @@ int string2int(char *str)
 char *string2string(char *str) 
 {
   SCM res;
-  res = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
+  res = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
   if (gh_string_p(res))
     return(gh_scm2newstr(res,NULL));
   else snd_error("%s is not a string",str);

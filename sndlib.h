@@ -26,9 +26,9 @@
 #endif
 
 
-#define SNDLIB_VERSION 10
-#define SNDLIB_REVISION 35
-#define SNDLIB_DATE "18-Sep-00"
+#define SNDLIB_VERSION 11
+#define SNDLIB_REVISION 0
+#define SNDLIB_DATE "21-Sep-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -70,24 +70,12 @@
   #endif
 #endif
 
-#ifndef __GNUC__
-  #ifndef __FUNCTION__
-    #define __FUNCTION__ ""
-  #endif
-#endif
-
 #if defined(ALPHA) || defined(WINDOZE) || defined(__alpha__)
   #define MUS_LITTLE_ENDIAN 1
 #endif
 
 #if (!(defined(MACOS))) && (defined(MPW_C) || defined(macintosh) || defined(__MRC__))
   #define MACOS 1
-#endif
-
-#if MACOS
-  #ifndef HAVE_FINITE
-    #define HAVE_FINITE 0
-  #endif
 #endif
 
 #if defined(__APPLE__)
@@ -128,6 +116,11 @@
   #endif
 #endif  
 
+#ifndef __GNUC__
+  #ifndef __FUNCTION__
+    #define __FUNCTION__ ""
+  #endif
+#endif
 
 /* this block needed because not everyone uses configure, and those who don't often have no clue what audio system they're using */
 /*   so, if nothing is set but we're on a system that looks linux-like and we can find the OSS headers, use OSS */
@@ -270,13 +263,6 @@ enum {MUS_UNKNOWN,MUS_BSHORT,MUS_MULAW,MUS_BYTE,MUS_BFLOAT,MUS_BINT,MUS_ALAW,MUS
 #define MUS_NIST_SHORTPACK 2
 #define MUS_AIFF_IMA_ADPCM 99
 
-enum {MUS_AUDIO_NO_ERROR,MUS_AUDIO_CHANNELS_NOT_AVAILABLE,MUS_AUDIO_SRATE_NOT_AVAILABLE,MUS_AUDIO_FORMAT_NOT_AVAILABLE,
-      MUS_AUDIO_NO_INPUT_AVAILABLE,MUS_AUDIO_NO_OUTPUT_AVAILABLE,MUS_AUDIO_INPUT_BUSY,MUS_AUDIO_OUTPUT_BUSY,
-      MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,MUS_AUDIO_INPUT_CLOSED,MUS_AUDIO_OUTPUT_CLOSED,MUS_AUDIO_IO_INTERRUPTED,
-      MUS_AUDIO_NO_LINES_AVAILABLE,MUS_AUDIO_WRITE_ERROR,MUS_AUDIO_SIZE_NOT_AVAILABLE,MUS_AUDIO_DEVICE_NOT_AVAILABLE,
-      MUS_AUDIO_CANT_CLOSE,MUS_AUDIO_CANT_OPEN,MUS_AUDIO_READ_ERROR,MUS_AUDIO_AMP_NOT_AVAILABLE,MUS_AUDIO_NO_OP,
-      MUS_AUDIO_CANT_WRITE,MUS_AUDIO_CANT_READ,MUS_AUDIO_NO_READ_PERMISSION};
-
 #define MUS_AUDIO_PACK_SYSTEM(n) ((n)<<16)
 #define MUS_AUDIO_SYSTEM(n) (((n)>>16)&0xffff)
 #define MUS_AUDIO_DEVICE(n) ((n)&0xffff)
@@ -295,6 +281,9 @@ enum {MUS_AUDIO_DEFAULT,MUS_AUDIO_DUPLEX_DEFAULT,MUS_AUDIO_ADAT_IN,MUS_AUDIO_AES
 
 #define MUS_AUDIO_DEVICE_OK(a) (((a) >= MUS_AUDIO_DEFAULT) && ((a) <= MUS_AUDIO_DIRECTION))
 
+#define MUS_ERROR_TYPE int
+#define MUS_ERROR -1
+
 enum {MUS_NO_ERROR,MUS_NO_FREQUENCY,MUS_NO_PHASE,MUS_NO_GEN,MUS_NO_LENGTH,
       MUS_NO_FREE,MUS_NO_DESCRIBE,MUS_NO_DATA,MUS_NO_SCALER,
       MUS_MEMORY_ALLOCATION_FAILED,MUS_UNSTABLE_TWO_POLE_ERROR,
@@ -305,7 +294,17 @@ enum {MUS_NO_ERROR,MUS_NO_FREQUENCY,MUS_NO_PHASE,MUS_NO_GEN,MUS_NO_LENGTH,
       MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,MUS_NOT_A_SOUND_FILE,MUS_FILE_CLOSED,MUS_WRITE_ERROR,
       MUS_BOGUS_FREE,MUS_BUFFER_OVERFLOW,MUS_BUFFER_UNDERFLOW,MUS_FILE_OVERFLOW,MUS_EXPONENT_OVERFLOW,
       MUS_HEADER_WRITE_FAILED,MUS_CANT_OPEN_TEMP_FILE,MUS_INTERRUPTED,
+
+      MUS_AUDIO_CHANNELS_NOT_AVAILABLE,MUS_AUDIO_SRATE_NOT_AVAILABLE,MUS_AUDIO_FORMAT_NOT_AVAILABLE,
+      MUS_AUDIO_NO_INPUT_AVAILABLE,MUS_AUDIO_NO_OUTPUT_AVAILABLE,MUS_AUDIO_INPUT_BUSY,MUS_AUDIO_OUTPUT_BUSY,
+      MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,MUS_AUDIO_INPUT_CLOSED,MUS_AUDIO_OUTPUT_CLOSED,MUS_AUDIO_IO_INTERRUPTED,
+      MUS_AUDIO_NO_LINES_AVAILABLE,MUS_AUDIO_WRITE_ERROR,MUS_AUDIO_SIZE_NOT_AVAILABLE,MUS_AUDIO_DEVICE_NOT_AVAILABLE,
+      MUS_AUDIO_CANT_CLOSE,MUS_AUDIO_CANT_OPEN,MUS_AUDIO_READ_ERROR,MUS_AUDIO_AMP_NOT_AVAILABLE,MUS_AUDIO_NO_OP,
+      MUS_AUDIO_CANT_WRITE,MUS_AUDIO_CANT_READ,MUS_AUDIO_NO_READ_PERMISSION,
+
       MUS_INITIAL_ERROR_TAG};
+
+/* keep this list in sync with error_names in sound.c */
 
 #ifdef MACOS
   /* C's calloc/free are incompatible with Mac's SndDisposeChannel (which we can't avoid using) */
@@ -336,15 +335,19 @@ __BEGIN_DECLS
 
 #ifdef __GNUC__
   void mus_error(int error, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-  void mus_write(int fd, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-  void mus_print(FILE *fd, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+  void mus_print(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 #else
   void mus_error              PROTO((int error, const char *format, ...));
-  void mus_write              PROTO((int fd, const char *format, ...));
-  void mus_print              PROTO((FILE *fd, const char *format, ...));
+  void mus_print              PROTO((const char *format, ...));
 #endif
-void mus_error_set_handler    PROTO((void (*new_error_handler)(int err_type, char *err_msg)));
-int mus_error_make_tag        PROTO((void));
+
+typedef void mus_error_handler_t(int type, char *msg);
+mus_error_handler_t *mus_error_set_handler PROTO((mus_error_handler_t *new_error_handler));
+int mus_make_error            PROTO((char *error_name));
+const char *mus_error_to_string     PROTO((int err));
+
+typedef void mus_print_handler_t(char *msg);
+mus_print_handler_t *mus_print_set_handler PROTO((mus_print_handler_t *new_print_handler));
 
 int mus_sound_samples         PROTO((const char *arg));
 int mus_sound_frames          PROTO((const char *arg));
@@ -413,10 +416,7 @@ int mus_audio_write_channel   PROTO((int line, char *buf, int bytes, int chan));
 int mus_audio_flush           PROTO((int line));
 void mus_audio_save           PROTO((void));
 void mus_audio_restore        PROTO((void));
-int mus_audio_error           PROTO((void));
 int mus_audio_initialize      PROTO((void));
-char *mus_audio_error_name    PROTO((int err));
-void mus_audio_set_error      PROTO((int err));
 int mus_audio_systems         PROTO((void));
 char *mus_audio_system_name   PROTO((int system));
 char *mus_audio_moniker       PROTO((void));

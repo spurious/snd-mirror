@@ -1800,7 +1800,13 @@ file_info *get_raw_file_info(char *filename, snd_state *ss)
   if (use_raw_defaults(ss))
     {
       /* choices already made, so just send back a header that reflects those choices */
-      return(make_file_info_1(filename,ss));
+      if (mus_file_probe(filename))
+	return(make_file_info_1(filename,ss));
+      else
+	{
+	  snd_error("can't find %s: %s",filename,strerror(errno));
+	  return(NULL);
+	}
     }
   if (!raw_data_dialog) 
     make_raw_data_dialog(filename,ss);

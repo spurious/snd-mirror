@@ -491,7 +491,6 @@ static char *linked_file(char *link_name)
 
 void sp_name_click(snd_info *sp)
 {
-  char *str;
   file_info *hdr;
   Float dur;
   int linked = 0;
@@ -505,26 +504,23 @@ void sp_name_click(snd_info *sp)
 	{
 	  linked = is_link(sp->fullname);
 	  dur = (Float)(hdr->samples)/(Float)(hdr->chans * hdr->srate);
-	  str = (char *)CALLOC(256,sizeof(char));
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
 	  strftime(timebuf,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&(sp->write_date)));
 #else
 	  sprintf(timebuf,"");
 #endif
-	  sprintf(str,"%d, %d chan%s, %.3f sec%s, %s:%s, %s%s%s%s",
-		  hdr->srate,
-		  hdr->chans,
-		  ((hdr->chans > 1) ? "s" : ""),
-		  dur,
-		  ((dur == 1.0) ? "" : "s"),
-		  mus_header_type_name(hdr->type),
-		  short_sound_format(hdr->format,hdr->type),
-		  timebuf,
-		  (linked) ? ", (link to " : "",
-		  (linked) ? linked_file(sp->fullname) : "",
-		  (linked) ? ")" : "");
-	  report_in_minibuffer(sp,str);
-	  FREE(str);
+	  report_in_minibuffer(sp,"%d, %d chan%s, %.3f sec%s, %s:%s, %s%s%s%s",
+			       hdr->srate,
+			       hdr->chans,
+			       ((hdr->chans > 1) ? "s" : ""),
+			       dur,
+			       ((dur == 1.0) ? "" : "s"),
+			       mus_header_type_name(hdr->type),
+			       short_sound_format(hdr->format,hdr->type),
+			       timebuf,
+			       (linked) ? ", (link to " : "",
+			       (linked) ? linked_file(sp->fullname) : "",
+			       (linked) ? ")" : "");
 	}
     }
 }
@@ -796,7 +792,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      si = free_sync_info(si); 
 	      break;
 	    }
-	  report_in_minibuffer(sp,"");
+	  clear_minibuffer(sp);
 	  set_apply_button(sp,FALSE);
 	  sp->apply_ok = 0;
 

@@ -477,7 +477,6 @@ void set_line_source(snd_state *ss, int in_digital)
   err = mus_audio_mixer_write(MUS_AUDIO_DEFAULT,MUS_AUDIO_PORT,((in_digital) ? MUS_AUDIO_DIGITAL_IN : MUS_AUDIO_MICROPHONE),NULL);
   if (err == -1) 
     {
-      snd_error("err: %s",mus_audio_error_name(mus_audio_error()));
       recorder_error("set input source: ");
     }
   rp->input_channel_active[0] = (!in_digital); 
@@ -1389,7 +1388,7 @@ int recorder_get_devices(recorder_info *rp, int *outs)
     {
       /* look for audio input devices -- if none, report problem and quit */
       err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DEFAULT,MUS_AUDIO_PORT,AUDVAL_SIZE,audval);
-      if (err != 0) snd_error("%s[%d] %s: read audio state: %s ",__FILE__,__LINE__,__FUNCTION__,mus_audio_error_name(mus_audio_error()));
+      if (err != 0) snd_error("%s[%d] %s",__FILE__,__LINE__,__FUNCTION__);
       cur_devices = (int)(audval[0]);
       if (cur_devices == 0) {snd_error("no audio devices available"); return(-1);}
       for (i=0;i<cur_devices;i++) 

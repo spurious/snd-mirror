@@ -71,7 +71,7 @@ void snd_error(char *format, ...)
 	{
 	  /* don't break (unlikely) existing code? */
 #endif
-      add_to_error_history(ss,snd_error_buffer);
+      add_to_error_history(ss,snd_error_buffer,TRUE);
       sp = selected_sound(ss);
       if (sp)
 	report_in_minibuffer(sp,snd_error_buffer);

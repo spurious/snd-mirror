@@ -1379,8 +1379,6 @@ static char sndlib_help_string[] =
   " S_mus_data_format_name " (format)\n\
   " S_mus_sound_comment " (filename)\n\
   " S_mus_data_format_bytes_per_sample " (format)\n\
-  " S_mus_audio_error " ()\n\
-  " S_mus_audio_error_name "(err)\n\
 \n\
 ";
 

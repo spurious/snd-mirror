@@ -100,7 +100,7 @@ static char *decode_format(int format, int type)
 
 int main(int argc, char *argv[])
 {
-  int i,chans,srate,samples,format,type;
+  int chans,srate,samples,format,type;
   float length;
   time_t date;
   int *loops = NULL;

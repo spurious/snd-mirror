@@ -86,17 +86,12 @@ int main(int argc, char *argv[])
 	  for (i=0;i<READS;i++)
 	    {
 	      err = mus_audio_read(afd,(char *)ibuf,bytes_per_read);
-	      if (err != MUS_AUDIO_NO_ERROR) {fprintf(stderr,mus_audio_error_name(mus_audio_error())); break;}
-	      write(fd,(char *)ibuf,bytes_per_read);
+	      if (err == MUS_NO_ERROR) write(fd,(char *)ibuf,bytes_per_read);
 	    }
 	  mus_audio_close(afd);
 	}
-      else 
-	fprintf(stderr,mus_audio_error_name(mus_audio_error()));
       mus_sound_close_output(fd,bytes_per_read * READS);
       FREE(ibuf);
     }
-  else
-    fprintf(stderr,"%s: %s ",argv[1],strerror(errno));
   return(0);
 }

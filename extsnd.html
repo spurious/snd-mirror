@@ -1179,7 +1179,7 @@ these are indicated as <em class=targ>reg</em> below.
   <a name="sndscaleselectionto">scale-selection-to</a>(<i>scalers</i>)     <a href="snd.html#scaling">normalize</a> the current selection to <i>scalers</i> which can be either a float, 
                                     or a vector of floats 
   <a name="selectionlength">selection-length</a>  ()            selection frames 
-  <a name="selectionmember">selection-member</a>  (<i>snd chn</i>)     #t if snd's chn is member of active selection.
+  <a name="selectionmember">selection-member?</a> (<i>snd chn</i>)     #t if snd's chn is member of active selection.
   <a name="selectionposition">selection-position</a> ()            selection begin sample number (used to be called selection-beg).
   <a name="selectiontotemp">selection-to-temp</a> (<i>type format</i>) write out selected data as a temp file (see <a href="grfsnd.html#programs">external programs</a>) 
   <a name="selectiontotemps">selection-to-temps</a>(<i>type format</i>) write out selected data as temp files (see <a href="grfsnd.html#programs">external programs</a>) 
@@ -1479,7 +1479,9 @@ sets its value to val.
                                   If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given, 
                                   play until end of sound. If 'end' is given (as a sample number), the 
                                   actual end point may be off by a few samples; Snd only checks on 
-                                  dac-buffer boundaries (normally around 256 samples).
+                                  dac-buffer boundaries (normally around 256 samples).  <i>samp</i> can
+                                  also be a filename (a string).  In this case, <i>snd</i> can be the start 
+                                  sample (default 0), and <i>chn</i> can be the end sample (default end-of-file).
                                   [<em class=error>no-such-file, no-such-sound</em>]
   <a name="sndplayandwait">play-and-wait</a>     (<i>samp snd chn sync end</i>) 
                                   play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait 

@@ -17,6 +17,35 @@ static void display_md(mixdata *md)
 }
 #endif
 
+static int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
+{
+  int kfree,kneeded,kother,go_on;
+  kfree = disk_kspace(fd);
+  if (kfree < 0) 
+    {
+      report_in_minibuffer(sp,strerror(errno)); 
+      return(NO_PROBLEM);
+    }
+  kneeded = bytes >> 10;
+  if (kfree < kneeded)
+    {
+      if (other_bytes > 0)
+	{
+	  kother = other_bytes >> 10;
+	  if (kother > kfree)
+	    {
+	      report_in_minibuffer(sp,"only %d bytes left on disk, changing to 16-bit temp output",kfree<<10);
+	      return(HUNKER_DOWN);
+	    }
+	}
+      go_on = snd_yes_or_no_p(sp->state,"only %d bytes left on disk; continue?",kfree<<10);
+      if (!go_on) return(GIVE_UP);
+      report_in_minibuffer(sp,"ok -- here we go...");
+      return(BLIND_LEAP);
+    }
+  return(NO_PROBLEM);
+}
+
 
 /* ---------------- MIX POOL ---------------- */
 
@@ -1155,7 +1184,7 @@ int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console)
   chan_info **cps = NULL;
   int nc,len,chans,id=-1;
   sync_info *si = NULL;
-  char *str1,*fullname = NULL;
+  char *fullname = NULL;
   if ((sp) && (str) && (*str))
     {
       fullname = mus_file_full_name(str);
@@ -1180,12 +1209,7 @@ int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console)
 	  if (si) si = free_sync_info(si); else if (cps) FREE(cps);
 	}
       else 
-	{
-	  str1 = (char *)CALLOC(512,sizeof(char));
-	  sprintf(str1,"can't open file: %s, %s ",fullname,strerror(errno));
-	  report_in_minibuffer(sp,str1);
-	  FREE(str1);
-	}
+	report_in_minibuffer(sp,"can't open file: %s, %s ",fullname,strerror(errno));
       if (fullname) FREE(fullname);
     }
   return(id);
@@ -2137,7 +2161,6 @@ void mix_watch_title(mixmark *m, chan_info *cp)
   console_state *cs;
   mixdata *md;
   mix_context *ms;
-  char *buf;
   int samps_moved=0;
   md = (mixdata *)(m->owner);
   cs = md->current_cs;
@@ -2160,10 +2183,7 @@ void mix_watch_title(mixmark *m, chan_info *cp)
   else
     {
       mix_raise_console(m);
-      buf = (char *)CALLOC(16,sizeof(char));
-      sprintf(buf,"mix %d",md->id);
-      report_in_minibuffer(cp->sound,buf);
-      FREE(buf);
+      report_in_minibuffer(cp->sound,"mix %d",md->id);
     }
 }
 

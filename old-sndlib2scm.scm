@@ -65,8 +65,8 @@
 (define sndlib-bass-field mus-audio-bass)
 (define sndlib-treble-field mus-audio-treble)
 
-(define (audio-error . args) (apply mus-audio-error args))
-(define (audio-error-name . args) (apply mus-audio-error-name args))
+(define (audio-error . args) 0)
+(define (audio-error-name . args) "")
 (define (audio-outputs . args) (apply mus-audio-sun-outputs args))
 (define (sound-bytes-per-sample . args) (apply mus-data-format-bytes-per-sample args))
 (define (report-audio-state . args) (apply mus-audio-report args))

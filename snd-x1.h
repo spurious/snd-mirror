@@ -17,10 +17,15 @@ int help_dialog_is_active(void);
 
 /* -------- snd-xerror.c -------- */
 
-void add_to_error_history(snd_state *ss, char *msg);
+void add_to_error_history(snd_state *ss, char *msg, int popup);
 void post_error_dialog(snd_state *ss, char *msg);
 void show_snd_errors(snd_state *ss);
-int snd_yes_or_no_p(snd_state *ss,char *question);
+
+#ifdef __GNUC__
+  int snd_yes_or_no_p(snd_state *ss, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+#else
+  int snd_yes_or_no_p(snd_state *ss, const char *format, ...);
+#endif
 
 
 /* -------- snd-xdraw.c -------- */
