@@ -383,6 +383,7 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 1-Mar:   rt-engine.scm thanks to Kjetil Matheussen!\n\
+         zoom-focus-style can be a function\n\
 28-Feb:  env-channel-with-base, Ruby side of edit-list->function.\n\
 24-Feb:  added mix.rb thanks to Mike Scholz.\n\
 22-Feb:  changed libxm to libxg in gtk case, also xm-version to xg-version\n\

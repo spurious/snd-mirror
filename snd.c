@@ -223,6 +223,8 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
   ss->Transform_Normalization = DEFAULT_TRANSFORM_NORMALIZATION;
   ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;
+  ss->zoom_focus_proc = XEN_UNDEFINED;
+  ss->zoom_focus_proc_loc = -1;
   ss->Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Region_Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Enved_Filter_Order = DEFAULT_ENVED_FILTER_ORDER;

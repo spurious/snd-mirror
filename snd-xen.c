@@ -1547,20 +1547,43 @@ output data format's maximum. The default (#f) allows them to wrap-around which 
   return(C_TO_XEN_BOOLEAN(data_clipped(ss)));
 }
 
-static XEN g_zoom_focus_style(void) {return(C_TO_XEN_INT((int)zoom_focus_style(ss)));}
+static XEN g_zoom_focus_style(void) 
+{
+  if (zoom_focus_style(ss) != ZOOM_FOCUS_PROC)
+    return(C_TO_XEN_INT((int)zoom_focus_style(ss)));
+  return(ss->zoom_focus_proc);
+}
+
 static XEN g_set_zoom_focus_style(XEN focus) 
 {
   #define H_zoom_focus_style "(" S_zoom_focus_style "): one of " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle \
-", or " S_zoom_focus_active ". This determines what zooming centers on (default: " S_zoom_focus_active ")"
+", or " S_zoom_focus_active ". This determines what zooming centers on (default: " S_zoom_focus_active ").  It can also \
+be a function of 6 args (snd chan zx x0 x1 range) that returns the new window left edge as a float."
   zoom_focus_t choice;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(focus), focus, XEN_ONLY_ARG, S_setB S_zoom_focus_style, "an integer"); 
-  choice = (zoom_focus_t)XEN_TO_C_INT(focus);
-  if (choice > ZOOM_FOCUS_MIDDLE)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 
-			   1, focus, 
-			   "~A, but must be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
-  activate_focus_menu(choice);
-  return(C_TO_XEN_INT((int)zoom_focus_style(ss)));
+  XEN_ASSERT_TYPE((XEN_INTEGER_P(focus)) || (XEN_PROCEDURE_P(focus)), focus, XEN_ONLY_ARG, S_setB S_zoom_focus_style, "an integer or a function");
+  if ((XEN_PROCEDURE_P(focus)) && (!(procedure_arity_ok(focus, 6))))
+    return(snd_bad_arity_error(S_setB S_zoom_focus_style, 
+			       C_TO_XEN_STRING("zoom focus func should take 4 args"), 
+			       focus));
+  if (zoom_focus_style(ss) == ZOOM_FOCUS_PROC)
+    {
+      snd_unprotect_at(ss->zoom_focus_proc_loc);
+      ss->zoom_focus_proc = XEN_UNDEFINED;
+    }
+  if (XEN_INTEGER_P(focus))
+    {
+      choice = (zoom_focus_t)XEN_TO_C_INT(focus);
+      if (choice > ZOOM_FOCUS_MIDDLE)
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 
+			       1, focus, 
+			       "~A, but must be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
+      activate_focus_menu(choice);
+      return(C_TO_XEN_INT((int)zoom_focus_style(ss)));
+    }
+  set_zoom_focus_style(ZOOM_FOCUS_PROC);
+  ss->zoom_focus_proc = focus;
+  ss->zoom_focus_proc_loc = snd_protect(focus);
+  return(focus);
 }
 
 static XEN g_snd_version(void) 

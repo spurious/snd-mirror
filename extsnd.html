@@ -693,8 +693,17 @@ Mono sounds and the listener are not affected (perhaps they should be?).
 <tr><td colspan=2><code><a class=def name="zoomfocusstyle">zoom-focus-style</a></code></td>
 <td><code>zoom-focus-active</code></td></tr>
 <tr><td></td><td colspan=2>This determines what a zoom action focuses (centers) on. The choices are 
-<i>zoom-focus-left</i>, <i>zoom-focus-right</i>, <i>zoom-focus-active</i>, and <i>zoom-focus-middle</i>.
-See <a href="snd.html#zoomoption">Zoom options</a>.</td></tr>
+<i>zoom-focus-left</i>, <i>zoom-focus-right</i>, <i>zoom-focus-active</i>, <i>zoom-focus-middle</i>,
+or a function of 6 arguments.  The function should return the new window left edge as a float.
+Its arguments are the current sound index, channel number, zoom slider value (0.0 to 1.0), time domain window left and right
+edges in seconds, and the current total x axis size (seconds) corresponding to a slider value
+of 1.0.
+<pre>
+(set! (zoom-focus-style) (lambda (snd chn zx x0 x1 range) (- x1 (* zx range))))
+</pre>
+mimics zoom-focus-right.
+See also <a href="snd.html#zoomoption">Zoom options</a>.
+</td></tr>
 </table>
 <br>
 

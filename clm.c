@@ -8196,5 +8196,5 @@ void mus_set_local_frequency_method(mus_any *gen, Float (*frequency)(mus_any *pt
  *          this is used in vox.ins, pqw.ins, pqw-vox.ins -- what name?
  * PERHAPS: gen to mix two sigs via amp and 1-amp -- what name? -- these two are related
  *
- * PERHAPS: ramp gen as in examp.scm -- need better name: leaper and flapper
+ * PERHAPS: ramp gen as in examp.scm
  */

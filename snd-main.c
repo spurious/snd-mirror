@@ -128,6 +128,7 @@ static char *zoom_focus_style_name(zoom_focus_t choice)
     case ZOOM_FOCUS_LEFT:   return(TO_VAR_NAME(S_zoom_focus_left));   break;
     case ZOOM_FOCUS_RIGHT:  return(TO_VAR_NAME(S_zoom_focus_right));  break;
     case ZOOM_FOCUS_MIDDLE: return(TO_VAR_NAME(S_zoom_focus_middle)); break;
+      /* proc?? */
     default:                return(TO_VAR_NAME(S_zoom_focus_active)); break;
     }
 }

@@ -81,7 +81,7 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -34964,6 +34964,13 @@ EDITS: 2
 	(set! (x-bounds) (list 0.0 .04))
 	(update-time-graph)
 	(update-transform-graph)
+	(set! (zoom-focus-style) (lambda (s c z x0 x1 range)
+				   0))
+	(if (not (procedure? (zoom-focus-style)))
+	    (snd-display ";zoom-focus-style as func: ~A" (zoom-focus-style)))
+	(set! (zoom-focus-style) zoom-focus-right)
+	(if (not (= (zoom-focus-style) zoom-focus-right))
+	    (snd-display ";unset zoom-focus-style as func: ~A" (zoom-focus-style)))
 	(close-sound ind))
 
       (if (file-exists? "test.snd") (delete-file "test.snd"))
@@ -54136,7 +54143,7 @@ EDITS: 2
 			      selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			      show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			      trap-segfault optimization unbind-key verbose-cursor vu-font vu-font-size vu-size window-height
-			      window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
+			      window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			      mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			      quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			      ))
@@ -54234,6 +54241,7 @@ EDITS: 2
 	    (check-error-tag 'no-such-channel (lambda () (make-sample-reader 0 "oboe.snd" 1)))
 	    (check-error-tag 'no-such-channel (lambda () (make-sample-reader 0 "oboe.snd" -1)))
 	    (check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
+	    (check-error-tag 'bad-arity (lambda () (set! (zoom-focus-style) (lambda (a) 0))))
 	    (check-error-tag 'wrong-type-arg (lambda () (mus-mix "oboe.snd" "pistol.snd" 0 12 0 (make-mixer 1 1.0) "a string")))
 	    (check-error-tag 'bad-header (lambda () (mus-mix "test.snd" (string-append sf-dir "bad_chans.aifc"))))
 	    (check-error-tag 'mus-error (lambda () (mus-mix "test.snd" (string-append sf-dir "bad_length.aifc"))))

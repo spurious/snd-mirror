@@ -439,6 +439,8 @@ typedef struct snd_state {
   tracking_cursor_t Cursor_Follows_Play;
   XEN cursor_proc;
   int cursor_proc_loc;
+  XEN zoom_focus_proc;
+  int zoom_focus_proc_loc;
   Float min_dB, lin_dB;
   char *HTML_Dir, *HTML_Program;
   bool error_lock;

@@ -17,8 +17,9 @@
  *          proc to return tick mark for axis label + proc to return displayed value given current value
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  *            y axis horizontal placement (label needs room)
- * PERHAPS: user-specified zoom choice, x-axis units 
- *       [axis-style, speed-style, (time|transform|lisp)-graph-style, zoom-focus-style, region-graph-style, enved-style?]
+ * PERHAPS: user-func for axis-style, (time|transform|lisp|region)-graph-style
+ *           -> label, make_axes (describe-ticks = x0 x1), tick_grf_x: (lambda (snd chn ques ...) [:label] [:tick x] [:x0 x0 range] [:x1 x1 range]
+ *          or x-axis-label-hook? (lambda (snd chn axis) ...) -> "time"
  *
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  */
@@ -45,7 +46,6 @@ static void after_transform(chan_info *cp, Float scaler)
 			C_TO_XEN_DOUBLE(scaler)),
 	     S_after_transform_hook);
 }
-
 
 static void set_y_bounds(axis_info *ap);
 static void chans_time_graph_type(chan_info *cp, void *ptr) 
@@ -867,6 +867,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
    *    focus_right - get old right, set sx to keep it as is
    *    focus_middle - ditto mid window
    *    focus_active - find the currently active entity, if none use focus_middle 
+   *    focus_proc -- call proc
    */
   if (ap->xmax == 0.0) return;
   if (ap->xmax <= ap->xmin) 
@@ -880,8 +881,22 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
       off_t newf;
       switch (focus_style)
 	{
-	case ZOOM_FOCUS_RIGHT:   ap->x0 = ap->x1 - ap->zx * ap->x_ambit; break;
-	case ZOOM_FOCUS_MIDDLE:  ap->x0 = 0.5 * ((ap->x1 + ap->x0) - ap->zx * ap->x_ambit); break;
+	case ZOOM_FOCUS_PROC:
+	  ap->x0 = XEN_TO_C_DOUBLE(XEN_CALL_6(ss->zoom_focus_proc,
+					      C_TO_XEN_INT((cp->sound)->index),
+					      C_TO_XEN_INT(cp->chan),
+					      C_TO_XEN_DOUBLE(ap->zx),
+					      C_TO_XEN_DOUBLE(ap->x0),
+					      C_TO_XEN_DOUBLE(ap->x1),
+					      C_TO_XEN_DOUBLE(ap->x_ambit),
+					      "zoom-focus-style procedure"));
+	  break;
+	case ZOOM_FOCUS_RIGHT:   
+	  ap->x0 = ap->x1 - ap->zx * ap->x_ambit; 
+	  break;
+	case ZOOM_FOCUS_MIDDLE:  
+	  ap->x0 = 0.5 * ((ap->x1 + ap->x0) - ap->zx * ap->x_ambit); 
+	  break;
 	case ZOOM_FOCUS_ACTIVE:
 	  ncp = virtual_selected_channel(cp);
 	  /* axes should be the same, since all move together in this mode */

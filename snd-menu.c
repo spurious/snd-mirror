@@ -411,7 +411,7 @@ void activate_focus_menu(zoom_focus_t new_focus)
 	case ZOOM_FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), true);   break;
 	case ZOOM_FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), true);  break;
 	case ZOOM_FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), true); break;
-	case ZOOM_FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), true); break;
+	default:                set_sensitive(options_focus_active_menu(), true); break;
 	}
     }
   set_zoom_focus_style(new_focus);
@@ -422,7 +422,7 @@ void activate_focus_menu(zoom_focus_t new_focus)
 	case ZOOM_FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), false);   break;
 	case ZOOM_FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), false);  break;
 	case ZOOM_FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), false); break;
-	case ZOOM_FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), false); break;
+	default:                set_sensitive(options_focus_active_menu(), false); break;
 	}
     }
 }  
