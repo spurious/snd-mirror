@@ -151,7 +151,7 @@ Here's a more elaborate initialization file:
 (set! (<a class=quiet href="extsnd.html#windowwidth">window-width</a>) 800)           ;these set the initial window size
 (set! (<a class=quiet href="extsnd.html#windowheight">window-height</a>) 500)
 
-(if (provided? 'snd-motif)          ;Motif and Gtk use different font naming conventions
+(if (provided? '<a class=quiet href="#sndmotiffeature">snd-motif</a>)          ;Motif and Gtk use different font naming conventions
     (begin
       (set! (<a class=quiet href="extsnd.html#listenerfont">listener-font</a>) "9x15")
       (set! (<a class=quiet href="extsnd.html#axislabelfont">axis-label-font</a>) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
@@ -192,9 +192,9 @@ Here's a more elaborate initialization file:
 (load "extensions.scm")
 
 (make-current-window-display)       ;display an overview of the current window in the upper right
-(if (provided? 'snd-motif)          
+(if (provided? '<a class=quiet href="#sndmotiffeature">snd-motif</a>)          
     (load "popup.scm")              ;context-sensitive popup menus
-    (if (provided? 'snd-gtk)
+    (if (provided? '<a class=quiet href="#sndgtkfeature">snd-gtk</a>)
         (load "/home/bil/cl/gtk-popup.scm")))
 
 (add-hook! <a class=quiet href="extsnd.html#afteropenhook">after-open-hook</a>          ;if sound has many chans, use just one pane for all
@@ -386,6 +386,33 @@ And several more color resources: whitecolor (list background),
 blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc), 
 greencolor (a few buttons),
 yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
+</p>
+
+<hr>
+
+<p>Depending on how Snd was configured, any of the following symbols may be
+on the *features* list (in Guile):
+</p>
+<table>
+<tr><td width=100>clm</td><td>clm module (always included)</td></tr>
+<tr><td>gl</td><td>OpenGL callable from Scheme/Ruby (--with-gl switch)</td></tr>
+<tr><td>snd-ladspa</td><td>LADSPA loaded (--with-ladspa, but also the default in Linux if ladspa.h can be found)</td></tr>
+<tr><td>sndlib</td><td>sndlib module (always included)</td></tr>
+<tr><td><A NAME="sndmotiffeature">snd-motif</a></td><td>Motif used as GUI toolkit (--with-motif, usually the default if Motif can be found)</td></tr>
+<tr><td><A NAME="sndgtkfeature">snd-gtk</a></td><td>Gtk+ used as GUI toolkit (--with-gtk)</td></tr>
+<tr><td>snd-nogui</td><td>No GUI built-in (--with-no-gui, or neither Motif nor Gtk+ found)</td></tr>
+<tr><td>snd-guile</td><td>Guile as extension language (--with-guile, usually the default if guile can be found)</td></tr>
+<tr><td>snd-ruby</td><td>Ruby as extension language (--with-ruby)</td></tr>
+<tr><td>snd-debug</td><td>internal debugging hooks included (--enable-snd-debug)</td></tr>
+<tr><td>snd</td><td>It's Snd, ferchrissake... (always included)</td></tr>
+<tr><td>xg</td><td>Gtk module (xg.c) included (--with-static-xm, or loaded dynamically)</td></tr>
+<tr><td>Xp</td><td>Xprint library included and available from Scheme/Ruby (--with-xp, the default if it exists)</td></tr>
+<tr><td>xm</td><td>Motif module (xm.c) included (--with-static-xm, or loaded dynamically)</td></tr>
+</table>
+
+<p>To check whether something is available in the current Snd, use <b>provided?</b>,
+as in <code>(if (provided? 'snd-gtk) ; do something involving gtk...</code>).
+In Ruby, the equivalent is <code>(if (provided? "snd-gtk")...)</code>.
 </p>
 
 <br>
@@ -1512,7 +1539,7 @@ as it scans the startup arguments (see snd-test.scm).
 #!/home/bil/test/snd-7/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
-  (display "usage: script file-name...\n")
+  (display "usage: script file-name...")
   (begin
     (<a class=quiet href="extsnd.html#opensound">open-sound</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1)))
     (<a class=quiet href="extsnd.html#scaleby">scale-by</a> 2.0)
@@ -1534,7 +1561,7 @@ the following displays all the comments it finds:
 !#
 (use-modules (ice-9 format))
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
-  (display "usage: script file-name...\n")
+  (display "usage: script file-name...")
   (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1) (1+ arg)))
       ((= arg (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>))))
     (let ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) arg)))
@@ -1567,7 +1594,7 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 #!/usr/local/bin/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
-  (display "usage: trunc.scm file-name...\n")
+  (display "usage: trunc.scm file-name...")
   (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1) (1+ arg)))
       ((= arg (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>))))
     (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) arg)))
@@ -1592,7 +1619,7 @@ into a bunch of mono files:
 #!snd -b
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
-  (display "usage: split.scm filename\n")
+  (display "usage: split.scm filename")
   (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (1+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>))))
 	 (chns (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> name)))
     (if (&gt; chns 1)

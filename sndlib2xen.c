@@ -994,7 +994,15 @@ from the audio line into sound-data sdata."
 
 static XEN g_mus_audio_mixer_read(XEN dev, XEN field, XEN chan, XEN vals)
 {
-  #define H_mus_audio_mixer_read "(" S_mus_audio_mixer_read " device field channel vals): read some portion of the sound card mixer state"
+  #define H_mus_audio_mixer_read "(" S_mus_audio_mixer_read " device field channel vals): read some portion of the sound card mixer state.\
+The device is the nominal audio device, normally " S_mus_audio_default ". The field describes what info we are requesting: \
+to get the devices max available chans, the field would be " S_mus_audio_channel ". The channel arg, when relevant, specifies \
+which channel we want info on, or how big the 'vals' array is (normally the latter).  The vals array is a vector in which \
+the requested info will be written by " S_mus_audio_mixer_read ".  So, \n\
+  (let ((vals (make-vector 32)))\n\
+    (mus-audio-mixer-read mus-audio-default mus-audio-format 32 vals))\n\
+sets (vector-ref vals 0) to the default device's desired audio sample data format."
+
   int val, i, len;
   float *fvals;
   XEN *vdata;

@@ -1657,7 +1657,7 @@ This is intended to make it possible to read user-typing in the listener.
   (let ((res #f))
     (add-hook! <em class=red>read-hook</em> (lambda (str) (set! res str) #t))
     (<a class=quiet href="#resetlistenercursor">reset-listener-cursor</a>)
-    (<a class=quiet href="#sndprint">snd-print</a> "\n")
+    (<a class=quiet href="#sndprint">snd-print</a> #\newline)
     (<a class=quiet href="#sndprint">snd-print</a> prompt)
     (do () ((or (<a class=quiet href="#cgp">c-g?</a>) res)))
     (reset-hook! <em class=red>read-hook</em>)

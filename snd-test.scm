@@ -43,7 +43,7 @@
     (display str)
     (if (not (provided? 'snd-nogui))
 	(begin
-	  (snd-print "\n")
+	  (snd-print #\newline)
 	  (snd-print str)))))
 
 (define tests 1)
@@ -1170,6 +1170,7 @@
 	    (list "next-dbl.snd" 1 22050 0.226757362484932 "Sun" "big endian double (64 bits)")
 	    (list "oboe.ldbl" 1 22050 2.30512475967407 "RIFF" "little endian double (64 bits)")
 	    (list "next-flt.snd" 1 22050 0.226757362484932 "Sun" "big endian float (32 bits)")
+	    (list "aifc-float.snd" 1 22050 0.226757362484932 "AIFC" "big endian float (32 bits)")
 	    (list "next-mulaw.snd" 1 8012 2.03295063972473 "Sun" "mulaw (8 bits)")
 	    (list "next24.snd" 1 44100 0.0367800444364548 "Sun" "big endian int (24 bits)")
 	    (list "nist-01.wav" 1 16000 2.26912498474121 "NIST" "little endian short (16 bits)")
@@ -1917,7 +1918,13 @@
 	    (if (file-exists? fsnd)
 		(begin
 		  (set! com (mus-sound-comment fsnd))
-		  (if (or (not (string? com)) (not (string-=? com "ICRD: 1997-02-22\nIENG: Paul R. Roger\nISFT: Sound Forge 4.0\n")))
+		  (if (or (not (string? com)) (not (string-=? com 
+							      (string-append "ICRD: 1997-02-22" 
+									     (string #\newline)
+									     "IENG: Paul R. Roger"
+									     (string #\newline)
+									     "ISFT: Sound Forge 4.0"
+									     (string #\newline)))))
 		      (snd-display ";mus-sound-comment \"nasahal8.wav\") -> ~A?" com)))))
 	  (let ((fsnd (string-append sf-dir "8svx-8.snd")))
 	    (if (file-exists? fsnd)
@@ -1960,7 +1967,7 @@
 	    (if (file-exists? fsnd)
 		(begin
 		  (set! com (mus-sound-comment fsnd))
-		  (if (or (not (string? com)) (not (string-=? com "MARY HAD A LITTLE LAMB\n")))
+		  (if (or (not (string? com)) (not (string-=? com (string-append "MARY HAD A LITTLE LAMB" (string #\newline)))))
 		      (snd-display ";mus-sound-comment \"mary-sun4.sig\") -> ~A?" com)))))
 	  (let ((fsnd (string-append sf-dir "nasahal.pat")))
 	    (if (file-exists? fsnd)
@@ -1997,14 +2004,25 @@
 	    (if (file-exists? fsnd)
 		(begin
 		  (set! com (mus-sound-comment fsnd))
-		  (if (or (not (string? com)) (not (string-=? com "1994 Jesus Villena\n")))
+		  (if (or (not (string? com)) (not (string-=? com (string-append "1994 Jesus Villena" (string #\newline)))))
 		      (snd-display ";mus-sound-comment \"anno.aif\") -> ~A?" com)))))
 	  (let ((fsnd (string-append sf-dir "telephone.wav")))
 	    (if (file-exists? fsnd)
 		(begin
 		  (set! com (mus-sound-comment fsnd))
 		  (if (or (not (string? com)) 
-			  (not (string-=? com "sample_byte_format -s2 01\nchannel_count -i 1\nsample_count -i 36461\nsample_rate -i 16000\nsample_n_bytes -i 2\nsample_sig_bits -i 16\n")))
+			  (not (string-=? com (string-append "sample_byte_format -s2 01"
+							     (string #\newline)
+							     "channel_count -i 1"
+							     (string #\newline)
+							     "sample_count -i 36461"
+							     (string #\newline)
+							     "sample_rate -i 16000"
+							     (string #\newline)
+							     "sample_n_bytes -i 2"
+							     (string #\newline)
+							     "sample_sig_bits -i 16"
+							     (string #\newline)))))
 		      (snd-display ";mus-sound-comment \"telephone.wav\") -> ~A?" com)))))
 
 	  (if (not (string? (mus-sound-comment (string-append sf-dir "traffic.aiff"))))
@@ -11756,7 +11774,7 @@ EDITS: 5
 	    (snd-display ";delay interp all-pass (3): ~A" v3))
 	(if (not (vequal v4 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0)))
 	    (snd-display ";delay interp none (4): ~A" v4))
-	(if (not (vequal v5 (vct 0.0 0.0 0.0 -0.120 -0.080 0.0 0.120 0.280 0.840 0.960 1.0 0.960 0.840 0.280 0.120 0.0 -0.080 -0.120 0.0 0.0)))
+	(if (not (vequal v5 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.120 0.280 0.480 0.720 1.000 0.960 0.840 0.640 0.360 0.000 -0.080 -0.120 -0.120 -0.080)))
 	    (snd-display ";delay interp lagrange (5): ~A" v5))
 	(if (not (vequal v6 (vct 0.0 -0.016 -0.048 -0.072 -0.064 0.0 0.168 0.424 0.696 0.912 1.0 0.912 0.696 0.424 0.168 0.0 -0.064 -0.072 -0.048 -0.016)))
 	    (snd-display ";delay interp hermite (6): ~A" v6))
@@ -14321,7 +14339,7 @@ EDITS: 5
        (list 
 	(list mus-interp-none (vct 0.000 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 1.000))
 	(list mus-interp-linear (vct 0.000 0.200 0.400 0.600 0.800 1.000 0.800 0.600 0.400 0.200))
-	(list mus-interp-lagrange (vct 0.000 0.120 0.280 0.840 0.960 1.000 0.960 0.840 0.280 0.120))
+	(list mus-interp-lagrange (vct 0.000 0.120 0.280 0.480 0.720 1.000 0.960 0.840 0.640 0.360))
 	(list mus-interp-hermite (vct 0.000 0.168 0.424 0.696 0.912 1.000 0.912 0.696 0.424 0.168))))
 
       (let ((gen0 (make-waveshape 440.0 :wave (partials->waveshape '(1 1))))
@@ -14467,6 +14485,25 @@ EDITS: 5
 	(if (not (= (mus-length hi) 256)) (snd-display ";wave-train set length: ~A?" (mus-length hi)))
 	(set! (mus-length hi) 128)
 	(if (not (= (mus-length hi) 128)) (snd-display ";set wave-train set length: ~A?" (mus-length hi))))
+
+      (for-each 
+       (lambda (args)
+	 (let ((type (car args))
+	       (vals (cadr args)))
+	   (let* ((tbl1 (make-wave-train :frequency 3000.0 :initial-phase (/ (* 2.0 pi .2) 4) :size 4 :type type)))
+	     (vct-set! (mus-data tbl1) 1 1.0)
+	     (let ((v (make-vct 10)))
+	       (do ((i 0 (1+ i)))
+		   ((= i 10))
+		 (vct-set! v i (wave-train tbl1 0.0))) ;(wave-train tbl1 (/ (* 2 pi .2) 4))))
+	       (if (not (vequal v vals))
+		   (snd-display ";tbl interp ~A: ~A ~A" type v (mus-inspect tbl1)))
+	       (if (not (= (mus-interp-type tbl1) type)) (snd-display ";tbl interp-type (~A): ~A" type (mus-interp-type tbl1)))))))
+       (list 
+	(list mus-interp-none (vct 0.000 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000))
+	(list mus-interp-linear (vct 0.200 0.800 0.000 0.000 0.000 0.000 0.000 0.000 0.200 0.800))
+	(list mus-interp-lagrange (vct 0.120 0.960 -0.080 0.000 0.000 0.000 0.000 0.000 0.120 0.960))
+	(list mus-interp-hermite (vct 0.168 0.912 -0.064 -0.016 0.000 0.000 0.000 0.000 0.168 0.912))))
 
       (let ((tag (catch #t (lambda () (make-wave-train :size 0)) (lambda args (car args)))))
 	(if (not (eq? tag 'out-of-range)) (snd-display ";wave-train size 0: ~A" tag)))

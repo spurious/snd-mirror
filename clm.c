@@ -1,12 +1,9 @@
-/* CLM (music V) implementation as a C module */
+/* CLM (Music V) implementation */
 /*
  *   to make global (gen-relative) method change, need way to set gen's class fields
  *   to make gen-local method change, need to copy class, reassign core, set desired field
  *   or add-to-existing would need access to current
  */
-
-/* TODO: tests for wave-train interps */
-/* TODO: some independent test for lagrange/hermite interpolations */
 
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
@@ -563,6 +560,19 @@ void mus_polar_to_rectangular(Float *rl, Float *im, int size)
     }
 }
 
+static Float *array_normalize(Float *table, int table_size)
+{
+  Float amp = 0.0;
+  int i;
+  for (i = 0; i < table_size; i++) 
+    if (amp < (fabs(table[i]))) 
+      amp = fabs(table[i]);
+  if ((amp > 0.0) && (amp != 1.0))
+    for (i = 0; i < table_size; i++) 
+      table[i] /= amp;
+  return(table);
+}
+
 Float mus_array_interp(Float *wave, Float phase, int size)
 {
   /* changed 26-Sep-00 to be closer to mus.lisp */
@@ -610,6 +620,7 @@ static Float mus_array_all_pass_interp(Float *wave, Float phase, int size, Float
 static Float mus_array_lagrange_interp(Float *wave, Float x, int size)
 {
   /* Abramovitz and Stegun 25.2.11 -- everyone badmouths this poor formula */
+  /* x assumed to be in the middle, between second and third vals */
   int x0, xp1, xm1;
   Float p, pp;
   if ((x < 0.0) || (x > size))
@@ -617,8 +628,7 @@ static Float mus_array_lagrange_interp(Float *wave, Float x, int size)
       x = fmod((double)x, (double)size);
       if (x < 0.0) x += size;
     }
-  x0 = (int)floor(x); /* goddamn C doesn't provide "round"?? */
-  if ((x - x0) > 0.5) x0++;
+  x0 = (int)floor(x);
   p = x - x0;
   if (x0 >= size) x0 -= size;
   if (p == 0.0) return(wave[x0]);
@@ -692,19 +702,6 @@ Float mus_array_interp_with_interp_type(Float *wave, Float phase, int size, mus_
 }
 #endif
 
-static Float *array_normalize(Float *table, int table_size)
-{
-  Float amp = 0.0;
-  int i;
-  for (i = 0; i < table_size; i++) 
-    if (amp < (fabs(table[i]))) 
-      amp = fabs(table[i]);
-  if ((amp > 0.0) && (amp != 1.0))
-    for (i = 0; i < table_size; i++) 
-      table[i] /= amp;
-  return(table);
-}
-
 
 
 /* ---------------- oscil ---------------- */
@@ -730,7 +727,6 @@ Float mus_oscil(mus_any *ptr, Float fm, Float pm)
   osc *gen = (osc *)ptr;
   result = sin(gen->phase + pm);
   gen->phase += (gen->freq + fm);
-  /* if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -741,7 +737,6 @@ Float mus_oscil_0(mus_any *ptr)
   osc *gen = (osc *)ptr;
   result = sin(gen->phase);
   gen->phase += gen->freq;
-  /* if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -751,7 +746,6 @@ Float mus_oscil_1(mus_any *ptr, Float fm)
   osc *gen = (osc *)ptr;
   result = sin(gen->phase);
   gen->phase += (gen->freq + fm);
-  /* if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -2452,7 +2446,6 @@ Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
   result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 */
   gen->phase += (gen->freq + fm);
-  /* if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -2464,7 +2457,6 @@ Float mus_asymmetric_fm_1(mus_any *ptr, Float index) /* mostly for internal opti
   result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 */
   gen->phase += gen->freq;
-  /* if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -3549,15 +3541,12 @@ mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size
   return((mus_any *)gen);
 }
 
-/* TODO: if interp choice in waveshape -- what is the correct form? */
-
 Float mus_waveshape(mus_any *ptr, Float index, Float fm)
 {
   ws *gen = (ws *)ptr;
   Float oscval, table_index;
   oscval = sin(gen->phase);
   gen->phase += (gen->freq + fm);
-  /* if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   table_index = gen->offset * (1.0 + (oscval * index));
   return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
@@ -3568,7 +3557,6 @@ Float mus_waveshape_1(mus_any *ptr, Float index)
   Float oscval, table_index;
   oscval = sin(gen->phase);
   gen->phase += gen->freq;
-  /* if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   table_index = gen->offset * (1.0 + (oscval * index));
   return(mus_array_interp(gen->table, table_index, gen->table_size));
 }

@@ -2,6 +2,7 @@
 ;; My config file for snd.
 ;; -Kjetil S. Matheussen.
 
+(use-modules (ice-9 rdelim))
 
 ;; This config-file is primarly made for use with gtk, so by
 ;; using motif you will get less functionality. (things change)
@@ -67,7 +68,7 @@
 (add-to-menu 4 "But! How do I..."
 	     (lambda ()
 	       (help-dialog  "How do I..."
-			     (apply string-append (map (lambda (s) (string-append s "\n"))
+			     (apply string-append (map (lambda (s) (string-append s (string #\newline)))
 						       '(
 							 "Play:"
 							 "     <Space>"
@@ -967,7 +968,7 @@
 	      (my-switch-to-buf filename)
 	      #t)
 	    (begin
-	      ;;(display filename)(display "-gakk\n")
+	      ;;(display filename)(display (string-append "-gakk" (string #\newline)))
 	      (add-to-menu buffer-menu 
 			   filename 
 			   (lambda () (my-switch-to-buf filename)))
@@ -1025,8 +1026,8 @@
 
 
 
-
-(load-from-path "ladspa.scm")
+(if (provided? 'snd-ladspa)
+    (load-from-path "ladspa.scm"))
 
 
 ;; Stores the peak information for sounds in the ~/peaks/ directory. Seems to work correctly. I have tried
@@ -1106,7 +1107,7 @@
 		   (lambda ()
 		     (open-sound line))
 		   (lambda (key . args)
-		     (display (string-append "File \"" line "\" not found.\n"))
+		     (display (string-append "File \"" line "\" not found." (string #\newline)))
 		     #f))
 	    (myread))
 	  (begin

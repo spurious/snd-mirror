@@ -372,6 +372,7 @@ void free_snd_info(snd_info *sp)
   sp->applying = false;
   sp->channel_style = CHANNELS_SEPARATE;
   sp->read_only = false;
+  sp->need_update = false;
   sp->minibuffer_on = MINI_OFF;                     /* if it's on, should we clear it first ?? */
   if (sp->search_expr) 
     {

@@ -271,14 +271,14 @@ returning you to the true top-level."
 	 (if to-snd
 	     (begin
 	       (if statistics
-		   (set! cycles (/ (- (get-internal-real-time) start) 100)))
+		   (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second))))
 	       (let ((cur (find-sound output-1)))
 		 (if cur (close-sound cur)))
 	       (let ((snd-output (open-sound output-1)))
 		 (set! (sync snd-output) #t)
 		 (if statistics
 		     (snd-print 
-		      (format #f "~A:~%  maxamp: ~A,~%  compute time: ~A~%"
+		      (format #f "~A:~%  maxamp:~{ ~,4F~},~%  compute time: ~,3F~%"
 			      output-1
 			      (maxamp snd-output #t)
 			      cycles)))

@@ -1392,9 +1392,14 @@ static Cessate read_adc(void)
 bool recorder_start_output_file(const char *comment)
 {
   int comlen, err, i;
+  off_t oloc = 0;
   char *msg;
   comlen = (int)(snd_strlen(comment) + 3) / 4;
   comlen *= 4;
+  /*
+  fprintf(stderr,"write %s: %s %s %d %d\n",
+	  rp->output_file, mus_header_type_name(rp->output_header_type), mus_data_format_name(rp->output_data_format), rp->srate, rp->out_chans);
+  */
   err = snd_write_header(rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 28 + comlen, 0,
 			 rp->output_data_format, comment, snd_strlen(comment), NULL);
   if (err == -1)
@@ -1407,6 +1412,7 @@ bool recorder_start_output_file(const char *comment)
       rp->triggered = (!rp->triggering);
       return(true);
     }
+  oloc = mus_header_data_location();
   unsensitize_control_buttons();
 
   if (rp->output_header_type != MUS_RAW) mus_header_read(rp->output_file);
@@ -1415,10 +1421,11 @@ bool recorder_start_output_file(const char *comment)
 			    rp->output_file,
 			    rp->output_data_format, 
 			    mus_bytes_per_sample(rp->output_data_format), 
-			    mus_header_data_location(),
+			    oloc,
 			    rp->out_chans, 
 			    rp->output_header_type);
   mus_file_set_data_clipped(rp->output_file_descriptor, data_clipped(ss));
+  lseek(rp->output_file_descriptor, oloc, SEEK_SET);
   rp->total_output_frames = 0;
   rp->duration_label_update_frames = rp->srate / 4;
   if (!rp->output_bufs)

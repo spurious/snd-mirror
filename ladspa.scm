@@ -497,7 +497,8 @@
 			 (string-append (if dashelp
 					    (caddr dashelp)
 					    lisense)
-					"\n\nProcessing can be stopped by pressing C-g"))))
+					(string #\newline) (string #\newline)
+					"Processing can be stopped by pressing C-g"))))
 	  
 	(define (OK)
 	  (MyStop)

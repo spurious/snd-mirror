@@ -8811,6 +8811,27 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
       if (2 < chan) val[2] = MUS_AUDIO_DAC_OUT;
       val[0] = 2;
       break;
+    case MUS_AUDIO_SAMPLES_PER_CHANNEL: 
+      /* bufsize / 16 seems to safe max -- conversions can be by 8, and hmmm we're off by 2 somewhere I guess */
+      {
+	int bufsize = 4096;
+	int sizeof_bufsize;
+	sizeof_bufsize = sizeof(unsigned int);
+	curdev = MUS_AUDIO_DEVICE(dev1);
+	size = sizeof(AudioDeviceID);
+	in_case = ((curdev == MUS_AUDIO_MICROPHONE) || (curdev == MUS_AUDIO_LINE_IN));
+	if (in_case)
+	  err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &size, &dev);
+	else err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, &dev);
+	if (err != noErr) 
+	  fprintf(stderr, "get samps/chan: %s\n", osx_error(err));
+	else 
+	  {
+	    err = AudioDeviceGetProperty(dev, 0, true, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
+	    if (err == noErr) val[0] = (float)(bufsize / 16);
+	  }
+      }
+      break;
     default: 
       return(MUS_ERROR);
       break;

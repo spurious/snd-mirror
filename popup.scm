@@ -221,7 +221,7 @@
 	 (lambda (pr)
 	   (let ((property (car pr))
 		 (value (cdr pr)))
-	     (set! str (string-append str "\n    " (object->string property) ": "))
+	     (set! str (string-append str (string #\newline) "    " (object->string property) ": "))
 	     (if (vector? value)
 		 (set! str (string-append str (vector-print value)))
 		 (if (list? value)

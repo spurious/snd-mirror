@@ -4,7 +4,7 @@
 ;;; help -- ditto but create single-topic help files with an index for lisp's help feature
 ;;; html-check -- look for dangling hrefs
 
-(require :loop)
+#-allegro-v7.0 (require :loop)
 
 ;;; (index '("clm.html") t "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") nil nil t)
 
@@ -228,8 +228,8 @@
 		      (incf j)
 		      (setf in-name nil)))
 		(setf in-bracket t)
-		(if (or (string= "<a href" (subseq xref i (+ i 7)))
-			(string= "<a class=quiet href" (subseq xref i (+ i 19))))
+		(if (or (and (< (+ i 7) len) (string= "<a href" (subseq xref i (+ i 7))))
+			(and (< (+ i 19) len) (string= "<a class=quiet href" (subseq xref i (+ i 19)))))
 		    (progn
 		      (if need-start
 			  (progn
@@ -248,7 +248,7 @@
 		      (setf (char outstr j) #\{)
 		      (incf j))))
 	    (if (char= c #\&)
-		(if (string= (subseq xref i (+ i 4)) "&gt;")
+		(if (and (< (+ i 4) len) (string= (subseq xref i (+ i 4)) "&gt;"))
 		    (progn
 		      (setf (char outstr j) #\>)
 		      (incf j)

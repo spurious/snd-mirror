@@ -1925,7 +1925,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		     (lambda (w data)
 		       (help-dialog "Convolution"
 				    "Very simple convolution. Move the sliders to set the numbers of the soundfiles
-to be convolved and the amount for the amplitude scaler.\n Output will be scaled to floating-point values, resulting
+to be convolved and the amount for the amplitude scaler.  Output will be scaled to floating-point values, resulting
 in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output.
 The convolution data file typically defines a natural reverberation source, and the output from this effect
 can provide very striking reverb effects. You can find convolution data files on sites listed at
