@@ -5728,6 +5728,11 @@ the direction argument between the channel and edit-position.
      (lambda (val)
        (convolve cnv (lambda (dir) (read-sample sf)))))
     (free-sample-reader sf)))
+
+(do ((i 0 (1+ i)))
+    ((= i (frames)))
+  ;; don't actually do this! -- it involves a separate edit on each sample
+  (set! (sample i) (* 2 (sample i))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>

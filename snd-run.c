@@ -92,8 +92,6 @@ static XEN optimization_hook = XEN_FALSE;
 /* this code assumes a void* is the same size as int */
 #if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 
-#define XEN_SYMBOL_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(a, scm_current_module_lookup_closure(), XEN_TRUE))
-#define XEN_SYMBOL_NAME_SET_VALUE(a, b) XEN_VARIABLE_SET(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_TRUE), b)
 #define C_TO_XEN_CHAR(c) SCM_MAKE_CHAR(c)
 #define XEN_CDDDR(a) SCM_CDDDR(a)
 #define XEN_CAAR(a) XEN_CAR(XEN_CAR(a))
@@ -107,11 +105,21 @@ static XEN optimization_hook = XEN_FALSE;
 #define CHR_PT "i%d(#\\%c)"
 
 /* find and set (Guile) variable values */
+
+static void xen_symbol_name_set_value(char *a, XEN b)
+{
+  XEN var = XEN_FALSE;
+  var = scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_FALSE);
+  if (!(XEN_FALSE_P(var)))
+    XEN_VARIABLE_SET(var, b);
+}
+
 static XEN symbol_to_value(XEN code, XEN sym, int *local)
 {
   XEN new_val = XEN_UNDEFINED;
   XEN pair = XEN_FALSE;
   XEN code_env = XEN_FALSE;
+  XEN val;
   XEN names, values;
   int i, len;
   if (XEN_PROCEDURE_P(code))
@@ -145,9 +153,13 @@ static XEN symbol_to_value(XEN code, XEN sym, int *local)
 	    }
 	}
     }
-  new_val = XEN_SYMBOL_TO_VALUE(sym); /* try the outer environment */
-  if (XEN_BOUND_P(new_val))
-    (*local) = 0;
+  val = scm_sym2var(sym, scm_current_module_lookup_closure(), XEN_FALSE);
+  if (!(XEN_FALSE_P(val))) 
+    {
+      new_val = XEN_VARIABLE_REF(val);
+      if (XEN_BOUND_P(new_val))
+	(*local) = 0;
+    }
   return(new_val);
 }
 
@@ -156,6 +168,7 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
   XEN pair = XEN_FALSE;
   XEN code_env = XEN_FALSE;
   XEN names, values;
+  XEN var = XEN_FALSE;
   int i, len;
   /* fprintf(stderr,"set %s to %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
   if (XEN_PROCEDURE_P(code))
@@ -187,7 +200,9 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 	    }
 	}
     }
-  XEN_VARIABLE_SET(scm_sym2var(sym, scm_current_module_lookup_closure(), XEN_TRUE), new_val);
+  var = scm_sym2var(sym, scm_current_module_lookup_closure(), XEN_FALSE);
+  if (!(XEN_FALSE_P(var)))
+    XEN_VARIABLE_SET(var, new_val);
   return(new_val);
 }
 
@@ -840,11 +855,11 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 	  if (current_optimization < 5)
 	    switch (var->v->type)
 	      {
-	      case R_FLOAT:  XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_DOUBLE(prog->dbls[var->v->addr]));           break;
-	      case R_INT:    XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_INT(prog->ints[var->v->addr]));              break;
-	      case R_BOOL:   XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));          break;
-	      case R_STRING: XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_STRING((char *)(prog->ints[var->v->addr]))); break;
-	      case R_CHAR:   XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_CHAR((char)(prog->ints[var->v->addr])));     break;
+	      case R_FLOAT:  xen_symbol_name_set_value(var->name, C_TO_XEN_DOUBLE(prog->dbls[var->v->addr]));           break;
+	      case R_INT:    xen_symbol_name_set_value(var->name, C_TO_XEN_INT(prog->ints[var->v->addr]));              break;
+	      case R_BOOL:   xen_symbol_name_set_value(var->name, C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));          break;
+	      case R_STRING: xen_symbol_name_set_value(var->name, C_TO_XEN_STRING((char *)(prog->ints[var->v->addr]))); break;
+	      case R_CHAR:   xen_symbol_name_set_value(var->name, C_TO_XEN_CHAR((char)(prog->ints[var->v->addr])));     break;
 	      case R_FLOAT_VECTOR:
 		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		if (XEN_VECTOR_P(val))
@@ -6517,8 +6532,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       var = find_var_in_ptree(prog, funcname);
       if (var == NULL)
 	{
-	  XEN val;
-	  val = XEN_SYMBOL_TO_VALUE(function);
+	  XEN val = XEN_UNDEFINED;
+	  XEN nval;
+	  nval = scm_sym2var(function, scm_current_module_lookup_closure(), XEN_FALSE);
+	  if (!(XEN_FALSE_P(nval))) val = XEN_VARIABLE_REF(nval);
 	  if ((sf_p(val)) || (mus_xen_p(val)))
 	    v = add_global_var_to_ptree(prog, function);
 

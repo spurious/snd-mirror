@@ -246,6 +246,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+3-Jul:   added contrib/DotEmacs thanks to Fernando.\n\
 27-Jun:  bad-header-hook.\n\
 20-Jun:  ptree-channel (an experiment) -- any func as virtual edit.\n\
          env-channel can take envelope (list) arg.\n\

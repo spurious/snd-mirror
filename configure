@@ -12286,6 +12286,130 @@ _ACEOF
 
 fi
 
+	echo "$as_me:$LINENO: checking for gdk_gl_font_use_gdk_font in -lm" >&5
+echo $ECHO_N "checking for gdk_gl_font_use_gdk_font in -lm... $ECHO_C" >&6
+if test "${ac_cv_lib_m_gdk_gl_font_use_gdk_font+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GL_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gdk_gl_font_use_gdk_font ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+gdk_gl_font_use_gdk_font ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_m_gdk_gl_font_use_gdk_font=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_m_gdk_gl_font_use_gdk_font=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_m_gdk_gl_font_use_gdk_font" >&5
+echo "${ECHO_T}$ac_cv_lib_m_gdk_gl_font_use_gdk_font" >&6
+if test $ac_cv_lib_m_gdk_gl_font_use_gdk_font = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_GDK_GL_FONT_USE_GDK_FONT 1
+_ACEOF
+
+fi
+
+	echo "$as_me:$LINENO: checking for gtk_widget_gl_make_current in -lm" >&5
+echo $ECHO_N "checking for gtk_widget_gl_make_current in -lm... $ECHO_C" >&6
+if test "${ac_cv_lib_m_gtk_widget_gl_make_current+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GL_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gtk_widget_gl_make_current ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+gtk_widget_gl_make_current ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_m_gtk_widget_gl_make_current=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_m_gtk_widget_gl_make_current=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_m_gtk_widget_gl_make_current" >&5
+echo "${ECHO_T}$ac_cv_lib_m_gtk_widget_gl_make_current" >&6
+if test $ac_cv_lib_m_gtk_widget_gl_make_current = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_GTK_WIDGET_GL_MAKE_CURRENT 1
+_ACEOF
+
+fi
+
       fi
     fi
   else

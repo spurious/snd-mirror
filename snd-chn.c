@@ -2085,7 +2085,12 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 #if USE_MOTIF
 	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
 #else
+  #if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
 	  gtk_widget_gl_make_current(channel_graph(cp));
+  #else
+          gdk_gl_drawable_make_current(gtk_widget_get_gl_drawable(channel_graph(cp)),
+				       gtk_widget_get_gl_context(channel_graph(cp)));
+  #endif
 	  gdk_gl_drawable_wait_gdk(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif
 	  if (cp->gl_fft_list == NO_LIST) 
@@ -2241,8 +2246,13 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
 	  else glFlush();
 #else
+  #if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
 	  if (gtk_widget_gl_is_double_buffer(channel_graph(cp)))
 	    gtk_widget_gl_swap_buffers(channel_graph(cp));
+  #else
+	  if (gdk_gl_drawable_is_double_buffered(gtk_widget_get_gl_drawable(channel_graph(cp))))
+	    gdk_gl_drawable_swap_buffers(gtk_widget_get_gl_drawable(channel_graph(cp)));
+  #endif
 	  else glFlush();
 	  gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif
@@ -2434,7 +2444,12 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 #if USE_MOTIF
       glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
 #else
+  #if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
       gtk_widget_gl_make_current(channel_graph(cp));
+  #else
+      gdk_gl_drawable_make_current(gtk_widget_get_gl_drawable(channel_graph(cp)),
+				       gtk_widget_get_gl_context(channel_graph(cp)));
+  #endif
       gdk_gl_drawable_wait_gdk(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif
       glEnable(GL_DEPTH_TEST);
@@ -2482,8 +2497,13 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
       else glFlush();
 #else
+  #if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
       if (gtk_widget_gl_is_double_buffer(channel_graph(cp)))
 	gtk_widget_gl_swap_buffers(channel_graph(cp));
+  #else
+      if (gdk_gl_drawable_is_double_buffered(gtk_widget_get_gl_drawable(channel_graph(cp))))
+	gdk_gl_drawable_swap_buffers(gtk_widget_get_gl_drawable(channel_graph(cp)));
+  #endif
       else glFlush();
       gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
 #endif

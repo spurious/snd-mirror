@@ -298,17 +298,14 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
   type = ed->edit_type;
   switch (type)
     {
-    case INSERTION_EDIT:  fprintf(outp, "\n (insert " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);   break;
-    case DELETION_EDIT:   fprintf(outp, "\n (delete " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);   break;
-    case CHANGE_EDIT:     fprintf(outp, "\n (set " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);      break;
-    case SCALED_EDIT:     fprintf(outp, "\n (scale " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);    break;
-    case ZERO_EDIT:       fprintf(outp, "\n (silence " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);  break;
-    case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);     break;
-    case PTREE_EDIT:      
-      fprintf(outp, "\n (ptree[%d] " OFF_TD " " OFF_TD ") ", 
-	      ed->ptree_location, ed->beg, ed->len);
-      break; 
-    case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                            break;
+    case INSERTION_EDIT:  fprintf(outp, "\n (insert " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                        break;
+    case DELETION_EDIT:   fprintf(outp, "\n (delete " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                        break;
+    case CHANGE_EDIT:     fprintf(outp, "\n (set " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                           break;
+    case SCALED_EDIT:     fprintf(outp, "\n (scale " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                         break;
+    case ZERO_EDIT:       fprintf(outp, "\n (silence " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                       break;
+    case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                          break;
+    case PTREE_EDIT:      fprintf(outp, "\n (ptree[%d] " OFF_TD " " OFF_TD ") ", ed->ptree_location, ed->beg, ed->len); break; 
+    case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                                                 break;
     }
   if (ed->origin) fprintf(outp, "; %s ", ed->origin);
   fprintf(outp, "[%d:%d]:", i, len);
@@ -1561,10 +1558,21 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
  *   call, but even if all the rest were passed in, dir could change without warning.
  *   Also currently assumes sample->sample mapping (as opposed to src etc)
  *   and randomness is out -- need to be able to start anywhere with same result etc.
- * Next step in virtual ops (leaving aside mixing support) might require
- *   user-written edit list, or perhaps pass in sample reader rather than 
- *   current sample -- return new length+peak envs?  (But sample reader
- *   would need prescaler to keep compatibility with scale-by etc).
+ *
+ * Next step in virtual ops
+ *   FILTER:
+ *     add "context" arg to ptree-channel: how many preceding samples to include with current
+ *     if given, user proc takes vct arg, not sample (intended for FIR filters)
+ *     snd_fd would need vct arg with size
+ *     new ED_VTREE? ptree+vct op
+ *     next_sample: shift back all current, get next, put at end of vct
+ *       init: start back n, fill vct (leaving 0's if loc < 0)
+ *       from prev: move sf across vct, filling it as we go
+ *     previous_sample: shift forward current, put prev at vct[0] (we're reading ahead here)
+ *       init: start at end of vct[end]=requested start, move back filling (unless < 0)
+ *       from next: move back filling
+ *   ENV:
+ *     embed exp env calc (new op)
  */
 void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt)
 {

@@ -614,6 +614,8 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
       if test "$with_gtk" = yes; then
         GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
         AC_CHECK_LIB(m, gdk_window_get_gl_config, [AC_DEFINE(HAVE_GTK_GL_EXT_0_1)], , $GL_LIBS)
+	AC_CHECK_LIB(m, gdk_gl_font_use_gdk_font, [AC_DEFINE(HAVE_GDK_GL_FONT_USE_GDK_FONT)], , $GL_LIBS)
+	AC_CHECK_LIB(m, gtk_widget_gl_make_current, [AC_DEFINE(HAVE_GTK_WIDGET_GL_MAKE_CURRENT)], , $GL_LIBS)
       fi
     fi
   else

@@ -1,5 +1,6 @@
 snd change log
 
+  3-Jul:     added contrib/DotEmacs thanks to Fernando.
   27-Jun:    bad-header-hook.
   20-Jun:    ptree-channel (an experiment) -- any func as virtual edit.
              env-channel can take envelope (list) arg.

@@ -13566,8 +13566,10 @@
 	(let ((data (map
 		     (lambda (sound)
 		       (if (file-exists? sound)
-			   (let ((ind (view-sound sound)))
+			   (let ((ind (view-sound sound))
+				 (old-opt (optimization)))
 			     (set! (squelch-update ind) #t)
+			     (set! (optimization) 5)
 			     (let ((times (map
 					   (lambda (function)
 					     (let ((start (get-internal-real-time)))
@@ -13587,6 +13589,7 @@
 						 (lambda () (src-channel 2.0))
 						 (lambda () (delete-samples 10 200))
 						 ))))
+			       (set! (optimization) old-opt)
 			       (close-sound ind)
 			       times))))
 		     (list "1a.snd" "oboe.snd" "storm.snd" "/home/bil/test/sound/away.snd"))))
@@ -20056,12 +20059,13 @@ EDITS: 5
 			(let ((rd (list-ref (dialog-widgets) 9)))
 			  (click-button (|XmMessageBoxGetChild rd |XmDIALOG_CANCEL_BUTTON)) (force-event))))
 		  (reset-hook! bad-header-hook)
-		  (let ((ind (open-sound "/home/bil/sf1/bogus.snd")))
-		    (let ((rd (list-ref (dialog-widgets) 9)))
-		      (if (|XtIsManaged rd)
-			  (begin
-			    (click-button (|XmMessageBoxGetChild rd |XmDIALOG_HELP_BUTTON)) (force-event)
-			    (click-button (|XmMessageBoxGetChild rd |XmDIALOG_CANCEL_BUTTON)) (force-event)))))
+		  (if (file-exists? "/home/bil/sf1/bogus.snd")
+		      (let ((ind (open-sound "/home/bil/sf1/bogus.snd")))
+			(let ((rd (list-ref (dialog-widgets) 9)))
+			  (if (|XtIsManaged rd)
+			      (begin
+				(click-button (|XmMessageBoxGetChild rd |XmDIALOG_HELP_BUTTON)) (force-event)
+				(click-button (|XmMessageBoxGetChild rd |XmDIALOG_CANCEL_BUTTON)) (force-event))))))
 		  (set! (with-background-processes) old-val))
 		(add-hook! bad-header-hook (lambda (n) #t))
 
@@ -23985,6 +23989,8 @@ EDITS: 5
 (define set-procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 5)))) set-procs))
 (define procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) procs))
 (define set-procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) set-procs))
+(define procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 8)))) procs))
+(define procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
 
 (define make-procs (list
                make-all-pass make-asymmetric-fm
@@ -25091,11 +25097,11 @@ EDITS: 5
 				       (lambda () (n arg1 arg2 arg3 arg4 arg5))
 				       (lambda args (car args))))
 			      procs5))
-			      (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
-			   (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
-			(list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
-		     (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
-		  (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890))
+			      (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
+			   (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
+			(list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
+		     (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
+		  (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890))
 
 	      ;; ---------------- set! 5 Args
 	      (for-each 
@@ -25114,11 +25120,11 @@ EDITS: 5
 				       (lambda () (set! (n arg1 arg2 arg3 arg4) arg5))
 				       (lambda args (car args))))
 			      procs5))
-			      (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
-			   (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
-			(list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
-		     (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890)))
-		  (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f #t '() 12345678901234567890))
+			      (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
+			   (list 1.5 "/hiho" 1234 -1 0 #f 12345678901234567890)))
+			(list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1)))
+		     (list 1.5 -1 0 #f 12345678901234567890)))
+		  (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890))
 
 	      (gc)
 
@@ -25141,12 +25147,12 @@ EDITS: 5
 					  (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6))
 					  (lambda args (car args))))
 				 procs6))
-			      (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
-			   (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
-			(list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
-		     (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
-		  (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
-	       (list 1.5 "/hiho" 1234 (make-vct 3) -1 #f #t))
+			      (list 1.5 "/hiho" 1234 -1 0 #f)))
+			   (list 1.5 "/hiho" 1234 0 #t)))
+			(list 1.5 "/hiho" 1234 (make-vct 3) #f #t)))
+		     (list 1.5 "/hiho" (make-vct 3) -1 #t)))
+		  (list 1.5 (make-vct 3) -1 0 #f #t)))
+	       (list 1.5 "/hiho" #f))
 		 
 	      ;; ---------------- set! 6 Args
 	      (for-each 
@@ -25167,13 +25173,83 @@ EDITS: 5
 					  (lambda () (set! (n arg1 arg2 arg3 arg4 arg5) arg6))
 					  (lambda args (car args))))
 				 procs6))
-			      (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
-			   (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
-			(list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
-		     (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
-		  (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t)))
-	       (list 1.5 "/hiho" 1234 (make-vct 3) -1 0 #f #t))
+			      (list 1.5 "/hiho" 1234 -1 0 #f)))
+			   (list 1.5 "/hiho" 1234 0 #t)))
+			(list 1.5 "/hiho" 1234 (make-vct 3) #f #t)))
+		     (list 1.5 "/hiho" (make-vct 3) -1 #t)))
+		  (list 1.5 (make-vct 3) -1 0 #f #t)))
+	       (list 1.5 "/hiho" #f))
 
+	      ;; ---------------- 8 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each
+			   (lambda (arg5)
+			     (for-each 
+			      (lambda (arg6)
+				(for-each 
+				 (lambda (arg7)
+				   (for-each 
+				    (lambda (arg8)
+				      (for-each 
+				       (lambda (n)
+					 (catch #t
+						(lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8))
+						(lambda args (car args))))
+				       procs8))
+				    (list 1.5 -1 #f)))
+				 (list "/hiho" 1234)))
+			      (list #t (make-vct 3))))
+			   (list (sqrt -1.0) 1)))
+			(list 1.5 '())))
+		     (list 2 1234)))
+		  (list #f #t)))
+	       (list 1.5 "/hiho"))
+				    
+
+	      ;; ---------------- 10 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each
+			   (lambda (arg5)
+			     (for-each 
+			      (lambda (arg6)
+				(for-each 
+				 (lambda (arg7)
+				   (for-each 
+				    (lambda (arg8)
+				      (for-each 
+				       (lambda (arg9)
+					 (for-each 
+					  (lambda (arg10)
+					    (for-each 
+					     (lambda (n)
+					       (catch #t
+						      (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10))
+						      (lambda args (car args))))
+					     procs10))
+					  (list 1.5 -1 #f)))
+				       (list "/hiho" 1234)))
+				    (list #t (make-vct 3))))
+				 (list (sqrt -1.0) 1)))
+			      (list 1.5 '())))
+			   (list 2 1234)))
+			(list #f #t)))
+		     (list 1.5 "/hiho")))
+		  (list 1.5 -1)))
+	       (list #f 1234))
 	      (gc)))
 	))
 
