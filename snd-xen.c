@@ -501,6 +501,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	  else msg = snd_strcat(msg, XEN_AS_STRING(XEN_CDR(throw_args)), &size);
 	}
     }
+  /* backtrace perhaps via xen_rb_report_error (via rescue) in xen.c? */
   rb_raise(err, msg);
 }
 #endif

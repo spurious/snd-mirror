@@ -2,6 +2,9 @@
 
 /* SOMEDAY: fftw error catcher (memerr = exit) (fftw does not yet support this) */
 /* SOMEDAY: logfreq in spectrogram?  */
+/* TODO: fft freq axis in wavelength -- inverse freq -- wouldn't this "naturally" stretch the low freqs? -- maybe too much so 
+ *       would need transform dialog button, inverse-frequency or something (parallel log-frequency)
+ */
 
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3
@@ -741,8 +744,8 @@ static void make_sonogram_axes(chan_info *cp)
 	    {
 	      if (yang < 45.0) xlabel = _("frequency");
 	      else if (yang < 135.0) xlabel = _("time");
-	      else if (yang < 225.0) xlabel = _("ycneuqerf"); /* a joke... */
-	      else if (yang < 315.0) xlabel = _("emit");
+	      else if (yang < 225.0) xlabel = _("wavelength");
+	      else if (yang < 315.0) xlabel = _("reversed time");
 	      else xlabel = "frequency";
 	    }
 	  else xlabel = spectro_xlabel(cp);

@@ -109,9 +109,6 @@ whenever they're in the current view."
 			     base chn copy-context #f #f graph-dots)))
 		      (cdr args)))))))
 
-
-;;; TODO: why not user-choice of time domain display, also dB axis?
-
 (define (display-energy snd chn)
   "(display-energy snd chn) is a lisp-graph-hook function that displays the time domain data as energy in the lisp graph; 
 the y-zoom-slider controls the graph amp"

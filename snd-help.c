@@ -382,12 +382,13 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-Mar:   rt-engine.scm thanks to Kjetil Matheussen!\n\
 28-Feb:  env-channel-with-base, Ruby side of edit-list->function.\n\
 24-Feb:  added mix.rb thanks to Mike Scholz.\n\
 22-Feb:  changed libxm to libxg in gtk case, also xm-version to xg-version\n\
            added --with-static-xg configure option\n\
 21-Feb:  removed snd_test.rb, replaced by snd-test.rb thanks to Mike Scholz!\n\
-	 added oo.scm and rt-compile.scm thanks to Kjetil Matheussen!\n\
+	 added oo.scm and rt-compiler.scm thanks to Kjetil Matheussen!\n\
 11-Feb:  snd 7.10.\n\
 8-Feb:   grani.scm and grani in clm-ins.rb thanks to Mike Scholz.\n\
          CLM sndwarp (B Battey) translated to Scheme: sndwarp.scm.\n\

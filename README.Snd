@@ -170,9 +170,9 @@ legalese).  Send bug reports or suggestions to bil@ccrma.stanford.edu.
 
 Authors:
 Bill Schottstaedt
-Michael Scholz: the German translation, the Ruby code, inf-snd.el, sndins, the Forth version of sndlib, and various instruments.
+Michael Scholz: the German translation, all of the Ruby code, inf-snd.el, sndins, the Forth version of sndlib, and various instruments.
+Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, snd-hobbit.scm, eval-c.scm, rt-compiler.scm, oo.scm, and the Jack audio support.
 Dave Phillips: the tutorial, new-effects.scm, and many other files.
-Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, snd-hobbit.scm, eval-c.scm, rt-compile.scm, oo.scm, and the Jack audio support.
 Fernando Lopez-Lezcano: the current ALSA support.
 Richard W.E. Furse: the original LADSPA support.
 Nick Bailey: the ESD support.

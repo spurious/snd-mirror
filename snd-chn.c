@@ -13,7 +13,13 @@
  *
  * TODO: bark scale as axis or color as above (fft as well?)
  * TODO: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
- * SOMEDAY: user-addable graph-style?
+ * SOMEDAY: user-addable graph-style? axis? (dB for example, or rms above)
+ *          proc to return tick mark for axis label + proc to return displayed value given current value
+ *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
+ *            y axis horizontal placement (label needs room)
+ * PERHAPS: user-specified zoom choice, x-axis units 
+ *       [axis-style, speed-style, (time|transform|lisp)-graph-style, zoom-focus-style, region-graph-style, enved-style?]
+ *
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  */
 
