@@ -62,48 +62,48 @@
 
 void mus_bint_to_char(unsigned char *j, int x)
 {
-  unsigned char *ox;
-  ox=(unsigned char *)&x;
+  unsigned char *ox = (unsigned char *)&x;
 #if MUS_LITTLE_ENDIAN
   j[0] = ox[3]; j[1] = ox[2]; j[2] = ox[1]; j[3] = ox[0];
 #else
-  j[0] = ox[0]; j[1] = ox[1]; j[2] = ox[2]; j[3] = ox[3];
+  memcpy((void *)j, (void *)ox, 4);
+  /* j[0] = ox[0]; j[1] = ox[1]; j[2] = ox[2]; j[3] = ox[3]; */
 #endif
 }
 
 int mus_char_to_bint (const unsigned char *inp)
 {
   int o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if MUS_LITTLE_ENDIAN
   outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
 #else
-  outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3];
+  memcpy((void *)outp, (void *)inp, 4);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3]; */
 #endif
   return(o);
 }
 
 void mus_lint_to_char(unsigned char *j, int x)
 {
-  unsigned char *ox;
-  ox=(unsigned char *)&x;
+  unsigned char *ox = (unsigned char *)&x;
 #if (!MUS_LITTLE_ENDIAN)
   j[0] = ox[3]; j[1] = ox[2]; j[2] = ox[1]; j[3] = ox[0];
 #else
-  j[0] = ox[0]; j[1] = ox[1]; j[2] = ox[2]; j[3] = ox[3];
+  memcpy((void *)j, (void *)ox, 4);
+  /* j[0] = ox[0]; j[1] = ox[1]; j[2] = ox[2]; j[3] = ox[3]; */
 #endif
 }
 
 int mus_char_to_lint (const unsigned char *inp)
 {
   int o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if (!MUS_LITTLE_ENDIAN)
   outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
 #else
-  outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3];
+  memcpy((void *)outp, (void *)inp, 4);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3]; */
 #endif
   return(o);
 }
@@ -111,21 +111,21 @@ int mus_char_to_lint (const unsigned char *inp)
 int mus_char_to_uninterpreted_int (const unsigned char *inp)
 {
   int o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
-  outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3];
+  unsigned char *outp = (unsigned char *)&o;
+  memcpy((void *)outp, (void *)inp, 4);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3]; */
   return(o);
 }
 
 unsigned int mus_char_to_ubint (const unsigned char *inp)
 {
   unsigned int o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if MUS_LITTLE_ENDIAN
   outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
 #else
-  outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3];
+  memcpy((void *)outp, (void *)inp, 4);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3]; */
 #endif
   return(o);
 }
@@ -133,12 +133,12 @@ unsigned int mus_char_to_ubint (const unsigned char *inp)
 unsigned int mus_char_to_ulint (const unsigned char *inp)
 {
   unsigned int o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if (!MUS_LITTLE_ENDIAN)
   outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
 #else
-  outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3];
+  memcpy((void *)outp, (void *)inp, 4);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3]; */
 #endif
   return(o);
 }
@@ -146,144 +146,144 @@ unsigned int mus_char_to_ulint (const unsigned char *inp)
 
 void mus_bfloat_to_char(unsigned char *j, float x)
 {
-  unsigned char *ox;
-  ox=(unsigned char *)&x;
+  unsigned char *ox = (unsigned char *)&x;
 #if MUS_LITTLE_ENDIAN
   j[0] = ox[3]; j[1] = ox[2]; j[2] = ox[1]; j[3] = ox[0];
 #else
-  j[0] = ox[0]; j[1] = ox[1]; j[2] = ox[2]; j[3] = ox[3];
+  memcpy((void *)j, (void *)ox, 4);
+  /* j[0] = ox[0]; j[1] = ox[1]; j[2] = ox[2]; j[3] = ox[3]; */
 #endif
 }
 
 float mus_char_to_bfloat (const unsigned char *inp)
 {
   float o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if MUS_LITTLE_ENDIAN
   outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
 #else
-  outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3];
+  memcpy((void *)outp, (void *)inp, 4);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3]; */
 #endif
   return(o);
 }
 
 void mus_lfloat_to_char(unsigned char *j, float x)
 {
-  unsigned char *ox;
-  ox=(unsigned char *)&x;
+  unsigned char *ox = (unsigned char *)&x;
 #if (!MUS_LITTLE_ENDIAN)
   j[0] = ox[3]; j[1] = ox[2]; j[2] = ox[1]; j[3] = ox[0];
 #else
-  j[0] = ox[0]; j[1] = ox[1]; j[2] = ox[2]; j[3] = ox[3];
+  memcpy((void *)j, (void *)ox, 4);
+  /* j[0] = ox[0]; j[1] = ox[1]; j[2] = ox[2]; j[3] = ox[3]; */
 #endif
 }
 
 float mus_char_to_lfloat (const unsigned char *inp)
 {
   float o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if (!MUS_LITTLE_ENDIAN)
   outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
 #else
-  outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3];
+  memcpy((void *)outp, (void *)inp, 4);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; outp[2] = inp[2]; outp[3] = inp[3]; */
 #endif
   return(o);
 }
 
 void mus_bshort_to_char(unsigned char *j, short x)
 {
-  unsigned char *ox;
-  ox=(unsigned char *)&x;
+  unsigned char *ox = (unsigned char *)&x;
 #if MUS_LITTLE_ENDIAN
   j[0] = ox[1]; j[1] = ox[0];
 #else
-  j[0] = ox[0]; j[1] = ox[1];
+  memcpy((void *)j, (void *)ox, 2); /* I wonder if this is faster */
+  /* j[0] = ox[0]; j[1] = ox[1]; */
 #endif
 }
 
 short mus_char_to_bshort (const unsigned char *inp)
 {
   short o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if MUS_LITTLE_ENDIAN
   outp[0] = inp[1]; outp[1] = inp[0];
 #else
-  outp[0] = inp[0]; outp[1] = inp[1];
+  memcpy((void *)outp, (void *)inp, 2);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; */
 #endif
   return(o);
 }
 
 void mus_lshort_to_char(unsigned char *j, short x)
 {
-  unsigned char *ox;
-  ox=(unsigned char *)&x;
+  unsigned char *ox = (unsigned char *)&x;
 #if (!MUS_LITTLE_ENDIAN)
   j[0] = ox[1]; j[1] = ox[0];
 #else
-  j[0] = ox[0]; j[1] = ox[1];
+  memcpy((void *)j, (void *)ox, 2);
+  /* j[0] = ox[0]; j[1] = ox[1]; */
 #endif
 }
 
 short mus_char_to_lshort (const unsigned char *inp)
 {
   short o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if (!MUS_LITTLE_ENDIAN)
   outp[0] = inp[1]; outp[1] = inp[0];
 #else
-  outp[0] = inp[0]; outp[1] = inp[1];
+  memcpy((void *)outp, (void *)inp, 2);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; */
 #endif
   return(o);
 }
 
 void mus_ubshort_to_char(unsigned char *j, unsigned short x)
 {
-  unsigned char *ox;
-  ox=(unsigned char *)&x;
+  unsigned char *ox = (unsigned char *)&x;
 #if MUS_LITTLE_ENDIAN
   j[0] = ox[1]; j[1] = ox[0];
 #else
-  j[0] = ox[0]; j[1] = ox[1];
+  memcpy((void *)j, (void *)ox, 2);
+  /* j[0] = ox[0]; j[1] = ox[1]; */
 #endif
 }
 
 unsigned short mus_char_to_ubshort (const unsigned char *inp)
 {
   unsigned short o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if MUS_LITTLE_ENDIAN
   outp[0] = inp[1]; outp[1] = inp[0];
 #else
-  outp[0] = inp[0]; outp[1] = inp[1];
+  memcpy((void *)outp, (void *)inp, 2);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; */
 #endif
   return(o);
 }
 
 void mus_ulshort_to_char(unsigned char *j, unsigned short x)
 {
-  unsigned char *ox;
-  ox=(unsigned char *)&x;
+  unsigned char *ox = (unsigned char *)&x;
 #if (!MUS_LITTLE_ENDIAN)
   j[0] = ox[1]; j[1] = ox[0];
 #else
-  j[0] = ox[0]; j[1] = ox[1];
+  memcpy((void *)j, (void *)ox, 2);
+  /* j[0] = ox[0]; j[1] = ox[1]; */
 #endif
 }
 
 unsigned short mus_char_to_ulshort (const unsigned char *inp)
 {
   unsigned short o;
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if (!MUS_LITTLE_ENDIAN)
   outp[0] = inp[1]; outp[1] = inp[0];
 #else
-  outp[0] = inp[0]; outp[1] = inp[1];
+  memcpy((void *)outp, (void *)inp, 2);
+  /* outp[0] = inp[0]; outp[1] = inp[1]; */
 #endif
   return(o);
 }
@@ -291,13 +291,10 @@ unsigned short mus_char_to_ulshort (const unsigned char *inp)
 double mus_char_to_ldouble (const unsigned char *inp)
 {
   double o;
+  unsigned char *outp = (unsigned char *)&o;
 #if (MUS_LITTLE_ENDIAN)
-  int i;
-#endif
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
-#if (MUS_LITTLE_ENDIAN)
-  for (i = 0; i < 8; i++) outp[i] = inp[i];
+  memcpy((void *)outp, (void *)inp, 8);
+  /* for (i = 0; i < 8; i++) outp[i] = inp[i]; */
 #else
   outp[0] = inp[7]; outp[1] = inp[6]; outp[2] = inp[5]; outp[3] = inp[4]; outp[4] = inp[3]; outp[5] = inp[2]; outp[6] = inp[1]; outp[7] = inp[0];
 #endif
@@ -307,42 +304,33 @@ double mus_char_to_ldouble (const unsigned char *inp)
 double mus_char_to_bdouble (const unsigned char *inp)
 {
   double o;
-#if (!MUS_LITTLE_ENDIAN)
-  int i;
-#endif
-  unsigned char *outp;
-  outp=(unsigned char *)&o;
+  unsigned char *outp = (unsigned char *)&o;
 #if (MUS_LITTLE_ENDIAN)
   outp[0] = inp[7]; outp[1] = inp[6]; outp[2] = inp[5]; outp[3] = inp[4]; outp[4] = inp[3]; outp[5] = inp[2]; outp[6] = inp[1]; outp[7] = inp[0];
 #else
-  for (i = 0; i < 8; i++) outp[i] = inp[i];
+  memcpy((void *)outp, (void *)inp, 8);
+  /* for (i = 0; i < 8; i++) outp[i] = inp[i]; */
 #endif
   return(o);
 }
 
 void mus_bdouble_to_char(unsigned char *j, double x)
 {
-#if (!MUS_LITTLE_ENDIAN)
-  int i;
-#endif
-  unsigned char *ox;
-  ox=(unsigned char *)&x;
+  unsigned char *ox = (unsigned char *)&x;
 #if (MUS_LITTLE_ENDIAN)
   j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
 #else
-  for (i = 0; i < 8; i++) j[i] = ox[i];
+  memcpy((void *)j, (void *)ox, 8);
+  /* for (i = 0; i < 8; i++) j[i] = ox[i]; */
 #endif
 }
 
 void mus_ldouble_to_char(unsigned char *j, double x)
 {
+  unsigned char *ox = (unsigned char *)&x;
 #if (MUS_LITTLE_ENDIAN)
-  int i;
-#endif
-  unsigned char *ox;
-  ox=(unsigned char *)&x;
-#if (MUS_LITTLE_ENDIAN)
-  for (i = 0; i < 8; i++) j[i] = ox[i];
+  memcpy((void *)j, (void *)ox, 8);
+  /* for (i = 0; i < 8; i++) j[i] = ox[i]; */
 #else
   j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
 #endif

@@ -72,7 +72,7 @@
 #include <X11/cursorfont.h>
 #include <stdio.h>
 
-/* compile-time flags are HAVE_XPM  HAVE_MOTIF  HAVE_XM_XP  HAVE_GUILE|HAVE_RUBY  XM_DISABLE_DEPRECATED  LESSTIF_VERSION */
+/* compile-time flags are HAVE_XPM  HAVE_MOTIF  HAVE_XM_XP  HAVE_GUILE|HAVE_RUBY  XM_DISABLE_DEPRECATED  LESSTIF_VERSION  WITH_EDITRES */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 

@@ -64,7 +64,7 @@ int mus_error(int error, const char *format, ...)
 #if HAVE_VPRINTF
   va_list ap;
 #endif
-  if (format == NULL) return(MUS_ERROR);
+  if (format == NULL) return(MUS_ERROR); /* else bus error in Mac OSX */
 #if HAVE_VPRINTF
   if (mus_error_buffer == NULL)
     mus_error_buffer = (char *)CALLOC(MUS_ERROR_BUFFER_SIZE, sizeof(char));

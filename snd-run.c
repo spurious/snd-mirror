@@ -4631,7 +4631,7 @@ static void display_int_vct(int *args, int *ints, Float *dbls)
     }
 }
 static char *descr_display_int_vct(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((int_vct *)(INT_ARG_1))));}
-static void display_rd(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", sf_to_string((snd_fd *)(INT_ARG_1)));}
+static void display_rd(int *args, int *ints, Float *dbls) {char *buf = NULL; fprintf(stderr, "%s", buf = sf_to_string((snd_fd *)(INT_ARG_1))); FREE(buf);}
 static char *descr_display_rd(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((snd_fd *)(INT_ARG_1))));}
 static void display_chr(int *args, int *ints, Float *dbls) {fprintf(stderr, "%c", (char)(INT_ARG_1));}
 static char *descr_display_chr(int *args, int *ints, Float *dbls) {return(mus_format("display(" CHR_PT ")", args[1], (char)(INT_ARG_1)));}

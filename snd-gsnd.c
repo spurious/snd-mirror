@@ -840,7 +840,7 @@ static void set_snd_revscl_1(snd_info *sp, Float val, int setadj)
   scrollval = pow(val, .333) * .6;
   sfs = prettyf(sp->reverb_control_scale, 3);
   fs = sfs;
-  ps=(char *)(revscl_number_buffer);
+  ps = (char *)(revscl_number_buffer);
   j = strlen(fs);
   if (j > 6) j = 6;
   if (j < 6) 

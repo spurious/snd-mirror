@@ -8991,6 +8991,18 @@
 			(lambda args (car args)))))
 	(if (not (eq? tag 'wrong-type-arg))
 	    (snd-display "set mix-frame -1: ~A"  tag)))
+
+      (revert-sound oboe)
+      (delete-sample 100)
+      (scale-by 2.0)
+      (revert-sound oboe)
+      (redo 32 oboe 0)
+      (if (not (= (edit-position oboe 0) 2))
+	  (snd-display ";redo 32: ~A" (edit-position oboe 0)))
+      (undo 32 oboe 0)
+      (if (not (= (edit-position oboe 0) 0))
+	  (snd-display ";undo 32: ~A" (edit-position oboe 0)))
+
       (close-sound oboe)
       )
 
@@ -11057,7 +11069,7 @@
 	    (if (> tests 1) (begin (snd-display ";main test ~D " test-ctr) (mus-sound-prune)))
 
 	    (let* ((frame-list (map frames open-files))
-		   (curloc (min 1200 (1- (list-ref frame-list 0))))
+		   (curloc (max 0 (min 1200 (1- (list-ref frame-list 0))))) ; max 0 since z.snd has 0 frames
 		   (curfd (choose-fd))
 		   (old-marks (length (marks curfd 0))))
 	      (set! test14-file (short-file-name curfd))
@@ -15731,6 +15743,69 @@ EDITS: 5
 	(close-sound ind)
 	(close-sound ind1)
 	(delete-file "t1.scm"))
+
+      (let ((ind (open-sound "oboe.snd"))
+	    (old-save-dir (save-dir))
+	    (old-eps-file (eps-file))
+	    (old-audio-state-file (audio-state-file)))
+	(set! (save-dir) #f)
+	(let ((v (make-vct 32 1.0)))
+	  (set! (samples 100 32) v))
+	(map-channel (lambda (y) (+ y .1)) 1000 10000)
+	(set! (show-axes ind 0) show-no-axes)
+	(set! (zoom-focus-style) zoom-focus-middle)
+	(set! (transform-normalization ind 0) dont-normalize)
+	(set! (graph-style ind 0) graph-filled)
+	(set! (transform-graph-type ind 0) graph-as-spectrogram)
+	(set! (time-graph-type ind 0) graph-as-wavogram)
+	(set! (x-axis-style ind 0) x-axis-as-percentage)
+	(set! (speed-control-style ind) speed-control-as-semitone)
+	(set! (cursor ind 0) 1234)
+	(set! (eps-file) "hiho.eps")
+	(set! (audio-state-file) ".mixer")
+	(save-state "s61.scm")
+	(close-sound ind)
+	(load "s61.scm")
+	(set! (save-dir) old-save-dir)
+	(set! ind (find-sound "oboe.snd"))
+	(if (not (= (show-axes ind 0) show-no-axes)) (snd-display ";save show-no-axes: ~A" (show-axes ind 0)))
+	(if (not (= (zoom-focus-style) zoom-focus-middle)) (snd-display ";save zoom-focus-middle: ~A" (zoom-focus-style)))
+	(if (not (= (transform-normalization ind 0) dont-normalize)) (snd-display ";save dont-normalize: ~A" (transform-normalization ind 0)))
+	(if (not (= (graph-style ind 0) graph-filled)) (snd-display ";save graph-filled: ~A" (graph-style ind 0)))
+	(if (not (= (transform-graph-type ind 0) graph-as-spectrogram)) (snd-display ";save graph-as-spectrogram: ~A" (transform-graph-type ind 0)))
+	(if (not (= (time-graph-type ind 0) graph-as-wavogram)) (snd-display ";save graph-as-wavogram: ~A" (time-graph-type ind 0)))
+	(if (not (= (x-axis-style ind 0) x-axis-as-percentage)) (snd-display ";save x-axis-as-percentage: ~A" (x-axis-style ind 0)))
+	(if (not (= (speed-control-style ind) speed-control-as-semitone)) (snd-display ";save speed-control-style: ~A" (speed-control-style ind)))
+	(if (not (= (cursor ind 0) 1234)) (snd-display ";save cursor 1234: ~A" (cursor ind 0)))
+	(if (not (string=? (eps-file) "hiho.eps")) (snd-display ";save eps-file: ~A" (eps-file)))
+	(set! (eps-file) old-eps-file)
+	(if (not (string=? (audio-state-file) ".mixer")) (snd-display ";save audio-state-file: ~A" (audio-state-file)))
+	(set! (audio-state-file) old-audio-state-file)
+	(if (not (string=? (display-edits) "
+EDITS: 2
+
+ (begin) [0:2]:
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (set 100 32) ; set-samples [1:4]:
+   (at 0, cp->sounds[0][0:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[1][0:31, 1.000000]) [buf: 32] 
+   (at 132, cp->sounds[0][132:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (set 1000 10000) ; map-channel [2:6]:
+   (at 0, cp->sounds[0][0:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[1][0:31, 1.000000]) [buf: 32] 
+   (at 132, cp->sounds[0][132:999, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[2][0:9999, 1.000000]) [buf: 10000] 
+   (at 11000, cp->sounds[0][11000:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+"))
+	    (snd-display "no save dir edits: ~A" (display-edits)))
+	(delete-file "s61.scm")
+	(close-sound ind))
+
       (mus-sound-prune)
       ))
 
@@ -16564,6 +16639,7 @@ EDITS: 5
 	      (dlinit handle "init_gsl_j0")
 	      (IF (fneq (j0 1.0) 0.765) (snd-display ";gsl loader test: ~A" (j0 1.0))))))
 
+      (set! (max-transform-peaks) 100)
       (let ((ind (open-sound "oboe.snd"))
 	    (ftype (add-transform "low-pass" "filtered" 0.0 1.0
 				  (lambda (len fd)
@@ -16584,6 +16660,8 @@ EDITS: 5
 	(let* ((samps (transform-samples->vct ind 0)))
 	  (IF (fneq (vct-ref samps 2) .002)
 	      (snd-display ";add-transform filtering (~A): ~A" ftype samps)))
+	(save-state "s61.scm")
+	(delete-file "s61.scm") ; added transform needs to be saved somehow?
 	(close-sound ind))
 
       (let ((ind (open-sound "oboe.snd"))
@@ -16665,6 +16743,8 @@ EDITS: 5
 	  (graph->ps "aaa.eps")
 	  (set! (x-bounds) (list 0.0 1.0))
 	  (update-time-graph)
+	  (update-transform-graph)
+	  (update-lisp-graph)
 	  (scale-by 0.0)
 	  (update-time-graph)
 	  (update-transform-graph)
@@ -16677,6 +16757,7 @@ EDITS: 5
 	  (set! (spectro-cutoff ind 0) .2)
 	  (set! (transform-graph-type ind 0) graph-as-spectrogram)
 	  (update-transform-graph)
+	  (update-lisp-graph)
 	  (graph->ps "aaa.eps")
 	  (set! (show-listener) #t)
 	  (close-sound ind))
@@ -21081,6 +21162,9 @@ EDITS: 5
 		(let ((str (widget-text (list-ref (sound-widgets ind2) 3))))
 		  (IF (not (string=? str "no active selection"))
 		      (snd-display ";C-x z report-in-minibuffer: ~A?" str)))
+		(XtCallCallbacks (menu-option "Save options") XmNactivateCallback (snd-global-state))
+		(if (file-exists? (string-append home-dir "/dot-snd"))
+		    (system (string-append "cp " home-dir "/dot-snd " home-dir "/.snd")))
 		(XtCallCallbacks (menu-option "Select all") XmNactivateCallback (snd-global-state))
 		(if (not (selection?))
 		    (snd-display "Select all menu option failed?"))
@@ -21808,6 +21892,8 @@ EDITS: 5
 			(snd-display "chose: ~A but not active?" filename))
 		    (XmToggleButtonSetState plays #f #t)
 		    (close-sound ind)
+		    (XmFileSelectionDoSearch filed #f)
+		    (XmFileSelectionDoSearch filed (XmStringCreateLocalized (string-append home-dir "/cl")))
 		    (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) 
 		    (force-event)))
 		(open-file-dialog)
@@ -24954,7 +25040,8 @@ EDITS: 5
 		    (snd-display ";XtIsSubclass thinks untext is a form?"))
 		(if (not (XtIsSubclass untext coreWidgetClass))
 		    (snd-display ";XtIsSubclass thinks untext is not a core widget"))
-		(XmTextCopyLink untext (list 'Time CurrentTime)))
+		(XmTextCopyLink untext (list 'Time CurrentTime))
+		(XmTextPasteLink untext))
 	      (let ((val (XmTextGetSubstring txt 2 3))
 		    (valf (XmTextFieldGetSubstring txtf 2 3)))
 		(IF (not (string=? val "234")) (snd-display ";XmTextGetSubstring: ~A" val))
@@ -25123,6 +25210,7 @@ EDITS: 5
 								    #f)))))
 		(focus-widget txtf1)
 		(XmTextFieldPaste txtf1)
+		(XmTextFieldPasteLink txtf1)
 		(IF (not (Widget? (XmGetTabGroup txtf1))) (snd-display ";XmGetTabGroup: ~A " (XmGetTabGroup txtf1)))
 		(let ((fw (XmGetFocusWidget (cadr (main-widgets)))))
 		  (IF (not (equal? fw txtf1))
@@ -25292,6 +25380,7 @@ EDITS: 5
 	      (XmContainerCopy box current-time)
 	      (XmContainerPaste box)
 	      (XmContainerCopyLink box (list 'Time CurrentTime))
+	      (XmContainerPasteLink box)
 	      
 	      (XmScaleSetValue scl 25)
 	      (IF (not (= (XmScaleGetValue scl) 25)) (snd-display ";XmScaleSetValue: ~A" (XmScaleGetValue scl)))

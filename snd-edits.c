@@ -669,7 +669,7 @@ static ed_list *make_ed_list(int size)
 {
   ed_list *ed;
   int i;
-  ed=(ed_list *)CALLOC(1, sizeof(ed_list));
+  ed = (ed_list *)CALLOC(1, sizeof(ed_list));
   ed->size = size;
   ed->allocated_size = size;
   ed->fragments = (ed_fragment **)CALLOC(size, sizeof(ed_fragment *));

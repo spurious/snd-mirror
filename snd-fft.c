@@ -602,6 +602,7 @@ static int compare_peaks(const void *pk1, const void *pk2)
 
 int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
 { /* in the fft peak finder below we assume data between 0 and 1 */
+  /* this procedure is for the list graph -- see below for fft */
   int i, j, pks, minpk;
   Float minval, la, ra, ca;
   Float *peaks;

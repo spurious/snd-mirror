@@ -198,7 +198,7 @@ static void pcp_sd(FILE *fd, char *name, int val, int chan)   {fprintf(fd, "%sse
 static void pcp_sod(FILE *fd, char *name, off_t val, int chan)   {fprintf(fd, "%sset_%s(%d, sfile, " OFF_TD ")\n", white_space, TO_PROC_NAME(name), val, chan);}
 static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%sset_%s(%.4f, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
 static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) 
-  {fprintf(fd, "%sset_%s([%.4f, %.4f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
+  {fprintf(fd, "%sset_%s([%f, %f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
 #endif
 #if HAVE_GUILE || (!HAVE_EXTENSION_LANGUAGE)
 static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
@@ -215,7 +215,7 @@ static void pcp_sd(FILE *fd, char *name, int val, int chan)   {fprintf(fd, "%s(s
 static void pcp_sod(FILE *fd, char *name, off_t val, int chan)   {fprintf(fd, "%s(set! (%s sfile %d) " OFF_TD ")\n", white_space, name, chan, val);}
 static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %.4f)\n", white_space, name, chan, val);}
 static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) 
-  {fprintf(fd, "%s(set! (%s sfile %d) (list %.4f %.4f))\n", white_space, name, chan, val1, val2);}
+  {fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
 #endif
 
 static void save_snd_state_options (snd_state *ss, FILE *fd)
@@ -500,15 +500,16 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (cp->time_graph_type != DEFAULT_TIME_GRAPH_TYPE) pcp_ss(fd, S_time_graph_type, time_graph_type_name(cp->time_graph_type), chan);
       if (cp->fft_window != DEFAULT_FFT_WINDOW) pcp_ss(fd, S_fft_window, mus_fft_window_name(cp->fft_window), chan);
       if (cp->transform_type != DEFAULT_TRANSFORM_TYPE) pcp_ss(fd, S_transform_type, transform_type_name(cp->transform_type), chan);
+      /* this is assuming the added transform definition (if any) can be found -- maybe not a good idea */
       if (cp->transform_normalization != DEFAULT_TRANSFORM_NORMALIZATION) pcp_ss(fd, S_transform_normalization, transform_normalization_name(cp->transform_normalization), chan);
       if (cp->time_graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_time_graph_style, graph_style_name(cp->time_graph_style), chan);
       if (cp->lisp_graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_lisp_graph_style, graph_style_name(cp->lisp_graph_style), chan);
       if (cp->transform_graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_transform_graph_style, graph_style_name(cp->transform_graph_style), chan);
       if (cp->show_mix_waveforms != DEFAULT_SHOW_MIX_WAVEFORMS) pcp_ss(fd, S_show_mix_waveforms, b2s(cp->show_mix_waveforms), chan);
       if (cp->dot_size != DEFAULT_DOT_SIZE) pcp_sd(fd, S_dot_size, cp->dot_size, chan);
-      if (cp->x_axis_style != DEFAULT_X_AXIS_STYLE) pcp_sd(fd, S_x_axis_style, cp->x_axis_style, chan);
+      if (cp->x_axis_style != DEFAULT_X_AXIS_STYLE) pcp_ss(fd, S_x_axis_style, x_axis_style_name(cp->x_axis_style), chan);
       if (cp->beats_per_minute != DEFAULT_BEATS_PER_MINUTE) pcp_sf(fd, S_beats_per_minute, cp->beats_per_minute, chan);
-      if (cp->show_axes != DEFAULT_SHOW_AXES) pcp_sd(fd, S_show_axes, cp->show_axes, chan);
+      if (cp->show_axes != DEFAULT_SHOW_AXES) pcp_ss(fd, S_show_axes, show_axes2string(cp->show_axes), chan);
       if (cp->graphs_horizontal != DEFAULT_GRAPHS_HORIZONTAL) pcp_ss(fd, S_graphs_horizontal, b2s(cp->graphs_horizontal), chan);
       edit_history_to_file(fd, cp);
     }
@@ -542,11 +543,12 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
       locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
       save_prevlist(save_fd);                                 /* list of previous files (View: Files option) */
+      save_snd_state_options(ss, save_fd);                    /* options = user-settable global state variables */
+      /* the global settings need to precede possible local settings */
       for_each_sound(ss, save_sound_state, (void *)save_fd);  /* current sound state -- will traverse chans */
       save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
       save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
       save_regions(ss, save_fd);                              /* regions */
-      save_snd_state_options(ss, save_fd);                    /* options = user-settable global state variables */
       if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_transform_dialog);
       if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_enved_dialog);
       if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_color_dialog);

@@ -679,7 +679,7 @@ static int snd_revscl_changed(snd_info *sp, int val)
   sp->reverb_control_scale = cube((Float)val / REVSCL_SCROLLBAR_MULT);
   sfs = prettyf(sp->reverb_control_scale, 3);
   fs = sfs;
-  ps=(char *)(revscl_number_buffer);
+  ps = (char *)(revscl_number_buffer);
   j = strlen(fs);
   if (j > 6) j = 6;
   if (j < 6) 

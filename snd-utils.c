@@ -121,7 +121,7 @@ char *prettyf(Float num, int tens)
   if (fullf == 0) 
     {
       /* will be freed later, so can't return a constant */
-      newval=(char *)MALLOC(2 * sizeof(char));
+      newval = (char *)MALLOC(2 * sizeof(char));
       newval[0] = '0';
       newval[1] = '\0';
       return(newval);
@@ -142,7 +142,7 @@ char *prettyf(Float num, int tens)
     {
       for (i = 0; i < len - tens - 1; i++) 
 	{
-	  (*sn) =(*sp); 
+	  (*sn) = (*sp); 
 	  sn++; 
 	  sp++;
 	}
@@ -484,7 +484,7 @@ static char *mem_stats(snd_state *ss, int ub)
       }
   result = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   for (i = 0; i < ss->max_sounds; i++)
-    if ((sp=((snd_info *)(ss->sounds[i]))))
+    if ((sp = ((snd_info *)(ss->sounds[i]))))
       {
 	snds++;
 	chns += sp->allocated_chans;

@@ -1161,11 +1161,11 @@ static int snd_access(char *dir, char *caller)
 static XEN g_temp_dir(void) {return(C_TO_XEN_STRING(temp_dir(get_global_state())));}
 static XEN g_set_temp_dir(XEN val) 
 {
-  #define H_temp_dir "(" S_temp_dir ") -> name of directory for temp files"
+  #define H_temp_dir "(" S_temp_dir ") -> name of directory for temp files (or #f=null)"
   char *dir = DEFAULT_TEMP_DIR;
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set! " S_temp_dir, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set! " S_temp_dir, "a string or #f=default (null)"); 
   if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
   if (snd_access(dir, S_temp_dir))
     {
@@ -1189,11 +1189,11 @@ static XEN g_snd_tempnam(void)
 static XEN g_save_dir(void) {return(C_TO_XEN_STRING(save_dir(get_global_state())));}
 static XEN g_set_save_dir(XEN val) 
 {
-  #define H_save_dir "(" S_save_dir ") -> name of directory for saved state data"
+  #define H_save_dir "(" S_save_dir ") -> name of directory for saved state data (or #f=null)"
   char *dir = DEFAULT_SAVE_DIR;
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set! " S_save_dir, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set! " S_save_dir, "a string or #f=default (null)"); 
   if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
   if (snd_access(dir, S_save_dir))
     {
@@ -1209,7 +1209,7 @@ static XEN g_set_ladspa_dir(XEN val)
   #define H_ladspa_dir "(" S_ladspa_dir ") -> name of directory for ladspa plugin libraries"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set! " S_ladspa_dir, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set! " S_ladspa_dir, "a string or #f=default (null)"); 
   if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
   if (XEN_FALSE_P(val))
     set_ladspa_dir(ss, (DEFAULT_LADSPA_DIR) ? copy_string(DEFAULT_LADSPA_DIR) : NULL);

@@ -1223,7 +1223,7 @@ env *string2env(char *str)
       while (tok)
 	{
 	  sscanf(tok, "%f", &f);
-	  env_buffer[i] =(Float)f;
+	  env_buffer[i] = (Float)f;
 	  i++;
 	  if (i == env_buffer_size)
 	    {

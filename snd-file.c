@@ -786,13 +786,11 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   /* we've already checked that filename exists */
   hdr = make_file_info_1(filename);
   chans = mus_sound_chans(filename);
-  if (chans == 0)
-    {
-      XEN_ERROR(XEN_ERROR_TYPE("no-channels"),
-		XEN_LIST_2(C_TO_XEN_STRING(filename),
-			   C_TO_XEN_STRING("sound has no channels?")));
-      return(NULL);
-    }
+#if DEBUGGING
+  if (chans <= 0) {fprintf(stderr,"no chans %s\n", filename); abort();} /* can't happen? */
+#else
+  if (chans <= 0) chans = 1;
+#endif
   sp = make_basic_snd_info(chans);
   sp->nchans = chans;
   sp->hdr = hdr;

@@ -1651,10 +1651,10 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
       if (cp->transform_type == FOURIER)
 	display_peaks(cp, fap, data, 
 		      (int)(SND_SRATE(sp) * cp->spectro_cutoff / 2), 
-		      hisamp, samples_per_pixel, 1, scale);
+		      hisamp, samples_per_pixel, TRUE, scale);
       else display_peaks(cp, fap, data, 
 			 (int)(fp->current_size * cp->spectro_cutoff), 
-			 hisamp, samples_per_pixel, 1, 0.0);
+			 hisamp, samples_per_pixel, TRUE, 0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_transform_size(cp, fap);
   if (with_hooks) after_fft(cp, scale);
@@ -2700,7 +2700,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixe
 	  if (cp->printing) ps_reset_color();
 	}
       if (cp->show_transform_peaks) 
-	display_peaks(cp, uap, up->data[0], 1, up->len[0] - 1, samples_per_pixel, 0, 0.0);
+	display_peaks(cp, uap, up->data[0], 1, up->len[0] - 1, samples_per_pixel, FALSE, 0.0);
     }
 }
 
@@ -2819,7 +2819,6 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       clear_window(ap->ax);
       return;
     }
-
   if (cp->graphs_horizontal)
     {
       if (with_time) ap->width = width / displays;
@@ -5887,8 +5886,11 @@ static XEN g_x_bounds(XEN snd_n, XEN chn_n)
   ASSERT_CHANNEL(S_x_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_x_bounds);
   ap = cp->axis;
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->x0),
-		    C_TO_XEN_DOUBLE(ap->x1)));
+  if (cp->time_graph_type == GRAPH_ONCE) 
+    return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->x0),
+		      C_TO_XEN_DOUBLE(ap->x1)));
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE((double)(ap->losamp) / (double)SND_SRATE(cp->sound)),
+		    C_TO_XEN_DOUBLE((double)(ap->hisamp) / (double)SND_SRATE(cp->sound))));
 }
 
 static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
@@ -5983,8 +5985,11 @@ static XEN g_y_bounds(XEN snd_n, XEN chn_n)
   ASSERT_CHANNEL(S_y_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_y_bounds);
   ap = cp->axis;
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->y0),
-		    C_TO_XEN_DOUBLE(ap->y1)));
+  if (cp->time_graph_type == GRAPH_ONCE) 
+    return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->y0),
+		      C_TO_XEN_DOUBLE(ap->y1)));
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->ymin),
+		    C_TO_XEN_DOUBLE(ap->ymax)));
 }
 
 static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display)

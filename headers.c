@@ -2574,7 +2574,7 @@ static int read_voc_header(int chan)
   lseek(chan, curbase, SEEK_SET);
   read(chan, hdrbuf, HDRBUFSIZ);
   type = (int)(hdrbuf[0]);
-  len=(((int)hdrbuf[3]) << 16) + (((int)hdrbuf[2]) << 8) + (((int)hdrbuf[1]));
+  len = (((int)hdrbuf[3]) << 16) + (((int)hdrbuf[2]) << 8) + (((int)hdrbuf[1]));
   while (happy)
     {
       if (type == 1) /* voc_data */
@@ -5559,7 +5559,7 @@ from_base64(char* cs, int *buf)
   /* assume we grab 4 chars and set 3 ints on each call */
   int dc1, dc2, dc3, dc4;
   dc1 = decode_char(cs[0]);  dc2 = decode_char(cs[1]);  dc3 = decode_char(cs[2]);  dc4 = decode_char(cs[3]);
-  buf[0] =((dc1<<2) | (dc2>>4));  buf[1] =(((dc2&0xf)<<4) | (dc3>>2));  buf[2] =(((dc3&0x3)<<6) | dc4);
+  buf[0] = ((dc1<<2) | (dc2>>4));  buf[1] = (((dc2&0xf)<<4) | (dc3>>2));  buf[2] = (((dc3&0x3)<<6) | dc4);
 }
 #endif
 

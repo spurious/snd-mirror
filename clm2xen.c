@@ -1012,7 +1012,7 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN g_oscil(XEN os, XEN fm, XEN pm)
 {
-  #define H_oscil "(" S_oscil " gen &optional fm pm) -> next sample from " S_oscil " gen: rtn = sin(phase+pm) phase+=(freq+fm)"
+  #define H_oscil "(" S_oscil " gen &optional fm pm) -> next sample from " S_oscil " gen: rtn = sin(phase + pm) phase += (freq + fm)"
   Float fm1 = 0.0, pm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(os)) && (mus_oscil_p(MUS_XEN_TO_CLM(os))), os, XEN_ARG_1, S_oscil, "an oscil");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_oscil, "a number");
