@@ -15152,6 +15152,22 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (itst '(let ((a 0)) (do ((i 0 (1+ i)) (j 1 (* j 2))) ((= i 3) (+ a 1)))) 1)
       (itst '(let ((a 0)) (do ((i 0 (1+ i)) (j 1 (* j 2))) ((= i 3) (+ j 1)))) 9)
       (itst '(let ((a 0)) (do () ((= a 3) a) (set! a (1+ a)))) 3)
+      (itst '(let ((a 0)) (do () ((= a 3) a) (set! a (1+ a))) (set! a -1) a) -1)
+      (itst '(let ((a 0) (b 3)) (do ((i 0 (1+ i))) ((= i (1- b))) (set! a (1+ a))) (set! a -1) a) -1)
+      (itst '(let ((a 0) (b 3)) (if (> b 2) (set! a 2) (set! b 2)) (set! a -1) a) -1)
+      (itst '(let ((a 0) (b 3)) (if (< b 2) (set! a 2) (set! b 2)) (set! a -1) a) -1)
+      (itst '(let ((a 0) (b 3)) (cond ((> b 2) (set! a 2)) (else (set! b 2))) (set! a -1) a) -1)
+      (itst '(let ((a 0) (b 3))
+	       (call-with-current-continuation
+		(lambda (break)
+		  (set! b 3)))
+	       (set! a -1) a) -1)
+      (itst '(let ((a 0) (b 3))
+	       (call-with-current-continuation
+		(lambda (break)
+		  (if (> b 2) (break))
+		  (set! b 3)))
+	       (set! a -1) a) -1)
       (itst '(let ((a 0)) a) 0)
       (btst '(do ((i 0 (1+ i))) ((= i 3))) #f)
       (btst '(let ((a 0)) (do ((i 0 (1+ i)) (j 3)) ((= i 3)) (set! a (1+ a)))) #f)
@@ -15799,6 +15815,75 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	(vct-map! v (lambda () (do ((i 0 (1+ i))) ((= i 3) 0.0) (set! a "ho"))))
 	(if (not (string=? a "ho")) (snd-display ";s a: ~A" a)))
       (itst '(do ((i 0 (1+ i))) ((= i 3) 0) (vct-scale! (make-vct 3) 1.0)) 0)
+
+      (let ((vect (make-vector 2 1.5))
+	    (v (make-vct 2)))
+	(vct-map! v (lambda () (vector-ref vect 0)))
+	(if (fneq (vct-ref v 0) 1.5) (snd-display ";f1.5 vector-ref: ~A" v)))
+
+      (let ((vect (make-vector 2 1))
+	    (v (make-vct 2))
+	    (i 0))
+	(vct-map! v (lambda () (set! i (vector-ref vect 0)) 0.0))
+	(if (not (= i 1)) (snd-display ";i1 vector-ref: ~A" i)))
+
+      (let ((vect (make-vector 2))
+	    (v (make-vct 2))
+	    (i 0))
+	(vector-set! vect 0 (make-vct 2 3.0))
+	(vector-set! vect 1 (make-vct 2 4.0))
+	(vct-map! v (lambda () (vct-ref (vector-ref vect 0) 0)))
+	(if (fneq (vct-ref v 0) 3.0) (snd-display ";v3.0 vector-ref: ~A" v)))
+
+      (let ((vect (make-vector 2 1.5))
+	    (v (make-vct 2)))
+	(vct-map! v (lambda () (vector-fill! vect 2.0) (vector-ref vect 0)))
+	(if (fneq (vct-ref v 0) 2.0) (snd-display ";f2.0 vector-fill: ~A" v)))
+      
+      (let ((vect (make-vector 2 1))
+	    (v (make-vct 2))
+	    (i 0))
+	(vct-map! v (lambda () (vector-fill! vect 32) (set! i (vector-ref vect 0)) 0.0))
+	(if (not (= i 32)) (snd-display ";i32 vector-fill: ~A" i)))
+      
+      (let ((vect (make-vector 2 1.5))
+	    (v (make-vct 2)))
+	(vct-map! v (lambda () (exact->inexact (vector-length vect))))
+	(if (fneq (vct-ref v 0) 2.0) (snd-display ";f2.0 vector-length: ~A" v)))
+      
+      (let ((vect (make-vector 2 1))
+	    (v (make-vct 2))
+	    (i 0))
+	(vct-map! v (lambda () (set! i (vector-length vect)) 0.0))
+	(if (not (= i 2)) (snd-display ";i2 vector-length: ~A" i)))
+      
+      (let ((vect (make-vector 2))
+	    (v (make-vct 2))
+	    (i 0))
+	(vector-set! vect 0 (make-vct 2 3.0))
+	(vector-set! vect 1 (make-vct 2 4.0))
+	(vct-map! v (lambda () (inexact->exact (vector-length vect))))
+	(if (fneq (vct-ref v 0) 2.0) (snd-display ";v2.0 vector-length: ~A" v)))
+      
+      (let ((vect (make-vector 2 1.5))
+	    (v (make-vct 2)))
+	(vct-map! v (lambda () (vector-set! vect 0 32.0) (vector-ref vect 0)))
+	(if (fneq (vct-ref v 0) 32.0) (snd-display ";f32.0 vector-set: ~A" v)))
+      
+      (let ((vect (make-vector 2 1))
+	    (v (make-vct 2))
+	    (i 0))
+	(vct-map! v (lambda () (vector-set! vect 0 123) (set! i (vector-ref vect 0)) 0.0))
+	(if (not (= i 123)) (snd-display ";i123 vector-set: ~A" i)))
+
+      (let ((vect (make-vector 3 32))
+	    (v (make-vct 3)))
+	(vct-map! v (lambda () (vector-set! vect 0 123) 0.0))
+	(if (not (= (vector-ref vect 0) 123)) (snd-display ";i vect set: ~A" vect)))
+      (let ((vect (make-vector 3 32.0))
+	    (v (make-vct 3)))
+	(vct-map! v (lambda () (vector-set! vect 0 123.0) 0.0))
+	(if (fneq (vector-ref vect 0) 123.0) (snd-display ";f vect set: ~A" vect)))
 
       (let ((ind (open-sound "oboe.snd")))
 	(let ((r (make-sample-reader 2000))
@@ -18385,6 +18470,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 		))))))
     
 
+(set! (optimization) 0)
 
 ;;; -------------------- test 24: X/Xt/Xm --------------------
 (if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))

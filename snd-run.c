@@ -67,16 +67,14 @@
  * TODO: rest of snd-test 22, and overall test
  * TODO: ptree as fragment edit op
  * TODO: general evaluate_ptree accessor
- * TODO: timing tests: fade piano pqwvox
- * TODO: vectors of generators (fade.scm needs this), vcts (pqwvox)
  * TODO: procedure property 'ptree -> saved ptree
  *
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
- *      variables can have only one type, the type has to be ascertainable somehow, 
+ *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
  *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found
  *      no recursion (could be added with some pain)
- *      no lists or pairs (these could be added, perhaps), vectors only of floats (could also be generalized)
+ *      no lists or pairs (these could be added, perhaps)
  *      no macro expansion (not sure how to handle this in Guile)
  *      no complex, ratio, bignum
  *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
@@ -257,20 +255,15 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 }
 
 
-enum {R_INT, R_FLOAT, R_BOOL, R_VCT, R_READER, R_CLM, R_CHAR, R_STRING, R_PENDING, R_GOTO, R_FUNCTION};
-static char *type_names[11] = {"int", "float", "bool", "vct", "reader", "clm", "char", "string", "pending", "continuation", "function"};
-static char* type_name(int id) {if ((id >= R_INT) && (id <= R_FUNCTION)) return(type_names[id]); return("unknown");}
+enum {R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_PENDING, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, 
+      R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR};
+static char *type_names[15] = {"int", "float", "bool", "char", "string", "pending", "function", "continuation", "vct", "reader", "clm", 
+			       "float-vector", "int-vector", "vct-vector", "clm-vector"};
+static char* type_name(int id) {if ((id >= R_INT) && (id <= R_CLM_VECTOR)) return(type_names[id]); return("unknown");}
 
-static int pointer_p(int type)
-{
-  return((type == R_VCT) || (type == R_CLM) || (type == R_READER));
-}
-
-static int pointer_or_goto_p(int type)
-{
-  return((type == R_VCT) || (type == R_CLM) || (type == R_READER) || (type == R_GOTO));
-}
-
+#define POINTER_P(Type) ((Type) > R_GOTO)
+#define POINTER_OR_GOTO_P(Type) ((Type) > R_FUNCTION)
+#define VECTOR_P(Type) ((Type) > R_CLM)
 
 enum {R_VARIABLE, R_CONSTANT};
 
@@ -630,6 +623,21 @@ static char *describe_ptree(ptree *p)
   return(buf);
 }
 
+typedef struct {
+  int length;
+  int *data;
+} int_vct;
+
+typedef struct {
+  int length;
+  mus_any **data;
+} clm_vct;
+
+typedef struct {
+  int length;
+  vct **data;
+} vct_vct;
+
 static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
 {
   char *buf = NULL;
@@ -641,12 +649,16 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
     case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "i%d(#\\%c)", v->addr, (char)(ints[v->addr]));           break;
     case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); snprintf(buf, 256, "i%d(\"%s\")", v->addr, (char *)(ints[v->addr]));      break;
     case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "d%d(%.4f)", v->addr, dbls[v->addr]);                    break;
+    case R_FLOAT_VECTOR:
     case R_VCT:     buf = vct_to_string((vct *)(ints[v->addr]));                                                                       break;
     case R_READER:  if (ints[v->addr]) buf = sf_to_string((snd_fd *)(ints[v->addr])); else buf = copy_string("null");                  break;
     case R_CLM:     if (ints[v->addr]) buf = copy_string(mus_describe((mus_any *)(ints[v->addr])));  else buf = copy_string("null");   break;
     case R_PENDING: return(copy_string("[value pending]"));                                                                            break;
     case R_GOTO:    return(mus_format("continuation: i%d(%d)", v->addr, ints[v->addr]));                                               break;
     case R_FUNCTION: return(describe_ptree((ptree *)(ints[v->addr])));                                                                 break;
+    case R_INT_VECTOR: return(mus_format("int vector i%d(%p)", v->addr, (int_vct *)(ints[v->addr])));                                  break;
+    case R_VCT_VECTOR: return(mus_format("vct vector i%d(%p)", v->addr, (vct_vct *)(ints[v->addr])));                                  break;
+    case R_CLM_VECTOR: return(mus_format("clm vector i%d(%p)", v->addr, (clm_vct *)(ints[v->addr])));                                  break;
     default:        buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "unknown type: %d", v->type);                            break;
     }
   return(buf);
@@ -782,6 +794,44 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->need_init = 0;
 }
 
+
+static void int_vct_to_vector(int_vct *v, XEN vect)
+{
+  int len, i;
+  XEN *vdata;
+  len = XEN_VECTOR_LENGTH(vect);
+  vdata = XEN_VECTOR_ELEMENTS(vect);
+  for (i = 0; i < len; i++) 
+    vdata[i] = C_TO_XEN_INT(v->data[i]);
+}
+
+static void free_int_vct(int_vct *v)
+{
+  if (v)
+    {
+      if (v->data) FREE(v->data);
+      FREE(v);
+    }
+}
+
+static void free_clm_vct(clm_vct *v)
+{
+  if (v)
+    {
+      if (v->data) FREE(v->data);
+      FREE(v);
+    }
+}
+
+static void free_vct_vct(vct_vct *v)
+{
+  if (v)
+    {
+      if (v->data) FREE(v->data);
+      FREE(v);
+    }
+}
+
 static xen_var *free_xen_var(ptree *prog, xen_var *var)
 {
   XEN val;
@@ -801,10 +851,15 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 	      case R_BOOL:   XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));          break;
 	      case R_STRING: XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_STRING((char *)(prog->ints[var->v->addr]))); break;
 	      case R_CHAR:   XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_CHAR((char)(prog->ints[var->v->addr])));     break;
-	      case R_VCT:    
+	      case R_FLOAT_VECTOR:
 		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		if (XEN_VECTOR_P(val))
 		  vct_to_vector((vct *)(prog->ints[var->v->addr]), val);
+		break;
+	      case R_INT_VECTOR:
+		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
+		if (XEN_VECTOR_P(val))
+		  int_vct_to_vector((int_vct *)(prog->ints[var->v->addr]), val);
 		break;
 	      }
 	  else
@@ -815,10 +870,15 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 	      case R_BOOL:   symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_BOOLEAN(prog->ints[var->v->addr]));          break;
 	      case R_STRING: symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_STRING((char *)(prog->ints[var->v->addr]))); break;
 	      case R_CHAR:   symbol_set_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), C_TO_XEN_CHAR((char)(prog->ints[var->v->addr])));     break;
-	      case R_VCT:    
+	      case R_FLOAT_VECTOR:
 		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		if (XEN_VECTOR_P(val))
 		  vct_to_vector((vct *)(prog->ints[var->v->addr]), val);
+		break;
+	      case R_INT_VECTOR:
+		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
+		if (XEN_VECTOR_P(val))
+		  int_vct_to_vector((int_vct *)(prog->ints[var->v->addr]), val);
 		break;
 	      }
 	}
@@ -880,11 +940,15 @@ void *free_ptree(void *upt)
 		{
 		  switch (v->type)
 		    {
-		    case R_VCT:      c_free_vct((vct *)(pt->ints[v->addr]));            break;
-		    case R_READER:   free_snd_fd((snd_fd *)(pt->ints[v->addr]));        break;
-		    case R_FUNCTION: free_embedded_ptree((ptree *)(pt->ints[v->addr])); break;
-		    case R_CLM:      mus_free((mus_any *)(pt->ints[v->addr]));          break;
-		    default:         FREE((void *)(pt->ints[v->addr]));                 break;
+		    case R_VCT:          c_free_vct((vct *)(pt->ints[v->addr]));            break;
+		    case R_READER:       free_snd_fd((snd_fd *)(pt->ints[v->addr]));        break;
+		    case R_FUNCTION:     free_embedded_ptree((ptree *)(pt->ints[v->addr])); break;
+		    case R_CLM:          mus_free((mus_any *)(pt->ints[v->addr]));          break;
+		    case R_FLOAT_VECTOR: c_free_vct((vct *)(pt->ints[v->addr]));            break;
+		    case R_INT_VECTOR:   free_int_vct((int_vct *)(pt->ints[v->addr]));      break;
+		    case R_CLM_VECTOR:   free_clm_vct((clm_vct *)(pt->ints[v->addr]));      break;
+		    case R_VCT_VECTOR:   free_vct_vct((vct_vct *)(pt->ints[v->addr]));      break;
+		    default:             FREE((void *)(pt->ints[v->addr]));                 break;
 		    }
 		  pt->ints[v->addr] = 0;
 		  v->gc = 0;
@@ -1105,6 +1169,76 @@ static void add_obj_to_gcs(ptree *pt, int type, int addr)
   pt->gcs[pt->gc_ctr++] = v;
 }
 
+static int_vct *read_int_vector(XEN vect)
+{
+  int len, i;
+  int_vct *v;
+  XEN *vdata;
+  len = XEN_VECTOR_LENGTH(vect);
+  if (len == 0) return(NULL);
+  v = (int_vct *)CALLOC(1, sizeof(int_vct));
+  v->length = len;
+  v->data = (int *)CALLOC(len, sizeof(int));
+  vdata = XEN_VECTOR_ELEMENTS(vect);
+  for (i = 0; i < len; i++) 
+    if (XEN_INTEGER_P(vdata[i]))
+      v->data[i] = XEN_TO_C_INT(vdata[i]);
+    else
+      {
+	FREE(v->data);
+	FREE(v);
+	return(NULL);
+      }
+  return(v);
+}
+
+static vct_vct *read_vct_vector(XEN vect)
+{
+  int len, i;
+  vct_vct *v;
+  XEN *vdata;
+  len = XEN_VECTOR_LENGTH(vect);
+  if (len == 0) return(NULL);
+  v = (vct_vct *)CALLOC(1, sizeof(vct_vct));
+  v->length = len;
+  v->data = (vct **)CALLOC(len, sizeof(vct *));
+  vdata = XEN_VECTOR_ELEMENTS(vect);
+  for (i = 0; i < len; i++) 
+    if (VCT_P(vdata[i]))
+      v->data[i] = get_vct(vdata[i]);
+    else
+      {
+	FREE(v->data);
+	FREE(v);
+	return(NULL);
+      }
+  return(v);
+}
+
+static clm_vct *read_clm_vector(XEN vect)
+{
+  int len, i;
+  clm_vct *v;
+  XEN *vdata;
+  len = XEN_VECTOR_LENGTH(vect);
+  if (len == 0) return(NULL);
+  v = (clm_vct *)CALLOC(1, sizeof(clm_vct));
+  v->length = len;
+  v->data = (mus_any **)CALLOC(len, sizeof(mus_any *));
+  vdata = XEN_VECTOR_ELEMENTS(vect);
+  for (i = 0; i < len; i++) 
+    if (mus_xen_p(vdata[i]))
+      v->data[i] = MUS_XEN_TO_CLM(vdata[i]);
+    else
+      {
+	FREE(v->data);
+	FREE(v);
+	return(NULL);
+      }
+  return(v);
+}
+
+
 static int pending_tag = -1;
 
 static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
@@ -1156,12 +1290,36 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
 			    {
 			      if (XEN_VECTOR_P(val))
 				{
-				  vct *v0;
-				  v0 = vector_to_vct(val);
-				  if (v0)
+				  XEN val0;
+				  val0 = XEN_VECTOR_REF(val, 0);
+				  if (XEN_NUMBER_P(val0))
 				    {
-				      v = make_xen_value(R_VCT, add_int_to_ptree(prog, (int)v0), R_VARIABLE);
-				      add_obj_to_gcs(prog, R_VCT, v->addr); /* this makes its own xen_value with TRUE gc field */
+				      if (XEN_EXACT_P(val0))
+					{
+					  v = make_xen_value(R_INT_VECTOR, add_int_to_ptree(prog, (int)read_int_vector(val)), R_VARIABLE);
+					  if (v) add_obj_to_gcs(prog, R_INT_VECTOR, v->addr); /* this makes its own xen_value with TRUE gc field */
+					}
+				      else 
+					{
+					  v = make_xen_value(R_FLOAT_VECTOR, add_int_to_ptree(prog, (int)vector_to_vct(val)), R_VARIABLE);
+					  if (v) add_obj_to_gcs(prog, R_FLOAT_VECTOR, v->addr);
+					}
+				    }
+				  else
+				    {
+				      if (VCT_P(val0))
+					{
+					  v = make_xen_value(R_VCT_VECTOR, add_int_to_ptree(prog, (int)read_vct_vector(val)), R_VARIABLE);
+					  if (v) add_obj_to_gcs(prog, R_VCT_VECTOR, v->addr);
+					}
+				      else
+					{
+					  if ((mus_xen_p(val0)) || (XEN_BOOLEAN_P(val0)))
+					    {
+					      v = make_xen_value(R_CLM_VECTOR, add_int_to_ptree(prog, (int)read_clm_vector(val)), R_VARIABLE);
+					      if (v) add_obj_to_gcs(prog, R_CLM_VECTOR, v->addr);
+					    }
+					}
 				    }
 				}
 			    }
@@ -1263,6 +1421,7 @@ static xen_var *initialize_globals(ptree *pt)
 	      if (!(XEN_BOOLEAN_P(val))) return(var);
 	      pt->ints[v->addr] = XEN_TO_C_BOOLEAN(val); 
 	      break;
+	    case R_FLOAT_VECTOR:
 	    case R_VCT:    
 	      if (!(VCT_P(val))) return(var);
 	      pt->ints[v->addr] = (int)get_vct(val);     
@@ -1289,6 +1448,7 @@ static xen_var *initialize_globals(ptree *pt)
 	      if (pt->ints[v->addr]) FREE((char *)(pt->ints[v->addr]));
 	      pt->ints[v->addr] = (int)(copy_string(XEN_TO_C_STRING(val)));     
 	      break;
+	      /* TODO: vector vals initialization? */
 	    }
 	}
     }
@@ -2147,7 +2307,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
   xen_value *result = NULL, *test, *expr, *jump_to_result, *jump_to_test;
   XEN var, vars, done, body, results, test_form;
   xen_var *vr;
-  int i, locals_loc, test_loc, varlen;
+  int i, locals_loc, test_loc, varlen, jump_loc;
   char *trouble;
   vars = XEN_CADR(form);
   done = XEN_CADDR(form);
@@ -2177,6 +2337,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
       return(run_warn("do test must be boolean: %s", XEN_AS_STRING(test_form)));
     }
   /* if test true, jump to result section */
+  jump_loc = prog->triple_ctr;
   jump_to_result = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump_if, descr_jump_if, 2, jump_to_result, test));
   FREE(test);
@@ -2218,7 +2379,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
   prog->ints[jump_to_test->addr] = test_loc;
   FREE(jump_to_test);
   /* fixup jump from true test above */
-  prog->ints[jump_to_result->addr] = prog->triple_ctr - test_loc - 2;
+  prog->ints[jump_to_result->addr] = prog->triple_ctr - jump_loc - 1;
   FREE(jump_to_result);
   /* now the result block */
   if (XEN_NOT_NULL_P(results))
@@ -2282,7 +2443,7 @@ static xen_value *or_form(ptree *prog, XEN form)
   for (i = 0; i < body_forms; i++, body = XEN_CDR(body))
     {
       v = walk(prog, XEN_CAR(body), TRUE);
-      if ((v == NULL) || ((v->type != R_BOOL) && (!(pointer_or_goto_p(v->type)))))
+      if ((v == NULL) || ((v->type != R_BOOL) && (!(POINTER_OR_GOTO_P(v->type)))))
 	{
 	  int was_null;
 	  was_null = (v == NULL);
@@ -2331,7 +2492,7 @@ static xen_value *and_form(ptree *prog, XEN form)
   for (i = 0; i < body_forms; i++, body = XEN_CDR(body))
     {
       v = walk(prog, XEN_CAR(body), TRUE);
-      if ((v == NULL) || ((v->type != R_BOOL) && (!(pointer_or_goto_p(v->type)))))
+      if ((v == NULL) || ((v->type != R_BOOL) && (!(POINTER_OR_GOTO_P(v->type)))))
 	{
 	  int was_null;
 	  was_null = (v == NULL);
@@ -2425,7 +2586,7 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
       val_type = v->type;
       var_type = var->v->type;
       /* two problematic cases: types differ and aren't compatible, or pointer aliasing */
-      if (pointer_p(val_type))
+      if (POINTER_P(val_type))
 	{
 	  FREE(v);
 	  return(run_warn("can't set pointer var (%s) to alias other such var", varname));
@@ -2441,7 +2602,7 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 	      return(v);
 	    }
 	  if ((val_type == R_BOOL) &&
-	      (pointer_p(var_type)))
+	      (POINTER_P(var_type)))
 	    {
  	      add_triple_to_ptree(prog, va_make_triple(store_i, descr_store_i, 2, var->v, v));
 	      var->unclean = TRUE;
@@ -4178,25 +4339,25 @@ static xen_value *string_ref_1(ptree *pt, xen_value **args)
 }
 
 
-static void display_str(int *args, int *ints, Float *dbls) {fprintf(stdout, "\"%s\"", STRING_ARG_1);}
+static void display_str(int *args, int *ints, Float *dbls) {fprintf(stderr, "\"%s\"", STRING_ARG_1);}
 static char *descr_display_str(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(\"%s\"))", args[1], STRING_ARG_1));}
-static void display_int(int *args, int *ints, Float *dbls) {fprintf(stdout, "%d", INT_ARG_1);}
+static void display_int(int *args, int *ints, Float *dbls) {fprintf(stderr, "%d", INT_ARG_1);}
 static char *descr_display_int(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%d))", args[1], INT_ARG_1));}
-static void display_flt(int *args, int *ints, Float *dbls) {fprintf(stdout, "%.6f", FLOAT_ARG_1);}
-static char *descr_display_flt(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%.4f))", args[1], FLOAT_ARG_1));}
-static void display_clm(int *args, int *ints, Float *dbls) {fprintf(stdout, "%s", mus_describe((mus_any *)(INT_ARG_1)));}
+static void display_flt(int *args, int *ints, Float *dbls) {fprintf(stderr, "%.6f", FLOAT_ARG_1);}
+static char *descr_display_flt(int *args, int *ints, Float *dbls) {return(mus_format("display(d%d(%.4f))", args[1], FLOAT_ARG_1));}
+static void display_clm(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", mus_describe((mus_any *)(INT_ARG_1)));}
 static char *descr_display_clm(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%p))", args[1], ((mus_any *)(INT_ARG_1))));}
-static void display_vct(int *args, int *ints, Float *dbls) {fprintf(stdout, "%s", vct_to_string((vct *)(INT_ARG_1)));}
+static void display_vct(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", vct_to_string((vct *)(INT_ARG_1)));}
 static char *descr_display_vct(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%p))", args[1], ((vct *)(INT_ARG_1))));}
-static void display_rd(int *args, int *ints, Float *dbls) {fprintf(stdout, "%s", sf_to_string((snd_fd *)(INT_ARG_1)));}
+static void display_rd(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", sf_to_string((snd_fd *)(INT_ARG_1)));}
 static char *descr_display_rd(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%p))", args[1], ((snd_fd *)(INT_ARG_1))));}
-static void display_chr(int *args, int *ints, Float *dbls) {fprintf(stdout, "#\\%c", (char)(INT_ARG_1));}
+static void display_chr(int *args, int *ints, Float *dbls) {fprintf(stderr, "#\\%c", (char)(INT_ARG_1));}
 static char *descr_display_chr(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(#\\%c))", args[1], (char)(INT_ARG_1)));}
-static void display_bool(int *args, int *ints, Float *dbls) {fprintf(stdout, "%s", (INT_ARG_1) ? "#t" : "#f");}
+static void display_bool(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", (INT_ARG_1) ? "#t" : "#f");}
 static char *descr_display_bool(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%s))", args[1], (INT_ARG_1) ? "#t" : "#f"));}
-static void display_con(int *args, int *ints, Float *dbls) {fprintf(stdout, "continuation");}
+static void display_con(int *args, int *ints, Float *dbls) {fprintf(stderr, "continuation");}
 static char *descr_display_con(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(continuation))", args[1]));}
-static void display_func(int *args, int *ints, Float *dbls) {fprintf(stdout, "%s", describe_ptree((ptree *)(INT_ARG_1)));}
+static void display_func(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", describe_ptree((ptree *)(INT_ARG_1)));}
 static char *descr_display_func(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%p))", args[1], (ptree *)(INT_ARG_1)));}
 static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
 {
@@ -4212,6 +4373,7 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_CHAR: return(package(pt, R_BOOL, display_chr, descr_display_chr, args, 1)); break;
     case R_GOTO: return(package(pt, R_BOOL, display_con, descr_display_con, args, 1)); break;
     case R_FUNCTION: return(package(pt, R_BOOL, display_func, descr_display_func, args, 1)); break;
+      /* TODO: display vectors */
     }
   return(NULL);
 }
@@ -4328,7 +4490,8 @@ static char *string_append(ptree *pt, xen_value **args, int num_args)
     len += snd_strlen((char *)(pt->ints[args[i + 1]->addr]));
   str = (char *)CALLOC(len + 1, sizeof(char));
   for (i = 0; i < num_args; i++)
-    strcat(str, (char *)(pt->ints[args[i + 1]->addr]));
+    if (pt->ints[args[i + 1]->addr])
+      strcat(str, (char *)(pt->ints[args[i + 1]->addr]));
   return(str);
 }
 static void appendstr_n(int *args, int *ints, Float *dbls) 
@@ -4338,7 +4501,9 @@ static void appendstr_n(int *args, int *ints, Float *dbls)
   n = ints[args[1]];
   for (i = 1; i <= n; i++) len += snd_strlen((char *)(ints[args[i + 1]]));
   STRING_RESULT = (char *)CALLOC(len + 1, sizeof(char));
-  for (i = 1; i <= n; i++) strcat(STRING_RESULT, (char *)(ints[args[i + 1]]));
+  for (i = 1; i <= n; i++) 
+    if (ints[args[i + 1]])
+      strcat(STRING_RESULT, (char *)(ints[args[i + 1]]));
 }
 static char *descr_appendstr_n(int *args, int *ints, Float *dbls)  {return(descr_strn(args, ints, dbls, "string-append", FALSE));}
 static xen_value *string_append_1(ptree *pt, xen_value **args, int num_args, int constants)
@@ -4644,12 +4809,13 @@ static void make_sample_reader_r(int *args, int *ints, Float *dbls)
   if (INT_ARG_5 == -1)
     pos = cp->edit_ctr;
   else pos = INT_ARG_5;
+  if (INT_RESULT) free_snd_fd((snd_fd *)(INT_RESULT));
   INT_RESULT = (int)(init_sample_read_any(INT_ARG_1, cp, INT_ARG_4, pos));
-  add_obj_to_gcs(PTREE, R_READER, args[0]);
 }
 static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[6];
+  xen_value *rtn;
   if (num_args > 5) return(run_warn("too many args for make-sample-reader"));
   if (num_args < 5) 
     true_args[5] = make_xen_value(R_INT, add_int_to_ptree(pt, AT_CURRENT_EDIT_POSITION), R_CONSTANT);
@@ -4675,8 +4841,173 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
     true_args[1] = make_xen_value(R_INT, add_int_to_ptree(pt, 0), R_CONSTANT);
   else true_args[1] = args[1];
   true_args[0] = args[0];
-  return(package(pt, R_READER, make_sample_reader_r, descr_make_sample_reader_r, true_args, 5));
+  rtn = package(pt, R_READER, make_sample_reader_r, descr_make_sample_reader_r, true_args, 5);
+  add_obj_to_gcs(pt, R_READER, rtn->addr);
+  return(rtn);
 }
+
+/* ---------------- vector stuff ---------------- */
+
+/* float vectors are handled as vcts
+ */
+
+/* length */
+static void vector_length_i(int *args, int *ints, Float *dbls) {INT_RESULT = ((vct *)(INT_ARG_1))->length;}
+static char *descr_vector_length_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("d%d(%d) = vector_length(i%d(%p))", args[0], INT_RESULT, args[1], (vct *)(INT_ARG_1)));
+}
+static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args != 1) return(NULL);
+  return(package(prog, R_INT, vector_length_i, descr_vector_length_i, args, 1));
+}
+
+/* ref */
+static void vector_ref_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = ((vct *)(INT_ARG_1))->data[INT_ARG_2];}
+static void vector_ref_i(int *args, int *ints, Float *dbls) {INT_RESULT = ((int_vct *)(INT_ARG_1))->data[INT_ARG_2];}
+static void vector_ref_v(int *args, int *ints, Float *dbls) {INT_RESULT = (int)((vct_vct *)(INT_ARG_1))->data[INT_ARG_2];}
+static void vector_ref_c(int *args, int *ints, Float *dbls) {INT_RESULT = (int)((clm_vct *)(INT_ARG_1))->data[INT_ARG_2];}
+static char *descr_vector_ref_f(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("d%d(%.4f) = vector_ref(i%d(%p), i%d(%d))", args[0], FLOAT_RESULT, args[1], (vct *)(INT_ARG_1), args[2], INT_ARG_2));
+}
+static char *descr_vector_ref_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%d) = vector_ref(i%d(%p), i%d(%d))", args[0], INT_RESULT, args[1], (int_vct *)(INT_ARG_1), args[2], INT_ARG_2));
+}
+static char *descr_vector_ref_v(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%p) = vector_ref(i%d(%p), i%d(%d))", args[0], (vct *)(INT_RESULT), args[1], (vct_vct *)(INT_ARG_1), args[2], INT_ARG_2));
+}
+static char *descr_vector_ref_c(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%p) = vector_ref(i%d(%p), i%d(%d))", args[0], (mus_any *)(INT_RESULT), args[1], (clm_vct *)(INT_ARG_1), args[2], INT_ARG_2));
+}
+static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args != 2) return(NULL);
+  if (args[2]->type != R_INT) return(run_warn("vector-ref bad index type"));
+  switch (args[1]->type)
+    {
+    case R_FLOAT_VECTOR: return(package(prog, R_FLOAT, vector_ref_f, descr_vector_ref_f, args, 2)); break;
+    case R_INT_VECTOR: return(package(prog, R_INT, vector_ref_i, descr_vector_ref_i, args, 2)); break;
+    case R_VCT_VECTOR: return(package(prog, R_VCT, vector_ref_v, descr_vector_ref_v, args, 2)); break;
+    case R_CLM_VECTOR: return(package(prog, R_CLM, vector_ref_c, descr_vector_ref_c, args, 2)); break;
+    }
+  return(NULL);
+}
+
+
+/* set */
+static void vector_set_f(int *args, int *ints, Float *dbls) 
+{
+  FLOAT_RESULT = FLOAT_ARG_3; 
+  ((vct *)(INT_ARG_1))->data[INT_ARG_2] = FLOAT_ARG_3;
+}
+static void vector_set_i(int *args, int *ints, Float *dbls) 
+{
+  INT_RESULT = INT_ARG_3; 
+  ((int_vct *)(INT_ARG_1))->data[INT_ARG_2] = INT_ARG_3;
+}
+static void vector_set_v(int *args, int *ints, Float *dbls) 
+{
+  INT_RESULT = INT_ARG_3; 
+  (int)((vct_vct *)(INT_ARG_1))->data[INT_ARG_2] = (vct *)(INT_ARG_3);
+}
+static void vector_set_c(int *args, int *ints, Float *dbls)
+{
+  INT_RESULT = INT_ARG_3; 
+  ((clm_vct *)(INT_ARG_1))->data[INT_ARG_2] = (mus_any *)(INT_ARG_3);
+}
+static char *descr_vector_set_f(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("d%d(%.4f) = vector_set(i%d(%p), i%d(%d), d%d(%.4f))", 
+		    args[0], FLOAT_RESULT, args[1], (vct *)(INT_ARG_1), args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
+}
+static char *descr_vector_set_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%d) = vector_set(i%d(%p), i%d(%d), i%d(%d))", 
+		    args[0], INT_RESULT, args[1], (int_vct *)(INT_ARG_1), args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
+static char *descr_vector_set_v(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%p) = vector_set(i%d(%p), i%d(%d), i%d(%p))", 
+		    args[0], (vct *)(INT_RESULT), args[1], (vct_vct *)(INT_ARG_1), args[2], INT_ARG_2, args[3], (vct *)(INT_ARG_3)));
+}
+static char *descr_vector_set_c(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%p) = vector_set(i%d(%p), i%d(%d), i%d(%p))", 
+		    args[0], (mus_any *)(INT_RESULT), args[1], (clm_vct *)(INT_ARG_1), args[2], INT_ARG_2, args[3], (mus_any *)(INT_ARG_3)));
+}
+static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_var *var;
+  if (num_args != 3) return(NULL);
+  if ((args[1] = fixup_if_pending(prog, args[1], R_FLOAT_VECTOR)) == NULL) return(run_warn("vector-set bad arg"));
+  var = find_var_in_ptree_via_addr(prog, FALSE, args[1]->addr);
+  if (var) var->unclean = TRUE;
+  if (args[2]->type != R_INT) return(run_warn("vector-set bad index type"));
+  switch (args[1]->type)
+    {
+      /* TODO: check arg3 type */
+    case R_FLOAT_VECTOR: return(package(prog, R_FLOAT, vector_set_f, descr_vector_set_f, args, 3)); break;
+    case R_INT_VECTOR: return(package(prog, R_INT, vector_set_i, descr_vector_set_i, args, 3)); break;
+    case R_VCT_VECTOR: return(package(prog, R_VCT, vector_set_v, descr_vector_set_v, args, 3)); break;
+    case R_CLM_VECTOR: return(package(prog, R_CLM, vector_set_c, descr_vector_set_c, args, 3)); break;
+    }
+  return(NULL);
+}
+
+
+/* fill */
+static void vector_fill_f(int *args, int *ints, Float *dbls) 
+{
+  int i; for (i = 0; i < ((vct *)(INT_ARG_1))->length; i++) ((vct *)(INT_ARG_1))->data[i] = FLOAT_ARG_2;
+}
+static void vector_fill_i(int *args, int *ints, Float *dbls) 
+{
+  int i; for (i = 0; i < ((vct *)(INT_ARG_1))->length; i++) ((int_vct *)(INT_ARG_1))->data[i] = INT_ARG_2;
+}
+static void vector_fill_v(int *args, int *ints, Float *dbls) 
+{
+  int i; for (i = 0; i < ((vct *)(INT_ARG_1))->length; i++) (int)((vct_vct *)(INT_ARG_1))->data[i] = (vct *)(INT_ARG_2);
+}
+static void vector_fill_c(int *args, int *ints, Float *dbls)
+{
+  int i; for (i = 0; i < ((vct *)(INT_ARG_1))->length; i++) ((clm_vct *)(INT_ARG_1))->data[i] = (mus_any *)(INT_ARG_2);
+}
+static char *descr_vector_fill_f(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("vector_fill(i%d(%p), d%d(%.4f))", args[1], (vct *)(INT_ARG_1), args[2], FLOAT_ARG_2));
+}
+static char *descr_vector_fill_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("vector_fill(i%d(%p), i%d(%d))", args[1], (int_vct *)(INT_ARG_1), args[2], INT_ARG_2));
+}
+static char *descr_vector_fill_v(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("vector_fill(i%d(%p), i%d(%p))", args[1], (vct_vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2)));
+}
+static char *descr_vector_fill_c(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("vector_fill(i%d(%p), i%d(%p))", args[1], (clm_vct *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2)));
+}
+static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args != 2) return(NULL);
+  if ((args[1] = fixup_if_pending(prog, args[1], R_FLOAT_VECTOR)) == NULL) return(run_warn("vector-fill! bad arg"));
+  switch (args[1]->type)
+    {
+      /* TODO: check arg2 type */
+    case R_FLOAT_VECTOR: return(package(prog, R_BOOL, vector_fill_f, descr_vector_fill_f, args, 2)); break;
+    case R_INT_VECTOR: return(package(prog, R_BOOL, vector_fill_i, descr_vector_fill_i, args, 2)); break;
+    case R_VCT_VECTOR: return(package(prog, R_BOOL, vector_fill_v, descr_vector_fill_v, args, 2)); break;
+    case R_CLM_VECTOR: return(package(prog, R_BOOL, vector_fill_c, descr_vector_fill_c, args, 2)); break;
+    }
+  return(NULL);
+}
+
 
 
 /* ---------------- vct stuff ---------------- */
@@ -4728,8 +5059,8 @@ static void make_vct_v(int *args, int *ints, Float *dbls)
 {
   vct *v;
   v = c_make_vct(INT_ARG_1);
+  if (INT_RESULT) c_free_vct((vct *)(INT_RESULT));
   INT_RESULT = (int)v;
-  add_obj_to_gcs(PTREE, R_VCT, args[0]);
 }
 static char *descr_make_vct_v(int *args, int *ints, Float *dbls) 
 {
@@ -4740,9 +5071,9 @@ static void make_vct_v2(int *args, int *ints, Float *dbls)
   vct *v;
   int i;
   v = c_make_vct(INT_ARG_1);
+  if (INT_RESULT) c_free_vct((vct *)(INT_RESULT));
   INT_RESULT = (int)v;
   for (i = 0; i < v->length; i++) v->data[i] = FLOAT_ARG_2;
-  add_obj_to_gcs(PTREE, R_VCT, args[0]);
 }
 static char *descr_make_vct_v2(int *args, int *ints, Float *dbls) 
 {
@@ -4751,6 +5082,7 @@ static char *descr_make_vct_v2(int *args, int *ints, Float *dbls)
 static xen_value *make_vct_1(ptree *prog, xen_value **args, int num_args)
 {
   args[0] = make_xen_value(R_VCT, add_int_to_ptree(prog, 0), R_VARIABLE);
+  add_obj_to_gcs(prog, R_VCT, args[0]->addr);
   if (num_args == 1)
     add_triple_to_ptree(prog, va_make_triple(make_vct_v, descr_make_vct_v, 2, args[0], args[1]));
   else
@@ -4780,8 +5112,8 @@ static void vct_copy_v(int *args, int *ints, Float *dbls)
 {
   vct *v;
   v = c_vct_copy((vct *)(INT_ARG_1));
+  if (INT_RESULT) c_free_vct((vct *)(INT_RESULT));
   INT_RESULT = (int)v;
-  add_obj_to_gcs(PTREE, R_VCT, args[0]);
 }
 static char *descr_vct_copy_v(int *args, int *ints, Float *dbls) 
 {
@@ -4792,6 +5124,7 @@ static xen_value *vct_copy_1(ptree *prog, xen_value **args, int num_args)
   if (num_args == 1)
     {
       args[0] = make_xen_value(R_VCT, add_int_to_ptree(prog, 0), R_VARIABLE);
+      add_obj_to_gcs(prog, R_VCT, args[0]->addr);
       add_triple_to_ptree(prog, va_make_triple(vct_copy_v, descr_vct_copy_v, 2, args[0], args[1]));
       return(args[0]);
     }
@@ -5817,6 +6150,29 @@ static xen_value *mus_data_format_name_1(ptree *prog, xen_value **args)
 }
 
 
+/* ---------------- formant-bank ---------------- */
+static char *descr_formant_bank_f(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("d%d(%.4f) = formant-bank(i%d(%p), i%d(%p), d%d(%.4f))", 
+		    args[0], FLOAT_RESULT, args[1], (vct *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2), args[3], FLOAT_ARG_3));
+}
+static void formant_bank_f(int *args, int *ints, Float *dbls) 
+{
+  FLOAT_RESULT = mus_formant_bank(((vct *)(INT_ARG_1))->data, 
+				  ((clm_vct *)(INT_ARG_2))->data, 
+				  FLOAT_ARG_3, 
+				  ((vct *)(INT_ARG_1))->length);
+}
+static xen_value *formant_bank_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("formant-bank: bad amps arg"));
+  if ((args[2] = fixup_if_pending(prog, args[1], R_CLM_VECTOR)) == NULL) return(run_warn("formant-bank: bad gens arg"));
+  if (num_args == 3) return(package(prog, R_FLOAT, formant_bank_f, descr_formant_bank_f, args, 3));
+  return(run_warn("formant-bank: wrong number of args"));
+}
+
+
+
 /* ---------------- the code walker ---------------- */
 
 static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
@@ -6009,8 +6365,13 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (strcmp(funcname, "string?") == 0) 
 	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_STRING), R_CONSTANT), args, num_args));
 	  
-	  if ((strcmp(funcname, "vct?") == 0) || (strcmp(funcname, "vector?") == 0))
+	  if (strcmp(funcname, "vct?") == 0)
 	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_VCT), R_CONSTANT), args, num_args));
+	  if (strcmp(funcname, "vector?") == 0)
+	    return(clean_up(make_xen_value(R_BOOL, 
+					   add_int_to_ptree(prog, VECTOR_P(args[1]->type)),
+					   R_CONSTANT), 
+			    args, num_args));
 	  if (strcmp(funcname, "sample-reader?") == 0) 
 	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_READER), R_CONSTANT), args, num_args));
 	}
@@ -6128,6 +6489,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (strcmp(funcname, "polar->rectangular") == 0) return(clean_up(polar2rectangular_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "sum-of-sines") == 0) return(clean_up(sum_of_sines_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "dot-product") == 0) return(clean_up(dot_product_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "formant-bank") == 0) return(clean_up(formant_bank_1(prog, args, num_args), args, num_args));
 
       if ((clms == 1) || (pendings == 1) || (booleans == 1))
 	/* boolean for gen that is null in the current context */
@@ -6273,8 +6635,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	}
       if (num_args == 3)
 	{
-	  if ((strcmp(funcname, "vct-set!") == 0) || (strcmp(funcname, "vector-set!") == 0))
-	    return(clean_up(vct_set_1(prog, args), args, num_args));
+	  if (strcmp(funcname, "vct-set!") == 0) return(clean_up(vct_set_1(prog, args), args, num_args));
 	}
       if (strcmp(funcname, "make-sample-reader") == 0) return(clean_up(make_sample_reader_1(prog, args, num_args), args, num_args));
       if ((num_args == 1) && ((readers == 1) || (pendings == 1)))
@@ -6290,12 +6651,9 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 
       if ((vcts > 0) || (pendings > 0))
 	{
-	  if ((strcmp(funcname, "vct-ref") == 0) || (strcmp(funcname, "vector-ref") == 0))
-	    return(clean_up(vct_ref_1(prog, args, num_args), args, num_args));
-	  if ((strcmp(funcname, "vct-length") == 0) || (strcmp(funcname, "vector-length") == 0))
-	    return(clean_up(vct_length_1(prog, args, num_args), args, num_args));
-	  if ((strcmp(funcname, "vct-fill!") == 0) || (strcmp(funcname, "vector-fill!") == 0))
-	    return(clean_up(vct_fill_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "vct-ref") == 0) return(clean_up(vct_ref_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "vct-length") == 0) return(clean_up(vct_length_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "vct-fill!") == 0) return(clean_up(vct_fill_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "vct-scale!") == 0) return(clean_up(vct_scale_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "vct-offset!") == 0) return(clean_up(vct_offset_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "vct-add!") == 0) return(clean_up(vct_add_1(prog, args, num_args), args, num_args));
@@ -6305,6 +6663,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (strcmp(funcname, "vct-peak") == 0) return(clean_up(vct_peak_1(prog, args, num_args), args, num_args));
 	}
       /* no vcts from here on (except make-vct) */
+      if (strcmp(funcname, "vector-ref") == 0) return(clean_up(vector_ref_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "vector-length") == 0) return(clean_up(vector_length_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "vector-fill!") == 0) return(clean_up(vector_fill_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "vector-set!") == 0) return(clean_up(vector_set_1(prog, args, num_args), args, num_args));
+      /* if (strcmp(funcname, "make-vector") == 0) return(clean_up(make_vector_1(prog, args, num_args), args, num_args)); */
 
       if (need_result)
 	{
@@ -6396,8 +6759,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      if (strcmp(funcname, "mus-header-type-name") == 0) return(clean_up(mus_header_type_name_1(prog, args), args, num_args));
 	      if (strcmp(funcname, "mus-data-format-name") == 0) return(clean_up(mus_data_format_name_1(prog, args), args, num_args));
 	    }
-	  if ((strcmp(funcname, "make-vct") == 0) || (strcmp(funcname, "make-vector") == 0))
-	    return(clean_up(make_vct_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "make-vct") == 0) return(clean_up(make_vct_1(prog, args, num_args), args, num_args));
 	} /* end need_result */
       if (need_result)
 	return(clean_up(NULL, args, num_args));
@@ -6680,6 +7042,97 @@ static XEN g_run_eval(XEN code, XEN arg)
   return(XEN_FALSE);
 }
 
+#define S_vct_map "vct-map"
+
+#if 0
+/*
+;;; -------- vct-map
+
+ (define (vct-map . args)
+  "(vct-map thunk v0 ...) calls 'thunk' within vct-map! applying the frame result to the vcts passed. \
+This is intended for use with locsig in multi-channel situations where you want the optimization that \
+vct-map! provides."
+  (let* ((func (car args))
+	 (vcts (cdr args))
+	 (len (length vcts))
+	 (vect (make-vector len)))
+    (let ((i 0))
+      (for-each
+       (lambda (v)
+	 (vector-set! vect i v)
+	 (set! i (1+ i)))
+       vcts))
+    (vct-map! 
+     (vector-ref vect 0)
+     (let ((ctr 0))
+       (lambda ()
+	 (let* ((fr (func))
+		(chans (mus-channels fr)))
+	   (do ((i 1 (1+ i)))
+	       ((= i chans))
+	     (vct-set! (vector-ref vect i) ctr (frame-ref fr i)))
+	   (set! ctr (1+ ctr))
+	   (frame-ref fr 0)))))))
+	   */
+#endif
+/* that Scheme code would have worked except I don't currently optimize "(func)",
+   so, we need (at least for now), a C version:
+*/
+static XEN g_vct_map(XEN arglist)
+{
+  /* TODO: test vct-map (and doc etc) */
+  #define H_vct_map "(" S_vct_map " thunk v ...) calls 'thunk' which should return a frame; the frame result \
+is then parcelled out to the vcts passed as the trailing arguments.  This is intended for use with locsig \
+in multi-channel situations where you want the optimization that vct-map! provides."
+  int i, len, min_len = 0;
+  vct **vs;
+  XEN proc, obj;
+  ptree *pt = NULL;
+  proc = XEN_CAR(arglist);
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 0), proc, XEN_ARG_1, S_vct_map, "a thunk");
+  len = XEN_LIST_LENGTH(arglist) - 1;
+  if (len <= 1)
+    mus_misc_error(S_vct_map, "no vcts passed to vct-map", arglist);
+  vs = (vct **)CALLOC(len, sizeof(vct *));
+  for (i = 0, arglist = XEN_CDR(arglist); i < len; i++, arglist = XEN_CDR(arglist))
+    {
+      obj = XEN_CAR(arglist);
+      XEN_ASSERT_TYPE(VCT_P(obj), obj, i + 2, S_vct_map, "a vct");
+      vs[i] = TO_VCT(obj);
+      if (min_len == 0)
+	min_len = vs[i]->length;
+      else
+	{
+	  if (min_len > vs[i]->length)
+	    min_len = vs[i]->length;
+	}
+    }
+  if (current_optimization > 0)
+    {
+      pt = form_to_ptree(proc);
+      if ((pt) && (pt->arity == 0) && (pt->result->type == R_CLM))
+	{
+	  char *err;
+	  int j;
+	  Float *vals;
+	  err = initialize_ptree(pt);
+	  if (err == NULL)
+	    {
+	      for (i = 0; i < min_len; i++) 
+		{
+		  eval_ptree(pt);
+		  vals = mus_data((mus_any *)(pt->ints[pt->result->addr]));
+		  for (j = 0; j < len; j++)
+		    vs[j]->data[i] = vals[j];
+		}
+	    }
+	}
+      if (pt) free_ptree(pt);
+    }
+  return(proc);
+}
+
+
 void g_init_run(void)
 {
   XEN_DEFINE_PROCEDURE("run", g_run, 1, 0, 0, "run macro...");
@@ -6689,7 +7142,13 @@ void g_init_run(void)
 during optimization to indicate where the optimizer ran into trouble"
 
   XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
+
+  XEN_EVAL_C_STRING("(use-modules (ice-9 optargs))");
+  XEN_DEFINE_PROCEDURE("vct-map-2", g_vct_map, 0, 0, 1, H_vct_map);
+  XEN_EVAL_C_STRING("(defmacro* vct-map (thunk #:rest args) `(apply vct-map-2 (list (list ',thunk ,thunk) ,@args)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("vct-map"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_vct_map));
 }
+
 
 #endif
 #else
@@ -6726,9 +7185,7 @@ mus_frame *mus_frame2frame      PROTO((mus_mixer *f, mus_frame *in, mus_frame *o
 mus_frame *mus_sample2frame     PROTO((mus_any *f, Float in, mus_frame *out));
 mus_mixer *mus_mixer_multiply   PROTO((mus_mixer *f1, mus_mixer *f2, mus_mixer *res));
 
-void mus_convolve_files         PROTO((const char *file1, const char *file2, Float maxamp, const char *output_file));
 Float *mus_set_data             PROTO((mus_any *gen, Float *data));
-Float mus_formant_bank          PROTO((Float *amps, mus_any **formants, Float inval, int size));
 Float mus_set_formant_radius    PROTO((mus_any *ptr, Float val));
 void mus_set_formant_radius_and_frequency PROTO((mus_any *ptr, Float radius, Float frequency));
 void mus_mix                    PROTO((const char *outfile, const char *infile, int out_start, int out_samps, int in_start, mus_mixer *mx, mus_any ***envs));
@@ -6736,6 +7193,7 @@ mus_random
 int mus_file2fltarray           PROTO((const char *filename, int chan, int start, int samples, Float *array));
 int mus_fltarray2file           PROTO((const char *filename, Float *ddata, int len, int srate, int channels));
 
+  void mus_convolve_files         PROTO((const char *file1, const char *file2, Float maxamp, const char *output_file));
   Float mus_oscil_bank            PROTO((Float *amps, mus_any **oscils, Float *inputs, int size));
   mus_any *mus_make_oscil         PROTO((Float freq, Float phase));
   mus_any *mus_make_sum_of_cosines PROTO((int cosines, Float freq, Float phase));

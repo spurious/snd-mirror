@@ -35,7 +35,7 @@
 	 (i 0)
 	 (outa-data (make-vct (- end start)))
 	 )
-    (do ((k 1 (1+ k)))
+    (do ((k 0 (1+ k)))
 	((= k fs))
       (vector-set! fs1 k (make-formant radius (* k bin))))
     (vct-map! 
@@ -78,6 +78,7 @@
 				   ((= k (1- fs)))
 				 (let ((rfs (max 0.0 (min 1.0 (- r2 (* k ifs))))))
 				   (set! outval (+ outval (formant (vector-ref fs1 (1+ k)) (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
+			       ;(display (string-append "val: " (number->string outval)))
 			       (set! val outval))
 			     (if (= ramp-type 1)
 				 (let ((r2 (* 2 ramp)))
@@ -101,7 +102,7 @@
        (set! i (1+ i))
        (* amp val)))))
 
-;;; (vct->channel (cross-fade 0 4 1 0 1 1.0 .5 0 .1 256 2))
+;;; (vct->channel (cross-fade 0 .1 1 0 1 .01 .01 0 .1 256 2))
 ;;;
 ;;; these fades seem more successful to me when done relatively quickly (the opposite of the dissolve below
 ;;; which is best if done as slowly as possible).  I like the sweep up best -- a sort of "evaporation" effect.
@@ -123,7 +124,7 @@
 	 (outa-data (make-vct (- end start)))
 	 (ctr 0))
     (if (not (number? hi)) (set! hi freq-inc))
-    (do ((k lo (1+ k)))
+    (do ((k 0 (1+ k)))
 	((= k hi))
       (vector-set! fs k (make-formant radius (* k bin))))
     (vct-map! 
@@ -154,14 +155,14 @@
 			      (begin 
 				(set! next k)
 				(break)))))))
-		 (set! (vct-ref spectrum next) (- (vct-ref spectrum next) ramp-inc))
+		 (vct-set! spectrum next (- (vct-ref spectrum next) ramp-inc))
 		 (set! ctr 0))))
 	 (do ((k lo (1+ k)))
 	     ((= k hi))
 	   (let ((sp (vct-ref spectrum k)))
 	     (set! outval (+ outval (formant (vector-ref fs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))))
 	     (if (> 1.0 sp 0.0)
-		 (set! (vct-ref spectrum k) (- (vct-ref spectrum k) ramp-inc)))))
+		 (vct-set! spectrum k (- (vct-ref spectrum k) ramp-inc)))))
 	 (* amp outval))))))
 
 

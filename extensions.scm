@@ -644,3 +644,4 @@ If 'check' is #f, the hooks are removed."
     (if (> len 0)
 	(loop-samples (make-sample-reader start snd chn 1 edpos) func len "c-channel" call-data))))
 
+

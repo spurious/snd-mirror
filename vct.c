@@ -405,7 +405,7 @@ void *form_to_ptree_0f2f(XEN proc);
 void *free_ptree(void *pt);
 #endif
 
-static XEN vct_map(XEN obj, XEN proc)
+static XEN vct_mapB(XEN obj, XEN proc)
 {
   #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"
   int i;
@@ -591,9 +591,7 @@ void vct_to_vector(vct *v, XEN vect)
   len = XEN_VECTOR_LENGTH(vect);
   vdata = XEN_VECTOR_ELEMENTS(vect);
   for (i = 0; i < len; i++) 
-    if (XEN_EXACT_P(vdata[i]))
-      vdata[i] = C_TO_XEN_INT((int)(v->data[i]));
-    else vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
+    vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
 }
 
 
@@ -614,7 +612,7 @@ XEN_NARGIFY_2(vct_fill_w, vct_fill)
 XEN_ARGIFY_3(vct_add_w, vct_add)
 XEN_NARGIFY_2(vct_subtract_w, vct_subtract)
 XEN_NARGIFY_2(vct_offset_w, vct_offset)
-XEN_NARGIFY_2(vct_map_w, vct_map)
+XEN_NARGIFY_2(vct_mapB_w, vct_mapB)
 XEN_NARGIFY_1(vct_peak_w, vct_peak)
 XEN_ARGIFY_4(vct_move_w, vct_move)
 XEN_ARGIFY_4(vct_subseq_w, vct_subseq)
@@ -636,7 +634,7 @@ XEN_VARGIFY(g_vct_w, g_vct)
 #define vct_add_w vct_add
 #define vct_subtract_w vct_subtract
 #define vct_offset_w vct_offset
-#define vct_map_w vct_map
+#define vct_mapB_w vct_mapB
 #define vct_peak_w vct_peak
 #define vct_move_w vct_move
 #define vct_subseq_w vct_subseq
@@ -725,11 +723,11 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_vct_subseq,    vct_subseq_w, 2, 2, 0,    H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,           g_vct_w, 0, 0, 1,         H_vct);
 #if WITH_RUN
-  XEN_DEFINE_PROCEDURE("vct-map-1",     vct_map_w, 2, 0, 0,       H_vct_mapB);
+  XEN_DEFINE_PROCEDURE("vct-map-1",     vct_mapB_w, 2, 0, 0,      H_vct_mapB);
   XEN_EVAL_C_STRING("(defmacro vct-map! (v form) `(vct-map-1 ,v (list ',form ,form)))");
   scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("vct-map!"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_vct_mapB));
 #else
-  XEN_DEFINE_PROCEDURE(S_vct_mapB,      vct_map_w, 2, 0, 0,       H_vct_mapB);
+  XEN_DEFINE_PROCEDURE(S_vct_mapB,      vct_mapB_w, 2, 0, 0,      H_vct_mapB);
 #endif
 
 #if HAVE_GUILE
