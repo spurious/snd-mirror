@@ -629,7 +629,12 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 {
   int i;
   mus_xen *ms;
+#if HAVE_RUBY
+  /* rb_gc_mark passes us the actual value, not the XEN wrapper! */
+  ms = (mus_xen *)obj;
+#else
   ms = CLM_TO_MUS_XEN(obj);
+#endif
   if (ms->vcts) 
     {
       for (i = 0; i < ms->nvcts; i++) 

@@ -54,6 +54,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       snd_protect(cp->after_edit_hook);
       XEN_DEFINE_SIMPLE_HOOK(cp->undo_hook, 0);
       snd_protect(cp->undo_hook);
+      cp->properties = XEN_FALSE; /* will be a vector of 1 element (permanently protected) if it's ever used */
     }
   else cp = cip;
   cp->tcgx = NULL;
@@ -182,6 +183,8 @@ static chan_info *free_chan_info(chan_info *cp)
       snd_unprotect(cp->cursor_proc);
       cp->cursor_proc = XEN_UNDEFINED;
     }
+  if (XEN_VECTOR_P(cp->properties)) /* using vector as node for GC */
+    XEN_VECTOR_SET(cp->properties, 0, XEN_EMPTY_LIST);
   cp->waiting_to_make_graph = 0;
   if (cp->sonogram_data) free_sono_info(cp);
   if (cp->temp_sonogram) 
@@ -213,6 +216,56 @@ static chan_info *free_chan_info(chan_info *cp)
   return(cp);  /* pointer is left for possible future re-use */
 }
 
+snd_info *make_basic_snd_info(int chans)
+{
+  snd_info *sp = NULL;
+  sp = (snd_info *)CALLOC(1, sizeof(snd_info));
+  sp->chans = (chan_info **)CALLOC(chans, sizeof(chan_info *));
+  sp->allocated_chans = chans;
+  sp->properties = XEN_FALSE; /* will be a vector of 1 element (permanently protected) if it's ever used */
+  return(sp);
+}
+
+void initialize_control_panel(snd_state *ss, snd_info *sp)
+{
+  sp->expand_control = DEFAULT_EXPAND_CONTROL;
+  sp->last_expand_control = 0.0;
+  sp->saved_expand_control = 0.0;
+  sp->expand_control_p = DEFAULT_EXPAND_CONTROL_P;
+  sp->amp_control = DEFAULT_AMP_CONTROL;
+  sp->last_amp_control = 1.0;
+  sp->saved_amp_control = 1.0;
+  sp->speed_control = fabs(DEFAULT_SPEED_CONTROL);
+  sp->last_speed_control = 1.0;
+  sp->saved_speed_control = 1.0;
+  if (DEFAULT_SPEED_CONTROL > 0.0) sp->speed_control_direction = 1; else sp->speed_control_direction = -1;
+  sp->contrast_control_p = DEFAULT_CONTRAST_CONTROL_P;
+  sp->contrast_control = DEFAULT_CONTRAST_CONTROL;
+  sp->last_contrast_control = 0.0;
+  sp->saved_contrast_control = 0.0;
+  sp->reverb_control_p = DEFAULT_REVERB_CONTROL_P;
+  sp->filter_control_p = DEFAULT_FILTER_CONTROL_P;
+  sp->expand_control_length = DEFAULT_EXPAND_CONTROL_LENGTH;
+  sp->expand_control_ramp = DEFAULT_EXPAND_CONTROL_RAMP;
+  sp->expand_control_hop = DEFAULT_EXPAND_CONTROL_HOP;
+  sp->reverb_control_feedback = DEFAULT_REVERB_CONTROL_FEEDBACK;
+  sp->reverb_control_lowpass = DEFAULT_REVERB_CONTROL_LOWPASS;
+  sp->reverb_control_scale = DEFAULT_REVERB_CONTROL_SCALE;
+  sp->reverb_control_decay = reverb_control_decay(ss);
+  sp->speed_control_tones = speed_control_tones(ss);
+  sp->speed_control_style = speed_control_style(ss);
+  sp->last_reverb_control_scale = 0.0;
+  sp->saved_reverb_control_scale = 0.0;
+  sp->reverb_control_length = DEFAULT_REVERB_CONTROL_LENGTH;
+  sp->last_reverb_control_length = 0.0;
+  sp->saved_reverb_control_length = 0.0;
+  sp->filter_control_order = DEFAULT_FILTER_CONTROL_ORDER;
+  sp->filter_control_in_dB = DEFAULT_FILTER_CONTROL_IN_DB;
+  sp->filter_control_changed = 0;
+  sp->contrast_control_amp = DEFAULT_CONTRAST_CONTROL_AMP;
+  sp->saved_controls = NULL;
+}
+
 snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot, int read_only)
 {
   snd_info *sp = NULL;
@@ -224,9 +277,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   chans = hdr->chans;
   if (!sip)
     {
-      sp = (snd_info *)CALLOC(1, sizeof(snd_info));
-      sp->chans = (chan_info **)CALLOC(chans, sizeof(chan_info *));
-      sp->allocated_chans = chans;
+      sp = make_basic_snd_info(chans);
       sp->sgx = (snd_context *)CALLOC(1, sizeof(snd_context));
     }
   else 
@@ -249,27 +300,11 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->state = ss;
   sp->sync = DEFAULT_SYNC;
   sp->previous_sync = sp->sync;
-  sp->expand_control = DEFAULT_EXPAND_CONTROL;
-  sp->last_expand_control = 0.0;
-  sp->saved_expand_control = 0.0;
-  sp->expand_control_p = DEFAULT_EXPAND_CONTROL_P;
+  initialize_control_panel(ss, sp);
   secs = (Float)hdr->samples / (Float)(hdr->chans * hdr->srate);
   if (secs < 1.0) 
     sp->sx_scroll_max = 100;
   else sp->sx_scroll_max = (int)pow(10, (ceil(log10(secs)) + 2));
-  sp->amp_control = DEFAULT_AMP_CONTROL;
-  sp->last_amp_control = 1.0;
-  sp->saved_amp_control = 1.0;
-  sp->speed_control = fabs(DEFAULT_SPEED_CONTROL);
-  sp->last_speed_control = 1.0;
-  sp->saved_speed_control = 1.0;
-  if (DEFAULT_SPEED_CONTROL > 0.0) sp->speed_control_direction = 1; else sp->speed_control_direction = -1;
-  sp->contrast_control_p = DEFAULT_CONTRAST_CONTROL_P;
-  sp->contrast_control = DEFAULT_CONTRAST_CONTROL;
-  sp->last_contrast_control = 0.0;
-  sp->saved_contrast_control = 0.0;
-  sp->reverb_control_p = DEFAULT_REVERB_CONTROL_P;
-  sp->filter_control_p = DEFAULT_FILTER_CONTROL_P;
   sp->searching = 0;
   if (chans > 1)
     sp->channel_style = channel_style(ss);
@@ -279,37 +314,18 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->filing = 0;
   sp->minibuffer_on = 0;
   sp->minibuffer_temp = 0;
-  sp->expand_control_length = DEFAULT_EXPAND_CONTROL_LENGTH;
-  sp->expand_control_ramp = DEFAULT_EXPAND_CONTROL_RAMP;
-  sp->expand_control_hop = DEFAULT_EXPAND_CONTROL_HOP;
-  sp->reverb_control_feedback = DEFAULT_REVERB_CONTROL_FEEDBACK;
-  sp->reverb_control_lowpass = DEFAULT_REVERB_CONTROL_LOWPASS;
-  sp->reverb_control_scale = DEFAULT_REVERB_CONTROL_SCALE;
-  sp->reverb_control_decay = reverb_control_decay(ss);
-  sp->speed_control_tones = speed_control_tones(ss);
-  sp->speed_control_style = speed_control_style(ss);
-  sp->last_reverb_control_scale = 0.0;
-  sp->saved_reverb_control_scale = 0.0;
-  sp->reverb_control_length = DEFAULT_REVERB_CONTROL_LENGTH;
-  sp->last_reverb_control_length = 0.0;
-  sp->saved_reverb_control_length = 0.0;
-  sp->filter_control_order = DEFAULT_FILTER_CONTROL_ORDER;
-  sp->filter_control_in_dB = DEFAULT_FILTER_CONTROL_IN_DB;
-  sp->filter_control_changed = 0;
   if (filter_env_in_hz(ss))
     sp->filter_control_env_xmax = hdr->srate / 2;
   else sp->filter_control_env_xmax = 1.0;
+  sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   sp->selected_channel = NO_SELECTION;
   sp->playing = 0;
   sp->applying = 0;
-  sp->saved_controls = NULL;
   sp->env_anew = 0;
-  sp->contrast_control_amp = DEFAULT_CONTRAST_CONTROL_AMP;
   sp->search_expr = NULL;
   sp->lacp = NULL;
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
-  sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   sp->delete_me = 0;
   sp->active = 1;
   return(sp);
@@ -318,6 +334,18 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
 void free_snd_info(snd_info *sp)
 {
   int i;
+  if (sp->sgx)
+    {
+      /* make sure trough colors are ok upon reuse */
+      if (sp->reverb_control_p != DEFAULT_REVERB_CONTROL_P)
+	toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
+      if (sp->expand_control_p != DEFAULT_EXPAND_CONTROL_P)
+	toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
+      if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P)
+	toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
+      if (sp->filter_control_p != DEFAULT_FILTER_CONTROL_P)
+	toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_P);
+    }
   /* leave most for reuse as in free_chan_info */
   if ((sp->state) && (sp->state->deferred_regions > 0))
     for (i = 0; i < sp->nchans; i++)
@@ -337,15 +365,6 @@ void free_snd_info(snd_info *sp)
       sp->chans[i] = free_chan_info(sp->chans[i]);
   sp->state = NULL;
   sp->inuse = 0;
-  sp->amp_control = DEFAULT_AMP_CONTROL;
-  sp->speed_control = DEFAULT_SPEED_CONTROL;
-  sp->expand_control = DEFAULT_EXPAND_CONTROL;
-  sp->expand_control_p = DEFAULT_EXPAND_CONTROL_P;
-  sp->contrast_control_p = DEFAULT_CONTRAST_CONTROL_P;
-  sp->reverb_control_p = DEFAULT_REVERB_CONTROL_P;
-  sp->filter_control_p = DEFAULT_FILTER_CONTROL_P;
-  sp->filter_control_changed = 0;
-  sp->speed_control_direction = 1;
   sp->playing_mark = NULL;
   sp->playing = 0;
   sp->searching = 0;
@@ -368,6 +387,8 @@ void free_snd_info(snd_info *sp)
   if (XEN_PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
   sp->prompt_callback = XEN_UNDEFINED;
+  if (XEN_VECTOR_P(sp->properties)) /* using vector as node for GC */
+    XEN_VECTOR_SET(sp->properties, 0, XEN_EMPTY_LIST);
   sp->selected_channel = NO_SELECTION;
   sp->short_filename = NULL;                      /* was a pointer into filename */
   if (sp->filename) FREE(sp->filename);
@@ -375,7 +396,6 @@ void free_snd_info(snd_info *sp)
   if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
   if (sp->saved_controls) free_controls(sp);
   sp->env_anew = 0;
-  sp->contrast_control_amp = 1.0;
   sp->delete_me = 0;
   sp->lacp = NULL;
   if (sp->hdr) sp->hdr = free_file_info(sp->hdr);

@@ -516,12 +516,14 @@ XEN xen_rb_funcall_0(XEN func)
 
 XEN xen_rb_copy_list(XEN val)
 {
+  /* if this is considered bad form, we could fall back on flatten */
   long len, i;
   VALUE collect;
   len = RARRAY(val)->len;
   collect = rb_ary_new2(len);
   for (i = 0; i < len; i++) 
     RARRAY(collect)->ptr[i] = RARRAY(val)->ptr[i];
+  RARRAY(collect)->len = len;
   return(collect);
 }
 

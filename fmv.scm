@@ -39,6 +39,33 @@
 	    (fm3-index #f)
 	    (base 1.0)
 	    #:allow-other-keys)
+
+"(make-fm-violin frequency amplitude #:key \n\
+  (fm-index 1.0) (amp-env #f) (periodic-vibrato-rate 5.0) \n\
+  (random-vibrato-rate 16.0) (periodic-vibrato-amplitude 0.0025) \n\
+  (random-vibrato-amplitude 0.005) (noise-amount 0.0) \n\
+  (noise-freq 1000.0) (ind-noise-freq 10.0) (ind-noise-amount 0.0)\n\
+  (amp-noise-freq 20.0) (amp-noise-amount 0.0) (gliss-env #f)\n\
+  (fm1-env #f) (fm2-env #f) (fm3-env #f) (fm1-rat 1.0) \n\
+  (fm2-rat 3.0)	(fm3-rat 4.0) (fm1-index #f) (fm2-index #f) \n\
+  (fm3-index #f) (base 1.0))\n\
+makes a new fm-violin generator.  It is the same as the v.scm version, \
+but does not assume it is running within with-sound. In terms of arguments \
+beg, dur, degree, reverb-amount, and distance are omitted, \
+and all envelopes default to constants (rather than envelopes). \
+From the generator's point of view, each envelope is a function called at run time to get its next value, \
+very much like 'as-needed' input in src or granulate. \
+fm-violin takes the value returned by make-fm-violin and returns a new sample each time it is called: \n\
+  (define (test-v beg dur freq amp)\n\
+    (let ((v (make-fm-violin freq amp \n\
+	      :amp-env (let ((e (make-env :envelope '(0 0 1 1 2 0) \n\
+					  :scaler amp :end dur)))\n\
+			 (lambda () (env e)))))\n\
+	  (data (samples->vct beg dur)))\n\
+      (do ((i 0 (1+ i))) ((= i dur))\n\
+	(vct-set! data i (+ (vct-ref data i) (v))))\n\
+      (vct->channel data beg dur))))"
+
     (let* ((frq-scl (hz->radians frequency))
 	   (modulate (not (zero? fm-index)))
 	   (maxdev (* frq-scl fm-index))
@@ -95,7 +122,7 @@
 				     (* (indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))
 			      0.0))))))))))
 
-
+#!
 (define test-v 
   (lambda (beg dur freq amp amp-env)
     (let ((v (make-fm-violin 
@@ -130,10 +157,11 @@
 	(vct-set! data i (+ (vct-ref data i)
 			    (v))))
       (vct->channel data beg dur))))
+!#
 
-;;; here's the original instrument using this new generator
-(define fm-violin-ins
-  (lambda* (startime dur freq amp #:key (degree #f) (reverb-amount 0.0) (distance 1.0) #:allow-other-keys #:rest args)
+(define* (fm-violin-ins startime dur freq amp #:key (degree #f) (reverb-amount 0.0) (distance 1.0) #:allow-other-keys #:rest args)
+  "(fm-violin-ins startime dur freq amp #:key (degree #f) (reverb-amount 0.0) (distance 1.0) #:allow-other-keys #:rest args) \
+calls the fm-violin with the given args and mixes the results into the current sound"
     (let* ((beg (floor (* startime (srate))))
 	   (len (floor (* dur (srate))))
 	   (end (+ beg len))
@@ -147,7 +175,7 @@
 	  (let ((bsamps (vct-copy out-data)))
 	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
 	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
-	  (mix-vct out-data beg #f 0 #f)))))
+	  (mix-vct out-data beg #f 0 #f))))
 
 
 			  

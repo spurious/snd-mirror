@@ -1,5 +1,7 @@
 snd change log
 
+  21-Jan:    bird.rb.
+             channel-properties, sound-properties (accessors in extensions.scm).
   18-Jan:    zip-channel (zip.scm).
              removed old-sndlib.h and old-sndlib2scm.scm.
   14-Jan:    gsl-error.

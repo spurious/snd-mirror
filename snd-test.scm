@@ -9893,6 +9893,39 @@
 				 #(0.0 0.10955810546875 0.130706787109375 0.14068603515625 0.141204833984375 0.147247314453125 
                                    0.145904541015625 0.140289306640625 0.126861572265625 0.08172607421875))))
 	      (snd-display ";channel-amp-envs: ~A?" vals)))
+
+	(let ((len (length (channel-properties id 0))))
+	  (if (channel-property 'hiho id 0)
+	      (snd-display ";channel-property 'hiho: ~A?" (channel-property 'hiho id 0)))
+	  (set! (channel-property 'hiho id 0) 123)
+	  (if (not (= (channel-property 'hiho id 0) 123))
+	      (snd-display ";channel-property 'hiho (123): ~A?" (channel-property 'hiho id 0)))
+	  (if (channel-property 'hi id 0)
+	      (snd-display ";channel-property 'hi: ~A?" (channel-property 'hi id 0)))
+	  (set! (channel-property 'hi id 0) 3.1415)
+	  (if (fneq (channel-property 'hi id 0) 3.1415)
+	      (snd-display ";channel-property 'hi (3.1415): ~A?" (channel-property 'hi id 0)))
+	  (if (not (= (channel-property 'hiho id 0) 123))
+	      (snd-display ";channel-property '2nd hiho (123): ~A?" (channel-property 'hiho id 0)))
+	  (if (not (= (length (channel-properties id 0)) (+ len 2)))
+	      (snd-display ";channel-properties: ~A?" (channel-properties id 0))))
+
+	(let ((len (length (sound-properties id))))
+	  (if (sound-property 'hiho id)
+	      (snd-display ";sound-property 'hiho: ~A?" (sound-property 'hiho id)))
+	  (set! (sound-property 'hiho id) 123)
+	  (if (not (= (sound-property 'hiho id) 123))
+	      (snd-display ";sound-property 'hiho (123): ~A?" (sound-property 'hiho id)))
+	  (if (sound-property 'hi id)
+	      (snd-display ";sound-property 'hi: ~A?" (sound-property 'hi id)))
+	  (set! (sound-property 'hi id) 3.1415)
+	  (if (fneq (sound-property 'hi id) 3.1415)
+	      (snd-display ";sound-property 'hi (3.1415): ~A?" (sound-property 'hi id)))
+	  (if (not (= (sound-property 'hiho id) 123))
+	      (snd-display ";sound-property '2nd hiho (123): ~A?" (sound-property 'hiho id)))
+	  (if (not (= (length (sound-properties id)) (+ len 2)))
+	      (snd-display ";sound-properties: ~A?" (sound-properties id))))
+
 	(close-sound id))
 
       (let ((id (open-sound "oboe.snd")))
@@ -12624,7 +12657,7 @@ EDITS: 3
 
 	    (|XSynchronize (|XtDisplay (cadr (main-widgets))) #f)
 
-	  (if (provided? 'snd-motif)
+	    (if (provided? 'snd-motif)
 	      (let ((move-scroll
 		     (lambda (w val)
 		       (if (and w
@@ -13958,6 +13991,7 @@ EDITS: 3
     (if (not (eq? tag expected-tag))
 	(snd-display "check-error-tag ~A from ~A: ~A" 
 			   expected-tag (procedure-source thunk) tag))))
+
 (defvar env3 '(0 0 1 1))
 (set! (with-background-processes) #t)
 
@@ -13969,7 +14003,7 @@ EDITS: 3
 	       button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style channel-sync
 	       channel-widgets channels chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog
 	       color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
-	       contrast-control?  convolve-arrays convolve-selection-with convolve-with
+	       contrast-control?  convolve-arrays convolve-selection-with convolve-with channel-properties
 	       auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
 	       cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location
 	       default-output-chans default-output-format default-output-srate default-output-type define-envelope
@@ -14020,7 +14054,7 @@ EDITS: 3
 	       sound-loop-info sound-widgets soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start
 	       spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 	       speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
-	       start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync temp-dir
+	       start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
 	       text-focus-color tiny-font track-sample-reader?  transform-dialog transform-sample transform-samples
 	       transform-samples->vct transform-samples-size transform-type trap-segfault unbind-key undo
 	       update-transform update-time-graph update-lisp-graph update-sound update-usage-stats use-sinc-interp
@@ -14072,7 +14106,7 @@ EDITS: 3
 		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize
 		   auto-update axis-label-font axis-numbers-font basic-color bold-button-font button-font channel-style
 		   channel-sync color-cutoff color-inverted color-scale contrast-control contrast-control-amp
-		   contrast-control? auto-update-interval current-font cursor cursor-color
+		   contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 		   cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
 		   default-output-chans default-output-format default-output-srate default-output-type dot-size
 		   enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
@@ -14096,7 +14130,7 @@ EDITS: 3
 		   show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
 		   show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle
 		   spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
-		   speed-control-style speed-control-tones squelch-update sync temp-dir text-focus-color tiny-font y-bounds
+		   speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
 		   transform-type trap-segfault use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
 		   graph-time? wavo-hop wavo-trace with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 
@@ -14161,7 +14195,7 @@ EDITS: 3
 		      progress-report read-only reset-controls restore-controls reverb-control-decay reverb-control-feedback
 		      reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? save-controls
 		      select-sound short-file-name sound-loop-info soundfont-info speed-control speed-control-style
-		      speed-control-tones srate channel-style start-progress-report sync swap-channels))
+		      speed-control-tones srate channel-style start-progress-report sync sound-properties swap-channels))
       
       (for-each (lambda (arg)
 		  (for-each (lambda (n)
@@ -14180,7 +14214,7 @@ EDITS: 3
 				  reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
 				  reverb-control-scale reverb-control? save-controls select-sound short-file-name
 				  sound-loop-info soundfont-info speed-control speed-control-style speed-control-tones srate
-				  channel-style start-progress-report sync swap-channels)))
+				  channel-style start-progress-report sync sound-properties swap-channels)))
 		(list (current-module) (sqrt -1.0) 1.5 "hiho"))
 
       (for-each (lambda (arg)
@@ -14451,7 +14485,7 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets count-matches cursor
+		    (list backward-graph backward-sample channel-sync channel-widgets count-matches cursor channel-properties
 			  cursor-follows-play cursor-position cursor-size cursor-style delete-sample display-edits dot-size
 			  draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency
 			  fft-log-magnitude transform-size transform-graph-type fft-window graph-transform? find forward-graph
@@ -14477,7 +14511,7 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: chn (no chn) procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets count-matches cursor
+		    (list backward-graph backward-sample channel-sync channel-widgets count-matches cursor channel-properties
 			  cursor-position cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines
 			  edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
 			  transform-size transform-graph-type fft-window graph-transform? find forward-graph forward-mark
@@ -14502,7 +14536,7 @@ EDITS: 3
 			(if (not (eq? tag 'no-such-sound))
 			    (snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets cursor cursor-follows-play
+		    (list backward-graph backward-sample channel-sync channel-widgets cursor cursor-follows-play channel-properties
 			  cursor-position cursor-size cursor-style delete-sample display-edits dot-size edit-fragment
 			  edit-position edit-tree edits env-sound fft-window-beta fft-log-frequency fft-log-magnitude
 			  transform-size transform-graph-type fft-window graph-transform? filter-sound forward-graph
@@ -14567,7 +14601,7 @@ EDITS: 3
 			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-samples->vct
 			  transform-samples-size transform-type update-transform update-time-graph update-lisp-graph
 			  wavelet-type graph-time?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
-			  x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad ))
+			  x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad channel-properties))
 	  (close-sound index))
 
         (let ((ctr 0)
@@ -14584,7 +14618,7 @@ EDITS: 3
 		    (list channel-sync channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
 			  fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
 			  graph-transform? graph-style graph-lisp? left-sample make-graph-data max-transform-peaks maxamp
-			  min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes
+			  min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes channel-properties
 			  show-transform-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop
 			  spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
 			  spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type

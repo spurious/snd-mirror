@@ -221,6 +221,7 @@ typedef struct chan__info {
   XEN undo_hook;
   XEN cursor_proc;
   XEN after_edit_hook;
+  XEN properties;
   int selection_visible, sync, active;
   Locus old_x0, old_x1;
   Float *amp_control; /* an experiment */
@@ -256,6 +257,7 @@ typedef struct snd__info {
   int nchans;
   XEN search_proc;
   XEN prompt_callback;
+  XEN properties;
   int raw_prompt;
   char *search_expr;
   int searching, marking, filing, finding_mark, amping, reging, printing, loading, macroing, prompting;
@@ -622,6 +624,8 @@ void g_init_marks(void);
 lisp_grf *free_lisp_info(chan_info *cp);
 chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *state);
 snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot, int read_only);
+snd_info *make_basic_snd_info(int chans);
+void initialize_control_panel(snd_state *ss, snd_info *sp);
 void free_snd_info(snd_info *sp);
 snd_info *completely_free_snd_info(snd_info *sp);
 int map_over_sounds (snd_state *ss, int (*func)(snd_info *, void *), void *userptr);
@@ -839,6 +843,7 @@ void add_region(int n, chan_info *cp, const char *origin);
 int region_stats(void);
 int define_region(sync_info *si, int *ends);
 snd_fd *init_region_read (int beg, int n, int chan, int direction);
+snd_info *make_initial_region_sp(snd_state *ss, GUI_WIDGET region_grf);
 void cleanup_region_temp_files(void);
 int snd_regions(void);
 void save_regions(snd_state *ss, FILE *fd);

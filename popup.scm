@@ -19,6 +19,7 @@
 	  (dlinit hxm "init_xm"))))
 
 (define (for-each-child w func)
+  "(for-each-child widget func) applies func to widget and each of its children"
   (func w)
   (if (|XtIsComposite w)
       (for-each 
@@ -27,11 +28,13 @@
        (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
 
 (define (change-label w new-label)
+  "(change-label widget new-label) changes widget's label to be new-label"
   (let ((str (|XmStringCreateLocalized new-label)))
     (|XtSetValues w (list |XmNlabelString str))
     (|XmStringFree str)))
       
 (define (current-label w)
+  "(current-label widget) returns widget's label"
   (let ((xmstr (cadr (|XtGetValues w (list |XmNlabelString 0)))))
     (cadr (|XmStringGetLtoR xmstr |XmFONTLIST_DEFAULT_TAG))))
 

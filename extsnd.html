@@ -128,7 +128,7 @@ various examples of and extensions to Snd can be found in the contrib directory,
 <table border=8 bordercolor="lightsteelblue">
 <tr><td width=140><a href="sndscm.html#autosavedoc">autosave.scm</a></td><td>auto-save (edit backup) support</td></tr>
 <tr><td><a href="sndscm.html#belldoc">bell.scm</a></td>       <td>the fm-bell from CLM</td></tr>
-<tr><td><a href="sndscm.html#birddoc">bird.scm</a></td>      <td>various North-American birds (from bird.clm)</td></tr>
+<tr><td><a href="sndscm.html#birddoc">bird.scm, bird.rb</a></td><td>various North-American birds (from bird.clm)</td></tr>
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>      <td>graphics additions</td></tr>
 <tr><td><a href="sndscm.html#dspdoc">dsp.scm</a></td>        <td>various DSP-related procedures</td></tr>
 <tr><td><a href="sndscm.html#editmenudoc">edit-menu.scm</a></td><td>Edit menu additions</td></tr>
@@ -4028,7 +4028,7 @@ The following substitutions can be made:
 <a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
 <a href="#sndmix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
 <a href="#sndmixsound">mix-sound</a> file beg                              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
-<a href="#sndinsertsound">insert-sound</a> file beg filechn s c e             <a href="sndscm.html#insertchannel">insert-channel</a> filedat beg dur s c e
+<a href="#sndinsertfile">insert-sound</a> file beg filechn s c e             <a href="sndscm.html#insertchannel">insert-channel</a> filedat beg dur s c e
 </pre>
 </small>
 <p><small>A scheme equivalent to map-channel might be:</small></p>
@@ -4139,6 +4139,17 @@ the direction argument between the channel and edit-position.
 <!-- -->'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background.
 <!-- -->If 'file' is a sound index (an integer), pts is an edit-position, and the current amp envs (if any) are returned.
 <!-- -->See <b>make-sound-icon</b> in snd-motif.scm for an example.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- channel-properties -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndchannelproperties">channel-properties</a></em> (<em class=targ>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->A property list associated with the given channel.  It is set to '() at the time a sound is opened.  The accessor
+<!-- --><a href="sndscm.html#exchannelproperty">channel-property</a> is provided in extensions.scm.  See enved.scm for an example use.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5826,6 +5837,17 @@ the direction argument between the channel and edit-position.
 <!-- -->For historical reasons, the 7th and 8th entries are the sustain and release modes.
 <!-- -->This is similar to mus-sound-loop-info (but it's settable).
 <!-- --></td></tr>
+<!-- -->
+<!-- sound-properties -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndsoundproperties">sound-properties</a></em> (<i>snd</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->A property list associated with the given sound.  It is set to '() at the time a sound is opened.  The accessor
+<!-- --><a href="sndscm.html#exsoundproperty">sound-property</a> is provided in extensions.scm.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- -->
 <!-- sounds -->
 <!-- --><tr><td colspan=2>

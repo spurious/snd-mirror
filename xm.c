@@ -8,6 +8,7 @@
  */
 
 /* HISTORY: 
+ *   21-Jan:    Ruby fixups (XEN_COPY_ARGS to protect lists)
  *   7-Jan-02:  XEvent fields settable. added XtCallCallbacks-raw.
  *   12-Sep:    xm-version.
  *   13-Aug:    Xp bindings, X11 predefined Atoms.
@@ -1326,11 +1327,12 @@ static void gxm_XmColorCalculationProc(Screen *scr, XColor *bg, XColor *fg, XCol
   xm_unprotect_at(loc);
 }
 
-static XtCallbackList XEN_TO_C_XtCallbackList(XEN call_list)
+static XtCallbackList XEN_TO_C_XtCallbackList(XEN call_list1)
 {
-  XEN descr, func, data;
+  XEN descr, func, data, call_list;
   int call_i, call_len;
   XtCallbackRec *cl = NULL;
+  call_list = XEN_COPY_ARG(call_list1);
   call_len = XEN_LIST_LENGTH(call_list) / 2;
   if (call_len == 0) return(NULL);
   cl = (XtCallbackRec *)CALLOC(call_len + 1, sizeof(XtCallbackRec));
@@ -1400,18 +1402,19 @@ static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom* selection, Atom* t
   return(True);
 }
 
-static Arg *XEN_TO_C_Args(XEN inarg)
+static Arg *XEN_TO_C_Args(XEN inargl)
 {
   /* an Arg array in xm is a list of name value pairs */
   Arg *args = NULL;
   int i, len, type;
   XtCallbackRec *cl = NULL;
-  XEN descr, value, xname;
+  XEN descr, value, xname, inarg;
   char *name;
   /* if XtVaNestedList supported, scan for it here, and increase length as needed,
    *   then make recursive call to XEN_TO_C_Args in that branch, unloading afterwards
    *   this is not actually needed in xm -- just use append!
    */
+  inarg = XEN_COPY_ARG(inargl);
   len = XEN_LIST_LENGTH(inarg) / 2;
   if (len == 0) return(NULL);
   args = (Arg *)CALLOC(len, sizeof(Arg));
@@ -1983,16 +1986,17 @@ static XEN C_TO_XEN_Args(Widget w, Arg *args, int len)
 
 /* (|XtGetValues c1 (list |XmNx 0) 1) */
 
-static XEN gxm_XtGetValues_1(XEN arg1, XEN arg2, int len)
+static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
 {
   Arg *args;
   unsigned long *locs;
   Widget w;
-  XEN val;
+  XEN val, arg2;
   int i;
   char *name;
   /* here we need to make sure the ref args are ok from C's point of view */
   w = XEN_TO_C_Widget(arg1);
+  arg2 = XEN_COPY_ARG(larg2);
   args = (Arg *)CALLOC(len, sizeof(Arg));
   locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
   for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
@@ -2453,12 +2457,12 @@ static XEN gxm_XmRenditionFree(XEN arg1)
   return(XEN_FALSE);
 }
 
-static XEN gxm_XmRenditionRetrieve(XEN arg1, XEN arg2, XEN arg3)
+static XEN gxm_XmRenditionRetrieve(XEN arg1, XEN larg2, XEN arg3)
 {
   #define H_XmRenditionRetrieve "void XmRenditionRetrieve(XmRendition rendition, ArgList arglist, Cardinal argcount) \
 retrieves rendition resources"
   XEN_ASSERT_TYPE(XEN_XmRendition_P(arg1), arg1, 1, "XmRenditionRetrieve", "XmRendition");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenditionRetrieve", "ArgList");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg2), larg2, 2, "XmRenditionRetrieve", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmRenditionRetrieve", "int");
   {
     /* this is a kind of XtGetvalues, not set
@@ -2469,6 +2473,8 @@ retrieves rendition resources"
     int i, len;
     XmRendition r;
     char *name;
+    XEN arg2;
+    arg2 = XEN_COPY_ARG(larg2);
     /* here we need to make sure the ref args are ok from C's point of view */
     r = XEN_TO_C_XmRendition(arg1);
     len = XEN_TO_C_INT_DEF(arg3, arg2);
@@ -7663,7 +7669,7 @@ RectangleOut if the rectangle is entirely out of the specified region, and Recta
   return(C_TO_XEN_INT(XRectInRegion(XEN_TO_C_Region(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3), XEN_TO_C_ULONG(arg4), XEN_TO_C_ULONG(arg5))));
 }
 
-static XEN gxm_XPolygonRegion(XEN arg1, XEN arg2, XEN arg3)
+static XEN gxm_XPolygonRegion(XEN larg1, XEN arg2, XEN arg3)
 {
   #define H_XPolygonRegion "Region XPolygonRegion(points, n, fill_rule) returns a region for the polygon defined by the points list."
   /* DIFF: XPolygonRegion XPoint* arg (arg 1) is list of XPoints
@@ -7671,10 +7677,11 @@ static XEN gxm_XPolygonRegion(XEN arg1, XEN arg2, XEN arg3)
   XPoint *pt, *pt1;
   int i, len;
   Region res;
-  XEN xp;
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XPolygonRegion", "list of XPoints");
+  XEN arg1, xp;
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg1), larg1, 1, "XPolygonRegion", "list of XPoints");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XPolygonRegion", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XPolygonRegion", "int");
+  arg1 = XEN_COPY_ARG(larg1);
   len = XEN_TO_C_INT(arg2);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg2, 2, "XPolygonRegion", "positive integer");
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
@@ -8321,7 +8328,7 @@ static XEN gxm_XStoreName(XEN arg1, XEN arg2, XEN arg3)
   return(C_TO_XEN_INT(XStoreName(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_STRING(arg3))));
 }
 
-static XEN gxm_XStoreColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static XEN gxm_XStoreColors(XEN arg1, XEN arg2, XEN larg3, XEN arg4)
 {
   #define H_XStoreColors "XStoreColors(display, colormap, color, ncolors) changes the colormap entries of the pixel values specified in the \
 pixel members of the XColor structures."
@@ -8329,10 +8336,12 @@ pixel members of the XColor structures."
    */
   XColor *xc, *xc1;
   int i, len;
+  XEN arg3;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XStoreColors", "Display*");
   XEN_ASSERT_TYPE(XEN_Colormap_P(arg2), arg2, 2, "XStoreColors", "Colormap");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XStoreColors", "list of XColor");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg3), larg3, 3, "XStoreColors", "list of XColor");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XStoreColors", "int");
+  arg3 = XEN_COPY_ARG(larg3);
   len = XEN_TO_C_INT(arg4);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg4, 4, "XStoreColors", "positive integer");
   xc = (XColor *)CALLOC(len, sizeof(XColor));
@@ -8687,7 +8696,7 @@ static XEN gxm_XSetCloseDownMode(XEN arg1, XEN arg2)
   return(C_TO_XEN_INT(XSetCloseDownMode(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2))));
 }
 
-static XEN gxm_XSetClipRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static XEN gxm_XSetClipRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN larg5, XEN arg6, XEN arg7)
 {
   #define H_XSetClipRectangles "XSetClipRectangles(display, gc, clip_x_origin, clip_y_origin, rectangles, n, ordering) changes the clip-mask in \
 the specified GC to the specified list of rectangles and sets the clip origin."
@@ -8695,13 +8704,15 @@ the specified GC to the specified list of rectangles and sets the clip origin."
    */
   XRectangle *pt, *pt1;
   int i, len;
+  XEN arg5;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetClipRectangles", "Display*");
   XEN_ASSERT_TYPE(XEN_GC_P(arg2), arg2, 2, "XSetClipRectangles", "GC");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XSetClipRectangles", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XSetClipRectangles", "int");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XSetClipRectangles", "list of XRectangles");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg5), larg5, 5, "XSetClipRectangles", "list of XRectangles");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XSetClipRectangles", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XSetClipRectangles", "int");
+  arg5 = XEN_COPY_ARG(larg5);
   len = XEN_TO_C_INT(arg6);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg6, 6, "XSetClipRectangles", "positive integer");
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
@@ -10078,18 +10089,20 @@ static XEN gxm_XFlush(XEN arg1)
 }
 
 
-static XEN gxm_XFillRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static XEN gxm_XFillRectangles(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
 {
   #define H_XFillRectangles "XFillRectangles(display, d, gc, rectangles, nrectangles)"
   /* DIFF: XFillRectangles XRectangle* arg (arg 4) is list of XRectangles
    */
   XRectangle *pt, *pt1;
   int i, len;
+  XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFillRectangles", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XFillRectangles", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XFillRectangles", "GC");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XFillRectangles", "list of XRectangle");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg4), larg4, 4, "XFillRectangles", "list of XRectangle");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XFillRectangles", "int");
+  arg4 = XEN_COPY_ARG(larg4);
   len = XEN_TO_C_INT(arg5);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XFillRectangles", "positive integer");
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
@@ -10124,21 +10137,22 @@ static XEN gxm_XFillRectangle(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, 
 				     XEN_TO_C_ULONG(arg6), XEN_TO_C_ULONG(arg7))));
 }
 
-static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
+static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, XEN arg6, XEN arg7)
 {
   #define H_XFillPolygon "XFillPolygon(display, d, gc, points, npoints, shape, mode)"
   /* DIFF: XFillPolygon Point* arg (arg 4) is list of XPoint
    */
   XPoint *pt, *pt1;
   int i, len;
-  XEN xp;
+  XEN xp, arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFillPolygon", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XFillPolygon", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XFillPolygon", "GC");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XFillPolygon", "list of XPoints");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg4), larg4, 4, "XFillPolygon", "list of XPoints");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XFillPolygon", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XFillPolygon", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XFillPolygon", "int");
+  arg4 = XEN_COPY_ARG(larg4);
   len = XEN_TO_C_INT(arg5);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XFillPolygon", "positive integer");
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
@@ -10160,7 +10174,7 @@ static XEN gxm_XFillPolygon(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
   return(C_TO_XEN_INT(len));
 }
 
-static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
 {
   #define H_XFillArcs "XFillArcs(display, d, gc, arcs, narcs)"
   /* DIFF: XFillArcs Arc* arg (arg 4) is list of XArcs
@@ -10170,11 +10184,13 @@ static XEN gxm_XFillArcs(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   Display *dpy;
   Drawable draw;
   GC gc;
+  XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFillArcs", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XFillArcs", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XFillArcs", "GC");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XFillArcs", "list of XArcs");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg4), larg4, 4, "XFillArcs", "list of XArcs");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XFillArcs", "int");
+  arg4 = XEN_COPY_ARG(larg4);
   len = XEN_TO_C_INT(arg5);
   if (len <= 0) return(XEN_FALSE);
   dpy = XEN_TO_C_Display(arg1);
@@ -10273,18 +10289,20 @@ static XEN gxm_XDrawString(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN
 				  XEN_TO_C_STRING(arg6), XEN_TO_C_INT(arg7))));
 }
 
-static XEN gxm_XDrawSegments(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static XEN gxm_XDrawSegments(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
 {
   #define H_XDrawSegments "XDrawSegments(display, d, gc, segments, nsegments) draws multiple, unconnected lines. "
   /* DIFF: XDrawSegments XSegment* arg (arg 4) is list of XSegments
    */
   XSegment *pt, *pt1;
   int i, len;
+  XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawSegments", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawSegments", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawSegments", "GC");
-  XEN_ASSERT_TYPE(XEN_XSegment_P(arg4), arg4, 4, "XDrawSegments", "list of XSegments");
+  XEN_ASSERT_TYPE(XEN_XSegment_P(larg4), larg4, 4, "XDrawSegments", "list of XSegments");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawSegments", "int");
+  arg4 = XEN_COPY_ARG(larg4);
   len = XEN_TO_C_INT(arg5);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XDrawSegments", "positive integer");
   pt = (XSegment *)CALLOC(len, sizeof(XSegment));
@@ -10304,18 +10322,20 @@ static XEN gxm_XDrawSegments(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   return(C_TO_XEN_INT(len));
 }
 
-static XEN gxm_XDrawRectangles(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static XEN gxm_XDrawRectangles(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
 {
   #define H_XDrawRectangles "XDrawRectangles(display, d, gc, rectangles, nrectangles) draws the outlines of the specified rectangles."
   /* DIFF: XDrawRectangles XRectangle* arg (arg 4) is list of XRectangles
    */
   XRectangle *pt, *pt1;
   int i, len;
+  XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawRectangles", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawRectangles", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawRectangles", "GC");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XDrawRectangles", "list of XRectangles");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg4), larg4, 4, "XDrawRectangles", "list of XRectangles");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawRectangles", "int");
+  arg4 = XEN_COPY_ARG(larg4);
   len = XEN_TO_C_INT(arg5);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XDrawRectangles", "positive integer");
   pt = (XRectangle *)CALLOC(len, sizeof(XRectangle));
@@ -10351,20 +10371,21 @@ static XEN gxm_XDrawRectangle(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, 
 				     XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5), XEN_TO_C_ULONG(arg6), XEN_TO_C_ULONG(arg7))));
 }
 
-static XEN gxm_XDrawPoints(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN gxm_XDrawPoints(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, XEN arg6)
 {
   #define H_XDrawPoints "XDrawPoints(display, d, gc, points, npoints, mode) draws multiple points."
   /* DIFF: XDrawPoints XPoint* arg (arg 4) is list of XPoints
    */
   XPoint *pt, *pt1;
   int i, len;
-  XEN xp;
+  XEN xp, arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawPoints", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawPoints", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawPoints", "GC");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XDrawPoints", "list of XPoints");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg4), larg4, 4, "XDrawPoints", "list of XPoints");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawPoints", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XDrawPoints", "int");
+  arg4 = XEN_COPY_ARG(larg4);
   len = XEN_TO_C_INT(arg5);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XDrawPoints", "positive integer");
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
@@ -10400,7 +10421,7 @@ point into the specified drawable."
 				 XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5))));
 }
 
-static XEN gxm_XDrawLines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN gxm_XDrawLines(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5, XEN arg6)
 {
   #define H_XDrawLines "XDrawLines(display, d, gc, points, npoints, mode) uses the components of the specified GC to draw npoints lines \
 between each pair of points (point[i], point[i+1]) in the array of XPoint structures."
@@ -10408,13 +10429,14 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
    */
   XPoint *pt, *pt1;
   int i, len;
-  XEN xp;
+  XEN xp, arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawLines", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawLines", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawLines", "GC");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XDrawLines", "list of XPoints");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg4), larg4, 4, "XDrawLines", "list of XPoints");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawLines", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XDrawLines", "int");
+  arg4 = XEN_COPY_ARG(larg4);
   len = XEN_TO_C_INT(arg5);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg5, 5, "XDrawLines", "positive integer");
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
@@ -10543,7 +10565,7 @@ static XEN gxm_XDrawImageString(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5
 				       XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5), XEN_TO_C_STRING(arg6), XEN_TO_C_INT(arg7))));
 }
 
-static XEN gxm_XDrawArcs(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static XEN gxm_XDrawArcs(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
 {
   #define H_XDrawArcs "XDrawArcs(display, d, gc, arcs, narcs) draws multiple circular or elliptical arcs."
   /* DIFF: XDrawArcs Arc* arg (arg 4) is list of XArcs
@@ -10553,11 +10575,13 @@ static XEN gxm_XDrawArcs(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   Display *dpy;
   Drawable draw;
   GC gc;
+  XEN arg4;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawArcs", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawArcs", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawArcs", "GC");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XDrawArcs", "list of XArcs");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg4), larg4, 4, "XDrawArcs", "list of XArcs");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawArcs", "int");
+  arg4 = XEN_COPY_ARG(larg4);
   len = XEN_TO_C_INT(arg5);
   dpy = XEN_TO_C_Display(arg1);
   draw = XEN_TO_C_Window(arg2);
@@ -15732,11 +15756,12 @@ static void gxm_XtActionProc7(Widget w, XEvent *e, char **args, Cardinal *argn)
 }
 static int xm_action_ctr = 0;
 
-static XtActionsRec *make_action_rec(int len, XEN arg2)
+static XtActionsRec *make_action_rec(int len, XEN larg2)
 {
   int i;
   XtActionsRec *act;
-  XEN pair;
+  XEN pair, arg2;
+  arg2 = XEN_COPY_ARG(larg2);
   act = (XtActionsRec *)CALLOC(len, sizeof(XtActionsRec));
   for (i = 0; i < len; i++, arg2 = XEN_CDR(arg2))
     {
@@ -16763,17 +16788,19 @@ static XEN gxm_XpmReadFileToPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
 		    C_TO_XEN_Pixmap(p2)));
 }
 
-static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
+static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN larg3, XEN arg6)
 {
   /* DIFF: XpmCreatePixmapFromData omits and returns pixmap args, arg3 (bits) is list of strings
    */
   Pixmap p1, p2;
   int val, i, len;
   char **bits;
+  XEN arg3;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreatePixmapFromData", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpmCreatePixmapFromData", "Drawable");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XpmCreatePixmapFromData", "list of char*");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg3), larg3, 3, "XpmCreatePixmapFromData", "list of char*");
   XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg6), arg6, 6, "XpmCreatePixmapFromData", "XpmAttributes*");
+  arg3 = XEN_COPY_ARG(larg3);
   len = XEN_LIST_LENGTH(arg3);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XpmCreatePixmapFromData", "positive integer");
   bits = (char **)CALLOC(len, sizeof(char *));
@@ -24863,7 +24890,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"14-Jan-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"21-Jan-02\")");
 #endif
       xm_already_inited = 1;
     }

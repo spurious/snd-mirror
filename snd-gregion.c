@@ -430,43 +430,12 @@ static void make_region_dialog(snd_state *ss)
   gtk_widget_show(region_dialog);
 
   if (!reg_sp) 
-    { /* just a place holder, I think -- see make_region_readable in snd-clip.c */
-      id = stack_position_to_id(0);
-      reg_sp = (snd_info *)CALLOC(1, sizeof(snd_info));
-      reg_sp->inuse = 1;
-      reg_sp->active = 1;
-      reg_sp->nchans = 1;
-      reg_sp->allocated_chans = 1;
-      reg_sp->chans = (chan_info **)CALLOC(1, sizeof(chan_info *));
-      reg_sp->sx_scroll_max = 100;
-      reg_sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
-      reg_sp->search_proc = XEN_UNDEFINED;
-      reg_sp->prompt_callback = XEN_UNDEFINED;
-      hdr = reg_sp->hdr;
-      hdr->samples = region_len(id);
-      hdr->srate = region_srate(id);
-      hdr->comment = NULL;
-      hdr->chans = 1;
+    { 
+      reg_sp = make_initial_region_sp(ss, region_grf);
       current_region = 0;
-      add_channel_window(reg_sp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
-      cp = reg_sp->chans[0];
-      cp->sound = reg_sp;
-      cp->edit_size = 1;
-      cp->edit_ctr = 0;
-      allocate_ed_list(cp);
-      cp->samples = (int *)CALLOC(cp->edit_size, sizeof(int));
-      cp->sound_size = 1;
-      cp->sound_ctr = 0;
-      cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
-      cp->samples[0] = region_len(id);
-      cp->graph_style = region_graph_style(ss); /* added 8-Aug-01 */
-      cp->dot_size = dot_size(ss);
     }
-  else 
-    {
-      add_channel_window(reg_sp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
-      cp = reg_sp->chans[0];
-    }
+  else add_channel_window(reg_sp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
+  cp = reg_sp->chans[0];
 
   gtk_paned_set_position(GTK_PANED(region_grf), 150);
 

@@ -173,7 +173,6 @@
 
 (use-modules (ice-9 syncase))
 
-
 (define-syntax loop
   ;; how to handle multiple, unordered phrases?
   (syntax-rules (for from below to by downto do)
@@ -204,7 +203,7 @@
     ;; across in on, func as step? (#'cddr)
     ))
 
-    
+#!
 (define-syntax dotimes
   (syntax-rules ()
     ((dotimes (<counter> <finish> <result>) <body> ...)
@@ -216,7 +215,6 @@
 	 ((>= <counter> <finish>))
        <body> ...))
     ))
-    
 
 (define-syntax dolist
   (syntax-rules ()
@@ -236,7 +234,6 @@
 	   <body> ...)
 	 (set! <new-list> (cdr <new-list>)))))
     ))
-    
 
 (define-syntax when
   (syntax-rules ()
@@ -253,15 +250,6 @@
      (if (not <test> )
 	 (begin <form> ...)))))
 
-
-(define-syntax progn
-  (syntax-rules ()
-    ((progn) #f)
-    ((progn <body> ...)
-     (begin <body> ...)) ; but "begin" isn't guaranteed to return its last form?
-    ))
-
-
 (define-syntax prog1
   (syntax-rules ()
     ((prog1 <form1>) <form1>)
@@ -274,6 +262,14 @@
   (syntax-rules ()
     ((if* <form1> <form2>) (if <form1> <form2> #f))
     ((if* <form1> <form2> <form3>) (if <form1> <form2> <form3>))))
+!#
+    
+(define-syntax progn
+  (syntax-rules ()
+    ((progn) #f)
+    ((progn <body> ...)
+     (begin <body> ...)) ; but "begin" isn't guaranteed to return its last form?
+    ))
 
 
 (load-from-path "cmn-glyphs.lisp")

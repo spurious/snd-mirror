@@ -1,5 +1,6 @@
 ;;; various generally useful Snd extensions
 
+;;; channel-property, sound-property
 ;;; accessors for graph-style fields
 ;;; delete selected portion and smooth the splice
 ;;; eval over selection
@@ -16,6 +17,45 @@
 ;;; mix-channel, insert-channel, c-channel
 
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
+
+
+;;; -------- channel-property
+
+(define channel-property
+  (make-procedure-with-setter
+       
+   (lambda (key snd chn)
+     "(channel-property key snd chn) returns the value associated with 'key' in the given channel's property list, or #f"
+     (let ((data (assoc key (channel-properties snd chn))))
+       (if data
+	   (cdr data)
+           #f)))
+
+   (lambda (key snd chn new-val)
+     (let ((old-val (assoc key (channel-properties snd chn))))
+       (if old-val
+	   (set-cdr! old-val new-val)
+	   (set! (channel-properties snd chn) (cons (cons key new-val) (channel-properties snd chn))))
+       new-val))))
+
+;;; -------- sound-property
+
+(define sound-property
+  (make-procedure-with-setter
+       
+   (lambda (key snd)
+     "(sound-property key snd) returns the value associated with 'key' in the given sound's property list, or #f"
+     (let ((data (assoc key (sound-properties snd))))
+       (if data
+	   (cdr data)
+           #f)))
+
+   (lambda (key snd new-val)
+     (let ((old-val (assoc key (sound-properties snd))))
+       (if old-val
+	   (set-cdr! old-val new-val)
+	   (set! (sound-properties snd) (cons (cons key new-val) (sound-properties snd))))
+       new-val))))
 
 
 ;;; -------- accessors for graph-style fields

@@ -1579,6 +1579,55 @@ As a very simple example, here's dialog window with a slider:</p>
 
 (create-scale-dialog (cadr (main-widgets)))
 </pre>
+<p>In Ruby, this would be:</p>
+<pre>
+$scale_dialog = false
+$current_scaler = 1.0
+
+def create_scale_dialog(parent)
+  if !RWidget?($scale_dialog) 
+    then
+      xdismiss = RXmStringCreate("Dismiss", RXmFONTLIST_DEFAULT_TAG)
+      xhelp = RXmStringCreate("Help", RXmFONTLIST_DEFAULT_TAG)
+      titlestr = RXmStringCreate("Scaling", RXmFONTLIST_DEFAULT_TAG)
+      $scale_dialog = RXmCreateTemplateDialog(parent, "Scaling",
+                   	[RXmNcancelLabelString,  xdismiss,
+                      	 RXmNhelpLabelString,    xhelp,
+                      	 RXmNautoUnmanage,       false,
+                      	 RXmNdialogTitle,        titlestr,
+                      	 RXmNresizePolicy,       RXmRESIZE_GROW,
+                      	 RXmNnoResize,           false,
+                       	 RXmNtransient,          false])
+      RXtAddCallback($scale_dialog, RXmNcancelCallback, 
+                     Proc.new { |w, context, info| RXtUnmanageChild($scale_dialog)})
+      RXtAddCallback($scale_dialog, RXmNhelpCallback, 
+                     Proc.new { |w, context, info| snd_print "move the slider to affect the volume"})
+      RXmStringFree xhelp
+      RXmStringFree xdismiss
+      RXmStringFree titlestr
+      mainform = RXtCreateManagedWidget("formd", RxmFormWidgetClass, $scale_dialog,
+                  	[RXmNleftAttachment,      RXmATTACH_FORM,
+                         RXmNrightAttachment,     RXmATTACH_FORM,
+                         RXmNtopAttachment,       RXmATTACH_FORM,
+                         RXmNbottomAttachment,    RXmATTACH_WIDGET,
+                         RXmNbottomWidget,        RXmMessageBoxGetChild($scale_dialog, RXmDIALOG_SEPARATOR)])
+      scale = RXtCreateManagedWidget("", RxmScaleWidgetClass, mainform,
+                  	[RXmNorientation, RXmHORIZONTAL,
+                         RXmNshowValue,   true,
+                         RXmNvalue,       100,
+                         RXmNmaximum,     500,
+                         RXmNdecimalPoints, 2])
+      RXtAddCallback(scale, RXmNvalueChangedCallback, 
+                     Proc.new { |w, context, info| $current_scaler = Rvalue(info) / 100.0})
+      RXtAddCallback(scale, RXmNdragCallback, 
+                     Proc.new { |w, context, info | $current_scaler = Rvalue(info) / 100.0})
+      RXtManageChild $scale_dialog
+    end
+end
+
+$Snd_widgets = main_widgets()
+create_scale_dialog $Snd_widgets[1]
+</pre>
 <p>All of Snd is at your disposal once this module is loaded.  As a more interesting example,
 the next function installs our own file filtering procedure into the File:Open dialog (it uses
 match-sound-files from extensions.scm):
@@ -1886,7 +1935,10 @@ backtrace upon error,
 env lookup from the env name,
 and
 many cute methods.
-I'm slowly translating snd-test.scm to Ruby: see snd.rb.
+I'm slowly translating snd-test.scm to Ruby: see snd.rb.  bird.rb is the
+Ruby version of bird.scm. (My very informal timing tests indicate that
+Guile and Ruby run at essentially the same speed: Guile might be about
+10 to 20% faster).
 </p>
 <br>
 

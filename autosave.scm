@@ -2,8 +2,26 @@
 
 (use-modules (ice-9 format))
 
+(if (not (defined? 'sound-property)) ; extensions.scm
+    (define sound-property
+      (make-procedure-with-setter
+       
+       (lambda (key snd)
+	 "(sound-property key snd) returns the value associated with 'key' in the given sound's property list, or #f"
+	 (let ((data (assoc key (sound-properties snd))))
+	   (if data
+	       (cdr data)
+	       #f)))
+
+       (lambda (key snd new-val)
+	 (let ((old-val (assoc key (sound-properties snd))))
+	   (if old-val
+	       (set-cdr! old-val new-val)
+	       (set! (sound-properties snd) (cons (cons key new-val) (sound-properties snd))))
+	   new-val)))))
+
+
 (define auto-save-interval 60.0) ;seconds between auto-save checks
-(define auto-save-histories '())
 (define auto-saving #f)
 
 (define (cancel-auto-save)
@@ -21,22 +39,14 @@
 		   "#" (short-file-name snd) "#"))
   
   (define (unsaved-edits snd)
-    (let ((data (assoc snd auto-save-histories)))
-      (if data 
-	  (cdr data) 
-	  0)))
+    (or (sound-property 'auto-save snd)
+	0))
 
   (define (clear-unsaved-edits snd)
-    (let ((old-data (assoc snd auto-save-histories)))
-      (if old-data
-	  (set-cdr! old-data 0)
-	  (set! auto-save-histories (cons (cons snd 0) auto-save-histories)))))
+    (set! (sound-property 'auto-save snd) 0))
   
   (define (increment-unsaved-edits snd)
-    (let ((old-data (assoc snd auto-save-histories)))
-      (if old-data
-	  (set-cdr! old-data (+ (cdr old-data) 1))
-	  (set! auto-save-histories (cons (cons snd 1) auto-save-histories)))))
+    (set! (sound-property 'auto-save snd) (+ 1 (sound-property 'auto-save snd))))
   
   (define (upon-edit snd)
     (lambda ()

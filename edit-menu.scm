@@ -5,16 +5,17 @@
 
 (use-modules (ice-9 format))
 
-(define (all-chans)
-  (let ((sndlist '())
-	(chnlist '()))
-    (for-each (lambda (snd)
-		(do ((i (1- (channels snd)) (1- i)))
-		    ((< i 0))
-		  (set! sndlist (cons snd sndlist))
-		  (set! chnlist (cons i chnlist))))
-	      (sounds))
-    (list sndlist chnlist)))
+(if (not (defined? 'all-chans))
+    (define (all-chans)
+      (let ((sndlist '())
+	    (chnlist '()))
+	(for-each (lambda (snd)
+		    (do ((i (1- (channels snd)) (1- i)))
+			((< i 0))
+		      (set! sndlist (cons snd sndlist))
+		      (set! chnlist (cons i chnlist))))
+		  (sounds))
+	(list sndlist chnlist))))
 
 (define edit-menu 1)
 

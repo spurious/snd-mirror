@@ -849,23 +849,12 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 			     C_TO_XEN_STRING("sound has no channels?")));
       return(NULL);
     }
-  sp = (snd_info *)CALLOC(1, sizeof(snd_info));
+  sp = make_basic_snd_info(chans);
   sp->nchans = chans;
-  sp->allocated_chans = sp->nchans;
-  sp->chans = (chan_info **)CALLOC(sp->nchans, sizeof(chan_info *));
   sp->hdr = hdr;
   sp->inuse = 1;
   sp->state = ss;
-  sp->expand_control = 1.0;
-  sp->expand_control_p = 0;
-  sp->amp_control = 1.0;
-  sp->speed_control = 1.0;
-  sp->speed_control_direction = 1;
-  sp->contrast_control_p = 0;
-  sp->contrast_control = 0.0;
-  sp->reverb_control_p = 0;
-  sp->reverb_control_scale = 0.0;
-  sp->filter_control_p = 0;
+  initialize_control_panel(ss, sp);
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
   sp->index = TEMP_SOUND_INDEX;

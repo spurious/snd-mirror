@@ -13,6 +13,7 @@
 (if use-gdbm (use-modules (gdbm gdbm)))
 
 (define (nb file note)
+  "(nb file note) adds 'note' to the info asociated with 'file'"
   (let ((ptr (gdbm-open nb-database 'create)))
     (if (gdbm? ptr)
 	(let ((current-note (and (gdbm-exists? ptr file)
@@ -26,6 +27,7 @@
 	  (gdbm-close! ptr)))))
 
 (define (unb file)
+  "(unb file) removes file's info from the nb (gdbm) data base"
   (let ((ptr (gdbm-open nb-database 'write)))
     (if (gdbm? ptr)
 	(begin
@@ -33,6 +35,7 @@
 	  (gdbm-close! ptr)))))
 
 (define (prune-db)
+  "(prune-db) cleans up the nb (gdbm) data base by removing references to non-existent files"
   (define (collect-files ptr key files)
     (if key
 	(collect-files ptr (gdbm-next-key ptr key) (cons key files))
@@ -56,6 +59,8 @@
 
 
 (define (files-popup-info type position name)
+  "(files-popup-info type position name) is intended as a mouse-enter-label hook function. \
+It causes a description of the file to popup when the mouse crosses the filename"
 
     (define file-info
       (lambda (file)
@@ -108,6 +113,8 @@
 		  (recolor-widget help-widget alert-color))))))))
 
 (define (files-popup-quit type position name)
+  "(files-popup-quit type position name) is intended as a mouse-leave-label hook function. \
+It unhighlights the popped-up info about a file as the mouse leaves the associated label"
   (let ((widget (list-ref (dialog-widgets) 14)))
     (if widget
 	(recolor-widget widget (basic-color)))))

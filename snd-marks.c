@@ -1702,7 +1702,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 
 enum {MARK_SAMPLE, MARK_NAME, MARK_SYNC, MARK_HOME};
 
-static XEN iread_mark(XEN n, int fld, XEN pos_n, char *caller)
+static XEN mark_get(XEN n, int fld, XEN pos_n, char *caller)
 {
   int pos;
   chan_info *ncp[1];
@@ -1733,7 +1733,7 @@ static XEN iread_mark(XEN n, int fld, XEN pos_n, char *caller)
   return(XEN_FALSE);
 }
 
-static XEN iwrite_mark(XEN mark_n, XEN val, int fld, char *caller)
+static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
 {
   chan_info *cp[1];
   mark *m;
@@ -1777,42 +1777,42 @@ static XEN g_mark_sample(XEN mark_n, XEN pos_n)
   #define H_mark_sample "(" S_mark_sample " &optional id pos) returns the mark's location (sample number) at edit history pos"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, S_mark_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos_n), pos_n, XEN_ARG_2, S_mark_sample, "an integer");
-  return(iread_mark(mark_n, MARK_SAMPLE, pos_n, S_mark_sample));
+  return(mark_get(mark_n, MARK_SAMPLE, pos_n, S_mark_sample));
 }
 
 static XEN g_set_mark_sample(XEN mark_n, XEN samp_n) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, "set-" S_mark_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, "set-" S_mark_sample, "an integer");
-  return(iwrite_mark(mark_n, samp_n, MARK_SAMPLE, "set-" S_mark_sample));
+  return(mark_set(mark_n, samp_n, MARK_SAMPLE, "set-" S_mark_sample));
 }
 
 static XEN g_mark_sync(XEN mark_n) 
 {
   #define H_mark_sync "(" S_mark_sync " id) returns the mark's sync value"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_sync, "an integer");
-  return(iread_mark(mark_n, MARK_SYNC, XEN_UNDEFINED, S_mark_sync));
+  return(mark_get(mark_n, MARK_SYNC, XEN_UNDEFINED, S_mark_sync));
 }
 
 static XEN g_set_mark_sync(XEN mark_n, XEN sync_n) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, "set-" S_mark_sync, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sync_n), sync_n, XEN_ARG_2, "set-" S_mark_sync, "an integer");
-  return(iwrite_mark(mark_n, sync_n, MARK_SYNC, "set-" S_mark_sync));
+  return(mark_set(mark_n, sync_n, MARK_SYNC, "set-" S_mark_sync));
 }
 
 static XEN g_mark_name(XEN mark_n) 
 {
   #define H_mark_name "(" S_mark_name " id &optional snd chn) returns the mark's name"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_name, "an integer");
-  return(iread_mark(mark_n, MARK_NAME, XEN_UNDEFINED, S_mark_name));
+  return(mark_get(mark_n, MARK_NAME, XEN_UNDEFINED, S_mark_name));
 }
 
 static XEN g_set_mark_name(XEN mark_n, XEN name) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, "set-" S_mark_name, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, "set-" S_mark_name, "a string");
-  return(iwrite_mark(mark_n, name, MARK_NAME, "set-" S_mark_name));
+  return(mark_set(mark_n, name, MARK_NAME, "set-" S_mark_name));
 }
 
 static XEN g_mark_sync_max(void) 
@@ -1825,7 +1825,7 @@ static XEN g_mark_home(XEN mark_n)
 {
   #define H_mark_home "(" S_mark_home " id) returns the sound (index) and channel that hold mark id"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_home, "an integer");
-  return(iread_mark(mark_n, MARK_HOME, XEN_UNDEFINED, S_mark_home));
+  return(mark_get(mark_n, MARK_HOME, XEN_UNDEFINED, S_mark_home));
 }
 
 static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n) 

@@ -1,54 +1,5 @@
 # snd.rb: Snd Ruby code and tests
 
-set_window_width 800
-set_window_height 500
-
-set_listener_font "9x15"
-set_help_text_font "9x15"
-set_axis_numbers_font "9x15"
-
-set_show_mix_waveforms #t
-set_trap_segfault #f
-# set_show_backtrace #t
-# set_show_indices #t
-
-# set_listener_prompt ":"
-show_listener
-
-beige = make_color 0.96, 0.96, 0.86
-blue = make_color 0, 0, 1
-set_selected_graph_color beige
-set_selected_data_color blue
-
-def car(v)
-  v[0]
-end
-
-$mouse_enter_graph_hook = Proc.new {|snd, chn| 
-			            if sound? snd then
-			               focus_widget car channel_widgets snd, chn
-                                    end 
-                                   }
-
-$mouse_enter_listener_hook = Proc.new { |widget| 
-                                        focus_widget widget 
-                                      }
-
-def display_energy(snd, chn)
-  ls = left_sample
-  rs = right_sample
-  data1 = make_graph_data(snd, chn)
-  data = data1
-  if not vct? data
-    data = data1[1]
-  end
-  len = vct_length data
-  sr = srate snd
-  y_max = y_zoom_slider(snd, chn)
-  vct_multiply!(data, data)
-  graph(data, "energy", ls / sr, rs / sr, 0.0, y_max * y_max, snd, chn, false)
-  end
-
 def provided?(feature) feature == $".find{|obj| obj == feature} end
 # not sure this is kosher in Ruby -- I'm using $" via rb_provided as a feature list, but doc says its a filename array
 
@@ -72,6 +23,7 @@ def vequal(a, b)
   if happy then
     0.upto(alen - 1) do |i|
       if fneq(a[i], b[i]) then happy = false end
+      break if !happy
     end
   end
   happy
@@ -1251,3 +1203,29 @@ if fneq(vb[8], 123.0) then snd_display sprintf("\n#vct_subseq[1:82vb][8] %s?", v
 if fneq(vct(1.0, 2.0, 3.0)[1], 2.0) then snd_display sprintf("\n# (vct...) = %s?", vct(1.0, 2.0, 3.0)[1]) end
 v1 = vct(1, 2, 3, 4)
 if fneq(v1[1], 2.0) then snd_display sprintf("\n# (v1 1) = %s?", v1[1]) end
+
+
+
+
+
+# from test 9
+load "bird.rb"
+make_birds
+close_sound(find_sound("test.snd"))
+
+
+def display_energy(snd, chn)
+  ls = left_sample
+  rs = right_sample
+  data1 = make_graph_data(snd, chn)
+  data = data1
+  if not vct? data
+    data = data1[1]
+  end
+  len = vct_length data
+  sr = srate snd
+  y_max = y_zoom_slider(snd, chn)
+  vct_multiply!(data, data)
+  graph(data, "energy", ls / sr, rs / sr, 0.0, y_max * y_max, snd, chn, false)
+  end
+

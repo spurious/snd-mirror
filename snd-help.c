@@ -268,6 +268,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+21-Jan:  bird.rb.\n\
+         channel-properties, sound-properties (accessors in extensions.scm).\n\
 18-Jan:  zip-channel (zip.scm).\n\
          removed old-sndlib.h and old-sndlib2scm.scm.\n\
 14-Jan:  gsl-error.\n\
@@ -281,8 +283,6 @@ void news_help(snd_state *ss)
 26-Dec:  explode-sf2 in examp.scm.\n\
 14-Dec:  removed icons.scm and backgrounds.scm (replaced by contrib/dlp code).\n\
          removed reverb-control-procedures and contrast-control-procedure.\n\
-10-Dec:  midi.c.\n\
-6-Dec:   play.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'",
@@ -1096,6 +1096,7 @@ all refer to the same thing.\n\
   " S_c_g "               ()\n\
   " S_c_g_x "              ()\n\
   " S_change_menu_label " (top-menu old-label new-label)\n\
+  " S_channel_properties "(snd chn)\n\
   " S_channel_style "     (snd)\n\
   " S_channel_sync "      (snd chn)\n\
   " S_channels "          (snd)\n\
@@ -1299,6 +1300,7 @@ all refer to the same thing.\n\
   " S_smooth_sound "      (beg num snd chn)\n\
   " S_sound_files_in_directory "(dir)\n\
   " S_sound_p "            (snd)\n\
+  " S_sound_properties "  (snd)\n\
   " S_sounds "            ()\n\
   " S_snd_apropos "       (name)\n\
   " S_snd_error "         (str)\n\

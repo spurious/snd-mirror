@@ -7,6 +7,7 @@
 ;;; see clm.c for C version (using GSL's complex trig functions)
 
 (define (dolph N gamma)
+  "(dolph n gamma) produces a Dolph-Chebyshev FFT data window of 'n' points using 'gamma' as the window parameter."
   (let* ((alpha (cosh (/ (acosh (expt 10.0 gamma)) N)))
 	 (den (/ 1.0 (cosh (* N (acosh alpha)))))
 	 (freq (/ pi N))
@@ -34,6 +35,7 @@
 ;;; -------- slow Hartley transform 
 
 (define (dht data) 
+  "(dht data) returns the Hartley transform of 'data'."
   ;; taken from Perry Cook's SignalProcessor.m (the slow version of the Hartley transform)
   ;; the built-in function fht is the fast form of this transform
   (let* ((len (vct-length data)) 
@@ -59,35 +61,39 @@
 ;;   who based his work on formulas from 
 ;;   Charles Dodge, Computer music: synthesis, composition, and performance.
 
-(define root-2 (sqrt 2.0))
-
-(define (butter b sig) (filter b sig))
+(define (butter b sig) 
+  "(butter b sig) is the generator side for the various make-butter procedure"
+  (filter b sig))
 
 (define (make-butter-high-pass fq)
+  "(make-butter-high-pass freq) makes a Butterworth filter with high pass cutoff at 'freq'"
   (let* ((r (tan (/ (* pi fq) (srate))))
 	 (r2 (* r r))
-	 (c1 (/ 1.0 (+ 1.0 (* r root-2) r2)))
+	 (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2)))
 	 (c2  (* -2.0 c1))
 	 (c3 c1)
 	 (c4 (* 2.0 (- r2 1.0) c1))
-	 (c5 (* (+ (- 1.0 (* r root-2)) r2) c1)))
+	 (c5 (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
     (make-filter 3
 		 (list->vct (list c1 c2 c3))
 		 (list->vct (list 0.0 c4 c5)))))
 
 (define (make-butter-low-pass fq)
+  "(make-butter-low-pass freq) makes a Butterworth filter with low pass cutoff at 'freq'.  The result \
+can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'butter' generator"
   (let* ((r (/ 1.0 (tan (/ (* pi fq) (srate)))))
 	 (r2 (* r r))
-	 (c1 (/ 1.0 (+ 1.0 (* r root-2) r2)))
+	 (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2)))
 	 (c2 (* 2.0 c1))
 	 (c3 c1)
 	 (c4 (* 2.0 (- 1.0 r2) c1))
-	 (c5  (* (+ (- 1.0 (* r root-2)) r2) c1)))
+	 (c5  (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
     (make-filter 3
 		 (list->vct (list c1 c2 c3))
 		 (list->vct (list 0.0 c4 c5)))))
 
 (define (make-butter-band-pass fq bw)
+  "(make-butter-band-pass freq band) makes a bandpass Butterworth filter with low edge at 'freq' and width 'band'"
   (let* ((d (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
 	 (c (/ 1.0 (tan (/ (* pi bw) (srate)))))
 	 (c1 (/ 1.0 (+ 1.0 c)))
@@ -100,6 +106,7 @@
 		 (list->vct (list 0.0 c4 c5)))))
 
 (define (make-butter-band-reject fq bw)
+  "(make-butter-band-reject freq band) makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
   (let* ((d  (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
 	 (c (tan (/ (* pi bw) (srate))))
 	 (c1 (/ 1.0 (+ 1.0 c)))
@@ -117,32 +124,30 @@
 
 ;;; Snd's (very simple) spectrum->coefficients procedure is:
 
-(define spectrum->coeffs 
-  (lambda (order spectr)
-    "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope"
-    (let* ((coeffs (make-vct order))
-	   (n order)
-	   (m (inexact->exact (floor (/ (+ n 1) 2))))
-	   (am (* 0.5 (+ n 1)))
-	   (q (/ (* 3.14159 2.0) n)))
-      (do ((j 0 (1+ j))
-	   (jj (- n 1) (1- jj)))
-	  ((= j m) coeffs)
-	(let ((xt (* 0.5 (vct-ref spectr 0))))
-	  (do ((i 1 (1+ i)))
-	      ((= i m))
-	    (set! xt (+ xt (* (vct-ref spectr i) (cos (* q i (- am j 1)))))))
-	  (let ((coeff (* 2.0 (/ xt n))))
-	    (vct-set! coeffs j coeff)
-	    (vct-set! coeffs jj coeff)))))))
+(define (spectrum->coeffs order spectr)
+  "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope"
+  (let* ((coeffs (make-vct order))
+	 (n order)
+	 (m (inexact->exact (floor (/ (+ n 1) 2))))
+	 (am (* 0.5 (+ n 1)))
+	 (q (/ (* 3.14159 2.0) n)))
+    (do ((j 0 (1+ j))
+	 (jj (- n 1) (1- jj)))
+	((= j m) coeffs)
+      (let ((xt (* 0.5 (vct-ref spectr 0))))
+	(do ((i 1 (1+ i)))
+	    ((= i m))
+	  (set! xt (+ xt (* (vct-ref spectr i) (cos (* q i (- am j 1)))))))
+	(let ((coeff (* 2.0 (/ xt n))))
+	  (vct-set! coeffs j coeff)
+	  (vct-set! coeffs jj coeff))))))
 
-(define fltit-1
-  (lambda (order spectr) 
-    "(fltit order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it"
-    (let* ((coeffs (spectrum->coeffs order spectr))
-	   (flt (make-fir-filter order coeffs)))
-      (lambda (x)
-	(fir-filter flt x)))))
+(define (fltit-1 order spectr)
+  "(fltit-1 order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it: \
+(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))"
+  (let* ((flt (make-fir-filter order (spectrum->coeffs order spectr))))
+    (lambda (x)
+      (fir-filter flt x))))
 
 ;(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
 ;
@@ -290,21 +295,18 @@
 
 
 ;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
-;;;
-;;; (freqdiv n) repeats each nth sample n times (clobbering the intermediate samples)
 
-(define freqdiv
-  (lambda (n)
-    (let ((div 0)
-	  (curval 0.0))
-      (map-chan (lambda (val)
-		  (if (= div 0)
-		      (set! curval val))
-		  (set! div (1+ div))
-		  (if (= div n) (set! div 0))
-		  curval)))))
+(define (freqdiv n)
+  "(freqdiv n) repeats each nth sample n times (clobbering the intermediate samples): (freqdiv 8)"
+  (let ((div 0)
+	(curval 0.0))
+    (map-chan (lambda (val)
+		(if (= div 0)
+		    (set! curval val))
+		(set! div (1+ div))
+		(if (= div n) (set! div 0))
+		curval))))
 
-;(freqdiv 8)
 
 
 ;;; -------- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com
@@ -312,30 +314,30 @@
 ;;; a more extreme effect is "saturation":
 ;;;   (map-chan (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
 
-(define adsat
-  (lambda (size)
-    (let ((mn 0.0)
-	  (mx 0.0)
-	  (n 0)
-	  (vals (make-vct size)))
-      (map-chan (lambda (val)
-		  (if (= n size)
-		      (begin
-			(do ((i 0 (1+ i)))
-			    ((= i size))
-			  (if (>= (vct-ref vals i) 0.0)
-			      (vct-set! vals i mx)
-			      (vct-set! vals i mn)))
-			(set! n 0)
-			(set! mx 0.0)
-			(set! mn 0.0)
-			vals)
-		      (begin
-			(vct-set! vals n val)
-			(if (> val mx) (set! mx val))
-			(if (< val mn) (set! mn val))
-			(set! n (1+ n))
-			#f)))))))
+(define (adsat size)
+  "(adsat size) is an 'adaptive saturation' sound effect"
+  (let ((mn 0.0)
+	(mx 0.0)
+	(n 0)
+	(vals (make-vct size)))
+    (map-chan (lambda (val)
+		(if (= n size)
+		    (begin
+		      (do ((i 0 (1+ i)))
+			  ((= i size))
+			(if (>= (vct-ref vals i) 0.0)
+			    (vct-set! vals i mx)
+			    (vct-set! vals i mn)))
+		      (set! n 0)
+		      (set! mx 0.0)
+		      (set! mn 0.0)
+		      vals)
+		    (begin
+		      (vct-set! vals n val)
+		      (if (> val mx) (set! mx val))
+		      (if (< val mn) (set! mn val))
+		      (set! n (1+ n))
+		      #f))))))
 
 
 ;;; -------- spike
@@ -343,6 +345,7 @@
 ;;; makes sound more spikey -- sometimes a nice effect
 
 (define (spike)
+  "(spike) multiplies successive samples together to make a sound more spikey"
   (map-chan (let ((x1 0.0) 
 		  (x2 0.0) 
 		  (amp (maxamp))) ; keep resultant peak at maxamp
@@ -362,6 +365,7 @@
 
 (define spot-freq
   (lambda args
+    "(spot-freq samp &optional snd chn) tries to determine the current pitch: (spot-freq (left-sample))"
     (let* ((s0 (car args))
 	   (snd (if (> (length args) 1) (list-ref args 1) #f))
 	   (chn (if (> (length args) 2) (list-ref args 2) #f))
@@ -397,6 +401,7 @@
 (define chorus-speed 10.0)
 
 (define (chorus)
+  "(chorus) tries to produce the chorus sound effect"
   (define (make-flanger)
     (let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
 	   (len (inexact->exact (random (* 3.0 chorus-time (srate)))))
@@ -425,6 +430,7 @@
 (define chordalize-chord '(1 3/4 5/4))
 
 (define (chordalize)
+  "(chordalize) uses harmonically-related comb-filters to bring out a chord in a sound"
   ;; chord is a list of members of chord such as '(1 5/4 3/2)
   (let ((combs (map (lambda (interval)
 		      (make-comb chordalize-amount (* chordalize-base interval)))
@@ -438,6 +444,7 @@
 ;;; fft games (from the "phazor" package of Scott McNab)
 
 (define (zero-phase)
+  "(zero-phase) calls fft, sets all phases to 0, and un-ffts"
   (let* ((len (frames))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
@@ -454,6 +461,7 @@
       (vct->samples 0 len (vct-scale! rl (/ old-pk pk))))))
 
 (define (rotate-phase func)
+  "(rotate-phase func) calls fft, applies func to each phase, then un-ffts"
   (let* ((len (frames))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))

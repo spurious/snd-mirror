@@ -1,5 +1,6 @@
 #include "snd.h"
 
+void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, GUI_WIDGET main, int arrows) {}
 int snd_help(snd_state *ss, char *subject, char *help) {fprintf(stdout, help); return(0);}
 int snd_help_with_wrap(snd_state *ss, char *subject, char *help) {fprintf(stdout, help); return(0);}
 void add_to_error_history(snd_state *ss, char *msg, int popup) {}

@@ -2,6 +2,7 @@
 
 (define red (make-color 1 0 0))
 
+#!
 ;;; this version uses draw-lines which is unnecessary
 (define (display-samps-in-red-1 snd chn)
   "display samples 1000 to 2000 in red whenever they're in the current view"
@@ -27,10 +28,12 @@
 		(set! (foreground-color snd chn) red)
 		(draw-lines lines snd chn)
 		(set! (foreground-color snd chn) old-color)))))))
+!#
 
 ;;; a better version:
 (define (display-samps-in-red snd chn)
-  "display samples 1000 to 2000 in red whenever they're in the current view"
+  "(display-samples-in-red snd chn) displays samples 1000 to 2000 in red whenever they're in the current view. It \
+is intended to be used as an after-graph-hook function."
   (let ((left (left-sample snd chn))
 	(right (right-sample snd chn))
 	(old-color (foreground-color snd chn)))
@@ -62,7 +65,7 @@
 ;(add-hook! after-graph-hook display-samps-in-red)
 
 (define (display-previous-edits snd chn)
-  "display all edits of the current sound, with older versions gradually fading away"
+  "(display-previous-edits snd chn) displays all edits of the current sound, with older versions gradually fading away"
   (let* ((edits (edit-position snd chn))
 	 (old-color (foreground-color snd chn))
 	 (clist (color->list old-color))
@@ -86,7 +89,7 @@
 
 
 (define (overlay-sounds . args)
-  "overlay-sounds overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3)"
+  "(overlay-sounds . args) overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3)"
   (let ((base (car args)))
     (add-hook! after-graph-hook
 	       (lambda (snd chn)
@@ -105,26 +108,24 @@
 
 
 
-(define display-energy
-  ;; in this version, the y-zoom-slider controls the graph amp
-  (lambda (snd chn)
-    "(display-energy snd chn) is a lisp-graph-hook function to display the time domain data\n\
-    as energy (squared)"
-    (let* ((ls (left-sample))
-           (rs (right-sample))
-	   (datal (make-graph-data snd chn))
-	   (data (if (vct? datal) datal (cadr datal)))
-           (len (vct-length data))
-           (sr (srate snd))
-	   (y-max (y-zoom-slider snd chn)))
-      (vct-multiply! data data)
-      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
+(define (display-energy snd chn)
+  "(display-energy snd chn) is a lisp-graph-hook function that displays the time domain data as energy in the lisp graph; \
+the y-zoom-slider controls the graph amp"
+  (let* ((ls (left-sample))
+	 (rs (right-sample))
+	 (datal (make-graph-data snd chn))
+	 (data (if (vct? datal) datal (cadr datal)))
+	 (len (vct-length data))
+	 (sr (srate snd))
+	 (y-max (y-zoom-slider snd chn)))
+    (vct-multiply! data data)
+    (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f)))
 
 ;(add-hook! lisp-graph-hook display-energy)
 
 
 (define (samples-via-colormap snd chn)
-  ;; displays time domain graph using current colormap (just an example of colormap-ref)
+  "(samples-via-colormap snd chn) displays time domain graph using current colormap (just an example of colormap-ref)"
   (let* ((left (left-sample snd chn))
 	 (right (right-sample snd chn))
 	 (old-color (foreground-color snd chn))

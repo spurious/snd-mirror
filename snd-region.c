@@ -299,6 +299,42 @@ static int check_regions(void)
   return(act);
 }
 
+snd_info *make_initial_region_sp(snd_state *ss, GUI_WIDGET region_grf)
+{
+  int id;
+  snd_info *reg_sp;
+  chan_info *cp;
+  file_info *hdr;
+  id = stack_position_to_id(0);
+  reg_sp = make_basic_snd_info(1);
+  reg_sp->nchans = 1;
+  reg_sp->inuse = 1;
+  reg_sp->active = 1;
+  reg_sp->sx_scroll_max = 100;
+  reg_sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
+  reg_sp->search_proc = XEN_UNDEFINED;
+  reg_sp->prompt_callback = XEN_UNDEFINED;
+  hdr = reg_sp->hdr;
+  hdr->samples = region_len(id);
+  hdr->srate = region_srate(id);
+  hdr->comment = NULL;
+  hdr->chans = 1;
+  add_channel_window(reg_sp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
+  cp = reg_sp->chans[0];
+  cp->sound = reg_sp;
+  cp->edit_size = 1;
+  cp->edit_ctr = 0;
+  allocate_ed_list(cp);
+  cp->samples = (int *)CALLOC(cp->edit_size, sizeof(int));
+  cp->sound_size = 1;
+  cp->sound_ctr = 0;
+  cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
+  cp->samples[0] = region_len(id);
+  cp->graph_style = region_graph_style(ss); /* added 8-Aug-01 */
+  cp->dot_size = dot_size(ss);
+  return(reg_sp);
+}
+
 static void make_region_readable(region *r)
 {
   snd_info *regsp;
@@ -314,10 +350,8 @@ static void make_region_readable(region *r)
   if (r->rsp) return;
 
   ss = get_global_state();
-  regsp = (snd_info *)CALLOC(1, sizeof(snd_info));
+  regsp = make_basic_snd_info(r->chans);
   regsp->nchans = r->chans;
-  regsp->allocated_chans = r->chans; /* needed for complete GC */
-  regsp->chans = (chan_info **)CALLOC(r->chans, sizeof(chan_info *));
   regsp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
   regsp->search_proc = XEN_UNDEFINED;
   regsp->prompt_callback = XEN_UNDEFINED;
@@ -1196,7 +1230,7 @@ static XEN g_set_max_regions(XEN n)
 
 enum {REGION_LENGTH, REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY};
 
-static XEN region_read(int field, XEN n, char *caller)
+static XEN region_get(int field, XEN n, char *caller)
 {
   int rg;
   rg = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(n, stack_position_to_id(0), caller);
@@ -1225,35 +1259,35 @@ static XEN g_region_length (XEN n)
 {
   #define H_region_length "(" S_region_length " &optional (n 0)) -> length in frames of region"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_length, "an integer");
-  return(region_read(REGION_LENGTH, n, S_region_length));
+  return(region_get(REGION_LENGTH, n, S_region_length));
 }
 
 static XEN g_region_srate (XEN n) 
 {
   #define H_region_srate "(" S_region_srate " &optional (n 0)) -> srate of region n"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_srate, "an integer");
-  return(region_read(REGION_SRATE, n, S_region_srate));
+  return(region_get(REGION_SRATE, n, S_region_srate));
 }
 
 static XEN g_region_chans (XEN n) 
 {
   #define H_region_chans "(" S_region_chans " &optional (n 0) -> channels of data in region n"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_chans, "an integer");
-  return(region_read(REGION_CHANS, n, S_region_chans));
+  return(region_get(REGION_CHANS, n, S_region_chans));
 }
 
 static XEN g_region_maxamp (XEN n) 
 {
   #define H_region_maxamp "(" S_region_maxamp " &optional (n 0)) -> max amp of region n"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_maxamp, "an integer");
-  return(region_read(REGION_MAXAMP, n, S_region_maxamp));
+  return(region_get(REGION_MAXAMP, n, S_region_maxamp));
 }
 
 static XEN g_forget_region (XEN n) 
 {
   #define H_forget_region "(" S_forget_region " &optional (n 0)) remove region n from the region list"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_forget_region, "an integer");
-  return(region_read(REGION_FORGET, n, S_forget_region));
+  return(region_get(REGION_FORGET, n, S_forget_region));
 }
 
 static XEN g_play_region (XEN n, XEN wait) 
