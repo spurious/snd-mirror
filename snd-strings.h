@@ -310,7 +310,6 @@
 #define S_max_regions                   "max-regions"
 #define S_max_transform_peaks           "max-transform-peaks"
 #define S_maxamp                        "maxamp"
-#define S_memo_sound                    "memo-sound"
 #define S_menu_widgets                  "menu-widgets"
 #define S_min_dB                        "min-dB"
 #define S_minibuffer_history_length     "minibuffer-history-length"
@@ -540,6 +539,11 @@
 #define S_snd_error_hook                "snd-error-hook"
 #define S_snd_gcs                       "snd-gcs"
 #define S_snd_help                      "snd-help"
+#if HAVE_RUBY
+  #define S_snd_opened_sound            "snd-opened-sound"
+#else
+  #define S_snd_opened_sound            "*snd-opened-sound*"
+#endif
 #define S_snd_print                     "snd-print"
 #define S_snd_spectrum                  "snd-spectrum"
 #define S_snd_tempnam                   "snd-tempnam"

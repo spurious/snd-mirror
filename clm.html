@@ -3943,15 +3943,15 @@ the most useful of the functions are:</p>
 </pre>
 <p><b>snd-memo</b> provides access to the ".scm" file that can be associated with any sound
 in Snd; the memo file can contain any Snd-related Scheme code you want; it will be loaded
-just after the sound it itself is loaded.  The variable <b>memo-sound</b> is set during
+just after the sound it itself is loaded.  The variable <b>*snd-opened-sound*</b> is set during
 this process to the index of the current sound.  You can save any arbitrary information
 you like at any time through this function; the predefined macro <b>add-mark</b> is
 just one simple example:</p>
 <pre>
   (defmacro add-mark (samp &amp;optional (chan 0))
-    `(<em class=red>snd-memo</em> *output* "(<em class=red>add-mark</em> ~D memo-sound ~D)~%" ,samp ,chan))
+    `(<em class=red>snd-memo</em> *output* "(<em class=red>add-mark</em> ~D *snd-opened-sound* ~D)~%" ,samp ,chan))
 </pre>
-<p>It appends the <code>(add-mark samp memo-sound chan)</code> call to the current output's
+<p>It appends the <code>(add-mark samp *snd-opened-sound* chan)</code> call to the current output's
 memo (.scm) file.  Similarly, <b>add-region</b> defines a new region in Snd; it can be used
 to mark a note's begin and end points with a sound. 
 </p>

@@ -1107,8 +1107,9 @@
 	'with-relative-panes (with-relative-panes) #t
 	'audio-output-device (audio-output-device) 0 
 	))
-      (if (not snd-remember-paths) (snd-display ";snd-remember-paths?"))
-      (if memo-sound (snd-display ";memo-sound: ~A" memo-sound))
+      (if (not *snd-remember-paths*) (snd-display ";*snd-remember-paths*?"))
+      (if *snd-opened-sound* (snd-display ";*snd-opened-sound*: ~A" *snd-opened-sound*))
+      (if (not *snd-loaded-files*) (snd-display ":*snd-loaded-files*?"))
       (run-hook after-test-hook 1)
       ))
 
@@ -8161,7 +8162,7 @@ EDITS: 5
 	
 	(let* ((ind (open-sound "now.snd"))
 	       (cur-amp (amp-control ind)))
-	  (if (not (= now-snd-index ind)) (snd-display ";memo-sound: ~A ~A ~A" memo-sound ind now-snd-index))
+	  (if (not (= now-snd-index ind)) (snd-display ";*snd-opened-sound*: ~A ~A ~A" *snd-opened-sound* ind now-snd-index))
 	  (set! (amp-control ind) .5)
 	  (if (ffneq (amp-control ind) .5) (snd-display ";amp-control (.5): ~A?" (amp-control ind)))
 	  (set! (amp-control ind 0) .25)
@@ -36533,6 +36534,21 @@ EDITS: 2
 	    (btst '(let ((sd (make-sound-data 2 3)) (sd1 (make-sound-data 2 4))) (equal? sd sd1)) #f)
 	    (btst '(let ((sd (make-sound-data 2 3)) (sd1 (make-sound-data 2 3))) (eq? sd sd1)) #f)
 	    
+	    (let ((val (run-eval '(lambda ()
+				    (let ((our-val 0.0))
+				      (do ((i 0 (1+ i)))
+					  ((= i 32) our-val)
+					(let ((v (make-vct 3))
+					      (sd (make-sound-data 1 4))
+					      (str (make-string 3 #\c)))
+					  (if (not (string=? str "ccc"))
+					      (snd-print (format #f ";make-string: ~A" str)))
+					  (vct-set! v 0 .1)
+					  (sound-data-set! sd 0 1 .2)
+					  (set! our-val (+ our-val (vct-ref v 0) (sound-data-ref sd 0 1))))))))))
+	      (if (fneq val 9.6)
+		  (snd-display ";make-all val: ~A" val)))
+
 	    (itst '(case 1 ((1) 4) ((2 3) 5)) 4)
 	    (stst '(case 2 ((1) "hi") ((2 3) "ho")) "ho")
 	    (itsta '(lambda (y) (declare (y integer)) (case y ((1) (let ((a y)) (+ a 1))) ((2 3 4) (* y 2)))) 1 2)
@@ -39440,6 +39456,8 @@ EDITS: 2
 	(if (not (equal? val 'mus-error)) (snd-display ";run-safety vct 1: ~A" val)))
       (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-vct 4)) (i 5)) (vct-ref v i))))) (lambda args (car args)))))
 	(if (not (equal? val 'mus-error)) (snd-display ";run-safety vct i: ~A" val)))
+      (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-sound-data 1 4)) (i 5)) (sound-data-ref v 0 i))))) (lambda args (car args)))))
+	(if (not (equal? val 'mus-error)) (snd-display ";run-safety sound-data index i: ~A" val)))
       (set! (run-safety) 0)
 
       (run-hook after-test-hook 22)

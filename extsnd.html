@@ -9696,7 +9696,7 @@ delete listener text from the beginning to the cursor position (C-M-g is bound t
 <tr><td></td><td>
 close file (opened by <a href="#opensoundfile">open-sound-file</a>) updating header to report <i>bytes</i> bytes of data.  This refers to data files
 handled directly, not sounds displayed in Snd (the latter are handled by <a href="#opensound">open-sound</a> and <a href="#closesound">close-sound</a>).
-See <i>save-track</i> in mix.scm.
+See <i>save-track</i> in mix.scm, and <a href="#opensoundfile">open-sound-file</a>.
 </td></tr>
 
 <!-- c-g? -->
@@ -9881,24 +9881,6 @@ and click-for-listener-help (draw.scm).
 return #t if underlying machine is little endian.
 </td></tr>
 
-<!-- memo-sound -->
-<tr><td colspan=2>
-<code><a class=def name="memosound">memo-sound</a></code></td></tr>
-<tr><td></td><td>
-When a sound file is opened, Snd looks for a file with the same 
-name but with an appended ".scm" extension.  If such a file is found, 
-it is loaded automatically.  The variable <i>memo-sound</i> is set to 
-the newly opened sound's index.  This supports the <a href="clm.html#snd-memo">snd-memo</a> feature 
-in CLM, but can be used independently of CLM to store marks, selections,
-or whatever that you want associated with a particular sound. Confusingly
-enough, this is a variable, unlike all the others -- that is, you
-refer to it directly, not as a procedure call.  Say we have a sound file "now.snd",
-and we want it to use the grid-graph whenever it is viewed.  We make "now.snd.scm"
-and put in it: <code>(set! (show-grid memo-sound) #t)</code>.  When now.snd is
-opened, so is now.snd.scm, with memo-sound holding the index of now.snd.
-There are other fancier ways to do this (e.g. <a href="sndscm.html#exremembersoundstate">remember-sound-state</a>).
-</td></tr>
-
 <!-- open-sound-file -->
 <tr><td colspan=2>
 <code><a class=def name="opensoundfile">open-sound-file</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :channels :srate :comment :header-type)</code></td></tr>
@@ -10043,12 +10025,31 @@ in draw.scm uses this to put off formatting the help string until the help dialo
 the listener) gets it.
 </td></tr>
 
-<!-- snd-loaded-files -->
+<!-- *snd-loaded-files* -->
 <tr><td colspan=2>
-<code><a class=def name="sndloadedfiles">snd-loaded-files</a></code></td></tr>
+<code><a class=def name="sndloadedfiles">*snd-loaded-files*</a></code></td></tr>
 <tr><td></td><td>
 A variable (not a function), a list containing the full names of (nearly) all the
 files currently loaded into Snd.  The Guile boot file may be missing from the list.
+(Guile only).
+</td></tr>
+
+<!-- *snd-opened-sound* -->
+<tr><td colspan=2>
+<code><a class=def name="sndopenedsound">*snd-opened-sound*</a></code></td></tr>
+<tr><td></td><td>
+When a sound file is opened, Snd looks for a file with the same 
+name but with an appended ".scm" extension.  If such a file is found, 
+it is loaded automatically.  The variable <i>*snd-opened-sound*</i> is set to 
+the newly opened sound's index.  This supports the <a href="clm.html#snd-memo">snd-memo</a> feature 
+in CLM, but can be used independently of CLM to store marks, selections,
+or whatever that you want associated with a particular sound. Confusingly
+enough, this is a variable, unlike all the others -- that is, you
+refer to it directly, not as a procedure call.  Say we have a sound file "now.snd",
+and we want it to use the grid-graph whenever it is viewed.  We make "now.snd.scm"
+and put in it: <code>(set! (show-grid *snd-opened-sound*) #t)</code>.  When "now.snd" is
+opened, "now.snd.scm" is loaded automatically with *snd-opened-sound* holding the index of "now.snd".
+There are other fancier ways to do this (e.g. <a href="sndscm.html#exremembersoundstate">remember-sound-state</a>).
 </td></tr>
 
 <!-- snd-print -->
@@ -10059,13 +10060,14 @@ displays <i>str</i> in lisp the listener, then returns <i>str</i>.  (This is int
 debugging aid -- there's still nothing like a lowly print statement).
 </td></tr>
 
-<!-- snd-remember-paths -->
+<!-- *snd-remember-paths* -->
 <tr><td colspan=2>
-<code><a class=def name="sndrememberpaths">snd-remember-paths</a></code></td></tr>
+<code><a class=def name="sndrememberpaths">*snd-remember-paths*</a></code></td></tr>
 <tr><td></td><td>
-A variable (not a function); if #t (its default is #f), Snd adds code to the Guile %load-hook that makes sure the
+A variable (not a function); if #t (the default), Snd adds code to the Guile %load-hook that makes sure the
 current file's path is included in %load-path when load or load-from-path is called.  This makes it possible to
 use load-from-path inside a Scheme file when you don't know in advance where that file will reside at load time.
+(Guile only).
 </td></tr>
 
 <!-- snd-spectrum -->

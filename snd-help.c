@@ -359,7 +359,7 @@ void about_snd_help(void)
 #if HAVE_GUILE
   char *files = NULL;
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
-  files = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("snd-loaded-files")), 400);
+  files = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*snd-loaded-files*")), 400);
 #endif
 #if HAVE_RUBY
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("$\".join(' ')")), 400);
@@ -369,7 +369,10 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-31-Jan:  removed support for Motif 1.\n\
+31-Jan:  removed support for Motif 1 and Lesstif.\n\
+         changed memo-sound to *snd-opened-sound*.\n\
+         snd-load-files to *snd-loaded-files*.\n\
+         snd-remember-paths to *snd-remember-paths* (default value is now #t).\n\
 26-Jan:  removed useless edpos arg to controls->channel.\n\
 20-Jan:  translation of CLM scentroid (B Battey) in dsp.scm.\n\
 19-Jan:  changed send-netscape to send-mozilla.\n\

@@ -57,7 +57,7 @@ static void save_loaded_files_list(FILE *fd, const char *current_filename)
   XEN old_list;
   char *full_name;
   int len;
-  old_list = XEN_NAME_AS_C_STRING_TO_VALUE("snd-loaded-files");
+  old_list = XEN_NAME_AS_C_STRING_TO_VALUE("*snd-loaded-files*");
   len = XEN_LIST_LENGTH(old_list);
   if (len > 0)
     {
@@ -81,7 +81,7 @@ static void save_loaded_files_list(FILE *fd, const char *current_filename)
 	{
 	  fprintf(fd, ";;; reload any missing files\n");
 	  fprintf(fd, "(for-each\n  (lambda (file)\n");
-	  fprintf(fd, "    (if (and (not (member file snd-loaded-files))\n             (file-exists? file))\n        (load file)))\n");
+	  fprintf(fd, "    (if (and (not (member file *snd-loaded-files*))\n             (file-exists? file))\n        (load file)))\n");
 	  fprintf(fd, "  '(");
 	  for (i = 0; i < new_files; i++)
 	    fprintf(fd, "\"%s\" ", files[i]);

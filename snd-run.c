@@ -82,7 +82,7 @@
  *   args to same type (i.e. int->float done just once, if possible)
  */
 
-/* TODO: run safety complex checks (CL too?) -- will require extracted macro or something (sound_data index checks?)
+/* TODO: run safety complex checks (CL too?) -- will require extracted macro or something
  */
 
 #include "snd.h"
@@ -7106,14 +7106,13 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- vct stuff ---------------- */
 
-static void vct_check_arg_1(int *args, ptree *pt) {if (!(VCT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");}
+static void vct_check_arg_1(int *args, ptree *pt) {if ((!args) || (!(VCT_ARG_1))) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");}
 static char *descr_vct_check_arg_1(int *args, ptree *pt) {return(mus_format("if (!(" VCT_PT ") mus-error", args[1], DESC_VCT_ARG_1));}
-
 static void vct_check_index_1(int *args, ptree *pt) {if (VCT_ARG_1->length < 2) mus_error(MUS_NO_DATA, "vct index (1) too high");}
 static void vct_check_index_2(int *args, ptree *pt) {if (VCT_ARG_1->length < 3) mus_error(MUS_NO_DATA, "vct index (2) too high");}
 static void vct_check_index(int *args, ptree *pt) 
 {
-  if (VCT_ARG_1->length < INT_ARG_2) 
+  if (VCT_ARG_1->length <= INT_ARG_2) 
     mus_error(MUS_NO_DATA, "vct index (" INT_PT ") too high (len = %d)", args[2], INT_ARG_2, VCT_ARG_1->length);
 }
 
@@ -7439,6 +7438,23 @@ static xen_value *vct_reverse_2(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- sound-data ---------------- */
 
+static void sound_data_check_1(int *args, ptree *pt) {if ((!args) || (!(SOUND_DATA_ARG_1))) mus_error(MUS_NO_DATA, "arg 1 (sound-data) is null");}
+static char *descr_sound_data_check_1(int *args, ptree *pt) {return(mus_format("if (!(" SD_PT ")) mus-error", args[1], DESC_SOUND_DATA_ARG_1));}
+
+static void sound_data_check_index(int *args, ptree *pt) 
+{
+  if (SOUND_DATA_ARG_1->chans <= INT_ARG_2) 
+    mus_error(MUS_NO_DATA, "sound-data chan (" INT_PT ") too high (chans = %d)", args[2], INT_ARG_2, SOUND_DATA_ARG_1->chans);
+  if (SOUND_DATA_ARG_1->length <= INT_ARG_3) 
+    mus_error(MUS_NO_DATA, "sound-data index (" INT_PT ") too high (length = %d)", args[3], INT_ARG_3, SOUND_DATA_ARG_1->length);
+}
+static char *descr_sound_data_check_index(int *args, ptree *pt) 
+{
+  return(mus_format("if ((" SD_PT "->chans < " INT_PT ") || (" SD_PT "->length < " INT_PT ")) mus-error", 
+		    args[1], DESC_SOUND_DATA_ARG_1, args[2], INT_ARG_2, 
+		    args[1], DESC_SOUND_DATA_ARG_1, args[3], INT_ARG_3));
+}
+
 static void sound_data_length_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->length;}
 static char *descr_sound_data_length_i(int *args, ptree *pt) 
 {
@@ -7446,6 +7462,7 @@ static char *descr_sound_data_length_i(int *args, ptree *pt)
 }
 static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
   return(package(prog, R_INT, sound_data_length_i, descr_sound_data_length_i, args, 1));
 }
 
@@ -7456,6 +7473,7 @@ static char *descr_sound_data_chans_i(int *args, ptree *pt)
 }
 static xen_value *sound_data_chans_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
   return(package(prog, R_INT, sound_data_chans_i, descr_sound_data_chans_i, args, 1));
 }
 
@@ -7467,6 +7485,11 @@ static char *descr_sound_data_ref_f(int *args, ptree *pt)
 }
 static xen_value *sound_data_ref_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (run_safety == RUN_SAFE) 
+    {
+      temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
+      temp_package(prog, R_BOOL, sound_data_check_index, descr_sound_data_check_index, args, 3);
+    }
   return(package(prog, R_FLOAT, sound_data_ref_f, descr_sound_data_ref_f, args, 3));
 }
 
@@ -7506,6 +7529,11 @@ static xen_value *sound_data_set_2(ptree *prog, xen_value **args, int num_args)
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
   if (var) var->unclean = true;
+  if (run_safety == RUN_SAFE) 
+    {
+      temp_package(prog, R_BOOL, sound_data_check_1, descr_sound_data_check_1, args, 1);
+      temp_package(prog, R_BOOL, sound_data_check_index, descr_sound_data_check_index, args, 3);
+    }
   if (args[4]->type == R_FLOAT)
     return(package(prog, R_FLOAT, sound_data_set_f, descr_sound_data_set_f, args, 4));
   return(package(prog, R_FLOAT, sound_data_set_i, descr_sound_data_set_i, args, 4));

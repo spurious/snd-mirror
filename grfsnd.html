@@ -1701,7 +1701,7 @@ into a bunch of mono files:
 
 <p>Ruby is an extension language described as an "object-oriented Perl".
 It provides a different syntax from that of Guile/Scheme.  In Ruby, all
-the "-" are "_", "-&gt;" is "2", hooks and memo_sound have "$" prepended
+the "-" are "_", "-&gt;" is "2", hooks and current_sound have "$" prepended
 (since they are global variables from Ruby's point of view), and all the constants are capitalized
 (e.g. Autocorrelation).  The generalized set! functions are replaced
 by "set_" plus the base name (e.g. set_window_width), with arguments
@@ -2142,7 +2142,7 @@ set gdb_print($arg0)
 print gdb_output
 end
 document gp
-Executes (object-&gt;string arg): gp memo_sound =&gt; #f
+Executes (object-&gt;string arg)
 end
 
 define ge

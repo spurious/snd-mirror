@@ -650,7 +650,7 @@ void reflect_file_change_in_title(void)
   FREE(alist);
 }
 
-static char *memo_file_name(snd_info *sp)
+static char *snd_opened_sound_file_name(snd_info *sp)
 {
   char *newname;
   int len;
@@ -660,19 +660,19 @@ static char *memo_file_name(snd_info *sp)
   return(newname);
 }
 
-static void read_memo_file(snd_info *sp)
+static void read_snd_opened_sound_file(snd_info *sp)
 {
   char *newname;
-  newname = memo_file_name(sp);
+  newname = snd_opened_sound_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
     {
 #if HAVE_GUILE
       /* this file shouldn't be left in the load list -- it will confuse the save-state process 
-       *   (memo-sound is defined here but not at the saved state file reload point)
-       * snd-loaded-files is the variable name (snd-xen.c), so we save and restore its value if possible 
+       *   (*snd-opened-sound* is defined here but not at the saved state file reload point)
+       * *snd-loaded-files* is the variable name (snd-xen.c), so we save and restore its value if possible 
        */
       XEN var = XEN_FALSE, val = XEN_FALSE;
-      var = XEN_NAME_AS_C_STRING_TO_VARIABLE("snd-loaded-files");
+      var = XEN_NAME_AS_C_STRING_TO_VARIABLE("*snd-loaded-files*");
       if (!(XEN_FALSE_P(var)))
 	val = XEN_VARIABLE_REF(var);
       snd_load_file(newname);
@@ -685,7 +685,7 @@ static void read_memo_file(snd_info *sp)
   FREE(newname);
 }
 
-static XEN memo_sound;
+static XEN snd_opened_sound;
 static XEN open_hook;
 static XEN close_hook;
 
@@ -766,9 +766,9 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
   if (sp)
     {
 #if HAVE_RUBY
-      XEN_VARIABLE_SET(S_memo_sound, C_TO_XEN_INT(sp->index));
+      XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
 #else
-      XEN_VARIABLE_SET(memo_sound, C_TO_XEN_INT(sp->index));
+      XEN_VARIABLE_SET(snd_opened_sound, C_TO_XEN_INT(sp->index));
 #endif
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = false;
@@ -789,7 +789,7 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
   if (sp) 
     {
       if (select) select_channel(sp, 0);
-      read_memo_file(sp);
+      read_snd_opened_sound_file(sp);
       if ((sp->channel_style != CHANNELS_SEPARATE) && 
 	  (sp->nchans > 1)) 
 	{
@@ -2753,7 +2753,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort, g_previous_files_sort_w, H_previous_files_sort,
 				   S_setB S_previous_files_sort, g_set_previous_files_sort_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_VARIABLE(S_memo_sound, memo_sound, XEN_FALSE);
+  XEN_DEFINE_VARIABLE(S_snd_opened_sound, snd_opened_sound, XEN_FALSE);
 
   #define H_open_hook S_open_hook " (filename): called each time a file is opened (before the actual open). \
 If it returns #t, the file is not opened."

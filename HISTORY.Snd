@@ -1,6 +1,9 @@
 Snd change log
 
-  31-Jan:    removed support for Motif 1.
+  31-Jan:    removed support for Motif 1 and Lesstif.
+             changed memo-sound to *snd-opened-sound*.
+                     snd-load-files to *snd-loaded-files*.
+                     snd-remember-paths to *snd-remember-paths* (default value is now #t).
   26-Jan:    removed useless edpos arg to controls->channel.
   20-Jan:    translation of CLM scentroid (B Battey) in dsp.scm.
   19-Jan:    changed send-netscape to send-mozilla.

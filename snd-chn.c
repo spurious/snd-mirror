@@ -14,7 +14,6 @@
  *
  * TODO: bark scale as axis or color as above (fft as well?)
  * TODO: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
- * TODO: "memo-sound" is a dumb name, etc "focus-widget" ambiguous (focus->widget?)
  * SOMEDAY: user-addable graph-style?
  */
 

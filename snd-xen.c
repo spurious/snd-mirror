@@ -3391,16 +3391,16 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   XEN_EVAL_C_STRING("(define undo-edit undo)");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
-  XEN_EVAL_C_STRING("(define snd-loaded-files '())");
-  XEN_EVAL_C_STRING("(define snd-remember-paths #f)");
+  XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
+  XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
   XEN_EVAL_C_STRING("(set! %load-path (cons \".\" %load-path))");
   XEN_EVAL_C_STRING("(set! %load-hook \
                        (lambda (filename)\
                          (if %load-verbosely\
                              (snd-print (format #f \"~%;;; loading ~S\" filename)))\
-                         (if (not (member filename snd-loaded-files))\
-                             (set! snd-loaded-files (cons filename snd-loaded-files)))\
-                         (if snd-remember-paths\
+                         (if (not (member filename *snd-loaded-files*))\
+                             (set! *snd-loaded-files* (cons filename *snd-loaded-files*)))\
+                         (if *snd-remember-paths*\
                              (let ((curfile (mus-expand-filename filename))\
                                    (last-slash 0))\
                                (do ((i 0 (1+ i)))\
