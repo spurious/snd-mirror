@@ -1,10 +1,10 @@
 # dlocsig.rb -- CLM -> Snd/Ruby translation of dlocsig.lisp -*- snd-ruby -*-
 
-# Copyright (C) 2003--2004 Michael Scholz
+# Copyright (C) 2003--2005 Michael Scholz
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Last: Wed Dec 15 20:15:29 CET 2004
+# Last: Wed Feb 23 01:32:22 CET 2005
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -242,11 +242,8 @@ require "complex"
 require "matrix"
 include Math
 
-if (provided? "snd-motif" or provided? "snd-gtk") and (not (provided? "xm" or provided? "xg"))
-  with_silence(LoadError) do
-    require "libxm"
-  end
-end
+provided?("snd-motif") and (not provided?("xm")) and require("libxm.so")
+provided?("snd-gtk")   and (not provided?("xg")) and require("libxg.so")
 
 # module Inject, see Thomas, David, Hunt, Andrew: Programming Ruby --
 # The Pragmatic Programmer's Guide, 2001 Addison-Wesley, page 102n
@@ -1844,7 +1841,6 @@ module DL
       xseg = [rx[0]]
       yseg = [ry[0]]
       zseg = [rz[0]]
-      vseg = [rv[0]]
       vi = rv[0]
       ti = 0.0
       times = [ti]
@@ -1856,7 +1852,6 @@ module DL
         xseg << x
         yseg << y
         zseg << z
-        vseg << v
         if v
           sofar = 0.0
           dseg = (0...xseg.length - 1).map do |j|
@@ -1881,7 +1876,6 @@ module DL
           xseg = [x]
           yseg = [y]
           zseg = [z]
-          vseg = [v]
           vi = v
           ti = tseg[-1]
         end
@@ -2152,7 +2146,6 @@ module DL
       xseg = [rx[0]]
       yseg = [ry[0]]
       zseg = [rz[0]]
-      vseg = [rv[0]]
       vi = rv[0]
       ti = 0.0
       times = [ti]
@@ -2164,7 +2157,6 @@ module DL
         xseg << x
         yseg << y
         zseg << z
-        vseg << v
         if v
           sofar = 0.0
           dseg = (0...xseg.length - 1).map do |j|
@@ -2189,7 +2181,6 @@ module DL
           xseg = [x]
           yseg = [y]
           zseg = [z]
-          vseg = [v]
           vi = v
           ti = tseg[-1]
         end

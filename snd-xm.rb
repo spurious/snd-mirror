@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@@gmx.de>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Last: Tue Apr 13 23:35:57 CEST 2004
+# Last: Wed Feb 23 01:32:04 CET 2005
 
 # Commentary:
 #
@@ -104,11 +104,8 @@
 
 require "examp"
 
-if (provided? "snd-motif" or provided? "snd-gtk") and (not (provided? "xm" or provided? "xg"))
-  with_silence(LoadError) do
-    require "libxm"
-  end
-end
+provided?("snd-motif") and (not provided?("xm")) and require("libxm.so")
+provided?("snd-gtk")   and (not provided?("xg")) and require("libxg.so")
 
 unless provided? "xm" or provided? "xg"
   error("%s requires --with-motif or --with-gtk and module libxm.so or --with-static-xm", __FILE__)

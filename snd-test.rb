@@ -38,18 +38,13 @@ end
 require "examp.rb"
 require "ws.rb"
 require "hooks.rb"
+require "extensions.rb"
+require "mix.rb"
 unless provided? "snd-nogui"
-  # if libxm.so is a separate module
-  if provided?("snd-motif") and (not provided?("xm"))
-    require "libxm.so"
-  end
-  if provided?("snd-gtk") and (not provided?("xg"))
-    # libxg.so can't be loaded under that name because it lacks a
-    # function Init_libxg(). So I symlinked it to
-    # site_ruby/.../gtk/libxm.so
-    require "gtk/libxm.so"                        # Attention!!!
-  end
+  provided?("snd-motif") and (not provided?("xm")) and require("libxm.so")
+  provided?("snd-gtk")   and (not provided?("xg")) and require("libxg.so")
   require "snd-xm.rb"
+  include Snd_XM
   require "popup.rb"
 end
 
@@ -69,7 +64,6 @@ $sf_dir = "/home/bil/sf1/"   unless defined? $sf_dir
 $snd_test = -1               unless defined? $snd_test
 $with_exit = ($snd_test < 0) unless defined? $with_exit
 $full_test = ($snd_test < 0) unless defined? $full_test
-$test_playing = true         unless defined? $test_playing
 $clear_listener = true       unless defined? $clear_listener
 # test 4, test084
 $test_long_file_tests = true unless defined? $test_long_file_tests
@@ -143,24 +137,26 @@ set_mus_file_buffer_size($default_file_buffer_size)
 set_with_background_processes(false)
 set_show_backtrace(true)
 
-def mus_audio_playback_amp
+# getter: mus_audio_playback_amp
+# setter: mus_audio_playback_amp(val)
+def mus_audio_playback_amp(val = :getter)
   vals = make_vct(32)
-  mus_audio_mixer_read(Mus_audio_default, Mus_audio_amp, 0, vals)
-  ch0_amp = vals[0]
-  mus_audio_mixer_read(Mus_audio_default, Mus_audio_amp, 1, vals)
-  ch1_amp = vals[0]
-  [ch0_amp, ch1_amp]
+  if val == :getter
+    mus_audio_mixer_read(Mus_audio_default, Mus_audio_amp, 0, vals)
+    ch0_amp = vals[0]
+    mus_audio_mixer_read(Mus_audio_default, Mus_audio_amp, 1, vals)
+    ch1_amp = vals[0]
+    [ch0_amp, ch1_amp]
+  else
+    vals[0] = val
+    mus_audio_mixer_write(Mus_audio_default, Mus_audio_amp, 0, vals)
+    mus_audio_mixer_write(Mus_audio_default, Mus_audio_amp, 1, vals)
+    val
+  end
 end
 
-def mus_audio_playback_amp=(val)
-  vals = make_vct(32)
-  vals[0] = val
-  mus_audio_mixer_write(Mus_audio_default, Mus_audio_amp, 0, vals)
-  mus_audio_mixer_write(Mus_audio_default, Mus_audio_amp, 1, vals)
-  val
-end
-
-mus_audio_playback_amp = 0.0
+$orig_audio_amp = mus_audio_playback_amp.first
+mus_audio_playback_amp(0.0)
 
 def make_color_with_catch(c1, c2, c3)
   make_color(c1, c2, c3)
@@ -192,52 +188,9 @@ def rb_error_to_mus_tag
   end
 end
 
-def snd_catch(tag = :all, &body)
-  catch(tag) do
-    begin
-      body.call
-    rescue
-      throw(tag, rb_error_to_mus_tag)
-    end
-  end
-end
-
-def set_snd_var(name, val)
-  if name.kind_of?(Symbol) or name.kind_of?(String)
-    send(format("set_%s", name.to_s).intern, val)
-  else
-    raise(TypeError, "set_snd_var(name, val): NAME must be String or Symbol")
-  end
-end
-
-def snd_var(name)
-  case name
-  when Symbol
-    send(name)
-  when String
-    send(name.intern)
-  else
-    raise(TypeError, "snd_var(name): NAME must be String or Symbol")
-  end
-end
-
 show_listener
 set_window_x(600)
 set_window_y(10)
-
-# snd7.scm
-def vct2samples(samp, samps, data, snd = false, chn = false)
-  vct2channel(data, samp, samps, snd, chn)
-end
-
-def samples2vct(samp, samps, snd = false, chn = false, nv = false, epos = false)
-  if nv
-    vct_subseq(channel2vct(samp, samps, snd, chn, epos), 0, samps, nv)
-  else
-    channel2vct(samp, samps, snd, chn, epos)
-  end
-end
-#
 
 def my_random(n)
   if n.zero?
@@ -295,13 +248,6 @@ end
 # returns last result in body
 def with_time(&body)
   Snd_test_time.new(&body).return
-end
-
-def dismiss_all_dialogs
-  dialog_widgets.each do |dialog|
-    next unless dialog
-    hide_widget dialog
-  end
 end
 
 $timings = Array.new(0)
@@ -1721,6 +1667,8 @@ def test024
   if mus_sound_loop_info("fmv1.snd") != [1200, 1400, 0, 0, 2, 1, 1, 0]
     snd_display("saved null loop_info (no mode1): %s?", mus_sound_loop_info("fmv1.snd").inspect)
   end
+  delete_file("fmv.snd")
+  delete_file("fmv1.snd")
 end
 
 def test034(func, lst)
@@ -1746,7 +1694,7 @@ def test044
   if res != "01-Nov-2004 06:10"
     snd_display("file_write_date oboe.snd: %s?", res)
   end
-  play_sound_1(oboe_snd) if $test_playing
+  play_sound_1(oboe_snd)
   let(1) do |lasth|
     until mus_header_type_name(lasth) == "unsupported" do lasth += 1 end
     if lasth < 50
@@ -1822,6 +1770,7 @@ def test054
                   vct_ref(v, maxpos), vct_ref(v1, maxpos))
     end
     close_sound(ind)
+    delete_file("test1.snd")
   end
 end
 
@@ -2172,6 +2121,7 @@ def test074
     snd_display("2 mus_sound_seek: %s?", res)
   end
   mus_sound_close_input(fd)
+  delete_file(fmv5_snd)
   if (res = snd_catch do
         mus_sound_open_output("fmv.snd", 22050, -1, Mus_bshort, Mus_aiff, "no comment")
       end) != :out_of_range
@@ -2202,6 +2152,7 @@ def test074
       end) != :out_of_range
     snd_display("mus_sound_reopen_output bad type: %s?", res)
   end
+  delete_file("fmv.snd")
   [:mus_audio_open_output, :mus_audio_open_input].each do |sym|
     if (res = snd_catch do
           send(sym, Mus_audio_default, 22050, -1, Mus_lshort, 512)
@@ -2372,6 +2323,7 @@ def test084
                     chans, pos, res, mus_header_type_name(ht), mus_data_format_name(df))
       end
       mus_sound_close_input(fd)
+      delete_file("fmv5.snd")
       res = catch(:read_write_error) do
         chans.times do |chn|
           samps.times do |i|
@@ -2385,18 +2337,6 @@ def test084
       end
       snd_display(res) if res.kind_of?(String)
     end
-  end
-end
-
-def sound_data_channel2list(sd, chan)
-  v = make_vct(sound_data_length(sd))
-  sound_data2vct(sd, chan, v)
-  vct2list(v)
-end
-
-def sound_data2list(sd)
-  make_array(sound_data_chans(sd)) do |chn|
-    sound_data_channel2list(sd, chn)
   end
 end
 
@@ -2512,6 +2452,7 @@ def test094
     snd_display("re-read/write[%d]: %s?", i, sound_data_channel2list(sdata, i).inspect)
   end
   mus_sound_close_input(fd)
+  delete_file(fmv)
   with_file("32bit.sf") do |fsnd|
     ind = open_sound(fsnd)
     if fneq(res = maxamp(ind, 0), 0.228)
@@ -2741,18 +2682,22 @@ def test114
           snd_display("bigger mark to: %d?", res)
         end
       end
-      if mix?(mx = mix_sound("oboe.snd", 44100 * 60000))
-        if (res = mix_position(mx)) != 44100 * 60000
-          snd_display("bigger mix at: %d?", res)
+      unless provided? "snd-nogui"
+        if mix?(mx = mix_sound("oboe.snd", 44100 * 60000))
+          if (res = mix_position(mx)) != 44100 * 60000
+            snd_display("bigger mix at: %d?", res)
+          end
+          set_mix_position(mx, 44100 * 61000)
+          if (res = mix_position(mx)) != 44100 * 61000
+            snd_display("bigger mix to: %d?", res)
+          end
+        else
+          snd_display("no mix tag from mix_sound")
         end
-        set_mix_position(mx, 44100 * 61000)
-        if (res = mix_position(mx)) != 44100 * 61000
-          snd_display("bigger mix to: %d?", res)
-        end
+        undo(2)
       else
-        snd_display("no mix tag from mix_sound")
+        undo(1)
       end
-      undo(2)
       let(selection_creates_region) do |old_select|
         set_selection_creates_region(false)
         select_all(ind)
@@ -2770,7 +2715,7 @@ def test114
         end
         set_selection_creates_region(old_select)
       end
-      set_cursor(ind, 44100 * 50000)
+      set_cursor(44100 * 50000, ind)
       if (res = cursor(ind)) != (44100 * 50000)
         snd_display("bigger cursor: %d?", res)
       end
@@ -2800,13 +2745,15 @@ def test114
           end
         end
       end
-      let(mix_sound("oboe.snd", 44123 * 51234),
-          find_mix(44123 * 51234)) do |mx, mxd|
-        if (not mdx.kind_of?(Numeric)) or mdx != mx
-          snd_display("bigger find_mix: %s %s", mdx.inspect, mx.inspect)
+      unless provided? "snd-nogui"
+        let(mix_sound("oboe.snd", 44123 * 51234),
+            find_mix(44123 * 51234)) do |mx, mxd|
+          if (not mxd.kind_of?(Numeric)) or mxd != mx
+            snd_display("bigger find_mix: %s %s", mxd.inspect, mx.inspect)
+          end
         end
       end
-      set_cursor(ind, 44123 * 51234)
+      set_cursor(44123 * 51234, ind)
       if (res = cursor(ind)) != (44123 * 51234)
         snd_display("bigger cursor 123: %d?", res)
       end
@@ -2858,6 +2805,7 @@ def test124
     snd_display("ramp env by 0.1: %s", res.inspect)
   end
   close_sound(ind)
+  delete_file("tmp.snd")
 end
 
 # unrecoverable sndlib errors on test134
@@ -3341,8 +3289,7 @@ snd_display("all done!")
 $timings.each do |tst| snd_display("test %2d %s", tst.first, tst.last.inspect) end
 snd_display("total   %s\n", $overall_start_time.inspect)
 save_listener("test.output")
-
-mus_audio_playback_amp = 1.0
+mus_audio_playback_amp($orig_audio_amp)
 
 exit if $with_exit
 

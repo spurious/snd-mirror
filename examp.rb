@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Sun Dec 26 14:51:22 CET 2004
+# Last: Wed Feb 23 01:01:05 CET 2005
 
 # Commentary:
 #
@@ -65,6 +65,12 @@
 # car(v), cadr(v), caddr(v), cdr(v)
 # warn(*args), die(*args), error(*args)
 # rbm_message(*args), message(*args), debug(*args), debug_trace(*args)
+# snd_snd(snd)
+# snd_chn(chn)
+# snd_var(name, snd, chn)
+# set_snd_var(name, val, snd, chn)
+# snd_catch(tag, &body)
+# snd_throw(tag, *args)
 # c_g?() (if not in Snd)
 # let(*args) do |*args| ... end
 # gloop(*args) do |args| ... end
@@ -714,6 +720,80 @@ end
 def debug_trace(*args)
   debug(*args)
   rbm_message(verbose_message_string(true, "# ", ""))
+end
+
+def snd_snd(snd = false)
+  snd or selected_sound or (sounds and sounds[0])
+end
+
+def snd_chn(chn = false)
+  chn or selected_channel or 0
+end
+
+# snd_var(:cursor_size) # => value
+def snd_var(name, snd = :no_snd, chn = :no_chn)
+  case name
+  when Symbol
+    if chn != :no_chn and chn != :no_chn
+      # channel variables
+      send(name, snd, chn)
+    elsif snd != :no_snd and chn == :no_chn
+      # sound variables
+      send(name, snd)
+    else
+      # global variables
+      send(name)
+    end
+  when String
+    if chn != :no_chn and chn != :no_chn
+      send(name, snd, chn)
+    elsif snd != :no_snd and chn == :no_chn
+      send(name, snd)
+    else
+      send(name.intern)
+    end
+  else
+    raise(TypeError, "snd_var(name, [snd, [chn]]): NAME must be String or Symbol")
+  end
+end
+
+# set_snd_var(:cursor_size, value) # => set_cursor_size(value)
+def set_snd_var(name, val, snd = :no_snd, chn = :no_chn)
+  if name.kind_of?(Symbol) or name.kind_of?(String)
+    func = format("set_%s", name.to_s).intern
+    if snd != :no_snd and chn != :no_chn
+      send(func, val, snd, chn)
+    elsif snd != :no_snd and chn == :no_chn
+      send(func, val, snd)
+    else
+      send(func, val)
+    end
+  else
+    raise(TypeError, "set_snd_var(name, val, [snd, [chn]]): NAME must be String or Symbol")
+  end
+end
+
+def snd_catch(tag = :all, &body)
+  catch(tag) do
+    begin
+      body.call
+    rescue
+      throw(tag, rb_error_to_mus_tag)
+    end
+  end
+end
+
+def snd_throw(tag, *args)
+  str = format("%s: `%s'", get_func_name(2), tag.to_s.capitalize)
+  args.each do |s| str += format(" %s", s.inspect) end
+  exception = case tag
+              when /[Oo]ut_of_range/
+                RangeError
+              else
+                StandardError
+              end
+  throw(tag, str)
+  raise(exception, str)
 end
 
 def c_g?

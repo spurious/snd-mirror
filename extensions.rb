@@ -2,9 +2,24 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Last: Tue Mar 09 17:23:44 CET 2004
+# Last: Wed Feb 23 00:31:29 CET 2005
 
 # Commentary:
+#
+# module Compatibility
+# scan_sound_chans(beg, end, snd, edpos) do |y| ... end
+# map_sound_chans(beg, end, edname, snd, edpos) do |y| ... end
+# scan_all_chans(beg, end, edpos) do |y| ... end
+# map_all_chans(beg, end, edname, edpos) do |y| ... end
+# scan_chans(beg, end, edpos) do |y| ... end
+# map_chans(beg, end, edname, edpos) do |y| ... end
+# forward_sample(count, snd, chn)
+# backward_sample(count, snd, chn)
+# sound_data_channel2list(sd, chan)
+# sound_data2list(sd)
+# vct2samples(samp, samps, data, snd, chn)
+# samples2vct(samp, samps, snd, chn, nv, epos)
+# 
 #
 # module Extensions
 #
@@ -69,6 +84,146 @@
 require "examp"
 require "hooks"
 include Math
+
+module Compatibility
+  # 
+  # Snd-4 compatibility stuff
+  # 
+  def scan_sound_chans(beg = 0, fin = false, snd = false, edpos = false, &body)
+    if body and body.arity == 1
+      val = nil
+      if c = (0...chans(snd)).detect do |chn| val = scan_chan(body, beg, fin, snd, chn, edpos) end
+        val += [snd_snd(snd), c]
+      else
+        nil
+      end
+    else
+      snd_throw(:bad_arity, "scan_sound_chans([beg, [end, [snd, [edpos]]]]) do |y| ... end")
+    end
+  end
+
+  def map_sound_chans(beg = 0, fin = false, edname = false, snd = false, edpos = false, &body)
+    if body and body.arity == 1
+      channels(snd).times do |chn| map_chan(body, beg, fin, edname, snd, chn, edpos) end
+    else
+      snd_throw(:bad_arity, "map_sound_chans([beg, [end, [ename, [snd, [edpos]]]]]) do |y| ... end")
+    end
+  end
+
+  def scan_all_chans(beg = 0, fin = false, edpos = false, &body)
+    if body and body.arity == 1
+      catch(:done) do
+        (sounds or []).each do |snd|
+          channels(snd).times do |chn|
+            if res = scan_chan(body, beg, fin, snd, chn, edpos)
+              throw(:done, res += [snd, chn])
+            end
+          end
+        end
+        false
+      end
+    else
+      snd_throw(:bad_arity, "scan_all_chans([beg, [end, [edpos]]]) do |y| ... end")
+    end
+  end
+
+  def map_all_chans(beg = 0, fin = false, edname = false, edpos = false, &body)
+    if body and body.arity == 1
+      (sounds or []).each do |snd|
+        channels(snd).times do |chn|
+          map_chan(body, beg, fin, edname, snd, chn, edpos)
+        end
+      end
+    else
+      snd_throw(:bad_arity, "map_all_chans([beg, [end, [ename, [edpos]]]]) do |y| ... end")
+    end
+  end
+
+  def scan_chans(beg = 0, fin = false, edpos = false, &body)
+    if body and body.arity == 1
+      current_sync = sync(selected_sound)
+      catch(:done) do
+        (sounds or []).each do |snd|
+          if sync(snd) == current_sync
+            channels(snd).times do |chn|
+              if res = scan_chan(body, beg, fin, snd, chn, edpos)
+                throw(:done, res += [snd, chn])
+              end
+            end
+          end
+        end
+        false
+      end
+    else
+      snd_throw(:bad_arity, "scan_chans([beg, [end, [edpos]]]) do |y| ... end")
+    end
+  end
+
+  def map_chans(beg = 0, fin = false, edname = false, edpos = false, &body)
+    if body and body.arity == 1
+      current_sync = sync(selected_sound)
+      (sounds or []).each do |snd|
+        if sync(snd) == current_sync
+          channels(snd).times do |chn|
+            map_chan(body, beg, fin, edname, snd, chn, edpos)
+          end
+        end
+      end
+    else
+      snd_throw(:bad_arity, "map_chans([beg, [end, [ename, [edpos]]]]) do |y| ... end")
+    end
+  end
+
+  # 
+  # Snd-5 compatibility stuff
+  # 
+  def forward_sample(count = 1, snd = false, chn = false)
+    set_cursor(cursor(snd, chn) + count, snd, chn)
+  end
+  
+  def backward_sample(count = 1, snd = false, chn = false)
+    set_cursor(cursor(snd, chn) - count, snd, chn)
+  end
+
+  # 
+  # Snd-6 compatibility stuff
+  # 
+  def dismiss_all_dialogs
+    dialog_widgets.each do |dialog|
+      next unless dialog
+      hide_widget dialog
+    end
+  end
+
+  # 
+  # Snd-6 compatibility stuff
+  # 
+  def sound_data_channel2list(sd, chan)
+    v = make_vct(sound_data_length(sd))
+    sound_data2vct(sd, chan, v)
+    vct2list(v)
+  end
+  
+  def sound_data2list(sd)
+    make_array(sound_data_chans(sd)) do |chn|
+      sound_data_channel2list(sd, chn)
+    end
+  end
+
+  def vct2samples(samp, samps, data, snd = false, chn = false)
+    vct2channel(data, samp, samps, snd, chn)
+  end
+  
+  def samples2vct(samp, samps, snd = false, chn = false, nv = false, epos = false)
+    if nv
+      vct_subseq(channel2vct(samp, samps, snd, chn, epos), 0, samps, nv)
+    else
+      channel2vct(samp, samps, snd, chn, epos)
+    end
+  end
+end
+
+include Compatibility
 
 module Extensions
   # Returns the value associated with KEY in the given CHN's
@@ -225,12 +380,16 @@ module Extensions
       end
       if file_write_date(snd_name) == sound_property(:current_file_time, snd)
         @sound_funcs.each do |prop|
-          send(format("set_%s", prop.to_s).intern, sound_property(prop, snd), snd)
+          if (val = sound_property(prop, snd))
+            set_snd_var(prop, val, snd)
+          end
         end
         channels(snd).times do |chn|
           set_squelch_update(true, snd, chn)
           @channel_funcs.each do |prop|
-            send(format("set_%s", prop.to_s).intern, channel_property(prop, snd, chn), snd, chn)
+            if (val = channel_property(prop, snd, chn))
+              set_snd_var(prop, val, snd, chn)
+            end
           end
           set_squelch_update(false, snd, chn)
         end
@@ -267,14 +426,14 @@ module Extensions
       props = (sound_properties(snd) or {})
       props[:current_file_time] = file_write_date(snd_name)
       @sound_funcs.each do |prop|
-        props[prop] = send(prop, snd)
+        props[prop] = snd_var(prop, snd)
       end
       res = format("let(find_sound(%s)) do |snd|\n", snd_name.inspect)
       res += format("  set_sound_properties(Marshal.load(%s), snd)\n", Marshal.dump(props).inspect)
       channels(snd).times do |chn|
         props = (channel_properties(snd, chn) or {})
         @channel_funcs.each do |prop|
-          props[prop] = send(prop, snd, chn)
+          props[prop] = snd_var(prop, snd, chn)
         end
         res += format("  if channels(snd) > %d\n", chn)
         res += format("    set_channel_properties(Marshal.load(%s), snd, %d)\n",
@@ -414,9 +573,9 @@ module Extensions
     sndlist = []
     chnlist = []
     (sounds() or []).each do |snd|
-      channels(snd).times do |i|
+      channels(snd).times do |chn|
         sndlist << snd
-        chnlist << i
+        chnlist << chn
       end
     end
     [sndlist, chnlist]
@@ -647,9 +806,9 @@ module Extensions
                      :show_axes, :graphs_horizontal, :lisp_graph_style, :transform_graph_style]
     $close_hook.add_hook!("remember-sound-state") do |snd|
       states[file_name(snd)] = [file_write_date(file_name(snd)),
-                                sound_funcs.map do |f| send(f, snd) end,
+                                sound_funcs.map do |f| snd_var(f, snd) end,
                                 (0..channels(snd) - 1).to_a.map do |chn|
-                                  channel_funcs.map do |f| send(f, snd, chn) end
+                                  channel_funcs.map do |f| snd_var(f, snd, chn) end
                                 end]
       false
     end
@@ -658,12 +817,12 @@ module Extensions
       if state.kind_of?(Array) and (not state.empty?)
         if file_write_date(file_name(snd)) == state[0]
           sound_funcs.zip(state[1]) do |f, val|
-            send(format("set_%s", f.to_s).intern, val, snd)
+            set_snd_var(f, val, snd)
           end
           channels(snd).times do |chn|
             set_squelch_update(true, snd, chn)
             channel_funcs.zip(state[2][chn]) do |f, val|
-              send(format("set_%s", f.to_s).intern, val, snd, chn)
+              set_snd_var(f, val, snd, chn)
             end
             set_squelch_update(false, snd, chn)
           end
