@@ -1537,7 +1537,7 @@ static BACKGROUND_TYPE run_adc(GUI_POINTER uss)
 
 void set_read_in_progress (snd_state *ss)
 {
-  if (with_background_processes(ss) != 1234)
+  if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
     rp->recorder_reader = BACKGROUND_ADD(ss, run_adc, ss);
 }
 

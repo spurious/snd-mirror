@@ -2122,7 +2122,7 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   reflect_raw_pending_in_menu();
   if (!XtIsManaged(raw_data_dialog)) 
     XtManageChild(raw_data_dialog);
-  if (with_background_processes(ss) != 1234)
+  if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
     while (XtIsManaged(raw_data_dialog)) 
       check_for_event(ss);
   reflect_raw_open_in_menu();
@@ -2272,7 +2272,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 
   load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, comment);
   if (!(XtIsManaged(new_dialog))) XtManageChild(new_dialog);
-  if (with_background_processes(ss) != 1234)
+  if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
     {
       while (XtIsManaged(new_dialog)) check_for_event(ss);
     }

@@ -116,7 +116,7 @@
 #endif
 
 #undef PROTO
-#if defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(__CYGWIN32__) || defined(__cplusplus)
+#if defined (__STDC__) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(__CYGWIN32__) || defined(__cplusplus)
 # define PROTO(protos) protos
 #else
 # define PROTO(protos) ()

@@ -19,16 +19,16 @@
 #endif
 
 #undef PROTO
-#if defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(__CYGWIN32__) || defined(__cplusplus)
+#if defined (__STDC__) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(__CYGWIN32__) || defined(__cplusplus)
 # define PROTO(protos) protos
 #else
 # define PROTO(protos) ()
 #endif
 
 
-#define SNDLIB_VERSION 16
-#define SNDLIB_REVISION 19
-#define SNDLIB_DATE "18-Oct-02"
+#define SNDLIB_VERSION 17
+#define SNDLIB_REVISION 0
+#define SNDLIB_DATE "11-Nov-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -214,7 +214,6 @@ BEGIN_DECLS
   #define MUS_SAMPLE_MIN (-1.0)
 #endif
 
-#define MUS_SAMPLE_TYPE mus_sample_t
 #define MUS_DAC_CHANNEL 252525
 #define MUS_DAC_REVERB 252520
 
@@ -296,7 +295,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       MUS_NO_SUCH_FFT_WINDOW, MUS_UNSUPPORTED_DATA_FORMAT, MUS_HEADER_READ_FAILED,
       MUS_UNSUPPORTED_HEADER_TYPE,
       MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, MUS_NOT_A_SOUND_FILE, MUS_FILE_CLOSED, MUS_WRITE_ERROR,
-      MUS_BOGUS_FREE, MUS_BUFFER_OVERFLOW, MUS_BUFFER_UNDERFLOW, MUS_FILE_OVERFLOW, MUS_EXPONENT_OVERFLOW,
+      MUS_BOGUS_FREE, MUS_BUFFER_OVERFLOW, MUS_BUFFER_UNDERFLOW, MUS_FILE_OVERFLOW,
       MUS_HEADER_WRITE_FAILED, MUS_CANT_OPEN_TEMP_FILE, MUS_INTERRUPTED, MUS_BAD_ENVELOPE,
 
       MUS_AUDIO_CHANNELS_NOT_AVAILABLE, MUS_AUDIO_SRATE_NOT_AVAILABLE, MUS_AUDIO_FORMAT_NOT_AVAILABLE,

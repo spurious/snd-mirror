@@ -5894,15 +5894,11 @@ static XEN g_x_bounds(XEN snd_n, XEN chn_n)
 {
   #define H_x_bounds "(" S_x_bounds " &optional snd chn) returns a list (x0 x1) giving the current x axis bounds of snd channel chn"
   chan_info *cp;
-  axis_info *ap;
   ASSERT_CHANNEL(S_x_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_x_bounds);
-  ap = cp->axis;
-  if (cp->time_graph_type == GRAPH_ONCE) 
-    return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->x0),
-		      C_TO_XEN_DOUBLE(ap->x1)));
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE((double)(ap->losamp) / (double)SND_SRATE(cp->sound)),
-		    C_TO_XEN_DOUBLE((double)(ap->hisamp) / (double)SND_SRATE(cp->sound))));
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->x0),
+		    C_TO_XEN_DOUBLE(cp->axis->x1)));
+  /* wavogram settings depend on context -- no easy way to map back to user's notion of bounds */
 }
 
 static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
@@ -5993,15 +5989,10 @@ static XEN g_y_bounds(XEN snd_n, XEN chn_n)
 {
   #define H_y_bounds "(" S_y_bounds " &optional snd chn) returns a list (y0 y1) giving the current y axis bounds of snd channel chn"
   chan_info *cp;
-  axis_info *ap;
   ASSERT_CHANNEL(S_y_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_y_bounds);
-  ap = cp->axis;
-  if (cp->time_graph_type == GRAPH_ONCE) 
-    return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->y0),
-		      C_TO_XEN_DOUBLE(ap->y1)));
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->ymin),
-		    C_TO_XEN_DOUBLE(ap->ymax)));
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->y0),
+		    C_TO_XEN_DOUBLE(cp->axis->y1)));
 }
 
 static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display)

@@ -1349,14 +1349,10 @@ static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqs
   if (state_ptr->yu < 544) state_ptr->yu = 544; else if (state_ptr->yu > 5120) state_ptr->yu = 5120;
   state_ptr->yl += state_ptr->yu + ((-state_ptr->yl) >> 6);
   if (tr == 1) {
+    int i;
     state_ptr->a[0] = 0;
     state_ptr->a[1] = 0;
-    state_ptr->b[0] = 0;
-    state_ptr->b[1] = 0;
-    state_ptr->b[2] = 0;
-    state_ptr->b[3] = 0;
-    state_ptr->b[4] = 0;
-    state_ptr->b[5] = 0;
+    for (i = 0; i < 6; i++) state_ptr->b[i] = 0;
   } else { 
     pks1 = pk0 ^ state_ptr->pk[0];		/* UPA2 */
     a2p = state_ptr->a[1] - (state_ptr->a[1] >> 7);

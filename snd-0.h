@@ -588,6 +588,7 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define with_background_processes(ss) ss->With_Background_Processes
 #define set_with_background_processes(ss, a) ss->With_Background_Processes = a
 #define DEFAULT_WITH_BACKGROUND_PROCESSES TRUE
+#define DISABLE_BACKGROUND_PROCESSES 1234
 
 #define wavo_hop(ss) ss->Wavo_Hop
 #define in_set_wavo_hop(ss, a) ss->Wavo_Hop = a

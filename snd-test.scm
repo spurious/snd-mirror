@@ -2561,7 +2561,7 @@
 			"no such channel" "no file name provided" "no location method" "no channel method"
 			"no such fft window" "unsupported data format" "header read failed"
 			"unsupported header type" "file descriptors not initialized" "not a sound file" "file closed" "write error"
-			"bogus free" "buffer overflow" "buffer underflow" "file overflow" "exponent overflow"
+			"bogus free" "buffer overflow" "buffer underflow" "file overflow"
 			"header write failed" "can't open temp file" "interrupted" "bad envelope"
 			"audio channels not available" "audio srate not available" "audio format not available"
 			"no audio input available" "audio configuration not available" 
@@ -2573,7 +2573,7 @@
 	(call-with-current-continuation
 	 (lambda (quit)
 	   (do ((i 0 (1+ i)))
-	       ((= i 58))
+	       ((= i 57))
 	     (if (not (string=? (list-ref errs i) (mus-error-to-string i)))
 		 (begin
 		   (snd-display ";mus-error-to-string ~D: ~A ~A" i (list-ref errs i) (mus-error-to-string i))
@@ -15958,7 +15958,6 @@ EDITS: 6
       (let ((old-bounds (x-bounds)))
 	(set! (show-axes) show-all-axes)
 	(set! (transform-graph-type) graph-as-sonogram)
-	;(set! (time-graph-type) graph-as-wavogram)
 	(set! (speed-control-style) speed-control-as-ratio)
 	(set! (channel-style) channels-superimposed)
 	(set! (enved-target) enved-srate)

@@ -230,7 +230,7 @@
 	 (gtk_widget_show scale)
 	 (gtk_box_pack_start (GTK_BOX scan-row) label #t #t 0)
 	 (gtk_widget_show label)
-	 (g_signal_connect_closure_by_id (list 'gpointer (cadr adj))
+	 (g_signal_connect_closure_by_id (GPOINTER adj)
 					 (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj)))
 					 0
 					 (g_cclosure_new (lambda (w d) (func (.value (GTK_ADJUSTMENT adj)))) #f #f) #f)))
@@ -248,7 +248,7 @@
 	  (gtk_box_pack_start (GTK_BOX scan-size) scan-text #t #t 0)
 	  (gtk_widget_show scan-text)
 	  (gtk_entry_set_text (GTK_ENTRY scan-text) (number->string size))
-	  (g_signal_connect_closure_by_id (list 'gpointer (cadr scan-text))
+	  (g_signal_connect_closure_by_id (GPOINTER scan-text)
 					  (g_signal_lookup "activate" 
 							   (G_OBJECT_TYPE (GTK_OBJECT scan-text)))
 					  0
@@ -261,30 +261,30 @@
 							    (set! vect (make-vector (* size 2))))
 							  #f #f) #f))))
 
-    (g_signal_connect_closure_by_id (list 'gpointer (cadr scan-pane))
+    (g_signal_connect_closure_by_id (GPOINTER scan-pane)
 				    (g_signal_lookup "expose_event" (G_OBJECT_TYPE (GTK_OBJECT scan-pane)))
 				    0 (g_cclosure_new (lambda (w e d) (redraw-graph)) #f #f) #f)
-    (g_signal_connect_closure_by_id (list 'gpointer (cadr scan-pane))
+    (g_signal_connect_closure_by_id (GPOINTER scan-pane)
 				    (g_signal_lookup "configure_event" (G_OBJECT_TYPE (GTK_OBJECT scan-pane)))
 				    0 (g_cclosure_new (lambda (w e d) (redraw-graph)) #f #f) #f)
-    (g_signal_connect_closure_by_id (list 'gpointer (cadr scan-pane))
+    (g_signal_connect_closure_by_id (GPOINTER scan-pane)
 				    (g_signal_lookup "button_press_event" (G_OBJECT_TYPE (GTK_OBJECT scan-pane)))
 				    0
 				    (g_cclosure_new (lambda (w e d) 
-						      (let ((button (.button (list 'GdkEventButton_ (cadr e)))))
+						      (let ((button (.button (GDK_EVENT_BUTTON e))))
 							(if (not work-proc)
 							    (if (= button 2)
 								(continue-synthesis)
 								(start-synthesis))
 							    (stop-synthesis))))
 						    #f #f) #f)
-    (g_signal_connect_closure_by_id (list 'gpointer (cadr scan-start))
+    (g_signal_connect_closure_by_id (GPOINTER scan-start)
 				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT scan-start))) 0
 				    (g_cclosure_new (lambda (w d) (start-synthesis)) #f #f) #f)
-    (g_signal_connect_closure_by_id (list 'gpointer (cadr scan-continue))
+    (g_signal_connect_closure_by_id (GPOINTER scan-continue)
 				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT scan-continue))) 0
 				    (g_cclosure_new (lambda (w d) (continue-synthesis)) #f #f) #f)
-    (g_signal_connect_closure_by_id (list 'gpointer (cadr scan-stop))
+    (g_signal_connect_closure_by_id (GPOINTER scan-stop)
 				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT scan-stop))) 0
 				    (g_cclosure_new (lambda (w d) (stop-synthesis)) #f #f) #f)
     #t))
@@ -315,7 +315,7 @@
 		  (pango_layout_set_font_description layout fs)
 		  (pango_layout_set_text layout text -1)
 		  (let ((wid (pango_layout_get_pixel_size layout #f)))
-		    (g_object_unref (list 'gpointer (cadr layout)))
+		    (g_object_unref (GPOINTER layout))
 		    (set! smpte-font-wh wid)
 		    wid))
 		#f))
@@ -464,7 +464,7 @@
 		  (begin
 		    (set! (y-zoom-slider snd i) (* val val))
 		    (set! (y-position-slider snd i) (y-position-slider snd chn)))))
-	    (g_signal_stop_emission (list 'gpointer (cadr adj))
+	    (g_signal_stop_emission (GPOINTER adj)
 				    (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj)))
 				    0)))))
       
@@ -472,7 +472,7 @@
   (do ((chn 0 (1+ chn)))
       ((= chn (chans snd)))
     (let* ((zy (list-ref (channel-widgets snd chn) 14)))
-      (g_signal_connect_closure_by_id (list 'gpointer (cadr zy))
+      (g_signal_connect_closure_by_id (GPOINTER zy)
 				      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT zy)))
 				      0
 				      (g_cclosure_new dragger-callback (list snd chn) (list 'GClosureNotify 0))
@@ -540,22 +540,22 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	(gtk_window_set_default_size (GTK_WINDOW hidden-controls-dialog) -1 -1)
 	(gtk_window_set_resizable (GTK_WINDOW hidden-controls-dialog) #t)
 	(gtk_widget_realize hidden-controls-dialog)
-	(g_signal_connect_closure_by_id (list 'gpointer (cadr hidden-controls-dialog))
+	(g_signal_connect_closure_by_id (GPOINTER hidden-controls-dialog)
 					(g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT hidden-controls-dialog)))
 					0 (g_cclosure_new (lambda (w ev data) (gtk_widget_hide hidden-controls-dialog)) #f #f) #f)
 
 	(gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG hidden-controls-dialog))) dismiss-button #t #t 20)
-	(g_signal_connect_closure_by_id (list 'gpointer (cadr dismiss-button))
+	(g_signal_connect_closure_by_id (GPOINTER dismiss-button)
 					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT dismiss-button)))
 					0 (g_cclosure_new (lambda (w data) (gtk_widget_hide hidden-controls-dialog)) #f #f) #f)
 	(gtk_widget_show dismiss-button)
 	(gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG hidden-controls-dialog))) reset-button #t #t 20)
-	(g_signal_connect_closure_by_id (list 'gpointer (cadr reset-button))
+	(g_signal_connect_closure_by_id (GPOINTER reset-button)
 					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT reset-button)))
 					0 (g_cclosure_new (lambda (w data) (reset-all-sliders)) #f #f) #f)
 	(gtk_widget_show reset-button)
 	(gtk_box_pack_end (GTK_BOX (.action_area (GTK_DIALOG hidden-controls-dialog))) help-button #t #t 20)
-	(g_signal_connect_closure_by_id (list 'gpointer (cadr help-button))
+	(g_signal_connect_closure_by_id (GPOINTER help-button)
 					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT help-button)))
 					0 (g_cclosure_new (lambda (w data) (help-dialog "More Controls" hidden-controls-help)) #f #f) #f)
 	(gtk_widget_show help-button)
@@ -578,7 +578,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	       (gtk_box_pack_start (GTK_BOX mainform) slider #t #t 4)
 	       (gtk_box_pack_start (GTK_BOX mainform) label #t #t 4)
 	       (set! hidden-controls (cons (list adj initial func) hidden-controls))	       
-	       (g_signal_connect_closure_by_id (list 'gpointer (cadr adj))
+	       (g_signal_connect_closure_by_id (GPOINTER adj)
 					       (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj)))
 					       0
 					       (g_cclosure_new (lambda (adj data)
@@ -661,7 +661,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		   (list-ref (dialog-widgets) 6)))
 	 (ok-button (.ok_button (GTK_FILE_SELECTION dialog))))
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr ok-button))
+     (GPOINTER ok-button)
      (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT ok-button)))
      0
      (g_cclosure_new (lambda (w d) (gtk_widget_show dialog)) #f #f) #f)
@@ -754,7 +754,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	     (dialog (or (find-free-dialog file-selector-dialogs)
 		 	 (let ((new-dialog (gtk_file_selection_new title)))
 			   (g_signal_connect_closure_by_id 
-			    (list 'gpointer (cadr new-dialog))
+			    (GPOINTER new-dialog)
 			    (g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT new-dialog))) 0
 			    (g_cclosure_new (lambda (w e d) 
 					      (let ((lst (find-dialog new-dialog file-selector-dialogs)))
@@ -762,7 +762,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 						(gtk_widget_hide new-dialog)))
 					    #f #f) #f)
 			   (g_signal_connect_closure_by_id 
-			    (list 'gpointer (cadr (.ok_button (GTK_FILE_SELECTION new-dialog))))
+			    (GPOINTER (.ok_button (GTK_FILE_SELECTION new-dialog)))
 			    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT (.ok_button (GTK_FILE_SELECTION new-dialog))))) 0
 			    (g_cclosure_new (lambda (w d)
 					      (let ((lst (find-dialog new-dialog file-selector-dialogs)))
@@ -771,7 +771,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 						(gtk_widget_hide new-dialog)))
 					    #f #f) #f)
 			   (g_signal_connect_closure_by_id 
-			    (list 'gpointer (cadr (.cancel_button (GTK_FILE_SELECTION new-dialog))))
+			    (GPOINTER (.cancel_button (GTK_FILE_SELECTION new-dialog)))
 			    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT (.cancel_button (GTK_FILE_SELECTION new-dialog))))) 0
 			    (g_cclosure_new (lambda (w d) 
 					      (let ((lst (find-dialog new-dialog file-selector-dialogs)))
@@ -798,13 +798,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (gtk_widget_show meter)
       (let ((context (list meter 0.0 1.0 0.0 0.0 width height)))
 	(g_signal_connect_closure_by_id 
-	 (list 'gpointer (cadr meter))
+	 (GPOINTER meter)
 	 (g_signal_lookup "expose_event" (G_OBJECT_TYPE (GTK_OBJECT meter))) 0
 	 (g_cclosure_new (lambda (w e d) 
 			   (display-level d)) 
 			 context #f) #f)
 	(g_signal_connect_closure_by_id 
-	 (list 'gpointer (cadr meter))
+	 (GPOINTER meter)
 	 (g_signal_lookup "configure_event" (G_OBJECT_TYPE (GTK_OBJECT meter))) 0
 	 (g_cclosure_new (lambda (w e d)
 			   (let ((xy (gdk_drawable_get_size (GDK_DRAWABLE (.window w)))))

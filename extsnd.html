@@ -5193,9 +5193,12 @@ higher -- this is probably not what you want.
        (do ((i 0 (1+ i)))
 	   ((= i 100))
 	 (outa i (oscil o) *output*))))))
-</pre>
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
+<!-- --></pre></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->This optimization is also hidden in many contexts (map-channel, find, etc).  See <a href="#optimization">optimization</a>
+<!-- -->for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
+<!-- --></td></tr><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
 <!-- sample -->
@@ -7921,7 +7924,7 @@ run
           (lambda () 
             "p moves cursor to left edge of window"
             cursor-on-left)
-          #f "#\\p->cursor-on-left")
+          #f "#\\p-&gt;cursor-on-left")
 
 (<em class=red>bind-key</em> (char-&gt;integer #\v) 4
 	  (lambda ()

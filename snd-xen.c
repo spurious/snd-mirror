@@ -1270,9 +1270,9 @@ static XEN g_set_with_background_processes(XEN val)
   #define H_with_background_processes "(" S_with_background_processes ") -> #t if Snd should use background (idle time) processing"
   snd_state *ss;
   ss = get_global_state();
-  if ((XEN_INTEGER_P(val)) && (XEN_TO_C_INT(val) == 1234))
+  if ((XEN_INTEGER_P(val)) && (XEN_TO_C_INT(val) == DISABLE_BACKGROUND_PROCESSES))
     {
-      set_with_background_processes(ss, 1234);
+      set_with_background_processes(ss, DISABLE_BACKGROUND_PROCESSES);
       return(C_STRING_TO_XEN_SYMBOL("internal-testing"));
     }
   else

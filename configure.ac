@@ -908,10 +908,6 @@ dnl do we need explicit -n32?
 	AC_DEFINE(WINDOZE)
 	audio_system=Windoze
 	;;
-    *-aix*) 
-        AC_DEFINE(AIX)
-	audio_system=aix
-        ;;
     *-apple-*)
 	AC_DEFINE(MAC_OSX)
 	audio_system=MacOSX

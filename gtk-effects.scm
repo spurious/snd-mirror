@@ -111,32 +111,32 @@
     (gtk_window_set_default_size (GTK_WINDOW new-dialog) -1 -1)
     (gtk_window_set_resizable (GTK_WINDOW new-dialog) #t)
     (gtk_widget_realize new-dialog)
-    (g_signal_connect_closure_by_id (list 'gpointer (cadr new-dialog))
+    (g_signal_connect_closure_by_id (GPOINTER new-dialog)
 				    (g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT new-dialog)))
 				    0 (g_cclosure_new (lambda (w ev data) 
 							(gtk_widget_hide new-dialog)) 
 						      #f #f) #f)
     (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) dismiss-button #t #t 20)
-    (g_signal_connect_closure_by_id (list 'gpointer (cadr dismiss-button))
+    (g_signal_connect_closure_by_id (GPOINTER dismiss-button)
 				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT dismiss-button)))
 				    0 (g_cclosure_new (lambda (w data) 
 							(gtk_widget_hide new-dialog)) 
 						      #f #f) #f)
     (gtk_widget_show dismiss-button)
     (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) ok-button #t #t 20)
-    (g_signal_connect_closure_by_id (list 'gpointer (cadr ok-button))
+    (g_signal_connect_closure_by_id (GPOINTER ok-button)
 				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT ok-button)))
 				    0 (g_cclosure_new ok-callback #f #f) #f)
     (gtk_widget_show ok-button)
     (if reset-button
 	(begin
 	  (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) reset-button #t #t 20)
-	  (g_signal_connect_closure_by_id (list 'gpointer (cadr reset-button))
+	  (g_signal_connect_closure_by_id (GPOINTER reset-button)
 					  (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT reset-button)))
 					  0 (g_cclosure_new reset-callback #f #f) #f)
 	  (gtk_widget_show reset-button)))
     (gtk_box_pack_end (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) help-button #t #t 20)
-    (g_signal_connect_closure_by_id (list 'gpointer (cadr help-button))
+    (g_signal_connect_closure_by_id (GPOINTER help-button)
 				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT help-button)))
 				    0 (g_cclosure_new help-callback #f #f) #f)
     (gtk_widget_show help-button)
@@ -239,7 +239,7 @@
 	 (gtk_widget_show scale)
 	 (if use-log
 	     (g_signal_connect_closure_by_id 
-	      (list 'gpointer (cadr adj))
+	      (GPOINTER adj)
 	      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj))) 0
 	      (g_cclosure_new (lambda (w d) 
 				(func w d)
@@ -250,7 +250,7 @@
 			      #f #f)
 	      #f)
 	     (g_signal_connect_closure_by_id 
-	      (list 'gpointer (cadr adj))
+	      (GPOINTER adj)
 	      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj))) 0
 	      (g_cclosure_new func #f #f)
 	      #f))
@@ -277,7 +277,7 @@
 	   (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) on)
 	   (gtk_widget_show button)
 	   (g_signal_connect_closure_by_id 
-	    (list 'gpointer (cadr button))
+	    (GPOINTER button)
 	    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button))) 0
 	    (g_cclosure_new (lambda (w d) 
 			      (target-callback type))
@@ -296,7 +296,7 @@
 	  (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) #t)
 	  (gtk_widget_show button)
 	  (g_signal_connect_closure_by_id 
-	   (list 'gpointer (cadr button))
+	   (GPOINTER button)
 	   (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button))) 0
 	   (g_cclosure_new (lambda (w d) 
 			     (truncate-callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w))))
@@ -331,7 +331,7 @@
   (gtk_widget_show amp-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM amp-menu) amp-cascade)
   (g_signal_connect_closure_by_id 
-   (list 'gpointer (cadr amp-menu))
+   (GPOINTER amp-menu)
    (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT amp-menu))) 0
    (g_cclosure_new (lambda (w d) 
 		     (update-label amp-menu-list))
@@ -355,7 +355,7 @@
     (gtk_menu_shell_append (GTK_MENU_SHELL amp-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -426,7 +426,7 @@
     (gtk_menu_shell_append (GTK_MENU_SHELL amp-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -540,7 +540,7 @@
       (gtk_menu_shell_append (GTK_MENU_SHELL amp-cascade) child)
       (gtk_widget_show child)
       (g_signal_connect_closure_by_id 
-       (list 'gpointer (cadr child))
+       (GPOINTER child)
        (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
        (g_cclosure_new 
 	(lambda (w d) 
@@ -579,7 +579,7 @@
 		  (gtk_widget_show toggle)
 		  (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON toggle) omit-silence)
 		  (g_signal_connect_closure_by_id 
-		   (list 'gpointer (cadr toggle))
+		   (GPOINTER toggle)
 		   (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT toggle))) 0
 		   (g_cclosure_new (lambda (w d) 
 				     (set! omit-silence (.active (GTK_TOGGLE_BUTTON toggle))))
@@ -602,7 +602,7 @@
   (gtk_widget_show delay-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM delay-menu) delay-cascade)
   (g_signal_connect_closure_by_id 
-   (list 'gpointer (cadr delay-menu))
+   (GPOINTER delay-menu)
    (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT delay-menu))) 0
    (g_cclosure_new (lambda (w d) 
 		     (update-label delay-menu-list))
@@ -621,7 +621,7 @@
     (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -687,7 +687,7 @@
     (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -757,7 +757,7 @@
     (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -847,7 +847,7 @@ the modulation frequency, and the echo amplitude."))
   (gtk_widget_show filter-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM filter-menu) filter-cascade)
   (g_signal_connect_closure_by_id 
-   (list 'gpointer (cadr filter-menu))
+   (GPOINTER filter-menu)
    (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT filter-menu))) 0
    (g_cclosure_new (lambda (w d) 
 		     (update-label filter-menu-list))
@@ -866,7 +866,7 @@ the modulation frequency, and the echo amplitude."))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -924,7 +924,7 @@ the modulation frequency, and the echo amplitude."))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -980,7 +980,7 @@ the modulation frequency, and the echo amplitude."))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1028,7 +1028,7 @@ the modulation frequency, and the echo amplitude."))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1077,7 +1077,7 @@ the modulation frequency, and the echo amplitude."))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1144,7 +1144,7 @@ the modulation frequency, and the echo amplitude."))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1233,7 +1233,7 @@ Move the sliders to set the comb chord parameters."))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1294,7 +1294,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
   (gtk_widget_show freq-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM freq-menu) freq-cascade)
   (g_signal_connect_closure_by_id 
-   (list 'gpointer (cadr freq-menu))
+   (GPOINTER freq-menu)
    (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT freq-menu))) 0
    (g_cclosure_new (lambda (w d) 
 		     (update-label freq-menu-list))
@@ -1310,7 +1310,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
     (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1379,7 +1379,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
     (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1435,7 +1435,7 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
     (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1528,7 +1528,7 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
   (gtk_widget_show mod-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM mod-menu) mod-cascade)
   (g_signal_connect_closure_by_id 
-   (list 'gpointer (cadr mod-menu))
+   (GPOINTER mod-menu)
    (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT mod-menu))) 0
    (g_cclosure_new (lambda (w d) 
 		     (update-label mod-menu-list))
@@ -1545,7 +1545,7 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
     (gtk_menu_shell_append (GTK_MENU_SHELL mod-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1609,7 +1609,7 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
     (gtk_menu_shell_append (GTK_MENU_SHELL mod-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1686,7 +1686,7 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
   (gtk_widget_show reverb-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM reverb-menu) reverb-cascade)
   (g_signal_connect_closure_by_id 
-   (list 'gpointer (cadr reverb-menu))
+   (GPOINTER reverb-menu)
    (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT reverb-menu))) 0
    (g_cclosure_new (lambda (w d) 
 		     (update-label reverb-menu-list))
@@ -1704,7 +1704,7 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
     (gtk_menu_shell_append (GTK_MENU_SHELL reverb-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1812,7 +1812,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     (gtk_menu_shell_append (GTK_MENU_SHELL reverb-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1867,7 +1867,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     (gtk_menu_shell_append (GTK_MENU_SHELL reverb-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -1943,7 +1943,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
   (gtk_widget_show misc-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM misc-menu) misc-cascade)
   (g_signal_connect_closure_by_id 
-   (list 'gpointer (cadr misc-menu))
+   (GPOINTER misc-menu)
    (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT misc-menu))) 0
    (g_cclosure_new (lambda (w d) 
 		     (update-label misc-menu-list))
@@ -1989,7 +1989,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -2055,7 +2055,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -2098,7 +2098,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -2187,7 +2187,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -2257,7 +2257,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -2328,7 +2328,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -2390,7 +2390,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -2463,7 +2463,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 
@@ -2532,7 +2532,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
     (g_signal_connect_closure_by_id 
-     (list 'gpointer (cadr child))
+     (GPOINTER child)
      (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
      (g_cclosure_new 
       (lambda (w d) 

@@ -30,7 +30,7 @@
 !#
 
 (define* (g_signal_connect obj name func #:optional data)
-  (g_signal_connect_closure_by_id (list 'gpointer (cadr obj))
+  (g_signal_connect_closure_by_id (GPOINTER obj)
 				  (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
 				  0
 				  (g_cclosure_new func data #f)
@@ -499,7 +499,7 @@
   (set! fft-popup-menu fft-popup-menu-1)
   (add-hook! gtk-popup-hook
 	     (lambda (widget event data snd chn)
-	       (let* ((e (list 'GdkEventButton_ (cadr event))) ; cast to button event
+	       (let* ((e (GDK_EVENT_BUTTON event))
 		    (x (.x e))
 		    (y (.y e))
 		    (menu graph-popup-menu))

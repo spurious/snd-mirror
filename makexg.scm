@@ -3,8 +3,6 @@
 
 ;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c and xg-ruby.c
 
-;;; TODO: any->gpointer picks out cadr? or get rid of gpointer?
-;;; TODO: OBJECT_TYPE macros? g_print? (is basically format)
 ;;; TODO: rest of settable struct fields
 
 (use-modules (ice-9 debug))
@@ -910,7 +908,6 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * ~A: check out the g_signal handlers~%" (string-append "T" "ODO"))
-(hey " * ~A: GdkEvent casts~%" (string-append "T" "ODO"))
 (hey " * ~A: struct print, more struct instance creators(?)~%" (string-append "T" "ODO"))
 (hey " * ~A: unprotect *_remove, unprotect old upon reset callback~%" (string-append "T" "ODO"))
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
