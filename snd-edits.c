@@ -3546,11 +3546,13 @@ static void choose_accessor(snd_fd *sf)
       sf->zero = ZERO_OP(typ);
       sf->xramp2 = (type_info[typ].xramps == 2);
     }
+#if DEBUGGING
   if ((typ != ED_SIMPLE) && ((type_info[typ].next == NULL) || (type_info[typ].previous == NULL)))
     {
       fprintf(stderr,"got %s null accessor\n", type_info[typ].name);
       abort();
     }
+#endif
   sf->run = to_sample;
   sf->rev_run = to_sample;
   sf->runf = type_info[typ].next;
@@ -6044,8 +6046,13 @@ static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg
 	}
     }
   
+#if DEBUGGING
   if (FRAGMENT_TYPE(new_ed, i) == -1)
-    fprintf(stderr, "%s -> ??\n", type_info[typ].name);
+    {
+      fprintf(stderr, "%s -> ??\n", type_info[typ].name);
+      abort();
+    }
+#endif
 }
 
 static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 

@@ -9023,7 +9023,7 @@ static int sndjack_buffersizecallback(jack_nframes_t nframes, void *arg){
 static int sndjack_getnumoutchannels(void){
   int lokke=0;
   const char **ports=jack_get_ports(sndjack_client,"alsa_pcm:playback_*","",0);
-  while(ports[lokke]!=NULL){
+  while(ports!=NULL && ports[lokke]!=NULL){
     lokke++;
   }
   if(lokke<2) return 2;
@@ -9033,7 +9033,7 @@ static int sndjack_getnumoutchannels(void){
 static int sndjack_getnuminchannels(void){
   int lokke=0;
   const char **ports=jack_get_ports(sndjack_client,"alsa_pcm:capture_*","",0);
-  while(ports[lokke]!=NULL){
+  while(ports!=NULL && ports[lokke]!=NULL){
     lokke++;
   }
   if(lokke<2) return 2;
@@ -9137,8 +9137,7 @@ static int sndjack_init(void){
 		     )
 	)
       {
-	fprintf (stderr, "Error. Cannot connect jack output port %d: \"%s\".\n",ch,temp);
-	goto failed_connect;
+	printf ("Warning. Cannot connect jack output port %d: \"%s\".\n",ch,temp);
       }
   }
 
@@ -9153,8 +9152,7 @@ static int sndjack_init(void){
 		     )
 	)
       {
-	fprintf (stderr, "Error. Cannot connect jack input port %d: \"%s\".\n",ch,temp);
-	goto failed_connect;
+	printf ("Warning. Cannot connect jack input port %d: \"%s\".\n",ch,temp);
       }
   }
 

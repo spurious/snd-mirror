@@ -39,7 +39,7 @@
 
 ;(setlocale LC_ALL "de_DE")
 
-(define tests 1)
+(define tests 100)
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
@@ -23647,8 +23647,8 @@ EDITS: 5
 	  
 	  (let ((choose-fd (lambda () (list-ref (sounds) (my-random (length (sounds)))))))
 	    (let* ((frame-list (map frames open-files))
-		   (curloc (max 0 (min 1200 (1- (list-ref frame-list 0))))) ; max 0 since z.snd has 0 frames
 		   (curfd (choose-fd))
+		   (curloc (max 0 (min 1200 (frames curfd 0))))
 		   (old-marks (length (marks curfd 0))))
 	      (set! test14-file (short-file-name curfd))
 	      (if (> (duration curfd) 0.0)

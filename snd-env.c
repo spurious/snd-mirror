@@ -1496,16 +1496,18 @@ static XEN g_define_envelope(XEN name, XEN data, XEN base)
   /* defines 'name' and attaches various 'envelope-* properties */
   XEN temp;
   env *e;
+  char *ename;
   #define H_define_envelope "(" S_define_envelope " name data (base 1.0)): load 'name' with associated 'data', a list of breakpoints \
 and 'base' into the envelope editor."
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_define_envelope, "a string");
   XEN_ASSERT_TYPE(XEN_LIST_P(data), data, XEN_ARG_2, S_define_envelope, "a list of breakpoints");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || XEN_FALSE_P(base), base, XEN_ARG_3, S_define_envelope, "a float or #f");
+  ename = XEN_TO_C_STRING(name);
   e = xen_to_env(data);
   if ((e) && (XEN_NUMBER_P(base)))
     e->base = XEN_TO_C_DOUBLE(base);
-  alert_envelope_editor(XEN_TO_C_STRING(name), e);
-  XEN_DEFINE_VARIABLE(XEN_TO_C_STRING(name), temp, data); /* already gc protected */
+  alert_envelope_editor(ename, e);
+  XEN_DEFINE_VARIABLE(ename, temp, data); /* already gc protected */
 #if HAVE_GUILE
   /* add property */
   XEN_SET_VARIABLE_PROPERTY(temp, envelope_base_sym, C_TO_XEN_DOUBLE(e->base));

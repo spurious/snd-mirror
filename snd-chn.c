@@ -3417,7 +3417,8 @@ static void draw_sonogram_cursor_1(chan_info *cp)
   fap = cp->fft->axis;
   fax = cursor_context(cp);
   /* fprintf(stderr,"draw (%d) at %d\n", cp->fft_cursor_visible, cp->fft_cx); */
-  draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
+  if (fap)
+    draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
 }
 
 static void draw_sonogram_cursor(chan_info *cp)
@@ -3586,12 +3587,12 @@ void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t
   ap = cp->axis;
   if (cp->cursor_visible)
     {
-      draw_cursor(cp);
+      if (cp->graph_time_p) draw_cursor(cp);
       cp->cursor_visible = false; /* don't redraw at old location */
     }
   if (cp->fft_cursor_visible)
     {
-      draw_sonogram_cursor_1(cp);
+      if ((cp->fft) && (cp->graph_transform_p)) draw_sonogram_cursor_1(cp);
       cp->fft_cursor_visible = false; /* don't redraw at old location */
     }
   CURSOR(cp) = samp;

@@ -10591,9 +10591,10 @@ static void *form_to_ptree(XEN code)
       prog->form_loc = snd_protect(prog->form);
       return((void *)prog);
     }
+  free_ptree((void *)prog);
   if (!run_warned)
     run_warn("can't optimize: %s\n", XEN_AS_STRING(form));
-  return(free_ptree((void *)prog));
+  return(NULL);
 }
 
 /* ---------------- various tree-building wrappers ---------------- */
@@ -10761,17 +10762,17 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 	{
 	  if (pt->arity > 0)
 	    {
-	      if (!(XEN_BOUND_P(arg))) XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code);
+	      if (!(XEN_BOUND_P(arg))) {free_ptree((void *)pt); XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); return(XEN_FALSE);}
 	      xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
 	      if (pt->arity > 1)
 		{
-		  if (!(XEN_BOUND_P(arg1))) XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code);
+		  if (!(XEN_BOUND_P(arg1))) {free_ptree((void *)pt); XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); return(XEN_FALSE);}
 		  xen_to_addr(pt, arg1, pt->arg_types[1], pt->args[1]);
 		  if (pt->arity > 2)
 		    {
-		      if (!(XEN_BOUND_P(arg2))) XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code);
+		      if (!(XEN_BOUND_P(arg2))) {free_ptree((void *)pt); XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); return(XEN_FALSE);}
 		      xen_to_addr(pt, arg2, pt->arg_types[2], pt->args[2]);
-		      if (pt->arity > 3) XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code);
+		      if (pt->arity > 3) {free_ptree((void *)pt); XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); return(XEN_FALSE);}
 		    }
 		}
 	    }
