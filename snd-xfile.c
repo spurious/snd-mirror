@@ -493,7 +493,6 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
   XmStringFree(s1);
   XmStringFree(s2);
-  /* TODO: should the FSB labels be changed to reflect locale? */
 
   rc1 = XtVaCreateManagedWidget("filebuttons", 
 				xmRowColumnWidgetClass, fd->dialog,
@@ -2410,7 +2409,7 @@ static XEN g_just_sounds(void)
 static XEN g_set_just_sounds(XEN on) 
 {
   int n;
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set! " S_just_sounds, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_just_sounds, "a boolean");
   n = XEN_TO_C_BOOLEAN_OR_TRUE(on);
   if ((open_dialog) && (open_dialog->just_sounds_button))
     XmToggleButtonSetState(open_dialog->just_sounds_button, n, TRUE);

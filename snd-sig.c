@@ -1627,8 +1627,6 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved,
     }
 }
 
-/* TODO: should reverse-channel move the cursor?  src-channel? */
-
 static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XEN edp, char *caller, int arg_pos)
 {
   snd_state *ss;
@@ -2148,7 +2146,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
 			  xramp_channel(si->cps[i], 
 					(Float)power,
 					power + rates[0] * (segnum - 1),
-					scaler, offset, segbeg, segnum, pos, TRUE);
+					scaler, offset, segbeg, segnum, pos, TRUE, egen, 0);
 			  power += rates[0] * (segnum - 1);
 			}
 		      else ramp_channel(si->cps[i], 
@@ -2164,7 +2162,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
 			  xramp_channel(si->cps[i], 
 					power + rates[k],
 					power + rates[k] * segnum,
-					scaler, offset, segbeg, segnum, pos, TRUE);
+					scaler, offset, segbeg, segnum, pos, TRUE, egen, k);
 			  power += rates[k] * segnum;
 			}
 		      else ramp_channel(si->cps[i], 
@@ -3680,7 +3678,7 @@ between beg and beg + num by an exponential ramp going from rmp0 to rmp1 with cu
 		  rates = mus_env_rates(e);
 		  passes = mus_env_passes(e);
 		  r1 = r0 + passes[0] * rates[0];
-		  xramp_channel(cp, r0, r1, mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, FALSE);
+		  xramp_channel(cp, r0, r1, mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, FALSE, e, 0);
 		  if (cp->amp_envs[pos])
 		    {
 		      if ((samp == 0) && 
@@ -4195,7 +4193,7 @@ frequency whistles leaking through."
   int len;
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_sinc_width, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_sinc_width, "an integer"); 
   len = XEN_TO_C_INT(val);
   if (len >= 0)
     set_sinc_width(ss, len);

@@ -70,6 +70,8 @@ The configure program has several Snd-related arguments:
    --with-save-dir       directory to use for saved-state files
    --with-run            Guile optimizer (default = yes)
    --with-shared-sndlib  try to use libsndlib.so (default = no)
+   --disable-nls         the gettext (internationalization) support is on
+                           by default; this turns it off.
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -86,7 +88,7 @@ Windoze/MSVC:          makefile.msv (this file assumes you have clisp's cccp, et
 Mac-OSX:               makefile.motif.osx and config.motif.osx (or gtk for motif)
 
 If you have Guile 1.3.4 add -DHAVE_GUILE_1_3.  (The default is now
-Guile 1.6.0).  If you don't have Guile or Ruby, Snd can still be built, but it's
+Guile 1.6.2).  If you don't have Guile or Ruby, Snd can still be built, but it's
 severely limited in what it can do (there is a configure switch
 --with-guile=no, and there's the compiler switch HAVE_EXTENSION_LANGUAGE).
 
@@ -103,7 +105,7 @@ are different enough that gl.c can be a pain to build).
 The customization/extension language is Guile, available in the Gnu
 distributions:
 
-  ftp://ftp.gnu.org/gnu/guile/guile-1.6.0.tar.gz
+  ftp://ftp.gnu.org/gnu/guile/guile-1.6.2.tar.gz
 
 To include guile in Snd, either use the configure script (which should
 be able to find the guile library automatically), or go to the

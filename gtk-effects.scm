@@ -855,8 +855,6 @@ the modulation frequency, and the echo amplitude."))
 		   #f #f)
    #f)
 
-  ;; TODO: these filters don't notice the 'marks target yet
-
   ;; -------- Butterworth band-pass filter
 
   (let ((child (gtk_menu_item_new_with_label "Band-pass filter"))

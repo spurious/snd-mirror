@@ -2411,7 +2411,7 @@ static XEN g_set_dac_size(XEN val)
   int len;
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_dac_size, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_dac_size, "a number");
   len = XEN_TO_C_INT_OR_ELSE(val, 0);
   if (len > 0)
     set_dac_size(ss, len);
@@ -2424,7 +2424,7 @@ static XEN g_set_dac_combines_channels(XEN val)
   #define H_dac_combines_channels "(" S_dac_combines_channels ") should be #t if extra channels are to be mixed into available ones during playing (#t)"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_dac_combines_channels, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_dac_combines_channels, "a boolean");
   set_dac_combines_channels(ss, XEN_TO_C_BOOLEAN_OR_TRUE(val)); 
   return(C_TO_XEN_BOOLEAN(dac_combines_channels(ss)));
 }

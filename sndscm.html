@@ -72,7 +72,7 @@
   <li><a href="#snd6doc">snd6.scm: Backwards compatibility for version 6</a>
   <li><a href="#sndgldoc">snd-gl.scm: OpenGL examples (gl.c)</a>
   <li><a href="#sndmotifdoc">snd-motif.scm, snd-gtk.scm: Motif/Gtk module (xm.c, xg.c)</a>
-  <li><a href="#sndtestdoc">snd-test.scm, snd.rb, and event.scm: Snd regression tests</a>
+  <li><a href="#sndtestdoc">snd-test.scm, snd_test.rb, and event.scm: Snd regression tests</a>
   <li><a href="#vdoc">v.scm: fm-violin</a>
   <li><a href="#wsdoc">ws.scm: with-sound</a>
   <li><a href="#xmenveddoc">xm-enved.scm</a>
@@ -1152,7 +1152,7 @@ change follows an envelope.  In <i>cross-synthesis</i>, <i>cross-snd</i> is the 
 of the sound that controls the spectra, not the affected sound.  <i>voiced-&gt;unvoiced</i>
 is essentially the same idea, but drives the synthesis with white noise.
 <i>cnvtest</i> demonstrates convolution.  <i>jc-reverb</i> is an old Mus10 reverberator
-written originally by John Chowning; see jcrev.ins in CLM. 
+written originally by John Chowning; see jcrev.ins in CLM or jcrev.scm. 
 Here are some sample calls:
 </p>
 <pre>
@@ -2373,7 +2373,7 @@ snd -l snd-test
 which will run all the tests, assuming you have the various sound files it is expecting to find.
 I assume that for most users snd-test.scm will provide more of a set of examples than anything directly useful.
 event.scm has some XEvent-related functions used by snd-test.scm.  The Ruby version (very incomplete) is
-snd.rb.
+snd_test.rb.
 </p>
 
 <A NAME="vdoc"></a><span class=box><h2>v.scm</h2></span>

@@ -1549,7 +1549,7 @@ static XEN g_recorder_autoload(void) {return(C_TO_XEN_BOOLEAN(rp->autoload));}
 static XEN g_set_recorder_autoload(XEN val) 
 {
   #define H_recorder_autoload "(" S_recorder_autoload ") -> #t if newly recorded sound should be loaded into Snd automatically"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_autoload, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_autoload, "a boolean");
   set_recorder_autoload(rp, XEN_TO_C_BOOLEAN_OR_TRUE(val));
   return(C_TO_XEN_BOOLEAN(rp->autoload));
 }
@@ -1559,10 +1559,10 @@ static XEN g_set_recorder_buffer_size(XEN val)
 {
   int size;
   #define H_recorder_buffer_size "(" S_recorder_buffer_size ") -> ADC buffer size (4096)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_buffer_size, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_buffer_size, "an integer"); 
   size = XEN_TO_C_INT(val);
   if (size <= 0)
-    mus_misc_error("set! " S_recorder_buffer_size, _("can't set buffer size <= 0"), val);
+    mus_misc_error(S_setB S_recorder_buffer_size, _("can't set buffer size <= 0"), val);
   rp->buffer_size = size;
   return(val);
 }
@@ -1571,7 +1571,7 @@ static XEN g_recorder_file(void) {return(C_TO_XEN_STRING(rp->output_file));}
 static XEN g_set_recorder_file(XEN val) 
 {
   #define H_recorder_file "(" S_recorder_file ") -> default recorder file name"
-  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_file, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_file, "a string"); 
   if (rp->output_file) FREE(rp->output_file);
   if (XEN_FALSE_P(val))
     {
@@ -1587,7 +1587,7 @@ static XEN g_recorder_in_format(void) {return(C_TO_XEN_INT(rp->in_format));}
 static XEN g_set_recorder_in_format(XEN val) 
 {
   #define H_recorder_in_format "(" S_recorder_in_format ") -> default recorder incoming data format (16 bit linear)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_in_format, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_in_format, "an integer"); 
   rp->in_format = XEN_TO_C_INT(val);
   return(C_TO_XEN_INT(rp->in_format));
 }
@@ -1596,7 +1596,7 @@ static XEN g_recorder_in_device(void) {return(C_TO_XEN_INT(rp->in_device));}
 static XEN g_set_recorder_in_device(XEN val) 
 {
   #define H_recorder_in_device "(" S_recorder_in_device ") -> default recorder input device (mus-audio-line-in)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_in_device, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_in_device, "an integer"); 
   rp->in_device = XEN_TO_C_INT(val);
   return(C_TO_XEN_INT(rp->in_device));
 }
@@ -1605,7 +1605,7 @@ static XEN g_recorder_out_chans(void) {return(C_TO_XEN_INT(rp->out_chans));}
 static XEN g_set_recorder_out_chans(XEN val) 
 {
   #define H_recorder_out_chans "(" S_recorder_out_chans ") -> default recorder output channels (2)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_out_chans, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_chans, "an integer"); 
   rp->out_chans = XEN_TO_C_INT(val);
   return(C_TO_XEN_INT(rp->out_chans));
 }
@@ -1614,7 +1614,7 @@ static XEN g_recorder_out_format(void) {return(C_TO_XEN_INT(rp->out_format));}
 static XEN g_set_recorder_out_format(XEN val) 
 {
   #define H_recorder_out_format "(" S_recorder_out_format ") -> default recorder output data format (16-bit linear)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_out_format, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_format, "an integer"); 
   rp->out_format = XEN_TO_C_INT(val);
   return(C_TO_XEN_INT(rp->out_format));
 }
@@ -1623,7 +1623,7 @@ static XEN g_recorder_srate(void) {return(C_TO_XEN_INT(rp->srate));}
 static XEN g_set_recorder_srate(XEN val) 
 {
   #define H_recorder_srate "(" S_recorder_srate ") -> default recorder sampling rate (22050)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_srate, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_srate, "a number"); 
   set_recorder_srate(rp, XEN_TO_C_INT_OR_ELSE(val, 0));
   return(C_TO_XEN_INT(rp->srate));
 }
@@ -1633,7 +1633,7 @@ static XEN g_set_recorder_trigger(XEN val)
 {
   Float trigger;
   #define H_recorder_trigger "(" S_recorder_trigger ") -> if doing triggered record, min amp that can trigger recording"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_trigger, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_trigger, "a number"); 
   trigger = XEN_TO_C_DOUBLE(val);
   if (trigger > 1.0) trigger = 1.0;
   if (trigger < 0.0) trigger = 0.0;
@@ -1645,7 +1645,7 @@ static XEN g_recorder_max_duration(void) {return(C_TO_XEN_DOUBLE(rp->max_duratio
 static XEN g_set_recorder_max_duration(XEN val) 
 {
   #define H_recorder_max_duration "(" S_recorder_max_duration ") -> max recorder output file length"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_max_duration, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_max_duration, "a number"); 
   rp->max_duration = XEN_TO_C_DOUBLE(val);
   return(C_TO_XEN_DOUBLE(rp->max_duration));
 }
@@ -1689,8 +1689,8 @@ static XEN g_recorder_out_amp (XEN num)
 static XEN g_set_recorder_gain (XEN num, XEN amp) 
 {
   int ind;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, "set! " S_recorder_gain, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_2, "set! " S_recorder_gain, "a number"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, S_setB S_recorder_gain, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_2, S_setB S_recorder_gain, "a number"); 
   ind = XEN_TO_C_INT(num);
   if ((ind >= 0) && (ind < MAX_MIXER_GAINS))
     {
@@ -1703,9 +1703,9 @@ static XEN g_set_recorder_gain (XEN num, XEN amp)
 static XEN g_set_recorder_in_amp (XEN in, XEN out, XEN amp) 
 {
   int in_ind, out_ind;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_1, "set! " S_recorder_in_amp, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_2, "set! " S_recorder_in_amp, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_3, "set! " S_recorder_in_amp, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_1, S_setB S_recorder_in_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_2, S_setB S_recorder_in_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_3, S_setB S_recorder_in_amp, "a number");
   in_ind = XEN_TO_C_INT(in);
   out_ind = XEN_TO_C_INT(out);
   if ((in_ind >= 0) && (in_ind < MAX_IN_CHANS) && 
@@ -1722,8 +1722,8 @@ static XEN g_set_recorder_in_amp (XEN in, XEN out, XEN amp)
 static XEN g_set_recorder_out_amp (XEN num, XEN amp) 
 {
   int ind;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, "set! " S_recorder_out_amp, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_2, "set! " S_recorder_out_amp, "a number"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, S_setB S_recorder_out_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_2, S_setB S_recorder_out_amp, "a number"); 
   ind = XEN_TO_C_INT(num);
   if ((ind >= 0) && (ind < MAX_OUT_CHANS))
     {
@@ -1747,7 +1747,7 @@ static XEN g_set_vu_font(XEN val)
   #define H_vu_font "(" S_vu_font ") -> name of font used to make VU meter labels (courier)"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set! " S_vu_font, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_vu_font, "a string"); 
   if (vu_font(ss)) FREE(vu_font(ss));
   if (XEN_FALSE_P(val))
     set_vu_font(ss, (DEFAULT_VU_FONT) ? copy_string(DEFAULT_VU_FONT) : NULL);
@@ -1761,7 +1761,7 @@ static XEN g_set_vu_font_size(XEN val)
   #define H_vu_font_size "(" S_vu_font_size ") -> size of VU font meter labels (1.0)"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_vu_font_size, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_vu_font_size, "a number"); 
   set_vu_font_size(ss, XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(vu_font_size(ss)));
 }
@@ -1772,7 +1772,7 @@ static XEN g_set_vu_size(XEN val)
   #define H_vu_size "(" S_vu_size ") -> size of VU meters (1.0)"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_vu_size, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_vu_size, "a number"); 
   set_vu_size(ss, XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(vu_size(ss)));
 }

@@ -973,7 +973,7 @@ off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t 
   int ifd, ichans, chn, j;
   unsigned int i, bufnum, curframes;
   off_t n, frames;
-  mus_sample_t fc;
+  mus_sample_t abs_samp;
   mus_sample_t *buffer, *samp;
   off_t *time;
   mus_sample_t **ibufs;
@@ -1015,16 +1015,15 @@ off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t 
       for (chn = 0; chn < ichans; chn++)
 	{
 	  buffer = (mus_sample_t *)(ibufs[chn]);
-	  fc = samp[chn];
 	  for (i = 0; i < curframes; i++) 
-	    if ((buffer[i] > fc) || 
-		(fc < -buffer[i])) 
-	      {
-		time[chn] = i + n; 
-		samp[chn] = buffer[i]; 
-		if (samp[chn] < 0) samp[chn] = -samp[chn];
-		fc = samp[chn];
-	      }
+	    {
+	      abs_samp = mus_sample_abs(buffer[i]);
+	      if (abs_samp > samp[chn])
+		{
+		  time[chn] = i + n; 
+		  samp[chn] = abs_samp;
+		}
+	    }
 	}
     }
   mus_sound_close_input(ifd);

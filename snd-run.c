@@ -1932,14 +1932,9 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 		  if (strcmp(type, "char") == 0) arg_type = R_CHAR; else
 		  if (strcmp(type, "list") == 0) arg_type = R_LIST; 
 
-		  /* TODO: list arg type actually doesn't work -- segfault:
-(let ((tst 0.0))
-  (run-eval '(lambda (lst)
-	       (declare (lst list))
-	       (set! tst (st3-one lst)))
-	    (make-st3 :one 1 :two 2)))
-		  */
-
+		  /* list arg type actually doesn't work -- segfault
+		   *   the problem here is that the walker needs read-time type info
+		   */
 		}
 	    }
 	  add_var_to_ptree(prog, 
@@ -7194,8 +7189,11 @@ static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc)
   /* types can't change within run */
   int run_type, addr, offset;
   XEN lst, lst_ref;
+  if (v == NULL) return(run_warn("clm-struct-ref of null struct"));
   offset = clm_struct_offsets[struct_loc];
   lst = (XEN)(prog->ints[v->addr]);
+  if ((lst == 0) || (!(XEN_LIST_P(lst))))
+    return(run_warn("%s struct lost! (%p)", clm_struct_names[struct_loc], lst));
   lst_ref = XEN_LIST_REF(lst, offset); /* get type at parse time */
   run_type = xen_to_run_type(lst_ref);
   addr = find_clm_var(prog, lst, lst_ref, offset, run_type); /* if doesn't exist add to tables, else return holder */
@@ -7773,7 +7771,7 @@ Float evaluate_ptreec(void *upt, Float arg, vct *v, int dir)
 static XEN g_run_eval(XEN code, XEN arg)
 {
   ptree *pt;
-  XEN result;
+  XEN result = XEN_FALSE;
   current_optimization = 4;
   pt = make_ptree(8);
   pt->result = walk(pt, code, TRUE);
@@ -7792,18 +7790,29 @@ static XEN g_run_eval(XEN code, XEN arg)
 	{
 	  switch (pt->arg_types[0])
 	    {
-	    case R_FLOAT:  pt->dbls[pt->args[0]] = (Float)XEN_TO_C_DOUBLE(arg); break;
-	    case R_INT:    pt->ints[pt->args[0]] = (int)XEN_TO_C_INT(arg); break;
-	    case R_STRING: pt->ints[pt->args[0]] = (int)copy_string(XEN_TO_C_STRING(arg)); break;
+	    case R_FLOAT:   pt->dbls[pt->args[0]] = (Float)XEN_TO_C_DOUBLE(arg); break;
+	    case R_INT:     pt->ints[pt->args[0]] = (int)XEN_TO_C_INT(arg); break;
+	    case R_STRING:  pt->ints[pt->args[0]] = (int)copy_string(XEN_TO_C_STRING(arg)); break;
+	    case R_CHAR:    pt->ints[pt->args[0]] = (int)XEN_TO_C_CHAR(arg); break;
+	    case R_BOOL:    pt->ints[pt->args[0]] = (int)XEN_TO_C_BOOLEAN(arg); break;
+	    case R_VCT:     pt->ints[pt->args[0]] = (int)get_vct(arg); break;
+	    case R_CLM:     pt->ints[pt->args[0]] = (int)(MUS_XEN_TO_CLM(arg)); break;
+	    case R_READER:  pt->ints[pt->args[0]] = (int)get_sf(arg); break;
+	    case R_LIST:
+	    case R_PAIR:    pt->ints[pt->args[0]] = (int)arg; break;
 	    }
 	}
       eval_ptree(pt);
-      if (pt->result->type == R_FLOAT) result = C_TO_XEN_DOUBLE(pt->dbls[pt->result->addr]); else
-	if (pt->result->type == R_INT) result = C_TO_XEN_INT(pt->ints[pt->result->addr]); else
-	  if (pt->result->type == R_CHAR) result = C_TO_XEN_CHAR((char)(pt->ints[pt->result->addr])); else
-	    if (pt->result->type == R_STRING) result = C_TO_XEN_STRING((char *)(pt->ints[pt->result->addr])); else
-	      if (pt->ints[pt->result->addr]) result = XEN_TRUE; else
-		result = XEN_FALSE;
+      switch (pt->result->type)
+	{
+	case R_FLOAT:   result = C_TO_XEN_DOUBLE(pt->dbls[pt->result->addr]); break;
+	case R_INT:     result = C_TO_XEN_INT(pt->ints[pt->result->addr]); break;
+	case R_CHAR:    result = C_TO_XEN_CHAR((char)(pt->ints[pt->result->addr])); break;
+	case R_STRING:  result = C_TO_XEN_STRING((char *)(pt->ints[pt->result->addr])); break;
+	case R_BOOL:    result = C_TO_XEN_BOOLEAN(pt->ints[pt->result->addr]); break;
+	case R_VCT:     run_warn("can't wrap vct?!?"); break;
+	case R_CLM:     run_warn("can't wrap gen?"); break;
+	}
       free_ptree((void *)pt);
       return(result);
     }

@@ -99,6 +99,12 @@
   #define INIT_FILE_NAME "snd-init"
 #endif
 
+#if HAVE_RUBY
+  #define S_setB "set_"
+#else
+  #define S_setB "set! "
+#endif
+
 #define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
 
 #define STR_decimal '.'

@@ -6,6 +6,7 @@
 /* SOMEDAY: some way to access XtGetApplicationResources */
 
 /* HISTORY: 
+ *   1-Feb:     XChangeProperty data (arg7) can be list of ints as well as string.
  *   19-Dec:    more Ruby fixups.
  *   6-Nov:     Ruby XmWMProtocols bugfixes thanks to Michael Scholz.
  *   17-Oct:    XtAppSetFallbackResources and fallbacks added to XtAppInitialize etc.
@@ -11256,22 +11257,35 @@ static XEN gxm_XChangeProperty(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5,
 {
   #define H_XChangeProperty "XChangeProperty(display, w, property, type, format, mode, data, nelements) alters the property for the specified \
 window and causes the X server to generate a PropertyNotify event on that window."
-  char *command;
+  unsigned char *command;
   int len;
+  int *data = NULL;
+  XEN rtn;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XChangeProperty", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XChangeProperty", "Window");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XChangeProperty", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg4), arg4, 4, "XChangeProperty", "Atom");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XChangeProperty", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XChangeProperty", "int");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg7), arg7, 7, "XChangeProperty", "unsigned char*");
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg7) || XEN_LIST_P(arg7), arg7, 7, "XChangeProperty", "string or list of int");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg8), arg8, 8, "XChangeProperty", "int");
-  command = XEN_TO_C_STRING(arg7);
-  if (XEN_INTEGER_P(arg8)) len = XEN_TO_C_INT(arg8); else len = strlen(command) + 1;
-  return(C_TO_XEN_INT(XChangeProperty(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), 
-				      XEN_TO_C_Atom(arg3), XEN_TO_C_Atom(arg4), 
-				      XEN_TO_C_INT(arg5), XEN_TO_C_INT(arg6), 
-				      (unsigned char *)command, len)));
+  if (XEN_STRING_P(arg7))
+    {
+      command = (unsigned char *)(XEN_TO_C_STRING(arg7));
+      if (XEN_INTEGER_P(arg8)) len = XEN_TO_C_INT(arg8); else len = strlen((const char *)command) + 1;
+    }
+  else 
+    {
+      if (XEN_INTEGER_P(arg8)) len = XEN_TO_C_INT(arg8); else len = XEN_LIST_LENGTH(arg7);
+      data = XEN_TO_C_Ints(arg7, len);
+      command = (unsigned char *)data;
+    }
+  rtn = C_TO_XEN_INT(XChangeProperty(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), 
+				     XEN_TO_C_Atom(arg3), XEN_TO_C_Atom(arg4), 
+				     XEN_TO_C_INT(arg5), XEN_TO_C_INT(arg6), 
+				     (const unsigned char *)command, len));
+  if (data) FREE(data);
+  return(rtn);
 }
 
 static XEN gxm_XChangePointerControl(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)

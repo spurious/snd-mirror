@@ -65,7 +65,6 @@
 ;;;  push 'start' to start the scanned synthesis display
 ;;;  if spring > mass, you'll get overflows
 ;;;
-;;; TODO: add audio output
 
 (define scanned-synthesis-pane #f)
 

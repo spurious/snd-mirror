@@ -241,14 +241,14 @@ static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
   #define H_foreground_color "(" S_foreground_color " snd chn ax) -> current drawing color"
 
   chan_info *cp;
-  ASSERT_CHANNEL("set! " S_foreground_color, snd, chn, 2);
+  ASSERT_CHANNEL(S_setB S_foreground_color, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, "set-" S_foreground_color, "a color");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, "set! " S_foreground_color, "an integer");
-  cp = get_cp(snd, chn, "set! " S_foreground_color);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_foreground_color, "an integer");
+  cp = get_cp(snd, chn, S_setB S_foreground_color);
   set_foreground_color(cp,                                  /* snd-xchn.c */
 		       get_ax(cp, 
 			      XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC),
-			      "set! " S_foreground_color),
+			      S_setB S_foreground_color),
 		       XEN_UNWRAP_PIXEL(color));
   return(color);
 }
@@ -289,12 +289,12 @@ static XEN g_load_font(XEN font)
 static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
   axis_context *ax;
-  ASSERT_CHANNEL("set! " S_current_font, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, "set! " S_current_font, "an integer");
+  ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer");
   XEN_ASSERT_TYPE((XEN_LIST_P(id)) &&
 		  (XEN_LIST_LENGTH(id) >= 2) &&
 		  (XEN_SYMBOL_P(XEN_CAR(id))) &&
-		  (strcmp("Font", XEN_SYMBOL_TO_C_STRING(XEN_CAR(id))) == 0), id, XEN_ARG_1, "set! " S_current_font, "a Font");
+		  (strcmp("Font", XEN_SYMBOL_TO_C_STRING(XEN_CAR(id))) == 0), id, XEN_ARG_1, S_setB S_current_font, "a Font");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
   ax->current_font = (Font)XEN_TO_C_INT(XEN_CADR(id));
   XSetFont(ax->dp, ax->gc, ax->current_font);
@@ -335,10 +335,10 @@ static XEN g_load_font(XEN font)
 static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
   axis_context *ax;
-  ASSERT_CHANNEL("set! " S_current_font, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, "set! " S_current_font, "an integer");
-  ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, "set! " S_current_font);
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id), id, XEN_ARG_1, "set! " S_current_font, "a wrapped object");
+  ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer");
+  ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_setB S_current_font);
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id), id, XEN_ARG_1, S_setB S_current_font, "a wrapped object");
   /* gtk_widget_modify_font(ax->w, (PangoFontDescription *)XEN_UNWRAP_C_POINTER(id)); */
   ax->current_font = (PangoFontDescription *)XEN_UNWRAP_C_POINTER(id);
   return(id);
@@ -510,15 +510,15 @@ static XEN g_widget_position(XEN wid)
 static XEN g_set_widget_position(XEN wid, XEN xy)
 {
   widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, "set! " S_widget_position, "a Widget");  
-  XEN_ASSERT_TYPE(XEN_LIST_P(xy) && (XEN_LIST_LENGTH(xy) == 2), xy, XEN_ARG_2, "set! " S_widget_position, "a list: (x y)");  
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_setB S_widget_position, "a Widget");  
+  XEN_ASSERT_TYPE(XEN_LIST_P(xy) && (XEN_LIST_LENGTH(xy) == 2), xy, XEN_ARG_2, S_setB S_widget_position, "a list: (x y)");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_position(w,
 			XEN_TO_C_INT(XEN_CAR(xy)),
 			XEN_TO_C_INT(XEN_CADR(xy)));
   else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_3(C_TO_XEN_STRING("set! " S_widget_position),
+		 XEN_LIST_3(C_TO_XEN_STRING(S_setB S_widget_position),
 			    wid,
 			    xy));
   return(wid);
@@ -541,15 +541,15 @@ static XEN g_widget_size(XEN wid)
 static XEN g_set_widget_size(XEN wid, XEN wh)
 {
   widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, "set! " S_widget_size, "a Widget");  
-  XEN_ASSERT_TYPE(XEN_LIST_P(wh) && (XEN_LIST_LENGTH(wh) == 2), wh, XEN_ARG_2, "set! " S_widget_size, "a list: (width height)");  
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_setB S_widget_size, "a Widget");  
+  XEN_ASSERT_TYPE(XEN_LIST_P(wh) && (XEN_LIST_LENGTH(wh) == 2), wh, XEN_ARG_2, S_setB S_widget_size, "a list: (width height)");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_size(w,
 		    XEN_TO_C_INT(XEN_CAR(wh)),
 		    XEN_TO_C_INT(XEN_CADR(wh)));
   else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_3(C_TO_XEN_STRING("set! " S_widget_size),
+		 XEN_LIST_3(C_TO_XEN_STRING(S_setB S_widget_size),
 			    wid,
 			    wh));
   return(wid);
@@ -612,8 +612,8 @@ static XEN g_widget_text(XEN wid)
 static XEN g_set_widget_text(XEN wid, XEN text)
 {
   widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, "set! " S_widget_text, "a Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_2, "set! " S_widget_text, "a string");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_setB S_widget_text, "a Widget");
+  XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_2, S_setB S_widget_text, "a string");
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
@@ -628,7 +628,7 @@ static XEN g_set_widget_text(XEN wid, XEN text)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_3(C_TO_XEN_STRING("set! " S_widget_text),
+		 XEN_LIST_3(C_TO_XEN_STRING(S_setB S_widget_text),
 			    wid,
 			    text));
   return(text);

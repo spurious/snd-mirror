@@ -807,12 +807,31 @@ char *edit_to_string(chan_info *cp, int edit)
   ed_list *ed;
   ed = cp->edits[edit];
   /* only for edit list in snd-xchn.c */
-  mus_snprintf(edbuf, PRINT_BUFFER_SIZE, "%s : (%s " OFF_TD " " OFF_TD ")", 
+  mus_snprintf(edbuf, PRINT_BUFFER_SIZE, 
+#if HAVE_RUBY
+	       "%s : %s(" OFF_TD ", " OFF_TD ")", 
+#else
+	       "%s : (%s " OFF_TD " " OFF_TD ")", 
+#endif
 	       ed->origin, 
 	       edit_names[ed->edit_type], 
 	       ed->beg, ed->len);
   return(edbuf);
 }
+
+#if HAVE_RUBY
+  #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
+  #define PROC_OPEN "("
+  #define PROC_SEP ", "
+  #define VECTOR_OPEN "["
+  #define VECTOR_CLOSE "]"
+#else
+  #define TO_PROC_NAME(Str) Str
+  #define PROC_OPEN " "
+  #define PROC_SEP " "
+  #define VECTOR_OPEN "#("
+  #define VECTOR_CLOSE ")"
+#endif
 
 static void display_edits(chan_info *cp, FILE *outp, int with_source)
 {
@@ -844,14 +863,16 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	    }
 	  else
 	    {
-	      fprintf(fd, "#(");
+	      fprintf(fd, VECTOR_OPEN);
 	      for (i = 0; i < ed->len; i++) 
+		{
 #if SNDLIB_USE_FLOATS
-		fprintf(fd, "%f ", sd->buffered_data[i]);
+		  fprintf(fd, "%f" PROC_SEP, sd->buffered_data[i]);
 #else
-	        fprintf(fd, "%d ", sd->buffered_data[i]);
+		  fprintf(fd, "%d" PROC_SEP, sd->buffered_data[i]);
 #endif
-	      fprintf(fd, ")");
+		}
+	      fprintf(fd, VECTOR_CLOSE);
 	    }
 	}
       else
@@ -870,7 +891,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      off_t idataloc, n, samples, cursamples, sample;
 	      mus_sample_t *buffer;
 	      mus_sample_t **ibufs;
-	      fprintf(fd, "#(");
+	      fprintf(fd, VECTOR_OPEN);
 	      ifd = mus_file_open_read(sd->filename);
 	      if (ifd == -1) 
 		{
@@ -901,9 +922,9 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		  for (i = 0; i < cursamples; i++) 
 		    {
 #if SNDLIB_USE_FLOATS
-		      fprintf(fd, "%f ", MUS_SAMPLE_TO_FLOAT(buffer[i]));
+		      fprintf(fd, "%f" PROC_SEP, MUS_SAMPLE_TO_FLOAT(buffer[i]));
 #else
-		      fprintf(fd, "%d ", MUS_SAMPLE_TO_INT(buffer[i]));
+		      fprintf(fd, "%d" PROC_SEP, MUS_SAMPLE_TO_INT(buffer[i]));
 #endif
 		      sample++;
 		      if (sample == ed->len) goto ALL_DONE;
@@ -911,7 +932,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		}
 	    ALL_DONE:
 	      mus_file_close(ifd);
-	      fprintf(fd, ")");
+	      fprintf(fd, VECTOR_CLOSE);
 	      FREE(ibufs[0]);
 	      FREE(ibufs);
 	    }
@@ -937,62 +958,73 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
       ed = cp->edits[i];
       if (ed)
 	{
+#if HAVE_RUBY
+	  fprintf(fd, "      ");
+#else
+	  fprintf(fd, "      (");
+#endif
 	  switch (ed->edit_type)
 	    {
 	    case INSERTION_EDIT: 
 	      /* samp data snd chn */
-	      fprintf(fd, "      (%s " OFF_TD " " OFF_TD " \"%s\" ",
-		      S_insert_samples_with_origin,
+	      fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "\"%s\" ",
+		      TO_PROC_NAME(S_insert_samples_with_origin),
 		      ed->beg,
 		      ed->len,
 		      (ed->origin) ? ed->origin : "");
 	      edit_data_to_file(fd, ed, cp);
-	      fprintf(fd, " sfile %d", cp->chan);
+	      fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
 	      break;
 	    case DELETION_EDIT:
 	      /* samp samps snd chn */
-	      fprintf(fd, "      (%s " OFF_TD " " OFF_TD " \"%s\" sfile %d",
-		      S_delete_samples_with_origin,
+	      fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "\"%s\"" PROC_SEP "sfile" PROC_SEP "%d",
+		      TO_PROC_NAME(S_delete_samples_with_origin),
 		      ed->beg,
 		      ed->len,
 		      (ed->origin) ? ed->origin : "",
 		      cp->chan);
 	      break;
 	    case CHANGE_EDIT:
-	      fprintf(fd, "      (%s " OFF_TD " " OFF_TD " \"%s\" ",
-		      S_change_samples_with_origin,
+	      fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP  OFF_TD PROC_SEP "\"%s\"" PROC_SEP,
+		      TO_PROC_NAME(S_change_samples_with_origin),
 		      ed->beg,
 		      ed->len,
 		      (ed->origin) ? ed->origin : "");
 	      edit_data_to_file(fd, ed, cp);
-	      fprintf(fd, " sfile %d", cp->chan);
+	      fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
 	      break;
 	    case SCALED_EDIT: 
-	      fprintf(fd, "      (%s sfile %d",
+	      fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
 		      ed->origin, /* imports scaler */
 		      cp->chan);
 	      break;
 	    case ZERO_EDIT:
-	      fprintf(fd, "      (%s " OFF_TD " " OFF_TD " sfile %d",
-		      S_pad_channel,
+	      fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
+		      TO_PROC_NAME(S_pad_channel),
 		      ed->beg,
 		      ed->len,
 		      cp->chan);
 	      break;
 	    case RAMP_EDIT:
-	      fprintf(fd, "      (%s sfile %d",
+	      fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
 		      ed->origin,
 		      cp->chan);
 	      break;
 	    case XEN_EDIT:
-	      fprintf(fd, "      (xen-channel %s " OFF_TD " " OFF_TD " sfile %d",
+	      fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
+		      TO_PROC_NAME("xen-channel"),
+#if HAVE_GUILE
+		      XEN_AS_STRING(scm_procedure_source(cp->xens[ed->ptree_location])),
+#else
 		      XEN_AS_STRING(cp->xens[ed->ptree_location]),
+#endif
 		      ed->beg,
 		      ed->len,
 		      cp->chan);
 	      break;
 	    case PTREE_EDIT:
-	      fprintf(fd, "      (ptree-channel %s " OFF_TD " " OFF_TD " sfile %d",
+	      fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
+		      TO_PROC_NAME(S_ptree_channel),
 		      XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
 		      ed->beg,
 		      ed->len,
@@ -1008,7 +1040,11 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	  if ((ed->edpos != AT_CURRENT_EDIT_POSITION) &&
 	      (ed->edpos != (i - 1)))
 	    fprintf(fd, " %d", ed->edpos);
+#if HAVE_RUBY
+	  else fprintf(fd, ", false");
+#else
 	  else fprintf(fd, " #f");
+#endif
 #if HAVE_GUILE
 	  if ((ed->edit_type == PTREE_EDIT) || (ed->edit_type == XEN_EDIT))
 	      {
@@ -1019,13 +1055,19 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		  fprintf(fd, " %s", XEN_AS_STRING(scm_procedure_source(code)));
 	      }
 #endif
-	  fprintf(fd,")\n");
+	  fprintf(fd, ")\n"); /* works for both Ruby and Scheme */
 	}
     }
   if (cp->edit_ctr < edits) 
+#if HAVE_RUBY
+    fprintf(fd, "      undo(%d, sfile, %d);\n",
+	    edits - cp->edit_ctr,
+	    cp->chan);
+#else
     fprintf(fd, "      (undo %d sfile %d)\n",
 	    edits - cp->edit_ctr,
 	    cp->chan);
+#endif
   save_mark_list(fd, cp);
 }
 
@@ -2102,7 +2144,11 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int 
     }
   new_ed->edit_type = SCALED_EDIT;
   new_ed->sound_location = 0;
+#if HAVE_RUBY
+  new_ed->origin = mus_format("%s(%.4f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(S_scale_channel), scl, beg, num);
+#else
   new_ed->origin = mus_format("%s %.4f " OFF_TD " " OFF_TD, S_scale_channel, scl, beg, num);
+#endif
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
@@ -2414,7 +2460,8 @@ static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg
 }
 
 static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
-			     off_t beg, off_t num, int pos, int in_as_one_edit, const char *origin, int is_x)
+			     off_t beg, off_t num, int pos, int in_as_one_edit, const char *origin, 
+			     int is_x, mus_any *e, int e_pos)
 {
   off_t len;
   int i;
@@ -2473,7 +2520,32 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
     }
   new_ed->edit_type = RAMP_EDIT;
   new_ed->sound_location = 0;
-  new_ed->origin = mus_format("%s %.4f %.4f %.4f %.4f " OFF_TD " " OFF_TD, origin, rmp0, rmp1, scaler, offset, beg, num);
+  if (!is_x)
+    {
+#if HAVE_RUBY
+  new_ed->origin = mus_format("%s(%.4f, %.4f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(origin), rmp0, rmp1, beg, num);
+#else
+  new_ed->origin = mus_format("%s %.4f %.4f " OFF_TD " " OFF_TD, origin, rmp0, rmp1, beg, num);
+#endif
+    }
+  else
+    {
+      Float *data;
+      data = mus_data(e);
+#if HAVE_RUBY
+  new_ed->origin = mus_format("%s(%.4f, %.4f, %.4f, " OFF_TD ", " OFF_TD, 
+			      TO_PROC_NAME(origin), 
+			      data[e_pos * 2 + 1], data[e_pos * 2 + 3],
+			      mus_increment(e),
+			      beg, num);
+#else
+  new_ed->origin = mus_format("%s %.4f %.4f %.4f " OFF_TD " " OFF_TD, 
+			      origin, 
+			      data[e_pos * 2 + 1], data[e_pos * 2 + 3],
+			      mus_increment(e),
+			      beg, num);
+#endif
+    }
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
@@ -2485,13 +2557,13 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 
 void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, int in_as_one_edit)
 {
-  all_ramp_channel(cp, rmp0, rmp1, 0.0, 0.0, beg, num, pos, in_as_one_edit, S_ramp_channel, FALSE);
+  all_ramp_channel(cp, rmp0, rmp1, 0.0, 0.0, beg, num, pos, in_as_one_edit, S_ramp_channel, FALSE, NULL, 0);
 }
 
 void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
-		   off_t beg, off_t num, int pos, int in_as_one_edit)
+		   off_t beg, off_t num, int pos, int in_as_one_edit, mus_any *e, int e_pos)
 {
-  all_ramp_channel(cp, rmp0, rmp1, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel, TRUE);
+  all_ramp_channel(cp, rmp0, rmp1, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel, TRUE, e, e_pos);
 }
 
 static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg, off_t num, int is_xen)
@@ -2663,7 +2735,11 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, in
   new_ed->edit_type = (is_xen) ? XEN_EDIT : PTREE_EDIT;
   new_ed->sound_location = 0;
   new_ed->ptree_location = ptree_loc;
+#if HAVE_RUBY
+  new_ed->origin = mus_format("%s(%d, " OFF_TD ", " OFF_TD, (is_xen) ? "xen" : "ptree", ptree_loc, beg, num);
+#else
   new_ed->origin = mus_format("%s %d " OFF_TD " " OFF_TD, (is_xen) ? "xen" : "ptree", ptree_loc, beg, num);
+#endif
   new_ed->edpos = pos;
   new_ed->ptree_env_too = env_it;
   new_ed->selection_beg = old_ed->selection_beg;
@@ -7410,7 +7486,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t num, int pos0
   new_ed->maxamp = maxamp1;
   new_ed->beg = 0;
   new_ed->len = num;
-  new_ed->origin = copy_string(S_swap_channels);
+  new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels));
   cp0->edits[cp0->edit_ctr] = new_ed;
   for (i = 0; i < new_ed->size; i++) 
     {
@@ -7427,7 +7503,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t num, int pos0
   new_ed->maxamp = maxamp0;
   new_ed->beg = 0;
   new_ed->len = num;
-  new_ed->origin = copy_string(S_swap_channels);
+  new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels));
   cp1->edits[cp1->edit_ctr] = new_ed;
   for (i = 0; i < new_ed->size; i++) 
     {
@@ -8399,7 +8475,7 @@ void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin) /* origin c
 	  if (ed)
 	    {
 	      if (ed->origin) FREE(ed->origin);
-	      ed->origin = copy_string(one_edit_origin);
+	      ed->origin = copy_string(one_edit_origin); /* TODO: as-one-edit save ruby case? */
 	      reflect_edit_history_change(cp);
 	    }
 	}
@@ -8586,9 +8662,8 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
       ss->stopped_explicitly = FALSE;
       for (i = 0; i < num; i++)
 	{
-	  mval = read_sample(sf);
+	  mval = mus_sample_abs(read_sample(sf));
 	  if (mval > ymax) ymax = mval;
-	  else if (-mval > ymax) ymax = -mval;
 	  j++;
 	  if (j > 1000000)
 	    {
@@ -8606,9 +8681,8 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
     {
       for (i = 0; i < num; i++)
 	{
-	  mval = read_sample(sf);
+	  mval = mus_sample_abs(read_sample(sf));
 	  if (mval > ymax) ymax = mval;
-	  else if (-mval > ymax) ymax = -mval;
 	}
     }
   free_snd_fd(sf);
@@ -8740,14 +8814,14 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   chan_info *cp;
   int pos;
   mus_sample_t ival[1];
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, "set! " S_sample, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set! " S_sample, "a number");
-  ASSERT_CHANNEL("set! " S_sample, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, "set! " S_sample);
-  pos = to_c_edit_position(cp, edpos, "set! " S_sample, 5);
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_setB S_sample, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_sample, "a number");
+  ASSERT_CHANNEL(S_setB S_sample, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, S_setB S_sample);
+  pos = to_c_edit_position(cp, edpos, S_setB S_sample, 5);
   ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
   change_samples(XEN_TO_C_OFF_T_OR_ELSE(samp_n, CURSOR(cp)), 
-		 1, ival, cp, LOCK_MIXES, "set! " S_sample, pos);
+		 1, ival, cp, LOCK_MIXES, S_setB S_sample, pos);
   update_graph(cp);
   return(val);
 }

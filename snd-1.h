@@ -704,7 +704,8 @@ snd_fd *get_sf(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 void scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, int in_as_one_edit);
 void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, int in_as_one_edit);
-void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, off_t beg, off_t num, int pos, int in_as_one_edit);
+void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
+		   off_t beg, off_t num, int pos, int in_as_one_edit, mus_any *e, int e_pos);
 void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, int env_it, XEN init_func, int is_xen);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position);

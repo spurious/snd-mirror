@@ -1849,9 +1849,9 @@ static XEN g_mark_sample(XEN mark_n, XEN pos_n)
 
 static XEN g_set_mark_sample(XEN mark_n, XEN samp_n) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, "set! " S_mark_sample, "an integer");
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_2, "set! " S_mark_sample, "an integer");
-  return(mark_set(mark_n, samp_n, MARK_SAMPLE, "set! " S_mark_sample));
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_setB S_mark_sample, "an integer");
+  return(mark_set(mark_n, samp_n, MARK_SAMPLE, S_setB S_mark_sample));
 }
 
 static XEN g_mark_sync(XEN mark_n) 
@@ -1863,9 +1863,9 @@ static XEN g_mark_sync(XEN mark_n)
 
 static XEN g_set_mark_sync(XEN mark_n, XEN sync_n) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, "set! " S_mark_sync, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sync_n), sync_n, XEN_ARG_2, "set! " S_mark_sync, "an integer");
-  return(mark_set(mark_n, sync_n, MARK_SYNC, "set! " S_mark_sync));
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_sync, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sync_n), sync_n, XEN_ARG_2, S_setB S_mark_sync, "an integer");
+  return(mark_set(mark_n, sync_n, MARK_SYNC, S_setB S_mark_sync));
 }
 
 static XEN g_mark_name(XEN mark_n) 
@@ -1877,9 +1877,9 @@ static XEN g_mark_name(XEN mark_n)
 
 static XEN g_set_mark_name(XEN mark_n, XEN name) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, "set! " S_mark_name, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, "set! " S_mark_name, "a string");
-  return(mark_set(mark_n, name, MARK_NAME, "set! " S_mark_name));
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_name, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_setB S_mark_name, "a string");
+  return(mark_set(mark_n, name, MARK_NAME, S_setB S_mark_name));
 }
 
 static XEN g_mark_sync_max(void) 

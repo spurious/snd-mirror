@@ -1782,7 +1782,7 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
       set_file_sort_sensitive(FALSE);
       errstr = C_TO_XEN_STRING(error);
       FREE(error);
-      return(snd_bad_arity_error("set! " S_previous_files_sort_procedure, errstr, proc));
+      return(snd_bad_arity_error(S_setB S_previous_files_sort_procedure, errstr, proc));
     }
   return(proc);
 }
@@ -2337,8 +2337,8 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   XEN start1 = XEN_UNDEFINED; XEN end1 = XEN_UNDEFINED; 
   XEN mode0 = XEN_UNDEFINED; XEN mode1 = XEN_UNDEFINED;
   XEN note = XEN_UNDEFINED; XEN detune = XEN_UNDEFINED;
-  ASSERT_SOUND("set! " S_sound_loop_info, snd, 1);
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, "set! " S_sound_loop_info, "a list");
+  ASSERT_SOUND(S_setB S_sound_loop_info, snd, 1);
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, S_setB S_sound_loop_info, "a list");
   if (XEN_NOT_BOUND_P(vals))
     {
       vals = snd;
@@ -2347,10 +2347,10 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     }
   else sp = get_sp(snd);
   if (sp == NULL) 
-    return(snd_no_such_sound_error("set! " S_sound_loop_info, snd));
+    return(snd_no_such_sound_error(S_setB S_sound_loop_info, snd));
   if (sp->read_only)
     XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING("set! " S_sound_loop_info),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
 			 C_TO_XEN_STRING(sp->filename),
 			 C_TO_XEN_STRING(_("sound is write-protected"))));
   hdr = sp->hdr;
@@ -2535,7 +2535,7 @@ static XEN g_set_previous_files_sort(XEN val)
   #define H_previous_files_sort "(" S_previous_files_sort ") -> sort choice in view files (0 = unsorted, 1 = by name, etc)"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_previous_files_sort, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_previous_files_sort, "an integer"); 
   update_prevlist();
   set_previous_files_sort(ss, mus_iclamp(0,
 					 XEN_TO_C_INT(val),

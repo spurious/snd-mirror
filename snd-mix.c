@@ -2234,10 +2234,6 @@ static void move_mix(mix_info *md)
 	}
       reflect_mix_in_mix_panel(md->id);
       if (show_mix_waveforms(ss)) draw_mix_waveform(md);
-
-      /* TODO: move track should move all mixes in track at the same time */
-      /* TODO: should mix-track(sync) be handled globally like sound sync? what about mark-sync? */
-
       /* can't easily use work proc here because the erasure gets complicated */
       make_temporary_graph(cp, md, cs);
     }
@@ -3135,14 +3131,14 @@ static int set_mix_amp(int mix_id, int chan, Float val, int from_gui, int remix)
 	      if (!from_gui) 
 		{
 		  reflect_mix_in_mix_panel(mix_id);
-		  remix_file(md, "set! " S_mix_amp);
+		  remix_file(md, S_setB S_mix_amp);
 		}
 	      else
 		{
 		  if (remix)
 		    {
 		      if (!(call_mix_amp_changed_hook(md)))
-			remix_file(md, "set! " S_mix_amp);
+			remix_file(md, S_setB S_mix_amp);
 		    }
 		  else make_temporary_graph(md->cp, md, cs);
 		}
@@ -3193,14 +3189,14 @@ static int set_mix_speed(int mix_id, Float val, int from_gui, int remix)
 	  if (!from_gui)
 	    {
 	      reflect_mix_in_mix_panel(mix_id);
-	      remix_file(md, "set! " S_mix_speed);
+	      remix_file(md, S_setB S_mix_speed);
 	    }
 	  else
 	    {
 	      if (remix)
 		{
 		  if (!(call_mix_speed_changed_hook(md)))
-		    remix_file(md, "set! " S_mix_speed);
+		    remix_file(md, S_setB S_mix_speed);
 		}
 	      else make_temporary_graph(md->cp, md, cs);
 	    }
@@ -3268,10 +3264,10 @@ static int set_mix_position(int mix_id, off_t val, int from_gui)
 	  else cs->beg = 0;
 	  reflect_mix_in_mix_panel(mix_id);
 	  if (!from_gui)
-	    remix_file(md, "set! " S_mix_position); 
+	    remix_file(md, S_setB S_mix_position); 
 	  else
 	    if (!(call_mix_position_changed_hook(md, cs->beg - cs->orig)))
-	      remix_file(md, "set! " S_mix_position); 
+	      remix_file(md, S_setB S_mix_position); 
 	}
       return(mix_id);
     }
@@ -3372,7 +3368,7 @@ static int set_mix_amp_env_1(int n, int chan, env *val, int remix)
 	      free_env(old_panel_env);
 	    }
 	  if (old_env) free_env(old_env);
-	  if (remix) remix_file(md, "set! " S_mix_amp_env);
+	  if (remix) remix_file(md, S_setB S_mix_amp_env);
 	  return(0);
 	}
       else return(INVALID_MIX_CHANNEL);
@@ -3591,12 +3587,12 @@ static XEN g_mix_amp_env(XEN n, XEN chan)
 
 static XEN g_set_mix_position(XEN n, XEN uval) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(n), n, XEN_ARG_1, "set! " S_mix_position, "a number");
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, "set! " S_mix_position, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(n), n, XEN_ARG_1, S_setB S_mix_position, "a number");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, S_setB S_mix_position, "an integer");
   if (set_mix_position(XEN_TO_C_INT_OR_ELSE(n, 0), 
 		       XEN_TO_C_OFF_T_OR_ELSE(uval, 0),
 		       FALSE) == INVALID_MIX_ID)
-    return(snd_no_such_mix_error("set! " S_mix_position, n));
+    return(snd_no_such_mix_error(S_setB S_mix_position, n));
   return(uval);
 }
 
@@ -3605,12 +3601,12 @@ static XEN g_set_mix_frames(XEN n, XEN uval)
   mix_info *md;
   off_t val;
   console_state *cs = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set! " S_mix_frames, "an integer");
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, "set! " S_mix_frames, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_frames, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, S_setB S_mix_frames, "an integer");
   md = md_from_id(XEN_TO_C_INT(n));
   if ((md == NULL) || 
       (!(mix_ok_and_unlocked(md->id))))
-    return(snd_no_such_mix_error("set! " S_mix_frames, n));
+    return(snd_no_such_mix_error(S_setB S_mix_frames, n));
   cs = md->current_cs;
   if (cs)
     {
@@ -3619,9 +3615,9 @@ static XEN g_set_mix_frames(XEN n, XEN uval)
 	{
 	  cs->len = val;
 	  reflect_mix_in_mix_panel(md->id);
-	  remix_file(md, "set! " S_mix_frames); 
+	  remix_file(md, S_setB S_mix_frames); 
 	}
-      else XEN_WRONG_TYPE_ARG_ERROR("set! " S_mix_frames, XEN_ARG_1, uval, "a positive integer");
+      else XEN_WRONG_TYPE_ARG_ERROR(S_setB S_mix_frames, XEN_ARG_1, uval, "a positive integer");
     }
   return(uval);
 }
@@ -3632,11 +3628,11 @@ static XEN g_set_mix_locked(XEN n, XEN val)
   mix_info *md;
   int on;
   snd_state *ss;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set! " S_mix_locked, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ARG_2, "set! " S_mix_locked, "a boolean");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_locked, "an integer");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ARG_2, S_setB S_mix_locked, "a boolean");
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
-    return(snd_no_such_mix_error("set! " S_mix_locked, n));
+    return(snd_no_such_mix_error(S_setB S_mix_locked, n));
   on = XEN_TO_C_BOOLEAN_OR_TRUE(val);
   cs = md->states[md->curcons];
   cs->locked = on;
@@ -3655,11 +3651,11 @@ static XEN g_set_mix_anchor(XEN n, XEN uval)
   mix_info *md;
   console_state *cs = NULL;
   off_t val;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set! " S_mix_anchor, "an integer");
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, "set! " S_mix_anchor, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_anchor, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, S_setB S_mix_anchor, "an integer");
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
-    return(snd_no_such_mix_error("set! " S_mix_anchor, n));
+    return(snd_no_such_mix_error(S_setB S_mix_anchor, n));
   cs = md->current_cs;
   if (cs)
     {
@@ -3676,11 +3672,11 @@ static XEN g_set_mix_anchor(XEN n, XEN uval)
 static XEN g_set_mix_name(XEN n, XEN val) 
 {
   mix_info *md;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set! " S_mix_name, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, "set! " S_mix_name, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_name, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, S_setB S_mix_name, "a string");
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
-    return(snd_no_such_mix_error("set! " S_mix_name, n));
+    return(snd_no_such_mix_error(S_setB S_mix_name, n));
   if (md->name) FREE(md->name);
   md->name = copy_string(XEN_TO_C_STRING(val));
   reflect_mix_in_mix_panel(md->id);
@@ -3690,11 +3686,11 @@ static XEN g_set_mix_name(XEN n, XEN val)
 static XEN g_set_mix_track(XEN n, XEN val) 
 {
   mix_info *md;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set! " S_mix_track, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "set! " S_mix_track, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_track, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, S_setB S_mix_track, "an integer");
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
-    return(snd_no_such_mix_error("set! " S_mix_track, n));
+    return(snd_no_such_mix_error(S_setB S_mix_track, n));
   md->track = XEN_TO_C_INT(val);
   reflect_mix_in_mix_panel(md->id);
   return(val);
@@ -3703,11 +3699,11 @@ static XEN g_set_mix_track(XEN n, XEN val)
 static XEN g_set_mix_tag_y(XEN n, XEN val) 
 {
   mix_info *md;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set! " S_mix_tag_y, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set! " S_mix_tag_y, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_tag_y, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mix_tag_y, "a number");
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
-    return(snd_no_such_mix_error("set! " S_mix_tag_y, n));
+    return(snd_no_such_mix_error(S_setB S_mix_tag_y, n));
   md->tag_y = XEN_TO_C_INT_OR_ELSE(val, 0);
   update_graph(md->cp);
   return(val);
@@ -3715,10 +3711,10 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
 
 static XEN g_set_mix_speed(XEN n, XEN uval) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set! " S_mix_speed, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, "set! " S_mix_speed, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_speed, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, S_setB S_mix_speed, "a number");
   if (set_mix_speed(XEN_TO_C_INT(n), XEN_TO_C_DOUBLE(uval), FALSE, TRUE) == INVALID_MIX_ID)
-    return(snd_no_such_mix_error("set! " S_mix_speed, n));
+    return(snd_no_such_mix_error(S_setB S_mix_speed, n));
   return(uval);
 }
 
@@ -3736,15 +3732,15 @@ static XEN g_set_mix_amp(XEN n, XEN uchan_1, XEN uval_1)
       uchan = uval_1;
       uval = uchan_1;
     }
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set! " S_mix_amp, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(uchan), uchan, XEN_ARG_2, "set! " S_mix_amp, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_3, "set! " S_mix_amp, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(uchan), uchan, XEN_ARG_2, S_setB S_mix_amp, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_3, S_setB S_mix_amp, "a number");
   res = set_mix_amp(XEN_TO_C_INT(n), (XEN_BOUND_P(uchan)) ? XEN_TO_C_INT(uchan) : 0, XEN_TO_C_DOUBLE(uval), FALSE, TRUE);
   if (res == INVALID_MIX_ID)
-    return(snd_no_such_mix_error("set! " S_mix_amp, n));
+    return(snd_no_such_mix_error(S_setB S_mix_amp, n));
   else 
     if (res == INVALID_MIX_CHANNEL)
-      return(snd_no_such_channel_error("set! " S_mix_amp, n, uchan));  
+      return(snd_no_such_channel_error(S_setB S_mix_amp, n, uchan));  
   return(uval);
 }
 
@@ -3763,18 +3759,18 @@ static XEN g_set_mix_amp_env(XEN n, XEN chan_1, XEN val_1)
       chan = val_1;
       val = chan_1;
     }
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set! " S_mix_amp_env, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, "set! " S_mix_amp_env, "an integer");
-  XEN_ASSERT_TYPE(XEN_LIST_P(val), val, XEN_ARG_3, "set! " S_mix_amp_env, "a list");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_amp_env, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_setB S_mix_amp_env, "an integer");
+  XEN_ASSERT_TYPE(XEN_LIST_P(val), val, XEN_ARG_3, S_setB S_mix_amp_env, "a list");
   res = set_mix_amp_env(XEN_TO_C_INT(n), 
 			(XEN_BOUND_P(chan)) ? XEN_TO_C_INT(chan) : 0,
-			e = get_env(val, "set! " S_mix_amp_env));
+			e = get_env(val, S_setB S_mix_amp_env));
   if (e) free_env(e);
   if (res == INVALID_MIX_ID)
-    return(snd_no_such_mix_error("set! " S_mix_amp_env, n));
+    return(snd_no_such_mix_error(S_setB S_mix_amp_env, n));
   else 
     if (res == INVALID_MIX_CHANNEL)
-      return(snd_no_such_channel_error("set! " S_mix_amp_env, n, chan)); 
+      return(snd_no_such_channel_error(S_setB S_mix_amp_env, n, chan)); 
   return(val);
 }
 
@@ -3834,7 +3830,7 @@ static XEN g_set_mix_waveform_height(XEN val)
   #define H_mix_waveform_height "(" S_mix_waveform_height ") -> max height (pixels) of mix waveforms (20)"
   snd_state *ss; 
   int new_val[1];
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_mix_waveform_height, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_waveform_height, "a number"); 
   ss = get_global_state(); 
   new_val[0] = XEN_TO_C_INT_OR_ELSE(val, 0);
   in_set_mix_waveform_height(ss, new_val[0]);
@@ -3862,7 +3858,7 @@ static XEN g_set_mix_tag_width(XEN val)
   #define H_mix_tag_width "(" S_mix_tag_width ") -> width (pixels) of mix tags (6)"
   snd_state *ss; 
   int width;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_mix_tag_width, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_width, "a number"); 
   ss = get_global_state(); 
   width = XEN_TO_C_INT_OR_ELSE(val, DEFAULT_MIX_TAG_WIDTH);
   set_mix_tag_width(ss, width);
@@ -3876,7 +3872,7 @@ static XEN g_set_mix_tag_height(XEN val)
   #define H_mix_tag_height "(" S_mix_tag_height ") -> height (pixels) of mix tags (14)"
   snd_state *ss; 
   int height;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_mix_tag_height, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_height, "a number"); 
   ss = get_global_state(); 
   height = XEN_TO_C_INT_OR_ELSE(val, DEFAULT_MIX_TAG_HEIGHT);
   set_mix_tag_height(ss, height);
@@ -4358,7 +4354,7 @@ finds the mix in snd's channel chn at samp, returning the mix id; returns #f if 
 
   int id;
   chan_info *cp = NULL;
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_find_mix, "a number");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_find_mix, "an integer");
   ASSERT_CHANNEL(S_find_mix, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mix);
   id = mix_id_from_channel_position(cp, XEN_TO_C_OFF_T_OR_ELSE(samp_n, -1));
@@ -4380,7 +4376,7 @@ static XEN g_set_mix_color (XEN arg1, XEN arg2)
       color = arg2;
       mix_id = arg1;
     }
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, "set! " S_mix_color, "a color"); 
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_mix_color, "a color"); 
   if (XEN_INTEGER_P(mix_id))
     color_one_mix_from_id(XEN_TO_SMALL_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
   else set_mix_color(ss, XEN_UNWRAP_PIXEL(color));
@@ -4402,7 +4398,7 @@ static XEN g_set_selected_mix_color (XEN color)
 {
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, "set! " S_selected_mix_color, "a color"); 
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_mix_color, "a color"); 
   set_selected_mix_color(ss, XEN_UNWRAP_PIXEL(color));
   for_each_chan(ss, update_graph);
   return(color);
@@ -4422,7 +4418,7 @@ static XEN g_set_with_mix_tags(XEN val)
   #define H_with_mix_tags "(" S_with_mix_tags ") -> #t if Snd should display mixed portions with a draggable tag"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_with_mix_tags, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_with_mix_tags, "a boolean");
   set_with_mix_tags(ss, XEN_TO_C_BOOLEAN_OR_TRUE(val));
   return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));
 }

@@ -3265,7 +3265,7 @@ EDITS: 5
 	
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 2) "
- (ramp 0 10) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 10 [2:2]:
+ (ramp 0 10) ; ramp-channel 0.0000 1.0000 0 10 [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000000, -0.000000 -> 1.000000]) [buf: 10] 
    (at 10, end_mark)
 "))
@@ -3308,7 +3308,7 @@ EDITS: 5
 	(undo 2)
 	(ramp-channel .2 .6 2 6)
 	(if (not (string=? (display-edits ind 0 2) "
- (ramp 2 6) ; ramp-channel 0.2000 0.6000 0.0000 0.0000 2 6 [2:4]:
+ (ramp 2 6) ; ramp-channel 0.2000 0.6000 2 6 [2:4]:
    (at 0, cp->sounds[1][0:1, 1.000000]) [buf: 10] 
    (at 2, cp->sounds[1][2:7, 1.000000, 0.200000 -> 0.600000]) [buf: 10] 
    (at 8, cp->sounds[1][8:9, 1.000000]) [buf: 10] 
@@ -3455,7 +3455,7 @@ EDITS: 5
 	(map-channel (lambda (y) 1.0) 0 10)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 2) "
- (ramp 0 10) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 10 [2:2]:
+ (ramp 0 10) ; xramp-channel 0.0000 1.0000 32.0000 0 10 [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000000, 0.000000 -> 3.465736, off: -0.032258, scl: 0.032258]) [buf: 10] 
    (at 10, end_mark)
 "))
@@ -3463,7 +3463,7 @@ EDITS: 5
 	(undo)
 	(xramp-channel 0.0 1.0 0.325)
 	(if (not (string=? (display-edits ind 0 2) "
- (ramp 0 10) ; xramp-channel 0.0000 -1.1239 -1.4815 1.4815 0 10 [2:2]:
+ (ramp 0 10) ; xramp-channel 0.0000 1.0000 0.3250 0 10 [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000000, -0.000000 -> -1.123930, off: 1.481481, scl: -1.481481]) [buf: 10] 
    (at 10, end_mark)
 "))
@@ -3479,7 +3479,7 @@ EDITS: 5
 	(undo)
 	(xramp-channel 0.0 1.0 1.0)
 	(if (not (string=? (display-edits ind 0 2) "
- (ramp 0 10) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 10 [2:2]:
+ (ramp 0 10) ; ramp-channel 0.0000 1.0000 0 10 [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000000, -0.000000 -> 1.000000]) [buf: 10] 
    (at 10, end_mark)
 "))
@@ -3487,7 +3487,7 @@ EDITS: 5
 	(undo)
 	(xramp-channel 0.5 1.5 32.0)
 	(if (not (string=? (display-edits ind 0 2) "
- (ramp 0 10) ; xramp-channel 0.0000 3.4657 0.0323 0.4677 0 10 [2:2]:
+ (ramp 0 10) ; xramp-channel 0.5000 1.5000 32.0000 0 10 [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000000, 0.000000 -> 3.465736, off: 0.467742, scl: 0.032258]) [buf: 10] 
    (at 10, end_mark)
 "))
@@ -3497,7 +3497,7 @@ EDITS: 5
 	(undo)
 	(xramp-channel -0.5 1.5 32.0)
 	(if (not (string=? (display-edits ind 0 2) "
- (ramp 0 10) ; xramp-channel 0.0000 3.4657 0.0645 -0.5645 0 10 [2:2]:
+ (ramp 0 10) ; xramp-channel -0.5000 1.5000 32.0000 0 10 [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000000, 0.000000 -> 3.465736, off: -0.564516, scl: 0.064516]) [buf: 10] 
    (at 10, end_mark)
 "))
@@ -3645,7 +3645,7 @@ EDITS: 5
 	  (scale-channel 0.5 (* i 10) 10))
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 12) "
- (ramp 0 100) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 100 [12:11]:
+ (ramp 0 100) ; ramp-channel 0.0000 1.0000 0 100 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.090909]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500000, 0.101010 -> 0.191919]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500000, 0.202020 -> 0.292929]) [buf: 100] 
@@ -3663,7 +3663,7 @@ EDITS: 5
 	(undo)
 	(ramp-channel 0.1 1.0 10 90)
 	(if (not (string=? (display-edits ind 0 12) "
- (ramp 10 90) ; ramp-channel 0.1000 1.0000 0.0000 0.0000 10 90 [12:11]:
+ (ramp 10 90) ; ramp-channel 0.1000 1.0000 10 90 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500000]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500000, 0.100000 -> 0.191011]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500000, 0.201124 -> 0.292135]) [buf: 100] 
@@ -3681,7 +3681,7 @@ EDITS: 5
 	(undo)
 	(ramp-channel 0.0 0.9 0 90)
 	(if (not (string=? (display-edits ind 0 12) "
- (ramp 0 90) ; ramp-channel 0.0000 0.9000 0.0000 0.0000 0 90 [12:11]:
+ (ramp 0 90) ; ramp-channel 0.0000 0.9000 0 90 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.091011]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500000, 0.101124 -> 0.192135]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500000, 0.202247 -> 0.293258]) [buf: 100] 
@@ -3701,7 +3701,7 @@ EDITS: 5
 	(undo)
 	(ramp-channel 0.1 0.9 10 80)
 	(if (not (string=? (display-edits ind 0 12) "
- (ramp 10 80) ; ramp-channel 0.1000 0.9000 0.0000 0.0000 10 80 [12:11]:
+ (ramp 10 80) ; ramp-channel 0.1000 0.9000 10 80 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500000]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500000, 0.100000 -> 0.191139]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500000, 0.201266 -> 0.292405]) [buf: 100] 
@@ -4326,7 +4326,7 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [4:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, 0.000000 -> 3.465736, -0.000000 -> 1.000000, off: -0.032258, scl: 0.032258, off2: -0.032258, scl2: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4340,7 +4340,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [3:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4378,7 +4378,7 @@ EDITS: 5
 	(undo 2)
 	(ramp-channel 0.75 0.25)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; ramp-channel 0.7500 0.2500 0.0000 0.0000 0 11 [3:2]:
+ (ramp 0 11) ; ramp-channel 0.7500 0.2500 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 0.750000 -> 0.250000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4386,7 +4386,7 @@ EDITS: 5
 	(undo)
 	(ramp-channel .2 .6 2 6)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 2 6) ; ramp-channel 0.2000 0.6000 0.0000 0.0000 2 6 [3:4]:
+ (ramp 2 6) ; ramp-channel 0.2000 0.6000 2 6 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000000, -0.000000 -> 0.100000]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000000, 0.200000 -> 0.700000, 0.200000 -> 0.600000]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000000, 0.800000 -> 1.000000]) [buf: 11] 
@@ -4428,7 +4428,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 1.0 0.0)
 	(if (not (string=? (display-edits ind 0 13) "
- (ramp 0 100) ; ramp-channel 1.0000 0.0000 0.0000 0.0000 0 100 [13:11]:
+ (ramp 0 100) ; ramp-channel 1.0000 0.0000 0 100 [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.090909, 1.000000 -> 0.909091]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500000, 0.101010 -> 0.191919, 0.898990 -> 0.808081]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500000, 0.202020 -> 0.292929, 0.797980 -> 0.707071]) [buf: 100] 
@@ -4447,7 +4447,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0 50 10)
 	(ramp-channel 0.0 1.0 25 10)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 25 10) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 25 10 [4:8]:
+ (ramp 25 10) ; ramp-channel 0.0000 1.0000 25 10 [4:8]:
    (at 0, cp->sounds[1][0:9, 1.000000]) [buf: 100] 
    (at 10, cp->sounds[1][10:24, 1.000000, -0.000000 -> 0.736842]) [buf: 100] 
    (at 25, cp->sounds[1][25:29, 1.000000, 0.789474 -> 1.000000, -0.000000 -> 0.444444]) [buf: 100] 
@@ -4469,7 +4469,7 @@ EDITS: 5
 	   (func)
 	   (ramp-channel 0 1)
 	   (if (not (string=? (display-edits ind 0 3 #f) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [3:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4478,7 +4478,7 @@ EDITS: 5
 	    (snd-display ";~A 1: ~A" name (channel->vct)))
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 4 #f) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [4:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4487,7 +4487,7 @@ EDITS: 5
 	    (snd-display ";~A 2: ~A" name (channel->vct)))
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 5 #f) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [5:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4500,7 +4500,7 @@ EDITS: 5
 	(func-zero)
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 4 #f) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [4:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4509,7 +4509,7 @@ EDITS: 5
 	    (snd-display ";~A-zero 1: ~A" name (channel->vct)))
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 5 #f) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [5:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4518,7 +4518,7 @@ EDITS: 5
 	    (snd-display ";~A-zero 2: ~A" name (channel->vct)))
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 6 #f) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [6:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [6:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4556,7 +4556,7 @@ EDITS: 5
 	   (func)
 	   (xramp-channel 0 1 32)
 	   (if (not (string=? (display-edits ind 0 3 #f) "
- (ramp 0 11) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 11 [3:2]:
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 32.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, off: -0.032258, scl: 0.032258, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4567,7 +4567,7 @@ EDITS: 5
 	    (begin
 	      (xramp-channel 0 1 32)
 	      (if (not (string=? (display-edits ind 0 4 #f) "
- (ramp 0 11) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 11 [4:2]:
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 32.0000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, 0.000000 -> 3.465736, off: -0.032258, scl: 0.032258, off2: -0.032258, scl2: 0.032258, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4580,7 +4580,7 @@ EDITS: 5
 	(func-zero)
 	(xramp-channel 0 1 32)
 	(if (not (string=? (display-edits ind 0 4 #f) "
- (ramp 0 11) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 11 [4:2]:
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 32.0000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, off: -0.032258, scl: 0.032258, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4591,7 +4591,7 @@ EDITS: 5
 	    (begin
 	      (xramp-channel 0 1 32)
 	      (if (not (string=? (display-edits ind 0 5 #f) "
- (ramp 0 11) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 11 [5:2]:
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 32.0000 0 11 [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, 0.000000 -> 3.465736, off: -0.032258, scl: 0.032258, off2: -0.032258, scl2: 0.032258, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4630,7 +4630,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 11 [3:2]:
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 32.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 0.000000 -> 3.465736, off2: -0.032258, scl2: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4670,7 +4670,7 @@ EDITS: 5
 	(undo 2)
 	(xramp-channel 0.75 0.25 32.0)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; xramp-channel 3.4657 0.0000 0.0161 0.2339 0 11 [3:2]:
+ (ramp 0 11) ; xramp-channel 0.7500 0.2500 32.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 3.465736 -> 0.000000, off2: 0.233871, scl2: 0.016129]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4678,7 +4678,7 @@ EDITS: 5
 	(undo)
 	(xramp-channel .2 .6 3.0 2 6)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 2 6) ; xramp-channel 0.0000 1.0986 0.2000 -0.0000 2 6 [3:4]:
+ (ramp 2 6) ; xramp-channel 0.2000 0.6000 3.0000 2 6 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000000, -0.000000 -> 0.100000]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000000, 0.200000 -> 0.700000, -0.000000 -> 1.098612, off2: -0.000000, scl2: 0.200000]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000000, 0.800000 -> 1.000000]) [buf: 11] 
@@ -4713,7 +4713,7 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [3:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, -0.000000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4751,7 +4751,7 @@ EDITS: 5
 	(undo 2)
 	(ramp-channel 0.75 0.25)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; ramp-channel 0.7500 0.2500 0.0000 0.0000 0 11 [3:2]:
+ (ramp 0 11) ; ramp-channel 0.7500 0.2500 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, 0.750000 -> 0.250000, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4759,7 +4759,7 @@ EDITS: 5
 	(undo)
 	(ramp-channel .2 .6 2 6)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 2 6) ; ramp-channel 0.2000 0.6000 0.0000 0.0000 2 6 [3:4]:
+ (ramp 2 6) ; ramp-channel 0.2000 0.6000 2 6 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000000, 0.000000 -> 0.346574, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000000, 0.693147 -> 2.426015, 0.200000 -> 0.600000, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000000, 2.772589 -> 3.465736, off: -0.032258, scl: 0.032258]) [buf: 11] 
@@ -4799,7 +4799,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [4:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, -0.000000 -> 1.000000, -0.000000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4839,7 +4839,7 @@ EDITS: 5
 	(undo 2)
 	(ramp-channel 0.75 0.25)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 0 11) ; ramp-channel 0.7500 0.2500 0.0000 0.0000 0 11 [4:2]:
+ (ramp 0 11) ; ramp-channel 0.7500 0.2500 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, -0.000000 -> 1.000000, 0.750000 -> 0.250000, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4847,7 +4847,7 @@ EDITS: 5
 	(undo)
 	(ramp-channel .2 .6 2 6)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 2 6) ; ramp-channel 0.2000 0.6000 0.0000 0.0000 2 6 [4:4]:
+ (ramp 2 6) ; ramp-channel 0.2000 0.6000 2 6 [4:4]:
    (at 0, cp->sounds[1][0:1, 1.000000, 0.000000 -> 0.346574, -0.000000 -> 0.100000, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000000, 0.693147 -> 2.426015, 0.200000 -> 0.700000, 0.200000 -> 0.600000, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000000, 2.772589 -> 3.465736, 0.800000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
@@ -4923,7 +4923,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 14) "
- (ramp 0 100) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 100 [14:11]:
+ (ramp 0 100) ; ramp-channel 0.0000 1.0000 0 100 [14:11]:
    (at 0, cp->sounds[1][0:9, 0.500000, 3.465736 -> 3.150669, 0.000000 -> 0.090909, 0.000000 -> 0.090909, off: -0.032258, scl: 0.032258]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500000, 3.115662 -> 2.800595, 0.101010 -> 0.191919, 0.101010 -> 0.191919, off: -0.032258, scl: 0.032258]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500000, 2.765587 -> 2.450521, 0.202020 -> 0.292929, 0.202020 -> 0.292929, off: -0.032258, scl: 0.032258]) [buf: 100] 
@@ -4947,7 +4947,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0 50 10)
 	(ramp-channel 0.0 1.0 25 10)
 	(if (not (string=? (display-edits ind 0 5) "
- (ramp 25 10) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 25 10 [5:8]:
+ (ramp 25 10) ; ramp-channel 0.0000 1.0000 25 10 [5:8]:
    (at 0, cp->sounds[1][0:9, 1.000000, 3.465736 -> 3.150669, off: -0.032258, scl: 0.032258]) [buf: 100] 
    (at 10, cp->sounds[1][10:24, 1.000000, 3.115662 -> 2.625557, -0.000000 -> 0.736842, off: -0.032258, scl: 0.032258]) [buf: 100] 
    (at 25, cp->sounds[1][25:29, 1.000000, 2.590550 -> 2.450520, 0.789474 -> 1.000000, -0.000000 -> 0.444444, off: -0.032258, scl: 0.032258]) [buf: 100] 
@@ -4976,7 +4976,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 1.0 0.0 32.0)
 	(if (not (string=? (display-edits ind 0 13) "
- (ramp 0 100) ; xramp-channel 3.4657 0.0000 0.0323 -0.0323 0 100 [13:11]:
+ (ramp 0 100) ; xramp-channel 1.0000 0.0000 32.0000 0 100 [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.090909, 3.465736 -> 3.150669, off2: -0.032258, scl2: 0.032258]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500000, 0.101010 -> 0.191919, 3.115662 -> 2.800595, off2: -0.032258, scl2: 0.032258]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500000, 0.202020 -> 0.292929, 2.765587 -> 2.450521, off2: -0.032258, scl2: 0.032258]) [buf: 100] 
@@ -4997,7 +4997,7 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 3.0 50 10)
 	(xramp-channel 0.0 1.0 3.0 25 10)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 25 10) ; xramp-channel 0.0000 1.0986 0.5000 -0.5000 25 10 [4:8]:
+ (ramp 25 10) ; xramp-channel 0.0000 1.0000 3.0000 25 10 [4:8]:
    (at 0, cp->sounds[1][0:9, 1.000000]) [buf: 100] 
    (at 10, cp->sounds[1][10:24, 1.000000, -0.000000 -> 0.809504, off: -0.500000, scl: 0.500000]) [buf: 100] 
    (at 25, cp->sounds[1][25:29, 1.000000, 0.867325 -> 1.098612, 0.000000 -> 0.488272, off: -0.500000, scl: 0.500000, off2: -0.500000, scl2: 0.500000]) [buf: 100] 
@@ -5018,7 +5018,7 @@ EDITS: 5
 	(xramp-channel 1.0 0.0 32.0)
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 13) "
- (ramp 0 100) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 100 [13:11]:
+ (ramp 0 100) ; ramp-channel 0.0000 1.0000 0 100 [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500000, 3.465736 -> 3.150669, 0.000000 -> 0.090909, off: -0.032258, scl: 0.032258]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500000, 3.115662 -> 2.800595, 0.101010 -> 0.191919, off: -0.032258, scl: 0.032258]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500000, 2.765587 -> 2.450521, 0.202020 -> 0.292929, off: -0.032258, scl: 0.032258]) [buf: 100] 
@@ -5039,7 +5039,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0 50 10)
 	(ramp-channel 0.0 1.0 25 10)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 25 10) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 25 10 [4:8]:
+ (ramp 25 10) ; ramp-channel 0.0000 1.0000 25 10 [4:8]:
    (at 0, cp->sounds[1][0:9, 1.000000]) [buf: 100] 
    (at 10, cp->sounds[1][10:24, 1.000000, -0.000000 -> 0.736842]) [buf: 100] 
    (at 25, cp->sounds[1][25:29, 1.000000, 0.789474 -> 1.000000, -0.000000 -> 0.444444]) [buf: 100] 
@@ -5059,7 +5059,7 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 2.0)
 	(xramp-channel 0.0 1.0 2.0)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; xramp-channel 0.0000 0.6931 1.0000 -1.0000 0 11 [3:2]:
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 2.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 0.693147, 0.000000 -> 0.693147, off: -1.000000, scl: 1.000000, off2: -1.000000, scl2: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5097,12 +5097,12 @@ EDITS: 5
 	(undo 2)
 	(xramp-channel 0.75 0.25 0.3)
 	(if (and (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; xramp-channel -1.2040 -0.0000 -0.7143 0.9643 0 11 [3:2]:
+ (ramp 0 11) ; xramp-channel 0.7500 0.2500 0.3000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 0.693147, -1.203973 -> -0.000000, off: -1.000000, scl: 1.000000, off2: 0.964286, scl2: -0.714286]) [buf: 11] 
    (at 11, end_mark)
 "))
 		 (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; xramp-channel -1.2040 0.0000 -0.7143 0.9643 0 11 [3:2]:
+ (ramp 0 11) ; xramp-channel 0.7500 0.2500 0.3000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 0.693147, -1.203973 -> 0.000000, off: -1.000000, scl: 1.000000, off2: 0.964286, scl2: -0.714286]) [buf: 11] 
    (at 11, end_mark)
 ")))
@@ -5110,7 +5110,7 @@ EDITS: 5
 	(undo)
 	(xramp-channel .2 .6 32.0 2 6)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 2 6) ; xramp-channel 0.0000 3.4657 0.0129 0.1871 2 6 [3:4]:
+ (ramp 2 6) ; xramp-channel 0.2000 0.6000 32.0000 2 6 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000000, 0.000000 -> 0.069315, off: -1.000000, scl: 1.000000]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000000, 0.138629 -> 0.485203, 0.000000 -> 3.465736, off: -1.000000, scl: 1.000000, off2: 0.187097, scl2: 0.012903]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000000, 0.554518 -> 0.693147, off: -1.000000, scl: 1.000000]) [buf: 11] 
@@ -5152,7 +5152,7 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 3.0)
 	(xramp-channel 1.0 0.0 0.3)
 	(if (not (string=? (display-edits ind 0 13) "
- (ramp 0 100) ; xramp-channel -1.2040 0.0000 -1.4286 1.4286 0 100 [13:11]:
+ (ramp 0 100) ; xramp-channel 1.0000 0.0000 0.3000 0 100 [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500000, -0.000000 -> 0.099874, -1.203973 -> -1.094521, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500000, 0.110971 -> 0.210845, -1.082359 -> -0.972907, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500000, 0.221942 -> 0.321816, -0.960746 -> -0.851294, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
@@ -5314,7 +5314,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [4:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5352,7 +5352,7 @@ EDITS: 5
 	(undo 2)
 	(ramp-channel 0.75 0.25)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 0 11) ; ramp-channel 0.7500 0.2500 0.0000 0.0000 0 11 [4:2]:
+ (ramp 0 11) ; ramp-channel 0.7500 0.2500 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, 0.750000 -> 0.250000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5360,7 +5360,7 @@ EDITS: 5
 	(undo)
 	(ramp-channel .2 .6 2 6)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 2 6) ; ramp-channel 0.2000 0.6000 0.0000 0.0000 2 6 [4:4]:
+ (ramp 2 6) ; ramp-channel 0.2000 0.6000 2 6 [4:4]:
    (at 0, cp->sounds[1][0:1, 1.000000, -0.000000 -> 0.100000, -0.000000 -> 0.100000]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000000, 0.200000 -> 0.700000, 0.200000 -> 0.700000, 0.200000 -> 0.600000]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000000, 0.800000 -> 1.000000, 0.800000 -> 1.000000]) [buf: 11] 
@@ -5403,7 +5403,7 @@ EDITS: 5
 	(ramp-channel 1.0 -0.5)
 	(ramp-channel -0.5 1.5)
 	(if (not (string=? (display-edits ind 0 14) "
- (ramp 0 100) ; ramp-channel -0.5000 1.5000 0.0000 0.0000 0 100 [14:11]:
+ (ramp 0 100) ; ramp-channel -0.5000 1.5000 0 100 [14:11]:
    (at 0, cp->sounds[1][0:9, 0.500000, 0.000000 -> 0.090909, 1.000000 -> 0.863636, -0.500000 -> -0.318182]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500000, 0.101010 -> 0.191919, 0.848485 -> 0.712121, -0.297980 -> -0.116162]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 0.500000, 0.202020 -> 0.292929, 0.696970 -> 0.560606, -0.095960 -> 0.085859]) [buf: 100] 
@@ -5423,7 +5423,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0 20 15)
 	(ramp-channel 0.0 1.0 30 30)
 	(if (not (string=? (display-edits ind 0 5) "
- (ramp 30 30) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 30 30 [5:10]:
+ (ramp 30 30) ; ramp-channel 0.0000 1.0000 30 30 [5:10]:
    (at 0, cp->sounds[1][0:9, 1.000000]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000000, 0.000000 -> 0.310345]) [buf: 100] 
    (at 20, cp->sounds[1][20:29, 1.000000, 0.344828 -> 0.655172, -0.000000 -> 0.642857]) [buf: 100] 
@@ -5465,7 +5465,7 @@ EDITS: 5
 			 (list (if (= pos 0) 0.0
 				   (sample (1- pos) ind 0 edpos))))))
 	(if (not (string=? (display-edits ind 0 2 #f) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [2:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [2:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))	
@@ -5636,7 +5636,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 11 [3:2]:
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 32.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 0.000000 -> 3.465736, off2: -0.032258, scl2: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5647,7 +5647,7 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 0.32)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 11 [3:2]:
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 32.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> -1.139434, 0.000000 -> 3.465736, off: 1.470588, scl: -1.470588, off2: -0.032258, scl2: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5671,7 +5671,7 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 4) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [4:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> -1.139434, 0.000000 -> 3.465736, -0.000000 -> 1.000000, off: 1.470588, scl: -1.470588, off2: -0.032258, scl2: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5682,7 +5682,7 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [3:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, -0.000000 -> 1.000000, off: -0.032258, scl: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5731,7 +5731,7 @@ EDITS: 5
 	(ptree-channel (lambda (y) y))
 	(ramp-channel 0.0 1.0)
 	(if (not (string=? (display-edits ind 0 3) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [3:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5795,7 +5795,7 @@ EDITS: 5
 	(ptree-channel (lambda (y) (* y 2.0)))
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 4 #f) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [4:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5804,7 +5804,7 @@ EDITS: 5
 	    (snd-display ";ramp ptree2: ~A" (channel->vct)))
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 5 #f) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [5:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5814,7 +5814,7 @@ EDITS: 5
 	(undo 2)
 	(xramp-channel 0 1 32)
 	(if (not (string=? (display-edits ind 0 4 #f) "
- (ramp 0 11) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 11 [4:2]:
+ (ramp 0 11) ; xramp-channel 0.0000 1.0000 32.0000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, off: -0.032258, scl: 0.032258, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -5838,7 +5838,7 @@ EDITS: 5
 	    (snd-display ";ramp ptree2 zero: ~A" (channel->vct)))
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 5 #f) "
- (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [5:2]:
+ (ramp 0 11) ; ramp-channel 0.0000 1.0000 0 11 [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -21465,6 +21465,41 @@ EDITS: 5
       (if (fneq (maxamp nind 0) 0.5) (snd-display ";scale-sound-to 0.5: ~A" (maxamp nind)))
       (close-sound nind)
 
+      (let ((nind (open-sound "oboe.snd")))
+	(ramp-channel 0.0 1.0)
+	(xramp-channel 0.0 1.0 32.0)
+	(save-edit-history "hiho.scm")
+	(revert-sound nind)
+	(set! sfile nind)
+	(load "hiho.scm")
+	(IF (not (equal? (edit-fragment 1) '("ramp-channel 0.0000 1.0000 0 50828" "env" 0 50828)))
+	    (snd-display ";save-edit-history ramp 1: ~A?" (edit-fragment 1)))
+	(IF (not (equal? (edit-fragment 2) '("xramp-channel 0.0000 1.0000 32.0000 0 50828" "env" 0 50828)))
+	    (snd-display ";save-edit-history xramp 2: ~A?" (edit-fragment 2)))
+	(revert-sound nind)
+	(let ((old-opt (optimization)))
+	  (set! (optimization) 5)
+	  (ptree-channel (lambda (y) (* y 2)))
+	  (save-edit-history "hiho.scm")
+	  (revert-sound nind)
+	  (set! sfile nind)
+	  (load "hiho.scm")
+	  (set! (optimization) old-opt))
+	(IF (not (equal? (edit-fragment 1) '("ptree 0 0 50828" "ptree" 0 50828)))
+	    (snd-display ";save-edit-history ptree 1: ~A?" (edit-fragment 1)))
+	(revert-sound nind)
+	(let ((old-opt (optimization)))
+	  (set! (optimization) 5)
+	  (xen-channel (lambda (y data dir) (* (list-ref data 0) y)) 0 (frames) nind 0 #f #f (lambda (beg dur) (list .5)))
+	  (save-edit-history "hiho.scm")
+	  (revert-sound nind)
+	  (set! sfile nind)
+	  (load "hiho.scm")
+	  (set! (optimization) old-opt))
+	(IF (not (equal? (edit-fragment 1) '("xen 0 0 50828" "xen" 0 50828)))
+	    (snd-display ";save-edit-history xen 1: ~A?" (edit-fragment 1)))
+	(close-sound nind))
+
       (let ((ind (new-sound "fmv.snd")))
 	(set! (sample 10) .1)
 	(save-sound ind)
@@ -24501,7 +24536,22 @@ EDITS: 2
       (itsta '(lambda (y) (cadr list-var)) 0.0 3)
       (ststa '(lambda (y) (caddr list-var)) 0.0 "hiho")
       (btsta '(lambda (y) (cadddr list-var)) 0.0 #t)
-      
+
+      (let ((val (run-eval '(lambda (v) (declare (v char)) (char->integer v)) #\b)))
+	(IF (not (= val 98)) (snd-display ";char as arg to run: ~A" val)))
+      (let ((val (run-eval '(lambda (v) (declare (v integer)) (1+ v)) 32)))
+	(IF (not (= val 33)) (snd-display ";integer as arg to run: ~A" val)))
+      (let ((val (run-eval '(lambda (v) (declare (v real)) (* v 2)) 1.3)))
+	(IF (fneq val 2.6) (snd-display ";real as arg to run: ~A" val)))
+      (let ((val (run-eval '(lambda (v) (declare (v string)) (string-length v)) "hiho")))
+	(IF (not (= val 4)) (snd-display ";string as arg to run: ~A" val)))
+      (let ((val (run-eval '(lambda (v) (declare (v boolean)) (not v)) #t)))
+	(IF val (snd-display ";boolean as arg to run: ~A" val)))
+      (let ((val (run-eval '(lambda (gen) (declare (gen clm)) (mus-frequency gen)) (make-oscil 440))))
+	(IF (fneq val 440.0) (snd-display ";clm gen as arg to run: ~A" val)))
+      (let ((val (run-eval '(lambda (v) (declare (v vct)) (vct-ref v 0)) (make-vct 3 1.5))))
+	(IF (fneq val 1.5) (snd-display ";vct as arg to run: ~A" val)))
+
       (def-clm-struct st3 one two)
       (define svar (make-st3 :one 1 :two 2))
       (define svar1 #f)

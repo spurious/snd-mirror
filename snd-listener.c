@@ -537,7 +537,7 @@ static XEN g_set_show_listener(XEN val)
 {
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, "set! " S_show_listener, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_listener, "a boolean");
   handle_listener(ss, XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(listener_height() > 5));
 }
@@ -548,7 +548,7 @@ static XEN g_set_listener_prompt(XEN val)
   #define H_listener_prompt "(" S_listener_prompt ") -> the current lisp listener prompt character ('>') "
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set! " S_listener_prompt, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_listener_prompt, "a string"); 
   if (listener_prompt(ss)) FREE(listener_prompt(ss));
   set_listener_prompt(ss, copy_string(XEN_TO_C_STRING(val)));
 #if USE_NO_GUI

@@ -192,6 +192,7 @@ BEGIN_DECLS
   #define MUS_SAMPLE_TO_DOUBLE(n) ((double)((n) * MUS_FIX_TO_FLOAT))
   #define MUS_SAMPLE_MAX ((mus_sample_t)((MUS_SAMPLE_BITS < 32) ? (MUS_FLOAT_TO_FIX - 1) : 0x7fffffff))
   #define MUS_SAMPLE_MIN ((mus_sample_t)((MUS_SAMPLE_BITS < 32) ? (-(MUS_FLOAT_TO_FIX)) : -0x7fffffff))
+  #define mus_sample_abs(Sample) abs(Sample)
 #else
   /* this could use Float throughout and reflect the Float = double choice elsewhere */
   #define mus_sample_t float
@@ -215,6 +216,7 @@ BEGIN_DECLS
   #define MUS_SAMPLE_TO_BYTE(n) ((char)((n) * (1 << 7)))
   #define MUS_SAMPLE_MAX 0.99999
   #define MUS_SAMPLE_MIN (-1.0)
+  #define mus_sample_abs(Sample) fabs(Sample)
 #endif
 
 #define MUS_DAC_CHANNEL 252525
