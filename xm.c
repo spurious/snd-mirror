@@ -2044,6 +2044,7 @@ static int xm_protect(XEN obj)
   XEN new_table;
   XEN *older, *newer;
   older = XEN_VECTOR_ELEMENTS(xm_protected);
+  /* VECTOR_SET here and below */
   if (last_xm_unprotect >= 0)
     {
       i = last_xm_unprotect;
@@ -9880,6 +9881,7 @@ to the XKeyboardState structure."
   v = XEN_MAKE_VECTOR(32, XEN_ZERO);
   loc = xm_protect(v);
   velts = XEN_VECTOR_ELEMENTS(v);
+  /* VECTOR_SET here */
   for (i = 0; i < 32; i++)
     velts[i] = C_TO_XEN_INT((int)(ks.auto_repeats[i]));
   xm_unprotect_at(loc);

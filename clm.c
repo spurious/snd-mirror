@@ -1291,6 +1291,17 @@ Float mus_table_lookup(mus_any *ptr, Float fm)
   return(result);
 }
 
+Float mus_table_lookup_1(mus_any *ptr)
+{
+  tbl *gen = (tbl *)ptr;
+  Float result;
+  result = mus_array_interp(gen->table, gen->phase, gen->table_size);
+  gen->phase += gen->freq;
+  while (gen->phase >= gen->table_size) gen->phase -= gen->table_size;
+  while (gen->phase < 0.0) gen->phase += gen->table_size;
+  return(result);
+}
+
 static Float run_table_lookup(mus_any *ptr, Float fm, Float unused) {return(mus_table_lookup(ptr, fm));}
 int mus_table_lookup_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TABLE_LOOKUP));}
 static int table_lookup_length(void *ptr) {return(((tbl *)ptr)->table_size);}
@@ -4183,6 +4194,22 @@ Float mus_wave_train(mus_any *ptr, Float fm)
       for (i = 0; i < b->size; i++) 
 	b->buf[i] += mus_array_interp(gen->wave, gen->phase + i, gen->wsize);
       b->fill_time += ((Float)sampling_rate / (gen->freq + (fm / w_rate)));
+      b->empty = FALSE;
+    }
+  return(mus_buffer2sample((mus_any *)(gen->b)));
+}
+
+Float mus_wave_train_1(mus_any *ptr) 
+{
+  wt *gen = (wt *)ptr;
+  rblk *b;
+  int i;
+  b = gen->b;
+  if (b->empty)
+    {
+      for (i = 0; i < b->size; i++) 
+	b->buf[i] += mus_array_interp(gen->wave, gen->phase + i, gen->wsize);
+      b->fill_time += ((Float)sampling_rate / gen->freq);
       b->empty = FALSE;
     }
   return(mus_buffer2sample((mus_any *)(gen->b)));

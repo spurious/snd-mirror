@@ -26,15 +26,9 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
   if ((cp) && (AXIS_INFO_ID_OK(ap_id)))
     switch (ap_id)
       {
-      case TIME_AXIS_INFO: 
-	return(cp->axis); 
-	break;
-      case TRANSFORM_AXIS_INFO:  
-	if (cp->fft) return(cp->fft->axis); 
-	break;
-      case LISP_AXIS_INFO: 
-	if (cp->lisp_info) return(cp->lisp_info->axis); 
-	break;
+      case TIME_AXIS_INFO:      return(cp->axis);                               break;
+      case TRANSFORM_AXIS_INFO: if (cp->fft) return(cp->fft->axis);             break;
+      case LISP_AXIS_INFO:      if (cp->lisp_info) return(cp->lisp_info->axis); break;
       }
   XEN_ERROR(NO_SUCH_AXIS_INFO,
 	    XEN_LIST_4(C_TO_XEN_STRING(caller),
@@ -219,6 +213,7 @@ static XEN g_make_bezier(XEN args)
   incr = 1.0 / (float)n;
   pts = XEN_MAKE_VECTOR(2 * (n + 1), C_TO_SMALL_XEN_INT(0));
   data = XEN_VECTOR_ELEMENTS(pts);
+  /* VECTOR_SET here */
   data[0] = C_TO_XEN_INT(x[0]);
   data[1] = C_TO_XEN_INT(y[0]);
   for (i = 1, val = incr; i <= n; i++, val += incr)

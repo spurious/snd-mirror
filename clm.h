@@ -311,6 +311,7 @@ int mus_all_pass_p              PROTO((mus_any *ptr));
 #define mus_set_feedback(Gen, Val) mus_set_increment(Gen, Val)
 
 Float mus_table_lookup          PROTO((mus_any *gen, Float fm));
+Float mus_table_lookup_1        PROTO((mus_any *gen));
 mus_any *mus_make_table_lookup  PROTO((Float freq, Float phase, Float *wave, int wave_size));
 int mus_table_lookup_p          PROTO((mus_any *ptr));
 Float *mus_partials2wave        PROTO((Float *partial_data, int partials, Float *table, int table_size, int normalize));
@@ -409,6 +410,7 @@ Float *mus_ycoeffs              PROTO((mus_any *ptr));
 void mus_clear_filter_state     PROTO((mus_any *gen));
 
 Float mus_wave_train            PROTO((mus_any *gen, Float fm));
+Float mus_wave_train_1          PROTO((mus_any *gen));
 mus_any *mus_make_wave_train    PROTO((Float freq, Float phase, Float *wave, int wsize));
 int mus_wave_train_p            PROTO((mus_any *gen));
 

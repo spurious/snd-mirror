@@ -3410,6 +3410,7 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
 	  ivdata = XEN_VECTOR_ELEMENTS(imag);
 	  for (i = 0; i < n; i++)
 	    {
+	      /* VECTOR_SET here and below */
 	      rvdata[i] = C_TO_XEN_DOUBLE(rl[i]);
 	      ivdata[i] = C_TO_XEN_DOUBLE(im[i]);
 	    }

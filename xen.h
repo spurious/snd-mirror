@@ -24,6 +24,7 @@
 
 /* HISTORY:
  *  
+ *   29-Jul-02: SCM_WRITABLE_VELTS for current CVS Guile
  *   28-May-02: off_t equivalents in Ruby 1.7
  *   6-May-02:  added off_t (long long) macros.
  *   29-Apr-02: added XEN_EXACT_P
@@ -337,7 +338,11 @@
 #else
   #define XEN_VECTOR_LENGTH(Arg)      ((int)(SCM_VECTOR_LENGTH(Arg)))
 #endif
-#define XEN_VECTOR_ELEMENTS(a)        SCM_VELTS(a)
+#ifdef SCM_WRITABLE_VELTS
+  #define XEN_VECTOR_ELEMENTS(a)      SCM_WRITABLE_VELTS(a)
+#else
+  #define XEN_VECTOR_ELEMENTS(a)      SCM_VELTS(a)
+#endif
 #define XEN_VECTOR_REF(Vect, Num)     scm_vector_ref(Vect, C_TO_XEN_INT(Num))
 #define XEN_VECTOR_SET(Vect, Num, Val) scm_vector_set_x(Vect, C_TO_XEN_INT(Num), Val)
 #define XEN_VECTOR_TO_LIST(Vect)      scm_vector_to_list(Vect)

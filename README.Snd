@@ -454,6 +454,20 @@ similar problems involving "applicable smobs" and the tab-completion
 system; if possible, get the latest Guile.
 
 
+About 1/4 to 1/3 of Guile's time is spent in the garbage collector.
+You can usually speed up Snd by (say) 15% by making the GC heap as
+big as possible.  For example, to set it to 32Mwords (128 Mbytes of
+memory),
+
+setenv GUILE_INIT_SEGMENT_SIZE_1 33554432
+
+before running Snd.  Guile may allocate more heaps of this size
+as it goes, so you need to make sure you have enough memory.  I
+think the default heap size is 45Kwords which means Snd starts
+faster, but runs slightly slower.  I can't decide if it's worth
+fooling with this variable or not.
+
+
 ---- SGI/OpenGL ----
 
 OpenGL comes with the SGI, but its drawing area widget seems to be less

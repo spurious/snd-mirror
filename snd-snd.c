@@ -3199,6 +3199,7 @@ static XEN g_env_info_to_vectors(env_info *ep, int len)
   snd_protect(res);
   velts_min = XEN_VECTOR_ELEMENTS(XEN_CAR(res));
   velts_max = XEN_VECTOR_ELEMENTS(XEN_CADR(res));
+  /* VECTOR_SET here */
   if (ep->amp_env_size == lim)
     {
       for (i = 0; i < lim; i++)

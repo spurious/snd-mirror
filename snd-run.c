@@ -39,7 +39,7 @@
  *
  * currently handled, at least partially:
  *
- *   types: float int char string boolean vct snd_fd mus_any vector function
+ *   types: float int char string boolean vct snd_fd mus_any vector function [and list constants]
  *
  *   lambda (use 'declare' to set arg types)
  *   call-with-current-continuation call/cc
@@ -57,27 +57,27 @@
  *   make-string substring string-append string=? string<=? string>=? string<? string>? and string-ci*
  *   display number->string
  *   make-vector if 2nd arg exists and is float
+ *   list|pair ops that reference constant lists and return something we can handle (like a number)
  *
  *   various sndlib, clm, and snd functions
  *
  * tests in snd-test.scm, test 22
  *
  *
- * TODO: procedure property 'ptree -> saved ptree
+ * TODO: procedure property 'ptree -> saved ptree (currently run parses the tree on every call)
  *         (set-object-property! <func> 'ptree pt) [scm_set_object_property_x in objprop]
  *              procedure-property? -- this has name and arity
- *       do loop var updates still have some unneeded intermediates
- *
- * many list ops don't (necessarily) involve (special) allocation: 
- *   car cdr (etc) list-ref list-set! length list->string list->vector list? member memq memv null? pair? set-car! set-cdr!
- *   we could also simply keep allocating (no gc), then do the entire gc at the end (free the "heap" all at once)
- *
+ *         would also need an initialization process(?)
+ * TODO: possible Snd additions: cursor sample samples(2vct) add-mark report-in-minibuffer[see snd-print] frames maxamp sample-reader-position snd-warning
+ * TODO: def-clm-struct equivalent:
+ *         need a way to add list-ref+offset to table of func names
+ *         macro to create the make func and all accessors
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
  *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* for example)
  *      no recursion (could be added with some pain)
- *      no lists or pairs (these could be added, perhaps)
+ *      no [variable] lists or pairs
  *      no macro expansion (not sure how to handle this in Guile)
  *      no complex, ratio, bignum
  *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
@@ -88,6 +88,11 @@
  *
  * whenever the code-walker or tree initializer finds something it is unhappy about,
  *  it returns an error indication, and the caller should fallback on Guile's evaluator.
+ *
+ * so where does the speed-up come from? We're not getting/freeing any Guile memory so the gc is never
+ *   triggered, we're doing math ops direct and normally using float (not double),
+ *   no function args are cons'd, no run-time types are checked, no vars are boxed/unboxed,
+ *   no symbols are looked-up in the current environment.
  */
 
 #include "snd.h"
@@ -104,6 +109,7 @@ static XEN optimization_hook = XEN_FALSE;
 #define XEN_CAAR(a) XEN_CAR(XEN_CAR(a))
 #define XEN_CDAR(a) XEN_CDR(XEN_CAR(a))
 #define XEN_CDADR(a) XEN_CDR(XEN_CADR(a))
+#define XEN_PAIR_P(a) XEN_TRUE_P(scm_pair_p(a))
 
 #define INT_PT "i%d(%d)"
 #define FLT_PT "d%d(%.4f)"
@@ -214,10 +220,10 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 }
 
 
-enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, 
+enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, 
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR};
-static char *type_names[15] = {"unspecified", "int", "float", "bool", "char", "string", "function", "continuation", "vct", "reader", "clm", 
-			       "float-vector", "int-vector", "vct-vector", "clm-vector"};
+static char *type_names[17] = {"unspecified", "int", "float", "bool", "char", "string", "list", "pair", "function", "continuation", 
+			       "vct", "reader", "clm", "float-vector", "int-vector", "vct-vector", "clm-vector"};
 static char* type_name(int id) {if ((id >= R_INT) && (id <= R_CLM_VECTOR)) return(type_names[id]); return("unknown");}
 
 #define POINTER_P(Type) ((Type) > R_GOTO)
@@ -1365,6 +1371,17 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
 					}
 				    }
 				}
+			      else
+				{
+				  /* order matters here (list is subset of pair) */
+				  if (XEN_LIST_P(val))
+				    v = make_xen_value(R_LIST, add_int_to_ptree(prog, (int)val), R_VARIABLE);
+				  else
+				    {
+				      if (XEN_PAIR_P(val))
+					v = make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)val), R_VARIABLE);
+				    }
+				}
 			    }
 			}
 		    }
@@ -1375,8 +1392,13 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
   if (v)
     {
       var_loc = add_outer_var_to_ptree(prog, varname, v);
-      if (current_optimization < 5)
-	prog->global_vars[var_loc]->unsettable = local_var;
+      if ((v->type == R_LIST) || (v->type == R_PAIR)) /* lists aren't settable yet */
+	prog->global_vars[var_loc]->unsettable = TRUE;
+      else
+	{
+	  if (current_optimization < 5)
+	    prog->global_vars[var_loc]->unsettable = local_var;
+	}
     }
   return(v);
 }
@@ -1558,6 +1580,10 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, int *ints, Float 
 #define STRING_ARG_2 ((char *)(ints[args[2]]))
 #define CHAR_ARG_1 ((char)(ints[args[1]]))
 #define CHAR_ARG_2 ((char)(ints[args[2]]))
+/* #define PAIR_ARG_1 ((XEN)(ints[args[1]]))
+   #define LIST_ARG_1 ((XEN)(ints[args[1]]))
+   TODO: these could work (via run-time list-ref etc) if we check all the list contents beforehand (so we know the type)
+*/
 
 static void quit(int *args, int *ints, Float *dbls) {ALL_DONE = TRUE;}
 static char *descr_quit(int *args, int *ints, Float *dbls) {return(copy_string("quit"));}
@@ -2240,6 +2266,33 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
+static int list_member(XEN symb, XEN varlst)
+{
+  XEN lst;
+  for (lst = varlst; (XEN_NOT_NULL_P(lst)); lst = XEN_CDR(lst))
+    if (XEN_EQ_P(symb, XEN_CAR(lst)))
+      return(TRUE);
+  return(FALSE);
+}
+
+static int tree_member(XEN varlst, XEN expr)
+{
+  /* search expr (assumed to be a list here) for reference to any member of varlst */
+  XEN symb;
+  if (XEN_NULL_P(expr)) return(FALSE);
+  symb = XEN_CAR(expr);
+  if (XEN_SYMBOL_P(symb))
+    {
+      if (list_member(symb, varlst))
+	return(TRUE);
+    }
+  else
+    {
+      if ((XEN_LIST_P(symb)) && (tree_member(varlst, symb)))
+	return(TRUE);
+    }
+  return(tree_member(varlst, XEN_CDR(expr)));
+}
 
 static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequential)
 {
@@ -2298,11 +2351,38 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
       if (!sequential)
 	{
 	  /* here we can optimize better if sequential is true, so look for such cases */
-	  if (varlen == 1) sequential = TRUE;
-	  /* also run through vars, and if none after first access any up to it, set to true */
-	  else exprs = (xen_value **)CALLOC(varlen, sizeof(xen_value *));
+	  sequential = TRUE; /* assume success */
+	  if (varlen > 1)    /* 0=doesn't matter, 1=no possible non-sequential ref */
+	    {
+	      XEN varlst = XEN_EMPTY_LIST, update = XEN_FALSE;
+	      snd_protect(varlst);
+	      vars = XEN_CADR(form);
+	      varlst = XEN_CONS(XEN_CAAR(vars), varlst);
+	      for (vars = XEN_CDR(vars), i = 1; i < varlen; i++, vars = XEN_CDR(vars))
+		{
+		  var = XEN_CAR(vars);
+		  /* current var is CAR(var), init can be ignored (it would refer to outer var), update is CADDR(var) */
+		  /*   we'll scan CADDR for any member of varlst */
+		  if ((XEN_NOT_NULL_P(XEN_CDDR(var))) && (XEN_NOT_NULL_P(XEN_CADDR(var))))
+		    {
+		      /* if update null, can't be ref */
+		      update = XEN_CADDR(var);
+		      if (((XEN_LIST_P(update)) && (tree_member(varlst, update))) ||
+			  ((XEN_SYMBOL_P(update)) && (list_member(update, varlst))))
+			{
+			  /* fprintf(stderr,"found seq ref %s\n", XEN_AS_STRING(vars)); */
+			  sequential = FALSE;
+			  break;
+			}
+		    }
+		  varlst = XEN_CONS(XEN_CAR(var), varlst);
+		}
+	      snd_unprotect(varlst);
+	      if (!sequential)
+		exprs = (xen_value **)CALLOC(varlen, sizeof(xen_value *));
+	    }
 	}
-      for (i = 0; i < varlen; i++, vars = XEN_CDR(vars))
+      for (vars = XEN_CADR(form), i = 0; i < varlen; i++, vars = XEN_CDR(vars))
 	{
 	  var = XEN_CAR(vars);
 	  if ((XEN_NOT_NULL_P(XEN_CDDR(var))) && (XEN_NOT_NULL_P(XEN_CADDR(var))))
@@ -2311,7 +2391,12 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
 	      expr = walk(prog, XEN_CADDR(var), TRUE);
 	      if (expr == NULL)
 		{
-		  if (expr) FREE(expr);
+		  if (exprs) 
+		    {
+		      int k;
+		      for (k = 0; k < i; k++) if (exprs[k]) FREE(exprs[k]);
+		      FREE(exprs);
+		    }
 		  FREE(jump_to_result);
 		  return(NULL);
 		}
@@ -2354,8 +2439,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
       if ((sequential) && (expr)) FREE(expr);
       if (!sequential)
 	{
-	  vars = XEN_CADR(form);
-	  for (i = 0; i < varlen; i++, vars = XEN_CDR(vars))
+	  for (vars = XEN_CADR(form), i = 0; i < varlen; i++, vars = XEN_CDR(vars))
 	    if (exprs[i])
 	      {
 		var = XEN_CAR(vars);
@@ -2648,7 +2732,7 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
       return(v);
     }
   if ((var) && (var->unsettable))
-    return(run_warn("set!: can't set local vars: %s", XEN_AS_STRING(settee)));
+    return(run_warn("set!: can't set local or list vars: %s", XEN_AS_STRING(settee)));
   return(run_warn("set! variable problem: %s", XEN_AS_STRING(form)));
 }
 
@@ -5527,6 +5611,9 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
 #define GEN2_0(Name) \
   static char *descr_ ## Name ## _0f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 0));} \
   static void Name ## _0f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## Name (((mus_any *)(INT_ARG_1)), 0.0);}  
+#define GEN2_0_OPT(Name) \
+  static char *descr_ ## Name ## _0f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 0));} \
+  static void Name ## _0f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## Name ## _1 (((mus_any *)(INT_ARG_1)));}  
 #define GEN1_0(Name) \
   static char *descr_ ## Name ## _0f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 0));} \
   static void Name ## _0f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## Name ((mus_any *)(INT_ARG_1));}  
@@ -5572,6 +5659,17 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   }
 #define GEN2(Name) \
   GEN2_0(Name) \
+  GEN2_1(Name) \
+  GEN_P(Name) \
+  static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
+  { \
+    if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
+    if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
+    if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
+    return(run_warn(#Name ": wrong number of args")); \
+  }
+#define GEN2_OPT(Name) \
+  GEN2_0_OPT(Name) \
   GEN2_1(Name) \
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
@@ -5646,7 +5744,6 @@ GEN3(all_pass)
 GEN2(rand)
 GEN2(rand_interp)
 GEN2(sum_of_cosines)
-GEN2(table_lookup)
 GEN2(sawtooth_wave)
 GEN2(pulse_train)
 GEN2(square_wave)
@@ -5658,12 +5755,14 @@ GEN2(one_pole)
 GEN2(two_zero)
 GEN2(two_pole)
 GEN2(formant)
-GEN2(wave_train)
 GEN3(waveshape)
 GEN2(filter)
 GEN2(fir_filter)
 GEN2(iir_filter)
 GEN1(readin)
+
+GEN2_OPT(wave_train)
+GEN2_OPT(table_lookup)
 
 GEN0(buffer2sample)
 GEN0(increment)
@@ -6702,6 +6801,25 @@ static xen_value *clean_up_if_needed(xen_value *result, xen_value **args, int ar
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
+static xen_value *unwrap_xen_object(ptree *prog, XEN form, const char *origin)
+{
+  if (XEN_BOOLEAN_P(form))
+    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT));
+  if (XEN_NUMBER_P(form))
+    {
+      if ((XEN_EXACT_P(form)) && (XEN_INTEGER_P(form)))
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(form)), R_CONSTANT));
+      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT));
+    }
+  if (XEN_CHAR_P(form)) 
+    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT));
+  if (XEN_STRING_P(form)) 
+    return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT));
+
+  /* TODO: list here? (list-ref (car ...)) */
+  return(run_warn("%s: non-simple arg: %s", origin, XEN_AS_STRING(form)));
+}
+
 static xen_value *walk(ptree *prog, XEN form, int need_result)
 {
   /* walk form, storing vars, making program entries for operators etc */
@@ -6715,7 +6833,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       char funcname[256];
       xen_value **args = NULL;
       int i, num_args, float_result = FALSE, constants = 0, booleans = 0, vcts = 0;
-      int readers = 0, clms = 0, chars = 0, strings = 0;
+      int readers = 0, clms = 0, chars = 0, strings = 0, pairs = 0, lists = 0;
       xen_var *var;
       xen_value *v = NULL;
       function = XEN_CAR(form);
@@ -6736,24 +6854,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (strcmp(funcname, "set!") == 0) return(set_form(prog, form, need_result));
       if (strcmp(funcname, "call/cc") == 0) return(callcc_form(prog, form, need_result));
       if (strcmp(funcname, "call-with-current-continuation") == 0) return(callcc_form(prog, form, need_result));
-      if (strcmp(funcname, "quote") == 0)
-	{
-	  form = XEN_CADR(form);
-	  if (XEN_BOOLEAN_P(form))
-	    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT));
-	  if (XEN_NUMBER_P(form))
-	    {
-	      if ((XEN_EXACT_P(form)) && (XEN_INTEGER_P(form)))
-		return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(form)), R_CONSTANT));
-	      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT));
-	    }
-	  if (XEN_CHAR_P(form)) 
-	    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT));
-	  if (XEN_STRING_P(form)) 
-	    return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT));
-	  return(run_warn("quote: non-simple arg: %s", XEN_AS_STRING(form)));
-	}
-
+      if (strcmp(funcname, "quote") == 0) return(unwrap_xen_object(prog, XEN_CADR(form), funcname));
       all_args = XEN_CDR(form);
       num_args = XEN_LIST_LENGTH(all_args);
       args = (xen_value **)CALLOC(num_args + 1, sizeof(xen_value *));
@@ -6777,6 +6878,8 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		case R_CLM:     clms++;              break;
 		case R_CHAR:    chars++;             break;
 		case R_STRING:  strings++;           break;
+		case R_PAIR:    pairs++;             break;
+		case R_LIST:    lists++;             break;
 		}
 	    }
 	}
@@ -6883,8 +6986,58 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 			    args, num_args));
 	  if (strcmp(funcname, "sample-reader?") == 0) 
 	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_READER), R_CONSTANT), args, num_args));
+	  if (strcmp(funcname, "list?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_LIST), R_CONSTANT), args, num_args));
+	  if (strcmp(funcname, "pair?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_PAIR), R_CONSTANT), args, num_args));
 	}
       if (strcmp(funcname, "make-string") == 0) return(clean_up(make_string_1(prog, args, num_args), args, num_args));
+
+      if ((lists == 1) && (args[1]->type == R_LIST))
+	{
+	  /* now try to handle some list ops */
+	  /* (define lst (list 1 2 3)) (define val 0) (run (lambda () (set! val (+ 1 (list-ref lst 1))))) */
+	  XEN lst;
+	  lst = (XEN)(prog->ints[args[1]->addr]);
+	  if ((strcmp(funcname, "list-ref") == 0) && (XEN_EXACT_P(XEN_CADDR(form))))
+	    return(unwrap_xen_object(prog, scm_list_ref(lst, XEN_CADDR(form)), funcname));
+	  /* TODO: if loc arg is not constant, we could check the list, get its contents types (all the same...)
+	   *       then set up a list-ref run-time accessor with that type built in.
+	   *       this way run-time (list-ref data i) would work
+	   */
+	  if (strcmp(funcname, "car") == 0) return(unwrap_xen_object(prog, XEN_CAR(lst), funcname));
+	  if (strcmp(funcname, "caar") == 0) return(unwrap_xen_object(prog, XEN_CAAR(lst), funcname));
+	  if (strcmp(funcname, "cadr") == 0) return(unwrap_xen_object(prog, XEN_CADR(lst), funcname));
+	  if (strcmp(funcname, "caaar") == 0) return(unwrap_xen_object(prog, SCM_CAAAR(lst), funcname));
+	  if (strcmp(funcname, "caadr") == 0) return(unwrap_xen_object(prog, SCM_CAADR(lst), funcname));
+	  if (strcmp(funcname, "cadar") == 0) return(unwrap_xen_object(prog, SCM_CADAR(lst), funcname));
+	  if (strcmp(funcname, "caddr") == 0) return(unwrap_xen_object(prog, SCM_CADDR(lst), funcname));
+	  if (strcmp(funcname, "caaaar") == 0) return(unwrap_xen_object(prog, SCM_CAAAAR(lst), funcname));
+	  if (strcmp(funcname, "caaadr") == 0) return(unwrap_xen_object(prog, SCM_CAAADR(lst), funcname));
+	  if (strcmp(funcname, "caadar") == 0) return(unwrap_xen_object(prog, SCM_CAADAR(lst), funcname));
+	  if (strcmp(funcname, "caaddr") == 0) return(unwrap_xen_object(prog, SCM_CAADDR(lst), funcname));
+	  if (strcmp(funcname, "cadaar") == 0) return(unwrap_xen_object(prog, SCM_CADAAR(lst), funcname));
+	  if (strcmp(funcname, "cadadr") == 0) return(unwrap_xen_object(prog, SCM_CADADR(lst), funcname));
+	  if (strcmp(funcname, "caddar") == 0) return(unwrap_xen_object(prog, SCM_CADDAR(lst), funcname));
+	  if (strcmp(funcname, "cadddr") == 0) return(unwrap_xen_object(prog, SCM_CADDDR(lst), funcname));
+	  if (strcmp(funcname, "length") == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_LIST_LENGTH(lst)), R_CONSTANT));
+	  if (strcmp(funcname, "null?") == 0) return(make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_NULL_P(lst)), R_CONSTANT));
+
+	  /* TODO: add port ops? hyperbolics? struct refs?
+	   * TODO: list could be added if all args are constants (list included)
+	   */
+	}
+
+      if ((pairs == 1) && (args[1]->type == R_PAIR))
+	{
+	  XEN lst;
+	  lst = (XEN)(prog->ints[args[1]->addr]);
+	  if (strcmp(funcname, "car") == 0) return(unwrap_xen_object(prog, XEN_CAR(lst), funcname));
+	  if (strcmp(funcname, "cdr") == 0) return(unwrap_xen_object(prog, XEN_CDR(lst), funcname));
+	}
+
+      if ((lists > 0) || (pairs > 0)) return(clean_up(run_warn("can't handle list or pair arg"), args, num_args));
+
       if (chars > 0)
 	{
 	  /* char-related funcs */
@@ -7309,6 +7462,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
     return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT));
   if (XEN_SYMBOL_P(form))
     return(add_global_var_to_ptree(prog, form));
+  if (XEN_LIST_P(form))
+    return(make_xen_value(R_LIST, add_int_to_ptree(prog, (int)form), R_CONSTANT));
+  if (XEN_PAIR_P(form))
+    return(make_xen_value(R_PAIR, add_int_to_ptree(prog, (int)form), R_CONSTANT));
   if (!run_warned)
     return(run_warn("can't handle: %s", XEN_AS_STRING(form)));
   return(NULL);

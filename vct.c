@@ -547,6 +547,7 @@ XEN vct2vector(XEN vobj)
   len = v->length;
   new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
   vdata = XEN_VECTOR_ELEMENTS(new_vect);
+  /* VECTOR_SET here */
   for (i = 0; i < len; i++) 
     vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
   return(xen_return_first(new_vect, vobj));
@@ -578,6 +579,7 @@ void vct_to_vector(vct *v, XEN vect)
   XEN *vdata;
   len = XEN_VECTOR_LENGTH(vect);
   vdata = XEN_VECTOR_ELEMENTS(vect);
+  /* VECTOR_SET here */
   for (i = 0; i < len; i++) 
     vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
 }
