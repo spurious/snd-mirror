@@ -81,11 +81,11 @@
   #define NEED_TOGGLE_MARGIN 1
 #endif
 
-#define SCROLLBAR_MAX 100       /* used by zx, zy but not sx (huge files need special handling) or sy (tiny motions needed here too) */
-#define SCROLLBAR_SY_MAX 500
-#define SCROLLBAR_MID 50
-#define SCROLLBAR_LINEAR_MAX 15
-#define SCROLLBAR_LINEAR_MULT 0.011584929
+#define SCROLLBAR_MAX 1000
+#define SCROLLBAR_SX_MAX 2000
+#define SCROLLBAR_MID 500
+#define SCROLLBAR_LINEAR_MAX 150
+#define SCROLLBAR_LINEAR_MULT 0.0011584929
 
 #define BACKGROUND_TYPE Boolean
 #define BACKGROUND_QUIT TRUE

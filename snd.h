@@ -153,7 +153,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "6-Mar-02"
+#define SND_VERSION "7-Mar-02"
 #define SND_RPM_VERSION "5.8"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 8

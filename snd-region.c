@@ -310,7 +310,6 @@ snd_info *make_initial_region_sp(snd_state *ss, GUI_WIDGET region_grf)
   reg_sp->nchans = 1;
   reg_sp->inuse = 1;
   reg_sp->active = 1;
-  reg_sp->sx_scroll_max = 100;
   reg_sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
   reg_sp->search_proc = XEN_UNDEFINED;
   reg_sp->prompt_callback = XEN_UNDEFINED;

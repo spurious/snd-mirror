@@ -13,7 +13,9 @@ static void update_mix_panel(int mix_id);
 /* ---------------- SPEED ---------------- */
 
 static char speed_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
-#define SPEED_SCROLLBAR_MAX 1000
+
+#define SPEED_SCROLLBAR_MID (0.45 * SCROLLBAR_MAX)
+#define SPEED_SCROLLBAR_BREAK (0.15 * SCROLLBAR_MAX)
 static Widget w_speed_number, w_speed_label, w_speed;
 static Float current_speed = 1.0;
 
@@ -34,7 +36,7 @@ static void speed_click_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   change_mix_speed(current_mix_id(ss), 1.0);
-  XtVaSetValues(w_speed, XmNvalue, 450, NULL);
+  XtVaSetValues(w_speed, XmNvalue, (int)SPEED_SCROLLBAR_MID, NULL);
 }
 
 static int mix_speed_to_int(Float uval, snd_info *sp)
@@ -48,10 +50,10 @@ static int mix_speed_to_int(Float uval, snd_info *sp)
   set_label(w_speed_number, speed_number_buffer);
   if (val > 0.0)
     {
-      ival = snd_round(450.0 + 150.0 * log(val));
-      if (ival < SPEED_SCROLLBAR_MAX)
+      ival = snd_round(SPEED_SCROLLBAR_MID + SPEED_SCROLLBAR_BREAK * log(val));
+      if (ival < SCROLLBAR_MAX)
 	return(ival);
-      else return(SPEED_SCROLLBAR_MAX);
+      else return(SCROLLBAR_MAX);
     }
   else return(0);
 }
@@ -64,7 +66,7 @@ static void speed_drag_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (dragging == 0) start_mix_drag(current_mix_id(ss));
   dragging = 1;
-  change_mix_speed(current_mix_id(ss), exp((Float)(ival - 450.0) / 150.0));
+  change_mix_speed(current_mix_id(ss), exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
 static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -73,7 +75,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
   snd_state *ss = (snd_state *)context;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   dragging = 0;
-  change_mix_speed(current_mix_id(ss), exp((Float)(cb->value - 450.0) / 150.0));
+  change_mix_speed(current_mix_id(ss), exp((Float)(cb->value - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
 
@@ -517,8 +519,8 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNleftWidget, w_speed_number); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNmaximum, SPEED_SCROLLBAR_MAX); n++;
-      XtSetArg(args[n], XmNvalue, 450); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
+      XtSetArg(args[n], XmNvalue, SPEED_SCROLLBAR_MID); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(speed_drag_callback, (XtPointer)ss)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(speed_valuechanged_callback, (XtPointer)ss)); n++;

@@ -57,7 +57,7 @@ static void sy_changed(int value, chan_info *cp)
   axis_info *ap;
   Float low;
   ap = cp->axis;
-  low = get_scrollbar(channel_sy(cp), value, SCROLLBAR_SY_MAX);
+  low = get_scrollbar(channel_sy(cp), value, SCROLLBAR_MAX);
   ap->sy = (1.0 - ap->zy) * low;
   apply_y_axis_change(ap, cp);
 }
@@ -70,7 +70,7 @@ static void sx_changed(int value, chan_info *cp)
   double low;
   ap = cp->axis;
   sp = cp->sound;
-  low = get_scrollbar(channel_sx(cp), value, sp->sx_scroll_max);
+  low = get_scrollbar(channel_sx(cp), value, SCROLLBAR_SX_MAX);
   ap->sx = low * (1.0 - ap->zx);
   apply_x_axis_change(ap, cp, sp);
 }
@@ -201,8 +201,8 @@ void initialize_scrollbars(chan_info *cp)
   snd_info *sp;
   ap = cp->axis;
   sp = cp->sound;
-  set_scrollbar(channel_sx(cp), ap->sx, ap->zx, sp->sx_scroll_max);
-  set_scrollbar(channel_sy(cp), ap->sy, ap->zy, SCROLLBAR_SY_MAX);
+  set_scrollbar(channel_sx(cp), ap->sx, ap->zx, SCROLLBAR_SX_MAX);
+  set_scrollbar(channel_sy(cp), ap->sy, ap->zy, SCROLLBAR_MAX);
   if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(channel_zx(cp), sqrt(ap->zx), .1, SCROLLBAR_MAX);  /* assume size is 10% of scrollbar length */
   else set_scrollbar(channel_zx(cp), pow(ap->zx, .333), .1, SCROLLBAR_MAX);
@@ -222,7 +222,7 @@ void resize_sy(chan_info *cp)
   set_scrollbar(channel_sy(cp),
 		(ap->y0 - ap->ymin) / ap->y_ambit,
 		(ap->y1 - ap->y0) / ap->y_ambit,
-		SCROLLBAR_SY_MAX);
+		SCROLLBAR_MAX);
 }
 
 void resize_sx(chan_info *cp)
@@ -234,7 +234,7 @@ void resize_sx(chan_info *cp)
   set_scrollbar(channel_sx(cp),
 		(ap->x0 - ap->xmin) / ap->x_ambit,
 		(ap->x1 - ap->x0) / ap->x_ambit,
-		sp->sx_scroll_max);
+		SCROLLBAR_SX_MAX);
 }
 
 void resize_zx(chan_info *cp)
@@ -978,7 +978,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNleftWidget, cw[W_zy]); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      XtSetArg(args[n], XmNmaximum, SCROLLBAR_SY_MAX); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNincrement, 1); n++;
       XtSetArg(args[n], XmNprocessingDirection, XmMAX_ON_TOP); n++;
       XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(sy_drag_callback, (XtPointer)cp)); n++;
@@ -1007,7 +1007,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNmaximum, sp->sx_scroll_max); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_SX_MAX); n++;
       XtSetArg(args[n], XmNincrement, 1); n++;
       XtSetArg(args[n], XmNdragCallback, n5 = make_callback_list(sx_drag_callback, (XtPointer)cp)); n++;
       XtSetArg(args[n], XmNincrementCallback, n6 = make_callback_list(sx_increment_callback, (XtPointer)cp)); n++;
@@ -1145,19 +1145,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       if ((sp->channel_style != CHANNELS_COMBINED) || (channel == 0))
 	for (i = 0; i < NUM_CHAN_WIDGETS; i++)
 	  if (cw[i])
-	    {
-	      if  (!XtIsManaged(cw[i])) 
-		XtManageChild(cw[i]);
-	      if (i == W_sx) 
-		{
-		  int current_size;
-		  XtVaSetValues(cw[i], XmNvalue, 0, NULL);
-		  XtVaGetValues(cw[i], XmNsliderSize, &current_size, NULL);
-		  if (current_size > sp->sx_scroll_max) 
-		    XtVaSetValues(cw[i], XmNsliderSize, sp->sx_scroll_max / 2, NULL);
-		  XtVaSetValues(cw[i], XmNmaximum, sp->sx_scroll_max, NULL);
-		}
-	    }
+	    if  (!XtIsManaged(cw[i])) 
+	      XtManageChild(cw[i]);
       recolor_graph(cp, FALSE); /* in case selection color left over from previous use */
     }
 #if (XmVERSION > 1)

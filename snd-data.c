@@ -295,9 +295,6 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->previous_sync = sp->sync;
   initialize_control_panel(ss, sp);
   secs = (Float)hdr->samples / (Float)(hdr->chans * hdr->srate);
-  if (secs < 1.0) 
-    sp->sx_scroll_max = 100;
-  else sp->sx_scroll_max = (int)pow(10, (ceil(log10(secs)) + 2));
   sp->searching = 0;
   if (chans > 1)
     sp->channel_style = channel_style(ss);

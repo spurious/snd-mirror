@@ -261,7 +261,6 @@ typedef struct snd__info {
   char *search_expr;
   int searching, marking, filing, finding_mark, amping, reging, printing, loading, macroing, prompting;
   int minibuffer_on, minibuffer_temp;
-  int sx_scroll_max;
   int read_only;
   chan_info **chans;
   struct snd__state *state;

@@ -1806,13 +1806,36 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 (define (add-amp-controls)
 
+  (define (label-name chan) (if (= chan 0) "amp-label" (format #f "amp-label-~D" chan)))
+  (define (number-name chan) (if (= chan 0) "amp-number" (format #f "amp-number-~D" chan)))
+  (define (scroller-name chan) (if (= chan 0) "amp" (format #f "amp-~D" chan)))
+
+  (define scroll-max #f)
+  (define scroll-mid #f)
+  (define scroll-mult #f)
+  (define scroll-break #f)
+
+  (define (scrollbar-max)
+    (or scroll-max
+	(let* ((wids (sound-widgets))
+	       (ctrls (list-ref wids 2))
+	       (snd-amp (find-child ctrls "snd-amp"))
+	       (amp (find-child snd-amp (scroller-name 0)))
+	       (val (cadr (|XtGetValues amp (list |XmNmaximum 0)))))
+	  (set! scroll-max val)
+	  (set! scroll-mid (inexact->exact (/ scroll-max 2)))
+	  (set! scroll-break (inexact->exact (* .15 scroll-max)))
+	  (set! scroll-mult (/ (exp (/ (- scroll-break scroll-mid) (* .2 scroll-max))) scroll-break))
+	  val)))
+	    
+
   (define (amp-scroller->amp val)
     ;; same as Snd's built-in amp scroller callbacks
     (if (= val 0)
 	0.0
-	(if (< val 15)
-	    (* val 0.011584929) ; linear section
-	    (exp (/ (- val 50) 20.0)))))
+	(if (< val scroll-break)
+	    (* val scroll-mult) ; linear section
+	    (exp (/ (- val scroll-mid) (* .2 scroll-max))))))
   
   (define (amp-callback w c i)
     ;; c is (list number-widget snd chan)
@@ -1826,18 +1849,15 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (if (> (caddr c) 0)
 	  (set! (amp-control snd chn) amp))))
   
-  (define (label-name chan) (if (= chan 0) "amp-label" (format #f "amp-label-~D" chan)))
-  (define (number-name chan) (if (= chan 0) "amp-number" (format #f "amp-number-~D" chan)))
-  (define (scroller-name chan) (if (= chan 0) "amp" (format #f "amp-~D" chan)))
-  
   (define (reset-to-one scroller number)
-    (|XtSetValues scroller (list |XmNvalue 50))
+    (|XtSetValues scroller (list |XmNvalue scroll-mid))
     (let ((ampstr (|XmStringCreateLocalized "1.00")))
       (|XtSetValues number (list |XmNlabelString ampstr))
       (|XmStringFree ampstr)))
   
   (define (make-amp-control snd chan parent)
     (let* ((s1 (|XmStringCreateLocalized "amp:"))
+	   (smax (scrollbar-max))
 	   (label (|XtCreateManagedWidget (label-name chan) |xmPushButtonWidgetClass parent
 					  (list |XmNbackground       (snd-pixel (basic-color))
 						|XmNalignment        |XmALIGNMENT_BEGINNING
@@ -1874,8 +1894,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 						 |XmNleftWidget       number
 						 |XmNrightAttachment  |XmATTACH_FORM
 						 |XmNorientation      |XmHORIZONTAL
-						 |XmNmaximum          100
-						 |XmNvalue            50
+						 |XmNmaximum          smax
+						 |XmNvalue            scroll-mid
 						 |XmNdragCallback     (list amp-callback (list number snd chan))
 						 |XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
       (|XtAddCallback label |XmNactivateCallback (lambda (w c i)
@@ -1894,6 +1914,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	  (let ((height (cadr (|XtGetValues ctrls (list |XmNheight 0))))
 		(panemin (cadr (|XtGetValues ctrls (list |XmNpaneMinimum 0))))
 		(panemax (cadr (|XtGetValues ctrls (list |XmNpaneMaximum 0)))))
+	    (scrollbar-max)
 	    (|XtUnmanageChild ctrls)
 	    (let ((existing-controls (or (sound-property 'amp-controls snd) 1)))
 	      (if (< existing-controls chns)
@@ -1924,7 +1945,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		  (reset-to-one amp ampn)
 		  (if next-amp
 		      (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_WIDGET
-						|XmNtopWidget     next-amp))
+					       |XmNtopWidget     next-amp))
 		      (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_FORM)))
 		  (|XtManageChild ampc)
 		  (|XtManageChild ampn)

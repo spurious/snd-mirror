@@ -375,7 +375,7 @@ static void amp_click_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_amp_to_int(sp->last_amp_control); 
-  else val = 50;
+  else val = SCROLLBAR_MID;
   snd_amp_changed(sp, val);
   XtVaSetValues(AMP_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
@@ -397,7 +397,8 @@ static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
 }
 
 
-#define SPEED_SCROLLBAR_MAX 1000
+#define SPEED_SCROLLBAR_MID (0.45 * SCROLLBAR_MAX)
+#define SPEED_SCROLLBAR_BREAK (0.15 * SCROLLBAR_MAX)
 
 static char srate_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
 
@@ -416,17 +417,17 @@ static int snd_srate_to_int(Float val)
   int ival;
   if (val > 0.0)
     {
-      ival = snd_round(450.0 + 150.0 * log(val));
-      if (ival < SPEED_SCROLLBAR_MAX)
+      ival = snd_round(SPEED_SCROLLBAR_MID + SPEED_SCROLLBAR_BREAK * log(val));
+      if (ival < SCROLLBAR_MAX)
 	return(ival);
-      else return(SPEED_SCROLLBAR_MAX);
+      else return(SCROLLBAR_MAX);
     }
   else return(0);
 }
 
 static int snd_srate_changed(snd_info *sp, int ival)
 {
-  sp->speed_control = srate_changed(exp((Float)(ival - 450) / 150.0),
+  sp->speed_control = srate_changed(exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK),
 				    srate_number_buffer,
 				    sp->speed_control_style,
 				    sp->speed_control_tones);
@@ -454,7 +455,7 @@ static void srate_click_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_srate_to_int(sp->last_speed_control); 
-  else val = 450;
+  else val = SPEED_SCROLLBAR_MID;
   snd_srate_changed(sp, val);
   XtVaSetValues(SRATE_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
@@ -483,26 +484,29 @@ void toggle_direction_arrow(snd_info *sp, int state)
 }
 
 
-#define EXPAND_SCROLLBAR_MAX 1000
+#define EXPAND_SCROLLBAR_MID (0.45 * SCROLLBAR_MAX)
+#define EXPAND_SCROLLBAR_BREAK (0.15 * SCROLLBAR_MAX)
+#define EXPAND_SCROLLBAR_MULT (.9697 / SCROLLBAR_MAX)
+#define EXPAND_SCROLLBAR_SPLIT (0.1 * SCROLLBAR_MAX)
 
 static char expand_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
 
 static int snd_expand_to_int(Float ep)
 {
   int val;
-  val = (int)(ep / .0009697);
-  if (val > 100) val = (int)(snd_round(450 + 150 * log(ep)));
-  if (val < EXPAND_SCROLLBAR_MAX)
+  val = (int)(ep / EXPAND_SCROLLBAR_MULT);
+  if (val > EXPAND_SCROLLBAR_SPLIT) val = (int)(snd_round(EXPAND_SCROLLBAR_MID + EXPAND_SCROLLBAR_BREAK * log(ep)));
+  if (val < SCROLLBAR_MAX)
     return(val);
-  return(EXPAND_SCROLLBAR_MAX);
+  return(SCROLLBAR_MAX);
 }
 
 static int snd_expand_changed(snd_info *sp, int val)
 {
   char *sfs;
-  if (val < 100)
-    sp->expand_control = (Float)val * .0009697;
-  else sp->expand_control = exp((Float)(val - 450) / 150.0);
+  if (val < EXPAND_SCROLLBAR_SPLIT)
+    sp->expand_control = (Float)val * EXPAND_SCROLLBAR_MULT;
+  else sp->expand_control = exp((Float)(val - EXPAND_SCROLLBAR_MID) / EXPAND_SCROLLBAR_BREAK);
   if (sp->playing) dac_set_expand(sp, sp->expand_control);
   sfs = prettyf(sp->expand_control, 2);
   fill_number(sfs, expand_number_buffer);
@@ -531,7 +535,7 @@ static void expand_click_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_expand_to_int(sp->last_expand_control); 
-  else val = 450;
+  else val = EXPAND_SCROLLBAR_MID;
   snd_expand_changed(sp, val);
   XtVaSetValues(EXPAND_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
@@ -572,20 +576,20 @@ void toggle_expand_button(snd_info *sp, int state)
 }
 
 
-
+#define CONTRAST_SCROLLBAR_MULT (SCROLLBAR_MAX / 10)
 static char contrast_number_buffer[5] ={'0', STR_decimal, '0', '0', '\0'};
 
 static int snd_contrast_to_int(Float val)
 {
   if (val < 10.0)
-    return(snd_round(val * 10));
-  else return(100);
+    return(snd_round(val * CONTRAST_SCROLLBAR_MULT));
+  else return(SCROLLBAR_MAX);
 }
 
 static int snd_contrast_changed(snd_info *sp, int val)
 {
   char *sfs;
-  sp->contrast_control = (Float)val / 10.0;
+  sp->contrast_control = (Float)val / CONTRAST_SCROLLBAR_MULT;
   sfs = prettyf(sp->contrast_control, 2);
   fill_number(sfs, contrast_number_buffer);
   set_label(CONTRAST_LABEL(sp), contrast_number_buffer);
@@ -654,12 +658,14 @@ void toggle_contrast_button(snd_info *sp, int state)
 }
 
 
+#define REVSCL_SCROLLBAR_MULT (0.60 * SCROLLBAR_MAX)
+
 static char revscl_number_buffer[7] ={'0', STR_decimal, '0', '0', '0', '0', '\0'};
 static char number_long_zero[7] ={'0', STR_decimal, '0', '0', '0', '0', '\0'};
 
 static int snd_revscl_to_int(Float val)
 {
-  return(snd_round(pow(val, 0.333) * 60.0));
+  return(snd_round(pow(val, 0.333) * REVSCL_SCROLLBAR_MULT));
 }
 
 static Float cube (Float a) {return(a*a*a);}
@@ -668,7 +674,7 @@ static int snd_revscl_changed(snd_info *sp, int val)
 {
   char *fs, *ps, *sfs;
   int i, j;
-  sp->reverb_control_scale = cube((Float)val / 60.0);
+  sp->reverb_control_scale = cube((Float)val / REVSCL_SCROLLBAR_MULT);
   sfs = prettyf(sp->reverb_control_scale, 3);
   fs = sfs;
   ps=(char *)(revscl_number_buffer);
@@ -731,17 +737,19 @@ static void revscl_valuechanged_callback(Widget w, XtPointer context, XtPointer 
 
 
 
+#define REVLEN_SCROLLBAR_MULT (SCROLLBAR_MAX / 5.0)
+
 static char revlen_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
 
 static int snd_revlen_to_int(Float val)
 {
-  return(snd_round(val * 20.0));
+  return(snd_round(val * REVLEN_SCROLLBAR_MULT));
 }
 
 static int snd_revlen_changed(snd_info *sp, int val)
 {
   char *sfs;
-  sp->reverb_control_length = (Float)val / 20.0;
+  sp->reverb_control_length = (Float)val / REVLEN_SCROLLBAR_MULT;
   sfs = prettyf(sp->reverb_control_length, 2);
   fill_number(sfs, revlen_number_buffer);
   set_label(REVLEN_LABEL(sp), revlen_number_buffer);
@@ -769,7 +777,7 @@ static void revlen_click_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_revlen_to_int(sp->last_reverb_control_length); 
-  else val = 20;
+  else val = REVLEN_SCROLLBAR_MULT;
   snd_revlen_changed(sp, val);
   XtVaSetValues(REVLEN_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
@@ -1867,7 +1875,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
-      XtSetArg(args[n], XmNvalue, SCROLLBAR_MID); n++;
+      XtSetArg(args[n], XmNvalue, (int)SCROLLBAR_MID); n++;
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(amp_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(amp_valuechanged_callback, (XtPointer)sp)); n++;
       sw[W_amp] = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
@@ -1953,8 +1961,8 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, sw[W_srate_arrow]); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNmaximum, SPEED_SCROLLBAR_MAX); n++;
-      XtSetArg(args[n], XmNvalue, 450); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
+      XtSetArg(args[n], XmNvalue, (int)SPEED_SCROLLBAR_MID); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
       XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(srate_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n4 = make_callback_list(srate_valuechanged_callback, (XtPointer)sp)); n++;
@@ -2033,8 +2041,8 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, sw[W_expand_button]); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNmaximum, EXPAND_SCROLLBAR_MAX); n++;
-      XtSetArg(args[n], XmNvalue, 450); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
+      XtSetArg(args[n], XmNvalue, (int)EXPAND_SCROLLBAR_MID); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNdragCallback, n5 = make_callback_list(expand_drag_callback, (XtPointer)sp)); n++;
@@ -2115,6 +2123,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, sw[W_contrast_button]); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
       XtSetArg(args[n], XmNvalue, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
@@ -2175,6 +2184,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightPosition, 60); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNvalue, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNdragCallback, n9 = make_callback_list(revscl_drag_callback, (XtPointer)sp)); n++;
@@ -2259,7 +2269,8 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightWidget, sw[W_reverb_button]); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
-      XtSetArg(args[n], XmNvalue, 20); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
+      XtSetArg(args[n], XmNvalue, (int)REVLEN_SCROLLBAR_MULT); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNdragCallback, n11 = make_callback_list(revlen_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n12 = make_callback_list(revlen_valuechanged_callback, (XtPointer)sp)); n++;
