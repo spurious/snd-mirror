@@ -15,17 +15,12 @@ static XEN after_graph_hook;
 
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
 {
-  if ((!(ss->transform_hook_active)) &&
-      (XEN_HOOKED(transform_hook)))
-    {
-      ss->transform_hook_active = 1;
-      g_c_run_progn_hook(transform_hook,
-			 XEN_LIST_3(C_TO_SMALL_XEN_INT((cp->sound)->index),
-				    C_TO_SMALL_XEN_INT(cp->chan),
-				    C_TO_XEN_DOUBLE(scaler)),
-			 S_transform_hook);
-      ss->transform_hook_active = 0;
-    }
+  if (XEN_HOOKED(transform_hook))
+    g_c_run_progn_hook(transform_hook,
+		       XEN_LIST_3(C_TO_SMALL_XEN_INT((cp->sound)->index),
+				  C_TO_SMALL_XEN_INT(cp->chan),
+				  C_TO_XEN_DOUBLE(scaler)),
+		       S_transform_hook);
 }
 
 
@@ -2444,7 +2439,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  make_axes(cp, fap,
 		    ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
 #if USE_MOTIF
-		    ((cp->chan == sp->nchans-1) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
+		    ((cp->chan == (sp->nchans - 1)) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
 	            /* Xt documentation says the most recently added work proc runs first, but we're
 		     *   adding fft work procs in channel order, normally, so the channel background
 		     *   clear for the superimposed case needs to happen on the highest-numbered 
@@ -4777,7 +4772,7 @@ static XEN g_set_wavelet_type(XEN val, XEN snd, XEN chn)
   else
     {
       ss = get_global_state();
-      set_wavelet_type(ss, mus_iclamp(0, XEN_TO_C_INT(val), NUM_WAVELETS-1));
+      set_wavelet_type(ss, mus_iclamp(0, XEN_TO_C_INT(val), NUM_WAVELETS - 1));
       return(C_TO_XEN_INT(wavelet_type(ss)));
     }
 }

@@ -2039,6 +2039,7 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
   int ind0, ind1, indx;
   snd_data *nxt_snd;
   int at_end;
+  if (sf->last == (MUS_SAMPLE_TYPE *)0) return(MUS_SAMPLE_0); /* common special case */
   at_end = ((sf->cb == NULL) || (sf->current_sound == NULL) || (sf->cb[ED_END] <= sf_end(sf->current_sound)));
   if (at_end)
     {
@@ -2049,7 +2050,6 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	  sf->current_sound = NULL;
 	  if (nxt_snd->copy) nxt_snd = free_snd_data(nxt_snd);
 	}
-      if (sf->last == (MUS_SAMPLE_TYPE *)0) return(MUS_SAMPLE_0);
       sf->cbi++;
       if (sf->cbi >= (sf->current_state)->size)
 	{
@@ -2279,6 +2279,9 @@ static int save_edits_and_update_display(snd_info *sp)
   /* can't overwrite current because we may have cut/paste backpointers scattered around the current edit list */
   /* have to decide here what header/data type to write as well -- original? */
   /* if latter, must be able to write all headers! -- perhaps warn user and use snd/aiff/riff/ircam */
+
+  /* sp->read_only already checked */
+
   char *ofile = NULL;
   int err = MUS_NO_ERROR, saved_errno = 0;
   snd_state *ss;
@@ -2376,6 +2379,11 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
   snd_fd **sf;
   chan_info *cp;
   ss = sp->state;
+  if ((sp->read_only) && (strcmp(new_name, sp->filename) == 0))
+    {
+      snd_error("%s is write-protected", sp->filename);
+      return(MUS_ERROR);
+    }
   if (dont_save(sp, new_name)) return(MUS_NO_ERROR);
   if (MUS_DATA_FORMAT_OK(format))
     {

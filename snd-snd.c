@@ -1536,7 +1536,6 @@ static XEN sp_iread(XEN snd_n, int fld, char *caller)
 {
   snd_info *sp;
   snd_state *ss;
-  char *str;
   int i;
   XEN res = XEN_EMPTY_LIST;
   if (XEN_TRUE_P(snd_n))
@@ -1582,12 +1581,7 @@ static XEN sp_iread(XEN snd_n, int fld, char *caller)
     case SP_SHOW_CONTROLS:       return(C_TO_XEN_BOOLEAN(control_panel_open(sp)));  break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));     break;
     case SP_SPEED_STYLE:         return(C_TO_XEN_INT(sp->speed_control_style));     break;
-    case SP_COMMENT:
-      str = mus_sound_comment(sp->filename);
-      res = C_TO_XEN_STRING(str);
-      if (str) FREE(str);
-      return(res);
-      break;
+    case SP_COMMENT:             return(C_TO_XEN_STRING(sp->hdr->comment));         break;
     }
   return(XEN_FALSE);
 }
@@ -1701,11 +1695,11 @@ static XEN sp_iwrite(XEN snd_n, XEN val, int fld, char *caller)
       snd_update(ss, sp); 
       break;
     case SP_COMMENT:      
-      /* this is safe only with aifc and riff headers */
       com = XEN_TO_NEW_C_STRING(val);
-      mus_header_update_comment(sp->filename, 0, com, snd_strlen(com), mus_sound_header_type(sp->filename));
+      if (sp->hdr->comment)
+	FREE(sp->hdr->comment);
+      sp->hdr->comment = copy_string(com);
       free(com);
-      snd_update(ss, sp);
       break;
     }
   return(val);
@@ -2251,7 +2245,7 @@ Any argument can be #f which causes its value to be taken from the sound being s
 	  err = save_channel_edits(cp, fname, edpos, S_save_sound_as, 7);
 	}
     }
-  else err = save_edits_without_display(sp, fname, ht, df, sr, NULL, edpos, S_save_sound_as, 7);
+  else err = save_edits_without_display(sp, fname, ht, df, sr, hdr->comment, edpos, S_save_sound_as, 7);
   if (err != MUS_NO_ERROR)
     {
       ss = sp->state;

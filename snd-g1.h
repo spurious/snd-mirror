@@ -219,7 +219,6 @@ void update_region_browser(snd_state *ss, int grf_too);
 void reflect_play_region_stop(int n);
 int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
-void select_region_and_update_browser(snd_state *ss, int n);
 void set_region_protect(int reg, int protect);
 void view_region_callback(GtkWidget *w, gpointer clientData);
 void allocate_region_rows(snd_state *ss, int n);

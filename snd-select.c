@@ -2,8 +2,6 @@
 
 /* selection support changed 11-Sep-00 to handle edit list movements */
 
-/* do we need selection_samples or selection_to_vct? */
-
 static int cp_has_selection(chan_info *cp, void *ignore)
 {
   ed_list *ed;

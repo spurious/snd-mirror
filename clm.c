@@ -963,6 +963,14 @@ static Float *delay_data(void *ptr) {return(((dly *)ptr)->line);}
 static Float delay_scaler(void *ptr) {return(((dly *)ptr)->xscl);}
 static Float set_delay_scaler(void *ptr, Float val) {((dly *)ptr)->xscl = val; return(val);}
 
+static Float *delay_set_data(void *ptr, Float *val) 
+{
+  dly *gen = (dly *)ptr;
+  if (gen->line_allocated) {FREE(gen->line); gen->line_allocated = 0;}
+  gen->line = val; 
+  return(val);
+}
+
 static mus_any_class DELAY_CLASS = {
   MUS_DELAY,
   "delay",
@@ -971,7 +979,7 @@ static mus_any_class DELAY_CLASS = {
   &inspect_delay,
   &delay_equalp,
   &delay_data,
-  0,
+  &delay_set_data,
   &delay_length,
   0,
   0, 0, 0, 0, 0, 0, /* freq phase scaler */
@@ -1032,7 +1040,7 @@ static mus_any_class COMB_CLASS = {
   &inspect_delay,
   &delay_equalp,
   &delay_data,
-  0,
+  &delay_set_data,
   &delay_length,
   0,
   0, 0, 0, 0, /* freq phase */
@@ -1065,7 +1073,7 @@ static mus_any_class NOTCH_CLASS = {
   &inspect_delay,
   &delay_equalp,
   &delay_data,
-  0,
+  &delay_set_data,
   &delay_length,
   0,
   0, 0, 0, 0, /* freq phase */
@@ -1116,7 +1124,7 @@ static mus_any_class ALL_PASS_CLASS = {
   &inspect_delay,
   &delay_equalp,
   &delay_data,
-  0,
+  &delay_set_data,
   &delay_length,
   0,
   0, 0, 0, 0, /* freq phase */
@@ -1309,6 +1317,14 @@ static int free_table_lookup(void *ptr)
   return(0);
 }
 
+static Float *table_set_data(void *ptr, Float *val) 
+{
+  tbl *gen = (tbl *)ptr;
+  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = 0;}
+  gen->table = val; 
+  return(val);
+}
+
 static mus_any_class TABLE_LOOKUP_CLASS = {
   MUS_TABLE_LOOKUP,
   "table_lookup",
@@ -1317,7 +1333,7 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
   &inspect_table_lookup,
   &table_lookup_equalp,
   &table_lookup_data,
-  0,
+  &table_set_data,
   &table_lookup_length,
   0,
   &table_lookup_freq,

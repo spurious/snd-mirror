@@ -765,23 +765,22 @@ void display_info(snd_info *sp)
 {
   char *buffer = NULL;
   file_info *hdr;
-  char *comment, *cstr = NULL, *ampstr = NULL;
+  char *comment = NULL, *ampstr = NULL;
   if (sp)
     {
       hdr = sp->hdr;
       if (hdr)
 	{
-	  buffer = (char *)CALLOC(INFO_BUFFER_SIZE, sizeof(char));
-	  cstr = mus_sound_comment(sp->filename);
-	  comment = cstr;
-	  if (mus_sound_maxamp_exists(sp->filename))
-	    ampstr = display_maxamps(sp->filename, sp->nchans);
+	  comment = hdr->comment;
 	  while ((comment) && (*comment) && 
 		 (((*comment) == '\n') || 
 		  ((*comment) == '\t') || 
 		  ((*comment) == ' ') || 
 		  ((*comment) == '\xd')))
 	    comment++;
+	  if (mus_sound_maxamp_exists(sp->filename))
+	    ampstr = display_maxamps(sp->filename, sp->nchans);
+	  buffer = (char *)CALLOC(INFO_BUFFER_SIZE, sizeof(char));
 #if HAVE_STRFTIME
 	  strftime(timestr, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&(sp->write_date)));
 #endif
@@ -802,7 +801,6 @@ void display_info(snd_info *sp)
 		    sp->short_filename,
 		    buffer,
 		    NULL);
-	  if (cstr) FREE(cstr);
 	  if (ampstr) FREE(ampstr);
 	  FREE(buffer);
 	}

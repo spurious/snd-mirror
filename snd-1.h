@@ -305,7 +305,7 @@ typedef struct snd__state {
   int listening;
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
-  int transform_hook_active, graph_hook_active;
+  int graph_hook_active;
 
   /* user-visible global variables
    *   all of these are accessed through macros in snd-0.h 
@@ -756,7 +756,6 @@ void g_init_fft(void);
 /* -------- snd-xen.c -------- */
 
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller);
-XEN snd_create_hook(const char *name, int args, const char *help);
 int ignore_mus_error(int type, char *msg);
 XEN snd_no_such_file_error(const char *caller, XEN filename);
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn);
@@ -778,7 +777,6 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 int procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
 void snd_protect(XEN obj);
 void snd_unprotect(XEN obj);
-int to_c_int_or_else(XEN obj, int fallback, const char *origin);
 XEN g_c_run_or_hook (XEN hook, XEN args, const char *caller);
 XEN g_c_run_and_hook (XEN hook, XEN args, const char *caller);
 XEN g_c_run_progn_hook (XEN hook, XEN args, const char *caller);

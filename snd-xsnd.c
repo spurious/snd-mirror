@@ -124,9 +124,7 @@ static void apply_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
 		     STR_Apply,
-"The Apply button saves the last recorded \
-run over the current file (see Record) as \
-an edit of the current file.");
+"The Apply button saves the last recorded run over the current file (see Record) as an edit of the current file.");
 }
 
 static void reset_help_callback(Widget w, XtPointer context, XtPointer info)

@@ -393,7 +393,6 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
 #ifndef SND_AS_WIDGET
       /* trap outer-level Close for cleanup check */
       wm_delete_window = XmInternAtom(tm->dpy, "WM_DELETE_WINDOW", FALSE);
-      /* XmAddWMProtocols(tm->shell, &wm_delete_window, 1); */ /* is this ever needed? */
       XmAddWMProtocolCallback(tm->shell, wm_delete_window, window_close, (XtPointer)ss);
 
       snd_v = XInternAtom(tm->dpy, "SND_VERSION", FALSE);
@@ -957,7 +956,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   
 }
 
- 
 void g_init_gxmain(void)
 {
   #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"

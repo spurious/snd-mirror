@@ -115,7 +115,7 @@ static file_info *make_file_info_1(char *fullname)
   if ((hdr->chans) <= 0) hdr->chans = 1;
   hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
   hdr->data_location = mus_sound_data_location(fullname);
-  hdr->comment = NULL;
+  hdr->comment = mus_sound_comment(fullname);
   hdr->loops = mus_sound_loop_info(fullname);
   return(hdr);
 }
@@ -992,33 +992,38 @@ int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_
 static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, old_sync, old_combine, need_update = 0, read_only, old_srate, old_chans, old_format;
+  int i, old_sync, old_combine, need_update = 0, read_only, old_srate, old_chans, old_format, old_raw;
   axes_data *sa;
-  snd_info *nsp;
+  snd_info *nsp = NULL;
   char *filename;
   filename = copy_string(ur_filename);
   old_sync = sp->sync;
   old_combine = sp->channel_style;
   read_only = sp->read_only;
   sa = make_axes_data(sp);
-  mus_header_raw_defaults(&old_srate, &old_chans, &old_format);
-  if (sp->hdr->type == MUS_RAW) 
-    mus_header_set_raw_defaults(sp->hdr->srate, sp->hdr->chans, sp->hdr->format);
+  old_raw = (sp->hdr->type == MUS_RAW);
+  if (old_raw)
+    {
+      mus_header_raw_defaults(&old_srate, &old_chans, &old_format);
+      mus_header_set_raw_defaults(sp->hdr->srate, sp->hdr->chans, sp->hdr->format);
+    }
   snd_close_file(sp, ss);
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
   alert_new_file();
   ss->reloading_updated_file = TRUE;
   nsp = snd_open_file(filename, ss, read_only);
   ss->reloading_updated_file = FALSE;
-  if (sp->hdr->type == MUS_RAW) 
+  if (old_raw)
     mus_header_set_raw_defaults(old_srate, old_chans, old_format);
-  /* end wrapper */
-  need_update = restore_axes_data(nsp, sa, mus_sound_duration(filename), FALSE);
-  if (nsp->channel_style != old_combine) set_sound_channel_style(nsp, old_combine);
-  if (nsp->sync != old_sync) syncb(nsp, old_sync);
-  if (need_update) 
-    for (i = 0; i < nsp->nchans; i++) 
-      update_graph(nsp->chans[i], NULL);
+  if (nsp)
+    {
+      need_update = restore_axes_data(nsp, sa, mus_sound_duration(filename), FALSE);
+      if (nsp->channel_style != old_combine) set_sound_channel_style(nsp, old_combine);
+      if (nsp->sync != old_sync) syncb(nsp, old_sync);
+      if (need_update) 
+	for (i = 0; i < nsp->nchans; i++) 
+	  update_graph(nsp->chans[i], NULL);
+    }
   sa = free_axes_data(sa);
   FREE(filename);
   return(nsp);
@@ -1037,7 +1042,9 @@ void snd_update(snd_state *ss, snd_info *sp)
   app_x = widget_width(MAIN_SHELL(ss));
   app_y = widget_height(MAIN_SHELL(ss));
   sp = snd_update_1(ss, sp, sp->filename);
-  report_in_minibuffer(sp, "updated %s", sp->short_filename);
+  if (sp)
+    report_in_minibuffer(sp, "updated %s", sp->short_filename);
+  else snd_error("update %s failed!", sp->filename);
   set_widget_size(MAIN_SHELL(ss), app_x, app_y);
 }
 
@@ -2018,6 +2025,11 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
   int fd, err, chans, srate, loc, comlen, type, format, bytes0, bytes1, curloc, readloc, writeloc, curbytes, totalbytes;
   char *comment;
   file_info *hdr;
+  if (sp->read_only)
+    {
+      snd_error("%s is write-protected", sp->filename);
+      return;
+    }
 #if HAVE_ACCESS
   err = access(sp->filename, W_OK);
 #else
@@ -2261,7 +2273,9 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   char *tmp_file;
   file_info *hdr;
   int type, len = 0;
-  XEN start0 = XEN_UNDEFINED; XEN end0 = XEN_UNDEFINED; XEN start1 = XEN_UNDEFINED; XEN end1 = XEN_UNDEFINED;
+  XEN start0 = XEN_UNDEFINED; XEN end0 = XEN_UNDEFINED; 
+  XEN start1 = XEN_UNDEFINED; XEN end1 = XEN_UNDEFINED; 
+  XEN note = XEN_UNDEFINED; XEN detune = XEN_UNDEFINED;
   ASSERT_SOUND("set-" S_sound_loop_info, snd, 1);
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, "set-" S_sound_loop_info, "a list");
   if (XEN_NOT_BOUND_P(vals))
@@ -2272,17 +2286,40 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   else sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error("set-" S_sound_loop_info, snd));
+  if (sp->read_only)
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_3(C_TO_XEN_STRING("set-" S_sound_loop_info),
+			 C_TO_XEN_STRING(sp->filename),
+			 C_TO_XEN_STRING("sound is write-protected")));
   hdr = sp->hdr;
-  if (len > 0) start0 = XEN_CAR(vals);
-  if (len > 1) end0 = XEN_CADR(vals);
-  if (len > 2) start1 = XEN_CADDR(vals);
-  if (len > 3) end1 = XEN_CADDDR(vals);
+  if (len > 0) 
+    {
+      start0 = XEN_LIST_REF(vals, 0);
+      if (len > 1) 
+	{
+	  end0 = XEN_LIST_REF(vals, 1);
+	  if (len > 2) 
+	    {
+	      start1 = XEN_LIST_REF(vals, 2);
+	      if (len > 3) 
+		{
+		  end1 = XEN_LIST_REF(vals, 3);
+		  if (len > 4)
+		    {
+		      note = XEN_LIST_REF(vals, 4);
+		      if (len > 5) detune = XEN_LIST_REF(vals, 5);
+		    }}}}}
   if (hdr->loops == NULL)
     hdr->loops = (int *)CALLOC(6, sizeof(int));
   hdr->loops[0] = XEN_TO_C_INT_OR_ELSE(start0, 0);
   hdr->loops[1] = XEN_TO_C_INT_OR_ELSE(end0, 0);
   hdr->loops[2] = XEN_TO_C_INT_OR_ELSE(start1, 0);
   hdr->loops[3] = XEN_TO_C_INT_OR_ELSE(end1, 0);
+  if (len > 4)
+    {
+      hdr->loops[4] = XEN_TO_C_INT_OR_ELSE(note, 60);
+      hdr->loops[5] = XEN_TO_C_INT_OR_ELSE(detune, 0);
+    }
   mus_sound_set_loop_info(sp->filename, hdr->loops);
   type = hdr->type;
   if ((type != MUS_AIFF) && 

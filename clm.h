@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 54
-#define MUS_DATE "1-Oct-01"
+#define MUS_REVISION 55
+#define MUS_DATE "21-Oct-01"
 
 /* 
+ * 21-Oct:     fill in some set-data methods.
  * 1-Sep:      mus_polar2rectangular.
  * 6-July:     scm -> xen.
  * 26-May:     mus_rand_seed.

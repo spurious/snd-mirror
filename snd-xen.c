@@ -2703,7 +2703,7 @@ void after_open(int index)
 char *output_comment(file_info *hdr)
 {
   char *com = NULL;
-  if (hdr) com = mus_sound_comment(hdr->name);
+  if (hdr) com = hdr->comment;
   if (XEN_HOOKED(output_comment_hook))
     {
       XEN result;
@@ -3286,6 +3286,12 @@ static XEN gc_before_hook(XEN code)
 #endif
 #endif
 
+static XEN g_global_state(void)
+{
+  return(XEN_WRAP_C_POINTER(get_global_state()));
+}
+ 
+
 void g_initialize_gh(snd_state *ss)
 {
   state = ss;
@@ -3298,6 +3304,7 @@ void g_initialize_gh(snd_state *ss)
 #endif
 
   XEN_DEFINE_PROCEDURE("show-stack", show_stack, 0 ,0, 0, "show stack trace");
+  XEN_DEFINE_PROCEDURE("snd-global-state", g_global_state, 0, 0, 0, "internal testing function");
 
 #if WITH_MCHECK
   XEN_NEW_PROCEDURE("mcheck-all", g_mcheck_check_all, 0, 0, 0);

@@ -102,9 +102,9 @@ static void mus_print2snd(char *msg)
 
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
 
-  #if HAVE_RUBY
-    ruby_init();
-  #endif
+#if HAVE_RUBY
+  ruby_init();
+#endif
 
   for (i = 1; i < argc; i++)
     {
@@ -259,7 +259,6 @@ static void mus_print2snd(char *msg)
   ss->sounds = (snd_info **)CALLOC(ss->max_sounds, sizeof(snd_info *));
   ss->print_choice = PRINT_SND;
   ss->listening = 0;
-  ss->transform_hook_active = 0;
   ss->graph_hook_active = 0;
   ss->just_time = 0;
   ss->error_lock = 0;

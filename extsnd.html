@@ -3983,20 +3983,20 @@ The following substitutions can be made:
 </p>
 <small>
 <pre>
-<a href="#sndenv">env-sound</a> env beg dur s c e                 <a href="#envchannel">env-channel</a> clm-env-gen beg dur s c e
-<a href="#sndfilter">filter-sound</a> env order s c e                <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap
-<a href="#mapchan">map-chan</a> func beg end origin s c e          <a href="#mapchannel">map-channel</a> func beg dur s c e origin
-<a href="#scanchan">scan-chan</a> func beg end s c e                <a href="#scanchannel">scan-channel</a> func beg dur s c e
-<a href="#sndplay">play</a> beg s c sync end e                     <a href="#playchannel">play-channel</a> beg dur s c e
-<a href="#sndreverse">reverse-sound</a> s c e                         <a href="#reversechannel">reverse-channel</a> beg dur s c e
-<a href="#sndscalesoundby">scale-sound-by</a> scl beg dur s c e            <a href="#scalechannel">scale-channel</a> scl beg dur s c e
-<a href="#sndsetsamples">set-samples</a> beg dur data s c trunc fchan    <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c e
-<a href="#sndsmooth">smooth-sound</a> beg dur s c                    <a href="#smoothchannel">smooth-channel</a> beg dur s c e
-<a href="#samples2vct">samples-&gt;vct</a> beg dur snd chn v e            <a href="#channel2vct">channel-&gt;vct</a> beg dur s c e
-<a href="#vct2samples">vct-&gt;samples</a> beg dur vct s c                <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c e
-<a href="#sndinsertsilence">insert-silence</a> beg dur s c                  <a href="#padchannel">pad-channel</a> beg dur s c e
-<a href="#sndsrc">src-sound</a> num base s c e                    <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
-<a href="#sndconvolvewith">convolve-with</a> file amp s c e                <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
+<a href="#sndenv">env-sound</a> env beg dur s c e                     <a href="#envchannel">env-channel</a> clm-env-gen beg dur s c e
+<a href="#sndfilter">filter-sound</a> env order s c e                    <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap
+<a href="#mapchan">map-chan</a> func beg end origin s c e              <a href="#mapchannel">map-channel</a> func beg dur s c e origin
+<a href="#scanchan">scan-chan</a> func beg end s c e                    <a href="#scanchannel">scan-channel</a> func beg dur s c e
+<a href="#sndplay">play</a> beg s c sync end e                         <a href="#playchannel">play-channel</a> beg dur s c e
+<a href="#sndreverse">reverse-sound</a> s c e                             <a href="#reversechannel">reverse-channel</a> beg dur s c e
+<a href="#sndscalesoundby">scale-sound-by</a> scl beg dur s c e                <a href="#scalechannel">scale-channel</a> scl beg dur s c e
+<a href="#sndsetsamples">set-samples</a> beg dur data s c trunc origin fchan <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c e
+<a href="#sndsmooth">smooth-sound</a> beg dur s c                        <a href="#smoothchannel">smooth-channel</a> beg dur s c e
+<a href="#samples2vct">samples-&gt;vct</a> beg dur snd chn v e                <a href="#channel2vct">channel-&gt;vct</a> beg dur s c e
+<a href="#vct2samples">vct-&gt;samples</a> beg dur vct s c trunc origin fchan <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c e
+<a href="#sndinsertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
+<a href="#sndsrc">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
+<a href="#sndconvolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
 </pre>
 </small>
 <p><small>An equivalent Scheme wrapper might be:</small></p>
@@ -4136,6 +4136,19 @@ The following substitutions can be made:
 <!-- --><tr><td></td><td>
 <!-- --><b>channel-&gt;vct</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#samples2vct">samples-&gt;vct</a>.
 <!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define* (selection-&gt;vct #:optional snd chn)
+  (if (selection-member? snd chn)
+      (channel-&gt;vct (selection-position snd chn)
+		    (selection-length snd chn)
+		    snd chn)
+      (if (selection?)
+	  (format #f "snd ~D channel ~D is not a member of the current selection" snd chn)
+	  "no active selection")))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
@@ -4169,8 +4182,9 @@ The following substitutions can be made:
 	 (dur (or ndur (- (frames snd chn) beg)))
 	 (edpos (or nedpos current-edit-position))
 	 (reader (make-sample-reader beg snd chn 1 edpos))
-	 (cgen (make-convolve :filter kernel :input (lambda (dir)
-						      (next-sample reader)))))
+	 (cgen (make-convolve :filter kernel 
+                              :input (lambda (dir)
+				       (next-sample reader)))))
     (clm-channel cgen beg dur snd chn edpos)
     (free-sample-reader reader)))
 <!-- --></pre></td></tr></table>
@@ -4193,8 +4207,7 @@ The following substitutions can be made:
 <!-- --><span class=defbox><code><em class=def><a name="sndcomment">comment</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s comment, if any.  If this is set, the new value may be appended 
-<!-- -->to the old (AIFC and RIFF headers are the only safe ones in this case).
+<!-- --><i>snd</i>'s comment, if any. 
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4491,7 +4504,7 @@ The following substitutions can be made:
 <!-- -->(see <a href="grfsnd.html#gmeteor">gmeteor</a>).  It can also be any CLM filtering generator 
 <!-- -->(e.g. comb, formant, one-pole, iir-filter, etc). The generator 
 <!-- -->is called in C, not Scheme, so this is the fastest way to apply 
-<!-- -->CLM filtering to a sound.
+<!-- -->CLM filtering to a sound. (The regularized version of this is <a href="#clmchannel">clm-channel</a>).
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -4739,7 +4752,8 @@ The following substitutions can be made:
 <!-- --><tr><td></td><td>
 <!-- -->insert <i>samps</i> samples of <i>data</i> starting at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <!-- --><i>data</i> can be a filename; Snd assumes any such file is temporary; 
-<!-- -->it will be deleted when no longer needed.
+<!-- -->it will be deleted when no longer needed.  The regularized version of this might be:
+<!-- --><code>(define* (insert-channel data #:optional beg dur snd chn edpos) (insert-samples beg dur data snd chn edpos))</code>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5583,7 +5597,7 @@ The following substitutions can be made:
 <!-- -->
 <!-- set-samples -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndsetsamples">set-samples</a></em> (samp samps data <i>snd chn trunc infile-chan edpos</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndsetsamples">set-samples</a></em> (samp samps data <i>snd chn trunc edname infile-chan edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->set <i>snd</i>'s channel <i>chn</i>'s samples starting from
@@ -5592,7 +5606,7 @@ The following substitutions can be made:
 <!-- --><i>data</i> can be a filename; Snd assumes any such file is temporary; it will
 <!-- -->be deleted when no longer needed.  If <i>trunc</i> is #t and <i>samp</i> is 0, the
 <!-- -->sound is truncated (if necessary) to reflect the end of <i>data</i>.
-<!-- -->The form (set! (samples samp samps <i>snd chn trunc infile-chan</i>) data) can also be used.
+<!-- -->The form (set! (samples samp samps <i>snd chn trunc edname infile-chan</i>) data) can also be used.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
