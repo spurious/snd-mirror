@@ -2020,6 +2020,9 @@ the hook.
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called each time some Snd-generated response (<i>text</i>) is about to be appended to the listener.
 <!-- -->If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt.
+<!-- -->The prompt is important!  Snd uses it to find the current form to evaluate, so if your print hook
+<!-- -->forgets to include it, you can end up with a comatose listener.  To get out of this state, include
+<!-- -->the prompt by hand (i.e. type ">(reset-hook! print-hook)").
 <!-- -->This is intended to make it possible to
 <!-- -->distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, etc.  Here are two
 <!-- -->examples, the first adds a timestamp, the second (in Gtk) displays Snd's responses in red:
@@ -2028,10 +2031,12 @@ the hook.
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (add-hook! <em class=red>print-hook</em>
   (lambda (msg) 
-    (snd-print (format #f "~A~%[~A]~%~A" ;need newline just before listener-prompt
-                      msg 
-                      (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
-                      (listener-prompt)))))
+    (if (char=? (string-ref msg 0) #\newline)
+	(snd-print msg)
+	(snd-print (format #f "~A~%[~A]~%~A" ;need newline just before listener-prompt
+			   msg 
+			   (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
+			   (listener-prompt))))))
 
 (add-hook! <em class=red>print-hook</em>
   (lambda (msg) 

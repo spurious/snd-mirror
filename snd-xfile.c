@@ -776,7 +776,8 @@ static void file_comment_label_help_callback(Widget w, XtPointer context, XtPoin
 #define NUM_HEADER_TYPES 7
 static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
 
-file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *in_args, int in_n, int with_chan, int header_type, int data_format, int with_loc)
+file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *in_args, int in_n, 
+				int with_chan, int header_type, int data_format, int with_loc)
 {
   Widget mainform, form,
     sep1, hlab, hlist, dlab, dlist,
@@ -1628,14 +1629,11 @@ void make_curfiles_list (snd_state *ss)
 	  r->ss = ss;
 	  r->parent = CURRENT_FILE_VIEWER;
 	}
-      XtUnmanageChild(r->nm); /* order matters here */
-      XtUnmanageChild(r->rw);
       str = view_curfiles_name(r->pos);
       set_button_label_bold(r->nm, str);
       XmToggleButtonSetState(r->sv, FALSE, FALSE);
       XmToggleButtonSetState(r->pl, FALSE, FALSE);
-      XtManageChild(r->rw);
-      XtManageChild(r->nm);
+      if (!(XtIsManaged(r->rw))) XtManageChild(r->rw);
       last_row = r->rw;
       FREE(str);
     }
@@ -1704,11 +1702,10 @@ void make_prevfiles_list (snd_state *ss)
 	      r->ss = ss;
 	      r->parent = PREVIOUS_FILE_VIEWER;
 	    }
-	  XtUnmanageChild(r->rw);
 	  set_button_label_bold(r->nm, get_prevname(r->pos));
 	  XmToggleButtonSetState(r->sv, FALSE, FALSE);
 	  XmToggleButtonSetState(r->pl, FALSE, FALSE);
-	  XtManageChild(r->rw);
+	  if (!(XtIsManaged(r->rw))) XtManageChild(r->rw);
 	  last_row = r->rw;
 	}
     }

@@ -1608,17 +1608,21 @@ void reset_io_c(void)
 }
 #endif
 
+static char *file_name_buf = NULL;
+
 char *mus_expand_filename(char *utok)
 {
   /* fill out under-specified library pathnames etc */
   /* what about "../" and "./" ? these work, but perhaps we should handle them explicitly) */
-  char *file_name_buf, *tok;
+  char *tok;
   int i, j, len;
   tok = utok;
   if ((tok) && (*tok)) 
     len = strlen(tok); 
   else return(NULL);
-  file_name_buf = (char *)CALLOC(MUS_MAX_FILE_NAME, sizeof(char));
+  if (file_name_buf == NULL) 
+    file_name_buf = (char *)CALLOC(MUS_MAX_FILE_NAME, sizeof(char));
+  else file_name_buf[0] = '\0';
   j = 0;
   for (i = 0; i < len - 1; i++)
     {
@@ -1656,7 +1660,7 @@ char *mus_expand_filename(char *utok)
     }
   else strcpy(file_name_buf, tok);
 #endif
- return(file_name_buf);
+ return(copy_string(file_name_buf));
 }
 
 

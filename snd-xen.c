@@ -246,6 +246,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	  snd_error(name_buf);
     }
 #endif
+  check_for_event(ss);
   return(tag);
 }
 
@@ -582,13 +583,10 @@ XEN snd_eval_str(snd_state *ss, char *buf)
   return(snd_report_result(ss, snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf));
 }
 
-static XEN print_hook;
-
 XEN snd_report_result(snd_state *ss, XEN result, char *buf)
 {
   snd_info *sp = NULL;
   char *str = NULL;
-  XEN res = XEN_FALSE;
   str = gl_print(result);
   if (ss->mx_sp)
     {
@@ -599,12 +597,7 @@ XEN snd_report_result(snd_state *ss, XEN result, char *buf)
   if (ss->listening)
     {
       if (buf) listener_append(ss, buf);
-      if (XEN_HOOKED(print_hook))
-	res = g_c_run_or_hook(print_hook, 
-			      XEN_LIST_1(C_TO_XEN_STRING(str)),
-			      S_print_hook);
-      if (XEN_FALSE_P(res))
-	listener_append_and_prompt(ss, str);
+      listener_append_and_prompt(ss, str);
     }
   if (str) FREE(str);
   return(result);
@@ -613,7 +606,7 @@ XEN snd_report_result(snd_state *ss, XEN result, char *buf)
 XEN snd_report_listener_result(snd_state *ss, XEN form)
 {
   char *str = NULL;
-  XEN res = XEN_FALSE; XEN result;
+  XEN result;
   listener_append(ss, "\n");
 #if HAVE_RUBY
   str = gl_print(form);
@@ -623,14 +616,7 @@ XEN snd_report_listener_result(snd_state *ss, XEN form)
   str = gl_print(result);
 #endif
   if (ss->listening)
-    {
-      if (XEN_HOOKED(print_hook))
-	res = g_c_run_or_hook(print_hook, 
-			      XEN_LIST_1(C_TO_XEN_STRING(str)),
-			      S_print_hook);
-      if (XEN_FALSE_P(res))
-	listener_append_and_prompt(ss, str);
-    }
+    listener_append_and_prompt(ss, str);
   if (str) FREE(str);
   return(result);
 }
@@ -777,6 +763,23 @@ static XEN g_snd_print(XEN msg)
   check_for_event(ss);
 #endif
   return(msg);
+}
+
+static XEN print_hook;
+static int print_depth = 0;
+
+int listener_print_p(char *msg)
+{
+  XEN res = XEN_FALSE;
+  if ((msg) && (print_depth == 0) && (strlen(msg) > 0) && (XEN_HOOKED(print_hook)))
+    {
+      print_depth++;
+      res = g_c_run_or_hook(print_hook, 
+			    XEN_LIST_1(C_TO_XEN_STRING(msg)),
+			    S_print_hook);
+      print_depth--;
+    }
+ return(XEN_FALSE_P(res));
 }
 
 
@@ -3284,17 +3287,33 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #endif
 #endif
 
-static XEN g_global_state(void)
+static XEN g_snd_global_state(void)
 {
   return(XEN_WRAP_C_POINTER(get_global_state()));
 }
- 
+
+#if DEBUGGING
+static XEN g_snd_sound_pointer(XEN snd)
+{
+  /* (|XtCallCallbacks (cadr (sound-widgets 0)) |XmNactivateCallback (snd-sound-pointer 0)) */
+  snd_state *ss;
+  int s;
+  ss = get_global_state();
+  s = XEN_TO_C_INT(snd);
+  if (ss->sounds[s])
+    return(C_TO_XEN_ULONG((unsigned long)(ss->sounds[s])));
+  return(XEN_FALSE);
+}
+#endif 
 
 void g_initialize_gh(snd_state *ss)
 {
   state = ss;
 
-  XEN_DEFINE_PROCEDURE("snd-global-state", g_global_state, 0, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state, 0, 0, 0, "internal testing function");
+#if DEBUGGING
+  XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer, 1, 0, 0, "internal testing function");
+#endif
 
   mus_sndlib2xen_initialize();
 #if HAVE_EXTENSION_LANGUAGE
@@ -3640,6 +3659,10 @@ If more than one hook function, results are concatenated. If none, the current c
         (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
           (localtime (current-time))))))"
 
+  XEN_DEFINE_HOOK(during_open_hook,    S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
+  XEN_DEFINE_HOOK(after_open_hook,     S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
+  XEN_DEFINE_HOOK(output_comment_hook, S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
+
   #define H_print_hook S_print_hook " (text) is called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
   (add-hook! print-hook \n\
@@ -3651,10 +3674,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                            (localtime (current-time))) \n\
                 (listener-prompt)))))"
 
-  XEN_DEFINE_HOOK(during_open_hook,    S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
-  XEN_DEFINE_HOOK(after_open_hook,     S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
-  XEN_DEFINE_HOOK(output_comment_hook, S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
-  XEN_DEFINE_HOOK(print_hook,          S_print_hook, 1,          H_print_hook);          /* arg = text */
+  XEN_DEFINE_HOOK(print_hook, S_print_hook, 1, H_print_hook);          /* arg = text */
 
   g_init_base();
   g_init_marks();

@@ -23,15 +23,18 @@ void append_listener_text(int end, char *msg)
   /* "end" arg needed in Motif */
   int chars;
   snd_state *ss;
-  ss = get_global_state();
-  chars = SG_TEXT_LENGTH(listener_text);
-  if (chars > 0) SG_TEXT_SET_POINT(listener_text, chars);
-  SG_TEXT_INSERT(listener_text,
-		 (ss->sgx)->listener_fnt,
-		 (ss->sgx)->listener_text_color,
-		 (ss->sgx)->listener_color,
-		 msg,
-		 -1);
+  if (listener_print_p(msg))
+    {
+      ss = get_global_state();
+      chars = SG_TEXT_LENGTH(listener_text);
+      if (chars > 0) SG_TEXT_SET_POINT(listener_text, chars);
+      SG_TEXT_INSERT(listener_text,
+		     (ss->sgx)->listener_fnt,
+		     (ss->sgx)->listener_text_color,
+		     (ss->sgx)->listener_color,
+		     msg,
+		     -1);
+    }
 }
 
 static void activate_channel (snd_state *ss)

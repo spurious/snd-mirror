@@ -983,10 +983,13 @@ static void c_g(snd_state *ss, snd_info *sp)
   defining_macro = 0;
   if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
   /* this tries to break out of long filter/src computations (and perhaps others) */
-  if (sp->playing) stop_playing_all_sounds();
-  if (sp->applying) stop_applying(sp);
-  map_over_sound_chans(sp, stop_fft_in_progress, NULL);
-  clear_minibuffer(sp);
+  if (sp)
+    {
+      if (sp->playing) stop_playing_all_sounds();
+      if (sp->applying) stop_applying(sp);
+      map_over_sound_chans(sp, stop_fft_in_progress, NULL);
+      clear_minibuffer(sp);
+    }
   clear_listener();
   ss->error_lock = 0;
 }

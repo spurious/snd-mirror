@@ -411,6 +411,7 @@ void mus_sound_finalize       PROTO((void));
 int mus_sample_bits           PROTO((void));
 int mus_sound_override_header PROTO((const char *arg, int srate, int chans, int format, int type, int location, int size));
 int mus_sound_forget          PROTO((const char *name));
+int mus_sound_prune           PROTO((void));
 void mus_sound_print_cache    PROTO((void));
 void mus_sound_report_cache   PROTO((FILE *fp));
 int mus_sound_aiff_p          PROTO((const char *arg));

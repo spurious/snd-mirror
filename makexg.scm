@@ -1,4 +1,4 @@
-#!/usr/lib/snd/bin/guile -s
+#!/home/bil/test/bin/guile -s
 !#
 
 ;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c and xg-ruby.c

@@ -457,8 +457,8 @@ bug in Redhat 7.2.  Whenever I install 7.2, I immediately:
 
 So to sum up:  
   GSL 0.8 or later
-  Gtk+ 1.2.8 or 1.2.10, (a port to 1.3.13 or later is underway)
-  any Motif but not Lesstif
+  Gtk+ 1.2.8 or 1.2.10, (a port to gtk2 is underway)
+  any Motif but not Lesstif (and I no longer have any way to test Motif 1)
   ALSA 0.9beta8 or later (or any version of OSS)
   Guile 1.3.4 or later but Snd's Scheme files need 1.5.0 or later
   Ruby 1.6.4 or later

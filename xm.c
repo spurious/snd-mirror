@@ -37,7 +37,7 @@
  *              XVisualInfo fields added. 
  *              Cursor type added.
  *   1-Feb:     Motif 2.2 additions (tooltip).
- *   21-Jan:    Ruby fixups (XEN_COPY_ARGS to protect lists)
+ *   21-Jan:    Ruby fixups (XEN_COPY_ARG to protect lists)
  *   7-Jan-02:  XEvent fields settable. added XtCallCallbacks-raw.
  *   12-Sep:    xm-version.
  *   13-Aug:    Xp bindings, X11 predefined Atoms.
@@ -9144,11 +9144,37 @@ static XEN gxm_XQueryExtension(XEN arg1, XEN arg2)
 static XEN gxm_XQueryColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XQueryColors "XQueryColors(display, colormap, defs_in_out, ncolors)"
+  int i, len, rtn;
+  XEN lst;
+  XColor *cols;
+  XColor *col;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XQueryColors", "Display*");
   XEN_ASSERT_TYPE(XEN_Colormap_P(arg2), arg2, 2, "XQueryColors", "Colormap");
-  XEN_ASSERT_TYPE(XEN_XColor_P(arg3), arg3, 3, "XQueryColors", "XColor");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XQueryColors", "int");
-  return(C_TO_XEN_INT(XQueryColors(XEN_TO_C_Display(arg1), XEN_TO_C_Colormap(arg2), XEN_TO_C_XColor(arg3), XEN_TO_C_INT(arg4))));
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XQueryColors", "XColor list");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XQueryColors", "int");
+  if (XEN_INTEGER_P(arg4)) len = XEN_TO_C_INT(arg4); else len = XEN_LIST_LENGTH(arg3);
+  lst = XEN_COPY_ARG(arg3);
+  cols = (XColor *)CALLOC(len, sizeof(XColor));
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+    {
+      if (XEN_XColor_P(XEN_CAR(lst)))
+	{
+	  col = XEN_TO_C_XColor(XEN_CAR(lst));
+	  cols[i].pixel = col->pixel;
+	}
+      else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "an XColor");
+    }
+  rtn = XQueryColors(XEN_TO_C_Display(arg1), XEN_TO_C_Colormap(arg2), cols, len);
+  for (i = 0; i < len; i++)
+    {
+      col = XEN_TO_C_XColor(XEN_LIST_REF(arg3, i));
+      col->red = cols[i].red;
+      col->green = cols[i].green;
+      col->blue = cols[i].blue;
+      col->flags = cols[i].flags;
+    }
+  FREE(cols);
+  return(C_TO_XEN_INT(rtn));
 }
 
 static XEN gxm_XQueryColor(XEN arg1, XEN arg2, XEN arg3)
@@ -10945,13 +10971,19 @@ on the server connection for the first event that matches the specified window a
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XCheckWindowEvent", "long");
   e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XCheckWindowEvent(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_INT(arg3), e);
-  return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
+  if (val)
+    return(C_TO_XEN_XEvent_OBJ(e));
+  else
+    {
+      FREE(e);
+      return(XEN_FALSE);
+    }
 }
 
 static XEN gxm_XCheckTypedWindowEvent(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XCheckTypedWindowEvent "Bool XCheckTypedWindowEvent(display, w, event_type) searches the event queue and then any events \
-available on the server connection for the first event that matches the specified"
+available on the server connection for the first event that matches the specified event mask"
   /* DIFF: XCheckTypedWindowEvent dpy win mask [ev] -> (list val ev)
    */
   XEvent *e;
@@ -10961,7 +10993,13 @@ available on the server connection for the first event that matches the specifie
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XCheckTypedWindowEvent", "int");
   e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XCheckTypedWindowEvent(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_INT(arg3), e);
-  return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
+  if (val)
+    return(C_TO_XEN_XEvent_OBJ(e));
+  else
+    {
+      FREE(e);
+      return(XEN_FALSE);
+    }
 }
 
 static XEN gxm_XCheckTypedEvent(XEN arg1, XEN arg2)
@@ -10976,10 +11014,16 @@ on the server connection for the first event that matches the specified type."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XCheckTypedEvent", "int");
   e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XCheckTypedEvent(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), e);
-  return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
+  if (val)
+    return(C_TO_XEN_XEvent_OBJ(e));
+  else
+    {
+      FREE(e);
+      return(XEN_FALSE);
+    }
 }
 
-static XEN gxm_XCheckMaskEvent(XEN arg1, XEN arg2, XEN arg3)
+static XEN gxm_XCheckMaskEvent(XEN arg1, XEN arg2)
 {
   #define H_XCheckMaskEvent "Bool XCheckMaskEvent(display, event_mask) searches the event queue and then any events available on \
 the server connection for the first event that matches the specified mask."
@@ -10991,7 +11035,13 @@ the server connection for the first event that matches the specified mask."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XCheckMaskEvent", "long");
   e = (XEvent *)CALLOC(1, sizeof(XEvent));
   val = XCheckMaskEvent(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), e);
-  return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
+  if (val)
+    return(C_TO_XEN_XEvent_OBJ(e));
+  else
+    {
+      FREE(e);
+      return(XEN_FALSE);
+    }
 }
 
 static XEN gxm_XCheckIfEvent(XEN arg1, XEN arg2, XEN arg3)
@@ -11008,7 +11058,13 @@ static XEN gxm_XCheckIfEvent(XEN arg1, XEN arg2, XEN arg3)
 		      e, 
 		      (Bool (*)(Display *d, XEvent *ev, char *p))gxm_XPeekIfEventProc, 
 		      (char*)arg3);
-  return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
+  if (val)
+    return(C_TO_XEN_XEvent_OBJ(e));
+  else
+    {
+      FREE(e);
+      return(XEN_FALSE);
+    }
 }
 
 static XEN gxm_XChangeWindowAttributes(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -12981,7 +13037,7 @@ static XEN gxm_XtGrabPointer(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, X
   #define H_XtGrabPointer "int XtGrabPointer(widget, owner_events, event_mask, pointer_mode, keyboard_mode, confine_to, cursor, time) calls \
 XGrabPointer specifying the widget's window as the grab window."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGrabPointer", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtGrabPointer", "int");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XtGrabPointer", "boolean");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XtGrabPointer", "unsigned int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtGrabPointer", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XtGrabPointer", "int");
@@ -12989,7 +13045,7 @@ XGrabPointer specifying the widget's window as the grab window."
   XEN_ASSERT_TYPE(XEN_Cursor_P(arg7), arg7, 7, "XtGrabPointer", "Cursor");
   XEN_ASSERT_TYPE(XEN_Time_P(arg8), arg8, 8, "XtGrabPointer", "Time");
   return(C_TO_XEN_INT(XtGrabPointer(XEN_TO_C_Widget(arg1), 
-				    XEN_TO_C_INT(arg2), XEN_TO_C_ULONG(arg3), 
+				    XEN_TO_C_BOOLEAN(arg2), XEN_TO_C_ULONG(arg3), 
 				    XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5), 
 				    XEN_TO_C_Window(arg6), XEN_TO_C_Cursor(arg7), 
 				    XEN_TO_C_Time(arg8))));
@@ -13013,14 +13069,14 @@ calls XGrabButton specifying the widget's window as the grab window if the widge
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGrabButton", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtGrabButton", "int");
   XEN_ASSERT_TYPE(XEN_Modifiers_P(arg3), arg3, 3, "XtGrabButton", "Modifiers");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtGrabButton", "int");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg4), arg4, 4, "XtGrabButton", "boolean");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XtGrabButton", "unsigned int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtGrabButton", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtGrabButton", "int");
   XEN_ASSERT_TYPE(XEN_Window_P(arg8), arg8, 8, "XtGrabButton", "Window");
   XEN_ASSERT_TYPE(XEN_Cursor_P(arg9), arg9, 9, "XtGrabButton", "Cursor");
   XtGrabButton(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), 
-	       XEN_TO_C_Modifiers(arg3), XEN_TO_C_INT(arg4), XEN_TO_C_ULONG(arg5), XEN_TO_C_INT(arg6), XEN_TO_C_INT(arg7), 
+	       XEN_TO_C_Modifiers(arg3), XEN_TO_C_BOOLEAN(arg4), XEN_TO_C_ULONG(arg5), XEN_TO_C_INT(arg6), XEN_TO_C_INT(arg7), 
 	       XEN_TO_C_Window(arg8), XEN_TO_C_Cursor(arg9));
   return(XEN_FALSE);
 }
@@ -13038,11 +13094,11 @@ static XEN gxm_XtGrabKeyboard(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XtGrabKeyboard "int XtGrabKeyboard(widget, owner_events, pointer_mode, keyboard_mode, time)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGrabKeyboard", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtGrabKeyboard", "int");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XtGrabKeyboard", "boolean");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtGrabKeyboard", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtGrabKeyboard", "int");
   XEN_ASSERT_TYPE(XEN_Time_P(arg5), arg5, 5, "XtGrabKeyboard", "Time");
-  return(C_TO_XEN_INT(XtGrabKeyboard(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3), XEN_TO_C_INT(arg4), XEN_TO_C_Time(arg5))));
+  return(C_TO_XEN_INT(XtGrabKeyboard(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2), XEN_TO_C_INT(arg3), XEN_TO_C_INT(arg4), XEN_TO_C_Time(arg5))));
 }
 
 static XEN gxm_XtUngrabKey(XEN arg1, XEN arg2, XEN arg3)
@@ -13063,10 +13119,10 @@ widget's window as the grab window if the widget is realized."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGrabKey", "Widget");
   XEN_ASSERT_TYPE(XEN_KeyCode_P(arg2), arg2, 2, "XtGrabKey", "KeyCode");
   XEN_ASSERT_TYPE(XEN_Modifiers_P(arg3), arg3, 3, "XtGrabKey", "Modifiers");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtGrabKey", "int");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg4), arg4, 4, "XtGrabKey", "boolean");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XtGrabKey", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtGrabKey", "int");
-  XtGrabKey(XEN_TO_C_Widget(arg1), XEN_TO_C_KeyCode(arg2), XEN_TO_C_Modifiers(arg3), XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5), XEN_TO_C_INT(arg6));
+  XtGrabKey(XEN_TO_C_Widget(arg1), XEN_TO_C_KeyCode(arg2), XEN_TO_C_Modifiers(arg3), XEN_TO_C_BOOLEAN(arg4), XEN_TO_C_INT(arg5), XEN_TO_C_INT(arg6));
   return(XEN_FALSE);
 }
 
@@ -15555,18 +15611,30 @@ static XEN gxm_XtCallActionProc(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5
   #define H_XtCallActionProc "void XtCallActionProc(widget, action, event, params, num_params) searches for the named action routine in the \
 same manner and order as translation tables are bound. If found, the action routine is invoked with the specified widget, event pointer, \
 and parameters."
-  char *str;
+  char **params = NULL;
+  int i, len = 0;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtCallActionProc", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtCallActionProc", "char*");
-  XEN_ASSERT_TYPE(XEN_XEvent_P(arg3), arg3, 3, "XtCallActionProc", "XEvent*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XtCallActionProc", "String");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XtCallActionProc", "int");
-  str = XEN_TO_C_STRING(arg4);
+  XEN_ASSERT_TYPE(XEN_XEvent_P(arg3) || XEN_FALSE_P(arg3), arg3, 3, "XtCallActionProc", "XEvent*");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg4) || XEN_FALSE_P(arg4), arg4, 4, "XtCallActionProc", "list of String");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg5), arg5, 5, "XtCallActionProc", "int");
+  if (XEN_LIST_P(arg4))
+    {
+      if (XEN_INTEGER_P(arg5)) 
+	len = XEN_TO_C_INT(arg5); 
+      else len = XEN_LIST_LENGTH(arg4);
+    }
+  if (len > 0) 
+    {
+      params = (char **)CALLOC(len, sizeof(char *));
+      for (i = 0; i < len; i++)
+	params[i] = XEN_TO_C_STRING(XEN_LIST_REF(arg4, i));
+    }
   XtCallActionProc(XEN_TO_C_Widget(arg1), 
 		   XEN_TO_C_STRING(arg2), 
-		   XEN_TO_C_XEvent(arg3), 
-		   &str,
-		   XEN_TO_C_INT(arg5));
+		   (XEN_XEvent_P(arg3)) ? XEN_TO_C_XEvent(arg3) : NULL,
+		   params, len);
+  if (params) FREE(params);
   return(XEN_FALSE);
 }
 
@@ -16175,7 +16243,7 @@ static XEN gxm_XtUnmapWidget(XEN arg)
 static XEN gxm_XtSetArg(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XtSetArg "XtSetArg in xm is useless -- it returns its arguments as a list"
-  return(XEN_LIST_3(arg2, arg3, arg1));
+  return(XEN_LIST_3(arg1, arg2, arg3));
 }
 
 
@@ -17056,7 +17124,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddActionHook" XM_POSTFIX, gxm_XtAppAddActionHook, 2, 1, 0, H_XtAppAddActionHook);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveActionHook" XM_POSTFIX, gxm_XtRemoveActionHook, 1, 0, 0, H_XtRemoveActionHook);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetActionList" XM_POSTFIX, gxm_XtGetActionList, 1, 0, 0, H_XtGetActionList);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallActionProc" XM_POSTFIX, gxm_XtCallActionProc, 5, 0, 0, H_XtCallActionProc);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallActionProc" XM_POSTFIX, gxm_XtCallActionProc, 4, 1, 0, H_XtCallActionProc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRegisterGrabAction" XM_POSTFIX, gxm_XtRegisterGrabAction, 5, 0, 0, H_XtRegisterGrabAction);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetMultiClickTime" XM_POSTFIX, gxm_XtSetMultiClickTime, 2, 0, 0, H_XtSetMultiClickTime);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetMultiClickTime" XM_POSTFIX, gxm_XtGetMultiClickTime, 1, 0, 0, H_XtGetMultiClickTime);
@@ -17316,7 +17384,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeProperty" XM_POSTFIX, gxm_XChangeProperty, 7, 1, 0, H_XChangeProperty);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeWindowAttributes" XM_POSTFIX, gxm_XChangeWindowAttributes, 4, 0, 0, H_XChangeWindowAttributes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckIfEvent" XM_POSTFIX, gxm_XCheckIfEvent, 3, 0, 0, H_XCheckIfEvent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckMaskEvent" XM_POSTFIX, gxm_XCheckMaskEvent, 3, 0, 0, H_XCheckMaskEvent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckMaskEvent" XM_POSTFIX, gxm_XCheckMaskEvent, 2, 0, 0, H_XCheckMaskEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckTypedEvent" XM_POSTFIX, gxm_XCheckTypedEvent, 2, 0, 0, H_XCheckTypedEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckTypedWindowEvent" XM_POSTFIX, gxm_XCheckTypedWindowEvent, 3, 0, 0, H_XCheckTypedWindowEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckWindowEvent" XM_POSTFIX, gxm_XCheckWindowEvent, 3, 0, 0, H_XCheckWindowEvent);
@@ -17443,7 +17511,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryBestStipple" XM_POSTFIX, gxm_XQueryBestStipple, 4, 0, 0, H_XQueryBestStipple);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryBestTile" XM_POSTFIX, gxm_XQueryBestTile, 4, 0, 0, H_XQueryBestTile);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryColor" XM_POSTFIX, gxm_XQueryColor, 3, 0, 0, H_XQueryColor);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryColors" XM_POSTFIX, gxm_XQueryColors, 4, 0, 0, H_XQueryColors);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryColors" XM_POSTFIX, gxm_XQueryColors, 3, 1, 0, H_XQueryColors);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryExtension" XM_POSTFIX, gxm_XQueryExtension, 2, 0, 0, H_XQueryExtension);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryKeymap" XM_POSTFIX, gxm_XQueryKeymap, 1, 0, 0, H_XQueryKeymap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryPointer" XM_POSTFIX, gxm_XQueryPointer, 2, 0, 0, H_XQueryPointer);

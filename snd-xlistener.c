@@ -299,7 +299,7 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
 {
   int i, j, length, wstart, wend, up, cap;
   XmTextPosition curpos, endpos;
-  char *buf;
+  char *buf = NULL;
   up = (str[0][0] == 'u');
   cap = (str[0][0] == 'c');
   curpos = XmTextGetCursorPosition(w);
@@ -339,6 +339,7 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
 	  XmTextReplace(w, curpos + wstart, curpos + wend, buf);
 	}
       XmTextSetCursorPosition(w, curpos + wend);
+      if (buf) FREE(buf);
     }
 }
 
@@ -797,9 +798,11 @@ static Widget lisp_window = NULL;
 
 void listener_append(snd_state *ss, char *msg)
 {
+
   if (listener_text)
     {
-      XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
+      if (listener_print_p(msg))
+	XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
       printout_end = XmTextGetLastPosition(listener_text) - 1;
     }
 }
@@ -811,10 +814,13 @@ void listener_append_and_prompt(snd_state *ss, char *msg)
   int cmd_eot;
   if (listener_text)
     {
-      if (msg)
-	XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
-      cmd_eot = XmTextGetLastPosition(listener_text);
-      XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(ss));
+      if (listener_print_p(msg))
+	{
+	  if (msg)
+	    XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
+	  cmd_eot = XmTextGetLastPosition(listener_text);
+	  XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(ss));
+	}
       cmd_eot = XmTextGetLastPosition(listener_text);
       printout_end = cmd_eot - 1;
       XmTextShowPosition(listener_text, cmd_eot - 1);

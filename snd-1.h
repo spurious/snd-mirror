@@ -750,7 +750,7 @@ XEN g_c_run_and_hook (XEN hook, XEN args, const char *caller);
 XEN g_c_run_progn_hook (XEN hook, XEN args, const char *caller);
 void during_open(int fd, char *file, int reason);
 void after_open(int index);
-
+int listener_print_p(char *msg);
 Float check_color_range(const char *caller, XEN val);
 int string2int(char *str);
 Float string2Float(char *str);

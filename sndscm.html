@@ -648,6 +648,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>superimpose spectra of sycn'd sounds
     <li>fft-edit, fft-env-interp, fft-env-edit -- FFT based editing
     <li>fft-squelch -- noise reduction 
+    <li>squelch-vowels -- remove steady-state (or the reverse)
     <li>fft-smoother -- fft-based smoothing
   </ul>
 </small>
@@ -804,6 +805,7 @@ is at 1.0, no filtering takes place.
   <em class=def><a name="exfftenvedit">fft-env-edit</a></em> env
   <em class=def><A NAME="exfftenvinterp">fft-env-interp</a></em> env1 env2 interp
   <em class=def><a name="exfftsquelch">fft-squelch</a></em> squelch
+  <em class=def><a name="exsquelchvowels">squelch-vowels</a></em>
   <em class=def><A NAME="exfftsmoother">fft-smoother</a></em> cutoff start samps snd chn
 </pre>
 <p><i>correlate</i> graphs the correlation of <i>snd</i>'s 2 channels.
@@ -819,6 +821,9 @@ envelope. Another similar function is <i>fft-smoother</i> that uses fft-filterin
 smooth a portion of a sound.
 <i>fft-squelch</i> is similar, but removes all energy below the squelch amount (normalized to
 be between 0.0 and 1.0).  This is sometimes useful for noise-reduction.
+<i>squelch-vowels</i> uses fft data to distinguish the steady state portion (a vowel in speech) from
+noise (a consonant, sometimes), and does whatever you want based on that (remove vowels, remove
+consonants, make consonants louder, etc).
 Finally there are two examples
 of using graph-hook to set the fft size based on the current time domain window
 size.  The simpler one is:

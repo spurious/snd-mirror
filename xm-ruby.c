@@ -95,7 +95,7 @@
   XEN_ARGIFY_3(gxm_XtAppAddActionHook_w, gxm_XtAppAddActionHook)
   XEN_NARGIFY_1(gxm_XtRemoveActionHook_w, gxm_XtRemoveActionHook)
   XEN_NARGIFY_1(gxm_XtGetActionList_w, gxm_XtGetActionList)
-  XEN_NARGIFY_5(gxm_XtCallActionProc_w, gxm_XtCallActionProc)
+  XEN_ARGIFY_5(gxm_XtCallActionProc_w, gxm_XtCallActionProc)
   XEN_NARGIFY_5(gxm_XtRegisterGrabAction_w, gxm_XtRegisterGrabAction)
   XEN_NARGIFY_2(gxm_XtSetMultiClickTime_w, gxm_XtSetMultiClickTime)
   XEN_NARGIFY_1(gxm_XtGetMultiClickTime_w, gxm_XtGetMultiClickTime)
@@ -355,7 +355,7 @@
   XEN_NARGIFY_8(gxm_XChangeProperty_w, gxm_XChangeProperty)
   XEN_NARGIFY_4(gxm_XChangeWindowAttributes_w, gxm_XChangeWindowAttributes)
   XEN_NARGIFY_3(gxm_XCheckIfEvent_w, gxm_XCheckIfEvent)
-  XEN_NARGIFY_3(gxm_XCheckMaskEvent_w, gxm_XCheckMaskEvent)
+  XEN_NARGIFY_2(gxm_XCheckMaskEvent_w, gxm_XCheckMaskEvent)
   XEN_NARGIFY_2(gxm_XCheckTypedEvent_w, gxm_XCheckTypedEvent)
   XEN_NARGIFY_3(gxm_XCheckTypedWindowEvent_w, gxm_XCheckTypedWindowEvent)
   XEN_NARGIFY_3(gxm_XCheckWindowEvent_w, gxm_XCheckWindowEvent)
@@ -482,7 +482,7 @@
   XEN_NARGIFY_4(gxm_XQueryBestStipple_w, gxm_XQueryBestStipple)
   XEN_NARGIFY_4(gxm_XQueryBestTile_w, gxm_XQueryBestTile)
   XEN_NARGIFY_3(gxm_XQueryColor_w, gxm_XQueryColor)
-  XEN_NARGIFY_4(gxm_XQueryColors_w, gxm_XQueryColors)
+  XEN_ARGIFY_4(gxm_XQueryColors_w, gxm_XQueryColors)
   XEN_NARGIFY_2(gxm_XQueryExtension_w, gxm_XQueryExtension)
   XEN_NARGIFY_1(gxm_XQueryKeymap_w, gxm_XQueryKeymap)
   XEN_NARGIFY_2(gxm_XQueryPointer_w, gxm_XQueryPointer)
@@ -1329,7 +1329,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddActionHook" XM_POSTFIX, gxm_XtAppAddActionHook_w, 2, 1, 0, H_XtAppAddActionHook);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveActionHook" XM_POSTFIX, gxm_XtRemoveActionHook_w, 1, 0, 0, H_XtRemoveActionHook);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetActionList" XM_POSTFIX, gxm_XtGetActionList_w, 1, 0, 0, H_XtGetActionList);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallActionProc" XM_POSTFIX, gxm_XtCallActionProc_w, 5, 0, 0, H_XtCallActionProc);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallActionProc" XM_POSTFIX, gxm_XtCallActionProc_w, 4, 1, 0, H_XtCallActionProc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRegisterGrabAction" XM_POSTFIX, gxm_XtRegisterGrabAction_w, 5, 0, 0, H_XtRegisterGrabAction);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetMultiClickTime" XM_POSTFIX, gxm_XtSetMultiClickTime_w, 2, 0, 0, H_XtSetMultiClickTime);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetMultiClickTime" XM_POSTFIX, gxm_XtGetMultiClickTime_w, 1, 0, 0, H_XtGetMultiClickTime);
@@ -1590,7 +1590,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeProperty" XM_POSTFIX, gxm_XChangeProperty_w, 7, 1, 0, H_XChangeProperty);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeWindowAttributes" XM_POSTFIX, gxm_XChangeWindowAttributes_w, 4, 0, 0, H_XChangeWindowAttributes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckIfEvent" XM_POSTFIX, gxm_XCheckIfEvent_w, 3, 0, 0, H_XCheckIfEvent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckMaskEvent" XM_POSTFIX, gxm_XCheckMaskEvent_w, 3, 0, 0, H_XCheckMaskEvent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckMaskEvent" XM_POSTFIX, gxm_XCheckMaskEvent_w, 2, 0, 0, H_XCheckMaskEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckTypedEvent" XM_POSTFIX, gxm_XCheckTypedEvent_w, 2, 0, 0, H_XCheckTypedEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckTypedWindowEvent" XM_POSTFIX, gxm_XCheckTypedWindowEvent_w, 3, 0, 0, H_XCheckTypedWindowEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckWindowEvent" XM_POSTFIX, gxm_XCheckWindowEvent_w, 3, 0, 0, H_XCheckWindowEvent);
@@ -1717,7 +1717,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryBestStipple" XM_POSTFIX, gxm_XQueryBestStipple_w, 4, 0, 0, H_XQueryBestStipple);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryBestTile" XM_POSTFIX, gxm_XQueryBestTile_w, 4, 0, 0, H_XQueryBestTile);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryColor" XM_POSTFIX, gxm_XQueryColor_w, 3, 0, 0, H_XQueryColor);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryColors" XM_POSTFIX, gxm_XQueryColors_w, 4, 0, 0, H_XQueryColors);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryColors" XM_POSTFIX, gxm_XQueryColors_w, 3, 1, 0, H_XQueryColors);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryExtension" XM_POSTFIX, gxm_XQueryExtension_w, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryKeymap" XM_POSTFIX, gxm_XQueryKeymap_w, 1, 0, 0, H_XQueryKeymap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryPointer" XM_POSTFIX, gxm_XQueryPointer_w, 2, 0, 0, H_XQueryPointer);

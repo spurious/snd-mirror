@@ -39,7 +39,7 @@
  * TODO: check out the g_signal handlers (gtk_signal_* is ok)
  * TODO: GdkEvent casts
  * TODO: struct print, more struct instance creators(?)
- * TODO: tie into libxm (configure.ac etc), Snd (snd-motif translation)
+ * TODO: tie into Snd (snd-motif translation)
  * TODO: add unicode handlers from glib -- anything else?
  * TODO: unprotect *_remove, unprotect old upon reset callback
  * TODO: test suite (snd-test 24)
@@ -39789,7 +39789,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"12-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"16-Mar-02\")");
 #endif
       xg_already_inited = 1;
     }

@@ -23,10 +23,10 @@
 ;;;     every-sample?
 ;;;     sort-samples
 ;;; mix mono sound into stereo sound panning according to env, also simple sound placement
-;;; fft-edit, fft-squelch, fft-env-interp, fft-smoother -- FFT based editing, fft-smoothing
+;;; fft-edit, fft-squelch, squelch-vowels, fft-env-interp, fft-smoother -- FFT based editing, fft-smoothing
 ;;; comb-filter, notch-filter, formant-filter
 ;;; echo (delays)
-;;; ring-modulation, am
+;;; ring-modulation, am, vibro
 ;;; src-related sound effects (src, rand-interp, etc)
 ;;; compand (array-interp)
 ;;; shift pitch keeping duration constant (src+granulate)
@@ -766,6 +766,62 @@ then inverse ffts."
     (vct->channel rdata 0 (1- len))
     scaler))
     
+
+;;; same idea but used to distinguish vowels (steady-state) from consonants
+
+(define (ramp gen up)
+  "(ramp gen up) is a kind of CLM generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes"
+  ;; gen is list: ctr size
+  ;;  the idea here is that we want to ramp in or out a portion of a sound based on some
+  ;;  factor of the sound data -- the ramp gen produces a ramp up when 'up' is #t, sticking
+  ;;  at 1.0, and a ramp down when 'up' is #f, sticking at 0.0
+  (let* ((ctr (car gen))
+	 (size (cadr gen))
+	 (val (/ ctr size)))
+    (list-set! gen 0 (min size (max 0 (+ ctr (if up 1 -1)))))
+    val))
+
+(define* (make-ramp #:optional (size 128))
+  "(make-ramp &optional size) returns a ramp generator"
+  (list 0 size))
+
+(define (squelch-vowels)
+  "(squelch-vowels) suppresses portions of a sound that look like steady-state"
+  (let* ((fft-size 32)
+	 (fft-mid (inexact->exact (/ fft-size 2)))
+	 (rl (make-vct fft-size))
+	 (im (make-vct fft-size))
+	 (ramper (make-ramp 256)) ; 512 ok too
+	 (peak (/ (maxamp) fft-mid))
+	 (read-ahead (make-sample-reader))
+	 (ctr 0)
+	 (in-vowel #f))
+    (do ((i 0 (1+ i)))
+	((= i (1- fft-size)))
+      (vct-set! rl i (read-ahead)))
+    (set! ctr (1- fft-size))
+    (map-channel (lambda (y)
+		   (vct-set! rl ctr (read-ahead))
+		   (set! ctr (1+ ctr))
+		   (if (= ctr fft-size)
+		       (begin
+			 (fft rl im 1)
+			 (vct-multiply! rl rl)
+			 (vct-multiply! im im)
+			 (vct-add! rl im)
+			 (set! in-vowel (> (+ (vct-ref rl 0) (vct-ref rl 1) (vct-ref rl 2) (vct-ref rl 3)) peak))
+			 ;; fancier version checked here ratio of this sum and
+			 ;;   sum of all rl vals, returned vowel if > 0.5
+			 (set! ctr 0)
+			 (vct-fill! im 0.0)))
+		   (let ((rval (- 1.0 (ramp ramper in-vowel))))
+		     ; squelch consonants if just ramp value (not 1.0-val)
+		     ;(and (> rval 0.0) ; if this is included, the vowel-portions are omitted
+		     (* y rval) ; squelch vowels 
+		     ;(* y (+ (* 2 rval) .1)) ;accentuate consonants
+		     )))))
+
+
 (define (fft-env-data fft-env)
   "(fft-env-data fft-env) applies fft-env as spectral env to current sound, returning vct of new data"
   (let* ((sr (srate))
@@ -994,6 +1050,14 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
   (let ((os (make-oscil freq))) 
     (lambda (inval) 
       (amplitude-modulate 1.0 inval (oscil os)))))
+
+;;; this taken from sox (vibro.c)
+(define (vibro speed depth)
+  (let* ((sine (make-oscil speed))
+	 (scl (* 0.5 depth))
+	 (offset (- 1.0 scl)))
+    (lambda (y)
+      (* y (+ offset (* scl (oscil sine)))))))
 
 
 ;;; -------- hello-dentist

@@ -320,6 +320,19 @@ static sound_file *add_to_sound_table(const char *name)
   return(sound_table[pos]);
 }
 
+int mus_sound_prune(void)
+{
+  int i, pruned = 0;
+  for (i = 0; i < sound_table_size; i++)
+    if ((sound_table[i]) && (!(mus_file_probe(sound_table[i]->file_name))))
+      {
+	free_sound_file(sound_table[i]);
+	sound_table[i] = NULL;
+	pruned++;
+      }
+  return(pruned);
+}
+
 int mus_sound_forget(const char *name)
 {
   int i, len, free_name = 0;
@@ -768,9 +781,9 @@ int mus_sound_open_input (const char *arg)
 int mus_sound_open_output (const char *arg, int srate, int chans, int data_format, int header_type, const char *comment)
 {
   int fd = MUS_ERROR, err, comlen = 0;
-  mus_sound_forget(arg);
   if (comment) comlen = strlen(comment);
   mus_sound_initialize();
+  mus_sound_forget(arg);
   err = mus_header_write(arg, header_type, srate, chans, 0, 0, data_format, comment, comlen);
   if (err != MUS_ERROR)
     {
