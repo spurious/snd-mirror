@@ -908,7 +908,7 @@ Its arguments are the sound index and the channel number."
   XEN_DEFINE_HOOK(select_sound_hook, S_select_sound_hook, 1, H_select_sound_hook);       /* arg = sound index */
   XEN_DEFINE_HOOK(select_channel_hook, S_select_channel_hook, 2, H_select_channel_hook); /* args = sound index, channel */
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("popup-display-info", g_display_info, 0, 0, 0, "internal test function");
 #endif
 }

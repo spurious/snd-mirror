@@ -1128,12 +1128,14 @@ XEN_ARGIFY_4(g_grf_y_w, g_grf_y)
 XEN_ARGIFY_4(g_ungrf_x_w, g_ungrf_x)
 XEN_ARGIFY_4(g_ungrf_y_w, g_ungrf_y)
 XEN_ARGIFY_3(g_axis_info_w, g_axis_info)
+XEN_VARGIFY(g_draw_axes_w, g_draw_axes)
 #else
 #define g_grf_x_w g_grf_x
 #define g_grf_y_w g_grf_y
 #define g_ungrf_x_w g_ungrf_x
 #define g_ungrf_y_w g_ungrf_y
 #define g_axis_info_w g_axis_info
+#define g_draw_axes_w g_draw_axes
 #endif
 
 void g_init_axis(void)
@@ -1146,7 +1148,7 @@ void g_init_axis(void)
   XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, H_axis_info);
 
 #if (!USE_NO_GUI)
-  XEN_DEFINE_PROCEDURE(S_draw_axes,  g_draw_axes, 0, 0, 1,   H_draw_axes);
+  XEN_DEFINE_PROCEDURE(S_draw_axes,  g_draw_axes_w, 0, 0, 1,   H_draw_axes);
 #endif
 }
 #endif

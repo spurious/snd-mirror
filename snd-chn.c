@@ -6323,7 +6323,7 @@ XEN_ARGIFY_3(g_set_y_bounds_w, g_set_y_bounds)
 XEN_ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
 XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
 XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
-XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
+XEN_ARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #else
 #define g_graph_w g_graph
 #define g_edits_w g_edits

@@ -3455,7 +3455,7 @@ static XEN g_mix_locked(XEN n)
 
 static XEN g_mix_anchor(XEN n) 
 {
-  #define H_mix_anchor "(" S_mix_anchor " id) -> location of mix 'anchor' (determines console position within mix)"
+  #define H_mix_anchor "(" S_mix_anchor " id) -> location of mix 'anchor' (determines tag position within mix)"
   mix_info *md; 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_anchor, "an integer");
   md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
@@ -3564,7 +3564,7 @@ static XEN g_mix_home(XEN n)
 
 static XEN g_mix_amp(XEN n, XEN uchan) 
 {
-  #define H_mix_amp "(" S_mix_amp " id &optional (chan 0)) -> amp (console slider setting) of mix's channel chan"
+  #define H_mix_amp "(" S_mix_amp " id &optional (chan 0)) -> amp of mix's channel chan"
   console_state *cs; 
   int chan;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ARG_1, S_mix_amp, "an integer");
@@ -4420,7 +4420,7 @@ static XEN g_selected_mix_color(void)
 static XEN g_with_mix_tags(void) {return(C_TO_XEN_BOOLEAN(with_mix_tags(get_global_state())));}
 static XEN g_set_with_mix_tags(XEN val) 
 {
-  #define H_with_mix_tags "(" S_with_mix_tags ") -> #t if Snd should editable mixes"
+  #define H_with_mix_tags "(" S_with_mix_tags ") -> #t if Snd should display mixed portions with a draggable tag"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_with_mix_tags, "a boolean");
@@ -4485,7 +4485,7 @@ XEN_ARGIFY_6(mix_vct_w, mix_vct)
 XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
 XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 XEN_NARGIFY_0(g_selected_mix_color_w, g_selected_mix_color)
-XEN_ARGIFY_1(g_set_selected_mix_color_w, g_set_selected_mix_color)
+XEN_NARGIFY_1(g_set_selected_mix_color_w, g_set_selected_mix_color)
 XEN_NARGIFY_0(g_with_mix_tags_w, g_with_mix_tags)
 XEN_ARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
 #else
@@ -4663,3 +4663,21 @@ The hook function argument 'id' is the newly selected mix's id."
 
 
 
+/*
+  TODO: fix these bugs:
+    After defining some mix files as members of a Track, I use the
+Reverse Track (from the Mix/Tracks menu) and the main waveform display
+disappears. Delete Track does the same. Also, the mix file graphics
+(with the handles) occasionally disappear during Mix/Track operations.
+Has the relevant code changed recently ?
+
+    If I use the OpenGL Transform display and have the wqveform display
+open at the same time, the Mix/Track functions are affected. For
+instance, Delete All Tracks & Mixes will remove what's in the main
+display but leave the mix files displayed.
+
+  Btw, the OpenGL display is really neat. Is there any way to have it
+respond to realtime input, i.e., create a dynamic waterfall spectral
+display ?
+
+*/

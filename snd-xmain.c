@@ -1048,6 +1048,12 @@ static XEN g_snd_glx_context(void)
   return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GLXContext"), 
 		    C_TO_XEN_ULONG((unsigned long)(ss->sgx->cx))));
 } 
+
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
+#else
+#define g_snd_glx_context_w g_snd_glx_context
+#endif
 #endif
 
 void g_init_gxmain(void)
@@ -1056,6 +1062,6 @@ void g_init_gxmain(void)
   XEN_DEFINE_HOOK(property_changed_hook, S_property_changed_hook, 1, H_property_changed_hook);
 
 #if HAVE_GL
-  XEN_DEFINE_PROCEDURE("snd-glx-context", g_snd_glx_context, 0, 0, 0, "OpenGL GLXContext");
+  XEN_DEFINE_PROCEDURE("snd-glx-context", g_snd_glx_context_w, 0, 0, 0, "OpenGL GLXContext");
 #endif
 }

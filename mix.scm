@@ -276,16 +276,22 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 (define (reverse-track track)
   "(reverse-track) reverses the order of its mixes (it changes various mix begin times)"
   (if (some mix? track)
-      (let* ((ids-in-order (sort track
-				 (lambda (a b)
-				   (> (mix-position a)
-				      (mix-position b))))))
-	(as-one-edit
-	 (lambda ()
-	   (for-each (lambda (id pos)
-		       (set! (mix-position id) pos))
-		     ids-in-order
-		     (reverse (map mix-position ids-in-order))))))
+      (let ((old-position-hook (hook->list mix-position-changed-hook)))
+	(reset-hook! mix-position-changed-hook)
+	(let* ((ids-in-order (sort track
+				   (lambda (a b)
+				     (> (mix-position a)
+					(mix-position b))))))
+	  (as-one-edit
+	   (lambda ()
+	     (for-each (lambda (id pos)
+			 (set! (mix-position id) pos))
+		       ids-in-order
+		       (reverse (map mix-position ids-in-order)))))
+	  (for-each
+	   (lambda (hook-func)
+	     (add-hook! mix-position-changed-hook hook-func))
+	   old-position-hook)))
       (throw 'no-such-track (list "reverse-track" track))))
 
 

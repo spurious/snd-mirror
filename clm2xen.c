@@ -5183,10 +5183,6 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_mus_mix_w g_mus_mix
 #endif
 
-#ifndef WITH_SET_NAME
-  #define WITH_SET_NAME 0
-#endif
-
 #if WITH_MODULES
 static void clm_init(void *ignore)
 #else
@@ -5238,14 +5234,14 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_srate, g_srate_w, H_mus_srate,
 				   S_mus_set_srate, g_set_srate_w,  0, 0, 0, 1);
 
-#if (!WITH_SET_NAME)
+#if HAVE_GUILE
   XEN_DEFINE_PROCEDURE(S_mus_set_srate, g_set_srate_w, 0, 1, 0, H_mus_srate);
 #endif
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_array_print_length, g_array_print_length_w, H_mus_array_print_length,
 				   S_mus_set_array_print_length, g_set_array_print_length_w,  0, 0, 0, 1);
 
-#if (!WITH_SET_NAME)
+#if HAVE_GUILE
   XEN_DEFINE_PROCEDURE(S_mus_set_array_print_length, g_set_array_print_length_w, 0, 1, 0, H_mus_array_print_length);
 #endif
   XEN_DEFINE_PROCEDURE(S_radians_hz,           g_radians2hz_w, 1, 0, 0,           H_radians_hz);
@@ -5365,9 +5361,9 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_random,       g_mus_random_w, 1, 0, 0,       H_mus_random);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_rand_seed, g_rand_seed_w, H_mus_set_rand_seed,
-				   S_mus_set_rand_seed, g_set_rand_seed_w, 0, 0, 0, 1);
+				   S_mus_set_rand_seed, g_set_rand_seed_w, 0, 0, 1, 0);
 
-#if (!WITH_SET_NAME)
+#if HAVE_GUILE
   XEN_DEFINE_PROCEDURE(S_mus_set_rand_seed, g_set_rand_seed_w, 0, 1, 0, H_mus_set_rand_seed);
 #endif
 

@@ -2429,7 +2429,7 @@ XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 #define g_set_just_sounds_w g_set_just_sounds
 #endif
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
 static XEN g_new_file_dialog(void)
 {
   snd_info *sp;
@@ -2460,7 +2460,7 @@ See also nb.scm."
   XEN_DEFINE_HOOK(mouse_enter_label_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   XEN_DEFINE_HOOK(mouse_leave_label_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("new-file-dialog", g_new_file_dialog, 0, 0, 0, "internal testing function");
 #endif
 }

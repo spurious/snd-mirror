@@ -807,6 +807,7 @@ XEN_NARGIFY_1(g_focus_widget_w, g_focus_widget)
 XEN_ARGIFY_5(g_make_graph_data_w, g_make_graph_data)
 XEN_ARGIFY_7(g_graph_data_w, g_graph_data)
 XEN_VARGIFY(g_make_bezier_w, g_make_bezier)
+XEN_NARGIFY_0(g_snd_gcs_w, g_snd_gcs)
 #else
 #define g_draw_line_w g_draw_line
 #define g_draw_dot_w g_draw_dot
@@ -835,6 +836,7 @@ XEN_VARGIFY(g_make_bezier_w, g_make_bezier)
 #define g_make_graph_data_w g_make_graph_data
 #define g_graph_data_w g_graph_data
 #define g_make_bezier_w g_make_bezier
+#define g_snd_gcs_w g_snd_gcs
 #endif
 
 void g_init_draw(void)
@@ -886,7 +888,7 @@ void g_init_draw(void)
   /* ---------------- unstable ---------------- */
 
   XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
-  XEN_DEFINE_PROCEDURE(S_snd_gcs, g_snd_gcs, 0, 0, 0, H_snd_gcs);
+  XEN_DEFINE_PROCEDURE(S_snd_gcs,         g_snd_gcs_w, 0, 0, 0,         H_snd_gcs);
 
   #define H_new_widget_hook S_new_widget_hook " (widget) is called each time a dialog or \
 a new set of channel or sound widgets is created."

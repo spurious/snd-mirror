@@ -1073,6 +1073,13 @@ static void new_leading_fragment(ed_fragment *new_front, ed_fragment *old_front,
     }
 }
 
+static void ripple_all(chan_info *cp, off_t beg, off_t samps)
+{
+  ripple_marks(cp, beg, samps);
+  ripple_mixes(cp, beg, samps);
+  check_for_first_edit(cp);
+}
+
 static ed_list *insert_samples_1(off_t samp, off_t num, ed_list *current_state, chan_info *cp, ed_fragment **cb_rtn, const char *origin, Float scaler)
 {
   int len, k;
@@ -1140,12 +1147,10 @@ static ed_list *insert_samples_1(off_t samp, off_t num, ed_list *current_state, 
   new_state->len = num;
   if (origin) new_state->origin = copy_string(origin);
   ripple_out(FRAGMENTS(new_state), k + 1, num, len);
-  ripple_marks(cp, samp, num);
-  ripple_mixes(cp, samp, num);
+  ripple_all(cp, samp, num);
   ripple_selection(new_state, samp, num);
   if (cp->cursor > samp) cp->cursor += num;
   reflect_sample_change_in_axis(cp);
-  check_for_first_edit(cp);
   fixup_edlist_endmark(new_state);
   return(new_state);
 }
@@ -1322,8 +1327,7 @@ static ed_list *delete_samples_1(off_t beg, off_t num, int pos, chan_info *cp, c
   new_state->edit_type = DELETION_EDIT;
   new_state->sound_location = 0;
   ripple_out(FRAGMENTS(new_state), start_del, -num, len + len_fixup);
-  ripple_marks(cp, beg, -num);
-  ripple_mixes(cp, beg, -num);
+  ripple_all(cp, beg, -num);
   ripple_selection(new_state, beg, -num);
   if (cp->cursor > beg)
     {
@@ -1332,7 +1336,6 @@ static ed_list *delete_samples_1(off_t beg, off_t num, int pos, chan_info *cp, c
       if (cp->cursor < beg) cp->cursor = beg;
     }
   reflect_sample_change_in_axis(cp);
-  check_for_first_edit(cp);
   new_state->size = len + len_fixup; /* don't propagate useless trailing blocks */
   if (FRAGMENT_SOUND(new_state, (new_state->size - 1)) != EDIT_LIST_END_MARK)
     {
@@ -1445,8 +1448,7 @@ static ed_list *change_samples_1(off_t beg, off_t num, int pos, chan_info *cp, e
       reflect_sample_change_in_axis(cp);
     }
   new_state->size = len + len_fixup; /* don't propagate useless trailing blocks */
-  ripple_marks(cp, 0, 0);
-  check_for_first_edit(cp);
+  ripple_all(cp, 0, 0);
   fixup_edlist_endmark(new_state);
   return(new_state);
 }    
@@ -1554,8 +1556,7 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, i
       e->edpos = cp->edit_ctr - 1;
       reflect_edit_history_change(cp);
       reflect_sample_change_in_axis(cp);
-      ripple_marks(cp, 0, 0);
-      check_for_first_edit(cp);
+      ripple_all(cp, 0, 0);
       update_graph(cp);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
       after_edit(cp);
@@ -1775,8 +1776,7 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int 
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
-  ripple_marks(cp, 0, 0); /* 0,0 -> copy marks */
-  check_for_first_edit(cp);
+  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, "scale"); /* 30-Jan-02 */
   reflect_edit_history_change(cp);
@@ -1854,8 +1854,7 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
-  ripple_marks(cp, 0, 0); /* 0,0 -> copy marks */
-  check_for_first_edit(cp);
+  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, "ramp");
   reflect_edit_history_change(cp);
@@ -1945,8 +1944,7 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, vo
   new_ed->ptree_env_too = (env_pt != NULL);
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
-  ripple_marks(cp, 0, 0); /* 0,0 -> copy marks */
-  check_for_first_edit(cp);
+  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, "ptree");
   reflect_edit_history_change(cp);
@@ -3356,8 +3354,8 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t beg0, off_t n
       cp0->amp_envs[cp0->edit_ctr] = e1;
       cp1->amp_envs[cp1->edit_ctr] = e0;
     }
-  ripple_marks(cp0, 0, 0);
-  ripple_marks(cp1, 0, 0);
+  ripple_all(cp0, 0, 0);
+  ripple_all(cp1, 0, 0);
   swap_marks(cp0, cp1);
   reflect_edit_history_change(cp0);
   reflect_edit_history_change(cp1);
@@ -5468,10 +5466,6 @@ static void init_fcomb(void)
 #endif
 /* -------------------------------- end of internal doc test -------------------------------- */
 
-#ifndef WITH_SET_NAME
-  #define WITH_SET_NAME 0
-#endif
-
 void g_init_edits(void)
 {
   sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));
@@ -5523,7 +5517,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_scale_sound_to,            g_scale_sound_to_w, 1, 4, 0,            H_scale_sound_to);
 
   /* semi-internal functions (restore-state) */
-  XEN_DEFINE_PROCEDURE("section-scale-by",           g_scale_sound_by_w, 5, 0, 0,           "internal scaling function");
+  XEN_DEFINE_PROCEDURE("section-scale-by",           g_scale_sound_by_w, 1, 5, 0,           "internal scaling function");
   XEN_DEFINE_PROCEDURE(S_change_samples_with_origin, g_change_samples_with_origin_w, 4, 3, 0, "");
   XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin, g_delete_samples_with_origin_w, 3, 3, 0, "");
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin, g_insert_samples_with_origin_w, 4, 3, 0, "");
@@ -5533,7 +5527,7 @@ void g_init_edits(void)
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
 					    "set-" S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 6);
-#if (!WITH_SET_NAME)
+#if HAVE_GUILE
   XEN_DEFINE_PROCEDURE("set-" S_samples, g_set_samples_w, 3, 6, 0, H_samples);
 #endif
 

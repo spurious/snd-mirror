@@ -6,6 +6,7 @@
 /* SOMEDAY: some way to access XtGetApplicationResources */
 
 /* HISTORY: 
+ *   19-Dec:    more Ruby fixups.
  *   6-Nov:     Ruby XmWMProtocols bugfixes thanks to Michael Scholz.
  *   17-Oct:    XtAppSetFallbackResources and fallbacks added to XtAppInitialize etc.
  *   15-Oct:    XtGetResourceList.
@@ -572,10 +573,18 @@ static XEN gxm_XGCValues(void)
 }
 
 #if HAVE_MOTIF
+#if HAVE_RUBY
+#define XM_Make(Name) \
+  static XEN gxm_ ## Name (void) {Name *e; e = (Name *)CALLOC(1, sizeof(Name)); return(WRAP_FOR_XEN_OBJ(#Name, e));} \
+  XEN_NARGIFY_0(gxm_ ## Name ## _w, gxm_ ## Name)
+#define XM_Declare(Name) \
+  XEN_DEFINE_PROCEDURE(XM_PREFIX #Name XM_POSTFIX, gxm_ ## Name ## _w, 0, 0, 0, "Make an " #Name " struct")
+#else
 #define XM_Make(Name) \
   static XEN gxm_ ## Name (void) {Name *e; e = (Name *)CALLOC(1, sizeof(Name)); return(WRAP_FOR_XEN_OBJ(#Name, e));}
 #define XM_Declare(Name) \
   XEN_DEFINE_PROCEDURE(XM_PREFIX #Name XM_POSTFIX, gxm_ ## Name, 0, 0, 0, "Make an " #Name " struct")
+#endif
 
 XM_Make(XmAnyCallbackStruct)
 XM_Make(XmArrowButtonCallbackStruct)

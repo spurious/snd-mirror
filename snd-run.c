@@ -8442,10 +8442,12 @@ to Guile and is equivalent to (thunk)."
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_optimization_w, g_optimization)
-XEN_ARGIFY_1(g_set_optimization_w, g_set_optimization)
+XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
+XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 #else
 #define g_optimization_w g_optimization
 #define g_set_optimization_w g_set_optimization
+#define g_vct_map_w g_vct_map
 #endif
 
 
@@ -8462,7 +8464,7 @@ void g_init_run(void)
   XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field, 2, 0, 0, H_add_clm_field);
   XEN_DEFINE_PROCEDURE(S_add_clm_type, g_add_clm_type, 1, 0, 0, H_add_clm_type);
 #else
-  XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map, 1, 0, 1, H_vct_map);
+  XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map_w, 2, 0, 0, H_vct_map);
 #endif
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization,

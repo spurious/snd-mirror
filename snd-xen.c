@@ -727,6 +727,7 @@ static char *stdin_check_for_full_expression(char *newstr)
       FREE(str);
     }
   else stdin_str = copy_string(newstr);
+#if HAVE_GUILE
   end_of_text = check_balance(stdin_str, 0, snd_strlen(stdin_str), FALSE); /* last-arg->not in listener */
   if (end_of_text > 0)
     {
@@ -735,6 +736,9 @@ static char *stdin_check_for_full_expression(char *newstr)
       return(stdin_str);
     }
   else return(NULL);
+#else
+  return(stdin_str);
+#endif
 }
 
 void snd_eval_stdin_str(snd_state *ss, char *buf)
@@ -2598,6 +2602,32 @@ static XEN g_snd_completion(XEN text)
   return(res);
 }
 
+static XEN g_snd_global_state(void)
+{
+  return(XEN_WRAP_C_POINTER(get_global_state()));
+}
+
+#if DEBUGGING
+static XEN g_snd_sound_pointer(XEN snd)
+{
+  /* (XtCallCallbacks (cadr (sound-widgets 0)) XmNactivateCallback (snd-sound-pointer 0)) */
+  snd_state *ss;
+  int s;
+  ss = get_global_state();
+  s = XEN_TO_C_INT(snd);
+  if ((s < ss->max_sounds) && (s >= 0) && (ss->sounds[s]))
+    return(C_TO_XEN_ULONG((unsigned long)(ss->sounds[s])));
+  return(XEN_FALSE);
+}
+
+#if HAVE_GUILE
+static SCM g_gc_off(void) {++scm_block_gc; return(XEN_FALSE);}
+static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
+#endif
+
+#endif 
+
+
 #ifdef XEN_ARGIFY_1
 #if HAVE_GUILE && HAVE_DLFCN_H
 XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
@@ -2764,6 +2794,10 @@ XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
+XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
+#if DEBUGGING
+  XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
+#endif
 #else
 #if HAVE_GUILE && HAVE_DLFCN_H
 #define g_dlopen_w g_dlopen
@@ -2930,6 +2964,10 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_mus_audio_describe_w g_mus_audio_describe
 #define g_little_endian_w g_little_endian
 #define g_snd_completion_w g_snd_completion
+#define g_snd_global_state_w g_snd_global_state
+#if DEBUGGING
+  #define g_snd_sound_pointer_w g_snd_sound_pointer
+#endif
 #endif
 
 #if HAVE_STATIC_XM
@@ -2950,36 +2988,11 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #endif
 #endif
 
-static XEN g_snd_global_state(void)
-{
-  return(XEN_WRAP_C_POINTER(get_global_state()));
-}
-
-#if DEBUGGING
-static XEN g_snd_sound_pointer(XEN snd)
-{
-  /* (XtCallCallbacks (cadr (sound-widgets 0)) XmNactivateCallback (snd-sound-pointer 0)) */
-  snd_state *ss;
-  int s;
-  ss = get_global_state();
-  s = XEN_TO_C_INT(snd);
-  if ((s < ss->max_sounds) && (s >= 0) && (ss->sounds[s]))
-    return(C_TO_XEN_ULONG((unsigned long)(ss->sounds[s])));
-  return(XEN_FALSE);
-}
-
-#if HAVE_GUILE
-static SCM g_gc_off(void) {++scm_block_gc; return(XEN_FALSE);}
-static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
-#endif
-
-#endif 
-
 void g_initialize_gh(void)
 {
-  XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state, 0, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
 #if DEBUGGING
-  XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer, 1, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gc-off", g_gc_off, 0, 0, 0, "turn off GC");
   XEN_DEFINE_PROCEDURE("gc-on", g_gc_on, 0, 0, 0, "turn on GC");

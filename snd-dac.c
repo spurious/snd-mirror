@@ -2437,6 +2437,10 @@ XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
 XEN_ARGIFY_1(g_set_dac_size_w, g_set_dac_size)
 XEN_NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
 XEN_ARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
+#if DEBUGGING
+  XEN_NARGIFY_0(g_disable_play_w, g_disable_play)
+  XEN_NARGIFY_0(g_enable_play_w, g_enable_play)
+#endif
 #else
 #define g_play_w g_play
 #define g_play_channel_w g_play_channel
@@ -2453,6 +2457,10 @@ XEN_ARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
 #define g_set_dac_size_w g_set_dac_size
 #define g_dac_combines_channels_w g_dac_combines_channels
 #define g_set_dac_combines_channels_w g_set_dac_combines_channels
+#if DEBUGGING
+  #define g_disable_play_w g_disable_play
+  #define g_enable_play_w g_enable_play
+#endif
 #endif
 
 void g_init_dac(void)
@@ -2496,7 +2504,7 @@ If it returns #t, the sound is not played."
   XEN_DEFINE_HOOK(stop_playing_selection_hook, S_stop_playing_selection_hook, 0, H_stop_playing_selection_hook); /* no args */
 
 #if DEBUGGING
-  XEN_DEFINE_PROCEDURE("disable-play", g_disable_play, 0, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE("enable-play", g_enable_play, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("disable-play", g_disable_play_w, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("enable-play", g_enable_play_w, 0, 0, 0, NULL);
 #endif
 }

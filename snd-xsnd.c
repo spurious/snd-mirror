@@ -3318,14 +3318,16 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
 
 #ifdef XEN_ARGIFY_1
   XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
+  XEN_ARGIFY_3(g_add_sound_window_w, g_add_sound_window)
 #else
   #define g_sound_widgets_w g_sound_widgets
+  #define g_add_sound_window_w g_add_sound_window
 #endif
 
 void g_init_gxsnd(void)
 {
   XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
-  XEN_DEFINE_PROCEDURE("create-sound-window", g_add_sound_window, 2, 1, 0, "add a sound window to a widget");
+  XEN_DEFINE_PROCEDURE("create-sound-window", g_add_sound_window_w, 2, 1, 0, "add a sound window to a widget");
 }
 
 

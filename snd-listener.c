@@ -568,12 +568,12 @@ static XEN g_set_listener_prompt(XEN val)
 XEN_NARGIFY_1(g_save_listener_w, g_save_listener)
 XEN_NARGIFY_0(g_clear_listener_w, g_clear_listener);
 XEN_NARGIFY_0(g_show_listener_w, g_show_listener)
-XEN_ARGIFY_1(g_set_show_listener_w, g_set_show_listener)
+XEN_NARGIFY_1(g_set_show_listener_w, g_set_show_listener)
 XEN_NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
 XEN_ARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
 #else
 #define g_save_listener_w g_save_listener
-#define g_clear_listener_w g_clear_listener);
+#define g_clear_listener_w g_clear_listener
 #define g_show_listener_w g_show_listener
 #define g_set_show_listener_w g_set_show_listener
 #define g_listener_prompt_w g_listener_prompt
@@ -583,7 +583,7 @@ XEN_ARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
 void g_init_listener(void)
 {
   XEN_DEFINE_PROCEDURE(S_save_listener, g_save_listener_w, 1, 0, 0, H_save_listener);
-  XEN_DEFINE_PROCEDURE(S_clear_listener, g_clear_listener, 0, 0, 0, H_clear_listener);
+  XEN_DEFINE_PROCEDURE(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_listener, g_show_listener_w, H_show_listener,
 				   "set-" S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);

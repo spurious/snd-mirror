@@ -1170,6 +1170,16 @@ static XEN g_mus_header_original_format_name(XEN format, XEN type)
 #endif
 
 
+#if HAVE_OSS
+#define S_mus_audio_reinitialize "mus-audio-reinitialize"
+static XEN g_mus_audio_reinitialize(void)
+{
+  #define H_mus_audio_reinitialize "(" S_mus_audio_reinitialize ") force audio device re-initialization"
+  return(C_TO_XEN_INT(mus_audio_reinitialize()));
+}
+#endif
+
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(sound_data_length_w, sound_data_length)
 XEN_NARGIFY_1(sound_data_chans_w, sound_data_chans)
@@ -1236,6 +1246,9 @@ XEN_NARGIFY_1(g_sound_forget_w, g_sound_forget)
 XEN_NARGIFY_0(g_sound_prune_w, g_sound_prune)
 XEN_NARGIFY_1(g_mus_error_to_string_w, g_mus_error_to_string)
 XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
+#if HAVE_OSS
+  XEN_NARGIFY_0(g_mus_audio_reinitialize_w, g_mus_audio_reinitialize)
+#endif
 #else
 #define sound_data_length_w sound_data_length
 #define sound_data_chans_w sound_data_chans
@@ -1302,6 +1315,9 @@ XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
 #define g_sound_prune_w g_sound_prune
 #define g_mus_error_to_string_w g_mus_error_to_string
 #define g_mus_audio_set_oss_buffers_w g_mus_audio_set_oss_buffers
+#if HAVE_OSS
+  #define g_mus_audio_reinitialize_w g_mus_audio_reinitialize
+#endif
 #endif
 
 #if HAVE_RUBY
@@ -1378,15 +1394,6 @@ static XEN sound_data_dup(XEN obj)
   return(result);
 }
 
-#endif
-
-#if HAVE_OSS
-#define S_mus_audio_reinitialize "mus-audio-reinitialize"
-static XEN g_mus_audio_reinitialize(void)
-{
-  #define H_mus_audio_reinitialize "(" S_mus_audio_reinitialize ") force audio device re-initialization"
-  return(C_TO_XEN_INT(mus_audio_reinitialize()));
-}
 #endif
 
 #if WITH_MODULES
@@ -1503,17 +1510,17 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_audio_treble,  MUS_AUDIO_TREBLE,  "mixer 'treble' field id");
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_samples, g_sound_samples_w, H_mus_sound_samples, 
-				   "set-" S_mus_sound_samples, g_sound_set_samples, 1, 0, 2, 0);
+				   "set-" S_mus_sound_samples, g_sound_set_samples_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_data_location, g_sound_data_location_w, H_mus_sound_data_location,
-				   "set-" S_mus_sound_data_location, g_sound_set_data_location, 1, 0, 2, 0);
+				   "set-" S_mus_sound_data_location, g_sound_set_data_location_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_chans, g_sound_chans_w, H_mus_sound_chans,
-				   "set-" S_mus_sound_chans, g_sound_set_chans, 1, 0, 2, 0);
+				   "set-" S_mus_sound_chans, g_sound_set_chans_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_srate, g_sound_srate_w, H_mus_sound_srate,
-				   "set-" S_mus_sound_srate, g_sound_set_srate, 1, 0, 2, 0);
+				   "set-" S_mus_sound_srate, g_sound_set_srate_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_header_type, g_sound_header_type_w, H_mus_sound_header_type,
-				   "set-" S_mus_sound_header_type, g_sound_set_header_type, 1, 0, 2, 0);
+				   "set-" S_mus_sound_header_type, g_sound_set_header_type_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_data_format, g_sound_data_format_w, H_mus_sound_data_format,
-				   "set-" S_mus_sound_data_format, g_sound_set_data_format, 1, 0, 2, 0);
+				   "set-" S_mus_sound_data_format, g_sound_set_data_format_w, 1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_sound_data_length,        sound_data_length_w, 1, 0, 0,       H_sound_data_length);
   XEN_DEFINE_PROCEDURE(S_sound_data_chans,         sound_data_chans_w, 1, 0, 0,        H_sound_data_chans);
@@ -1536,8 +1543,8 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp,         g_sound_maxamp_w, 1, 0, 0,          H_mus_sound_maxamp);
   XEN_DEFINE_PROCEDURE(S_mus_sound_set_maxamp,     g_sound_set_maxamp_w, 2, 0, 0,      H_mus_sound_set_maxamp);
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp_exists,  g_sound_maxamp_exists_w, 1, 0, 0,   H_mus_sound_maxamp_exists);
-  XEN_DEFINE_PROCEDURE(S_mus_sound_forget,         g_sound_forget, 1, 0, 0,            H_mus_sound_forget);
-  XEN_DEFINE_PROCEDURE(S_mus_sound_prune,          g_sound_prune, 0, 0, 0,             H_mus_sound_prune);
+  XEN_DEFINE_PROCEDURE(S_mus_sound_forget,         g_sound_forget_w, 1, 0, 0,          H_mus_sound_forget);
+  XEN_DEFINE_PROCEDURE(S_mus_sound_prune,          g_sound_prune_w, 0, 0, 0,           H_mus_sound_prune);
 
   XEN_DEFINE_PROCEDURE(S_mus_audio_report,         g_report_audio_state_w, 0, 0, 0,    H_mus_audio_report);
   XEN_DEFINE_PROCEDURE(S_mus_audio_sun_outputs,    g_audio_outputs_w, 3, 0, 0,         H_mus_audio_sun_outputs);
@@ -1577,7 +1584,7 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_sound_data_setB,          sound_data_set_w, 4, 0, 0,          H_sound_data_setB);
 
 #if HAVE_OSS
-  XEN_DEFINE_PROCEDURE(S_mus_audio_reinitialize,   g_mus_audio_reinitialize, 0, 0, 0,  H_mus_audio_reinitialize);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_reinitialize,   g_mus_audio_reinitialize_w, 0, 0, 0,  H_mus_audio_reinitialize);
 #endif
 
 #if DEBUGGING && HAVE_GUILE
