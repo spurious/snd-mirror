@@ -1227,11 +1227,13 @@ int snd_translate(snd_state *ss, char *oldname, char *newname);
 
 /* -------- snd-rec.c -------- */
 
-void init_recorder(snd_state *ss);
+void init_recorder(void);
 void save_recorder_state(FILE *fd);
+void close_recorder_audio(void);
 #if HAVE_GUILE
   void g_init_recorder(SCM local_doc);
 #endif
+int fire_up_recorder(snd_state *ss);
 
 
 /* -------- snd.c -------- */

@@ -409,7 +409,6 @@ void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(snd_state *ss);
 int record_dialog_is_active(void);
-int fire_up_recorder(snd_state *ss);
 
 
 /* -------- snd-xprint.c -------- */

@@ -538,14 +538,12 @@ void use_mixmark(mixdata *md, int x, int y);
 
 /* -------- snd-xrec.c -------- */
 
-void close_recorder_audio(void);
 int record_in_progress(void);
 void lock_recording_audio(void);
 void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(snd_state *ss);
 int record_dialog_is_active(void);
-int fire_up_recorder(snd_state *ss);
 
 
 /* -------- snd-xprint.c -------- */

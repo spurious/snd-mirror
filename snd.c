@@ -224,7 +224,7 @@ static void mus_error2snd(int type, char *msg)
 #endif
 
   set_snd_IO_error(SND_NO_ERROR);
-  init_recorder(ss);
+  init_recorder();
 
 #if HAVE_GUILE
   g_initialize_gh(ss);

@@ -315,8 +315,11 @@ void unlock_recording_audio(void) {}
 void cleanup_recording (void) {}
 void snd_record_file(snd_state *ss) {}
 int record_dialog_is_active(void) {return(0);}
-int fire_up_recorder(snd_state *ss) {return(0);}
-void close_recorder_audio(void) {}
+void recorder_error(char *msg) {}
+void reflect_record_size(int val) {}
+void unsensitize_control_buttons(void) {}
+void stop_background_read(void) {}
+void reflect_recorder_duration(Float new_dur) {}
 char *ps_rgb(snd_state *ss, int pchan) {return(NULL);}
 #if HAVE_GUILE
 void g_initialize_xgh(snd_state *ss, SCM local_doc) {}
@@ -347,9 +350,6 @@ void set_snd_revscl(snd_info *sp, Float val) {sp->revscl = val;}
 void set_snd_filter_order(snd_info *sp, int val) {sp->filter_order = val;}
 void set_filter_dBing(snd_info *sp, int val) {sp->filter_dBing = val;}
 
-void set_recorder_autoload(int val) {}
-void set_recorder_trigger(Float val) {}
-void set_recorder_srate(int val) {}
 void reflect_recorder_mixer_gain(int ind, Float val) {}
 void reflect_recorder_out_amp(int ind, Float val) {}
 void reflect_recorder_in_amp(int in, int out, Float val) {}

@@ -540,7 +540,6 @@ void reflect_mix_in_enved(void);
 
 /* -------- snd-grec.c -------- */
 
-void close_recorder_audio(void);
 int record_in_progress(void);
 void lock_recording_audio(void);
 void unlock_recording_audio(void);
@@ -550,7 +549,6 @@ int record_dialog_is_active(void);
 #if HAVE_GUILE_GTK
   void init_recorder_widgets(SCM local_doc);
 #endif
-int fire_up_recorder(snd_state *ss);
 
 
 
