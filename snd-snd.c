@@ -1113,8 +1113,8 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
 	case FILTERDBING: RTNBOOL(sp->filter_dBing); break;
 	case FILTERORDERF: RTNINT(sp->filter_order); break;
 	case SRATEF: RTNINT((sp->hdr)->srate); break;
-	case DATAFORMATF: return(SCM_LIST2(gh_int2scm((sp->hdr)->format),gh_str02scm(mus_data_format_name((sp->hdr)->format)))); break;
-	case HEADERTYPEF: return(SCM_LIST2(gh_int2scm((sp->hdr)->type),gh_str02scm(mus_header_type_name((sp->hdr)->type)))); break;
+	case DATAFORMATF: return(gh_int2scm((sp->hdr)->format)); break;
+	case HEADERTYPEF: return(gh_int2scm((sp->hdr)->type)); break;
 	case DATALOCATIONF: RTNINT((sp->hdr)->data_location); break;
 	case CONTROLPANELSAVEF: save_control_panel(sp); break;
 	case CONTROLPANELRESTOREF: restore_control_panel(sp); break;

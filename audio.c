@@ -805,12 +805,12 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 
       i = 0;
       if (alGetResourceByName(AL_SYSTEM,"Microphone",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_MICROPHONE; i++;}
-      if (alGetResourceByName(AL_SYSTEM,"Analog Out",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_DAC_OUT; i++;}
-      if (alGetResourceByName(AL_SYSTEM,"ADAT In",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_ADAT_IN; i++;}
-      if (alGetResourceByName(AL_SYSTEM,"AES In",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_AES_IN; i++;}
-      if (alGetResourceByName(AL_SYSTEM,"ADAT Out",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_ADAT_OUT; i++;}
-      if (alGetResourceByName(AL_SYSTEM,"AES Out",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_AES_OUT; i++;}
-      if (alGetResourceByName(AL_SYSTEM,"Line In",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_LINE_IN; i++;}
+      if (alGetResourceByName(AL_SYSTEM,"Analog Out",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_DAC_OUT;    i++;}
+      if (alGetResourceByName(AL_SYSTEM,"ADAT In",AL_DEVICE_TYPE) != 0)    {if ((i+1)<chan) val[i+1] = MUS_AUDIO_ADAT_IN;    i++;}
+      if (alGetResourceByName(AL_SYSTEM,"AES In",AL_DEVICE_TYPE) != 0)     {if ((i+1)<chan) val[i+1] = MUS_AUDIO_AES_IN;     i++;}
+      if (alGetResourceByName(AL_SYSTEM,"ADAT Out",AL_DEVICE_TYPE) != 0)   {if ((i+1)<chan) val[i+1] = MUS_AUDIO_ADAT_OUT;   i++;}
+      if (alGetResourceByName(AL_SYSTEM,"AES Out",AL_DEVICE_TYPE) != 0)    {if ((i+1)<chan) val[i+1] = MUS_AUDIO_AES_OUT;    i++;}
+      if (alGetResourceByName(AL_SYSTEM,"Line In",AL_DEVICE_TYPE) != 0)    {if ((i+1)<chan) val[i+1] = MUS_AUDIO_LINE_IN;    i++;}
       /* if (alGetResourceByName(AL_SYSTEM,"DAC2 In",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_DIGITAL_IN; i++;} */
       val[0] = i;
       break;

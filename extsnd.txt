@@ -986,7 +986,7 @@ access a particular mix object:
   play-mix          (mix)         play mix mix.
   play-track        (track snd chn) play track track. If snd is #t, play all associated chans.
   select-mix        (id)          select mix id.
-  selected-mix      ()            selected mix (-1 = none).
+  selected-mix      ()            selected mix (-1 = none) -- set! here is equivalent to select-mix.
   show-mix-consoles
   show-mix-waveforms
 
@@ -1203,7 +1203,11 @@ value to val.
                                     (add-hook! stop-playing-hook
                                       (lambda (snd) (set-sound-cursor snd cursor-cross)))
 
-  data-format       (snd)         snd's data format (a list of the format number and its name).
+  data-format       (snd)         snd's data format (e.g. mus-bshort).  If you encounter a file
+                                  with an unknown format, or a header that has the wrong format,
+                                  you can set this field forcing Snd to interpret the data in any
+                                  form you like.  Similar remarks apply to the srate, data-location,
+                                  header-type, and channels fields.
   data-location     (snd)         snd's data location (bytes).
   delete-sample     (samp snd chn) delete sample samp in snd's channel chn [no-such-sample].
   delete-samples    (samp samps snd chn)
@@ -1279,7 +1283,7 @@ value to val.
   graphing          (snd chn)     #t if (lisp) graph data is being displayed.
   graphs-horizontal (snd chn)     determines whether channel graphs (time domain, spectrum, lisp graph)
                                   are arranged vertically or horizontally.
-  header-type       (snd)         return (type . name)
+  header-type       (snd)         snd's header type (e.g. mus-aiff).
   insert-sound      (file in_chan snd chn)
                                   insert channel in_chan of file at the cursor in snd's channel chn
                                   [no-such-file].
@@ -1478,8 +1482,8 @@ value to val.
                                   apply func to current sound's channels
   select-channel    (chn)         select channel chn.
   select-sound      (snd)         select sound snd.
-  selected-channel  (snd)         selected channel in snd.
-  selected-sound    ()            selected sound (index).
+  selected-channel  (snd)         selected channel in snd (set! = select-channel).
+  selected-sound    ()            selected sound (index) (set! = select-sound).
   set-contrast-func (func)        set contrast function to func, a function of two arguments,
                                   the current sample and the current 'contrast' slider setting,
                                   returning a new sample, the result of the control panel contrast

@@ -1295,7 +1295,11 @@ sets its value to val.
                                     (add-hook! stop-playing-hook 
                                       (lambda (snd) (set-sound-cursor snd <em class=red>cursor-cross</em>)))
 </small>
-  <a name="snddataformat">data-format</a>       (<em class=targ>snd</em>)         <i>snd</i>'s data format (a list of the format number and its name).
+  <a name="snddataformat">data-format</a>       (<em class=targ>snd</em>)         <i>snd</i>'s data format (e.g. mus-bshort).  If you encounter a file
+                                  with an unknown format, or a header that has the wrong format, 
+                                  you can set this field forcing Snd to interpret the data in any 
+                                  form you like.  Similar remarks apply to the srate, data-location,
+                                  header-type, and channels fields.
   <a name="snddatalocation">data-location</a>     (<em class=targ>snd</em>)         <i>snd</i>'s data location (bytes).
   <a name="snddeletesample">delete-sample</a>     (samp <i>snd chn</i>) delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-sample</em>].
   <a name="snddeletesamples">delete-samples</a>    (samp samps <i>snd chn</i>) 
@@ -1371,7 +1375,7 @@ sets its value to val.
   <a name="sndgraphing">graphing</a>          (<i>snd chn</i>)     #t if (lisp) graph data is being displayed.
   <a name="graphshorizontal">graphs-horizontal</a> (<em class=narg>snd chn</em>)     determines whether channel graphs (time domain, spectrum, lisp graph) 
                                   are arranged vertically or horizontally.
-  <a name="sndheadertype">header-type</a>       (<em class=targ>snd</em>)         return (type . name)
+  <a name="sndheadertype">header-type</a>       (<em class=targ>snd</em>)         <i>snd</i>'s header type (e.g. mus-aiff).
   <a name="sndinsertfile">insert-sound</a>      (file <i>in_chan snd chn</i>)
                                   insert channel <i>in_chan</i> of <i>file</i> at the cursor in <i>snd</i>'s channel <i>chn</i> 
                                   [<em class=error>no-such-file</em>].

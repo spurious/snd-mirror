@@ -1,6 +1,6 @@
 snd change log
 
-  27-Sep:    showing-controls -> show-controls. 
+  27-Sep:    showing-controls -> show-controls. data-format and header-type now return just the sndlib int.
   22-Sep:    removed override-data-format|header-type|data-location and replaced with
                generalized set! of header fields.
   18-Sep:    snd 4.6.

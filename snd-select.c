@@ -531,11 +531,13 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	}
       else 
 	{
-	  snd_error("unknown header type?!? %d ",type);
+	  snd_error("save-selection: unsupported header type? %d (%s)",
+		    type,mus_header_type_name(type));
 	  return(MUS_UNSUPPORTED_HEADER_TYPE);
 	}
     }
-  else snd_error("impossible data format?!? %d ",format);
+  else snd_error("save-selection: unsupported data format? %d (%s)",
+		 format,mus_data_format_name(format));
   return(MUS_UNSUPPORTED_DATA_FORMAT);
 }
 

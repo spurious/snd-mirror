@@ -235,10 +235,13 @@ static void make_region_readable(region *r, snd_state *ss)
 	  if (hdr)
 	    {
 	      fd = snd_open_read(ss,r->filename);
-	      mus_file_open_descriptors(fd,
-					hdr->format,
-					mus_data_format_to_bytes_per_sample(hdr->format),
-					hdr->data_location);
+	      mus_file_set_descriptors(fd,
+				       r->filename,
+				       hdr->format,
+				       mus_data_format_to_bytes_per_sample(hdr->format),
+				       hdr->data_location,
+				       hdr->chans,
+				       hdr->type);
 	      datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,FILE_BUFFER_SIZE);
 	      cp->sounds[0] = make_snd_data_file(r->filename,datai,
 						 MUS_SAMPLE_ARRAY(datai[SND_IO_DATS+SND_AREF_HEADER_SIZE+i]),
@@ -483,7 +486,7 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
 	  tempfile = snd_tempnam(ss);
 	  err = copy_file(r->filename,tempfile);
 	  if (err != MUS_NO_ERROR)
-	    snd_error("can't make region temp file (%s: %s)",tempfile,strerror(errno));
+	    snd_error("can't make region %d temp file (%s: %s)",n,tempfile,strerror(errno));
 	  else
 	    if (r->chans > 1) 
 	      remember_temp(tempfile,r->chans);
@@ -767,7 +770,7 @@ void region_edit(snd_state *ss, int reg)
     {
       r = regions[reg];
       if (r->editor_copy)
-	snd_error("region already being edited");
+	snd_error("region %d already being edited",reg);
       else
 	{
 	  temp_region_name = shorter_tempnam(temp_dir(ss),"region-");
@@ -785,14 +788,16 @@ void region_edit(snd_state *ss, int reg)
 		  /* save backpointer so subsequent save affects region if still legit */
 		  /* also, since it's a temp file, if closed, delete temp */
 		}
-	      else snd_error("can't open sound pane!");
+	      else snd_error("edit region: can't open region %d temp sound %s: %s!",
+			     reg,temp_region_name,strerror(errno));
 	    }
 	  else 
-	    snd_error("can't save region in temp file (%s: %s)",temp_region_name,strerror(errno));
+	    snd_error("edit region: can't save region %d in temp file (%s: %s)",
+		      reg,temp_region_name,strerror(errno));
 	  FREE(temp_region_name);
 	}
     }
-  else snd_error("no such region!");
+  else snd_error("edit region: no region %d!",reg);
 }
 
 void clear_region_backpointer(snd_info *sp)

@@ -194,6 +194,8 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 		  scm_puts(" \"",port);
 		  scm_display(gh_cadr(throw_args),port);
 		  scm_puts("\"",port);
+		  if (gh_length(throw_args) > 2)
+		    scm_display(gh_cddr(throw_args),port);
 		}
 	      else
 		{
@@ -233,7 +235,8 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
   ans = scm_strport_to_string(port);
 #else
   SCM_DEFER_INTS;
-  /* new version? SCM_STRING_CHARS(SCM_CDR...) */
+  /* ans = scm_makfromstr (SCM_STRING_CHARS (SCM_CDR (SCM_STREAM (port))),SCM_INUM (SCM_CAR (SCM_STREAM (port))),0); */
+  /* ^ new form?  (not sure what this port is returning) */
   ans = scm_makfromstr (SCM_CHARS (SCM_CDR (SCM_STREAM (port))),SCM_INUM (SCM_CAR (SCM_STREAM (port))),0);
   SCM_ALLOW_INTS;
 #endif
@@ -1560,9 +1563,9 @@ static SCM g_open_sound_file(SCM g_name, SCM g_chans, SCM g_srate, SCM g_comment
   hdr->type = type;
   hdr->comment = comment;
   result = open_temp_file(name,chans,hdr,state);
+  if (result == -1) return(scm_throw(NO_SUCH_FILE,SCM_LIST3(gh_str02scm(S_open_sound_file),g_name,gh_str02scm(strerror(errno)))));
   set_temp_fd(result,hdr);
-  return(gh_int2scm(result)); /* -1 for error */
-  /* TODO: fix this so it throws an error! */
+  return(gh_int2scm(result));
 }
 
 static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
@@ -1577,10 +1580,8 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
   hdr = get_temp_header(fd);
   if (hdr == NULL) 
     {
-      snd_error("can't find %d's header!",fd);
       close(fd);
-      /* TODO: fix this so it throws an error! */
-      return(SCM_BOOL_F);
+      return(scm_throw(NO_SUCH_FILE,SCM_LIST3(gh_str02scm(S_close_sound_file),g_fd,gh_str02scm(strerror(errno)))));
     }
   else
     {

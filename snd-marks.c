@@ -462,7 +462,8 @@ mark *add_mark(int samp, char *name, chan_info *cp)
   if (cp->mark_ctr[ed] >= cp->mark_size[ed])
     {
       cp->mark_size[ed] += 16;
-      if (!cp->marks[ed]) cp->marks[ed] = (mark **)CALLOC(cp->mark_size[ed],sizeof(mark *));
+      if (!cp->marks[ed]) 
+	cp->marks[ed] = (mark **)CALLOC(cp->mark_size[ed],sizeof(mark *));
       else 
 	{
 	  cp->marks[ed] = (mark **)REALLOC(cp->marks[ed],cp->mark_size[ed] * sizeof(mark *));
@@ -1877,19 +1878,19 @@ void g_init_marks(SCM local_doc)
 			       "set-" S_mark_name,SCM_FNC g_set_mark_name,
 			       local_doc,0,1,1,1);
 
-  gh_new_procedure4_0(S_restore_marks,g_restore_marks);
-  DEFINE_PROC(gh_new_procedure0_0(S_mark_sync_max,g_mark_sync_max),H_mark_sync_max);
-  DEFINE_PROC(gh_new_procedure0_1(S_mark_to_sound,g_mark_to_sound),H_mark_to_sound);
+  gh_new_procedure(S_restore_marks,SCM_FNC g_restore_marks,4,0,0);
+  DEFINE_PROC(gh_new_procedure(S_mark_sync_max,SCM_FNC g_mark_sync_max,0,0,0),H_mark_sync_max);
+  DEFINE_PROC(gh_new_procedure(S_mark_to_sound,SCM_FNC g_mark_to_sound,0,1,0),H_mark_to_sound);
   DEFINE_PROC(gh_new_procedure(S_marks,SCM_FNC g_marks,0,3,0),H_marks);
   DEFINE_PROC(gh_new_procedure(S_add_mark,SCM_FNC g_add_mark,0,3,0),H_add_mark);
-  DEFINE_PROC(gh_new_procedure0_1(S_delete_mark,g_delete_mark),H_delete_mark);
-  DEFINE_PROC(gh_new_procedure0_2(S_delete_marks,g_delete_marks),H_delete_marks);
-  DEFINE_PROC(gh_new_procedure1_0(S_syncd_marks,g_syncd_marks),H_syncd_marks);
-  DEFINE_PROC(gh_new_procedure1_2(S_find_mark,g_find_mark),H_find_mark);
+  DEFINE_PROC(gh_new_procedure(S_delete_mark,SCM_FNC g_delete_mark,0,1,0),H_delete_mark);
+  DEFINE_PROC(gh_new_procedure(S_delete_marks,SCM_FNC g_delete_marks,0,2,0),H_delete_marks);
+  DEFINE_PROC(gh_new_procedure(S_syncd_marks,SCM_FNC g_syncd_marks,1,0,0),H_syncd_marks);
+  DEFINE_PROC(gh_new_procedure(S_find_mark,SCM_FNC g_find_mark,1,2,0),H_find_mark);
   DEFINE_PROC(gh_new_procedure(S_forward_mark,SCM_FNC g_forward_mark,0,3,0),H_forward_mark);
   DEFINE_PROC(gh_new_procedure(S_backward_mark,SCM_FNC g_backward_mark,0,3,0),H_backward_mark);
-  DEFINE_PROC(gh_new_procedure0_1(S_save_marks,g_save_marks),H_save_marks);
-  DEFINE_PROC(gh_new_procedure1_0(S_markQ,g_markQ),H_markQ);
+  DEFINE_PROC(gh_new_procedure(S_save_marks,SCM_FNC g_save_marks,0,1,0),H_save_marks);
+  DEFINE_PROC(gh_new_procedure(S_markQ,SCM_FNC g_markQ,1,0,0),H_markQ);
 }
 
 #endif

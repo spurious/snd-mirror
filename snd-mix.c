@@ -378,7 +378,9 @@ static int mix_input_amp_env_usable(mixdata *md, Float samples_per_pixel)
 	  if ((ep == NULL) && (current_ed_samples(cp) > AMP_ENV_CUTOFF))
 	    ep = make_mix_input_amp_env(cp);
 	  if ((ep) && (samps_per_bin == 0.0)) samps_per_bin = ep->samps_per_bin;
-	  happy = ((ep) && (samples_per_pixel >= (Float)(ep->samps_per_bin)) && (ep->samps_per_bin == samps_per_bin));
+	  happy = ((ep) && 
+		   (samples_per_pixel >= (Float)(ep->samps_per_bin)) && 
+		   (ep->samps_per_bin == samps_per_bin));
 	  if (!happy) break;
 	}
       return(happy);
@@ -595,7 +597,9 @@ static mix_fd *init_mix_read_1(mixdata *md, int old, int type)
 	{
 	  e = cs->amp_envs[i];
 	  if ((e) && (cs->scalers[i] != 0.0))
-	    mf->segs[i] = mus_make_env(e->data,e->pts,cs->scalers[i],0.0,1.0,0.0,0,(type == MIX_INPUT_SOUND) ? (cs->len - 1) : amp_env_len(md,i),NULL);
+	    mf->segs[i] = mus_make_env(e->data,e->pts,cs->scalers[i],0.0,1.0,0.0,0,
+				       (type == MIX_INPUT_SOUND) ? (cs->len - 1) : amp_env_len(md,i),
+				       NULL);
 	  else mf->segs[i] = NULL;
 	}
     }
@@ -707,7 +711,8 @@ static mix_fd *free_mix_fd(mix_fd *mf)
       if (mf->sfs)
 	{
 	  for (i=0;i<mf->chans;i++)
-	    if (mf->sfs[i]) mf->sfs[i] = free_snd_fd(mf->sfs[i]);
+	    if (mf->sfs[i]) 
+	      mf->sfs[i] = free_snd_fd(mf->sfs[i]);
 	  FREE(mf->sfs);
 	  mf->sfs = NULL;
 	}
@@ -829,7 +834,11 @@ int map_over_mixes(int (*func)(mixdata *,void *), void *ptr)
 
 static int remove_temporary_mix_file(mixdata *md, void *ptr)
 {
-  if (md->temporary == DELETE_ME) {mus_sound_forget(md->in_filename); remove(md->in_filename);}
+  if (md->temporary == DELETE_ME) 
+    {
+      mus_sound_forget(md->in_filename); 
+      remove(md->in_filename);
+    }
   return(0);
 }
 
@@ -978,7 +987,8 @@ static mixdata *add_mix(chan_info *cp, int chan, int beg, int num,
   md->out_filename = copy_string(mixed_chan_file);
   md->in_filename = copy_string(full_original_file);
   xspot = grf_x((double)beg/(double)SND_SRATE(cp->sound),ap);
-  if ((xspot+16*5 + mark_name_width(md->ss,md->name))>ap->x_axis_x1) md->state = MD_M;
+  if ((xspot+16*5 + mark_name_width(md->ss,md->name)) > ap->x_axis_x1) 
+    md->state = MD_M;
   use_mixmark(md,xspot,OFFSET_FROM_TOP);
   if (md->mixer) color_mix(md,(void *)(cp->state));
   update_graph(cp,NULL);
@@ -1042,8 +1052,11 @@ static mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp
   csf = init_sample_read(beg,cp,READ_FORWARD);
   ifd = snd_open_read(ss,tempfile);
   mus_file_set_descriptors(ifd,tempfile,
-			   ihdr->format,mus_data_format_to_bytes_per_sample(ihdr->format),ihdr->data_location,
-			   ihdr->chans,ihdr->type);
+			   ihdr->format,
+			   mus_data_format_to_bytes_per_sample(ihdr->format),
+			   ihdr->data_location,
+			   ihdr->chans,
+			   ihdr->type);
   during_open(ifd,tempfile,SND_MIX_FILE);
   if (num < MAX_BUFFER_SIZE) size = num; else size = MAX_BUFFER_SIZE;
   data = (MUS_SAMPLE_TYPE **)CALLOC(in_chans,sizeof(MUS_SAMPLE_TYPE *));
@@ -1058,9 +1071,7 @@ static mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp
 	  cursamps = num-i;
 	  if (cursamps > MAX_BUFFER_SIZE) cursamps = MAX_BUFFER_SIZE;
 	  for (j=0;j<cursamps;j++)
-	    {
-	      NEXT_SAMPLE(chandata[j],csf);
-	    }
+	    NEXT_SAMPLE(chandata[j],csf);
 	  err = mus_file_write(ofd,0,cursamps-1,1,&chandata);
 	  if (err == -1) break;
 	}
@@ -1724,7 +1735,9 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
       sf = init_sample_read(ap->losamp,cp,READ_FORWARD);
       add = init_mix_read(md,0);
       sub = init_mix_read(md,1);
-      if ((oldbeg < lo) && (lo < oldend)) {for (i=oldbeg;i<lo;i++) next_mix_sample(sub);}
+      if ((oldbeg < lo) && (lo < oldend)) 
+	for (i=oldbeg;i<lo;i++) 
+	  next_mix_sample(sub);
       if (samples_per_pixel < 1.0)
 	{
 	  incr = 1.0 / samples_per_pixel;
@@ -1761,7 +1774,9 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 	  sf = init_sample_read(ap->losamp,cp,READ_FORWARD);
 	  add = init_mix_read(md,0);
 	  sub = init_mix_read(md,1);
-	  if ((oldbeg < lo) && (lo < oldend)) {for (i=oldbeg;i<lo;i++) next_mix_sample(sub);}
+	  if ((oldbeg < lo) && (lo < oldend)) 
+	    for (i=oldbeg;i<lo;i++) 
+	      next_mix_sample(sub);
 	  j = 0;      /* graph point counter */
 	  x=ap->x0;
 	  xi=grf_x(x,ap);
@@ -1896,7 +1911,9 @@ static int display_mix_amp_env(mixdata *md, Float scl, int yoff, int newbeg, int
       newx = grf_x(xstart,ap);
       if (newx > lastx)
 	{
-	  set_grf_points(lastx,j,(int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymin)), (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymax)));
+	  set_grf_points(lastx,j,
+			 (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymin)),
+			 (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymax)));
 	  lastx = newx;
 	  j++;
 	  ymin=low;
@@ -2014,7 +2031,9 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
 	      xf+=1.0;
 	      if (xf>samples_per_pixel)
 		{
-		  set_grf_points(xi,j,(int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymin)), (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymax)));
+		  set_grf_points(xi,j,
+				 (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymin)),
+				 (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymax)));
 		  j++;
 		  ymin = MUS_MIX_MAX;
 		  ymax = MUS_MIX_MIN;
@@ -3392,7 +3411,7 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
     err = mix(beg,mus_sound_frames(filename),sp->nchans,sp->chans,filename,DONT_DELETE_ME,S_mix_sound,with_mix_consoles(ss)); 
   else err = -1;
   if (filename) free(filename);
-  if (err == -1) return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_mix_sound),file)));
+  if (err == -1) return(scm_throw(NO_SUCH_FILE,SCM_LIST3(gh_str02scm(S_mix_sound),file,gh_str02scm(strerror(errno)))));
   RTNINT(err);
 }
 
@@ -3485,7 +3504,7 @@ static SCM g_mix(SCM file, SCM chn_samp_n, SCM file_chn, SCM snd_n, SCM chn_n, S
   if (SCM_UNBNDP(chn_samp_n))
     {
       id = mix_complete_file(any_selected_sound(ss),name,S_mix,with_mixer);
-      if (id == -1) return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_mix),file)));
+      if (id == -1) return(scm_throw(NO_SUCH_FILE,SCM_LIST3(gh_str02scm(S_mix),file,gh_str02scm(strerror(errno)))));
     }
   else
     {

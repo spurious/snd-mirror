@@ -176,10 +176,12 @@ char *version_info(void)
 #ifdef LESSTIF_VERSION
 	  "\n    Lesstif ",itoa[8]=snd_itoa(LESSTIF_VERSION),".",itoa[9]=snd_itoa(LESSTIF_REVISION)," ",
 #endif
-	  "\n    Motif ",itoa[10]=snd_itoa(XmVERSION),".",itoa[11]=snd_itoa(XmREVISION),".",itoa[12]=snd_itoa(XmUPDATE_LEVEL)," X",itoa[13]=snd_itoa(X_PROTOCOL),"R",itoa[14]=snd_itoa(XT_REVISION),
+	  "\n    Motif ",itoa[10]=snd_itoa(XmVERSION),".",itoa[11]=snd_itoa(XmREVISION),".",itoa[12]=snd_itoa(XmUPDATE_LEVEL),
+	  " X",itoa[13]=snd_itoa(X_PROTOCOL),"R",itoa[14]=snd_itoa(XT_REVISION),
 #endif
 #if USE_GTK
-	  "\n    Gtk+ ",itoa[9]=snd_itoa(GTK_MAJOR_VERSION),".",itoa[10]=snd_itoa(GTK_MINOR_VERSION),".",itoa[11]=snd_itoa(GTK_MICRO_VERSION),", Glib ",itoa[12]=snd_itoa(GLIB_MAJOR_VERSION),".",itoa[13]=snd_itoa(GLIB_MINOR_VERSION),".",itoa[14]=snd_itoa(GLIB_MICRO_VERSION),
+	  "\n    Gtk+ ",itoa[9]=snd_itoa(GTK_MAJOR_VERSION),".",itoa[10]=snd_itoa(GTK_MINOR_VERSION),".",itoa[11]=snd_itoa(GTK_MICRO_VERSION),
+	  ", Glib ",itoa[12]=snd_itoa(GLIB_MAJOR_VERSION),".",itoa[13]=snd_itoa(GLIB_MINOR_VERSION),".",itoa[14]=snd_itoa(GLIB_MICRO_VERSION),
 #endif
 #if HAVE_GUILE_GTK
 	  ", Guile-gtk",
@@ -252,6 +254,7 @@ void news_help(snd_state *ss)
 	    "Recent changes include:\n\
 \n\
 27-Sep:  showing-controls -> show-controls. \n\
+         data-format and header-type now return just the sndlib int.\n\
 22-Sep:  removed override-data-format|header-type|data-location and replaced with\n\
            generalized set! of header fields.\n\
 18-Sep:  snd 4.6.\n\
@@ -267,10 +270,6 @@ void news_help(snd_state *ss)
 6-Sep:   gtk menu accelerators, stop-playing-channel-hook, just-sounds-hook.\n\
 5-Sep:   changed Apply button handling -- control-click now for selection.\n\
          HAVE_GTKEXTRA to support libgtkextra's icon-oriented file selector.\n\
-31-Aug:  gtk popup menu fixed.\n\
-30-Aug:  new snd.spec thanks to Fernando Lopez-Lezcano.\n\
-         snd-emacs errors now go to emacs, play-region notices its wait argument (thanks to Anders Vinjar).\n\
-         added sash-color, gtk CLM/Snd connection finally works.\n\
 ",
 NULL);
   FREE(info);

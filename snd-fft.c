@@ -1786,7 +1786,12 @@ static int cleanup_sonogram(sonogram_state *sg)
   if (sg)
     {
       cp = sg->cp;
-      if ((cp->ffting == 0) || (sg->scp == NULL) || (sg->outlim <= 1)) return(1);
+      if (cp->ffting == 0)
+	{
+	  if (sg->fs) sg->fs = free_fft_state(sg->fs);
+	  return(1);
+	}
+      if ((sg->scp == NULL) || (sg->outlim <= 1)) return(1);
       make_sonogram_axes(cp);
       if (sg->fs) sg->fs = free_fft_state(sg->fs);
       cp->fft_data = NULL;
@@ -1811,7 +1816,11 @@ BACKGROUND_TYPE sonogram_in_slices(void *sono)
   chan_info *cp;
   int res = 0;
   cp = sg->cp;
-  if (cp->ffting == 0) return(BACKGROUND_QUIT);
+  if (cp->ffting == 0) 
+    {
+      if (sg) cleanup_sonogram(sg);
+      return(BACKGROUND_QUIT);
+    }
   switch (sg->slice)
     {
     case 0: res = set_up_sonogram(sg); break; /* return 1 to go on, 2 to quit early */

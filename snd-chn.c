@@ -3393,26 +3393,35 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 	  saved_chan_file = snd_tempnam(ss);
 	  err = chan_save_edits(ucp,saved_chan_file);
 	  if (err != MUS_NO_ERROR)
-	    snd_error("save chan: %s\n",strerror(errno));
+	    snd_error("convolve: save chan (%s[%d]) in %s: %s\n",
+		      sp->shortname,ucp->chan,saved_chan_file,strerror(errno));
 	  else
 	    {
 	      scfd = mus_file_open_read(saved_chan_file);
 	      if (scfd == -1) 
-		snd_error("open saved chan file %s: %s\n",saved_chan_file,strerror(errno));
+		snd_error("convolve: open saved chan (%s[%d]) file %s: %s\n",
+			  sp->shortname,ucp->chan,saved_chan_file,strerror(errno));
 	      else
 		{
 		  hdr = sp->hdr;
-		  mus_file_set_descriptors(scfd,saved_chan_file,
-					   hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location,
+		  mus_file_set_descriptors(scfd,
+					   saved_chan_file,
+					   hdr->format,
+					   mus_data_format_to_bytes_per_sample(hdr->format),
+					   hdr->data_location,
 					   1,hdr->type); /* ??? */
 		  fltfd = mus_file_open_read(filename);
 		  if (fltfd == -1) 
-		    snd_error("open filter file %s: %s\n",filename,strerror(errno));
+		    snd_error("convolve: open filter file %s: %s\n",filename,strerror(errno));
 		  else
 		    {
-		      mus_file_set_descriptors(fltfd,filename,
-					       dataformat,mus_data_format_to_bytes_per_sample(dataformat),dataloc,
-					       filter_chans,mus_sound_header_type(filename));
+		      mus_file_set_descriptors(fltfd,
+					       filename,
+					       dataformat,
+					       mus_data_format_to_bytes_per_sample(dataformat),
+					       dataloc,
+					       filter_chans,
+					       mus_sound_header_type(filename));
 		      if (cp == NULL)
 			filesize = selection_len();
 		      else filesize = current_ed_samples(ucp);
@@ -3421,8 +3430,10 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 			  ipow = (int)(ceil(log(filtersize + filesize)/log(2.0))) + 1;
 			  fftsize = (int)(pow(2.0,ipow));
 			  ok = 1;
-			  c_convolve(ofile,amp,scfd,mus_sound_data_location(saved_chan_file),
-				     fltfd,dataloc,filtersize,fftsize,filter_chans,impulse_chan,filtersize + filesize + 1,
+			  c_convolve(ofile,amp,scfd,
+				     mus_sound_data_location(saved_chan_file),
+				     fltfd,dataloc,filtersize,fftsize,filter_chans,impulse_chan,
+				     filtersize + filesize + 1,
 				     gsp,NOT_FROM_ENVED,ip,si->chans);
 			  impulse_chan++;
 			  if (impulse_chan >= filter_chans) impulse_chan = 0;
@@ -5355,7 +5366,8 @@ static int execute_named_macro_1(chan_info *cp, char *name, int count)
   macro_cmd *mc;
   for (k=0;k<named_macro_ctr;k++)
     {
-      if ((named_macros[k]->name) && (strcmp(name,named_macros[k]->name) == 0))
+      if ((named_macros[k]->name) && 
+	  (strcmp(name,named_macros[k]->name) == 0))
 	{
 	  nm = named_macros[k];
 	  for (j=0;j<count;j++)
@@ -5400,7 +5412,9 @@ static int in_user_keymap(int key, int state)
   if (keymap_top == 0) return(-1);
   for (i=0;i<keymap_top;i++)
     {
-      if ((user_keymap[i].key == key) && (user_keymap[i].state == state) && (user_keymap[i].func != SCM_UNDEFINED))
+      if ((user_keymap[i].key == key) && 
+	  (user_keymap[i].state == state) && 
+	  (user_keymap[i].func != SCM_UNDEFINED))
 	return(i);
     }
   return(-1);
@@ -5609,7 +5623,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	{
 	  switch (sp->filing)
 	    {
-	    case NOT_FILING: snd_error("%s[%d] %s: oh good grief!",__FILE__,__LINE__,__FUNCTION__); break;
 	    case INPUT_FILING:
 	      nsp = snd_open_file(str,ss); /* will post error if any */
 	      if (nsp) 
@@ -5672,9 +5685,16 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	      FREE(str1);
 	      break;
 #if HAVE_GUILE
-	    case MACRO_FILING: name_last_macro(str); clear_minibuffer(sp); break;
+	    case MACRO_FILING: 
+	      name_last_macro(str); 
+	      clear_minibuffer(sp); 
+	      break;
 #endif
-	    default: snd_error("%s[%d] %s: unknown filing option: %d",__FILE__,__LINE__,__FUNCTION__,sp->filing); break;
+	    default: 
+	      snd_error("%s[%d] %s: unknown filing option: %d",
+			__FILE__,__LINE__,__FUNCTION__,
+			sp->filing); 
+	      break;
 	    }
 	  sp->filing = NOT_FILING;
 	  if (str) free(str);

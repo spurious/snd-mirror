@@ -523,7 +523,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   axis_context *cax;
   state_context *sx;
   int make_widgets,need_extra_scrollbars;
-  if (sp == NULL) snd_error("null sound pointer passed to add_channel_window");
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel],channel,sp,ss);
   cp = sp->chans[channel];

@@ -1070,7 +1070,10 @@ int mus_array_to_file(const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int
       return(MUS_ERROR);
     }
   set_sound_error(filename,__LINE__,__FUNCTION__);
-  err = mus_file_open_descriptors(fd,MUS_OUT_FORMAT,mus_data_format_to_bytes_per_sample(MUS_OUT_FORMAT),28);
+  err = mus_file_set_descriptors(fd,filename,
+				 MUS_OUT_FORMAT,
+				 mus_data_format_to_bytes_per_sample(MUS_OUT_FORMAT),
+				 28,channels,MUS_NEXT);
   if (err != MUS_ERROR)
     {
       err = mus_header_write_next_header(fd,srate,channels,28,len*sizeof(MUS_SAMPLE_TYPE),MUS_OUT_FORMAT,NULL,0);

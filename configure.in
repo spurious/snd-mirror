@@ -393,7 +393,7 @@ if test "$use_guile" = y || test "$use_guile" = yes; then
       GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
     fi
     if test "`guile -c '(display (string>=? (version) "1.3"))'`" != "#t"; then
-      echo "Snd needs Guile 1.3 or later";
+      echo Snd needs Guile 1.3 or later
       AC_DEFINE(HAVE_GUILE,0)
     else
       AC_SUBST(GUILE_CFLAGS)
@@ -423,19 +423,26 @@ if test "$use_guile" = y || test "$use_guile" = yes; then
         AC_PATH_PROGS(GUILE_GTK_PROG,
 	      guile-gtk guile-gtk-1.3 guile-gtk-1.2 guile-gtk-1.1 guile-gtk-1.0,
 	      no-guile-gtk)
-
+    
+        if test "$GUILE_GTK_PROG" = no-guile-gtk; then
+          AC_PATH_PROGS(LOCATE_PROG,
+	        locate,
+	        no-locate)
+	  if test "$LOCATE_PROG" != no-locate; then
+	    GUILE_GTK_PROG="`locate bin/guile-gtk -n 1`"
+	    if test "$GUILE_GTK_PROG"; then
+              echo "found $GUILE_GTK_PROG";
+            else GUILE_GTK_PROG="no-guile-gtk"
+            fi
+          fi
+        fi
         if test "$GUILE_GTK_PROG" != no-guile-gtk; then
           AC_MSG_CHECKING(for guile-gtk libraries)
           GUILE_GTK_LIBS=`$GUILE_GTK_PROG -c "(use-modules (gtk config)) (display gtkconf-guilegtk-lib)"`
           AC_MSG_RESULT($GUILE_GTK_LIBS)
-dnl this test works in cases where it's not needed (sigh)
-dnl	  if test "`guile -c '(use-modules (gtk config)) (display (and (string>? (version) "1.3.4") (string<? gtkconf-guile-gtk-version "0.19")))'`" = "#t"; then
-dnl	    echo Guile 1.4 needs Guile-Gtk 0.19 or later.
-dnl	    dnl should we cancel HAVE_GUILE_GTK here?
-dnl	  fi
           AC_DEFINE(HAVE_GUILE_GTK)
           AC_SUBST(GUILE_GTK_LIBS)
-          guile_gtk_version="`guile -c '(use-modules (gtk config)) (display gtkconf-guile-gtk-version)'`"
+          guile_gtk_version="`$GUILE_GTK_PROG -c '(use-modules (gtk config)) (display gtkconf-guile-gtk-version)'`"
           AC_DEFINE_UNQUOTED(GUILE_GTK_VERSION,"${guile_gtk_version}")
 	fi
       fi
@@ -626,12 +633,6 @@ AC_SUBST(MAKE_TARGET)
 AC_OUTPUT(makefile)
 
 
-dnl if no motif, search for gtk
+dnl if no motif, search for gtk (could use locate)
 dnl need to be able to set both HAVE_ALSA and HAVE_OSS?
-dnl
-dnl how to find non-standard guile/guile-gtk? locate?
-dnl   AC_CHECK_PROG(locate...)
-dnl   /home/bil/cl/ locate /bin/guile-gtk -n 1
-dnl   /usr/local/bin/guile-gtk-1.2
-dnl
-dnl I suppose we could use this for guile as well
+

@@ -116,9 +116,6 @@ static void set_scrollbar(Widget w,Float position,Float range, int scrollbar_max
   val = (int)(scrollbar_max * position);
   if ((val+size)>scrollbar_max) val=scrollbar_max-size;
   if (val < 0) val = 0;
-  /* snd_error("%s %f %f to %d %d\n",XtName(w),position,range,val,size); */
-  /* in Linux this occasionally generates bogus complaints about slide size and value */
-  /* since the values going in are completely legal, I'll not try to kludge around the bug */
   XtVaSetValues(w,XmNsliderSize,size,XmNvalue,val,NULL);
 }
 
@@ -681,7 +678,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   state_context *sx;
   int make_widgets,i,n,need_colors,need_extra_scrollbars;
   Arg args[32];
-  if (sp == NULL) snd_error("null sound pointer passed to add_channel_window");
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel],channel,sp,ss);
   cp = sp->chans[channel];

@@ -30,6 +30,9 @@
 ;;;      un-hum (notch)
 ;;;      expsrc?
 ;;;      unvoice?
+;;;
+;;;
+;;; to modify, for example, the gain (set! gain-amount .75)
 
 
 (use-modules (ice-9 format))

@@ -473,6 +473,8 @@ static void alloc_io_fd(int tfd)
     io_fds[tfd] = (io_fd *)CALLOC(1,sizeof(io_fd));
 }
 
+#if 0
+/* removed 28-Sep-00 -- has been obsolete (and undocumented) for a long time */
 int mus_file_open_descriptors (int tfd, int format, int size, int location)
 { /* transfers header info from functions in header.c back to us for reads and writes here */
   io_fd *fd;
@@ -487,6 +489,7 @@ int mus_file_open_descriptors (int tfd, int format, int size, int location)
   fd->chans = 1;
   return(MUS_NO_ERROR);
 }
+#endif
 
 int mus_file_set_descriptors (int tfd, const char *name, int format, int size, int location, int chans, int type)
 {

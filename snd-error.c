@@ -1,5 +1,9 @@
 #include "snd.h"
 
+/* TODO: provide wrapper for snd_error within scheme
+ *       provide snd-level trace info (as in dac_error)
+ */
+
 static char *snd_error_buffer = NULL;
 #if HAVE_GUILE
   static int ignore_snd_error(char *msg);

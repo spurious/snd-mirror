@@ -351,6 +351,7 @@ void backup_edit_list(chan_info *cp)
   if (cp->marks)
     {
       release_pending_marks(cp,cur - 1);
+      if (cp->marks[cur - 1]) FREE(cp->marks[cur - 1]); /* not freed by release_pending_marks */
       cp->marks[cur - 1] = cp->marks[cur];
       cp->marks[cur] = NULL;
       cp->mark_ctr[cur - 1] = cp->mark_ctr[cur];

@@ -423,7 +423,7 @@ void snd_print(snd_state *ss, char *output)
 	    }
 	  end_ps_graph();
 	}
-      else snd_error("%s: %s",output,strerror(errno));
+      else snd_error("print %s failed: %s",output,strerror(errno));
       si = free_sync_info(si);
       if (offsets) FREE(offsets);
     }
@@ -441,7 +441,7 @@ void region_print(char *output, char* title, chan_info *cp)
 	  ps_graph(cp,0,0);
 	  end_ps_graph();
 	}
-      else snd_error("%s: %s",output,strerror(errno));
+      else snd_error("print region %s failed: %s",output,strerror(errno));
     }
   else snd_error("print region: eps file name needed");
 }
@@ -463,7 +463,7 @@ void print_enved(char *output, chan_info *cp, int y0)
 	  cp->ps_fd = 0;
 	  end_ps_graph();
 	}
-      else snd_error("%s: %s",output,strerror(errno));
+      else snd_error("print env %s failed: %s",output,strerror(errno));
     }
   else snd_error("print envelope: eps file name needed");
 }

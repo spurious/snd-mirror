@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 5
-#define SNDLIB_DATE "27-Sep-00"
+#define SNDLIB_REVISION 6
+#define SNDLIB_DATE "28-Sep-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -446,7 +446,6 @@ void mus_audio_mixer_restore        PROTO((const char *file));
 
 /* -------- io.c -------- */
 
-int mus_file_open_descriptors       PROTO((int tfd, int df, int ds, int dl)); /* obsolete -- will be removed someday */
 int mus_file_set_descriptors        PROTO((int tfd, const char *arg, int df, int ds, int dl, int dc, int dt));
 int mus_file_close_descriptors      PROTO((int tfd));
 int mus_file_open_read              PROTO((const char *arg));
@@ -577,8 +576,6 @@ void mus_header_set_aifc            PROTO((int val)); /* backwards compatibility
 /* -------- sndlib2scm.c -------- */
 
 void mus_sndlib2scm_initialize      PROTO((void));
-
-
 
 #ifdef DEBUG_MEMORY
   /* snd-utils.c (only used in conjunction with Snd's memory tracking functions) */
