@@ -9123,7 +9123,7 @@ Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
 
 <p>Fonts in Snd are strings containing a description of the
 desired font.  These can be the abbreviated forms such as
-"8x14" or a full X font name such as "-misc-fixed-bold-r-normal--*-140-*-*-c-*-iso8859-1".
+"8x14" or a full X font name such as "-misc-fixed-bold-r-normal--*-140-*-*-c-*-*-*".
 The font variables are:
 </p>
 <table cellpadding=0 cellspacing=0>
@@ -9138,8 +9138,8 @@ The font variables are:
 <br>
 <center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (set! (listener-font) "9x15")
-(set! (bold-button-font) "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*")
-(set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
+(set! (bold-button-font) "-*-times-bold-r-*-*-14-*-*-*-*-*-*-*")
+(set! (axis-label-font) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
 (set! (axis-numbers-font) "9x15")
 </pre></td></tr></table></center>
 
@@ -9149,7 +9149,7 @@ If the requested font can't be loaded, the set! statement returns the old (uncha
 </p>
 <pre>
 &gt;<em class=typing>(set! (axis-label-font) "8x14")</em>
-<em class=listener>"-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*"</em>
+<em class=listener>"-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*"</em>
 </pre>
 <br>
 <br>
@@ -9437,7 +9437,7 @@ We can goof around with colors and fonts:
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define new-font (load-font "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+(define new-font (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
 
 (define show-hiho
   ;; show a red "hiho" in the helvetica bold font on a gray background
@@ -9528,7 +9528,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 <tr><td></td><td>
 load the font <i>font-name</i> (an X-style font spec), and return a handle for it (for <a href="#currentfont">current-font</a>).
 <pre>
-  (define new-font (<em class=red>load-font</em> "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+  (define new-font (<em class=red>load-font</em> "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
 </pre>
 load-font could be (should have been!) defined using the xm module as:
 </td></tr>

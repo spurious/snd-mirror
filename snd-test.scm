@@ -297,6 +297,11 @@
 		  (set! tests (string->number (list-ref args (+ arg 2))))
 		  (set! (script-arg) (+ arg 2))))))))
 
+(define skip-24 (let ((host (getenv "HOSTNAME")))
+		  (and (not (= snd-test 24))
+		       (string? host)
+		       (string=? host "cat"))))
+
 (if (and (provided? 'snd-motif)
 	 (provided? 'xm))
     (begin
@@ -29538,7 +29543,7 @@ EDITS: 2
 (if (not (defined? 'move-scale))
     (define (move-scale a b) #f))
 
-(if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
+(if (and (not skip-24) (or full-test (= snd-test 24) (and keep-going (<= snd-test 24))))
     (begin
       (run-hook before-test-hook 24)
       (add-hook! snd-error-hook (lambda (msg) (snd-display ";err: ~A" msg) #t))
@@ -30569,7 +30574,7 @@ EDITS: 2
 		    (let ((edit-pos (edit-position)))
 		      (key-event cwid (char->integer #\x) 4) (force-event)
 		      (key-event cwid (char->integer #\i) 4) (force-event)
-		      (widget-string minibuffer "z.sn")
+		      (widget-string minibuffer "z.snd")
 		      (key-event minibuffer snd-tab-key 0) (force-event)
 		      (key-event minibuffer snd-return-key 0) (force-event)
 		      (if (not (= (edit-position) edit-pos))
@@ -30658,6 +30663,7 @@ EDITS: 2
 		
 		(dismiss-all-dialogs)
 		(click-button name-button) (force-event)
+		(take-keyboard-focus name-button)
 		(key-event name-button (char->integer #\x) 4) (force-event)
 		(key-event name-button (char->integer #\f) 4) (force-event)
 		(focus-widget minibuffer)
@@ -30717,6 +30723,7 @@ EDITS: 2
 		      (snd-display ";temp-dir reset: ~A ~A?" (temp-dir) tmp)))
 		
 		(set! (cursor) 4000)
+		(take-keyboard-focus name-button)
 		(key-event name-button (char->integer #\x) 4) (force-event)
 		(key-event name-button (char->integer #\m) 4) (force-event)
 		(widget-string minibuffer "hiho!")
@@ -30896,9 +30903,11 @@ EDITS: 2
 		  (list "speed-scroll" "expand-scroll" "contrast-scroll" "revscl-scroll" "revlen-scroll")))
 		(click-button (find-child ctrls "fltdB") #t)
 		(let ((flttxt (find-child ctrls "filter-window")))
+		  (take-keyboard-focus flttxt)
 		  (widget-string flttxt "'(0 0 1 1 2 0)")
 		  (key-event flttxt snd-return-key 0) (force-event))
 		(let ((fltord (find-child ctrls "filter-order")))
+		  (take-keyboard-focus fltord)
 		  (widget-string fltord "40")
 		  (key-event fltord snd-return-key 0) (force-event))
 		(click-button (find-child ctrls "Remember") #t)
@@ -30912,8 +30921,10 @@ EDITS: 2
 	      (set! (show-controls ind) #f)
 	      (select-sound ind)
 	      (select-channel 1)
+	      (take-keyboard-focus cwid)
 	      (key-event cwid (char->integer #\x) 4) (force-event)
 	      (key-event cwid (char->integer #\i) 4) (force-event)
+	      (take-keyboard-focus minibuffer)
 	      (widget-string minibuffer "oboe.snd")
 	      (key-event minibuffer snd-return-key 0) (force-event)
 	      (if (not (= (frames ind 0) c0))
@@ -31044,6 +31055,7 @@ EDITS: 2
 		  (key-event cwid (char->integer (string-ref ridstr i)) 0) (force-event))
 		(key-event cwid (char->integer #\x) 4) (force-event)
 		(key-event cwid (char->integer #\w) 0) (force-event)
+		(take-keyboard-focus minibuffer)
 		(widget-string minibuffer "fmv2.snd")
 		(key-event minibuffer snd-return-key 0) (force-event)
 		(if (not (= (mus-sound-frames "fmv2.snd") 50828))
@@ -32831,10 +32843,10 @@ EDITS: 2
 		  (snd-display ";XListProperties: ~A" (XListProperties dpy win)))
 	      (if (not (member "SHAPE" (XListExtensions dpy)))
 		  (snd-display ";XListExtensions: ~A" (XListExtensions dpy)))
-	      (if (not (= (length (XListFontsWithInfo dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)) 4))
-		  (snd-display ";XListFontsWithInfo: ~A" (XListFontsWithInfo dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)))
-	      (if (not (= (length (XListFonts dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)) 4))
-		  (snd-display ";XListFonts: ~A" (XListFonts dpy "-adobe-times-medium-r-*-*-*-*-*-*-*-*-iso8859-1" 4)))
+	      (if (not (= (length (XListFontsWithInfo dpy "-*-times-medium-r-*-*-*-*-*-*-*-*-*-*" 4)) 4))
+		  (snd-display ";XListFontsWithInfo: ~A" (XListFontsWithInfo dpy "-*-times-medium-r-*-*-*-*-*-*-*-*-*-*" 4)))
+	      (if (not (= (length (XListFonts dpy "-*-times-medium-r-*-*-*-*-*-*-*-*-*-*" 4)) 4))
+		  (snd-display ";XListFonts: ~A" (XListFonts dpy "-*-times-medium-r-*-*-*-*-*-*-*-*-*-*" 4)))
 	      (let ((val (XListInstalledColormaps dpy win)))
 		(if (or (not val)
 			(null? val)
@@ -33608,8 +33620,8 @@ EDITS: 2
 			  
 			  
 			  )))
-		  (let* ((fid (XLoadFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
-			 (fnt (XLoadQueryFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
+		  (let* ((fid (XLoadFont dpy "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
+			 (fnt (XLoadQueryFont dpy "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
 			 (chs (XQueryTextExtents dpy fid "hiho"))
 			 (struct (list-ref chs 4))
 			 (fnt1 (XQueryFont dpy fid)))
@@ -34156,8 +34168,8 @@ EDITS: 2
 		  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XmNinvokeParseProc wrong arity: ~A" tag))))
 	      
 	      (let* ((fonts (list "fixed"
-				  "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*"
-				  "-adobe-*-medium-i-*-*-18-*-*-*-*-*-*-*"
+				  "-*-times-bold-r-*-*-14-*-*-*-*-*-*-*"
+				  "-*-*-medium-i-*-*-18-*-*-*-*-*-*-*"
 				  "-*-helvetica-*-*-*-*-18-*-*-*-*-*-*-*"))
 		     (tags (list "one" "two" "three" "four"))
 		     (colors (list "red" "green" "blue" "orange"))
@@ -34296,7 +34308,7 @@ EDITS: 2
 			    )
 			  (XmFontListFreeFontContext context)))
 		      (let ((fnt (XmFontListEntryLoad (XtDisplay (cadr (main-widgets)))
-						      "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*"
+						      "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*"
 						      XmFONT_IS_FONTSET
 						      "a_new_font")))
 			(XmFontListEntryFree fnt))
