@@ -345,7 +345,7 @@ RETSIGTYPE top_level_catch(int ignore)
 
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
-static int noglob = 0, noinit = 0, batch = 0;
+static int noglob = FALSE, noinit = FALSE, batch = FALSE, nostdin = FALSE;
 
 #if HAVE_EXTENSION_LANGUAGE
 static XtInputId stdin_id = 0;
@@ -419,17 +419,20 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
     case 1:
       snd_load_init_file(ss, noglob, noinit);
 #if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE
-      signal(SIGTTIN, SIG_IGN);
-      signal(SIGTTOU, SIG_IGN);
-      /* these signals are sent by a shell if we start Snd as a background process,
-       * but try to read stdin (needed to support the emacs subjob connection).  If
-       * we don't do this, the background job is suspended when the shell sends SIGTTIN.
-       */
-      stdin_id = XtAppAddInput(MAIN_APP(ss), 
-			       fileno(stdin), 
-			       (XtPointer)XtInputReadMask, 
-			       get_stdin_string, 
-			       (XtPointer)ss);
+      if (!nostdin)
+	{
+	  signal(SIGTTIN, SIG_IGN);
+	  signal(SIGTTOU, SIG_IGN);
+	  /* these signals are sent by a shell if we start Snd as a background process,
+	   * but try to read stdin (needed to support the emacs subjob connection).  If
+	   * we don't do this, the background job is suspended when the shell sends SIGTTIN.
+	   */
+	  stdin_id = XtAppAddInput(MAIN_APP(ss), 
+				   fileno(stdin), 
+				   (XtPointer)XtInputReadMask, 
+				   get_stdin_string, 
+				   (XtPointer)ss);
+	}
 #endif
       break;
     case 2: 
@@ -665,14 +668,17 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 	    set_sound_style(ss, SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
 	    if (strcmp(argv[i], "-noglob") == 0)
-	      noglob = 1;
+	      noglob = TRUE;
 	    else
 	      if (strcmp(argv[i], "-noinit") == 0)
-		noinit = 1;
+		noinit = TRUE;
 	      else
-		if ((strcmp(argv[i], "-b") == 0) || 
-		    (strcmp(argv[i], "-batch") == 0))
-		  batch = 1;
+		if (strcmp(argv[i], "-nostdin") == 0)
+		  nostdin = TRUE;
+		else
+		  if ((strcmp(argv[i], "-b") == 0) || 
+		      (strcmp(argv[i], "-batch") == 0))
+		    batch = TRUE;
 
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, False);

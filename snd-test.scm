@@ -20520,6 +20520,7 @@ EDITS: 2
 	(IF (not (= (st2-one var) 11)) (snd-display ";st2-one 11 (def): ~A" (st2-one var)))  
 	(IF (not (= (st2-two var) 3)) (snd-display ";st2-two (3): ~A" (st2-two var))))
 
+      (if (file-exists? "test.snd") (delete-file "test.snd"))
       (let ((outer (with-sound () 
 			       (sound-let ((a () (fm-violin 0 .1 440 .1))) 
 					  (mus-mix "test.snd" a)))))
@@ -20528,9 +20529,10 @@ EDITS: 2
 	(let ((ind (find-sound outer)))
 	  (if (or (not (sound? ind))
 		  (not (= (frames ind) (inexact->exact (* (mus-srate) .1)))))
-	      (snd-display ";sound-let: ~A" (frames ind)))
+	      (snd-display ";sound-let: ~A ~A" (frames ind) (inexact->exact (* (mus-srate) .1))))
 	  (close-sound ind)))
 
+      (if (file-exists? "test.snd") (delete-file "test.snd"))
       (let ((outer (with-sound () 
 			       (sound-let ((a () (fm-violin 0 .1 440 .1))
 					   (b 100))
@@ -20542,7 +20544,7 @@ EDITS: 2
 	(let ((ind (find-sound outer)))
 	  (if (or (not (sound? ind))
 		  (not (= (frames ind) (+ 100 (inexact->exact (* (mus-srate) .1))))))
-	      (snd-display ";sound-let (2): ~A" (frames ind)))
+	      (snd-display ";sound-let (2): ~A ~A" (frames ind) (+ 100 (inexact->exact (* (mus-srate) .1)))))
 	  (if (file-exists? "temp.snd")
 	      (snd-display ";sound-let explicit output exists?"))
 	  (close-sound ind)))

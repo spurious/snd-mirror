@@ -933,7 +933,7 @@ the hook.
 <!-- -->called the first time a given channel is displayed.
 <!-- -->If it returns a list, the list's contents are interpreted as: <br>
 <!-- --><code>'(x0 x1 y0 y1 label ymin ymax)</code><br> (all values optional), where these numbers set the
-<!-- -->initial axis limits and settings.  This replaces the variable <i>initial-x0</i> and its friends.
+<!-- -->initial axis limits and settings. 
 <!-- -->The default (empty hook) is equivalent to:
 <!-- --><pre>(add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 0.1 -1.0 1.0 "time" -1.0 1.0)))</pre>
 <!-- -->The <i>dur</i> argument is the total length in seconds of the channel, so to cause the

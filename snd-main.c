@@ -652,6 +652,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 	  (strcmp("-vertical", argname) == 0) ||
 	  (strcmp("-notebook", argname) == 0) ||
 	  (strcmp("-separate", argname) == 0) ||
+	  (strcmp("-nostdin", argname) == 0) ||
 	  (strcmp("-noglob", argname) == 0) ||
 	  (strcmp("-noinit", argname) == 0))
 	return(auto_open_ctr + 1);

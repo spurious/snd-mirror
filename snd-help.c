@@ -271,6 +271,7 @@ void news_help(snd_state *ss)
 1-Dec:   removed Chebyshev transform.\n\
          def-clm-struct support in run completed.\n\
          new-sound-hook, sound-let (ws.scm).\n\
+         -nostdin switch for CLM/Snd communication.\n\
 22-Nov:  added contrib/v.rb thanks to Michael Scholz.\n\
 13-Nov:  snd 6.3.\n\
 8-Nov:   gtk-effects.scm.\n\

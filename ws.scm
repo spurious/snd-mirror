@@ -163,7 +163,7 @@
 		     (if (file-exists? file)
 			 (delete-file file)))
 		   temp-files)
-	 (reset-hook! new-sound-hook)                 ; restore old new-sound-hook
+	 (reset-hook! new-sound-hook)                 ; restore old new-sound-hook (should this happen before ,@body?)
 	 (if (not (null? old-hook-list))
 	     (for-each (lambda (proc)
 			 (add-hook! new-sound-hook proc))

@@ -358,7 +358,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
 static XEN menu_hook;
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
-static int noglob = 0, noinit = 0;
+static int noglob = FALSE, noinit = FALSE, nostdin = FALSE;
 
 #if HAVE_SETJMP_H
 #if TRAP_SEGFAULT
@@ -500,13 +500,16 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   for (i = 1; i < argc; i++)
     {
       if (strcmp(argv[i], "-noglob") == 0)
-	noglob = 1;
+	noglob = TRUE;
       else
 	if (strcmp(argv[i], "-noinit") == 0)
-	  noinit = 1;
+	  noinit = TRUE;
 	else
-	  if ((strcmp(argv[i], "-b") == 0) || (strcmp(argv[i], "-batch") == 0))
-	    ss->batch_mode = TRUE;
+	  if (strcmp(argv[i], "-nostdin") == 0)
+	    nostdin = TRUE;
+	  else
+	    if ((strcmp(argv[i], "-b") == 0) || (strcmp(argv[i], "-batch") == 0))
+	      ss->batch_mode = TRUE;
     }
   snd_load_init_file(ss, noglob, noinit);
 #if HAVE_SIGNAL

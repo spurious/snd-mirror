@@ -263,6 +263,7 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td><code>--version</code></td>               <td>print version info</td></tr>
 <tr><td><code>-noglob</code></td>                 <td>don't read /etc/snd.conf</td></tr>
 <tr><td><code>-noinit</code></td>                 <td>don't read ~/.snd, if any</td></tr>
+<tr><td><code>-nostdin</code></td>                <td>don't watch for possible input from stdin</td></tr>
 <tr><td><code>-p -preload &lt;dir&gt;</code></td> <td>preload sound files in directory &lt;dir&gt; (for example, snd -p .)</td></tr>
 <tr><td><code>-l -load &lt;file&gt;</code></td>   <td>load guile (scheme) code in &lt;file&gt; (for example, snd -l test.scm)</td></tr>
 <tr><td><code>-e -eval expr</code></td>           <td>evaluate expr</td></tr>
@@ -786,7 +787,7 @@ is a synthesis toolkit developed by Perry Cook and Gary Scavone.
 Like many such programs, it reads a score file and produces an output file.  We'll use it here
 to replace the current sound with a clarinet tone:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define stk
   (lambda ()
     (let* ((str "")
@@ -834,7 +835,7 @@ next examples.</p>
 and various sound effects.  In this case, we'll read and write NeXT files, and
 use Sox's copy "effect".</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define sox
   (lambda ()
     (let ((data (<em class=red>selection-to-temp</em>)))
@@ -873,7 +874,7 @@ to handle a file with arbitrarily many channels (<i>sound-to-temp</i>).
 In the next example, we'll loop through the mono files, processing each
 in turn.  We'll also start packaging up the boilerplate a bit.</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define execute-and-wait
   (lambda (cmd)
     (let ((str "")
@@ -912,7 +913,7 @@ through the input file list, passing it the input and output file
 names as arguments.  It (<i>make-cmd</i>) puts together the actual
 call on sox that we were making earlier.  An equivalent using cp is:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define copyfile
   (lambda ()
     (loop-through-files
@@ -936,7 +937,7 @@ a way (<i>-e</i>) to evaluate lisp code from the command line, so
 we'll use that along with the <i>exit</i> function to turn CLM
 into a batch program.  For example, we can reverberate the current data:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define reverb
   (lambda (reverb-amount)
     (loop-through-files
@@ -967,7 +968,7 @@ data.  For example, to add an fm-violin note starting at the
 current cursor:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define fm-violin
   (lambda (dur frq amp)
     (let* ((beg (/ (<em class=red>cursor</em>) (srate)))
@@ -994,7 +995,7 @@ exit -- we have to go to a shell and kill the Lisp subjob!
 So let's check for C-g in Snd, and send the subjob output to
 Guile's "current-output-port" (whatever that is):</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define read-or-run
   (lambda (fil)
     (let ((val (<em class=red>peek-char</em> fil)))
@@ -1079,7 +1080,7 @@ lisp listener, and using the graph and spectrum functions.  For example, say we 
 these declarations in ~/.snd:
 </p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define data-size 1024)
 (define data (make-vct data-size))
 
@@ -1108,7 +1109,7 @@ these declarations in ~/.snd:
 <p>Obviously, any CLM instrument or function can be used in this way 
 to edit sounds, and so on.  Say we want an echo effect:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define echo 
   (lambda (scaler secs)
     (let ((del (make-delay (round (* secs (srate))))))
@@ -1140,7 +1141,7 @@ which returns the function that actually runs the delay line,
 producing the echo.  
 The CLM (common lisp) version might be something like:</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (definstrument echo (beg dur scaler secs file)
   (let ((del (make-delay (round (* secs *srate*))))
 	(inf (open-input file))
