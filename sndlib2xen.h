@@ -19,6 +19,10 @@ typedef struct {
 } sound_data;
 
 bool sound_data_p(XEN obj);
+char *sound_data_to_string(sound_data *v);
+void sound_data_free(sound_data *v);
+bool sound_data_equalp(sound_data *v1, sound_data *v2);
+sound_data *c_make_sound_data(int chans, int frames);
 XEN make_sound_data(int chans, int frames);
 void mus_misc_error(const char *caller, char *msg, XEN val);
 void mus_sndlib2xen_initialize (void);

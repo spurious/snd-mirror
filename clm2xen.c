@@ -5249,28 +5249,28 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_array_print_length, g_array_print_length_w, H_mus_array_print_length,
 				   S_setB S_mus_array_print_length, g_set_array_print_length_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_radians_hz,           g_radians2hz_w, 1, 0, 0,           H_radians_hz);
-  XEN_DEFINE_PROCEDURE(S_hz_radians,           g_hz2radians_w, 1, 0, 0,           H_hz_radians);
-  XEN_DEFINE_PROCEDURE(S_in_hz,                g_hz2radians_w, 1, 0, 0,           H_in_hz);
-  XEN_DEFINE_PROCEDURE(S_radians_degrees,      g_radians2degrees_w, 1, 0, 0,      H_radians_degrees);
-  XEN_DEFINE_PROCEDURE(S_degrees_radians,      g_degrees2radians_w, 1, 0, 0,      H_degrees_radians);
-  XEN_DEFINE_PROCEDURE(S_db_linear,            g_db2linear_w, 1, 0, 0,            H_db_linear);
-  XEN_DEFINE_PROCEDURE(S_linear_db,            g_linear2db_w, 1, 0, 0,            H_linear_db);
-  XEN_DEFINE_PROCEDURE(S_ring_modulate,        g_ring_modulate_w, 2, 0, 0,        H_ring_modulate);
-  XEN_DEFINE_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w, 3, 0, 0,   H_amplitude_modulate);
+  XEN_DEFINE_PROCEDURE(S_radians_hz,           g_radians2hz_w,           1, 0, 0, H_radians_hz);
+  XEN_DEFINE_PROCEDURE(S_hz_radians,           g_hz2radians_w,           1, 0, 0, H_hz_radians);
+  XEN_DEFINE_PROCEDURE(S_in_hz,                g_hz2radians_w,           1, 0, 0, H_in_hz);
+  XEN_DEFINE_PROCEDURE(S_radians_degrees,      g_radians2degrees_w,      1, 0, 0, H_radians_degrees);
+  XEN_DEFINE_PROCEDURE(S_degrees_radians,      g_degrees2radians_w,      1, 0, 0, H_degrees_radians);
+  XEN_DEFINE_PROCEDURE(S_db_linear,            g_db2linear_w,            1, 0, 0, H_db_linear);
+  XEN_DEFINE_PROCEDURE(S_linear_db,            g_linear2db_w,            1, 0, 0, H_linear_db);
+  XEN_DEFINE_PROCEDURE(S_ring_modulate,        g_ring_modulate_w,        2, 0, 0, H_ring_modulate);
+  XEN_DEFINE_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
   XEN_DEFINE_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 2, 0, 0, H_contrast_enhancement);
-  XEN_DEFINE_PROCEDURE(S_dot_product,          g_dot_product_w, 2, 0, 0,          H_dot_product);
-  XEN_DEFINE_PROCEDURE(S_clear_array,          g_clear_array_w, 1, 0, 0,          H_clear_array);
-  XEN_DEFINE_PROCEDURE(S_polynomial,           g_polynomial_w, 2, 0, 0,           H_polynomial);
-  XEN_DEFINE_PROCEDURE(S_multiply_arrays,      g_multiply_arrays_w, 2, 1, 0,      H_multiply_arrays);
-  XEN_DEFINE_PROCEDURE(S_make_fft_window,      g_make_fft_window_w, 2, 1, 0,      H_make_fft_window);
-  XEN_DEFINE_PROCEDURE(S_mus_fft,              g_mus_fft_w, 2, 2, 0,              H_mus_fft);
-  XEN_DEFINE_PROCEDURE(S_spectrum,             g_spectrum_w, 3, 1, 0,             H_mus_spectrum); 
-  XEN_DEFINE_PROCEDURE(S_convolution,          g_convolution_w, 2, 1, 0,          H_mus_convolution);
-  XEN_DEFINE_PROCEDURE(S_rectangular2polar,    g_rectangular2polar_w, 2, 0, 0,    H_rectangular2polar);
-  XEN_DEFINE_PROCEDURE(S_polar2rectangular,    g_polar2rectangular_w, 2, 0, 0,    H_polar2rectangular);
-  XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w, 2, 1, 0,         H_array_interp);
-  XEN_DEFINE_PROCEDURE(S_sum_of_sines,         g_sum_of_sines_w, 2, 0, 0,         H_sum_of_sines);
+  XEN_DEFINE_PROCEDURE(S_dot_product,          g_dot_product_w,          2, 0, 0, H_dot_product);
+  XEN_DEFINE_PROCEDURE(S_clear_array,          g_clear_array_w,          1, 0, 0, H_clear_array);
+  XEN_DEFINE_PROCEDURE(S_polynomial,           g_polynomial_w,           2, 0, 0, H_polynomial);
+  XEN_DEFINE_PROCEDURE(S_multiply_arrays,      g_multiply_arrays_w,      2, 1, 0, H_multiply_arrays);
+  XEN_DEFINE_PROCEDURE(S_make_fft_window,      g_make_fft_window_w,      2, 1, 0, H_make_fft_window);
+  XEN_DEFINE_PROCEDURE(S_mus_fft,              g_mus_fft_w,              2, 2, 0, H_mus_fft);
+  XEN_DEFINE_PROCEDURE(S_spectrum,             g_spectrum_w,             3, 1, 0, H_mus_spectrum); 
+  XEN_DEFINE_PROCEDURE(S_convolution,          g_convolution_w,          2, 1, 0, H_mus_convolution);
+  XEN_DEFINE_PROCEDURE(S_rectangular2polar,    g_rectangular2polar_w,    2, 0, 0, H_rectangular2polar);
+  XEN_DEFINE_PROCEDURE(S_polar2rectangular,    g_polar2rectangular_w,    2, 0, 0, H_polar2rectangular);
+  XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
+  XEN_DEFINE_PROCEDURE(S_sum_of_sines,         g_sum_of_sines_w,         2, 0, 0, H_sum_of_sines);
 
   #define H_rectangular_window     "The un-window, so to speak"
   #define H_hann_window            "A simple raised cosine window"
@@ -5336,86 +5336,86 @@ void mus_xen_init(void)
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define %delay delay)"); /* protect the original meaning (a Scheme built-in function) */
 #endif
-  XEN_DEFINE_PROCEDURE(S_make_delay,    g_make_delay_w, 0, 0, 1,    H_make_delay);
-  XEN_DEFINE_PROCEDURE(S_make_comb,     g_make_comb_w, 0, 0, 1,     H_make_comb);
-  XEN_DEFINE_PROCEDURE(S_make_notch,    g_make_notch_w, 0, 0, 1,    H_make_notch); 
+  XEN_DEFINE_PROCEDURE(S_make_delay,    g_make_delay_w,    0, 0, 1, H_make_delay);
+  XEN_DEFINE_PROCEDURE(S_make_comb,     g_make_comb_w,     0, 0, 1, H_make_comb);
+  XEN_DEFINE_PROCEDURE(S_make_notch,    g_make_notch_w,    0, 0, 1, H_make_notch); 
   XEN_DEFINE_PROCEDURE(S_make_all_pass, g_make_all_pass_w, 0, 0, 1, H_make_all_pass);
-  XEN_DEFINE_PROCEDURE(S_delay,         g_delay_w, 1, 2, 0,         H_delay); 
-  XEN_DEFINE_PROCEDURE(S_tap,           g_tap_w, 1, 1, 0,           H_tap);
-  XEN_DEFINE_PROCEDURE(S_notch,         g_notch_w, 1, 2, 0,         H_notch);
-  XEN_DEFINE_PROCEDURE(S_comb,          g_comb_w, 1, 2, 0,          H_comb);
-  XEN_DEFINE_PROCEDURE(S_all_pass,      g_all_pass_w, 1, 2, 0,      H_all_pass);
-  XEN_DEFINE_PROCEDURE(S_delay_p,       g_delay_p_w, 1, 0, 0,       H_delay_p);
-  XEN_DEFINE_PROCEDURE(S_notch_p,       g_notch_p_w, 1, 0, 0,       H_notch_p);
-  XEN_DEFINE_PROCEDURE(S_comb_p,        g_comb_p_w, 1, 0, 0,        H_comb_p);
-  XEN_DEFINE_PROCEDURE(S_all_pass_p,    g_all_pass_p_w, 1, 0, 0,    H_all_pass_p);
+  XEN_DEFINE_PROCEDURE(S_delay,         g_delay_w,         1, 2, 0, H_delay); 
+  XEN_DEFINE_PROCEDURE(S_tap,           g_tap_w,           1, 1, 0, H_tap);
+  XEN_DEFINE_PROCEDURE(S_notch,         g_notch_w,         1, 2, 0, H_notch);
+  XEN_DEFINE_PROCEDURE(S_comb,          g_comb_w,          1, 2, 0, H_comb);
+  XEN_DEFINE_PROCEDURE(S_all_pass,      g_all_pass_w,      1, 2, 0, H_all_pass);
+  XEN_DEFINE_PROCEDURE(S_delay_p,       g_delay_p_w,       1, 0, 0, H_delay_p);
+  XEN_DEFINE_PROCEDURE(S_notch_p,       g_notch_p_w,       1, 0, 0, H_notch_p);
+  XEN_DEFINE_PROCEDURE(S_comb_p,        g_comb_p_w,        1, 0, 0, H_comb_p);
+  XEN_DEFINE_PROCEDURE(S_all_pass_p,    g_all_pass_p_w,    1, 0, 0, H_all_pass_p);
 
   #define H_mus_feedback "(" S_mus_feedback " gen): feedback value of gen"
   #define H_mus_feedforward "(" S_mus_feedforward " gen): feedforward term of gen"
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_mus_increment_w, H_mus_feedback, S_setB S_mus_feedback, g_mus_set_increment_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_mus_scaler_w, H_mus_feedforward, S_setB S_mus_feedforward, g_mus_set_scaler_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w, 0, 4, 0,        H_make_rand);
+  XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w,        0, 4, 0, H_make_rand);
   XEN_DEFINE_PROCEDURE(S_make_rand_interp, g_make_rand_interp_w, 0, 4, 0, H_make_rand_interp);
 #if HAVE_RUBY
   rb_define_alias(rb_mKernel, "kernel_rand", "rand");
 #endif
-  XEN_DEFINE_PROCEDURE(S_rand,             g_rand_w, 1, 1, 0,             H_rand);
-  XEN_DEFINE_PROCEDURE(S_rand_interp,      g_rand_interp_w, 1, 1, 0,      H_rand_interp);
-  XEN_DEFINE_PROCEDURE(S_rand_p,           g_rand_p_w, 1, 0, 0,           H_rand_p);
-  XEN_DEFINE_PROCEDURE(S_rand_interp_p,    g_rand_interp_p_w, 1, 0, 0,    H_rand_interp_p);
-  XEN_DEFINE_PROCEDURE(S_mus_random,       g_mus_random_w, 1, 0, 0,       H_mus_random);
+  XEN_DEFINE_PROCEDURE(S_rand,             g_rand_w,          1, 1, 0, H_rand);
+  XEN_DEFINE_PROCEDURE(S_rand_interp,      g_rand_interp_w,   1, 1, 0, H_rand_interp);
+  XEN_DEFINE_PROCEDURE(S_rand_p,           g_rand_p_w,        1, 0, 0, H_rand_p);
+  XEN_DEFINE_PROCEDURE(S_rand_interp_p,    g_rand_interp_p_w, 1, 0, 0, H_rand_interp_p);
+  XEN_DEFINE_PROCEDURE(S_mus_random,       g_mus_random_w,    1, 0, 0, H_mus_random);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_rand_seed, g_mus_rand_seed_w, H_mus_rand_seed,
 				   S_setB S_mus_rand_seed, g_mus_set_rand_seed_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_make_sum_of_cosines, g_make_sum_of_cosines_w, 0, 6, 0, H_make_sum_of_cosines); 
-  XEN_DEFINE_PROCEDURE(S_sum_of_cosines,      g_sum_of_cosines_w, 1, 1, 0,      H_sum_of_cosines);
-  XEN_DEFINE_PROCEDURE(S_sum_of_cosines_p,    g_sum_of_cosines_p_w, 1, 0, 0,    H_sum_of_cosines_p);
+  XEN_DEFINE_PROCEDURE(S_sum_of_cosines,      g_sum_of_cosines_w,      1, 1, 0, H_sum_of_cosines);
+  XEN_DEFINE_PROCEDURE(S_sum_of_cosines_p,    g_sum_of_cosines_p_w,    1, 0, 0, H_sum_of_cosines_p);
   #define H_mus_cosines "(" S_mus_cosines " gen): number of cosines produced by gen"
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_cosines, g_mus_hop_w, H_mus_cosines, S_setB S_mus_cosines, g_mus_set_hop_w, 1, 0, 2, 0);
 
 
-  XEN_DEFINE_PROCEDURE(S_table_lookup_p,     g_table_lookup_p_w, 1, 0, 0,     H_table_lookup_p);
-  XEN_DEFINE_PROCEDURE(S_make_table_lookup,  g_make_table_lookup_w, 0, 8, 0,  H_make_table_lookup);
-  XEN_DEFINE_PROCEDURE(S_table_lookup,       g_table_lookup_w, 1, 1, 0,       H_table_lookup);
-  XEN_DEFINE_PROCEDURE(S_partials2wave,      g_partials2wave_w, 1, 2, 0,      H_partials2wave);
+  XEN_DEFINE_PROCEDURE(S_table_lookup_p,     g_table_lookup_p_w,     1, 0, 0, H_table_lookup_p);
+  XEN_DEFINE_PROCEDURE(S_make_table_lookup,  g_make_table_lookup_w,  0, 8, 0, H_make_table_lookup);
+  XEN_DEFINE_PROCEDURE(S_table_lookup,       g_table_lookup_w,       1, 1, 0, H_table_lookup);
+  XEN_DEFINE_PROCEDURE(S_partials2wave,      g_partials2wave_w,      1, 2, 0, H_partials2wave);
   XEN_DEFINE_PROCEDURE(S_phasepartials2wave, g_phasepartials2wave_w, 1, 2, 0, H_phasepartials2wave);
 
 
   XEN_DEFINE_PROCEDURE(S_make_sawtooth_wave, g_make_sawtooth_wave_w, 0, 6, 0, H_make_sawtooth_wave);
-  XEN_DEFINE_PROCEDURE(S_sawtooth_wave,      g_sawtooth_wave_w, 1, 1, 0,      H_sawtooth_wave);
-  XEN_DEFINE_PROCEDURE(S_sawtooth_wave_p,    g_sawtooth_wave_p_w, 1, 0, 0,    H_sawtooth_wave_p);
+  XEN_DEFINE_PROCEDURE(S_sawtooth_wave,      g_sawtooth_wave_w,      1, 1, 0, H_sawtooth_wave);
+  XEN_DEFINE_PROCEDURE(S_sawtooth_wave_p,    g_sawtooth_wave_p_w,    1, 0, 0, H_sawtooth_wave_p);
   XEN_DEFINE_PROCEDURE(S_make_triangle_wave, g_make_triangle_wave_w, 0, 6, 0, H_make_triangle_wave);
-  XEN_DEFINE_PROCEDURE(S_triangle_wave,      g_triangle_wave_w, 1, 1, 0,      H_triangle_wave);
-  XEN_DEFINE_PROCEDURE(S_triangle_wave_p,    g_triangle_wave_p_w, 1, 0, 0,    H_triangle_wave_p);
-  XEN_DEFINE_PROCEDURE(S_make_square_wave,   g_make_square_wave_w, 0, 6, 0,   H_make_square_wave);
-  XEN_DEFINE_PROCEDURE(S_square_wave,        g_square_wave_w, 1, 1, 0,        H_square_wave);
-  XEN_DEFINE_PROCEDURE(S_square_wave_p,      g_square_wave_p_w, 1, 0, 0,      H_square_wave_p);
-  XEN_DEFINE_PROCEDURE(S_make_pulse_train,   g_make_pulse_train_w, 0, 6, 0,   H_make_pulse_train);
-  XEN_DEFINE_PROCEDURE(S_pulse_train,        g_pulse_train_w, 1, 1, 0,        H_pulse_train);
-  XEN_DEFINE_PROCEDURE(S_pulse_train_p,      g_pulse_train_p_w, 1, 0, 0,      H_pulse_train_p);
+  XEN_DEFINE_PROCEDURE(S_triangle_wave,      g_triangle_wave_w,      1, 1, 0, H_triangle_wave);
+  XEN_DEFINE_PROCEDURE(S_triangle_wave_p,    g_triangle_wave_p_w,    1, 0, 0, H_triangle_wave_p);
+  XEN_DEFINE_PROCEDURE(S_make_square_wave,   g_make_square_wave_w,   0, 6, 0, H_make_square_wave);
+  XEN_DEFINE_PROCEDURE(S_square_wave,        g_square_wave_w,        1, 1, 0, H_square_wave);
+  XEN_DEFINE_PROCEDURE(S_square_wave_p,      g_square_wave_p_w,      1, 0, 0, H_square_wave_p);
+  XEN_DEFINE_PROCEDURE(S_make_pulse_train,   g_make_pulse_train_w,   0, 6, 0, H_make_pulse_train);
+  XEN_DEFINE_PROCEDURE(S_pulse_train,        g_pulse_train_w,        1, 1, 0, H_pulse_train);
+  XEN_DEFINE_PROCEDURE(S_pulse_train_p,      g_pulse_train_p_w,      1, 0, 0, H_pulse_train_p);
 
 
   XEN_DEFINE_PROCEDURE(S_make_asymmetric_fm, g_make_asymmetric_fm_w, 0, 8, 0, H_make_asymmetric_fm);
-  XEN_DEFINE_PROCEDURE(S_asymmetric_fm,      g_asymmetric_fm_w, 1, 2, 0,      H_asymmetric_fm);
-  XEN_DEFINE_PROCEDURE(S_asymmetric_fm_p,    g_asymmetric_fm_p_w, 1, 0, 0,    H_asymmetric_fm_p);
+  XEN_DEFINE_PROCEDURE(S_asymmetric_fm,      g_asymmetric_fm_w,      1, 2, 0, H_asymmetric_fm);
+  XEN_DEFINE_PROCEDURE(S_asymmetric_fm_p,    g_asymmetric_fm_p_w,    1, 0, 0, H_asymmetric_fm_p);
 
 
   XEN_DEFINE_PROCEDURE(S_make_one_zero, g_make_one_zero_w, 0, 4, 0, H_make_one_zero);
-  XEN_DEFINE_PROCEDURE(S_one_zero,      g_one_zero_w, 1, 1, 0,      H_one_zero);
-  XEN_DEFINE_PROCEDURE(S_one_zero_p,    g_one_zero_p_w, 1, 0, 0,    H_one_zero_p);
+  XEN_DEFINE_PROCEDURE(S_one_zero,      g_one_zero_w,      1, 1, 0, H_one_zero);
+  XEN_DEFINE_PROCEDURE(S_one_zero_p,    g_one_zero_p_w,    1, 0, 0, H_one_zero_p);
   XEN_DEFINE_PROCEDURE(S_make_one_pole, g_make_one_pole_w, 0, 4, 0, H_make_one_pole);
-  XEN_DEFINE_PROCEDURE(S_one_pole,      g_one_pole_w, 1, 1, 0,      H_one_pole);
-  XEN_DEFINE_PROCEDURE(S_one_pole_p,    g_one_pole_p_w, 1, 0, 0,    H_one_pole_p);
+  XEN_DEFINE_PROCEDURE(S_one_pole,      g_one_pole_w,      1, 1, 0, H_one_pole);
+  XEN_DEFINE_PROCEDURE(S_one_pole_p,    g_one_pole_p_w,    1, 0, 0, H_one_pole_p);
   XEN_DEFINE_PROCEDURE(S_make_two_zero, g_make_two_zero_w, 0, 6, 0, H_make_two_zero);
-  XEN_DEFINE_PROCEDURE(S_two_zero,      g_two_zero_w, 1, 1, 0,      H_two_zero);
-  XEN_DEFINE_PROCEDURE(S_two_zero_p,    g_two_zero_p_w, 1, 0, 0,    H_two_zero_p);
+  XEN_DEFINE_PROCEDURE(S_two_zero,      g_two_zero_w,      1, 1, 0, H_two_zero);
+  XEN_DEFINE_PROCEDURE(S_two_zero_p,    g_two_zero_p_w,    1, 0, 0, H_two_zero_p);
   XEN_DEFINE_PROCEDURE(S_make_two_pole, g_make_two_pole_w, 0, 6, 0, H_make_two_pole);
-  XEN_DEFINE_PROCEDURE(S_two_pole,      g_two_pole_w, 1, 1, 0,      H_two_pole);
-  XEN_DEFINE_PROCEDURE(S_two_pole_p,    g_two_pole_p_w, 1, 0, 0,    H_two_pole_p);
-  XEN_DEFINE_PROCEDURE(S_make_zpolar,   g_make_zpolar_w, 0, 4, 0,   H_make_zpolar);
-  XEN_DEFINE_PROCEDURE(S_make_ppolar,   g_make_ppolar_w, 0, 4, 0,   H_make_ppolar);
+  XEN_DEFINE_PROCEDURE(S_two_pole,      g_two_pole_w,      1, 1, 0, H_two_pole);
+  XEN_DEFINE_PROCEDURE(S_two_pole_p,    g_two_pole_p_w,    1, 0, 0, H_two_pole_p);
+  XEN_DEFINE_PROCEDURE(S_make_zpolar,   g_make_zpolar_w,   0, 4, 0, H_make_zpolar);
+  XEN_DEFINE_PROCEDURE(S_make_ppolar,   g_make_ppolar_w,   0, 4, 0, H_make_ppolar);
 
   #define H_mus_a0 "(" S_mus_a0 " gen): gen's " S_mus_a0 " coefficient (scaler on x(n)), if any"
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a0, g_mus_scaler_w, H_mus_a0, S_setB S_mus_a0, g_mus_set_scaler_w,  1, 0, 2, 0);
@@ -5431,55 +5431,55 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y2, g_mus_y2_w, H_mus_y2, S_setB S_mus_y2, g_mus_set_y2_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_make_wave_train, g_make_wave_train_w, 0, 8, 0, H_make_wave_train);
-  XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w, 1, 1, 0,      H_wave_train);
-  XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w, 1, 0, 0,    H_wave_train_p);
+  XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w,      1, 1, 0, H_wave_train);
+  XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_buffer,    g_make_buffer_w, 0, 4, 0,    H_make_buffer);
-  XEN_DEFINE_PROCEDURE(S_buffer_p,       g_buffer_p_w, 1, 0, 0,       H_buffer_p);
+  XEN_DEFINE_PROCEDURE(S_make_buffer,    g_make_buffer_w,    0, 4, 0, H_make_buffer);
+  XEN_DEFINE_PROCEDURE(S_buffer_p,       g_buffer_p_w,       1, 0, 0, H_buffer_p);
   XEN_DEFINE_PROCEDURE(S_buffer_empty_p, g_buffer_empty_p_w, 1, 0, 0, H_buffer_empty_p);
-  XEN_DEFINE_PROCEDURE(S_buffer_full_p,  g_buffer_full_p_w, 1, 0, 0,  H_buffer_full_p);
-  XEN_DEFINE_PROCEDURE(S_buffer2sample,  g_buffer2sample_w, 1, 0, 0,  H_buffer2sample);
-  XEN_DEFINE_PROCEDURE(S_buffer2frame,   g_buffer2frame_w, 1, 1, 0,   H_buffer2frame);
-  XEN_DEFINE_PROCEDURE(S_sample2buffer,  g_sample2buffer_w, 2, 0, 0,  H_sample2buffer);
-  XEN_DEFINE_PROCEDURE(S_frame2buffer,   g_frame2buffer_w, 2, 0, 0,   H_frame2buffer);
+  XEN_DEFINE_PROCEDURE(S_buffer_full_p,  g_buffer_full_p_w,  1, 0, 0, H_buffer_full_p);
+  XEN_DEFINE_PROCEDURE(S_buffer2sample,  g_buffer2sample_w,  1, 0, 0, H_buffer2sample);
+  XEN_DEFINE_PROCEDURE(S_buffer2frame,   g_buffer2frame_w,   1, 1, 0, H_buffer2frame);
+  XEN_DEFINE_PROCEDURE(S_sample2buffer,  g_sample2buffer_w,  2, 0, 0, H_sample2buffer);
+  XEN_DEFINE_PROCEDURE(S_frame2buffer,   g_frame2buffer_w,   2, 0, 0, H_frame2buffer);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w, 0, 0, 1,     H_make_frame);
+  XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w,     0, 0, 1, H_make_frame);
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define %frame? frame?)"); /* protect the original meaning */
   /* frame? is defined in guile stacks.c scm_frame_p, but doesn't appear to be used in ice-9 */
 #endif
-  XEN_DEFINE_PROCEDURE(S_frame_p,        g_frame_p_w, 1, 0, 0,        H_frame_p);
-  XEN_DEFINE_PROCEDURE(S_frame_add,      g_frame_add_w, 2, 1, 0,      H_frame_add);
+  XEN_DEFINE_PROCEDURE(S_frame_p,        g_frame_p_w,        1, 0, 0, H_frame_p);
+  XEN_DEFINE_PROCEDURE(S_frame_add,      g_frame_add_w,      2, 1, 0, H_frame_add);
   XEN_DEFINE_PROCEDURE(S_frame_multiply, g_frame_multiply_w, 2, 1, 0, H_frame_multiply);
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frame_ref, g_frame_ref_w, H_frame_ref, S_setB S_frame_ref, g_set_frame_ref_w,  2, 0, 3, 0);
 #else
-  XEN_DEFINE_PROCEDURE(S_frame_ref,      g_frame_ref_w, 2, 0, 0,      H_frame_ref);
+  XEN_DEFINE_PROCEDURE(S_frame_ref,      g_frame_ref_w,      2, 0, 0, H_frame_ref);
 #endif
-  XEN_DEFINE_PROCEDURE(S_frame_set,      g_set_frame_ref_w, 3, 0, 0,  H_frame_set);
+  XEN_DEFINE_PROCEDURE(S_frame_set,      g_set_frame_ref_w,  3, 0, 0, H_frame_set);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_mixer,     g_make_mixer_w, 0, 0, 1,     H_make_mixer);
-  XEN_DEFINE_PROCEDURE(S_mixer_p,        g_mixer_p_w, 1, 0, 0,        H_mixer_p);
+  XEN_DEFINE_PROCEDURE(S_make_mixer,     g_make_mixer_w,     0, 0, 1, H_make_mixer);
+  XEN_DEFINE_PROCEDURE(S_mixer_p,        g_mixer_p_w,        1, 0, 0, H_mixer_p);
   XEN_DEFINE_PROCEDURE(S_mixer_multiply, g_mixer_multiply_w, 2, 1, 0, H_mixer_multiply);
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_set_mixer_ref_w,  3, 0, 4, 0);
 #else
-  XEN_DEFINE_PROCEDURE(S_mixer_ref,      g_mixer_ref_w, 3, 0, 0,      H_mixer_ref);
+  XEN_DEFINE_PROCEDURE(S_mixer_ref,      g_mixer_ref_w,      3, 0, 0, H_mixer_ref);
 #endif
-  XEN_DEFINE_PROCEDURE(S_mixer_set,      g_set_mixer_ref_w, 4, 0, 0,  H_mixer_set);
-  XEN_DEFINE_PROCEDURE(S_frame2sample,   g_frame2sample_w, 2, 0, 0,   H_frame2sample);
-  XEN_DEFINE_PROCEDURE(S_frame2list,     g_frame2list_w, 1, 0, 0,     H_frame2list);
-  XEN_DEFINE_PROCEDURE(S_frame2frame,    g_frame2frame_w, 2, 1, 0,    H_frame2frame);
-  XEN_DEFINE_PROCEDURE(S_sample2frame,   g_sample2frame_w, 2, 1, 0,   H_sample2frame);
+  XEN_DEFINE_PROCEDURE(S_mixer_set,      g_set_mixer_ref_w,  4, 0, 0, H_mixer_set);
+  XEN_DEFINE_PROCEDURE(S_frame2sample,   g_frame2sample_w,   2, 0, 0, H_frame2sample);
+  XEN_DEFINE_PROCEDURE(S_frame2list,     g_frame2list_w,     1, 0, 0, H_frame2list);
+  XEN_DEFINE_PROCEDURE(S_frame2frame,    g_frame2frame_w,    2, 1, 0, H_frame2frame);
+  XEN_DEFINE_PROCEDURE(S_sample2frame,   g_sample2frame_w,   2, 1, 0, H_sample2frame);
 
 
   XEN_DEFINE_PROCEDURE(S_formant_bank, g_formant_bank_w, 2, 1, 0, H_formant_bank);
-  XEN_DEFINE_PROCEDURE(S_formant_p,    g_formant_p_w, 1, 0, 0,    H_formant_p);
+  XEN_DEFINE_PROCEDURE(S_formant_p,    g_formant_p_w,    1, 0, 0, H_formant_p);
   XEN_DEFINE_PROCEDURE(S_make_formant, g_make_formant_w, 0, 6, 0, H_make_formant);
-  XEN_DEFINE_PROCEDURE(S_formant,      g_formant_w, 1, 1, 0,      H_formant);
+  XEN_DEFINE_PROCEDURE(S_formant,      g_formant_w,      1, 1, 0, H_formant);
 
   #define H_mus_formant_radius  "(" S_mus_formant_radius  " gen): (" S_formant " generator) gen's pole radius; \
 the closer the radius is to 1.0, the narrower the resonance."
@@ -5490,51 +5490,51 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_waveshape,      g_make_waveshape_w, 0, 8, 0,      H_make_waveshape);
-  XEN_DEFINE_PROCEDURE(S_waveshape,           g_waveshape_w, 1, 2, 0,           H_waveshape);
-  XEN_DEFINE_PROCEDURE(S_waveshape_p,         g_waveshape_p_w, 1, 0, 0,         H_waveshape_p);
-  XEN_DEFINE_PROCEDURE(S_partials2waveshape,  g_partials2waveshape_w, 1, 1, 0,  H_partials2waveshape);
+  XEN_DEFINE_PROCEDURE(S_make_waveshape,      g_make_waveshape_w,      0, 8, 0, H_make_waveshape);
+  XEN_DEFINE_PROCEDURE(S_waveshape,           g_waveshape_w,           1, 2, 0, H_waveshape);
+  XEN_DEFINE_PROCEDURE(S_waveshape_p,         g_waveshape_p_w,         1, 0, 0, H_waveshape_p);
+  XEN_DEFINE_PROCEDURE(S_partials2waveshape,  g_partials2waveshape_w,  1, 1, 0, H_partials2waveshape);
   XEN_DEFINE_PROCEDURE(S_partials2polynomial, g_partials2polynomial_w, 1, 1, 0, H_partials2polynomial);
 
 
   XEN_DEFINE_PROCEDURE(S_make_sine_summation, g_make_sine_summation_w, 0, 0, 1, H_make_sine_summation);
-  XEN_DEFINE_PROCEDURE(S_sine_summation,      g_sine_summation_w, 1, 1, 0,      H_sine_summation);
-  XEN_DEFINE_PROCEDURE(S_sine_summation_p,    g_sine_summation_p_w, 1, 0, 0,    H_sine_summation_p);
+  XEN_DEFINE_PROCEDURE(S_sine_summation,      g_sine_summation_w,      1, 1, 0, H_sine_summation);
+  XEN_DEFINE_PROCEDURE(S_sine_summation_p,    g_sine_summation_p_w,    1, 0, 0, H_sine_summation_p);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_filter,     g_make_filter_w, 0, 6, 0,     H_make_filter);
-  XEN_DEFINE_PROCEDURE(S_filter,          g_filter_w, 2, 0, 0,          H_filter);
-  XEN_DEFINE_PROCEDURE(S_filter_p,        g_filter_p_w, 1, 0, 0,        H_filter_p);
+  XEN_DEFINE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);
+  XEN_DEFINE_PROCEDURE(S_filter,          g_filter_w,          2, 0, 0, H_filter);
+  XEN_DEFINE_PROCEDURE(S_filter_p,        g_filter_p_w,        1, 0, 0, H_filter_p);
   XEN_DEFINE_PROCEDURE(S_make_fir_filter, g_make_fir_filter_w, 0, 4, 0, H_make_fir_filter);
-  XEN_DEFINE_PROCEDURE(S_fir_filter,      g_fir_filter_w, 2, 0, 0,      H_fir_filter);
-  XEN_DEFINE_PROCEDURE(S_fir_filter_p,    g_fir_filter_p_w, 1, 0, 0,    H_fir_filter_p);
+  XEN_DEFINE_PROCEDURE(S_fir_filter,      g_fir_filter_w,      2, 0, 0, H_fir_filter);
+  XEN_DEFINE_PROCEDURE(S_fir_filter_p,    g_fir_filter_p_w,    1, 0, 0, H_fir_filter_p);
   XEN_DEFINE_PROCEDURE(S_make_iir_filter, g_make_iir_filter_w, 0, 4, 0, H_make_iir_filter);
-  XEN_DEFINE_PROCEDURE(S_iir_filter,      g_iir_filter_w, 2, 0, 0,      H_iir_filter);
-  XEN_DEFINE_PROCEDURE(S_iir_filter_p,    g_iir_filter_p_w, 1, 0, 0,    H_iir_filter_p);
+  XEN_DEFINE_PROCEDURE(S_iir_filter,      g_iir_filter_w,      2, 0, 0, H_iir_filter);
+  XEN_DEFINE_PROCEDURE(S_iir_filter_p,    g_iir_filter_p_w,    1, 0, 0, H_iir_filter_p);
   #define H_mus_order "(" S_mus_order " gen): gen's filter order"
-  XEN_DEFINE_PROCEDURE(S_mus_order,       g_mus_length_w, 1, 0, 0,      H_mus_order);
-  XEN_DEFINE_PROCEDURE(S_mus_xcoeffs,     g_mus_xcoeffs_w, 1, 0, 0,     H_mus_xcoeffs);
-  XEN_DEFINE_PROCEDURE(S_mus_ycoeffs,     g_mus_ycoeffs_w, 1, 0, 0,     H_mus_ycoeffs);
+  XEN_DEFINE_PROCEDURE(S_mus_order,       g_mus_length_w,      1, 0, 0, H_mus_order);
+  XEN_DEFINE_PROCEDURE(S_mus_xcoeffs,     g_mus_xcoeffs_w,     1, 0, 0, H_mus_xcoeffs);
+  XEN_DEFINE_PROCEDURE(S_mus_ycoeffs,     g_mus_ycoeffs_w,     1, 0, 0, H_mus_ycoeffs);
 
 
-  XEN_DEFINE_PROCEDURE(S_env_p,       g_env_p_w, 1, 0, 0,       H_env_p);
-  XEN_DEFINE_PROCEDURE(S_env,         g_env_w, 1, 0, 0,         H_env);
+  XEN_DEFINE_PROCEDURE(S_env_p,       g_env_p_w,       1, 0, 0, H_env_p);
+  XEN_DEFINE_PROCEDURE(S_env,         g_env_w,         1, 0, 0, H_env);
   XEN_DEFINE_PROCEDURE(S_restart_env, g_restart_env_w, 1, 0, 0, H_restart_env);
-  XEN_DEFINE_PROCEDURE(S_make_env,    g_make_env_w, 0, 0, 1,    H_make_env);
-  XEN_DEFINE_PROCEDURE(S_env_interp,  g_env_interp_w, 2, 0, 0,  H_env_interp);
+  XEN_DEFINE_PROCEDURE(S_make_env,    g_make_env_w,    0, 0, 1, H_make_env);
+  XEN_DEFINE_PROCEDURE(S_env_interp,  g_env_interp_w,  2, 0, 0, H_env_interp);
 
 
-  XEN_DEFINE_PROCEDURE(S_locsig_p,          g_locsig_p_w, 1, 0, 0,          H_locsig_p);
-  XEN_DEFINE_PROCEDURE(S_locsig,            g_locsig_w, 3, 0, 0,            H_locsig);
-  XEN_DEFINE_PROCEDURE(S_make_locsig,       g_make_locsig_w, 0, 0, 1,       H_make_locsig);
-  XEN_DEFINE_PROCEDURE(S_move_locsig,       g_move_locsig_w, 3, 0, 0,       H_move_locsig);
-  XEN_DEFINE_PROCEDURE(S_mus_channels,      g_mus_channels_w, 1, 0, 0,      H_mus_channels);
+  XEN_DEFINE_PROCEDURE(S_locsig_p,          g_locsig_p_w,     1, 0, 0, H_locsig_p);
+  XEN_DEFINE_PROCEDURE(S_locsig,            g_locsig_w,       3, 0, 0, H_locsig);
+  XEN_DEFINE_PROCEDURE(S_make_locsig,       g_make_locsig_w,  0, 0, 1, H_make_locsig);
+  XEN_DEFINE_PROCEDURE(S_move_locsig,       g_move_locsig_w,  3, 0, 0, H_move_locsig);
+  XEN_DEFINE_PROCEDURE(S_mus_channels,      g_mus_channels_w, 1, 0, 0, H_mus_channels);
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, S_setB S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
 #else
-  XEN_DEFINE_PROCEDURE(S_locsig_ref,        g_locsig_ref_w, 2, 0, 0,        H_locsig_ref);
+  XEN_DEFINE_PROCEDURE(S_locsig_ref,        g_locsig_ref_w,   2, 0, 0, H_locsig_ref);
 #endif
-  XEN_DEFINE_PROCEDURE(S_locsig_set,        g_locsig_set_w, 3, 0, 0,        H_locsig_set);
+  XEN_DEFINE_PROCEDURE(S_locsig_set,        g_locsig_set_w,   3, 0, 0, H_locsig_set);
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_reverb_ref, g_locsig_reverb_ref_w, H_locsig_reverb_ref, 
 				   S_locsig_reverb_set, g_locsig_reverb_set_w,  2, 0, 3, 0);
@@ -5544,47 +5544,47 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type, g_locsig_type_w, H_locsig_type, S_setB S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_file2sample_p,    g_file2sample_p_w, 1, 0, 0,    H_file2sample_p);
-  XEN_DEFINE_PROCEDURE(S_make_file2sample, g_make_file2sample_w, 1, 0, 0, H_make_file2sample);
-  XEN_DEFINE_PROCEDURE(S_file2sample,      g_file2sample_w, 2, 1, 0,      H_file2sample);
-  XEN_DEFINE_PROCEDURE(S_file2frame_p,     g_file2frame_p_w, 1, 0, 0,     H_file2frame_p);
-  XEN_DEFINE_PROCEDURE(S_make_file2frame,  g_make_file2frame_w, 1, 0, 0,  H_make_file2frame);
-  XEN_DEFINE_PROCEDURE(S_file2frame,       g_file2frame_w, 2, 1, 0,       H_file2frame);
-  XEN_DEFINE_PROCEDURE(S_sample2file_p,    g_sample2file_p_w, 1, 0, 0,    H_sample2file_p);
-  XEN_DEFINE_PROCEDURE(S_make_sample2file, g_make_sample2file_w, 4, 1, 0, H_make_sample2file);
+  XEN_DEFINE_PROCEDURE(S_file2sample_p,        g_file2sample_p_w,        1, 0, 0, H_file2sample_p);
+  XEN_DEFINE_PROCEDURE(S_make_file2sample,     g_make_file2sample_w,     1, 0, 0, H_make_file2sample);
+  XEN_DEFINE_PROCEDURE(S_file2sample,          g_file2sample_w,          2, 1, 0, H_file2sample);
+  XEN_DEFINE_PROCEDURE(S_file2frame_p,         g_file2frame_p_w,         1, 0, 0, H_file2frame_p);
+  XEN_DEFINE_PROCEDURE(S_make_file2frame,      g_make_file2frame_w,      1, 0, 0, H_make_file2frame);
+  XEN_DEFINE_PROCEDURE(S_file2frame,           g_file2frame_w,           2, 1, 0, H_file2frame);
+  XEN_DEFINE_PROCEDURE(S_sample2file_p,        g_sample2file_p_w,        1, 0, 0, H_sample2file_p);
+  XEN_DEFINE_PROCEDURE(S_make_sample2file,     g_make_sample2file_w,     4, 1, 0, H_make_sample2file);
   XEN_DEFINE_PROCEDURE(S_continue_sample2file, g_continue_sample2file_w, 1, 0, 0, H_continue_sample2file);
-  XEN_DEFINE_PROCEDURE(S_sample2file,      g_sample2file_w, 4, 0, 0,      H_sample2file);
-  XEN_DEFINE_PROCEDURE(S_frame2file_p,     g_frame2file_p_w, 1, 0, 0,     H_frame2file_p);
-  XEN_DEFINE_PROCEDURE(S_frame2file,       g_frame2file_w, 3, 0, 0,       H_frame2file);
-  XEN_DEFINE_PROCEDURE(S_make_frame2file,  g_make_frame2file_w, 4, 0, 0,  H_make_frame2file);
-  XEN_DEFINE_PROCEDURE(S_mus_input_p,      g_input_p_w, 1, 0, 0,          H_mus_input_p);
-  XEN_DEFINE_PROCEDURE(S_mus_output_p,     g_output_p_w, 1, 0, 0,         H_mus_output_p);
-  XEN_DEFINE_PROCEDURE(S_in_any,           g_in_any_w, 3, 0, 0,           H_in_any);
-  XEN_DEFINE_PROCEDURE(S_ina,              g_ina_w, 2, 0, 0,              H_ina);  
-  XEN_DEFINE_PROCEDURE(S_inb,              g_inb_w, 2, 0, 0,              H_inb);
-  XEN_DEFINE_PROCEDURE(S_out_any,          g_out_any_w, 4, 0, 0,          H_out_any);
-  XEN_DEFINE_PROCEDURE(S_outa,             g_outa_w, 3, 0, 0,             H_outa);
-  XEN_DEFINE_PROCEDURE(S_outb,             g_outb_w, 3, 0, 0,             H_outb);
-  XEN_DEFINE_PROCEDURE(S_outc,             g_outc_w, 3, 0, 0,             H_outc);
-  XEN_DEFINE_PROCEDURE(S_outd,             g_outd_w, 3, 0, 0,             H_outd);
-  XEN_DEFINE_PROCEDURE(S_array2file,       g_array2file_w, 5, 0, 0,       H_array2file);
-  XEN_DEFINE_PROCEDURE(S_file2array,       g_file2array_w, 5, 0, 0,       H_file2array);
-  XEN_DEFINE_PROCEDURE(S_mus_close,        g_mus_close_w, 1, 0, 0,        H_mus_close);
+  XEN_DEFINE_PROCEDURE(S_sample2file,          g_sample2file_w,          4, 0, 0, H_sample2file);
+  XEN_DEFINE_PROCEDURE(S_frame2file_p,         g_frame2file_p_w,         1, 0, 0, H_frame2file_p);
+  XEN_DEFINE_PROCEDURE(S_frame2file,           g_frame2file_w,           3, 0, 0, H_frame2file);
+  XEN_DEFINE_PROCEDURE(S_make_frame2file,      g_make_frame2file_w,      4, 0, 0, H_make_frame2file);
+  XEN_DEFINE_PROCEDURE(S_mus_input_p,          g_input_p_w,              1, 0, 0, H_mus_input_p);
+  XEN_DEFINE_PROCEDURE(S_mus_output_p,         g_output_p_w,             1, 0, 0, H_mus_output_p);
+  XEN_DEFINE_PROCEDURE(S_in_any,               g_in_any_w,               3, 0, 0, H_in_any);
+  XEN_DEFINE_PROCEDURE(S_ina,                  g_ina_w,                  2, 0, 0, H_ina);  
+  XEN_DEFINE_PROCEDURE(S_inb,                  g_inb_w,                  2, 0, 0, H_inb);
+  XEN_DEFINE_PROCEDURE(S_out_any,              g_out_any_w,              4, 0, 0, H_out_any);
+  XEN_DEFINE_PROCEDURE(S_outa,                 g_outa_w,                 3, 0, 0, H_outa);
+  XEN_DEFINE_PROCEDURE(S_outb,                 g_outb_w,                 3, 0, 0, H_outb);
+  XEN_DEFINE_PROCEDURE(S_outc,                 g_outc_w,                 3, 0, 0, H_outc);
+  XEN_DEFINE_PROCEDURE(S_outd,                 g_outd_w,                 3, 0, 0, H_outd);
+  XEN_DEFINE_PROCEDURE(S_array2file,           g_array2file_w,           5, 0, 0, H_array2file);
+  XEN_DEFINE_PROCEDURE(S_file2array,           g_file2array_w,           5, 0, 0, H_file2array);
+  XEN_DEFINE_PROCEDURE(S_mus_close,            g_mus_close_w,            1, 0, 0, H_mus_close);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,
 				   S_setB S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0);
 
 
-  XEN_DEFINE_PROCEDURE(S_readin_p,    g_readin_p_w, 1, 0, 0,    H_readin_p);
-  XEN_DEFINE_PROCEDURE(S_readin,      g_readin_w, 1, 0, 0,      H_readin);
+  XEN_DEFINE_PROCEDURE(S_readin_p,    g_readin_p_w,    1, 0, 0, H_readin_p);
+  XEN_DEFINE_PROCEDURE(S_readin,      g_readin_w,      1, 0, 0, H_readin);
   XEN_DEFINE_PROCEDURE(S_make_readin, g_make_readin_w, 0, 8, 0, H_make_readin);
   XEN_DEFINE_PROCEDURE(S_mus_channel, g_mus_channel_w, 1, 0, 0, H_mus_channel);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_location, g_mus_location_w, H_mus_location, S_setB S_mus_location, g_mus_set_location_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_increment, g_mus_increment_w, H_mus_increment, S_setB S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_granulate_p,    g_granulate_p_w, 1, 0, 0,    H_granulate_p);
-  XEN_DEFINE_PROCEDURE(S_granulate,      g_granulate_w, 1, 1, 0,      H_granulate);
+  XEN_DEFINE_PROCEDURE(S_granulate_p,    g_granulate_p_w,    1, 0, 0, H_granulate_p);
+  XEN_DEFINE_PROCEDURE(S_granulate,      g_granulate_w,      1, 1, 0, H_granulate);
   XEN_DEFINE_PROCEDURE(S_make_granulate, g_make_granulate_w, 0, 0, 1, H_make_granulate);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_ramp, g_mus_ramp_w, H_mus_ramp,
@@ -5592,23 +5592,23 @@ the closer the radius is to 1.0, the narrower the resonance."
 
 
   XEN_DEFINE_PROCEDURE(S_clear_sincs, g_clear_sincs_w, 0, 0, 0, "clears out any sinc tables");
-  XEN_DEFINE_PROCEDURE(S_src_p,       g_src_p_w, 1, 0, 0,       H_src_p);
-  XEN_DEFINE_PROCEDURE(S_src,         g_src_w, 1, 2, 0,         H_src);
-  XEN_DEFINE_PROCEDURE(S_make_src,    g_make_src_w, 0, 6, 0,    H_make_src);
+  XEN_DEFINE_PROCEDURE(S_src_p,       g_src_p_w,       1, 0, 0, H_src_p);
+  XEN_DEFINE_PROCEDURE(S_src,         g_src_w,         1, 2, 0, H_src);
+  XEN_DEFINE_PROCEDURE(S_make_src,    g_make_src_w,    0, 6, 0, H_make_src);
 
 
-  XEN_DEFINE_PROCEDURE(S_convolve_p,     g_convolve_p_w, 1, 0, 0,     H_convolve_p);
-  XEN_DEFINE_PROCEDURE(S_convolve,       g_convolve_w, 1, 1, 0,       H_convolve_gen);
-  XEN_DEFINE_PROCEDURE(S_make_convolve,  g_make_convolve_w, 0, 0, 1,  H_make_convolve);
+  XEN_DEFINE_PROCEDURE(S_convolve_p,     g_convolve_p_w,     1, 0, 0, H_convolve_p);
+  XEN_DEFINE_PROCEDURE(S_convolve,       g_convolve_w,       1, 1, 0, H_convolve_gen);
+  XEN_DEFINE_PROCEDURE(S_make_convolve,  g_make_convolve_w,  0, 0, 1, H_make_convolve);
   XEN_DEFINE_PROCEDURE(S_convolve_files, g_convolve_files_w, 2, 2, 0, H_convolve_files);
 
-  XEN_DEFINE_PROCEDURE(S_phase_vocoder_p,       g_phase_vocoder_p_w, 1, 0, 0,     H_phase_vocoder_p);
-  XEN_DEFINE_PROCEDURE(S_phase_vocoder,         g_phase_vocoder_w, 1, 1, 0,       H_phase_vocoder);
-  XEN_DEFINE_PROCEDURE(S_make_phase_vocoder,    g_make_phase_vocoder_w, 0, 0, 1,  H_make_phase_vocoder);
-  XEN_DEFINE_PROCEDURE(S_pv_amp_increments,     g_pv_amp_increments_w, 1, 0, 0,   H_pv_amp_increments);
-  XEN_DEFINE_PROCEDURE(S_pv_amps,               g_pv_amps_w, 1, 0, 0,             H_pv_amps);
-  XEN_DEFINE_PROCEDURE(S_pv_freqs,              g_pv_freqs_w, 1, 0, 0,            H_pv_freqs);
-  XEN_DEFINE_PROCEDURE(S_pv_phases,             g_pv_phases_w, 1, 0, 0,           H_pv_phases);
+  XEN_DEFINE_PROCEDURE(S_phase_vocoder_p,       g_phase_vocoder_p_w,     1, 0, 0, H_phase_vocoder_p);
+  XEN_DEFINE_PROCEDURE(S_phase_vocoder,         g_phase_vocoder_w,       1, 1, 0, H_phase_vocoder);
+  XEN_DEFINE_PROCEDURE(S_make_phase_vocoder,    g_make_phase_vocoder_w,  0, 0, 1, H_make_phase_vocoder);
+  XEN_DEFINE_PROCEDURE(S_pv_amp_increments,     g_pv_amp_increments_w,   1, 0, 0, H_pv_amp_increments);
+  XEN_DEFINE_PROCEDURE(S_pv_amps,               g_pv_amps_w,             1, 0, 0, H_pv_amps);
+  XEN_DEFINE_PROCEDURE(S_pv_freqs,              g_pv_freqs_w,            1, 0, 0, H_pv_freqs);
+  XEN_DEFINE_PROCEDURE(S_pv_phases,             g_pv_phases_w,           1, 0, 0, H_pv_phases);
   XEN_DEFINE_PROCEDURE(S_pv_phase_increments,   g_pv_phase_increments_w, 1, 0, 0, H_pv_phase_increments);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pv_outctr, g_pv_outctr_w, H_pv_outctr, S_setB S_pv_outctr, g_pv_set_outctr_w,  1, 0, 2, 0);
 

@@ -5535,5 +5535,3 @@ void mus_header_set_full_aiff_loop_info (int *data)
       loop_modes[1] = 0;
     }
 }
-
-/* TODO: spdif support via ircam library */

@@ -7,10 +7,12 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "25-Nov-03"
+#define XM_DATE "1-Dec-03"
 
 
 /* HISTORY: 
+ *   1-Dec:     XShapeGetRectangles XRectangle array needed local allocation.
+ *              removed (unusable) XtCallCallbackList.
  *   25-Nov:    more GC protection. Removed XInitThreads, XLockDisplay, XUnlockDisplay. Fixed XmTextBlock allocation bug.
  *   15-Oct:    XFontsOfFontSet indexing bugfix and several more struct field accessors from MS.
  *   14-Oct:    XShapeQueryExtension from Michael Scholz, plus other extensions/shape.h functions and constants.
@@ -960,6 +962,17 @@ static XEN c_to_xen_string(XEN str)
   return(C_TO_XEN_STRING((char *)XEN_TO_C_ULONG(str)));
 }
 
+static XEN copy_xrectangle(XRectangle *old_r)
+{
+  XRectangle *r;
+  r = (XRectangle *)CALLOC(1, sizeof(XRectangle));
+  r->x = old_r->x;
+  r->y = old_r->y;
+  r->width = old_r->width;
+  r->height = old_r->height;
+  return(C_TO_XEN_XRectangle(r));
+}
+
 static XEN C_TO_XEN_XRectangles(XRectangle *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
@@ -968,7 +981,7 @@ static XEN C_TO_XEN_XRectangles(XRectangle *array, int len)
     {
       loc = xm_protect(lst);
       for (i = len - 1; i >= 0; i--)
-	lst = XEN_CONS(C_TO_XEN_XRectangle(&(array[i])), lst);
+	lst = XEN_CONS(copy_xrectangle(&(array[i])), lst);
       xm_unprotect_at(loc);
     }
   return(lst);
@@ -13502,9 +13515,6 @@ static XEN gxm_XShapeCombineRectangles(XEN dpy, XEN win, XEN kind, XEN x, XEN y,
   if (cr) FREE(cr);
   return(XEN_FALSE);
 }
-
-/* TODO: shape tests */
-
 #endif
 
 
@@ -15415,22 +15425,6 @@ list identified by callback_name; returns XtCallbackNoList or XtCallbackHasNone 
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtHasCallbacks", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtHasCallbacks", "char*");
   return(C_TO_XEN_INT(XtHasCallbacks(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2))));
-}
-
-static XEN gxm_XtCallCallbackList(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XtCallCallbackList "XtCallCallbackList(w, callbacks, call_data) calls each of the callback procedures in the list \
-passing client data call_data"
-
-  /* DIFF: XtCallCallbackList takes list of (func data) pairs as arg2 
-   */
-  XtCallbackRec *calls;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtCallCallbackList", "Widget");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XtCallCallbackList", "list of XtCallbacks");
-  calls = XEN_TO_C_XtCallbackList(arg2);
-  XtCallCallbackList(XEN_TO_C_Widget(arg1), calls, (XtPointer)arg3);
-  FREE(calls);
-  return(XEN_FALSE);
 }
 
 static XEN gxm_XtCallCallbacks(XEN arg1, XEN arg2, XEN arg3)
@@ -18109,7 +18103,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtRemoveCallbacks, gxm_XtRemoveCallbacks, 3, 0, 0, H_XtRemoveCallbacks);
   XM_DEFINE_PROCEDURE(XtRemoveAllCallbacks, gxm_XtRemoveAllCallbacks, 2, 0, 0, H_XtRemoveAllCallbacks);
   XM_DEFINE_PROCEDURE(XtCallCallbacks, gxm_XtCallCallbacks, 3, 0, 0, H_XtCallCallbacks);
-  XM_DEFINE_PROCEDURE(XtCallCallbackList, gxm_XtCallCallbackList, 3, 0, 0, H_XtCallCallbackList);
   XM_DEFINE_PROCEDURE(XtHasCallbacks, gxm_XtHasCallbacks, 2, 0, 0, H_XtHasCallbacks);
   XM_DEFINE_PROCEDURE(XtCreatePopupShell, gxm_XtCreatePopupShell, 4, 1, 0, H_XtCreatePopupShell);
   XM_DEFINE_PROCEDURE(XtVaCreatePopupShell, gxm_XtVaCreatePopupShell, 4, 0, 0, H_XtVaCreatePopupShell);

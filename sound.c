@@ -415,7 +415,7 @@ static sound_file *find_sound_file(const char *name)
       (previous_sf->write_date == local_file_write_date(name)))
     return(previous_sf);
   if (name)
-    for (i = 0; i < sound_table_size; i++) /* SOMEDAY: this happens enough that a hash table is probably worth the bother */
+    for (i = 0; i < sound_table_size; i++)
       if ((sound_table[i]) &&
 	  (strcmp(name, sound_table[i]->file_name) == 0))
 	{
@@ -808,13 +808,7 @@ int mus_sound_reopen_output(const char *arg, int chans, int format, int type, of
   mus_sound_initialize();
   fd = mus_file_reopen_write(arg);
   if (fd != -1)
-    mus_file_open_descriptors(fd,
-			      arg,
-			      format,
-			      mus_bytes_per_sample(format),
-			      data_loc,
-			      chans,
-			      type);
+    mus_file_open_descriptors(fd, arg, format, mus_bytes_per_sample(format), data_loc, chans, type);
   return(fd);
 }
 

@@ -819,14 +819,14 @@ static mix_fd *init_mix_read(mix_info *md, bool old, off_t beg)
 #define HI_PEAKS true
 #define LO_PEAKS false
 
-static mix_fd *init_mix_input_amp_env_read(mix_info *md, bool old, bool hi)
+static mix_fd *init_mix_input_amp_env_read(mix_info *md, bool hi)
 {
   int i;
   mix_fd *mf = NULL;
   snd_info *sp;
   chan_info *cp;
   env_info *ep;
-  mf = init_mix_read_any(md, old, MIX_INPUT_AMP_ENV, 0);
+  mf = init_mix_read_any(md, CURRENT_MIX, MIX_INPUT_AMP_ENV, 0);
   if (!mf) return(NULL);
   sp = md->add_snd;
   mf->ctr = (int *)CALLOC(sp->nchans, sizeof(int));
@@ -839,9 +839,7 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, bool old, bool hi)
       cp = sp->chans[i];
       mf->ctr[i] = -1; /* preincremented */
       mf->samples[i] = CURRENT_SAMPLES(cp);
-      if (old == PREVIOUS_MIX) 
-	cs = md->states[md->current_state];
-      else cs = md->active_mix_state;
+      cs = md->active_mix_state;
       if ((mf->calc != C_ZERO_SOUND) && 
 	  (mf->calc != C_ZERO_PEAK) &&
 	  (cs->as_built->amp_envs) && 
@@ -1855,8 +1853,8 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
   env_info *ep;
   lo = ap->losamp;
   hi = ap->hisamp;
-  new_min_fd = init_mix_input_amp_env_read(md, CURRENT_MIX, LO_PEAKS); 
-  new_max_fd = init_mix_input_amp_env_read(md, CURRENT_MIX, HI_PEAKS); 
+  new_min_fd = init_mix_input_amp_env_read(md, LO_PEAKS); 
+  new_max_fd = init_mix_input_amp_env_read(md, HI_PEAKS); 
   ep = cp->amp_envs[cp->edit_ctr];
   main_loc = (int)((double)(ap->losamp) / (double)(ep->samps_per_bin));
   main_start = ap->losamp;
@@ -2116,8 +2114,8 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
   Locus lastx, newx;
   Float ymin, ymax, high = 0.0, low = 0.0;
   double xend, xstart, xstep;
-  min_fd = init_mix_input_amp_env_read(md, CURRENT_MIX, LO_PEAKS);
-  max_fd = init_mix_input_amp_env_read(md, CURRENT_MIX, HI_PEAKS);
+  min_fd = init_mix_input_amp_env_read(md, LO_PEAKS);
+  max_fd = init_mix_input_amp_env_read(md, HI_PEAKS);
   lo = ap->losamp;
   hi = ap->hisamp;
 
@@ -2600,7 +2598,7 @@ static void move_mix(mix_info *md)
   cs = md->active_mix_state;
   if (md->nx != nx)
     {
-      if (show_mix_waveforms(ss)) erase_mix_waveform(md);
+      erase_mix_waveform(md);
       md->nx = nx;
       samp = (off_t)(ungrf_x(ap, nx) * SND_SRATE(cp->sound));
       if (samp < cs->tag_position) samp = cs->tag_position;
@@ -2612,7 +2610,7 @@ static void move_mix(mix_info *md)
       cs->beg = samp - cs->tag_position;
       if (cs->beg < 0) cs->beg = 0; 
       reflect_mix_or_track_change(md->id, ANY_TRACK_ID, false);
-      if (show_mix_waveforms(ss)) draw_mix_waveform(md);
+      draw_mix_waveform(md);
       /* can't easily use work proc here because the erasure gets complicated */
       make_temporary_graph(cp, md, cs);
       if (XEN_HOOKED(mix_drag_hook))
@@ -2777,7 +2775,7 @@ void display_channel_mixes(chan_info *cp)
 		  if (((xspot + mix_tag_width(ss)) <= ap->x_axis_x1) &&      /* not cut off on right */
 		      (!combined))
 		    {
-		      if (cp->show_mix_waveforms) draw_mix_waveform(md);
+		      draw_mix_waveform(md);
 		      if (cs->tag_y == 0)
 			{
 			  y += hgt;
@@ -2919,12 +2917,12 @@ static int ripple_mixes_1(mix_info *md, void *ptr)
       ncs->orig = cs->beg + data->change;
       ncs->beg = ncs->orig;
       ncs->end = ncs->beg + cs->len - 1;
-      if (cp->show_mix_waveforms) erase_mix_waveform(md);
+      erase_mix_waveform(md);
       extend_mix_state_list(md);
       if (md->states[md->current_state]) free_mix_state(md->states[md->current_state]);
       md->states[md->current_state] = ncs;
       make_current_mix_state(md);
-      if (cp->show_mix_waveforms) draw_mix_waveform(md);
+      draw_mix_waveform(md);
     }
   return(0);
 }
@@ -3060,12 +3058,14 @@ int previous_mix_id(int id)
 
 static void draw_mix_waveform(mix_info *md) 
 {
-  display_mix_waveform(md->cp, md, md->active_mix_state, true);
+  if (md->cp->show_mix_waveforms)
+    display_mix_waveform(md->cp, md, md->active_mix_state, true);
 }
 
 static void erase_mix_waveform(mix_info *md) 
 {
-  display_mix_waveform(md->cp, md, md->active_mix_state, false);
+  if (md->cp->show_mix_waveforms)
+    display_mix_waveform(md->cp, md, md->active_mix_state, false);
 }
 
 
@@ -3231,12 +3231,14 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 		}
 	      else
 		{
+		  if (!remix) erase_mix_waveform(md);
 		  cs->scalers[chan] = val;
 		  if (remix)
 		    remix_file(md, origin, false);
 		  else 
 		    {
 		      cs->as_built->scalers[chan] = val * gather_track_amp(cs);
+		      draw_mix_waveform(md);
 		      make_temporary_graph(md->cp, md, cs);
 		    }
 		}
@@ -3362,6 +3364,7 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 	      else
 		{
 		  /* no fanciness needed */
+		  if (!remix) erase_mix_waveform(md);
 		  cs->speed = new_speed;
 		  cs->len = (off_t)(ceil(md->in_samps / new_final_speed));
 		  if (remix)
@@ -3370,12 +3373,14 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 		    {
 		      cs->as_built->speed = new_final_speed;
 		      cs->as_built->len = cs->len;
+		      draw_mix_waveform(md);
 		      make_temporary_graph(md->cp, md, cs);
 		    }
 		}
 	    }
 	  else
 	    {
+	      if (!remix) erase_mix_waveform(md);
 	      cs->speed = new_speed;
 	      cs->len = (off_t)(ceil(md->in_samps / new_final_speed));
 	      if (remix)
@@ -3384,6 +3389,7 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 		{
 		  cs->as_built->speed = new_final_speed;
 		  cs->as_built->len = cs->len;
+		  draw_mix_waveform(md);
 		  make_temporary_graph(md->cp, md, cs);
 		}
 	    }
@@ -6352,9 +6358,11 @@ static void temporary_track_speed(mix_info *md, void *ptr)
   mix_track_state *ms;
   cs = md->active_mix_state;
   ms = cs->as_built;
+  erase_mix_waveform(md);
   ms->speed = cs->speed * gather_track_speed(cs->track);
   cs->len = (off_t)(ceil(md->in_samps / ms->speed));
   ms->len = cs->len;
+  draw_mix_waveform(md);
   make_temporary_graph(md->cp, md, cs);
 }
 
@@ -6385,8 +6393,9 @@ static void temporary_track_tempo(mix_info *md, void *ptr)
   /* use orig to get original position (we're using the original tempo as well) */
   if (cs->orig != tt->beg)
     {
+      erase_mix_waveform(md);
       cs->beg = tt->beg + (off_t)((cs->orig - tt->beg) * tt->tempo_mult);  
-      if (show_mix_waveforms(ss)) draw_mix_waveform(md);
+      draw_mix_waveform(md);
     }
   make_temporary_graph(md->cp, md, cs);
 }
@@ -6420,9 +6429,11 @@ static void temporary_track_amp(mix_info *md, void *ptr)
   Float local_amp; /* might be embedded tracks so we have to put off the track amp until the specific mix */
   cs = md->active_mix_state;
   ms = cs->as_built;
+  erase_mix_waveform(md);
   local_amp = gather_track_amp(cs);
   for (i = 0; i < ms->chans; i++)
     ms->scalers[i] = cs->scalers[i] * local_amp;
+  draw_mix_waveform(md);
   make_temporary_graph(md->cp, md, cs);
 }
 
@@ -7921,17 +7932,13 @@ void g_init_track(void)
 
 /* 
    mix/track stuff:
-   SOMEDAY: how to save|restore-(mix|track)-state? -- mixes are not currently saved, but the track states could be
-   SOMEDAY: what about saving all dialog state? mix|track-properties? (see marks.scm save-mark-properties)
+   SOMEDAY: how to save|restore-(mix|track)-state? dialog-state? mix|track-properties?
    SOMEDAY: pan choices with sinusoidal, exponential envs
    TODO: synchronization across mixes ("snap")
    SOMEDAY: choice of y-style (i.e. split out tracks vertically -- track all at same height)
    SOMEDAY: timing grid
-   TODO: mix waveform not fixed up alongside waveform if track speed dragging (and lags in mix dialog)
-   TODO: some way to squelch mix-tag/wave in 2nd chan (less clutter in track etc)
    TODO: axis movement stops if track drag motion stops when outside axis?
    TODO: initial dpy leaves start|end points unerased?
 
    TODO: vct-map! and backtrace troubles in new guile
-   SOMEDAY: copy-*? [have mix|track|region|sample-reader, copy-mix|track|file, vct-copy, clone-sound-as], xref tables for copy
 */

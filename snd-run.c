@@ -65,10 +65,10 @@
  *
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
- * PERHAPS: xen2sample and make-snd2sample
- * SOMEDAY: if not DESCRIBE_PTREE, omit description (debugging) funcs
+ * PERHAPS: xen2sample and make-snd2sample (requires support for snd2sample structs)
  * SOMEDAY: throw with 2nd arg
- * TODO: make-region-sample-reader, read-region-sample
+ * TODO:  (run (lambda () (let ((x 3.14)) (define (a b) (display b)) (a x)))) -> "0" with no warning
+ *  also: (run (lambda () (let ((x 3.14)) ((lambda (a) (display a)) x))))
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -92,6 +92,7 @@
  */
 
 #include "snd.h"
+#include "sndlib2xen.h"
 #include "clm2xen.h"
 #include "clm-strings.h"
 #include "sndlib-strings.h"
@@ -176,6 +177,7 @@ static XEN optimization_hook = XEN_FALSE;
 #define CLM_PT  "c%d(%p)"
 #define FNC_PT  "f%d(%p)"
 #define VCT_PT  "v%d(%p)"
+#define SD_PT   "a%d(%p)"
 #define GO_PT   "i%d(continuation)"
 #define BOOL_PT "i%d(%s)"
 #define VECT_PT "m%d(%p)"
@@ -288,20 +290,20 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 
 enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, 
       R_SYMBOL, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, 
-      R_READER, R_MIX_READER, R_TRACK_READER,
+      R_READER, R_MIX_READER, R_TRACK_READER, R_SOUND_DATA,
       R_CLM, R_XCLM,
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, 
       R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_ANY}; /* last 5 for walker arg checks */
 
 
-#define BUILT_IN_TYPES 27
+#define BUILT_IN_TYPES 28
 static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
 static char **type_names = NULL;
 static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", "boolean", "char", "string", "list", "pair", 
 						 "symbol", "keyword", "function", "continuation", "vct", 
 						 "sample-reader", "mix-sample-reader", "track-sample-reader",
-						 "clm", "x-clm", 
+						 "sound-data", "clm", "x-clm", 
 						 "float-vector", "int-vector", "vct-vector", "clm-vector", 
 						 "number", "cons", "vector", "xen", "any"};
 static void init_type_names(void)
@@ -403,6 +405,8 @@ struct ptree {
   char **strs;
   int vct_ctr, vcts_size;
   vct **vcts;
+  int sd_ctr, sds_size;
+  sound_data **sds;
   int clm_ctr, clms_size;
   mus_any **clms;
   int vect_ctr, vects_size;
@@ -460,6 +464,8 @@ typedef struct ptree {
   char **strs;
   int vct_ctr, vcts_size;
   vct **vcts;
+  int sd_ctr, sds_size;
+  sound_data **sds;
   int clm_ctr, clms_size;
   mus_any **clms;
   int vect_ctr, vects_size;
@@ -693,9 +699,10 @@ static char *add_comments(ptree *pt, char *str)
 						   ((str[i] == 'r') ? R_READER :
 						    ((str[i] == 'm') ? R_MIX_READER :
 						     ((str[i] == 't') ? R_TRACK_READER :
-						      ((str[i] == 'f') ? R_FUNCTION :
-						       ((str[i] == 'x') ? R_LIST :
-							R_INT))))))))),
+						      ((str[i] == 'a') ? R_SOUND_DATA :
+						       ((str[i] == 'f') ? R_FUNCTION :
+							((str[i] == 'x') ? R_LIST :
+							 R_INT)))))))))),
 					       addr);
 	      if (var)
 		{
@@ -731,6 +738,7 @@ static char *describe_ptree(ptree *pt)
   Double *inner_dbls;
   char **inner_strs;
   vct **inner_vcts;
+  sound_data **inner_sds;
   mus_any **inner_clms;
   vect **inner_vects;
   snd_fd **inner_readers;
@@ -746,6 +754,7 @@ static char *describe_ptree(ptree *pt)
   inner_xen_vars = pt->xen_vars;
   inner_strs = pt->strs;
   inner_vcts = pt->vcts;
+  inner_sds = pt->sds;
   inner_clms = pt->clms;
   inner_vects = pt->vects;
   inner_fncs = (ptree **)(pt->fncs);
@@ -759,6 +768,7 @@ static char *describe_ptree(ptree *pt)
       pt->dbls = ((ptree *)(pt->outer_tree))->dbls;
       pt->strs = ((ptree *)(pt->outer_tree))->strs;
       pt->vcts = ((ptree *)(pt->outer_tree))->vcts;
+      pt->sds = ((ptree *)(pt->outer_tree))->sds;
       pt->clms = ((ptree *)(pt->outer_tree))->clms;
       pt->vects = ((ptree *)(pt->outer_tree))->vects;
       pt->fncs = ((ptree *)(pt->outer_tree))->fncs;
@@ -831,6 +841,7 @@ static char *describe_ptree(ptree *pt)
   pt->xen_vars = inner_xen_vars;
   pt->strs = inner_strs;
   pt->vcts = inner_vcts;
+  pt->sds = inner_sds;
   pt->clms = inner_clms;
   pt->vects = inner_vects;
   pt->fncs = (struct ptree **)(inner_fncs);
@@ -870,6 +881,17 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	  return(buf);
 	}
       else return(mus_format("v%d(null)", addr));
+      break;
+    case R_SOUND_DATA:
+      if ((pt->sds) && (pt->sds[addr]))
+	{
+	  char *buf = NULL, *vstr = NULL;
+	  vstr = sound_data_to_string(pt->sds[addr]);
+	  buf = mus_format(SD_PT, addr, vstr);
+	  if (vstr) FREE(vstr);
+	  return(buf);
+	}
+      else return(mus_format("a%d(null)", addr));
       break;
     case R_READER:
       if ((pt->readers) && (pt->readers[addr]))
@@ -934,114 +956,6 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 
 static char *describe_xen_value(xen_value *v, ptree *pt)
 {
-  char *msg = NULL;
-  if (v == NULL) return(copy_string("null xen_value"));
-  switch (v->type)
-    {
-    case R_FLOAT:
-      if ((pt->dbls == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->dbls))
-	{
-	  pt->dbls = ((ptree *)(pt->outer_tree))->dbls;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->dbls = NULL;
-	  return(msg);
-	}
-      break;
-    case R_STRING:
-      if ((pt->strs == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->strs))
-	{
-	  pt->strs = ((ptree *)(pt->outer_tree))->strs;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->strs = NULL;
-	  return(msg);
-	}
-      break;
-    case R_VCT:
-      if ((pt->vcts == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->vcts))
-	{
-	  pt->vcts = ((ptree *)(pt->outer_tree))->vcts;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->vcts = NULL;
-	  return(msg);
-	}
-      break;
-    case R_CLM:
-      if ((pt->clms == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->clms))
-	{
-	  pt->clms = ((ptree *)(pt->outer_tree))->clms;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->clms = NULL;
-	  return(msg);
-	}
-      break;
-    case R_CLM_VECTOR:
-    case R_INT_VECTOR:
-    case R_VCT_VECTOR:
-      if ((pt->vects == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->vects))
-	{
-	  pt->vects = ((ptree *)(pt->outer_tree))->vects;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->vects = NULL;
-	  return(msg);
-	}
-      break;
-    case R_FUNCTION:
-      if ((pt->fncs == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->fncs))
-	{
-	  pt->fncs = ((ptree *)(pt->outer_tree))->fncs;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->fncs = NULL;
-	  return(msg);
-	}
-      break;
-    case R_SYMBOL:
-    case R_LIST:
-    case R_PAIR:
-    case R_KEYWORD:
-      if ((pt->xens == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->xens))
-	{
-	  pt->xens = ((ptree *)(pt->outer_tree))->xens;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->xens = NULL;
-	  return(msg);
-	}
-      break;
-    case R_READER:
-      if ((pt->readers == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->readers))
-	{
-	  pt->readers = ((ptree *)(pt->outer_tree))->readers;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->readers = NULL;
-	  return(msg);
-	}
-      break;
-    case R_MIX_READER:
-      if ((pt->mix_readers == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->mix_readers))
-	{
-	  pt->mix_readers = ((ptree *)(pt->outer_tree))->mix_readers;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->mix_readers = NULL;
-	  return(msg);
-	}
-      break;
-    case R_TRACK_READER:
-      if ((pt->track_readers == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->track_readers))
-	{
-	  pt->track_readers = ((ptree *)(pt->outer_tree))->track_readers;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->track_readers = NULL;
-	  return(msg);
-	}
-      break;
-    default:
-      if ((pt->ints == NULL) && (pt->outer_tree) && (((ptree *)(pt->outer_tree))->ints))
-	{
-	  pt->ints = ((ptree *)(pt->outer_tree))->ints;
-	  msg = describe_xen_value_1(v->type, v->addr, pt);
-	  pt->ints = NULL;
-	  return(msg);
-	}
-    }
   return(describe_xen_value_1(v->type, v->addr, pt));
 }
 
@@ -1083,6 +997,9 @@ static ptree *make_ptree(int initial_data_size)
   pt->vcts_size = 0;
   pt->vcts = NULL;
   pt->vct_ctr = 0;
+  pt->sds_size = 0;
+  pt->sds = NULL;
+  pt->sd_ctr = 0;
   pt->clms_size = 0;
   pt->clms = NULL;
   pt->clm_ctr = 0;
@@ -1131,6 +1048,7 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->gotos = pt->gotos;
   new_tree->strs = pt->strs;
   new_tree->vcts = pt->vcts;
+  new_tree->sds = pt->sds;
   new_tree->clms = pt->clms;
   new_tree->vects = pt->vects;
   new_tree->fncs = pt->fncs;
@@ -1153,6 +1071,7 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->gcs_size = pt->gcs_size;
   new_tree->str_ctr = pt->str_ctr;
   new_tree->vct_ctr = pt->vct_ctr;
+  new_tree->sd_ctr = pt->sd_ctr;
   new_tree->clm_ctr = pt->clm_ctr;
   new_tree->vect_ctr = pt->vect_ctr;
   new_tree->fnc_ctr = pt->fnc_ctr;
@@ -1162,6 +1081,7 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->track_reader_ctr = pt->track_reader_ctr;
   new_tree->strs_size = pt->strs_size;
   new_tree->vcts_size = pt->vcts_size;
+  new_tree->sds_size = pt->sds_size;
   new_tree->clms_size = pt->clms_size;
   new_tree->vects_size = pt->vects_size;
   new_tree->fncs_size = pt->fncs_size;
@@ -1188,6 +1108,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->gotos = inner->gotos;
   outer->strs = inner->strs;
   outer->vcts = inner->vcts;
+  outer->sds = inner->sds;
   outer->clms = inner->clms;
   outer->vects = inner->vects;
   outer->fncs = inner->fncs;
@@ -1206,6 +1127,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->gotos = NULL;
   inner->strs = NULL;
   inner->vcts = NULL;
+  inner->sds = NULL;
   inner->clms = NULL;
   inner->vects = NULL;
   inner->fncs = NULL;
@@ -1230,6 +1152,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->gcs_size = inner->gcs_size;
   outer->str_ctr = inner->str_ctr;
   outer->vct_ctr = inner->vct_ctr;
+  outer->sd_ctr = inner->sd_ctr;
   outer->clm_ctr = inner->clm_ctr;
   outer->vect_ctr = inner->vect_ctr;
   outer->fnc_ctr = inner->fnc_ctr;
@@ -1239,6 +1162,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->track_reader_ctr = inner->track_reader_ctr;
   outer->strs_size = inner->strs_size;
   outer->vcts_size = inner->vcts_size;
+  outer->sds_size = inner->sds_size;
   outer->clms_size = inner->clms_size;
   outer->vects_size = inner->vects_size;
   outer->fncs_size = inner->fncs_size;
@@ -1265,6 +1189,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->gcs_size = 0;
   inner->str_ctr = 0;
   inner->vct_ctr = 0;
+  inner->sd_ctr = 0;
   inner->clm_ctr = 0;
   inner->vect_ctr = 0;
   inner->fnc_ctr = 0;
@@ -1274,6 +1199,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->track_reader_ctr = 0;
   inner->strs_size = 0;
   inner->vcts_size = 0;
+  inner->sds_size = 0;
   inner->clms_size = 0;
   inner->vects_size = 0;
   inner->fncs_size = 0;
@@ -1473,6 +1399,17 @@ void *free_ptree(void *upt)
 			      pt->vcts[v->addr] = NULL;   
 			    }
 			  break;
+			case R_SOUND_DATA: 
+			  if (pt->sds[v->addr])
+			    {
+			      int k;
+			      for (k = 0; k < pt->sd_ctr; k++)
+				if ((k != v->addr) && (pt->sds[k] == pt->sds[v->addr]))
+				  pt->sds[k] = NULL;
+			      sound_data_free(pt->sds[v->addr]); 
+			      pt->sds[v->addr] = NULL;   
+			    }
+			  break;
 			case R_READER: 
 			  if (pt->readers[v->addr])
 			    {
@@ -1581,6 +1518,11 @@ void *free_ptree(void *upt)
 	{
 	  FREE(pt->vcts);
 	  pt->vcts = NULL;
+	}
+      if (pt->sds) 
+	{
+	  FREE(pt->sds);
+	  pt->sds = NULL;
 	}
       if (pt->clms) 
 	{
@@ -1723,6 +1665,24 @@ static int add_vct_to_ptree(ptree *pt, vct *value)
       else pt->vcts = (vct **)CALLOC(pt->vcts_size, sizeof(vct *));
     }
   pt->vcts[cur] = value;
+  return(cur);
+}
+
+static int add_sound_data_to_ptree(ptree *pt, sound_data *value)
+{
+  int i, cur;
+  cur = pt->sd_ctr++;
+  if (cur >= pt->sds_size)
+    {
+      pt->sds_size += 8;
+      if (pt->sds)
+	{
+	  pt->sds = (sound_data **)REALLOC(pt->sds, pt->sds_size * sizeof(sound_data *));
+	  for (i = cur; i < pt->sds_size; i++) pt->sds[i] = NULL;
+	}
+      else pt->sds = (sound_data **)CALLOC(pt->sds_size, sizeof(sound_data *));
+    }
+  pt->sds[cur] = value;
   return(cur);
 }
 
@@ -1938,6 +1898,7 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
     case R_READER: return(make_xen_value(type, add_reader_to_ptree(prog, NULL), R_VARIABLE)); break;
     case R_MIX_READER: return(make_xen_value(type, add_mix_reader_to_ptree(prog, NULL), R_VARIABLE)); break;
     case R_TRACK_READER: return(make_xen_value(type, add_track_reader_to_ptree(prog, NULL), R_VARIABLE)); break;
+    case R_SOUND_DATA: return(make_xen_value(type, add_sound_data_to_ptree(prog, NULL), R_VARIABLE)); break;
     case R_FLOAT_VECTOR:
     case R_VCT: 
       return(make_xen_value(type, add_vct_to_ptree(prog, NULL), R_VARIABLE)); 
@@ -1984,6 +1945,7 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
     case R_READER: 
     case R_MIX_READER: 
     case R_TRACK_READER: 
+    case R_SOUND_DATA:
     case R_SYMBOL: 
     case R_KEYWORD:
     case R_LIST:
@@ -2143,41 +2105,42 @@ static int xen_to_run_type(XEN val)
 	  if (sf_p(val)) return(R_READER); else
 	    if (mf_p(val)) return(R_MIX_READER); else
 	      if (tf_p(val)) return(R_TRACK_READER); else
-		if (mus_xen_p(val)) return(R_CLM); else
-		  if (XEN_CHAR_P(val)) return(R_CHAR); else
-		    if (XEN_STRING_P(val)) return(R_STRING); else
-		      if (XEN_KEYWORD_P(val)) return(R_KEYWORD); else
-			if (XEN_SYMBOL_P(val)) return(R_SYMBOL); else
-			  if (XEN_VECTOR_P(val))
-			    {
-			      XEN val0;
-			      val0 = XEN_VECTOR_REF(val, 0);
-			      if (XEN_NUMBER_P(val0))
-				{
-				  if (XEN_EXACT_P(val0))
-				    return(R_INT_VECTOR);
-				  else return(R_FLOAT_VECTOR);
-				}
-			      else
-				if (VCT_P(val0)) return(R_VCT_VECTOR); else
-				  if ((mus_xen_p(val0)) || (XEN_BOOLEAN_P(val0))) return(R_CLM_VECTOR);
-			    }
-			  else
-			    /* order matters here (list is subset of pair) */
-			    if (XEN_LIST_P(val))
+		if (sound_data_p(val)) return(R_SOUND_DATA); else
+		  if (mus_xen_p(val)) return(R_CLM); else
+		    if (XEN_CHAR_P(val)) return(R_CHAR); else
+		      if (XEN_STRING_P(val)) return(R_STRING); else
+			if (XEN_KEYWORD_P(val)) return(R_KEYWORD); else
+			  if (XEN_SYMBOL_P(val)) return(R_SYMBOL); else
+			    if (XEN_VECTOR_P(val))
 			      {
-				if ((!(XEN_NULL_P(val))) &&
-				    (XEN_SYMBOL_P(XEN_CAR(val))))
+				XEN val0;
+				val0 = XEN_VECTOR_REF(val, 0);
+				if (XEN_NUMBER_P(val0))
 				  {
-				    int type;
-				    type = name_to_type(XEN_SYMBOL_TO_C_STRING(XEN_CAR(val)));
-				    if (type > R_ANY)
-				      return(type);
+				    if (XEN_EXACT_P(val0))
+				      return(R_INT_VECTOR);
+				    else return(R_FLOAT_VECTOR);
 				  }
-				return(R_LIST); 
+				else
+				  if (VCT_P(val0)) return(R_VCT_VECTOR); else
+				    if ((mus_xen_p(val0)) || (XEN_BOOLEAN_P(val0))) return(R_CLM_VECTOR);
 			      }
 			    else
-			      if (XEN_PAIR_P(val)) return(R_PAIR);
+			      /* order matters here (list is subset of pair) */
+			      if (XEN_LIST_P(val))
+				{
+				  if ((!(XEN_NULL_P(val))) &&
+				      (XEN_SYMBOL_P(XEN_CAR(val))))
+				    {
+				      int type;
+				      type = name_to_type(XEN_SYMBOL_TO_C_STRING(XEN_CAR(val)));
+				      if (type > R_ANY)
+					return(type);
+				    }
+				  return(R_LIST); 
+				}
+			      else
+				if (XEN_PAIR_P(val)) return(R_PAIR);
     }
   return(R_UNSPECIFIED);
 }
@@ -2216,9 +2179,10 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
     case R_FLOAT:  v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), R_VARIABLE);                  break;
     case R_BOOL:   v = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)XEN_TO_C_BOOLEAN(val)), R_VARIABLE);             break;
     case R_VCT:    v = make_xen_value(R_VCT, add_vct_to_ptree(prog, get_vct(val)), R_VARIABLE);                            break;
+    case R_SOUND_DATA: v = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, (sound_data *)XEN_OBJECT_REF(val)), R_VARIABLE);   break;
     case R_READER: v = make_xen_value(R_READER, add_reader_to_ptree(prog, get_sf(val)), R_VARIABLE);                       break;
-    case R_MIX_READER: v = make_xen_value(R_READER, add_mix_reader_to_ptree(prog, get_mf(val)), R_VARIABLE);               break;
-    case R_TRACK_READER: v = make_xen_value(R_READER, add_track_reader_to_ptree(prog, get_tf(val)), R_VARIABLE);           break;
+    case R_MIX_READER: v = make_xen_value(R_MIX_READER, add_mix_reader_to_ptree(prog, get_mf(val)), R_VARIABLE);           break;
+    case R_TRACK_READER: v = make_xen_value(R_TRACK_READER, add_track_reader_to_ptree(prog, get_tf(val)), R_VARIABLE);     break;
     case R_CHAR:   v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);              break;
     case R_STRING: v = make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(val))), R_VARIABLE); break;
     case R_LIST:   v = make_xen_value(R_LIST, add_xen_to_ptree(prog, val), R_VARIABLE);                                    break;
@@ -2364,6 +2328,7 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
   prog->xen_vars = pt->xen_vars;
   prog->strs = pt->strs;
   prog->vcts = pt->vcts;
+  prog->sds = pt->sds;
   prog->clms = pt->clms;
   prog->vects = pt->vects;
   prog->fncs = pt->fncs;
@@ -2377,6 +2342,7 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
   prog->xen_vars = NULL;
   prog->strs = NULL;
   prog->vcts = NULL;
+  prog->sds = NULL;
   prog->clms = NULL;
   prog->vects = NULL;
   prog->fncs = NULL;
@@ -2442,6 +2408,8 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define CHAR_RESULT pt->ints[args[0]]
 #define VCT_RESULT pt->vcts[args[0]]
 #define DESC_VCT_RESULT ((args[0] < pt->vct_ctr) ? pt->vcts[args[0]] : NULL)
+#define SOUND_DATA_RESULT pt->sds[args[0]]
+#define DESC_SOUND_DATA_RESULT ((args[0] < pt->sd_ctr) ? pt->sds[args[0]] : NULL)
 #define CLM_RESULT pt->clms[args[0]]
 #define DESC_CLM_RESULT ((args[0] < pt->clm_ctr) ? pt->clms[args[0]] : NULL)
 #define VECT_RESULT pt->vects[args[0]]
@@ -2479,6 +2447,10 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_VCT_ARG_3 ((args[3] < pt->vct_ctr) ? pt->vcts[args[3]] : NULL)
 #define DESC_VCT_ARG_4 ((args[4] < pt->vct_ctr) ? pt->vcts[args[4]] : NULL)
 #define DESC_VCT_ARG_5 ((args[5] < pt->vct_ctr) ? pt->vcts[args[5]] : NULL)
+#define SOUND_DATA_ARG_1 pt->sds[args[1]]
+#define SOUND_DATA_ARG_2 pt->sds[args[2]]
+#define DESC_SOUND_DATA_ARG_1 ((args[1] < pt->sd_ctr) ? pt->sds[args[1]] : NULL)
+#define DESC_SOUND_DATA_ARG_2 ((args[2] < pt->sd_ctr) ? pt->sds[args[2]] : NULL)
 #define STRING_ARG_1 pt->strs[args[1]]
 #define STRING_ARG_2 pt->strs[args[2]]
 #define CHAR_ARG_1 ((char)(pt->ints[args[1]]))
@@ -4605,6 +4577,7 @@ static xen_value *not_p(ptree *prog, xen_value **args, int num_args)
 
 static void eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(INT_ARG_1 == INT_ARG_2);} /* safe because float arg -> #f below */
 static void vct_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(VCT_ARG_1 == VCT_ARG_2);} 
+static void sd_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(SOUND_DATA_ARG_1 == SOUND_DATA_ARG_2);} 
 static void xen_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQ_P(RXEN_ARG_1, RXEN_ARG_2);}
 static void clm_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(CLM_ARG_1 == CLM_ARG_2);}
 static void reader_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(READER_ARG_1 == READER_ARG_2);} /* safe because float arg -> #f below */
@@ -4618,6 +4591,10 @@ static char *descr_eq_b(int *args, ptree *pt)
 static char *descr_vct_eq_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eq?(" VCT_PT ", " VCT_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
+}
+static char *descr_sd_eq_b(int *args, ptree *pt) 
+{
+  return(mus_format( BOOL_PT " = eq?(" SD_PT ", " SD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_SOUND_DATA_ARG_1, args[2], DESC_SOUND_DATA_ARG_2));
 }
 static char *descr_xen_eq_b(int *args, ptree *pt) 
 {
@@ -4654,6 +4631,7 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
   switch (args[1]->type)
     {
     case R_VCT: return(package(prog, R_BOOL, vct_eq_b, descr_vct_eq_b, args, 2));
+    case R_SOUND_DATA: return(package(prog, R_BOOL, sd_eq_b, descr_sd_eq_b, args, 2));
     case R_CLM: return(package(prog, R_BOOL, clm_eq_b, descr_clm_eq_b, args, 2));
     case R_READER: return(package(prog, R_BOOL, reader_eq_b, descr_reader_eq_b, args, 2));
     case R_MIX_READER: return(package(prog, R_BOOL, mix_reader_eq_b, descr_mix_reader_eq_b, args, 2));
@@ -4671,6 +4649,7 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
 /* -------- eqv/equal -------- */
 
 static void vct_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(vct_equalp(VCT_ARG_1, VCT_ARG_2));} 
+static void sd_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(sound_data_equalp(SOUND_DATA_ARG_1, SOUND_DATA_ARG_2));} 
 static void xen_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQV_P(RXEN_ARG_1, RXEN_ARG_2);}
 static void eqv_fb(int *args, ptree *pt) {BOOL_RESULT = (Int)(FLOAT_ARG_1 == FLOAT_ARG_2);}
 static void eqv_clm(int *args, ptree *pt) {BOOL_RESULT = (Int)mus_equalp(CLM_ARG_1, CLM_ARG_2);}
@@ -4682,6 +4661,10 @@ static char *descr_eqv_fb(int *args, ptree *pt)
 static char *descr_vct_eqv_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eqv?(" VCT_PT ", " VCT_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
+}
+static char *descr_sd_eqv_b(int *args, ptree *pt) 
+{
+  return(mus_format( BOOL_PT " = eqv?(" SD_PT ", " SD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_SOUND_DATA_ARG_1, args[2], DESC_SOUND_DATA_ARG_2));
 }
 static char *descr_xen_eqv_b(int *args, ptree *pt) 
 {
@@ -4713,6 +4696,7 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
     case R_MIX_READER: return(package(prog, R_BOOL, mix_reader_eq_b, descr_mix_reader_eq_b, args, 2));
     case R_TRACK_READER: return(package(prog, R_BOOL, track_reader_eq_b, descr_track_reader_eq_b, args, 2));
     case R_VCT: return(package(prog, R_BOOL, vct_eqv_b, descr_vct_eqv_b, args, 2));
+    case R_SOUND_DATA: return(package(prog, R_BOOL, sd_eqv_b, descr_sd_eqv_b, args, 2));
     case R_KEYWORD:
     case R_LIST:
     case R_PAIR:
@@ -5719,6 +5703,8 @@ static void display_mf(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, 
 static char *descr_display_mf(int *args, ptree *pt) {return(mus_format("display(" MF_PT ")", args[1], DESC_MIX_READER_ARG_1));}
 static void display_tf(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = run_track_reader_to_string(TRACK_READER_ARG_1)); FREE(buf);}
 static char *descr_display_tf(int *args, ptree *pt) {return(mus_format("display(" TF_PT ")", args[1], DESC_TRACK_READER_ARG_1));}
+static void display_sd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sound_data_to_string(SOUND_DATA_ARG_1)); FREE(buf);}
+static char *descr_display_sd(int *args, ptree *pt) {return(mus_format("display(" SD_PT ")", args[1], DESC_SOUND_DATA_ARG_1));}
 static void display_chr(int *args, ptree *pt) {fprintf(stderr, "%c", (char)(INT_ARG_1));}
 static char *descr_display_chr(int *args, ptree *pt) {return(mus_format("display(" CHR_PT ")", args[1], (char)(INT_ARG_1)));}
 static void display_bool(int *args, ptree *pt) {fprintf(stderr, "%s", B2S(INT_ARG_1));}
@@ -5750,16 +5736,17 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_KEYWORD:    return(package(pt, R_BOOL, display_key, descr_display_key, args, 1));   break;
     case R_READER:     return(package(pt, R_BOOL, display_rd, descr_display_rd, args, 1));     break;
     case R_MIX_READER: return(package(pt, R_BOOL, display_mf, descr_display_mf, args, 1));     break;
-    case R_TRACK_READER: return(package(pt, R_BOOL, display_tf, descr_display_tf, args, 1));     break;
+    case R_TRACK_READER: return(package(pt, R_BOOL, display_tf, descr_display_tf, args, 1));   break;
     case R_FLOAT_VECTOR:
     case R_VCT:        return(package(pt, R_BOOL, display_vct, descr_display_vct, args, 1));   break;
+    case R_SOUND_DATA: return(package(pt, R_BOOL, display_sd, descr_display_sd, args, 1));     break;
     case R_BOOL:       return(package(pt, R_BOOL, display_bool, descr_display_bool, args, 1)); break;
     case R_CHAR:       return(package(pt, R_BOOL, display_chr, descr_display_chr, args, 1));   break;
     case R_GOTO:       return(package(pt, R_BOOL, display_con, descr_display_con, args, 1));   break;
     case R_FUNCTION:   return(package(pt, R_BOOL, display_func, descr_display_func, args, 1)); break;
-    case R_CLM_VECTOR: return(package(pt, R_BOOL, display_clm_vect, descr_display_vect, args, 1));   break;
-    case R_VCT_VECTOR: return(package(pt, R_BOOL, display_vct_vect, descr_display_vect, args, 1));   break;
-    case R_INT_VECTOR: return(package(pt, R_BOOL, display_int_vect, descr_display_vect, args, 1));   break;
+    case R_CLM_VECTOR: return(package(pt, R_BOOL, display_clm_vect, descr_display_vect, args, 1)); break;
+    case R_VCT_VECTOR: return(package(pt, R_BOOL, display_vct_vect, descr_display_vect, args, 1)); break;
+    case R_INT_VECTOR: return(package(pt, R_BOOL, display_int_vect, descr_display_vect, args, 1)); break;
     default:
       if (args[1]->type > R_ANY)
 	return(package(pt, R_BOOL, display_lst, descr_display_lst, args, 1));
@@ -6104,6 +6091,9 @@ static void funcall_nf(int *args, ptree *pt)
       case R_VCT: 
  	pt->vcts[func->args[i]] = pt->vcts[args[i + 2]]; 
  	break;
+      case R_SOUND_DATA: 
+ 	pt->sds[func->args[i]] = pt->sds[args[i + 2]]; 
+ 	break;
       case R_CLM: 
  	pt->clms[func->args[i]] = pt->clms[args[i + 2]]; 
  	break;
@@ -6152,6 +6142,9 @@ static void funcall_nf(int *args, ptree *pt)
     case R_FLOAT_VECTOR:
     case R_VCT:   
       VCT_RESULT = pt->vcts[fres->addr];   
+      break;
+    case R_SOUND_DATA:   
+      SOUND_DATA_RESULT = pt->sds[fres->addr];   
       break;
     case R_CLM:   
       CLM_RESULT = pt->clms[fres->addr];   
@@ -6694,6 +6687,25 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
 }
 
 
+static char *descr_make_region_sample_reader_r(int *args, ptree *pt)
+{
+  return(mus_format( RD_PT " = make-region-sample-reader(" INT_PT ", " INT_PT ", " INT_PT ")",
+		    args[0], DESC_READER_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
+static void make_region_sample_reader_r(int *args, ptree *pt) 
+{
+  if (READER_RESULT) free_snd_fd(READER_RESULT);
+  READER_RESULT = init_region_read(INT_ARG_1, INT_ARG_2, INT_ARG_3, READ_FORWARD); /* beg reg chn */
+}
+static xen_value *make_region_sample_reader_1(ptree *pt, xen_value **args, int num_args)
+{
+  xen_value *rtn;
+  rtn = package(pt, R_READER, make_region_sample_reader_r, descr_make_region_sample_reader_r, args, 3);
+  add_obj_to_gcs(pt, R_READER, rtn->addr);
+  return(rtn);
+}
+
+
 /* -------- mix -------- */
 
 static void mix_reader_f(int *args, ptree *pt) {FLOAT_RESULT = mix_read_sample_to_float(MIX_READER_ARG_1);}
@@ -7005,10 +7017,10 @@ static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, vct_ref_f, descr_vct_ref_f, args, 2));
 }
 
-static void vct_constant_set_0(int *args, ptree *pt) {VCT_ARG_1->data[0] = FLOAT_ARG_3;}
-static void vct_constant_set_1(int *args, ptree *pt) {VCT_ARG_1->data[1] = FLOAT_ARG_3;}
-static void vct_constant_set_2(int *args, ptree *pt) {VCT_ARG_1->data[2] = FLOAT_ARG_3;}
-static void vct_set_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3;}
+static void vct_constant_set_0(int *args, ptree *pt) {VCT_ARG_1->data[0] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
+static void vct_constant_set_1(int *args, ptree *pt) {VCT_ARG_1->data[1] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
+static void vct_constant_set_2(int *args, ptree *pt) {VCT_ARG_1->data[2] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
+static void vct_set_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
 
 static char *descr_vct_constant_set_0(int *args, ptree *pt) 
 {
@@ -7026,7 +7038,7 @@ static char *descr_vct_set_f(int *args, ptree *pt)
 {
   return(mus_format("vct_set!(" VCT_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
-static void vct_set_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (Float)INT_ARG_3;}
+static void vct_set_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (Float)INT_ARG_3; FLOAT_RESULT = (Float)INT_ARG_3;}
 static char *descr_vct_set_i(int *args, ptree *pt) 
 {
   return(mus_format("vct_set!(" VCT_PT ", " INT_PT ", " INT_PT ")", args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
@@ -7079,7 +7091,7 @@ static void make_vct_v(int *args, ptree *pt)
 }
 static char *descr_make_vct_v(int *args, ptree *pt) 
 {
-  return(mus_format( PTR_PT " = make_vct(" INT_PT ")", args[0], VCT_RESULT, args[1], INT_ARG_1));
+  return(mus_format( VCT_PT " = make_vct(" INT_PT ")", args[0], DESC_VCT_RESULT, args[1], INT_ARG_1));
 }
 static void make_vct_v2(int *args, ptree *pt) 
 {
@@ -7212,6 +7224,102 @@ static xen_value *vct_convolve_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_VCT, vct_convolve_0, descr_vct_convolve_0, args, 2));
 }
+
+
+
+/* ---------------- sound-data ---------------- */
+
+static void sound_data_length_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->length;}
+static char *descr_sound_data_length_i(int *args, ptree *pt) 
+{
+  return(mus_format( INT_PT " = sound-data-length(" SD_PT ")", args[0], INT_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
+}
+static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_INT, sound_data_length_i, descr_sound_data_length_i, args, 1));
+}
+
+static void sound_data_chans_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->chans;}
+static char *descr_sound_data_chans_i(int *args, ptree *pt) 
+{
+  return(mus_format( INT_PT " = sound-data-chans(" SD_PT ")", args[0], INT_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
+}
+static xen_value *sound_data_chans_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_INT, sound_data_chans_i, descr_sound_data_chans_i, args, 1));
+}
+
+static void sound_data_ref_f(int *args, ptree *pt) {FLOAT_RESULT = (Float)MUS_SAMPLE_TO_DOUBLE(SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3]);}
+static char *descr_sound_data_ref_f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = sound_data_ref(" SD_PT ", " INT_PT ", " INT_PT ")", 
+		     args[0], FLOAT_RESULT, args[1], DESC_SOUND_DATA_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
+static xen_value *sound_data_ref_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_FLOAT, sound_data_ref_f, descr_sound_data_ref_f, args, 3));
+}
+
+static void sound_data_set_f(int *args, ptree *pt) 
+{
+  SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3] = MUS_DOUBLE_TO_SAMPLE(FLOAT_ARG_4);
+  FLOAT_RESULT = FLOAT_ARG_4;
+}
+static void sound_data_set_i(int *args, ptree *pt) 
+{
+  SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3] = MUS_DOUBLE_TO_SAMPLE((Float)INT_ARG_4);
+  FLOAT_RESULT = (Float)INT_ARG_4;
+}
+
+static char *descr_sound_data_set_i(int *args, ptree *pt) 
+{
+  return(mus_format("sound_data_set!(" SD_PT ", " INT_PT ", " INT_PT ", " INT_PT ")", 
+		    args[1], DESC_SOUND_DATA_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4));
+}
+static char *descr_sound_data_set_f(int *args, ptree *pt) 
+{
+  return(mus_format("sound_data_set!(" SD_PT ", " INT_PT ", " INT_PT ", " FLT_PT ")", 
+		    args[1], DESC_SOUND_DATA_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], FLOAT_ARG_4));
+}
+
+static void sound_data_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
+{
+  xen_var *var;
+  var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
+  if (var) var->unclean = true;
+  if (v->type == R_FLOAT)
+    add_triple_to_ptree(prog, va_make_triple(sound_data_set_f, descr_sound_data_set_f, 5, NULL, in_v, in_v1, in_v2, v));
+  else add_triple_to_ptree(prog, va_make_triple(sound_data_set_i, descr_sound_data_set_i, 5, NULL, in_v, in_v1, in_v2, v));
+}
+
+static xen_value *sound_data_set_2(ptree *prog, xen_value **args, int num_args)
+{
+  xen_var *var;
+  var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
+  if (var) var->unclean = true;
+  if (args[4]->type == R_FLOAT)
+    return(package(prog, R_FLOAT, sound_data_set_f, descr_sound_data_set_f, args, 4));
+  return(package(prog, R_FLOAT, sound_data_set_i, descr_sound_data_set_i, args, 4));
+}
+
+static void make_sound_data_v(int *args, ptree *pt) 
+{
+  if (SOUND_DATA_RESULT) sound_data_free(SOUND_DATA_RESULT);
+  SOUND_DATA_RESULT = c_make_sound_data(INT_ARG_1, INT_ARG_2);
+}
+static char *descr_make_sound_data_v(int *args, ptree *pt) 
+{
+  return(mus_format( SD_PT " = make_sound_data(" INT_PT ", " INT_PT ")", args[0], DESC_SOUND_DATA_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
+}
+static xen_value *make_sound_data_1(ptree *prog, xen_value **args, int num_args)
+{
+  args[0] = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, NULL), R_VARIABLE);
+  add_obj_to_gcs(prog, R_SOUND_DATA, args[0]->addr);
+  add_triple_to_ptree(prog, va_make_triple(make_sound_data_v, descr_make_sound_data_v, 3, args[0], args[1], args[2]));
+  return(args[0]);
+}
+
+
 
 
 
@@ -7730,6 +7838,7 @@ static xen_value *snd2sample_1p(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_BOOL, snd2sample_0p, descr_snd2sample_0p, args, 1));
 }
+
 
 
 /* ---------------- sample->file ---------------- */
@@ -8531,6 +8640,11 @@ static xen_value *vct_p_1(ptree *prog, xen_value **args, int num_args)
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_VCT), R_CONSTANT));
 }
 
+static xen_value *sound_data_p_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_SOUND_DATA), R_CONSTANT));
+}
+
 static xen_value *vector_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, VECTOR_P(args[1]->type)), R_CONSTANT));
@@ -8596,6 +8710,7 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
     case R_CHAR:    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
     case R_STRING:  return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
     case R_VCT:     return(make_xen_value(R_VCT, add_vct_to_ptree(prog, get_vct(form)), R_CONSTANT)); break;
+    case R_SOUND_DATA: return(make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, (sound_data *)XEN_OBJECT_REF(form)), R_CONSTANT)); break;
     case R_PAIR:    if (constant) return(make_xen_value(R_PAIR, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
     case R_LIST:    if (constant) return(make_xen_value(R_LIST, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
     case R_SYMBOL:  return(make_xen_value(R_SYMBOL, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
@@ -8697,7 +8812,7 @@ static bool xenable(xen_value *v)
   switch (v->type)
     {
     case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL:
-    case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT: case R_KEYWORD: case R_SYMBOL:
+    case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT: case R_SOUND_DATA: case R_KEYWORD: case R_SYMBOL:
       return(true);
       break;
     default:
@@ -9087,6 +9202,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
     case R_CHAR:    pt->ints[addr] = (Int)XEN_TO_C_CHAR(arg);            break;
     case R_BOOL:    pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(arg);         break;
     case R_VCT:     pt->vcts[addr] = get_vct(arg);                       break;
+    case R_SOUND_DATA: pt->sds[addr] = (sound_data *)XEN_OBJECT_REF(arg); break;
     case R_CLM:     pt->clms[addr] = XEN_TO_MUS_ANY(arg);                break;
     case R_READER:  pt->readers[addr] = get_sf(arg);                     break;
     case R_MIX_READER: pt->mix_readers[addr] = get_mf(arg);              break;
@@ -10078,7 +10194,9 @@ static XEN eval_ptree_to_xen(ptree *pt)
 	FREE(v);
       }
       break;
-    case R_CLM:     run_warn("can't wrap gen?"); break;
+    case R_CLM:
+      run_warn("can't wrap gen?"); 
+      break;
     default:
       if (pt->result->type > R_ANY)
 	result = pt->xens[pt->result->addr]; 
@@ -10743,12 +10861,23 @@ static void init_walkers(void)
   INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, false, 1, -R_FLOAT));
   INIT_WALKER(S_vct_p, make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 
+  INIT_WALKER(S_sound_data_length, make_walker(sound_data_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_SOUND_DATA));
+  INIT_WALKER(S_sound_data_chans, make_walker(sound_data_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_SOUND_DATA));
+  INIT_WALKER(S_sound_data_p, make_walker(sound_data_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(S_sound_data_ref, make_walker(sound_data_ref_1, NULL, sound_data_set_1, 3, 3, R_FLOAT, false, 3, R_SOUND_DATA, R_INT, R_INT));
+  INIT_WALKER(S_sound_data_setB, make_walker(sound_data_set_2, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_SOUND_DATA, R_INT, R_INT, R_NUMBER));
+  INIT_WALKER(S_make_sound_data, make_walker(make_sound_data_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_INT, R_INT));
+
+
   /* -------- snd funcs */
   INIT_WALKER(S_next_sample, make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
   INIT_WALKER(S_previous_sample, make_walker(previous_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
   INIT_WALKER(S_read_sample, make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
   INIT_WALKER(S_make_sample_reader, make_walker(make_sample_reader_1, NULL, NULL, 0, 5, R_READER, false, 1, R_NUMBER));
   INIT_WALKER(S_sample_reader_p, make_walker(sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+
+  INIT_WALKER(S_make_region_sample_reader, make_walker(make_region_sample_reader_1, NULL, NULL, 3, 3, R_READER, false, 3, R_INT, R_INT, R_INT));
+  INIT_WALKER(S_read_region_sample, make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
 
   INIT_WALKER(S_read_mix_sample, make_walker(mix_reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_MIX_READER));
   INIT_WALKER(S_make_mix_sample_reader, make_walker(make_mix_sample_reader_1, NULL, NULL, 1, 2, R_MIX_READER, false, 1, R_NUMBER));

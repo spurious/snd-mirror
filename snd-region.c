@@ -1485,21 +1485,21 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 
 void g_init_regions(void)
 {
-  XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w, 9, 0, 0,     "internal func used in save-state, restores a region");
-  XEN_DEFINE_PROCEDURE(S_insert_region,      g_insert_region_w, 0, 4, 0,      H_insert_region);
-  XEN_DEFINE_PROCEDURE(S_regions,            g_regions_w, 0, 0, 0,            H_regions);
-  XEN_DEFINE_PROCEDURE(S_region_frames,      g_region_frames_w, 0, 1, 0,      H_region_frames);
-  XEN_DEFINE_PROCEDURE(S_region_srate,       g_region_srate_w, 0, 1, 0,       H_region_srate);
-  XEN_DEFINE_PROCEDURE(S_region_chans,       g_region_chans_w, 0, 1, 0,       H_region_chans);
-  XEN_DEFINE_PROCEDURE(S_region_maxamp,      g_region_maxamp_w, 0, 1, 0,      H_region_maxamp);
-  XEN_DEFINE_PROCEDURE(S_save_region,        g_save_region_w, 2, 3, 0,        H_save_region);
-  XEN_DEFINE_PROCEDURE(S_forget_region,      g_forget_region_w, 0, 1, 0,      H_forget_region);
-  XEN_DEFINE_PROCEDURE(S_play_region,        g_play_region_w, 0, 2, 0,        H_play_region);
-  XEN_DEFINE_PROCEDURE(S_make_region,        g_make_region_w, 0, 4, 0,        H_make_region);
-  XEN_DEFINE_PROCEDURE(S_mix_region,         g_mix_region_w, 0, 5, 0,         H_mix_region);
-  XEN_DEFINE_PROCEDURE(S_region_sample,      g_region_sample_w, 0, 3, 0,      H_region_sample);
+  XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w,     9, 0, 0, "internal func used in save-state, restores a region");
+  XEN_DEFINE_PROCEDURE(S_insert_region,      g_insert_region_w,      0, 4, 0, H_insert_region);
+  XEN_DEFINE_PROCEDURE(S_regions,            g_regions_w,            0, 0, 0, H_regions);
+  XEN_DEFINE_PROCEDURE(S_region_frames,      g_region_frames_w,      0, 1, 0, H_region_frames);
+  XEN_DEFINE_PROCEDURE(S_region_srate,       g_region_srate_w,       0, 1, 0, H_region_srate);
+  XEN_DEFINE_PROCEDURE(S_region_chans,       g_region_chans_w,       0, 1, 0, H_region_chans);
+  XEN_DEFINE_PROCEDURE(S_region_maxamp,      g_region_maxamp_w,      0, 1, 0, H_region_maxamp);
+  XEN_DEFINE_PROCEDURE(S_save_region,        g_save_region_w,        2, 3, 0, H_save_region);
+  XEN_DEFINE_PROCEDURE(S_forget_region,      g_forget_region_w,      0, 1, 0, H_forget_region);
+  XEN_DEFINE_PROCEDURE(S_play_region,        g_play_region_w,        0, 2, 0, H_play_region);
+  XEN_DEFINE_PROCEDURE(S_make_region,        g_make_region_w,        0, 4, 0, H_make_region);
+  XEN_DEFINE_PROCEDURE(S_mix_region,         g_mix_region_w,         0, 5, 0, H_mix_region);
+  XEN_DEFINE_PROCEDURE(S_region_sample,      g_region_sample_w,      0, 3, 0, H_region_sample);
   XEN_DEFINE_PROCEDURE(S_region_samples2vct, g_region_samples2vct_w, 0, 5, 0, H_region_samples2vct);
-  XEN_DEFINE_PROCEDURE(S_region_p,           g_region_p_w, 1, 0, 0,           H_region_p);
+  XEN_DEFINE_PROCEDURE(S_region_p,           g_region_p_w,           1, 0, 0, H_region_p);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_regions, g_max_regions_w, H_max_regions, S_setB S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
 }

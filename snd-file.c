@@ -2639,15 +2639,15 @@ XEN_NARGIFY_1(g_set_previous_files_sort_w, g_set_previous_files_sort)
 
 void g_init_file(void)
 {
-  XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,    g_add_sound_file_extension_w, 1, 0, 0,  H_add_sound_file_extension);
-  XEN_DEFINE_PROCEDURE(S_file_write_date,             g_file_write_date_w, 1, 0, 0,           H_file_write_date);
-  XEN_DEFINE_PROCEDURE(S_soundfont_info,              g_soundfont_info_w, 0, 1, 0,            H_soundfont_info);
-  XEN_DEFINE_PROCEDURE(S_preload_directory,           g_preload_directory_w, 1, 0, 0,         H_preload_directory);
-  XEN_DEFINE_PROCEDURE(S_preload_file,                g_preload_file_w, 1, 0, 0,              H_preload_file);
-  XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 0, 1, 0,  H_sound_files_in_directory);
-  XEN_DEFINE_PROCEDURE(S_open_file_dialog,            g_open_file_dialog_w, 0, 1, 0,          H_open_file_dialog);
-  XEN_DEFINE_PROCEDURE(S_mix_file_dialog, g_mix_file_dialog_w, 0, 1, 0, H_mix_file_dialog);
-  XEN_DEFINE_PROCEDURE(S_disk_kspace,                 g_disk_kspace_w, 1, 0, 0,               H_disk_kspace);
+  XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,    g_add_sound_file_extension_w, 1, 0, 0, H_add_sound_file_extension);
+  XEN_DEFINE_PROCEDURE(S_file_write_date,             g_file_write_date_w,          1, 0, 0, H_file_write_date);
+  XEN_DEFINE_PROCEDURE(S_soundfont_info,              g_soundfont_info_w,           0, 1, 0, H_soundfont_info);
+  XEN_DEFINE_PROCEDURE(S_preload_directory,           g_preload_directory_w,        1, 0, 0, H_preload_directory);
+  XEN_DEFINE_PROCEDURE(S_preload_file,                g_preload_file_w,             1, 0, 0, H_preload_file);
+  XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 0, 1, 0, H_sound_files_in_directory);
+  XEN_DEFINE_PROCEDURE(S_open_file_dialog,            g_open_file_dialog_w,         0, 1, 0, H_open_file_dialog);
+  XEN_DEFINE_PROCEDURE(S_mix_file_dialog, g_mix_file_dialog_w,                      0, 1, 0, H_mix_file_dialog);
+  XEN_DEFINE_PROCEDURE(S_disk_kspace,                 g_disk_kspace_w,              1, 0, 0, H_disk_kspace);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info, g_sound_loop_info_w, H_sound_loop_info,
 				   S_setB S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 

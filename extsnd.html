@@ -2185,6 +2185,7 @@ there are also several functions that create and fill vcts with data:</p>
   <a href="#sounddata2vct">sound-data-&gt;vct</a>
   <a href="sndscm.html#track2vct">track-&gt;vct</a>
   <a href="#sndvector2vct">vector-&gt;vct</a>
+  <a href="#selection2vct">selection-&gt;vct</a>
 </pre>
 <p>There is one slightly
 unusual function in this family: <i>vct-map!</i>.
@@ -2638,6 +2639,28 @@ and <i>read-track-sample</i>.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="copysamplereader">copy-sample-reader</a></em> (obj)</code></span></td></tr>
 <tr><td width=50><br></td>
 <td>return a copy of <i>obj</i> (any kind of sample-reader).
+<br>
+<br>
+<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<blockquote><small>
+<br>
+copy file: in Guile: copy-file, in Ruby: File.copy or File.syscopy<br>
+copy string: in Guile: string-copy.<br>
+copy list: in Guile: list-copy.<br>
+copy vct: <a href="#vctcopy">vct-copy</a><br>
+copy mix: <a href="#copymix">copy-mix</a><br>
+copy track: <a href="#copytrack">copy-track</a><br>
+copy sample reader: <a href="#copysamplereader">copy-sample-reader</a><br>
+copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
+copy channel data: <a href="#channel2vct">channel-&gt;vct</a> or <a href="#sndsaveas">save-sound-as</a><br>
+copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="#sndsaveselection">save-selection</a><br>
+copy region data: <a href="#region2vct">region-&gt;vct</a>, <a href="#sndregionsamples2vct">region-samples-&gt;vct, or <a href="#sndsaveregion">save-region</a><br>
+copy transform data: <a href="#transformsamples2vct">transform-samples-&gt;vct</a><br>
+copy sound-data: <a href="#sounddata2vct">sound-data-&gt;vct</a><br>
+<br>
+</small></blockquote>
+</td></tr></TABLE>
+<br>
 </td></tr>
 
 <!-- free-sample-reader -->
@@ -2714,7 +2737,27 @@ can read external sounds without going to the trouble of loading them into Snd.
 
 <!-- read-region-sample -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="readregionsample">read-region-sample</a></em> (obj)</code></span></td></tr>
-<tr><td></td><td>return next sample read by region-sample-reader <i>obj</i>.</td></tr>
+<tr><td></td><td>return next sample read by region-sample-reader <i>obj</i>.
+</td></tr>
+
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<A NAME="region2vct"></a>
+(define* (region-&gt;vct reg #:optional (chn 0))
+  (if (region? reg)
+      (if (&lt; chn (region-chans reg))
+	  (let* ((reader (<em class=red>make-region-sample-reader</em> 0 reg chn))
+		 (len (region-frames reg))
+		 (data (make-vct len)))
+	    (do ((i 0 (1+ i)))
+		((= i len) data)
+	      (vct-set! data i (<em class=red>reader</em>))))
+	  (throw 'no-such-channel (list "region-&gt;vct" reg chn)))
+      (throw 'no-such-region (list "region-&gt;vct" reg))))
+</pre></td></tr></table>
+<br>
+
+</td></tr>
 
 <!-- read-sample -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="readsample">read-sample</a></em> (obj)</code></span></td></tr>
@@ -4057,6 +4100,7 @@ The following code sets the 'unite' button if the current sound has more than 4 
 
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<A NAME="selection2vct"></a>
 (define* (selection-&gt;vct #:optional snd chn)
   (if (selection-member? snd chn)
       (<em class=red>channel-&gt;vct</em> (selection-position snd chn)

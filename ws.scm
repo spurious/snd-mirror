@@ -1,5 +1,7 @@
 ;;; with-sound and friends
 
+;;; SOMEDAY: mix/track output through outn (perhaps via with-mix?)
+
 (use-modules (ice-9 optargs) (ice-9 format))
 (if (not (defined? 'local-variables)) (load-from-path "debug.scm"))
 

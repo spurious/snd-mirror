@@ -25,8 +25,6 @@ noise reduction.
 In snd-test.scm, the gtk (xg) section needs to be completed.
   Similarly for OpenGL and Ruby (snd_test.rb).
 
-A jack connection (the Linux Jack library).
-
 Gtk versions of bess.scm and Dave Phillips' extensions
     dlp/fft-menu.scm
     dlp/misc.scm
@@ -36,9 +34,6 @@ Gtk versions of bess.scm and Dave Phillips' extensions
 Both versions could be rewritten to take advantage of the optimizer.
   See bess1.scm/rb by Michael Scholz.
 
-A nice user-interface to the track mechanism, perhaps as an
-  extension of the current Mix Panel.
-
 find and fix clipping (some kind of plausible smoothing operation over
   the truncated portion, perhaps with global rescaling afterwards).
 
@@ -47,3 +42,6 @@ It should be possible to build Snd in Windows with either
   (Snd needs 2.0 or later).
 
 A CD building script.
+
+sdif file support (all I need is a routine to translate from
+sdif to aifc or some such format).

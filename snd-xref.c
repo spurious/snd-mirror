@@ -3443,6 +3443,36 @@ static char *help_urls[HELP_NAMES_SIZE] = {
   "extsnd.html#zoomcolor",
   "extsnd.html#zoomfocusstyle"};
 
+static char *Vcts_xrefs[] = {
+  "copy file: in Guile: copy-file, in Ruby: File.copy or File.syscopy",
+  "copy string: in Guile: string-copy.",
+  "copy list: in Guile: list-copy.",
+  "copy vct: {vct-copy}",
+  "copy mix: {copy-mix}",
+  "copy track: {copy-track}",
+  "copy sample reader: see above",
+  "copy (clone) current sound edit state: {clone-sound-as}",
+  "copy channel data: {channel->ct} or {save-sound-as}",
+  "copy selection data: {selection->ct} or {save-selection}",
+  "copy region data: {region->ct} or {save-region}",
+  "copy sound-data: {sound-data->ct}",
+  NULL};
+
+static char *Vcts_urls[] = {
+  NULL,
+  NULL,
+  NULL,
+  "extsnd.html#vctcopy",
+  "extsnd.html#copymix",
+  "extsnd.html#copytrack",
+  NULL,
+  "extsnd.html#clonesoundas",
+  "extsnd.html#channel2vct",
+  "extsnd.html#selection2vct",
+  "extsnd.html#region2vct",
+  "extsnd.html#sounddata2vct",
+  NULL};
+
 static char *Marking_xrefs[] = {
   "global find-mark: {mark-name->d}",
   "mark history: {describe-mark}",
@@ -3525,7 +3555,7 @@ static char *Mixing_urls[] = {
   "sndscm.html#panmixregion",
   "sndscm.html#panmixvct",
   "snd.html#mixdialog",
-  "extsnd.html#usepanmixinmixmenu",
+  "sndscm.html#usepanmixinmixmenu",
   NULL,
   "sndscm.html#fadedoc",
   "sndscm.html#zipdoc",

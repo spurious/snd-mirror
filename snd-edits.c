@@ -9996,7 +9996,7 @@ static XEN g_xen2sample(XEN os, XEN frame, XEN chan)
 
 static XEN g_make_snd2sample(XEN snd, XEN edp)
 {
-  #define H_make_snd2sample "(" S_make_snd2sample " (snd #f)): return a new " S_snd2sample " (input) generator"
+  #define H_make_snd2sample "(" S_make_snd2sample " (snd #f) (edpos -1)): return a new " S_snd2sample " (input) generator"
   mus_xen *gn;
   mus_any *ge;
   snd_info *sp;
@@ -10077,10 +10077,10 @@ XEN_ARGIFY_7(g_insert_sound_w, g_insert_sound)
 XEN_ARGIFY_6(g_scale_sound_by_w, g_scale_sound_by)
 XEN_ARGIFY_6(g_scale_channel_w, g_scale_channel)
 XEN_ARGIFY_5(g_scale_sound_to_w, g_scale_sound_to)
-XEN_ARGIFY_7(g_change_samples_with_origin_w, g_change_samples_with_origin)
-XEN_ARGIFY_6(g_delete_samples_with_origin_w, g_delete_samples_with_origin)
-XEN_ARGIFY_7(g_insert_samples_with_origin_w, g_insert_samples_with_origin)
-XEN_ARGIFY_7(g_override_samples_with_origin_w, g_override_samples_with_origin)
+XEN_NARGIFY_7(g_change_samples_with_origin_w, g_change_samples_with_origin)
+XEN_NARGIFY_6(g_delete_samples_with_origin_w, g_delete_samples_with_origin)
+XEN_NARGIFY_7(g_insert_samples_with_origin_w, g_insert_samples_with_origin)
+XEN_NARGIFY_5(g_override_samples_with_origin_w, g_override_samples_with_origin)
 XEN_ARGIFY_4(g_sample_w, g_sample)
 XEN_ARGIFY_5(g_set_sample_w, g_set_sample)
 XEN_ARGIFY_5(g_samples_w, g_samples)

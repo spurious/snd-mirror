@@ -2267,7 +2267,6 @@ static bool make_spectrogram(chan_info *cp)
        *          glRectf in bg color
        *          no action (something is still clearing the darn thing!)
        * TODO: get gl spectro to work in united channel cases
-       * TODO: check out 1.0.5 gtkglext antiflicker changes
        */
       /* SOMEDAY: editable spectrogram (select, apply any selection-proc)
 	 TODO: printing support (via pixmaps I guess) glReadBuffer(GL_BACK) then glReadPixels

@@ -9,8 +9,6 @@
 	UL {list-style-type: none}
 -->
 
-<!-- TODO: sndins and gfm documentation -->
-
 </style>
 </head>
 <body bgcolor=white>
@@ -45,6 +43,7 @@
 <li><a href="#currentstatus">Current Status</a>
 <li><a href="#lowerlevels">Lower Levels</a>
 <li><a href="#sndlibguile">Sndlib and Guile</a>
+<li><a href="#sndlibforth">Sndlib and Forth</a>
 </ul>
 <br>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="introduction">Introduction</a></h2></td></tr></table>
@@ -885,13 +884,17 @@ static SCM call_phase-vocoder(void)
   /* etc */
 }
 </pre>
+<p>
+Michael Scholz
+has written a package using these functions, and several CLM instruments:
+see the sndins directory, and in particular the README file, for details.
+</p>
+
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="otherexamples">Other Examples</a></h3></td></tr></table>
 
 <p>The primary impetus for the sound library was the development
-of Snd and CLM, both of which are freely available.  Michael Scholz
-has written a package using these functions, and several CLM instruments:
-see sndins-1.0.0.tar.gz at ccrma-ftp.
+of Snd and CLM, both of which are freely available.
 </p>
 <br>
 
@@ -1215,6 +1218,14 @@ guile&gt; (oscil osc)
 Guile, and the second (mus_xen_init) ties clm2xen.c into Guile.  See bess.scm
 and bess.rb in the Snd tarball.
 </p>
+
+<br>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibforth">Sndlib and Forth</a></h2></td></tr></table>
+<p>
+Michael Scholz has provided a Forth version of sndlib and CLM -- see the README
+file in the gfm directory for details.
+</p>
+
 
 <center>
 <table border=1><tr><td>

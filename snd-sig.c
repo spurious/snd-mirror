@@ -4193,13 +4193,13 @@ void g_init_sig(void)
 {
 #if WITH_RUN
   XEN_EVAL_C_STRING("(use-modules (ice-9 optargs))");
-  XEN_DEFINE_PROCEDURE(S_scan_channel "-1",       g_scan_channel_w, 1, 5, 0,            H_scan_channel);
-  XEN_DEFINE_PROCEDURE(S_scan_chan "-1",          g_scan_chan_w, 1, 5, 0,               H_scan_chan);
-  XEN_DEFINE_PROCEDURE(S_find "-1",               g_find_w, 1, 4, 0,                    H_find);
-  XEN_DEFINE_PROCEDURE(S_count_matches "-1",      g_count_matches_w, 1, 4, 0,           H_count_matches);
-  XEN_DEFINE_PROCEDURE(S_map_chan "-1",           g_map_chan_w, 1, 6, 0,                H_map_chan);
-  XEN_DEFINE_PROCEDURE(S_map_channel "-1",        g_map_channel_w, 1, 6, 0,             H_map_channel);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel_w, 1, 8, 0,           H_ptree_channel);
+  XEN_DEFINE_PROCEDURE(S_scan_channel "-1",       g_scan_channel_w,  1, 5, 0, H_scan_channel);
+  XEN_DEFINE_PROCEDURE(S_scan_chan "-1",          g_scan_chan_w,     1, 5, 0, H_scan_chan);
+  XEN_DEFINE_PROCEDURE(S_find "-1",               g_find_w,          1, 4, 0, H_find);
+  XEN_DEFINE_PROCEDURE(S_count_matches "-1",      g_count_matches_w, 1, 4, 0, H_count_matches);
+  XEN_DEFINE_PROCEDURE(S_map_chan "-1",           g_map_chan_w,      1, 6, 0, H_map_chan);
+  XEN_DEFINE_PROCEDURE(S_map_channel "-1",        g_map_channel_w,   1, 6, 0, H_map_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel_w, 1, 8, 0, H_ptree_channel);
 
   XEN_EVAL_C_STRING("(defmacro* scan-channel (form #:rest args) `(apply scan-channel-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_scan_channel, H_scan_channel);
@@ -4216,46 +4216,46 @@ void g_init_sig(void)
   XEN_EVAL_C_STRING("(defmacro* ptree-channel (form #:rest args) `(apply ptree-channel-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_ptree_channel, H_ptree_channel);
 #else
-  XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w, 1, 5, 0,            H_scan_channel);
-  XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w, 1, 5, 0,               H_scan_chan);
-  XEN_DEFINE_PROCEDURE(S_find,                    g_find_w, 1, 4, 0,                    H_find);
-  XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w, 1, 4, 0,           H_count_matches);
-  XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w, 1, 6, 0,                H_map_chan);
-  XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w, 1, 6, 0,             H_map_channel);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel_w, 1, 8, 0,           H_ptree_channel);
+  XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w,            1, 5, 0, H_scan_channel);
+  XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w,               1, 5, 0, H_scan_chan);
+  XEN_DEFINE_PROCEDURE(S_find,                    g_find_w,                    1, 4, 0, H_find);
+  XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w,           1, 4, 0, H_count_matches);
+  XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w,                1, 6, 0, H_map_chan);
+  XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w,             1, 6, 0, H_map_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel_w,           1, 8, 0, H_ptree_channel);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_smooth_sound,            g_smooth_sound_w, 0, 4, 0,            H_smooth_sound);
-  XEN_DEFINE_PROCEDURE(S_smooth_selection,        g_smooth_selection_w, 0, 0, 0,        H_smooth_selection);
-  XEN_DEFINE_PROCEDURE(S_reverse_sound,           g_reverse_sound_w, 0, 3, 0,           H_reverse_sound);
-  XEN_DEFINE_PROCEDURE(S_reverse_selection,       g_reverse_selection_w, 0, 0, 0,       H_reverse_selection);
-  XEN_DEFINE_PROCEDURE(S_swap_channels,           g_swap_channels_w, 0, 8, 0,           H_swap_channels);
-  XEN_DEFINE_PROCEDURE(S_insert_silence,          g_insert_silence_w, 2, 2, 0,          H_insert_silence);
+  XEN_DEFINE_PROCEDURE(S_smooth_sound,            g_smooth_sound_w,            0, 4, 0, H_smooth_sound);
+  XEN_DEFINE_PROCEDURE(S_smooth_selection,        g_smooth_selection_w,        0, 0, 0, H_smooth_selection);
+  XEN_DEFINE_PROCEDURE(S_reverse_sound,           g_reverse_sound_w,           0, 3, 0, H_reverse_sound);
+  XEN_DEFINE_PROCEDURE(S_reverse_selection,       g_reverse_selection_w,       0, 0, 0, H_reverse_selection);
+  XEN_DEFINE_PROCEDURE(S_swap_channels,           g_swap_channels_w,           0, 8, 0, H_swap_channels);
+  XEN_DEFINE_PROCEDURE(S_insert_silence,          g_insert_silence_w,          2, 2, 0, H_insert_silence);
 
-  XEN_DEFINE_PROCEDURE(S_scale_selection_to,      g_scale_selection_to_w, 0, 1, 0,      H_scale_selection_to);
-  XEN_DEFINE_PROCEDURE(S_scale_selection_by,      g_scale_selection_by_w, 1, 0, 0,      H_scale_selection_by);
-  XEN_DEFINE_PROCEDURE(S_scale_to,                g_scale_to_w, 0, 3, 0,                H_scale_to);
-  XEN_DEFINE_PROCEDURE(S_scale_by,                g_scale_by_w, 1, 2, 0,                H_scale_by);
-  XEN_DEFINE_PROCEDURE(S_env_selection,           g_env_selection_w, 1, 1, 0,           H_env_selection);
-  XEN_DEFINE_PROCEDURE(S_env_sound,               g_env_sound_w, 1, 6, 0,               H_env_sound);
-  XEN_DEFINE_PROCEDURE(S_fft,                     g_fft_w, 2, 1, 0,                     H_fft);
-  XEN_DEFINE_PROCEDURE(S_snd_spectrum,            g_snd_spectrum_w, 1, 6, 0,            H_snd_spectrum);
-  XEN_DEFINE_PROCEDURE(S_vct_convolve,            g_vct_convolve_w, 1, 1, 0,            H_vct_convolve);
-  XEN_DEFINE_PROCEDURE(S_convolve_with,           g_convolve_with_w, 1, 4, 0,           H_convolve_with);
+  XEN_DEFINE_PROCEDURE(S_scale_selection_to,      g_scale_selection_to_w,      0, 1, 0, H_scale_selection_to);
+  XEN_DEFINE_PROCEDURE(S_scale_selection_by,      g_scale_selection_by_w,      1, 0, 0, H_scale_selection_by);
+  XEN_DEFINE_PROCEDURE(S_scale_to,                g_scale_to_w,                0, 3, 0, H_scale_to);
+  XEN_DEFINE_PROCEDURE(S_scale_by,                g_scale_by_w,                1, 2, 0, H_scale_by);
+  XEN_DEFINE_PROCEDURE(S_env_selection,           g_env_selection_w,           1, 1, 0, H_env_selection);
+  XEN_DEFINE_PROCEDURE(S_env_sound,               g_env_sound_w,               1, 6, 0, H_env_sound);
+  XEN_DEFINE_PROCEDURE(S_fft,                     g_fft_w,                     2, 1, 0, H_fft);
+  XEN_DEFINE_PROCEDURE(S_snd_spectrum,            g_snd_spectrum_w,            1, 6, 0, H_snd_spectrum);
+  XEN_DEFINE_PROCEDURE(S_vct_convolve,            g_vct_convolve_w,            1, 1, 0, H_vct_convolve);
+  XEN_DEFINE_PROCEDURE(S_convolve_with,           g_convolve_with_w,           1, 4, 0, H_convolve_with);
   XEN_DEFINE_PROCEDURE(S_convolve_selection_with, g_convolve_selection_with_w, 1, 1, 0, H_convolve_selection_with);
-  XEN_DEFINE_PROCEDURE(S_src_sound,               g_src_sound_w, 1, 4, 0,               H_src_sound);
-  XEN_DEFINE_PROCEDURE(S_src_selection,           g_src_selection_w, 1, 1, 0,           H_src_selection);
-  XEN_DEFINE_PROCEDURE(S_filter_sound,            g_filter_sound_w, 1, 4, 0,            H_filter_sound);
-  XEN_DEFINE_PROCEDURE(S_filter_selection,        g_filter_selection_w, 1, 1, 0,        H_filter_selection);
+  XEN_DEFINE_PROCEDURE(S_src_sound,               g_src_sound_w,               1, 4, 0, H_src_sound);
+  XEN_DEFINE_PROCEDURE(S_src_selection,           g_src_selection_w,           1, 1, 0, H_src_selection);
+  XEN_DEFINE_PROCEDURE(S_filter_sound,            g_filter_sound_w,            1, 4, 0, H_filter_sound);
+  XEN_DEFINE_PROCEDURE(S_filter_selection,        g_filter_selection_w,        1, 1, 0, H_filter_selection);
 
-  XEN_DEFINE_PROCEDURE(S_reverse_channel,         g_reverse_channel_w, 0, 5, 0,         H_reverse_channel);
-  XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w, 1, 6, 0,             H_clm_channel);
-  XEN_DEFINE_PROCEDURE(S_env_channel,             g_env_channel_w, 1, 5, 0,             H_env_channel);
-  XEN_DEFINE_PROCEDURE(S_ramp_channel,            g_ramp_channel_w, 2, 5, 0,            H_ramp_channel);
-  XEN_DEFINE_PROCEDURE(S_xramp_channel,           g_xramp_channel_w, 2, 6, 0,           H_xramp_channel);
-  XEN_DEFINE_PROCEDURE(S_smooth_channel,          g_smooth_channel_w, 0, 5, 0,          H_smooth_channel);
-  XEN_DEFINE_PROCEDURE(S_src_channel,             g_src_channel_w, 1, 5, 0,             H_src_channel);
-  XEN_DEFINE_PROCEDURE(S_pad_channel,             g_pad_channel_w, 2, 3, 0,             H_pad_channel);
+  XEN_DEFINE_PROCEDURE(S_reverse_channel,         g_reverse_channel_w,         0, 5, 0, H_reverse_channel);
+  XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w,             1, 6, 0, H_clm_channel);
+  XEN_DEFINE_PROCEDURE(S_env_channel,             g_env_channel_w,             1, 5, 0, H_env_channel);
+  XEN_DEFINE_PROCEDURE(S_ramp_channel,            g_ramp_channel_w,            2, 5, 0, H_ramp_channel);
+  XEN_DEFINE_PROCEDURE(S_xramp_channel,           g_xramp_channel_w,           2, 6, 0, H_xramp_channel);
+  XEN_DEFINE_PROCEDURE(S_smooth_channel,          g_smooth_channel_w,          0, 5, 0, H_smooth_channel);
+  XEN_DEFINE_PROCEDURE(S_src_channel,             g_src_channel_w,             1, 5, 0, H_src_channel);
+  XEN_DEFINE_PROCEDURE(S_pad_channel,             g_pad_channel_w,             2, 3, 0, H_pad_channel);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);

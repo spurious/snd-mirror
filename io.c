@@ -57,7 +57,7 @@
 #include "sndlib.h"
 
 /* data translations for big/little endian machines
- *   the m_* forms are macros where possible for speed (dating back to 1991 -- probably no longer needed -- gcc O3 switch?)
+ *   the m_* forms are macros where possible for speed (dating back to 1991 -- probably not needed)
  */
 
 void mus_bint_to_char(unsigned char *j, int x)

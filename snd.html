@@ -1568,11 +1568,10 @@ in the other cases, the default is to
 start at the current cursor location.
 The mixed-in sound is displayed as a separate waveform above the main waveform with
 a red tag at the beginning.  You can drag the tag to reposition the
-mix.  The underlying sound being mixed can be edited by the same
-functions used throughout Snd; the mix number is used as the first
-(only) member of a list where the functions take the sound index
-argument.  It is usually handier, however, to adjust the mix
-via the Mix Dialog.</p>
+mix.  The amplitude, amplitude envelope, and speed (resampling rate) of the mixed-in portion can
+be changed independently of anything else either through such functions as
+<a href="extsnd.html#sndmixamp">mix-amp</a>, or through the View:Mix Dialog.
+</p>
 	<!-- I(move mixed file):O(drag mix tag)(mixingfiles) -->
 	<!-- I(move mixed file):A(mixingfiles) -->
 
@@ -1583,14 +1582,14 @@ via the Mix Dialog.</p>
 
 <p>The Mix Dialog (under the View Menu) provides various
 commonly-used controls on the currently chosen mix.  At the top are
-the mix id, name, begin and end times, and a play button for the mix,
+the mix id (an integer), begin and end times, and a play button for the mix,
 followed by the track number, a play button for the track, and a
-panning button (that icon is a pan...).  If the pan is set (am I babbling?)
+panning button (that icon is a pan...).  If the pan button is set,
 the track amplitude envelope is inverted before being applied to the mix;
 in conjunction with the un-inverted case, this treats the track envelope
 as a panning control.
 Beneath all that are various sliders
-controlling the speed (sampling rate) of the mix, and the amplitude of each
+controlling the speed (resampling rate) of the mix, and the amplitude of each
 input channel; and finally, an editor for the mix's (input) channels.
 The current mix amp env is not actually changed until you click 'Apply Env'.
 The editor envelope is drawn in black with dots whereas the current
