@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 3
-#define MUS_DATE "2-Aug-04"
+#define MUS_REVISION 4
+#define MUS_DATE "24-Aug-04"
 
 /*
+ * 24-Aug:     removed mus_inspect method -- overlaps mus_describe and is useless given gdb capabilities.
  * 27-July:    mus_granulate_with_editor and mus_phase_vocoder_with_editors.
  * 21-July:    edit-func as run-time arg to granulate (for CL/clm compatibility)
  * 19-July:    clm 3.0!
@@ -178,7 +179,6 @@ typedef struct mus_any_class {
   char *name;
   int (*release)(mus_any *ptr);
   char* (*describe)(mus_any *ptr);
-  char* (*inspect)(mus_any *ptr);
   bool (*equalp)(mus_any *gen1, mus_any *gen2);
   Float* (*data)(mus_any *ptr);
   Float* (*set_data)(mus_any *ptr, Float *new_data);
@@ -281,7 +281,6 @@ Float mus_array_interp(Float *wave, Float phase, int size);
 
 int mus_free(mus_any *ptr);
 char *mus_describe(mus_any *gen);
-char *mus_inspect(mus_any *gen);
 bool mus_equalp(mus_any *g1, mus_any *g2);
 Float mus_phase(mus_any *gen);
 Float mus_set_phase(mus_any *gen, Float val);

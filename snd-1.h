@@ -1076,6 +1076,7 @@ void set_wavo_trace(int uval);
 void set_dot_size(int val);
 chan_info *virtual_selected_channel(chan_info *cp);
 void handle_cursor(chan_info *cp, kbd_cursor_t redisplay);
+void handle_cursor_with_sync(chan_info *cp, kbd_cursor_t redisplay);
 void chans_field(fcp_t field, Float val);
 void in_set_transform_graph_type(graph_type_t val);
 void in_set_fft_window(mus_fft_window_t val);

@@ -962,7 +962,6 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#mus-hop">mus-hop</a></td><td>(gen)</td><td>hop amount of gen (<a class=quiet href="clm.html#granulate">granulate</a>)</td></tr>
 <tr><td><a href="clm.html#mus-increment">mus-increment</a></td><td>(gen)</td><td>increment of gen (src, readin, granulate)</td></tr>
 <tr><td><a href="clm.html#mus-input?">mus-input?</a></td><td>(gen)</td><td>#t if gen is input source</td></tr>
-<tr><td><a href="clm.html#mus-inspect">mus-inspect</a></td><td>(gen)</td><td>return internal (complete) description of gen</td></tr>
 <tr><td><a href="clm.html#mus-interp-type">mus-interp-type</a></td><td>(gen)</td><td>interpolation choice of gen</td></tr>
 <tr><td><a href="clm.html#mus-length">mus-length</a></td><td>(gen)</td><td>length of gen</td></tr>
 <tr><td><a href="clm.html#mus-location">mus-location</a></td><td>(gen)</td><td>location (read point) of gen</td></tr>
@@ -2208,7 +2207,6 @@ If you have a pointer to a CLM generator, you can use:
 </p>
 <pre>
 p mus_describe(arg)  --  show the outsider's view of arg
-p mus_inspect(arg)  --  show every internal field of arg
 </pre>
 <p>The ge function can show current Snd state:</p>
 <pre>

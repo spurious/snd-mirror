@@ -1,12 +1,10 @@
 #!/bin/csh -f
 
-set snddir = /home/bil/dist/snd
-set snddlp = /home/bil/dist/snd/dlp
-set sndtools = /home/bil/dist/snd/tools
-set movdir = /home/bil/mov
-set curdir = /home/bil/cl
-set curdlp = /home/bil/cl/dlp
-set curtools = /home/bil/cl
+set snddir = /usr/ccrma/lisp/src/snd
+set snddlp = /usr/ccrma/lisp/src/snd/dlp
+set sndtools = /usr/ccrma/lisp/src/snd/tools
+set curdir = $cwd
+set curtools = $cwd/tools
 
 date > $curdir/hi
 echo ' ' >> $curdir/hi
@@ -16,25 +14,25 @@ foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm make
   if (-e $curdir/$file) then
     diff -bcw $curdir/$file $snddir/$file >> $curdir/hi
     find $curdir/$file -newer $snddir/$file -exec echo ' updating ' $file \;
-    find $curdir/$file -newer $snddir/$file -exec cp $snddir/$file $movdir \;
     find $curdir/$file -newer $snddir/$file -exec cp $curdir/$file $snddir \;
-  endif
-end
-
-chdir curdlp
-foreach file (*.scm)
-  if (-e $curdir/$file) then
-    find $curdir/$file -newer $curdlp/$file -exec echo ' cl-dlp mismatch ' $file \;
   endif
 end
 
 chdir snddlp
 foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm makesnd.* *.lisp snd.spec old-snd.spec *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub)
-  if (-e $curdlp/$file) then
-    diff -bcw $curdlp/$file $snddlp/$file >> $curdir/hi
-    find $curdlp/$file -newer $snddlp/$file -exec echo ' updating ' dlp/$file \;
-    find $curdlp/$file -newer $snddlp/$file -exec cp $snddlp/$file $movdir \;
-    find $curdlp/$file -newer $snddlp/$file -exec cp $curdlp/$file $snddlp \;
+  if (-e $curdir/dlp/$file) then
+    diff -bcw $curdir/dlp/$file $snddlp/$file >> $curdir/hi
+    find $curdir/dlp/$file -newer $snddlp/$file -exec echo ' updating ' dlp/$file \;
+    find $curdir/dlp/$file -newer $snddlp/$file -exec cp $curdir/dlp/$file $snddlp \;
+  endif
+end
+
+chdir curtools
+foreach file (*)
+  if (-e $curdir/$file) then
+    diff -bcw $curdir/$file $curtools/$file >> $curdir/hi
+    find $curdir/$file -newer $curtools/$file -exec echo ' updating ' tools/$file \;
+    find $curdir/$file -newer $curtools/$file -exec cp $curdir/$file $curtools \;
   endif
 end
 
@@ -43,20 +41,13 @@ foreach file (*)
   if (-e $curtools/$file) then
     diff -bcw $curtools/$file $sndtools/$file >> $curdir/hi
     find $curtools/$file -newer $sndtools/$file -exec echo ' updating ' tools/$file \;
-    find $curtools/$file -newer $sndtools/$file -exec cp $sndtools/$file $movdir \;
     find $curtools/$file -newer $sndtools/$file -exec cp $curtools/$file $sndtools \;
   endif
 end
-  
 
-chdir snddir
 cp $curdir/configure $snddir
-
-rm snd.tar
-tar -chf snd.tar *
 
 chdir curdir
 wc hi
-mv po/snd.pot $movdir
 xgettext --keyword=_ --keyword=N_ --files-from=po/POTFILES.in -o po/snd.pot
 cp po/snd.pot $snddir/po/snd.pot

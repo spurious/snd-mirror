@@ -4388,7 +4388,6 @@ static mus_any_class FCOMB_CLASS = {
   "fcomb",                       /* mus_name: class name (used in descriptive/error messages) */
   &amp;free_fcomb,                   /* mus_free: free gen's struct etc */
   &amp;describe_fcomb,               /* mus_describe: user-friendly description */
-  &amp;describe_fcomb,               /* mus_inspect: internal debugging description */
   &amp;fcomb_equalp,                 /* mus_equalp: check equality of fcomb gens */
   &amp;fcomb_data,                   /* mus_data: the fcomb delay line, a float array */
   0,                             /* mus_set_data: not implemented for fcomb */

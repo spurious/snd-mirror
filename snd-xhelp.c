@@ -505,7 +505,7 @@ static void create_help_monolog(void)
       XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->doit_again_button_color, NULL);
     }
   set_dialog_widget(HELP_DIALOG, help_dialog);
 }

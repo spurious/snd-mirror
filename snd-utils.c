@@ -433,7 +433,7 @@ static void set_padding(void *p1, void *p2, int len)
   for (i = 0, j = len + MEM_PAD_SIZE; i < MEM_PAD_SIZE; i++, j++) ip2[j] = (char)i;
 }
 
-static void check_padding(void *p1, void *p2, int len)
+static void check_padding(void *p1, void *p2, int len, bool refill)
 {
   int i, j;
   char *ip2;
@@ -446,6 +446,9 @@ static void check_padding(void *p1, void *p2, int len)
 	fprintf(stderr,")\n");
 	abort();
       }
+  if (refill)
+    for (i = MEM_PAD_SIZE; i < len + MEM_PAD_SIZE; i++)
+      ip2[i] = 'X';
   for (i = 0, j = len + MEM_PAD_SIZE; i < MEM_PAD_SIZE; i++, j++) 
     if (ip2[j] != (char)i)
       {
@@ -462,7 +465,7 @@ static int last_forgotten = -1;
 static int last_remembered = -1, last_remembered_ptr = -1;
 #define FREED_POINTER 0x99999999
 
-static void *forget_pointer(void *ptr, const char *func, const char *file, int line)
+static void *forget_pointer(void *ptr, const char *func, const char *file, int line, bool refill)
 {
   int i;
   void *rtp;
@@ -471,7 +474,7 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   if (last_remembered_ptr == (int)ptr)
     {
       rtp = (void *)true_pointers[last_remembered];
-      check_padding(ptr, rtp, sizes[last_remembered]);
+      check_padding(ptr, rtp, sizes[last_remembered], refill);
       pointers[last_remembered] = 0;
       true_pointers[last_remembered] = 0;
       stacks[last_remembered] = NULL;
@@ -483,7 +486,7 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
     if (pointers[i] == (int)ptr)
       {
 	rtp = (void *)true_pointers[i];
-	check_padding(ptr, rtp, sizes[i]);
+	check_padding(ptr, rtp, sizes[i], refill);
 	pointers[i] = 0;
 	true_pointers[i] = 0;
 	stacks[i] = NULL;
@@ -610,7 +613,7 @@ void mem_free(void *ptr, const char *func, const char *file, int line)
 {
   void *true_ptr;
   /* fprintf(stderr,"free %s %s[%d]: %p\n", func, file, line, ptr); */
-  true_ptr = forget_pointer(ptr, func, file, line);
+  true_ptr = forget_pointer(ptr, func, file, line, true);
 #if WITH_EFENCE
   ef_free(ptr);
 #else
@@ -627,7 +630,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
       fprintf(stderr, "%s:%s[%d] attempt to realloc %d bytes", func, file, line, size);
       mem_report(); abort();
     }
-  true_ptr = (char *)forget_pointer(ptr, func, file, line);
+  true_ptr = (char *)forget_pointer(ptr, func, file, line, false);
 #if WITH_EFENCE
   new_ptr = (char *)ef_realloc((void *)ptr, size);
 #else

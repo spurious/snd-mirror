@@ -1278,7 +1278,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = true; 
-	      handle_cursor(cp, CURSOR_IN_MIDDLE);
+	      handle_cursor_with_sync(cp, CURSOR_IN_MIDDLE);
 	      break;
 	    case snd_K_M: case snd_K_m:
 	      if (count > 0) 
@@ -1795,7 +1795,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  if (selection_is_active_in_channel(cp))
 		    cursor_moveto(cp, (off_t)(selection_beg(cp) + 0.5 * selection_len()));
 		  else no_selection_error(sp); 
-		  handle_cursor(cp, CURSOR_IN_MIDDLE);
+		  handle_cursor_with_sync(cp, CURSOR_IN_MIDDLE);
 		  break;
 		case snd_K_O: case snd_K_o: 
 		  if (ext_count > 0) 

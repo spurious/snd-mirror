@@ -6,8 +6,15 @@
 /* TODO: drag sample (x and y) -- also mix/selection? (tag up/down = overall amp change) */
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
+/* TODO: if cursor line, don't draw into the upper corner graph */
+/*    would need some way to add a region to a list saying "don't overwrite this" */
+/*    channel-clip-regions? */
+/*    or just a cursor-drawing proc that knows the right 1/4 is in use */
+/* TODO: tracking cursor in sonogram (or spectrogram -- would need projected xor'd line) */
+/*    and what about the xor effect over unknown bg colors? -- perhaps white here? */
+/*    for sonogram, can use local_grf_x[y not needed?] here, just as in time case, I think */
 
-typedef enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
+typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
 
 static XEN lisp_graph_hook;
 static XEN mouse_press_hook; 
@@ -2279,8 +2286,7 @@ static bool make_spectrogram(chan_info *cp)
        *          no action (something is still clearing the darn thing!)
        * TODO: get gl spectro to work in united channel cases
        */
-      /* SOMEDAY: editable spectrogram (select, apply any selection-proc)
-	 TODO: printing support: XGetImage, then X->ps translation [vector (gl2ps): image switch in print dialog]
+      /* TODO: printing support: XGetImage, then X->ps translation [vector (gl2ps): image switch in print dialog]
 	 TODO: multichannel resize: one chan ends up messed up until expose event; can't see why
       */
       if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
@@ -3357,8 +3363,8 @@ kbd_cursor_t cursor_decision(chan_info *cp)
 
 void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 {
+  /* no sync here */
   axis_info *ap;
-  axis_context *ax;
   snd_info *sp;
   double gx = 0.0;
   if (cp == NULL) return;
@@ -3373,20 +3379,6 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
       if (redisplay != CURSOR_IN_VIEW)
 	{
 	  ap = cp->axis;
-	  if (cp->cursor_visible)
-	    {
-	      /* TODO: what if cursor is line or proc? or does this block actually do anything? */
-	      /*  also if cursor line, don't draw into the upper corner graph */
-	      /*  would need some way to add a region to a list saying "don't overwrite this" */
-	      /*  channel-clip-regions? */
-	      /* TODO: tracking cursor in sonogram (or spectrogram -- would need projected xor'd line) */
-	      /*  and what about the xor effect over unknown bg colors? -- perhaps white here? */
-	      /*  for sonogram, can use local_grf_x[y not needed?] here, just as in time case, I think */
-	      ax = cursor_context(cp);
-	      draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
-	      draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
-	      cp->cursor_visible = false; /* don't redraw at old location */
-	    }
 	  switch (redisplay)
 	    {
 	    case CURSOR_ON_LEFT: 
@@ -3413,6 +3405,22 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
     for (i = 0; i < cp->edit_size; i++) cp->cursors[i] = CURSOR(cp);
   }
   update_possible_selection_in_progress(CURSOR(cp));
+}
+
+void handle_cursor_with_sync(chan_info *cp, kbd_cursor_t redisplay)
+{
+  snd_info *sp;
+  sync_info *si;
+  int i;
+  sp = cp->sound;
+  if ((sp) && (sp->sync != 0))
+    {
+      si = snd_sync(sp->sync);
+      for (i = 0; i < si->chans; i++)
+	handle_cursor(si->cps[i], redisplay);
+      si = free_sync_info(si);
+    }
+  else handle_cursor(cp, redisplay);
 }
 
 void cursor_moveto(chan_info *cp, off_t samp)
@@ -3584,7 +3592,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
       /* does (x, y) fall within the current axis bounds x_axis_x0|x1, y_axis_y0|y1 */
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
-	return(WAVE);
+	return(CLICK_WAVE);
     }
   if (cp->graph_transform_p)
     {
@@ -3597,34 +3605,34 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	  GLdouble xx;
 	  xx = unproject2x(x, y);
 	  if ((xx > -0.7) && (xx < -0.49))
-	    return(FFT_AXIS);
+	    return(CLICK_FFT_AXIS);
 	}
 #endif
       if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 	{
 	  if (((x >= ap->x_axis_x0) && (x <= ap->x_axis_x1)) && 
 	      ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y0)))
-	    return(FFT_AXIS);
+	    return(CLICK_FFT_AXIS);
 	}
       else
 	{
 	  if (((x0 <= ap->x_axis_x0) && (x1 >= ap->x_axis_x0)) && 
 	      ((y <= ap->y_axis_y0) && (y >= ap->y_axis_y1)))
-	    return(FFT_AXIS);
+	    return(CLICK_FFT_AXIS);
 	}
       /* now check within fft graph */
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
-	return(FFT_MAIN);
+	return(CLICK_FFT_MAIN);
     }
   if (((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))) && (cp->lisp_info))
     {
       ap = ((lisp_grf *)(cp->lisp_info))->axis;
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
-	return(LISP);
+	return(CLICK_LISP);
     }
-  return(NOGRAPH);
+  return(CLICK_NOGRAPH);
 }
 
 static char *describe_fft_point(chan_info *cp, int x, int y)
@@ -3786,7 +3794,7 @@ bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
   sp = cp->sound;
   select_channel(sp, cp->chan);
   if (((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))) &&
-      (within_graph(cp, x, y) == LISP) &&
+      (within_graph(cp, x, y) == CLICK_LISP) &&
       (XEN_HOOKED(key_press_hook)))
     {
       /* return true to keep this key press from being passed to keyboard_command */
@@ -3841,7 +3849,7 @@ static bool dragged = false;
 static Tempus mouse_down_time;
 static mark *mouse_mark = NULL;
 static mark *play_mark = NULL;
-static click_loc_t click_within_graph = NOGRAPH;
+static click_loc_t click_within_graph = CLICK_NOGRAPH;
 static int fft_axis_start = 0;
 #if HAVE_GL
   static Float fft_faxis_start = 0.0;
@@ -3875,7 +3883,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   click_within_graph = within_graph(cp, x, y);
   switch (click_within_graph)
     {
-    case FFT_AXIS:
+    case CLICK_FFT_AXIS:
       if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 	{
 #if HAVE_GL
@@ -3886,7 +3894,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 	}
       else fft_axis_start = y;
       break;
-    case LISP:
+    case CLICK_LISP:
       if (XEN_HOOKED(mouse_press_hook))
 	run_hook(mouse_press_hook,
 		 XEN_LIST_6(C_TO_XEN_INT(sp->index),
@@ -3897,13 +3905,13 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 			    C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
 		 S_mouse_press_hook);
       break;
-    case WAVE:
+    case CLICK_WAVE:
       if ((mouse_mark == NULL) && 
 	  (play_mark == NULL))
 	mix_tag = hit_mix(cp, x, y);
       break;
-    case NOGRAPH:
-    case FFT_MAIN:
+    case CLICK_NOGRAPH:
+    case CLICK_FFT_MAIN:
       break;
     }
 }
@@ -3968,15 +3976,15 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 						 C_TO_XEN_INT(key_state),
 						 C_TO_XEN_INT(x),
 						 C_TO_XEN_INT(y),
-						 C_TO_XEN_INT((int)((actax == WAVE) ? 
-								    TIME_AXIS_INFO : ((actax == LISP) ? 
+						 C_TO_XEN_INT((int)((actax == CLICK_WAVE) ? 
+								    TIME_AXIS_INFO : ((actax == CLICK_LISP) ? 
 										      LISP_AXIS_INFO : TRANSFORM_AXIS_INFO)))),
 				      S_mouse_click_hook))))
 	    return;
 
 	  switch (actax)
 	    {
-	    case WAVE:
+	    case CLICK_WAVE:
 	      if (button == BUTTON_2) /* the middle button */
 		{
 		  cp->cursor_on = true;
@@ -4047,7 +4055,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		    }
 		}
 	      break;
-	    case FFT_MAIN:
+	    case CLICK_FFT_MAIN:
 	      str = describe_fft_point(cp, x, y);
 	      report_in_minibuffer(sp, str);
 	      if (str) FREE(str);
@@ -4084,7 +4092,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		}
 	      else
 		{
-		  if (click_within_graph == WAVE)
+		  if (click_within_graph == CLICK_WAVE)
 		    {
 		      cancel_selection_watch();
 		      finish_selection_creation();
@@ -4174,7 +4182,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 	{
 	  switch (click_within_graph)
 	    {
-	    case WAVE:
+	    case CLICK_WAVE:
 	      if (mix_tag != NO_MIX_TAG)
 		{
 		  move_mix_tag(mix_tag, x);
@@ -4190,7 +4198,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 		}
 	      dragged = true;
 	      break;
-	    case FFT_AXIS:
+	    case CLICK_FFT_AXIS:
 	      /* change spectro_cutoff(ss) and redisplay fft */
 	      old_cutoff = cp->spectro_cutoff;
 	      if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
@@ -4223,7 +4231,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 		  else for_each_chan(update_graph);
 		}
 	      break;
-	    case LISP:
+	    case CLICK_LISP:
 	      if (XEN_HOOKED(mouse_drag_hook))
 		run_hook(mouse_drag_hook,
 			 XEN_LIST_6(C_TO_XEN_INT(cp->sound->index),
@@ -4234,9 +4242,9 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 				    C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
 			 S_mouse_drag_hook);
 	      break;
-	    case FFT_MAIN:
+	    case CLICK_FFT_MAIN:
 	      if ((cp->verbose_cursor) && 
-		  (within_graph(cp, x, y) == FFT_MAIN))
+		  (within_graph(cp, x, y) == CLICK_FFT_MAIN))
 		{
 		  str = describe_fft_point(cp, x, y);
 		  report_in_minibuffer(cp->sound, str);

@@ -7839,7 +7839,6 @@ static char *descr_str_gen0(int *args, ptree *pt, const char *which)
 
 STR_GEN0(name)
 STR_GEN0(describe)
-STR_GEN0(inspect)
 STR_GEN0(file_name)
 
 
@@ -11505,7 +11504,6 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_name, make_walker(mus_name_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
   INIT_WALKER(S_mus_file_name, make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
   INIT_WALKER(S_mus_describe, make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
-  INIT_WALKER(S_mus_inspect, make_walker(mus_inspect_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
   INIT_WALKER(S_mus_close, make_walker(mus_close_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
 
   INIT_WALKER(S_oscil, make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));

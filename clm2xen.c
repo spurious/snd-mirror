@@ -835,13 +835,6 @@ mus_any *mus_optkey_to_mus_any(XEN key, const char *caller, int n, mus_any *def)
 
 /* ---------------- generic functions ---------------- */
 
-static XEN g_mus_inspect(XEN gen)
-{
-  #define H_mus_inspect "(" S_mus_inspect " gen): show the internal state of gen"
-  XEN_ASSERT_TYPE((MUS_XEN_P(gen)), gen, XEN_ONLY_ARG, S_mus_inspect, "a generator");
-  return(C_TO_XEN_STRING(mus_inspect(XEN_TO_MUS_ANY(gen))));
-}
-
 static XEN g_mus_describe(XEN gen) 
 {
   #define H_mus_describe "(" S_mus_describe " gen): show the outside world's view of the state of gen"
@@ -5164,7 +5157,6 @@ XEN_NARGIFY_2(g_rectangular_to_polar_w, g_rectangular_to_polar)
 XEN_NARGIFY_2(g_polar_to_rectangular_w, g_polar_to_rectangular)
 XEN_ARGIFY_3(g_array_interp_w, g_array_interp)
 XEN_ARGIFY_3(g_sine_bank_w, g_sine_bank)
-XEN_NARGIFY_1(g_mus_inspect_w, g_mus_inspect)
 XEN_NARGIFY_1(g_mus_describe_w, g_mus_describe)
 XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
 XEN_ARGIFY_3(g_mus_run_w, g_mus_run)
@@ -5429,7 +5421,6 @@ XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 #define g_polar_to_rectangular_w g_polar_to_rectangular
 #define g_array_interp_w g_array_interp
 #define g_sine_bank_w g_sine_bank
-#define g_mus_inspect_w g_mus_inspect
 #define g_mus_describe_w g_mus_describe
 #define g_mus_name_w g_mus_name
 #define g_mus_run_w g_mus_run
@@ -5796,7 +5787,6 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_mus_interp_none,        MUS_INTERP_NONE,            "no interpolation -- step func");
   XEN_DEFINE_CONSTANT(S_mus_interp_bezier,      MUS_INTERP_BEZIER,          "bezier interpolation");
 
-  XEN_DEFINE_PROCEDURE(S_mus_inspect,   g_mus_inspect_w, 1, 0, 0,   H_mus_inspect);
   XEN_DEFINE_PROCEDURE(S_mus_describe,  g_mus_describe_w, 1, 0, 0,  H_mus_describe);
   XEN_DEFINE_PROCEDURE(S_mus_name,      g_mus_name_w, 1, 0, 0,      H_mus_name);
   XEN_DEFINE_PROCEDURE(S_mus_run,       g_mus_run_w, 1, 2, 0,       H_mus_run);
@@ -6277,7 +6267,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_hop,
 	       S_mus_increment,
 	       S_mus_input_p,
-	       S_mus_inspect,
 	       S_mus_interp_type,
 	       S_mus_length,
 	       S_mus_interp_all_pass,

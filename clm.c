@@ -182,108 +182,6 @@ static char *print_array(Float *arr, int len, int loc)
   return(base);
 }
 
-static char *print_double_array(double *arr, int len, int loc)
-{
-  char *base, *str;
-  int i, lim, k, size = 128;
-  if (arr == NULL) 
-    {
-      str = (char *)CALLOC(4, sizeof(char));
-      sprintf(str, "nil");
-      return(str);
-    }
-  if ((array_print_length * 16) > size) size = array_print_length * 16;
-  base = (char *)CALLOC(size, sizeof(char));
-  str = (char *)CALLOC(STR_SIZE, sizeof(char));
-  sprintf(base, "[");
-  lim = len;
-  if (lim > array_print_length) lim = array_print_length;
-  k = loc;
-  for (i = 0; i < lim - 1; i++)
-    {
-      mus_snprintf(str, STR_SIZE, "%.3f ", arr[k]);
-      strcat(base, str);
-      if ((int)(strlen(base) + 32) > size)
-	{
-	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
-	  base[size] = 0;
-	  size *= 2;
-	}
-      k++;
-      if (k >= len) k = 0;
-    }
-  mus_snprintf(str, STR_SIZE, "%.3f%s", arr[k], (len > lim) ? "..." : "]");
-  strcat(base, str);
-  if (len > lim)
-    {
-      /* print ranges */
-      int min_loc = 0, max_loc = 0;
-      double min_val, max_val;
-      min_val = arr[0];
-      max_val = arr[0];
-      for (i = 1; i < len; i++)
-	{
-	  if (arr[i] < min_val) {min_val = arr[i]; min_loc = i;}
-	  if (arr[i] > max_val) {max_val = arr[i]; max_loc = i;}
-	}
-      mus_snprintf(str, STR_SIZE, "(%d: %.3f, %d: %.3f)]", min_loc, min_val, max_loc, max_val);
-      strcat(base, str);
-    }
-  FREE(str);
-  return(base);
-}
-
-static char *print_off_t_array(off_t *arr, int len, int loc)
-{
-  char *base, *str;
-  int i, lim, k, size = 128;
-  if (arr == NULL) 
-    {
-      str = (char *)CALLOC(4, sizeof(char));
-      sprintf(str, "nil");
-      return(str);
-    }
-  if ((array_print_length * 16) > size) size = array_print_length * 16;
-  base = (char *)CALLOC(size, sizeof(char));
-  str = (char *)CALLOC(STR_SIZE, sizeof(char));
-  sprintf(base, "[");
-  lim = len;
-  if (lim > array_print_length) lim = array_print_length;
-  k = loc;
-  for (i = 0; i < lim - 1; i++)
-    {
-      mus_snprintf(str, STR_SIZE, OFF_TD " ", arr[k]);
-      strcat(base, str);
-      if ((int)(strlen(base) + 32) > size)
-	{
-	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
-	  base[size] = 0;
-	  size *= 2;
-	}
-      k++;
-      if (k >= len) k = 0;
-    }
-  mus_snprintf(str, STR_SIZE, OFF_TD "%s", arr[k], (len > lim) ? "..." : "]");
-  strcat(base, str);
-  if (len > lim)
-    {
-      /* print ranges */
-      int min_loc = 0, max_loc = 0;
-      off_t min_val, max_val;
-      min_val = arr[0];
-      max_val = arr[0];
-      for (i = 1; i < len; i++)
-	{
-	  if (arr[i] < min_val) {min_val = arr[i]; min_loc = i;}
-	  if (arr[i] > max_val) {max_val = arr[i]; max_loc = i;}
-	}
-      mus_snprintf(str, STR_SIZE, "(%d: " OFF_TD ", %d: " OFF_TD ")]", min_loc, min_val, max_loc, max_val);
-      strcat(base, str);
-    }
-  FREE(str);
-  return(base);
-}
-
 
 /* ---------------- generic functions ---------------- */
 
@@ -302,16 +200,6 @@ char *mus_describe(mus_any *gen)
   if ((gen->core) && ((gen->core)->describe))
     return((*((gen->core)->describe))(gen));
   else mus_error(MUS_NO_DESCRIBE, "can't describe %s", mus_name(gen));
-  return(NULL);
-}
-
-char *mus_inspect(mus_any *gen)
-{
-  if (gen == NULL)
-    return("null");
-  if ((gen->core) && ((gen->core)->inspect))
-    return((*((gen->core)->inspect))(gen));
-  else mus_error(MUS_NO_INSPECT, "can't inspect %s", mus_name(gen));
   return(NULL);
 }
 
@@ -944,19 +832,11 @@ static char *describe_oscil(mus_any *ptr)
   return(describe_buffer);
 }
 
-static char *inspect_oscil(mus_any *ptr)
-{
-  osc *gen = (osc *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "osc freq: %f, phase: %f", gen->freq, gen->phase);
-  return(describe_buffer);
-}
-
 static mus_any_class OSCIL_CLASS = {
   MUS_OSCIL,
   S_oscil,
   &free_oscil,
   &describe_oscil,
-  &inspect_oscil,
   &oscil_equalp,
   0, 0, 0, 0, /* data length */
   &oscil_freq,
@@ -1050,15 +930,6 @@ static char *describe_sum_of_cosines(mus_any *ptr)
   return(describe_buffer);
 }
 
-static char *inspect_sum_of_cosines(mus_any *ptr)
-{
-  cosp *gen = (cosp *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "cosp freq: %f, phase: %f, cosines: %d, scaler: %f", 
-	       gen->freq, gen->phase, gen->cosines, gen->scaler);
-  return(describe_buffer);
-}
-
 static Float run_sum_of_sines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_sines(ptr, fm));}
 
 static mus_any_class SUM_OF_COSINES_CLASS = {
@@ -1066,7 +937,6 @@ static mus_any_class SUM_OF_COSINES_CLASS = {
   S_sum_of_cosines,
   &free_sum_of_cosines,
   &describe_sum_of_cosines,
-  &inspect_sum_of_cosines,
   &sum_of_cosines_equalp,
   0, 0, /* data */
   &sum_of_cosines_cosines,
@@ -1177,7 +1047,6 @@ static mus_any_class SUM_OF_SINES_CLASS = {
   S_sum_of_sines,
   &free_sum_of_cosines,
   &describe_sum_of_sines,
-  &inspect_sum_of_cosines,
   &sum_of_sines_equalp,
   0, 0, /* data */
   &sum_of_cosines_cosines,
@@ -1322,24 +1191,6 @@ static int free_delay(mus_any *gen)
   return(0);
 }
 
-static char *inspect_delay(mus_any *ptr)
-{
-  dly *gen = (dly *)ptr;
-  char *arr = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "dly line[%d,%d at %d,%d (%s)]: %s, xscl: %f, yscl: %f, type: %s",
-	       gen->size,
-	       gen->zsize,
-	       gen->loc,
-	       gen->zloc,
-	       (gen->line_allocated) ? "local" : "external",
-	       arr = print_array(gen->line, gen->size, (gen->zdly) ? gen->zloc : gen->loc),
-	       gen->xscl,
-	       gen->yscl,
-	       interp_name[gen->type]);
-  if (arr) FREE(arr);
-  return(describe_buffer);
-}
-
 static char *describe_delay(mus_any *ptr)
 {
   char *str = NULL;
@@ -1479,7 +1330,6 @@ static mus_any_class DELAY_CLASS = {
   S_delay,
   &free_delay,
   &describe_delay,
-  &inspect_delay,
   &delay_equalp,
   &delay_data,
   &delay_set_data,
@@ -1551,7 +1401,6 @@ static mus_any_class COMB_CLASS = {
   S_comb,
   &free_delay,
   &describe_comb,
-  &inspect_delay,
   &delay_equalp,
   &delay_data,
   &delay_set_data,
@@ -1592,7 +1441,6 @@ static mus_any_class NOTCH_CLASS = {
   S_notch,
   &free_delay,
   &describe_notch,
-  &inspect_delay,
   &delay_equalp,
   &delay_data,
   &delay_set_data,
@@ -1663,7 +1511,6 @@ static mus_any_class ALL_PASS_CLASS = {
   S_all_pass,
   &free_delay,
   &describe_all_pass,
-  &inspect_delay,
   &delay_equalp,
   &delay_data,
   &delay_set_data,
@@ -1717,7 +1564,6 @@ static mus_any_class AVERAGE_CLASS = {
   S_average,
   &free_delay,
   &describe_average,
-  &inspect_delay,
   &delay_equalp,
   &delay_data,
   &delay_set_data,
@@ -1876,16 +1722,6 @@ static char *describe_table_lookup(mus_any *ptr)
   return(describe_buffer);
 }
 
-static char *inspect_table_lookup(mus_any *ptr)
-{
-  tbl *gen = (tbl *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "tbl freq: %f, phase: %f, length: %d, mag: %f, table: %s, type: %s",
-	       gen->freq, gen->phase, gen->table_size, gen->internal_mag, 
-	       (gen->table_allocated) ? "local" : "external",
-	       interp_name[gen->type]);
-  return(describe_buffer);
-}
-
 static bool table_lookup_equalp(mus_any *p1, mus_any *p2)
 {
   int i;
@@ -1932,7 +1768,6 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
   S_table_lookup,
   &free_table_lookup,
   &describe_table_lookup,
-  &inspect_table_lookup,
   &table_lookup_equalp,
   &table_lookup_data,
   &table_set_data,
@@ -1989,15 +1824,6 @@ typedef struct {
   Float base;
   Float width;
 } sw;
-
-static char *inspect_sw(mus_any *ptr)
-{
-  sw *gen = (sw *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "sw current_value: %f, freq: %f, phase: %f, base: %f", 
-	       gen->current_value, gen->freq, gen->phase, gen->base);
-  return(describe_buffer);
-}
 
 static int free_sw(mus_any *ptr) 
 {
@@ -2061,7 +1887,6 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
   S_sawtooth_wave,
   &free_sw,
   &describe_sawtooth,
-  &inspect_sw,
   &sw_equalp,
   0, 0, 0, 0,
   &sw_freq,
@@ -2128,7 +1953,6 @@ static mus_any_class SQUARE_WAVE_CLASS = {
   S_square_wave,
   &free_sw,
   &describe_square_wave,
-  &inspect_sw,
   &sw_equalp,
   0, 0, 0, 0,
   &sw_freq,
@@ -2205,7 +2029,6 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
   S_triangle_wave,
   &free_sw,
   &describe_triangle_wave,
-  &inspect_sw,
   &sw_equalp,
   0, 0, 0, 0,
   &sw_freq,
@@ -2275,7 +2098,6 @@ static mus_any_class PULSE_TRAIN_CLASS = {
   S_pulse_train,
   &free_sw,
   &describe_pulse_train,
-  &inspect_sw,
   &sw_equalp,
   0, 0, 0, 0,
   &sw_freq,
@@ -2320,24 +2142,6 @@ typedef struct {
   Float *distribution;
   int distribution_size;
 } noi;
-
-static char *inspect_noi(mus_any *ptr)
-{
-  noi *gen = (noi *)ptr;
-  if (gen->distribution)
-    {
-      char *arr = NULL;
-      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		   "noi freq: %f, phase: %f, base: %f, output: %f, incr: %f, envelope: %s",
-		   gen->freq, gen->phase, gen->base, gen->output, gen->incr,
-		   arr = print_array(gen->distribution, gen->distribution_size, 0));
-      if (arr) FREE(arr);
-    }
-  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    "noi freq: %f, phase: %f, base: %f, output: %f, incr: %f",
-		    gen->freq, gen->phase, gen->base, gen->output, gen->incr);
-  return(describe_buffer);
-}
 
 /* rand taken from the ANSI C standard (essentially the same as the Cmix form used earlier) */
 static unsigned long randx = 1;
@@ -2471,7 +2275,6 @@ static mus_any_class RAND_INTERP_CLASS = {
   S_rand_interp,
   &free_noi,
   &describe_noi,
-  &inspect_noi,
   &noi_equalp,
   &noi_data, 0, 
   &noi_length, 0,
@@ -2496,7 +2299,6 @@ static mus_any_class RAND_CLASS = {
   S_rand,
   &free_noi,
   &describe_noi,
-  &inspect_noi,
   &noi_equalp,
   &noi_data, 0, 
   &noi_length, 0,
@@ -2570,15 +2372,6 @@ typedef struct {
   Float sinr;
 } asyfm;
 
-static char *inspect_asyfm (mus_any *ptr)
-{
-  asyfm *gen = (asyfm *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "asyfm r: %f, freq: %f, phase: %f, ratio: %f, cosr: %f, sinr: %f",
-	       gen->r, gen->freq, gen->phase, gen->ratio, gen->cosr, gen->sinr);
-  return(describe_buffer);
-}
-
 static int free_asymmetric_fm(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float asyfm_freq(mus_any *ptr) {return(mus_radians_to_hz(((asyfm *)ptr)->freq));}
 static Float set_asyfm_freq(mus_any *ptr, Float val) {((asyfm *)ptr)->freq = mus_hz_to_radians(val); return(val);}
@@ -2648,7 +2441,6 @@ static mus_any_class ASYMMETRIC_FM_CLASS = {
   S_asymmetric_fm,
   &free_asymmetric_fm,
   &describe_asyfm,
-  &inspect_asyfm,
   &asyfm_equalp,
   0, 0, 0, 0,
   &asyfm_freq,
@@ -2696,15 +2488,6 @@ typedef struct {
   Float a, b, an, a2;
   int n;
 } sss;
-
-static char *inspect_sss(mus_any *ptr)
-{
-  sss *gen = (sss *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "sss freq: %f, phase: %f, a: %f, b: %f, an: %f, a2: %f, n: %d",
-	       gen->freq, gen->phase, gen->a, gen->b, gen->an, gen->a2, gen->n);
-  return(describe_buffer);
-}
 
 static int free_sss(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float sss_freq(mus_any *ptr) {return(mus_radians_to_hz(((sss *)ptr)->freq));}
@@ -2781,7 +2564,6 @@ static mus_any_class SINE_SUMMATION_CLASS = {
   S_sine_summation,
   &free_sss,
   &describe_sss,
-  &inspect_sss,
   &sss_equalp,
   0, 0, 0, 0,
   &sss_freq,
@@ -2828,15 +2610,6 @@ typedef struct {
   Float x1, x2, y1, y2;
   Float gain, radius, frequency;
 } smpflt;
-
-static char *inspect_smpflt(mus_any *ptr)
-{
-  smpflt *gen = (smpflt *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "smpflt a0: %f, a1: %f, a2: %f, b1: %f, b2: %f, x1: %f, x2: %f, y1: %f, y2: %f",
-	       gen->xs[0], gen->xs[1], gen->xs[2], gen->ys[1], gen->ys[2], gen->x1, gen->x2, gen->y1, gen->y2);
-  return(describe_buffer);
-}
 
 static int free_smpflt(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
 
@@ -2907,7 +2680,6 @@ static mus_any_class ONE_ZERO_CLASS = {
   S_one_zero,
   &free_smpflt,
   &describe_smpflt,
-  &inspect_smpflt,
   &smpflt_equalp,
   0, 0,
   &one_length, 0,
@@ -2953,7 +2725,6 @@ static mus_any_class ONE_POLE_CLASS = {
   S_one_pole,
   &free_smpflt,
   &describe_smpflt,
-  &inspect_smpflt,
   &smpflt_equalp,
   0, 0,
   &one_length, 0,
@@ -3000,7 +2771,6 @@ static mus_any_class TWO_ZERO_CLASS = {
   S_two_zero,
   &free_smpflt,
   &describe_smpflt,
-  &inspect_smpflt,
   &smpflt_equalp,
   0, 0,
   &two_length, 0,
@@ -3054,7 +2824,6 @@ static mus_any_class TWO_POLE_CLASS = {
   S_two_pole,
   &free_smpflt,
   &describe_smpflt,
-  &inspect_smpflt,
   &smpflt_equalp,
   0, 0,
   &two_length, 0,
@@ -3192,7 +2961,6 @@ static mus_any_class FORMANT_CLASS = {
   S_formant,
   &free_smpflt,
   &describe_formant,
-  &inspect_smpflt,
   &smpflt_equalp,
   0, 0,
   &two_length, 0,
@@ -3234,22 +3002,6 @@ typedef struct {
   bool state_allocated;
   Float *x, *y, *state;
 } flt;
-
-static char *inspect_flt(mus_any *ptr)
-{
-  flt *gen = (flt *)ptr;
-  char *arr1 = NULL, *arr2 = NULL, *arr3 = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "flt order: %d, state (%s): %s, x: %s, y: %s",
-	       gen->order,
-	       (gen->state_allocated) ? "local" : "external",
-	       arr1 = print_array(gen->state, gen->order, 0),
-	       arr2 = print_array(gen->x, gen->order, 0),
-	       arr3 = print_array(gen->y, gen->order, 0));
-  if (arr1) FREE(arr1);
-  if (arr2) FREE(arr2);
-  if (arr3) FREE(arr3);
-  return(describe_buffer);
-}
 
 Float mus_filter(mus_any *ptr, Float input)
 {
@@ -3414,7 +3166,6 @@ static mus_any_class FILTER_CLASS = {
   S_filter,
   &free_filter,
   &describe_filter,
-  &inspect_flt,
   &filter_equalp,
   &filter_data, 0,
   &filter_length,
@@ -3438,7 +3189,6 @@ static mus_any_class FIR_FILTER_CLASS = {
   S_fir_filter,
   &free_filter,
   &describe_filter,
-  &inspect_flt,
   &filter_equalp,
   &filter_data, 0,
   &filter_length,
@@ -3462,7 +3212,6 @@ static mus_any_class IIR_FILTER_CLASS = {
   S_iir_filter,
   &free_filter,
   &describe_filter,
-  &inspect_flt,
   &filter_equalp,
   &filter_data, 0,
   &filter_length,
@@ -3611,23 +3360,6 @@ typedef struct {
   bool table_allocated;
 } ws;
 
-static char *inspect_ws(mus_any *ptr)
-{
-  ws *gen = (ws *)ptr;
-  char *ostr;
-  char *arr = NULL;
-  ostr = strdup(mus_inspect(gen->o));
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "ws %s, offset: %f, table[%d (%s)]: %s",
-	       ostr,
-	       gen->offset, gen->table_size,
-	       (gen->table_allocated) ? "local" : "external",
-	       arr = print_array(gen->table, gen->table_size, 0));
-  if (arr) FREE(arr);
-  if (ostr) free(ostr);
-  return(describe_buffer);
-}
-
 static int free_ws(mus_any *pt) 
 {
   ws *ptr = (ws *)pt;
@@ -3690,7 +3422,6 @@ static mus_any_class WAVESHAPE_CLASS = {
   S_waveshape,
   &free_ws,
   &describe_waveshape,
-  &inspect_ws,
   &ws_equalp,
   &ws_data,
   &set_ws_data,
@@ -3861,28 +3592,6 @@ typedef struct {
   double *rates;
   off_t *passes;
 } seg;
-
-static char *inspect_seg(mus_any *ptr)
-{
-  seg *gen = (seg *)ptr;
-  char *arr = NULL, *str1 = NULL, *str2 = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "seg scaler: %.4f, offset: %.4f, rate: %f, current_value: %f, base: %f, offset: %f, scaler: %f, power: %f, init_y: %f, init_power: %f, \
-pass: " OFF_TD ", end: " OFF_TD ", style: %d, index: %d, size: %d, original_data[%d]: %s, rates[%d]: %s, passes[%d]: %s",
-	       gen->original_scaler, gen->original_offset,
-	       gen->rate, gen->current_value, gen->base, gen->offset, gen->scaler, gen->power, gen->init_y, gen->init_power,
-	       gen->pass, gen->end, (int)(gen->style), gen->index, gen->size,
-	       gen->size * 2,
-	       arr = print_array(gen->original_data, gen->size * 2, 0),
-	       gen->size,
-	       str1 = print_double_array(gen->rates, gen->size, 0),
-	       gen->size,
-	       str2 = print_off_t_array(gen->passes, gen->size, 0));
-  if (arr) FREE(arr);
-  if (str1) FREE(str1);
-  if (str2) FREE(str2);
-  return(describe_buffer);
-}
 
 /* what about breakpoint triples for per-segment exp envs? */
 
@@ -4086,7 +3795,6 @@ static mus_any_class ENV_CLASS = {
   S_env,
   &free_env_gen,
   &describe_env,
-  &inspect_seg,
   &env_equalp,
   &env_data,
   0,
@@ -4276,8 +3984,6 @@ static char *describe_frame(mus_any *ptr)
   return(describe_buffer);
 }
 
-static char *inspect_frame(mus_any *ptr) {return(describe_frame(ptr));}
-
 bool mus_frame_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FRAME));}
 
 static bool equalp_frame(mus_any *p1, mus_any *p2)
@@ -4308,7 +4014,6 @@ static mus_any_class FRAME_CLASS = {
   S_frame,
   &free_frame,
   &describe_frame,
-  &inspect_frame,
   &equalp_frame,
   &frame_data,
   &set_frame_data,
@@ -4499,8 +4204,6 @@ static char *describe_mixer(mus_any *ptr)
   return(describe_buffer);
 }
 
-static char *inspect_mixer(mus_any *ptr) {return(describe_mixer(ptr));}
-
 bool mus_mixer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_MIXER));}
 
 static bool equalp_mixer(mus_any *p1, mus_any *p2)
@@ -4531,7 +4234,6 @@ static mus_any_class MIXER_CLASS = {
   S_mixer,
   &free_mixer,
   &describe_mixer,
-  &inspect_mixer,
   &equalp_mixer,
   &mixer_data, 0,
   &mixer_length,
@@ -4815,19 +4517,6 @@ typedef struct {
   bool buf_allocated;
 } rblk;
 
-static char *inspect_rblk(mus_any *ptr)
-{
-  rblk *gen = (rblk *)ptr;
-  char *arr = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "rblk buf[%d (%s)]: %s, loc: %d, fill_time: %f, empty: %s",
-	       gen->size, (gen->buf_allocated) ? "local" : "external",
-	       arr = print_array(gen->buf, gen->size, 0),
-	       gen->loc, gen->fill_time, (gen->empty) ? "true" : "false");
-  if (arr) FREE(arr);
-  return(describe_buffer);
-}
-
 static int mus_free_buffer(mus_any *gen) 
 {
   rblk *ptr = (rblk *)gen;
@@ -4951,7 +4640,6 @@ static mus_any_class BUFFER_CLASS = {
   S_buffer,
   &mus_free_buffer,
   &describe_genbuffer,
-  &inspect_rblk,
   &rblk_equalp,
   &rblk_data,
   &rblk_set_data,
@@ -5038,23 +4726,6 @@ typedef struct {
   bool wave_allocated;
   mus_interp_t type;
 } wt;
-
-static char *inspect_wt(mus_any *ptr)
-{
-  wt *gen = (wt *)ptr;
-  char *arr = NULL, *str = NULL;
-  str = strdup(inspect_rblk((mus_any *)(gen->b)));
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "wt freq: %f, phase: %f, wave[%d (%s)]: %s, type: %s, b: %s",
-	       gen->freq, gen->phase, gen->wsize, 
-	       (gen->wave_allocated) ? "local" : "external",
-	       arr = print_array(gen->wave, gen->wsize, 0),
-	       interp_name[gen->type],
-	       str);
-  if (str) free(str);
-  if (arr) FREE(arr);
-  return(describe_buffer);
-}
 
 static Float wt_freq(mus_any *ptr) {return(((wt *)ptr)->freq);}
 static Float set_wt_freq(mus_any *ptr, Float val) {((wt *)ptr)->freq = val; return(val);}
@@ -5155,7 +4826,6 @@ static mus_any_class WAVE_TRAIN_CLASS = {
   S_wave_train,
   &free_wt,
   &describe_wt,
-  &inspect_wt,
   &wt_equalp,
   &wt_data,
   &wt_set_data,
@@ -5254,15 +4924,6 @@ typedef struct {
   off_t data_start, data_end, file_end;
 } rdin;
 
-static char *inspect_rdin(mus_any *ptr)
-{
-  rdin *gen = (rdin *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "rdin chan: %d, dir: %d, loc: " OFF_TD ", chans: %d, data_start: " OFF_TD ", data_end: " OFF_TD ", file_end: " OFF_TD ", file_name: %s",
-	       gen->chan, gen->dir, gen->loc, gen->chans, gen->data_start, gen->data_end, gen->file_end, gen->file_name);
-  return(describe_buffer);
-}
-
 static char *describe_file_to_sample(mus_any *ptr)
 {
   rdin *gen = (rdin *)ptr;
@@ -5313,7 +4974,6 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
   S_file_to_sample,
   &free_file_to_sample,
   &describe_file_to_sample,
-  &inspect_rdin,
   &rdin_equalp,
   0, 0, 
   &file_to_sample_length, 0,
@@ -5468,7 +5128,6 @@ static mus_any_class READIN_CLASS = {
   S_readin,
   &free_readin,
   &describe_readin,
-  &inspect_rdin,
   &rdin_equalp,
   0, 0, 
   &file_to_sample_length, 0,
@@ -5559,7 +5218,6 @@ static mus_any_class FILE_TO_FRAME_CLASS = {
   S_file_to_frame,
   &free_file_to_sample,
   &describe_file_to_frame,
-  &inspect_rdin,
   &rdin_equalp,
   0, 0, 
   &file_to_sample_length, 0,
@@ -5626,15 +5284,6 @@ typedef struct {
   int output_header_type;
 } rdout;
 
-static char *inspect_rdout(mus_any *ptr)
-{
-  rdout *gen = (rdout *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "rdout chan: %d, loc: " OFF_TD ", file_name: %s, chans: %d, data_start: " OFF_TD ", data_end: " OFF_TD ", out_end: " OFF_TD,
-	       gen->chan, gen->loc, gen->file_name, gen->chans, gen->data_start, gen->data_end, gen->out_end);
-  return(describe_buffer);
-}
-
 static char *describe_sample_to_file(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
@@ -5671,7 +5320,6 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   S_sample_to_file,
   &free_sample_to_file,
   &describe_sample_to_file,
-  &inspect_rdout,
   &sample_to_file_equalp,
   0, 0, 
   &bufferlen, &set_bufferlen, /* does this have any effect on the current gen? */
@@ -5913,7 +5561,6 @@ static mus_any_class FRAME_TO_FILE_CLASS = {
   S_frame_to_file,
   &free_sample_to_file,
   &describe_frame_to_file,
-  &inspect_rdout,
   &sample_to_file_equalp,
   0, 0,
   &bufferlen, &set_bufferlen,
@@ -5996,22 +5643,6 @@ typedef struct {
   mus_interp_t type;
   Float reverb;
 } locs;
-
-static char *inspect_locs(mus_any *ptr)
-{
-  locs *gen = (locs *)ptr;
-  char *arr1 = NULL, *arr2 = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "locs outn[%d]: %s, revn[%d]: %s, interp: %s",
-	       gen->chans,
-	       arr1 = print_array(gen->outn, gen->chans, 0),
-	       gen->rev_chans,
-	       arr2 = print_array(gen->revn, gen->rev_chans, 0),
-	       interp_name[gen->type]);
-  if (arr1) FREE(arr1);
-  if (arr2) FREE(arr2);
-  return(describe_buffer);
-}
 
 static bool locsig_equalp(mus_any *p1, mus_any *p2) 
 {
@@ -6182,7 +5813,6 @@ static mus_any_class LOCSIG_CLASS = {
   S_locsig,
   &free_locsig,
   &describe_locsig,
-  &inspect_locs,
   &locsig_equalp,
   &locsig_data, 0,
   &locsig_length,
@@ -6357,18 +5987,6 @@ typedef struct {
   void *closure;
 } sr;
 
-static char *inspect_sr(mus_any *ptr)
-{
-  sr *gen = (sr *)ptr;
-  char *arr = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "sr x: %f, incr: %f, width: %d, sinc table len: %d, data[%d]: %s",
-	       gen->x, gen->incr, gen->width, gen->len, gen->width * 2 + 1,
-	       arr = print_array(gen->data, gen->width * 2 + 1, 0));
-  if (arr) FREE(arr);
-  return(describe_buffer);
-}
-
 #define SRC_SINC_DENSITY 1000
 #define SRC_SINC_WIDTH 10
 
@@ -6475,7 +6093,6 @@ static mus_any_class SRC_CLASS = {
   S_src,
   &free_src_gen,
   &describe_src,
-  &inspect_sr,
   &src_equalp,
   &src_sinc_table, 0,
   &src_length,  /* sinc width actually */
@@ -6712,23 +6329,6 @@ typedef struct {
   Float *grain;
 } grn_info;
 
-static char *inspect_grn_info(mus_any *ptr)
-{
-  grn_info *gen = (grn_info *)ptr;
-  char *arr1 = NULL, *arr2 = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "grn_info s20: %d, s50: %d, rmp: %d, amp: %f, len: %d, cur_out: %d, cur_in: %d, input_hop: %d, ctr: %d, output_hop: %d, in_data_start: %d, in_data[%d]: %s, data[%d]: %s",
-	       gen->s20, gen->s50, gen->rmp, gen->amp, gen->len, gen->cur_out, gen->cur_in, gen->input_hop,
-	       gen->ctr, gen->output_hop, gen->in_data_start,
-	       gen->in_data_len,
-	       arr1 = print_array(gen->in_data, gen->in_data_len, 0),
-	       gen->block_len,
-	       arr2 = print_array(gen->data, gen->block_len, 0));
-  if (arr1) FREE(arr1);
-  if (arr2) FREE(arr2);
-  return(describe_buffer);
-}
-
 bool mus_granulate_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_GRANULATE));}
 
 static bool granulate_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
@@ -6793,7 +6393,6 @@ static mus_any_class GRANULATE_CLASS = {
   S_granulate,
   &free_granulate,
   &describe_granulate,
-  &inspect_grn_info,
   &granulate_equalp,
   &granulate_data, 0,
   &grn_length,  /* segment-length */
@@ -7430,24 +7029,6 @@ typedef struct {
   void *closure;
 } conv;
 
-static char *inspect_conv(mus_any *ptr)
-{
-  conv *gen = (conv *)ptr;
-  char *arr1 = NULL, *arr2 = NULL, *arr3 = NULL, *arr4 = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "conv fftsize: %d, fftsize2: %d, filtersize: %d, ctr: %d, rl1: %s, rl2: %s, buf: %s, filter: %s",
-	       gen->fftsize, gen->fftsize2, gen->filtersize, gen->ctr,
-	       arr1 = print_array(gen->rl1, gen->fftsize, 0),
-	       arr2 = print_array(gen->rl2, gen->fftsize, 0),
-	       arr3 = print_array(gen->buf, gen->fftsize, 0),
-	       arr4 = print_array(gen->filter, gen->filtersize, 0));
-  if (arr1) FREE(arr1);
-  if (arr2) FREE(arr2);
-  if (arr3) FREE(arr3);
-  if (arr4) FREE(arr4);
-  return(describe_buffer);
-}
-
 static bool convolve_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
 static char *describe_convolve(mus_any *ptr)
@@ -7481,7 +7062,6 @@ static mus_any_class CONVOLVE_CLASS = {
   S_convolve,
   &free_convolve,
   &describe_convolve,
-  &inspect_conv,
   &convolve_equalp,
   0, 0,
   &conv_length,
@@ -8019,22 +7599,6 @@ typedef struct {
   Float *win, *ampinc, *amps, *freqs, *phases, *phaseinc, *lastphase, *in_data;
 } pv_info;
 
-static char *inspect_pv_info(mus_any *ptr)
-{
-  pv_info *gen = (pv_info *)ptr;
-  char *arr1 = NULL, *arr2 = NULL, *arr3 = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "pv_info outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s, amps: %s, freqs: %s",
-	       gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
-	       arr1 = print_array(gen->in_data, gen->N, 0),
-	       arr2 = print_array(gen->amps, gen->N / 2, 0),
-	       arr3 = print_array(gen->freqs, gen->N, 0));
-  if (arr1) FREE(arr1);
-  if (arr2) FREE(arr2);
-  if (arr3) FREE(arr3);
-  return(describe_buffer);
-}
-
 bool mus_phase_vocoder_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_PHASE_VOCODER));}
 
 static bool phase_vocoder_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
@@ -8093,7 +7657,6 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   S_phase_vocoder,
   &free_phase_vocoder,
   &describe_phase_vocoder,
-  &inspect_pv_info,
   &phase_vocoder_equalp,
   0, 0,
   &pv_length,
@@ -8374,29 +7937,11 @@ static char *describe_ssb_am(mus_any *ptr)
   return(describe_buffer);
 }
 
-static char *inspect_ssb_am(mus_any *ptr)
-{
-  ssbam *gen = (ssbam *)ptr;
-  char *sinstr, *cosstr, *dlystr, *fltstr;
-  sinstr = strdup(mus_inspect(gen->sin_osc));
-  cosstr = strdup(mus_inspect(gen->cos_osc));
-  dlystr = strdup(mus_inspect(gen->dly));
-  fltstr = strdup(mus_inspect(gen->hilbert));
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "ssbam: shift_up: %s, sin: %s, cos: %s, delay: %s, hilbert: %s",
-	       (gen->shift_up) ? "true" : "false", sinstr, cosstr, dlystr, fltstr);
-  if (sinstr) free(sinstr);
-  if (cosstr) free(cosstr);
-  if (dlystr) free(dlystr);
-  if (fltstr) free(fltstr);
-  return(describe_buffer);
-}
-
 static mus_any_class SSB_AM_CLASS = {
   MUS_SSB_AM,
   S_ssb_am,
   &free_ssb_am,
   &describe_ssb_am,
-  &inspect_ssb_am,
   &ssb_am_equalp,
   &ssb_am_data, 0,
   &ssb_am_order, 0,

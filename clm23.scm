@@ -693,8 +693,6 @@
 	     (begin
 	       (if (not (string=? (mus-describe os) "oscil freq: 440.000Hz, phase: 0.000"))
 		   (clm-print "describe oscil: ~A~%" (mus-describe os)))
-	       (if (not (string=? (mus-inspect os) "osc freq: 0.125379, phase: 0.000000"))
-		   (clm-print "inspect oscil: ~A~%" (mus-inspect os)))
 	       (if (> (abs (- (mus-frequency os) freq)) .001)
 		   (clm-print "osc freq: ~A (~A)~%" (mus-frequency os) freq))
 	       (set! printed #t)))

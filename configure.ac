@@ -1,6 +1,6 @@
 dnl Configuration script for Snd
 
-AC_INIT(snd, 7.6, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
+AC_INIT(snd, 7.7, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
 
 INVOKED_PROG="$[0]"
 INVOKED_ARGS="$[@]"
@@ -17,7 +17,7 @@ audio_system="unknown"
 MAKE_TARGET="snd"
 
 PACKAGE=snd
-VERSION=7.6
+VERSION=7.7
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -70,8 +70,6 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
-#
-# SOMEDAY: --with-static-libraries --with-static-guile
 
 #--------------------------------------------------------------------------------
 

@@ -136,7 +136,7 @@
 	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
      (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
 	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
-	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd")))
+	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd" "funcs.cl")))
 
 (define (real-time) (exact->inexact (/ (get-internal-real-time) internal-time-units-per-second)))
 (define (hundred n) (inexact->exact (round (* 100 n))))
@@ -11729,15 +11729,11 @@ EDITS: 5
 	(vct-set! spect i sum)))
     (vct-scale! spect (/ 1.0 mx))))
 
-(define* (print-and-check gen name desc insp #:optional insp2)
+(define* (print-and-check gen name desc)
   (if (not (string=? (mus-name gen) name))
       (snd-display ";mus-name ~A: ~A?" name (mus-name gen)))
   (if (not (string=? (mus-describe gen) desc))
       (snd-display ";mus-describe ~A: ~A?" (mus-name gen) (mus-describe gen)))
-  (if (and (not (string=? (mus-inspect gen) insp))
-	   (or (not insp2)
-	       (not (string=? (mus-inspect gen) insp2))))
-      (snd-display ";mus-inspect ~A: ~A?" (mus-name gen) (mus-inspect gen)))
   (let ((egen gen))
     (if (not (equal? egen gen))
 	(snd-display ";equal? ~A: ~A?" gen egen))))
@@ -12131,8 +12127,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "delay" 
-			 "delay: line[3, step]: [0.000 0.000 0.000]"
-			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.000000, yscl: 0.000000, type: step")
+			 "delay: line[3, step]: [0.000 0.000 0.000]")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (delay gen i)))
@@ -12204,10 +12199,7 @@ EDITS: 5
 	  (delay del 1.0)
 	  (delay del 0.0 0.4)
 	  (if (not (string=? (mus-describe del) "delay: line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]"))
-	      (snd-display ";describe zdelay: ~A" (mus-describe del)))
-	  (if (not (string=? (mus-inspect del) 
-			     "dly line[5,8 at 4,7 (external)]: [0.000 0.000 0.000 1.000 0.000], xscl: 0.000000, yscl: 0.000000, type: linear"))
-	      (snd-display ";inspect zdelay: ~A" (mus-inspect del)))))
+	      (snd-display ";describe zdelay: ~A" (mus-describe del)))))
       (let ((tag (catch #t (lambda () 
 			     (let ((gen (make-oscil)))
 			       (tap gen)))
@@ -12328,8 +12320,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "all-pass"
-			 "all-pass: feedback: 0.400, feedforward: 0.600, line[3, step]:[0.000 0.000 0.000]"
-			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.600000, yscl: 0.400000, type: step")
+			 "all-pass: feedback: 0.400, feedforward: 0.600, line[3, step]:[0.000 0.000 0.000]")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (all-pass gen 1.0)))
@@ -12372,8 +12363,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "average"
-			 "average: 0.000, line[4]:[0.000 0.000 0.000 0.000]"
-			 "dly line[4,4 at 0,0 (external)]: [0.000 0.000 0.000 0.000], xscl: 0.000000, yscl: 0.250000, type: step")
+			 "average: 0.000, line[4]:[0.000 0.000 0.000 0.000]")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (average gen 1.0)))
@@ -12435,8 +12425,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "comb"
-			 "comb: scaler: 0.400, line[3, step]: [0.000 0.000 0.000]"
-			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.000000, yscl: 0.400000, type: step")
+			 "comb: scaler: 0.400, line[3, step]: [0.000 0.000 0.000]")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (comb gen 1.0)))
@@ -12474,10 +12463,7 @@ EDITS: 5
 	  (comb del 1.0)
 	  (comb del 0.0 0.4)
 	  (if (not (string=? (mus-describe del) "comb: scaler: 0.000, line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]"))
-	      (snd-display ";describe zcomb: ~A" (mus-describe del)))
-	  (if (not (string=? (mus-inspect del) 
-			     "dly line[5,8 at 4,7 (external)]: [0.000 0.000 0.000 1.000 0.000], xscl: 0.000000, yscl: 0.000000, type: linear"))
-	      (snd-display ";inspect zcomb: ~A" (mus-inspect del))))
+	      (snd-display ";describe zcomb: ~A" (mus-describe del))))
 	(set! (mus-feedback del) 1.0)
 	(if (fneq (mus-feedback del) 1.0)
 	    (snd-display ";comb feedback set: ~A" (mus-feedback del))))
@@ -12488,8 +12474,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "notch"
-			 "notch: scaler: 0.400, line[3, step]: [0.000 0.000 0.000]"
-			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.400000, yscl: 0.000000, type: step")
+			 "notch: scaler: 0.400, line[3, step]: [0.000 0.000 0.000]")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (notch gen 1.0)))
@@ -12835,8 +12820,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "one-pole"
-			 "one-pole: a0: 0.400, b1: 0.700, y1: 0.000"
-			 "smpflt a0: 0.400000, a1: 0.000000, a2: 0.000000, b1: 0.700000, b2: 0.000000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
+			 "one-pole: a0: 0.400, b1: 0.700, y1: 0.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (one-pole gen 1.0)))
@@ -12862,8 +12846,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen
 			 "one-zero"
-			 "one-zero: a0: 0.400, a1: 0.700, x1: 0.000"
-			 "smpflt a0: 0.400000, a1: 0.700000, a2: 0.000000, b1: 0.000000, b2: 0.000000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
+			 "one-zero: a0: 0.400, a1: 0.700, x1: 0.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (one-zero gen 1.0)))
@@ -12884,8 +12867,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "two-zero"
-			 "two-zero: a0: 0.400, a1: 0.700, a2: 0.300, x1: 0.000, x2: 0.000"
-			 "smpflt a0: 0.400000, a1: 0.700000, a2: 0.300000, b1: 0.000000, b2: 0.000000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
+			 "two-zero: a0: 0.400, a1: 0.700, a2: 0.300, x1: 0.000, x2: 0.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (two-zero gen 1.0)))
@@ -12915,8 +12897,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "two-pole"
-			 "two-pole: a0: 0.400, b1: 0.700, b2: 0.300, y1: 0.000, y2: 0.000"
-			 "smpflt a0: 0.400000, a1: 0.000000, a2: 0.000000, b1: 0.700000, b2: 0.300000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
+			 "two-pole: a0: 0.400, b1: 0.700, b2: 0.300, y1: 0.000, y2: 0.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (two-pole gen 1.0)))
@@ -12964,8 +12945,7 @@ EDITS: 5
 	    (v2 (make-vct 10)))
 	(print-and-check gen 
 			 "oscil"
-			 "oscil freq: 440.000Hz, phase: 0.000"
-			 "osc freq: 0.125379, phase: 0.000000")
+			 "oscil freq: 440.000Hz, phase: 0.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (oscil gen 0.0))
@@ -13232,8 +13212,7 @@ EDITS: 5
 	
 	(print-and-check gen 
 			 "buffer"
-			 "buffer: length: 3, loc: 0, fill: 3.000"
-			 "rblk buf[3 (external)]: [1.000 0.500 0.250], loc: 0, fill_time: 3.000000, empty: true")
+			 "buffer: length: 3, loc: 0, fill: 3.000")
 	(if (not (buffer-full? gen)) (snd-display ";buffer-full: ~A?" gen))
 	(if (not (buffer? gen)) (snd-display ";~A not buffer?" gen))
 	(if (not (= (mus-length gen) 3)) (snd-display ";buffer length: ~D?" (mus-length gen)))
@@ -13262,22 +13241,19 @@ EDITS: 5
 	
 	(print-and-check gen 
 			 "buffer"
-			 "buffer: length: 6, loc: 0, fill: 2.000"
-			 "rblk buf[6 (external)]: [0.100 0.200 0.000 0.000 0.000 0.000], loc: 0, fill_time: 2.000000, empty: true")
+			 "buffer: length: 6, loc: 0, fill: 2.000")
 	(frame->buffer gen fr2)
 	(frame->buffer gen fr3)
 	
 	(print-and-check gen 
 			 "buffer"
-			 "buffer: length: 6, loc: 0, fill: 6.000"
-			 "rblk buf[6 (external)]: [0.100 0.200 0.300 0.400 0.500 0.600], loc: 0, fill_time: 6.000000, empty: true")
+			 "buffer: length: 6, loc: 0, fill: 6.000")
 	(buffer->frame gen fr2)
 	(if (not (equal? fr2 fr1)) (snd-display ";buffer->frame: ~A ~A?" fr1 fr2))
 	
 	(print-and-check gen 
 			 "buffer"
-			 "buffer: length: 6, loc: 2, fill: 6.000"
-			 "rblk buf[6 (external)]: [0.100 0.200 0.300 0.400 0.500 0.600], loc: 2, fill_time: 6.000000, empty: true")
+			 "buffer: length: 6, loc: 2, fill: 6.000")
 	(let ((f (buffer->frame gen)))
 	  (if (not (= (mus-channels f) 1)) (snd-display ";buffer->frame default: ~A?" f))
 	  (if (fneq (frame-ref f 0) .3) (snd-display ";buffer->frame: ~A?" f))
@@ -13287,8 +13263,7 @@ EDITS: 5
 	  
 	  (print-and-check gen 
 			   "buffer"
-			   "buffer: length: 6, loc: 0, fill: 3.000"
-			   "rblk buf[6 (external)]: [0.600 0.700 0.800 0.000 0.000 0.000], loc: 0, fill_time: 3.000000, empty: true")))
+			   "buffer: length: 6, loc: 0, fill: 3.000")))
       
       (test-gen-equal (make-buffer 3) (make-buffer 3) (make-buffer 4))
       (let ((gen (make-buffer 3))
@@ -13309,8 +13284,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "sum-of-cosines"
-			 "sum-of-cosines freq: 440.000Hz, phase: 0.000, cosines: 10"
-			 "cosp freq: 0.125379, phase: 0.000000, cosines: 10, scaler: 0.100000")
+			 "sum-of-cosines freq: 440.000Hz, phase: 0.000, cosines: 10")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (sum-of-cosines gen 0.0)))
@@ -13361,8 +13335,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "sum-of-sines"
-			 "sum-of-sines freq: 440.000Hz, phase: 0.000, sines: 10"
-			 "cosp freq: 0.125379, phase: 0.000000, cosines: 10, scaler: 0.131579")
+			 "sum-of-sines freq: 440.000Hz, phase: 0.000, sines: 10")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (sum-of-sines gen 0.0)))
@@ -13406,8 +13379,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "sine-summation"
-			 "sine-summation: frequency: 440.000, phase: 0.000, n: 1, a: 0.500, ratio: 1.000"
-			 "sss freq: 0.125379, phase: 0.000000, a: 0.500000, b: 1.000000, an: 0.250000, a2: 1.250000, n: 1")
+			 "sine-summation: frequency: 440.000, phase: 0.000, n: 1, a: 0.500, ratio: 1.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (sine-summation gen 0.0)))
@@ -13497,8 +13469,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "asymmetric-fm"
-			 "asymmetric-fm freq: 440.000Hz, phase: 0.000, ratio: 1.000, r: 1.000"
-			 "asyfm r: 1.000000, freq: 0.125379, phase: 0.000000, ratio: 1.000000, cosr: 0.000000, sinr: 1.000000")
+			 "asymmetric-fm freq: 440.000Hz, phase: 0.000, ratio: 1.000, r: 1.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (asymmetric-fm gen 0.0)))
@@ -13620,8 +13591,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "fir-filter"
-			 "fir-filter: order: 3"
-			 "flt order: 3, state (local): [0.000 0.000 0.000], x: [0.500 0.250 0.125], y: nil")
+			 "fir-filter: order: 3")
 	(vct-set! v0 0 (fir-filter gen 1.0))
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
@@ -13679,8 +13649,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "iir-filter"
-			 "iir-filter: order: 3"
-			 "flt order: 3, state (local): [0.000 0.000 0.000], x: nil, y: [0.500 0.250 0.125]")
+			 "iir-filter: order: 3")
 	(vct-set! v0 0 (iir-filter gen 1.0))
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
@@ -13717,8 +13686,7 @@ EDITS: 5
 	    (gen2 (make-biquad .1 .2 .3 .4 .5)))
 	(print-and-check gen 
 			 "filter"
-			 "filter: order: 3"
-			 "flt order: 3, state (local): [0.000 0.000 0.000], x: [0.500 0.250 0.125], y: [0.500 0.250 0.125]")
+			 "filter: order: 3")
 	(vct-set! v0 0 (filter gen 1.0))
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
@@ -14088,8 +14056,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "sawtooth-wave"
-			 "sawtooth-wave freq: 440.000Hz, phase: 3.142, amp: 1.000"
-			 "sw current_value: 0.000000, freq: 0.125379, phase: 3.141593, base: 0.318310")
+			 "sawtooth-wave freq: 440.000Hz, phase: 3.142, amp: 1.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (sawtooth-wave gen 0.0)))
@@ -14124,8 +14091,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "square-wave"
-			 "square-wave freq: 440.000Hz, phase: 0.000, amp: 1.000"
-			 "sw current_value: 1.000000, freq: 0.125379, phase: 0.000000, base: 1.000000")
+			 "square-wave freq: 440.000Hz, phase: 0.000, amp: 1.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (square-wave gen 0.0)))
@@ -14168,8 +14134,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "triangle-wave"
-			 "triangle-wave freq: 440.000Hz, phase: 0.000, amp: 1.000"
-			 "sw current_value: 0.000000, freq: 0.125379, phase: 0.000000, base: 0.636620")
+			 "triangle-wave freq: 440.000Hz, phase: 0.000, amp: 1.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (triangle-wave gen 0.0)))
@@ -14203,8 +14168,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "pulse-train"
-			 "pulse-train freq: 440.000Hz, phase: 0.000, amp: 1.000"
-			 "sw current_value: 0.000000, freq: 0.125379, phase: 6.283185, base: 1.000000")
+			 "pulse-train freq: 440.000Hz, phase: 0.000, amp: 1.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (pulse-train gen 0.0)))
@@ -14286,8 +14250,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "formant"
-			 "formant: radius: 0.900, frequency: 1200.000, (gain: 1.000)"
-			 "smpflt a0: 0.063710, a1: 1.000000, a2: -0.900000, b1: -1.695789, b2: 0.810000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
+			 "formant: radius: 0.900, frequency: 1200.000, (gain: 1.000)")
 	(vct-set! v0 0 (formant gen 1.0))
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
@@ -14404,11 +14367,9 @@ EDITS: 5
 	    (fr1 (make-frame 2 0.0 0.0)))
 	(print-and-check gen 
 			 "mixer"
-			 "mixer: chans: 2, vals: [(0.500 0.250) (0.125 1.000)]"
 			 "mixer: chans: 2, vals: [(0.500 0.250) (0.125 1.000)]")
 	(print-and-check fr0 
 			 "frame"
-			 "frame[2]: [1.000 1.000]"
 			 "frame[2]: [1.000 1.000]")
 	(if (not (frame? fr0)) (snd-display ";~A not a frame?" fr0))
 	(if (not (mixer? gen)) (snd-display ";~A not a mixer?" gen))
@@ -14775,8 +14736,7 @@ EDITS: 5
 	    (gen1 (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 10)))
 	(print-and-check gen 
 			 "env"
-			 "env: linear, pass: 0 (dur: 11), index: 0, scaler: 0.5000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000]"
-			 "seg scaler: 0.5000, offset: 0.0000, rate: 0.100000, current_value: 0.000000, base: 1.000000, offset: 0.000000, scaler: 0.500000, power: 0.000000, init_y: 0.000000, init_power: 0.000000, pass: 0, end: 10, style: 0, index: 0, size: 3, original_data[6]: [0.000 0.000 1.000 1.000 2.000 0.000], rates[3]: [0.100 -0.100 0.000], passes[3]: [5 10 100000000]")
+			 "env: linear, pass: 0 (dur: 11), index: 0, scaler: 0.5000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000]")
 	(if (not (env? gen)) (snd-display ";~A not env?" gen))
 	(if (fneq (mus-scaler gen) 0.5) (snd-display ";env scaler ~F?" (mus-scaler gen)))
 	(if (fneq (mus-increment gen) 1.0) (snd-display ";env base (1.0): ~A?" (mus-increment gen)))
@@ -15019,9 +14979,7 @@ EDITS: 5
 	    (v2 (make-vct 10)))
 	(print-and-check gen 
 			 "table-lookup"
-			 "table-lookup: freq: 440.000Hz, phase: 0.000, length: 512, interp: linear"
-			 (mus-inspect gen))
-	;; problem with mus-inspect here is that it includes the table pointer itself
+			 "table-lookup: freq: 440.000Hz, phase: 0.000, length: 512, interp: linear")
 	(if (not (= (mus-length gen) 512)) (snd-display ";table-lookup length: ~A?" (mus-length gen)))
 	(if (not (= (mus-length gen3) 512)) (snd-display ";default table-lookup length: ~A?" (mus-length gen3)))
 	(do ((i 0 (1+ i)))
@@ -15136,8 +15094,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "waveshape"
-			 "waveshape freq: 440.000Hz, phase: 0.000, size: 512"
-			 "ws osc freq: 0.125379, phase: 0.000000, offset: 255.500000, table[512 (external)]: [-1.000 -0.996 -0.992 -0.988 -0.984 -0.980 -0.977 -0.973...(0: -1.000, 511: 1.000)]")
+			 "waveshape freq: 440.000Hz, phase: 0.000, size: 512")
 	(if (not (= (mus-length gen) 512)) (snd-display ";waveshape length: ~A?" (mus-length gen)))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
@@ -15240,8 +15197,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "wave-train"
-			 "wave-train freq: 440.000Hz, phase: 0.000, size: 20, interp: linear"
-			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], type: linear, b: rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], loc: 0, fill_time: 0.000000, empty: true")
+			 "wave-train freq: 440.000Hz, phase: 0.000, size: 20, interp: linear")
 	(do ((i 0 (1+ i)))
 	    ((= i 20))
 	  (vct-set! (mus-data gen) i (* i .5))
@@ -15284,7 +15240,7 @@ EDITS: 5
 		   ((= i 10))
 		 (vct-set! v i (wave-train tbl1 0.0))) ;(wave-train tbl1 (/ (* 2 pi .2) 4))))
 	       (if (not (vequal v vals))
-		   (snd-display ";tbl interp ~A: ~A ~A" type v (mus-inspect tbl1)))
+		   (snd-display ";tbl interp ~A: ~A ~A" type v (mus-describe tbl1)))
 	       (if (not (= (mus-interp-type tbl1) type)) (snd-display ";tbl interp-type (~A): ~A" type (mus-interp-type tbl1)))))))
        (list 
 	(list mus-interp-none (vct 0.000 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000))
@@ -15301,8 +15257,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "readin"
-			 "readin: oboe.snd[chan 0], loc: 1490, dir: 1"
-			 "rdin chan: 0, dir: 1, loc: 1490, chans: 1, data_start: 0, data_end: -1, file_end: 50828, file_name: oboe.snd")
+			 "readin: oboe.snd[chan 0], loc: 1490, dir: 1")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (readin gen)))
@@ -15340,8 +15295,7 @@ EDITS: 5
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "readin"
-			 "readin: 2.snd[chan 1], loc: 0, dir: 1"
-			 "rdin chan: 1, dir: 1, loc: 0, chans: 2, data_start: 0, data_end: -1, file_end: 22051, file_name: 2.snd")
+			 "readin: 2.snd[chan 1], loc: 0, dir: 1")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (readin gen)))
@@ -15349,15 +15303,13 @@ EDITS: 5
 	(if (or (fneq (vct-ref v0 1) 0.010) (fneq (vct-ref v0 7) -.006)) (snd-display ";readin 1 output: ~A" v0))
 	(print-and-check gen 
 			 "readin"
-			 "readin: 2.snd[chan 1], loc: 10, dir: 1"
-			 "rdin chan: 1, dir: 1, loc: 10, chans: 2, data_start: 0, data_end: 22051, file_end: 22051, file_name: 2.snd"))
+			 "readin: 2.snd[chan 1], loc: 10, dir: 1"))
       
       (let ((gen (make-file->sample "oboe.snd"))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "file->sample"
-			 "file->sample: oboe.snd"
-			 "rdin chan: 0, dir: 0, loc: 0, chans: 1, data_start: 0, data_end: -1, file_end: 50828, file_name: oboe.snd")
+			 "file->sample: oboe.snd")
 	(if (not (mus-input? gen)) (snd-display ";~A not input?" gen))
 	(if (not (= (mus-length gen) 50828)) (snd-display ";file->sample length: ~A?" (mus-length gen)))
 	(if (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display ";file->sample mus-file-name: ~A" (mus-file-name gen)))
@@ -15376,7 +15328,6 @@ EDITS: 5
 	     (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "snd->sample"
-			 "snd->sample: reading oboe.snd (1 chan) at 0:[no readers]"
 			 "snd->sample: reading oboe.snd (1 chan) at 0:[no readers]")
 	(if (not (equal? gen gen)) (snd-display ";snd->sample not eq? itself?"))
 	(if (equal? gen gen1) (snd-display ";snd->sample eq? not itself?"))
@@ -15406,7 +15357,6 @@ EDITS: 5
 	  (vct-set! v0 i (snd->sample gen (+ 1490 i) 1)))
 	(print-and-check gen 
 			 "snd->sample"
-			 "snd->sample: reading 2.snd (2 chans) at 1499:[#<sample-reader: 2.snd[0: 0] from 1490, at 1500>, #<sample-reader: 2.snd[1: 0] from 1490, at 1500>]"
 			 "snd->sample: reading 2.snd (2 chans) at 1499:[#<sample-reader: 2.snd[0: 0] from 1490, at 1500>, #<sample-reader: 2.snd[1: 0] from 1490, at 1500>]")
 	(if (not (mus-input? gen)) (snd-display ";snd->sample ~A not input?" gen))
 	(if (not (string=? (mus-file-name gen) (string-append cwd "2.snd")))
@@ -15423,7 +15373,6 @@ EDITS: 5
 	     (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "xen->sample"
-			 "xen->sample: (lambda (samp chan) (* 2.0 (file->sample fgen samp chan)))"
 			 "xen->sample: (lambda (samp chan) (* 2.0 (file->sample fgen samp chan)))")
 	(if (not (mus-input? gen)) (snd-display ";xen->sample ~A not input?" gen))
 	(if (not (equal? gen gen)) (snd-display ";xen->sample not eq? itself?"))
@@ -15443,8 +15392,7 @@ EDITS: 5
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "file->frame"
-			 "file->frame: oboe.snd"
-			 "rdin chan: 0, dir: 0, loc: 0, chans: 1, data_start: 0, data_end: -1, file_end: 50828, file_name: oboe.snd")
+			 "file->frame: oboe.snd")
 	(if (not (mus-input? gen)) (snd-display ";~A not input?" gen))
 	(if (not (= (mus-length gen) 50828)) (snd-display ";file->frame length: ~A?" (mus-length gen)))
 	(if (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display ";file->frame mus-file-name: ~A" (mus-file-name gen)))
@@ -15461,8 +15409,7 @@ EDITS: 5
       (let ((gen (make-sample->file "fmv.snd" 2 mus-lshort mus-riff)))
 	(print-and-check gen 
 			 "sample->file"
-			 "sample->file: fmv.snd"
-			 "rdout chan: 0, loc: 0, file_name: fmv.snd, chans: 2, data_start: 0, data_end: 65535, out_end: 0")
+			 "sample->file: fmv.snd")
 	(if (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(if (not (sample->file? gen)) (snd-display ";~A not sample->file?" gen))
 	(if (not (= (mus-length gen) (mus-file-buffer-size))) (snd-display ";sample->file length: ~A?" (mus-length gen)))
@@ -15491,8 +15438,7 @@ EDITS: 5
 	     (val9 (in-any 60 1 gen)))
 	(print-and-check gen 
 			 "file->sample"
-			 "file->sample: fmv.snd"
-			 "rdin chan: 0, dir: 0, loc: 0, chans: 2, data_start: 20, data_end: 100, file_end: 100, file_name: fmv.snd")
+			 "file->sample: fmv.snd")
 	(if (not (= (mus-channels gen) 2)) (snd-display ";make-sample->file chans: ~A?" (mus-channels gen)))
 	(if (not (mus-input? gen)) (snd-display ";~A not input?" gen))
 	(if (or (fneq val0 .02) (fneq val1 .2)) (snd-display ";in-any: ~A ~A?" val0 val1))
@@ -15504,8 +15450,7 @@ EDITS: 5
       (let ((gen (make-sample->file "fmv.snd" 4 mus-lshort mus-riff)))
 	(print-and-check gen 
 			 "sample->file"
-			 "sample->file: fmv.snd"
-			 "rdout chan: 0, loc: 0, file_name: fmv.snd, chans: 4, data_start: 0, data_end: 65535, out_end: 0")
+			 "sample->file: fmv.snd")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (outa i .1 gen)
@@ -15522,8 +15467,7 @@ EDITS: 5
       (let* ((gen (make-file->sample "fmv.snd")))
 	(print-and-check gen 
 			 "file->sample"
-			 "file->sample: fmv.snd"
-			 "rdin chan: 0, dir: 0, loc: 0, chans: 4, data_start: 0, data_end: -1, file_end: 10, file_name: fmv.snd")
+			 "file->sample: fmv.snd")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (if (or (fneq (ina i gen) .11)
@@ -15573,8 +15517,7 @@ EDITS: 5
       (let ((gen (make-frame->file "fmv1.snd" 2 mus-bshort mus-next)))
 	(print-and-check gen 
 			 "frame->file"
-			 "frame->file: fmv1.snd"
-			 "rdout chan: 0, loc: 0, file_name: fmv1.snd, chans: 2, data_start: 0, data_end: 65535, out_end: 0")
+			 "frame->file: fmv1.snd")
 	(if (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(if (not (frame->file? gen)) (snd-display ";~A not frame->file?" gen))
 	(if (not (= (mus-length gen) (mus-file-buffer-size))) (snd-display ";frame->file length: ~A?" (mus-length gen)))
@@ -15601,8 +15544,7 @@ EDITS: 5
       (let ((gen (make-sample->file "fmv2.snd" 4 mus-bshort mus-aifc)))
 	(print-and-check gen 
 			 "sample->file"
-			 "sample->file: fmv2.snd"
-			 "rdout chan: 0, loc: 0, file_name: fmv2.snd, chans: 4, data_start: 0, data_end: 8191, out_end: 0")
+			 "sample->file: fmv2.snd")
 	(if (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(if (not (sample->file? gen)) (snd-display ";~A not sample->file?" gen))
 	(do ((i 0 (1+ i)))
@@ -15782,8 +15724,7 @@ EDITS: 5
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "rand"
-			 "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000"
-			 "noi freq: 2.849517, phase: 0.000000, base: 1.000000, output: 0.000000, incr: 0.000000")
+			 "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (rand gen 0.0)))
@@ -15798,8 +15739,7 @@ EDITS: 5
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "rand"
-			 "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000, with distribution envelope"
-			 "noi freq: 2.849517, phase: 0.000000, base: 1.000000, output: 0.000000, incr: 0.000000, envelope: [0.020 0.054 0.072 0.086 0.098 0.108 0.118 0.126...(0: 0.020, 511: 1.000)]")
+			 "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000, with distribution envelope")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (rand gen 0.0)))
@@ -15846,8 +15786,7 @@ EDITS: 5
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "rand-interp"
-			 (mus-describe gen)
-			 (mus-inspect gen)) ; problem here is the random incr field
+			 (mus-describe gen))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (rand-interp gen 0.0)))
@@ -15862,8 +15801,7 @@ EDITS: 5
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "rand-interp"
-			 (mus-describe gen)
-			 (mus-inspect gen)) ; problem here is the random incr field
+			 (mus-describe gen))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (rand-interp gen 0.0)))
@@ -15891,9 +15829,7 @@ EDITS: 5
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "rand"
-			 "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000, with distribution envelope"
-			 "noi freq: 2.849517, phase: 0.000000, base: 1.000000, output: 0.000000, incr: 0.000000, envelope: [0.000 0.054 0.072 0.086 0.098 0.108 0.118 0.126...(0: 0.000, 511: 1.000)]")
-
+			 "rand freq: 10000.000Hz, phase: 0.000, amp: 1.000, with distribution envelope")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (rand gen 0.0)))
@@ -16093,8 +16029,7 @@ EDITS: 5
 	     (fr0 (locsig gen 0 1.0)))
 	(print-and-check gen 
 			 "locsig"
-			 "locsig: chans 2, outn: [0.667 0.333], interp: linear"
-			 "locs outn[2]: [0.667 0.333], revn[0]: nil, interp: linear")
+			 "locsig: chans 2, outn: [0.667 0.333], interp: linear")
 	(if (not (locsig? gen)) (snd-display ";~A not locsig?" gen))
 	(if (not (eq? gen1 gen3)) (snd-display ";locsig eq? ~A ~A" gen1 gen3))
 	(if (not (equal? gen1 gen3)) (snd-display ";locsig equal? ~A ~A" gen1 gen3))
@@ -16223,8 +16158,7 @@ EDITS: 5
 	     (lc (make-locsig 60.0 :reverb .1 :channels 4 :distance 4.0 :output gen :revout rev)))
 	(print-and-check lc
 			 "locsig"
-			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.017 0.033 0.000 0.000], interp: linear"
-			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.017 0.033 0.000 0.000], interp: linear")
+			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.017 0.033 0.000 0.000], interp: linear")
 	(do ((i 0 (1+ i)))
 	    ((= i 100))
 	  (locsig lc i 1.0))
@@ -16235,8 +16169,7 @@ EDITS: 5
 	      (snd-display ";locsig reverb set![~A]: ~A?" i (locsig-reverb-ref lc i))))
 	(print-and-check lc
 			 "locsig"
-			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.000 0.100 0.200 0.300], interp: linear"
-			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.000 0.100 0.200 0.300], interp: linear")
+			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.000 0.100 0.200 0.300], interp: linear")
 	(if (not (vct? (mus-data lc))) (snd-display ";out data locsig: ~A" (mus-data lc)))
 	(if (not (vct? (mus-xcoeffs lc))) (snd-display ";rev data locsig: ~A" (mus-xcoeffs lc)))
 	(let ((xcs (mus-xcoeffs lc)))
@@ -16247,32 +16180,25 @@ EDITS: 5
       
       (print-and-check (make-locsig 160 :channels 4)
 		       "locsig"
-		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear"
-		       "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil, interp: linear")
+		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
       (print-and-check (make-locsig -200 :channels 4)
 		       "locsig"
-		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear"
-		       "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil, interp: linear")
+		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
       (print-and-check (make-locsig 160 :channels 4 :distance .5)
 		       "locsig"
-		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear"
-		       "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil, interp: linear")
+		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
       (print-and-check (make-locsig 320 :channels 4)
 		       "locsig"
-		       "locsig: chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear"
-		       "locs outn[4]: [0.556 0.000 0.000 0.444], revn[0]: nil, interp: linear")
+		       "locsig: chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear")
       (print-and-check (make-locsig -40 :channels 4)
 		       "locsig"
-		       "locsig: chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear"
-		       "locs outn[4]: [0.556 0.000 0.000 0.444], revn[0]: nil, interp: linear")
+		       "locsig: chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear")
       (print-and-check (make-locsig 320 :channels 2)
 		       "locsig"
-		       "locsig: chans 2, outn: [0.000 1.000], interp: linear"
-		       "locs outn[2]: [0.000 1.000], revn[0]: nil, interp: linear")
+		       "locsig: chans 2, outn: [0.000 1.000], interp: linear")
       (print-and-check (make-locsig -40 :channels 2)
 		       "locsig"
-		       "locsig: chans 2, outn: [0.000 1.000], interp: linear"
-		       "locs outn[2]: [0.000 1.000], revn[0]: nil, interp: linear")
+		       "locsig: chans 2, outn: [0.000 1.000], interp: linear")
       (letrec ((locsig-data
 		(lambda (gen)
 		  (let* ((chans (mus-channels gen))
@@ -16459,8 +16385,7 @@ EDITS: 5
 	    (rd1a (make-readin "oboe.snd" 0 2000)))
 	(print-and-check gen 
 			 "src"
-			 "src: width: 10, x: 0.000, incr: 2.000, sinc table len: 10000"
-			 "sr x: 0.000000, incr: 2.000000, width: 10, sinc table len: 10000, data[21]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]")
+			 "src: width: 10, x: 0.000, incr: 2.000, sinc table len: 10000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (src gen 0.0 (lambda (dir) (readin rd)))))
@@ -16500,9 +16425,7 @@ EDITS: 5
 	    (rd1b (make-readin "oboe.snd" 0 4000)))
 	(print-and-check gen 
 			 "granulate"
-			 "granulate: expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060"
-			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5513, in_data[5513]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], data[4410]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]"
-			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5512, in_data[5512]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], data[4409]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]")
+			 "granulate: expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060")
 	(do ((i 0 (1+ i)))
 	    ((= i 1000))
 	  (vct-set! v0 i (granulate gen (lambda (dir) (readin rd)))))
@@ -16642,8 +16565,7 @@ EDITS: 5
 	      (n1 -1))
 	  (print-and-check gen 
 			   "convolve"
-			   "convolve: size: 64"
-			   "conv fftsize: 64, fftsize2: 32, filtersize: 32, ctr: 32, rl1: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], rl2: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], buf: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], filter: [0.000 1.000 0.500 0.333 0.250 0.200 0.167 0.143...(0: 0.000, 1: 1.000)]")
+			   "convolve: size: 64")
 	  (if (not (convolve? gen)) (snd-display ";~A not convolve?" gen))
 	  (let ((genx gen1))
 	    (if (not (equal? genx gen1)) (snd-display ";convolve equal?: ~A ~A ~A" genx gen1 (equal? genx gen1))))
@@ -17033,9 +16955,7 @@ EDITS: 5
 	(if (not (phase-vocoder? pv)) (snd-display ";~A not phase-vocoder?" pv))
 	(print-and-check pv 
 			 "phase-vocoder"
-			 "phase-vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil"
-			 "pv_info outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil, amps: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], freqs: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]")
-
+			 "phase-vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil")
 	(let ((val (let ((pv (make-phase-vocoder))) (set! (phase-vocoder-outctr pv) 120) (phase-vocoder-outctr pv))))
 	  (if (not (= val 120)) (snd-display ";pv set outctr: ~A" val)))
 
@@ -17188,8 +17108,7 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "ssb-am"
-			 "ssb-am: shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 40"
-			 "ssbam: shift_up: true, sin: osc freq: 0.125379, phase: 0.000000, cos: osc freq: 0.125379, phase: 1.570796, delay: dly line[40,40 at 0,0 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], xscl: 0.000000, yscl: 0.000000, type: step, hilbert: flt order: 80, state (local): [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], x: [-0.000 -0.001 -0.000 -0.002 -0.000 -0.002 -0.000 -0.003...(39: -0.636, 41: 0.636)], y: nil")
+			 "ssb-am: shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 40")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (ssb-am gen 0.0)))
@@ -35768,7 +35687,6 @@ EDITS: 2
 	      (vct-map! v (lambda ()
 			    (if (not (string=? (mus-name gen) "oscil")) (set! res 1))
 			    (if (not (string=? (mus-describe gen) "oscil freq: 440.000Hz, phase: 0.000")) (set! res (+ res 10)))
-			    (if (not (string=? (mus-inspect gen) "osc freq: 0.125379, phase: 0.000000")) (set! res (+ res 100)))
 			    0.0))
 	      (if (not (= res 0)) (snd-display ";run mus-name etc: ~A" res))
 	      (catch #t (lambda () (vct-map (lambda () (oscil gen 0.0 1.0 1.0)) v)) (lambda args args)))
@@ -49397,7 +49315,7 @@ EDITS: 2
 		     
 		     beats-per-minute buffer-full? channel-amp-envs convolve-files filter-control-coeffs 
 		     locsig-type make-phase-vocoder mus-audio-mixer-read mus-bank 
-		     mus-describe mus-inspect mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format
+		     mus-describe mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format
 		     mus-rand-seed mus-width phase-vocoder?
 		     polar->rectangular previous-files-sort-procedure 
 		     phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr 

@@ -1124,7 +1124,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   snd_fd *sf;
   if ((beg < 0) || ((dur + overlap) <= 0)) return(NULL);
   sp = cp->sound;
-  if (!(MUS_RUN_P(gen)))
+  if (!(MUS_RUN_P(gen))) /* currently can't happen */
     return(mus_format(_(S_clm_channel ": %s can't handle %s generators"),
 		      caller,
 		      mus_name(gen)));

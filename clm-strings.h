@@ -174,7 +174,6 @@
 #define S_mus_hop                    "mus-hop"
 #define S_mus_increment              "mus-increment"
 #define S_mus_input_p                "mus-input?"
-#define S_mus_inspect                "mus-inspect"
 #define S_mus_interp_all_pass        "mus-interp-all-pass"
 #define S_mus_interp_bezier          "mus-interp-bezier"
 #define S_mus_interp_hermite         "mus-interp-hermite"
