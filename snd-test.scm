@@ -7174,7 +7174,152 @@
 	      (if (not (= (mix-position mix-id) 10))
 		  (snd-display ";mix-position 10: ~A" (mix-position mix-id)))))
 	(close-sound id)))
-
+    (set! (print-length) 30)
+    (let ((index (new-sound "test.snd"))
+	  (v1 (make-vct 1))
+	  (v2 (make-vct 2))
+	  (v3 (make-vct 3)))
+      (vct-fill! v1 .1)
+      (vct-fill! v2 .2)
+      (vct-fill! v3 .3)
+      (let ((id1 (map (lambda (start)
+			(mix-vct v1 start))
+		      (list 0 10 20)))
+	    (id2 (map (lambda (start)
+			(mix-vct v2 start))
+		      (list 1 12 23)))
+	    (id3 (map (lambda (start)
+			(mix-vct v3 start))
+		      (list 2 14 26)))
+	    (trk1 (unused-track)))
+	(if (not (vequal (channel->vct)
+			 (vct .1 .2 .5 .3 .3  0 0  0 0 0  
+			      .1 0  .2 .2 .3 .3 .3 0 0 0
+			      .1 0  0  .2 .2  0 .3 .3 .3)))
+	    (snd-display ";mix tests off to a bad start: ~A" (channel->vct)))
+	(if (not (vequal (mix->vct (car id2)) (vct .2 .2)))
+	    (snd-display ";mix->vct of .2: ~A" (mix->vct (car id2))))
+	(for-each
+	 (lambda (proc name)
+	   (let ((tag (catch #t (lambda () (proc (track trk1))) (lambda args (car args)))))
+	     (if (not (eq? tag 'no-such-track)) (snd-display ";~A err: ~A" name tag))))
+	 (list track-position track-end track-length track-amp track-speed)
+	 (list 'track-position 'track-end 'track-length 'track-amp 'track-speed))
+	(set! (mix-track (car id1)) trk1)
+	(let ((tr1 (track trk1)))
+	  (if (not (equal? tr1 (list (car id1))))
+	      (snd-display ";1 track->~A ~A" tr1 (car id1)))
+	  (if (not (= (track-position tr1) (mix-position (car id1))))
+	      (snd-display ";1 track-position ~A ~A (~A)" tr1 (track-position tr1) (mix-position (car id1))))
+	  (if (not (= (track-length tr1) (mix-length (car id1))))
+	      (snd-display ";1 track-length ~A ~A (~A)" tr1 (track-length tr1) (mix-length (car id1))))
+	  (if (not (= (track-end tr1) (+ (mix-position (car id1)) (mix-length (car id1)))))
+	      (snd-display ";1 track-end ~A ~A ~A" (track-end tr1) (mix-position (car id1)) (mix-length (car id1))))
+	  (if (fneq (track-amp tr1) (mix-amp (car id1) 0))
+	      (snd-display ";1 track-amp: ~A ~A" (track-amp tr1) (mix-amp (car id1) 0)))
+	  (if (fneq (track-speed tr1) (mix-speed (car id1)))
+	      (snd-display ";1 track-speed: ~A ~A" (track-speed tr1) (mix-speed (car id1))))
+	  (if (not (vequal (track->vct tr1) (mix->vct (car id1))))
+	      (snd-display ";1 track->vct ~A ~A" (track->vct tr1) (mix->vct (car id1))))
+	  (delete-track tr1)
+	  (if (fneq (mix-amp (car id1) 0) 0.0)
+	      (snd-display ";1 delete-track amp: ~A" (mix-amp (car id1) 0)))
+	  (if (not (vequal (channel->vct)
+			   (vct 0 .2 .5 .3 .3  0 0  0 0 0  
+				.1 0  .2 .2 .3 .3 .3 0 0 0
+				.1 0  0  .2 .2  0 .3 .3 .3)))
+	      (snd-display ";first mix deleted: ~A" (channel->vct)))
+	  (undo)
+	  (if (fneq (mix-amp (car id1) 0) 1.0)
+	      (snd-display ";1 undo delete-track amp: ~A" (mix-amp (car id1) 0)))
+	  (set! (track-amp tr1) 2.0)
+	  (if (not (vequal (channel->vct)
+			   (vct .2 .2 .5 .3 .3  0 0  0 0 0  
+				.1 0  .2 .2 .3 .3 .3 0 0 0
+				.1 0  0  .2 .2  0 .3 .3 .3)))
+	      (snd-display ";1 set track-amp: ~A" (channel->vct)))
+	  (set! (track-position tr1) 8)
+	  (if (not (= (track-position tr1) 8))
+	      (snd-display ";moved track 1: ~A" (track-position tr1)))
+	  (if (not (vequal (channel->vct)
+			   (vct 0 .2 .5 .3 .3  0 0  0 .2 0  
+				.1 0  .2 .2 .3 .3 .3 0 0 0
+				.1 0  0  .2 .2  0 .3 .3 .3)))
+	      (snd-display ";1 set track-position 8: ~A" (channel->vct)))
+	  (reverse-track tr1)
+	  (if (not (vequal (channel->vct)
+			   (vct 0 .2 .5 .3 .3  0 0  0 .2 0  
+				.1 0  .2 .2 .3 .3 .3 0 0 0
+				.1 0  0  .2 .2  0 .3 .3 .3)))
+	      (snd-display ";1 reverse track: ~A" (channel->vct)))
+	  
+	  (let* ((trk2 (unused-track))
+		 (tr2 (make-track trk2 (list (cadr id1) (cadr id2) (cadr id3)))))
+	    (if (not (= (track-position tr2) (mix-position (cadr id1))))
+		(snd-display ";2 track-position ~A ~A (~A)" tr2 (track-position tr2) (mix-position (cadr id1))))
+	    (set! (track-amp tr2) 2.0)
+	    (if (not (vequal (channel->vct)
+			     (vct 0 .2 .5 .3 .3  0 0  0 .2 0  
+				  .2 0  .4 .4 .6 .6 .6 0 0 0
+				  .1 0  0  .2 .2  0 .3 .3 .3)))
+		(snd-display ";2 set track-amp: ~A" (channel->vct)))
+	    (set! (track-position tr2) (- (track-position tr2) 1))
+	    (if (not (vequal (channel->vct)
+			     (vct 0 .2 .5 .3 .3  0 0  0 .2 .2  
+				  0 .4 .4 .6 .6 .6 0 0 0 0
+				  .1 0  0  .2 .2  0 .3 .3 .3)))
+		(snd-display ";2 set track-position: ~A" (channel->vct)))
+	    (delete-all-tracks)
+	    (if (not (vequal (channel->vct)
+			     (vct 0 .2 .5 .3 .3  0 0  0 0 0
+				  0 0 0 0 0 0 0 0 0 0
+				  .1 0  0  .2 .2  0 .3 .3 .3)))
+		(snd-display ";2 delete-all-tracks: ~A" (channel->vct)))
+	    (undo)
+	    (if (not (vequal (channel->vct)
+			     (vct 0 .2 .5 .3 .3  0 0  0 .2 .2  
+				  0 .4 .4 .6 .6 .6 0 0 0 0
+				  .1 0  0  .2 .2  0 .3 .3 .3)))
+		(snd-display ";2 undo delete-all-tracks: ~A" (channel->vct)))
+	    (revert-sound index)
+	    
+	    (set! id1 (map (lambda (start)
+			     (mix-vct v1 start))
+			   (list 0 10 20)))
+	    (set! id2 (map (lambda (start)
+			     (mix-vct v2 start))
+			   (list 1 12 23)))
+	    (set! id3 (map (lambda (start)
+			     (mix-vct v3 start))
+			   (list 2 14 26)))
+	    (if (not (vequal (channel->vct)
+			     (vct .1 .2 .5 .3 .3  0 0  0 0 0  
+				  .1 0  .2 .2 .3 .3 .3 0 0 0
+				  .1 0  0  .2 .2  0 .3 .3 .3)))
+		(snd-display ";mix tests 2nd start: ~A" (channel->vct)))
+	    (set! tr1 (make-track (unused-track) id1))
+	    (set! tr2 (make-track (unused-track) id3))
+	    (let ((old-pos (map mix-position tr1)))
+	      (if (not (equal? old-pos (map mix-position id1)))
+		  (snd-display ";old-pos: ~A ~A" old-pos (map mix-position id1)))
+	      (set-track-tempo tr1 2) ; tempo > 1 is faster
+	      (if (not (vequal (channel->vct)
+			       (vct .1 .2 .5 .3 .3  .1 0  0 0 0  
+				    .1 0  .2 .2 .3 .3 .3 0 0 0
+				    0 0  0  .2 .2  0 .3 .3 .3)))
+		  (snd-display ";3 track-tempo .5: ~A -> ~A, ~A" old-pos (map mix-position tr1) (channel->vct))))
+	    (set! (track-amp tr1) 0.0)
+	    (if (not (vequal (channel->vct)
+			     (vct 0 .2 .5 .3 .3  0 0  0 0 0  
+				  0 0  .2 .2 .3 .3 .3 0 0 0
+				  0 0  0  .2 .2  0 .3 .3 .3)))
+		(snd-display ";3 track-amp 0: ~A" (channel->vct)))
+	    (delete-all-mixes)
+	    (if (fneq (vct-peak (channel->vct)) 0.0)
+		(snd-display "2 delete-all-mixes: ~A ~A" (vct-peak (channel->vct)) (channel->vct)))))
+	
+	(close-sound index)
+	))
     ))
 
 (clear-sincs)

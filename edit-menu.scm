@@ -27,6 +27,7 @@
 (define selctr 0)
 
 (define (selection->new)
+  "(selection-<new) saves the selection in a new file, then opens that file"
   (if (selection?)
       (let ((new-file-name (format #f "sel-~D.snd" selctr)))
 	(set! selctr (+ selctr 1))
@@ -39,6 +40,7 @@
 ;;; -------- cut selection -> new file
 
 (define (cut-selection->new)
+  "(cut-selection->new) saves the selection, deletes it, then opens the saved file"
   (if (selection?)
       (let ((new-file-name (format #f "sel-~D.snd" selctr)))
 	(set! selctr (+ selctr 1))
@@ -51,10 +53,11 @@
 ;;; -------- append sound (and append selection for lafs)
 
 (define (append-sound name)
-  ;; appends sound file
+  (append-sound name) appends file 'name'"
   (insert-sound name (frames)))
 
 (define (append-selection)
+  "(append-selection) appends the current selection"
   (if (selection?)
       (insert-selection (frames))))
 
@@ -64,8 +67,9 @@
 (add-to-menu edit-menu #f #f)
 
 ;;; -------- trim front and back (goes by first or last mark)
+
 (define (trim-front)
-  "trim-front finds the first mark in each of the syncd channels and removes all samples before it"
+  "(trim-front) finds the first mark in each of the syncd channels and removes all samples before it"
   (let ((snc (sync)))
     (define (trim-front-one-channel snd chn)
       (if (< (length (marks snd chn)) 1)
@@ -82,7 +86,7 @@
 (add-to-menu edit-menu "Trim front" trim-front)
 
 (define (trim-back)
-  "trim-back finds the last mark in each of the syncd channels and removes all samples after it"
+  "(trim-back) finds the last mark in each of the syncd channels and removes all samples after it"
   (let ((snc (sync)))
     (define (trim-back-one-channel snd chn)
       (if (< (length (marks snd chn)) 1)
@@ -102,7 +106,7 @@
 
 ;;; -------- crop (trims front and back)
 (define (crop)
-  "crop finds the first and last marks in each of the syncd channels and removes all samples outside them"
+  "(crop) finds the first and last marks in each of the syncd channels and removes all samples outside them"
   (let ((snc (sync)))
     (define (crop-one-channel snd chn)
       (if (< (length (marks snd chn)) 2)

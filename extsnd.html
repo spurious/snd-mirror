@@ -7717,6 +7717,9 @@ throws the error 'no-such-file:</p>
     (or (file-exists? file)
 	(throw 'no-such-file (list "look-for-file" file)))))
 </pre>
+<p>The mix.scm track functions can return 'no-such-track if a
+given track has no associated valid mixes.
+</p>
 
 <hr>
 <p>There are a variety of debugging aids supplied by Guile, including

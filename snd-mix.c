@@ -1005,7 +1005,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
 	  chandata[j] += next_sample(csf);
 	  j++;
 	}
-      if (j > 1) mus_file_write(ofd, 0, j - 1, 1, &chandata);
+      if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
     }
   close_temp_file(ofd, ohdr, num * mus_data_format_to_bytes_per_sample(ohdr->format), sp);
   mus_file_close(ifd);
