@@ -1,0 +1,21 @@
+
+SETTING THE MODULE LOAD PATH
+
+Snd will load Scheme files according to the path settings in your $HOME/.snd file. The entry in my own .snd file looks like this:
+
+	(set! %load-path (cons "/home/dlphilp/my_scm" %load-path))
+	(set! %load-path (cons "/home/dlphilp/snd-6" %load-path))
+	(set! snd-remember-paths #t)
+
+	(load-from-path "misc.scm")
+
+Scheme modules located in those load paths are then available for use in Snd at any time.
+
+ABOUT THE LADSPA PLUGINS
+
+I have used the LADSPA plugins as standalone effects processing modules. The Help texts for the LADSPA effects are courtesy Steve Harris, with edits and emendations from yours truly. You will need the latest plugin sets from www.ladspa.org and plugin.org.uk to make full use of the LADSPA effects in Snd.
+
+== Dave Phillips dlphilp@bright.net
+
+25 July 2002
+
