@@ -320,6 +320,9 @@ char *version_info(void)
 	  " 1.0",
   #endif
 #endif
+#ifdef JACK_VERSION
+	  ", Jack: ", JACK_VERSION,
+#endif
 #if SND_AS_WIDGET
 	  _("\n    compiled as a widget"),
 #endif

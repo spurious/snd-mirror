@@ -35,10 +35,12 @@
 
 ;;; replacement for change-menu-label
 (define (change-label widget new-label)
-  (if (provided? 'xm)
-      (let ((str (XmStringCreateLocalized new-label)))
-	(XtSetValues widget (list XmNlabelString str))
-	(XmStringFree str))))
+  (if (provided? 'xg)
+      (gtk_label_set_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN widget))) new-label)
+      (if (provided? 'xm)
+         (let ((str (XmStringCreateLocalized new-label)))
+           (XtSetValues widget (list XmNlabelString str))
+           (XmStringFree str)))))
 
 
 ;;; -------- Insert/append file
@@ -55,7 +57,11 @@
   ;; appends sound file
   (insert-sound name (frames)))
 
-(add-to-menu special-menu "Append file" (lambda () (append-sound name)))
+(add-to-menu special-menu "Append file"
+  (lambda ()
+    (select-file
+     (lambda (filename)
+       (append-sound name)))))
 
 (add-to-menu special-menu #f #f)
 

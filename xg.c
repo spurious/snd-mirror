@@ -44,6 +44,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     28-May:    GtkFileSelection struct support put back in -- need ok_button et al.
  *     14-Apr:    make-target-entry.
  *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26
  *     29-Mar:    support for some ... args.
@@ -27481,22 +27482,25 @@ static XEN gxg_colorsel(XEN ptr)
 
 static XEN gxg_ok_button(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_GtkColorSelectionDialog__P(ptr) || XEN_GtkFontSelectionDialog__P(ptr), ptr, XEN_ONLY_ARG, "ok_button", "GtkColorSelectionDialog" " or " "GtkFontSelectionDialog");
   if (XEN_GtkColorSelectionDialog__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkColorSelectionDialog_(ptr))->ok_button)));
-  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->ok_button)));
+  if (XEN_GtkFileSelection__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->ok_button)));
+  if (XEN_GtkFontSelectionDialog__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->ok_button)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "ok_button", "pointer to struct with ok_button field");
 }
 
 static XEN gxg_cancel_button(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_GtkColorSelectionDialog__P(ptr) || XEN_GtkFontSelectionDialog__P(ptr), ptr, XEN_ONLY_ARG, "cancel_button", "GtkColorSelectionDialog" " or " "GtkFontSelectionDialog");
   if (XEN_GtkColorSelectionDialog__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkColorSelectionDialog_(ptr))->cancel_button)));
-  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->cancel_button)));
+  if (XEN_GtkFileSelection__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->cancel_button)));
+  if (XEN_GtkFontSelectionDialog__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->cancel_button)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "cancel_button", "pointer to struct with cancel_button field");
 }
 
 static XEN gxg_help_button(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_GtkColorSelectionDialog__P(ptr), ptr, XEN_ONLY_ARG, "help_button", "GtkColorSelectionDialog");
-  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkColorSelectionDialog_(ptr))->help_button)));
+  XEN_ASSERT_TYPE(XEN_GtkColorSelectionDialog__P(ptr) || XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "help_button", "GtkColorSelectionDialog" " or " "GtkFileSelection");
+  if (XEN_GtkColorSelectionDialog__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkColorSelectionDialog_(ptr))->help_button)));
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->help_button)));
 }
 
 static XEN gxg_vbox(XEN ptr)
@@ -27507,9 +27511,10 @@ static XEN gxg_vbox(XEN ptr)
 
 static XEN gxg_action_area(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_GtkDialog__P(ptr) || XEN_GtkFontSelectionDialog__P(ptr), ptr, XEN_ONLY_ARG, "action_area", "GtkDialog" " or " "GtkFontSelectionDialog");
   if (XEN_GtkDialog__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkDialog_(ptr))->action_area)));
-  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->action_area)));
+  if (XEN_GtkFileSelection__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->action_area)));
+  if (XEN_GtkFontSelectionDialog__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->action_area)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "action_area", "pointer to struct with action_area field");
 }
 
 static XEN gxg_separator(XEN ptr)
@@ -27518,16 +27523,107 @@ static XEN gxg_separator(XEN ptr)
   return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkDialog_(ptr))->separator)));
 }
 
-static XEN gxg_fontsel(XEN ptr)
+static XEN gxg_dir_list(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_GtkFontSelectionDialog__P(ptr), ptr, XEN_ONLY_ARG, "fontsel", "GtkFontSelectionDialog");
-  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->fontsel)));
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "dir_list", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->dir_list)));
+}
+
+static XEN gxg_file_list(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "file_list", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->file_list)));
+}
+
+static XEN gxg_selection_entry(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "selection_entry", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->selection_entry)));
+}
+
+static XEN gxg_selection_text(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "selection_text", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->selection_text)));
 }
 
 static XEN gxg_main_vbox(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_GtkFontSelectionDialog__P(ptr), ptr, XEN_ONLY_ARG, "main_vbox", "GtkFontSelectionDialog");
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr) || XEN_GtkFontSelectionDialog__P(ptr), ptr, XEN_ONLY_ARG, "main_vbox", "GtkFileSelection" " or " "GtkFontSelectionDialog");
+  if (XEN_GtkFileSelection__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->main_vbox)));
   return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->main_vbox)));
+}
+
+static XEN gxg_history_pulldown(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "history_pulldown", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->history_pulldown)));
+}
+
+static XEN gxg_history_menu(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "history_menu", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->history_menu)));
+}
+
+static XEN gxg_history_list(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "history_list", "GtkFileSelection");
+  return(C_TO_XEN_GList_((GList*)((XEN_TO_C_GtkFileSelection_(ptr))->history_list)));
+}
+
+static XEN gxg_fileop_dialog(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "fileop_dialog", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->fileop_dialog)));
+}
+
+static XEN gxg_fileop_entry(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "fileop_entry", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->fileop_entry)));
+}
+
+static XEN gxg_fileop_file(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "fileop_file", "GtkFileSelection");
+  return(C_TO_XEN_gchar_((gchar*)((XEN_TO_C_GtkFileSelection_(ptr))->fileop_file)));
+}
+
+static XEN gxg_cmpl_state(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "cmpl_state", "GtkFileSelection");
+  return(C_TO_XEN_gpointer((gpointer)((XEN_TO_C_GtkFileSelection_(ptr))->cmpl_state)));
+}
+
+static XEN gxg_fileop_c_dir(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "fileop_c_dir", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->fileop_c_dir)));
+}
+
+static XEN gxg_fileop_del_file(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "fileop_del_file", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->fileop_del_file)));
+}
+
+static XEN gxg_fileop_ren_file(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "fileop_ren_file", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->fileop_ren_file)));
+}
+
+static XEN gxg_button_area(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFileSelection__P(ptr), ptr, XEN_ONLY_ARG, "button_area", "GtkFileSelection");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->button_area)));
+}
+
+static XEN gxg_fontsel(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_GtkFontSelectionDialog__P(ptr), ptr, XEN_ONLY_ARG, "fontsel", "GtkFontSelectionDialog");
+  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->fontsel)));
 }
 
 static XEN gxg_apply_button(XEN ptr)
@@ -27952,8 +28048,23 @@ static void define_structs(void)
   XG_DEFINE_READER(auto_resize, gxg_auto_resize, 1, 0, 0, NULL);
   XG_DEFINE_READER(dialog_width, gxg_dialog_width, 1, 0, 0, NULL);
   XG_DEFINE_READER(apply_button, gxg_apply_button, 1, 0, 0, NULL);
-  XG_DEFINE_READER(main_vbox, gxg_main_vbox, 1, 0, 0, NULL);
   XG_DEFINE_READER(fontsel, gxg_fontsel, 1, 0, 0, NULL);
+  XG_DEFINE_READER(button_area, gxg_button_area, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_ren_file, gxg_fileop_ren_file, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_del_file, gxg_fileop_del_file, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_c_dir, gxg_fileop_c_dir, 1, 0, 0, NULL);
+  XG_DEFINE_READER(cmpl_state, gxg_cmpl_state, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_file, gxg_fileop_file, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_entry, gxg_fileop_entry, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_dialog, gxg_fileop_dialog, 1, 0, 0, NULL);
+  XG_DEFINE_READER(history_list, gxg_history_list, 1, 0, 0, NULL);
+  XG_DEFINE_READER(history_menu, gxg_history_menu, 1, 0, 0, NULL);
+  XG_DEFINE_READER(history_pulldown, gxg_history_pulldown, 1, 0, 0, NULL);
+  XG_DEFINE_READER(main_vbox, gxg_main_vbox, 1, 0, 0, NULL);
+  XG_DEFINE_READER(selection_text, gxg_selection_text, 1, 0, 0, NULL);
+  XG_DEFINE_READER(selection_entry, gxg_selection_entry, 1, 0, 0, NULL);
+  XG_DEFINE_READER(file_list, gxg_file_list, 1, 0, 0, NULL);
+  XG_DEFINE_READER(dir_list, gxg_dir_list, 1, 0, 0, NULL);
   XG_DEFINE_READER(separator, gxg_separator, 1, 0, 0, NULL);
   XG_DEFINE_READER(action_area, gxg_action_area, 1, 0, 0, NULL);
   XG_DEFINE_READER(vbox, gxg_vbox, 1, 0, 0, NULL);
@@ -29698,10 +29809,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"23-May-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"27-May-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("23-May-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("27-May-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

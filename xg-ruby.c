@@ -3053,8 +3053,23 @@ XEN_NARGIFY_1(gxg_fg_w, gxg_fg)
 XEN_NARGIFY_1(gxg_auto_resize_w, gxg_auto_resize)
 XEN_NARGIFY_1(gxg_dialog_width_w, gxg_dialog_width)
 XEN_NARGIFY_1(gxg_apply_button_w, gxg_apply_button)
-XEN_NARGIFY_1(gxg_main_vbox_w, gxg_main_vbox)
 XEN_NARGIFY_1(gxg_fontsel_w, gxg_fontsel)
+XEN_NARGIFY_1(gxg_button_area_w, gxg_button_area)
+XEN_NARGIFY_1(gxg_fileop_ren_file_w, gxg_fileop_ren_file)
+XEN_NARGIFY_1(gxg_fileop_del_file_w, gxg_fileop_del_file)
+XEN_NARGIFY_1(gxg_fileop_c_dir_w, gxg_fileop_c_dir)
+XEN_NARGIFY_1(gxg_cmpl_state_w, gxg_cmpl_state)
+XEN_NARGIFY_1(gxg_fileop_file_w, gxg_fileop_file)
+XEN_NARGIFY_1(gxg_fileop_entry_w, gxg_fileop_entry)
+XEN_NARGIFY_1(gxg_fileop_dialog_w, gxg_fileop_dialog)
+XEN_NARGIFY_1(gxg_history_list_w, gxg_history_list)
+XEN_NARGIFY_1(gxg_history_menu_w, gxg_history_menu)
+XEN_NARGIFY_1(gxg_history_pulldown_w, gxg_history_pulldown)
+XEN_NARGIFY_1(gxg_main_vbox_w, gxg_main_vbox)
+XEN_NARGIFY_1(gxg_selection_text_w, gxg_selection_text)
+XEN_NARGIFY_1(gxg_selection_entry_w, gxg_selection_entry)
+XEN_NARGIFY_1(gxg_file_list_w, gxg_file_list)
+XEN_NARGIFY_1(gxg_dir_list_w, gxg_dir_list)
 XEN_NARGIFY_1(gxg_separator_w, gxg_separator)
 XEN_NARGIFY_1(gxg_action_area_w, gxg_action_area)
 XEN_NARGIFY_1(gxg_vbox_w, gxg_vbox)
@@ -6310,8 +6325,23 @@ static void define_structs(void)
   XG_DEFINE_READER(auto_resize, gxg_auto_resize_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(dialog_width, gxg_dialog_width_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(apply_button, gxg_apply_button_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(main_vbox, gxg_main_vbox_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(fontsel, gxg_fontsel_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(button_area, gxg_button_area_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_ren_file, gxg_fileop_ren_file_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_del_file, gxg_fileop_del_file_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_c_dir, gxg_fileop_c_dir_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(cmpl_state, gxg_cmpl_state_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_file, gxg_fileop_file_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_entry, gxg_fileop_entry_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fileop_dialog, gxg_fileop_dialog_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(history_list, gxg_history_list_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(history_menu, gxg_history_menu_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(history_pulldown, gxg_history_pulldown_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(main_vbox, gxg_main_vbox_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(selection_text, gxg_selection_text_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(selection_entry, gxg_selection_entry_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(file_list, gxg_file_list_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(dir_list, gxg_dir_list_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(separator, gxg_separator_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(action_area, gxg_action_area_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(vbox, gxg_vbox_w, 1, 0, 0, NULL);

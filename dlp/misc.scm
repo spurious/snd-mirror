@@ -105,46 +105,6 @@
 
 
 ;;;
-;;; OpenGL FFT display
-;;;
-
-(define (draw-it)
-   (|glXMakeCurrent (XtDisplay (cadr (main-widgets)))
-                    (XtWindow (car (channel-widgets)))
-                    (snd-glx-context))
-   (|glEnable |GL_DEPTH_TEST)
-   (|glDepthFunc |GL_LEQUAL)
-   (|glClearDepth 1.0)
-   (|glClearColor 0.0 0.0 0.0 0.0)
-   (|glLoadIdentity)
-   (|gluPerspective 40.0 1.0 10.0 200.0)
-   (|glTranslatef 0.0 0.0 -50.0)
-   (|glRotatef -58.0 0.0 1.0 0.0)
-   (let ((vals (XtVaGetValues (car (channel-widgets)) (list XmNwidth 0 XmNheight 0))))
-     (|glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
-   (|glClear (logior |GL_COLOR_BUFFER_BIT |GL_DEPTH_BUFFER_BIT))
-   (|glBegin |GL_POLYGON)
-   (|glColor3f 0.0 0.0 0.0)   (|glVertex3f -10.0 -10.0 0.0)
-   (|glColor3f 0.7 0.7 0.7)   (|glVertex3f 10.0 -10.0 0.0)
-   (|glColor3f 1.0 1.0 1.0)   (|glVertex3f -10.0 10.0 0.0)
-   (|glEnd)
-   (|glBegin |GL_POLYGON)
-   (|glColor3f 1.0 1.0 0.0)   (|glVertex3f 0.0 -10.0 -10.0)
-   (|glColor3f 0.0 1.0 0.7)   (|glVertex3f 0.0 -10.0 10.0)
-   (|glColor3f 0.0 0.0 1.0)   (|glVertex3f 0.0 5.0 -10.0)
-   (|glEnd)
-   (|glBegin |GL_POLYGON)
-   (|glColor3f 1.0 1.0 0.0)   (|glVertex3f -10.0 6.0 4.0)
-   (|glColor3f 1.0 0.0 1.0)   (|glVertex3f -10.0 3.0 4.0)
-   (|glColor3f 0.0 0.0 1.0)   (|glVertex3f 4.0 -9.0 -10.0)
-   (|glColor3f 1.0 0.0 1.0)   (|glVertex3f 4.0 -6.0 -10.0)
-   (|glEnd)
-   (|glXSwapBuffers (XtDisplay (cadr (main-widgets)))
-                    (XtWindow (car (channel-widgets))))
-   (|glFlush))
-
-
-;;;
 ;;; disable original Play radio button
 ;;;
 

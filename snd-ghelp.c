@@ -298,6 +298,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
       if (new_help) FREE(new_help);
     }
   else add_help_text(help_text, helpstr);
+  gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(related_items))));
   return(help_dialog);
 }
 
@@ -308,7 +309,6 @@ GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_wo
   if (xrefs)
     {
       int i;
-      gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(related_items))));
       for (i = 0; (xrefs[i]); i++)
 	sg_list_append(related_items, xrefs[i]);
     }

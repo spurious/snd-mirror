@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: the chooser preview area could display a thumbnail graph of the sound */
+
 #define HAVE_GFCDN HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
 
 /* most of these dialogs present a view of the various file header possibilities */
@@ -358,7 +360,7 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
     }
 #endif
 #if HAVE_GFCDN
-  gtk_file_chooser_set_preview_widget_active (chooser, have_preview);
+  gtk_file_chooser_set_preview_widget_active(chooser, have_preview);
 #endif
 }
 
@@ -399,7 +401,8 @@ static int sound_files_only_filter(const GtkFileFilterInfo *filter_info, gpointe
   /* apparently I never see the folders in the filter, and can't select "files only" mode -- 
    *   there is a "folders only" mode (sigh...)
    */
-  return((int)(sound_file_p((char *)(filter_info->display_name)) && (run_just_sounds_hook(filter_info->filename))));
+  return((int)((sound_file_p((char *)(filter_info->display_name))) && 
+	       (run_just_sounds_hook(filter_info->filename))));
 }
 
 static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog_t which_dialog, 

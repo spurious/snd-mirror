@@ -1313,6 +1313,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     28-May:    GtkFileSelection struct support put back in -- need ok_button et al.~%")
 (hey " *     14-Apr:    make-target-entry.~%")
 (hey " *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26~%")
 (hey " *     29-Mar:    support for some ... args.~%")
@@ -2878,3 +2879,5 @@
 ;   (if (not (member (car v) declared-types))
 ;       (display (format #f "~A " (car v)))))
 ; direct-types)
+
+;;; TODO: gdk_atom_name free (strdup)

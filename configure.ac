@@ -70,31 +70,31 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 
 #--------------------------------------------------------------------------------
 
-AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
-AC_ARG_WITH(alsa,       [  --with-alsa		  use ALSA])
-AC_ARG_WITH(jack,       [  --with-jack		  use JACK])
-AC_ARG_WITH(static-alsa,[  --with-static-alsa	  use ALSA statically loaded])
-AC_ARG_WITH(gtk,        [  --with-gtk		  use Gtk+ to build Snd])
-AC_ARG_WITH(no-gui,     [  --with-no-gui  	  make Snd without any graphics support])
-AC_ARG_WITH(doubles,    [  --with-doubles	  use doubles throughout])
-AC_ARG_WITH(static-gsl, [  --with-static-gsl	  use libgsl.a to build Snd])
-AC_ARG_WITH(static-xm,  [  --with-static-xm	  include the xm module])
-AC_ARG_WITH(guile,      [  --with-guile		  use Guile])
-AC_ARG_WITH(gl,         [  --with-gl		  include OpenGL support])
-AC_ARG_WITH(just-gl,    [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
-AC_ARG_WITH(motif,	[  --with-motif		  use libXm to build Snd])
+AC_ARG_WITH(esd,         [  --with-esd		  use ESD])
+AC_ARG_WITH(alsa,        [  --with-alsa		  use ALSA])
+AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
+AC_ARG_WITH(static-alsa, [  --with-static-alsa	  use ALSA statically loaded])
+AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
+AC_ARG_WITH(no-gui,      [  --with-no-gui  	  make Snd without any graphics support])
+AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
+AC_ARG_WITH(static-gsl,  [  --with-static-gsl	  use libgsl.a to build Snd])
+AC_ARG_WITH(static-xm,   [  --with-static-xm	  include the xm module])
+AC_ARG_WITH(guile,       [  --with-guile	  	  use Guile])
+AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support])
+AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
+AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
-AC_ARG_WITH(modules,    [  --with-modules	  use if sndlib uses modules])
-AC_ARG_WITH(editres,    [  --with-editres	  include editres in xm])
-AC_ARG_WITH(ladspa,	[  --with-ladspa  	  include support for LADSPA plugins])
-AC_ARG_WITH(x11,	[  --with-x11		  include X funcs from xm.c with xg.c])
+AC_ARG_WITH(modules,     [  --with-modules	  use if sndlib uses modules])
+AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
+AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins])
+AC_ARG_WITH(x11,	 [  --with-x11		  include X funcs from xm.c with xg.c])
 
 # these are primarily for testing
-AC_ARG_WITH(gsl,        [  --with-gsl		  use GSL, default=yes])
-AC_ARG_WITH(fftw,       [  --with-fftw		  use fftw, default=yes])
-AC_ARG_WITH(xpm,        [  --with-xpm		  use xpm, default=yes])
-AC_ARG_WITH(xp,         [  --with-xp		  use xp, default=no])
-AC_ARG_WITH(profiling,  [  --with-profiling	  include profiling machinery, default=no])
+AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
+AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
+AC_ARG_WITH(xpm,         [  --with-xpm		  use xpm, default=yes])
+AC_ARG_WITH(xp,          [  --with-xp		  use xp, default=no])
+AC_ARG_WITH(profiling,   [  --with-profiling	  include profiling machinery, default=no])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -1067,6 +1067,11 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
             if test $with_jack = yes ; then
 	       if test $audio_system = OSS ; then
+	           AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+	           if test x$PKG_CONFIG != xno ; then
+                      jack_version="`$PKG_CONFIG jack --modversion`"
+                      AC_DEFINE_UNQUOTED(JACK_VERSION,"${jack_version}")
+                   fi
                  audio_system=JACK
                fi
             fi
