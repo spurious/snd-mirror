@@ -1485,7 +1485,8 @@ static XEN g_window_y(void)
 
 static int snd_screen_height(void)
 {
-#if HAVE_X
+#if USE_MOTIF
+  /* TODO: find gtk equivalent of screenwidth macro */
   return(HeightOfScreen(ScreenOfDisplay(MAIN_DISPLAY(get_global_state()), 0)));
 #else
   return(4000);
@@ -1494,7 +1495,7 @@ static int snd_screen_height(void)
 
 static int snd_screen_width(void)
 {
-#if HAVE_X
+#if USE_MOTIF
   return(WidthOfScreen(ScreenOfDisplay(MAIN_DISPLAY(get_global_state()), 0)));
 #else
   return(4000);

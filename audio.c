@@ -10201,9 +10201,11 @@ static void describe_audio_state_1(void)
       pprint(device_name(device));
       if (device == default_output) pprint("output default");
       if (device == default_input) pprint("input default");
+#if 0
       size = 0;
-      err = AudioHardwareGetProperty(kAudioHardwarePropertyVolumeScalar, &size, &vol);
+      err = AudioHardwareGetProperty(kAudioHardwarePropertyVolumeScalar, &size, &vol); /* kAudioDevicePropertyVolumeScalar */
       mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "vol: %f ", vol); pprint(audio_strbuf);
+#endif
       size = sizeof(*desc); /* ???? */
       err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &size, (void *)desc);
       mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "srate: %d, format: %d, chans: %d, frames: %d\n",
