@@ -335,7 +335,6 @@ Cessator add_work_proc(XtWorkProc func, XtPointer data);
 int attach_all_sides(Arg *args, int n);
 void widget_int_to_text(Widget w, int val);
 void widget_float_to_text(Widget w, Float val);
-void widget_bool_to_text(Widget w, bool val);
 void widget_off_t_to_text(Widget w, off_t val);
 
 

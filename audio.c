@@ -4099,6 +4099,33 @@ static int alsa_mus_audio_initialize(void)
 
 /* dump current hardware and software configuration */
 
+
+/* configuration dump is disabled for now -- Alsa clobbers
+ * memory it does not own, causing later segfaults.
+ * Here is the note I send bug-alsa (24-Nov-04):
+ *
+ * In Alsa 1.0.6 (and 1.0.7 I think), snd_output_buffer_puts in
+ * alsa-lib/src/output.c can write to memory it does not own,
+ * causing segfaults in various unrelated later mallocs.  The
+ * offending line is 280:
+ * 
+ *   result = vsnprintf(buffer->buf + buffer->size, size, format, args);
+ * 
+ * which should be:
+ * 
+ *   result = vsnprintf(buffer->buf + buffer->size, result, format, args);
+ * 
+ * There might not actually be "size" bytes available beyond buffer->buf+buffer->size --
+ * the preceding snd_output_buffer_need call only guaranteed "result" bytes.
+ * 
+ * I notice a similar bug in line 303:
+ * 
+ * 	memcpy(buffer->buf + buffer->size, str, size);
+ * 
+ * where you actually have "err" bytes available, not "size" -- 
+ * this code looks very buggy...
+ */
+
 static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, snd_pcm_sw_params_t *sw_params)
 {
     int err; 
@@ -4106,8 +4133,7 @@ static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, 
     size_t len;
     snd_output_t *buf;
 
-    return;
-    /* FIXME: there is a bug in Alsa 1.0.6 (it tries to free its output string twice) which causes a segfault here */
+    return; /* see note above */
 
     err = snd_output_buffer_open(&buf);
     if (err < 0) {
@@ -4545,10 +4571,9 @@ static void alsa_describe_audio_state_1(void)
     char *str;
     size_t len;
     snd_config_t *conf;
-    snd_output_t *buf;
+    snd_output_t *buf = NULL;
 
-    return;
-    /* FIXME: there is a bug in Alsa 1.0.6 (it tries to free its output string twice) which causes a segfault here */
+    return; /* see note above -- this code in Alsa clobbers memory it does not own */
 
     err = snd_config_update();
     if (err < 0) {

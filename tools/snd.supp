@@ -1,0 +1,876 @@
+# Snd valgrind suppressions file
+# valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp snd
+# first section copied from default: /usr/local/lib/valgrind/default.supp
+
+# This is a generated file, composed of the following suppression rules:
+#
+#       glibc-2.3.supp xfree-4.supp xfree-3.supp
+#
+
+
+##----------------------------------------------------------------------##
+
+# Errors to suppress by default with glibc 2.3.x
+
+# Format of this file is:
+# {
+#     name_of_suppression
+#     skin_name:supp_kind
+#     (optional extra info for some suppression types)
+#     caller0 name, or /name/of/so/file.so
+#     caller1 name, or ditto
+#     (optionally: caller2 name)
+#     (optionally: caller3 name)
+#  }
+#
+# For Memcheck, the supp_kinds are:
+#
+#     Param Value1 Value2 Value4 Value8 Value16
+#     Free Addr1 Addr2 Addr4 Addr8 Addr16
+#     Cond (previously known as Value0)
+#
+# and the optional extra info is:
+#     if Param: name of system call param
+#     if Free: name of free-ing fn)
+
+{
+   __GI___stpcpy/*
+   Memcheck:Cond
+   fun:__GI___stpcpy
+   fun:*
+}
+{
+   strlen/__GI__dl_open/dlopen_doit
+   Memcheck:Cond
+   fun:strlen
+   fun:__GI__dl_open
+   fun:dlopen_doit
+}
+{
+   strlen/_dl_signal_cerror/_dl_lookup_symbol_internal/do_dlsym
+   Memcheck:Cond
+   fun:_dl_signal_cerror
+   fun:_dl_lookup_symbol_internal
+   fun:do_dlsym
+}
+{
+   strlen/*dl_map_object*(Cond)
+   Memcheck:Cond
+   fun:strlen
+   fun:*dl_map_object*
+}
+
+{
+   strlen/*dl_open_worker*(Cond)
+   Memcheck:Cond
+   fun:strlen
+   fun:*dl_open_worker*
+}
+{
+   strlen/_dl_sym/dlsym_doit
+   Memcheck:Cond
+   fun:strlen
+   fun:_dl_sym
+   fun:dlsym_doit
+}
+{
+   realpath is inefficiently coded
+   Addrcheck,Memcheck:Overlap
+   fun:memcpy
+   fun:realpath*
+}
+
+{
+   realpath stupidity part II
+   Addrcheck,Memcheck:Overlap
+   fun:strcpy
+   fun:realpath*
+}
+{
+   strlen/decompose_rpath/_dl_map_object
+   Memcheck:Cond
+   fun:strlen
+   fun:decompose_rpath
+   fun:*dl_map_object*
+}
+{
+   stpcpy/_dl_sym*
+   Memcheck:Cond
+   fun:__stpcpy
+   fun:_dl_*
+}
+
+#-------- For R H 8.0
+{
+   elf_dynamic_do_rel.7/_dl_relocate_object_internal/dl_open_worker(Cond)
+   Memcheck:Cond
+   fun:elf_dynamic_do_rel.7
+   fun:_dl_relocate_object_internal
+   fun:dl_open_worker
+}
+{
+   dl_relocate/dl_open_worker
+   Memcheck:Cond
+   fun:_dl_relocate_object_internal
+   fun:dl_open_worker
+}
+
+
+#-------- Threading bugs?
+# glibc 'knows' that destroying a locked mutex will unlock it
+{
+   pthread_error/__pthread_mutex_destroy/__closedir
+   core:PThread
+   fun:pthread_error
+   fun:__pthread_mutex_destroy
+   fun:__closedir
+}
+
+{
+   pthread_error/__pthread_mutex_destroy/_IO_default_finish
+   core:PThread
+   fun:pthread_error
+   fun:__pthread_mutex_destroy
+   fun:_IO_default_finish*
+}
+
+{
+   __pthread_mutex_unlock/_IO_funlockfile
+   core:PThread
+   fun:__pthread_mutex_unlock
+   fun:_IO_funlockfile
+}
+
+##----------------------------------------------------------------------##
+## For a leak in Valgrind's own libpthread.so :(
+{
+   my_malloc/get_or_allocate_specifics_ptr/__pthread_key_create(Leak)
+   Memcheck:Leak
+   fun:my_malloc
+   fun:get_or_allocate_specifics_ptr
+   fun:__pthread_key_create
+}
+
+##----------------------------------------------------------------------##
+## Bugs in helper library supplied with Intel Icc 7.0 (65)
+## in /opt/intel/compiler70/ia32/lib/libcxa.so.3
+{
+   Intel compiler70/ia32/lib/libcxa.so.3 below-esp accesses
+   Addrcheck,Memcheck:Addr4
+   obj:/opt/intel/compiler70/ia32/lib/libcxa.so.3
+}
+
+##----------------------------------------------------------------------##
+
+# Errors to suppress by default with XFree86 4.1.0)
+
+# Format of this file is:
+# {
+#     name_of_suppression
+#     skin_name:supp_kind
+#     (optional extra info for some suppression types)
+#     caller0 name, or /name/of/so/file.so
+#     caller1 name, or ditto
+#     (optionally: caller2 name)
+#     (optionally: caller3 name)
+#  }
+#
+# For memcheck, the supp_kinds are:
+#
+#     Param Value1 Value2 Value4 Value8 Value16
+#     Free Addr1 Addr2 Addr4 Addr8 Addr16
+#     Cond (previously known as Value0)
+#
+# and the optional extra info is:
+#     if Param: name of system call param
+#     if Free: name of free-ing fn)
+
+# Resulting from R H 8.0
+{
+   *libc_write/libX11.so.6.2/*X11TransWrite(Param)
+   Addrcheck,Memcheck:Param
+   write(buf)
+   fun:*libc_write
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:*X11TransWrite
+}
+
+{
+   libX11.so.6.2/libX11.so.6.2/libX11.so.6.2(Cond)
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+}
+
+{
+   libXt.so.6.2/libXt.so.6.2/libXt.so.6.2(Cond)
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+
+{
+   libXaw.so.7.0/libXaw.so.7.0/libXaw.so.7.0(Cond)
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+}
+
+{
+   libXmu.so.6.2/libXmu.so.6.2/libXmu.so.6.2(Cond)
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libXmu.so.6.2
+   obj:/usr/X11R6/lib/libXmu.so.6.2
+   obj:/usr/X11R6/lib/libXmu.so.6.2
+}
+
+{
+   libXt.so.6.0/libXt.so.6.0/libXaw.so.7.0(Cond)
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+}
+
+{
+   libXaw.so.7.0/libXaw.so.7.0/libXt.so.6.0(Value4)
+   Memcheck:Value4
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   libXaw.so.7.0/libXaw.so.7.0/libXt.so.6.0(Cond)
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   libX11.so.6.2/libX11.so.6.2/libXaw.so.7.0(Cond)
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+}
+
+{
+   libX11.so.6.2/libXaw.so.7.0/libXaw.so.7.0(Cond)
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+   obj:/usr/X11R6/lib/libXaw.so.7.0
+}
+
+{
+   libXpm.so.4.11/libXpm.so.4.11/libXpm.so.4.11
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libXpm.so.4.11
+   obj:/usr/X11R6/lib/libXpm.so.4.11
+   obj:/usr/X11R6/lib/libXpm.so.4.11
+}
+
+
+##----------------------------------------------------------------------##
+
+
+##----------------------------------------------------------------------##
+
+# Errors to suppress by default with XFree86 3.3.6)
+
+# Format of this file is:
+# {
+#     name_of_suppression
+#     skin_name:supp_kind
+#     (optional extra info for some suppression types)
+#     caller0 name, or /name/of/so/file.so
+#     caller1 name, or ditto
+#     (optionally: caller2 name)
+#     (optionally: caller3 name)
+#  }
+#
+# For Memcheck, the supp_kinds are:
+#
+#     Param Value1 Value2 Value4 Value8 Value16
+#     Free Addr1 Addr2 Addr4 Addr8 Addr16
+#     Cond (previously known as Value0)
+#
+# and the optional extra info is:
+#     if Param: name of system call param
+#     if Free: name of free-ing fn)
+
+##----------------------------------------------------------------------##
+
+{
+   X11-Cond-0
+   Memcheck:Cond
+   obj:*libXt.so.6.0
+   obj:*libXt.so.6.0
+   obj:*libXt.so.6.0
+}
+{
+   X11-Cond-1
+   Memcheck:Cond
+   fun:__rawmemchr
+   obj:*libXt.so.6.0
+   obj:*libXt.so.6.0
+}
+
+
+# Suppressions for XFree86-3.3.X
+
+{
+   X11-Addr4-1
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libX11.so.6.1
+   obj:/usr/X11R6/lib/libX11.so.6.1
+   obj:/usr/X11R6/lib/libX11.so.6.1
+}
+
+{
+   X11-Addr4-2
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libX11.so.6.1
+   obj:/usr/X11R6/lib/libX11.so.6.1
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   X11-Addr4-3
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   X11-Addr4-4
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libX11.so.6.1
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   X11-Addr4-5
+   Addrcheck,Memcheck:Addr4
+   fun:__rawmemchr
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   X11-Addr4-6
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libXmu.so.6.0
+   obj:/usr/X11R6/lib/libXmu.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   X11-Addr4-7
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXawXpm_posing_as_Xaw.so.6.1
+}
+
+{
+   X11-Param-1
+   Addrcheck,Memcheck:Param
+   write(buf)
+   fun:__libc_write
+   obj:/usr/X11R6/lib/libX11.so.6.1
+   obj:/usr/X11R6/lib/libX11.so.6.1
+}
+
+{
+   X11-Addr4-8
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libX11.so.6.1
+   obj:/usr/X11R6/lib/libXpm.so.4.11
+   obj:/usr/X11R6/lib/libXpm.so.4.11
+}
+
+{
+   X11-Addr4-8
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXawXpm_posing_as_Xaw.so.6.1
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   X11-Addr4-9
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libXaw.so.6.1
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   X11-Addr4-10
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libXaw.so.6.1
+   obj:/usr/X11R6/lib/libXaw.so.6.1
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   X11-Addr4-11
+   Addrcheck,Memcheck:Addr4
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   obj:/usr/X11R6/lib/libXaw.so.6.1
+}
+
+
+
+##----------------------------------------------------------------------##
+{
+   scm-1
+   Memcheck:Cond
+   fun:scm_i_find_heap_segment_containing_object
+   fun:*
+}
+{
+   scm-2
+   Memcheck:Cond
+   fun:scm_gc_mark
+   fun:*
+}
+
+{
+   scm-3
+   Memcheck:Cond
+   fun:scm_mark_locations
+   fun:*
+}
+
+{
+   scm-4
+   Memcheck:Value4
+   fun:scm_gc_mark
+   fun:*
+}
+
+{
+   scm-5
+   Memcheck:Value4
+   fun:scm_gc_mark_dependencies
+   fun:*
+}
+
+{
+   scm-6
+   Memcheck:Value4
+   fun:scm_i_string_mark
+   fun:*
+}
+
+{
+   scm-7
+   Memcheck:Cond
+   fun:scm_gc_mark_dependencies
+   fun:*
+}
+
+{
+   scm-8
+   Memcheck:Cond
+   fun:scm_mark_weak_vector_spines
+   fun:*
+}
+
+{
+   scm-9
+   Memcheck:Cond
+   fun:scm_i_sweep_card
+   fun:*
+}
+
+{
+   scm-10
+   Memcheck:Value4
+   fun:scm_i_symbol_mark
+   fun:*
+}
+
+{
+   scm-11
+   Memcheck:Value4
+   fun:scm_markcdr
+   fun:*
+}
+
+{
+   scm-12
+   Memcheck:Cond
+   fun:scan_weak_hashtables
+   fun:*
+}
+
+{
+   scm-13
+   Memcheck:Value4
+   fun:scm_markstream
+   fun:*
+}
+
+{
+   scm-14
+   Memcheck:Addr4
+   fun:scm_make_continuation
+   fun:*
+}
+
+{
+   scm-15
+   Memcheck:Value4
+   fun:continuation_mark
+   fun:scm_gc_mark_dependencies
+   fun:*
+}
+
+{
+   scm-16
+   Memcheck:Cond
+   fun:scm_from_uint32
+   fun:gxm_XGetFontProperty
+   fun:*
+}
+# ==19816== Conditional jump or move depends on uninitialised value(s)
+# ==19816==    at 0x4062172D: scm_from_uint32 (conv-uinteger.i.c:98)
+
+{
+   scm-17
+   Memcheck:Value4
+   fun:scm_i_sweep_card
+   fun:*
+}
+
+{
+   scm-18
+   Memcheck:Addr1
+   fun:scm_from_locale_stringn
+   fun:scm_from_locale_string
+   fun:*
+}
+# ==30535== Invalid read of size 1
+# ==30535==    at 0x406352A3: scm_from_locale_stringn (strings.c:817)
+# ==30535==    by 0x406352CC: scm_from_locale_string (strings.c:826)
+
+{
+   scm-19
+   Memcheck:Addr1
+   fun:memcpy
+   fun:scm_from_locale_stringn
+   fun:scm_from_locale_string
+   fun:*
+}
+
+{
+   scm-20
+   Memcheck:Cond
+   fun:scm_from_int32
+   fun:*
+}
+
+{
+   scm-21
+   Memcheck:Cond
+   fun:__gmpz_init_set_si
+   fun:scm_from_int32
+   fun:*
+}
+
+{
+   Xt-1
+   Memcheck:Overlap
+   fun:memcpy
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   fun:_XtGetResources
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   Xt-2
+   Memcheck:Overlap
+   fun:memcpy
+   obj:/usr/X11R6/lib/libXt.so.6.0
+   fun:_XtGetSubresources
+   fun:XtGetSubresources
+}
+
+{
+   Xt-3
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+}
+
+{
+   Xt-4
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   fun:_XtMakeGeometryRequest
+}
+
+{
+   Xt-5
+   Memcheck:Cond
+   fun:_XtMakeGeometryRequest
+   fun:*
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+}
+
+{
+   X11-1
+   Memcheck:Param
+   writev(vector[...])
+   fun:vgAllRoadsLeadToRome_writev
+   fun:__writev
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_X11TransWritev
+}
+
+{
+   Xm-1
+   Memcheck:Addr4
+   fun:_XmTextFindScroll
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+}
+
+{
+   Xm-2
+   Memcheck:Cond
+   fun:_XmTextFindScroll
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+}
+
+{
+   Xm-3
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   fun:_XmTextShowPosition
+   fun:XmTextShowPosition
+   fun:command_return
+}
+
+{
+   Xm-4
+   Memcheck:Addr4
+   fun:XmRenderTableGetRendition
+   fun:help_font
+   fun:help_text_width
+   fun:word_wrap
+}
+
+{
+   Xbug
+   Memcheck:Addr1
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:change_pixmap_background
+   fun:make_sound_icons_transparent_again
+   fun:g_set_basic_color
+}
+
+{
+   Xm-5
+   Memcheck:Cond
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   fun:_XmTextShowPosition
+   fun:XmTextShowPosition
+   fun:listener_append_and_prompt
+}
+
+{
+   Xm-6
+   Memcheck:Cond
+   fun:strlen
+   fun:_XmStringNCreate
+   fun:XmStringCreate
+   fun:set_label
+}
+
+{
+   Xm-7
+   Memcheck:Cond
+   fun:XTextExtents
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   fun:XmStringExtent
+}
+
+{
+   Xm-8
+   Memcheck:Value4
+   fun:XTextExtents
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   fun:XmStringExtent
+}
+
+{
+   Xm-9
+   Memcheck:Cond
+   fun:XInsertModifiermapEntry
+   fun:gxm_XInsertModifiermapEntry
+   fun:*
+}
+
+{
+   Xm-10
+   Memcheck:Cond
+   fun:XmStringTableProposeTablist
+   fun:gxm_XmStringTableProposeTablist
+   fun:*
+}
+
+{
+   Xm-11
+   Memcheck:Addr4
+   fun:XmRenderTableCvtFromProp
+   fun:gxm_XmRenderTableCvtFromProp
+   fun:*
+}
+
+{
+   Xm-12
+   Memcheck:Cond
+   fun:XDeleteModifiermapEntry
+   fun:gxm_XDeleteModifiermapEntry
+   fun:*
+}
+
+{
+   Xm-13
+   Memcheck:Addr1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   fun:XmCvtByteStreamToXmString
+   fun:XmStringNCopy
+}
+
+{
+   Xm-14
+   Memcheck:Addr1
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   fun:XmCvtByteStreamToXmString
+   fun:XmStringNCopy
+   fun:XmStringNConcat
+}
+
+{
+   Xm-15
+   Memcheck:Addr1
+   fun:strncmp
+   fun:_XmStringIndexCacheTag
+   fun:_XmStringCacheTag
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+}
+
+{
+   Xm-16
+   Memcheck:Addr1
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:gxm_XSubImage
+   fun:scm_gsubr_apply
+}
+
+{
+   Glibc-1
+   Memcheck:Cond
+   fun:strlen
+   fun:_IO_str_init_static_internal
+   fun:_IO_vsscanf
+   fun:__GI_sscanf
+}
+
+{
+   Glibc-2
+   Memcheck:Value4
+   fun:_IO_vfprintf_internal
+   fun:*
+}
+
+{
+   Glibc-3
+   Memcheck:Cond
+   fun:_IO_vfprintf_internal
+   fun:*
+}
+
+{
+   Glibc-4
+   Memcheck:Cond
+   fun:_IO_vfscanf_internal
+   fun:_IO_vsscanf
+   fun:__GI_sscanf
+   fun:*
+}
+
+# --------------------------------------------------------------------------------
+
+{
+   OSS-1
+   Memcheck:Param
+   ioctl(SNDCTL_XXX|SOUND_XXX (SIOWR, int))
+   fun:__GI___ioctl
+   fun:describe_audio_state_1
+   fun:mus_audio_report
+   fun:g_mus_audio_describe
+}
+
+{
+   OSS-2
+   Memcheck:Param
+   ioctl(SNDCTL_XXX|SOUND_XXX (SIOWR, int))
+   fun:__GI___ioctl
+   fun:describe_audio_state_1
+   fun:mus_audio_report
+   fun:g_mus_audio_report
+}
+
+{
+   snd-1
+   Memcheck:Value4
+   fun:_IO_vfscanf_internal
+   fun:_IO_vsscanf
+   fun:__GI_sscanf
+   fun:read_nist_header
+}
+
+{
+   snd-2
+   Memcheck:Cond
+   fun:_IO_sputbackc_internal
+   fun:_IO_vfscanf_internal
+   fun:_IO_vsscanf
+   fun:__GI_sscanf
+}
+
+{
+   snd-3
+   Memcheck:Value4
+   fun:mark_mus_xen
+   fun:scm_gc_mark_dependencies
+   fun:scm_gc_mark
+   fun:scm_mark_locations
+}

@@ -186,7 +186,6 @@ void reflect_log_freq_start_in_transform_dialog(void);
 void reflect_min_db_in_transform_dialog(void);
 void widget_int_to_text(widget_t w, int val);
 void widget_float_to_text(widget_t w, Float val);
-void widget_bool_to_text(widget_t w, bool val);
 void widget_off_t_to_text(widget_t w, off_t val);
 
 

@@ -5345,3 +5345,5 @@
 (CFNC-255 "void gtk_progress_bar_set_ellipsize GtkProgressBar* pbar PangoEllipsizeMode mode")
 (CFNC-255 "PangoEllipsizeMode gtk_progress_bar_get_ellipsize GtkProgressBar* pbar")
 (CFNC-255 "gboolean gtk_selection_data_targets_include_image GtkSelectionData* selection_data gboolean writable")
+
+;;; TODO: GPOINTER of non-list segfaults

@@ -4127,7 +4127,11 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	    gn->vcts[G_FILTER_XCOEFFS] = make_vct_wrapper(mus_channels(revp), mus_xcoeffs((mus_any *)ge));
 	  else gn->vcts[G_FILTER_XCOEFFS] = XEN_UNDEFINED;
 	}
-      else gn->nvcts = 0;
+      else 
+	{
+	  gn->nvcts = 0;
+	  gn->vcts = NULL;
+	}
       gn->gen = ge;
       return(mus_xen_to_object(gn));
     }

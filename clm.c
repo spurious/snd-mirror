@@ -525,6 +525,7 @@ void *_mus_wrap_no_vcts(mus_any *ge)
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->gen = ge;
   gn->nvcts = 0;
+  gn->vcts = NULL;
   return((void *)gn);
 }
 

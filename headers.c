@@ -2136,7 +2136,7 @@ static int read_nist_header(const char *filename, int chan)
   char str[MAX_FIELD_LENGTH], name[MAX_FIELD_LENGTH];
   bool happy = true;
   off_t curbase;
-  int k, hend, j, n, nm, samples, bytes, byte_format, idata_location;
+  int k, hend, j, n, nm, samples, bytes, byte_format, idata_location = 0;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf); /* the actual id is "NIST_1A" */
   for (k = 8; k < 16; k++) 
     str[k - 8] = hdrbuf[k];

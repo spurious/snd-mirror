@@ -584,15 +584,6 @@ void widget_float_to_text(Widget w, Float val)
   FREE(str);
 }
 
-void widget_bool_to_text(Widget w, bool val)
-{
-#if HAVE_GUILE
-  XmTextSetString(w, (char *)((val) ? "#t" : "#f"));
-#else
-  XmTextSetString(w, (char *)((val) ? "true" : "false"));
-#endif  
-}
-
 void widget_off_t_to_text(Widget w, off_t val)
 {
   char *str;

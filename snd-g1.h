@@ -395,7 +395,6 @@ GtkWidget *snd_gtk_dialog_new(void);
 GtkWidget *snd_gtk_label_new(const char *label, GdkColor *color);
 void widget_int_to_text(GtkWidget *w, int val);
 void widget_float_to_text(GtkWidget *w, Float val);
-void widget_bool_to_text(GtkWidget *w, bool val);
 void widget_off_t_to_text(GtkWidget *w, off_t val);
 
 
