@@ -50,20 +50,6 @@
 ;;; redefine 'if' for tracing and so on (backtrace is sometimes very confused)
 ;(define-syntax IF
 ;  (syntax-rules ()
-;    ((IF <form1> <form2>) (begin <form2>))
-;    ((IF <form1> <form2> <form3>) (begin <form2>))))
-;(define-syntax IF
-;  (syntax-rules ()
-;    ((IF <form1> <form2>) 
-;     (begin 
-;       (display (format #f "~A " (quote <form1>)))
-;       (if <form1> <form2>)))
-;    ((IF <form1> <form2> <form3>) 
-;     (begin 
-;       (display (format #f "~A " (quote <form1>)))
-;       (if <form1> <form2> <form3>)))))
-;(define-syntax IF
-;  (syntax-rules ()
 ;    ((IF <form1> <form2>) (begin (display (quote <form1>)) (if <form1> <form2>) (gc)))
 ;    ((IF <form1> <form2> <form3>) (begin (display (quote <form1>)) (if <form1> <form2> <form3>) (gc)))))
 
@@ -6583,7 +6569,7 @@ EDITS: 5
 		    (snd-display "abs max: ~A ~A" mx3 mx4))
 		(peak-env-equal? "map-chan peak" ind e1 .0001))
 	      (delete-samples 10000 5000)
-	      (let* ((e1 (channel-amp-envs ind 0 3))
+	      (let* ((e1 (channel-amp-envs ind 0))
 		     (mx3 (vct-peak (car e1)))
 		     (mx4 (vct-peak (cadr e1))))
 		(IF (fneq (* 3.0 mx2) mx4)
@@ -6675,7 +6661,7 @@ EDITS: 5
 	      (peak-env-equal? "insert-samples peak" ind (channel-amp-envs ind 0 1) .0001)
 	      (undo)
 	      (set! (samples 500 100) (make-vct 100 .1))
-	      (peak-env-equal? "set-samples peak" ind (channel-amp-envs ind 0 1) .0001)
+	      (peak-env-equal? "set-samples peak" ind (channel-amp-envs ind 0) .0001)
 	      (undo)
 	      
 	      (revert-sound ind)
@@ -6777,6 +6763,14 @@ EDITS: 5
 			   (lambda (pos dur)
 			     (list 0.5)))
 	      (peak-env-equal? "xen peak" ind (channel-amp-envs ind 0 1) .0001)
+
+	      (revert-sound ind)
+	      (xen-channel (lambda (y data forward)
+			     (* y (list-ref data 0)))
+			   2000 1000 ind 0 #f #t
+			   (lambda (pos dur)
+			     (list 0.5)))
+	      (peak-env-equal? "xen peak selection" ind (channel-amp-envs ind 0 1) .0001)
 
 	      ))
 	(close-sound ind))
@@ -7400,6 +7394,41 @@ EDITS: 5
 
 	  (close-sound ind))
   
+	(let ((ind (new-sound "test.snd")))
+	  (pad-channel 0 1000)
+	  (set! (sample 100) 1.0)
+	  (let ((h (make-hilbert-transform 100)))
+	    (map-channel (lambda (y) (hilbert-transform h y)))
+	    (map-channel (lambda (y) (hilbert-transform h y)))
+	    (map-channel (lambda (y) (hilbert-transform h y)))
+	    (map-channel (lambda (y) (hilbert-transform h y)))
+	    ;; now ideally we'd be back to an impulse
+	    (if (> (abs (- (sample 500) .98)) .01)
+		(snd-display ";hilbert impulse: ~A" (sample 500)))
+	    (set! (sample 500) 0.0)
+	    (if (> (maxamp ind 0) .02)
+		(snd-display ";hilbert sidelobes: ~A" (maxamp ind 0)))
+	    (revert-sound))
+	  (pad-channel 0 1000)
+	  (set! (sample 100) 1.0)
+	  (let ((lo (make-lowpass (* .1 pi) 20))
+		(hi (make-highpass (* .1 pi) 20)))
+	    (map-channel (lambda (y) (+ (lowpass lo y) (highpass hi y))))
+	    (if (fneq (sample 120) 1.0)
+		(snd-display ";lowpass+highpass impulse: ~A" (sample 120)))
+	    (set! (sample 120) 0.0)
+	    (if (fneq (maxamp ind 0) 0.0)
+		(snd-display ";lowpass+highpass sidelobes: ~A" (maxamp ind 0))))
+	  (undo 2)
+	  (let ((lo (make-bandpass (* .1 pi) (* .2 pi) 20))
+		(hi (make-bandstop (* .1 pi) (* .2 pi) 20)))
+	    (map-channel (lambda (y) (+ (bandpass lo y) (bandstop hi y))))
+	    (if (fneq (sample 120) 1.0)
+		(snd-display ";bandpass+bandstop impulse: ~A" (sample 120)))
+	    (set! (sample 120) 0.0)
+	    (if (fneq (maxamp ind 0) 0.0)
+		(snd-display ";bandpass+bandstop sidelobes: ~A" (maxamp ind 0))))
+	  (close-sound ind))
         ))))
 
 
@@ -11729,6 +11758,28 @@ EDITS: 5
       (if (not (= (mix-position m2) 123)) (snd-display ";mix-position m2[7]: ~A" (mix-position m2)))
       (if (not (= (mix-position m1) 321)) (snd-display ";mix-position m1[7]: ~A" (mix-position m1)))
       (close-sound ind))
+
+    ;; check that current console is correct
+    (let ((ind (open-sound "storm.snd")))
+      (set! (x-bounds) (list 0 80.0))
+      (make-selection 1000000 1050000)
+      (let ((m1 (mix-selection 900000))
+	    (m2 (mix-selection 400000)))
+	(as-one-edit (lambda () 
+		       (set! (mix-position m1) 0) 
+		       (set! (mix-position m2) 1)))
+	(if (or (not (= (mix-position m1) 0))
+		(not (= (mix-position m2) 1)))
+	    (snd-display ";as-one-edit positions: ~A ~A" (mix-position m1) (mix-position m2)))
+	(undo)
+	(if (or (not (= (mix-position m1) 900000))
+		(not (= (mix-position m2) 400000)))
+	    (snd-display ";as-one-edit positions after undo: (~A): ~A (~A): ~A" m1 (mix-position m1) m2 (mix-position m2)))
+	(redo)
+	(if (or (not (= (mix-position m1) 0))
+		(not (= (mix-position m2) 1)))
+	    (snd-display ";as-one-edit positions after redo: ~A ~A" (mix-position m1) (mix-position m2)))
+	(close-sound ind)))
 
     ))
 
@@ -24248,6 +24299,18 @@ EDITS: 2
 		  (key (char->integer #\d) 4 i1)
 		  (if (not (= (frames i1 0) (- len 300)))
 		      (snd-display ";C-u (C-kp)100 C-d: ~A ~A" len (frames i1 0)))
+
+		  (revert-sound ind)
+		  (set! (cursor) 10)
+		  (key (char->integer #\u) 4 i1)
+		  (key (char->integer #\-) 0 i1)
+		  (key (char->integer #\1) 0 i1)
+		  (key (char->integer #\0) 0 i1)
+		  (key (char->integer #\0) 0 i1)
+		  (key (char->integer #\d) 4 i1)
+		  (if (or (not (= (frames i1 0) (- len 10)))
+			  (not (= (cursor) 0)))
+		      (snd-display ";C-u -100 C-d: ~A ~A ~A" len (frames i1 0) (cursor)))
 		  
 		  (key (char->integer #\x) 4 i1)
 		  (key (char->integer #\() 0 i1)

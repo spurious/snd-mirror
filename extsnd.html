@@ -4555,20 +4555,6 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- loop-samples -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><A NAME="loopsamples">loop-samples</a></em> (reader function beg dur origin <i>environ</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->[loop-samples may be removed in the near future] This calls external C functions while moving through the data accessed
-<!-- -->by the sample reader. loop-samples takes a sample reader, a pointer to a 
-<!-- -->(C) float function that takes one float argument (the current sample), 
-<!-- -->the number of times to call that function, and a name for the editing 
-<!-- -->operation for the edit history list.  If <i>environ</i> is included, it
-<!-- -->is passed as the second (void *) argument to the function.
-<!-- --></td></tr><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- make-player -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="makeplayer">make-player</a></em> (<em class=narg>snd chn</em>)</code></span>
@@ -6086,8 +6072,8 @@ This can be
 <!-- --><span class=defbox><code><em class=def><a name="squelchupdate">squelch-update</a></em> (<em class=targ>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->#t if graphic updates squelched (turned off). This is useful primarily in <a href="#asoneedit">as-one-edit</a>
-<!-- -->where it's pointless to waste time displaying in-between states.
+<!-- -->#t if graphic updates squelched (turned off).  If you're doing a sequence of edits where intermediate
+<!-- -->states aren't of great interest, you can save time by turning off redisplays.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6991,8 +6977,7 @@ The edit list functions are:</p>
 <!-- --></td></tr>
 <!-- --><tr><td width=150></td><td>
 <!-- -->apply <i>func</i> (a function of no arguments), treating it as
-<!-- -->one edit (in all channels) in the edit history mechanism.  To turn off (unnecessary) graphics
-<!-- -->updates during the 'func', see <a href="#squelchupdate">squelch-update</a>.
+<!-- -->one edit (in all channels) in the edit history mechanism.  Graphics redisplays are currently squelched during as-one-edit.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>

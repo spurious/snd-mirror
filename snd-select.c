@@ -712,7 +712,7 @@ static XEN g_delete_selection(void)
 
 static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 {
-  #define H_insert_selection "(" S_insert_selection ") inserts the currently selected portion start at beg"
+  #define H_insert_selection "(" S_insert_selection " beg snd chn) inserts the currently selected portion start at beg"
   chan_info *cp;
   snd_state *ss;
   int err = MUS_NO_ERROR;
@@ -732,7 +732,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 
 static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
 {
-  #define H_mix_selection "(" S_mix_selection ") mixes the currently selected portion start at beg"
+  #define H_mix_selection "(" S_mix_selection " beg snd chn) mixes the currently selected portion start at beg"
   chan_info *cp;
   snd_state *ss;
   if (selection_is_active())

@@ -656,10 +656,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (let* ((k (+ i len))
 	     (denom (* pi i))
 	     (num (- 1.0 (cos (* pi i)))))
-	;; might want hamm window over this
 	(if (= i 0)
 	    (vct-set! arr k 0.0)
-	    (vct-set! arr k (/ num denom)))))
+	    ;; this is the "ideal" -- rectangular window -- version:
+	    ;; (vct-set! arr k (/ num denom))
+            ;; this is the Hamming window version:
+	    (vct-set! arr k (* (/ num denom) 
+			       (+ .54 (* .46 (cos (/ (* i pi) len)))))) ; window
+	    )))
     (make-fir-filter arrlen arr)))
 
 (define (hilbert-transform f in)
@@ -668,7 +672,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 #!
   (let ((h (make-hilbert-transform 15)))
     (map-channel (lambda (y)
-		   (* 8.0 (hilbert-transform h y)))))
+		   (hilbert-transform h y))))
 !#
 
 ;;; -------- highpass filter 
@@ -683,7 +687,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	     (num (- (sin (* fc i)))))
 	(if (= i 0)
 	    (vct-set! arr k (- 1.0 (/ fc pi)))
-	    (vct-set! arr k (/ num denom)))))
+	    (vct-set! arr k (* (/ num denom) 
+			       (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 
 (define (highpass f in)
@@ -708,7 +713,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	     (num (sin (* fc i))))
 	(if (= i 0)
 	    (vct-set! arr k (/ fc pi))
-	    (vct-set! arr k (/ num denom)))))
+	    (vct-set! arr k (* (/ num denom) 
+			       (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 
 (define (lowpass f in)
@@ -732,7 +738,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	     (num (- (sin (* fhi i)) (sin (* flo i)))))
 	(if (= i 0)
 	    (vct-set! arr k (/ (- fhi flo) pi))
-	    (vct-set! arr k (/ num denom)))))
+	    (vct-set! arr k (* (/ num denom) 
+			       (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 
 (define (bandpass f in)
@@ -756,7 +763,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	     (num (- (sin (* flo i)) (sin (* fhi i)))))
 	(if (= i 0)
 	    (vct-set! arr k (- 1.0 (/ (- fhi flo) pi)))
-	    (vct-set! arr k (/ num denom)))))
+	    (vct-set! arr k (* (/ num denom) 
+			       (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 
 (define (bandstop f in)
@@ -778,7 +786,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (let* ((k (+ i len)))
 	(if (= i 0)
 	    (vct-set! arr k 0.0)
-	    (vct-set! arr k (- (/ (cos (* pi i)) i) (/ (sin (* pi i)) (* pi i i)))))))
+	    (vct-set! arr k (* (- (/ (cos (* pi i)) i) (/ (sin (* pi i)) (* pi i i))) 
+			       (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (make-fir-filter arrlen arr)))
 
 (define (differentiator f in)

@@ -258,7 +258,6 @@
 #define S_listener_selection            "listener-selection"
 #define S_listener_text_color           "listener-text-color"
 #define S_load_font                     "load-font"
-#define S_loop_samples                  "loop-samples"
 #define S_main_menu                     "main-menu"
 #define S_main_widgets                  "main-widgets"
 #define S_make_color                    "make-color"

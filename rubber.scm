@@ -161,7 +161,7 @@
 
       (as-one-edit
        (lambda ()
-	 (set! (squelch-update snd chn) #t)
+	 ;(set! (squelch-update snd chn) #t)
 	 (derumble-sound snd chn)
 	 (sample-sound snd chn)
 
@@ -302,7 +302,8 @@
 
 	 ;; and return to original srate
 	 (unsample-sound snd chn)
-	 (set! (squelch-update snd chn) #f)) ; end of as-one-edit thunk
+	 ;(set! (squelch-update snd chn) #f)
+	 ) ; end of as-one-edit thunk
        (format #f "(rubber-sound ~{~A~^ ~})" args)))))
 
 

@@ -1,5 +1,6 @@
 Snd change log
 
+  8-Jan:     removed loop-samples.
   7-Jan:     added various simple FIR filters to dsp.scm.
   6-Jan:     xramp-channel for virtual exp envs.
              edpos args for swap-channels.

@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: find why as_one_edit ends up with all-zero peak-amp-env after mix change */
-
 typedef struct {         /* save one mix console state */
   int chans;             /* size of arrays in this struct */
   int edit_ctr;          /* cp edit_ctr at time of creation of this struct */
@@ -172,14 +170,7 @@ static void make_current_console(mix_info *md)
     {
       cur->mix_edit_ctr[i] = cs->mix_edit_ctr[i];
       if (md->add_snd)
-	{
-	  /*
-	  if (md->add_snd->chans[i]->edit_ctr != cur->mix_edit_ctr[i])
-	    fprintf(stderr, "reset underlying chan %d pos from %d to %d\n", 
-		    i, md->add_snd->chans[i]->edit_ctr, cur->mix_edit_ctr[i]);
-	  */
-	  md->add_snd->chans[i]->edit_ctr = cur->mix_edit_ctr[i];
-	}
+	md->add_snd->chans[i]->edit_ctr = cur->mix_edit_ctr[i];
     }
   cur->edit_ctr = cs->edit_ctr;
   cur->orig = cs->beg;
@@ -1126,6 +1117,8 @@ static void extend_console_list(mix_info *md)
     }
 }
 
+/* (as-one-edit (lambda () (set! (mix-position 0) 0) (set! (mix-position 1) 1))) */
+
 static int backup_mix(mix_info *md, void *ptr)
 {
   int one_edit, curcons;
@@ -1134,7 +1127,7 @@ static int backup_mix(mix_info *md, void *ptr)
   curcons = md->curcons;
   curcs = md->states[curcons];
   while ((md->curcons > 1) && 
-	 ((md->states[md->curcons - 1])->edit_ctr > one_edit))
+	 ((md->states[md->curcons - 1])->edit_ctr >= one_edit))
     {
       md->curcons--; 
       cs = md->states[md->curcons];
@@ -3077,8 +3070,22 @@ void mix_play_from_id(int mix_id)
 static console_state *cs_from_id(int n)
 {
   mix_info *md;
+  console_state *cs;
+  chan_info *cp;
   md = md_from_id(n);
-  if (md) return(md->current_cs);
+  if (md)
+    {
+      cp = md->cp;
+      cs = md->current_cs;
+      if (cs->edit_ctr > cp->edit_ctr) /* used to depend on redisplay here */
+	cs = backup_console(cp, md);
+      else
+	{
+	  if (cs->edit_ctr < cp->edit_ctr)
+	    cs = restore_console(cp, md);
+	}
+      return(cs);
+    }
   return(NULL);
 }
 

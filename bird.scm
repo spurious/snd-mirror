@@ -1248,4 +1248,4 @@
 
 ;;; the examp.scm with-sound macro could be used here:
 ;;;   (with-sound () (orchard-oriole 0) ... )
-;;; on a fast enough machine this could run directly to the dac even interpreted.
+

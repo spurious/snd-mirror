@@ -1597,7 +1597,7 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, i
       reflect_edit_history_change(cp);
       reflect_sample_change_in_axis(cp);
       ripple_all(cp, 0, 0);
-      update_graph(cp);
+      /* update_graph(cp); */
       if (cp->mix_md) reflect_mix_edit(cp, origin);
       after_edit(cp);
     }
@@ -4903,113 +4903,6 @@ static XEN g_free_sample_reader(XEN obj)
   return(xen_return_first(XEN_FALSE, obj));
 }
 
-typedef float (*g_plug)(float val);
-typedef float (*g_plug_env)(float val, void *envp);
-
-static XEN g_loop_samples(XEN reader, XEN proc, XEN s_beg, XEN s_dur, XEN origin, XEN environ)
-{
-  #define H_loop_samples "(" S_loop_samples " reader func beg dur origin environ) calls (func (reader)) 'dur' times, \
-replacing current data starting at 'beg' with the function results; origin is the edit-history name for this operation"
-
-  /* proc here is a pointer to a float procedure that takes a float arg */
-  g_plug func = NULL;
-  g_plug_env func_env = NULL;
-  chan_info *cp;
-  snd_info *sp;
-  char *ofile;
-  snd_state *ss;
-  int j = 0, ofd, datumb, err = 0;
-  off_t i, num = 0, beg = 0;
-  snd_fd *sf;
-  void *envp = NULL;
-  file_info *hdr;
-  mus_sample_t **data;
-  mus_sample_t *idata;
-  XEN_ASSERT_TYPE(SAMPLE_READER_P(reader), reader, XEN_ARG_1, S_loop_samples, "a sample-reader");
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(proc), proc, XEN_ARG_2, S_loop_samples, "a wrapped object");
-  ASSERT_SAMPLE_TYPE(S_loop_samples, s_beg, XEN_ARG_3);
-  ASSERT_SAMPLE_TYPE(S_loop_samples, s_dur, XEN_ARG_4);
-  XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_5, S_loop_samples, "a string");
-  num = XEN_TO_C_OFF_T(s_dur);
-  if (num <= 0) return(XEN_FALSE);
-  beg = XEN_TO_C_OFF_T(s_beg);
-  sf = TO_SAMPLE_READER(reader);
-  cp = sf->cp;
-  ss = cp->state;
-  if ((XEN_BOUND_P(environ)) && (!(XEN_FALSE_P(environ))))
-    {
-      XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(environ), environ, XEN_ARG_5, S_loop_samples, "a wrapped object");
-      envp = (void *)XEN_UNWRAP_C_POINTER(environ);
-      func_env = (g_plug_env)XEN_UNWRAP_C_POINTER(proc);
-    }
-  else
-    {
-      func = (g_plug)XEN_UNWRAP_C_POINTER(proc);
-      envp = NULL;
-    }
-  ofile = snd_tempnam(ss);
-  sp = (cp->sound);
-  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, num, XEN_TO_C_STRING(origin));
-  ofd = open_temp_file(ofile, 1, hdr, ss);
-  if (ofd == -1)
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_loop_samples),
-			 C_TO_XEN_STRING(ofile),
-			 C_TO_XEN_STRING(strerror(errno))));
-  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
-  data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
-  data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
-  idata = data[0];
-  ss->stopped_explicitly = FALSE;
-  if (envp)
-    {
-      for (i = 0; i < num; i++)
-	{
-	  idata[j++] = MUS_FLOAT_TO_SAMPLE((*func_env)(read_sample_to_float(sf), envp));
-	  if (j == MAX_BUFFER_SIZE)
-	    {
-	      err = mus_file_write(ofd, 0, j - 1, 1, data);
-	      j = 0;
-	      if (err == -1) break;
-	      if (ss->stopped_explicitly) break;
-	    }
-	}
-    }
-  else
-    {
-      for (i = 0; i < num; i++)
-	{
-	  idata[j++] = MUS_FLOAT_TO_SAMPLE((*func)(read_sample_to_float(sf)));
-	  if (j == MAX_BUFFER_SIZE)
-	    {
-	      err = mus_file_write(ofd, 0, j - 1, 1, data);
-	      j = 0;
-	      if (err == -1) break;
-	      if (ss->stopped_explicitly) break;
-	    }
-	}
-    }
-  if (!(ss->stopped_explicitly))
-    if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-  close_temp_file(ofd, hdr, num * datumb, sp);
-  hdr = free_file_info(hdr);
-  if (!(ss->stopped_explicitly))
-    {
-      file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, XEN_TO_C_STRING(origin), cp->edit_ctr);
-      update_graph(cp);
-    }
-  else 
-    {
-      ss->stopped_explicitly = FALSE;
-      report_in_minibuffer(sp, S_loop_samples " interrupted...");
-    }
-  if (ofile) FREE(ofile);
-  FREE(data[0]);
-  FREE(data);
-  return(proc);
-}
-
-
 static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 {
   #define H_save_edit_history "(" S_save_edit_history " filename &optional snd chn) saves snd channel's chn edit history in filename"
@@ -5128,20 +5021,58 @@ static char *as_one_edit_origin;
 static void init_as_one_edit(chan_info *cp, void *ptr) 
 {
   ((int *)ptr)[chan_ctr] = cp->edit_ctr; 
+  cp->squelch_update = TRUE;
   chan_ctr++; 
 }
 
 static void finish_as_one_edit(chan_info *cp, void *ptr) 
 {
   as_one_edit(cp, (((int *)ptr)[chan_ctr] + 1), as_one_edit_origin);
+  cp->squelch_update = FALSE;
+  update_graph(cp);
   chan_ctr++; 
 }
+
+#if HAVE_DYNAMIC_WIND
+/* protect against errors within as-one-edit */
+typedef struct {
+  XEN proc;
+  int *cur_edits;
+  int chans;
+} as_one_edit_context;
+
+static void before_as_one_edit(void *context)
+{
+  as_one_edit_context *sc = (as_one_edit_context *)context;
+  sc->cur_edits = (int *)CALLOC(sc->chans, sizeof(int));
+  chan_ctr = 0;
+  for_each_chan_1(get_global_state(), init_as_one_edit, (void *)(sc->cur_edits));
+}
+
+static XEN as_one_edit_body(void *context)
+{
+  as_one_edit_context *sc = (as_one_edit_context *)context;
+  return(XEN_CALL_0_NO_CATCH(sc->proc, S_as_one_edit));
+}
+
+static void after_as_one_edit(void *context)
+{
+  as_one_edit_context *sc = (as_one_edit_context *)context;
+  chan_ctr = 0;
+  for_each_chan_1(get_global_state(), finish_as_one_edit, (void *)(sc->cur_edits));
+  FREE(sc->cur_edits);
+  FREE(sc);
+}
+#endif
+
 
 static XEN g_as_one_edit(XEN proc, XEN origin)
 {
   #define H_as_one_edit "(" S_as_one_edit " func &optional origin) runs func, collecting all edits into one from the edit historys' point of view"
   int chans;
+#if (!HAVE_DYNAMIC_WIND)
   int *cur_edits;
+#endif
   snd_state *ss;
   XEN result = XEN_FALSE;
   char *errmsg;
@@ -5161,13 +5092,29 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       if (XEN_STRING_P(origin))
 	as_one_edit_origin = XEN_TO_C_STRING(origin);
       else as_one_edit_origin = NULL;
+#if HAVE_DYNAMIC_WIND
+      {
+	as_one_edit_context *sc;
+	sc = (as_one_edit_context *)CALLOC(1, sizeof(as_one_edit_context));
+	sc->chans = chans;
+	sc->proc = proc;
+	result = scm_internal_dynamic_wind((scm_t_guard)before_as_one_edit, 
+					   (scm_t_inner)as_one_edit_body, 
+					   (scm_t_guard)after_as_one_edit, 
+					   (void *)sc,
+					   (void *)sc);
+      }
+#else
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;
       for_each_chan_1(ss, init_as_one_edit, (void *)cur_edits); /* redo here can't make sense, can it? */
+      /* this is problematic mainly because we now squelch updates within as-one-edit */
+      /*   so we really need the dynamic unwind above to make sure graphics aren't disabled by a user programming error */
       result = XEN_CALL_0_NO_CATCH(proc, S_as_one_edit);
       chan_ctr = 0;
       for_each_chan_1(ss, finish_as_one_edit, (void *)cur_edits);
       FREE(cur_edits);
+#endif
     }
   return(xen_return_first(result, proc, origin));
 }
@@ -5931,7 +5878,6 @@ XEN_NARGIFY_1(g_sample_reader_position_w, g_sample_reader_position)
 XEN_NARGIFY_1(g_inspect_sample_reader_w, g_inspect_sample_reader)
 XEN_NARGIFY_1(g_sf_p_w, g_sf_p)
 XEN_NARGIFY_1(g_sample_reader_at_end_w, g_sample_reader_at_end)
-XEN_ARGIFY_6(g_loop_samples_w, g_loop_samples)
 XEN_ARGIFY_3(g_save_edit_history_w, g_save_edit_history)
 XEN_ARGIFY_3(g_edit_fragment_w, g_edit_fragment)
 XEN_ARGIFY_3(g_undo_w, g_undo)
@@ -5970,7 +5916,6 @@ XEN_ARGIFY_9(g_set_samples_w, g_set_samples)
 #define g_inspect_sample_reader_w g_inspect_sample_reader
 #define g_sf_p_w g_sf_p
 #define g_sample_reader_at_end_w g_sample_reader_at_end
-#define g_loop_samples_w g_loop_samples
 #define g_save_edit_history_w g_save_edit_history
 #define g_edit_fragment_w g_edit_fragment
 #define g_undo_w g_undo
@@ -6027,7 +5972,6 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_sample_reader_at_end_p,    g_sample_reader_at_end_w, 1, 0, 0,      H_sample_reader_at_end);
   XEN_DEFINE_PROCEDURE(S_sample_reader_position,    g_sample_reader_position_w, 1, 0, 0,    H_sample_reader_position);
   XEN_DEFINE_PROCEDURE("inspect-sample-reader",     g_inspect_sample_reader_w, 1, 0, 0,     "internal debugging function");
-  XEN_DEFINE_PROCEDURE(S_loop_samples,              g_loop_samples_w, 5, 1, 0,              H_loop_samples);
 
   XEN_DEFINE_PROCEDURE(S_save_edit_history,         g_save_edit_history_w, 1, 2, 0,         H_save_edit_history);
   XEN_DEFINE_PROCEDURE(S_edit_fragment,             g_edit_fragment_w, 0, 3, 0,             H_edit_fragment);

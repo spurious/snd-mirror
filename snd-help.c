@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Jan:   removed loop-samples.\n\
 7-Jan:   added various simple FIR filters to dsp.scm.\n\
 6-Jan:   xramp-channel for virtual exp envs.\n\
          edpos args for swap-channels.\n\
@@ -1246,7 +1247,6 @@ all refer to the same thing.\n\
   " S_listener_selection "()\n\
   " S_lisp_graph_p "       (snd chn)\n\
   " S_list2vct "         (lst)\n\
-  " S_loop_samples "      (reader function calls origin environ)\n\
   " S_make_color "        (r g b)\n\
   " S_make_player "       (snd chn)\n\
   " S_make_region "       (beg end snd chn)\n\
