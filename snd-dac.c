@@ -900,7 +900,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
       dp->contrast_amp = sp->contrast_control_amp;
       if ((use_sinc_interp(sp->state)) && 
 	  ((sp->speed_control * sp->speed_control_direction) != 1.0))
-	dp->src = make_src(sp->state, 0.0, fd);
+	dp->src = make_src(sp->state, 0.0, fd, sp->speed_control * sp->speed_control_direction);
       /* that is, if user wants fancy src, he needs to say so before we start */
       if (dp->expanding) 
 	{
@@ -1587,7 +1587,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	      if ((sp) && 
 		  (cursor_change) && 
 		  (sp->cursor_follows_play != DONT_FOLLOW) &&
-		  (dp->chn_fd->eof == 0) &&
+		  (!(read_sample_eof(dp->chn_fd))) &&
 		  (dp->chn_fd->cb))
 		handle_cursor(dp->cp, cursor_moveto(dp->cp, current_location(dp->chn_fd)));
 

@@ -687,7 +687,7 @@ static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
 	{
 	  mf->srcs = (src_state **)CALLOC(chans, sizeof(src_state *));
 	  for (i = 0; i < chans; i++)
-	    mf->srcs[i] = make_src(md->ss, 0.0, mf->sfs[i]);
+	    mf->srcs[i] = make_src(md->ss, 0.0, mf->sfs[i], 1.0);
 	  mf->lst = NULL;
 	  mf->nxt = NULL;
 	}

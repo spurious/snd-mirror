@@ -3658,7 +3658,11 @@ static int probe_api(void)
 #endif
 
 #include <sys/ioctl.h>
-#include <sys/asoundlib.h>
+#if HAVE_ALSA_ASOUNDLIB_H
+  #include <alsa/asoundlib.h>
+#else
+  #include <sys/asoundlib.h>
+#endif
 
 /* simplify this silliness! (bil -- 3-Mar-01) */
 #if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))

@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: convolve-channel (vct-kernel|string-filename beg dur s c e overlap)
- */
-
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
@@ -627,12 +624,13 @@ static Float input_as_needed(void *arg, int dir)
   else return(previous_sample_to_float(sf));
 }
 
-src_state *make_src(snd_state *ss, Float srate, snd_fd *sf)
+src_state *make_src(snd_state *ss, Float srate, snd_fd *sf, Float initial_srate)
 {
   src_state *sr;
   sr = (src_state *)CALLOC(1, sizeof(src_state));
   sr->sf = sf;
-  sr->gen = mus_make_src(&input_as_needed, srate, sinc_width(ss), (void *)sr);
+  sr->gen = mus_make_src(&input_as_needed, initial_srate, sinc_width(ss), (void *)sr);
+  mus_set_increment(sr->gen, srate);
   sr->sample = 0; /* this is how the old form worked */
   return(sr);
 }
@@ -685,7 +683,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, int beg, int dur,
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
   idata = data[0];
 
-  sr = make_src(ss, ratio, sf);
+  sr = make_src(ss, ratio, sf, ratio);
   j = 0;
   if (egen == NULL)
     {

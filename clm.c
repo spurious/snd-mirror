@@ -5567,7 +5567,7 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 {
   sr *srp;
   int i, lim, wid;
-  if (srate > (Float)(1 << 16))
+  if (fabs(srate) > (Float)(1 << 16))
     mus_error(MUS_ARG_OUT_OF_RANGE, "mus_make_src srate arg invalid: %f", srate);
   else
     {
@@ -5581,7 +5581,9 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 	  else
 	    {
 	      if (width == 0) width = SRC_SINC_WIDTH;
-	      if (width < (srate * 2)) wid = (int)(ceil(fabs(srate)) * 2); else wid = width;
+	      if (width < (fabs(srate) * 2)) 
+		wid = (int)(ceil(fabs(srate)) * 2); 
+	      else wid = width;
 	      srp->core = &SRC_CLASS;
 	      srp->x = 0.0;
 	      srp->feeder = input;
@@ -6239,9 +6241,9 @@ void mus_convolution (Float* rl1, Float* rl2, int n)
 
   mus_fft(rl1, rl2, n, 1);
   
-  n2 = (int)(n * 0.5);
-  invn = 0.25 / n;
-  rl1[0] = ((rl1[0] * rl2[0]) / n);
+  n2 = n >> 1;
+  invn = 0.25 / (Float)n;
+  rl1[0] = ((rl1[0] * rl2[0]) / (Float)n);
   rl2[0] = 0.0;
 
   for (j = 1; j <= n2; j++)

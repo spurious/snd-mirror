@@ -194,7 +194,6 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
       search_in_progress = 0;
       return(-1);
     }
-  sf->direction = READ_FORWARD;
   end = current_ed_samples(cp);
   for (i = cp->cursor + 1, passes = 0; i < end; i++, passes++)
     {
@@ -243,7 +242,6 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
       search_in_progress = 0;
       return(-1);
     }
-  sf->direction = READ_BACKWARD;
   for (i = cp->cursor - 1, passes = 0; i >= 0; i--, passes++)
     {
       res = XEN_CALL_1(sp->search_proc, 

@@ -210,17 +210,8 @@ void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cu
     sf->first = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind0 - cur_snd->io[SND_IO_BEG]);
   else sf->first = cur_snd->buffered_data;
   if (ind1 <= cur_snd->io[SND_IO_END]) 
-    {
-      sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind1 - cur_snd->io[SND_IO_BEG]);
-      sf->eof = 1;
-    }
-  else 
-    {
-      sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
-      sf->eof = 0;
-    }
-  sf->beg = cur_snd->io[SND_IO_BEG];
-  sf->end = cur_snd->io[SND_IO_END];
+    sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind1 - cur_snd->io[SND_IO_BEG]);
+  else sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
 }
 
 void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
@@ -233,17 +224,22 @@ void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_s
     sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind1 - cur_snd->io[SND_IO_BEG]);
   else sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
   if (ind0 >= cur_snd->io[SND_IO_BEG]) 
-    {
-      sf->first = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind0 - cur_snd->io[SND_IO_BEG]);
-      sf->eof = 1;
-    }
-  else 
-    {
-      sf->first = cur_snd->buffered_data;
-      sf->eof = 0;
-    }
-  sf->beg = cur_snd->io[SND_IO_BEG];
-  sf->end = cur_snd->io[SND_IO_END];
+    sf->first = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind0 - cur_snd->io[SND_IO_BEG]);
+  else sf->first = cur_snd->buffered_data;
+}
+
+int sf_beg(snd_data *sd)
+{
+  if (sd)
+    return(sd->io[SND_IO_BEG]);
+  return(0);
+}
+
+int sf_end(snd_data *sd)
+{
+  if (sd)
+    return(sd->io[SND_IO_END]);
+  return(0);
 }
 
 MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp)

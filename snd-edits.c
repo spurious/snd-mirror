@@ -145,7 +145,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 	      }
 	    else 
 	      if (sd->type == SND_DATA_BUFFER)
-		fprintf(outp, " [buf: %d] ", sd->len/4);
+		fprintf(outp, " [buf: %d] ", sd->len / 4);
 	      else fprintf(outp, " [bogus!]");
 	}
     }
@@ -846,12 +846,12 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
       return(NULL);
     }
   mus_file_open_descriptors(fd,
-			   sd->filename,
-			   hdr->format,
-			   mus_data_format_to_bytes_per_sample(hdr->format),
-			   hdr->data_location,
-			   hdr->chans,
-			   hdr->type);
+			    sd->filename,
+			    hdr->format,
+			    mus_data_format_to_bytes_per_sample(hdr->format),
+			    hdr->data_location,
+			    hdr->chans,
+			    hdr->type);
   during_open(fd, sd->filename, SND_COPY_READER);
   io = make_file_state(fd, hdr, sd->chan, bufsize);
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
@@ -865,6 +865,10 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->open = FD_OPEN;
   sf->inuse = FALSE;
   sf->copy = 1;
+#if 0
+  sf->chan = sd->chan;
+  sf->len = sd->len;
+#endif
   sf->just_zeros = 0;
   return(sf);
 }
@@ -1866,20 +1870,18 @@ snd_fd *free_snd_fd(snd_fd *sf)
 #if LONG_INT_P
   int current_location(snd_fd *sf) 
   {
-    if (sf->eof) return(sf->end);
-    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf->beg + (int)(((long)(sf->view_buffered_data) - (long)(sf->first)) >> 2));
+    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf_beg(sf->current_sound) + (int)(((long)(sf->view_buffered_data) - (long)(sf->first)) >> 2));
   }
 #else
   int current_location(snd_fd *sf) 
   {
-    if (sf->eof) return(sf->end);
-    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf->beg + (((int)(sf->view_buffered_data) - (int)(sf->first)) >> 2));
+    /* only used by moving cursor code in snd-dac.c */
+    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf_beg(sf->current_sound) + (((int)(sf->view_buffered_data) - (int)(sf->first)) >> 2));
   }
 #endif
 
 static snd_fd *cancel_reader(snd_fd *sf)
 {
-  sf->eof = 1;
   sf->view_buffered_data = (MUS_SAMPLE_TYPE *)1;
   sf->last = (MUS_SAMPLE_TYPE *)0; /* can I get away with this?? -- we're trying to do something with an empty file here */
   sf->first = (MUS_SAMPLE_TYPE *)2;
@@ -1899,6 +1901,11 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
   snd_data *first_snd = NULL;
   if (cp->active == 0) return(NULL);
   if ((edit_position < 0) || (edit_position > cp->edit_size)) return(NULL);
+  if ((samp == 0) && (direction == READ_BACKWARD))
+    {
+      snd_warning("reading backward from sample 0?");
+      direction = READ_FORWARD;
+    }
   ed = (ed_list *)(cp->edits[edit_position]);
   if (!ed) return(NULL);
   sp = cp->sound;
@@ -1912,7 +1919,6 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
   sf->initial_samp = samp;
-  sf->direction = 0;
   sf->cp = cp;
   sf->scaler = MUS_SAMPLE_TO_FLOAT(1.0);
   sf->current_state = ed;
@@ -1965,7 +1971,6 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 	      sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + indx);
 	      sf->first = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + ind0);
 	      sf->last = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + ind1);
-	      sf->eof = 1;
 	    }
 	  return(sf);
 	}
@@ -1983,7 +1988,9 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 {
   int ind0, ind1, indx;
   snd_data *prev_snd;
-  if (sf->eof)
+  int at_start;
+  at_start = ((sf->cb == NULL) || (sf->current_sound == NULL) || (sf->cb[ED_BEG] >= sf_beg(sf->current_sound)));
+  if (at_start)
     {
       if (sf->current_sound) 
 	{
@@ -2014,7 +2021,6 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(prev_snd->buffered_data + ind1);
 	  sf->first = (MUS_SAMPLE_TYPE *)(prev_snd->buffered_data + ind0);
 	  sf->last = sf->view_buffered_data;
-	  sf->eof = 1;
 	}
     }
   else
@@ -2022,7 +2028,7 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
       /* back up in current file */
       ind0 = sf->cb[ED_BEG];
       ind1 = sf->cb[ED_END];
-      indx = sf->beg - 1;
+      indx = sf_beg(sf->current_sound) - 1;
       file_buffers_back(ind0, ind1, indx, sf, sf->current_sound);
     }
   return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data--, sf->cb[ED_SCL])));
@@ -2032,7 +2038,9 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 {
   int ind0, ind1, indx;
   snd_data *nxt_snd;
-  if (sf->eof) /* a convenience -- we could figure this out from various pointers */
+  int at_end;
+  at_end = ((sf->cb == NULL) || (sf->current_sound == NULL) || (sf->cb[ED_END] <= sf_end(sf->current_sound)));
+  if (at_end)
     {
       if (sf->current_sound) 
 	{
@@ -2074,14 +2082,13 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(nxt_snd->buffered_data + ind0);
 	  sf->first = sf->view_buffered_data;
 	  sf->last = (MUS_SAMPLE_TYPE *)(nxt_snd->buffered_data + ind1);
-	  sf->eof = 1;
 	}
     }
   else
     { 
       ind0 = sf->cb[ED_BEG];
       ind1 = sf->cb[ED_END];
-      indx = sf->end + 1;
+      indx = sf_end(sf->current_sound) + 1;
       file_buffers_forward(ind0, ind1, indx, sf, sf->current_sound);
     }
   return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data++, sf->cb[ED_SCL])));
@@ -2779,11 +2786,8 @@ static char *sf_to_string(snd_fd *fd)
 	    name = (cp->sound)->short_filename;
 	  else name = "unknown source";
 	}
-      if (fd->eof)
-	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from %d, at eof>",
-		     fd, name, fd->initial_samp);
-      else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from %d, at %d>",
-			fd, name, fd->initial_samp, current_location(fd));
+      mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from %d, at %d>",
+		   fd, name, fd->initial_samp, current_location(fd));
     }
   return(desc);
 }
@@ -2869,7 +2873,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
     }
   fd = init_sample_read_any(XEN_TO_C_INT_OR_ELSE(samp_n, 0), 
 			    cp, 
-			    XEN_TO_C_INT_OR_ELSE(dir1, 1), 
+			    XEN_TO_C_INT_OR_ELSE(dir1, READ_FORWARD), 
                             to_c_edit_position(cp, pos, S_make_sample_reader, 5));
   if (fd)
     {
@@ -2906,7 +2910,7 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
   fd = init_region_read(XEN_TO_C_INT_OR_ELSE(samp_n, 0), 
 			reg_n,
 			chn_n,
-			XEN_TO_C_INT_OR_ELSE(dir1, 1));
+			XEN_TO_C_INT_OR_ELSE(dir1, READ_FORWARD));
   if (fd)
     {
 #if HAVE_GUILE

@@ -77,14 +77,12 @@ typedef struct snd_fd {
   ed_list *current_state;
   int *cb;
   int cbi;
-  int eof;
   MUS_SAMPLE_TYPE *first;
   MUS_SAMPLE_TYPE *last;
   MUS_SAMPLE_TYPE *view_buffered_data;
   snd_data **sounds;
   snd_data *current_sound;
-  int beg, end, initial_samp;
-  int direction;
+  int initial_samp;
   struct chan__info *cp;
   struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
   Float scaler;
@@ -400,6 +398,8 @@ MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp);
 int *make_zero_file_state(int size);
 char *snd_remove_with_error(const char *name);
 int snd_remove(const char *name);
+int sf_beg(snd_data *sd);
+int sf_end(snd_data *sd);
 
 
 /* -------- snd-help.c -------- */
@@ -1322,7 +1322,7 @@ void g_init_kbd(void);
 void scale_by(chan_info *cp, Float *scalers, int len, int selection);
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
 Float get_maxamp(snd_info *sp, chan_info *cp, int edpos);
-src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);
+src_state *make_src(snd_state *ss, Float srate, snd_fd *sf, Float initial_srate);
 Float run_src(src_state *sr, Float sr_change);
 src_state *free_src(src_state *sr);
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
