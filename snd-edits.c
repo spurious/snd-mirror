@@ -2602,6 +2602,7 @@ void revert_edits(chan_info *cp, void *ptr)
   old_ctr = cp->edit_ctr;
   sp = cp->sound;
   cp->edit_ctr = 0;
+  clear_transform_edit_ctrs(cp);
   reflect_edit_counter_change(cp);
   reflect_sample_change_in_axis(cp);
   if (selection_is_active())
@@ -2621,6 +2622,7 @@ void undo_edit(chan_info *cp, int count)
       sp = cp->sound;
       cp->edit_ctr -= count; 
       if (cp->edit_ctr < 0) cp->edit_ctr = 0;
+      clear_transform_edit_ctrs(cp);
       reflect_edit_counter_change(cp);
       reflect_sample_change_in_axis(cp);
       reflect_undo_in_menu();
@@ -2678,6 +2680,7 @@ void redo_edit(chan_info *cp, int count)
 	reflect_no_more_redo_in_menu();
       if (cp->edit_ctr != 0) /* possibly a sync'd redo to chan that has no edits */
 	{
+	  clear_transform_edit_ctrs(cp);
 	  reflect_file_change_in_label(cp);
 	  reflect_redo_in_menu();
 	  reflect_edit_counter_change(cp);

@@ -166,7 +166,7 @@
 #define STR_envs_p			 "envs:"
 #define STR_eps_file_p			 "eps file:"
 #define STR_exp			         "exp"
-#define STR_exp_base		         "exp base:"
+#define STR_exp_base		         "exp:"
 #define STR_expand			 "expand:"
 #define STR_f			 	 "f"
 /* this 'f' => fft */
@@ -397,6 +397,7 @@
 #define S_enved_dialog                  "enved-dialog"
 #define S_enved_exp_p                   "enved-exp?"
 #define S_enved_filter_order            "enved-filter-order"
+#define S_enved_filter                  "enved-filter"
 #define S_enved_hook                    "enved-hook"
 #define S_enved_in_dB                   "enved-in-dB"
 #define S_enved_move_point              "enved-move-point"

@@ -1,9 +1,12 @@
 #include "snd.h"
 
+/* TODO: add FIR button 
+ */
+
 /* envelope editor and viewer */
 
 static GtkWidget *enved_dialog = NULL;
-static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB;
+static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
 static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
 static GtkWidget *nameL, *textL, *env_list, *env_list_frame, *env_list_scroller, *dBB, *orderL;
 static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *mixB, *selrow, *revrow, *unrow, *saverow;
@@ -27,6 +30,8 @@ static env* active_env = NULL;   /* env currently being edited */
 
 static chan_info *axis_cp = NULL;
 static axis_info *gray_ap = NULL;
+static int FIR_p = 1;
+static int old_clip_p = 0;
 
 chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, 
 			      int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
@@ -172,8 +177,11 @@ static void apply_enved(snd_state *ss)
 	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
 	    case ENVED_SPECTRUM: 
-	      apply_filter(active_channel, enved_filter_order(ss), active_env, 
-			   FROM_ENVED, "Enved: flt", apply_to_selection, NULL, NULL,
+	      apply_filter(active_channel, 
+			   (FIR_p) ? enved_filter_order(ss) : 0,
+			   active_env, 
+			   FROM_ENVED, "Enved: flt", 
+			   apply_to_selection, NULL, NULL,
 			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      break;
 	    case ENVED_SRATE:
@@ -213,9 +221,24 @@ void env_redisplay(snd_state *ss)
 	    {
 	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env))
 		display_frequency_response(ss, active_env, axis_cp->axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
-	      else enved_show_background_waveform(ss, axis_cp, gray_ap, apply_to_mix, apply_to_selection);
+	      enved_show_background_waveform(ss, axis_cp, gray_ap, apply_to_mix, apply_to_selection,
+					     (enved_target(ss) == ENVED_SPECTRUM));
 	    }
 	}
+    }
+}
+
+void enved_fft_update(void)
+{
+  snd_state *ss;
+  if ((enved_dialog_is_active()) &&
+      (!(showing_all_envs)))
+    {
+      ss = get_global_state();
+      if ((enved_wave_p(ss)) &&
+	  (enved_target(ss) == ENVED_SPECTRUM) && 
+	  (active_env))
+	enved_show_background_waveform(ss, axis_cp, gray_ap, apply_to_mix, apply_to_selection,TRUE);
     }
 }
 
@@ -589,12 +612,16 @@ static void flt_button_pressed(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_enved_target(ss, ENVED_SPECTRUM);
+  old_clip_p = enved_clip_p(ss);
+  set_enved_clip_p(ss, TRUE);
   reflect_apply_state(ss);
 }
 
 static void amp_button_pressed(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
+  if (enved_target(ss) == ENVED_SPECTRUM)
+    set_enved_clip_p(ss, old_clip_p);
   in_set_enved_target(ss, ENVED_AMPLITUDE);
   reflect_apply_state(ss);
 }
@@ -602,6 +629,8 @@ static void amp_button_pressed(GtkWidget *w, gpointer context)
 static void src_button_pressed(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
+  if (enved_target(ss) == ENVED_SPECTRUM)
+    set_enved_clip_p(ss, old_clip_p);
   in_set_enved_target(ss, ENVED_SRATE);
   reflect_apply_state(ss);
 }
@@ -770,6 +799,12 @@ static void base_changed_callback(GtkAdjustment *adj, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   base_changed(ss, adj->value);
+}
+
+static void fir_button_pressed(GtkWidget *w, gpointer context)
+{
+  FIR_p = (!FIR_p);
+  set_button_label(firB, (FIR_p) ? "fir" : "fft");
 }
 
 GtkWidget *create_envelope_editor (snd_state *ss)
@@ -1055,6 +1090,11 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       gtk_signal_connect(GTK_OBJECT(orderAdj), "value_changed", GTK_SIGNAL_FUNC(enved_filter_order_callback), (gpointer)ss);
       gtk_widget_show(orderL);
 
+      firB = gtk_button_new_with_label("fir");
+      gtk_signal_connect(GTK_OBJECT(firB), "clicked", GTK_SIGNAL_FUNC(fir_button_pressed), (gpointer)ss);
+      gtk_box_pack_end(GTK_BOX(bottomrow), firB, FALSE, FALSE, 0);
+      gtk_widget_show(firB);
+
       gtk_widget_show(mainform);
       gtk_widget_show(enved_dialog);
 
@@ -1244,6 +1284,21 @@ static XEN g_set_enved_selected_env(XEN name)
   return(name);
 }
 
+static XEN g_enved_filter(void)
+{
+  #define H_enved_filter "(" S_enved_filter ") -> FIR/FFT filter type choice (#t: FIR)"
+  return(C_TO_XEN_BOOLEAN(FIR_p));
+}
+
+static XEN g_set_enved_filter(XEN type)
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, XEN_ONLY_ARG, "set-" S_enved_filter, "boolean");
+  FIR_p = XEN_TO_C_BOOLEAN(type);
+  if (firB)
+    set_label(firB, (FIR_p) ? "fir" : "fft");
+  return(type);
+}
+
 #if DEBUGGING
 static XEN g_enved_dialog_widgets(void)
 {
@@ -1298,6 +1353,8 @@ static XEN g_enved_axis_info(void)
 
 
 #ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_enved_filter_w, g_enved_filter)
+XEN_NARGIFY_1(g_set_enved_filter_w, g_set_enved_filter)
 XEN_NARGIFY_0(g_enved_active_env_w, g_enved_active_env)
 XEN_NARGIFY_1(g_set_enved_active_env_w, g_set_enved_active_env)
 XEN_NARGIFY_0(g_enved_selected_env_w, g_enved_selected_env)
@@ -1307,6 +1364,8 @@ XEN_NARGIFY_0(g_enved_dialog_widgets_w, g_enved_dialog_widgets)
 XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 #endif
 #else
+#define g_enved_filter_w g_enved_filter
+#define g_set_enved_filter_w g_set_enved_filter
 #define g_enved_active_env_w g_enved_active_env
 #define g_set_enved_active_env_w g_set_enved_active_env
 #define g_enved_selected_env_w g_enved_selected_env
@@ -1319,6 +1378,8 @@ XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 
 void g_init_gxenv(void)
 {
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter, g_enved_filter_w, H_enved_filter,
+				   "set-" S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_active_env, g_enved_active_env_w, H_enved_active_env,
 			       "set-" S_enved_active_env, g_set_enved_active_env_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_selected_env, g_enved_selected_env_w, H_enved_selected_env,

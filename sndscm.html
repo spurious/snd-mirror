@@ -589,6 +589,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>set transform-size based on current time domain window size
     <li>superimpose spectra of sycn'd sounds
     <li>fft-edit -- FFT based editing
+    <li>fft-squelch -- noise reduction 
     <li>fft-smoother -- fft-based smoothing
     <li>phase vocoder
   </ul>
@@ -789,6 +790,7 @@ is at 1.0, no filtering takes place.
   <em class=def><A NAME="excorrelate">correlate</a></em> snd chn y0 y1
   <em class=def><a name="exsuperimposeffts">superimpose-ffts</a></em> snd chn y0 y1
   <em class=def><a name="exfftedit">fft-edit</a></em> low-freq high-freq
+  <em class=def><a name="exfftsquelch">fft-squelch</a></em> squelch
   <em class=def><A NAME="exfftsmoother">fft-smoother</a></em> cutoff start samps snd chn
   <em class=def><A NAME="expvoc">pvoc</a></em> #:key (fftsize 512) (overlap 4) (time 1.0) (pitch 1.0) (gate 0.0) (hoffset 0.0) (snd 0) (chn 0)
 </pre>
@@ -801,6 +803,8 @@ superimposes the ffts of multiple (syncd) sounds.
 It takes an fft of the entire sound, removes all energy below <i>low-freq</i> and above <i>high-freq</i>,
 then inverse fft's. A similar function is <i>fft-smoother</i> that uses fft-filtering to
 smooth a portion of a sound.
+<i>fft-squelch</i> is similar, but removes all energy below the squelch amount (normalized to
+be between 0.0 and 1.0).  This is sometimes useful for noise-reduction.
 <i>pvoc</i> is a phase-vocoder.  
 pvoc applies the phase-vocoder (i.e. fft analysis, oscil bank resynthesis).
 to the current sound; <i>pitch</i> specifies the pitch transposition ratio, 

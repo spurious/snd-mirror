@@ -762,7 +762,8 @@ void *make_sonogram_state(chan_info *cp);
 BACKGROUND_TYPE safe_fft_in_slices(void *fftData);
 BACKGROUND_TYPE sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
-
+void clear_transform_edit_ctrs(chan_info *cp);
+void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss, axis_info *fap, axis_context *ax, int with_hooks);
 void g_init_fft(void);
 
 
@@ -914,7 +915,7 @@ char *enved_all_names(int n);
 void set_enved_env_list_top(int n);
 env *enved_all_envs(int pos);
 void alert_envelope_editor(snd_state *ss, char *name, env *val);
-void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection);
+void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection, int show_fft);
 int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, int evx, int evy);
 void save_envelope_editor_state(FILE *fd);
 char *env_name_completer(char *text);

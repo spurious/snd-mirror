@@ -1790,7 +1790,17 @@ the amplitude, the spectrum, or the sampling rate. The
 choice is made via the three buttons marked 'amp',
 'flt', and 'src'.
 The filter order is the variable enved-filter-order
-which defaults to 40. 
+which defaults to 40. To use fft-filtering (convolution)
+instead, click the "fir" button, changing its label to "fft".
+If you are displaying the fft graph of the current channel,
+and the fft is large enough to include the entire sound,
+and the 'wave' button is set, 
+the spectrum will also be displayed in the envelope
+editor, making it easier to perform very accurate filtering
+operations.
+</p>
+
+<p>
 To interrupt the application of the envelope, click the
 'Stop' button.  To apply the changes to the current
 selection, rather than the current sound, set the 'selection' button.

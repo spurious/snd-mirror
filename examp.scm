@@ -26,7 +26,7 @@
 ;;;     every-sample?
 ;;;     sort-samples
 ;;; mix mono sound into stereo sound panning according to env, also simple sound placement
-;;; fft-edit -- FFT based editing, fft-smoothing
+;;; fft-edit, fft-squelch -- FFT based editing, fft-smoothing
 ;;; comb-filter, notch-filter, formant-filter
 ;;; echo (delays)
 ;;; ring-modulation, am
@@ -844,6 +844,36 @@
       (vct-scale! rdata (/ 1.0 fsize))
       (set-samples 0 (1- len) rdata))))
 
+(define (fft-squelch squelch)
+  ;; fft entire sound, remove all energy below squelch, unfft
+  (let* ((sr (srate))
+	 (len (frames))
+	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (rdata (samples->vct 0 fsize))
+	 (idata (make-vct fsize))
+	 (fsize2 (/ fsize 2))
+	 (scaler 1.0))
+    (fft rdata idata 1)
+    (let ((vr (vct-copy rdata))
+	  (vi (vct-copy idata)))
+      (rectangular->polar vr vi)
+      (set! scaler (vct-peak vr)))
+    (set! squelch (* squelch scaler))
+    (do ((i 0 (1+ i))
+	 (j (- fsize 1) (1- j)))
+	((= i fsize2))
+      (let ((magnitude (sqrt (+ (* (vct-ref rdata i) (vct-ref rdata i)) (* (vct-ref idata i) (vct-ref idata i))))))
+	(if (< magnitude squelch)
+	    (begin
+	      (vct-set! rdata i 0.0)
+	      (vct-set! rdata j 0.0)
+	      (vct-set! idata i 0.0)
+	      (vct-set! idata j 0.0)))))
+    (fft rdata idata -1)
+    (vct-scale! rdata (/ 1.0 fsize))
+    (set-samples 0 (1- len) rdata)
+    scaler))
+    
 (define (fft-smoother cutoff start samps snd chn)
   "use fft-filtering to smooth a section"
   (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (1+ samps)) (log 2.0))))))

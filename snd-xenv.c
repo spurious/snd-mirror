@@ -4,7 +4,7 @@
 
 static Widget enved_dialog = NULL;
 static Widget mainform, applyB, apply2B, cancelB, drawer, colB, colF, showB, saveB, revertB, undoB, redoB, printB, brkptL, graphB, fltB, ampB, srcB, rbrow, clipB;
-static Widget nameL, textL, screnvlst, screnvname, dBB, orderL, revrow, deleteB, resetB;
+static Widget nameL, textL, screnvlst, screnvname, dBB, orderL, revrow, deleteB, resetB, firB = NULL;
 static Widget expB, linB, lerow, baseScale, baseLabel, baseValue, baseSep, selectionB, mixB, selrow, unrow, saverow;
 static GC gc, rgc, ggc;
 
@@ -25,6 +25,8 @@ static Float active_env_base = 1.0;
 
 static chan_info *axis_cp = NULL;
 static axis_info *gray_ap = NULL;
+static int FIR_p = 1;
+static int old_clip_p = 0;
 
 chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, 
 			      int ex0, int ey0, int width, int height, 
@@ -171,11 +173,11 @@ static void apply_enved(snd_state *ss)
 			     "Enved: amp", NULL,
 			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
-	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
 	    case ENVED_SPECTRUM: 
-	      apply_filter(active_channel, 
-			   enved_filter_order(ss), active_env, FROM_ENVED, 
+	      apply_filter(active_channel,
+			   (FIR_p) ? enved_filter_order(ss) : 0,
+			   active_env, FROM_ENVED, 
 			   "Enved: flt", apply_to_selection, 
 			   NULL, NULL,
 			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
@@ -193,9 +195,9 @@ static void apply_enved(snd_state *ss)
 			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base);
 	      within_selection_src = 0;
 	      max_env = free_env(max_env);
-	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
 	    }
+	  if (enved_wave_p(ss)) env_redisplay(ss);
 	  set_sensitive(applyB, TRUE);
 	  set_sensitive(apply2B, TRUE);
 	  set_button_label(cancelB, STR_Dismiss);
@@ -219,11 +221,26 @@ void env_redisplay(snd_state *ss)
 	  if (name) XtFree(name);
 	  if (enved_wave_p(ss))
 	    {
-	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env))
+	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p))
 		display_frequency_response(ss, active_env, axis_cp->axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
-	      else enved_show_background_waveform(ss, axis_cp, gray_ap, apply_to_mix, apply_to_selection);
+	      enved_show_background_waveform(ss, axis_cp, gray_ap, apply_to_mix, apply_to_selection,
+					     (enved_target(ss) == ENVED_SPECTRUM));
 	    }
 	}
+    }
+}
+
+void enved_fft_update(void)
+{
+  snd_state *ss;
+  if ((enved_dialog_is_active()) &&
+      (!(showing_all_envs)))
+    {
+      ss = get_global_state();
+      if ((enved_wave_p(ss)) &&
+	  (enved_target(ss) == ENVED_SPECTRUM) && 
+	  (active_env))
+	enved_show_background_waveform(ss, axis_cp, gray_ap, apply_to_mix, apply_to_selection,TRUE);
     }
 }
 
@@ -354,7 +371,7 @@ static void Apply_Enved_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void Undo_and_Apply_Enved_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /* undo upto previous amp env, then apply */
+  /* undo previous amp env, then apply */
   /* this blindly undoes the previous edit (assumed to be an envelope) -- if the user made some other change in the meantime, too bad */
   snd_state *ss = (snd_state *)context;
   if ((active_channel) && (active_channel == last_active_channel))
@@ -814,30 +831,12 @@ static void reflect_apply_state (snd_state *ss)
     env_redisplay(ss);
 }
 
-static void amp_button_pressed(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  in_set_enved_target(ss, enved_target(ss) + 1);
-  if (enved_target(ss) > ENVED_SRATE) in_set_enved_target(ss, ENVED_AMPLITUDE);
-  reflect_apply_state(ss);
-}
-
-static void amp_button_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help((snd_state *)context,
-	   "Env Label",
-"If you click the envelope name label, it\n\
-is equivalent to pushing the next button\n\
-in the sequence amp, flt, src; that is,\n\
-it chooses the next in the list of possible\n\
-envelope applications.\n\
-");
-}
-
 static void Freq_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   in_set_enved_target(ss, ENVED_SPECTRUM);
+  old_clip_p = enved_clip_p(ss);
+  set_enved_clip_p(ss, TRUE);
   reflect_apply_state(ss);
 }
 
@@ -859,6 +858,8 @@ which defaults to 40.\n\
 static void Amp_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
+  if (enved_target(ss) == ENVED_SPECTRUM)
+    set_enved_clip_p(ss, old_clip_p);
   in_set_enved_target(ss, ENVED_AMPLITUDE);
   reflect_apply_state(ss);
 }
@@ -877,6 +878,8 @@ the envelope is interpreted as a amplitude envelope.\n\
 static void Src_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
+  if (enved_target(ss) == ENVED_SPECTRUM)
+    set_enved_clip_p(ss, old_clip_p);
   in_set_enved_target(ss, ENVED_SRATE);
   reflect_apply_state(ss);
 }
@@ -1055,6 +1058,15 @@ the 'flt' envelope.\n\
 ");
 }
 
+static void FIR_Help_Callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_help((snd_state *)context,
+	   "Filter Type",
+"This button sets the type of filter used by the 'flt'\n\
+envelope -- FIR or FFT.\n\
+");
+}
+
 #define BASE_MAX 400
 #define BASE_MID 200
 /* these two just set the granularity of the scale widget, not the user-visible bounds */
@@ -1159,6 +1171,13 @@ static void Base_Click_Callback(Widget w, XtPointer context, XtPointer info)
   else val = BASE_MID;
   base_changed(ss, val);
   XtVaSetValues(baseScale, XmNvalue, val, NULL);
+}
+
+static void FIR_Click_Callback(Widget w, XtPointer context, XtPointer info) 
+{
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
+  FIR_p = (!FIR_p);
+  set_label(w, (FIR_p) ? "fir" : "fft");
 }
 
 Widget create_envelope_editor (snd_state *ss)
@@ -1271,6 +1290,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtAddCallback(baseValue, XmNhelpCallback, Base_Help_Callback, ss);
       XmStringFree(s1);
 
+      /* -------- filter order -------- */
       n = 0;      
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
@@ -1291,6 +1311,23 @@ Widget create_envelope_editor (snd_state *ss)
       orderL = sndCreateTextFieldWidget(ss, "orderL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(orderL, XmNhelpCallback, Order_Help_Callback, ss);
 
+      /* -------- fft/fir choice -------- */
+      n = 0;      
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNrightWidget, orderL); n++;
+      XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
+      firB = sndCreatePushButtonWidget ("fir", mainform, args, n);
+      XtAddCallback(firB, XmNhelpCallback, FIR_Help_Callback, ss);
+      XtAddCallback(firB, XmNactivateCallback, FIR_Click_Callback, ss);
+
+      /* -------- exp base scale -------- */
       n = 0;      
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->position_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -1299,7 +1336,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, baseValue); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNrightWidget, orderL); n++;
+      XtSetArg(args[n], XmNrightWidget, firB); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNmaximum, BASE_MAX); n++;
       XtSetArg(args[n], XmNvalue, BASE_MID); n++;
@@ -1337,10 +1374,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-      XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      nameL = sndCreatePushButtonWidget("nameL", mainform, args, n);
-      XtAddCallback(nameL, XmNactivateCallback, amp_button_pressed, ss);
-      XtAddCallback(nameL, XmNhelpCallback, amp_button_help_callback, ss);
+      nameL = XtCreateManagedWidget("nameL", xmLabelWidgetClass, mainform, args, n);
       XmStringFree(s1);
 
       n = 0;
@@ -1897,6 +1931,21 @@ static XEN g_set_enved_selected_env(XEN name)
   return(name);
 }
 
+static XEN g_enved_filter(void)
+{
+  #define H_enved_filter "(" S_enved_filter ") -> FIR/FFT filter type choice (#t: FIR)"
+  return(C_TO_XEN_BOOLEAN(FIR_p));
+}
+
+static XEN g_set_enved_filter(XEN type)
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, XEN_ONLY_ARG, "set-" S_enved_filter, "boolean");
+  FIR_p = XEN_TO_C_BOOLEAN(type);
+  if (firB)
+    set_label(firB, (FIR_p) ? "fir" : "fft");
+  return(type);
+}
+
 #if DEBUGGING
 static XEN g_enved_dialog_widgets(void)
 {
@@ -1949,6 +1998,8 @@ static XEN g_enved_axis_info(void)
 #endif
 
 #ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_enved_filter_w, g_enved_filter)
+XEN_NARGIFY_1(g_set_enved_filter_w, g_set_enved_filter)
 XEN_NARGIFY_0(g_enved_active_env_w, g_enved_active_env)
 XEN_NARGIFY_1(g_set_enved_active_env_w, g_set_enved_active_env)
 XEN_NARGIFY_0(g_enved_selected_env_w, g_enved_selected_env)
@@ -1958,6 +2009,8 @@ XEN_NARGIFY_0(g_enved_dialog_widgets_w, g_enved_dialog_widgets)
 XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 #endif
 #else
+#define g_enved_filter_w g_enved_filter
+#define g_set_enved_filter_w g_set_enved_filter
 #define g_enved_active_env_w g_enved_active_env
 #define g_set_enved_active_env_w g_set_enved_active_env
 #define g_enved_selected_env_w g_enved_selected_env
@@ -1970,6 +2023,8 @@ XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 
 void g_init_gxenv(void)
 {
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter, g_enved_filter_w, H_enved_filter,
+				   "set-" S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_active_env, g_enved_active_env_w, H_enved_active_env,
 				   "set-" S_enved_active_env, g_set_enved_active_env_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_selected_env, g_enved_selected_env_w, H_enved_selected_env,

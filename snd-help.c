@@ -246,6 +246,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+21-Aug:  added explicit FIR/FFT choice to envelope editor (enved-filter).\n\
+         fft-squelch in examp.scm.\n\
 20-Aug:  add-listener-popup, fft-popup in popup.scm.\n\
 17-Aug:  GSL 0.9. Gtk+extra 0.99.16.\n\
 16-Aug:  removed load-colormap.\n\

@@ -322,6 +322,9 @@
       (set! (enved-clip?) (enved-clip?))
       (if (not (equal? (enved-clip?)  #f )) 
 	  (snd-display ";enved-clip? set def: ~A" (enved-clip?)))
+      (set! (enved-filter) (enved-filter))
+      (if (not (equal? (enved-filter) #f)) 
+	  (snd-display ";enved-filter set def: ~A" (enved-filter)))
       (set! (enved-filter-order) (enved-filter-order))
       (if (not (equal? (enved-filter-order)  40)) 
 	  (snd-display ";enved-filter-order set def: ~A" (enved-filter-order)))
@@ -616,6 +619,7 @@
 	'enved-base (enved-base) 1.0 
 	'enved-clip? (enved-clip?) #f 
 	'enved-filter-order (enved-filter-order) 40
+	'enved-filter (enved-filter) #f
 	'enved-in-dB (enved-in-dB) #f 
 	'enved-exp? (enved-exp?) #f 
 	'enved-power (enved-power) 3.0
@@ -1140,6 +1144,7 @@
 	  (list 'graph-transform? graph-transform? #f set-graph-transform? #t)
 	  (list 'filter-control-in-dB filter-control-in-dB #f set-filter-control-in-dB #t)
 	  (list 'filter-control-env filter-control-env (list 0.0 1.0 1.0 1.0) set-filter-control-env (list 0.0 1.0 1.0 0.0))
+	  (list 'enved-filter enved-filter #f set-enved-filter #t)
 	  (list 'enved-filter-order enved-filter-order 40 set-enved-filter-order 20)
 	  (list 'filter-env-in-hz filter-env-in-hz #f set-filter-env-in-hz #t)
 	  (list 'filter-control-order filter-control-order 20 set-filter-control-order 40)
@@ -10121,7 +10126,8 @@ EDITS: 3
 		  (click-button apply-button) (force-event)
 		  (if (not (equal? (edits ind) '(2 0)))
 		      (snd-display ";apply flt: ~A?" (edits ind)))
-		  (if (not (equal? (edit-fragment 2) (list "Enved: flt" "set" 0 50868)))
+		  (if (and (not (equal? (edit-fragment 2) (list "Enved: flt" "set" 0 50868)))
+			   (not (equal? (edit-fragment 2) (list "Enved: flt" "set" 0 50828))))
 		      (snd-display ";apply flt fragment: ~A?" (edit-fragment 2)))
 		  (click-button reset-button) (force-event)
 		  (widget-string text-widget "'(0 .5 1 .4)") (force-event)
@@ -10130,7 +10136,8 @@ EDITS: 3
 		  (click-button apply-button) (force-event)
 		  (if (not (equal? (edits ind) '(3 0)))
 		      (snd-display ";apply src: ~A?" (edits ind)))
-		  (if (not (equal? (edit-fragment 3) (list "Enved: src" "set" 0 113510)))
+		  (if (and (not (equal? (edit-fragment 3) (list "Enved: src" "set" 0 113510)))
+			   (not (equal? (edit-fragment 3) (list "Enved: src" "set" 0 113420))))
 		      (snd-display ";apply flt fragment: ~A?" (edit-fragment 3)))
 		  (if (not (> (frames ind) (* 2 fr)))
 		      (snd-display ";apply src length: ~A ~A?" fr (frames ind)))
@@ -10252,7 +10259,7 @@ EDITS: 3
 	       expand-control-hop expand-control-length expand-control-ramp expand-control? fft fft-window-beta fft-log-frequency 
 	       fft-log-magnitude transform-size transform-graph-type fft-window graph-transform?
 	       fht file-dialog file-name fill-polygon fill-rectangle filter-sound filter-control-in-dB 
-	       filter-control-env enved-filter-order filter-env-in-hz filter-control-order
+	       filter-control-env enved-filter-order enved-filter filter-env-in-hz filter-control-order
 	       filter-selection filter-waveform-color filter-control? find find-mark find-sound finish-progress-report foreground-color
 	       forward-graph forward-mark forward-mix forward-sample frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
 	       graph-color graph-cursor graph-data graph->ps graph-style graph-lisp? graphs-horizontal header-type help-dialog help-text-font
@@ -10333,7 +10340,8 @@ EDITS: 3
 		   expand-control expand-control-hop expand-control-length
 		   expand-control-ramp expand-control? fft-window-beta fft-log-frequency fft-log-magnitude 
 		   transform-size transform-graph-type fft-window graph-transform? filter-control-in-dB filter-control-env
-		   enved-filter-order filter-env-in-hz filter-control-order filter-waveform-color filter-control? foreground-color graph-color graph-cursor
+		   enved-filter-order enved-filter filter-env-in-hz filter-control-order filter-waveform-color filter-control? 
+		   foreground-color graph-color graph-cursor
 		   graph-style graph-lisp? graphs-horizontal help-text-font highlight-color just-sounds left-sample listener-color listener-font
 		   listener-prompt listener-text-color mark-color mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
 		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix-position mix-speed mix-tag-height
@@ -10925,7 +10933,7 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: misc procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list enved-filter-order filter-env-in-hz filter-waveform-color ask-before-overwrite audio-state-file auto-resize auto-update 
+		    (list enved-filter-order enved-filter filter-env-in-hz filter-waveform-color ask-before-overwrite audio-state-file auto-resize auto-update 
 			  axis-label-font axis-numbers-font basic-color bind-key bold-button-font button-font channel-style color-cutoff color-dialog 
 			  color-inverted color-scale cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans default-output-format 
 			  default-output-srate default-output-type enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? 

@@ -264,6 +264,7 @@ void set_enved_revert_sensitive(int val) {}
 void set_enved_undo_sensitive(int val) {}
 void set_enved_save_sensitive(int val) {}
 void set_enved_show_sensitive(int val) {}
+void enved_fft_update(void) {}
 void make_scrolled_env_list (snd_state *ss) {}
 void new_active_channel_alert(snd_state *ss) {}
 void env_redisplay(snd_state *ss) {}

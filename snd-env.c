@@ -997,13 +997,11 @@ void alert_envelope_editor(snd_state *ss, char *name, env *val)
   else add_envelope(ss, name, val);
 }
 
-
-void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection)
+void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection, int show_fft)
 {
   int samps, srate, pts = 0, id = INVALID_MIX_ID, old_time_graph_type = GRAPH_TIME_ONCE, mixing = 0;
   axis_info *ap, *active_ap = NULL;
   chan_info *active_channel = NULL, *ncp;
-
   if (!(any_selected_sound(ss))) return;
   set_grf_points(-1, 0, 0, 0); /* this is a kludge to handle one-sided graphs (snd-xchn.c) */
   ap = axis_cp->axis;
@@ -1011,87 +1009,113 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
   gray_ap->x_axis_x1 = ap->x_axis_x1;
   gray_ap->y_axis_y0 = ap->y_axis_y0;
   gray_ap->y_axis_y1 = ap->y_axis_y1;
-  if ((apply_to_mix) && 
-      ((ss->selected_mix != NO_SELECTION) || 
-       (mixes() == 1)))
+  if (show_fft)
     {
-      if (mixes() == 0) return;
-      if (ss->selected_mix != NO_SELECTION) 
-	id = ss->selected_mix; 
-      else
+      if ((!apply_to_mix) && (!apply_to_selection))
 	{
-	  id = any_mix_id();
-	  if (id != NO_SELECTION) select_mix_from_id(id);
+	  active_channel = current_channel(ss);
+	  if ((active_channel->fft) &&
+	      (active_channel->transform_size >= current_ed_samples(active_channel)))
+	    {
+	      gray_ap->losamp = 0;
+	      gray_ap->hisamp = active_channel->transform_size - 1;
+	      gray_ap->y0 = 0.0;
+	      gray_ap->y1 = 1.0;
+	      gray_ap->x0 = 0.0;
+	      gray_ap->x1 = SND_SRATE(active_channel->sound) / 2;
+	      gray_ap->x_scale = ((double)(gray_ap->x_axis_x1 - gray_ap->x_axis_x0)) / ((double)(gray_ap->x1 - gray_ap->x0));
+	      gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0) / (gray_ap->y1 - gray_ap->y0);
+	      gray_ap->x_base = (double)(gray_ap->x_axis_x0 - gray_ap->x0 * gray_ap->x_scale);
+	      gray_ap->y_base = (Float)(gray_ap->y_axis_y0 - gray_ap->y0 * gray_ap->y_scale);
+	      make_fft_graph(active_channel, active_channel->sound, ss, gray_ap, gray_ap->ax, FALSE);
+	      /* last arg makes sure we don't call any hooks in make_fft_graph */
+	    }
 	}
-      samps = mix_length(id);
-      ncp = mix_channel_from_id(id);
-      srate = SND_SRATE(ncp->sound);
-      gray_ap->losamp = 0;
-      gray_ap->hisamp = samps - 1;
-      gray_ap->y0 = -1.0;
-      gray_ap->y1 = 1.0;
-      gray_ap->x0 = 0.0;
-      gray_ap->x1 = (Float)samps / (Float)srate;
-      mixing = 1;
     }
   else
     {
-      active_channel = current_channel(ss);
-      active_ap = active_channel->axis;
-      if (apply_to_selection)
+      if ((apply_to_mix) && 
+	  ((ss->selected_mix != NO_SELECTION) || 
+	   (mixes() == 1)))
 	{
-	  if (!(selection_is_active())) return;
-	  /* show current channel overall view in gray scale */
-	  samps = selection_len();
-	  srate = selection_srate();
-	  gray_ap->losamp = selection_beg(NULL);
-	  gray_ap->hisamp = gray_ap->losamp + samps - 1;
-	  gray_ap->x0 = (Float)(gray_ap->losamp) / (Float)srate;
-	  gray_ap->x1 = (Float)(gray_ap->hisamp) / (Float)srate;
+	  if (mixes() == 0) return;
+	  if (ss->selected_mix != NO_SELECTION) 
+	    id = ss->selected_mix; 
+	  else
+	    {
+	      id = any_mix_id();
+	      if (id != NO_SELECTION) select_mix_from_id(id);
+	    }
+	  samps = mix_length(id);
+	  ncp = mix_channel_from_id(id);
+	  srate = SND_SRATE(ncp->sound);
+	  gray_ap->losamp = 0;
+	  gray_ap->hisamp = samps - 1;
 	  gray_ap->y0 = -1.0;
 	  gray_ap->y1 = 1.0;
+	  gray_ap->x0 = 0.0;
+	  gray_ap->x1 = (Float)samps / (Float)srate;
+	  mixing = 1;
 	}
       else
 	{
-	  /* show current channel overall view in gray scale */
-	  samps = current_ed_samples(active_channel);
-	  srate = SND_SRATE(active_channel->sound);
-	  gray_ap->losamp = 0;
-	  gray_ap->hisamp = samps - 1;
-	  if (active_channel->time_graph_type == GRAPH_TIME_AS_WAVOGRAM)
+	  active_channel = current_channel(ss);
+	  active_ap = active_channel->axis;
+	  if (apply_to_selection)
 	    {
+	      if (!(selection_is_active())) return;
+	      /* show current channel overall view in gray scale */
+	      samps = selection_len();
+	      srate = selection_srate();
+	      gray_ap->losamp = selection_beg(NULL);
+	      gray_ap->hisamp = gray_ap->losamp + samps - 1;
+	      gray_ap->x0 = (Float)(gray_ap->losamp) / (Float)srate;
+	      gray_ap->x1 = (Float)(gray_ap->hisamp) / (Float)srate;
 	      gray_ap->y0 = -1.0;
 	      gray_ap->y1 = 1.0;
 	    }
 	  else
 	    {
-	      gray_ap->y0 = active_ap->y0;
-	      gray_ap->y1 = active_ap->y1;
+	      /* show current channel overall view in gray scale */
+	      samps = current_ed_samples(active_channel);
+	      srate = SND_SRATE(active_channel->sound);
+	      gray_ap->losamp = 0;
+	      gray_ap->hisamp = samps - 1;
+	      if (active_channel->time_graph_type == GRAPH_TIME_AS_WAVOGRAM)
+		{
+		  gray_ap->y0 = -1.0;
+		  gray_ap->y1 = 1.0;
+		}
+	      else
+		{
+		  gray_ap->y0 = active_ap->y0;
+		  gray_ap->y1 = active_ap->y1;
+		}
+	      gray_ap->x0 = 0.0;
+	      gray_ap->x1 = (Float)samps / (Float)srate;
 	    }
-	  gray_ap->x0 = 0.0;
-	  gray_ap->x1 = (Float)samps / (Float)srate;
 	}
+      gray_ap->x_scale = ((double)(gray_ap->x_axis_x1 - gray_ap->x_axis_x0)) / ((double)(gray_ap->x1 - gray_ap->x0));
+      gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0) / (gray_ap->y1 - gray_ap->y0);
+      gray_ap->x_base = (double)(gray_ap->x_axis_x0 - gray_ap->x0 * gray_ap->x_scale);
+      gray_ap->y_base = (Float)(gray_ap->y_axis_y0 - gray_ap->y0 * gray_ap->y_scale);
+      if (mixing)
+	{
+	  axis_cp->axis = gray_ap;
+	  pts = display_mix_waveform_at_zero(axis_cp, id);
+	  axis_cp->axis = ap;
+	}
+      else
+	{
+	  active_channel->axis = gray_ap;
+	  old_time_graph_type = active_channel->time_graph_type;
+	  active_channel->time_graph_type = GRAPH_TIME_ONCE;
+	  pts = make_graph(active_channel, NULL, ss);
+	  active_channel->time_graph_type = old_time_graph_type;
+	  active_channel->axis = active_ap;
+	}
+      if (pts > 0) draw_both_grfs(gray_ap->ax, pts);
     }
-  gray_ap->x_scale = ((double)(gray_ap->x_axis_x1 - gray_ap->x_axis_x0)) / ((double)(gray_ap->x1 - gray_ap->x0));
-  gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0) / (gray_ap->y1 - gray_ap->y0);
-  gray_ap->x_base = (double)(gray_ap->x_axis_x0 - gray_ap->x0 * gray_ap->x_scale);
-  gray_ap->y_base = (Float)(gray_ap->y_axis_y0 - gray_ap->y0 * gray_ap->y_scale);
-  if (mixing)
-    {
-      axis_cp->axis = gray_ap;
-      pts = display_mix_waveform_at_zero(axis_cp, id);
-      axis_cp->axis = ap;
-    }
-  else
-    {
-      active_channel->axis = gray_ap;
-      old_time_graph_type = active_channel->time_graph_type;
-      active_channel->time_graph_type = GRAPH_TIME_ONCE;
-      pts = make_graph(active_channel, NULL, ss);
-      active_channel->time_graph_type = old_time_graph_type;
-      active_channel->axis = active_ap;
-    }
-  if (pts > 0) draw_both_grfs(gray_ap->ax, pts);
 }
 
 int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, int evx, int evy)

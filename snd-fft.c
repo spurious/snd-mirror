@@ -1893,6 +1893,7 @@ BACKGROUND_TYPE safe_fft_in_slices(void *fftData)
       set_chan_fft_in_progress(cp, 0);
       if (cp->transform_size >= 65536) finish_progress_report(sp, NOT_FROM_ENVED);
       display_channel_fft_data(cp, sp, ss);
+      enved_fft_update();
     }
   return(res);
 }
@@ -1930,6 +1931,22 @@ typedef struct {
   int old_style, old_logxing, transform_type, w_choice;
   int minibuffer_needs_to_be_cleared;
 } sonogram_state;
+
+void clear_transform_edit_ctrs(chan_info *cp)
+{
+  fft_state *fs;
+  sonogram_state *lsg;
+  if (cp->fft_data)
+    {
+      fs = (fft_state *)(cp->fft_data);
+      fs->edit_ctr = -1;
+    }
+  if (cp->last_sonogram)
+    {
+      lsg = (sonogram_state *)(cp->last_sonogram);
+      lsg->edit_ctr = -1;
+    }
+}
 
 void *make_sonogram_state(chan_info *cp)
 {

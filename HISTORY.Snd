@@ -1,5 +1,7 @@
 snd change log
 
+  21-Aug:    added explicit FIR/FFT choice to envelope editor (enved-filter).
+             fft-squelch in examp.scm.
   20-Aug:    add-listener-popup, fft-popup in popup.scm.
   17-Aug:    GSL 0.9. Gtk+extra 0.99.16.
   16-Aug:    removed load-colormap.

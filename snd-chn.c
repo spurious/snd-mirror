@@ -235,12 +235,12 @@ int calculate_fft(chan_info *cp, void *ptr)
       ss = cp->state;
       if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
 	{
-	  if (cp->transform_size >= 65536) 
-	    start_progress_report(cp->sound, NOT_FROM_ENVED);
 	  set_chan_fft_in_progress(cp,
 				   BACKGROUND_ADD(ss,
 						  safe_fft_in_slices,
 						  make_fft_state(cp, 1)));
+	  if (cp->transform_size >= 65536) 
+	    start_progress_report(cp->sound, NOT_FROM_ENVED); /* this can trigger an expose event which can try to calculate the fft! */
 	}
       else set_chan_fft_in_progress(cp,
 				    BACKGROUND_ADD(ss,
@@ -1378,13 +1378,11 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (peak_amps) FREE(peak_amps);
 }
 
-static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
+void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss, axis_info *fap, axis_context *ax, int with_hooks)
 {
   /* axes are already set, data is in the fft_info struct -- don't reset here! */
   /* since the fft size menu callback can occur while we are calculating the next fft, we have to lock the current size until the graph goes out */
   fft_info *fp;
-  axis_info *fap;
-  axis_context *ax;
   Float *data;
   Float incr, x, scale;
   int i, j, hisamp, losamp = 0;
@@ -1393,7 +1391,6 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   Float pslogx, pslogy;
   fp = cp->fft;
   if (chan_fft_in_progress(cp)) return;
-  fap = fp->axis;
   if (!fap->graph_active) return;
   data = fp->data;
   /* these lo..hi values are just for upcoming loops -- not axis info */
@@ -1415,12 +1412,8 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   samples_per_pixel = (Float)(hisamp - losamp) / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
-  if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
-    {
-      ax = combined_context(cp); 
-      if (cp->printing) ps_recolor(cp);
-    }
-  else ax = copy_context(cp);
+  if ((sp->channel_style == CHANNELS_SUPERIMPOSED) && (cp->printing))
+    ps_recolor(cp);
   if (samples_per_pixel < 4.0)
     {
       if ((!(cp->fft_log_magnitude)) && 
@@ -1554,7 +1547,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       if (cp->printing) 
 	ps_draw_grf_points(fap, j, 0.0, TRANSFORM_GRAPH_STYLE(cp), cp->dot_size);
     }
-  if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
+  if (sp->channel_style == CHANNELS_SUPERIMPOSED)
     {
       copy_context(cp); /* reset for axes etc */
       if (cp->printing) ps_reset_color();
@@ -1570,7 +1563,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 			 hisamp, samples_per_pixel, 1, 0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_transform_size(cp, fap);
-  if (cp->hookable) after_fft(ss, cp, scale);
+  if (with_hooks) after_fft(ss, cp, scale);
 }
 
 static int display_transform_peaks(chan_info *ucp, char *filename)
@@ -2439,10 +2432,21 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	    }
 	  switch (cp->transform_graph_type)
 	    {
-	    case GRAPH_TRANSFORM_ONCE:           make_fft_graph(cp, sp, ss);                        break;
-	    case GRAPH_TRANSFORM_AS_SONOGRAM:    make_sonogram(cp, sp, ss);                         break;
-	    case GRAPH_TRANSFORM_AS_SPECTROGRAM: make_spectrogram(cp, sp, ss);                      break;
-	    default:                             snd_error("unknown fft style: %d", cp->transform_graph_type); break;
+	    case GRAPH_TRANSFORM_ONCE:
+	      make_fft_graph(cp, sp, ss,
+			     cp->fft->axis,
+			     (sp->channel_style == CHANNELS_SUPERIMPOSED) ? combined_context(cp) : copy_context(cp),
+			     cp->hookable);
+	      break;
+	    case GRAPH_TRANSFORM_AS_SONOGRAM:
+	      make_sonogram(cp, sp, ss);
+	      break;
+	    case GRAPH_TRANSFORM_AS_SPECTROGRAM:
+	      make_spectrogram(cp, sp, ss);
+	      break;
+	    default:
+	      snd_error("unknown fft style: %d", cp->transform_graph_type); 
+	      break;
 	    }
 	}
     }
