@@ -206,8 +206,8 @@ that it can't play big-endian shorts.
 
 
 ---- Recording: ----
-The Record dialog only works in Linux (OSS, perhaps ALSA) and on some
-SGI systems.  It tries real hard on a Sun, but drops samples.
+The Record dialog only works in Linux (OSS, perhaps ALSA), Sun, and on some
+SGI systems. 
 
 
 ---- Colors: ----

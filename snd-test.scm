@@ -55,7 +55,6 @@
     ((IF <form1> <form2>) (if <form1> <form2>))
     ((IF <form1> <form2> <form3>) (if <form1> <form2> <form3>))))
 
-(system "cp /home/bil/.snd /home/bil/dot-snd")
 (define tests 1)
 (define snd-test -1)
 (if (provided? 'snd-debug) (disable-play))
@@ -71,6 +70,9 @@
 (define pi 3.141592653589793)
 
 (define home-dir "/home")
+(if (file-exists? "/export/home/bil/cl/oboe.snd")
+    (set! home-dir "/export/home"))
+(system (string-append "cp " home-dir "/bil/.snd " home-dir "/bil/dot-snd"))
 (define sf-dir "/sf1")
 (define sample-reader-tests 300)
 (define original-save-dir (or (save-dir) "/zap/snd"))
@@ -89,22 +91,6 @@
 	   (lambda (msg)
 	     (display msg optimizer-log)
 	     (newline optimizer-log)))
-
-(if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
-    (begin
-      (set! sample-reader-tests 10)
-      (set! home-dir "/usr/people")
-      (set! sf-dir "/sf")))
-(if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
-    (begin
-      (set! sample-reader-tests 10)
-      (set! home-dir "/space/home")
-      (set! sf-dir "/sf")))
-(if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
-    (begin
-      (set! sample-reader-tests 10)
-      (set! home-dir "/user/b")
-      (set! sf-dir "/sf")))
 
 (define sf-dir1 (string-append home-dir "/bil" sf-dir "/"))
 (if (not (file-exists? (string-append sf-dir1 "alaw.wav")))
@@ -1213,8 +1199,9 @@
       (let ((td (temp-dir)))
 	(catch #t
 	       (lambda ()
-		 (set! (temp-dir) "/home/bil/test")
-		 (IF (not (string=? (temp-dir) "/home/bil/test")) (snd-display ";set temp-dir: ~A?" (temp-dir))))
+		 (set! (temp-dir) (string-append home-dir "/bil/test"))
+		 (IF (not (string=? (temp-dir) (string-append home-dir "/bil/test")))
+		     (snd-display ";set temp-dir: ~A?" (temp-dir))))
 	       (lambda args args))
 	(if td 
 	    (set! (temp-dir) td)
@@ -1651,10 +1638,10 @@
 	  (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
 
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	(IF (not (string=? str "02-Aug 13:46 PDT"))
+	(IF (not (string=? str "19-Oct 09:46 PDT"))
 	    (snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
-	(IF (not (string=? str "30-Dec 12:04 PST"))
+	(IF (not (string=? str "19-Oct 09:46 PDT"))
 	    (snd-display ";mus-sound-write-date pistol.snd: ~A?" str)))
 
       (let* ((fsnd (string-append sf-dir "forest.aiff")))
@@ -1801,7 +1788,7 @@
       (IF (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 	       (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	  (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-      (IF (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "02-Aug-2002 13:46"))
+      (IF (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "19-Oct-1998 09:46"))
 	  (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
       (play-sound "oboe.snd")
 
@@ -2167,6 +2154,7 @@
 	(IF (fneq (sound-data-ref sdata 0 0) .2) (snd-display ";2 mus-sound-seek: ~A?" (sound-data-ref sdata 0 0)))
 	(let ((pos (mus-sound-seek fd 20 0)))
 	  (IF (not (= pos (ftell fd))) (snd-display ";1 mus-sound-seek: ~A ~A?" pos (ftell fd))))
+	(IF (not (= (mus-sound-seek 252525 0 0) 0)) (snd-display ";mus-sound-seek dac-chan: ~A" (mus-sound-seek 252525 0 0)))
 	(mus-sound-close-input fd))
 
       (let ((var (catch #t (lambda () (mus-sound-open-output "fmv.snd" 22050 -1 mus-bshort mus-aiff "no comment")) (lambda args args))))
@@ -2308,9 +2296,15 @@
 		(list mus-lshort mus-nist)
 		(list mus-bint mus-aiff)
 		(list mus-lint mus-next)
+		(list mus-bintn mus-next)
+		(list mus-lintn mus-next)
 		(list mus-b24int mus-aifc)
 		(list mus-l24int mus-riff)
 		(list mus-bfloat mus-ircam)
+		(list mus-bfloat-unscaled mus-next)
+		(list mus-lfloat-unscaled mus-next)
+		(list mus-bdouble-unscaled mus-next)
+		(list mus-ldouble-unscaled mus-next)
 		(list mus-bdouble mus-next)
 		(list mus-ldouble mus-next)
 		(list mus-ulshort mus-next)
@@ -2549,6 +2543,13 @@
 	(set! (mus-sound-data-location "oboe.snd") cur-loc)
 	(set! (mus-sound-header-type "oboe.snd") cur-type)
 	(set! (mus-sound-data-format "oboe.snd") cur-format))
+
+      (let ((ind (mus-sound-open-input "oboe.snd")))
+	(mus-file-set-data-clipped ind #t)
+	(mus-file-set-prescaler ind 2.0)
+	(if (fneq (mus-file-prescaler ind) 2.0) (snd-display ";prescaler: ~A" (mus-file-prescaler ind)))
+	(mus-sound-close-input ind))
+	
       (if (and with-big-file (file-exists? "/zap/sounds/bigger.snd"))
 	  (begin
 	    (IF (not (= (mus-sound-samples "/zap/sounds/bigger.snd") 3175200000))
@@ -3597,6 +3598,12 @@
 	(set! (amp-control ind) 1.0)
 	(IF (ffneq (amp-control ind) 1.0) (snd-display ";amp-control (1.0): ~A?" (amp-control ind)))
 	(IF (ffneq (amp-control ind 0) .25) (snd-display ";amp-control 0 after set (.25): ~A?" (amp-control ind 0)))
+	(set! (transform-graph-type ind 0) graph-as-sonogram)
+	(IF (not (= (transform-samples-size ind 0) 0)) 
+	    (snd-display ";transform-samples-size: ~A" (transform-samples-size ind 0)))
+	(IF (transform-sample ind 0) (snd-display ";transform-sample (empty): ~A" (transform-sample ind 0)))
+	(IF (transform-samples->vct ind 0) (snd-display ";transform-samples->vct (empty): ~A" (transform-samples->vct ind 0)))
+	(IF (transform-samples ind 0) (snd-display ";transform-samples (empty): ~A" (transform-samples ind 0)))
 	(close-sound ind)
 	(set! ind (open-sound "4.aiff"))
 	(IF (ffneq (amp-control ind) 1.0) (snd-display ";amp-control upon open (1.0): ~A?" (amp-control ind)))
@@ -4240,7 +4247,7 @@
 
       (with-output-to-file "sndtst" 
 	(lambda ()
-	  (display "#!/home/bil/cl/snd -b
+	  (display (string-append "#!" home-dir "/bil/cl/snd -b
 !#
  (use-modules (ice-9 format))
  (if (= (length (script-args)) 2) ;i.e. (\"-l\" \"script\")
@@ -4250,7 +4257,7 @@
      (let ((name (list-ref (script-args) arg)))
        (display (format #f \"~A: ~A~%\" name (mus-sound-comment name))))))
  (exit)
-")))
+"))))
 
       (system "chmod 777 sndtst")
       (let ((val (shell "sndtst fyow.snd")))
@@ -5140,7 +5147,11 @@
 		      (vct-map! v2 (lambda () .1))
 		      (vct-ref v2 0))))
 	(IF (fneq (vct-ref v1 12) .1) (snd-display ";vct-map! twice: ~A" (vct-ref v1 12))))
-
+      (let ((hi (make-vct 3)))
+	(if (vct-subseq hi 1 0) (snd-display ";vct-subseq 0 len: ~A" (vct-subseq hi 1 0)))
+	(if (vct) (snd-display ";(vct) -> ~A" (vct)))
+	(let ((tag (catch #t (lambda () (make-vct 0)) (lambda args (car args)))))
+	  (if (not (eq? tag 'mus-error)) (snd-display ";make-vct 0 -> ~A" tag))))
       ))
     ))
 
@@ -9539,7 +9550,12 @@
 	    (IF (not (= (mark-sample m0) 4763)) (snd-display ";pad-marks m0 pos: ~A" (mark-sample m0)))
 	    (IF (fneq (sample 1235) 0.0) (snd-display ";pad-marks 1235: ~A" (sample 1235))))
 	  (close-sound ind))
-  	
+	(let ((ind (open-sound "oboe.snd")))
+	  (IF (forward-mark) (snd-display ";forward-mark when no marks: ~A" (forward-mark)))
+	  (IF (backward-mark) (snd-display ";backward-mark when no marks: ~A" (backward-mark)))
+	  (IF (find-mark 12345) (snd-display ";find-mark when no marks: ~A" (find-mark 12345)))
+	  (close-sound ind))
+
 	))))
 
 
@@ -9680,19 +9696,21 @@
 	 (IF (not (string=? str (widget-text (cadr (sound-widgets ind)))))
 	     (snd-display ";name text: ~A ~A" str (widget-text (cadr (sound-widgets ind))))))
        (close-sound ind))
-     (let* ((ind (open-sound "link-oboe.snd"))
-	    (linked-str (format #f "~D: (~A)" ind (short-file-name ind))))
-       (IF (not (string=? linked-str (widget-text (cadr (sound-widgets ind)))))
-	   (snd-display ";linked name text: ~A ~A" linked-str (widget-text (cadr (sound-widgets ind)))))
-       (if (and (provided? 'xm) (provided? 'snd-debug))
-	   (XtCallCallbacks (cadr (sound-widgets ind)) XmNactivateCallback (snd-sound-pointer ind)))
-       (close-sound ind))
+     (if (file-exists? "link-oboe.snd")
+	 (let* ((ind (open-sound "link-oboe.snd"))
+		(linked-str (format #f "~D: (~A)" ind (short-file-name ind))))
+	   (IF (not (string=? linked-str (widget-text (cadr (sound-widgets ind)))))
+	       (snd-display ";linked name text: ~A ~A" linked-str (widget-text (cadr (sound-widgets ind)))))
+	   (if (and (provided? 'xm) (provided? 'snd-debug))
+	       (XtCallCallbacks (cadr (sound-widgets ind)) XmNactivateCallback (snd-sound-pointer ind)))
+	   (close-sound ind)))
      (set! (show-indices) #f)
-     (let* ((ind (open-sound "link-oboe.snd"))
-	    (linked-str (format #f "(~A)" (short-file-name ind))))
-       (IF (not (string=? linked-str (widget-text (cadr (sound-widgets ind)))))
-	   (snd-display ";linked name text (no index): ~A ~A" linked-str (widget-text (cadr (sound-widgets ind)))))
-       (close-sound ind))
+     (if (file-exists? "link-oboe.snd")
+	 (let* ((ind (open-sound "link-oboe.snd"))
+		(linked-str (format #f "(~A)" (short-file-name ind))))
+	   (IF (not (string=? linked-str (widget-text (cadr (sound-widgets ind)))))
+	       (snd-display ";linked name text (no index): ~A ~A" linked-str (widget-text (cadr (sound-widgets ind)))))
+	   (close-sound ind)))
 
      ))
 
@@ -10381,7 +10399,7 @@
 
       (IF (not (hook-empty? open-raw-sound-hook)) (reset-hook! open-raw-sound-hook))
       (add-hook! open-raw-sound-hook (lambda (file choices) (list 1 22050 mus-bshort)))
-      (let* ((ind (open-sound "../sf/addf8.nh")))
+      (let* ((ind (open-sound "../sf1/addf8.nh")))
 	(play-and-wait 0 ind)
 	(reset-hook! open-raw-sound-hook)
 	(IF (or (not (= (chans ind) 1))
@@ -14071,7 +14089,7 @@
 			       (set! (optimization) old-opt)
 			       (close-sound ind)
 			       times))))
-		     (list "1a.snd" "oboe.snd" "storm.snd" "/home/bil/test/sound/away.snd"))))
+		     (list "1a.snd" "oboe.snd" "storm.snd" (string-append home-dir "/bil/test/sound/away.snd")))))
 	  (snd-display "         scl   rev   env   map   ptree  scn  pad   wrt   clm   mix   src   del")
 	  (snd-display "1a:   ~{~6,F~}" (car data))  
 	  (snd-display "oboe: ~{~6,F~}" (cadr data))  
@@ -15592,7 +15610,7 @@ EDITS: 5
 
       (set! (hankel-jn) -1.0)
       (let ((tag (catch #t (lambda () (snd-transform hankel-transform (make-vct 8))) (lambda args args))))
-	(IF (not (eq? (car tag) 'gsl-error)) (snd-display ";hankel bad jn: ~A" tag)))
+	(IF (or (vct? tag) (not (eq? (car tag) 'gsl-error))) (snd-display ";hankel bad jn: ~A" tag)))
 
       (set! (hankel-jn) 1.0)
       (set! d0 (make-vct 256))
@@ -15777,7 +15795,7 @@ EDITS: 5
 	  (begin
 	    (system "cc gsl-ex.c -c")
 	    (system "ld -shared gsl-ex.o -o gsl-ex.so -lguile")
-	    (let ((handle (dlopen "/home/bil/cl/gsl-ex.so")))
+	    (let ((handle (dlopen (string-append home-dir "/bil/cl/gsl-ex.so"))))
 	      (dlinit handle "init_gsl_j0")
 	      (IF (fneq (j0 1.0) 0.765) (snd-display ";gsl loader test: ~A" (j0 1.0))))))
 
@@ -19759,10 +19777,11 @@ EDITS: 5
 		    (let ((edit-pos (edit-position)))
 		      (key-event cwid (char->integer #\x) 4) (force-event)
 		      (key-event cwid (char->integer #\i) 4) (force-event)
-		      (widget-string minibuffer "z.snd")
+		      (widget-string minibuffer "z.sn")
+		      (key-event minibuffer snd-tab-key 0) (force-event)
 		      (key-event minibuffer snd-return-key 0) (force-event)
 		      (if (not (= (edit-position) edit-pos))
-			  (snd-display ";C-x C-i emtpy file not a no-op?"))
+			  (snd-display ";C-x C-i empty file not a no-op?"))
 		      (let ((str (widget-text minibuffer)))
 			(if (not (string=? str "z.snd has no data"))
 			    (snd-display ";C-x C-i z.snd minibuffer text: ~A" str))))
@@ -19828,6 +19847,15 @@ EDITS: 5
 		  (key-event minibuffer snd-return-key 0) (force-event)
 		  (IF (not (= (frames) (- fr 6 12))) (snd-display ";4 x macro call wasn't effective?: ~A ~A" fr (frames))))
 
+		(set! (widget-text minibuffer) "")
+		(key-event cwid (char->integer #\x) 8) (force-event)
+		(widget-string minibuffer "(short-")
+		(key-event minibuffer snd-tab-key 0) (force-event)
+		(append-to-minibuffer ")")
+		(key-event minibuffer snd-return-key 0) (force-event)
+		(let ((str (widget-text minibuffer)))
+		  (IF (not (string=? str "\"oboe.snd\""))
+		      (snd-display ";completed mini: ~A" str)))
 		(revert-sound ind)
 
 		(click-button name-button) (force-event)
@@ -20048,7 +20076,11 @@ EDITS: 5
 	      (IF (or (> (maxamp ind 0) mx0)
 		      (fneq (maxamp ind 1) .25))
 		  (snd-display ";map fives env: ~A ~A" (maxamp ind 0) (maxamp ind 1)))
-	      (revert-sound ind)
+	      (XtCallCallbacks (menu-option "Revert") XmNactivateCallback (snd-global-state))
+	      (if (> (edit-position ind 0) 0)
+		  (begin
+		    (snd-display ";activate Revert menu: ~A" (edit-position ind 0))
+		    (revert-sound ind)))
 	      (select-channel 1)
 	      (key-event cwid (char->integer #\x) 4) (force-event)
 	      (key-event cwid (char->integer #\q) 4) (force-event)
@@ -20086,7 +20118,11 @@ EDITS: 5
 		(let ((str (widget-text (list-ref (sound-widgets ind2) 3))))
 		  (IF (not (string=? str "no active selection"))
 		      (snd-display ";C-x z report-in-minibuffer: ~A?" str)))
-		(close-sound ind2))
+		(XtCallCallbacks (menu-option "Close  C-x k") XmNactivateCallback (snd-global-state))
+		(if (find-sound "fmv1.snd") 
+		    (begin
+		      (snd-display ";activate menu ~A -> ~A" (menu-option "Close  C-x k") (find-sound "fmv1.snd"))
+		      (close-sound ind2))))
 	      (delete-file "fmv1.snd")
 	      (mus-sound-forget "fmv1.snd")
 	      (select-sound ind)
@@ -20767,17 +20803,17 @@ EDITS: 5
 		       (sounds (find-child filed "sound files only")))
 		  (XmToggleButtonSetState sounds #t #t)
 		  (XmToggleButtonSetState sounds #f #t)
-		  (XmTextSetString pattern "/home/bil/cl/*.snd")
+		  (XmTextSetString pattern (string-append home-dir "/bil/cl/*.snd"))
 		  (XmToggleButtonSetState sounds #t #t)
 		  (XmToggleButtonSetState sounds #f #t)
-		  (XmTextSetString pattern "/home/bil/cl/*.wav")
+		  (XmTextSetString pattern (string-append home-dir "/bil/cl/*.wav"))
 		  (XmToggleButtonSetState sounds #t #t)
 		  (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event))
                 (open-file-dialog)
                 (let* ((filed (list-ref (dialog-widgets) 6))
 		       (filename (XmFileSelectionBoxGetChild filed XmDIALOG_TEXT))
 		       (snd-tab-key #xFF09))
-		  (XmTextSetString filename "oboe.")
+		  (XmTextSetString filename "oboe.sn")
 		  (key-event filename snd-tab-key 0) (force-event)
 		  (XmUpdateDisplay filename)
 		  ;; now the completion help should be active
@@ -21008,8 +21044,8 @@ EDITS: 5
 			(let ((rd (list-ref (dialog-widgets) 9)))
 			  (click-button (XmMessageBoxGetChild rd XmDIALOG_CANCEL_BUTTON)) (force-event))))
 		  (reset-hook! bad-header-hook)
-		  (if (file-exists? "/home/bil/sf1/bogus.snd")
-		      (let ((ind (open-sound "/home/bil/sf1/bogus.snd")))
+		  (if (file-exists? (string-append home-dir "/bil/sf1/bogus.snd"))
+		      (let ((ind (open-sound (string-append home-dir "/bil/sf1/bogus.snd"))))
 			(let ((rd (list-ref (dialog-widgets) 9)))
 			  (if (XtIsManaged rd)
 			      (begin
@@ -21798,7 +21834,8 @@ EDITS: 5
 		 (lambda (func name)
 		   (IF (not (= (func icon) 0)) (snd-display ";iconsize ~A: ~A" name (func icon))))
 		 (list .min_width .min_height .max_width .max_height .width_inc .height_inc)
-		 (list 'min_width 'min_height 'max_width 'max_height 'width_inc 'height_inc)))
+		 (list 'min_width 'min_height 'max_width 'max_height 'width_inc 'height_inc))
+		(XFree icon))
 			  
 	      (let ((fs (XCreateFontSet dpy "*-*-*-*-Normal-*-180-100-100-*-*")))
 		(IF (or (not (XFontSet? fs))
@@ -22138,7 +22175,9 @@ EDITS: 5
 		(IF (not (= (.icon_y hints) -1)) (snd-display ";icon_y wmhints: ~A" (.icon_y hints)))
 		(IF (not (equal? (.icon_mask hints) (list 'Pixmap 0))) (snd-display ";icon_mask: ~A" (.icon_mask hints)))
 		(IF (not (number? (.window_group hints))) (snd-display ";window_group: ~A" (.window_group hints)))
-		(IF (not (XWMHints? (XAllocWMHints))) (snd-display ";XAllocWMHints: ~A" (XAllocWMHints)))))
+		(let ((st (XAllocWMHints)))
+		  (IF (not (XWMHints? st)) (snd-display ";XAllocWMHints: ~A" st))
+		  (XFree st))))
 
 	    (IF (not (IsKeypadKey (list 'KeySym XK_KP_Space))) (snd-display ";IsKeypadKey kp-space"))
 	    (IF (IsKeypadKey (list 'KeySym XK_A)) (snd-display ";IsKeypadKey A"))
@@ -22396,7 +22435,10 @@ EDITS: 5
 			      (IF (not (Cursor? vals)) (snd-display ";XCreateGlyphCursor: ~A" vals)))
 			    (let ((vals (XCreatePixmapCursor dpy pix None col col1 5 5)))
 			      (IF (not (Cursor? vals)) (snd-display ";XCreatePixmapCursor: ~A" vals))
-			      (XRecolorCursor dpy vals col1 col)))
+			      (XRecolorCursor dpy vals col1 col))
+			    (XAllocColorPlanes dpy cmap #f 2 1 1 1)
+			    (XAllocColorCells dpy cmap #f 1 1))
+
 			    
 			  )))
 		  (let* ((fid (XLoadFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
@@ -23206,6 +23248,10 @@ EDITS: 5
 		   (depth (cadr (XtGetValues grf (list XmNdepth 0))))
 		   (pix (XCreatePixmap dpy win 10 10 depth))
 		   (rotpix (XCreatePixmap dpy win 10 10 depth)))
+
+	      (XDrawText dpy win gc 50 50 (list (XTextItem "hi" 2 2 '(Font 0))
+						(XTextItem "ho" 2 3 '(Font 0))))
+
 	      (let ((cmap (XCreateColormap dpy win vis AllocNone)))
 		(set! cmap (XCopyColormapAndFree dpy cmap))
 		(XFreeColormap dpy cmap)
@@ -23937,6 +23983,9 @@ EDITS: 5
 				(let ((clip (XmClipboardRetrieve dpy win "SND_DATA" 10)))
 				  (IF (not (string=? (cadr clip) "copy this")) (snd-display ";XmClipboardRetrieve: ~A" clip))
 				  (XmClipboardWithdrawFormat dpy win item-id)))))))))
+	      (let ((val (XmClipboardLock dpy win)))
+		(if (not (= val ClipboardLocked))
+		    (XmClipboardUnlock dpy win #t)))
 	      (let ((selbox (XmCreateSelectionBox shell "selbox" '() 0)))
 		(XmSelectionBoxGetChild selbox XmDIALOG_APPLY_BUTTON)))
 
@@ -25912,6 +25961,16 @@ EDITS: 5
 	(check-error-tag 'mus-error (lambda () (new-sound "hiho" 123)))
 	(check-error-tag 'mus-error (lambda () (new-sound "hiho" mus-nist 123)))
 	(check-error-tag 'mus-error (lambda () (new-sound "hiho" mus-nist mus-bfloat)))
+	(check-error-tag 'mus-error (lambda () (make-sound-data 0 1)))
+	(check-error-tag 'mus-error (lambda () (make-sound-data -2 1)))
+	(check-error-tag 'mus-error (lambda () (make-sound-data 1 -1)))
+	(check-error-tag 'mus-error (lambda () (make-sound-data 1 0)))
+	(check-error-tag 'mus-error (lambda () (mus-sound-close-output 0 1)))
+	(check-error-tag 'mus-error (lambda () (mus-sound-close-output 1 1)))
+	(check-error-tag 'mus-error (lambda () (mus-sound-close-output 2 1)))
+	(check-error-tag 'mus-error (lambda () (mus-sound-close-input 0)))
+	(check-error-tag 'mus-error (lambda () (mus-sound-close-input 1)))
+	(check-error-tag 'mus-error (lambda () (mus-sound-close-input 2)))
 	(check-error-tag 'wrong-type-arg (lambda () (vector->vct (make-vector 3 "hio"))))
 	(check-error-tag 'out-of-range (lambda () (make-color 1.5 0.0 0.0)))
 	(check-error-tag 'out-of-range (lambda () (make-color -0.5 0.0 0.0)))
@@ -26567,10 +26626,9 @@ EDITS: 5
 (mem-report)
 (system "fgrep -H -n 'snd-run' memlog >> optimizer.log")
 
-(if (file-exists? "/home/bil/dot-snd")
-    (system "cp /home/bil/dot-snd /home/bil/.snd")
-    (if (file-exists? "/space/home/bil/dot-snd")
-	(system "cp /space/home/bil/dot-snd /space/home/bil/.snd")))
+(if (file-exists? (string-append home-dir "/bil/dot-snd"))
+    (system (string-append "cp " home-dir "/bil/dot-snd " home-dir "/bil/.snd")))
+
 (if with-exit (exit))
 
 

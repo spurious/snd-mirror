@@ -1299,6 +1299,22 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_little_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
 	      break;
+	    case MUS_BFLOAT_UNSCALED:    
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
+		m_set_big_endian_float(jchar, 32768.0 * MUS_SAMPLE_TO_FLOAT(buffer[loc]));
+	      break;
+	    case MUS_LFLOAT_UNSCALED:    
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
+		m_set_little_endian_float(jchar, 32768.0 * MUS_SAMPLE_TO_FLOAT(buffer[loc]));
+	      break;
+	    case MUS_BDOUBLE_UNSCALED:
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
+		m_set_big_endian_double(jchar, 32768.0 * MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
+	      break;
+	    case MUS_LDOUBLE_UNSCALED:   
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
+		m_set_little_endian_double(jchar, 32768.0 * MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
+	      break;
 	    case MUS_UBSHORT: 
 	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_big_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
@@ -1425,10 +1441,12 @@ char *mus_expand_filename(char *utok)
 	}
       else
 	{
+#ifndef WINDOZE
 #if HAVE_GETCWD
 	  getcwd(file_name_buf, MUS_MAX_FILE_NAME);
 #else
 	  getwd(file_name_buf);
+#endif
 #endif
 	  strcat(file_name_buf, "/");
 	  strcat(file_name_buf, tok);

@@ -272,10 +272,11 @@ static XEN snd_internal_stack_catch (XEN tag,
   XEN result;
   snd_state *ss;
   ss = get_global_state();
+  if (ss->catch_exists < 0) ss->catch_exists = 0;
   ss->catch_exists++;
   /* one function can invoke, for example, a hook that will call back here setting up a nested catch */
   result = scm_internal_stack_catch(tag, body, body_data, handler, handler_data);
-  ss->catch_exists--;
+  if (ss->catch_exists > 0) ss->catch_exists--;
   return(result);
 }
 

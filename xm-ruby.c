@@ -1,7 +1,7 @@
 /* this is so ugly I can't bear to include it in xm.c
  */
 
-#if HAVE_XP
+#if HAVE_XM_XP
   XEN_NARGIFY_2(gxm_XpStartPage_w, gxm_XpStartPage)
   XEN_NARGIFY_1(gxm_XpEndPage_w, gxm_XpEndPage)
   XEN_NARGIFY_2(gxm_XpCancelPage_w, gxm_XpCancelPage)
@@ -393,7 +393,6 @@
   XEN_NARGIFY_6(gxm_XDrawLines_w, gxm_XDrawLines)
   XEN_NARGIFY_6(gxm_XDrawLinesDirect_w, gxm_XDrawLinesDirect)
   XEN_NARGIFY_1(gxm_FreeXPoints_w, gxm_FreeXPoints)
-  XEN_NARGIFY_4(gxm_MoveXPoints_w, gxm_MoveXPoints)
   XEN_NARGIFY_1(gxm_Vector2XPoints_w, gxm_Vector2XPoints)
   XEN_NARGIFY_5(gxm_XDrawPoint_w, gxm_XDrawPoint)
   XEN_NARGIFY_6(gxm_XDrawPoints_w, gxm_XDrawPoints)
@@ -401,7 +400,7 @@
   XEN_NARGIFY_5(gxm_XDrawRectangles_w, gxm_XDrawRectangles)
   XEN_NARGIFY_5(gxm_XDrawSegments_w, gxm_XDrawSegments)
   XEN_NARGIFY_7(gxm_XDrawString_w, gxm_XDrawString)
-  XEN_NARGIFY_7(gxm_XDrawText_w, gxm_XDrawText)
+  XEN_ARGIFY_7(gxm_XDrawText_w, gxm_XDrawText)
   XEN_NARGIFY_1(gxm_XEnableAccessControl_w, gxm_XEnableAccessControl)
   XEN_NARGIFY_2(gxm_XEventsQueued_w, gxm_XEventsQueued)
   XEN_NARGIFY_2(gxm_XFetchName_w, gxm_XFetchName)
@@ -682,7 +681,7 @@
 #if MOTIF_2
   XEN_ARGIFY_4(gxm_XmCreateNotebook_w, gxm_XmCreateNotebook)
   XEN_NARGIFY_2(gxm_XmNotebookGetPageInfo_w, gxm_XmNotebookGetPageInfo)
-#if HAVE_XP
+#if HAVE_XM_XP
   XEN_ARGIFY_5(gxm_XmPrintSetup_w, gxm_XmPrintSetup)
   XEN_NARGIFY_4(gxm_XmPrintToFile_w, gxm_XmPrintToFile)
   XEN_NARGIFY_2(gxm_XmPrintPopupPDM_w, gxm_XmPrintPopupPDM)
@@ -1061,7 +1060,7 @@
   XEN_NARGIFY_1(gxm_XmIsArrowButton_w, gxm_XmIsArrowButton)
 #if MOTIF_2
   XEN_NARGIFY_1(gxm_XmIsNotebook_w, gxm_XmIsNotebook)
-#if HAVE_XP
+#if HAVE_XM_XP
   XEN_NARGIFY_1(gxm_XmIsPrintShell_w, gxm_XmIsPrintShell)
 #endif
   XEN_NARGIFY_1(gxm_XmIsComboBox_w, gxm_XmIsComboBox)
@@ -1224,7 +1223,7 @@
   XEN_NARGIFY_1(XEN_XStandardColormap_p_w, XEN_XStandardColormap_p)
   XEN_NARGIFY_1(XEN_Substitution_p_w, XEN_Substitution_p)
   XEN_NARGIFY_1(XEN_Cursor_p_w, XEN_Cursor_p)
-#if HAVE_XP
+#if HAVE_XM_XP
   XEN_NARGIFY_1(XEN_XPContext_p_w, XEN_XPContext_p)
 #endif
 #if HAVE_MOTIF
@@ -1253,7 +1252,7 @@ static void define_procedures(void)
   xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);
   XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);
 
-#if HAVE_XP
+#if HAVE_XM_XP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpStartPage" XM_POSTFIX, gxm_XpStartPage_w, 2, 0, 0, H_XpStartPage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpEndPage" XM_POSTFIX, gxm_XpEndPage_w, 1, 0, 0, H_XpEndPage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpCancelPage" XM_POSTFIX, gxm_XpCancelPage_w, 2, 0, 0, H_XpCancelPage);
@@ -1622,7 +1621,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawLines" XM_POSTFIX, gxm_XDrawLines_w, 6, 0, 0, H_XDrawLines);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawLinesDirect" XM_POSTFIX, gxm_XDrawLinesDirect_w, 6, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "freeXPoints" XM_POSTFIX, gxm_FreeXPoints_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "moveXPoints" XM_POSTFIX, gxm_MoveXPoints_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "vector->XPoints" XM_POSTFIX, gxm_Vector2XPoints_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawPoint" XM_POSTFIX, gxm_XDrawPoint_w, 5, 0, 0, H_XDrawPoint);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawPoints" XM_POSTFIX, gxm_XDrawPoints_w, 6, 0, 0, H_XDrawPoints);
@@ -1630,7 +1628,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawRectangles" XM_POSTFIX, gxm_XDrawRectangles_w, 5, 0, 0, H_XDrawRectangles);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawSegments" XM_POSTFIX, gxm_XDrawSegments_w, 5, 0, 0, H_XDrawSegments);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawString" XM_POSTFIX, gxm_XDrawString_w, 7, 0, 0, H_XDrawString);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawText" XM_POSTFIX, gxm_XDrawText_w, 7, 0, 0, H_XDrawText);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawText" XM_POSTFIX, gxm_XDrawText_w, 6, 1, 0, H_XDrawText);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XEnableAccessControl" XM_POSTFIX, gxm_XEnableAccessControl_w, 1, 0, 0, H_XEnableAccessControl);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XEventsQueued" XM_POSTFIX, gxm_XEventsQueued_w, 2, 0, 0, H_XEventsQueued);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFetchName" XM_POSTFIX, gxm_XFetchName_w, 2, 0, 0, H_XFetchName);
@@ -1910,7 +1908,7 @@ static void define_procedures(void)
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateNotebook" XM_POSTFIX, gxm_XmCreateNotebook_w, 3, 1, 0, H_XmCreateNotebook);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmNotebookGetPageInfo" XM_POSTFIX, gxm_XmNotebookGetPageInfo_w, 2, 0, 0, H_XmNotebookGetPageInfo);
-#if HAVE_XP
+#if HAVE_XM_XP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrintSetup" XM_POSTFIX, gxm_XmPrintSetup_w, 4, 1, 0, H_XmPrintSetup);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrintToFile" XM_POSTFIX, gxm_XmPrintToFile_w, 4, 0, 0, H_XmPrintToFile);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrintPopupPDM" XM_POSTFIX, gxm_XmPrintPopupPDM_w, 2, 0, 0, H_XmPrintPopupPDM);
@@ -2287,7 +2285,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsArrowButton" XM_POSTFIX, gxm_XmIsArrowButton_w, 1, 0, 0, NULL);
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsNotebook" XM_POSTFIX, gxm_XmIsNotebook_w, 1, 0, 0, NULL);
-#if HAVE_XP
+#if HAVE_XM_XP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsPrintShell" XM_POSTFIX, gxm_XmIsPrintShell_w, 1, 0, 0, NULL);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsComboBox" XM_POSTFIX, gxm_XmIsComboBox_w, 1, 0, 0, NULL);
@@ -2475,7 +2473,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XStandardColormap?" XM_POSTFIX, XEN_XStandardColormap_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Substitution?" XM_POSTFIX, XEN_Substitution_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Cursor?" XM_POSTFIX, XEN_Cursor_p_w, 1, 0, 0, NULL);
-#if HAVE_XP
+#if HAVE_XM_XP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XPContext?" XM_POSTFIX, XEN_XPContext_p_w, 1, 0, 0, NULL);
 #endif
 #if HAVE_MOTIF
@@ -2498,7 +2496,7 @@ static void define_procedures(void)
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTab?" XM_POSTFIX, XEN_XmTab_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmNotebook?" XM_POSTFIX, gxm_XmIsNotebook_w, 1, 0, 0, NULL);
-#if HAVE_XP
+#if HAVE_XM_XP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrintShell?" XM_POSTFIX, gxm_XmIsPrintShell_w, 1, 0, 0, NULL);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmComboBox?" XM_POSTFIX, gxm_XmIsComboBox_w, 1, 0, 0, NULL);
@@ -2854,7 +2852,7 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_prev_page_widget_w, gxm_prev_page_widget)
   XEN_NARGIFY_1(gxm_rendition_w, gxm_rendition)
   XEN_NARGIFY_1(gxm_render_table_w, gxm_render_table)
-#if HAVE_XP
+#if HAVE_XM_XP
   XEN_NARGIFY_1(gxm_last_page_w, gxm_last_page)
 #endif
   XEN_NARGIFY_1(gxm_crossed_boundary_w, gxm_crossed_boundary)

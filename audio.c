@@ -5561,10 +5561,10 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	  info.record.balance = 0;
 	  break;
         case MUS_AUDIO_CHANNEL: 
-	  info.record.channels = 1;
+	  info.record.channels = (int)val[0];
 	  break;
         case MUS_AUDIO_SRATE: 
-	  info.record.sample_rate = 8000; 
+	  info.record.sample_rate = (int)val[0];
 	  break;
 	case MUS_AUDIO_IGAIN: 
 	  info.monitor_gain = (int)(AUDIO_MAX_GAIN * val[0]); 
@@ -5603,7 +5603,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	    }
 	  break;
         case MUS_AUDIO_CHANNEL: 
-	  info.record.channels = 1; 
+	  info.record.channels = (int)val[0]; 
 	  break;
         case MUS_AUDIO_SRATE: 
 	  info.record.sample_rate = (int)val[0]; 

@@ -1035,46 +1035,6 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_
   return(MUS_ERROR);
 }
 
-/* these two for backwards compatibility */
-off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
-{
-  mus_sample_t *mvals;
-  off_t *mtimes;
-  int chans, i, j;
-  off_t frames;
-  chans = mus_sound_chans(ifile);
-  mvals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
-  mtimes = (off_t *)CALLOC(chans, sizeof(off_t));
-  frames = mus_sound_maxamps(ifile, chans, mvals, mtimes);
-  for (i = 0, j = 0; i < chans; i++, j += 2)
-    {
-      vals[j] = (mus_sample_t)(mtimes[i]);
-      vals[j + 1] = mvals[i];
-    }
-  FREE(mvals);
-  FREE(mtimes);
-  return(frames);
-}
-
-int mus_sound_set_maxamp(const char *ifile, mus_sample_t *vals)
-{
-  mus_sample_t *mvals;
-  off_t *mtimes;
-  int chans, i, j;
-  chans = mus_sound_chans(ifile);
-  mvals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
-  mtimes = (off_t *)CALLOC(chans, sizeof(off_t));
-  for (i = 0, j = 0; i < chans; i++, j += 2)
-    {
-      mtimes[i] = (off_t)(vals[j]);
-      mvals[i] = vals[j + 1];
-    }
-  mus_sound_set_maxamps(ifile, chans, mvals, mtimes);
-  FREE(mvals);
-  FREE(mtimes);
-  return(MUS_NO_ERROR);
-}
-
 int mus_file_to_array(const char *filename, int chan, int start, int samples, mus_sample_t *array)
 {
   int ifd, chans, total_read;

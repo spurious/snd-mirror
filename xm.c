@@ -203,7 +203,6 @@
  *    XDrawLinesDirect same as XDrawLines but takes (opaque) ptr to XPoint array
  *    vector->XPoints vect packages point data in vector as (opaque) array of XPoints 
  *    freeXPoints to free (opaque) XPoint array created by vector->Xpoints
- *    moveXPoints to move XPoint array created by vector->Xpoints
  *    <name>? -> #t if arg is of type <name>
  *    <name> -> empty struct of type <name>
  *
@@ -6377,8 +6376,8 @@ static XEN gxm_XmClipboardUnlock(XEN arg1, XEN arg2, XEN arg3)
   #define H_XmClipboardUnlock "int XmClipboardUnlock (display, window, remove_all_locks) unlocks the clipboard"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardUnlock", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardUnlock", "Window");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmClipboardUnlock", "int");
-  return(C_TO_XEN_INT(XmClipboardUnlock(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_INT(arg3))));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmClipboardUnlock", "boolean");
+  return(C_TO_XEN_INT(XmClipboardUnlock(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_BOOLEAN(arg3))));
 }
 
 static XEN gxm_XmClipboardLock(XEN arg1, XEN arg2)
@@ -10157,8 +10156,11 @@ frees the colormap storage."
 static XEN gxm_XFree(XEN arg1)
 {
   #define H_XFree "XFree(data) is a general-purpose Xlib routine that frees the specified data."
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XFree", "void*");
-  return(C_TO_XEN_INT(XFree((void *)XEN_TO_C_ULONG(arg1))));
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1) || XEN_LIST_P(arg1), arg1, 1, "XFree", "void* or xm entity");
+  if (XEN_LIST_P(arg1))
+    XFree((void *)XEN_TO_C_ULONG(XEN_CADR(arg1)));
+  else XFree((void *)XEN_TO_C_ULONG(arg1));
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XForceScreenSaver(XEN arg1, XEN arg2)
@@ -10346,19 +10348,34 @@ static XEN gxm_XEnableAccessControl(XEN arg1)
 static XEN gxm_XDrawText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
   #define H_XDrawText "XDrawText(display, d, gc, x, y, items, nitems) draws text"
+  int i, len = 0, res;
+  XTextItem *items, *val;
+  XEN lst;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawText", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawText", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawText", "GC");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XDrawText", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawText", "int");
-  XEN_ASSERT_TYPE(XEN_XTextItem_P(arg6), arg6, 6, "XDrawText", "XTextItem*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XDrawText", "int");
-  /* TODO: XDrawText arg6 is an array of XTextItems */
-  return(C_TO_XEN_INT(XDrawText(XEN_TO_C_Display(arg1), 
-				XEN_TO_C_Window(arg2), 
-				XEN_TO_C_GC(arg3), 
-				XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5), 
-				XEN_TO_C_XTextItem(arg6), XEN_TO_C_INT(arg7))));
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 6, "XDrawText", "list of XTextItem");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg7), arg7, 7, "XDrawText", "int");
+  lst = XEN_COPY_ARG(arg6);
+  if (XEN_INTEGER_P(arg7)) len = XEN_TO_C_INT(arg7); else len = XEN_LIST_LENGTH(arg6);
+  items = (XTextItem *)CALLOC(len, sizeof(XTextItem));
+  for (i = 0; (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+    {
+      val = XEN_TO_C_XTextItem(XEN_CAR(lst));
+      items[i].chars = val->chars;
+      items[i].nchars = val->nchars;
+      items[i].delta = val->delta;
+      items[i].font = val->font;
+    }
+  res = XDrawText(XEN_TO_C_Display(arg1), 
+		  XEN_TO_C_Window(arg2), 
+		  XEN_TO_C_GC(arg3), 
+		  XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5), 
+		  items, len);
+  FREE(items);
+  return(C_TO_XEN_INT(res));
 }
 
 static XEN gxm_XDrawString(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
@@ -10594,28 +10611,6 @@ static XEN gxm_FreeXPoints(XEN arg1)
   #define H_freeXPoints "(freeXPoints vect) frees an (opaque) XPoint array created by vector->Xpoints"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ONLY_ARG, "freeXPoints", "opaque XPoint array");
   FREE((void *)(XEN_TO_C_ULONG(arg1)));
-  return(XEN_FALSE);
-}
-
-
-static XEN gxm_MoveXPoints(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_moveXPoints "(moveXPoints vect len dx dy) moves an XPoint array created by vector->Xpoints"
-  XPoint *pt;
-  int i, len, x, y;
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ARG_1, "moveXPoints", "opaque XPoint array");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, XEN_ARG_2, "moveXPoints", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, XEN_ARG_3, "moveXPoints", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, XEN_ARG_4, "moveXPoints", "int");
-  pt = ((XPoint *)(XEN_TO_C_ULONG(arg1)));
-  len = XEN_TO_C_INT(arg2);
-  x = XEN_TO_C_INT(arg3);
-  y = XEN_TO_C_INT(arg4);
-  for (i = 0; i < len; i++)
-    {
-      pt[i].x += x;
-      pt[i].y += y;
-    }
   return(XEN_FALSE);
 }
 
@@ -11340,7 +11335,7 @@ named color with respect to the screen that is associated with the specified col
 
 static XEN gxm_XAllocColorPlanes(XEN args)
 {
-  #define H_XAllocColorPlanes "Status XAllocColorPlanes(display, colormap, contig, pixels_return, ncolors, nreds, ngreens, nblues, rmask_return, gmask_return, bmask_return)"
+  #define H_XAllocColorPlanes "Status XAllocColorPlanes(display, colormap, contig, ncolors, nreds, ngreens, nblues)"
   /* DIFF: XAllocColorPlanes omits pixel array (arg4) and trailing 3 args, returns them and embedded list of pixels
    */
   unsigned long r,g,b;
@@ -11412,19 +11407,24 @@ allocates read/write color cells."
 			 XEN_TO_C_BOOLEAN(arg3), 
 			 ms, mlen, 
 			 ps, plen);
-  loc1 = xm_protect(mlst);
-  loc2 = xm_protect(plst);
-  for (i = mlen - 1; i >= 0; i--) 
-    mlst = XEN_CONS(C_TO_XEN_ULONG(ms[i]), mlst);
-  for (i = plen - 1; i >= 0; i--) 
-    mlst = XEN_CONS(C_TO_XEN_ULONG(ps[i]), plst);
-  xm_unprotect_at(loc1);
-  xm_unprotect_at(loc2);
+  if (val != 0)
+    {
+      loc1 = xm_protect(mlst);
+      loc2 = xm_protect(plst);
+      for (i = mlen - 1; i >= 0; i--) 
+	mlst = XEN_CONS(C_TO_XEN_ULONG(ms[i]), mlst);
+      for (i = plen - 1; i >= 0; i--) 
+	mlst = XEN_CONS(C_TO_XEN_ULONG(ps[i]), plst);
+      xm_unprotect_at(loc1);
+      xm_unprotect_at(loc2);
+    }
   FREE(ms);
   FREE(ps);
-  return(XEN_LIST_3(C_TO_XEN_INT(val),
-		    mlst,
-		    plst));
+  if (val != 0)
+    return(XEN_LIST_3(C_TO_XEN_INT(val),
+		      mlst,
+		      plst));
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XAllocColor(XEN arg1, XEN arg2, XEN arg3)
@@ -17569,7 +17569,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XDrawLines, gxm_XDrawLines, 6, 0, 0, H_XDrawLines);
   XM_DEFINE_PROCEDURE(XDrawLinesDirect, gxm_XDrawLinesDirect, 6, 0, 0, H_XDrawLinesDirect);
   XM_DEFINE_PROCEDURE(freeXPoints, gxm_FreeXPoints, 1, 0, 0, H_freeXPoints);
-  XM_DEFINE_PROCEDURE(moveXPoints, gxm_MoveXPoints, 4, 0, 0, H_moveXPoints);
   XM_DEFINE_PROCEDURE(vector->XPoints, gxm_Vector2XPoints, 1, 0, 0, H_vector2XPoints);
   XM_DEFINE_PROCEDURE(XDrawPoint, gxm_XDrawPoint, 5, 0, 0, H_XDrawPoint);
   XM_DEFINE_PROCEDURE(XDrawPoints, gxm_XDrawPoints, 6, 0, 0, H_XDrawPoints);
@@ -17577,7 +17576,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XDrawRectangles, gxm_XDrawRectangles, 5, 0, 0, H_XDrawRectangles);
   XM_DEFINE_PROCEDURE(XDrawSegments, gxm_XDrawSegments, 5, 0, 0, H_XDrawSegments);
   XM_DEFINE_PROCEDURE(XDrawString, gxm_XDrawString, 7, 0, 0, H_XDrawString);
-  XM_DEFINE_PROCEDURE(XDrawText, gxm_XDrawText, 7, 0, 0, H_XDrawText);
+  XM_DEFINE_PROCEDURE(XDrawText, gxm_XDrawText, 6, 1, 0, H_XDrawText);
   XM_DEFINE_PROCEDURE(XEnableAccessControl, gxm_XEnableAccessControl, 1, 0, 0, H_XEnableAccessControl);
   XM_DEFINE_PROCEDURE(XEventsQueued, gxm_XEventsQueued, 2, 0, 0, H_XEventsQueued);
   XM_DEFINE_PROCEDURE(XFetchName, gxm_XFetchName, 2, 0, 0, H_XFetchName);

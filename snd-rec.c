@@ -953,7 +953,11 @@ void fire_up_recorder(snd_state *ss)
     val[0] = 1.0;
     mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_IGAIN, 0, val);
     rp->input_channel_active[0] = 1;
+#if HAVE_SYS_MIXER_H
+    rp->input_channel_active[1] = 1;
+#else
     rp->input_channel_active[1] = 0;
+#endif
   #else
     err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | rp->in_device, MUS_AUDIO_SRATE, 0, val);
     if (!err) 

@@ -1874,7 +1874,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if (j != NO_COLOR)
 		{
 		  if (cp->fft_log_frequency)
-		    set_sono_rectangle(js[j], j, (Locus)xf, hidata[i + 1], rectw, hidata[i] - hidata[i + 1]);
+		    set_sono_rectangle(js[j], j, (Locus)xf, hidata[i + 1], rectw, (Latus)(hidata[i] - hidata[i + 1]));
 		  else set_sono_rectangle(js[j], j, (Locus)xf, hidata[i + 1], rectw, recth);
 		  if (cp->printing)
 		    {

@@ -484,7 +484,7 @@ static XEN list2vct(XEN lst)
   vct *v;
   XEN scv; XEN lst1;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(lst, len), lst, XEN_ONLY_ARG, S_list2vct, "a list");
-  if (len == 0)
+  if (len == 0) 
     return(XEN_FALSE);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = TO_VCT(scv);
