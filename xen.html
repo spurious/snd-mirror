@@ -79,7 +79,197 @@ handled by macros such as XEN_INTEGER_P; type conversions by macros
 such as XEN_TO_C_INT or C_TO_XEN_INT. 
 </p>
 
-<!-- TODO: show config stuff, describe each macro/function, gcc sequence
--->
+<p>If you use Xen, you'll need to deal with the various compile-time
+switches that configure it for the current version of the extension
+language.  The simplest approach would be to copy the relevant portions
+of Snd's or sndlib's configure.ac.  This is an autoconf (2.50 or later)
+input file that generates the script that runs the configuration checks.
+Its output is guided by config.h.in (which has the various macros)
+and makefile.in (the makefile template).
+The Ruby portion is:
+</p>
+<pre>
+AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX where Ruby is installed],
+            ruby_prefix="$withval", ruby_prefix="")
+
+AC_ARG_WITH(ruby,
+	[  --with-ruby	  	try to use Ruby as the extension language],
+  	if test "$with_ruby" = yes ; then
+            AC_MSG_CHECKING([for Ruby])
+	    RUBY_VERSION=`ruby -e 'puts RUBY_VERSION'`
+            if test "$RUBY_VERSION" > "0" ; then
+	      AC_DEFINE(HAVE_RUBY)
+	      AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+              AC_MSG_RESULT($RUBY_VERSION)
+              if test x$ruby_prefix != x ; then
+      		GUILE_CFLAGS=" -I$ruby_prefix"
+                GUILE_LIBS="-L$ruby_prefix"
+              else
+                RUBY_LOC=`ruby -e [['puts \$:[0]']]`  # good grief... 
+                GUILE_CFLAGS="-I$RUBY_LOC"
+	        GUILE_LIBS="-L$RUBY_LOC"
+                RUBY_LOC=`ruby -e [['puts \$:[1]']]`
+	        if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                  GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	          GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                  RUBY_LOC=`ruby -e [['puts \$:[2]']]`
+	          if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                    GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	            GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                    RUBY_LOC=`ruby -e [['puts \$:[3]']]`
+	            if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                      GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	              GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                      RUBY_LOC=`ruby -e [['puts \$:[4]']]`
+	              if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                        GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	                GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                        RUBY_LOC=`ruby -e [['puts \$:[5]']]`
+	                if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                          GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	                  GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                          RUBY_LOC=`ruby -e [['puts \$:[6]']]`
+	                  if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                            GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	                    GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+  		          fi
+	 	        fi
+	              fi
+	  	    fi
+		  fi
+	        fi
+	      fi
+              GUILE_LIBS="$GUILE_LIBS -lruby -ldl -lcrypt"
+	      AC_CHECK_LIB(readline, readline, 
+			   [AC_DEFINE(HAVE_READLINE)
+			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"], ,"-lncurses")
+              AC_SUBST(GUILE_LIBS)
+              AC_SUBST(GUILE_CFLAGS)
+            else 
+              AC_MSG_WARN([can't find Ruby!])
+            fi
+	fi)
+
+</pre>
+<p>The endless RUBY_LOC foolishness is trying to make a list of all
+possible locations of the ruby header and library files.  (It's using
+the name GUILE_LIBS for historical reasons).  The corresponding Guile
+code is:
+</p>
+<pre>
+if test "$with_ruby" != yes ; then
+
+GUILE_LIBS=""
+GUILE_CFLAGS=""
+GUILE_CONFIG_path=""
+GUILE_LIB_path=""
+
+if test "$with_no_guile" = yes ; then
+  AC_DEFINE(HAVE_GUILE, 0)
+  AC_DEFINE(HAVE_EXTENSION_LANGUAGE, 0)
+else
+
+AC_CHECK_FILE(/usr/lib/snd/bin/guile-config,[
+  GUILE_CONFIG_path=/usr/lib/snd/bin/
+  GUILE_LIB_path=/usr/lib/snd/lib
+	])
+
+AC_MSG_CHECKING(for Guile)
+if (${GUILE_CONFIG_path}guile-config link > /dev/null) 2>&1; then
+  GUILE_CONFIG_works=yes
+else
+  GUILE_CONFIG_works=no
+  AC_MSG_RESULT(no)
+fi
+
+if test $GUILE_CONFIG_works = yes; then
+  GUILE_CFLAGS="`${GUILE_CONFIG_path}guile-config compile`"
+  if test "$GUILE_LIB_path" != "" ; then
+    GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}guile-config link`"
+  else
+    GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
+  fi
+
+  guile_version="`${GUILE_CONFIG_path}guile -c '(display (version))'`"
+  AC_MSG_RESULT($guile_version)
+
+  if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
+    AC_MSG_WARN(Snd needs Guile 1.3.4 or later)
+    AC_DEFINE(HAVE_GUILE,0)
+    AC_DEFINE(HAVE_EXTENSION_LANGUAGE, 0)
+  else
+    AC_SUBST(GUILE_CFLAGS)
+    AC_SUBST(GUILE_LIBS)
+    AC_DEFINE(HAVE_GUILE)
+    AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+
+    OLD_LIBS="$LIBS"
+    LIBS="$GUILE_LIBS"
+    OLD_CFLAGS="$CFLAGS"
+    CFLAGS="$GUILE_CFLAGS"
+    AC_CHECK_LIB(guile, scm_create_hook,        [AC_DEFINE(HAVE_SCM_CREATE_HOOK)])
+    AC_CHECK_LIB(guile, scm_set_smob_apply,     [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
+    AC_CHECK_LIB(guile, scm_remember_upto_here, [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
+    AC_CHECK_LIB(guile, scm_make_real,          [AC_DEFINE(HAVE_SCM_MAKE_REAL)])
+    AC_CHECK_LIB(guile, scm_strport_to_string,  [AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING)])
+    AC_CHECK_LIB(guile, scm_object_to_string,   [AC_DEFINE(HAVE_SCM_OBJECT_TO_STRING)])
+    AC_CHECK_LIB(guile, scm_num2long_long,      [AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
+    AC_CHECK_LIB(guile, scm_num2int,            [AC_DEFINE(HAVE_SCM_NUM2INT)])
+    AC_CHECK_LIB(guile, scm_c_make_vector,      [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
+    AC_CHECK_LIB(guile, scm_c_define,           [AC_DEFINE(HAVE_SCM_C_DEFINE)])
+    AC_CHECK_LIB(guile, scm_c_define_gsubr,     [AC_DEFINE(HAVE_SCM_C_DEFINE_GSUBR)])
+    AC_CHECK_LIB(guile, scm_c_eval_string,      [AC_DEFINE(HAVE_SCM_C_EVAL_STRING)])
+    AC_CHECK_LIB(guile, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
+    AC_CHECK_LIB(guile, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
+    AC_CHECK_TYPE(scm_t_catch_body,             [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <guile/gh.h>])
+    LIBS="$OLD_LIBS"
+    CFLAGS="$OLD_CFLAGS"
+
+    if test "`${GUILE_CONFIG_path}guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
+      echo found old out-of-date Guile library
+    fi
+  fi
+else
+  AC_DEFINE(HAVE_GUILE,0)
+  AC_DEFINE(HAVE_EXTENSION_LANGUAGE, 0)
+fi
+fi
+fi
+</pre>
+<p>Guile has changed a lot over the years; these macrors
+are trying to pick out which version is currently available. The /usr/lib/snd/bin
+stuff is specific to CCRMA.
+</p>
+<p>The corresponding portion of config.h.in is</p>
+<pre>
+#undef HAVE_GUILE
+#undef HAVE_RUBY
+#undef HAVE_EXTENSION_LANGUAGE
+#undef HAVE_APPLICABLE_SMOB
+#undef HAVE_SCM_REMEMBER_UPTO_HERE
+#undef HAVE_SCM_MAKE_REAL
+#undef HAVE_SCM_CREATE_HOOK
+#undef HAVE_SCM_STRPORT_TO_STRING
+#undef HAVE_SCM_OBJECT_TO_STRING
+#undef HAVE_SCM_NUM2LONG_LONG
+#undef HAVE_SCM_C_MAKE_VECTOR
+#undef HAVE_SCM_C_DEFINE
+#undef HAVE_SCM_C_DEFINE_GSUBR
+#undef HAVE_SCM_C_EVAL_STRING
+#undef HAVE_SCM_NUM2INT
+#undef HAVE_SCM_LIST_N
+#undef HAVE_SCM_STR2SYMBOL
+#undef HAVE_SCM_T_CATCH_BODY
+</pre>
+<p>And the corresponding portion of makefile.in:
+</p>
+<pre>
+GUILE_LIBS = @GUILE_LIBS@
+GUILE_CFLAGS = @GUILE_CFLAGS@
+</pre>
+<p>I hope the xen.h names are largely self-explanatory; 
+see the Snd sources for many examples.
+</p>
+
 </body>
 </html>

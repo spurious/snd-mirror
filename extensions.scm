@@ -73,11 +73,11 @@
 (define normalized-mix 
   (lambda (filename beg in-chan snd chn)
     "(normalized-mix filename beg in-chan snd chn) is like mix but mix result has same peak amp as unmixed snd/chn (returns scaler)"
-    (let ((original-max-amp (maxamp snd chn)))
+    (let ((original-maxamp (maxamp snd chn)))
       (mix filename beg in-chan snd chn)
-      (let ((new-max-amp (maxamp snd chn)))
-	(if (not (= original-max-amp new-max-amp))
-	    (let ((scaler (/ original-max-amp new-max-amp))
+      (let ((new-maxamp (maxamp snd chn)))
+	(if (not (= original-maxamp new-maxamp))
+	    (let ((scaler (/ original-maxamp new-maxamp))
 		  (old-sync (sync snd)))
 	      (set! (sync snd) 0)
 	      (scale-by scaler snd chn)

@@ -2798,6 +2798,8 @@ static XEN g_sound_widgets(XEN snd)
   snd_info *sp;
   ASSERT_SOUND(S_sound_widgets, snd, 1);
   sp = get_sp(snd);
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_sound_widgets, snd));
   return(XEN_CONS(XEN_WRAP_C_POINTER(w_snd_pane(sp)),
 	  XEN_CONS(XEN_WRAP_C_POINTER(w_snd_name(sp)),
            XEN_CONS(XEN_WRAP_C_POINTER(w_snd_ctrls(sp)),

@@ -240,32 +240,32 @@ static XEN g_audio_outputs(XEN speakers, XEN headphones, XEN line_out)
   return(XEN_FALSE);
 }
 
-static XEN g_sound_max_amp_exists(XEN file)
+static XEN g_sound_maxamp_exists(XEN file)
 {
-  #define H_mus_sound_max_amp_exists "(" S_mus_sound_max_amp_exists " filename) -> max amps available for sound"
+  #define H_mus_sound_maxamp_exists "(" S_mus_sound_maxamp_exists " filename) -> max amps available for sound"
   int val;
   char *filename;
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_max_amp, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");
   filename = mus_expand_filename(XEN_TO_C_STRING(file));
-  val = mus_sound_max_amp_exists(filename);
+  val = mus_sound_maxamp_exists(filename);
   if (filename) FREE(filename);
   return(C_TO_XEN_BOOLEAN(val));
 }
 
-static XEN g_sound_max_amp(XEN file)
+static XEN g_sound_maxamp(XEN file)
 {
-  #define H_mus_sound_max_amp "(" S_mus_sound_max_amp " filename) -> max amps in sound (a list of amps and locations)"
+  #define H_mus_sound_maxamp "(" S_mus_sound_maxamp " filename) -> max amps in sound (a list of amps and locations)"
   int chans, rtn, i;
   MUS_SAMPLE_TYPE *vals;
   char *filename;
   XEN res = XEN_EMPTY_LIST;
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_max_amp, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");
   filename = mus_expand_filename(XEN_TO_C_STRING(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
       vals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
-      rtn = mus_sound_max_amp(filename, vals);
+      rtn = mus_sound_maxamp(filename, vals);
       if (rtn > 0)
 	for (i = (chans * 2) - 2; i >= 0; i -= 2)
 	  res = XEN_CONS(C_TO_XEN_INT((int)(vals[i])),
@@ -276,22 +276,22 @@ static XEN g_sound_max_amp(XEN file)
   return(res);
 }
 
-static XEN g_sound_set_max_amp(XEN file, XEN vals)
+static XEN g_sound_set_maxamp(XEN file, XEN vals)
 {
-  #define H_mus_sound_set_max_amp "(" S_mus_sound_set_max_amp " filename vals) -> set max amps for sound (vals is a list of amps and locations)"
+  #define H_mus_sound_set_maxamp "(" S_mus_sound_set_maxamp " filename vals) -> set max amps for sound (vals is a list of amps and locations)"
   int i, chans, len;
   MUS_SAMPLE_TYPE *mvals;
   char *filename;
   XEN lst;
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_set_max_amp, "a string");
-  XEN_ASSERT_TYPE(XEN_LIST_P(vals), vals, XEN_ARG_2, S_mus_sound_set_max_amp, "a list");
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_set_maxamp, "a string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(vals), vals, XEN_ARG_2, S_mus_sound_set_maxamp, "a list");
   filename = mus_expand_filename(XEN_TO_C_STRING(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
       len = XEN_LIST_LENGTH(vals);
       if (len < (chans * 2))
-	mus_misc_error(S_mus_sound_set_max_amp, "max amp list wrong length", vals);
+	mus_misc_error(S_mus_sound_set_maxamp, "max amp list wrong length", vals);
       if (len > chans * 2) len = chans * 2;
       mvals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
       for (i = 0, lst = vals; i < len; i += 2, lst = XEN_CDDR(lst))
@@ -299,7 +299,7 @@ static XEN g_sound_set_max_amp(XEN file, XEN vals)
 	  mvals[i] = MUS_INT_TO_SAMPLE(XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0));
 	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CADR(lst)));
 	}
-      mus_sound_set_max_amp(filename, mvals);
+      mus_sound_set_maxamp(filename, mvals);
       FREE(mvals);
     }
   FREE(filename);
@@ -709,7 +709,7 @@ after updating its header (if any) to reflect bytes, the new file data size"
   if ((nfd < 0) || (nfd == fileno(stdin)) || (nfd == fileno(stdout)) || (nfd == fileno(stderr)))
     mus_misc_error(S_mus_sound_close_output, "invalid file", fd);
   return(C_TO_XEN_INT(mus_sound_close_output(XEN_TO_C_INT(fd),
-					   XEN_TO_C_INT_OR_ELSE(bytes, 0))));
+					     XEN_TO_C_INT_OR_ELSE(bytes, 0))));
 }
 
 static XEN g_read_sound(XEN fd, XEN beg, XEN end, XEN chans, XEN sv)
@@ -723,10 +723,10 @@ filling the sound-data object sdata's buffers starting at (buffer location) beg,
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_4, S_mus_sound_read, "an integer");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sv), sv, XEN_ARG_5, S_mus_sound_read, "a sound-data object");
   return(C_TO_XEN_INT(mus_sound_read(XEN_TO_C_INT(fd),
-				   XEN_TO_C_INT_OR_ELSE(beg, 0),
-				   XEN_TO_C_INT_OR_ELSE(end, 0),
-				   XEN_TO_C_INT(chans),
-				   get_sound_data(sv))));
+				     XEN_TO_C_INT_OR_ELSE(beg, 0),
+				     XEN_TO_C_INT_OR_ELSE(end, 0),
+				     XEN_TO_C_INT(chans),
+				     get_sound_data(sv))));
 }
 
 static XEN g_write_sound(XEN fd, XEN beg, XEN end, XEN chans, XEN sv)
@@ -740,10 +740,10 @@ starting at (buffer location) beg, going to end, writing to file number fd"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_4, S_mus_sound_write, "an integer");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sv), sv, XEN_ARG_5, S_mus_sound_write, "a sound-data object");
   return(C_TO_XEN_INT(mus_sound_write(XEN_TO_C_INT(fd),
-				    XEN_TO_C_INT_OR_ELSE(beg, 0),
-				    XEN_TO_C_INT_OR_ELSE(end, 0),
-				    XEN_TO_C_INT(chans),
-				    get_sound_data(sv))));
+				      XEN_TO_C_INT_OR_ELSE(beg, 0),
+				      XEN_TO_C_INT_OR_ELSE(end, 0),
+				      XEN_TO_C_INT(chans),
+				      get_sound_data(sv))));
 }
 
 static XEN g_seek_sound(XEN fd, XEN offset, XEN origin)
@@ -755,8 +755,8 @@ to the short-wise sample offset given origin (both treated as in lseek)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(offset), offset, XEN_ARG_2, S_mus_sound_seek, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(origin), origin, XEN_ARG_3, S_mus_sound_seek, "an integer");
   return(C_TO_XEN_INT(mus_sound_seek(XEN_TO_C_INT(fd),
-				   XEN_TO_C_INT(offset),
-				   XEN_TO_C_INT(origin))));
+				     XEN_TO_C_INT(offset),
+				     XEN_TO_C_INT(origin))));
 }
 
 static XEN g_seek_sound_frame(XEN fd, XEN offset)
@@ -767,7 +767,7 @@ to the indicated frame"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_sound_seek_frame, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(offset), offset, XEN_ARG_2, S_mus_sound_seek_frame, "an integer");
   return(C_TO_XEN_INT(mus_sound_seek_frame(XEN_TO_C_INT(fd),
-					 XEN_TO_C_INT(offset))));
+					   XEN_TO_C_INT(offset))));
 }
 
 static XEN g_open_audio_output(XEN dev, XEN srate, XEN chans, XEN format, XEN size)
@@ -793,10 +793,10 @@ returns the audio line number:\n\
   if ((XEN_TO_C_INT(chans) <= 0) || (XEN_TO_C_INT(chans) > 256))
     mus_misc_error(S_mus_audio_open_output, "invalid chans", chans);
   return(C_TO_XEN_INT(mus_audio_open_output(XEN_TO_C_INT(dev),
-					  XEN_TO_C_INT_OR_ELSE(srate, 0),
-					  XEN_TO_C_INT(chans),
-					  XEN_TO_C_INT(format),
-					  XEN_TO_C_INT_OR_ELSE(size, 0))));
+					    XEN_TO_C_INT_OR_ELSE(srate, 0),
+					    XEN_TO_C_INT(chans),
+					    XEN_TO_C_INT(format),
+					    XEN_TO_C_INT_OR_ELSE(size, 0))));
 }
 
 static XEN g_open_audio_input(XEN dev, XEN srate, XEN chans, XEN format, XEN size)
@@ -820,10 +820,10 @@ opens the audio device ready for input with the indicated attributes, returns th
   if (XEN_TO_C_INT(chans) <= 0)
     mus_misc_error(S_mus_audio_open_input, "invalid chans", chans);
   return(C_TO_XEN_INT(mus_audio_open_input(XEN_TO_C_INT(dev),
-					 XEN_TO_C_INT_OR_ELSE(srate, 0),
-					 XEN_TO_C_INT(chans),
-					 XEN_TO_C_INT(format),
-					 XEN_TO_C_INT_OR_ELSE(size, 0))));
+					   XEN_TO_C_INT_OR_ELSE(srate, 0),
+					   XEN_TO_C_INT(chans),
+					   XEN_TO_C_INT(format),
+					   XEN_TO_C_INT_OR_ELSE(size, 0))));
 }
 
 static XEN g_close_audio(XEN line)
@@ -991,7 +991,7 @@ static XEN g_mus_set_data_clipped(XEN fd, XEN clipped)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_file_set_data_clipped, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(clipped), fd, XEN_ARG_2, S_mus_file_set_data_clipped, "a boolean");
   return(C_TO_XEN_INT(mus_file_set_data_clipped(XEN_TO_C_INT(fd),
-					      (XEN_FALSE_P(clipped)) ? 0 : 1)));
+						(XEN_FALSE_P(clipped)) ? 0 : 1)));
 }
 
 static XEN g_mus_prescaler(XEN fd)
@@ -1007,7 +1007,7 @@ static XEN g_mus_set_prescaler(XEN fd, XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_file_set_prescaler, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_file_set_prescaler, "a number");
   return(C_TO_XEN_DOUBLE(mus_file_set_prescaler(XEN_TO_C_INT(fd),
-					      XEN_TO_C_DOUBLE(val))));
+						XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_mus_expand_filename(XEN file)
@@ -1070,9 +1070,9 @@ XEN_NARGIFY_1(g_sound_comment_w, g_sound_comment)
 XEN_NARGIFY_1(g_sound_write_date_w, g_sound_write_date)
 XEN_NARGIFY_1(g_sound_bytes_per_sample_w, g_sound_bytes_per_sample)
 XEN_NARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
-XEN_NARGIFY_1(g_sound_max_amp_w, g_sound_max_amp)
-XEN_NARGIFY_2(g_sound_set_max_amp_w, g_sound_set_max_amp)
-XEN_NARGIFY_1(g_sound_max_amp_exists_w, g_sound_max_amp_exists)
+XEN_NARGIFY_1(g_sound_maxamp_w, g_sound_maxamp)
+XEN_NARGIFY_2(g_sound_set_maxamp_w, g_sound_set_maxamp)
+XEN_NARGIFY_1(g_sound_maxamp_exists_w, g_sound_maxamp_exists)
 XEN_NARGIFY_0(g_report_audio_state_w, g_report_audio_state)
 XEN_NARGIFY_3(g_audio_outputs_w, g_audio_outputs)
 XEN_NARGIFY_1(g_open_sound_input_w, g_open_sound_input)
@@ -1126,9 +1126,9 @@ XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
 #define g_sound_write_date_w g_sound_write_date
 #define g_sound_bytes_per_sample_w g_sound_bytes_per_sample
 #define g_sound_loop_info_w g_sound_loop_info
-#define g_sound_max_amp_w g_sound_max_amp
-#define g_sound_set_max_amp_w g_sound_set_max_amp
-#define g_sound_max_amp_exists_w g_sound_max_amp_exists
+#define g_sound_maxamp_w g_sound_maxamp
+#define g_sound_set_maxamp_w g_sound_set_maxamp
+#define g_sound_maxamp_exists_w g_sound_maxamp_exists
 #define g_report_audio_state_w g_report_audio_state
 #define g_audio_outputs_w g_audio_outputs
 #define g_open_sound_input_w g_open_sound_input
@@ -1333,9 +1333,14 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_write_date,     g_sound_write_date_w, 1, 0, 0,      H_mus_sound_write_date);
   XEN_DEFINE_PROCEDURE(S_mus_data_format_bytes_per_sample, g_sound_bytes_per_sample_w, 1, 0, 0, H_mus_data_format_bytes_per_sample);
   XEN_DEFINE_PROCEDURE(S_mus_sound_loop_info,      g_sound_loop_info_w, 1, 0, 0,       H_mus_sound_loop_info);
-  XEN_DEFINE_PROCEDURE(S_mus_sound_max_amp,        g_sound_max_amp_w, 1, 0, 0,         H_mus_sound_max_amp);
-  XEN_DEFINE_PROCEDURE(S_mus_sound_set_max_amp,    g_sound_set_max_amp_w, 2, 0, 0,     H_mus_sound_set_max_amp);
-  XEN_DEFINE_PROCEDURE(S_mus_sound_max_amp_exists, g_sound_max_amp_exists_w, 1, 0, 0,  H_mus_sound_max_amp_exists);
+  XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp,         g_sound_maxamp_w, 1, 0, 0,          H_mus_sound_maxamp);
+  XEN_DEFINE_PROCEDURE(S_mus_sound_set_maxamp,     g_sound_set_maxamp_w, 2, 0, 0,      H_mus_sound_set_maxamp);
+  XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp_exists,  g_sound_maxamp_exists_w, 1, 0, 0,   H_mus_sound_maxamp_exists);
+  /* backwards compatibility */
+  XEN_DEFINE_PROCEDURE("mus-sound-max-amp",        g_sound_maxamp_w, 1, 0, 0,          H_mus_sound_maxamp);
+  XEN_DEFINE_PROCEDURE("mus-sound-set-max-amp",    g_sound_set_maxamp_w, 2, 0, 0,      H_mus_sound_set_maxamp);
+  XEN_DEFINE_PROCEDURE("mus-sound-max-amp-exists?",g_sound_maxamp_exists_w, 1, 0, 0,   H_mus_sound_maxamp_exists);
+
   XEN_DEFINE_PROCEDURE(S_mus_audio_report,         g_report_audio_state_w, 0, 0, 0,    H_mus_audio_report);
   XEN_DEFINE_PROCEDURE(S_mus_audio_sun_outputs,    g_audio_outputs_w, 3, 0, 0,         H_mus_audio_sun_outputs);
   XEN_DEFINE_PROCEDURE(S_mus_sound_open_input,     g_open_sound_input_w, 1, 0, 0,      H_mus_sound_open_input);
@@ -1365,7 +1370,7 @@ void mus_sndlib2xen_initialize(void)
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, sound_data_ref_w, H_sound_data_ref,
-			       "set-" S_sound_data_ref, sound_data_set_w,  3, 0, 4, 0);
+				   "set-" S_sound_data_ref, sound_data_set_w,  3, 0, 4, 0);
 #endif
 
 #if HAVE_OSS

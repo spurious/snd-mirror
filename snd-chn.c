@@ -5448,28 +5448,6 @@ static XEN g_channel_widgets(XEN snd, XEN chn)
 #endif
 
 
-#if 0
-static XEN g_cp(XEN snd, XEN chn)
-{
-  ASSERT_CHANNEL("cp", snd, chn, 1);
-  return(C_TO_XEN_ULONG((unsigned long)get_cp(snd, chn, "cp")));
-}
-
-static XEN g_sp(XEN snd)
-{
-  ASSERT_SOUND("sp", snd, 1);
-  return(C_TO_XEN_ULONG((unsigned long)get_sp(snd)));
-}
-
-static XEN g_ss(void)
-{
-  return(C_TO_XEN_ULONG((unsigned long)get_global_state()));
-}
-#endif
-
-
-
-
 #ifdef XEN_ARGIFY_1
 #if (!USE_NO_GUI)
 XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
@@ -5960,12 +5938,6 @@ If it returns #t, the key press is not passed to the main handler. 'state' refer
   XEN_DEFINE_HOOK(key_press_hook, S_key_press_hook, 4, H_key_press_hook);             /* args = sound channel key state */
   XEN_DEFINE_HOOK(mark_click_hook, S_mark_click_hook, 1, H_mark_click_hook);          /* arg = id */
   XEN_DEFINE_HOOK(initial_graph_hook, S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
-
-#if 0
-  XEN_DEFINE_PROCEDURE("cp", g_cp, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE("sp", g_sp, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE("ss", g_ss, 0, 0, 0, NULL);
-#endif
 }
 
 

@@ -1503,6 +1503,8 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   ASSERT_CHANNEL(S_restore_marks, snd, chn, 2);
   ss = get_global_state();
   sp = get_sp(snd);
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(S_restore_marks, snd));
   cp = get_cp(snd, chn, S_restore_marks);
   if ((cp) && (!(cp->marks)))
     {

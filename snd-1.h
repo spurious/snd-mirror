@@ -301,7 +301,6 @@ typedef struct snd__state {
   XEN file_sort_proc;
   int catch_exists;
   char *catch_message;
-  int search_in_progress;
   int using_schemes;
   state_context *sgx;
   int position_slider_width, zoom_slider_width, toggle_size, enved_point_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
@@ -657,8 +656,8 @@ void select_channel(snd_info *sp, int chan);
 chan_info *current_channel(snd_state *ss);
 sync_info *free_sync_info (sync_info *si);
 sync_info *snd_sync(snd_state *ss, int sync);
-sync_info *make_simple_sync (chan_info *cp, int beg);
 sync_info *sync_to_chan(chan_info *cp);
+sync_info *make_simple_sync (chan_info *cp, int beg);
 snd_info *find_sound(snd_state *ss, char *name);
 void display_info(snd_info *sp);
 

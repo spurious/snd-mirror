@@ -274,6 +274,7 @@ void news_help(snd_state *ss)
 #endif
 	    "Recent changes include:\n\
 \n\
+24-Sep:  changed mus-sound-max-amp to mus-sound-maxamp to match all other such cases (old name still exists)
 18-Sep:  backwards incompatible change to save-state of small regions\n\
 17-Sep:  section-scale-by renamed scale-sound-by (more consistent), also scale-sound-to\n\
 14-Sep:  peak-env.scm.\n\
@@ -285,11 +286,6 @@ void news_help(snd_state *ss)
          region-play-list in examp.scm.\n\
 31-Aug:  Snd 5.2.\n\
 29-Aug:  added edit-menu.scm and merged in Dave Phillips changes for effects.scm.\n\
-28-Aug:  after-apply-hook, before-apply-hook.\n\
-24-Aug:  add-amp-controls in snd-motif.scm, add-notes in examp.scm.\n\
-21-Aug:  added explicit FIR/FFT choice to envelope editor (enved-filter).\n\
-         fft-squelch in examp.scm.\n\
-20-Aug:  add-listener-popup, fft-popup in popup.scm.\n\
 ",
 NULL);
   FREE(info);

@@ -144,7 +144,7 @@ static XEN g_key_event(XEN win, XEN key, XEN state)
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
   ev.type = KeyPress;
-  window = (Window)XEN_TO_C_UNSIGNED_LONG(win);
+  window = (Window)XEN_TO_C_ULONG(win);
   ev.window = window;
   ev.display = dpy;
   ev.root = RootWindow(dpy, DefaultScreen(dpy));
@@ -181,7 +181,7 @@ static XEN g_click_event(XEN win, XEN button, XEN state, XEN x, XEN y)
   int b;
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
-  window = (Window)XEN_TO_C_UNSIGNED_LONG(win);
+  window = (Window)XEN_TO_C_ULONG(win);
   ev.type = ButtonPress;
   ev.window = window;
   ev.display = dpy;
@@ -224,7 +224,7 @@ static XEN g_drag_event(XEN win, XEN button, XEN state, XEN x0, XEN y0, XEN x1, 
   int b;
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
-  window = (Window)XEN_TO_C_UNSIGNED_LONG(win);
+  window = (Window)XEN_TO_C_ULONG(win);
   ev.type = ButtonPress;
   ev.window = window;
   ev.display = dpy;
@@ -280,7 +280,7 @@ static XEN g_expose_event(XEN win, XEN x, XEN y, XEN width, XEN height)
   XExposeEvent ev;
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
-  window = (Window)XEN_TO_C_UNSIGNED_LONG(win);
+  window = (Window)XEN_TO_C_ULONG(win);
   ev.type = Expose;
   ev.window = window;
   ev.display = dpy;
@@ -300,7 +300,7 @@ static XEN g_resize_event(XEN win, XEN width, XEN height)
   XResizeRequestEvent ev;
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
-  window = (Window)XEN_TO_C_UNSIGNED_LONG(win);
+  window = (Window)XEN_TO_C_ULONG(win);
   ev.type = ResizeRequest;
   ev.window = window;
   ev.display = dpy;
@@ -344,7 +344,7 @@ static XEN g_force_event(void)
 static XEN g_widget_window(XEN wid)
 {
 #if USE_MOTIF
-  return(C_TO_XEN_UNSIGNED_LONG(XtWindow((Widget)(XEN_UNWRAP_C_POINTER(wid)))));
+  return(C_TO_XEN_ULONG(XtWindow((Widget)(XEN_UNWRAP_C_POINTER(wid)))));
 #endif
 #if USE_GTK
   GtkWidget *w;
@@ -352,10 +352,10 @@ static XEN g_widget_window(XEN wid)
   while (w)
     {
       if (GTK_IS_WINDOW(w))
-	return(C_TO_XEN_UNSIGNED_LONG((unsigned long)(GTK_WINDOW(w))));
+	return(C_TO_XEN_ULONG((unsigned long)(GTK_WINDOW(w))));
       else
 	if (GTK_IS_WINDOW(w->window))
-	  return(C_TO_XEN_UNSIGNED_LONG((unsigned long)(GTK_WINDOW(w->window))));
+	  return(C_TO_XEN_ULONG((unsigned long)(GTK_WINDOW(w->window))));
 	else w = w->parent;
     }
   /* this can't be used directly: Gdk-XEN_ERROR **: BadWindow (invalid Window parameter) */

@@ -302,6 +302,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	  fd->last_dir = copy_string(our_dir);
 	  strcpy(fd->fullpathname, our_dir);
 	  fd->save_dir = (char *)(fd->fullpathname + snd_strlen(our_dir));
+	  if (fd->sound_files) free_dir(fd->sound_files);
 	  fd->sound_files = find_sound_files_in_dir(our_dir);
 	  fd->need_update = 1;
 	}

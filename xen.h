@@ -17,9 +17,13 @@
 #endif
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 0
-#define XEN_VERSION "1.0"
+#define XEN_MINOR_VERSION 1
+#define XEN_VERSION "1.1"
 
+/* HISTORY:
+ *  
+ *   22-Sep-01: removed (redundant) UNSIGNED_LONG macros -- use ULONG instead
+*/
 
 /* ------------------------------ GUILE ------------------------------ */
 
@@ -149,10 +153,6 @@
 #define C_TO_XEN_INT(a)               scm_long2num((long)a)
 #define C_TO_SMALL_XEN_INT(a)         SCM_MAKINUM(a)
 #define XEN_TO_SMALL_C_INT(a)         ((int)(SCM_INUM(a)))
-#define XEN_TO_C_UNSIGNED_LONG(a)     scm_num2ulong(a, 0, __FUNCTION__)
-#define C_TO_XEN_UNSIGNED_LONG(a)     scm_ulong2num(a)
-
-/* those names are too long-winded! */
 #define XEN_TO_C_ULONG(a)             scm_num2ulong(a, 0, __FUNCTION__)
 #define C_TO_XEN_ULONG(a)             scm_ulong2num((unsigned long)a)
 #define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
@@ -199,12 +199,12 @@
 
 /* (need a way to pass an uninterpreted pointer from C to XEN then back to C) */
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-  #define XEN_WRAP_C_POINTER(a)       (C_TO_XEN_UNSIGNED_LONG((unsigned long)a))
+  #define XEN_WRAP_C_POINTER(a)       (C_TO_XEN_ULONG((unsigned long)a))
 #else
-  #define XEN_WRAP_C_POINTER(a)       ((XEN)(C_TO_XEN_UNSIGNED_LONG((unsigned long)a)))
+  #define XEN_WRAP_C_POINTER(a)       ((XEN)(C_TO_XEN_ULONG((unsigned long)a)))
 #endif
 
-#define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_UNSIGNED_LONG(a)
+#define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a)
 #define XEN_WRAPPED_C_POINTER_P(a)    XEN_NOT_FALSE_P(scm_number_p(a))
 
 #if HAVE_SCM_C_EVAL_STRING
@@ -315,7 +315,7 @@
 #define XEN_VECTOR_P(Arg)             (SCM_VECTORP(Arg))
 #define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
-#define XEN_UNSIGNED_LONG_P(Arg1)      (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
+#define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
 
 #define XEN_LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))
 #define XEN_LIST_REF(Lst, Num)        scm_list_ref(Lst, C_TO_SMALL_XEN_INT(Num))
@@ -514,8 +514,6 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define C_TO_XEN_INT(a)                   INT2NUM(a)
 #define C_TO_SMALL_XEN_INT(a)             INT2FIX(a)
 #define XEN_TO_SMALL_C_INT(a)             FIX2INT(a)
-#define XEN_TO_C_UNSIGNED_LONG(a)         NUM2ULONG(a)
-#define C_TO_XEN_UNSIGNED_LONG(a)         UINT2NUM((unsigned long)a)
 #define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
 #define C_TO_XEN_ULONG(a)                 UINT2NUM((unsigned long)a)
 
@@ -834,9 +832,9 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a) 0
 #define XEN_OBJECT_TYPE int
 #define XEN_OBJECT_TYPE_P(OBJ, TAG) 0
-#define XEN_TRUE_P(a) 0
-#define XEN_FALSE_P(a) 0
-#define XEN_NULL_P(a) 0
+#define XEN_TRUE_P(a) ((a) == XEN_TRUE)
+#define XEN_FALSE_P(a) ((a) == XEN_FALSE)
+#define XEN_NULL_P(a) ((a) == XEN_EMPTY_LIST)
 #define XEN_BOUND_P(Arg) 0
 #define XEN_NOT_BOUND_P(Arg) 1
 #define XEN_ZERO 0
@@ -852,8 +850,6 @@ XEN xen_rb_funcall_0(XEN func);
 #define C_TO_XEN_INT(a) a
 #define C_TO_SMALL_XEN_INT(a) a
 #define XEN_TO_SMALL_C_INT(a) 0
-#define XEN_TO_C_UNSIGNED_LONG(a) 0
-#define C_TO_XEN_UNSIGNED_LONG(a) 0
 #define C_TO_XEN_STRING(a) 0
 #define XEN_TO_NEW_C_STRING(a) NULL
 #define C_TO_XEN_BOOLEAN(a) 0

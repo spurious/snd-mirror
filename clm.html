@@ -2070,7 +2070,7 @@ a few that look for all the world like generators.</p>
   <a name="sound-length"><em class=def>sound-length</em></a> filename          true file length (for error checks)
   <a name="sound-duration"><em class=def>sound-duration</em></a> filename        file length in seconds
   <a name="mus-set-raw-header-defaults"><em class=def>mus-set-raw-header-defaults</em></a> srate chans data-format
-  <a name="sound-max-amp"><em class=def>sound-max-amp</em></a> name vals        get max amp vals and times of file name in vals
+  <a name="sound-maxamp"><em class=def>sound-maxamp</em></a> name vals        get max amp vals and times of file name in vals
   <a name="sound-loop-info"><em class=def>sound-loop-info</em></a> name vals      get loop info of file name in vals (make-integer-array 6)
   <a name="sound-set-loop-info"><em class=def>sound-set-loop-info</em></a> name vals  set loop info of file name to vals
   <a name="sound-format-name"><em class=def>sound-format-name</em></a> format       format name as string
@@ -2652,13 +2652,13 @@ Besides the obvious options like :reverb and :srate, the most useful ones are :s
 <i>Statistics</i>, if t (the default is nil), causes clm
 to keep track of a variety of interesting things and print them out at the end
 of the computation.  <i>Scaled-to</i> tells clm to make sure the final output
-file has a max-amp of whatever the argument is to :scaled-to -- that is,</p>
+file has a maxamp of whatever the argument is to :scaled-to -- that is,</p>
 <pre>
 (with-sound (<em class=red>:scaled-to</em> .5) 
   (dotimes (i 32) (mix "oboe.snd" :output-frame (* i *srate*))))
 </pre>
-<p>will produce test.snd with a max-amp of .5, no matter how loud the intermediate
-mix actually is (within reason -- the current true intermediate max-amp is
+<p>will produce test.snd with a maxamp of .5, no matter how loud the intermediate
+mix actually is (within reason -- the current true intermediate maxamp is
 128.0 (if using the default sndlib settings)).  Similarly, the <i>scaled-by</i> argument causes all the output to
 be scaled (in amplitude) by its value.</p>
 <pre>
@@ -3974,7 +3974,7 @@ they randomly drop the "mus-" and so on).
   <tr><td><em class=tab><a href="clm.html#*clm-file-name*">*clm-file-name*</a></em></td><td><em class=tab><a href="clm.html#formant?">formant?</a></em></td><td><em class=tab><a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a></em></td><td><em class=tab><a href="clm.html#optional-key">optional-key</a></em></td><td><em class=tab><a href="clm.html#sound-length">sound-length</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-header-type*">*clm-header-type*</a></em></td><td><em class=tab><a href="clm.html#fft"><b>Fourier transforms </b></a></em></td><td><em class=tab><a href="clm.html#make-sine-summation">make-sine-summation</a></em></td><td><em class=tab><a href="clm.html#oscil">oscil</a></em></td><td><em class=tab><a href="clm.html#sound-let">sound-let</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#clm-help">clm-help</a></em></td><td><em class=tab><a href="clm.html#frame*">frame*</a></em></td><td><em class=tab><a href="clm.html#make-square-wave">make-square-wave</a></em></td><td><em class=tab><a href="clm.html#oscilbank">oscil-bank</a></em></td><td><em class=tab><a href="clm.html#sound-loop-info">sound-loop-info</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-help-browser*">*clm-help-browser*</a></em></td><td><em class=tab><a href="clm.html#frame+">frame+</a></em></td><td><em class=tab><a href="clm.html#make-src">make-src</a></em></td><td><em class=tab><a href="clm.html#oscil?">oscil?</a></em></td><td><em class=tab><a href="clm.html#sound-max-amp">sound-max-amp</a></em></td></tr>
+  <tr><td><em class=tab><a href="clm.html#*clm-help-browser*">*clm-help-browser*</a></em></td><td><em class=tab><a href="clm.html#frame+">frame+</a></em></td><td><em class=tab><a href="clm.html#make-src">make-src</a></em></td><td><em class=tab><a href="clm.html#oscil?">oscil?</a></em></td><td><em class=tab><a href="clm.html#sound-maxamp">sound-maxamp</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-init*">*clm-init*</a></em></td><td><em class=tab><a href="clm.html#frame-&gt;buffer">frame-&gt;buffer</a></em></td><td><em class=tab><a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a></em></td><td><em class=tab><a href="clm.html#out-any">out-any</a></em></td><td><em class=tab><a href="clm.html#sound-samples">sound-samples</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-instruments*">*clm-instruments*</a></em></td><td><em class=tab><a href="clm.html#frame-&gt;file">frame-&gt;file</a></em></td><td><em class=tab><a href="clm.html#make-table-lookup">make-table-lookup</a></em></td><td><em class=tab><a href="clm.html#outa">outa</a></em></td><td><em class=tab><a href="clm.html#sound-set-loop-info">sound-set-loop-info</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#clm-load">clm-load</a></em></td><td><em class=tab><a href="clm.html#frame-&gt;file?">frame-&gt;file?</a></em></td><td><em class=tab><a href="clm.html#make-triangle-wave">make-triangle-wave</a></em></td><td><em class=tab><a href="clm.html#outb">outb</a></em></td><td><em class=tab><a href="clm.html#sound-srate">sound-srate</a></em></td></tr>

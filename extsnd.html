@@ -1495,15 +1495,15 @@ the hook.
 <!-- -->The <i>dur</i> argument is the total length in seconds of the channel, so to cause the
 <!-- -->entire sound to be displayed initially:
 <!-- --><pre>(add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 dur)))</pre>
-<!-- -->To get the data limits (rather than the default -1.0 to 1.0 as above), you can use <a href="mussoundmaxamp">mus-sound-max-amp</a>,
+<!-- -->To get the data limits (rather than the default -1.0 to 1.0 as above), you can use <a href="mussoundmaxamp">mus-sound-maxamp</a>,
 <!-- -->but that can in some cases require a long process of reading the underlying file. The following hook procedure
 <!-- -->uses the max amp data only if it is already available:
 <!-- --></td></tr><tr><td></td><td colspan=2>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (add-hook! <em class=red>initial-graph-hook</em>
   (lambda (snd chn dur)
-    (if (mus-sound-max-amp-exists? (file-name snd))
-	(let* ((amp-vals (mus-sound-max-amp (file-name snd)))
+    (if (mus-sound-maxamp-exists? (file-name snd))
+	(let* ((amp-vals (mus-sound-maxamp (file-name snd)))
 	       (max-val (list-ref amp-vals (+ (* chn 2) 1))))
 	  (list 0.0 dur (- max-val) max-val))
 	(list 0.0 dur -1.0 1.0))))
@@ -1543,8 +1543,8 @@ the hook.
 (add-hook! initial-graph-hook
   (lambda (snd chn dur)
     (if (&lt; dur 100.0)
-	(if (<em class=red>mus-sound-max-amp-exists?</em> (file-name snd))
-	    (let* ((amp-vals (<em class=red>mus-sound-max-amp</em> (file-name snd)))
+	(if (<em class=red>mus-sound-maxamp-exists?</em> (file-name snd))
+	    (let* ((amp-vals (<em class=red>mus-sound-maxamp</em> (file-name snd)))
 		   (max-val (list-ref amp-vals (+ (* chn 2) 1))))
 	      (list 0.0 dur (- max-val) max-val))
 	    (list 0.0 dur -1.0 1.0))
@@ -2885,13 +2885,13 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundloopinfo">mus-sound-loop-info</a></em> (filename)</code></span></td>
 <!-- --><td>loop info (for an example, see <a href="sndscm.html#exampdoc">examp.scm</a> mark-loops)</td></tr>
 <!-- -->
-<!-- mus-sound-max-amp -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundmaxamp">mus-sound-max-amp</a></em> (filename)</code></span></td>
-<!-- --><td>returns a list of max amps and locations thereof.  The corresponding set! procedure is mus-sound-set-max-amp (this
+<!-- mus-sound-maxamp -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundmaxamp">mus-sound-maxamp</a></em> (filename)</code></span></td>
+<!-- --><td>returns a list of max amps and locations thereof.  The corresponding set! procedure is mus-sound-set-maxamp (this
 <!-- -->affects only the sndlib table of sound file info, not the sound file itself).</td></tr>
 <!-- -->
-<!-- mus-sound-max-amp-exists -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxampexists">mus-sound-max-amp-exists</a></em> (filename)</code></span></td>
+<!-- mus-sound-maxamp-exists -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxampexists">mus-sound-maxamp-exists</a></em> (filename)</code></span></td>
 <!-- --></tr><tr><td></td><td>returns #t if the sound's max amps are already available.</td></tr>
 <!-- -->
 <!-- mus-sound-open-input -->
@@ -6922,8 +6922,8 @@ And an example that lets us see the result of filtering the waveform:
 	      (if (null? mxlst)
 		  mxcur
 		  (mxall (max mxcur (cadr mxlst)) (cddr mxlst))))
-	    (let ((mxa (<em class=red>mus-sound-max-amp</em> a))
-		  (mxb (<em class=red>mus-sound-max-amp</em> b)))
+	    (let ((mxa (<em class=red>mus-sound-maxamp</em> a))
+		  (mxb (<em class=red>mus-sound-maxamp</em> b)))
 	      (or (null? mxb)
 		  (and (not (null? mxa))
 		       (&gt; (mxall 0.0 mxa)

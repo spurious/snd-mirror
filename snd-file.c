@@ -496,14 +496,12 @@ dir *find_sound_files_in_dir (char *name)
 		if ((strcmp(dot, sound_file_extensions[i]) == 0) && 
 		    (!(is_empty_file(dirp->d_name))))
 		  {
-#if HAVE_EXTENSION_LANGUAGE
 		    XEN res = XEN_TRUE;
 		    if (XEN_HOOKED(just_sounds_hook))
 		      res = g_c_run_or_hook(just_sounds_hook,
 					    XEN_LIST_1(C_TO_XEN_STRING(dirp->d_name)),
 					    S_just_sounds_hook);
 		    if (XEN_TRUE_P(res))
-#endif
 		      add_snd_file_to_dir_list(dp, dirp->d_name);
 		    break;
 		  }
@@ -1300,8 +1298,6 @@ void add_directory_to_prevlist(snd_state *ss, char *dirname)
 	  fullnames[i] = NULL;
 	}
       FREE(fullnames);
-      if (file_dialog_is_active()) 
-	make_prevfiles_list(ss);
       free_dir(sound_files);
       FREE(fullpathname);
     }

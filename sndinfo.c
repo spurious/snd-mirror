@@ -31,7 +31,7 @@ void mem_free(void *ptr, const char *func, const char *file, int line) {free(ptr
 void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr, size));}
 #endif
 
-static char *display_max_amps(const char *filename, int chans)
+static char *display_maxamps(const char *filename, int chans)
 {
   char *ampstr;
   char fstr[16];
@@ -40,7 +40,7 @@ static char *display_max_amps(const char *filename, int chans)
   ampstr = (char *)CALLOC(chans * 32, sizeof(char));
   vals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
   sprintf(ampstr,"\n  max amp%s: ",(chans > 1) ? "s" : "");
-  mus_sound_max_amp(filename, vals);
+  mus_sound_maxamp(filename, vals);
   for (i = 0; i < chans; i++)
     {
       sprintf(fstr,"%.3f ",MUS_SAMPLE_TO_FLOAT(vals[2 * i + 1]));
@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
       type = mus_sound_header_type(argv[1]);
       header_name = (char *)mus_header_type_name(type);
       format = mus_sound_data_format(argv[1]);
-      if (mus_sound_max_amp_exists(argv[1]))
-	ampstr = display_max_amps(argv[1], chans);
+      if (mus_sound_maxamp_exists(argv[1]))
+	ampstr = display_maxamps(argv[1], chans);
       if (format != MUS_UNSUPPORTED)
 	format_info = (char *)mus_data_format_name(format);
       else

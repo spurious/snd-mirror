@@ -17,7 +17,7 @@ static XEN g_in(XEN ms, XEN code)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
   if (XEN_INTEGER_P(ms))
-    time = XEN_TO_C_UNSIGNED_LONG(ms);
+    time = XEN_TO_C_ULONG(ms);
   else time = (unsigned long)snd_round(XEN_TO_C_DOUBLE(ms));
   if (XEN_REQUIRED_ARGS(code) == 0)
     {

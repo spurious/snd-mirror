@@ -36,17 +36,21 @@
 
 (define home-dir "/home")
 (define sf-dir "/sf1")
+(define sample-reader-tests 300)
 
 (if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
     (begin
+      (set! sample-reader-tests 10)
       (set! home-dir "/usr/people")
       (set! sf-dir "/sf")))
 (if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
     (begin
+      (set! sample-reader-tests 10)
       (set! home-dir "/space/home")
       (set! sf-dir "/sf")))
 (if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
     (begin
+      (set! sample-reader-tests 10)
       (set! home-dir "/user/b")
       (set! sf-dir "/sf")))
 
@@ -60,8 +64,6 @@
 	    (snd-print "can't find sf directory!")
 	    (set! sf-dir1 #f)))))
 (set! sf-dir sf-dir1)
-
-
 
 (if (and (not (file-exists? "4.aiff"))
 	 (not (string=? (getcwd) (string-append home-dir "/bil/cl"))))
@@ -204,7 +206,7 @@
 		    (begin
 		      (if (not (= (cadr lst) (caddr lst)))
 			  (snd-display ";~A /= ~A (~A)~%"
-					     (car lst) (cadr lst) (caddr lst)))
+				       (car lst) (cadr lst) (caddr lst)))
 		      (test-constants (cdddr lst)))))))
       (if (procedure? test-hook) (test-hook 0))
       (test-constants
@@ -1475,8 +1477,8 @@
 	  (size (mus-sound-datum-size "oboe.snd"))
 	  (com (mus-sound-comment "oboe.snd"))
 	  (sr (mus-sound-srate "oboe.snd"))
-	  (m1 (mus-sound-max-amp-exists? "oboe.snd"))
-	  (mal (mus-sound-max-amp "oboe.snd"))
+	  (m1 (mus-sound-maxamp-exists? "oboe.snd"))
+	  (mal (mus-sound-maxamp "oboe.snd"))
 	  (bytes (mus-data-format-bytes-per-sample (mus-sound-data-format "oboe.snd")))
 	  (sys (mus-audio-systems)))
       (mus-sound-report-cache "hiho.tmp")
@@ -1501,9 +1503,9 @@
       (if (not (= size 2)) (snd-display ";oboe: mus-sound-datum-size ~D?" size))
       (if (not (= bytes 2)) (snd-display ";oboe: sound-bytes ~D?" bytes))
       (if (not (= sr 22050)) (snd-display ";oboe: mus-sound-srate ~D?" sr))
-      (if (and m1 (= clmtest 0)) (snd-display ";oboe: mus-sound-max-amp-exists before max-amp: ~A" m1))
-      (if (not (mus-sound-max-amp-exists? "oboe.snd")) 
-	  (snd-display ";oboe: mus-sound-max-amp-exists after max-amp: ~A" (mus-sound-max-amp-exists? "oboe.snd")))
+      (if (and m1 (= clmtest 0)) (snd-display ";oboe: mus-sound-maxamp-exists before maxamp: ~A" m1))
+      (if (not (mus-sound-maxamp-exists? "oboe.snd")) 
+	  (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
 
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
 	(if (not (string=? str "18-Oct 06:56 PDT"))
@@ -1607,19 +1609,19 @@
 		      (not (string=? com "sample_byte_format -s2 01\nchannel_count -i 1\nsample_count -i 36461\nsample_rate -i 16000\nsample_n_bytes -i 2\nsample_sig_bits -i 16\n")))
 		  (snd-display ";mus-sound-comment \"telephone.wav\") -> ~A?" com)))))
       
-      (if (fneq (cadr mal) .14724) (snd-display ";oboe: mus-sound-max-amp ~F?" (cadr mal)))
-      (if (not (= (car mal) 24971)) (snd-display ";oboe: mus-sound-max-amp at ~D?" (car mal)))
-      (mus-sound-set-max-amp "oboe.snd" (list 1234 .5))
-      (set! mal (mus-sound-max-amp "oboe.snd"))
-      (if (fneq (cadr mal) .5) (snd-display ";oboe: mus-sound-set-max-amp ~F?" (cadr mal)))
-      (if (not (= (car mal) 1234)) (snd-display ";oboe: mus-sound-set-max-amp at ~D?" (car mal)))
-      (set! mal (mus-sound-max-amp "4.aiff"))
+      (if (fneq (cadr mal) .14724) (snd-display ";oboe: mus-sound-maxamp ~F?" (cadr mal)))
+      (if (not (= (car mal) 24971)) (snd-display ";oboe: mus-sound-maxamp at ~D?" (car mal)))
+      (mus-sound-set-maxamp "oboe.snd" (list 1234 .5))
+      (set! mal (mus-sound-maxamp "oboe.snd"))
+      (if (fneq (cadr mal) .5) (snd-display ";oboe: mus-sound-set-maxamp ~F?" (cadr mal)))
+      (if (not (= (car mal) 1234)) (snd-display ";oboe: mus-sound-set-maxamp at ~D?" (car mal)))
+      (set! mal (mus-sound-maxamp "4.aiff"))
       (if (not (feql mal (list 810071 0.245 810071 0.490 810071 0.735 810071 0.980)))
-	  (snd-display ";mus-sound-max-amp 4.aiff: ~A?" mal))
-      (mus-sound-set-max-amp "4.aiff" (list 12345 .5 54321 .2 0 .1 9999 .01))
-      (set! mal (mus-sound-max-amp "4.aiff"))
+	  (snd-display ";mus-sound-maxamp 4.aiff: ~A?" mal))
+      (mus-sound-set-maxamp "4.aiff" (list 12345 .5 54321 .2 0 .1 9999 .01))
+      (set! mal (mus-sound-maxamp "4.aiff"))
       (if (not (feql mal (list 12345 .5 54321 .2 0 .1 9999 .01)))
-	  (snd-display ";mus-sound-set-max-amp 4.aiff: ~A?" mal))
+	  (snd-display ";mus-sound-set-maxamp 4.aiff: ~A?" mal))
 
       (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 	       (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
@@ -3280,8 +3282,8 @@
 			  (if (null? mxlst)
 			      mxcur
 			      (mxall (max mxcur (cadr mxlst)) (cddr mxlst))))
-			(let ((mxa (mus-sound-max-amp a))
-			      (mxb (mus-sound-max-amp b)))
+			(let ((mxa (mus-sound-maxamp a))
+			      (mxb (mus-sound-maxamp b)))
 			  (or (null? mxb)
 			      (and (not (null? mxa))
 				   (> (mxall 0.0 mxa)
@@ -5419,8 +5421,8 @@
 		  (fneq (vct-ref v2 7) 0.143))
 	      (snd-display ";convolve output: ~A?" v2)))
 	(convolve-files "oboe.snd" "fyow.snd" .5 "fmv.snd")
-	(if (fneq (cadr (mus-sound-max-amp "fmv.snd")) .5) 
-	    (snd-display ";convolve-files: ~A /= .5?" (cadr (mus-sound-max-amp "fmv.snd"))))
+	(if (fneq (cadr (mus-sound-maxamp "fmv.snd")) .5) 
+	    (snd-display ";convolve-files: ~A /= .5?" (cadr (mus-sound-maxamp "fmv.snd"))))
 	(play-sound "fmv.snd"))
 
       (let* ((fd (mus-sound-open-input "oboe.snd"))
@@ -6008,7 +6010,7 @@
       (set! (mix-track mix2) 123)
       (set! (mix-track mix3) 123)
       (do ((i 0 (1+ i)))
-	  ((= i 300))
+	  ((= i sample-reader-tests))
 	(let* ((cur (random 4))
 	       (r (random 100)))
 	  (if (= cur 0)
@@ -10839,7 +10841,7 @@ EDITS: 3
 	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size expand-control
 	       expand-control-hop expand-control-length expand-control-ramp expand-control? fft fft-window-beta fft-log-frequency 
 	       fft-log-magnitude transform-size transform-graph-type fft-window graph-transform?
-	       fht file-dialog file-name fill-polygon fill-rectangle filter-sound filter-control-in-dB 
+	       fht file-dialog mix-file-dialog file-name fill-polygon fill-rectangle filter-sound filter-control-in-dB 
 	       filter-control-env enved-filter-order enved-filter filter-env-in-hz filter-control-order
 	       filter-selection filter-waveform-color filter-control? find find-mark find-sound finish-progress-report foreground-color
 	       forward-graph forward-mark forward-mix forward-sample frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
@@ -10864,7 +10866,7 @@ EDITS: 3
 	       reverse-sound reverse-selection revert-sound right-sample sample sample-reader-at-end?
 	       sample-reader? samples samples->vct samples->sound-data sash-color save-controls save-dir save-edit-history save-envelopes
 	       save-listener save-macros save-marks save-options save-region save-selection save-sound save-sound-as save-state save-state-file
-	       scale-by scale-selection-by scale-selection-to scale-to 
+	       scale-by scale-selection-by scale-selection-to scale-to scale-sound-by scale-sound-to
 	       scan-chan search-procedure select-all select-channel select-mix select-sound
 	       selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound selection-position selection-color
 	       selection-creates-region selection-length selection-member? selection? short-file-name 
@@ -10885,7 +10887,7 @@ EDITS: 3
 	       y-zoom-slider zero-pad zoom-color zoom-focus-style mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
 	       mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier
 	       mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info
-	       mus-audio-report mus-audio-sun-outputs mus-sound-max-amp mus-sound-max-amp-exists? mus-sound-open-input mus-sound-open-output
+	       mus-audio-report mus-audio-sun-outputs mus-sound-maxamp mus-sound-maxamp-exists? mus-sound-open-input mus-sound-open-output
 	       mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write mus-sound-seek mus-sound-seek-frame
 	       mus-file-set-data-clipped mus-file-prescaler mus-file-set-prescaler mus-expand-filename make-sound-data sound-data-ref sound-data-set!
 	       sound-data? sound-data-length sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate array->file
@@ -11204,7 +11206,7 @@ EDITS: 3
 		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
 			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-header-type-name
 			mus-data-format-name mus-sound-comment mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info
-			mus-sound-max-amp mus-sound-max-amp-exists?))
+			mus-sound-maxamp mus-sound-maxamp-exists?))
 
 	(for-each (lambda (n)
 		    (let ((tag
@@ -11217,7 +11219,7 @@ EDITS: 3
 		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
 			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-header-type-name
 			mus-data-format-name mus-sound-comment mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info
-			mus-sound-max-amp mus-sound-max-amp-exists?))
+			mus-sound-maxamp mus-sound-maxamp-exists?))
 
 	(for-each (lambda (n)
 		    (let ((tag
@@ -11229,7 +11231,7 @@ EDITS: 3
 			  (snd-display ";bad file mus-sound ~A: ~A" n tag))))
 		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
 			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-sound-comment 
-			mus-sound-write-date mus-sound-max-amp mus-sound-max-amp-exists?))
+			mus-sound-write-date mus-sound-maxamp mus-sound-maxamp-exists?))
 
 	(let ((ctr 0))
 	  (for-each (lambda (n)
@@ -11301,7 +11303,7 @@ EDITS: 3
 			  play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample samples->vct samples->sound-data 
 			  save-sound scale-by scale-to show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop 
 			  spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update 
-			  src-sound transform-sample transform-samples transform-samples->vct 
+			  src-sound transform-sample transform-samples transform-samples->vct scale-sound-by scale-sound-to
 			  transform-samples-size transform-type undo update-transform update-time-graph 
 			  update-lisp-graph update-sound wavelet-type graph-time? time-graph-type 
 			  wavo-hop wavo-trace x-bounds x-position-slider x->position x-zoom-slider 
@@ -11318,7 +11320,8 @@ EDITS: 3
 			    (snd-display ";~D: snd(1) chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
 		    (list backward-graph backward-sample delete-sample edit-fragment forward-graph forward-mark forward-mix forward-sample graph-data 
-			  graph-style play play-and-wait position->x position->y redo scale-by scale-to undo x->position y->position)))
+			  graph-style play play-and-wait position->x position->y redo scale-sound-by scale-sound-to scale-by scale-to 
+			  undo x->position y->position)))
 
         (let ((ctr 0)
 	      (index (open-sound "oboe.snd")))

@@ -118,7 +118,7 @@ name of the sound file.
   int mus_sound_align (const char *arg)            /* more compression data */
   int mus_sound_bits_per_sample(const char *arg)   /* bits per sample */
   int mus_data_format_to_bytes_per_sample(int format) /* bytes per sample */
-  int mus_sound_max_amp(const char *arg, int *vals)/* return list of max-amp sample pairs */
+  int mus_sound_maxamp(const char *arg, int *vals) /* return list of maxamp sample pairs */
   int mus_sound_aiff_p(const char *arg)            /* is it an old-style AIFF file (not AIFC) */
   int *mus_sound_loop_info(const char *arg)        /* 6 loop vals (mode,start,end) then base-detune and base-note  (empty list if no loop info found) */
   int mus_sound_initialize(void)                   /* initialize everything */
@@ -1049,8 +1049,8 @@ see headers.c or sndlib.h for details.  The next functions handle various IO cal
   int mus_file_read_any (int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm)
   int mus_file_write_zeros (int tfd, int num)
   int mus_file_write (int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
-  int mus_sound_max_amp (char *ifile, MUS_SAMPLE_TYPE *vals)
-  int mus_sound_max_amp_exists (char *ifile)
+  int mus_sound_maxamp (char *ifile, MUS_SAMPLE_TYPE *vals)
+  int mus_sound_maxamp_exists (char *ifile)
   float mus_file_prescaler(int tfd)
   float mus_file_set_prescaler(int tfd, float val)
 </pre>
@@ -1139,7 +1139,7 @@ constants and functions described above into Scheme.
   mus-sound-data-format (filename)         data format (e.g. <i>mus-bshort</i>)
   mus-sound-length (filename)              true file length (bytes)
   mus-sound-type-specifier (filename)      original header type identifier
-  mus-sound-max-amp(filename)              returns a list of max amps and locations thereof
+  mus-sound-maxamp(filename)               returns a list of max amps and locations thereof
   mus-sound-loop-info(filename)            returns list of 4 loop values (the actual mark positions here, not
                                            the so-called id's), then base-note and base-detune
   

@@ -19,7 +19,6 @@
  *  we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
  *
- *
  * in Ruby, a zillion methods to tie into the mus_xen class etc
  */
 
@@ -1473,14 +1472,14 @@ the built-in 'random' function returns values between 0 and its argument"
   return(C_TO_XEN_DOUBLE(mus_random(XEN_TO_C_DOUBLE(a))));
 }
 
-static XEN g_rand_seed(void) {return(C_TO_XEN_UNSIGNED_LONG(mus_rand_seed()));}
+static XEN g_rand_seed(void) {return(C_TO_XEN_ULONG(mus_rand_seed()));}
 static XEN g_set_rand_seed(XEN a) 
 {
   #define H_mus_set_rand_seed "(" S_mus_set_rand_seed " val) sets the random number seed, \
 this can be used to re-run a particular random number sequence."
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(a), a, XEN_ONLY_ARG, S_mus_set_rand_seed, "an integer");
-  mus_set_rand_seed(XEN_TO_C_UNSIGNED_LONG(a)); 
+  mus_set_rand_seed(XEN_TO_C_ULONG(a)); 
   return(a);
 }
 

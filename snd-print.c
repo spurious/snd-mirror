@@ -424,6 +424,7 @@ static char *snd_print_or_error(snd_state *ss, char *output)
   snd_info *sp;
   sync_info *si;
   chan_info *ccp;
+  char *errstr = NULL;
   if ((output) && (*output))
     {
       ccp = current_channel(ss);
@@ -459,10 +460,10 @@ static char *snd_print_or_error(snd_state *ss, char *output)
 	    ps_graph(si->cps[i], 0, offsets[i]);
 	  end_ps_graph();
 	}
-      else return(mus_format("print %s failed: %s", output, strerror(errno)));
-      si = free_sync_info(si);
+      else errstr = mus_format("print %s failed: %s", output, strerror(errno));
+      if (si) si = free_sync_info(si);
       if (offsets) FREE(offsets);
-      return(NULL);
+      return(errstr);
     }
   else return(copy_string("print sound: eps file name needed"));
 }

@@ -19,7 +19,7 @@ static XEN g_in(XEN ms, XEN code)
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   if (XEN_INTEGER_P(ms))
-    time = XEN_TO_C_UNSIGNED_LONG(ms);
+    time = XEN_TO_C_ULONG(ms);
   else time = (unsigned long)snd_round(XEN_TO_C_DOUBLE(ms));
   if (XEN_REQUIRED_ARGS(code) == 0)
     {
@@ -204,16 +204,12 @@ void color_unselected_graphs(COLOR_TYPE color)
     {
       sp = (snd_info *)state->sounds[i];
       if (sp)
-	{
-	  for (j = 0; j < sp->allocated_chans; j++)
-	    {
-	      cp = sp->chans[j];
-	      if ((cp) && ((i != state->selected_sound) || (j != sp->selected_channel)))
-		{
-		  XtVaSetValues(channel_graph(cp), XmNbackground, color, NULL);
-		}
-	    }
-	}
+	for (j = 0; j < sp->allocated_chans; j++)
+	  {
+	    cp = sp->chans[j];
+	    if ((cp) && ((i != state->selected_sound) || (j != sp->selected_channel)))
+	      XtVaSetValues(channel_graph(cp), XmNbackground, color, NULL);
+	  }
     }
 }
 
@@ -226,25 +222,23 @@ void color_chan_components(COLOR_TYPE color, int which_component)
     {
       sp = (snd_info *)state->sounds[i];
       if (sp)
-	{
-	  for (j = 0; j < sp->allocated_chans; j++)
-	    {
-	      cp = sp->chans[j];
-	      if (cp)
-		{
-		  if (which_component == COLOR_POSITION)
-		    {
-		      XtVaSetValues(channel_sx(cp), XmNbackground, color, NULL);
-		      XtVaSetValues(channel_sy(cp), XmNbackground, color, NULL);
-		    }
-		  else
-		    {
-		      XtVaSetValues(channel_zy(cp), XmNbackground, color, NULL);
-		      XtVaSetValues(channel_zx(cp), XmNbackground, color, NULL);
-		    }
-		}
-	    }
-	}
+	for (j = 0; j < sp->allocated_chans; j++)
+	  {
+	    cp = sp->chans[j];
+	    if (cp)
+	      {
+		if (which_component == COLOR_POSITION)
+		  {
+		    XtVaSetValues(channel_sx(cp), XmNbackground, color, NULL);
+		    XtVaSetValues(channel_sy(cp), XmNbackground, color, NULL);
+		  }
+		else
+		  {
+		    XtVaSetValues(channel_zy(cp), XmNbackground, color, NULL);
+		    XtVaSetValues(channel_zx(cp), XmNbackground, color, NULL);
+		  }
+	      }
+	  }
     }
 }
 
@@ -326,5 +320,5 @@ void g_initialize_xgh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_snd_pixel,     g_snd_pixel, 1, 0, 0,        H_snd_pixel);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
-			       "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
+				   "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
 }

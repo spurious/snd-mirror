@@ -29,6 +29,7 @@
  * offsets could be added, but need reader-proc at init time (and isn't a very common editing operation)
  */
 
+/* TODO: after-edit-hook after-undo-hook (also change to before-edit|undo-hook?) */
 /* TODO: if edit applies to edpos not current, show that somehow in the edit-history list */
 
 /* another thing we could use: anonymous edit -- an unattached edlist passable to init-sample-read etc
@@ -3240,6 +3241,8 @@ between beg and beg + num by scaler.  If channel is omitted, the scaling applies
   else
     {
       sp = get_sp(snd);
+      if (sp == NULL)
+	return(snd_no_such_sound_error(S_scale_sound_by, snd));
       for (i = 0; i < sp->nchans; i++)
 	scale_channel(sp->chans[i], scaler, samp, XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(sp->chans[i])));
     }
@@ -3279,6 +3282,8 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
   scaler = XEN_TO_C_DOUBLE(norm);
   samp = XEN_TO_C_INT_OR_ELSE(beg, 0);
   sp = get_sp(snd);
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_scale_sound_to, snd));
   if (XEN_INTEGER_P(chn))
     {
       cp = get_cp(snd, chn, S_scale_sound_by);
@@ -3922,10 +3927,10 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin, g_insert_samples_with_origin_w, 4, 2, 0, "");
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
-					"set-" S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 0, 4);
+					    "set-" S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 0, 4);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
-					"set-" S_samples, g_set_samples_w, g_set_samples_reversed, 2, 3, 3, 5);
+					    "set-" S_samples, g_set_samples_w, g_set_samples_reversed, 2, 3, 3, 5);
 
   #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \
 If it returns #t, the file is not saved.  'name' is #f unless \

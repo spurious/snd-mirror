@@ -282,29 +282,40 @@ XEN show_stack(void) {return(XEN_FALSE);}
  */
 
 static int mem_size = 0;
-static const char *encloser = NULL;
-void set_encloser(const char *name) 
-{
-  encloser = name;
-} /* for exposing call chains */
-
 static int *pointers = NULL, *sizes = NULL, *locations = NULL;
 static char **functions = NULL, **files = NULL;
 static int *lines = NULL;
 static int mem_location = -1;
 static int mem_locations = 0;
 static int last_mem_location = -1;
+static char ***stacks = NULL;
+static int *stack_sizes = NULL;
 
-static int find_mem_location(const char *ur_func, const char *file, int line)
+static char **encloser = NULL;
+static int stack_size = 0;
+void set_encloser(const char *name) 
+{
+  /* for exposing call chains */
+#if HAVE_EXECINFO_H
+  void *ba[6];
+  int n;
+  if (name)
+    {
+      n = backtrace(ba, sizeof (ba) / sizeof (ba[0]));
+      if (n != 0)
+	{
+	  encloser = backtrace_symbols(ba, n);
+	  stack_size = n;
+	}
+      else encloser = NULL;
+    }
+  else encloser = NULL;
+#endif
+}
+
+static int find_mem_location(const char *func, const char *file, int line)
 {
   int i;
-  char *func = NULL;
-  if (encloser)
-    {
-      func = (char *)calloc(strlen(encloser) + strlen(ur_func) + 4, sizeof(char));
-      sprintf(func, "%s->%s", encloser, ur_func);
-    }
-  else func = (char *)ur_func;
   if ((last_mem_location >= 0) &&
       (line == lines[last_mem_location]) &&
       (strcmp(func, functions[last_mem_location]) == 0) &&
@@ -359,6 +370,8 @@ static void forget_pointer(void *ptr, const char *func, const char *file, int li
   if (last_remembered_ptr == (int)ptr)
     {
       pointers[last_remembered] = 0;
+      stacks[last_remembered] = NULL;
+      stack_sizes[last_remembered] = 0;
       last_forgotten = last_remembered;
       last_remembered_ptr = -1;
       return;
@@ -367,6 +380,8 @@ static void forget_pointer(void *ptr, const char *func, const char *file, int li
     if (pointers[i] == (int)ptr)
       {
 	pointers[i] = 0;
+	stacks[i] = NULL;
+	stack_sizes[i] = 0;
 	last_forgotten = i;
 	return;
       }
@@ -384,6 +399,8 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
 	  pointers = (int *)calloc(mem_size, sizeof(int));
 	  sizes = (int *)calloc(mem_size, sizeof(int));
 	  locations = (int *)calloc(mem_size, sizeof(int));
+	  stacks = (char ***)calloc(mem_size, sizeof(char **));
+	  stack_sizes = (int *)calloc(mem_size, sizeof(int));
 	  loc = 0;
 	  goto GOT_ONE;
 	}
@@ -405,11 +422,15 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
       pointers = (int *)realloc(pointers, mem_size * sizeof(int));
       sizes = (int *)realloc(sizes, mem_size * sizeof(int));
       locations = (int *)realloc(locations, mem_size * sizeof(int));
+      stacks = (char ***)realloc(stacks, mem_size * sizeof(char **));
+      stack_sizes = (int *)realloc(stack_sizes, mem_size * sizeof(int));
       for (i = loc; i < mem_size; i++)
 	{
 	  pointers[i] = 0;
 	  sizes[i] = 0;
 	  locations[i] = 0;
+	  stacks[i] = NULL;
+	  stack_sizes[i] = 0;
 	}
     }
   else
@@ -421,6 +442,11 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
   pointers[loc] = (int)ptr;
   sizes[loc] = (int)len;
   locations[loc] = find_mem_location(func, file, line);
+  if (encloser) 
+    {
+      stacks[loc] = encloser;
+      stack_sizes[loc] = stack_size;
+    }
   last_remembered = loc;
   last_remembered_ptr = (int)ptr;
 }
@@ -438,7 +464,7 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
     }
 #endif
   ptr = calloc(len, size);
-  remember_pointer(ptr, len*size, func, file, line);
+  remember_pointer(ptr, len * size, func, file, line);
   return(ptr);
 }
 
@@ -518,11 +544,18 @@ static void report_times_1(FILE *std);
 
 void mem_report(void)
 {
-  int loc, i, sum, ptr = 0;
+  int loc, i, j, k, sum, ptr = 0, have_stacks = 0;
   int *sums, *ptrs;
   FILE *Fp;
   time_t ts;
   char time_buf[TIME_STR_SIZE];
+
+  for (i = 0; i < mem_size; i++)
+    if (stacks[i])
+      {
+	have_stacks = 1;
+	break;
+      }
 
   sums = (int *)calloc(mem_location + 1, sizeof(int));
   ptrs = (int *)calloc(mem_location + 1, sizeof(int));
@@ -558,6 +591,16 @@ void mem_report(void)
 	{
 	  fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
 	  sums[ptr] = 0;
+	  if (have_stacks)
+	    {
+	      for (j = 0; j < mem_size; j++)
+		if ((stacks[j]) && (locations[j] == ptr) && (pointers[j]))
+		  {
+		    fprintf(Fp, "stack: \n");
+		    for (k = 0; k < stack_sizes[j]; k++)
+		      fprintf(Fp, "    %s\n", stacks[j][k]);
+		  }
+	    }
 	}
     }
   for (i = 0; i < 512; i++)

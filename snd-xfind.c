@@ -8,12 +8,9 @@ static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
 		     "Global Find",
-"This search travels through all the current channels \
-in parallel until a match is found.  The find \
-expression is a Scheme function of one argument,  \
-the current sample value.  It should return #t when the \
-search is satisified.  For example, (lambda (n) (> n .1) \
-looks for the next sample that is greater than .1.");
+"This search travels through all the current channels in parallel until a match is found.  The find \
+expression is a Scheme function of one argument,  the current sample value.  It should return #t when the \
+search is satisified.  For example, (lambda (n) (> n .1) looks for the next sample that is greater than .1.");
 } 
 
 static void edit_find_ok_callback(int direction, Widget w, XtPointer context, XtPointer info)

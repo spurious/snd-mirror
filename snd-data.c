@@ -648,7 +648,7 @@ chan_info *current_channel(snd_state *ss)
   return(NULL);
 }
 
-sync_info *free_sync_info (sync_info *si)
+sync_info *free_sync_info(sync_info *si)
 {
   if (si)
     {
@@ -736,7 +736,7 @@ snd_info *find_sound(snd_state *ss, char *name)
   return(NULL);
 }
 
-static char *display_max_amps(const char *filename, int chans)
+static char *display_maxamps(const char *filename, int chans)
 {
   char *ampstr;
   int i;
@@ -744,7 +744,7 @@ static char *display_max_amps(const char *filename, int chans)
   ampstr = (char *)CALLOC(chans * 32, sizeof(char));
   vals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
   mus_snprintf(ampstr,chans * 32, "\nmax amp%s: ",(chans > 1) ? "s" : "");
-  mus_sound_max_amp(filename, vals);
+  mus_sound_maxamp(filename, vals);
   for (i = 0; i < chans; i++)
     {
       strcat(ampstr, prettyf(MUS_SAMPLE_TO_FLOAT(vals[2 * i + 1]), 3));
@@ -770,8 +770,8 @@ void display_info(snd_info *sp)
 	  buffer = (char *)CALLOC(INFO_BUFFER_SIZE, sizeof(char));
 	  cstr = mus_sound_comment(sp->filename);
 	  comment = cstr;
-	  if (mus_sound_max_amp_exists(sp->filename))
-	    ampstr = display_max_amps(sp->filename, sp->nchans);
+	  if (mus_sound_maxamp_exists(sp->filename))
+	    ampstr = display_maxamps(sp->filename, sp->nchans);
 	  while ((comment) && (*comment) && 
 		 (((*comment) == '\n') || 
 		  ((*comment) == '\t') || 

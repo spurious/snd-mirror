@@ -2220,6 +2220,8 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
       if (XEN_INTEGER_P(snd1))
 	sp = get_sp(snd1);
       else sp = cp0->sound;
+      if (sp == NULL) 
+	return(snd_no_such_sound_error(S_swap_channels, snd1));
       if (cp0->sound == sp)
 	{
 	  if ((cp0->chan + 1) < sp->nchans)
