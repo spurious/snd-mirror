@@ -6,6 +6,7 @@
 #define MUS_DATE "10-Dec-01"
 
 /* 
+ * --------
  * 10-Dec:     add outctr calls, phase-vocoder bugfixes, thanks to Scott Wilson.
  * 21-Oct:     fill in some set-data methods.
  * 1-Sep:      mus_polar2rectangular.

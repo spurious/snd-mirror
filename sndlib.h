@@ -631,6 +631,7 @@ int mus_midi_close                  PROTO((int line));
 int mus_midi_read                   PROTO((int line, unsigned char *buffer, int bytes));
 int mus_midi_write                  PROTO((int line, unsigned char *buffer, int bytes));
 char *mus_midi_device_name          PROTO((int sysdev));
+char *mus_midi_describe             PROTO((void));
 #if HAVE_EXTENSION_LANGUAGE
   void mus_midi_init                PROTO((void));
 #endif

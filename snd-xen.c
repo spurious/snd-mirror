@@ -3306,53 +3306,6 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #endif
 #endif
 
-#if 0
-#if HAVE_GUILE && HAVE_SCM_LIST_N
-static int after_hooked = 0, before_hooked = 0;
-static XEN after_hook = XEN_FALSE;
-static XEN before_hook = XEN_FALSE;
-static void *after_gc(void *hook_data, void *func_data, void *data)
-{
-  XEN_CALL_0(after_hook, "gc-after-hook");
-  return NULL;
-}
-
-static void *before_gc(void *hook_data, void *func_data, void *data)
-{
-  XEN_CALL_0(before_hook, "gc-before-hook");
-  return NULL;
-}
-
-static XEN gc_after_hook(XEN code)
-{
-  extern scm_t_c_hook scm_after_gc_c_hook;
-  if (XEN_PROCEDURE_P(after_hook)) snd_unprotect(after_hook);
-  snd_protect(code);
-  after_hook = code;
-  if (!after_hooked)
-    {
-      scm_c_hook_add(&scm_after_gc_c_hook, after_gc, NULL, 0);
-      after_hooked = 1;
-    }
-  return(XEN_FALSE);
-}
-
-static XEN gc_before_hook(XEN code)
-{
-  extern scm_t_c_hook scm_before_gc_c_hook;
-  if (XEN_PROCEDURE_P(before_hook)) snd_unprotect(before_hook);
-  snd_protect(code);
-  before_hook = code;
-  if (!before_hooked)
-    {
-      scm_c_hook_add(&scm_before_gc_c_hook, before_gc, NULL, 0);
-      before_hooked = 1;
-    }
-  return(XEN_FALSE);
-}
-#endif
-#endif
-
 #if HAVE_STATIC_XM
 #if HAVE_GUILE
  XEN init_xm(void);
@@ -3370,13 +3323,6 @@ static XEN g_global_state(void)
 void g_initialize_gh(snd_state *ss)
 {
   state = ss;
-
-#if 0
-#if HAVE_GUILE && HAVE_SCM_LIST_N
-  XEN_DEFINE_PROCEDURE("gc-after-hook", gc_after_hook, 1, 0, 0, "");
-  XEN_DEFINE_PROCEDURE("gc-before-hook", gc_before_hook, 1, 0, 0, "");
-#endif
-#endif
 
   XEN_DEFINE_PROCEDURE("show-stack", show_stack, 0 ,0, 0, "show stack trace");
   XEN_DEFINE_PROCEDURE("snd-global-state", g_global_state, 0, 0, 0, "internal testing function");
@@ -3690,7 +3636,6 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_file_save_as_dialog, g_file_save_as_dialog_w, 0, 0, 0, H_file_save_as_dialog);
   XEN_DEFINE_PROCEDURE(S_help_dialog,         g_help_dialog_w, 2, 0, 0,         H_help_dialog);
   XEN_DEFINE_PROCEDURE(S_mix_panel,           g_mix_panel_w, 0, 0, 0,           H_mix_panel);
-
   XEN_DEFINE_PROCEDURE(S_max_sounds,          g_max_sounds_w, 0, 0, 0,          H_max_sounds);
   XEN_DEFINE_PROCEDURE(S_sounds,              g_sounds_w, 0, 0, 0,              H_sounds);
   XEN_DEFINE_PROCEDURE(S_yes_or_no_p,         g_yes_or_no_p_w, 1, 0, 0,         H_yes_or_no_p);
@@ -3710,10 +3655,6 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w, 0, 1, 0, H_finish_progress_report);
   XEN_DEFINE_PROCEDURE(S_progress_report,     g_progress_report_w, 1, 4, 0,     H_progress_report);
   XEN_DEFINE_PROCEDURE(S_snd_print,           g_snd_print_w, 1, 0, 0,           H_snd_print);
-
-  XEN_DEFINE_PROCEDURE("describe-audio",      g_mus_audio_describe_w, 0, 0, 0,  H_mus_audio_describe);
-  /* this (describe-audio) is going away someday */
-
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe,  g_mus_audio_describe_w, 0, 0, 0,  H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w, 0, 0, 0,       "return #t if host is little endian");
   XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w, 1, 0, 0,      "return completion of arg");
@@ -3745,14 +3686,14 @@ If more than one hook function, results are concatenated. If none, the current c
 
   #define H_print_hook S_print_hook " (text) is called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
-(add-hook! print-hook \n\
-  (lambda (msg) \n\
-    (snd-print \n\
-      (format #f \"~A~%[~A]~%~A\" \n\
-              msg \n\
-              (strftime \"%d-%b %H:%M %Z\" \n\
-                         (localtime (current-time))) \n\
-              (listener-prompt)))))"
+  (add-hook! print-hook \n\
+    (lambda (msg) \n\
+      (snd-print \n\
+        (format #f \"~A~%[~A]~%~A\" \n\
+                msg \n\
+                (strftime \"%d-%b %H:%M %Z\" \n\
+                           (localtime (current-time))) \n\
+                (listener-prompt)))))"
 
   XEN_DEFINE_HOOK(during_open_hook,    S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
   XEN_DEFINE_HOOK(after_open_hook,     S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
@@ -3824,7 +3765,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                     (lambda ()\
                                       (apropos (if (string? val) val (object->string val)))))))");
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
-  XEN_EVAL_C_STRING("(print-enable 'source)");  /* added 13-Feb-01 */
+  XEN_EVAL_C_STRING("(print-enable 'source)");  /* added 13-Feb-01 -- print closures with source  */
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-last-file-loaded #f)");

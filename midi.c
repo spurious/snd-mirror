@@ -4,6 +4,7 @@
 /* TODO: OSX support
  *       document and test
  *       proper error handling
+ *       tie into CLM (rt.lisp, sndlib2clm.lisp etc)
  */
 
 /*
@@ -12,13 +13,12 @@
  * int mus_midi_close(int line)
  * int mus_midi_read(int line, unsigned char *buffer, int bytes)
  * int mus_midi_write(int line, unsigned char *buffer, int bytes)
- * char *mus_midi_device_name(int sysdev)
+ * char *mus_midi_device_name(int sysdev)  [don't free result]
+ * char *mus_midi_describe(void)           [free result]
  *
- *    not implemented:
- * char *mus_midi_describe()
- * int mus_midi_flush()
+ *    not implemented (not sure it's needed): int mus_midi_flush(line)
  *
- * currently OSS, ALSA, SGI (none tested), some notes on OSX
+ * currently OSS, ALSA, SGI (both libraries), some of OSX
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -51,11 +51,16 @@
   int mus_midi_read(int line, unsigned char *buffer, int bytes);
   int mus_midi_write(int line, unsigned char *buffer, int bytes);
   char *mus_midi_device_name(int sysdev);
+  char *mus_midi_describe(void);
   #define MUS_AUDIO_SYSTEM(n) (((n) >> 16) & 0xffff)
   #define MUS_AUDIO_DEVICE(n) ((n) & 0xffff)
   #if HAVE_EXTENSION_LANGUAGE
     void mus_midi_init(void);
   #endif
+  #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
+  #define MALLOC(a)     malloc((size_t)(a))
+  #define FREE(a)       free(a)
+  #define REALLOC(a, b) realloc(a, (size_t)(b))
 #endif
 
 
@@ -70,8 +75,8 @@
 #endif
 
 #define MIDI_OK
-#define DEV_BUFSIZE 64
-#define MIDI_READ 0
+#define DEV_BUFSIZE 64  /* what is this for? */
+#define MIDI_READ 0     /* do we need MIDI_READ_WRITE? */
 #define MIDI_WRITE 1
 
 static snd_rawmidi_t **midi_lines = NULL;
@@ -192,7 +197,37 @@ char *mus_midi_device_name(int sysdev)
   return(devname);
 }
 
-/* snd_rawmidi_drop to clear */
+/* snd_rawmidi_drop to clear or snd_rawmidi_drain|flush_output */
+
+char *mus_midi_describe(void) 
+{
+  int;
+  snd_rawmidi_t *line;
+  snd_rawmidi_info_t *info;
+  char *buf = NULL;
+  char one[256];
+  snd_rawmidi_info_malloc(&info);
+  buf = (char *)CALLOC(1024, sizeof(char));
+  for (i = 0; ; i++)
+    {
+      err = snd_rawmidi_open(&line, NULL, mus_midi_device_name(i << 16), SND_RAWMIDI_NONBLOCK); /* do the "devices" matter here? */
+      if (err < 0) break;
+      err = snd_rawmidi_info(line, info);
+      if (err < 0) break;
+      sprintf(one, "%s: device: %d, stream: %d, flags: %x, id: %d, name: %s[%s; %d]\n", /* what are all these things? */
+	      mus_midi_device_name(i << 16),
+	      snd_rawmidi_info_get_device(info),
+	      snd_rawmidi_info_get_stream(info),
+	      snd_rawmidi_info_get_flags(info),
+	      snd_rawmidi_info_get_id(info),
+	      snd_rawmidi_info_get_name(info),
+	      snd_rawmidi_info_get_subdevice_name(info),
+	      snd_rawmidi_info_get_subdevices_count(info));
+      strcat(buf, one);
+    }
+  snd_rawmidi_info_free(info);
+  return(buf);
+}
 
 #endif
 
@@ -211,6 +246,18 @@ static int *midi_directions = NULL;
 static char **midi_names = NULL;
 static int midis = 0;
 static int midi_initialized = 0;
+static int midi_ports = 0;
+
+static void mus_midi_initialize(void)
+{
+  if (midi_initialized == 0)
+    {
+      midi_ports = mdInit();
+      if (midi_ports == -1)
+	fprintf(stderr,"startmidi not called?");
+      midi_initialized = 1;
+    }
+}
 
 static int new_midi_line(const char *name, MDport line, int input)
 {
@@ -249,11 +296,7 @@ static int new_midi_line(const char *name, MDport line, int input)
 int midi_open(const char *name, int input)
 {
   MDport md;
-  if (midi_initialized == 0)
-    {
-      mdInit();
-      midi_initialized = 1;
-    }
+  mus_midi_initialize();
   if (input == MIDI_READ)
     md = mdOpenInPort((char *)name);
   else md = mdOpenOutPort((char *)name);
@@ -323,12 +366,26 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
 
 char *mus_midi_device_name(int sysdev)
 {
-  if (midi_initialized == 0)
-    {
-      mdInit();
-      midi_initialized = 1;
-    }
+  mus_midi_initialize();
   return(mdGetName(MUS_AUDIO_DEVICE(sysdev)));
+}
+
+char *mus_midi_describe(void)
+{
+  int i;
+  char *buf = NULL;
+  char name[64];
+  mus_midi_initialize(); 
+  if (midi_ports > 0)
+    {
+      buf = (char *)CALLOC(midi_ports * 64, sizeof(char));
+      for (i = 0; i < midi_ports; i++)
+	{
+	  sprintf(name, "%s\n", mdGetName(i));
+	  strcat(buf, name);
+	}
+    }
+  return(buf);
 }
 
 #endif
@@ -337,12 +394,82 @@ char *mus_midi_device_name(int sysdev)
 /* ---------------- OSS ---------------- */
 #if HAVE_OSS
 #define MIDI_OK
+
+#include <sys/ioctl.h>
+
+#if (USR_LIB_OSS)
+  #include "/usr/lib/oss/include/sys/soundcard.h"
+#else
+  #if (USR_LOCAL_LIB_OSS)
+    #include "/usr/local/lib/oss/include/sys/soundcard.h"
+  #else
+    #if (OPT_OSS)
+      #include "/opt/oss/include/sys/soundcard.h"
+    #else
+      #if (VAR_LIB_OSS)
+        #include "/var/lib/oss/include/sys/soundcard.h"
+      #else
+        #if defined(HAVE_SYS_SOUNDCARD_H) || defined(LINUX) || defined(UW2)
+          #include <sys/soundcard.h>
+        #else
+          #if defined(HAVE_MACHINE_SOUNDCARD_H)
+            #include <machine/soundcard.h>
+          #else
+            #include <soundcard.h>
+          #endif
+        #endif
+      #endif
+    #endif
+  #endif
+#endif
+
 int mus_midi_open_read(const char *name) {return(open(name, O_RDONLY, 0));}  /* name should be "/dev/sequencer" */
 int mus_midi_open_write(const char *name) {return(open(name, O_RDWR, 0));}   /* O_WRONLY? */
 int mus_midi_close(int line) {return(close(line));}
 int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(read(line, buffer, bytes));}
 int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(write(line, buffer, bytes));}
 char *mus_midi_device_name(int sysdev) {return("/dev/sequencer");}
+
+char *mus_midi_describe(void)
+{
+  /* taken from audio.c 3067 */
+  int fd, status, i, numdevs;
+  char *buf = NULL;
+  char info[256];
+  struct midi_info minfo;
+  fd = open("/dev/sequencer", O_RDWR, 0);
+  if (fd == -1) fd = open("/dev/sequencer", O_RDONLY, 0);
+  if (fd != -1)
+    {
+      status = ioctl(fd, SNDCTL_SEQ_NRMIDIS, &numdevs);
+      if (status == -1) 
+	{ 
+	  /* not strdup for memcheck consistency */
+	  char *newstr;
+	  close(fd);
+	  newstr = (char *)CALLOC(16, sizeof(char));
+	  strcpy(newstr, "no midi");
+	  return(newstr);
+	}
+      else
+	{
+	  buf = (char *)CALLOC(1024, sizeof(char));
+	  sprintf(buf, "%d midi device%s installed\n", numdevs, (numdevs == 1) ? "" : "s"); 
+	  for (i = 0; i < numdevs; i++)
+	    {
+	      minfo.device = i;
+	      status = ioctl(fd, SNDCTL_MIDI_INFO, &minfo);
+	      if (status != -1)
+		{
+		  sprintf(info, "  dev %d: %s\n", i, minfo.name); 
+		  strcat(buf, info);
+		}
+	    }
+	}
+    }
+  return(buf);
+}
+
 #endif
 
 
@@ -350,7 +477,53 @@ char *mus_midi_device_name(int sysdev) {return("/dev/sequencer");}
 /*
  * MIDIInput|OutputPortCreate(90)
  * MIDIPortDispose, MIDISend, MIDIReceived (not a typo) -- based on "packet lists" (sigh...)
+ *
+ * forced to go through callbacks here, so we'll have to buffer junk ourselves (read side)
  */
+#if 0
+#ifdef MAC_OSX
+#define MIDI_OK
+#include <CoreMIDI/MIDIServices.h>
+/* #include <CoreFoundation/CFRunLoop.h> */
+
+char *mus_midi_describe(void)
+{
+  int i, n;
+  MIDIDeviceRef dev;
+  CFStringRef cs1, cs2, cs3;
+  char name[64], mfg[64], model[64], all[192];
+  char *buf;
+  n = MIDIGetNumberOfDevices();
+  buf = (char *)CALLOC(n * 192, sizeof(char));
+  for (i = 0; i < n; i++) 
+    {
+      dev = MIDIGetDevice(i);
+      MIDIObjectGetStringProperty(dev, kMIDIPropertyName, &cs1);
+      MIDIObjectGetStringProperty(dev, kMIDIPropertyMfgacturer, &cs2);
+      MIDIObjectGetStringProperty(dev, kMIDIPropertyModel, &cs3);
+      CFStringGetCString(cs1, name, sizeof(name), 0);
+      CFStringGetCString(cs2, mfg, sizeof(mfg), 0);
+      CFStringGetCString(cs3, model, sizeof(model), 0);
+      CFRelease(cs1);
+      CFRelease(cs2);
+      CFRelease(cs3);
+      sprintf(all, "%s (%s): %s\n", name, mfg, model);
+      strcat(buf, all);
+    }
+  return(buf);
+}
+
+int mus_midi_open_read(const char *name) {return(-1);}
+int mus_midi_open_write(const char *name) {return(-1);}
+int mus_midi_close(int line) {return(-1);}
+int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(-1);}
+int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(-1);}
+char *mus_midi_device_name(int sysdev) {return("none");}
+
+#endif
+#endif
+
+
 
 /* ---------------- stubs ---------------- */
 #ifndef MIDI_OK
@@ -359,7 +532,8 @@ int mus_midi_open_write(const char *name) {return(-1);}
 int mus_midi_close(int line) {return(-1);}
 int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(-1);}
 int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(-1);}
-char *mus_midi_device_name(int sysdev) {return("none");}
+char *mus_midi_device_name(int sysdev) {return("none");} /* result should not be freed by caller */
+char *mus_midi_describe(void) {return(NULL);}            /* result should be freed by caller (if not NULL) */
 #endif
 
 
@@ -370,12 +544,13 @@ char *mus_midi_device_name(int sysdev) {return("none");}
 
 #include "xen.h"
 
-#define S_mus_midi_open_read   "midi-open-read"
-#define S_mus_midi_open_write  "midi-open-write"
-#define S_mus_midi_read        "midi-read"
-#define S_mus_midi_write       "midi-write"
-#define S_mus_midi_close       "midi-close"
-#define S_mus_midi_device_name "midi-device-name"
+#define S_mus_midi_open_read   "mus-midi-open-read"
+#define S_mus_midi_open_write  "mus-midi-open-write"
+#define S_mus_midi_read        "mus-midi-read"
+#define S_mus_midi_write       "mus-midi-write"
+#define S_mus_midi_close       "mus-midi-close"
+#define S_mus_midi_device_name "mus-midi-device-name"
+#define S_mus_midi_describe    "mus-midi-describe"
 
 static XEN g_mus_midi_open_read(XEN name)
 {
@@ -447,14 +622,47 @@ static XEN g_mus_midi_device_name(XEN dev)
   return(C_TO_XEN_STRING(mus_midi_device_name(XEN_TO_C_INT_OR_ELSE(dev, 0))));
 }
 
+static XEN g_mus_midi_describe(void)
+{
+  #define H_mus_midi_describe "(" S_mus_midi_describe ") returns a description of the midi hardware"
+  char *str;
+  XEN res = XEN_FALSE;
+  str = mus_midi_describe();
+  if (str)
+    {
+      res = C_TO_XEN_STRING(str);
+      FREE(str);
+    }
+  return(res);
+}
+
+#ifdef XEN_ARGIFY_1
+  XEN_NARGIFY_1(g_mus_midi_open_read_w, g_mus_midi_open_read)
+  XEN_NARGIFY_1(g_mus_midi_open_write_w, g_mus_midi_open_write)
+  XEN_NARGIFY_2(g_mus_midi_read_w, g_mus_midi_read)
+  XEN_NARGIFY_2(g_mus_midi_write_w, g_mus_midi_write)
+  XEN_NARGIFY_1(g_mus_midi_close_w, g_mus_midi_close)
+  XEN_ARGIFY_1(g_mus_midi_device_name_w, g_mus_midi_device_name)
+  XEN_NARGIFY_0(g_mus_midi_describe_w, g_mus_midi_describe)
+#else
+  #define g_mus_midi_open_read_w g_mus_midi_open_read
+  #define g_mus_midi_open_write_w g_mus_midi_open_write
+  #define g_mus_midi_read_w g_mus_midi_read
+  #define g_mus_midi_write_w g_mus_midi_write
+  #define g_mus_midi_close_w g_mus_midi_close
+  #define g_mus_midi_device_name_w g_mus_midi_device_name
+  #define g_mus_midi_describe_w g_mus_midi_describe
+#endif
+
 void mus_midi_init(void)
 {
-  XEN_DEFINE_PROCEDURE(S_mus_midi_open_read,   g_mus_midi_open_read, 1, 0, 0,   H_mus_midi_open_read);
-  XEN_DEFINE_PROCEDURE(S_mus_midi_open_write,  g_mus_midi_open_write, 1, 0, 0,  H_mus_midi_open_write);
-  XEN_DEFINE_PROCEDURE(S_mus_midi_close,       g_mus_midi_close, 1, 0, 0,       H_mus_midi_close);
-  XEN_DEFINE_PROCEDURE(S_mus_midi_read,        g_mus_midi_read, 2, 0, 0,        H_mus_midi_read);
-  XEN_DEFINE_PROCEDURE(S_mus_midi_write,       g_mus_midi_write, 2, 0, 0,       H_mus_midi_write);
-  XEN_DEFINE_PROCEDURE(S_mus_midi_device_name, g_mus_midi_device_name, 0, 1, 0, H_mus_midi_device_name);
+  XEN_DEFINE_PROCEDURE(S_mus_midi_open_read,   g_mus_midi_open_read_w, 1, 0, 0,   H_mus_midi_open_read);
+  XEN_DEFINE_PROCEDURE(S_mus_midi_open_write,  g_mus_midi_open_write_w, 1, 0, 0,  H_mus_midi_open_write);
+  XEN_DEFINE_PROCEDURE(S_mus_midi_close,       g_mus_midi_close_w, 1, 0, 0,       H_mus_midi_close);
+  XEN_DEFINE_PROCEDURE(S_mus_midi_read,        g_mus_midi_read_w, 2, 0, 0,        H_mus_midi_read);
+  XEN_DEFINE_PROCEDURE(S_mus_midi_write,       g_mus_midi_write_w, 2, 0, 0,       H_mus_midi_write);
+  XEN_DEFINE_PROCEDURE(S_mus_midi_device_name, g_mus_midi_device_name_w, 0, 1, 0, H_mus_midi_device_name);
+  XEN_DEFINE_PROCEDURE(S_mus_midi_describe,    g_mus_midi_describe_w, 0, 0, 0,    H_mus_midi_describe);
 }
 
 #endif
