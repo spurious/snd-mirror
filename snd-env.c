@@ -1374,7 +1374,7 @@ static SCM g_save_envelopes(SCM filename)
   FILE *fd;
   SCM_ASSERT((gh_string_p(filename) || (SCM_FALSEP(filename)) || (SCM_UNBNDP(filename))), filename, SCM_ARG1, S_save_envelopes);
   if (gh_string_p(filename)) 
-    name = mus_file_full_name(TO_C_STRING(filename));
+    name = mus_expand_filename(TO_C_STRING(filename));
   else name = copy_string("envs.save");
   fd = fopen(name, "w");
   if (fd) save_envelope_editor_state(fd);

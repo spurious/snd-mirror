@@ -91,7 +91,6 @@
 #endif
 
 #if 0
-/* this is not compatible with the Sun and the whole thing strikes me as flawed */
 #if HAVE_GETTEXT
   #include <libintl.h>
   #define _(String) gettext (String)

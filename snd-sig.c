@@ -3692,7 +3692,7 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
 	amp = 0.0;
       else amp = 1.0;
     }
-  fname = mus_file_full_name(TO_C_STRING(file));
+  fname = mus_expand_filename(TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
       error = convolve_with_or_error(fname, amp, cp);
@@ -3786,7 +3786,7 @@ convolves the current selection with file; amp is the resultant peak amp"
 	amp = 0.0;
       else amp = 1.0;
     }
-  fname = mus_file_full_name(TO_C_STRING(file));
+  fname = mus_expand_filename(TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
       error = convolve_with_or_error(fname, amp, NULL);

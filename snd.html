@@ -523,9 +523,8 @@ the variables <a href="extsnd.html#defaultoutputtype">default-output-type</a>
 and friends, or from a dialog that pops up when not every decision has been
 made in advance.
 A raw data file gets its srate, chans,
-and data format information either from the variables
-<a href="extsnd.html#rawsrate">raw-srate</a> and friends (if <a href="extsnd.html#userawdefaults">use-raw-defaults</a> is #t), or
-from a dialog window that pops up when such a file
+and data format information either from the open-raw-sound-hook
+or from a dialog window that pops up when such a file
 is opened. The file types listed above as "automatically translated" are
 decoded upon being opened, rewritten in Sun 16-bit format
 to a new file with an added (possibly redundant) extension .snd,

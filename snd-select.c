@@ -913,7 +913,7 @@ saves the current selection in filename using the indicated file attributes"
   if (gh_string_p(comment)) 
     com = TO_NEW_C_STRING(comment); 
   else com = NULL;
-  fname = mus_file_full_name(TO_C_STRING(filename));
+  fname = mus_expand_filename(TO_C_STRING(filename));
   old_mus_error = mus_error_set_handler(mus_local_error);
   err = save_selection(ss, fname, type, format, sr, com);
   mus_error_set_handler(old_mus_error);

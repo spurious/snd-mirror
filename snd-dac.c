@@ -2534,7 +2534,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   if (gh_string_p(samp_n))
     {
       /* filename beg end background syncd ignored */
-      name = mus_file_full_name(TO_C_STRING(samp_n));
+      name = mus_expand_filename(TO_C_STRING(samp_n));
       if (!(mus_file_probe(name)))
 	return(scm_throw(NO_SUCH_FILE,
 			 SCM_LIST2(TO_SCM_STRING(S_play),
@@ -2606,7 +2606,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   return(SCM_BOOL_T);
 }
 
-#define TO_C_BOOLEAN_OR_F(n) ((SCM_TRUE_P(n)) ? 1 : (to_c_int_or_else(n, 0, __FUNCTION__)))
+#define TO_C_BOOLEAN_OR_F(a) ((SCM_TRUE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 1))) ? 1 : 0)
 
 static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n) 
 {

@@ -3272,7 +3272,7 @@ static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info)
       if ((str) && (*str))
 	{
 	  if (rp->output_file) FREE(rp->output_file);
-	  rp->output_file = mus_file_full_name(str);
+	  rp->output_file = mus_expand_filename(str);
 	  XtFree(str);
 	  str = NULL;
 	  old_srate = rp->srate;

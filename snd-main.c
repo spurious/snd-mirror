@@ -759,7 +759,7 @@ static SCM g_save_options(SCM filename)
   char *name = NULL;
   FILE *fd;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_options);
-  name = mus_file_full_name(TO_C_STRING(filename));
+  name = mus_expand_filename(TO_C_STRING(filename));
   fd = fopen(name, "w");
   if (name) FREE(name);
   if (fd) 
@@ -800,7 +800,7 @@ void g_init_main(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_save_state,   SCM_FNC g_save_state, 1, 0, 0),   H_save_state);
   DEFINE_PROC(gh_new_procedure(S_exit,         SCM_FNC g_exit, 0, 1, 0),         H_exit);
 
-  gh_new_procedure("mem-report", SCM_FNC g_mem_report, 0, 0, 0);
+  DEFINE_PROC(gh_new_procedure("mem-report",   SCM_FNC g_mem_report, 0, 0, 0), "(mem-report) writes memory usage stats to memlog");
 
 #if HAVE_HOOKS
   #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."

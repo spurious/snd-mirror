@@ -110,7 +110,7 @@ S_vct2sound_data
 static int sndlib_num_commands(void) {return(NUM_SNDLIB_NAMES);}
 static const char **sndlib_commands(void) {return(sndlib_names);}
 
-#define NUM_COMMANDS 558
+#define NUM_COMMANDS 554
 
 static char *snd_commands[NUM_COMMANDS] ={
   S_abort, S_activate_listener, S_add_mark, S_add_player, S_add_sound_file_extension, 
@@ -198,7 +198,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_previous_files_sort, S_previous_sample, S_print_length,
   S_progress_report, S_prompt_in_minibuffer, S_protect_region, S_pushed_button_color,
 
-  S_raw_chans, S_raw_format, S_raw_srate, S_read_only,
+  S_read_only,
   S_recorder_autoload, S_recorder_buffer_size, S_recorder_dialog,
   S_recorder_file, S_recorder_gain, S_recorder_in_amp, S_recorder_in_format, 
   S_recorder_max_duration, S_recorder_out_amp, S_recorder_out_chans,
@@ -239,7 +239,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_transform_size, S_transform_type, S_trap_segfault,
 
   S_unbind_key, S_undo, S_undo_hook, S_uniting, S_update_fft, S_update_graph, S_update_lisp_graph, 
-  S_update_sound, S_use_raw_defaults, S_use_sinc_interp,
+  S_update_sound, S_use_sinc_interp,
 
   S_vct2list, S_vct_samples, S_vct_sound_file, S_vct_addB, S_vct_copy, S_vct_doB, S_vct_fillB, S_vct_length, S_vct_mapB, S_vct_moveB,
   S_vct_multiplyB, S_vct_offsetB, S_vct_peak, S_vct_ref, S_vct_scaleB, S_vct_setB, S_vct_subtractB, S_vct_p, S_vcts_doB, S_vcts_mapB,
@@ -458,7 +458,7 @@ char *filename_completer(char *text)
   struct dirent *dirp;
   DIR *dpos;
 
-  full_name = mus_file_full_name(text);
+  full_name = mus_expand_filename(text);
   len = snd_strlen(full_name);
   for (i = len-1; i > 0; i--)
     if (full_name[i] == '/')

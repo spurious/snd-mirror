@@ -315,6 +315,11 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   char *mem_stats(snd_state *ss, int ub);
 #endif
 
+#if DEBUGGING
+  void report_header_stats(int *vals);
+  void report_sound_stats(int *vals);
+#endif
+
 void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 {
 #if (!USE_NO_GUI)
@@ -341,7 +346,7 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
     {
       region_stats(vals);
       str = (char *)CALLOC(256, sizeof(char));
-      sprintf(str, "\nregions (%d): %s + %s\n",
+      sprintf(str, "\nregions (%d): array: %s + file: %s\n",
 	      regs,
 	      r0 = kmg(vals[0]),
 	      r1 = kmg(vals[1]));
@@ -377,31 +382,55 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
   GUI_STATS_TEXT_INSERT(stats_form, pos, str);
   free(str);
 #endif
-#if HAVE_GUILE && HAVE_CLOCK
+#if HAVE_GUILE && HAVE_CLOCK && HAVE_LONG_LONGS
   {
     SCM stats;
+    long long gc_swept = 0, gc_heap = 0, gc_cells = 0;
+    Float gc_time;
     stats = scm_gc_stats();
     if (gh_list_p(stats))
       {
+	if (gh_length(stats) > 7)
+	  gc_swept = scm_num2long_long(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(9))), (char *)SCM_ARG1, __FUNCTION__);
+	gc_heap = scm_num2long_long(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(2))), (char *)SCM_ARG1, __FUNCTION__);
+	gc_cells = scm_num2long_long(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(1))), (char *)SCM_ARG1, __FUNCTION__);
+	gc_time = (float)TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(0)))) * (1000.0 / (float)CLOCKS_PER_SEC);
 	str = (char *)CALLOC(2048,sizeof(char));
 	if (gh_length(stats) > 7)
 	  sprintf(str,
-		  "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %d (%d gc'd)\n  heap size: %d",
-		  (float)TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(0)))) * 1000.0 / (float)CLOCKS_PER_SEC, /* gc_time_taken */
+		  "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %Ld (%Ld gc'd)\n  heap size: %Ld",
+		  gc_time,
 		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(5)))),     /* times */
-		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(1)))),     /* cells allocated */
-		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(9)))),     /* cells swept */
-		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(2)))));    /* heap size */
+		  gc_cells,
+		  gc_swept,
+		  gc_heap);
 	else
 	  sprintf(str,
-		  "\nGuile:\n  gc time: %.2f secs\n  cells: %d\n  heap size: %d",
-		  (float)TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(0)))) * 1000.0 / (float)CLOCKS_PER_SEC,
-		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(1)))),
-		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(2)))));
+		  "\nGuile:\n  gc time: %.2f secs\n  cells: %Ld\n  heap size: %Ld",
+		  gc_time,
+		  gc_cells,
+		  gc_heap);
 	pos = GUI_TEXT_END(stats_form);
 	GUI_STATS_TEXT_INSERT(stats_form, pos, str);
 	FREE(str);
       }
+  }
+#endif
+#if DEBUGGING
+  {
+    char *str;
+    int vals[6];
+    int sfs[3];
+    str = (char *)CALLOC(2048,sizeof(char));
+    report_header_stats(vals);
+    report_sound_stats(sfs);
+    sprintf(str, "\n\nHeader:\n  reads: %d, writes: %d, updates: %d\n  seeks: %d, size-seeks: %d, empty chunks: %d\n  sf-seeks: %d, table-seeks: %d\n",
+	    vals[1], vals[0], vals[2],
+	    vals[3], vals[4], vals[5],
+	    sfs[0], sfs[1]);
+    pos = GUI_TEXT_END(stats_form);
+    GUI_STATS_TEXT_INSERT(stats_form, pos, str);
+    FREE(str);
   }
 #endif
 #endif

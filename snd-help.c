@@ -265,6 +265,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+21-Mar:  mus-expand-filename.\n\
+         open-raw-sound-hook (old raw-* variables are obsolete).\n\
 20-Mar:  mouse-enter-label hook function needs full filename (thanks to Anders Vinjar).\n\
 19-Mar:  snd 4.12.\n\
          removed gdbm support from sndlib.\n\
@@ -296,9 +298,6 @@ void news_help(snd_state *ss)
                lisp-graph-hook, recolor-widget, show-backtrace.\n\
                make-graph-data, graph-data, property-changed-hook.\n\
 28-Feb:  added enved-hook with enved-add-point, enved-delete-point, and enved-move-point.\n\
-26-Feb:  Tab-completion is much smarter in Guile 1.4.1.\n\
-23-Feb:  --with-gsl is the default in configure.\n\
-21-Feb:  snd 4.11.\n\
 ",
 NULL);
   FREE(info);
@@ -1008,9 +1007,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_prefix_arg "            nil\n\
   " S_print_length "          12\n\
   " S_pushed_button_color "   lightsteelblue1\n\
-  " S_raw_chans "             1\n\
-  " S_raw_format "            " S_mus_bshort "\n\
-  " S_raw_srate "             44100\n\
   " S_recorder_autoload "     #f\n\
   " S_recorder_buffer_size "  4096\n\
   " S_recorder_file "         nil\n\
@@ -1055,7 +1051,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_text_focus_color "      white\n\
   " S_transform_type "        " S_fourier_transform " (snd #t) (chn #t)\n\
   " S_trap_segfault "         #t\n\
-  " S_use_raw_defaults "      #f\n\
   " S_use_sinc_interp "       #f\n\
   " S_verbose_cursor "        #f (snd #t) (chn #t)\n\
   " S_vu_font "               nil\n\

@@ -94,8 +94,12 @@ Just as a quick example:
 
   (set! (fft-size) 4096)
 
-sets the fft size to 4096 -- the syntax is Scheme  which is a
-variant of Lisp; see the urls below for some Scheme tutorials.
+sets the fft size to 4096, and
+
+  (scale-by 2.0)
+
+scales the current sound's volume by 2.0 -- the syntax is Scheme,
+a variant of Lisp; see the urls below for some Scheme tutorials.
 The details of Snd customization are discussed in extsnd.html
 and grfsnd.html.
 
@@ -121,7 +125,7 @@ If you want bigger colormaps and have the requisite video memory,
 define WITH_BIG_COLORMAP (see snd.h).
 
 There are precompiled binaries available at the ccrma-ftp site
-mentioned above: linux-snd (or linux-snd.gz) and xlinux-snd for Linux
+mentioned above: linux-snd (or linux-snd.gz) for Linux
 on a PC; sun-snd for the Sun; also RPM (Redhat package management)
 files that contain the Linux/PC version, (snd-4-12.i386.rpm), the
 sources (snd-4-12.src.rpm), and the LinuxPPC version (snd-4-12.ppc.rpm).

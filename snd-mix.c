@@ -1092,7 +1092,7 @@ int mix_complete_file(snd_info *sp, char *str, const char *origin, int with_tag)
   if ((sp) && (str) && (*str))
     {
       clear_minibuffer(sp);
-      fullname = mus_file_full_name(str);
+      fullname = mus_expand_filename(str);
       nc = mus_sound_chans(fullname);
       if (nc != -1)
 	{
@@ -3643,7 +3643,7 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
   int beg, err = 0;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mix_sound);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(start_samp)), start_samp, SCM_ARG1, S_mix_sound);
-  filename = mus_file_full_name(TO_C_STRING(file));
+  filename = mus_expand_filename(TO_C_STRING(file));
   beg = TO_C_INT_OR_ELSE(start_samp, 0);
   ss = get_global_state();
   sp = any_selected_sound(ss);  /* why not as arg?? -- apparently this is assuming CLM with-sound explode */
@@ -3780,7 +3780,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
   SCM_ASSERT(INT_OR_ARG_P(file_chn), file_chn, SCM_ARG3, S_mix);
   SND_ASSERT_CHAN(S_mix, snd_n, chn_n, 4);
   SCM_ASSERT((gh_number_p(console)) || (gh_boolean_p(console)) || (SCM_UNBNDP(console)), console, SCM_ARG6, S_mix);
-  name = mus_file_full_name(TO_C_STRING(file));
+  name = mus_expand_filename(TO_C_STRING(file));
   ss = get_global_state();
   if (SCM_UNBNDP(console))
     with_mixer = with_mix_tags(ss);

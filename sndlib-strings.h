@@ -122,5 +122,6 @@
 #define S_mus_file_set_data_clipped     "mus-file-set-data-clipped"
 #define S_mus_file_prescaler            "mus-file-prescaler"
 #define S_mus_file_set_prescaler        "mus-file-set-prescaler"
+#define S_mus_expand_filename           "mus-expand-filename"
 
 #endif

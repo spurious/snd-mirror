@@ -621,7 +621,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
 #endif
   if ((ss->init_file) && (noi == 0))
     {
-      str = mus_file_full_name(ss->init_file);
+      str = mus_expand_filename(ss->init_file);
       fd = open(str, O_RDONLY, 0);
       if (fd != -1) 
 	{
@@ -636,7 +636,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
 void snd_load_file(char *filename)
 {
   char *str = NULL, *str1 = NULL;
-  str = mus_file_full_name(filename);
+  str = mus_expand_filename(filename);
   if (!mus_file_probe(str))
     {
       /* try tacking on .scm */
@@ -818,7 +818,6 @@ static SCM g_set_corruption_time(SCM val)
   return(TO_SCM_DOUBLE(corruption_time(state)));
 }
 
-/* TODO: default-* -> open-output-sound-hook */
 static SCM g_default_output_chans(void) {return(TO_SCM_INT(default_output_chans(state)));}
 static SCM g_set_default_output_chans(SCM val) 
 {

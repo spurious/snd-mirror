@@ -693,7 +693,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		}
 	      break;
 	    case REGION_FILING:
-	      str1 = mus_file_full_name(str);
+	      str1 = mus_expand_filename(str);
 	      if (!(snd_overwrite_ok(ss, str1))) 
 		{
 		  free(str); 
@@ -707,7 +707,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      FREE(str1);
 	      break;
 	    case CHANNEL_FILING:
-	      chan_save_edits(active_chan, mcf = mus_file_full_name(str));
+	      chan_save_edits(active_chan, mcf = mus_expand_filename(str));
 	      if (mcf) FREE(mcf);
 	      clear_minibuffer(sp);
 	      break;
@@ -734,7 +734,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      mix_complete_file(sp, str, "C-x C-q", with_mix_tags(ss));
 	      break;
 	    case INSERT_FILING:
-	      str1 = mus_file_full_name(str);
+	      str1 = mus_expand_filename(str);
 	      nc = mus_sound_chans(str1);
 	      if (nc != -1)
 		{

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 3
-#define SNDLIB_DATE "19-Mar-01"
+#define SNDLIB_REVISION 4
+#define SNDLIB_DATE "21-Mar-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
@@ -481,6 +481,7 @@ int mus_file_read_buffer            PROTO((int charbuf_data_format, int beg, int
 int mus_file_write_file             PROTO((int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
 int mus_file_write_buffer           PROTO((int charbuf_data_format, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, char *charbuf, int clipped));
 char *mus_file_full_name            PROTO((char *tok));
+#define mus_expand_filename(File) mus_file_full_name(File)
 int mus_file_set_data_clipped       PROTO((int tfd, int clipped));
 int mus_file_set_header_type        PROTO((int tfd, int type));
 int mus_file_header_type            PROTO((int tfd));

@@ -407,9 +407,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
     }
   if (strcmp(tok, "set-" S_previous_files_sort) == 0) {set_previous_files_sort(ss, istr(str[1])); update_prevfiles(ss); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_print_length) == 0) {set_print_length(ss, istr(str[1])); isym(ss, 0); return(0);}
-  if (strcmp(tok, "set-" S_raw_chans) == 0) {set_raw_chans(ss, istr(str[1])); isym(ss, 0); return(0);}
-  if (strcmp(tok, "set-" S_raw_format) == 0) {set_raw_format(ss, istr(str[1])); isym(ss, 0); return(0);}
-  if (strcmp(tok, "set-" S_raw_srate) == 0) {set_raw_srate(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_read_only) == 0) 
     {sp = get_sp(ss, str[2]); if (sp) {ival = istr(str[1]); sp->read_only = ival; snd_file_lock_icon(sp, ival);} isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_reverb_feedback) == 0) {sp = get_sp(ss, str[2]); if (sp) sp->revfb = fstr(str[1]); isym(ss, 0); return(0);}
@@ -458,7 +455,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok, "set-" S_transform_type) == 0) {set_transform_type(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_trap_segfault) == 0) {set_trap_segfault(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_uniting) == 0) {sp = get_sp(ss, str[2]); if (sp) combineb(sp, istr(str[1])); isym(ss, 0); return(0);}
-  if (strcmp(tok, "set-" S_use_raw_defaults) == 0) {set_use_raw_defaults(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_use_sinc_interp) == 0) {set_use_sinc_interp(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_verbose_cursor) == 0) {set_verbose_cursor(ss, istr(str[1])); isym(ss, 0); return(0);}
   if (strcmp(tok, "set-" S_vu_font) == 0) {set_vu_font(ss, snd_strdup(sstr(str[1]))); isym(ss, 0); return(0);}
@@ -787,7 +783,7 @@ static int symit(snd_state *ss, char **str)
 	  cp = get_cp(ss, str[3], str[4]);
 	  if (cp)
 	    {
-	      filename = mus_file_full_name(sstr(str[1]));
+	      filename = mus_expand_filename(sstr(str[1]));
 	      ival = mus_sound_chans(filename);
 	      if (ival > 0)
 		{
@@ -810,7 +806,7 @@ static int symit(snd_state *ss, char **str)
       if (strcmp(tok, S_left_sample) == 0) 
 	{cp = get_cp(ss, str[1], str[2]); if ((cp) && (cp->axis)) isym(ss, (cp->axis)->losamp); else isym(ss, 0); return(0);}
       if (strcmp(tok, S_line_size) == 0) {isym(ss, line_size(ss)); return(0);}
-      if (strcmp(tok, "load") == 0) {snd_load_file(filename = mus_file_full_name(sstr(str[1]))); if (filename) FREE(filename); return(0);}
+      if (strcmp(tok, "load") == 0) {snd_load_file(filename = mus_expand_filename(sstr(str[1]))); if (filename) FREE(filename); return(0);}
       break;
     case 'm':
       if (strcmp(tok, S_max_fft_peaks) == 0) {isym(ss, max_fft_peaks(ss)); return(0);}
@@ -825,8 +821,8 @@ static int symit(snd_state *ss, char **str)
       if (strcmp(tok, S_new_sound) == 0) 
 	{
 	  if (str[2] == NULL)
-	    snd_new_file(ss, filename = mus_file_full_name(sstr(str[1])), MUS_UNSUPPORTED, MUS_UNSUPPORTED, 0, 0, NULL, WITH_DIALOG);
-	  else snd_new_file(ss, filename = mus_file_full_name(sstr(str[1])), istr(str[2]), istr(str[3]), istr(str[4]), istr(str[5]), sstr(str[6]), WITHOUT_DIALOG);
+	    snd_new_file(ss, filename = mus_expand_filename(sstr(str[1])), MUS_UNSUPPORTED, MUS_UNSUPPORTED, 0, 0, NULL, WITH_DIALOG);
+	  else snd_new_file(ss, filename = mus_expand_filename(sstr(str[1])), istr(str[2]), istr(str[3]), istr(str[4]), istr(str[5]), sstr(str[6]), WITHOUT_DIALOG);
 	  if (filename) FREE(filename);
 	  isym(ss, 0); 
 	  return(0);
@@ -864,9 +860,6 @@ static int symit(snd_state *ss, char **str)
 	{if (str[2]) ival = istr(str[2]); else ival = 1; set_region_protect(istr(str[1]), ival); isym(ss, 0); return(0);}
       break;
     case 'r':
-      if (strcmp(tok, S_raw_chans) == 0) {isym(ss, raw_chans(ss)); return(0);}
-      if (strcmp(tok, S_raw_format) == 0) {isym(ss, raw_format(ss)); return(0);}
-      if (strcmp(tok, S_raw_srate) == 0) {isym(ss, raw_srate(ss)); return(0);}
       if (strcmp(tok, S_read_only) == 0) {sp = get_sp(ss, str[1]); if (sp) isym(ss, sp->read_only); else isym(ss, 0); return(0);}
       if (strcmp(tok, S_region_chans) == 0) 
 	{ival = istr(str[1]); if (region_ok(ival)) isym(ss, region_chans(ival)); else display_results(ss, "no such region"); return(0);}
@@ -930,7 +923,7 @@ static int symit(snd_state *ss, char **str)
 	{
 	  ival = istr(str[1]);
 	  if (region_ok(ival))
-	    save_region(ss, ival, filename = mus_file_full_name(sstr(str[2])), istr(str[3])); 
+	    save_region(ss, ival, filename = mus_expand_filename(sstr(str[2])), istr(str[3])); 
 	  else display_results(ss, "no such region");
 	  if (filename) FREE(filename);
 	  isym(ss, 0); 
@@ -938,7 +931,7 @@ static int symit(snd_state *ss, char **str)
 	}
       if (strcmp(tok, S_save_selection) == 0)
 	{
-	  save_selection(ss, filename = mus_file_full_name(sstr(str[1])), istr(str[2]), istr(str[3]), istr(str[4]), sstr(str[5]));
+	  save_selection(ss, filename = mus_expand_filename(sstr(str[1])), istr(str[2]), istr(str[3]), istr(str[4]), sstr(str[5]));
 	  if (filename) FREE(filename);
 	  isym(ss, 0); return(0);
 	}
@@ -1078,8 +1071,8 @@ static int symit(snd_state *ss, char **str)
 	{
 	  sp = get_sp(ss, str[2]);
 	  if (str[3] == NULL)
-	    save_edits_2(sp, filename = mus_file_full_name(sstr(str[1])), (sp->hdr)->type, (sp->hdr)->format, (sp->hdr)->srate, NULL);
-	  else save_edits_2(sp, filename = mus_file_full_name(sstr(str[1])), istr(str[3]), istr(str[4]), istr(str[5]), NULL);
+	    save_edits_2(sp, filename = mus_expand_filename(sstr(str[1])), (sp->hdr)->type, (sp->hdr)->format, (sp->hdr)->srate, NULL);
+	  else save_edits_2(sp, filename = mus_expand_filename(sstr(str[1])), istr(str[3]), istr(str[4]), istr(str[5]), NULL);
 	  if (filename) FREE(filename);
 	  isym(ss, 0);
 	  return(0);
@@ -1096,7 +1089,6 @@ static int symit(snd_state *ss, char **str)
       if (strcmp(tok, S_update_fft) == 0) {cp = get_cp(ss, str[1], str[2]); calculate_fft(cp, NULL); isym(ss, 0); return(0);}
       if (strcmp(tok, S_update_graph) == 0) {cp = get_cp(ss, str[1], str[2]); update_graph(cp, NULL); isym(ss, 0); return(0);}
       if (strcmp(tok, S_update_sound) == 0) {sp = get_sp(ss, str[1]); if (sp) snd_update(ss, sp); isym(ss, 0); return(0);}
-      if (strcmp(tok, S_use_raw_defaults) == 0) {isym(ss, use_raw_defaults(ss)); return(0);}
       if (strcmp(tok, S_use_sinc_interp) == 0) {isym(ss, use_sinc_interp(ss)); return(0);}
       if (strcmp(tok, S_undo) == 0) 
 	{

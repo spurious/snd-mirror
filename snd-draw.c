@@ -561,12 +561,7 @@ static SCM g_dialog_widgets(void)
 {
   if (!(gh_vector_p(dialog_widgets)))
     dialog_widgets = scm_permanent_object(gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F));
-#if HAVE_GUILE_1_3_0
-  /* guile-1.3/libguile/gh.h:#define gh_vector_to_list(v) scm_vector_to_list(ls) -- ls is undefined! */
   return(scm_vector_to_list(dialog_widgets));
-#else
-  return(gh_vector_to_list(dialog_widgets));
-#endif
 }
 
 void set_dialog_widget(int which, GUI_WIDGET wid)

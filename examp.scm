@@ -615,11 +615,7 @@
     "(mpg file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
     ;; there's probably a way to get the channels automatically
     (system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))
-    (set! (raw-srate) 44100)
-    (set! (raw-chans) chans)
-    (if (little-endian?) (set! (raw-format) mus-lshort) (set! (raw-format) mus-bshort))
-    (set! (use-raw-defaults) #t)
-    (open-sound rawfile)))
+    (open-raw-sound rawfile 1 44100 (if (little-endian?) mus-lshort mus-bshort))))
 
 ;;; (mpg "mpeg.mpg" "mpeg.raw" 1)
 

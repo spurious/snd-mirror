@@ -3,6 +3,7 @@
 /* -------- STATS WINDOW -------- */
 
 static GtkWidget *stats_window = NULL;
+static GtkWidget *stats_form = NULL;
 
 static void stats_help(GtkWidget *w, gpointer context) 
 {
@@ -25,8 +26,6 @@ static void stats_update(GtkWidget *w, gpointer context)
   update_all_usage_stats(ss);
   check_stats_window(ss, TRUE);
 }
-
-static GtkWidget *stats_form;
 
 void update_stats(snd_state *ss)
 {
@@ -122,3 +121,12 @@ void check_stats_window(snd_state *ss, int val)
     }
 }
 
+#if DEBUGGING
+char *stats_window_state(void);
+char *stats_window_state(void)
+{
+  if (stats_form)
+    return(gtk_editable_get_chars(GTK_EDITABLE(stats_form), 0, -1));
+  return(NULL);
+}
+#endif

@@ -1647,7 +1647,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
   si = sync_to_chan(ucp);
   if ((filename) && (snd_strlen(filename) > 0))
     {
-      fd = fopen(mcf = mus_file_full_name(filename), "w");
+      fd = fopen(mcf = mus_expand_filename(filename), "w");
       if (mcf) FREE(mcf);
       if (fd == NULL) 
 	{
@@ -5205,7 +5205,7 @@ to the help dialog if filename is omitted"
   SND_ASSERT_CHAN(S_peaks, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_peaks);
   if (gh_string_p(filename))
-    name = mus_file_full_name(TO_C_STRING(filename));
+    name = mus_expand_filename(TO_C_STRING(filename));
   else name = NULL;
   err = display_fft_peaks(cp, name);
   if (name) FREE(name);

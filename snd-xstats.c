@@ -3,6 +3,7 @@
 /* -------- STATS WINDOW -------- */
 
 static Widget stats_window = NULL;
+static Widget stats_form = NULL;
 
 static void stats_help(Widget w, XtPointer context, XtPointer info) 
 {
@@ -20,8 +21,6 @@ static void stats_update(Widget w, XtPointer context, XtPointer info)
   update_all_usage_stats(ss);
   check_stats_window(ss, TRUE);
 }
-
-static Widget stats_form;
 
 void update_stats(snd_state *ss) 
 {
@@ -74,8 +73,8 @@ void update_stats_display(snd_state *ss, int all)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNheight, 60); n++;
-      XtSetArg(args[n], XmNwidth, 300); n++;
+      XtSetArg(args[n], XmNheight,250); n++;
+      XtSetArg(args[n], XmNwidth, 600); n++;
       stats_form = sndCreateTextWidget(ss, "stats", stats_window, args, n);
 
       XtManageChild(stats_window);
@@ -110,3 +109,12 @@ void check_stats_window(snd_state *ss, int val)
     }
 }
 
+#if DEBUGGING
+char *stats_window_state(void);
+char *stats_window_state(void)
+{
+  if (stats_form)
+    return(XmTextGetString(stats_form));
+  return(NULL);
+}
+#endif

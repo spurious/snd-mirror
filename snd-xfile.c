@@ -1683,7 +1683,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   int i, n;
   char *str;
   Arg args[20];
-  Widget lst, defw, dls, dfs, dfc, rform, dlab, dloc, dloclab, chnlab;
+  Widget lst, defw, dls, rform, dlab, dloclab, chnlab;
   n = 0;
   xstr1 = XmStringCreate(STR_Cancel, XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
   xstr2 = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
@@ -1743,15 +1743,15 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNcolumns, 6); n++;
   XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
-  dfs = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
+  raw_srate_text = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
   if (raw_srate(ss) < 100000) 
     sprintf(dfs_str, " %d", raw_srate(ss)); 
   else sprintf(dfs_str, "%d", raw_srate(ss));
-  XmTextSetString(dfs, dfs_str);
+  XmTextSetString(raw_srate_text, dfs_str);
 
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, dfs); n++;
+  XtSetArg(args[n], XmNleftWidget, raw_srate_text); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1767,17 +1767,17 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNcolumns, 3); n++;
   XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
-  dfc = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+  raw_chans_text = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
   if (raw_chans(ss) < 10) 
     sprintf(dfc_str, "  %d", raw_chans(ss)); 
   else sprintf(dfc_str, " %d", raw_chans(ss));
-  XmTextSetString(dfc, dfc_str);
+  XmTextSetString(raw_chans_text, dfc_str);
   
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, dfs); n++;
+  XtSetArg(args[n], XmNtopWidget, raw_srate_text); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
   XtSetArg(args[n], XmNmarginTop, 6); n++;
@@ -1788,17 +1788,17 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNleftWidget, dloclab); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, dfs); n++;
+  XtSetArg(args[n], XmNtopWidget, raw_srate_text); n++;
   XtSetArg(args[n], XmNcolumns, 8); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  dloc = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-  XmTextSetString(dloc, "0");
+  raw_location_text = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+  XmTextSetString(raw_location_text, "0");
 
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, dloc); n++;
+  XtSetArg(args[n], XmNtopWidget, raw_location_text); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   dlab = XtCreateManagedWidget(STR_data_format_p, xmLabelWidgetClass, rform, args, n);
 
@@ -1831,10 +1831,6 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
       XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(defw, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
     }
-
-  raw_srate_text = dfs;
-  raw_chans_text = dfc;
-  raw_location_text = dloc;
 }
 
 static file_info *read_raw_dialog(char *filename, snd_state *ss)
@@ -1873,11 +1869,52 @@ static file_info *read_raw_dialog(char *filename, snd_state *ss)
   return(hdr);
 }
 
+#if HAVE_HOOKS
+static SCM open_raw_sound_hook;
+#endif
+
+/* TODO: remove raw-chans et al in favor of open-raw-sound-hook
+ * TODO: gtk version of open-raw-sound-hook
+ * TODO: snd-test cases for open-raw-sound-hook (and doc and index etc)
+ */
+
 file_info *get_raw_file_info(char *filename, snd_state *ss)
 {
   /* put up dialog for srate, chans, data format */
   XmString xstr;
   char *str;
+#if HAVE_HOOKS
+  SCM res;
+  file_info *hdr = NULL;
+  int len, srate, chans, data_format, data_location, bytes;
+  if (HOOKED(open_raw_sound_hook))
+    {
+      res = g_c_run_progn_hook(open_raw_sound_hook,
+			       SCM_LIST1(TO_SCM_STRING(filename)));
+      if (gh_list_p(res))
+	{
+	  len = gh_length(res);
+	  chans = TO_C_INT(gh_list_ref(res, 0));
+	  if (len > 1) srate = TO_C_INT(gh_list_ref(res, 1)); else srate = raw_srate(ss);
+	  if (len > 2) data_format = TO_C_INT(gh_list_ref(res, 2)); else data_format = raw_format(ss);
+	  if (len > 3) data_location = TO_C_INT(gh_list_ref(res, 3)); else data_location = 0;
+	  if (len > 4) bytes = TO_C_INT(gh_list_ref(res, 4)); else bytes = mus_sound_length(filename);
+	  mus_header_set_raw_defaults(srate, chans, data_format);
+	  mus_sound_override_header(filename, srate, chans, data_format, MUS_RAW, data_location,
+				    mus_bytes_to_samples(data_format, bytes - data_location));
+	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
+	  hdr->name = copy_string(filename);
+	  hdr->type = MUS_RAW;
+	  hdr->srate = mus_sound_srate(filename);
+	  hdr->chans = mus_sound_chans(filename);
+	  hdr->format = mus_sound_data_format(filename);
+	  hdr->samples = mus_sound_samples(filename); /* total samples, not per channel */
+	  hdr->data_location = mus_sound_data_location(filename);
+	  hdr->comment = NULL;
+	  return(hdr);
+	}
+    }
+#endif
   if (use_raw_defaults(ss))
     {
       /* choices already made, so just send back a header that reflects those choices */
@@ -2273,6 +2310,13 @@ See also nb.scm."
 
   mouse_name_enter_hook = MAKE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
+
+#define H_open_raw_sound_hook S_open_raw_sound_hook " (filename) is called when a headerless sound file is opened. \
+Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
+The list is interpreted as '(chans srate data-format data-location data-length) where the final two elements can \
+be omitted (location defaults to 0, and length defaults to the file length in bytes)."
+
+  open_raw_sound_hook =   MAKE_HOOK(S_open_raw_sound_hook, 1,    H_open_raw_sound_hook);    /* arg = filename */
 #endif
 }
 

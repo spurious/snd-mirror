@@ -1923,6 +1923,11 @@ static SCM g_selected_sound(void)
   return(TO_SMALL_SCM_INT(NO_SELECTION));
 }
 
+/* TODO: open-sound (et al) should throw NO-SUCH-FILE or whatever, not call snd_error (via make_file_info) 
+ *         this either requires homogenizing snd_error/mus_error or making snd_error redirectable,
+ *         or setting and restoring the snd_error_hook or splitting make_file_info into the _with_error parts
+ */
+
 static SCM g_open_sound(SCM filename)
 { /* returns index of new sound if successful */
   #define H_open_sound "(" S_open_sound " filename) opens filename (as if opened from File:Open menu option)"
@@ -1931,7 +1936,12 @@ static SCM g_open_sound(SCM filename)
   snd_info *sp;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_open_sound);
   ss = get_global_state();
-  fname = mus_file_full_name(TO_C_STRING(filename));
+  fname = mus_expand_filename(TO_C_STRING(filename));
+  if (!(mus_file_probe(fname)))
+    scm_throw(NO_SUCH_FILE,
+	      SCM_LIST3(TO_SCM_STRING(S_open_sound),
+			filename,
+			TO_SCM_STRING(strerror(errno))));
   sp = snd_open_file(fname, ss);
   if (fname) FREE(fname);
   if (sp) return(TO_SCM_INT(sp->index));
@@ -1965,8 +1975,16 @@ opens filename assuming the data matches the attributes indicated unless the fil
   mus_header_set_raw_defaults(TO_C_INT_OR_ELSE(srate, 0),
 			      TO_C_INT_OR_ELSE(chans, 0),
 			      TO_C_INT_OR_ELSE(format, 0));
-  fname = mus_file_full_name(TO_C_STRING(filename));
+  fname = mus_expand_filename(TO_C_STRING(filename));
+  if (!(mus_file_probe(fname)))
+    scm_throw(NO_SUCH_FILE,
+	      SCM_LIST3(TO_SCM_STRING(S_open_raw_sound),
+			filename,
+			TO_SCM_STRING(strerror(errno))));
   sp = snd_open_file(fname, ss);
+  /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> get_raw_file_info */
+  /*   if defaults -> make_file_info_1 else -> make_raw_data_dialog -> read_raw_dialog */
+  /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
   if (fname) FREE(fname);
   set_raw_srate(ss, os);
   set_raw_chans(ss, oc);
@@ -1988,7 +2006,12 @@ static SCM g_open_alternate_sound(SCM filename)
   ss = get_global_state();
   sp = any_selected_sound(ss);
   if (sp) snd_close_file(sp, ss); /* should we ask about saving edits here? */
-  fname = mus_file_full_name(TO_C_STRING(filename));
+  fname = mus_expand_filename(TO_C_STRING(filename));
+  if (!(mus_file_probe(fname)))
+    scm_throw(NO_SUCH_FILE,
+	      SCM_LIST3(TO_SCM_STRING(S_open_alternate_sound),
+			filename,
+			TO_SCM_STRING(strerror(errno))));
   sp = snd_open_file(fname, ss);
   if (fname) FREE(fname);
   if (sp) return(TO_SCM_INT(sp->index));
@@ -2003,7 +2026,12 @@ static SCM g_view_sound(SCM filename)
   snd_state *ss;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_view_sound);
   ss = get_global_state();
-  fname = mus_file_full_name(TO_C_STRING(filename));
+  fname = mus_expand_filename(TO_C_STRING(filename));
+  if (!(mus_file_probe(fname)))
+    scm_throw(NO_SUCH_FILE,
+	      SCM_LIST3(TO_SCM_STRING(S_view_sound),
+			filename,
+			TO_SCM_STRING(strerror(errno))));
   if (fname)
     {
       ss->viewing = 1;
@@ -2041,7 +2069,7 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
     return(scm_throw(NO_SUCH_SOUND,
 		     SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
 			       index)));
-  fname = mus_file_full_name(TO_C_STRING(newfile));
+  fname = mus_expand_filename(TO_C_STRING(newfile));
   hdr = sp->hdr;
   ht = TO_C_INT_OR_ELSE(type, hdr->type);
   sr = TO_C_INT_OR_ELSE(srate, hdr->srate);
@@ -2089,7 +2117,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
   char *str = NULL, *com = NULL;
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_new_sound);
   ss = get_global_state();
-  str = mus_file_full_name(TO_C_STRING(name));
+  str = mus_expand_filename(TO_C_STRING(name));
   if (SCM_UNBNDP(type))
     sp = snd_new_file(ss, str,
 		      default_output_type(ss),
@@ -2619,21 +2647,24 @@ static SCM g_peak_env_info(SCM snd, SCM chn, SCM pos)
 static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
 {
   chan_info *cp;
+  char *fullname = NULL;
   env_info *ep;
   int fd;
   int ibuf[5];
   MUS_SAMPLE_TYPE mbuf[2];
   SND_ASSERT_CHAN(S_write_peak_env_info_file, snd, chn, 1);
-  cp = get_cp(snd, chn, "write-peak-info-file");
+  cp = get_cp(snd, chn, S_write_peak_env_info_file);
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG2, S_write_peak_env_info_file);
   if ((cp->amp_envs) && (cp->amp_envs[0]))
     {
-      fd = mus_file_open_write(TO_C_STRING(name));
+      fullname = mus_expand_filename(TO_C_STRING(name));
+      fd = mus_file_create(fullname);
       if (fd == -1)
 	return(scm_throw(CANNOT_SAVE,
 			 SCM_LIST3(TO_SCM_STRING(S_write_peak_env_info_file),
-				   name,
+				   TO_SCM_STRING(fullname),
 				   TO_SCM_STRING(strerror(errno)))));
+      if (fullname) FREE(fullname);
       ep = cp->amp_envs[0];
       ibuf[0] = ep->completed;
       ibuf[1] = ep->amp_env_size;
@@ -2659,18 +2690,21 @@ static SCM g_read_peak_env_info_file(SCM snd, SCM chn, SCM name)
 {
   /* has to happen in initial_graph_hook to precede add_amp_env */
   chan_info *cp;
+  char *fullname;
   env_info *ep;
   int fd;
   int ibuf[5];
   MUS_SAMPLE_TYPE mbuf[2];
   SND_ASSERT_CHAN(S_read_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_read_peak_env_info_file);
-  fd = mus_file_open_read(TO_C_STRING(name));
+  fullname = mus_expand_filename(TO_C_STRING(name));
+  fd = mus_file_open_read(fullname);
   if (fd == -1)
     return(scm_throw(NO_SUCH_FILE,
 		     SCM_LIST3(TO_SCM_STRING(S_read_peak_env_info_file),
-			       name,
+			       TO_SCM_STRING(fullname),
 			       TO_SCM_STRING(strerror(errno)))));
+  if (fullname) FREE(fullname);
   /* assume cp->amp_envs already exists (needs change to snd-chn) */
   cp->amp_envs[0] = (env_info *)CALLOC(1, sizeof(env_info));
   ep = cp->amp_envs[0];

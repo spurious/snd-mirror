@@ -499,7 +499,7 @@ static int dont_open(snd_state *ss, char *file)
   if (HOOKED(open_hook))
     {
       res = g_c_run_or_hook(open_hook,
-			    SCM_LIST1(TO_SCM_STRING(mcf = mus_file_full_name(file))));
+			    SCM_LIST1(TO_SCM_STRING(mcf = mus_expand_filename(file))));
       if (mcf) FREE(mcf);
     }
   return(SCM_TRUE_P(res));
@@ -538,7 +538,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
 #if HAVE_HOOKS
   if (dont_open(ss, filename)) return(NULL);
 #endif
-  sp = add_sound_window(mcf = mus_file_full_name(filename), ss); /* snd-xsnd.c -> make_file_info */
+  sp = add_sound_window(mcf = mus_expand_filename(filename), ss); /* snd-xsnd.c -> make_file_info */
   if (mcf) FREE(mcf);
   if (sp)
     {
@@ -1642,7 +1642,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
   alert_new_file();
   /* now check in-core files -- need to close any of same name -- if edited what to do? */
   /* also it's possible the new file name is the same as the current file name(!) */
-  fullname = mus_file_full_name(str);
+  fullname = mus_expand_filename(str);
   if (!(snd_overwrite_ok(ss, fullname))) {FREE(fullname); return(-1);}
   if (strcmp(fullname, sp->fullname) == 0)
     {
@@ -2102,7 +2102,7 @@ static SCM g_preload_file(SCM file)
   #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"
   char *name = NULL;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_preload_file);
-  name = mus_file_full_name(TO_C_STRING(file));
+  name = mus_expand_filename(TO_C_STRING(file));
   remember_me(get_global_state(), 
 	      filename_without_home_directory(name), 
 	      name);

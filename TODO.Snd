@@ -25,7 +25,7 @@ Sawfish connection: it should be possible to send commands to sawfish,
   sawfish's title bars) -- it might be neat to have this use the
   current theme.
 
-gtk-html support (and the XmHTML stuff is not very recent).
+gtk-html support (and the XmHTML stuff needs to be updated -- it segfaults on extsnd.html).
 
 A more direct connection to gmeteor (perhaps using the control-panel filter
   text widget).  use (filter-sound(make-filter ...)).
@@ -57,22 +57,15 @@ gtk_signal_connect(GTK_OBJECT(client),"save_yourself",GTK_SIGNAL_FUNC(save_snd_s
 gtk_signal_connect(GTK_OBJECT(client),"die",GTK_SIGNAL_FUNC(exit_cleanly),NULL);
 
 
-Gettext support, if there's interest. (How does gettext handle Scheme-style
-  string formatting as in scm_misc_error?). The main drawback of gettext, besides problems like
-  how to handle help strings and the completion array, is that it seems to
-  require that we drag around an infinite number of ancillary files; surely
-  there's a way to do the same thing in a less intrusive manner?
-  Here's an example of the scm problem: in vct.c we have
+Gettext support, if there's interest. How does gettext handle Scheme-style
+  string formatting as in scm_misc_error?  Say we have 
 
-    scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?",SCM_LIST2(pos,gh_int2scm(v->length)));
+    scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?", SCM_LIST2(pos, gh_int2scm(v->length)));
 
   but if translation requires that the args be reversed (as in the %2$d msgfmt business),
-  does msgfmt know about things like ~A and SCM_LIST2?
+  does msgfmt know about things like ~A and SCM_LIST2?  Gnucash uses guile and gettext --
+  maybe they've solved this problem.
 
-
-A motif module parallel to guile-gtk; there's something like this in
-cmucl, and a Scheme binding in xscm; perhaps the latter can be ported
-to Guile.
 
 Mac-OSX Snd port (since gtk and guile have been ported, Snd shouldn't be difficult).
 

@@ -1981,7 +1981,7 @@ static void Record_Button_Callback(GtkWidget *w, gpointer context)
       if ((str) && (*str))
 	{
 	  if (rp->output_file) FREE(rp->output_file);
-	  rp->output_file = mus_file_full_name(str);
+	  rp->output_file = mus_expand_filename(str);
 	  str = NULL;
 	  old_srate = rp->srate;
 	  str = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc); 

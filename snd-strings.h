@@ -599,6 +599,7 @@
 #define S_open_alternate_sound          "open-alternate-sound"
 #define S_open_hook                     "open-hook"
 #define S_open_raw_sound                "open-raw-sound"
+#define S_open_raw_sound_hook           "open-raw-sound-hook"
 #define S_open_sound                    "open-sound"
 #define S_open_sound_file               "open-sound-file"
 #define S_orientation_dialog            "orientation-dialog"

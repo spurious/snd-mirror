@@ -1007,30 +1007,6 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- raw-chans -->
-<!-- --><tr><td valign=top><code><em class=def><a name="rawchans">raw-chans</a></em></code></td>
-<!-- --><td valign=top><code>1</code></td>
-<!-- --><td>The "raw-" variables refer to sound data interpretation choices made
-<!-- -->when a sound is opened that appears to be headerless.  
-<!-- --><i>raw-chans</i> sets the default number of channels.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
-<!-- raw-format -->
-<!-- --><tr><td><code><em class=def><a name="rawformat">raw-format</a></em></code></td>
-<!-- --><td colspan=2><code>mus-bshort</code></td></tr>
-<!-- --><tr><td colspan=2></td><td>The default data format in a headerless sound.  Other possibilities
-<!-- -->are given <a href="#localdataformats">above</a>, or you can use the <a href="sndlib.html">Sndlib</a> macros directly.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
-<!-- raw-srate -->
-<!-- --><tr><td><code><em class=def><a name="rawsrate">raw-srate</a></em></code></td>
-<!-- --><td><code>44100</code></td>
-<!-- --><td>The default headerless sound sampling rate.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
 <!-- save-dir -->
 <!-- --><tr><td valign=top><code><em class=def><a name="savedir">save-dir</a></em></code></td>
 <!-- --><td valign=top><code>""</code></td>
@@ -1133,15 +1109,6 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td><code><em class=def><a name="trapsegfault">trap-segfault</a></em></code></td>
 <!-- --><td><code>#t</code></td>
 <!-- --><td>If #t, try to catch segfaults and continue anyway.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
-<!-- use-raw-defaults -->
-<!-- --><tr><td valign=top><code><em class=def><a name="userawdefaults">use-raw-defaults</a></em></code></td>
-<!-- --><td valign=top><code>#f</code></td>
-<!-- --><td>If #t, the "raw-" variables' values are used automatically
-<!-- -->when a headerless file is encountered.  If #f, Snd fires up the 
-<!-- -->raw file dialog to find out how to interpret the data.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1509,6 +1476,8 @@ the hook.
 <!-- --><br>
 <!-- -->(define (peak-env-info-file-name snd chn)
 <!-- -->  (format #f "~A-peaks-~D" (file-name snd) chn))
+<!-- -->  ;; or, if we want these files saved in a directory named "peaks":
+<!-- -->  ;;   (format #f "~~/peaks/~A-peaks-~D" (short-file-name snd) chn))
 <!-- --><br>
 <!-- -->(define (save-peak-env-info-at-close snd)
 <!-- -->  ;; intended as a close-hook function
@@ -1516,18 +1485,23 @@ the hook.
 <!-- -->	   (not (null? (peak-env-info snd 0))))
 <!-- -->      (do ((i 0 (1+ i)))
 <!-- -->	  ((= i (chans snd)))
-<!-- -->	(<em class=red>write-peak-env-info-file</em> snd i (peak-env-info-file-name snd i))))
+<!-- -->	(let ((peak-file (mus-expand-filename (peak-env-info-file-name snd i))))
+<!-- -->	  (if (or (not (file-exists? peak-file))
+<!-- -->		  (&lt; (file-write-date peak-file)
+<!-- -->		     (file-write-date (file-name snd))))
+<!-- -->	      (<em class=red>write-peak-env-info-file</em> snd i peak-file)))))
 <!-- -->  #f)
 <!-- --><br>
 <!-- -->(define (restore-peak-env-info-upon-open snd chn dur)
 <!-- -->  ;; intended as an initial-graph-hook-function
-<!-- -->  (let ((peak-file (peak-env-info-file-name snd chn)))
+<!-- -->  (let ((peak-file (mus-expand-filename (peak-env-info-file-name snd chn))))
 <!-- -->    (if (and (file-exists? peak-file)
 <!-- -->	     (&gt; (file-write-date peak-file)
 <!-- -->		(file-write-date (file-name snd))))
 <!-- -->	(<em class=red>read-peak-env-info-file</em> snd chn peak-file))))
 <!-- --><br>
 <!-- -->(add-hook! close-hook save-peak-env-info-at-close)
+<!-- -->(add-hook! exit-hook (lambda () (for-each save-peak-env-info-at-close (sounds)) #f))
 <!-- -->(add-hook! initial-graph-hook restore-peak-env-info-upon-open)
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
@@ -2515,6 +2489,11 @@ The most important Sndlib functions for Snd are:</p>
 <!-- -->  mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
 <!-- -->  mus-ldouble
 <!-- --></pre></td></tr>
+<!-- -->
+<!-- mus-expand-filename -->
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="musexpandfilename">mus-expand-filename</a></em> (name)</code></span></td>
+<!-- --><td>expands <i>name</i> into its 'absolute' pathname; that is, it replaces '~' with the current home directory,
+<!-- -->and whatever else seems appropriate.</td></tr>
 <!-- -->
 <!-- mus-header-type-name -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundtypename">mus-header-type-name</a></em> (type)</code></span></td>
@@ -4574,7 +4553,7 @@ sets its value to val.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->close the currently selected file, if any, and open <i>name</i>.
-<!-- -->Returns #f if it can't open <i>name</i>, otherwise the new index.
+<!-- -->Returns #f if it can't open <i>name</i>, otherwise the new index. [<em class=error>no-such-file</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4586,7 +4565,7 @@ sets its value to val.
 <!-- --><tr><td></td><td>
 <!-- -->open <i>name</i> as a raw (no header) sound in the layout specified.
 <!-- -->If the file has a header, it is not ignored (use (set! (data-format ...))
-<!-- -->and friends if you want to ignore the header).
+<!-- -->and friends if you want to ignore the header).  [<em class=error>no-such-file</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4596,7 +4575,7 @@ sets its value to val.
 <!-- --><span class=defbox><code><em class=def><a name="sndopen">open-sound</a></em> (name)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->open <i>name</i> as in File menu Open option.
+<!-- -->open <i>name</i> as in File menu Open option.  [<em class=error>no-such-file</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5711,7 +5690,7 @@ sets its value to val.
 <!-- --><span class=defbox><code><em class=def><a name="sndview">view-sound</a></em> (filename)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->open <i>filename</i> read-only.
+<!-- -->open <i>filename</i> read-only. [<em class=error>no-such-file</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7733,7 +7712,6 @@ found (this code obviously has to be in the init file):</p>
         <!-- I(fft window parameter):L(fft-beta)(fftbeta) -->
 	<!-- I(move cursor ahead):L(forward-sample)(sndforwardsample) -->
         <!-- I(move cursor back):L(backward-sample)(sndbackwardsample) -->
-	<!-- I(file formats):L(raw-format)(rawformat) -->
         <!-- I(insert zeros):L(insert-samples)(sndinsertsamples) -->
 	<!-- I(change samples):L(set-samples)(sndsetsamples) -->
 	<!-- I(srate conversion):L(src-sound)(sndsrc) --><!-- I(srate conversion):M(Edit: Edit Env)(editenvelope) -->

@@ -278,9 +278,6 @@
 	'normalize-on-open (normalize-on-open) #t
 	'previous-files-sort (previous-files-sort) 0 
 	'print-length (print-length) 12 
-	'raw-chans (raw-chans) 1 
-	'raw-format (raw-format) 1
-	'raw-srate (raw-srate) 44100 
 	'read-only (without-errors (read-only)) 'no-such-sound
 	'recorder-autoload (recorder-autoload) #f
 	'recorder-buffer-size (recorder-buffer-size) 4096 
@@ -326,7 +323,6 @@
 	'transform-type (transform-type) 0 
 	'trap-segfault (trap-segfault) #f
 	'uniting (without-errors (uniting)) 'no-such-sound
-	'use-raw-defaults (use-raw-defaults) #f 
 	'use-sinc-interp (use-sinc-interp) #t 
 	'verbose-cursor (verbose-cursor) #f
 	'vu-font (vu-font) #f 
@@ -767,9 +763,6 @@
 	  (list 'prefix-arg prefix-arg 0 set-prefix-arg 123)
 	  (list 'previous-files-sort previous-files-sort 0 set-previous-files-sort 1)
 	  (list 'print-length print-length 12 set-print-length 16)
-	  (list 'raw-chans raw-chans 1 set-raw-chans 2)
-	  (list 'raw-format raw-format 1 set-raw-format 2)
-	  (list 'raw-srate raw-srate 44100 set-raw-srate 22050)
 	  (list 'recorder-autoload recorder-autoload #f set-recorder-autoload #t)
 	  (list 'recorder-out-chans recorder-out-chans 2 set-recorder-out-chans 1)
 	  (list 'recorder-buffer-size recorder-buffer-size 4096 set-recorder-buffer-size 256)
@@ -807,7 +800,6 @@
 	  (list 'sync sync 0 set-sync 1)
 	  (list 'tiny-font tiny-font "6x12" set-tiny-font "9x15")
 	  (list 'transform-type transform-type 0 set-transform-type 1)
-	  (list 'use-raw-defaults use-raw-defaults #f set-use-raw-defaults #t)
 	  (list 'use-sinc-interp use-sinc-interp #t set-use-sinc-interp #f)
 	  (list 'verbose-cursor verbose-cursor #f set-verbose-cursor #t)
 	  (list 'vu-size vu-size 1.0 set-vu-size 2.0)
@@ -1017,11 +1009,7 @@
 	  (if (fneq (sample 1000 ab) samp) (snd-display (format #f ";aifc[1000] = ~A?" (sample 1000 ab))))
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-raw)
-	(set! (raw-srate) 22050)
-	(set! (raw-chans) 1)
-	(set! (raw-format) mus-bshort)
-	(set! (use-raw-defaults) #t)
-	(let ((ab (open-sound "test.snd")))
+	(let ((ab (open-raw-sound "test.snd" 1 22050 mus-bshort)))
 	  (if (not (= (header-type ab) mus-raw)) 
 	      (snd-display (format #f ";save-as raw -> ~A?" (mus-header-type-name (header-type ab)))))
 	  (if (not (= (mus-sound-header-type "test.snd") mus-raw)) 
@@ -1469,12 +1457,12 @@
 	(revert-sound index)
 	(vct-fill! v0 1.0)
 	(vct->samples 0 128 v0 index 0) 
+	(if (file-exists? "fmv5.snd") (delete-file "fmv5.snd"))
 	(select-all) 
 	(env-selection '(0 0 1 1 2 0) 1.0) 
 	(set! v0 (samples->vct 0 128 index 0 v0)) 
 	(if (or (fneq (sample 64) 1.0) (fneq (sample 20) .3125) (fneq (sample 120) 0.125))
 	    (snd-display (format #f ";env-selection: ~A ~A ~A ~A?" (sample 64) (sample 20) (sample 120) v0)))
-	(if (file-exists? "fmv5.snd") (delete-file "fmv5.snd"))
 	(save-selection "fmv5.snd" mus-next mus-bint 22050 "") ;1.0->-1.0 if short
 	(revert-sound index)
 	(file->array "fmv5.snd" 0 0 128 v0) 
@@ -4196,6 +4184,7 @@
   )
   
 ;;; ---------------- test 13: menus, edit lists, hooks, seach/key funcs ----------------
+
 (if (or full-test (= snd-test 13))
     (let ((fd (view-sound "oboe.snd"))
 	  (mb (add-to-main-menu "clm")))
@@ -4276,7 +4265,8 @@
 			      (string=? option "invert"))
 			 (set! ctr (+ ctr 1)))
 		     #t))
-	(test-menus) ; built-in self-test function
+	(without-errors
+	 (test-menus)) ; built-in self-test function
 	(revert-sound fd)
 	(close-sound fd)
 	(if (not (= ctr 4)) (snd-display (format #f ";ctr after test-menus: ~A? " ctr)))
@@ -4310,6 +4300,7 @@
 	(close-sound ind)
 	)
       ))
+
 
 (define test-panel
   (lambda (func name)
@@ -5016,9 +5007,6 @@
 		    (list 'normalize-on-open #f #f set-normalize-on-open #t)
 		    (list 'previous-files-sort #f 0 set-previous-files-sort 3)
 		    (list 'print-length #f 2 set-print-length 32)
-		    (list 'raw-chans #f 1 set-raw-chans 8)
-		    (list 'raw-format #f 0 set-raw-format 12)
-		    (list 'raw-srate #f 8000 set-raw-srate 44100)
 		    (list 'reverb-decay #f 0.0 set-reverb-decay 2.0)
 		    (list 'reverb-feedback #t 1.00 set-reverb-feedback 1.1)
 		    (list 'reverb-length #t 1.0 set-reverb-length 2.0)
@@ -5049,7 +5037,6 @@
 		    (list 'speed-tones #f 2 set-speed-tones 100)
 		    (list 'sync #t 0 set-sync 5)
 		    (list 'transform-type #f 0 set-transform-type 6)
-		    (list 'use-raw-defaults #f #f set-use-raw-defaults #t)
 		    (list 'use-sinc-interp #f #f set-use-sinc-interp #t)
 		    (list 'verbose-cursor #f #f set-verbose-cursor #t)
 		    (list 'wavelet-type #f 0 set-wavelet-type 10)
@@ -6467,12 +6454,12 @@
 			  enved-power enved-selected-env enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin 
 			  fit-data-on-open foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding listener-color 
 			  listener-font listener-prompt listener-text-color max-regions max-sounds minibuffer-history-length mix-waveform-height 
-			  movies normalize-on-open position-color previous-files-sort print-length pushed-button-color raw-chans raw-format raw-srate 
+			  movies normalize-on-open position-color previous-files-sort print-length pushed-button-color
 			  recorder-autoload recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans recorder-out-format 
 			  recorder-srate recorder-trigger sash-color save-dir save-state-file save-state-on-exit selected-channel selected-data-color 
 			  selected-graph-color selected-mix selected-mix-color selected-sound selection-creates-region show-backtrace show-controls 
 			  show-indices show-listener show-selection-transform show-usage-stats sinc-width temp-dir text-focus-color tiny-font trap-segfault 
-			  unbind-key use-raw-defaults use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height window-width window-x 
+			  unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height window-width window-x 
 			  window-y with-mix-tags x-axis-style zoom-color zoom-focus-style mix-tag-height mix-tag-width ))
 	  (gc))
 
@@ -6538,6 +6525,10 @@
 	(check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
 	(check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
 	(check-error-tag 'wrong-type-arg (lambda () (yes-or-no-p (list 0 1))))
+	(check-error-tag 'no-such-file (lambda () (open-sound "/bad/baddy.snd")))
+	(check-error-tag 'no-such-file (lambda () (open-raw-sound "/bad/baddy.snd" 1 22050 mus-lshort)))
+	(check-error-tag 'no-such-file (lambda () (open-alternate-sound "/bad/baddy.snd")))
+	(check-error-tag 'no-such-file (lambda () (view-sound "/bad/baddy.snd")))
       ))
 
 
@@ -6616,6 +6607,7 @@
 					    ))))))))))))
 
 (define (all-done)
+  (update-usage-stats)
   (save-listener "test.output")
   (set! (listener-prompt) original-prompt)
   (snd-display (format #f ";all done!~%~A" original-prompt))

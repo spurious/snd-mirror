@@ -1,5 +1,7 @@
 snd change log
 
+  21-Mar:    mus-expand-filename.
+             open-raw-sound-hook (old raw-* variables are obsolete).
   20-Mar:    mouse-enter-label hook function needs full filename (thanks to Anders Vinjar).
   19-Mar:    snd 4.12.
              removed gdbm support from sndlib.

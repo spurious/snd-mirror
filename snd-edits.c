@@ -2956,7 +2956,7 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
   snd_state *ss;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_edit_history);
   SND_ASSERT_CHAN(S_save_edit_history, snd, chn, 2);
-  mcf = mus_file_full_name(TO_C_STRING(filename));
+  mcf = mus_expand_filename(TO_C_STRING(filename));
   fd = fopen(mcf, "w");
   if (mcf) FREE(mcf);
   if (fd)
@@ -3323,7 +3323,7 @@ inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into sn
   SCM_ASSERT(INT_OR_ARG_P(file_chn), file_chn, SCM_ARG3, S_insert_sound);
   SND_ASSERT_CHAN(S_insert_sound, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_insert_sound);
-  filename = mus_file_full_name(TO_C_STRING(file));
+  filename = mus_expand_filename(TO_C_STRING(file));
   nc = mus_sound_chans(filename);
   if (nc == -1)
     {

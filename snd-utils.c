@@ -534,6 +534,10 @@ char *mem_stats(snd_state *ss, int ub)
   return(result);
 }
 
+#if DEBUGGING && (!USE_NO_GUI)
+char *stats_window_state(void);
+#endif
+
 void mem_report(void)
 {
   int loc, i, sum, ptr = 0;
@@ -586,6 +590,9 @@ void mem_report(void)
   for (i = 0; i < 512; i++)
     if (mus_file_fd_name(i))
       fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));
+#if DEBUGGING && (!USE_NO_GUI)
+  fprintf(Fp, stats_window_state());
+#endif
   fclose(Fp);
 }
 
