@@ -440,7 +440,8 @@ void g_init_gxsnd(void);
 /* -------- snd-xfile.c -------- */
 
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location);
-file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *args, int n, int with_chan, int header_type, int data_format, int with_loc);
+file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *args, int n, int with_chan, 
+				int header_type, int data_format, int with_loc, int with_comment);
 void alert_new_file(void);
 void make_open_file_dialog(snd_state *ss, int read_only, int managed);
 void make_file_save_as_dialog(snd_state *ss);

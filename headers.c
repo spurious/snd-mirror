@@ -508,29 +508,29 @@ const char *mus_short_data_format_name(int format)
 {
   switch (format)
     {
-    case MUS_BSHORT:           return("bshort");         break;
-    case MUS_MULAW:            return("mulaw");          break;
-    case MUS_BYTE:             return("byte");           break;
-    case MUS_BFLOAT:           return("bfloat");         break;
-    case MUS_BFLOAT_UNSCALED:  return("bfloatu");        break;
-    case MUS_BINT:             return("bint");           break;
-    case MUS_ALAW:             return("alaw");           break;
-    case MUS_UBYTE:            return("char");           break;
-    case MUS_B24INT:           return("bint24");         break;
-    case MUS_BDOUBLE:          return("bdouble");        break;
-    case MUS_BDOUBLE_UNSCALED: return("bdoubleu");       break;
-    case MUS_LSHORT:           return("lshort");         break;
-    case MUS_LINT:             return("lint");           break;
-    case MUS_LFLOAT_UNSCALED:  return("lfloatu");        break;
-    case MUS_LDOUBLE_UNSCALED: return("ldoubleu");       break;
-    case MUS_LFLOAT:           return("lfloat");         break;
-    case MUS_LDOUBLE:          return("ldouble");        break;
-    case MUS_UBSHORT:          return("ubshort");        break;
-    case MUS_ULSHORT:          return("ulshort");        break;
-    case MUS_L24INT:           return("lint24");         break;
-    case MUS_BINTN:            return("bint");           break;
-    case MUS_LINTN:            return("lint");           break;
-    default:                   return("unknown format"); break;
+    case MUS_BSHORT:           return("mus-bshort");            break;
+    case MUS_MULAW:            return("mus-mulaw");             break;
+    case MUS_BYTE:             return("mus-byte");              break;
+    case MUS_BFLOAT:           return("mus-bfloat");            break;
+    case MUS_BFLOAT_UNSCALED:  return("mus-bfloat-unscaled");   break;
+    case MUS_BINT:             return("mus-bint");              break;
+    case MUS_ALAW:             return("mus-alaw");              break;
+    case MUS_UBYTE:            return("mus-char");              break;
+    case MUS_B24INT:           return("mus-bint24");            break;
+    case MUS_BDOUBLE:          return("mus-bdouble");           break;
+    case MUS_BDOUBLE_UNSCALED: return("mus-bdouble-unscaled");  break;
+    case MUS_LSHORT:           return("mus-lshort");            break;
+    case MUS_LINT:             return("mus-lint");              break;
+    case MUS_LFLOAT_UNSCALED:  return("mus-lfloat-unscaled");   break;
+    case MUS_LDOUBLE_UNSCALED: return("mus-ldouble-unscaled");  break;
+    case MUS_LFLOAT:           return("mus-lfloat");            break;
+    case MUS_LDOUBLE:          return("mus-ldouble");           break;
+    case MUS_UBSHORT:          return("mus-ubshort");           break;
+    case MUS_ULSHORT:          return("mus-ulshort");           break;
+    case MUS_L24INT:           return("mus-lint24");            break;
+    case MUS_BINTN:            return("mus-bintn");             break;
+    case MUS_LINTN:            return("mus-lintn");             break;
+    default:                   return("unknown format");        break;
     }
 }
 

@@ -281,7 +281,8 @@
 #define XEN_BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
 #define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
 #define XEN_DOUBLE_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
-#define XEN_INTEGER_P(Arg)            (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
+#define XEN_INTEGER_P(Arg)            ((XEN_NOT_FALSE_P(scm_integer_p(Arg))) && (!(SCM_BIGP(Arg))))
+/* we want something here that can be turned into an int without throwing an error (out-of-range for bignum) */
 #define XEN_SYMBOL_P(Arg)             (SCM_SYMBOLP(Arg))
 #define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))
 #define XEN_STRING_P(Arg)             (SCM_STRINGP(Arg))
@@ -366,13 +367,13 @@
 /* disabling type checks saves almost no space (200k out of 12M) and no time (5% or so) */
 #ifdef SCM_ASSERT_TYPE
   #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
-    SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
+    do {SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type);} while (0) /* actual macro is unprotected if..then */
 
   #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
     scm_wrong_type_arg_msg(Caller, ArgN, Arg, Descr)
 #else
   #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
-    SCM_ASSERT(Assertion, Arg, Position, Caller)
+    do {SCM_ASSERT(Assertion, Arg, Position, Caller);} while (0)
 
   #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
     scm_wrong_type_arg(Caller, ArgN, Arg)

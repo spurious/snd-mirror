@@ -156,7 +156,7 @@ static void make_record_icons(GtkWidget *w, snd_state *ss)
   mic_pix = SG_XPM_TO_PIXMAP(wn, mic_bits(), mic_mask);
   line_in_pix = SG_XPM_TO_PIXMAP(wn, line_in_bits(), line_in_mask);
   cd_pix = SG_XPM_TO_PIXMAP(wn, cd_bits(), cd_mask);
-  /* TODO: digital_in, aes, adat */
+  /* SOMEDAY: digital_in, aes, adat */
 }
 
 static SG_PIXMAP *device_pix(int device)

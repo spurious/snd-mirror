@@ -690,10 +690,9 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *or
       for (i = 0; ((i < r->chans) && (i < si->chans)); i++)
 	{
 	  ncp = si->cps[i];                       /* currently syncd chan that we might paste to */
-	  if (err == MUS_NO_ERROR)
-	    file_insert_samples(beg, r->frames, tempfile, ncp, i,
-				(r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-				origin, ncp->edit_ctr);
+	  file_insert_samples(beg, r->frames, tempfile, ncp, i,
+			      (r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+			      origin, ncp->edit_ctr);
 	  update_graph(si->cps[i], NULL);
 	}
       if ((r->use_temp_file == REGION_FILE) && (tempfile)) FREE(tempfile);

@@ -524,29 +524,6 @@ void init_gsl_j0(void)
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt;<em class=typing>(bes-fm 22050 440 10.0 1.0 8.0)</em>
 </pre>
-<p>It is possible to have the gsl-ex.so library loaded automatically,
-including the dynamic-link.  (This part of Guile's module system
-may change, but they've been saying that for years).  First, include
-this in gsl-ex.c:
-</p>
-<pre>
-void scm_init_gsl_bessel_module ()
-{
-  scm_register_module_xxx ("gsl bessel", init_gsl_j0);
-}
-</pre>
-<p>This tells Guile to call init_gsl_j0 when the module is loaded (thereby
-defining j0 for us).  Now we'll call this module (gsl bessel) just for
-laughs; this means when we type</p>
-<pre>
-&gt;(use-modules (gsl bessel))
-</pre>
-<p>in Snd's listener, the loader will look for gsl/libbessel.so,
-calling scm_init_gsl_bessel_module if possible. So we create
-a subdirectory named gsl, and put gsl-ex.so in it under the name
-libbessel.so.  Then whenever we want to use j0, we simply
-use the <code>use-modules</code> line given above.
-</p>
 
 <p>To acess and edit sound data from such a module, use the
 Snd functions make-sample-reader and loop-samples.  loop-samples

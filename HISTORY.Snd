@@ -1,5 +1,6 @@
 snd change log
 
+  1-Apr:     insert-samples and set-samples no longer delete file passed as 'data'.
   29-Mar:    Mac-OSX with Motif (thanks to Charles Nichols).
   28-Mar:    removed movies function.
   27-Mar:    selected-mix, selected-sound, and selected-channel return #f if none selected (not -1).

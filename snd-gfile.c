@@ -1337,6 +1337,22 @@ static void raw_data_default_callback(GtkWidget *w, gpointer context)
   raw_done = 1;
 }
 
+static char **data_formats = NULL;
+static char **data_format_names(void)
+{
+  int i;
+  if (data_formats == NULL)
+    {
+      data_formats = (char **)CALLOC(MUS_LAST_DATA_FORMAT, sizeof(char *));
+      for (i = 0; i < MUS_LAST_DATA_FORMAT; i++)
+	data_formats[i] = (char *)mus_data_format_name(i + 1);
+    }
+  return(data_formats);
+}
+
+/* must parallel sndlib.h definitions */
+
+
 #if HAVE_GTK2
 static void raw_data_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
@@ -1348,7 +1364,7 @@ static void raw_data_browse_callback(GtkTreeSelection *selection, gpointer *gp)
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
   names = data_format_names();
-  for (i = 0; i < num_data_formats(); i++)
+  for (i = 0; i < MUS_LAST_DATA_FORMAT; i++)
     if (strcmp(value, names[i]) == 0)
       {
 	int sr, oc, fr;
@@ -1451,7 +1467,7 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->vbox), dlab, FALSE, FALSE, 6);
   gtk_widget_show(dlab);
 
-  lst = sg_make_list((gpointer)ss, num_data_formats(), data_format_names(), GTK_SIGNAL_FUNC(raw_data_browse_callback));
+  lst = sg_make_list((gpointer)ss, MUS_LAST_DATA_FORMAT, data_format_names(), GTK_SIGNAL_FUNC(raw_data_browse_callback));
 
   scroller = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);

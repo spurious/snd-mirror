@@ -784,7 +784,7 @@ static void file_comment_label_help_callback(Widget w, XtPointer context, XtPoin
 static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
 
 file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *in_args, int in_n, 
-				int with_chan, int header_type, int data_format, int with_loc)
+				int with_chan, int header_type, int data_format, int with_loc, int with_comment)
 {
   Widget mainform, form,
     sep1, hlab, hlist, dlab, dlist,
@@ -985,7 +985,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, form); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNbottomAttachment, (with_comment) ? XmATTACH_NONE : XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -993,31 +993,33 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
   sep4 = XtCreateManagedWidget("sep4", xmSeparatorWidgetClass, mainform, args, n);
 
-  n = 0;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, sep4); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  comment_label = XtCreateManagedWidget(STR_comment_p, xmLabelWidgetClass, mainform, args, n);
-  XtAddCallback(comment_label, XmNhelpCallback, file_comment_label_help_callback, ss);
-
-  n = 0;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, comment_label); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, comment_label); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrows, 2); n++;
+  if (with_comment)
+    {
+      n = 0;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, sep4); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      comment_label = XtCreateManagedWidget(STR_comment_p, xmLabelWidgetClass, mainform, args, n);
+      XtAddCallback(comment_label, XmNhelpCallback, file_comment_label_help_callback, ss);
+      
+      n = 0;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, comment_label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, comment_label); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrows, 2); n++;
 #if (HAVE_OSS || HAVE_ALSA)
-  XtSetArg(args[n], XmNcolumns, 40); n++;
-  /* this pushes the right boundary over a ways -- otherwise the button holder box takes up all available space */
+      XtSetArg(args[n], XmNcolumns, 40); n++;
+      /* this pushes the right boundary over a ways -- otherwise the button holder box takes up all available space */
 #endif
-  comment_text = make_text_widget(ss, "comment-text", mainform, args, n);
-  XtAddCallback(comment_text, XmNhelpCallback, file_comment_label_help_callback, ss);
-  fdat->comment_text = comment_text;
-
+      comment_text = make_text_widget(ss, "comment-text", mainform, args, n);
+      XtAddCallback(comment_text, XmNhelpCallback, file_comment_label_help_callback, ss);
+      fdat->comment_text = comment_text;
+    }
   return(fdat);
 }
 
@@ -1060,7 +1062,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XtAddCallback(save_as_dialog, XmNokCallback, save_as_ok_callback, ss);
       
       n = attach_all_sides(args, 0);
-      save_as_file_data = make_file_data_panel(ss, save_as_dialog, "data-form", args, n, FALSE, header_type, format_type, FALSE);
+      save_as_file_data = make_file_data_panel(ss, save_as_dialog, "data-form", args, n, FALSE, header_type, format_type, FALSE, TRUE);
 
       color_file_selection_box(save_as_dialog, ss);
       if (!(ss->using_schemes))	
@@ -1943,6 +1945,8 @@ static void raw_data_help_callback(Widget w, XtPointer context, XtPointer info)
 static char dfs_str[LABEL_BUFFER_SIZE];
 static char dfc_str[LABEL_BUFFER_SIZE];
 
+/* TODO: use the standard header pane for the raw data dialog */
+
 static void make_raw_data_dialog(char *filename, snd_state *ss)
 {
   XmString *formats;
@@ -1950,7 +1954,6 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   int i, n;
   int sr, oc, fr;
   char *str;
-  char **format_names;
   Arg args[20];
   Widget lst, defw, dls, rform, dlab, dloclab, chnlab;
 
@@ -2075,17 +2078,16 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, dlab); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  formats = (XmString *)CALLOC(num_data_formats(), sizeof(XmString));
-  format_names = data_format_names();
-  for (i = 0; i < num_data_formats(); i++) 
-    formats[i] = XmStringCreate(format_names[i], XmFONTLIST_DEFAULT_TAG);
+  formats = (XmString *)CALLOC(MUS_LAST_DATA_FORMAT, sizeof(XmString));
+  for (i = 0; i < MUS_LAST_DATA_FORMAT; i++) 
+    formats[i] = XmStringCreate((char *)mus_data_format_name(i + 1), XmFONTLIST_DEFAULT_TAG);
   lst = XmCreateScrolledList(rform, "raw-data-format-list", args, n);
   XtVaSetValues(lst, XmNitems, formats, 
-		     XmNitemCount, num_data_formats(), 
+		     XmNitemCount, MUS_LAST_DATA_FORMAT, 
 		     XmNvisibleItemCount, 6, NULL);
   XtManageChild(lst); 
   XmListSelectPos(lst, fr, FALSE);
-  for (i = 0; i < num_data_formats(); i++) 
+  for (i = 0; i < MUS_LAST_DATA_FORMAT; i++) 
     XmStringFree(formats[i]);
   FREE(formats);
   XtAddCallback(lst, XmNbrowseSelectionCallback, raw_data_browse_callback, ss);
@@ -2242,7 +2244,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      new_dialog_data = make_file_data_panel(ss, form, "data-form", args, n, TRUE, default_output_type(ss), default_output_format(ss), FALSE);
+      new_dialog_data = make_file_data_panel(ss, form, "data-form", args, n, TRUE, default_output_type(ss), default_output_format(ss), FALSE, TRUE);
 
       XtManageChild(new_dialog);
       if (!(ss->using_schemes))	
@@ -2372,7 +2374,7 @@ Widget edit_header(snd_info *sp)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       n = attach_all_sides(args, n);
-      edit_header_data = make_file_data_panel(ss, edit_header_dialog, STR_Edit_Header, args, n, TRUE, hdr->type, hdr->format, TRUE);
+      edit_header_data = make_file_data_panel(ss, edit_header_dialog, STR_Edit_Header, args, n, TRUE, hdr->type, hdr->format, TRUE, TRUE);
       load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
 
       XtManageChild(edit_header_dialog);

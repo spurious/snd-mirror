@@ -1,8 +1,5 @@
 /* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, HPUX, Mac OSX, ESD) */
 
-/* TODO  sgi adat in hangs
- */
-
 /*
  * layout of this file:
  *    error handlers
@@ -157,6 +154,16 @@ int device_gains(int dev);
 int device_channels(int dev)
 {
   float val[4];
+#if USE_SND && DEBUGGING
+  XEN res;
+  int chans;
+  res = XEN_EVAL_C_STRING("(if (defined? 'debugging-device-channels) debugging-device-channels 0)");
+  if (XEN_INTEGER_P(res))
+    {
+      chans = XEN_TO_C_INT(res);
+      if (chans > 0) return(chans);
+    }
+#endif
   mus_audio_mixer_read(dev, MUS_AUDIO_CHANNEL, 0, val);
   return((int)val[0]);
 }

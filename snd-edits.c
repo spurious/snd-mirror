@@ -700,27 +700,6 @@ void remember_temp(char *filename, int chans)
   tmp->ticks = (int *)CALLOC(chans, sizeof(int));
 }
 
-static void remember_redundant_temp(char *filename, int cur_chan)
-{
-  int i, j;
-  tempfile_ctr *tmp;
-  for (i = 0; i < tempfiles_size; i++)
-    {
-      tmp = tempfiles[i];
-      if ((tmp) && (strcmp(filename, tmp->name) == 0))
-	{
-	  if (cur_chan >= tmp->chans)
-	    {
-	      tmp->ticks = (int *)REALLOC(tmp->ticks, (cur_chan + 1) * sizeof(int));
-	      for (j = tmp->chans; j < cur_chan + 1; j++) tmp->ticks[j] = 0;
-	      tmp->chans = cur_chan + 1;
-	    }
-	  return;
-	}
-    }
-  remember_temp(filename, cur_chan + 1);
-}
-
 static void forget_temp(char *filename, int chan)
 {
   int i, j, happy = 0;
@@ -1264,7 +1243,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
   ed_list *ed;
   file_info *hdr;
   snd_state *ss;
-  if (num <= 0) 
+  if (num <= 0) /* can't happen!? */
     {
       if ((inserted_file) && (auto_delete == DELETE_ME)) snd_remove(inserted_file);
       if ((inserted_file) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(inserted_file, chan);
@@ -2963,7 +2942,9 @@ replacing current data with the function results; origin is the edit-history nam
   if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
   close_temp_file(ofd, hdr, num * datumb, sp);
   hdr = free_file_info(hdr);
-  file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, XEN_TO_C_STRING(origin), cp->edit_ctr);
+  if (num > 0)
+    file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, XEN_TO_C_STRING(origin), cp->edit_ctr);
+  else snd_remove(ofile);
   update_graph(cp, NULL);
   if (ofile) FREE(ofile);
   FREE(data[0]);
@@ -3306,6 +3287,7 @@ static MUS_SAMPLE_TYPE *g_floats_to_samples(XEN obj, int *size, const char *call
       if (XEN_VECTOR_P(obj))
 	{
 	  num = XEN_VECTOR_LENGTH(obj); 
+	  if (num == 0) return(NULL);
 	  if (((*size) > 0) && (num > (*size)))
 	    num = (*size);
 	  vals = (MUS_SAMPLE_TYPE *)MALLOC(num * sizeof(MUS_SAMPLE_TYPE));
@@ -3394,7 +3376,7 @@ the new data's end."
 
   chan_info *cp;
   MUS_SAMPLE_TYPE *ivals;
-  int len = 0, beg, curlen, override = 0, inchan = 0, delete_choice = DELETE_ME, pos;
+  int len = 0, beg, curlen, override = 0, inchan = 0, pos;
   char *fname, *caller;
   if (XEN_STRING_P(edname))
     caller = XEN_TO_C_STRING(edname);
@@ -3416,15 +3398,10 @@ the new data's end."
       curlen = current_ed_samples(cp);
       fname = XEN_TO_C_STRING(vect);
       inchan = XEN_TO_C_INT_OR_ELSE(infile_chan, 0);
-      if (XEN_BOUND_P(infile_chan)) 
-	{
-	  delete_choice = MULTICHANNEL_DELETION;
-	  remember_redundant_temp(fname, inchan);
-	}
       if ((beg == 0) && 
 	  ((len > curlen) || override))
-	file_override_samples(len, fname, cp, inchan, delete_choice, LOCK_MIXES, caller);
-      else file_change_samples(beg, len, fname, cp, inchan, delete_choice, LOCK_MIXES, caller, pos);
+	file_override_samples(len, fname, cp, inchan, DONT_DELETE_ME, LOCK_MIXES, caller);
+      else file_change_samples(beg, len, fname, cp, inchan, DONT_DELETE_ME, LOCK_MIXES, caller, pos);
     }
   else
     {
@@ -3610,6 +3587,8 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
     {
       ivals = (MUS_SAMPLE_TYPE *)MALLOC(len * sizeof(MUS_SAMPLE_TYPE));
       vdata = XEN_VECTOR_ELEMENTS(vect);
+      if (len > XEN_VECTOR_LENGTH(vect)) len = XEN_VECTOR_LENGTH(vect);
+      if (len <= 0) return(XEN_FALSE); /* should this be an error? */
 #if SNDLIB_USE_FLOATS
       for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_DOUBLE(vdata[i]);
 #else
@@ -3623,7 +3602,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
       /* string = filename here */
       file_change_samples(beg, len,
 			  XEN_TO_C_STRING(vect),
-			  cp, 0, 0, 1,
+			  cp, 0, DONT_DELETE_ME, LOCK_MIXES,
 			  XEN_TO_C_STRING(origin), 
 			  pos);
     }
@@ -3789,9 +3768,10 @@ inserts data (either a vector, vct, or list of samples, or a filename) into snd'
   cp = get_cp(snd_n, chn_n, S_insert_samples);
   beg = XEN_TO_C_INT_OR_ELSE(samp, 0);
   len = XEN_TO_C_INT_OR_ELSE(samps, 0);
+  if (len <= 0) return(samps);
   pos = to_c_edit_position(cp, edpos, S_insert_samples, 6);
   if (XEN_STRING_P(vect))
-    file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DELETE_ME, S_insert_samples, pos);
+    file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, S_insert_samples, pos);
   else
     {
       ivals = g_floats_to_samples(vect, &len, S_insert_samples, 3);
@@ -3819,11 +3799,14 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   cp = get_cp(snd_n, chn_n, S_insert_samples_with_origin);
   beg = XEN_TO_C_INT_OR_ELSE(samp, 0);
   len = XEN_TO_C_INT_OR_ELSE(samps, 0);
+  if (len <= 0) return(samps);
   pos = to_c_edit_position(cp, edpos, S_insert_samples_with_origin, 7);
   if (XEN_VECTOR_P(vect))
     {
       ivals = (MUS_SAMPLE_TYPE *)MALLOC(len * sizeof(MUS_SAMPLE_TYPE));
       vdata = XEN_VECTOR_ELEMENTS(vect);
+      if (len > XEN_VECTOR_LENGTH(vect)) len = XEN_VECTOR_LENGTH(vect);
+      if (len <= 0) return(XEN_FALSE); /* should this be an error? */
 #if SNDLIB_USE_FLOATS
       for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_DOUBLE(vdata[i]);
 #else
@@ -3837,7 +3820,8 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
       if (XEN_STRING_P(vect))
 	file_insert_samples(beg, len,
 			    XEN_TO_C_STRING(vect),
-			    cp, 0, 0,
+			    cp, 0, 
+			    DONT_DELETE_ME,
 			    XEN_TO_C_STRING(origin),
 			    pos);
       else extend_with_zeros(cp, beg, len, XEN_TO_C_STRING(origin), pos);

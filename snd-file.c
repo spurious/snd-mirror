@@ -1318,6 +1318,16 @@ static void remember_me(snd_state *ss, char *shortname, char *fullname)
     }
 }
 
+void init_curfiles(int size)
+{
+  if (curfile_size == 0)
+    {
+      curfile_size = size;
+      curnames = (char **)CALLOC(curfile_size, sizeof(char *));
+      a_big_star = (int *)CALLOC(curfile_size, sizeof(int *));
+    }
+}
+
 static void greet_me(snd_state *ss, char *shortname)
 {
   int i, new_size;
@@ -1352,16 +1362,6 @@ static void greet_me(snd_state *ss, char *shortname)
     {
       make_curfiles_list(ss);
       make_prevfiles_list(ss);
-    }
-}
-
-void init_curfiles(int size)
-{
-  if (curfile_size == 0)
-    {
-      curfile_size = size;
-      curnames = (char **)CALLOC(curfile_size, sizeof(char *));
-      a_big_star = (int *)CALLOC(curfile_size, sizeof(int *));
     }
 }
 
@@ -1656,64 +1656,39 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
 #define IRCAM_POSITION 5
 #define NIST_POSITION 6
 
-static char *next_data_formats[NUM_NEXT_FORMATS] = {"short", "mulaw", "signed byte  ", "float", "long", "alaw", "24-bit", "double"};
-static char *ircam_data_formats[NUM_IRCAM_FORMATS] = {"short", "mulaw", "float        ", "long", "alaw"};
-static char *wave_data_formats[NUM_WAVE_FORMATS] = {"mulaw", "alaw", "unsigned byte", "short", "long", "float", "double", "24-bit"};
-static char *aifc_data_formats[NUM_AIFC_FORMATS] = {"short", "mulaw", "signed byte  ", "long", "alaw", "24 bit",
-						    "float", "double", "unsigned byte", "short swapped",
-						    "long swapped", "24-bit swapped", "unsigned short"};
-static char *aiff_data_formats[NUM_AIFF_FORMATS] = {"short", "long", "signed byte", "24 bit"};
-static char *nist_data_formats[NUM_NIST_FORMATS] = {"BE short", "LE short", "BE int", "LE int", "8-bit", "BE 24-bit", "LE 24-bit"};
-static char *raw_data_formats[NUM_RAW_FORMATS] =   {"BE short", "mulaw", "byte", "BE float", "BE int", "alaw", "char", "BE 24-bit",
-						    "BE double", "LE short", "LE int", "LE float", "LE double", "BE unsigned short",
-						    "LE unsigned short", "LE 24-bit", "BE int normalized", "LE int normalized"};
+static char **next_data_formats, **ircam_data_formats, **wave_data_formats, **aifc_data_formats, **aiff_data_formats, **nist_data_formats, **raw_data_formats;
 
-static int next_dfs[NUM_NEXT_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW,
-					 MUS_B24INT, MUS_BDOUBLE};
+static int next_dfs[NUM_NEXT_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_B24INT, MUS_BDOUBLE};
 static int ircam_dfs[NUM_IRCAM_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BFLOAT, MUS_BINT, MUS_ALAW};
-static int wave_dfs[NUM_WAVE_FORMATS] = {MUS_MULAW, MUS_ALAW, MUS_UBYTE, MUS_LSHORT,
-					 MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_L24INT};
+static int wave_dfs[NUM_WAVE_FORMATS] = {MUS_MULAW, MUS_ALAW, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_L24INT};
 static int aifc_dfs[NUM_AIFC_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT,
 					 MUS_BFLOAT, MUS_BDOUBLE, MUS_UBYTE, MUS_LSHORT,
 					 MUS_LINT, MUS_L24INT, MUS_UBSHORT};
 static int aiff_dfs[NUM_AIFF_FORMATS] = {MUS_BSHORT, MUS_BINT, MUS_BYTE, MUS_B24INT};
-static int nist_dfs[NUM_NIST_FORMATS] = {MUS_BSHORT, MUS_LSHORT, MUS_BINT, MUS_LINT,
-					 MUS_BYTE, MUS_B24INT, MUS_L24INT};
+static int nist_dfs[NUM_NIST_FORMATS] = {MUS_BSHORT, MUS_LSHORT, MUS_BINT, MUS_LINT, MUS_BYTE, MUS_B24INT, MUS_L24INT};
 static int raw_dfs[NUM_RAW_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW,
 				       MUS_UBYTE, MUS_B24INT, MUS_BDOUBLE, MUS_LSHORT, MUS_LINT,
 				       MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT,
 				       MUS_L24INT, MUS_BINTN, MUS_LINTN};
 
-#define NUM_DATA_FORMATS 22
-static char *data_formats[NUM_DATA_FORMATS] = {
-  "16 bit big-endian int",
-  "8 bit mulaw",
-  "8 bit signed int",
-  "32 bit big-endian float",
-  "32 bit big-endian int",
-  "8 bit alaw",
-  "8 bit unsigned int",
-  "24 bit big-endian int",
-  "64 bit big-endian double",
-  "16 bit little-endian int",
-  "32 bit little-endian int",
-  "32 bit little-endian float",
-  "64 bit little-endian double",
-  "16 bit big-endian unsigned int",
-  "16 bit little-endian unsigned int",
-  "24 bit little-endian int",
-  "32 bit big-endian normalized int",
-  "32 bit little-endian normalized int",
-  "32 bit big-endian unscaled float",
-  "32 bit little-endian unscaled float",
-  "32 bit big-endian unscaled double",
-  "32 bit little-endian unscaled double",
-};
-
-int num_data_formats(void) {return(NUM_DATA_FORMATS);}
-char **data_format_names(void) {return(data_formats);}
-
-/* must parallel sndlib.h definitions */
+void initialize_format_lists(void)
+{
+  int i;
+  next_data_formats = (char **)CALLOC(NUM_NEXT_FORMATS, sizeof(char *));
+  for (i = 0; i < NUM_NEXT_FORMATS; i++) next_data_formats[i] = (char *)mus_short_data_format_name(next_dfs[i]);
+  ircam_data_formats = (char **)CALLOC(NUM_IRCAM_FORMATS, sizeof(char *));
+  for (i = 0; i < NUM_IRCAM_FORMATS; i++) ircam_data_formats[i] = (char *)mus_short_data_format_name(ircam_dfs[i]);
+  wave_data_formats = (char **)CALLOC(NUM_WAVE_FORMATS, sizeof(char *));
+  for (i = 0; i < NUM_WAVE_FORMATS; i++) wave_data_formats[i] = (char *)mus_short_data_format_name(wave_dfs[i]);
+  aiff_data_formats = (char **)CALLOC(NUM_AIFF_FORMATS, sizeof(char *));
+  for (i = 0; i < NUM_AIFF_FORMATS; i++) aiff_data_formats[i] = (char *)mus_short_data_format_name(aiff_dfs[i]);
+  aifc_data_formats = (char **)CALLOC(NUM_AIFC_FORMATS, sizeof(char *));
+  for (i = 0; i < NUM_AIFC_FORMATS; i++) aifc_data_formats[i] = (char *)mus_short_data_format_name(aifc_dfs[i]);
+  nist_data_formats = (char **)CALLOC(NUM_NIST_FORMATS, sizeof(char *));
+  for (i = 0; i < NUM_NIST_FORMATS; i++) nist_data_formats[i] = (char *)mus_short_data_format_name(nist_dfs[i]);
+  raw_data_formats = (char **)CALLOC(NUM_RAW_FORMATS, sizeof(char *));
+  for (i = 0; i < NUM_RAW_FORMATS; i++) raw_data_formats[i] = (char *)mus_short_data_format_name(raw_dfs[i]);
+}
 
 int header_type_from_position(int position)
 {

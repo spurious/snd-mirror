@@ -23,10 +23,7 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 #
 #--------------------------------------------------------------------------------
 #
-# still TODO: sndlib configuration
-#             Mac OSX Guile/Gtk searches (Ruby?)
-#             Sgi compiler optimations automated somehow
-#             Lesstif detection and warning
+# SOMEDAY: sndlib configuration
 #
 #--------------------------------------------------------------------------------
 
@@ -770,6 +767,7 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
     *-*-solaris*) 
 	AC_DEFINE(SUN)
 	LIBS="-lm -ldl"
+# odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	audio_system=Sun
 	LDSO_FLAGS="-G"
         ;;

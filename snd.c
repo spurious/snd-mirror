@@ -147,8 +147,8 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 	  }
     }
 
+  initialize_format_lists();
   ss = (snd_state *)CALLOC(1, sizeof(snd_state));
-
   ss->Transform_Size = DEFAULT_TRANSFORM_SIZE;
   ss->Minibuffer_History_Length = DEFAULT_MINIBUFFER_HISTORY_LENGTH;
   ss->Fft_Window = DEFAULT_FFT_WINDOW;

@@ -1106,8 +1106,6 @@ void file_unprevlist(char *filename);
 void update_prevfiles(snd_state *ss);
 void add_directory_to_prevlist(snd_state *ss, char *dirname);
 void make_prevfiles_list_1(snd_state *ss);
-int num_data_formats(void);
-char **data_format_names(void);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
 int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment);
 void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data);
@@ -1119,7 +1117,7 @@ void set_header_type_and_format_from_position(file_data *fdat, int pos);
 char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format);
 
 void g_init_file(void);
-
+void initialize_format_lists(void);
 
 
 
@@ -1292,7 +1290,6 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin);
 void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
 void cursor_delete(chan_info *cp, int count, const char *origin);
-void cursor_delete_previous(chan_info *cp, int count, const char *origin);
 void cursor_zeros(chan_info *cp, int count, int regexpr);
 void cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 void fht(int powerOfFour, Float *array);

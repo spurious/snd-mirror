@@ -246,6 +246,7 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
 /* "unscaled" means the float value is used directly (i.e. not as -1.0 to 1.0, but (probably) -32768.0 to 32768.0) */
 
 #define MUS_DATA_FORMAT_OK(n) (((n) > MUS_UNKNOWN) && ((n) <= MUS_LDOUBLE_UNSCALED))
+#define MUS_LAST_DATA_FORMAT MUS_LDOUBLE_UNSCALED
 
 #if MAC_OSX
   #define MUS_COMPATIBLE_FORMAT MUS_BFLOAT

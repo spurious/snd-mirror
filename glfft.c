@@ -1,4 +1,4 @@
-/* TODO: make this look fancy */
+/* SOMEDAY: make this look fancy */
 
 #include <stdio.h>
 #include <stdlib.h>

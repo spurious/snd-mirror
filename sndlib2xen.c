@@ -368,16 +368,11 @@ static char *sound_data_to_string(sound_data *v)
 {
   char *buf;
   buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  if (v == NULL)
-    sprintf(buf, "#<sound-data: null>");
-  else
-    {
-      if ((v->data) && (v->chans > 0))
-	mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<sound-data: %d chan%s, %d frame%s>",
-		     v->chans, (v->chans == 1) ? "" : "s",
-		     v->length, (v->length == 1) ? "" : "s");
-      else sprintf(buf, "#<sound-data: inactive>");
-    }
+  if ((v->data) && (v->chans > 0))
+    mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<sound-data: %d chan%s, %d frame%s>",
+		 v->chans, (v->chans == 1) ? "" : "s",
+		 v->length, (v->length == 1) ? "" : "s");
+  else sprintf(buf, "#<sound-data: inactive>");
   return(buf);
 }
 
@@ -409,7 +404,6 @@ static XEN sound_data_length(XEN obj)
   sound_data *v;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ONLY_ARG, S_sound_data_length, "a sound-data object");
   v = (sound_data *)XEN_OBJECT_REF(obj);
-  if (v == NULL) return(XEN_FALSE);
   return(C_TO_XEN_INT(v->length));
 }
 
@@ -419,7 +413,6 @@ static XEN sound_data_chans(XEN obj)
   sound_data *v;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ONLY_ARG, S_sound_data_chans, "a sound-data object");
   v = (sound_data *)XEN_OBJECT_REF(obj);
-  if (v == NULL) return(XEN_FALSE);
   return(C_TO_SMALL_XEN_INT(v->chans));
 }
 
@@ -473,18 +466,13 @@ static XEN sound_data_ref(XEN obj, XEN chan, XEN frame_num)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_sound_data_ref, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frame_num), frame_num, XEN_ARG_3, S_sound_data_ref, "an integer");
   v = (sound_data *)XEN_OBJECT_REF(obj);
-  if (v)
-    {
-      chn = XEN_TO_C_INT(chan);
-      if ((chn < 0) || (chn >= v->chans))
-	mus_misc_error(S_sound_data_ref, "invalid channel", XEN_LIST_2(obj, chan));
-      loc = XEN_TO_C_INT(frame_num);
-      if ((loc < 0) || (loc >= v->length))
-	mus_misc_error(S_sound_data_ref, "invalid frame number", XEN_LIST_2(obj, frame_num));
-      return(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(v->data[chn][loc])));
-    }
-  else mus_misc_error(S_sound_data_ref, "nil sound-data?", XEN_EMPTY_LIST);
-  return(C_TO_XEN_DOUBLE(0.0));
+  chn = XEN_TO_C_INT(chan);
+  if ((chn < 0) || (chn >= v->chans))
+    mus_misc_error(S_sound_data_ref, "invalid channel", XEN_LIST_2(obj, chan));
+  loc = XEN_TO_C_INT(frame_num);
+  if ((loc < 0) || (loc >= v->length))
+    mus_misc_error(S_sound_data_ref, "invalid frame number", XEN_LIST_2(obj, frame_num));
+  return(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(v->data[chn][loc])));
 }
 
 static XEN g_sound_data_maxamp(XEN obj)
@@ -497,24 +485,21 @@ static XEN g_sound_data_maxamp(XEN obj)
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_maxamp, "a sound-data object");
   v = (sound_data *)XEN_OBJECT_REF(obj);
-  if (v)
+  chans = v->chans;
+  len = v->length;
+  for (i = chans - 1; i >= 0; i--)
     {
-      chans = v->chans;
-      len = v->length;
-      for (i = chans - 1; i >= 0; i--)
+      mx = MUS_SAMPLE_MIN;
+      buf = v->data[i];
+      for (j = 0; j < len; j++)
 	{
-	  mx = MUS_SAMPLE_MIN;
-	  buf = v->data[i];
-	  for (j = 0; j < len; j++)
-	    {
-	      if (buf[j] > mx)
-		mx = buf[j];
-	      else
-		if (-buf[j] > mx)
-		  mx = -buf[j];
-	    }
-	  lst = XEN_CONS(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(mx)), lst);
+	  if (buf[j] > mx)
+	    mx = buf[j];
+	  else
+	    if (-buf[j] > mx)
+	      mx = -buf[j];
 	}
+      lst = XEN_CONS(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(mx)), lst);
     }
   return(lst);
 }
@@ -523,14 +508,7 @@ static XEN g_sound_data_maxamp(XEN obj)
 #if HAVE_APPLICABLE_SMOB
 static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 {
-#if DEBUGGING
-  /* if an error is signalled by sound_data_ref, our catch is ignored! */
-  if ((XEN_INTEGER_P(chan)) && (XEN_INTEGER_P(i)))
-    return(sound_data_ref(obj, chan, i));
-  return(XEN_ZERO);
-#else
   return(sound_data_ref(obj, chan, i));
-#endif
 }
 #endif
 
@@ -544,17 +522,13 @@ static XEN sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frame_num), frame_num, XEN_ARG_3, S_sound_data_setB, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_sound_data_setB, "a number");
   v = (sound_data *)XEN_OBJECT_REF(obj);
-  if (v)
-    {
-      chn = XEN_TO_C_INT(chan);
-      if ((chn < 0) || (chn >= v->chans))
-	mus_misc_error(S_sound_data_setB, "invalid channel", XEN_LIST_3(obj, chan, frame_num));
-      loc = XEN_TO_C_INT(frame_num);
-      if ((loc < 0) || (loc >= v->length))
-	mus_misc_error(S_sound_data_setB, "invalid frame number", XEN_LIST_3(obj, chan, frame_num));
-      v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
-    }
-  else mus_misc_error(S_sound_data_setB, "nil sound-data?", XEN_EMPTY_LIST);
+  chn = XEN_TO_C_INT(chan);
+  if ((chn < 0) || (chn >= v->chans))
+    mus_misc_error(S_sound_data_setB, "invalid channel", XEN_LIST_3(obj, chan, frame_num));
+  loc = XEN_TO_C_INT(frame_num);
+  if ((loc < 0) || (loc >= v->length))
+    mus_misc_error(S_sound_data_setB, "invalid frame number", XEN_LIST_3(obj, chan, frame_num));
+  v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
   return(val);
 }
 

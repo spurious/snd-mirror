@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 2
-#define MUS_DATE "27-Mar-02"
+#define MUS_REVISION 3
+#define MUS_DATE "1-Apr-02"
 
 /* 
+ * 1-Apr:      sine-summation n=0 bugfix.
  * 27-Mar:     negative degree locsig bugfix.
  * 18-Mar:     mus_move_locsig.
  * 15-Mar:     n-chan locsig (and reverb scalers), 'type' arg to mus_make_locsig.

@@ -1102,7 +1102,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_H: case snd_K_h: 
 	      cp->cursor_on = 1; 
-	      cursor_delete_previous(cp, count, "C-h"); 
+	      cursor_delete(cp, -count, "C-h"); 
 	      break; 
 	    case snd_K_I: case snd_K_i: 
 	      show_cursor_info(cp); 

@@ -471,9 +471,10 @@ void save_listener_text(FILE *fp)
 
 static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  char *source = NULL, *name;
+  char *source = NULL, *name, *prompt;
   int end = 0, beg, len, i, j, start_of_name = -1;
   XEN result;
+  snd_state *ss;
   end = XmTextGetLastPosition(w);
   beg = end - 1024;
   if (beg < 0) beg = 0;
@@ -483,10 +484,13 @@ static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num)
   XmTextGetSubstring(w, beg, len, len + 1, source);
   if (source)
     {
-      /* look for "(name...)" */
-      for (i = len - 1; i > 0; i--)
+      /* look for "(name...)" or "\n>name" */
+      ss = get_global_state();
+      prompt = listener_prompt(ss);
+      for (i = len - 1; i >= 0; i--)
 	{
-	  if (source[i] == '(')
+	  if ((source[i] == '(') || 
+	      ((source[i] == prompt[0]) && ((i == 0) || (source[i - 1] == '\n'))))
 	    {
 	      start_of_name = i + 1;
 	      /* look forward for a name */
@@ -499,7 +503,8 @@ static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num)
 		    FREE(name);
 		    if (XEN_STRING_P(result))
 		      {
-			listener_append_and_prompt(get_global_state(), XEN_TO_C_STRING(result));
+			listener_append(ss, "\n;");
+			listener_append_and_prompt(ss, XEN_TO_C_STRING(result));
 			return;
 		      }
 		  }

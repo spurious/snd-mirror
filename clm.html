@@ -1636,7 +1636,8 @@ The basic idea is very similar to that used in the
 <a href="#sum-of-cosines">sum-of-cosines</a> generator. (see "Special Functions", Andrews, Askey, Roy
 chapter 5 for lots of interesting stuff, including the cosine-summation formula used in dsp.scm).
 The output amplitude of this generator is hard to predict; 
-see Moorer's paper for some normalization functions.
+see Moorer's paper for some normalization functions (and it is numerically a disaster --
+don't set <i>a</i> to 1.0!).
 </p>
 <pre><small>
   (definstrument ss (beg dur freq amp &amp;optional (N 1) (a .5) (B-ratio 1.0))

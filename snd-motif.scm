@@ -1409,7 +1409,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	    icon)))
 
       ;; now the actual sound-box maker
-      ;; TODO: multi-channel thumbnail sketches, filled polygon rather than lines, small/large icon distinction
+      ;; SOMEDAY: multi-channel thumbnail sketches, filled polygon rather than lines, small/large icon distinction
       (lambda (name parent select-func peak-func sounds args)
 	;; select-func called when sound selected and passed sound file name
 	;; peak-func (if any) tells icon where to find peak-env-info-file (if any)
@@ -1823,7 +1823,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; -------- add amp sliders in control panel for multi-channel sounds
 ;;;
-;;; TODO: some way to synchronize sliders (needs to be installable into existing set)
+;;; SOMEDAY: some way to synchronize sliders (needs to be installable into existing set)
 
 (define (add-amp-controls)
 
@@ -2252,13 +2252,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; TODO: bess-translations
 ;;; TODO: equivalent of zync (x too) across sounds
-;;; TODO: radar scope style region cue list
+;;; SOMEDAY: radar scope style region cue list
 ;;; (create-sound-window (list-ref (main-widgets) 3) "pistol.snd")
 ;;;   will probably want to disable close here, or use replace?
 ;;; TODO: mix-panning via enved (or as part of mix file dialog?)
-;;; TODO: spatial envelope dialog
-;;; TODO: spectral edit dialog
-;;; TODO: finish the loop-point dialog in marks-menu.scm (create-loop-dialog)
+;;; SOMEDAY: spatial envelope dialog
+;;; SOMEDAY: spectral edit dialog
+;;; SOMEDAY: finish the loop-point dialog in marks-menu.scm (create-loop-dialog)
 
 #!
 (let ((dpy (|XtDisplay (cadr (main-widgets)))))

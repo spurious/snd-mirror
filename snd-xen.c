@@ -1200,7 +1200,7 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white."
   return(C_TO_XEN_INT(color_map(state)));
 }
 
-static XEN snd_access(char *dir, char *caller)
+static int snd_access(char *dir, char *caller)
 {
   int err;
   char *temp;
@@ -1213,27 +1213,26 @@ static XEN snd_access(char *dir, char *caller)
       temp = mus_format("%s %s is not writable: %s", caller, dir, strerror(errno));
       res = C_TO_XEN_STRING(temp);
       FREE(temp);
-      return(res);
+      XEN_ERROR(NO_SUCH_FILE,
+		XEN_LIST_1(res));
     }
   else close(err);
   remove(temp);
   FREE(temp);
-  return(C_TO_XEN_STRING(dir));
+  return(1);
 }
 
 static XEN g_temp_dir(void) {return(C_TO_XEN_STRING(temp_dir(state)));}
 static XEN g_set_temp_dir(XEN val) 
 {
   #define H_temp_dir "(" S_temp_dir ") -> name of directory for temp files"
-
+  char *dir = DEFAULT_TEMP_DIR;
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_temp_dir, "a string"); 
-  if (temp_dir(state)) FREE(temp_dir(state));
-  if (XEN_FALSE_P(val))
-    set_temp_dir(state, (DEFAULT_TEMP_DIR) ? copy_string(DEFAULT_TEMP_DIR) : NULL);
-  else 
+  if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
+  if (snd_access(dir, S_temp_dir))
     {
-      set_temp_dir(state, copy_string(XEN_TO_C_STRING(val)));
-      return(snd_access(temp_dir(state), S_temp_dir));
+      if (temp_dir(state)) FREE(temp_dir(state));
+      set_temp_dir(state, copy_string(dir));
     }
   return(C_TO_XEN_STRING(temp_dir(state)));
 }
@@ -1253,10 +1252,15 @@ static XEN g_save_dir(void) {return(C_TO_XEN_STRING(save_dir(state)));}
 static XEN g_set_save_dir(XEN val) 
 {
   #define H_save_dir "(" S_save_dir ") -> name of directory for saved state data"
+  char *dir = DEFAULT_SAVE_DIR;
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_save_dir, "a string"); 
-  if (save_dir(state)) FREE(save_dir(state));
-  set_save_dir(state, copy_string(XEN_TO_C_STRING(val)));
-  return(snd_access(save_dir(state), S_save_dir));
+  if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
+  if (snd_access(dir, S_save_dir))
+    {
+      if (save_dir(state)) FREE(save_dir(state));
+      set_save_dir(state, copy_string(dir));
+    }
+  return(C_TO_XEN_STRING(save_dir(state)));
 }
 
 static XEN g_ladspa_dir(void) {return(C_TO_XEN_STRING(ladspa_dir(state)));}

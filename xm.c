@@ -3,12 +3,12 @@
  *   for tests and examples see snd-motif.scm and snd-test.scm
  */
 
-/* TODO: finish selection-oriented Xt callbacks
- * TODO: XmVaCreateSimple* (need special arglist handlers)
+/* SOMEDAY: finish selection-oriented Xt callbacks
+ * SOMEDAY: XmVaCreateSimple* (need special arglist handlers)
  * TODO: callback struct print (and tie makers into Ruby)
  * TODO: finish the -> converters
  * TODO: add_resource
- * TODO: get Xprt to work and test the Xp stuff
+ * SOMEDAY: get Xprt to work and test the Xp stuff
  * TODO: rest of help strings and check in snd-help.
  */
 
@@ -3008,14 +3008,17 @@ static XEN gxm_XmStringTableToXmString(XEN arg1, XEN arg2, XEN arg3)
 converts a compound string table to a single compound string"
   /* DIFF: XmStringTableToXmString 1st arg is list of XmStrings
    */
+  int count;
   XmStringTable tab;
   XmString val;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XmStringTableToXmString", "XmStringTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringTableToXmString", "int");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg3) || XEN_FALSE_P(arg3), arg3, 3, "XmStringTableToXmString", "XmString");
-  tab = XEN_TO_C_XmStringTable(arg1, XEN_TO_C_INT(arg2));
+  count = XEN_TO_C_INT(arg2);
+  if (count <= 0) return(XEN_FALSE);
+  tab = XEN_TO_C_XmStringTable(arg1, count);
   val = XmStringTableToXmString(tab,
-				XEN_TO_C_INT(arg2), 
+				count,
 				(XEN_XmString_P(arg3)) ? XEN_TO_C_XmString(arg3) : NULL);
   FREE(tab);
   return(C_TO_XEN_XmString(val));
@@ -16670,13 +16673,16 @@ static XEN gxm_XpGetPrinterList(XEN arg1, XEN arg2)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetPrinterList", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XpGetPrinterList", "char*");
   xp = XpGetPrinterList(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), &len);
-  loc = xm_protect(lst);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(XEN_LIST_2(C_TO_XEN_STRING(xp[i].name),
-			      C_TO_XEN_STRING(xp[i].desc)),
-		   lst);
-  XpFreePrinterList(xp);
-  xm_unprotect_at(loc);
+  if (xp)
+    {
+      loc = xm_protect(lst);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(XEN_LIST_2(C_TO_XEN_STRING(xp[i].name),
+				  C_TO_XEN_STRING(xp[i].desc)),
+		       lst);
+      XpFreePrinterList(xp);
+      xm_unprotect_at(loc);
+    }
   return(lst);
 }
 

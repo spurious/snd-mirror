@@ -170,8 +170,6 @@ static int decode_keywords(char *caller, int nkeys, XEN *keys, int nargs, XEN *a
 	  if (keying) 
 	    mus_misc_error(caller, "unmatched value within keyword section?", args[arg_ctr]);
 	  /* type checking on the actual values has to be the caller's problem */
-	  if (arg_ctr > nkeys) 
-	    mus_misc_error(caller, "ran out of keyword space!", args[arg_ctr]);
 	  keys[arg_ctr] = args[arg_ctr];
 	  orig[arg_ctr] = arg_ctr;
 	  arg_ctr++;
@@ -182,15 +180,11 @@ static int decode_keywords(char *caller, int nkeys, XEN *keys, int nargs, XEN *a
 	{
 	  if ((arg_ctr == (nargs - 1)) ||
 	      (!(XEN_BOUND_P(args[arg_ctr + 1]))))
-	    mus_misc_error(caller, 
-			   "keyword without value?", 
-			   (arg_ctr > 0) ? args[arg_ctr - 1] : C_TO_XEN_STRING("hmmm... this should not happen"));
+	    mus_misc_error(caller, "keyword without value?", args[arg_ctr]);
 	  keying = 1;
 	  key = args[arg_ctr];
 	  if (XEN_KEYWORD_P(args[arg_ctr + 1])) 
 	    mus_misc_error(caller, "two keywords in a row?", key);
-	  if (key_start > nkeys) 
-	    mus_misc_error(caller, "extra trailing args?", key);
 	  key_found = 0;
 	  for (i = key_start; i < nkeys; i++)
 	    {
@@ -667,12 +661,8 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
 #if HAVE_GUILE
 static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 {
-  char *str;
   XEN_PUTS("#<", port);
-  str = mus_describe(MUS_XEN_TO_CLM(obj));
-  if (str)
-    XEN_PUTS(str, port);
-  else XEN_PUTS("nil", port);
+  XEN_PUTS(mus_describe(MUS_XEN_TO_CLM(obj)), port);
   XEN_PUTS(">", port);
   return(1);
 }
@@ -927,6 +917,7 @@ static XEN g_mus_bank(XEN gens, XEN amps, XEN inp, XEN inp2)
   XEN *data;
   XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_1, S_mus_bank, "a vector of generators");
   size = XEN_VECTOR_LENGTH(gens);
+  if (size == 0) return(XEN_ZERO);
   scls = whatever_to_floats(amps, size, S_mus_bank);
   if (scls == NULL)
     XEN_ASSERT_TYPE(0, amps, XEN_ARG_2, S_mus_bank, "a vct, vector, number, or procedure(!)");
@@ -3197,12 +3188,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   gn->gen = mus_make_env(brkpts, npts, scaler, offset, base, duration, start, end, odata);
   FREE(brkpts);
   if (gn->gen == NULL)
-    {
-      FREE(gn->vcts);
-      FREE(gn);
-      if (odata) FREE(odata);
-      return(XEN_FALSE);
-    }
+    mus_misc_error(S_make_env, "internal clm bug -- prechecked mus_make_env returned null!", arglist);
   return(mus_xen_to_object_with_vct(gn, make_vct(len, odata)));
 }
 
@@ -3427,7 +3413,7 @@ should be sndlib identifiers:\n\
       else mus_misc_error(S_make_sample2file, "invalid header type", out_type);
     }
   else mus_misc_error(S_make_sample2file, "invalid data format", out_format);
-  return(XEN_FALSE);
+  return(XEN_FALSE); /* make compiler happy */
 }
 
 static XEN g_sample2file(XEN obj, XEN samp, XEN chan, XEN val)
@@ -4225,26 +4211,27 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
 static int pvedit (void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
-  if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[EDIT_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[EDIT_FUNCTION])))
-    return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
-  return(0);
+  return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[EDIT_FUNCTION], 
+					      gn->vcts[SELF_WRAPPER],
+					      __FUNCTION__)));
 }
 
 static Float pvsynthesize (void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
-  if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[SYNTHESIZE_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[SYNTHESIZE_FUNCTION])))
-    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
-  return(0.0);
+  return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[SYNTHESIZE_FUNCTION], 
+					     gn->vcts[SELF_WRAPPER], 
+					     __FUNCTION__)));
 }
 
 static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
 {
   mus_xen *gn = (mus_xen *)ptr;
-  if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[ANALYZE_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[ANALYZE_FUNCTION])))
-    /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
-    return(XEN_TO_C_BOOLEAN(XEN_CALL_2_NO_CATCH(gn->vcts[ANALYZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
-  return(0);
+  /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
+  return(XEN_TO_C_BOOLEAN(XEN_CALL_2_NO_CATCH(gn->vcts[ANALYZE_FUNCTION], 
+					      gn->vcts[SELF_WRAPPER], 
+					      gn->vcts[INPUT_FUNCTION], 
+					      __FUNCTION__)));
 }
 
 #define S_phase_vocoder       "phase-vocoder"
@@ -4646,6 +4633,11 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
     {
       /* pack into a C-style array of arrays of env pointers */
       in_len = XEN_VECTOR_LENGTH(envs);
+      if (in_len == 0)
+	XEN_ERROR(BAD_TYPE,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			     envs,
+			     C_TO_XEN_STRING("env vector can't be empty")));
       vdata0 = XEN_VECTOR_ELEMENTS(envs);
       for (i = 0; i < in_len; i++)
 	if (!(XEN_VECTOR_P(vdata0[i])))

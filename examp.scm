@@ -59,12 +59,12 @@
 ;;; explode-sf2 -- turn soundfont file into a bunch of files of the form sample-name.aif
 
 
-;;; TODO: robust pitch tracker
-;;; TODO: adaptive notch filter
-;;; TODO: ins: singer piano fade dlocsig
-;;; TODO: data-file rw case for pvoc.scm
-;;; TODO: notation following location (as in display-current-window-location)
-;;;       but this requires some way to converse with cmn that does not require sleep
+;;; SOMEDAY: robust pitch tracker
+;;; SOMEDAY: adaptive notch filter
+;;; SOMEDAY: ins: singer piano fade dlocsig
+;;; SOMEDAY: data-file rw case for pvoc.scm
+;;; SOMEDAY: notation following location (as in display-current-window-location)
+;;;          but this requires some way to converse with cmn that does not require sleep
 
 
 (use-modules (ice-9 debug))

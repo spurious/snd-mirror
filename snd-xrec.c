@@ -1,8 +1,8 @@
 /* 
- * TODO  output panel should support max chans found in all output devices, and have some way to send output anywhere
- * TODO  recorder-defaults device {function} -> layout, chans, whether included and active, etc (using sndlib device numbers)
- * TODO  dB in VUs (code below -- needs labels and a switch somewhere)
- * TODO  syncd sliders ("master" volume control basically)
+ * SOMEDAY:  output panel should support max chans found in all output devices, and have some way to send output anywhere
+ * SOMEDAY:  recorder-defaults device {function} -> layout, chans, whether included and active, etc (using sndlib device numbers)
+ * TODO:  dB in VUs (code below -- needs labels and a switch somewhere)
+ * SOMEDAY:  syncd sliders ("master" volume control basically)
  */
 
 #include "snd.h"
@@ -1408,7 +1408,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  recdat = make_file_data_panel(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->out_format, FALSE);
+  recdat = make_file_data_panel(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE);
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, (void *)ss); /* this is a no-op -- textfield widget is not activatable */
 #if defined(SGI)

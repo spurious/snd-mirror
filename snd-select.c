@@ -318,7 +318,7 @@ static int insert_selection(snd_state *ss, chan_info *cp, int beg, const char *o
   char *tempfile = NULL;
   sync_info *si_out, *si_in;
   chan_info *cp_in, *cp_out;
-  int i, err = MUS_NO_ERROR;
+  int i, err = MUS_NO_ERROR, len;
   tempfile = snd_tempnam(ss);
   err = save_selection(ss, tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (err == MUS_NO_ERROR)
@@ -331,8 +331,8 @@ static int insert_selection(snd_state *ss, chan_info *cp, int beg, const char *o
 	{
 	  cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
 	  cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
-	  file_insert_samples(beg,
-			      cp_selection_len(cp_in, NULL),
+	  len = cp_selection_len(cp_in, NULL);
+	  file_insert_samples(beg, len,
 			      tempfile, cp_out, i,
 			      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 			      origin, cp_out->edit_ctr);

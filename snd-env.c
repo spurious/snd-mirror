@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "vct.h"
 
 Float un_dB(snd_state *ss, Float py)
 {
@@ -1330,19 +1331,10 @@ static XEN g_define_envelope(XEN a, XEN b)
   return(XEN_FALSE);
 }
 
-static XEN array_to_list(Float *arr, int i, int len)
-{
-  if (i < (len - 1))
-    return(XEN_CONS(C_TO_XEN_DOUBLE(arr[i]), 
-		    array_to_list(arr, i + 1, len)));
-  else return(XEN_CONS(C_TO_XEN_DOUBLE(arr[i]), 
-		       XEN_EMPTY_LIST));
-}
-
 XEN env_to_xen (env *e)
 {
   if (e) 
-    return(array_to_list(e->data, 0, e->pts * 2));
+    return(mus_array_to_list(e->data, 0, e->pts * 2));
   return(XEN_EMPTY_LIST);
 }
 

@@ -533,7 +533,8 @@ int record_dialog_is_active(void);
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location);
 void alert_new_file(void);
 void make_open_file_dialog(snd_state *ss, int read_only, int managed);
-file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry);
+file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, int with_chan, 
+				int header_type, int data_format, int with_loc, int comment_as_entry);
 void make_file_save_as_dialog(snd_state *ss);
 void make_edit_save_as_dialog(snd_state *ss);
 ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *second_str, char *main_str, int pad, int with_sort, int with_pane);

@@ -778,37 +778,6 @@ void add_sound_data(char *filename, snd_info *sp, snd_state *ss, int graphed)
 }
 
 
-static char *short_sound_format (int format, int type)
-{
-  switch (format)
-    {
-    case MUS_BSHORT:  if (type == MUS_RIFF) return("short swapped"); else return("short"); break;
-    case MUS_LSHORT:  if (type == MUS_AIFC) return("short swapped"); else return("short"); break;
-    case MUS_UBSHORT: 
-    case MUS_ULSHORT: return("unsigned short"); break;
-    case MUS_MULAW:   return("mulaw"); break;
-    case MUS_BYTE:    return("byte"); break;
-    case MUS_ALAW:    return("alaw"); break;
-    case MUS_BFLOAT:  if (type == MUS_RIFF) return("float swapped"); else return("float"); break;
-    case MUS_LFLOAT:  if (type == MUS_AIFC) return("float swapped"); else return("float"); break;
-    case MUS_BFLOAT_UNSCALED: 
-    case MUS_LFLOAT_UNSCALED: return("unscaled float");
-    case MUS_BINT:    if (type == MUS_RIFF) return("int swapped"); else return("int"); break;
-    case MUS_LINT:    if (type == MUS_AIFC) return("int swapped"); else return("int"); break;
-    case MUS_BINTN:   if (type == MUS_RIFF) return("normalized int swapped"); else return("normalized int"); break;
-    case MUS_LINTN:   if (type == MUS_AIFC) return("normalized int swapped"); else return("normalized int"); break;
-    case MUS_UBYTE:   return("unsigned byte"); break;
-    case MUS_B24INT:  if (type == MUS_RIFF) return("24-bit swapped"); else return("24-bit"); break;
-    case MUS_L24INT:  if (type == MUS_AIFC) return("24-bit swapped"); else return("24-bit"); break;
-    case MUS_BDOUBLE: 
-    case MUS_LDOUBLE: return("double"); break;
-    case MUS_BDOUBLE_UNSCALED: 
-    case MUS_LDOUBLE_UNSCALED: return("unscaled double"); break;
-    case MUS_L12INT:  return("12-bit"); break;
-    default:          return("unknown"); break;
-    }
-}
-
 static char timebuf[TIME_STR_SIZE];
 static char *link_file = NULL;
 
@@ -856,14 +825,14 @@ void sp_name_click(snd_info *sp)
 #else
 	  sprintf(timebuf, "");
 #endif
-	  report_in_minibuffer(sp, "%d, %d chan%s, %.3f sec%s, %s:%s, %s%s%s%s",
+	  report_in_minibuffer(sp, "%d, %d chan%s, %.3f sec%s, %s: %s, %s%s%s%s",
 			       hdr->srate,
 			       hdr->chans,
 			       ((hdr->chans > 1) ? "s" : ""),
 			       dur,
 			       ((dur == 1.0) ? "" : "s"),
 			       mus_header_type_name(hdr->type),
-			       short_sound_format(hdr->format, hdr->type),
+			       mus_short_data_format_name(hdr->format),
 			       timebuf,
 			       (linked) ? ", (link to " : "",
 			       (linked) ? linked_file(sp->filename) : "",
@@ -1303,7 +1272,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 			  ap->hdr,
 			  apply_dur * (ap->hdr->chans) * mus_data_format_to_bytes_per_sample((ap->hdr)->format),
 			  sp);
-	  if (sp->apply_ok)
+	  if ((sp->apply_ok) && (apply_dur > 0))
 	    {
 	      switch (ss->apply_choice)
 		{
@@ -1402,7 +1371,6 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	    {
 	      remove(ap->ofile);
 	      mus_sound_forget(ap->ofile);
-	      report_in_minibuffer(sp, "apply flushed!");
 	    }
 	  FREE(ap->ofile);
 	  ap->ofile = NULL;

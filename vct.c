@@ -576,11 +576,11 @@ static XEN g_vct(XEN args)
   return(list2vct(args));
 }
 
-static XEN array_to_list(Float *arr, int i, int len)
+XEN mus_array_to_list(Float *arr, int i, int len)
 {
   if (i < (len - 1))
     return(XEN_CONS(C_TO_XEN_DOUBLE(arr[i]), 
-		    array_to_list(arr, i + 1, len)));
+		    mus_array_to_list(arr, i + 1, len)));
   else return(XEN_CONS(C_TO_XEN_DOUBLE(arr[i]), 
 		       XEN_EMPTY_LIST));
 }
@@ -591,7 +591,7 @@ static XEN vct2list(XEN vobj)
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct2list, "a vct");
   v = TO_VCT(vobj);
-  return(xen_return_first(array_to_list(v->data, 0, v->length), vobj));
+  return(xen_return_first(mus_array_to_list(v->data, 0, v->length), vobj));
 }
 
 static XEN vector2vct(XEN vect)
@@ -603,6 +603,7 @@ static XEN vector2vct(XEN vect)
   XEN scv;
   XEN_ASSERT_TYPE(XEN_VECTOR_P(vect), vect, XEN_ONLY_ARG, S_vector2vct, "a vector");
   len = XEN_VECTOR_LENGTH(vect);
+  if (len == 0) return(XEN_FALSE);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = TO_VCT(scv);
   vdata = XEN_VECTOR_ELEMENTS(vect);

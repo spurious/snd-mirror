@@ -348,6 +348,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		      if (ucp->marks) 
 			ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize + filesize);
 		    }
+		  else snd_remove(ofile);
 		  update_graph(ucp, NULL); 
 		}
 	      else file_override_samples(filtersize + filesize, ofile, ucp, 0, DELETE_ME, LOCK_MIXES, origin);
@@ -846,17 +847,14 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, int beg, int dur,
       else
 	{
 	  delete_samples(beg, dur, cp, origin, cp->edit_ctr);
-	  if (k > 0)
-	    {
-	      file_insert_samples(beg, k, ofile, cp, 0, DELETE_ME, origin, cp->edit_ctr);
-	      if (over_selection)
-		reactivate_selection(cp, beg, beg + k); /* backwards compatibility */
-	      backup_edit_list(cp);
-	      if (cp->marks) 
-		ripple_marks(cp, 0, 0);
-	    }
-	  update_graph(cp, NULL);
+	  file_insert_samples(beg, k, ofile, cp, 0, DELETE_ME, origin, cp->edit_ctr);
+	  if (over_selection)
+	    reactivate_selection(cp, beg, beg + k); /* backwards compatibility */
+	  backup_edit_list(cp);
+	  if (cp->marks) 
+	    ripple_marks(cp, 0, 0);
 	}
+      update_graph(cp, NULL);
     }
   else file_override_samples(k, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin);
   /* not file_change_samples because that would not necessarily change the current file length */
@@ -1317,7 +1315,11 @@ static char *clm_channel(chan_info *cp, mus_any *gen, int beg, int dur, int edpo
 	  ofile = NULL;
 	}
     }
-  else change_samples(beg, dur, idata, cp, LOCK_MIXES, caller, cp->edit_ctr);
+  else 
+    {
+      if (dur > 0) 
+	change_samples(beg, dur, idata, cp, LOCK_MIXES, caller, cp->edit_ctr);
+    }
   update_graph(cp, NULL); 
   free_snd_fd(sf);
   FREE(data[0]);
@@ -2031,7 +2033,20 @@ void cursor_delete(chan_info *cp, int count, const char *origin)
   sync_info *si;
   chan_info **cps;
   si = NULL;
-  beg = cp->cursor;
+  if (count == 0) return;
+  if (count > 0)
+    beg = cp->cursor;
+  else
+    {
+      count = -count;
+      beg = cp->cursor - count;
+      if (beg < 0)
+	{
+	  count += beg;
+	  beg = 0;
+	  if (count <= 0) return;
+	}
+    }
   sp = cp->sound;
   if (sp->sync != 0)
     {
@@ -2039,32 +2054,16 @@ void cursor_delete(chan_info *cp, int count, const char *origin)
       cps = si->cps;
       for (i = 0; i < si->chans; i++)
 	{
-	  if (count > 0)
-	    delete_samples(beg, count, cps[i], origin, cps[i]->edit_ctr); 
-	  else delete_samples(beg + count, -count, cps[i], origin, cps[i]->edit_ctr);
+	  delete_samples(beg, count, cps[i], origin, cps[i]->edit_ctr); 
+	  cps[i]->cursor = beg;
 	  update_graph(si->cps[i], NULL);
 	}
       si = free_sync_info(si);
     }
   else
     {
-      if (count > 0)
-	delete_samples(beg, count, cp, origin, cp->edit_ctr);
-      else delete_samples(beg + count, -count, cp, origin, cp->edit_ctr);
-    }
-}
-
-void cursor_delete_previous(chan_info *cp, int count, const char *origin)
-{
-  if (cp->cursor > 0)
-    {
-      cp->cursor -= count;
-      if (cp->cursor < 0)
-	{
-	  count += cp->cursor;
-	  cp->cursor = 0;
-	}
-      cursor_delete(cp, count, origin);
+      delete_samples(beg, count, cp, origin, cp->edit_ctr);
+      cp->cursor = beg;
     }
 }
 
@@ -2345,6 +2344,7 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 		  if (cp->marks) 
 		    ripple_trailing_marks(cp, beg, num, j);
 		}
+	      else snd_remove(filename);
 	    }
 	  update_graph(cp, NULL);
 	}
@@ -2474,7 +2474,7 @@ if func returns non-#f, the scan stops, and the value is returned to the caller 
   (scan-channel (lambda (x) (> x .1)))"
 
   ASSERT_CHANNEL(S_scan_channel, snd, chn, 4); 
-  return(g_sp_scan(proc, beg, XEN_FALSE, snd, chn, S_scan_channel, FALSE, edpos, 6, dur));
+  return(g_sp_scan(proc, beg, XEN_FALSE, snd, chn, S_scan_channel, FALSE, edpos, 6, (XEN_BOUND_P(dur)) ? dur : XEN_FALSE));
 }
 
 static XEN g_map_chan(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos) 
@@ -2490,7 +2490,7 @@ static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN e
   #define H_map_channel "(" S_map_channel " func &optional (start 0) dur snd chn edpos edname)\n\
 apply func to samples in current channel, edname is the edit history name for this editing operation.\n\
   (map-channel abs)"
-  return(g_map_chan_1(proc, s_beg, XEN_FALSE, org, snd, chn, edpos, s_dur, S_map_channel));
+  return(g_map_chan_1(proc, s_beg, XEN_FALSE, org, snd, chn, edpos, (XEN_BOUND_P(s_dur)) ? s_dur : XEN_FALSE, S_map_channel));
 }
 
 static XEN g_find(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
@@ -2751,7 +2751,7 @@ static XEN g_fht(XEN data)
   return(data);
 }
 
-static Float *load_Floats(XEN scalers, int *result_len)
+static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
 {
   int len, i;
   Float *scls;
@@ -2763,7 +2763,8 @@ static Float *load_Floats(XEN scalers, int *result_len)
     if (XEN_LIST_P(scalers))
       len = XEN_LIST_LENGTH(scalers);
     else len = 1;
-  if (len <= 0) len = 1;
+  if (len == 0) 
+    mus_misc_error(caller, "scalers empty?", scalers);
   scls = (Float *)CALLOC(len, sizeof(Float));
   if (XEN_VECTOR_P(scalers))
     {
@@ -2796,7 +2797,7 @@ normalizes snd to norms (following sync) norms can be a float or a vector of flo
   Float *scls;
   ASSERT_CHANNEL(S_scale_to, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_scale_to);
-  scls = load_Floats(scalers, len);
+  scls = load_Floats(scalers, len, S_scale_to);
   scale_to(cp->state, cp->sound, cp, scls, len[0], FALSE); /* last arg for selection */
   FREE(scls);
   return(scalers);
@@ -2813,7 +2814,7 @@ scales snd by scalers (following sync) scalers can be a float or a vector of flo
   Float *scls;
   ASSERT_CHANNEL(S_scale_by, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_scale_by);
-  scls = load_Floats(scalers, len);
+  scls = load_Floats(scalers, len, S_scale_by);
   scale_by(cp, scls, len[0], FALSE);
   FREE(scls);
   return(scalers);
@@ -2826,7 +2827,7 @@ static XEN g_scale_selection_to(XEN scalers)
   Float *scls;
   if (selection_is_active())
     {
-      scls = load_Floats(scalers, len);
+      scls = load_Floats(scalers, len, S_scale_selection_to);
       scale_to(get_global_state(), NULL, NULL, scls, len[0], TRUE);
       FREE(scls);
       return(scalers);
@@ -2842,7 +2843,7 @@ static XEN g_scale_selection_by(XEN scalers)
   Float *scls;
   if (selection_is_active())
     {
-      scls = load_Floats(scalers, len);
+      scls = load_Floats(scalers, len, S_scale_selection_by);
       scale_by(NULL, scls, len[0], TRUE);
       FREE(scls);
       return(scalers);
@@ -2971,6 +2972,8 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
   XEN *rvdata; XEN *ivdata;
   XEN_ASSERT_TYPE(((VCT_P(reals)) || (XEN_VECTOR_P(reals))), reals, XEN_ARG_1, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
   XEN_ASSERT_TYPE(((VCT_P(imag)) || (XEN_VECTOR_P(imag))), imag, XEN_ARG_2, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
+  if (XEN_NUMBER_P(sign)) isign = XEN_TO_C_INT_OR_ELSE(sign, 0);
+  if (isign == 0) isign = 1;
   if ((VCT_P(reals)) && (VCT_P(imag)))
     {
       v1 = (vct *)XEN_OBJECT_REF(reals);
@@ -2978,7 +2981,12 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
       n = v1->length;
     }
   else
-    n = XEN_VECTOR_LENGTH(reals);
+    {
+      n = XEN_VECTOR_LENGTH(reals);
+      if (n == 0) return(XEN_ZERO);
+      n = XEN_VECTOR_LENGTH(imag);
+      if (n == 0) return(XEN_ZERO);
+    }
   if (POWER_OF_2_P(n))
     n2 = n;
   else
@@ -2997,8 +3005,6 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
       rl = v1->data;
       im = v2->data;
     }
-  if (XEN_NUMBER_P(sign)) isign = XEN_TO_C_INT_OR_ELSE(sign, 0);
-  if (isign == 0) isign = 1;
   if (v1 == NULL)
     {
       rvdata = XEN_VECTOR_ELEMENTS(reals);
@@ -3231,32 +3237,29 @@ static XEN g_convolve(XEN reals, XEN imag)
   else return(g_fft_1(reals, imag, C_TO_SMALL_XEN_INT(1), FALSE));
 }
 
-static Float check_src_envelope(env *e, char *caller)
+static Float check_src_envelope(int pts, Float *data, const char *caller)
 {
   /* can't go through zero here, and if negative need to return 1.0 */
   int i;
   Float res = 0.0;
-  for (i = 0; i < (2 * e->pts); i += 2)
-    {
-
-      if (e->data[i + 1] == 0.0)
-	mus_misc_error(caller, "src envelope hits 0.0", env_to_xen(e));
-      else
-	{
-	  if (e->data[i + 1] < 0.0)
-	    {
-	      if (res <= 0.0)
-		res = -1.0;
-	      else mus_misc_error(caller, "src envelope passes through 0.0", env_to_xen(e));
-	    }
-	  else
-	    {
-	      if (res >= 0)
-		res = 1.0;
-	      else mus_misc_error(caller, "src envelope passes through 0.0", env_to_xen(e));
-	    }
-	}
-    }
+  for (i = 0; i < (2 * pts); i += 2)
+    if (data[i + 1] == 0.0)
+      mus_misc_error(caller, "envelope hits 0.0", mus_array_to_list(data, 0, pts * 2));
+    else
+      {
+	if (data[i + 1] < 0.0)
+	  {
+	    if (res <= 0.0)
+	      res = -1.0;
+	    else mus_misc_error(caller, "envelope passes through 0.0", mus_array_to_list(data, 0, pts * 2));
+	  }
+	else
+	  {
+	    if (res >= 0)
+	      res = 1.0;
+	    else mus_misc_error(caller, "envelope passes through 0.0", mus_array_to_list(data, 0, pts * 2));
+	  }
+      }
   return(res);
 }
 
@@ -3291,6 +3294,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope gene
       ratio = XEN_TO_C_DOUBLE(ratio_or_env_gen);
       if ((ratio == 0.0) || (ratio == 1.0)) return(XEN_FALSE);
     }
+  else check_src_envelope(mus_length(egen), mus_data(egen), S_src_channel);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, FALSE, S_src_channel, FALSE);
   sf = free_snd_fd(sf);
@@ -3324,7 +3328,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
       if (XEN_LIST_P(ratio_or_env))
 	{
 	  e = get_env(ratio_or_env, (char *)caller);
-	  e_ratio = check_src_envelope(e, (char *)caller);
+	  e_ratio = check_src_envelope(e->pts, e->data, caller);
 	  src_env_or_num(ss, cp,
 			 e, e_ratio,
 			 FALSE, NOT_FROM_ENVED, caller, 
@@ -3336,6 +3340,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	{
 	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = MUS_XEN_TO_CLM(ratio_or_env))), 
 			  ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
+	  check_src_envelope(mus_length(egen), mus_data(egen), caller);
 	  src_env_or_num(ss, cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, caller, 

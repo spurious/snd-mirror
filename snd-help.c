@@ -204,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-Apr:   insert-samples and set-samples no longer delete file passed as 'data'.\n\
 29-Mar:  Mac-OSX with Motif (thanks to Charles Nichols).\n\
 28-Mar:  removed movies function.\n\
 27-Mar:  selected-mix, selected-sound, and selected-channel return #f if none selected (not -1)\n\

@@ -2516,7 +2516,7 @@ static Float set_sss_a(void *ptr, Float val)
   sss *gen = (sss *)ptr;
   gen->a = val;
   gen->a2 = 1.0 + val * val;
-  if (gen->n != 0) gen->an = pow(val, gen->n + 1);
+  gen->an = pow(val, gen->n + 1);
   /* TODO: add mus-index method for asyfm index (and remove that arg), waveshape index (remove arg???) */
   return(val);
 }
@@ -2551,16 +2551,22 @@ static char *describe_sss(void *ptr)
 Float mus_sine_summation(mus_any *ptr, Float fm)
 {
   sss *gen = (sss *)ptr;
-  Float B, thB, result;
+  Float B, thB, result, divisor;
   B = gen->b * gen->phase;
   thB = gen->phase - B;
-  if (gen->n == 0)
-    result = (mus_sin(gen->phase) - (gen->a * mus_sin(thB))) / (gen->a2 - (2 * gen->a * cos(B)));
-  else result = (mus_sin(gen->phase) - 
-		 (gen->a * mus_sin(thB)) - 
+  divisor = (gen->a2 - (2 * gen->a * cos(B)));
+  if (divisor == 0.0) 
+    result = 0.0;
+  /* if a=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
+   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 1 1 1.0))) (lambda (y) (sine-summation gen))))
+   * or even worse:
+   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 0 1 1.0))) (lambda (y) (sine-summation gen))))
+   * which should be a sine wave! 
+   * I wonder if that formula is incorrect...
+   */
+  else result = (mus_sin(gen->phase) - (gen->a * mus_sin(thB)) - 
 		 (gen->an * (mus_sin(gen->phase + (B * (gen->n + 1))) - 
-                             (gen->a * mus_sin(gen->phase + (B * gen->n)))))) / 
-	        (gen->a2 - (2 * gen->a * cos(B)));
+			     (gen->a * mus_sin(gen->phase + (B * gen->n)))))) / divisor;
   gen->phase += (gen->freq + fm);
   gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
@@ -2597,7 +2603,7 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
       gen->core = &SINE_SUMMATION_CLASS;
       gen->freq = mus_hz2radians(frequency);
       gen->phase = phase;
-      if (n) gen->an = pow(a, n + 1); else gen->an = 0.0;
+      gen->an = pow(a, n + 1);
       gen->a2 = 1.0 + a * a;
       gen->a = a;
       gen->n = n;

@@ -2477,9 +2477,6 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	    case GRAPH_TRANSFORM_AS_SPECTROGRAM:
 	      make_spectrogram(cp, sp, ss);
 	      break;
-	    default:
-	      snd_error("unknown fft style: %d", cp->transform_graph_type); 
-	      break;
 	    }
 	}
     }
