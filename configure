@@ -13465,6 +13465,13 @@ _ACEOF
       *-apple-*)
  	CFLAGS="$CFLAGS -all_load"
 	GNAME="m"
+	;;
+      *-*-solaris*)
+# this is a bug in the Sun guile-config I think
+        if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.6"))'`" = "#t"; then
+	  GUILE_LIBS="$GUILE_LIBS -lltdl"
+	fi
+	;;
     esac
 
     as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_set_smob_apply" | $as_tr_sh`

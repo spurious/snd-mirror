@@ -2269,9 +2269,7 @@ static bool make_spectrogram(chan_info *cp)
        * TODO: get gl spectro to work in united channel cases
        */
       /* SOMEDAY: editable spectrogram (select, apply any selection-proc)
-	 TODO: printing support (via pixmaps I guess) glReadBuffer(GL_BACK) then glReadPixels
-	        glReadPixels(fap->graph_x0, 0, fap->width, fap->height, GL_RGB, GL_UNSIGNED_SHORT, array_for_pixels)
-		then PS colorimage op [see gtkplotps.c, ps doc p 225]
+	 TODO: printing support: XGetImage, then X->ps translation [vector (gl2ps): image switch in print dialog]
 	 TODO: multichannel resize: one chan ends up messed up until expose event; can't see why
       */
       if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&

@@ -518,12 +518,6 @@ to your initialization file:
 
 See also the cmdist archives for tips from Juan Pampin and others.
 
-
-If you want to use fftw, first copy Snd's versions of config.sub
-and config.guess to the main fftw directory (clobbering its ancient
-versions), then configure --disable-shared, and ignore the (bogus)
-error messages.
-
 Here's some info from Josh Mattoon:
 
     "It turns out everything required for snd is now in fink! 
@@ -542,31 +536,16 @@ Here's some info from Josh Mattoon:
     linker also suggested the bind_at_load (though I'm not totally sure
     what that means)."
 
+(Just a note that fftw is optional -- if it is omitted, Snd will
+fallback on its own (slower) version of the fft).
 
-On a Mac running 10.2 with the developers environment (i.e. gcc),
-I installed these programs:
+The ccrma-ftp images osx-10.2-snd and osx-10.3-snd need only guile 1.6.4;
+  everything else (well, leaving aside -lm) is loaded statically.  The guile
+  libraries are loaded statically, but guile needs its "boot" files in
+  its ice-9 directory whenever it starts, so you need it installed.  Set
+  the environment variable GUILE_LOAD_PATH to point to your version:
 
-from osxgnu:
-  DLcompat
-  XFree86-complete
-  OroboroSX (a minimal window manager for "rootless" operation)
-     (both of these may have been rendered obsolete by Apple's X11)
-  XEmacs (but its load-path is screwed up)
-
-from motifzone:
-  openMotif-2.2
-
-from the sources:
-  GSL (using --disable-shared)
-  fftw (using --disable-shared, new config.guess and config.sub)
-  Guile 1.4 (--disable-shared)
-  snd (using --with-just-gl)
-  
-from ccrma-ftp:
-  libXm.a (omitted from motifzone package, but sometimes needed by Snd)
-
-(I think Snd runs much more smoothly in 10.3's X11 that comes from Apple:
-it's on the Xcode Tools CD (X11 SDK) and gets installed into /Applications/utils).
+    setenv GUILE_LOAD_PATH /Users/Mozart/Desktop/guile-1.6.4
 
 Loading xm.c (--with-static-xm etc) is problematic on Mac.  If you use
 the libXm.dylib from openMotif, you'll probably need the langinfo
@@ -574,7 +553,6 @@ library as well (motifzone has this in the package "darwin-extras");
 you need to add -llanginfo to the makefile (but -lXm will work in this
 case).  If you use libXm.a from ccrma-ftp, you'll need to go to
 config.h and set the macro HAVE_XmToolTipGetLabel to 0.
-
 
 The dac-size variable seems to matter a lot in OSX.  If you're
 getting distorted playback, try various powers of 2.  It defaults

@@ -773,6 +773,13 @@ if test $GUILE_CONFIG_works = yes; then
       *-apple-*)
  	CFLAGS="$CFLAGS -all_load"
 	GNAME="m"
+	;;
+      *-*-solaris*) 
+# this is a bug in the Sun guile-config I think
+        if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.6"))'`" = "#t"; then
+	  GUILE_LIBS="$GUILE_LIBS -lltdl"
+	fi
+	;;
     esac
 
     AC_CHECK_LIB($GNAME, scm_set_smob_apply,     [AC_DEFINE(HAVE_APPLICABLE_SMOB)])

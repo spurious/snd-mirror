@@ -8404,24 +8404,35 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
       if (err != noErr)
 	{
 	  /* it must have failed for some reason -- look for closest match available */
+	  /* if srate = 22050 try 44100, if chans = 1 try 2 */
+	  /* the "get closest match" business appears to be completely bogus... */
+	  device_desc.mChannelsPerFrame = (chans == 1) ? 2 : chans;
+	  device_desc.mSampleRate = (srate == 22050) ? 44100 : srate;
+	  device_desc.mBytesPerPacket = device_desc.mChannelsPerFrame * 4; /* assume 1 frame/packet and float32 data */
+	  device_desc.mBytesPerFrame = device_desc.mChannelsPerFrame * 4;
 	  sizeof_format = sizeof(AudioStreamBasicDescription);
-	  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormatMatch, &sizeof_format, &device_desc);
-	  if (err == noErr)
+	  err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+	  if (err != noErr)
 	    {
-	      /* match suggests: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
-	      /* try to set DAC to reflect that match */
-	      /* a bug here in emagic 2|6 -- we can get 6 channel match, but then can't set it?? */
 	      sizeof_format = sizeof(AudioStreamBasicDescription);
-	      err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
-	      if (err != noErr) 
+	      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormatMatch, &sizeof_format, &device_desc);
+	      if (err == noErr)
 		{
-		  /* no luck -- get current DAC settings at least */
+		  /* match suggests: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
+		  /* try to set DAC to reflect that match */
+		  /* a bug here in emagic 2|6 -- we can get 6 channel match, but then can't set it?? */
 		  sizeof_format = sizeof(AudioStreamBasicDescription);
-		  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
-		  if (err != noErr)
+		  err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+		  if (err != noErr) 
 		    {
-		      fprintf(stderr,"can't get?: %s ", osx_error(err));
-		      return(MUS_ERROR);
+		      /* no luck -- get current DAC settings at least */
+		      sizeof_format = sizeof(AudioStreamBasicDescription);
+		      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+		      if (err != noErr)
+			{
+			  fprintf(stderr,"can't get?: %s ", osx_error(err));
+			  return(MUS_ERROR);
+			}
 		    }
 		}
 	    }
