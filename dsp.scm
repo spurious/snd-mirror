@@ -254,7 +254,7 @@
 ;;; a more extreme effect is "saturation":
 ;;;   (map-channel (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
 
-(define* (adsat size #:optional snd chn)
+(define* (adsat size #:optional beg dur snd chn)
   "(adsat size) is an 'adaptive saturation' sound effect"
   (let ((mn 0.0)
 	(mx 0.0)
@@ -278,7 +278,7 @@
 			 (if (< val mn) (set! mn val))
 			 (set! n (1+ n))
 			 #f)))
-		 0 #f snd chn #f (format #f "adsat ~A" size))))
+		 beg dur snd chn #f (format #f "adsat ~A ~A ~A" size beg dur))))
 
 
 ;;; -------- spike

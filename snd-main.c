@@ -1,6 +1,10 @@
 #include "snd.h"
 #include "clm2xen.h"
 
+/* TODO: we could use the "files" list here to make sure all previously loaded code is available:
+ *         in Guile: files = XEN_AS_STRING(XEN_EVAL_C_STRING("snd-loaded-files"))
+ */
+
 #if HAVE_RUBY
   #define TO_VAR_NAME(Str) xen_scheme_constant_to_ruby(Str)
   #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)

@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [360]
-;;;  test 1: defaults                           [909]
-;;;  test 2: headers                            [1082]
-;;;  test 3: variables                          [1381]
-;;;  test 4: sndlib                             [1768]
-;;;  test 5: simple overall checks              [3559]
-;;;  test 6: vcts                               [10786]
-;;;  test 7: colors                             [11033]
-;;;  test 8: clm                                [11529]
-;;;  test 9: mix                                [17758]
-;;;  test 10: marks                             [20754]
-;;;  test 11: dialogs                           [21452]
-;;;  test 12: extensions                        [21762]
-;;;  test 13: menus, edit lists, hooks, etc     [22176]
-;;;  test 14: all together now                  [23445]
-;;;  test 15: chan-local vars                   [24496]
-;;;  test 16: regularized funcs                 [25756]
-;;;  test 17: dialogs and graphics              [30093]
-;;;  test 18: enved                             [30167]
-;;;  test 19: save and restore                  [30187]
-;;;  test 20: transforms                        [31301]
-;;;  test 21: new stuff                         [32385]
-;;;  test 22: run                               [33140]
-;;;  test 23: with-sound                        [38221]
-;;;  test 24: user-interface                    [39206]
-;;;  test 25: X/Xt/Xm                           [42381]
-;;;  test 26: Gtk                               [46900]
-;;;  test 27: GL                                [50011]
-;;;  test 28: errors                            [50115]
-;;;  test all done                              [52115]
+;;;  test 0: constants                          [358]
+;;;  test 1: defaults                           [907]
+;;;  test 2: headers                            [1080]
+;;;  test 3: variables                          [1379]
+;;;  test 4: sndlib                             [1766]
+;;;  test 5: simple overall checks              [3557]
+;;;  test 6: vcts                               [10796]
+;;;  test 7: colors                             [11046]
+;;;  test 8: clm                                [11542]
+;;;  test 9: mix                                [17775]
+;;;  test 10: marks                             [20771]
+;;;  test 11: dialogs                           [21469]
+;;;  test 12: extensions                        [21779]
+;;;  test 13: menus, edit lists, hooks, etc     [22193]
+;;;  test 14: all together now                  [23462]
+;;;  test 15: chan-local vars                   [24513]
+;;;  test 16: regularized funcs                 [25773]
+;;;  test 17: dialogs and graphics              [30110]
+;;;  test 18: enved                             [30184]
+;;;  test 19: save and restore                  [30204]
+;;;  test 20: transforms                        [31556]
+;;;  test 21: new stuff                         [32640]
+;;;  test 22: run                               [33399]
+;;;  test 23: with-sound                        [38481]
+;;;  test 24: user-interface                    [39466]
+;;;  test 25: X/Xt/Xm                           [42641]
+;;;  test 26: Gtk                               [47160]
+;;;  test 27: GL                                [50271]
+;;;  test 28: errors                            [50375]
+;;;  test all done                              [52375]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -31039,7 +31039,7 @@ EDITS: 2
 	    (if (not (procedure? func)) 
 		(snd-display ";edit-list->function 8: ~A" func))
 	    (if (not (string=? (object->string (procedure-source func)) 
-			       "(lambda (snd chn) (ptree-channel (lambda (y) (+ y 0.1)) 0 50828 snd chn))")) ; TODO: ptree needs dur #f support
+			       "(lambda (snd chn) (ptree-channel (lambda (y) (+ y 0.1)) 0 #f snd chn))"))
 		(snd-display ";edit-list->function 8: ~A" (object->string (procedure-source func))))
 	    (func ind 0)
 	    (let ((mx (maxamp)))
@@ -31398,6 +31398,22 @@ EDITS: 2
 	      (lambda () (spectral-polynomial (vct 0.0 1.0)))
 	      (lambda () (notch-channel (list 60.0 120.0 240.0) #f #f #f))
 	      
+	      ;; ---- new-effects.scm
+	      (lambda () (effects-squelch-channel .1 128))
+	      (lambda () (effects-echo #f 0.5 0.1 0 #f))
+	      (lambda () (effects-flecho-1 0.5 0.1 #f 0 #f))
+	      (lambda () (effects-zecho-1 0.75 0.75 6.0 10.0 #f 0 #f))
+	      (lambda () (effects-comb-filter 0.1 50 0 #f))
+	      (lambda () (effects-moog 10000 0.5 0 #f))
+	      (lambda () (effects-remove-dc))
+	      (lambda () (effects-compand))
+	      (lambda () (effects-am 100.0 #f))
+	      (lambda () (effects-rm 100.0 #f))
+	      (lambda () (effects-bbp 1000.0 100.0 0 #f))
+	      (lambda () (effects-bbr 1000.0 100.0 0 #f))
+	      (lambda () (effects-bhp 1000.0 0 #f))
+	      (lambda () (effects-blp 1000.0 0 #f))
+
 	      )
 	     (list 
 	      "(lambda (snd chn) (insert-vct (vct 1.0 0.5) 0 2 snd chn))"
@@ -31438,7 +31454,7 @@ EDITS: 2
 	      "(lambda (snd chn) (ssb-bank-env 550 600 (quote (0 1 1 2)) 10 40 50.0 0 #f snd chn))"
 	      "(lambda (snd chn) (down-oct 1 snd chn))"
 	      "(lambda (snd chn) (freqdiv 8 snd chn))"
-	      "(lambda (snd chn) (adsat 8 snd chn))"
+	      "(lambda (snd chn) (adsat 8 #f #f snd chn))"
 	      "(lambda (snd chn) (spike snd chn))"
 	      "(lambda (snd chn) (zero-phase snd chn))"
 	      "(lambda (snd chn) (rotate-phase (lambda (x) (random 3.1415)) snd chn))"
@@ -31448,12 +31464,120 @@ EDITS: 2
 	      "(lambda (snd chn) (spectral-polynomial (vct 0.0 1.0) snd chn))"
 	      "(lambda (snd chn) (notch-channel (quote (60.0 120.0 240.0)) #f #f #f snd chn))"
 	      
+	      "(lambda (snd chn) (effects-squelch-channel 0.1 128 snd chn))"
+	      "(lambda (snd chn) (effects-echo #f 0.5 0.1 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-flecho-1 0.5 0.1 #f 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-zecho-1 0.75 0.75 6.0 10.0 #f 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-comb-filter 0.1 50 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-moog 10000 0.5 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-remove-dc snd chn))"
+	      "(lambda (snd chn) (effects-compand snd chn))"
+	      "(lambda (snd chn) (effects-am 100.0 #f #f #f snd chn))"
+	      "(lambda (snd chn) (effects-rm 100.0 #f #f #f snd chn))"
+	      "(lambda (snd chn) (effects-bbp 1000.0 100.0 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-bbr 1000.0 100.0 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-bhp 1000.0 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-blp 1000.0 0 #f snd chn))"
+
 	      )
 	     ))
 	  
 	  (close-sound ind)
 	  ))
       
+      ;; ---- apply controls edit lists
+      (let* ((ind (open-sound "oboe.snd"))
+	     (original-maxamp (maxamp)))
+	(reset-controls)
+	(controls->channel (list 2.0))
+	(if (fneq (amp-control ind) 1.0) (snd-display ";controls->channel amp: ~A" (amp-control ind)))
+	(if (fneq (maxamp) (* 2 original-maxamp)) (snd-display ";controls->channel maxamp: ~A" (maxamp)))
+	(let ((func (edit-list->function)))
+	  (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 2.0 0 #f snd chn))"))
+	      (snd-display ";edit-list->function controls->channel 1: ~A" (object->string (procedure-source func))))
+	  (func ind 0)
+	  (revert-sound ind))
+	
+	(controls->channel (list #f 2.0))
+	(let ((pk (vct-peak (channel->vct 22000 22100))))
+	  (if (fneq pk 0.0479) (snd-display ";dp->end screwed up again!?!: ~A" pk)))
+	(let ((func (edit-list->function)))
+	  (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel (quote (#f 2.0)) 0 #f snd chn))"))
+	      (snd-display ";edit-list->function controls->channel 2: ~A" (object->string (procedure-source func))))
+	  (revert-sound ind)
+	  (func ind 0)
+	  (revert-sound ind)
+	  (if (fneq (speed-control ind) 1.0) (snd-display ";controls->channel speed: ~A" (speed-control ind))))
+	
+	(controls->channel (list #f #f (list 0.5)))
+	(let ((func (edit-list->function)))
+	  (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel (quote (#f #f (0.5))) 0 #f snd chn))"))
+	      (snd-display ";edit-list->function controls->channel 3: ~A" (object->string (procedure-source func))))
+	  (revert-sound ind)
+	  (func ind 0)
+	  (revert-sound ind)
+	  (if (fneq (contrast-control ind) 0.0) (snd-display ";controls->channel contrast: ~A" (contrast-control ind))))
+	
+	(controls->channel (list #f #f (list 0.5 2.0)))
+	(let ((func (edit-list->function)))
+	  (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel (quote (#f #f (0.5 2.0))) 0 #f snd chn))"))
+	      (snd-display ";edit-list->function controls->channel 3a: ~A" (object->string (procedure-source func))))
+	  (revert-sound ind)
+	  (func ind 0)
+	  (revert-sound ind)
+	  (if (fneq (contrast-control ind) 0.0) (snd-display ";controls->channel contrast 3a: ~A" (contrast-control ind))))
+	
+	(controls->channel (list #f #f #f (list 0.5)))
+	(let ((func (edit-list->function)))
+	  (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel (quote (#f #f #f (0.5))) 0 #f snd chn))"))
+	      (snd-display ";edit-list->function controls->channel 4: ~A" (object->string (procedure-source func))))
+	  (revert-sound ind)
+	  (func ind 0)
+	  (revert-sound ind)
+	  (if (ffneq (expand-control ind) 1.0) (snd-display ";controls->channel expand: ~A" (expand-control ind))))
+	
+	(controls->channel (list #f #f #f (list 0.5 .1 .2 .06 0.0)))
+	(let ((func (edit-list->function)))
+	  (if (not (string=? (object->string (procedure-source func)) 
+			     "(lambda (snd chn) (controls->channel (quote (#f #f #f (0.5 0.1 0.2 0.06 0.0))) 0 #f snd chn))"))
+	      (snd-display ";edit-list->function controls->channel 4a: ~A" (object->string (procedure-source func))))
+	  (revert-sound ind)
+	  (func ind 0)
+	  (revert-sound ind)
+	  (if (ffneq (expand-control ind) 1.0) (snd-display ";controls->channel expand 4a: ~A" (expand-control ind))))
+	
+	(controls->channel (list #f #f #f #f (list 0.1)))
+	(let ((func (edit-list->function)))
+	  (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel (quote (#f #f #f #f (0.1))) 0 #f snd chn))"))
+	      (snd-display ";edit-list->function controls->channel 5: ~A" (object->string (procedure-source func))))
+	  (revert-sound ind)
+	  (func ind 0)
+	  (revert-sound ind)
+	  (if (fneq (reverb-control-scale ind) 0.0) (snd-display ";controls->channel reverb: ~A" (reverb-control-scale ind))))
+	
+	(controls->channel (list #f #f #f #f (list 0.1 1.2 0.9 0.9 2.0)))
+	(let ((func (edit-list->function)))
+	  (if (not (string=? (object->string (procedure-source func)) 
+			     "(lambda (snd chn) (controls->channel (quote (#f #f #f #f (0.1 1.2 0.9 0.9 2.0))) 0 #f snd chn))"))
+	      (snd-display ";edit-list->function controls->channel 5a: ~A" (object->string (procedure-source func))))
+	  (revert-sound ind)
+	  (func ind 0)
+	  (revert-sound ind)
+	  (if (fneq (reverb-control-scale ind) 0.0) (snd-display ";controls->channel reverb 5a: ~A" (reverb-control-scale ind))))
+	
+	(let ((order (filter-control-order ind)))
+	  (controls->channel (list #f #f #f #f #f (list 10 '(0 0 1 1))))
+	  (let ((func (edit-list->function)))
+	    (if (not (string=? (object->string (procedure-source func)) 
+			       "(lambda (snd chn) (controls->channel (quote (#f #f #f #f #f (10 (0 0 1 1)))) 0 #f snd chn))"))
+		(snd-display ";edit-list->function controls->channel 6: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0)
+	    (revert-sound ind)
+	    (if (not (= (filter-control-order ind) order)) (snd-display ";controls->channel filter: ~A" (filter-control-order ind)))))
+	
+	(close-sound ind))
+  
       (mus-sound-prune)
       (run-hook after-test-hook 19)
       ))

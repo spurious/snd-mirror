@@ -476,6 +476,8 @@ Float get_maxamp(snd_info *sp, chan_info *cp, int edpos)
   return(val);
 }
 
+/* TODO: scale-to for edit list funcs needs higher level origin */
+
 bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over_selection)
 {
   /* essentially the same as scale-by, but first take into account current maxamps */

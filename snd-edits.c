@@ -4745,21 +4745,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
   save_mark_list(fd, cp);
 }
 
-/*
- * TODO: some way to back up, change something (or remove such a change), then re-run all subsequent edits
- *       perhaps edit_list_to_function -- (edit-list->function [snd chn start end]) -> 
- *          "(lambda (snd chn edpos) ...) ; (lambda* (:optional snd chn edpos) ...)
- *             (scale-by 2.0 ...))" using snd chn, starting at edpos?
- *       or edit + keep current list but recalc temp data?
- *       The function could be built from edit_fragment and eval_string (or in scheme, probably)
- *       or a version of edit_history_to_file that re-executes the edits (save current list past edit_ctr, prune, re-rerun, free?)
- *         this would need to know in advance that the current list should not be pruned
- *         boxes in editlist=save-list-from-here, run-saved-list (and prune from here?)
- *         (mix - change etc for this?)
- *       since "origin" is already in use as a sort of user-supplied comment, perhaps a new edlist char *call
- *       how to handle cross-sound/channel dependencies (swap-channels, etc), or regions created within the rerun list?
- *         or as-one-edit, 
- */
+/* TODO: Ruby side of edit-list->function */
 
 #if HAVE_GUILE
 static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
@@ -4809,10 +4795,18 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		case PTREE_EDIT:
 		  if ((ed->origin) && (strcmp(ed->origin, S_ptree_channel) != 0))
 		    function = mus_format("%s (%s snd chn)", function, ed->origin);
-		  else function = mus_format("%s (%s %s " OFF_TD " " OFF_TD " snd chn)",
+		  else 
+		    {
+		      char *durstr;
+		      if (ed->len == cp->samples[i])
+			durstr = copy_string("#f");
+		      else durstr = mus_format(OFF_TD, ed->len);
+		      function = mus_format("%s (%s %s " OFF_TD " %s snd chn)",
 					     function, S_ptree_channel,
 					     XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
-					     ed->beg, ed->len);
+					     ed->beg, durstr);
+		      FREE(durstr);
+		    }
 		  break;
 		case XEN_EDIT:
 		  function = mus_format("%s (%s snd chn)", function, ed->origin); /* no way we can conjure up a working string here */
@@ -6287,15 +6281,8 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
   return(NULL);
 }
 
-#if DEBUGGING
-  static void check_dangling_readers(snd_fd *md);
-#endif
-
 snd_fd *free_snd_fd(snd_fd *sf)
 {
-#if DEBUGGING
-  check_dangling_readers(sf);
-#endif      
   free_snd_fd_almost(sf);
   FREE(sf);
   return(NULL);
@@ -7413,19 +7400,6 @@ void report_dangling_readers(FILE *fp)
 		sf->loc, sf->frag_pos, sf->first, sf->last,
 		sf->cbi);
       }
-}
-static void check_dangling_readers(snd_fd *fd)
-{
-  int i;
-  if (fd)
-    {
-      for (i = 0; i < dangling_reader_size; i++)
-	if (dangling_readers[i] == fd)
-	  {
-	    fprintf(stderr, "lost reader: %p\n", fd);
-	    abort();
-	  }
-    }
 }
 #endif
 

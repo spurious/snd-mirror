@@ -84,9 +84,6 @@
 <p>Snd is a highly customizable, extensible program.
 The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by the Gnu Guile library.
 You can also use Ruby, but need to make the obvious <a href="grfsnd.html#sndandruby">changes</a>.
-(I am slowly adding Ruby code to parallel the Guile examples in this document; nearly all
-such code is thanks to Michael Scholz; the Ruby version of a given example is set to the
-right, normally in a different background color).
 I've tried to bring out to lisp nearly every portion
 of Snd, both the signal-processing functions, and
 much of the user interface.  You can, for example,
@@ -391,7 +388,7 @@ or a save dialog is opened.
 <tr><td colspan=2><code><a class=def name="defaultoutputformat">default-output-format</a></code></td>
 <td><code>mus-bshort</code></td></tr>
 <tr><td></td><td colspan=2>The default data format when a new or temporary file is created, 
-or a save dialog is opened. (mus-bshort is from sndlib, standing for 16-bit big-endian data).  Use mus-out-format for fastest IO.
+or a save dialog is opened. (mus-bshort is from sndlib, standing for 16-bit big-endian data).  Use <a href="#musoutformat">mus-out-format</a> for fastest IO.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -407,7 +404,7 @@ or a save dialog is opened.
 <tr><td colspan=2><code><a class=def name="defaultoutputtype">default-output-type</a></code></td>
 <td><code>mus-next</code></td></tr>
 <tr><td></td><td colspan=2>The default header type when a new file is created, 
-or a save dialog is opened. (mus-next is from sndlib, standing for the NeXT/Sun sound file header).
+or a save dialog is opened. (<code>mus-next</code> stands for the NeXT/Sun sound file header).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -647,7 +644,7 @@ a chance to save your current work, but please also send bil@ccrma.stanford.edu 
 <td><code>0</code></td></tr>
 <tr><td></td><td colspan=2>The current Snd window height in pixels.
 This is the same as <br>
-<code>(cadr (<a href="#widgetsize">widget-size</a> (cadr (<a href="#mainwidgets">main-widgets</a>))))</code><br>
+<code>(cadr (<a class=quiet href="#widgetsize">widget-size</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))))</code><br>
 except at startup when the window-height function and friends defer the set until after the main widgets
 have been created.  If Snd becomes confused about screen size, it can make its main window so large that
 you can't get at any of the decorations for resizing the window; in this emergency you can
@@ -667,7 +664,7 @@ you can't get at any of the decorations for resizing the window; in this emergen
 <td><code>-1</code></td></tr>
 <tr><td></td><td colspan=2>The current Snd window left side in pixels.
 This is (usually) the same as <br>
-<code>(car (<a href="#widgetposition">widget-position</a> (cadr (<a href="#mainwidgets">main-widgets</a>))))</code><br>
+<code>(car (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))))</code><br>
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1478,7 +1475,7 @@ You can redirect mus_print output from stderr (the default) to stdout via:
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(add-hook! mus-error-hook 
+(add-hook! <em class=red>mus-error-hook</em>
   (lambda (typ msg)
     (and (= typ 0)         ; it's mus_print, not mus_error
          (display msg))))  ; display returns some non-#f result, I assume
@@ -1855,7 +1852,7 @@ If it returns #t, Snd does not play the selection.
 </td></tr>
 
 <tr><td></td><td colspan=2>
-called when Snd stops playing and turns off the DAC, normally upon mus-audio-close.  See snd-motif.scm.
+called when Snd stops playing and turns off the DAC, normally upon <a href="#musaudioclose">mus-audio-close</a>.  See snd-motif.scm.
 </td></tr><tr><td colspan=3></td></tr>
 
 <!-- stop-playing-hook -->
@@ -2676,13 +2673,13 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
   (lambda (file)
     (string-append 
      file
-     ": chans: " (number-&gt;string (<a href="#soundchans">mus-sound-chans</a> file))
-     ", srate: " (number-&gt;string (<a href="#soundsrate">mus-sound-srate</a> file))
-     ", " (<a href="#soundtypename">mus-header-type-name</a> (<a href="#soundheadertype">mus-sound-header-type</a> file))
-     ", " (<a href="#soundformatname">mus-data-format-name</a> (<a href="#sounddataformat">mus-sound-data-format</a> file))
+     ": chans: " (number-&gt;string (<a class=quiet href="#soundchans">mus-sound-chans</a> file))
+     ", srate: " (number-&gt;string (<a class=quiet href="#soundsrate">mus-sound-srate</a> file))
+     ", " (<a class=quiet href="#soundtypename">mus-header-type-name</a> (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> file))
+     ", " (<a class=quiet href="#soundformatname">mus-data-format-name</a> (<a class=quiet href="#sounddataformat">mus-sound-data-format</a> file))
      ", len: " (number-&gt;string 
-                (/ (<a href="#soundsamples">mus-sound-samples</a> file) 
-                   (* (<a href="#soundchans">mus-sound-chans</a> file) (<a href="#soundsrate">mus-sound-srate</a> file)))))))
+                (/ (<a class=quiet href="#soundsamples">mus-sound-samples</a> file) 
+                   (* (<a class=quiet href="#soundchans">mus-sound-chans</a> file) (<a class=quiet href="#soundsrate">mus-sound-srate</a> file)))))))
 </pre></td></tr></table>
 <br>
 
@@ -3337,7 +3334,7 @@ To place all the mixes in track 1 at the same height above the waveform:
 <!-- mix-track -->
 <tr><td colspan=2><code><a class=def name="mixtrack">mix-track</a> (mix)</code></td></tr>
 <tr><td></td><td>mix track (0 = none).
-A "track" is a list of associated mixes (see below).
+A "track" is a list of associated mixes.
 </td></tr>
 
 <tr><td colspan=2><code><a class=def name="mixvct">mix-vct</a> (vct <i>beg snd chn with-mix-tags</i> origin track)</code></td></tr>
@@ -4098,9 +4095,9 @@ send channel 1 data to channel 1 of the DAC, and so on).
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (play-mono-as-stereo #:optional snd)
   "(play-mono-as-stereo snd) sends the channel 0 data in 'snd' to all available DAC channels."
-  (let ((vals (make-vct 3))
-	(end (frames snd)))
-    (mus-audio-mixer-read mus-audio-default mus-audio-channel 3 vals)
+  (let ((vals (<a class=quiet href="#makevct">make-vct</a> 3))
+	(end (<a class=quiet href="#frames">frames</a> snd)))
+    (<a class=quiet href="#musaudiomixerread">mus-audio-mixer-read</a> mus-audio-default mus-audio-channel 3 vals)
     (let ((chans (max (inexact-&lt;exact (<a class=quiet href="#vctref">vct-ref</a> vals 0)) 2)))       ; assume stereo is out there
       (do ((chan 0 (1+ chan)))                                      ; get a player for each output channel
 	  ((= chan chans))
@@ -5098,7 +5095,7 @@ are arranged vertically or horizontally.
 <tr><td></td><td>
 controls spacing of axis ticks; default is 1.0.  If less than 1.0, more ticks are squeezed
 in; if greater than 1.0, fewer ticks are displayed.  This mainly affects the grid display
-(see <a href="#showgrid">show-grid</a>).
+(<a href="#showgrid">show-grid</a>).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5179,7 +5176,8 @@ The regularized version of this might be:<br>
 <tr><td></td><td>
 insert num zeros at beg in <i>snd</i>'s channel <i>chn</i>. <a href="#padchannel">pad-channel</a> is the regularized version,
 with one small change: insert-silence forces <i>beg</i> to be within the current sound, but pad-channel pads out to <i>beg</i> if
-<i>beg</i> is past the end of the sound.
+<i>beg</i> is past the end of the sound.  (And, as  usual in these cases, insert-silence follows the <a class=quiet href="#sync">sync</a>
+field, whereas <a class=quiet href="#padchannel">pad-channel</a> ignores it).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5618,7 +5616,7 @@ To insert a block of arbitrary-valued samples:
 (define* (<A NAME="blockchannel">block-channel</a> value #:optional beg dur snd chn edpos)
   (let ((val value)) ; this for the run macro's benefit
     (<em class=red>pad-channel</em> beg dur snd chn edpos)
-    (<a href="#ptreechannel">ptree-channel</a> (lambda (y) val) beg dur snd chn)))
+    (<a class=quiet href="#ptreechannel">ptree-channel</a> (lambda (y) val) beg dur snd chn)))
 </pre></td></tr></table>
 <br>
 We could also use map-channel here (rather than ptree-channel), but this version
@@ -6630,7 +6628,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 <code><a class=def name="scaleto">scale-to</a> (<i>scalers snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-(see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i> (following sync as in scale-by).
+<a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i> (following sync as in <a href="#scaleby">scale-by</a>).
 <code>(scale-to 0.5)</code> scales the current channel so that its maxamp is 0.5.
 If all the samples are 0.0, scale-to returns #f and does not perform any edit.
 <i>scalers</i> can be a number, a list of numbers, or a vct.
@@ -8510,9 +8508,9 @@ graphical user interface.  So we create myfile.scm, and
 put in it something like:</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(let ((myfile (<a href="#newsound">new-sound</a> "mysound.snd" mus-aifc-sound-file mus-bshort 44100 2 "this is my sound")))
+(let ((myfile (<a class=quiet href="#newsound">new-sound</a> "mysound.snd" mus-aifc-sound-file mus-bshort 44100 2 "this is my sound")))
 	;; this is equivalent to the New file menu option
-  (<a href="#mix">mix</a> "oboe.snd" 0 0 myfile 0)
+  (<a class=quiet href="#mix">mix</a> "oboe.snd" 0 0 myfile 0)
   ;; this mixes in the mono file oboe.snd at sample 0 in channel 0
   ;; use (<a class=quiet href="#mix">mix</a> "oboe.snd" 0 0 myfile 0 #f) to forego the editable mix
   (<a class=quiet href="#mix">mix</a> "pistol.snd" 0 0 myfile 1)
@@ -9927,7 +9925,7 @@ limitations to this process; the worst is that save-state does not try to save h
 see also <a href="#ptreechannel">ptree-channel</a> in this regard.
 If you call save-state with active regions, and have the region browser running all the time, and subsequently
 want to back up the the saved state, it's safer to delete all the regions first (via <a href="#forgetregion">forget-region</a>), 
-then load the saved-state file (see snd-test.scm).
+then load the saved-state file.
 <a href="#savestatehook">save-state-hook</a> is called during the saving process (once on each temp file), and
 and <a href="#aftersavestatehook">after-save-state-hook</a> is called afterwards.
 </td></tr>

@@ -76,7 +76,6 @@ static env *gather_track_amp_env(mix_state *cs);
 static void release_dangling_mix_readers(mix_info *md);
 #if DEBUGGING
   void report_dangling_mix_readers(FILE *fp);
-  static void check_dangling_mix_readers(mix_fd *md);
 #endif
 static void set_mix_track(mix_info *md, int trk, bool redisplay);
 static int new_track(void);
@@ -922,9 +921,6 @@ static mix_fd *free_mix_fd(mix_fd *mf)
 {
   if (mf)
     {
-#if DEBUGGING
-      check_dangling_mix_readers(mf);
-#endif      
       free_mix_fd_almost(mf);
       FREE(mf);
     }
@@ -4495,20 +4491,6 @@ void report_dangling_mix_readers(FILE *fp)
 	fprintf(fp, "  %p, md: %p, type: %d\n",	sf, sf->md, sf->type);
 	fprintf(stderr, "  %p, md: %p, type: %d\n",	sf, sf->md, sf->type);
       }
-}
-
-static void check_dangling_mix_readers(mix_fd *md)
-{
-  if (md)
-    {
-      int i;
-      for (i = 0; i < dangling_mix_reader_size; i++)
-	if (dangling_mix_readers[i] == md)
-	  {
-	    fprintf(stderr, "lost mix reader: %p\n", md);
-	    abort();
-	  }
-    }
 }
 #endif
 

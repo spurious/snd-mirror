@@ -856,11 +856,11 @@ current window and is updated as the window bounds change.
 If you'd like the fft size to reflect the current time domain
 window size:</p>
 <pre>
-(add-hook! <a href="extsnd.html#graphhook">graph-hook</a>
+(add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a>
   (lambda (snd chn y0 y1)
-    (if (and (<a href="extsnd.html#transformgraphp">transform-graph?</a>) 
-             (= (<a href="extsnd.html#transformgraphtype">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype">graph-once</a>))
-      (set! (<a href="extsnd.html#transformsize">transform-size)</a>
+    (if (and (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a>) 
+             (= (<a class=quiet href="extsnd.html#transformgraphtype">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype">graph-once</a>))
+      (set! (<a class=quiet href="extsnd.html#transformsize">transform-size)</a>
         (expt 2 (ceiling (/ (log (- (<a class=quiet href="extsnd.html#rightsample">right-sample</a>) 
                                     (<a class=quiet href="extsnd.html#leftsample">left-sample</a>))) 
                             (log 2.0))))))))
@@ -1550,9 +1550,9 @@ red: playback paused.</p>
 If you're getting
 interruptions while playing a sound (stereo 44.1 kHz sounds can be problematic),
 try using a very large dac buffer.  Use set! to change this:
-<code>(set! (<a href="extsnd.html#dacsize">dac-size</a>) 65536)</code>.
+<code>(set! (<a class=quiet href="extsnd.html#dacsize">dac-size</a>) 65536)</code>.
 If you're getting clicks in Linux despite a large dac-size, try setting the OSS fragment sizes by hand: <code>
-(<a href="extsnd.html#setossbuffers">mus-audio-set-oss-buffers</a> fragments fragment-size)</code>. OSS's
+(<a class=quiet href="extsnd.html#setossbuffers">mus-audio-set-oss-buffers</a> fragments fragment-size)</code>. OSS's
 defaults are 16 and 12 which make the control panel controls very sluggish.  Snd used to
 default to 4 and 12, but this seems to cause trouble for a variety of new sound cards.
 My initialization file uses <code>(mus-audio-set-oss-buffers 2 12)</code>.

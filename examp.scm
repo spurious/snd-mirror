@@ -141,7 +141,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   "(window-samples #:optional snd chn) -> samples in snd channel chn in current graph window"
   (let ((wl (left-sample snd chn))
 	(wr (right-sample snd chn)))
-    (samples wl (+ 1 (- wr wl)) snd chn)))
+    (channel->vct wl (+ 1 (- wr wl)) snd chn)))
 
 (define (display-energy snd chn)
   ;; in this version, the y-zoom-slider controls the graph amp

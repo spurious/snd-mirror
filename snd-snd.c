@@ -1689,6 +1689,7 @@ Cessate apply_controls(Indicium ptr)
   Float mult_dur;
   int i, curchan = 0, added_dur = 0;
   bool over_selection;
+  off_t orig_apply_dur;
   if (ptr == NULL) return(BACKGROUND_QUIT);
   sp = ap->sp;
   if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(BACKGROUND_QUIT);
@@ -1735,6 +1736,7 @@ Cessate apply_controls(Indicium ptr)
     }
   else
     {
+      orig_apply_dur = apply_dur;
       switch (ap->slice)
 	{
 	case 0:
@@ -1766,8 +1768,56 @@ Cessate apply_controls(Indicium ptr)
 	  if (ap->origin == NULL)
 	    {
 	      /* from apply-controls or the 'Apply' button */
-	      ap->origin = copy_string("YOW");
-	      /* TODO: conjure up apply call */
+	      /* to reproduce this on a channel-independent basis, we need to use controls->channel
+	       *   and conjure up a list of settings that match the current ones.
+	       */
+#if HAVE_GUILE
+	      char *ampstr, *speedstr, *contraststr, *expandstr, *filterstr, *reverbstr;
+	      if (sp->amp_control != DEFAULT_AMP_CONTROL)
+		ampstr = mus_format("%.4f", sp->amp_control);
+	      else ampstr = copy_string("#f");
+	      if ((sp->speed_control != DEFAULT_SPEED_CONTROL) || (sp->speed_control_direction == -1))
+		speedstr = mus_format("%.4f", sp->speed_control * sp->speed_control_direction);
+	      else speedstr = copy_string("#f");
+	      if (sp->contrast_control_p)
+		contraststr = mus_format("'(%.4f %.4f)", sp->contrast_control, sp->contrast_control_amp);
+	      else contraststr = copy_string("#f");
+	      if (sp->expand_control_p)
+		expandstr = mus_format("'(%.4f %.4f %.4f %.4f %.4f)",
+				       sp->expand_control, sp->expand_control_length, sp->expand_control_ramp, 
+				       sp->expand_control_hop, sp->expand_control_jitter);
+	      else expandstr = copy_string("#f");
+	      if (sp->reverb_control_p)
+		reverbstr = mus_format("'(%.4f %.4f %.4f %.4f %.4f)",
+				       sp->reverb_control_scale, sp->reverb_control_length, sp->reverb_control_feedback, 
+				       sp->reverb_control_lowpass, sp->reverb_control_decay);
+	      else reverbstr = copy_string("#f");
+	      if (sp->filter_control_p)
+		{
+		  char *envstr;
+		  envstr = env_to_string(sp->filter_control_envelope);
+		  filterstr = mus_format("'(%d %s)", sp->filter_control_order, envstr);
+		  FREE(envstr);
+		}
+	      else filterstr = copy_string("#f");
+	      if (orig_apply_dur == 0)
+	      ap->origin = mus_format("%s (list %s %s %s %s %s %s) " OFF_TD " #f", 
+				      S_controls_to_channel,
+				      ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr, 
+				      apply_beg);
+	      else ap->origin = mus_format("%s (list %s %s %s %s %s %s) " OFF_TD " " OFF_TD,
+					   S_controls_to_channel,
+					   ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr,
+					   apply_beg, apply_dur);
+	      FREE(ampstr);
+	      FREE(speedstr);
+	      FREE(contraststr);
+	      FREE(expandstr);
+	      FREE(reverbstr);
+	      FREE(filterstr);
+#else
+	      ap->origin = copy_string(S_apply_controls);
+#endif	      
 	    }
 	  orig_dur = apply_dur;
 	  apply_dur = (off_t)(mult_dur * (apply_dur + added_dur));
@@ -3839,8 +3889,7 @@ static XEN g_set_filter_control_envelope(XEN val, XEN snd)
 
 WITH_REVERSED_ARGS(g_set_filter_control_envelope_reversed, g_set_filter_control_envelope)
 
-/* TODO: g_controls_to_channel test settings etc
-   TODO: similarly ladspa->channel
+/* TODO: ladspa->channel + edit/doc/test stuff
 */
 
 #if HAVE_GUILE_DYNAMIC_WIND
