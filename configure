@@ -12484,6 +12484,7 @@ fi
 
 
 # -------- OpenGL --------
+
 GL_LIBS=""
 GL_FILES=""
 GL_FLAGS=""
@@ -12631,12 +12632,12 @@ if test $ac_cv_header_GL_gl_h = yes; then
   have_gl=yes
 else
 
-    	   OLD_CFLAGS="$CFLAGS"
-           CFLAGS="-I/usr/X11R6/include $CFLAGS"
-           # can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
-	   echo "$as_me:$LINENO: checking for /usr/X11R6/include/GL/gl.h" >&5
+       OLD_CFLAGS="$CFLAGS"
+       CFLAGS="-I/usr/X11R6/include $CFLAGS"
+       # can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
+       echo "$as_me:$LINENO: checking for /usr/X11R6/include/GL/gl.h" >&5
 echo $ECHO_N "checking for /usr/X11R6/include/GL/gl.h... $ECHO_C" >&6
-	   cat >conftest.$ac_ext <<_ACEOF
+       cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -12674,9 +12675,9 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   have_gl=yes
-	      GL_FLAGS="-I/usr/X11R6/include"
-	      CFLAGS="$OLD_CFLAGS"
-	      echo "$as_me:$LINENO: result: yes" >&5
+            GL_FLAGS="-I/usr/X11R6/include"
+            CFLAGS="$OLD_CFLAGS"
+            echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 
 else
@@ -12690,449 +12691,14 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
 
+    # motif uses built-in support, but gtk uses gtkglext, so we need to check for the latter
     if test "$have_gl" = yes ; then
-      cat >>confdefs.h <<\_ACEOF
-#define HAVE_GL 1
-_ACEOF
-
-      if test "$with_just_gl" = yes ; then
-        cat >>confdefs.h <<\_ACEOF
-#define JUST_GL 1
-_ACEOF
-
-      else
-        cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <GL/gl.h>
-int
-main ()
-{
-int i; i = GL_TEXTURE_BINDING_3D
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  GL_FILES="gl.o"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-cat >>confdefs.h <<\_ACEOF
-#define JUST_GL 1
-_ACEOF
-
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-      fi
       GL_LIBS="-lGLU -lGL"
-      case "$host" in
-        *-apple-*)
-	  GL_LIBS="-framework OpenGL"
-# is this in place of or in additon to -lGL etc?
-	  ;;
-      esac
       if test "$with_gtk" = yes ; then
-	if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
+        if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
           GL_LIBS="$GL_LIBS `$PKG_CONFIG gtkglext-1.0 --libs`"
           GL_FLAGS="$GL_FLAGS `$PKG_CONFIG gtkglext-1.0 --cflags`"
-        else
-          OLD_CFLAGS="$CFLAGS"
-	  OLD_CPPFLAGS="$CPPFLAGS"
-          CFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
-          CPPFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
-	  if test "${ac_cv_header_gtk_gtkgl_h+set}" = set; then
-  echo "$as_me:$LINENO: checking for gtk/gtkgl.h" >&5
-echo $ECHO_N "checking for gtk/gtkgl.h... $ECHO_C" >&6
-if test "${ac_cv_header_gtk_gtkgl_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_gtk_gtkgl_h" >&5
-echo "${ECHO_T}$ac_cv_header_gtk_gtkgl_h" >&6
-else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking gtk/gtkgl.h usability" >&5
-echo $ECHO_N "checking gtk/gtkgl.h usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-#include <gtk/gtkgl.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_header_compiler=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_header_compiler=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
-
-# Is the header present?
-echo "$as_me:$LINENO: checking gtk/gtkgl.h presence" >&5
-echo $ECHO_N "checking gtk/gtkgl.h presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <gtk/gtkgl.h>
-_ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
-  yes:no: )
-    { echo "$as_me:$LINENO: WARNING: gtk/gtkgl.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: gtk/gtkgl.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: gtk/gtkgl.h: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: gtk/gtkgl.h: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: gtk/gtkgl.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: gtk/gtkgl.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: gtk/gtkgl.h:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: gtk/gtkgl.h:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: gtk/gtkgl.h: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: gtk/gtkgl.h: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: gtk/gtkgl.h:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: gtk/gtkgl.h:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: gtk/gtkgl.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: gtk/gtkgl.h: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: gtk/gtkgl.h: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: gtk/gtkgl.h: in the future, the compiler will take precedence" >&2;}
-    (
-      cat <<\_ASBOX
-## ------------------------------------- ##
-## Report this to bil@ccrma.stanford.edu ##
-## ------------------------------------- ##
-_ASBOX
-    ) |
-      sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-echo "$as_me:$LINENO: checking for gtk/gtkgl.h" >&5
-echo $ECHO_N "checking for gtk/gtkgl.h... $ECHO_C" >&6
-if test "${ac_cv_header_gtk_gtkgl_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_header_gtk_gtkgl_h=$ac_header_preproc
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_gtk_gtkgl_h" >&5
-echo "${ECHO_T}$ac_cv_header_gtk_gtkgl_h" >&6
-
-fi
-if test $ac_cv_header_gtk_gtkgl_h = yes; then
-
-              GL_LIBS="$GL_LIBS -lgdkglext-x11-1.0 -lgtkglext-x11-1.0"
-              GL_FLAGS="$GL_FLAGS -I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include"
-
-else
-
-              GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
-              GL_FLAGS="$GL_FLAGS -I/usr/local/include/gtkglext-0.x"
-
-fi
-
-
-	  CFLAGS="$OLD_CFLAGS"
-	  CPPFLAGS="$OLD_CPPFLAGS"
-        fi
-        echo "$as_me:$LINENO: checking for gdk_window_get_gl_config in -lm" >&5
-echo $ECHO_N "checking for gdk_window_get_gl_config in -lm... $ECHO_C" >&6
-if test "${ac_cv_lib_m_gdk_window_get_gl_config+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm $GL_LIBS $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char gdk_window_get_gl_config ();
-int
-main ()
-{
-gdk_window_get_gl_config ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_m_gdk_window_get_gl_config=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_m_gdk_window_get_gl_config=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_m_gdk_window_get_gl_config" >&5
-echo "${ECHO_T}$ac_cv_lib_m_gdk_window_get_gl_config" >&6
-if test $ac_cv_lib_m_gdk_window_get_gl_config = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_GTK_GL_EXT_0_1 1
-_ACEOF
-
-fi
-
-	echo "$as_me:$LINENO: checking for gdk_gl_font_use_gdk_font in -lm" >&5
-echo $ECHO_N "checking for gdk_gl_font_use_gdk_font in -lm... $ECHO_C" >&6
-if test "${ac_cv_lib_m_gdk_gl_font_use_gdk_font+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm $GL_LIBS $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char gdk_gl_font_use_gdk_font ();
-int
-main ()
-{
-gdk_gl_font_use_gdk_font ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_m_gdk_gl_font_use_gdk_font=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_m_gdk_gl_font_use_gdk_font=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_m_gdk_gl_font_use_gdk_font" >&5
-echo "${ECHO_T}$ac_cv_lib_m_gdk_gl_font_use_gdk_font" >&6
-if test $ac_cv_lib_m_gdk_gl_font_use_gdk_font = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_GDK_GL_FONT_USE_GDK_FONT 1
-_ACEOF
-
-fi
-
-	echo "$as_me:$LINENO: checking for gtk_widget_gl_make_current in -lm" >&5
-echo $ECHO_N "checking for gtk_widget_gl_make_current in -lm... $ECHO_C" >&6
-if test "${ac_cv_lib_m_gtk_widget_gl_make_current+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm $GL_LIBS $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char gtk_widget_gl_make_current ();
-int
-main ()
-{
-gtk_widget_gl_make_current ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_m_gtk_widget_gl_make_current=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_m_gtk_widget_gl_make_current=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_m_gtk_widget_gl_make_current" >&5
-echo "${ECHO_T}$ac_cv_lib_m_gtk_widget_gl_make_current" >&6
-if test $ac_cv_lib_m_gtk_widget_gl_make_current = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_GTK_WIDGET_GL_MAKE_CURRENT 1
-_ACEOF
-
-fi
-
-	echo "$as_me:$LINENO: checking for gdk_gl_context_copy in -lm" >&5
+          echo "$as_me:$LINENO: checking for gdk_gl_context_copy in -lm" >&5
 echo $ECHO_N "checking for gdk_gl_context_copy in -lm... $ECHO_C" >&6
 if test "${ac_cv_lib_m_gdk_gl_context_copy+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -13197,18 +12763,103 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_m_gdk_gl_context_copy" >&5
 echo "${ECHO_T}$ac_cv_lib_m_gdk_gl_context_copy" >&6
 if test $ac_cv_lib_m_gdk_gl_context_copy = yes; then
-  cat >>confdefs.h <<\_ACEOF
+
+	      cat >>confdefs.h <<\_ACEOF
 #define HAVE_GDK_GL_CONTEXT_COPY 1
 _ACEOF
 
+              have_gl=yes
+
+else
+
+	      { echo "$as_me:$LINENO: WARNING: gtkglext version is too old" >&5
+echo "$as_me: WARNING: gtkglext version is too old" >&2;}
+              have_gl=no
+
 fi
 
+        else
+          have_gl=no
+          { echo "$as_me:$LINENO: WARNING: can't find gtkglext" >&5
+echo "$as_me: WARNING: can't find gtkglext" >&2;}
+        fi
       fi
     fi
   else
     { echo "$as_me:$LINENO: WARNING: GL only works with Motif or Gtk2" >&5
 echo "$as_me: WARNING: GL only works with Motif or Gtk2" >&2;}
   fi
+fi
+if test "$have_gl" = yes ; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_GL 1
+_ACEOF
+
+  if test "$with_just_gl" = yes ; then
+    cat >>confdefs.h <<\_ACEOF
+#define JUST_GL 1
+_ACEOF
+
+  else
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <GL/gl.h>
+int
+main ()
+{
+int i; i = GL_TEXTURE_BINDING_3D
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  GL_FILES="gl.o"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+cat >>confdefs.h <<\_ACEOF
+#define JUST_GL 1
+_ACEOF
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+  fi
+  case "$host" in
+    *-apple-*)
+      GL_LIBS="-framework OpenGL"
+      # is this in place of or in additon to -lGL etc?
+      ;;
+  esac
+else
+  GL_LIBS=""
+  GL_FILES=""
+  GL_FLAGS=""
 fi
 
 
@@ -15054,8 +14705,15 @@ SO_LD="ld"
 SO_INSTALL="install"
 A_LD="ld"
 A_LD_FLAGS=""
+# Python configure.in has a lot of code to get these switches right
 
 
+# we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
+# this only matters for those cases where we've implemented the audio code in audio.c
+# test for ALSA courtesy of Paul Barton-Davis
+# test for ESD courtesy of Nick Bailey
+# test for BSD courtesy of Steven Schultz
+# test for Jack courtesy of Kjetil S. Matheussen
 
 if test "$with_esd" = yes ; then
   echo "$as_me:$LINENO: checking for main in -lesd" >&5
@@ -15302,6 +14960,8 @@ _ACEOF
 
         LDSO_FLAGS="-shared"
         LIBS="-lm"
+#     This ^ used to be "" but in redhat 7 the -lm needs to be explicit for make sndsine etc
+#     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
         audio_system=OSS
 
@@ -16305,6 +15965,7 @@ _ACEOF
 	SO_INSTALL=":"
 	SO_LD=":"
 	A_LD_FLAGS="-non_shared"
+# should we include -lSgm if motif?
 	# OPT:Olimit check borrowed from Python's configure.in
 	echo "$as_me:$LINENO: checking whether $CC accepts -OPT:Olimit=0" >&5
 echo $ECHO_N "checking whether $CC accepts -OPT:Olimit=0... $ECHO_C" >&6
@@ -16357,6 +16018,9 @@ echo "${ECHO_T}$ac_cv_opt_olimit_ok" >&6
 	    LIBS="$LIBS -lm"
           fi
 	fi
+# how to incorporate the TARG:platform arguments? (hinv...)
+# what is -IPA?
+# do we need explicit -n32?
         ;;
     alpha*)
         cat >>confdefs.h <<\_ACEOF
@@ -16534,6 +16198,7 @@ fi
 #   the libit configure.in and fsusage.c might be useful here.
 #--------------------------------------------------------------------------------
 
+# statfs is a mess
 statfs_args=0
 echo "$as_me:$LINENO: checking stafs args" >&5
 echo $ECHO_N "checking stafs args... $ECHO_C" >&6
@@ -16872,6 +16537,7 @@ cat >>confdefs.h <<_ACEOF
 #define STATFS_ARGS $statfs_args
 _ACEOF
 
+# on NeXT, this is apparently in libc.h?
 
 
 # Check whether --enable-snd-debug or --disable-snd-debug was given.
@@ -16996,6 +16662,7 @@ fi;
 # sigsetjmp special case
 #--------------------------------------------------------------------------------
 
+# look for sigsetjmp for segfault trap
 if test "$enable_snd_debug" != yes ; then
   trap_segfault=no
   echo "$as_me:$LINENO: checking for sigsetjmp" >&5

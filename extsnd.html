@@ -4082,6 +4082,44 @@ send channel 1 data to channel 1 of the DAC, and so on).
 <tr><td colspan=2></td></tr>
 
 
+<!-- axis-info -->
+<tr><td colspan=2>
+<code><a class=def name="axisinfo">axis-info</a> (snd chn <i>grf</i>)</code></td></tr>
+<tr><td width=50><br></td><td>
+return a list describing the specified axis:
+<code>'(<a class=quiet href="#leftsample">left-sample</a> right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
+x0-position y0-position x1-position y1-position y-offset xlabel)</code>.  This might be
+useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
+time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x_to_position">x-&gt;position</a>
+could be defined as:
+</td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define (x-&gt;position-1 x snd chn)
+  (let* ((axinfo (<em class=red>axis-info</em> snd chn <a class=quiet href="#y_to_position">time-graph</a>))
+	 (x0 (list-ref axinfo 2))
+	 (x1 (list-ref axinfo 4))
+	 (axis-left (list-ref axinfo 10))
+	 (axis-right (list-ref axinfo 12)))
+    (inexact-&gt;exact 
+     (+ axis-left
+	(* (- x x0) 
+	   (/ (- axis-right axis-left)
+	      (- x1 x0)))))))
+</pre></td></tr></table>
+<br>
+<b>x0</b> is the time in seconds corresponding to the left-sample (the left edge of the graph).
+Similarly <b>y0</b> is the lower y axis limit as a sample value (i.e. -1.0).
+<b>x-max</b> is the sound's duration in seconds (<b>x-min</b> is always 0.0).
+The "positions" are pixel values, in drawing area coordinates; these give the position
+of the graph in the drawing area.  <b>y-offset</b> refers to "united" graphs where
+several channels share one drawing area.  You can use it to translate mouse coordinates
+to channel number in that situation.
+See <i>draw-smpte-label</i> in snd-motif.scm, or <i>make-current-window-display</i> in draw.scm.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- beats-per-minute -->
 <tr><td colspan=2>
 <code><a class=def name="beatsperminute">beats-per-minute</a> (<em class=narg>snd chn</em>)</code>
@@ -7607,6 +7645,16 @@ a background process is launched to read the entire sound to get the needed data
 </td></tr>
 <tr><td colspan=2></td></tr>
 
+
+<!-- x-axis-label -->
+<tr><td colspan=2>
+<code><a class=def name="xaxislabel">x-axis-label</a> (snd chn context)</code></td></tr>
+<tr><td></td><td>
+return the current x axis label (also settable).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- x-axis-style -->
 <tr><td colspan=2>
 <code><a class=def name="xaxisstyle">x-axis-style</a> (<em class=narg>snd chn</em>)</code>
@@ -9614,6 +9662,7 @@ same as <code>(define var val)</code> except that the envelope editor keeps trac
 of <i>var</i> thereafter and treats lists as envelopes. (<i>defvar</i> is a macro).
 <i>defvar</i> exists in this context so that Snd and CLM can share envelope files;
 non-CLM users might prefer <a href="#defineenvelope">define-envelope</a>.
+<code>(defvar a-func '(0 0 1 1))</code>.
 </td></tr>
 
 <!-- equalize-panes -->
@@ -9862,7 +9911,7 @@ and returns <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and
 <code><a class=def name="sndhelp">snd-help</a> (obj <i>(formatted #t)</i>)</code></td></tr>
 <tr><td></td><td>
 return (as a string) the help text associated with <i>obj</i>:
-<br><br>
+<br>
 <pre>
 :<em class=typing>(snd-help 'open-sound)</em>
 <em class=listener>"(open-sound filename) opens filename (as if opened from File:Open menu option), 
@@ -9922,6 +9971,12 @@ If <i>in-place</i> is #t, the spectrum is in <i>data</i>, otherwise snd-spectrum
 <code><a class=def name="sndtempnam">snd-tempnam</a> ()</code></td></tr>
 <tr><td></td><td>
 return a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
+<pre>
+<em class=listener>:</em><em class=typing>(temp-dir)</em>
+<em class=listener>"/home/bil/zap/tmp"</em>
+<em class=listener>:</em><em class=typing>(snd-tempnam)</em>
+<em class=listener>"/home/bil/zap/tmp/snd_7000_2.snd"</em>
+</pre>
 </td></tr>
 
 <!-- snd-url -->
@@ -9939,7 +9994,11 @@ return the url (in the Snd documentation) corresponding to <i>name</i>; <i>name<
 <tr><td colspan=2>
 <code><a class=def name="sndurls">snd-urls</a> ()</code></td></tr>
 <tr><td></td><td>
-return a list of lists each inner list containing a Snd function name and its associated url in the Snd documentation.
+return a list of lists each inner list containing a Snd function name (as a string) and its associated url in the Snd documentation.
+<pre>
+:<em class=typing>(assoc "open-sound" (snd-urls))</em>
+<em class=listener>: ("open-sound" . "extsnd.html#opensound")
+</em></pre>
 </td></tr>
 
 <!-- snd-version -->
@@ -9987,7 +10046,7 @@ See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and
 <tr><td colspan=2>
 <code><a class=def name="unbindkey">unbind-key</a> (key state extended)</code></td></tr>
 <tr><td></td><td>
-cause <i>key</i> with modifiers <i>state</i> to be a no-op.
+cause <i>key</i> with modifiers <i>state</i> to be a no-op (or to revert to its built-in default).
 </td></tr>
 
 <!-- widget-position -->
@@ -10546,36 +10605,6 @@ The lowest level procedures are:
 <!-- -------------------------------- GRAPHICS TABLE -------------------------------- -->
 <table border=0 cellspacing=4>
 
-<!-- axis-info -->
-<tr><td colspan=2>
-<code><a class=def name="axisinfo">axis-info</a> (snd chn <i>grf</i>)</code></td></tr>
-<tr><td width=50><br></td><td>
-return a list describing the specified axis:
-<code>'(<a class=quiet href="#leftsample">left-sample</a> right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
-x0-position y0-position x1-position y1-position y-offset xlabel)</code>.  This might be
-useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
-time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x_to_position">x-&gt;position</a>
-could be defined as:
-</td></tr>
-<tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define (x-&gt;position-1 x snd chn)
-  (let* ((axinfo (<em class=red>axis-info</em> snd chn <a class=quiet href="#y_to_position">time-graph</a>))
-	 (x0 (list-ref axinfo 2))
-	 (x1 (list-ref axinfo 4))
-	 (axis-left (list-ref axinfo 10))
-	 (axis-right (list-ref axinfo 12)))
-    (inexact-&gt;exact 
-     (+ axis-left
-	(* (- x x0) 
-	   (/ (- axis-right axis-left)
-	      (- x1 x0)))))))
-</pre></td></tr></table>
-<br>
-See <i>draw-smpte-label</i> in snd-motif.scm, or <i>make-current-window-display</i> in draw.scm.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
 <!-- add-colormap -->
 <tr><td colspan=2>
 <code><a class=def name="addcolormap">add-colormap</a> (name func)</code></td></tr>
@@ -11025,14 +11054,6 @@ the desired url.
 <code><a class=def name="withgl">with-gl</a></code></td></tr>
 <tr><td></td><td>
 If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></tr>
-<tr><td colspan=2></td></tr>
-
-<!-- x-axis-label -->
-<tr><td colspan=2>
-<code><a class=def name="xaxislabel">x-axis-label</a> (snd chn context)</code></td></tr>
-<tr><td></td><td>
-return the current x axis label (also settable).
-</td></tr>
 <tr><td colspan=2></td></tr>
 
 </table>

@@ -2,7 +2,7 @@
 
 /* 
    SOMEDAY: highlight bracketed help text in red fg
-     can this be done with tags?
+     can this be done with tags? -- currently using a list of strings -- would need to change to a text widget 
  */
 
 static GtkWidget *help_dialog = NULL;
@@ -23,6 +23,8 @@ static gint delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 
 static GtkWidget *help_text = NULL, *related_items = NULL;
 static char *original_help_text = NULL;
+
+/* gtk_text_buffer_insert_with_tags_by_name (buffer, &iter, "some text in red", -1, "red_foreground", NULL); */
 
 static void add_help_text(GtkWidget *text, const char *message)
 {
@@ -323,6 +325,8 @@ static void create_help_monolog(void)
   gtk_widget_show(help_dialog);
   SG_SIGNAL_CONNECT(GTK_OBJECT(help_dialog), "expose_event", help_expose_callback, NULL);
   set_dialog_widget(HELP_DIALOG, help_dialog);
+
+  /* gtk_text_buffer_create_tag(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "red_foreground", "foreground", "red", NULL); */
 }
 
 GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_wrap)

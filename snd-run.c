@@ -4765,12 +4765,15 @@ static char *descr_track_reader_eq_b(int *args, ptree *pt)
 
 static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
 {
-  if ((args[1]->type != args[2]->type) || (args[1]->type == R_FLOAT) || (args[1]->type == R_FUNCTION))
+  if ((args[1]->type != args[2]->type) || 
+      ((args[1]->type == R_FLOAT) && (prog->constants > 0)) ||
+      (args[1]->type == R_FUNCTION))
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT));
+  if ((args[1]->type == args[2]->type) &&
+      (args[1]->addr == args[2]->addr))
+    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)true), R_CONSTANT)); /* addr same if (eq? var var) -> always #t */
   if (prog->constants == 2) /* this can include xen vals */
     {
-      if (args[1]->addr == args[2]->addr) /* types are same, checked above */
-	return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)true), R_CONSTANT));
       if ((args[1]->type == R_INT) || (args[1]->type == R_BOOL))
 	return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->ints[args[1]->addr] == prog->ints[args[2]->addr]), R_CONSTANT));
     }
@@ -11144,7 +11147,7 @@ static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
 static XEN g_set_optimization(XEN val) 
 {
   #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_optimization, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_optimization, "an integer");
   set_optimization(XEN_TO_C_INT(val));
   return(C_TO_XEN_INT(optimization(ss)));
 }
@@ -11153,7 +11156,7 @@ static XEN g_run_safety(void) {return(C_TO_XEN_INT(run_safety));}
 static XEN g_set_run_safety(XEN val) 
 {
   #define H_run_safety "(" S_run_safety "): the current 'run' safety level (default 0 = off)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_run_safety, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_run_safety, "an integer");
   run_safety = XEN_TO_C_INT(val);
   if ((run_safety != RUN_SAFE) && (run_safety != RUN_UNSAFE))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_run_safety, XEN_ONLY_ARG, val, "must be 0 (no checks) or 1 (with checks)");

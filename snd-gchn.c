@@ -691,15 +691,11 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 
       cw[W_graph] = gtk_drawing_area_new();
 #if HAVE_GL
-#if HAVE_GTK_GL_EXT_0_1
-      gtk_widget_set_gl_capability(GTK_WIDGET(cw[W_graph]), config_attributes, GDK_GL_RGBA_TYPE, NULL, true);
-#else
   #if HAVE_GDK_GL_CONTEXT_COPY
       gtk_widget_set_gl_capability(GTK_WIDGET(cw[W_graph]), gdk_gl_config_new(&config_attributes[0]), NULL, true, GDK_GL_RGBA_TYPE);
   #else
       gtk_widget_set_gl_capability(GTK_WIDGET(cw[W_graph]), gdk_gl_config_new(&config_attributes[0]), GDK_GL_RGBA_TYPE, NULL, true);
   #endif
-#endif
 #endif
       add_drop(cw[W_graph]);
       set_user_int_data(G_OBJECT(cw[W_graph]), PACK_SOUND_AND_CHANNEL(sp->index, cp->chan));

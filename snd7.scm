@@ -210,3 +210,22 @@
 (define pv-phases phase-vocoder-phases)
 
 (define mus-inspect mus-describe)
+
+;;; -------- sound-data->list
+
+(define (sound-data->list sd)
+  "(sound-data->list sd chan) turns a sound-data object's data into a list of lists (one for each channel)"
+
+  (define (sound-data-channel->list sd chan)
+    (let ((ls '()))
+      (do ((i (1- (sound-data-length sd)) (1- i)))
+	  ((< i 0) ls)
+	(set! ls (cons (sound-data-ref sd chan i) ls)))))
+
+  (let ((lst '()))
+    (do ((i (1- (sound-data-chans sd)) (1- i)))
+	((< i 0) lst)
+      (set! lst (cons (sound-data-channel->list sd i) lst)))))
+
+
+

@@ -1,4 +1,4 @@
-dnl Configuration script for Snd
+# Configuration script for Snd
 
 AC_INIT(snd, 7.7, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
 
@@ -806,8 +806,6 @@ AC_SUBST(GX_HEADERS)
 
 
 # -------- OpenGL --------
-#
-# TODO: this can be confused if user requests gl + gtk, but doesn't have gtkglext -- need some sort of warning at least
 
 GL_LIBS=""
 GL_FILES=""
@@ -816,69 +814,69 @@ have_gl=no
 if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
   if test "$with_motif" = yes || test "$with_gtk" = yes ; then
     AC_CHECK_HEADER(GL/gl.h,
-	  [have_gl=yes],
-	  [
-    	   OLD_CFLAGS="$CFLAGS"
-           CFLAGS="-I/usr/X11R6/include $CFLAGS"
-           # can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
-	   AC_MSG_CHECKING([for /usr/X11R6/include/GL/gl.h])
-	   AC_COMPILE_IFELSE(
-	     [AC_LANG_PROGRAM([#include <GL/gl.h>],
-			      [int i; i = GL_TRUE])],
-	     [have_gl=yes
-	      GL_FLAGS="-I/usr/X11R6/include"
-	      CFLAGS="$OLD_CFLAGS"
-	      AC_MSG_RESULT(yes)
-	     ],
-  	     [AC_MSG_WARN(can't find GL headers)])])
+      [have_gl=yes],
+      [
+       OLD_CFLAGS="$CFLAGS"
+       CFLAGS="-I/usr/X11R6/include $CFLAGS"
+       # can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
+       AC_MSG_CHECKING([for /usr/X11R6/include/GL/gl.h])
+       AC_COMPILE_IFELSE(
+         [AC_LANG_PROGRAM([#include <GL/gl.h>],
+		          [int i; i = GL_TRUE])],
+           [have_gl=yes
+            GL_FLAGS="-I/usr/X11R6/include"
+            CFLAGS="$OLD_CFLAGS"
+            AC_MSG_RESULT(yes)
+           ],
+         [AC_MSG_WARN(can't find GL headers)])])
+    # motif uses built-in support, but gtk uses gtkglext, so we need to check for the latter
     if test "$have_gl" = yes ; then
-      AC_DEFINE(HAVE_GL)
-      if test "$with_just_gl" = yes ; then
-        AC_DEFINE(JUST_GL)
-      else
-        AC_COMPILE_IFELSE(
-          [AC_LANG_PROGRAM([#include <GL/gl.h>], 
-	 	           [int i; i = GL_TEXTURE_BINDING_3D])],
-          [GL_FILES="gl.o"],
-          [AC_DEFINE(JUST_GL)])
-      fi   
       GL_LIBS="-lGLU -lGL"
-      case "$host" in
-        *-apple-*)
-	  GL_LIBS="-framework OpenGL"
-# is this in place of or in additon to -lGL etc?
-	  ;;
-      esac
       if test "$with_gtk" = yes ; then
-	if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
+        if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
           GL_LIBS="$GL_LIBS `$PKG_CONFIG gtkglext-1.0 --libs`"
           GL_FLAGS="$GL_FLAGS `$PKG_CONFIG gtkglext-1.0 --cflags`"
+          AC_CHECK_LIB(m, gdk_gl_context_copy, 
+            [
+	      AC_DEFINE(HAVE_GDK_GL_CONTEXT_COPY)
+              have_gl=yes
+            ],
+            [
+	      AC_MSG_WARN([gtkglext version is too old])
+              have_gl=no
+            ], 
+            $GL_LIBS)
         else
-          OLD_CFLAGS="$CFLAGS"
-	  OLD_CPPFLAGS="$CPPFLAGS"
-          CFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
-          CPPFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
-	  AC_CHECK_HEADER(gtk/gtkgl.h,
-	    [
-              GL_LIBS="$GL_LIBS -lgdkglext-x11-1.0 -lgtkglext-x11-1.0"
-              GL_FLAGS="$GL_FLAGS -I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include"
-	    ],
-	    [
-              GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
-              GL_FLAGS="$GL_FLAGS -I/usr/local/include/gtkglext-0.x"
-	    ])
-	  CFLAGS="$OLD_CFLAGS"
-	  CPPFLAGS="$OLD_CPPFLAGS"
+          have_gl=no
+          AC_MSG_WARN([can't find gtkglext])
         fi
-        AC_CHECK_LIB(m, gdk_window_get_gl_config, [AC_DEFINE(HAVE_GTK_GL_EXT_0_1)], , $GL_LIBS)
-	AC_CHECK_LIB(m, gdk_gl_font_use_gdk_font, [AC_DEFINE(HAVE_GDK_GL_FONT_USE_GDK_FONT)], , $GL_LIBS)
-	AC_CHECK_LIB(m, gtk_widget_gl_make_current, [AC_DEFINE(HAVE_GTK_WIDGET_GL_MAKE_CURRENT)], , $GL_LIBS)
-	AC_CHECK_LIB(m, gdk_gl_context_copy, [AC_DEFINE(HAVE_GDK_GL_CONTEXT_COPY)], , $GL_LIBS)
       fi
     fi
   else
     AC_MSG_WARN([GL only works with Motif or Gtk2])
   fi
+fi
+if test "$have_gl" = yes ; then
+  AC_DEFINE(HAVE_GL)
+  if test "$with_just_gl" = yes ; then
+    AC_DEFINE(JUST_GL)
+  else
+    AC_COMPILE_IFELSE(
+      [AC_LANG_PROGRAM([#include <GL/gl.h>], 
+                       [int i; i = GL_TEXTURE_BINDING_3D])],
+      [GL_FILES="gl.o"],
+      [AC_DEFINE(JUST_GL)])
+  fi   
+  case "$host" in
+    *-apple-*)
+      GL_LIBS="-framework OpenGL"
+      # is this in place of or in additon to -lGL etc?
+      ;;
+  esac
+else
+  GL_LIBS=""
+  GL_FILES=""
+  GL_FLAGS=""
 fi
 AC_SUBST(GL_LIBS)
 AC_SUBST(GL_FILES)
@@ -1046,15 +1044,15 @@ SO_LD="ld"
 SO_INSTALL="install"
 A_LD="ld"
 A_LD_FLAGS=""
-dnl Python configure.in has a lot of code to get these switches right
+# Python configure.in has a lot of code to get these switches right
 
 
-dnl we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
-dnl this only matters for those cases where we've implemented the audio code in audio.c
-dnl test for ALSA courtesy of Paul Barton-Davis
-dnl test for ESD courtesy of Nick Bailey
-dnl test for BSD courtesy of Steven Schultz
-dnl test for Jack courtesy of Kjetil S. Matheussen
+# we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
+# this only matters for those cases where we've implemented the audio code in audio.c
+# test for ALSA courtesy of Paul Barton-Davis
+# test for ESD courtesy of Nick Bailey
+# test for BSD courtesy of Steven Schultz
+# test for Jack courtesy of Kjetil S. Matheussen
 
 if test "$with_esd" = yes ; then
   AC_CHECK_LIB(esd,main,[
@@ -1083,8 +1081,8 @@ case "$host" in
 	AC_DEFINE(LINUX)
         LDSO_FLAGS="-shared"
         LIBS="-lm"
-dnl     This ^ used to be "" but in redhat 7 the -lm needs to be explicit for make sndsine etc
-dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
+#     This ^ used to be "" but in redhat 7 the -lm needs to be explicit for make sndsine etc
+#     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
         audio_system=OSS
 
@@ -1212,7 +1210,7 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	SO_INSTALL=":"
 	SO_LD=":"
 	A_LD_FLAGS="-non_shared"
-dnl should we include -lSgm if motif?
+# should we include -lSgm if motif?
 	# OPT:Olimit check borrowed from Python's configure.in
 	AC_MSG_CHECKING(whether $CC accepts -OPT:Olimit=0)
 	AC_CACHE_VAL(ac_cv_opt_olimit_ok,
@@ -1230,9 +1228,9 @@ dnl should we include -lSgm if motif?
 	    LIBS="$LIBS -lm"
           fi
 	fi
-dnl how to incorporate the TARG:platform arguments? (hinv...)
-dnl what is -IPA?
-dnl do we need explicit -n32?	
+# how to incorporate the TARG:platform arguments? (hinv...)
+# what is -IPA?
+# do we need explicit -n32?	
         ;;
     alpha*) 
         AC_DEFINE(ALPHA)
@@ -1298,7 +1296,7 @@ AC_SUBST(A_LD_FLAGS)
 #   the libit configure.in and fsusage.c might be useful here.
 #--------------------------------------------------------------------------------
 
-dnl statfs is a mess
+# statfs is a mess
 statfs_args=0
 AC_MSG_CHECKING([stafs args])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],statfs_args=4)
@@ -1337,7 +1335,7 @@ if test $statfs_args = 0; then
 fi
 AC_MSG_RESULT($statfs_args)
 AC_DEFINE_UNQUOTED(STATFS_ARGS,$statfs_args)
-dnl on NeXT, this is apparently in libc.h?
+# on NeXT, this is apparently in libc.h?
 
 
 AC_ARG_ENABLE(snd-debug,
@@ -1353,7 +1351,7 @@ AC_ARG_ENABLE(snd-debug,
 # sigsetjmp special case
 #--------------------------------------------------------------------------------
 
-dnl look for sigsetjmp for segfault trap
+# look for sigsetjmp for segfault trap
 if test "$enable_snd_debug" != yes ; then
   trap_segfault=no
   AC_MSG_CHECKING([for sigsetjmp])

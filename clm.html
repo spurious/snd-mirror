@@ -1239,8 +1239,23 @@ So, the default is <code>'(-1 1 1 1)</code> which says "output numbers between -
 each number having the same chance of being chosen".
 An envelope of <code>'(0 1 1 0)</code> outputs values between 0 and 1, denser toward 0.
 If you already have the distribution table (the result of <code>(inverse-integrate envelope))</code>,
-you can pass it through the <i>distribution</i> argument.
+you can pass it through the <i>distribution</i> argument.  Here is gaussian noise
+using the distribution argument (this is Scheme, but the CL version should be self-evident):
 </p>
+<pre>
+(define (gaussian-envelope s)
+  (let ((e '())
+	(den (* 2.0 s s)))
+    (do ((i 0 (1+ i))
+	 (x -1.0 (+ x .1))
+	 (y -4.0 (+ y .4)))
+	((= i 21))
+      (set! e (cons x e))
+      (set! e (cons (exp (- (/ (* y y) den))) e)))
+    (reverse e)))
+
+(<em class=red>make-rand</em> :envelope (gaussian-envelope 1.0))
+</pre>
 
 <p>
 You can, of course, filter the output of rand to get a different

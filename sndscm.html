@@ -1123,7 +1123,6 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>mapping extensions (map arbitrary single-channel function over various channel collections)
     <li>sound-interp, env-sound-interp
     <li>searching procedures (search-for-click, find-pitch, zero+, next-peak)
-    <li>sound-data-&gt;list
     <li>smooth-channel-via-ptree -- smooth-channel as virtual op
     <li>ring-modulate-channel -- ring-modulation as virtual op
     <li>scramble-channels -- reorder chans
@@ -1600,12 +1599,6 @@ envelope to sound sample positions.  A similar function is <a href="#scratch">sc
 positive-going zero crossing (if searching forwards), <b>next-peak</b> finds
 the next max or min in the waveform, and <b>find-pitch</b> finds the next
 place where the given pitch is predominate.
-</p>
-<pre>
-  <em class=emdef>sound-data-&gt;list</em> sdata
-</pre>
-<p>This converts a sound-data object into a list of lists, each inner list
-holding the samples of one channel.
 </p>
 <pre>
   <em class=emdef>smooth-channel-via-ptree</em> #:optional beg dur snd chn edpos

@@ -5,7 +5,7 @@ rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall"  '
 ./configure --quiet CFLAGS="-Wall" 
-make clean
+make allclean
 make
 echo ' '
 echo ' '
@@ -25,14 +25,14 @@ make sndrecord
 
 # GUILE_CONFIG_path=/home/bil/test/bin 
 echo ' -------------------------------- basic configure test/bin -------------------------------- '
-make clean
+make allclean
 echo ' CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin '
 ./configure --quiet CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin
 make
 make xm
 ./snd --version
 ./snd -l snd-test 0
-make clean
+make allclean
 echo ' CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin '
 ./configure --quiet CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin
 make
@@ -42,7 +42,7 @@ make xm
 ./snd -l snd-test 22
 
 echo ' -------------------------------- with-no-gui -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --with-no-gui '
@@ -56,7 +56,7 @@ make xm
 ./snd -noinit -l snd-test 28
 
 echo ' -------------------------------- with-no-gui/ladspa -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --with-no-gui --without-ladspa '
@@ -68,7 +68,7 @@ echo ' '
 ./snd -noinit -l snd-test 3
 
 echo ' -------------------------------- gtk -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --with-gtk '
@@ -85,7 +85,7 @@ rm xg.o
 echo ' CC=g++ CFLAGS="-Wall" --with-gtk '
 ./configure --quiet CC=g++ CFLAGS="-Wall" --with-gtk --disable-deprecated
 make xg
-make clean
+make allclean
 echo ' CC=g++ --with-gtk CFLAGS="-Wall" '
 ./configure --quiet CC=g++ --with-gtk CFLAGS="-Wall"
 make
@@ -94,7 +94,7 @@ make xg
 ./snd -noinit -l snd-test 9
 
 echo ' -------------------------------- no-guile -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' --without-guile --without-ruby '
@@ -103,7 +103,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-make clean
+make allclean
 echo ' --without-guile --without-ruby --with-gtk '
 ./configure --quiet --without-guile --without-ruby --with-gtk
 make
@@ -118,7 +118,7 @@ make sndinfo
 echo ' '
 date
 echo ' -------------------------------- static gsl -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --with-static-gsl '
@@ -133,7 +133,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- configure --with-doubles test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 rm -f makefile
@@ -152,7 +152,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- configure --with-float-samples test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 rm -f makefile
@@ -173,7 +173,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- configure --with-sample-width=32 test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 rm -f makefile
@@ -192,7 +192,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- configure --with-sample-width=28 test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 rm -f makefile
@@ -211,7 +211,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- configure --with-sample-width=16 test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 rm -f makefile
@@ -227,26 +227,26 @@ echo ' '
 ./snd -l snd-test 10
 
 echo ' -------------------------------- configure with lesstif -------------------------------- '
-make clean
+make allclean
 echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm '
 ./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm
 make
 ./snd --version
 echo ' '
 echo ' '
-make clean
+make allclean
 echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm --with-ruby '
 ./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm --with-ruby
 make
 ./snd --version
-make clean
+make allclean
 echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-2.0 --with-static-xm '
 ./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm
 make
 ./snd --version
 echo ' '
 echo ' '
-make clean
+make allclean
 echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-2.0 --with-static-xm --with-ruby '
 ./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm --with-ruby
 make
@@ -255,7 +255,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- configure --with-gtk test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall"  --with-gtk '
@@ -266,7 +266,7 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -l snd-test 7
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall"  --with-gtk '
@@ -277,7 +277,7 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -l snd-test 8
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall"  --with-gtk --with-static-xm '
@@ -287,7 +287,7 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -l snd-test
-make clean
+make allclean
 echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-gtk --with-static-xm --with-x11 '
 ./configure --quiet --disable-deprecated CFLAGS="-Wall" --with-gtk --with-static-xm --with-x11
 make
@@ -297,7 +297,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- motif test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f sndinfo
 rm -f audinfo
@@ -310,7 +310,7 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -noinit -l snd-test 2
-make clean
+make allclean
 echo ' CFLAGS="-Wall" --with-static-xm '
 ./configure --quiet CFLAGS="-Wall" --with-static-xm
 make
@@ -323,7 +323,7 @@ make xm
 ./snd --version
 ./snd -l snd-test 12
 
-make clean
+make allclean
 echo ' CFLAGS="-Wall" --with-static-xm --without-xpm --without-xp '
 ./configure --quiet CFLAGS="-Wall" --with-static-xm --without-xpm --without-xp
 make
@@ -334,7 +334,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- snd-as-widget test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --with-snd-as-widget '
@@ -347,7 +347,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- gtk test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --enable-snd-debug --with-gtk --with-gsl --with-gl '
@@ -363,7 +363,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- ruby test (Motif) -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --with-ruby '
@@ -377,12 +377,12 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -noinit -l snd_test.rb
-make clean
+make allclean
 echo ' CC=g++ CFLAGS="-Wall" --with-ruby '
 ./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby
 make
 make xm
-make clean
+make allclean
 echo ' CFLAGS="-Wall" --with-ruby --with-static-xm --with-gl --enable-snd-debug '
 ./configure --quiet CFLAGS="-Wall" --with-ruby --with-static-xm --with-gl --enable-snd-debug
 make
@@ -391,7 +391,7 @@ echo ' '
 ./snd --version
 date
 echo ' -------------------------------- ruby test (Gtk) -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --with-ruby --with-gtk '
@@ -401,21 +401,21 @@ make xg
 echo ' '
 echo ' '
 ./snd --version
-make clean
+make allclean
 echo ' CC=g++ --with-ruby --with-gtk '
 ./configure --quiet CC=g++ --with-ruby --with-gtk
 make
 make xg
 echo ' '
 echo ' '
-make clean
+make allclean
 echo ' CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm --without-xp '
 ./configure --quiet CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm --without-xp
 make
 echo ' '
 echo ' '
 ./snd --version
-make clean
+make allclean
 echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl '
 ./configure --quiet disable-deprecated CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl
 make
@@ -424,7 +424,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- ruby test (no gui) -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CFLAGS="-Wall" --with-ruby --with-no-gui --without-fftw '
@@ -433,14 +433,14 @@ make
 echo ' '
 echo ' '
 ./snd --version
-make clean
+make allclean
 echo ' CFLAGS="-Wall" --with-ruby --with-no-gui --enable-snd-debug '
 ./configure --quiet CFLAGS="-Wall" --with-ruby --with-no-gui --enable-snd-debug
 make
 echo ' '
 echo ' '
 ./snd --version
-make clean
+make allclean
 echo ' CC=g++ CFLAGS="-Wall" --with-ruby --with-no-gui --enable-snd-debug '
 ./configure --quiet CC=g++ CFLAGS="-Wall" --with-ruby --with-no-gui --enable-snd-debug
 make
@@ -449,7 +449,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- g++ test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 echo ' CC=g++ CFLAGS="-Wall" '
@@ -464,7 +464,7 @@ make sndrecord
 ./sndinfo test.snd
 ./snd --version
 ./snd -l snd-test 16
-make clean
+make allclean
 echo ' '
 echo ' '
 echo ' CC=g++ --with-gtk '
@@ -474,7 +474,7 @@ make xg
 ./snd --version
 ./snd -l snd-test 17
 ./snd -l snd-test 20
-make clean
+make allclean
 echo ' '
 echo ' '
 echo ' CC=g++ --with-no-gui '
@@ -482,25 +482,25 @@ echo ' CC=g++ --with-no-gui '
 make
 ./snd --version
 ./snd -noinit -l snd-test 6
-make clean
+make allclean
 echo ' CC=g++ --without-guile --without-ruby '
 ./configure --quiet CC=g++ --without-guile --without-ruby
 make
 make xm
 ./snd --version
-make clean
+make allclean
 echo ' CC=g++ --with-static-xm --without-gsl '
 ./configure --quiet CC=g++ --with-static-xm --without-gsl
 make
 make xm
 ./snd --version
 ./snd -l snd-test 18
-make clean
+make allclean
 echo ' '
 echo ' '
 date
 echo ' -------------------------------- sndlib test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 rm -f sndinfo
@@ -516,7 +516,7 @@ echo ' '
 echo ' '
 date
 echo ' -------------------------------- no-gui test -------------------------------- '
-make clean
+make allclean
 rm -f snd
 echo ' CFLAGS="-Wall" --with-no-gui '
 ./configure --quiet CFLAGS="-Wall" --with-no-gui
@@ -529,7 +529,7 @@ echo ' '
 date
 
 echo ' -------------------------------- configure --disable-nls in various forms -------------------------------- '
-make clean
+make allclean
 rm -f snd
 rm -f config.cache
 rm -f makefile
@@ -540,7 +540,7 @@ make
 make xm
 ./snd --version
 ./snd -l snd-test 19
-make clean
+make allclean
 echo ' '
 echo ' '
 echo ' CC=g++ --with-gtk --disable-nls  '
@@ -549,14 +549,14 @@ make
 make xg
 ./snd --version
 ./snd -l snd-test 20
-make clean
+make allclean
 echo ' '
 echo ' '
 echo ' CC=g++ --with-no-gui --disable-nls '
 ./configure --quiet CC=g++ --with-no-gui --disable-nls
 make
 ./snd --version
-make clean
+make allclean
 echo ' '
 echo ' '
 echo ' CC=g++ --without-guile --without-ruby --disable-nls '
@@ -564,7 +564,7 @@ echo ' CC=g++ --without-guile --without-ruby --disable-nls '
 make
 make xm
 ./snd --version
-make clean
+make allclean
 echo ' '
 echo ' '
 echo ' CC=g++ --with-static-xm --disable-nls '
@@ -572,7 +572,7 @@ echo ' CC=g++ --with-static-xm --disable-nls '
 make
 ./snd --version
 ./snd -e "(begin (display (+ 1 2 3)) (exit))"
-make clean
+make allclean
 echo ' '
 echo ' '
 echo ' CFLAGS="-Wall" --with-ruby --disable-nls '
@@ -580,17 +580,17 @@ echo ' CFLAGS="-Wall" --with-ruby --disable-nls '
 make
 make xm
 ./snd --version
-make clean
+make allclean
 echo ' --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall" '
 ./configure --quiet --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall"
 ./snd --version
 ./snd -l snd-test 28
 make
-make clean
+make allclean
 echo ' --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall" '
 ./configure --quiet --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall"
 make
-make clean
+make allclean
 
 
 # ./configure --enable-snd-debug CFLAGS=-DWITH_EFENCE SNDLIB_LIB=/home/bil/test/ElectricFence-2.2.2/libefence.a

@@ -25,6 +25,12 @@ distclean: clean
 clmclean:
 	rm io.o headers.o audio.o sound.o clm.o
 
+allclean:
+	rm -f *.o
+	rm -f *.so
+	rm -f *.a
+	rm -f snd sndplay audinfo sndrecord sndinfo sndsine
+
 sndplay: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndplay.o
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndplay.o -o sndplay $(AUDIO_LIB) $(LIBS)
 

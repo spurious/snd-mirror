@@ -1904,7 +1904,7 @@ static XEN g_set_clm_table_size(XEN val)
 {
   int size;
   #define H_clm_table_size "(" S_clm_table_size "): the default table size for most generators (512)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_clm_table_size, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_clm_table_size, "an integer");
   size = XEN_TO_C_INT(val);
   if ((size <= 0) || (size > MAX_TABLE_SIZE))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_clm_table_size, XEN_ARG_1, val, "invalid size: ~A");
@@ -4906,8 +4906,8 @@ static XEN g_phase_vocoder_outctr(XEN obj)
 
 static XEN g_phase_vocoder_set_outctr(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, "set! " S_phase_vocoder_outctr, "a phase-vocoder generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set! " S_phase_vocoder_outctr, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_setB S_phase_vocoder_outctr, "a phase-vocoder generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_phase_vocoder_outctr, "a number");
   return(C_TO_XEN_INT(mus_phase_vocoder_set_outctr(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT_OR_ELSE(val, 0))));
 }
 

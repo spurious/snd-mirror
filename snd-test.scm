@@ -31955,7 +31955,7 @@ EDITS: 2
 	    ;; monkeys pound on keyboard...
 	    (copy-file (string-append (getcwd) "/2a.snd") (string-append (getcwd) "/test.snd"))
 	    (let ((ind (open-sound "test.snd"))
-		  (last-time (+ (real-time) 30))
+		  (last-time (+ (real-time) 300))
 		  (tests 250000))
 	      (do ((i 0 (1+ i)))
 		  ((or (> (real-time) last-time)
@@ -32333,8 +32333,6 @@ EDITS: 2
 (define unique-clm-vector (make-vector 3 #f))
 (define unique-boolean #t)
 (define unique-vct-vector (make-vector 3 #f))
-
-;(set! (run-safety) 1)
 
 (if (or full-test (= snd-test 22) (and keep-going (<= snd-test 22)))
     (begin
@@ -33415,6 +33413,10 @@ EDITS: 2
 	    (btst '(eq? :a :b) #f)
 	    (btst '(eq? 'a 'a) #t)
 	    (btst '(eq? 'a 'b) #f)
+	    (btst '(eq? int-var int-var) #t)
+	    (btst '(eq? int-var 123) #t)
+	    (btst '(eq? dbl-var dbl-var) #t)
+	    (btst '(eq? bool-var bool-var) #t)
 	    
 	    (btst '(eqv? 1 1) #t)
 	    (btst '(eqv? 1 2) #f)
@@ -33436,6 +33438,10 @@ EDITS: 2
 	    (btst '(eqv? :a :b) #f)
 	    (btst '(eqv? 'a 'a) #t)
 	    (btst '(eqv? 'a 'b) #f)
+	    (btst '(eqv? int-var int-var) #t)
+	    (btst '(eqv? int-var 123) #t)
+	    (btst '(eqv? dbl-var dbl-var) #t)
+	    (btst '(eqv? bool-var bool-var) #t)
 	    
 	    (btst '(equal? 1 1) #t)
 	    (btst '(equal? 1 2) #f)
@@ -33457,6 +33463,10 @@ EDITS: 2
 	    (btst '(equal? :a :b) #f)
 	    (btst '(equal? 'a 'a) #t)
 	    (btst '(equal? 'a 'b) #f)
+	    (btst '(equal? int-var int-var) #t)
+	    (btst '(equal? int-var 123) #t)
+	    (btst '(equal? dbl-var dbl-var) #t)
+	    (btst '(equal? bool-var bool-var) #t)
 	    
 	    (btst '(eq? #\a #\a) #t)
 	    (btst '(eqv? #\a #\a) #t)
@@ -36308,6 +36318,7 @@ EDITS: 2
 		       (report-in-minibuffer "report-in-minibuffer test..." ind)
 		       (display hi) (display '(1 2)) (display '(1 . 2)) (display :hiho) (display 'asdf)
 		       (call/cc (lambda (hiho) (if #f (hiho) (display hiho))))
+		       (display svar)
 		       (display #\newline) (display "---------------------------------------------------------------") (display #\newline)
 		       )))
 	      (if (defined? 'describe-walk-info)
@@ -37251,12 +37262,13 @@ EDITS: 2
 				(vct-ref b 2))))))
 	(if (fneq val 1.0) (snd-display ";mus-data -> vct opt: ~A" val)))
       
-      (if (> (run-safety) 0)
-	  (begin
-	    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil))) (oscil #f))))) (lambda args (car args)))))
-	      (if (not (equal? val 'mus-error)) (snd-display ";run-safety #f osc: ~A" val)))
-	    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil)) (ts (make-table-lookup))) (oscil ts))))) (lambda args (car args)))))
-	      (if (not (equal? val 'mus-error)) (snd-display ";run-safety tbl osc: ~A" val)))))
+      (set! (run-safety) 1)
+      (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil))) (oscil #f))))) (lambda args (car args)))))
+	(if (not (equal? val 'mus-error)) (snd-display ";run-safety #f osc: ~A" val)))
+      (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil)) (ts (make-table-lookup))) (oscil ts))))) (lambda args (car args)))))
+	(if (not (equal? val 'mus-error)) (snd-display ";run-safety tbl osc: ~A" val)))
+      (fm-violin-opt 0 .01 440 .1)
+      (set! (run-safety) 0)
 
       (run-hook after-test-hook 22)
       ))
@@ -38060,7 +38072,8 @@ EDITS: 2
 
       (make-birds)
       (map close-sound (sounds))
-      
+
+      (set! (run-safety) 1)
       (with-sound ()
 		  (simple-ssb 0 .2 440 .1)
 		  (simple-sos .25 .2 .1)
@@ -38155,6 +38168,7 @@ EDITS: 2
 		  (cndf-ins 7 .2 .1 40.0 6)
 		  (sample-pvoc5 7.25 .2 .1 256 "oboe.snd" 440.0)
 		  )
+      (set! (run-safety) 0)
 
       (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
 	     (mx (mus-sound-maxamp outfile)))

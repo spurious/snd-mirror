@@ -291,20 +291,6 @@ char *version_info(void)
 	  snd_itoa(GTKGLEXT_MAJOR_VERSION), ".",
 	  snd_itoa(GTKGLEXT_MINOR_VERSION), ".",
 	  snd_itoa(GTKGLEXT_MICRO_VERSION),
-    #else
-      #if HAVE_GTK_GL_EXT_0_1
-	  "0.1",
-      #else
-        #if HAVE_GDK_GL_FONT_USE_GDK_FONT
-	  "0.2",
-        #else
-          #if HAVE_GDK_GL_CONTEXT_COPY
-	  "0.4",
-          #else
-	  "0.3",
-          #endif
-        #endif
-      #endif
     #endif
   #endif
 #endif

@@ -49,7 +49,6 @@
 ;;;    C-x b support along the same lines 
 ;;; remove-clicks
 ;;; searching examples (zero+, next-peak, find-pitch)
-;;; sound-data->list
 ;;; file->vct and a sort of cue-list, I think, and region-play-list, region-play-sequence
 ;;; replace-with-selection
 ;;; explode-sf2 -- turn soundfont file into a bunch of files of the form sample-name.aif
@@ -1925,24 +1924,6 @@ In most cases, this will be slightly offset from the true beginning of the note"
 			  (set! rtn (- (/ (transform-size) 2)))))))
 	       (vct-fill! data 0.0)))
 	 rtn))))
-
-
-;;; -------- sound-data->list
-
-(define (sound-data->list sd)
-  "(sound-data->list sd chan) turns a sound-data object's data into a list of lists (one for each channel)"
-
-  (define (sound-data-channel->list sd chan)
-    (let ((ls '()))
-      (do ((i (1- (sound-data-length sd)) (1- i)))
-	  ((< i 0) ls)
-	(set! ls (cons (sound-data-ref sd chan i) ls)))))
-
-  (let ((lst '()))
-    (do ((i (1- (sound-data-chans sd)) (1- i)))
-	((< i 0) lst)
-      (set! lst (cons (sound-data-channel->list sd i) lst)))))
-
 
 
 ;;; -------- file->vct and a sort of cue-list, I think

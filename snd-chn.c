@@ -2148,18 +2148,11 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 #define CLEAR_GRAPH true
 
 #if HAVE_GL && USE_GTK
-#if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
-  #define GL_MAKE_CURRENT(Cp) gtk_widget_gl_make_current(channel_graph(Cp))
-  #define GL_SWAP_BUFFERS(Cp) if (gtk_widget_gl_is_double_buffer(channel_graph(Cp))) \
-	                        gtk_widget_gl_swap_buffers(channel_graph(Cp)); \
-                              else glFlush()
-#else
   #define GL_MAKE_CURRENT(Cp) gdk_gl_drawable_make_current(gtk_widget_get_gl_drawable(channel_graph(Cp)), \
 		                                           gtk_widget_get_gl_context(channel_graph(Cp)))
   #define GL_SWAP_BUFFERS(Cp) if (gdk_gl_drawable_is_double_buffered(gtk_widget_get_gl_drawable(channel_graph(Cp)))) \
 	                        gdk_gl_drawable_swap_buffers(gtk_widget_get_gl_drawable(channel_graph(Cp))); \
                               else glFlush()
-#endif
 #endif
 
 #if HAVE_GL
