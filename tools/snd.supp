@@ -1422,3 +1422,44 @@
    fun:*
 }
 
+{
+   ruby-1
+   Memcheck:Cond
+   fun:mark_locations_array
+   fun:rb_gc
+   fun:*
+}
+
+{
+   ruby-2
+   Memcheck:Cond
+   fun:rb_gc_mark
+   fun:mark_locations_array
+   fun:*
+}
+
+{
+   ruby-3
+   Memcheck:Value4
+   fun:rb_gc_mark
+   fun:mark_locations_array
+   fun:*
+}
+
+{
+   ruby-4
+   Memcheck:Value4
+   fun:st_lookup
+   fun:rb_mark_generic_ivar
+   fun:rb_gc_mark
+   fun:*
+}
+
+{
+   ruby-5
+   Memcheck:Cond
+   fun:st_lookup
+   fun:rb_mark_generic_ivar
+   fun:rb_gc_mark
+   fun:*
+}

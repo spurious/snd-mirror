@@ -184,6 +184,8 @@ static void view_ctrls_callback(Widget w, XtPointer info, XtPointer context)
   if ((label) && (strcmp(label, _("Show controls")) == 0))
     show_controls(); 
   else hide_controls();
+  if (label) XtFree(label);
+
 }
 static void view_region_callback_1(Widget w, XtPointer info, XtPointer context) {view_region_callback(w, info, context);}
 static void view_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_orientation_callback(w, info, context);}

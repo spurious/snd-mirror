@@ -291,7 +291,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
    * the pattern (file name mask) only matters if the filter button is hit, 
    * it appears to be "*" until the filter is invoked.
    */
-  char *pattern, *our_dir;
+  char *pattern = NULL, *our_dir = NULL;
   dir *cdp;
   file_dialog_info *fd;
   XmFileSelectionBoxCallbackStruct *data = (XmFileSelectionBoxCallbackStruct *)info;
@@ -380,7 +380,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	      char *sp, *sn;
 	      for (sp = fd->save_dir, sn = cdp->files[i]; ((*sp) = (*sn)) != '\0'; sp++, sn++);
 	      /* save_dir is a pointer into fullpathname after the directory portion */
-	      /*   this is unreadable code! -- it's basically sprintf(fullpathname,"%s%s",our_dir,cdp->files[i]) I think */
+	      /*   this is unreadable code! -- it's basically sprintf(fullpathname, "%s%s", our_dir, cdp->files[i]) I think */
 	      names[i] = XmStringCreate(fd->fullpathname, XmFONTLIST_DEFAULT_TAG);
 	    }
 	}
@@ -399,6 +399,8 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	  FREE(names);
 	}
     }
+  if (our_dir) XtFree(our_dir);
+  if (pattern) XtFree(pattern);
   fd->need_update = false;
 }
 
@@ -570,7 +572,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *)info;
-  char *filename;
+  char *filename = NULL;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
   XtUnmanageChild(w);
   XmStringGetLtoR (cbs->value, XmFONTLIST_DEFAULT_TAG, &filename);
@@ -581,6 +583,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
       sp = snd_open_file(filename, 
 			 fd->file_dialog_read_only);
       if (sp) select_channel(sp, 0);           /* add_sound_window (snd-xsnd.c) will report reason for error, if any */
+      if (filename) XtFree(filename);
     }
   else snd_error(_("%s is a directory"), filename);
 }
@@ -638,13 +641,16 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *)info;
   file_dialog_info *fd = (file_dialog_info *)context;
-  char *filename;
+  char *filename = NULL;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
   XtUnmanageChild(w);
   XmStringGetLtoR (cbs->value, XmFONTLIST_DEFAULT_TAG, &filename);
   file_dialog_stop_playing(fd);
   if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
-    mix_complete_file_at_cursor(any_selected_sound(), filename, with_mix_tags(ss), 0);
+    {
+      mix_complete_file_at_cursor(any_selected_sound(), filename, with_mix_tags(ss), 0);
+      if (filename) XtFree(filename);
+    }
   else snd_error(_("%s is a directory"), filename);
 }
 
@@ -1331,6 +1337,7 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
       (XEN_HOOKED(hook)))
     {
       char *label = NULL;
+      bool need_free = false;
       if (r->parent == CURRENT_FILE_VIEWER)
 	label = get_curfullname(r->pos);
       else
@@ -1344,6 +1351,7 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 	      XtVaGetValues(r->nm, XmNlabelString, &s1, NULL);
 	      if (XmStringEmpty(s1)) return;
 	      XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &label);
+	      if (label) need_free = true;
 	      XmStringFree(s1);
 	    }
 	}
@@ -1353,6 +1361,7 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 			    C_TO_XEN_INT(r->pos),
 			    C_TO_XEN_STRING(label)),
 		 caller);
+      if (need_free) XtFree(label);
     }
 }
 

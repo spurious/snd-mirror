@@ -591,7 +591,6 @@ static XEN g_widget_text(XEN wid)
 	{
 	  text = XmTextGetString(w);
 	  res = C_TO_XEN_STRING(text);
-	  XtFree(text);
 	}
       else
 	{
@@ -602,6 +601,7 @@ static XEN g_widget_text(XEN wid)
 	  XmStringFree(s1);
 	  res = C_TO_XEN_STRING(text);
 	}
+      if (text) XtFree(text);
       return(res);
 #else
       if (GTK_IS_ENTRY(w))

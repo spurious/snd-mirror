@@ -41,8 +41,8 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #t)
-(define all-args #t) ; huge arg testing
+(define keep-going #f)
+(define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
 (define (snd-display . args)

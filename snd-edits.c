@@ -6278,7 +6278,7 @@ static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg
   FRAGMENT_SCALER(new_ed, i) = 1.0;
 }
 
-bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, const char *origin)
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, const char *origin)
 {
   off_t len;
   int i, ptree_loc = 0;
@@ -6287,14 +6287,17 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
       (num <= 0) ||
       (beg >= cp->samples[pos]) ||
       (ptree == NULL))
-    return(true); 
+    {
+      if (ptree) ptree = free_ptree(ptree);
+      return; 
+    }
   len = cp->samples[pos];
   if (pos > cp->edit_ctr)
     {
       /* prepare_edit_list will throw 'no-such-edit, but we need to clean up the ptree first */
       ptree = free_ptree(ptree);
     }
-  if (!(prepare_edit_list(cp, len, pos, S_ptree_channel))) return(false);
+  if (!(prepare_edit_list(cp, len, pos, S_ptree_channel))) return;
   old_ed = cp->edits[pos];
   ptree_loc = add_ptree(cp);
   cp->ptrees[ptree_loc] = ptree;
@@ -6351,7 +6354,6 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
   update_graph(cp);
-  return(true);
 }
 
 
@@ -6735,7 +6737,7 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   char *name;
   ed_list *new_ed, *old_ed;
   file_info *hdr0, *hdr1;
-  env_info *e0, *e1;
+  env_info *e0 = NULL, *e1 = NULL;
 
   if ((!(prepare_edit_list(cp0, cp1->samples[pos1], AT_CURRENT_EDIT_POSITION, S_swap_channels))) ||
       (!(prepare_edit_list(cp1, cp0->samples[pos0], AT_CURRENT_EDIT_POSITION, S_swap_channels))))
@@ -6768,7 +6770,7 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
 				     make_file_state(fd, hdr1, cp1->chan, 0, FILE_BUFFER_SIZE),
 				     hdr1, DONT_DELETE_ME, cp1->chan);
   e0 = amp_env_copy(cp0, false, pos0);
-  e1 = amp_env_copy(cp1, false, pos1);
+  if (e0) e1 = amp_env_copy(cp1, false, pos1);
   old_ed = cp1->edits[pos1];
   new_ed = make_ed_list(old_ed->size);
   new_ed->edit_type = CHANGE_EDIT;
@@ -6805,6 +6807,11 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
     {
       cp0->amp_envs[cp0->edit_ctr] = e1;
       cp1->amp_envs[cp1->edit_ctr] = e0;
+    }
+  else
+    {
+      if (e0) e0 = free_env_info(e0);
+      if (e1) e1 = free_env_info(e1);
     }
   ripple_all(cp0, 0, 0);
   ripple_all(cp1, 0, 0);
