@@ -389,16 +389,7 @@ void forget_temps(void)
   int i;
   for (i = 0; i < tempfiles_size; i++)
     if (tempfiles[i])
-      {
-	snd_remove(tempfiles[i]->name, TRUE);
-#if DEBUG_MEMORY
-	fprintf(stderr,"lost temp: %s\n", tempfiles[i]->name);
-	FREE(tempfiles[i]->name);
-	FREE(tempfiles[i]->ticks);
-	FREE(tempfiles[i]);
-	tempfiles[i] = NULL;
-#endif
-      }
+      snd_remove(tempfiles[i]->name, TRUE);
 }
 
 snd_data *make_snd_data_file(char *name, snd_io *io, file_info *hdr, int temp, int ctr, int temp_chan)

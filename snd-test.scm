@@ -998,6 +998,7 @@
 				(snd-display ";~A missing?" file))
 			    (test-headers (cdr base-files))))))))
 	  (if (procedure? test-hook) (test-hook 2))
+	  (if (not (= (mus-sound-header-type (string-append sf-dir "midi60.mid")) -1)) (snd-display ";midi60?"))
 	  (test-headers
 	   (list
 	    (list "8svx-8.snd" 1 22050 1.88766443729401 "SVX8" "signed byte (8 bits)")
@@ -12479,6 +12480,15 @@ EDITS: 5
 	    (set! (mix-amp mix-id 0) 0.5) 
 	    (set! (mix-speed mix-id) 2.0) 
 	    (set! (mix-track mix-id) 3) 
+	    (catch 'mus-error
+		   (lambda () (play-track 3))
+		   (lambda args (snd-display "can't play track")))
+	    (catch 'mus-error
+		   (lambda () (play-track 3 #t))
+		   (lambda args (snd-display "can't play track #t")))
+	    (catch 'mus-error
+		   (lambda () (play-track 3 new-index 0))
+		   (lambda args (snd-display "can't play track new-index")))
 	    (set! (mix-anchor mix-id) 30) 
 	    (set! (mix-amp-env mix-id 0) '(0.0 0.0 1.0 1.0)) 
 	    (let ((val (mix-amp-env mix-id 0)))
@@ -13965,6 +13975,7 @@ EDITS: 5
 			(not (= (list-ref val1 3) 1234)))
 		    (snd-display ";describe-mark m1 [1]: ~A" val1)))))
 	  (revert-sound ind)
+	  (add-hook! draw-mark-hook (lambda (id) #t)
 	  (let ((m0 (add-mark 4321))
 		(m1 (add-mark 1234))
 		(dur (/ (frames ind) (srate ind))))
@@ -15195,7 +15206,15 @@ EDITS: 5
 	  (IF (not me) (snd-display ";mus-error-hook not called?"))
 	  (reset-hook! snd-error-hook)
 	  (reset-hook! snd-warning-hook)
-	  (reset-hook! mus-error-hook))
+	  (reset-hook! mus-error-hook)
+	  (add-hook! snd-error-hook
+		     (lambda (msg)
+		       (set! se msg)
+		       #f))
+	  (snd-error "not an error")
+	  (if (not (string=? se "not an error"))
+	      (snd-display "snd-error-hook saw: ~A" se))
+	  (reset-hook! snd-error-hook))
 
 	(add-hook! exit-hook (lambda () #f))
 	(add-hook! exit-hook (lambda () #t))
@@ -22834,6 +22853,7 @@ EDITS: 2
 	  (set! (transform-graph? ind 0) #t)
 	  (graph->ps "aaa.eps")
 	  (set! (x-bounds) (list 0.0 1.0))
+	  (set! (max-transform-peaks ind 0) 3)
 	  (update-time-graph)
 	  (update-transform-graph)
 	  (update-lisp-graph)
@@ -24931,6 +24951,14 @@ EDITS: 2
       (ststa '(lambda (y) (caddr list-var)) 0.0 "hiho")
       (btsta '(lambda (y) (cadddr list-var)) 0.0 #t)
 
+      (set! list-var (list (list (list (list 2 3 6 7)) (list 4 5)) 17 (list 12 (list (list 14 15)))))
+      (itst '(caaaar list-var) 2)
+      (itst '(caadar list-var) 4)
+      (itst '(caaddr list-var) 12)
+      (itsta '(lambda (y) (caaaar list-var)) 0.0 2)
+      (itsta '(lambda (y) (caadar list-var)) 0.0 4)
+      (itsta '(lambda (y) (caaddr list-var)) 0.0 12)
+
       (itst '(car '(1 . 2)) 1)
       (itst '(cdr '(1 . 2)) 2)
       (itst '(cadr '(3 4)) 4)
@@ -25174,6 +25202,17 @@ EDITS: 2
 	(if (fneq val 4.14) (snd-display ";typed hiho1-xx+xx: ~A" val)))
       (let ((val (run-eval '(lambda (y) (declare (y hiho1)) y) hi1)))
 	(if (not (hiho1? val)) (snd-display ";clm-struct return: ~A" val)))
+      (let ((tag (catch 'cannot-parse
+			(lambda () (run-eval '(set! (hiho1-ii hi1) "ho")))
+			(lambda args (car args)))))
+	(if (not (eq? tag 'cannot-parse))
+	    (snd-display ";set def-clm-struct type check? ~A" tag)))
+      (let ((tag (catch 'cannot-parse
+			(lambda () (run-eval '(let ((r (make-sample-reader))) (format #f "~A" r))))
+			(lambda args (car args)))))
+	(if (not (eq? tag 'cannot-parse))
+	    (snd-display ";format arg type check? ~A" tag)))
+      
       
       (def-clm-struct hiho2 (i 0 :type int) (x 0.0 :type float) (v #f :type vct) (s "hiho") (ii 3 :type int) (xx 1.0 :type float))
       (define hi2 (make-hiho2 :v (make-vct 3 .1)))
@@ -33427,7 +33466,9 @@ EDITS: 2
 				'.event '.override_redirect '.border_width '.parent '.minor_code '.major_code '.drawable '.count '.key_vector '.focus
 				'.detail '.mode '.is_hint '.button '.same_screen '.keycode '.state '.y_root '.x_root '.root '.time '.subwindow '.window
 				'.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt '.valuemask '.ncolors '.cpp
-				'.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot)))
+				'.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot))
+		    (dpy (XtDisplay (cadr (main-widgets))))
+		    (win (XtWindow (cadr (main-widgets)))))
 
 		;; ---------------- 0 Args
 		(for-each 
@@ -33462,15 +33503,22 @@ EDITS: 2
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";(~A ~A) -> ~A" name arg tag)))
 		      (if (procedure-with-setter? n)
-			  (let ((tag 
-				 (catch #t
-					(lambda () (set! (n arg) 0))
-					(lambda args (car args)))))
-			    (if (not (eq? tag 'wrong-type-arg))
-				(snd-display ";(~A ~A) -> ~A" name arg tag)))))
+			  (begin
+			    (let ((tag 
+				   (catch #t
+					  (lambda () (set! (n arg) 0))
+					  (lambda args (car args)))))
+			      (if (not (eq? tag 'wrong-type-arg))
+				  (snd-display ";(~A ~A) -> ~A" name arg tag)))
+			    (let ((tag 
+				   (catch #t
+					  (lambda () (set! (n 0) arg))
+					  (lambda args (car args)))))
+			      (if (not (eq? tag 'wrong-type-arg))
+				  (snd-display ";(set ~A ~A) -> ~A" name arg tag))))))
 		    struct-accessors
 		    struct-accessor-names))
-		 (list 1.5 "/hiho" (list 0 1) 1234 #f #t '() (make-vector 0))))
+		 (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #t '() (make-vector 0))))
 	      (gc))
 	      ))))
 

@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 27
-#define MUS_DATE "11-Mar-03"
+#define MUS_REVISION 28
+#define MUS_DATE "9-Apr-03"
 
 /* 
+ * 9-Apr:      removed MUS_HANNING_WINDOW (use MUS_HANN_WINDOW).
  * 3-Mar:      mus_delay_line_p for tap error checking.
  * 27-Feb:     mus_length for env -> original duration in samples.
  * 21-Feb:     mus_set_cosines added, mus_cosines moved to hop slot.
@@ -179,7 +180,6 @@ enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WIND
       MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
       MUS_EXPONENTIAL_WINDOW, MUS_RIEMANN_WINDOW, MUS_KAISER_WINDOW, MUS_CAUCHY_WINDOW, MUS_POISSON_WINDOW,
       MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW};
-#define MUS_HANNING_WINDOW MUS_HANN_WINDOW
 
 #define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) &&((Window) <= MUS_DOLPH_CHEBYSHEV_WINDOW))
 

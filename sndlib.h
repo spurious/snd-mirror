@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 18
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "31-Mar-03"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "9-Apr-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -501,7 +501,6 @@ int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints,
 int mus_file_write_file(int tfd, int beg, int end, int chans, mus_sample_t **bufs);
 int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, mus_sample_t **bufs, char *charbuf, int clipped);
 char *mus_expand_filename(char *name);
-#define mus_file_full_name(File) mus_expand_filename(File)
 
 int mus_file_data_clipped(int tfd);
 int mus_file_set_data_clipped(int tfd, int clipped);
@@ -580,7 +579,6 @@ int mus_header_read_with_fd(int chan);
 int mus_header_read(const char *name);
 int mus_header_write(const char *name, int type, int srate, int chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len);
 int mus_header_update_with_fd(int chan, int type, off_t siz);
-int mus_header_update(const char *name, int type, off_t size, int srate, int format, int chans, off_t loc);
 int mus_header_aux_comment_start(int n);
 int mus_header_aux_comment_end(int n);
 int mus_header_initialize(void);

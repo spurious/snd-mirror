@@ -438,7 +438,7 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 
 void for_each_region_chan(void (*func)(chan_info *, void *), void *userptr)
 {
-  /* used only in snd-io.c to remove dangling temp files */
+  /* used only in snd-io.c to remove dangling temp files (probably can't actually happen) */
   int i, chn;
   region *r;
   chan_info *cp;

@@ -1024,14 +1024,12 @@ using these functions (this is normally done for you by the various
 <pre>
   int mus_header_read (char *name)
   int mus_header_write (char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, char *comment, int len)
-  int mus_header_update (char *name, int type, off_t size, int srate, int format, int chans, off_t loc)
   int mus_header_writable(int type, int format)
 </pre>
 
 <p>These read and write a sound file's header.  The <i>loc</i> parameter is normally 0 (the data location depends
 on many things -- you'd normally write the header, then use mus_header_data_location to get the resultant
-data location). <i>len</i> is the length (bytes) of <i>comment</i>.  <i>mus_header_update</i> is normally
-used only to set the file size after the sound has been written.  <i>mus_header_writable</i> returns
+data location). <i>len</i> is the length (bytes) of <i>comment</i>. <i>mus_header_writable</i> returns
 1 if the given combination of header type and data format can be handled by sndlib.  If you already have
 the file descriptor (as returned by open), the corresponding lower level calls are:</p>
 <pre>

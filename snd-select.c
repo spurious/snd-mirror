@@ -944,12 +944,11 @@ save the current selection in filename using the indicated file attributes.  If 
   ss->catch_message = NULL;
   err = save_selection(ss, fname, type, format, sr, com, chn);
   if (fname) FREE(fname);
-  if (err == MUS_NO_ERROR) 
-    return(filename);
-  else XEN_ERROR(CANNOT_SAVE,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
-			    C_TO_XEN_STRING(ss->catch_message)));
-  return(C_TO_XEN_INT(err));
+  if (err != MUS_NO_ERROR) 
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
+			 C_TO_XEN_STRING(ss->catch_message)));
+  return(filename);
 }
 
 static XEN g_selection_chans(void)

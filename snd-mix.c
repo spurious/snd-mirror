@@ -2828,7 +2828,7 @@ static Float next_track_sample(track_fd *fd)
   #define MUS_CONVERT(samp) MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(samp))
 #endif
 
-static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
+static int play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
 {
   track_fd **fds;
   chan_info **cps;
@@ -2844,7 +2844,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   if (ucps == NULL)
     {
       chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
-      if (chans == 0) return;
+      if (chans == 0) return(-1);
       cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
       need_free = TRUE;
       chan = 0;
@@ -2870,7 +2870,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
     }
   else cps = ucps;
   samps = 0;
-  if (chans == 0) return;
+  if (chans == 0) return(-1);
   outchans = chans;
   format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
   datum_bytes = mus_bytes_per_sample(format);
@@ -2945,6 +2945,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
 #endif
   FREE(buf);
   if (need_free) FREE(cps);
+  return(0);
 }
 
 void reflect_mix_edit(chan_info *input_cp, const char *origin)
@@ -4166,14 +4167,11 @@ return a reader ready to access track's data associated with snd's channel chn"
   tf = init_track_reader(cp, 
 			 XEN_TO_C_INT(track_id), 
 			 FALSE); /* true to track all chans in parallel (assuming different starting points) */
-  if (tf)
-    {
-      XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);
-    }
-  XEN_ERROR(NO_SUCH_TRACK,
-	    XEN_LIST_2(C_TO_XEN_STRING(S_make_track_sample_reader),
-		       track_id));
-  return(track_id);
+  if (tf == NULL)
+    XEN_ERROR(NO_SUCH_TRACK,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_track_sample_reader),
+			 track_id));
+  XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);
 }
 
 static XEN g_next_track_sample(XEN obj)
@@ -4203,17 +4201,21 @@ static XEN g_free_track_sample_reader(XEN obj)
 static XEN g_play_track(XEN num, XEN snd, XEN chn)
 {
   #define H_play_track "(" S_play_track " track (snd #f) (chn #f)): play track"
-  /* just a dummy for testing */
   chan_info *cp = NULL;
+  int err;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(num), num, XEN_ARG_1, S_play_track, "an integer");
   /* in this case if snd=#t, play all associated mixes in all chans */
   if (XEN_TRUE_P(snd))
-    play_track(get_global_state(), NULL, 0, XEN_TO_C_INT_OR_ELSE(num, 0));
+    err = play_track(get_global_state(), NULL, 0, XEN_TO_C_INT_OR_ELSE(num, 0));
   else 
     {
       cp = get_cp(snd, chn, S_play_track);
-      play_track(cp->state, &cp, 1, XEN_TO_C_INT_OR_ELSE(num, 0));
+      err = play_track(cp->state, &cp, 1, XEN_TO_C_INT_OR_ELSE(num, 0));
     }
+  if (err == -1)
+    XEN_ERROR(NO_SUCH_TRACK,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_play_track),
+			 num));
   return(num);
 }
 

@@ -65,12 +65,6 @@
  * tests in snd-test.scm, test 22
  *
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
- * TODO: file->array and array->file, comment? delete-mark? fft? file-name? partial->poly etc? 
- *        these should be named file->vct etc
- * TODO: left|right-sample? mark-name? mark? mark-sample mark-sync find-mark
- * TODO: mix/track/region sample readers? region info? selection info? mix info?
- * TODO: samples->vct? access to sound|channel-properties? sound?[g_sound_p in snd-snd.c]
- * TODO: def-clm-struct make-funcs?
  * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -8683,7 +8677,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 		  {
 		    char *xb;
 		    xb = describe_xen_value(v, prog->ints, prog->dbls);
-		    run_warn("can't set %s (a %s) to %s (a %s)",
+		    run_warn("can't set %s (%s) to %s (%s)",
 			     accessor,
 			     type_name(sv->type),
 			     xb,

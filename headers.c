@@ -3,7 +3,6 @@
  * --------------------------------
  * int mus_header_read (const char *name)
  * int mus_header_write (const char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
- * int mus_header_update (const char *name, int type, off_t size, int srate, int format, int chans, int loc)
  * int mus_header_initialize (void)
  *
  *   Once mus_header_read has been called, the data in it can be accessed through:
@@ -4852,41 +4851,6 @@ int mus_header_update_with_fd(int chan, int type, off_t size)
       break;
     }
   return(MUS_NO_ERROR);
-}
-
-int mus_header_update(const char *name, int type, off_t size, int wsrate, int format, int wchans, off_t loc)
-{
-  int chan, err;
-  off_t siz;
-  chan = mus_file_reopen_write(name);
-  if (chan == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_update for %s failed: %s", name, strerror(errno)));
-  siz = mus_samples_to_bytes(format, size);
-  err = mus_header_update_with_fd(chan, type, siz);
-  if (type == MUS_NEXT)
-    {
-      if (wsrate != 0)
-	{
-	  lseek(chan, 16L, SEEK_SET);
-	  mus_bint_to_char((unsigned char *)hdrbuf, wsrate);
-	  write(chan, hdrbuf, 4);
-	}
-      if (wchans != 0)
-	{
-	  lseek(chan, 20L, SEEK_SET);
-	  mus_bint_to_char((unsigned char *)hdrbuf, wchans);
-	  write(chan, hdrbuf, 4);
-	}
-      if (loc != 0)
-	{
-	  lseek(chan, 4L, SEEK_SET);
-	  mus_bint_to_char((unsigned char *)hdrbuf, (int)loc);
-	  write(chan, hdrbuf, 4);
-	}
-    }
-  if (CLOSE(chan) != 0)
-    return(mus_error(MUS_CANT_CLOSE_FILE, "mus_header_update can't close %s: %s", name, strerror(errno)));
-  return(err);
 }
 
 int mus_header_change_samples(const char *filename, off_t new_samples)
