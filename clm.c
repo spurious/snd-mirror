@@ -3257,6 +3257,8 @@ static void dmagify_env(seg *e, Float *data, int pts, int dur, Float scaler)
 	  else e->rates[j] = scaler * (y1 - y0) / (double)passes;
 	}
     }
+  if ((pts > 1) && (e->style == ENV_STEP))
+    e->rates[pts - 1] = e->rates[pts - 2]; /* stick at last value, which in this case is the value (not 0 as increment) */
   e->passes[pts - 1] = 100000000;
 }
 
@@ -3360,6 +3362,8 @@ static Float *env_data(void *ptr) {return(((seg *)ptr)->original_data);}
 static Float env_scaler(void *ptr) {return(((seg *)ptr)->scaler);}
 static int env_size(void *ptr) {return(((seg *)ptr)->size);}
 static Float env_current_value(void *ptr) {return(((seg *)ptr)->current_value);}
+int *mus_env_passes(mus_any *gen) {return(((seg *)gen)->passes);}
+double *mus_env_rates(mus_any *gen) {return(((seg *)gen)->rates);}
 
 static mus_any_class ENV_CLASS = {
   MUS_ENV,
@@ -4178,13 +4182,15 @@ static char *inspect_wt(void *ptr)
 {
   wt *gen = (wt *)ptr;
   char *arr = NULL, *str = NULL;
+#if HAVE_STRDUP
   str = strdup(inspect_rblk((void *)(gen->b)));
+#endif
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
 	       "wt freq: %f, phase: %f, wave[%d (%s)]: %s, b: %s",
 	       gen->freq, gen->phase, gen->wsize, 
 	       (gen->wave_allocated) ? "local" : "external",
 	       arr = print_array(gen->wave, gen->wsize, 0),
-	       str);
+	       (str) ? str : "rblk...");
   if (str) free(str);
   if (arr) FREE(arr);
   return(describe_buffer);
@@ -6939,6 +6945,12 @@ Float mus_increment(mus_any *rd)
   if (mus_buffer_p(rd)) return(((rblk *)rd)->fill_time);
   if (mus_granulate_p(rd)) return(((Float)(((grn_info *)rd)->output_hop)) / ((Float)((grn_info *)rd)->input_hop));
   if (mus_phase_vocoder_p(rd)) return(((pv_info *)rd)->interp);
+  if (mus_env_p(rd)) 
+    {
+      if (((seg *)rd)->style == ENV_STEP)
+	return(0.0);
+      return(exp(((seg *)rd)->base));
+    }
   return(0);
 }
 

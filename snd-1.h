@@ -662,6 +662,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp);
 char *edit_to_string(chan_info *cp, int edit);
 void free_edit_list(chan_info *cp);
 void backup_edit_list(chan_info *cp);
+void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin);
 void remember_temp(char *filename, int chans);
 void forget_temps(void);
 snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int ctr, int temp_chan);

@@ -240,10 +240,10 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
   XDrawImageString(dp, pix, draw_gc, 0, height, str, strlen(str));
 
   /* dump pixmap bits into an "image", image data will be freed automatically later */
-  data = (char *)CALLOC((width + 1) * (height + 1) * depth_bytes, sizeof(char));
+  data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
   before = XCreateImage(dp, vis, depth, XYPixmap, 0, data, width, height, 8, 0);
   XGetSubImage(dp, pix, 0, 0, width, height, AllPlanes, XYPixmap, before, 0, 0);
-  data = (char *)CALLOC((nwidth + 1) * (nheight + 1) * depth_bytes, sizeof(char));
+  data = (char *)calloc((nwidth + 1) * (nheight + 1) * depth_bytes, sizeof(char));
   after = XCreateImage(dp, vis, depth, XYPixmap, 0, data, nwidth, nheight, 8, 0);
 
   /* clear background of result image */

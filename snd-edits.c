@@ -3119,6 +3119,32 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
   return(XEN_TRUE);
 }
 
+void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin) /* origin copied here */
+{
+  int need_backup = 0;
+  ed_list *ed;
+  need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
+  if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */
+    {
+      if ((cp->state) && (cp->state->deferred_regions > 0))
+	sequester_deferred_regions(cp, one_edit - 1);
+      while (cp->edit_ctr > one_edit) backup_edit_list(cp);
+      if ((need_backup) && (cp->mixes)) backup_mix_list(cp, one_edit);
+      if (one_edit_origin)
+	{
+	  ed = cp->edits[cp->edit_ctr];
+	  if (ed)
+	    {
+	      if (ed->origin) FREE(ed->origin);
+	      ed->origin = copy_string(one_edit_origin);
+	      reflect_edit_history_change(cp);
+	    }
+	}
+      if (need_backup) prune_edits(cp, cp->edit_ctr + 1);
+      update_graph(cp, NULL); 
+    }
+}
+
 static int chan_ctr = 0;
 static char *as_one_edit_origin;
 
@@ -3131,29 +3157,7 @@ static int init_as_one_edit(chan_info *cp, void *ptr)
 
 static int finish_as_one_edit(chan_info *cp, void *ptr) 
 {
-  int one_edit, need_backup = 0;
-  ed_list *ed;
-  one_edit = (((int *)ptr)[chan_ctr] + 1);
-  need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
-  if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */
-    {
-      if ((cp->state) && (cp->state->deferred_regions > 0))
-	sequester_deferred_regions(cp, one_edit - 1);
-      while (cp->edit_ctr > one_edit) backup_edit_list(cp);
-      if ((need_backup) && (cp->mixes)) backup_mix_list(cp, one_edit);
-      if (as_one_edit_origin)
-	{
-	  ed = cp->edits[cp->edit_ctr];
-	  if (ed)
-	    {
-	      if (ed->origin) FREE(ed->origin);
-	      ed->origin = as_one_edit_origin;
-	      reflect_edit_history_change(cp);
-	    }
-	}
-      if (need_backup) prune_edits(cp, cp->edit_ctr + 1);
-      update_graph(cp, NULL); 
-    }
+  as_one_edit(cp, (((int *)ptr)[chan_ctr] + 1), as_one_edit_origin);
   chan_ctr++; 
   return(0);
 }
@@ -3180,7 +3184,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   if (chans > 0)
     {
       if (XEN_STRING_P(origin))
-	as_one_edit_origin = copy_string(XEN_TO_C_STRING(origin));
+	as_one_edit_origin = XEN_TO_C_STRING(origin);
       else as_one_edit_origin = NULL;
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;
@@ -3197,7 +3201,8 @@ void scale_channel(chan_info *cp, Float scaler, int beg, int num, int pos)
 {
   if ((beg < 0) || 
       (num <= 0) ||
-      (beg > cp->samples[pos]))
+      (beg > cp->samples[pos]) ||
+      (scaler == 1.0))
     return; 
   if ((beg == 0) && 
       (num >= cp->samples[pos]))

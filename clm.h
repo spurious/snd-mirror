@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 58
-#define MUS_DATE "10-Dec-01"
+#define MUS_REVISION 59
+#define MUS_DATE "25-Jan-02"
 
 /* 
+ * 25-Jan-02:  mus_increment of env returns base.
  * --------
  * 10-Dec:     add outctr calls, phase-vocoder bugfixes, thanks to Scott Wilson.
  * 21-Oct:     fill in some set-data methods.
@@ -397,6 +398,8 @@ mus_any *mus_make_env           PROTO((Float *brkpts, int pts, Float scaler, Flo
 int mus_env_p                   PROTO((mus_any *ptr));
 void mus_restart_env            PROTO((mus_any *ptr));
 Float mus_env_interp            PROTO((Float x, mus_any *env));
+int *mus_env_passes             PROTO((mus_any *gen)); /* for Snd */
+double *mus_env_rates           PROTO((mus_any *gen)); /* ditto */
 int mus_position                PROTO((mus_any *ptr));
 
 int mus_frame_p                 PROTO((mus_any *ptr));

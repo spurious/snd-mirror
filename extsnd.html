@@ -5161,8 +5161,18 @@ the direction argument between the channel and edit-position.
 <!-- --><br><br>
 <!-- -->The <i>pos</i> argument makes it easier to try "A:B" comparisons.
 <!-- --><code>(play 0 #f #f #f #f (1- (edit-position)))</code> plays version before the latest edit.
-<!-- --><code>(define (play-then-and-now) (play-and-wait 0 #f #f #f #f (1- (edit-position))) (play))</code>
-<!-- --></td></tr>
+<!-- --><code>(define (play-then-and-now) (play-and-wait 0 #f #f #f #f (1- (edit-position))) (play))</code>.
+<!-- -->The following code plays from the cursor with a moving ("tracking") cursor:
+<!-- --><br><br>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (pfc)
+  (let ((old-tracking (cursor-follows-play)))
+    (set! (cursor-follows-play) #t)
+    (add-hook! stop-playing-hook 
+	       (lambda (snd)
+		 (set! (cursor-follows-play) old-tracking)))
+    (play (cursor))))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->

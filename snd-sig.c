@@ -685,6 +685,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, int beg, int dur,
   Float env_val;
   int next_pass;
 
+  if ((ratio == 1.0) && (egen == NULL)) return(NULL);
   sp = cp->sound;
   ss = cp->state;
   full_chan = ((beg == 0) && (dur == cp->samples[cp->edit_ctr]));
@@ -1234,7 +1235,10 @@ static char *clm_channel(chan_info *cp, mus_any *gen, int beg, int dur, XEN edp,
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur + overlap, caller);
       ofd = open_temp_file(ofile, 1, hdr, ss);
       if (ofd == -1)
-	return(mus_format("can't open %s temp file %s: %s\n", caller, ofile, strerror(errno)));
+	{
+	  free_snd_fd(sf); 
+	  return(mus_format("can't open %s temp file %s: %s\n", caller, ofile, strerror(errno)));
+	}
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);
     }
   else temp_file = 0;
@@ -1277,6 +1281,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, int beg, int dur, XEN edp,
     }
   else change_samples(beg, dur, idata, cp, LOCK_MIXES, caller, cp->edit_ctr);
   update_graph(cp, NULL); 
+  free_snd_fd(sf);
   FREE(data[0]);
   FREE(data);
   return(NULL);
@@ -1763,6 +1768,14 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   Float egen_val;
   
   if ((!e) && (!gen)) return;
+  if (regexpr) 
+    {
+      if (selection_is_active())
+	dur = selection_len();
+      else dur = 0;
+    }
+  if (dur == 0) return;
+
   if (e)
     {
       if (e->pts == 0) return;
@@ -1776,8 +1789,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       if (scalable)
 	{
 	  val[0] *= scaler;
-	  if ((beg == 0) && 
-	      ((dur == 0) || (dur >= current_ed_samples(cp))))
+	  if ((beg == 0) && (dur >= current_ed_samples(cp)))
 	    {
 	      scale_by(cp, val, 1, regexpr);
 	      return;
@@ -1785,33 +1797,78 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	}
     }
   else scalable = 0;
+
   si = NULL;
   sp = cp->sound;
   ss = cp->state;
-  sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD, edpos, origin, arg_pos);
-  if (sc == NULL) return;
-  si = sc->si;
-  sfs = sc->sfs;
-  if (regexpr) dur = sc->dur;
-  if (dur == 0) 
-    {
-      for (i = 0; i < si->chans; i++) 
-	if (sfs[i]) 
-	  free_snd_fd(sfs[i]);
-      free_sync_state(sc); 
-      return;
-    }
+
   if (scalable)
     {
+      sc = get_sync_state_without_snd_fds(ss, sp, cp, beg, regexpr);
+      if (sc == NULL) return;
+      si = sc->si;
       for (i = 0; i < si->chans; i++) 
 	scale_channel(si->cps[i], val[0], beg, dur, to_c_edit_position(si->cps[i], edpos, origin, arg_pos));
       free_sync_state(sc);
       return;
     }
+
   if (e)
     egen = mus_make_env(e->data, e->pts, scaler, 0.0, e_base, 0.0, 0, dur - 1, NULL);
   else egen = gen;
 
+  if (mus_increment(egen) == 0.0) 
+    {
+      /* step env -- handled as sequence of scalings */
+      /*   there's another special case we could break out -- ramp up to 1.0 then later down, could be split */
+      int local_edpos, len, k, pos, segbeg, segnum, segend, old_squelch;
+      int *passes;
+      double *rates;
+      /* base == 0 originally, so it's a step env */
+      len = mus_length(egen);
+      passes = mus_env_passes(egen);
+      rates = mus_env_rates(egen);
+      segbeg = beg;
+      segend = beg + dur;
+      segnum = passes[0];
+      sc = get_sync_state_without_snd_fds(ss, sp, cp, beg, regexpr);
+      if (sc == NULL) return;
+      si = sc->si;
+      for (i = 0; i < si->chans; i++) 
+	{
+	  local_edpos = si->cps[i]->edit_ctr;
+	  old_squelch = si->cps[i]->squelch_update;
+	  si->cps[i]->squelch_update = 1;
+	  pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
+	  for (k = 0; k < len; k++)
+	    {
+	      if ((segbeg + segnum) > segend) 
+		segnum = segend - segbeg;
+	      else
+		if ((k == (len - 1)) && 
+		    ((segbeg + segnum) < segend))
+		  segnum = segend - segbeg; /* last value is sticky in envs */
+	      if (segnum > 0)
+		{
+		  scale_channel(si->cps[i], (Float)(rates[k]), segbeg, segnum, pos);
+		  pos = si->cps[i]->edit_ctr;
+		}
+	      segbeg += segnum;
+	      if (segbeg >= segend) break;
+	      segnum = passes[k + 1] - passes[k];
+	    }
+	  si->cps[i]->squelch_update = old_squelch;
+	  as_one_edit(si->cps[i], local_edpos + 1, (char *)origin);
+	}
+      free_sync_state(sc);
+      if (e) mus_free(egen);
+      return;
+    }
+
+  sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD, edpos, origin, arg_pos);
+  if (sc == NULL) return;
+  si = sc->si;
+  sfs = sc->sfs;
   if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
     {
       temp_file = 1; 
@@ -3202,7 +3259,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope gene
   if (XEN_NUMBER_P(ratio_or_env_gen))
     {
       ratio = XEN_TO_C_DOUBLE(ratio_or_env_gen);
-      if (ratio == 0.0) return(XEN_FALSE);
+      if ((ratio == 0.0) || (ratio == 1.0)) return(XEN_FALSE);
     }
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, FALSE, S_src_channel, FALSE);
