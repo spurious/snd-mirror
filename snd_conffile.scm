@@ -4,6 +4,17 @@
 ;; Should work for gtk and perhaps motif.
 
 
+
+(if (or (< (string->number (major-version)) 1)
+	(and (string=? "1" (major-version))
+	     (< (string->number (minor-version)) 4)))
+    (begin
+      (display "Warning, snd_conffile.scm has not been tested with earlier versions of Guile than 1.6.4.")(newline)
+      (display "In case of problems, please upgrade Guile to the latest version, and recompile Snd.")(newline)))
+
+
+
+
 (use-modules (ice-9 rdelim))
 
 (provide 'snd-snd_conffile.scm)
@@ -550,39 +561,58 @@
       (c-show-times cursorpos #t))
   (set! (cursor-follows-play) #t))
 
-(define (c-play-selection2)
-  (if c-islooping
-      (play-selection)
-      (remove-hook! stop-playing-selection-hook c-play-selection2))
-  #f)
+    
 
+(define (c-play-do start end replaypos)
+  (let* ((backwards (< (speed-control) 0))
+	 (startpos (if start start (if backwards (+ (c-selection-position) (c-selection-frames)) (c-selection-position))))
+	 (endpos (if end end (if backwards (c-selection-position) (+ (c-selection-position) (c-selection-frames)))))
+	 (whentostopcursor-delta (* 2 (srate) (cursor-update-interval))))
+    
+    (define (dashook samps)
+      (if (< (abs (- (cursor) endpos)) whentostopcursor-delta)
+	  (begin
+	    (remove-hook! play-hook dashook)
+	    (set! (cursor-follows-play) #f))))
+
+    (c-set-cursor-pos startpos)
+
+    (add-hook! play-hook dashook)
+    (in 1
+	(lambda ()
+	  (set! (cursor-follows-play) #t)))
+    (play startpos #f #f #f endpos #f
+	  (lambda (x)
+	    (if (and (= x 0) c-islooping)
+		(c-play-do (if (not replaypos) start c-playstartpos) end replaypos))))))
 
 (define (c-play-selection)
-  (c-set-cursor-pos (c-selection-position))
-  (set! c-playstartpos (cursor))
-  (if c-is-stop-hooks-here
-      (begin
-	(if c-islooping
-	    (add-hook! stop-playing-selection-hook c-play-selection2))
-	(play-selection))
-      (play-selection #f #f
-                      (lambda (x)
-                        (if (and (= x 0) c-islooping)
-                            (c-play-selection))))))
+  (c-play-do #f #f #f))
 
 
-
-
+(add-hook! stop-playing-hook
+	   (lambda (snd)
+	     (set! (cursor-follows-play) #f)
+	     (c-set-cursor-pos (cursor))
+	     (c-show-times (cursor) #t)
+	     (set! (cursor-follows-play) #t)))
 
 
 (define* (c-play pos #:optional dontsetstartpos)
   (if (not dontsetstartpos)
       (set! c-playstartpos pos))
-  (play pos #f #f #f #f #f
-	(lambda (x)
-	  (if (and (= x 0) c-islooping)
-	      (c-play c-playstartpos)))))
+  (if (< (speed-control) 0)
+      (c-play-do pos 0 #t)
+      (c-play-do pos (frames) #t)))
 
+
+(define (c-dosomepause func)
+  (let ((isplaying (dac-is-running)))
+    (if isplaying
+	(c-stop-playing (cursor)))
+    (func)
+    (if isplaying
+	(c-play (cursor) #t))))
 
 
 ;; Replace the old space binding with one that starts playing from the current cursor position,
@@ -1150,7 +1180,7 @@ Does not work.
 		   (set! height (cadr (widget-size sound-widget)))
 		   (set! y (+ (- (* fontheight level) (* 1.5 fontheight))
 			      (- (/ (- height fontheight) 2) fontheight)))
-
+		   
 		   (if (car dim)
 		       (begin
 			 (set! (foreground-color) c-backgroundcolor)
@@ -1425,6 +1455,59 @@ Does not work.
 
 
 
+;;##################################################################
+;; Focus
+;;##################################################################
+
+#!
+;; The brutal method:
+(define (fokus-right)
+  (let ((snd (selected-sound)))
+    (if snd
+	(focus-widget (c-editor-widget snd))))
+  (in 100 fokus-right))
+
+(fokus-right)
+!#
+
+(add-hook! mouse-enter-graph-hook
+  (lambda (snd chn)
+    (if (sound? snd) (focus-widget (car (channel-widgets snd chn))))))
+
+(add-hook! mouse-leave-text-hook
+	   (lambda (w)
+	     (in 100
+		 (lambda ()
+		   (let ((snd (selected-sound)))
+		     (if snd
+			 (focus-widget (c-editor-widget snd))))))))
+
+(add-hook! mouse-enter-listener-hook
+	   (lambda (widget)
+	     (focus-widget widget)))
+
+
+;; All checkbuttons in the control-panel.
+(add-hook! after-open-hook
+	   (lambda (snd)
+	     (let ((ws '()))
+	       (define (fixit w)
+		 (if (not (member w ws))
+		     (begin
+		       (set! ws (cons w ws))
+		       (for-each-child w
+				       (lambda (w)
+					 (if (GTK_IS_CHECK_BUTTON w)
+					     (c-g_signal_connect w "button_release_event"
+								 (lambda (w e i)
+								   (c-dosomepause (lambda ()
+										    (gtk_button_released (GTK_BUTTON w))
+										    (focus-widget (c-editor-widget snd)))))))
+					 (if (GTK_IS_CONTAINER w)
+					     (fixit w)))))))
+	       (fixit (caddr (sound-widgets snd))))))
+
+	   
 ;;##############################################################
 ;; dac-size slider in the control-panel
 ;;##############################################################
@@ -1444,15 +1527,19 @@ Does not work.
 			   (begin
 			     (c-play (cursor) #t)
 			     (set! iswaiting #f))))))
-	       (<slider> control-panel "dac-size" 8 (dac-size) 8192
+	       (<slider> control-panel "dac-size" 1 (dac-size) 8192
 			 (lambda (val)
-			   (c-stop-playing (cursor))
-			   (set! (dac-size) (c-integer val))
-			   (if iswaiting
-			       (set! must-wait-more #t)
-			       (begin
-				 (set! iswaiting #t)
-				 (waitfunc))))
+			   (let ((isplaying (dac-is-running)))
+			     (if isplaying
+				 (c-stop-playing (cursor)))
+			     (set! (dac-size) (c-integer val))
+			     (focus-widget (c-editor-widget snd))
+			     (if isplaying
+				 (if iswaiting
+				     (set! must-wait-more #t)
+				     (begin
+				       (set! iswaiting #t)
+				       (waitfunc))))))
 			 1))))
 
 

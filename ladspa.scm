@@ -597,14 +597,16 @@
 	    (begin
 	      (if (not (selection-member? (selected-sound)))
 		  (select-all (selected-sound)))
-	      (letrec ((das-play (lambda ()
-				   (play-selection #f #f
-						   (lambda (x)
-						     (if (= x 0)
-							 (das-play)
-							 (-> button set #f)
-							 ))))))
-		(das-play)))
+	      (if (defined? 'c-play-selection)
+		  (c-play-selection)
+		  (letrec ((das-play (lambda ()
+				       (play-selection #f #f
+						       (lambda (x)
+							 (if (= x 0)
+							     (das-play)
+							     (-> button set #f)
+							     ))))))
+		    (das-play))))
 	    (stop-playing)))
 
       (define (Reset)
