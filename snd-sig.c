@@ -2328,7 +2328,6 @@ void cos_smooth(chan_info *cp, off_t beg, off_t num, int regexpr, const char *or
 
 static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edpos)
 {
-#if WITH_RUN
   snd_state *ss;
   snd_info *sp;
   file_info *hdr = NULL;
@@ -2396,15 +2395,10 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   free_snd_fd(sf);
   FREE(data[0]);
   FREE(data);
-#endif
   return(NULL);
 }
 
-#if WITH_RUN
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
-#else
-static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
-#endif
 { 
   snd_state *ss;
   chan_info *cp;
@@ -2421,13 +2415,11 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
   mus_any *outgen = NULL;
   XEN *data;
   vct *v;
-#if WITH_RUN
   XEN proc = XEN_FALSE;
   void *pt = NULL;
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
-#endif
-
+  else proc = proc_and_list;
   if (XEN_STRING_P(org)) 
     caller = XEN_TO_C_STRING(org);
   else caller = fallback_caller;
@@ -2464,21 +2456,19 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 	  return(snd_bad_arity_error(caller, errstr, proc));
 	}
 
-#if WITH_RUN
-  if (optimization(ss) > 0)
-    {
-      pt = form_to_ptree_1f2f(proc_and_list);
-      if (pt)
+      if (optimization(ss) > 0)
 	{
-	  char *errstr;
-	  errstr = run_channel(cp, pt, beg, num, pos);
-	  free_ptree(pt);
-	  if (errstr == NULL)
-	    return(XEN_ZERO);
-	  else FREE(errstr); /* and fallback on normal evaluator */
+	  pt = form_to_ptree_1f2f(proc_and_list);
+	  if (pt)
+	    {
+	      char *errstr;
+	      errstr = run_channel(cp, pt, beg, num, pos);
+	      free_ptree(pt);
+	      if (errstr == NULL)
+		return(XEN_ZERO);
+	      else FREE(errstr); /* and fallback on normal evaluator */
+	    }
 	}
-    }
-#endif
       sp = cp->sound;
       reporting = (num > MAX_BUFFER_SIZE);
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
@@ -2547,7 +2537,6 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 	  if (ss->stopped_explicitly) 
 	    break;
 	}
-      /* mus_close_file(outgen); */
       if (outgen) mus_free(outgen);
       if (sf) sf = free_snd_fd(sf);
       if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
@@ -2597,7 +2586,7 @@ about where it is in the sound."
   void *pt = NULL;
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, S_ptree_channel, "a procedure");
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && (XEN_REQUIRED_ARGS(proc) == 1), proc, XEN_ARG_1, S_ptree_channel, "a procedure of one arg");
   ASSERT_SAMPLE_TYPE(S_ptree_channel, s_beg, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_ptree_channel, s_dur, XEN_ARG_3);
   ASSERT_CHANNEL(S_ptree_channel, snd, chn, 4); 
@@ -2623,20 +2612,15 @@ about where it is in the sound."
     }
   else
     {
-      snd_warning("can't optimize ptree -> calling map-channel");
+      snd_warning("can't optimize ptree; calling map-channel");
       g_map_chan_1(proc_and_list, s_beg, XEN_FALSE, C_TO_XEN_STRING(S_ptree_channel), snd, chn, edpos, s_dur, "map-chan");
     }
   return(XEN_FALSE);
 }
 
 
-#if WITH_RUN
 static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 		     const char *caller, int counting, XEN edpos, int arg_pos, XEN s_dur)
-#else
-static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
-		     const char *caller, int counting, XEN edpos, int arg_pos, XEN s_dur)
-#endif
 {
   snd_state *ss;
   chan_info *cp;
@@ -2648,13 +2632,11 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   int reporting = 0, rpt = 0, rpt4, counts = 0, pos;
   XEN res;
   char *errmsg;
-#if WITH_RUN
   XEN proc = XEN_FALSE;
   void *pt = NULL;
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
-#endif
-
+  else proc = proc_and_list;
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, caller, "a procedure");
   ASSERT_SAMPLE_TYPE(caller, s_beg, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(caller, s_end, XEN_ARG_3);
@@ -2690,17 +2672,14 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       else end = cp->samples[pos] - 1;
     }
   num = end - beg + 1;
-#if WITH_RUN
   if (optimization(ss) > 0)
     pt = form_to_ptree_1f2b(proc_and_list);
-#endif
   if (num > 0)
     {
       reporting = (num > MAX_BUFFER_SIZE);
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       for (kp = 0; kp < num; kp++)
 	{
-#if WITH_RUN
 	  if (pt)
 	    {
 	      if (evaluate_ptree_1f2b(pt, read_sample_to_float(sf)))
@@ -2720,7 +2699,6 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	    }
 	  else
 	    {
-#endif
 	      res = XEN_CALL_1_NO_CATCH(proc,
 					C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 					caller);
@@ -2738,9 +2716,7 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 					C_TO_XEN_OFF_T(kp + beg)));
 		    }
 		}
-#if WITH_RUN
 	    }
-#endif
 	  if (reporting) 
 	    {
 	      rpt++;
@@ -2765,9 +2741,7 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
     }
   if (sf) sf = free_snd_fd(sf);
-#if WITH_RUN
   if (pt) free_ptree(pt);
-#endif
   if (counting)
     return(C_TO_XEN_INT(counts));
   return(XEN_FALSE);

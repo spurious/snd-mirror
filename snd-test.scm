@@ -37,7 +37,7 @@
 ;;; TODO: lisp-graph-hook with forward proc, linear src moving backwards
 ;;; TODO: srate control change while using semitones
 ;;; TODO: control-panel apply to channel [apply button with ctrl and no active selection]
-;;; TODO: raw|new data dialog help, delete enved env? ...
+;;; TODO: new data dialog help, delete enved env? ...
 ;;; TODO: activate order text
 
 
@@ -10822,6 +10822,12 @@
 	      (let ((pl (make-player ind 0)))
 		(add-player pl)
 		(start-playing 1 22050 #f))
+	      (revert-sound ind)
+	      (set! (graph-transform? ind 0) #t)
+	      (add-hook! lisp-graph-hook display-energy)
+	      (set! (x-bounds) (list 0.0 .01))
+	      (set! (sample 0) 0.5)
+	      (set! (x-bounds) (list 0.0 .001))
 	      (close-sound ind))
 	    (IF (channel-amp-envs "z.snd" 0 100)
 		(snd-display ";channel-amp-envs of empty file: ~A" (channel-amp-envs "z.snd" 0 100)))
@@ -13479,31 +13485,31 @@
 	     (close-sound i2)
 	     ))
 	 (list 10 10000))
-
 	(let ((data (map
 		     (lambda (sound)
-		       (let* ((ind (view-sound sound))
-			      (times (map
-				      (lambda (function)
-					(let ((start (get-internal-real-time)))
-					  (function)
-					  (revert-sound)
-					  (/ (- (get-internal-real-time) start) 100)))
-				      (list (lambda () (scale-channel 2.0))
-					    (lambda () (reverse-channel))
-					    (lambda () (env-channel '(0 0 1 1)))
-					    (lambda () (map-channel (lambda (y) (* y 2))))
-					    (lambda () (ptree-channel (lambda (y) (+ y .2)) #f #f ind 0 #f #t))
-					    (lambda () (scan-channel (lambda (y) (> y 1.0))))
-					    (lambda () (pad-channel 0 2000))
-					    (lambda () (vct->channel (vct-fill! (make-vct 1000) .1)) 0 1000)
-					    (lambda () (clm-channel (make-two-zero .5 .5)))
-					    (lambda () (mix "pistol.snd" 12345))
-					    (lambda () (src-channel 2.0))
-					    (lambda () (delete-samples 10 200))
-					    ))))
-			 (close-sound ind)
-			 times))
+		       (let ((ind (view-sound sound)))
+			 (set! (squelch-update ind) #t)
+			 (let ((times (map
+				       (lambda (function)
+					 (let ((start (get-internal-real-time)))
+					   (function)
+					   (revert-sound)
+					   (/ (- (get-internal-real-time) start) 100)))
+				       (list (lambda () (scale-channel 2.0))
+					     (lambda () (reverse-channel))
+					     (lambda () (env-channel '(0 0 1 1)))
+					     (lambda () (map-channel (lambda (y) (* y 2))))
+					     (lambda () (ptree-channel (lambda (y) (+ y .2)) #f #f ind 0 #f #t))
+					     (lambda () (scan-channel (lambda (y) (> y 1.0))))
+					     (lambda () (pad-channel 0 2000))
+					     (lambda () (vct->channel (vct-fill! (make-vct 1000) .1)) 0 1000)
+					     (lambda () (clm-channel (make-two-zero .5 .5)))
+					     (lambda () (mix "pistol.snd" 12345))
+					     (lambda () (src-channel 2.0))
+					     (lambda () (delete-samples 10 200))
+					     ))))
+			   (close-sound ind)
+			   times)))
 		     (list "1a.snd" "oboe.snd" "storm.snd" "~/test/sound/away.snd"))))
 	  (snd-display "timings:  scl   rev   env   map   ptree  scn  pad   wrt   clm   mix   src   del")
 	  (snd-display "1a:     ~{~6,F~}" (car data))  
@@ -13742,6 +13748,130 @@ EDITS: 2
 	  (IF (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
 	      (snd-display ";ptree y*y differs"))
 	  
+	  (revert-sound ind-map)
+	  (revert-sound ind-ptree)
+	  (map-channel (lambda (y) (+ y .1)) 100 100 ind-map)
+	  (ptree-channel (lambda (y) (+ y .1)) 100 100 ind-ptree)
+	  (IF (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
+	      (snd-display ";ptree[100] + .1 differs"))
+	  (scale-by 2.0 ind-map)
+	  (scale-by 2.0 ind-ptree)
+	  (map-channel (lambda (y) (+ y .2))  1000 100 ind-map)
+	  (ptree-channel (lambda (y) (+ y .2)) 1000 100 ind-ptree)
+	  (IF (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
+	      (snd-display ";ptree[1000] + .2 differs"))
+	  (IF (not (string=? (display-edits ind-ptree) "
+EDITS: 3
+
+ (begin) [0:2]:
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (ptree[4] 100 100) ; ptree 4 100 100 [1:4]:
+   (at 0, cp->sounds[0][0:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 1.000000, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (scale 0 50828) ; scale-channel 2.0000 0 50828 [2:4]:
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (ptree[5] 1000 100) ; ptree 5 1000 100 [3:6]:
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+"))
+	      (snd-display ";ptree[1000] display: ~A" (display-edits ind-ptree)))
+	  
+	  (env-channel '(0 0 1 1 2 0) 2000 1000 ind-map)
+	  (env-channel '(0 0 1 1 2 0) 2000 1000 ind-ptree)
+	  (map-channel (lambda (y) (+ y .3))  4000 100 ind-map)
+	  (ptree-channel (lambda (y) (+ y .3)) 4000 100 ind-ptree)
+	  (IF (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
+	      (snd-display ";ptree[2000] + .2 differs"))
+	  (map-channel (lambda (y) (+ y .1)) 0 3200 ind-map)
+	  (ptree-channel (lambda (y) (+ y .1)) 0 3200 ind-ptree)
+	  (IF (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
+	      (snd-display ";ptree[3200] + .2 differs"))
+	  (IF (not (string=? (display-edits ind-ptree) "
+EDITS: 6
+
+ (begin) [0:2]:
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (ptree[4] 100 100) ; ptree 4 100 100 [1:4]:
+   (at 0, cp->sounds[0][0:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 1.000000, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (scale 0 50828) ; scale-channel 2.0000 0 50828 [2:4]:
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (ptree[5] 1000 100) ; ptree 5 1000 100 [3:6]:
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (set 2000 1000) ; env-channel [4:8]:
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:1999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2000, cp->sounds[1][0:999, 1.000000]) [buf: 1000] 
+   (at 3000, cp->sounds[0][3000:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (ptree[6] 4000 100) ; ptree 6 4000 100 [5:10]:
+   (at 0, cp->sounds[0][0:99, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 2.000000, arg: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 200, cp->sounds[0][200:999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, arg: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1100, cp->sounds[0][1100:1999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 2000, cp->sounds[1][0:999, 1.000000]) [buf: 1000] 
+   (at 3000, cp->sounds[0][3000:3999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 4000, cp->sounds[0][4000:4099, 1.000000, arg: 2.000000, code: (lambda (y) (+ y 0.3))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 4100, cp->sounds[0][4100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+
+ (set 0 3200) ; map-channel [6:5]:
+   (at 0, cp->sounds[2][0:3199, 1.000000]) [buf: 3200] 
+   (at 3200, cp->sounds[0][3200:3999, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 4000, cp->sounds[0][4000:4099, 1.000000, arg: 2.000000, code: (lambda (y) (+ y 0.3))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 4100, cp->sounds[0][4100:50827, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, end_mark)
+"))
+	      (snd-display ";ptree[3200] display: ~A" (display-edits ind-ptree)))
+	  (undo 1 ind-ptree)
+	  (let ((reader (make-sample-reader (1- (frames)) ind-ptree 0 -1)))
+	    (map-channel (lambda (y) (read-sample reader)) 0 (frames) ind-ptree))
+	  (let ((reader (make-sample-reader (1- (frames)) ind-ptree 0 -1)))
+	    (map-channel (lambda (y) (read-sample reader)) 0 (frames) ind-ptree))
+	  (scan-channel (let ((old-reader (make-sample-reader 0 ind-ptree 0 1 (- (edit-position ind-ptree 0) 2)))
+			      (pos 0))
+			  (lambda (y)
+			    (let ((val (read-sample old-reader)))
+			      (if (fneq y val)
+				  (begin
+				    (snd-display ";trouble in reverse ptree read at ~D ~A ~A" pos val y)
+				    #t)
+				  (begin
+				    (set! pos (1+ pos))
+				    #f))))))
 	  (close-sound ind-map)
 	  (close-sound ind-ptree))
 
@@ -19589,6 +19719,12 @@ EDITS: 5
 			(snd-display ";raw-data open: ~A" (list-ref (dialog-widgets) 9))
 			(let ((rd (list-ref (dialog-widgets) 9)))
 			  (click-button (|XmMessageBoxGetChild rd |XmDIALOG_CANCEL_BUTTON)) (force-event))))
+		  (let ((ind (open-sound "/home/bil/sf1/bogus.snd")))
+		    (let ((rd (list-ref (dialog-widgets) 9)))
+		      (if (|XtIsManaged rd)
+			  (begin
+			    (click-button (|XmMessageBoxGetChild rd |XmDIALOG_HELP_BUTTON)) (force-event)
+			    (click-button (|XmMessageBoxGetChild rd |XmDIALOG_CANCEL_BUTTON)) (force-event)))))
 		  (set! (with-background-processes) old-val))
 
 		;; ---------------- file:new dialog ----------------
@@ -24220,6 +24356,7 @@ EDITS: 5
 	(check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
 	(check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	(check-error-tag 'no-such-menu (lambda () (main-menu 111)))
+	(check-error-tag 'no-such-menu (lambda () (change-menu-label -1 "hiho" "hhoo")))
 	(check-error-tag 'mus-error (lambda () (vct-map (lambda () 1.0))))
 	(let ((ind (open-sound "oboe.snd"))) 
 	  (select-all)

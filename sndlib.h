@@ -481,7 +481,7 @@ int mus_audio_compatible_format     PROTO((int dev));
 
 int mus_file_set_descriptors        PROTO((int tfd, const char *arg, int df, int ds, off_t dl, int dc, int dt));
 #define mus_file_open_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt) mus_file_set_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt)
-int mus_file_close_descriptors      PROTO((int tfd));
+int mus_file_close_descriptors      PROTO((int tfd)); /* deprecated -- please don't use this function */
 int mus_file_open_read              PROTO((const char *arg));
 int mus_file_probe                  PROTO((const char *arg));
 int mus_file_open_write             PROTO((const char *arg));

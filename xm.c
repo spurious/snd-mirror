@@ -15643,7 +15643,7 @@ static XEN gxm_XtRegisterGrabAction(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
 {
   #define H_XtRegisterGrabAction "void XtRegisterGrabAction(action_proc, owner_events, event_mask, pointer_mode, keyboard_mode) adds the \
 specified action_proc to a list known to the translation manager."
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS(arg1) ==4), arg1, 1, "XtRegisterGrabAction", "XtActionProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS(arg1) == 4), arg1, 1, "XtRegisterGrabAction", "XtActionProc");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtRegisterGrabAction", "int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XtRegisterGrabAction", "unsigned int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtRegisterGrabAction", "int");

@@ -1085,8 +1085,8 @@ when you save a sound via the "save" dialog.</p>
 <!-- -->8 and 20; see snd-run.c for what is implemented, what the major limitations are, and so on.
 <!-- -->If you set the optimization-hook to print out whatever it's argument is, you can
 <!-- -->find out what the optimizer found confusing.  Here are some representative results;
-the first number is the unoptimized time, the second is the optimized time, the third is
-the speed-up ratio:<br><br></td></tr>
+<!-- -->the first number is the unoptimized time, the second is the optimized time, the third is
+<!-- -->the speed-up ratio:<br><br></td></tr>
 <tr><td></td><td colspan=2>
 <!-- --><table border=1 cellpadding=5>
 <tr><td>singer</td><td>1225</td><td>55</td><td>22</td>
@@ -4055,7 +4055,7 @@ See make-selection in extensions.scm.
 <br>
 <span class=cbox><h3><A NAME="sndsounds">Sounds and channels</a></h3></span>
 
-<p>This is the "heart" of Snd; we've waded through all the ancillary junk, and we've
+<p>This is the heart of Snd; we've waded through all the ancillary junk, and we've
 finally reached the functions that actually edit sounds!  Most of these functions
 take both a sound index and a channel number.  To make global operations simpler to achieve,
 some of the <i>snd</i> and <i>chan</i> arguments can be #t, referring to all current sounds or all channels of a sound; 
@@ -5456,12 +5456,15 @@ the direction argument between the channel and edit-position.
 <!-- -->current sample), comes about as an implicit change in the way the data is read.  This is similar to
 <!-- -->scaling and some envelope operations in that no data actually changes.  If 'env-too' is #t,
 <!-- -->the same function is applied to the peak env values to get the new version.  If the underlying data
-<!-- -->has any envelope ramps of previous ptree operations, map-channel is called instead and the new
-<!-- -->data is saved in the normal manner.  Also, there's currently no way to inform the 'proc' that
+<!-- -->has any envelope ramps or previous ptree operations, map-channel is called instead and the new
+<!-- -->data is saved in the normal manner (that is, I don't currently try to chain these operations
+<!-- -->together).  Also, there's currently no way to inform the 'proc' that
 <!-- -->a new read has begun, so (for now) 'proc' should not have any state or make any assumptions
-<!-- -->about where it is in the sound.  'proc' must be compatible with the optimizer. <b>ptree-channel</b> operations are effectively instantaneous,
+<!-- -->about where it is in the sound.  'proc' must be compatible with (and run through) the optimizer;
+<!-- -->this means the <a href="#optimization">optimization</a> variable must be greater than 0. 
+<!-- --><b>ptree-channel</b> operations are effectively instantaneous,
 <!-- -->take no memory, and save no temporary data on disk. <code>(ptree-channel (lambda (y) (+ y .1)))</code>
-<!-- -->The name refers to "parse tree" -- see snd-run.c for more details.
+<!-- -->The name refers to "parse tree" -- see snd-run.c for more details. (ptree-channel does not work in Ruby).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5472,7 +5475,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><b>ramp-channel</b> is a slight extension of scale-channel. It scales samples in the given sound/channel
-<!-- -->between beg and beg + dur by a ramp going from rmp0 to rmp1.
+<!-- -->between beg and beg + dur by a ramp going from rmp0 to rmp1. (It underlies the virtual envelope operations).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

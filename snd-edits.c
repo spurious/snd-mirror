@@ -255,8 +255,7 @@ static void check_for_first_edit(chan_info *cp)
  * redo: push position foward
  * No actual changes are flushed out to the file system until the file is saved.
  *
- * the editing possibilities are insert, change, delete, scaling, zero, ramp.  All input goes through these lists.
- *   others are being added slowly ("virtual" edits)
+ * the editing possibilities are insert, change, delete, scaling, zero, ramp, ptree.  All input goes through these lists.
  */
 
 /* ed_list fields accessed only in this file */

@@ -7258,18 +7258,18 @@ in multi-channel situations where you want the optimization that vct-map! provid
   int i, j, len, min_len = 0;
   vct **vs = NULL;
   XEN proc, obj, code;
-#if WITH_RUN
-  ptree *pt = NULL;
-#endif
   Float *vals;
   mus_any *f;
-#if WITH_RUN
-  proc = XEN_CAR(proc_and_code);
-  code = XEN_CADR(proc_and_code);
-#else
-  proc = proc_and_code;
-  code = proc_and_code;
-#endif
+  if (XEN_LIST_P(proc_and_code))
+    {
+      proc = XEN_CAR(proc_and_code);
+      code = XEN_CADR(proc_and_code);
+    }
+  else
+    {
+      proc = proc_and_code;
+      code = proc_and_code;
+    }
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS(code) == 0), code, XEN_ARG_1, S_vct_map, "a thunk");
   len = XEN_LIST_LENGTH(arglist);
   if (len == 0)
@@ -7288,11 +7288,13 @@ in multi-channel situations where you want the optimization that vct-map! provid
 	    min_len = vs[i]->length;
 	}
     }
-#if WITH_RUN
+
   if (optimization(get_global_state()) > 0)
     {
+#if WITH_RUN
+      ptree *pt = NULL;
       pt = (ptree *)form_to_ptree(proc_and_code);
-      if ((pt) && (pt->arity == 0) && (pt->result->type == R_CLM))
+      if (pt)
 	{
 	  for (i = 0; i < min_len; i++) 
 	    {
@@ -7307,8 +7309,9 @@ in multi-channel situations where you want the optimization that vct-map! provid
 	}
       /* else fall through to guile */
       if (pt) free_ptree(pt);
-    }
 #endif
+    }
+
   for (i = 0; i < min_len; i++) 
     {
       obj = XEN_CALL_0_NO_CATCH(code, S_vct_map);
