@@ -1381,7 +1381,7 @@ void restore_controls(snd_info *sp)
   if (cs->filter_env) 
     sp->filter_control_envelope = copy_env(cs->filter_env);
   else sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
-  set_snd_filter_order(sp, cs->filter_order);
+  set_snd_filter_order(sp, cs->filter_order); /* causes redisplay */
   tmpstr = env_to_string(sp->filter_control_envelope);
   set_filter_text(sp, tmpstr);
   if (tmpstr) FREE(tmpstr);
@@ -1406,6 +1406,7 @@ void reset_controls(snd_info *sp)
   sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
   tmpstr = env_to_string(sp->filter_control_envelope);
   set_filter_text(sp, tmpstr);
+  display_filter_env(sp);
   if (tmpstr) FREE(tmpstr);
 }
 
@@ -1846,7 +1847,6 @@ Cessate apply_controls(Indicium ptr)
 	  FREE(ap->ofile);
 	  ap->ofile = NULL;
 	  if (ap->hdr) ap->hdr = free_file_info(ap->hdr);
-	  free_controls(sp);
 	  break;
 	}
     }
@@ -4321,7 +4321,6 @@ If it returns #t, the apply is aborted."
 
 /* noise reduction notes:
    TODO: pop fixer, auto click remover
-   TODO: check control filter unset and reset, and that text is always correct
    TODO: some indication of freq response in fft case?
    TODO: settable bounds for expand control (and the rest?): 
          amp-control-bounds contrast-control-bounds expand-control-bounds reverb-control-length-bounds reverb-control-scale-bounds speed-control-bounds

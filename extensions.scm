@@ -755,4 +755,4 @@ If 'check' is #f, the hooks are removed."
 				       0 len2 snd2 chn2)))))))))
 
 
-;;; TODO: channels-difference (rtn loc vals) or max-difference (rtn loc val)
+;;; TODO: channels-difference (rtn loc vals) or max-difference (rtn loc val), channels= (trailing 0 ignored)

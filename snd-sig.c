@@ -1404,6 +1404,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		}
 	      if (!(editable_p(cp))) continue;
 	      dur += order;
+	      /* if over-selection this causes it to clobber samples beyond the selection end -- maybe mix? */
 	      reporting = ((sp) && (dur > REPORTING_SIZE));
 	      if (reporting) start_progress_report(sp, from_enved);
 	      if (dur > MAX_BUFFER_SIZE)

@@ -676,7 +676,7 @@ static void filter_textfield_deactivate(snd_info *sp)
 
 #define MIN_FILTER_GRAPH_HEIGHT 20
 
-static void display_filter_env(snd_info *sp)
+void display_filter_env(snd_info *sp)
 {
   axis_context *ax;
   int height, width;

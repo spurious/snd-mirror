@@ -393,6 +393,7 @@ void set_snd_revlen(snd_info *sp, Float val);
 void set_snd_revscl(snd_info *sp, Float val);
 void set_snd_filter_order(snd_info *sp, int val);
 void set_filter_text(snd_info *sp, char *str);
+void display_filter_env(snd_info *sp);
 void toggle_expand_button(snd_info *sp, bool state);
 void toggle_contrast_button(snd_info *sp, bool state);
 void toggle_reverb_button(snd_info *sp, bool state);

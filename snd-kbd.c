@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: C-x w -> mus-next no matter what?? -- need snd-test for this */
+/* TODO: resurrect lpc */
+
 #define NO_SUCH_KEY XEN_ERROR_TYPE("no-such-key")
 
 static bool defining_macro = false;
@@ -306,7 +309,7 @@ void save_macro_state (FILE *fd)
     save_macro_1(named_macros[i], fd);
 }
 
-static char *vstr(const char *format, va_list ap)
+static char *vstr(const char *format, va_list ap) 
 {
   char *buf;
   int len;
@@ -677,15 +680,27 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  return;
 		}
 	      if ((region_count == 0) && (selection_is_active()))
-		save_selection(str1, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
-	      else save_region(region_count, str1, MUS_OUT_FORMAT);
-	      clear_minibuffer(sp);
+		err = save_selection(str1, default_output_type(ss), default_output_format(ss), SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
+	      else err = save_region(region_count, str1, default_output_format(ss));
+	      if (err == MUS_NO_ERROR)
+		{
+		  clear_minibuffer(sp); /* get rid of prompt */
+		  report_in_minibuffer(sp, _("%s saved as %s"), 
+				       ((region_count == 0) && (selection_is_active())) ? "selection" : "region",
+				       str1);
+		}
 	      FREE(str1);
 	      break;
 	    case CHANNEL_FILING:
 	      err = save_channel_edits(active_chan, mcf = mus_expand_filename(str), C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w", 0);
+	      if (err == MUS_NO_ERROR)
+		{
+		  clear_minibuffer(sp);
+		  report_in_minibuffer(sp, _("channel %d saved as %s"), 
+				       active_chan->chan,
+				       mcf);
+		}
 	      if (mcf) FREE(mcf);
-	      if (err == MUS_NO_ERROR) clear_minibuffer(sp); /* else leave error message posted */
 	      break;
 #if HAVE_OPENDIR
 	    case TEMP_FILING:
@@ -1896,6 +1911,19 @@ static XEN g_control_g_x(void)
   return(XEN_FALSE);
 }
 
+#define S_snd_simulate_keystroke "snd-simulate-keystroke"
+static XEN g_snd_simulate_keystroke(XEN snd, XEN chn, XEN key, XEN state)
+{
+  /* intended for testing */
+  chan_info *cp;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_3, S_snd_simulate_keystroke, "key number (int)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_4, S_snd_simulate_keystroke, "key state (int)");
+  ASSERT_CHANNEL(S_backward_graph, snd, chn, 1);
+  cp = get_cp(snd, chn, S_snd_simulate_keystroke);
+  keyboard_command(cp, XEN_TO_C_INT(key), XEN_TO_C_INT(state));
+  return(key);
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_3(g_forward_graph_w, g_forward_graph)
 XEN_ARGIFY_3(g_backward_graph_w, g_backward_graph)
@@ -1907,6 +1935,7 @@ XEN_ARGIFY_1(g_save_macros_w, g_save_macros)
 XEN_NARGIFY_0(g_control_g_x_w, g_control_g_x)
 XEN_ARGIFY_2(g_report_in_minibuffer_w, g_report_in_minibuffer)
 XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
+XEN_NARGIFY_4(g_snd_simulate_keystroke_w, g_snd_simulate_keystroke)
 #else
 #define g_forward_graph_w g_forward_graph
 #define g_backward_graph_w g_backward_graph
@@ -1918,6 +1947,7 @@ XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
 #define g_control_g_x_w g_control_g_x
 #define g_report_in_minibuffer_w g_report_in_minibuffer
 #define g_prompt_in_minibuffer_w g_prompt_in_minibuffer
+#define g_snd_simulate_keystroke_w g_snd_simulate_keystroke
 #endif
 
 void g_init_kbd(void)
@@ -1928,20 +1958,21 @@ void g_init_kbd(void)
   #define H_cursor_in_middle "The value for a " S_bind_key " function that causes it to shift the window so that the cursor is in the middle"
   #define H_keyboard_no_action "The value for a " S_bind_key " function that causes it do nothing upon return"
 
-  XEN_DEFINE_CONSTANT(S_cursor_in_view,        CURSOR_IN_VIEW,                    H_cursor_in_view);
-  XEN_DEFINE_CONSTANT(S_cursor_on_left,        CURSOR_ON_LEFT,                    H_cursor_on_left);
-  XEN_DEFINE_CONSTANT(S_cursor_on_right,       CURSOR_ON_RIGHT,                   H_cursor_on_right);
-  XEN_DEFINE_CONSTANT(S_cursor_in_middle,      CURSOR_IN_MIDDLE,                  H_cursor_in_middle);
-  XEN_DEFINE_CONSTANT(S_keyboard_no_action,    KEYBOARD_NO_ACTION,                H_keyboard_no_action);
+  XEN_DEFINE_CONSTANT(S_cursor_in_view,          CURSOR_IN_VIEW,                      H_cursor_in_view);
+  XEN_DEFINE_CONSTANT(S_cursor_on_left,          CURSOR_ON_LEFT,                      H_cursor_on_left);
+  XEN_DEFINE_CONSTANT(S_cursor_on_right,         CURSOR_ON_RIGHT,                     H_cursor_on_right);
+  XEN_DEFINE_CONSTANT(S_cursor_in_middle,        CURSOR_IN_MIDDLE,                    H_cursor_in_middle);
+  XEN_DEFINE_CONSTANT(S_keyboard_no_action,      KEYBOARD_NO_ACTION,                  H_keyboard_no_action);
 
-  XEN_DEFINE_PROCEDURE(S_key_binding,          g_key_binding_w,          2, 1, 0, H_key_binding);
-  XEN_DEFINE_PROCEDURE(S_bind_key,             g_bind_key_w,             3, 2, 0, H_bind_key);
-  XEN_DEFINE_PROCEDURE(S_unbind_key,           g_unbind_key_w,           2, 1, 0, H_unbind_key);
-  XEN_DEFINE_PROCEDURE(S_key,                  g_key_w,                  2, 2, 0, H_key);
-  XEN_DEFINE_PROCEDURE(S_save_macros,          g_save_macros_w,          0, 1, 0, H_save_macros);
-  XEN_DEFINE_PROCEDURE(S_c_g_x,                g_control_g_x_w,          0, 0, 0, H_control_g_x);  
-  XEN_DEFINE_PROCEDURE(S_report_in_minibuffer, g_report_in_minibuffer_w, 1, 1, 0, H_report_in_minibuffer);
-  XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer, g_prompt_in_minibuffer_w, 1, 3, 0, H_prompt_in_minibuffer);
-  XEN_DEFINE_PROCEDURE(S_forward_graph,        g_forward_graph_w,        0, 3, 0, H_forward_graph);
-  XEN_DEFINE_PROCEDURE(S_backward_graph,       g_backward_graph_w,       0, 3, 0, H_backward_graph);
+  XEN_DEFINE_PROCEDURE(S_key_binding,            g_key_binding_w,            2, 1, 0, H_key_binding);
+  XEN_DEFINE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 2, 0, H_bind_key);
+  XEN_DEFINE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
+  XEN_DEFINE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
+  XEN_DEFINE_PROCEDURE(S_save_macros,            g_save_macros_w,            0, 1, 0, H_save_macros);
+  XEN_DEFINE_PROCEDURE(S_c_g_x,                  g_control_g_x_w,            0, 0, 0, H_control_g_x);  
+  XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,   g_report_in_minibuffer_w,   1, 1, 0, H_report_in_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,   g_prompt_in_minibuffer_w,   1, 3, 0, H_prompt_in_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_forward_graph,          g_forward_graph_w,          0, 3, 0, H_forward_graph);
+  XEN_DEFINE_PROCEDURE(S_backward_graph,         g_backward_graph_w,         0, 3, 0, H_backward_graph);
+  XEN_DEFINE_PROCEDURE(S_snd_simulate_keystroke, g_snd_simulate_keystroke_w, 4, 0, 0, "internal testing function");
 }

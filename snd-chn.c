@@ -5,7 +5,10 @@
 /* TODO: in stereo file, if c-g during cursor-follows-play, unselected chan may not sync up */
 /* TODO: if cursor-follows-play with fft and movinf window via mouse and c-g, fft may not ever be fixed for that window */
 /* TODO: accurate window mvt in large file is a pain -- need close slider, mv win 1/4 1/8 <-->, pos to cursor etc -- phaps drag axis? */
-/* TODO: fft start pos choice: left, cursor, mid, etc */
+/* TODO: fft start pos choice: left, cursor, mid, etc -- can be done with before-transform-hook */
+/*   (add-hook! before-transform-hook (lambda (s c) (inexact->exact (* .5 (+ (right-sample s c) (left-sample s c)))))) ; mid window = fft start
+ *   (add-hook! before-transform-hook (lambda (s c) (cursor s c))) ; cursor -- also need one for moved cursor -> cursor-moved-hook
+ */
 /* TODO: filter-sound doesn't move edit pos forward?? */
 /* TODO: auto-to-mix in ws (with-mix -> to-mix?) */
 

@@ -4614,7 +4614,7 @@ telephone recordings, I assumed anything under 40 Hz or above
 </p>
 <!-- TODO: why no regularized filter-channel? -->
 <pre>
-(define* (notch-out-rumble-and-hiss #:optional (snd #f) (chn #f))
+(define* (<a class=quiet name="notchoutrumbleandhiss">notch-out-rumble-and-hiss</a> #:optional (snd #f) (chn #f))
   (let* ((cur-srate (exact-&lt;inexact (srate snd))))
     (filter-sound
      (list 0.0 0.0                    ; get rid of DC
@@ -4739,7 +4739,7 @@ and see what is left:
 
 (define* (notch-selection freqs #:optional (filter-order #f) (notch-width 2))
   (filter-selection (make-notch-frequency-response (exact-&lt;inexact (selection-srate)) freqs notch-width)
-		    (or filter-order (inexact-&lt;exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))))
+		    (or filter-order (inexact-&lt;exact (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0))))))))
 
 (notch-sound (list 425 450 470 546 667 789 910) 2048 1 10)
 </pre>
@@ -4779,6 +4779,14 @@ to do anything but load it.  Most of the functions mentioned
 here are now in play.scm or dsp.scm.
 </p>
 
+<!-- TODO: table of noise-reduction related stuff:
+     smooth-*
+     remove-clicks
+     notches
+     fft-squelch (etc)
+     anoi + Koskinen stuff
+     deconvolution?
+-->
 <br>
 
 

@@ -59,6 +59,7 @@ AC_SUBST(VERSION)
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
+# TODO: pass static decisions up to snd-help
 
 
 #--------------------------------------------------------------------------------

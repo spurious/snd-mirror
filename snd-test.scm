@@ -31,8 +31,8 @@
 ;;; test 28: errors
 
 ;;; TODO: recorder-file-hook
-;;; TODO: compsnd locally
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
+;;; TODO: replace all the (buggy) keystroke junk with snd-simulate-keystroke 
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
 
@@ -104,15 +104,15 @@
 	    (set! sf-dir1 #f)))))
 (set! sf-dir sf-dir1)
 
-(if (and (not (file-exists? "4.aiff"))
-	 (not (string=? (getcwd) (string-append home-dir "/cl"))))
-    (copy-file (string-append home-dir "/cl/4.aiff") (string-append (getcwd) "/4.aiff")))
-(if (and (not (file-exists? "2.snd"))
-	 (not (string=? (getcwd) (string-append home-dir "/cl"))))
-    (copy-file (string-append home-dir "/cl/2.snd") (string-append (getcwd) "/2.snd")))
-(if (and (not (file-exists? "obtest.snd"))
-	 (not (string=? (getcwd) (string-append home-dir "/cl"))))
-    (copy-file (string-append home-dir "/cl/oboe.snd") (string-append (getcwd) "/obtest.snd")))
+(if (not (string=? (getcwd) (string-append home-dir "/cl")))
+    (for-each
+     (lambda (file)
+       (if (not (file-exists? file))
+	   (begin
+	     (display (format #f "copying ~A~%" file))
+	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
+     (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
+	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd")))
 
 (define times '())
 (defmacro time (a) 
@@ -33372,7 +33372,7 @@ EDITS: 2
 		  (ffneq (maxamp) .06))
 	      (snd-display ";notch 60 Hz: ~A to ~A" mx (maxamp)))
 	  (undo)
-	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) 1024 0 10)
+	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) 1024 ind 0 10)
 	  (if (ffneq (maxamp) .009)
 	      (snd-display ";notch 60 hz 2: ~A" (maxamp)))
 	  (undo)

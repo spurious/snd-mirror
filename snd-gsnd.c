@@ -930,7 +930,7 @@ void toggle_reverb_button(snd_info *sp, bool state)
 
 #define MIN_FILTER_GRAPH_HEIGHT 20
 
-static void display_filter_env(snd_info *sp)
+void display_filter_env(snd_info *sp)
 {
   axis_context *ax;
   int height, width;

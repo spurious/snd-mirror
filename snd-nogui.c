@@ -282,6 +282,7 @@ char *transform_type_name(int choice) {return(TRANSFORM_TYPE_CONSTANTS[choice]);
 
 int add_transform_to_list(char *name) {return(0);}
 void set_filter_text(snd_info *sp, char *str) {}
+void display_filter_env(snd_info *sp) {}
 int max_transform_type(void) {return(19);}
 
 void reflect_mix_or_track_change(int mix_id, int track_id, bool forced) {}
