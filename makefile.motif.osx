@@ -1,3 +1,7 @@
+# this is just an example of how to edit the output of the
+#   configure script to get Snd to load -- you'll need to
+#   fix up paths to reflect your own setup, of course.
+
 CC = gcc
 DEFS = -DHAVE_CONFIG_H
 CFLAGS = -I. -g -O2

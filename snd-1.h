@@ -783,7 +783,6 @@ XEN g_call0_unprotected(XEN proc);
 XEN g_call1_unprotected(XEN proc, XEN arg);
 XEN g_call2_unprotected(XEN proc, XEN arg1, XEN arg2);
 XEN g_call3_unprotected(XEN proc, XEN arg1, XEN arg2, XEN arg3);
-XEN g_call_any_unprotected(XEN proc, XEN arglist);
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
 int procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
 int snd_protect(XEN obj);
@@ -810,6 +809,9 @@ void snd_eval_property_str(char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
 void clear_stdin(void);
+#if HAVE_RUBY
+  void snd_rb_raise(XEN type, XEN info);
+#endif
 
 
 /* -------- snd-select.c -------- */

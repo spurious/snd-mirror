@@ -728,6 +728,11 @@ static XEN gl_change_menu_label(XEN menu, XEN old_label, XEN new_label)
   val = g_change_menu_label(m,
 			    XEN_TO_C_STRING(old_label), 
 			    XEN_TO_C_STRING(new_label));
+  if (val == -1)
+    XEN_ERROR(NO_SUCH_MENU,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_change_menu_label),
+			 C_TO_XEN_STRING("menu: ~A, labels ~A -> ~A"),
+			 XEN_LIST_3(menu, old_label, new_label)));
   return(C_TO_XEN_INT(val));
 }
 

@@ -19,11 +19,12 @@
 #endif
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 5
-#define XEN_VERSION "1.5"
+#define XEN_MINOR_VERSION 6
+#define XEN_VERSION "1.6"
 
 /* HISTORY:
  *  
+ *   7-Apr-03:  changes to error handlers for more perspicuous error messages
  *   10-Mar-03: XEN_OUT_OF_RANGE_ERROR, XEN_BAD_ARITY_ERROR
  *   17-Feb-03: XEN_HOOK_P
  *   20-Jan-03: added Windows case for auto-import loader bugfix.
@@ -425,7 +426,6 @@
   #define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             g_call1_unprotected(Func, Arg1)
   #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       g_call2_unprotected(Func, Arg1, Arg2)
   #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) g_call3_unprotected(Func, Arg1, Arg2, Arg3)
-  #define XEN_APPLY_NO_CATCH(Func, Args, Caller)              g_call_any_unprotected(Func, Args)
 #else
   #define XEN_CALL_0(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
   #define XEN_CALL_1(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
@@ -442,8 +442,8 @@
   #define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
   #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, scm_listofnull))
   #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_listofnull))
-  #define XEN_APPLY_NO_CATCH(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
 #endif
+#define XEN_APPLY_NO_CATCH(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
 
 #ifdef WINDOZE
 /* can't use scm_listofnull in Windows because the loader can't deal with it:
@@ -745,9 +745,6 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_UNPROTECT_FROM_GC(Var)      rb_gc_unregister_address(&(Var))
 
 #define XEN_ERROR_TYPE(Name)            rb_intern(xen_scheme_constant_to_ruby(Name))
-#define XEN_ERROR(Type, Info)           xen_rb_raise(Type, Info)
-/* this should format the error msg based on the type, but that is Snd specific? id2name + array and spaces 
- */
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
   if (!(Assertion)) \
@@ -758,9 +755,19 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
   rb_raise(rb_eTypeError, "%s: wrong type arg %d, %s, wanted %s\n", \
            Caller, ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
 
+#if USE_SND
+#define XEN_ERROR(Type, Info)           snd_rb_raise(Type, Info)
+#define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
+  snd_rb_raise(XEN_ERROR_TYPE("out-of-range"), \
+            XEN_LIST_3(C_TO_XEN_STRING(Caller), \
+                       C_TO_XEN_STRING(Descr), \
+                       XEN_LIST_1(Arg)))
+#else
+#define XEN_ERROR(Type, Info)           xen_rb_raise(Type, Info)
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
   rb_raise(rb_eRangeError, "%s: arg %d, %s, out of range: %s\n", \
            Caller, ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
+#endif
 
 #if DEBUGGING
 

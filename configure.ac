@@ -974,6 +974,26 @@ dnl do we need explicit -n32?
 	audio_system=MacOSX
 	AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
 	AC_SUBST(AUDIO_LIB)
+	AC_MSG_CHECKING([for kAudioDevicePropertyDeviceManufacturer])
+	AC_COMPILE_IFELSE(
+          [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
+                            #include <CoreAudio/CoreAudio.h>],
+			   [AudioDeviceID deviceID; 
+			    UInt32 trans_size = 0, trans;
+      			    trans_size = sizeof(UInt32);
+     			    AudioDeviceGetProperty(deviceID, 0, true, kAudioDevicePropertyTransportType, &trans_size, &trans)
+			   ])],
+	  [AC_DEFINE(HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE)
+	   AC_MSG_RESULT(yes)],
+	  [AC_MSG_RESULT(no)])
+	AC_MSG_CHECKING([for kLinearPCMFormatFlagIsNonInterleaved])
+	AC_COMPILE_IFELSE(
+          [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
+                            #include <CoreAudio/CoreAudio.h>],
+			   [int i; i = kLinearPCMFormatFlagIsNonInterleaved])],
+	  [AC_DEFINE(HAVE_KLINEARPCMFORMATFLAGISNONINTERLEAVED)
+	   AC_MSG_RESULT(yes)],
+	  [AC_MSG_RESULT(no)])
 	;;
 esac
 AC_MSG_CHECKING([for audio system])

@@ -8123,9 +8123,11 @@ char *device_name(AudioDeviceID deviceID, int input_case)
       mfg = (char *)MALLOC(msize + 2);
       err = AudioDeviceGetProperty(deviceID, 0, input_case, kAudioDevicePropertyDeviceManufacturer, &msize, mfg);
       full_name = (char *)MALLOC(size + msize + 4);
+#if HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE
       trans_size = sizeof(UInt32);
       err = AudioDeviceGetProperty(deviceID, 0, input_case, kAudioDevicePropertyTransportType, &trans_size, &trans);
       if (err != noErr) 
+#endif
 	trans = 0;
       if (trans == 0)
 	mus_snprintf(full_name, size + msize + 4, "\n  %s: %s", mfg, name);
@@ -8225,7 +8227,12 @@ static void describe_audio_state_1(void)
 			       (flags & kLinearPCMFormatFlagIsSignedInteger) ? "signed-int " : "",
 			       (flags & kLinearPCMFormatFlagIsPacked) ? "packed " : "",
 			       (flags & kLinearPCMFormatFlagIsAlignedHigh) ? "aligned-high " : "",
-			       (flags & kLinearPCMFormatFlagIsNonInterleaved) ? "non-interleaved " : "");
+#if HAVE_KLINEARPCMFORMATFLAGISNONINTERLEAVED
+			       (flags & kLinearPCMFormatFlagIsNonInterleaved) ? "non-interleaved " : ""
+#else
+		               ""
+#endif
+			       );
 		  pprint(audio_strbuf);
 		}
 

@@ -15285,6 +15285,100 @@ _ACEOF
 	audio_system=MacOSX
 	AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
 
+	echo "$as_me:$LINENO: checking for kAudioDevicePropertyDeviceManufacturer" >&5
+echo $ECHO_N "checking for kAudioDevicePropertyDeviceManufacturer... $ECHO_C" >&6
+	cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <CoreServices/CoreServices.h>
+                            #include <CoreAudio/CoreAudio.h>
+int
+main ()
+{
+AudioDeviceID deviceID;
+			    UInt32 trans_size = 0, trans;
+      			    trans_size = sizeof(UInt32);
+     			    AudioDeviceGetProperty(deviceID, 0, true, kAudioDevicePropertyTransportType, &trans_size, &trans)
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE 1
+_ACEOF
+
+	   echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+	echo "$as_me:$LINENO: checking for kLinearPCMFormatFlagIsNonInterleaved" >&5
+echo $ECHO_N "checking for kLinearPCMFormatFlagIsNonInterleaved... $ECHO_C" >&6
+	cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <CoreServices/CoreServices.h>
+                            #include <CoreAudio/CoreAudio.h>
+int
+main ()
+{
+int i; i = kLinearPCMFormatFlagIsNonInterleaved
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_KLINEARPCMFORMATFLAGISNONINTERLEAVED 1
+_ACEOF
+
+	   echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
 	;;
 esac
 echo "$as_me:$LINENO: checking for audio system" >&5

@@ -135,15 +135,6 @@ static void string_to_stdout(snd_state *ss, char *msg)
   FREE(str);
 }
 
-#ifndef DEBUGGING
-  #define DEBUGGING 0
-#endif
-
-#if HAVE_GUILE
-  #include <libguile/fluids.h>
-#endif
-
-#if HAVE_GUILE
 static char *gl_print(XEN result);
 
 static XEN snd_format_if_needed(XEN args)
@@ -157,7 +148,7 @@ static XEN snd_format_if_needed(XEN args)
   if (num_args == 1) return(XEN_CAR(args));
   format_info = XEN_TO_C_STRING(XEN_CAR(args));
   format_info_len = snd_strlen(format_info);
-  format_args = XEN_CADR(args);
+  format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case, a no-op in Guile */
   errmsg = (char *)CALLOC(ERR_SIZE, sizeof(char));
   for (i = 0; i < format_info_len; i++)
     {
@@ -222,12 +213,18 @@ static XEN snd_format_if_needed(XEN args)
   FREE(errmsg);
   return(result);
 }
+
+/* ---------------- GUILE error handler ---------------- */
+
+#ifndef DEBUGGING
+  #define DEBUGGING 0
 #endif
 
+#if HAVE_GUILE
+#include <libguile/fluids.h>
 
 static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error handler */
 {
-#if HAVE_GUILE
   snd_info *sp;
   char *possible_code;
   XEN port;
@@ -373,10 +370,46 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	}
     }
   check_for_event(ss);
-#endif
   return(tag);
 }
+#endif
+/* end HAVE_GUILE */
 
+
+/* ---------------- RUBY error handler ---------------- */
+
+#if HAVE_RUBY
+static char *msg = NULL;
+void snd_rb_raise(XEN tag, XEN throw_args)
+{
+  XEN err = rb_eStandardError;
+  int need_comma = FALSE;
+  if (strcmp(rb_id2name(tag), "Out_of_range") == 0) err = rb_eRangeError;
+  if (msg) FREE(msg);
+  msg = (char *)CALLOC(2048, sizeof(char));
+  if ((XEN_LIST_P(throw_args)) && 
+      (XEN_LIST_LENGTH(throw_args) > 0))
+    {
+      /* normally car is string name of calling func */
+      if (XEN_NOT_FALSE_P(XEN_CAR(throw_args)))
+	{
+	  snprintf(msg, 2048, "%s: %s", XEN_AS_STRING(XEN_CAR(throw_args)), rb_id2name(tag));
+	  need_comma = TRUE;
+	}
+      if (XEN_LIST_LENGTH(throw_args) > 1)
+	{
+	  /* here XEN_CADR can contain formatting info and XEN_CADDR is a list of args to fit in */
+	  /* or it may be a list of info vars etc */
+	  if (need_comma) strcat(msg, ": ");
+	  if (XEN_STRING_P(XEN_CADR(throw_args)))
+	    strcat(msg, XEN_TO_C_STRING(snd_format_if_needed(XEN_CDR(throw_args))));
+	  else strcat(msg, XEN_AS_STRING(XEN_CDR(throw_args)));
+	}
+    }
+  rb_raise(err, msg);
+}
+#endif
+/* end HAVE_RUBY */
 
 /* if error occurs in sndlib, mus-error wants to throw to user-defined catch
  *   (or our own global catch), but if the sndlib function was not called by the user, 
@@ -642,15 +675,6 @@ static XEN g_call_any_1(void *arg)
 		   XEN_EMPTY_LIST));
 }
 #endif
-
-XEN g_call_any_unprotected(XEN proc, XEN arglist)
-{
-#if HAVE_GUILE
-  return(scm_apply(proc, arglist, XEN_EMPTY_LIST));
-#else
-  return(arglist);
-#endif
-}
 
 XEN g_call_any(XEN proc, XEN arglist, const char *caller)
 {

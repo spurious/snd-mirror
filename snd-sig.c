@@ -1823,7 +1823,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
 	dur = selection_len();
       else 
 	{
-	  snd_no_active_selection_error(S_env_selection);
+	  snd_no_active_selection_error(S_env_selection); /* can't actually happen currently (checked at all higher levels) */
 	  return;
 	}
     }

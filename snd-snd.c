@@ -1158,24 +1158,19 @@ void add_sound_data(char *filename, snd_info *sp, snd_state *ss, int graphed)
 
 
 static char timebuf[TIME_STR_SIZE];
-static char *link_file = NULL;
 
+#if HAVE_READLINK
+static char *link_file = NULL;
 static char *linked_file(char *link_name)
 {
   int bytes;
-#if HAVE_READLINK
   #define READLINK_FILE_SIZE 256
   if (link_file == NULL) link_file = (char *)CALLOC(READLINK_FILE_SIZE, sizeof(char));
   bytes = readlink(link_name, link_file, READLINK_FILE_SIZE);
-  if (bytes > 0)
-    {
-      link_file[bytes] = 0;
-      return(link_file);
-    }
-  else 
-#endif
-    return("?");
+  link_file[bytes] = 0;
+  return(link_file);
 }
+#endif
 
 static XEN name_click_hook;
 
@@ -1215,7 +1210,11 @@ void sp_name_click(snd_info *sp)
 			       mus_short_data_format_name(hdr->format),
 			       timebuf,
 			       (linked) ? ", (link to " : "",
+#if HAVE_READLINK
 			       (linked) ? linked_file(sp->filename) : "",
+#else
+			       (linked) ? "?" : "",
+#endif
 			       (linked) ? ")" : "");
 	}
     }
