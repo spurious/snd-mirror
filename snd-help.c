@@ -253,7 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-6-Aug:   drop file into channel graph mixes at cursor.
+6-Aug:   drop file into channel graph mixes at cursor.\n\
          make-sound-box, select-file, snd-clock-icon in snd-motif.scm.\n\
 3-Aug:   moved listener widget to main-widgets list.\n\
          add-selection-popup in snd-motif.scm.\n\
