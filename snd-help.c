@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+16-Sep:  snd 6.1.\n\
 12-Sep:  removed \"set-\" names -- use -DWITH_SET_NAME=1 to restore them.\n\
 11-Sep:  save-state-hook.\n\
 10-Sep:  new edit123.scm thanks to Tom Roth.\n\
@@ -291,7 +292,6 @@ void news_help(snd_state *ss)
          ccrma-ftp: old-cmdist.html.\n\
 16-Aug:  added IBM adpcm from Perry Cook's adpcmdec.c.\n\
 15-Aug:  set-channel-drop in snd-motif.scm.\n\
-13-Aug:  snd 6.0.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -4864,13 +4864,21 @@ the direction argument between the channel and edit-position:
 <!-- -->dac-buffer boundaries (normally around 256 samples).  <i>samp</i> can
 <!-- -->also be a filename (a string).  In this case, <i>snd</i> can be the start 
 <!-- -->sample (default 0), and <i>chn</i> can be the end sample (default end-of-file).
+<!-- -->If 'chn' is not given, or is a boolean, play all channels together.
 <!-- -->If <i>pos</i> is given, play at that edit position.
 <!-- -->[<em class=error>no-such-file, no-such-sound</em>]
 <!-- --><br><br>
-<!-- -->The <i>pos</i> argument makes it easier to try "A:B" comparisons.
-<!-- --><br><code>(play 0 #f #f #f #f (1- (edit-position)))</code><br> plays the version before the latest edit.
-<!-- -->The following code plays from the cursor with a moving ("tracking") cursor:
+<!-- -->The <i>pos</i> argument makes it easier to try "A:B" comparisons.<br>
+<!-- --><br><code>(play 0 #f #f #f #f (1- (edit-position)))</code><br><br> plays the version before the latest edit.
 <!-- --><br><br>
+<!-- -->This code binds the "p" key to play all channels of the current sound from the cursor:<br><br>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(bind-key (char-&gt;integer #\p) 0 
+  (lambda () 
+    (<em class=red>play</em> (cursor))
+    keyboard-no-action))
+<!-- --></pre></td></tr></table><br>
+<!-- -->The following code plays from the cursor with a moving ("tracking") cursor:<br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (pfc)
   (let ((old-tracking (cursor-follows-play)))
@@ -4889,7 +4897,8 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait 
-<!-- -->for it to finish.
+<!-- -->for it to finish. (<a href="#sndplay">play</a> on the other hand returns immediately so subsequent calls on play 
+<!-- -->mix multiple sample streams together, rather than playing them one after the other).
 <!-- -->If <i>pos</i> is given, play at that edit position.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 16
-#define SNDLIB_REVISION 12
-#define SNDLIB_DATE "13-Sep-02"
+#define SNDLIB_REVISION 13
+#define SNDLIB_DATE "16-Sep-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -367,12 +367,12 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 /* -------- sound.c -------- */
 
 #ifdef __GNUC__
-  void mus_error(int error, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-  void mus_print(const char *format, ...)            __attribute__ ((format (printf, 1, 2)));
-  char *mus_format(const char *format, ...)          __attribute__ ((format (printf, 1, 2)));
+  int mus_error(int error, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+  void mus_print(const char *format, ...)           __attribute__ ((format (printf, 1, 2)));
+  char *mus_format(const char *format, ...)         __attribute__ ((format (printf, 1, 2)));
   void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)  __attribute__ ((format (printf, 3, 4)));
 #else
-  void mus_error                  PROTO((int error, const char *format, ...));
+  int mus_error                   PROTO((int error, const char *format, ...));
   void mus_print                  PROTO((const char *format, ...));
   char *mus_format                PROTO((const char *format, ...));
   void mus_snprintf               PROTO((char *buffer, int buffer_len, const char *format, ...));
@@ -616,7 +616,6 @@ int mus_header_sf2_loop_end         PROTO((int n));
 const char *mus_header_original_format_name PROTO((int format, int type));
 int mus_header_no_header            PROTO((const char *name));
 
-void mus_header_set_aifc            PROTO((int val)); /* backwards compatibility, sort of */
 char *mus_header_riff_aux_comment   PROTO((const char *name, int *starts, int *ends));
 char *mus_header_aiff_aux_comment   PROTO((const char *name, int *starts, int *ends));
 

@@ -1,5 +1,6 @@
 Snd change log
 
+  16-Sep:    snd 6.1.
   12-Sep:    removed "set-" names.
   11-Sep:    save-state-hook.
   10-Sep:    new edit123.scm thanks to Tom Roth.

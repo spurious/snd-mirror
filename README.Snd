@@ -127,8 +127,8 @@ Guile (on the HAVE_RUBY or --with-ruby switches).
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-6-0.i386.rpm (for Linux), snd-6-0.src.rpm
-(sources), and snd-6-0.ppc.rpm (linuxPPC).  These RPM files have been
+mentioned above: snd-6-1.i386.rpm (for Linux), snd-6-1.src.rpm
+(sources), and snd-6-1.ppc.rpm (linuxPPC).  These RPM files have been
 superseded by Fernando Lopez-Lezcano's set available at
 http://www-ccrma.stanford.edu/planetccrma/software/
 
@@ -217,7 +217,11 @@ the color cells -- exit it and try Snd again, or (if you have the
 video RAM), increase your "depth" to 16 or 24.
 
 If you're running KDE and the menu labels are invisible, check
-the 'theme' you're using.  You normally want black label foregrounds.
+the 'theme' you're using.  You normally want black label foregrounds;
+you can get these by
+
+    ./snd -xrm '*foreground: Black'
+
 
 
 ---- Compiling: ----
@@ -497,6 +501,16 @@ I added the two /home/bil/test directories to the makefile:
 
 Don't run the Motif/GL and the Gtk/GL versions of Snd at the same time.
 This can kill the X server!
+
+
+---- Sun ----
+
+If the make process complains about lt_dlclose and friends,
+add -lltdl to the GUILE_LIBS list in makefile.  Also, if you're
+loading xm.o, #define NEED_XtIsSubClass 1 in xm.c.  (The --with-gl
+and --with-just-gl switches are not recommended on the Sun,
+though they work; the colormap of the entire system is hijacked
+while Snd is running).
 
 
 ---- Mac OS-X: ---- 

@@ -17,6 +17,7 @@
  */
 
 /* SOMEDAY: linux jack support */
+/* TODO: mus_error -> MUS_ERROR change */
 
 /*
  * void mus_audio_describe(void) describes the audio hardware state.
@@ -3350,13 +3351,9 @@ static void oss_mus_audio_save (void)
     {
       afd = linux_audio_open(mixer_name(system), O_RDONLY, 0, 0);
       if (afd == -1) 
-	{
-	  mus_error(MUS_AUDIO_CANT_OPEN, "%s: %s\n  [%s[%d] %s]",
-		    mixer_name(system), 
-		    strerror(errno),
-		    __FILE__, __LINE__, __FUNCTION__);
-	  return;
-	}
+	mus_error(MUS_AUDIO_CANT_OPEN, "mus_audio_save: %s: %s",
+		  mixer_name(system), 
+		  strerror(errno));
       ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
       for (i = 0; i < SOUND_MIXER_NRDEVICES; i++)
 	{
@@ -3384,13 +3381,9 @@ static void oss_mus_audio_restore (void)
     {
       afd = linux_audio_open(mixer_name(system), O_RDWR, 0, 0);
       if (afd == -1) 
-	{
-	  mus_error(MUS_AUDIO_CANT_OPEN, "%s: %s\n  [%s[%d] %s]",
-		    mixer_name(system), 
-		    strerror(errno),
-		    __FILE__, __LINE__, __FUNCTION__);
-	  return;
-	}
+	mus_error(MUS_AUDIO_CANT_OPEN, "mus_audio_restore: %s: %s",
+		  mixer_name(system), 
+		  strerror(errno));
       ioctl(afd, SOUND_PCM_WRITE_CHANNELS, &(init_chans[system]));
       ioctl(afd, SOUND_PCM_WRITE_RATE, &(init_srate[system]));
       ioctl(afd, SOUND_PCM_SETFMT, &(init_format[system]));
@@ -8151,9 +8144,8 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   if (line == -1)
     {
       if (errno == EBUSY) 
-	mus_error(MUS_AUDIO_OUTPUT_BUSY, NULL);
-      else mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, NULL);
-      return(MUS_ERROR);
+	return(mus_error(MUS_AUDIO_OUTPUT_BUSY, NULL));
+      else return(mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, NULL));
     }
   AUDIO_INITINFO(&a_info);
   a_info.blocksize = 1024;
@@ -8260,10 +8252,7 @@ static int FindDefaultDevice(AFAudioConn *aud)
 int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
 {
   if ( (AFaud = AFOpenAudioConn("")) == NULL) 
-    {
-      mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, NULL);
-      return(MUS_ERROR);
-    }
+    return(mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, NULL));
   AFdevice = FindDefaultDevice(AFaud);
   AFattributes.type = LIN16;
   AFattributes.endian = ALittleEndian;
@@ -8271,10 +8260,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   ac = AFCreateAC(AFaud, AFdevice, (ACPlayGain | ACEncodingType | ACEndian), &AFattributes);
   AFSync(AFaud, 0);     /* Make sure we confirm encoding type support. */
   if (ac == NULL)
-    {
-      mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, NULL);
-      return(MUS_ERROR);
-    }
+    return(mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, NULL));
   AFtime0 = AFbaseT = AFGetTime(ac) + TOFFSET;
   return(MUS_NO_ERROR);
 }
@@ -8677,8 +8663,7 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
       val[1] = MUS_BFLOAT;
       break;
     default: 
-      mus_error(MUS_AUDIO_CANT_READ, NULL);
-      return(MUS_ERROR);
+      return(mus_error(MUS_AUDIO_CANT_READ, NULL));
       break;
     }
   return(MUS_NO_ERROR);
@@ -8702,8 +8687,7 @@ int mus_audio_mixer_write(int dev1, int field, int chan, float *val)
 	err = AudioDeviceSetProperty(dev, NULL, chan + 1, false, kAudioDevicePropertyVolumeScalar, sizeof(Float32), &amp);
       break;
     default: 
-      mus_error(MUS_AUDIO_CANT_WRITE, NULL);
-      return(MUS_ERROR);
+      return(mus_error(MUS_AUDIO_CANT_WRITE, NULL));
       break;
     }
   return(MUS_NO_ERROR);
@@ -8972,8 +8956,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
       break;
 
     default: 
-      mus_error(MUS_AUDIO_CANT_READ, NULL);
-      return(MUS_ERROR);
+      return(mus_error(MUS_AUDIO_CANT_READ, NULL));
       break;
     }
     return(MUS_NO_ERROR);

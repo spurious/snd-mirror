@@ -1606,6 +1606,20 @@
 	  (mal (mus-sound-maxamp "oboe.snd"))
 	  (bytes (mus-data-format-bytes-per-sample (mus-sound-data-format "oboe.snd")))
 	  (sys (mus-audio-systems)))
+      (let ((formats (list mus-bshort mus-lshort mus-mulaw mus-alaw mus-byte mus-ubyte mus-bfloat mus-lfloat
+			   mus-bint mus-lint mus-bintn mus-lintn mus-b24int mus-l24int mus-bdouble mus-ldouble
+			   mus-ubshort mus-ulshort mus-bdouble-unscaled mus-ldouble-unscaled mus-bfloat-unscaled 
+			   mus-lfloat-unscaled))
+	    (sizes (list 2 2 1 1 1 1 4 4 
+			 4 4 4 4 3 3 8 8
+			 2 2 8 8 4
+			 4)))
+	(for-each
+	 (lambda (frm siz)
+	   (if (not (= (mus-data-format-bytes-per-sample frm) siz))
+	       (snd-display ";mus-data-format-bytes-per-sample ~A: ~A" (mus-data-format-name frm) siz)))
+	 formats
+	 sizes))
       (mus-sound-report-cache "hiho.tmp")
       (if (defined? 'read-line)
 	  (let ((p (open-input-file "hiho.tmp")))
@@ -2176,6 +2190,16 @@
        (list mus-audio-open-output mus-audio-open-input)
        (list "mus-audio-open-output" "mus-audio-open-input"))
 
+      (for-each
+       (lambda (file)
+	 (let ((tag (catch #t
+			   (lambda () (open-sound (string-append sf-dir file)))
+			   (lambda args args))))
+	   (if (not (eq? (car tag) 'mus-error))
+	       (snd-display "open-sound ~A: ~A" file tag))))
+       (list "trunc.snd" "trunc.aiff" "trunc.wav" "trunc.sf" "trunc.voc" "trunc.nist" "bad.wav" 
+	     "empty.snd" "trunc1.aiff" "badform.aiff"))
+
       (let ((vals (make-vector 32)))
 	(for-each 
 	 (lambda (proc name)
@@ -2189,7 +2213,7 @@
 	 (list "mus-audio-mixer-read" "mus-audio-mixer-write")))
       (mus-audio-mixer-write mus-audio-microphone mus-audio-amp 0 (make-vector 0))
 
-      (let* ((ind (open-sound "2.snd"))
+      (let* ((ind (open-sound (string-append "/usr/local/" (getcwd) "/2.snd"))) ; check the "//" path reset case
 	     (sd1 (samples->sound-data 12000 10 ind 0))
 	     (vc1 (sound-data->vct sd1))
 	     (vc2 (samples->vct 12000 10 ind 0))
@@ -9558,7 +9582,19 @@
 
      ))
 
-(define sf-dir-files (if (string? sf-dir) (sound-files-in-directory sf-dir) #f))
+(define sf-dir-files
+  (if (string? sf-dir) 
+      (let ((good-files '()))
+	(for-each ; omit bad headers (test cases) 
+	 (lambda (file)
+	   (catch 'mus-error
+		  (lambda () 
+		    (if (< (mus-sound-chans (string-append sf-dir file)) 256)
+			(set! good-files (cons file good-files))))
+		  (lambda args (car args))))
+	 (sound-files-in-directory sf-dir))
+	good-files)
+      #f))
 (define sf-dir-len (if sf-dir-files (length sf-dir-files) 0))
 (define cur-dir-files (sound-files-in-directory "."))
 (define cur-dir-len (length cur-dir-files))
@@ -11059,6 +11095,7 @@
 		     (lambda (beg) (insert-silence beg 100)))))
 	  
 	    (let ((ind (open-sound "z.snd")))
+	      (restore-controls)
 	      (IF (not (equal? (peak-env-info ind) '()))
 		  (snd-display ";peak-env-info z.snd: ~A" (peak-env-info ind)))
 	      (let ((var (catch #t (lambda () (write-peak-env-info-file ind 0 "hi")) (lambda args args))))
@@ -25624,6 +25661,7 @@ EDITS: 5
 	  (check-error-tag 'mus-error (lambda () (src-sound (make-env '(0 -1 1 1) :end 10))))
 	  (check-error-tag 'mus-error (lambda () (make-readin 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
 	  (check-error-tag 'mus-error (lambda () (filter-sound (make-vct 3) 32)))
+	  (check-error-tag 'mus-error (lambda () (filter-sound '(0 0 1 1) 0)))
 	  (check-error-tag 'no-such-sound (lambda () (swap-channels ind 0 12345 0)))
 	  (check-error-tag 'no-such-sample (lambda () (scan-channel (lambda (n) #f) (* (frames) 2))))
 	  (check-error-tag 'no-such-sample (lambda () (map-channel (lambda (n) #f) (* (frames) 2))))
@@ -26250,6 +26288,7 @@ EDITS: 5
 
 (mus-sound-prune)
 (close-output-port optimizer-log)
+;;;(mus-sound-report-cache "hiho.tmp")
 (mem-report)
 (system "fgrep -H -n 'snd-run' memlog >> optimizer.log")
 

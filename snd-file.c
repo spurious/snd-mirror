@@ -686,8 +686,8 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
   return(sp);
 }
 
-snd_info *snd_open_file (char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, TRUE, read_only));}
-snd_info *snd_open_file_unselected (char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, FALSE, read_only));}
+snd_info *snd_open_file(char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, TRUE, read_only));}
+snd_info *snd_open_file_unselected(char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, FALSE, read_only));}
 
 void snd_close_file(snd_info *sp, snd_state *ss)
 {

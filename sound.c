@@ -59,7 +59,7 @@ mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handle
 #define MUS_ERROR_BUFFER_SIZE 1024
 static char *mus_error_buffer = NULL;
 
-void mus_error(int error, const char *format, ...)
+int mus_error(int error, const char *format, ...)
 {
 #if HAVE_VPRINTF
   va_list ap;
@@ -84,7 +84,7 @@ void mus_error(int error, const char *format, ...)
     fprintf(stderr, format);
   else fprintf(stderr, "error: %d %s\n", error, format);
 #endif
-  /* it was a big mistake not to return the error code here! Too late to change... */
+  return(MUS_ERROR);
 }
 
 static mus_print_handler_t *mus_print_handler = NULL;
@@ -192,8 +192,9 @@ const char *mus_error_to_string(int err)
     }
 }
 
-static void sound_mus_error(int type, char *msg)
+static void default_mus_error(int type, char *msg)
 {
+  /* default error handler simply prints the error message */
   fprintf(stderr, msg);
 }
 
@@ -220,7 +221,7 @@ int mus_sound_initialize(void)
   if (!sndlib_initialized)
     {
       sndlib_initialized = 1;
-      mus_error_handler = sound_mus_error;
+      mus_error_handler = default_mus_error;
       err = mus_header_initialize();
       if (err == MUS_NO_ERROR) 
 	err = mus_audio_initialize();
@@ -326,7 +327,8 @@ int mus_sound_prune(void)
 {
   int i, pruned = 0;
   for (i = 0; i < sound_table_size; i++)
-    if ((sound_table[i]) && (!(mus_file_probe(sound_table[i]->file_name))))
+    if ((sound_table[i]) && 
+	(!(mus_file_probe(sound_table[i]->file_name))))
       {
 	free_sound_file(sound_table[i]);
 	sound_table[i] = NULL;
@@ -1083,8 +1085,7 @@ int mus_file_to_array(const char *filename, int chan, int start, int samples, mu
   if (chan >= chans) 
     {
       mus_sound_close_input(ifd);      
-      mus_error(MUS_NO_SUCH_CHANNEL, "mus_file_to_array can't read %s channel %d (file has %d chans)", filename, chan, chans);
-      return(MUS_ERROR);
+      return(mus_error(MUS_NO_SUCH_CHANNEL, "mus_file_to_array can't read %s channel %d (file has %d chans)", filename, chan, chans));
     }
   bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
   bufs[chan] = array;
@@ -1129,9 +1130,6 @@ int mus_array_to_file(const char *filename, mus_sample_t *ddata, int len, int sr
   char *errmsg;
   errmsg = mus_array_to_file_with_error(filename, ddata, len, srate, channels);
   if (errmsg)
-    {
-      mus_error(MUS_CANT_OPEN_FILE, errmsg);
-      return(MUS_ERROR);
-    }
+    return(mus_error(MUS_CANT_OPEN_FILE, errmsg));
   return(MUS_NO_ERROR);
 }

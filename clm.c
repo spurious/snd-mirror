@@ -130,10 +130,7 @@ Float mus_sum_of_sines(Float *amps, Float *phases, int size)
 static int check_gen(mus_any *ptr, const char *name)
 {
   if (ptr == NULL)
-    {
-      mus_error(MUS_NO_GEN, "null gen passed to %s", name);
-      return(FALSE); /* normally not reachable */
-    }
+    return(mus_error(MUS_NO_GEN, "null gen passed to %s", name));
   return(TRUE);
 }
 
@@ -6780,10 +6777,7 @@ int mus_fltarray2file(const char *filename, Float *ddata, int len, int srate, in
   errmsg = mus_array_to_file_with_error(filename, idata, len, srate, channels);
   FREE(idata);
   if (errmsg)
-    {
-      mus_error(MUS_CANT_OPEN_FILE, errmsg);
-      return(MUS_ERROR);
-    }
+    return(mus_error(MUS_CANT_OPEN_FILE, errmsg));
   return(MUS_NO_ERROR);
 }
 
