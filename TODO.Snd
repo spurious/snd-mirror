@@ -39,7 +39,7 @@ In snd-test.scm, the gtk (xg) section needs to be written.
 
 A jack connection (the Linux Jack library).
 
-Gtk versions of popup.scm and snd-motif.scm.
+Gtk versions of effects.scm and Dave Phillips extensions.
 
 A nice user-interface to the track mechanism, perhaps as an
   extension of the current Mix Panel.

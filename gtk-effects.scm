@@ -1,9 +1,11 @@
+;;; translation of new-effects.scm to gtk/xg
+
 (use-modules (ice-9 format) (ice-9 common-list))
  
-(if (not (provided? 'xm))
+(if (not (provided? 'xg))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
-	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
+	  (snd-error (format #f "gtk-effects.scm needs the xg module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
 
 (define pi 3.141592653589793)
@@ -87,52 +89,57 @@
 		 (list (list (selected-sound)) 
 		       (list (selected-channel))))))))
 
+
 (define (make-effect-dialog label ok-callback help-callback reset-callback)
   ;; make a standard dialog
-  (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
-	 (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-	 (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
-	 (titlestr (XmStringCreate label XmFONTLIST_DEFAULT_TAG))
-	 (new-dialog (XmCreateTemplateDialog
-		       (cadr (main-widgets)) label
-		       (list XmNcancelLabelString   xdismiss
-			     XmNhelpLabelString     xhelp
-			     XmNokLabelString       xok
-			     XmNautoUnmanage        #f
-			     XmNdialogTitle         titlestr
-			     XmNresizePolicy        XmRESIZE_GROW
-			     XmNnoResize            #f
-			     XmNbackground          (basic-color)
-			     XmNtransient           #f))))
-    (for-each
-     (lambda (button)
-       (XtVaSetValues
-	 (XmMessageBoxGetChild new-dialog button)
-	 (list XmNarmColor   (pushed-button-color)
-		XmNbackground (basic-color))))
-     (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
-    
-    (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild new-dialog)))
-    (XtAddCallback new-dialog XmNhelpCallback help-callback)  ; "Help"
-    (XtAddCallback new-dialog XmNokCallback ok-callback)    ; "DoIt"
-
-    (if reset-callback
-	;; add a Reset button
-	(let ((reset-button (XtCreateManagedWidget "Reset" xmPushButtonWidgetClass new-dialog
-			      (list XmNbackground (basic-color)
-				    XmNarmColor   (pushed-button-color)))))
-	  (XtAddCallback reset-button XmNactivateCallback reset-callback)))
-
-    (XmStringFree xhelp)
-    (XmStringFree xok)
-    (XmStringFree xdismiss)
-    (XmStringFree titlestr)
+  ;; callbacks take 2 args: widget data
+  (let* ((dismiss-button (gtk_button_new_with_label "Dismiss"))
+	 (help-button (gtk_button_new_with_label "Help"))
+	 (ok-button (gtk_button_new_with_label "DoIt"))
+	 (reset-button (if reset-callback (gtk_button_new_with_label "Reset") #f))
+	 (new-dialog (gtk_dialog_new)))
+    (gtk_window_set_title (GTK_WINDOW new-dialog) label)
+    (gtk_container_set_border_width (GTK_CONTAINER new-dialog) 10)
+    (gtk_window_set_default_size (GTK_WINDOW new-dialog) -1 -1)
+    (gtk_window_set_resizable (GTK_WINDOW new-dialog) #t)
+    (gtk_widget_realize new-dialog)
+    (g_signal_connect_closure_by_id (list 'gpointer (cadr new-dialog))
+				    (g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT new-dialog)))
+				    0 (g_cclosure_new (lambda (w ev data) 
+							(gtk_widget_hide new-dialog)) 
+						      #f #f) #f)
+    (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) dismiss-button #t #t 20)
+    (g_signal_connect_closure_by_id (list 'gpointer (cadr dismiss-button))
+				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT dismiss-button)))
+				    0 (g_cclosure_new (lambda (w data) 
+							(gtk_widget_hide new-dialog)) 
+						      #f #f) #f)
+    (gtk_widget_show dismiss-button)
+    (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) ok-button #t #t 20)
+    (g_signal_connect_closure_by_id (list 'gpointer (cadr ok-button))
+				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT ok-button)))
+				    0 (g_cclosure_new ok-callback #f #f) #f)
+    (gtk_widget_show ok-button)
+    (if reset-button
+	(begin
+	  (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) reset-button #t #t 20)
+	  (g_signal_connect_closure_by_id (list 'gpointer (cadr reset-button))
+					  (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT reset-button)))
+					  0 (g_cclosure_new reset-callback #f #f) #f)
+	  (gtk_widget_show reset-button)))
+    (gtk_box_pack_end (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) help-button #t #t 20)
+    (g_signal_connect_closure_by_id (list 'gpointer (cadr help-button))
+				    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT help-button)))
+				    0 (g_cclosure_new help-callback #f #f) #f)
+    (gtk_widget_show help-button)
+    ;; build rest in (.vbox (GTK_DIALOG new-dialog))
     new-dialog))
 
-(define (change-label widget new-label)
-  (let ((str (XmStringCreateLocalized new-label)))
-    (XtSetValues widget (list XmNlabelString str))
-    (XmStringFree str)))
+(define (change-label w new-label)
+  (if w
+      (if (GTK_IS_LABEL w)
+	  (gtk_label_set_text (GTK_LABEL w) new-label)
+	  (gtk_label_set_text (GTK_LABEL (.child (GTK_BIN w))) new-label))))
 
 
 ;;; -------- log scaler widget
@@ -160,6 +167,7 @@
   (format #f "~,2F" (scale-linear->log lo val hi)))
 	  
 (define (create-log-scale-widget parent title low initial high callback scale)
+;;; STOPPED HERE
   (let* ((label (XtCreateManagedWidget (format #f "~,2F" initial) xmLabelWidgetClass parent
 	   (list XmNbackground          (basic-color))))
 	 (scale (XtCreateManagedWidget "scale" xmScaleWidgetClass parent
@@ -179,44 +187,6 @@
 		      (change-label label (scale-log-label low (.value info) high))))
     scale))
 
-
-;;; -------- semitone scaler widget
-;;; 
-;;; set up like log scale (use 'semi in place of 'log),
-;;;   to get the ratio from the semitones, use (expt 2.0 (/ value 12.0)) -- semitones->ratio below					 
-
-(define semi-range 24) ; 2 octaves either way
-
-(define (semi-scale-label val)
-  (format #f "semitones: ~D" (- val semi-range)))
-
-(define (semitones->ratio val)
-  (expt 2.0 (/ val 12.0)))
-
-(define (ratio->semitones ratio)
-  (inexact->exact (round (* 12 (/ (log ratio) (log 2.0))))))
-	  
-(define (create-semi-scale-widget parent title initial callback)
-  (let* ((label (XtCreateManagedWidget (format #f "semitones: ~D" (ratio->semitones initial)) xmLabelWidgetClass parent
-	   (list XmNbackground          (basic-color))))
-	 (scale (XtCreateManagedWidget "scale" xmScaleWidgetClass parent
-                  (list XmNorientation   XmHORIZONTAL
-			XmNshowValue     #f
-			XmNminimum       0
-			XmNmaximum       (* 2 semi-range)
-			XmNvalue         (+ semi-range (ratio->semitones initial))
-			XmNdecimalPoints 0
-			XmNtitleString   title
-			XmNbackground    (basic-color)))))
-    (XtAddCallback scale XmNvalueChangedCallback
-		    (lambda (widget context info)
-		      (change-label label (semi-scale-label (.value info)))))
-    (XtAddCallback scale XmNdragCallback
-		    (lambda (widget context info)
-		      (change-label label (semi-scale-label (.value info)))))
-    scale))
-
-					 
 
 (define (add-sliders dialog sliders)
   ;; sliders is a list of lists, each inner list being (title low initial high callback scale ['log])
@@ -240,8 +210,7 @@
 	      (scale (list-ref slider-data 5))
 	      (new-slider (if (= (length slider-data) 7)
 			      (if (eq? (list-ref slider-data 6) 'log)
-				  (create-log-scale-widget mainform title low initial high func scale)
-				  (create-semi-scale-widget mainform title initial func))
+				  (create-log-scale-widget mainform title low initial high func scale))
 			      (XtCreateManagedWidget (car slider-data) xmScaleWidgetClass mainform
 			        (list XmNorientation   XmHORIZONTAL
 				      XmNshowValue     #t
@@ -601,7 +570,7 @@
                                              100))))
               ;; now add a toggle button setting omit-silence 
               ;;  (need to use XtParent here because the containing RowColumn widget is
-              ;;  hidden in add-sliders -- prehaps it should be returned in the slider list)
+              ;;  newliders -- prehaps it should be returned in the slider list)
 
               (let* ((s1 (XmStringCreateLocalized "Omit silence"))
                      (toggle

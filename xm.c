@@ -6,7 +6,7 @@
 /* TODO: some way to access XtGetApplicationResources */
 
 /* HISTORY: 
- *   6-Nox:     Ruby XmWMProtocols bugfixes thanks to Michael Scholz.
+ *   6-Nov:     Ruby XmWMProtocols bugfixes thanks to Michael Scholz.
  *   17-Oct:    XtAppSetFallbackResources and fallbacks added to XtAppInitialize etc.
  *   15-Oct:    XtGetResourceList.
  *   11-Oct:    xm-ruby XM_DEFINE* cleaned up (thanks to Michael Scholz).
