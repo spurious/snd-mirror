@@ -476,7 +476,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
 	  gtk_box_pack_start(GTK_BOX(w_amp_forms[i]), w_amp_numbers[i], FALSE, FALSE, 0);
 	  gtk_widget_show(w_amp_numbers[i]);
 	  
-	  w_amp_adjs[i] = gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
+	  w_amp_adjs[i] = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
 	  w_amps[i] = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_amp_adjs[i]));
 	  gtk_box_pack_start(GTK_BOX(w_amp_forms[i]), w_amps[i], TRUE, TRUE, 4);
 	  gtk_signal_connect(GTK_OBJECT(w_amp_adjs[i]), "value_changed", GTK_SIGNAL_FUNC(amp_changed_callback), (gpointer)ss);
@@ -588,4 +588,11 @@ void reflect_mix_in_mix_panel(int mix_id)
       (GTK_WIDGET_VISIBLE(mix_panel)) &&
       (current_mix_id(get_global_state()) == mix_id))
     update_mix_panel(mix_id);
+}
+
+void reflect_no_mix_in_mix_panel(void)
+{
+  if ((mix_panel) &&
+      (GTK_WIDGET_VISIBLE(mix_panel)))
+    gtk_widget_hide(mix_panel);
 }

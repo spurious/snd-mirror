@@ -2889,7 +2889,7 @@ void g_init_dac(void)
   /* can't use generalized set here because it's confused by the 3 args -- perhaps a list would be ok */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_contrast_control_procedure, g_contrast_procedure_w, H_contrast_control_procedure,
-			       "set-" S_contrast_control_procedure, g_set_contrast_procedure_w,  0, 0, 1, 0);
+				   "set-" S_contrast_control_procedure, g_set_contrast_procedure_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_play,           g_play_w, 0, 6, 0,           H_play);
   XEN_DEFINE_PROCEDURE(S_play_channel,   g_play_channel_w, 0, 5, 0,   H_play_channel);
@@ -2936,7 +2936,6 @@ If it returns #t, the sound is not played."
   XEN_DEFINE_PROCEDURE("make-snd-freeverb", g_make_freeverb_w, 2, 0, 0, "make-snd-freeverb is the freeverb reverb make function");
   XEN_DEFINE_PROCEDURE("snd-freeverb",      g_freeverb_w, 3, 0, 0,      "snd-freeverb is the freeverb reverb");
   XEN_DEFINE_PROCEDURE("free-snd-freeverb", g_free_rev_w, 1, 0, 0,      "free-snd-freeverb is the freeverb reverb free function");
-
 
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)");

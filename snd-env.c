@@ -1035,18 +1035,15 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
   else
     {
       if ((apply_to_mix) &&
-	  ((ss->selected_mix != NO_SELECTION) || 
-	   (accessible_mixes() == 1)))
+	  (any_mix_id() != INVALID_MIX_ID))
 	{
-	  if (accessible_mixes() == 0) return;
-	  if (ss->selected_mix != NO_SELECTION) 
+	  if (ss->selected_mix != INVALID_MIX_ID) 
 	    id = ss->selected_mix; 
 	  else
 	    {
 	      id = any_mix_id();
-	      if (id != NO_SELECTION) select_mix_from_id(id);
+	      select_mix_from_id(id);
 	    }
-	  if (id == -1) return;
 	  samps = mix_length(id);
 	  ncp = mix_channel_from_id(id);
 	  if (ncp == NULL) return;

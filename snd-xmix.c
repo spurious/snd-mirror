@@ -255,7 +255,7 @@ static void id_activated(snd_state *ss)
   if (val)
     {
       id = string2int(val);
-      if (mix_ok(id))
+      if (mix_ok_and_unlocked(id))
 	{
 	  ss->selected_mix = id;
 	  update_mix_panel(ss->selected_mix);
@@ -579,7 +579,7 @@ Widget make_mix_panel(snd_state *ss)
 	  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
 	  XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
 	  XtSetArg(args[n], XmNuserData, i); n++;
-	  XtSetArg(args[n], XmNvalue, SCROLLBAR_MID); n++;
+	  XtSetArg(args[n], XmNvalue, 0); n++;  /* fixed up later; current_amp[chan] initial value is 0.0 */
 	  XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(amp_drag_callback, (XtPointer)ss)); n++;
 	  XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(amp_valuechanged_callback, (XtPointer)ss)); n++;
 	  w_amps[i] = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, mainform, args, n);
@@ -672,13 +672,13 @@ static void update_mix_panel(int mix_id)
 	{
 	  if (!(XtIsManaged(w_amp_labels[i]))) XtManageChild(w_amp_labels[i]);
 	  if (!(XtIsManaged(w_amp_numbers[i]))) XtManageChild(w_amp_numbers[i]);
-	  if (!(XtIsManaged(w_amps[i]))) XtManageChild(w_amps[i]);
 	  val = mix_amp_from_id(mix_id, i);
 	  if (val != current_amps[i])
 	    {
 	      XtVaSetValues(w_amps[i], XmNvalue, mix_amp_to_int(val, i), NULL);
 	      current_amps[i] = val;
 	    }
+	  if (!(XtIsManaged(w_amps[i]))) XtManageChild(w_amps[i]);
 	}
       for (i = chans; i < chans_allocated; i++)
 	{
@@ -703,4 +703,11 @@ void reflect_mix_in_mix_panel(int mix_id)
       (XtIsManaged(mix_panel)) &&
       (current_mix_id(get_global_state()) == mix_id))
     update_mix_panel(mix_id);
+}
+
+void reflect_no_mix_in_mix_panel(void)
+{
+  if ((mix_panel) &&
+      (XtIsManaged(mix_panel)))
+    XtUnmanageChild(mix_panel);
 }

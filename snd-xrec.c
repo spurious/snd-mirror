@@ -910,7 +910,7 @@ static void record_amp_changed(AMP *ap, int val)
     {
       if (val < RECORD_SCROLLBAR_LINEAR_MAX)
 	amp = (Float)val * RECORD_SCROLLBAR_LINEAR_MULT;
-      else amp = exp((Float)(val-RECORD_SCROLLBAR_MID) / ((Float)RECORD_SCROLLBAR_MAX * .2));
+      else amp = exp((Float)(val - RECORD_SCROLLBAR_MID) / ((Float)RECORD_SCROLLBAR_MAX * .2));
     }
   sfs = prettyf(amp, 2);
   fill_number(sfs, amp_number_buffer);

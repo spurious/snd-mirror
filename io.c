@@ -1056,7 +1056,9 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 	}
       format = fd->data_format;
       siz = fd->bytes_per_sample;
-      if ((format == MUS_OUT_FORMAT) && (chans == 1) && (beg == 0)
+      if ((format == MUS_OUT_FORMAT) && 
+	  (chans == 1) && 
+	  (beg == 0)
 #if SNDLIB_USE_FLOATS 
 	  && (fd->prescaler == 1.0)
 #endif
@@ -1223,7 +1225,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 		      for (; loc < loclim; loc++, jchar += siz_chans)
 			buffer[loc] = (MUS_SAMPLE_TYPE) (MUS_SAMPLE_UNSCALED(m_big_endian_double(jchar)));
 		      break;
-		    case MUS_LFLOAT:    
+		    case MUS_LFLOAT:
 		      if (prescaling == 1.0)
 			{
 			  for (; loc < loclim; loc++, jchar += siz_chans) 

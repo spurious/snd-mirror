@@ -222,14 +222,6 @@ static mix_info **mix_infos = NULL;
 static int mix_infos_size = 0;
 static int mix_infos_ctr = 0;
 
-int accessible_mixes(void) 
-{
-  int i, mixes = 0;
-  for (i = 0; i < mix_infos_ctr; i++)
-    if (mix_infos[i]) mixes++;
-  return(mixes);
-}
-
 static mix_info *md_from_id(int n) 
 {
   if ((n >= 0) && (n < mix_infos_size)) 
@@ -262,7 +254,6 @@ static mix_info *make_mix_info(chan_info *cp)
   mix_infos[mix_infos_ctr] = md;
   cp->mixes = 1;
   md->id = mix_infos_ctr++;
-  reflect_mix_in_enved();
   md->cp = cp;
   md->ss = ss;
   md->add_snd = NULL;
@@ -282,7 +273,7 @@ static mix_info *free_mix_info(mix_info *md)
   if (md)
     {
       ss = md->ss;
-      if (md->id == ss->selected_mix) ss->selected_mix = NO_SELECTION;
+      if (md->id == ss->selected_mix) ss->selected_mix = INVALID_MIX_ID;
       if (md->wg) md->wg = free_mix_context(md->wg);
       mix_infos[md->id] = NULL;
       if (md->temporary == DELETE_ME) 
@@ -343,16 +334,16 @@ static void select_mix(mix_info *md)
   mix_info *old_md = NULL;
   snd_state *ss;
   ss = get_global_state();
-  if ((ss->selected_mix != NO_SELECTION) && 
+  if ((ss->selected_mix != INVALID_MIX_ID) && 
       ((md == NULL) || (ss->selected_mix != md->id)))
-    old_md = md_from_id(ss->selected_mix);
-  if (md) 
-    ss->selected_mix = md->id; 
-  else ss->selected_mix = NO_SELECTION;
-  if ((old_md) && (old_md->cp->show_mix_waveforms)) 
-    draw_mix_waveform(old_md);
-  if (md)
     {
+      old_md = md_from_id(ss->selected_mix);
+      if ((old_md) && (old_md->cp->show_mix_waveforms)) 
+	draw_mix_waveform(old_md);
+    }
+  if ((md) && (mix_ok_and_unlocked(md->id)))
+    {
+      ss->selected_mix = md->id; 
       if (md->cp->show_mix_waveforms) 
 	draw_mix_waveform(md);
       reflect_mix_in_mix_panel(md->id);
@@ -361,6 +352,7 @@ static void select_mix(mix_info *md)
 			   XEN_LIST_1(C_TO_XEN_INT(md->id)),
 			   S_select_mix_hook);
     }
+  else ss->selected_mix = INVALID_MIX_ID;
 }
 
 void select_mix_from_id(int mix_id) {select_mix(md_from_id(mix_id));}
@@ -898,7 +890,6 @@ static mix_info *add_mix(chan_info *cp, int chan, int beg, int num,
   mix_info *md;
   char *namebuf;
   console_state *cs;
-  reflect_mix_active_in_menu();
   md = make_mix_info(cp);     /* add active mix to chan_info list */
   md->in_chans = input_chans;
   md->orig_beg = beg;
@@ -918,6 +909,8 @@ static mix_info *add_mix(chan_info *cp, int chan, int beg, int num,
   md->curcons = 0;
   make_current_console(md);
   md->in_filename = copy_string(full_original_file);
+  reflect_mix_in_menu();
+  reflect_mix_in_enved();
   update_graph(cp, NULL);
   return(md);
 }
@@ -2475,7 +2468,7 @@ static int lock_mixes(mix_info *md, void *ptr)
 	  cs = md->states[md->curcons];
 	  cs->locked = 1;
 	  ss = get_global_state();
-	  if (ss->selected_mix == md->id) ss->selected_mix = NO_SELECTION;
+	  if (ss->selected_mix == md->id) ss->selected_mix = INVALID_MIX_ID;
 	  cp = md->cp;
 	  cs->edit_ctr = cp->edit_ctr;
 	  cs = md->current_cs;
@@ -2504,6 +2497,8 @@ void lock_affected_mixes(chan_info *cp, int beg, int end)
   lt_beg = beg;
   lt_end = end;
   map_over_channel_mixes(cp, lock_mixes, NULL);
+  reflect_mix_in_menu();
+  reflect_mix_in_enved();
 }
 
 void release_pending_mixes(chan_info *cp, int edit_ctr)
@@ -2714,7 +2709,7 @@ int mix_ok(int n)
 	 (((md->states[0])->edit_ctr) <= ((md->cp)->edit_ctr)));
 }
 
-static int mix_active(int n) 
+int mix_ok_and_unlocked(int n)
 {
   mix_info *md; 
   md = md_from_id(n); 
@@ -2731,8 +2726,9 @@ int any_mix_id(void)
 {
   int i;
   for (i = 0; i < mix_infos_ctr; i++) 
-    if (mix_active(i)) 
+    if (mix_ok_and_unlocked(i)) 
       return(i);
+  reflect_no_mix_in_mix_panel();
   return(INVALID_MIX_ID);
 }
 
@@ -2864,13 +2860,14 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   track_fd **fds;
   chan_info **cps;
   chan_info *locp;
-  int playfd, i, j, k, n, samps, chan = 0, happy = 0, need_free = 0, format, datum_bytes;
+  int playfd, i, j, k, n, samps, chan = 0, happy = 0, need_free = 0, format, datum_bytes, outchans;
 #if MAC_OSX
   float *buf;
 #else
   #if HAVE_ALSA
     MUS_SAMPLE_TYPE **buf;
     char *outbuf;
+    Float val[4];
   #else
     short *buf;
   #endif
@@ -2905,6 +2902,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   else cps = ucps;
   samps = 0;
   if (chans == 0) return;
+  outchans = chans;
   format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
   datum_bytes = mus_data_format_to_bytes_per_sample(format);
 #if MAC_OSX
@@ -2912,11 +2910,15 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   buf = (float *)CALLOC(2 * 256, sizeof(float));
 #else
   fds = (track_fd **)CALLOC(chans, sizeof(track_fd *));
+
   #if HAVE_ALSA
-    /* in ALSA we have no way to tell what the possible output format is, so... */
-    buf = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
+    /* in ALSA we have no way to tell what the possible output format is, or min chans, so... */
+    mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
+    if (chans < (int)(val[1])) outchans = (int)(val[1]);
+    buf = (MUS_SAMPLE_TYPE **)CALLOC(outchans, sizeof(MUS_SAMPLE_TYPE *));
     for (i = 0; i < chans; i++) buf[i] = (MUS_SAMPLE_TYPE *)CALLOC(256, sizeof(MUS_SAMPLE_TYPE));
-    outbuf = (char *)CALLOC(256 * datum_bytes * chans, sizeof(char));
+    outbuf = (char *)CALLOC(256 * datum_bytes * outchans, sizeof(char));
+
   #else
     buf = (short *)CALLOC(chans * 256, sizeof(short));
   #endif
@@ -2935,7 +2937,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
     {
       playfd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), 
 				     SND_SRATE(cps[0]->sound), 
-				     chans, 
+				     outchans, 
 				     format, 
 				     dac_size(ss));
       if (playfd != -1)
@@ -2954,8 +2956,8 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
 		if (fds[k])
 		  for (j = 0; j < 256; j++)
 		    buf[k][j] = MUS_FLOAT_TO_SAMPLE(next_track_sample(fds[k]));
-	      mus_file_write_buffer(format, 0, 255, chans, buf, outbuf, TRUE);
-	      mus_audio_write(playfd, outbuf, 256 * datum_bytes * chans);
+	      mus_file_write_buffer(format, 0, 255, outchans, buf, outbuf, TRUE);
+	      mus_audio_write(playfd, outbuf, 256 * datum_bytes * outchans);
   #else
 	      for (k = 0; k < chans; k++)
 		if (fds[k])
@@ -3008,26 +3010,29 @@ static void play_mix(snd_state *ss, mix_info *md)
   #if HAVE_ALSA
     MUS_SAMPLE_TYPE **buf;
     char *outbuf;
+    Float val[4];
   #else
     short *buf;
   #endif
 #endif
-  int play_fd, i, j, samps, format, datum_bytes;
+  int play_fd, i, j, samps, format, datum_bytes, outchans;
   if (md == NULL) return;
   cp = md->cp;
   cs = md->current_cs;
   samps = cs->len;
   format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
   datum_bytes = mus_data_format_to_bytes_per_sample(format);
+  outchans = 1;
 
 #if MAC_OSX
   buf = (float *)CALLOC(2 * 256, sizeof(float));
 #else
   #if HAVE_ALSA
-    /* in ALSA we have no way to tell what the possible output format is, so... */
-    buf = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
+    mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
+    if (outchans < (int)(val[1])) outchans = (int)(val[1]);
+    buf = (MUS_SAMPLE_TYPE **)CALLOC(outchans, sizeof(MUS_SAMPLE_TYPE *));
     buf[0] = (MUS_SAMPLE_TYPE *)CALLOC(256, sizeof(MUS_SAMPLE_TYPE));
-    outbuf = (char *)CALLOC(256 * datum_bytes, sizeof(char));
+    outbuf = (char *)CALLOC(256 * datum_bytes * outchans, sizeof(char));
   #else
     buf = (short *)CALLOC(256, sizeof(short));
   #endif
@@ -3035,7 +3040,7 @@ static void play_mix(snd_state *ss, mix_info *md)
 
   play_fd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss),
 				  SND_SRATE(cp->sound),
-				  1, 
+				  outchans, 
 				  format, 
 				  dac_size(ss));
   if (play_fd != -1)
@@ -3053,8 +3058,8 @@ static void play_mix(snd_state *ss, mix_info *md)
   #if HAVE_ALSA
 	      for (j = 0; j < 256; j++)
 		buf[0][j] = MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf));
-	      mus_file_write_buffer(format, 0, 255, 1, buf, outbuf, TRUE);
-	      mus_audio_write(play_fd, outbuf, 256 * datum_bytes);
+	      mus_file_write_buffer(format, 0, 255, outchans, buf, outbuf, TRUE);
+	      mus_audio_write(play_fd, outbuf, 256 * datum_bytes * outchans);
   #else
 	      for (j = 0; j < 256; j++) 
 		buf[j] = MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf)));
@@ -3131,7 +3136,7 @@ static int set_mix_amp(int mix_id, int chan, Float val, int from_gui, int remix)
   mix_info *md;
   console_state *cs;
   md = md_from_id(mix_id);
-  if (md)
+  if ((md) && (mix_ok_and_unlocked(mix_id)))
     {
       if (val >= 0.0)
 	{
@@ -3189,7 +3194,7 @@ static int set_mix_speed(int mix_id, Float val, int from_gui, int remix)
   char srcbuf[16];
   console_state *cs;
   md = md_from_id(mix_id);
-  if (md)
+  if ((md) && (mix_ok_and_unlocked(mix_id)))
     {
       if (val != 0.0)
 	{
@@ -3262,11 +3267,10 @@ void set_mix_name_from_id(int mix_id, char *name)
 
 static int set_mix_position(int mix_id, int val, int from_gui)
 {
-  /* should a locked mix be settable? Currently it is. */
   mix_info *md;
   console_state *cs = NULL;
   md = md_from_id(mix_id);
-  if (md)
+  if ((md) && (mix_ok_and_unlocked(mix_id)))
     {
       cs = md->current_cs;
       if (cs)
@@ -3330,7 +3334,7 @@ int set_mix_amp_env(int n, int chan, env *val)
   mix_info *md;
   console_state *cs;
   md = md_from_id(n);
-  if (md)
+  if ((md) && (mix_ok_and_unlocked(n)))
     {
       if (chan == NO_SELECTION) chan = md->selected_chan;
       if (md->in_chans > chan)
@@ -3635,7 +3639,8 @@ static XEN g_set_mix_length(XEN n, XEN uval)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set-" S_mix_length, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, "set-" S_mix_length, "a number");
   md = md_from_id(XEN_TO_C_INT(n));
-  if (md == NULL)
+  if ((md == NULL) || 
+      (!(mix_ok_and_unlocked(md->id))))
     return(snd_no_such_mix_error("set-" S_mix_length, n));
   cs = md->current_cs;
   if (cs)
@@ -3668,7 +3673,9 @@ static XEN g_set_mix_locked(XEN n, XEN val)
   cs = md->current_cs;
   cs->locked = on;
   ss = get_global_state();
-  if ((on) && (ss->selected_mix == md->id)) ss->selected_mix = NO_SELECTION;
+  if ((on) &&  (ss->selected_mix == md->id)) ss->selected_mix = INVALID_MIX_ID;
+  reflect_mix_in_menu();
+  reflect_mix_in_enved();
   display_channel_mixes(md->cp);
   return(val);
 }
@@ -4158,8 +4165,8 @@ returns a reader ready to access track's data associated with snd's channel chn 
       XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);
     }
   XEN_ERROR(NO_SUCH_TRACK,
-	XEN_LIST_2(C_TO_XEN_STRING(S_make_track_sample_reader),
-		  track_id));
+	    XEN_LIST_2(C_TO_XEN_STRING(S_make_track_sample_reader),
+		       track_id));
   return(track_id);
 }
 
@@ -4457,65 +4464,51 @@ void g_init_mix(void)
 #endif
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_make_track_sample_reader,      g_make_track_sample_reader_w, 1, 3, 0, H_make_track_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_next_track_sample,             g_next_track_sample_w, 1, 0, 0,                 H_next_track_sample);
-  XEN_DEFINE_PROCEDURE(S_free_track_sample_reader,      g_free_track_sample_reader_w, 1, 0, 0,          H_free_track_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_track_sample_reader_p,         g_tf_p_w, 1, 0, 0,                              H_tf_p);
-  XEN_DEFINE_PROCEDURE(S_play_mix,                      g_play_mix_w, 0, 1, 0,                          H_play_mix);
-  XEN_DEFINE_PROCEDURE(S_play_track,                    g_play_track_w, 1, 2, 0,                        H_play_track);
+  XEN_DEFINE_PROCEDURE(S_make_track_sample_reader, g_make_track_sample_reader_w, 1, 3, 0, H_make_track_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_next_track_sample,        g_next_track_sample_w, 1, 0, 0,        H_next_track_sample);
+  XEN_DEFINE_PROCEDURE(S_free_track_sample_reader, g_free_track_sample_reader_w, 1, 0, 0, H_free_track_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_track_sample_reader_p,    g_tf_p_w, 1, 0, 0,                     H_tf_p);
+  XEN_DEFINE_PROCEDURE(S_play_mix,                 g_play_mix_w, 0, 1, 0,                 H_play_mix);
+  XEN_DEFINE_PROCEDURE(S_play_track,               g_play_track_w, 1, 2, 0,               H_play_track);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position, g_mix_position_w, H_mix_position,
-			       "set-" S_mix_position, g_set_mix_position_w,
-			       0, 1, 2, 0);
+				   "set-" S_mix_position, g_set_mix_position_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_length, g_mix_length_w, H_mix_length,
-			       "set-" S_mix_length, g_set_mix_length_w,
-			       0, 1, 2, 0);
+				   "set-" S_mix_length, g_set_mix_length_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked, g_mix_locked_w, H_mix_locked,
-			       "set-" S_mix_locked, g_set_mix_locked_w,
-			       0, 1, 2, 0);
+				   "set-" S_mix_locked, g_set_mix_locked_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_anchor, g_mix_anchor_w, H_mix_anchor,
-			       "set-" S_mix_anchor, g_set_mix_anchor_w,
-			       0, 1, 2, 0);
+				   "set-" S_mix_anchor, g_set_mix_anchor_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track, g_mix_track_w, H_mix_track,
-			       "set-" S_mix_track, g_set_mix_track_w,
-			       0, 1, 2, 0);
+				   "set-" S_mix_track, g_set_mix_track_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y, g_mix_tag_y_w, H_mix_tag_y,
-			       "set-" S_mix_tag_y, g_set_mix_tag_y_w,
-			       0, 1, 2, 0);
+				   "set-" S_mix_tag_y, g_set_mix_tag_y_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed, g_mix_speed_w, H_mix_speed,
-			       "set-" S_mix_speed, g_set_mix_speed_w,
-			       0, 1, 2, 0);
+				   "set-" S_mix_speed, g_set_mix_speed_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_name, g_mix_name_w, H_mix_name,
-			       "set-" S_mix_name, g_set_mix_name_w,
-			       0, 1, 2, 0);
+				   "set-" S_mix_name, g_set_mix_name_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height,
-			       "set-" S_mix_waveform_height, g_set_mix_waveform_height_w,
-			       0, 0, 1, 0);
+				   "set-" S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_width, g_mix_tag_width_w, H_mix_tag_width,
-			       "set-" S_mix_tag_width, g_set_mix_tag_width_w,
-			       0, 0, 1, 0);
+				   "set-" S_mix_tag_width, g_set_mix_tag_width_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height,
-			       "set-" S_mix_tag_height, g_set_mix_tag_height_w,
-			       0, 0, 1, 0);
+				   "set-" S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp,
-			       "set-" S_mix_amp, g_set_mix_amp_w,
-			       0, 2, 3, 0);
+				   "set-" S_mix_amp, g_set_mix_amp_w, 0, 2, 3, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env,
-			       "set-" S_mix_amp_env, g_set_mix_amp_env_w,
-			       0, 2, 3, 0);
-
+				   "set-" S_mix_amp_env, g_set_mix_amp_env_w, 0, 2, 3, 0);
 
   XEN_DEFINE_PROCEDURE(S_mix_chans,    g_mix_chans_w, 0, 1, 0,    H_mix_chans);
   XEN_DEFINE_PROCEDURE(S_mix_p,        g_mix_p_w, 0, 1, 0,         H_mix_p);
@@ -4526,8 +4519,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_find_mix,     g_find_mix_w, 0, 3, 0,     H_find_mix);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix, g_selected_mix_w, H_selected_mix,
-			       "set-" S_selected_mix, g_select_mix_w,
-			       0, 0, 1, 0);
+				   "set-" S_selected_mix, g_select_mix_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_forward_mix,  g_forward_mix_w, 0, 3, 0,  H_forward_mix);
   XEN_DEFINE_PROCEDURE(S_backward_mix, g_backward_mix_w, 0, 3, 0, H_backward_mix);

@@ -2548,6 +2548,8 @@ void revert_edits(chan_info *cp, void *ptr)
   else reflect_edit_without_selection_in_menu();
   update_graph(cp, NULL);
   if ((cp->mix_md) && (old_ctr != 0)) reflect_mix_edit(cp, "revert-sound");
+  reflect_mix_in_menu();
+  reflect_mix_in_enved();
   if (XEN_HOOKED(cp->undo_hook))
     g_c_run_progn_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
 }
@@ -2574,6 +2576,8 @@ void undo_edit(chan_info *cp, int count)
       else reflect_edit_without_selection_in_menu();
       update_graph(cp, NULL);
       if (cp->mix_md) reflect_mix_edit(cp, "undo");
+      reflect_mix_in_menu();
+      reflect_mix_in_enved();
       if (XEN_HOOKED(cp->undo_hook))
 	g_c_run_progn_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
     }
@@ -2628,6 +2632,8 @@ void redo_edit(chan_info *cp, int count)
 	  else reflect_edit_without_selection_in_menu();
 	  update_graph(cp, NULL);
 	  if (cp->mix_md) reflect_mix_edit(cp, "redo");
+	  reflect_mix_in_menu();
+	  reflect_mix_in_enved();
 	}
       if (XEN_HOOKED(cp->undo_hook))
 	g_c_run_progn_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);

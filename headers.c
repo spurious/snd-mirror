@@ -610,6 +610,9 @@ static int read_next_header (int chan)
     case 38: data_format = MUS_BFLOAT_UNSCALED; break;
     case 39: data_format = MUS_LDOUBLE_UNSCALED; break;
     case 40: data_format = MUS_BDOUBLE_UNSCALED; break;
+    case 41: data_format = MUS_LSHORT;      break; 
+    case 42: data_format = MUS_L24INT;      break; 
+    case 43: data_format = MUS_UBYTE;       break; 
     default: data_format = MUS_UNSUPPORTED; break;
     }
   srate = mus_char_to_bint((unsigned char *)(hdrbuf + 16));
@@ -656,19 +659,22 @@ int mus_header_write_next_header (int chan, int wsrate, int wchans, int loc, int
     case MUS_BINT:    mus_bint_to_char((unsigned char *)(hdrbuf + 12), 5);  break;
     case MUS_BFLOAT:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 6);  break;
     case MUS_BDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 7);  break;
-    case MUS_LINT:    mus_bint_to_char((unsigned char *)(hdrbuf + 12), 30); break; /* see above */
-    case MUS_LFLOAT:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 31); break; 
-    case MUS_BINTN:   mus_bint_to_char((unsigned char *)(hdrbuf + 12), 32); break; 
-    case MUS_LINTN:   mus_bint_to_char((unsigned char *)(hdrbuf + 12), 33); break; 
-    case MUS_LDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 34); break; 
     case MUS_ALAW:    mus_bint_to_char((unsigned char *)(hdrbuf + 12), 27); break;
-      
-    case MUS_ULSHORT: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 35); break; 
-    case MUS_UBSHORT: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 36); break;
-    case MUS_LFLOAT_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 37); break;
-    case MUS_BFLOAT_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 38); break;
+
+    case MUS_LINT:             mus_bint_to_char((unsigned char *)(hdrbuf + 12), 30); break; /* see above */
+    case MUS_LFLOAT:           mus_bint_to_char((unsigned char *)(hdrbuf + 12), 31); break; 
+    case MUS_BINTN:            mus_bint_to_char((unsigned char *)(hdrbuf + 12), 32); break; 
+    case MUS_LINTN:            mus_bint_to_char((unsigned char *)(hdrbuf + 12), 33); break; 
+    case MUS_LDOUBLE:          mus_bint_to_char((unsigned char *)(hdrbuf + 12), 34); break; 
+    case MUS_ULSHORT:          mus_bint_to_char((unsigned char *)(hdrbuf + 12), 35); break; 
+    case MUS_UBSHORT:          mus_bint_to_char((unsigned char *)(hdrbuf + 12), 36); break;
+    case MUS_LFLOAT_UNSCALED:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 37); break;
+    case MUS_BFLOAT_UNSCALED:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 38); break;
     case MUS_LDOUBLE_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 39); break;
     case MUS_BDOUBLE_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 40); break;
+    case MUS_LSHORT:           mus_bint_to_char((unsigned char *)(hdrbuf + 12), 41);  break;
+    case MUS_L24INT:           mus_bint_to_char((unsigned char *)(hdrbuf + 12), 42);  break;
+    case MUS_UBYTE:            mus_bint_to_char((unsigned char *)(hdrbuf + 12), 43);  break;
 
     default: 
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
@@ -5306,7 +5312,7 @@ int mus_header_writable(int type, int format) /* -2 to ignore format for this ca
       if (format == -2) return(TRUE);
       switch (format)
 	{
-	case MUS_UBYTE: case MUS_L12INT: return(FALSE); break;
+	case MUS_L12INT: return(FALSE); break;
 	}
       return(TRUE);
       break;

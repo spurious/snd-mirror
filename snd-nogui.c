@@ -315,6 +315,7 @@ void set_filter_text(snd_info *sp, char *str) {}
 int max_transform_type(void) {return(19);}
 
 void reflect_mix_in_mix_panel(int mix_id) {}
+void reflect_no_mix_in_mix_panel(void) {}
 int make_mix_panel(snd_state *ss) {return(0);}
 int mix_play_stopped(void) {return(0);}
 void reflect_mix_play_stop(void) {}

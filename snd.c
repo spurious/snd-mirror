@@ -255,7 +255,7 @@ static void mus_print2snd(char *msg)
   ss->stopped_explicitly = 0;
   ss->reloading_updated_file = FALSE;
   ss->selected_sound = NO_SELECTION;
-  ss->selected_mix = NO_SELECTION;
+  ss->selected_mix = INVALID_MIX_ID;
   ss->mx_sp = NULL;
   ss->open_ctrls_height = 180;        /* just a first guess */
   ss->sounds = (snd_info **)CALLOC(ss->max_sounds, sizeof(snd_info *));

@@ -500,7 +500,9 @@ static gint real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   key_state = (GdkModifierType)(ev->state);
   keysym = ev->keyval;
   ss = cp->state;
-  /* fprintf(stderr, "grf: %s %d ", gdk_keyval_name(keysym), key_state); */
+#if DEBUGGING && MAC_OSX
+  fprintf(stderr, "grf: %s %d ", gdk_keyval_name(keysym), key_state);
+#endif
   theirs = key_press_callback(cp, x, y, ev->state, keysym);
   if (theirs) (ss->sgx)->graph_is_active = FALSE;
   gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key_press_event");
@@ -518,7 +520,9 @@ gint graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   key_state = (GdkModifierType)(ev->state);
   keysym = ev->keyval;
   ss = cp->state;
-  /* fprintf(stderr, "key: %s %d ", gdk_keyval_name(keysym), key_state); */
+#if DEBUGGING && MAC_OSX
+  fprintf(stderr, "key: %s %d ", gdk_keyval_name(keysym), key_state);
+#endif
   theirs = key_press_callback(cp, x, y, ev->state, keysym);
   if (theirs) (ss->sgx)->graph_is_active = TRUE;
   return(TRUE);

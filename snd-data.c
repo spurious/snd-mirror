@@ -383,6 +383,7 @@ void free_snd_info(snd_info *sp)
   clear_filter_strings(sp);
   clear_players();
   reflect_mix_in_enved();
+  reflect_mix_in_menu();
 }
 
 snd_info *completely_free_snd_info(snd_info *sp)

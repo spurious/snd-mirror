@@ -58,9 +58,9 @@ void reflect_file_lack_in_menu (void)
     }
 }
 
-void reflect_mix_active_in_menu(void)
+void reflect_mix_in_menu(void)
 {
-  set_sensitive(view_mix_panel_menu(), TRUE);
+  set_sensitive(view_mix_panel_menu(), (any_mix_id() != INVALID_MIX_ID));
 }
 
 void reflect_equalize_panes_in_menu(int on)

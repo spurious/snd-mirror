@@ -393,6 +393,7 @@ void reflect_mix_in_mix_panel(int mix_id);
 int make_mix_panel(snd_state *ss);
 int mix_play_stopped(void);
 void reflect_mix_play_stop(void);
+void reflect_no_mix_in_mix_panel(void);
 
 
 /* -------- snd-xrec.c -------- */

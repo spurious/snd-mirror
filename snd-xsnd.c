@@ -234,7 +234,7 @@ static int snd_amp_changed(snd_info *sp, int val)
     {
       if (val < SCROLLBAR_LINEAR_MAX)
 	sp->amp_control = (Float)val * SCROLLBAR_LINEAR_MULT;
-      else sp->amp_control = exp((Float)(val-SCROLLBAR_MID) / ((Float)SCROLLBAR_MAX * .2));
+      else sp->amp_control = exp((Float)(val - SCROLLBAR_MID) / ((Float)SCROLLBAR_MAX * .2));
     }
   sfs = prettyf(sp->amp_control, 2);
   fill_number(sfs, amp_number_buffer);

@@ -142,7 +142,7 @@ static void apply_enved(snd_state *ss)
     {
       if (apply_to_mix)
 	{
-	  if (ss->selected_mix != NO_SELECTION)
+	  if (ss->selected_mix != INVALID_MIX_ID)
 	    mix_id = ss->selected_mix;
 	  else mix_id = any_mix_id();
 	  chan = mix_selected_channel(mix_id);
@@ -526,20 +526,20 @@ static void mix_button_pressed(GtkWidget *w, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   int chan = 0;
-  int mxchan, mix_id = NO_SELECTION;
+  int mxchan, mix_id = INVALID_MIX_ID;
   apply_to_mix = (!apply_to_mix);
   if (apply_to_mix) 
     {
       if (apply_to_selection) set_backgrounds(selectionB, (ss->sgx)->highlight_color);
       apply_to_selection = 0;
-      if (ss->selected_mix != NO_SELECTION) 
+      if (ss->selected_mix != INVALID_MIX_ID) 
 	mix_id = ss->selected_mix; 
       else
 	{
 	  mix_id = any_mix_id();
-	  if (mix_id != NO_SELECTION) select_mix_from_id(mix_id);
+	  select_mix_from_id(mix_id);
 	}
-      if (mix_id != NO_SELECTION)
+      if (mix_id != INVALID_MIX_ID)
 	{
 	  mxchan = mix_selected_channel(mix_id);
 	  if (mxchan != NO_SELECTION) chan = mxchan;
@@ -1131,7 +1131,7 @@ GtkWidget *create_envelope_editor (snd_state *ss)
     }
   else raise_dialog(enved_dialog);
   active_channel = current_channel(ss);
-  set_sensitive(mixB, (accessible_mixes() > 0));
+  set_sensitive(mixB, (any_mix_id() != INVALID_MIX_ID));
   return(enved_dialog);
 }
 
@@ -1231,7 +1231,7 @@ void color_enved_waveform(GdkColor *pix)
 void reflect_mix_in_enved(void)
 {
   if (enved_dialog)
-    set_sensitive(mixB, accessible_mixes() > 0);
+    set_sensitive(mixB, (any_mix_id() != INVALID_MIX_ID));
 }
 
 
