@@ -1,5 +1,7 @@
 # Configuration script for Snd
 
+# TODO: decide how to incorporate LDFLAGS = -Wl,-export-dynamic
+
 AC_INIT(snd, 7.11, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
 
 INVOKED_PROG="$[0]"

@@ -4875,6 +4875,10 @@ mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures)
   return((mus_any *)res);
 }
 
+/* PERHAPS: spinner -- a frame + a rotation mixer + an oscil or something to drive it
+ *            this could be done in Scheme -- perhaps makes more sense at that level
+ */
+
 
 /* ---------------- input/output ---------------- */
 
@@ -5752,6 +5756,13 @@ static Float *locsig_data(mus_any *ptr) {return(((locs *)ptr)->outn);}
 static int locsig_channels(mus_any *ptr) {return(((locs *)ptr)->chans);}
 static Float *locsig_xcoeffs(mus_any *ptr) {return(((locs *)ptr)->revn);}
 
+static void locsig_reset(mus_any *ptr)
+{
+  locs *gen = (locs *)ptr;
+  if (gen->outn) memset((void *)(gen->outn), 0, gen->chans * sizeof(Float));
+  if (gen->revn) memset((void *)(gen->revn), 0, gen->rev_chans * sizeof(Float));
+}
+
 static Float locsig_xcoeff(mus_any *ptr, int index) 
 {
   locs *gen = (locs *)ptr;
@@ -5852,7 +5863,7 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0, 
   &locsig_xcoeffs, 0,
   &_mus_wrap_no_vcts,
-  &no_reset
+  &locsig_reset
 };
 
 bool mus_locsig_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_LOCSIG));}
@@ -5966,6 +5977,7 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
 {
   locs *gen = (locs *)ptr;
   Float dist;
+  mus_reset(ptr); /* clear old state, if any */
   if (distance > 1.0)
     dist = 1.0 / distance;
   else dist = 1.0;

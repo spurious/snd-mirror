@@ -1,7 +1,8 @@
 Snd
 
-Snd is a sound editor.  It currently runs on Linux, Sun, SGI,
-HPUX, LinuxPPC, FreeBSD, Mac OSX, BSD, and Cygwin systems. 
+Snd is a sound editor.  It currently runs on nearly all
+Unix-based systems, including Mac OSX and Cygwin.  It might
+even run on others if the GUI support is omitted.
 
 
 To build Snd, get the sources from
@@ -137,7 +138,7 @@ See also http://ccrma.stanford.edu/planetccrma/software/.
 
 
 ----------------------------------------------------------------
-Included with Snd are five command-line programs that might
+Included with Snd are four command-line programs that might
 be of interest: sndplay, sndrecord, sndinfo, and audinfo:
 
   make sndplay
@@ -171,7 +172,7 @@ Authors:
 Bill Schottstaedt
 Michael Scholz: the German translation, the Ruby code, inf-snd.el, sndins, and the Forth version of sndlib.
 Dave Phillips: the tutorial, new-effects.scm, and many other files.
-Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, snd-hobbit.scm, and the Jack audio support.
+Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, snd-hobbit.scm, eval-c.scm, and the Jack audio support.
 Fernando Lopez-Lezcano: the current ALSA support.
 Richard W.E. Furse: the original LADSPA support.
 Nick Bailey: the ESD support.
@@ -718,7 +719,7 @@ be helpful to move to the first Snd-related function in the stack
 info locals
 
 This will print out the value of the local variables.  In most cases,
-that's all I need to fix the bug immediately.  On the sgi, the debugger
+that's all I need to fix the bug immediately.  On the SGI, the debugger
 is named dbx, and the local variable command is named dump.  If Snd
 appears to be hung, you can 
 

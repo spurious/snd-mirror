@@ -1,5 +1,7 @@
 Snd change log
 
+  21-Feb:    removed snd_test.rb, replaced by snd-test.rb thanks to Mike Scholz!
+	     added oo.scm and rt-compile.scm thanks to Kjetil Matheussen!
   11-Feb:    snd 7.10.
   8-Feb:     grani.scm and grani in clm-ins.rb thanks to Mike Scholz.
              CLM sndwarp (B Battey) translated to Scheme: sndwarp.scm.

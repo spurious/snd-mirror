@@ -369,6 +369,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+21-Feb:  removed snd_test.rb, replaced by snd-test.rb thanks to Mike Scholz!\n\
+	 added oo.scm and rt-compile.scm thanks to Kjetil Matheussen!\n\
 11-Feb:  snd 7.10.\n\
 8-Feb:   grani.scm and grani in clm-ins.rb thanks to Mike Scholz.\n\
          CLM sndwarp (B Battey) translated to Scheme: sndwarp.scm.\n\
