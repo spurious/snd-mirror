@@ -215,6 +215,8 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
 	  break;
 	}
     }
+  if (j == 0)
+    return(free_env(local_e));
   local_e->pts = j / 2;
   local_e->data_size = j;
   return(normalize_x_axis(local_e));
@@ -280,6 +282,8 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
       k += 2;
       if (x >= 1.0) break;
     }
+  if (k == 0)
+    return(free_env(e));
   e->data_size = k;
   e->pts = k / 2;
   return(e);

@@ -12,7 +12,7 @@ enum {menu_menu,
         help_menu, h_cascade_menu,
           h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_controls_menu,
           h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
-          h_mix_menu, h_recording_menu, h_keys_menu,
+          h_mix_menu, h_track_menu, h_recording_menu, h_keys_menu,
           h_play_menu, h_save_menu, h_resample_menu, h_filter_menu, h_insert_menu, 
           h_delete_menu, h_reverb_menu, h_debug_menu,
         option_menu, o_cascade_menu,
@@ -37,7 +37,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 102
+#define NUM_MENU_WIDGETS 103
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 static const char *ml[NUM_MENU_WIDGETS];
 
@@ -241,6 +241,7 @@ static void help_controls_callback (GtkWidget *w, gpointer info) {controls_help(
 static void help_env_callback (GtkWidget *w, gpointer info) {env_help();}
 static void help_marks_callback (GtkWidget *w, gpointer info) {marks_help();}
 static void help_mix_callback (GtkWidget *w, gpointer info) {mix_help();}
+static void help_track_callback (GtkWidget *w, gpointer info) {track_help();}
 static void help_sound_files_callback (GtkWidget *w, gpointer info) {sound_files_help();}
 static void help_init_file_callback (GtkWidget *w, gpointer info) {init_file_help();}
 static void help_recording_callback (GtkWidget *w, gpointer info) {recording_help();}
@@ -1074,6 +1075,16 @@ GtkWidget *add_menu(void)
 				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(mw[h_mix_menu]))),
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(help_mix_callback), NULL, 0),
+				 0);
+
+  mw[h_track_menu] = gtk_menu_item_new_with_label(_("Track"));
+  ml[h_track_menu] = _("Track");
+  gtk_menu_shell_append(GTK_MENU_SHELL(mw[h_cascade_menu]), mw[h_track_menu]);
+  gtk_widget_show(mw[h_track_menu]);
+  g_signal_connect_closure_by_id(GTK_OBJECT(mw[h_track_menu]),
+				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(mw[h_track_menu]))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(help_track_callback), NULL, 0),
 				 0);
 
   mw[h_resample_menu] = gtk_menu_item_new_with_label(_("Resample"));

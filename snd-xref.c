@@ -3479,13 +3479,19 @@ static char *Mixing_xrefs[] = {
   "mix selection: {mix-selection}",
   "mix vct: {mix-vct}",
   "enveloped mix: see {enveloped-mix} in extensions.scm",
+  "read mix samples: {make-mix-sample-reader}",
+  "mix data maxamp: {mix-maxamp}",
+  "mix data to vct: {mix->ct}",
+  "save mix data in file: {save-mix}",
+  "mix property list: {mix-property} in mix.scm",
   "pan mono into stereo: see {place-sound} in examp.scm",
+  "pan mix data with envelope: {pan-mix}",
   "the mix dialog: {Mix Panel}",
   "mix menu: see dlp/mix-menu.scm",
-  "read mix samples: {make-mix-sample-reader}",
-  "mix property list: {mix-property} in mix.scm",
   "cross-fade in frequency: cross-fade and dissolve-fade in {fade.scm}",
   "zipper cross-fade: {zipper.scm}",
+  "snap mix to beat after drag: {snap-mix-to-beat}",
+  "delete all mixes: {delete-all-mixes}",
   NULL};
 
 static char *Mixing_urls[] = {
@@ -3495,13 +3501,19 @@ static char *Mixing_urls[] = {
   "extsnd.html#sndmixselection",
   "extsnd.html#sndmixvct",
   "sndscm.html#exenvelopedmix",
+  "extsnd.html#makemixsamplereader",
+  "sndscm.html#mixmaxamp",
+  "sndscm.html#mix2vct",
+  "sndscm.html#savemix",
+  "sndscm.html#mixproperty",
   "sndscm.html#placesound",
+  "sndscm.html#panmix",
   "snd.html#mixpanel",
   NULL,
-  "extsnd.html#makemixsamplereader",
-  "sndscm.html#mixproperty",
   "sndscm.html#fadedoc",
   "sndscm.html#zipdoc",
+  "sndscm.html#snapmixtobeat",
+  "sndscm.html#deleteallmixes",
   NULL};
 
 static char *Regions_xrefs[] = {

@@ -675,11 +675,11 @@ The Mix Panel is a dialog (under the View Menu) that provides various \
 commonly-used controls on the currently selected mix. At the top are the mix id, \
 name, begin and end times, track number, and a play button. Beneath that are \
 various sliders controlling the speed (sampling rate) of the mix, amplitude of \
-each input channel, and the amplitude envelope. This part of Snd is in flux currently. \
+each input channel, and the amplitude envelopes. \
 \n\n\
 To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
 \n\n\
-It is often handy to collect several mixes into a 'track'; mix.scm implements a variety of track-related operations.",
+A set of associated mixes is called a 'track' in Snd, and there's a help menu item for that subject.",
 		      true, 
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
@@ -690,6 +690,11 @@ static char *record_xrefs[4] = {
   "low-level ADC input: {mus-audio-open-input}",
   "process incoming sound: rtio.scm",
   NULL};
+
+void track_help(void) 
+{
+  /* TODO: track help + xrefs */
+}
 
 void recording_help(void) 
 {

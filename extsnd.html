@@ -3187,8 +3187,8 @@ mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 </td></tr>
 
 <!-- mix-tag-height -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagheighth">mix-tag-height</a></em> (<i>mix</i>)</code></span></td></tr>
-<tr><td></td><td>tag height in graph of <i>mix</i> (default 14)
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagheighth">mix-tag-height</a></em> ()</code></span></td></tr>
+<tr><td></td><td>mix tag height in pixels (default: 14)
 </td></tr>
 
 <!-- mix-tag-position -->
@@ -3197,8 +3197,8 @@ mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 </td></tr>
 
 <!-- mix-tag-width -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagwidth">mix-tag-width</a></em> (<i>mix</i>)</code></span></td></tr>
-<tr><td></td><td>tag width in graph of <i>mix</i> (default 6)
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagwidth">mix-tag-width</a></em> ()</code></span></td></tr>
+<tr><td></td><td>mix tag width in pixels (default: 6)
 </td></tr>
 
 <!-- mix-tag-y -->
@@ -3243,16 +3243,8 @@ mix so that it can be easily moved around.
 </td></tr>
 
 </table>
-<br>
-<p>
-See mix.scm for more mix-related (and track-related) functions including:
-</p>
-<table border=0>
-<tr><td><em class=def><a href="sndscm.html#mix2vct">mix-&gt;vct</a></em></td><td>place samples of mix in vct</td></tr>
-<tr><td><em class=def><a href="sndscm.html#panmix">pan-mix</a></em></td><td>pan mix samples via envelope</td></tr>
-<tr><td><em class=def><a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a></em></td><td>force dragged mix to land on a beat</td></tr>
-<tr><td><em class=def><a href="sndscm.html#deleteallmixes">delete-all-mixes</a></em></td><td>delete all mixes</td></tr>
-</table>
+
+<! TODO: track help menu item/ xref table -->
 
 <!-- INDEX mixingexamples:Mixing -->
 <A NAME="mixingexamples"></a>
@@ -3266,13 +3258,19 @@ mix region: <a href="#sndmixregion">mix-region</a><br>
 mix selection: <a href="#sndmixselection">mix-selection</a><br>
 mix vct: <a href="#sndmixvct">mix-vct</a><br>
 enveloped mix: see <a href="sndscm.html#exenvelopedmix">enveloped-mix</a> in extensions.scm<br>
+read mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a><br>
+mix data maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
+mix data to vct: <a href="sndscm.html#mix2vct">mix-&gt;vct</a><br>
+save mix data in file: <a href="sndscm.html#savemix">save-mix</a><br>
+mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm<br>
 pan mono into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
+pan mix data with envelope: <a href="sndscm.html#panmix">pan-mix</a><br>
 the mix dialog: <a href="snd.html#mixpanel">Mix Panel</a><br>
 mix menu: see dlp/mix-menu.scm<br>
-read mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a><br>
-mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm<br>
 cross-fade in frequency: <i>cross-fade</i> and <i>dissolve-fade</i> in <a href="sndscm.html#fadedoc">fade.scm</a><br>
 zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
+snap mix to beat after drag: <a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a><br>
+delete all mixes: <a href="sndscm.html#deleteallmixes">delete-all-mixes</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>

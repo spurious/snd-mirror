@@ -12,7 +12,7 @@ enum {menu_menu,
         help_menu, h_cascade_menu,
           h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_controls_menu,
           h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
-          h_mix_menu, h_recording_menu, h_keys_menu, 
+          h_mix_menu, h_track_menu, h_recording_menu, h_keys_menu, 
           h_play_menu, h_save_menu, h_resample_menu, h_filter_menu, h_insert_menu, 
           h_delete_menu, h_reverb_menu, h_debug_menu,
         option_menu, o_cascade_menu,
@@ -38,7 +38,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 103
+#define NUM_MENU_WIDGETS 104
 static Widget mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
@@ -243,6 +243,7 @@ static void help_controls_callback (Widget w, XtPointer info, XtPointer context)
 static void help_env_callback (Widget w, XtPointer info, XtPointer context) {env_help();}
 static void help_marks_callback (Widget w, XtPointer info, XtPointer context) {marks_help();}
 static void help_mix_callback (Widget w, XtPointer info, XtPointer context) {mix_help();}
+static void help_track_callback (Widget w, XtPointer info, XtPointer context) {track_help();}
 static void help_sound_files_callback (Widget w, XtPointer info, XtPointer context) {sound_files_help();}
 static void help_init_file_callback (Widget w, XtPointer info, XtPointer context) {init_file_help();}
 static void help_recording_callback (Widget w, XtPointer info, XtPointer context) {recording_help();}
@@ -659,6 +660,9 @@ Widget add_menu(void)
 
   mw[h_mix_menu] = XtCreateManagedWidget(_("Mix"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_mix_menu], XmNactivateCallback, help_mix_callback, NULL);
+
+  mw[h_track_menu] = XtCreateManagedWidget(_("Track"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  XtAddCallback(mw[h_track_menu], XmNactivateCallback, help_track_callback, NULL);
 
   mw[h_resample_menu] = XtCreateManagedWidget(_("Resample"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_resample_menu], XmNactivateCallback, help_resample_callback, NULL);

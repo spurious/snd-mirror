@@ -2,7 +2,14 @@
 
 (catch 'no-such-track
        (lambda ()
-	 (set! (track-color 0) red)
+	 (do ((i 1 (1+ i)))
+	     ((= i 45))
+	   (if (not (track? i))
+	       (let ((val (make-track)))
+		 (if (< val i)
+		     (do ((j (1+ val) (1+ j)))
+			 ((= j val))
+		       (make-track))))))
 	 (set! (track-color 1) orange)
 	 (set! (track-color 2) blue)
 	 (set! (track-color 3) white)

@@ -473,6 +473,7 @@ void debug_help(void);
 void env_help(void);
 void marks_help(void);
 void mix_help(void);
+void track_help(void);
 void sound_files_help(void);
 void init_file_help(void);
 void recording_help(void);
