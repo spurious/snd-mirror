@@ -30,7 +30,7 @@
 ;;; TODO un-hum (notch)
 ;;; TODO expsrc?
 ;;; TODO unvoice?
-;;; TODO  forr some of these, we should write C modules, loaded when this file is loaded -- see grfsnd.html (to speed up flanging etc)
+;;; TODO  for some of these, we should write C modules, loaded when this file is loaded -- see grfsnd.html (to speed up flanging etc)
 ;;;
 ;;; to modify, for example, the gain (set! gain-amount .75)
 

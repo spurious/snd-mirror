@@ -281,6 +281,9 @@ char *ps_rgb(snd_state *ss, int pchan) {return(NULL);}
 #if HAVE_GUILE
 void g_initialize_xgh(snd_state *ss, SCM local_doc) {}
 void g_init_gxutils(void) {}
+#if HAVE_HOOKS
+void g_init_gxmenu(void) {}
+#endif
 #endif
 void update_stats(snd_state *ss) {}
 void update_stats_display(snd_state *ss, int all) {}

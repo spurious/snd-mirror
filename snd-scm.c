@@ -559,7 +559,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
   /*   (Ilisp always sends a complete expression, but it may be broken into two or more pieces from read's point of view) */
   SCM result;
   char *str = NULL;
-  if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
+  if (snd_strlen(buf) == 0) return;
   str = stdin_check_for_full_expression(buf);
   if (str)
     {

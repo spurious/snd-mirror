@@ -81,7 +81,7 @@ static void Speed_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer 
 /* ---------------- AMP ---------------- */
 
 static Widget *w_amp_numbers,*w_amp_labels,*w_amps;
-Float *current_amps;
+static Float *current_amps;
 static int chans_allocated = 0;
 static char amp_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
 
@@ -257,7 +257,7 @@ static void Mix_Amp_Env_Resize(Widget w,XtPointer clientData,XtPointer callData)
       axis_cp = new_env_axis(ss);
       fixup_axis_context(axis_cp->axis->ax,w_env,ax->gc);
     }
-  init_env_axes(axis_cp,"mix amp env",ex0,ey0,widget_width(w),widget_height(w),ex0,ex1,ey0,ey1);
+  init_env_axes(axis_cp,"mix amp env",(int)ex0,(int)ey0,widget_width(w),widget_height(w),ex0,ex1,ey0,ey1);
 
   ap = axis_cp->axis;
 

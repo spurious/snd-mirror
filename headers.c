@@ -4125,8 +4125,7 @@ static int mus_resource(char *resname)
 int mus_header_read_with_fd (int chan)
 {
   /* returns 0 on success (at least to the extent that we can report the header type), -1 for error */
-  int i,happy,loc = 0;
-  read(chan,hdrbuf,INITIAL_READ_SIZE);
+  int i,happy,loc = 0,bytes;
   header_type = MUS_UNSUPPORTED;
   data_format = MUS_UNSUPPORTED;
   comment_start = 0;
@@ -4136,8 +4135,36 @@ int mus_header_read_with_fd (int chan)
       loop_modes[0] = 0;
       loop_modes[1] = 0;
     }
+  bytes = read(chan,hdrbuf,INITIAL_READ_SIZE);
+  /* if it's a 0 length file we need to get out */
+  if (bytes < 0) 
+    {
+      mus_error(MUS_HEADER_READ_FAILED,
+		"read header failed: %s!\n  [%s[%d] %s]",
+		strerror(errno),__FILE__,__LINE__,__FUNCTION__);
+      return(MUS_ERROR);
+    }
+  if (bytes == 0) 
+    {
+      mus_error(MUS_HEADER_READ_FAILED,
+		"attempt to read header of an empty file!\n  [%s[%d] %s]",
+		__FILE__,__LINE__,__FUNCTION__);
+      return(MUS_ERROR);
+    }
+  if (bytes < 4) 
+    {
+      header_type = MUS_RAW;
+      return(read_no_header(chan));
+    }
   if ((match_four_chars((unsigned char *)hdrbuf,I_DSND)) || (match_four_chars((unsigned char *)hdrbuf,I_DECN)))
     {
+      if (bytes < 24) 
+	{
+	  mus_error(MUS_HEADER_READ_FAILED,
+		    "NeXT header truncated? read only %d bytes\n  [%s[%d] %s]",
+		bytes,__FILE__,__LINE__,__FUNCTION__);
+	  return(MUS_ERROR);
+	}
       header_type = MUS_NEXT;
       return(read_next_header(chan));
     }

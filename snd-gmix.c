@@ -89,9 +89,9 @@ static void reflect_mix_speed(Float uval, snd_info *sp)
 
 /* ---------------- AMP ---------------- */
 
-GtkWidget **w_amps,**w_amp_labels,**w_amp_numbers,**w_amp_events,**w_amp_forms;
-GtkObject **w_amp_adjs;
-Float *current_amps;
+static GtkWidget **w_amps,**w_amp_labels,**w_amp_numbers,**w_amp_events,**w_amp_forms;
+static GtkObject **w_amp_adjs;
+static Float *current_amps;
 static int chans_allocated = 0;
 static char amp_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
 

@@ -142,8 +142,12 @@ int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
   int *datai;
   int bufsize,chansize;
   bufsize = suggested_bufsize;
-  chansize = (hdr->samples/hdr->chans);
-  if (MAX_BUFFER_SIZE > chansize) bufsize = chansize+1;
+  chansize = (hdr->samples/hdr->chans); /* this can be bogus if the header is messed up */
+#if DEBUGGING
+  if (chansize < 0)
+    fprintf(stderr,"%s: chansize: %d = %d / %d (samps/chans)",hdr->name,chansize,hdr->samples,hdr->chans);
+#endif
+  if ((chansize > 0) && (bufsize > chansize)) bufsize = chansize+1;
   datai = (int *)CALLOC(SND_IO_DATS + SND_AREF_HEADER_SIZE + hdr->chans + 2,sizeof(int)); /* why the +2?? */
   datai[SND_IO_FD] = fd;
   datai[SND_IO_CHANS] = hdr->chans;
