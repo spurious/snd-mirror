@@ -527,7 +527,7 @@ void g_init_menu(void);
 /* -------- snd-main.c -------- */
 
 int snd_exit_cleanly(snd_state *ss, int force_exit);
-void snd_not_current(snd_info *sp, void *dat);
+void sound_not_current(snd_info *sp, void *dat);
 int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);

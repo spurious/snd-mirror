@@ -232,7 +232,7 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
     {
       if ((!(play_in_progress())) && 
 	  (!(record_in_progress())))
-	for_each_sound(ss, snd_not_current, NULL);
+	for_each_sound(ss, sound_not_current, NULL);
       XtAppAddTimeOut(MAIN_APP(ss),
 		      (unsigned long)(auto_update_interval(ss)*1000),
 		      (XtTimerCallbackProc)auto_update_check,

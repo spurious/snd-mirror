@@ -2722,7 +2722,7 @@ static int save_edits_and_update_display(snd_info *sp)
       ofile = NULL;
     }
   if (auto_update(ss)) 
-    for_each_sound(ss, snd_not_current, NULL);
+    for_each_sound(ss, sound_not_current, NULL);
   return(MUS_NO_ERROR); /* don't erase our error message for the special write-permission problem */
 }
 

@@ -45,7 +45,7 @@ int snd_exit_cleanly(snd_state *ss, int force_exit)
   return(1);
 }
 
-void snd_not_current(snd_info *sp, void *ignore)
+void sound_not_current(snd_info *sp, void *ignore)
 {
   /* check for change in update status */
   int needs_update;
@@ -414,11 +414,14 @@ int save_options(snd_state *ss)
 
 static void save_sound_state (snd_info *sp, void *ptr) 
 {
+  /* called only after the global settings have been established, so here we can't use the DEFAULT_* macros that are ambiguous */
   int chan;
   FILE *fd;
   chan_info *cp;
   axis_info *ap;
   char *tmpstr = NULL;
+  snd_state *ss;
+  ss = sp->state;
   fd = (FILE *)ptr;
 #if HAVE_RUBY
   fprintf(fd, "begin\n  sfile = %s(\"%s\")\n  if (sfile == false)\n    sfile = %s(\"%s\")\n  end\n",
@@ -473,44 +476,44 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (cp->cursor != 0) pcp_sod(fd, S_cursor, cp->cursor, chan);
       if (cp->cursor_size != DEFAULT_CURSOR_SIZE) pcp_sd(fd, S_cursor_size, cp->cursor_size, chan);
       if (cp->cursor_style != CURSOR_CROSS) pcp_sd(fd, S_cursor_style, cp->cursor_style, chan);
-      if (cp->show_marks != DEFAULT_SHOW_MARKS) pcp_ss(fd, S_show_marks, b2s(cp->show_marks), chan);
-      if (cp->show_y_zero != DEFAULT_SHOW_Y_ZERO) pcp_ss(fd, S_show_y_zero, b2s(cp->show_y_zero), chan);
-      if (cp->wavo_hop != DEFAULT_WAVO_HOP) pcp_sd(fd, S_wavo_hop, cp->wavo_hop, chan);
-      if (cp->wavo_trace != DEFAULT_WAVO_TRACE) pcp_sd(fd, S_wavo_trace, cp->wavo_trace, chan);
-      if (cp->max_transform_peaks != DEFAULT_MAX_TRANSFORM_PEAKS) pcp_sd(fd, S_max_transform_peaks, cp->max_transform_peaks, chan);
-      if (cp->show_transform_peaks != DEFAULT_SHOW_TRANSFORM_PEAKS) pcp_ss(fd, S_show_transform_peaks, b2s(cp->show_transform_peaks), chan);
-      if (cp->fft_log_frequency != DEFAULT_FFT_LOG_FREQUENCY) pcp_ss(fd, S_fft_log_frequency, b2s(cp->fft_log_frequency), chan);
-      if (cp->fft_log_magnitude != DEFAULT_FFT_LOG_MAGNITUDE) pcp_ss(fd, S_fft_log_magnitude, b2s(cp->fft_log_magnitude), chan);
-      if (cp->verbose_cursor != DEFAULT_VERBOSE_CURSOR) pcp_ss(fd, S_verbose_cursor, b2s(cp->verbose_cursor), chan);
-      if (cp->zero_pad != DEFAULT_ZERO_PAD) pcp_sd(fd, S_zero_pad, cp->zero_pad, chan);
-      if (cp->wavelet_type != DEFAULT_WAVELET_TYPE) pcp_sd(fd, S_wavelet_type, cp->wavelet_type, chan);
-      if (fneq(cp->min_dB, DEFAULT_MIN_DB)) pcp_sf(fd, S_min_dB, cp->min_dB, chan);
-      if (fneq(cp->spectro_x_angle, DEFAULT_SPECTRO_X_ANGLE)) pcp_sf(fd, S_spectro_x_angle, cp->spectro_x_angle, chan);
-      if (fneq(cp->spectro_y_angle, DEFAULT_SPECTRO_Y_ANGLE)) pcp_sf(fd, S_spectro_y_angle, cp->spectro_y_angle, chan);
-      if (fneq(cp->spectro_z_angle, DEFAULT_SPECTRO_Z_ANGLE)) pcp_sf(fd, S_spectro_z_angle, cp->spectro_z_angle, chan);
-      if (fneq(cp->spectro_x_scale, DEFAULT_SPECTRO_X_SCALE)) pcp_sf(fd, S_spectro_x_scale, cp->spectro_x_scale, chan);
-      if (fneq(cp->spectro_y_scale, DEFAULT_SPECTRO_Y_SCALE)) pcp_sf(fd, S_spectro_y_scale, cp->spectro_y_scale, chan);
-      if (fneq(cp->spectro_z_scale, DEFAULT_SPECTRO_Z_SCALE)) pcp_sf(fd, S_spectro_z_scale, cp->spectro_z_scale, chan);
-      if (fneq(cp->spectro_cutoff, DEFAULT_SPECTRO_CUTOFF)) pcp_sf(fd, S_spectro_cutoff, cp->spectro_cutoff, chan);
-      if (fneq(cp->spectro_start, DEFAULT_SPECTRO_START)) pcp_sf(fd, S_spectro_start, cp->spectro_start, chan);
-      if (fneq(cp->fft_window_beta, DEFAULT_FFT_WINDOW_BETA)) pcp_sf(fd, S_fft_window_beta, cp->fft_window_beta, chan);
-      if (cp->spectro_hop != DEFAULT_SPECTRO_HOP) pcp_sd(fd, S_spectro_hop, cp->spectro_hop, chan);
-      if (cp->transform_size != DEFAULT_TRANSFORM_SIZE) pcp_sd(fd, S_transform_size, cp->transform_size, chan);
-      if (cp->transform_graph_type != DEFAULT_TRANSFORM_GRAPH_TYPE) pcp_ss(fd, S_transform_graph_type, transform_graph_type_name(cp->transform_graph_type), chan);
-      if (cp->time_graph_type != DEFAULT_TIME_GRAPH_TYPE) pcp_ss(fd, S_time_graph_type, time_graph_type_name(cp->time_graph_type), chan);
-      if (cp->fft_window != DEFAULT_FFT_WINDOW) pcp_ss(fd, S_fft_window, mus_fft_window_name(cp->fft_window), chan);
-      if (cp->transform_type != DEFAULT_TRANSFORM_TYPE) pcp_ss(fd, S_transform_type, transform_type_name(cp->transform_type), chan);
+      if (cp->show_marks != show_marks(ss)) pcp_ss(fd, S_show_marks, b2s(cp->show_marks), chan);
+      if (cp->show_y_zero != show_y_zero(ss)) pcp_ss(fd, S_show_y_zero, b2s(cp->show_y_zero), chan);
+      if (cp->wavo_hop != wavo_hop(ss)) pcp_sd(fd, S_wavo_hop, cp->wavo_hop, chan);
+      if (cp->wavo_trace != wavo_trace(ss)) pcp_sd(fd, S_wavo_trace, cp->wavo_trace, chan);
+      if (cp->max_transform_peaks != max_transform_peaks(ss)) pcp_sd(fd, S_max_transform_peaks, cp->max_transform_peaks, chan);
+      if (cp->show_transform_peaks != show_transform_peaks(ss)) pcp_ss(fd, S_show_transform_peaks, b2s(cp->show_transform_peaks), chan);
+      if (cp->fft_log_frequency != fft_log_frequency(ss)) pcp_ss(fd, S_fft_log_frequency, b2s(cp->fft_log_frequency), chan);
+      if (cp->fft_log_magnitude != fft_log_magnitude(ss)) pcp_ss(fd, S_fft_log_magnitude, b2s(cp->fft_log_magnitude), chan);
+      if (cp->verbose_cursor != verbose_cursor(ss)) pcp_ss(fd, S_verbose_cursor, b2s(cp->verbose_cursor), chan);
+      if (cp->zero_pad != zero_pad(ss)) pcp_sd(fd, S_zero_pad, cp->zero_pad, chan);
+      if (cp->wavelet_type != wavelet_type(ss)) pcp_sd(fd, S_wavelet_type, cp->wavelet_type, chan);
+      if (fneq(cp->min_dB, ss->min_dB)) pcp_sf(fd, S_min_dB, cp->min_dB, chan);
+      if (fneq(cp->spectro_x_angle, spectro_x_angle(ss))) pcp_sf(fd, S_spectro_x_angle, cp->spectro_x_angle, chan);
+      if (fneq(cp->spectro_y_angle, spectro_y_angle(ss))) pcp_sf(fd, S_spectro_y_angle, cp->spectro_y_angle, chan);
+      if (fneq(cp->spectro_z_angle, spectro_z_angle(ss))) pcp_sf(fd, S_spectro_z_angle, cp->spectro_z_angle, chan);
+      if (fneq(cp->spectro_x_scale, spectro_x_scale(ss))) pcp_sf(fd, S_spectro_x_scale, cp->spectro_x_scale, chan);
+      if (fneq(cp->spectro_y_scale, spectro_y_scale(ss))) pcp_sf(fd, S_spectro_y_scale, cp->spectro_y_scale, chan);
+      if (fneq(cp->spectro_z_scale, spectro_z_scale(ss))) pcp_sf(fd, S_spectro_z_scale, cp->spectro_z_scale, chan);
+      if (fneq(cp->spectro_cutoff, spectro_cutoff(ss))) pcp_sf(fd, S_spectro_cutoff, cp->spectro_cutoff, chan);
+      if (fneq(cp->spectro_start, spectro_start(ss))) pcp_sf(fd, S_spectro_start, cp->spectro_start, chan);
+      if (fneq(cp->fft_window_beta, fft_window_beta(ss))) pcp_sf(fd, S_fft_window_beta, cp->fft_window_beta, chan);
+      if (cp->spectro_hop != spectro_hop(ss)) pcp_sd(fd, S_spectro_hop, cp->spectro_hop, chan);
+      if (cp->transform_size != transform_size(ss)) pcp_sd(fd, S_transform_size, cp->transform_size, chan);
+      if (cp->transform_graph_type != transform_graph_type(ss)) pcp_ss(fd, S_transform_graph_type, transform_graph_type_name(cp->transform_graph_type), chan);
+      if (cp->time_graph_type != time_graph_type(ss)) pcp_ss(fd, S_time_graph_type, time_graph_type_name(cp->time_graph_type), chan);
+      if (cp->fft_window != fft_window(ss)) pcp_ss(fd, S_fft_window, mus_fft_window_name(cp->fft_window), chan);
+      if (cp->transform_type != transform_type(ss)) pcp_ss(fd, S_transform_type, transform_type_name(cp->transform_type), chan);
       /* this is assuming the added transform definition (if any) can be found -- maybe not a good idea */
-      if (cp->transform_normalization != DEFAULT_TRANSFORM_NORMALIZATION) pcp_ss(fd, S_transform_normalization, transform_normalization_name(cp->transform_normalization), chan);
-      if (cp->time_graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_time_graph_style, graph_style_name(cp->time_graph_style), chan);
-      if (cp->lisp_graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_lisp_graph_style, graph_style_name(cp->lisp_graph_style), chan);
-      if (cp->transform_graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_transform_graph_style, graph_style_name(cp->transform_graph_style), chan);
-      if (cp->show_mix_waveforms != DEFAULT_SHOW_MIX_WAVEFORMS) pcp_ss(fd, S_show_mix_waveforms, b2s(cp->show_mix_waveforms), chan);
-      if (cp->dot_size != DEFAULT_DOT_SIZE) pcp_sd(fd, S_dot_size, cp->dot_size, chan);
-      if (cp->x_axis_style != DEFAULT_X_AXIS_STYLE) pcp_ss(fd, S_x_axis_style, x_axis_style_name(cp->x_axis_style), chan);
-      if (cp->beats_per_minute != DEFAULT_BEATS_PER_MINUTE) pcp_sf(fd, S_beats_per_minute, cp->beats_per_minute, chan);
-      if (cp->show_axes != DEFAULT_SHOW_AXES) pcp_ss(fd, S_show_axes, show_axes2string(cp->show_axes), chan);
-      if (cp->graphs_horizontal != DEFAULT_GRAPHS_HORIZONTAL) pcp_ss(fd, S_graphs_horizontal, b2s(cp->graphs_horizontal), chan);
+      if (cp->transform_normalization != transform_normalization(ss)) pcp_ss(fd, S_transform_normalization, transform_normalization_name(cp->transform_normalization), chan);
+      if (cp->time_graph_style != graph_style(ss)) pcp_ss(fd, S_time_graph_style, graph_style_name(cp->time_graph_style), chan);
+      if (cp->lisp_graph_style != graph_style(ss)) pcp_ss(fd, S_lisp_graph_style, graph_style_name(cp->lisp_graph_style), chan);
+      if (cp->transform_graph_style != graph_style(ss)) pcp_ss(fd, S_transform_graph_style, graph_style_name(cp->transform_graph_style), chan);
+      if (cp->show_mix_waveforms != show_mix_waveforms(ss)) pcp_ss(fd, S_show_mix_waveforms, b2s(cp->show_mix_waveforms), chan);
+      if (cp->dot_size != dot_size(ss)) pcp_sd(fd, S_dot_size, cp->dot_size, chan);
+      if (cp->x_axis_style != x_axis_style(ss)) pcp_ss(fd, S_x_axis_style, x_axis_style_name(cp->x_axis_style), chan);
+      if (cp->beats_per_minute != beats_per_minute(ss)) pcp_sf(fd, S_beats_per_minute, cp->beats_per_minute, chan);
+      if (cp->show_axes != show_axes(ss)) pcp_ss(fd, S_show_axes, show_axes2string(cp->show_axes), chan);
+      if (cp->graphs_horizontal != graphs_horizontal(ss)) pcp_ss(fd, S_graphs_horizontal, b2s(cp->graphs_horizontal), chan);
       edit_history_to_file(fd, cp);
     }
 #if HAVE_RUBY

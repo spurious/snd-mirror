@@ -175,6 +175,15 @@ the y-zoom-slider controls the graph amp"
 
 (define (make-current-window-display)
 
+  (define (update-current-window-location snd)
+    ;; this is called before the actual update -- we need to clear the notion of edit-position to force a re-read
+    (do ((i 0 (1+ i)))
+	((= i (chans snd)))
+      (let ((vals (channel-property 'inset-envelope snd i)))
+	(if vals
+	    (list-set! vals 2 -2)))) ; set edit-position to impossible value
+    #f)
+
   (define (display-current-window-location snd chn)
     "display in upper right corner the overall current sound and where the current window fits in it"
     (if (graph-time? snd chn)
@@ -310,4 +319,5 @@ the y-zoom-slider controls the graph amp"
 	#f))
   
   (add-hook! after-graph-hook display-current-window-location)
-  (add-hook! mouse-click-hook click-current-window-location))
+  (add-hook! mouse-click-hook click-current-window-location)
+  (add-hook! update-hook update-current-window-location))

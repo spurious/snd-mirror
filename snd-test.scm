@@ -9814,9 +9814,8 @@
 	 (sound-files-in-directory sf-dir))
 	good-files)
       #f))
+
 (define sf-dir-len (if sf-dir-files (length sf-dir-files) 0))
-(define cur-dir-files (sound-files-in-directory "."))
-(define cur-dir-len (length cur-dir-files))
 (define buffer-menu #f)
 
 (define (remove-if p l)
@@ -10926,12 +10925,36 @@
       
       (add-hook! print-hook (lambda (str) 
 			      (IF (and (char=? (string-ref str 0) #\#) 
-				       (not (string=? str "#(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ...)")))
+				       (or (and (= (print-length) 30) ; test 9
+						(not (string=? str "#(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ...)")))
+					   (and (= (print-length) 12) ; just test 13
+						(not (string=? str "#(0 0 0 0 0 0 0 0 0 0 0 0 ...)")))))
 				  (snd-display ";vector abbreviation: ~A" str))
 			      #f))
       (let ((v (make-vector 128 0)))
 	(snd-print v)
 	(reset-hook! print-hook))
+
+      (let ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 1 "auto-update test"))
+	    (ind1 (new-sound "fmv1.snd" mus-next mus-bshort 22050 1 "auto-update test"))
+	    (old-update (auto-update)))
+	(pad-channel 0 1000 ind 0)
+	(pad-channel 0 1000 ind1 0)
+	(save-sound ind)
+	(save-sound ind1)
+	(set! (auto-update) #t)
+	(sleep 1) ; make sure write dates differ(!)
+	(system "cp oboe.snd fmv1.snd") ; ind1 needs auto-update now
+	(set! (sample 100 ind 0) 0.5)
+	(save-sound ind) ; this should cause auto-update scan of all files
+	(set! ind1 (find-sound "fmv1.snd")) ; hmmm auto-update can change any file's index!
+	(if (not (= (frames ind1) (mus-sound-frames "oboe.snd")))
+	    (snd-display ";fmv1 after update: ~A" (frames ind1)))
+	(set! (auto-update) old-update)
+	(close-sound ind)
+	(close-sound ind1)
+	(delete-file "fmv.snd")
+	(delete-file "fmv1.snd"))
 
       ))
 
@@ -11001,6 +11024,9 @@
 
 
 ;;; ---------------- test 14: all together now ----------------
+
+(define cur-dir-files (sound-files-in-directory "."))
+(define cur-dir-len (length cur-dir-files))
 
 (if (or full-test (= snd-test 14) (and keep-going (<= snd-test 14)))
     (let* ((stereo-files '())
@@ -15554,6 +15580,13 @@ EDITS: 6
 
 (define sfile 0)
 
+(define (local-eq? a b)
+  (if (number? a)
+      (if (exact? a)
+	  (= a b)
+	  (< (abs (- a b)) .001))
+      (eq? a b)))
+
 (if (or full-test (= snd-test 19) (and keep-going (<= snd-test 19)))
     (let ((nind (open-sound "oboe.snd")))
       (if (procedure? test-hook) (test-hook 19))
@@ -15805,6 +15838,45 @@ EDITS: 2
 	    (snd-display "no save dir edits: ~A" (display-edits)))
 	(delete-file "s61.scm")
 	(close-sound ind))
+
+      (let* ((ind (open-sound "oboe.snd"))
+	     (funcs (list transform-graph-type time-graph-type show-axes transform-normalization
+			  graph-style x-axis-style spectro-x-scale transform-size fft-window
+			  dot-size max-transform-peaks verbose-cursor zero-pad min-dB spectro-hop spectro-cutoff))
+	     (func-names (list 'transform-graph-type 'time-graph-type 'show-axes 'transform-normalization
+			       'graph-style 'x-axis-style 'spectro-x-scale 'transform-size 'fft-window
+			       'dot-size 'max-transform-peaks 'verbose-cursor 'zero-pad 'min-dB 'spectro-hop 'spectro-cutoff))
+	     (old-globals (map (lambda (func) (func)) funcs))
+	     (new-globals (list graph-as-sonogram graph-as-wavogram show-all-axes normalize-by-sound
+				graph-dots x-axis-in-samples 0.1 32 bartlett-window
+				4 10 #t 1 -90 12 .1))
+	     (new-locals (list graph-once graph-once show-x-axis normalize-by-channel
+			       graph-lines x-axis-in-seconds 1.0 256 blackman2-window
+			       1 100 #f 0 -60 4 1.0)))
+	(for-each (lambda (func func-name global local)
+		    (set! (func) global)
+		    (set! (func ind 0) local))
+		  funcs func-names new-globals new-locals)
+	(set! (zoom-focus-style) zoom-focus-right)
+	(set! (channel-style) channels-combined)
+	(set! (channel-style ind) channels-separate)
+	(save-state "s61.scm")
+	(close-sound ind)
+	(load "s61.scm")
+	(set! ind (find-sound "oboe.snd"))
+	(for-each (lambda (func func-name global local)
+		    (if (or (not (local-eq? (func) global))
+			    (not (local-eq? (func ind 0) local)))
+			(snd-display "; save ~A reversed: ~A [~A] ~A [~A]" 
+				     func-name (func) global (func ind 0) local)))
+		  funcs func-names new-globals new-locals)
+	(if (not (= (channel-style ind) channels-separate))
+	    (snd-display ";save channel-style reversed: ~A ~A" (channel-style) (channel-style ind)))
+	(for-each (lambda (func val) (set! (func) val)) funcs old-globals)
+	(close-sound ind)
+	(set! (zoom-focus-style) zoom-focus-active)
+	(set! (channel-style) channels-separate)
+	(delete-file "s61.scm"))
 
       (mus-sound-prune)
       ))

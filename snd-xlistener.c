@@ -1006,22 +1006,51 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
     {
       prompt = listener_prompt(ss);
       str = XmTextGetString(w);
-      /* this can be confused by comments, quoted parens, and string constants */
-      if (str[pos] == ')')
+      if ((str[pos] == ')') && 
+	  ((pos <= 1) || (str[pos - 1] != '\\') || (str[pos - 2] != '#')))
 	{
+	  int quoting = FALSE, up_comment = -1;
 	  parens = 1;
-	  for (i = pos - 1; i > 0; i--)
+	  for (i = pos - 1; i > 0;)
 	    {
 	      if ((i > 0) && (str[i] == prompt[0]) && (str[i - 1] == '\n'))
 		break;
-	      if (str[i] == ')') parens++;
-	      if (str[i] == '(') parens--;
+	      if ((str[i] == '\"') && (str[i - 1] != '\\'))
+		quoting = !quoting;
+	      if (!quoting)
+		{
+		  if ((i <= 1) || (str[i - 1] != '\\') || (str[i - 2] != '#'))
+		    {
+		      if (str[i] == ')') parens++;
+		      if (str[i] == '(') parens--;
+		      if (str[i] == '\n')
+			{
+			  /* check for comment on next line up */
+			  int j, up_quoting = FALSE;
+			  for (j = i - 1; j > 0; j--)
+			    {
+			      if (str[j] == '\n') break;
+			      if ((str[j] == '\"') && (str[j - 1] != '\\'))
+				up_quoting = !up_quoting;
+			      if (!up_quoting)
+				{
+				  if ((str[j] == ';') &&
+				      ((j <= 1) || (str[j - 1] != '\\') || (str[j - 2] != '#')))
+				    up_comment = j;
+				}
+			    }
+			  if (up_comment > 0)
+			    i = up_comment;
+			}
+		    }
+		}
 	      if (parens == 0)
 		{
 		  XmTextSetHighlight(w, i, i + 1, XmHIGHLIGHT_SECONDARY_SELECTED);
 		  last_highlight_position = i;
 		  break;
 		}
+	      i--;
 	    }
 	}
       if (str) XtFree(str);

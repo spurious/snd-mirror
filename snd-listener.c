@@ -1,10 +1,23 @@
 #include "snd.h"
 
-/* check_balance stolen from scwm-0.9/utilities/scwmrepl/scwmrepl.c */
+/* check_balance stolen from scwm-0.9/utilities/scwmrepl/scwmrepl.c, 
+ *   revised by bil 9-Oct-02:
+ *   original did not handle #\) (etc) correctly or #()
+ *            had support for #{} which doesn't seem to mean anything in Scheme
+ *            mishandled \" in a quoted string
+ */
 
+/*
+(+ 1 ;a comment
+   (char->integer #\a) 
+   (char->integer (string-ref "01\"" 2)) 
+   (char->integer (string-ref "01\";#" 2)) 
+   (vector-ref #(1 2) 0)
+  (char->integer #\))
+  )
+*/
 int check_balance(char *expr, int start, int end) 
 {
-  /* If you think _this_ is hairy, try doing it for C statements. */
   int i;
   int non_whitespace_p = 0;
   int paren_count = 0;
@@ -12,128 +25,114 @@ int check_balance(char *expr, int start, int end)
   int quote_wait = 0;
 
   i = start;
-  while (i < end) {
-    switch(expr[i]) {
-    case ';' :
-      /* skip till newline. */
-      do {
-	i++;
-      } while (expr[i]!='\n' && i < end);
-      break;
-    case ' ':
-    case '\n':
-    case '\t':
-    case '\r':
-      if (non_whitespace_p && paren_count==0 && !quote_wait) {
-	return i;
-      } else {
-	prev_separator = 1;
-	i++;
-      }
-      break;
-    case '\"' :
-      if (non_whitespace_p && paren_count==0 &&
-	  !quote_wait) {
-	return i;
-      } else {
-	/* skip past ", ignoring \" */
-	do {
- 	  i++;
-	  if (i < end && expr[i] =='\\') {
-	    i++;
-	  }
-	} while (i < end && expr[i]!='\"');
-	i++;
-	if (paren_count==0) {
-	  if (i < end) {
-	    return i;
-	  } else {
-	    return 0;
-	  }
-	} else {
-	  prev_separator = 1;
-	  non_whitespace_p = 1;
-	  quote_wait = 0;
-	}
-      }
-      break;
-    case '#' :
-      if (non_whitespace_p && paren_count==0 &&
-	  !quote_wait) {
-	return i;
-      } else {
-	if (prev_separator && i + 1 < end && expr[i + 1] =='{') {
-	  /* skip past }#, ignoring \} */
+  while (i < end) 
+    {
+      switch (expr[i]) 
+	{
+	case ';' :
+	  /* skip till newline. */
 	  do {
 	    i++;
-	    if (i < end && expr[i] =='\\') {
+	  } while ((expr[i] != '\n') && (i < end));
+	  break;
+	case ' ':
+	case '\n':
+	case '\t':
+	case '\r':
+	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	    return(i);
+	  else 
+	    {
+	      prev_separator = 1;
 	      i++;
 	    }
-	  } while (i < end && !(expr[i] =='}' && i + 1 < end
-				&& expr[i + 1] =='#'));
-	  i += 2;
-	  if (paren_count==0) {
-	    if (i < end) {
-	      return i;
-	    } else {
-	      return 0;
+	  break;
+	case '\"' :
+	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	    return(i);
+	  else 
+	    {
+	      /* skip past ", ignoring \" */
+	      do {
+		i++;
+		if ((i < (end - 1)) && (expr[i] =='\\') && (expr[i + 1] == '\"'))
+		  i += 2;
+	      } while ((i < end) && (expr[i] != '\"'));
+	      i++;
+	      if (paren_count == 0) 
+		{
+		  if (i < end) 
+		    return(i);
+		  else return(0);
+		} 
+	      else 
+		{
+		  prev_separator = 1;
+		  non_whitespace_p = 1;
+		  quote_wait = 0;
+		}
 	    }
-	  } else {
-	    prev_separator = 1;
-	    non_whitespace_p = 1;
-	    quote_wait = 0;
-	  }
-	  /* MS:FIXME:: Handle #\) properly! */
-	} else {
+	  break;
+	case '#' :
+	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	    return i;
+	  else 
+	    {
+	      if ((prev_separator) && (i + 1 < end) && (expr[i + 1] =='('))
+		i++;
+	      else
+		{
+		  if ((i + 2 < end) && (expr[i + 1] == '\\') && 
+		      ((expr[i + 2] == ')') || (expr[i + 2] == ';') || (expr[i + 2] == '\"') || (expr[i + 2] == '(')))
+		    i += 3;
+		  else
+		    {
+		      prev_separator = 0;
+		      quote_wait = 0;
+		      non_whitespace_p = 1;
+		      i++;
+		    }
+		}
+	    }
+	  break;
+	case '(' :
+	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+	    return(i);
+	  else 
+	    {
+	      i++;
+	      paren_count++;
+	      non_whitespace_p = 1;
+	      prev_separator = 1;
+	      quote_wait = 0;
+	    }
+	  break;
+	case ')' :
+	  paren_count--;
+	  if ((non_whitespace_p) && (paren_count == 0))
+	    return(i + 1);
+	  else 
+	    {
+	      i++;
+	      non_whitespace_p = 1;
+	      prev_separator = 1;
+	      quote_wait = 0;
+	    }
+	  break;
+	case '\'' :
+	  if (prev_separator) 
+	    quote_wait = 1;
+	  non_whitespace_p = 1;
+	  i++;
+	  break;
+	default:
 	  prev_separator = 0;
 	  quote_wait = 0;
 	  non_whitespace_p = 1;
 	  i++;
+	  break;
 	}
-      }
-      break;
-    case '(' :
-      if (non_whitespace_p && paren_count==0 &&!quote_wait) {
-	return i;
-      } else {
-	i++;
-	paren_count++;
-	non_whitespace_p = 1;
-	prev_separator = 1;
-	quote_wait = 0;
-      }
-      break;
-    case ')' :
-      paren_count--;
-      if (non_whitespace_p && paren_count==0) {
-	return i + 1;
-      } else {
-	i++;
-	non_whitespace_p = 1;
-	prev_separator = 1;
-	quote_wait = 0;
-      }
-      break;
-    case '\'' :
-      if (prev_separator) {
-	non_whitespace_p = 1;
-	quote_wait = 1;
-	prev_separator = 1;
-	i++;
-      } else {
-	non_whitespace_p = 1;
-	prev_separator = 0;
-	i++;
-      }
-      break;
-    default :
-      prev_separator = 0;
-      quote_wait = 0;
-      non_whitespace_p = 1;
-      i++;
-      break;
     }
-  }
   return 0;
 }
 
