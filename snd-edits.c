@@ -9609,12 +9609,12 @@ static char *snd2sample_describe(mus_any *ptr)
 	  len += snd_strlen(sf_to_string(spl->sfs[i]));
     }
   snd2sample_buf = (char *)CALLOC(len, sizeof(char));
-  snprintf(snd2sample_buf, len, "%s: reading %s (%d chan%s) at " OFF_TD ":[", 
-	   S_snd2sample, 
-	   spl->sp->short_filename, 
-	   spl->chans, 
-	   (spl->chans > 1) ? "s" : "",
-	   spl->samps[0]);
+  mus_snprintf(snd2sample_buf, len, "%s: reading %s (%d chan%s) at " OFF_TD ":[", 
+	       S_snd2sample, 
+	       spl->sp->short_filename, 
+	       spl->chans, 
+	       (spl->chans > 1) ? "s" : "",
+	       spl->samps[0]);
   if (spl->sfs)
     {
       for (i = 0; i < spl->chans; i++)
