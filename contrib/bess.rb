@@ -5,8 +5,8 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Sep 15 19:11:12 CEST 2002
-# Last: Fri Oct 04 00:48:08 CEST 2002
-# Version: $Revision: 1.2 $
+# Last: Sun Oct 13 05:33:50 CEST 2002
+# Version: $Revision: 1.3 $
 # Keywords: sound, snd, clm
 
 # This program is free software; you can redistribute it and/or
@@ -24,19 +24,10 @@
 # Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307 USA
 
-# Change Log:
-# $Log: bess.rb,v $
-# Revision 1.2  2002/10/03 22:48:51  mike
-# Command line options added.
-#
-# Revision 1.1  2002/09/15 22:20:25  mike
-# Initial revision
-#
-
 # Code:
 
 DEBUG = true;
-VER = "$Revision: 1.2 $";
+VER = "$Revision: 1.3 $";
 FILE = File::basename($0);
 BANNER = "This is #{FILE.upcase} v#{VER.scan(/[\d.]+/)}, (c) 2002 by Michael Scholz";
 
@@ -71,7 +62,7 @@ Schottstaedt\'s Snd sound editor.
 
 Default values shown in brackets.
 
-Usage: #{FILE} [ options ]
+Usage: #{FILE} [ options ] [ -- X options ]
 
    -p, --play               play immediately (#{$play != 0.0 ? "yes" : "no"})
 
@@ -189,65 +180,69 @@ for i in 1 .. 15		# SIGHUP .. SIGTERM
   end
 end
 
-require "getoptlong";
-
-opt = GetoptLong.new(["--play", "-p", GetoptLong::NO_ARGUMENT],
-		     ["--frequency", "-f", GetoptLong::REQUIRED_ARGUMENT],
-		     ["--index", "-i", GetoptLong::REQUIRED_ARGUMENT],
-		     ["--ratio", "-r", GetoptLong::REQUIRED_ARGUMENT],
-		     ["--amplitude", "-a", GetoptLong::REQUIRED_ARGUMENT],
-		     ["--background", "-b", GetoptLong::REQUIRED_ARGUMENT],
-		     ["--sliderback", "-s", GetoptLong::REQUIRED_ARGUMENT],
-		     ["--version", "-V", GetoptLong::NO_ARGUMENT],
-		     ["--help", "-h", "-?", GetoptLong::NO_ARGUMENT]);
-
-begin
-  opt.each { |name, arg|
-    case name
-    when "--play"
-      $play = 1.0;
-    when "--frequency"
-      freq = arg.to_f.abs;
-      $freq = freq < $low_freq ? $low_freq : 
-	freq > $high_freq ? $high_freq : freq;
-    when "--index"
-      ind = arg.to_f.abs;
-      $index = ind > $high_index ? $high_index : ind;
-    when "--ratio"
-      rat = arg.to_i.abs;
-      $ratio = rat > $high_ratio ? $high_ratio : rat;
-    when "--amplitude"
-      amp = arg.to_f.abs;
-      $amp = amp > 1 ? 1 : amp;
-    when "--sliderback"
-      $sliderback = arg;
-    when "--background"
-      $background = arg;
-    when "--version"
-      $vers = true;
-    when "--help"
-      $help = true;
-    end
-  }
-rescue
-  usage();
-end
-
-usage() if $help;
-version() if $vers;
-
 begin
   require "libxm";
+
+  args = ([$0] << $*).flatten;
+  $shell_app = RXtVaOpenApplication("FM", args.length, args,
+				    RapplicationShellWidgetClass,
+				    [RXmNallowShellResize, true,
+				      RXmNtitle, "FM forever!"]);
+
+  begin
+    require "getoptlong";
+
+    GetoptLong.new(["--play", "-p", GetoptLong::NO_ARGUMENT],
+		   ["--frequency", "-f", GetoptLong::REQUIRED_ARGUMENT],
+		   ["--index", "-i", GetoptLong::REQUIRED_ARGUMENT],
+		   ["--ratio", "-r", GetoptLong::REQUIRED_ARGUMENT],
+		   ["--amplitude", "-a", GetoptLong::REQUIRED_ARGUMENT],
+		   ["--background", "-b", GetoptLong::REQUIRED_ARGUMENT],
+		   ["--sliderback", "-s", GetoptLong::REQUIRED_ARGUMENT],
+		   ["--version", "-V", GetoptLong::NO_ARGUMENT],
+		   ["--help", "-h", "-?", GetoptLong::NO_ARGUMENT]).each { |name, arg|
+
+      case name
+      when "--play"
+	$play = 1.0;
+      when "--frequency"
+	freq = arg.to_f.abs;
+	$freq = freq < $low_freq ? $low_freq : 
+	  freq > $high_freq ? $high_freq : freq;
+      when "--index"
+	ind = arg.to_f.abs;
+	$index = ind > $high_index ? $high_index : ind;
+      when "--ratio"
+	rat = arg.to_i.abs;
+	$ratio = rat > $high_ratio ? $high_ratio : rat;
+      when "--amplitude"
+	amp = arg.to_f.abs;
+	$amp = amp > 1 ? 1 : amp;
+      when "--sliderback"
+	$sliderback = arg;
+      when "--background"
+	$background = arg;
+      when "--version"
+	$vers = true;
+      when "--help"
+	$help = true;
+      end
+    }
+  rescue
+    usage();
+  end
+
+  usage() if $help;
+  version() if $vers;
+
   require "sndlib";
 
-  $shell_app = RXtVaOpenApplication("FM", 0, 0, 0, [], 0, RapplicationShellWidgetClass,
-				   [RXmNallowShellResize, true,
-				     RXmNtitle, "FM forever!"]);
   app = $shell_app[1];
   shell = $shell_app[0];
   carosc = make_oscil(0.0);
   modosc = make_oscil(0.0);
 
+  RXtAddEventHandler(shell, 0, true, lambda { |w, c, i, f| R_XEditResCheckMessages(w, c, i, f) });
   form = RXtCreateManagedWidget("form", RxmFormWidgetClass, shell,
 				[RXmNresizePolicy, RXmRESIZE_GROW,
 				  RXmNbackground, get_color($background)]);
@@ -262,11 +257,11 @@ begin
   RXmToggleButtonSetState(play_button, $play != 0.0 ? true : false, false);
 
   quit_button = RXtCreateManagedWidget(" Quit ", RxmPushButtonWidgetClass, form,
-					  [RXmNtopAttachment, RXmATTACH_FORM,
-					    RXmNleftAttachment, RXmATTACH_NONE,
-					    RXmNrightAttachment, RXmATTACH_FORM,
-					    RXmNbottomAttachment, RXmATTACH_NONE,
-					    RXmNbackground, get_color($background)]);
+				       [RXmNtopAttachment, RXmATTACH_FORM,
+					 RXmNleftAttachment, RXmATTACH_NONE,
+					 RXmNrightAttachment, RXmATTACH_FORM,
+					 RXmNbottomAttachment, RXmATTACH_NONE,
+					 RXmNbackground, get_color($background)]);
 
   freq_label = make_scale_label(make_label("Carrier Frequency:", play_button, form), form);
   freq_scale = make_scale(freq_label, form);
