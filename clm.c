@@ -1938,12 +1938,15 @@ static char *describe_asyfm(void *ptr)
 
 int mus_asymmetric_fm_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ASYMMETRIC_FM));}
 
+/* TODO: for moving formant from asymmetric-fm, need access to "r" at run-time */
+
 Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
 {
   asyfm *gen = (asyfm *)ptr;
   Float result, mth;
   mth = gen->ratio * gen->phase;
-  result = exp(index * gen->cosr * cos(mth)) * mus_sin(gen->phase + gen->sinr * mus_sin(mth));
+  result = exp(index * gen->cosr * cos(mth)) * mus_sin(gen->phase + index * gen->sinr * mus_sin(mth));
+  /* second index factor added 4-Mar-02 */
   gen->phase += (gen->freq + fm);
   if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
@@ -1979,7 +1982,7 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
       gen->phase = phase;
       gen->r = r;
       gen->ratio = ratio;
-      gen->cosr = 0.5 * (r - (1.0 / r));
+      gen->cosr = 0.5 * (r - (1.0 / r)); /* 0.5 factor for I/2 */
       gen->sinr = 0.5 * (r + (1.0 / r));
       return((mus_any *)gen);
     }

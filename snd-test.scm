@@ -30,6 +30,7 @@
 ;;; TODO: gtk tests
 ;;; TODO: Xt selection tests?
 ;;; TODO: rest of Snd callbacks triggered
+;;; TODO: rest of CLM fm-arg tests
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -52,7 +53,7 @@
 
 (define tests 1)
 (define snd-test -1)
-(define keep-going #f)
+(define keep-going #t)
 (define full-test (< snd-test 0))
 (define total-tests 25)
 (define with-exit (< snd-test 0))
@@ -5325,6 +5326,32 @@
       (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 440.0 1.0))
       (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 440.0 0.0 3))
 
+      (let ((gen1 (make-sine-summation 1000 0 1 0.0 1))
+	    (gen2 (make-oscil 1000))
+	    (gen3 (make-sine-summation 1000 0 1 0.5 2))
+	    (gen4 (make-oscil 1000))
+	    (gen5 (make-oscil 3000))
+	    (v0 (make-vct 10)))
+
+	(call-with-current-continuation
+	 (lambda (give-up)
+	   (do ((i 0 (1+ i)))
+	       ((= i 100))
+	     (let ((ss (sine-summation gen1 0.0))
+		   (os (oscil gen2 0.0))
+		   (ss1 (sine-summation gen3 0.0))
+		   (os1 (+ (oscil gen4 0.0) 
+			   (* 0.5 (oscil gen5 0.0)))))
+	       (IF (ffneq ss os)
+		   (begin
+		     (snd-display ";sine-summation 1: ~A: os: ~A ss: ~A" i os ss)
+		     (give-up)))
+	       (IF (fneq ss1 os1)
+		   (begin
+		     (snd-display ";sine-summation 2: ~A: os1: ~A ss1: ~A" i os1 ss1)
+		     (give-up))))))))
+
+
       (let ((gen (make-asymmetric-fm 440.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -5337,11 +5364,66 @@
 	(IF (not (asymmetric-fm? gen)) (snd-display ";~A not asymmetric-fm?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";asymmetric-fm phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";asymmetric-fm frequency: ~F?" (mus-frequency gen)))
-	(IF (or (fneq (vct-ref v0 1) 0.248) (fneq (vct-ref v0 8) .962)) (snd-display ";asymmetric-fm output: ~A" v0)))
+	(IF (or (fneq (vct-ref v0 1) 0.248) (fneq (vct-ref v0 8) .843)) (snd-display ";asymmetric-fm output: ~A" v0)))
 
       (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 100.0))
       (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0 1.0))
       (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0 0.0 3))
+
+      (let ((gen1 (make-asymmetric-fm 1000 0 1.0 0.1))
+	    (gen2 (make-oscil 1000)))
+	(call-with-current-continuation
+	 (lambda (give-up)
+	   (do ((i 0 (1+ i)))
+	       ((= i 100))
+	     (let ((ss (asymmetric-fm gen1 0.0 0.0))
+		   (os (oscil gen2 0.0)))
+	       (IF (fneq ss os)
+		   (begin
+		     (snd-display ";asymmetric-fm 1: ~A: os: ~A ss: ~A" i os ss)
+		     (give-up))))))))
+
+      (let ((vct0 (make-vct 2048))
+	    (vct1 (make-vct 2048))
+	    (gen3 (make-asymmetric-fm 1000 0 1.0 0.2))
+	    (gen4 (make-oscil 1000))
+	    (gen5 (make-oscil 200))
+	    (fm1 (in-hz (* 1.0 .2 1000)))) ; make notions of "index" match
+	(do ((i 0 (1+ i)))
+	    ((= i 2048))
+	  (vct-set! vct0 i (asymmetric-fm gen3 1.0 0.0))
+	  (vct-set! vct1 i (oscil gen4 (* fm1 (oscil gen5)))))
+	(let* ((spectr1 (snd-spectrum vct0 rectangular-window 2048 #t))
+	       (spectr2 (snd-spectrum vct1 rectangular-window 2048 #t)))
+	  (call-with-current-continuation
+	   (lambda (give-up)
+	     (do ((i 1 (1+ i)))
+		 ((= i 512))
+	       (IF (ffneq (vct-ref spectr1 i) (vct-ref spectr2 i))
+		   (begin
+		     (snd-display ";asymmetric-fm 2: ~A: ~A ~A" (* i (/ 22050 2048)) (vct-ref spectr1 i) (vct-ref spectr2 i))
+		     (give-up))))))))
+
+      (let ((vct0 (make-vct 2048))
+	    (vct1 (make-vct 2048))
+	    (gen3 (make-asymmetric-fm 1000 0 2.0 0.1))
+	    (gen4 (make-asymmetric-fm 1000 0 0.5 0.1)))
+	(do ((i 0 (1+ i)))
+	    ((= i 2048))
+	  (vct-set! vct0 i (asymmetric-fm gen3 2.0 0.0))
+	  (vct-set! vct1 i (asymmetric-fm gen4 2.0 0.0)))
+	(let* ((spectr1 (snd-spectrum vct0 rectangular-window 2048 #t))
+	       (spectr2 (snd-spectrum vct1 rectangular-window 2048 #t))
+	       (s1-loc 0)
+	       (s2-loc 0))
+	  (do ((i 1 (1+ i)))
+	      ((= i 256))
+	    (if (< (abs (- 1.0 (vct-ref spectr1 i))) .01) (set! s1-loc i))
+	    (if (< (abs (- 1.0 (vct-ref spectr2 i))) .01) (set! s2-loc i)))
+	  (IF (> s2-loc s1-loc) (snd-display ";asymmetric-fm peaks: ~A ~A" s1-loc s2-loc))
+	  (let ((center (* (/ 22050 2048) (* .5 (+ s1-loc s2-loc)))))
+	    (IF (> (abs (- 1000 center)) 50) (snd-display ";asymmetric-fm center: ~A" center)))))
+
 
       (let ((gen (make-fir-filter 3 (list->vct '(.5 .25 .125))))
 	    (v0 (make-vct 10)))

@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 60
-#define MUS_DATE "20-Feb-02"
+#define MUS_REVISION 61
+#define MUS_DATE "5-Mar-02"
 
 /* 
+ * 5-Mar:      dumb typo in asymmetric-fm generator fixed.
  * 19-Feb:     buffer reallocation redundant free bugfix.
  * 25-Jan-02:  mus_increment of env returns base.
  * --------

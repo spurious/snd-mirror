@@ -490,3 +490,92 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;(rotate-phase (lambda (x) x) returns original
 ;(rotate-phase (lambda (x) (- x))) reverses original (might want to write fftlen samps here)
 
+
+;;; -------- asymmetric FM with the I0 form
+;;;
+;;; in CLM currently, you can't easily sweep "r" so the moving formant idea is hard to implement
+;;;   in this version, just (set! (asyfm-r gen) (env e)) (or whatever)
+
+(define* (make-asyfm #:key
+		     (frequency 440.0) (initial-phase 0.0)
+		     (ratio 1.0) (r 1.0)
+		     (index 1.0))
+  (list (hz->radians frequency) initial-phase ratio r index))
+		     
+(define asyfm-freq
+  (make-procedure-with-setter
+   (lambda (gen) (radians->hz (list-ref gen 0)))
+   (lambda (gen val) (list-set! gen 0 (hz->radians val)))))
+
+(define asyfm-phase
+  (make-procedure-with-setter
+   (lambda (gen) (list-ref gen 1))
+   (lambda (gen val) (list-set! gen 1 val))))
+
+(define asyfm-ratio
+  (make-procedure-with-setter
+   (lambda (gen) (list-ref gen 2))
+   (lambda (gen val) (list-set! gen 2 val))))
+
+(define asyfm-r
+  (make-procedure-with-setter
+   (lambda (gen) (list-ref gen 3))
+   (lambda (gen val) (list-set! gen 3 val))))
+
+(define asyfm-index
+  (make-procedure-with-setter
+   (lambda (gen) (list-ref gen 4))
+   (lambda (gen val) (list-set! gen 4 val))))
+
+(define (asyfm-J gen input)
+  (let* ((freq (list-ref gen 0))
+	 (phase (asyfm-phase gen))
+	 (ratio (asyfm-ratio gen))
+	 (r (asyfm-r gen))
+	 (r1 (/ 1.0 r))
+	 (index (asyfm-index gen))
+	 (modphase (* ratio phase))
+	 (result (* (exp (* 0.5 index (- r r1) (cos modphase)))
+		    (sin (+ phase (* 0.5 index (+ r r1) (sin modphase)))))))
+    (set! (asyfm-phase gen) (+ phase input freq))
+    result))
+
+;;; (let ((gen (make-asyfm :frequency 2000 :ratio .1))) (map-channel (lambda (n) (asyfm-J gen 0.0))))
+
+(define (I0 x)
+  (if (< (abs x) 3.75)
+      (let* ((y (expt (/ x 3.75) 2)))
+	(+ 1.0
+	   (* y (+ 3.5156229
+		   (* y (+ 3.0899424
+			   (* y (+ 1.2067492
+				   (* y (+ 0.2659732
+					   (* y (+ 0.360768e-1
+						   (* y 0.45813e-2)))))))))))))
+    (let* ((ax (abs x))
+	   (y (/ 3.75 ax)))
+      (* (/ (exp ax) (sqrt ax)) 
+	 (+ 0.39894228
+	    (* y (+ 0.1328592e-1
+		    (* y (+ 0.225319e-2
+			    (* y (+ -0.157565e-2
+				    (* y (+ 0.916281e-2
+					    (* y (+ -0.2057706e-1
+						    (* y (+ 0.2635537e-1
+							    (* y (+ -0.1647633e-1
+								    (* y 0.392377e-2))))))))))))))))))))
+
+(define (asyfm-I gen input)
+  (let* ((freq (list-ref gen 0))
+	 (phase (asyfm-phase gen))
+	 (ratio (asyfm-ratio gen))
+	 (r (asyfm-r gen))
+	 (r1 (/ 1.0 r))
+	 (index (asyfm-index gen))
+	 (modphase (* ratio phase))
+	 (result (* (exp (- (* 0.5 index (+ r r1) (cos modphase))
+			    (* 0.5 (log (I0 (* index (+ r r1)))))))
+		    (sin (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
+    (set! (asyfm-phase gen) (+ phase input freq))
+    result))
+

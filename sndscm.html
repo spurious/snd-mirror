@@ -275,6 +275,7 @@ the cursor is moved to the clicked point.
     <li>spike effect
     <li>easily-fooled autocorrelation-based pitch tracker 
     <li>zero-phase, rotate-phase
+    <li>asyfm
   </ul>
 
 <p>These are DSP-related procedures that aren't closely tied to CLM.
@@ -297,6 +298,7 @@ the cursor is moved to the clicked point.
   <em class=def><A NAME="excomputestring">compute-string</a></em>size x0 x1 x2 masses xsprings esprings damps haptics
   <em class=def><A NAME="exppitcher">spot-freq</a></em>
   <em class=def><A NAME="zerophase">zero-phase, rotate-phase</a></em>
+  <em class=def><A NAME="asyfm">both forms of asymmetric-fm</a></em>
 </pre>
 
 <p><i>dolph</i> is the Dolph-Chebyshev fft data window, taken
@@ -353,6 +355,12 @@ log10 arguments fall between 0.0 and 1.0.
 
 <p><i>zero-phase</i> and <i>rotate-phase</i> are fft-manipulators taken from
 the phazor package of Scott McNab.
+</p>
+
+<p><i>asyfm-J</i> is a Scheme version of the CLM asymmetric-fm generator;
+</i>asyfm-I</i> is the Modifier Bessel version of this generator.  In both
+cases, the "r" variable is accessible, so it's easy to experiment with 
+the moving formant idea mentioned in the original article.
 </p>
 
 

@@ -139,10 +139,13 @@ AC_ARG_WITH(ruby,
   	if test "$with_ruby" = yes ; then
             AC_MSG_CHECKING([for Ruby])
 	    RUBY_VERSION=`ruby -e 'puts RUBY_VERSION'`
+	    RUBY_RELEASE_DATE=`ruby -e 'puts RUBY_RELEASE_DATE'`
             if test "$RUBY_VERSION" > "0" ; then
 	      AC_DEFINE(HAVE_RUBY)
 	      AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
               AC_MSG_RESULT($RUBY_VERSION)
+              AC_DEFINE_UNQUOTED(RUBY_VERSION,"${RUBY_VERSION}")
+              AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
               if test x$ruby_prefix != x ; then
       		GUILE_CFLAGS=" -I$ruby_prefix"
                 GUILE_LIBS="-L$ruby_prefix"

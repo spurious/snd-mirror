@@ -667,7 +667,7 @@ static void autocorrelation(Float *data, int n)
   for (i = 0; i < n; i++) rl[i] = data[i];
 
   p = (int)(log(n + 1) / log(4.0));
-  if (n == (int)pow(4, p))
+  if (n == snd_ipow2(p * 2))
     {
       fht(p, rl);
       rl[0] *= rl[0];
@@ -1461,7 +1461,7 @@ static int apply_fft_window(fft_state *fs)
 	  /* to my surprise, it's smoother even on an old SGI to just do the fft in place */
 	  /*   hooray for micro-optimization! */
 	  p = (int)(log(fs->size + 1) / log(4.0));
-	  use_fht = ((p > 0) && (fs->size == (int)pow(4, p)));
+	  use_fht = ((p > 0) && (fs->size == snd_ipow2(p * 2)));
 	}
       if (use_fht)
 	for (i = 0; i < data_len; i++)
