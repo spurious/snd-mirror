@@ -2415,7 +2415,7 @@ Notes
 	    (,thunk (lambda () ,@(cddr func))))
        (if (= (rt-setjmp/setjmp) 0)
 	   (set! ,res (,thunk)))
-       ,res))
+       ,res)))
 
 	    
 (define-rt-macro (printf string . rest)
@@ -2488,7 +2488,7 @@ Notes
 	(das-func (string->symbol (eval-c-get-unique-name))))
     `(let ((,pthread <pthread_t>)
 	   (,das-func <int> (lambda ((<void-*> arg))
-				 (,thunk))))
+			      (,thunk))))
        (rt-create-thread/pthread_create ,pthread ,das-func))))
 (<rt-func> 'rt-create-thread/pthread_create '<int> '(<pthread_t> (<void-*> (<void-*>))))
 (define-c-macro (rt-create-thread/pthread_create pthread func)
@@ -3460,6 +3460,7 @@ return(xen_return_first(C_TO_XEN_DOUBLE(mus_polynomial(v->data, XEN_TO_C_DOUBLE(
 (<rt-func> 'rt-vct-length/vct-length '<int> '(<vct-*>))
 
 
+
 #!
 (define v (vct 2 3 4))
 (begin v)
@@ -3794,7 +3795,8 @@ return(xen_return_first(C_TO_XEN_DOUBLE(mus_polynomial(v->data, XEN_TO_C_DOUBLE(
   (cond ((not (list? term)) term)
 	((null? term) term)
 	((and (eq? 'let* (car term))
-
-(remove number? '(a b 9 c d))
+	      
+	      (remove number? '(a b 9 c d))
 
 !#
+

@@ -1662,7 +1662,7 @@ int fgetc (FILE
     "#define MAKE_FLOAT(a) scm_make_real((double)a)"
     "#define GET_SCM(a) (a)"
     "#define MAKE_SCM(a) (a)"
-    "#define POINTER_P(a) (scm_is_false(a) || ((SCM_BOOL_T == scm_list_p(a)) && XEN_STRING_P(SCM_CAR(a)) && SCM_NULLP(SCM_CDR(SCM_CDR(a))) && (SCM_BOOL_T ==scm_number_p(SCM_CAR(SCM_CDR(a))))))"
+    "#define POINTER_P(a) (scm_is_false(a) || ((SCM_BOOL_T == scm_list_p(a)) && (XEN_STRING_P(SCM_CAR(a))||scm_symbol_p(SCM_CAR(a))) && SCM_NULLP(SCM_CDR(SCM_CDR(a))) && (SCM_BOOL_T ==scm_number_p(SCM_CAR(SCM_CDR(a))))))"
     "#if HAVE_SCM_C_MAKE_RECTANGULAR"
     "#define XEN_STRING_P(Arg)           scm_is_string(Arg)"
     "#else"
@@ -1699,11 +1699,15 @@ int fgetc (FILE
 ;	   (public (,(car def) ,(cadr def) (lambda ,(cdr def)
 ;					   ,@body)))))
 
-(define-macro (define-c ret-type def . body)
-  `(eval-c ""
-	   (public (,ret-type ,(car def) (lambda ,(cdr def)
-					   ,@body)))))
+;(define-macro (define-c ret-type def . body)
+;  `(eval-c ""
+;	   (public (,ret-type ,(car def) (lambda ,(cdr def)
+;					   ,@body)))))
 
+(define-macro (define-c ret-type body)
+  `(eval-c ""
+	   (public (,ret-type ,(car body) (lambda ,(cadr body)
+					    ,@(cddr body))))))
 
 (eval-c ""
 	(<void-*> a_pointer)
