@@ -1697,17 +1697,17 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
 					  proc)));
 }
 
-static XEN g_transform_samples_size(XEN snd, XEN chn)
+static XEN g_transform_frames(XEN snd, XEN chn)
 {
-  #define H_transform_samples_size "(" S_transform_samples_size " (snd #f) (chn #f)): \
+  #define H_transform_frames "(" S_transform_frames " (snd #f) (chn #f)): \
 return a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
 If there is no transform graph, return 0; if " S_graph_once ", return " S_transform_size ",\
 and otherwise return a list (total-size active-bins active-slices)"
 
   chan_info *cp;
   sono_info *si;
-  ASSERT_CHANNEL(S_transform_samples_size, snd, chn, 1);
-  cp = get_cp(snd, chn, S_transform_samples_size);
+  ASSERT_CHANNEL(S_transform_frames, snd, chn, 1);
+  cp = get_cp(snd, chn, S_transform_frames);
   if (!(cp->graph_transform_p)) 
     return(XEN_ZERO);
   if (cp->transform_graph_type == GRAPH_ONCE)
@@ -1776,15 +1776,15 @@ return the current transform sample at bin and slice in snd channel chn (assumin
   return(XEN_FALSE);
 }  
 
-static XEN g_transform_samples_to_vct(XEN snd_n, XEN chn_n, XEN v)
+static XEN g_transform_to_vct(XEN snd_n, XEN chn_n, XEN v)
 {
-  #define H_transform_samples_to_vct "(" S_transform_samples_to_vct " (snd #f) (chn #f) (obj #f)): \
+  #define H_transform_to_vct "(" S_transform_to_vct " (snd #f) (chn #f) (obj #f)): \
 return a vct (obj if it's passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;
   vct *v1 = get_vct(v);
-  ASSERT_CHANNEL(S_transform_samples_to_vct, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_transform_samples_to_vct);
+  ASSERT_CHANNEL(S_transform_to_vct, snd_n, chn_n, 1);
+  cp = get_cp(snd_n, chn_n, S_transform_to_vct);
   if ((cp->graph_transform_p) && (cp->fft))
     {
       int len;
@@ -1890,16 +1890,16 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_ARGIFY_2(g_transform_samples_size_w, g_transform_samples_size)
+XEN_ARGIFY_2(g_transform_frames_w, g_transform_frames)
 XEN_ARGIFY_4(g_transform_sample_w, g_transform_sample)
-XEN_ARGIFY_3(g_transform_samples_to_vct_w, g_transform_samples_to_vct)
+XEN_ARGIFY_3(g_transform_to_vct_w, g_transform_to_vct)
 XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
 XEN_NARGIFY_5(g_add_transform_w, g_add_transform)
 XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
 #else
-#define g_transform_samples_size_w g_transform_samples_size
+#define g_transform_frames_w g_transform_frames
 #define g_transform_sample_w g_transform_sample
-#define g_transform_samples_to_vct_w g_transform_samples_to_vct
+#define g_transform_to_vct_w g_transform_to_vct
 #define g_autocorrelate_w g_autocorrelate
 #define g_add_transform_w g_add_transform
 #define g_snd_transform_w g_snd_transform
@@ -1950,12 +1950,11 @@ an integer, it is used as the starting point of the transform."
   XEN_DEFINE_CONSTANT(S_normalize_by_sound,    NORMALIZE_BY_SOUND,   H_normalize_by_sound);
   XEN_DEFINE_CONSTANT(S_normalize_globally,    NORMALIZE_GLOBALLY,   H_normalize_globally);
 
-  XEN_DEFINE_PROCEDURE(S_transform_samples_size, g_transform_samples_size_w, 0, 2, 0, H_transform_samples_size);
-  XEN_DEFINE_PROCEDURE(S_transform_sample,       g_transform_sample_w,       0, 4, 0, H_transform_sample);
-  XEN_DEFINE_PROCEDURE(S_transform_samples_to_vct,  g_transform_samples_to_vct_w,  0, 3, 0, H_transform_samples_to_vct);
-  XEN_DEFINE_PROCEDURE(S_autocorrelate,          g_autocorrelate_w,          1, 0, 0, H_autocorrelate);
-  XEN_DEFINE_PROCEDURE(S_add_transform,          g_add_transform_w,          5, 0, 0, H_add_transform);
-
-  XEN_DEFINE_PROCEDURE("snd-transform",          g_snd_transform_w,          2, 1, 0, "call transform code directly");
+  XEN_DEFINE_PROCEDURE(S_transform_frames,     g_transform_frames_w, 0, 2, 0, H_transform_frames);
+  XEN_DEFINE_PROCEDURE(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
+  XEN_DEFINE_PROCEDURE(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
+  XEN_DEFINE_PROCEDURE(S_autocorrelate,        g_autocorrelate_w,    1, 0, 0, H_autocorrelate);
+  XEN_DEFINE_PROCEDURE(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
+  XEN_DEFINE_PROCEDURE("snd-transform",        g_snd_transform_w,    2, 1, 0, "call transform code directly");
 }
 

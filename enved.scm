@@ -203,7 +203,7 @@
     (if (not (= audio-fd -1))
 	(let ((e (make-env (channel-envelope sound 0) :end (inexact->exact (floor (/ len bufsize))))))
 	  (do ((res #f (let* ((scaler (env e))
-			      (samps0 (samples->vct samp bufsize))
+			      (samps0 (channel->vct samp bufsize))
 			      (samps1 (vct-copy samps0)))
 			 (vct->sound-data (vct-scale! samps0 scaler) data 0)
 			 (vct->sound-data (vct-scale! samps1 (- 1.0 scaler)) data 1)

@@ -347,6 +347,7 @@
 	(begin
 	  (if (not (provided? 'snd-snd-gtk.scm)) (load "snd-gtk.scm"))
 	  (if (not (provided? 'snd-gtk-popup.scm)) (load "gtk-popup.scm")))))
+(if (not (provided? 'snd-snd7.scm)) (load "snd7.scm")) ; forward-graph
 
 ;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 
@@ -3556,7 +3557,6 @@
 ;;; ---------------- test 5: simple overall checks ----------------
 
 (if (not (provided? 'snd-snd4.scm)) (load "snd4.scm")) ; needed for various scan/map extensions
-(if (not (provided? 'snd-snd7.scm)) (load "snd7.scm")) ; forward-graph
 (define a-ctr 0)
 
 (define (test-edpos test-func func-name change-thunk ind1)
@@ -3709,7 +3709,7 @@
       (vct-set! v i (next-sample rs)))))
 
 (define (region2vct r c len)
-  (region-samples->vct 0 len r c))
+  (region->vct 0 len r c))
 
 (define old-opt-val (optimization))
 
@@ -3798,7 +3798,7 @@ EDITS: 1
    (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
- (set 0 1) ; set! sample [1:2]:
+ (set 0 1) ; set-sample 0 0.5000 [1:2]:
    (at 0, cp->sounds[1][0:0, 1.000]) [buf: 1] 
    (at 1, end_mark)
 ")))
@@ -3945,7 +3945,7 @@ EDITS: 5
 	    (snd-display ";new 15: ~A" (display-edits ind 0 12)))
 	(set! (sample 0) .5)
 	(if (not (string-=? (display-edits ind 0 13) "
- (set 0 1) ; set! sample [13:3]:
+ (set 0 1) ; set-sample 0 0.5000 [13:3]:
    (at 0, cp->sounds[7][0:0, 1.000]) [buf: 1] 
    (at 1, cp->sounds[6][1:1, 1.000]) [buf: 3] 
    (at 2, end_mark)
@@ -3953,7 +3953,7 @@ EDITS: 5
 	    (snd-display ";new 16: ~A" (display-edits ind 0 13)))
 	(set! (sample 1) .5)
 	(if (not (string-=? (display-edits ind 0 14) "
- (set 1 1) ; set! sample [14:3]:
+ (set 1 1) ; set-sample 1 0.5000 [14:3]:
    (at 0, cp->sounds[7][0:0, 1.000]) [buf: 1] 
    (at 1, cp->sounds[8][0:0, 1.000]) [buf: 1] 
    (at 2, end_mark)
@@ -4068,7 +4068,7 @@ EDITS: 5
 	(undo)
 	(set! (sample 4) .5)
 	(if (not (string-=? (display-edits ind 0 2) "
- (set 4 1) ; set! sample [2:4]:
+ (set 4 1) ; set-sample 4 0.5000 [2:4]:
    (at 0, cp->sounds[1][0:3, 1.000]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
    (at 5, cp->sounds[1][5:9, 1.000]) [buf: 10] 
@@ -4215,7 +4215,7 @@ EDITS: 5
 	(undo)
 	(set! (sample 4) .5)
 	(if (not (string-=? (display-edits ind 0 3) "
- (set 4 1) ; set! sample [3:6]:
+ (set 4 1) ; set-sample 4 0.5000 [3:6]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
@@ -4304,7 +4304,7 @@ EDITS: 5
 	(undo)
 	(pad-channel 4 1)
 	(if (not (string-=? (display-edits ind 0 3) "
- (silence 4 1) ; pad-channel from 4 for 1 [3:6]:
+ (silence 4 1) ; pad-channel 4 1 [3:6]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
    (at 4, cp->sounds[-1][0:0, 0.000])
@@ -4462,7 +4462,7 @@ EDITS: 5
 	  (undo)
 	  (pad-channel 4 2)
 	  (if (not (string-=? (display-edits ind 0 3) "
- (silence 4 2) ; pad-channel from 4 for 2 [3:4]:
+ (silence 4 2) ; pad-channel 4 2 [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[-1][0:1, 0.000])
    (at 6, cp->sounds[1][4:9, 1.000, [4]1.540 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
@@ -4472,7 +4472,7 @@ EDITS: 5
 	  (undo)
 	  (set! (sample 4) 1.0)
 	  (if (not (string-=? (display-edits ind 0 3) "
- (set 4 1) ; set! sample [3:4]:
+ (set 4 1) ; set-sample 4 1.0000 [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
    (at 5, cp->sounds[1][5:9, 1.000, [4]1.925 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
@@ -5271,7 +5271,7 @@ EDITS: 5
 	(undo)
 	(set! (sample 4) .5)
 	(if (not (string-=? (display-edits ind 0 4) "
- (set 4 1) ; set! sample [4:6]:
+ (set 4 1) ; set-sample 4 0.5000 [4:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.280]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
@@ -5539,7 +5539,7 @@ EDITS: 5
 	(undo)
 	(set! (sample 4) .5)
 	(if (not (string-=? (display-edits ind 0 4) "
- (set 4 1) ; set! sample [4:6]:
+ (set 4 1) ; set-sample 4 0.5000 [4:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [4]-0.000 -> 0.220, off: -0.000, scl: 0.200]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
@@ -5620,7 +5620,7 @@ EDITS: 5
 	(undo)
 	(set! (sample 4) .5)
 	(if (not (string=? (display-edits ind 0 4) "
- (set 4 1) ; set! sample [4:6]:
+ (set 4 1) ; set-sample 4 0.5000 [4:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280, [4]0.693 -> 1.040, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
@@ -5708,7 +5708,7 @@ EDITS: 5
 	(undo)
 	(set! (sample 4) .5)
 	(if (not (string-=? (display-edits ind 0 5) "
- (set 4 1) ; set! sample [5:6]:
+ (set 4 1) ; set-sample 4 0.5000 [5:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.280, [4]0.693 -> 1.040, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
@@ -5966,7 +5966,7 @@ EDITS: 5
 	(undo)
 	(set! (sample 4) .5)
 	(if (not (string=? (display-edits ind 0 4) "
- (set 4 1) ; set! sample [4:6]:
+ (set 4 1) ; set-sample 4 0.5000 [4:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [4]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [3]0.000 -> 0.693, [4]0.139 -> 0.208, off: -1.000, scl: 1.000, off2: 0.187, scl2: 0.013]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
@@ -6216,7 +6216,7 @@ EDITS: 5
 	(undo)
 	(set! (sample 4) .5)
 	(if (not (string-=? (display-edits ind 0 5) "
- (set 4 1) ; set! sample [5:6]:
+ (set 4 1) ; set-sample 4 0.5000 [5:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.300, [3]0.200 -> 0.280]) [buf: 11] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
@@ -7066,7 +7066,7 @@ EDITS: 5
 	  (set! k (disk-kspace "/baddy/hiho"))
 	  (if (not (= k -1))
 	      (snd-display ";disk-kspace of bogus file = ~A" (disk-kspace "/baddy/hiho"))))
-	(if (not (= (transform-samples-size) 0)) (snd-display ";transform-samples-size ~A?" (transform-samples-size)))
+	(if (not (= (transform-frames) 0)) (snd-display ";transform-frames ~A?" (transform-frames)))
 	(set! (transform-graph?) #t)
 	(let ((pk (fft-peak index 0 1.0)))
 	  (if (not pk) (snd-display ";fft-peak? ")))
@@ -7108,9 +7108,9 @@ EDITS: 5
 	(if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) (snd-display ";def fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
 	(set! (x-axis-label index 0 transform-graph) "fourier")
 	(if (not (string=? (x-axis-label index 0 transform-graph) "fourier")) (snd-display ";fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
-	(if (and (number? (transform-samples-size))
-		 (= (transform-samples-size) 0))
-	    (snd-display ";transform-graph? transform-samples-size ~A?" (transform-samples-size)))
+	(if (and (number? (transform-frames))
+		 (= (transform-frames) 0))
+	    (snd-display ";transform-graph? transform-frames ~A?" (transform-frames)))
 	(update-transform-graph)
 	(peaks "tmp.peaks")
 	(if (defined? 'read-line)
@@ -7264,7 +7264,7 @@ EDITS: 5
 	  (if (fneq (region-maxamp r0) (maxamp index)) (snd-display ";region-maxamp: ~A?" (region-maxamp r0)))
 	  (if (fneq (selection-maxamp index 0) (maxamp index)) (snd-display ";selection-maxamp: ~A?" (selection-maxamp index 0)))
 	  (let ((samps1 (samples->vct 0 50827 index 0))
-		(samps2 (region-samples->vct 0 50828 r0 0))
+		(samps2 (region->vct 0 50828 r0 0))
 		(vr (make-sample-reader 0 index 0 1)))
 	    (if (not (sample-reader? vr)) (snd-display ";~A not sample-reader?" vr))
 	    (if (not (= (sample-reader-position vr) 0)) (snd-display ";initial sample-reader-position: ~A" (sample-reader-position vr)))
@@ -7273,12 +7273,12 @@ EDITS: 5
 	    (if (sample-reader-at-end? vr) (snd-display ";~A init at end?" vr))
 	    (let ((err (catch #t
 			      (lambda ()
-				(region-samples->vct -1 1233 r0))
+				(region->vct -1 1233 r0))
 			      (lambda args (car args)))))
 	      (if (not (eq? err 'no-such-sample)) (snd-display ";region->vct -1: ~A" err)))
 	    (let ((err (catch #t
 			      (lambda ()
-				(region-samples->vct 12345678 1 r0))
+				(region->vct 12345678 1 r0))
 			      (lambda args (car args)))))
 	      ;; should this return 'no-such-sample?
 	      (if err (snd-display ";region->vct 12345678: ~A" err)))
@@ -7412,7 +7412,7 @@ EDITS: 5
 	    (select-all index) 
 	    (let ((rread (make-region-sample-reader 0 (car (regions))))
 		  (sread (make-sample-reader 0 index))
-		  (rvect (region-samples->vct 0 100 (car (regions))))
+		  (rvect (region->vct 0 100 (car (regions))))
 		  (svect (samples 0 100 index)))
 	      (if (fneq (vct-ref rvect 1) (region-sample 1 (car (regions))))
 		  (snd-display ";region-sample: ~A ~A?" (region-sample 1 (car (regions))) (vct-ref rvect 1)))
@@ -7585,7 +7585,7 @@ EDITS: 5
 	  (vct-fill! v0 0.0)
 	  (vct-set! v0 10 .5)
 					;(vct->samples 0 128 v0 index 0) 
-	  (vct->samples v0)
+	  (vct->channel v0)
 	  (select-all) 
 	  (set! (sinc-width) 40)
 	  (src-selection 0.5) 
@@ -7596,7 +7596,7 @@ EDITS: 5
 	  (vct-fill! v0 0.0)
 	  (vct-set! v0 10 .5)
 					;(vct->samples 0 128 v0 index 0) 
-	  (vct->samples 0 v0)
+	  (vct->channel v0 0)
 	  (select-all) 
 	  (filter-selection '(0 0 .1 1 1 0) 40) 
 	  (set! v0 (samples->vct 0 128 index 0 v0)) 
@@ -8025,10 +8025,10 @@ EDITS: 5
 	  (if (ffneq (amp-control ind) 1.0) (snd-display ";amp-control (1.0): ~A?" (amp-control ind)))
 	  (if (ffneq (amp-control ind 0) .25) (snd-display ";amp-control 0 after set (.25): ~A?" (amp-control ind 0)))
 	  (set! (transform-graph-type ind 0) graph-as-sonogram)
-	  (if (not (= (transform-samples-size ind 0) 0)) 
-	      (snd-display ";transform-samples-size: ~A" (transform-samples-size ind 0)))
+	  (if (not (= (transform-frames ind 0) 0)) 
+	      (snd-display ";transform-frames: ~A" (transform-frames ind 0)))
 	  (if (transform-sample 0 0 ind 0) (snd-display ";transform-sample (empty): ~A" (transform-sample 0 0 ind 0)))
-	  (if (transform-samples->vct ind 0) (snd-display ";transform-samples->vct (empty): ~A" (transform-samples->vct ind 0)))
+	  (if (transform->vct ind 0) (snd-display ";transform->vct (empty): ~A" (transform->vct ind 0)))
 	  (close-sound ind)
 	  (set! ind (open-sound "4.aiff"))
 	  (if (ffneq (amp-control ind) 1.0) (snd-display ";amp-control upon open (1.0): ~A?" (amp-control ind)))
@@ -9277,7 +9277,7 @@ EDITS: 5
 	      (snd-display ";channel edits: ~A" (edits index)))
 	  (let ((old-max (maxamp index #t))
 		(regdata (map (lambda (n)
-				(region-samples->vct 0 10 n))
+				(region->vct 0 10 n))
 			      (regions)))
 		(old-pos0 (edit-position index 0))
 		(old-pos1 (edit-position index 1))
@@ -9294,8 +9294,8 @@ EDITS: 5
 	    (if (not (equal? old-reglen (map region-frames (regions))))
 		(snd-display ";region-frames after save: ~A ~A" old-reglen (map region-frames (regions))))
 	    (for-each (lambda (n data)
-			(if (not (vequal data (region-samples->vct 0 10 n)))
-			    (snd-display ";region after save ~A: ~A ~A" n data (region-samples->vct 0 10 n))))
+			(if (not (vequal data (region->vct 0 10 n)))
+			    (snd-display ";region after save ~A: ~A ~A" n data (region->vct 0 10 n))))
 		      (regions)
 		      regdata)
 	    (set! index (find-sound "fmv.snd"))
@@ -22344,7 +22344,7 @@ EDITS: 5
 	 (set! (transform-graph-type fd 0) dpy-type)
 	 (set! (transform-type fd 0) fft-type)
 	 (update-transform-graph fd 0)
-	 (transform-samples->vct fd 0))
+	 (transform->vct fd 0))
        (list graph-once graph-as-sonogram graph-as-spectrogram
 	     graph-once graph-as-sonogram graph-as-spectrogram)
        (list fourier-transform fourier-transform fourier-transform 
@@ -22840,7 +22840,7 @@ EDITS: 5
 		       (if (and (transform-graph? snd chn) 
 				(= (transform-graph-type snd chn) graph-once))
 			   (report-in-minibuffer 
-			    (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn)))
+			    (number->string (/ (* 2.0 (vct-peak (transform->vct snd chn)))
 					       (transform-size snd chn)))
 			    snd)
 			   #f)))
@@ -23842,9 +23842,6 @@ EDITS: 5
 	      (if (not (eq? (channel->vct) #f)) (snd-display ";channel->vct of empty file (z): ~A" (channel->vct)))
 	      (if (fneq (maxamp ind) 0.0) (snd-display ";maxamp z.snd ~A" (maxamp ind)))
 	      (if (fneq (sample 100 ind) 0.0) (snd-display ";sample 100 z.snd ~A" (sample 100 ind)))
-	      (let ((var (catch #t (lambda () (samples->vct 1)) (lambda args args))))
-		(if (not (eq? (car var) 'out-of-range))
-		    (snd-display ";samples->vct null: ~A" var)))
 	      (scale-by 2.0)
 	      (if (not (= (edit-position ind 0) 0)) (snd-display ";scale z: ~A" (edit-position ind 0)))
 	      (env-sound '(0 0 1 1))
@@ -25560,7 +25557,7 @@ EDITS: 5
 	    (time (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048)) ; convolution
 	    (revert-sound ind)
 	    (let ((reg (make-region 0 123000 ind 0))) ; force copy branch to execute
-	      (region-samples->vct 0 10 reg 0 (make-vct 10)))
+	      (region->vct 0 10 reg 0 (make-vct 10)))
 	    (ramp-channel 0.0 1.0)
 	    (ramp-channel 0.0 1.0)
 	    (ramp-channel 0.0 1.0)
@@ -25720,7 +25717,7 @@ EDITS: 5
 	(set! (show-selection-transform) #t)
 	(set! (selection-frames) 300)
 	(update-transform-graph)
-	(let* ((data (transform-samples->vct))
+	(let* ((data (transform->vct))
 	       (peak (vct-peak data)))
 	  (if (< peak 40.0) (snd-display ";transform selection peak: ~A" peak))
 	  (if (> (* .5 peak) (vct-ref data 51)) (snd-display ";transform selection at 51: ~A, peak: ~A" (vct-ref data 51) peak)))
@@ -25728,7 +25725,7 @@ EDITS: 5
 	 (lambda (pad)
 	   (set! (zero-pad) pad)
 	   (update-transform-graph)
-	   (let* ((data (transform-samples->vct))
+	   (let* ((data (transform->vct))
 		  (peak (vct-peak data))
 		  (pval (vct-ref data (inexact->exact (floor (* .1 (vct-length data)))))))
 	     (if (> (* .5 peak) pval)
@@ -27692,52 +27689,7 @@ EDITS: 5
 		  (fneq (sample 50) 1.0))
 	      (snd-display ";cosine-chan with edits: ~A"
 			   (map sample (list 12 0 25 30 20 21 31 50))))
-	  (if (and (> (optimization) 0)
-		   (not (string=? (display-edits) (string-append "
-EDITS: 6
-
- (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 0.000]) [file: /home/bil/cl/test.snd[0]]
-   (at 1, end_mark)
-
- (silence 0 100) ; insert-silence from 0 for 100 [1:3]:
-   (at 0, cp->sounds[-1][0:99, 0.000])
-   (at 100, cp->sounds[0][0:0, 0.000]) [file: /home/bil/cl/test.snd[0]]
-   (at 101, end_mark)
-
- (set 0 101) ; map-channel [2:2]:
-   (at 0, cp->sounds[1][0:100, 1.000]) [buf: 101] 
-   (at 101, end_mark)
-
- (ptree[0] 0 101) ; ptree 0 0 101 [3:2]:
-   (at 0, cp->sounds[1][0:100, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 101, end_mark)
-
- (delete 10 1) ; delete-sample [4:3]:
-   (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:100, 1.000, loc: 0, pos: 11, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 100, end_mark)
-
- (set 20 1) ; set! sample [5:5]:
-   (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:20, 1.000, loc: 0, pos: 11, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 20, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 21, cp->sounds[1][22:100, 1.000, loc: 0, pos: 22, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 100, end_mark)
-
- (silence 30 1) ; insert-silence from 30 for 1 [6:7]:
-   (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:20, 1.000, loc: 0, pos: 11, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 20, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 21, cp->sounds[1][22:30, 1.000, loc: 0, pos: 22, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 30, cp->sounds[-1][0:0, 0.000])
-   (at 31, cp->sounds[1][31:100, 1.000, loc: 0, pos: 31, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 101, end_mark)
-"))))
-	      (snd-display ";cosine channel edits: ~A"
-			   (display-edits)))
 	  (close-sound ind))
-	
 	
 	(let ((ind (open-sound "oboe.snd")))
 	  (scale-by 0.0)
@@ -27762,7 +27714,7 @@ EDITS: 3
    (at 0, cp->sounds[0][0:50827, 1.000, loc: 0, pos: 0, scl: 0.000, code: (lambda (y) (+ y 0.1))]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 
- (set 100 1) ; set! sample [3:4]:
+ (set 100 1) ; set-sample 100 0.0500 [3:4]:
    (at 0, cp->sounds[0][0:99, 1.000, loc: 0, pos: 0, scl: 0.000, code: (lambda (y) (+ y 0.1))]) [file: " cwd "oboe.snd[0]]
    (at 100, cp->sounds[1][0:0, 1.000]) [buf: 1] 
    (at 101, cp->sounds[0][101:50827, 1.000, loc: 0, pos: 101, scl: 0.000, code: (lambda (y) (+ y 0.1))]) [file: " cwd "oboe.snd[0]]
@@ -30316,11 +30268,11 @@ EDITS: 1
       (revert-sound nind)
       (set! sfile nind)
       (load "hiho.scm")
-      (if (not (equal? (edit-fragment 1) '("set! sample" "set" 1 1))) (snd-display ";save-edit-history 1: ~A?" (edit-fragment 1)))
+      (if (not (equal? (edit-fragment 1) '("set-sample 1 0.5000" "set" 1 1))) (snd-display ";save-edit-history 1: ~A?" (edit-fragment 1)))
       (if (not (equal? (edit-fragment 2) '("delete-sample" "delete" 100 1))) (snd-display ";save-edit-history 2: ~A?" (edit-fragment 2)))
-      (if (not (equal? (edit-fragment 3) '("insert-sample" "insert" 10 1))) (snd-display ";save-edit-history 3: ~A?" (edit-fragment 3)))
+      (if (not (equal? (edit-fragment 3) '("insert-sample 10 0.5000" "insert" 10 1))) (snd-display ";save-edit-history 3: ~A?" (edit-fragment 3)))
       (if (not (equal? (edit-fragment 4) '("scale-channel 2.000 0 50828" "scale" 0 50828))) (snd-display ";save-edit-history 4: ~A?" (edit-fragment 4)))
-      (if (not (equal? (edit-fragment 5) '("pad-channel from 100 for 20" "zero" 100 20))) (snd-display ";save-edit-history 5: ~A?" (edit-fragment 5)))
+      (if (not (equal? (edit-fragment 5) '("pad-channel 100 20" "zero" 100 20))) (snd-display ";save-edit-history 5: ~A?" (edit-fragment 5)))
       (let ((str (display-edits)))
 	(if (not (string=? str (string-append "
 EDITS: 5
@@ -30329,7 +30281,7 @@ EDITS: 5
    (at 0, cp->sounds[0][0:50827, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 
- (set 1 1) ; set! sample [1:4]:
+ (set 1 1) ; set-sample 1 0.5000 [1:4]:
    (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 1.000]) [buf: 1] 
    (at 2, cp->sounds[0][2:50827, 1.000]) [file: " cwd "oboe.snd[0]]
@@ -31595,7 +31547,7 @@ EDITS: 2
 	      (set! (transform-graph-type ind 0) graph-once)
 	      (set! (transform-graph? ind 0) #t)
 	      (set! (cursor ind 0) 12000)
-	      (let* ((samps (transform-samples->vct ind 0)))
+	      (let* ((samps (transform->vct ind 0)))
 		(if (fneq (vct-ref samps 2) .002)
 		    (snd-display ";add-transform filtering (~A): ~A" ftype samps)))
 	      (save-state "s61.scm")
@@ -31615,7 +31567,7 @@ EDITS: 2
 	      (set! (transform-graph-type ind 0) graph-once)
 	      (set! (transform-graph? ind 0) #t)
 	      (set! (cursor ind 0) 12000)
-	      (let* ((samps (transform-samples->vct ind 0))
+	      (let* ((samps (transform->vct ind 0))
 		     (orig (channel->vct (left-sample ind 0) 256)))
 		(call-with-current-continuation
 		 (lambda (break)
@@ -31638,10 +31590,10 @@ EDITS: 2
 	      (set! (transform-graph-type ind1 0) graph-as-sonogram)
 	      (set! (transform-size) 256)
 	      (update-transform-graph)
-	      (let ((size (transform-samples-size ind1 0)))
+	      (let ((size (transform-frames ind1 0)))
 		(if (or (number? size)
 			(not (= (length size) 3)))
-		    (snd-display ";transform-samples-size of sonogram: ~A" size)))
+		    (snd-display ";transform-frames of sonogram: ~A" size)))
 	      (graph->ps "aaa.eps")
 	      (catch #t
 		     (lambda ()
@@ -37017,9 +36969,6 @@ EDITS: 2
 		(close-sound ind))))
 
 	    (let ((ind (open-sound "oboe.snd")))
-	      (let ((val (run (lambda () (samples->vct 1000 10 ind 0 (make-vct 10))))))
-		(if (not (vequal val (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
-		    (snd-display ";run samples->vct: ~A" val)))
 	      ;; check that sequestering works with init-func/ptree-channel
 	      (ring-modulate-channel 100)
 	      (make-region 0 10000)
@@ -49808,12 +49757,12 @@ EDITS: 2
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
 		     recorder-out-chans recorder-out-format recorder-out-type recorder-srate recorder-trigger redo region-chans view-regions-dialog
-		     region-graph-style region-frames region-position region-maxamp selection-maxamp region-sample region-samples->vct
+		     region-graph-style region-frames region-position region-maxamp selection-maxamp region-sample region->vct
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 		     restore-marks restore-region reverb-control-decay reverb-control-feedback 
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
 		     reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples sample-reader-position
-		     samples->vct samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
+		     samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
 		     save-listener save-marks save-region save-selection save-sound save-sound-as
 		     save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to scale-sound-by
 		     scale-sound-to scan-chan search-procedure select-all select-channel select-sound
@@ -49828,9 +49777,9 @@ EDITS: 2
 		     ;start-playing 
 		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
 		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
-		     transform-samples->vct transform-samples-size transform-type trap-segfault optimization unbind-key undo
+		     transform->vct transform-frames transform-type trap-segfault optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
-		     vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
+		     vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style 
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider
@@ -50415,11 +50364,11 @@ EDITS: 2
 			      time-graph-style lisp-graph-style transform-graph-style
 			      left-sample make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region
 			      transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound
-			      revert-sound right-sample sample samples->vct samples->sound-data save-sound save-sound-as scan-chan
+			      revert-sound right-sample sample samples->sound-data save-sound save-sound-as scan-chan
 			      select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
 			      spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle  grid-density
 			      spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample
-			      transform-samples->vct transform-samples-size transform-type update-transform-graph update-time-graph
+			      transform->vct transform-frames transform-type update-transform-graph update-time-graph
 			      update-lisp-graph update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds
 			      x-position-slider x-zoom-slider x-axis-label y-bounds y-position-slider y-zoom-slider zero-pad))
 	      (gc))
@@ -50442,10 +50391,10 @@ EDITS: 2
 			      time-graph-style lisp-graph-style transform-graph-style
 			      make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region transform-normalization
 			      peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample
-			      samples->vct samples->sound-data save-sound-as scan-chan show-axes show-transform-peaks show-marks
+			      samples->sound-data save-sound-as scan-chan show-axes show-transform-peaks show-marks
 			      show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			      spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
-			      transform-sample transform-samples->vct transform-samples-size transform-type
+			      transform-sample transform->vct transform-frames transform-type
 			      update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
 			      wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider x-axis-label y-bounds y-position-slider
 			      y-zoom-slider zero-pad)))
@@ -50468,11 +50417,11 @@ EDITS: 2
 			      time-graph-style lisp-graph-style transform-graph-style
 			      make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info play
 			      play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample
-			      samples->vct samples->sound-data save-sound scale-by scale-to show-axes show-transform-peaks
+			      samples->sound-data save-sound scale-by scale-to show-axes show-transform-peaks
 			      show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			      spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
-			      src-sound transform-sample transform-samples->vct scale-sound-by scale-sound-to
-			      transform-samples-size transform-type undo update-transform-graph update-time-graph update-lisp-graph
+			      src-sound transform-sample transform->vct scale-sound-by scale-sound-to
+			      transform-frames transform-type undo update-transform-graph update-time-graph update-lisp-graph
 			      update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
 			      x->position x-zoom-slider y-bounds y-position-slider x-axis-label y->position y-zoom-slider zero-pad scale-channel)))
 	    
@@ -50524,8 +50473,8 @@ EDITS: 2
 			      reverse-sound right-sample show-axes show-transform-peaks show-marks 
 			      show-mix-waveforms show-y-zero show-grid show-sonogram-cursor  grid-density
 			      spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
-			      spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-samples->vct
-			      transform-samples-size transform-type update-transform-graph update-time-graph update-lisp-graph
+			      spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform->vct
+			      transform-frames transform-type update-transform-graph update-time-graph update-lisp-graph
 			      wavelet-type time-graph?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x-axis-label
 			      x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad channel-properties))
 	      (close-sound index))
@@ -50548,7 +50497,7 @@ EDITS: 2
 			      min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes  grid-density
 			      show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectro-cutoff spectro-hop
 			      spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
-			      spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type
+			      spectro-z-scale squelch-update transform->vct transform-frames transform-type
 			      update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
 			      wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
 			      y-zoom-slider zero-pad x-axis-label
@@ -50663,7 +50612,7 @@ EDITS: 2
 					    (snd-display ";~D: region procs ~A: ~A ~A" ctr n tag arg))
 					(set! ctr (+ ctr 1))))
 				    (list play-region region-chans region-frames region-position region-maxamp region-sample 
-					  region-samples->vct region-srate forget-region))))
+					  region->vct region-srate forget-region))))
 		      (list (current-module) '#(0 1) (sqrt -1.0) "hiho" (list 0 1)))
 	    
 	    (let ((ctr 0))
@@ -50980,13 +50929,11 @@ EDITS: 2
 	      (check-error-tag 'no-such-channel (lambda () (region-sample 0 (car (regions)) 1234)))
 	      (check-error-tag 'no-such-channel (lambda () (region-frames (car (regions)) 1234)))
 	      (check-error-tag 'no-such-channel (lambda () (region-position (car (regions)) 1234)))
-	      (check-error-tag 'no-such-region (lambda () (region-samples->vct 0 1 -1)))
-	      (check-error-tag 'no-such-channel (lambda () (region-samples->vct 0 1 (car (regions)) 1234)))
+	      (check-error-tag 'no-such-region (lambda () (region->vct 0 1 -1)))
+	      (check-error-tag 'no-such-channel (lambda () (region->vct 0 1 (car (regions)) 1234)))
 	      (check-error-tag 'cannot-save (lambda () (save-sound-as "/bad/baddy.snd")))
 	      (check-error-tag 'no-such-sound (lambda () (transform-sample 0 1 1234)))
 	      (check-error-tag 'no-such-channel (lambda () (transform-sample 0 1 ind 1234)))
-	      (check-error-tag 'no-such-sound (lambda () (samples->vct 0 100 1234)))
-	      (check-error-tag 'no-such-channel (lambda () (samples->vct 0 100 ind 1234)))
 	      (check-error-tag 'no-such-sound (lambda () (samples->sound-data 0 100 1234)))
 	      (check-error-tag 'no-such-channel (lambda () (samples->sound-data 0 100 ind 1234)))
 	      (check-error-tag 'no-such-sound (lambda () (graph (vct 0 1) "hi" 0 1 0 1 1234)))

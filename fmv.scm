@@ -62,7 +62,7 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 	      :amp-env (let ((e (make-env :envelope '(0 0 1 1 2 0) 
 					  :scaler amp :end dur)))
 			 (lambda () (env e)))))
-	  (data (samples->vct beg dur)))
+	  (data (channel->vct beg dur)))
       (do ((i 0 (1+ i))) ((= i dur))
 	(vct-set! data i (+ (vct-ref data i) (v))))
       (vct->channel data beg dur))))"
@@ -132,7 +132,7 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 					  :scaler amp 
 					  :end dur)))
 			 (lambda () (env e)))))
-	  (data (samples->vct beg dur)))
+	  (data (channel->vct beg dur)))
       (do ((i 0 (1+ i)))
 	  ((= i dur))
 	(vct-set! data i (+ (vct-ref data i)
@@ -152,7 +152,7 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 			 (lambda () (env e)))
 	      :fm1-env (let ((osc (make-oscil 100.0)))
 			 (lambda () (oscil osc)))))
-	  (data (samples->vct beg dur)))
+	  (data (channel->vct beg dur)))
       (do ((i 0 (1+ i)))
 	  ((= i dur))
 	(vct-set! data i (+ (vct-ref data i)

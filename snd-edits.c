@@ -4255,6 +4255,9 @@ off_t edit_changes_end_at(chan_info *cp, int edpos)
   return(0);
 }
 
+
+/* ---------------- edit list display, save, etc ---------------- */
+
 static char edbuf[PRINT_BUFFER_SIZE];
 char *edit_to_string(chan_info *cp, int edit)
 {
@@ -4602,7 +4605,8 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 			  TO_PROC_NAME(S_insert_samples_with_origin),
 			  ed->beg,
 			  ed->len,
-			  (ed->origin) ? ed->origin : "");
+			  S_insert_samples);
+		  /* was origin here ^, but there can be embedded file names, so \\\ is needed upon output */
 		  nfile = edit_data_to_file(fd, ed, cp);
 		  fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
 		  break;
@@ -4762,7 +4766,6 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		{
 		case INSERTION_EDIT: 
 		  /* insert-samples problem: where did the data come from? (channel->vct for example data may have changed)
-		   * apply-controls and several sig (convolve) use delete/insert sequence for selection-relative edits + backup -- as-one-edit origin?
 		   */
 		  function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  /* this assumes snd chn as trailing op args -- ok for insert-sample|sound|region|selection */
@@ -4770,6 +4773,9 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		case CHANGE_EDIT:
 		  /* similar to insertion, but worse -- src etc */
 		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+
+		  /* if smooth-selection, it doesn't take the snd chn trailers */
+
 		  break;
 		case DELETION_EDIT:
 		  function = mus_format("%s (%s " OFF_TD " " OFF_TD " snd chn)", function, S_delete_samples, ed->beg, ed->len);
@@ -8106,7 +8112,9 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   /* each call consitutes a separate edit from the undo/redo point-of-view */
   chan_info *cp;
   int pos;
+  char *origin;
   off_t beg;
+  Float fval;
   mus_sample_t ival[1];
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_setB S_sample, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_sample, "a number");
@@ -8116,9 +8124,12 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(samp_n))
     beg = beg_to_sample(samp_n, S_setB S_sample);
   else beg = CURSOR(cp);
-  ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
-  if (change_samples(beg, 1, ival, cp, LOCK_MIXES, S_setB S_sample, pos))
+  fval = XEN_TO_C_DOUBLE(val);
+  ival[0] = MUS_FLOAT_TO_SAMPLE(fval);
+  origin = mus_format("set-sample " OFF_TD " %.4f", beg, fval);
+  if (change_samples(beg, 1, ival, cp, LOCK_MIXES, origin, pos))
     update_graph(cp);
+  FREE(origin);
   return(val);
 }
 
@@ -8257,36 +8268,6 @@ static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd_n, XE
   return(g_set_samples(XEN_ZERO, samps, filename, snd_n, chn_n, XEN_TRUE, origin, XEN_ZERO, XEN_FALSE, XEN_FALSE));
 }
 
-
-static XEN g_vct_to_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan)
-{
-  #define H_vct_to_samples "(" S_vct_to_samples " start-samp samps data (snd #f) (chn #f) (truncate #f) (edname #f) (infile-chan 0)): \
-set snd's channel chn's samples starting at start-samp for samps from data (a vct); \
-start-samp can be beyond current data end; if truncate is #t and start-samp is 0, the end of the file is set to match \
-the new data's end.  start-samp can also be a vct, as can samps."
-
-  vct *v;
-  if (VCT_P(samp_0))
-    {
-      v = TO_VCT(samp_0);
-      if (XEN_INTEGER_P(samps))
-	return(g_set_samples(XEN_ZERO, samps, samp_0, 
-			     XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-      else return(g_set_samples(XEN_ZERO, C_TO_XEN_INT(v->length), samp_0, 
-				XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-    }
-  else
-    {
-      if ((XEN_INTEGER_P(samp_0)) && (VCT_P(samps)))
-	{
-	  v = TO_VCT(samps);
-	  return(g_set_samples(samp_0, C_TO_XEN_INT(v->length), samps, 
-			       XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-	}
-    }
-  return(g_set_samples(samp_0, samps, vect, snd_n, chn_n, truncate, edname, infile_chan, XEN_UNDEFINED, XEN_UNDEFINED));
-}
-
 static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_vct_to_channel "(" S_vct_to_channel " vct (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
@@ -8302,14 +8283,13 @@ set snd's channel chn's samples starting at beg for dur samps from vct data"
   return(g_set_samples(beg, dur, v, snd_n, chn_n, XEN_FALSE, C_TO_XEN_STRING(S_vct_to_channel), XEN_FALSE, edpos, XEN_UNDEFINED));
 }
 
-static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos, const char *caller)
+static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos, const char *caller)
 {
   chan_info *cp;
   snd_fd *sf;
   Float *fvals;
   off_t i, len, beg;
   int pos;
-  vct *v1 = get_vct(v);
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, caller, "a number");
   ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
@@ -8319,13 +8299,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, 
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, cp->samples[pos] - beg);
   if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
   if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
-  if (v1)
-    {
-      fvals = v1->data;
-      if (len > v1->length)
-	len = v1->length;
-    }
-  else fvals = (Float *)MALLOC(len * sizeof(Float));
+  fvals = (Float *)MALLOC(len * sizeof(Float));
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf)
     {
@@ -8333,18 +8307,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, 
 	fvals[i] = read_sample_to_float(sf);
       free_snd_fd(sf);
     }
-  if (v1)
-    return(v);
-  else return(make_vct(len, fvals));
-}
-
-static XEN g_samples_to_vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos)
-{
-  #define H_samples_to_vct "(" S_samples_to_vct " (start-samp 0) (samps len) (snd #f) (chn #f) (vct-obj #f) (edpos #f)): \
-return a vct (vct-obj if given) containing snd channel chn's data starting at start-samp for samps, \
-reading edit version edpos (defaulting to the current version)"
-
-  return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, v, edpos, S_samples_to_vct));
+  return(make_vct(len, fvals));
 }
 
 static XEN g_channel_to_vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
@@ -8352,7 +8315,7 @@ static XEN g_channel_to_vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
   #define H_channel_to_vct "(" S_channel_to_vct " (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
 return a vct containing snd channel chn's data starting at beg for dur samps"
 
-  return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_channel_to_vct));
+  return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, edpos, S_channel_to_vct));
 }
 
 static XEN g_samples(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
@@ -8361,7 +8324,7 @@ static XEN g_samples(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 return a vct containing snd channel chn's samples starting a start-samp for samps samples; edpos is the edit \
 history position to read (defaults to current position)."
 
-  return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_samples));
+  return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, edpos, S_samples));
 }
 
 #if HAVE_GUILE
@@ -8502,7 +8465,7 @@ inserts all of oboe.snd starting at sample 1000."
       if (fchn < mus_sound_chans(filename))
 	{
 	  origin = mus_format("%s \"%s\" " OFF_TD " %d", S_insert_sound, filename, beg, fchn);
-	  if (file_insert_samples(beg, len, filename, cp, fchn, (delete_file) ? DELETE_ME : DONT_DELETE_ME, S_insert_sound,
+	  if (file_insert_samples(beg, len, filename, cp, fchn, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin,
 				  to_c_edit_position(cp, edpos, S_insert_sound, 6)))
 	    update_graph(cp);
 	  FREE(origin);
@@ -8523,7 +8486,7 @@ inserts all of oboe.snd starting at sample 1000."
       for (i = 0; i < nc; i++)
 	{
 	  origin = mus_format("%s \"%s\" " OFF_TD " %d", S_insert_sound, filename, beg, i);
-	  if (file_insert_samples(beg, len, filename, sp->chans[i], i, (delete_file) ? DELETE_ME: DONT_DELETE_ME, S_insert_sound,
+	  if (file_insert_samples(beg, len, filename, sp->chans[i], i, (delete_file) ? DELETE_ME: DONT_DELETE_ME, origin,
 				  /* this edit_position cannot be optimized out -- each channel may have
 				   *   a different edit history, but edpos might be -1 throughout etc.
 				   */
@@ -8599,6 +8562,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   char *origin;
   int pos;
   off_t beg;
+  Float fval;
   mus_sample_t ival[1];
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_insert_sample, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_insert_sample, "a number");
@@ -8606,8 +8570,9 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   cp = get_cp(snd_n, chn_n, S_insert_sample);
   beg = beg_to_sample(samp_n, S_insert_sample);
   pos = to_c_edit_position(cp, edpos, S_insert_sample, 5);
-  ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
-  origin = mus_format("%s " OFF_TD " %.4f", S_insert_sample, beg, ival[0]);
+  fval = XEN_TO_C_DOUBLE(val);
+  ival[0] = MUS_FLOAT_TO_SAMPLE(fval);
+  origin = mus_format("%s " OFF_TD " %.4f", S_insert_sample, beg, fval);
   if (insert_samples(beg, 1, ival, cp, origin, pos))
     update_graph(cp); 
   FREE(origin);
@@ -8636,9 +8601,12 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
   if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
   if (XEN_STRING_P(vect))
     {
-      origin = mus_format("%s " OFF_TD " " OFF_TD " \"%s\"", S_insert_samples, beg, len, XEN_TO_C_STRING(vect));
-      file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin, pos);
+      char *filename;
+      filename = mus_expand_filename(XEN_TO_C_STRING(vect));
+      origin = mus_format("%s " OFF_TD " " OFF_TD " \"%s\"", S_insert_samples, beg, len, filename);
+      file_insert_samples(beg, len, filename, cp, 0, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin, pos);
       FREE(origin);
+      if (filename) FREE(filename);
     }
   else
     {
@@ -9038,8 +9006,6 @@ be a function of 2 args: the sample to read (a long int), and the channel."
 
 
 #if HAVE_GUILE
-#define S_edit_list_to_function "edit-list->function"
-
 static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 {
   #define H_edit_list_to_function "(" S_edit_list_to_function " snd chn start end) -> function encapsulating edits"
@@ -9079,9 +9045,7 @@ XEN_ARGIFY_4(g_delete_sample_w, g_delete_sample)
 XEN_ARGIFY_5(g_delete_samples_w, g_delete_samples)
 XEN_ARGIFY_5(g_insert_sample_w, g_insert_sample)
 XEN_ARGIFY_7(g_insert_samples_w, g_insert_samples)
-XEN_ARGIFY_8(g_vct_to_samples_w, g_vct_to_samples)
 XEN_ARGIFY_6(g_vct_to_channel_w, g_vct_to_channel)
-XEN_ARGIFY_6(g_samples_to_vct_w, g_samples_to_vct)
 XEN_ARGIFY_5(g_channel_to_vct_w, g_channel_to_vct)
 XEN_ARGIFY_7(g_insert_sound_w, g_insert_sound)
 XEN_ARGIFY_6(g_scale_sound_by_w, g_scale_sound_by)
@@ -9125,9 +9089,7 @@ XEN_NARGIFY_1(g_make_xen_to_sample_w, g_make_xen_to_sample)
 #define g_delete_samples_w g_delete_samples
 #define g_insert_sample_w g_insert_sample
 #define g_insert_samples_w g_insert_samples
-#define g_vct_to_samples_w g_vct_to_samples
 #define g_vct_to_channel_w g_vct_to_channel
-#define g_samples_to_vct_w g_samples_to_vct
 #define g_channel_to_vct_w g_channel_to_vct
 #define g_insert_sound_w g_insert_sound
 #define g_scale_sound_by_w g_scale_sound_by
@@ -9200,9 +9162,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_delete_samples,            g_delete_samples_w,            2, 3, 0, H_delete_samples);
   XEN_DEFINE_PROCEDURE(S_insert_sample,             g_insert_sample_w,             2, 3, 0, H_insert_sample);
   XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w,            3, 4, 0, H_insert_samples);
-  XEN_DEFINE_PROCEDURE(S_vct_to_samples,            g_vct_to_samples_w,            1, 7, 0, H_vct_to_samples);
   XEN_DEFINE_PROCEDURE(S_vct_to_channel,            g_vct_to_channel_w,            1, 5, 0, H_vct_to_channel);
-  XEN_DEFINE_PROCEDURE(S_samples_to_vct,            g_samples_to_vct_w,            0, 6, 0, H_samples_to_vct);
   XEN_DEFINE_PROCEDURE(S_channel_to_vct,            g_channel_to_vct_w,            0, 5, 0, H_channel_to_vct);
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w,              1, 6, 0, H_insert_sound);
   XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w,            1, 5, 0, H_scale_sound_by);
@@ -9222,6 +9182,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
 					    S_setB S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 7);
 #if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("set-sample",  g_set_sample_w,  2, 2, 0, H_sample);   /* for edit-list->function */
   XEN_DEFINE_PROCEDURE("set-samples", g_set_samples_w, 3, 7, 0, H_samples);
 #endif
 

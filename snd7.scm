@@ -282,4 +282,14 @@
 (define* (old-formant-bank amps gens #:optional (in1 0.0))
   (formant-bank (if (vector? amps) (vector->vct amps) amps) gens in1))
 
+(define* (vct->samples samp samps data #:optional snd chn) 
+  (vct->channel data samp samps snd chn))
 
+(define* (samples->vct samp samps #:optional snd chn v pos)
+  (if (not v)
+      (channel->vct samp samps snd chn pos)
+      (vct-subseq (channel->vct samp samps snd chn pos) 0 samps v)))
+
+(define transform-samples->vct transform->vct)
+(define transform-samples-size transform-frames)
+(define region-samples->vct region->vct)

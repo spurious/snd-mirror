@@ -294,14 +294,14 @@ decay is how long to run the effect past the end of the sound\n") if target == :
   def cnvtest(snd0, snd1, amp)
     flt_len = frames(snd0)
     total_len = flt_len + frames(snd1)
-    cnv = make_convolve(:filter, samples2vct(0, flt_len, snd0))
+    cnv = make_convolve(:filter, channel2vct(0, flt_len, snd0))
     sf = make_sample_reader(0, snd1)
     out_data = make_vct(total_len)
     vct_map!(out_data, lambda do || convolve(cnv, lambda do |dir| next_sample(sf) end) end)
     free_sample_reader(sf)
     vct_scale!(out_data, amp)
     max_samp = vct_peak(out_data)
-    vct2samples(0, total_len, out_data, snd1)
+    vct2channel(out_data, 0, total_len, snd1)
     set_y_bounds([-max_samp, max_samp], snd1) if max_samp > 1.0
     max_samp
   end
@@ -353,7 +353,7 @@ decay is how long to run the effect past the end of the sound\n") if target == :
     lambda do |inval|
       outval = 0.0
       if ctr == freq_inc
-        samples2vct(inctr, fftsize, cross_snd, 0, fdr)
+        fdr = channel2vct(inctr, fftsize, cross_snd, 0)
         inctr += freq_inc
         spectrum(fdr, fdi, false, 2)
         vct_subtract!(fdr, spectr)
@@ -384,14 +384,14 @@ decay is how long to run the effect past the end of the sound\n") if target == :
                    end)
              end)
     free_sample_reader(sf)
-    vct2samples(beg, len, out_data)
+    vct2channel(out_data, beg, len)
   end
   
   def hello_dentist_1(frq, amp, beg, fin)
     rn = make_rand_interp(:frequency, frq, :amplitude, amp)
     i = j = 0
     len = (fin - beg) + 1
-    in_data = samples2vct(beg, len)
+    in_data = channel2vct(beg, len)
     out_len = (len * (1.0 + 2 * amp)).round
     out_data = make_vct(out_len)
     rd = make_src(:srate, 1.0, :input, lambda do |dir|
@@ -403,7 +403,7 @@ decay is how long to run the effect past the end of the sound\n") if target == :
       vct_set!(out_data, j, src(rd, rand_interp(rn)))
       j += 1
     end
-    vct2samples(beg, j, out_data)
+    vct2channel(out_data, beg, j)
   end
   
   #

@@ -369,6 +369,10 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+4-Oct:   moved vct->samples and samples->vct to snd7.scm.\n\
+         added edit-list->function\n\
+         changed transform-samples->vct to transform->vct, region-samples->vct to region->vct,\n\
+	   transform-samples-size to transform-frames. (Old forms are in snd7.scm).\n\
 1-Oct:   grid-density (controls axis tick spacing)\n\
 30-Sep:  mus-audio-mixer-read|write vector arg is now a vct.\n\
 27-Sep:  do? (examp.scm -- do that can be interrupted and continued)\n\

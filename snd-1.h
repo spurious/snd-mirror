@@ -984,6 +984,7 @@ env *free_env(env *e);
 char *env_to_string(env *e);
 int find_env(const char *name);
 env *make_envelope(Float *env_buffer, int len);
+env *make_envelope_with_offset_and_scaler(Float *env_buffer, int len, Float offset, Float scaler);
 XEN envelope_base(XEN obj);
 env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur, Float maxx);
 env *multiply_envs(env *e1, env *e2, Float maxx);

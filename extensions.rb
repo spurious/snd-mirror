@@ -568,7 +568,7 @@ module Extensions
       sndlst.zip(chnlst) do |snd, chn|
         if selection_member?(snd, chn)
           new_data = make_vct(len)
-          old_data = samples2vct(beg, len, snd, chn)
+          old_data = channel2vct(beg, len, snd, chn)
           len.times do |i| new_data[i] = func.call(old_data[i]) end
           vct2channel(new_data, beg, len, snd, chn)
         end

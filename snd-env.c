@@ -103,7 +103,7 @@ char *env_to_string(env *e)
   return(news);
 }
 
-env *make_envelope(Float *env_buffer, int len)
+env *make_envelope_with_offset_and_scaler(Float *env_buffer, int len, Float offset, Float scaler)
 {
   env *e;
   int i, flen;
@@ -112,7 +112,11 @@ env *make_envelope(Float *env_buffer, int len)
   e->data = (Float *)CALLOC(flen, sizeof(Float));
   e->data_size = flen;
   e->pts = flen / 2;
-  for (i = 0; i < len; i++) e->data[i] = env_buffer[i];
+  for (i = 0; i < len; i += 2) 
+    {
+      e->data[i] = env_buffer[i];
+      e->data[i + 1] = offset + scaler * env_buffer[i + 1];
+    }
   if ((flen == 4) && (len == 2))  /* fixup degenerate envelope */
     {
       e->data[2] = e->data[0] + 1.0; 
@@ -120,6 +124,11 @@ env *make_envelope(Float *env_buffer, int len)
     }
   e->base = 1.0;
   return(e);
+}
+
+env *make_envelope(Float *env_buffer, int len)
+{
+  return(make_envelope_with_offset_and_scaler(env_buffer, len, 0.0, 1.0));
 }
 
 static env *normalize_x_axis(env *e)

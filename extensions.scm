@@ -330,7 +330,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 	  (apply map (lambda (snd chn)
 		       (if (selection-member? snd chn)
 			   (let ((new-data (make-vct len))
-				 (old-data (samples->vct beg len snd chn)))
+				 (old-data (channel->vct beg len snd chn)))
 			     (do ((k 0 (1+ k))) ;here we're applying our function to each sample in the currently selected portion
 				 ((= k len) (vct->channel new-data beg len snd chn))
 			       (vct-set! new-data k (func (vct-ref old-data k)))))))

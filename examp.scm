@@ -132,7 +132,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 (define* (region-rms #:optional (n 0))
   "(region-rms #:optional (n 0)) -> rms of region n's data (chan 0)"
   (if (region? n)
-      (let* ((data (region-samples->vct 0 0 n)))
+      (let* ((data (region->vct 0 0 n)))
 	(sqrt (/ (dot-product data data) (vct-length data))))
       (throw 'no-such-region (list "region-rms" n))))
 
@@ -184,7 +184,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   "(window-rms) -> rms of data in currently selected graph window"
   (let* ((ls (left-sample))
 	 (rs (right-sample))
-	 (data (samples->vct ls (+ 1 (- rs ls))))
+	 (data (channel->vct ls (+ 1 (- rs ls))))
 	 (len (vct-length data)))
     (sqrt (/ (dot-product data data) len))))
 
@@ -194,7 +194,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   (if (and (transform-graph?) 
 	   (= (transform-graph-type) graph-once))
       (report-in-minibuffer 
-       (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn))) 
+       (number->string (/ (* 2.0 (vct-peak (transform->vct snd chn))) 
 			  (transform-size)))
        snd)
       #f))
@@ -232,8 +232,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	     (fftlen (inexact->exact (expt 2 pow2)))
 	     (fftlen2 (/ fftlen 2))
 	     (fftscale (/ 1.0 fftlen))
-	     (rl1 (samples->vct ls fftlen snd 0))
-	     (rl2 (samples->vct ls fftlen snd 1))
+	     (rl1 (channel->vct ls fftlen snd 0))
+	     (rl2 (channel->vct ls fftlen snd 1))
 	     (im1 (make-vct fftlen))
 	     (im2 (make-vct fftlen)))
 	(fft rl1 im1 1)
@@ -400,7 +400,7 @@ this can be confusing if fft normalization is on (the default)"
 		 (lambda (n)
 		   (if (and (= (sync n) (sync snd))
 			    (> (chans n) chn))
-		       (set! ffts (append ffts (let* ((fdr (samples->vct ls fftlen n chn))
+		       (set! ffts (append ffts (let* ((fdr (channel->vct ls fftlen n chn))
 						      (fdi (make-vct fftlen))
 						      (spectr (make-vct (/ fftlen 2))))
 						 (list (vct-add! spectr (spectrum fdr fdi #f 2))))))))
@@ -811,7 +811,7 @@ then inverse ffts."
   (let* ((sr (srate))
 	 (len (frames))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
-	 (rdata (samples->vct 0 fsize))
+	 (rdata (channel->vct 0 fsize))
 	 (idata (make-vct fsize))
 	 (lo (inexact->exact (round (/ bottom (/ sr fsize)))))
 	 (hi (inexact->exact (round (/ top (/ sr fsize))))))
@@ -839,7 +839,7 @@ then inverse ffts."
   (let* ((sr (srate))
 	 (len (frames))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
-	 (rdata (samples->vct 0 fsize))
+	 (rdata (channel->vct 0 fsize))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
 	 (scaler 1.0))
@@ -869,7 +869,7 @@ then inverse ffts."
   (let* ((sr (srate))
 	 (len (frames))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
-	 (rdata (samples->vct 0 fsize))
+	 (rdata (channel->vct 0 fsize))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
 	 (scaler 1.0))
@@ -951,7 +951,7 @@ then inverse ffts."
   (let* ((sr (srate))
 	 (len (frames))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
-	 (rdata (samples->vct 0 fsize))
+	 (rdata (channel->vct 0 fsize))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
 	 (e (make-env fft-env :end (1- fsize2))))
@@ -989,12 +989,11 @@ spectral envelopes) following interp (an env between 0 and 1)"
 
 (define (fft-smoother cutoff start samps snd chn)
   "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
-section: (vct->samples (cursor) 400 (fft-smoother .1 (cursor) 400 0 0))"
+section: (vct->channel (fft-smoother .1 (cursor) 400 0 0) (cursor) 400)"
   (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (1+ samps)) (log 2.0))))))
-	 (rl (make-vct fftpts))
+	 (rl (channel->vct start samps snd chn rl))
 	 (im (make-vct fftpts))
 	 (top (inexact->exact (floor (* fftpts cutoff)))))
-    (samples->vct start samps snd chn rl)
     (let* ((old0 (vct-ref rl 0))
 	   (old1 (vct-ref rl (1- samps)))
 	   (oldmax (vct-peak rl)))
@@ -1194,7 +1193,7 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 	 (i 0)
 	 (j 0)
 	 (len (frames))
-	 (in-data (samples->vct 0 len))
+	 (in-data (channel->vct 0 len))
 	 (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
 	 (out-data (make-vct out-len))
 	 (rd (make-src :srate 1.0 
@@ -1227,7 +1226,7 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 			   (next-sample sf)
 			   (previous-sample sf))))))
     (free-sample-reader sf)
-    (vct->samples 0 len out-data)))
+    (vct->channel out-data 0 len)))
 	    
 
 ;;; -------- compand, compand-channel
@@ -1270,7 +1269,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 	 (sr (make-src :srate rate))
 	 (vsize 1024)
 	 (vbeg 0)
-	 (v (samples->vct 0 vsize))
+	 (v (channel->vct 0 vsize))
 	 (inctr 0))
     (lambda (inval)
       (src sr 0.0
@@ -1283,7 +1282,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 				(begin
 				  (set! vbeg (+ vbeg inctr))
 				  (set! inctr 0)
-				  (samples->vct vbeg vsize snd chn v)))
+				  (set! v (channel->vct vbeg vsize snd chn))))
 			    val))))))))
 
 ;;; the next (expsnd) changes the tempo according to an envelope; the new duration
@@ -1315,7 +1314,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 			   (set! (mus-increment gr) (env ge))
 			   val)))
     (free-sample-reader sf)
-    (vct->samples 0 len out-data)))
+    (vct->channel out-data 0 len)))
 
 
 ;;; -------- cross-synthesis
@@ -1341,7 +1340,7 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
       (let ((outval 0.0))
 	(if (= ctr freq-inc)
 	    (begin
-	      (samples->vct inctr fftsize cross-snd 0 fdr)
+	      (set! fdr (channel->vct inctr fftsize cross-snd 0))
 	      (set! inctr (+ inctr freq-inc))
 	      (spectrum fdr fdi #f 2)
 	      (vct-subtract! fdr spectr)
@@ -1383,7 +1382,7 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 	       (begin
 		 (if (c-g?)               ; let interface run
 		     (break "interrupted")) ;   if C-g exit the loop returning the string "interrupted"
-		 (samples->vct inctr fftsize (selected-sound) 0 fdr)
+		 (set! fdr (channel->vct inctr fftsize (selected-sound) 0))
 		 (let ((pk (vct-peak fdr)))
 		   (if (> pk old-peak-amp) (set! old-peak-amp pk)))
 		 (spectrum fdr fdi #f 2)
@@ -1397,7 +1396,7 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
 	   (vct-set! out-data k outval)))
        (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
-       (vct->samples 0 (max len outlen) out-data)
+       (vct->channel out-data 0 (max len outlen))
        (play-and-wait)))))
 
 
@@ -1409,14 +1408,14 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
   "(cnvtest snd0 snd1 amp) convolves snd0 and snd1, scaling by amp, returns new max amp: (cnvtest 0 1 .1)"
   (let* ((flt-len (frames snd0))
 	 (total-len (+ flt-len (frames snd1)))
-	 (cnv (make-convolve :filter (samples->vct 0 flt-len snd0)))
+	 (cnv (make-convolve :filter (channel->vct 0 flt-len snd0)))
 	 (sf (make-sample-reader 0 snd1))
 	 (out-data (make-vct total-len)))
     (vct-map! out-data (lambda () (convolve cnv (lambda (dir) (next-sample sf)))))
     (free-sample-reader sf)
     (vct-scale! out-data amp)
     (let ((max-samp (vct-peak out-data)))
-      (vct->samples 0 total-len out-data snd1)
+      (vct->channel out-data 0 total-len snd1)
       (if (> max-samp 1.0) (set! (y-bounds snd1) (list (- max-samp) max-samp)))
       max-samp)))
 
@@ -1495,7 +1494,7 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 	   (chn (if (> (length rest) 1) (cadr rest) #f))
 	   (bufsize 2048)
 	   (buf4size 128)
-	   (data (samples->vct start bufsize snd chn))
+	   (data (channel->vct start bufsize snd chn))
 	   (curbeg start)
 	   (curend (+ start bufsize)))
       (lambda (loc)
@@ -1504,13 +1503,13 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 	      ;; get previous buffer
 	      (set! curbeg (+ buf4size (- loc bufsize)))
 	      (set! curend (+ curbeg bufsize))
-	      (samples->vct curbeg bufsize snd chn data))
+	      (set! data (channel->vct curbeg bufsize snd chn)))
 	    (if (> loc curend)
 		(begin
 		  ;; get next buffer
 		  (set! curbeg (- loc buf4size))
 		  (set! curend (+ curbeg bufsize))
-		  (samples->vct curbeg bufsize snd chn data))))
+		  (set! data (channel->vct curbeg bufsize snd chn)))))
 	(array-interp data (- loc curbeg) bufsize)))))
 
 (define sound-interp ;make it look like a clm generator

@@ -1119,7 +1119,7 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
   FREE(coeffs);
 }
 
-static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int edpos, char *caller, off_t overlap)
+static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int edpos, off_t overlap)
 {
   /* calls gen over cp[beg for dur] data, replacing. */
   snd_info *sp;
@@ -1134,27 +1134,25 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   if ((beg < 0) || ((dur + overlap) <= 0)) return(NULL);
   sp = cp->sound;
   if (!(MUS_RUN_P(gen))) /* currently can't happen */
-    return(mus_format(_(S_clm_channel ": %s can't handle %s generators"),
-		      caller,
-		      mus_name(gen)));
+    return(mus_format(_("%s can't handle %s generators"), S_clm_channel, mus_name(gen)));
   if (!(editable_p(cp))) return(NULL);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL)
     {
       cp->edit_hook_checked = false;
-      return(mus_format(_("%s: can't read %s[%d] channel data!"), caller, sp->short_filename, cp->chan));
+      return(mus_format(_("%s can't read %s[%d] channel data!"), S_clm_channel, sp->short_filename, cp->chan));
     }
   if ((dur + overlap) > MAX_BUFFER_SIZE)
     {
       temp_file = true; 
       ofile = snd_tempnam();
-      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur + overlap, caller);
+      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur + overlap, S_clm_channel);
       ofd = open_temp_file(ofile, 1, hdr);
       if (ofd == -1)
 	{
 	  cp->edit_hook_checked = false;
 	  free_snd_fd(sf); 
-	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, strerror(errno)));
+	  return(mus_format(_("can't open %s temp file %s: %s\n"), S_clm_channel, ofile, strerror(errno)));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -1198,7 +1196,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
       hdr = free_file_info(hdr);
-      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, caller, cp->edit_ctr);
+      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, S_clm_channel, cp->edit_ctr);
       if (ofile) 
 	{
 	  FREE(ofile); 
@@ -1208,7 +1206,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   else 
     {
       if (dur > 0) 
-	change_samples(beg, dur, idata, cp, LOCK_MIXES, caller, cp->edit_ctr);
+	change_samples(beg, dur, idata, cp, LOCK_MIXES, S_clm_channel, cp->edit_ctr);
     }
   update_graph(cp); 
   free_snd_fd(sf);
@@ -1823,6 +1821,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
    *              if not optimizable (via virtual edits), call mus_env on each sample
    *              if optimizable, use sequence of (x)ramp-channels
    */
+  /* e can be NULL => use gen */
   snd_info *sp;
   sync_info *si;
   sync_state *sc = NULL;
@@ -1933,7 +1932,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      if (segbeg >= segend) break;
 	      segnum = passes[k + 1] - passes[k];
 	    }
-	  newe = make_envelope(mus_data(egen), mus_env_breakpoints(egen) * 2);
+	  newe = make_envelope_with_offset_and_scaler(mus_data(egen), mus_env_breakpoints(egen) * 2, offset, scaler);
 	  new_origin = mus_format("env-channel (make-env %s :base 0 :end " OFF_TD ") " OFF_TD " " OFF_TD,
 				  tmpstr = env_to_string(newe), 
 				  (len > 1) ? (passes[len - 2]) : dur,
@@ -2199,7 +2198,9 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      if ((len < 2) || (snd_abs_off_t(dur - passes[len - 2]) < 2))
 		amp_env_env_selection_by(si->cps[i], egen, si->begs[i], dur, env_pos);
 	    }
-	  newe = make_envelope(mus_data(egen), mus_env_breakpoints(egen) * 2);
+	  /* TODO: what about Ruby syntax for origin? */
+	  newe = make_envelope_with_offset_and_scaler(mus_data(egen), mus_env_breakpoints(egen) * 2, offset, scaler);
+	  /* TODO: egen might have end + stick? */
 	  new_origin = mus_format("env-channel (make-env %s :base %.4f :end " OFF_TD ") " OFF_TD " " OFF_TD,
 				  tmpstr = env_to_string(newe), 
 				  base,
@@ -3173,7 +3174,7 @@ data from start-samp for samps in snd's channel chn"
   cp = get_cp(snd_n, chn_n, S_smooth_sound);
   start = beg_to_sample(beg, S_smooth_sound);
   samps = dur_to_samples(num, start, cp, cp->edit_ctr, 2, S_smooth_sound);
-  buf = mus_format("%s from " OFF_TD " for " OFF_TD, S_smooth_sound, start, samps);
+  buf = mus_format("%s " OFF_TD " " OFF_TD, S_smooth_sound, start, samps);
   cos_smooth(cp, start, samps, OVER_SOUND, buf); 
   FREE(buf);
   return(beg);
@@ -3197,7 +3198,7 @@ smooth data from beg for dur in snd's channel chn"
       (num > 0))
     {
       char *buf;
-      buf = mus_format("%s from " OFF_TD " for " OFF_TD, S_smooth_channel, start, num);
+      buf = mus_format("%s " OFF_TD " " OFF_TD, S_smooth_channel, start, num);
       smooth_channel(cp, start, num, pos, buf);
       FREE(buf);
     }
@@ -3534,7 +3535,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   if (dur == 0) return(XEN_FALSE);
   XEN_ASSERT_TYPE(mus_xen_p(gen), gen, XEN_ARG_1, S_clm_channel, "a clm generator");
   egen = XEN_TO_MUS_ANY(gen);
-  errmsg = clm_channel(cp, egen, beg, dur, pos, S_clm_channel, XEN_TO_C_OFF_T_OR_ELSE(overlap, 0));
+  errmsg = clm_channel(cp, egen, beg, dur, pos, XEN_TO_C_OFF_T_OR_ELSE(overlap, 0));
   if (errmsg)
     {
       XEN str;

@@ -6663,68 +6663,6 @@ static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
 }
 
 
-/* ---------------- samples->vct ---------------- */
-/* samples->vct samp samps snd chn v edpos */
-
-static void samples_to_vct_v(int *args, ptree *pt) 
-{
-  vct *v;
-  v = pt->vcts[args[5]];
-  if (v)
-    {
-      chan_info *cp; 
-      Float *fvals;
-      fvals = v->data;
-      cp = run_get_cp(3, args, pt->ints);
-      if (cp)
-	{
-	  int pos;
-	  snd_fd *sf;
-	  if (INT_ARG_6 == AT_CURRENT_EDIT_POSITION)
-	    pos = cp->edit_ctr;
-	  else pos = INT_ARG_6;
-	  sf = init_sample_read_any(INT_ARG_1, cp, READ_FORWARD, pos);
-	  if (sf)
-	    {
-	      int i, len;
-	      len = INT_ARG_2;
-	      for (i = 0; i < len; i++) 
-		fvals[i] = read_sample_to_float(sf);
-	      free_snd_fd(sf);
-	    }
-	}
-    }
-  VCT_RESULT = v;
-}
-
-static char *descr_samples_to_vct_v(int *args, ptree *pt) 
-{
-  return(mus_format( VCT_PT " = samples->vct(" INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ", " VCT_PT ", " INT_PT ")",
-		     args[0], DESC_VCT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, 
-		     args[3], INT_ARG_3, args[4], INT_ARG_4, args[5], DESC_VCT_ARG_5,
-		     args[6], INT_ARG_6));
-}
-
-static xen_value *samples_to_vct_1(ptree *pt, xen_value **args, int num_args)
-{
-  xen_value *true_args[7];
-  xen_value *rtn;
-  int k;
-  true_args[0] = args[0];
-  true_args[1] = args[1];
-  true_args[2] = args[2];
-  run_opt_arg(pt, args, num_args, 3, true_args);
-  run_opt_arg(pt, args, num_args, 4, true_args);
-  true_args[5] = args[5]; /* create? */
-  if (num_args < 6)
-    true_args[6] = make_xen_value(R_INT, add_int_to_ptree(pt, AT_CURRENT_EDIT_POSITION), R_CONSTANT);
-  else true_args[6] = args[6];
-  rtn = package(pt, R_VCT, samples_to_vct_v, descr_samples_to_vct_v, true_args, 6);
-  for (k = num_args + 1; k <= 6; k++) FREE(true_args[k]);
-  return(rtn);
-}
-
-
 /* ---------------- report-in-minibuffer ---------------- */
 
 static void report_in_minibuffer_s(int *args, ptree *pt) 
@@ -11513,7 +11451,6 @@ static void init_walkers(void)
   INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
   INIT_WALKER(S_autocorrelate, make_walker(autocorrelate_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
-  INIT_WALKER(S_samples_to_vct, make_walker(samples_to_vct_1, NULL, NULL, 5, 6, R_VCT, false, 5, R_INT, R_INT, R_ANY, R_ANY, R_VCT));
 
   INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
   INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));

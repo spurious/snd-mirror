@@ -1889,7 +1889,7 @@ called just after an FFT (or spectrum) is calculated.
   (if (and (<a class=quiet href="#transformgraphp">transform-graph?</a>) 
            (= (<a class=quiet href="#transformgraphtype">transform-graph-type</a>) <a class=quiet href="#transformgraphtype">graph-once</a>))
       (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> 
-        (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak">vct-peak</a> (<a class=quiet href="#transformsamples_to_vct">transform-samples-&gt;vct</a> snd chn))) 
+        (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak">vct-peak</a> (<a class=quiet href="#transform_to_vct">transform-&gt;vct</a> snd chn))) 
                            (<a class=quiet href="#transformsize">transform-size</a> snd chn))))))
 (add-hook! <em class=red>transform-hook</em> fft-peak)
 </pre></td></tr></table>
@@ -2205,20 +2205,11 @@ to the end of <i>v</i>.</td></tr>
 <tr><td colspan=2><code><a class=def name="vct_to_channel">vct-&gt;channel</a> (v (beg 0) (dur len) (snd #f) (chn #f) (edpos #f))</code></td></tr>
 <tr><td></td><td>
 set the samples from <i>beg</i> to <i>beg+dur</i> from the values in <i>v</i>.
-This is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#vct_to_samples">vct-&gt;samples</a>.
 </td></tr>
 
 <!-- vct->list -->
 <tr><td colspan=2><code><a class=def name="vct_to_list">vct-&gt;list</a> (v)</code></td></tr>
 <tr><td></td><td>return list with elements of <i>v</i></td></tr>
-
-<!-- vct->samples -->
-<tr><td colspan=2><code><a class=def name="vct_to_samples">vct-&gt;samples</a> (samp samps data (snd #f) (chn #f))</code></td></tr>
-<tr><td></td><td>A synonym for <a href="#setsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
-sample and a vct as the second argument.  This is too confusing!  Use <a href="#vct_to_channel">vct-&gt;channel</a> instead.
-<code>
-(vct-&gt;samples (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#samples_to_vct">samples-&gt;vct</a>) 2.0))
-</code></td></tr>
 
 <!-- vct->sound-data -->
 <tr><td colspan=2><code><em class=emdef>vct-&gt;sound-data</em> (v sd (chan 0))</code></td></tr>
@@ -2242,9 +2233,8 @@ sample and a vct as the second argument.  This is too confusing!  Use <a href="#
 <p>Many of the functions described below can take a vct as an argument; 
 there are also several functions that create and fill vcts with data:</p>
 <pre>
-  <a href="#regionsamples_to_vct">region-samples-&gt;vct</a>
-  <a href="#samples_to_vct">samples-&gt;vct</a>
-  <a href="#transformsamples_to_vct">transform-samples-&gt;vct</a>
+  <a href="#region_to_vct">region-&gt;vct</a>
+  <a href="#transform_to_vct">transform-&gt;vct</a>
   <a href="#channel_to_vct">channel-&gt;vct</a>
   <a href="sndscm.html#mix2vct">mix-&gt;vct</a>
   <a href="#sounddata2vct">sound-data-&gt;vct</a>
@@ -2292,7 +2282,7 @@ We can use vcts to write new sound files:</p>
   <a href="#vct2soundfile">vct-&gt;sound-file</a> (fd vct vals)                ; writes vals floats to fd
   <a href="#closesoundfile">close-sound-file</a> (fd vals)
 </pre>
-<p>After opening the file, loop through the data calling samples-&gt;vct, deal with the
+<p>After opening the file, loop through the data calling channel-&gt;vct, deal with the
 vct data as desired, write the samples to the file via vct-&gt;sound-file, then
 when finished, close-sound-file.  If the new data is to replace the old,
 call (set! (samples...) data) with the new sound file's name; otherwise call insert-samples.
@@ -2700,11 +2690,11 @@ which can sometimes require that it open, read, and close a sound file.
 The result is that <i>sample</i> will bring your code
 to a grinding halt.  There are two alternatives, leaving aside the scanning
 and mapping functions mentioned below.  One involves keeping the buffer of
-data around explicitly (<i>samples-&gt;vct</i>), and the other involves the
+data around explicitly (<i>channel-&gt;vct</i>), and the other involves the
 use of a special object known as a <i>sample-reader</i>.  The sample-reader
 returns the next sample in its sound each time it is called; this kind
 of access is sometimes called an "enumerator".
-The buffer approach (<i>samples-&gt;vct</i> in <a href="grfsnd.html#expsrc">expsrc</a>)
+The buffer approach (<i>channel-&gt;vct</i> in <a href="grfsnd.html#expsrc">expsrc</a>)
 is better if you're jumping around in the data, the sample-by-sample approach (examp.scm has examples) if you're treating
 the data as a sequence of samples.
 To get a sample reader,
@@ -2724,7 +2714,7 @@ data is:</p>
    ...
    (<a class=quiet href="#vctmap">vct-map!</a> out-data (lambda () (+ (<a class=quiet href="#readsample">read-sample</a> sf) &lt;new stuff&gt;)))
    (<a class=quiet href="#freesamplereader">free-sample-reader</a> sf)
-   (<a class=quiet href="#vct_to_samples">vct-&gt;samples</a> start len out-data)
+   (<a class=quiet href="#vct_to_channel">vct-&gt;channel</a> out-data start)
 </pre>
 <p>This is equivalent to the clm call</p>
 <pre>
@@ -2765,10 +2755,10 @@ copy mix: <a href="#copymix">copy-mix</a>, <a href="sndscm.html#mix2vct">mix-&gt
 copy track: <a href="#copytrack">copy-track</a>, <a href="sndscm.html#track2vct">track-&gt;vct</a><br>
 copy sample reader: <a href="#copysamplereader">copy-sample-reader</a><br>
 copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
-copy channel data: <a href="#channel_to_vct">channel-&gt;vct</a>,  <a href="#samples_to_vct">samples-&gt;vct</a>, or <a href="#savesoundas">save-sound-as</a><br>
+copy channel data: <a href="#channel_to_vct">channel-&gt;vct</a>, or <a href="#savesoundas">save-sound-as</a><br>
 copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="#saveselection">save-selection</a><br>
-copy region data: <a href="#region2vct">region-&gt;vct</a>, <a href="#regionsamples_to_vct">region-samples-&gt;vct</a>, or <a href="#saveregion">save-region</a><br>
-copy transform data: <a href="#transformsamples_to_vct">transform-samples-&gt;vct</a><br>
+copy region data: <a href="#region2vct">region-&gt;vct</a>, <a href="#region_to_vct">region-&gt;vct</a>, or <a href="#saveregion">save-region</a><br>
+copy transform data: <a href="#transform_to_vct">transform-&gt;vct</a><br>
 copy sound-data: <a href="#sounddata2vct">sound-data-&gt;vct</a><br>
 copy vector: <a href="#vector_to_vct">vector-&gt;vct</a><br>
 copy random state: Guile: copy-random-state, or use <a href="clm.html#mus-set-rand-seed">mus-rand-seed</a><br>
@@ -3697,7 +3687,7 @@ value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
 </td></tr>
 
 <!-- region-samples->vct -->
-<tr><td colspan=2><code><a class=def name="regionsamples_to_vct">region-samples-&gt;vct</a> (<i>samp samps reg chn v</i>)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="region_to_vct">region-&gt;vct</a> (<i>samp samps reg chn v</i>)</code></td></tr>
 <tr><td></td><td>
 return a vct containing <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
 channel <i>chn</i>. If v (a vct) is provided, it is filled, 
@@ -3706,7 +3696,7 @@ rather than creating a new vct.
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (region-rms n)
-  (let* ((data (<em class=red>region-samples-&gt;vct</em> 0 0 n)) ; len=0 =&gt; entire region
+  (let* ((data (<em class=red>region-&gt;vct</em> 0 0 n)) ; len=0 =&gt; entire region
 	 (len (<a class=quiet href="#vctlength">vct-length</a> data)))
     (sqrt (/ (<a class=quiet href="clm.html#dot-product">dot-product</a> data data len) len))))
 </pre></td></tr></table>
@@ -4058,8 +4048,6 @@ The following substitutions can be made:
 <a href="#scalesoundby">scale-sound-by</a> scl beg dur s c e                <a href="#scalechannel">scale-channel</a> scl beg dur s c e
 <a href="#setsamples">set-samples</a> beg dur data s c trunc origin fchan <a href="#vct_to_channel">vct-&gt;channel</a> vct beg dur s c e
 <a href="#smoothsound">smooth-sound</a> beg dur s c                        <a href="#smoothchannel">smooth-channel</a> beg dur s c e
-<a href="#samples_to_vct">samples-&gt;vct</a> beg dur snd chn v e                <a href="#channel_to_vct">channel-&gt;vct</a> beg dur s c e
-<a href="#vct_to_samples">vct-&gt;samples</a> beg dur vct s c trunc origin fchan <a href="#vct_to_channel">vct-&gt;channel</a> vct beg dur s c e
 <a href="#insertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
 <a href="#srcsound">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
 <a href="#convolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
@@ -4280,7 +4268,7 @@ The following code sets the 'unite' button if the current sound has more than 4 
 <code><a class=def name="channel_to_vct">channel-&gt;vct</a> (<i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>channel-&gt;vct</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#samples_to_vct">samples-&gt;vct</a>.
+return vct with the specified data.
 </td></tr>
 
 <tr><td></td><td>
@@ -5433,7 +5421,7 @@ whether it's a good idea -- you may end up with unclosed files and so on).
 If the editing action is not mapping something over the current sound, it is
 safest to write a temp file with the new data, then pass that to set-samples
 with the trunc argument set to #t.  This way you don't assume the new sound
-will fit in memory (as in using <a class=quiet href="#vct_to_samples">vct-&gt;samples</a> for example).
+will fit in memory (as in using <a class=quiet href="#vct_to_channel">vct-&gt;channel</a> for example).
 Use <a href="#sndtempnam">snd-tempnam</a> to get a temporary filename that reflects the current
 temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
 is an example of this. 
@@ -6461,7 +6449,7 @@ value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 If the desired sample happens to fall outside the current buffer 
 for the indicated channel, this function grinds to a halt -- if you're 
 running a loop through a bunch of samples, use the <a href="#samplereaders">sample-readers</a> 
-or <a href="#samples_to_vct">samples-&gt;vct</a> instead.  <i>samp</i> defaults to the current cursor location.
+or <a href="#channel_to_vct">channel-&gt;vct</a> instead.  <i>samp</i> defaults to the current cursor location.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6475,7 +6463,7 @@ return vct of <i>samps</i> samples starting at <i>samp</i> in <i>snd</i>'s chann
 <i>samp</i> defaults to 0.  <i>samps</i> defaults to frames - samp.
 <i>pos</i> is the edit history position to read (defaults to current position).
 This is settable (as is <b>sample</b>) -- see <a href="#setsamples">set-samples</a>.
-(<i>samples</i> is basically another name for channel-&gt;vct and samples-&gt;vct).
+(<i>samples</i> is basically another name for channel-&gt;vct).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6485,22 +6473,8 @@ This is settable (as is <b>sample</b>) -- see <a href="#setsamples">set-samples<
 <code><a class=def name="samples2sounddata">samples-&gt;sound-data</a> (<i>samp samps snd chn sdobj edpos sdchan</i>)</code>
 </td></tr>
 <tr><td></td><td>
-similar to samples-&gt;vct, but fill a <a href="#sndsounddata">sound-data</a> object.  This is an optimization
+similar to channel-&gt;vct, but fill a <a href="#sndsounddata">sound-data</a> object.  This is an optimization
 for real-time audio applications; see play.scm.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-
-<!-- samples->vct -->
-<tr><td colspan=2>
-<code><a class=def name="samples_to_vct">samples-&gt;vct</a> (<i>samp samps snd chn v edpos</i>)</code>
-</td></tr>
-<tr><td></td><td>
-return vct struct with same data as in <i>samples</i> call above.  
-If v (a vct) is provided, it is filled, rather than creating 
-a new vct. <i>pos</i> is the edit history position to read.
-The regularized version of this function is <a href="#channel_to_vct">channel-&gt;vct</a>.
-There are many examples in examp.scm and dsp.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6602,7 +6576,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#envsound">env-sound</a> '(0 2 1 2))
 (<a class=quiet href="#envchannel">env-channel</a> (<a class=quiet href="clm.html#make-env">make-env</a> '(0 1 1 1) :scaler 2.0) :end (1- (<a class=quiet href="#frames">frames</a>)))
 (<a class=quiet href="#clmchannel">clm-channel</a> (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> :a0 2.0 :a1 0.0))
-(<a class=quiet href="#vct_to_samples">vct-&gt;samples</a> 0 (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#samples_to_vct">samples-&gt;vct</a>) 2.0))
+(<a class=quiet href="#vct_to_channel">vct-&gt;channel</a> (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#channel_to_vct">channel-&gt;vct</a>) 2.0) 0)
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#mixselection">mix-selection</a> 0))
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#scaleselectionby">scale-selection-by</a> 2.0))
 (begin (<a class=quiet href="#savesoundas">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix">mix</a> "temp.snd" 0) (delete-file "temp.snd"))
@@ -7470,6 +7444,17 @@ The default is <code>graph-once</code>.  See also <a href="#wavohop">wavo-hop</a
 <tr><td colspan=2></td></tr>
 
 
+<!-- transform-frames -->
+<tr><td colspan=2>
+<code><a class=def name="transformframes">transform-frames</a> (<i>snd chn</i>)</code>
+</td></tr>
+<tr><td></td><td>
+return either 0 if no transform, <a href="#transformsize">transform-size</a> if graph-once,
+or (list full-size bins slices) if sonogram or spectrogram.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- transform-graph? -->
 <tr><td colspan=2>
 <code><a class=def name="transformgraphp">transform-graph?</a> (<em class=narg>snd chn</em>)</code>
@@ -7533,29 +7518,6 @@ sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.
 <tr><td colspan=2></td></tr>
 
 
-<!-- transform-samples->vct -->
-<tr><td colspan=2>
-<code><a class=def name="transformsamples_to_vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>)</code>
-</td></tr>
-<tr><td></td><td>
-return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
-If v (a vct) is provided, it is filled, rather than creating a new vct.
-See <a href="#fftpeak">fft-peak</a> for an example.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-
-<!-- transform-samples-size -->
-<tr><td colspan=2>
-<code><a class=def name="transformgraphsize">transform-samples-size</a> (<i>snd chn</i>)</code>
-</td></tr>
-<tr><td></td><td>
-return either 0 if no transform, transform-size if graph-once,
-or (list full-size bins slices) if sonogram or spectrogram.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-
 <!-- transform-size -->
 <tr><td colspan=2>
 <code><a class=def name="transformsize">transform-size</a> (<em class=narg>snd chn</em>)</code>
@@ -7581,6 +7543,18 @@ fourier-transform  wavelet-transform   haar-transform
 autocorrelation    walsh-transform     cepstrum     
 </pre>
 </td></tr>
+
+<!-- transform->vct -->
+<tr><td colspan=2>
+<code><a class=def name="transform_to_vct">transform-&gt;vct</a> (<i>snd chn v</i>)</code>
+</td></tr>
+<tr><td></td><td>
+return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
+If v (a vct) is provided, it is filled, rather than creating a new vct.
+See <a href="#fftpeak">fft-peak</a> for an example.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
 
 <tr><td colspan=2>
 <code><a class=def name="undo">undo</a> (<i>edits snd chn</i>)</code>
@@ -8680,8 +8654,8 @@ the size of the vcts passed to it, whereas CLM's takes the size as an argument.
 <p>Other related variables and functions:</p>
 <table cellpadding=0 celspacing=10 border=0>
 <tr><td width=200><a href="#transformgraphp"><small>transform-graph?</small></a></td><td width=200><a href="#showfftpeaks"><small>show-transform-peaks</small></a></td><td><a href="#transformsample"><small>transform-sample</small></a></td></tr>
-<tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#showselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transformsamples_to_vct"><small>transform-samples-&gt;vct</small></a></td></tr>
-<tr><td><a href="#ffthook"><small>transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformgraphsize"><small>transform-samples-size</small></a></td></tr>
+<tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#showselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transform_to_vct"><small>transform-&gt;vct</small></a></td></tr>
+<tr><td><a href="#ffthook"><small>transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformframes"><small>transform-frames</small></a></td></tr>
 <tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#transformtype"><small>transform-type</small></a></td></tr>
 <tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrostart"><small>spectro-start</small></a></td><td><a href="#updatetransformgraph"><small>update-transform-graph</small></a></td></tr>
 <tr><td><a href="#transformsize"><small>transform-size</small></a></td><td><a href="#spectroxangle"><small>spectro-x-angle</small></a></td><td><a href="#normalizefft"><small>transform-normalization</small></a></td></tr>

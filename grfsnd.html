@@ -617,7 +617,7 @@ void init_gsl_j0(void)
            (set! car-ph (+ car-ph car-incr (* index (</em><em class=red>j0</em><em class=typing> mod-ph))))
            (set! mod-ph (+ mod-ph mod-incr))
 	   val)))
-     (vct-&gt;samples 0 dur output)))</em>
+     (vct-&gt;channel output 0 dur)))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt;<em class=typing>(bes-fm 22050 440 10.0 1.0 8.0)</em>
 </pre>
@@ -1149,7 +1149,7 @@ all reading a single input signal, and summing their outputs.  The amplitude sca
 			       (<a class=quiet href="extsnd.html#nextsample">next-sample</a> sf)
 			       (<a class=quiet href="extsnd.html#previoussample">previous-sample</a> sf))))))
       (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> sf)
-      (<a class=quiet href="extsnd.html#vct_to_samples">vct-&gt;samples</a> 0 len out-data))))
+      (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> out-data 0 len))))
 
 ; (fp 1.0 .3 20)
 
@@ -1165,7 +1165,7 @@ all reading a single input signal, and summing their outputs.  The amplitude sca
 	   (sr (<a class=quiet href="clm.html#make-src">make-src</a> :srate rate))
 	   (vsize 1024)
 	   (vbeg 0)
-	   (v (<a class=quiet href="extsnd.html#samples_to_vct">samples-&gt;vct</a> 0 vsize))
+	   (v (<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> 0 vsize))
 	   (inctr 0))
       (lambda (inval)
         (<a class=quiet href="clm.html#src">src</a> sr 0.0
@@ -1178,7 +1178,7 @@ all reading a single input signal, and summing their outputs.  The amplitude sca
 		      (begin
 			(set! vbeg (+ vbeg inctr))
 			(set! inctr 0)
-			(<a class=quiet href="extsnd.html#samples_to_vct">samples-&gt;vct</a> vbeg vsize 0 0 v)))
+			(<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> vbeg vsize 0 0 v)))
 		  val)))))))))
 
 </pre>
@@ -2031,7 +2031,7 @@ data directly to the DAC:
      (ladspa-activate descriptor handle)
      (do ((i 0 (+ i block-size)))
 	 ((&gt;= i len))
-       (<a class=quiet href="extsnd.html#samples_to_vct">samples-&gt;vct</a> i block-size #f #f in-block)
+       (<a class=quiet href="extsnd.html#vctsubseq">vct-subseq</a> (<a class=quiet href="extsnd.html#channel_to_vct">channel-&gt;vct</a> i block-size) 0 block-size in-block)
        (ladspa-run descriptor handle block-size)
        (<a class=quiet href="extsnd.html#vct2sounddata">vct-&gt;sound-data</a> out-block data 0)
        (<a class=quiet href="extsnd.html#musaudiowrite">mus-audio-write</a> audio-port data block-size)))

@@ -127,7 +127,7 @@
 			   m2 (car m2-home) (cadr m2-home)))
 	(let* ((mark-samps (- m2-samp m1-samp))
 	       (selection-samps (selection-frames))
-	       (reg-data (region-samples->vct))
+	       (reg-data (region->vct))
 	       (reader (make-sample-reader m1-samp))
 	       (new-data (make-vct mark-samps))
 	       (gr (make-granulate :expansion (/ mark-samps selection-samps)))
@@ -143,7 +143,7 @@
 					    (set! inctr (+ inctr dir))
 					    val)))))))
 	  (free-sample-reader reader)
-	  (vct->samples m1-samp mark-samps new-data (car m1-home) (cadr m1-home))))))
+	  (vct->channel new-data m1-samp mark-samps (car m1-home) (cadr m1-home))))))
 
 
 ;;; -------- pad-marks inserts silence before each in a list of marks
@@ -264,7 +264,7 @@
 		    (let* ((beg (mark-sample (car winl)))
 			   (len (- (mark-sample (cadr winl)) beg))
 			   (new-data (make-vct len))
-			   (old-data (samples->vct beg len snd chan)))
+			   (old-data (channel->vct beg len snd chan)))
 		      (do ((k 0 (1+ k)))
 			  ((= k len) (vct->channel new-data beg len snd chan))
 			(vct-set! new-data k (func (vct-ref old-data k))))))))))))

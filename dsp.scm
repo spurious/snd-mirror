@@ -78,7 +78,7 @@
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
-	 (rl1 (samples->vct 0 fftlen))
+	 (rl1 (channel->vct 0 fftlen))
 	 (im1 (make-vct fftlen)))
     (fft rl1 im1 1)
     (vct-scale! rl1 fftscale)
@@ -94,7 +94,7 @@
 	(vct-set! im2 i (vct-ref im1 i))
 	(vct-set! im2 j (vct-ref im1 k)))
       (fft rl2 im2 -1)
-      (vct->samples 0 (* n len) rl2))))
+      (vct->channel rl2 0 (* n len)))))
 
 (define (stretch-sound-via-dft factor)
   ;; this is very slow! factor>1.0
@@ -201,7 +201,7 @@
 	    (vct-set! data i (+ g2 (* k (- g1 g2))))))
 	(let ((curamp (vct-peak data)))
 	  (vct-scale! data (/ amp curamp)))
-	(vct->samples 0 dur data)))))
+	(vct->channel data 0 dur)))))
 
 (define compute-string
   ;; this is the more general form
@@ -310,7 +310,7 @@
 	   (chn (if (> (length args) 2) (list-ref args 2) #f))
 	   (pow2 (ceiling (/ (log (/ (srate snd) 20.0)) (log 2))))
 	   (fftlen (inexact->exact (expt 2 pow2)))
-	   (data (autocorrelate (samples->vct s0 fftlen snd chn)))
+	   (data (autocorrelate (channel->vct s0 fftlen snd chn)))
 	   (cor-peak (vct-peak data)))
       (call-with-current-continuation
        (lambda (return)
@@ -388,7 +388,7 @@
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
-	 (rl (samples->vct 0 fftlen))
+	 (rl (channel->vct 0 fftlen))
 	 (old-pk (vct-peak rl))
 	 (im (make-vct fftlen)))
     (fft rl im 1)
@@ -397,7 +397,7 @@
     (vct-scale! im 0.0)
     (fft rl im -1)
     (let ((pk (vct-peak rl)))
-      (vct->samples 0 len (vct-scale! rl (/ old-pk pk))))))
+      (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len))))
 
 (define (rotate-phase func)
   "(rotate-phase func) calls fft, applies func to each phase, then un-ffts"
@@ -406,7 +406,7 @@
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftlen2 (inexact->exact (floor (/ fftlen 2))))
 	 (fftscale (/ 1.0 fftlen))
-	 (rl (samples->vct 0 fftlen))
+	 (rl (channel->vct 0 fftlen))
 	 (old-pk (vct-peak rl))
 	 (im (make-vct fftlen)))
     (fft rl im 1)
@@ -422,7 +422,7 @@
     (polar->rectangular rl im)
     (fft rl im -1)
     (let ((pk (vct-peak rl)))
-      (vct->samples 0 len (vct-scale! rl (/ old-pk pk))))))
+      (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len))))
 
 ;(rotate-phase (lambda (x) 0.0)) is the same as (zero-phase)
 ;(rotate-phase (lambda (x) (random 3.1415))) randomizes phases

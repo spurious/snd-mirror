@@ -270,7 +270,7 @@
 	   (nextpct 10.0)       ; how often to print out the percentage complete message
 	   (outlen (inexact->exact (floor (* time len))))
 	   (out-data (make-vct (max len outlen)))
-	   (in-data (samples->vct 0 (* N 2) snd chn))
+	   (in-data (channel->vct 0 (* N 2) snd chn))
 	   (in-data-beg 0))
       ;; setup oscillators
       (do ((i 0 (1+ i)))
@@ -306,7 +306,7 @@
 		 (if (> filptr (+ in-data-beg N))
 		     (begin
 		       (set! in-data-beg filptr)
-		       (samples->vct in-data-beg (* N 2) snd chn in-data)))
+		       (set! in-data (channel->vct in-data-beg (* N 2) snd chn))))
 		 ;; no imaginary component input so zero out fdi
 		 (vct-fill! fdi 0.0)
 		 ;; compute the fft
@@ -349,6 +349,6 @@
 	   (vct-add! lastfreq freqinc)
 	   (vct-set! out-data i (oscil-bank lastamp resynth-oscils lastfreq))
 	   (set! output (1+ output)))
-	 (vct->samples 0 (max len outlen) out-data))))))
+	 (vct->channel out-data 0 (max len outlen)))))))
 
 
