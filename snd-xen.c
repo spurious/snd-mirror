@@ -1081,14 +1081,12 @@ void snd_load_file(char *filename)
   XEN result = XEN_TRUE;
   str = mus_expand_filename(filename);
 #if (!HAVE_RUBY)
-  str2 = (char *)CALLOC(snd_strlen(filename) + 16, sizeof(char));
-  sprintf(str2, "(load \"%s\")", filename);
+  str2 = mus_format("(load \"%s\")", filename);
 #endif
   if (!mus_file_probe(str))
     {
       /* try tacking on extension */
-      str1 = (char *)CALLOC(snd_strlen(str) + 8 + strlen(XEN_FILE_EXTENSION), sizeof(char));
-      sprintf(str1, "%s.%s", str, XEN_FILE_EXTENSION);
+      str1 = mus_format("%s.%s", str, XEN_FILE_EXTENSION);
       if (!mus_file_probe(str1))
 	{
 	  FREE(str);

@@ -659,7 +659,11 @@ static void read_memo_file(snd_info *sp)
   char *newname;
   newname = memo_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
-    snd_load_file(newname);
+    {
+      snd_load_file(newname);
+      /* this file shouldn't be left in the load list -- it will confuse the save-state process */
+      /* snd-loaded-files is the variable name (snd-xen.c), but it's not obvious how to remove this name cleanly */
+    }
   FREE(newname);
 }
 

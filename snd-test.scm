@@ -39,7 +39,7 @@
 
 ;(setlocale LC_ALL "de_DE")
 
-(define tests 1000)
+(define tests 1)
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
@@ -281,8 +281,8 @@
 (snd-display ";~%~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 (define (log-mem tst) 
-  (if (> tests 1) (snd-display ";test ~D " (1+ tst)))
-  (if (and (> tests 50) (= (modulo tst 10) 0))  (if (defined? 'mem-report) (mem-report))))
+  (if (> tests 1) (begin (snd-display ";test ~D " (1+ tst)) (gc)))
+  (if (= (modulo tst 10) 0) (if (defined? 'mem-report) (mem-report))))
 
 (defmacro without-errors (func)
   `(catch #t 
@@ -23628,7 +23628,7 @@ EDITS: 5
 			  (set! quad-files (cons name quad-files))
 			  (if (= chans 8)
 			      (set! octo-files (cons name octo-files)))))))))
-      
+
       (set! buffer-menu (add-to-main-menu "Buffers"))  
       (add-hook! open-hook open-buffer)
       (add-hook! close-hook close-buffer)
@@ -23639,6 +23639,7 @@ EDITS: 5
 	    (begin
 	      (for-each close-sound open-files)
 	      (set! open-files '())))
+	(clear-sincs)      
 	(log-mem test-ctr)
 	(let* ((len (length open-files))
 	       (open-chance (max 0.0 (* (- 8 len) .125)))

@@ -20,11 +20,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 22
-#define XEN_VERSION "1.22"
+#define XEN_MINOR_VERSION 23
+#define XEN_VERSION "1.23"
 
 /* HISTORY:
  *
+ *  10-Nov-04: scm_c_vector* (new Guile functions)
  *  21-Oct-04: XEN_LIST_REVERSE, (using rb_ary_dup available in 1.8)
  *  7-Oct-04:  keyword changes for new Guile.
  *  28-Sep-04: deprecated *_WITH_CALLER -- these no longer do anything useful in Guile.
@@ -450,7 +451,12 @@
   #define XEN_STRING_P(Arg)           (SCM_STRINGP(Arg))
 #endif
 
-#define XEN_VECTOR_P(Arg)             (SCM_VECTORP(Arg))
+#if HAVE_SCM_IS_VECTOR
+  #define XEN_VECTOR_P(Arg)           (scm_is_vector(Arg))
+#else
+  #define XEN_VECTOR_P(Arg)           (SCM_VECTORP(Arg))
+#endif
+
 #define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
 #define XEN_HOOK_P(Arg)               (SCM_HOOKP(Arg))
@@ -484,10 +490,14 @@
 #endif
 #define XEN_APPEND(a, b)                  scm_append(XEN_LIST_2(a, b))
 
+#if HAVE_SCM_IS_VECTOR
+  #define XEN_VECTOR_LENGTH(Arg)      (scm_c_vector_length(Arg))
+#else
 #ifndef SCM_VECTOR_LENGTH
   #define XEN_VECTOR_LENGTH(Arg)      ((int)(gh_vector_length(Arg)))
 #else
   #define XEN_VECTOR_LENGTH(Arg)      ((int)(SCM_VECTOR_LENGTH(Arg)))
+#endif
 #endif
 #ifdef SCM_WRITABLE_VELTS
   #define XEN_VECTOR_ELEMENTS(a)      SCM_WRITABLE_VELTS(a)
@@ -495,12 +505,17 @@
   #define XEN_VECTOR_ELEMENTS(a)      SCM_VELTS(a)
 #endif
 
+#if HAVE_SCM_IS_VECTOR
+  #define XEN_VECTOR_REF(Vect, Num)      scm_c_vector_ref(Vect, Num)
+  #define XEN_VECTOR_SET(Vect, Num, Val) scm_c_vector_set_x(Vect, Num, Val)
+#else
 #ifdef SCM_VECTOR_REF
   #define XEN_VECTOR_REF(Vect, Num)      SCM_VECTOR_REF(Vect, Num)
   #define XEN_VECTOR_SET(Vect, Num, Val) SCM_VECTOR_SET(Vect, Num, Val)
 #else
   #define XEN_VECTOR_REF(Vect, Num)      scm_vector_ref(Vect, C_TO_XEN_INT(Num))
   #define XEN_VECTOR_SET(Vect, Num, Val) scm_vector_set_x(Vect, C_TO_XEN_INT(Num), Val)
+#endif
 #endif
 
 #define XEN_VECTOR_TO_LIST(Vect)      scm_vector_to_list(Vect)

@@ -867,7 +867,7 @@ static void update_mix_dialog(int mix_id)
 	  widget_int_to_text(w_id, mix_dialog_id);
 	  beg = mix_dialog_mix_position(mix_dialog_id);
 	  len = mix_frames(mix_dialog_id);
-	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
+	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f%s",
 		       (float)((double)beg / (float)SND_SRATE(cp->sound)),
 		       (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)),
 		       (mix_ok_and_unlocked(mix_dialog_id)) ? "" : " (locked)");

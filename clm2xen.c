@@ -4178,7 +4178,7 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
   else return(0.0);
 }
 
-static XEN g_clear_sincs(void)
+static XEN g_mus_clear_sincs(void)
 {
   mus_clear_sinc_tables();
   return(XEN_FALSE);
@@ -5257,7 +5257,7 @@ XEN_NARGIFY_2(g_locsig_ref_w, g_locsig_ref)
 XEN_NARGIFY_2(g_locsig_reverb_ref_w, g_locsig_reverb_ref)
 XEN_NARGIFY_3(g_locsig_set_w, g_locsig_set)
 XEN_NARGIFY_3(g_locsig_reverb_set_w, g_locsig_reverb_set)
-XEN_NARGIFY_0(g_clear_sincs_w, g_clear_sincs)
+XEN_NARGIFY_0(g_mus_clear_sincs_w, g_mus_clear_sincs)
 XEN_NARGIFY_1(g_src_p_w, g_src_p)
 XEN_ARGIFY_3(g_src_w, g_src)
 XEN_ARGIFY_6(g_make_src_w, g_make_src)
@@ -5512,7 +5512,7 @@ XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 #define g_locsig_reverb_ref_w g_locsig_reverb_ref
 #define g_locsig_set_w g_locsig_set
 #define g_locsig_reverb_set_w g_locsig_reverb_set
-#define g_clear_sincs_w g_clear_sincs
+#define g_mus_clear_sincs_w g_mus_clear_sincs
 #define g_src_p_w g_src_p
 #define g_src_w g_src
 #define g_make_src_w g_make_src
@@ -5947,7 +5947,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 				   S_setB S_mus_ramp, g_mus_set_ramp_w,  1, 0, 2, 0);
 
 
-  XEN_DEFINE_PROCEDURE(S_clear_sincs, g_clear_sincs_w, 0, 0, 0, "clears out any sinc tables");
+  XEN_DEFINE_PROCEDURE(S_clear_sincs, g_mus_clear_sincs_w, 0, 0, 0, "clears out any sinc tables");
   XEN_DEFINE_PROCEDURE(S_src_p,       g_src_p_w,       1, 0, 0, H_src_p);
   XEN_DEFINE_PROCEDURE(S_src,         g_src_w,         1, 2, 0, H_src);
   XEN_DEFINE_PROCEDURE(S_make_src,    g_make_src_w,    0, 6, 0, H_make_src);

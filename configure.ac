@@ -1008,6 +1008,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB($GNAME, scm_c_make_rectangular, [AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)])
     AC_CHECK_LIB($GNAME, scm_car,                [AC_DEFINE(HAVE_SCM_CAR)])
     AC_CHECK_LIB($GNAME, scm_from_locale_keyword,[AC_DEFINE(HAVE_SCM_FROM_LOCALE_KEYWORD)])
+    AC_CHECK_LIB($GNAME, scm_is_vector,          [AC_DEFINE(HAVE_SCM_IS_VECTOR)])
     AC_CHECK_LIB($GNAME, scm_c_define_module,    [AC_DEFINE(HAVE_SCM_C_DEFINE_MODULE)
                                                  if test "$with_modules" = yes; then
 						   AC_DEFINE(WITH_MODULES)

@@ -49,7 +49,7 @@
 (if (defined? 'kjetil-settings)
     ;; This is for my personal computers settings. May not suite your setup.
     (begin
-      (set! %load-path (cons "/hom/kjetil/snd-7" %load-path))
+      (set! %load-path (cons "/hom/kjetil/snd-run" %load-path))
       (set! (temp-dir) "/lyd/local/tmp")
       (set! (save-dir) "/lyd/local/tmp")))
 
@@ -117,7 +117,8 @@
 (c-define c-show-indices #t)
 (set! (show-indices) c-show-indices)
 
-;;(set! (auto-resize) #f)
+(c-define c-auto-resize #f)
+(set! (auto-resize) c-auto-resize)
 
 ; Regions are created when needed when using the ctrl+y and ctrl+w keybindings.
 (set! (selection-creates-region) #f)
@@ -264,6 +265,8 @@
 
 
 
+
+
 ;;##############################################################
 ;; Various more or less general functions
 ;;##############################################################
@@ -351,9 +354,7 @@
   (let ((isplaying (dac-is-running))
 	(legalpos (min (frames) (max 0 pos))))
     (if isplaying
-	(begin
-	  (c-pause legalpos)
-	  (c-stop-pause legalpos))
+	(-> (c-p) set-cursor legalpos)
 	(begin
 	  (c-show-times legalpos #f)
 	  (c-set-cursor-pos legalpos)))))
@@ -492,6 +493,7 @@
 
 
 
+
 ;;##############################################################
 ;; Various mouse handling
 ;;##############################################################
@@ -512,46 +514,136 @@
 	     (if (and (not (= state 260))
 		      (= axis time-graph))
 		 (let ((samp (max 0 (c-integer (* (srate snd) (position->x x snd chn)))))
-		       (dasspeed (speed-control)))
-		   (c-pause samp)
+		       (dasspeed (speed-control))
+		       (play (c-p snd)))
 		   (cond ((= button 4)
 			  (if (< dasspeed 0)
 			      (set! (speed-control) (* -1 dasspeed)))
-			  (c-stop-pause samp))
+			  (-> play play2 samp))
 			 ((= button 5)
 			  (if (> dasspeed 0)
 			      (set! (speed-control) (* -1 dasspeed)))
-			  (c-stop-pause samp)))))
+			  (-> play play2 samp))
+			 (else
+			  (if (-> play isplaying)
+			      (-> play stop samp)
+			      (set! (cursor snd) samp)))))) 
 	     #f))
 	
 
-
-
+#!
+(set! (speed-control) -1)
+(play (- (frames) 1000) #f #f #f 1000 #f #f)
+!#
 
 ;;##############################################################
-;; New play code: (the old play code is horrible)
+;; Playing
 ;;##############################################################
 
-(define-class (<play>)
-  (define-method (play)
-    #t)
-  (define-method (stop-play)
-    #t)
+
+(define-class (<play> snd)
+  (define isplaying #f)
+  (define startplaypos 0)
+  (define playtype 'song)
+
+  (define (get-selection-start)
+    (if (< (speed-control snd) 0)
+	(+ (selection-position snd) (selection-frames snd))
+	(selection-position snd)))
+  (define (get-selection-end)
+    (if (< (speed-control snd) 0)
+	(selection-position snd)
+	(+ (selection-position snd) (selection-frames snd))))
+  
+  (define-method (play pos)
+    (define (das-play)
+      (play 0 #f #f #f #f #f das-callback))
+    (define (das-callback x)
+      (if (and (= x 0) c-islooping)
+	  (das-play)
+	  (set! isplaying #f)))
+    (set! isplaying #t)
+    (set! startplaypos (if pos pos (cursor snd)))
+    (set! playtype 'song)
+    (play startplaypos #f #f #f #f #f das-callback))
+
+  ;; Stops if allready playing
+  (define-method (play2 pos)
+    (if isplaying
+	(begin
+	  (set! (cursor-follows-play) #f)
+	  (stop-playing)
+	  (set! (cursor-follows-play) #t)))
+    (this->play pos))
+
+  (define-method* (play-selection #:optional (pos (get-selection-start)))
+    (define (das-play)
+      (play (get-selection-start) #f #f #f (get-selection-end) #f das-callback))
+    (define (das-callback x)
+      (if (and (= x 0) c-islooping)
+	  (das-play)
+	  (set! isplaying #f)))
+    (set! isplaying #t)
+    (set! startplaypos pos)
+    (set! playtype 'selection)
+    (c-display pos (get-selection-end))
+    (play pos #f #f #f (get-selection-end) #f das-callback))
+
+  (define-method* (stop #:optional pos)
+    (set! (cursor-follows-play) #f)
+    (stop-playing)
+    (set! (cursor) (if pos pos startplaypos))
+    (set! (cursor-follows-play) #t))
+
   (define-method (pause)
-    #t)
-  (define-method (stop-pause)
-    #t)
+    (set! (cursor-follows-play) #f)
+    (let ((pos (cursor snd)))
+      (stop-playing)
+      (set! (cursor snd) pos)
+      (set! (cursor-follows-play) #t)))
+
+  (define-method* (continue #:optional (pos (cursor snd)))
+    (if (eq? playtype 'song)
+	(this->play pos)
+	(this->play-selection pos)))
+
+
+  (define-method (isplaying)
+    (dac-is-running))
+    ;;(or isplaying (dac-is-running)))
+
+  (define-method (set-cursor pos)
+    (set! (cursor-follows-play) #f)
+    (stop-playing)
+    (this->continue pos)
+    (set! (cursor-follows-play) #t))
+
+  (define-method (dosomepause thunk)
+    (this->pause)
+    (thunk)
+    (this->continue))
+
   )
 
 
-;;##############################################################
-;; Playing (Lots of chaotic code)
-;;##############################################################
 
-(define c-playstartpos 0)
+(add-hook! after-open-hook
+	   (lambda (snd)
+	     (c-put snd 'play (<play> snd))))
 
-;(define (play-selection-with-play)
-;  (play (c-selection-position) #f #f #f (+ (c-selection-position) (c-selection-frames))))
+(define* (c-p #:optional (snd (selected-sound)))
+  (c-get snd 'play))
+
+(define* (c-play #:optional samp)
+  (-> (c-p) play samp))
+(define (c-stop)
+  (-> (c-p) stop))
+(define (c-pause)
+  (-> (c-p) pause))
+(define (c-continue)
+  (-> (c-p) continue))
+(define (c-play-selection)
+  (-> (c-p) play-selection))
 
 
 
@@ -575,109 +667,36 @@
 		   (c-gc-off #f)))))
 
 
-
-
-;; To avoid flickering and eye-uncomfortable cursor-jumps
-(define (c-stop-playing cursorpos)
-  (set! (cursor-follows-play) #f)
-  (stop-playing)
-  (c-set-cursor-pos (if cursorpos cursorpos (cursor)))
-  (if cursorpos
-      (c-show-times cursorpos #t))
-  (set! (cursor-follows-play) #t))
-
-    
-
-(define (c-play-do start end replaypos)
-  (let* ((backwards (< (speed-control) 0))
-	 (startpos (if start start (if backwards (+ (c-selection-position) (c-selection-frames)) (c-selection-position))))
-	 (endpos (if end end (if backwards (c-selection-position) (+ (c-selection-position) (c-selection-frames)))))
-	 (whentostopcursor-delta (* 2 (srate) (cursor-update-interval))))
-    
-    (define (dashook samps)
-      (if (< (abs (- (cursor) endpos)) whentostopcursor-delta)
-	  (begin
-	    (remove-hook! play-hook dashook)
-	    (set! (cursor-follows-play) #f))))
-
-    (c-set-cursor-pos startpos)
-
-    ;;(add-hook! play-hook dashook)
-    (in 1
-	(lambda ()
-	  (set! (cursor-follows-play) #t)))
-    (play startpos #f #f #f endpos #f
-	  (lambda (x)
-	    (if (and (= x 0) c-islooping)
-		(c-play-do (if (not replaypos) start replaypos) end replaypos))))))
-
-
-(define* (c-play-selection #:optional pos)
-  (c-put (selected-sound) 'playtype 'selection)
-  (set! c-playstartpos (if (< (speed-control) 0) (+ (c-selection-position) (c-selection-frames)) (c-selection-position)))
-  (if pos
-      (c-play-do pos #f c-playstartpos)
-      (c-play-do #f #f #f)))
-
-
+#!
+Doesnt work any more.
 (add-hook! stop-playing-hook
 	   (lambda (snd)
+	     (c-display "stop-playing-hook")
 	     (set! (cursor-follows-play) #f)
 	     (c-set-cursor-pos (cursor))
 	     (c-show-times (cursor) #t)
 	     (set! (cursor-follows-play) #t)))
-
-
-(define* (c-play pos #:optional dontsetstartpos)
-  (c-put (selected-sound) 'playtype 'all)
-  (if (not dontsetstartpos)
-      (set! c-playstartpos pos))
-  (if (< (speed-control) 0)
-      (c-play-do pos 0 c-playstartpos)
-      (c-play-do pos (frames) c-playstartpos)))
-
-
-(define c-dac-was-running #f)
-(define c-pause-pos 0)
-(define* (c-pause #:optional pausepos)
-  (set! c-dac-was-running (dac-is-running))
-  (set! c-pause-pos (if pausepos pausepos (cursor)))
-  (c-stop-playing c-pause-pos))
-
-(define* (c-stop-pause #:optional pausepos)
-  (if (eq? 'all (c-get (selected-sound) 'playtype 'all))
-      (c-play (if pausepos pausepos c-pause-pos) #t)
-      (if pausepos
-	  (c-play-selection pausepos)
-	  (c-play-selection c-pause-pos))))
-
-(define (c-dosomepause func)
-  (c-pause)
-  (func)
-  (c-stop-pause))
+!#
 
 
 ;; Replace the old space binding with one that starts playing from the current cursor position,
 ;; all channels. And stops playing if allready playing.
 (bind-key (char->integer #\ ) 0 
 	  (lambda ()
-	    (if (dac-is-running)
-		(c-stop-playing c-playstartpos)
+	    (if (-> (c-p) isplaying)
+		(-> (c-p) stop)
 		(if (c-selection?)
-		    (c-play-selection)
-		    (c-play (cursor))))))
-
+		    (-> (c-p) play-selection)
+		    (-> (c-p) play #f)))))
 
 
 ;; Makes the P key a pause button. If playing, stops playing, but doesn't reset the cursor pos.
 ;; If not playing, starts playing from cursor.
 (bind-key (char->integer #\p) 0 
 	  (lambda x
-	    (if (dac-is-running)
-		(c-stop-playing #f)
-		(c-play (cursor) #t))))
-
-
+	    (if (-> (c-p) isplaying)
+		(-> (c-p) pause)
+		(-> (c-p) continue))))
 
 
 
@@ -730,10 +749,7 @@
 	  (lambda ()
 	    (c-zoom (/ 1 c-zoomfactor))))
 
-;(new-sound "test.snd" :channels 2 :size 2)
-;(set! (sync) 1)
-;(set! (channel-style) channels-combined)
-;(set! (x-bounds) (list 0.0 (/ (+ (frames) 1) (srate))))
+
 
 ;; Shows the full sound after opening.
 (add-hook! after-open-hook
@@ -1564,9 +1580,10 @@ Does not work.
 					     (if (GTK_IS_CHECK_BUTTON w)
 						 (c-g_signal_connect w "button_release_event"
 								     (lambda (w e i)
-								       (c-dosomepause (lambda ()
-											(gtk_button_released (GTK_BUTTON w))
-											(focus-widget (c-editor-widget snd))))))))
+								       (-> (c-p snd) dosomepause (lambda ()
+												   (gtk_button_released (GTK_BUTTON w))
+												   (focus-widget (c-editor-widget snd))))))))
+					 
 					 (if (GTK_IS_CONTAINER w)
 					     (fixit w)))))))
 	       (fixit (caddr (sound-widgets snd))))))
@@ -1590,14 +1607,14 @@ Does not work.
 			     (set! must-wait-more #f)
 			     (waitfunc))
 			   (begin
-			     (c-stop-pause)
+			     (-> (c-p snd) continue)
 			     (set! iswaiting #f))))))
 	       (c-put snd 'dac-slider
 		      (<slider> control-panel "dac-size" 1 (dac-size) 8192
 				(lambda (val)
 				  (let ((isplaying (dac-is-running)))
 				    (if isplaying
-					(c-pause))
+					(-> (c-p snd) pause))
 				    (set! (dac-size) (c-integer val))
 				    (focus-widget (c-editor-widget snd))
 				    (if isplaying
@@ -1803,6 +1820,20 @@ Does not work.
 
 
 
+;; Automatically open saved-as files.
+(let ((save-dialog (save-sound-dialog)))
+  (g_signal_connect  (.ok_button (GTK_FILE_SELECTION save-dialog)) "clicked"
+		     (lambda (w d)
+		       (let ((filename (gtk_file_selection_get_filename (GTK_FILE_SELECTION save-dialog))))
+			 (gtk_widget_hide save-dialog)
+			 (open-sound filename)))
+		     #f)
+  (gtk_widget_hide save-dialog)
+)
+
+
+
+
 ;;##############################################################
 ;; Add/Remove things to the edit-menu
 ;;##############################################################
@@ -1866,6 +1897,10 @@ Does not work.
 		       #f))
 				   
 
+(add-hook! after-open-hook (lambda args
+			     (c-save-all-filenames (c-open-sounds-filename))
+			     #f))
+			
 
 (add-hook! after-open-hook
 	   (lambda (snd)

@@ -848,21 +848,23 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
   read_direction_t direction = READ_FORWARD;
   off_t beg = 0;
   snd_fd *sf;
-  if (start >= cp->samples[pos]) return(NULL);
   if (pos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr;
   if (sp)
     {
       if (sp->speed_control_direction == 1) 
 	{
+	  if (start >= cp->samples[pos]) return(NULL);
 	  direction = READ_FORWARD; 
 	  beg = start;
 	}
       else 
 	{
 	  direction = READ_BACKWARD;
-	  if (start == 0) 
+	  if ((start == 0) || (start >= cp->samples[pos])) /* don't be pedantic about the start point */
 	    beg = cp->samples[pos] - 1;
 	  else beg = start;
+	  if (end == 0)
+	    end = NO_END_SPECIFIED;
 	}
     }
   slot = find_slot_to_play();
@@ -1376,9 +1378,12 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		}
 	      if (dp->end != NO_END_SPECIFIED)
 		{
-		  if ((dp->chn_fd->at_eof) || 
-		      (dp->chn_fd->cb == NULL) ||
-		      (dp->end <= current_location(dp->chn_fd)))
+		  if ((dp->chn_fd->cb == NULL) ||
+		      ((dp->sp->speed_control_direction > 0) && 
+		       ((dp->chn_fd->at_eof) || 
+			(dp->end <= current_location(dp->chn_fd)))) ||
+		      ((dp->sp->speed_control_direction < 0) && 
+			(dp->end > current_location(dp->chn_fd))))
 		    dp->end = 0;
 		}
 	    }
