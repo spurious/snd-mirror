@@ -420,16 +420,15 @@ static XEN vct_map(XEN obj, XEN proc)
 	  {
 	    char *err;
 	    err = initialize_ptree(pt);
-	    if (err)
-	      mus_misc_error(S_vct_mapB, "bad variable type?", C_TO_XEN_STRING(err));
-	    for (i = 0; i < v->length; i++) 
-	      v->data[i] = evaluate_ptree_0f2f(pt);
-	    free_ptree(pt);
-	    return(xen_return_first(obj, proc));
+	    if (err == NULL)
+	      {
+		for (i = 0; i < v->length; i++) 
+		  v->data[i] = evaluate_ptree_0f2f(pt);
+		free_ptree(pt);
+		return(xen_return_first(obj, proc));
+	      }
+	    else free_ptree(pt); /* and fallback on Guile */
 	  }
-#if DEBUGGING
-	/* else fprintf(stderr,"can't vct-map %s\n", XEN_TO_C_STRING(XEN_TO_STRING(XEN_CAR(proc)))); */
-#endif
       }
     proc = XEN_CADR(proc);
     XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 0), proc, XEN_ARG_2, S_vct_mapB, "a thunk");

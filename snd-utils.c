@@ -554,7 +554,12 @@ void mem_report(void)
   FILE *Fp;
   time_t ts;
   char time_buf[TIME_STR_SIZE];
-
+  snd_state *ss;
+  ss = get_global_state();
+#if WITH_RUN
+  if (ss->search_tree)
+    ss->search_tree = free_ptree(ss->search_tree);
+#endif
   for (i = 0; i < mem_size; i++)
     if (stacks[i])
       {
@@ -581,7 +586,7 @@ void mem_report(void)
 
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  fprintf(Fp, "memlog: %s: %s\n\n", time_buf, mem_stats(get_global_state(), 0));
+  fprintf(Fp, "memlog: %s: %s\n\n", time_buf, mem_stats(ss, 0));
 
   for (i = 0; i <= mem_location; i++)
     {

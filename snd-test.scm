@@ -52,7 +52,7 @@
 
 (define tests 1)
 (define snd-test -1)
-(if (provided? 'snd-debug) (disable-play))
+;(if (provided? 'snd-debug) (disable-play))
 (define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 26)
@@ -71,6 +71,15 @@
 (debug-enable 'debug 'backtrace)
 (read-enable 'positions)
 (define (irandom n) (inexact->exact (random n)))
+
+(if (file-exists? "optimizer.log")
+    (delete-file "optimizer.log"))
+(define optimizer-log (open-output-file "optimizer.log"))
+(reset-hook! optimization-hook)
+(add-hook! optimization-hook 
+	   (lambda (msg)
+	     (display msg optimizer-log)
+	     (newline optimizer-log)))
 
 (if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
     (begin
@@ -4992,7 +5001,7 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (delay gen i)))
-	;(vct-map! v1 (let ((i 0)) (lambda () (let ((val (delay gen2 i))) (set! i (1+ i)) val))))
+	(vct-map! v1 (let ((i 0)) (lambda () (let ((val (if (delay? gen) (delay gen2 i) -1.0))) (set! i (1+ i)) val))))
 	(IF (not (vequal v1 v0)) (snd-display ";map delay: ~A ~A" v0 v1))
 	(IF (not (delay? gen)) (snd-display ";~A not delay?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";delay length: ~D?" (mus-length gen)))
@@ -5066,7 +5075,7 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (all-pass gen 1.0)))
-	(vct-map! v1 (lambda () (all-pass gen1 1.0)))
+	(vct-map! v1 (lambda () (if (all-pass? gen1) (all-pass gen1 1.0) -1.0)))
 	(IF (not (vequal v1 v0)) (snd-display ";map all-pass: ~A ~A" v0 v1))
 	(IF (not (all-pass? gen)) (snd-display ";~A not all-pass?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";all-pass length: ~D?" (mus-length gen)))
@@ -5104,7 +5113,7 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (comb gen 1.0)))
-	(vct-map! v1 (lambda () (comb gen1 1.0)))
+	(vct-map! v1 (lambda () (if (comb? gen1) (comb gen1 1.0) -1.0)))
 	(IF (not (vequal v0 v1)) (snd-display ";map comb: ~A ~A" v0 v1))
 	(IF (not (comb? gen)) (snd-display ";~A not comb?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";comb length: ~D?" (mus-length gen)))
@@ -5156,7 +5165,7 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (notch gen 1.0)))
-	(vct-map! v1 (lambda () (notch gen1 1.0)))
+	(vct-map! v1 (lambda () (if (notch? gen1) (notch gen1 1.0) -1.0)))
 	(IF (not (vequal v0 v1)) (snd-display ";map notch: ~A ~A" v0 v1))
 	(IF (not (notch? gen)) (snd-display ";~A not notch?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";notch length: ~D?" (mus-length gen)))
@@ -5192,7 +5201,7 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (one-pole gen 1.0)))
-	(vct-map! v1 (lambda () (one-pole gen1 1.0)))
+	(vct-map! v1 (lambda () (if (one-pole? gen) (one-pole gen1 1.0) -1.0)))
 	(IF (not (vequal v0 v1)) (snd-display ";map one-pole: ~A ~A" v0 v1))
 	(IF (not (one-pole? gen)) (snd-display ";~A not one-pole?" gen))
 	(IF (not (= (mus-order gen) 1)) (snd-display ";one-pole order: ~D?" (mus-order gen)))
@@ -5212,7 +5221,7 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (one-zero gen 1.0)))
-	(vct-map! v1 (lambda () (one-zero gen1 1.0)))
+	(vct-map! v1 (lambda () (if (one-zero? gen) (one-zero gen1 1.0) -1.0)))
 	(IF (not (vequal v0 v1)) (snd-display ";map one-zero: ~A ~A" v0 v1))
 	(IF (not (one-zero? gen)) (snd-display ";~A not one-zero?" gen))
 	(IF (not (= (mus-order gen) 1)) (snd-display ";one-zero order: ~D?" (mus-order gen)))
@@ -5231,7 +5240,7 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (two-zero gen 1.0)))
-	(vct-map! v1 (lambda () (two-zero gen1 1.0)))
+	(vct-map! v1 (lambda () (if (two-zero? gen1) (two-zero gen1 1.0) -1.0)))
 	(IF (not (vequal v0 v1)) (snd-display ";map two-zero: ~A ~A" v0 v1))
 	(IF (not (two-zero? gen)) (snd-display ";~A not two-zero?" gen))
 	(IF (not (= (mus-order gen) 2)) (snd-display ";two-zero order: ~D?" (mus-order gen)))
@@ -5251,7 +5260,7 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (two-pole gen 1.0)))
-	(vct-map! v1 (lambda () (two-pole gen1 1.0)))
+	(vct-map! v1 (lambda () (if (two-pole? gen1) (two-pole gen1 1.0) -1.0)))
 	(IF (not (vequal v0 v1)) (snd-display ";map two-pole: ~A ~A" v0 v1))
 	(IF (not (two-pole? gen)) (snd-display ";~A not two-pole?" gen))
 	(IF (not (= (mus-order gen) 2)) (snd-display ";two-pole order: ~D?" (mus-order gen)))
@@ -5275,8 +5284,10 @@
 
       (let ((gen (make-oscil 440.0))
 	    (gen1 (make-oscil 440.0))
+	    (gen2 (make-oscil 440.0))
 	    (v0 (make-vct 10))
-	    (v1 (make-vct 10)))
+	    (v1 (make-vct 10))
+	    (v2 (make-vct 10)))
 	(print-and-check gen 
 			 "oscil"
 			 "oscil freq: 440.000Hz, phase: 0.000"
@@ -5285,6 +5296,8 @@
 	    ((= i 10))
 	  (vct-set! v0 i (oscil gen 0.0))
 	  (vct-set! v1 i (mus-apply gen1 0.0 0.0)))
+	(vct-map! v2 (lambda () (if (oscil? gen2) (oscil gen2 0.0) -1.0)))
+	(IF (not (vequal v0 v2)) (snd-display ";map oscil: ~A ~A" v0 v2))
 	(IF (not (oscil? gen)) (snd-display ";~A not oscil?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";oscil phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";oscil frequency: ~F?" (mus-frequency gen)))
@@ -5488,7 +5501,9 @@
 	(test-gen-equal gen gen1 gen2))
 
       (let ((gen (make-sum-of-cosines 10 440.0))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-sum-of-cosines 10 440.0))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "sum_of_cosines"
 			 "sum_of_cosines freq: 440.000Hz, phase: 0.000, cosines: 10"
@@ -5496,6 +5511,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (sum-of-cosines gen 0.0)))
+	(vct-map! v1 (lambda () (if (sum-of-cosines? gen1) (sum-of-cosines gen1 0.0) -1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map sum-of-cosines: ~A ~A" v0 v10))
 	(IF (not (sum-of-cosines? gen)) (snd-display ";~A not sum-of-cosines?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";sum-of-cosines phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";sum-of-cosines frequency: ~F?" (mus-frequency gen)))
@@ -5510,7 +5527,9 @@
       (test-gen-equal (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 400.0))
 
       (let ((gen (make-sine-summation 440.0))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-sine-summation 440.0))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "sine_summation"
 			 "sine_summation: frequency: 440.000, phase: 0.000, n: 1, a: 0.500, ratio: 1.000"
@@ -5518,6 +5537,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (sine-summation gen 0.0)))
+	(vct-map! v1 (lambda () (if (sine-summation? gen1) (sine-summation gen1 0.0) -1.0)))
+	(IF (not (vequal v0 v1)) (sdnd-display ";map sine-summation: ~A ~A" v0 v1))
 	(IF (not (sine-summation? gen)) (snd-display ";~A not sine-summation?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";sine-summation phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";sine-summation frequency: ~F?" (mus-frequency gen)))
@@ -5561,7 +5582,9 @@
 
 
       (let ((gen (make-asymmetric-fm 440.0))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-asymmetric-fm 440.0))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "asymmetric_fm"
 			 "asymmetric-fm freq: 440.000Hz, phase: 0.000, ratio: 1.000, r: 1.000"
@@ -5569,6 +5592,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (asymmetric-fm gen 0.0)))
+	(vct-map! v1 (lambda () (if (asymmetric-fm? gen1) (asymmetric-fm gen1 0.0) -1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map asymmetric-fm: ~A ~A" v0 v1))
 	(IF (not (asymmetric-fm? gen)) (snd-display ";~A not asymmetric-fm?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";asymmetric-fm phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";asymmetric-fm frequency: ~F?" (mus-frequency gen)))
@@ -5646,7 +5671,9 @@
 
 
       (let ((gen (make-fir-filter 3 (list->vct '(.5 .25 .125))))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-fir-filter 3 (list->vct '(.5 .25 .125))))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "fir_filter"
 			 "fir_filter: order: 3"
@@ -5655,6 +5682,12 @@
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (fir-filter gen 0.0)))
+	(vct-map! v1 (let ((inp 1.0))
+		       (lambda () 
+			 (let ((val (if (fir-filter? gen1) (fir-filter gen1 inp) -1.0)))
+			   (set! inp 0.0)
+			   val))))
+	(IF (not (vequal v0 v1)) (snd-display ";map fir-filter: ~A ~A" v0 v1))
 	(IF (not (fir-filter? gen)) (snd-display ";~A not fir-filter?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";fir-filter length: ~D?" (mus-length gen)))
 	(IF (or (fneq (vct-ref v0 1) 0.25) (fneq (vct-ref v0 2) .125)) (snd-display ";fir-filter output: ~A" v0))
@@ -5691,7 +5724,9 @@
 	      (snd-display ";filter xcoeffs: ~A?" data))))
 
       (let ((gen (make-iir-filter 3 (list->vct '(.5 .25 .125))))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-iir-filter 3 (list->vct '(.5 .25 .125))))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "iir_filter"
 			 "iir_filter: order: 3"
@@ -5700,6 +5735,12 @@
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (iir-filter gen 0.0)))
+	(vct-map! v1 (let ((inp 1.0))
+		       (lambda ()
+			 (let ((val (if (iir-filter? gen1) (iir-filter gen1 inp) -1.0)))
+			   (set! inp 0.0)
+			   val))))
+	(IF (not (vequal v0 v1)) (snd-display ";map iir-filter: ~A ~A" v0 v1))
 	(IF (not (iir-filter? gen)) (snd-display ";~A not iir-filter?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";iir-filter length: ~D?" (mus-length gen)))
 	(IF (or (fneq (vct-ref v0 1) -0.25) (fneq (vct-ref v0 2) -.062)) (snd-display ";iir-filter output: ~A" v0))
@@ -5714,7 +5755,9 @@
 		      (let ((f3 (make-iir-filter 2 (list->vct '(.5 .25))))) (iir-filter f3 1.0) f3))
 
       (let ((gen (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "filter"
 			 "filter: order: 3"
@@ -5723,6 +5766,12 @@
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (filter gen 0.0)))
+	(vct-map! v1 (let ((inp 1.0))
+		       (lambda () 
+			 (let ((val (if (filter? gen1) (filter gen1 inp) -1.0)))
+			   (set! inp 0.0)
+			   val))))
+	(IF (not (vequal v0 v1)) (snd-display ";map filter: ~A ~A" v0 v1))
 	(IF (not (filter? gen)) (snd-display ";~A not filter?" gen))
 	(IF (not (= (mus-length gen) 3)) (snd-display ";filter length: ~D?" (mus-length gen)))
 	(IF (or (fneq (vct-ref v0 1) 0.125) (fneq (vct-ref v0 2) .031)) (snd-display ";filter output: ~A" v0))
@@ -5748,7 +5797,9 @@
 	    (snd-display ";make-filter no coeffs: ~A" var)))
 
       (let ((gen (make-sawtooth-wave 440.0))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-sawtooth-wave 440.0))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "sawtooth_wave"
 			 "sawtooth freq: 440.000Hz, phase: 3.142, amp: 1.000"
@@ -5756,6 +5807,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (sawtooth-wave gen 0.0)))
+	(vct-map! v1 (lambda () (if (sawtooth-wave? gen1) (sawtooth-wave gen1 0.0) -1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map sawtooth: ~A ~A" v0 v1))
 	(IF (not (sawtooth-wave? gen)) (snd-display ";~A not sawtooth-wave?" gen))
 	(IF (fneq (mus-phase gen) 4.39538) (snd-display ";sawtooth-wave phase: ~F?" (mus-phase gen))) ;starts at pi
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";sawtooth-wave frequency: ~F?" (mus-frequency gen)))
@@ -5767,7 +5820,9 @@
       (test-gen-equal (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0 0.5))
 
       (let ((gen (make-square-wave 440.0))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-square-wave 440.0))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "square_wave"
 			 "square_wave freq: 440.000Hz, phase: 0.000, amp: 1.000"
@@ -5775,6 +5830,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (square-wave gen 0.0)))
+	(vct-map! v1 (lambda () (if (square-wave? gen1) (square-wave gen1 0.0) -1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map square-wave: ~A ~A" v0 v1))
 	(IF (not (square-wave? gen)) (snd-display ";~A not square-wave?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";square-wave phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";square-wave frequency: ~F?" (mus-frequency gen)))
@@ -5787,7 +5844,9 @@
 
       (let ((gen (make-triangle-wave 440.0))
 	    (gen1 (make-triangle-wave 440.0 1.0 pi))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen2 (make-triangle-wave 440.0))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "triangle_wave"
 			 "triangle_wave freq: 440.000Hz, phase: 0.000, amp: 1.000"
@@ -5795,6 +5854,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (triangle-wave gen 0.0)))
+	(vct-map! v1 (lambda () (if (triangle-wave? gen2) (triangle-wave gen2 0.0) -1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map triangle-wave: ~A ~A" v0 v1))
 	(IF (not (triangle-wave? gen)) (snd-display ";~A not triangle-wave?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";triangle-wave phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-phase gen1) pi) (snd-display ";init triangle-wave phase: ~F?" (mus-phase gen1)))
@@ -5807,7 +5868,9 @@
       (test-gen-equal (make-triangle-wave 440.0) (make-triangle-wave 440.0) (make-triangle-wave 440.0 0.5))
 
       (let ((gen (make-pulse-train 440.0))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-pulse-train 440.0))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "pulse_train"
 			 "pulse_train freq: 440.000Hz, phase: 6.283, amp: 1.000"
@@ -5815,6 +5878,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (pulse-train gen 0.0)))
+	(vct-map! v1 (lambda () (if (pulse-train? gen1) (pulse-train gen1 0.0) -1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map pulse-train: ~A ~A" v0 v1))
 	(IF (not (pulse-train? gen)) (snd-display ";~A not pulse-train?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";pulse-train phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";pulse-train frequency: ~F?" (mus-frequency gen)))
@@ -5872,7 +5937,9 @@
 		      (let ((z3 (make-zpolar .1 600.0))) (two-zero z3 0.5) z3))
 
       (let ((gen (make-formant .9 1200.0 1.0))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-formant .9 1200.0 1.0))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "formant"
 			 "formant: radius: 0.900, frequency: 1200.000, (gain: 1.000)"
@@ -5881,6 +5948,12 @@
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (formant gen 0.0)))
+	(vct-map! v1 (let ((inp 1.0))
+		       (lambda () 
+			 (let ((val (if (formant? gen1) (formant gen1 inp) -1.0)))
+			   (set! inp 0.0)
+			   val))))
+	(IF (not (vequal v0 v1)) (snd-display ";map formant: ~A ~A" v0 v1))
 	(IF (not (formant? gen)) (snd-display ";~A not formant?" gen))
 	(IF (not (= (mus-order gen) 2)) (snd-display ";formant order: ~D?" (mus-order gen)))
 	(IF (fneq (mus-a0 gen) 0.06371) (snd-display ";formant a0: ~F?" (mus-a0 gen)))
@@ -6144,7 +6217,9 @@
 	     (snd-display ";dolph-chebyshev window: ~A" gen))))
 
       (let ((v0 (make-vct 10))
-	    (gen (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 10)))
+	    (gen (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 10))
+	    (v1 (make-vct 10))
+	    (gen1 (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 10)))
 	(print-and-check gen 
 			 "env"
 			 "env: linear, pass: 0 (dur: 11), index: 0, data: [0.000 0.000 1.000 1.000 2.000 0.000]"
@@ -6155,6 +6230,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (env gen)))
+	(vct-map! v1 (lambda () (if (env? gen1) (env gen1) -1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map env: ~A ~A" v0 v1))
 	(IF (or (fneq (vct-ref v0 0) 0.0) (fneq (vct-ref v0 1) .1) (fneq (vct-ref v0 6) .4))
 	    (snd-display ";~A output: ~A" gen v0))
 	(IF (fneq (env-interp 1.5 gen) 0.25) (snd-display ";env-interp ~A at 1.5: ~F?" gen (env-interp 1.5 gen)))
@@ -6283,7 +6360,9 @@
 	    (gen2 (partials->wave '(1 1 2 1 3 1 4 1) #f #t))
 	    (gen3 (make-table-lookup))
 	    (v0 (make-vct 10))
-	    (v1 (make-vct 10)))
+	    (v1 (make-vct 10))
+	    (gen4 (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1))))
+	    (v2 (make-vct 10)))
 	(print-and-check gen 
 			 "table_lookup"
 			 "table_lookup: freq: 440.000Hz, phase: 0.000, length: 512"
@@ -6295,6 +6374,8 @@
 	    ((= i 10))
 	  (vct-set! v0 i (table-lookup gen 0.0))
 	  (vct-set! v1 i (mus-apply gen1 0.0)))
+	(vct-map! v2 (lambda () (if (table-lookup? gen4) (table-lookup gen4 0.0) -1.0)))
+	(IF (not (vequal v0 v2)) (snd-display ";map table-lookup: ~A ~A" v0 v2))
 	(IF (not (table-lookup? gen)) (snd-display ";~A not table-lookup?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";table-lookup phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";table-lookup frequency: ~F?" (mus-frequency gen)))
@@ -6323,7 +6404,9 @@
 
       (let ((gen0 (make-waveshape 440.0 :wave (partials->waveshape '(1 1))))
 	    (gen (make-waveshape 440.0 :size 512 :partials '(1 1)))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-waveshape 440.0 :wave (partials->waveshape '(1 1))))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "waveshape"
 			 "waveshape freq: 440.000Hz, phase: 0.000, size: 512"
@@ -6335,6 +6418,8 @@
 		(val (waveshape gen 1.0 0.0)))
 	    (IF (fneq val val0) (snd-display ";waveshape: ~A /= ~F?" val val0))
 	    (vct-set! v0 i val)))
+	(vct-map! v1 (lambda () (if (waveshape? gen1) (waveshape gen1 1.0 0.0) -1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map waveshape: ~A ~A" v0 v1))
 	(IF (not (waveshape? gen)) (snd-display ";~A not waveshape?" gen))
 	(IF (fneq (mus-phase gen) 1.253787) (snd-display ";waveshape phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";waveshape frequency: ~F?" (mus-frequency gen)))
@@ -6355,19 +6440,24 @@
 	    (snd-display ";make-waveshape bad size -1: ~A" var)))
 
       (let ((gen (make-wave-train 440.0 0.0 (make-vct 20)))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-wave-train 440.0 0.0 (make-vct 20)))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "wave_train"
 			 "wave_train freq: 440.000Hz, phase: 0.000, size: 20"
 			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], b: rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], loc: 0, fill_time: 0.000000, empty: 1")
 	(do ((i 0 (1+ i)))
 	    ((= i 20))
-	  (vct-set! (mus-data gen) i (* i .5)))
+	  (vct-set! (mus-data gen) i (* i .5))
+	  (vct-set! (mus-data gen1) i (vct-ref (mus-data gen) i)))
 	(IF (not (= (vct-length (mus-data gen)) 20)) (snd-display ";wave-train data length: ~A?" (vct-length (mus-data gen))))
 	(IF (not (= (mus-length gen) 20)) (snd-display ";wave-train length: ~A?" (mus-length gen)))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (wave-train gen 0.0)))
+	(vct-map! v1 (lambda () (if (wave-train? gen1) (wave-train gen1 0.0) -1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map wave-train: ~A ~A" v0 v1))
 	(IF (not (wave-train? gen)) (snd-display ";~A not wave-train?" gen))
 	(IF (fneq (mus-phase gen) 0.0) (snd-display ";wave-train phase: ~F?" (mus-phase gen)))
 	(IF (fneq (mus-frequency gen) 440.0) (snd-display ";wave-train frequency: ~F?" (mus-frequency gen)))
@@ -6378,7 +6468,9 @@
       (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 1.0 (make-vct 20)))
 
       (let ((gen (make-readin "oboe.snd" 0 1490))
-	    (v0 (make-vct 10)))
+	    (v0 (make-vct 10))
+	    (gen1 (make-readin "oboe.snd" 0 1490))
+	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "readin"
 			 "readin: oboe.snd[chan 0], loc: 1490, dir: 1"
@@ -6386,6 +6478,8 @@
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (readin gen)))
+	(vct-map! v1 (lambda () (if (readin? gen1) (readin gen1) -1.0)))
+	(IF (not (vequal v0 v1)) (snd-display ";map readin: ~A ~A" v0 v1))
 	(IF (not (readin? gen)) (snd-display ";~A not readin?" gen))
 	(IF (not (mus-input? gen)) (snd-display ";~A not input?" gen))
 	(IF (not (= (mus-channel gen) 0)) (snd-display ";readin chan: ~A?" (mus-channel gen)))
@@ -13957,11 +14051,20 @@ EDITS: 5
 		  (not (eq? (car tag) 'cannot-parse)))
 	      (snd-display ";~A -> ~A?" form tag))))
       
+      (define (ctst form result)
+	(let ((val (run-eval form)))
+	  (if (not (char=? val result)) (snd-display ";~A -> ~A (~A)" form val result))))
+      
+      (define (ctsta form arg result)
+	(let ((val (run-eval form arg)))
+	  (if (not (char=? val result)) (snd-display ";~A -> ~A (~A)" form val result))))
+
       (define int-var 32)
       (define dbl-var 3.14)
       (define bool-var #t)
       
       (if (procedure? test-hook) (test-hook 22))
+      (if (> (optimization) 0) (begin
       
       (ftsta '(lambda (y) (set! dbl-var 32.0) dbl-var) 0.0 32.0)
       (if (fneq dbl-var 32.0) (snd-display ";set! 1 dbl-var: ~A" dbl-var))
@@ -13978,6 +14081,14 @@ EDITS: 5
       (btsta '(lambda (y) (set! bool-var (odd? y)) bool-var) 1 #t)
       (if (not (eq? bool-var #t)) (snd-display ";set! 2 bool-var: ~A" bool-var))
       
+      (define (stst form result)
+	(let ((val (run-eval form)))
+	  (if (not (string=? val result)) (snd-display ";~A -> ~A (~A)" form val result))))
+
+      (define (ststa form arg result)
+	(let ((val (run-eval form arg)))
+	  (if (not (string=? val result)) (snd-display ";~A -> ~A (~A)" form val result))))
+
       (set! int-var 32)
       (set! dbl-var 3.14)
       (set! bool-var #t)
@@ -14596,7 +14707,7 @@ EDITS: 5
       (btst '(number? 2) #t)
       (btst '(number? 2.1) #t)
       (btst '(number? #f) #f)
-      (etst '(number? "hi"))
+      (btst '(number? "hi") #f)
       (etst '(number?))
       (etst '(number? 1 2 3))
       (btsta '(lambda (y) (number? y)) 2.0 #t)
@@ -14604,7 +14715,7 @@ EDITS: 5
       (btst '(real? 2) #t)
       (btst '(real? 2.1) #t)
       (btst '(real? #f) #f)
-      (etst '(real? "hi"))
+      (btst '(real? "hi") #f)
       (etst '(real?))
       (etst '(real? 1 2 3))
       (btsta '(lambda (y) (real? y)) 2.0 #t)
@@ -14612,7 +14723,7 @@ EDITS: 5
       (btst '(integer? 2) #t)
       (btst '(integer? 2.1) #f)
       (btst '(integer? #f) #f)
-      (etst '(integer? "hi"))
+      (btst '(integer? "hi") #f)
       (etst '(integer?))
       (etst '(integer? 1 2 3))
       (btsta '(lambda (y) (integer? y)) 2.1 #f)
@@ -14620,7 +14731,7 @@ EDITS: 5
       (btst '(exact? 2) #t)
       (btst '(exact? 2.1) #f)
       (btst '(exact? 2.0) #f)
-      (etst '(exact? "hi"))
+      (btst '(exact? "hi") #f)
       (etst '(exact?))
       (etst '(exact? 1 2 3))
       (btsta '(lambda (y) (exact? y)) 2.1 #f)
@@ -14628,7 +14739,7 @@ EDITS: 5
       (btst '(inexact? 2) #f)
       (btst '(inexact? 2.1) #t)
       (btst '(inexact? 2.0) #t)
-      (etst '(inexact? "hi"))
+      (btst '(inexact? "hi") #f)
       (etst '(inexact?))
       (etst '(inexact? 1 2 3))
       (btsta '(lambda (y) (inexact? y)) 2.1 #t)
@@ -14636,7 +14747,7 @@ EDITS: 5
       (btst '(boolean? 2) #f)
       (btst '(boolean? 2.1) #f)
       (btst '(boolean? #f) #t)
-      (etst '(boolean? "hi"))
+      (btst '(boolean? "hi") #f)
       (etst '(boolean?))
       (etst '(boolean? 1 2 3))
       (btsta '(lambda (y) (boolean? (odd? y))) 2.0 #t)
@@ -14739,6 +14850,7 @@ EDITS: 5
       (if (= int-var 321) (snd-display ";and not short-circuited"))
       
       (btst '(eq? 1 1) #t)
+      (btst '(eq? 1 2) #f)
       (btst '(eq? #f #f) #t)
       (btst '(eq? #f 1) #f)
       (btst '(eq? 1.0 1.0) #f)
@@ -14754,6 +14866,7 @@ EDITS: 5
       (btsta '(lambda (y) (eq? 1 y)) 1.0 #f)
       
       (btst '(eqv? 1 1) #t)
+      (btst '(eqv? 1 2) #f)
       (btst '(eqv? #f #f) #t)
       (btst '(eqv? #f 1) #f)
       (btst '(eqv? 1.0 1.0) #t)
@@ -14770,9 +14883,11 @@ EDITS: 5
       (btsta '(lambda (y) (eqv? 1 (inexact->exact y))) 1 #t)
       
       (btst '(equal? 1 1) #t)
+      (btst '(equal? 1 2) #f)
       (btst '(equal? #f #f) #t)
       (btst '(equal? #f 1) #f)
       (btst '(equal? 1.0 1.0) #t)
+      (btst '(equal? 1.0 2.0) #f)
       (btst '(equal? #t 1) #f)
       (btst '(equal? 1 1.0) #f)
       (etst '(equal?))
@@ -14783,6 +14898,16 @@ EDITS: 5
       (btsta '(lambda (y) (equal? y 1.0)) 1.0 #t)
       (btsta '(lambda (y) (equal? #t y)) 1.0 #f)
       (btsta '(lambda (y) (equal? 1 y)) 1.0 #f)
+
+      (btst '(eq? #\a #\a) #t)
+      (btst '(eqv? #\a #\a) #t)
+      (btst '(equal? #\a #\a) #t)
+      (btst '(eq? #\a #\A) #f)
+      (btst '(eqv? #\a #\A) #f)
+      (btst '(equal? #\a #\A) #f)
+      (btst '(eq? #\a 97) #f)
+      (btst '(eqv? #\a 97) #f)
+      (btst '(equal? #\a 97) #f)
       
       (itst '(if #t 3 2) 3)
       (itst '(if #f 3 2) 2)
@@ -15008,11 +15133,207 @@ EDITS: 5
       (etst '(* '#f))
       (etst '(* '"hihi"))
       (ftsta '(lambda (y) (+ y '3.1)) 1.2 4.3)
+      (ctst '(quote #\a) #\a)
+      (ctst '#\a #\a)
+      (itst '3 3)
+      (ftst '3.0 3.0)
+      (btst '#f #f)
 
       (define global-v (make-vct 3))
       (btst '(vct? global-v) #t)
       (btst '(vct? 1) #f)
       
+      (define c-var #\a)
+      (btst '(char? #\a) #t)
+      (btst '(char? 3) #f)
+      (btst '(char? "hiho") #f)
+      (btst '(char? (integer->char 97)) #t)
+      (btst '(char? #t) #f)
+      (btsta '(lambda (y) (char? (integer->char (inexact->exact y)))) 97 #t)
+
+      (btst '(char>? #\a #\b) #f)
+      (btst '(char>? c-var #\b) #f)
+      (btst '(char>? #\b #\b) #f)
+      (btst '(char>? #\b #\a) #t)
+      (btst '(char>? #\b c-var) #t)
+      (btst '(char>? #\c #\b #\a) #t)
+      (btst '(char>? #\c #\b c-var) #t)
+      (btsta '(lambda (y) (char>? (integer->char (inexact->exact y)) #\b)) 97 #f)
+      (btsta '(lambda (y) (char>? (integer->char (inexact->exact y)) #\b)) (char->integer #\c) #t)
+      
+      (btst '(char>=? #\a #\b) #f)
+      (btst '(char>=? c-var #\b) #f)
+      (btst '(char>=? #\b #\b) #t)
+      (btst '(char>=? #\b #\a) #t)
+      (btst '(char>=? #\b c-var) #t)
+      (btst '(char>=? #\c #\b #\a) #t)
+      (btst '(char>=? #\c #\b #\b) #t)
+      (btst '(char>=? #\c #\b c-var) #t)
+      (btst '(char>=? #\c #\b c-var #\b) #f)
+      (btsta '(lambda (y) (char>=? (integer->char (inexact->exact y)) #\b)) 97 #f)
+      (btsta '(lambda (y) (char>=? (integer->char (inexact->exact y)) #\b)) (char->integer #\c) #t)
+      
+      (btst '(char=? #\a #\b) #f)
+      (btst '(char=? c-var #\b) #f)
+      (btst '(char=? #\b #\b) #t)
+      (btst '(char=? #\b #\a) #f)
+      (btst '(char=? #\b c-var) #f)
+      (btst '(char=? #\c #\b #\a) #f)
+      (btst '(char=? #\c #\b #\b) #f)
+      (btst '(char=? #\c #\b c-var) #f)
+      (btst '(char=? #\c #\b c-var #\b) #f)
+      (btsta '(lambda (y) (char=? (integer->char (inexact->exact y)) #\a)) 97 #t)
+      (btsta '(lambda (y) (char=? (integer->char (inexact->exact y)) #\b)) (char->integer #\c) #f)
+      (btst '(char=? #\+ #\+) #t)
+      (btst '(char=? #\space #\space) #t)
+      (btst '(char=? #\newline #\+) #f)
+      
+      (btst '(char<=? #\a #\b) #t)
+      (btst '(char<=? c-var #\b) #t)
+      (btst '(char<=? #\b #\b) #t)
+      (btst '(char<=? #\b #\a) #f)
+      (btst '(char<=? #\b c-var) #f)
+      (btst '(char<=? #\c #\b #\a) #f)
+      (btst '(char<=? #\c #\b #\b) #f)
+      (btst '(char<=? #\c #\b c-var) #f)
+      (btst '(char<=? #\c #\b c-var #\b) #f)
+      (btsta '(lambda (y) (char<=? (integer->char (inexact->exact y)) #\b)) 97 #t)
+      (btsta '(lambda (y) (char<=? (integer->char (inexact->exact y)) #\b)) (char->integer #\c) #f)
+      
+      (btst '(char<? #\a #\b) #t)
+      (btst '(char<? c-var #\b) #t)
+      (btst '(char<? #\b #\b) #f)
+      (btst '(char<? #\b #\a) #f)
+      (btst '(char<? #\b c-var) #f)
+      (btst '(char<? #\c #\b #\a) #f)
+      (btst '(char<? #\c #\b #\b) #f)
+      (btst '(char<? #\c #\b c-var) #f)
+      (btst '(char<? #\c #\b c-var #\b) #f)
+      (btsta '(lambda (y) (char<? (integer->char (inexact->exact y)) #\b)) 97 #t)
+      (btsta '(lambda (y) (char<? (integer->char (inexact->exact y)) #\b)) (char->integer #\c) #f)
+      (btst '(char<? #\a #\b #\c) #t)
+      
+      (etst '(char=? #f))
+      (etst '(char=? 1.0))
+      (etst '(char=? 1.0 2.0))
+      (etst '(char=? '(asd) #\c))
+      
+      (btst '(char-ci<? #\a #\B) #t)
+      (btst '(char-ci<? c-var #\b) #t)
+      (btst '(char-ci<? #\B #\b) #f)
+      (btst '(char-ci<? #\b #\A) #f)
+      (btst '(char-ci<? #\B c-var) #f)
+      (btst '(char-ci<? #\c #\B #\a) #f)
+      (btst '(char-ci<? #\c #\b #\b) #f)
+      (btst '(char-ci<? #\C #\b c-var) #f)
+      (btst '(char-ci<? #\c #\b c-var #\b) #f)
+      (btsta '(lambda (y) (char-ci<? (integer->char (inexact->exact y)) #\B)) 97 #t)
+      (btsta '(lambda (y) (char-ci<? (integer->char (inexact->exact y)) #\B)) (char->integer #\c) #f)
+      (btst '(char-ci<? #\a #\B #\c) #t)
+      
+      (btst '(char-ci<=? #\a #\B) #t)
+      (btst '(char-ci<=? c-var #\b) #t)
+      (btst '(char-ci<=? #\B #\b) #t)
+      (btst '(char-ci<=? #\c #\B #\a) #f)
+      (btst '(char-ci<=? #\C #\b c-var) #f)
+      (btst '(char-ci<=? #\c #\b c-var #\b) #f)
+      (btsta '(lambda (y) (char-ci<=? (integer->char (inexact->exact y)) #\B)) 97 #t)
+      (btsta '(lambda (y) (char-ci<=? (integer->char (inexact->exact y)) #\B)) (char->integer #\c) #f)
+      
+      (btst '(char-ci>=? #\a #\B) #f)
+      (btst '(char-ci>=? c-var #\b) #f)
+      (btst '(char-ci>=? #\B #\b) #t)
+      (btst '(char-ci>=? #\c #\B #\a) #t)
+      (btst '(char-ci>=? #\C #\b c-var) #t)
+      (btst '(char-ci>=? #\c #\b c-var #\b) #f)
+      (btsta '(lambda (y) (char-ci>=? (integer->char (inexact->exact y)) #\B)) 97 #f)
+      (btsta '(lambda (y) (char-ci>=? (integer->char (inexact->exact y)) #\B)) (char->integer #\c) #t)
+      
+      (btst '(char-ci>? #\a #\B) #f)
+      (btst '(char-ci>? c-var #\b) #f)
+      (btst '(char-ci>? #\B #\b) #f)
+      (btst '(char-ci>? #\c #\B #\a) #t)
+      (btst '(char-ci>? #\C #\b c-var) #t)
+      (btst '(char-ci>? #\c #\b c-var #\b) #f)
+      (btsta '(lambda (y) (char-ci>? (integer->char (inexact->exact y)) #\B)) 97 #f)
+      (btsta '(lambda (y) (char-ci>? (integer->char (inexact->exact y)) #\B)) (char->integer #\c) #t)
+      
+      (btst '(char-ci=? #\a #\B) #f)
+      (btst '(char-ci=? c-var #\b) #f)
+      (btst '(char-ci=? #\B #\b) #t)
+      (btst '(char-ci=? #\c #\B #\a) #f)
+      (btst '(char-ci=? #\C #\b c-var) #f)
+      (btst '(char-ci=? #\c #\b c-var #\b) #f)
+      (btsta '(lambda (y) (char-ci=? (integer->char (inexact->exact y)) #\B)) 97 #f)
+      (btsta '(lambda (y) (char-ci=? (integer->char (inexact->exact y)) #\B)) (char->integer #\c) #f)
+      
+      (btst '(char-alphabetic? #\a) #t)
+      (btst '(char-alphabetic? #\T) #t)
+      (btst '(char-alphabetic? #\+) #f)
+      (btst '(char-alphabetic? #\8) #f)
+      
+      (btst '(char-numeric? #\a) #f)
+      (btst '(char-numeric? #\T) #f)
+      (btst '(char-numeric? #\+) #f)
+      (btst '(char-numeric? #\8) #t)
+      
+      (btst '(char-lower-case? #\a) #t)
+      (btst '(char-lower-case? #\T) #f)
+      (btst '(char-lower-case? #\+) #f)
+      (btst '(char-lower-case? #\8) #f)
+      
+      (btst '(char-upper-case? #\a) #f)
+      (btst '(char-upper-case? #\T) #t)
+      (btst '(char-upper-case? #\+) #f)
+      (btst '(char-upper-case? #\8) #f)
+      
+      (btst '(char-whitespace? #\a) #f)
+      (btst '(char-whitespace? #\T) #f)
+      (btst '(char-whitespace? #\space) #t)
+      (btst '(char-whitespace? #\8) #f)
+      
+      (ctst '(char-upcase #\a) #\A)
+      (ctsta '(lambda (y) (char-upcase (integer->char (inexact->exact y)))) 97.0 #\A)
+      (ctst '(char-downcase #\A) #\a)
+      (ctsta '(lambda (y) (char-downcase (integer->char (inexact->exact y)))) 65.0 #\a)
+      (ctst '(integer->char 65) #\A)
+      (itst '(char->integer #\A) 65)
+      (itst '(char->integer #\newline) 10)
+      (ctst '(integer->char 48) #\0)
+      
+      (define str-var "hi")
+      (btst '(string? "hi") #t)
+      (btst '(string? 3) #f)
+      (btst '(string? #\a) #f)
+      (btst '(string? str-var) #t)
+      (btsta '(lambda (y) (string? "hiho")) 1 #t)
+      
+      (stst '(string #\a #\b) "ab")
+      (stst '(string #\a #\b (integer->char 65)) "abA")
+      (stst '(string) "")
+      (stst '(string #\a) "a")
+      (ststa '(lambda (y) (string #\a #\!)) 1 "a!")
+      (etst '(string 1))
+      (etst '(string "hi"))
+
+      (itst '(string-length "abc") 3)
+      (itst '(string-length str-var) 2)
+      (itsta '(lambda (y) (string-length (string #\a (integer->char (inexact->exact y))))) 65 2)
+
+      (stst '(string-copy "hi") "hi")
+      (stst '(string-copy (string #\a #\b)) "ab")
+      (stst '(string-copy str-var) "hi")
+      (ststa '(lambda (y) (string-copy (string (integer->char (inexact->exact y)) #\!))) 65 "A!")
+      (etst '(string-copy #\a))
+      (etst '(string-copy))
+      (etst '(string-copy 123))
+
+      (stst '(let ((str "asdfg")) (string-fill! str #\x) str) "xxxxx")
+      (stst '(let ((str "asdf")) (string-set! str 1 #\x) str) "axdf")
+      (ctst '(string-ref "asdf" 2) #\d)
+      (stst '(make-string 3) "   ")
+      (stst '(make-string 3 #\a) "aaa")
+
       (let ((ind0 (new-sound "fmv0.snd" mus-next mus-bfloat 22050 1 "map tests"))
 	    (ind1 (new-sound "fmv1.snd" mus-next mus-bfloat 22050 1 "map tests"))
 	    (ones (make-vct 1000000))
@@ -15094,7 +15415,7 @@ EDITS: 5
 	    (if (or (not (vequal v0 v1)) (fneq (vct-ref v1 0) .01)) (snd-display ";vct-map dbl-var .01: ~A ~A" v0 v1))))
 	)
 
-      ))
+      ))))
 
 
 ;;; ---------------- test 23: user-interface ----------------
@@ -22202,6 +22523,10 @@ EDITS: 5
       (snd-display (format #f "ls /tmp/snd_* | wc~%"))
       (system "ls /tmp/snd_* | wc")
       (system "rm /tmp/snd_*")))
+
+(close-output-port optimizer-log)
+(mem-report)
+(system "fgrep -H -n 'snd-run' memlog >> optimizer.log")
 
 (system "cp /home/bil/dot-snd /home/bil/.snd")
 (if with-exit (exit))

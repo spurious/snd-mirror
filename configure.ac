@@ -63,7 +63,7 @@ MAKE_TARGET="snd"
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
-#   --with-run            experimental...
+#   --with-run            experimental...(Guile 1.5+ only)
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
@@ -81,10 +81,6 @@ if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
 else
   AC_DEFINE(Float,float)
-fi
-
-if test "$with_run" = yes; then
-  AC_DEFINE(WITH_RUN)
 fi
 
 XMHTML_LIB=""
@@ -652,6 +648,13 @@ if test $GUILE_CONFIG_works = yes; then
 
     if test "`${GUILE_CONFIG_path}guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
       echo found old out-of-date Guile library
+    fi
+    if test "$with_run" = yes; then
+      if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
+        AC_DEFINE(WITH_RUN)
+      else
+        echo --with-run switch is not compatible with Guile versions before 1.5
+      fi
     fi
   fi
 else

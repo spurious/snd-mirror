@@ -397,7 +397,9 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
   if (data >= 0)
     {
       old_text = XmTextGetString(w);
+      if (snd_strlen(old_text) == 0) return; /* C-x C-f TAB in minibuffer, for example */
       new_text = complete_text(old_text, data);
+      if (snd_strlen(new_text) == 0) return; /* can this happen? */
       matches = get_completion_matches();
       XmTextSetString(w, new_text);
       XmTextSetCursorPosition(w, XmTextGetLastPosition(w));

@@ -101,7 +101,7 @@
        (bird 2.2 .02 2200 3000 .04 oriup main-amp)
        (bird 2.28 .02 2200 3000 .04 oriup main-amp)
        (bigbird 2.4 .17 2000 1000 .2 oriupdwna oriamp '(1 1 2 .04)))
-     (report-in-minibuffer "orchard-oriole")
+     "orchard-oriole"
      )))
 
 
@@ -113,7 +113,7 @@
      (lambda ()
        (bigbird .03 .04 1700 1200 .15 kingfirst main-amp '(1 1 2 .5 3 0 4 .2))
        (bigbird .12 .18 1700 900 .25 kingsecond main-amp '(1 1 2 .01 3 0 4 .1)))
-     (report-in-minibuffer "cassins-kingbird")
+     "cassins-kingbird"
      )))
 
 
@@ -139,7 +139,7 @@
        (bird .84 .05 4000 2400 .2 chip-up main-amp)
        (bird .90 .05 4000 2400 .2 chip-up main-amp)
        (bird .96 .05 4000 2400 .2 chip-up main-amp))
-     (report-in-minibuffer "chipping-sparrow")
+     "chipping-sparrow"
      )))
 
 
@@ -151,7 +151,7 @@
      (lambda ()
        (bigbird .4 .2 1800 200 .1 bobup1 main-amp '(1 1 2 .02))
        (bigbird 1 .20 1800 1200 .2 bobup2 main-amp '(1 1 2 .02)))
-     (report-in-minibuffer "bobwhite")
+     "bobwhite"
      )))
 
 
@@ -170,7 +170,7 @@
        (bigbird 2.000 .10 3200.000 1400.000 .110 fas-down main-amp '(1 1 2 .04))
        (bigbird 2.200 .05 2000.000 200.000 .110 fas-down main-amp '(1 1 2 .04))
        (bigbird 2.300 .10 1600.000 0.000 .110 fas-down main-amp '(1 1 2 .04)))
-     (report-in-minibuffer "western-meadowlark")
+     "western-meadowlark"
      )))
 
 
@@ -179,7 +179,7 @@
     (one-bird beg 1.0
      (lambda ()
        (bigbird 0 .05 1800 1800 .2 scissor main-amp '(1 .5 2 1 3 .5 4 .1 5 .01)))
-     (report-in-minibuffer "scissor-tailed-flycatcher")
+     "scissor-tailed-flycatcher"
      )))
 
 
@@ -193,7 +193,7 @@
        (bigbird .6 .4 293 6 .1 owldown main-amp '(1 1 3 .02 7 .01))
        (bigbird 1.75 .35 293 7 .1 owlup main-amp '(1 1 3 .02 7 .01))
        (bigbird 2.5 .2 300 0 .1 owlup main-amp '(1 1 3 .02 7 .01)))
-     (report-in-minibuffer "great-horned-owl")
+     "great-horned-owl"
      )))
 
 
@@ -216,7 +216,7 @@
        (bird 1.2 .02 4500 500 .05 grayfour main-amp)
        (bird 1.25 .02 4200 800 .05 grayfour main-amp)
        (bird 1.3 .02 4000 900 .05 grayfour main-amp))
-     (report-in-minibuffer "black-throated-gray-warbler")
+     "black-throated-gray-warbler"
      )))
 
 
@@ -238,7 +238,7 @@
        (bird 1.15 .075 3700 800 .15 yellow-down main-amp)
        (bird 1.25 .075 3700 800 .15 yellow-down main-amp)
        (bird 1.4  .2   3700 2000 .2 yellow-last swirl-amp))
-     (report-in-minibuffer "yellow-warbler")
+     "yellow-warbler"
      )))
 
 
@@ -258,7 +258,7 @@
        (bigbird 0 .1 900 100 .2 rampup upamp '( 1 .5  2 1 3 .75 4 .5  5 .1))
        (bigbird .30 .1 900 200 .2 rampup upamp '( 1 .5  2 1 3 .75 4 .5  5 .1))
        (bigbird .60 .1 900 250 .2 rampup upamp '( 1 .5  2 1 3 .75 4 .5  5 .1)))
-     (report-in-minibuffer "black-necked-stilt")
+     "black-necked-stilt"
      )))
 
 
@@ -287,7 +287,7 @@
        (bigbird 1.20 .12 3800 2200 .15 wcurve wamp '(1 1 2 .1))
        (bigbird 1.35 .12 2500 2200 .25 upcurve louder '(1 1 2 .1))
        (bigbird 1.50 .12 2500 4000 .15 downcurve main-amp '(1 1 2 .1)))
-     (report-in-minibuffer "chestnut-sided-warbler")
+     "chestnut-sided-warbler"
      )))
 
 
@@ -301,7 +301,7 @@
        (bird .60 .01 5700 300 .1 grasstwo main-amp)
        (bird .92 .01 3900 100 .1 grasstwo main-amp)
        (bird 1.00 1.4 6000 2500 .2 grassone main-amp))
-     (report-in-minibuffer "grasshopper-sparrow")
+     "grasshopper-sparrow"
      )))
 
 
@@ -350,7 +350,7 @@
        (bird .9 .02 3900 200 .3 swamp-up main-amp)
        (bird .935 .035 3200 3000 .1 swamp-down main-amp)
        (bird .98 .025 3700 0 .1 main-amp main-amp))
-     (report-in-minibuffer "swamp-sparrow")
+     "swamp-sparrow"
      )))
 
 
@@ -368,7 +368,7 @@
        (bird 1.3 .45 3300 200 .15 goldone main-amp)
        (bird 1.75 .4 3800 100 .15 goldtwo main-amp)
        (bird 2.2 .3 3800 100 .1 goldtrill main-amp))
-     (report-in-minibuffer "golden-crowned-sparrow")
+     "golden-crowned-sparrow"
      )))
 
 
@@ -401,7 +401,7 @@
        (bird 2.33 .08 3000 1500 .15 buntup main-amp)
        (bird 2.43 .07 5200 1800 .1 buntn main-amp)
        (bird 2.51 .08 3000 1500 .10 buntup main-amp))
-     (report-in-minibuffer "indigo-bunting")
+     "indigo-bunting"
      )))
 
 
@@ -438,7 +438,7 @@
        (bird 2.29 .04 3000 1000 .15 hoodup main-amp)
        (bird 2.37 .04 3000 1000 .15 hoodup main-amp)
        (bird 2.45 .04 3000 1000 .15 hoodup main-amp))
-     (report-in-minibuffer "hooded-warbler")
+     "hooded-warbler"
      )))
 
 
@@ -451,7 +451,7 @@
        (bigbird .3 .07 1900 300 .15 widgeon widgeon '(1 1 2 .02))
        (bigbird .4 .11 1700 1400 .25 widgeon widgeon '(1 .7 2 1 3 .02))
        (bigbird .55 .07 1900 300 .15 widgeon widgeon '(1 1 2 .02)))
-     (report-in-minibuffer "american-widgeon")
+     "american-widgeon"
      )))
 
 
@@ -475,7 +475,7 @@
        (bird 1.58 .02 5200 1000 .1 water-five main-amp)
        (bird 1.65 .02 5200 1000 .1 water-five main-amp)
        (bird 1.7 .035 3200 1000 .1 water-four water-damp))
-     (report-in-minibuffer "louisiana-waterthrush")
+     "louisiana-waterthrush"
      )))
 
 
@@ -495,7 +495,7 @@
        (bigbird 1.63 .13 1900 1600 .20 r-three main-amp '(1 1 2 .1))
        (bigbird 1.80 .11 2200 1200 .25 r-four main-amp '(1 1 2 .1))
        (bigbird 2.31 .21 1950 2000 .15 r-five main-amp '(1 1 2 .1)))
-     (report-in-minibuffer "robin")
+     "robin"
      )))
 
 
@@ -504,7 +504,7 @@
     (one-bird beg 1.0
      (lambda ()
        (bird 0 .4 1800 1200 .2 bigskew main-amp))
-     (report-in-minibuffer "solitary-vireo")
+     "solitary-vireo"
      )))
 
 
@@ -542,7 +542,7 @@
        (bigbird 1.69 .1 1900 200 .2 hupdown main-amp '(1 .7 2 1))
        (bigbird 1.81 .01 2050 0 .1 main-amp main-amp '(1 .5 2 1))
        (bigbird 1.82 .1 1900 200 .2 hupdown main-amp '(1 .7 2 1)))
-     (report-in-minibuffer "pigeon-hawk")
+     "pigeon-hawk"
      )))
 
 
@@ -594,7 +594,7 @@
        (bird 1.28 .01 3900 1400 .1 w-up main-amp)
        (bird 1.29 .01 3900 1400 .1 w-up main-amp)
        (bird 1.30 .01 3900 1400 .1 w-up main-amp))
-     (report-in-minibuffer "cerulean-warbler")
+     "cerulean-warbler"
      )))
 
 
@@ -619,7 +619,7 @@
        (bird 1.57 .1 3800 2200 .1 nash-up main-amp)
        (bird 1.7 .1 3800 2150 .125 nash-up main-amp)
        (bird 1.85 .075 3900 1800 .1 nash-up nash-amp))
-     (report-in-minibuffer "nashville-warbler")
+     "nashville-warbler"
      )))
 
 
@@ -636,7 +636,7 @@
        (bird .35 .12 3000 500 .1 phoebe-two phoebe-amp)
        (bird .4 .10 3000 1500 .2 phoebe-three phoebe-amp)
        (bird .55 .05 3000 1400 .2 phoebe-four phoebe-amp))
-     (report-in-minibuffer "eastern-phoebe")
+     "eastern-phoebe"
      )))
 
 
@@ -672,7 +672,7 @@
        (bird 1.36 .02 3200 1000 .1 b-eleven main-amp)
        (bird 1.40 .03 4000 2000 .12 b-twelve b-thirteen)
        (bird 1.47 .1 2300 1700 .2 b-fourteen b-fifteen))
-     (report-in-minibuffer "painted-bunting")
+     "painted-bunting"
      )))
 
 
@@ -686,7 +686,7 @@
      (lambda ()
        (bigbird 0 .2 2000 2200 .2 f-one a-one '(1 1 2 .02 3 .1 4 .01))
        (bigbird .3 .2 2000 1100 .2 f-two a-two '(1 1 2 .02 3 .1 4 .01)))
-     (report-in-minibuffer "western-flycatcher")
+     "western-flycatcher"
      )))
 
 
@@ -740,7 +740,7 @@
        (bird 4.0 .15 3000 1000 .2 slast main-amp)
        (bird 4.2 .15 3000 1000 .2 slast main-amp)
        (bird 4.4 .15 3000 1000 .2 slast main-amp))
-     (report-in-minibuffer "bachmans-sparrow")
+     "bachmans-sparrow"
      )))
 
 
@@ -750,7 +750,7 @@
     (one-bird beg 1.0
      (lambda ()
        (bird 0 .50 6000 800 .2 cedar cedamp))
-     (report-in-minibuffer "cedar-waxwing")
+     "cedar-waxwing"
     )))
 
 
@@ -800,7 +800,7 @@
        (bird 1.87 .01 4200 100 .06 bairdend main-amp)
        (bird 1.92 .01 4400 100 .06 bairdend main-amp)
        (bird 1.97 .01 4200 100 .05 bairdend main-amp))
-     (report-in-minibuffer "bairds-sparrow")
+     "bairds-sparrow"
      )))
 
 
@@ -843,7 +843,7 @@
        (bigbird 2.30 .05 2800 800 .15 kenstart main-amp '(1 1 2 .01))
        (bigbird 2.37 .06 2700 1200 .1 kendwn main-amp '(1 1 2 .01))
        (bigbird 2.45 .05 4700 100 .25 kentrill main-amp '(1 1 2 .1)))
-     (report-in-minibuffer "kentucky-warbler")
+     "kentucky-warbler"
      )))
 
 
@@ -908,7 +908,7 @@
        (bird 1.480 .01 5100 1600 .03 towhee-two main-amp)
        (bird 1.495 .01 5100 1000 .03 towhee-two main-amp)
        (bird 1.515 .01 3000 1200 .03 towhee-three main-amp))
-     (report-in-minibuffer "rufous-sided-towhee")
+     "rufous-sided-towhee"
      )))
 
 
@@ -939,7 +939,7 @@
        
        (bird 2.30 .08 3000 3000 .10 pro-one pro-amp)
        (bird 2.39 .05 4000 2500 .06 pro-two bird-amp))
-     (report-in-minibuffer "prothonotary-warbler")
+     "prothonotary-warbler"
      )))
 
 
@@ -975,7 +975,7 @@
        (bird 1.79 .06 2400 1000 .10 w-down bird-amp)
        (bird 1.86 .14 3100 900 .25 w-end bird-amp)
        (bird 2.02 .12 3200 800 .20 w-end bird-amp))
-     (report-in-minibuffer "audubons-warbler")
+     "audubons-warbler"
      )))
 
 
@@ -1020,7 +1020,7 @@
        
        (bird 1.77 .23 6000 600 .15 b-trill-one bird-amp)
        (bird 2.005 .28 6000 600 .15 b-trill-two bird-amp))
-     (report-in-minibuffer "lark-bunting")
+     "lark-bunting"
      )))
 
 
@@ -1041,7 +1041,7 @@
        (bird 1.68 .03 2200 400 .1 blue-one bird-amp)
        (bird 1.72 .10 1950 100 .15 blue-four bird-amp)
        (bird 1.96 .15 2000 600 .20 blue-five bird-amp))
-     (report-in-minibuffer "eastern-bluebird")
+     "eastern-bluebird"
      )))
 
 
@@ -1055,7 +1055,7 @@
        (bird .05 .03 1000 800 .1 wid-down bird-amp)
        (bird .32 .20 1000 1000 .2 wid-one bird-amp)
        (bird .56 .29 900 1100 .2 wid-two bird-amp))
-     (report-in-minibuffer "chuck-wills-widow")
+     "chuck-wills-widow"
      )))
 
 
@@ -1073,7 +1073,7 @@
        (bigbird 1.80 .17 4000 900 .2 gskw1 bird-amp '(1 .4 2 1 3 .3))
        (bigbird 2.00 .17 4000 700 .2 gskw1 bird-amp '(1 .4 2 1 3 .3))
        (bigbird 2.20 .17 4000 800 .2 gskw2 bird-amp '(1 .4 2 1 3 .3)))
-     (report-in-minibuffer "blue-gray-gnatcatcher"	)
+     "blue-gray-gnatcatcher"	
      )))
 
 
@@ -1125,7 +1125,7 @@
        (bird 2.13 .01 1900 100 .10 black-up black-amp)
        
        (bird 2.16 .03 3800 300 .1 black-up bird-amp))
-     (report-in-minibuffer "black-throated-sparrow")
+     "black-throated-sparrow"
      )))
 
 
@@ -1152,7 +1152,7 @@
        (bird 2.19 .02 3900 100 .03 chin-up bird-amp)
        (bird 2.22 .01 3900 100 .01 chin-up bird-amp)
        (bird 2.24 .01 3900 100 .01 chin-up bird-amp))
-     (report-in-minibuffer "black-chinned-sparrow")
+     "black-chinned-sparrow"
      )))
 
 
@@ -1193,7 +1193,7 @@
        (bigbird 7.450 1.80  1050  1050  .1 gullend  bird-amp
 		'(1  .1  2  1  3  .1  4  .01  5
 		     .09  6  .01  7  .01)))
-     (report-in-minibuffer "gulls")
+     "gulls"
      )))
 
 

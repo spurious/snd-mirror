@@ -7,8 +7,9 @@
  *
  * The evaluator is eval_ptree.  The code walker is walk.  A program
  *   is a list of triples. Each triple has a function pointer and a
- *   pointer to addresses of arguments.  There are two special addresses:
- *   the program counter (PC) and the termination flag (ALL_DONE).
+ *   pointer to addresses of arguments and data.  There are two special addresses:
+ *   the program counter (PC) and the termination flag (ALL_DONE).  There is
+ *   also a "self" pointer PTREE.
  *
  *
  * Snd optimization flag determines how safe we try to be:
@@ -38,18 +39,23 @@
  *
  * currently handled, at least partially:
  *
- *   types: float int boolean vct snd_fd
+ *   types: float int char string boolean vct snd_fd mus_any
  *
  *   lambda [assuming float arg(s) for now]["declare" for types?]
  *   call-with-current-continuation [as goto with result value][this could fully implemented]
  *   if begin or and not let let* set!
  *   * + - / > < >= <= = max min 1+ 1-
- *   sin cos tan abs log exp expt (no complex...)
- *   acos asin atan sqrt (assuming no complex, so args are assumed to be in float result range -- on optimization switch?)
+ *   sin cos tan abs log exp expt
+ *   acos asin atan sqrt
  *   boolean? exact? inexact? integer? real? number? quote
  *   odd? even? zero? positive? negative? eq? eqv? equal?
  *   round truncate floor ceiling exact->inexact inexact->exact
  *   gcd lcm logand logior logxor lognot ash modulo remainder quotient random
+ *   char? char=? char<? char>? char<=? char>=? char-ci=? char-ci<? char-ci>? char-ci<=? char-ci>=?
+ *   char-alphabetic? char-numeric? char-lower-case? char-upper-case? char-whitespace? 
+ *   char-upcase char-downcase char->integer integer->char
+ *   string? string string-length string-copy string-fill! string-ref string-set!
+ *   make-string
  *
  *   vct? make-vct vct-ref vct-set! vct-map!
  *   sample-reader? read-sample next-sample previous-sample
@@ -58,27 +64,37 @@
  * tests in snd-test.scm, test 22
  *
  *
- * TODO: cond[not => of course] case[not symbols] do rationalize[in slib] defined?
- * TODO: clm sndlib:  R_CLM R_SND -- optargs are main problem here (and repeated code -- everything is wrapped in XEN procs)
- * TODO: snd procs? (need ffi or something to avoid repeating opt args handles etc) snd-print needed at least
- * TODO: define dbl int bool, (proc? -- each could be an independent ptree)
- * TODO: strings/chars
- * TODO:   R_CHR is easy -- just use ints
- * TODO:   R_STR perhaps via table of strings with refcounts (display)
+ * TODO: cond[not => of course] case[not symbols] do
+ * TODO: clm sndlib snd procs
+ * TODO: define var, (proc? -- each could be an independent ptree)
  * TODO: rest of snd-test 22, and overall test
  * TODO: ptree as fragment edit op
  * TODO: lambda with other types? (declare...)
- * TODO: run-time var typing?
  * TODO: callback to Guile (format in particular)
  * TODO: generalized set!
- *
  * TODO: vct-add! -subtract! -multiply! -scale! -length -copy -fill! -offset!
- * TODO: make-sample-reader
+ * TODO: make-sample-reader (mix-sr?)
  *
  * NEED TEST:
  *   make-vct vct-ref vct-set! [and (let ((v global-v)...)) gc -- also (define a #f) (let ((a (make-vct 3))) (vct-ref a 1))]
  *   sample-reader? read-sample next-sample previous-sample
- *   oscil env polynomial random etc
+ *   fill in strings tests
+ *
+ *
+ * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
+ *      variables can have only one type, the type has to be ascertainable somehow
+ *      no recursion (could be added with some pain)
+ *      call/cc only as goto (could be completed without much pain)
+ *      no vectors (use vct), no lists or pairs (these could be added, perhaps)
+ *      no macro expansion (not sure how to handle this in Guile)
+ *      no complex, ratio, bignum
+ *      leaving aside call/cc, only one level of lambda (this could be fixed)
+ *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
+ *      no symbols (could be added if there were any conceivable need)
+ *      no apply or eval (we need to know at parse time what we are trying to do)
+ *      no "delay/force", no syntax-case fanciness
+ *      no map or for-each (these need lists)
+ *      we're unfortunately at the mercy of Guile when it comes to finding/setting local variable values -- this is a nightmare.
  */
 
 #include "snd.h"
@@ -90,8 +106,10 @@
 #define XEN_EXACT_P(Arg) XEN_TRUE_P(scm_exact_p(Arg))
 #define XEN_SYMBOL_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(a, scm_current_module_lookup_closure(), XEN_TRUE))
 #define XEN_SYMBOL_NAME_SET_VALUE(a, b) XEN_VARIABLE_SET(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_TRUE), b)
+#define XEN_AS_STRING(form) XEN_TO_C_STRING(XEN_TO_STRING(form))
+#define C_TO_XEN_CHAR(c) SCM_MAKE_CHAR(c)
 
-enum {R_INT, R_FLOAT, R_BOOL, R_VCT, R_READER, R_CLM, R_CHAR, R_STRING, R_VECTOR, R_PENDING};
+enum {R_INT, R_FLOAT, R_BOOL, R_VCT, R_READER, R_CLM, R_CHAR, R_STRING, R_VECTOR, R_PENDING, R_PORT};
 
 /* local variables (let vars) global to the closure we are passed are unbound at read-time,
  *   so we can't get their type from their current value.  It's possible to make plausible
@@ -101,6 +119,8 @@ enum {R_INT, R_FLOAT, R_BOOL, R_VCT, R_READER, R_CLM, R_CHAR, R_STRING, R_VECTOR
  *   one we chose, we give up -- this means in some cases, the user will have to reduce
  *   his optimization choice or change his code.
  */
+
+static int current_optimization = 0;
 
 typedef struct {
   void (*function)(int *arg_addrs, int *ints, Float *dbls);
@@ -129,7 +149,7 @@ typedef struct {
   int gc;
 } xen_value;
 
-static xen_value *make_xen_value(int typ, int address, int constant)
+static xen_value *make_xen_value_2(int typ, int address, int constant)
 {
   xen_value *v;
   v = (xen_value *)CALLOC(1, sizeof(xen_value));
@@ -138,6 +158,38 @@ static xen_value *make_xen_value(int typ, int address, int constant)
   v->constant = constant;
   v->gc = 0;
   return(v);
+}
+
+static xen_value *make_xen_value_1(int typ, int address, int constant, const char *func)
+{
+  xen_value *v;
+  set_encloser((char *)func);
+  v = make_xen_value_2(typ, address, constant);
+  set_encloser(NULL);
+  return(v);
+}
+#define make_xen_value(a,b,c) make_xen_value_1(a,b,c,__FUNCTION__)
+
+#define OPTIMIZER_WARNING_BUFFER_SIZE 1024
+static char optimizer_warning_buffer[OPTIMIZER_WARNING_BUFFER_SIZE];
+static XEN optimization_hook = XEN_FALSE;
+static xen_value *run_warn(char *format, ...)
+{
+  va_list ap;
+#if HAVE_VPRINTF
+  va_start(ap, format);
+#if HAVE_VSNPRINTF
+  vsnprintf(optimizer_warning_buffer, OPTIMIZER_WARNING_BUFFER_SIZE, format, ap);
+#else
+  vsprintf(optimizer_warning_buffer, format, ap);
+#endif
+  va_end(ap);
+  if (XEN_HOOKED(optimization_hook))
+    g_c_run_progn_hook(optimization_hook, 
+		       XEN_LIST_1(C_TO_XEN_STRING(optimizer_warning_buffer)),
+		       S_optimization_hook);
+#endif
+  return(NULL); /* this is so we can insert the call into the error return call chain */
 }
 
 static xen_value *copy_xen_value(xen_value *v)
@@ -152,6 +204,8 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
     {
     case R_BOOL:    buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "i%d(%s)", v->addr, (ints[v->addr] == 0) ? "#f" : "#t"); break;
     case R_INT:     buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "i%d(%d)", v->addr, ints[v->addr]);                      break;
+    case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "i%d(#\%c)", v->addr, (char)(ints[v->addr]));              break;
+    case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); snprintf(buf, 256, "i%d(\"%s\")", v->addr, (char *)(ints[v->addr]));          break;
     case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "d%d(%.4f)", v->addr, dbls[v->addr]);                    break;
     case R_VCT:     buf = vct_to_string((vct *)(ints[v->addr]));                                                                       break;
     case R_READER:  buf = sf_to_string((snd_fd *)(ints[v->addr]));                                                                     break;
@@ -212,6 +266,8 @@ typedef struct {
   int initial_pc;
   int need_init;
   XEN code;
+  int str_ctr, strs_size;
+  int *strs;
 } ptree;
 
 static void describe_ptree(ptree *p)
@@ -283,6 +339,9 @@ static ptree *make_ptree(int initial_data_size)
   pt->gcs_size = 0;
   pt->initial_pc = 0;
   pt->code = XEN_FALSE;
+  pt->strs_size = 0;
+  pt->strs = NULL;
+  pt->str_ctr = 0;
   return(pt);
 }
 
@@ -291,7 +350,6 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
   if (var)
     {
       /* if var->global, reflect new value into outer level version of the variable upon quit */
-#ifdef SCM_VARIABLE_REF
       if ((var->global) &&
 	  (var->unclean))
 	{
@@ -307,7 +365,6 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 	    case R_BOOL:  XEN_SYMBOL_NAME_SET_VALUE(var->name, C_TO_XEN_BOOLEAN(prog->ints[var->v->addr])); break;
 	    }
 	}
-#endif
       if (var->name) FREE(var->name);
       if (var->v) FREE(var->v);
       FREE(var);
@@ -333,7 +390,7 @@ void *free_ptree(void *upt)
 		{
 		  if (v->type == R_VCT)
 		    c_free_vct((vct *)(pt->ints[v->addr]));
-		  else  FREE((void *)(pt->ints[v->addr]));
+		  else FREE((void *)(pt->ints[v->addr]));
 		  v->gc = 0;
 		  FREE(v);
 		  pt->gcs[i] = NULL;
@@ -351,6 +408,16 @@ void *free_ptree(void *upt)
 	  for (i = 0; i < pt->global_var_ctr; i++)
 	    free_xen_var(pt, pt->global_vars[i]);
 	  FREE(pt->global_vars);
+	}
+      if (pt->strs)
+	{
+	  for (i = 0; i < pt->str_ctr; i++)
+	    if ((pt->strs[i] > 2) && (pt->ints[pt->strs[i]]))
+	      {
+		FREE((char *)(pt->ints[pt->strs[i]]));
+		pt->ints[pt->strs[i]] = 0;
+	      }
+	  FREE(pt->strs);
 	}
       if (pt->program)
 	{
@@ -501,22 +568,42 @@ static xen_var *find_pending_var_in_ptree_via_xen_value(ptree *pt, xen_value *v)
   return(NULL);
 }
 
+static int add_string_to_ptree(ptree *pt, char *str)
+{
+  int i, cur, addr;
+  cur = pt->str_ctr;
+  if (cur >= pt->strs_size)
+    {
+      pt->strs_size += 8;
+      if (pt->strs)
+	{
+	  pt->strs = (int *)REALLOC(pt->strs, pt->strs_size * sizeof(int));
+	  for (i = cur; i < pt->strs_size; i++)
+	    pt->strs[i] = 0;
+	}
+      else pt->strs = (int *)CALLOC(pt->strs_size, sizeof(int));
+    }
+  addr = add_int_to_ptree(pt, (int)(str));
+  pt->strs[pt->str_ctr++] = addr;
+  return(addr);
+}
+
+
 static int pending_tag = -1;
 
 static XEN symbol_to_value(ptree *pt, XEN sym, int *local)
 {
   /* sigh... this is a can of worms */
   XEN new_val = XEN_UNDEFINED;
-#ifdef SCM_VARIABLE_REF
   XEN pair = XEN_FALSE;
   XEN code_env = XEN_FALSE;
   int believe_it = FALSE;
-  /* fprintf(stderr,"look 0: (%d) %s\n", XEN_PROCEDURE_P(pt->code), XEN_TO_C_STRING(XEN_TO_STRING(pt->code))); */
+  /* fprintf(stderr,"look 0: (%d) %s\n", XEN_PROCEDURE_P(pt->code), XEN_AS_STRING(pt->code)); */
   if (XEN_PROCEDURE_P(pt->code))
     {
       /* scrounge around in the "eval" environment looking for local version of sym */
       code_env = SCM_ENV(pt->code);
-      /* fprintf(stderr,"look 0: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(code_env))); */
+      /* fprintf(stderr,"look 0: %s\n", XEN_AS_STRING(code_env)); */
       if (XEN_LIST_P(code_env))
 	{
 	  /* now we might have an "eval environment" (an association list) or an "eval closure" (something different...) */
@@ -524,7 +611,7 @@ static XEN symbol_to_value(ptree *pt, XEN sym, int *local)
 	    {
 	      XEN names, values;
 	      int i;
-	      /* fprintf(stderr,"look 1: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(code_env))); */
+	      /* fprintf(stderr,"look 1: %s\n", XEN_AS_STRING(code_env)); */
 	      code_env = XEN_CAR(code_env);
 	      names = XEN_CAR(code_env);
 	      values = XEN_CDR(code_env);
@@ -532,7 +619,7 @@ static XEN symbol_to_value(ptree *pt, XEN sym, int *local)
 		if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
 		  {
 		    new_val = XEN_LIST_REF(values, i);
-		    /* fprintf(stderr,"%s found 1: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(sym)), XEN_TO_C_STRING(XEN_TO_STRING(new_val))); */
+		    /* fprintf(stderr,"%s found 1: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
 		    believe_it = TRUE;
 		    (*local) = TRUE;
 		    break;
@@ -540,13 +627,13 @@ static XEN symbol_to_value(ptree *pt, XEN sym, int *local)
 	    }
 	  else
 	    {
-	      /* fprintf(stderr,"look 2: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(code_env))); */
+	      /* fprintf(stderr,"look 2: %s\n", XEN_AS_STRING(code_env)); */
 	      pair = scm_sloppy_assoc(sym, code_env); /* sloppy = no goddamn error */
 	      if (XEN_TRUE_P(scm_pair_p(pair)))
 		{
 		  new_val = XEN_CDR(pair);
 		  /* whatever it is, it is the current reigning sym */
-		  /* fprintf(stderr,"%s found 2: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(sym)), XEN_TO_C_STRING(XEN_TO_STRING(new_val))); */
+		  /* fprintf(stderr,"%s found 2: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
 		  believe_it = TRUE;
 		  (*local) = TRUE;
 		}
@@ -557,10 +644,9 @@ static XEN symbol_to_value(ptree *pt, XEN sym, int *local)
     {
       new_val = XEN_SYMBOL_TO_VALUE(sym); /* try the outer environment */
       (*local) = FALSE;
-      /* fprintf(stderr,"%s found 3: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(sym)), XEN_TO_C_STRING(XEN_TO_STRING(new_val))); */
+      /* fprintf(stderr,"%s found 3: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
     } 
-#endif
-  /* fprintf(stderr,"%s found %d: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(sym)), (*local), XEN_TO_C_STRING(XEN_TO_STRING(new_val))); */
+  /* fprintf(stderr,"%s found %d: %s\n", XEN_AS_STRING(sym), (*local), XEN_AS_STRING(new_val)); */
   return(new_val);
 }
 
@@ -571,18 +657,14 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
   int var_loc = 0, local_var = FALSE;
   xen_value *v = NULL;
   char varname[256];
-#ifndef SCM_VARIABLE_REF
-  return(NULL);
-#else
   snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(form));
-#endif
   var = find_var_in_ptree(prog, varname);
 
   /* fprintf(stderr,"%s %s at %d\n", (var) ? "found " : "looking for ", varname, (var) ? var->v->addr : -1); */
 
   if (var) return(copy_xen_value(var->v));
   val = symbol_to_value(prog, form, &local_var);
-  /* fprintf(stderr,"%s val: %s (%d)\n",varname, XEN_TO_C_STRING(XEN_TO_STRING(val)), XEN_NOT_BOUND_P(val)); */
+  /* fprintf(stderr,"%s val: %s (%d)\n",varname, XEN_AS_STRING(val), XEN_NOT_BOUND_P(val)); */
   /* if val not (yet) available, set up a request for it at eval_ptree time
    *    if we know for sure what it's type will be (i.e. clm gen, reader, etc)
    */
@@ -608,6 +690,16 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
 		{
 		  if (mus_xen_p(val))
 		    v = make_xen_value(R_CLM, add_int_to_ptree(prog, (int)(MUS_XEN_TO_CLM(val))), FALSE);
+		  else
+		    {
+		      if (XEN_CHAR_P(val))
+			v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(val))), FALSE);
+		      else
+			{
+			  if (XEN_STRING_P(val))
+			    v = make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(val))), FALSE);
+			}
+		    }
 		}
 	    }
 	}
@@ -714,7 +806,7 @@ static xen_var *initialize_globals(ptree *pt)
 	  v = var->v;
 	  val = symbol_to_value(pt, C_STRING_TO_XEN_SYMBOL(var->name), &local);
 	  if (XEN_NOT_BOUND_P(val)) return(var);
-	  /* fprintf(stderr,"init %s to %s (type: %d)\n", var->name, XEN_TO_C_STRING(XEN_TO_STRING(val)), v->type); */
+	  /* fprintf(stderr,"init %s to %s (type: %d)\n", var->name, XEN_AS_STRING(val), v->type); */
 	  switch (v->type)
 	    {
 	    case R_INT:
@@ -747,6 +839,15 @@ static xen_var *initialize_globals(ptree *pt)
 		    pt->ints[v->addr] = 0; /* null gen is acceptable */
 		}
 	      break;
+	    case R_CHAR:
+	      if (!(XEN_CHAR_P(val))) return(var);
+	      pt->ints[v->addr] = (int)(XEN_TO_C_CHAR(val));     
+	      break;
+	    case R_STRING:
+	      if (!(XEN_STRING_P(val))) return(var);
+	      if (pt->ints[v->addr]) FREE((char *)(pt->ints[v->addr]));
+	      pt->ints[v->addr] = (int)(copy_string(XEN_TO_C_STRING(val)));     
+	      break;
 	    }
 	}
     }
@@ -766,7 +867,10 @@ char *initialize_ptree(void *upt)
     {
       trouble = initialize_globals(pt);
       if (trouble)
-	return(mus_format("can't initialize %s", trouble->name));
+	{
+	  run_warn("can't initialize %s", trouble->name);
+	  return(mus_format("can't initialize %s", trouble->name));
+	}
     }
   return(NULL);
 }
@@ -849,6 +953,8 @@ static xen_value *walk(ptree *prog, XEN form, int need_result);
 #define BOOL_RESULT ints[args[0]]
 #define DBL_RESULT dbls[args[0]]
 #define INT_RESULT ints[args[0]]
+#define STRING_RESULT ((char *)(ints[args[0]]))
+#define CHAR_RESULT ((char)(ints[args[0]]))
 #define BOOL_ARG_1 ints[args[1]]
 #define BOOL_ARG_2 ints[args[2]]
 #define BOOL_ARG_3 ints[args[3]]
@@ -862,6 +968,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result);
 #define DBL_ARG_4 dbls[args[4]]
 #define VCT_ARG_1 (vct *)(ints[args[1]])
 #define VCT_ARG_2 (vct *)(ints[args[2]])
+#define STRING_ARG_1 ((char *)(ints[args[1]]))
+#define STRING_ARG_2 ((char *)(ints[args[2]]))
+#define CHAR_ARG_1 ((char)(ints[args[1]]))
+#define CHAR_ARG_2 ((char)(ints[args[2]]))
 
 static void quit(int *args, int *ints, Float *dbls) {ALL_DONE = TRUE;}
 static char *descr_quit(int *args, int *ints, Float *dbls) {return(copy_string("quit"));}
@@ -927,14 +1037,14 @@ static xen_value *lambda_form(ptree *prog, XEN form)
   xen_value *v = NULL;
   int i, arg_num, body_forms;
 
-  if (got_lambda) return(NULL);
+  if (got_lambda) return(run_warn("can't handle non-call/cc lambda within lambda: %s", XEN_AS_STRING(form)));
   got_lambda = 1;
 
   args = XEN_CADR(form);
-  if (!(XEN_LIST_P(args))) return(NULL);
+  if (!(XEN_LIST_P(args))) return(run_warn("can't handle non-explicit lambda args: %s", XEN_AS_STRING(args)));
   arg_num = XEN_LIST_LENGTH(args);
 
-  if (arg_num > 1) return(NULL); /* temporary?? */
+  if (arg_num > 1) return(run_warn("can't handle lambda arity > 1: %s", XEN_AS_STRING(args))); /* temporary?? */
 
   body = XEN_CDDR(form);
   body_forms = XEN_LIST_LENGTH(body);
@@ -957,7 +1067,7 @@ static xen_value *lambda_form(ptree *prog, XEN form)
     {
       if (v) FREE(v);
       v = walk(prog, XEN_CAR(body), (i == (body_forms - 1)));
-      if (v == NULL) return(NULL);
+      if (v == NULL) return(run_warn("lambda: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
     }
   return(v);
 }
@@ -975,7 +1085,7 @@ static xen_value *begin_form(ptree *prog, XEN form, int need_result)
     {
       if (v) FREE(v);
       v = walk(prog, XEN_CAR(body), ((need_result) && (i == (body_forms - 1))));
-      if (v == NULL) return(NULL);
+      if (v == NULL) return(run_warn("begin: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
     }
   return(v);
 }
@@ -995,7 +1105,7 @@ static xen_value *let_star_form(ptree *prog, XEN form, int need_result)
   lets = XEN_CADR(form);
   body = XEN_CDDR(form);
   body_forms = XEN_LIST_LENGTH(body);
-  if (body_forms == 0) return(NULL);
+  if (body_forms == 0) return(run_warn("let*: empty body? %s", XEN_AS_STRING(body)));
   vars = XEN_LIST_LENGTH(lets);
   locals_loc = prog->var_ctr; /* lets can be nested */
   if (vars > 0)
@@ -1007,7 +1117,9 @@ static xen_value *let_star_form(ptree *prog, XEN form, int need_result)
 	  if ((v == NULL) || (v->type == R_PENDING)) 
 	    {
 	      if (v) FREE(v);
-	      return(NULL);
+	      if (v == NULL)
+		return(run_warn("can't handle let* var: %s", XEN_AS_STRING(lets)));
+	      else return(run_warn("pending var used in let*: %s", XEN_AS_STRING(lets)));
 	    }
 	  if (v->type == R_FLOAT)
 	    vs = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, prog->dbls[v->addr]), FALSE);
@@ -1027,7 +1139,7 @@ static xen_value *let_star_form(ptree *prog, XEN form, int need_result)
     {
       if (v) FREE(v);
       v = walk(prog, XEN_CAR(body), ((need_result) && (i == (body_forms - 1))));
-      if (v == NULL) return(NULL);
+      if (v == NULL) return(run_warn("let*: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
     }
   for (i = locals_loc; i < prog->var_ctr; i++)
     if (prog->vars[i])
@@ -1046,7 +1158,7 @@ static xen_value *let_form(ptree *prog, XEN form, int need_result)
   lets = XEN_CADR(form);
   body = XEN_CDDR(form);
   body_forms = XEN_LIST_LENGTH(body);
-  if (body_forms == 0) return(NULL);
+  if (body_forms == 0) return(run_warn("let: empty body? %s", XEN_AS_STRING(body)));
   vars = XEN_LIST_LENGTH(lets);
   locals_loc = prog->var_ctr; /* lets can be nested */
   if (vars > 0)
@@ -1059,7 +1171,8 @@ static xen_value *let_form(ptree *prog, XEN form, int need_result)
 	  v = walk(prog, XEN_CADR(var), TRUE);
 	  if ((v == NULL) || (v->type == R_PENDING))
 	    {
-	      int j;
+	      int j, was_null;
+	      was_null = (v == NULL);
 	      for (j = 0; j < i; j++)
 		{
 		  if (old_vs[j]) FREE(old_vs[j]);
@@ -1068,7 +1181,9 @@ static xen_value *let_form(ptree *prog, XEN form, int need_result)
 	      if (v) FREE(v);
 	      FREE(vs);
 	      FREE(old_vs);
-	      return(NULL);
+	      if (was_null)
+		return(run_warn("can't handle let var: %s", XEN_AS_STRING(lets)));
+	      else return(run_warn("pending var used in let: %s", XEN_AS_STRING(lets)));
 	    }
 	  old_vs[i] = v;
 	  if (v->type == R_FLOAT)
@@ -1097,7 +1212,7 @@ static xen_value *let_form(ptree *prog, XEN form, int need_result)
     {
       if (v) FREE(v);
       v = walk(prog, XEN_CAR(body), ((need_result) && (i == (body_forms - 1))));
-      if (v == NULL) return(NULL);
+      if (v == NULL) return(run_warn("let: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
     }
   for (i = locals_loc; i < prog->var_ctr; i++)
     if (prog->vars[i]) 
@@ -1108,12 +1223,12 @@ static xen_value *let_form(ptree *prog, XEN form, int need_result)
 
 static xen_value *cond_form(ptree *prog, XEN form, int need_result)
 {
-  return(NULL);
+  return(run_warn("can't handle cond yet"));
 }
 
 static xen_value *do_form(ptree *prog, XEN form, int need_result)
 {
-  return(NULL);
+  return(run_warn("can't handle do yet"));
 }
 
 static xen_value *if_form(ptree *prog, XEN form, int need_result)
@@ -1124,13 +1239,13 @@ static xen_value *if_form(ptree *prog, XEN form, int need_result)
   int current_pc, false_pc = 0, has_false;
   has_false = (XEN_LIST_LENGTH(form) == 4);
   if_value = walk(prog, XEN_CADR(form), TRUE);                                      /* walk selector */
-  if (if_value == NULL) return(NULL);
-  if (if_value->type != R_BOOL) return(NULL);
+  if (if_value == NULL) return(run_warn("if: no selector? %s", XEN_AS_STRING(XEN_CADR(form))));
+  if (if_value->type != R_BOOL) return(run_warn("if: selector type not boolean: %s", XEN_AS_STRING(XEN_CADR(form))));
   current_pc = prog->triple_ctr;
   jump_to_false = make_xen_value(R_INT, add_int_to_ptree(prog, 0), FALSE);
   add_triple_to_ptree(prog, va_make_triple(jump_if_not, descr_jump_if_not, 2, jump_to_false, if_value));
   true_result = walk(prog, XEN_CADDR(form), TRUE);                                  /* walk true branch */
-  if (true_result == NULL) return(NULL);
+  if (true_result == NULL) return(run_warn("if: can't handle true branch %s", XEN_AS_STRING(XEN_CADDR(form))));
   if (need_result)
     {
       if (true_result->type != R_FLOAT)
@@ -1154,7 +1269,7 @@ static xen_value *if_form(ptree *prog, XEN form, int need_result)
   if (has_false)
     {
       false_result = walk(prog, XEN_CADDDR(form), TRUE);                            /* walk false branch */
-      if (false_result == NULL) return(NULL);
+      if (false_result == NULL) return(run_warn("if: can't handle false branch %s", XEN_AS_STRING(XEN_CADDDR(form))));
       prog->ints[jump_to_end->addr] = prog->triple_ctr - false_pc;                  /* fixup jump-past-false addr */
       if (false_result->type != true_result->type)
 	{
@@ -1163,7 +1278,7 @@ static xen_value *if_form(ptree *prog, XEN form, int need_result)
 	  if (jump_to_end) FREE(jump_to_end);
 	  if (jump_to_false) FREE(jump_to_false);
 	  if (result) FREE(result);
-	  return(NULL);
+	  return(run_warn("if: branches have different types"));
 	}
       if (need_result)
 	{
@@ -1208,12 +1323,12 @@ static xen_value *callcc_form(ptree *prog, XEN form, int need_result)
     {
       if (v) FREE(v);
       v = walk(prog, XEN_CAR(lambda_body), ((need_result) && (i == (body_forms - 1))));
-      if (v == NULL) return(NULL);
+      if (v == NULL) return(run_warn("call/cc: can't handle %s", XEN_AS_STRING(XEN_CAR(lambda_body))));
     }
   if (c->result)
     {
       if (v->type != c->result->type)
-	return(NULL);
+	return(run_warn("call/cc: types differ"));
       if (need_result)
 	{
       	  if (v->type == R_FLOAT)
@@ -1246,10 +1361,15 @@ static xen_value *or_form(ptree *prog, XEN form)
       v = walk(prog, XEN_CAR(body), TRUE);
       if ((v == NULL) || (v->type != R_BOOL)) 
 	{
+	  int was_null;
+	  was_null = (v == NULL);
 	  for (j = 0; j < i; j++)
 	    if (fixups[j]) FREE(fixups[j]);
 	  FREE(fixups);
-	  return(NULL);
+	  if (v) FREE(v);
+	  if (was_null)
+	    return(run_warn("or: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
+	  else return(run_warn("or: type not boolean: %s", XEN_AS_STRING(XEN_CAR(body))));
 	}
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), FALSE);
       add_triple_to_ptree(prog, va_make_triple(jump_if, descr_jump_if, 2, fixups[i], v));
@@ -1290,10 +1410,15 @@ static xen_value *and_form(ptree *prog, XEN form)
       v = walk(prog, XEN_CAR(body), TRUE);
       if ((v == NULL) || (v->type != R_BOOL))
 	{
+	  int was_null;
+	  was_null = (v == NULL);
 	  for (j = 0; j < i; j++)
 	    if (fixups[j]) FREE(fixups[j]);
 	  FREE(fixups);
-	  return(NULL);
+	  if (v) FREE(v);
+	  if (was_null)
+	    return(run_warn("and: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
+	  else return(run_warn("and: type not boolean: %s", XEN_AS_STRING(XEN_CAR(body))));
 	}
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), FALSE);
       add_triple_to_ptree(prog, va_make_triple(jump_if_not, descr_jump_if_not, 2, fixups[i], v));
@@ -1322,7 +1447,8 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
   char varname[256];
   xen_var *var;
   xen_value *v;
-  if (!(XEN_SYMBOL_P(XEN_CADR(form)))) return(NULL); /* TODO: handle generalized set! */
+  if (!(XEN_SYMBOL_P(XEN_CADR(form)))) return(run_warn("generalized set! not implemented yet: %s", XEN_AS_STRING(XEN_CADR(form))));
+  /* TODO: handle generalized set! */
   snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(XEN_CADR(form)));
   var = find_var_in_ptree(prog, varname);
   if (var == NULL)
@@ -1337,17 +1463,25 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
   if ((var) && (!(var->unsettable)))
     {
       v = walk(prog, XEN_CADDR(form), TRUE);
-      if (v == NULL) return(NULL);
-      if ((v->type != var->v->type) || (v->type == R_VCT)) /* don't allow assignments that can complicate GC */
+      if (v == NULL) return(run_warn("set!: can't handle: %s", XEN_AS_STRING(XEN_CADDR(form))));
+      if ((v->type != var->v->type) || 
+	  (v->type == R_VCT) || (v->type == R_STRING) || (v->type == R_CLM) || (v->type == R_READER))
+	/* don't allow assignments that can complicate GC */
 	{
 	  FREE(v);
-	  return(NULL); /* variables have only one type in this context */
+	  /* variables have only one type in this context */
+	  if (v->type != var->v->type)
+	    return(run_warn("set! can't change var's type: %s", XEN_AS_STRING(form)));
+	  else return(run_warn("can't set pointer vars to alias other such vars"));
+	  /* this limitation could be removed, but is it worth the bother? */
 	}
       init_var(prog, var->v, v);
       var->unclean = TRUE;
       return(v);
     }
-  return(NULL);
+  if ((var) && (var->unsettable))
+    return(run_warn("set!: can't set local vars: %s", XEN_AS_STRING(XEN_CADR(form))));
+  return(run_warn("set! variable problem: %s", XEN_AS_STRING(form)));
 }
 
 static xen_value *package(ptree *prog,
@@ -1423,12 +1557,37 @@ static char *describe_int_args(char *func, int num_args, int *args, int *ints, i
   return(buf);
 }
 
-/* ---------------- multiply ---------------- */
+static xen_value *fixup_if_pending(ptree *pt, xen_value *sf, int new_type)
+{
+  xen_var *var;
+  if (sf->type == R_PENDING)
+    {
+      var = find_pending_var_in_ptree_via_xen_value(pt, sf);
+      if (var == NULL) return(NULL);
+      if (new_type == R_FLOAT)
+	sf->addr = add_dbl_to_ptree(pt, 0.0);
+      else sf->addr = add_int_to_ptree(pt, 0);
+      sf->type = new_type;
+      var->v->type = new_type;
+      var->v->addr = sf->addr;
+    }
+  return(sf);
+}
+
+static void fixup_all_pending_args(ptree *pt, xen_value **args, int num_args, int new_type)
+{
+  int i;
+  if (current_optimization > 3)
+    for (i = 1; i <= num_args; i++)
+      if (args[i])
+	fixup_if_pending(pt, args[i], new_type);
+}
 
 static int float_all_args(ptree *prog, int num_args, xen_value **args, int float_result)
 {
   int i, j;
   xen_value *old_loc;
+  fixup_all_pending_args(prog, args, num_args, (float_result) ? R_FLOAT : R_INT);
   for (i = 1, j = 1; i <= num_args; i++)
     if (args[i])
       {
@@ -1450,6 +1609,8 @@ static int float_all_args(ptree *prog, int num_args, xen_value **args, int float
       }
   return(j - 1);
 }
+
+/* ---------------- multiply ---------------- */
 
 static void multiply_f2(int *args, int *ints, Float *dbls) {dbls[args[0]] = (DBL_ARG_1 * DBL_ARG_2);}
 static char *descr_multiply_f2(int *args, int *ints, Float *dbls) {return(describe_dbl_args("*", 2, args, dbls, 1));}
@@ -1529,7 +1690,7 @@ static xen_value *multiply(ptree *prog, int float_result, xen_value **args, int 
       if (num_args == 3) return(package(prog, R_INT, multiply_i3, descr_multiply_i3, args, num_args));
       return(package_n(prog, R_INT, multiply_in, descr_multiply_in, args, num_args));
     }
-  return(NULL);
+  return(run_warn("* trouble"));
 }
 
 
@@ -1611,7 +1772,7 @@ static xen_value *add(ptree *prog, int float_result, xen_value **args, int num_a
       if (num_args == 3) return(package(prog, R_INT, add_i3, descr_add_i3, args, num_args));
       return(package_n(prog, R_INT, add_in, descr_add_in, args, num_args));
     }
-  return(NULL);
+  return(run_warn("+ trouble"));
 }
 
 /* ---------------- subtract ---------------- */
@@ -1658,7 +1819,7 @@ static xen_value *subtract(ptree *prog, int float_result, xen_value **args, int 
   int iscl = 0, cons_loc = 0;
   Float fscl = 0.0;
   int i;
-  if (num_args == 0) return(NULL);
+  if (num_args == 0) return(run_warn("- with no arg?"));
   if ((num_args == 1) && (args[1]->constant))
     {
       if (args[1]->type == R_INT)
@@ -1714,7 +1875,7 @@ static xen_value *subtract(ptree *prog, int float_result, xen_value **args, int 
       if (num_args == 3) return(package(prog, R_INT, subtract_i3, descr_subtract_i3, args, num_args));
       return(package_n(prog, R_INT, subtract_in, descr_subtract_in, args, num_args));
     }
-  return(NULL);
+  return(run_warn("- trouble"));
 }
 
 
@@ -1801,7 +1962,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args, int consta
   int cons_loc = 0;
   Float fscl = 1.0;
   int i;
-  if (num_args == 0) return(NULL);
+  if (num_args == 0) return(run_warn("/ with no arg?"));
   if ((num_args == 1) && (args[1]->constant))
     {
       if (args[1]->type == R_INT)
@@ -1947,7 +2108,7 @@ static xen_value *greater_than(ptree *prog, int float_result, xen_value **args, 
       if (num_args == 2) return(package(prog, R_BOOL, gt_i2, descr_gt_i2, args, num_args));
       return(package_n(prog, R_BOOL, gt_in, descr_gt_in, args, num_args));
     }
-  return(NULL);
+  return(run_warn("> trouble"));
 }
 
 /* ---------------- greater-than-or-equal ---------------- */
@@ -2010,7 +2171,7 @@ static xen_value *greater_than_or_equal(ptree *prog, int float_result, xen_value
       if (num_args == 2) return(package(prog, R_BOOL, geq_i2, descr_geq_i2, args, num_args));
       return(package_n(prog, R_BOOL, geq_in, descr_geq_in, args, num_args));
     }
-  return(NULL);
+  return(run_warn(">= trouble"));
 }
 
 /* ---------------- less-than ---------------- */
@@ -2072,7 +2233,7 @@ static xen_value *less_than(ptree *prog, int float_result, xen_value **args, int
       if (num_args == 2) return(package(prog, R_BOOL, lt_i2, descr_lt_i2, args, num_args));
       return(package_n(prog, R_BOOL, lt_in, descr_lt_in, args, num_args));
     }
-  return(NULL);
+  return(run_warn("< trouble"));
 }
 
 /* ---------------- less-than-or-equal ---------------- */
@@ -2134,7 +2295,7 @@ static xen_value *less_than_or_equal(ptree *prog, int float_result, xen_value **
       if (num_args == 2) return(package(prog, R_BOOL, leq_i2, descr_leq_i2, args, num_args));
       return(package_n(prog, R_BOOL, leq_in, descr_leq_in, args, num_args));
     }
-  return(NULL);
+  return(run_warn("<= trouble"));
 }
 
 /* ---------------- equal (as in "=") ---------------- */
@@ -2196,7 +2357,7 @@ static xen_value *numbers_equal(ptree *prog, int float_result, xen_value **args,
       if (num_args == 2) return(package(prog, R_BOOL, equal_i2, descr_equal_i2, args, num_args));
       return(package_n(prog, R_BOOL, equal_in, descr_equal_in, args, num_args));
     }
-  return(NULL);
+  return(run_warn("= trouble"));
 }
 
 /* ---------------- max ---------------- */
@@ -2305,7 +2466,7 @@ static xen_value *max_1(ptree *prog, int float_result, xen_value **args, int num
       if (num_args == 2) return(package(prog, R_INT, max_i2, descr_max_i2, args, num_args));
       return(package_n(prog, R_INT, max_in, descr_max_in, args, num_args));
     }
-  return(NULL);
+  return(run_warn("max trouble"));
 }
 
 /* ---------------- min ---------------- */
@@ -2378,7 +2539,7 @@ static xen_value *min_1(ptree *prog, int float_result, xen_value **args, int num
       if (num_args == 2) return(package(prog, R_INT, min_i2, descr_min_i2, args, num_args));
       return(package_n(prog, R_INT, min_in, descr_min_in, args, num_args));
     }
-  return(NULL);
+  return(run_warn("min trouble"));
 }
 
 
@@ -2408,7 +2569,7 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int constants)
   if ((args[1]->type != args[2]->type) || (args[1]->type == R_FLOAT))
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, FALSE), TRUE));
   if (constants == 2)
-    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->ints[args[1]->addr] == prog->ints[args[1]->addr]), TRUE));
+    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->ints[args[1]->addr] == prog->ints[args[2]->addr]), TRUE));
   return(package(prog, R_BOOL, eq_b, descr_eq_b, args, 2));
 }
 
@@ -2424,8 +2585,8 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int constants)
   if (constants == 2)
     {
       if (args[1]->type == R_FLOAT)
-	return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->dbls[args[1]->addr] == prog->dbls[args[1]->addr]), TRUE));
-      else return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->ints[args[1]->addr] == prog->ints[args[1]->addr]), TRUE));
+	return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->dbls[args[1]->addr] == prog->dbls[args[2]->addr]), TRUE));
+      else return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->ints[args[1]->addr] == prog->ints[args[2]->addr]), TRUE));
     }
   if (args[1]->type == R_FLOAT)
     return(package(prog, R_BOOL, eqv_fb, descr_eqv_fb, args, 2));
@@ -2456,7 +2617,7 @@ static char *descr_odd_i(int *args, int *ints, Float *dbls) {return(mus_format("
 static xen_value *odd_p(ptree *prog, xen_value **args, int constants)
 {
   args[1] = convert_to_int(prog, args[1]);
-  if (args[1] == NULL) return(NULL);
+  if (args[1] == NULL) return(run_warn("odd? can't convert arg"));
   if (constants == 1)
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, prog->ints[args[1]->addr] & 1), TRUE));
   return(package(prog, R_BOOL, odd_i, descr_odd_i, args, 1));
@@ -2467,7 +2628,7 @@ static char *descr_even_i(int *args, int *ints, Float *dbls) {return(mus_format(
 static xen_value *even_p(ptree *prog, xen_value **args, int constants)
 {
   args[1] = convert_to_int(prog, args[1]);
-  if (args[1] == NULL) return(NULL);
+  if (args[1] == NULL) return(run_warn("even? can't convert arg"));
   if (constants == 1)
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (!(prog->ints[args[1]->addr] & 1))), TRUE));
   return(package(prog, R_BOOL, even_i, descr_even_i, args, 1));
@@ -2487,11 +2648,11 @@ static xen_value *zero_p(ptree *prog, xen_value **args, int constants)
       {
 	if (args[1]->type == R_FLOAT)
 	  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (prog->dbls[args[1]->addr] == 0.0)), TRUE));
-	else return(NULL);
+	else return(run_warn("zero? bad arg"));
       }
     }
   if ((args[1]->type != R_INT) && (args[1]->type != R_FLOAT))
-    return(NULL);
+    return(run_warn("zero? wrong type arg"));
   if (args[1]->type == R_FLOAT)
     return(package(prog, R_BOOL, zero_f, descr_zero_f, args, 1));
   return(package(prog, R_BOOL, zero_i, descr_zero_i, args, 1));
@@ -2511,11 +2672,11 @@ static xen_value *positive_p(ptree *prog, xen_value **args, int constants)
       {
 	if (args[1]->type == R_FLOAT)
 	  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (prog->dbls[args[1]->addr] > 0.0)), TRUE));
-	else return(NULL);
+	else return(run_warn("positive? bad arg"));
       }
     }
   if ((args[1]->type != R_INT) && (args[1]->type != R_FLOAT))
-    return(NULL);
+    return(run_warn("positive? wrong type arg"));
   if (args[1]->type == R_FLOAT)
     return(package(prog, R_BOOL, positive_f, descr_positive_f, args, 1));
   return(package(prog, R_BOOL, positive_i, descr_positive_i, args, 1));
@@ -2535,11 +2696,11 @@ static xen_value *negative_p(ptree *prog, xen_value **args, int constants)
       {
 	if (args[1]->type == R_FLOAT)
 	  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (prog->dbls[args[1]->addr] < 0.0)), TRUE));
-	else return(NULL);
+	else return(run_warn("negative? bad arg"));
       }
     }
   if ((args[1]->type != R_INT) && (args[1]->type != R_FLOAT))
-    return(NULL);
+    return(run_warn("negative? wrong type arg"));
   if (args[1]->type == R_FLOAT)
     return(package(prog, R_BOOL, negative_f, descr_negative_f, args, 1));
   return(package(prog, R_BOOL, negative_i, descr_negative_i, args, 1));
@@ -2853,7 +3014,7 @@ static xen_value *gcd_1(ptree *prog, xen_value **args, int constants, int num_ar
   for (i = 1; i <= num_args; i++)
     {
       args[i] = convert_to_int(prog, args[i]);
-      if (args[i] == NULL) return(NULL);
+      if (args[i] == NULL) return(run_warn("gcd can't convert to int"));
     }
   if (num_args == 1)
     {
@@ -2910,7 +3071,7 @@ static xen_value *lcm_1(ptree *prog, xen_value **args, int constants, int num_ar
   for (i = 1; i <= num_args; i++)
     {
       args[i] = convert_to_int(prog, args[i]);
-      if (args[i] == NULL) return(NULL);
+      if (args[i] == NULL) return(run_warn("lcm can't convert to int"));
     }
   if (num_args == 1)
     {
@@ -2960,9 +3121,9 @@ static char *descr_modulo_i(int *args, int *ints, Float *dbls)
 static xen_value *modulo_1(ptree *prog, xen_value **args, int constants)
 {
   args[1] = convert_to_int(prog, args[1]);
-  if (args[1] == NULL) return(NULL);
+  if (args[1] == NULL) return(run_warn("modulo arg1 can't convert to int"));
   args[2] = convert_to_int(prog, args[2]);
-  if (args[2] == NULL) return(NULL);
+  if (args[2] == NULL) return(run_warn("modulo arg2 can't convert to int"));
   if (constants == 2)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, c_mod(prog->ints[args[1]->addr], prog->ints[args[2]->addr])), TRUE));
   return(package(prog, R_INT, modulo_i, descr_modulo_i, args, 2));
@@ -2976,9 +3137,9 @@ static char *descr_remainder_i(int *args, int *ints, Float *dbls)
 static xen_value *remainder_1(ptree *prog, xen_value **args, int constants)
 {
   args[1] = convert_to_int(prog, args[1]);
-  if (args[1] == NULL) return(NULL);
+  if (args[1] == NULL) return(run_warn("remainder arg1 can't convert to int"));
   args[2] = convert_to_int(prog, args[2]);
-  if (args[2] == NULL) return(NULL);
+  if (args[2] == NULL) return(run_warn("remainder arg2 can't convert to int"));
   if (constants == 2)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, (prog->ints[args[1]->addr] % prog->ints[args[2]->addr])), TRUE));
   return(package(prog, R_INT, remainder_i, descr_remainder_i, args, 2));
@@ -2992,9 +3153,9 @@ static char *descr_quotient_i(int *args, int *ints, Float *dbls)
 static xen_value *quotient_1(ptree *prog, xen_value **args, int constants)
 {
   args[1] = convert_to_int(prog, args[1]);
-  if (args[1] == NULL) return(NULL);
+  if (args[1] == NULL) return(run_warn("quotient arg1 can't convert to int"));
   args[2] = convert_to_int(prog, args[2]);
-  if (args[2] == NULL) return(NULL);
+  if (args[2] == NULL) return(run_warn("quotient arg2 can't convert to int"));
   if (constants == 2)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, (prog->ints[args[1]->addr] / prog->ints[args[2]->addr])), TRUE));
   return(package(prog, R_INT, quotient_i, descr_quotient_i, args, 2));
@@ -3011,7 +3172,8 @@ static char *descr_logand_i(int *args, int *ints, Float *dbls)
 }
 static xen_value *logand_1(ptree *prog, xen_value **args, int constants)
 {
-  if ((args[1]->type != R_INT) || (args[2]->type != R_INT)) return(NULL);
+  if ((args[1]->type != R_INT) || (args[2]->type != R_INT)) 
+    return(run_warn("logand non-int arg"));
   if (constants == 2)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, (prog->ints[args[1]->addr] & prog->ints[args[2]->addr])), TRUE));
   return(package(prog, R_INT, logand_i, descr_logand_i, args, 2));
@@ -3024,7 +3186,8 @@ static char *descr_logior_i(int *args, int *ints, Float *dbls)
 }
 static xen_value *logior_1(ptree *prog, xen_value **args, int constants)
 {
-  if ((args[1]->type != R_INT) || (args[2]->type != R_INT)) return(NULL);
+  if ((args[1]->type != R_INT) || (args[2]->type != R_INT)) 
+    return(run_warn("logior non-int arg"));
   if (constants == 2)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, (prog->ints[args[1]->addr] | prog->ints[args[2]->addr])), TRUE));
   return(package(prog, R_INT, logior_i, descr_logior_i, args, 2));
@@ -3040,7 +3203,8 @@ static char *descr_logxor_i(int *args, int *ints, Float *dbls)
 }
 static xen_value *logxor_1(ptree *prog, xen_value **args, int constants)
 {
-  if ((args[1]->type != R_INT) || (args[2]->type != R_INT)) return(NULL);
+  if ((args[1]->type != R_INT) || (args[2]->type != R_INT)) 
+    return(run_warn("logxor non-int arg"));
   if (constants == 2)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, XOR(prog->ints[args[1]->addr], prog->ints[args[2]->addr])), TRUE));
   return(package(prog, R_INT, logxor_i, descr_logxor_i, args, 2));
@@ -3050,7 +3214,8 @@ static void lognot_i(int *args, int *ints, Float *dbls) {INT_RESULT = ~INT_ARG_1
 static char *descr_lognot_i(int *args, int *ints, Float *dbls) {return(mus_format("i%d(%d) = ~i%d(%d)", args[0], INT_RESULT, args[1], INT_ARG_1));}
 static xen_value *lognot_1(ptree *prog, xen_value **args, int constants)
 {
-  if (args[1]->type != R_INT) return(NULL);
+  if (args[1]->type != R_INT) 
+    return(run_warn("lognot non-int arg"));
   if (constants == 1)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, ~(prog->ints[args[1]->addr])), TRUE));
   return(package(prog, R_INT, lognot_i, descr_lognot_i, args, 1));
@@ -3070,7 +3235,8 @@ static char *descr_ash_i(int *args, int *ints, Float *dbls)
 }
 static xen_value *ash_1(ptree *prog, xen_value **args, int constants)
 {
-  if ((args[1]->type != R_INT) || (args[2]->type != R_INT)) return(NULL);
+  if ((args[1]->type != R_INT) || (args[2]->type != R_INT)) 
+    return(run_warn("ash non-int arg"));
   if (constants == 2)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, c_ash(prog->ints[args[1]->addr], prog->ints[args[2]->addr])), TRUE));
   return(package(prog, R_INT, ash_i, descr_ash_i, args, 2));
@@ -3168,22 +3334,197 @@ static xen_value *random_1(ptree *prog, xen_value **args)
 }
 
 
-/* ---------------- sample-reader stuff ---------------- */
+/* ---------------- chars ---------------- */
 
-static xen_value *fixup_if_pending(ptree *pt, xen_value *sf, int new_type)
-{
-  xen_var *var;
-  if (sf->type == R_PENDING)
-    {
-      var = find_pending_var_in_ptree_via_xen_value(pt, sf);
-      if (var == NULL) return(NULL);
-      sf->addr = add_int_to_ptree(pt, 0);
-      sf->type = new_type;
-      var->v->type = new_type;
-      var->v->addr = sf->addr;
-    }
-  return(sf);
+#define CHARP(SName, CName) \
+static void char_ ## CName ## _c(int *args, int *ints, Float *dbls) {BOOL_RESULT = CName((char)(INT_ARG_1));} \
+static char *descr_ ## CName ## _c(int *args, int *ints, Float *dbls) \
+{ \
+  return(mus_format("i%d(%d) = " #SName "(i%d(%c))", args[0], BOOL_RESULT, args[1], (char)(INT_ARG_1))); \
+} \
+static xen_value * SName(ptree *pt, xen_value **args, int constants) \
+{ \
+  if (constants == 1) \
+    return(make_xen_value(R_BOOL, add_int_to_ptree(pt, CName((char)(pt->ints[args[1]->addr]))), TRUE)); \
+  return(package(pt, R_BOOL, char_## CName ## _c, descr_ ## CName ## _c, args, 1)); \
 }
+
+CHARP(char_alphabetic_p, isalpha)
+CHARP(char_numeric_p, isdigit)
+CHARP(char_lower_case_p, islower)
+CHARP(char_upper_case_p, isupper)
+CHARP(char_whitespace_p, isspace)
+
+#define CHARC(SName, CName) \
+static void char_ ## CName ## _c(int *args, int *ints, Float *dbls) {INT_RESULT = (int)CName((char)(INT_ARG_1));} \
+static char *descr_ ## CName ## _c(int *args, int *ints, Float *dbls) \
+{ \
+  return(mus_format("i%d(%c) = " #SName "(i%d(%c))", args[0], (char)(INT_RESULT), args[1], (char)(INT_ARG_1))); \
+} \
+static xen_value * SName(ptree *pt, xen_value **args, int constants) \
+{ \
+  if (constants == 1) \
+    return(make_xen_value(R_CHAR, add_int_to_ptree(pt, CName((char)(pt->ints[args[1]->addr]))), TRUE)); \
+  return(package(pt, R_CHAR, char_## CName ## _c, descr_ ## CName ## _c, args, 1)); \
+}
+
+CHARC(char_upcase, toupper)
+CHARC(char_downcase, tolower)
+
+static xen_value *char_to_integer(xen_value *v)
+{
+  xen_value *newv;
+  newv = copy_xen_value(v);
+  newv->type = R_INT;
+  return(newv);
+}
+
+static xen_value *integer_to_char(xen_value *v)
+{
+  xen_value *newv;
+  newv = copy_xen_value(v);
+  newv->type = R_CHAR;
+  return(newv);
+}
+
+static xen_value **upcase_args(ptree *pt, xen_value **args, int num_args)
+{
+  int i;
+  xen_value *old_loc;
+  for (i = 1; i <= num_args; i++)
+    if (args[i])
+      {
+	old_loc = args[i];
+	if (args[i]->constant)
+	  args[i] = make_xen_value(R_CHAR, add_int_to_ptree(pt, toupper((char)(pt->ints[args[i]->addr]))), TRUE);
+	else 
+	  {
+	    args[i] = make_xen_value(R_CHAR, add_int_to_ptree(pt, 0), FALSE);
+	    add_triple_to_ptree(pt, va_make_triple(char_toupper_c, descr_toupper_c, 2, args[i], old_loc));
+	  }
+	FREE(old_loc);
+      }
+  return(args);
+}
+
+
+/* ---------------- strings ---------------- */
+
+static void string_n(int *args, int *ints, Float *dbls)
+{
+  int i, n;
+  n = ints[args[1]];
+  if (STRING_RESULT) FREE(STRING_RESULT);
+  STRING_RESULT = (char *)CALLOC(n + 1, sizeof(char));
+  for (i = 1; i <= n; i++) STRING_RESULT[i - 1] = (char)(ints[args[i + 1]]);
+}
+static char *descr_string_n(int *args, int *ints, Float *dbls)
+{
+  return(copy_string("string"));
+}
+
+/* (lambda (y) (string #\a (integer->char (inexact->exact y)))) */
+
+static xen_value *string_1(ptree *pt, xen_value **args, int num_args, int constants)
+{
+  if (constants == num_args)
+    {
+      int i;
+      char *str;
+      str = (char *)CALLOC(num_args + 1, sizeof(char));
+      for (i = 1; i <= num_args; i++)
+	str[i - 1] = (char)(pt->ints[args[i]->addr]);
+      return(make_xen_value(R_STRING, add_string_to_ptree(pt, str), TRUE));
+    }
+  return(package_n(pt, R_STRING, string_n, descr_string_n, args, num_args));
+}
+
+static void strlen_1(int *args, int *ints, Float *dbls) {INT_RESULT = snd_strlen(STRING_ARG_1);}
+static char *descr_strlen_1(int *args, int *ints, Float *dbls) {return(copy_string("string-length"));}
+static xen_value *string_length_1(ptree *pt, xen_value **args)
+{
+  if (args[1]->constant)
+    return(make_xen_value(R_INT, add_int_to_ptree(pt, snd_strlen((char *)(pt->ints[args[1]->addr]))), TRUE));
+  return(package(pt, R_INT, strlen_1, descr_strlen_1, args, 1));
+}
+
+static void strcpy_1(int *args, int *ints, Float *dbls) 
+{
+  if (STRING_RESULT) FREE(STRING_RESULT);
+  STRING_RESULT = copy_string(STRING_ARG_1);
+}
+static char *descr_strcpy_1(int *args, int *ints, Float *dbls) {return(copy_string("string-copy"));}
+static xen_value *string_copy_1(ptree *pt, xen_value **args)
+{
+  if (args[1]->constant)
+    return(make_xen_value(R_STRING, add_string_to_ptree(pt, copy_string((char *)(pt->ints[args[1]->addr]))), TRUE));
+  return(package(pt, R_STRING, strcpy_1, descr_strcpy_1, args, 1));
+}
+
+static void strfill_1(int *args, int *ints, Float *dbls) 
+{
+  int len;
+  len = snd_strlen(STRING_RESULT);
+  memset((void *)(STRING_RESULT), (char)(CHAR_ARG_1), len);
+}
+static char *descr_strfill_1(int *args, int *ints, Float *dbls) {return(copy_string("string-fill!"));}
+static xen_value *string_fill_1(ptree *pt, xen_value **args)
+{
+  if ((args[1]->constant) || (args[1]->type != R_STRING) || (args[2]->type != R_CHAR))
+    return(run_warn("bad args to string-fill!"));
+  add_triple_to_ptree(pt, va_make_triple(strfill_1, descr_strfill_1, 2, args[1], args[2])); /* shifts back one */
+  return(make_xen_value(R_BOOL, -1, TRUE));
+}
+
+static void strset_1(int *args, int *ints, Float *dbls) {STRING_RESULT[INT_ARG_1] = (char)(CHAR_ARG_2);}
+static char *descr_strset_1(int *args, int *ints, Float *dbls) {return(copy_string("string-set!"));}
+static xen_value *string_set_1(ptree *pt, xen_value **args)
+{
+  if ((args[1]->constant) || (args[1]->type != R_STRING) || (args[2]->type != R_INT) || (args[3]->type != R_CHAR))
+    return(run_warn("bad args to string-set!"));
+  add_triple_to_ptree(pt, va_make_triple(strset_1, descr_strset_1, 3, args[1], args[2], args[3])); /* shifts back one */
+  return(make_xen_value(R_BOOL, -1, TRUE));
+}
+
+static void strref_1(int *args, int *ints, Float *dbls) {CHAR_RESULT = STRING_ARG_1[INT_ARG_1];}
+static char *descr_strref_1(int *args, int *ints, Float *dbls) {return(copy_string("string-ref"));}
+static xen_value *string_ref_1(ptree *pt, xen_value **args)
+{
+  if ((args[1]->type != R_STRING) || (args[2]->type != R_INT))
+    return(run_warn("bad args to string-ref"));
+  if ((args[1]->constant) && (args[2]->constant))
+    return(make_xen_value(R_CHAR, add_int_to_ptree(pt, (int)(((char *)(pt->ints[args[1]->addr]))[pt->ints[args[2]->addr]])), TRUE));
+  return(package(pt, R_CHAR, strref_1, descr_strref_1, args, 2));
+}
+
+static void strmake_c(int *args, int *ints, Float *dbls, char c) 
+{
+  int i, n;
+  n = INT_ARG_1;
+  if (STRING_RESULT) FREE(STRING_RESULT);
+  /* this should be safe because we don't allow (set! str str1) aliasing */
+  STRING_RESULT = (char *)CALLOC(n + 1, sizeof(char));
+  for (i = 1; i <= n; i++) STRING_RESULT[i - 1] = c;
+}
+static void strmake_1(int *args, int *ints, Float *dbls) {strmake_c(args, ints, dbls, ' ');}
+static void strmake_2(int *args, int *ints, Float *dbls) {strmake_c(args, ints, dbls, CHAR_ARG_2);}
+static char *descr_strmake_1(int *args, int *ints, Float *dbls) {return(copy_string("make-string"));}
+static char *descr_strmake_2(int *args, int *ints, Float *dbls) {return(copy_string("make-string"));}
+static xen_value *make_string_1(ptree *pt, xen_value **args, int num_args)
+{
+  if ((num_args == 0) || (num_args > 2) || 
+      (args[1]->type != R_INT) || 
+      ((num_args == 2) && (args[2]->type != R_CHAR)))
+    return(run_warn("bad args to make-string"));
+  if (num_args == 1)
+    return(package(pt, R_STRING, strmake_1, descr_strmake_1, args, 1));
+  return(package(pt, R_STRING, strmake_2, descr_strmake_2, args, 2));
+}
+
+
+
+
+/* ---------------- sample-reader stuff ---------------- */
 
 static void reader_f(int *args, int *ints, Float *dbls) {DBL_RESULT = read_sample_to_float(((snd_fd *)(INT_ARG_1)));}
 static char *descr_reader(int *args, int *ints, Float *dbls, char *which) 
@@ -3193,7 +3534,7 @@ static char *descr_reader(int *args, int *ints, Float *dbls, char *which)
 static char *descr_reader_f(int *args, int *ints, Float *dbls) {return(descr_reader(args, ints, dbls, "read-sample"));}
 static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
 {
-  if (fixup_if_pending(prog, sf, R_READER) == NULL) return(NULL);
+  if (fixup_if_pending(prog, sf, R_READER) == NULL) return(run_warn("sample-reader bad arg"));
   if (args[0]) FREE(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), FALSE);
   add_triple_to_ptree(prog, va_make_triple(reader_f, descr_reader_f, 2, args[0], sf));
@@ -3205,7 +3546,7 @@ static char *descr_next_reader_f(int *args, int *ints, Float *dbls) {return(desc
 static void next_reader_f(int *args, int *ints, Float *dbls) {DBL_RESULT = protected_next_sample_to_float(((snd_fd *)(INT_ARG_1)));}
 static xen_value *next_sample_1(ptree *prog, xen_value **args) 
 {
-  if (fixup_if_pending(prog, args[1], R_READER) == NULL) return(NULL);
+  if (fixup_if_pending(prog, args[1], R_READER) == NULL) return(run_warn("next-sample bad arg"));
   return(package(prog, R_FLOAT, next_reader_f, descr_next_reader_f, args, 1));
 }
 
@@ -3213,7 +3554,7 @@ static char *descr_previous_reader_f(int *args, int *ints, Float *dbls) {return(
 static void previous_reader_f(int *args, int *ints, Float *dbls) {DBL_RESULT = protected_previous_sample_to_float(((snd_fd *)(INT_ARG_1)));}
 static xen_value *previous_sample_1(ptree *prog, xen_value **args) 
 {
-  if (fixup_if_pending(prog, args[1], R_READER) == NULL) return(NULL);
+  if (fixup_if_pending(prog, args[1], R_READER) == NULL) return(run_warn("previous-sample bad arg"));
   return(package(prog, R_FLOAT, previous_reader_f, descr_previous_reader_f, args, 1));
 }
 
@@ -3227,10 +3568,10 @@ static char *descr_vct_ref_f(int *args, int *ints, Float *dbls)
 }
 static xen_value *vct_ref_1(ptree *prog, xen_value **args)
 {
-  if (fixup_if_pending(prog, args[1], R_VCT) == NULL) return(NULL);
+  if (fixup_if_pending(prog, args[1], R_VCT) == NULL) return(run_warn("vct-ref bad arg"));
   if (args[2]->type == R_INT)
     return(package(prog, R_FLOAT, vct_ref_f, descr_vct_ref_f, args, 2));
-  return(NULL);
+  return(run_warn("vct-ref bad index type"));
 }
 
 static void vct_set_f(int *args, int *ints, Float *dbls) {DBL_RESULT = DBL_ARG_3; ((vct *)(INT_ARG_1))->data[INT_ARG_2] = DBL_ARG_3;}
@@ -3241,10 +3582,10 @@ static char *descr_vct_set_f(int *args, int *ints, Float *dbls)
 }
 static xen_value *vct_set_1(ptree *prog, xen_value **args)
 {
-  if (fixup_if_pending(prog, args[1], R_VCT) == NULL) return(NULL);
+  if (fixup_if_pending(prog, args[1], R_VCT) == NULL) return(run_warn("vct-set! bad arg"));
   if ((args[2]->type == R_INT) && (args[3]->type == R_FLOAT))
     return(package(prog, R_FLOAT, vct_set_f, descr_vct_set_f, args, 3));
-  return(NULL);
+  return(run_warn("vct-set! bad index type"));
 }
 
 static void make_vct_v(int *args, int *ints, Float *dbls) 
@@ -3292,7 +3633,7 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   static void Name ## _0p(int *args, int *ints, Float *dbls) {BOOL_RESULT = mus_ ##Name ## _p((mus_any *)(INT_ARG_1));} \
   static xen_value * Name ## _p(ptree *prog, xen_value **args) \
   { \
-    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(NULL); \
+    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(run_warn(#Name ": bad gen")); \
     return(package(prog, R_BOOL, Name ## _0p, descr_ ## Name ## _0p, args, 1)); \
   }
 
@@ -3321,13 +3662,13 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(NULL); \
+    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(run_warn(#Name ": bad gen")); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
     if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
     if (num_args == 3) return(package(prog, R_FLOAT, Name ## _2f, descr_ ## Name ## _2f, args, 3)); \
-    return(NULL); \
+    return(run_warn(#Name ": wrong number of args")); \
   }
 #define GEN2(Name) \
   GEN2_0(Name) \
@@ -3335,20 +3676,20 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(NULL); \
+    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(run_warn(#Name ": bad gen")); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
     if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
-    return(NULL); \
+    return(run_warn(#Name ": wrong number of args")); \
   }
 #define GEN1(Name) \
   GEN1_0(Name) \
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(NULL); \
+    if (fixup_if_pending(prog, args[1], R_CLM) == NULL) return(run_warn(#Name ": bad gen")); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
-    return(NULL); \
+    return(run_warn(#Name ": wrong number of args")); \
   }
 
 GEN3(oscil)
@@ -3390,9 +3731,9 @@ static void polynomial_1f(int *args, int *ints, Float *dbls)
 }
 static xen_value *polynomial_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (fixup_if_pending(prog, args[1], R_VCT) == NULL) return(NULL);
+  if (fixup_if_pending(prog, args[1], R_VCT) == NULL) return(run_warn("polynomial: bad arg"));
   if (num_args == 2) return(package(prog, R_FLOAT, polynomial_1f, descr_polynomial_1f, args, 2));
-  return(NULL);
+  return(run_warn("polynomial: wrong number of args"));
 }
 
 
@@ -3414,12 +3755,9 @@ static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
 static xen_value *walk(ptree *prog, XEN form, int need_result)
 {
   /* walk form, storing vars, making program entries for operators etc */
-  int optimize;
+  /* fprintf(stderr,"walk %s\n", XEN_AS_STRING(form)); */
 
-  /* fprintf(stderr,"walk %s\n", XEN_TO_C_STRING(XEN_TO_STRING(form))); */
-
-  optimize = optimization(get_global_state());
-  if (optimize == 0) return(NULL);
+  if (current_optimization == 0) return(NULL);
 
   if (XEN_BOOLEAN_P(form))
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), TRUE));
@@ -3429,14 +3767,19 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(form)), TRUE));
       else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), TRUE));
     }
+  if (XEN_CHAR_P(form)) 
+    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), TRUE));
+  if (XEN_STRING_P(form)) 
+    return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), TRUE));
   if (XEN_LIST_P(form))
     {
       XEN function, all_args;
       char funcname[32];
       xen_value **args = NULL;
-      int i, num_args, float_result = FALSE, constants = 0, booleans = 0, vcts = 0, readers = 0, pendings = 0, clms = 0;
+      int i, num_args, float_result = FALSE, constants = 0, booleans = 0, vcts = 0;
+      int readers = 0, pendings = 0, clms = 0, chars = 0, strings = 0;
       function = XEN_CAR(form);
-      snprintf(funcname, 32, "%s", XEN_TO_C_STRING(XEN_TO_STRING(function))); /* protect from gc... */
+      snprintf(funcname, 32, "%s", XEN_AS_STRING(function)); /* protect from gc... */
 
       if (strcmp(funcname, "lambda") == 0) return(lambda_form(prog, form));
       if (strcmp(funcname, "begin") == 0) return(begin_form(prog, form, need_result));
@@ -3461,7 +3804,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT(form)), TRUE));
 	      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), TRUE));
 	    }
-	  return(NULL);
+	  if (XEN_CHAR_P(form)) 
+	    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), TRUE));
+	  if (XEN_STRING_P(form)) 
+	    return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), TRUE));
+	  return(run_warn("quote: non-simple arg: %s", XEN_AS_STRING(form)));
 	}
 
       all_args = XEN_CDR(form);
@@ -3475,17 +3822,130 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      args[i + 1] = walk(prog, XEN_CAR(all_args), TRUE);
 	      if (args[i + 1] == NULL) return(clean_up(NULL, args, num_args));
 	      if (args[i + 1]->constant) constants++;
-	      if (args[i + 1]->type == R_FLOAT) float_result = TRUE; else
-	      if (args[i + 1]->type == R_BOOL) booleans++; else
-	      if (args[i + 1]->type == R_VCT) vcts++; else
-	      if (args[i + 1]->type == R_READER) readers++; else
-	      if (args[i + 1]->type == R_CLM) clms++; else
-  	      if (args[i + 1]->type == R_PENDING) pendings++;
+	      switch (args[i + 1]->type)
+		{
+		case R_FLOAT:   float_result = TRUE; break;
+		case R_BOOL:    booleans++;          break;
+		case R_VCT:     vcts++;              break;
+		case R_READER:  readers++;           break;
+		case R_CLM:     clms++;              break;
+		case R_PENDING: pendings++;          break;
+		case R_CHAR:    chars++;             break;
+		case R_STRING:  strings++;           break;
+		}
 	    }
 	}
-
+      /* type-independent funcs first */
+      if (num_args == 2)
+	{
+	  if (strcmp(funcname, "eq?") == 0) return(clean_up(eq_p(prog, args, constants), args, num_args));
+	  if (strcmp(funcname, "eqv?") == 0) return(clean_up(eqv_p(prog, args, constants), args, num_args));
+	  if (strcmp(funcname, "equal?") == 0) return(clean_up(equal_p(prog, args, constants), args, num_args));
+	}
+      if ((num_args == 1) && (pendings == 0))
+	{
+	  /* these are known in advance in this context */
+	  if (strcmp(funcname, "boolean?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_BOOL), TRUE), args, num_args));
+	  if (strcmp(funcname, "number?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, 
+					   add_int_to_ptree(prog, (args[1]->type == R_INT) || (args[1]->type == R_FLOAT)), 
+					   TRUE), 
+			    args, num_args));
+	  if (strcmp(funcname, "integer?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), TRUE), args, num_args));
+	  if (strcmp(funcname, "real?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, 
+					   add_int_to_ptree(prog, (args[1]->type == R_INT) || (args[1]->type == R_FLOAT)), 
+					   TRUE), 
+			    args, num_args));
+	  if (strcmp(funcname, "exact?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), TRUE), args, num_args));
+	  if (strcmp(funcname, "inexact?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_FLOAT), TRUE), args, num_args));
+	  if (strcmp(funcname, "char?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_CHAR), TRUE), args, num_args));
+	  if (strcmp(funcname, "string?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_STRING), TRUE), args, num_args));
+	  
+	  if (strcmp(funcname, "vct?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_VCT), TRUE), args, num_args));
+	  if (strcmp(funcname, "sample-reader?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_READER), TRUE), args, num_args));
+	}
+      if (strcmp(funcname, "make-string") == 0) return(clean_up(make_string_1(prog, args, num_args), args, num_args));
+      if (chars > 0)
+	{
+	  /* char-related funcs */
+	  if (num_args == 1)
+	    {
+	      if (strcmp(funcname, "char-alphabetic?") == 0) 
+		return(clean_up(char_alphabetic_p(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "char-numeric?") == 0) 
+		return(clean_up(char_numeric_p(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "char-lower-case?") == 0) 
+		return(clean_up(char_lower_case_p(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "char-upper-case?") == 0) 
+		return(clean_up(char_upper_case_p(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "char-whitespace?") == 0) 
+		return(clean_up(char_whitespace_p(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "char-upcase") == 0) 
+		return(clean_up(char_upcase(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "char-downcase") == 0) 
+		return(clean_up(char_downcase(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "char->integer") == 0) 
+		return(clean_up(char_to_integer(args[1]), args, num_args));
+	      if (strcmp(funcname, "char?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, TRUE), TRUE), args, num_args));
+	    }
+	  if (chars == num_args)
+	    {
+	      if (strcmp(funcname, "char>=?") == 0) return(clean_up(greater_than_or_equal(prog, FALSE, args, num_args, constants), args, num_args));
+	      if (strcmp(funcname, "char>?") == 0) return(clean_up(greater_than(prog, FALSE, args, num_args, constants), args, num_args));
+	      if (strcmp(funcname, "char<=?") == 0) return(clean_up(less_than_or_equal(prog, FALSE, args, num_args, constants), args, num_args));
+	      if (strcmp(funcname, "char<?") == 0) return(clean_up(less_than(prog, FALSE, args, num_args, constants), args, num_args));
+	      if (strcmp(funcname, "char=?") == 0) return(clean_up(numbers_equal(prog, FALSE, args, num_args, constants), args, num_args));
+	      /* ci cases convert-to-upper on all args */
+	      if (strcmp(funcname, "char-ci>=?") == 0) 
+		return(clean_up(greater_than_or_equal(prog, FALSE, upcase_args(prog, args, num_args), num_args, constants), args, num_args));
+	      if (strcmp(funcname, "char-ci>?") == 0) 
+		return(clean_up(greater_than(prog, FALSE, upcase_args(prog, args, num_args), num_args, constants), args, num_args));
+	      if (strcmp(funcname, "char-ci<=?") == 0) 
+		return(clean_up(less_than_or_equal(prog, FALSE, upcase_args(prog, args, num_args), num_args, constants), args, num_args));
+	      if (strcmp(funcname, "char-ci<?") == 0) 
+		return(clean_up(less_than(prog, FALSE, upcase_args(prog, args, num_args), num_args, constants), args, num_args));
+	      if (strcmp(funcname, "char-ci=?") == 0) 
+		return(clean_up(numbers_equal(prog, FALSE, upcase_args(prog, args, num_args), num_args, constants), args, num_args));
+	      if (strcmp(funcname, "string") == 0) 
+		return(clean_up(string_1(prog, args, num_args, constants), args, num_args));
+	    }
+	  if (num_args == 2)
+	    {
+	      if (strcmp(funcname, "string-fill!") == 0) return(clean_up(string_fill_1(prog, args), args, num_args));
+	    }
+	  if (num_args == 3)
+	    {
+	      if (strcmp(funcname, "string-set!") == 0) return(clean_up(string_set_1(prog, args), args, num_args));
+	    }
+	  return(run_warn("bad character in unsavory place"));
+	}
+      if (strings > 0)
+	{
+	  /* TODO: string=? string<=? string>=? string<? string>? -ci string-append substring */
+	  if (num_args == 1)
+	    {
+	      if (strcmp(funcname, "string-length") == 0) return(clean_up(string_length_1(prog, args), args, num_args));
+	      if (strcmp(funcname, "string-copy") == 0) return(clean_up(string_copy_1(prog, args), args, num_args));
+	    }
+	  if (num_args == 2)
+	    {
+	      if (strcmp(funcname, "string-ref") == 0) return(clean_up(string_ref_1(prog, args), args, num_args));
+	    }
+	  return(run_warn("bad string arg"));
+	}
       if (strcmp(funcname, "polynomial") == 0) return(clean_up(polynomial_1(prog, args, num_args), args, num_args));
-      if ((clms == 1) || (pendings == 1) || (booleans == 1)) /* boolean for gen that is null in the current context */
+      if ((clms == 1) || (pendings == 1) || (booleans == 1))
+	/* boolean for gen that is null in the current context */
 	{
 	  if (strcmp(funcname, "oscil") == 0) return(clean_up(oscil_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "notch") == 0) return(clean_up(notch_1(prog, args, num_args), args, num_args));
@@ -3550,9 +4010,23 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	{
 	  if (strcmp(funcname, "vct-set!") == 0) return(clean_up(vct_set_1(prog, args), args, num_args));
 	}
-      if ((!need_result) && (prog->goto_ctr == 0) && (vcts == 0) && (readers == 0) && (clms == 0))
-	return(clean_up(make_xen_value(R_BOOL, -1, TRUE), args, num_args));
-      if ((booleans == 0) && (vcts == 0) && (readers == 0) && (pendings == 0) && (clms == 0))
+      if ((num_args == 1) && ((readers == 1) || (pendings == 1)))
+	{
+	  if (strcmp(funcname, "next-sample") == 0) return(clean_up(next_sample_1(prog, args), args, num_args));
+	  if (strcmp(funcname, "previous-sample") == 0) return(clean_up(previous_sample_1(prog, args), args, num_args));
+	  if (strcmp(funcname, "read-sample") == 0) return(clean_up(reader_1(prog, args), args, num_args));
+	}
+      if (readers > 0) return(run_warn("reader bad arg"));
+      if (clms > 0) return(run_warn("clm gen bad arg"));
+      /* both of these can be applicable objects, but those are not counted in the arg scan */
+
+      if ((!need_result) && (prog->goto_ctr == 0)) return(clean_up(make_xen_value(R_BOOL, -1, TRUE), args, num_args));
+      /* no side-effects from here down */
+      if (num_args == 0)
+	{
+	  if (strcmp(funcname, "string") == 0) return(make_xen_value(R_STRING, add_string_to_ptree(prog, (char *)CALLOC(1, sizeof(char))), TRUE));
+	}
+      if ((booleans == 0) && (vcts == 0) && (pendings == 0))
 	{
 	  if (strcmp(funcname, "*") == 0) return(clean_up(multiply(prog, float_result, args, num_args, constants), args, num_args));
 	  if (strcmp(funcname, "+") == 0) return(clean_up(add(prog, float_result, args, num_args, constants), args, num_args));
@@ -3579,7 +4053,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      if (strcmp(funcname, "logxor") == 0) return(clean_up(logxor_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "logior") == 0) return(clean_up(logior_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "ash") == 0) return(clean_up(ash_1(prog, args, constants), args, num_args));
-	      if (optimize > 1) 
+	      if (current_optimization > 1) 
 		{
 		  if (strcmp(funcname, "expt") == 0) return(clean_up(expt_1(prog, args, constants), args, num_args));
 		  if (strcmp(funcname, "atan") == 0) return(clean_up(atan2_1(prog, args, constants), args, num_args));
@@ -3589,13 +4063,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    {
 	      if (strcmp(funcname, "1+") == 0) return(clean_up(one_plus(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "1-") == 0) return(clean_up(one_minus(prog, args, constants), args, num_args));
+	      if (strcmp(funcname, "integer->char") == 0) return(clean_up(integer_to_char(args[1]), args, num_args));
 	    }
 	}
       if (num_args == 2)
 	{
-	  if (strcmp(funcname, "eq?") == 0) return(clean_up(eq_p(prog, args, constants), args, num_args));
-	  if (strcmp(funcname, "eqv?") == 0) return(clean_up(eqv_p(prog, args, constants), args, num_args));
-	  if (strcmp(funcname, "equal?") == 0) return(clean_up(equal_p(prog, args, constants), args, num_args));
 	  if ((vcts == 1) && (args[1]->type == R_VCT))
 	    {
 	      if (strcmp(funcname, "vct-ref") == 0) return(clean_up(vct_ref_1(prog, args), args, num_args));
@@ -3604,7 +4076,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (num_args == 1)
 	{
 	  if (strcmp(funcname, "not") == 0) return(clean_up(not_p(prog, args, constants), args, num_args));
-	  if ((booleans == 0) && (vcts == 0) && (readers == 0) && (pendings == 0) && (clms == 0))
+	  if ((booleans == 0) && (vcts == 0) && (pendings == 0))
 	    {
 	      if (strcmp(funcname, "lognot") == 0) return(clean_up(lognot_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "abs") == 0) return(clean_up(abs_1(prog, args, constants), args, num_args));
@@ -3612,7 +4084,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      if (strcmp(funcname, "cos") == 0) return(clean_up(cos_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "tan") == 0) return(clean_up(tan_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "random") == 0) return(clean_up(random_1(prog, args), args, num_args));
-	      if (optimize > 1)
+	      if (current_optimization > 1)
 		{
 		  if (strcmp(funcname, "atan") == 0) return(clean_up(atan1_1(prog, args, constants), args, num_args));
 		  if (strcmp(funcname, "log") == 0) return(clean_up(log_1(prog, args, constants), args, num_args));
@@ -3633,48 +4105,20 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      if (strcmp(funcname, "positive?") == 0) return(clean_up(positive_p(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "negative?") == 0) return(clean_up(negative_p(prog, args, constants), args, num_args));
 	    }
-	  if ((readers == 1) || (pendings == 1))
-	    {
-	      if (strcmp(funcname, "next-sample") == 0) return(clean_up(next_sample_1(prog, args), args, num_args));
-	      if (strcmp(funcname, "previous-sample") == 0) return(clean_up(previous_sample_1(prog, args), args, num_args));
-	      if (strcmp(funcname, "read-sample") == 0) return(clean_up(reader_1(prog, args), args, num_args));
-	    }
 	  if (strcmp(funcname, "make-vct") == 0) return(clean_up(make_vct_1(prog, args), args, num_args));
-	  if (pendings == 0)
-	    {
-	      /* these are known in advance in this context */
-	      if (strcmp(funcname, "boolean?") == 0) 
-		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_BOOL), TRUE), args, num_args));
-	      if (strcmp(funcname, "number?") == 0) 
-		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type != R_BOOL), TRUE), args, num_args));
-	      if (strcmp(funcname, "integer?") == 0) 
-		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), TRUE), args, num_args));
-	      if (strcmp(funcname, "real?") == 0) 
-		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type != R_BOOL), TRUE), args, num_args));
-	      if (strcmp(funcname, "exact?") == 0) 
-		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), TRUE), args, num_args));
-	      if (strcmp(funcname, "inexact?") == 0) 
-		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_FLOAT), TRUE), args, num_args));
-	      
-	      if (strcmp(funcname, "vct?") == 0) 
-		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_VCT), TRUE), args, num_args));
-	      if (strcmp(funcname, "sample-reader?") == 0) 
-		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_READER), TRUE), args, num_args));
-	    }
 	}
       if (num_args == 0)
 	{
 	  xen_var *var;
 	  xen_value *v = NULL;
+
 	  var = find_var_in_ptree(prog, funcname);
 	  if (var == NULL)
 	    {
-#ifdef SCM_VARIABLE_REF
 	      XEN val;
 	      val = XEN_SYMBOL_TO_VALUE(function);
 	      if (sf_p(val))
 		v = add_global_var_to_ptree(prog, function);
-#endif
 	    }
 	  else v = var->v;
 	  if (v) 
@@ -3682,6 +4126,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      if (v->type == R_READER)
 		return(clean_up(reader_0(prog, args, v), args, num_args));
 	    }
+	  return(run_warn("no arg func?"));
 	}
       if (prog->goto_ctr > 0)
 	{
@@ -3722,7 +4167,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  v = add_global_var_to_ptree(prog, form);
 	  if (v->type == R_PENDING)
 	    {
-	      if (optimize > 2)
+	      if (current_optimization > 2)
 		{
 		  var = find_var_in_ptree(prog, XEN_SYMBOL_TO_C_STRING(form));
 		  var->undefined = TRUE;
@@ -3730,13 +4175,13 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      else
 		{
 		  FREE(v);
-		  return(NULL);
+		  return(run_warn("can't handle %s", XEN_AS_STRING(form)));
 		}
 	    }
 	  return(v);
 	}
     }
-  return(NULL);
+  return(run_warn("can't handle: %s", XEN_AS_STRING(form)));
 }
 /*
 (define v (make-vct 3))
@@ -3750,9 +4195,8 @@ static void *form_to_ptree(XEN code)
   ptree *prog;
   xen_var *var;
   XEN form;
-#ifndef SCM_VARIABLE
-  return(NULL);
-#else
+  current_optimization = optimization(get_global_state());
+  if (current_optimization == 0) return(NULL);
   form = XEN_CAR(code);
   prog = make_ptree(8);
   if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
@@ -3762,22 +4206,21 @@ static void *form_to_ptree(XEN code)
   if (XEN_SYMBOL_P(form))                         /* try to use the procedure source if it's available */
     {
       form = XEN_FALSE;
-      if (optimization(get_global_state()) > 3)
+      if (current_optimization > 3)
 	{
 	  XEN function, source;
 	  function = XEN_SYMBOL_TO_VALUE(form);
 	  if (XEN_PROCEDURE_P(function))
 	    {
 	      source = scm_procedure_source(function);
-	      fprintf(stderr,"use: %s\n", XEN_TO_C_STRING(XEN_TO_STRING(source)));
+	      fprintf(stderr,"use: %s\n", XEN_AS_STRING(source));
 	      if (XEN_LIST_P(source))
 		form = source;
 	    }
 	}
-      if (XEN_FALSE_P(form)) 
+      if (XEN_FALSE_P(form))
 	return(free_ptree((void *)prog));
     }
-#endif
   prog->result = walk(prog, form, TRUE);
   if (prog->result)
     {
@@ -3789,15 +4232,14 @@ static void *form_to_ptree(XEN code)
 	  if ((var) &&
 	      (var->v->type == R_PENDING))
 	    {
-	      /* fprintf(stderr,"unhappy about %s (%d, %p->%p)\n", var->name, var->v->addr, var, var->v); */
 	      free_ptree((void *)prog);
-	      return(NULL);
+	      return(run_warn("can't decide type for %s", var->name));
 	    }
 	}
       return((void *)prog);
     }
-  else free_ptree((void *)prog);
-  return(NULL);
+  run_warn("can't optimize: %s\n", XEN_AS_STRING(form));
+  return(free_ptree((void *)prog));
 }
 
 void *form_to_ptree_1f2f(XEN code)
@@ -3892,6 +4334,7 @@ int evaluate_ptree_1f2b(void *upt, Float arg)
 static XEN g_run(XEN code)
 {
   ptree *prog;
+  current_optimization = 4;
   prog = make_ptree(8);
   prog->result = walk(prog, code, TRUE);
   if (prog->result)
@@ -3909,6 +4352,7 @@ static XEN g_run_eval(XEN code, XEN arg)
   ptree *pt;
   XEN result;
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(arg) || XEN_NOT_BOUND_P(arg), arg, XEN_ARG_2, "run-eval", "a double");
+  current_optimization = 4;
   pt = make_ptree(8);
   pt->result = walk(pt, code, TRUE);
   if (pt->result)
@@ -3919,8 +4363,10 @@ static XEN g_run_eval(XEN code, XEN arg)
       eval_ptree(pt);
       if (pt->result->type == R_FLOAT) result = C_TO_XEN_DOUBLE(pt->dbls[pt->result->addr]); else
 	if (pt->result->type == R_INT) result = C_TO_XEN_INT(pt->ints[pt->result->addr]); else
-	  if (pt->ints[pt->result->addr]) result = XEN_TRUE; else
-	    result = XEN_FALSE;
+	  if (pt->result->type == R_CHAR) result = C_TO_XEN_CHAR((char)(pt->ints[pt->result->addr])); else
+	    if (pt->result->type == R_STRING) result = C_TO_XEN_STRING((char *)(pt->ints[pt->result->addr])); else
+	      if (pt->ints[pt->result->addr]) result = XEN_TRUE; else
+		result = XEN_FALSE;
       free_ptree((void *)pt);
       return(result);
     }
@@ -3934,6 +4380,11 @@ void g_init_run(void)
 {
   XEN_DEFINE_PROCEDURE("run", g_run, 1, 0, 0, "run macro...");
   XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 1, 0, "run macro...");
+
+  #define H_optimization_hook S_optimization_hook " (msg) is called possibly several times \
+during optimization to indicate where the optimizer ran into trouble"
+
+  XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 }
 
 #endif
