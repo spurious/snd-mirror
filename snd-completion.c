@@ -110,7 +110,7 @@ S_vct2sound_data
 static int sndlib_num_commands(void) {return(NUM_SNDLIB_NAMES);}
 static const char **sndlib_commands(void) {return(sndlib_names);}
 
-#define NUM_COMMANDS 562
+#define NUM_COMMANDS 558
 
 static char *snd_commands[NUM_COMMANDS] ={
   S_abort, S_activate_listener, S_add_mark, S_add_player, S_add_sound_file_extension, 
@@ -165,7 +165,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_hadamard_transform, S_hankel_transform, S_header_type, S_help_dialog, S_help_text_font,
   S_hide_listener, S_highlight_color, S_html_dir,
 
-  S_id_region, S_in, S_initial_x0, S_initial_x1, S_initial_y0, S_initial_y1, S_insert_region, S_insert_sample,
+  S_id_region, S_in, S_insert_region, S_insert_sample,
   S_insert_samples, S_insert_selection, S_insert_silence, S_insert_sound,
 
   S_just_sounds_hook,

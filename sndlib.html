@@ -1049,6 +1049,7 @@ see headers.c or sndlib.h for details.  The next functions handle various IO cal
   int mus_file_write_zeros (int tfd, int num)
   int mus_file_write (int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
   int mus_sound_max_amp (char *ifile, MUS_SAMPLE_TYPE *vals)
+  int mus_sound_max_amp_exists (char *ifile)
   float mus_file_prescaler(int tfd)
   float mus_file_set_prescaler(int tfd, float val)
 </pre>

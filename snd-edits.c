@@ -2293,7 +2293,7 @@ static int save_edits_1(snd_info *sp)
   else saved_errno = errno;
   sp->write_date = file_write_date(sp->fullname);
 
-  add_sound_data(sp->fullname, sp, ss);
+  add_sound_data(sp->fullname, sp, ss, WITHOUT_INITIAL_GRAPH_HOOK);
 
   for (i = 0; i < sp->nchans; i++)
     {

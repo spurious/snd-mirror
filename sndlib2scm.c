@@ -249,6 +249,20 @@ static SCM g_audio_outputs(SCM speakers, SCM headphones, SCM line_out)
   return(SCM_BOOL_F);
 }
 
+static SCM g_sound_max_amp_exists(SCM file)
+{
+  #define H_mus_sound_max_amp_exists "(" S_mus_sound_max_amp_exists " filename) -> max amps available for sound"
+  int val;
+  char *filename;
+  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_max_amp);
+  filename = full_filename(file);
+  val = mus_sound_max_amp_exists(filename);
+  if (filename) FREE(filename);
+  return(TO_SCM_BOOLEAN(val));
+}
+
+/* TODO: bring out mus_sound_set_max_amp */
+
 static SCM g_sound_max_amp(SCM file)
 {
   #define H_mus_sound_max_amp "(" S_mus_sound_max_amp " filename) -> max amps in sound (a vector of amps and locations)"
@@ -989,6 +1003,7 @@ void mus_sndlib2scm_initialize(void)
   DEFINE_PROC(gh_new_procedure1_0(S_mus_data_format_bytes_per_sample, g_sound_bytes_per_sample), H_mus_data_format_bytes_per_sample);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_loop_info,      g_sound_loop_info),       H_mus_sound_loop_info);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_max_amp,        g_sound_max_amp),         H_mus_sound_max_amp);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_max_amp_exists, g_sound_max_amp_exists),  H_mus_sound_max_amp_exists);
   DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_report,         g_report_audio_state),    H_mus_audio_report);
   DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_sun_outputs,    g_audio_outputs),         H_mus_audio_sun_outputs);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_open_input,     g_open_sound_input),      H_mus_sound_open_input);

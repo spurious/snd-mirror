@@ -1,7 +1,11 @@
 snd change log
 
- 12-Mar:     musglyphs.scm.
- 10-Mar:     moved grfsnd.html index to new file: index.html.
+  13-Mar:    removed initial-x0, initial-x1, initial-y0, initial-y1, and replaced with
+               initial-graph-hook -- this is a non-backwards compatible change!
+             added add-idler, remove-idler (background process)
+             removed (long obsolete) showing-controls (replaced by show-controls)
+  12-Mar:    musglyphs.scm.
+  10-Mar:    moved grfsnd.html index to new file: index.html.
   9-Mar:     removed *.txt
              mouse-enter|leave-graph|listener-hook.
              show-widget, hide-widget, focus-widget.

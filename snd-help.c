@@ -272,6 +272,10 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+13-Mar:  removed initial-x0, initial-x1, initial-y0, initial-y1, and replaced with\n\
+           initial-graph-hook -- this is a non-backwards compatible change!\n\
+         added add-idler, remove-idler (background process)\n\
+         removed (long obsolete) showing-controls (replaced by show-controls)\n\
 12-Mar:  musglyphs.scm.\n\
 9-Mar:   removed *.txt\n\
          mouse-enter|leave-graph|listener-hook.\n\
@@ -292,9 +296,6 @@ void news_help(snd_state *ss)
 26-Feb:  Tab-completion is much smarter in Guile 1.4.1.\n\
 23-Feb:  --with-gsl is the default in configure.\n\
 21-Feb:  snd 4.11.\n\
-14-Feb:  vct func now built-in (was in examp.scm).\n\
-13-Feb:  added search-procedure, key-binding.\n\
-12-Feb:  added Wakefield's freeverb, changed user-defined reverb handlers.\n\
 ",
 NULL);
   FREE(info);
@@ -1077,46 +1078,51 @@ static char hooks_help_string[] =
 "The hooks provide a way to customize various situations that arise through\n\
 user-interface manipulations.\n\
 \n\
-  " S_open_hook "\n\
-  " S_during_open_hook "\n\
-  " S_after_open_hook "\n\
-  " S_close_hook "\n\
-  " S_save_hook "\n\
-  " S_before_fft_hook "\n\
-  " S_fft_hook "\n\
-  " S_graph_hook "\n\
-  " S_after_graph_hook "(snd chn)\n\
-  " S_lisp_graph_hook "(snd chn)\n\
+  " S_after_graph_hook " (snd chn)\n\
+  " S_after_open_hook " (snd)\n\
+  " S_before_fft_hook " (snd chn)\n\
+  " S_close_hook " (snd)\n\
+  " S_during_open_hook " (fd name reason)\n\
+  " S_edit_hook " (snd chn)\n\
+  " S_enved_hook " (env pt new-x new-y)\n\
   " S_exit_hook "\n\
-  " S_start_hook "\n\
-  " S_play_hook "\n\
-  " S_stop_playing_channel_hook "\n\
-  " S_stop_playing_hook "\n\
-  " S_stop_playing_region_hook "\n\
-  " S_start_playing_hook "\n\
-  " S_just_sounds_hook "\n\
-  " S_mark_click_hook "\n\
-  " S_mark_drag_hook "\n\
-  " S_mix_amp_changed_hook "\n\
-  " S_mix_speed_changed_hook "\n\
-  " S_mix_position_changed_hook "\n\
-  " S_multichannel_mix_hook "\n\
-  " S_mus_error_hook "\n\
-  " S_property_changed_hook "\n\
-  " S_snd_error_hook "\n\
-  " S_snd_warning_hook "\n\
-  " S_edit_hook "(snd chn)\n\
-  " S_undo_hook "(snd chn)\n\
-  " S_output_comment_hook "(str)\n\
+  " S_fft_hook " (snd chn scaler)\n\
+  " S_graph_hook " (snd chn y0 y1)\n\
+  " S_initial_graph_hook " (snd chn dur)\n\
+  " S_just_sounds_hook " (filename)\n\
+  " S_lisp_graph_hook "(snd chn)\n\
+  " S_mark_click_hook " (id)\n\
+  " S_mark_drag_hook " (id)\n\
+  " S_menu_hook " (name option)\n\
+  " S_mix_amp_changed_hook " (id)\n\
+  " S_mix_position_changed_hook " (id samps)\n\
+  " S_mix_speed_changed_hook " (id)\n\
+  " S_mouse_drag_hook " (snd chn button state x y)\n\
+  " S_mouse_enter_graph_hook " (snd chn)\n\
+  " S_mouse_enter_label_hook " (type position name)\n\
+  " S_mouse_enter_listener_hook " (widget)\n\
+  " S_mouse_leave_graph_hook " (snd chn)\n\
+  " S_mouse_leave_label_hook " (type position name)\n\
+  " S_mouse_leave_listener_hook " (widget)\n\
+  " S_mouse_press_hook " (snd chn button state x y)\n\
+  " S_mouse_release_hook " (snd chn button state x y)\n\
+  " S_multichannel_mix_hook " (ids)\n\
+  " S_mus_error_hook " (type msg)\n\
+  " S_name_click_hook " (snd)\n\
+  " S_open_hook " (filename)\n\
+  " S_output_comment_hook " (str)\n\
   " S_output_name_hook "()\n\
-  " S_mouse_drag_hook "(snd chn button state x y)\n\
-  " S_mouse_press_hook "(snd chn button state x y)\n\
-  " S_mouse_release_hook "(snd chn button state x y)\n\
-  " S_mouse_enter_label_hook "(type position name)\n\
-  " S_mouse_leave_label_hook "(type position name)\n\
-  " S_name_click_hook "(snd-index)\n\
-  " S_menu_hook "(name option)\n\
-  " S_enved_hook "(env pt new-x new-y)\n\
+  " S_play_hook " (samps)\n\
+  " S_property_changed_hook " (command)\n\
+  " S_save_hook " (snd name)\n\
+  " S_snd_error_hook " (msg)\n\
+  " S_snd_warning_hook " (msg)\n\
+  " S_start_hook " (filename)\n\
+  " S_start_playing_hook " (snd)\n\
+  " S_stop_playing_channel_hook " (snd chn)\n\
+  " S_stop_playing_hook " (snd)\n\
+  " S_stop_playing_region_hook " (reg)\n\
+  " S_undo_hook " (snd chn)\n\
 \n\
 ";
 
@@ -1130,6 +1136,7 @@ all refer to the same thing.\n\
 \n\
   " S_abort "             ()\n\
   " S_activate_listener " ()\n\
+  " S_add_idler "         (code)\n\
   " S_add_mark "          (sample snd chn)\n\
   " S_add_player "        (player start end)\n\
   " S_add_to_main_menu "  (menu-label)\n\
@@ -1301,6 +1308,7 @@ all refer to the same thing.\n\
   " S_region_srate "      (reg)\n\
   " S_regions "           ()\n\
   " S_regionQ "           (id)\n\
+  " S_remove_idler "      (id)\n\
   " S_report_in_minibuffer "(msg snd)\n\
   " S_restore_control_panel "(snd)\n\
   " S_reverb_feedback "   (snd)\n\

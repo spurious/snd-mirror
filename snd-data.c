@@ -200,8 +200,6 @@ static chan_info *free_chan_info(chan_info *cp)
   return(cp);  /* pointer is left for possible future re-use */
 }
 
-static void file_maxamps(char *ifile, Float *vals, int ichans, int format);
-
 snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot)
 {
   snd_info *sp = NULL;
@@ -308,16 +306,15 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
 
   if (fit_data_on_open(ss)) 
     {
+      MUS_SAMPLE_TYPE *vals;
+      int i;
       sp->fit_data_amps = (Float *)CALLOC(sp->nchans, sizeof(Float));
-      file_maxamps(sp->fullname, 
-		   sp->fit_data_amps, 
-		   hdr->chans, 
-		   hdr->format);
-      /* can't use snd-chn.c get_maxamp here because the file edit tree is not yet set up */
-      /* can't use mus_sound_chans etc here because this might be a raw header file */
-      /* TODO: why not mus_sound_max_amps?
-       *       even better, why not defer this until either maxamp or envs are set?
-       */
+      if (hdr->type == MUS_RAW)
+	mus_sound_override_header(sp->fullname, -1, hdr->chans, hdr->format, -1, -1, -1);
+      vals = (MUS_SAMPLE_TYPE *)CALLOC(sp->nchans * 2, sizeof(MUS_SAMPLE_TYPE));
+      mus_sound_max_amp(sp->fullname, vals);
+      for (i = 0; i < sp->nchans; i++)
+	sp->fit_data_amps[i] = MUS_SAMPLE_TO_FLOAT(vals[i * 2 + 1]);
     }
   return(sp);
 }
@@ -748,6 +745,24 @@ snd_info *find_sound(snd_state *ss, char *name)
   return(NULL);
 }
 
+static char *display_max_amps(const char *filename, int chans)
+{
+  char *ampstr;
+  int i;
+  MUS_SAMPLE_TYPE *vals;
+  ampstr = (char *)CALLOC(chans * 32, sizeof(char));
+  vals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
+  sprintf(ampstr,"\nmax amp%s: ",(chans > 1) ? "s" : "");
+  mus_sound_max_amp(filename, vals);
+  for (i = 0; i < chans; i++)
+    {
+      strcat(ampstr, prettyf(MUS_SAMPLE_TO_FLOAT(vals[2 * i + 1]), 3));
+      strcat(ampstr, " ");
+    }
+  FREE(vals);
+  return(ampstr);
+}
+
 static char timestr[TIME_STR_SIZE];
 #define INFO_BUFFER_SIZE 1024
 
@@ -755,7 +770,7 @@ void display_info(snd_info *sp)
 {
   char *buffer = NULL;
   file_info *hdr;
-  char *comment, *cstr = NULL;
+  char *comment, *cstr = NULL, *ampstr = NULL;
   if (sp)
     {
       hdr = sp->hdr;
@@ -764,6 +779,8 @@ void display_info(snd_info *sp)
 	  buffer = (char *)CALLOC(INFO_BUFFER_SIZE, sizeof(char));
 	  cstr = mus_sound_comment(sp->fullname);
 	  comment = cstr;
+	  if (mus_sound_max_amp_exists(sp->fullname))
+	    ampstr = display_max_amps(sp->fullname, sp->nchans);
 	  while ((comment) && (*comment) && 
 		 (((*comment) == '\n') || 
 		  ((*comment) == '\t') || 
@@ -773,7 +790,7 @@ void display_info(snd_info *sp)
 #if HAVE_STRFTIME
 	  strftime(timestr, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&(sp->write_date)));
 #endif
-	  sprintf(buffer, "srate: %d\nchans: %d\nlength: %.3f (%d %s)\ntype: %s\nformat: %s\nwritten: %s%s%s\n",
+	  sprintf(buffer, "srate: %d\nchans: %d\nlength: %.3f (%d %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n",
 		  hdr->srate,
 		  hdr->chans,
 		  (Float)(hdr->samples) / (Float)(hdr->chans * hdr->srate),
@@ -782,6 +799,7 @@ void display_info(snd_info *sp)
 		  mus_header_type_name(hdr->type),
 		  mus_data_format_name(hdr->format),
 		  timestr,
+		  (ampstr) ? ampstr : "",
 		  (comment) ? "\ncomment: " : "",
 		  (comment) ? comment : "");
 	  ssnd_help(sp->state,
@@ -789,80 +807,8 @@ void display_info(snd_info *sp)
 		    buffer,
 		    NULL);
 	  if (cstr) FREE(cstr);
+	  if (ampstr) FREE(ampstr);
 	  FREE(buffer);
 	}
     }
 }
-
-static void file_maxamps(char *ifile, Float *vals, int ichans, int format)
-{
-  int ifd, idataloc, bufnum, n, cursamples, idatasize, loc, i, samples, chn;
-  MUS_SAMPLE_TYPE fc;
-  MUS_SAMPLE_TYPE *buffer, *amps;
-  MUS_SAMPLE_TYPE **ibufs;
-  if ((ifd = mus_file_open_read(ifile)) == -1) return;
-  idataloc = mus_sound_data_location(ifile);
-  mus_file_set_descriptors(ifd,
-			   ifile,
-			   format,
-			   mus_data_format_to_bytes_per_sample(format),
-			   idataloc,
-			   ichans,
-			   mus_sound_header_type(ifile));
-  idatasize = mus_sound_samples(ifile);
-  samples = (idatasize / ichans);
-  if (samples <= 0) 
-    {
-      if (mus_file_close(ifd) != 0)
-	snd_error("%s[%d] %s: close file %s: %s\n", 
-		  __FILE__, __LINE__, __FUNCTION__, 
-		  ifile, strerror(errno));
-      return;
-    }
-  loc = mus_file_seek(ifd, idataloc, SEEK_SET);
-  if (loc < idataloc) 
-    {
-      if (mus_file_close(ifd) != 0)
-	snd_error("%s[%d] %s: close file %s: %s\n", 
-		  __FILE__, __LINE__, __FUNCTION__, 
-		  ifile, strerror(errno));
-      return;
-    }
-  ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE *));
-  for (i = 0; i < ichans; i++) 
-    ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
-  amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE));
-  bufnum = (FILE_BUFFER_SIZE);
-  for (n = 0; n < samples; n += bufnum)
-    {
-      if ((n + bufnum) < samples) 
-	cursamples = bufnum; 
-      else cursamples = (samples - n);
-      mus_file_read(ifd, 0, cursamples - 1, ichans, ibufs);
-      for (chn = 0; chn < ichans; chn++)
-	{
-	  buffer = (MUS_SAMPLE_TYPE *)(ibufs[chn]);
-	  fc = amps[chn];
-	  for (i = 0; i < cursamples; i++) 
-	    {
-	      if ((buffer[i] > fc) || (fc < -buffer[i])) 
-		{
-		  fc = buffer[i]; 
-		  if (fc < MUS_SAMPLE_0) fc = -fc;
-		}
-	    }
-	  amps[chn] = fc;
-	}
-    }
-  for (chn = 0; chn < ichans; chn++) 
-    vals[chn] = MUS_SAMPLE_TO_FLOAT(amps[chn]);
-  for (i = 0; i < ichans; i++) 
-    FREE(ibufs[i]);
-  FREE(ibufs);
-  FREE(amps);
-  if (mus_file_close(ifd) != 0)
-    snd_error("%s[%d] %s: close file %s: %s\n", 
-	      __FILE__, __LINE__, __FUNCTION__, 
-	      ifile, strerror(errno));
-}
-

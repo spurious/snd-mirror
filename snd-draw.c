@@ -9,6 +9,9 @@
  * TODO: similar split for make_fft_graph [needs sonogram etc??]
  * TODO: decide about the "info" functions, fft-info? sync_info + accessors?
  * TODO: in gtk widget position to always be 0 0, or initial if using gdk_get_window_geometry?
+ * TODO: run scheme code in background
+ *         add-idler (lambda () ... returning background-quit or background-continue)
+ *         remove-idler
  */
 
 #if HAVE_GUILE && (!USE_NO_GUI)
@@ -488,6 +491,30 @@ static SCM g_remove_input(SCM id)
   return(id);
 }
 
+
+static BACKGROUND_TYPE call_idler(GUI_POINTER code)
+{
+  if (SCM_TRUE_P(g_call0(SND_UNWRAP((SCM)code))))
+    return(BACKGROUND_CONTINUE);
+  return(BACKGROUND_QUIT);
+}
+
+static SCM g_add_idler(SCM code)
+{
+  SCM_ASSERT(gh_procedure_p(code), code, SCM_ARG1, S_add_idler);
+  return(SND_WRAP(BACKGROUND_ADD(get_global_state(), 
+				 call_idler, 
+				 (GUI_POINTER)SND_WRAP(code))));
+}
+
+static SCM g_remove_idler(SCM id)
+{
+  SCM_ASSERT(SND_WRAPPED(id), id, SCM_ARG1, S_remove_idler);
+  BACKGROUND_REMOVE(SND_UNWRAP(id));
+  return(id);
+}
+
+
 static SCM g_make_graph_data(SCM snd, SCM chn, SCM pos, SCM lo, SCM hi)
 {
   #define H_make_graph_data "(" S_make_graph_data " snd chn edit-pos low high)\n\
@@ -715,6 +742,10 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_hide_widget,     SCM_FNC g_hide_widget, 1, 0, 0),     "(" S_hide_widget " widget)");
   DEFINE_PROC(gh_new_procedure(S_show_widget,     SCM_FNC g_show_widget, 1, 0, 0),     "(" S_show_widget " widget)");
   DEFINE_PROC(gh_new_procedure(S_focus_widget,    SCM_FNC g_focus_widget, 1, 0, 0),    "(" S_focus_widget " widget) causes widget to receive input ('focus')");
+
+  DEFINE_PROC(gh_new_procedure(S_add_idler,       SCM_FNC g_add_idler, 1, 0, 0),       "(" S_add_idler " code) -> id");
+  DEFINE_PROC(gh_new_procedure(S_remove_idler,    SCM_FNC g_remove_idler, 1, 0, 0),    "(" S_remove_idler " id)");
+
 
 
   /* ---------------- unstable ---------------- */

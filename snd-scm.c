@@ -1028,42 +1028,6 @@ static SCM g_set_fit_data_on_open(SCM val)
   return(TO_SCM_BOOLEAN(fit_data_on_open(state)));
 }
 
-static SCM g_initial_x0(void) {return(TO_SCM_DOUBLE(initial_x0(state)));}
-static SCM g_set_initial_x0(SCM val) 
-{
-  #define H_initial_x0 "(" S_initial_x0 ") -> initial time domain window left edge (seconds, 0.0)"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_initial_x0); 
-  set_initial_x0(state, TO_C_DOUBLE(val));
-  return(TO_SCM_DOUBLE(initial_x0(state)));
-}
-
-static SCM g_initial_x1(void) {return(TO_SCM_DOUBLE(initial_x1(state)));}
-static SCM g_set_initial_x1(SCM val) 
-{
-  #define H_initial_x1 "(" S_initial_x1 ") -> initial time domain window right edge (seconds, 0.1)"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_initial_x1); 
-  set_initial_x1(state, TO_C_DOUBLE(val));
-  return(TO_SCM_DOUBLE(initial_x1(state)));
-}
-
-static SCM g_initial_y0(void) {return(TO_SCM_DOUBLE(initial_y0(state)));}
-static SCM g_set_initial_y0(SCM val) 
-{
-  #define H_initial_y0 "(" S_initial_y0 ") -> initial time domain window lower edge (-1.0)"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_initial_y0); 
-  set_initial_y0(state, TO_C_DOUBLE(val));
-  return(TO_SCM_DOUBLE(initial_y0(state)));
-}
-
-static SCM g_initial_y1(void) {return(TO_SCM_DOUBLE(initial_y1(state)));}
-static SCM g_set_initial_y1(SCM val) 
-{
-  #define H_initial_y1 "(" S_initial_y1 ") -> initial time domain window upper edge (1.0)"
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_initial_y1); 
-  set_initial_y1(state, TO_C_DOUBLE(val));
-  return(TO_SCM_DOUBLE(initial_y1(state)));
-}
-
 static SCM g_movies(void) {return(TO_SCM_BOOLEAN(movies(state)));}
 static SCM g_set_movies(SCM val) 
 {
@@ -2648,18 +2612,6 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_fit_data_on_open, SCM_FNC g_fit_data_on_open, H_fit_data_on_open,
 			       "set-" S_fit_data_on_open, SCM_FNC g_set_fit_data_on_open, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_initial_x0, SCM_FNC g_initial_x0, H_initial_x0,
-			       "set-" S_initial_x0, SCM_FNC g_set_initial_x0, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_initial_x1, SCM_FNC g_initial_x1, H_initial_x1,
-			       "set-" S_initial_x1, SCM_FNC g_set_initial_x1, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_initial_y0, SCM_FNC g_initial_y0, H_initial_y0,
-			       "set-" S_initial_y0, SCM_FNC g_set_initial_y0, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_initial_y1, SCM_FNC g_initial_y1, H_initial_y1,
-			       "set-" S_initial_y1, SCM_FNC g_set_initial_y1, local_doc, 0, 0, 0, 1);
-
   define_procedure_with_setter(S_movies, SCM_FNC g_movies, H_movies,
 			       "set-" S_movies, SCM_FNC g_set_movies, local_doc, 0, 0, 0, 1);
 
@@ -2914,7 +2866,6 @@ If more than one hook function, results are concatenated. If none, the current c
   /* backwards compatibility */
   gh_eval_str("(define abort? c-g?)"); 
   gh_eval_str("(define syncing sync)");
-  gh_eval_str("(define showing-controls show-controls)");
 
 #if USE_MOTIF
   scm_add_feature("snd-motif");

@@ -634,12 +634,13 @@
     (let ((dots (- (right-sample snd chn)
 		   (left-sample snd chn))))
       (if (> dots 100) 
-	  (set! (dot-size) 1)
+	  (set! (dot-size snd chn) 1)
 	(if (> dots 50)
-	    (set! (dot-size) 2)
+	    (set! (dot-size snd chn) 2)
 	  (if (> dots 25)
-	      (set! (dot-size) 3)
-	    (set! (dot-size) 5)))))))
+	      (set! (dot-size snd chn) 3)
+	    (set! (dot-size snd chn) 5))))
+      #f)))
     
 ;(add-hook! graph-hook auto-dot)
 

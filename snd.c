@@ -115,10 +115,6 @@ static void mus_print2snd(char *msg)
   ss->Default_Output_Srate = DEFAULT_OUTPUT_SRATE;
   ss->Default_Output_Type = DEFAULT_OUTPUT_TYPE;
   ss->Default_Output_Format = DEFAULT_OUTPUT_FORMAT;
-  ss->Initial_X0 = DEFAULT_INITIAL_X0;
-  ss->Initial_X1 = DEFAULT_INITIAL_X1;
-  ss->Initial_Y0 = DEFAULT_INITIAL_Y0;
-  ss->Initial_Y1 = DEFAULT_INITIAL_Y1;
   ss->Normalize_On_Open = DEFAULT_NORMALIZE_ON_OPEN;
   ss->Auto_Resize = DEFAULT_AUTO_RESIZE; 
   ss->Auto_Update = DEFAULT_AUTO_UPDATE; 

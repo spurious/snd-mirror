@@ -22,6 +22,8 @@
 ;;; test 19: save and restore
 ;;; test 20: transforms
 
+;;; TODO: mus-sound-max-amp-exists, initial-graph-hook (beyond existence tests)
+
 (use-modules (ice-9 format) (ice-9 debug))
 
 (define tests 1)
@@ -653,6 +655,12 @@
 	  (snd-display (format #f ";mouse-leave-listener-hook: ~A?" mouse-leave-listener-hook)))
       (if (or (not (hook? property-changed-hook)) (not (hook-empty? property-changed-hook)))
 	  (snd-display (format #f ";property-changed-hook: ~A?" property-changed-hook)))
+      (if (or (not (hook? initial-graph-hook)) (not (hook-empty? initial-graph-hook)))
+	  (snd-display (format #f ";initial-graph-hook: ~A?" initial-graph-hook)))
+      (if (or (not (hook? after-graph-hook)) (not (hook-empty? after-graph-hook)))
+	  (snd-display (format #f ";after-graph-hook: ~A?" after-graph-hook)))
+      (if (or (not (hook? graph-hook)) (not (hook-empty? graph-hook)))
+	  (snd-display (format #f ";graph-hook: ~A?" graph-hook)))
 
       (set! (show-controls) #t)
       (enved-dialog) 
@@ -4152,6 +4160,7 @@
   (reset-hook! fft-hook) (add-hook! fft-hook arg3) (carg3 fft-hook) (reset-hook! fft-hook)
   (reset-hook! mouse-enter-label-hook) (add-hook! mouse-enter-label-hook arg3) (carg3 mouse-enter-label-hook) (reset-hook! mouse-enter-label-hook)
   (reset-hook! mouse-leave-label-hook) (add-hook! mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook) (reset-hook! mouse-leave-label-hook)
+  (reset-hook! initial-graph-hook) (add-hook! initial-graph-hook arg3) (carg3 initial-graph-hook) (reset-hook! initial-graph-hook)
 
   (reset-hook! graph-hook) (add-hook! graph-hook arg4) (carg4 graph-hook) (reset-hook! graph-hook)
   (reset-hook! key-press-hook) (add-hook! key-press-hook arg4) (carg4 key-press-hook) (reset-hook! key-press-hook)

@@ -351,7 +351,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot);
   sp = ss->sounds[snd_slot];
   for (i = 0; i < nchans; i++) sp->chans[i] = make_chan_info(sp->chans[i], i, sp, ss);
-  add_sound_data(filename, sp, ss);
+  add_sound_data(filename, sp, ss, WITHOUT_GRAPH); /* TODO: ?? -- test this without_graph setting */
 #if HAVE_HOOKS
   after_open(sp->index);
 #endif

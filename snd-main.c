@@ -317,10 +317,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 
   if (fneq(fft_beta(ss), DEFAULT_FFT_BETA)) pss_sf(fd, S_fft_beta, fft_beta(ss));
   if (fneq(reverb_decay(ss), DEFAULT_REVERB_DECAY)) pss_sf(fd, S_reverb_decay, reverb_decay(ss));
-  if (fneq(initial_x0(ss), DEFAULT_INITIAL_X0)) pss_sf(fd, S_initial_x0, initial_x0(ss));
-  if (fneq(initial_x1(ss), DEFAULT_INITIAL_X1)) pss_sf(fd, S_initial_x1, initial_x1(ss));
-  if (fneq(initial_y0(ss), DEFAULT_INITIAL_Y0)) pss_sf(fd, S_initial_y0, initial_y0(ss));
-  if (fneq(initial_y1(ss), DEFAULT_INITIAL_Y1)) pss_sf(fd, S_initial_y1, initial_y1(ss));
   if (fneq(ss->min_dB, DEFAULT_MIN_DB)) pss_sf(fd, S_min_dB, ss->min_dB);
   if (fneq(color_cutoff(ss), DEFAULT_COLOR_CUTOFF)) pss_sf(fd, S_color_cutoff, color_cutoff(ss));
   if (fneq(color_scale(ss), DEFAULT_COLOR_SCALE)) pss_sf(fd, S_color_scale, color_scale(ss));

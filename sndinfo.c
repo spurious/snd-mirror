@@ -31,6 +31,25 @@ void mem_free(void *ptr, const char *func, const char *file, int line) {free(ptr
 void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr, size));}
 #endif
 
+static char *display_max_amps(const char *filename, int chans)
+{
+  char *ampstr;
+  char fstr[16];
+  int i;
+  MUS_SAMPLE_TYPE *vals;
+  ampstr = (char *)CALLOC(chans * 32, sizeof(char));
+  vals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
+  sprintf(ampstr,"\n  max amp%s: ",(chans > 1) ? "s" : "");
+  mus_sound_max_amp(filename, vals);
+  for (i = 0; i < chans; i++)
+    {
+      sprintf(fstr,"%.3f ",MUS_SAMPLE_TO_FLOAT(vals[2 * i + 1]));
+      strcat(ampstr, fstr);
+    }
+  FREE(vals);
+  return(ampstr);
+}
+
 int main(int argc, char *argv[])
 {
   int chans, srate, samples, format, type;
@@ -38,7 +57,7 @@ int main(int argc, char *argv[])
   time_t date;
   int *loops = NULL;
   char *comment, *header_name;
-  char *format_info, *format_name;
+  char *format_info, *format_name, *ampstr = NULL;
   char timestr[64];
 #if MACOS
   argc = ccommand(&argv);
@@ -66,6 +85,8 @@ int main(int argc, char *argv[])
       type = mus_sound_header_type(argv[1]);
       header_name = mus_header_type_name(type);
       format = mus_sound_data_format(argv[1]);
+      if (mus_sound_max_amp_exists(argv[1]))
+	ampstr = display_max_amps(argv[1], chans);
       if (format != MUS_UNSUPPORTED)
 	format_info = mus_data_format_name(format);
       else
@@ -84,10 +105,11 @@ int main(int argc, char *argv[])
 #endif
       fprintf(stdout, "%s:\n  srate: %d\n  chans: %d\n  length: %f\n",
 	      argv[1], srate, chans, length);
-      fprintf(stdout, "  type: %s\n  format: %s\n  written: %s\n",
+      fprintf(stdout, "  type: %s\n  format: %s\n  written: %s%s\n",
 	      header_name,
 	      format_info,
-	      timestr);
+	      timestr,
+	      (ampstr) ? ampstr : "");
       if (comment) fprintf(stdout, "  comment: %s\n", comment);
       if (loops)
 	{

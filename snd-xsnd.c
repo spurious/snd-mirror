@@ -2494,7 +2494,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XmToggleButtonSetState(w_snd_combine(sp), FALSE, FALSE);
       XtUnmanageChild(w_snd_combine(sp));
     }
-  add_sound_data(filename, sp, ss);
+  add_sound_data(filename, sp, ss, WITH_GRAPH);
   snd_file_lock_icon(sp, (ss->viewing || (cant_write(sp->fullname)))); /* sp->read_only not set yet */
   if (ss->pending_change)
     report_in_minibuffer(sp, "(translated %s)", old_name);
@@ -2662,9 +2662,6 @@ void reflect_amp_env_completion(snd_info *sp)
     }
   info_sep = w_snd_minibuffer_sep(sp);
   if (info_sep) XtVaSetValues(info_sep, XmNseparatorType, XmSHADOW_ETCHED_IN, NULL);
-#if DEBUGGING
-  /* stop_timing(); */
-#endif
   alert_enved_amp_env(sp);
 }
 
@@ -2673,9 +2670,6 @@ void reflect_amp_env_in_progress(snd_info *sp)
   Widget info_sep;
   info_sep = w_snd_minibuffer_sep(sp);
   if (info_sep) XtVaSetValues(info_sep, XmNseparatorType, XmNO_LINE, NULL);
-#if DEBUGGING
-  /* start_timing(); */
-#endif
 }
 
 /* ---------------- normalize sounds ---------------- */

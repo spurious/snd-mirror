@@ -953,6 +953,15 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- fit-data-on-open -->
+<!-- --><tr><td valign=top><code><em class=def><a name="fitdataonopen">fit-data-on-open</a></em></code></td>
+<!-- --><td valign=top><code>#f</code></td>
+<!-- --><td>If #t, the initial time-domain display of a sound shows
+<!-- -->its entire duration, with the Y-axis set to show its maxamp.
+<!-- -->I may remove this variable; see <a href="#initialgraphhook">initial-graph-hook</a> for a better way to handle this problem.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- graph-cursor -->
 <!-- --><tr><td><code><em class=def><a name="graphcursor">graph-cursor</a></em></code></td>
 <!-- --><td colspan=2><code>XC_crosshair (34)</code></td></tr>
@@ -1202,7 +1211,7 @@ callbacks is known as a hook.
 A hook provides
 a way to customize user-interface
 actions.  
-It is either a list of functions or #f.  The Guile function add-hook! adds a function to a hook's
+The hook itself is list of functions.  The Guile function add-hook! adds a function to a hook's
 list, remove-hook! removes a function, and reset-hook! clears out the list.
 For example, the hook that is checked when you click the sound's name in the minibuffer is
 name-click-hook.  We can cause that action to print "hi" in the listener by:</p>
@@ -1397,7 +1406,98 @@ the hook.
 <!-- -->called each time a graph is updated or redisplayed.
 <!-- -->If it returns #t, the display is not updated.
 <!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(add-hook! graph-hook
+<!-- -->  (lambda (snd chn y0 y1)
+<!-- -->    "set the dot size depending on the number of samples being displayed"
+<!-- -->    (let ((dots (- (right-sample snd chn) (left-sample snd chn))))
+<!-- -->      (if (> dots 100) 
+<!-- -->	  (set! (dot-size snd chn) 1)
+<!-- -->	(if (> dots 50)
+<!-- -->	    (set! (dot-size snd chn) 2)
+<!-- -->	  (if (> dots 25)
+<!-- -->	      (set! (dot-size snd chn) 3)
+<!-- -->	    (set! (dot-size snd chn) 5))))
+<!-- -->      #f)))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- initial-graph-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="initialgraphhook">initial-graph-hook</a></em> (snd chn dur) </code></span>
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->called the first time a given channel is displayed. (<b>or hook</b>).
+<!-- -->If it returns a list, the list's contents are interpreted as: 
+<!-- --><code>'(x0 x1 y0 y1 label)</code> (with more to come...), where these numbers set the
+<!-- -->initial axis limits.  This replaces the variable <i>initial-x0</i> and its friends.
+<!-- -->The default (empty hook) is equivalent to:
+<!-- --><pre>(add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 0.1 -1.0 1.0 "time")))</pre>
+<!-- -->The <i>dur</i> argument is the total length in seconds of the channel, so to cause the
+<!-- -->entire sound to be displayed initially:
+<!-- --><pre>(add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 dur -1.0 1.0 "time")))</pre>
+<!-- -->To get the data limits (rather than use -1.0 to 1.0 as above), you can use <a href="mussoundmaxamp">mus-sound-max-amp</a>,
+<!-- -->but that can in some cases require a long process of reading the underlying file. The following hook procedure
+<!-- -->uses the max amp data only if it is already available:
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(add-hook! <em class=red>initial-graph-hook</em>
+<!-- -->  (lambda (snd chn dur)
+<!-- -->    (if (mus-sound-max-amp-exists? (file-name snd))
+<!-- -->	(let* ((amp-vals (mus-sound-max-amp (file-name snd)))
+<!-- -->	       (max-val (vector-ref amp-vals (+ (* chn 2) 1))))
+<!-- -->	  (list 0.0 dur (- max-val) max-val))
+<!-- -->	(list 0.0 dur -1.0 1.0))))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr><tr><td colspan=2></td></tr>
+<!-- --><tr><td></td><td>A similar problem affects the <i>dur</i> argument.  If the file is very long, Snd starts
+<!-- -->a background process reading its data to get an overall amplitude envelope of the file,
+<!-- -->and this envelope is what it actually displays when you zoom out to look at the entire
+<!-- -->sound. If you set <i>x1</i> to <i>dur</i>, you effectively get two such processes
+<!-- -->contending for access to the data.  One way around this would be to notice if the
+<!-- -->duration is very long, and if so, set up an after-graph-hook function that looks
+<!-- -->at the channel's peak-env-info, waiting for it to be completed before finally 
+<!-- -->asking that the entire file be displayed:
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(use-modules (ice-9 common-list))
+<!-- -->(define startups '())
+<!-- -->
+<!-- -->(define (remove-startup snd chn)
+<!-- -->  (set! startups (remove-if (lambda (n) (and (= (car n) snd) (= (cadr n) chn))) startups)))
+<!-- -->
+<!-- -->(define (add-startup snd chn)
+<!-- -->  (set! startups (cons (list snd chn) startups)))
+<!-- -->
+<!-- -->(define (starting? snd chn)
+<!-- -->  (find-if (lambda (n) (and (= (car n) snd) (= (cadr n) chn))) startups))
+<!-- -->
+<!-- -->(define (wait-for-completed-envelope snd chn)
+<!-- -->  (if (starting? snd chn)
+<!-- -->      (let ((e (peak-env-info snd chn)))
+<!-- -->	(if (and e (car e))
+<!-- -->	    (begin
+<!-- -->	      (set! (x-bounds snd chn) (list 0.0 (/ (frames snd chn) (srate snd))))
+<!-- -->	      (remove-startup snd chn))))))
+<!-- -->
+<!-- -->(add-hook! initial-graph-hook
+<!-- -->  (lambda (snd chn dur)
+<!-- -->    (if (< dur 100.0)
+<!-- -->	(if (mus-sound-max-amp-exists? (file-name snd))
+<!-- -->	    (let* ((amp-vals (mus-sound-max-amp (file-name snd)))
+<!-- -->		   (max-val (vector-ref amp-vals (+ (* chn 2) 1))))
+<!-- -->	      (list 0.0 dur (- max-val) max-val))
+<!-- -->	    (list 0.0 dur -1.0 1.0))
+<!-- -->	(begin
+<!-- -->	  (add-startup snd chn)
+<!-- -->	  #f))))
+<!-- -->
+<!-- -->(add-hook! after-graph-hook wait-for-completed-envelope)
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- just-sounds-hook -->
 <!-- --><tr><td colspan=2>
@@ -1576,7 +1676,7 @@ the hook.
 <!-- -->
 <!-- mouse-enter-listener-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mouseenterlistenerhook">mouse-enter-listener-hook</a></em> (snd chn) </code></span>
+<!-- --><span class=defbox><code><em class=def><a name="mouseenterlistenerhook">mouse-enter-listener-hook</a></em> (widget) </code></span>
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -1625,7 +1725,7 @@ the hook.
 <!-- -->
 <!-- mouse-leave-listener-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mousleavelistenerhook">mouse-leave-listener-hook</a></em> (snd chn) </code></span>
+<!-- --><span class=defbox><code><em class=def><a name="mousleavelistenerhook">mouse-leave-listener-hook</a></em> (widget) </code></span>
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -1762,6 +1862,48 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- snd-error-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="snderrorhook">snd-error-hook</a></em> (error-message)</code></span>
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->called upon snd_error. (<b>or hook</b>)
+<!-- -->If it returns #t, Snd flushes the error (it assumes you've 
+<!-- -->reported it via the hook).
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(add-hook! <em class=red>snd-error-hook</em>
+<!-- -->  (lambda (msg) 
+<!-- -->    (play "bong.snd") 
+<!-- -->    #f))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- snd-warning-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndwarninghook">snd-warning-hook</a></em> (warning-message)</code></span>
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->called upon snd_warning. (<b>or hook</b>)
+<!-- -->If it returns #t, Snd flushes the warning (it assumes you've 
+<!-- -->reported it via the hook).
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(define without-warnings
+<!-- -->  (lambda (thunk)
+<!-- -->    (define no-warning (lambda (msg) #t))
+<!-- -->      (add-hook! <em class=red>snd-warning-hook</em> no-warning)
+<!-- -->      (thunk)
+<!-- -->      (remove-hook! <em class=red>snd-warning-hook</em> no-warning)))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- start-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="starthook">start-hook</a></em> (filename)</code></span>
@@ -1824,48 +1966,6 @@ the hook.
 <!-- --><tr><td></td><td>
 <!-- -->called when a region finishes playing. (<b>or hook</b>)
 <!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- snd-error-hook -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="snderrorhook">snd-error-hook</a></em> (error-message)</code></span>
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->called upon snd_error. (<b>or hook</b>)
-<!-- -->If it returns #t, Snd flushes the error (it assumes you've 
-<!-- -->reported it via the hook).
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td colspan=2 align=center>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-<!-- -->(add-hook! <em class=red>snd-error-hook</em>
-<!-- -->  (lambda (msg) 
-<!-- -->    (play "bong.snd") 
-<!-- -->    #f))
-<!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- snd-warning-hook -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndwarninghook">snd-warning-hook</a></em> (warning-message)</code></span>
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->called upon snd_warning. (<b>or hook</b>)
-<!-- -->If it returns #t, Snd flushes the warning (it assumes you've 
-<!-- -->reported it via the hook).
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td colspan=2 align=center>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-<!-- -->(define without-warnings
-<!-- -->  (lambda (thunk)
-<!-- -->    (define no-warning (lambda (msg) #t))
-<!-- -->      (add-hook! <em class=red>snd-warning-hook</em> no-warning)
-<!-- -->      (thunk)
-<!-- -->      (remove-hook! <em class=red>snd-warning-hook</em> no-warning)))
-<!-- --></pre></td></tr></table></td></tr>
 <!-- --></table>
 
 <pre>
@@ -2361,8 +2461,13 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundlength">mus-sound-length</a></em> (filename)</code></span></td>
 <!-- --><td>true file length (bytes)</td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>mus-sound-max-amp</em> (filename)</code></span></td>
+<!-- mus-sound-max-amp -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundmaxamp">mus-sound-max-amp</a></em> (filename)</code></span></td>
 <!-- --><td>returns a vector of max amps and locations thereof</td></tr>
+<!-- -->
+<!-- mus-sound-max-amp-exists -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundmaxampexists">mus-sound-max-amp-exists</a></em> (filename)</code></span></td>
+<!-- --><td>returns #t if the sound's max amps are already available.</td></tr>
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def>mus-sound-open-input</em> (filename)</code></span></td>
 <!-- --><td>open filename (a sound file) returning an integer ("fd" below)</td></tr>
@@ -5557,7 +5662,7 @@ sets its value to val.
 <!-- --><span class=defbox><code><em class=def><a name="sndxbounds">x-bounds</a></em> (<i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->return (x0 . x1) -- current x axis time domain bounds in seconds.
+<!-- -->return (list x0 x1) -- current x axis time domain bounds in seconds.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5597,7 +5702,7 @@ sets its value to val.
 <!-- --><span class=defbox><code><em class=def><a name="sndybounds">y-bounds</a></em> (<i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->return (y0 . y1) -- current y axis bounds.
+<!-- -->return (list y0 y1) -- current y axis bounds.
 <!-- -->To set the bounds to reflect the channel's maxamp, use (set! (y-bounds) '()).
 <!-- -->To set all channels at once using the selected sound's maxamp:
 <!-- --></td></tr>
@@ -7217,10 +7322,17 @@ variable %load-verbosely to #t.
 <!-- remove-input -->
   <b><a name="addinput">add-input</a></b> (file callback)
   <b><a name="removeinput">remove-input</a></b> (id)
+
+  <b><a name="addidler">add-idler</a></b> (code)
+  <b><a name="removeidler">remove-idler</a></b> (id)
 </pre>
 <p>These are still experimental; <i>add-input</i> causes <i>callback</i> (a function of one argument, the file number)
 to be called whenever input is available on <i>file</i> (a file number, as returned by open). <i>remove-input</i>
 removes the callback.  Eventually I hope to add MIDI controls to Snd, using these two functions.
+<i>add-idler</i> adds a background process running <i>code</i> (a Scheme function of no arguments).
+As long as the function returns #t, the process keeps calling it; <i>remove-idler</i> takes as its
+argument the thing returned by <i>add-idler</i> (the identifier of that process), and kills the
+associated background process.
 </p>
 
 <br>

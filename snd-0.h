@@ -196,8 +196,7 @@ enum {COLOR_DIALOG, ORIENTATION_DIALOG, ENVED_DIALOG, ERROR_DIALOG, YES_OR_NO_DI
 #define NOT_FROM_ENVED 0
 #define FROM_ENVED 1
 
-#define WITHOUT_GRAPH 0
-#define WITH_GRAPH 1
+enum {WITHOUT_GRAPH, WITH_GRAPH, WITHOUT_INITIAL_GRAPH_HOOK};
 
 #define IS_PLAYER(snd) ((snd) && (snd->index < 0))
 #define PLAYER(snd) (-(snd->index))
@@ -263,6 +262,11 @@ enum {WAVE_AXIS_INFO, FFT_AXIS_INFO, LISP_AXIS_INFO};
 #define DEFAULT_INIT_WINDOW_Y -1
 #define DEFAULT_INIT_WINDOW_WIDTH -1
 #define DEFAULT_INIT_WINDOW_HEIGHT -1
+
+#define DEFAULT_INITIAL_X0 0.0
+#define DEFAULT_INITIAL_X1 0.1
+#define DEFAULT_INITIAL_Y0 -1.0
+#define DEFAULT_INITIAL_Y1 1.0
 
 #define reverb_decay(ss) ss->Reverb_Decay
 #define in_set_reverb_decay(ss, a) ss->Reverb_Decay = a
@@ -352,22 +356,6 @@ enum {WAVE_AXIS_INFO, FFT_AXIS_INFO, LISP_AXIS_INFO};
 #define trap_segfault(ss) ss->Trap_Segfault
 #define set_trap_segfault(ss, a) ss->Trap_Segfault = a
 #define DEFAULT_TRAP_SEGFAULT 1
-
-#define initial_x0(ss) ss->Initial_X0
-#define set_initial_x0(ss, a) ss->Initial_X0 = a
-#define DEFAULT_INITIAL_X0 0.0
-
-#define initial_x1(ss) ss->Initial_X1
-#define set_initial_x1(ss, a) ss->Initial_X1 = a
-#define DEFAULT_INITIAL_X1 0.1
-
-#define initial_y0(ss) ss->Initial_Y0
-#define set_initial_y0(ss, a) ss->Initial_Y0 = a
-#define DEFAULT_INITIAL_Y0 -1.0
-
-#define initial_y1(ss) ss->Initial_Y1
-#define set_initial_y1(ss, a) ss->Initial_Y1 = a
-#define DEFAULT_INITIAL_Y1 1.0
 
 #define line_size(ss) ss->Line_Size
 #define in_set_line_size(ss, a) ss->Line_Size = a

@@ -292,6 +292,10 @@ int update_graph(chan_info *cp, void *ptr)
 
 #define INITIAL_EDIT_SIZE 8
 
+#if HAVE_HOOKS
+  static SCM initial_graph_hook;
+#endif
+
 void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
 {
   /* initialize channel, including edit/sound lists */
@@ -302,34 +306,42 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   int samples_per_channel;
   hdr = sp->hdr;
   samples_per_channel = hdr->samples / hdr->chans;
-
-  /* TODO: get rid of initial_x|y0|1 also fit_data_on_open,
-   *       replace with initial_graph_hook or something --
-   *       could return (x0 y0 x1 y1 [ymin ymax xlabel]) and these could include the fit-data decisions
-   * but probably should be only if graphed==WITH_GRAPH
-   *   this is called in snd-file for make_sound_readable
-   *                     snd-region for make_region_readable
-   *                     below in add_channel_data (called only in snd-snd) from add_sound_data
-   *                          itself from snd-edits [after save and re-read] -- here we don't want a call either?
-   *                                      snd-x|gsnd [after open-sound]
-   *   also delete sp->fit_data_amps
-   */
-  /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
-   *         but would be much faster if we can wait until the amp-env is computed
-   *         via after-open-hook?
-   *
-   * remove from snd-completion, snd-1, snd-0, snd-strings, snd-main, snd-scm, snd-snd, snd-data
-   * add initial_graph_hook (or hook), doc, test, etc
-   *   try to use mus_sound_max_amp, and delete file_maxamps in snd-data
-   *   (also remember to set this where possible)
-   */
-
-  x0 = initial_x0(ss);
-  x1 = initial_x1(ss);
-  y0 = initial_y0(ss);
-  y1 = initial_y1(ss);
+  x0 = DEFAULT_INITIAL_X0;
+  x1 = DEFAULT_INITIAL_X1;
+  y0 = DEFAULT_INITIAL_Y0;
+  y1 = DEFAULT_INITIAL_Y1;
   label = STR_time;
   dur = (Float)samples_per_channel / (Float)hdr->srate;
+
+#if HAVE_HOOKS
+  if ((graphed == WITH_GRAPH) &&    
+      /* can also be WITHOUT_GRAPH and WITHOUT_INITIAL_GRAPH_HOOK
+       *   the former is called in snd-nogui, and in the make_readable calls in snd-regions and snd-snd
+       *   the latter is from snd-edits where we are updating an already displayed sound (and keeping its axis settings across the update)
+       * this hook is replacing earlier "initial-x0" settings
+       */
+      (HOOKED(initial_graph_hook)))
+    {
+      SCM res;
+      int len;
+      res = g_c_run_or_hook(initial_graph_hook,
+			    SCM_LIST3(TO_SMALL_SCM_INT(sp->index),
+				      TO_SMALL_SCM_INT(cp->chan),
+				      TO_SCM_DOUBLE(dur)));
+      if (gh_list_p(res))
+	{
+	  len = gh_length(res);
+	  if (len > 0) x0 = TO_C_DOUBLE(SCM_CAR(res));
+	  if (len > 1) x1 = TO_C_DOUBLE(SCM_CADR(res));
+	  if (len > 2) y0 = TO_C_DOUBLE(SCM_CADDR(res));
+	  if (len > 3) y1 = TO_C_DOUBLE(SCM_CADDDR(res));
+	  if (len > 4) label = TO_C_STRING(gh_list_ref(res, TO_SMALL_SCM_INT(4)));
+
+	  /* also ymin/ymax for fit data eventually */
+	}
+    }
+#endif
+
   if (dur == 0.0) gdur = .001; else gdur = dur;
   xmax = gdur;
   if ((sp->fit_data_amps) && 
@@ -408,14 +420,14 @@ void start_amp_env(chan_info *cp)
     }
 }
 
-void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss)
+void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss, int graphed)
 {
   int fd, chn = 0;
   int *datai;
   snd_info *sp;
   file_info *chdr;
   sp = cp->sound;
-  add_channel_data_1(cp, sp, ss, WITH_GRAPH);
+  add_channel_data_1(cp, sp, ss, graphed);
   set_initial_ed_list(cp, (hdr->samples/hdr->chans) - 1);
   chdr = copy_header(filename, sp->hdr); /* need one separate from snd_info case */
   chn = cp->chan;
@@ -5640,6 +5652,7 @@ void g_init_chn(SCM local_doc)
   #define H_mark_click_hook S_mark_click_hook " (id) is called when a mark is clicked; return #t to squelch the default message."
   #define H_key_press_hook S_key_press_hook " (snd chn key state) is called upon a key press if the mouse is in the lisp graph. \
 If it returns #t, the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
+  #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur) is called when a sound is displayed for the first time"
 
 #if HAVE_HOOKS
   fft_hook =           MAKE_HOOK(S_fft_hook, 3, H_fft_hook);                     /* args = sound channel scaler */
@@ -5651,6 +5664,7 @@ If it returns #t, the key press is not passed to the main handler. 'state' refer
   mouse_drag_hook =    MAKE_HOOK(S_mouse_drag_hook, 6, H_mouse_drag_hook);       /* args = sound channel button state x y */
   key_press_hook =     MAKE_HOOK(S_key_press_hook, 4, H_key_press_hook);         /* args = sound channel key state */
   mark_click_hook =    MAKE_HOOK(S_mark_click_hook, 1, H_mark_click_hook);       /* arg = id */
+  initial_graph_hook = MAKE_HOOK(S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
 #endif
 }
 

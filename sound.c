@@ -224,7 +224,8 @@ static void sound_mus_error(int type, char *msg)
       if (local_filename)
 	{
 	  if (sound_err_buf == NULL) sound_err_buf = (char *)CALLOC(512, sizeof(char));
-	  sprintf(sound_err_buf, "%s\n  [sound.c[%d] %s: %s]",
+	  sprintf(sound_err_buf, 
+		  "%s\n  [sound.c[%d] %s: %s]",
 		  msg, local_line, local_func, local_filename);
 	  (*old_sound_handler)(type, sound_err_buf);
 	}
@@ -275,8 +276,13 @@ int mus_sound_initialize(void)
       mus_error_buffer = (char *)CALLOC(256, sizeof(char));
       if (mus_error_buffer == NULL) return(MUS_ERROR);
       err = mus_header_initialize();
-      if (err == MUS_NO_ERROR) err = mus_audio_initialize();
-      if (err == MUS_ERROR) {FREE(mus_error_buffer); return(MUS_ERROR);}
+      if (err == MUS_NO_ERROR) 
+	err = mus_audio_initialize();
+      if (err == MUS_ERROR) 
+	{
+	  FREE(mus_error_buffer); 
+	  return(MUS_ERROR);
+	}
     }
   return(MUS_NO_ERROR);
 }
@@ -308,7 +314,7 @@ typedef struct {
   int aux_comment_start[4], aux_comment_end[4];
   int loop_modes[2], loop_starts[2], loop_ends[2];
   int marker_ids[4], marker_positions[4];
-  MUS_SAMPLE_TYPE max_amps[SNDLIB_GDBM_MAX_CHANS*2];
+  MUS_SAMPLE_TYPE max_amps[SNDLIB_GDBM_MAX_CHANS * 2];
   int max_amps_ok;
 } sound_file;
 
@@ -412,19 +418,13 @@ int mus_sound_forget(const char *name)
 #else
   int i;
   if (name)
-    {
-      for (i = 0; i < sound_table_size; i++)
+    for (i = 0; i < sound_table_size; i++)
+      if ((sound_table[i]) &&
+	  (strcmp(name, sound_table[i]->file_name) == 0))
 	{
-	  if (sound_table[i])
-	    {
-	      if (strcmp(name, sound_table[i]->file_name) == 0)
-		{
-		  free_sound_file(sound_table[i]);
-		  return(MUS_NO_ERROR);
-		}
-	    }
+	  free_sound_file(sound_table[i]);
+	  return(MUS_NO_ERROR);
 	}
-    }
   return(MUS_ERROR);
 #endif
 }
@@ -469,16 +469,10 @@ static sound_file *find_sound_file(const char *name)
 #else
   int i;
   if (name)
-    {
-      for (i = 0; i < sound_table_size; i++)
-	{
-	  if (sound_table[i])
-	    {
-	      if (strcmp(name, sound_table[i]->file_name) == 0)
-		return(check_write_date(name, sound_table[i]));
-	    }
-	}
-    }
+    for (i = 0; i < sound_table_size; i++)
+      if ((sound_table[i]) &&
+	  (strcmp(name, sound_table[i]->file_name) == 0))
+	return(check_write_date(name, sound_table[i]));
   return(NULL);
 #endif
 }
@@ -530,16 +524,17 @@ static void display_sound_file_entry(const char *name, sound_file *sf)
       if (lim > 0)
 	{
 #if HAVE_GDBM
-	  if (lim > SNDLIB_GDBM_MAX_CHANS) lim = SNDLIB_GDBM_MAX_CHANS;
+	  if (lim > SNDLIB_GDBM_MAX_CHANS) 
+	    lim = SNDLIB_GDBM_MAX_CHANS;
 #else
-	  if (lim > 64) lim = 64;
+	  if (lim > 64) 
+	    lim = 64;
 #endif
-	  fprintf(stdout, ", max amps:");
 	  for (i = 0; i < lim; i++)
 	    {
 	      if (i > 1) fprintf(stdout, ", ");
 	      fprintf(stdout, " %.3f at %.3f ",
-		      MUS_SAMPLE_TO_FLOAT(sf->max_amps[i+1]),
+		      MUS_SAMPLE_TO_FLOAT(sf->max_amps[i + 1]),
 		      (float)(sf->max_amps[i]) / (float)(sf->srate));
 	    }
 	}
@@ -635,7 +630,8 @@ static void fill_sf_record(const char *name, sound_file *sf)
       for (i = 0; i < 2; i++)
 	{
 	  sf->loop_modes[i] = mus_header_loop_mode(i);
-	  if ((sf->header_type == MUS_AIFF) || (sf->header_type == MUS_AIFC))
+	  if ((sf->header_type == MUS_AIFF) || 
+	      (sf->header_type == MUS_AIFC))
 	    {
 	      sf->loop_starts[i] = mus_header_mark_position(mus_header_loop_start(i)); 
 	      sf->loop_ends[i] = mus_header_mark_position(mus_header_loop_end(i));
@@ -654,8 +650,10 @@ static void fill_sf_record(const char *name, sound_file *sf)
   sf->max_amps_ok = 0;
   err = gdbm_store(gdbm_fd(), gdbm_key((char *)name), gdbm_contents(sf), GDBM_REPLACE);
   if (err != 0) 
-    mus_error(MUS_CANT_OPEN_FILE, "%s %d = %s \n  [%s[%d] %s]",
-	      name, i, gdbm_strerror(gdbm_errno),
+    mus_error(MUS_CANT_OPEN_FILE, 
+	      "%s %d = %s \n  [%s[%d] %s]",
+	      name, i, 
+	      gdbm_strerror(gdbm_errno),
 	      __FILE__, __LINE__, __FUNCTION__, i);
 #endif
 }
@@ -817,8 +815,10 @@ void mus_sound_set_loop_info(const char *arg, int *loop)
       sf->base_detune = loop[5];
 #if HAVE_GDBM
       if (gdbm_store(gdbm_fd(), gdbm_key((char *)arg), gdbm_contents(sf), GDBM_REPLACE) != 0)
-	mus_error(MUS_CANT_OPEN_FILE, "%s: %s \n  [%s[%d] %s]",
-		  arg, gdbm_strerror(gdbm_errno),
+	mus_error(MUS_CANT_OPEN_FILE, 
+		  "%s: %s \n  [%s[%d] %s]",
+		  arg, 
+		  gdbm_strerror(gdbm_errno),
 		  __FILE__, __LINE__, __FUNCTION__);
       free(sf);
 #endif      
@@ -844,10 +844,14 @@ char *mus_sound_comment(const char *name)
   if (end == 0) 
     {
       if (mus_sound_header_type(name) == MUS_RIFF) 
-	return(mus_header_riff_aux_comment(name, sf->aux_comment_start, sf->aux_comment_end));
+	return(mus_header_riff_aux_comment(name, 
+					   sf->aux_comment_start, 
+					   sf->aux_comment_end));
       if ((mus_sound_header_type(name) == MUS_AIFF) || 
 	  (mus_sound_header_type(name) == MUS_AIFC)) 
-	return(mus_header_aiff_aux_comment(name, sf->aux_comment_start, sf->aux_comment_end));
+	return(mus_header_aiff_aux_comment(name, 
+					   sf->aux_comment_start, 
+					   sf->aux_comment_end));
       return(NULL);
     }
   len = end-start+1;
@@ -857,14 +861,16 @@ char *mus_sound_comment(const char *name)
       fd = mus_file_open_read(name);
       if (fd == -1) return(NULL);
       lseek(fd, start, SEEK_SET);
-      sc = (char *)CALLOC(len+1, sizeof(char)); /* len+1 calloc'd => we'll always have a trailing null */
+      sc = (char *)CALLOC(len + 1, sizeof(char)); /* len+1 calloc'd => we'll always have a trailing null */
       read(fd, sc, len);
       close(fd);
 #ifndef MACOS
       if ((mus_sound_header_type(name) == MUS_AIFF) || 
 	  (mus_sound_header_type(name) == MUS_AIFC)) 
 	{
-	  auxcom = mus_header_aiff_aux_comment(name, sf->aux_comment_start, sf->aux_comment_end);
+	  auxcom = mus_header_aiff_aux_comment(name, 
+					       sf->aux_comment_start, 
+					       sf->aux_comment_end);
 	  if (auxcom)
 	    {
 	      full_len = strlen(auxcom) + strlen(sc) + 2;
@@ -1002,6 +1008,20 @@ int mus_sound_override_header(const char *arg, int srate, int chans, int format,
   return(MUS_ERROR);
 }
 
+int mus_sound_max_amp_exists(const char *ifile)
+{
+  sound_file *sf; 
+  int val = 0;
+  sf = getsf(ifile); 
+#if HAVE_GDBM
+  val = ((sf) && (sf->max_amps_ok));
+  free(sf);
+#else
+  val = ((sf) && (sf->max_amps));
+#endif
+  return(val);
+}
+
 int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
 {
   int ifd, ichans, bufnum, n, curframes, i, frames, chn;
@@ -1021,67 +1041,97 @@ int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
 	  vals[chn * 2] = sf->max_amps[chn * 2];
 	  vals[chn * 2 + 1] = sf->max_amps[chn * 2 + 1];
 	}
+      frames = sf->samples / sf->chans;
 #if HAVE_GDBM
       free(sf);
 #endif
-      return(sf->samples / sf->chans);
+      return(frames);
     }
   ifd = mus_sound_open_input(ifile);
   if (ifd == MUS_ERROR) return(MUS_ERROR);
   /* sf = getsf(ifile); */
   ichans = mus_sound_chans(ifile);
   frames = mus_sound_frames(ifile);
-  if (frames <= 0) {mus_sound_close_input(ifd); return(0);}
+  if (frames <= 0) 
+    {
+      mus_sound_close_input(ifd);
+      return(0);
+    }
   mus_sound_seek_frame(ifd, 0);
   ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE *));
   bufnum = 8192;
-  for (i = 0; i < ichans; i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(bufnum, sizeof(MUS_SAMPLE_TYPE));
+  for (i = 0; i < ichans; i++) 
+    ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(bufnum, sizeof(MUS_SAMPLE_TYPE));
   time = (MUS_SAMPLE_TYPE *)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE));
   samp = (MUS_SAMPLE_TYPE *)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE));
-  for (n = 0; n < frames; n+=bufnum)
+  for (n = 0; n < frames; n += bufnum)
     {
-      if ((n + bufnum) < frames) curframes = bufnum; else curframes = (frames - n);
+      if ((n + bufnum) < frames) 
+	curframes = bufnum; 
+      else curframes = (frames - n);
       mus_sound_read(ifd, 0, curframes - 1, ichans, ibufs);
       for (chn = 0; chn < ichans; chn++)
 	{
 	  buffer = (MUS_SAMPLE_TYPE *)(ibufs[chn]);
 	  fc = samp[chn];
 	  for (i = 0; i < curframes; i++) 
-	    {
-	      if ((buffer[i] > fc) || 
-		  (fc < -buffer[i])) 
-		{
-		  time[chn] = i + n; 
-		  samp[chn] = buffer[i]; 
-		  if (samp[chn] < 0) samp[chn] = -samp[chn];
-		  fc = samp[chn];
-		}
-	    }
+	    if ((buffer[i] > fc) || 
+		(fc < -buffer[i])) 
+	      {
+		time[chn] = i + n; 
+		samp[chn] = buffer[i]; 
+		if (samp[chn] < 0) samp[chn] = -samp[chn];
+		fc = samp[chn];
+	      }
 	}
     }
   mus_sound_close_input(ifd);
-#if (!HAVE_GDBM)
-  if (sf->max_amps == NULL) 
-    sf->max_amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans * 2, sizeof(MUS_SAMPLE_TYPE));
-#endif
-  for (chn = 0, i = 0; chn < ichans; chn++, i+=2)
+  for (chn = 0, i = 0; chn < ichans; chn++, i += 2)
     {
       vals[i] = time[chn];
       vals[i + 1] = samp[chn];
-      sf->max_amps[i] = vals[i];
-      sf->max_amps[i + 1] = vals[i + 1];
     }
-#if HAVE_GDBM
-  sf->max_amps_ok = 1;
-  if (gdbm_store(gdbm_fd(), gdbm_key((char *)ifile), gdbm_contents(sf), GDBM_REPLACE) != 0)
-    mus_error(MUS_CANT_OPEN_FILE, "gdbm_store: %s ", gdbm_strerror(gdbm_errno));
-  free(sf);
-#endif      
+  mus_sound_set_max_amp(ifile, vals);
   FREE(time);
   FREE(samp);
   for (i = 0; i < ichans; i++) FREE(ibufs[i]);
   FREE(ibufs);
   return(frames);
+}
+
+int mus_sound_set_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
+{
+  int i, ichans = 0;
+  sound_file *sf; 
+  sf = getsf(ifile); 
+#if HAVE_GDBM
+  if ((sf) && (sf->max_amps_ok))
+#else
+  if ((sf) && (sf->max_amps))
+#endif
+    {
+      for (i = 0; i < (2 * sf->chans); i++)
+	sf->max_amps[i] = vals[i];
+    }
+  else
+    {
+      ichans = mus_sound_chans(ifile);
+#if (!HAVE_GDBM)
+      if (sf->max_amps == NULL) 
+	sf->max_amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans * 2, sizeof(MUS_SAMPLE_TYPE));
+#endif
+      for (i = 0; i < (2 * ichans); i++)
+	sf->max_amps[i] = vals[i];
+    }
+#if HAVE_GDBM
+  sf->max_amps_ok = 1;
+  if (gdbm_store(gdbm_fd(), gdbm_key((char *)ifile), gdbm_contents(sf), GDBM_REPLACE) != 0)
+    mus_error(MUS_CANT_OPEN_FILE, 
+	      "gdbm_store: %s ", 
+	      gdbm_strerror(gdbm_errno));
+  free(sf);
+#endif      
+  return(0);
 }
 
 

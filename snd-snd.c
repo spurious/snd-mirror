@@ -656,11 +656,11 @@ char *shortname_indexed(snd_info *sp)
   else return(shortname(sp));
 }
 
-void add_sound_data(char *filename, snd_info *sp, snd_state *ss)
+void add_sound_data(char *filename, snd_info *sp, snd_state *ss, int graphed)
 {
   int i;
   for (i = 0; i < sp->nchans; i++) 
-    add_channel_data(filename, sp->chans[i], sp->hdr, ss);
+    add_channel_data(filename, sp->chans[i], sp->hdr, ss, graphed);
 }
 
 

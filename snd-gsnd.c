@@ -1823,7 +1823,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
 
   if (sp->nchans == 1) 
     gtk_widget_hide(sw[W_combine]);
-  add_sound_data(filename, sp, ss);
+  add_sound_data(filename, sp, ss, WITH_GRAPH);
 
   snd_file_lock_icon(sp, (ss->viewing || (cant_write(sp->fullname)))); /* sp->read_only not set yet */
   if (ss->pending_change)
