@@ -109,6 +109,7 @@ static void set_max_transform_peaks(snd_state *ss, int uval)
 static int map_chans_zero_pad(chan_info *cp, void *ptr) 
 {
   cp->zero_pad = (*((int *)ptr)); 
+  calculate_fft(cp, NULL);
   return(0);
 }
 
@@ -320,14 +321,7 @@ int calculate_fft(chan_info *cp, void *ptr)
     {
       ss = cp->state;
       if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
-	{
-	  set_chan_fft_in_progress(cp,
-				   BACKGROUND_ADD(ss,
-						  safe_fft_in_slices,
-						  make_fft_state(cp, 1)));
-	  if (cp->transform_size >= 65536) 
-	    start_progress_report(cp->sound, NOT_FROM_ENVED); /* this can trigger an expose event which can try to calculate the fft! */
-	}
+	single_fft(cp);
       else set_chan_fft_in_progress(cp,
 				    BACKGROUND_ADD(ss,
 						   sonogram_in_slices,
@@ -4178,10 +4172,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 		  
 		  (cp->state)->checking_explicitly = 1;  /* do not allow UI events to intervene here! */
 		  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
-		    {
-		      val = (void *)make_fft_state(cp, 1);
-		      while (safe_fft_in_slices(val) == BACKGROUND_CONTINUE);
-		    }
+		    single_fft(cp);
 		  else
 		    {
 		      val = (void *)make_sonogram_state(cp);

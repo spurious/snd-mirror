@@ -83,16 +83,15 @@ typedef struct {
   off_t beg, len;
   char *origin;
   int sfnum;
-  off_t selection_beg, selection_end;  /* added 11-Sep-00: selection needs to follow edit list */
-  Float maxamp, selection_maxamp;      /* added 3-Oct-00 */
+  off_t selection_beg, selection_end;  /* selection needs to follow edit list */
+  Float maxamp, selection_maxamp;
 } ed_list;
 
 typedef struct snd__fd {
-  /* most of this is local to snd-edits, highly inflammable... */
   mus_sample_t (*run)(struct snd__fd *sf);
   Float (*runf)(struct snd__fd *sf);
 
-  /* the rest are private to snd-edits.c (mostly...) */
+  /* the rest are private to snd-edits.c (or should be) */
   ed_list *current_state;
   ed_fragment *cb;
   off_t loc, first, last;
@@ -729,25 +728,24 @@ Float ed_selection_maxamp(chan_info *cp);
 
 /* -------- snd-fft.c -------- */
 
-int make_fft_window_1(Float *window, int size, int type, Float beta);
 int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize, int srate, Float samps_per_pixel, Float fft_scale);
 int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size);
 fft_info *free_fft_info(fft_info *fp);
 void free_sonogram_fft_state(void *ptr);
 int fft_window_beta_in_use(int win);
-void *make_fft_state(chan_info *cp, int simple);
 void free_sono_info (chan_info *cp);
 int sono_update(chan_info *cp, void *ptr);
 void set_spectro_cutoff_and_redisplay(snd_state *ss, Float val);
 void c_convolve(char *fname, Float amp, int filec, int filehdr, int filterc, int filterhdr, int filtersize,
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp);
-BACKGROUND_TYPE safe_fft_in_slices(void *fftData);
+void single_fft(chan_info *cp);
 BACKGROUND_TYPE sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
 void clear_transform_edit_ctrs(chan_info *cp);
 void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *ax, int with_hooks);
 void g_init_fft(void);
+Float fft_beta_max(int win);
 
 
 
@@ -888,7 +886,6 @@ void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE moti
 int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE time, env *e, int in_dB, Float xmax);
 void edp_handle_release(void *spf, env *e);
 void edp_edited(void *spf);
-axis_info *new_env_axis(snd_state *ss);
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
 		   Float xmin, Float xmax, Float ymin, Float ymax, int printing);
 void display_enved_env(snd_state *ss, env *e, axis_context *ax, char *name, 

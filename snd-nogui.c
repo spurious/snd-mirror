@@ -85,7 +85,6 @@ int view_dots_menu(void) {return(0);}
 int view_dots_and_lines_menu(void) {return(0);}
 int view_filled_menu(void) {return(0);}
 int view_lollipops_menu(void) {return(0);}
-int view_marks_menu(void) {return(0);}
 int view_zero_menu(void) {return(0);}
 int view_ctrls_menu(void) {return(0);}
 int view_listener_menu(void) {return(0);}
@@ -126,7 +125,6 @@ void set_fft_log_magnitude(snd_state *ss, int val) {}
 void set_fft_log_frequency(snd_state *ss, int val) {}
 void set_transform_normalization(snd_state *ss, int val) {}
 void set_show_selection_transform(snd_state *ss, int show) {}
-void intern_atoms (snd_state *ss) {}
 void reflect_regions_in_region_browser(void) {}
 void reflect_no_regions_in_region_browser(void) {}
 void update_region_browser(snd_state *ss, int grf_too) {}
@@ -233,7 +231,6 @@ int control_panel_open(snd_info *sp) {return(0);}
 void start_progress_report(snd_info *sp, int from_enved) {}
 void finish_progress_report(snd_info *sp, int from_enved) {}
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved) {}
-char *clm2snd_help(void) {return(NULL);}
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location) {return(NULL);}
 void alert_new_file(void) {}
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment) {return(NULL);}

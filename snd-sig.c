@@ -3135,7 +3135,7 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   if (b < 0.0) b = 0.0; else if (b > 1.0) b = 1.0;
   idat = (Float *)CALLOC(n, sizeof(Float));
   window = (Float *)CALLOC(n, sizeof(Float));
-  make_fft_window_1(window, n, wtype, b); /* this multiplies by beta max, so beta here should be between 0.0 and 1.0 */
+  mus_make_fft_window_with_window(wtype, n, b * fft_beta_max(wtype), window);
   for (i = 0; i < n; i++) rdat[i] *= window[i];
   FREE(window);
   n2 = n / 2;

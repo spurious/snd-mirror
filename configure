@@ -8888,6 +8888,7 @@ _ACEOF
 
 
 
+# -------- long long
 echo "$as_me:$LINENO: checking for long longs" >&5
 echo $ECHO_N "checking for long longs... $ECHO_C" >&6
 if test "${snd_cv_long_longs+set}" = set; then
@@ -8940,6 +8941,7 @@ _ACEOF
 
 fi
 
+#-------- isnan
 
 for ac_func in isnan
 do
@@ -9064,6 +9066,7 @@ fi
 done
 
 
+# -------- FFTW
 SAVELIBS=$LIBS
 FFTW_LIBS=""
 LIBS="$LIBS -lrfftw -lfftw -lm"

@@ -2895,7 +2895,7 @@ generates a compound string"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringGenerate", "XmTextType");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XmStringGenerate", "XmStringTag");
   type = (XmTextType)XEN_TO_C_INT(arg3);
-  if ((type < 0) || (type > 1)) XEN_ASSERT_TYPE(0, arg3, 3, "XmStringGenerate", "XmTextType");
+  if (type > 1) XEN_ASSERT_TYPE(0, arg3, 3, "XmStringGenerate", "XmTextType");
   return(C_TO_XEN_XmString(XmStringGenerate((XtPointer)XEN_TO_C_STRING(arg1), 
 					    XEN_FALSE_P(arg2) ? NULL : XEN_TO_C_STRING(arg2), 
 					    type,
@@ -2937,7 +2937,7 @@ to a compound string table"
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg5) || XEN_XmParseTable_P(arg5), arg5, 5, "XmStringTableParseStringArray", "XmParseTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XmStringTableParseStringArray", "int");
   type = (XmTextType)XEN_TO_C_INT(arg4);
-  if ((type < 0) || (type > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringTableParseStringArray", "XmTextType");
+  if (type > 1) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringTableParseStringArray", "XmTextType");
   len = XEN_TO_C_INT(arg2);
   if (len <= 0) return(XEN_FALSE);
   strs = XEN_TO_C_Strings(arg1, len);
@@ -2976,9 +2976,9 @@ compound strings to an array of text"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XmStringTableUnparse", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg8), arg8, 8, "XmStringTableUnparse", "XmParseModel");
   type1 = (XmTextType)XEN_TO_C_INT(arg4);
-  if ((type1 < 0) || (type1 > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringTableUnparse", "XmTextType");
+  if (type1 > 1) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringTableUnparse", "XmTextType");
   type2 = (XmTextType)XEN_TO_C_INT(arg5);
-  if ((type2 < 0) || (type2 > 1)) XEN_ASSERT_TYPE(0, arg5, 5, "XmStringTableUnparse", "XmTextType");
+  if (type2 > 1) XEN_ASSERT_TYPE(0, arg5, 5, "XmStringTableUnparse", "XmTextType");
   len = XEN_TO_C_INT(arg2);
   if (len <= 0) return(XEN_FALSE);
   loc = xm_protect(lst);
@@ -3061,7 +3061,7 @@ XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a 
   XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg5), arg5, 5, "XmStringParseText", "XmParseTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XmStringParseText", "int");
   type = (XmTextType)XEN_TO_C_INT(arg4);
-  if ((type < 0) || (type > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringParseText", "XmTextType");
+  if (type > 1) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringParseText", "XmTextType");
   str = XEN_TO_C_STRING(arg1);
   if (XEN_INTEGER_P(arg2)) 
     {
@@ -3092,9 +3092,9 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unpars
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XmStringUnparse", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XmStringUnparse", "XmParseModel");
   type1 = (XmTextType)XEN_TO_C_INT(arg3);
-  if ((type1 < 0) || (type1 > 1)) XEN_ASSERT_TYPE(0, arg3, 3, "XmStringUnparse", "XmTextType");
+  if (type1 > 1) XEN_ASSERT_TYPE(0, arg3, 3, "XmStringUnparse", "XmTextType");
   type2 = (XmTextType)XEN_TO_C_INT(arg4);
-  if ((type2 < 0) || (type2 > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringUnparse", "XmTextType");
+  if (type2 > 1) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringUnparse", "XmTextType");
   len = XEN_TO_C_INT(arg6);
   if (XEN_XmParseTable_P(arg5)) pt = XEN_TO_C_XmParseTable(arg5, len);
   rtn = C_TO_XEN_STRING((const char *)XmStringUnparse(XEN_TO_C_XmString(arg1), 
@@ -3518,7 +3518,7 @@ loads a font or creates a font set and creates an accompanying font list entry"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmFontListEntryLoad", "XmFontType");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XmFontListEntryLoad", "char*");
   type = (XmFontType)XEN_TO_C_INT(arg3);
-  if ((type < 0) || (type > 1)) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryLoad", 3, arg3, "XmFontType");
+  if (type > 1) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryLoad", 3, arg3, "XmFontType");
   return(C_TO_XEN_XmFontListEntry(XmFontListEntryLoad(XEN_TO_C_Display(arg1),
 						      XEN_TO_C_STRING(arg2),
 						      type,
@@ -3595,7 +3595,7 @@ static XEN gxm_XmFontListEntryCreate_r(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg3) || XEN_XFontSet_P(arg3), arg3, 3, "XmFontListEntryCreate_r", "XFontSet or XFontStruct");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg4), arg4, 4, "XmFontListEntryCreate_r", "Widget");
   type = (XmFontType)XEN_TO_C_INT(arg2);
-  if ((type < 0) || (type > 1)) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryCreate_r", 2, arg2, "XmFontType");
+  if (type > 1) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryCreate_r", 2, arg2, "XmFontType");
   if (type == XmFONT_IS_FONTSET)
     gad = (XtPointer)XEN_TO_C_XFontSet(arg3);
   else gad = (XtPointer)XEN_TO_C_XFontStruct(arg3);
@@ -3616,7 +3616,7 @@ creates a font list entry"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmFontListEntryCreate", "XmFontType");
   XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg3) || XEN_XFontSet_P(arg3), arg3, 3, "XmFontListEntryCreate", "XFontSet or XFontStruct");
   type = (XmFontType)XEN_TO_C_INT(arg2);
-  if ((type < 0) || (type > 1)) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryCreate", 2, arg2, "XmFontType");
+  if (type > 1) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryCreate", 2, arg2, "XmFontType");
   if (type == XmFONT_IS_FONTSET)
     gad = (XtPointer)XEN_TO_C_XFontSet(arg3);
   else gad = (XtPointer)XEN_TO_C_XFontStruct(arg3);

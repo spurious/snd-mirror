@@ -1,150 +1,15 @@
 #include "snd.h"
+#include "vct.h"
 
 /* TODO: added-transform self-display option */
 
 /* handling of "beta" changed drastically 28-June-98 
- * it is now a number between 0 and 1 from ss point of view,
- * and is scaled by the window max before being applied 
- *
- * returned to old wavelet code 18-Apr-01, and finally wrote the snd-test.scm tests.
+ *   it is now a number between 0 and 1 from ss point of view, and is scaled by the window max before being applied 
+ * returned to old wavelet code 18-Apr-01
  * added fftw support and removed fht 6-June-02
+ * removed non-GSL Hankel case 7-June-02
+ * greatly simplified 8-June-02: no more cached windows, single fft background functions etc, zero pad made sensible
  */
-
-#if HAVE_FFTW
-  #define FFT_IN_BACKGROUND_SIZE 16384
-#else
-  #define FFT_IN_BACKGROUND_SIZE 1024
-#endif
-/* this fft size decides when to use a background process rather than a single fft call */
-
-#define NUM_CACHED_FFT_WINDOWS 8
-
-static Float beta_maxes[NUM_FFT_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-					    1.0, 1.0, 15.0, 10.0, 10.0, 10.0, 1.0, 18.0};
-
-typedef struct {
-  int type;
-  int inuse;
-  int size;
-  int pad_zero;
-  Float beta;
-  Float *window;
-} fft_window_state;
-
-typedef struct {
-  int n, nn, mmax, istep, m, i, size, wintype, old_style;
-  double wr, c, wi, s, angle;
-  int slice, inner, outer;
-  void *chan;
-  fft_window_state *wp;
-  Float *data;
-  Float *hwin;
-  Float beta;
-  int fw_slot, hwin_size, wavelet_choice, transform_type;
-  off_t beg, databeg, datalen;
-  off_t losamp;
-  int edit_ctr, dBing, lfreq;
-  int pad_zero;
-  Float cutoff;
-  snd_state *ss;
-} fft_state;
-
-#include "vct.h"
-
-typedef struct {
-  char *name, *xlabel;
-  Float lo, hi;
-  XEN proc;
-  int type;
-} added_transform;
-
-static added_transform **added_transforms = NULL;
-static int added_transforms_size = 0;
-static int added_transforms_top = 0;
-
-static added_transform *new_added_transform(void)
-{
-  int i;
-  if (added_transforms == NULL)
-    {
-      added_transforms_size = 4;
-      added_transforms = (added_transform **)CALLOC(added_transforms_size, sizeof(added_transform *));
-    }
-  else
-    {
-      if (added_transforms_top == added_transforms_size)
-	{
-	  added_transforms_size += 4;
-	  added_transforms = (added_transform **)REALLOC(added_transforms, added_transforms_size * sizeof(added_transform *));
-	  for (i = added_transforms_top; i < added_transforms_size; i++) added_transforms[i] = NULL;
-	}
-    }
-  added_transforms[added_transforms_top] = (added_transform *)CALLOC(1, sizeof(added_transform));
-  return(added_transforms[added_transforms_top++]);
-}
-
-static int add_transform(char *name, char *xlabel, Float lo, Float hi, XEN proc)
-{
-  added_transform *af;
-  snd_protect(proc);
-  af = new_added_transform();
-  af->name = copy_string(name);
-  af->xlabel = copy_string(xlabel);
-  af->lo = lo;
-  af->hi = hi;
-  af->proc = proc;
-  af->type = add_transform_to_list(name);
-  return(af->type);
-}
-
-char *added_transform_name(int type)
-{
-  int i;
-  for (i = 0; i < added_transforms_top; i++)
-    if (added_transforms[i]->type == type)
-      return(added_transforms[i]->name);
-  return("unknown");
-}
-
-static char *added_transform_xlabel(int type)
-{
-  int i;
-  for (i = 0; i < added_transforms_top; i++)
-    if (added_transforms[i]->type == type)
-      return(added_transforms[i]->xlabel);
-  return("unknown");
-}
-
-static Float added_transform_lo(int type)
-{
-  int i;
-  for (i = 0; i < added_transforms_top; i++)
-    if (added_transforms[i]->type == type)
-      return(added_transforms[i]->lo);
-  return(0.0);
-}
-
-static Float added_transform_hi(int type)
-{
-  int i;
-  for (i = 0; i < added_transforms_top; i++)
-    if (added_transforms[i]->type == type)
-      return(added_transforms[i]->hi);
-  return(1.0);
-}
-
-static XEN added_transform_proc(int type)
-{
-  int i;
-  for (i = 0; i < added_transforms_top; i++)
-    if (added_transforms[i]->type == type)
-      return(added_transforms[i]->proc);
-  return(XEN_FALSE);
-}
-
-static XEN before_transform_hook;
-static fft_window_state *fft_windows[NUM_CACHED_FFT_WINDOWS];
-
 
 /* -------------------------------- HANKEL TRANSFORM -------------------------------- */
 
@@ -302,108 +167,6 @@ static void hankel_transform(int size, Float *input, Float *output, Float Jn)
       FREE(out1);
     }
   /* gsl_dht_free(t); */
-}
-
-#else
-/*
- * Abel transform followed by fft
- *
- * taken (with modifications) from cwplib abel.c and hankel.c by
- *   Dave Hale and Lydia Deng, Colorado School of Mines, 06/01/90 
- *   that code: Copyright (c) Colorado School of Mines, 1995. All rights reserved.
- * 
- * Original reference:
- *   Hansen, E. W., 1985, Fast Hankel transform algorithm:  IEEE Trans. on
- *   Acoustics, Speech and Signal Processing, v. ASSP-33, n. 3, p. 666-671.
- */
-
-#define NSE 9
-static Float h[NSE] = {1.000000000000000000, 0.610926299405048390, 0.895089852938535935, 1.34082948787002865, 2.02532848558443890,
-		       3.18110895533701843, 5.90898360396353794, 77.6000213494180286, 528.221800846070892};    
-static Float lambda[NSE] = {0.000000000000000000, -2.08424632126539366, -5.78928630565552371, -14.6268676854951032,
-			    -35.0617158334443104, -83.3258406398958158, -210.358805421311445, -6673.64911325382036, -34897.7050244132261};
-
-typedef struct abeltStruct {int n; Float **a, **b0, **b1;} abelt;
-static abelt *atdat = NULL;
-
-static void make_abel_transformer(int n)
-{
-  int i, j, nse = NSE;
-  Float **a, **b0, **b1, fi, hj, lambdaj, scale, temp;
-  if ((!atdat) || (atdat->n != n))
-    {
-      if (atdat) 
-	{
-	  for (i = 0; i < atdat->n; i++) 
-	    {
-	      FREE(atdat->a[i]); 
-	      FREE(atdat->b0[i]); 
-	      FREE(atdat->b1[i]);
-	    } 
-	  FREE(atdat->a);
-	  FREE(atdat->b0);
-	  FREE(atdat->b1);
-	}
-      else atdat = (abelt *)CALLOC(1, sizeof(abelt));
-      a = (Float **)MALLOC(n * sizeof(Float *));
-      b0 = (Float **)MALLOC(n * sizeof(Float *));
-      b1 = (Float **)MALLOC(n * sizeof(Float *));
-      for (i = 0; i < n; i++) 
-	{
-	  a[i] = (Float *)MALLOC(nse * sizeof(Float));
-	  b0[i] = (Float *)MALLOC(nse * sizeof(Float));
-	  b1[i] = (Float *)MALLOC(nse * sizeof(Float));
-	}
-      for (i = 1; i < n; ++i) 
-	{
-	  fi = (Float)i + 1.0;
-	  for (j = 0; j < nse; ++j) 
-	    {
-	      hj = h[j];
-	      lambdaj = lambda[j];
-	      a[i][j] = temp = pow(fi / (fi - 1.0), lambdaj);
-	      temp *= fi / (fi - 1.0);
-	      scale = 2.0 * hj * (fi - 1.0) / ((lambdaj + 1.0) * (lambdaj + 2.0));				
-	      b0[i][j] = scale * (fi - 1.0 + (lambdaj + 2.0 - fi) * temp);
-	      b1[i][j] = -scale * (lambdaj + 1.0 + fi - fi * temp);
-	    }
-	}
-      atdat->n = n;
-      atdat->a = a;
-      atdat->b0 = b0;
-      atdat->b1 = b1;
-    }
-}
-
-static void abel (Float *f, Float *g)
-{
-  int i, j, n, nse = NSE;
-  Float **a, **b0, **b1, xi[NSE], sum, fi, fip1;
-  n = atdat->n;
-  a = atdat->a;
-  b0 = atdat->b0;
-  b1 = atdat->b1;
-  fi = f[n - 1];
-  g[0] = 0.5 * f[0] + fi;
-  for (j = 0, sum = 0.0; j < nse; ++j)
-    {
-      xi[j] = b1[n - 1][j] * fi;
-      sum += xi[j];
-    }
-  g[n-1] = sum;
-  for (i = n-2; i > 0; --i) 
-    {
-      fip1 = fi;
-      fi = f[i];
-      g[0] += fi;
-      for (j = 0, sum = 0.0; j < nse; ++j) 
-	{
-	  xi[j] = a[i][j] * xi[j] + b0[i][j] * fip1 + b1[i][j] * fi;
-	  sum += xi[j];
-	}
-      g[i] = sum;
-    }
-  g[0] *= 2.0;
 }
 #endif
 
@@ -762,7 +525,7 @@ static void cepstrum(Float *data, int n)
  * Implementation by C.C.Gumas 1/13/93 (slightly reformatted by bil for snd 30-Jan-99)
  */
 
-static void fast_hwt_first_stage (int local_half_size, Float *out, Float *in) 
+static void fast_hwt_first_stage(int local_half_size, Float *out, Float *in) 
 {
   Float tmp0, tmp1;
   int k, j, i;
@@ -775,7 +538,7 @@ static void fast_hwt_first_stage (int local_half_size, Float *out, Float *in)
     }
 }
 
-static void fast_hwt_stage (int n, int local_size, int local_half_size, Float *out, Float *in) 
+static void fast_hwt_stage(int n, int local_size, int local_half_size, Float *out, Float *in) 
 {
   Float tmp0, tmp1;
   int k, j, i;
@@ -808,7 +571,7 @@ static void fast_hwt_stage (int n, int local_size, int local_half_size, Float *o
     }
 }
 
-static void fast_hwt (Float *out, Float *in, int n)
+static void fast_hwt(Float *out, Float *in, int n)
 {
   int size;
   int need_to_switch_on_output = 0;
@@ -818,15 +581,6 @@ static void fast_hwt (Float *out, Float *in, int n)
   if (need_to_switch_on_output) memcpy (out, in, size * sizeof(in[0])); 
 }
 
-
-
-/* -------------------------------- FFT DATA WINDOW -------------------------------- */
-
-int make_fft_window_1(Float *window, int size, int type, Float pre_beta)
-{
-  mus_make_fft_window_with_window(type, size, pre_beta * beta_maxes[type], window);
-  return(1);
-}
 
 static int compare_peaks(const void *pk1, const void *pk2)
 {
@@ -990,314 +744,103 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
   return(k);
 }
 
+static Float beta_maxes[NUM_FFT_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+					    1.0, 1.0, 15.0, 10.0, 10.0, 10.0, 1.0, 18.0};
+Float fft_beta_max(int win) {return(beta_maxes[win]);}
 
-static int scramble_fft_state(fft_state *fs)
-{
-  int i, j, m;
-  Float vr;
-  Float *data;
-  data = fs->data;
-  if (!data) 
-    {
-      snd_error("no fft data!"); 
-      return(-1); /* i.e. give up */
-    }
-  fs->n = (fs->nn * 2);
-  j = 1;
-  for (i = 1; i < fs->n; i += 2) 
-    {
-      if (j > i) 
-	{
-	  vr = data[j];
-	  data[j] = data[i];
-	  data[i] = vr;
-	  vr = data[j + 1];
-	  data[j + 1] = data[i + 1];
-	  data[i + 1] = vr;
-	}
-      m = fs->n >> 1;
-      while (m >= 2 && j > m) 
-	{
-	  j -= m;
-	  m >>= 1;
-	}
-      j += m;
-    }
-  fs->mmax = 2;
-  fs->outer = 1;
-  return(1);
-}
+typedef struct {
+  char *name, *xlabel;
+  Float lo, hi;
+  XEN proc;
+  int type;
+} added_transform;
 
-static int snd_fft(fft_state *fs)
-{
-  /* this (re-entrant) fft seemed like a good idea back in the days of the old 24 MHz NeXTs, but now... */
-  double wtemp;
-  Float vr, vi;
-  Float *data;
-  int k, j;
-  data = fs->data;
-  if (fs->n == fs->mmax) return(1);
-  if (fs->outer)
-    {
-      fs->outer = 0;
-      fs->istep = 2 * fs->mmax;
-      fs->angle = 6.28318530717959 / fs->mmax;
-      wtemp = sin(0.5 * fs->angle);
-      fs->c = -2.0 * wtemp * wtemp;
-      fs->s = sin(fs->angle);
-      fs->wr = 1.0;
-      fs->wi = 0.0;
-      fs->m = 1;
-      fs->inner = 1;
-    }
-  if (fs->inner)
-    {
-      fs->i = fs->m;
-      fs->inner = 0;
-    }
-  k = 0;
-LOOP:
-  j = fs->i + fs->mmax;
-  vr = fs->wr * data[j] - fs->wi * data[j + 1];
-  vi = fs->wr * data[j + 1] + fs->wi * data[j];
-  data[j] = data[fs->i] - vr;
-  data[j + 1] = data[fs->i + 1] - vi;
-  data[fs->i] += vr;
-  data[fs->i + 1] += vi;
-  k++;
-  fs->i += fs->istep;
-  if (fs->i > fs->n)
-    {
-      fs->inner = 1;
-      fs->wr = (wtemp = fs->wr) * fs->c - fs->wi * fs->s + fs->wr;
-      fs->wi = fs->wi * fs->c + wtemp * fs->s + fs->wi;
-      fs->m += 2;
-      if (fs->m >= fs->mmax)
-	{
-	  fs->outer = 1;
-	  fs->mmax = fs->istep;
-	}
-    }
-  else 
-    if (k < 100) goto LOOP;
-  return(0);
-}
+static added_transform **added_transforms = NULL;
+static int added_transforms_size = 0;
+static int added_transforms_top = 0;
 
-static int snd_fft_cleanup(fft_state *fs)
+static added_transform *new_added_transform(void)
 {
-  double wtemp;
-  int n2p3, i, i1, i2, i3, i4;
-  Float h1r, h1i, h2r, h2i;
-  Float *data;
-  data = fs->data;
-  fs->angle = 3.141592653589793 / ((double)fs->nn);
-  wtemp = sin(0.5 * fs->angle);
-  fs->c = -2.0 * wtemp * wtemp;
-  fs->s = sin(fs->angle);
-  fs->wr = 1.0 + fs->c;
-  fs->wi = fs->s;
-  n2p3 = 2 * fs->nn + 3;
-  for (i = 2; i <= (fs->nn / 2); i++) 
+  int i;
+  if (added_transforms == NULL)
     {
-      i1 = i + i - 1;
-      i2 = i1 + 1;
-      i3 = n2p3 - i2;
-      i4 = 1 + i3;
-      h1r = 0.5 * (data[i1] + data[i3]);
-      h1i = 0.5 * (data[i2] - data[i4]);
-      h2r = 0.5 * (data[i2] + data[i4]);
-      h2i = (-0.5) * (data[i1] - data[i3]);
-      data[i1] = h1r + fs->wr * h2r - fs->wi * h2i;
-      data[i2] = h1i + fs->wr * h2i + fs->wi * h2r;
-      data[i3] = h1r - fs->wr * h2r + fs->wi * h2i;
-      data[i4] = -h1i + fs->wr * h2i + fs->wi * h2r;
-      fs->wr = (wtemp = fs->wr) * fs->c - fs->wi * fs->s + fs->wr;
-      fs->wi = fs->wi * fs->c + wtemp * fs->s + fs->wi;
-    }
-  h1r = data[1];
-  data[1] = h1r + data[2];
-  data[2] = h1r - data[2];
-  return(1);
-}
-
-static int snd_fft_to_spectrum (fft_state *fs)
-{
-  int i, j;
-  Float val = 0.0;
-  Float *fft_data;
-  fft_data = fs->data;
-  if (fs->transform_type == HANKEL) /* we only get here if not HAVE_GSL */
-    {
-      for (j = 0; j < fs->size; j += 2)
-	{
-	  if (fft_data[j] > val) 
-	    val = fft_data[j];
-	  else
-	    if ((-fft_data[j]) > val)
-	      val = (-fft_data[j]);
-	}
-      for (i = 0, j = 0; i < fs->size; j++, i += 2)
-	fft_data[j] = fft_data[i] * val;
+      added_transforms_size = 4;
+      added_transforms = (added_transform **)CALLOC(added_transforms_size, sizeof(added_transform *));
     }
   else
     {
-      if (fft_data[1] < 0.0001) fft_data[0] = 0.0; else fft_data[0] = fft_data[1];
-      if (fft_data[2] < 0.0001) fft_data[fs->size - 1] = 0.0; else fft_data[fs->size - 1] = fft_data[2];
-      for (i = 3, j = 1; i < fs->size - 3; i += 2, j++)
-	fft_data[j] = hypot(fft_data[i], fft_data[i + 1]);
-      /* if fft_data[i] == 0 pi/2 else atan2(fft_data[i], fft_data[i + 1]) */
-    }
-  return(1);
-}
-
-static int make_fft_window(fft_state *fs)
-{
-  /* build fft window, taking int->Float transition into account */
-  fft_window_state *wp;
-  int toploc;
-  switch (fs->transform_type)
-    {
-    case FOURIER:
-      wp = (fft_window_state *)(fs->wp);
-      if (fs->pad_zero == 0)
-	toploc = fs->size;
-      else toploc = snd_ipow2((int)floor(log(fs->size / (1 + fs->pad_zero)) / log(2.0)));
-      return(make_fft_window_1(wp->window, toploc, wp->type, wp->beta));
-      break;
-    case HANKEL: 
-      if (fs->size != fs->hwin_size)
+      if (added_transforms_top == added_transforms_size)
 	{
-	  fs->hwin_size = fs->size;
-	  if (fs->hwin) FREE(fs->hwin);
-	  fs->hwin = (Float *)CALLOC(fs->size, sizeof(Float));
-	}
-      break;
-    }
-  return(1);
-}
-
-static void free_fft_window(int i)
-{
-  if (fft_windows[i])
-    {
-      if (((fft_window_state *)fft_windows[i])->window) 
-	FREE(((fft_window_state *)fft_windows[i])->window);
-      FREE(fft_windows[i]);
-      fft_windows[i] = NULL;
-    }
-}
-
-static fft_state *free_fft_state(fft_state *fs)
-{
-  if (fs) 
-    {
-      if (fs->fw_slot == -1) FREE(fs->wp); /* free window only if it's not in the cache */
-      if (fs->hwin) FREE(fs->hwin);
-      FREE(fs); 
-    }
-  return(NULL);
-}
-
-static void decrement_fft_window_use(fft_state *fs)
-{
-  if (fs->fw_slot != -1)
-    fft_windows[fs->fw_slot]->inuse--;
-}
-
-static int set_up_fft_window(fft_state *fs)
-{
-  int i, empty, ok, unused;
-  fft_window_state *wp;
-  if (fs->transform_type != FOURIER) return(1);
-  /* first look to see if it already exists */
-  empty = -1;
-  ok = -1;
-  unused = -1;
-  for (i = 0; i < NUM_CACHED_FFT_WINDOWS; i++)
-    {
-      wp = fft_windows[i];
-      if (!wp) 
-	{
-	  if (empty == -1) empty = i;
-	}
-      else
-	{
-	  if (!wp->inuse) unused = i;
-	  if (wp->size == fs->size) 
-	    {
-
-	      if ((wp->type == fs->wintype) && 
-		  (wp->beta == fs->beta) && 
-		  (wp->pad_zero == fs->pad_zero))
-		{
-		  fs->wp = wp;
-		  fs->fw_slot = i;
-		  wp->inuse++;
-		  return(2);  /* skip making window */
-		}
-	      if (ok == -1) ok = i;
-	    }
+	  added_transforms_size += 4;
+	  added_transforms = (added_transform **)REALLOC(added_transforms, added_transforms_size * sizeof(added_transform *));
+	  for (i = added_transforms_top; i < added_transforms_size; i++) added_transforms[i] = NULL;
 	}
     }
-  if (empty == -1) empty = ok;
-  if (empty == -1) empty = unused;
-  if (empty == -1) 
-    {
-      wp = (fft_window_state *)CALLOC(1, sizeof(fft_window_state));
-      fs->fw_slot = -1;
-    }
-  else
-    {
-      if (empty == unused) free_fft_window(empty);
-      if (!fft_windows[empty])
-	{
-	  fft_windows[empty] = (fft_window_state *)CALLOC(1, sizeof(fft_window_state));
-	}
-      wp = fft_windows[empty];
-      fs->fw_slot = empty;
-    }
-  fs->wp = wp;
-  wp->size = fs->size;
-  wp->pad_zero = fs->pad_zero;
-  wp->type = fs->wintype;
-  wp->beta = fs->beta;
-  wp->inuse++;
-  if (!wp->window) wp->window = (Float *)CALLOC(fs->size, sizeof(Float));
-  return(1);
+  added_transforms[added_transforms_top] = (added_transform *)CALLOC(1, sizeof(added_transform));
+  return(added_transforms[added_transforms_top++]);
 }
 
- 
-/*-------------------------------- FFT_INFO -------------------------------- */
-
-static fft_info *make_fft_info(int size, int window, Float beta)
+static int add_transform(char *name, char *xlabel, Float lo, Float hi, XEN proc)
 {
-  fft_info *fp;
-  fp = (fft_info *)CALLOC(1, sizeof(fft_info));
-  fp->size = size;
-  fp->window = window;
-  fp->beta = beta;
-  fp->ok = 1;
-  fp->data = (Float *)CALLOC(size + 1, sizeof(Float)); /*  + 1 for complex storage or starts at 1 or something */
-  return(fp);
+  added_transform *af;
+  snd_protect(proc);
+  af = new_added_transform();
+  af->name = copy_string(name);
+  af->xlabel = copy_string(xlabel);
+  af->lo = lo;
+  af->hi = hi;
+  af->proc = proc;
+  af->type = add_transform_to_list(name);
+  return(af->type);
 }
 
-fft_info *free_fft_info(fft_info *fp)
+char *added_transform_name(int type)
 {
-  fp->chan = NULL;
-  if (fp->data) FREE(fp->data);
-  if (fp->axis) free_axis_info(fp->axis);
-  FREE(fp);
-  return(NULL);
+  int i;
+  for (i = 0; i < added_transforms_top; i++)
+    if (added_transforms[i]->type == type)
+      return(added_transforms[i]->name);
+  return("unknown");
 }
 
+static char *added_transform_xlabel(int type)
+{
+  int i;
+  for (i = 0; i < added_transforms_top; i++)
+    if (added_transforms[i]->type == type)
+      return(added_transforms[i]->xlabel);
+  return("unknown");
+}
 
+static Float added_transform_lo(int type)
+{
+  int i;
+  for (i = 0; i < added_transforms_top; i++)
+    if (added_transforms[i]->type == type)
+      return(added_transforms[i]->lo);
+  return(0.0);
+}
 
-/* -------------------------------- FFT_WINDOW_STATE, FFT_STATE -------------------------------- 
- *
- * FFT as work proc, using the "realft" version, and splitting out as many steps as possible.
- * the basic fft here is taken from Xavier Serra's SMS program (CLM's is based on two 0-based arrays,
- * which in this case is not so useful).  Number of splits depends on the FFT size.
- */
+static Float added_transform_hi(int type)
+{
+  int i;
+  for (i = 0; i < added_transforms_top; i++)
+    if (added_transforms[i]->type == type)
+      return(added_transforms[i]->hi);
+  return(1.0);
+}
+
+static XEN added_transform_proc(int type)
+{
+  int i;
+  for (i = 0; i < added_transforms_top; i++)
+    if (added_transforms[i]->type == type)
+      return(added_transforms[i]->proc);
+  return(XEN_FALSE);
+}
+
+static XEN before_transform_hook;
+
 
 static char *spectro_xlabel(chan_info *cp)
 {
@@ -1319,33 +862,6 @@ static char *spectro_xlabel(chan_info *cp)
     default:              return(added_transform_xlabel(cp->transform_type)); break;
     }
   return(NULL);
-}
-
-static int snd_fft_set_up(fft_state *fs)
-{
-  /* allocate arrays if needed */
-  fft_info *fp;
-  chan_info *cp;
-  cp = (chan_info *)(fs->chan);
-  fp = cp->fft;
-  if (!fp)                              /* associated channel hasn't done any ffts yet, so there's no struct */
-    {
-      cp->fft = make_fft_info(fs->size, fs->wintype, 0.0);
-      fp = cp->fft;
-    }
-  else
-    {
-      if ((!fp->ok) || (!fp->data) || (fs->size > fp->size))
-	{
-	  fp->size = fs->size;
-	  if (fp->data) FREE(fp->data);
-	  fp->data = (Float *)CALLOC(fp->size + 1, sizeof(Float));
-	  fp->ok = 1;
-	}
-    }
-  fp->current_size = fs->size; /* protect against parallel size change via fft size menu */
-  fs->data = fp->data;
-  return(1);
 }
 
 static void make_sonogram_axes(chan_info *cp)
@@ -1406,39 +922,44 @@ static void make_sonogram_axes(chan_info *cp)
 				    fp->axis);
 	}
       else 
-	{
-	  xlabel = STR_time;
-	  fp->axis = make_axis_info(cp,
-				    ap->x0, ap->x1,
-				    min_freq, max_freq,
-				    xlabel,
-				    ap->x0, ap->x1,
-				    min_freq, max_freq,
-				    fp->axis);
-	}
+	fp->axis = make_axis_info(cp,
+				  ap->x0, ap->x1,
+				  min_freq, max_freq,
+				  STR_time,
+				  ap->x0, ap->x1,
+				  min_freq, max_freq,
+				  fp->axis);
     }
 }
 
-static int apply_fft_window(fft_state *fs)
+typedef struct {
+  int size, wintype, old_style, done;
+  void *chan;
+  Float *window;
+  Float *data;
+  Float beta;
+  int wavelet_choice, transform_type;
+  off_t beg, databeg, datalen;
+  off_t losamp;
+  int edit_ctr, dBing, lfreq;
+  int pad_zero;
+  Float cutoff;
+  snd_state *ss;
+} fft_state;
+
+static void apply_fft(fft_state *fs)
 {
-  /* apply the window, reading data if necessary, resetting IO blocks to former state */
-  int i, j, result = 5;
+  int i, j;
   off_t ind0;
   Float *window, *fft_data;
   int data_len;
-  int pad = 0;
   snd_fd *sf;
   chan_info *cp;
   snd_state *ss;
-  Float scaler;
   ss = fs->ss;
   cp = (chan_info *)(fs->chan);
   fft_data = fs->data;
-  
-  if (cp->transform_type == FOURIER) pad = fs->pad_zero;
-  if (pad == 0)
-    data_len = fs->size;
-  else data_len = snd_ipow2((int)floor(log(fs->size / (1 + pad)) / log(2.0)));
+  data_len = cp->transform_size;
   if ((show_selection_transform(ss)) && 
       (selection_is_active_in_channel(cp)) && 
       (fs->datalen > 0))
@@ -1463,57 +984,42 @@ static int apply_fft_window(fft_state *fs)
 	ind0 = (cp->axis)->losamp + fs->beg;
     }
   sf = init_sample_read(ind0, cp, READ_FORWARD);
-  if (sf == NULL) return(-1); /* error exit indication below */
+  if (sf == NULL) return;
   switch (cp->transform_type)
     {
     case FOURIER:
-      window = (Float *)((fft_window_state *)(fs->wp))->window;
-#if HAVE_FFTW
-      if (fs->size <= FFT_IN_BACKGROUND_SIZE)
-	{
-	  for (i = 0; i < data_len; i++)
-	    fft_data[i] = window[i] * read_sample_to_float(sf);
-	}
-      else
-#endif
-	{
-	  fft_data[0] = 0.0;
-	  for (i = 1; i < data_len; i++)  /* 22-Nov-00 was starting at 0, but I think XJS's version of the fft is 1-based */
-	    fft_data[i] = window[i - 1] * read_sample_to_float(sf);
-	}
+      window = fs->window;
+      for (i = 0; i < data_len; i++)
+	fft_data[i] = window[i] * read_sample_to_float(sf);
       if (data_len < fs->size) 
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
-      decrement_fft_window_use(fs);
-      result = 1;
 #if HAVE_FFTW
-      if (fs->size <= FFT_IN_BACKGROUND_SIZE)
-	{
-	  mus_fftw(fft_data, fs->size, 1);
-	  scaler = 2.0 / (Float)(fs->size);
-	  fft_data[0] = fabs(scaler * fft_data[0]);
-	  fft_data[fs->size / 2] = fabs(scaler * fft_data[fs->size / 2]);
-	  for (i = 1, j = fs->size - 1; i < fs->size / 2; i++, j--) 
-	    fft_data[i] = scaler * hypot(fft_data[i], fft_data[j]);
-	  result = 5;
-	}
+      mus_fftw(fft_data, fs->size, 1);
+      fft_data[0] = fabs(fft_data[0]);
+      fft_data[fs->size / 2] = fabs(fft_data[fs->size / 2]);
+      for (i = 1, j = fs->size - 1; i < fs->size / 2; i++, j--) 
+	fft_data[i] = hypot(fft_data[i], fft_data[j]);
+#else
+      {
+	Float *idata;
+	idata = (Float *)CALLOC(fs->size, sizeof(Float));
+	mus_fft(fft_data, idata, fs->size, 1);
+	for (i = 0; i < fs->size; i++) 
+	  fft_data[i] = hypot(fft_data[i], idata[i]);
+	FREE(idata);
+      }
 #endif
       break;
     case HANKEL:
-      for (i = 0; i < data_len; i++) fs->hwin[i] = read_sample_to_float(sf);
-      if (data_len < fs->size) 
-	for (i = data_len; i < fs->size; i++) 
-	  fs->hwin[i] = 0.0;
 #if HAVE_GSL
-      hankel_transform(data_len, fs->hwin, fft_data, hankel_jn(ss));
-      result = 5;
-#else
-      make_abel_transformer(data_len);
-      abel(fs->hwin, fft_data);
-      result = 1;
-#endif
-#if DEBUGGING
-      if ((fs->slice + result) > 8) abort();
+      {
+	Float *hwin;
+	hwin = (Float *)CALLOC(fs->size, sizeof(Float));
+	for (i = 0; i < data_len; i++) hwin[i] = read_sample_to_float(sf);
+	hankel_transform(data_len, hwin, fft_data, hankel_jn(ss));
+	FREE(hwin);
+      }
 #endif
       break;
     case WAVELET:
@@ -1590,17 +1096,16 @@ static int apply_fft_window(fft_state *fs)
 	    for (i = 0; i < len; i++) fft_data[i] = v->data[i];
 	  }
 	snd_unprotect(res);
-	free_snd_fd_almost(sf);
 	snd_unprotect(sfd);
-	return(result);
+	free_snd_fd_almost(sf);
+	return;
       }
       break;
     }
   free_snd_fd(sf);
-  return(result);
 }
 
-static int display_snd_fft(fft_state *fs)
+static void display_fft(fft_state *fs)
 {
   fft_info *fp;
   chan_info *cp;
@@ -1614,11 +1119,11 @@ static int display_snd_fft(fft_state *fs)
   int i, j, lo, hi;
 
   cp = (chan_info *)(fs->chan);
-  if ((cp == NULL) || (cp->active == 0)) return(-1);
+  if ((cp == NULL) || (cp->active == 0)) return;
   fp = cp->fft;
-  if (fp == NULL) return(-1); /* can happen if selection transform set, but no selection */
+  if (fp == NULL) return; /* can happen if selection transform set, but no selection */
   data = fp->data;
-  if (data == NULL) return(-1);
+  if (data == NULL) return;
   sp = cp->sound;
   if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
     {
@@ -1770,19 +1275,26 @@ static int display_snd_fft(fft_state *fs)
 				min_val, max_val,
 				fp->axis);
     }
-  return(-1);
+}
+
+static fft_state *free_fft_state(fft_state *fs)
+{
+  if (fs) 
+    {
+      if (fs->window) {FREE(fs->window); fs->window = NULL;}
+      FREE(fs); 
+    }
+  return(NULL);
 }
 
 int fft_window_beta_in_use(int win) {return(win >= MUS_KAISER_WINDOW);}
 
-void *make_fft_state(chan_info *cp, int simple)
+static fft_state *make_fft_state(chan_info *cp, int simple)
 {
-  /* in simple fft case, (snd-xchn.c) calls this and passes it to fft_in_slices */
-  /* we can cause the current fft to be re-used by setting slice to 8 */
   fft_state *fs = NULL;
   snd_state *ss;
   axis_info *ap;
-  int reuse_old = 0, fftsize;
+  int reuse_old = FALSE, fftsize;
   off_t dbeg = 0, dlen = 0;
   ss = cp->state;
   ap = cp->axis;
@@ -1794,7 +1306,7 @@ void *make_fft_state(chan_info *cp, int simple)
       dbeg = selection_beg(cp);
       dlen = selection_len();
       /* these need to be handled at the same time, and not re-examined until the next call */
-      /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft_window, selection_len() can change */
+      /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft, selection_len() can change */
       fftsize = snd_2pow2(dlen * (1 + cp->zero_pad));
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = fftsize;
@@ -1807,7 +1319,6 @@ void *make_fft_state(chan_info *cp, int simple)
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = 0;
     }
-
   if ((simple) && (cp->fft_data) && (cp->selection_transform_size == 0))
     {
       fs = (fft_state *)(cp->fft_data);
@@ -1824,17 +1335,12 @@ void *make_fft_state(chan_info *cp, int simple)
 	  (fs->old_style == cp->transform_graph_type) &&
 	  (fs->wavelet_choice == cp->wavelet_type) &&
 	  (fs->edit_ctr == cp->edit_ctr))
-	reuse_old = 1;
+	reuse_old = TRUE;
     }
-  if (reuse_old)
-    {
-      fs->slice = 8;
-    }
-  else
+  if (!reuse_old)
     {
       if (cp->fft_data) cp->fft_data = free_fft_state((fft_state *)(cp->fft_data));
       fs = (fft_state *)CALLOC(1, sizeof(fft_state));
-      fs->slice = 0;
       fs->chan = cp;
       fs->cutoff = cp->spectro_cutoff;
       fs->size = fftsize;
@@ -1842,98 +1348,105 @@ void *make_fft_state(chan_info *cp, int simple)
       fs->wintype = cp->fft_window;
       fs->dBing = cp->fft_log_magnitude;
       fs->lfreq = cp->fft_log_frequency;
-      fs->wp = NULL;
+      fs->window = NULL;
       fs->losamp = ap->losamp;
       fs->edit_ctr = cp->edit_ctr;
       fs->ss = ss;
-      fs->hwin_size = 0;
-      fs->hwin = NULL;
       fs->wavelet_choice = cp->wavelet_type;
       fs->transform_type = cp->transform_type;
       fs->old_style = cp->transform_graph_type;
       fs->beta = cp->fft_window_beta;
     }
-  fs->nn = fs->size / 2;
+  fs->done = reuse_old;
   fs->beg = 0;
   fs->databeg = dbeg;
   fs->datalen = dlen;
   if (simple) cp->fft_data = fs; else cp->fft_data = NULL;
-  return((void *)fs);
+  return(fs);
 }
 
-static BACKGROUND_TYPE fft_in_slices(void *fftData)
+static int last_size = 0, last_wintype = -1, last_zero = 0;
+static Float last_beta = 0.0;
+static Float *last_window = NULL;
+
+static fft_info *make_fft_info(int size, int window, Float beta)
 {
-  /* return true when done */
-  /* slices are: 
-   *    create arrays if needed
-   *    window/load data
-   *    scramble 
-   *    step n times through the fft (100 to 200 per iteration) -- wait for  + 1 here
-   *    return true 
-   *
-   * since we can be running multiple FFTs at once, not to mention other work procedures,
-   * all FFT state needs to be in clientData.
-   * 
-   * Each slice function returns 0 => call me again, 1 => go to next slice, -1 => quit work proc altogether
-   */
-  fft_state *fs;
-  int res = 0;
-  fs = (fft_state *)fftData;
-#if DEBUGGING
-      if (fs->slice > 8) abort();
-#endif
-  switch (fs->slice)
-    {
-    case 0: res = snd_fft_set_up(fs);            break;
-    case 1: res = set_up_fft_window(fs);         break;
-    case 2: res = make_fft_window(fs);           break;
-    case 3: res = apply_fft_window(fs);          break; /* in most non-Fourier cases this returns 5 causing us to skip to display_snd_fft */
-    case 4: res = scramble_fft_state(fs);        break;
-    case 5: res = snd_fft(fs);                   break;
-    case 6: res = snd_fft_cleanup(fs);           break;
-    case 7: res = snd_fft_to_spectrum(fs);       break;
-    case 8: res = display_snd_fft(fs);           break;
-    default: 
-      snd_error("impossible fft slice! %d", fs->slice); 
-#if DEBUGGING
-      abort();
-#endif
-      return(BACKGROUND_QUIT);
-      break;
-    }
-  if (res == -1) 
-    {
-      return(BACKGROUND_QUIT);
-    }
-  fs->slice += res;
-#if DEBUGGING
-  if (fs->slice > 8) abort();
-#endif
-  return(BACKGROUND_CONTINUE);
+  fft_info *fp;
+  fp = (fft_info *)CALLOC(1, sizeof(fft_info));
+  fp->size = size;
+  fp->window = window;
+  fp->beta = beta;
+  fp->ok = 1;
+  fp->data = (Float *)CALLOC(size + 1, sizeof(Float)); /*  + 1 for complex storage or starts at 1 or something */
+  return(fp);
 }
 
-BACKGROUND_TYPE safe_fft_in_slices(void *fftData)
+fft_info *free_fft_info(fft_info *fp)
 {
-  BACKGROUND_TYPE res;
-  chan_info *cp;
-  snd_info *sp;
-  snd_state *ss;
-  fft_state *fs;
-  fs = (fft_state *)fftData;
-  cp = (chan_info *)(fs->chan);
-  if (!(cp->graph_transform_p)) return(BACKGROUND_QUIT);
-  if (cp->transform_size < 2) return(BACKGROUND_QUIT);
-  res = fft_in_slices(fftData);
-  if (res == BACKGROUND_QUIT)
+  fp->chan = NULL;
+  if (fp->data) FREE(fp->data);
+  if (fp->axis) free_axis_info(fp->axis);
+  FREE(fp);
+  return(NULL);
+}
+
+static void one_fft(fft_state *fs)
+{
+  if (!fs->done)
     {
-      ss = cp->state;
-      sp = cp->sound;
-      set_chan_fft_in_progress(cp, 0);
-      if (cp->transform_size >= 65536) finish_progress_report(sp, NOT_FROM_ENVED);
-      display_channel_fft_data(cp, sp, ss);
-      enved_fft_update();
+      /* allocate arrays if needed */
+      fft_info *fp;
+      chan_info *cp;
+      cp = (chan_info *)(fs->chan);
+      fp = cp->fft;
+      if (!fp)                              /* associated channel hasn't done any ffts yet, so there's no struct */
+	{
+	  cp->fft = make_fft_info(fs->size, fs->wintype, 0.0);
+	  fp = cp->fft;
+	}
+      else
+	{
+	  if ((!fp->ok) || (!fp->data) || (fs->size > fp->size))
+	    {
+	      fp->size = fs->size;
+	      if (fp->data) FREE(fp->data);
+	      fp->data = (Float *)CALLOC(fp->size + 1, sizeof(Float));
+	      fp->ok = 1;
+	    }
+	}
+      fp->current_size = fs->size; /* protect against parallel size change via fft size menu */
+      fs->data = fp->data;
+      if (fs->window == NULL)
+	{
+	  fs->window = (Float *)CALLOC(fs->size, sizeof(Float));
+	  if ((fs->wintype != last_wintype) ||
+	      (fs->size != last_size) ||
+	      (fs->beta != last_beta) ||
+	      (fs->pad_zero != last_zero))
+	    {
+	      if (last_window) FREE(last_window);
+	      last_window = (Float *)CALLOC(fs->size, sizeof(Float));
+	      if (cp->selection_transform_size > 0)
+		mus_make_fft_window_with_window(fs->wintype, cp->selection_transform_size, fs->beta * beta_maxes[fs->wintype], last_window);
+	      else mus_make_fft_window_with_window(fs->wintype, cp->transform_size, fs->beta * beta_maxes[fs->wintype], last_window);
+	      last_size = fs->size;
+	      last_beta = fs->beta;
+	      last_wintype = fs->wintype;
+	      last_zero = fs->pad_zero;
+	    }
+	  memcpy(fs->window, (void *)last_window, fs->size * sizeof(Float));
+	}
+      apply_fft(fs);
     }
-  return(res);
+  display_fft(fs);
+}
+
+void single_fft(chan_info *cp)
+{
+  if (cp->transform_size < 2) return;
+  one_fft(make_fft_state(cp, TRUE));
+  display_channel_fft_data(cp, cp->sound, cp->state);
+  enved_fft_update();
 }
 
 
@@ -1993,7 +1506,7 @@ void *make_sonogram_state(chan_info *cp)
   sg = (sonogram_state *)CALLOC(1, sizeof(sonogram_state));
   sg->cp = cp;
   sg->done = 0;
-  fs = (fft_state *)make_fft_state(cp, 0); /* 0=>not a simple one-shot fft */
+  fs = make_fft_state(cp, FALSE); /* 0=>not a simple one-shot fft */
   sg->fs = fs;
   sg->msg_ctr = 8;
   sg->transform_type = cp->transform_type;
@@ -2003,7 +1516,7 @@ void *make_sonogram_state(chan_info *cp)
     {
       /* we must have restarted fft process without letting the previous run at all */
       temp_sg = (sonogram_state *)(cp->temp_sonogram);
-      if (temp_sg->fs) free_fft_state(temp_sg->fs);
+      if (temp_sg->fs) temp_sg->fs = free_fft_state(temp_sg->fs);
       FREE(temp_sg);
       /* cp->last_sonogram = NULL; */
     }
@@ -2144,7 +1657,6 @@ static int set_up_sonogram(sonogram_state *sg)
 
 static int run_all_ffts(sonogram_state *sg)
 {
-  BACKGROUND_TYPE res;
   fft_state *fs;
   sono_info *si;
   chan_info *cp;
@@ -2153,60 +1665,56 @@ static int run_all_ffts(sonogram_state *sg)
   int i;
   /* return 0 until done with all ffts, then 1 -- 1 causes cleanup whether done or not */
   /* check for losamp/hisamp change? */
-  res = fft_in_slices(sg->fs);
-  if (res == BACKGROUND_QUIT)
+  one_fft((fft_state *)(sg->fs));
+  fs = sg->fs;
+  cp = sg->cp;
+  si = (sono_info *)(cp->sonogram_data);
+  if (si->active_slices < si->total_slices) 
+    si->begs[si->active_slices] = sg->beg + fs->beg;
+  sg->msg_ctr--;
+  if (sg->msg_ctr == 0)
     {
-      /* slice is done -- store it and prepare to start the next slice */
-      fs = sg->fs;
-      cp = sg->cp;
-      si = (sono_info *)(cp->sonogram_data);
-      if (si->active_slices < si->total_slices) 
-	si->begs[si->active_slices] = sg->beg + fs->beg;
-      sg->msg_ctr--;
-      if (sg->msg_ctr == 0)
+      progress_report(cp->sound, 
+		      (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SONOGRAM) ? S_graph_transform_as_sonogram : S_graph_transform_as_spectrogram, 
+		      0, 0,
+		      ((Float)(si->active_slices) / (Float)(si->target_slices)), 
+		      NOT_FROM_ENVED);
+      sg->minibuffer_needs_to_be_cleared = 1;
+      sg->msg_ctr = 8;
+      if (cp->graph_transform_p == 0) return(1);
+    }
+  if (si->active_slices < si->total_slices)
+    {
+      if (cp->transform_type == FOURIER)
 	{
-	  progress_report(cp->sound, 
-			  (cp->transform_graph_type == GRAPH_TRANSFORM_AS_SONOGRAM) ? S_graph_transform_as_sonogram : S_graph_transform_as_spectrogram, 
-			  0, 0,
-			  ((Float)(si->active_slices) / (Float)(si->target_slices)), 
-			  NOT_FROM_ENVED);
-	  sg->minibuffer_needs_to_be_cleared = 1;
-	  sg->msg_ctr = 8;
-	  if (cp->graph_transform_p == 0) return(1);
-	}
-      if (si->active_slices < si->total_slices)
-	{
-	  if (cp->transform_type == FOURIER)
+	  for (i = 0; i < sg->spectrum_size; i++) 
 	    {
-	      for (i = 0; i < sg->spectrum_size; i++) 
-		{
-		  val = fs->data[i];
-		  if (val > si->scale) si->scale = val;
-		  si->data[si->active_slices][i] = val;
-		}
+	      val = fs->data[i];
+	      if (val > si->scale) si->scale = val;
+	      si->data[si->active_slices][i] = val;
 	    }
-	  else
-	    {
-	      for (i = 0; i < sg->spectrum_size; i++) 
-		{
-		  val = fs->data[i];
-		  if (val < 0.0) val = -val;  /* kinda dubious but I can't think of a good alternative */
-		  if (val > si->scale) si->scale = val;
-		  si->data[si->active_slices][i] = val;
-		}
-	    }
-	  si->active_slices++;
 	}
-      sg->outer++;
-      if ((sg->outer == sg->outlim) || (cp->graph_transform_p == 0) || (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)) return(1);
-      fs->beg += sg->hop;
-      fs->slice = 0;
-      ap = cp->axis;
-      if ((sg->losamp != ap->losamp) || (sg->hisamp != ap->hisamp)) 
+      else
 	{
-	  fs->beg = 0;
-	  return(-1);
+	  for (i = 0; i < sg->spectrum_size; i++) 
+	    {
+	      val = fs->data[i];
+	      if (val < 0.0) val = -val;  /* kinda dubious but I can't think of a good alternative */
+	      if (val > si->scale) si->scale = val;
+	      si->data[si->active_slices][i] = val;
+	    }
 	}
+      si->active_slices++;
+    }
+  sg->outer++;
+  if ((sg->outer == sg->outlim) || (cp->graph_transform_p == 0) || (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)) return(1);
+  fs->beg += sg->hop;
+  
+  ap = cp->axis;
+  if ((sg->losamp != ap->losamp) || (sg->hisamp != ap->hisamp)) 
+    {
+      fs->beg = 0;
+      return(-1);
     }
   return(0);
 }
@@ -2307,8 +1815,8 @@ static void spectral_multiply (Float* rl1, Float* rl2, int n)
     }
 }
 
-void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, int filterhdr, int filtersize,
-           int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans)
+void c_convolve(char *fname, Float amp, int filec, int filehdr, int filterc, int filterhdr, int filtersize,
+		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans)
 {
   Float *rl0 = NULL, *rl1 = NULL, *rl2 = NULL;
   mus_sample_t **pbuffer = NULL, **fbuffer = NULL;
@@ -2585,7 +2093,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, "snd-transform", "an integer");
   XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
   trf = XEN_TO_SMALL_C_INT(type);
-  if ((trf < 0) || (trf > HAAR))
+  if ((trf < 0) || (trf > HANKEL))
     mus_misc_error("snd-transform", "invalid transform choice", type);
   v = TO_VCT(data);
   switch (trf)
@@ -2603,14 +2111,14 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 	}
       FREE(dat);
       break;
-    case HANKEL:
 #if HAVE_GSL
+    case HANKEL:
       dat = (Float *)CALLOC(v->length, sizeof(Float));
       hankel_transform(v->length, v->data, dat, hankel_jn(get_global_state()));
       memcpy((void *)(v->data), (void *)dat, (v->length * sizeof(Float)));
       FREE(dat);
-#endif
       break;
+#endif
     case WAVELET:
       hnt = XEN_TO_SMALL_C_INT(hint);
       if (hnt < NUM_WAVELETS)

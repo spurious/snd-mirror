@@ -57,7 +57,6 @@ int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
 
 
-char *clm2snd_help(void);
 void recorder_error(char *msg);
 void reflect_record_size(int val);
 void unsensitize_control_buttons(void);
@@ -115,7 +114,6 @@ int view_dots_menu(void);
 int view_dots_and_lines_menu(void);
 int view_filled_menu(void);
 int view_lollipops_menu(void);
-int view_marks_menu(void);
 int view_zero_menu(void);
 int view_ctrls_menu(void);
 int view_listener_menu(void);
@@ -186,7 +184,6 @@ void set_transform_graph_type(snd_state *ss, int val);
 
 /* -------- snd-xregion.c -------- */
 
-void intern_atoms (snd_state *ss);
 void update_region_browser(snd_state *ss, int grf_too);
 int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);

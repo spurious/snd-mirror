@@ -42,8 +42,12 @@
 ;(define last-form #f)
 ;(define-syntax IF
 ;  (syntax-rules ()
-;    ((IF <form1> <form2>) (begin (set! last-form (quote <form1>)) (if <form1> <form2>)))
-;    ((IF <form1> <form2> <form3>) (begin (set! last-form (quote <form1>)) (if <form1> <form2> <form3>)))))
+;    ((IF <form1> <form2>) (begin (set! last-form (quote <form1>)) (if <form1> <form2>) (gc)))
+;    ((IF <form1> <form2> <form3>) (begin (set! last-form (quote <form1>)) (if <form1> <form2> <form3>) (gc)))))
+;(define-syntax IF
+;  (syntax-rules ()
+;    ((IF <form1> <form2>) (begin (display (quote <form1>)) (if <form1> <form2>) (gc)))
+;    ((IF <form1> <form2> <form3>) (begin (display (quote <form1>)) (if <form1> <form2> <form3>) (gc)))))
 (define-syntax IF
   (syntax-rules ()
     ((IF <form1> <form2>) (if <form1> <form2>))
@@ -285,7 +289,7 @@
       (test-constants
        (list
 	'enved-amplitude enved-amplitude 0 
-	'autocorrelation autocorrelation 4 
+	'autocorrelation autocorrelation 3
 	'bartlett-window bartlett-window 4 
 	'blackman2-window blackman2-window 6 
 	'blackman3-window blackman3-window 7 
@@ -294,7 +298,7 @@
 	'channels-combined channels-combined 1 
 	'channels-separate channels-separate 0 
 	'channels-superimposed channels-superimposed 2
-	'chebyshev-transform chebyshev-transform 5 
+	'chebyshev-transform chebyshev-transform 4
 	'cursor-in-middle cursor-in-middle 3
 	'cursor-in-view cursor-in-view 0 
 	'cursor-on-left cursor-on-left 1 
@@ -312,14 +316,14 @@
 	'graph-filled graph-filled 2 
 	'graph-lines graph-lines 0 
 	'graph-lollipops graph-lollipops 4
-	'hadamard-transform hadamard-transform 7 
-	'haar-transform haar-transform 8
+	'hadamard-transform hadamard-transform 6
+	'haar-transform haar-transform 7
 	'hamming-window hamming-window 5
-	'hankel-transform hankel-transform 2 
+	'hankel-transform hankel-transform 8
 	'hanning-window hanning-window 1
 	'kaiser-window kaiser-window 11 
 	'keyboard-no-action keyboard-no-action 4
-	'cepstrum cepstrum 6
+	'cepstrum cepstrum 5
 	'graph-transform-once graph-transform-once 0 
 	'parzen-window parzen-window 3
 	'poisson-window poisson-window 13
@@ -335,7 +339,7 @@
 	'speed-control-as-semitone speed-control-as-semitone 2 
 	'enved-srate enved-srate 2 
 	'tukey-window tukey-window 15 
-	'walsh-transform walsh-transform 3
+	'walsh-transform walsh-transform 2
 	'wavelet-transform wavelet-transform 1
 	'welch-window welch-window 2 
 	'cursor-cross cursor-cross 0
@@ -11981,6 +11985,36 @@
 	  (snd-display ";concatenate-envelopes: ~A" (concatenate-envelopes '(0 0 1 1) '(0 1 1 0))))
       (IF (not (feql (concatenate-envelopes '(0 0 1 1.5) '(0 1 1 0)) '(0.0 0 1.0 1.5 1.01 1 2.01 0)))
 	  (snd-display ";concatenate-envelopes: ~A" (concatenate-envelopes '(0 0 1 1.5) '(0 1 1 0))))
+
+      (let ((ind (new-sound "fmv.snd"))
+	    (v (make-vct 2000))
+	    (ctr 0))
+	(vct-map! v (lambda ()
+		      (let ((val (sin (* ctr 2.0 (/ 3.14159 10.0)))))
+			(set! ctr (1+ ctr))
+			val)))
+	(vct->channel v 0 2000 ind 0)
+	(set! (zero-pad) 0)
+	(set! (graph-transform?) #t)
+	(make-selection 0 200)
+	(set! (show-selection-transform) #t)
+	(set! (selection-length) 300)
+	(update-transform)
+	(let* ((data (transform-samples->vct))
+	       (peak (vct-peak data)))
+	  (if (< peak 40.0) (snd-display ";transform selection peak: ~A" peak))
+	  (if (> (* .5 peak) (vct-ref data 51)) (snd-display ";transform selection at 51: ~A, peak: ~A" (vct-ref data 51) peak)))
+	(for-each
+	 (lambda (pad)
+	   (set! (zero-pad) pad)
+	   (update-transform)
+	   (let* ((data (transform-samples->vct))
+		  (peak (vct-peak data))
+		  (pval (vct-ref data (inexact->exact (* .1 (vct-length data))))))
+	     (if (> (* .5 peak) pval)
+		 (snd-display ";transform selection padded ~D: ~A, peak: ~A" pval peak))))
+	 (list 1 0 3 31))
+	(close-sound ind))
       ))
 
 ;;; ---------------- test 16: regularized funcs ----------------
