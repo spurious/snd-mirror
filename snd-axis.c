@@ -969,7 +969,7 @@ static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_x2position "(" S_x2position " val (snd #f) (chn #f) (ax #f)): x pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_x2position, "a number");
-  ASSERT_JUST_CHANNEL(S_x2position, snd, chn, 2);
+  ASSERT_CHANNEL(S_x2position, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_x2position, "an integer");
   return(C_TO_XEN_INT(grf_x(XEN_TO_C_DOUBLE(val),
 			    TO_C_AXIS_INFO(snd, chn, ap, S_x2position))));
@@ -979,7 +979,7 @@ static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
 #define H_y2position "(" S_y2position " val (snd #f) (chn #f) (ax #f)): y pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_y2position, "a number");
-  ASSERT_JUST_CHANNEL(S_y2position, snd, chn, 2);
+  ASSERT_CHANNEL(S_y2position, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_y2position, "an integer");
   return(C_TO_XEN_INT(grf_y(XEN_TO_C_DOUBLE(val),
 			    TO_C_AXIS_INFO(snd, chn, ap, S_y2position))));
@@ -989,7 +989,7 @@ static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_position2x "(" S_position2x " val (snd #f) (chn #f) (ax #f)): x axis value corresponding to pixel val"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position2x, "an integer");
-  ASSERT_JUST_CHANNEL(S_position2x, snd, chn, 2);
+  ASSERT_CHANNEL(S_position2x, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position2x, "an integer");
   return(C_TO_XEN_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position2x),
 				 XEN_TO_C_INT(val))));
@@ -999,7 +999,7 @@ static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
   #define H_position2y "(" S_position2y " val (snd #f) (chn #f) (ax #f)): y axis value corresponding to pixel val"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position2y, "an integer");
-  ASSERT_JUST_CHANNEL(S_position2y, snd, chn, 2);
+  ASSERT_CHANNEL(S_position2y, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position2y, "an integer");
   return(C_TO_XEN_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position2y),
 				 XEN_TO_C_INT(val))));
@@ -1010,7 +1010,7 @@ static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
   #define H_axis_info "(" S_axis_info " (snd #f) (chn #f) (grf #f)): info about axis: (list losamp hisamp \
 x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale label)"
   axis_info *ap;
-  ASSERT_JUST_CHANNEL(S_axis_info, snd, chn, 1);
+  ASSERT_CHANNEL(S_axis_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap_id), ap_id, XEN_ARG_3, S_axis_info, "an integer");
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, S_axis_info);
   if (ap == NULL) return(XEN_EMPTY_LIST);
@@ -1167,7 +1167,7 @@ static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)
 {
   #define H_x_axis_label "(" S_x_axis_label " (snd #f) (chn #f) (ax #f)): current x axis label"
   axis_info *ap;
-  ASSERT_JUST_CHANNEL(S_x_axis_label, snd, chn, 1);
+  ASSERT_CHANNEL(S_x_axis_label, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_x_axis_label, "an integer");
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
   return(C_TO_XEN_STRING(ap->xlabel));
@@ -1176,7 +1176,7 @@ static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)
 static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 {
   axis_info *ap;
-  ASSERT_JUST_CHANNEL(S_setB S_x_axis_label, snd, chn, 2);
+  ASSERT_CHANNEL(S_setB S_x_axis_label, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_setB S_x_axis_label, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_x_axis_label, "an integer");
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);

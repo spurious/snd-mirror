@@ -1332,7 +1332,7 @@ static XEN g_channel_widgets(XEN snd, XEN chn)
 {
   #define H_channel_widgets "(" S_channel_widgets " (snd #f) (chn #f)): a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)"
   chan_info *cp;
-  ASSERT_JUST_CHANNEL(S_channel_widgets, snd, chn, 1);
+  ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
   return(XEN_CONS(XEN_WRAP_WIDGET(channel_graph(cp)),
 	   XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),

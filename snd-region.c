@@ -1100,7 +1100,7 @@ insert region data into snd's channel chn starting at start-samp"
   off_t samp;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_insert_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_insert_region, "a region id");
-  ASSERT_JUST_CHANNEL(S_insert_region, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
@@ -1339,7 +1339,7 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
   int rg, id = -1;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_1, S_mix_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_mix_region, "a region id");
-  ASSERT_JUST_CHANNEL(S_mix_region, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_mix_region, snd_n, chn_n, 3);
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_mix_region, reg_n));

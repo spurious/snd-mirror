@@ -8621,13 +8621,6 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
   #define H_undo "(" S_undo " (count 1) (snd #f) (chn #f)): undo 'count' edits in snd's channel chn"
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_undo, "an integer");
-#if 0
-  if (XEN_LIST_P(snd_n))
-    XEN_ERROR(NO_SUCH_EDIT,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_undo),
-			 snd_n,
-			 C_TO_XEN_STRING(_("can't undo an underlying mix edit except through the outer (mixed-into) sound"))));
-#endif
   ASSERT_CHANNEL(S_undo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_undo);
   if (XEN_INTEGER_P(ed_n))
@@ -8645,13 +8638,6 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
   #define H_redo "(" S_redo " (count 1) (snd #f) (chn #f)): redo 'count' edits in snd's channel chn"
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_redo, "an integer");
-#if 0
-  if (XEN_LIST_P(snd_n))
-    XEN_ERROR(NO_SUCH_EDIT,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_redo),
-			 snd_n,
-			 C_TO_XEN_STRING(_("can't redo an underlying mix edit except through the outer (mixed-into) sound"))));
-#endif
   ASSERT_CHANNEL(S_redo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_redo);
   if (XEN_INTEGER_P(ed_n))

@@ -1788,7 +1788,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   snd_info *sp;
   char *str;
   int i, j, list_size, in_size, id;
-  ASSERT_JUST_CHANNEL(S_restore_marks, snd, chn, 2);
+  ASSERT_CHANNEL(S_restore_marks, snd, chn, 2);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_restore_marks, snd));
@@ -1992,7 +1992,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   char *name = NULL;
   chan_info *cp = NULL;
   XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, XEN_ARG_1, S_find_mark, "a number or string or #f");
-  ASSERT_JUST_CHANNEL(S_find_mark, snd_n, chn_n, 2); 
+  ASSERT_CHANNEL(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 
     return(XEN_FALSE);
@@ -2029,7 +2029,7 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n)
   chan_info *cp;
   off_t loc;
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
-  ASSERT_JUST_CHANNEL(S_add_mark, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_add_mark);
   loc = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
   if ((loc < 0) || (loc >= CURRENT_SAMPLES(cp)))
@@ -2065,7 +2065,7 @@ static XEN g_delete_marks(XEN snd_n, XEN chn_n)
 {
   #define H_delete_marks "(" S_delete_marks " (snd #f) (chn #f)): delete all marks in snd's channel chn"
   chan_info *cp;
-  ASSERT_JUST_CHANNEL(S_delete_marks, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_delete_marks, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_delete_marks);
   delete_marks(cp);
   return(XEN_FALSE);
@@ -2201,7 +2201,7 @@ static XEN g_forward_mark(XEN count, XEN snd, XEN chn)
   chan_info *cp;
   mark *mp = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_mark, "an integer");
-  ASSERT_JUST_CHANNEL(S_forward_mark, snd, chn, 2);
+  ASSERT_CHANNEL(S_forward_mark, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mark);
   val = XEN_TO_C_INT_OR_ELSE(count, 1); 
   if (cp->marks) mp = find_nth_mark(cp, val);
@@ -2220,7 +2220,7 @@ static XEN g_backward_mark(XEN count, XEN snd, XEN chn)
   chan_info *cp;
   mark *mp = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_mark, "an integer");
-  ASSERT_JUST_CHANNEL(S_backward_mark, snd, chn, 2);
+  ASSERT_CHANNEL(S_backward_mark, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mark);
   val = -(XEN_TO_C_INT_OR_ELSE(count, 1)); 
   if (cp->marks) mp = find_nth_mark(cp, val);
@@ -2244,7 +2244,7 @@ static XEN g_save_marks(XEN snd_n, XEN filename)
   #define H_save_marks "(" S_save_marks " (snd #f) (filename \"<snd-file-name>.marks\")): save snd's marks in filename"
   snd_info *sp;
   XEN res = XEN_FALSE;
-  ASSERT_JUST_SOUND(S_save_marks, snd_n, 1);
+  ASSERT_SOUND(S_save_marks, snd_n, 1);
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ARG_2, S_save_marks, "a string");  
   sp = get_sp(snd_n, NO_PLAYERS);
   if (sp == NULL) 

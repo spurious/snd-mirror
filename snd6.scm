@@ -163,3 +163,5 @@
      #f)
    (lambda (val)
      #f)))
+
+(define mix-sync mix-track)

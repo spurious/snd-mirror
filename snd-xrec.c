@@ -2978,6 +2978,8 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  if (rp->output_file) FREE(rp->output_file);
 	  rp->output_file = mus_expand_filename(str);
+	  /* TODO: some way to specialize record output file name -- recorder-output-name|comment-hook? */
+	  /*       also perhaps set default -- if no name, allow hook to supply one */
 	  XtFree(str);
 	  str = NULL;
 	  old_srate = rp->srate;

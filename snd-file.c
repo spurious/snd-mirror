@@ -2359,7 +2359,7 @@ static XEN g_sound_loop_info(XEN snd)
 list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   snd_info *sp;
-  ASSERT_JUST_SOUND(S_sound_loop_info, snd, 1);
+  ASSERT_SOUND(S_sound_loop_info, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
@@ -2390,7 +2390,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     }
   else 
     {
-      ASSERT_JUST_SOUND(S_setB S_sound_loop_info, snd, 1);
+      ASSERT_SOUND(S_setB S_sound_loop_info, snd, 1);
       sp = get_sp(snd, NO_PLAYERS);
     }
   if (sp == NULL) 
@@ -2484,7 +2484,7 @@ each inner list has the form: (name start loopstart loopend)"
   XEN inlist = XEN_EMPTY_LIST, outlist = XEN_EMPTY_LIST;
   int i, lim;
   snd_info *sp;
-  ASSERT_JUST_SOUND(S_soundfont_info, snd, 1);
+  ASSERT_SOUND(S_soundfont_info, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_soundfont_info, snd));

@@ -375,6 +375,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Oct:  removed mix-sync (use mix-track).\n\
 9-Oct:   removed the mix-id in list option for various functions.\n\
 8-Oct:   optional filename arg for save-marks (and Ruby case implemented).\n\
 6-Oct:   cursor-style and cursor-size can be set globally.\n\

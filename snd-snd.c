@@ -1869,7 +1869,7 @@ static XEN g_select_sound(XEN snd_n)
   #define H_select_sound "(" S_select_sound " (snd #f)): select snd."
   int val;
   snd_info *sp;
-  ASSERT_JUST_SOUND(S_select_sound, snd_n, 1);
+  ASSERT_SOUND(S_select_sound, snd_n, 1);
   if (XEN_FALSE_P(snd_n))
     ss->selected_sound = NO_SELECTION;
   else
@@ -1898,7 +1898,7 @@ static XEN g_select_channel(XEN chn_n)
   #define H_select_channel "(" S_select_channel " (chn 0)): select channel"
   snd_info *sp;
   int chan;
-  ASSERT_JUST_SOUND(S_select_channel, chn_n, 1);
+  ASSERT_SOUND(S_select_channel, chn_n, 1);
   chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
   sp = any_selected_sound();
   if ((sp) && 
@@ -1928,7 +1928,7 @@ static XEN g_bomb(XEN snd, XEN on)
 {
   #define H_bomb "(" S_bomb " (snd #f) (on #t)): display (or erase if on=#f) the bomb icon"
   snd_info *sp;
-  ASSERT_JUST_SOUND(S_bomb, snd, 1);
+  ASSERT_SOUND(S_bomb, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_bomb, snd));
@@ -1945,7 +1945,7 @@ typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP
 	      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE
 } sp_field_t;
 
-static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller, bool just_sound)
+static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
 {
   snd_info *sp;
   int i;
@@ -1956,19 +1956,11 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller, bool just_sound)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse == SOUND_NORMAL))
-	    res = XEN_CONS(sound_get(C_TO_SMALL_XEN_INT(i), fld, caller, just_sound), res);
+	    res = XEN_CONS(sound_get(C_TO_SMALL_XEN_INT(i), fld, caller), res);
 	}
       return(res);
     }
-  /* TODO: all the "just_sound assert_sound args can go */
-  if (just_sound)
-    {
-      ASSERT_JUST_SOUND(caller, snd_n, 1);
-    }
-  else 
-    {
-      ASSERT_SOUND(caller, snd_n, 1);
-    }
+  ASSERT_SOUND(caller, snd_n, 1);
   sp = get_sp(snd_n, PLAYERS_OK);
   if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(caller, snd_n));
@@ -2064,7 +2056,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	}
       return(val);
     }
-  ASSERT_JUST_SOUND(caller, snd_n, 2);
+  ASSERT_SOUND(caller, snd_n, 2);
   sp = get_sp(snd_n, PLAYERS_OK);
   if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(caller, snd_n));
@@ -2313,13 +2305,10 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
   return(val);
 }
 
-#define MIX_OK false
-#define NO_MIX true
-
 static XEN g_channels(XEN snd_n)
 {
   #define H_channels "("  S_channels " (snd #f)): how many channels snd has"
-  return(sound_get(snd_n, SP_NCHANS, S_channels, MIX_OK));
+  return(sound_get(snd_n, SP_NCHANS, S_channels));
 }
 
 static XEN check_number(XEN val, char *caller)
@@ -2338,7 +2327,7 @@ static XEN g_set_channels(XEN snd_n, XEN val)
 static XEN g_srate(XEN snd_n) 
 {
   #define H_srate "(" S_srate " (snd #f)): snd's srate"
-  return(sound_get(snd_n, SP_SRATE, S_srate, MIX_OK));
+  return(sound_get(snd_n, SP_SRATE, S_srate));
 }
 
 static XEN g_set_srate(XEN snd_n, XEN val) 
@@ -2351,7 +2340,7 @@ static XEN g_set_srate(XEN snd_n, XEN val)
 static XEN g_data_location(XEN snd_n) 
 {
   #define H_data_location "(" S_data_location " (snd #f)): snd's data location (bytes)"
-  return(sound_get(snd_n, SP_DATA_LOCATION, S_data_location, MIX_OK));
+  return(sound_get(snd_n, SP_DATA_LOCATION, S_data_location));
 }
 
 static XEN g_set_data_location(XEN snd_n, XEN val) 
@@ -2364,7 +2353,7 @@ static XEN g_set_data_location(XEN snd_n, XEN val)
 static XEN g_data_size(XEN snd_n) 
 {
   #define H_data_size "(" S_data_size " (snd #f)): snd's data size (bytes)"
-  return(sound_get(snd_n, SP_DATA_SIZE, S_data_size, MIX_OK));
+  return(sound_get(snd_n, SP_DATA_SIZE, S_data_size));
 }
 
 static XEN g_set_data_size(XEN snd_n, XEN val) 
@@ -2377,7 +2366,7 @@ static XEN g_set_data_size(XEN snd_n, XEN val)
 static XEN g_data_format(XEN snd_n) 
 {
   #define H_data_format "(" S_data_format " (snd #f)): snd's data format (e.g. " S_mus_bshort ")"
-  return(sound_get(snd_n, SP_DATA_FORMAT, S_data_format, MIX_OK));
+  return(sound_get(snd_n, SP_DATA_FORMAT, S_data_format));
 }
 
 static XEN g_set_data_format(XEN snd_n, XEN val) 
@@ -2390,7 +2379,7 @@ static XEN g_set_data_format(XEN snd_n, XEN val)
 static XEN g_header_type(XEN snd_n) 
 {
   #define H_header_type "(" S_header_type " (snd #f)): snd's header type (e.g. " S_mus_aiff ")"
-  return(sound_get(snd_n, SP_HEADER_TYPE, S_header_type, MIX_OK));
+  return(sound_get(snd_n, SP_HEADER_TYPE, S_header_type));
 }
 
 static XEN g_set_header_type(XEN snd_n, XEN val) 
@@ -2403,7 +2392,7 @@ static XEN g_set_header_type(XEN snd_n, XEN val)
 static XEN g_comment(XEN snd_n)
 {
   #define H_comment "(" S_comment " (snd #f)): snd's comment (in its header)"
-  return(sound_get(snd_n, SP_COMMENT, S_comment, MIX_OK));
+  return(sound_get(snd_n, SP_COMMENT, S_comment));
 }
 
 static XEN g_set_comment(XEN snd_n, XEN val) 
@@ -2435,7 +2424,7 @@ static XEN name_reversed(XEN arg1, XEN arg2) \
 static XEN g_sync(XEN snd_n) 
 {
   #define H_sync "(" S_sync " (snd #f)): snd's sync value (0 = no sync)"
-  return(sound_get(snd_n, SP_SYNC, S_sync, NO_MIX));
+  return(sound_get(snd_n, SP_SYNC, S_sync));
 }
 
 static XEN g_set_sync(XEN on, XEN snd_n) 
@@ -2450,7 +2439,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_sync_reversed, g_set_sync)
 static XEN g_sound_properties(XEN snd_n) 
 {
   #define H_sound_properties "(" S_sound_properties " snd): snd's property list"
-  return(sound_get(snd_n, SP_PROPERTIES, S_sound_properties, NO_MIX));
+  return(sound_get(snd_n, SP_PROPERTIES, S_sound_properties));
 }
 
 static XEN g_set_sound_properties(XEN on, XEN snd_n) 
@@ -2467,7 +2456,7 @@ static XEN g_channel_style(XEN snd)
   snd_info *sp;
   if (XEN_NOT_BOUND_P(snd))
     return(C_TO_XEN_INT(channel_style(ss)));
-  ASSERT_JUST_SOUND(S_channel_style, snd, 1);
+  ASSERT_SOUND(S_channel_style, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_channel_style, snd));
@@ -2491,7 +2480,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
       set_channel_style(new_style);
       return(C_TO_XEN_INT(channel_style(ss)));
     }
-  ASSERT_JUST_SOUND(S_setB S_channel_style, snd, 2);
+  ASSERT_SOUND(S_setB S_channel_style, snd, 2);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_channel_style, snd));
@@ -2504,7 +2493,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_channel_style_reversed, g_set_channel_style)
 static XEN g_read_only(XEN snd_n) 
 {
   #define H_read_only "(" S_read_only " (snd #f)): whether snd is write-protected"
-  return(sound_get(snd_n, SP_READ_ONLY, S_read_only, NO_MIX));
+  return(sound_get(snd_n, SP_READ_ONLY, S_read_only));
 }
 
 static XEN g_set_read_only(XEN on, XEN snd_n) 
@@ -2518,7 +2507,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_read_only_reversed, g_set_read_only)
 static XEN g_contrast_control_p(XEN snd_n) 
 {
   #define H_contrast_control_p "(" S_contrast_control_p " (snd #f)): snd's control panel constrast button state"
-  return(sound_get(snd_n, SP_CONTRASTING, S_contrast_control_p, NO_MIX));
+  return(sound_get(snd_n, SP_CONTRASTING, S_contrast_control_p));
 }
 
 static XEN g_set_contrast_control_p(XEN on, XEN snd_n) 
@@ -2532,7 +2521,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_contrast_control_p_reversed, g_set_contrast_con
 static XEN g_expand_control_p(XEN snd_n) 
 {
   #define H_expand_control_p "(" S_expand_control_p " (snd #f)): snd's control panel expand button state"
-  return(sound_get(snd_n, SP_EXPANDING, S_expand_control_p, NO_MIX));
+  return(sound_get(snd_n, SP_EXPANDING, S_expand_control_p));
 }
 
 static XEN g_set_expand_control_p(XEN on, XEN snd_n) 
@@ -2546,7 +2535,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_expand_control_p_reversed, g_set_expand_control
 static XEN g_reverb_control_p(XEN snd_n) 
 {
   #define H_reverb_control_p "(" S_reverb_control_p " (snd #f)): snd's control panel reverb button state"
-  return(sound_get(snd_n, SP_REVERBING, S_reverb_control_p, NO_MIX));
+  return(sound_get(snd_n, SP_REVERBING, S_reverb_control_p));
 }
 
 static XEN g_set_reverb_control_p(XEN on, XEN snd_n) 
@@ -2560,7 +2549,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_reverb_control_p_reversed, g_set_reverb_control
 static XEN g_filter_control_p(XEN snd_n) 
 {
   #define H_filter_control_p "(" S_filter_control_p " (snd #f)): snd's control panel filter button state"
-  return(sound_get(snd_n, SP_FILTERING, S_filter_control_p, NO_MIX));
+  return(sound_get(snd_n, SP_FILTERING, S_filter_control_p));
 }
 
 static XEN g_set_filter_control_p(XEN on, XEN snd_n) 
@@ -2574,7 +2563,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_p_reversed, g_set_filter_control
 static XEN g_filter_control_in_dB(XEN snd_n) 
 {
   #define H_filter_control_in_dB "(" S_filter_control_in_dB " (snd #f)): #t if snd's filter envelope is displayed in dB in control panel"
-  return(sound_get(snd_n, SP_FILTER_DBING, S_filter_control_in_dB, NO_MIX));
+  return(sound_get(snd_n, SP_FILTER_DBING, S_filter_control_in_dB));
 }
 
 static XEN g_set_filter_control_in_dB(XEN on, XEN snd_n) 
@@ -2588,13 +2577,13 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_in_dB_reversed, g_set_filter_con
 static XEN g_filter_control_coeffs(XEN snd_n) 
 {
   #define H_filter_control_coeffs "(" S_filter_control_coeffs " (snd #f)): control panel filter coeffs"
-  return(sound_get(snd_n, SP_FILTER_COEFFS, S_filter_control_coeffs, NO_MIX));
+  return(sound_get(snd_n, SP_FILTER_COEFFS, S_filter_control_coeffs));
 }
 
 static XEN g_filter_control_order(XEN snd_n) 
 {
   #define H_filter_control_order "(" S_filter_control_order " (snd #f)): filter order (in control panel)"
-  return(sound_get(snd_n, SP_FILTER_ORDER, S_filter_control_order, NO_MIX));
+  return(sound_get(snd_n, SP_FILTER_ORDER, S_filter_control_order));
 }
 
 static XEN g_set_filter_control_order(XEN on, XEN snd_n) 
@@ -2620,7 +2609,7 @@ WITH_REVERSED_ARGS(g_set_filter_control_order_reversed, g_set_filter_control_ord
 static XEN g_cursor_follows_play(XEN snd_n) 
 {
   #define H_cursor_follows_play "("  S_cursor_follows_play " (snd #f)): #t if cursor moves along in waveform display as sound is played (#f)"
-  return(sound_get(snd_n, SP_CURSOR_FOLLOWS_PLAY, S_cursor_follows_play, NO_MIX));
+  return(sound_get(snd_n, SP_CURSOR_FOLLOWS_PLAY, S_cursor_follows_play));
 }
 
 static XEN g_set_cursor_follows_play(XEN on, XEN snd_n) 
@@ -2634,7 +2623,7 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_cursor_follows_play_reversed, g_set_cursor_foll
 static XEN g_show_controls(XEN snd_n) 
 {
   #define H_show_controls "(" S_show_controls " (snd #f)): #t if snd's control panel is known to be open"
-  return(sound_get(snd_n, SP_SHOW_CONTROLS, S_show_controls, NO_MIX));
+  return(sound_get(snd_n, SP_SHOW_CONTROLS, S_show_controls));
 }
 
 static XEN g_set_show_controls(XEN on, XEN snd_n)
@@ -2648,25 +2637,25 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_show_controls_reversed, g_set_show_controls)
 static XEN g_save_controls(XEN snd_n) 
 {
   #define H_save_controls "(" S_save_controls " (snd #f)): save the control panel settings for subsequent " S_restore_controls
-  return(sound_get(snd_n, SP_SAVE_CONTROLS, S_save_controls, NO_MIX));
+  return(sound_get(snd_n, SP_SAVE_CONTROLS, S_save_controls));
 }
 
 static XEN g_restore_controls(XEN snd_n) 
 {
   #define H_restore_controls "(" S_restore_controls " (snd #f)): restore the previously saved control panel settings"
-  return(sound_get(snd_n, SP_RESTORE_CONTROLS, S_restore_controls, NO_MIX));
+  return(sound_get(snd_n, SP_RESTORE_CONTROLS, S_restore_controls));
 }
 
 static XEN g_reset_controls(XEN snd_n) 
 {
   #define H_reset_controls "(" S_reset_controls " (snd #f)): reset (clear) the control panel settings"
-  return(sound_get(snd_n, SP_RESET_CONTROLS, S_reset_controls, NO_MIX));
+  return(sound_get(snd_n, SP_RESET_CONTROLS, S_reset_controls));
 }
 
 static XEN g_selected_channel(XEN snd_n) 
 {
   #define H_selected_channel "(" S_selected_channel " (snd #f)): currently selected channel in snd (or #f if none)"
-  return(sound_get(snd_n, SP_SELECTED_CHANNEL, S_selected_channel, NO_MIX));
+  return(sound_get(snd_n, SP_SELECTED_CHANNEL, S_selected_channel));
 }
 
 static XEN g_set_selected_channel(XEN snd_n, XEN chn_n) 
@@ -2677,7 +2666,7 @@ static XEN g_set_selected_channel(XEN snd_n, XEN chn_n)
     return(g_select_channel(snd_n));
   else
     {
-      ASSERT_JUST_SOUND(S_setB S_selected_channel, snd_n, 1); 
+      ASSERT_SOUND(S_setB S_selected_channel, snd_n, 1); 
       sp = get_sp(snd_n, NO_PLAYERS);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(S_setB S_selected_channel, snd_n));
@@ -2701,32 +2690,32 @@ static XEN g_set_selected_channel(XEN snd_n, XEN chn_n)
 static XEN g_file_name(XEN snd_n) 
 {
   #define H_file_name "(" S_file_name " (snd #f)): snd's full filename"
-  return(sound_get(snd_n, SP_FILE_NAME, S_file_name, MIX_OK));
+  return(sound_get(snd_n, SP_FILE_NAME, S_file_name));
 }
 
 static XEN g_short_file_name(XEN snd_n) 
 {
   #define H_short_file_name "(" S_short_file_name " (snd #f)): short form of snd's file name (no directory)"
-  return(sound_get(snd_n, SP_SHORT_FILE_NAME, S_short_file_name, MIX_OK));
+  return(sound_get(snd_n, SP_SHORT_FILE_NAME, S_short_file_name));
 }
 
 static XEN g_close_sound(XEN snd_n) 
 {
   #define H_close_sound "(" S_close_sound " (snd #f)): close snd"
-  return(sound_get(snd_n, SP_CLOSE, S_close_sound, NO_MIX));
+  return(sound_get(snd_n, SP_CLOSE, S_close_sound));
 }
 
 static XEN g_update_sound(XEN snd_n) 
 {
   #define H_update_sound "(" S_update_sound " (snd #f)): update snd (re-read it from the disk after flushing pending edits)"
-  return(sound_get(snd_n, SP_UPDATE, S_update_sound, NO_MIX));
+  return(sound_get(snd_n, SP_UPDATE, S_update_sound));
 }
 
 /* should this throw an error if write-protected or whatever (not snd_error in this context)?  */
 static XEN g_save_sound(XEN snd_n) 
 {
   #define H_save_sound "(" S_save_sound " (snd #f)): save snd (update the on-disk data to match Snd's current version)"
-  return(sound_get(snd_n, SP_SAVE, S_save_sound, NO_MIX));
+  return(sound_get(snd_n, SP_SAVE, S_save_sound));
 }
 
 static XEN g_revert_sound(XEN index)
@@ -2734,13 +2723,6 @@ static XEN g_revert_sound(XEN index)
   #define H_revert_sound "("  S_revert_sound " (snd #f)): revert snd to its unedited state (undo all)"
   snd_info *sp;
   int i;
-#if 0
-  if (XEN_LIST_P(index))
-    XEN_ERROR(NO_SUCH_EDIT,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_revert_sound),
-			 index,
-			 C_TO_XEN_STRING("can't revert an underlying mix edit except through the outer (mixed-into) sound")));
-#endif
   ASSERT_SOUND(S_revert_sound, index, 1);
   sp = get_sp(index, NO_PLAYERS);
   if (sp == NULL) 
@@ -3014,7 +2996,7 @@ static XEN g_speed_control_style(XEN snd)
 {
   #define H_speed_control_style "(" S_speed_control_style " (snd #t)): speed control panel interpretation choice (" S_speed_control_as_float ")"
   if (XEN_BOUND_P(snd))
-    return(sound_get(snd, SP_SPEED_STYLE, S_speed_control_style, NO_MIX));
+    return(sound_get(snd, SP_SPEED_STYLE, S_speed_control_style));
   return(C_TO_XEN_INT((int)speed_control_style(ss)));
 }
 
@@ -3042,7 +3024,7 @@ static XEN g_speed_control_tones(XEN snd)
 {
   #define H_speed_control_tones "(" S_speed_control_tones " (snd #t)): if " S_speed_control_style " is " S_speed_control_as_semitone ", this chooses the octave divisions (12)"
   if (XEN_BOUND_P(snd))
-    return(sound_get(snd, SP_SPEED_TONES, S_speed_control_tones, NO_MIX));
+    return(sound_get(snd, SP_SPEED_TONES, S_speed_control_tones));
   return(C_TO_XEN_INT(speed_control_tones(ss)));
 }
 
@@ -3067,12 +3049,12 @@ static XEN g_amp_control(XEN snd_n, XEN chn_n)
   chan_info *cp;
   if (XEN_BOUND_P(chn_n))
     {
-      ASSERT_JUST_CHANNEL(S_amp_control, snd_n, chn_n, 1);
+      ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 1);
       cp = get_cp(snd_n, chn_n, S_amp_control);
       if (cp->amp_control)
 	return(C_TO_XEN_DOUBLE(cp->amp_control[0]));
     }
-  return(sound_get(snd_n, SP_AMP, S_amp_control, NO_MIX));
+  return(sound_get(snd_n, SP_AMP, S_amp_control));
 }
 
 static XEN g_set_amp_control(XEN on, XEN snd_n, XEN chn_n) 
@@ -3081,7 +3063,7 @@ static XEN g_set_amp_control(XEN on, XEN snd_n, XEN chn_n)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_amp_control, "a number"); 
   if (XEN_BOUND_P(chn_n))
     {
-      ASSERT_JUST_CHANNEL(S_amp_control, snd_n, chn_n, 2);
+      ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 2);
       cp = get_cp(snd_n, chn_n, S_amp_control);
       if (cp->amp_control == NULL)
 	cp->amp_control = (Float *)CALLOC(1, sizeof(Float));
@@ -3096,7 +3078,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_amp_control_reversed, g_set_amp_control)
 static XEN g_contrast_control(XEN snd_n) 
 {
   #define H_contrast_control "(" S_contrast_control " (snd #f)): current contrast slider setting"
-  return(sound_get(snd_n, SP_CONTRAST, S_contrast_control, NO_MIX));
+  return(sound_get(snd_n, SP_CONTRAST, S_contrast_control));
 }
 
 static XEN g_set_contrast_control(XEN on, XEN snd_n) 
@@ -3112,7 +3094,7 @@ static XEN g_contrast_control_amp(XEN snd_n)
   #define H_contrast_control_amp "(" S_contrast_control_amp " (snd #f)): snd's contrast amp\n\
    (scaler on data before contrast operation in control panel, 1.0)"
 
-  return(sound_get(snd_n, SP_CONTRAST_AMP, S_contrast_control_amp, NO_MIX));
+  return(sound_get(snd_n, SP_CONTRAST_AMP, S_contrast_control_amp));
 }
 
 static XEN g_set_contrast_control_amp(XEN on, XEN snd_n) 
@@ -3126,7 +3108,7 @@ WITH_REVERSED_ARGS(g_set_contrast_control_amp_reversed, g_set_contrast_control_a
 static XEN g_expand_control(XEN snd_n) 
 {
   #define H_expand_control "(" S_expand_control " (snd #f)): current expand slider setting"
-  return(sound_get(snd_n, SP_EXPAND, S_expand_control, NO_MIX));
+  return(sound_get(snd_n, SP_EXPAND, S_expand_control));
 }
 
 static XEN g_set_expand_control(XEN on, XEN snd_n) 
@@ -3140,7 +3122,7 @@ WITH_REVERSED_ARGS(g_set_expand_control_reversed, g_set_expand_control)
 static XEN g_expand_control_length(XEN snd_n) 
 {
   #define H_expand_control_length "(" S_expand_control_length " (snd #f)): current expansion segment length in seconds (.15)"
-  return(sound_get(snd_n, SP_EXPAND_LENGTH, S_expand_control_length, NO_MIX));
+  return(sound_get(snd_n, SP_EXPAND_LENGTH, S_expand_control_length));
 }
 
 static XEN g_set_expand_control_length(XEN on, XEN snd_n) 
@@ -3154,7 +3136,7 @@ WITH_REVERSED_ARGS(g_set_expand_control_length_reversed, g_set_expand_control_le
 static XEN g_expand_control_ramp(XEN snd_n) 
 {
   #define H_expand_control_ramp "(" S_expand_control_ramp " (snd #f)): current expansion ramp time (.4)"
-  return(sound_get(snd_n, SP_EXPAND_RAMP, S_expand_control_ramp, NO_MIX));
+  return(sound_get(snd_n, SP_EXPAND_RAMP, S_expand_control_ramp));
 }
 
 static XEN g_set_expand_control_ramp(XEN on, XEN snd_n) 
@@ -3168,7 +3150,7 @@ WITH_REVERSED_ARGS(g_set_expand_control_ramp_reversed, g_set_expand_control_ramp
 static XEN g_expand_control_hop(XEN snd_n) 
 {
   #define H_expand_control_hop "(" S_expand_control_hop " (snd #f)): current expansion output grain spacing in seconds (0.05)"
-  return(sound_get(snd_n, SP_EXPAND_HOP, S_expand_control_hop, NO_MIX));
+  return(sound_get(snd_n, SP_EXPAND_HOP, S_expand_control_hop));
 }
 
 static XEN g_set_expand_control_hop(XEN on, XEN snd_n) 
@@ -3182,7 +3164,7 @@ WITH_REVERSED_ARGS(g_set_expand_control_hop_reversed, g_set_expand_control_hop)
 static XEN g_speed_control(XEN snd_n) 
 {
   #define H_speed_control "(" S_speed_control " (snd #f)): current speed (srate) slider setting"
-  return(sound_get(snd_n, SP_SPEED, S_speed_control, NO_MIX));
+  return(sound_get(snd_n, SP_SPEED, S_speed_control));
 }
 
 static XEN g_set_speed_control(XEN on, XEN snd_n) 
@@ -3196,7 +3178,7 @@ WITH_REVERSED_ARGS(g_set_speed_control_reversed, g_set_speed_control)
 static XEN g_reverb_control_length(XEN snd_n) 
 {
   #define H_reverb_control_length "(" S_reverb_control_length " (snd #f)): reverb decay length scaler"
-  return(sound_get(snd_n, SP_REVERB_LENGTH, S_reverb_control_length, NO_MIX));
+  return(sound_get(snd_n, SP_REVERB_LENGTH, S_reverb_control_length));
 }
 
 static XEN g_set_reverb_control_length(XEN on, XEN snd_n) 
@@ -3210,7 +3192,7 @@ WITH_REVERSED_ARGS(g_set_reverb_control_length_reversed, g_set_reverb_control_le
 static XEN g_reverb_control_feedback(XEN snd_n) 
 {
   #define H_reverb_control_feedback "(" S_reverb_control_feedback " (snd #f)): reverb feedback scaler"
-  return(sound_get(snd_n, SP_REVERB_FEEDBACK, S_reverb_control_feedback, NO_MIX));
+  return(sound_get(snd_n, SP_REVERB_FEEDBACK, S_reverb_control_feedback));
 }
 
 static XEN g_set_reverb_control_feedback(XEN on, XEN snd_n) 
@@ -3224,7 +3206,7 @@ WITH_REVERSED_ARGS(g_set_reverb_control_feedback_reversed, g_set_reverb_control_
 static XEN g_reverb_control_scale(XEN snd_n) 
 {
   #define H_reverb_control_scale "(" S_reverb_control_scale " (snd #f)): reverb scaler (the amount of reverb)"
-  return(sound_get(snd_n, SP_REVERB_SCALE, S_reverb_control_scale, NO_MIX));
+  return(sound_get(snd_n, SP_REVERB_SCALE, S_reverb_control_scale));
 }
 
 static XEN g_set_reverb_control_scale(XEN on, XEN snd_n) 
@@ -3238,7 +3220,7 @@ WITH_REVERSED_ARGS(g_set_reverb_control_scale_reversed, g_set_reverb_control_sca
 static XEN g_reverb_control_lowpass(XEN snd_n) 
 {
   #define H_reverb_control_lowpass "(" S_reverb_control_lowpass " (snd #f)): reverb lowpass filter coefficient"
-  return(sound_get(snd_n, SP_REVERB_LOW_PASS, S_reverb_control_lowpass, NO_MIX));
+  return(sound_get(snd_n, SP_REVERB_LOW_PASS, S_reverb_control_lowpass));
 }
 
 static XEN g_set_reverb_control_lowpass(XEN on, XEN snd_n) 
@@ -3253,7 +3235,7 @@ static XEN g_reverb_control_decay(XEN snd)
 {
   #define H_reverb_control_decay "(" S_reverb_control_decay " (snd #t)): 'Apply' button reverb decay time (1.0 seconds)"
   if (XEN_BOUND_P(snd))
-    return(sound_get(snd, SP_REVERB_DECAY, S_reverb_control_decay, NO_MIX));
+    return(sound_get(snd, SP_REVERB_DECAY, S_reverb_control_decay));
   return(C_TO_XEN_DOUBLE(reverb_control_decay(ss)));
 }
 
@@ -3276,7 +3258,7 @@ static XEN g_set_filter_control_env(XEN edata, XEN snd_n)
   snd_info *sp;
   env *e;
   int i;
-  ASSERT_JUST_SOUND(S_setB S_filter_control_env, snd_n, 2);
+  ASSERT_SOUND(S_setB S_filter_control_env, snd_n, 2);
   sp = get_sp(snd_n, PLAYERS_OK);
   if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(S_setB S_filter_control_env, snd_n));
@@ -3301,7 +3283,7 @@ static XEN g_filter_control_env(XEN snd_n)
 {
   #define H_filter_control_env "(" S_filter_control_env " (snd #f)): snd's filter envelope (in the control panel)"
   snd_info *sp = NULL;
-  ASSERT_JUST_SOUND(S_filter_control_env, snd_n, 1);
+  ASSERT_SOUND(S_filter_control_env, snd_n, 1);
   sp = get_sp(snd_n, PLAYERS_OK);
   if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(S_filter_control_env, snd_n));
@@ -3319,7 +3301,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   snd_info *sp;
   apply_state *ap;
   snd_apply_t cur_choice;
-  ASSERT_JUST_SOUND(S_apply_controls, snd, 1);
+  ASSERT_SOUND(S_apply_controls, snd, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(choice), choice, XEN_ARG_2, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_3, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dur), dur, XEN_ARG_4, S_apply_controls, "an integer");
@@ -3352,7 +3334,7 @@ the envelopes are complete (they are the result of a background process), and th
   env_info *ep;
   int edpos;
   chan_context *cgx;
-  ASSERT_JUST_CHANNEL(S_peak_env_info, snd, chn, 1);
+  ASSERT_CHANNEL(S_peak_env_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos), pos, XEN_ARG_3, S_peak_env_info, "an integer");
   cp = get_cp(snd, chn, S_peak_env_info);
   cgx = cp->cgx;
@@ -3404,7 +3386,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   int ibuf[5];
   mus_sample_t mbuf[2];
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_write_peak_env_info_file, "a string");
-  ASSERT_JUST_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
+  ASSERT_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
   if ((cp->amp_envs == NULL) || (cp->amp_envs[0] == NULL))
     XEN_ERROR(NO_SUCH_ENVELOPE,
@@ -3510,7 +3492,7 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
   char *fullname;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_3, S_read_peak_env_info_file, "a string");
-  ASSERT_JUST_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
+  ASSERT_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_read_peak_env_info_file);
   fullname = mus_expand_filename(XEN_TO_C_STRING(name));
   cp->amp_envs[0] = get_peak_env_info(fullname, &err);
@@ -3753,7 +3735,7 @@ static XEN g_start_progress_report(XEN snd)
 {
   #define H_start_progress_report "(" S_start_progress_report " (snd #f)): post the hour-glass icon"
   snd_info *sp;
-  ASSERT_JUST_SOUND(S_start_progress_report, snd, 1);
+  ASSERT_SOUND(S_start_progress_report, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_start_progress_report, snd));
@@ -3765,7 +3747,7 @@ static XEN g_finish_progress_report(XEN snd)
 {
   #define H_finish_progress_report "(" S_finish_progress_report " (snd #f)): remove the hour-glass icon"
   snd_info *sp;
-  ASSERT_JUST_SOUND(S_finish_progress_report, snd, 1);
+  ASSERT_SOUND(S_finish_progress_report, snd, 1);
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_finish_progress_report, snd));
@@ -3780,7 +3762,7 @@ update an on-going 'progress report' (an animated hour-glass icon) in snd using 
 
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(pct), pct, XEN_ARG_1, S_progress_report, "a number");
-  ASSERT_JUST_SOUND(S_progress_report, snd, 5);
+  ASSERT_SOUND(S_progress_report, snd, 5);
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_2, S_progress_report, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(cur_chan), cur_chan, XEN_ARG_3, S_progress_report, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_4, S_progress_report, "an integer");

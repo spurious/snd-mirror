@@ -14488,9 +14488,9 @@ EDITS: 5
 		  (fneq (maxamp ind 1) (* 2 m1)))
 	      (snd-display ";mix twice syncd: 0: ~A -> ~A, m1: ~A -> ~A, len: ~A -> ~A"
 			   m0 (maxamp ind 0) m1 (maxamp ind 1) len (frames ind 0)))
-	  (if (or (= (mix-sync md) 0)
-		  (not (= (mix-sync md) (mix-sync (1+ md)))))
-	      (snd-display ";sync-multichannel-mixes setup: ~A ~A" (mix-sync md) (mix-sync (1+ md))))
+	  (if (or (= (mix-track md) 0)
+		  (not (= (mix-track md) (mix-track (1+ md)))))
+	      (snd-display ";sync-multichannel-mixes setup: ~A ~A" (mix-track md) (mix-track (1+ md))))
 	  (if (and (provided? 'snd-motif)
 		   (provided? 'xm))
 	      (begin
@@ -38500,6 +38500,8 @@ EDITS: 2
 	    (check-error-tag 'cannot-print (lambda () (graph->ps)))
 	    (let ((ind (open-sound "oboe.snd"))) 
 	      (select-all)
+	      (check-error-tag 'wrong-type-arg (lambda () (read-only (list ind))))
+	      (check-error-tag 'wrong-type-arg (lambda () (frames ind (list 0))))
 ;	      (check-error-tag 'mus-error (lambda () (filter-sound (make-frame 4))))
 	      (check-error-tag 'wrong-type-arg (lambda () (smooth-sound 0 -10)))
 	      (check-error-tag 'out-of-range (lambda () (let ((hi (make-sound-data 1 10))) (samples->sound-data 0 8 #f #f hi #f 2))))

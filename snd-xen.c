@@ -1717,8 +1717,7 @@ static XEN g_abortq(void)
 snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 {
   int snd_n;
-  /* if x_snd_n is a number, it is sp->index
-  */
+  /* if x_snd_n is a number, it is sp->index */
   if (XEN_INTEGER_P(x_snd_n))
     {
       snd_n = XEN_TO_C_INT(x_snd_n);
@@ -1735,25 +1734,6 @@ snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 	}
       return(NULL);
     }
-#if 0
-  else
-    {
-      int len;
-      if (XEN_LIST_P_WITH_LENGTH(x_snd_n, len))
-	{
-	  /* a mix input sound */
-	  if ((len == 1) && 
-	      XEN_INTEGER_P(XEN_CAR(x_snd_n)))
-	    {
-	      snd_n = XEN_TO_C_INT(XEN_CAR(x_snd_n));
-	      if (mix_ok(snd_n))
-		return(make_mix_readable_from_id(snd_n));
-	    }
-	  XEN_ERROR(NO_SUCH_MIX,
-		    x_snd_n);
-	}
-    }
-#endif
   /* use default sound, if any */
   return(any_selected_sound());
 }

@@ -1774,7 +1774,7 @@ and otherwise return a list (total-size active-bins active-slices)"
 
   chan_info *cp;
   sono_info *si;
-  ASSERT_JUST_CHANNEL(S_transform_samples_size, snd, chn, 1);
+  ASSERT_CHANNEL(S_transform_samples_size, snd, chn, 1);
   cp = get_cp(snd, chn, S_transform_samples_size);
   if (!(cp->graph_transform_p)) 
     return(XEN_ZERO);
@@ -1798,7 +1798,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
   int fbin, fslice;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(bin), bin, XEN_ARG_1, S_transform_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(slice), slice, XEN_ARG_2, S_transform_sample, "an integer");
-  ASSERT_JUST_CHANNEL(S_transform_sample, snd_n, chn_n, 3);
+  ASSERT_CHANNEL(S_transform_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_transform_sample);
   if (cp->graph_transform_p)
     {
@@ -1854,7 +1854,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
   int i, j, k, len, bins, slices;
   Float *fvals;
   vct *v1 = get_vct(v);
-  ASSERT_JUST_CHANNEL(S_transform_samples2vct, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_transform_samples2vct, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_transform_samples2vct);
   if ((cp->graph_transform_p) && (cp->fft))
     {

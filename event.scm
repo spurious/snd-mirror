@@ -260,11 +260,13 @@
 			   XmNpaneMaximum 1000)))
 
 (define (force-event)
-  (let ((app (car (main-widgets))))
-    (while #t
+  (let ((app (car (main-widgets)))
+	(done #f))
+    (do ()
+	(done)
       (let ((msk (XtAppPending app)))
 	(if (= (logand msk (logior XtIMXEvent XtIMAlternateInput)) 0)
-	    (break 'done)
+	    (set! done #t)
 	    (XtDispatchEvent (XtAppNextEvent app)))))))
 	      
 (define (take-keyboard-focus wid)

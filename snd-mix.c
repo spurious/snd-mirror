@@ -8,12 +8,16 @@
  * --> all else, if track, track reader -- this automates track editing
  * --> add mix/track button to mix-panel to automate track edits (tempo slider), or add new track panel
  * --> if drag track, all drag together (track edits should undo/redo together, even across all outputs?)
- * --> add track funcs from mix.scm
+ * --> add track funcs from mix.scm, track-track so that mix-reader can ascend through all track settings
  * --> add easy pan choices with linear, sinusoidal, exponential envs
  * --> add easy synchronization across mixes ("snap")
  * --> mix-maxamp, (mix-frames), filter-track in mix.scm
- * --> flatten to handle indefinitely nested tracks
  * --> sync multichan mixes should change together in graph
+ *
+ *
+ * int scale_mix_amp(int mix_id, int chan, Float scl)
+ * int scale_mix_speed(int mix_id, Float scl)
+ * SCM g_flatten
  */
 
 #define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
@@ -26,8 +30,6 @@ typedef struct {         /* save one mix console state */
   Float *scalers;
   Float speed;
   env **amp_envs;
-  /* TODO: remove mix_edit_ctr */
-  int *mix_edit_ctr;     /* edit_ctr's in underlying mix sound */
 } console_state;
 
 typedef struct {
@@ -147,7 +149,6 @@ static console_state *make_console_state(int chans, int edit_ctr, off_t beg, off
   cs->end = end;
   cs->len = end - beg + 1;
   cs->locked = false;
-  cs->mix_edit_ctr = (int *)CALLOC(chans, sizeof(int));
   cs->scalers = (Float *)CALLOC(chans, sizeof(Float));
   cs->amp_envs = NULL; 
   return(cs);
@@ -163,8 +164,6 @@ static console_state *copy_console(console_state *cs)
       ncs->scalers[i] = cs->scalers[i];
   ncs->locked = cs->locked;
   ncs->speed = cs->speed;
-  for (i = 0; i < cs->chans; i++) 
-    ncs->mix_edit_ctr[i] = cs->mix_edit_ctr[i];
   if (cs->amp_envs)
     {
       ncs->amp_envs = (env **)CALLOC(cs->chans, sizeof(env *));
@@ -183,12 +182,6 @@ static void make_current_console(mix_info *md)
   cs = md->states[md->curcons];
   cur = md->current_cs;
   cur->chans = cs->chans;
-  for (i = 0; i < cs->chans; i++) 
-    {
-      cur->mix_edit_ctr[i] = cs->mix_edit_ctr[i];
-      if (md->add_snd)
-	md->add_snd->chans[i]->edit_ctr = cur->mix_edit_ctr[i];
-    }
   cur->edit_ctr = cs->edit_ctr;
   cur->orig = cs->beg;
   cur->beg = cs->beg;
@@ -214,7 +207,6 @@ static console_state *free_console_state(console_state *cs)
   if (cs)
     {
       if (cs->scalers) {FREE(cs->scalers); cs->scalers = NULL;}
-      if (cs->mix_edit_ctr) {FREE(cs->mix_edit_ctr); cs->mix_edit_ctr = NULL;}
       if (cs->amp_envs) 
 	{
 	  for (i = 0; i < cs->chans; i++) 
@@ -709,11 +701,11 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
     {
       if (mf->calc == C_STRAIGHT)
 	/* to include edpos here we'd need to use it also during the mix_input_amp_env_read business below, so it's non-trivial to add */
-	mf->sfs[mf->base] = init_sample_read_any(beg, add_sp->chans[mf->base], READ_FORWARD, cs->mix_edit_ctr[mf->base]); 
+	mf->sfs[mf->base] = init_sample_read(beg, add_sp->chans[mf->base], READ_FORWARD); 
       else
 	{
 	  for (i = 0; i < chans; i++)
-	    mf->sfs[i] = init_sample_read_any(beg, add_sp->chans[i], READ_FORWARD, cs->mix_edit_ctr[i]);
+	    mf->sfs[i] = init_sample_read(beg, add_sp->chans[i], READ_FORWARD);
 	}
     }
   if (mf->calc == C_SPEED)
@@ -3047,7 +3039,6 @@ void reflect_mix_edit(chan_info *input_cp, const char *origin)
   console_state *cs;
   md = (mix_info *)(input_cp->mix_md);
   cs = md->current_cs;
-  cs->mix_edit_ctr[input_cp->chan] = input_cp->edit_ctr;
   cs->len = CURRENT_SAMPLES(input_cp);
   remix_file(md, origin);
 }
@@ -3256,6 +3247,29 @@ int set_mix_amp_from_id(int mix_id, int chan, Float val, bool dragging)
   return(set_mix_amp(mix_id, chan, val, true, !dragging));
 }
 
+#if 0
+static int scale_mix_amp(int mix_id, int chan, Float scl)
+{
+  mix_info *md;
+  console_state *cs;
+  md = md_from_id(mix_id);
+  if ((md) && (mix_ok_and_unlocked(mix_id)))
+    {
+      if (md->in_chans > chan)
+	{
+	  cs = md->current_cs;
+	  cs->scalers[chan] *= scl;
+	  reflect_mix_in_mix_panel(mix_id);
+	  remix_file(md, S_setB S_mix_amp);
+	  return(mix_id);
+	}
+      else return(INVALID_MIX_CHANNEL);
+    }
+  return(INVALID_MIX_ID);
+}
+#endif
+
+
 Float mix_amp_from_id(int mix_id, int chan)
 {
   mix_info *md;
@@ -3324,6 +3338,29 @@ int set_mix_speed_from_id(int mix_id, Float val, bool dragging)
 {
   return(set_mix_speed(mix_id, val, true, !dragging));
 }
+
+#if 0
+static int scale_mix_speed(int mix_id, Float scl)
+{
+  mix_info *md;
+  char srcbuf[16];
+  console_state *cs;
+  Float new_speed;
+  md = md_from_id(mix_id);
+  if ((md) && (mix_ok_and_unlocked(mix_id)))
+    {
+      cs = md->current_cs;
+      new_speed = srate_changed(scl * cs->speed, srcbuf, speed_control_style(ss), speed_control_tones(ss)); 
+      /* new_speed is closest acceptable speed giving tuning etc */
+      cs->speed = new_speed;
+      cs->len = (off_t)(ceil(md->in_samps / cs->speed));
+      reflect_mix_in_mix_panel(mix_id);
+      remix_file(md, S_setB S_mix_speed);
+      return(mix_id);
+    }
+  return(INVALID_MIX_ID);
+}
+#endif
 
 Float mix_speed_from_id(int mix_id)
 {
@@ -4001,7 +4038,7 @@ static XEN g_forward_mix(XEN count, XEN snd, XEN chn)
   int val;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_mix, "an integer");
-  ASSERT_JUST_CHANNEL(S_forward_mix, snd, chn, 2);
+  ASSERT_CHANNEL(S_forward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mix);
   val = XEN_TO_C_INT_OR_ELSE(count, 1); 
   goto_mix(cp, val);
@@ -4014,7 +4051,7 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
   int val; 
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_mix, "an integer");
-  ASSERT_JUST_CHANNEL(S_backward_mix, snd, chn, 2);
+  ASSERT_CHANNEL(S_backward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mix);
   val = -(XEN_TO_C_INT_OR_ELSE(count, 1)); 
   goto_mix(cp, val);
@@ -4038,7 +4075,7 @@ If file_chn is omitted or #f, file's channels are mixed until snd runs out of ch
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(file_chn) || XEN_FALSE_P(file_chn) || (!(XEN_BOUND_P(file_chn))), file_chn, XEN_ARG_3, S_mix, "an integer or #f");
-  ASSERT_JUST_CHANNEL(S_mix, snd_n, chn_n, 4);
+  ASSERT_CHANNEL(S_mix, snd_n, chn_n, 4);
   XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(tag), tag, XEN_ARG_6, S_mix, "a number");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_mix, "a boolean");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
@@ -4398,7 +4435,7 @@ return a reader ready to access track's data associated with snd's channel chn, 
   int i;
   off_t samp;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(track_id), track_id, XEN_ARG_1, S_make_track_sample_reader, "an integer");
-  ASSERT_JUST_CHANNEL(S_make_track_sample_reader, snd, chn, 2); 
+  ASSERT_CHANNEL(S_make_track_sample_reader, snd, chn, 2); 
   cp = get_cp(snd, chn, S_make_track_sample_reader);
   ASSERT_SAMPLE_TYPE(S_make_track_sample_reader, beg, XEN_ARG_4);
   samp = beg_to_sample(beg, S_make_track_sample_reader);
@@ -4504,7 +4541,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   int i, len, mix_id = -1;
   bool with_mixer = true;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_mix_vct, "a vct");
-  ASSERT_JUST_CHANNEL(S_mix_vct, snd, chn, 3);
+  ASSERT_CHANNEL(S_mix_vct, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_mix_vct, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_tag), with_tag, XEN_ARG_5, S_mix_vct, "a boolean");
   v = TO_VCT(obj);
@@ -4547,7 +4584,7 @@ find the mix in snd's channel chn at samp; return the mix id or #f if no such mi
   int id;
   chan_info *cp = NULL;
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_find_mix, "an integer");
-  ASSERT_JUST_CHANNEL(S_find_mix, snd_n, chn_n, 2); 
+  ASSERT_CHANNEL(S_find_mix, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mix);
   id = mix_id_from_channel_position(cp, XEN_TO_C_OFF_T_OR_ELSE(samp_n, -1));
   if (id == INVALID_MIX_ID)
@@ -4830,8 +4867,22 @@ The hook function argument 'id' is the newly selected mix's id."
 
   #define H_mix_drag_hook S_mix_drag_hook " (id): called when a mix is dragged"
   XEN_DEFINE_HOOK(mix_drag_hook, S_mix_drag_hook, 1, H_mix_drag_hook); /* arg = id */
-
-#if HAVE_GUILE
-  XEN_EVAL_C_STRING("(define mix-sync mix-track)");
-#endif
 }
+
+
+#if 0
+/* for tracks of tracks */
+static SCM g_flatten(SCM lst)
+{
+  XEN_ASSERT_TYPE(XEN_LIST_P(lst), lst, XEN_ONLY_ARG, "flatten", "a list");
+  if (!(XEN_NULL_P(lst)))
+    {
+      if (XEN_LIST_P(XEN_CAR(lst)))
+	return(XEN_APPEND(flatten(XEN_CAR(lst)),
+			  flatten(XEN_CDR(lst))));
+      return(XEN_CONS(XEN_CAR(lst),
+		      flatten(XEN_CDR(lst))));
+    }
+  return(XEN_EMPTY_LIST);
+}
+#endif
