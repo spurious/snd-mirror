@@ -435,6 +435,16 @@ int sf_p(XEN obj);
 
 #define S_apply_ladspa "apply-ladspa"
 
+/* bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the
+        stack with a huge array.  Also added c++ code (previous code
+        was illegal in c++).
+*/
+
+static LADSPA_Data *pfInputBuffer = NULL;
+#if (!SNDLIB_USE_FLOATS)
+  static LADSPA_Data *pfBuffer2 = NULL;
+#endif
+
 static XEN g_apply_ladspa(XEN reader,
 			  XEN ladspa_plugin_configuration,
 			  XEN samples,
@@ -456,11 +466,16 @@ by any arguments. (Information about about parameters can be acquired using anal
   LADSPA_PortDescriptor iPortDescriptor;
 
   LADSPA_Data * pfControls;
+#if 0
+  /* this can cause a stack overflow -- moved out of the local frame 20-Sep-01 */
   LADSPA_Data pfInputBuffer[MAX_BUFFER_SIZE];
+#endif
   LADSPA_Data * pfOutputBuffer;
 
+#if 0
 #if (!SNDLIB_USE_FLOATS)
   LADSPA_Data pfBuffer2[MAX_BUFFER_SIZE];
+#endif
 #endif
 
   chan_info *cp;
@@ -474,6 +489,14 @@ by any arguments. (Information about about parameters can be acquired using anal
   MUS_SAMPLE_TYPE *idata;
 #if (!SNDLIB_USE_FLOATS)
   MUS_SAMPLE_TYPE val;
+#endif
+
+  /* this code added 20-Sep-01 */
+  if (pfInputBuffer == NULL)
+    pfInputBuffer = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
+#if (!SNDLIB_USE_FLOATS)
+  if (pfBuffer2 == NULL)
+    pfBuffer2 = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
 #endif
 
   state = get_global_state();
@@ -693,7 +716,7 @@ by any arguments. (Information about about parameters can be acquired using anal
 		      DELETE_ME, LOCK_MIXES,
 		      XEN_TO_NEW_C_STRING(origin));
 
-  update_graph(cp, NULL); /* is this needed? */
+  update_graph(cp, NULL);
 
   if (ofile) FREE(ofile);
   FREE(data[0]);

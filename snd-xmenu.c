@@ -1236,14 +1236,17 @@ static void Popup_Info_Callback(Widget w, XtPointer cD, XtPointer mD)
     }
 }
 
+void post_popup(XButtonPressedEvent *event)
+{
+  XmMenuPosition(popup_menu, event);
+  XtManageChild(popup_menu);
+}
+
 #if (XmVERSION == 1)
 static void Post_Popup_Menu(Widget w, XtPointer cD, XEvent *event, Boolean *flag)
 {
   if (event->xbutton.button == BUTTON_3)
-    {
-      XmMenuPosition(popup_menu, (XButtonPressedEvent *)event);
-      XtManageChild(popup_menu);
-    }
+    post_popup((XButtonPressedEvent *)event);
 }
 #endif
 

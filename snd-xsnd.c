@@ -1454,7 +1454,8 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	      XtSetArg(args[n], XmNtransient, FALSE); n++;
 	      sx->dialog = XtCreatePopupShell(title, xmDialogShellWidgetClass, MAIN_SHELL(ss), args, n);
 	      /* using popup shell here gets around the problem that the shell passes resize requests to all its children
-	       * -- as a popup, it's not considered a child
+	       * -- as a popup, it's not considered a child, but that means we don't inherit things like popup menus from 
+	       * the main shell.
 	       */
 	      sound_delete = XmInternAtom(XtDisplay(sx->dialog), "WM_DELETE_WINDOW", FALSE);
 	      XmAddWMProtocolCallback(sx->dialog, sound_delete, Close_Sound_Dialog, (XtPointer)sp);
