@@ -45,6 +45,8 @@
   <li><a href="#sndwithclm">Snd and the CLM module</a>
     <ul>
     <li><a href="#clmfuncs">CLM functions</a>
+    <li><a href="#sndinstruments">Instruments</a>
+    <li><a href="#sndeffects">Effects</a>
     </ul>
   <li><a href="#sndwithmotif">Snd and Motif</a>
   <li><a href="#sndwithgtk">Snd and Gtk</a>
@@ -1097,7 +1099,7 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 
 ;;; various "Forbidden Planet" sound effects:
 
-(define sp
+(define fp
   (lambda (sr osamp osfrq)
     (let* ((os (make-oscil osfrq))
 	   (sr (make-src :srate sr))
@@ -1160,9 +1162,275 @@ You can load Rick Taube's CM into Snd as Scheme code:
 </pre>
 <p>and all of CM is at your disposal! 
 </p>
-
 <br>
 
+<!-- INDEX sndinstruments:Instruments -->
+<span class=cbox><h4><A NAME="sndinstruments">Instruments</a></h4></span>
+
+<p>It's hard to decide what's an "instrument" in this context, but I think I'll treat
+it as something that can be called as a note in a notelist (say in with-sound) and
+generate its own sound.
+In many cases, I've used "definstrument" in place of define* for CM's benefit.
+See test 23 in snd-test.scm for example calls.
+</p>
+<table border=1 cellpadding=5>
+<tr><th>Instrument</th><th>Sources</th><th>Description</th></tr>
+<tr><td>pluck</td><td>examp.scm</td><td>David Jaffe's Karplus-Strong (physical model) plucked string</td></tr>
+<tr><td>fm-violin</td><td>v.scm, v.rb, fmv.scm, fm.html, sndscm.html</td><td>violin-like sounds via FM</td></tr>
+<tr><td>jc-reverb</td><td>jcrev.scm, examp.scm, examp.rb</td><td>Chowning's old reverb</td></tr>
+<tr><td>maraca, big-maraca</td><td>maraca.scm</td><td>Perry Cook's maraca physical model</td></tr>
+<tr><td>fm-bell</td><td>bell.scm, examp.rb</td><td>Mike McNabb's FM bell</td></tr>
+<tr><td>singer</td><td>singer.scm</td><td>Perry Cook's vocal tract physical model</td></tr>
+<tr><td>stereo-flute</td><td>flute.scm</td><td>Nicky Hind's flute physical model</td></tr>
+<!-- TODO: finish this table! -->
+<!--
+with:
+clm.html:(define (simp start-time duration frequency amplitude)
+clm.html:(define (waver spectr driver)
+bes.scm:(define (bes-fm dur freq amp ratio index)
+bird.scm:(define (bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)
+bird.scm:(define (bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
+examp.scm:(define (scissor begin-time)
+examp.scm:(define* (fofins beg dur frq amp uvib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
+examp.scm:(define (vox beg dur freq amp ampfun freqfun freqscl voxfun index vibscl)
+examp.scm:(define* (chain-dsps beg dur #:rest dsps)
+freeverb.scm:(define* (freeverb #:optional
+noise.scm:(define* (fm-noise startime dur freq0 amp ampfun ampat ampdc
+piano.scm:(define* (p start
+pqwvox.scm:(define (pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes)
+pqwvox.scm:  (define (vox-fun phons which newenv)
+prc95.scm:(define (bow beg dur frq amplitude maxa)
+prc95.scm:(define (brass beg dur freq amplitude maxa)
+prc95.scm:(define (clarinet beg dur freq amplitude maxa)
+prc95.scm:(define (flute beg dur freq amplitude maxa)
+strad.scm:(define* (bow beg dur frq amplitude #:key
+
+add:
+addflt.ins:(definstrument addflts (start dur numfilts driver freqfun freq0 freq1 ampfun amp cosnum 
+add.ins:(definstrument (complete-add :exp-env nil)
+addsnd.ins:(definstrument add-sound (file beg &optional dur
+anoi.ins:(definstrument anoi (infile dur &optional (fftsize 128) (amp-scaler 10.0) (r two-pi))
+b1.ins:(definstrument bes-fm (beg dur freq amp ratio index)
+badd.ins:(definstrument (badd :exp-env nil)
+b.ins:(definstrument simp (beg dur)
+canter.ins:(definstrument canter (beg dur pitch amp-1 deg dis pcrev ampfun ranfun skewfun
+cellon.ins:(definstrument cellon (beg dur pitch0 amp ampfun betafun 
+cnv.ins:(definstrument cnv (beg dur filter file &optional (amp 1.0) (chan 0))
+cnv.ins:(definstrument cnvo (beg dur filter file &optional (size 512))
+cnv.ins:(definstrument cnv-reverb (beg dur &key (rev-amt .1) (decay-time 1.0) (decay-expt 32.0))
+cnv.ins:(definstrument cnvrev (file impulse &optional (rev-amt .1))
+ctst.ins:(definstrument ctst (samps)
+cut.ins:(definstrument one-cut
+dfm.ins:(definstrument dfm (start duration amp ampenv 
+drone.ins:(definstrument drone (startime dur frequency amp-1
+edbug.ins:(definstrument formants
+fast.ins:(definstrument simp1 (dur n frq)
+filter-noise.ins:(definstrument filter-noise (start-time duration amp 
+flt.ins:(definstrument filter-white-noise (beg end R freq G)
+fltnoi.ins:(definstrument filter-noise (beg dur amp coeffs)
+fltnoi.ins:(definstrument filter-noise (beg dur amp &key x-coeffs order)
+fltsnd.ins:(definstrument filter-sound (file beg &optional (dur -1.0) 
+flute.ins:(definstrument stereo-flute (start dur freq flow 
+fmex.ins:(definstrument fm-bell (start-time duration frequency amplitude amp-env index-env index
+fmex.ins:(definstrument fm-drum (start-time duration frequency amplitude index 
+fmex.ins:(definstrument gong (start-time duration frequency amplitude
+fmsimp.ins:(definstrument fmsimp (beg dur frq amp ind &optional previous-oscils)
+fmsrc.ins:(definstrument (simp :language :c) (start-time duration amp srt fmamp fmfreq filename wid)
+fr.ins:(definstrument fr ()
+fullmix.ins:(definstrument fullmix (in-file &optional (beg 0.0) outdur (inbeg 0.0) matrix srate reverb-amount)
+good-saw.ins:(definstrument good-saw (start-time duration frequency &optional (amp 1.0)
+good-sqr.ins:(definstrument good-sqr (start-time duration frequency &optional (amp 1.0)
+good-sync.ins:(definstrument good-sync (start-time duration frequency &optional (amp 1.0)
+good-tri.ins:(definstrument good-tri (start-time duration frequency &optional (amp 1.0)
+grani.ins:(definstrument grani 
+granular.ins:(definstrument granular
+grapheq.ins:(definstrument
+grev.ins:(definstrument grev (beg dur exp-amt file file-beg)
+insect.ins:(definstrument fm-insect (startime dur frequency amplitude amp-env 
+jcrevf.ins:(definstrument jc-reverb
+jcrev.ins:(definstrument jc-reverb
+jcvoi.ins:(definstrument fm-voice (beg dur pitch amp vowel-1 sex-1 ampfun1 ampfun2 ampfun3 indxfun skewfun vibfun ranfun
+jllrev.ins:(definstrument jll-reverb
+jlrev.ins:(definstrument jl-reverb
+jul.ins:(definstrument
+kiprev.ins:(definstrument kiprev (startime dur &key (dgain .95)
+lbjPiano.ins:(definstrument lbj-piano
+locarr.ins:(definstrument roomsig-ins (start-time duration filename)
+lt.ins:(definstrument sf-ws (start-time d a speedup ws-f ws-a filename from-sample)
+maraca.ins:(definstrument maraca (beg dur &optional (amp .1) 
+maraca.ins:(definstrument big-maraca (beg dur &optional (amp .1) 
+maxf.ins:(definstrument maxfilter (file beg 
+mebug.ins:(definstrument splinter
+mlbvoi.ins:(definstrument mlb-voice (beg dur freq amp ampfun freqfun freqscl 
+noise.ins:(definstrument fm-noise (startime dur freq0 amp ampfun ampat ampdc
+nrev.ins:(definstrument nrev (startime dur &key (reverb-factor 1.09)
+nsp.ins:(definstrument splinter
+piano.ins:(definstrument p
+p.ins:(definstrument p
+pluck.ins:(definstrument pluck (start dur freq amp weighting lossfact decaytime attacktime)
+pqw.ins:(definstrument pqw (start dur spacing-freq carrier-freq amplitude ampfun indexfun partials
+pqwvox.ins:(definstrument pqw-vox (beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes &optional (vibscl .1) (deg 0) (pcrev 0))
+prc96.ins:(definstrument tubebell (beg dur freq amp &optional (base 32))
+prc96.ins:(definstrument wurley (beg dur freq amp)
+prc96.ins:(definstrument Rhodey (beg dur freq amp &optional (base .5))
+prc96.ins:(definstrument hammondoid (beg dur freq amp)
+prc96.ins:(definstrument metal (beg dur freq amp)
+print.ins:(definstrument simp-print (dur)
+pvoc.ins:(definstrument pvoc
+r7tap.ins:(definstrument R7tap (start-time duration 
+rdtest.ins:(definstrument backandforth (onset duration file src-ratio)
+resflt.ins:(definstrument resflt (start dur driver 
+reson.ins:(definstrument reson
+rev2.ins:(definstrument rev2 (startime dur &key (volume1 1.0) (volume2 1.0))
+rev2.ins:(definstrument simp (start duration freq amp which-reverb)
+rev4.ins:(definstrument new-4-reverb (startime dur &key (low-pass nil) 
+revtst.ins:(definstrument (new-JC-reverb :c-file "/user/bil/cl/njcr.c")  (startime dur &key (low-pass nil) 
+ring-modulate.ins:(definstrument ring-modulate-file
+rmsp.ins:(definstrument track-rms (&optional (time-interval 1.0) (file clm::last-dac-filename))
+san.ins:(definstrument pins (beg dur file amp 
+scanned.ins:(definstrument scanned (start dur freq amp &key
+simp.ins:(definstrument simp (dur hiho)
+simp.ins:(definstrument granulate-sound (file beg &optional dur (orig-beg 0.0) (exp-amt 1.0))
+simp.ins:(definstrument mapenv2 (beg dur frq amp en)
+simp.ins:(definstrument simp ()
+simple.ins:(definstrument simple (beg dur freq amp)
+singer.ins:(definstrument singer (beg amp data)
+space.ins:(definstrument space (file onset duration 
+sp.ins:(definstrument spectr (infile outfile &optional (fftsize 128))
+splinter18.ins:(definstrument splinter
+src.ins:(definstrument srctst (file beg srcenv)
+src.ins:(definstrument (srctst :language :c) (file beg dur src1 src2)
+src.ins:(definstrument src-c (file beg dur src-ratio &optional (start-time 0.0) (amp 1.0))
+src.ins:(definstrument (src-l :language :lisp) (file beg dur src-ratio &optional (amp 1.0))
+src.ins:(definstrument src-sound (file beg dur src-ratio &optional instart ampenv)
+src.ins:(definstrument src-sound (file beg dur src-ratio &optional instart ampenv)
+src.ins:(definstrument simp (start-time duration amp srt fmamp fmfreq filename &optional (fstart 0.0))
+srctst.ins:(definstrument srctst (file beg srcenv in-file-start)
+strad.ins:(definstrument bow (beg dur frq amplitude &key
+tap.ins:(definstrument del-test (del-time tap-offset)
+tb.ins:(definstrument formant-noise (start dur amp 
+tc.ins:(definstrument tc (beg dur file amp shift &optional (fftsize 128))
+t.ins:(definstrument simp (start-time duration freq)
+trp.ins:(definstrument fm-trumpet (startime dur
+ugex.ins:(definstrument gran-synth (start-time duration audio-freq grain-dur grain-interval amp)
+ugex.ins:(definstrument touch-tone-telephone (telephone-number)
+ugex.ins:(definstrument spectrum (start-time duration frequency amplitude
+ugex.ins:(definstrument two-tab (start-time duration frequency amplitude
+ugex.ins:(definstrument noi-attempt (beg dur amp R freq)
+ugex.ins:(definstrument filter-white-noise (beg end R freq G)
+ugex.ins:(definstrument filter-white-noise-1 (beg end R freq G)
+ugex.ins:(definstrument testR (beg end R0 R1 freq G)
+ugex.ins:(definstrument pvins (beg dur file amp shift &optional (fftsize 128))
+v.ins:(definstrument fm-violin 
+vox.ins:(definstrument vox (beg dur freq amp ampfun freqfun freqscl phonemes formant-amps formant-indices &optional (vibscl .1) (deg 0) (pcrev 0))
+vslf.ins:(definstrument vslf
+vsum.ins:(definstrument vsum
+waver.ins:(definstrument brighten (start duration file file-maxamp partials)
+waver.ins:(definstrument brit (start duration freq partials zamp)
+wavetrain.ins:(definstrument fofins (beg dur frq amp vib f0 a0 f1 a1 f2 a2 &optional (ae '(0 0 25 1 75 1 100 0)))
+wavetrain.ins:(definstrument grain-simp-sound (file startime dur
+balance.html:(definstrument formnt-noise (start dur amp 
+clm.html:(definstrument simple-fm (beg end freq amp mc-ratio index
+clm.html:(definstrument mapenv (beg dur frq amp en)
+clm.html:(definstrument simp (dur)
+clm.html:(definstrument simp ()
+clm.html:(definstrument fofins (beg dur frq amp vib f0 a0 f1 a1 f2 a2 &amp;optional ve ae)
+clm.html:(definstrument fractal (start duration m x amp)
+clm.html:(definstrument attract (beg dur amp c) ;c from 1 to 10 or so
+clm.html:(definstrument <A NAME="cross-synthesis">cross-synthesis</a> (beg dur file1 file2 amp &amp;optional (fftsize 128) (r two-pi) (lo 2) (hi nil))
+clm.html:(definstrument filter-noise (beg dur amp &amp;key xcoeffs)
+clm.html:(definstrument echo (beg dur scaler secs file)
+clm.html:(definstrument simp (start-time duration amp srt srt-env filename)
+clm.html:(definstrument simp (start-time duration amp srt fmamp fmfreq filename)
+clm.html:(definstrument convins (beg dur filter file &amp;optional (size 128))
+clm.html:(definstrument granulate-sound (file beg &amp;optional dur (orig-beg 0.0) (exp-amt 1.0))
+clm.html:(definstrument grev (beg dur exp-amt file file-beg)
+clm.html:(definstrument simp (dur)
+clm.html:  (definstrument ss (beg dur freq amp &amp;optional (N 1) (a .5) (B-ratio 1.0))
+clm.html:  (definstrument asy (beg dur freq amp index &amp;optional (r 1.0) (ratio 1.0))
+clm.html:(definstrument backandforth (onset duration file src-ratio)
+clm.html:(definstrument <A NAME="srctst">srctst</a> (file beg srcenv in-file-start)
+clm.html:(definstrument <A NAME="envsound">env-sound</a> (file beg &amp;optional (amp 1.0) (amp-env '(0 1 100 1)))
+clm.html:(definstrument space (file onset duration 
+clm.html:(definstrument simp (start dur freq amp &amp;key (degree 0) (dist 1.0) (reverb 0))
+clm.html:(definstrument <A NAME="brighten">brighten</a> (start duration file file-maxamp partials)
+clm.html:(definstrument spectr (infile outfile &amp;optional (fftsize 128))
+clm.html:  (definstrument simp ()
+clm.html:(definstrument noisey (beg dur)
+clm.html:(definstrument p (beg dur frq amp)
+clm.html:(definstrument fmsimp (beg dur frq amp ind &amp;optional previous-oscils)
+clm.html:(definstrument (simp :language :lisp) (args) ...), and then recompile and reload
+clm.html:(definstrument simp (dur)
+clm.html:(definstrument average-stuff (beg dur freq amp)
+clm.html:  (definstrument auto (dur)
+fm.html:(definstrument pm (beg end freq amp mc-ratio index)
+fm.html:(definstrument fm (beg end freq amp mc-ratio index)
+fm.html:(definstrument fm (beg end freq amp mc-ratio index &amp;optional (index-env '(0 1 100 1)))
+fm.html:(definstrument fm (beg end freq amp mc-ratio index carrier-phase mod-phase)
+fm.html:(definstrument fm (beg end freq amp mc-ratio index car-phase mod-phase skew-func skew)
+fm.html:(definstrument fm (beg end freq amp mc-ratio index cr0p cr1p md0p md1p)
+fm.html:(definstrument fm (beg end freq amp mc-ratios indexes carrier-phase mod-phases)
+fm.html:(definstrument violin (beg end frequency amplitude fm-index)
+fm.html:(definstrument cascade (beg end freq amp modrat modind casrat casind caspha)
+fm.html:(definstrument vox (beg end freq amp 
+sndscm.html:(definstrument simp (start-time duration frequency amplitude
+bessel.lisp:(definstrument waveshaping (beg dur amp freq a)
+bessel.lisp:(definstrument (bessel-convolve :language :lisp) (lim snd1 start1 snd2 start2 samps)
+bessel.lisp:(definstrument bes-fm (beg dur freq amp ratio index)
+bessel.lisp:(definstrument (airy-x :language :c) (beg dur amp freq)
+useful.lisp:(definstrument revsnd (file beg amp reverb)
+useful.lisp:(definstrument piano (start dur freq vol)
+bes-test.cl:(definstrument airy-x (beg dur amp freq)
+bes-test.cl:(definstrument waveshaping (beg dur amp freq a)
+bes-test.cl:(definstrument bes-fm (beg dur freq amp ratio index)
+green.cl:(definstrument green (beg end)
+
+-->
+</table>
+<br><br>
+
+<!-- INDEX sndeffects:Effects -->
+<span class=cbox><h4><A NAME="sndeffects">Effects</a></h4></span>
+
+<p>As with instruments, it's hard to say what isn't an "effect"; even "Invert"
+(that is, scale by -1) seems to count as an effect in some circles.  This list
+is limited to functions that aren't already built into Snd/CLM.
+</p>
+
+<table border=1>
+<tr><th>Effect</th><th>Sources</th><th>Description</th></tr>
+<tr><td></td><td></td><td></td></tr>
+<!-- TODO: fill this table -->
+<!-- fade.scm cross-syn hello-dentist vocoder filters expsnd/src compand voiced->un various mixes echos osc-formants(etc) place-sound
+     brighten-slightly chorus flanger chordalize zero-phase(etc) vibro/ringmod fp sum-of-cos exs
+
+add:
+backandforth.ins:(definstrument backandforth (onset duration file src-ratio)
+clm.html:(definstrument inside-out (beg dur file amp lo hi &amp;optional (fftsize 1024))
+zdelay.ins:(definstrument zdelay (time duration file
+zd.ins:(definstrument zc (time dur freq amp length1 length2 feedback)
+zd.ins:(definstrument zn (time dur freq amp length1 length2 feedforward)
+zipper.ins:(definstrument zipper (beg dur file1 file2 ramp-envelope frame-size &optional (ramp-envelope-base 1.0) frame-envelope)
+comb.ins:(definstrument comb-test (del-time dur f-dif)
+cross.ins:(definstrument cross-synthesis (beg dur file1 file2 amp &optional (fftsize 128) (r two-pi) (lo 2) (hi nil))
+envsnd.ins:(definstrument env-sound (file beg &optional (amp 1.0) (amp-env '(0 1 100 1)))
+expfil.ins:(definstrument expfil (start duration hopsecs rampsecs steadysecs file1 file2)
+expins.ins:(definstrument expins (dur k m)
+expsnd.ins:(definstrument expsnd (file beg dur amp &optional exp-amt ramp seglen sr hop ampenv)
+expsrc.ins:(definstrument expsrc (beg dur input-file exp-ratio src-ratio amp &optional rev start-in-file)
+expsrc.ins:(definstrument expsrc1 (beg dur input-file exp-ratio src-ratio amp &optional rev start-in-file)
+expsrc.ins:(definstrument expsnd (file beg dur amp &optional exp-amt ramp seglen sr hop ampenv)
+expsrc.ins:(definstrument expfil (beg dur exp-amt ramplen steadylen file1 file2)
+expsrc.ins:(definstrument interleave-files (start duration hopsecs rampsecs steadysecs &rest files)
+fade.ins:(definstrument cross-fade (beg dur amp file1 file2 ramp-beg ramp-dur ramp-type &optional (bank-dur .1) (fs 256) (fwidth two-pi))
+fade.ins:(definstrument dissolve-fade (beg dur amp file1 file2 &optional (fsize 128) (r two-pi) (lo 2) (hi nil))
+dissolve.ins:(definstrument dissolve (beg dur file1 file2 renv)
+
+-->
+</table>
+
+
+<br><br>
 <span class=bbox><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></span>
 
 <p>It is possible to add your own user-interface elements using the xm module

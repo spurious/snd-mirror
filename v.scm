@@ -3,8 +3,7 @@
 ;;; this version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined)
 ;;; see fmv.scm for a version that runs more easily in Snd
 
-(define fm-violin
-  (lambda* (startime dur frequency amplitude #:key
+(definstrument (fm-violin startime dur frequency amplitude #:key
 	    (fm-index 1.0)
 	    (amp-env '(0 0  25 1  75 1  100 0))
 	    (periodic-vibrato-rate 5.0) 
@@ -128,7 +127,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 		 ((= i end))
 	       (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
 		      (modulation (* (env indf1) (polynomial coeffs (oscil fmosc1 vib)))))
-		 (locsig locs i (* (env ampf) (oscil carrier (+ vib modulation))))))))))))
+		 (locsig locs i (* (env ampf) (oscil carrier (+ vib modulation)))))))))))
 
 
 

@@ -2,7 +2,7 @@
 
 (use-modules (ice-9 optargs))
 
-(define* (stereo-flute start dur freq flow 
+(definstrument (stereo-flute start dur freq flow 
 			     #:key
 			     (flow-envelope '(0  1 100 1))
 			     (decay 0.01) 		; additional time for instrument to decay
@@ -45,7 +45,7 @@ is a physical model of a flute:\n\
 	 (beg (floor (* start (mus-srate))))
 	 (len (floor (* dur (mus-srate))))
 	 (end (+ beg len))
-	 (chns (channels))
+	 (chns (mus-channels *output*))
 	 (flowf (make-env :envelope flow-envelope 
 			  :scaler flow 
 			  :start beg 
@@ -58,9 +58,7 @@ is a physical model of a flute:\n\
 	 (embouchure (make-delay embouchure-samples :initial-element 0.0))
 	 (bore (make-delay period-samples))
 	 (offset (floor (* period-samples offset-pos)))
-	 (reflection-lowpass-filter (make-one-pole a0 b1))
-	 (sampa (make-vct len))
-	 (sampb (if (> chns 1) (make-vct len))))
+	 (reflection-lowpass-filter (make-one-pole a0 b1)))
      (do ((i beg (1+ i)))
 	 ((= i end))
        (set! delay-sig (delay bore out-sig))
@@ -81,14 +79,12 @@ is a physical model of a flute:\n\
 	     (dc-blocker out-sig previous-out-sig previous-dc-blocked-a))
        (set! dc-blocked-b 
 	     (dc-blocker tap-sig previous-tap-sig previous-dc-blocked-b))
-       (vct-set! sampa i (* out-scl dc-blocked-a))
-       (if (> chns 1) (vct-set! sampb i (* out-scl dc-blocked-b)))
+       (outa i (* out-scl dc-blocked-a) *output*)
+       (if (> chns 1) (outb i (* out-scl dc-blocked-b) *output*))
        (set! previous-out-sig out-sig)
        (set! previous-dc-blocked-a dc-blocked-a)
        (set! previous-tap-sig tap-sig)
-       (set! previous-dc-blocked-b dc-blocked-b))
-     (vct->channel sampa beg len #f 0)
-     (if (> chns 1) (vct->channel sampb beg len #f 1))))
+       (set! previous-dc-blocked-b dc-blocked-b))))
 
 		  
 

@@ -1,9 +1,9 @@
 (use-modules (ice-9 optargs))
 
-(define* (fm-bell startime dur frequency amplitude #:optional amp-env index-env index)
+(definstrument (fm-bell startime dur frequency amplitude #:optional amp-env index-env index)
   "(fm-bell startime dur frequency amplitude #:optional amp-env index-env index) mixes in one fm bell note"
-  (let* ((beg (inexact->exact (* startime (srate))))
-	 (len (inexact->exact (* dur (srate))))
+  (let* ((beg (inexact->exact (* startime (mus-srate))))
+	 (len (inexact->exact (* dur (mus-srate))))
 	 (end (+ beg len))
 	 (fmInd1 (hz->radians (* 32.0 frequency)))
 	 (fmInd2 (hz->radians (* 4.0 (- 8.0 (/ frequency 50.0)))))
@@ -21,21 +21,22 @@
 			 (or index 1.0) dur))
 	 (ampf (make-env (or amp-env 
 			     (list 0 0 .1 1 10 .6 25 .3 50 .15 90 .1 100 0))
-			 amplitude dur))
-	 (out-data (make-vct len)))
-    (vct-map! out-data
-	      (lambda ()
-		(let ((fmenv (env indf)))
-		  (* (env ampf)
-		     (+ (oscil car1 (* fmenv fmInd1 (oscil mod1)))
-			(* .15 (oscil car2 (* fmenv 
-					      (+ (* fmInd2 (oscil mod2))
-						 (* fmInd3 
-						    (oscil mod3))))))
-			(* .15 (oscil car3 (* fmenv 
-					      fmInd4 
-					      (oscil mod4)))))))))
-    (mix-vct out-data beg)))
+			 amplitude dur)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (let ((fmenv (env indf)))
+	   (outa i (* (env ampf)
+		      (+ (oscil car1 (* fmenv fmInd1 (oscil mod1)))
+			 (* .15 (oscil car2 (* fmenv 
+					       (+ (* fmInd2 (oscil mod2))
+						  (* fmInd3 
+						     (oscil mod3))))))
+			 (* .15 (oscil car3 (* fmenv 
+					       fmInd4 
+					       (oscil mod4))))))
+		 *output*)))))))
 
 
 ;(define fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .2000 ))

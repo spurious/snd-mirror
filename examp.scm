@@ -1783,11 +1783,11 @@ this clock, set retitle-time to 0"
 ;;;  CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
 ;;;  translated from CLM's pluck.ins
 
-(define (pluck start dur freq amp weighting lossfact)
+(definstrument (pluck start dur freq amp-1 #:optional (weighting .5) (lossfact .9))
   "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. \
 'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. \
 Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
-'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (pluck .01 1 330 .3 .96 0 0 0)"
+'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (pluck 0 1 330 .3 .95 .95)"
 
   (define (getOptimumC S o p)
     (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
@@ -1801,7 +1801,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
       (list tmpInt (/ (- (sin o) (sin (* o pc))) (sin (+ o (* o pc)))))))
 
   (define (tuneIt f s1)
-    (let* ((p (/ (srate) f))	;period as float
+    (let* ((p (/ (mus-srate) f))	;period as float
 	   (s (if (= s1 0.0) 0.5 s1))
 	   (o (hz->radians f))
 	   (vals (getOptimumC s o p))
@@ -1819,8 +1819,9 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
 	 (wt0 (car vals))
 	 (c (cadr vals))
 	 (dlen (caddr vals))
-	 (beg (inexact->exact (floor (* start (srate)))))
-	 (end (+ beg (inexact->exact (floor (* dur (srate))))))
+	 (amp amp-1)
+	 (beg (inexact->exact (floor (* start (mus-srate)))))
+	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
 	 (lf (if (= lossfact 0.0) 1.0 (min 1.0 lossfact)))
 	 (wt (if (= wt0 0.0) 0.5 (min 1.0 wt0)))
 	 (tab (make-vct dlen))
@@ -1830,21 +1831,21 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
 	 (val 0.0)
 	 (allp (make-one-zero (* lf (- 1.0 wt)) (* lf wt)))
 	 (feedb (make-one-zero c 1.0)) ;or (feedb (make-one-zero 1.0 c))
-	 (ctr 0)
-	 (out-data (make-vct (+ 1 (- end beg)))))
+	 (ctr 0))
     (do ((i 0 (1+ i)))
 	((= i dlen))
       (vct-set! tab i (- 1.0 (random 2.0))))
-    (vct-map! out-data (lambda ()
-			 (let ((val (vct-ref tab ctr)))	;current output value
-			   (vct-set! tab ctr (* (- 1.0 c) 
-						(one-zero feedb 
-							  (one-zero allp val))))
-			   (set! ctr (+ ctr 1))
-			   (if (>= ctr dlen) (set! ctr 0))
-			   (* amp val))))
-    (mix-vct out-data beg #f 0 #f)
-    (update-time-graph)))
+    (run 
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (let ((val (vct-ref tab ctr)))	;current output value
+	   (vct-set! tab ctr (* (- 1.0 c) 
+				(one-zero feedb 
+					  (one-zero allp val))))
+	   (set! ctr (+ ctr 1))
+	   (if (>= ctr dlen) (set! ctr 0))
+	   (outa i (* amp val) *output*)))))))
 
 
 
@@ -1892,8 +1893,8 @@ voice: (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 2
 	  (set! f3 (cons (caddr phon) f3))
 	  (set! f3 (cons x f3))))
       
-      (let* ((start (inexact->exact (floor (* (srate) beg))))
-	     (end (+ start (inexact->exact (floor (* (srate) dur)))))
+      (let* ((start (inexact->exact (floor (* (mus-srate) beg))))
+	     (end (+ start (inexact->exact (floor (* (mus-srate) dur)))))
 	     (car-os (make-oscil :frequency 0))
 	     (of0 (make-oscil :frequency 0))
 	     (of1 (make-oscil :frequency 0))

@@ -6,7 +6,6 @@
 
 #include "snd.h"
 
-static snd_state *ss;
 static XEN mus_error_hook;
 
 static int ignore_mus_error(int type, char *msg)
@@ -30,9 +29,14 @@ static void mus_error2snd(int type, char *msg)
    *   kills the main program!
    */
   snd_state *ss;
+  ss = get_global_state();
+  if (ss == NULL)
+    {
+      fprintf(stderr, msg);
+      return;
+    }
   if (!(ignore_mus_error(type, msg)))
     {
-      ss = get_global_state();
       if (ss->catch_exists)
 	{
 	  if (msg == NULL)
@@ -54,6 +58,13 @@ static void mus_error2snd(int type, char *msg)
 
 static void mus_print2snd(char *msg)
 {
+  snd_state *ss;
+  ss = get_global_state();
+  if (ss == NULL)
+    {
+      fprintf(stderr, msg);
+      return;
+    }
   add_to_error_history(ss, msg, FALSE);
   if (record_dialog_is_active()) recorder_error(msg);
   if (!(ignore_mus_error(MUS_NO_ERROR, msg)))
@@ -96,6 +107,8 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 				  C_TO_XEN_INT(gsl_errno))));
 }
 #endif
+
+static snd_state *ss = NULL;
 
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv)

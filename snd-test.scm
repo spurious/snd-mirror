@@ -36,6 +36,18 @@
 ;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
+;;; TODO: translate clm ins: prc96.ins, canter.ins+drone.ins+bag.clm, badd.ins, addflt.ins, add.ins
+;;; TODO:           grani.ins, dlocsig, jcvoi?, lbjPiano?, resflt?, reson?, san?, scanned?, trp?, vox?, ugex?
+;;;                 see all-ins, scm-ins for the full lists
+;;; change to use with-sound as in v.scm, clm-ins.scm, test case here, table in grfsnd, "definstrument"?
+;;; effects crossref + tests, interface crossref
+;;; are there redundancies in examp.scm? (jcrev?)
+;;; predefine definstrument so ws.scm isn't required for CM
+;;; mus10+sam versions?
+;;;
+;;; doc: grfsnd table + sndscm for new
+;;; test: test 23 
+
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -26771,7 +26783,6 @@ EDITS: 2
 	(set! t1 (time-it (fm-violin-opt 0 5 440 .1)))
 	(set! ts (cons (list "fm vln " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
 	
-	(load "singer.scm")
 	(let ((ind (open-sound "1.snd"))
 	      (v0 #f)
 	      (v1 #f))
@@ -26803,15 +26814,6 @@ EDITS: 2
 	  (set! t1 (time-it (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) .025 .1)))
 	  (set! v1 (channel->vct 1000 100))
 	  (set! ts (cons (list "mlbvoi " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
-
-	  (set! (optimization) 0) 
-	  (set! t0 (time-it (singer 0 .01 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01)))))
-	  (set! v0 (channel->vct 1000 100))
-	  (undo 1 ind)
-	  (set! (optimization) max-optimization) 
-	  (set! t1 (time-it (singer 0 .01 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01)))))
-	  (set! v1 (channel->vct 1000 100))
-	  (set! ts (cons (list "singer " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
 	  (close-sound ind))
 	(snd-display ";         ~{~%       ~A~}~%" ts))
 
@@ -26917,6 +26919,10 @@ EDITS: 2
 
 (load "v.scm")
 (load "jcrev.scm") ; redefines jc-reverb (different from examp.scm version used above)
+(load "maraca.scm")
+(load "bell.scm")
+(load "singer.scm")
+
 (define old-opt-23 (optimization))
 (set! (optimization) max-optimization)
 
@@ -27104,6 +27110,28 @@ EDITS: 2
 		      (snd-display ";init-with-sound type: ~A ~A" (header-type ind) w))
 		  (close-sound ind))))))
 
+      (set! (mus-srate) 22050)
+      (set! (default-output-srate) 22050)
+      (with-sound (:srate 22050) 
+	(fm-violin 0 .01 440 .1 :noise-amount 0.0)
+	(pluck 0.05 .01 330 .1 .95 .95)
+	(maraca .1 .1)
+	(big-maraca .2 .5 .25 0.95 0.9985 .03125 '(2300 5600 8100) '(0.96 0.995 0.995) .01)
+	(fm-bell 0.3 1.0 220.0 .5 
+		 '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0 )
+		 '(0 1 2 1.1000 25 .7500 75 .5000 100 .2000 )
+		 1.0)
+	(singer .4 .1 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01)))
+	(stereo-flute .6 .2 440 .55 :flow-envelope '(0 0 1 1 2 1 3 0))
+	)
+      (if (defined? 'enable-play) (enable-play))
+      (let ((ind (find-sound "test.snd")))
+	(if (or (not (vequal (channel->vct 45 10) (vct -0.068 -0.059 -0.045 -0.028 -0.011 0.005 0.018 0.028 0.035 0.039)))
+		(not (vequal (channel->vct 210 10) (vct 0.015 0.014 0.013 0.011 0.009 0.007 0.005 0.003 0.001 0.000))))
+	    (snd-display "fm-violin with-sound: ~A ~A" (channel->vct 45 10) (channel->vct 210 10)))
+	(play-and-wait ind)
+	(close-sound ind))
+      (if (defined? 'disable-play) (disable-play))
 
       ))
 (set! (optimization) old-opt-23)
