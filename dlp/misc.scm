@@ -298,11 +298,7 @@
 
 ;;; (add-to-menu 1 "Cut Selection -> New" cut-selection->new)
 
-;;; -------- append sound (and append selection for lafs)
-
-(define (append-sound name)
-  ;; appends sound file
-  (insert-sound name (frames)))
+;;; -------- append selection
 
 (define (append-selection)
   (if (selection?)

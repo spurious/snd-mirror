@@ -28,9 +28,9 @@
 	  (apply map
 		 (lambda (snd chn)
 		   (if (= (sync snd) snc)
-		       (map-chan (func) #f #f origin snd chn)))
+		       (map-channel (func) 0 #f snd chn #f origin)))
 		 (all-chans))
-	  (map-chan (func) #f #f origin)))))
+	  (map-channel (func) 0 #f #f #f #f origin)))))
 
 
 ;;; replacement for change-menu-label
@@ -53,17 +53,15 @@
         (insert-sound filename))
       "Insert file" "." "*" "File will be inserted at cursor location.")))
 
-(define (append-sound name)
-  ;; appends sound file
-  (insert-sound name (frames)))
-
-(add-to-menu special-menu "Append file"
+(add-to-menu edit-menu "Append file"
   (lambda ()
     (select-file
      (lambda (filename)
-       (append-sound name)))))
+        (insert-sound filename (frames))))))
+
 
 (add-to-menu special-menu #f #f)
+
 
 ;;; -------- MIDI to WAV
 ;;;
