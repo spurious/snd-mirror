@@ -11614,8 +11614,8 @@ if test $ac_cv_lib_Xp_XpGetDocumentData = yes; then
 fi
 
 
-    LIBS=$XLIBS
-    CFLAGS=$XFLAGS
+    LIBS="$LIBS $XLIBS"
+    CFLAGS="$CFLAGS $XFLAGS"
 
     if test "$with_editres" = yes ; then
 	echo "$as_me:$LINENO: checking for _XEditResCheckMessages in -lXmu" >&5
@@ -12105,6 +12105,56 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
+# perhaps the user hasn't installed the Motif headers?
+             echo "$as_me:$LINENO: checking for Motif headers" >&5
+echo $ECHO_N "checking for Motif headers... $ECHO_C" >&6
+	     cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <Xm/XmAll.h>
+int
+main ()
+{
+ Widget w;
+				   w = XmCreateForm(NULL, "form", NULL, 0)
+
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+	       { echo "$as_me:$LINENO: WARNING: can't find the Motif headers! These are in openmotif-devel or some such package -- will look for Gtk" >&5
+echo "$as_me: WARNING: can't find the Motif headers! These are in openmotif-devel or some such package -- will look for Gtk" >&2;}
+               with_gtk=yes
+	       with_motif=no
+
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 	  if test "$with_xp" != no; then

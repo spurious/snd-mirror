@@ -108,6 +108,181 @@ env *make_envelope(Float *env_buffer, int len)
   return(e);
 }
 
+Float interp_env(env *e, Float x)
+{
+  int i;
+  if (e)
+    {
+      if ((e->pts == 1) || (x <= e->data[0])) return(e->data[1]);
+      if (x >= e->data[e->data_size - 2]) return(e->data[e->data_size - 1]);
+      for (i = 0; i < e->data_size - 1; i += 2)
+	{
+	  if (e->data[i] == x)
+	    return(e->data[i + 1]);
+	  else
+	    {
+	      if (e->data[i + 2] > x)
+		return(e->data[i + 1] + 
+		       (e->data[i + 3] - e->data[i + 1]) * (x - e->data[i]) / (e->data[i + 2] - e->data[i]));
+	    }
+	}
+    }
+  return(0.0);
+}
+
+#if DEBUGGING
+static XEN g_interp_env(XEN e, XEN val)
+{
+  return(C_TO_XEN_DOUBLE(interp_env(xen_to_env(e), XEN_TO_C_DOUBLE(val))));
+}
+#endif
+
+env *normalize_x_axis(env *e)
+{
+  /* make sure env goes from 0 to 1 x-wise; e is changed */
+  Float x0, x1;
+  int i;
+  if (!e) return(NULL);
+  x0 = e->data[0];
+  x1 = e->data[e->data_size - 2];
+  if ((x0 == 0.0) && (x1 == 1.0))
+    return(e);
+  if ((e->pts == 1) || (x0 == x1))
+    {
+      e->data[0] = 0.0;
+      return(e);
+    }
+  for (i = 0; i < e->data_size - 1; i += 2)
+    e->data[i] = (e->data[i] - x0) / (x1 - x0);
+  return(e);
+}
+
+env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur)
+{
+  env *local_e = NULL;
+  int i, j = 0;
+  Float x0, x1, e_x_range, e_x0, e_x1, local_x0, local_x1;
+  /* return env representing e from local beg for local dur */
+  if ((local_beg == e_beg) && (local_dur == e_dur))
+    return(normalize_x_axis(copy_env(e))); /* fixup 0..1? */
+  /* only need to interpolate start and end breaks, copy in between */
+  x0 = (double)(local_beg - e_beg) / (double)e_dur;
+  x1 = (double)(local_beg + local_dur - e_beg) / (double)e_dur;
+  e_x0 = e->data[0];
+  e_x1 = e->data[e->data_size - 2];
+  e_x_range = e_x1 - e_x0;
+  local_x0 = e_x0 + x0 * e_x_range;
+  local_x1 = e_x0 + x1 * e_x_range;
+  local_e = (env *)CALLOC(1, sizeof(env));
+  local_e->data = (Float *)CALLOC(e->data_size, sizeof(Float));
+  /* this may leave wasted space, but worst case the two envs are the same size */
+  for (i = 0; i < e->data_size - 1; i += 2)
+    {
+      if (e->data[i] >= local_x0)
+	{
+	  if (j == 0)
+	    {
+	      if (e->data[i] == local_x0)
+		{
+		  local_e->data[0] = local_x0;
+		  local_e->data[1] = e->data[i + 1];
+		}
+	      else
+		{
+		  local_e->data[0] = local_x0;
+		  local_e->data[1] = e->data[i - 1] + (e->data[i + 1] - e->data[i - 1]) * (local_x0 - e->data[i - 2]) / (e->data[i] - e->data[i - 2]);
+		}
+	      j = 2;
+	    }
+	  if ((e->data[i] < local_x1) && (e->data[i] != local_x0))
+	    {
+	      local_e->data[j] = e->data[i];
+	      local_e->data[j + 1] = e->data[i + 1];
+	      if (e->data[i] == local_x1) break; /* hit end point */
+	      j += 2;
+	    }
+	}
+      if (e->data[i] >= local_x1)
+	{
+	  local_e->data[j] = local_x1;
+	  local_e->data[j + 1] = e->data[i - 1] + (e->data[i + 1] - e->data[i - 1]) * (local_x1 - e->data[i - 2]) / (e->data[i] - e->data[i - 2]);
+	  j += 2;
+	  break;
+	}
+    }
+  local_e->pts = j / 2;
+  local_e->data_size = j;
+  return(normalize_x_axis(local_e));
+}
+
+#if DEBUGGING
+static XEN g_window_env(XEN e, XEN b1, XEN d1, XEN b2, XEN d2)
+{
+  /* (memleak) */
+  return(env_to_xen(window_env(xen_to_env(e),
+			       XEN_TO_C_OFF_T(b1),
+			       XEN_TO_C_OFF_T(d1),
+			       XEN_TO_C_OFF_T(b2),
+			       XEN_TO_C_OFF_T(d2))));
+}
+#endif
+
+env *multiply_envs(env *e1, env *e2, Float maxx)
+{
+  /* assume at this point that x axes are 0..1 */
+  int i = 2, j = 2, k = 2;
+  Float x = 0.0, y0, y1;
+  env *e = NULL;
+  e = (env *)CALLOC(1, sizeof(env));
+  e->data_size = (e1->pts + e2->pts) * 2;
+  e->data = (Float *)CALLOC(e->data_size, sizeof(Float));
+  e->data[0] = 0.0;
+  e->data[1] = e1->data[1] * e2->data[1];
+  while (true)
+    {
+      x += maxx;
+      if (x >= e1->data[i]) x = e1->data[i];
+      if (x >= e2->data[j]) x = e2->data[j];
+      if (k >= e->data_size)
+	{
+	  e->data_size += 16;
+	  e->data = (Float *)REALLOC(e->data, e->data_size * sizeof(Float));
+	}
+      if (x == e1->data[i])
+	{
+	  y0 = e1->data[i + 1];
+	  if (i < e1->data_size - 1) i += 2;
+	}
+      else
+	y0 = e1->data[i - 1] + (x - e1->data[i - 2]) * (e1->data[i + 1] - e1->data[i - 1]) / (e1->data[i] - e1->data[i - 2]);
+      
+      if (x == e2->data[j])
+	{
+	  y1 = e2->data[j + 1];
+	  if (j < e2->data_size - 1) j += 2;
+	}
+      else
+	y1 = e2->data[j - 1] + (x - e2->data[j - 2]) * (e2->data[j + 1] - e2->data[j - 1]) / (e2->data[j] - e2->data[j - 2]);
+
+      e->data[k] = x;
+      e->data[k + 1] = y0 * y1;
+      k += 2;
+      if (x >= 1.0) break;
+    }
+  e->data_size = k;
+  e->pts = k / 2;
+  return(e);
+}
+
+#if DEBUGGING
+static XEN g_multiply_envs(XEN e1, XEN e2, XEN maxx)
+{
+  /* (memleak) */
+  return(env_to_xen(multiply_envs(xen_to_env(e1), xen_to_env(e2), XEN_TO_C_DOUBLE(maxx))));
+}
+#endif
+
+
 static void add_point (env *e, int pos, Float x, Float y)
 {
   int i, j;
@@ -1239,7 +1414,7 @@ static XEN g_define_envelope(XEN a, XEN b)
   return(b);
 }
 
-XEN env_to_xen (env *e)
+XEN env_to_xen(env *e)
 {
   if (e) 
     return(mus_array_to_list(e->data, 0, e->pts * 2));
@@ -1557,4 +1732,10 @@ stretch-envelope from env.scm: \n\
          #f)))"
 
   XEN_DEFINE_HOOK(enved_hook, S_enved_hook, 5, H_enved_hook);
+
+#if DEBUGGING
+  XEN_DEFINE_PROCEDURE("interp-env", g_interp_env, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("window-env", g_window_env, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs, 3, 0, 0, NULL);
+#endif
 }

@@ -16,6 +16,8 @@
 
    or: 
    make the "list" an uneditable text widget, use gtk_text_tags for the red/normal text, and have a click event handler
+
+   gtk_label_set_markup(dialog->label,"<b>Pango Markuped string</b>");
  */
 
 static GtkWidget *help_dialog = NULL;

@@ -37,7 +37,7 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 }
 
 
-/* ---------------- amp envs ---------------- */
+/* ---------------- peak amp envs ---------------- */
 
 typedef struct {
   int slice, edpos;
@@ -692,6 +692,33 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
       cp->amp_envs[cp->edit_ctr] = new_ep;
       mus_free(e);
     }
+}
+
+env_info *env_on_env(env *e, chan_info *cp)
+{
+  env_info *ep;
+  ep = amp_env_copy(cp, false, 0);
+  if (ep)
+    {
+      int i;
+      Float x, incr, val;
+      incr = 1.0 / (double)(ep->amp_env_size);
+      for (i = 0, x = 0.0; i < ep->amp_env_size; i++, x+= incr) 
+	{
+	  val = interp_env(e, x);
+	  if (val >= 0.0)
+	    {
+	      ep->data_min[i] = (mus_sample_t)(ep->data_min[i] * val);
+	      ep->data_max[i] = (mus_sample_t)(ep->data_max[i] * val);
+	    }
+	  else
+	    {
+	      ep->data_min[i] = (mus_sample_t)(ep->data_max[i] * val);
+	      ep->data_max[i] = (mus_sample_t)(ep->data_min[i] * val);
+	    }
+	}
+    }
+  return(ep);
 }
 
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos)

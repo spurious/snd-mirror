@@ -408,8 +408,8 @@ else
 	         TEST_LIBS="$TEST_LIBS -lXp"
 	         ], , $TEST_LIBS)
 
-    LIBS=$XLIBS
-    CFLAGS=$XFLAGS
+    LIBS="$LIBS $XLIBS"
+    CFLAGS="$CFLAGS $XFLAGS"
 
     if test "$with_editres" = yes ; then
 	AC_CHECK_LIB(Xmu, _XEditResCheckMessages, 
@@ -460,7 +460,22 @@ else
 	     AC_DEFINE(WITH_RELATIVE_PANES)
 	     AC_MSG_RESULT(yes)
 	    ],
-	    [AC_MSG_RESULT(no)])
+	    [AC_MSG_RESULT(no)
+# perhaps the user hasn't installed the Motif headers? 
+             AC_MSG_CHECKING([for Motif headers])
+	     AC_COMPILE_IFELSE(
+               [AC_LANG_PROGRAM([#include <Xm/XmAll.h>],
+			        [[ Widget w; 
+				   w = XmCreateForm(NULL, "form", NULL, 0)
+			        ]]
+                               )],
+	      [AC_MSG_RESULT(yes)],
+	      [AC_MSG_RESULT(no)
+	       AC_MSG_WARN([can't find the Motif headers! These are in openmotif-devel or some such package -- will look for Gtk])
+               with_gtk=yes
+	       with_motif=no
+              ])
+	    ])
 	  if test "$with_xp" != no; then
 	    AC_MSG_CHECKING([for XmPrint support])
 	    AC_COMPILE_IFELSE(
