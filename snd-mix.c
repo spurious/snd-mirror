@@ -1427,7 +1427,8 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
   double xi;
   Float xf, xfinc;
   off_t lo, hi, i;
-  int j, lastx, main_loc;
+  int j, main_loc;
+  Locus lastx;
   env_info *ep;
 
   lo = ap->losamp;
@@ -1534,7 +1535,8 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
   Float new_high, new_low, old_high, old_low;
   double xi, xf, xfinc, x;
   off_t lo, hi;
-  int lastx, main_loc, j;
+  int main_loc, j;
+  Locus lastx;
   env_info *ep;
 
   lo = ap->losamp;

@@ -515,7 +515,7 @@ void reflect_resize(snd_state *ss)
 
 void set_sensitive(Widget wid, int val) {if (wid) XtSetSensitive(wid, val);}
 int is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(0);}
-void set_toggle_button(Widget wid, int val, int passed, void *data) {XmToggleButtonSetState(wid, val, passed);}
+void set_toggle_button(Widget wid, int val, int passed, void *data) {XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);}
 
 
 Dimension widget_height(Widget w)

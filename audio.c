@@ -48,7 +48,7 @@
   #include <config.h>
 #endif
 
-#if USE_SND && defined(MAC_OSX) && USE_MOTIF
+#if USE_SND && MAC_OSX && USE_MOTIF
   #undef USE_MOTIF
   #define USE_NO_GUI 1
   /* Xt's Boolean collides with MacTypes.h Boolean, but we want snd.h for other stuff,
@@ -63,14 +63,14 @@
   #define LABEL_BUFFER_SIZE 64
 #endif
 
-#if USE_SND && defined(MAC_OSX)
+#if USE_SND && MAC_OSX
   #define USE_MOTIF 1
   #undef USE_NO_GUI
 #endif
 
 #include <math.h>
 #include <stdio.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_FCNTL_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_FCNTL_H
   #include <fcntl.h>
 #endif
 #include <errno.h>
@@ -82,11 +82,11 @@
     #include <unistd.h>
   #endif
 #endif
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
   #include <string.h>
 #endif
 
-#if (defined(HAVE_CONFIG_H)) && (!defined(HAVE_STRERROR))
+#if (defined(HAVE_CONFIG_H)) && (!HAVE_STRERROR)
 char *strerror(int errnum)
 {
   char *strerrbuf;
@@ -4018,7 +4018,7 @@ static int to_sndlib_device(int dev, int channel) {
 /* set schedulling priority to SCHED_FIFO 
  * this will only work if the program that uses sndlib is run as root or is suid root */
 
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_SCHED_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_SCHED_H
 #include <sched.h>
 
 static void set_priority() 

@@ -417,6 +417,45 @@ static void display_edits(chan_info *cp, FILE *outp)
     }
 }
 
+static XEN save_state_hook = XEN_FALSE;
+static int save_state_ctr = 0;
+void increment_save_state_ctr(void) {save_state_ctr++;}
+
+char *run_save_state_hook(char *filename)
+{
+  XEN result = XEN_FALSE;
+  if (XEN_HOOKED(save_state_hook))
+    {
+#if HAVE_GUILE
+      XEN procs = XEN_HOOK_PROCEDURES(save_state_hook);
+      while (XEN_NOT_NULL_P(procs))
+	{
+	  result = XEN_CALL_2(XEN_CAR(procs),
+			      C_TO_XEN_INT(save_state_ctr),
+			      C_TO_XEN_STRING(filename),
+			      "save state hook");
+	  if (XEN_STRING_P(result))
+	    {
+	      FREE(filename);
+	      filename = copy_string(XEN_TO_C_STRING(result));
+	    }
+	  procs = XEN_CDR (procs);
+	}
+#else
+      result = XEN_CALL_2(save_state_hook,
+			  C_TO_XEN_INT(save_state_ctr),
+			  C_TO_XEN_STRING(filename),
+			  "save state hook");
+      if (XEN_STRING_P(result))
+	{
+	  FREE(filename);
+	  filename = copy_string(XEN_TO_C_STRING(result));
+	}
+#endif
+    }
+  return(filename);
+}
+
 static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 {
   snd_data *sd;
@@ -432,7 +471,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	{
 	  if ((ed->len > 16) && (save_dir(ss)))
 	    {
-	      newname = shorter_tempnam(save_dir(ss), "snd_");
+	      newname = run_save_state_hook(shorter_tempnam(save_dir(ss), "snd_"));
 	      mus_array_to_file(newname, sd->buffered_data, ed->len, 22050, 1);
 	      fprintf(fd, "\"%s\"", newname);
 	      FREE(newname);
@@ -453,7 +492,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	{
 	  if (save_dir(ss))
 	    {
-	      newname = shorter_tempnam(save_dir(ss), "snd_");
+	      newname = run_save_state_hook(shorter_tempnam(save_dir(ss), "snd_"));
 	      copy_file(sd->filename, newname);
 	      fprintf(fd, "\"%s\"", newname);
 	      FREE(newname);
@@ -3305,6 +3344,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
   if (mcf) FREE(mcf);
   if (fd)
     {
+      increment_save_state_ctr();
       if ((XEN_INTEGER_P(chn)) && (XEN_INTEGER_P(snd)))
 	{
 	  cp = get_cp(snd, chn, S_save_edit_history);
@@ -4574,6 +4614,14 @@ void g_init_edits(void)
 If it returns #t, the file is not saved.  'name' is #f unless the file is being saved under a new name (as in sound-save-as)."
 
   XEN_DEFINE_HOOK(save_hook, S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
+
+  #define H_save_state_hook S_save_state_hook " (save-id temp-filename) is called each time the save-state \
+mechanism is about to create a new temporary file to save some edit history sample values.  The save-id \
+is a unique integer that identifies all the files in a given saved state; temp-filename is the current file. \
+If the hook returns a string, it is treated as the new temp filename.  This hook provides a way to \
+keep track of which files are in a given saved state batch, and a way to rename or redirect those files."
+
+  XEN_DEFINE_HOOK(save_state_hook, S_save_state_hook, 2, H_save_state_hook);      /* args = saved-state index, temp-filename */
 
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("get-test-a2", g_get_test_a2, 0, 0, 0, "internal test function");

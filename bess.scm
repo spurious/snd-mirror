@@ -245,13 +245,19 @@
 				 (XtRemoveWorkProc proc) ; odd that there's no XtAppRemoveWorkProc
 				 (mus-audio-close port))
 			       #f)
-      (set! proc (XtAppAddWorkProc app (lambda (ignored-arg)
-					 (do ((i 0 (1+ i)))
-					     ((= i bufsize))
-					   (sound-data-set! data 0 i
-							    (* amplitude playing
-							       (oscil carosc (+ (in-hz frequency)
-										(* index (oscil modosc (in-hz (* ratio frequency)))))))))
-					 (mus-audio-write port data bufsize)
-					 #f))))
+      (set! proc (XtAppAddWorkProc 
+		  app 
+		  (lambda (ignored-arg)
+		    (do ((i 0 (1+ i)))
+			((= i bufsize))
+		      (sound-data-set! 
+		       data 0 i
+		       (* amplitude playing
+			  (oscil carosc 
+				 (+ (in-hz frequency)
+				    (* index 
+				       (oscil modosc 
+					      (in-hz (* ratio frequency)))))))))
+		    (mus-audio-write port data bufsize)
+		    #f))))
     (XtAppMainLoop app)))

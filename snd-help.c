@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+11-Sep:  save-state-hook.\n\
 10-Sep:  new edit123.scm thanks to Tom Roth.\n\
 9-Sep:   bess.scm.\n\
          set-oss-buffers -> mus-audio-set-oss-buffers\n\

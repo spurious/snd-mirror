@@ -1366,8 +1366,8 @@ void change_channel_style(snd_info *sp, int new_style)
 		      if (cw[W_edhist]) 
 			XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
 #endif
-		      XmToggleButtonSetState(cw[W_f], cp->graph_transform_p, FALSE);
-		      XmToggleButtonSetState(cw[W_w], cp->graph_time_p, FALSE);
+		      XmToggleButtonSetState(cw[W_f], (Boolean)(cp->graph_transform_p), FALSE);
+		      XmToggleButtonSetState(cw[W_w], (Boolean)(cp->graph_time_p), FALSE);
 		      /* these can get out of sync if changes are made in the unseparated case */
 		      set_axes(cp, ap->x0, ap->x1, ap->y0, ap->y1);
 		    }

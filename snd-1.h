@@ -680,6 +680,8 @@ void allocate_ed_list(chan_info *cp);
 void set_initial_ed_list(chan_info *cp, off_t len);
 off_t edit_changes_begin_at(chan_info *cp);
 off_t edit_changes_end_at(chan_info *cp);
+void increment_save_state_ctr(void);
+char *run_save_state_hook(char *filename);
 void edit_history_to_file(FILE *fd, chan_info *cp);
 char *edit_to_string(chan_info *cp, int edit);
 void free_edit_list(chan_info *cp);

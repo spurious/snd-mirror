@@ -109,7 +109,7 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
       return;
     }
   entries[0].target = targets[k];
-  entries[0].client_data = w;
+  entries[0].client_data = (XtPointer)w;
   n = 0;
   XtSetArg(args[n], XmNdropTransfers, entries); n++;
   XtSetArg(args[n], XmNnumDropTransfers, 1); n++;

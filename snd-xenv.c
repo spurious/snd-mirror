@@ -1683,9 +1683,9 @@ Widget create_envelope_editor (snd_state *ss)
       if (!(selection_is_active())) 
 	set_sensitive(selectionB, FALSE);
 
-      XmToggleButtonSetState(clipB, enved_clip_p(ss), FALSE);
-      XmToggleButtonSetState(graphB, enved_wave_p(ss), FALSE);
-      XmToggleButtonSetState(dBB, enved_in_dB(ss), FALSE);
+      XmToggleButtonSetState(clipB, (Boolean)(enved_clip_p(ss)), FALSE);
+      XmToggleButtonSetState(graphB, (Boolean)(enved_wave_p(ss)), FALSE);
+      XmToggleButtonSetState(dBB, (Boolean)(enved_in_dB(ss)), FALSE);
 
       FREE(n1);
       FREE(n2);
@@ -1706,7 +1706,7 @@ void set_enved_clip_p(snd_state *ss, int val)
 {
   in_set_enved_clip_p(ss, val); 
   if (enved_dialog) 
-    XmToggleButtonSetState(clipB, val, FALSE);
+    XmToggleButtonSetState(clipB, (Boolean)val, FALSE);
 }
 
 void set_enved_exp_p(snd_state *ss, int val) 
@@ -1726,14 +1726,14 @@ void set_enved_wave_p(snd_state *ss, int val)
 {
   in_set_enved_wave_p(ss, val); 
   if (enved_dialog) 
-    XmToggleButtonSetState(graphB, val, FALSE);
+    XmToggleButtonSetState(graphB, (Boolean)val, FALSE);
 }
 
 void set_enved_in_dB(snd_state *ss, int val) 
 {
   in_set_enved_in_dB(ss, val);
   if (enved_dialog) 
-    XmToggleButtonSetState(dBB, val, FALSE);
+    XmToggleButtonSetState(dBB, (Boolean)val, FALSE);
 }
 
 void set_enved_base(snd_state *ss, Float val) 

@@ -83,7 +83,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
   #include <string.h>
 #endif
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))

@@ -368,7 +368,8 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
   Float step, x, pinc = 0.0;
   double xf, xk;
   mus_sample_t ymin, ymax;
-  int j, xi, k, kk;
+  int j, k, kk;
+  Locus xi;
   off_t i;
   env_info *ep;
   ep = cp->amp_envs[cp->edit_ctr];

@@ -1005,14 +1005,14 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       gv.foreground = (ss->sgx)->enved_waveform_color;
       fgc = XtGetGC(graph_drawer, GCForeground | GCFunction, &gv);
 
-      XmToggleButtonSetState(normo_button, transform_graph_type(ss) == GRAPH_ONCE, FALSE);
-      XmToggleButtonSetState(sono_button, transform_graph_type(ss) == GRAPH_AS_SONOGRAM, FALSE);
-      XmToggleButtonSetState(spectro_button, transform_graph_type(ss) == GRAPH_AS_SPECTROGRAM, FALSE);
-      XmToggleButtonSetState(peaks_button, show_transform_peaks(ss), FALSE);
-      XmToggleButtonSetState(db_button, fft_log_magnitude(ss), FALSE);
-      XmToggleButtonSetState(logfreq_button, fft_log_frequency(ss), FALSE);
-      XmToggleButtonSetState(normalize_button, transform_normalization(ss), FALSE);
-      XmToggleButtonSetState(selection_button, show_selection_transform(ss), FALSE);
+      XmToggleButtonSetState(normo_button, (Boolean)(transform_graph_type(ss) == GRAPH_ONCE), FALSE);
+      XmToggleButtonSetState(sono_button, (Boolean)(transform_graph_type(ss) == GRAPH_AS_SONOGRAM), FALSE);
+      XmToggleButtonSetState(spectro_button, (Boolean)(transform_graph_type(ss) == GRAPH_AS_SPECTROGRAM), FALSE);
+      XmToggleButtonSetState(peaks_button, (Boolean)(show_transform_peaks(ss)), FALSE);
+      XmToggleButtonSetState(db_button, (Boolean)(fft_log_magnitude(ss)), FALSE);
+      XmToggleButtonSetState(logfreq_button, (Boolean)(fft_log_frequency(ss)), FALSE);
+      XmToggleButtonSetState(normalize_button, (Boolean)(transform_normalization(ss)), FALSE);
+      XmToggleButtonSetState(selection_button, (Boolean)(show_selection_transform(ss)), FALSE);
 
       /* select current list choices */
       /* display current windowing choice unless wavelet in force */

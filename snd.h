@@ -68,17 +68,17 @@
 #include <stddef.h>
 #include <math.h>
 #include <stdio.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_FCNTL_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_FCNTL_H
   #include <fcntl.h>
 #endif
 #include <signal.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_LIMITS_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_LIMITS_H
   #include <limits.h>
 #endif
 #include <errno.h>
 #include <stdlib.h>
 
-#if defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))
+#if HAVE_LIBC_H && (!HAVE_UNISTD_H)
   #include <libc.h>
 #else
   #ifndef _MSC_VER
@@ -86,10 +86,10 @@
   #endif
 #endif
 
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
   #include <string.h>
 #endif
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_VPRINTF))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_VPRINTF
   #include <stdarg.h>
 #endif
 
@@ -138,7 +138,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "10-Sep-02"
+#define SND_VERSION "11-Sep-02"
 #define SND_RPM_VERSION "6.1"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 1

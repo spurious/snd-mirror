@@ -1316,7 +1316,7 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
        * envelope -- if its length doesn't match current, we need to remake
        * current. Otherwise return 0, and assume the caller will handle default
        */
-      procs = XEN_HOOK_PROCEDURES (enved_hook);
+      procs = XEN_HOOK_PROCEDURES(enved_hook);
       env_list = env_to_xen(e);
 #if HAVE_GUILE
       while (XEN_NOT_NULL_P(procs))

@@ -627,9 +627,9 @@ void make_mix_file_dialog(snd_state *ss, int managed)
 void set_open_file_play_button(int val)
 {
   if ((open_dialog) && (open_dialog->play_selected_button))
-    XmToggleButtonSetState(open_dialog->play_selected_button, val, FALSE);
+    XmToggleButtonSetState(open_dialog->play_selected_button, (Boolean)val, FALSE);
   if ((mix_dialog) && (mix_dialog->play_selected_button))
-    XmToggleButtonSetState(mix_dialog->play_selected_button, val, FALSE);
+    XmToggleButtonSetState(mix_dialog->play_selected_button, (Boolean)val, FALSE);
 }
 
 void alert_new_file(void) 
@@ -1535,7 +1535,7 @@ void set_file_browser_play_button(char *name, int state)
       if (i != -1)
 	{
 	  if (list) r = cur_name_row[i]; else r = prev_name_row[i];
-	  XmToggleButtonSetState(r->pl, state, FALSE);
+	  XmToggleButtonSetState(r->pl, (Boolean)state, FALSE);
 	}
     }
 }

@@ -1198,7 +1198,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 
 snd_info *snd_update(snd_state *ss, snd_info *sp)
 {
-  int app_x, app_y;
+  Latus app_x, app_y;
   if (sp->edited_region) return(sp);
   if (mus_file_probe(sp->filename) == 0)
     {

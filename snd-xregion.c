@@ -65,7 +65,7 @@ static void make_region_element(region_state *rs, int i)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(r->sv), r->sv);
   ASSERT_WIDGET_TYPE(XmIsToggleButton(r->pl), r->pl);
   set_button_label_bold(r->nm, rs->name[i]);
-  XmToggleButtonSetState(r->sv, rs->save[i], FALSE);
+  XmToggleButtonSetState(r->sv, (Boolean)(rs->save[i]), FALSE);
   XmToggleButtonSetState(r->pl, FALSE, FALSE);
   XtManageChild(r->rw);
 }
@@ -292,7 +292,7 @@ void set_region_protect(int id, int protect)
   if (region_rows)
     {
       r = region_row(id_to_stack_position(id));
-      if ((r) && (r->sv)) XmToggleButtonSetState(r->sv, protect, FALSE);
+      if ((r) && (r->sv)) XmToggleButtonSetState(r->sv, (Boolean)protect, FALSE);
     }
 }
 

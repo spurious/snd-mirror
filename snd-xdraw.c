@@ -573,7 +573,7 @@ void set_color_inverted(snd_state *ss, int val)
 {
   in_set_color_inverted(ss, val);
   if (ccd) 
-    XmToggleButtonSetState(ccd->invert, val, FALSE);
+    XmToggleButtonSetState(ccd->invert, (Boolean)val, FALSE);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph_setting_fft_changed);
 }
@@ -1139,7 +1139,7 @@ void reflect_spectro(snd_state *ss)
   /* set color/orientaton widget values */
   if (ccd) 
     {
-      XmToggleButtonSetState(ccd->invert, color_inverted(ss), FALSE);
+      XmToggleButtonSetState(ccd->invert, (Boolean)(color_inverted(ss)), FALSE);
       XtVaSetValues(ccd->cutoff, XmNvalue, (int)((color_cutoff(ss)) * 1000), NULL);
       reflect_color_scale(color_scale(ss));
     }

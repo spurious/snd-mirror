@@ -54,7 +54,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
   #include <string.h>
 #endif
 

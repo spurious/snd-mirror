@@ -4497,7 +4497,12 @@
 			    (regions)))
 	      (old-pos0 (edit-position index 0))
 	      (old-pos1 (edit-position index 1))
-	      (old-reglen (map region-frames (regions))))
+	      (old-reglen (map region-frames (regions)))
+	      (s61-files '()))
+	  (add-hook! save-state-hook
+		     (lambda (id file)
+		       (set! s61-files (cons file s61-files))
+		       #f))
 	  (save-state "s61.scm")
 	  (close-sound index)
 	  (load "s61.scm")
@@ -4521,6 +4526,15 @@
 	      (set! (edit-position index) (inexact->exact (* (car (edits index)) .7)))))
 
 	  (close-sound index)
+	  (for-each
+	   (lambda (n)
+	     (forget-region n))
+	   (regions))
+	  (for-each
+	   (lambda (file)
+	     (if (file-exists? file) 
+		 (delete-file file)))
+	   s61-files)
 	  (delete-file "s61.scm")
 	  ))
 
@@ -9758,6 +9772,7 @@
   (add-hook! mix-position-changed-hook arg2) (carg2 mix-position-changed-hook)
   (add-hook! stop-playing-channel-hook arg2) (carg2 stop-playing-channel-hook)
   (add-hook! save-hook arg2) (carg2 save-hook)
+  (add-hook! save-state-hook arg2) (carg2 save-state-hook)
   (add-hook! mus-error-hook arg2) (carg2 mus-error-hook)
   (add-hook! mouse-enter-graph-hook arg2) (carg2 mouse-enter-graph-hook)
   (add-hook! mouse-leave-graph-hook arg2) (carg2 mouse-leave-graph-hook)
@@ -25517,6 +25532,7 @@ EDITS: 5
 			(list mix-position-changed-hook 'mix-position-changed-hook)
 			(list stop-playing-channel-hook 'stop-playing-channel-hook)
 			(list save-hook 'save-hook)
+			(list save-state-hook 'save-state-hook)
 			(list mus-error-hook 'mus-error-hook)
 			(list mouse-enter-graph-hook 'mouse-enter-graph-hook)
 			(list mouse-leave-graph-hook 'mouse-leave-graph-hook)

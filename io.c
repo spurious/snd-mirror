@@ -31,10 +31,10 @@
 
 #include <math.h>
 #include <stdio.h>
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_FCNTL_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_FCNTL_H
   #include <fcntl.h>
 #endif
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_LIMITS_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_LIMITS_H
   #include <limits.h>
 #endif
 #include <errno.h>
@@ -47,7 +47,7 @@
     #include <unistd.h>
   #endif
 #endif
-#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
+#if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
   #include <string.h>
 #endif
 #if HAVE_VPRINTF

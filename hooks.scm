@@ -14,7 +14,7 @@
 	print-hook exit-hook output-name-hook during-open-hook transform-hook mouse-enter-label-hook mouse-leave-label-hook initial-graph-hook
 	graph-hook key-press-hook mouse-drag-hook mouse-press-hook mouse-release-hook enved-hook read-hook mouse-click-hook new-widget-hook
 	mark-hook previous-files-select-hook dac-hook stop-dac-hook stop-playing-selection-hook after-apply-hook before-apply-hook draw-mark-hook
-	bad-header-hook))
+	bad-header-hook save-state-hook))
 
 (define (reset-all-hooks)
   "(reset-all-hooks) removes all Snd hook functions"

@@ -1024,7 +1024,7 @@ void save_regions(snd_state *ss, FILE *fd)
 	  if (r->use_temp_file == REGION_DEFERRED) 
 	    deferred_region_to_temp_file(r);
 
-	  newname = shorter_tempnam(save_dir(ss), "snd_save_");
+	  newname = run_save_state_hook(shorter_tempnam(save_dir(ss), "snd_save_"));
 	  copy_file(r->filename, newname);
 	  fprintf(fd, " \"%s\")\n", newname);
 	  FREE(newname);

@@ -1599,7 +1599,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   rp->autoload_button = ndevs;
   XtAddCallback(autoload_file, XmNhelpCallback, autoload_file_help_callback, ss);
   XtAddCallback(autoload_file, XmNvalueChangedCallback, autoload_file_callback, ss);
-  XmToggleButtonSetState(autoload_file, rp->autoload, FALSE); 
+  XmToggleButtonSetState(autoload_file, (Boolean)(rp->autoload), FALSE); 
 #if (HAVE_OSS || HAVE_ALSA)
   save_audio_settings = make_togglebutton_widget("Save Audio Settings", button_holder, args, n);
   XtAddCallback(save_audio_settings, XmNvalueChangedCallback, save_audio_settings_callback, NULL);
@@ -3454,7 +3454,7 @@ void set_recorder_autoload(recorder_info *rp, int val)
 {
   rp->autoload = val;
   if (recorder) 
-    XmToggleButtonSetState(device_buttons[rp->autoload_button], val, FALSE); 
+    XmToggleButtonSetState(device_buttons[rp->autoload_button], (Boolean)val, FALSE); 
 }
 
 void reflect_recorder_in_amp(int in, int out, Float val)

@@ -52,7 +52,7 @@
       #endif
     #endif
   #endif
-  #if defined(USE_SND) && (!(defined(_FILE_OFFSET_BITS)))
+  #if USE_SND && (!(defined(_FILE_OFFSET_BITS)))
     #define _FILE_OFFSET_BITS 64
   #endif
 #endif
@@ -490,7 +490,7 @@ int mus_audio_compatible_format   PROTO((int dev));
   void mus_audio_sun_outputs      PROTO((int speakers, int headphones, int line_out));
 #endif
 
-#if (defined(HAVE_CONFIG_H)) && (!defined(HAVE_STRERROR))
+#if (defined(HAVE_CONFIG_H)) && (!HAVE_STRERROR)
   char *strerror                  PROTO((int errnum));
 #endif
 

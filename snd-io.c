@@ -229,11 +229,7 @@ int snd_overwrite_ok(snd_state *ss, const char *ofile)
   int fil, rtn = 1;
   if (ask_before_overwrite(ss))
     {
-#ifndef _MSC_VER
       fil = OPEN(ofile, O_RDONLY, O_NONBLOCK);
-#else
-      fil = OPEN(ofile, O_RDONLY);
-#endif
       if (fil != -1) 
 	{
 	  CLOSE(fil);

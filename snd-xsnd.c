@@ -482,7 +482,7 @@ void toggle_direction_arrow(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
     sp->speed_control_direction = ((state) ? -1 : 1);
-  else XmToggleButtonSetState(SRATE_ARROW(sp), state, TRUE);
+  else XmToggleButtonSetState(SRATE_ARROW(sp), (Boolean)state, TRUE);
 }
 
 
@@ -574,7 +574,7 @@ void toggle_expand_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
     sp->expand_control_p = state;
-  else XmToggleButtonSetState(EXPAND_BUTTON(sp), state, TRUE);
+  else XmToggleButtonSetState(EXPAND_BUTTON(sp), (Boolean)state, TRUE);
 }
 
 
@@ -656,7 +656,7 @@ void toggle_contrast_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
     sp->contrast_control_p = state;
-  else XmToggleButtonSetState(CONTRAST_BUTTON(sp), state, TRUE);
+  else XmToggleButtonSetState(CONTRAST_BUTTON(sp), (Boolean)state, TRUE);
 }
 
 
@@ -821,7 +821,7 @@ void toggle_reverb_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
     sp->reverb_control_p = state;
-  else XmToggleButtonSetState(REVERB_BUTTON(sp), state, TRUE);
+  else XmToggleButtonSetState(REVERB_BUTTON(sp), (Boolean)state, TRUE);
 }
 
 static void filter_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -836,7 +836,7 @@ void toggle_filter_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
     sp->filter_control_p = state;
-  else XmToggleButtonSetState(FILTER_BUTTON(sp), state, TRUE);
+  else XmToggleButtonSetState(FILTER_BUTTON(sp), (Boolean)state, TRUE);
 }
 
 static void filter_textfield_deactivate(snd_info *sp)
@@ -960,7 +960,7 @@ void set_filter_in_dB(snd_info *sp, int val)
   sp->filter_control_in_dB = val;
   if (!(IS_PLAYER(sp)))
     {
-      XmToggleButtonSetState(FILTER_DB_BUTTON(sp), val, FALSE);
+      XmToggleButtonSetState(FILTER_DB_BUTTON(sp), (Boolean)val, FALSE);
       display_filter_env(sp);
     }
 }
@@ -1092,7 +1092,7 @@ void set_play_button(snd_info *sp, int val)
 {
   if (!(IS_PLAYER(sp)))
     {
-      XmToggleButtonSetState(PLAY_BUTTON(sp), val, FALSE);
+      XmToggleButtonSetState(PLAY_BUTTON(sp), (Boolean)val, FALSE);
       set_file_browser_play_button(sp->short_filename, val);
       set_open_file_play_button(val);
     }
@@ -1194,7 +1194,7 @@ void syncb(snd_info *sp, int on)
   if (!(IS_PLAYER(sp)))
     {
       set_sync_color(sp);
-      XmToggleButtonSetState(SYNC_BUTTON(sp), (on == 0) ? FALSE : TRUE, FALSE);
+      XmToggleButtonSetState(SYNC_BUTTON(sp), (Boolean)((on == 0) ? FALSE : TRUE), FALSE);
     }
 }
 
@@ -2883,7 +2883,7 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
 
 void set_apply_button(snd_info *sp, int val) 
 {
-  XmToggleButtonSetState(APPLY_BUTTON(sp), val, FALSE);
+  XmToggleButtonSetState(APPLY_BUTTON(sp), (Boolean)val, FALSE);
 }
 
 

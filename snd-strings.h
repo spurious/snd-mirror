@@ -464,6 +464,7 @@
 #define S_save_sound_as                 "save-sound-as"
 #define S_save_state                    "save-state"
 #define S_save_state_file               "save-state-file"
+#define S_save_state_hook               "save-state-hook"
 #define S_scale_by                      "scale-by"
 #define S_scale_channel                 "scale-channel"
 #define S_scale_selection_by            "scale-selection-by"

@@ -1,5 +1,6 @@
 Snd change log
 
+  11-Sep:    save-state-hook.
   10-Sep:    new edit123.scm thanks to Tom Roth.
   9-Sep:     bess.scm.
              set-oss-buffers -> mus-audio-set-oss-buffers.

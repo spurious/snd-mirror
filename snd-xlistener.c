@@ -261,7 +261,7 @@ static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num)
     XtVaSetValues(w, XmNbackground, (ss->sgx)->white, NULL);
   if (w == listener_text) 
     XmTextClearSelection(listener_text, CurrentTime); /* should this happen in other windows as well? */
-  pos = XmTextXYToPos(w, ev->x, ev->y);
+  pos = XmTextXYToPos(w, (Position)(ev->x), (Position)(ev->y));
   XmTextSetCursorPosition(w, pos);
   down_pos = pos;
   last_pos = pos;
@@ -271,7 +271,7 @@ static void B1_move(Widget w, XEvent *event, char **str, Cardinal *num)
 {
   XmTextPosition pos;
   XButtonEvent *ev = (XButtonEvent *)event;
-  pos = XmTextXYToPos(w, ev->x, ev->y);
+  pos = XmTextXYToPos(w, (Position)(ev->x), (Position)(ev->y));
   if (last_pos > pos)                                 /* must have backed up the cursor */
     XmTextSetHighlight(w, pos, last_pos, XmHIGHLIGHT_NORMAL);
   if (down_pos != pos)
@@ -283,7 +283,7 @@ static void B1_release(Widget w, XEvent *event, char **str, Cardinal *num)
 {
   XmTextPosition pos;
   XButtonEvent *ev = (XButtonEvent *)event;
-  pos = XmTextXYToPos(w, ev->x, ev->y);
+  pos = XmTextXYToPos(w, (Position)(ev->x), (Position)(ev->y));
   XmTextSetCursorPosition(w, pos);
   if (down_pos != pos)
     {
