@@ -1,5 +1,4 @@
 CC = @CC@
-INSTALL = @INSTALL@
 DEFS = @DEFS@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
@@ -39,6 +38,7 @@ DESTDIR =
 
 include makesnd.files
 
+INSTALL = @INSTALL@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 prefix = @prefix@
 exec_prefix = @exec_prefix@

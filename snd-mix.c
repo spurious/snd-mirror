@@ -17,11 +17,11 @@ typedef struct {
   mix_context *wg;
   char *name;
   char *in_filename;
-  int in_chans, in_samps;       /* in_samps needed to simplify speed changed duration calculations */
+  int in_chans, in_samps;      /* in_samps needed to simplify speed changed duration calculations */
   int console_state_size;      /* current size of console_state list */
   console_state **states;      /* list of mixer states */
   console_state *current_cs;
-  int anchor, orig_beg;         /* sample in in-data of console attachment */
+  int anchor, orig_beg;        /* sample in in-data of console attachment */
   int curcons;
   int temporary;               /* in-filename was written by us and needs to be deleted when mix console is deleted */
   snd_info *add_snd;           /* readable snd_info struct for mix input */
@@ -165,7 +165,18 @@ static void make_current_console(mix_info *md)
   cur = md->current_cs;
   cur->chans = cs->chans;
   for (i = 0; i < cs->chans; i++) 
-    cur->mix_edit_ctr[i] = cs->mix_edit_ctr[i];
+    {
+      cur->mix_edit_ctr[i] = cs->mix_edit_ctr[i];
+      if (md->add_snd)
+	{
+	  /*
+	  if (md->add_snd->chans[i]->edit_ctr != cur->mix_edit_ctr[i])
+	    fprintf(stderr, "reset underlying chan %d pos from %d to %d\n", 
+		    i, md->add_snd->chans[i]->edit_ctr, cur->mix_edit_ctr[i]);
+	  */
+	  md->add_snd->chans[i]->edit_ctr = cur->mix_edit_ctr[i];
+	}
+    }
   cur->edit_ctr = cs->edit_ctr;
   cur->orig = cs->beg;
   cur->beg = cs->beg;

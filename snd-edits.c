@@ -1691,6 +1691,7 @@ static void parse_tree_scale_by(chan_info *cp, Float scl, int pos)
   ripple_marks(cp, 0, 0);
   check_for_first_edit(cp);
   lock_affected_mixes(cp, 0, len);
+  if (cp->mix_md) reflect_mix_edit(cp, "scale"); /* 30-Jan-02 */
   reflect_edit_history_change(cp);
 }
 
@@ -1724,6 +1725,7 @@ static void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int
   ripple_marks(cp, 0, 0);
   check_for_first_edit(cp);
   lock_affected_mixes(cp, beg, beg + num);
+  if (cp->mix_md) reflect_mix_edit(cp, "scale"); /* 30-Jan-02 */
   reflect_edit_history_change(cp);
 }
 
@@ -2462,7 +2464,6 @@ void revert_edits(chan_info *cp, void *ptr)
     reflect_edit_with_selection_in_menu(); 
   else reflect_edit_without_selection_in_menu();
   update_graph(cp, NULL);
-  if ((cp->mix_md) && (old_ctr != 0)) reflect_mix_edit(cp, "revert-sound");
   reflect_mix_in_menu();
   reflect_mix_in_enved();
   if (XEN_HOOKED(cp->undo_hook))
@@ -2490,7 +2491,6 @@ void undo_edit(chan_info *cp, int count)
 	reflect_edit_with_selection_in_menu();
       else reflect_edit_without_selection_in_menu();
       update_graph(cp, NULL);
-      if (cp->mix_md) reflect_mix_edit(cp, "undo");
       reflect_mix_in_menu();
       reflect_mix_in_enved();
       if (XEN_HOOKED(cp->undo_hook))
@@ -2544,7 +2544,6 @@ void redo_edit(chan_info *cp, int count)
 	    reflect_edit_with_selection_in_menu(); 
 	  else reflect_edit_without_selection_in_menu();
 	  update_graph(cp, NULL);
-	  if (cp->mix_md) reflect_mix_edit(cp, "redo");
 	  reflect_mix_in_menu();
 	  reflect_mix_in_enved();
 	}
@@ -3028,6 +3027,12 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
   #define H_undo "("  S_undo " &optional (count 1) snd chn) undoes count edits in snd's channel chn"
   chan_info *cp;
+  if (XEN_LIST_P(ed_n))
+    XEN_ERROR(NO_SUCH_EDIT,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_undo),
+			 ed_n,
+			 C_TO_XEN_STRING("can't undo an underlying mix edit except through the outer (mixed-into) sound")));
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_undo, "an integer");
   ASSERT_CHANNEL(S_undo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_undo);
   if (XEN_INTEGER_P(ed_n))
@@ -3041,6 +3046,12 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
   #define H_redo "("  S_redo " &optional (count 1) snd chn) redoes count edits in snd's channel chn"
   chan_info *cp;
+  if (XEN_LIST_P(ed_n))
+    XEN_ERROR(NO_SUCH_EDIT,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_redo),
+			 ed_n,
+			 C_TO_XEN_STRING("can't redo an underlying mix edit except through the outer (mixed-into) sound")));
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_redo, "an integer");
   ASSERT_CHANNEL(S_redo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_redo);
   if (XEN_INTEGER_P(ed_n))

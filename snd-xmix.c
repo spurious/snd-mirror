@@ -1,10 +1,7 @@
 #include "snd.h"
 
 /* 
- * TODO: make amp env display editable -- each change would affect the original
- *        (not an edit history addition to the mixed sound), but would each be
- *        a separate edit of the underlying sound? (Then we'd need a stack of
- *        mix envs so we could back up).
+ * TODO: make amp env display editable
  * TODO: add a sync button to affect all of track?  Also need a way to display all related mixes at once (panning etc)
  */
 
@@ -326,7 +323,11 @@ static void help_mix_panel_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
 		     "Mix Panel",
-"This dialog controls the currently selected mix");
+"This dialog provides various commonly-used controls on the currently \
+selected mix.  At the top are the mix id, name, begin and end times, \
+track number, and a play button.  Beneath that are various sliders \
+controlling the speed (sampling rate) of the mix, and the amplitude of each \
+input channel; and finally, a picture of the amplitude envelope(s).");
 }
 
 

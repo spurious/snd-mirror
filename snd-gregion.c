@@ -522,54 +522,14 @@ static XEN g_region_dialog(void)
   return(XEN_WRAP_WIDGET(region_dialog));
 }
 
-#if DEBUGGING
-XEN g_channel_widgets_1(chan_info *cp);
-static XEN g_region_dialog_widgets(void)
-{
-  if (region_dialog)
-    return(XEN_CONS(XEN_WRAP_WIDGET(region_dialog),
-             XEN_CONS(XEN_WRAP_WIDGET(print_button),
-	       XEN_CONS(XEN_WRAP_WIDGET(edit_button),
-		 XEN_CONS(XEN_WRAP_WIDGET(dismiss_button),
-		   XEN_CONS(XEN_WRAP_WIDGET(delete_button),
-		     XEN_CONS(XEN_WRAP_WIDGET(help_button),
-		       (rsp) ? g_channel_widgets_1(rsp->chans[0]) : XEN_EMPTY_LIST)))))));
-  return(XEN_EMPTY_LIST);
-}
-static XEN g_region_row_widgets(void)
-{
-  int i;
-  XEN lst;
-  lst = XEN_EMPTY_LIST;
-  for (i = region_rows_size - 1; i >= 0; i--)
-    if ((region_rows[i]) &&
-	(GTK_WIDGET_IS_SENSITIVE(region_rows[i]->nm)))
-      lst = XEN_CONS(XEN_WRAP_WIDGET(region_rows[i]->nm), lst);
-  return(lst);
-}
-#endif
-
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_region_dialog_w, g_region_dialog)
-#if DEBUGGING
-XEN_NARGIFY_0(g_region_dialog_widgets_w, g_region_dialog_widgets)
-XEN_NARGIFY_0(g_region_row_widgets_w, g_region_row_widgets)
-#endif
 #else
 #define g_region_dialog_w g_region_dialog
-#if DEBUGGING
-#define g_region_dialog_widgets_w g_region_dialog_widgets
-#define g_region_row_widgets_w g_region_row_widgets
-#endif
 #endif
 
 void g_init_gxregion(void)
 {
   XEN_DEFINE_PROCEDURE(S_region_dialog, g_region_dialog_w, 0, 0, 0,  H_region_dialog);
-
-#if DEBUGGING
-  XEN_DEFINE_PROCEDURE("region-dialog-widgets", g_region_dialog_widgets_w, 0, 0, 0, "");
-  XEN_DEFINE_PROCEDURE("region-row-widgets", g_region_row_widgets_w, 0, 0, 0, "");
-#endif
 }
 

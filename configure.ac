@@ -799,10 +799,10 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	A_LD_FLAGS="-non_shared"
 dnl should we include -lSgm if motif?
 	# OPT:Olimit check borrowed from Python's configure.in
-	AC_MSG_CHECKING(whether $CC accepts -OPT:Olimit=4000)
+	AC_MSG_CHECKING(whether $CC accepts -OPT:Olimit=0)
 	AC_CACHE_VAL(ac_cv_opt_olimit_ok,
 	[ac_save_cc="$CC"
-	CC="$CC -OPT:Olimit=4000"
+	CC="$CC -OPT:Olimit=0"
 	AC_TRY_RUN([int main() { return 0; }],
  	  ac_cv_opt_olimit_ok=yes,
   	  ac_cv_opt_olimit_ok=no,
@@ -810,9 +810,9 @@ dnl should we include -lSgm if motif?
 	CC="$ac_save_cc"])
 	AC_MSG_RESULT($ac_cv_opt_olimit_ok)
 	if test $ac_cv_opt_olimit_ok = yes; then
-	  CFLAGS="$CFLAGS -OPT:Olimit=4000"
+	  CFLAGS="$CFLAGS -OPT:Olimit=0"
 	fi
-dnl how to incorporate the TARG:platform arguments?
+dnl how to incorporate the TARG:platform arguments? (hinv...)
 dnl what is -IPA?
 dnl do we need explicit -n32?	
         ;;

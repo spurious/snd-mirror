@@ -5413,38 +5413,8 @@ static XEN g_backward_sample(XEN count, XEN snd, XEN chn)
   return(C_TO_XEN_INT(cp->cursor));
 }
 
-#if (!USE_NO_GUI)
-#if DEBUGGING
-XEN g_channel_widgets_1(chan_info *cp);
-XEN g_channel_widgets_1(chan_info *cp)
-#else
-static XEN g_channel_widgets_1(chan_info *cp)
-#endif
-{
-  return(XEN_CONS(XEN_WRAP_WIDGET(channel_graph(cp)),
-	   XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),
-	     XEN_CONS(XEN_WRAP_WIDGET(channel_f(cp)),
-	       XEN_CONS(XEN_WRAP_WIDGET(channel_sx(cp)),
-	         XEN_CONS(XEN_WRAP_WIDGET(channel_sy(cp)),
-	           XEN_CONS(XEN_WRAP_WIDGET(channel_zx(cp)),
-	             XEN_CONS(XEN_WRAP_WIDGET(channel_zy(cp)),
-		       XEN_CONS(XEN_WRAP_WIDGET(channel_edhist(cp)),
-	                 XEN_EMPTY_LIST)))))))));
-}
-
-static XEN g_channel_widgets(XEN snd, XEN chn)
-{
-  #define H_channel_widgets "(" S_channel_widgets " snd chn) -> list of widgets ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)"
-  ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
-  return(g_channel_widgets_1(get_cp(snd, chn, S_channel_widgets)));
-}
-#endif
-
 
 #ifdef XEN_ARGIFY_1
-#if (!USE_NO_GUI)
-XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
-#endif
 XEN_ARGIFY_2(g_edits_w, g_edits)
 XEN_ARGIFY_3(g_peaks_w, g_peaks)
 XEN_ARGIFY_2(g_edit_hook_w, g_edit_hook)
@@ -5567,9 +5537,6 @@ XEN_ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
 XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
 XEN_ARGIFY_2(g_update_transform_w, g_update_transform)
 #else
-#if (!USE_NO_GUI)
-#define g_channel_widgets_w g_channel_widgets
-#endif
 #define g_edits_w g_edits
 #define g_peaks_w g_peaks
 #define g_edit_hook_w g_edit_hook
@@ -5696,10 +5663,6 @@ XEN_ARGIFY_2(g_update_transform_w, g_update_transform)
 void g_init_chn(void)
 {
   cp_edpos = XEN_UNDEFINED;
-
-#if (!USE_NO_GUI)
-  XEN_DEFINE_PROCEDURE(S_channel_widgets,         g_channel_widgets_w, 0, 2, 0,         H_channel_widgets);
-#endif
 
   XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w, 0, 2, 0,                   H_edits);
   XEN_DEFINE_PROCEDURE(S_peaks,                   g_peaks_w, 0, 3, 0,                   H_peaks);

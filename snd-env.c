@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO:  edit of mix sound doesn't follow undo chains -- should this be accessible in the mix panel? or here?
- */
-
 Float un_dB(snd_state *ss, Float py)
 {
   /* used only by envelope editor (snd-xenv etc) */

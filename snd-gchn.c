@@ -31,7 +31,8 @@ GtkWidget *channel_w(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_w
 GtkWidget *channel_f(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_f]);}
 GtkWidget *channel_up_arrow(chan_info *cp)   {return((cp->cgx)->chan_widgets[W_up_ev]);}
 GtkWidget *channel_down_arrow(chan_info *cp) {return((cp->cgx)->chan_widgets[W_down_ev]);}
-GtkWidget *channel_edhist(chan_info *cp)     {return((cp->cgx)->chan_widgets[W_edhist]);}
+
+#define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->chan_widgets[W_edhist]
 
 static GtkWidget *channel_main_pane(chan_info *cp) {return((cp->cgx)->chan_widgets[W_main_window]);}
 static GtkObject *gsy_adj(chan_info *cp)           {return((cp->cgx)->chan_adjs[W_gsy_adj]);}
@@ -412,7 +413,7 @@ void reflect_edit_history_change(chan_info *cp)
   cx = cp->cgx;
   if (cx)
     {
-      lst = cx->chan_widgets[W_edhist];
+      lst = EDIT_HISTORY_LIST(cp);
       if (lst)
 	{
 	  eds = cp->edit_ctr;
@@ -447,7 +448,7 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
   cx = cp->cgx;
   if (cx)
     {
-      lst = cx->chan_widgets[W_edhist];
+      lst = EDIT_HISTORY_LIST(cp);
       if (lst)
 	{
 	  new_line = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -471,7 +472,7 @@ void reflect_edit_counter_change(chan_info *cp)
   cx = cp->cgx;
   if (cx)
     {
-      lst = cx->chan_widgets[W_edhist];
+      lst = EDIT_HISTORY_LIST(cp);
       if (lst)
 	{
 	  gtk_signal_handler_block_by_data(GTK_OBJECT(lst), (gpointer)cp);
@@ -787,35 +788,15 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   /* cax->wn has to wait until update_graph */
 }
 
-void set_peak_numbers_font(chan_info *cp)
+static void set_graph_font(chan_info *cp, GdkFont *fnt)
 {
-  snd_state *ss;
-  axis_context *ax;
-  ss = cp->state;
-  ax = (cp->cgx)->ax;
-  ax->current_font = (ss->sgx)->button_fnt;
-  gdk_gc_set_font(copy_GC(cp), (ss->sgx)->button_fnt);
+  cp->cgx->ax->current_font = fnt;
+  gdk_gc_set_font(copy_GC(cp), fnt);
 }
 
-void set_tiny_numbers_font(chan_info *cp)
-{
-  snd_state *ss;
-  axis_context *ax;
-  ss = cp->state;
-  ax = (cp->cgx)->ax;
-  ax->current_font = (ss->sgx)->tiny_fnt;
-  gdk_gc_set_font(copy_GC(cp), (ss->sgx)->tiny_fnt);
-}
-
-void set_bold_peak_numbers_font(chan_info *cp)
-{
-  snd_state *ss;
-  axis_context *ax;
-  ss = cp->state;
-  ax = (cp->cgx)->ax;
-  ax->current_font = (ss->sgx)->bold_button_fnt;
-  gdk_gc_set_font(copy_GC(cp), (ss->sgx)->bold_button_fnt);
-}
+void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->button_fnt);}
+void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->tiny_fnt);}
+void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->bold_button_fnt);}
 
 COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax)
 {
@@ -981,8 +962,33 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
 int channel_unlock_pane(chan_info *cp, void *ptr) {return(0);}
 /* static int channel_lock_pane(chan_info *cp, void *ptr) {return(0);} */
 
+static XEN g_channel_widgets(XEN snd, XEN chn)
+{
+  #define H_channel_widgets "(" S_channel_widgets " snd chn) -> list of widgets ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)"
+  chan_info *cp;
+  ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
+  cp = get_cp(snd, chn, S_channel_widgets);
+  return(XEN_CONS(XEN_WRAP_WIDGET(channel_graph(cp)),
+	   XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),
+	     XEN_CONS(XEN_WRAP_WIDGET(channel_f(cp)),
+	       XEN_CONS(XEN_WRAP_WIDGET(channel_sx(cp)),
+	         XEN_CONS(XEN_WRAP_WIDGET(channel_sy(cp)),
+	           XEN_CONS(XEN_WRAP_WIDGET(channel_zx(cp)),
+	             XEN_CONS(XEN_WRAP_WIDGET(channel_zy(cp)),
+		       XEN_CONS(XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)),
+	                 XEN_EMPTY_LIST)))))))));
+}
+
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
+#else
+#define g_channel_widgets_w g_channel_widgets
+#endif
+
 void g_init_gxchn(void)
 {
+  XEN_DEFINE_PROCEDURE(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
+
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn) is called when the mouse \
 enters the drawing area (graph pane) of the given channel.\n\
   (add-hook! mouse-enter-graph-hook\n\

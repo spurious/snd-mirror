@@ -38,7 +38,8 @@ static Widget channel_gsy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gsy])
 static Widget channel_gzy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gzy]);}
 Widget channel_w(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_w]);}
 Widget channel_f(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_f]);}
-Widget channel_edhist(chan_info *cp)     {return((cp->cgx)->chan_widgets[W_edhist]);}
+
+#define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->chan_widgets[W_edhist]
 
 static Float sqr(Float a) {return(a * a);}
 static Float cube (Float a) {return(a * a * a);}
@@ -666,7 +667,7 @@ void reflect_edit_history_change(chan_info *cp)
       cx = cp->cgx;
       if (cx)
 	{
-	  lst = cx->chan_widgets[W_edhist];
+	  lst = EDIT_HISTORY_LIST(cp);
 	  if (lst)
 	    {
 	      eds = cp->edit_ctr;
@@ -724,7 +725,7 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
   if (cx)
 #endif
     {
-      lst = cx->chan_widgets[W_edhist];
+      lst = EDIT_HISTORY_LIST(cp);
       if (lst)
 	{
 	  new_line = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -754,7 +755,7 @@ void reflect_edit_counter_change(chan_info *cp)
       cx = cp->cgx;
       if (cx)
 	{
-	  lst = cx->chan_widgets[W_edhist];
+	  lst = EDIT_HISTORY_LIST(cp);
 	  if (lst)
 	    {
 	      XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
@@ -1160,44 +1161,18 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   cax->gc = sx->basic_gc;
 }
 
-void set_peak_numbers_font(chan_info *cp)
+static void set_graph_font(chan_info *cp, XFontStruct *bf)
 {
-  XFontStruct *bf;
   chan_context *cx;
-  snd_state *ss;
-  ss = cp->state;
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;
-  bf = PEAK_NUMBERS_FONT(ss);
   cx->ax->current_font = bf->fid;  
   XSetFont(XtDisplay(cx->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
 }
 
-void set_tiny_numbers_font(chan_info *cp)
-{
-  XFontStruct *bf;
-  chan_context *cx;
-  snd_state *ss;
-  ss = cp->state;
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  bf = TINY_NUMBERS_FONT(ss);
-  cx->ax->current_font = bf->fid;
-  XSetFont(XtDisplay(cx->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
-}
-
-void set_bold_peak_numbers_font(chan_info *cp)
-{
-  XFontStruct *bf;
-  chan_context *cx;
-  snd_state *ss;
-  ss = cp->state;
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  bf = BOLD_PEAK_NUMBERS_FONT(ss);
-  cx->ax->current_font = bf->fid;
-  XSetFont(XtDisplay(cx->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
-}
+void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAK_NUMBERS_FONT(cp->state));}
+void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_NUMBERS_FONT(cp->state));}
+void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAK_NUMBERS_FONT(cp->state));}
 
 COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax)
 {
@@ -1413,8 +1388,34 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
   return(1);
 }
 
+static XEN g_channel_widgets(XEN snd, XEN chn)
+{
+  #define H_channel_widgets "(" S_channel_widgets " snd chn) -> list of widgets ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)"
+  chan_info *cp;
+  ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
+  cp = get_cp(snd, chn, S_channel_widgets);
+  return(XEN_CONS(XEN_WRAP_WIDGET(channel_graph(cp)),
+	   XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),
+	     XEN_CONS(XEN_WRAP_WIDGET(channel_f(cp)),
+	       XEN_CONS(XEN_WRAP_WIDGET(channel_sx(cp)),
+	         XEN_CONS(XEN_WRAP_WIDGET(channel_sy(cp)),
+	           XEN_CONS(XEN_WRAP_WIDGET(channel_zx(cp)),
+	             XEN_CONS(XEN_WRAP_WIDGET(channel_zy(cp)),
+		       XEN_CONS(XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)),
+	                 XEN_EMPTY_LIST)))))))));
+}
+
+
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
+#else
+#define g_channel_widgets_w g_channel_widgets
+#endif
+
 void g_init_gxchn(void)
 {
+  XEN_DEFINE_PROCEDURE(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
+
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn) is called when the mouse \
 enters the drawing area (graph pane) of the given channel.\n\
   (add-hook! mouse-enter-graph-hook\n\

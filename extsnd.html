@@ -3611,8 +3611,9 @@ To mix data in such a way as to create an associated mix object:</p>
 <p>In the functions that refer to a given sound, the form <code>(list mix-id)</code> refers to the
 underlying mix's sound.  So, for example, <code>(src-sound 2.0 1.0 (list 0) 0)</code> performs
 sampling-rate conversion on mix 0's sound's channel 0; <code>(display-edits (list 0) 0)</code>
-shows the edit list of that sound, and <code>(set! (edit-position (list 0) 0) 0)</code> reverts
-it to its original state.  See mix.scm for more mix-related (and track-related) functions including:
+shows the edit list of that sound.  To undo or redo an edit that actually applied to the underlying
+mix sound, call undo or redo on the outer (resultant, mixed-into) sound.
+See mix.scm for more mix-related (and track-related) functions including:
 </p>
 <table border=0>
 <tr><td width=240><em class=def><a href="sndscm.html#mixname2id">mix-name-&gt;id</a></em></td><td>returns id of named mix</td></tr>

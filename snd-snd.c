@@ -2224,6 +2224,11 @@ static XEN g_revert_sound(XEN index)
   #define H_revert_sound "("  S_revert_sound " &optional snd) reverts snd to its unedited state (undo all)"
   snd_info *sp;
   int i;
+  if (XEN_LIST_P(index))
+    XEN_ERROR(NO_SUCH_EDIT,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_revert_sound),
+			 index,
+			 C_TO_XEN_STRING("can't revert an underlying mix edit except through the outer (mixed-into) sound")));
   ASSERT_SOUND(S_revert_sound, index, 1);
   sp = get_sp(index);
   if (sp == NULL) 

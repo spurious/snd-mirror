@@ -848,14 +848,14 @@ static void filter_order_up_help_callback(Widget w, XtPointer context, XtPointer
 {
   snd_help_with_wrap((snd_state *)context,
 		     "Filter Order Increment Button",
-"This button causes the filter order to be incremented in case your keyboard is not working, or arabic numbers present an insuperable challenge.");
+"This button causes the filter order to be incremented");
 }
 
 static void filter_order_down_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
 		     "Filter Order Decrement Button",
-"This button causes the filter order to be decremented in case your keyboard is not working, or arabic numbers present an insuperable challenge.");
+"This button causes the filter order to be decremented");
 }
 
 static void filter_activate_callback(Widget w, XtPointer context, XtPointer info)

@@ -904,7 +904,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_PROTECT_FROM_GC(a) 0
 #define XEN_LOAD_FILE(a) 0
 #define XEN_ERROR_TYPE(Typ) XEN_FALSE
-#define XEN_ERROR(Type, Info) fprintf(stderr, Info)
+#define XEN_ERROR(Type, Info) fprintf(stderr, "error")
 #define XEN_TO_STRING(Obj) "(unknown)"
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
 #define XEN_APPEND(X, Y) 0
