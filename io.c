@@ -1304,7 +1304,7 @@ int mus_file_read(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
     /* this zeroing can be fooled if the file is chunked and has trailing, non-data chunks */
     for (k = 0; k < chans; k++)
       {
-	buffer=(MUS_SAMPLE_TYPE *)(bufs[k]);
+	buffer = (MUS_SAMPLE_TYPE *)(bufs[k]);
 	for (i = rtn + beg; i <= end; i++)
 	  buffer[i] = MUS_SAMPLE_0;
       }

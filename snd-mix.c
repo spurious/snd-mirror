@@ -916,11 +916,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   int i, size, j, cursamps, in_chans, base, no_space, len, err = 0;
   file_info *ihdr, *ohdr;
   ss = cp->state;
-  if (num <= 0) 
-    {
-      snd_error("mix %s which has %d samples?", tempfile, num);
-      return(NULL);
-    }
+  if (num <= 0) return(NULL); /* a no-op -- mixing in an empty file */
   len = current_ed_samples(cp);
   if (beg >= len)
     extend_with_zeros(cp, len, beg - len + 1, "(mix-extend)", cp->edit_ctr);
@@ -1113,7 +1109,12 @@ int mix_complete_file(snd_info *sp, char *str, const char *origin, int with_tag)
       nc = mus_sound_chans(fullname);
       if (nc != -1)
 	{
-	  len = mus_sound_samples(fullname)/nc;
+	  len = mus_sound_samples(fullname) / nc;
+	  if (len == 0)
+	    {
+	      if (fullname) FREE(fullname);
+	      return(-2);
+	    }
 	  cp = any_selected_channel(sp);
 	  if (sp->sync != 0)
 	    {
@@ -2310,6 +2311,7 @@ int active_mix_p(chan_info *cp) {return(active_mix(cp) != NULL);}
 
 int mix_beg(chan_info *cp)
 {
+  /* used in snd-chn.c for zoom focus active */
   mix_info *md;
   console_state *cs;
   md = active_mix(cp);
@@ -3919,7 +3921,8 @@ static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, X
   #define H_mix "(" S_mix " file &optional (chn-start 0) (file-chan 0) snd chn with-console))\n\
 mixes file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chan-start \
 is omitted), returning the new mix's id.  if with-console is #f, the data is mixed (no console is created). \
-If chn is omitted, file's channels are mixed until snd runs out of channels"
+If chn is omitted, file's channels are mixed until snd runs out of channels.  If the file-to-be-mixed has \
+no data, the 'id' value returned is -2, and no edit takes place."
 
   chan_info *cp = NULL;
   char *name = NULL;

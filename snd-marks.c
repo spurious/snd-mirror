@@ -1773,7 +1773,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
 
 static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n) 
 {
-  #define H_add_mark "(" S_add_mark ") samp &optional snd chn) adds a mark at sample samp returning the mark id"
+  #define H_add_mark "(" S_add_mark ") samp &optional snd chn) adds a mark at sample samp returning the mark id."
   mark *m;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
@@ -1791,7 +1791,7 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n)
 
 static XEN g_delete_mark(XEN id_n) 
 {
-  #define H_delete_mark "(" S_delete_mark " id) delete mark id (- C-m)"
+  #define H_delete_mark "(" S_delete_mark " id) deletes mark id"
   chan_info *cp[1];
   mark *m;
   int id;
@@ -1806,7 +1806,7 @@ static XEN g_delete_mark(XEN id_n)
 
 static XEN g_delete_marks(XEN snd_n, XEN chn_n) 
 {
-  #define H_delete_marks "(" S_delete_marks " &optional snd chn) delete all marks in snd's channel chn"
+  #define H_delete_marks "(" S_delete_marks " &optional snd chn) deletes all marks in snd's channel chn"
   chan_info *cp;
   ASSERT_CHANNEL(S_delete_marks, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_delete_marks);
@@ -1839,7 +1839,7 @@ static int *syncd_marks(snd_state *ss, int sync)
 
 static XEN g_syncd_marks(XEN sync)
 {
-  #define H_syncd_marks "(" S_syncd_marks " sync) -> list of mark ids that share sync"
+  #define H_syncd_marks "(" S_syncd_marks " sync) -> list of mark ids that share a given sync value (mark-sync)"
   int *ids;
   XEN res;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(sync), sync, XEN_ONLY_ARG, S_syncd_marks, "an integer");
@@ -1872,8 +1872,8 @@ static int *channel_marks(chan_info *cp, int pos)
 
 static XEN g_marks(XEN snd_n, XEN chn_n, XEN pos_n) 
 {
-  #define H_marks "(" S_marks " &optional snd chn pos) -> list of marks (ids) in snd/chn at edit history position pos"
-  /* mark list is: channel: (id id id), snd: ((id id) (id id...)), neither: (((id...)...)...) */
+  #define H_marks "(" S_marks " &optional snd chn pos) -> list of marks (ids) in snd/chn at edit history position pos. \
+mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neither given: (((id ...) ...) ...)."
   chan_info *cp;
   snd_info *sp;
   snd_state *ss;

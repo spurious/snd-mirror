@@ -16,7 +16,7 @@
 ;;; test 13: menus, edit lists, hooks, etc
 ;;; test 14: all functions
 ;;; test 15: chan-local vars 
-;;; test 16: define-syntax
+;;; test 16: [removed]
 ;;; test 17: graphics
 ;;; test 18: enved
 ;;; test 19: save and restore
@@ -2612,6 +2612,9 @@
 	(set! (speed-control-style nindex) speed-control-as-semitone)
 	(if (not (= (speed-control-style nindex) speed-control-as-semitone))
 	    (snd-display ";speed-control-style set semi: ~A" (speed-control-style nindex)))
+	(set! (speed-control-tones nindex) -8)
+	(if (not (= (speed-control-tones nindex) 12))
+	    (snd-display ";speed-control-tones -8: ~A" (speed-control-tones nindex)))
 	(set! (speed-control-tones nindex) 18)
 	(if (not (= (speed-control-tones nindex) 18))
 	    (snd-display ";speed-control-tones 18: ~A" (speed-control-tones nindex)))
@@ -7059,7 +7062,7 @@
 
     (let* ((ind (open-sound "oboe.snd"))
 	   (open-readers (make-vector 100 #f))
-	   (mix1 (mix-vct (vct 0.1 0.2 0.3) 120 ind 0 #t))
+	   (mix1 (mix-vct (vct 0.1 0.2 0.3) 120 ind 0 #t "origin!"))
 	   (mix2 (mix-vct (vct 0.1 0.2 0.3) 1200 ind 0 #t))
 	   (mix3 (mix-vct (vct 0.1 0.2 0.3) 12000 ind 0 #t))
 	   (reg1 (make-region 200 300 ind 0)))
@@ -9147,6 +9150,8 @@
 	      (apply-controls) 
 	      (play-and-wait)
 
+	      (if (fneq (reverb-control-decay cfd) (reverb-control-decay))
+		  (snd-display ";reverb-control-decay local: ~A, global: ~A" (reverb-control-decay cfd) (reverb-control-decay)))
 	      (set! (reverb-control?) #t)
 	      (set! (reverb-control-scale) .2) 
 	      (test-panel reverb-control-scale 'reverb-control-scale)
@@ -10328,19 +10333,12 @@
 	  (snd-display ";concatenate-envelopes: ~A" (concatenate-envelopes '(0 0 1 1.5) '(0 1 1 0))))
       ))
 
-;;; ---------------- test 16: define-syntax ----------------
+;;; ---------------- test 16: removed ----------------
 
 (if (or full-test (= snd-test 16) (and keep-going (<= snd-test 16)))
-    (let ((hi 32)
-	  (ho 0))
-      (if (procedure? test-hook) (test-hook 16))
-      (load "loop.scm")
-      (set! hi (progn (dotimes (k 3) (set! ho (1+ ho))) ho))
-      (if (not (= hi 3)) (snd-display ";dotimes: ~A ~A?" ho hi))
-      (loop for k from 0 to 12 do (set! ho (+ ho 1)))
-      (if (not (= ho 16)) (snd-display ";loop: ~A?" ho))
-      (set! hi (prog1 (+ 2 ho) (set! ho 3)))
-      (if (not (= hi 18)) (snd-display ";prog1: ~A?" hi))))
+    (begin
+      (if (procedure? test-hook) (test-hook 16))))
+
 
 
 ;;; ---------------- test 17: dialogs and graphics ----------------
@@ -14518,8 +14516,12 @@ EDITS: 3
 	(check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
 	(let ((ind (open-sound "oboe.snd"))) 
 	  (select-all)
+	  (check-error-tag 'mus-error (lambda () (mix-vct (vct 0.1 0.2 0.3) -1 ind 0 #t)))
 	  (check-error-tag 'no-such-file (lambda () (insert-sound (string-append sf-dir "mus10.snd"))))
 	  (check-error-tag 'mus-error (lambda () (set! (filter-control-env ind) '())))
+	  (check-error-tag 'mus-error (lambda () (set! (data-format ind) 123)))
+	  (check-error-tag 'mus-error (lambda () (set! (header-type ind) 123)))
+	  (check-error-tag 'no-such-channel (lambda () (set! (selected-channel ind) 123)))
 	  (check-error-tag 'bad-arity (lambda () (set! (search-procedure ind) (lambda (a b c) #t))))
 	  (check-error-tag 'bad-arity (lambda () (map-chan (lambda (a b c) 1.0))))
 	  (check-error-tag 'bad-arity (lambda () (scan-chan (lambda (a b c) 1.0))))

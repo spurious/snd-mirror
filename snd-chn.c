@@ -1011,14 +1011,19 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       if (sf == NULL) return(0);
       incr = (double)1.0 / cur_srate;
       grfpts = ap->hisamp - ap->losamp + 1;
-      for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
+      if (cp->printing)
 	{
-	  samp = next_sample_to_float(sf);
-	  set_grf_point(local_grf_x(x, ap), 
-			j, 
-			local_grf_y(samp, ap));
-	  if (cp->printing) 
-	    ps_set_grf_point(x, j, samp);
+	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
+	    {
+	      samp = next_sample_to_float(sf);
+	      set_grf_point(local_grf_x(x, ap), j, local_grf_y(samp, ap));
+	      ps_set_grf_point(x, j, samp);
+	    }
+	}
+      else
+	{
+	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
+	    set_grf_point(local_grf_x(x, ap), j, local_grf_y(next_sample_to_float(sf), ap));
 	}
       if (sp)
 	{

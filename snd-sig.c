@@ -1032,7 +1032,7 @@ static int fht_last_length = 0, fht_length = 0;
 static void make_sines(int length)
 {
   int i;
-  Float freq, temp;
+  Float freq, incr;
   if (length != fht_last_length)
     {
       if (fht_length < length)
@@ -1044,12 +1044,11 @@ static void make_sines(int length)
 	  fht_length = length;
 	}
       fht_last_length = length;
-      freq = TWO_PI / (Float)length;
-      for (i = 0; i < length; i++) 
+      incr = TWO_PI / (Float)length;
+      for (i = 0, freq = 0.0; i < length; i++, freq += incr) 
 	{
-	  temp = freq * i;
-	  fht_sines[i] = sin(temp);
-	  fht_cosines[i] = cos(temp);
+	  fht_sines[i] = sin(freq);
+	  fht_cosines[i] = cos(freq);
         }
     }
 }

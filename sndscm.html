@@ -48,7 +48,6 @@
   <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
   <li><a href="#hooksdoc">hooks.scm: functions related to hooks</a>
   <li><a href="#indexdoc">index.scm: snd-help extension</a>
-  <li><a href="#loopdoc">loop.scm: Common Lisp syntax</a>
   <li><a href="#marksdoc">marks.scm: functions related to marks</a>
   <li><a href="#mixdoc">mix.scm: functions related to mixes and tracks</a>
   <li><a href="#moogdoc">moog.scm: Moog filter</a>
@@ -1464,41 +1463,6 @@ reader can work.  All the following forms are acceptable:
 <p>Similarly, <code>(c? arg)</code> tries to find and print out the location of the C code
 that defines <i>arg</i>.
 </p>
-
-<A NAME="loopdoc"></a><span class=box><h2>loop.scm</h2></span>
-
-<p>loop.scm implements (at least partially) some Common Lisp syntax in Scheme using
-Scheme's define-syntax.  For example, prog1 in Scheme is:
-</p>
-<pre>
-(define-syntax prog1
-  (syntax-rules ()
-    ((prog1 &lt;form1&gt;) &lt;form1&gt;)
-    ((prog1 &lt;form1&gt; &lt;form2&gt; ...)
-     (let ((_result_ &lt;form1&gt;)) &lt;form2&gt; ... _result_))
-    ))
-</pre>
-<p>This code says that <code>(prog1 &lt;form&gt;)</code> should be expanded as &lt;form&gt;,
-and that anything more complicated should save the value of the first form, returning
-it at the end.  There's nothing special (in Scheme) about the "&lt; &gt;" business,
-and probably a better way to specify the "_result_".  The "..." is Scheme's "and so on"
-marker within these syntax patterns.  loop.scm has a first stab at loop, and
-implementations of dotimes, progn, and prog1.  musglyphs.scm uses these to load
-cmn-glyphs.lisp directly.
-Any additions are welcome!
-</p>
-<pre>
-:<em class=typing>(define hi (prog1 (+ 1 2) (abs -1) "hi"))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-:<em class=typing>hi</em>
-<em class=listener>3</em>
-:<em class=typing>(loop for i from 0 to 2 do (snd-print i))</em>
-<em class=listener>0
-1
-2
-#f
-</em>
-</pre>
 
 <A NAME="marksdoc"></a><span class=box><h2>marks.scm</h2></span>
 

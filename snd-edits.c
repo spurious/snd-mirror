@@ -3653,8 +3653,13 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
       if (filename) FREE(filename);
       return(snd_no_such_file_error(S_insert_sound, file));
     }
-  pos = to_c_edit_position(cp, edpos, S_insert_sound, 6);
   len = mus_sound_samples(filename) / nc;
+  if (len == 0) 
+    {
+      if (filename) FREE(filename);
+      return(C_TO_XEN_INT(len));
+    }
+  pos = to_c_edit_position(cp, edpos, S_insert_sound, 6);
   if (XEN_NUMBER_P(ubeg))
     beg = XEN_TO_C_INT_OR_ELSE(ubeg, 0);
   else beg = cp->cursor;

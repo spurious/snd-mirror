@@ -1,6 +1,8 @@
 snd change log
 
 
+  4-Jan:     removed loop.scm.
+
 2002 ----------------------------------------------------------------
 
   26-Dec:    explode-sf2 in examp.scm.

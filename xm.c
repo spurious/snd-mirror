@@ -2346,7 +2346,7 @@ static XEN gxm_XmRenderTableFree(XEN arg1)
 
 static XEN gxm_XmRenderTableGetTags(XEN arg1)
 {
-  #define H_XmRenderTableGetTags "int XmRenderTableGetTags(XmRenderTable table, XmStringTag **tag_list) gets rendition tags"
+  #define H_XmRenderTableGetTags "int XmRenderTableGetTags(XmRenderTable table) gets rendition tags (list of strings)"
   /* DIFF: XmRenderTableGetTags omits arg2, returns list of strings
    */
   int i, len, loc;
@@ -2633,8 +2633,7 @@ static XEN gxm_XmTabFree(XEN arg1)
 
 static XEN gxm_XmTabGetValues(XEN arg1)
 {
-  #define H_XmTabGetValues "float XmTabGetValues(XmTab tab, unsigned char *units, XmOffsetModel *offset, unsigned char *alignment, char **decimal) \
-returns tab values"
+  #define H_XmTabGetValues "float XmTabGetValues(XmTab tab) returns tab values"
   /* DIFF: XmTabGetValues tab [units offset align decimal] -> (list val units ofset align decimal)
      arg2/3/4/5 omit rtn with float 
   */
@@ -2903,7 +2902,7 @@ converts a compound string table to a single compound string"
 
 static XEN gxm_XmStringToXmStringTable(XEN arg1, XEN arg2)
 {
-  #define H_XmStringToXmStringTable "Cardinal XmStringToXmStringTable(XmString string, XmString break_component, XmStringTable *table) \
+  #define H_XmStringToXmStringTable "Cardinal XmStringToXmStringTable(XmString string, XmString break_component) \
 converts a single compound string to a table of compound strings"
   /* DIFF: XmStringToXmStringTable omits and rtns (list len table)
    */
@@ -2982,7 +2981,7 @@ creates arbitrary components"
 
 static XEN gxm_XmStringGetNextTriple(XEN arg1)
 {
-  #define H_XmStringGetNextTriple "XmStringComponentType XmStringGetNextTriple(XmStringContext context, unsigned int *length, XtPointer *value) \
+  #define H_XmStringGetNextTriple "XmStringComponentType XmStringGetNextTriple(XmStringContext context) \
 returns the type, length, and value of the next component in the compound string"
   /* DIFF: XmStringGetNextTriple omits last 2 args, returns val
    */
@@ -3164,7 +3163,7 @@ in the provided compound string"
 
 static XEN gxm_XmStringExtent(XEN arg1, XEN arg2)
 {
-  #define H_XmStringExtent "void XmStringExtent(XmRenderTable rendertable, XmString string, Dimension *width, Dimension *height) \
+  #define H_XmStringExtent "void XmStringExtent(XmRenderTable rendertable, XmString string) \
 determines the size of the smallest rectangle that will enclose the compound string"
   /* DIFF: XmStringExtent omits and returns the last 2 args
    */
@@ -3318,7 +3317,7 @@ the font list context is no longer needed"
 
 static XEN gxm_XmFontListGetNextFont(XEN arg1)
 {
-  #define H_XmFontListGetNextFont "Boolean XmFontListGetNextFont(XmFontContext context, XmStringCharSet *charset, XFontStruct **font) \
+  #define H_XmFontListGetNextFont "Boolean XmFontListGetNextFont(XmFontContext context) \
 allows applications to access the fonts and character sets in a font list"
   /* DIFF: XmFontListGetNextFont omits args 2 3, returns list
    */
@@ -3334,7 +3333,7 @@ allows applications to access the fonts and character sets in a font list"
 
 static XEN gxm_XmFontListInitFontContext(XEN arg1)
 {
-  #define H_XmFontListInitFontContext "Boolean XmFontListInitFontContext(XmFontContext *context, XmFontList fontlist) \
+  #define H_XmFontListInitFontContext "Boolean XmFontListInitFontContext(XmFontList fontlist) \
 allows applications to access the entries in a font list"
   /* DIFF: XmFontListInitFontContext omits arg1 and rtns it
    */
@@ -3530,7 +3529,7 @@ creates a font list entry"
 
 static XEN gxm_XmStringGetLtoR(XEN arg1, XEN arg2)
 {
-  #define H_XmStringGetLtoR "Boolean XmStringGetLtoR(XmString string, XmStringCharSet tag, char **text) searches \
+  #define H_XmStringGetLtoR "Boolean XmStringGetLtoR(XmString string, XmStringCharSet tag) searches \
 for a text segment in the input compound string"
   /* DIFF: XmStringGetLtoR omits and rtns last arg
    */
@@ -3547,8 +3546,7 @@ for a text segment in the input compound string"
 
 static XEN gxm_XmStringGetNextSegment(XEN arg1)
 {
-  #define H_XmStringGetNextSegment "Boolean XmStringGetNextSegment(XmStringContext context, char **text, XmStringTag *tag, XmStringDirection *direction, \
-Boolean *separator) fetches the bytes in the next segment of a compound string"
+  #define H_XmStringGetNextSegment "Boolean XmStringGetNextSegment(XmStringContext context) fetches the bytes in the next segment of a compound string"
   /* DIFF: XmStringGetNextSegment omits last args, returns them
    */
   Boolean b; /* returned boolean omitted arg 5 */
@@ -3576,9 +3574,8 @@ returns the component type of the next component to be fetched"
 
 static XEN gxm_XmStringGetNextComponent(XEN arg1)
 {
-  #define H_XmStringGetNextComponent "XmStringComponentType XmStringGetNextComponent(XmStringContext context, char **text, XmStringTag *tag, \
-XmStringDirection *direction, XmStringComponentType *unknown_tag, unsigned short *unknown_length, unsigned char **unknown_value) \
-returns the type and value of the next component in a compound string"
+  #define H_XmStringGetNextComponent "XmStringComponentType XmStringGetNextComponent(XmStringContext context) \
+returns the type and value of the next component in a compound string (list val text tag direction component len value)"
   /* DIFF: XmStringGetNextComponent omits all but 1st arg, returns list
    */
   unsigned char direction;
@@ -3611,7 +3608,7 @@ context data structure"
 static XmStringContext gxm_initxmsc;
 static XEN gxm_XmStringInitContext(XEN arg2)
 {
-  #define H_XmStringInitContext "Boolean XmStringInitContext(XmStringContext * context, XmString string) creates \
+  #define H_XmStringInitContext "Boolean XmStringInitContext(XmString string) creates \
 a data structure for scanning an XmString component by component"
   /* DIFF XmStringInitContext 1st arg omitted and rtn
    */
@@ -3698,8 +3695,7 @@ static XEN gxm_XmChangeColor(XEN arg1, XEN arg2)
 
 static XEN gxm_XmGetColors(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmGetColors "void XmGetColors(Screen * screen, Colormap colormap, Pixel background, Pixel * foreground, Pixel * top_shadow, \
-Pixel * bottom_shadow, Pixel * select) generates foreground, select, and shadow colors"
+  #define H_XmGetColors "void XmGetColors(Screen * screen, Colormap colormap, Pixel background) generates foreground, select, and shadow colors"
   /* DIFF: XmGetColors omits trailing 4 args and returns them
    */
   Pixel fg,ts, bs, sr;
@@ -4163,7 +4159,7 @@ static XEN gxm_XmWidgetGetDisplayRect(XEN arg1)
 
 static XEN gxm_XmWidgetGetBaselines(XEN arg1)
 {
-  #define H_XmWidgetGetBaselines "Boolean XmWidgetGetBaselines(Widget widget, Dimension **baselines, int *line_count) retrieves baseline information for a widget"
+  #define H_XmWidgetGetBaselines "Boolean XmWidgetGetBaselines(Widget widget) retrieves baseline information for a widget"
   /* DIFF: XmWidgetGetBaselines omits args 2 and 3, returns list of Dimensions
    */
   Dimension *ds;
@@ -4358,8 +4354,7 @@ static XEN gxm_XmListSetHorizPos(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListGetSelectedPos(XEN arg1)
 {
-  #define H_XmListGetSelectedPos "Boolean XmListGetSelectedPos(Widget widget, int **position_list, int *position_count) A List function \
-that returns the position of every selected item in the list"
+  #define H_XmListGetSelectedPos "Boolean XmListGetSelectedPos(Widget widget) A List function that returns the position of every selected item in the list"
   /* DIFF: XmListGetSelectedPos omits args 2 and 3, returns list of positions
    */
   int *ps;
@@ -4380,8 +4375,7 @@ that returns the position of every selected item in the list"
 
 static XEN gxm_XmListGetMatchPos(XEN arg1, XEN arg2)
 {
-  #define H_XmListGetMatchPos "Boolean XmListGetMatchPos(Widget widget, XmString item, int **position_list, int *position_count) \
-returns all instances of an item in the list"
+  #define H_XmListGetMatchPos "Boolean XmListGetMatchPos(Widget widget, XmString item) returns all instances of an item in the list"
   /* DIFF: XmListGetSelectedPos omits args 3 and 4, returns list of positions
    */
   int *ps;
@@ -4403,8 +4397,7 @@ returns all instances of an item in the list"
 
 static XEN gxm_XmListPosToBounds(XEN arg1, XEN arg2)
 {
-  #define H_XmListPosToBounds "Boolean XmListPosToBounds(Widget widget, int position, Position *x, Position *y, Dimension *width, \
-Dimension *height) returns the bounding box of an item at a specified position in a list"
+  #define H_XmListPosToBounds "Boolean XmListPosToBounds(Widget widget, int position) returns the bounding box of an item at a specified position in a list"
   /* DIFF: XmListPosToBounds last 4 args omitted and returned 
    */
   Position x, y;
@@ -5039,8 +5032,8 @@ static XEN gxm_XmTextGetSource(XEN arg1)
 
 static XEN gxm_XmTextPosToXY(XEN arg1, XEN arg2)
 {
-  #define H_XmTextPosToXY "Boolean XmTextPosToXY(Widget widget, XmTextPosition position, Position *x, Position *y) A Text function \
-that accesses the x and y position of a character position"
+  #define H_XmTextPosToXY "Boolean XmTextPosToXY(Widget widget, XmTextPosition position) A Text function \
+that returns the x and y position of a character position"
   /* DIFF: XmTextPosToXY omits last 2 args and returns them
    */
   Position x, y;
@@ -5065,8 +5058,7 @@ the character position nearest an x and y position"
 
 static XEN gxm_XmTextGetSelectionPosition(XEN arg1)
 {
-  #define H_XmTextGetSelectionPosition "Boolean XmTextGetSelectionPosition(Widget widget, XmTextPosition *left, XmTextPosition *right) \
-accesses the position of the primary selection"
+  #define H_XmTextGetSelectionPosition "Boolean XmTextGetSelectionPosition(Widget widget) returns the position of the primary selection"
   /* DIFF: XmTextGetSelectionPosition widget [left right] -> (list res left right)
      no arg2 arg3, returns (owner left right) instead */
   XmTextPosition pos1, pos2;
@@ -5420,8 +5412,7 @@ forces text at a given position to be displayed"
 
 static XEN gxm_XmTextFieldPosToXY(XEN arg1, XEN arg2)
 {
-  #define H_XmTextFieldPosToXY "Boolean XmTextFieldPosToXY(Widget widget, XmTextPosition position, Position *x, Position *y) \
-accesses the x and y position of a character position"
+  #define H_XmTextFieldPosToXY "Boolean XmTextFieldPosToXY(Widget widget, XmTextPosition position) returns the x and y position of a character position"
   /* DIFF: XmTextFieldPosToXY omits last 2 args and returns them
    */
   Position x, y;
@@ -5525,8 +5516,8 @@ static XEN gxm_XmTextFieldGetSelection(XEN arg1)
 
 static XEN gxm_XmTextFieldGetSelectionPosition(XEN arg1)
 {
-  #define H_XmTextFieldGetSelectionPosition "Boolean XmTextFieldGetSelectionPosition(Widget widget, XmTextPosition *left, XmTextPosition *right) \
-accesses the position of the primary selection"
+  #define H_XmTextFieldGetSelectionPosition "Boolean XmTextFieldGetSelectionPosition(Widget widget) \
+returns the position of the primary selection"
   /* DIFF: XmTextFieldGetSelectionPosition widget [left right] -> (list res left right)
      no arg2 arg3, returns (owner left right) instead 
   */
@@ -5688,7 +5679,7 @@ static XEN gxm_XmTextFieldGetString(XEN arg1)
 
 static XEN gxm_XmDropTransferAdd(XEN arg1, XEN arg2)
 {
-  #define H_XmDropTransferAdd "void XmDropTransferAdd(Widget drop_transfer, XmDropTransferEntryRec *transfers, Cardinal num_transfers) \
+  #define H_XmDropTransferAdd "void XmDropTransferAdd(Widget drop_transfer, XmDropTransferEntryRec *transfers) \
 enables additional drop transfer entries to be processed after initiating a drop transfer"
   /* DIFF: XmDropTransferAdd  arg2 is list of (atom data) lists, arg3 omitted
    */
@@ -5904,7 +5895,7 @@ The DrawnButton widget creation function"
 #if MOTIF_2
 static XEN gxm_XmSpinBoxValidatePosition(XEN arg1)
 {
-  #define H_XmSpinBoxValidatePosition "int XmSpinBoxValidatePosition(Widget textfield, int *position) translate the current value of \
+  #define H_XmSpinBoxValidatePosition "int XmSpinBoxValidatePosition(Widget textfield) translate the current value of \
 the specified XmSpinBox child into a valid position"
   /* DIFF: XmSpinBoxValidatePosition omits arg2, returns pos
    */
@@ -6110,8 +6101,7 @@ changes ScrollBar's increment values and the slider's size and position"
 
 static XEN gxm_XmScrollBarGetValues(XEN arg1)
 {
-  #define H_XmScrollBarGetValues "void XmScrollBarGetValues (widget) \
-returns the ScrollBar's increment values (list val size incr page)"
+  #define H_XmScrollBarGetValues "void XmScrollBarGetValues (widget) returns the ScrollBar's increment values (list val size incr page)"
   /* DIFF: XmScrollBarGetValues omits and returns last 4 args
    */
   int val, size, incr, page;
@@ -6150,7 +6140,7 @@ static XEN gxm_XmClipboardRegisterFormat(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmClipboardInquirePendingItems(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmClipboardInquirePendingItems "int XmClipboardInquirePendingItems (display, window, format_name, item_list, count) \
+  #define H_XmClipboardInquirePendingItems "int XmClipboardInquirePendingItems (display, window, format_name) \
 returns a list of data ID/private ID pairs"
   /* DIFF: XmClipboardInquirePendingItems omits last 2 args, returns list of pairs
    */
@@ -6177,8 +6167,7 @@ returns a list of data ID/private ID pairs"
 
 static XEN gxm_XmClipboardInquireLength(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmClipboardInquireLength "int XmClipboardInquireLength (display, window, format_name, length) \
-returns the length of the stored data"
+  #define H_XmClipboardInquireLength "int XmClipboardInquireLength (display, window, format_name) returns the length of the stored data"
   /* DIFF: XmClipboardInquireLength omit and rtn last arg
    */
   unsigned long len;
@@ -6193,7 +6182,7 @@ returns the length of the stored data"
 
 static XEN gxm_XmClipboardInquireFormat(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XmClipboardInquireFormat "int XmClipboardInquireFormat (display, window, index, format_name_buf,  buffer_len, copied_len) \
+  #define H_XmClipboardInquireFormat "int XmClipboardInquireFormat (display, window, index, buffer_len) \
 returns a specified format name"
   /* DIFF: XmClipboardInquireFormat omits arg4 (XtPointer buffer) and arg6, returns them
    */
@@ -6218,8 +6207,7 @@ returns a specified format name"
 
 static XEN gxm_XmClipboardInquireCount(XEN arg1, XEN arg2)
 {
-  #define H_XmClipboardInquireCount "int XmClipboardInquireCount (display, window, count,  max_format_name_length) \
-returns the number of data item formats"
+  #define H_XmClipboardInquireCount "int XmClipboardInquireCount (display, window) returns the number of data item formats"
   /* DIFF: XmClipboardInquireCount omits and rtns last 2 args
    */
   int count, val;
@@ -6236,8 +6224,7 @@ returns the number of data item formats"
 
 static XEN gxm_XmClipboardRetrieve(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XmClipboardRetrieve "int XmClipboardRetrieve (display, window, format_name, buffer, length, num_bytes, private_id) \
-retrieves a data item from the clipboard"
+  #define H_XmClipboardRetrieve "int XmClipboardRetrieve (display, window, format_name, length) retrieves a data item from the clipboard"
   /* DIFF: XmClipboardRetrieve omits buf arg, and last 2, returning them and a list of ulongs
    */
   unsigned long n;
@@ -6313,7 +6300,7 @@ static XEN gxm_XmClipboardUndoCopy(XEN arg1, XEN arg2)
 
 static XEN gxm_XmClipboardCopyByName(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_XmClipboardCopyByName "int XmClipboardCopyByName (display, window, data_id,  copies a data item passed by name"
+  #define H_XmClipboardCopyByName "int XmClipboardCopyByName (display, window, data_id,  buf, len, id) copies a data item passed by name"
   /* DIFF: XmClipboardCopyByName arg4 is string
    */
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardCopyByName", "Display*");
@@ -6360,7 +6347,7 @@ copying of data to the clipboard"
 
 static XEN gxm_XmClipboardCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
-  #define H_XmClipboardCopy "int XmClipboardCopy (display, window, item_id, format_name, buffer, len, id, data) copies a data item \
+  #define H_XmClipboardCopy "int XmClipboardCopy (display, window, item_id, format_name, buffer, len, id) copies a data item \
 to temporary storage for later copying to clipboard"
   /* DIFF: XmClipboardCopy omits and returns last arg, arg5 is string
    */
@@ -6396,8 +6383,8 @@ static void gxm_XmCutPasteProc(Widget w, long *data, long *privater, int *reason
 
 static XEN gxm_XmClipboardStartCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_XmClipboardStartCopy "int XmClipboardStartCopy (display, window, clip_label, timestamp, widget, callback, item_id) \
-sets up a storage and data structure"
+  #define H_XmClipboardStartCopy "int XmClipboardStartCopy (display, window, clip_label, timestamp, widget, callback) \
+sets up a storage and data structure, returns id"
   /* DIFF: XmClipboardStartCopy omits and returns last arg
    */
   long id;
@@ -6430,7 +6417,7 @@ static void gxm_XmVoidProc(Widget w, int *data, int *privater, int *reason)
 
 static XEN gxm_XmClipboardBeginCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XmClipboardBeginCopy "int XmClipboardBeginCopy(display, window, XmString label, widget, callback, long *itemid)"
+  #define H_XmClipboardBeginCopy "int XmClipboardBeginCopy(display, window, XmString label, widget, callback)"
   /* DIFF: XmClipboardBeinCopy omits and returns last arg
    */
   long id;
@@ -6565,8 +6552,8 @@ static XEN gxm_XmContainerRelayout(XEN arg1)
 
 static XEN gxm_XmContainerGetItemChildren(XEN arg1, XEN arg2)
 {
-  #define H_XmContainerGetItemChildren "int XmContainerGetItemChildren(Widget container, Widget item,  Container function \
-to find all children of an item"
+  #define H_XmContainerGetItemChildren "int XmContainerGetItemChildren(Widget container, Widget item) \
+returns a list of all children of an item"
   /* DIFF: XmContainerGetItemChildren omits arg3, rtns widget list
    */
   Widget *ws;
@@ -7660,7 +7647,7 @@ RectangleOut if the rectangle is entirely out of the specified region, and Recta
 
 static XEN gxm_XPolygonRegion(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XPolygonRegion "Region XPolygonRegion(points, n, fill_rule) returns a region for the polygon defined by the points array."
+  #define H_XPolygonRegion "Region XPolygonRegion(points, n, fill_rule) returns a region for the polygon defined by the points list."
   /* DIFF: XPolygonRegion XPoint* arg (arg 1) is list of XPoints
    */
   XPoint *pt, *pt1;
@@ -9710,7 +9697,7 @@ static XEN gxm_XGetScreenSaver(XEN arg1)
 
 static XEN gxm_XGetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XGetPointerMapping "int XGetPointerMapping(display) returns the current mapping of the pointer."
+  #define H_XGetPointerMapping "int XGetPointerMapping(display, ignored, len returns the current mapping of the pointer."
   /* DIFF: XGetPointerMapping ignores arg2, returns list
    */
   int i, len, loc;
@@ -9971,7 +9958,7 @@ static XEN gxm_XFreeGC(XEN arg1, XEN arg2)
 
 static XEN gxm_XFreeFontPath(XEN arg1)
 {
-  #define H_XFreeFontPath "XFreeFontPath(list) frees the data allocated by XGetFontPath."
+  #define H_XFreeFontPath "XFreeFontPath(list) frees the data allocated by XGetFontPath (a no-op in xm)."
   /* DIFF: XFreeFontPath is no-op
    */
   return(XEN_FALSE);
@@ -9979,7 +9966,7 @@ static XEN gxm_XFreeFontPath(XEN arg1)
 
 static XEN gxm_XFreeFontNames(XEN arg1)
 {
-  #define H_XFreeFontNames "XFreeFontNames(list) frees the array and strings returned by XListFonts or XListFontsWithInfo."
+  #define H_XFreeFontNames "XFreeFontNames(list) frees the array and strings returned by XListFonts or XListFontsWithInfo (a no-op in xm)."
   /* DIFF: XFreeFontNames is no-op
    */
   return(XEN_FALSE);
@@ -9988,7 +9975,7 @@ static XEN gxm_XFreeFontNames(XEN arg1)
 static XEN gxm_XFreeFontInfo(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XFreeFontInfo "XFreeFontInfo(names, free_info, actual_count) frees a font structure or an array of font structures, and \
-optionally an array of font names."
+optionally an array of font names (a no-op in xm)."
   /* DIFF: XFreeFontInfo is a no-op 
    */
   return(XEN_FALSE);
@@ -11232,7 +11219,7 @@ static XEN gxm_XAllocColorPlanes(XEN args)
 
 static XEN gxm_XAllocColorCells(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XAllocColorCells "Status XAllocColorCells(display, colormap, contig, plane_masks_return, nplanes, pixels_return, npixels) \
+  #define H_XAllocColorCells "Status XAllocColorCells(display, colormap, contig, nplanes, npixels) \
 allocates read/write color cells."
   /* DIFF: XAllocColorCells arg 4 and 6 omitted and returned as (embedded) lists 
    */
@@ -11325,7 +11312,7 @@ window to the specified prop_window."
 static XEN gxm_XFreeStringList(XEN arg1)
 {
   #define H_XFreeStringList "void XFreeStringList(list) releases memory allocated by  XTextPropertyToStringList and the missing charset \
-list allocated by  XCreateFontSet."
+list allocated by  XCreateFontSet (a no-op in xm)."
   /* DIFF: XFreeStringList is a no-op
    */
   return(XEN_FALSE);
@@ -12286,7 +12273,7 @@ static XEN gxm_XGetAtomName(XEN arg1, XEN arg2)
 
 static XEN gxm_XFetchBuffer(XEN arg1, XEN arg3)
 {
-  #define H_XFetchBuffer "char *XFetchBuffer(display, buffer) returns zero to the nbytes_return argument if there \
+  #define H_XFetchBuffer "char *XFetchBuffer(display, len) returns zero if there \
 is no data in the buffer or if an invalid buffer is specified."
   /* DIFF: XFetchBuffer returns list of bytes, omits arg2
    */
@@ -12306,7 +12293,7 @@ is no data in the buffer or if an invalid buffer is specified."
 
 static XEN gxm_XFetchBytes(XEN arg1)
 {
-  #define H_XFetchBytes "char *XFetchBytes(display) returns the number of bytes in the nbytes_return argument, if the buffer \
+  #define H_XFetchBytes "char *XFetchBytes(display) returns the number of bytes, if the buffer \
 contains data."
   /* DIFF: XFetchBytes returns list of bytes, omits arg2
    */
@@ -14619,8 +14606,7 @@ static XEN gxm_XtAddCallbacks(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtRemoveCallback(XEN arg1, XEN arg2, XEN arg4)
 {
-  #define H_XtRemoveCallback "void XtRemoveCallback(w, callback_name, callback, client_data) removes a callback only if both the procedure \
-and the client data match."
+  #define H_XtRemoveCallback "void XtRemoveCallback(w, callback_name, client_data) removes a callback"
   /* DIFF: XtRemoveCallback omits proc arg and is passed whatever XtAddCallback returned
    */
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtRemoveCallback", "Widget");
@@ -16436,7 +16422,7 @@ static XEN gxm_XpSendOneTicket(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XpGetAuthParams(XEN arg1, XEN arg2)
 {
-  #define H_XpGetAuthParams "Status XpGetAuthParams(Display *print_display,Display *video_display,Display **selection_display,Atom *selection, Atom *target)"
+  #define H_XpGetAuthParams "Status XpGetAuthParams(Display *print_display,Display *video_display)"
   /* DIFF: XpGetAuthParams omits 3 ref args and returns them 
    */
   Atom a1, a2;
@@ -16454,8 +16440,7 @@ static XEN gxm_XpGetAuthParams(XEN arg1, XEN arg2)
 static XEN gxm_XpGetPdmStartParams(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XpGetPdmStartParams "Status XpGetPdmStartParams(Display *print_display,Window print_window,XPContext print_context, \
-Display *video_display,Window video_window,Display **selection_display,Atom *selection, Atom *type, int *format, \
-unsigned char **data, int *nelements)"
+Display *video_display,Window video_window)"
   /* DIFF: XpGetPdmStartParams trailing 6 ref args omitted and returned
    */
   int val, i1, i2;
@@ -16482,7 +16467,7 @@ unsigned char **data, int *nelements)"
 
 static XEN gxm_XpQueryScreens(XEN arg1)
 {
-  #define H_XpQueryScreens "Screen **XpQueryScreens(Display *display,int *list_count)"
+  #define H_XpQueryScreens "Screen **XpQueryScreens(Display *display)"
   /* DIFF: XpQueryScreens omits last arg, returns list of Screens
    */
   int len, i, loc;
@@ -16515,7 +16500,7 @@ static XEN gxm_XpQueryExtension(XEN arg1)
 
 static XEN gxm_XpQueryVersion(XEN arg1)
 {
-  #define H_XpQueryVersion "Status XpQueryVersion(Display *display,short *major_version, short *minor_version)"
+  #define H_XpQueryVersion "Status XpQueryVersion(Display *display)"
   /* DIFF: XpQueryVersion omits and rtns last 2 args
    */
   int val;
@@ -16537,8 +16522,7 @@ static XEN gxm_XpFreePrinterList(XEN arg1)
 
 static XEN gxm_XpGetPageDimensions(XEN arg1, XEN arg2)
 {
-  #define H_XpGetPageDimensions "Status XpGetPageDimensions(Display *display,XPContext print_context,unsigned short *width, \
-unsigned short *height, XRectangle *reproducible_area)"
+  #define H_XpGetPageDimensions "Status XpGetPageDimensions(Display *display,XPContext print_context)"
   /* DIFF: XpGetPageDimensions omits and rtns last 3 args
    */
   unsigned short i1, i2;
@@ -16571,7 +16555,7 @@ static XEN gxm_XpSetImageResolution(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XpGetPrinterList(XEN arg1, XEN arg2)
 {
-  #define H_XpGetPrinterList "XPPrinterList XpGetPrinterList(Display *display,char *printer_name,int *list_count)"
+  #define H_XpGetPrinterList "XPPrinterList XpGetPrinterList(Display *display,char *printer_name)"
   /* DIFF: XpGetPrinterList returns list of printers, omits arg 3
    */
   XPPrinterList xp;

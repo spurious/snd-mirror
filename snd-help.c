@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+4-Jan:   removed loop.scm.\n\
 26-Dec:  explode-sf2 in examp.scm.\n\
 14-Dec:  removed icons.scm and backgrounds.scm (replaced by contrib/dlp code).\n\
          removed reverb-control-procedures and contrast-control-procedure.\n\
