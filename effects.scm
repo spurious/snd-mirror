@@ -1,4 +1,10 @@
-(use-modules (ice-9 format) (ice-9 common-list))
+(use-modules (ice-9 format) (ice-9 common-list) (ice-9 optargs))
+ 
+(if (not (provided? 'xm))
+    (let ((hxm (dlopen "xm.so")))
+      (if (string? hxm)
+	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
+	  (dlinit hxm "init_xm"))))
 
 (define pi 3.141592653589793)
 
@@ -107,7 +113,7 @@
 	 (xok (|XmStringCreate "DoIt" |XmFONTLIST_DEFAULT_TAG))
 	 (titlestr (|XmStringCreate label |XmFONTLIST_DEFAULT_TAG))
 	 (new-dialog (|XmCreateTemplateDialog
-		       (|Widget (cadr (main-widgets))) label
+		       (cadr (main-widgets)) label
 		       (list |XmNcancelLabelString   xdismiss
 			     |XmNhelpLabelString     xhelp
 			     |XmNokLabelString       xok
@@ -115,14 +121,14 @@
 			     |XmNdialogTitle         titlestr
 			     |XmNresizePolicy        |XmRESIZE_GROW
 			     |XmNnoResize            #f
-			     |XmNbackground          (|Pixel (snd-pixel (basic-color)))
+			     |XmNbackground          (snd-pixel (basic-color))
 			     |XmNtransient           #f))))
     (for-each
      (lambda (button)
        (|XtVaSetValues
 	 (|XmMessageBoxGetChild new-dialog button)
-	 (list |XmNarmColor   (|Pixel (snd-pixel (pushed-button-color)))
-		|XmNbackground (|Pixel (snd-pixel (basic-color))))))
+	 (list |XmNarmColor   (snd-pixel (pushed-button-color))
+		|XmNbackground (snd-pixel (basic-color)))))
      (list |XmDIALOG_HELP_BUTTON |XmDIALOG_CANCEL_BUTTON |XmDIALOG_OK_BUTTON))
     
     (|XtAddCallback new-dialog |XmNcancelCallback dismiss-callback) ; "Dismiss"
@@ -132,8 +138,8 @@
     (if reset-callback
 	;; add a Reset button
 	(let ((reset-button (|XtCreateManagedWidget "Reset" |xmPushButtonWidgetClass new-dialog
-			      (list |XmNbackground (|Pixel (snd-pixel (basic-color)))
-				    |XmNarmColor   (|Pixel (snd-pixel (pushed-button-color)))))))
+			      (list |XmNbackground (snd-pixel (basic-color))
+				    |XmNarmColor   (snd-pixel (pushed-button-color))))))
 	  (|XtAddCallback reset-button |XmNactivateCallback reset-callback)))
 
     (|XmStringFree xhelp)
@@ -152,7 +158,7 @@
 		 |XmNtopAttachment       |XmATTACH_FORM
 		 |XmNbottomAttachment    |XmATTACH_WIDGET
 		 |XmNbottomWidget        (|XmMessageBoxGetChild dialog |XmDIALOG_SEPARATOR)
-		 |XmNbackground          (|Pixel (snd-pixel (highlight-color)))
+		 |XmNbackground          (snd-pixel (highlight-color))
 		 |XmNorientation         |XmVERTICAL))))
     (map 
      (lambda (slider-data)
@@ -172,7 +178,7 @@
 			|XmNdecimalPoints (if (= scale 1000) 3 (if (= scale 100) 2 (if (= scale 10) 1 0)))
 			|XmNtitleString   title
 			;|XmNborderWidth   1
-			|XmNbackground    (|Pixel (snd-pixel (basic-color)))))))
+			|XmNbackground    (snd-pixel (basic-color))))))
 	 (|XmStringFree title)
 	 (|XtAddCallback new-slider |XmNvalueChangedCallback func)
 	 new-slider))
@@ -182,7 +188,7 @@
   (let ((pix #f))
     (lambda ()
       (if (not pix)
-	  (let* ((shell (|Widget (cadr (main-widgets))))
+	  (let* ((shell (cadr (main-widgets)))
 		 (dpy (|XtDisplay shell))
 		 (scr (|DefaultScreen dpy))
 		 (cmap (|DefaultColormap dpy scr))
@@ -199,10 +205,10 @@
   (let* ((sep (|XtCreateManagedWidget "sep" |xmSeparatorWidgetClass mainform
 		(list |XmNorientation      |XmHORIZONTAL
 		      |XmNseparatorType    |XmSHADOW_ETCHED_OUT
-		      |XmNbackground       (|Pixel (snd-pixel (basic-color))))))
+		      |XmNbackground       (snd-pixel (basic-color)))))
 	 (rc (|XtCreateManagedWidget "rc"  |xmRowColumnWidgetClass mainform
                 (list |XmNorientation      |XmHORIZONTAL
-		      |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+		      |XmNbackground       (snd-pixel (basic-color))
 		      |XmNradioBehavior    #t
 		      |XmNradioAlwaysOne   #t
 		      |XmNentryClass       |xmToggleButtonWidgetClass
@@ -210,7 +216,7 @@
     (map 
      (lambda (name type on)
        (|XtCreateManagedWidget name |xmToggleButtonWidgetClass rc
-                (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+                (list |XmNbackground       (snd-pixel (basic-color))
 		      |XmNset              on
 		      |XmNselectColor      (yellow-pixel)
 		      |XmNindicatorType    |XmONE_OF_MANY_ROUND
@@ -222,7 +228,7 @@
 	(let* ((trsep (|XtCreateManagedWidget "trsep" |xmSeparatorWidgetClass mainform
 		(list |XmNorientation      |XmHORIZONTAL)))
 	       (trbutton (|XtCreateManagedWidget "truncate at end" |xmToggleButtonWidgetClass mainform
-                (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+                (list |XmNbackground       (snd-pixel (basic-color))
 		      |XmNset              #t
 		      |XmNselectColor      (yellow-pixel)))))
 	  (|XtAddCallback trbutton |XmNvalueChangedCallback (lambda (w c i) (truncate-callback (|set i)))) ))))
@@ -250,11 +256,11 @@
 ;;;
 
 (define amp-menu-list '())
-(define amp-menu (|XmCreatePulldownMenu (|Widget (main-menu effects-menu)) "Amplitude Effects"
-                                        (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))
-(define amp-cascade (|XtCreateManagedWidget "Amplitude Effects" |xmCascadeButtonWidgetClass (|Widget (main-menu effects-menu))
+(define amp-menu (|XmCreatePulldownMenu (main-menu effects-menu) "Amplitude Effects"
+                                        (list |XmNbackground (snd-pixel (basic-color)))))
+(define amp-cascade (|XtCreateManagedWidget "Amplitude Effects" |xmCascadeButtonWidgetClass (main-menu effects-menu)
                                             (list |XmNsubMenuId amp-menu
-                                                  |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+                                                  |XmNbackground (snd-pixel (basic-color)))))
 
 (|XtAddCallback amp-cascade |XmNcascadingCallback
                 (lambda (w c i)
@@ -324,9 +330,6 @@
 					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* gain-amount 100)))))))
 	      (|XtVaSetValues gain-dialog (list |XmNnoResize #t |XmNresizePolicy |XmRESIZE_NONE))
 	      ;; TODO: fix this (the no resize kludge should not be needed)
-	      ;;       but, I think what is needed here is an outer form widget holding the row-column widget
-	      ;;       that is the current "parent", and that requires re-parenting the latter, or knowing
-	      ;;       in advance that we'll want an envelope editor (i.e. before calling add-sliders)
 	      (set! sliders
 		    (add-sliders gain-dialog
 				 (list (list "gain" 0.0 initial-gain-amount 5.0
@@ -350,7 +353,7 @@
 	    (activate-dialog gain-dialog)))
 
       (let ((child (|XtCreateManagedWidget "Gain" |xmPushButtonWidgetClass amp-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! gain-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -418,7 +421,7 @@
 	(activate-dialog normalize-dialog))
 
       (let ((child (|XtCreateManagedWidget "Normalize" |xmPushButtonWidgetClass amp-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! normalize-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -547,8 +550,8 @@
               (let* ((s1 (|XmStringCreateLocalized "Omit silence"))
                      (toggle
                       (|XtCreateManagedWidget "Omit silence" |xmToggleButtonWidgetClass (|XtParent (car sliders))
-                        (list |XmNselectColor  (|Pixel (snd-pixel (pushed-button-color)))
-                              |XmNbackground   (|Pixel (snd-pixel (basic-color)))
+                        (list |XmNselectColor  (snd-pixel (pushed-button-color))
+                              |XmNbackground   (snd-pixel (basic-color))
                               |XmNvalue        omit-silence
                               ;|XmNborderWidth  1
                               |XmNlabelString  s1))))
@@ -558,7 +561,7 @@
         (activate-dialog gate-dialog))
 
       (let ((child (|XtCreateManagedWidget "Gate" |xmPushButtonWidgetClass amp-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! gate-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -581,11 +584,11 @@
 ;;;
 
 (define delay-menu-list '())
-(define delay-menu (|XmCreatePulldownMenu (|Widget (main-menu effects-menu)) "Delay Effects"
-                                        (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))
-(define delay-cascade (|XtCreateManagedWidget "Delay Effects" |xmCascadeButtonWidgetClass (|Widget (main-menu effects-menu))
+(define delay-menu (|XmCreatePulldownMenu (main-menu effects-menu) "Delay Effects"
+                                        (list |XmNbackground (snd-pixel (basic-color)))))
+(define delay-cascade (|XtCreateManagedWidget "Delay Effects" |xmCascadeButtonWidgetClass (main-menu effects-menu)
                                             (list |XmNsubMenuId delay-menu
-                                                  |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+                                                  |XmNbackground (snd-pixel (basic-color)))))
 
 (|XtAddCallback delay-cascade |XmNcascadingCallback
                 (lambda (w c i)
@@ -663,7 +666,7 @@
 	(activate-dialog echo-dialog))
 
       (let ((child (|XtCreateManagedWidget "Echo" |xmPushButtonWidgetClass delay-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! echo-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -758,7 +761,7 @@
 	(activate-dialog flecho-dialog))
 
       (let ((child (|XtCreateManagedWidget "Filtered echo" |xmPushButtonWidgetClass delay-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! flecho-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -864,7 +867,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	(activate-dialog zecho-dialog))
 
       (let ((child (|XtCreateManagedWidget "Modulated echo" |xmPushButtonWidgetClass delay-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! zecho-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -887,11 +890,11 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 ;;;
 
 (define filter-menu-list '())
-(define filter-menu (|XmCreatePulldownMenu (|Widget (main-menu effects-menu)) "Filter Effects"
-                                        (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))
-(define filter-cascade (|XtCreateManagedWidget "Filter Effects" |xmCascadeButtonWidgetClass (|Widget (main-menu effects-menu))
+(define filter-menu (|XmCreatePulldownMenu (main-menu effects-menu) "Filter Effects"
+                                        (list |XmNbackground (snd-pixel (basic-color)))))
+(define filter-cascade (|XtCreateManagedWidget "Filter Effects" |xmCascadeButtonWidgetClass (main-menu effects-menu)
                                             (list |XmNsubMenuId filter-menu
-                                                  |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+                                                  |XmNbackground (snd-pixel (basic-color)))))
 
 (|XtAddCallback filter-cascade |XmNcascadingCallback
                 (lambda (w c i)
@@ -980,7 +983,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	(activate-dialog band-pass-dialog))
 
       (let ((child (|XtCreateManagedWidget "Band-pass filter" |xmPushButtonWidgetClass filter-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! band-pass-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1061,7 +1064,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	(activate-dialog notch-dialog))
 
       (let ((child (|XtCreateManagedWidget "Band-reject filter" |xmPushButtonWidgetClass filter-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! notch-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1135,7 +1138,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	(activate-dialog high-pass-dialog))
 
       (let ((child (|XtCreateManagedWidget "High-pass filter" |xmPushButtonWidgetClass filter-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! high-pass-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1209,7 +1212,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	(activate-dialog low-pass-dialog))
 
       (let ((child (|XtCreateManagedWidget "Low-pass filter" |xmPushButtonWidgetClass filter-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! low-pass-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1289,7 +1292,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	(activate-dialog comb-dialog))
 
       (let ((child (|XtCreateManagedWidget "Comb filter" |xmPushButtonWidgetClass filter-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! comb-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1396,7 +1399,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
         (activate-dialog new-comb-chord-dialog))
 
       (let ((child (|XtCreateManagedWidget "Comb chord filter" |xmPushButtonWidgetClass filter-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! new-comb-chord-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1416,9 +1419,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
     (|XmStringFree str)))
 
 (set! filter-menu-list (cons (lambda ()
-                      (let ((new-label (format #f "Comb chord filter (~1,2F ~1,2D ~1,2F ~1,2F ~1,2F)"  
-					       new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp 
-					       new-comb-chord-interval-one new-comb-chord-interval-two)))           
+                      (let ((new-label (format #f "Comb chord filter (~1,2F ~1,2D ~1,2F ~1,2F ~1,2F)"  new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp new-comb-chord-interval-one new-comb-chord-interval-two)))           
                         (change-label new-comb-chord-menu-widget new-label)))
                     filter-menu-list))
 
@@ -1481,7 +1482,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	(activate-dialog moog-dialog))
 
       (let ((child (|XtCreateManagedWidget "Moog filter" |xmPushButtonWidgetClass filter-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! moog-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1505,11 +1506,11 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
 
 (define freq-menu-list '())
-(define freq-menu (|XmCreatePulldownMenu (|Widget (main-menu effects-menu)) "Frequency Effects"
-                                        (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))
-(define freq-cascade (|XtCreateManagedWidget "Frequency Effects" |xmCascadeButtonWidgetClass (|Widget (main-menu effects-menu))
+(define freq-menu (|XmCreatePulldownMenu (main-menu effects-menu) "Frequency Effects"
+                                        (list |XmNbackground (snd-pixel (basic-color)))))
+(define freq-cascade (|XtCreateManagedWidget "Frequency Effects" |xmCascadeButtonWidgetClass (main-menu effects-menu)
                                             (list |XmNsubMenuId freq-menu
-                                                  |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+                                                  |XmNbackground (snd-pixel (basic-color)))))
 
 (|XtAddCallback freq-cascade |XmNcascadingCallback
                 (lambda (w c i)
@@ -1586,7 +1587,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
         (activate-dialog adsat-dialog))
 
       (let ((child (|XtCreateManagedWidget "Adaptive saturation" |xmPushButtonWidgetClass freq-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! adsat-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1650,7 +1651,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
         (activate-dialog src-dialog))
 
       (let ((child (|XtCreateManagedWidget "Sample rate scaling" |xmPushButtonWidgetClass freq-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! src-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1756,7 +1757,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	(activate-dialog expsrc-dialog))
 
       (let ((child (|XtCreateManagedWidget "Time/pitch scaling" |xmPushButtonWidgetClass freq-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! expsrc-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1780,11 +1781,11 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
 
 (define mod-menu-list '())
-(define mod-menu (|XmCreatePulldownMenu (|Widget (main-menu effects-menu)) "Modulation Effects"
-					(list |XmNbackground (|Pixel (snd-pixel (basic-color))))))
-(define mod-cascade (|XtCreateManagedWidget "Modulation Effects" |xmCascadeButtonWidgetClass (|Widget (main-menu effects-menu))
+(define mod-menu (|XmCreatePulldownMenu (main-menu effects-menu) "Modulation Effects"
+					(list |XmNbackground (snd-pixel (basic-color)))))
+(define mod-cascade (|XtCreateManagedWidget "Modulation Effects" |xmCascadeButtonWidgetClass (main-menu effects-menu)
 					    (list |XmNsubMenuId mod-menu
-						  |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+						  |XmNbackground (snd-pixel (basic-color)))))
 				
 (|XtAddCallback mod-cascade |XmNcascadingCallback
 		(lambda (w c i)
@@ -1865,7 +1866,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	    (activate-dialog am-effect-dialog)))
 
       (let ((child (|XtCreateManagedWidget "Amplitude modulation" |xmPushButtonWidgetClass mod-menu
-					   (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+					   (list |XmNbackground (snd-pixel (basic-color))))))
 	(set! am-effect-menu-widget child)
 	(|XtAddCallback child |XmNactivateCallback
 			(lambda (w c i)
@@ -1961,7 +1962,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
             (activate-dialog rm-dialog)))
 
       (let ((child (|XtCreateManagedWidget "Ring modulation" |xmPushButtonWidgetClass mod-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! rm-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -1986,7 +1987,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 ;            (activate-dialog rm-dialog)))
 ;
 ;      (let ((child (|XtCreateManagedWidget "Ring modulation" |xmPushButtonWidgetClass mod-menu
-;                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+;                                           (list |XmNbackground (snd-pixel (basic-color))))))
 ;        (|XtAddCallback child |XmNactivateCallback
 ;                        (lambda (w c i)
 ;                          (post-rm-dialog)))))
@@ -1998,11 +1999,11 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 ;;;
 
 (define reverb-menu-list '())
-(define reverb-menu (|XmCreatePulldownMenu (|Widget (main-menu effects-menu)) "Reverbs"
-                                        (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))
-(define reverb-cascade (|XtCreateManagedWidget "Reverbs" |xmCascadeButtonWidgetClass (|Widget (main-menu effects-menu))
+(define reverb-menu (|XmCreatePulldownMenu (main-menu effects-menu) "Reverbs"
+                                        (list |XmNbackground (snd-pixel (basic-color)))))
+(define reverb-cascade (|XtCreateManagedWidget "Reverbs" |xmCascadeButtonWidgetClass (main-menu effects-menu)
                                             (list |XmNsubMenuId reverb-menu
-                                                  |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+                                                  |XmNbackground (snd-pixel (basic-color)))))
 
 (|XtAddCallback reverb-cascade |XmNcascadingCallback
                 (lambda (w c i)
@@ -2088,7 +2089,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	(activate-dialog reverb-dialog))
 
       (let ((child (|XtCreateManagedWidget "McNabb reverb" |xmPushButtonWidgetClass reverb-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! reverb-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -2189,7 +2190,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
         (activate-dialog jc-reverb-dialog))
 
       (let ((child (|XtCreateManagedWidget "Chowning reverb" |xmPushButtonWidgetClass reverb-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! jc-reverb-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -2281,7 +2282,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
         (activate-dialog convolve-dialog))
 
       (let ((child (|XtCreateManagedWidget "Convolution" |xmPushButtonWidgetClass reverb-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! convolve-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -2304,11 +2305,11 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 ;;;
 
 (define misc-menu-list '())
-(define misc-menu (|XmCreatePulldownMenu (|Widget (main-menu effects-menu)) "Various"
-                                        (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))
-(define misc-cascade (|XtCreateManagedWidget "Various" |xmCascadeButtonWidgetClass (|Widget (main-menu effects-menu))
+(define misc-menu (|XmCreatePulldownMenu (main-menu effects-menu) "Various"
+                                        (list |XmNbackground (snd-pixel (basic-color)))))
+(define misc-cascade (|XtCreateManagedWidget "Various" |xmCascadeButtonWidgetClass (main-menu effects-menu)
                                             (list |XmNsubMenuId misc-menu
-                                                  |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+                                                  |XmNbackground (snd-pixel (basic-color)))))
 
 (|XtAddCallback misc-cascade |XmNcascadingCallback
                 (lambda (w c i)
@@ -2360,7 +2361,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
         (activate-dialog silence-dialog))
 
       (let ((child (|XtCreateManagedWidget "Add silence" |xmPushButtonWidgetClass misc-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! silence-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -2431,7 +2432,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
         (activate-dialog contrast-dialog))
 
       (let ((child (|XtCreateManagedWidget "Contrast enhancement" |xmPushButtonWidgetClass misc-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! contrast-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -2559,14 +2560,14 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 				      |XmNrightAttachment     |XmATTACH_FORM
 				      |XmNtopAttachment       |XmATTACH_FORM
 				      |XmNbottomAttachment    |XmATTACH_FORM
-				      |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+				      |XmNbackground          (snd-pixel (basic-color)))))
 			 (lab (|XtCreateManagedWidget "FFT size" |xmLabelWidgetClass frm
 				   (list |XmNleftAttachment      |XmATTACH_FORM
 					 |XmNrightAttachment     |XmATTACH_NONE
 					 |XmNtopAttachment       |XmATTACH_FORM
 					 |XmNbottomAttachment    |XmATTACH_FORM
 					 |XmNlabelString         s1
-					 |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+					 |XmNbackground          (snd-pixel (basic-color)))))
 			 (fft-labels (map (lambda (n) (|XmStringCreateLocalized n)) (list "64" "128" "256" "512" "1024" "4096")))
 			 (combo (|XtCreateManagedWidget "fftsize" |xmComboBoxWidgetClass frm
 				   (list |XmNleftAttachment      |XmATTACH_WIDGET
@@ -2577,7 +2578,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 					 |XmNitems               fft-labels
 					 |XmNitemCount           (length fft-labels)
 					 |XmNcomboBoxType        |XmDROP_DOWN_COMBO_BOX
-					 |XmNbackground          (|Pixel (snd-pixel (basic-color)))))))
+					 |XmNbackground          (snd-pixel (basic-color))))))
 		    (set! cross-synth-default-fft-widget combo)
 		    (for-each (lambda (n) (|XmStringFree n)) fft-labels)
 		    (|XmStringFree s1)
@@ -2599,7 +2600,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 				      |XmNrightAttachment     |XmATTACH_FORM
 				      |XmNtopAttachment       |XmATTACH_FORM
 				      |XmNbottomAttachment    |XmATTACH_FORM
-				      |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+				      |XmNbackground          (snd-pixel (basic-color)))))
 			 (rc (|XtCreateManagedWidget "rc" |xmRowColumnWidgetClass frm
 				   (list |XmNorientation |XmHORIZONTAL
 					 |XmNradioBehavior #t
@@ -2610,7 +2611,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 					 |XmNrightAttachment     |XmATTACH_FORM
 					 |XmNtopAttachment       |XmATTACH_FORM
 					 |XmNbottomAttachment    |XmATTACH_NONE
-					 |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+					 |XmNbackground          (snd-pixel (basic-color)))))
 			 (lab (|XtCreateManagedWidget "FFT size" |xmLabelWidgetClass frm
 				   (list |XmNleftAttachment      |XmATTACH_FORM
 					 |XmNrightAttachment     |XmATTACH_FORM
@@ -2619,11 +2620,11 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 					 |XmNbottomAttachment    |XmATTACH_FORM
 					 |XmNlabelString         s1
 					 |XmNalignment           |XmALIGNMENT_BEGINNING
-					 |XmNbackground          (|Pixel (snd-pixel (basic-color)))))))
+					 |XmNbackground          (snd-pixel (basic-color))))))
 		    (for-each 
 		     (lambda (size)
 		       (let ((button (|XtCreateManagedWidget (format #f "~D" size) |xmToggleButtonWidgetClass rc
-				        (list |XmNbackground           (|Pixel (snd-pixel (basic-color)))
+				        (list |XmNbackground           (snd-pixel (basic-color))
 					      |XmNvalueChangedCallback (list (lambda (w c i) (if (|set i) (set! cross-synth-fft-size c))) size)
 					      |XmNset                  (= size cross-synth-fft-size)))))
 			 (if (= size cross-synth-fft-size)
@@ -2636,7 +2637,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
         (activate-dialog cross-synth-dialog))
 
       (let ((child (|XtCreateManagedWidget "Cross synthesis" |xmPushButtonWidgetClass misc-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! cross-synth-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -2650,8 +2651,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     (|XmStringFree str)))
 
 (set! misc-menu-list (cons (lambda ()
-                           (let ((new-label (format #f "Cross synthesis (~1,2D ~1,2F ~1,2D ~1,2F)" 
-						    cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
+                           (let ((new-label (format #f "Cross synthesis (~1,2D ~1,2F ~1,2D ~1,2F)" cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
                         (change-label cross-synth-menu-widget new-label)))
                     misc-menu-list))
 
@@ -2722,7 +2722,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
         (activate-dialog flange-dialog))
 
       (let ((child (|XtCreateManagedWidget "Flange" |xmPushButtonWidgetClass misc-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! flange-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -2782,7 +2782,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
         (activate-dialog random-phase-dialog))
 
       (let ((child (|XtCreateManagedWidget "Randomize phase" |xmPushButtonWidgetClass misc-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! random-phase-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -2889,7 +2889,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
         (activate-dialog robotize-dialog))
 
       (let ((child (|XtCreateManagedWidget "Robotize" |xmPushButtonWidgetClass misc-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! robotize-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -2950,7 +2950,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
         (activate-dialog rubber-dialog))
 
       (let ((child (|XtCreateManagedWidget "Rubber sound" |xmPushButtonWidgetClass misc-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! rubber-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
@@ -3057,7 +3057,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
         (activate-dialog wobble-dialog))
 
       (let ((child (|XtCreateManagedWidget "Wobble" |xmPushButtonWidgetClass misc-menu
-                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+                                           (list |XmNbackground (snd-pixel (basic-color))))))
         (set! wobble-menu-widget child)
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)

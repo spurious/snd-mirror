@@ -1577,7 +1577,7 @@ As a very simple example, here's dialog window with a slider:</p>
 						 (set! current-scaler (/ (|value info) 100.0)))))))
   (|XtManageChild scale-dialog))
 
-(create-scale-dialog (|Widget (cadr (main-widgets))))
+(create-scale-dialog (cadr (main-widgets)))
 </pre>
 <p>All of Snd is at your disposal once this module is loaded.  As a more interesting example,
 the next function installs our own file filtering procedure into the File:Open dialog (it uses
@@ -1593,7 +1593,7 @@ match-sound-files from extensions.scm):
     (|XmStringTableParseStringArray strs (length strs) #f |XmCHARSET_TEXT #f 0 #f))
   (|XtSetValues (let ((m (open-file-dialog #f)))
                          ; make sure the dialog exists
-		  (|Widget (list-ref (dialog-widgets) 6)))
+		  (list-ref (dialog-widgets) 6))
 		(list |XmNfileSearchProc                             ; set dialog file search procedure
 		       (lambda (widget info)
 			 (let* ((dir (XmString-&gt;string (|dir info))) ; directory string
@@ -1619,9 +1619,6 @@ There are a few special Snd functions to support this module:
   snd-gcs -- returns list of Snd graphics contexts
   all the widget-list functions
 </pre>
-<p>and functions on the xm side to "cast" these to its way of viewing objects:
-|Pixel, |Widget, |GC. 
-</p>
 <br>
 
 <span class=bbox><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></span>

@@ -2074,7 +2074,7 @@ is up to the caller-supplied procedure.
 </p>
 <pre>
 (make-sound-box "sounds"
-		(|Widget (list-ref (main-widgets) 3))
+		(list-ref (main-widgets) 3)
 		(lambda (file) (snd-print file))
 		peak-env-info-filename ; this points to ~/peaks in my case
 		(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")

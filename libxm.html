@@ -91,23 +91,17 @@ get the Display variable).  In Snd, the g_main_widgets procedure
 passes back a list:
 </p>
 <pre>
-  return(XEN_CONS(XEN_WRAP_C_POINTER(MAIN_APP(ss)),
-	   XEN_CONS(XEN_WRAP_C_POINTER(MAIN_SHELL(ss)),
-             XEN_CONS(XEN_WRAP_C_POINTER(MAIN_PANE(ss)),...))));
+  return(XEN_CONS(XEN_WRAP_APPCONTEXT(MAIN_APP(ss)),
+	   XEN_CONS(XEN_WRAP_WIDGET(MAIN_SHELL(ss)),
+             XEN_CONS(XEN_WRAP_WIDGET(MAIN_PANE(ss)),...))));
 </pre>
 <p>The XEN entities are from the xen package that provides
 a wrapper for Guile-specific (or Ruby-specific) functions
-and macros.  Once exported, we import them into the libxm
-world via the C-style casting procedures |Widget and
-|XtAppContext:
+and macros. 
 </p>
 <pre>
-  (set! app (|XtAppContext (car (main-widgets))))
+  (set! app (car (main-widgets)))
 </pre>
-<p>And now "app" can be used wherever a libxm procedure
-expects to get an XtAppContext argument.  There are several
-other "casters": |Pixel, etc. See snd-motif.scm and friends.
-</p>
 
 </body>
 </html>
