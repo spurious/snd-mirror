@@ -299,6 +299,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Jul:  record->raw file segfault bugfix (thanks to Russell Aspinwall).\n\
 1-July:  added optional 'nth' arg to find-sound.\n\
          added optional begin time to make-track-sample-reader, play-track, and play-mix.\n\
 30-Jun:  snd 6.10.\n\
@@ -311,8 +312,6 @@ void news_help(snd_state *ss)
          mix.scm name changes (see snd6.scm for old forms).\n\
          with-mix (ws.scm).\n\
 12-Jun:  bess1.scm and bess1.rb from Michael Scholz.\n\
-10-Jun:  added initial-length arg to new-sound.\n\
-2-June:  debug.scm and with-sound debugger in ws.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

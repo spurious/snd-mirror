@@ -1528,6 +1528,8 @@ If there is more than one function on the hook list, functions after the first g
 on-going list result (if any) as the <i>current-choices</i> argument (the empty list is the default).
 <br><br><code>(add-hook! open-raw-sound-hook (lambda (file choices) (list 1 44100 mus-lshort)))</code><br><br>
 Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
+The raw header defaults are stereo, 44100 Hz, big endian short data; these values can be changed in the
+Raw File Dialog.
 </td></tr>
 <tr><td colspan=3></td></tr>
 

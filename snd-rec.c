@@ -309,7 +309,7 @@ void init_recorder(void)
   rp->autoload = DEFAULT_RECORDER_AUTOLOAD;
   rp->buffer_size = DEFAULT_RECORDER_BUFFER_SIZE;
   rp->out_chans = DEFAULT_RECORDER_OUT_CHANS;
-  rp->out_format = DEFAULT_RECORDER_OUT_FORMAT;
+  rp->output_data_format = DEFAULT_RECORDER_OUT_FORMAT;
   rp->in_format = DEFAULT_RECORDER_IN_FORMAT;
   rp->srate = DEFAULT_RECORDER_SRATE;
   rp->trigger = DEFAULT_RECORDER_TRIGGER;
@@ -371,7 +371,7 @@ void save_recorder_state(FILE *fd)
   if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd, "(set! (%s) %s)\n", S_recorder_autoload, b2s(rp->autoload));
   if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "(set! (%s) %d)\n", S_recorder_buffer_size, rp->buffer_size);
   if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "(set! (%s) %d)\n", S_recorder_out_chans, rp->out_chans);
-  if (rp->out_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_out_format, rp->out_format);
+  if (rp->output_data_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_out_format, rp->output_data_format);
   if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_format, rp->in_format);
   if (rp->in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_device, rp->in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "(set! (%s) %d)\n", S_recorder_srate, rp->srate);
@@ -383,7 +383,7 @@ void save_recorder_state(FILE *fd)
   if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd, "set_%s %s\n", S_recorder_autoload, b2s(rp->autoload));
   if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "set_%s %d\n", S_recorder_buffer_size, rp->buffer_size);
   if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "set_%s %d\n", S_recorder_out_chans, rp->out_chans);
-  if (rp->out_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd, "set_%s %d\n", S_recorder_out_format, rp->out_format);
+  if (rp->output_data_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd, "set_%s %d\n", S_recorder_out_format, rp->output_data_format);
   if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd, "set_%s %d\n", S_recorder_in_format, rp->in_format);
   if (rp->in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "set_%s %d\n", S_recorder_in_device, rp->in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "set_%s %d\n", S_recorder_srate, rp->srate);
@@ -781,7 +781,7 @@ void fire_up_recorder(snd_state *ss)
 
       /*
        * if (full_duplex(0))
-       *   rp->monitor_port = mus_audio_open_output(MUS_AUDIO_DUPLEX_DEFAULT, rp->srate, rp->monitor_chans, rp->out_format, rp->buffer_size);
+       *   rp->monitor_port = mus_audio_open_output(MUS_AUDIO_DUPLEX_DEFAULT, rp->srate, rp->monitor_chans, rp->output_data_format, rp->buffer_size);
        */
 
       if (rp->monitor_port == -1)
@@ -959,14 +959,14 @@ void fire_up_recorder(snd_state *ss)
 
   /*
    * if (full_duplex(0))
-   *   rp->monitor_port = mus_audio_open_output(MUS_AUDIO_DUPLEX_DEFAULT, rp->srate, rp->monitor_chans, rp->out_format, rp->buffer_size);
+   *   rp->monitor_port = mus_audio_open_output(MUS_AUDIO_DUPLEX_DEFAULT, rp->srate, rp->monitor_chans, rp->output_data_format, rp->buffer_size);
    */
 
 #else
   rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
 					   rp->srate,
 					   rp->monitor_chans,
-					   rp->out_format,
+					   rp->output_data_format,
 					   rp->buffer_size);
 #endif
   if (rp->monitor_port == -1)
@@ -1098,7 +1098,7 @@ static Cessate read_adc(snd_state *ss)
   if (rp->systems == 1)
     {
       active_in_chans = rp->input_channels[0];
-      buffer_size = rp->input_buffer_sizes[0]*rp->input_channels[0];
+      buffer_size = rp->input_buffer_sizes[0] * rp->input_channels[0];
       if (ochns > active_in_chans) buffer_size /= ochns;
       if (rp->system_input_buffer_size < buffer_size)
 	{
@@ -1198,7 +1198,7 @@ static Cessate read_adc(snd_state *ss)
     }
   if ((rp->monitoring) && (rp->output_bufs) && (ochns <= rp->monitor_chans))
     {
-      /* opened in rp->out_format and rp->monitor_chans */
+      /* opened in rp->output_data_format and rp->monitor_chans */
       mus_file_write_buffer(rp->monitor_data_format, 0, out_frame - 1, rp->monitor_chans, rp->output_bufs, rp->monitor_buf, data_clipped(ss));
       mus_audio_write(rp->monitor_port, 
 		      rp->monitor_buf, 
@@ -1322,11 +1322,11 @@ static Cessate read_adc(snd_state *ss)
       (rp->output_bufs) && 
       (ochns == rp->monitor_chans))
     {
-      /* opened in rp->out_format and rp->monitor_chans */
-      mus_file_write_buffer(rp->out_format, 0, out_frame - 1, rp->monitor_chans, rp->output_bufs, rp->raw_input_bufs[0], data_clipped(ss));
+      /* opened in rp->output_data_format and rp->monitor_chans */
+      mus_file_write_buffer(rp->output_data_format, 0, out_frame - 1, rp->monitor_chans, rp->output_bufs, rp->raw_input_bufs[0], data_clipped(ss));
       mus_audio_write(rp->monitor_port, 
 		      rp->raw_input_bufs[0], 
-		      out_frame * rp->monitor_chans * mus_bytes_per_sample(rp->out_format));
+		      out_frame * rp->monitor_chans * mus_bytes_per_sample(rp->output_data_format));
     }
   if ((rp->recording) && (rp->triggered))
     {
@@ -1349,7 +1349,7 @@ int recorder_start_output_file(snd_state *ss, char *comment)
   comlen = (int)(snd_strlen(comment) + 3) / 4;
   comlen *= 4;
   err = snd_write_header(ss, rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 28 + comlen, 0,
-			 rp->out_format, comment, snd_strlen(comment), NULL);
+			 rp->output_data_format, comment, snd_strlen(comment), NULL);
   if (err == -1)
     {
       msg = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -1360,15 +1360,14 @@ int recorder_start_output_file(snd_state *ss, char *comment)
       rp->triggered = (!rp->triggering);
       return(TRUE);
     }
-
   unsensitize_control_buttons();
 
   rp->output_file_descriptor = snd_reopen_write(ss, rp->output_file);
-  mus_header_read_with_fd(rp->output_file_descriptor);
+  if (rp->output_header_type != MUS_RAW) mus_header_read_with_fd(rp->output_file_descriptor);
   mus_file_open_descriptors(rp->output_file_descriptor, 
 			    rp->output_file,
-			    rp->out_format, 
-			    mus_bytes_per_sample(rp->out_format), 
+			    rp->output_data_format, 
+			    mus_bytes_per_sample(rp->output_data_format), 
 			    mus_header_data_location(),
 			    rp->out_chans, 
 			    rp->output_header_type);
@@ -1531,13 +1530,13 @@ static XEN g_set_recorder_out_chans(XEN val)
   return(C_TO_XEN_INT(rp->out_chans));
 }
 
-static XEN g_recorder_out_format(void) {return(C_TO_XEN_INT(rp->out_format));}
+static XEN g_recorder_out_format(void) {return(C_TO_XEN_INT(rp->output_data_format));}
 static XEN g_set_recorder_out_format(XEN val) 
 {
   #define H_recorder_out_format "(" S_recorder_out_format "): default recorder output data format (16-bit linear usually)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_format, "an integer"); 
-  rp->out_format = XEN_TO_C_INT(val);
-  return(C_TO_XEN_INT(rp->out_format));
+  rp->output_data_format = XEN_TO_C_INT(val);
+  return(C_TO_XEN_INT(rp->output_data_format));
 }
 
 static XEN g_recorder_srate(void) {return(C_TO_XEN_INT(rp->srate));}

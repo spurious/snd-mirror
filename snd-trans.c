@@ -580,7 +580,6 @@ static unsigned short log2s[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 20
 
 static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 {
-  /* assume all relevant header stuff is ready via c_read_header */
   int fs = -1, fd = -1, err = MUS_NO_ERROR, totalin, happy, chans, srate, outp, i = 0, k, num, bits = 0, out, els = 0;
   int isp, osp;
   unsigned short *ptr = NULL, *stop, *start, *kptr;

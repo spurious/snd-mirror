@@ -776,7 +776,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	      if (!rp->monitoring)
 		{
 		  rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
-							   rp->srate, rp->monitor_chans, rp->out_format, rp->buffer_size);
+							   rp->srate, rp->monitor_chans, rp->output_data_format, rp->buffer_size);
 		  if (rp->monitor_port == -1)
 		    {
 		      record_report(messages, _("open output"), NULL);
@@ -880,7 +880,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(left_form), ff_sep3, FALSE, FALSE, 8);
   gtk_widget_show(ff_sep3);
 
-  recdat = make_file_data_panel(ss, left_form, "data-form", TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE, FALSE);
+  recdat = make_file_data_panel(ss, left_form, "data-form", TRUE, rp->output_header_type, rp->output_data_format, FALSE, TRUE, FALSE);
   g_signal_connect_closure_by_id(GTK_OBJECT(recdat->srate_text), 
 				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(recdat->srate_text))),
 				 0,
@@ -1839,7 +1839,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   rp->output_file_descriptor = mus_file_reopen_write(rp->output_file);
   mus_header_update_with_fd(rp->output_file_descriptor,
 			    rp->output_header_type,
-			    rp->total_output_frames * rp->out_chans * mus_bytes_per_sample(rp->out_format)); 
+			    rp->total_output_frames * rp->out_chans * mus_bytes_per_sample(rp->output_data_format)); 
   CLOSE(rp->output_file_descriptor);
   rp->output_file_descriptor = -1;
   duration = (Float)((double)(rp->total_output_frames) / (Float)(rp->srate));
@@ -1848,7 +1848,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s"),
 	       rp->output_file, duration, rp->srate, rp->out_chans,
 	       mus_header_type_name(rp->output_header_type), 
-	       mus_data_format_name(rp->out_format));
+	       mus_data_format_name(rp->output_data_format));
   record_report(messages, str, NULL);
   FREE(str);
   if (rp->autoload)
@@ -1884,7 +1884,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	  str = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
 	  if (str) FREE(str);
 	  str = NULL;
-	  rp->out_format = ofmt;
+	  rp->output_data_format = ofmt;
 	  rp->out_chans = ochns;
 	  if (rs != old_srate) 
 	    {

@@ -2476,7 +2476,17 @@
 	       (if (not (eq? (car tag) 'mus-error))
 		   (snd-display ";open-sound ~A: ~A" file tag))))
 	   (list "trunc.snd" "trunc.aiff" "trunc.wav" "trunc.sf" "trunc.voc" "trunc.nist" "bad.wav" 
-		 "empty.snd" "trunc1.aiff" "badform.aiff"))
+		 "trunc1.aiff" "badform.aiff"))
+	  (add-hook! open-raw-sound-hook (lambda (file choice) (list 1 22050 mus-bshort)))
+	  (let ((ind (open-sound (string-append sf-dir "empty.snd"))))
+	    (if (or (not (= (data-format ind) mus-bshort))
+		    (not (= (chans ind) 1))
+		    (not (= (srate ind) 22050))
+		    (not (= (data-location ind) 0))
+		    (not (= (frames ind) 0)))
+		(snd-display ";open raw: ~A ~A ~A ~A ~A" (data-format ind) (chans ind) (srate ind) (data-location ind) (frames ind)))
+	    (reset-hook! open-raw-sound-hook)
+	    (close-sound ind))
 	  
 	  (let ((vals (make-vector 32)))
 	    (for-each 
@@ -16174,8 +16184,10 @@ EDITS: 5
 	  (if (not (= (length (sounds)) 0)) (snd-display ";active-sounds: ~A ~A?" (sounds) (map short-file-name (sounds))))
 	  (let* ((name (string-append sf-dir (list-ref sf-dir-files 0)))
 		 (index (view-sound name)))
-	    (if (not (string=? name (file-name index))) (snd-display ";file-name: ~A?" (file-name index)))
-	    (close-sound index))
+	    (if index
+		(begin
+		  (if (not (string=? name (file-name index))) (snd-display ";file-name: ~A?" (file-name index)))
+		  (close-sound index))))
 	  (let ((fd (open-raw-sound (string-append sf-dir "addf8.nh") 1 8012 mus-mulaw)))
 	    (if (not (= (data-format fd) mus-mulaw)) (snd-display ";open-raw-sound: ~A?" (mus-data-format-name (data-format fd))))
 	    (close-sound fd))
@@ -28948,7 +28960,7 @@ EDITS: 2
       
       (with-sound (:srate 22050) (fm-violin 0 .1 440 .1))
       (let ((ind (find-sound "test.snd")))
-	(if (not ind) (snd-display ";with-sound: ~A" (sounds)))
+	(if (not ind) (snd-display ";with-sound: ~A" (map file-name (sounds))))
 	(let ((mx (maxamp)))
 	  (if (fneq mx .1) (snd-display ";with-sound max: ~A" (maxamp)))
 	  (if (not (= (srate ind) 22050)) (snd-display ";with-sound srate: ~A (~A, ~A)" 
@@ -28957,7 +28969,7 @@ EDITS: 2
       
       (with-sound (:continue-old-file #t) (fm-violin .2 .1 440 .25))
       (let ((ind (find-sound "test.snd")))
-	(if (not ind) (snd-display ";with-sound continued: ~A" (sounds)))
+	(if (not ind) (snd-display ";with-sound continued: ~A" (map file-name (sounds))))
 	(if (not (= (length (sounds)) 1)) (snd-display ";with-sound continued: ~{~A ~}" (map short-file-name (sounds))))
 	(let ((mx (maxamp)))
 	  (if (fneq mx .25) (snd-display ";with-sound continued max: ~A" (maxamp)))
@@ -28975,7 +28987,7 @@ EDITS: 2
       
       (with-sound (:srate 22050 :channels 2 :output "test1.snd") (fm-violin 0 .1 440 .1 :degree 45.0))
       (let ((ind (find-sound "test1.snd")))
-	(if (not ind) (snd-display ";with-sound (1): ~A" (sounds)))
+	(if (not ind) (snd-display ";with-sound (1): ~A" (map file-name (sounds))))
 	(let ((mx (maxamp)))
 	  (if (fneq mx .05) (snd-display ";with-sound max (1): ~A" (maxamp)))
 	  (if (not (= (srate ind) 22050)) (snd-display ";with-sound srate (1): ~A (~A, ~A)" 
@@ -28987,20 +28999,20 @@ EDITS: 2
       
       (with-sound (:srate 22050 :channels 2 :output "test1.snd" :reverb jc-reverb) (fm-violin 0 .1 440 .1 :degree 45.0))
       (let ((ind (find-sound "test1.snd")))
-	(if (not ind) (snd-display ";with-sound (2): ~A" (sounds)))
+	(if (not ind) (snd-display ";with-sound (2): ~A" (map file-name (sounds))))
 	(if (not (= (frames ind) (+ 22050 2205))) (snd-display ";with-sound reverbed frames (2): ~A" (frames ind)))
 	(close-sound ind))
       
       (with-sound (:srate 22050 :output "test1.snd" :reverb jc-reverb) (fm-violin 0 .1 440 .1))
       (let ((ind (find-sound "test1.snd")))
-	(if (not ind) (snd-display ";with-sound (3): ~A" (sounds)))
+	(if (not ind) (snd-display ";with-sound (3): ~A" (map file-name (sounds))))
 	(if (not (= (frames ind) (+ 22050 2205))) (snd-display ";with-sound reverbed frames (3): ~A" (frames ind)))
 	(close-sound ind)
 	(delete-file "test1.snd"))
       
       (with-sound (:srate 22050 :comment "Snd+Run!" :scaled-to .5) (fm-violin 0 .1 440 .1))
       (let ((ind (find-sound "test.snd")))
-	(if (not ind) (snd-display ";with-sound: ~A" (sounds)))
+	(if (not ind) (snd-display ";with-sound: ~A" (map file-name (sounds))))
 	(let ((mx (maxamp)))
 	  (if (fneq mx .5) (snd-display ";with-sound scaled-to: ~A" (maxamp)))
 	  (if (not (string=? (comment ind) "Snd+Run!")) (snd-display ";with-sound comment: ~A (~A)" (comment ind) (mus-sound-comment "test.snd"))))
@@ -29008,11 +29020,20 @@ EDITS: 2
       
       (with-sound (:srate 22050 :scaled-by .5 :header-type mus-aifc :data-format mus-bfloat) (fm-violin 0 .1 440 .1))
       (let ((ind (find-sound "test.snd")))
-	(if (not ind) (snd-display ";with-sound: ~A" (sounds)))
+	(if (not ind) (snd-display ";with-sound: ~A" (map file-name (sounds))))
 	(let ((mx (maxamp)))
 	  (if (fneq mx .05) (snd-display ";with-sound scaled-by: ~A" (maxamp)))
 	  (if (not (= (header-type ind) mus-aifc)) (snd-display ";with-sound type: ~A (~A)" (header-type ind) (mus-header-type-name (header-type ind))))
 	  (if (not (= (data-format ind) mus-bfloat)) (snd-display ";with-sound format: ~A (~A)" (data-format ind) (mus-data-format-name (data-format ind)))))
+	(close-sound ind))
+
+      (add-hook! open-raw-sound-hook (lambda (file choice) (list 1 22050 mus-bshort)))      
+      (with-sound (:header-type mus-raw) (fm-violin 0 1 440 .1))
+      (reset-hook! open-raw-sound-hook)
+      (let ((ind (find-sound "test.snd")))
+	(if (not ind) (snd-display ";with-sound (raw out): ~A" (map file-name (sounds))))
+	(if (not (= (header-type ind) mus-raw)) (snd-display ";with-sound type raw: ~A (~A)" (header-type ind) (mus-header-type-name (header-type ind))))
+	(if (not (= (data-format ind) mus-bshort)) (snd-display ";with-sound format raw: ~A (~A)" (data-format ind) (mus-data-format-name (data-format ind))))
 	(close-sound ind))
       
       (with-sound (:srate 44100 :statistics #t) (ws-sine 1000))
@@ -31174,9 +31195,9 @@ EDITS: 2
 		    (widget-string text-widget "new-env")
 		    (click-button save-button) (force-event)
 		    (if (not (defined? 'new-env))
-			(snd-display ";save new-env failed?"))
-		    (if (not (ffeql new-env (list 0.0 0.0 0.5 1.0 1.0 0.0)))
-			(snd-display ";saved new-env: ~A?" new-env))
+			(snd-display ";save new-env failed?")
+			(if (not (ffeql new-env (list 0.0 0.0 0.5 1.0 1.0 0.0)))
+			    (snd-display ";saved new-env: ~A?" new-env)))
 		    (click-event ewid 1 0 (enved-x 0.5) (enved-y 1.0)) (force-event)
 		    (let ((active-env (enved-active-env)))
 		      (if (not (ffeql active-env (list 0.0 0.0 1.0 0.0)))

@@ -4428,8 +4428,15 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
 		     (filename) ? filename : "read header failed",
 		     (errno) ? strerror(errno) : "bytes read < 0?"));
   if (bytes == 0) 
-    return(mus_error(MUS_HEADER_READ_FAILED,	"%s%sattempt to read header of empty file",
-		     (filename) ? filename : "", (filename) ? ": " : ""));
+    {
+      header_type = MUS_RAW;
+      srate = header_raw_srate;
+      chans = header_raw_chans;
+      data_format = header_raw_format;
+      data_location = 0;
+      true_file_length = 0;
+      return(MUS_NO_ERROR);
+    }
   if (bytes < 4) 
     {
       header_type = MUS_RAW;

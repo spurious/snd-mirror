@@ -2551,7 +2551,8 @@ static XEN g_mix_file_dialog(XEN managed)
 static XEN g_previous_files_sort(void) {return(C_TO_XEN_INT(previous_files_sort(get_global_state())));}
 static XEN g_set_previous_files_sort(XEN val) 
 {
-  #define H_previous_files_sort "(" S_previous_files_sort "): sort choice in view files (0 = unsorted, 1 = by name, etc)"
+  #define H_previous_files_sort "(" S_previous_files_sort "): sort choice in view files (0 = unsorted, 1 = by name, \
+2 = by write date, 3 = by size, 4 = by directory order, 5 = by previous-files-sort-procedure."
   snd_state *ss;
   int choice;
   ss = get_global_state();

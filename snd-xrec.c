@@ -1149,7 +1149,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	      if (!rp->monitoring)
 		{
 		  rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
-							   rp->srate, rp->monitor_chans, rp->out_format, rp->buffer_size);
+							   rp->srate, rp->monitor_chans, rp->output_data_format, rp->buffer_size);
 		  if (rp->monitor_port == -1)
 		    {
 		      record_report(messages, _("open output"), NULL);
@@ -1291,7 +1291,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  recdat = make_file_data_panel(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE, FALSE);
+  recdat = make_file_data_panel(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->output_data_format, FALSE, TRUE, FALSE);
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, (void *)ss); /* this is a no-op -- textfield widget is not activatable */
 #if SGI
@@ -2836,7 +2836,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
 	      strerror(errno));
   mus_header_update_with_fd(rp->output_file_descriptor,
 			    rp->output_header_type,
-			    rp->total_output_frames * rp->out_chans * mus_bytes_per_sample(rp->out_format));
+			    rp->total_output_frames * rp->out_chans * mus_bytes_per_sample(rp->output_data_format));
   snd_close(rp->output_file_descriptor, rp->output_file);
   rp->output_file_descriptor = -1;
   duration = (Float)((double)(rp->total_output_frames) / (Float)(rp->srate));
@@ -2846,7 +2846,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s"),
 	       rp->output_file, duration, rp->srate, rp->out_chans,
 	       mus_header_type_name(rp->output_header_type), 
-	       mus_data_format_name(rp->out_format));
+	       mus_data_format_name(rp->output_data_format));
   record_report(messages, str, NULL);
   FREE(str);
   if (rp->autoload)
@@ -2884,7 +2884,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	  str = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
 	  if (str) FREE(str);
 	  str = NULL;
-	  rp->out_format = ofmt;
+	  rp->output_data_format = ofmt;
 	  rp->out_chans = ochns;
 	  if (rs != old_srate) 
 	    {
