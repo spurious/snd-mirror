@@ -1303,6 +1303,7 @@ static int remove_option(int which_menu, char *label)
 int g_add_to_main_menu(char *label, int slot)
 {
   GtkWidget *m, *mc;
+  if (new_menu >= MAX_MAIN_MENUS) return(INVALID_MENU);
   m = gtk_menu_item_new_with_label(label);
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[menu_menu]), m);
   gtk_widget_show(m);
@@ -1319,12 +1320,8 @@ int g_add_to_main_menu(char *label, int slot)
   mc = gtk_menu_new();
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(m), mc);
   new_menu++;
-  if (new_menu < MAX_MAIN_MENUS)
-    {
-      added_menus[new_menu] = mc;
-      return(new_menu);
-    }
-  else return(INVALID_MENU);
+  added_menus[new_menu] = mc;
+  return(new_menu);
 }
 
 GtkWidget *get_help_menu_widget(void)
@@ -1346,7 +1343,7 @@ GtkWidget *g_add_to_menu(int which_menu, char *label, int callb, int position)
     default: 
       if (which_menu < MAX_MAIN_MENUS)
 	menw = added_menus[which_menu]; 
-      else return(INVALID_MENU);
+      else return(NULL);
       break;
     }
    if (label)

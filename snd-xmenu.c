@@ -820,7 +820,7 @@ Widget g_add_to_menu(int which_menu, char *label, int callb, int position)
   int n = 0;
   unsigned int i;
   menw = menu_widget(which_menu);
-  if (menw == NULL) return(INVALID_MENU);
+  if (menw == NULL) return(NULL);
   if (label)
     {
       /* look for currently unused widget first */

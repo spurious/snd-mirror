@@ -1,12 +1,8 @@
 /* CLM (music V) implementation as a C module */
 /*
- *   the leftovers now are: xcoeffs, ycoeffs, x1,x2,y1,y2
  *   to make global (gen-relative) method change, need way to set gen's class fields
  *   to make gen-local method change, need to copy class, reassign core, set desired field
  *   or add-to-existing would need access to current
- */
-
-/* readin_interp?
  */
 
 #if defined(HAVE_CONFIG_H)

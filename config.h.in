@@ -129,6 +129,8 @@
 #undef USE_NO_GUI
 #undef HAVE_MOTIF
 #undef HAVE_XmToolTipGetLabel
+#undef HAVE_XmCreateMultiList
+#undef HAVE_XmCreateDataField
 #undef HAVE_XmCreateButtonBox
 #undef HAVE_XmCreateDropDown
 #undef HAVE_XmCreateColumn

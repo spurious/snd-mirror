@@ -555,7 +555,15 @@ void snd_doit(int argc, char **argv)
 
   if (mus_file_probe("Snd.gtkrc"))
     gtk_rc_parse("Snd.gtkrc");
-  else gtk_rc_parse_string("\n\
+  else
+    {
+      char *str = NULL;
+      str = mus_expand_filename("~/Snd.gtkrc");
+      if (mus_file_probe(str))
+	gtk_rc_parse(str);
+      else 
+	{
+	  gtk_rc_parse_string("\n\
 \n\
 # This is the same as Snd.gtkrc\n\
 style \"default\"\n\
@@ -697,6 +705,9 @@ style \"reset\" = \"default_button\"\n\
 \n\
 widget \"*.reset_button\" style \"reset\"\n\
 ");
+        }
+      if (str) FREE(str);
+    }
 
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
 

@@ -478,6 +478,32 @@ else
           fi
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
+          AC_MSG_CHECKING(for XmMultiList)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>
+                 #include <Xm/MultiList.h>],
+		[ Widget w;
+                  w = XmCreateMultiList(NULL, "multilist", NULL, 0)
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmCreateMultiList)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
+          AC_MSG_CHECKING(for XmDataField)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>
+                 #include <Xm/DataF.h>],
+		[ Widget w;
+                  w = XmCreateDataField(NULL, "data-field", NULL, 0)
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmCreateDataField)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
           AC_MSG_CHECKING(for XmButtonBox)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(

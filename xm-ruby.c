@@ -1174,6 +1174,24 @@
   XEN_NARGIFY_1(gxm_XmIsButtonBox_w, gxm_XmIsButtonBox)
   XEN_ARGIFY_4(gxm_XmCreateButtonBox_w, gxm_XmCreateButtonBox)
 #endif
+#if HAVE_XmCreateDataField
+  XEN_NARGIFY_1(gxm_XmIsDataField_w, gxm_XmIsDataField)
+  XEN_ARGIFY_4(gxm_XmCreateDataField_w, gxm_XmCreateDataField)
+  XEN_NARGIFY_2(gxm_XmDataFieldSetString_w, gxm_XmDataFieldSetString)
+  XEN_NARGIFY_1(gxm_XmDataFieldGetString_w, gxm_XmDataFieldGetString)
+  XEN_NARGIFY_4(gxm_XmDataFieldSetHighlight_w, gxm_XmDataFieldSetHighlight)
+  XEN_NARGIFY_2(gxm_XmDataFieldSetAddMode_w, gxm_XmDataFieldSetAddMode)
+  XEN_NARGIFY_1(gxm_XmDataFieldGetSelection_w, gxm_XmDataFieldGetSelection)
+  XEN_NARGIFY_4(gxm_XmDataFieldSetSelection_w, gxm_XmDataFieldSetSelection)
+  XEN_NARGIFY_1(gxm_XmDataFieldGetSelectionPosition_w, gxm_XmDataFieldGetSelectionPosition)
+  XEN_NARGIFY_3(gxm_XmDataFieldXYToPos_w, gxm_XmDataFieldXYToPos)
+  XEN_NARGIFY_2(gxm_XmDataFieldShowPosition_w, gxm_XmDataFieldShowPosition)
+  XEN_NARGIFY_2(gxm_XmDataFieldCut_w, gxm_XmDataFieldCut)
+  XEN_NARGIFY_2(gxm_XmDataFieldCopy_w, gxm_XmDataFieldCopy)
+  XEN_NARGIFY_1(gxm_XmDataFieldPaste_w, gxm_XmDataFieldPaste)
+  XEN_NARGIFY_2(gxm_XmDataFieldSetEditable_w, gxm_XmDataFieldSetEditable)
+  XEN_NARGIFY_2(gxm_XmDataFieldSetInsertionPosition_w, gxm_XmDataFieldSetInsertionPosition)
+#endif
 #if HAVE_XmCreateColumn
   XEN_NARGIFY_1(gxm_XmIsColumn_w, gxm_XmIsColumn)
   XEN_NARGIFY_1(gxm_XmColumnGetChildLabel_w, gxm_XmColumnGetChildLabel)
@@ -2491,6 +2509,24 @@ static void define_procedures(void)
 #if HAVE_XmCreateButtonBox
   XM_DEFINE_PROCEDURE(XmIsButtonBox, gxm_XmIsButtonBox_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmCreateButtonBox, gxm_XmCreateButtonBox_w, 3, 1, 0, H_XmCreateButtonBox);
+#endif
+#if HAVE_XmCreateDataField
+  XM_DEFINE_PROCEDURE(XmIsDataField, gxm_XmIsDataField_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmCreateDataField, gxm_XmCreateDataField_w, 3, 1, 0, H_XmCreateDataField);
+  XM_DEFINE_PROCEDURE(XmDataFieldSetString, gxm_XmDataFieldSetString_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldGetString, gxm_XmDataFieldGetString_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldSetHighlight, gxm_XmDataFieldSetHighlight_w, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldSetAddMode, gxm_XmDataFieldSetAddMode_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldGetSelection, gxm_XmDataFieldGetSelection_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldSetSelection, gxm_XmDataFieldSetSelection_w, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldGetSelectionPosition, gxm_XmDataFieldGetSelectionPosition_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldXYToPos, gxm_XmDataFieldXYToPos_w, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldShowPosition, gxm_XmDataFieldShowPosition_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldCut, gxm_XmDataFieldCut_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldCopy, gxm_XmDataFieldCopy_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldPaste, gxm_XmDataFieldPaste_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldSetEditable, gxm_XmDataFieldSetEditable_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataFieldSetInsertionPosition, gxm_XmDataFieldSetInsertionPosition_w, 2, 0, 0, NULL);
 #endif
 #if HAVE_XmCreateColumn
   XM_DEFINE_PROCEDURE(XmIsColumn, gxm_XmIsColumn_w, 1, 0, 0, NULL);
