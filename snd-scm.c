@@ -643,14 +643,18 @@ static SCM g_snd_print(SCM msg)
 {
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   char *str=NULL;
-  SCM_ASSERT(gh_string_p(msg) || gh_char_p(msg),msg,SCM_ARG1,S_snd_print);
+  /* SCM_ASSERT(gh_string_p(msg) || gh_char_p(msg),msg,SCM_ARG1,S_snd_print); */
   state->result_printout = MESSAGE_WITHOUT_CARET;
   if (gh_string_p(msg))
     str = gh_scm2newstr(msg,NULL);
   else
     {
-      str = (char *)CALLOC(2,sizeof(char));
-      str[0] = gh_scm2char(msg);
+      if (gh_char_p(msg))
+	{
+	  str = (char *)CALLOC(2,sizeof(char));
+	  str[0] = gh_scm2char(msg);
+	}
+      else str = gh_print(msg);
     }
   snd_append_command(state,str);
   if (str) free(str);

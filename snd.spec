@@ -1,8 +1,8 @@
 # RPM spec file for Snd
 
 %define prefix  /usr
-%define ver     4.10
-%define rel     2
+%define ver     4.9
+%define rel     1
 %define alsaapi 0.5
 
 # these constants define which binary rpm's are going to be generated,
@@ -16,6 +16,14 @@
 %define build_oss_api 1
 %define build_alsa_api 1
 
+# set this to "0" if you want to use whatever version of guile your
+# distribution has preinstalled. I'd recommend using a separate guile
+# living in /usr/lib/snd so that snd can benefit from using the latest
+# version. Usually distributions come with out of date preinstalled
+# guile libraries. 
+
+%define usesndguile 1
+
 Summary:	A sound editor
 Name:		snd
 Version:	%{ver}
@@ -26,21 +34,24 @@ Source:		ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
 URL:		http://ccrma-www/CCRMA/Software/snd/snd.html
 Vendor:		CCRMA/Music Stanford University
 Packager:	Bill Schottstaedt <bil@ccrma.stanford.edu>
-Docdir:         %{prefix}/doc
 Buildroot:      %{_tmppath}/%{name}-root
+Prefix:         %{prefix}
 
 %description
 Snd is a sound editor modelled loosely after Emacs and an old, sorely-missed
-PDP-10 sound editor named Dpysnd. It can accommodate any number of sounds
+PDP-10 sound editor named Dpysnd. It can accomodate any number of sounds
 each with any number of channels, and can be customized and extended
 using guile and guile-gtk. Snd is free (LGPL); the code is available via
 anonymous ftp at ccrma-ftp.stanford.edu as pub/Lisp/snd-4.tar.gz.
 
-
 %package oss
 Summary:        Motif/OSS version of snd
 Group:		Applications/Sound
+%if %{usesndguile}
 Requires:       snd == %{ver} snd-guile
+%else
+Requires:       snd == %{ver}
+%endif
 
 %description oss
 A version of the Snd editor compiled with the Motif gui (statically
@@ -49,7 +60,11 @@ linked), and support for the OSS api sound driver.
 %package alsa-%{alsaapi}
 Summary:        Motif/ALSA version of snd
 Group:		Applications/Sound
+%if %{usesndguile}
 Requires:       snd == %{ver} snd-guile
+%else
+Requires:       snd == %{ver}
+%endif
 
 %description alsa-%{alsaapi}
 A version of the Snd editor compiled with the Motif gui (statically
@@ -58,7 +73,11 @@ linked), and support for the ALSA 0.5.x api sound driver.
 %package motif-oss
 Summary:        Motif/OSS version of snd
 Group:		Applications/Sound
+%if %{usesndguile}
 Requires:       snd == %{ver} snd-guile
+%else
+Requires:       snd == %{ver}
+%endif
 
 %description motif-oss
 A version of the Snd editor compiled with the Motif gui and support for
@@ -68,7 +87,11 @@ Motif already installed.
 %package motif-alsa-%{alsaapi}
 Summary:        Motif/ALSA version of snd
 Group:		Applications/Sound
+%if %{usesndguile}
 Requires:       snd == %{ver} snd-guile
+%else
+Requires:       snd == %{ver}
+%endif
 
 %description motif-alsa-%{alsaapi}
 A version of the Snd editor compiled with the Motif gui and support for
@@ -78,7 +101,11 @@ of Motif already installed.
 %package gtk-oss
 Summary:        Gtk/OSS version of snd
 Group:		Applications/Sound
-Requires:       snd == %{ver} snd-guile
+%if %{usesndguile}
+Requires:       snd == %{ver} snd-guile snd-guile-gtk
+%else
+Requires:       snd == %{ver}
+%endif
 
 %description gtk-oss
 A version of the Snd editor compiled with the gtk gui and support for
@@ -87,7 +114,11 @@ the OSS api sound driver.
 %package gtk-alsa-%{alsaapi}
 Summary:        Gtk/ALSA version of snd
 Group:		Applications/Sound
+%if %{usesndguile}
 Requires:       snd == %{ver} snd-guile snd-guile-gtk
+%else
+Requires:       snd == %{ver}
+%endif
 
 %description gtk-alsa-%{alsaapi}
 A version of the Snd editor compiled with the gtk gui and support for
@@ -96,7 +127,11 @@ the ALSA api sound driver.
 %package utils-oss
 Summary:        OSS version of sndplay and friends
 Group:		Applications/Sound
-Requires:       snd == %{ver} snd-guile snd-guile-gtk
+%if %{usesndguile}
+Requires:       snd == %{ver} snd-guile
+%else
+Requires:       snd == %{ver}
+%endif
 
 %description utils-oss
 Command line utilities included with the snd sound editor compiled with
@@ -105,7 +140,11 @@ support for the OSS api sound driver.
 %package utils-alsa-%{alsaapi}
 Summary:        ALSA versions of sndplay and friends
 Group:		Applications/Sound
+%if %{usesndguile}
 Requires:       snd == %{ver} snd-guile
+%else
+Requires:       snd == %{ver}
+%endif
 
 %description utils-alsa-%{alsaapi}
 Command line utilities included with the snd sound editor compiled with
@@ -118,7 +157,11 @@ support for the ALSA api sound driver.
 %ifos Linux
 %ifarch i386
 
+%if %{usesndguile}
 %define guilepath PATH=/usr/lib/snd/bin:${PATH}
+%else
+%define guilepath PATH=$PATH
+%endif
 
 #--- build OSS api utilities
 %if %{build_oss_api}
@@ -206,40 +249,42 @@ make -f makefile.ppcrpm
 %endif
 
 %install snd
-install -m 755 -o 0 -g 0 -d ${RPM_BUILD_ROOT}%{prefix}/bin/
+rm -rf ${RPM_BUILD_ROOT}
+install -m 755 -d ${RPM_BUILD_ROOT}%{prefix}/bin/
 %if %{build_motif_gui} && %{build_oss_api}
-    install -m 755 -o 0 -g 0 snd-motif-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 snd-motif-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 %if %{build_static_motif_gui} && %{build_oss_api}
-    install -m 755 -o 0 -g 0 snd-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 snd-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 %if %{build_motif_gui} && %{build_alsa_api}
-    install -m 755 -o 0 -g 0 snd-motif-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 snd-motif-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 %if %{build_static_motif_gui} && %{build_alsa_api}
-    install -m 755 -o 0 -g 0 snd-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 snd-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 %if %{build_gtk_gui} && %{build_oss_api}
-    install -m 755 -o 0 -g 0 snd-gtk-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 snd-gtk-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 %if %{build_gtk_gui} && %{build_alsa_api}
-    install -m 755 -o 0 -g 0 snd-gtk-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 snd-gtk-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 %if %{build_oss_api}
-    install -m 755 -o 0 -g 0 sndplay-oss sndrecord-oss sndinfo-oss sndsine-oss audinfo-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 sndplay-oss sndrecord-oss sndinfo-oss sndsine-oss audinfo-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 %if %{build_alsa_api}
-    install -m 755 -o 0 -g 0 sndplay-alsa sndrecord-alsa sndinfo-alsa sndsine-alsa audinfo-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 sndplay-alsa sndrecord-alsa sndinfo-alsa sndsine-alsa audinfo-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
+
+%clean
+rm -rf ${RPM_BUILD_ROOT}
 
 #--- snd package, just documentation
 %files
 %defattr(-, root, root)
-%doc README.Snd HISTORY.Snd snd.html snd.txt extsnd.html extsnd.txt sndlib.html sndlib.txt grfsnd.html grfsnd.txt clm.html
-%doc title.png controls.png auto.png files.png regions.png mixer.png rec.png reclin.png hfft.png energy.png s.png n.png d.png env.png bgd.png note.png
-%doc bell.scm glfft.scm loop.scm old-sndlib2scm.scm zip.scm env.scm gm.scm marks.scm pqwvox.scm snd-gtk.scm prc95.scm enved.scm
-%doc examp.scm goopsnd.scm mix.scm pvoc.scm snd-test.scm fmv.scm index.scm moog.scm rgb.scm v.scm effects.scm bird.scm ws.scm rubber.scm
-
+%doc README.Snd HISTORY.Snd Snd.ad *.html
+%doc *.png
+%doc *.scm
 
 #--- snd-oss (motif statically linked)
 %if %{build_static_motif_gui} && %{build_oss_api} 
@@ -430,21 +475,32 @@ done
 %endif
 
 %changelog
-
+* Mon Dec 11 2000 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+- compiled for snd-4.9 of Dec 11 2000, release set to 1
+- added %{prefix}, removed ${RPM_BUILD_ROOT} prior to install, remove
+  -o and -g from the install lines, thanks to Volker Kuhlmann for the tips
+- use wildcards in doc file list, added Snd.ad
+- added %{usesndguile} option for enabling the search for a private guile
+  library
+* Mon Nov 20 2000 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+- compiled for snd-4.8 of Nov 20 2000, release set to 1
+- fixed dependencies, utils packages do not depend on guile-gtk, 
+  only gtk-* do (thanks to Volker Kuhlmann <kuhlmav@elec.canterbury.ac.nz>)
+* Mon Oct 16 2000 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+- compiled for snd-4.7, release set to 1
+* Thu Sep 28 2000 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+- compiled for snd-4.6 of Sep 28 2000, release set to 1
 * Fri Aug 25 2000 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 - added statically linked versions of the motif gui packages
 - compiled using snd-4.tar.gz Aug 25 2000
-
 * Mon Aug 21 2000 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 - changed postun to only erase link to binaries if the package being
   installed is the one that set up the link in the first place
 - added alsa version number to naming of packages, that will enable
   us to have packages for alsa 0.5.x and 0.6.x in the same directory
-
 * Wed Aug 16 2000 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 - no need to hack configure.in, a simple PATH added to the ./configure
   stage makes sure that the proper guile binary is found...
-
 * Tue Aug 15 2000 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 - created subpackages snd-motif-oss snd-motif-alsa snd-gtk-oss
   snd-gtk-alsa snd-utils-oss snd-utils-alsa
@@ -452,7 +508,6 @@ done
   /usr/lib/snd/, added -rpath to the linker invocation so that 
   it is not necessary to add /usr/lib/snd/lib to /etc/ld.so.conf
 - TODO: create a snd-devel package with the include files and sndlib?
-
 * Mon Aug 14 2000 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 - added a root install directory so that compiling the package
   does not clobber the real filesystem
@@ -461,7 +516,6 @@ done
 - changed version numbering, 4.5 refers to the version of the program,
   the release number is the rpm package release number, the .tar.gz 
   file should be named snd-4.5.tar.gz...
-
 
 # to make the rpm file (since I keep forgetting):
 #   make up-to-date snd-4.tar.gz

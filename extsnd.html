@@ -117,6 +117,7 @@ provides alphabetical entry.</p>
 <p>There are many examples in examp.scm and snd-test.scm.  In addition,
 various examples of and extensions to Snd can be found in:
 </p>
+
 <table border=8 bordercolor="lightsteelblue">
 <tr><td width=140>bell.scm</td><td>the fm-bell from CLM</td></tr>
 <tr><td>bird.scm</td><td>various North-American birds (from bird.clm)</td></tr>
@@ -517,7 +518,7 @@ the hook.
                                       together but are independent of any other sound), united channels, 
                                       and filled graphs:
 
-                                       (add-hook! after-open-hook 
+                                       (add-hook! <em class=red>after-open-hook</em>
                                          (lambda (snd)
                                            (if (&gt; (channels snd) 1)
                                                (begin
@@ -532,7 +533,7 @@ the hook.
 <small>
                                       This provides an opportunity to set sndlib prescaling values:
 
-                                       (add-hook! during-open-hook
+                                       (add-hook! <em class=red>during-open-hook</em>
                                          (lambda (fd name reason)
                                            (if (= (mus-sound-header-type name) mus-raw)
                                                (mus-file-set-prescaler fd 500.0))))
@@ -549,7 +550,7 @@ the hook.
                                       of a moving mark:
 <small>
                                       (define fft-position #f)
-                                      (add-hook! before-fft-hook (lambda (snd chn) fft-position))
+                                      (add-hook! <em class=red>before-fft-hook</em> (lambda (snd chn) fft-position))
                                       (add-hook! mark-drag-hook (lambda (id)
                                                                   (set! fft-position (mark-sample id))
                                                                   (update-fft)))
@@ -562,7 +563,7 @@ the hook.
   <b><a name="justsoundshook">just-sounds-hook</a></b> (filename)         called on each file (after the sound file extension check) if the
                                       just-sounds button is set. Return #f to filter out <i>filename</i>.
 <small>
-                                      (add-hook! just-sounds-hook 
+                                      (add-hook! <em class=red>just-sounds-hook</em>
                                         (lambda (name) ;display only stereo files in file selection dialog
                                           (and (not (= (mus-sound-header-type name) mus-raw)) ;any unrecognized file is considered "raw"
                                                (= (mus-sound-chans name) 2))))
@@ -576,7 +577,7 @@ the hook.
 
   <b><a name="markclickhook">mark-click-hook</a></b> (id)                called when a mark is clicked, return #t to squelch message.
 <small>
-                                      (add-hook! mark-click-hook 
+                                      (add-hook! <em class=red>mark-click-hook</em>
                                         (lambda (n) 
                                            (help-dialog "Mark Help" (number-&gt;string (mark-sample n))) 
                                            #t))
@@ -591,7 +592,7 @@ the hook.
                                             samp (/ samp (srate (car sndchn))) 
                                             (short-file-name (car sndchn)) (cadr sndchn)))))
 
-                                      (add-hook! mark-drag-hook report-mark-location)
+                                      (add-hook! <em class=red>mark-drag-hook</em> report-mark-location)
 </small>
   <b><a name="mixampchangedhook">mix-amp-changed-hook</a></b> (id)           called when mix amp changes via mouse (id = mix id).
                                       If #t, the actual remix is the hook's responsibility.
@@ -628,7 +629,7 @@ the hook.
                                       If more than one hook function, results are concatenated.  
                                       If none, the current comment is used.
 <small>
-                                      (add-hook! output-comment-hook 
+                                      (add-hook! <em class=red>output-comment-hook</em>
                                         (lambda (str) 
                                           (string-append "written " 
                                             (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))))) 
@@ -658,7 +659,7 @@ the hook.
                                       If it returns #t, Snd flushes the error (it assumes you've 
                                       reported it via the hook).
 <small>
-                                      (add-hook! snd-error-hook
+                                      (add-hook! <em class=red>snd-error-hook</em>
                                         (lambda (msg) (play "bong.snd") #f))
 </small>
   <b><a name="sndwarninghook">snd-warning-hook</a></b> (warning-message)  called upon snd_warning. (<b>or</b>)
@@ -668,9 +669,9 @@ the hook.
                                       (define without-warnings
                                         (lambda (thunk)
                                           (define no-warning (lambda (msg) #t))
-                                          (add-hook! snd-warning-hook no-warning)
+                                          (add-hook! <em class=red>snd-warning-hook</em> no-warning)
                                           (thunk)
-                                          (remove-hook! snd-warning-hook no-warning)))
+                                          (remove-hook! <em class=red>snd-warning-hook</em> no-warning)))
 </small>
 
   Channel-specific hooks:
@@ -683,7 +684,7 @@ the hook.
      edit-hook is called just before any attempt to edit the channel's data.  If it returns #t,
      the edit is aborted. So,
 
-         (add-hook! (edit-hook) (lambda () #t))
+         (add-hook! (<em class=red>edit-hook</em>) (lambda () #t))
 
      aborts any attempt to edit the data; this is even more restrictive than setting the read-only
      flag because the latter only refuses to overwrite the current data.  undo-hook is called
@@ -694,7 +695,7 @@ the hook.
            "(protect &amp;optional snd chn) disallows any edits before the current one"
            (lambda args
              (let* ((edit-pos (apply edit-position args))
-                    (hook (apply edit-hook args)))
+                    (hook (apply <em class=red>edit-hook</em> args)))
                (reset-hook! hook)
                (add-hook! hook 
                  (lambda ()
@@ -704,7 +705,7 @@ the hook.
 
          (define unprotect 
            "(unprotect &amp;optional snd chn) allows edits at any edit history position"
-           (lambda args (reset-hook! (apply edit-hook args))))
+           (lambda args (reset-hook! (apply <em class=red>edit-hook</em> args))))
 </small>
 </pre>
 <p>enved.scm uses several of these hooks to implement an envelope editor in lisp.
@@ -886,7 +887,7 @@ vct data as desired, write the samples to the file via vct-&gt;sound-file, then
 when finished, close-sound-file.  If the new data is to replace the old,
 call (set! (samples...) data) with the new sound file's name; otherwise call insert-samples.
 </p>
-<p>If you have Guile 1.4.1 or later, it's possible to access a vct objects
+<p>If you have Guile 1.4.1 or later, it's possible to access a vct object's
 elements with the syntax (obj index), equivalent to (vct-ref obj index).
 This is using a feature called "applicable smobs" in Guile; I may extend
 it to handle vct-set! and perhaps others: sound-data objects, the various
@@ -901,6 +902,25 @@ can now use this syntax:
   &gt;<em class=typing>(oscil hi)</em>
   <em class=listener>0.125050634145737</em>
 </pre>
+<p>It's no accident that the generator's type (i.e. oscil or whatever)
+is hidden here.  For example, we can make a generator that is either
+an oscil or a sawtooth-wave:
+</p>
+<pre>
+  &gt;<em class=typing>(define sine-or-sawtooth
+     (lambda (sine)
+        (let ((gen ((if sine make-oscil make-sawtooth-wave) 440.0)))
+           (lambda (fm)
+              (gen fm)))))</em>
+  <em class=listener>#&lt;unspecified&gt;</em>
+  &gt;<em class=typing>(define osc (sine-or-sawtooth #t))</em>
+  <em class=listener>#&lt;unspecified&gt;</em>
+  &gt;<em class=typing>(osc 0.0)</em>
+  <em class=listener>0.0</em>
+  &gt;<em class=typing>(osc 0.0)</em>
+  <em class=listener>0.125050634145737</em>
+<pre>
+
 <br>
 <span class=cbox><h3><a name="sndsounddata">Sound-data and Sndlib</a></h3></span>
 
@@ -1753,10 +1773,10 @@ sets its value to val.
                                         (let ((chans (chans sound)))
                                           (do ((chan 0 (1+ chan)))
                                               ((= chan chans))
-                                            (let ((player (make-player sound chan)))
+                                            (let ((player (<em class=red>make-player</em> sound chan)))
                                               (set! (amp player) (list-ref amps chan))
-                                              (add-player player)))
-                                          (start-playing chans (srate sound)))))
+                                              (<em class=red>add-player</em> player)))
+                                          (<em class=red>start-playing</em> chans (srate sound)))))
 
                                     (play-with-amps 0 1.0 0.5) ;plays channel 2 of stereo sound at half amplitude
 </small>
@@ -2003,7 +2023,7 @@ sets its value to val.
                                    (define delay-line #f)
                                    (define delay-time 0.5)
 
-                                   (set-reverb-funcs
+                                   (<em class=red>set-reverb-funcs</em>
                                      (lambda (ptr inval chans)
                                        (vector-set! outputs 0 (delay delay-line (+ (* .75 (tap delay-line)) inval)))
                                        outputs)
@@ -2245,14 +2265,14 @@ sets its value to val.
                                     (let ((maxval (apply max (maxamp #f #t)))) 
                                       (do ((i 0 (1+ i))) 
                                           ((= i (chans))) 
-                                        (set! (y-bounds #f i) (list (- maxval) maxval))))
+                                        (set! (<em class=red>y-bounds</em> #f i) (list (- maxval) maxval))))
 </small>
                                   Or to set each channel to its own maxamp:
 <small>
                                     (do ((i 0 (1+ i))) 
                                         ((= i (chans)))
                                       (let ((maxval (maxamp #f i))) 
-                                        (set! (y-bounds #f i) (list (- maxval) maxval))))
+                                        (set! (<em class=red>y-bounds</em> #f i) (list (- maxval) maxval))))
 </small>
   <b><a name="ypositionslider">y-position-slider</a></b> (<em class=targ>snd chn</em>)     value of y axis position slider.
 
@@ -2263,8 +2283,8 @@ sets its value to val.
                                   determined by the nominal fft-size).  Zero padding causes sinc-interpolation 
                                   of the fft points, making the display smoother.
 <small>
-                                  (bind-key (char-&gt;integer #\p) 0 (lambda () (set! (zero-pad) (+ (zero-pad) 1)) (update-fft)))
-                                  (bind-key (char-&gt;integer #\m) 0 (lambda () (set! (zero-pad) (- (zero-pad) 1)) (update-fft)))
+                                  (bind-key (char-&gt;integer #\p) 0 (lambda () (set! (zero-pad) (+ (<em class=red>zero-pad</em>) 1)) (update-fft)))
+                                  (bind-key (char-&gt;integer #\m) 0 (lambda () (set! (zero-pad) (- (<em class=red>zero-pad</em>) 1)) (update-fft)))
 </small>
 </pre>
 
@@ -2355,7 +2375,7 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
                                          (if (and (cdr tree)              ; go to next fragment
                                                   (not (= (cadr (car tree)) -2)))
                                            (check-fragment (cdr tree) ls rs))))
-                                     (check-fragment (edit-tree snd chn)
+                                     (check-fragment (<em class=red>edit-tree</em> snd chn)
                                                      (left-sample snd chn)
                                                      (right-sample snd chn)))
                                    (add-hook! after-graph-hook show-original)
@@ -3036,7 +3056,7 @@ Axis choice:
                                        (let* ((size (fft-size snd chn))
                                               (hv0 (samples-&gt;vct (left-sample snd chn) size))
                                               (hv1 (make-vct (/ size 2))))
-                                         (fht hv0)
+                                         (<em class=red>fht</em> hv0)
                                          (do ((i 1 (1+ i)))
                                              ((= i (/ size 2)))
                                            (vct-set! hv1 i (* (sqrt (+ (* (vct-ref hv0 i) (vct-ref hv0 i))

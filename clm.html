@@ -111,7 +111,8 @@ named fm-violin) at 440 Hz, and a somewhat soft amplitude.  Compile and load v.i
 in most lisps.  In ACL, for example, <code>:cl v.ins</code> or perhaps even <code>:cl v</code> will call compile-file
 if needed, then load.
 Once loaded, we don't
-need to reload v unless we change it in some way.  To get an arpeggio:</p>
+need to reload v unless we change it in some way.  (In CMU-CL, load v.cmucl, not v.x86f).
+To get an arpeggio:</p>
 <pre>
     (with-sound ()
       (loop for i from 0 to 7 do

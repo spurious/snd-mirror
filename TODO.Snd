@@ -83,4 +83,5 @@ to Guile.
 Mac-OSX Snd port (since gtk and guile have been ported, Snd shouldn't be difficult).
 
 There's a Scheme to C translator in Jaffer's schlep.scm -- perhaps this
-can be used as a stopgap until Guile's compiler is ready?
+can be used as a stopgap until Guile's compiler is ready?  (I've edited
+a version of this so it runs in Guile).

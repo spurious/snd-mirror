@@ -707,3 +707,10 @@ AC_OUTPUT(makefile)
 dnl if no motif, search for gtk (could use locate)
 dnl need to be able to set both HAVE_ALSA and HAVE_OSS?
 dnl support for sndlib.so needs to decide whether clm2scm/clm are available
+
+dnl gstreamer's aclocal.m4 has macros for ALSA and ESD
+dnl these then are used as follows:
+dnl Check for libesd
+dnl AM_PATH_ESD(0.2.12, HAVE_LIBESD=yes, HAVE_LIBESD=no)
+dnl Check for libasound
+dnl AM_PATH_ALSA(0.5.0, HAVE_LIBASOUND=yes, HAVE_LIBASOUND=no)

@@ -23,6 +23,7 @@ Contents
    * Current Status
    * Lower Levels
    * Sndlib and Guile
+   * Sndlib and Common Lisp
 
 Introduction
 
@@ -1154,5 +1155,10 @@ translations of the constants and functions described above into Scheme.
           (mus-sound-read sound-fd 0 (1- bufsize) chans data))
         (mus-sound-close-input sound-fd)
         (mus-audio-close audio-fd)))))
+
+Sndlib and Common Lisp
+
+See CLM's ffi.lisp for a foreign function interface for sndlib to ACL, MCL,
+and CMU-CL. This could be expanded if there's interest.
 
    related documentationsnd.html   extsnd.html    grfsnd.html   clm.html

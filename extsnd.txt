@@ -69,27 +69,28 @@ needed. The index provides alphabetical entry.
 There are many examples in examp.scm and snd-test.scm. In addition, various
 examples of and extensions to Snd can be found in:
 
-bell.scm          the fm-bell from CLM
-bird.scm          various North-American birds (from bird.clm)
-effects.scm       an Effects menu based on examp.scm
-env.scm           various envelope functions from CLM
-enved.scm         envelope editor in lisp graph section
-fmv.scm           the fm-violin tied to real-time gtk graphics
-glfft.scm         OpenGL for spectra (needs work)
-goopsnd.scm       first look at Goops (Guile Object System) for Snd
-index.scm         snd-help locators
-loop.scm          some Common Lisp syntax in Scheme
-marks.scm         functions related to marks
-mix.scm           functions related to mixes and tracks
-moog.scm          Moog filter (from CLM)
-pqwvox.scm        phase-quadrature waveshaping (from CLM)
-prc95.scm         Perry Cook's physical model examples (from CLM)
-pvoc.scm          phase-vocoder examples
-rgb.scm           color definitions
-snd-gtk.scm       various Guile-Gtk examples
-v.scm             fm-violin (from CLM)
-ws.scm            with-sound implementation
-zip.scm           the zipper (a cross-fader, sort of) (from CLM)
+  bell.scm          the fm-bell from CLM
+  bird.scm          various North-American birds (from bird.clm)
+  effects.scm       an Effects menu based on examp.scm
+  env.scm           various envelope functions from CLM
+  enved.scm         envelope editor in lisp graph section
+  fmv.scm           the fm-violin tied to real-time gtk graphics
+  glfft.scm         OpenGL for spectra (needs work)
+  goopsnd.scm       first look at Goops (Guile Object System) for Snd
+  index.scm         snd-help locators
+  loop.scm          some Common Lisp syntax in Scheme
+  marks.scm         functions related to marks
+  mix.scm           functions related to mixes and tracks
+  moog.scm          Moog filter (from CLM)
+  pqwvox.scm        phase-quadrature waveshaping (from CLM)
+  prc95.scm         Perry Cook's physical model examples (from CLM)
+  pvoc.scm          phase-vocoder examples
+  rgb.scm           color definitions
+  rubber.scm        rubber-sound
+  snd-gtk.scm       various Guile-Gtk examples
+  v.scm             fm-violin (from CLM)
+  ws.scm            with-sound implementation
+  zip.scm           the zipper (a cross-fader, sort of) (from CLM)
 
 Customizing Snd's appearance
 
@@ -255,7 +256,8 @@ The main variables affecting Snd's overall behavior are:
 
   audio-output-device   sndlib-default-device Audio output device (for the play button)
 
-  audio-state-file      ".snd-mixer"  Name of file in which current audio hardware settings are saved.
+  audio-state-file      ".snd-mixer"  Name of file in which current audio hardware settings are
+                                saved (only works in OSS and SGI).
 
   auto-resize           #t      should Snd window resize upon open/close (see AutoResize)
 
@@ -263,10 +265,12 @@ The main variables affecting Snd's overall behavior are:
                                 The default state of the 'unite' button in multi-channel files.
                                 Other values are channels-combined and channels-superimposed.
 
-  corruption-time       60      Time (seconds) between background checks for changed file on disk
-                                (see auto-update). If less than 0.0, background process is turned off.
+  corruption-time       60      Time (seconds) between background checks for changed file on
+                                disk (see auto-update). If less than 0.0, background process
+                                is turned off.
 
-  dac-folding           #t      channels folded upon dac output if not enough dac channels are available.
+  dac-folding           #t      channels folded upon dac output if not enough dac channels are
+                                available.
 
   dac-size              256     Audio output buffer size (not always meaningful).
 
@@ -797,6 +801,23 @@ generators can now use this syntax:
   >(hi)
   0.0
   >(oscil hi)
+  0.125050634145737
+
+It's no accident that the generator's type (i.e. oscil or whatever) is
+hidden here. For example, we can make a generator that is either an oscil or
+a sawtooth-wave:
+
+  >(define sine-or-sawtooth
+     (lambda (sine)
+        (let ((gen ((if sine make-oscil make-sawtooth-wave) 440.0)))
+           (lambda (fm)
+              (gen fm)))))
+  #<unspecified>
+  >(define osc (sine-or-sawtooth #t))
+  #<unspecified>
+  >(osc 0.0)
+  0.0
+  >(osc 0.0)
   0.125050634145737
 
 Sound-data and Sndlib
@@ -2305,21 +2326,46 @@ optional subsequence of the data can be requested via 'start' and 'end'
 points. If beg is #f, it defaults to 0; if end is #f, it defaults to the end
 of the channel.
 
-  map-across-all-chans (func start end edname)       apply func to all open channels in parallel
-  map-across-chans (func start end edname)           apply func to currently syncd channels in parallel
-  map-across-sound-chans (func start end edname snd) apply func to sound's channels in parallel
-  map-all-chans (func start end edname)              apply func to all open channels
-  map-chan (func start end edname snd chn)           apply func to samples in current channel
-  map-chans (func start end edname)                  apply func to currently syncd channels
-  map-sound-chans (func start end edname snd)        apply func to current sound's channels
+map-across-all-chans (func start end edname)  apply func to all open
+                                              channels in parallel
 
-  scan-across-all-chans (func start end)             apply func to all open channels in parallel
-  scan-across-chans (func start end)                 apply func to currently syncd channels in parallel
-  scan-across-sound-chans (func start end snd)       apply func to sound's channels in parallel
-  scan-all-chans (func start end)                    apply func to all open channels
-  scan-chan (func start end snd chn)                 apply func to samples in current channel
-  scan-chans (func start end)                        apply func to currently syncd channels
-  scan-sound-chans (func start end snd)              apply func to current sound's channels
+map-across-chans (func start end edname)      apply func to currently syncd
+                                              channels in parallel
+map-across-sound-chans (func start end edname apply func to sound's channels
+snd)                                          in parallel
+
+map-all-chans (func start end edname)         apply func to all open
+                                              channels
+
+map-chan (func start end edname snd chn)      apply func to samples in
+                                              current channel
+
+map-chans (func start end edname)             apply func to currently syncd
+                                              channels
+
+map-sound-chans (func start end edname snd)   apply func to current sound's
+                                              channels
+
+scan-across-all-chans (func start end)        apply func to all open
+                                              channels in parallel
+
+scan-across-chans (func start end)            apply func to currently syncd
+                                              channels in parallel
+
+scan-across-sound-chans (func start end snd)  apply func to sound's channels
+                                              in parallel
+
+scan-all-chans (func start end)               apply func to all open
+                                              channels
+
+scan-chan (func start end snd chn)            apply func to samples in
+                                              current channel
+
+scan-chans (func start end)                   apply func to currently syncd
+                                              channels
+
+scan-sound-chans (func start end snd)         apply func to current sound's
+                                              channels
 
 In the case of the scanning operations, the function passed as the first
 argument takes either the current sample (when scanning in series), or two
