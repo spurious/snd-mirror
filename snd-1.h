@@ -108,7 +108,7 @@ typedef struct snd_fd {
   double incr2, curval2, incr3, curval3;
   mus_sample_t (*rev_run)(struct snd_fd *sf);
   Float (*rev_runf)(struct snd_fd *sf);
-  int edit_ctr, dangling_loc;
+  int edit_ctr, dangling_loc, region;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -922,6 +922,8 @@ void save_region_backpointer(snd_info *sp);
 void sequester_deferred_regions(chan_info *cp, int edit_top);
 void g_init_regions(void);
 void for_each_region_chan(void (*func)(chan_info *, void *), void *userptr);
+off_t region_current_location(snd_fd *fd);
+
 
 
 /* -------- snd-env.c -------- */
@@ -1373,6 +1375,17 @@ void run_free_track_fd(void *ptr);
 void *run_make_track_sample_reader(int id, int chan, off_t beg);
 bool mix_dialog_mix_inverted(int id);
 void mix_dialog_set_mix_inverted(int id, bool on);
+
+XEN g_copy_mix_sample_reader(XEN obj);
+XEN g_mix_sample_reader_home(XEN obj);
+XEN g_mix_sample_reader_at_end_p(XEN obj);
+XEN g_mix_sample_reader_position(XEN obj);
+XEN g_free_mix_sample_reader(XEN obj);
+XEN g_copy_track_sample_reader(XEN obj);
+XEN g_track_sample_reader_home(XEN obj);
+XEN g_track_sample_reader_at_end_p(XEN obj);
+XEN g_track_sample_reader_position(XEN obj);
+XEN g_free_track_sample_reader(XEN obj);
 
 
 

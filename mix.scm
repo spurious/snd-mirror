@@ -166,7 +166,7 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 	(do ((i 0 (1+ i)))
 	    ((= i len))
 	  (vct-set! v i (read-mix-sample reader)))
-	(free-mix-sample-reader reader)
+	(free-sample-reader reader)
 	v)
       (throw 'no-such-mix (list "mix->vct" id))))
 
@@ -188,7 +188,7 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 	  (let ((val (abs (read-mix-sample reader))))
 	    (if (> val peak)
 		(set! peak val))))
-	(free-mix-sample-reader reader)
+	(free-sample-reader reader)
 	peak)
       (throw 'no-such-mix (list "mix-maxamp" id))))
 	  
@@ -361,7 +361,7 @@ If 'envelope' is a scaler, it is turned into an evelope at that value."
 	  (let ((val (abs (read-track-sample reader))))
 	    (if (> val peak)
 		(set! peak val))))
-	(free-track-sample-reader reader)
+	(free-sample-reader reader)
 	peak)
       (throw 'no-such-track (list "track-maxamp" id))))
 	  

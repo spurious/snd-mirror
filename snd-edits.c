@@ -7259,7 +7259,8 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
     }
   curlen = cp->samples[edit_position];
   /* snd_fd allocated only here */
-  sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
+  sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point */
+  sf->region = INVALID_REGION;
   sf->initial_samp = samp;
   sf->cp = cp;
   sf->fscaler = MUS_FIX_TO_FLOAT;
@@ -8247,13 +8248,7 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type)
 static XEN_OBJECT_TYPE sf_tag;
 bool sf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sf_tag));}
 #define SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, sf_tag)
-
-static XEN g_sf_p(XEN obj) 
-{
-  #define H_sf_p "(" S_sample_reader_p " obj): #t if obj is a sample-reader"
-  return(C_TO_XEN_BOOLEAN(SAMPLE_READER_P(obj)));
-}
-
+#define ANY_SAMPLE_READER_P(Obj) ((sf_p(Obj)) || (mf_p(Obj)) || (tf_p(Obj)))
 snd_fd *get_sf(XEN obj) {if (SAMPLE_READER_P(obj)) return((snd_fd *)XEN_OBJECT_REF(obj)); else return(NULL);}
 #define TO_SAMPLE_READER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
 
@@ -8273,16 +8268,20 @@ char *sf_to_string(snd_fd *fd)
 	{
 	  if ((cp) && (cp->sound) && (cp->active) && (!(fd->at_eof)))
 	    {
-	      name = (cp->sound)->short_filename;
-	      if (name == NULL)
-		switch (cp->sound->inuse)
-		  {
-		  case SOUND_IDLE: name = "idle source";        break;
-		  case SOUND_NORMAL: name = "unknown source";   break;
-		  case SOUND_WRAPPER: name = "wrapped source";  break;
-		  case SOUND_REGION: name = "region as source"; break;
-		  case SOUND_READER: name = "reader source";    break;
-		  }
+	      if (fd->region == INVALID_REGION)
+		{
+		  name = (cp->sound)->short_filename;
+		  if (name == NULL)
+		    switch (cp->sound->inuse)
+		      {
+		      case SOUND_IDLE: name = "idle source";        break;
+		      case SOUND_NORMAL: name = "unknown source";   break;
+		      case SOUND_WRAPPER: name = "wrapped source";  break;
+		      case SOUND_REGION: name = "region as source"; break;
+		      case SOUND_READER: name = "reader source";    break;
+		      }
+		}
+	      else name = "region as source";
 	    }
 	}
       if (name == NULL) name = "unknown source";
@@ -8436,55 +8435,64 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
 static XEN g_sample_reader_at_end(XEN obj) 
 {
   #define H_sample_reader_at_end "(" S_sample_reader_at_end_p " obj): #t if sample-reader has reached the end of its data"
-  snd_fd *sf;
-  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_at_end_p, "a sample-reader");
-  sf = TO_SAMPLE_READER(obj);
-  return(C_TO_XEN_BOOLEAN(sf->at_eof));
-}
-
-static XEN g_inspect_sample_reader(XEN obj) 
-{
-  snd_fd *sf = NULL;
-  char *buf;
-  XEN res;
-  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, "inspect-sample-reader", "a sample-reader");
-  sf = TO_SAMPLE_READER(obj);
-  buf = (char *)malloc(4096);
-  mus_snprintf(buf, 4096, "snd_fd: %f, %s[%d: %d](%s%s) \
-beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d",
-	       sf->curval,
-	       (sf->cp->sound) ? sf->cp->sound->filename : "no sound",
-	       sf->cp->chan, sf->edit_ctr,
-	       (sf->direction == READ_FORWARD) ? "forward" : "backward",
-	       (sf->at_eof) ? ", at eof" : "",
-	       sf->initial_samp,
-	       sf->loc, sf->frag_pos, sf->first, sf->last,
-	       sf->cbi);
-  res = C_TO_XEN_STRING(buf);
-  free(buf);
-  return(res);
+  XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_at_end_p, "a sample-reader (of any kind)");
+  if (sf_p(obj))
+    {
+      snd_fd *sf;
+      sf = TO_SAMPLE_READER(obj);
+      return(C_TO_XEN_BOOLEAN(sf->at_eof));
+    }
+  if (mf_p(obj))
+    return(g_mix_sample_reader_at_end_p(obj));
+  if (tf_p(obj))
+    return(g_track_sample_reader_at_end_p(obj));
+  return(XEN_FALSE);
 }
 
 static XEN g_sample_reader_position(XEN obj) 
 {
   #define H_sample_reader_position "(" S_sample_reader_position " obj): current (sample-wise) location of sample-reader"
-  snd_fd *fd = NULL;
-  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_position, "a sample-reader");
-  fd = TO_SAMPLE_READER(obj);
-  if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
-    return(C_TO_XEN_OFF_T(current_location(fd)));
+  XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_position, "a sample-reader (of any kind)");
+  if (sf_p(obj))
+    {
+      snd_fd *fd = NULL;
+      fd = TO_SAMPLE_READER(obj);
+      if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
+	{
+	  if (fd->region == INVALID_REGION)
+	    return(C_TO_XEN_OFF_T(current_location(fd)));
+	  return(C_TO_XEN_OFF_T(region_current_location(fd)));
+	}
+    }
+  if (mf_p(obj))
+    return(g_mix_sample_reader_position(obj));
+  if (tf_p(obj))
+    return(g_track_sample_reader_position(obj));
   return(XEN_ZERO);
 }
 
 static XEN g_sample_reader_home(XEN obj)
 {
-  #define H_sample_reader_home "(" S_sample_reader_home " obj): (list sound-index chan-num) associated with reader"
-  snd_fd *fd = NULL;
-  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a sample-reader");
-  fd = TO_SAMPLE_READER(obj);
-  if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
-    return(XEN_LIST_2(C_TO_SMALL_XEN_INT(fd->cp->sound->index),
-		      C_TO_SMALL_XEN_INT(fd->cp->chan)));
+  #define H_sample_reader_home "(" S_sample_reader_home " obj): (list sound-index chan-num) associated with a sound reader, or \
+if 'obj' is a mix-sample-reader, the id of underlying mix, or if a track-sample-reader, (list track-id chan)"
+  XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a sample-reader (of any kind)");
+  if (sf_p(obj))
+    {
+      snd_fd *fd = NULL;
+      fd = TO_SAMPLE_READER(obj);
+      if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
+	{
+	  if (fd->region == INVALID_REGION)
+	    return(XEN_LIST_2(C_TO_XEN_INT(fd->cp->sound->index),
+			      C_TO_XEN_INT(fd->cp->chan)));
+	  return(XEN_LIST_2(C_TO_XEN_INT(fd->region),
+			    C_TO_XEN_INT(fd->cp->chan)));
+	}
+    }
+  if (mf_p(obj))
+    return(g_mix_sample_reader_home(obj));
+  if (tf_p(obj))
+    return(g_track_sample_reader_home(obj));
   return(XEN_FALSE);
 }
 
@@ -8588,9 +8596,64 @@ return a reader ready to access region's channel chn data starting at start-samp
     {
       fd->edit_ctr = -2 - reg_n; /* can't use fd->cp because deferred case is pointer to original (not copied) data */
                                  /* has to be less than -1 because that is the "delete all readers" sign on chan close */
+      fd->region = reg_n;
       list_reader(fd);
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
+  return(XEN_FALSE);
+}
+
+static XEN g_sample_reader_p(XEN obj)
+{
+  #define H_sample_reader_p "(" S_sample_reader_p " obj) -> #t if obj is a sound sample-reader."
+  snd_fd *fd;
+  if (sf_p(obj))
+    {
+      fd = TO_SAMPLE_READER(obj);
+      return(C_TO_XEN_BOOLEAN(fd->region == INVALID_REGION));
+    }
+  return(XEN_FALSE);
+}
+
+static XEN g_region_sample_reader_p(XEN obj)
+{
+  #define H_region_sample_reader_p "(" S_region_sample_reader_p " obj) -> #t if obj is a region sample-reader."
+  snd_fd *fd;
+  if (sf_p(obj))
+    {
+      fd = TO_SAMPLE_READER(obj);
+      return(C_TO_XEN_BOOLEAN(fd->region != INVALID_REGION));
+    }
+  return(XEN_FALSE);
+}
+
+static XEN g_copy_sample_reader(XEN obj)
+{
+  #define H_copy_sample_reader "(" S_copy_sample_reader " reader): return a copy of reader"
+  XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_copy_sample_reader, "a sample-reader (of any kind)");
+  if (sf_p(obj))
+    {
+      snd_fd *fd = NULL;
+      fd = TO_SAMPLE_READER(obj);
+      if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
+	{
+	  if (fd->region == INVALID_REGION)
+	    return(g_make_sample_reader(C_TO_XEN_OFF_T(current_location(fd)),
+					C_TO_XEN_INT(fd->cp->sound->index),
+					C_TO_XEN_INT(fd->cp->chan),
+					C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1), /* Scheme side is different from C side */
+					C_TO_XEN_INT(fd->edit_ctr)));
+	  return(g_make_region_sample_reader(C_TO_XEN_OFF_T(region_current_location(fd)),
+					     C_TO_XEN_INT(fd->region),
+					     C_TO_XEN_INT(fd->cp->chan),
+					     C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1)));
+	}
+      return(XEN_FALSE);
+    }
+  if (mf_p(obj))
+    return(g_copy_mix_sample_reader(obj));
+  if (tf_p(obj))
+    return(g_copy_track_sample_reader(obj));
   return(XEN_FALSE);
 }
 
@@ -8634,15 +8697,22 @@ static XEN g_previous_sample(XEN obj)
 
 static XEN g_free_sample_reader(XEN obj)
 {
-  #define H_free_sample_reader "(" S_free_sample_reader " reader): free a sample reader"
+  #define H_free_sample_reader "(" S_free_sample_reader " reader): free a sample reader (of any kind)"
   snd_fd *fd;
   snd_info *sp = NULL;
-  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_sample_reader, "a sample-reader");
-  fd = TO_SAMPLE_READER(obj);
-  sp = fd->local_sp; 
-  fd->local_sp = NULL;
-  free_snd_fd_almost(fd); /* this is different from sf_free! */
-  if (sp) completely_free_snd_info(sp);
+  XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_sample_reader, "a sample-reader");
+  if (sf_p(obj))
+    {
+      fd = TO_SAMPLE_READER(obj);
+      sp = fd->local_sp; 
+      fd->local_sp = NULL;
+      free_snd_fd_almost(fd); /* this is different from sf_free! */
+      if (sp) completely_free_snd_info(sp);
+    }
+  if (mf_p(obj))
+    return(g_free_mix_sample_reader(obj));
+  if (tf_p(obj))
+    return(g_free_track_sample_reader(obj));
   return(xen_return_first(XEN_FALSE, obj));
 }
 
@@ -9952,9 +10022,10 @@ XEN_NARGIFY_1(g_previous_sample_w, g_previous_sample)
 XEN_NARGIFY_1(g_free_sample_reader_w, g_free_sample_reader)
 XEN_NARGIFY_1(g_sample_reader_home_w, g_sample_reader_home)
 XEN_NARGIFY_1(g_sample_reader_position_w, g_sample_reader_position)
-XEN_NARGIFY_1(g_inspect_sample_reader_w, g_inspect_sample_reader)
-XEN_NARGIFY_1(g_sf_p_w, g_sf_p)
+XEN_NARGIFY_1(g_sample_reader_p_w, g_sample_reader_p)
+XEN_NARGIFY_1(g_region_sample_reader_p_w, g_region_sample_reader_p)
 XEN_NARGIFY_1(g_sample_reader_at_end_w, g_sample_reader_at_end)
+XEN_NARGIFY_1(g_copy_sample_reader_w, g_copy_sample_reader)
 XEN_ARGIFY_3(g_save_edit_history_w, g_save_edit_history)
 XEN_ARGIFY_3(g_edit_fragment_w, g_edit_fragment)
 XEN_ARGIFY_3(g_undo_w, g_undo)
@@ -9996,9 +10067,10 @@ XEN_NARGIFY_1(g_make_xen2sample_w, g_make_xen2sample)
 #define g_free_sample_reader_w g_free_sample_reader
 #define g_sample_reader_home_w g_sample_reader_home
 #define g_sample_reader_position_w g_sample_reader_position
-#define g_inspect_sample_reader_w g_inspect_sample_reader
-#define g_sf_p_w g_sf_p
+#define g_sample_reader_p_w g_sample_reader_p
+#define g_region_sample_reader_p_w g_region_sample_reader_p
 #define g_sample_reader_at_end_w g_sample_reader_at_end
+#define g_copy_sample_reader_w g_copy_sample_reader
 #define g_save_edit_history_w g_save_edit_history
 #define g_edit_fragment_w g_edit_fragment
 #define g_undo_w g_undo
@@ -10048,46 +10120,48 @@ void g_init_edits(void)
   rb_define_method(sf_tag, "to_s", XEN_PROCEDURE_CAST print_sf, 0);
 #endif
 
-  XEN_DEFINE_CONSTANT(S_current_edit_position,      AT_CURRENT_EDIT_POSITION,             "current edit position indicator for 'edpos' args");
+  XEN_DEFINE_CONSTANT(S_current_edit_position,      AT_CURRENT_EDIT_POSITION,      "current edit position indicator for 'edpos' args");
 
-  XEN_DEFINE_PROCEDURE(S_make_sample_reader,        g_make_sample_reader_w, 0, 5, 0,        H_make_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_make_sample_reader,        g_make_sample_reader_w,        0, 5, 0, H_make_sample_reader);
   XEN_DEFINE_PROCEDURE(S_make_region_sample_reader, g_make_region_sample_reader_w, 0, 4, 0, H_make_region_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_read_sample,               g_read_sample_w, 1, 0, 0,               H_read_sample);
-  XEN_DEFINE_PROCEDURE(S_next_sample,               g_next_sample_w, 1, 0, 0,               H_next_sample);
-  XEN_DEFINE_PROCEDURE(S_previous_sample,           g_previous_sample_w, 1, 0, 0,           H_previous_sample);
-  XEN_DEFINE_PROCEDURE(S_free_sample_reader,        g_free_sample_reader_w, 1, 0, 0,        H_free_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_home,        g_sample_reader_home_w, 1, 0, 0,        H_sample_reader_home);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_p,           g_sf_p_w, 1, 0, 0,                      H_sf_p);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_at_end_p,    g_sample_reader_at_end_w, 1, 0, 0,      H_sample_reader_at_end);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_position,    g_sample_reader_position_w, 1, 0, 0,    H_sample_reader_position);
-  XEN_DEFINE_PROCEDURE("inspect-sample-reader",     g_inspect_sample_reader_w, 1, 0, 0,     "internal debugging function");
+  XEN_DEFINE_PROCEDURE(S_read_sample,               g_read_sample_w,               1, 0, 0, H_read_sample);
+  XEN_DEFINE_PROCEDURE(S_read_region_sample,        g_read_sample_w,               1, 0, 0, H_read_sample);
+  XEN_DEFINE_PROCEDURE(S_next_sample,               g_next_sample_w,               1, 0, 0, H_next_sample);
+  XEN_DEFINE_PROCEDURE(S_previous_sample,           g_previous_sample_w,           1, 0, 0, H_previous_sample);
+  XEN_DEFINE_PROCEDURE(S_free_sample_reader,        g_free_sample_reader_w,        1, 0, 0, H_free_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_sample_reader_home,        g_sample_reader_home_w,        1, 0, 0, H_sample_reader_home);
+  XEN_DEFINE_PROCEDURE(S_sample_reader_p,           g_sample_reader_p_w,           1, 0, 0, H_sample_reader_p);
+  XEN_DEFINE_PROCEDURE(S_region_sample_reader_p,    g_region_sample_reader_p_w,    1, 0, 0, H_region_sample_reader_p);
+  XEN_DEFINE_PROCEDURE(S_sample_reader_at_end_p,    g_sample_reader_at_end_w,      1, 0, 0, H_sample_reader_at_end);
+  XEN_DEFINE_PROCEDURE(S_sample_reader_position,    g_sample_reader_position_w,    1, 0, 0, H_sample_reader_position);
+  XEN_DEFINE_PROCEDURE(S_copy_sample_reader,        g_copy_sample_reader_w,        1, 0, 0, H_copy_sample_reader);
 
-  XEN_DEFINE_PROCEDURE(S_save_edit_history,         g_save_edit_history_w, 1, 2, 0,         H_save_edit_history);
-  XEN_DEFINE_PROCEDURE(S_edit_fragment,             g_edit_fragment_w, 0, 3, 0,             H_edit_fragment);
-  XEN_DEFINE_PROCEDURE(S_undo,                      g_undo_w, 0, 3, 0,                      H_undo);
+  XEN_DEFINE_PROCEDURE(S_save_edit_history,         g_save_edit_history_w,         1, 2, 0, H_save_edit_history);
+  XEN_DEFINE_PROCEDURE(S_edit_fragment,             g_edit_fragment_w,             0, 3, 0, H_edit_fragment);
+  XEN_DEFINE_PROCEDURE(S_undo,                      g_undo_w,                      0, 3, 0, H_undo);
 #if HAVE_RUBY
-  XEN_DEFINE_PROCEDURE("undo_edit",                 g_undo_w, 0, 3, 0,                      H_undo);
+  XEN_DEFINE_PROCEDURE("undo_edit",                 g_undo_w,                      0, 3, 0, H_undo);
 #endif
-  XEN_DEFINE_PROCEDURE(S_redo,                      g_redo_w, 0, 3, 0,                      H_redo);
-  XEN_DEFINE_PROCEDURE(S_as_one_edit,               g_as_one_edit_w, 1, 1, 0,               H_as_one_edit);
-  XEN_DEFINE_PROCEDURE(S_display_edits,             g_display_edits_w, 0, 4, 0,             H_display_edits);
-  XEN_DEFINE_PROCEDURE(S_edit_tree,                 g_edit_tree_w, 0, 3, 0,                 H_edit_tree);
+  XEN_DEFINE_PROCEDURE(S_redo,                      g_redo_w,                      0, 3, 0, H_redo);
+  XEN_DEFINE_PROCEDURE(S_as_one_edit,               g_as_one_edit_w,               1, 1, 0, H_as_one_edit);
+  XEN_DEFINE_PROCEDURE(S_display_edits,             g_display_edits_w,             0, 4, 0, H_display_edits);
+  XEN_DEFINE_PROCEDURE(S_edit_tree,                 g_edit_tree_w,                 0, 3, 0, H_edit_tree);
 
-  XEN_DEFINE_PROCEDURE(S_delete_sample,             g_delete_sample_w, 1, 3, 0,             H_delete_sample);
-  XEN_DEFINE_PROCEDURE(S_delete_samples,            g_delete_samples_w, 2, 3, 0,            H_delete_samples);
-  XEN_DEFINE_PROCEDURE(S_insert_sample,             g_insert_sample_w, 2, 3, 0,             H_insert_sample);
-  XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w, 3, 4, 0,            H_insert_samples);
-  XEN_DEFINE_PROCEDURE(S_vct2samples,               g_vct2samples_w, 1, 7, 0,               H_vct2samples);
-  XEN_DEFINE_PROCEDURE(S_vct2channel,               g_vct2channel_w, 1, 5, 0,               H_vct2channel);
-  XEN_DEFINE_PROCEDURE(S_samples2vct,               g_samples2vct_w, 0, 6, 0,               H_samples2vct);
-  XEN_DEFINE_PROCEDURE(S_channel2vct,               g_channel2vct_w, 0, 5, 0,               H_channel2vct);
-  XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w, 1, 6, 0,              H_insert_sound);
-  XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w, 1, 5, 0,            H_scale_sound_by);
-  XEN_DEFINE_PROCEDURE(S_scale_channel,             g_scale_channel_w, 1, 5, 0,             H_scale_channel);
-  XEN_DEFINE_PROCEDURE(S_scale_sound_to,            g_scale_sound_to_w, 1, 4, 0,            H_scale_sound_to);
+  XEN_DEFINE_PROCEDURE(S_delete_sample,             g_delete_sample_w,             1, 3, 0, H_delete_sample);
+  XEN_DEFINE_PROCEDURE(S_delete_samples,            g_delete_samples_w,            2, 3, 0, H_delete_samples);
+  XEN_DEFINE_PROCEDURE(S_insert_sample,             g_insert_sample_w,             2, 3, 0, H_insert_sample);
+  XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w,            3, 4, 0, H_insert_samples);
+  XEN_DEFINE_PROCEDURE(S_vct2samples,               g_vct2samples_w,               1, 7, 0, H_vct2samples);
+  XEN_DEFINE_PROCEDURE(S_vct2channel,               g_vct2channel_w,               1, 5, 0, H_vct2channel);
+  XEN_DEFINE_PROCEDURE(S_samples2vct,               g_samples2vct_w,               0, 6, 0, H_samples2vct);
+  XEN_DEFINE_PROCEDURE(S_channel2vct,               g_channel2vct_w,               0, 5, 0, H_channel2vct);
+  XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w,              1, 6, 0, H_insert_sound);
+  XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w,            1, 5, 0, H_scale_sound_by);
+  XEN_DEFINE_PROCEDURE(S_scale_channel,             g_scale_channel_w,             1, 5, 0, H_scale_channel);
+  XEN_DEFINE_PROCEDURE(S_scale_sound_to,            g_scale_sound_to_w,            1, 4, 0, H_scale_sound_to);
 
   /* semi-internal functions (restore-state) */
-  XEN_DEFINE_PROCEDURE("section-scale-by",           g_scale_sound_by_w, 1, 5, 0,           "internal scaling function used in save-state");
+  XEN_DEFINE_PROCEDURE("section-scale-by",           g_scale_sound_by_w,             1, 5, 0,           "internal scaling function used in save-state");
   XEN_DEFINE_PROCEDURE(S_change_samples_with_origin, g_change_samples_with_origin_w, 4, 3, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin, g_delete_samples_with_origin_w, 3, 3, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin, g_insert_samples_with_origin_w, 4, 3, 0, "internal function used in save-state");
@@ -10101,12 +10175,12 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE("set-samples", g_set_samples_w, 3, 7, 0, H_samples);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_snd2sample_p,    g_snd2sample_p_w, 1, 0, 0,    H_snd2sample_p);
-  XEN_DEFINE_PROCEDURE(S_xen2sample_p,    g_xen2sample_p_w, 1, 0, 0,    H_xen2sample_p);
+  XEN_DEFINE_PROCEDURE(S_snd2sample_p,    g_snd2sample_p_w,    1, 0, 0, H_snd2sample_p);
+  XEN_DEFINE_PROCEDURE(S_xen2sample_p,    g_xen2sample_p_w,    1, 0, 0, H_xen2sample_p);
   XEN_DEFINE_PROCEDURE(S_make_snd2sample, g_make_snd2sample_w, 0, 2, 0, H_make_snd2sample);
   XEN_DEFINE_PROCEDURE(S_make_xen2sample, g_make_xen2sample_w, 1, 0, 0, H_make_xen2sample);
-  XEN_DEFINE_PROCEDURE(S_snd2sample,      g_snd2sample_w, 2, 1, 0,      H_snd2sample);
-  XEN_DEFINE_PROCEDURE(S_xen2sample,      g_xen2sample_w, 2, 1, 0,      H_xen2sample);
+  XEN_DEFINE_PROCEDURE(S_snd2sample,      g_snd2sample_w,      2, 1, 0, H_snd2sample);
+  XEN_DEFINE_PROCEDURE(S_xen2sample,      g_xen2sample_w,      2, 1, 0, H_xen2sample);
 
 
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \

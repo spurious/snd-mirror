@@ -4470,57 +4470,19 @@ static XEN g_read_mix_sample(XEN obj)
   return(C_TO_XEN_DOUBLE(next_mix_sample(TO_MIX_SAMPLE_READER(obj))));
 }
 
-static XEN g_free_mix_sample_reader(XEN obj)
-{
-  #define H_free_mix_sample_reader "(" S_free_mix_sample_reader " reader): free mix sample reader"
-  mix_fd *mf;
-  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_mix_sample_reader, "a mix-sample-reader");
-  mf = TO_MIX_SAMPLE_READER(obj);
-  free_mix_fd_almost(mf);
-  return(xen_return_first(XEN_FALSE, obj));
-}
-
-#if 0
-XEN g_copy_mix_sample_reader(XEN obj);
-XEN g_describe_mix_sample_reader(XEN obj);
-XEN g_mix_sample_reader_home(XEN obj);
-XEN g_mix_sample_reader_at_end_p(XEN obj);
-XEN g_mix_sample_reader_position(XEN obj);
+/* tie into generic sample-reader procedures (snd-edits.c) */
 
 XEN g_copy_mix_sample_reader(XEN obj)
 {
-  mix_fd *mf, *new_mf;
-  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_copy_sample_reader, "a mix-sample-reader");
-  mf = TO_MIX_SAMPLE_READER(obj);
-  new_mf = init_mix_read(mf->md, CURRENT_MIX, current_location(mf->sfs[mf->base]));
-  if (new_mf)
-    {
-      list_mix_reader(new_mf);
-      XEN_MAKE_AND_RETURN_OBJECT(mf_tag, new_mf, 0, free_mf);
-    }
-  return(xen_return_first(XEN_FALSE, obj));
-}
-
-XEN g_describe_mix_sample_reader(XEN obj)
-{
-  char *desc;
   mix_fd *mf;
-  mix_info *md;
-  XEN result;
-  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a mix-sample-reader");
   mf = TO_MIX_SAMPLE_READER(obj);
-  md = mf->md;
-  desc = mus_format("mix %d (%d chans) sample-reader at " OFF_TD ", %s",
-		    md->id, mf->chans, current_location(mf->sfs[mf->base]), mix_calc_names[mf->type]);
-  result = C_TO_XEN_STRING(desc);
-  FREE(desc);
-  return(result);
+  return(g_make_mix_sample_reader(C_TO_XEN_INT(mf->md->id),
+				  C_TO_XEN_OFF_T(current_location(mf->sfs[mf->base]))));
 }
 
 XEN g_mix_sample_reader_home(XEN obj)
 {
   mix_fd *mf;
-  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a mix-sample-reader");
   mf = TO_MIX_SAMPLE_READER(obj);
   return(C_TO_XEN_INT(mf->md->id));
 }
@@ -4528,7 +4490,6 @@ XEN g_mix_sample_reader_home(XEN obj)
 XEN g_mix_sample_reader_at_end_p(XEN obj)
 {
   mix_fd *mf;
-  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_at_end_p, "a mix-sample-reader");
   mf = TO_MIX_SAMPLE_READER(obj);
   return(C_TO_XEN_BOOLEAN(mf->sfs[mf->base]->at_eof));
 }
@@ -4536,11 +4497,17 @@ XEN g_mix_sample_reader_at_end_p(XEN obj)
 XEN g_mix_sample_reader_position(XEN obj)
 {
   mix_fd *mf;
-  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_position, "a mix-sample-reader");
   mf = TO_MIX_SAMPLE_READER(obj);
   return(C_TO_XEN_OFF_T(current_location(mf->sfs[mf->base])));
 }
-#endif
+
+XEN g_free_mix_sample_reader(XEN obj)
+{
+  mix_fd *mf;
+  mf = TO_MIX_SAMPLE_READER(obj);
+  free_mix_fd_almost(mf);
+  return(xen_return_first(XEN_FALSE, obj));
+}
 
 
 static XEN g_play_mix(XEN num, XEN beg)
@@ -4687,7 +4654,6 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_make_mix_sample_reader_w, g_make_mix_sample_reader)
 XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
-XEN_NARGIFY_1(g_free_mix_sample_reader_w, g_free_mix_sample_reader)
 XEN_NARGIFY_1(g_mf_p_w, g_mf_p)
 XEN_ARGIFY_2(g_play_mix_w, g_play_mix)
 XEN_NARGIFY_1(g_mix_position_w, g_mix_position)
@@ -4732,7 +4698,6 @@ XEN_ARGIFY_3(g_backward_mix_w, g_backward_mix)
 #else
 #define g_make_mix_sample_reader_w g_make_mix_sample_reader
 #define g_read_mix_sample_w g_read_mix_sample
-#define g_free_mix_sample_reader_w g_free_mix_sample_reader
 #define g_mf_p_w g_mf_p
 #define g_play_mix_w g_play_mix
 #define g_mix_position_w g_mix_position
@@ -4793,7 +4758,6 @@ void g_init_mix(void)
 
   XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 1, 0, H_make_mix_sample_reader);
   XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
-  XEN_DEFINE_PROCEDURE(S_free_mix_sample_reader, g_free_mix_sample_reader_w, 1, 0, 0, H_free_mix_sample_reader);
   XEN_DEFINE_PROCEDURE(S_mix_sample_reader_p,    g_mf_p_w,                   1, 0, 0, H_mf_p);
 
   XEN_DEFINE_PROCEDURE(S_play_mix,               g_play_mix_w,               0, 2, 0, H_play_mix);
@@ -7282,7 +7246,8 @@ the copy at 'beg' which defaults to the copied track's position."
 
 /* track reader: an array of mix readers with state: active, waiting, null (done) */
 typedef struct {
-  int mixes, track;
+  int mixes, track, initial_chan;
+  off_t loc;
   off_t *state;
   off_t *len;
   mix_fd **fds;
@@ -7315,6 +7280,8 @@ static track_fd *init_track_reader(int track_num, int chan, off_t beg, bool glob
 	{
 	  fd = (track_fd *)CALLOC(1, sizeof(track_fd));
 	  fd->track = track_num;
+	  fd->initial_chan = chan;
+	  fd->loc = beg;
 	  fd->mixes = mixes;
 	  fd->state = (off_t *)CALLOC(mixes, sizeof(off_t));
 	  fd->len = (off_t *)CALLOC(mixes, sizeof(off_t));
@@ -7380,24 +7347,35 @@ static void free_track_fd(track_fd *fd)
 static Float next_track_sample(track_fd *fd)
 {
   int i;
+  bool eof = true;
   Float sum = 0.0;
   if (fd)
-    for (i = 0; i < fd->mixes; i++)
-      if ((fd->fds[i]) && 
-	  (fd->len[i] > 0))
-	{
-	  if (fd->state[i] <= 0)
-	    {
-	      sum += next_mix_sample(fd->fds[i]);
-	      fd->len[i]--;
-	      if (fd->len[i] <= 0) 
-		{
-		  unlist_mix_reader(fd->fds[i]);
-		  fd->fds[i] = free_mix_fd(fd->fds[i]);
-		}
-	    }
-	  else fd->state[i]--;
-	}
+    {
+      for (i = 0; i < fd->mixes; i++)
+	if ((fd->fds[i]) && 
+	    (fd->len[i] > 0))
+	  {
+	    if (fd->state[i] <= 0)
+	      {
+		sum += next_mix_sample(fd->fds[i]);
+		fd->len[i]--;
+		if (fd->len[i] <= 0) 
+		  {
+		    unlist_mix_reader(fd->fds[i]);
+		    fd->fds[i] = free_mix_fd(fd->fds[i]);
+		  }
+		else eof = false;
+	      }
+	    else 
+	      {
+		fd->state[i]--;
+		eof = false;
+	      }
+	  }
+      if (eof)
+	fd->loc = -1;
+      else fd->loc++;
+    }
   return(sum);
 }
 
@@ -7576,7 +7554,6 @@ static char *tf_to_string(track_fd *fd)
 		  happy = true;
 		  if (!banner)
 		    {
-
 		      mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader track %d: %s chan %d via mixes '(",
 				   fd->track,
 				   md->in_filename,
@@ -7660,12 +7637,13 @@ static XEN g_read_track_sample(XEN obj)
   return(C_TO_XEN_DOUBLE(next_track_sample(TO_TRACK_SAMPLE_READER(obj))));
 }
 
-static XEN g_free_track_sample_reader(XEN obj)
+
+/* tie into generic sample-reader procedures (snd-edits.c) */
+
+XEN g_free_track_sample_reader(XEN obj)
 {
-  #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader): free the track sample reader"
   track_fd *tf = NULL;
   int i;
-  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_track_sample_reader, "a track-sample-reader");
   tf = TO_TRACK_SAMPLE_READER(obj);
   if ((tf) && (tf->fds))
     {
@@ -7677,60 +7655,39 @@ static XEN g_free_track_sample_reader(XEN obj)
   return(xen_return_first(XEN_FALSE, obj));
 }
 
-#if 0
-XEN g_copy_track_sample_reader(XEN obj);
-XEN g_describe_track_sample_reader(XEN obj);
-XEN g_track_sample_reader_home(XEN obj);
-XEN g_track_sample_reader_at_end_p(XEN obj);
-XEN g_track_sample_reader_position(XEN obj);
-
 XEN g_copy_track_sample_reader(XEN obj)
 {
-  track_fd *tf, *new_tf;
-  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_copy_sample_reader, "a track-sample-reader");
-  tf = TO_TRACK_SAMPLE_READER(obj);
-  new_tf = init_track_read(?TRACK?, ?CHAN?, ?CURRENT_LOCATION?, false);
-  if (new_tf)
-    {
-      /* list all readers */
-      XEN_MAKE_AND_RETURN_OBJECT(tf_tag, new_tf, 0, free_tf);
-    }
-  return(xen_return_first(XEN_FALSE, obj));
-}
-
-XEN g_describe_track_sample_reader(XEN obj)
-{
-  XEN result;
-  char *desc;
   track_fd *tf;
-  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_describe_sample_reader, "a track-sample-reader");
   tf = TO_TRACK_SAMPLE_READER(obj);
-
-  FREE(desc);
-  return(result);
+  if (tf->loc != -1)
+    return(g_make_track_sample_reader(C_TO_XEN_INT(tf->track),
+				      C_TO_XEN_INT(tf->initial_chan),
+				      C_TO_XEN_OFF_T(tf->loc)));
+  return(XEN_FALSE);
 }
 
 XEN g_track_sample_reader_home(XEN obj)
 {
+  /* returns (list track-id initial-chan) */
   track_fd *tf;
-  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a track-sample-reader");
   tf = TO_TRACK_SAMPLE_READER(obj);
+  return(XEN_LIST_2(C_TO_XEN_INT(tf->track),
+		    C_TO_XEN_INT(tf->initial_chan)));
 }
 
 XEN g_track_sample_reader_at_end_p(XEN obj)
 {
   track_fd *tf;
-  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_at_end_p, "a track-sample-reader");
   tf = TO_TRACK_SAMPLE_READER(obj);
+  return(C_TO_XEN_BOOLEAN(tf->loc == -1));
 }
 
 XEN g_track_sample_reader_position(XEN obj)
 {
   track_fd *tf;
-  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_position, "a track-sample-reader");
   tf = TO_TRACK_SAMPLE_READER(obj);
+  return(C_TO_XEN_OFF_T(tf->loc));
 }
-#endif
 
 
 /* -------- mix/track dialog ---------------- */
@@ -7784,7 +7741,6 @@ static XEN g_track_dialog(void)
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_3(g_make_track_sample_reader_w, g_make_track_sample_reader)
 XEN_NARGIFY_1(g_read_track_sample_w, g_read_track_sample)
-XEN_NARGIFY_1(g_free_track_sample_reader_w, g_free_track_sample_reader)
 XEN_NARGIFY_1(g_tf_p_w, g_tf_p)
 XEN_ARGIFY_3(g_play_track_w, g_play_track)
 XEN_NARGIFY_1(g_free_track_w, g_free_track)
@@ -7821,7 +7777,6 @@ XEN_NARGIFY_0(g_track_dialog_w, g_track_dialog)
 #else
 #define g_make_track_sample_reader_w g_make_track_sample_reader
 #define g_read_track_sample_w g_read_track_sample
-#define g_free_track_sample_reader_w g_free_track_sample_reader
 #define g_tf_p_w g_tf_p
 #define g_play_track_w g_play_track
 #define g_free_track_w g_free_track
@@ -7873,7 +7828,6 @@ void g_init_track(void)
 
   XEN_DEFINE_PROCEDURE(S_make_track_sample_reader, g_make_track_sample_reader_w, 1, 2, 0, H_make_track_sample_reader);
   XEN_DEFINE_PROCEDURE(S_read_track_sample,        g_read_track_sample_w,        1, 0, 0, H_read_track_sample);
-  XEN_DEFINE_PROCEDURE(S_free_track_sample_reader, g_free_track_sample_reader_w, 1, 0, 0, H_free_track_sample_reader);
   XEN_DEFINE_PROCEDURE(S_track_sample_reader_p,    g_tf_p_w,                     1, 0, 0, H_tf_p);
   XEN_DEFINE_PROCEDURE(S_play_track,               g_play_track_w,               1, 2, 0, H_play_track);
   XEN_DEFINE_PROCEDURE(S_free_track,               g_free_track_w,               1, 0, 0, H_free_track);
@@ -7933,30 +7887,6 @@ void g_init_track(void)
    TODO: vct-map! and backtrace troubles in new guile
    TODO: is arglist autocode (gl.c) safe from gc?
    TODO: run non-gl case (test 25) through efence/new guile
-   SOMEDAY: describe-* [mix|mark|selection|sound|channel|track|cursor|region, gen|(mix,track)reader|
-                       player|(sound)file|key|plugin|hook|dialog(i.e. recorder)|audio]
-            [have mus-(audio|midi)-)describe, mark|instrument|hook]
-   SOMEDAY: copy-*? [have mix|track, vct-copy]
-
-   copy-mix-sample-reader: init_mix_read(md, false, current_location(mf->sfs[...mf->base?...]))
-   track|mix|region-sample-reader-position? home? at-end? -- or maybe generics here (i.e. sample-reader-home for all 4 types)
-    then copy is:
-      (make-mix-sample-reader 
-        (sample-reader-home mx) ; mix id
-        (sample-read-position mx))
-    and if track sample-reader-home returns (id chan):
-      (make-track-sample-reader 
-        (car (sample-reader-home tr))
-        (cadr (sample-reader-home tr))
-        (sample-reader-position tr)) -- this can't currently be done 
-    and if region sample-reader-home -> (reg chan) -- how to tell its a region reader?
-             sf->inuse = SOUND_READER (not unique)
-	     need another field somewhere to distinguish from sound, and reg/chan/etc
-	     there's also direct (deferred) reads -- this is currently not catchable
-      (make-region-sample-reader
-        (sample-reader-position rg)
-        (car (sample-reader-home rg))
-        (cadr (sample-reader-home rg)))
-    or generic copy|describe-sample-reader
-
+   SOMEDAY: copy-*? [have mix|track|region|sample-reader, vct-copy]
+   TODO: xref tables for copy
 */

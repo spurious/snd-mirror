@@ -244,6 +244,24 @@ static Float region_sample(int reg, int chn, off_t samp)
   return(0.0);
 }
 
+off_t region_current_location(snd_fd *fd)
+{
+  region *r;
+  deferred_region *drp;
+  r = id_to_region(fd->region);
+  switch (r->use_temp_file)
+    {
+    case REGION_FILE:
+      return(current_location(fd));
+      break;
+    case REGION_DEFERRED:
+      drp = r->dr;
+      return(current_location(fd) - drp->begs[0]);
+      break;
+    }
+  return(-1);
+}
+
 static void region_samples(int reg, int chn, off_t beg, off_t num, Float *data)
 {
   region *r;
@@ -1277,6 +1295,7 @@ selection is used."
 	  if (CURRENT_SAMPLES(si->cps[i]) - 1 < iend)
 	    ends[i] = CURRENT_SAMPLES(si->cps[i]) - 1;
 	  else ends[i] = iend;
+	  si->begs[i] = ibeg;
 	  if (ends[i] < ibeg) 
 	    {
 	      FREE(ends);

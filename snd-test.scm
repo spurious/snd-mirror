@@ -6951,8 +6951,7 @@ EDITS: 5
 	    (if (not (= (sample-reader-position vr) 0)) (snd-display ";initial sample-reader-position: ~A" (sample-reader-position vr)))
 	    (if (not (equal? (sample-reader-home vr) (list index 0))) 
 		(snd-display ";sample-reader-home: ~A ~A?" (sample-reader-home vr) (list index 0)))
-	    (if (not (string? (inspect-sample-reader vr)))
-		(snd-display ";inspect-sample-reader: ~A" (inspect-sample-reader vr)))
+	    (if (sample-reader-at-end? vr) (snd-display ";~A init at end?" vr))
 	    (let ((err (catch #t
 			      (lambda ()
 				(region-samples->vct -1 1233 r0))
@@ -6986,6 +6985,11 @@ EDITS: 5
 	  (if (not (eq? (car var) 'no-such-channel))
 	      (snd-display ";make-sample-reader bad chan (1): ~A, ~A" var index)))
 	(let ((fd (make-sample-reader 0)))
+	  (if (mix-sample-reader? fd) (snd-display ";sample-reader: mix ~A" fd))
+	  (if (region-sample-reader? fd) (snd-display ";sample-reader: region ~A" fd))
+	  (if (track-sample-reader? fd) (snd-display ";sample-reader: track ~A" fd))
+	  (if (not (sample-reader? fd)) (snd-display ";sample-reader: normal ~A" fd))
+	  (if (not (= (sample-reader-position fd) 0)) (snd-display ";sample-reader: position: ~A" fd))
 	  (free-sample-reader fd)
 	  (let ((str (format #f "~A" fd)))
 	    (if (not (string=? (substring str (- (string-length str) 16)) "at eof or freed>"))
@@ -14066,6 +14070,13 @@ EDITS: 5
 		  (amp (mix-amp mix-id 0))
 		  (mr (make-mix-sample-reader mix-id)))
 	      (if (not (mix-sample-reader? mr)) (snd-display ";~A not mix-sample-reader?" mr))
+	      (if (track-sample-reader? mr) (snd-display ";mix sample-reader: track ~A" mr))
+	      (if (region-sample-reader? mr) (snd-display ";mix sample-reader: region ~A" mr))
+	      (if (sample-reader? mr) (snd-display ";mix sample-reader: normal ~A" mr))
+	      (if (not (= (sample-reader-position mr) 0)) (snd-display ";mix sample reader position: ~A" (sample-reader-position mr)))
+	      (if (sample-reader-at-end? mr) (snd-display ";mix sample reader at end? ~A" mr))
+	      (if (not (equal? (sample-reader-home mr) mix-id))
+		  (snd-display ";~A home: ~A" mr (sample-reader-home mr)))
 	      (let ((reader-string (format #f "~A" mr)))
 		(if (not (string=? (substring reader-string 0 22) "#<mix-sample-reader mi"))
 		    (snd-display ";mix sample reader actually got: [~S]" (substring reader-string 0 22))))
@@ -14086,7 +14097,7 @@ EDITS: 5
 	      (let ((mx (mr))
 		    (sx (sample 199)))
 		(if (fneq mx sx) (snd-display ";mix-sample 100: ~A ~A?" mx sx)))
-	      (free-mix-sample-reader mr)
+	      (free-sample-reader mr)
 	      (if (not (= pos 100)) (snd-display ";mix-position: ~A?" pos))
 	      (if (not (= len 41623)) (snd-display ";mix-frames: ~A?" len))
 	      (if loc (snd-display ";mix-locked?: ~A?" loc))
@@ -14188,7 +14199,14 @@ EDITS: 5
 		   (reader-string (format #f "~A" mr)))
 	      (if (not (string=? (substring reader-string 0 24) "#<track-sample-reader tr"))
 		  (snd-display ";track sample reader actually got: [~S]" (substring reader-string 0 24)))
-	      (free-track-sample-reader mr))
+	      (if (not (= (sample-reader-position mr) 0)) (snd-display ";track sample reader position: ~A" (sample-reader-position mr)))
+	      (if (sample-reader-at-end? mr) (snd-display ";track sample reader at end? ~A" mr))
+	      (if (not (equal? (sample-reader-home mr) (list trk 0))) 
+		  (snd-display ";track ~A home: ~A" mr (sample-reader-home mr)))
+	      (if (mix-sample-reader? mr) (snd-display ";track sample-reader: mix ~A" mr))
+	      (if (region-sample-reader? mr) (snd-display ";track sample-reader: region ~A" mr))
+	      (if (sample-reader? mr) (snd-display ";track sample-reader: normal ~A" mr))
+	      (free-sample-reader mr))
 	    (let ((curend (track-end trk))
 		  (curframes (track-frames trk))
 		  (curmixpos (map mix-position (track trk)))
@@ -14301,8 +14319,8 @@ EDITS: 5
 	     (let ((val (read-track-sample tr1)))
 	       (if (fneq val (* .05 5))
 		   (snd-display ";track-sample-reader with beg: ~A ~A ~A" val (* 5 .05) tr1)))
-	     (free-track-sample-reader tr)
-	     (free-track-sample-reader tr1)
+	     (free-sample-reader tr)
+	     (free-sample-reader tr1)
 	     (save-sound ind)
 	     (if (not (mix? (vector-ref mxs 0)))
 		 (snd-display ";saved mixes not re-activated?"))
@@ -14332,7 +14350,7 @@ EDITS: 5
 		(if (= cur 1)
 		    (begin
 		      (vector-set! open-readers r (make-region-sample-reader (random 90) reg1))
-		      (if (not (sample-reader? (vector-ref open-readers r))) (snd-display ";region-sample-reader? ~A?" (vector-ref open-readers r)))
+		      (if (not (region-sample-reader? (vector-ref open-readers r))) (snd-display ";region-sample-reader? ~A?" (vector-ref open-readers r)))
 		      (next-sample (vector-ref open-readers r)))
 		    (if (= cur 2)
 			(begin
@@ -14349,8 +14367,8 @@ EDITS: 5
 		(let ((rr (random 100)))
 		  (if (vector-ref open-readers rr)
 		      (if (sample-reader? (vector-ref open-readers rr)) (free-sample-reader (vector-ref open-readers rr))
-			  (if (mix-sample-reader? (vector-ref open-readers rr)) (free-mix-sample-reader (vector-ref open-readers rr))
-			      (if (track-sample-reader? (vector-ref open-readers rr)) (free-track-sample-reader (vector-ref open-readers rr))))))
+			  (if (mix-sample-reader? (vector-ref open-readers rr)) (free-sample-reader (vector-ref open-readers rr))
+			      (if (track-sample-reader? (vector-ref open-readers rr)) (free-sample-reader (vector-ref open-readers rr))))))
 		  (vector-set! open-readers rr #f)))))
 	(do ((i 0 (1+ i)))
 	    ((= i 100))
@@ -16579,8 +16597,216 @@ EDITS: 5
 	    (set! trk (mix-track id0))
 	    (if (not (equal? (track trk) (list id0 id1)))
 		(snd-display ";pan-mix 1->4 track: ~A ~A" (track trk) id0))
-	    (close-sound ind))
-	  )
+	    (close-sound ind)))
+
+	(let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 2 "copy sample-reader tests" 1000)))
+	  (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 101 10 ind 0)
+	  (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 201 10 ind 1)
+	  (let ((rd1 (make-sample-reader 100 ind 0))
+		(rd2 (make-sample-reader 200 ind 1)))
+	    (rd1) (rd2) (rd1) (rd2)
+	    (let ((rd11 (copy-sample-reader rd1))
+		  (rd22 (copy-sample-reader rd2)))
+	      (if (or (not (sample-reader? rd11)) (not (sample-reader? rd22)))
+		  (snd-display ";copy-sample-reader (normal): ~A ~A" rd11 rd22))
+	      (if (or (mix-sample-reader? rd11) (mix-sample-reader? rd22)
+		      (track-sample-reader? rd11) (track-sample-reader? rd22)
+		      (region-sample-reader? rd11) (region-sample-reader? rd22))
+		  (snd-display ";copy sample-reader-p trouble: ~A ~A ~A ~A ~A ~A"
+			       (mix-sample-reader? rd11) (mix-sample-reader? rd22)
+			       (track-sample-reader? rd11) (track-sample-reader? rd22)
+			       (region-sample-reader? rd11) (region-sample-reader? rd22)))
+	      (if (or (not (equal? (sample-reader-home rd11) (list ind 0)))
+		      (not (equal? (sample-reader-home rd22) (list ind 1))))
+		  (snd-display ";copy normal reader home: ~A ~A" (sample-reader-home rd11) (sample-reader-home rd22)))
+	      (if (or (sample-reader-at-end? rd11) (sample-reader-at-end? rd22))
+		  (snd-display ";copy normal reader end?: ~A ~A" (sample-reader-at-end? rd11) (sample-reader-at-end? rd22)))
+	      (if (or (not (= (sample-reader-position rd11) (sample-reader-position rd1) 102))
+		      (not (= (sample-reader-position rd22) (sample-reader-position rd2) 202)))
+		  (snd-display ";copy normal reader position: ~A ~A ~A ~A" 
+			       (sample-reader-position rd11) (sample-reader-position rd1)
+			       (sample-reader-position rd22) (sample-reader-position rd2)))
+	      (call-with-current-continuation
+	       (lambda (break)
+		 (let ((v1 (vct .2 .3 .4 .5 .6 .7 .8 .9 1.0 0.0 0.0 0.0)))
+		   (do ((i 0 (1+ i)))
+		       ((= i 10))
+		     (let ((rd1v (rd1))
+			   (rd11v (rd11))
+			   (rd2v (next-sample rd2))
+			   (rd22v (read-sample rd22)))
+		       (if (or (fneq rd1v rd11v)
+			       (fneq rd1v (vct-ref v1 i))
+			       (fneq rd2v rd22v)
+			       (fneq rd2v (vct-ref v1 i)))
+			   (begin
+			     (snd-display ";copy sample reader vals at ~A: ~A ~A ~A ~A ~A"
+					  i rd1v rd11v rd2v rd22v (vct-ref v1 i))
+			     (break))))))))
+	      (free-sample-reader rd1)
+	      (free-sample-reader rd11)))
+	  (let ((mx1 (mix-vct (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 95 ind 0))
+		(mx2 (mix-vct (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 195 ind 1)))
+	    (let ((mx1rd (make-mix-sample-reader mx1 2))
+		  (mx2rd (make-mix-sample-reader mx2 4)))
+	      (mx1rd)
+	      (mx1rd)
+	      (let ((val1 (mx1rd))
+		    (val2 (mx2rd)))
+		(if (or (fneq val1 val2)
+			(fneq val2 .5))
+		    (snd-display ";precopy-mix-sample-reader vals: ~A ~A" val1 val2))
+		(let ((mx11rd (copy-sample-reader mx1rd))
+		      (mx22rd (copy-sample-reader mx2rd)))
+		  (if (or (not (mix-sample-reader? mx11rd)) (not (mix-sample-reader? mx22rd)))
+		      (snd-display ";copy-sample-reader (mix): ~A ~A" mx11rd mx22rd))
+		  (if (or (sample-reader? mx11rd) (sample-reader? mx22rd)
+			  (track-sample-reader? mx11rd) (track-sample-reader? mx22rd)
+			  (region-sample-reader? mx11rd) (region-sample-reader? mx22rd))
+		      (snd-display ";copy mix sample-reader-p trouble: ~A ~A ~A ~A ~A ~A"
+				   (sample-reader? mx11rd) (sample-reader? mx22rd)
+				   (track-sample-reader? mx11rd) (track-sample-reader? mx22rd)
+				   (region-sample-reader? mx11rd) (region-sample-reader? mx22rd)))
+		  (if (or (not (equal? (sample-reader-home mx11rd) mx1))
+			  (not (equal? (sample-reader-home mx22rd) mx2)))
+		      (snd-display ";copy mix reader home: ~A ~A" (sample-reader-home mx11rd) (sample-reader-home mx22rd)))
+		  (if (or (sample-reader-at-end? mx11rd) (sample-reader-at-end? mx22rd))
+		      (snd-display ";copy mix reader end?: ~A ~A" (sample-reader-at-end? mx11rd) (sample-reader-at-end? mx22rd)))
+		  (if (or (not (= (sample-reader-position mx11rd) (sample-reader-position mx1rd) 5))
+			  (not (= (sample-reader-position mx22rd) (sample-reader-position mx2rd) 5)))
+		      (snd-display ";copy mix reader position: ~A ~A ~A ~A" 
+				   (sample-reader-position mx11rd) (sample-reader-position mx1rd)
+				   (sample-reader-position mx22rd) (sample-reader-position mx2rd)))
+		  (let ((tag (catch 'wrong-type-arg
+				    (lambda () (next-sample mx11rd))
+				    (lambda args (car args)))))
+		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";next-sample of mix reader: ~A" tag)))
+		  (call-with-current-continuation
+		   (lambda (break)
+		     (let ((v1 (vct .6 .7 .8 .9 1.0 0.0 0.0 0.0)))
+		       (do ((i 0 (1+ i)))
+			   ((= i 6))
+			 (let ((mx1rdv (mx1rd))
+			       (mx11rdv (mx11rd))
+			       (mx2rdv (read-mix-sample mx2rd))
+			       (mx22rdv (read-mix-sample mx22rd)))
+			   (if (or (fneq mx1rdv mx11rdv)
+				   (fneq mx1rdv (vct-ref v1 i))
+				   (fneq mx2rdv mx22rdv)
+				   (fneq mx2rdv (vct-ref v1 i)))
+			       (begin
+				 (snd-display ";copy mix sample reader vals at ~A: ~A ~A ~A ~A ~A"
+					      i mx1rdv mx11rdv mx2rdv mx22rdv (vct-ref v1 i))
+				 (break))))))))
+		  (free-sample-reader mx1rd)
+		  (free-sample-reader mx11rd))))
+	    (let ((trk (make-track)))
+	      (set! (mix-track mx1) trk)
+	      (set! (mix-track mx2) trk)
+	      (let ((mx1rd (make-track-sample-reader trk 0 2))
+		    (mx2rd (make-track-sample-reader trk 1 4)))
+		(mx1rd)
+		(mx1rd)
+		(let ((val1 (mx1rd))
+		      (val2 (mx2rd)))
+		  (if (or (fneq val1 val2)
+			  (fneq val2 .5))
+		      (snd-display ";precopy-track-sample-reader vals: ~A ~A" val1 val2))
+		  (let ((mx11rd (copy-sample-reader mx1rd))
+			(mx22rd (copy-sample-reader mx2rd)))
+		    (if (or (not (track-sample-reader? mx11rd)) (not (track-sample-reader? mx22rd)))
+			(snd-display ";copy-sample-reader (track): ~A ~A" mx11rd mx22rd))
+		    (if (or (sample-reader? mx11rd) (sample-reader? mx22rd)
+			    (mix-sample-reader? mx11rd) (mix-sample-reader? mx22rd)
+			    (region-sample-reader? mx11rd) (region-sample-reader? mx22rd))
+			(snd-display ";copy track sample-reader-p trouble: ~A ~A ~A ~A ~A ~A"
+				     (sample-reader? mx11rd) (sample-reader? mx22rd)
+				     (mix-sample-reader? mx11rd) (mix-sample-reader? mx22rd)
+				     (region-sample-reader? mx11rd) (region-sample-reader? mx22rd)))
+		    (if (or (not (equal? (sample-reader-home mx11rd) (list trk 0)))
+			    (not (equal? (sample-reader-home mx22rd) (list trk 1))))
+			(snd-display ";copy track reader home: ~A ~A" (sample-reader-home mx11rd) (sample-reader-home mx22rd)))
+		    (if (or (sample-reader-at-end? mx11rd) (sample-reader-at-end? mx22rd))
+			(snd-display ";copy track reader end?: ~A ~A" (sample-reader-at-end? mx11rd) (sample-reader-at-end? mx22rd)))
+		    (if (or (not (= (sample-reader-position mx11rd) (sample-reader-position mx1rd) 5))
+			    (not (= (sample-reader-position mx22rd) (sample-reader-position mx2rd) 5)))
+			(snd-display ";copy track reader position: ~A ~A ~A ~A" 
+				     (sample-reader-position mx11rd) (sample-reader-position mx1rd)
+				     (sample-reader-position mx22rd) (sample-reader-position mx2rd)))
+		    (let ((tag (catch 'wrong-type-arg
+				      (lambda () (next-sample mx11rd))
+				      (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";next-sample of track reader: ~A" tag)))
+		    (call-with-current-continuation
+		     (lambda (break)
+		       (let ((v1 (vct .6 .7 .8 .9 1.0 0.0 0.0 0.0)))
+			 (do ((i 0 (1+ i)))
+			     ((= i 6))
+			   (let ((mx1rdv (mx1rd))
+				 (mx11rdv (mx11rd))
+				 (mx2rdv (read-track-sample mx2rd))
+				 (mx22rdv (read-track-sample mx22rd)))
+			     (if (or (fneq mx1rdv mx11rdv)
+				     (fneq mx1rdv (vct-ref v1 i))
+				     (fneq mx2rdv mx22rdv)
+				     (fneq mx2rdv (vct-ref v1 i)))
+				 (begin
+				   (snd-display ";copy track sample reader vals at ~A: ~A ~A ~A ~A ~A"
+						i mx1rdv mx11rdv mx2rdv mx22rdv (vct-ref v1 i))
+				   (break))))))))
+		    (free-sample-reader mx1rd)
+		    (free-sample-reader mx11rd))))))
+	  (set! (sync ind) 1)
+	  (let ((reg (make-region 90 220 ind #t)))
+	    (if (not (= (region-frames reg) (1+ (- 220 90)))) (snd-display ";make-region frames: ~A" (region-frames reg)))
+	    (if (not (= (region-chans reg) 2)) (snd-display ";make-region chans: ~A" (region-chans reg)))
+	    
+	    ;; beg = 0, chan 2 not highlighted
+	    
+	    (let ((rd1 (make-region-sample-reader 0 reg 0))
+		  (rd2 (make-region-sample-reader 100 reg 1)))
+	      (let ((rd11 (copy-sample-reader rd1))
+		    (rd22 (copy-sample-reader rd2)))
+		(if (or (not (region-sample-reader? rd11)) (not (region-sample-reader? rd22)))
+		    (snd-display ";copy-sample-reader (region): ~A ~A" rd11 rd22))
+		(if (or (mix-sample-reader? rd11) (mix-sample-reader? rd22)
+			(track-sample-reader? rd11) (track-sample-reader? rd22)
+			(sample-reader? rd11) (sample-reader? rd22))
+		    (snd-display ";copy (region) sample-reader-p trouble: ~A ~A ~A ~A ~A ~A"
+				 (mix-sample-reader? rd11) (mix-sample-reader? rd22)
+				 (track-sample-reader? rd11) (track-sample-reader? rd22)
+				 (sample-reader? rd11) (sample-reader? rd22)))
+		(if (or (not (equal? (sample-reader-home rd11) (list reg 0)))
+			(not (equal? (sample-reader-home rd22) (list reg 1))))
+		    (snd-display ";copy region reader home: ~A ~A" (sample-reader-home rd11) (sample-reader-home rd22)))
+		(if (or (sample-reader-at-end? rd11) (sample-reader-at-end? rd22))
+		    (snd-display ";copy region reader end?: ~A ~A" (sample-reader-at-end? rd11) (sample-reader-at-end? rd22)))
+		(if (or (not (= (sample-reader-position rd11) (sample-reader-position rd1) 0))
+			(not (= (sample-reader-position rd22) (sample-reader-position rd2) 100)))
+		    (snd-display ";copy region reader position: ~A ~A ~A ~A" 
+				 (sample-reader-position rd11) (sample-reader-position rd1)
+				 (sample-reader-position rd22) (sample-reader-position rd2)))
+		(call-with-current-continuation
+		 (lambda (break)
+		   (let ((v1 (vct 0.000 0.000 0.000 0.000 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.800 1.000 1.200 1.400 0.500 0.600 0.700 0.800 0.900)))
+		     (do ((i 0 (1+ i)))
+			 ((= i 20))
+		       (let ((rd1v (rd1))
+			     (rd11v (rd11))
+			     (rd2v (read-region-sample rd2))
+			     (rd22v (read-region-sample rd22)))
+			 (if (or (fneq rd1v rd11v)
+				 (fneq rd1v (vct-ref v1 i))
+				 (fneq rd2v rd22v)
+				 (fneq rd2v (vct-ref v1 i)))
+			     (begin
+			       (snd-display ";copy region sample reader vals at ~A: ~A ~A ~A ~A ~A"
+					    i rd1v rd11v rd2v rd22v (vct-ref v1 i))
+			       (break))))))))
+		(free-sample-reader rd1)
+		(free-sample-reader rd11))))
+	  (close-sound ind))
+	
 	(set! (with-mix-tags) old-with-mix-tags))
       
       (run-hook after-test-hook 9)
@@ -17592,9 +17818,7 @@ EDITS: 5
 	      (close-sound ind)
 	      (if (not (sample-reader? hi)) (snd-display ";dangling reader? ~A" hi))
 	      (let ((name (format #f "~A" hi)))
-		(if (not (string? name)) (snd-display ";dangling reader format: ~A" name))
-		(set! name (inspect-sample-reader hi))
-		(if (not (string? name)) (snd-display ";dangling reader inspect: ~A" name)))
+		(if (not (string? name)) (snd-display ";dangling reader format: ~A" name)))
 	      (let* ((val (hi))
 		     (val1 (next-sample hi))
 		     (val2 (previous-sample hi))
@@ -17613,9 +17837,7 @@ EDITS: 5
 	      (delete-samples 100 100)
 	      (if (not (sample-reader? hi)) (snd-display ";pruned dangling reader? ~A" hi))
 	      (let ((name (format #f "~A" hi)))
-		(if (not (string? name)) (snd-display ";pruned dangling reader format: ~A" name))
-		(set! name (inspect-sample-reader hi))
-		(if (not (string? name)) (snd-display ";pruned dangling reader inspect: ~A" name)))
+		(if (not (string? name)) (snd-display ";pruned dangling reader format: ~A" name)))
 	      (let* ((val (hi))
 		     (val1 (next-sample hi))
 		     (val2 (previous-sample hi))
@@ -17630,6 +17852,13 @@ EDITS: 5
 	  (let* ((ind (open-sound "oboe.snd"))
 		 (reg (make-region 1000 2000 ind 0))
 		 (rd (make-region-sample-reader 0 reg)))
+	    (if (mix-sample-reader? rd) (snd-display ";region sample-reader: mix ~A" rd))
+	    (if (not (region-sample-reader? rd)) (snd-display ";region sample-reader: region ~A" rd))
+	    (if (track-sample-reader? rd) (snd-display ";region sample-reader: track ~A" rd))
+	    (if (sample-reader? rd) (snd-display ";region sample-reader: normal ~A" rd))
+	    ;(if (not (= (sample-reader-position rd) 0)) (snd-display ";region sample-reader position: ~A" (sample-reader-position rd)))
+	    (if (not (equal? (sample-reader-home rd) (list reg 0))) (snd-display ";region sample-reader home: ~A" (sample-reader-home rd)))
+	    (if (sample-reader-at-end? rd) (snd-display ";region sample-reader at end?: ~A" (sample-reader-at-end? rd)))
 	    (let ((val (rd)))
 	      (if (fneq val .0328) (snd-display ";region-sample-reader at start: ~A" val))
 	      (if (not (string? (format #f "~A" rd))) (snd-display ";region-sample-reader: ~A" (format #f "~A" rd)))
@@ -17664,7 +17893,7 @@ EDITS: 5
 		  (if (not (string=? str "#<mix-sample-reader: inactive>")) (snd-display ";mix-sample-reader released: ~A" str))
 		  (set! val (read-mix-sample rd))
 		  (if (fneq val 0.0) (snd-display ";mix-sample-reader at end: ~A" val))
-		  (free-mix-sample-reader rd))))
+		  (free-sample-reader rd))))
 	    ;; track reader
 	    (let* ((ind (open-sound "oboe.snd"))
 		   (reg (make-region 1000 2000 ind 0))
@@ -17684,7 +17913,7 @@ EDITS: 5
 		    (if (not (string? str)) (snd-display ";track-sample-reader released: ~A" str))
 		    (set! val (read-track-sample rd))
 		    (if (fneq val 0.0) (snd-display ";track-sample-reader at end: ~A" val))
-		    (free-track-sample-reader rd)
+		    (free-sample-reader rd)
 		    (for-each
 		     (lambda (n b)
 		       (let ((tag (catch #t
@@ -17721,7 +17950,7 @@ EDITS: 5
 		    (if (not (string? str)) (snd-display ";track-sample-reader (2) released: ~A" str))
 		    (set! val (read-track-sample rd))
 		    (if (fneq val 0.0) (snd-display ";track-sample-reader (2) at end: ~A" val))
-		    (free-track-sample-reader rd))))))
+		    (free-sample-reader rd))))))
 	  
 	  (let ((sfiles '())
 		(ffiles '()))
@@ -33291,6 +33520,7 @@ EDITS: 2
 		  (begin
 		    (delete-file "fmv1.snd")
 		    (mus-sound-forget "fmv1.snd")))
+	      (if (not (sound? ind)) (set! ind (open-sound "4.aiff")))
 	      (select-sound ind)
 	      (select-channel 1)
 	      (set! (selection-member? #t) #f)
@@ -33620,6 +33850,7 @@ EDITS: 2
 		      (click-button amp-button) (force-event)
 		      (if (not (= (enved-target) enved-amplitude))
 			  (snd-display ";click flt button but target: ~A" (enved-target)))
+		      (XtSetKeyboardFocus (enved-dialog) apply-button)
 		      (click-button apply-button) (force-event)
 		      (if (not (equal? (edits ind) '(1 0)))
 			  (snd-display ";apply amp: ~A?" (edits ind)))
@@ -33635,6 +33866,7 @@ EDITS: 2
 		      (if (not (equal? (edits ind) '(1 0)))
 			  (snd-display ";undo-apply amp: ~A?" (edits ind)))
 		      (click-button flt-button) (force-event)
+		      (XtSetKeyboardFocus (enved-dialog) apply-button)
 		      (click-button apply-button) (force-event)
 		      (if (not (equal? (edits ind) '(2 0)))
 			  (snd-display ";apply flt: ~A?" (edits ind)))
@@ -33648,6 +33880,7 @@ EDITS: 2
 		      (widget-string text-widget "'(0 .5 1 .4)") (force-event)
 		      (key-event text-widget snd-return-key 0) (force-event)
 		      (click-button src-button) (force-event)
+		      (XtSetKeyboardFocus (enved-dialog) apply-button)
 		      (click-button apply-button) (force-event)
 		      (if (not (equal? (edits ind) '(3 0)))
 			  (snd-display ";apply src: ~A?" (edits ind)))
@@ -33884,6 +34117,7 @@ EDITS: 2
 		  ;; ---------------- error dialog ----------------
 		  (let ((errord (list-ref (dialog-widgets) 3)))
 		    (XtManageChild errord)
+		    (XtSetKeyboardFocus errord (XmMessageBoxGetChild errord XmDIALOG_OK_BUTTON))
 		    (click-button (XmMessageBoxGetChild errord XmDIALOG_OK_BUTTON)) (force-event)
 		    (if (XtIsManaged errord)
 			(snd-display ";why is error dialog alive?")))
@@ -33970,6 +34204,7 @@ EDITS: 2
 				      (XmListSelectPos w (+ kaiser-window 1) #t)
 				      (if (not (= (fft-window) kaiser-window))
 					  (snd-display ";fft-window kaiser: ~A ~A" (fft-window) kaiser-window)))))
+		    (XtSetKeyboardFocus transd (XmMessageBoxGetChild transd XmDIALOG_OK_BUTTON))
 		    (click-button (XmMessageBoxGetChild transd XmDIALOG_OK_BUTTON)) (force-event)
 		    (if (XtIsManaged transd)
 			(snd-display ";why is transform dialog active?")))
@@ -34270,6 +34505,7 @@ EDITS: 2
 			(XtCallCallbacks name XmNactivateCallback (snd-global-state)))
 		      (click-button (XmMessageBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event)     ;clear
 		      (set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG)))
+		      (XtSetKeyboardFocus filed (XmMessageBoxGetChild filed XmDIALOG_OK_BUTTON))
 		      (click-button (XmMessageBoxGetChild filed XmDIALOG_OK_BUTTON)) (force-event)
 		      (reset-hook! mouse-enter-label-hook)
 		      (reset-hook! mouse-leave-label-hook)
@@ -34416,6 +34652,7 @@ EDITS: 2
 		      (XmUpdateDisplay srtxt)
 		      (XmTextSetString loctxt "44")
 		      (XmTextSetString comtxt "saved from edit-header dialog")
+		      (XtSetKeyboardFocus editd (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON))
 		      (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
 		      (set! ind (find-sound "fmv.snd"))
 		      (if (not (= (header-type ind) mus-riff))
@@ -34464,6 +34701,7 @@ EDITS: 2
 			   (edit-header-dialog)
 			   (if com (XmTextSetString comtxt com))
 			   (XmTextSetString chtxt (number->string chns))
+			   (XtSetKeyboardFocus editd (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON))
 			   (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
 			   (set! ind (find-sound "test.aiff"))
 			   (if com
@@ -34632,6 +34870,7 @@ EDITS: 2
 			(key-event trktxt snd-return-key 0) (force-event)
 			(widget-string idtxt "2") (force-event)
 			(key-event idtxt snd-return-key 0) (force-event)
+			(XtSetKeyboardFocus mixd (XmMessageBoxGetChild mixd XmDIALOG_OK_BUTTON))
 			(click-button (XmMessageBoxGetChild mixd XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
 			(if (XtIsManaged mixd)
 			    (snd-display ";why is mix-dialog dialog alive?"))))
@@ -34699,6 +34938,7 @@ EDITS: 2
 			(key-event trktxt snd-return-key 0) (force-event)
 			(widget-string idtxt "2") (force-event)
 			(key-event idtxt snd-return-key 0) (force-event)
+			(XtSetKeyboardFocus trackd (XmMessageBoxGetChild trackd XmDIALOG_OK_BUTTON))
 			(click-button (XmMessageBoxGetChild trackd XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
 			(if (XtIsManaged trackd)
 			    (snd-display ";why is track-dialog dialog alive?"))))
@@ -34725,6 +34965,7 @@ EDITS: 2
 			      (if (not (file-exists? "test.eps"))
 				  (snd-display ";print -> test.eps?")
 				  (delete-file "test.eps"))
+			      (XtSetKeyboardFocus printd (XmMessageBoxGetChild printd XmDIALOG_CANCEL_BUTTON))
 			      (click-button (XmMessageBoxGetChild printd XmDIALOG_CANCEL_BUTTON))
 			      (if (XtIsManaged printd)
 				  (snd-display ";why is print dialog alive?"))))
@@ -39285,7 +39526,7 @@ EDITS: 2
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-env enved-filter-order enved-filter
 		     filter-env-in-hz filter-control-order filter-selection filter-waveform-color filter-control? find
 		     find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
-		     frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
+		     frames free-sample-reader graph
 		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
 		     help-dialog info-dialog highlight-color in insert-region insert-sample insert-samples
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
@@ -39325,7 +39566,7 @@ EDITS: 2
 		     spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		     speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
 		     start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
-		     text-focus-color tiny-font track-sample-reader?  transform-dialog transform-sample
+		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
 		     transform-samples->vct transform-samples-size transform-type trap-segfault optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound
 		     vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
@@ -39405,7 +39646,7 @@ EDITS: 2
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
 			 mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
-			 mix-amp-env mix-tag-position mix-chans mix-color mix-track mix-locked? mix-inverted? mix-position
+			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-position
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height transform-normalization
 			 equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color
 			 recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
@@ -39428,14 +39669,11 @@ EDITS: 2
 			 y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-x1 mus-x2 mus-y1 mus-y2 mus-array-print-length 
 			 mus-b1 mus-b2 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
-			 
 			 beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 
 			 previous-files-sort-procedure pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
-
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
-
-			 track-amp track-position track-speed track-tempo track-amp-env track-track track-color
+			 track-amp track-position track-speed track-tempo track-amp-env track-color
 			 ))
       
       (define make-procs (list
@@ -39632,7 +39870,7 @@ EDITS: 2
 					mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 					sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? table-lookup? 
 					triangle-wave? two-pole? two-zero? wave-train? waveshape? color? mix-sample-reader? 
-					sample-reader? track-sample-reader? vct? )))
+					sample-reader? track-sample-reader? region-sample-reader? vct? )))
 		      (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
 	    (gc)
 	    
@@ -39649,7 +39887,7 @@ EDITS: 2
 			    mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			    sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? table-lookup? 
 			    triangle-wave? two-pole? two-zero? wave-train? waveshape? sound? color? mix-sample-reader? 
-			    sample-reader? track-sample-reader? vct?))
+			    sample-reader? track-sample-reader? region-sample-reader? vct?))
 	    
 	    (for-each (lambda (n)
 			(let ((tag
@@ -39691,12 +39929,7 @@ EDITS: 2
 			    (if (not (eq? tag 'no-such-track))
 				(snd-display ";set track ~A: ~A" n tag))))
 			(list track-amp track-position track-speed track-tempo track-amp-env track-track track-color)
-			(list 1.0 0 1.0 1.0 '(0 0 1 1) (1- trk) (make-color 1 0 0)))
-	      (let ((tag (catch #t
-				(lambda () (set! (track-track trk) (1+ trk)))
-				(lambda args (car args)))))
-		(if (not (eq? tag 'no-such-track))
-		    (snd-display ";set! track-track: ~A" tag))))
+			(list 1.0 0 1.0 1.0 '(0 0 1 1) (1- trk) (make-color 1 0 0))))
 
 	    (for-each (lambda (arg)
 			(let ((ctr 0))

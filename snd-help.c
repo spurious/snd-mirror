@@ -378,6 +378,9 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+25-Nov:  copy-sample-reader, region-sample-reader?, read-region-sample.\n\
+         removed free-mix|track-sample-reader (use free-sample-reader).\n\
+         sample-reader-position|home|at-end? are generic.\n\
 24-Nov:  snd 7.0.\n\
 20-Nov:  track-tempo.\n\
 17-Nov:  mix-dialog-mix, track-dialog-track, mix-inverted?\n\

@@ -1,6 +1,6 @@
 dnl Configuration script for Snd
 
-AC_INIT(snd, 7.0, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
+AC_INIT(snd, 7.1, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)

@@ -2626,33 +2626,25 @@ data is:</p>
 <p>There is a similar set of functions giving access to the mix data.
 <i>make-mix-sample-reader</i> returns a mix reader for the desired mix,
 <i>mix-sample-reader?</i> returns #t if its argument in a mix sample reader,
-<i>read-mix-sample</i> returns the next sample (before it is mixed into
-the output), and <i>free-mix-sample-reader</i> releases a reader.
+and <i>read-mix-sample</i> returns the next sample (before it is mixed into
+the output).
 Mixes can be collected into tracks, so there are also <i>make-track-sample-reader</i>, <i>track-sample-reader?</i>,
-<i>read-track-sample</i>, and <i>free-track-sample-reader</i>.
+and <i>read-track-sample</i>.
 </p>
 
 <!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
 
 <table border=0 cellspacing=10>
 
-<!-- free-mix-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="freemixsamplereader">free-mix-sample-reader</a></em> (obj)</code></span></td></tr>
+<!-- copy-sample-reader -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="copysamplereader">copy-sample-reader</a></em> (obj)</code></span></td></tr>
 <tr><td width=50><br></td>
-<td>release mix-sample-reader <i>obj</i>.</td></tr>
+<td>return a copy of <i>obj</i> (any kind of sample-reader).
+</td></tr>
 
 <!-- free-sample-reader -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="freesamplereader">free-sample-reader</a></em> (obj)</code></span></td></tr>
-<tr><td></td><td>release sample-reader <i>obj</i>.</td></tr>
-
-<!-- free-track-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="freetracksamplereader">free-track-sample-reader</a></em> (obj)</code></span></td></tr>
-<tr><td></td>
-<td>release track-sample-reader <i>obj</i>.</td></tr>
-
-<!-- inspect-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="inspectsamplereader">inspect-sample-reader</a></em> (obj)</code></span></td></tr>
-<tr><td></td><td>This is mainly a debugging aid; it returns a string with much internal info about the sample-reader <i>obj</i>.</td></tr>
+<tr><td></td><td>release sample-reader <i>obj</i> (any kind of reader).</td></tr>
 
 <!-- make-mix-sample-reader -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="makemixsamplereader">make-mix-sample-reader</a></em> (mix <i>beg</i>)</code></span></td></tr>
@@ -2711,42 +2703,53 @@ can read external sounds without going to the trouble of loading them into Snd.
 <tr><td></td><td>#t if <i>obj</i> is a mix-sample-reader.</td></tr>
 
 <!-- next-sample -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="nextsample">next-sample</a></em>       (obj)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="nextsample">next-sample</a></em> (obj)</code></span></td></tr>
 <tr><td></td><td>return next sample (reading forward) read by sample-reader <i>obj</i>.</td></tr>
 
 <!-- previous-sample -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="previoussample">previous-sample</a></em>   (obj)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="previoussample">previous-sample</a></em> (obj)</code></span></td></tr>
 <tr><td></td><td>return previous sample in stream read by sample-reader <i>obj</i>.</td></tr>
 
-<!-- read-sample -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="readsample">read-sample</a></em>       (obj)</code></span></td></tr>
-<tr><td></td><td>return next sample (reading in the direction set by make-sample-reader) from sample-reader <i>obj</i>.</td></tr>
-
 <!-- read-mix-sample -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="readmixsample">read-mix-sample</a></em>   (obj)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="readmixsample">read-mix-sample</a></em> (obj)</code></span></td></tr>
 <tr><td></td><td>return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
+
+<!-- read-region-sample -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="readregionsample">read-region-sample</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>return next sample read by region-sample-reader <i>obj</i>.</td></tr>
+
+<!-- read-sample -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="readsample">read-sample</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>return next sample (reading in the direction set by make-sample-reader) from sample-reader <i>obj</i>.</td></tr>
 
 <!-- read-track-sample -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="readtracksample">read-track-sample</a></em> (obj)</code></span></td></tr>
 <tr><td></td><td>return next sample read by track-sample-reader <i>obj</i>.</td></tr>
 
+<!-- region-sample-reader? -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="regionsamplereaderQ">region-sample-reader?</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>#t if <i>obj</i> is a region sample-reader.</td></tr>
+
 <!-- sample-reader-at-end? -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderatendQ">sample-reader-at-end?</a></em> (obj)</code></span></td></tr>
-<tr><td></td><td>#t if sample-reader <i>obj</i> is at the end of the sound (and hence returning 0.0 each time it is called).
+<tr><td></td><td>#t if sample-reader <i>obj</i> (any kind of reader) is at the end of the sound (or whatever it is reading),
+and hence is returning 0.0 each time it is called.
 See <a href="#scanagain">scan-again</a> and <a href="newcp">find-zero</a>.
 </td></tr>
 
 <!-- sample-reader-home -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderhome">sample-reader-home</a></em> (obj)</code></span></td></tr>
-<tr><td></td><td>return a list with the sound index and channel number associated with <i>obj</i>.</td></tr>
+<tr><td></td><td>if <i>obj</i> is a sound sample reader, return a list with the sound index and channel number associated with <i>obj</i>.
+If it is a mix reader, return the mix's id.  If it is a track reader, return a list with the track id and channel number.
+</td></tr>
 
 <!-- sample-reader-position -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderposition">sample-reader-position</a></em> (obj)</code></span></td></tr>
-<tr><td></td><td>current (sample-wise) location of sample-reader <i>obj</i>.  See <a href="#scanagain">scan-again</a>.
+<tr><td></td><td>current (sample-wise) location of sample-reader <i>obj</i> (any kind of reader).  See <a href="#scanagain">scan-again</a>.
 </td></tr>
 
 <!-- sample-reader? -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderQ">sample-reader?</a></em>    (obj)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderQ">sample-reader?</a></em> (obj)</code></span></td></tr>
 <tr><td></td><td>#t if <i>obj</i> is a sample-reader.</td></tr>
 
 <!-- track-sample-reader? -->
@@ -3341,7 +3344,7 @@ the portion of the track env that happens to fall over it.  Use #f to reset it t
 Anything that changes the track's bounds causes the track envelope to be reapplied; there are many ways
 this can happen implicitly: set mix-track, mix-position, mix-speed (of a constituent mix), track-position,
 track-speed, and track-tempo; even make-track if it steals away one of our member mixes.
-If a mix in a track has set the <a href="#mixinverted">mix-inverted?</a> flag, the
+If a mix in a track has set the <a href="#sndmixinverted">mix-inverted?</a> flag, the
 first track envelope in its track chain is inverted, thereby interpreting the
 track envelope as a panning control.
 </td></tr>

@@ -1,5 +1,8 @@
 Snd change log
 
+  25-Nov:    copy-sample-reader, read-region-sample, region-sample-reader?.
+             removed free-mix|track-sample-reader (use free-sample-reader).
+             sample-reader-position|home|at-end? are generic.
   24-Nov:    snd 7.0.
   20-Nov:    track-tempo.
   17-Nov:    mix-dialog-mix, track-dialog-track, mix-inverted?
