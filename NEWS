@@ -1,0 +1,40 @@
+Snd 7.5
+
+snd-hobbit.scm from Kjetil -- support for the Hobbit Scheme compiler in Snd!
+  gtk support in fft-menu.scm (and many other improvements) thanks to Kjetil
+
+Steve Sykes got Snd to run in Cygwin/Windows (with Guile and Motif)!
+
+configure switch --with-doc-dir (for gentoo)
+  also new variables GUILE_CONFIG_name and GUILE_name (for OSX/fink)
+
+The Snd/sndlib/CLM build process now requires configure -> config.h.
+  for the case of CLM on the old Mac (OS9 etc),  it might work to just 
+    make an empty file named config.h
+  in the CL CLM, you can force configure to run with the *feature* #+reconfigure
+
+removed stop-playing-region-hook, stop-playing-channel-hook, before-apply-hook
+  added stop-function arg to play, play-and-wait, play-selection, play-region, add-player
+  cursor-update-interval (tracking cursor redraw rate if it is tracking the DAC)
+  cursor-location-offset (tracking cursor position fixup)
+
+added add-colormap, delete-colormap, colormap-size, colormap-name, changed colormap-ref
+  removed 2 previously built-in colormaps, added rainbow colormap
+  default colormap is 0 (black and white)
+  new error: 'no-such-colormap
+
+ssb-am generator in CLM
+  ssb-bank (dsp.scm) for pitch/duration changes, ssb-bank-env to add freq env
+  ssb-fm
+  distribution arg to make-rand, make-rand-interp
+  removed mus-x*|y*|a*|b*, replaced by mus-x|ycoeff
+
+periodogram in dsp.scm
+  edot-product (clm.c) (for DFT-related stuff like stretch-sound-via-dft)
+  read-ascii (examp.scm) (raw text as sound file data format)
+  complex number support in xen (xen.h) (in Guile -- I don't think Ruby has complex numbers)
+
+checked: cmucl 19a, gtk 2.4.2|3, sbcl 0.8.11
+
+With much help from: Kjetil S. Matheussen, Anders Vinjar, Michael Edwards,
+  Stephen Sykes, Cris Ewing, Meino Cramer, Heinrich Gudenus
