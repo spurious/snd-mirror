@@ -144,7 +144,6 @@ static const char *mus_audio_format_name(int fr)
   return("invalid format");
 }
 
-
 static char *audio_strbuf = NULL; /* previous name "strbuf" collides with Mac OSX global! */
 static void pprint(char *str);
 

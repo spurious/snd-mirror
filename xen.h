@@ -825,11 +825,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 
 #ifndef XEN_OK
 
-#if LONG_INT_P
-  #define XEN long
-#else
-  #define XEN int
-#endif
+#define XEN int
 #define XEN_FALSE 0
 #define XEN_TRUE 1
 #define XEN_EMPTY_LIST 0

@@ -3151,6 +3151,14 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #endif
 #endif
 
+#if HAVE_GL
+#if HAVE_GUILE
+ XEN init_gl(void);
+#else
+ XEN Init_libgl(void);
+#endif
+#endif
+
 static XEN g_snd_global_state(void)
 {
   return(XEN_WRAP_C_POINTER(get_global_state()));
@@ -3626,6 +3634,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   init_xm();
 #else
   Init_libxm();
+#endif
+#endif
+
+#if HAVE_GL
+#if HAVE_GUILE
+  init_gl();
+#else
+  Init_libgl();
 #endif
 #endif
 

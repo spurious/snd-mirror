@@ -36,10 +36,6 @@ A sndinfo script?
 
 See the end of snd-motif.scm for other user-interface extension projects.
 
-Finish the glfft tie-in to openGL or figure out how to deal with it
-via the xm module and shared objects (my first try at the latter 
-ran into some XVisual complaint that I didn't immediately recognize).
-
 More Ruby examples, translations, etc. (snd.rb is snd-test.scm 
 translation in-progress).
 

@@ -2129,16 +2129,52 @@ sets SND_COMMAND to <i>str</i>, which Snd subsequently notices.
 
 <span class=bbox><h3><A NAME="sndandgl">Snd and OpenGL</a></h3></span>
 
-<p>Snd can be used in conjunction with OpenGL, but due to the way GL uses X, it's
-not built into the Snd image.  The files glfft.c and <a href="sndscm.html#glfftdoc">glfft.scm</a> show one way
-to get GL graphics of Snd data.  glfft.c is a program that sets up a Motif/Mesa
-GL drawing area widget, then sits in a loop watching for Snd-generated spectrogram
-data.  Whenever any appears, it displays it using (exceedingly primitive) GL
-commands.  <a href="sndscm.html#glfftdoc">glfft.scm</a> is the Snd side of the process; it puts a function on
-the after-fft hook to write the spectrogram data to the shared file.  To use
-this stuff, build glfft, start Snd, display spectrograms, load <a href="sndscm.html#glfftdoc">glfft.scm</a>,
-and (start-gl).
+<p>Snd can be used in conjunction with OpenGL.  If it is compiled with
+the switch -DHAVE_GL, and loaded with -lGLU -lGL (normally this can be
+handled via the configure switch --with-gl), the top level Snd shell
+is setup to handle OpenGL graphics; the GLXContext is (snd-glx-context).
+The GL-to-Scheme bindings are in gl.c, and follow the same name and type
+conventions of the Motif bindings in xm.c.
+Any of the Snd drawing area widgets (or your own) can receive GL graphics
+commands.  For example, here is a translation of the SGI/xjournal glxmotif
+program:
 </p>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (draw-it)
+  (|glXMakeCurrent (|XtDisplay (cadr (main-widgets))) 
+		   (|XtWindow (car (channel-widgets)))
+		   (snd-glx-context))
+  (|glEnable |GL_DEPTH_TEST)
+  (|glDepthFunc |GL_LEQUAL)
+  (|glClearDepth 1.0)
+  (|glClearColor 0.0 0.0 0.0 0.0)
+  (|glLoadIdentity)
+  (|gluPerspective 40.0 1.0 10.0 200.0)
+  (|glTranslatef 0.0 0.0 -50.0)
+  (|glRotatef -58.0 0.0 1.0 0.0)
+  (let ((vals (|XtVaGetValues (car (channel-widgets)) (list |XmNwidth 0 |XmNheight 0))))
+    (|glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
+  (|glClear (logior |GL_COLOR_BUFFER_BIT |GL_DEPTH_BUFFER_BIT))
+  (|glBegin |GL_POLYGON)
+  (|glColor3f 0.0 0.0 0.0)   (|glVertex3f -10.0 -10.0 0.0)
+  (|glColor3f 0.7 0.7 0.7)   (|glVertex3f 10.0 -10.0 0.0)
+  (|glColor3f 1.0 1.0 1.0)   (|glVertex3f -10.0 10.0 0.0)
+  (|glEnd)
+  (|glBegin |GL_POLYGON)
+  (|glColor3f 1.0 1.0 0.0)   (|glVertex3f 0.0 -10.0 -10.0)
+  (|glColor3f 0.0 1.0 0.7)   (|glVertex3f 0.0 -10.0 10.0)
+  (|glColor3f 0.0 0.0 1.0)   (|glVertex3f 0.0 5.0 -10.0)
+  (|glEnd)
+  (|glBegin |GL_POLYGON)
+  (|glColor3f 1.0 1.0 0.0)   (|glVertex3f -10.0 6.0 4.0)
+  (|glColor3f 1.0 0.0 1.0)   (|glVertex3f -10.0 3.0 4.0)
+  (|glColor3f 0.0 0.0 1.0)   (|glVertex3f 4.0 -9.0 -10.0)
+  (|glColor3f 1.0 0.0 1.0)   (|glVertex3f 4.0 -6.0 -10.0)
+  (|glEnd)
+  (|glXSwapBuffers (|XtDisplay (cadr (main-widgets))) 
+		   (|XtWindow (car (channel-widgets))))
+  (|glFlush))
+<!-- --></pre></td></tr></table>
 <br>
 
 <span class=bbox><h3><A NAME="sndandgdb">Snd and gdb</a></h3></span>

@@ -87,6 +87,22 @@ static char *xm_version(void)
 }
 #endif
 
+#if HAVE_GL
+static char *glx_version(void)
+{
+  snd_state *ss;
+  int major, minor, err;
+  char *version;
+  ss = get_global_state();
+  if (ss == NULL) return(""); /* snd --help for example */
+  err = glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
+  version = (char *)CALLOC(32, sizeof(char));
+  snprintf(version, 32, " %d.%d", major, minor);
+  /* this info doesn't look useful: glXQueryExtensionsString(MAIN_DISPLAY(ss), XScreenNumberOfScreen(DefaultScreenOfDisplay(MAIN_DISPLAY(ss))))); */
+  return(version);
+}
+#endif
+
 char *version_info(void)
 {
   char *buf;
@@ -150,6 +166,9 @@ char *version_info(void)
     #endif
   #endif
 #endif
+#if HAVE_GL
+	  "\n    OpenGL", glx_version(),
+#endif
 #if (!(defined(USE_MOTIF))) && (!(defined(USE_GTK)))
 	  "\n    without any graphics system",
 #endif
@@ -204,6 +223,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+20-May:  removed glfft.c and glfft.scm, added snd-gxl-context on -DHAVE_GL switch (configure --with-gl).\n\
+         added gl.c, makegl.scm, gldata.scm (GL example in grfsnd.html).\n\
 15-May:  update-hook.\n\
 13-May:  snd 5.10.\n\
 9-May:   sound-loop-info bugfix (thanks to Dave Phillips).\n\

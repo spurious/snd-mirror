@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 16
-#define SNDLIB_REVISION 3
-#define SNDLIB_DATE "16-May-02"
+#define SNDLIB_REVISION 4
+#define SNDLIB_DATE "20-May-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -37,18 +37,7 @@
   #if (!defined(WORDS_BIGENDIAN))
      #define MUS_LITTLE_ENDIAN 1
   #endif
-  #if (SIZEOF_INT_P != SIZEOF_INT)
-     /* this is for the Lisp version of CLM (kludge around FFI limitations) */
-     #define LONG_INT_P 1
-  #else 
-     #define LONG_INT_P 0
-  #endif
 #else
-  #if defined(ALPHA) || defined(__alpha__)
-     #define LONG_INT_P 1
-  #else 
-     #define LONG_INT_P 0
-  #endif
   #define RETSIGTYPE void
   #ifdef __LITTLE_ENDIAN__
     /* NeXTStep on Intel */
@@ -556,19 +545,6 @@ unsigned int mus_char_to_ulint      PROTO((const unsigned char *inp));
 int mus_iclamp                      PROTO((int lo, int val, int hi));
 off_t mus_oclamp                    PROTO((off_t lo, off_t val, off_t hi));
 Float mus_fclamp                    PROTO((Float lo, Float val, Float hi));
-
-#if LONG_INT_P
-  mus_sample_t *mus_table2ptr       PROTO((int arr));
-  int mus_ptr2table                 PROTO((mus_sample_t *arr));
-  void mus_untableptr               PROTO((int ip_1));
-  #define MUS_SAMPLE_ARRAY(n) mus_table2ptr((int)(n))
-  #define MUS_MAKE_SAMPLE_ARRAY(size) mus_ptr2table((mus_sample_t *)CALLOC((size), sizeof(mus_sample_t)))
-  #define MUS_FREE_SAMPLE_ARRAY(p) mus_untableptr((int)(p))
-#else
-  #define MUS_SAMPLE_ARRAY(n) ((mus_sample_t *)(n))
-  #define MUS_MAKE_SAMPLE_ARRAY(size) ((mus_sample_t *)CALLOC((size), sizeof(mus_sample_t)))
-  #define MUS_FREE_SAMPLE_ARRAY(p) FREE((void *)(p))
-#endif
 
 #ifdef CLM
   /* these are needed to clear a saved lisp image to the just-initialized state */

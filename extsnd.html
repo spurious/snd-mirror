@@ -139,7 +139,6 @@ various examples of and extensions to Snd can be found in the contrib directory,
 <tr><td><a href="sndscm.html#extensionsdoc">extensions.scm</a></td><td>extensions of Snd</td></tr>
 <tr><td><a href="sndscm.html#fadedoc">fade.scm</a></td>      <td>frequency-domain cross-fades</td></tr>
 <tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>        <td>the fm-violin tied to real-time stuff</td></tr>
-<tr><td><a href="sndscm.html#glfftdoc">glfft.scm</a></td>    <td>OpenGL for spectra (needs work)</td></tr>
 <tr><td><a href="sndscm.html#goopsnddoc">goopsnd.scm</a></td><td>first look at Goops (Guile Object System) for Snd</td></tr>
 <tr><td><a href="sndscm.html#hooksdoc">hooks.scm</a></td>    <td>functions related to hooks</td></tr>
 <tr><td><a href="sndscm.html#indexdoc">index.scm</a></td>    <td>snd-help locators</td></tr>
@@ -2186,7 +2185,7 @@ the hook.
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>snd-error-hook</em>
   (lambda (msg) 
-    (play "bong.snd") 
+    (play "bong.snd") ; or if xm is loaded, (|XBell (|XtDisplay (cadr (main-widgets))) 10)
     #f))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>

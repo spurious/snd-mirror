@@ -20,8 +20,7 @@
  *                   see ftp://ftp.netlab.co.jp/pub/lang/ruby/
  *                 This part of Snd is brand-new and has many bugs/omissions/etc.
  *
- *   HAVE_XPM      define if you have the XPM library (the default in Linux and Gtk+)
- *                 (used to make cute icons in various places).
+ *   HAVE_GL       define to include support for OpenGL.
  *
  *   HAVE_LADSPA   define if you have LADSPA and want support for it included in Snd.
  *
@@ -75,7 +74,7 @@
   #define _FILE_OFFSET_BITS 64
 #endif
 
-/* in all Snd-related files, it is very important that the #include "snd.h" immediately follow the #include <config.h> */
+/* in all Snd-related files, it is important that the #include "snd.h" immediately follow the #include <config.h> */
 
 #include <ctype.h>
 #include <stddef.h>
@@ -151,7 +150,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "17-May-02"
+#define SND_VERSION "20-May-02"
 #define SND_RPM_VERSION "5.11"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 11

@@ -45,7 +45,6 @@
   <li><a href="#extensionsdoc">extensions.scm: various generally useful Snd extensions</a>
   <li><a href="#fadedoc">fade.scm: frequency-domain cross-fades</a>
   <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
-  <li><a href="#glfftdoc">glfft.scm: OpenGL for spectra</a>
   <li><a href="#gmdoc">gm.scm: gmeteor support</a>
   <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
   <li><a href="#hooksdoc">hooks.scm: functions related to hooks</a>
@@ -1474,26 +1473,6 @@ generating functions should have attack and decay ramps, triggered by note-on an
 note-off; once the ramp has reached its end point, the end value should be held;
 the note itself should be called until it has had time to ramp off; an exercise
 for the interested reader.
-</p>
-
-<A NAME="glfftdoc"></a><span class=box><h2>glfft.scm</h2></span>
-<pre>
-  <em class=def><A NAME="startgl">start-gl</a></em>
-  <em class=def><A NAME="stopgl">stop-gl</a></em>
-  <em class=def><A NAME="cleanupgl">cleanup-gl</a></em>
-</pre>
-<p>glfft.scm and glfft.c implement a way for Snd to display spectra using OpenGL.  Due to
-the way Mesa (the open source OpenGL) connects with the X server, I decided not to try
-to imbed this in Snd itself. Snd and glfft communicate through shared files, one
-being a "lock" file and the other containing the data to be displayed. Snd writes
-"glfft.data", then "glfft.lock". glfft (the reader) waits until it sees glfft.lock,
-then reads glfft.data and deletes both files.  If Snd has data ready to go but sees
-glfft.lock, it does not try to write glfft.data (it assumes glfft is reading the
-previous version).  The OpenGL code in glfft.c is very primitive; someday I'll
-learn about OpenGL, or even better some OpenGL expert will take a look at it!
-To use this code, build glfft.c, invoke glfft, go to Snd, set up a spectrogram,
-and <code>(start-gl)</code>.  <code>(stop-gl)</code> turns it off.  <code>(cleanup-gl)</code>
-calls stop-gl and then removes the glfft communication files.
 </p>
 
 <A NAME="gmdoc"></a><span class=box><h2>gm.scm</h2></span>

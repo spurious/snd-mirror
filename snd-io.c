@@ -9,7 +9,7 @@ static void c_io_bufclr (snd_io *io, int beg)
   end = io->bufsize;
   for (k = 0; k < io->chans; k++)
     {
-      j = MUS_SAMPLE_ARRAY(io->arrays[k]);
+      j = io->arrays[k];
       if (j)
 	memset((void *)(j + beg), 0, (end - beg) * sizeof(mus_sample_t));
     }
@@ -98,7 +98,7 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
   io->beg = 0;
   io->end = bufsize - 1;
   io->bufsize = bufsize;
-  io->arrays[chan] = MUS_MAKE_SAMPLE_ARRAY(bufsize);
+  io->arrays[chan] = (mus_sample_t *)CALLOC(bufsize, sizeof(mus_sample_t));
   reposition_file_buffers_1(0, io); /* get ready to read -- we're assuming mus_file_read_chans here */
   return(io);
 }
@@ -112,7 +112,7 @@ snd_io *free_file_state(snd_io *io)
       chans = io->chans;
       for (i = 0; i < chans; i++)
 	if (io->arrays[i]) 
-	  MUS_FREE_SAMPLE_ARRAY(io->arrays[i]);
+	  FREE(io->arrays[i]);
       FREE(io->arrays);
       FREE(io);
     }
@@ -428,7 +428,7 @@ snd_data *make_snd_data_file(char *name, snd_io *io, file_info *hdr, int temp, i
   snd_data *sd;
   sd = (snd_data *)CALLOC(1, sizeof(snd_data));
   sd->type = SND_DATA_FILE;
-  sd->buffered_data = MUS_SAMPLE_ARRAY(io->arrays[temp_chan]);
+  sd->buffered_data = io->arrays[temp_chan];
   sd->io = io;
   sd->filename = copy_string(name);
   sd->hdr = hdr;
@@ -464,7 +464,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   io = make_file_state(fd, hdr, sd->chan, bufsize);
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = sd->type;
-  sf->buffered_data = MUS_SAMPLE_ARRAY(io->arrays[sd->chan]);
+  sf->buffered_data = io->arrays[sd->chan];
   sf->io = io;
   sf->filename = copy_string(sd->filename);
   sf->hdr = hdr;

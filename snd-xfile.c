@@ -1331,7 +1331,7 @@ static XEN mouse_leave_label_hook;
 
 static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 {
-  XmString s1;
+  XmString s1 = NULL;
   char *label = NULL;
 
   if ((r) &&
@@ -1347,6 +1347,7 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 	    {
 	      /* it's a bit tedious to get the current button label... */
 	      XtVaGetValues(r->nm, XmNlabelString, &s1, NULL);
+	      if (XmStringEmpty(s1)) return;
 	      XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &label);
 	      if (label == NULL)
 		{

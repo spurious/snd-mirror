@@ -1124,7 +1124,7 @@ int g_menu_is_sensitive(int which_menu, char *old_label)
   return(0);
 }
 
-int g_add_to_main_menu(snd_state *ss, char *label, int slot)
+int g_add_to_main_menu(snd_state *ss, char *label, long slot)
 {
   static Arg args[12];
   Widget m, cas;

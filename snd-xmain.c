@@ -508,7 +508,7 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
    *   the main ones involve scrollbar settings that are claimed to be out-of-range, but that are generated
    *   by Motif itself while unmanaging the widget!
    */
-#if DEBUGGING
+#if 0
   int i;
   fprintf(stderr, "warning: %s: %s", name, defaultp);
   for (i = 0; i < (*num_params); i++)
@@ -610,7 +610,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   */
   XtSetArg(args[0], XtNwidth, 640);
   XtSetArg(args[1], XtNheight, 256);
-  shell = XtAppInitialize( &app, "Snd", NULL, 0, &argc, argv, NULL, args, 2);
+  shell = XtAppInitialize(&app, "Snd", NULL, 0, &argc, argv, NULL, args, 2);
 #else
   shell = XtVaOpenApplication(&app, "Snd", NULL, 0, &argc, argv, NULL, applicationShellWidgetClass,
 			      XmNallowShellResize, AUTO_RESIZE_DEFAULT,
@@ -634,6 +634,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
 
   dpy = XtDisplay(shell);
+
   XtGetApplicationResources(shell, &snd_rs, resources, XtNumber(resources), NULL, 0);
   XtVaGetValues(shell, XmNtitle, &app_title, NULL);  /* perhaps caller included -title arg */
   if (app_title) 
@@ -714,6 +715,35 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
+
+#if (HAVE_GL) && (!SND_AS_WIDGET)
+  {
+    /* this taken from glxmotif.c from xjournal/sgi */
+    XVisualInfo *vi;
+    Colormap cmap;
+    GLXContext cx;
+    int snglBuf[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, None};
+    int dblBuf[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
+    vi = glXChooseVisual(dpy, DefaultScreen(dpy), dblBuf);
+    if (vi == NULL) vi = glXChooseVisual(dpy, DefaultScreen(dpy), snglBuf);
+    if (vi == NULL) 
+      snd_error("no RGB visual with depth buffer");
+    else
+      {
+	/* create an OpenGL rendering context */
+	cx = glXCreateContext(dpy, vi, /* no display list sharing */ None, /* favor direct */ GL_TRUE);
+	if (cx == NULL) 
+	  snd_error("could not create rendering context");
+	else
+	  {
+	    /* create an X colormap since probably not using default visual */
+	    cmap = XCreateColormap(dpy, RootWindow(dpy, vi->screen), vi->visual, AllocNone);
+	    XtVaSetValues(shell, XtNvisual, vi->visual, XtNdepth, vi->depth, XtNcolormap, cmap, NULL);
+	    ss->sgx->cx = cx;
+	  }
+      }
+  }
+#endif
 
 #ifndef SND_AS_WIDGET
   XtAppSetWarningMsgHandler(app, muffle_warning);
@@ -964,8 +994,22 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   
 }
 
+#if HAVE_GL
+static XEN g_snd_glx_context(void)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GLXContext"), 
+		    C_TO_XEN_ULONG((unsigned long)(ss->sgx->cx))));
+} 
+#endif
+
 void g_init_gxmain(void)
 {
   #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"
   XEN_DEFINE_HOOK(property_changed_hook, S_property_changed_hook, 1, H_property_changed_hook);
+
+#if HAVE_GL
+  XEN_DEFINE_PROCEDURE("snd-glx-context", g_snd_glx_context, 0, 0, 0, "OpenGL GLXContext");
+#endif
 }

@@ -29,6 +29,7 @@
 ;;; test 26: errors
 
 ;;; TODO: test of off_t mark search
+;;; TODO: GL tests
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -19480,7 +19481,7 @@ EDITS: 5
 (if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
     (begin
       (if (procedure? test-hook) (test-hook 24))
-      (if (provided? 'snd-motif)
+      (if (and (provided? 'snd-motif) (not (provided? 'gl)))
 	  (begin
 	    ;; ---------------- X tests ----------------
 	    (let ((scr (current-screen))

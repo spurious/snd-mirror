@@ -33,6 +33,8 @@ AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES(makefile)
 AC_PROG_CC
+AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER!! (autoconf docs don't mention this problem)
+AC_PROG_INSTALL
 
 audio_system="unknown"
 MAKE_TARGET="snd"
@@ -64,6 +66,7 @@ MAKE_TARGET="snd"
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
 #   --with-run            Guile optimizer (default=yes)
+#   --with-gl             include OpenGL support (default=no)
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
@@ -76,6 +79,7 @@ AC_ARG_WITH(static-gsl, [  --with-static-gsl	  use libgsl.a to build Snd])
 AC_ARG_WITH(xm,         [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(guile,      [  --with-guile		  use Guile])
 AC_ARG_WITH(run,        [  --with-run		  Guile optimizer])
+AC_ARG_WITH(gl,         [  --with-gl		  include OpenGL support])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -231,6 +235,7 @@ AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_CFLAGS)
 
 
+
 # -------- SNDLIB (not ready yet...) --------
 # SNDLIB_LIB=""
 # SNDLIB_FILES="headers.o audio.o io.o sound.o clm.o vct.o sndlib2xen.o clm2xen.o"
@@ -315,15 +320,12 @@ AC_ARG_WITH(ladspa,
 # standard libraries, header files, functions, OSS special cases
 #--------------------------------------------------------------------------------
 
-AC_PROG_INSTALL
-
 AC_CHECK_LIB(m,main)
 AC_CHECK_LIB(c,main)
 AC_CHECK_LIB(dl,main)
 LIBS=""
 
 AC_HEADER_DIRENT
-AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h)
 AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h setjmp.h sched.h pwd.h ladspa.h locale.h sys/fpu.h dlfcn.h sys/param.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
@@ -337,6 +339,7 @@ AC_HEADER_TIME
 
 AC_CHECK_HEADER(execinfo.h, [AC_DEFINE(HAVE_EXECINFO_H)
                              LDFLAGS="$LDFLAGS -rdynamic"])
+
 
 AC_C_CONST
 AC_TYPE_MODE_T
@@ -378,6 +381,20 @@ AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
 # AC_CHECK_STRUCT_FOR([#include <sys/statfs.h>],statfs,f_bsize)
+
+
+# -------- OpenGL --------
+GL_LIBS=""
+GL_FILES=""
+if test "$with_gl" = yes ; then
+  AC_CHECK_HEADER(GL/gl.h,
+	[AC_DEFINE(HAVE_GL)
+	 GL_FILES="gl.o"
+	 GL_LIBS="-lGLU -lGL"],
+	[AC_MSG_WARN(can't find GL headers)])
+fi
+AC_SUBST(GL_LIBS)
+AC_SUBST(GL_FILES)
 
 
 #--------------------------------------------------------------------------------

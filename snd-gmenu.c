@@ -1410,7 +1410,7 @@ int g_set_menu_sensitive(int which_menu, char *old_label, int on)
   return(INVALID_MENU);
 }
 
-int g_add_to_main_menu(snd_state *ss, char *label, int slot)
+int g_add_to_main_menu(snd_state *ss, char *label, long slot)
 {
   GtkWidget *m, *mc;
   m = gtk_menu_item_new_with_label(label);

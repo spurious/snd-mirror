@@ -10,6 +10,12 @@
 #include <Xm/XmAll.h>
 #include <X11/keysym.h>
 
+#if HAVE_GL
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glx.h>
+#endif
+
 #if (USE_RENDITIONS)
   /* SOMEDAY: get renditions working */
   #define XM_FONT_TYPE XmRenderTable
@@ -189,6 +195,9 @@ typedef struct {
 
   Cursor mix_cursor, graph_cursor, wait_cursor;
   Widget completion_requestor;
+#if HAVE_GL
+  GLXContext cx;
+#endif
 } state_context;
 
 typedef struct {
