@@ -9756,7 +9756,7 @@ static XEN gxm_XGetScreenSaver(XEN arg1)
 
 static XEN gxm_XGetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XGetPointerMapping "int XGetPointerMapping(display, ignored, len returns the current mapping of the pointer."
+  #define H_XGetPointerMapping "int XGetPointerMapping(display, ignored, len) returns the current mapping of the pointer."
   /* DIFF: XGetPointerMapping ignores arg2, returns list
    */
   int i, len, loc;
@@ -10580,8 +10580,7 @@ specified set of points (x1, y1) and (x2, y2)."
 
 static XEN gxm_XDrawImageString(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
-  #define H_XDrawImageString "XDrawImageString(display, d, gc, x, y, string, length) is similar to XDrawImageString except that it uses \
-2-byte or 16-bit characters."
+  #define H_XDrawImageString "XDrawImageString(display, d, gc, x, y, string, length)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawImageString", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawImageString", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawImageString", "GC");

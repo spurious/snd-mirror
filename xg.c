@@ -1,5 +1,5 @@
 /* xg.c: Guile (and someday Ruby) bindings for gdk/gtk/pango, some of glib
- *   generated automatically from makexg.scm and xgdata.scm (included in the libxm tarball)
+ *   generated automatically from makexg.scm and xgdata.scm
  *   needs xen.h
  *
  *   GDK_DISABLE_DEPRECATED and GTK_DISABLE_DEPRECATED are handled together
@@ -20,6 +20,9 @@
  *    (|GdkRectangle #:optional x y width height) -> GdkRectangle struct
  *    (|GdkSegment #:optional x1 y1 x2 y2) -> GdkSegment struct
  *    (|GdkSpan #:optional x y width) -> GdkSpan struct
+ *    (|GtkTextIter) -> GtkTextIter struct
+ *    (|GtkTextMark) -> GtkTextMark struct
+ *    (|GtkTextChildAnchor) -> GtkTextChildAnchor struct
  *
  * omitted functions and macros:
  *     anything with a va_list or GtkArg* argument.  "..." args are ignored.
@@ -32,7 +35,12 @@
  * TODO:
  *     check out the g_signal handlers: GtkSignalFunc also GtkEmissionHook (gtk_signal_* should be ok)
  *     GdkEvent casts
- *     struct print, perhaps more struct instance creators
+ *     struct print, more struct instance creators(?)
+ *     tie into libxm (configure.ac etc), Snd (snd-motif translation)
+ *     add gdk-pixbuf? (has GDK_PIXBUF_DISABLE_DEPRECATED)
+ *     unprotect *_remove, unprotect old upon reset callback
+ *     document/test (libxm|grfsnd.html, snd-test.scm)
+ *     add Ruby linkages
  *
  * HISTORY:
  *     11-Feb-02: initial version.
@@ -134,6 +142,7 @@ static void define_xm_obj(void)
 #define XEN_gchar_P(Arg) XEN_CHAR_P(Arg)
 #define XEN_guint32_P(Arg) XEN_ULONG_P(Arg)
 #define XEN_gulong_P(Arg) XEN_ULONG_P(Arg)
+#define XEN_xen_P(Arg) 1
 
 #define XEN_guint_P(Arg) XEN_ULONG_P(Arg)
 #define XEN_guint16_P(Arg) XEN_INTEGER_P(Arg)
@@ -156,6 +165,7 @@ static void define_xm_obj(void)
 #define XEN_TO_C_gchar(Arg) XEN_TO_C_CHAR(Arg)
 #define XEN_TO_C_guint32(Arg) XEN_TO_C_ULONG(Arg)
 #define XEN_TO_C_gulong(Arg) XEN_TO_C_ULONG(Arg)
+#define XEN_TO_C_xen(Arg) ((gpointer)Arg)
 
 #define XEN_TO_C_guint(Arg) XEN_TO_C_ULONG(Arg)
 #define XEN_TO_C_guint16(Arg) XEN_TO_C_INT(Arg)
@@ -877,6 +887,27 @@ static int xm_protect(XEN obj)
   return(i);
 }
 
+static void xm_unprotect_idler(guint id)
+{
+  int i;
+  XEN *velts;
+  XEN cur, idler;
+  velts = XEN_VECTOR_ELEMENTS(xm_protected);
+  for (i = 0; i < xm_protected_size; i++)
+    {
+      cur = velts[i];
+      if ((XEN_LIST_P(cur)) && (XEN_LIST_LENGTH(cur) == 3) && (XEN_LIST_P(XEN_CADDR(cur))))
+        {
+          idler = XEN_CADDR(cur);
+          if ((XEN_SYMBOL_P(XEN_CAR(idler))) &&
+              (strcmp("idler", XEN_SYMBOL_TO_C_STRING(XEN_CAR(idler))) == 0) &&
+              (id == XEN_TO_C_INT(XEN_CADR(idler))))
+            {
+              velts[i] = XEN_FALSE;
+              last_xm_unprotect = i;
+              return;
+            }}}
+}
 static void xm_unprotect_at(int ind)
 {
   XEN *velts;
@@ -9115,8 +9146,8 @@ static XEN gxg_gtk_init_add(XEN func, XEN func_data)
     int loc;
     XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gtk_init_add(XEN_TO_C_GtkFunction(func), XEN_TO_C_lambda_data(func_data));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
     return(result);
    }
 }
@@ -9141,8 +9172,8 @@ static XEN gxg_gtk_quit_add(XEN main_level, XEN func, XEN func_data)
     int loc;
     XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_quit_add(XEN_TO_C_guint(main_level), XEN_TO_C_GtkFunction(func), XEN_TO_C_lambda_data(func_data)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
     return(result);
    }
 }
@@ -9160,8 +9191,8 @@ static XEN gxg_gtk_quit_add_full(XEN main_level, XEN func, XEN marshal, XEN func
     int loc;
     XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_quit_add_full(XEN_TO_C_guint(main_level), XEN_TO_C_GtkFunction(func), XEN_TO_C_GtkCallbackMarshal(marshal), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
     return(result);
    }
 }
@@ -9171,14 +9202,16 @@ static XEN gxg_gtk_quit_remove(XEN quit_handler_id)
   #define H_gtk_quit_remove "void gtk_quit_remove(guint quit_handler_id)"
   XEN_ASSERT_TYPE(XEN_guint_P(quit_handler_id), quit_handler_id, 1, "gtk_quit_remove", "guint");
   gtk_quit_remove(XEN_TO_C_guint(quit_handler_id));
+  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(quit_handler_id)));
   return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_quit_remove_by_data(XEN data)
 {
-  #define H_gtk_quit_remove_by_data "void gtk_quit_remove_by_data(gpointer data)"
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 1, "gtk_quit_remove_by_data", "gpointer");
-  gtk_quit_remove_by_data(XEN_TO_C_gpointer(data));
+  #define H_gtk_quit_remove_by_data "void gtk_quit_remove_by_data(xen data)"
+  XEN_ASSERT_TYPE(XEN_xen_P(data), data, 1, "gtk_quit_remove_by_data", "xen");
+  gtk_quit_remove_by_data(XEN_TO_C_xen(data));
+  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(data)));
   return(XEN_FALSE);
 }
 
@@ -9236,8 +9269,8 @@ static XEN gxg_gtk_idle_add(XEN func, XEN func_data)
     int loc;
     XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_idle_add(XEN_TO_C_GtkFunction(func), XEN_TO_C_lambda_data(func_data)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
     return(result);
    }
 }
@@ -9253,8 +9286,8 @@ static XEN gxg_gtk_idle_add_priority(XEN priority, XEN func, XEN func_data)
     int loc;
     XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_idle_add_priority(XEN_TO_C_gint(priority), XEN_TO_C_GtkFunction(func), XEN_TO_C_lambda_data(func_data)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
     return(result);
    }
 }
@@ -9272,8 +9305,8 @@ static XEN gxg_gtk_idle_add_full(XEN priority, XEN func, XEN marshal, XEN func_d
     int loc;
     XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_idle_add_full(XEN_TO_C_gint(priority), XEN_TO_C_GtkFunction(func), XEN_TO_C_GtkCallbackMarshal(marshal), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
     return(result);
    }
 }
@@ -9283,14 +9316,16 @@ static XEN gxg_gtk_idle_remove(XEN idle_handler_id)
   #define H_gtk_idle_remove "void gtk_idle_remove(guint idle_handler_id)"
   XEN_ASSERT_TYPE(XEN_guint_P(idle_handler_id), idle_handler_id, 1, "gtk_idle_remove", "guint");
   gtk_idle_remove(XEN_TO_C_guint(idle_handler_id));
+  xm_unprotect_idler(XEN_TO_C_guint(idle_handler_id));
   return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_idle_remove_by_data(XEN data)
 {
-  #define H_gtk_idle_remove_by_data "void gtk_idle_remove_by_data(gpointer data)"
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 1, "gtk_idle_remove_by_data", "gpointer");
-  gtk_idle_remove_by_data(XEN_TO_C_gpointer(data));
+  #define H_gtk_idle_remove_by_data "void gtk_idle_remove_by_data(xen data)"
+  XEN_ASSERT_TYPE(XEN_xen_P(data), data, 1, "gtk_idle_remove_by_data", "xen");
+  gtk_idle_remove_by_data(XEN_TO_C_xen(data));
+  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(data)));
   return(XEN_FALSE);
 }
 
@@ -9305,9 +9340,11 @@ static XEN gxg_gtk_input_add_full(XEN source, XEN condition, XEN func, XEN marsh
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 6, "gtk_input_add_full", "GtkDestroyNotify");
   {
     XEN result = XEN_FALSE;
+    int loc;
     XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
-    xm_protect(gxg_ptr);
+    loc = xm_protect(gxg_ptr);
     result = C_TO_XEN_guint(gtk_input_add_full(XEN_TO_C_gint(source), XEN_TO_C_GdkInputCondition(condition), XEN_TO_C_GdkInputFunction(func), XEN_TO_C_GtkCallbackMarshal(marshal), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
     return(result);
    }
 }
@@ -9317,6 +9354,7 @@ static XEN gxg_gtk_input_remove(XEN input_handler_id)
   #define H_gtk_input_remove "void gtk_input_remove(guint input_handler_id)"
   XEN_ASSERT_TYPE(XEN_guint_P(input_handler_id), input_handler_id, 1, "gtk_input_remove", "guint");
   gtk_input_remove(XEN_TO_C_guint(input_handler_id));
+  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(input_handler_id)));
   return(XEN_FALSE);
 }
 
@@ -9327,9 +9365,11 @@ static XEN gxg_gtk_key_snooper_install(XEN func, XEN func_data)
   XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 2, "gtk_key_snooper_install", "lambda_data");
   {
     XEN result = XEN_FALSE;
+    int loc;
     XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
-    xm_protect(gxg_ptr);
+    loc = xm_protect(gxg_ptr);
     result = C_TO_XEN_guint(gtk_key_snooper_install(XEN_TO_C_GtkKeySnoopFunc(func), XEN_TO_C_lambda_data(func_data)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
     return(result);
    }
 }
@@ -9339,6 +9379,7 @@ static XEN gxg_gtk_key_snooper_remove(XEN snooper_handler_id)
   #define H_gtk_key_snooper_remove "void gtk_key_snooper_remove(guint snooper_handler_id)"
   XEN_ASSERT_TYPE(XEN_guint_P(snooper_handler_id), snooper_handler_id, 1, "gtk_key_snooper_remove", "guint");
   gtk_key_snooper_remove(XEN_TO_C_guint(snooper_handler_id));
+  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(snooper_handler_id)));
   return(XEN_FALSE);
 }
 
@@ -20840,9 +20881,11 @@ static XEN gxg_gdk_input_add_full(XEN source, XEN condition, XEN func, XEN func_
   XEN_ASSERT_TYPE(XEN_GdkDestroyNotify_P(destroy), destroy, 5, "gdk_input_add_full", "GdkDestroyNotify");
   {
     XEN result = XEN_FALSE;
+    int loc;
     XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
-    xm_protect(gxg_ptr);
+    loc = xm_protect(gxg_ptr);
     result = C_TO_XEN_gint(gdk_input_add_full(XEN_TO_C_gint(source), XEN_TO_C_GdkInputCondition(condition), XEN_TO_C_GdkInputFunction(func), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GdkDestroyNotify(destroy)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
     return(result);
    }
 }
@@ -20856,9 +20899,11 @@ static XEN gxg_gdk_input_add(XEN source, XEN condition, XEN func, XEN func_data)
   XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gdk_input_add", "lambda_data");
   {
     XEN result = XEN_FALSE;
+    int loc;
     XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
-    xm_protect(gxg_ptr);
+    loc = xm_protect(gxg_ptr);
     result = C_TO_XEN_gint(gdk_input_add(XEN_TO_C_gint(source), XEN_TO_C_GdkInputCondition(condition), XEN_TO_C_GdkInputFunction(func), XEN_TO_C_lambda_data(func_data)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
     return(result);
    }
 }
@@ -32569,37 +32614,34 @@ static XEN gxg_mnemonic_modifier(XEN ptr)
   return(C_TO_XEN_GdkModifierType((GdkModifierType)((XEN_TO_C_GtkWindow_(ptr))->mnemonic_modifier)));
 }
 
-static XEN gxg_make_GdkSpan(XEN arglist)
+static XEN gxg_make_GdkCursor(XEN arglist)
 {
-  GdkSpan* result;
+  GdkCursor* result;
   int i, len;
-  result = (GdkSpan*)CALLOC(1, sizeof(GdkSpan));
+  result = (GdkCursor*)CALLOC(1, sizeof(GdkCursor));
+  len = XEN_LIST_LENGTH(arglist);
+  for (i = 0; i < len; i++)
+    switch (i)
+      {
+      case 0: result->type = XEN_TO_C_GdkCursorType(XEN_LIST_REF(arglist, 0));
+      case 1: result->ref_count = XEN_TO_C_guint(XEN_LIST_REF(arglist, 1));
+      }
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkCursor_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+}
+
+static XEN gxg_make_GdkPoint(XEN arglist)
+{
+  GdkPoint* result;
+  int i, len;
+  result = (GdkPoint*)CALLOC(1, sizeof(GdkPoint));
   len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < len; i++)
     switch (i)
       {
       case 0: result->x = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
       case 1: result->y = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
-      case 2: result->width = XEN_TO_C_gint(XEN_LIST_REF(arglist, 2));
       }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkSpan_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
-}
-
-static XEN gxg_make_GdkSegment(XEN arglist)
-{
-  GdkSegment* result;
-  int i, len;
-  result = (GdkSegment*)CALLOC(1, sizeof(GdkSegment));
-  len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < len; i++)
-    switch (i)
-      {
-      case 0: result->x1 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
-      case 1: result->y1 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
-      case 2: result->x2 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 2));
-      case 3: result->y2 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 3));
-      }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkSegment_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkPoint_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GdkRectangle(XEN arglist)
@@ -32619,34 +32661,58 @@ static XEN gxg_make_GdkRectangle(XEN arglist)
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkRectangle_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
-static XEN gxg_make_GdkPoint(XEN arglist)
+static XEN gxg_make_GdkSegment(XEN arglist)
 {
-  GdkPoint* result;
+  GdkSegment* result;
   int i, len;
-  result = (GdkPoint*)CALLOC(1, sizeof(GdkPoint));
+  result = (GdkSegment*)CALLOC(1, sizeof(GdkSegment));
+  len = XEN_LIST_LENGTH(arglist);
+  for (i = 0; i < len; i++)
+    switch (i)
+      {
+      case 0: result->x1 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
+      case 1: result->y1 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
+      case 2: result->x2 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 2));
+      case 3: result->y2 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 3));
+      }
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkSegment_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+}
+
+static XEN gxg_make_GdkSpan(XEN arglist)
+{
+  GdkSpan* result;
+  int i, len;
+  result = (GdkSpan*)CALLOC(1, sizeof(GdkSpan));
   len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < len; i++)
     switch (i)
       {
       case 0: result->x = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
       case 1: result->y = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
+      case 2: result->width = XEN_TO_C_gint(XEN_LIST_REF(arglist, 2));
       }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkPoint_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkSpan_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
-static XEN gxg_make_GdkCursor(XEN arglist)
+static XEN gxg_make_GtkTextIter(void)
 {
-  GdkCursor* result;
-  int i, len;
-  result = (GdkCursor*)CALLOC(1, sizeof(GdkCursor));
-  len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < len; i++)
-    switch (i)
-      {
-      case 0: result->type = XEN_TO_C_GdkCursorType(XEN_LIST_REF(arglist, 0));
-      case 1: result->ref_count = XEN_TO_C_guint(XEN_LIST_REF(arglist, 1));
-      }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkCursor_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  GtkTextIter* result;
+  result = (GtkTextIter*)CALLOC(1, sizeof(GtkTextIter));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTextIter_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+}
+
+static XEN gxg_make_GtkTextMark(void)
+{
+  GtkTextMark* result;
+  result = (GtkTextMark*)CALLOC(1, sizeof(GtkTextMark));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTextMark_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+}
+
+static XEN gxg_make_GtkTextChildAnchor(void)
+{
+  GtkTextChildAnchor* result;
+  result = (GtkTextChildAnchor*)CALLOC(1, sizeof(GtkTextChildAnchor));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTextChildAnchor_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
 static void define_structs(void)
@@ -33289,11 +33355,14 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "green" XG_POST, gxg_green, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "red" XG_POST, gxg_red, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "pixel" XG_POST, gxg_pixel, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GdkSpan" XG_POST, gxg_make_GdkSpan, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GdkSegment" XG_POST, gxg_make_GdkSegment, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GdkRectangle" XG_POST, gxg_make_GdkRectangle, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GdkPoint" XG_POST, gxg_make_GdkPoint, 0, 0, 1, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GdkCursor" XG_POST, gxg_make_GdkCursor, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GdkPoint" XG_POST, gxg_make_GdkPoint, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GdkRectangle" XG_POST, gxg_make_GdkRectangle, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GdkSegment" XG_POST, gxg_make_GdkSegment, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GdkSpan" XG_POST, gxg_make_GdkSpan, 0, 0, 1, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GtkTextIter" XG_POST, gxg_make_GtkTextIter, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GtkTextMark" XG_POST, gxg_make_GtkTextMark, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GtkTextChildAnchor" XG_POST, gxg_make_GtkTextChildAnchor, 0, 0, 0, NULL);
 }
 
 /* ---------------------------------------- macros ---------------------------------------- */

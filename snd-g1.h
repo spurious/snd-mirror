@@ -378,6 +378,8 @@ gpointer get_user_data(GtkObject *obj);
   char *sg_get_text(GtkWidget *w, int start, int end);
   void sg_set_cursor(GtkWidget *w, int position);
   void sg_text_insert(GtkWidget *w, char *text);
+  int sg_cursor_position(GtkWidget *w);
+  void sg_select_text(GtkWidget *w, int s0, int s1);
 #else
   char *sg_label_text(GtkLabel *w);
 #endif

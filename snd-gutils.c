@@ -573,10 +573,12 @@ char *sg_get_text(GtkWidget *w, int start, int end)
 void sg_text_insert(GtkWidget *w, char *text)
 {
   GtkTextIter pos;
+  GtkTextBuffer *buf;
   if (text)
     {
-      gtk_text_buffer_get_end_iter(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)), &pos);
-      gtk_text_buffer_insert(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)), &pos, text, strlen(text));
+      buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+      gtk_text_buffer_get_end_iter(buf, &pos);
+      gtk_text_buffer_insert(buf, &pos, text, strlen(text));
     }
   else SG_TEXT_CLEAR(w);
 }
@@ -588,6 +590,45 @@ void sg_set_cursor(GtkWidget *w, int position)
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
   gtk_text_buffer_get_iter_at_offset(buf, &pos, position);
   gtk_text_buffer_place_cursor(buf, &pos);
+}
+
+int sg_cursor_position(GtkWidget *w)
+{
+  GtkTextMark *m;
+  GtkTextIter pos;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  m = gtk_text_buffer_get_insert(buf);
+  gtk_text_buffer_get_iter_at_mark(buf, &pos, m);
+  /* free m? */
+  return(gtk_text_iter_get_offset(&pos));
+}
+
+void sg_select_text(GtkWidget *w, int s0, int s1)
+{
+  /* The currently-selected text in @buffer is the region between the
+   * "selection_bound" and "insert" marks. If "selection_bound" and
+   * "insert" are in the same place, then there is no current selection.
+   * gtk_text_buffer_get_selection_bounds() is another convenient function
+   * for handling the selection, if you just want to know whether there's a
+   * selection and what its bounds are.
+   */
+  GtkTextIter start, end;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  gtk_text_iter_set_offset(&start, s0);
+  gtk_text_iter_set_offset(&end, s1);
+  gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &start);
+  gtk_text_buffer_move_mark_by_name(buf, "insert", &end);
+}
+
+void sg_unselect_text(GtkWidget *w)
+{
+  GtkTextIter start;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  gtk_text_iter_set_offset(&start, sg_cursor_position(w));
+  gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &start);
 }
 
 #else

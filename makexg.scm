@@ -11,6 +11,7 @@
 ;;; TODO: event casts?
 ;;;   GdkColor|GC|GCValues|Event* make?
 ;;; TODO: add gdk-pixbuf? (has GDK_PIXBUF_DISABLE_DEPRECATED)
+;;; TODO: unprotect *_remove?
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -58,6 +59,9 @@
 (define extra-ints '())
 (define extra-strings '())
 (define listable-types (list "gint8*" "int*" "gint*" "gdouble*"))
+(define idlers (list "gtk_idle_remove" "gtk_idle_remove_by_data" 
+		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
+		     "gtk_input_remove" "gtk_key_snooper_remove"))
 
 (define (cadr-str data)
   (let ((sp1 -1)
@@ -199,7 +203,7 @@
 			      "void"
 			      "input_func"
 			      (parse-args "lambda_data func_data gint fd GdkInputCondition condition" 'callback)
-			      'permanent)
+			      'semi-permanent)
 			(list 'GtkCallback
 			      "void"
 			      "func2"
@@ -229,12 +233,12 @@
 			      "gboolean"
 			      "func1"
 			      (parse-args "lambda_data func_data" 'callback)
-			      'semi-permanent) ; TODO: unprotect at idle_remove
+			      'semi-permanent)
 			(list 'GtkKeySnoopFunc
 			      "gint"
 			      "snoop_func"
 			      (parse-args "GtkWidget* widget GdkEventKey* event lambda_data func_data" 'callback)
-			      'permanent)
+			      'semi-permanent)
 			(list 'GtkTranslateFunc
 			      "gchar*"
 			      "translate_func"
@@ -346,6 +350,8 @@
 	   (not (string=? type "gint16"))
 	   (not (string=? type "guint8"))
 	   (not (string=? type "gint8"))
+
+	   (not (string=? type "xen"))
 
 	   ;; function args handled separately
 	   (not (string=? type "lambda"))
@@ -655,7 +661,7 @@
 
 
 (hey "/* xg.c: Guile (and someday Ruby) bindings for gdk/gtk/pango, some of glib~%")
-(hey " *   generated automatically from makexg.scm and xgdata.scm (included in the libxm tarball)~%")
+(hey " *   generated automatically from makexg.scm and xgdata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")
 (hey " *   GDK_DISABLE_DEPRECATED and GTK_DISABLE_DEPRECATED are handled together~%")
@@ -681,12 +687,15 @@
 
 (for-each
  (lambda (name)
-   (hey " *    (|~A #:optional" name)
-   (for-each
-    (lambda (str)
-      (hey " ~A" (cadr str)))
-    (cadr (find-struct name)))
-   (hey ") -> ~A struct~%" name))
+   (let ((args (cadr (find-struct name))))
+     (if (> (length args) 0)
+	 (hey " *    (|~A #:optional" name)
+	 (hey " *    (|~A" name))
+     (for-each
+      (lambda (str)
+	(hey " ~A" (cadr str)))
+      args)
+     (hey ") -> ~A struct~%" name)))
  (reverse make-structs))
  
 (hey " *~%")
@@ -701,7 +710,12 @@
 (hey " * TODO:~%")
 (hey " *     check out the g_signal handlers: GtkSignalFunc also GtkEmissionHook (gtk_signal_* should be ok)~%")
 (hey " *     GdkEvent casts~%")
-(hey " *     struct print, perhaps more struct instance creators~%")
+(hey " *     struct print, more struct instance creators(?)~%")
+(hey " *     tie into libxm (configure.ac etc), Snd (snd-motif translation)~%")
+(hey " *     add gdk-pixbuf? (has GDK_PIXBUF_DISABLE_DEPRECATED)~%")
+(hey " *     unprotect *_remove, unprotect old upon reset callback~%")
+(hey " *     document/test (libxm|grfsnd.html, snd-test.scm)~%")
+(hey " *     add Ruby linkages~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
 (hey " *     11-Feb-02: initial version.~%")
@@ -796,7 +810,8 @@
 (hey "#define XEN_char_P(Arg) XEN_CHAR_P(Arg)~%")
 (hey "#define XEN_gchar_P(Arg) XEN_CHAR_P(Arg)~%")
 (hey "#define XEN_guint32_P(Arg) XEN_ULONG_P(Arg)~%")
-(hey "#define XEN_gulong_P(Arg) XEN_ULONG_P(Arg)~%~%")
+(hey "#define XEN_gulong_P(Arg) XEN_ULONG_P(Arg)~%")
+(hey "#define XEN_xen_P(Arg) 1~%~%")
 
 (hey "#define XEN_guint_P(Arg) XEN_ULONG_P(Arg)~%")
 (hey "#define XEN_guint16_P(Arg) XEN_INTEGER_P(Arg)~%")
@@ -818,7 +833,8 @@
 (hey "#define XEN_TO_C_char(Arg) XEN_TO_C_CHAR(Arg)~%")
 (hey "#define XEN_TO_C_gchar(Arg) XEN_TO_C_CHAR(Arg)~%")
 (hey "#define XEN_TO_C_guint32(Arg) XEN_TO_C_ULONG(Arg)~%")
-(hey "#define XEN_TO_C_gulong(Arg) XEN_TO_C_ULONG(Arg)~%~%")
+(hey "#define XEN_TO_C_gulong(Arg) XEN_TO_C_ULONG(Arg)~%")
+(hey "#define XEN_TO_C_xen(Arg) ((gpointer)Arg)~%~%")
 
 (hey "#define XEN_TO_C_guint(Arg) XEN_TO_C_ULONG(Arg)~%")
 (hey "#define XEN_TO_C_guint16(Arg) XEN_TO_C_INT(Arg)~%")
@@ -938,6 +954,27 @@
 (hey "  return(i);~%")
 (hey "}~%")
 (hey "~%")
+(hey "static void xm_unprotect_idler(guint id)~%")
+(hey "{~%")
+(hey "  int i;~%")
+(hey "  XEN *velts;~%")
+(hey "  XEN cur, idler;~%")
+(hey "  velts = XEN_VECTOR_ELEMENTS(xm_protected);~%")
+(hey "  for (i = 0; i < xm_protected_size; i++)~%")
+(hey "    {~%")
+(hey "      cur = velts[i];~%")
+(hey "      if ((XEN_LIST_P(cur)) && (XEN_LIST_LENGTH(cur) == 3) && (XEN_LIST_P(XEN_CADDR(cur))))~%")
+(hey "        {~%")
+(hey "          idler = XEN_CADDR(cur);~%")
+(hey "          if ((XEN_SYMBOL_P(XEN_CAR(idler))) &&~%")
+(hey "              (strcmp(\"idler\", XEN_SYMBOL_TO_C_STRING(XEN_CAR(idler))) == 0) &&~%")
+(hey "              (id == XEN_TO_C_INT(XEN_CADR(idler))))~%")
+(hey "            {~%")
+(hey "              velts[i] = XEN_FALSE;~%")
+(hey "              last_xm_unprotect = i;~%")
+(hey "              return;~%")
+(hey "            }}}~%")
+(hey "}~%")
 (hey "static void xm_unprotect_at(int ind)~%")
 (hey "{~%")
 (hey "  XEN *velts;~%")
@@ -1128,8 +1165,7 @@
 	       (hey "    loc = xm_protect(gxg_ptr);~%")
 	       (hey "    xm_protect(gxg_ptr);~%"))
 	   (if (and callback-data
-		    (or (eq? (callback-gc callback-data) 'timeout)
-			(eq? (callback-gc callback-data) 'semi-permanent)))
+		    (eq? (callback-gc callback-data) 'timeout))
 	       (hey "    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));~%")
 	       (if (eq? lambda-type 'GtkClipboardGetFunc)
 		   (hey "    XEN_LIST_SET(gxg_ptr, 2, clear_func);~%")))
@@ -1147,7 +1183,7 @@
 	       (if (= refargs 0)
 		   (hey "  return(C_TO_XEN_~A(" (no-stars return-type))
 		   (hey "    result = C_TO_XEN_~A(" (no-stars return-type)))
-	     (hey "  "))))
+	       (hey "  "))))
      (if (not (eq? lambda-type 'lambda))
 	 (begin
 	   (hey "~A(" name)
@@ -1176,6 +1212,9 @@
 		 (if (and callback-data
 			  (eq? (callback-gc callback-data) 'temporary))
 		     (hey "    xm_unprotect_at(loc);~%"))
+		 (if (and callback-data
+			  (eq? (callback-gc callback-data) 'semi-permanent))
+		     (hey "    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(\"idler\"), result, C_TO_XEN_INT(loc)));~%"))
 		 (hey "    return(result);~%")
 		 (hey "   }~%"))
 	       (begin
@@ -1196,8 +1235,13 @@
 			args)
 		       (hey "));~%")
 		       (if restoo (hey "   }~%")))
-		     (if (string=? return-type "void")
-			 (hey "  return(XEN_FALSE);~%"))))))
+		     (begin
+		       (if (member name idlers)
+			   (if (string=? name "gtk_idle_remove")
+			       (hey "  xm_unprotect_idler(XEN_TO_C_guint(~A));~%" (cadr (car args)))
+			       (hey "  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(~A)));~%" (cadr (car args)))))
+		       (if (string=? return-type "void")
+			   (hey "  return(XEN_FALSE);~%")))))))
 	 (begin ; 'lambda
 	   (hey "if (XEN_REQUIRED_ARGS(func) == 2)~%")
 	   (if (not (string=? return-type "void"))
@@ -1510,29 +1554,39 @@
    (let* ((struct (find-struct name))
 	  (strs (cadr struct)))
      ;; cadr of each inner list is field name, car is field type
-     (hey "static XEN gxg_make_~A(XEN arglist)~%" name)
-     (hey "{~%")
-     (hey "  ~A* result;~%" name)
-     (hey "  int i, len;~%")
-     (hey "  result = (~A*)CALLOC(1, sizeof(~A));~%" name name)
-     (hey "  len = XEN_LIST_LENGTH(arglist);~%")
-     (hey "  for (i = 0; i < len; i++)~%")
-     (hey "    switch (i)~%")
-     (hey "      {~%")
-     (let ((ctr 0))
-       (for-each
-	(lambda (str)
-	  (let ((field-name (cadr str))
-		(field-type (car str)))
-	    (hey "      case ~D: result->~A = XEN_TO_C_~A(XEN_LIST_REF(arglist, ~D));~%"
-		 ctr field-name (no-stars field-type) ctr)
-	    (set! ctr (1+ ctr))))
-	strs))
-     (hey "      }~%")
-     (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));~%" 
-	  (string-append name "_"))
-     (hey "}~%~%")))
-   make-structs)
+     (if (= (length strs) 0)
+	 (begin
+	   (hey "static XEN gxg_make_~A(void)~%" name)
+	   (hey "{~%")
+	   (hey "  ~A* result;~%" name)
+	   (hey "  result = (~A*)CALLOC(1, sizeof(~A));~%" name name)
+	   (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));~%" 
+		(string-append name "_"))
+	   (hey "}~%~%"))
+	 (begin
+	   (hey "static XEN gxg_make_~A(XEN arglist)~%" name)
+	   (hey "{~%")
+	   (hey "  ~A* result;~%" name)
+	   (hey "  int i, len;~%")
+	   (hey "  result = (~A*)CALLOC(1, sizeof(~A));~%" name name)
+	   (hey "  len = XEN_LIST_LENGTH(arglist);~%")
+	   (hey "  for (i = 0; i < len; i++)~%")
+	   (hey "    switch (i)~%")
+	   (hey "      {~%")
+	   (let ((ctr 0))
+	     (for-each
+	      (lambda (str)
+		(let ((field-name (cadr str))
+		      (field-type (car str)))
+		  (hey "      case ~D: result->~A = XEN_TO_C_~A(XEN_LIST_REF(arglist, ~D));~%"
+		       ctr field-name (no-stars field-type) ctr)
+		  (set! ctr (1+ ctr))))
+	      strs))
+	   (hey "      }~%")
+	   (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));~%" 
+		(string-append name "_"))
+	   (hey "}~%~%")))))
+ (reverse make-structs))
 
 (hey "static void define_structs(void)~%")
 (hey "{~%~%")
@@ -1548,9 +1602,11 @@
 
 (for-each 
  (lambda (struct)
-   (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_make_~A, 0, 0, 1, NULL);~%"
-		    struct struct))
- make-structs)
+   (let* ((s (find-struct struct)))
+     (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_make_~A, 0, 0, ~D, NULL);~%"
+	  struct struct
+	  (if (> (length (cadr s)) 0) 1 0)))) 
+ (reverse make-structs))
 
 (hey "}~%~%")
 

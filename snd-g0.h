@@ -333,11 +333,11 @@ typedef struct {
 
 #if HAVE_GTK2
 
-  #define SG_MAKE_RESIZABLE(Widget) gtk_widget_set_size_request(Widget, 0, 0); gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE)
-  #define SG_SET_RESIZABLE(Window, Val) gtk_window_set_resizable(Window, Val)
+  #define SG_MAKE_RESIZABLE(Widget)          gtk_widget_set_size_request(Widget, 0, 0); gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE)
+  #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_resizable(Window, Val)
   #define SG_SET_SIZE(Widget, Width, Height) gtk_widget_set_size_request(Widget, Width, Height)
-  #define SG_SET_POSITION(Widget, X, Y) gtk_window_move(GTK_WINDOW(Widget), X, Y)
-  #define SG_LABEL_TEXT(Widget) (char *)gtk_label_get_text(Widget)
+  #define SG_SET_POSITION(Widget, X, Y)      gtk_window_move(GTK_WINDOW(Widget), X, Y)
+  #define SG_LABEL_TEXT(Widget)              (char *)gtk_label_get_text(Widget)
   #define SG_SET_GUTTER_SIZE(Widget, Size)
   #define SG_SET_HANDLE_SIZE(Widget, Size)
   #define SG_SET_DRAWING_AREA_SIZE(Widget, Width, Height)
@@ -364,9 +364,9 @@ typedef struct {
     #define gtk_radio_button_group gtk_radio_button_get_group
   #endif
 
-  #define SG_TEXT_LENGTH(Widget) gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)))
-  #define SG_TEXT_CHARS(Widget, Start, End) sg_get_text(Widget, Start, End)
-  #define SG_TEXT_CLEAR(Widget) gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)), "", 0)
+  #define SG_TEXT_LENGTH(Widget)              gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)))
+  #define SG_TEXT_CHARS(Widget, Start, End)   sg_get_text(Widget, Start, End)
+  #define SG_TEXT_CLEAR(Widget)               gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)), "", 0)
   /*  or  gtk_text_buffer_get_bounds (buffer, &start, &end);  gtk_text_buffer_delete (buffer, &start, &end); */
   #define SG_TEXT_FREEZE(Widget)
   #define SG_TEXT_THAW(Widget)
@@ -378,11 +378,11 @@ typedef struct {
        gtk_text_buffer_get_iter_at_mark converts to iter, gtk_text_iter_get_offset -> offset
   */
   /* use deprecated forms for testing */
-  #define SG_TEXT_SET_POINT(Widget, Point)   gtk_text_set_point(GTK_TEXT(Widget), Point); gtk_editable_set_position(GTK_EDITABLE(Widget), Point)
-  #define SG_TEXT_GET_POINT(Widget)          gtk_editable_get_position(GTK_EDITABLE(Widget))
-  #define SG_TEXT_UNSELECT(Widget)           gtk_editable_select_region(GTK_EDITABLE(Widget), 0, 0)
-  #define SG_TEXT_SELECT(Widget, Start, End) gtk_editable_select_region(GTK_EDITABLE(Widget), Start, End)
-  #define SG_TEXT_INSERT(Widget, Font, FG, BG, Text, Length) gtk_text_insert(GTK_TEXT(Widget), gdk_font_from_description(Font), FG, BG, Text, Length)
+  #define SG_TEXT_SET_POINT(Widget, Point)   sg_set_cursor(Widget, Point)
+  #define SG_TEXT_GET_POINT(Widget)          sg_cursor_position(Widget)
+  #define SG_TEXT_UNSELECT(Widget)           sg_unselect_text(Widget)
+  #define SG_TEXT_SELECT(Widget, Start, End) sg_select_text(Widget, Start, End)
+  #define SG_TEXT_INSERT(Widget, Font, FG, BG, Text, Length) sg_text_insert(Widget, Text)
   #define SG_TEXT_BACKWARD_DELETE(Wid, Num)  gtk_text_backward_delete(GTK_TEXT(Wid), Num)
   #define SG_LIST_SELECT_ROW(Widget, Row)    gtk_clist_select_row(GTK_CLIST(Widget), Row, 0)
   #define SG_LIST_MOVETO(Widget, Row)        gtk_clist_moveto(GTK_CLIST(Widget), Row, 0, 0.5, 0.5);
