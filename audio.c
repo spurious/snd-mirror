@@ -3504,7 +3504,6 @@ static int probe_api(void)
     int jackprobe = jack_mus_audio_initialize();
     if (jackprobe == MUS_ERROR)
       {
-	printf("Using the OSS API instead.\n");
 #endif
   /* go for the oss api */
   api = OSS_API;
@@ -9143,9 +9142,20 @@ void describe_audio_state_1(void)
 /* Kjetil S. Matheussen. k.s.matheussen@notam02.no */
 /* Based on code from ceres. */
  
- #if HAVE_JACK
- #define AUDIO_OK
- #include <jack/jack.h>
+#if HAVE_JACK
+#define AUDIO_OK
+#include <jack/jack.h>
+#include <samplerate.h>
+
+#if MUS_LITTLE_ENDIAN
+#  define MUS_COMP_SHORT MUS_LSHORT
+#  define MUS_COMP_FLOAT MUS_LFLOAT
+#else
+#  define MUS_COMP_SHORT MUS_BSHORT
+#  define MUS_COMP_FLOAT MUS_BFLOAT
+#endif
+
+#define SRC_QUALITY SRC_SINC_MEDIUM_QUALITY
  
 /*************/
 /* Jack Part */
@@ -9178,12 +9188,16 @@ static  int sj_readplace;
 static  int sj_unread;
 static  int sj_buffersize;
 static int sj_jackbuffersize; // number of frames sent to sndjack_process.
+static int sj_totalxrun=0;
 static int sj_xrun=0;
 static int sj_status=SJ_STOPPED;
 
 static int sndjack_num_channels_allocated=0;
 static int sndjack_num_channels_inuse=0;
 static struct SndjackChannel *sndjack_channels=NULL;
+
+static SRC_STATE **sndjack_srcstates;
+static double sndjack_srcratio=1.0;
 
 #define SJ_MAX(a,b) (((a)>(b))?(a):(b))
 
@@ -9245,8 +9259,10 @@ static void sndjack_write(sample_t **buf,int nframes,int latencyframes,int chs){
   int i;
 
   if(sj_xrun>0){
-    if(sj_status==SJ_RUNNING)
+    if(sj_status==SJ_RUNNING){
       printf("Warning. %d frames delayed.\n",sj_xrun);
+      sj_totalxrun+=sj_xrun;
+    }
     sj_xrun=0;
   }
 
@@ -9269,7 +9285,7 @@ static void sndjack_write(sample_t **buf,int nframes,int latencyframes,int chs){
       sj_writeplace=0;
   }
   sj_status=SJ_RUNNING;
- }
+}
  
 static int sndjack_buffersizecallback(jack_nframes_t nframes, void *arg){
   sj_jackbuffersize=nframes;
@@ -9404,9 +9420,11 @@ static void sndjack_cleanup(void){
 			 sndjack_client,
 			 sndjack_channels[ch].port
 			 );
+    src_delete(sndjack_srcstates[ch]);
   }
   jack_deactivate(sndjack_client);
   jack_client_close(sndjack_client);
+
 }
 
 
@@ -9417,7 +9435,7 @@ static void sndjack_cleanup(void){
 
 static int sndjack_format;
 static sample_t **sndjack_buffer;
-
+static sample_t *sndjack_srcbuffer;
 
 /* prototypes for the jack sndlib functions */
 static int   jack_mus_audio_initialize(void);
@@ -9440,12 +9458,22 @@ static void  jack_describe_audio_state_1(void);
 static int jack_mus_audio_initialize(void) {
   int ch;
 
+  if(audio_initialized){
+    return MUS_NO_ERROR;
+  }
+
   if(sndjack_init()!=0)
     return MUS_ERROR;
 
   sndjack_buffer=calloc(sizeof(sample_t*),sndjack_num_channels_allocated);
   for(ch=0;ch<sndjack_num_channels_allocated;ch++)
     sndjack_buffer[ch]=calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
+  sndjack_srcbuffer=calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
+
+  sndjack_srcstates=calloc(sizeof(SRC_STATE*),sndjack_num_channels_allocated);
+  for(ch=0;ch<sndjack_num_channels_allocated;ch++){
+    sndjack_srcstates[ch]=src_new(SRC_QUALITY,1,NULL);
+  }
 
   atexit(sndjack_cleanup);
 
@@ -9465,6 +9493,8 @@ static int jack_mus_audio_initialize(void) {
   vect_mus_audio_save = jack_mus_audio_save;
   vect_mus_audio_restore = jack_mus_audio_restore;
   vect_describe_audio_state_1 = jack_describe_audio_state_1;
+
+  audio_initialized = true;
   
   return MUS_NO_ERROR;
 }
@@ -9473,87 +9503,93 @@ static int jack_mus_audio_initialize(void) {
 static void  jack_mus_audio_set_oss_buffers(int num, int size){
 }
 
-int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
- {
-
+int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int size){
   if(sndjack_client==NULL){
     if(jack_mus_audio_initialize()==MUS_ERROR)
       return MUS_ERROR;
   }
-
+  
   if(sndjack_num_channels_allocated<chans){
     printf("Error. Can not play back %d channels. (Only %d)\n",chans,sndjack_num_channels_allocated);
+    return MUS_ERROR;
+  }
+
+  if(format!=MUS_BYTE && format!=MUS_COMP_SHORT && format!=MUS_COMP_FLOAT){
+    printf("Error, unable to handle format %d.\n",format);
     return MUS_ERROR;
   }
 
   while(sj_status!=SJ_STOPPED) usleep(5);
 
   if(srate!=jack_get_sample_rate(sndjack_client)){
-    printf("Warning, sample-rate differs between snd and jack. Sound will not be played correctly! %d/%d\n",srate,jack_get_sample_rate(sndjack_client));
+    int lokke;
+    //printf("Warning, sample-rate differs between snd and jack. Sound will not be played correctly! %d/%d\n",srate,jack_get_sample_rate(sndjack_client));
+    sndjack_srcratio=(double)jack_get_sample_rate(sndjack_client)/(double)srate;
+    for(lokke=0;lokke<chans;lokke++){
+      src_reset(sndjack_srcstates[lokke]);
+    }
+  }else{
+    sndjack_srcratio=1.0;
   }
+
   sndjack_format=format;
   sndjack_num_channels_inuse=chans;
 
-   return(MUS_NO_ERROR);
- }
+  return(MUS_NO_ERROR);
+}
  
-static int sndjack_from_byte(int ch,int chs,char *buf,int bytes){
+static int sndjack_from_byte(int ch,int chs,char *buf,float *out,int bytes){
   int i;
   int len=bytes/chs;
   if(len>SNDJACK_BUFFERSIZE) return -1;
 
   for(i=0;i<len;i++){
-    sndjack_buffer[ch][i]=MUS_BYTE_TO_SAMPLE(buf[i*chs+ch]);
+    out[i]=MUS_BYTE_TO_SAMPLE(buf[i*chs+ch]);
   }
   return len;
 }
 
-static int sndjack_from_short(int ch,int chs,short *buf,int bytes){
+static int sndjack_from_short(int ch,int chs,short *buf,float *out,int bytes){
   int i;
   int len=bytes/(sizeof(short)*chs);
   if(len>SNDJACK_BUFFERSIZE) return -1;
 
   for(i=0;i<len;i++){
-    sndjack_buffer[ch][i]=(float)buf[i*chs+ch]/32768.1f;
+    out[i]=(float)buf[i*chs+ch]/32768.1f;
   }
   return len;
 }
 
-static int sndjack_from_float(int ch,int chs,float *buf,int bytes){
+static int sndjack_from_float(int ch,int chs,float *buf,float *out,int bytes){
   int i;
   int len=bytes/(sizeof(float)*chs);
   if(len>SNDJACK_BUFFERSIZE) return -1;
 
   for(i=0;i<len;i++){
-    sndjack_buffer[ch][i]=buf[i*chs+ch];
+    out[i]=buf[i*chs+ch];
   }
   return len;
 }
 
 
-int jack_mus_audio_write(int line, char *buf, int bytes) 
-{
+int jack_mus_audio_write(int line, char *buf, int bytes){
   int i;
   int ch;
-  int len=0;
-
-  //printf(stderr,"jack_mus_audio_write start\n");
-  //  printf("mus_audio_write called. line: %d, bytes: %d format: %s\n",line,bytes,sndjack_format==MUS_LSHORT?"lshort":sndjack_format==MUS_LFLOAT?"lfloat":"unknown");
+  int outlen=0;
 
   for(ch=0;ch<sndjack_num_channels_inuse;ch++){
+    int len;
+    float *buf2=sndjack_srcratio==1.0?sndjack_buffer[ch]:sndjack_srcbuffer;
+
     switch(sndjack_format){
     case MUS_BYTE:
-      len=sndjack_from_byte(ch,sndjack_num_channels_inuse,buf,bytes);
+      len=sndjack_from_byte(ch,sndjack_num_channels_inuse,buf,buf2,bytes);
       break;
-    case MUS_LSHORT:
-      len=sndjack_from_short(ch,sndjack_num_channels_inuse,(short *)buf,bytes);
+    case MUS_COMP_SHORT:
+      len=sndjack_from_short(ch,sndjack_num_channels_inuse,(short *)buf,buf2,bytes);
       break;
-    case MUS_LFLOAT:
-      len=sndjack_from_float(ch,sndjack_num_channels_inuse,(float *)buf,bytes);
-      break;
-    default:
-      printf("Error, unknown format\n");
-      return MUS_ERROR;
+    case MUS_COMP_FLOAT:
+      len=sndjack_from_float(ch,sndjack_num_channels_inuse,(float *)buf,buf2,bytes);
       break;
     }
     if(len<0){
@@ -9561,13 +9597,39 @@ int jack_mus_audio_write(int line, char *buf, int bytes)
       return MUS_ERROR;
     }
 
+    if(sndjack_srcratio!=1.0){
+      SRC_DATA src_data={
+	buf2,sndjack_buffer[ch],
+	len,SNDJACK_BUFFERSIZE,
+	0,0,
+	0,
+	sndjack_srcratio
+      };
+      int res=src_process(sndjack_srcstates[ch],&src_data);
+      if(res!=0){
+	printf("Error while resampling. (%s)\n",src_strerror(res));
+	return MUS_ERROR;
+      }
+      if(src_data.input_frames!=len){
+	printf("Unsuccessfull resampling: Should have used %d bytes, used %d.",len,src_data.input_frames);
+	return MUS_ERROR;
+      }
+      if(ch>0 && src_data.output_frames_gen!=outlen){
+	printf("Error, src_process did not output the same number of frames as previous resampled channel (%d/%d).\n"
+	       "Please report this problem to k.s.matheussen@notam02.no. Thanks!\n",src_data.output_frames_gen,outlen);
+	return MUS_ERROR;
+      }
+      outlen=src_data.output_frames_gen;
+    }else{
+      outlen=len;
+    }
   }
 
 
-  sndjack_write(sndjack_buffer,len,len*2,sndjack_num_channels_inuse);
+  sndjack_write(sndjack_buffer,outlen,outlen*2,sndjack_num_channels_inuse);
 
   return MUS_NO_ERROR;
- }
+}
  
 int jack_mus_audio_close(int line) 
 {
@@ -9579,19 +9641,31 @@ int jack_mus_audio_close(int line)
 int jack_mus_audio_mixer_read(int dev, int field, int chan, float *val) 
 {
   if(field==MUS_AUDIO_FORMAT){
-#if MUS_LITTLE_ENDIAN
-    val[1]=MUS_LFLOAT;
-#else
-    val[1]=MUS_BFLOAT;
-#endif
+    val[1]=MUS_COMP_FLOAT;
     val[0]=1;
     return(MUS_NO_ERROR);
   }
   return(MUS_ERROR);
 }
 
- 
-static void jack_describe_audio_state_1(void) {pprint("jack audio");}
+
+static void jack_describe_audio_state_1(void) {
+  char temp[500];
+	  
+  pprint("jack audio:\n");
+  sprintf(temp,"\tNumber of channels: %d\n",sndjack_num_channels_allocated);pprint(temp);
+  sprintf(temp,"\tSamplerate: %d\n",jack_get_sample_rate(sndjack_client));pprint(temp);
+  sprintf(temp,"\tJack buffersize: %d\n",sj_jackbuffersize);pprint(temp);
+  sprintf(temp,"\tSndjack buffersize: %d\n",SNDJACK_BUFFERSIZE);pprint(temp);
+  sprintf(temp,"\tMax number of instances: %d\n",SNDJACK_MAXSNDS);pprint(temp);
+  sprintf(temp,"\tTotal number of frames delayed: %d\n",sj_totalxrun);pprint(temp);
+  sprintf(temp,"\tCurrent cpu-load: %f\n",jack_cpu_load(sndjack_client));pprint(temp);
+  sprintf(temp,"\tIs running realtime: %s\n",jack_is_realtime(sndjack_client)==1?"yes":"no");pprint(temp);
+  sprintf(temp,"\tResample quality (only used when needed): %s (%s)\n",src_get_name(SRC_QUALITY),src_get_description(SRC_QUALITY));pprint(temp);
+  sprintf(temp,"\tIs able to handle the following audio formats: %s %s %s\n",mus_short_data_format_name(MUS_BYTE),mus_short_data_format_name(MUS_COMP_SHORT),mus_short_data_format_name(MUS_COMP_FLOAT));pprint(temp);
+  sprintf(temp,"\tPrefered audio format: %s\n",mus_short_data_format_name(MUS_COMP_FLOAT));pprint(temp);
+}
+
 int jack_mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
 int jack_mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
 int jack_mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}

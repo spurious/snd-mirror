@@ -891,6 +891,7 @@ dnl     This ^ used to be "" but in redhat 7 the -lm needs to be explicit for ma
 dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
         audio_system=OSS
+
 	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then 
           AC_CHECK_LIB(asound,main,[ 
 	    AC_CHECK_HEADER(sys/asoundlib.h,
@@ -899,16 +900,28 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
                     [audio_system=ALSA],
    	            [AC_MSG_WARN(can't find the ALSA header files)])])],
           [AC_MSG_WARN(can't find the ALSA library)])
-	else
-	  if test "$with_jack" = yes ; then 
+	fi
+
+	if test "$with_jack" = yes ; then 
             AC_CHECK_LIB(jack,main,[ 
 	      AC_CHECK_HEADER(jack/jack.h,
-                  [audio_system=JACK],
+                  ,
    	          [with_jack=no
                    AC_MSG_WARN(can't find the JACK header files)])],
               [with_jack=no
 	       AC_MSG_WARN(can't find the JACK library)])
-          fi
+            AC_CHECK_LIB(samplerate,main,[ 
+	      AC_CHECK_HEADER(samplerate.h,
+                  ,
+   	          [with_jack=no
+                   AC_MSG_WARN(can't find the samplerate header files. JACK will not be used.)])],
+              [with_jack=no
+	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
+            if test $with_jack = yes ; then
+	       if test $audio_system = OSS ; then
+                 audio_system=JACK
+               fi
+            fi
         fi
 
 	case $audio_system in
@@ -948,9 +961,9 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
 		    if test "$with_jack" = yes ; then 
 		      if test "$with_static_alsa" = yes ; then
-			 AUDIO_LIB="/usr/lib/libasound.a -ljack"
+			 AUDIO_LIB="/usr/lib/libasound.a -ljack -lsamplerate"
 		      else
-			 AUDIO_LIB="-lasound -ljack"
+			 AUDIO_LIB="-lasound -ljack -lsamplerate"
 	              fi
 		      AC_DEFINE(HAVE_JACK)
 		    fi
@@ -961,7 +974,8 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
  		;;
 	    JACK)
 		AC_DEFINE(HAVE_JACK)
-		AUDIO_LIB="-ljack"
+		AC_DEFINE(HAVE_OSS)
+		AUDIO_LIB="-ljack -lsamplerate"
 		;;
 	    OSS)
 		AC_DEFINE(HAVE_OSS)
@@ -1046,11 +1060,6 @@ dnl do we need explicit -n32?
     *-*-openbsd*) 
         AC_DEFINE(OPENBSD)
 	audio_system=Sun
-        ;;
-    *-*-sco*) 
-        AC_DEFINE(SCO5)
-	audio_system=OSS
-	LDSO_FLAGS="-belf -dy -Bdynamic -G"
         ;;
     *-*-cygwin*)
 	AC_DEFINE(WINDOZE)

@@ -1975,7 +1975,8 @@ typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP
 	      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
 	      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
 	      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE, SP_FILTER_HZING, SP_EXPAND_JITTER,
-	      SP_CONTRAST_BOUNDS, SP_AMP_BOUNDS, SP_SPEED_BOUNDS, SP_EXPAND_BOUNDS, SP_REVERB_LENGTH_BOUNDS, SP_REVERB_SCALE_BOUNDS
+	      SP_CONTRAST_BOUNDS, SP_AMP_BOUNDS, SP_SPEED_BOUNDS, SP_EXPAND_BOUNDS, SP_REVERB_LENGTH_BOUNDS, SP_REVERB_SCALE_BOUNDS,
+	      SP_FILTER_ENVELOPE
 } sp_field_t;
 
 static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
@@ -2084,7 +2085,10 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
 	  FREE(data);
 	  return(make_vct(len, coeffs));
 	}
-      return(XEN_FALSE);
+      break;
+    case SP_FILTER_ENVELOPE:
+      if (sp->filter_control_envelope)
+	return(env_to_xen(sp->filter_control_envelope));
       break;
     }
   return(XEN_FALSE);
@@ -2094,6 +2098,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 {
   snd_info *sp;
   int i, ival, old_format;
+  env *e;
   Float fval;
   if (XEN_TRUE_P(snd_n))
     {
@@ -2418,6 +2423,22 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       break;
     case SP_REVERB_DECAY:     
       sp->reverb_control_decay = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      break;
+    case SP_FILTER_ENVELOPE:
+      if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);  /* set to null in case get_env throws error */
+      e = get_env(val, caller); /* has some error checks */
+      if (e)
+	{
+	  for (i = 0; i < e->pts; i++)
+	    if ((e->data[i * 2 + 1] > 1.0) ||
+		(e->data[i * 2 + 1] < 0.0))
+	      {
+		free_env(e);
+		XEN_OUT_OF_RANGE_ERROR(caller, 1, val, "y values ~A < 0.0 or > 1.0");
+	      }
+	  sp->filter_control_envelope = e;
+	  filter_env_changed(sp, sp->filter_control_envelope);
+	}
       break;
     default:
       break;
@@ -3501,41 +3522,15 @@ static XEN g_set_reverb_control_decay(XEN val, XEN snd)
 
 WITH_REVERSED_ARGS(g_set_reverb_control_decay_reversed, g_set_reverb_control_decay)
 
-static XEN g_set_filter_control_envelope(XEN edata, XEN snd_n)
-{
-  snd_info *sp;
-  env *e;
-  int i;
-  ASSERT_SOUND(S_setB S_filter_control_envelope, snd_n, 2);
-  sp = get_sp(snd_n, PLAYERS_OK);
-  if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
-    return(snd_no_such_sound_error(S_setB S_filter_control_envelope, snd_n));
-  if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);  /* set to null in case get_env throws error */
-  e = get_env(edata, S_setB S_filter_control_envelope);
-  if (e)
-    {
-      for (i = 0; i < e->pts; i++)
-	if ((e->data[i * 2 + 1] > 1.0) ||
-	    (e->data[i * 2 + 1] < 0.0))
-	  {
-	    free_env(e);
-	    XEN_OUT_OF_RANGE_ERROR(S_setB S_filter_control_envelope, 1, edata, "y values ~A < 0.0 or > 1.0");
-	  }
-      sp->filter_control_envelope = e;
-      filter_env_changed(sp, sp->filter_control_envelope);
-    }
-  return(edata);
-}
-
-static XEN g_filter_control_envelope(XEN snd_n)
+static XEN g_filter_control_envelope(XEN snd)
 {
   #define H_filter_control_envelope "(" S_filter_control_envelope " (snd #f)): snd's filter envelope (in the control panel)"
-  snd_info *sp = NULL;
-  ASSERT_SOUND(S_filter_control_envelope, snd_n, 1);
-  sp = get_sp(snd_n, PLAYERS_OK);
-  if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
-    return(snd_no_such_sound_error(S_filter_control_envelope, snd_n));
-  return(env_to_xen(sp->filter_control_envelope)); 
+  return(sound_get(snd, SP_FILTER_ENVELOPE, S_filter_control_envelope));
+}
+
+static XEN g_set_filter_control_envelope(XEN val, XEN snd)
+{
+  return(sound_set(snd, val, SP_FILTER_ENVELOPE, S_setB S_filter_control_envelope));
 }
 
 WITH_REVERSED_ARGS(g_set_filter_control_envelope_reversed, g_set_filter_control_envelope)

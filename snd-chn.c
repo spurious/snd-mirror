@@ -5287,10 +5287,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_y_zero_reversed, g_set_show_y_zero
 static XEN g_min_dB(XEN snd, XEN chn) 
 {
   #define H_min_dB "(" S_min_dB " (snd #f) (chn #f)): min dB value displayed in fft graphs using dB scales (default: -60)"
-
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_MIN_DB, S_min_dB));
-
   return(C_TO_XEN_DOUBLE(ss->min_dB));
 }
 

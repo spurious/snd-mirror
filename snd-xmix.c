@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* TODO: should mix/rec sliders reflect *-control-bounds decisions? */
+/* TODO: should mix/rec sliders reflect *-control-bounds decisions? -- mix|track|-dialog-|recorder-amp|speed(tempo?)-bounds (also tones/style)? */
 
 #define SCROLLBAR_MID 450
 #define SCROLLBAR_LINEAR_MAX 150

@@ -7,6 +7,8 @@
   #define MAIN_DISPLAY(a) GDK_DISPLAY()
 #endif
 
+#if (!USE_GTK) || (!MAC_OSX)
+
 #include <X11/Xatom.h>
 
 /* this code based on XmHTML's netscape.c */
@@ -147,6 +149,13 @@ void g_init_gxutils(void)
   XEN_DEFINE_PROCEDURE(S_send_netscape, g_send_netscape_w,                   1, 0, 0, H_send_netscape);
   XEN_DEFINE_PROCEDURE(S_change_window_property, g_change_window_property_w, 3, 0, 0, H_change_window_property);
 }
+
+#else
+/* gtk+osx = no X window property access, apparently */
+bool send_netscape(const char *html_viewer, const char *url)
+{
+}
+#endif
 
 #endif
 
