@@ -890,6 +890,12 @@
       (set! (mix-tag-height) (mix-tag-height))
       (if (not (equal? (mix-tag-height)  14)) 
 	  (snd-display ";mix-tag-height set def: ~A" (mix-tag-height)))
+      (set! (mark-tag-width) (mark-tag-width))
+      (if (not (equal? (mark-tag-width)  10)) 
+	  (snd-display ";mark-tag-width set def: ~A" (mark-tag-width)))
+      (set! (mark-tag-height) (mark-tag-height))
+      (if (not (equal? (mark-tag-height)  4)) 
+	  (snd-display ";mark-tag-height set def: ~A" (mark-tag-height)))
       (set! (audio-output-device) (audio-output-device))
       (if (not (equal? (audio-output-device)  0 )) 
 	  (snd-display ";audio-output-device set def: ~A" (audio-output-device)))
@@ -1072,6 +1078,8 @@
 	'mix-waveform-height (mix-waveform-height) 20 
 	'mix-tag-width (mix-tag-width) 6
 	'mix-tag-height (mix-tag-height) 14
+	'mark-tag-width (mark-tag-width) 10
+	'mark-tag-height (mark-tag-height) 4
 	'with-mix-tags (with-mix-tags) #t
 	'with-relative-panes (with-relative-panes) #t
 	'audio-output-device (audio-output-device) 0 
@@ -1582,6 +1590,8 @@
 	  (list 'mix-waveform-height mix-waveform-height 20 40)
 	  (list 'mix-tag-height mix-tag-height 14 20)
 	  (list 'mix-tag-width mix-tag-width 6 20)
+	  (list 'mark-tag-height mark-tag-height 4 20)
+	  (list 'mark-tag-width mark-tag-width 10 20)
 	  (list 'selection-creates-region selection-creates-region #t #f)
 	  (list 'transform-normalization transform-normalization normalize-by-channel dont-normalize)
 	  (list 'previous-files-sort previous-files-sort 0 1)
@@ -50772,7 +50782,7 @@ EDITS: 2
 		     maxamp menu-widgets minibuffer-history-length min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-tag-position mix-chans mix-color mix-track mix-frames mix-locked? mix? view-mixes-dialog mix-position view-tracks-dialog
 		     track-dialog-track mix-dialog-mix mix-inverted?
-		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
+		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound 
 		     read-mix-sample read-track-sample next-sample
@@ -50916,7 +50926,7 @@ EDITS: 2
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
 			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
 			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-position
-			 mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height transform-normalization
+			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height mix-waveform-height transform-normalization
 			 equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color
 			 recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
 			 recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-out-type
@@ -51682,7 +51692,7 @@ EDITS: 2
 			      show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			      trap-segfault optimization unbind-key verbose-cursor vu-font vu-font-size vu-size window-height
 			      window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
-			      mix-tag-width with-relative-panes run-safety clm-table-size
+			      mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			      quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			      ))
 	      (gc))

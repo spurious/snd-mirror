@@ -644,7 +644,7 @@
 	     (if (pair? label)
 		 (change-label button (format #f "~A[~A]" (short-file-name (car label)) (cdr label)))
 		 (change-label button label))
-	     (g_object_set_data (G_OBJECT button) "popup-index" (GPOINTER (list #f index)))
+	     (g_object_set_data (G_OBJECT button) "popup-index" (GPOINTER index))
 	     (gtk_widget_show button)
 	     (set! index (1+ index))))
 	 edhist-funcs))
@@ -735,3 +735,4 @@ all saved edit lists."
 			      (if old-val
 				  (set-car! old-val (format #f "~A[~A]" name i))))))))
 (for-each add-edhist-popup (sounds))
+

@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+3-Dec:   mark-tag-width|height.\n\
 17-Nov:  snd 7.9\n\
 16-Nov:  moved the 'Apply' button and friends from the Controls pane to a popup menu.\n\
 5-Nov:   recorder-in-chans.\n\
@@ -376,7 +377,6 @@ void about_snd_help(void)
 28-Oct:  rms-envelope in env.scm.\n\
          removed edpos arg to play-selection.\n\
 18-Oct:  oscope.scm\n\
-15-Oct:  normalize-channel.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

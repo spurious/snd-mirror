@@ -1525,8 +1525,9 @@ make sure all newly created widgets have the same background pixmaps.
 <code><a class=def name="openhook">open-hook</a> (filename)</code></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called each time a file is opened (before the actual open).
-If it returns #t, the file is not opened.
+called before a sound file is opened.
+If it returns #t, or the sound is not readable (bad header, etc) the file is not opened
+(and any corresponding <a href="#afteropenhook">after-open-hook</a> functions are not called).
 If it returns a string (a filename), that file is opened instead of the original one.
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -3086,6 +3087,16 @@ the respective marks (which need not be in separate channels).
 <!-- mark-sync-max -->
 <tr><td colspan=2><code><a class=def name="marksyncmax">mark-sync-max</a> ()</code></td></tr>
 <tr><td></td><td>max mark sync value seen so far (intended as a way to get a unique sync value).
+</td></tr>
+
+<!-- mark-tag-height -->
+<tr><td colspan=2><code><a class=def name="marktagheight">mark-tag-height</a> ()</code></td></tr>
+<tr><td></td><td>mark tag height in pixels (default: 4)
+</td></tr>
+
+<!-- mark-tag-width -->
+<tr><td colspan=2><code><a class=def name="marktagwidth">mark-tag-width</a> ()</code></td></tr>
+<tr><td></td><td>mark tag width in pixels (default: 10)
 </td></tr>
 
 <!-- marks -->

@@ -1,6 +1,6 @@
 # Snd valgrind suppressions file
 # valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp snd
-# valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=yes snd
+# valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=no --num-callers=8 snd
 # first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp
 
 # This is a generated file, composed of the following suppression rules:

@@ -178,8 +178,6 @@ void marks_off(chan_info *cp)
 
 
 #define PLAY_ARROW_SIZE 10
-#define MARK_TAB_WIDTH 10
-#define MARK_TAB_HEIGHT 4
 
 static XEN draw_mark_hook;
 
@@ -221,8 +219,8 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
       draw_string(ax, (int)(cx - 0.5 * len), y1 + 6, mp->name, strlen(mp->name));
     }
   fill_rectangle(ax,
-		 cx - MARK_TAB_WIDTH, top,
-		 2 * MARK_TAB_WIDTH, MARK_TAB_HEIGHT);
+		 cx - mark_tag_width(ss), top,
+		 2 * mark_tag_width(ss), mark_tag_height(ss));
   draw_line(ax, cx, top + 4, cx, y0);
   fill_polygon(ax, 4,
 	       cx,                   y0,
@@ -269,12 +267,12 @@ static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
   if (mp->samp < ap->losamp) return(NULL);
   if (mp->samp > ap->hisamp) return(md->all_done); /* grf_x clips so we can be confused by off-screen marks */
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
-  if (mx > (md->x + MARK_TAB_WIDTH)) return(md->all_done); /* past it */
-  if (mx < (md->x - MARK_TAB_WIDTH)) return(NULL);         /* before it */
+  if (mx > (md->x + mark_tag_width(ss))) return(md->all_done); /* past it */
+  if (mx < (md->x - mark_tag_width(ss))) return(NULL);         /* before it */
   if (mp->name == NULL)                                    /* check y if unnamed */
     {
       if ((md->y >= ap->y_axis_y1) && 
-	  (md->y <= (ap->y_axis_y1 + MARK_TAB_HEIGHT))) 
+	  (md->y <= (ap->y_axis_y1 + mark_tag_height(ss)))) 
 	return(mp); 
       else return(NULL);
     }
@@ -1389,7 +1387,7 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
       ap = cp->axis;
       /* first check that we're in the top portion of the graph where the mark tabs are */
       if ((y >= ap->y_axis_y1) && 
-	  (y <= (ap->y_axis_y1 + MARK_TAB_HEIGHT + 10)))               /*  + 10 for named marks -- checked again later */
+	  (y <= (ap->y_axis_y1 + mark_tag_height(ss) + 10)))               /*  + 10 for named marks -- checked again later */
 	{
 	  mdata *md;
 	  md = (mdata *)CALLOC(1, sizeof(mdata));
@@ -2173,6 +2171,30 @@ static XEN g_syncd_marks(XEN sync)
   return(res);
 }
 
+static XEN g_mark_tag_width(void) {return(C_TO_XEN_INT(mark_tag_width(ss)));}
+static XEN g_set_mark_tag_width(XEN val) 
+{
+  #define H_mark_tag_width "(" S_mark_tag_width "): width (pixels) of mark tags (10)"
+  int width;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mark_tag_width, "an integer"); 
+  width = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
+  set_mark_tag_width(width);
+  for_each_normal_chan(update_graph);
+  return(C_TO_XEN_INT(mark_tag_width(ss)));
+}
+
+static XEN g_mark_tag_height(void) {return(C_TO_XEN_INT(mark_tag_height(ss)));}
+static XEN g_set_mark_tag_height(XEN val) 
+{
+  #define H_mark_tag_height "(" S_mark_tag_height "): height (pixels) of mark tags (4)"
+  int height;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mark_tag_height, "an integer"); 
+  height = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
+  set_mark_tag_height(height);
+  for_each_normal_chan(update_graph);
+  return(C_TO_XEN_INT(mark_tag_height(ss)));
+}
+
 static int *channel_marks(chan_info *cp, int pos)
 {
   int *ids = NULL;
@@ -2339,6 +2361,10 @@ XEN_ARGIFY_3(g_add_mark_w, g_add_mark)
 XEN_ARGIFY_1(g_delete_mark_w, g_delete_mark)
 XEN_ARGIFY_2(g_delete_marks_w, g_delete_marks)
 XEN_NARGIFY_1(g_syncd_marks_w, g_syncd_marks)
+XEN_NARGIFY_0(g_mark_tag_width_w, g_mark_tag_width)
+XEN_NARGIFY_1(g_set_mark_tag_width_w, g_set_mark_tag_width)
+XEN_NARGIFY_0(g_mark_tag_height_w, g_mark_tag_height)
+XEN_NARGIFY_1(g_set_mark_tag_height_w, g_set_mark_tag_height)
 XEN_ARGIFY_4(g_find_mark_w, g_find_mark)
 XEN_ARGIFY_2(g_save_marks_w, g_save_marks)
 XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
@@ -2357,6 +2383,10 @@ XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 #define g_delete_mark_w g_delete_mark
 #define g_delete_marks_w g_delete_marks
 #define g_syncd_marks_w g_syncd_marks
+#define g_mark_tag_width_w g_mark_tag_width
+#define g_set_mark_tag_width_w g_set_mark_tag_width
+#define g_mark_tag_height_w g_mark_tag_height
+#define g_set_mark_tag_height_w g_set_mark_tag_height
 #define g_find_mark_w g_find_mark
 #define g_save_marks_w g_save_marks
 #define g_mark_p_w g_mark_p
@@ -2391,6 +2421,12 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_find_mark,     g_find_mark_w,     1, 3, 0, H_find_mark);
   XEN_DEFINE_PROCEDURE(S_save_marks,    g_save_marks_w,    0, 2, 0, H_save_marks);
   XEN_DEFINE_PROCEDURE(S_mark_p,        g_mark_p_w,        1, 0, 0, H_mark_p);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_tag_width, g_mark_tag_width_w, H_mark_tag_width,
+				   S_setB S_mark_tag_width, g_set_mark_tag_width_w, 0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_tag_height, g_mark_tag_height_w, H_mark_tag_height,
+				   S_setB S_mark_tag_height, g_set_mark_tag_height_w, 0, 0, 1, 0);
 
   #define H_draw_mark_hook S_draw_mark_hook " (mark-id): called before a mark is drawn (in XOR mode). \
 If the hook returns #t, the mark is not drawn."

@@ -2840,6 +2840,7 @@ XEN_NARGIFY_1(gxg_gtk_progress_bar_get_ellipsize_w, gxg_gtk_progress_bar_get_ell
 XEN_NARGIFY_2(gxg_gtk_selection_data_targets_include_image_w, gxg_gtk_selection_data_targets_include_image)
 #endif
 
+XEN_NARGIFY_1(gxg_GPONTER_w, gxg_GPOINTER)
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
 XEN_NARGIFY_1(gxg_GDK_DRAG_CONTEXT_w, gxg_GDK_DRAG_CONTEXT)
 XEN_NARGIFY_1(gxg_GDK_DRAWABLE_w, gxg_GDK_DRAWABLE)
@@ -2970,7 +2971,6 @@ XEN_NARGIFY_1(gxg_PANGO_FONT_w, gxg_PANGO_FONT)
 XEN_NARGIFY_1(gxg_PANGO_FONT_MAP_w, gxg_PANGO_FONT_MAP)
 XEN_NARGIFY_1(gxg_PANGO_LAYOUT_w, gxg_PANGO_LAYOUT)
 XEN_NARGIFY_1(gxg_G_OBJECT_w, gxg_G_OBJECT)
-XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
 XEN_NARGIFY_1(gxg_GDK_EVENT_ANY_w, gxg_GDK_EVENT_ANY)
 XEN_NARGIFY_1(gxg_GDK_EVENT_EXPOSE_w, gxg_GDK_EVENT_EXPOSE)
 XEN_NARGIFY_1(gxg_GDK_EVENT_NOEXPOSE_w, gxg_GDK_EVENT_NOEXPOSE)
@@ -6318,6 +6318,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_selection_data_targets_include_image, gxg_gtk_selection_data_targets_include_image_w, 2, 0, 0, H_gtk_selection_data_targets_include_image);
 #endif
 
+  XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_DRAG_CONTEXT, gxg_GDK_DRAG_CONTEXT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_DRAWABLE, gxg_GDK_DRAWABLE_w, 1, 0, 0, NULL);
@@ -6448,7 +6449,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(PANGO_FONT_MAP, gxg_PANGO_FONT_MAP_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_LAYOUT, gxg_PANGO_LAYOUT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(G_OBJECT, gxg_G_OBJECT_w, 1, 0, 0, NULL);
-  XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_EVENT_ANY, gxg_GDK_EVENT_ANY_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_EVENT_EXPOSE, gxg_GDK_EVENT_EXPOSE_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_EVENT_NOEXPOSE, gxg_GDK_EVENT_NOEXPOSE_w, 1, 0, 0, NULL);

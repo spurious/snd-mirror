@@ -417,7 +417,7 @@ typedef struct snd_state {
   Float Enved_Base, Enved_Power, Auto_Update_Interval;
   bool Enved_Wave_p, Graphs_Horizontal, With_Background_Processes;
   env_type_t Enved_Style;
-  int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
+  int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Mark_Tag_Height, Mark_Tag_Width, Minibuffer_History_Length;
   enved_target_t Enved_Target;
   bool Data_Clipped, Show_Indices;
   int Cursor_Size;

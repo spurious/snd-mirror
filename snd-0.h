@@ -880,4 +880,12 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 #define set_mix_tag_height(a) ss->Mix_Tag_Height = a
 #define DEFAULT_MIX_TAG_HEIGHT 14
 
+#define mark_tag_width(ss) ss->Mark_Tag_Width
+#define set_mark_tag_width(a) ss->Mark_Tag_Width = a
+#define DEFAULT_MARK_TAG_WIDTH 10
+
+#define mark_tag_height(ss) ss->Mark_Tag_Height
+#define set_mark_tag_height(a) ss->Mark_Tag_Height = a
+#define DEFAULT_MARK_TAG_HEIGHT 4
+
 #endif

@@ -60,7 +60,7 @@ The configure program has several Snd-related arguments:
 
    --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 
-   --with-ruby           try to use Ruby as the extension language
+   --with-ruby           use Ruby as the extension language
      --with-ruby-prefix  set location of Ruby
    --with-guile          use Guile, not Ruby (the default); the path to guile-config
                            can be set via GUILE_CONFIG_path (see examples below).

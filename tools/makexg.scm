@@ -1522,6 +1522,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     3-Dec:     changed GPOINTER cast func to accept non-lists.~%")
 (hey " *     15-Nov:    gtk 2.5.5 changes.~%")
 (hey " *     29-Oct:    gtk 2.5.4 changes.~%")
 (hey " *     27-Aug:    gtk 2.5.2 changes. removed the PANGO_ENGINE and PANGO_BACKEND stuff.~%")
@@ -2422,7 +2423,10 @@
    (let ((cast-name (car cast))
 	 (cast-type (cadr cast)))
      (hey "static XEN gxg_~A(XEN obj)" (no-arg cast-name))
-     (hey " {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(~S), XEN_CADR(obj)));}~%" (no-stars cast-type)))))
+     (hey " {return((XEN_LIST_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(~S), XEN_CADR(obj)) : XEN_FALSE);}~%" (no-stars cast-type)))))
+
+(hey "static XEN gxg_GPOINTER(XEN obj)")
+(hey " {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(\"gpointer\"), (XEN_LIST_P(obj)) ? XEN_CADR(obj) : obj));}~%")
 
 (for-each cast-it (reverse casts))
 (if (not (null? casts-21)) (with-21 hey (lambda () (for-each cast-it (reverse casts-21)))))
@@ -2529,6 +2533,8 @@
 (if (not (null? funcs-255)) (with-255 say (lambda () (for-each argify-func (reverse funcs-255)))))
 
 (define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
+(say "XEN_NARGIFY_1(gxg_GPONTER_w, gxg_GPOINTER)~%")
+
 (for-each ruby-cast (reverse casts))
 (if (not (null? casts-21)) (with-21 say (lambda () (for-each ruby-cast (reverse casts-21)))))
 (if (not (null? casts-23)) (with-23 say (lambda () (for-each ruby-cast (reverse casts-23)))))
@@ -2674,6 +2680,9 @@
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
   (say "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
+
+(hey "  XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER, 1, 0, 0, NULL);~%")
+(say "  XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);~%")
 
 (for-each cast-out (reverse casts))
 (if (not (null? casts-21)) (with-21 say-hey (lambda () (for-each cast-out (reverse casts-21)))))

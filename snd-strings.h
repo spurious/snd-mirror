@@ -300,6 +300,8 @@
 #define S_mark_sample                   "mark-sample"
 #define S_mark_sync                     "mark-sync"
 #define S_mark_sync_max                 "mark-sync-max"
+#define S_mark_tag_height               "mark-tag-height"
+#define S_mark_tag_width                "mark-tag-width"
 #define S_marks                         "marks"
 #define S_max_regions                   "max-regions"
 #define S_max_transform_peaks           "max-transform-peaks"

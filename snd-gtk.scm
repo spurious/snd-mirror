@@ -714,10 +714,22 @@ Reverb-feedback sets the scaler on the feedback.
 ;;;   (This order means we can't use stop_emission to disable the built-in callback)
 
 (define (keep-file-dialog-open-upon-ok)
-  (let* ((dialog (open-file-dialog #f))
-	 (ok-button (.ok_button (GTK_FILE_SELECTION dialog))))
-    (g_signal_connect ok-button "clicked"(lambda (w d) (gtk_widget_show dialog)) #f)
-    'ok))
+  (let ((dialog (open-file-dialog #f)))
+    (if (GTK_IS_FILE_SELECTION dialog)
+	(let ((ok-button (.ok_button (GTK_FILE_SELECTION dialog))))
+	  (g_signal_connect ok-button "clicked" (lambda (w d) (gtk_widget_show dialog)) #f)
+	  'ok)
+	'oops)))
+#!
+;;; this code segfaults, but I can't see why
+	(if (GTK_IS_FILE_CHOOSER dialog)
+	    (g_signal_connect dialog "response" (lambda (w id)
+						  (if (= id GTK_RESPONSE_OK)
+						      (gtk_widget_show dialog)))
+			      #f)
+	    'unknown-dialog-widget))))
+!#
+
 
 
 ;;; -------- snd-clock-icon --------
@@ -970,9 +982,11 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define (add-delete-and-rename-options)
   (let ((dialog (open-file-dialog #f)))
-    (gtk_file_selection_show_fileop_buttons (GTK_FILE_SELECTION dialog))
+    (if (GTK_IS_FILE_SELECTION dialog) ; in newer gtk's this is a file_chooser, not a file_selection widget
+	(gtk_file_selection_show_fileop_buttons (GTK_FILE_SELECTION dialog)))
     (set! dialog (mix-file-dialog #f))
-    (gtk_file_selection_show_fileop_buttons (GTK_FILE_SELECTION dialog))))
+    (if (GTK_IS_FILE_SELECTION dialog)
+	(gtk_file_selection_show_fileop_buttons (GTK_FILE_SELECTION dialog)))))
 
   
 

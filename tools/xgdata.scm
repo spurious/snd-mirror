@@ -4423,7 +4423,7 @@
 (CFNC "gpointer g_object_get_data GObject* object gchar* key" 'const)
 (CFNC "void g_object_set_data GObject* object gchar* key gpointer data" 'const)
 
-(CCAST "GPOINTER(obj)" "gpointer")
+;(CCAST "GPOINTER(obj)" "gpointer") ; do this by hand...
 (CCAST "GDK_EVENT_ANY(obj)" "GdkEventAny*")
 (CCAST "GDK_EVENT_EXPOSE(obj)" "GdkEventExpose*")
 (CCAST "GDK_EVENT_NOEXPOSE(obj)" "GdkEventNoExpose*")
@@ -5346,4 +5346,4 @@
 (CFNC-255 "PangoEllipsizeMode gtk_progress_bar_get_ellipsize GtkProgressBar* pbar")
 (CFNC-255 "gboolean gtk_selection_data_targets_include_image GtkSelectionData* selection_data gboolean writable")
 
-;;; TODO: GPOINTER of non-list segfaults
+
