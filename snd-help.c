@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+17-Nov:  snd 7.9\n\
 16-Nov:  moved the 'Apply' button and friends from the Controls pane to a popup menu.\n\
 5-Nov:   recorder-in-chans.\n\
 1-Nov:   edit history pane popup menu (popup.scm).\n\
@@ -376,11 +377,6 @@ void about_snd_help(void)
          removed edpos arg to play-selection.\n\
 18-Oct:  oscope.scm\n\
 15-Oct:  normalize-channel.\n\
-11-Oct:  vct->string\n\
-         moved scale-sound-by and scale-sound-to to snd7.scm.\n\
-	 added sndins and gfm directories (Mike Scholz sndlib/clm code)\n\
-         controls->channel\n\
-5-Oct:   snd 7.7.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

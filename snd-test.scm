@@ -40,7 +40,7 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -23265,8 +23265,8 @@ EDITS: 5
 	(set! (auto-update) #t)
 	(sleep 1) ; make sure write dates differ(!)
 	(system "cp oboe.snd fmv1.snd") ; ind1 needs auto-update now
-	(set-sample 100 0.5 ind 0 #f)
-	(if (fneq (sample 100 ind 0) 0.5) (snd-display ";set-sample: ~A" (sample 100 ind 0)))
+	(set-sample 100 0.55 ind 0 #f)
+	(if (fneq (sample 100 ind 0) 0.55) (snd-display ";set-sample: ~A" (sample 100 ind 0)))
 	(save-sound ind) ; this should cause auto-update scan of all files
 	(set! ind1 (find-sound "fmv1.snd")) ; hmmm auto-update can change any file's index!
 	(if (not (= (frames ind1) (mus-sound-frames "oboe.snd")))
@@ -26782,30 +26782,32 @@ EDITS: 5
 	  (close-sound oboe0)
 	  (close-sound oboe1))
 	
-	(let ((ind (open-sound "oboe.snd")))
-	  (scale-by .5)
-	  (scale-by .25)
-	  (undo)
-	  (for-each
-	   (lambda (func name)
-	     (let ((tag (catch #t (lambda () (func ind)) (lambda args (car args)))))
-	       (if (not (eq? tag 'no-such-edit))
-		   (snd-display ";~A upon about-to-be-clobbered data: ~A" name tag))))
-	   (list (lambda (n) (scale-channel .5 0 #f n 0 2))
-		 (lambda (n) (env-channel '(0 0 1 1 2 0) 0 #f n 0 2))
-		 (if (> (optimization) 0)
-		     (lambda (n) (ptree-channel (lambda (y1) y1) 0 #f n 0 2 #f))
-		     (lambda (n) (pad-channel 0 100 n 0 2)))
-		 ;;(lambda (n) (map-channel (lambda (y2) y2) 0 #f n 0 2)) ; actually will work
-		 (lambda (n) (pad-channel 100 100 n 0 2))
-		 (lambda (n) (delete-sample 100 n 0 2))
-		 (lambda (n) (set! (sample 100 n 0 2) .5))
-		 )
-	   (list "scale" "env" "ptree" 
-		 ;;"map" 
-		 "pad" "delete" "set"
-		 ))
-	  (close-sound ind))
+	(if (= test-16 0)
+	    (let ((ind (open-sound "oboe.snd")))
+	      (scale-by .5)
+	      (scale-by .25)
+	      (undo)
+	      (for-each
+	       (lambda (func name)
+		 (let ((tag (catch #t (lambda () (func ind)) (lambda args (car args)))))
+		   (if (not (eq? tag 'no-such-edit))
+		       (snd-display ";~A upon about-to-be-clobbered data: ~A" name tag))))
+	       (list (lambda (n) (scale-channel .5 0 #f n 0 2))
+		     (lambda (n) (env-channel '(0 0 1 1 2 0) 0 #f n 0 2))
+		     (if (> (optimization) 0)
+			 (lambda (n) (ptree-channel (lambda (y1) y1) 0 #f n 0 2 #f))
+			 (lambda (n) (pad-channel 0 100 n 0 2)))
+		     ;;(lambda (n) (map-channel (lambda (y2) y2) 0 #f n 0 2)) ; actually will work
+		     (lambda (n) (pad-channel 100 100 n 0 2))
+		     (lambda (n) (delete-sample 100 n 0 2))
+		     (lambda (n) (set! (sample 100 n 0 2) .52)) ; memleak here, so don't run this over and over
+					; (set-sample origin is created, then change_samples notices it can't edit ahead, losing origin)
+		     )
+	       (list "scale" "env" "ptree" 
+		     ;;"map" 
+		     "pad" "delete" "set"
+		     ))
+	      (close-sound ind)))
 	
 	(let ((ind (new-sound "test.snd")))
 	  (insert-silence 0 1000)

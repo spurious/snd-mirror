@@ -1,7 +1,7 @@
 ;;; specialize popup menus
 ;;;
-;;; currently there are four special popup menus:
-;;;   selection fft time-domain lisp-listener
+;;; currently there are five special popup menus:
+;;;   selection fft time-domain lisp-listener edit-history
 ;;;
 ;;; (add-popups) creates popup menus specialized for the fft, selection, and time-domain sections of the graph
 ;;;    (change-selection-popup-color new-color) to change selection memu's color
@@ -50,9 +50,9 @@
      (lambda (entry)
        ;; entry is list: name type args optional-callback optional-func
        (let ((widget (XtCreateManagedWidget (car entry)
-					     (cadr entry)
-					     menu
-					     (caddr entry))))
+					    (cadr entry)
+					    menu
+					    (caddr entry))))
 	 (if (> (length entry) 3)
 	     (begin
 	       (XtAddCallback widget XmNactivateCallback (list-ref entry 3))
@@ -623,64 +623,109 @@
 
 ;;; -------- edit history popup
 
-;;; TODO: close-hook (or open?) to change the key so that old lists aren't clobbered
-
-(define edhist-lists '())
+(define edhist-funcs '())
+(define edhist-widgets '()) ; the apply popdown list
 (define edhist-snd #f)
 (define edhist-chn #f)
 
 (define (edhist-clear-edits w c i)
-  (set! edhist-lists '())
+  (set! edhist-funcs '())
   #f)
 
 (define (edhist-save-edits w c i)
-  (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-lists))
+  (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-funcs))
 	 (cur-edits (edits edhist-snd edhist-chn))
 	 (new-func (edit-list->function edhist-snd edhist-chn (1+ (car cur-edits)) (apply + cur-edits))))
     (if old-val
 	(set-cdr! old-val new-func)
-	(set! edhist-lists (cons (cons (cons edhist-snd edhist-chn) new-func) edhist-lists)))
+	;; perhaps this should save the previous function under the current file name?
+	(set! edhist-funcs (cons (cons (cons edhist-snd edhist-chn) new-func) edhist-funcs)))
     #f))
 
 (define (edhist-reapply-edits w c i)
-  ;; PERHAPS: would be nice to provide some indication of what the saved function does
-  ;; PERHAPS: insensitive 'apply/reapply/clear' buttons if no saved func?
-  (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-lists)))
-    (if old-val
-	((cdr old-val) edhist-snd edhist-chn))))
+  (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-funcs)))
+    (if old-val	((cdr old-val) edhist-snd edhist-chn))))
 
-(define (edhist-apply-edits w c i) 
-  ;; TODO: give option to apply any save edit list func -- might need a way to clear this list [and how to display it?]
+(define (edhist-apply-edits w c i)
+  ;; the current popdown widgets are in edhist-widgets, current funcs are in edhist-funcs
+  ;; edhist-apply (for new widgets) is car of edhist-widgets
+
+  (define (edhist-apply w c i)
+    (let ((index (cadr (XtVaGetValues w (list XmNuserData 0)))))
+      (if (and (> index 0)
+	       (<= index (length edhist-funcs)))
+	  ((cdr (list-ref edhist-funcs (1- index))) edhist-snd edhist-chn))))
+	  
+  (let ((wids (cdr edhist-widgets))
+	(funcs edhist-funcs)
+	(parent (car edhist-widgets))
+	(index 1))
+    (if (not (null? funcs))
+	(for-each
+	 (lambda (func)
+	   (let* ((label (car func))
+		  (button (if (not (null? wids))
+			      (let ((wid (car wids)))
+				(set! wids (cdr wids))
+				(XtManageChild wid)
+				wid)
+			      (let ((wid (XtCreateManagedWidget "wid" xmPushButtonWidgetClass parent (list XmNbackground (highlight-color)))))
+				(set! edhist-widgets (append edhist-widgets (list wid)))
+				(XtAddCallback wid XmNactivateCallback edhist-apply)
+				wid))))
+	     (if (pair? label)
+		 (change-label button (format #f "~A[~A]" (short-file-name (car label)) (cdr label)))
+		 (change-label button label))
+	     (XtVaSetValues button (list XmNuserData index))
+	     (set! index (1+ index))))
+	 edhist-funcs))
+    (if (not (null? wids))
+	(for-each
+	 (lambda (w)
+	   (XtUnmanageChild w))
+	 wids)))
   #f)
 
-(define (edhist-help w c i)
+(define (edhist-help-edits w c i)
   (help-dialog "Edit History Functions"
 	       "This popup menu gives access to the edit-list function handlers in Snd. \
 At any time you can backup in the edit list, 'save' the current trailing edits, make some \
-new set of edits, then 'reapply' the saved edits.  The 'apply' choice is not yet implemented, \
-but eventually it will give access to all saved edit list functions, making it easy to apply \
-one channel's edits to others."
+new set of edits, then 'reapply' the saved edits.  The 'apply' choice gives access to all \
+currently saved edit lists -- any such list can be applied to any channel.  'Clear' deletes \
+all saved edit lists."
 	       (list "{edit lists}" "{edit-list->function}")
 	       (list "extsnd.html#editlists" "extsnd.html#editlist_to_function")
 	       ))
 
 (define edit-history-menu
-  (let ((every-menu (list XmNbackground (highlight-color))))
-    (make-popup-menu 
-     "edit-history-popup"
-     (caddr (main-widgets))
-     (list XmNpopupEnabled #t
-	   XmNbackground (highlight-color))
-     (list
-      (list "Edits"    xmLabelWidgetClass      every-menu)
-      (list "sep"      xmSeparatorWidgetClass  every-menu)
-      (list "Save"     xmPushButtonWidgetClass every-menu edhist-save-edits)
-      (list "Reapply"  xmPushButtonWidgetClass every-menu edhist-reapply-edits)
-      (list "Apply"    xmPushButtonWidgetClass every-menu edhist-apply-edits)
-      (list "Clear"    xmPushButtonWidgetClass every-menu edhist-clear-edits)
-      (list "Help"     xmPushButtonWidgetClass every-menu edhist-help)))))
-
-;;; PERHAPS: clear local clear?
+  (let* ((every-menu (list XmNbackground (highlight-color)))
+	 (edhist-popup (XmCreatePopupMenu (caddr (main-widgets)) "edhist-popup"
+					  (append (list XmNpopupEnabled #t) every-menu))))
+    (XtCreateManagedWidget "Edits" xmLabelWidgetClass edhist-popup every-menu)
+    (XtCreateManagedWidget "sep" xmSeparatorWidgetClass edhist-popup every-menu)
+    (let ((edhist-save (XtCreateManagedWidget "Save" xmPushButtonWidgetClass edhist-popup every-menu)))
+      (XtAddCallback edhist-save XmNactivateCallback edhist-save-edits))
+    (let ((edhist-reapply (XtCreateManagedWidget "Reapply" xmPushButtonWidgetClass edhist-popup every-menu)))
+      (XtAddCallback edhist-reapply XmNactivateCallback edhist-reapply-edits))
+    (let* ((edhist-apply (XmCreatePulldownMenu edhist-popup "Apply" every-menu))
+	   (apply-cascade (XtCreateManagedWidget "Apply" xmCascadeButtonWidgetClass edhist-popup
+						 (append (list XmNsubMenuId edhist-apply)
+							 every-menu))))
+      (XtAddCallback apply-cascade XmNcascadingCallback edhist-apply-edits)
+      (set! edhist-widgets (list edhist-apply)))
+    (let ((edhist-clear (XtCreateManagedWidget "Clear" xmPushButtonWidgetClass edhist-popup every-menu)))
+      (XtAddCallback edhist-clear XmNactivateCallback edhist-clear-edits))
+    (let ((edhist-help (XtCreateManagedWidget "Help" xmPushButtonWidgetClass edhist-popup every-menu)))
+      (XtAddCallback edhist-help XmNactivateCallback edhist-help-edits))
+    (add-hook! close-hook (lambda (snd)
+			    (let ((chns (chans snd))
+				  (name (short-file-name snd)))
+			      (do ((i 0 (1+ i)))
+				  ((= i chns))
+				(let* ((old-val (assoc (cons snd i) edhist-funcs)))
+				  (if old-val
+				      (set-car! old-val (format #f "~A[~A]" name i))))))))
+    edhist-popup))
 
 (define (edit-history-popup-menu snd chn)
   (set! edhist-snd snd)
@@ -716,7 +761,21 @@ one channel's edits to others."
 		 (lambda (w data info)
 		   (let ((e (.event info)))
 		     (if (= ButtonPress (.type e))
-			 (set! (.menuToPost info) (edit-history-popup-menu snd chn))))))
+			 (begin
+			   (if edit-history-menu
+			       (for-each-child
+				edit-history-menu
+				(lambda (w)
+				  (let ((name (XtName w)))
+				    (if (string=? name "Clear")
+					(XtSetSensitive w (not (null? edhist-funcs)))
+					(if (string=? name "Save")
+					    (XtSetSensitive w (> (apply + (edits snd chn)) 0))
+					    (if (string=? name "Apply")
+						(XtSetSensitive w (not (null? edhist-funcs)))
+						(if (string=? name "Reapply")
+						    (XtSetSensitive w (not (eq? #f (assoc (cons snd chn) edhist-funcs))))))))))))
+			   (set! (.menuToPost info) (edit-history-popup-menu snd chn)))))))
 
 	      (XtAddCallback chn-grf XmNpopupHandlerCallback 
 		 (lambda (w data info)

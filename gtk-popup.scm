@@ -588,6 +588,7 @@
 
 
 ;;; -------- edit history popup
+;; TODO: gtk side of edhist-apply and sensitized stuff
 
 (define edhist-lists '())
 (define edhist-snd #f)
