@@ -31,6 +31,8 @@
 ;;;      un-hum (notch)
 ;;;      expsrc?
 ;;;      unvoice?
+;;;   for some of these, we should write C modules, loaded when this file is loaded -- see grfsnd.html
+;;;     (to speed up flanging etc)
 ;;;
 ;;; to modify, for example, the gain (set! gain-amount .75)
 
@@ -303,7 +305,8 @@
 	   (lambda ()
 	     (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)
 	     (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
-	       (delete-samples (+ endpt 1) (- (frames snd chn) endpt)))))))
+	       (delete-samples (+ endpt 1) (- (frames snd chn) endpt))))
+	   "crop")))
     (if (> snc 0)
 	(apply map
 	       (lambda (snd chn)

@@ -93,6 +93,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define NO_SUCH_FILE gh_symbol2scm("no-such-file")
 #define NO_SUCH_REGION gh_symbol2scm("no-such-region")
 #define NO_SUCH_SAMPLE gh_symbol2scm("no-such-sample")
+#define NO_SUCH_ENVELOPE gh_symbol2scm("no-such-envelope")
 #define NO_SUCH_EDIT gh_symbol2scm("no-such-edit")
 #define CANNOT_SAVE gh_symbol2scm("cannot-save")
 #define IMPOSSIBLE_BOUNDS gh_symbol2scm("impossible-bounds")

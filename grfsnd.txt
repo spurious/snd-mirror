@@ -280,7 +280,10 @@ Now C-x C-l in Emacs starts Snd as a subjob; anything you type in the Emacs
 *snd* buffer is sent to Snd (very much as if you were running CLM as an
 Emacs subjob), and Snd's output is appended to the *snd* buffer. This
 connection still needs some work -- it would be nice to have Snd's command
-completion available in the *snd* buffer.
+completion available in the *snd* buffer. snd-program is the name of the snd
+image; you can include whatever startup switches you like:
+
+(setq snd-program "snd -horizontal ~/cl/oboe.snd")
 
 Dynamically loaded modules
 
@@ -387,6 +390,104 @@ order of magnitude. When it becomes available, I'll probably move the vct
 support stuff back into Scheme, and reduce some of the clutter of functions
 aimed at fast data access. I think all that's really needed from Snd are the
 sample-reader functions.
+
+To use sndlib (clm) functions from a shared object file can be a bit tricky;
+first you need to build sndlib as a shared library (named "libsndlib.so" for
+loader convenience). If it's not in a directory the loader normally
+searches, you need to use -rpath in the loader arguments to force the loader
+to look in the right place. Then, Snd needs to be built with the same
+pointer to sndlib. Here's an example that implements effects.scm's flanger
+in a file named eff.c:
+
+#include <guile/gh.h>
+#include <stdio.h>
+#include <math.h>
+#include "sndlib.h"
+#include "clm.h"
+
+typedef struct {
+  mus_any *del,*ri;
+} flg;
+
+static flg *make_flange(float flg_speed, float flg_amount, float flg_time)
+{
+  flg *gens;
+  int len;
+  len = (int)(flg_time * 22050) + 1;
+  gens = (flg *)calloc(1,sizeof(flg));
+  gens->del = mus_make_delay(len,NULL,(int)(len+1+flg_amount));
+  gens->ri = mus_make_rand_interp(flg_speed,flg_amount);
+  return(gens);
+}
+
+static float run_flange(float inval, void *ugens)
+{
+  flg *gens = (flg *)ugens;
+  return(0.75 * (inval + mus_delay(gens->del,inval,mus_rand_interp(gens->ri,0.0))));
+}
+
+static void free_flange(flg *gens)
+{
+  mus_free(gens->del);
+  mus_free(gens->ri);
+  free(gens);
+}
+
+static SCM g_make_flange(SCM speed, SCM amount, SCM time)
+{
+  SCM result;
+  flg *gens;
+  gens = make_flange(gh_scm2double(speed),gh_scm2double(amount),gh_scm2double(time));
+  return(gh_ulong2scm((unsigned long)(gens)));
+}
+
+static SCM g_get_flange(void)
+{
+  return(gh_ulong2scm((unsigned long)run_flange));
+}
+
+static SCM g_free_flange(SCM g_gens)
+{
+  free_flange((flg *)gh_scm2ulong(g_gens));
+}
+
+void init_eff(void)
+{
+  gh_new_procedure("free-flange",g_free_flange,1,0,0);
+  gh_new_procedure("get-flange",g_get_flange,0,0,0);
+  gh_new_procedure("make-flange",g_make_flange,3,0,0);
+}
+
+Now compile eff.c and turn it into eff.so, then
+
+(define lib (dynamic-link "/home/bil/cl/eff.so"))
+(dynamic-call "init_eff" lib)
+
+If this gets the catch-all error "file not found: eff.so", it's actually
+complaining about the libraries, not eff.so itself. In a case where I had
+both guile and sndlib on unusual directories, I used:
+
+ld -shared -o eff.so eff.o -rpath /home/bil/test/lib -L/home/bil/test/lib -lguile -rpath /home/bil/cl -L/home/bil/cl -lsndlib -ldl -lm
+
+and changed the Snd makefile LIBS statement to:
+
+LIBS = -Xlinker -rpath -Xlinker /home/bil/test/lib -L/home/bil/test/lib -lguile -Xlinker -rpath -Xlinker /home/bil/cl -L/home/bil/cl -lsndlib -lmcheck -L/usr/X11R6/lib -lXm -lXp -lXpm -lXt -lXext -lX11 -ldl -lm
+
+Once the dynamic linker is happy, the flanger can be invoked:
+
+(loop-samples (make-sample-reader 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
+
+which is about 30 times faster than the interpreted version in effects.scm.
+There is (yet another) gotcha in this business: if Snd is built in the
+normal way incorporating the sndlib code directly, the call (mus-srate) in
+the listener does not refer to the same thing that mus_srate refers to in
+eff.c; the latter is using the shared library's variable whereas Snd is
+using the variable incorporated at compile time. In addition, the
+initialization used in sndlib doesn't carry over to the shared library (this
+is probably a bug...). So, you can (set! (mus-srate) 22050), and then find
+that mus_srate is returning 0! It's probably best to set the shared
+library's mus_srate explicitly when you initialize your module, or build Snd
+with sndlib.so (I've actually never done this...)
 
   ------------------------------------------------------------------------
 
@@ -812,7 +913,7 @@ See clm.html for full details. Optional args are in italics.
   fir-filter          (gen input)                  FIR filter
   fir-filter?         (gen)                        #t if gen is fir filter
   formant             (gen input)                  formant generator
-  formant-bank        (scls gens invals)
+  formant-bank        (scls gens inval)
   formant?            (gen)                        #t if gen is formant generator
   frame*              (fr1 fr2 outfr)              element-wise multiply
   frame+              (fr1 fr2 outfr)              element-wise add
@@ -997,7 +1098,7 @@ time it is called; similarly for the inputs (the third argument); the bank
 of generators (the second argument) is assumed to be a vector full of
 generators.
 
-  (formant-bank amps gens inputs)
+  (formant-bank amps gens inval)
 
 is essentially the same as (but 30 times faster than)
 
@@ -1005,7 +1106,7 @@ is essentially the same as (but 30 times faster than)
        (i 0 (1+ i)))
       ((= i (vct-length gens)) sum)
     (set! sum (+ sum (* (vector-ref amps i)
-                        (formant (vector-ref gens i) (vector-ref inputs i))))))
+                        (formant (vector-ref gens i) inval)))))
 
 in the all-vector case. Here are a few more examples, taken from examp.scm.
 
@@ -1516,7 +1617,7 @@ axis-label-font            graph-cursor               mus-sound-chans           
 axis-numbers-font          graph-hook                 mus-sound-comment          show-selection-transform
 backward-graph             graph-lines                mus-sound-data-format      show-usage-stats
 backward-mark              graph-style                mus-sound-data-location    show-y-zero
-backward-mix               graphing                   mus-sound-duration         showing-controls
+backward-mix               graphing                   mus-sound-duration         show-controls
 backward-sample            graphs-horizontal          mus-sound-frames           sinc-width
 basic-color                header-type                mus-sound-header-type      sine-summation
 be-helpful                 headers                    mus-sound-length           sine-summation?

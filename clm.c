@@ -42,6 +42,7 @@ int mus_make_class_tag(void) {return(mus_class_tag++);}
 
 static Float sampling_rate = 22050.0;
 static int array_print_length = 8;
+/* all these globals need to be set explicitly if we're using clm from a shared library */
 
 static int mus_file_buffer_size = 8192;
 int mus_set_file_buffer_size(int size) {mus_file_buffer_size = size; return(size);}
@@ -2221,12 +2222,12 @@ Float mus_formant(mus_any *ptr, Float input)
   return(output);
 }
 
-Float mus_formant_bank(Float *amps, mus_any **formants, Float *inputs, int size)
+Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size)
 {
   int i;
   Float sum = 0.0;
   for (i=0;i<size;i++) 
-    sum += (amps[i] * mus_formant(formants[i],inputs[i]));
+    sum += (amps[i] * mus_formant(formants[i],inval));
   return(sum);
 }
 

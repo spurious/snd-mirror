@@ -3,6 +3,8 @@
 /* TODO: all the mixdata calls should use md_from_int locally (to make it easier to extract the struct later)
  */
 
+enum {NO_PROBLEM,BLIND_LEAP,GIVE_UP,HUNKER_DOWN};
+
 #if 0
 static void display_md(mixdata *md)
 {
@@ -37,11 +39,11 @@ static int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
 	  kother = other_bytes >> 10;
 	  if (kother > kfree)
 	    {
-	      report_in_minibuffer(sp,"only %d bytes left on disk, changing to 16-bit temp output",kfree<<10);
+	      report_in_minibuffer(sp,"only %d Kbytes left on disk, changing to 16-bit temp output",kfree);
 	      return(HUNKER_DOWN);
 	    }
 	}
-      go_on = snd_yes_or_no_p(sp->state,"only %d bytes left on disk; continue?",kfree<<10);
+      go_on = snd_yes_or_no_p(sp->state,"only %d Kbytes left on disk; continue?",kfree);
       if (!go_on) return(GIVE_UP);
       report_in_minibuffer(sp,"ok -- here we go...");
       return(BLIND_LEAP);

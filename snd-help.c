@@ -256,6 +256,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+16-Oct:  snd 4.7.\n\
+         added optional environ arg to loop-samples and clm example to grfsnd.html.\n\
 11-Oct:  added delete button in envelope editor.\n\
 10-Oct:  removed scaler arg to mix-region and associated kbd scaler arg.\n\
 9-Oct:   bird.scm.  added origin arg to as-one-edit.\n\
@@ -268,9 +270,6 @@ void news_help(snd_state *ss)
 22-Sep:  removed override-data-format|header-type|data-location and replaced with\n\
            generalized set! of header fields.\n\
 18-Sep:  snd 4.6.\n\
-         selection now follows the edit history lists.\n\
-         selection-beg is now selection-position (to be consistent with everything else).\n\
-12-Sep:  effects.scm.\n\
 ",
 NULL);
   FREE(info);
@@ -1181,7 +1180,7 @@ all refer to the same thing.\n\
   " S_key "               (key state)\n\
   " S_left_sample "       (snd chn)\n\
   " S_list2vct "         (lst)\n\
-  " S_loop_samples "      (reader function calls origin)\n\
+  " S_loop_samples "      (reader function calls origin environ)\n\
   " S_mus_sound_length "      (snd chn)\n\
   " S_make_color "        (r g b)\n\
   " S_make_player "       (snd chn)\n\

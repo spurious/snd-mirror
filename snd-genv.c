@@ -1131,12 +1131,38 @@ void reflect_mix_in_enved(void)
 }
 
 #if HAVE_GUILE
-/* settable? */
+
+static env *find_named_env(SCM name)
+{
+  char *env_name;
+  int i,len;
+  env_name = gh_scm2newstr(name,NULL);
+  len = enved_all_envs_top();
+  for (i=0;i<len;i++)
+    if (strcmp(env_name,enved_all_names(i)) == 0)
+      {
+	free(env_name);
+	return(enved_all_envs(i));
+      }
+  free(env_name);
+  scm_throw(NO_SUCH_ENVELOPE,SCM_LIST1(name));
+  return(NULL);
+}
 
 static SCM g_enved_active_env(void)
 {
   #define H_enved_active_env "(" S_enved_active_env ") -> current envelope editor env"
   return(env2scm(active_env));
+}
+
+static SCM g_set_enved_active_env(SCM e)
+{
+  if (active_env) free_env(active_env);
+  if (gh_string_p(e))
+    active_env = copy_env(find_named_env(e));
+  else active_env = copy_env(scm2env(e));
+  env_redisplay(get_global_state());
+  return(e);
 }
 
 static SCM g_enved_selected_env(void)
@@ -1145,10 +1171,19 @@ static SCM g_enved_selected_env(void)
   return(env2scm(selected_env));
 }
 
+static SCM g_set_enved_selected_env(SCM name)
+{
+  selected_env = find_named_env(name);
+  return(name);
+}
+
 void g_init_gxenv(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure0_0(S_enved_active_env,g_enved_active_env),H_enved_active_env);
-  DEFINE_PROC(gh_new_procedure0_0(S_enved_selected_env,g_enved_selected_env),H_enved_selected_env);
+  define_procedure_with_setter(S_enved_active_env,SCM_FNC g_enved_active_env,H_enved_active_env,
+			       "set-" S_enved_active_env,SCM_FNC g_set_enved_active_env,local_doc,0,0,1,0);
+  define_procedure_with_setter(S_enved_selected_env,SCM_FNC g_enved_selected_env,H_enved_selected_env,
+			       "set-" S_enved_selected_env,SCM_FNC g_set_enved_selected_env,local_doc,0,0,1,0);
+
 }
 #endif
 

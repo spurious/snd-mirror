@@ -22,10 +22,16 @@
  * A simpler version would allow only one level of this, and collapse it out if any further edits take place.
  *   (problem is that amp env reads new form and that's just as expensive as writing it out in some cases --
  *   reverse and amp-env can be done directly).
+ *
+ * step func as amp env: split input into pieces following the steps and set scalers (no loss if ampenv ampenv here)
+ *   seg envs could be similar, but add incr (so now + * not just *)
+ * reverse could set read-dir and loc based on assumed reverse; if subsequent edit, perform the reverse
+ *   or do the reverse as a background op until it's needed (whereupon force completion)
+ *
  */
 
 
-/* -------------------------------- EDIT LISTS -------------------------------- *
+/* -------------------------------- EDIT LISTS --------------------------------
  *
  * each channel has a list of lists containing the current edit history and the associated sound temp files or buffers
  * undo: back up current list position
@@ -2620,20 +2626,23 @@ static SCM g_free_sample_reader(SCM obj)
 }
 
 typedef Float (*g_plug)(Float val);
+typedef Float (*g_plug_env)(Float val, void *envp);
 
-static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin)
+static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin, SCM environ)
 {
-  #define H_loop_samples "(" S_loop_samples " reader func calls origin) calls (func (reader)) 'calls' times,\n\
+  #define H_loop_samples "(" S_loop_samples " reader func calls origin environ) calls (func (reader)) 'calls' times,\n\
    replacing current data with the function results; origin is the edit-history name for this operation"
 
   /* proc here is a pointer to a float procedure that takes a float arg */
   g_plug func;
+  g_plug_env func_env;
   chan_info *cp;
   snd_info *sp;
   char *ofile;
   snd_state *ss;
   int num,i,j=0,ofd,datumb,err=0;
   snd_fd *sf;
+  void *envp=NULL;
   file_info *hdr;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
@@ -2644,7 +2653,16 @@ static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin)
   sf = get_sf(reader);
   cp = sf->cp;
   ss = cp->state;
-  func = (g_plug)gh_scm2ulong(proc);
+  if (!(SCM_UNBNDP(environ))) 
+    {
+      envp = (void *)gh_scm2ulong(environ);
+      func_env = (g_plug_env)gh_scm2ulong(proc);
+    }
+  else
+    {
+      func = (g_plug)gh_scm2ulong(proc);
+      envp = NULL;
+    }
   ofile = snd_tempnam(ss);
   sp = (cp->sound);
   hdr = make_temp_header(ss,ofile,SND_SRATE(sp),1,num);
@@ -2653,16 +2671,32 @@ static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin)
   data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
   data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE)); 
   idata = data[0];
-  for (i=0;i<num;i++)
+  if (envp)
     {
-      idata[j] = MUS_FLOAT_TO_SAMPLE((*func)(next_sample_to_float(sf)));
-      j++;
-      if (j == MAX_BUFFER_SIZE)
+      for (i=0;i<num;i++)
 	{
-	  err = mus_file_write(ofd,0,j-1,1,data);
-	  j=0;
-	  if (err == -1) break;
-	  if (ss->stopped_explicitly) break;
+	  idata[j++] = MUS_FLOAT_TO_SAMPLE((*func_env)(next_sample_to_float(sf),envp));
+	  if (j == MAX_BUFFER_SIZE)
+	    {
+	      err = mus_file_write(ofd,0,j-1,1,data);
+	      j=0;
+	      if (err == -1) break;
+	      if (ss->stopped_explicitly) break;
+	    }
+	}
+    }
+  else
+    {
+      for (i=0;i<num;i++)
+	{
+	  idata[j++] = MUS_FLOAT_TO_SAMPLE((*func)(next_sample_to_float(sf)));
+	  if (j == MAX_BUFFER_SIZE)
+	    {
+	      err = mus_file_write(ofd,0,j-1,1,data);
+	      j=0;
+	      if (err == -1) break;
+	      if (ss->stopped_explicitly) break;
+	    }
 	}
     }
   if (j > 0) mus_file_write(ofd,0,j-1,1,data);
@@ -2875,7 +2909,7 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_free_sample_reader,SCM_FNC g_free_sample_reader,1,0,0),H_free_sample_reader);
   DEFINE_PROC(gh_new_procedure(S_sample_readerQ,SCM_FNC g_sf_p,1,0,0),H_sf_p);
   DEFINE_PROC(gh_new_procedure(S_sample_reader_at_endQ,SCM_FNC g_sample_reader_at_end,1,0,0),H_sample_reader_at_end);
-  DEFINE_PROC(gh_new_procedure(S_loop_samples,SCM_FNC g_loop_samples,4,0,0),H_loop_samples);
+  DEFINE_PROC(gh_new_procedure(S_loop_samples,SCM_FNC g_loop_samples,4,1,0),H_loop_samples);
 
   DEFINE_PROC(gh_new_procedure(S_save_edit_history,SCM_FNC g_save_edit_history,1,2,0),H_save_edit_history);
   DEFINE_PROC(gh_new_procedure(S_edit_fragment,SCM_FNC g_edit_fragment,0,3,0),H_edit_fragment);

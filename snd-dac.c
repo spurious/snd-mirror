@@ -1,5 +1,4 @@
-/* TODO 
- * TODO  make revlen follow slider in "real-time":
+/* TODO  make revlen follow slider in "real-time":
  * TODO    set up line_size in mus_make_comb to 5.0*srate/25641, then
  * TODO    then as running, at each block reset to initial - new scaled
  * TODO    (negative pm = longer delay)
@@ -1421,6 +1420,7 @@ static void stop_audio_output (dac_state *dacp);
 
 int mus_audio_compatible_format(int dev) 
 {
+#ifndef PPC
   int err, i;
   float val[32];
   int ival[32];
@@ -1443,6 +1443,7 @@ int mus_audio_compatible_format(int dev)
 	  return(ival[i]);
       return(ival[1]);
     }
+#endif
   return(MUS_COMPATIBLE_FORMAT);
 }
 

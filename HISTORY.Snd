@@ -1,5 +1,7 @@
 snd change log
-  
+
+  16-Oct:    snd 4.7.  
+             added optional environ arg to loop-samples and clm example to grfsnd.html.
   11-Oct:    added delete button in envelope editor.
   10-Oct:    removed scaler arg to mix-region and associated kbd scaler arg.
   9-Oct:     bird.scm.  added origin arg to as-one-edit.

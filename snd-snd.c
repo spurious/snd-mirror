@@ -784,6 +784,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   int i,len,over_selection,curchan=0,added_dur=0,old_sync;
   int maxsync[1];
   Float scaler[1];
+  if (ptr == NULL) return(BACKGROUND_QUIT);
   sp = ap->sp;
   if (!(sp->inuse)) return(BACKGROUND_QUIT);
   ss = sp->state;
@@ -989,9 +990,12 @@ static void run_apply_to_completion(snd_info *sp)
 {
   /* this version called from Guile, so we want it to complete before returning */
   apply_state *ap;
-  sp->applying = 1;
-  ap = (apply_state *)make_apply_state((void *)sp);
-  while (apply_controls((GUI_POINTER)ap) == BACKGROUND_CONTINUE);
+  if (sp)
+    {
+      sp->applying = 1;
+      ap = (apply_state *)make_apply_state((void *)sp);
+      while (apply_controls((GUI_POINTER)ap) == BACKGROUND_CONTINUE);
+    }
 }
 
 #if FILE_PER_CHAN

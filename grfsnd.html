@@ -6,15 +6,22 @@
 	EM.red {color:red; font-style:normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+	SPAN.box {background: beige; width: 100%; font-style: normal; text-align: center; border-width: thin; border-style: ridge}
+	SPAN.bbox {background: lightsteelblue; width: 100%; font-style: normal; border-width: thin; border-style: ridge}
+	SPAN.cbox {background: lightgreen; width: 100%; font-style: normal; border-width: thin; border-style: ridge}
+	SPAN.htmlbox {background: tan; font-style: normal; font-size: small; border-width: thin; border-style: ridge}
 -->
 </style>
 </head>
 <body bgcolor=white>
 
 <a name="grfsndcontents"></a>
-<h1>Snd Customization and Extension Part 2</h1>
+<span class=box><h1>Snd Customization and Extension Part 2</h1></span>
+<br>
 
-<center><small><a href="snd.html#overview">snd.html</a>    <a href="extsnd.html#extsndcontents">extsnd.html</a>    <a href="clm.html#introduction">clm.html</a>    <a href="sndlib.html#introduction">sndlib.html</a></small></center>
+<center>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html#overview">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html#extsndcontents">extsnd.html</a><spacer type=horizontal size=25><a href="clm.html#introduction">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a></span>
+</center>
 
 <ul>
 <li><a href="#startup">Snd Startup</a>
@@ -48,11 +55,11 @@
 <li><a href="#extsndindex">Customization Index</a>
 </ul>
 
-<hr>
+<br>
 
-<h2><a name="startup">Snd Startup</a></h2>
-
-<h3><a name="sndresources">Snd resources</a></h3>
+<span class=box><h2><a name="startup">Snd Startup</a></h2></span>
+<br>
+<span class=bbox><h3><a name="sndresources">Snd resources</a></h3></span>
 
 <p>In the Motif version, there are a few X-style resources that Snd explicity looks for (see Snd.ad):</p>
 
@@ -191,8 +198,8 @@ yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and 
 
         <!-- I(print file):O(epsFile resource)(epsresource) -->
 
-<hr>
-<h3><a name="sndswitches">Snd invocation flags</a></h3>
+<br>
+<span class=bbox><h3><a name="sndswitches">Snd invocation flags</a></h3></span>
 
 <p>The following flags are recognized by Snd (leaving aside all
 the usual Xt/X-related flags like -xrm).</p>
@@ -223,8 +230,10 @@ snd -e "(set! (data-color) (make-color 1 0 0))" oboe.snd
 </pre>
 <p>prints "3" and exits.  The "-title" argument works in both versions of Snd.
 </p>
-
-<h3><a name="sndinitfile">The initialization file</a></h3>
+<img src="note.png" alt="notebook"><spacer type=horizontal size=10><img src="bgd.png" alt="colors" vspace=30>
+<br>
+<br>
+<span class=bbox><h3><a name="sndinitfile">The initialization file</a></h3></span>
 <p>
 When Snd starts up, it looks for an "initialization file", normally named "~/.snd" (its name can be set
 via the X resource mechanism, or through the environment variable SND_INIT_FILE).  This optional file is
@@ -280,15 +289,15 @@ more full of junk than my garage):</p>
 </small></pre>
 
 
-<hr>
-<h2><a name="snddynamic">Runtime modules and external programs</a></h2>
+<br>
+<span class=box><h2><a name="snddynamic">Runtime modules and external programs</a></h2></span>
 
 <p>It is possible to load your own C code into Snd at run-time or
 use any external program from within Snd as an editing function.
 And, perhaps most useful, you can run Snd as an Emacs subjob.
 </p>
-
-<h3><a name="emacssnd">Snd as an Emacs subjob</a></h3>
+<br>
+<span class=bbox><h3><a name="emacssnd">Snd as an Emacs subjob</a></h3></span>
 
 <p>Snd watches stdin; any input received
 is evaluated as if typed in Snd's lisp listener; any subsequent output
@@ -307,7 +316,7 @@ Once you have ILISP, put this code in your .emacs file:</p>
   (setq ilisp-directory-command "(getcwd)"
 	ilisp-set-directory-command "(chdir \"%s\")"
 	ilisp-complete-command
-	"(map (lambda (sym) (list (symbol->string sym))) (apropos-internal \"^%s\"))"))
+	"(map (lambda (sym) (list (symbol-&gt;string sym))) (apropos-internal \"^%s\"))"))
 (if (not snd-program) (setq snd-program "snd"))
 </pre>
 <p>You can bind this to some key via:</p>
@@ -327,8 +336,8 @@ startup switches you like:
 (setq snd-program "snd -horizontal ~/cl/oboe.snd")
 </pre>
 </p>
-
-<h3><a name="dynamic">Dynamically loaded modules</a></h3>
+<br>
+<span class=bbox><h3><a name="dynamic">Dynamically loaded modules</a></h3></span>
 
 <p>You can import shared object files into Snd at any time.
 You need to build Snd
@@ -446,8 +455,108 @@ clutter of functions aimed at fast data access.  I think all
 that's really needed from Snd are the sample-reader functions.
 </p>
 
-<hr>
-<h3><a name="programs">External Programs</a></h3>
+<p>
+To use sndlib (clm) functions from a shared object file can be a bit
+tricky; first you need to build sndlib as a shared library (named
+"libsndlib.so" for loader convenience).  If it's not in a directory
+the loader normally searches, you need to use -rpath in the loader
+arguments to force the loader to look in the right place.  Then, Snd needs
+to be built with the same pointer to sndlib.  Here's an example that
+implements effects.scm's flanger in a file named eff.c:
+</p>
+<pre><small>
+#include &lt;guile/gh.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+#include "sndlib.h"
+#include "clm.h"
+
+typedef struct {
+  mus_any *del,*ri;
+} flg;
+
+static flg *make_flange(float flg_speed, float flg_amount, float flg_time)
+{
+  flg *gens;
+  int len;
+  len = (int)(flg_time * 22050) + 1;
+  gens = (flg *)calloc(1,sizeof(flg));
+  gens-&gt;del = mus_make_delay(len,NULL,(int)(len+1+flg_amount));
+  gens-&gt;ri = mus_make_rand_interp(flg_speed,flg_amount);
+  return(gens);
+}
+
+static float run_flange(float inval, void *ugens)
+{
+  flg *gens = (flg *)ugens;
+  return(0.75 * (inval + mus_delay(gens-&gt;del,inval,mus_rand_interp(gens-&gt;ri,0.0))));
+}
+
+static void free_flange(flg *gens)
+{
+  mus_free(gens-&gt;del);
+  mus_free(gens-&gt;ri);
+  free(gens);
+}
+
+static SCM g_make_flange(SCM speed, SCM amount, SCM time)
+{
+  SCM result;
+  flg *gens;
+  gens = make_flange(gh_scm2double(speed),gh_scm2double(amount),gh_scm2double(time));
+  return(gh_ulong2scm((unsigned long)(gens)));
+}
+
+static SCM g_get_flange(void)
+{
+  return(gh_ulong2scm((unsigned long)run_flange));
+}
+
+static SCM g_free_flange(SCM g_gens)
+{
+  free_flange((flg *)gh_scm2ulong(g_gens));
+}
+
+void init_eff(void)
+{
+  gh_new_procedure("free-flange",g_free_flange,1,0,0);
+  gh_new_procedure("get-flange",g_get_flange,0,0,0);
+  gh_new_procedure("make-flange",g_make_flange,3,0,0);
+}
+</small></pre>
+<p>Now compile eff.c and turn it into eff.so, then</p>
+<pre><small>
+(define lib (dynamic-link "/home/bil/cl/eff.so"))
+(dynamic-call "init_eff" lib)
+</small></pre>
+<p>If this gets the catch-all error "file not found: eff.so",
+it's actually complaining about the libraries, not eff.so itself.
+In a case where I had both guile and sndlib on unusual directories, I used:
+</p>
+<pre><small>
+ld -shared -o eff.so eff.o -rpath /home/bil/test/lib -L/home/bil/test/lib -lguile -rpath /home/bil/cl -L/home/bil/cl -lsndlib -ldl -lm
+</small></pre>
+<p>and changed the Snd makefile LIBS statement to:</p>
+<pre><small>
+LIBS = -Xlinker -rpath -Xlinker /home/bil/test/lib -L/home/bil/test/lib -lguile -Xlinker -rpath -Xlinker /home/bil/cl -L/home/bil/cl -lsndlib -lmcheck -L/usr/X11R6/lib -lXm -lXp -lXpm -lXt -lXext -lX11 -ldl -lm
+</small></pre>
+<p>Once the dynamic linker is happy, the flanger can be
+invoked:</p>
+<pre><small>
+(loop-samples (make-sample-reader 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
+</small></pre>
+<p>which is about 30 times faster than the interpreted version in effects.scm.  There is (yet another)
+gotcha in this business: if Snd is built in the normal way incorporating the sndlib code directly,
+the call (mus-srate) in the listener does not refer to the same thing that mus_srate refers to
+in eff.c; the latter is using the shared library's variable whereas Snd is using the variable
+incorporated at compile time.  In addition, the initialization used in sndlib doesn't carry
+over to the shared library (this is probably a bug...).  So, you can (set! (mus-srate) 22050),
+and then find that mus_srate is returning 0!  It's probably best to set the shared library's
+mus_srate explicitly when you initialize your module, or build Snd with sndlib.so (I've actually
+never done this...)</p>
+
+<br>
+<span class=bbox><h3><a name="programs">External Programs</a></h3></span>
 
 <p>Any external program that knows about sound files can be used to perform editing operations
 from Snd.  You thereby get Snd's display, analysis, header and format conversion, and edit-tree support,
@@ -499,8 +608,8 @@ you can specify them here.  The external program should not delete either input
 or output files, and should not overwrite existing output files (Snd handles this
 bookkeeping). 
 </p>
-
-<h4><a name="stk">STK</a></h4>
+<br>
+<span class=cbox><h4><a name="stk">STK</a></h4></span>
 
 <p><b><a href="www-ccrma.stanford.edu/CCRMA/Software/STK/">STK</a></b>
 is a synthesis toolkit developed by Perry Cook and Gary Scavone.
@@ -546,8 +655,8 @@ using <b>temp-filenames</b>.  We'll also apply this to the current
 selection, rather than the full file.  Since I don't know enough
 about STK to get it to read an input file, I'll use Sox for the
 next examples.</p>
-
-<h4><a name="sox">Sox</a></h4>
+<br>
+<span class=cbox><h4><a name="sox">Sox</a></h4></span>
 
 <p>Sox is a widely available and well-known program for sound format conversions
 and various sound effects.  In this case, we'll read and write NeXT files, and
@@ -637,8 +746,8 @@ call on sox that we were making earlier.  An equivalent using cp is:</p>
 <p>But we're still assuming NeXT/Sun format files, and we're throwing away the string
 we so laboriously created.  A more friendly function would display its progress.
 </p>
-
-<h4><a name="clm">CLM</a></h4>
+<br>
+<span class=cbox><h4><a name="clm">CLM</a></h4></span>
 
 <p>Reading, mixing, and writing sound files are no problem in CLM, but
 it's unusual to run it as a batch program.
@@ -739,8 +848,8 @@ Also, place the expression to be evaluated in double quotes, rather than
 ACL's single quotes.
 </p>
 
-<hr>
-<h3><a name="sndaswidget">Snd as a Widget</a></h3>
+<br>
+<span class=bbox><h3><a name="sndaswidget">Snd as a Widget</a></h3></span>
 
 <p>To include the entire Snd editor as a widget in some other program,
 first compile it with -DSND_AS_WIDGET. Then load it into your program,
@@ -763,8 +872,8 @@ ignored by Snd.</p>
 <p>In Gtk, the arguments are different, but the basic idea is the same.
 saw.c has an example.</p>
 
-<hr>
-<h3><a name="sndwithclm">Snd and the CLM module</a></h3>
+<br>
+<span class=bbox><h3><a name="sndwithclm">Snd and the CLM module</a></h3></span>
 
 <p>The files clm.c, clm.h, and clm2scm.c implement CLM (a Common Lisp Music V implementation
 described in clm.html, available in clm-2.tar.gz at ccrma-ftp) as a Guile-loadable module.
@@ -844,8 +953,8 @@ The CLM (common lisp) version might be something like:</p>
 
 ;;; (with-sound () (echo 0 60000 .5 1.0 "pistol.snd"))
 </small></pre>
-
-<h4><a name="clmfuncs">CLM functions</a></h4>
+<br>
+<span class=cbox><h4><a name="clmfuncs">CLM functions</a></h4></span>
 
 <p>See <a href="clm.html">clm.html</a> for full details. Optional args are in italics.</p>
 
@@ -897,7 +1006,7 @@ The CLM (common lisp) version might be something like:</p>
   <a href="clm.html#fir-filter">fir-filter</a>          (gen input)                  FIR filter
   <a href="clm.html#fir-filter?">fir-filter?</a>         (gen)                        #t if gen is fir filter
   <a href="clm.html#formant">formant</a>             (gen input)                  formant generator
-  formant-bank        (scls gens invals)
+  formant-bank        (scls gens inval)
   <a href="clm.html#formant?">formant?</a>            (gen)                        #t if gen is formant generator
   <a href="clm.html#frame*">frame*</a>              (fr1 fr2 <i>outfr</i>)              element-wise multiply
   <a href="clm.html#frame+">frame+</a>              (fr1 fr2 <i>outfr</i>)              element-wise add
@@ -1080,7 +1189,7 @@ the bank function) can be a float, a vector of floats, a vct of floats, or a fun
 returns a float each time it is called; similarly for the inputs (the third argument); the
 bank of generators (the second argument) is assumed to be a vector full of generators. </p>
 <pre>
-  (formant-bank amps gens inputs)
+  (formant-bank amps gens inval)
 </pre>
 <p>is essentially the same as (but 30 times faster than)</p>
 <pre><small>
@@ -1088,7 +1197,7 @@ bank of generators (the second argument) is assumed to be a vector full of gener
        (i 0 (1+ i))) 
       ((= i (vct-length gens)) sum)
     (set! sum (+ sum (* (vector-ref amps i)
-                        (formant (vector-ref gens i) (vector-ref inputs i))))))
+                        (formant (vector-ref gens i) inval)))))
 </small></pre>
 <p>in the all-vector case.
 Here are a few more examples, taken from examp.scm.
@@ -1209,9 +1318,9 @@ Here are a few more examples, taken from examp.scm.
 
 </small></pre>
 <p>Geez, I haven't had this much fun in a long time!  Check out examp.scm and snd-test.scm for more.</p>
-<hr>
+<br>
 
-<h3><a name="sndwithmotif">Snd and Motif</a></h3>
+<span class=bbox><h3><a name="sndwithmotif">Snd and Motif</a></h3></span>
 <p>It is possible to add your own user-interface elements.
 As a very simple example, let's make a dialog window with a slider:</p>
 <pre>
@@ -1327,9 +1436,9 @@ void init_hiho()
 <p>I've heard rumors of a guile-motif package similar (I presume) 
 to the guile-gtk package (see below).  If it surfaces, I'll add
 some immortal prose here.</p>
-<hr>
+<br>
 
-<h3><a name="sndwithgtk">Snd and Gtk+</a></h3>
+<span class=bbox><h3><a name="sndwithgtk">Snd and Gtk+</a></h3></span>
 
 <p>In the Gtk+ version of Snd, the .Xdefaults file is replaced by .sndrc, but I have no
 idea how it's supposed to work.  The easiest way to add your own user interface widgets
@@ -1478,9 +1587,9 @@ option named "one":</p>
   (gtk-widget-show one-menu)
 </small></pre>
 <p>See snd-gtk.scm for more examples.</p>
-<hr>
+<br>
 
-<h3><a name="sndwithgmeteor">Snd and gmeteor</a></h3>
+<span class=bbox><h3><a name="sndwithgmeteor">Snd and gmeteor</a></h3></span>
 
 <p><a name="gmeteor">gmeteor</a> is a Guile-based filter design package
 written by Matteo Frigo, based on the Meteor system of Steiglitz, Parks,
@@ -1502,9 +1611,9 @@ named make-filter.  Someday I'll learn enough about the Guile module system to
 know how to keep gmeteor's make-filter from clobbering CLM's.  (There may
 be others as well -- this is the one I happened to notice).
 </p>
-<hr>
+<br>
 
-<h3><a name="sndandladspa">Snd and LADSPA</a></h3>
+<span class=bbox><h3><a name="sndandladspa">Snd and LADSPA</a></h3></span>
 
 <p>Richard Furse has provided a module to support LADSPA plugins in Snd. To get it
 loaded, either use the configure switch --with-ladspa, or include the compile
@@ -1540,9 +1649,9 @@ An example call to apply the low-pass-filter in the CMT plugin library is
 (apply-ladspa (make-sample-reader 0) (list "cmt" "lpf" 1000) 10000 "origin").
 </pre>
 </small>
-<hr>
+<br>
 
-<h3><a name="sndandx">Driving Snd remotely</a></h3>
+<span class=bbox><h3><a name="sndandx">Driving Snd remotely</a></h3></span>
 
 <p>It is possible to send Snd arbitrary scheme code from any other program;
 the program sndctrl.c is a simple example.  Snd has two X window properties:
@@ -1554,9 +1663,9 @@ a response from Snd, use the function change-property(consat,name,command) where
 consat is the property name Snd should search for, name is the property to change, and command is the string
 that replaces the current property value.
 </p>
-<hr>
+<br>
 
-<h3><a name="sndandgl">Snd and OpenGL</a></h3>
+<span class=bbox><h3><a name="sndandgl">Snd and OpenGL</a></h3></span>
 
 <p>Snd can be used in conjunction with OpenGL, but due to the way GL uses X, it's
 not built into the Snd image.  The files glfft.c and glfft.scm show one way
@@ -1569,9 +1678,9 @@ this stuff, build glfft, start Snd, display spectrograms, load glfft.scm,
 and (start-gl).
 </p>
 
-<hr>
+<br>
 
-<h2><a name="extsndindex">Customization Index</a></h2>
+<span class=box><h2><a name="extsndindex">Customization Index</a></h2></span>
 <!-- created 21-Sep-00 -->
 <pre>
 <small>

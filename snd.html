@@ -6,6 +6,9 @@
 	EM.red {color:red; font-style:normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+	SPAN.box {background: beige; width: 100%; font-style: normal; text-align: center; border-width: thin; border-style: ridge}
+	SPAN.bbox {background: lightsteelblue; width: 100%; font-style: normal; border-width: thin; border-style: ridge}
+	SPAN.htmlbox {background: tan; font-style: normal; font-size: small; border-width: thin; border-style: ridge}
 -->
 </style>
 <!-- 	P {text-align: justify}  -->
@@ -55,12 +58,14 @@ href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz">snd-4.tar.gz</a>.
 Snd has a <a href="http://www-ccrma.stanford.edu/software/snd/">home page</a>
 and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 </p>
+<center>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="extsnd.html#extsndcontents">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html#grfsndcontents">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html#introduction">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a></span>
+</center>
 
-<center><small><a href="extsnd.html#extsndcontents">extsnd.html</a>    <a href="grfsnd.html#grfsndcontents">grfsnd.html</a>    <a href="clm.html#introduction">clm.html</a>    <a href="sndlib.html#introduction">sndlib.html</a></small></center>
 
-<hr>
+<br>
+<span class=box><h2>Contents</h2></span>
 
-<h2>Contents</h2>
 <ul>
 <li><a href="#gettingstarted">Getting Started</a>
 <li><a href="#fileoperations">File Operations</a>
@@ -159,12 +164,12 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
   </ul>
 <li><a href="#index">Topical Index</a>
 </ul>
-<hr>
+<br>
         <!-- I(examine regions):A(regions) --><!-- I(control panel):A(controls) -->
         <!-- I(move cursor ahead):A(thecursor) --><!-- I(move cursor back):A(thecursor) -->
         <!-- I(define mark):A(marks) -->
 
-<h2><a name="gettingstarted">Getting Started</a></h2>
+<span class=box><h2><a name="gettingstarted">Getting Started</a></h2></span>
 <p>Once compiled and loaded (see README.Snd for instructions), fire Snd up with</p>
 <pre>
   snd some.snd
@@ -370,9 +375,9 @@ listener available under the View:Open Listener menu option.
 <td><small>News</small></td>
 </tr>
 </table>
-<hr>
+<br>
 
-<h2><a name="fileoperations">File Operations</a></h2>
+<span class=box><h2><a name="fileoperations">File Operations</a></h2></span>
 <pre>
   File Menu
 
@@ -615,9 +620,9 @@ flushed (but see the function unsaved-edits? in examp.scm).</p>
 	<!-- I(extract channel):K(C-x C-w)(cxcw) --><!-- I(extract channel):A(cxcw) -->
         <!-- I(save channel):A(cxcw) --><!-- I(overwrite check):O(overwriteCheck)(overwrite) -->
         <!-- I(overwrite check):A(overwrite) --><!-- I(revert file):A(revertfile) --><!-- I(print file):A(printfile) -->
-<hr>
+<br>
 
-<h3><a name="viewing">The Display</a></h3>
+<span class=bbox><h3><a name="viewing">The Display</a></h3></span>
 <pre>
   View Menu
 
@@ -713,9 +718,9 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
 
 <p>The <a href="#regionbrowser">Regions</a> option is described below.</p>
 
-<hr>
+<br>
 
-<h3><a name="options">Other Options</a></h3>
+<span class=bbox><h3><a name="options">Other Options</a></h3></span>
 <pre>
   Options Menu
 
@@ -866,9 +871,9 @@ selection if either is visible.  You can also have
 zoom focus on the left edge, right edge, or
 midpoint of the current window.</p>
         <!-- I(save options):A(saveoptions) --><!-- I(zoom focus):A(zoomoption) -->
-<hr>
+<br>
 
-<h2><a name="editoperations">Edit Operations</a></h2>
+<span class=box><h2><a name="editoperations">Edit Operations</a></h2></span>
 <pre>
   Edit Menu
     <a href="#undoredo">Undo</a>:              Undo last edit                  (C-x C-u or C-_)
@@ -914,7 +919,8 @@ all the mouse and keyboard editing commands.  The 'control
 panel' provides more complex editing operations, but
 has a chapter to itself.</p>
 
-<h3><a name="thecursor">The Active Channel and The Cursor</a></h3>
+<br>
+<span class=bbox><h3><a name="thecursor">The Active Channel and The Cursor</a></h3></span>
 
 <h4>The Active Channel</h4>
 
@@ -1015,8 +1021,8 @@ the window display .1 seconds of data.</p>
         <!-- I(move window back):K([Right], C-x b)(movewindow) --><!-- I(zoom window):K([Up],[Down]) -->
         <!-- I(center selection):K(C-x l)(cxl) --><!-- I(center selection):A(cxl) -->
         <!-- I(axis bounds):K(C-x C-b, C-x C-p)(cxcb) --><!-- I(axis bounds):A(cxcb) -->
-<hr>
-<h3><a name="marks">Marks</a></h3>
+<br>
+<span class=bbox><h3><a name="marks">Marks</a></h3></span>
 
 <p>A mark marks a particular sample in a sound file (not a
 position in that file).
@@ -1065,8 +1071,8 @@ file that Snd will load automatically later via
 <code>(save-marks)</code>.</p>
         <!-- I(save marks):A(savemarks) -->
 
-<hr>
-<h3><a name="regions">Regions</a></h3>
+<br>
+<span class=bbox><h3><a name="regions">Regions</a></h3></span>
 
 <p>A region is a (saved) portion of the sound
 data.  Although I'm not completely consistent in this document, 
@@ -1168,9 +1174,9 @@ was saved in region 0).
 (or equivalently, <a href="extsnd.html#lshowselectiontransform">show-selection-transform</a>
 is #t), the fft display, if any, displays the transform of the selected portion.
 </p>
-<hr>
+<br>
 
-<h3><a name="edithistory">The Edit List</a></h3>
+<span class=bbox><h3><a name="edithistory">The Edit List</a></h3></span>
 
 <p>The current state of the undo/redo list can be viewed
 as a scrolled list of strings in the pane on the left of the 
@@ -1191,8 +1197,8 @@ meantime).  The file can be edited (it's just a text file with comments).
 See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 </p>
 
-<hr>
-<h3><a name="howtoedit">How to...</a></h3>
+<br>
+<span class=bbox><h3><a name="howtoedit">How to...</a></h3></span>
 
 <ul>
 <li><a href="#saveopen">Save, open, close, print</a>
@@ -1936,8 +1942,8 @@ If there is no completion routine active, Tab is a no-op.
         <!-- I(temp directory):K(C-x d)(ktempdir) --><!-- I(temp directory):A(ktempdir) -->
         <!-- I(temp directory):O(TMPDIR or /var/tmp) -->
 	<!-- I(change key binding):A(sndbindkey) --><!-- I(change key binding):L(bind-key)(sndbindkey) -->
-<hr>
-<h3><a name="keyboardcommands">Keyboard Commands</a></h3>
+<br>
+<span class=bbox><h3><a name="keyboardcommands">Keyboard Commands</a></h3></span>
 
 <p>There are two types of keyboard commands in Snd: 
 those associated with the Meta ('Alt') key, used as 
@@ -2074,8 +2080,8 @@ all the samples between the cursor and the next mark.</p>
         <!-- I(smooth samples):K(C-x C-z)(cxcz) --><!-- I(smooth samples):A(cxcz) -->
 	<!-- I(continue session):K(C-x C-l)(cxcl) -->
 	<!-- I(smooth samples):L(smooth)(sndsmooth) -->
-<hr>
-<h2><a name="controls">The Control Panel</a></h2>
+<br>
+<span class=box><h2><a name="controls">The Control Panel</a></h2></span>
 
 <p>The control panel is the portion of each sound's display
 beneath the channel graphs.  It is normally hidden, except
@@ -2083,7 +2089,8 @@ for the upper portion that shows the file name, the
 sync and play buttons, and the minibuffer (the portion
 in between that opens into a text window when activated).
 </p>
-<img src="controls.png" alt="picture of Snd control panel" align=left hspace=20 vspace=10>
+<center><img src="controls.png" alt="picture of Snd control panel"></center>
+
 <p>The controls are: amp, speed, expand, contrast,
 reverb, and filter.</p>
 
@@ -2198,16 +2205,17 @@ panel are:</p>
   C-x C-c   hide ("close") control panel
 </pre>
 <p>See also <a href="extsnd.html#callapply">call-apply</a>.</p>
-<hr>
+<br>
 
 <h2><a name="customization">Customization and Extension</a></h2>
 
 <p>See <a href="extsnd.html#extsndcontents">extsnd.html</a>.</p>
-<hr>
+<br>
 
-<h2><a name="index">Index</a></h2>
+<span class=box><h2><a name="index">Index</a></h2></span>
+<br>
+<center>
 <table border rows=117>
-  <caption>Index</caption>
   <!-- created whenever -->
   <tr><th>Action<th>Menu<th>Keyboard<th>Lisp<th>Other</tr>
   <tr><td><a href="#kgc">abort command</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#sndabort"><small>abort?</small></a></td><td><small>mouse click</small></td></tr>
@@ -2328,8 +2336,10 @@ panel are:</p>
   <tr><td><a href="#zoomoption">zoom focus</a></td><td><small>Options: <a href="#zoomoption">Zoom style</a></small></td><td><br></td><td><a href="extsnd.html#zoomfocusstyle"><small>zoom-focus-style</small></a></td><td><br></td></tr>
   <tr><td><a href="#movingwindow">zoom window</a></td><td><br></td><td><small>[Up],[Down]</small></td><td><a href="extsnd.html#sndxbounds"><small>x-bounds</small></a></td><td><a href="#movingwindow"><small>control keys intensify</small></a></td></tr>
 </table>
-
+</center>
 <br>
-<center><small><a href="extsnd.html#extsndcontents">extsnd.html</a>    <a href="grfsnd.html#grfsndcontents">grfsnd.html</a>    <a href="clm.html#introduction">clm.html</a>    <a href="sndlib.html#introduction">sndlib.html</a></small></center>
+<center>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="extsnd.html#extsndcontents">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html#grfsndcontents">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html#introduction">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a></span>
+</center>
 
 </body></html>

@@ -932,6 +932,7 @@ env* name_to_env(char *str);
 void delete_envelope(snd_state *ss, char *name);
 #if HAVE_GUILE
   SCM env2scm (env *e);
+  env *scm2env(SCM res);
   env *get_env(SCM e, SCM base, char *origin);
   void g_init_env(SCM local_doc);
 #endif

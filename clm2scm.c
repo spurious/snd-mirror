@@ -2455,7 +2455,7 @@ static SCM g_formant(SCM gen, SCM input)
 
 static SCM g_formant_bank(SCM amps, SCM gens, SCM inp)
 {
-  #define H_formant_bank "(" S_formant_bank " scls gens inputs) -> sum a bank of " S_formant "s: scls[i]*" S_formant "(gens[i],fms[i])"
+  #define H_formant_bank "(" S_formant_bank " scls gens inval) -> sum a bank of " S_formant "s: scls[i]*" S_formant "(gens[i],inval)"
   return(g_mus_bank1(amps,gens,inp,MUS_FORMANT,S_formant_bank));
 }
 
@@ -4882,7 +4882,7 @@ static char CLM_help_string[] =
   fir-filter          (gen input)          FIR filter\n\
   fir-filter?         (gen)                #t if gen is fir filter\n\
   formant             (gen input)          formant generator\n\
-  formant-bank        (scls gens invals)   bank for formants\n\
+  formant-bank        (scls gens inval)    bank for formants\n\
   formant?            (gen)                #t if gen is formant generator\n\
   frame*              (fr1 fr2 outfr)      element-wise multiply\n\
   frame+              (fr1 fr2 outfr)      element-wise add\n\

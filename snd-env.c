@@ -1258,7 +1258,7 @@ void save_envelope_editor_state(FILE *fd)
 
 #if HAVE_GUILE
 
-static env *scm2env(SCM res)
+env *scm2env(SCM res)
 {
   SCM el,lst;
   int i,len;
@@ -1431,7 +1431,7 @@ static SCM g_save_envelopes(SCM filename)
       fclose(fd);
       return(filename);
     }
-  return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_envelopes))));
+  return(scm_throw(CANNOT_SAVE,SCM_LIST3(gh_str02scm(S_save_envelopes),filename,gh_str02scm(strerror(errno)))));
 }
 
 void g_init_env(SCM local_doc)

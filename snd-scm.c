@@ -2,6 +2,7 @@
 #include "vct.h"
 
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
+ *         but would be much faster if we can wait until the amp-env is computed
  * TODO  mark-moved-hook? selection-creation-hook? sample-color?
  * TODO  need to redirect scheme display output to snd's listener somehow
  *          (define %display display)
@@ -1457,7 +1458,7 @@ snd_info *get_sp(SCM scm_snd_n)
   int snd_n;
   mixdata *md;
   /* if scm_snd_n is a number, it is sp->index
-     if it's a list, car is mix id 
+     if it's a (non-empty) list, car is mix id (perhaps someday treat list as track if more than one member)
   */
   if (gh_number_p(scm_snd_n))
     {
@@ -1476,9 +1477,13 @@ snd_info *get_sp(SCM scm_snd_n)
       if (gh_list_p(scm_snd_n))
 	{
 	  /* a mix input sound */
-	  snd_n = g_scm2int(SCM_CAR(scm_snd_n));
-	  md = md_from_int(snd_n);
-	  if (md) return(make_mix_readable(md));
+	  /* make sure it's not the null list */
+	  if (gh_length(scm_snd_n) > 0)
+	    {
+	      snd_n = g_scm2int(SCM_CAR(scm_snd_n));
+	      md = md_from_int(snd_n);
+	      if (md) return(make_mix_readable(md));
+	    }
 	  return(NULL);
 	}
     }

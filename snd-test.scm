@@ -24,6 +24,9 @@
 ;;;       add to test-spectral-difference set (reading o2 etc)
 ;;;       test active selection mix/insert as opposed to region mix/paste
 ;;;       also mix-selection (from menu) is untested currently
+;;;       set! of enved-active-env
+;;;       formant-bank
+;;;       cscm test (i.e. dynamically loaded code)
 
 
 (use-modules (ice-9 format) (ice-9 debug))

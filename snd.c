@@ -4,6 +4,9 @@
  * with much help from Douglas Young's "The X Window System, Programming and Applications with Xt" Prentice-Hall 1994.
  */
 
+/* TODO: tie in configuration scripts to possible use of sndlib.so
+ */
+
 #include "snd.h"
 
 #ifdef HAVE_FPU_CONTROL_H

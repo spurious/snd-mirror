@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 32
-#define MUS_DATE "27-Sep-00"
+#define MUS_REVISION 33
+#define MUS_DATE "12-Oct-00"
 
 /* 
+ * 12-Oct:     mus_formant_bank takes one input (can't remember why I had an array here)
  * 27-Sep:     mus_array_interp bugfix (imitates mus.lisp now).
  * 18-Sep:     clm now assumes it's used as a part of sndlib.
  * 11-Sep:     added generalized set! to generic functions in clm2scm.c.
@@ -315,7 +316,7 @@ Float mus_b2                    PROTO((mus_any *ptr));
 Float mus_set_b2                PROTO((mus_any *ptr, Float val));
 
 Float mus_formant               PROTO((mus_any *ptr, Float input)); 
-Float mus_formant_bank          PROTO((Float *amps, mus_any **formants, Float *inputs, int size));
+Float mus_formant_bank          PROTO((Float *amps, mus_any **formants, Float inval, int size));
 mus_any *mus_make_formant       PROTO((Float radius, Float frequency, Float gain));
 int mus_formant_p               PROTO((mus_any *ptr));
 Float mus_formant_radius        PROTO((mus_any *ptr));

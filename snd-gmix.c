@@ -3,7 +3,6 @@
 
 #include "snd.h"
 
-
 /* ---------------- MIX CURSOR ---------------- */
 
 static void mix_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
