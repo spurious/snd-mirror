@@ -227,7 +227,11 @@ mix_context *make_mix_context(chan_info *cp)
 {
   mix_context *g;
   g = (mix_context *)CALLOC(1,sizeof(mix_context));
+#if USE_GTK
+  g->graph = channel_graph_parent(cp);
+#else
   g->graph = channel_graph(cp);
+#endif
   return(g);
 }
 

@@ -2,8 +2,8 @@ Snd
 
 Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
 OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, BeOS (no GUI
-yet), Mac OS-X (also no GUI), and in Windoze using either Cygwin with
-Lesstif, or MS C with a commercial Motif.  To build Snd, get the
+yet), Mac OS-X (also no GUI), and in Windoze
+using MS C and a commercial Motif.  To build Snd, get the
 sources from
 
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
@@ -46,7 +46,6 @@ the relevant makefile:
 
 SGI:                   make -f makefile.sgi
 Linux with Motif:      make -f makefile.linux
-Linux with Lesstif:    make -f makefile.lesstif
 Linux with Gtk+:       make -f makefile.gtk
 Unixware 2:            make -f makefile.uw2
 Unixware 7:            make -f makefile.uw7
@@ -237,28 +236,15 @@ If you get the error:
 This probably means you don't have Motif installed -- to build Snd
 from the sources, you need either Motif or Gtk+.  Motif has recently
 been released as open source software: see the url mentioned below.
-Another freeware version is called Lesstif.  The linux binary rpm file
-and the linux-snd image at ccrma-ftp has Motif statically loaded.  If
-you have installed it in some weird place, use the -I compiler flag to
-provide that information to the compiler.
+Another freeware version is called Lesstif, but this is no longer
+supported in Snd with elaborate special bug-work-arounds.  The linux
+binary rpm file and the linux-snd image at ccrma-ftp have Motif
+statically loaded.  If you have installed it in some weird place, use
+the -I compiler flag to provide that information to the compiler.
 
 
-If you're using Lesstif and get this error:
-
-snd-xmain.o: In function `snd_doit':
-/space/home/bil/snd/snd-xmain.c:894: undefined reference to `xmNotebookWidgetClass'
-
-it means you've built Snd with Lesstif's Motif 2 headers, but are
-trying to load Lesstif's Motif 1 libraries, or something -- in more
-recent versions, I think the problem is actually that the Lesstif
-XmVERSION macro is screwed up; in any case, you need to make Motif 2 the
-default in Lesstif via the configure arg --enable-default-20.  For
-example (in the lesstif directory):
-
-make clean
-./configure --enable-default-20 --disable-default-12 --enable-static --prefix=/home/bil/test/local
-make
-
+If Snd using Lesstif is messed up, that's Lesstif's problem!  I'm
+not trying to support this anymore.
 
 
 Gtk+:
@@ -289,6 +275,18 @@ your version of guile-gtk is not in sync with guile -- for
 Guile version 1.4, you need guile-gtk version 0.19 (there's
 currently a pre-0.19 version that works at: http://erin.netpedia.net/guile-gtk --
 look for something like ftp://erin.netpedia.net/download/guile-gtk-0.19pre.tar.gz)
+
+If you get an error like:
+
+  Gtk-WARNING **: invalid cast from `GtkDrawingArea' to `GtkSnd_Fixed'
+
+you can find where it occurs by:
+
+  gdb snd
+  run --g-fatal-warnings
+    <now do whatever it takes to hit the warning>
+  where
+
 
 
 RPM:
@@ -432,7 +430,6 @@ Snd:
 
 Motif:
   http://www.opengroup.org/openmotif/
-  http://www.lesstif.org
 
 Gtk+:
   http://www.gtk.org

@@ -23,6 +23,7 @@
 typedef struct {
   void *ss;
   int wn;
+  int gc;
 } axis_context;
 
 typedef struct {
@@ -46,6 +47,12 @@ typedef struct {
   int data_color,selected_data_color;
   int white,black,red,yellow,green,light_blue,lighter_blue;
   int fltenv_basic_gc,fltenv_data_gc;
+  int basic_gc,selected_basic_gc,combined_basic_gc;        
+  int cursor_gc,selected_cursor_gc;      
+  int selection_gc,selected_selection_gc;
+  int erase_gc,selected_erase_gc;        
+  int mark_gc,selected_mark_gc;          
+  int mix_gc;           
 } state_context;
 
 typedef struct {

@@ -921,7 +921,7 @@ char *update_chan_stats(chan_info *cp)
   return(desc);
 }
 
-/* files lists -- it was probably a mistake to try to split this out of the graphics files */
+/* View:Files lists */
 
 static int prevfile_size = 0;
 static int curfile_size = 0;
@@ -936,11 +936,7 @@ static int max_curfile_end = 0;
 static int max_prevfile_end = -1;
 static int prevtime = 0;
 
-char *get_curnames(int n) {return(curnames[n]);}
 char *get_prevnames(int n) {return(prevnames[n]);}
-char *get_prevfullnames(int n) {return(prevfullnames[n]);}
-int get_a_big_star(int n) {return(a_big_star[n]);}
-void set_a_big_star(int n,int i) {a_big_star[n]=i;}
 int get_max_prevfile_end(void) {return(max_prevfile_end);}
 void set_max_prevfile_end(int n) {max_prevfile_end=n;}
 int get_prevfile_end(void) {return(prevfile_end);}
@@ -949,6 +945,92 @@ void set_max_curfile_end(int n) {max_curfile_end=n;}
 int get_curfile_end(void) {return(curfile_end);}
 int get_curfile_size(void) {return(curfile_size);}
 int get_prevfile_size(void) {return(prevfile_size);}
+
+char *view_curfiles_name(int pos)
+{
+  char *str;
+  str = (char *)CALLOC(128,sizeof(char));
+  sprintf(str,"%s%s",curnames[pos],(a_big_star[pos]) ? "*" : "");
+  return(str);
+}
+
+void view_curfiles_play(snd_state *ss, int pos, int play)
+{
+  snd_info *sp;
+  sp = find_sound(ss,curnames[pos]);
+  if (sp)
+    {
+      if (sp->playing) stop_playing_sound(sp);
+      if (play)
+	{
+	  start_playing(sp,0,NO_END_SPECIFIED);
+	  set_play_button(sp,1);
+	}
+      else set_play_button(sp,0);
+    }
+}
+
+void view_curfiles_select(snd_state *ss, int pos)
+{
+  snd_info *sp,*osp;
+  curfile_highlight(ss,pos);
+  sp = find_sound(ss,curnames[pos]);
+  osp = any_selected_sound(ss);
+  if (sp != osp)
+    {
+      select_channel(sp,0);
+      normalize_sound(ss,sp,sp->chans[0]);
+      /* goto_graph(sp->chans[0]); */
+    }
+}
+
+void view_curfiles_save(snd_state *ss, int pos)
+{
+  snd_info *sp;
+  sp = find_sound(ss,curnames[pos]);
+  if (sp)
+    {
+      finish_keyboard_selection();
+      save_edits(sp,NULL);
+    }
+}
+
+void view_prevfiles_select(snd_state *ss, int pos)
+{
+  snd_info *sp;
+  sp = snd_open_file(prevfullnames[pos],ss);
+  if (sp) select_channel(sp,0); 
+}
+
+int view_prevfiles_play(snd_state *ss, int pos, int play)
+{
+  static snd_info *play_sp;
+  if (play)
+    {
+      if (play_sp)
+	{
+	  if (play_sp->playing) return(1); /* can't play two of these at once */
+	  if (strcmp(play_sp->shortname,prevnames[pos]) != 0)
+	    {
+	      completely_free_snd_info(play_sp);
+	      play_sp = NULL;
+	    }
+	}
+      if (!play_sp) play_sp = make_sound_readable(ss,prevfullnames[pos],FALSE);
+      if (play_sp)
+	{
+	  play_sp->shortname = prevnames[pos];
+	  play_sp->fullname = NULL;
+	  start_playing(play_sp,0,NO_END_SPECIFIED);
+	}
+      else return(1); /* can't find or setup file */
+    }
+  else
+    { /* play toggled off */
+      if ((play_sp) && (play_sp->playing)) stop_playing_sound(play_sp);
+    }
+  return(0);
+}
 
 void file_unprevlist(char *filename)
 {
@@ -1113,6 +1195,18 @@ void init_prevfiles(int size)
   prevnames = (char **)CALLOC(prevfile_size,sizeof(char *));
   prevfullnames = (char **)CALLOC(prevfile_size,sizeof(char *));
   prevtimes = (int *)CALLOC(prevfile_size,sizeof(char *));
+}
+
+void make_a_big_star_outa_me(char *shortname, int big_star)
+{
+  int i;
+  i = find_curfile_regrow(shortname);
+  if ((i != -1) && (a_big_star[i] != big_star))
+    {
+      if (file_dialog_is_active())
+	view_curfiles_set_row_name(i);
+      a_big_star[i] = big_star;
+    }
 }
 
 int find_curfile_regrow(char *shortname)

@@ -371,12 +371,11 @@ void enved_display_point_label(snd_state *ss, Float x, Float y)
   set_button_label_normal(brkptL,brkpt_buf);
 }
 
-void display_enved_progress(snd_state *ss, char *str, Pixmap pix)
+void display_enved_progress(char *str, Pixmap pix)
 {
   if (pix == 0)
     set_button_label_normal(brkptL,str);
   else XtVaSetValues(brkptL,XmNlabelType,XmPIXMAP,XmNlabelPixmap,pix,NULL);
-  check_for_event(ss);
 }
 
 static Time down_time;
@@ -1462,11 +1461,7 @@ void create_envelope_editor (snd_state *ss)
       XtAddCallback(screnvname,XmNhelpCallback,Scrolled_List_Help_Callback,ss);
 
       n=0;
-#ifdef LESSTIF_VERSION
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#else
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-#endif
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;

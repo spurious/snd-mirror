@@ -2758,7 +2758,7 @@ void hide_controls(snd_state *ss)
  * if no xpm, send a string, else post an hourglass
  */
 
-void progress_report(snd_state *ss, snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved)
+void progress_report(snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved)
 {
   int which;
 #if HAVE_XPM
@@ -2766,7 +2766,7 @@ void progress_report(snd_state *ss, snd_info *sp, char *funcname, int curchan, i
   if (which >= NUM_GLASSES) which = NUM_GLASSES-1;
   if (which < 0) which = 0;
   if (from_enved)
-    display_enved_progress(ss,NULL,mini_glasses[which]);
+    display_enved_progress(NULL,mini_glasses[which]);
   else snd_file_glasses_icon(sp,TRUE,which);
 #else
   char *expr_str;
@@ -2776,31 +2776,31 @@ void progress_report(snd_state *ss, snd_info *sp, char *funcname, int curchan, i
     sprintf(expr_str,"%s: (%d of %d) %d%%",funcname,curchan,chans,which);
   else sprintf(expr_str,"%s: %d%%",funcname,which);
   if (from_enved)
-    display_enved_progress(ss,expr_str,0);
+    display_enved_progress(expr_str,0);
   else report_in_minibuffer(sp,expr_str);
   FREE(expr_str);
 #endif
-  check_for_event(ss);
+  check_for_event(sp->state);
 }
 
-void finish_progress_report(snd_state *ss, snd_info *sp, int from_enved)
+void finish_progress_report(snd_info *sp, int from_enved)
 {
 #if HAVE_XPM
   if (from_enved)
-    display_enved_progress(ss,NULL,blank_pixmap);
+    display_enved_progress(NULL,blank_pixmap);
   else snd_file_glasses_icon(sp,FALSE,0);
 #else
   char *expr_str;
   expr_str = (char *)CALLOC(128,sizeof(char));
   if (ss->stopped_explicitly) sprintf(expr_str,"stopped"); else expr_str[0]='\0';
   if (from_enved)
-    display_enved_progress(ss,expr_str,0);
+    display_enved_progress(expr_str,0);
   else report_in_minibuffer(sp,expr_str);
   FREE(expr_str);
 #endif
 }
 
-void start_progress_report(snd_state *ss, snd_info *sp, int from_enved)
+void start_progress_report(snd_info *sp, int from_enved)
 {
 #if HAVE_XPM
   if (!(from_enved)) snd_file_glasses_icon(sp,TRUE,0);
@@ -2810,7 +2810,7 @@ void start_progress_report(snd_state *ss, snd_info *sp, int from_enved)
     {
       expr_str = (char *)CALLOC(4,sizeof(char));
       expr_str[0]='\0';
-      display_enved_progress(ss,expr_str,0);
+      display_enved_progress(expr_str,0);
       FREE(expr_str);
     }
 #endif

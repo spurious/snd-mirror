@@ -26,6 +26,7 @@
 #define SMALLER_FONT "5x7"
 
 #define AUDVAL_SIZE 64
+#define MAX_AUDIO_FIELD (MUS_AUDIO_DIRECTION+1)
 
 #define DEFAULT_RECORDER_AUTOLOAD 0
 #define DEFAULT_RECORDER_FILE NULL
@@ -53,6 +54,10 @@
   #endif
 #endif
 
+int recorder_columns(int vu_meters);
+int recorder_sort_mixer_device(void *wd, int i, int chan, int input, int device, int *mixflds);
+void recorder_fill_wd(void *wd, int chan, int field, int device);
+int recorder_check_device(int system, int device, int *mixer_gains_posted, int *tone_controls_posted, int *mixflds, int *gains, int *inp);
 void recorder_set_audio_srate(snd_state *ss, int device, int srate, int system, int aud);
 char *recorder_device_name(int dev);
 char *recorder_system_and_device_name(int sys, int dev);
@@ -122,7 +127,7 @@ typedef struct {
 } recorder_info;
 
 recorder_info *get_recorder_info(void);
-int recorder_get_devices(snd_state *ss, recorder_info *rp, int *outs);
+int recorder_get_devices(recorder_info *rp, int *outs);
 void set_recorder_autoload(recorder_info *rp, int val);
 void set_recorder_trigger(recorder_info *rp, Float val);
 void set_recorder_srate(recorder_info *rp, int val);

@@ -1545,7 +1545,7 @@ BACKGROUND_TYPE safe_fft_in_slices(void *fftData)
       ss = cp->state;
       sp = cp->sound;
       set_chan_fft_in_progress(cp,0);
-      if (cp->fft_size >= 65536) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+      if (cp->fft_size >= 65536) finish_progress_report(sp,NOT_FROM_ENVED);
       display_channel_data(cp,sp,ss);
     }
   return(res);
@@ -1711,7 +1711,7 @@ static int set_up_sonogram(sonogram_state *sg)
 	  return(2);                                   /* so skip the ffts! */
 	}
     }
-  start_progress_report(ss,cp->sound,NOT_FROM_ENVED);
+  start_progress_report(cp->sound,NOT_FROM_ENVED);
   return(1);
 }
 
@@ -1722,7 +1722,6 @@ static int run_all_ffts(sonogram_state *sg)
   sono_info *si;
   chan_info *cp;
   axis_info *ap;
-  snd_state *ss;
   Float val;
   int i;
   /* return 0 until done with all ffts, then 1 -- 1 causes cleanup whether done or not */
@@ -1733,13 +1732,12 @@ static int run_all_ffts(sonogram_state *sg)
       /* slice is done -- store it and prepare to start the next slice */
       fs = sg->fs;
       cp = sg->cp;
-      ss = cp->state;
       si = (sono_info *)(cp->sonogram_data);
       si->begs[si->active_slices] = sg->beg + fs->beg;
       sg->msg_ctr--;
       if (sg->msg_ctr == 0)
 	{
-	  progress_report(ss,cp->sound,(cp->fft_style == SONOGRAM) ? S_sonogram : S_spectrogram,0,0,
+	  progress_report(cp->sound,(cp->fft_style == SONOGRAM) ? S_sonogram : S_spectrogram,0,0,
 			  ((Float)(si->active_slices)/(Float)(si->target_slices)),NOT_FROM_ENVED);
 	  sg->minibuffer_needs_to_be_cleared = 1;
 	  sg->msg_ctr = 8;
@@ -1798,7 +1796,7 @@ static int cleanup_sonogram(sonogram_state *sg)
       cp->last_sonogram = sg;
       if (sg->minibuffer_needs_to_be_cleared)
 	{
-	  finish_progress_report(cp->state,cp->sound,NOT_FROM_ENVED);
+	  finish_progress_report(cp->sound,NOT_FROM_ENVED);
 	  sg->minibuffer_needs_to_be_cleared = 0;
 	}
     }
@@ -1858,7 +1856,7 @@ static void spectral_multiply (Float* rl1, Float* rl2, int n)
     }
 }
 
-void c_convolve (snd_state *ss, char *fname, Float amp, int filec, int filehdr, int filterc, int filterhdr, int filtersize,
+void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, int filterhdr, int filtersize,
            int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans)
 {
   Float *rl0 = NULL,*rl1 = NULL, *rl2 = NULL;
@@ -1900,20 +1898,20 @@ void c_convolve (snd_state *ss, char *fname, Float amp, int filec, int filehdr, 
 	  mus_file_read_any(filterc,0,filter_chans,filtersize-1,fbuffer,fcm);
 	  for (i=0;i<filtersize;i++) 
 	    rl1[i] = MUS_SAMPLE_TO_FLOAT(fbuffer[filter_chan][i]);
-	  progress_report(ss,gsp,"convolve",ip+1,total_chans,.1,from_enved);
+	  progress_report(gsp,"convolve",ip+1,total_chans,.1,from_enved);
 	  mus_header_write_next_header(tempfile,22050,1,28,data_size*4,MUS_BINT,NULL,0);
 	  mus_file_set_descriptors(tempfile,fname,MUS_BINT,4,28,1,MUS_NEXT);
 	  /* get the convolution data */
 	  mus_file_read_any(filec,0,1,data_size-1,pbuffer,cm);
 	  for (i=0;i<data_size;i++) rl0[i] = MUS_SAMPLE_TO_FLOAT(pbuf[i]);
 
-	  progress_report(ss,gsp,"convolve",ip+1,total_chans,.3,from_enved);
+	  progress_report(gsp,"convolve",ip+1,total_chans,.3,from_enved);
 	  mus_fft(rl0,rl1,fftsize,1);
-	  progress_report(ss,gsp,"convolve",ip+1,total_chans,.5,from_enved);
+	  progress_report(gsp,"convolve",ip+1,total_chans,.5,from_enved);
 	  spectral_multiply(rl0,rl1,fftsize);
-	  progress_report(ss,gsp,"convolve",ip+1,total_chans,.6,from_enved);
+	  progress_report(gsp,"convolve",ip+1,total_chans,.6,from_enved);
 	  mus_fft(rl0,rl1,fftsize,-1);
-	  progress_report(ss,gsp,"convolve",ip+1,total_chans,.8,from_enved);
+	  progress_report(gsp,"convolve",ip+1,total_chans,.8,from_enved);
 
 	  if (amp != 0.0)
 	    {
@@ -1927,7 +1925,7 @@ void c_convolve (snd_state *ss, char *fname, Float amp, int filec, int filehdr, 
 	      if (scl != 0.0) scl = amp / scl;
 	      for (i=0;i<data_size;i++) pbuf[i] = MUS_FLOAT_TO_SAMPLE(scl * rl0[i]);
 	    }
-	  progress_report(ss,gsp,"convolve",ip+1,total_chans,.9,from_enved);
+	  progress_report(gsp,"convolve",ip+1,total_chans,.9,from_enved);
 	  /* and save as temp file */
 	  mus_file_write(tempfile,0,data_size-1,1,&(pbuf));
 	  mus_file_close(tempfile);

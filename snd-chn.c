@@ -143,7 +143,7 @@ static int stop_fft_in_progress(chan_info *cp, void *ptr)
       if (cx->fft_in_progress) 
 	{
 	  BACKGROUND_REMOVE(cx->fft_in_progress);
-	  finish_progress_report(cp->state,cp->sound,NOT_FROM_ENVED);
+	  finish_progress_report(cp->sound,NOT_FROM_ENVED);
 	  cx->fft_in_progress = 0;
 	}
     }
@@ -155,7 +155,7 @@ int force_fft_clear(chan_info *cp, void *ptr)
   if ((cp->cgx) && ((cp->cgx)->fft_in_progress))
     {
       BACKGROUND_REMOVE((cp->cgx)->fft_in_progress);
-      finish_progress_report(cp->state,cp->sound,NOT_FROM_ENVED);
+      finish_progress_report(cp->sound,NOT_FROM_ENVED);
       (cp->cgx)->fft_in_progress = 0;
     }
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
@@ -2758,7 +2758,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
       if (num > 0)
 	{
 	  reporting = (num > MAX_BUFFER_SIZE);
-	  if (reporting) start_progress_report(ss,sp,NOT_FROM_ENVED);
+	  if (reporting) start_progress_report(sp,NOT_FROM_ENVED);
 	  for (kp=0;kp<num;kp++)
 	    {
 	      NEXT_SAMPLE(val,sf);
@@ -2767,7 +2767,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		{
 		  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);
 		  free_sync_state(sc); 
-		  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+		  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
 		  if (SCM_SYMBOLP(res))
 		    return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
 		  return(gh_list(res,gh_int2scm(kp+beg),gh_int2scm(cp->chan),gh_int2scm(sp->index),SCM_UNDEFINED));
@@ -2777,12 +2777,12 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		  rpt++;
 		  if (rpt > rpt4)
 		    {
-		      progress_report(ss,sp,origin,ip+1,si->chans,(Float)kp / (Float)num,NOT_FROM_ENVED);
+		      progress_report(sp,origin,ip+1,si->chans,(Float)kp / (Float)num,NOT_FROM_ENVED);
 		      rpt = 0;
 		      if (ss->stopped_explicitly)
 			{
 			  ss->stopped_explicitly = 0;
-			  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+			  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
 			  cgbuf = (char *)CALLOC(128,sizeof(char));
 			  if (si->chans == 1)
 			    sprintf(cgbuf,"C-G stopped %s at sample %d",origin,kp+beg);
@@ -2796,7 +2796,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		    }
 		}
 	    }
-	  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+	  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
 	  sfs[ip] = free_snd_fd(sfs[ip]);
 	}
     }
@@ -2843,7 +2843,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   if (end == 0) end = len-1;
   num = end-beg+1;
   reporting = (num > MAX_BUFFER_SIZE);
-  if (reporting) start_progress_report(ss,sp,NOT_FROM_ENVED);
+  if (reporting) start_progress_report(sp,NOT_FROM_ENVED);
   if (si->chans == 1)
     { /* optimize common special case */
       zero = gh_int2scm(0);
@@ -2858,7 +2858,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	      rpt++;
 	      if (rpt > rpt4)
 		{
-		  progress_report(ss,sp,origin,1,1,(Float)kp / (Float)num,NOT_FROM_ENVED);
+		  progress_report(sp,origin,1,1,(Float)kp / (Float)num,NOT_FROM_ENVED);
 		  rpt = 0;
 		  check_for_event(ss);
  		  if ((ss->stopped_explicitly) || (!(cp->sound))) break;
@@ -2882,14 +2882,14 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	      rpt++;
 	      if (rpt > rpt4)
 		{
-		  progress_report(ss,sp,origin,1,1,(Float)kp / (Float)num,NOT_FROM_ENVED);
+		  progress_report(sp,origin,1,1,(Float)kp / (Float)num,NOT_FROM_ENVED);
 		  rpt = 0;
  		  if (ss->stopped_explicitly) break;
 		}
 	    }
 	}
     }
-  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
   for (ip=0;ip<si->chans;ip++) free_snd_fd(sfs[ip]);
   free_sync_state(sc); 
   if (ss->stopped_explicitly)
@@ -3039,7 +3039,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
       if (num > 0)
 	{
 	  reporting = (num > MAX_BUFFER_SIZE);
-	  if (reporting) start_progress_report(ss,sp,NOT_FROM_ENVED);
+	  if (reporting) start_progress_report(sp,NOT_FROM_ENVED);
 	  os = start_output(MAX_BUFFER_SIZE,sp->hdr,num);
 	  for (kp=0;kp<num;kp++)
 	    {
@@ -3054,7 +3054,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 			  end_output(os,beg,cp,origin);
 			  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);    
 			  free_sync_state(sc); 
-			  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+			  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
 			  return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
 			}
 		      if (gh_number_p(res)) /* one number -> replace current sample */
@@ -3075,7 +3075,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		      os = end_output(os,beg,cp,origin);
 		      for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);    
 		      free_sync_state(sc); 
-		      if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+		      if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
 		      return(res);
 		    }
 		}
@@ -3084,21 +3084,21 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		  rpt++;
 		  if (rpt > rpt4)
 		    {
-		      progress_report(ss,sp,origin,ip+1,si->chans,(Float)kp / (Float)num,NOT_FROM_ENVED);
+		      progress_report(sp,origin,ip+1,si->chans,(Float)kp / (Float)num,NOT_FROM_ENVED);
 		      rpt = 0;
 		      if (ss->stopped_explicitly) 
 			{
 			  os = end_output(os,beg,cp,origin);
 			  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);    
 			  free_sync_state(sc); 
-			  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+			  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
 			  ss->stopped_explicitly = 0;
 			  return(SCM_BOOL_F);
 			}
 		    }
 		}
 	    }
-	  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+	  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
 	  sfs[ip] = free_snd_fd(sfs[ip]);
 	  os = end_output(os,beg,cp,origin);
 	}
@@ -3142,7 +3142,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   if (end == 0) end = len-1;
   num = end-beg+1;
   reporting = (num > MAX_BUFFER_SIZE);
-  if (reporting) start_progress_report(ss,sp,NOT_FROM_ENVED);
+  if (reporting) start_progress_report(sp,NOT_FROM_ENVED);
   os_arr = (output_state **)CALLOC(si->chans,sizeof(output_state *)); 
   for (ip=0;ip<si->chans;ip++)
     os_arr[ip] = start_output(MAX_BUFFER_SIZE,sp->hdr,num);
@@ -3194,13 +3194,13 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 	  rpt++;
 	  if (rpt > rpt4)
 	    {
-	      progress_report(ss,sp,origin,ip+1,si->chans,(Float)kp / (Float)num,NOT_FROM_ENVED);
+	      progress_report(sp,origin,ip+1,si->chans,(Float)kp / (Float)num,NOT_FROM_ENVED);
 	      rpt = 0;
 	      if (ss->stopped_explicitly) break;
 	    }
 	}
     }
-  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
   for (ip=0;ip<si->chans;ip++) 
     {
       os_arr[ip] = end_output(os_arr[ip],beg,si->cps[ip],origin);
@@ -3351,8 +3351,8 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 	  ok = 0;
       	  ucp = si->cps[ip];
 	  sp = ucp->sound;
-	  if ((ip>0) && (sp != gsp)) finish_progress_report(ss,gsp,NOT_FROM_ENVED);
-	  if ((ip == 0) || (sp != gsp)) {gsp = ucp->sound; start_progress_report(ss,gsp,NOT_FROM_ENVED);}
+	  if ((ip>0) && (sp != gsp)) finish_progress_report(gsp,NOT_FROM_ENVED);
+	  if ((ip == 0) || (sp != gsp)) {gsp = ucp->sound; start_progress_report(gsp,NOT_FROM_ENVED);}
 
 	  /* ofile here = new convolved data */
 	  ofile = snd_tempnam(ss);
@@ -3388,7 +3388,7 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 			  ipow = (int)(ceil(log(filtersize + filesize)/log(2.0))) + 1;
 			  fftsize = (int)(pow(2.0,ipow));
 			  ok = 1;
-			  c_convolve(ss,ofile,amp,scfd,mus_sound_data_location(saved_chan_file),
+			  c_convolve(ofile,amp,scfd,mus_sound_data_location(saved_chan_file),
 				     fltfd,dataloc,filtersize,fftsize,filter_chans,impulse_chan,filtersize + filesize + 1,
 				     gsp,NOT_FROM_ENVED,ip,si->chans);
 			  impulse_chan++;
@@ -3426,7 +3426,7 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 	}
     }
   if (origin) {FREE(origin); origin = NULL;}
-  if (gsp) finish_progress_report(ss,gsp,NOT_FROM_ENVED);
+  if (gsp) finish_progress_report(gsp,NOT_FROM_ENVED);
   if (ss->stopped_explicitly)
     {
       /* clean up and undo all edits up to stop_point */
@@ -3474,7 +3474,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
       if (scdur == 0) dur = current_ed_samples(cp); else dur = scdur;
       if (dur == 0) continue;
       reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 10)));
-      if (reporting) start_progress_report(ss,sp,NOT_FROM_ENVED);
+      if (reporting) start_progress_report(sp,NOT_FROM_ENVED);
       if (dur > MAX_BUFFER_SIZE)
 	{
 	  temp_file = 1; 
@@ -3506,7 +3506,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
 		  err = mus_file_write(ofd,0,j-1,1,data);
 		  j=0;
 		  if (err == -1) break;
-		  if (reporting) progress_report(ss,sp,"scl",i+1,si->chans,(Float)k / (Float)dur,NOT_FROM_ENVED);
+		  if (reporting) progress_report(sp,"scl",i+1,si->chans,(Float)k / (Float)dur,NOT_FROM_ENVED);
 		}
 	    }
 	}
@@ -3527,7 +3527,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
 			  err = mus_file_write(ofd,0,j-1,1,data);
 			  j=0;
 			  if (err == -1) break;
-			  if (reporting) progress_report(ss,sp,"scl",i+1,si->chans,(Float)k / (Float)dur,NOT_FROM_ENVED);
+			  if (reporting) progress_report(sp,"scl",i+1,si->chans,(Float)k / (Float)dur,NOT_FROM_ENVED);
 			}
 		    }
 		}
@@ -3546,7 +3546,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
 			  err = mus_file_write(ofd,0,j-1,1,data);
 			  j=0;
 			  if (err == -1) break;
-			  if (reporting) progress_report(ss,sp,"scl",i+1,si->chans,(Float)k / (Float)dur,NOT_FROM_ENVED);
+			  if (reporting) progress_report(sp,"scl",i+1,si->chans,(Float)k / (Float)dur,NOT_FROM_ENVED);
 			}
 		    }
 		}
@@ -3559,7 +3559,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
 	  free_file_info(hdr);
 	  file_change_samples(si->begs[i],dur,ofile,cp,0,DELETE_ME,LOCK_MIXES,origin); /* was beg 0 -- can't be right for selection */
 	  if (ofile) {free(ofile); ofile=NULL;}
-	  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+	  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
 	}
       else change_samples(si->begs[i],dur,data[0],cp,LOCK_MIXES,origin);
       update_graph(cp,NULL); /* is this needed? */
@@ -3682,7 +3682,7 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
   sp0 = cp0->sound;
   cp1 = c1->cp;
   reporting = ((sp0) && (dur > (MAX_BUFFER_SIZE * 10)));
-  if (reporting) start_progress_report(ss,sp0,NOT_FROM_ENVED);
+  if (reporting) start_progress_report(sp0,NOT_FROM_ENVED);
   if (dur > MAX_BUFFER_SIZE)
     {
       temp_file = 1; 
@@ -3713,7 +3713,7 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
 	      err = mus_file_write(ofd1,0,j-1,1,data1);
 	      j=0;
 	      if (err == -1) break;
-	      if (reporting) progress_report(ss,sp0,"scl",1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
+	      if (reporting) progress_report(sp0,"scl",1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
 	    }
 	}
     }
@@ -3732,7 +3732,7 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
       file_change_samples(beg,dur,ofile1,cp1,0,DELETE_ME,LOCK_MIXES,S_swap_channels);
       if (ofile0) {free(ofile0); ofile0=NULL;}
       if (ofile1) {free(ofile1); ofile1=NULL;}
-      if (reporting) finish_progress_report(ss,sp0,NOT_FROM_ENVED);
+      if (reporting) finish_progress_report(sp0,NOT_FROM_ENVED);
     }
   else 
     {
@@ -4055,7 +4055,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  if (scdur == 0) dur = current_ed_samples(cp); else dur = scdur;
 	  if (dur == 0) continue;
 	  reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
-	  if (reporting) start_progress_report(ss,sp,from_enved);
+	  if (reporting) start_progress_report(sp,from_enved);
 	  ofile = snd_tempnam(ss);
 	  hdr = make_temp_header(ss,ofile,sp->hdr,dur);
 	  hdr->chans = 1;
@@ -4078,7 +4078,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		      if (err == -1) break;
 		      if (reporting) 
 			{
-			  progress_report(ss,sp,S_src_sound,i+1,si->chans,(Float)(sr->sample) / (Float)dur,from_enved);
+			  progress_report(sp,S_src_sound,i+1,si->chans,(Float)(sr->sample) / (Float)dur,from_enved);
 			  if (ss->stopped_explicitly) break;
 			}
 		    }
@@ -4132,7 +4132,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		      if (err == -1) break;
 		      if (reporting) 
 			{
-			  progress_report(ss,sp,S_src_sound,i+1,si->chans,(Float)(sr->sample) / (Float)dur,from_enved);
+			  progress_report(sp,S_src_sound,i+1,si->chans,(Float)(sr->sample) / (Float)dur,from_enved);
 			  if (ss->stopped_explicitly) break;
 			}
 		    }
@@ -4174,7 +4174,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		}
 	      FREE(ef);
 	    }
-	  if (reporting) finish_progress_report(ss,sp,from_enved);
+	  if (reporting) finish_progress_report(sp,from_enved);
 	  sr = free_src(sr);
 	  if (j > 0) mus_file_write(ofd,0,j-1,1,data);
 	  close_temp_file(ofd,hdr,k*datumb,sp);
@@ -4368,7 +4368,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 	  if (scdur == 0) dur = current_ed_samples(cp); else dur = scdur;
 	  if (dur == 0) continue;
 	  reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
-	  if (reporting) start_progress_report(ss,sp,from_enved);
+	  if (reporting) start_progress_report(sp,from_enved);
 	  if (dur > MAX_BUFFER_SIZE)
 	    {
 	      temp_file = 1; 
@@ -4420,13 +4420,13 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
 		      if (err == -1) break;
 		      if (reporting) 
 			{
-			  progress_report(ss,sp,S_filter_sound,i+1,si->chans,(Float)k / (Float)dur,from_enved);
+			  progress_report(sp,S_filter_sound,i+1,si->chans,(Float)k / (Float)dur,from_enved);
 			  if (ss->stopped_explicitly) break;
 			}
 		    }
 		}
 	    }
-	  if (reporting) finish_progress_report(ss,sp,from_enved);
+	  if (reporting) finish_progress_report(sp,from_enved);
 	  if (temp_file)
 	    {
 	      if (j > 0) mus_file_write(ofd,0,j-1,1,data);
@@ -4646,7 +4646,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   ef_ctr = 0;
   j=0;
   reporting = (dur > (MAX_BUFFER_SIZE * 4));
-  if (reporting) start_progress_report(ss,sp,from_enved);
+  if (reporting) start_progress_report(sp,from_enved);
   if (!need_exponential)
     {
       if (!need_step)
@@ -4679,7 +4679,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 			{
 			  if (j == FILE_BUFFER_SIZE)
 			    {
-			      progress_report(ss,sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
+			      progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
 			      err = mus_file_write(ofd,0,j-1,si->chans,data);
 			      j=0;
 			      if (err == -1) break;
@@ -4709,7 +4709,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 			{
 			  if (j == FILE_BUFFER_SIZE)
 			    {
-			      progress_report(ss,sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
+			      progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
 			      err = mus_file_write(ofd,0,j-1,1,data);
 			      j=0;
 			      if (err == -1) break;
@@ -4749,7 +4749,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 			      err = mus_file_write(ofd,0,j-1,si->chans,data);
 			      j=0;
 			      if (err == -1) break;
-			      if (reporting) progress_report(ss,sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
+			      if (reporting) progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
 			      if (ss->stopped_explicitly) break;
 			    }
 			}
@@ -4779,7 +4779,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 			      err = mus_file_write(ofd,0,j-1,1,data);
 			      j=0;
 			      if (err == -1) break;
-			      if (reporting) progress_report(ss,sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
+			      if (reporting) progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
 			      if (ss->stopped_explicitly) break;
 			    }
 			}
@@ -4818,7 +4818,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 		      err = mus_file_write(ofd,0,j-1,si->chans,data);
 		      j=0;
 		      if (err == -1) break;
-		      if (reporting) progress_report(ss,sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
+		      if (reporting) progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
 		      if (ss->stopped_explicitly) break;
 		    }
 		}
@@ -4855,7 +4855,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	    {
 	      if (j == FILE_BUFFER_SIZE)
 		{
-		  progress_report(ss,sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
+		  progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
 		  err = mus_file_write(ofd,0,j-1,si->chans,data);
 		  j=0;
 		  if (err == -1) break;
@@ -4869,7 +4869,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       if (j>0) mus_file_write(ofd,0,j-1,si->chans,data);
       close_temp_file(ofd,hdr,dur*si->chans*datumb,sp);
     }
-  if (reporting) finish_progress_report(ss,sp,from_enved);
+  if (reporting) finish_progress_report(sp,from_enved);
   if (ss->stopped_explicitly)
     {
       ss->stopped_explicitly = 0;
@@ -5137,7 +5137,7 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 		  chan_dur = current_ed_samples(si->cps[chan]) - si->begs[chan];
 		  if (dur < chan_dur) chan_dur = dur;
 		  if (chan_dur == 0) chan_dur = 1;
-		  if (dur > MAX_BUFFER_SIZE) start_progress_report(ss,sp,FALSE);
+		  if (dur > MAX_BUFFER_SIZE) start_progress_report(sp,FALSE);
 		}
 	      j = 0;
 	      for (k=0;k<chan_dur;k++)
@@ -5155,7 +5155,7 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {
-		      progress_report(ss,sp,"C-x C-x",chan,si->chans,(Float)k/((Float)chan_dur),FALSE);
+		      progress_report(sp,"C-x C-x",chan,si->chans,(Float)k/((Float)chan_dur),FALSE);
 		      check_for_event(ss);
 		      if ((ss->stopped_explicitly) || (!(sp->inuse)))
 			{
@@ -5167,7 +5167,7 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 		    }
 		}
 	      free_snd_fd(sf);
-	      if (dur > MAX_BUFFER_SIZE) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+	      if (dur > MAX_BUFFER_SIZE) finish_progress_report(sp,NOT_FROM_ENVED);
 	    }
 	  if ((!regexpr) && (chan_dur == 1))
 	    {
@@ -7008,6 +7008,75 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
     }
   FREE(coeffs);
 }
+
+
+#define CHAN_GC 0
+#define CHAN_IGC 1
+#define CHAN_SELGC 2
+#define CHAN_CGC 3
+#define CHAN_MGC 4
+#define CHAN_MXGC 5
+#define CHAN_TMPGC 6
+
+static axis_context *set_context (chan_info *cp, int gc)
+{
+  axis_context *ax;
+  state_context *sx;
+  chan_context *cx;
+  snd_state *ss;
+  cx = cp->tcgx;
+  ss = cp->state;
+  if (!cx) cx = cp->cgx;
+  ax = cx->ax;
+  sx = ss->sgx;
+  if ((cp->cgx)->selected)
+    {
+      switch (gc)
+	{
+	case CHAN_GC: ax->gc = sx->selected_basic_gc;        break;
+	case CHAN_IGC: ax->gc = sx->selected_erase_gc;       break;
+	case CHAN_SELGC: ax->gc = sx->selected_selection_gc; break;
+	case CHAN_CGC: ax->gc = sx->selected_cursor_gc;      break;
+	case CHAN_MGC: ax->gc = sx->selected_mark_gc;        break;
+	case CHAN_MXGC: ax->gc = sx->mix_gc;                 break;
+	case CHAN_TMPGC: ax->gc = sx->selected_basic_gc;     break;
+	}
+    }
+  else
+    {
+      switch (gc)
+	{
+	case CHAN_GC: ax->gc = sx->basic_gc;        break;
+	case CHAN_IGC: ax->gc = sx->erase_gc;       break;
+	case CHAN_SELGC: ax->gc = sx->selection_gc; break;
+	case CHAN_CGC: ax->gc = sx->cursor_gc;      break;
+	case CHAN_MGC: ax->gc = sx->mark_gc;        break;
+	case CHAN_MXGC: ax->gc = sx->mix_gc;        break;
+	case CHAN_TMPGC: 
+	  ax->gc = sx->combined_basic_gc;
+	  /* if this changes, see snd-xprint.c ps_rgb */
+	  switch (cp->chan % 4)
+	    {
+	    case 0: set_foreground_color(cp,ax,sx->black);      break;
+	    case 1: set_foreground_color(cp,ax,sx->red);        break;
+	    case 2: set_foreground_color(cp,ax,sx->green);      break;
+	    case 3: set_foreground_color(cp,ax,sx->light_blue); break;
+	    }
+	  break;
+	}
+    }
+  return(ax);
+}
+
+axis_context *copy_context (chan_info *cp)         {return(set_context(cp,CHAN_GC));}
+axis_context *erase_context (chan_info *cp)        {return(set_context(cp,CHAN_IGC));}
+axis_context *selection_context (chan_info *cp)    {return(set_context(cp,CHAN_SELGC));}
+axis_context *cursor_context (chan_info *cp)       {return(set_context(cp,CHAN_CGC));}
+axis_context *mark_context (chan_info *cp)         {return(set_context(cp,CHAN_MGC));}
+axis_context *mix_waveform_context (chan_info *cp) {return(set_context(cp,CHAN_MXGC));}
+axis_context *combined_context (chan_info *cp)     {return(set_context(cp,CHAN_TMPGC));}
+
+
 
 
 #if HAVE_GUILE

@@ -401,10 +401,8 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
   axis_info *ap;
   float apsx,apzx,apsy,apzy;
   char *argname;
-#ifndef LESSTIF_VERSION
 #if HAVE_OPENDIR
   DIR *dp;
-#endif
 #endif
   int i,files;
   static int auto_open_ctr = 0;
@@ -525,7 +523,6 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
       break;
     case 3: 
       /* this stupid thing (which I can't customize without major hassles) takes forever on large directories */
-#ifndef LESSTIF_VERSION
 #if HAVE_OPENDIR
       files = 0;
       if ((dp=opendir(".")) != NULL)
@@ -535,12 +532,6 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
       closedir(dp);
       if (files < 400) CreateOpenDialog(tm->shell,(XtPointer)ss);
 #endif
-#endif
-      /* in Lesstif, we can't set up the dialog in advance in the background
-       * because it requires that the dialog be activated ("managed") before
-       * various things are done to it as it is initialized.  But that requires
-       * the dumb thing to popup unexpectedly.
-       */
       break;
     case 4:
       if (ss->init_window_width > 0) set_widget_width(MAIN_SHELL(ss),ss->init_window_width);
@@ -664,7 +655,6 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   state_context *sx;
   Widget menu;
   XGCValues gv;
-  char **Fallback = NULL;
   char *app_title = NULL;
 #if HAVE_XmHTML
   char *tmpstr;
@@ -679,15 +669,6 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = XC_crosshair;
-
-#ifdef LESSTIF_VERSION
-  Fallback = (char **)CALLOC(2,sizeof(char *));
-  Fallback[0] = (char *)CALLOC(64,sizeof(char));
-  sprintf(Fallback[0],"*.background: %s",BASIC_COLOR);
-  Fallback[1] = (char *)CALLOC(64,sizeof(char));
-  sprintf(Fallback[1],"*XmList.background: white");
-  /* attempt to make sashes green here died with segfault (*XmSash.background: %s",MIXER_COLOR) */
-#endif
 
 #ifndef SND_AS_WIDGET
 #if defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA)
@@ -707,11 +688,8 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   shell = XtCreateApplicationShell("Snd",shellWidgetClass,args,n);
  #else
 
-  shell = XtVaOpenApplication(&app,"Snd",NULL,0,&argc,argv,Fallback,applicationShellWidgetClass,
+  shell = XtVaOpenApplication(&app,"Snd",NULL,0,&argc,argv,NULL,applicationShellWidgetClass,
 			      XmNallowShellResize,AUTO_RESIZE_DEFAULT,
-  #ifdef LESSTIF_VERSION
-			      XmNwidth,250,XmNheight,100,
-  #endif
 			      NULL);
  #endif
 #endif

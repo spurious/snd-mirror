@@ -752,7 +752,7 @@ void *make_fft_state(chan_info *cp, int simple);
 void free_sono_info (chan_info *cp);
 int sono_update(chan_info *cp, void *ptr);
 void set_spectro_cutoff_and_redisplay(snd_state *ss,Float val);
-void c_convolve(snd_state *ss, char *fname, Float amp, int filec, int filehdr,int filterc, int filterhdr, int filtersize,
+void c_convolve(char *fname, Float amp, int filec, int filehdr,int filterc, int filterhdr, int filtersize,
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp);
 BACKGROUND_TYPE safe_fft_in_slices(void *fftData);
@@ -809,9 +809,9 @@ void after_open(int index);
 char *output_comment(file_info *hdr);
 env* name_to_env(char *str);
 void snd_load_init_file(snd_state *ss, int nog, int noi);
-int snd_load_file(char *filename);
+void snd_load_file(char *filename);
 int snd_eval_str(snd_state *ss, char *buf, int count);
-int snd_eval_listener_str(snd_state *ss, char *buf);
+void snd_eval_listener_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
 void add_or_edit_symbol(char *name, env *val);
@@ -1012,6 +1012,13 @@ void w_button_callback(chan_info *cp, int on, int with_control);
 void edit_select_callback(chan_info *cp, int ed, int with_control);
 void draw_graph_border(chan_info *cp);
 void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, int dBing);
+axis_context *copy_context (chan_info *cp);
+axis_context *erase_context (chan_info *cp);
+axis_context *selection_context (chan_info *cp);
+axis_context *cursor_context (chan_info *cp);
+axis_context *mark_context (chan_info *cp);
+axis_context *mix_waveform_context (chan_info *cp);
+axis_context *combined_context (chan_info *cp);
 
 
 
@@ -1099,11 +1106,13 @@ int snd_copy_file(char *oldfile, char *newfile);
 snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close);
 void snd_update(snd_state *ss, snd_info *sp);
 char *update_chan_stats(chan_info *cp);
-char *get_curnames(int n);
+char *view_curfiles_name(int pos);
+void view_curfiles_play(snd_state *ss, int pos, int play);
+void view_curfiles_select(snd_state *ss, int pos);
+void view_curfiles_save(snd_state *ss, int pos);
+void view_prevfiles_select(snd_state *ss, int pos);
+int view_prevfiles_play(snd_state *ss, int pos, int play);
 char *get_prevnames(int n);
-char *get_prevfullnames(int n);
-int get_a_big_star(int n);
-void set_a_big_star(int n, int i);
 int get_max_prevfile_end(void);
 void set_max_prevfile_end(int n);
 int get_prevfile_end(void);

@@ -705,7 +705,7 @@ int calculate_fft(chan_info *cp, void *ptr)
 	{
 	  if (cp->fft_style == NORMAL_FFT)
 	    {
-	      if (cp->fft_size >= 65536) start_progress_report(ss,cp->sound,NOT_FROM_ENVED);
+	      if (cp->fft_size >= 65536) start_progress_report(cp->sound,NOT_FROM_ENVED);
 	      set_chan_fft_in_progress(cp,gtk_idle_add(safe_fft_in_slices,(gpointer)make_fft_state(cp,1)));
 	    }
 	  else 
@@ -745,64 +745,6 @@ void set_bold_peak_numbers_font(chan_info *cp)
   gdk_gc_set_font(copy_GC(cp),(ss->sgx)->bold_button_fnt);
 }
 
-#define CHAN_GC 0
-#define CHAN_IGC 1
-#define CHAN_SELGC 2
-#define CHAN_CGC 3
-#define CHAN_MGC 4
-#define CHAN_MXGC 5
-#define CHAN_TMPGC 6
-
-static axis_context *set_context (chan_info *cp, int gc)
-{
-  axis_context *ax;
-  state_context *sx;
-  chan_context *cx;
-  snd_state *ss;
-  ss = cp->state;
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  ax = cx->ax;
-  sx = ss->sgx;
-  if ((cp->cgx)->selected)
-    {
-      switch (gc)
-	{
-	case CHAN_GC: ax->gc = sx->selected_basic_gc;        break;
-	case CHAN_IGC: ax->gc = sx->selected_erase_gc;       break;
-	case CHAN_SELGC: ax->gc = sx->selected_selection_gc; break;
-	case CHAN_CGC: ax->gc = sx->selected_cursor_gc;      break;
-	case CHAN_MGC: ax->gc = sx->selected_mark_gc;        break;
-	case CHAN_MXGC: ax->gc = sx->mix_gc;                 break;
-	case CHAN_TMPGC: ax->gc = sx->selected_basic_gc;     break;
-	}
-    }
-  else
-    {
-      switch (gc)
-	{
-	case CHAN_GC: ax->gc = sx->basic_gc;        break;
-	case CHAN_IGC: ax->gc = sx->erase_gc;       break;
-	case CHAN_SELGC: ax->gc = sx->selection_gc; break;
-	case CHAN_CGC: ax->gc = sx->cursor_gc;      break;
-	case CHAN_MGC: ax->gc = sx->mark_gc;        break;
-	case CHAN_MXGC: ax->gc = sx->mix_gc;        break;
-	case CHAN_TMPGC: 
-	  ax->gc = sx->combined_basic_gc;
-	  /* if this changes, see snd-xprint.c ps_rgb */
-	  switch (cp->chan % 4)
-	    {
-	    case 0: gdk_gc_set_foreground(ax->gc,sx->black);      break;
-	    case 1: gdk_gc_set_foreground(ax->gc,sx->red);        break;
-	    case 2: gdk_gc_set_foreground(ax->gc,sx->green);      break;
-	    case 3: gdk_gc_set_foreground(ax->gc,sx->light_blue); break;
-	    }
-	  break;
-	}
-    }
-  return(ax);
-}
-
 GdkColor *get_foreground_color(chan_info *cp, axis_context *ax)
 {
   GdkGCValues gv;
@@ -832,14 +774,6 @@ GdkGC *erase_GC(chan_info *cp)
   if ((cp->cgx)->selected) return(sx->selected_erase_gc);
   return(sx->erase_gc);
 }
-
-axis_context *copy_context (chan_info *cp)         {return(set_context(cp,CHAN_GC));}
-axis_context *erase_context (chan_info *cp)        {return(set_context(cp,CHAN_IGC));}
-axis_context *selection_context (chan_info *cp)    {return(set_context(cp,CHAN_SELGC));}
-axis_context *cursor_context (chan_info *cp)       {return(set_context(cp,CHAN_CGC));}
-axis_context *mark_context (chan_info *cp)         {return(set_context(cp,CHAN_MGC));}
-axis_context *mix_waveform_context (chan_info *cp) {return(set_context(cp,CHAN_MXGC));}
-axis_context *combined_context (chan_info *cp)     {return(set_context(cp,CHAN_TMPGC));}
 
 static BACKGROUND_TYPE xget_amp_env(gpointer cp)
 {

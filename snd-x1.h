@@ -358,13 +358,6 @@ unsigned long get_foreground_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, Pixel color);
 GC copy_GC(chan_info *cp);
 GC erase_GC(chan_info *cp);
-axis_context *copy_context (chan_info *cp);
-axis_context *erase_context (chan_info *cp);
-axis_context *selection_context (chan_info *cp);
-axis_context *cursor_context (chan_info *cp);
-axis_context *mark_context (chan_info *cp);
-axis_context *mix_waveform_context (chan_info *cp);
-axis_context *combined_context (chan_info *cp);
 void graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont);
 void start_amp_env(chan_info *cp);
 void cleanup_cw(chan_info *cp);
@@ -428,9 +421,9 @@ void sound_hide_ctrls(snd_info *sp);
 int control_panel_open(snd_info *sp);
 void show_controls(snd_state *ss);
 void hide_controls(snd_state *ss);
-void start_progress_report(snd_state *ss, snd_info *sp, int from_enved);
-void finish_progress_report(snd_state *ss, snd_info *sp, int from_enved);
-void progress_report(snd_state *ss, snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved);
+void start_progress_report(snd_info *sp, int from_enved);
+void finish_progress_report(snd_info *sp, int from_enved);
+void progress_report(snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved);
 
 
 /* -------- snd-xfile.c -------- */
@@ -449,6 +442,8 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
 			   XtCallbackProc first_callback, XtCallbackProc second_callback, XtCallbackProc third_callback);
 void make_prevfiles_list (snd_state *ss);
 void make_curfiles_list (snd_state *ss);
+void curfile_highlight(snd_state *ss, int i);
+void view_curfiles_set_row_name(int pos);
 void make_cur_name_row(int old_size, int new_size);
 void make_prev_name_row(int old_size, int new_size);
 void make_a_big_star_outa_me(char *shortname, int big_star);
@@ -477,7 +472,7 @@ void alert_enved_amp_env(snd_info *sp);
 void new_active_channel_alert(snd_state *ss);
 void env_redisplay(snd_state *ss);
 void enved_display_point_label(snd_state *ss, Float x, Float y);
-void display_enved_progress(snd_state *ss, char *str, Pixmap pix);
+void display_enved_progress(char *str, Pixmap pix);
 void set_enved_click_to_delete(int n);
 void enved_print(char *name);
 void create_envelope_editor (snd_state *ss);

@@ -734,11 +734,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       if (left_widget)
 	{
 	  XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
-#if defined(LESSTIF_VERSION) && (XmVERSION == 1)
-	  XtSetArg(args[n],XmNleftWidget,XtParent(left_widget)); n++;
-#else
 	  XtSetArg(args[n],XmNleftWidget,left_widget); n++;
-#endif
 	}
       else
 	{
@@ -793,11 +789,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       if (left_widget)
 	{
 	  XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
-#if defined(LESSTIF_VERSION) && (XmVERSION == 1)
-	  XtSetArg(args[n],XmNleftWidget,XtParent(left_widget)); n++;
-#else
 	  XtSetArg(args[n],XmNleftWidget,left_widget); n++;
-#endif
 	}
       else
 	{
@@ -1010,16 +1002,14 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 int calculate_fft(chan_info *cp, void *ptr)
 {
   Widget w;
-  snd_state *ss;
   if (cp->ffting)
     {
-      ss = cp->state;
       if (!(chan_fft_in_progress(cp)))
 	{
 	  w = channel_graph(cp);
 	  if (cp->fft_style == NORMAL_FFT)
 	    {
-	      if (cp->fft_size >= 65536) start_progress_report(ss,cp->sound,NOT_FROM_ENVED);
+	      if (cp->fft_size >= 65536) start_progress_report(cp->sound,NOT_FROM_ENVED);
 	      set_chan_fft_in_progress(cp,XtAppAddWorkProc(XtWidgetToApplicationContext(w),safe_fft_in_slices,(XtPointer)make_fft_state(cp,1)));
 	    }
 	  else 
@@ -1065,64 +1055,6 @@ void set_bold_peak_numbers_font(chan_info *cp)
   XSetFont(XtDisplay(cx->chan_widgets[W_graph]),copy_GC(cp),bf->fid);
 }
 
-#define CHAN_GC 0
-#define CHAN_IGC 1
-#define CHAN_SELGC 2
-#define CHAN_CGC 3
-#define CHAN_MGC 4
-#define CHAN_MXGC 5
-#define CHAN_TMPGC 6
-
-static axis_context *set_context (chan_info *cp, int gc)
-{
-  axis_context *ax;
-  state_context *sx;
-  chan_context *cx;
-  snd_state *ss;
-  cx = cp->tcgx;
-  ss = cp->state;
-  if (!cx) cx = cp->cgx;
-  ax = cx->ax;
-  sx = ss->sgx;
-  if ((cp->cgx)->selected)
-    {
-      switch (gc)
-	{
-	case CHAN_GC: ax->gc = sx->selected_basic_gc;        break;
-	case CHAN_IGC: ax->gc = sx->selected_erase_gc;       break;
-	case CHAN_SELGC: ax->gc = sx->selected_selection_gc; break;
-	case CHAN_CGC: ax->gc = sx->selected_cursor_gc;      break;
-	case CHAN_MGC: ax->gc = sx->selected_mark_gc;        break;
-	case CHAN_MXGC: ax->gc = sx->mix_gc;                 break;
-	case CHAN_TMPGC: ax->gc = sx->selected_basic_gc;     break;
-	}
-    }
-  else
-    {
-      switch (gc)
-	{
-	case CHAN_GC: ax->gc = sx->basic_gc;        break;
-	case CHAN_IGC: ax->gc = sx->erase_gc;       break;
-	case CHAN_SELGC: ax->gc = sx->selection_gc; break;
-	case CHAN_CGC: ax->gc = sx->cursor_gc;      break;
-	case CHAN_MGC: ax->gc = sx->mark_gc;        break;
-	case CHAN_MXGC: ax->gc = sx->mix_gc;        break;
-	case CHAN_TMPGC: 
-	  ax->gc = sx->combined_basic_gc;
-	  /* if this changes, see snd-xprint.c ps_rgb */
-	  switch (cp->chan % 4)
-	    {
-	    case 0: XSetForeground(MAIN_DISPLAY(ss),ax->gc,sx->black);      break;
-	    case 1: XSetForeground(MAIN_DISPLAY(ss),ax->gc,sx->red);        break;
-	    case 2: XSetForeground(MAIN_DISPLAY(ss),ax->gc,sx->green);      break;
-	    case 3: XSetForeground(MAIN_DISPLAY(ss),ax->gc,sx->light_blue); break;
-	    }
-	  break;
-	}
-    }
-  return(ax);
-}
-
 unsigned long get_foreground_color(chan_info *cp, axis_context *ax)
 {
   XGCValues gv;
@@ -1154,14 +1086,6 @@ GC erase_GC(chan_info *cp)
   if ((cp->cgx)->selected) return(sx->selected_erase_gc);
   return(sx->erase_gc);
 }
-
-axis_context *copy_context (chan_info *cp)         {return(set_context(cp,CHAN_GC));}
-axis_context *erase_context (chan_info *cp)        {return(set_context(cp,CHAN_IGC));}
-axis_context *selection_context (chan_info *cp)    {return(set_context(cp,CHAN_SELGC));}
-axis_context *cursor_context (chan_info *cp)       {return(set_context(cp,CHAN_CGC));}
-axis_context *mark_context (chan_info *cp)         {return(set_context(cp,CHAN_MGC));}
-axis_context *mix_waveform_context (chan_info *cp) {return(set_context(cp,CHAN_MXGC));}
-axis_context *combined_context (chan_info *cp)     {return(set_context(cp,CHAN_TMPGC));}
 
 /* for combined cases, the incoming chan_info pointer is always chan[0], 
  * but the actual channel depends on placement if mouse oriented.

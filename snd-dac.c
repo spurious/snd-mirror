@@ -1942,7 +1942,7 @@ void initialize_apply(snd_info *sp)
   apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
   if (apply_reporting) 
     {
-      start_progress_report(ss,sp,NOT_FROM_ENVED);
+      start_progress_report(sp,NOT_FROM_ENVED);
       apply_location_fd = fds[0];
       apply_tick = 0;
     }
@@ -1956,7 +1956,7 @@ int finalize_apply(snd_info *sp)
   play_list_members = 0;
   sp->playing = 0;
   if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
-  if (apply_reporting) finish_progress_report(sp->state,sp,NOT_FROM_ENVED);
+  if (apply_reporting) finish_progress_report(sp,NOT_FROM_ENVED);
   return(apply_dac_op);
 }
 
@@ -1983,14 +1983,14 @@ int run_apply(snd_info *sp, int ofd)
   if (apply_reporting) 
     {
       if (ss->stopped_explicitly)
-	finish_progress_report(ss,sp,NOT_FROM_ENVED);
+	finish_progress_report(sp,NOT_FROM_ENVED);
       else
 	{
 	  apply_tick++;
 	  if (apply_tick > APPLY_TICKS)
 	    {
 	      apply_tick = 0;
-	      progress_report(ss,sp,"apply",1,1,(Float)abs(current_location(apply_location_fd) - apply_beg) / (Float)apply_dur,NOT_FROM_ENVED);
+	      progress_report(sp,"apply",1,1,(Float)abs(current_location(apply_location_fd) - apply_beg) / (Float)apply_dur,NOT_FROM_ENVED);
 	    }
 	}
     }

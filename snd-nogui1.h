@@ -253,13 +253,6 @@ void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
 unsigned long get_foreground_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, int color);
-axis_context *copy_context (chan_info *cp);
-axis_context *erase_context (chan_info *cp);
-axis_context *selection_context (chan_info *cp);
-axis_context *cursor_context (chan_info *cp);
-axis_context *mark_context (chan_info *cp);
-axis_context *mix_waveform_context (chan_info *cp);
-axis_context *combined_context (chan_info *cp);
 void start_amp_env(chan_info *cp);
 void cleanup_cw(chan_info *cp);
 void StartMarkWatch(chan_info *cp);
@@ -318,9 +311,9 @@ void normalize_all_sounds(snd_state *ss);
 void sound_show_ctrls(snd_info *sp);
 void sound_hide_ctrls(snd_info *sp);
 int control_panel_open(snd_info *sp);
-void start_progress_report(snd_state *ss, snd_info *sp, int from_enved);
-void finish_progress_report(snd_state *ss, snd_info *sp, int from_enved);
-void progress_report(snd_state *ss, snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved);
+void start_progress_report(snd_info *sp, int from_enved);
+void finish_progress_report(snd_info *sp, int from_enved);
+void progress_report(snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved);
 
 
 /* -------- snd-xfile.c -------- */
@@ -333,7 +326,8 @@ void make_cur_name_row(int old_size, int new_size);
 void make_prev_name_row(int old_size, int new_size);
 void make_prevfiles_list (snd_state *ss);
 void make_curfiles_list (snd_state *ss);
-void make_a_big_star_outa_me(char *shortname, int big_star);
+void view_curfiles_set_row_name(int pos);
+void curfile_highlight(snd_state *ss, int i);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
 void start_file_dialog(snd_state *ss, int width, int height);

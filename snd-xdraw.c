@@ -773,11 +773,7 @@ void View_Color_Callback(Widget w,XtPointer clientData,XtPointer callData)
       n=0;
       cmaps = (XmString *)CALLOC(NUM_COLORMAPS,sizeof(XmString));
       for (i=0;i<NUM_COLORMAPS;i++) cmaps[i] = XmStringCreate(colormap_name(i),XmFONTLIST_DEFAULT_TAG);
-#ifdef LESSTIF_VERSION
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#else
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-#endif
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_NONE); n++;
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
@@ -796,18 +792,10 @@ void View_Color_Callback(Widget w,XtPointer clientData,XtPointer callData)
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_NONE); n++;
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_WIDGET); n++;
-#ifdef LESSTIF_VERSION
-      XtSetArg(args[n],XmNrightWidget,XtParent(ccd->list)); n++;
-#else
       XtSetArg(args[n],XmNrightWidget,ccd->list); n++;
-#endif
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-#ifdef LESSTIF_VERSION
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-#else
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_WIDGET); n++;
       XtSetArg(args[n],XmNbottomWidget,XmMessageBoxGetChild(ccd->dialog,XmDIALOG_SEPARATOR)); n++;
-#endif
       XtSetArg(args[n],XmNseparatorType,XmNO_LINE); n++;
       XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
       XtSetArg(args[n],XmNwidth,10); n++;

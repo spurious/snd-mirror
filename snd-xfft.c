@@ -547,11 +547,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(type_label,XmNhelpCallback,transform_type_help_Callback,ss);
 
       n=0;
-#ifdef LESSTIF_VERSION
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#else
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-#endif
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
@@ -606,11 +602,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(size_label,XmNhelpCallback,size_help_Callback,ss);
 
       n=0;
-#ifdef LESSTIF_VERSION
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#else
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-#endif
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
@@ -839,11 +831,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(wavelet_label,XmNhelpCallback,wavelet_help_Callback,ss);
 
       n=0;
-#ifdef LESSTIF_VERSION
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#else
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-#endif
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
@@ -909,11 +897,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtAddCallback(window_label,XmNhelpCallback,window_help_Callback,ss);
 
       n=0;
-#ifdef LESSTIF_VERSION
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#else
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-#endif
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_WIDGET); n++;
       XtSetArg(args[n],XmNbottomWidget,window_beta_scale); n++;

@@ -1895,7 +1895,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
   if (reporting) 
     {
       cp = sfs[0]->cp;
-      start_progress_report(ss,cp->sound,NOT_FROM_ENVED);
+      start_progress_report(cp->sound,NOT_FROM_ENVED);
     }
   if (chans == 1)
     {
@@ -1911,7 +1911,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
 	      if (reporting)
 		{
 		  total += FILE_BUFFER_SIZE;
-		  progress_report(ss,cp->sound,NULL,1,1,(Float)total / (Float)length,NOT_FROM_ENVED);
+		  progress_report(cp->sound,NULL,1,1,(Float)total / (Float)length,NOT_FROM_ENVED);
 		}
 	      check_for_event(ss);
 	      if (ss->stopped_explicitly)
@@ -1941,7 +1941,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
 	      if (reporting)
 		{
 		  total += FILE_BUFFER_SIZE;
-		  progress_report(ss,cp->sound,NULL,1,1,(Float)total / (Float)length,NOT_FROM_ENVED);
+		  progress_report(cp->sound,NULL,1,1,(Float)total / (Float)length,NOT_FROM_ENVED);
 		}
 	      check_for_event(ss);
 	      if (ss->stopped_explicitly)
@@ -1962,7 +1962,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
       alert_new_file();
     }
   else snd_close(ofd);
-  if (reporting) finish_progress_report(ss,cp->sound,NOT_FROM_ENVED);
+  if (reporting) finish_progress_report(cp->sound,NOT_FROM_ENVED);
   for (i=0;i<chans;i++) FREE(obufs[i]);
   FREE(obufs);
   return(snd_io_error);

@@ -673,7 +673,7 @@ static XtWorkProcId watch_mix_proc = 0;    /* work proc if mouse outside graph c
 static int last_mix_x = 0;                 /* mouse position within console title bar (console coordinates) */
 
 /* for axis movement (as in mark drag off screen) */
-static int move_mix(mixmark *m, int evx);
+static void move_mix(mixmark *m, int evx);
 
 int mix_dragging(void) {return(mix_dragged);} /* snd-xchn.c */
 
@@ -721,23 +721,23 @@ static void mix_title_button_press(Widget w, XtPointer clientData, XEvent *event
 /* also what about dragging in the y direction? */
 
 
-static int move_mix(mixmark *m, int evx)
+static void move_mix(mixmark *m, int evx)
 {
   snd_state *ss;
   axis_info *ap;
   chan_info *cp;
   mixdata *md;
   console_state *cs;
-  int samps,nx,x,samp,kx,updated=0,old_beg;
+  int samps,nx,x,samp,kx,updated=0;
   Position xx;
   Dimension len;
   Widget w;
   cp = m_to_cp(m);
-  if (!cp) return(0);
+  if (!cp) return;
   ap = cp->axis;
-  if (!ap) return(0);
+  if (!ap) return;
   md = (mixdata *)(m->owner);
-  if (!md) return(0);
+  if (!md) return;
   ss = md->ss;
 #if 0
   /* evx here is in root window coordinates */
@@ -749,8 +749,8 @@ static int move_mix(mixmark *m, int evx)
     {
       if (watch_mix_proc)
 	{
-	  if ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)) return(0);
-	  if ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) return(0);
+	  if ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)) return;
+	  if ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) return;
 	}
       nx = move_axis(cp,ap,x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
       updated = 1;
@@ -767,7 +767,6 @@ static int move_mix(mixmark *m, int evx)
 	}
     }
   cs = md->current_cs;
-  old_beg = cs->beg;
   if (m->x != nx)
     {
       if (show_mix_waveforms(ss)) erase_mix_waveform(md,m->y);
@@ -788,7 +787,7 @@ static int move_mix(mixmark *m, int evx)
 	      if (!watch_mix_proc)
 		watch_mix_proc = XtAppAddWorkProc((ss->sgx)->mainapp,watch_mix,(XtPointer)m);
 	    }
-	  else if ((xx == kx) && (!updated)) return(0);
+	  else if ((xx == kx) && (!updated)) return;
 	}
       samp = (int)(ungrf_x(ap,m->x) * SND_SRATE(cp->sound));
       if (samp < 0) samp = 0;
@@ -803,7 +802,6 @@ static int move_mix(mixmark *m, int evx)
       /* can't easily use work proc here because the erasure gets complicated */
       make_temporary_graph(cp,md,cs);
       mix_set_title_beg(md,m);
-      return(cs->beg - old_beg);
     }
   else
     {
@@ -811,10 +809,8 @@ static int move_mix(mixmark *m, int evx)
 	{
 	  cs = md->current_cs;
 	  make_temporary_graph(cp,md,cs);
-	  return(cs->beg - old_beg);
 	}
     }
-  return(0);
 }
 
 static void mix_title_button_release(Widget w, XtPointer clientData, XEvent *event, Boolean *flag) 

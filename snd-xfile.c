@@ -83,7 +83,6 @@ static void color_file_selection_box(Widget w, snd_state *ss)
       map_over_children(w,set_main_color_of_widget,(void *)ss);
       XtVaSetValues(XmFileSelectionBoxGetChild(w,XmDIALOG_DIR_LIST),XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
       XtVaSetValues(XmFileSelectionBoxGetChild(w,XmDIALOG_LIST),XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
-#ifndef LESSTIF_VERSION
       XtVaSetValues(XtNameToWidget(w,"Apply"),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
       XtVaSetValues(XtNameToWidget(w,"Cancel"),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
       XtVaSetValues(XtNameToWidget(w,"Help"),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
@@ -92,14 +91,6 @@ static void color_file_selection_box(Widget w, snd_state *ss)
       if (!wtmp) wtmp = XmFileSelectionBoxGetChild(w,XmDIALOG_TEXT);
       ftmp = XtNameToWidget(w,"FilterText");
       if (!ftmp) ftmp = XmFileSelectionBoxGetChild(w,XmDIALOG_FILTER_TEXT);	
-#else
-      XtVaSetValues(XmFileSelectionBoxGetChild(w,XmDIALOG_APPLY_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w,XmDIALOG_CANCEL_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w,XmDIALOG_HELP_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w,XmDIALOG_OK_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
-      wtmp = XmFileSelectionBoxGetChild(w,XmDIALOG_TEXT);
-      ftmp = XmFileSelectionBoxGetChild(w,XmDIALOG_FILTER_TEXT);	
-#endif
       if (wtmp)
 	{
 	  XtAddCallback(wtmp,XmNfocusCallback,textfield_focus_Callback,ss);
@@ -333,9 +324,6 @@ void CreateOpenDialog(Widget w,XtPointer clientData)
       XtSetArg(args[n],XmNselectionLabelString,s1); n++;
       open_dialog = XmCreateFileSelectionDialog(w,STR_File,args,n);
       XmStringFree(s1);
-#ifdef LESSTIF_VERSION
-      XtManageChild(open_dialog);
-#endif
 #if OVERRIDE_TOGGLE
       override_form_translation(open_dialog);
 #endif
@@ -346,20 +334,12 @@ void CreateOpenDialog(Widget w,XtPointer clientData)
 						   NULL);
       color_file_selection_box(open_dialog,ss);
 
-#ifndef LESSTIF_VERSION
       wtmp = XtNameToWidget(open_dialog,"Text");
       if (!wtmp) wtmp = XmFileSelectionBoxGetChild(open_dialog,XmDIALOG_TEXT);
-#else
-      wtmp = XmFileSelectionBoxGetChild(open_dialog,XmDIALOG_TEXT);
-#endif
       if (wtmp) add_completer_to_textfield(ss,wtmp,add_completer_func(filename_completer));
       
-#ifndef LESSTIF_VERSION
       wtmp = XtNameToWidget(open_dialog,"FilterText");
       if (!wtmp) wtmp = XmFileSelectionBoxGetChild(open_dialog,XmDIALOG_FILTER_TEXT);
-#else
-      wtmp = XmFileSelectionBoxGetChild(open_dialog,XmDIALOG_FILTER_TEXT);
-#endif
       if (wtmp) add_completer_to_textfield(ss,wtmp,add_completer_func(filename_completer));
 
       if (!(ss->using_schemes)) XtVaSetValues(just_sounds_button,XmNselectColor,(ss->sgx)->pushed_button_color,NULL);
@@ -564,9 +544,6 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   XtAddCallback(hlab,XmNhelpCallback,file_header_help_callback,ss);
 
   n=0;
-#ifdef LESSTIF_VERSION
-  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#endif
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
   XtSetArg(args[n],XmNtopWidget,hlab); n++;
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
@@ -611,9 +588,6 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   XtAddCallback(dlab,XmNhelpCallback,file_data_help_callback,ss);
 
   n=0;
-#ifdef LESSTIF_VERSION
-  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#endif
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
   XtSetArg(args[n],XmNtopWidget,dlab); n++;
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
@@ -638,11 +612,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
-#ifndef LESSTIF_VERSION
   XtSetArg(args[n],XmNleftWidget,dlist); n++;
-#else
-  XtSetArg(args[n],XmNleftWidget,XtParent(dlist)); n++;
-#endif
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_NONE); n++;
   XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
   XtSetArg(args[n],XmNwidth,15); n++;
@@ -799,21 +769,14 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XmStringFree(s1);
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
-#ifndef LESSTIF_VERSION
       file_save_as_file_name = XtNameToWidget(save_as_dialog,"Text");
       if (!(file_save_as_file_name)) file_save_as_file_name = XmFileSelectionBoxGetChild(save_as_dialog,XmDIALOG_TEXT);
-#else
-      file_save_as_file_name = XmFileSelectionBoxGetChild(save_as_dialog,XmDIALOG_TEXT);
-#endif
 
       XtAddCallback(save_as_dialog,XmNhelpCallback,save_as_help_callback,ss);
       XtAddCallback(save_as_dialog,XmNcancelCallback,save_as_cancel_callback,ss);
       XtAddCallback(save_as_dialog,XmNokCallback,save_as_ok_callback,ss);
       
       n=0;
-#ifdef LESSTIF_VERSION
-      XtSetArg(args[n],XmNheight,100); n++;
-#endif
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
@@ -1151,29 +1114,6 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   return(r);
 }
 
-static void make_row_name(regrow *r, char *name, int big_star)
-{
-  char *str;
-  if (big_star)
-    {
-      str = (char *)CALLOC(128,sizeof(char));
-      sprintf(str,"%s*",name);
-      set_button_label_bold(r->nm,str);
-      FREE(str);
-    }
-  else set_button_label_bold(r->nm,name);
-}
-
-static void fill_in_row(regrow *r, char *name, int big_star)
-{
-  XtUnmanageChild(r->rw);
-  make_row_name(r,name,big_star);
-  XmToggleButtonSetState(r->sv,FALSE,FALSE);
-  XmToggleButtonSetState(r->pl,FALSE,FALSE);
-  XtManageChild(r->rw);
-}
-
-
 /* -------- view files dialog -------- */
 
 static Widget view_files_dialog = NULL;
@@ -1207,18 +1147,15 @@ void make_prev_name_row(int old_size, int new_size)
     }
 }
 
-void make_a_big_star_outa_me(char *shortname, int big_star)
+void view_curfiles_set_row_name(int pos)
 {
-  int i;
-  i = find_curfile_regrow(shortname);
-  if ((i != -1) && (get_a_big_star(i) != big_star))
-    {
-      if (file_dialog_is_active())
-	{
-	  make_row_name(cur_name_row[i],get_curnames(i),big_star);
-	}
-      set_a_big_star(i,big_star);
-    }
+  regrow *r;
+  char *str;
+  r = cur_name_row[pos];
+  XtUnmanageChild(r->rw);
+  str = view_curfiles_name(r->pos);
+  set_button_label_bold(r->nm,str);
+  FREE(str);
 }
 
 static void View_Files_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -1246,13 +1183,7 @@ static void View_Files_Update_Callback(Widget w,XtPointer clientData,XtPointer c
 static void View_CurFiles_Save_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   regrow *r = (regrow *)clientData;
-  snd_info *sp;
-  sp = find_sound(r->ss,get_curnames(r->pos));
-  if (sp)
-    {
-      finish_keyboard_selection();
-      save_edits(sp,NULL);
-    }
+  view_curfiles_save(r->ss,r->pos);
   XmToggleButtonSetState(r->sv,FALSE,FALSE);
 }
 
@@ -1277,18 +1208,7 @@ static void View_CurFiles_Play_Callback(Widget w,XtPointer clientData,XtPointer 
 {
   regrow *r = (regrow *)clientData;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
-  snd_info *sp;
-  sp = find_sound(r->ss,get_curnames(r->pos));
-  if (sp)
-    {
-      if (sp->playing) stop_playing_sound(sp);
-      if (cb->set)
-	{
-	  start_playing(sp,0,NO_END_SPECIFIED);
-	  set_play_button(sp,1);
-	}
-      else set_play_button(sp,0);
-    }
+  view_curfiles_play(r->ss,r->pos,cb->set);
 }
 
 static void curfile_unhighlight(snd_state *ss)
@@ -1306,7 +1226,7 @@ static void curfile_unhighlight(snd_state *ss)
     }
 }
 
-static void curfile_highlight(snd_state *ss, int i)
+void curfile_highlight(snd_state *ss, int i)
 {
   regrow *r;
   if (file_dialog_is_active())
@@ -1325,18 +1245,7 @@ static void curfile_highlight(snd_state *ss, int i)
 static void View_CurFiles_Select_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   regrow *r = (regrow *)clientData;
-  snd_info *sp,*osp;
-  snd_state *ss;
-  ss = r->ss;
-  curfile_highlight(ss,r->pos);
-  sp = find_sound(ss,get_curnames(r->pos));
-  osp = any_selected_sound(ss);
-  if (sp != osp)
-    {
-      select_channel(sp,0);
-      normalize_sound(ss,sp,sp->chans[0]);
-      /* goto_graph(sp->chans[0]); */
-    }
+  view_curfiles_select(r->ss,r->pos);
 }
 
 static void View_PrevFiles_Unlist_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -1351,46 +1260,15 @@ static void View_PrevFiles_Play_Callback(Widget w,XtPointer clientData,XtPointer
   /* open and play -- close at end or when button off toggled */
   regrow *r = (regrow *)clientData;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
-  static snd_info *play_sp;
-  int play;
-  play = cb->set;
-  if (play)
-    {
-      if (play_sp)
-	{
-	  if (play_sp->playing) {XmToggleButtonSetState(w,FALSE,FALSE); return;} /* can't play two of these at once */
-	  if (strcmp(play_sp->shortname,get_prevnames(r->pos)) != 0)
-	    {
-	      completely_free_snd_info(play_sp);
-	      play_sp = NULL;
-	    }
-	}
-      if (!play_sp) play_sp = make_sound_readable(r->ss,get_prevfullnames(r->pos),FALSE);
-      if (play_sp)
-	{
-	  play_sp->shortname = get_prevnames(r->pos);
-	  play_sp->fullname = NULL;
-	  start_playing(play_sp,0,NO_END_SPECIFIED);
-	}
-      else
-	{ /* can't find or setup file */
-	  XmToggleButtonSetState(w,FALSE,FALSE);
-	  play = 0;
-	}
-    }
-  else
-    { /* play toggled off */
-      if ((play_sp) && (play_sp->playing)) stop_playing_sound(play_sp);
-    }
+  if (view_prevfiles_play(r->ss,r->pos,cb->set))
+    XmToggleButtonSetState(w,FALSE,FALSE);
 }
 
 static void View_PrevFiles_Select_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   /* open and set as selected */
   regrow *r = (regrow *)clientData;
-  snd_info *sp;
-  sp = snd_open_file(get_prevfullnames(r->pos),r->ss);
-  if (sp) select_channel(sp,0); 
+  view_prevfiles_select(r->ss,r->pos);
 }
 
 void highlight_selected_sound(snd_state *ss)
@@ -1410,6 +1288,7 @@ void make_curfiles_list (snd_state *ss)
 {
   int i;
   Widget last_row = NULL;
+  char *str;
   regrow *r;
   for (i=0;i<get_curfile_end();i++)
     {
@@ -1421,7 +1300,13 @@ void make_curfiles_list (snd_state *ss)
 	  r->pos = i;
 	  r->ss = ss;
 	}
-      fill_in_row(r,get_curnames(i),get_a_big_star(i));
+      XtUnmanageChild(r->rw);
+      str = view_curfiles_name(r->pos);
+      set_button_label_bold(r->nm,str);
+      FREE(str);
+      XmToggleButtonSetState(r->sv,FALSE,FALSE);
+      XmToggleButtonSetState(r->pl,FALSE,FALSE);
+      XtManageChild(r->rw);
       last_row = r->rw;
     }
   for (i=get_curfile_end();i<get_max_curfile_end();i++)
@@ -1481,7 +1366,11 @@ void make_prevfiles_list (snd_state *ss)
 	      r->pos = i;
 	      r->ss = ss;
 	    }
-	  fill_in_row(r,get_prevnames(i),0);
+	  XtUnmanageChild(r->rw);
+	  set_button_label_bold(r->nm,get_prevnames(r->pos));
+	  XmToggleButtonSetState(r->sv,FALSE,FALSE);
+	  XmToggleButtonSetState(r->pl,FALSE,FALSE);
+	  XtManageChild(r->rw);
 	  last_row = r->rw;
 	}
     }
@@ -1819,9 +1708,6 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   dlab = XtCreateManagedWidget(STR_data_format_p,xmLabelWidgetClass,rform,args,n);
 
   n=0;
-#ifdef LESSTIF_VERSION
-  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#endif
   XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
@@ -2011,9 +1897,6 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       new_file_name = sndCreateTextFieldWidget(ss,"newtext",form,args,n,NOT_ACTIVATABLE,add_completer_func(filename_completer));
 
       n=0;
-#ifdef LESSTIF_VERSION
-      XtSetArg(args[n],XmNheight,100); n++;
-#endif
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
       XtSetArg(args[n],XmNtopWidget,new_file_name); n++;
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
@@ -2109,20 +1992,12 @@ void File_Mix_Callback(Widget w,XtPointer clientData,XtPointer callData)
       XtAddCallback(file_mix_dialog,XmNokCallback,file_mix_ok_callback,ss);
       XtManageChild(file_mix_dialog);
       color_file_selection_box(file_mix_dialog,ss);
-#ifndef LESSTIF_VERSION
       file_mix_name = XtNameToWidget(file_mix_dialog,"Text");
       if (!file_mix_name) file_mix_name = XmFileSelectionBoxGetChild(file_mix_dialog,XmDIALOG_TEXT);
-#else
-      file_mix_name = XmFileSelectionBoxGetChild(file_mix_dialog,XmDIALOG_TEXT);
-#endif
       if (file_mix_name) add_completer_to_textfield(ss,file_mix_name,add_completer_func(filename_completer));
 
-#ifndef LESSTIF_VERSION
       wtmp = XtNameToWidget(file_mix_dialog,"FilterText");
       if (!wtmp) wtmp = XmFileSelectionBoxGetChild(file_mix_dialog,XmDIALOG_FILTER_TEXT);
-#else
-      wtmp = XmFileSelectionBoxGetChild(file_mix_dialog,XmDIALOG_FILTER_TEXT);
-#endif
       if (wtmp) add_completer_to_textfield(ss,wtmp,add_completer_func(filename_completer));
 
     }

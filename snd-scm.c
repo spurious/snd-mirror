@@ -512,22 +512,21 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
   return(0);
 }
 
-int snd_eval_listener_str(snd_state *ss, char *buf)
+void snd_eval_listener_str(snd_state *ss, char *buf)
 {
   SCM result;
   char *str;
-  if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return(0);
+  if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   result = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
   if (g_error_occurred)
     {
       g_error_occurred = 0;
-      return(0);
+      return;
     }
   str = gh_print(result);
   ss->result_printout = MESSAGE_WITH_CARET;
   snd_append_command(ss,str);
   if (str) FREE(str);
-  return(0);
 }
 
 
@@ -581,7 +580,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
     }
 }
 
-int snd_load_file(char *filename)
+void snd_load_file(char *filename)
 {
   char *str = NULL,*str1 = NULL;
   str = mus_file_full_name(filename);
@@ -595,7 +594,6 @@ int snd_load_file(char *filename)
     }
   else scm_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str,snd_catch_scm_error,NULL);
   if (str) FREE(str);
-  return(0);
 }
 
 static SCM snd_test = SCM_BOOL_F, full_test = SCM_BOOL_F;
@@ -3248,7 +3246,7 @@ static SCM g_start_progress_report(SCM snd)
   ERRSP(S_start_progress_report,snd,1);
   sp = get_sp(snd);
   if (sp)
-    start_progress_report(state,sp,NOT_FROM_ENVED); 
+    start_progress_report(sp,NOT_FROM_ENVED); 
   else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_start_progress_report),snd)));
   return(SCM_BOOL_T);
 }
@@ -3261,7 +3259,7 @@ static SCM g_finish_progress_report(SCM snd)
   ERRSP(S_finish_progress_report,snd,1);
   sp = get_sp(snd);
   if (sp) 
-    finish_progress_report(state,sp,NOT_FROM_ENVED); 
+    finish_progress_report(sp,NOT_FROM_ENVED); 
   else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_finish_progress_report),snd)));
   return(SCM_BOOL_T);
 }
@@ -3279,7 +3277,7 @@ static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd
   if (sp) 
     {
       if (gh_string_p(name)) str = gh_scm2newstr(name,NULL); else str = copy_string("something useful");
-      progress_report(state,sp,str,
+      progress_report(sp,str,
 		      g_scm2intdef(cur_chan,0),
 		      g_scm2intdef(chans,sp->nchans),
 		      gh_scm2double(pct),

@@ -99,17 +99,9 @@ static Widget rec_size_text,trigger_scale,trigger_label;
 static Widget file_duration,messages,record_button,reset_button,file_text;
 static Widget *device_buttons;
 static int device_buttons_size = 0;
-#if NEW_SGI_AL
-  static int active_device_button = -1;
-#endif
-#if SUN
-  static int active_device_button = -1;
-#endif
-
-#if (HAVE_OSS || HAVE_ALSA)
-  static int mixer_gains_posted[MAX_SOUNDCARDS];
-  static int tone_controls_posted[MAX_SOUNDCARDS];
-#endif
+static int active_device_button = -1;
+static int mixer_gains_posted[MAX_SOUNDCARDS];
+static int tone_controls_posted[MAX_SOUNDCARDS];
 static XM_FONT_TYPE small_fontlist;
 
 static vu_label **vu_labels = NULL;
@@ -1676,7 +1668,7 @@ int record_in_progress(void)
 
 void lock_recording_audio(void)
 {
-  if ((recorder) && (XtIsManaged(recorder)))
+  if (record_dialog_is_active())
     {
       close_recorder_audio();
       set_sensitive(record_button,FALSE);
@@ -1687,7 +1679,7 @@ void lock_recording_audio(void)
 void unlock_recording_audio(void)
 {
   XmString s1;
-  if ((recorder) && (XtIsManaged(recorder)))
+  if (record_dialog_is_active())
     {
       set_sensitive(record_button,TRUE);
       set_sensitive(reset_button,TRUE);
@@ -2352,8 +2344,6 @@ static Widget make_vertical_gain_separator(snd_state *ss, PANE *p, int vu_meters
 static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *frames, Widget in_last_frame, Widget in_left_frame,
 			   int overall_input_ctr, Float meter_size, int input, Widget *out_frame);
 
-#define MAX_AUDIO_FIELD (MUS_AUDIO_DIRECTION+1)
-
 static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, int device, int system)
 {
   /* VU meters (frame, then drawing area widget) */
@@ -2369,9 +2359,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   Position pane_max;
   Float meter_size;
   int mixflds[MAX_AUDIO_FIELD];
-#if (HAVE_OSS || HAVE_ALSA)
-  float mixer_field_chans[MAX_AUDIO_FIELD];
-#endif
   int last_device=0;
   static int overall_input_ctr = 0;
   static int gain_ctr = 0;
@@ -2380,35 +2367,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   p->device = device;
   p->system = system;
   p->ss = ss;
-  vu_meters = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
-  input = (recorder_input_device(device));
-  num_gains = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
-
-#if (HAVE_OSS || HAVE_ALSA)
-  if (num_gains == 0)
-    {
-      mixer_gains_posted[system] = 0;
-      tone_controls_posted[system] = 0;
-      last_device = -1;
-    }
-  else
-    {
-      if ((input) && (!mixer_gains_posted[system]))
-	{
-	  for (k=0;k<MAX_AUDIO_FIELD;k++) mixer_field_chans[k] = 0.0;
-	  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER,MUS_AUDIO_FORMAT,MAX_AUDIO_FIELD,mixer_field_chans);
-	  for (k=0;k<MAX_AUDIO_FIELD;k++) mixflds[k] = (int)mixer_field_chans[k]; /* simplify life later */
-	  mixer_gains_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER);
-	  num_gains = mixer_gains_posted[system]; /* includes the MUS_AUDIO_LINE_IN gains */
-	}
-      if ((!input) && (!tone_controls_posted[system]))
-	{
-	  tone_controls_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DAC_FILTER);
-	  num_gains += tone_controls_posted[system];
-	}
-    }
-  last_device = MUS_AUDIO_MICROPHONE;
-#endif
+  vu_meters = recorder_check_device(system,device,mixer_gains_posted,tone_controls_posted,mixflds,&num_gains,&input);
 
   if (input) 
     {
@@ -2426,6 +2385,10 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       p->out_chans = vu_meters;
       p->in_chans = 1;
     }
+
+#if (HAVE_OSS || HAVE_ALSA)
+  last_device = MUS_AUDIO_MICROPHONE;
+#endif
 
   p->meters = (VU **)CALLOC(vu_meters,sizeof(VU *));
   p->meters_size = vu_meters;
@@ -2527,14 +2490,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
   last_frame = in_last_frame;
   left_frame = in_left_frame;
 
-  if ((vu_meters%4) == 0)
-    columns = 4;
-  else 
-    {
-      if ((vu_meters%5) == 0)
-	columns = 5;
-      else columns = vu_meters;
-    }
+  columns = recorder_columns(vu_meters);
   row = 0;
 
   for (i=0;i<vu_meters;i++)
@@ -2639,11 +2595,19 @@ static Widget make_vertical_gain_separator(snd_state *ss, PANE *p, int vu_meters
   return(XtCreateManagedWidget("sep",xmSeparatorWidgetClass,p->pane,args,n));
 }
 
+void recorder_fill_wd(void *uwd, int chan, int field, int device)
+{
+  Wdesc *wd = (Wdesc *)uwd;
+  wd->chan = chan;
+  wd->field = field;
+  wd->device = device;
+}
+
 static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
 					 int num_gains, int gain_ctr, int *mixflds, int input,int in_last_device)
 {
   /* vertical scalers on the right (with icon) */
-  int n,i,k,chan,this_device=0,last_device;
+  int n,i,chan,this_device=0,last_device;
   Arg args[32];
   Widget icon_label, last_slider;
   Wdesc *wd;
@@ -2690,95 +2654,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
       /* in the Linux case, as each new device pops up, we need some indication above it */
       wd = (Wdesc *)CALLOC(1,sizeof(Wdesc));
       wd->system = p->system;
-#if (HAVE_OSS || HAVE_ALSA)
-      /* we're moving right to left here, chan is counting down, we need to fill out MIXER|MUS_AUDIO_DAC_FILTER fields and channels */
-      /* and also handle whatever else comes along */
-      /* treble and bass are actually stereo -- we'll do both at once */
-      if (!input)
-	{
-	  if (mus_audio_api() == ALSA_API) 
-	    {
-	      /* the existing code assumes there are tone controls and that
-	       * a certain device is the output (MUS_AUDIO_DAC_OUT), for now
-	       * no tone controls at all */
-	      wd->chan = 1;
-	      wd->field = MUS_AUDIO_AMP;
-	      wd->device = p->device;
-	      this_device = p->device;
-	    }
-	  else
-	    {
-	      /* count back from speaker 1 0 treble bass */
-	      switch (i)
-		{
-		case 0: 
-		  wd->chan = 1;
-		  wd->field = MUS_AUDIO_AMP;
-		  wd->device = MUS_AUDIO_DAC_OUT;
-		  break;
-		case 1: 
-		  wd->chan = 0;
-		  wd->field = MUS_AUDIO_AMP;
-		  wd->device = MUS_AUDIO_DAC_OUT;
-		  break;
-		case 2: 
-		  wd->chan = 0;
-		  wd->field = MUS_AUDIO_TREBLE;
-		  wd->device = MUS_AUDIO_DAC_FILTER;
-		  break;
-		case 3: 
-		  wd->chan =0;
-		  wd->field = MUS_AUDIO_BASS;
-		  wd->device = MUS_AUDIO_DAC_FILTER;
-		  break;
-		}
-	      if (i>1) this_device = MUS_AUDIO_DAC_FILTER; else this_device = MUS_AUDIO_DAC_OUT;
-	    }
-	}
-      else
-	{
-	  /* we want speaker/line-in gains on the far right, then whatever else */
-	  if (mixflds[MUS_AUDIO_MICROPHONE] > 0)
-	    {
-	      wd->chan = mixflds[MUS_AUDIO_MICROPHONE]-1;
-	      wd->field = MUS_AUDIO_AMP;
-	      wd->device = MUS_AUDIO_MICROPHONE;
-	      mixflds[MUS_AUDIO_MICROPHONE]--;
-	      this_device = MUS_AUDIO_MICROPHONE;
-	    }
-	  else
-	    {
-	      if (mixflds[MUS_AUDIO_LINE] > 0)
-		{
-		  wd->chan = mixflds[MUS_AUDIO_LINE]-1;
-		  wd->field = MUS_AUDIO_AMP;
-		  wd->device = MUS_AUDIO_LINE_IN;
-		  mixflds[MUS_AUDIO_LINE]--;
-		  this_device = MUS_AUDIO_LINE;
-		}
-	      else
-		{
-		  wd->chan = 0;
-		  for (k=0;k<MAX_AUDIO_FIELD;k++)
-		    {
-		      if (mixflds[k] > 0)
-			{
-			  wd->chan = mixflds[k]-1;
-			  wd->field = k;
-			  wd->device = MUS_AUDIO_MIXER;
-			  mixflds[k]--;
-			  this_device = k;
-			  break;
-			}
-		    }
-		}
-	    }
-	}
-#else
-      wd->chan = chan;
-      wd->field = MUS_AUDIO_AMP;
-      wd->device = p->device;
-#endif
+      this_device = recorder_sort_mixer_device((void *)wd,i,chan,input,p->device,mixflds);
       wd->ss = ss;
       wd->p = p;
       wd->gain = gain_ctr+chan;
@@ -2837,11 +2713,8 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_NONE); n++;
       XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
-#ifdef LESSTIF_VERSION
-      XtSetArg(args[n],XmNscaleWidth,15); n++;
-#else
       XtSetArg(args[n],XmNwidth,15); n++;
-#endif
+
       if (vol < 0.0) vol = 0.0;
       if (vol > 1.0) vol = 1.0;
       XtSetArg(args[n],XmNvalue,(int)(vol*100)); n++;
@@ -2940,14 +2813,8 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
   last_button = NULL;
   last_max = NULL;
 
-  if ((vu_meters%4) == 0)
-    columns = 4;
-  else 
-    {
-      if ((vu_meters%5) == 0)
-	columns = 5;
-      else columns = vu_meters;
-    }
+  columns = recorder_columns(vu_meters);
+
   row = 0;
   button_size = 100/columns;
 
@@ -3437,7 +3304,7 @@ void snd_record_file(snd_state *ss)
       v.foreground = sx->black;
       vu_gc = XCreateGC(dpy,wn,GCForeground | GCBackground,&v);
 
-      input_devices = recorder_get_devices(ss,rp,&output_devices);
+      input_devices = recorder_get_devices(rp,&output_devices);
       if (input_devices == -1) return;
 
       all_panes = (PANE **)CALLOC(input_devices+1,sizeof(PANE *));
@@ -3514,23 +3381,14 @@ void snd_record_file(snd_state *ss)
       XmStringFree(xdismiss);
       XmStringFree(xreset);
 
-#ifndef LESSTIF_VERSION
-      /* now add the RECORD button to the others at the bottom of the window */
-      /* this is a push button from Motif's point of view, but its behaviour is like a toggle button */
-      /* in Lesstif, this causes a segmentation fault, so we move the record button elsewhere */
       n=0;
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
       XtSetArg(args[n],XmNlabelString,titlestr); n++;
       record_button = XtCreateManagedWidget("record-button",xmPushButtonWidgetClass,recorder,args,n);
       XtAddCallback(record_button,XmNactivateCallback,Record_Button_Callback,ss);
-#endif
       XmStringFree(titlestr);
 
-#ifndef LESSTIF_VERSION
       reset_button = XtNameToWidget(recorder,"Cancel");
-#else
-      reset_button = XmMessageBoxGetChild(recorder,XmDIALOG_CANCEL_BUTTON);
-#endif
 
       if (!(ss->using_schemes))
 	{
@@ -3544,12 +3402,8 @@ void snd_record_file(snd_state *ss)
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-#ifdef LESSTIF_VERSION
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-#else
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_WIDGET); n++;
       XtSetArg(args[n],XmNbottomWidget,XmMessageBoxGetChild(recorder,XmDIALOG_SEPARATOR)); n++;
-#endif
       XtSetArg(args[n],XmNallowResize,TRUE); n++;
       XtSetArg(args[n],XmNsashHeight,ss->sash_size); n++;
       XtSetArg(args[n],XmNsashWidth,ss->sash_size); n++;
@@ -3596,17 +3450,7 @@ void snd_record_file(snd_state *ss)
 	{
 	  p = all_panes[i];
 	  XtVaSetValues(p->pane,XmNpaneMaximum,p->pane_size,NULL);
-#ifdef LESSTIF_VERSION
-	  XtVaSetValues(p->pane,XmNheight,p->pane_size,NULL);
-#endif
 	}
-
-#ifdef LESSTIF_VERSION
-      n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      record_button = XtCreateManagedWidget(STR_Record,xmPushButtonWidgetClass,recorder,args,n);
-      XtAddCallback(record_button,XmNactivateCallback,Record_Button_Callback,ss);
-#endif
 
       /* in case caller closes (via window menu) dialog: */
       wm_delete = XmInternAtom(XtDisplay(recorder),"WM_DELETE_WINDOW",FALSE);

@@ -3,6 +3,18 @@
 #include "snd.h"
 #include "snd-rec.h"
 
+int recorder_columns(int vu_meters)
+{
+  if ((vu_meters%4) == 0)
+    return(4);
+  else 
+    {
+      if ((vu_meters%5) == 0)
+	return(5);
+      else return(vu_meters);
+    }
+}
+
 char *recorder_device_name(int dev)
 {
   /* format label at top of pane */
@@ -171,6 +183,111 @@ char *recorder_field_function(int fld)
     }
 }
 #endif
+
+int recorder_sort_mixer_device(void *wd, int i, int chan, int input, int device, int *mixflds)
+{
+  int k;
+#if (HAVE_OSS || HAVE_ALSA)
+  /* we're moving right to left here, chan is counting down, we need to fill out MIXER|MUS_AUDIO_DAC_FILTER fields and channels */
+  /* and also handle whatever else comes along */
+  /* treble and bass are actually stereo -- we'll do both at once */
+  if (!input)
+    {
+      if (mus_audio_api() == ALSA_API) 
+	{
+	  /* the existing code assumes there are tone controls and that
+	   * a certain device is the output (MUS_AUDIO_DAC_OUT), for now
+	   * no tone controls at all */
+	  recorder_fill_wd(wd,1,MUS_AUDIO_AMP,device);
+	  return(device);
+	}
+      else
+	{
+	  /* count back from speaker 1 0 treble bass */
+	  switch (i)
+	    {
+	    case 0: recorder_fill_wd(wd,1,MUS_AUDIO_AMP,MUS_AUDIO_DAC_OUT); break;
+	    case 1: recorder_fill_wd(wd,0,MUS_AUDIO_AMP,MUS_AUDIO_DAC_OUT); break;
+	    case 2: recorder_fill_wd(wd,0,MUS_AUDIO_TREBLE,MUS_AUDIO_DAC_FILTER); break;
+	    case 3: recorder_fill_wd(wd,0,MUS_AUDIO_BASS,MUS_AUDIO_DAC_FILTER); break;
+	    }
+	  if (i>1) return(MUS_AUDIO_DAC_FILTER); else return(MUS_AUDIO_DAC_OUT);
+	}
+    }
+  else
+    {
+      /* we want speaker/line-in gains on the far right, then whatever else */
+      if (mixflds[MUS_AUDIO_MICROPHONE] > 0)
+	{
+	  recorder_fill_wd(wd,mixflds[MUS_AUDIO_MICROPHONE]-1,MUS_AUDIO_AMP,MUS_AUDIO_MICROPHONE);
+	  mixflds[MUS_AUDIO_MICROPHONE]--;
+	  return(MUS_AUDIO_MICROPHONE);
+	}
+      else
+	{
+	  if (mixflds[MUS_AUDIO_LINE] > 0)
+	    {
+	      recorder_fill_wd(wd,mixflds[MUS_AUDIO_LINE]-1,MUS_AUDIO_AMP,MUS_AUDIO_LINE_IN);
+	      mixflds[MUS_AUDIO_LINE]--;
+	      return(MUS_AUDIO_LINE);
+	    }
+	  else
+	    {
+	      for (k=0;k<MAX_AUDIO_FIELD;k++)
+		{
+		  if (mixflds[k] > 0)
+		    {
+		      recorder_fill_wd(wd,mixflds[k]-1,k,MUS_AUDIO_MIXER);
+		      mixflds[k]--;
+		      return(k);
+		    }
+		}
+	    }
+	}
+    }
+#else
+  recorder_fill_wd(wd,chan,MUS_AUDIO_AMP,device);
+#endif
+  return(device);
+}
+
+int recorder_check_device(int system, int device, int *mixer_gains_posted, int *tone_controls_posted, int *mixflds, int *gains, int *inp)
+{
+  int vu_meters = 0,input,num_gains,k;
+#if (HAVE_OSS || HAVE_ALSA)
+  float mixer_field_chans[MAX_AUDIO_FIELD];
+#endif
+  vu_meters = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
+  input = (recorder_input_device(device));
+  num_gains = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
+
+#if (HAVE_OSS || HAVE_ALSA)
+  if (num_gains == 0)
+    {
+      mixer_gains_posted[system] = 0;
+      tone_controls_posted[system] = 0;
+    }
+  else
+    {
+      if ((input) && (!mixer_gains_posted[system]))
+	{
+	  for (k=0;k<MAX_AUDIO_FIELD;k++) mixer_field_chans[k] = 0.0;
+	  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER,MUS_AUDIO_FORMAT,MAX_AUDIO_FIELD,mixer_field_chans);
+	  for (k=0;k<MAX_AUDIO_FIELD;k++) mixflds[k] = (int)mixer_field_chans[k]; /* simplify life later */
+	  mixer_gains_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER);
+	  num_gains = mixer_gains_posted[system]; /* includes the MUS_AUDIO_LINE_IN gains */
+	}
+      if ((!input) && (!tone_controls_posted[system]))
+	{
+	  tone_controls_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DAC_FILTER);
+	  num_gains += tone_controls_posted[system];
+	}
+    }
+#endif
+  (*inp) = input;
+  (*gains) = num_gains;
+  return(vu_meters);
+}
 
 /* now recorder_info dependent code */
 
@@ -1204,7 +1321,7 @@ int recorder_start_output_file(snd_state *ss, char *comment)
   return(FALSE);
 }
 
-int recorder_get_devices(snd_state *ss, recorder_info *rp, int *outs)
+int recorder_get_devices(recorder_info *rp, int *outs)
 {
   int i,err,input_devices=0,output_devices=0,system,cur_devices,device;
   float audval[AUDVAL_SIZE];
@@ -1461,4 +1578,5 @@ void g_init_recorder(SCM local_doc)
   void set_read_in_progress (snd_state *ss, recorder_info *rp) {}
   void sensitize_control_buttons(void) {}
   int record_in_progress(void) {return(0);}
+  void recorder_fill_wd(void *uwd, int chan, int field, int device) {}
 #endif

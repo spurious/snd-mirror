@@ -326,12 +326,11 @@ void enved_display_point_label(snd_state *ss, Float x, Float y)
   gtk_label_set_text(GTK_LABEL(brktxtL),brkpt_buf);
 }
 
-void display_enved_progress(snd_state *ss, char *str, GdkPixmap *pix, GdkBitmap *mask)
+void display_enved_progress(char *str, GdkPixmap *pix, GdkBitmap *mask)
 {
   if (pix == NULL)
     gtk_label_set_text(GTK_LABEL(brktxtL),str);
   else gtk_pixmap_set(GTK_PIXMAP(brkpixL),pix,mask);
-  check_for_event(ss);
 }
 
 static TIME_TYPE down_time;

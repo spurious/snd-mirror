@@ -306,14 +306,13 @@ void add_or_edit_symbol(char *name, env *val)
 
 static int symit(snd_state *ss,char **str);
 
-int snd_eval_listener_str(snd_state *ss, char *buf) 
+void snd_eval_listener_str(snd_state *ss, char *buf) 
 {
   int val;
   /* this is called from the lisp listener when the user has typed in a form (so don't echo it) */
   ss->result_printout = MESSAGE_WITH_CARET;
   val = snd_eval_str(ss,buf,1);
   ss->result_printout = PLAIN_MESSAGE;
-  return(val);
 }
 
 void snd_eval_stdin_str(snd_state *ss, char *buf)
@@ -856,7 +855,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_left_sample) == 0) 
 	{cp = get_cp(ss,str[1],str[2]); if ((cp) && (cp->axis)) isym(ss,(cp->axis)->losamp); else isym(ss,0); return(0);}
       if (strcmp(tok,S_line_size) == 0) {isym(ss,line_size(ss)); return(0);}
-      if (strcmp(tok,"load") == 0) {ival = snd_load_file(filename = mus_file_full_name(sstr(str[1]))); if (filename) FREE(filename); isym(ss,ival); return(0);}
+      if (strcmp(tok,"load") == 0) {snd_load_file(filename = mus_file_full_name(sstr(str[1]))); if (filename) FREE(filename); return(0);}
       break;
     case 'm':
       if (strcmp(tok,S_make_region) == 0) {cp = get_cp(ss,str[3],str[4]); if (cp) define_region(cp,istr(str[1]),istr(str[2]),FALSE); isym(ss,0); return(0);}
@@ -938,7 +937,6 @@ static int symit(snd_state *ss,char **str)
 	  return(0);
 	}
       if (strcmp(tok,S_preload_directory) == 0) {add_directory_to_prevlist(ss,sstr(str[1])); isym(ss,0); return(0);}
-      if (strcmp(tok,S_preload_file) == 0) {remember_me(ss,filename_without_home_directory(sstr(str[1])),sstr(str[1])); isym(ss,0); return(0);}
       if (strcmp(tok,S_previous_files_sort) == 0) {isym(ss,previous_files_sort(ss)); return(0);}
       if (strcmp(tok,S_print_length) == 0) {isym(ss,print_length(ss)); return(0);}
       if (strcmp(tok,S_protect_region) == 0) 
@@ -1275,7 +1273,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
   no_guile_errors = 0;
 }
 
-int snd_load_file(char *filename)
+void snd_load_file(char *filename)
 {
   int fd;
   char *str,*saved_buf;
@@ -1290,10 +1288,9 @@ int snd_load_file(char *filename)
       fd = open(init_file_buffer,O_RDONLY,0);
     }
   else fd = open(str,O_RDONLY,0);
-  if (fd == -1) return(-1);
+  if (fd == -1) return;
   while (eval_forever(ss,fd));
   close(fd);
-  return(0);
 }
 
 int dont_exit(snd_state *ss) {return(0);}

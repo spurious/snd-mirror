@@ -24,9 +24,6 @@ static void create_snd_error_dialog(snd_state *ss)
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog,XmDIALOG_HELP_BUTTON));
 
   n=0;
-#ifdef LESSTIF_VERSION
-  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#endif
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
@@ -48,11 +45,7 @@ static void create_snd_error_dialog(snd_state *ss)
   XmStringFree(titlestr);
   if (!(ss->using_schemes))
     {
-#ifndef LESSTIF_VERSION
       XtVaSetValues(XtNameToWidget(snd_error_dialog,"OK"),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
-#else
-      XtVaSetValues(XmMessageBoxGetChild(snd_error_dialog,XmDIALOG_OK_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
-#endif
       XtVaSetValues(snd_error_history,XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
     }
 }

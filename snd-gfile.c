@@ -561,28 +561,6 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   return(r);
 }
 
-static void make_row_name(regrow *r, char *name, int big_star)
-{
-  char *str;
-  if (big_star)
-    {
-      str = (char *)CALLOC(128,sizeof(char));
-      sprintf(str,"%s*",name);
-      set_button_label_bold(r->nm,str);
-      FREE(str);
-    }
-  else set_button_label_bold(r->nm,name);
-}
-
-static void fill_in_row(regrow *r, char *name, int big_star)
-{
-  make_row_name(r,name,big_star);
-  set_toggle_button(r->sv,FALSE,FALSE,(void *)r);
-  set_toggle_button(r->pl,FALSE,FALSE,(void *)r);
-  gtk_widget_show(r->rw);
-}
-
-
 /* -------- view files dialog -------- */
 
 static GtkWidget *view_files_dialog = NULL;
@@ -616,20 +594,14 @@ void make_prev_name_row(int old_size, int new_size)
     }
 }
 
-void make_a_big_star_outa_me(char *shortname, int big_star)
+void view_curfiles_set_row_name(int pos)
 {
-  int i;
   regrow *r;
-  i = find_curfile_regrow(shortname);
-  if ((i != -1) && (get_a_big_star(i) != big_star))
-    {
-      if (file_dialog_is_active())
-	{
-	  r = cur_name_row[i];
-	  make_row_name(r,get_curnames(i),big_star);
-	}
-      set_a_big_star(i,big_star);
-    }
+  char *str;
+  r = cur_name_row[pos];
+  str = view_curfiles_name(r->pos);
+  set_button_label_bold(r->nm,str);
+  FREE(str);
 }
 
 static void View_Files_Help_Callback(GtkWidget *w,gpointer clientData) 
@@ -662,13 +634,7 @@ static void View_Files_Update_Callback(GtkWidget *w,gpointer clientData)
 static void View_CurFiles_Save_Callback(GtkWidget *w,gpointer clientData) 
 {
   regrow *r = (regrow *)clientData;
-  snd_info *sp;
-  sp = find_sound(r->ss,get_curnames(r->pos));
-  if (sp)
-    {
-      finish_keyboard_selection();
-      save_edits(sp,NULL);
-    }
+  view_curfiles_save(r->ss,r->pos);
   set_toggle_button(r->sv,FALSE,FALSE,(void *)r);
 }
 
@@ -692,18 +658,7 @@ void set_file_browser_play_button(char *name, int state)
 static void View_CurFiles_Play_Callback(GtkWidget *w,gpointer clientData) 
 {
   regrow *r = (regrow *)clientData;
-  snd_info *sp;
-  sp = find_sound(r->ss,get_curnames(r->pos));
-  if (sp)
-    {
-      if (sp->playing) stop_playing_sound(sp);
-      if (GTK_TOGGLE_BUTTON(w)->active)
-	{
-	  start_playing(sp,0,NO_END_SPECIFIED);
-	  set_play_button(sp,1);
-	}
-      else set_play_button(sp,0);
-    }
+  view_curfiles_play(r->ss,r->pos,GTK_TOGGLE_BUTTON(w)->active);
 }
 
 static void curfile_unhighlight(snd_state *ss)
@@ -721,7 +676,7 @@ static void curfile_unhighlight(snd_state *ss)
     }
 }
 
-static void curfile_highlight(snd_state *ss, int i)
+void curfile_highlight(snd_state *ss, int i)
 {
   regrow *r;
   if (file_dialog_is_active())
@@ -737,18 +692,7 @@ static void curfile_highlight(snd_state *ss, int i)
 static void View_CurFiles_Select_Callback(GtkWidget *w,gpointer clientData) 
 {
   regrow *r = (regrow *)clientData;
-  snd_info *sp,*osp;
-  snd_state *ss;
-  ss = r->ss;
-  curfile_highlight(ss,r->pos);
-  sp = find_sound(ss,get_curnames(r->pos));
-  osp = any_selected_sound(ss);
-  if (sp != osp)
-    {
-      select_channel(sp,0);
-      normalize_sound(ss,sp,sp->chans[0]);
-      /* goto_graph(sp->chans[0]); */
-    }
+  view_curfiles_select(r->ss,r->pos);
 }
 
 static void View_PrevFiles_Unlist_Callback(GtkWidget *w,gpointer clientData) 
@@ -762,46 +706,15 @@ static void View_PrevFiles_Play_Callback(GtkWidget *w,gpointer clientData)
 {
   /* open and play -- close at end or when button off toggled */
   regrow *r = (regrow *)clientData;
-  static snd_info *play_sp;
-  int play;
-  play = GTK_TOGGLE_BUTTON(w)->active;
-  if (play)
-    {
-      if (play_sp)
-	{
-	  if (play_sp->playing) {set_toggle_button(w,FALSE,FALSE,(void *)r); return;} /* can't play two of these at once */
-	  if (strcmp(play_sp->shortname,get_prevnames(r->pos)) != 0)
-	    {
-	      completely_free_snd_info(play_sp);
-	      play_sp = NULL;
-	    }
-	}
-      if (!play_sp) play_sp = make_sound_readable(r->ss,get_prevfullnames(r->pos),FALSE);
-      if (play_sp)
-	{
-	  play_sp->shortname = get_prevnames(r->pos);
-	  play_sp->fullname = NULL;
-	  start_playing(play_sp,0,NO_END_SPECIFIED);
-	}
-      else
-	{ /* can't find or setup file */
-	  set_toggle_button(w,FALSE,FALSE,(void *)r);
-	  play = 0;
-	}
-    }
-  else
-    { /* play toggled off */
-      if ((play_sp) && (play_sp->playing)) stop_playing_sound(play_sp);
-    }
+  if (view_prevfiles_play(r->ss,r->pos,GTK_TOGGLE_BUTTON(w)->active))
+    set_toggle_button(w,FALSE,FALSE,(void *)r);
 }
 
 static void View_PrevFiles_Select_Callback(GtkWidget *w,gpointer clientData) 
 {
   /* open and set as selected */
   regrow *r = (regrow *)clientData;
-  snd_info *sp;
-  sp = snd_open_file(get_prevfullnames(r->pos),r->ss);
-  if (sp) select_channel(sp,0); 
+  view_prevfiles_select(r->ss,r->pos);
 }
 
 void highlight_selected_sound(snd_state *ss)
@@ -820,6 +733,7 @@ void highlight_selected_sound(snd_state *ss)
 void make_curfiles_list (snd_state *ss)
 {
   int i;
+  char *str;
   regrow *r;
   for (i=0;i<get_curfile_end();i++)
     {
@@ -831,7 +745,12 @@ void make_curfiles_list (snd_state *ss)
 	  r->pos = i;
 	  r->ss = ss;
 	}
-      fill_in_row(r,get_curnames(i),get_a_big_star(i));
+      str = view_curfiles_name(r->pos);
+      set_button_label_bold(r->nm,str);
+      FREE(str);
+      set_toggle_button(r->sv,FALSE,FALSE,(void *)r);
+      set_toggle_button(r->pl,FALSE,FALSE,(void *)r);
+      gtk_widget_show(r->rw);
     }
   for (i=get_curfile_end();i<get_max_curfile_end();i++)
     {
@@ -889,7 +808,10 @@ void make_prevfiles_list (snd_state *ss)
 	      r->pos = i;
 	      r->ss = ss;
 	    }
-	  fill_in_row(r,get_prevnames(i),0);
+	  set_button_label_bold(r->nm,get_prevnames(r->pos));
+	  set_toggle_button(r->sv,FALSE,FALSE,(void *)r);
+	  set_toggle_button(r->pl,FALSE,FALSE,(void *)r);
+	  gtk_widget_show(r->rw);
 	}
     }
   for (i=get_prevfile_end()+1;i<=get_max_prevfile_end();i++)
