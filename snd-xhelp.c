@@ -76,13 +76,6 @@ static void create_help_monolog(snd_state *ss)
   help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-help", args, n);
   XtAddEventHandler(help_dialog, ExposureMask, FALSE, help_expose, NULL);
 
-  n = 0;
-  if (!(ss->using_schemes)) 
-  {
-    XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
-    XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
-  }
-
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_HELP_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_SYMBOL_LABEL));
@@ -109,7 +102,7 @@ static void create_help_monolog(snd_state *ss)
     {
       map_over_children(help_dialog, set_main_color_of_widget, (void *)ss);
       XtVaSetValues(help_text, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
     }
   set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 }

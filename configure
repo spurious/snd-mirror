@@ -2775,8 +2775,6 @@ _ACEOF
 
 
 
-#TODO: --without-gtk --without-motif ends up with gtk?
-
 #--------------------------------------------------------------------------------
 # configuration options
 #   --with-motif          use Motif (the default)
@@ -3392,7 +3390,7 @@ _ACEOF
 #define DEBUG_MEMORY 1
 _ACEOF
 
-    CFLAGS="$CFLAGS -Wall"
+    CFLAGS="$CFLAGS -g3 -Wall"
   fi
 fi;
 
@@ -11323,6 +11321,10 @@ fi
 
 fi
 
+
+if test "$with_motif" = no && test "$with_gtk" = no ; then
+  with_no_gui=yes
+fi
 
 if test "$no_x" = yes || test "$with_no_gui" = yes ; then
 

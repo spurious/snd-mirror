@@ -20,8 +20,6 @@ AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
-#TODO: --without-gtk --without-motif ends up with gtk?
-
 #--------------------------------------------------------------------------------
 # configuration options
 #   --with-motif          use Motif (the default)
@@ -214,7 +212,7 @@ AC_ARG_ENABLE(snd-debug,
   if test "$enable_snd_debug" = yes ; then
     AC_DEFINE(DEBUGGING)
     AC_DEFINE(DEBUG_MEMORY)
-    CFLAGS="$CFLAGS -Wall"
+    CFLAGS="$CFLAGS -g3 -Wall"
   fi)
 
 
@@ -320,6 +318,10 @@ fi
 #--------------------------------------------------------------------------------
 
 AC_PATH_XTRA
+
+if test "$with_motif" = no && test "$with_gtk" = no ; then
+  with_no_gui=yes
+fi
 
 if test "$no_x" = yes || test "$with_no_gui" = yes ; then
 

@@ -6411,6 +6411,7 @@ static XEN gxm_XmClipboardInquireFormat(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 returns a specified format name"
   /* DIFF: XmClipboardInquireFormat omits arg4 (XtPointer buffer) and arg6, returns them
    */
+  XEN res;
   XtPointer buf;
   unsigned long len, n;
   int val;
@@ -6420,14 +6421,14 @@ returns a specified format name"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XmClipboardInquireFormat", "ulong");
   len = XEN_TO_C_ULONG(arg4);
   if (len == 0) return(XEN_FALSE);
-  buf = (XtPointer)MALLOC(len);
+  buf = (XtPointer)CALLOC(len + 1, sizeof(char));
   val = XmClipboardInquireFormat(XEN_TO_C_Display(arg1), 
 				 XEN_TO_C_Window(arg2), 
 				 XEN_TO_C_INT(arg3), 
 				 buf, len, &n);
+  res = C_TO_XEN_STRING((char *)buf);
   FREE(buf);
-  return(XEN_LIST_2(C_TO_XEN_INT(val),
-		    C_TO_XEN_STRING((char *)buf)));
+  return(XEN_LIST_2(C_TO_XEN_INT(val), res));
 }
 
 static XEN gxm_XmClipboardInquireCount(XEN arg1, XEN arg2)

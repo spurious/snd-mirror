@@ -486,7 +486,7 @@ void dac_set_expand(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_E
 void dac_set_expand_length(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_LENGTH);}
 void dac_set_expand_ramp(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_RAMP);}
 void dac_set_expand_hop(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_HOP);}
-static void dac_set_expand_scaler(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_SCALER);} /* not currently accessible */
+/* static void dac_set_expand_scaler(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_SCALER);} */ /* not currently accessible */
 void dac_set_contrast_amp(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_CONTRAST_AMP);}
 void dac_set_reverb_feedback(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_REVERB_FEEDBACK);}
 void dac_set_reverb_lowpass(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_REVERB_LOWPASS);}
@@ -527,7 +527,8 @@ static void reflect_play_stop (snd_info *sp)
 #if (!USE_NO_GUI)
   set_control_panel_play_button(sp, FALSE);
 #endif
-  set_file_browser_play_button(sp->short_filename, 0);
+  if (sp->short_filename)
+    set_file_browser_play_button(sp->short_filename, 0);
   set_open_file_play_button(0);
   reflect_play_stop_in_popup_menu();
 }

@@ -1229,7 +1229,7 @@ static XEN region_get(int field, XEN n, char *caller)
     case REGION_MAXAMP: return(C_TO_XEN_DOUBLE(region_maxamp(rg))); break;
     case REGION_FORGET: delete_region_and_update_browser(get_global_state(), id_to_stack_position(rg)); return(n); break;
     }
-  return(C_TO_XEN_INT(0));
+  return(XEN_FALSE);
 }
 
 static XEN g_region_p(XEN n)

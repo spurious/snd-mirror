@@ -500,6 +500,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   set_axis_numbers_font(ss, FALLBACK_FONT);
   set_help_text_font(ss, FALLBACK_FONT);
   set_listener_font(ss, FALLBACK_FONT);
+  set_html_dir(ss, copy_string(DEFAULT_HTML_DIR));
 
   XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, NULL);
 

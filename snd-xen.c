@@ -2,6 +2,8 @@
 #include "clm2xen.h"
 #include "sndlib-strings.h"
 
+/* TODO: in Ruby, the error report proc name (or all S_* names) need to be rubified */
+
 #define NO_ACTIVE_SELECTION XEN_ERROR_TYPE("no-active-selection")
 
 /* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile versions,

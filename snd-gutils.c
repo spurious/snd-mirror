@@ -326,7 +326,7 @@ void sg_left_justify_button(GtkWidget *button)
 {
   gfloat x, y;
   gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(GTK_BIN(button)->child)), &x, &y);
-  gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(GTK_BIN(button)->child)), 0.05, y); /* jeez...gtk is a joke */
+  gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(GTK_BIN(button)->child)), 0.05, y);
 }
 
 void sg_left_justify_label(GtkWidget *label)

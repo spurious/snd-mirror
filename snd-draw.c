@@ -328,8 +328,12 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 	      XEN_TO_C_INT_OR_ELSE(ax_id, CHAN_GC),
 	      S_current_font);
   if (ax->current_font == 0)
-    return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Font"),
-		      C_TO_XEN_ULONG(cp->axis->ax->current_font)));
+    {
+      if ((cp->axis) && (cp->axis->ax))
+	return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Font"),
+			  C_TO_XEN_ULONG(cp->axis->ax->current_font)));
+      else return(XEN_FALSE);
+    }
   return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Font"),
 		    C_TO_XEN_ULONG(ax->current_font)));
 }

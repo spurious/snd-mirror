@@ -3075,14 +3075,14 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(y2, gxm_y2_w, set_y2, gxm_set_y2_w,  1, 0, 2, 0);
   XM_DEFINE_READER(XSegment, gxm_XSegment_w, 4, 0, 0);
   XM_DEFINE_READER(XRectangle, gxm_XRectangle_w, 4, 0, 0);
-  XM_DEFINE_ACCESSOR(dashes, gxm_dashes_w,  set_dashes, gxm_set_dashes_w,  1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(dashes, gxm_dashes_w, set_dashes, gxm_set_dashes_w,  1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(dash_offset, gxm_dash_offset_w, set_dash_offset, gxm_set_dash_offset_w,  1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(clip_mask, gxm_clip_mask_w, set_clip_mask, gxm_set_clip_mask_w,  1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(clip_y_origin, gxm_clip_y_origin_w, set_clip_y_origin, gxm_set_clip_y_origin_w,  1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(clip_x_origin, gxm_clip_x_origin_w, set_clip_x_origin, gxm_set_clip_x_origin_w,  1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(graphics_exposures, gxm_graphics_exposures_w, set_graphics_exposures, gxm_set_graphics_exposures_w,  1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(subwindow_mode, gxm_subwindow_mode_w, set_subwindow_mode, gxm_set_subwindow_mode_w,  1, 0, 2, 0);
-  XM_DEFINE_ACCESSOR(font, gxm_font_w,  set_font, gxm_set_font_w,  1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(font, gxm_font_w, set_font, gxm_set_font_w,  1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(ts_y_origin, gxm_ts_y_origin_w, set_ts_y_origin, gxm_set_ts_y_origin_w,  1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(ts_x_origin, gxm_ts_x_origin_w, set_ts_x_origin, gxm_set_ts_x_origin_w,  1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(stipple, gxm_stipple_w, set_stipple, gxm_set_stipple_w,  1, 0, 2, 0);
@@ -3146,8 +3146,8 @@ static void define_structs(void)
   XM_DEFINE_READER(green_mask, gxm_green_mask_w, 1, 0, 0);
   XM_DEFINE_READER(blue_mask, gxm_blue_mask_w, 1, 0, 0);
   XM_DEFINE_READER(bits_per_rgb, gxm_bits_per_rgb_w, 1, 0, 0);
-  XM_DEFINE_READER(map_entries, gxm_map_entries_w, 1, 0, 0);
   XM_DEFINE_READER(colormap_size, gxm_colormap_size_w, 1, 0, 0);
+  XM_DEFINE_READER(map_entries, gxm_map_entries_w, 1, 0, 0);
   XM_DEFINE_READER(nvisuals, gxm_nvisuals_w, 1, 0, 0);
   XM_DEFINE_READER(visuals, gxm_visuals_w, 1, 0, 0);
   XM_DEFINE_READER(bits_per_pixel, gxm_bits_per_pixel_w, 1, 0, 0);
@@ -3186,7 +3186,6 @@ static void define_structs(void)
   XM_DEFINE_READER(blue_mult, gxm_blue_mult_w, 1, 0, 0);
   XM_DEFINE_READER(base_pixel, gxm_base_pixel_w, 1, 0, 0);
   XM_DEFINE_READER(killid, gxm_killid_w, 1, 0, 0);
-  XM_DEFINE_ACCESSOR(data, gxm_data_w, set_data, gxm_set_data_w, 1, 0, 2, 0);
 
   XM_DEFINE_READER(min_height, gxm_min_height_w, 1, 0, 0);
   XM_DEFINE_READER(max_height, gxm_max_height_w, 1, 0, 0);
@@ -3218,7 +3217,9 @@ static void define_structs(void)
   XM_DEFINE_READER(prev_page_widget, gxm_prev_page_widget_w, 1, 0, 0);
   XM_DEFINE_READER(rendition, gxm_rendition_w, 1, 0, 0);
   XM_DEFINE_READER(render_table, gxm_render_table_w, 1, 0, 0);
+#if HAVE_XM_XP
   XM_DEFINE_READER(last_page, gxm_last_page_w, 1, 0, 0);
+#endif
   XM_DEFINE_READER(crossed_boundary, gxm_crossed_boundary_w, 1, 0, 0);
   XM_DEFINE_READER(client_data, gxm_client_data_w, 1, 0, 0);
   XM_DEFINE_READER(status, gxm_status_w, 1, 0, 0);
@@ -3227,24 +3228,27 @@ static void define_structs(void)
   XM_DEFINE_READER(traversal_destination, gxm_traversal_destination_w, 1, 0, 0);
   XM_DEFINE_READER(dragProtocolStyle, gxm_dragProtocolStyle_w, 1, 0, 0);
   XM_DEFINE_READER(direction, gxm_direction_w, 1, 0, 0);
+  XM_DEFINE_READER(position, gxm_position_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(menuToPost, gxm_menuToPost_w, set_menuToPost, gxm_set_menuToPost_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(postIt, gxm_postIt_w, set_postIt, gxm_set_postIt_w, 1, 0, 2, 0);
 #endif
-  XM_DEFINE_ACCESSOR(reason, gxm_reason_w, set_reason, gxm_set_reason_w, 1, 0, 2, 0);
-  XM_DEFINE_ACCESSOR(ptr, gxm_ptr_w, set_ptr, gxm_set_ptr_w, 1, 0, 2, 0);
   XM_DEFINE_READER(timeStamp, gxm_timeStamp_w, 1, 0, 0);
   XM_DEFINE_ACCESSOR(operation, gxm_operation_w, set_operation, gxm_set_operation_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(reason, gxm_reason_w, set_reason, gxm_set_reason_w, 1, 0, 2, 0);
   XM_DEFINE_READER(operations, gxm_operations_w, 1, 0, 0);
   XM_DEFINE_ACCESSOR(dropSiteStatus, gxm_dropSiteStatus_w, set_dropSiteStatus, gxm_set_dropSiteStatus_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(set, gxm_set_w, set_set, gxm_set_set_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(click_count, gxm_click_count_w, set_click_count, gxm_set_click_count_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(length, gxm_length_w, set_length, gxm_set_length_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(ptr, gxm_ptr_w, set_ptr, gxm_set_ptr_w, 1, 0, 2, 0);
   XM_DEFINE_READER(dropAction, gxm_dropAction_w, 1, 0, 0);
   XM_DEFINE_READER(iccHandle, gxm_iccHandle_w, 1, 0, 0);
   XM_DEFINE_READER(completionStatus, gxm_completionStatus_w, 1, 0, 0);
   XM_DEFINE_READER(dragContext, gxm_dragContext_w, 1, 0, 0);
   XM_DEFINE_READER(animate, gxm_animate_w, 1, 0, 0);
-  XM_DEFINE_ACCESSOR(length, gxm_length_w, set_length, gxm_set_length_w, 1, 0, 2, 0);
-  XM_DEFINE_ACCESSOR(click_count, gxm_click_count_w, set_click_count, gxm_set_click_count_w, 1, 0, 2, 0);
   XM_DEFINE_READER(widget, gxm_widget_w, 1, 0, 0);
   XM_DEFINE_READER(item_position, gxm_item_position_w, 1, 0, 0);
   XM_DEFINE_READER(callbackstruct, gxm_callbackstruct_w, 1, 0, 0);
-  XM_DEFINE_ACCESSOR(set, gxm_set_w, set_set, gxm_set_set_w, 1, 0, 2, 0);
   XM_DEFINE_READER(item, gxm_item_w, 1, 0, 0);
   XM_DEFINE_READER(item_length, gxm_item_length_w, 1, 0, 0);
   XM_DEFINE_READER(selected_items, gxm_selected_items_w, 1, 0, 0);
@@ -3257,14 +3261,27 @@ static void define_structs(void)
   XM_DEFINE_READER(dir_length, gxm_dir_length_w, 1, 0, 0);
   XM_DEFINE_READER(pattern, gxm_pattern_w, 1, 0, 0);
   XM_DEFINE_READER(pattern_length, gxm_pattern_length_w, 1, 0, 0);
-#if MOTIF_2
-  XM_DEFINE_READER(position, gxm_position_w, 1, 0, 0);
-#endif
   XM_DEFINE_READER(currInsert, gxm_currInsert_w, 1, 0, 0);
   XM_DEFINE_READER(newInsert, gxm_newInsert_w, 1, 0, 0);
   XM_DEFINE_READER(startPos, gxm_startPos_w, 1, 0, 0);
   XM_DEFINE_READER(endPos, gxm_endPos_w, 1, 0, 0);
   XM_DEFINE_READER(text, gxm_text_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(value, gxm_value_w, set_value, gxm_set_value_w,  1, 0, 2, 0); 
+  XM_DEFINE_ACCESSOR(doit, gxm_doit_w, set_doit, gxm_set_doit_w,  1, 0, 2, 0); 
+#if HAVE_XPM
+  XM_DEFINE_ACCESSOR(valuemask, gxm_valuemask_w, set_valuemask, gxm_set_valuemask_w,  1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(ncolors, gxm_ncolors_w, set_ncolors, gxm_set_ncolors_w,  1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(cpp, gxm_cpp_w, set_cpp, gxm_set_cpp_w,  1, 0, 2, 0);
+  XM_DEFINE_READER(XpmImage, gxm_XpmImage_w, 5, 0, 0);
+  XM_DEFINE_ACCESSOR(numsymbols, gxm_numsymbols_w, set_numsymbols, gxm_set_numsymbols_w,  1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(colorsymbols, gxm_colorsymbols_w, set_colorsymbols, gxm_set_colorsymbols_w,  1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(npixels, gxm_npixels_w, set_npixels, gxm_set_npixels_w,  1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(y_hotspot, gxm_y_hotspot_w, set_y_hotspot, gxm_set_y_hotspot_w,  1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(x_hotspot, gxm_x_hotspot_w, set_x_hotspot, gxm_set_x_hotspot_w,  1, 0, 2, 0);
+  XM_DEFINE_READER(XpmColorSymbol, gxm_XpmColorSymbol_w, 3, 0, 0);
+  XM_DEFINE_READER(XpmAttributes, gxm_XpmAttributes_w, 0, 0, 0);
+#endif
+#endif
 
   XM_DEFINE_ACCESSOR(request_code, gxm_request_code_w, set_request_code, gxm_set_request_code_w,  1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(error_code, gxm_error_code_w, set_error_code, gxm_set_error_code_w,  1, 0, 2, 0); 
@@ -3272,6 +3289,7 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(request, gxm_request_w, set_request, gxm_set_request_w,  1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(resourceid, gxm_resourceid_w, set_resourceid, gxm_set_resourceid_w,  1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(format, gxm_format_w, set_format, gxm_set_format_w,  1, 0, 2, 0); 
+  XM_DEFINE_ACCESSOR(data, gxm_data_w, set_data, gxm_set_data_w,  1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(message_type, gxm_message_type_w, set_message_type, gxm_set_message_type_w,  1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(new, gxm_new_w, set_new, gxm_set_new_w,  1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(property, gxm_property_w, set_property, gxm_set_property_w,  1, 0, 2, 0); 
@@ -3311,28 +3329,5 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(send_event, gxm_send_event_w, set_send_event, gxm_set_send_event_w,  1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(serial, gxm_serial_w, set_serial, gxm_set_serial_w,  1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(type, gxm_type_w, set_type, gxm_set_type_w,  1, 0, 2, 0); 
-  XM_DEFINE_ACCESSOR(value, gxm_value_w, set_value, gxm_set_value_w,  1, 0, 2, 0); 
-  XM_DEFINE_ACCESSOR(doit, gxm_doit_w, set_doit, gxm_set_doit_w,  1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(colormap, gxm_colormap_w, set_colormap, gxm_set_colormap_w, 1, 0, 2, 0);
-#if MOTIF_2
-  XM_DEFINE_ACCESSOR(menuToPost, gxm_menuToPost_w, set_menuToPost, gxm_set_menuToPost_w, 1, 0, 2, 0);
-  XM_DEFINE_ACCESSOR(postIt, gxm_postIt_w, set_postIt, gxm_set_postIt_w, 1, 0, 2, 0);
-#endif
-
-#if HAVE_XPM
-  XM_DEFINE_ACCESSOR(valuemask, gxm_valuemask_w, set_valuemask, gxm_set_valuemask_w,  1, 0, 2, 0);
-  XM_DEFINE_ACCESSOR(ncolors, gxm_ncolors_w, set_ncolors, gxm_set_ncolors_w,  1, 0, 2, 0);
-  XM_DEFINE_ACCESSOR(cpp, gxm_cpp_w, set_cpp, gxm_set_cpp_w,  1, 0, 2, 0);
-  XM_DEFINE_READER(XpmImage, gxm_XpmImage_w, 5, 0, 0);
-  XM_DEFINE_ACCESSOR(numsymbols, gxm_numsymbols_w, set_numsymbols, gxm_set_numsymbols_w,  1, 0, 2, 0);
-  XM_DEFINE_ACCESSOR(colorsymbols, gxm_colorsymbols_w, set_colorsymbols, gxm_set_colorsymbols_w,  1, 0, 2, 0);
-  XM_DEFINE_ACCESSOR(npixels, gxm_npixels_w, set_npixels, gxm_set_npixels_w,  1, 0, 2, 0);
-  XM_DEFINE_ACCESSOR(y_hotspot, gxm_y_hotspot_w, set_y_hotspot, gxm_set_y_hotspot_w,  1, 0, 2, 0);
-  XM_DEFINE_ACCESSOR(x_hotspot, gxm_x_hotspot_w, set_x_hotspot, gxm_set_x_hotspot_w,  1, 0, 2, 0);
-  XM_DEFINE_READER(XpmColorSymbol, gxm_XpmColorSymbol_w, 3, 0, 0);
-  XM_DEFINE_READER(XpmAttributes, gxm_XpmAttributes_w, 0, 0, 0);
-#endif
-
-#endif
 }
-

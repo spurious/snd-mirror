@@ -56,7 +56,7 @@
 (define tests 1)
 (define snd-test -1)
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #f)
+(define keep-going #t)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (define with-exit (< snd-test 0))
@@ -530,9 +530,11 @@
       (set! (enved-wave?) (enved-wave?))
       (if (not (equal? (enved-wave?)  #f )) 
 	  (snd-display ";enved-wave? set def: ~A" (enved-wave?)))
-      (set! (enved-active-env) (enved-active-env))
-      (if (not (equal? (enved-active-env)  '())) 
-	  (snd-display ";enved-active-env set def: ~A" (enved-active-env)))
+      (if with-gui
+	  (begin
+	    (set! (enved-active-env) (enved-active-env))
+	    (if (not (equal? (enved-active-env)  '())) 
+		(snd-display ";enved-active-env set def: ~A" (enved-active-env)))))
       (set! (eps-file) (eps-file))
       (if (not (equal? (eps-file)  "snd.eps" )) 
 	  (snd-display ";eps-file set def: ~A" (eps-file)))
@@ -1293,7 +1295,7 @@
 	  (snd-display ";graph-hook: ~A?" graph-hook))
 
       (set! (show-controls) #t)
-      (if (not (provided? 'snd-nogui))
+      (if with-gui
 	  (begin
 	    (enved-dialog) 
 	    (if (not (list-ref (dialog-widgets) 2)) (snd-display ";enved-dialog?"))
@@ -1554,10 +1556,12 @@
 
       (set! (enved-filter-order) 5)
       (if (not (= (enved-filter-order) 6)) (snd-display ";set enved-filter-order 5: ~A" (enved-filter-order)))
-      (set! (enved-active-env) 'zero_to_one) ; funcs.cl above
-      (if (not (feql (enved-active-env) zero_to_one)) (snd-display ";set symbol enved-active-env: ~A ~A" (enved-active-env) zero_to_one))
-      (set! (enved-active-env) "mod_down")
-      (if (not (feql (enved-active-env) mod_down)) (snd-display ";set string enved-active-env: ~A ~A" (enved-active-env) mod_down))
+      (if with-gui
+	  (begin
+	    (set! (enved-active-env) 'zero_to_one) ; funcs.cl above
+	    (if (not (feql (enved-active-env) zero_to_one)) (snd-display ";set symbol enved-active-env: ~A ~A" (enved-active-env) zero_to_one))
+	    (set! (enved-active-env) "mod_down")
+	    (if (not (feql (enved-active-env) mod_down)) (snd-display ";set string enved-active-env: ~A ~A" (enved-active-env) mod_down))))
       (close-sound 0) 
       (dismiss-all-dialogs)
 
@@ -6682,7 +6686,7 @@ EDITS: 5
 	(set! (cursor index 0) 30) 
 	(set! (cursor-style) cursor-line)
 	(set! (cursor index 0) 20) 
-	(if (not (provided? 'snd-nogui))
+	(if with-gui
 	    (set! (cursor-style index 0)
 		  (lambda (snd chn ax)
 		    (let* ((point (cursor-position))
@@ -7272,7 +7276,7 @@ EDITS: 5
 		  (fneq (caddr amps) (caddr newamps))
 		  (fneq (cadddr amps) (cadddr newamps)))
 	      (snd-display ";apply selection amp:~%  ~A ->~%  ~A?" amps newamps))
-	  (if (not (provided? 'snd-nogui))
+	  (if with-gui
 	      (let* ((axinfo (axis-info obind 0 time-graph))
 		     (losamp (car axinfo))
 		     (hisamp (cadr axinfo))
@@ -12663,6 +12667,11 @@ EDITS: 5
 	  (if (not (string=? (short-file-name (list mix-id)) "oboe.snd")) (snd-display ";mix oboe short name: ~S?" (short-file-name (list mix-id))))
 	  (let ((matches (count-matches (lambda (a) (> a .125)) 0 (list mix-id))))
 	    (if (not (= matches 1313)) (snd-display ";mix count-matches: ~A?" matches)))
+	  (let ((opt (optimization)))
+	    (set! (optimization) 0)
+	    (let ((matches (count-matches (lambda (a) (> a .125)) 0 (list mix-id))))
+	      (if (not (= matches 1313)) (snd-display ";unopt mix count-matches: ~A?" matches)))
+	    (set! (optimization) opt))
 	  (let ((spot (find (lambda (a) (> a .13)) 0 (list mix-id))))
 	    (if (or (null? spot) (not (= (cadr spot) 8862))) (snd-display ";mix find: ~A?" spot)))
 	  (let ((eds (edits (list mix-id))))
@@ -13548,7 +13557,7 @@ EDITS: 5
 	    (if (not (= (track-end t0) (+ t0e 1000))) (snd-display ";track-end: ~A ~A?" t0e (track-end t0))))
 	  (if (not (= (track-length t0) 3100)) (snd-display ";track-length: ~A?" (track-length t0)))
 	  (set-track-tempo t0 2.0)
-	  (if (not (provided? 'snd-nogui))
+	  (if with-gui
 	      (let ((col (color->list (track-color t1))))
 		(if (or (fneq (car col) 0.0) (fneq (cadr col) 0.0) (fneq (caddr col) 1.0))
 		    (snd-display ";track-color: ~A?" col))))
@@ -14192,7 +14201,7 @@ EDITS: 5
 (defvar ramp-up-env '(0 0 1 1))
 (define-envelope "env4" '(0 1 1 0))
 
-(if (and (not (provided? 'snd-nogui))
+(if (and with-gui
 	 (or full-test (= snd-test 11) (and keep-going (<= snd-test 11))))
     (begin
       (if (procedure? test-hook) (test-hook 11))
@@ -14779,13 +14788,15 @@ EDITS: 5
       (set! (cursor fd) 2000)
       (set! (transform-graph-type) graph-once)
       (set! (transform-graph? fd) #t)
-      (add-to-menu mb "fm-violin" (lambda () (if (sound?) (clm-fm-violin .1 660 .1))))
-      (add-to-menu mb "not here" (lambda () (snd-display ";oops")))
-      (set! (menu-sensitive mb "not here") #f)
-      (if (menu-sensitive mb "not here") (snd-display ";menu-sensitive?"))
-      (remove-from-menu mb "not here")
-      (add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))
-      (change-menu-label 3 "Denoise" "hiho")
+      (if with-gui
+	  (begin
+	    (add-to-menu mb "fm-violin" (lambda () (if (sound?) (clm-fm-violin .1 660 .1))))
+	    (add-to-menu mb "not here" (lambda () (snd-display ";oops")))
+	    (set! (menu-sensitive mb "not here") #f)
+	    (if (menu-sensitive mb "not here") (snd-display ";menu-sensitive?"))
+	    (remove-from-menu mb "not here")
+	    (add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))
+	    (change-menu-label 3 "Denoise" "hiho")))
       (reset-hook! help-hook)
       (let ((hi (snd-help 'cursor-position)))
 	(add-hook! help-hook (lambda (a b) 
@@ -16635,7 +16646,7 @@ EDITS: 5
          ((= i num) v)
        (vct-set! v i (+ off (* scale (cos (+ angle (* i incr)))))))))
 
-(if (and (not (provided? 'snd-nogui)) 
+(if (and with-gui
 	 (or full-test (= snd-test 15) (and keep-going (<= snd-test 15))))
     (let ((obi (open-sound (car (match-sound-files (lambda (file) 
 						     (and (not (= (mus-sound-header-type file) mus-raw))
@@ -17269,7 +17280,7 @@ EDITS: 5
 	(key (char->integer #\o) 4 ind)
 	(if (not (= (frames ind) (+ 100 len)))
 	    (snd-display ";C-o len: ~A? " (frames)))
-	(if (not (provided? 'snd-nogui))
+	(if with-gui
 	    (let ((reader (make-sample-reader 1200 ind)))
 	      (do ((i 0 (1+ i)))
 		  ((= i 100))
@@ -17286,7 +17297,7 @@ EDITS: 5
 	(key (char->integer #\z) 4 ind)
 	(if (not (= (frames ind) len))
 	    (snd-display ";C-z len: ~A? " (frames)))
-	(if (not (provided? 'snd-nogui))
+	(if with-gui
 	    (let ((reader (make-sample-reader 1200 ind)))
 	      (do ((i 0 (1+ i)))
 		  ((= i 100))
@@ -17309,7 +17320,7 @@ EDITS: 5
 	(key (char->integer #\o) 4 ind)
 	(if (not (= (frames ind) (+ (srate ind) len)))
 	    (snd-display ";C-o 1.0 len: ~A? " (frames)))
-	(if (not (provided? 'snd-nogui))
+	(if with-gui
 	    (let ((reader (make-sample-reader 1200 ind)))
 	      (do ((i 0 (1+ i)))
 		  ((= i (srate ind)))
@@ -17325,7 +17336,7 @@ EDITS: 5
 	(key (char->integer #\z) 4 ind)
 	(if (not (= (frames ind) len))
 	    (snd-display ";C-z 1.0 len: ~A? " (frames)))
-	(if (not (provided? 'snd-nogui))
+	(if with-gui
 	    (let ((reader (make-sample-reader 1200 ind)))
 	      (do ((i 0 (1+ i)))
 		  ((= i (srate ind)))
@@ -21921,7 +21932,7 @@ EDITS: 1
 		    snd chn)))  
 
 (if (and (or full-test (= snd-test 17) (and keep-going (<= snd-test 17)))
-	 (not (provided? 'snd-nogui)))
+	 with-gui)
     (begin
       (if (procedure? test-hook) (test-hook 17))
       (if (not (file-exists? "cmn-glyphs.lisp"))
@@ -21977,7 +21988,7 @@ EDITS: 1
 
 (load "enved.scm")
 (if (and (or full-test (= snd-test 18) (and keep-going (<= snd-test 18)))
-	 (not (provided? 'snd-nogui)))
+	 with-gui)
     (begin
       (if (procedure? test-hook) (test-hook 18))
       (start-enveloping)
@@ -33620,8 +33631,8 @@ EDITS: 2
 		         XCreatePixmap XCreateBitmapFromData XCreatePixmapFromBitmapData XCreateSimpleWindow
 		         XGetSelectionOwner XCreateWindow XListInstalledColormaps XListFonts XListFontsWithInfo
 		         XGetFontPath XListExtensions XListProperties XKeycodeToKeysym XLookupKeysym
-		         XGetKeyboardMapping XStringToKeysym XMaxRequestSize XExtendedMaxRequestSize
-		         XDisplayMotionBufferSize XVisualIDFromVisual
+		         XGetKeyboardMapping XStringToKeysym
+		         XDisplayMotionBufferSize XVisualIDFromVisual XMaxRequestSize XExtendedMaxRequestSize
 		         XInitThreads XLockDisplay XUnlockDisplay XRootWindow XDefaultRootWindow XRootWindowOfScreen
 		         XDefaultVisual XDefaultVisualOfScreen XDefaultGC XDefaultGCOfScreen XBlackPixel XWhitePixel
 		         XAllPlanes XBlackPixelOfScreen XWhitePixelOfScreen XNextRequest XLastKnownRequestProcessed
@@ -34121,7 +34132,7 @@ EDITS: 2
 
 ;;; -------------------- test 27: GL --------------------
 
-(if (or full-test (= snd-test 27) (and keep-going (<= snd-test 27)))
+(if (and with-gui (or full-test (= snd-test 27) (and keep-going (<= snd-test 27))))
     (begin
       (if (procedure? test-hook) (test-hook 27))
       (if (provided? 'gl)
@@ -34240,6 +34251,7 @@ EDITS: 2
 (defvar env3 '(0 0 1 1))
 (set! (with-background-processes) #t)
 
+(if with-gui (begin
 (define procs (list 
 	       add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control
 	       as-one-edit ask-before-overwrite audio-input-device audio-output-device
@@ -35789,7 +35801,7 @@ EDITS: 2
 (set! (window-y) 10)
 ;(set! (basic-color) (make-color 0.96 0.96 0.86))
 (dismiss-all-dialogs)
-
+))
 
 
 ;;; -------------------------------- clean up and quit -------------------------------- 

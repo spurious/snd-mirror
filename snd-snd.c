@@ -3550,6 +3550,7 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
 	      x -= incr;
 	      cmax = ep->fmin;
 	      cmin = ep->fmax;
+	      if (j == lim) break;
 	    }
 	}
     }

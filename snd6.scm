@@ -83,12 +83,14 @@
 	(XtUnmanageChild dialog)
 	(if (provided? 'xg)
 	    (gtk_widget_hide dialog))))
-  (for-each
-   (lambda (dialog)
-     (if dialog
-	 (if (is-active? dialog)
-	     (deactivate dialog))))
-   (dialog-widgets)))
+  (if (or (provided? 'snd-gtk)
+	  (provided? 'snd-motif))
+      (for-each
+       (lambda (dialog)
+	 (if dialog
+	     (if (is-active? dialog)
+		 (deactivate dialog))))
+       (dialog-widgets))))
 
 (define change-property change-window-property)
 
