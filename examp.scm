@@ -61,7 +61,6 @@
 (use-modules (ice-9 optargs))
 (debug-enable 'debug 'backtrace)
 (read-enable 'positions)
-(read-set! keywords 'prefix) ;this so we can use ":" as the keyword prefix
 
 (define all-chans
   (lambda ()
@@ -1822,8 +1821,6 @@
 	  (mix-vct out-data beg 1 #f 0 #f)))))
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)
-
-;;;   remember to (read-set! keywords 'prefix) before using a keyword like :fm-index
 
 
 ;;; -------- zipper "crossfade"

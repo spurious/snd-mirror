@@ -1278,7 +1278,7 @@ static void make_file_info_pane(snd_state *ss, GtkWidget *file_pane, int *ordere
   gtk_box_pack_end(GTK_BOX(right_form),triggerbox,FALSE,FALSE,0);
   gtk_widget_show(triggerbox);
 
-  trigger_label = gtk_label_new(STR_trigger_p);
+  trigger_label = gtk_label_new("trigger:");
   gtk_box_pack_start(GTK_BOX(triggerbox),trigger_label,FALSE,FALSE,4);
   gtk_widget_show(trigger_label);
 
@@ -2746,7 +2746,7 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
 
 	  if (recorder_out_chans(ss) <= 0)
 	    {
-	      record_report(ss,messages,STR_cant_record_screwed_up_chans,NULL);
+	      record_report(ss,messages,"can't record: you screwed up the output channel number!",NULL);
 	      recording = 0;
 	      triggered = (!triggering);
 	      return;
@@ -2781,7 +2781,7 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
 	    }
 	  if (in_chans_active() == 0)
 	    {
-	      record_report(ss,messages,STR_cant_record_no_inputs,NULL);
+	      record_report(ss,messages,"can't record: no inputs enabled",NULL);
 	      recording = 0;
 	      triggered = (!triggering);
 	      return;
@@ -2822,7 +2822,7 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
 	}
       else
 	{
-	  record_report(ss,messages,STR_cant_record_no_output_file,NULL);
+	  record_report(ss,messages,"can't record: no output file name supplied",NULL);
 	  recording = 0;
 	  triggered = (!triggering);
 	  return;

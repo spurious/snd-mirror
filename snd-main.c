@@ -366,7 +366,7 @@ int save_state (snd_state *ss, char *save_state_name)
   save_fd = open_restart_file(save_state_name,FALSE);
   if (save_fd == NULL) 
     {
-      snd_error(STR_cant_write_p,save_state_name,strerror(errno));
+      snd_error("can't write %s: %s",save_state_name,strerror(errno));
       return(-1);
     }
   else

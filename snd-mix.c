@@ -282,7 +282,7 @@ snd_info *make_mix_readable(mixdata *md)
       cp = md->cp;
       md->add_snd = make_sound_readable(cp->state,md->in_filename,TRUE);
       if (!(md->add_snd)) 
-	snd_error(STR_cant_find,md->in_filename);
+	snd_error("can't find %s",md->in_filename);
       else
 	{
 	  add_sp = md->add_snd;
@@ -1094,7 +1094,7 @@ int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console)
       else 
 	{
 	  str1 = (char *)CALLOC(512,sizeof(char));
-	  sprintf(str1,"%s: %s, %s ",STR_cant_open_file,fullname,strerror(errno));
+	  sprintf(str1,"can't open file: %s, %s ",fullname,strerror(errno));
 	  report_in_minibuffer(sp,str1);
 	  FREE(str1);
 	}

@@ -192,6 +192,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+27-Jul:  (read-set! keywords 'prefix) is now built-in.\n\
 26-Jul:  Snd now uses clm for all control-panel functions (play/apply).\n\
          added name-click-hook, show-indices.\n\
          ladspa-related bugfix thanks to Jorn Nettingsmeier.\n\

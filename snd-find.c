@@ -85,7 +85,7 @@ char *global_search(snd_state *ss, int direction)
   chan_info *cp;
   if (ss->search_in_progress) 
     {
-      sprintf(search_no_luck,STR_search_in_progress);
+      sprintf(search_no_luck,"search in progress");
       return(search_no_luck);
     }
   ss->search_in_progress = 1;
@@ -116,7 +116,7 @@ char *global_search(snd_state *ss, int direction)
 	{
 	  if (ss->stopped_explicitly)
 	    sprintf(search_no_luck,"search stopped");
-	  else sprintf(search_no_luck,"%s: %s",ss->search_expr,STR_not_found);
+	  else sprintf(search_no_luck,"%s: not found",ss->search_expr);
 	  /* printed by find_ok_callback in snd-xmenu.c */
 	}
       else
@@ -155,7 +155,7 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
   ss = sp->state;
   if (ss->search_in_progress) 
     {
-      report_in_minibuffer(sp,STR_search_in_progress);
+      report_in_minibuffer(sp,"search in progress");
       return(-1);
     }
   c=count;
@@ -213,7 +213,7 @@ static void get_find_expression(snd_info *sp, int count)
   /* clear previous ? */
   search_no_luck[0] = '\0';
   set_minibuffer_string(sp,search_no_luck);
-  make_minibuffer_label(sp,STR_find_p);
+  make_minibuffer_label(sp,"find:");
   sp->minibuffer_on = 1;
   goto_minibuffer(sp);
   sp->searching = count;
@@ -230,7 +230,7 @@ int cursor_search(chan_info *cp, int count)
   sp = cp->sound;
   if (ss->search_in_progress) 
     {
-      report_in_minibuffer(sp,STR_search_in_progress);
+      report_in_minibuffer(sp,"search in progress");
       return(KEYBOARD_NO_ACTION);
     }
   if (sp->searching)
@@ -241,16 +241,15 @@ int cursor_search(chan_info *cp, int count)
       else samp = cursor_find(sp,cp,count,0);
       if (samp == -1) 
 	{ 
-	  sprintf(search_no_luck,"%s: %s",sp->search_expr,STR_not_found);
+	  sprintf(search_no_luck,"%s: not found",sp->search_expr);
 	  report_in_minibuffer(sp,search_no_luck);
 	  return(CURSOR_IN_VIEW);
 	}
       else
 	{
-	  sprintf(search_no_luck,"%s: y = %s %s %s (%d)",
+	  sprintf(search_no_luck,"%s: y = %s at %s (%d)",
 		  sp->search_expr,
 		  s1 = prettyf(sample(samp,cp),2),
-		  STR_at,
 		  s2 = prettyf((double)samp/(double)SND_SRATE(sp),2),
 		  samp);
 	  report_in_minibuffer(sp,search_no_luck);

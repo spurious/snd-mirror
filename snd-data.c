@@ -741,7 +741,7 @@ void display_info(snd_info *sp)
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
 	  strftime(timestr,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&(sp->write_date)));
 #endif
-	  sprintf(buffer,STR_display_info,
+	  sprintf(buffer,"srate: %d\nchans: %d\nlength: %.3f (%d %s)\ntype: %s\nformat: %s\nwritten: %s\ncomment: %s\n",
 		  hdr->srate,
 		  hdr->chans,
 		  (Float)(hdr->samples)/(Float)(hdr->chans * hdr->srate),(hdr->samples)/(hdr->chans),(hdr->chans == 1) ? "samples" : "frames",

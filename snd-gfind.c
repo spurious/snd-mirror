@@ -47,7 +47,7 @@ static void edit_find_find(int direction,GtkWidget *w,gpointer clientData)
 	  snd_protect(proc);
 	}
       buf = (char *)CALLOC(256,sizeof(char));
-      sprintf(buf,STR_find_s,str);
+      sprintf(buf,"find: %s",str);
       set_label(edit_find_label,buf);
       gtk_entry_set_text(GTK_ENTRY(edit_find_text),"");
       FREE(buf);
@@ -108,7 +108,7 @@ void Edit_Find_Callback(GtkWidget *w,gpointer clientData)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox),rc,TRUE,TRUE,4);
       gtk_widget_show(rc);
 
-      dl = gtk_label_new(STR_find_p);
+      dl = gtk_label_new("find:");
       gtk_box_pack_start(GTK_BOX(rc),dl,FALSE,FALSE,4);
       gtk_widget_show(dl);
 

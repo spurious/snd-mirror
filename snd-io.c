@@ -250,7 +250,7 @@ int snd_overwrite_ok(snd_state *ss, char *ofile)
 	{
 	  close(fil);
 	  buf = (char *)CALLOC(256,sizeof(char));
-	  sprintf(buf,STR_exists_overwrite,ofile);
+	  sprintf(buf,"%s exists. Overwrite?",ofile);
 	  rtn = snd_yes_or_no_p(ss,buf);
 	  FREE(buf);
 	}

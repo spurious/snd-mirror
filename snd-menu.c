@@ -362,7 +362,7 @@ void save_options_from_menu(snd_state *ss)
 	}
     }
   else 
-    snd_error(STR_cant_write_p,ss->init_file,strerror(errno));
+    snd_error("cant write %s: %s",ss->init_file,strerror(errno));
 }
 
 void save_state_from_menu(snd_state *ss)

@@ -1395,13 +1395,13 @@ int snd_translate(snd_state *ss, char *oldname, char *newname)
 	  switch (err)
 	    {
 	    case TRANSLATOR_CANT_CREATE:
-	      sprintf(errstr,STR_cant_create,newname,strerror(errno));
+	      sprintf(errstr,"can't create %s: %s",newname,strerror(errno));
 	      break;
 	    case CANT_TRANSLATE:
-	      sprintf(errstr,STR_cant_translate,oldname);
+	      sprintf(errstr,"can't translate %s",oldname);
 	      break;
 	    case TRANSLATOR_CANT_WRITE:
-	      sprintf(errstr,STR_cant_write_p,newname,strerror(errno));
+	      sprintf(errstr,"can't write %s: %s",newname,strerror(errno));
 	      break;
 	    default:
 	      sprintf(errstr,"unknown translator error: %d!",err);
@@ -1413,7 +1413,7 @@ int snd_translate(snd_state *ss, char *oldname, char *newname)
 	}
     }
   else 
-    snd_error("%s:%s (%s)",oldname,STR_cant_read_header,strerror(errno));
+    snd_error("can't read header: %s (%s)",oldname,strerror(errno));
   FREE(hdr);
   if (err) return(-1); else return(0);
 }

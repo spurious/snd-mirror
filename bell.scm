@@ -1,5 +1,3 @@
-(read-set! keywords 'prefix)
-
 (define fm-bell
   (lambda (startime dur frequency amplitude amp-env index-env index)
     (let* ((beg (inexact->exact (* startime (srate))))

@@ -1362,7 +1362,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
       if (fd == NULL) 
 	{
 	  str = (char *)CALLOC(256,sizeof(char));
-	  sprintf(str,STR_cant_write_p,filename,strerror(errno));
+	  sprintf(str,"cant write %s: %s",filename,strerror(errno));
 	  report_in_minibuffer(sp,str);
 	  err = 1;
 	  FREE(str);
@@ -2220,8 +2220,8 @@ static int cursor_moveto_end(chan_info *cp)
 
 
 static int region_count = 0;
-static void get_amp_expression(snd_info *sp,int count, int regexpr) {prompt(sp,STR_env_p,NULL); sp->amping = count; sp->reging = regexpr;}
-static void get_eval_expression(snd_info *sp, int count, int regexpr) {prompt(sp,STR_eval_p,NULL); sp->evaling = count; sp->reging = regexpr;}
+static void get_amp_expression(snd_info *sp,int count, int regexpr) {prompt(sp,"env:",NULL); sp->amping = count; sp->reging = regexpr;}
+static void get_eval_expression(snd_info *sp, int count, int regexpr) {prompt(sp,"eval:",NULL); sp->evaling = count; sp->reging = regexpr;}
 
 void show_cursor_info(chan_info *cp)
 {
@@ -2239,14 +2239,14 @@ void show_cursor_info(chan_info *cp)
   else if (absy<.001) digits=3;
   else digits=2;
   if (sp->nchans == 1)
-    sprintf(expr_str,STR_cursor_at_sample,
+    sprintf(expr_str,"cursor at %s (sample %d) = %s",
 	    s1 = prettyf((double)samp/(double)SND_SRATE(sp),2),
 	    samp,
 	    s2 = prettyf(y,digits));
   else
     {
       if (sp->syncing == 0)
-	sprintf(expr_str,STR_chan_cursor_at_sample,
+	sprintf(expr_str,"chan %d, cursor at %s (sample %d) = %s",
 		cp->chan + 1,
 		s1 = prettyf((double)samp/(double)SND_SRATE(sp),2),
 		samp,
@@ -2255,7 +2255,7 @@ void show_cursor_info(chan_info *cp)
 	{
 	  /* in this case, assume we show all on chan 0 and ignore the call otherwise (see above) */
 	  /* "cursor at..." then list of values */
-	  sprintf(expr_str,STR_cursor_at_sample_p,
+	  sprintf(expr_str,"cursor at %s (sample %d): %s",
 		  s1 = prettyf((double)samp/(double)SND_SRATE(sp),2),
 		  samp,
 		  s2 = prettyf(y,digits));
@@ -2448,7 +2448,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
 	    }
 	  else 
 	    {
-	      snd_warning(STR_no_current_selection);
+	      snd_warning("no current selection");
 	      return(NULL);
 	    }
 	}
@@ -4877,7 +4877,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
 	    }
 	  else
 	    {
-	      snd_warning(STR_no_current_selection);
+	      snd_warning("no current selection");
 	      return(NULL);
 	    }
 	}
@@ -5028,7 +5028,7 @@ static int prompt_named_mark(chan_info *cp)
 {
   snd_info *sp = cp->sound;
   clear_minibuffer(sp);
-  make_minibuffer_label(sp,STR_mark_p);
+  make_minibuffer_label(sp,"mark:");
   sp->minibuffer_on = 1;
   goto_minibuffer(sp);
   sp->marking = cp->cursor+1; /* +1 so it's not confused with 0 (if (sp->marking)...) */
@@ -5044,7 +5044,7 @@ static int defining_macro = 0;
 
 static int macro_cmd_size = 0;
 static int macro_size = 0;
-typedef struct {int keysym; int state; char *sndop;} macro_cmd;
+typedef struct {int keysym; int state;} macro_cmd;
 static macro_cmd **macro_cmds = NULL;
 typedef struct {char *name; int macro_size; macro_cmd **cmds;} named_macro;
 static named_macro **named_macros = NULL;
@@ -5150,9 +5150,8 @@ static void save_macro_1(named_macro *nm, FILE *fd)
   for (i=0;i<nm->macro_size;i++)
     {
       mc = nm->cmds[i];
-      if (mc->keysym == 0)
-	fprintf(fd,"  %s\n",mc->sndop);
-      else fprintf(fd,"  (%s %c %d)\n",S_key,(char)(mc->keysym),mc->state);
+      if (mc->keysym != 0)
+	fprintf(fd,"  (%s %c %d)\n",S_key,(char)(mc->keysym),mc->state);
     }
   fprintf(fd,")\n");
 }
@@ -5173,13 +5172,7 @@ static int execute_named_macro_1(chan_info *cp, char *name, int count)
 		{
 		  mc = nm->cmds[i];
 		  if (mc->keysym != 0)
-		    {
-		      keyboard_command(cp,mc->keysym,mc->state);
-		    }
-		  else
-		    {
-		      snd_eval_str(cp->state,mc->sndop,1);
-		    }
+		    keyboard_command(cp,mc->keysym,mc->state);
 		}
 	    }
 	  return(1);
@@ -5347,7 +5340,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	  if ((str) && (*str))
 	    {
 	      /* check for procedure as arg, or lambda form:
-	       * (lambda (y) (> y .1)) is the same as y>.1
+	       * (lambda (y) (> y .1)) 
 	       * if returns #t, search stops
 	       */
 	      if (sp->search_expr) free(sp->search_expr);
@@ -5376,12 +5369,12 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	  m = add_mark(sp->marking-1,str,active_chan);
 	  if (m)
 	    {
-	      sprintf(expr_str,STR_placed_at_sample,str,sp->marking-1);
+	      sprintf(expr_str,"%s placed at sample %d",str,sp->marking-1);
 	      draw_mark(active_chan,active_chan->axis,m);
 	    }
 	  else
 	    {
-	      sprintf(expr_str,STR_There_is_already_a_mark_at_sample,sp->marking-1);
+	      sprintf(expr_str,"There is already a mark at sample %d",sp->marking-1);
 	    }
 	  report_in_minibuffer(sp,expr_str);
 	  sp->marking = 0;
@@ -5451,7 +5444,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	      else 
 		{
 		  tok = dir_from_tempnam(ss);
-		  sprintf(expr_str,STR_cant_access,newdir,tok);
+		  sprintf(expr_str,"can't access %s! temp dir is still %s",newdir,tok);
 		  report_in_minibuffer(sp,expr_str);
 		  if (newdir) FREE(newdir);
 		  if (tok) free(tok);
@@ -5478,7 +5471,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 		}
 	      else 
 		{
-		  sprintf(expr_str,STR_cant_read_his_header,str);
+		  sprintf(expr_str,"can't read %s's header",str);
 		  report_in_minibuffer(sp,expr_str);
 		}
 	      FREE(str1);
@@ -5888,9 +5881,9 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_A: case snd_K_a: get_amp_expression(sp,ext_count,0); searching = 1; redisplay = CURSOR_IN_VIEW; break;
 	    case snd_K_B: case snd_K_b: redisplay = set_window_bounds(cp,ext_count); break;
 	    case snd_K_C: case snd_K_c: sound_hide_ctrls(sp); break;
-	    case snd_K_D: case snd_K_d: redisplay = prompt(sp,STR_eps_file_p,NULL); sp->printing = ext_count; searching = 1; break;
-	    case snd_K_E: case snd_K_e: redisplay = prompt(sp,STR_macro_name_p,NULL); sp->filing = MACRO_FILING; searching = 1; break;
-	    case snd_K_F: case snd_K_f: redisplay = prompt(sp,STR_file_p,NULL); sp->filing = INPUT_FILING; searching = 1; break;
+	    case snd_K_D: case snd_K_d: redisplay = prompt(sp,"eps file:",NULL); sp->printing = ext_count; searching = 1; break;
+	    case snd_K_E: case snd_K_e: redisplay = prompt(sp,"macro name:",NULL); sp->filing = MACRO_FILING; searching = 1; break;
+	    case snd_K_F: case snd_K_f: redisplay = prompt(sp,"file:",NULL); sp->filing = INPUT_FILING; searching = 1; break;
 	    case snd_K_G: case snd_K_g: 
 	      number_ctr = 0;
 	      counting = 0; 
@@ -5899,9 +5892,9 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
 	      break;
 	    case snd_K_H: case snd_K_h: break;
-	    case snd_K_I: case snd_K_i: redisplay = prompt(sp,STR_insert_file_p,NULL); sp->filing = INSERT_FILING; searching = 1; break;
+	    case snd_K_I: case snd_K_i: redisplay = prompt(sp,"insert file:",NULL); sp->filing = INSERT_FILING; searching = 1; break;
 	    case snd_K_J: case snd_K_j: cp->cursor_on = 1; redisplay = goto_mix(cp,ext_count); break;
-	    case snd_K_L: case snd_K_l: redisplay = prompt(sp,STR_load_p,NULL); sp->loading = 1; searching = 1; break;
+	    case snd_K_L: case snd_K_l: redisplay = prompt(sp,"load:",NULL); sp->loading = 1; searching = 1; break;
 	    case snd_K_M: case snd_K_m:
 	      cp->cursor_on = 1; 
 	      redisplay = prompt_named_mark(cp);
@@ -6100,7 +6093,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_B: case snd_K_b: cp->cursor_on = 1; redisplay = CURSOR_ON_LEFT; break;
 	    case snd_K_C: case snd_K_c: mark_define_region(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count); redisplay = CURSOR_CLAIM_SELECTION; break;
-	    case snd_K_D: case snd_K_d: redisplay = prompt(sp,STR_temp_dir_p,NULL); sp->filing = TEMP_FILING; searching = 1; break;
+	    case snd_K_D: case snd_K_d: redisplay = prompt(sp,"temp dir:",NULL); sp->filing = TEMP_FILING; searching = 1; break;
 #if HAVE_GUILE
 	    case snd_K_E: case snd_K_e: 
 	      execute_last_macro(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count);
@@ -6112,7 +6105,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_H: case snd_K_h: 
 	      break;
 	    case snd_K_I: case snd_K_i: paste_region((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count,cp,"C-x i"); redisplay = CURSOR_UPDATE_DISPLAY; break;
-	    case snd_K_J: case snd_K_j: redisplay = prompt(sp,STR_mark_p,NULL); sp->finding_mark = 1; searching = 1; break;
+	    case snd_K_J: case snd_K_j: redisplay = prompt(sp,"mark:",NULL); sp->finding_mark = 1; searching = 1; break;
 	    case snd_K_K: case snd_K_k: snd_close_file(sp,ss); redisplay = CURSOR_NO_ACTION; break;
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = 1;
@@ -6178,11 +6171,11 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_openparen:
 #if HAVE_GUILE
 	      if (defining_macro) 
-		report_in_minibuffer(sp,STR_macro_definition_already_in_progress);
+		report_in_minibuffer(sp,"macro definition already in progress");
 	      else
 		{
 		  start_defining_macro(); 
-		  report_in_minibuffer(sp,STR_defining_kbd_macro); 
+		  report_in_minibuffer(sp,"defining macro..."); 
 		}
 #endif
 	      redisplay = NO_ACTION; 

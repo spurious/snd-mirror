@@ -1571,7 +1571,7 @@ static int really_start_audio_output (dac_manager *tm)
 	for (i=0; i<d; i++) {
 	  mus_audio_close(devices[out_dev[i]]);
 	}
-	snd_error("%s: %s", STR_cant_play, mus_audio_error_name(mus_audio_error()));
+	snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
 	dac_running=0;
 	unlock_recording_audio();
 	if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
@@ -1639,7 +1639,7 @@ static int really_start_audio_output (dac_manager *tm)
       dev_fd[0] = mus_audio_open_output(audio_output_device(ss),tm->srate,tm->channels,compatible_format,dac_size(ss));
     if (dev_fd[0] == -1)
       {
-	snd_error("%s: %s",STR_cant_play,mus_audio_error_name(mus_audio_error()));
+	snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
 	dac_running = 0;
 	unlock_recording_audio();
 	if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
@@ -1683,7 +1683,7 @@ static int really_start_audio_output (dac_manager *tm)
     dev_fd[0] = mus_audio_open_output(audio_output_device(ss),tm->srate,tm->channels,compatible_format,dac_size(ss));
   if (dev_fd[0] == -1)
     {
-      snd_error("%s: %s",STR_cant_play,mus_audio_error_name(mus_audio_error()));
+      snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
       dac_running = 0;
       unlock_recording_audio();
       if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}

@@ -36,7 +36,7 @@ static void edit_find_ok_callback(int direction, Widget w,XtPointer clientData,X
 	  snd_protect(proc);
 	}
       buf = (char *)CALLOC(256,sizeof(char));
-      sprintf(buf,STR_find_s,str);
+      sprintf(buf,"find: %s",str);
       set_label(edit_find_label,buf);
       XmTextSetString(edit_find_text,NULL);
       FREE(buf);
@@ -93,7 +93,7 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n],XmNnoResize,FALSE); n++;
 #endif
   XtSetArg(args[n],XmNtransient,FALSE); n++;
-  edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss),STR_find,args,n);
+  edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss),"find",args,n);
   add_dialog(ss,edit_find_dialog);
 #if OVERRIDE_TOGGLE
   override_form_translation(edit_find_dialog);
@@ -126,7 +126,7 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_NONE); n++;
-  dl = XtCreateManagedWidget(STR_find_p,xmLabelWidgetClass,rc,args,n);
+  dl = XtCreateManagedWidget("find:",xmLabelWidgetClass,rc,args,n);
 
   n=0;
   XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;

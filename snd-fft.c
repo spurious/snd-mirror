@@ -1225,11 +1225,11 @@ static void make_sonogram_axes(chan_info *cp)
 	{
 	  if (transform_type(ss) == FOURIER)
 	    {
-	      if (yang < 45.0) xlabel = STR_frequency;
-	      else if (yang < 135.0) xlabel = STR_time;
-	      else if (yang < 225.0) xlabel = STR_frequency_reversed;
-	      else if (yang < 315.0) xlabel = STR_time_reversed;
-	      else xlabel = STR_frequency;
+	      if (yang < 45.0) xlabel = "frequency";
+	      else if (yang < 135.0) xlabel = "time";
+	      else if (yang < 225.0) xlabel = "ycneuqerf";
+	      else if (yang < 315.0) xlabel = "emit";
+	      else xlabel = "frequency";
 	    }
 	  else xlabel = spectro_xlabel(ss);
 	}

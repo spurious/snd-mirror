@@ -1,4 +1,3 @@
-(read-set! keywords 'prefix)
 (use-modules (ice-9 optargs))
 
 (define pi 3.141592653589793)

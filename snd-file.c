@@ -159,7 +159,7 @@ static file_info *translate_file(char *filename, snd_state *ss)
       fd = creat(tempname,0666);
       if (fd == -1)
 	{
-	  snd_error(STR_cant_write_translator_file,newname,tempname);
+	  snd_error("can't write translator temp file: %s or %s!",newname,tempname);
 	  return(NULL);
 	}
       FREE(newname);
@@ -727,7 +727,7 @@ int copy_file(char *oldname, char *newname)
   if (wb < 0) 
     snd_error(strerror(errno));
   else
-    if (total > wb) snd_error(STR_were_getting_short_on_disk_space,(int)total,(int)wb);
+    if (total > wb) snd_error("disk nearly full: used %d Kbytes leaving %d",(int)total,(int)wb);
   FREE(buf);
   close(ofd);
   return(SND_NO_ERROR);
@@ -881,7 +881,7 @@ void snd_update(snd_state *ss, snd_info *sp)
     {
       /* user deleted file while editing it? */
       buf = (char *)CALLOC(256,sizeof(char));
-      sprintf(buf,STR_no_longer_exists,sp->shortname);
+      sprintf(buf,"%s no longer exists!",sp->shortname);
       report_in_minibuffer(sp,buf);
       FREE(buf);
       return;
@@ -889,7 +889,7 @@ void snd_update(snd_state *ss, snd_info *sp)
   save_window_size(ss);
   sp = snd_update_1(ss,sp,sp->fullname);
   buf = (char *)CALLOC(64,sizeof(char));
-  sprintf(buf,STR_updated,sp->shortname);
+  sprintf(buf,"updated %s",sp->shortname);
   report_in_minibuffer(sp,buf);
   FREE(buf);
   restore_window_size(ss);
@@ -1563,7 +1563,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       if (sp->read_only)
 	{
 	  file_string = (char *)CALLOC(256,sizeof(char));
-	  sprintf(file_string,STR_cant_save_as,fullname,sp->shortname);
+	  sprintf(file_string,"can't save-as %s (%s is write-protected)",fullname,sp->shortname);
 	  report_in_minibuffer(sp,file_string);
 	  FREE(fullname);
 	  FREE(file_string);
@@ -1578,7 +1578,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       if (result != SND_NO_ERROR)
 	{
 	  file_string = (char *)CALLOC(256,sizeof(char));
-	  sprintf(file_string,STR_save_as_temp,ofile,strerror(errno),snd_error_name(result));
+	  sprintf(file_string,"save as temp: %s: %s (%s)",ofile,strerror(errno),snd_error_name(result));
 	  report_in_minibuffer(sp,file_string);
 	  FREE(file_string);
 	}
@@ -1602,7 +1602,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	  if (collision->edits > 0)
 	    {
 	      file_string = (char *)CALLOC(256,sizeof(char));
-	      sprintf(file_string,STR_has_unsaved_edits,str,str);
+	      sprintf(file_string,"%s has unsaved edits.\nClobber them and overwrite %s?",str,str);
 	      if (!(snd_yes_or_no_p(ss,file_string))) {FREE(fullname); FREE(collision); FREE(file_string); return(-1);}
 	      FREE(file_string);
 	    }
@@ -1614,7 +1614,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       file_string = (char *)CALLOC(256,sizeof(char));
       if (result != SND_NO_ERROR)
 	sprintf(file_string,"%s: %s (%s)",str,strerror(errno),snd_error_name(result));
-      else sprintf(file_string,STR_saved_as_p,(save_type == FILE_SAVE_AS) ? sp->shortname : "selection",str);
+      else sprintf(file_string,"%s saved as %s",(save_type == FILE_SAVE_AS) ? sp->shortname : "selection",str);
       report_in_minibuffer(sp,file_string);
       FREE(file_string);
       if (collision->sp) snd_open_file(fullname,ss);
@@ -1715,11 +1715,11 @@ int edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_dat
 	  if (auto_update(ss)) map_over_sounds(ss,snd_not_current,NULL);
 	}
       else 
-	snd_error(STR_cant_open,sp->shortname);
+	snd_error("can't open %s",sp->shortname);
       mus_header_set_aiff_loop_info(NULL);
     }
   else 
-    snd_error(STR_cant_write,sp->shortname);
+    snd_error("can't write %s",sp->shortname);
   return(0);
 }
 
@@ -1804,7 +1804,7 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   hdr->type = MUS_RAW;
   snd_help(ss,"Current header values",reason_str);
   file_string = (char *)CALLOC(256,sizeof(char));
-  sprintf(file_string,STR_Bogus_header_found_for,filename_without_home_directory(filename));
+  sprintf(file_string,"Bogus header found for %s",filename_without_home_directory(filename));
   FREE(tmp_str);
   FREE(reason_str);
   return(file_string);
@@ -1835,7 +1835,7 @@ snd_info *finish_new_file(snd_state *ss,char *newname,int header_type, int data_
 	}
       else 
 	{
-	  snd_error(STR_cant_write_type_with_format,
+	  snd_error("can't write %s %s file with %s data format",
 		    ((header_type != MUS_RIFF) && (header_type != MUS_NEXT)) ? "an" : "a",
 		    mus_header_type_name(header_type),
 		    data_format_name(data_format));

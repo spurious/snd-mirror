@@ -6,7 +6,6 @@
 (use-modules (ice-9 optargs))
 (debug-enable 'debug 'backtrace)
 (read-enable 'positions)
-(read-set! keywords 'prefix) ;this so we can use ":" as the keyword prefix
 
 (define ifloor (lambda (n) (inexact->exact (floor n))))
 (define pi 3.141592653589793)

@@ -33,23 +33,8 @@ static SCM g_region_dialog(void)
 
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
-  char *scode = NULL;
-  SCM code;
-  code = (SCM)in_code;
-  if (code)
-    {
-      if (gh_string_p(code))
-	{
-	  scode = gh_scm2newstr(code,NULL);
-	  gh_eval_str(scode);
-	  FREE(scode);
-	}
-      else
-	{
-	  if (gh_procedure_p(code))
-	    g_call0(code);
-	}
-    }
+  SCM code = (SCM)in_code;
+  if ((code) && (gh_procedure_p(code))) g_call0(code);
 }
 
 static SCM g_in(SCM ms, SCM code)

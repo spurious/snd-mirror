@@ -1,5 +1,6 @@
 snd change log
 
+  27-Jul:    (read-set! keywords 'prefix) is now built-in.
   26-Jul:    Snd now uses clm for all control-panel functions (play/apply).
              name-click-hook, show-indices.
              ladspa-related bugfix thanks to Jorn Nettingsmeier.

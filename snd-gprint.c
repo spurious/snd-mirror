@@ -48,7 +48,7 @@ static void file_print_ok_callback(GtkWidget *w,gpointer clientData)
 	{
 	  set_button_label(file_print_ok_button,STR_Stop);
 	  nsp = any_selected_sound(ss);
-	  sprintf(print_string,STR_printing,nsp->shortname);
+	  sprintf(print_string,"printing %s",nsp->shortname);
 	  set_label(file_print_message,print_string);
 	}
       printing = 1;
@@ -82,7 +82,7 @@ static void file_print_ok_callback(GtkWidget *w,gpointer clientData)
   if (ss->print_choice == PRINT_SND)
     {
       set_button_label(file_print_ok_button,STR_Print);
-      sprintf(print_string,STR_print_f,nsp->shortname);
+      sprintf(print_string,"print %s",nsp->shortname);
       set_label(file_print_message,print_string);
     }
   ss->print_choice = PRINT_SND;
@@ -148,7 +148,7 @@ void File_Print_Callback(GtkWidget *w,gpointer clientData)
   if (ss->print_choice == PRINT_SND)
     {
       nsp = any_selected_sound(ss);
-      sprintf(print_string,STR_print_f,nsp->shortname);
+      sprintf(print_string,"print %s",nsp->shortname);
     }
   else sprintf(print_string,"%s",STR_print_env);
   gtk_label_set_text(GTK_LABEL(file_print_message),print_string);

@@ -86,8 +86,6 @@
 
 ;;; -------- fit selection between marks, expanding via granulate (this needs some tweaking...)
 
-(read-set! keywords 'prefix) ;this so we can use ":" as the keyword prefix
-
 (define fit-selection-between-marks
   (lambda (m1 m2)
     "(fit-selection-between-marks m1 m2) fits (and mixes) the current selection (via granulate) between the given marks"

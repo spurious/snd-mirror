@@ -1082,11 +1082,10 @@ bank of generators (the second argument) is assumed to be a vector full of gener
                         (formant (vector-ref gens i) (vector-ref inputs i))))))
 </small></pre>
 <p>in the all-vector case.
-Here are a few more examples, taken from examp.scm.  To use ":" as the keyword prefix
-(rather than "#:") remember to start your scheme code with (read-set! keywords 'prefix).</p>
+Here are a few more examples, taken from examp.scm.
+</p>
 <pre>
 <small>
-(read-set! keywords 'prefix)
 
 (define comb-filter 
   (lambda (scaler size)
@@ -1334,7 +1333,6 @@ program, but it is very easy to modify it to be a dialog in Snd (my changes are 
 </p>
 <pre><small>
 (use-modules (gtk gtk))
-(read-set! keywords 'prefix)
 (<em class=red>define hiho 
   (lambda ()</em>
     (let* ((window (gtk-widget-new 'GtkWindow

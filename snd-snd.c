@@ -460,7 +460,7 @@ static char *short_sound_format (int format, int type)
     case MUS_L24INT: if (type == MUS_AIFC) return("24-bit swapped"); else return("24-bit"); break;
     case MUS_BDOUBLE: case MUS_LDOUBLE: return("double"); break;
     case MUS_L12INT: return("12-bit"); break;
-    default: return(STR_unknown); break;
+    default: return("unknown"); break;
     }
 }
 
@@ -758,7 +758,7 @@ static BACKGROUND_TYPE apply_controls_1(apply_manager *ap)
 	{
 	  remove(ap->ofile);
 	  mus_sound_forget(ap->ofile);
-	  report_in_minibuffer(sp,STR_apply_flushed);
+	  report_in_minibuffer(sp,"apply flushed!");
 	}
       free(ap->ofile);                                              /* safe only if tempnam, not tmpnam used */
       ap->ofile=NULL;

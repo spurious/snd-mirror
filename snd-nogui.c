@@ -385,6 +385,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
 void snd_doit(snd_state *ss,int argc, char **argv)
 {
   ss->sgx = (state_context *)CALLOC(1,sizeof(state_context));
+  gh_eval_str("(set! scm-repl-prompt \"snd> \")");
   gh_repl(argc,argv);
 }
 #else

@@ -195,7 +195,7 @@ prints "3" and exits. The "-title" argument works in both versions of Snd.
 The initialization file
 
 When Snd starts up, it looks for an "initialization file", normally named
-"~/.snd" (it can be set via the X resource mechanism, or through the
+"~/.snd" (its name can be set via the X resource mechanism, or through the
 environment variable SND_INIT_FILE). This optional file is supposed to be
 just like emacs' .emacs file, containing any customizations or extensions
 that you want loaded whenever Snd starts up. For example, say we want the
@@ -1006,10 +1006,6 @@ is essentially the same as (but 30 times faster than)
                         (formant (vector-ref gens i) (vector-ref inputs i))))))
 
 in the all-vector case. Here are a few more examples, taken from examp.scm.
-To use ":" as the keyword prefix (rather than "#:") remember to start your
-scheme code with (read-set! keywords 'prefix).
-
-(read-set! keywords 'prefix)
 
 (define comb-filter
   (lambda (scaler size)
@@ -1258,7 +1254,6 @@ top-level program, but it is very easy to modify it to be a dialog in Snd
 (my changes are in red):
 
 (use-modules (gtk gtk))
-(read-set! keywords 'prefix)
 (define hiho
   (lambda ()
     (let* ((window (gtk-widget-new 'GtkWindow

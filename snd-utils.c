@@ -148,15 +148,15 @@ int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
 	  kother = other_bytes >> 10;
 	  if (kother > kfree)
 	    {
-	      sprintf(prtbuf,STR_no_room_but_we_try,kfree<<10);
+	      sprintf(prtbuf,"only %d bytes left on disk, changing to 16-bit temp output",kfree<<10);
 	      report_in_minibuffer(sp,prtbuf);
 	      return(HUNKER_DOWN);
 	    }
 	}
-      sprintf(prtbuf,STR_no_room_go_on_p,kfree<<10);
+      sprintf(prtbuf,"only %d bytes left on disk; continue?",kfree<<10);
       go_on = snd_yes_or_no_p(sp->state,prtbuf);
       if (!go_on) return(GIVE_UP);
-      report_in_minibuffer(sp,STR_going_on);
+      report_in_minibuffer(sp,"ok -- here we go...");
       return(BLIND_LEAP);
     }
   return(NO_PROBLEM);
@@ -170,14 +170,14 @@ int snd_checked_write(snd_state *ss, int fd, unsigned char *buf, int bytes)
   if (kfree < 0) {snd_error(strerror(errno)); return(-1);}
   if (kfree < (bytes>>10))
     {
-      sprintf(prtbuf,STR_no_room,kfree<<10,bytes);
+      sprintf(prtbuf,"only %d bytes left on disk, can't write %d",kfree<<10,bytes);
       snd_yes_or_no_p(ss,prtbuf);
       return(-1);
     }
   bytes_written = write(fd,buf,bytes);
   if (bytes_written != bytes)
     {
-      snd_error(STR_write_failed,strerror(errno));
+      snd_error("write failed: %s",strerror(errno));
       return(-1);
     }
   return(bytes_written);

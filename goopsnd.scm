@@ -7,7 +7,6 @@
 (use-modules (ice-9 optargs))
 (debug-enable 'debug 'backtrace)
 (read-enable 'positions)
-(read-set! keywords 'prefix)
 
 
 ;;; beyond reducing names (i.e. mark-name, mix-name, file-name, etc)

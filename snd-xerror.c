@@ -18,7 +18,7 @@ static void create_snd_error_dialog(snd_state *ss)
   XtSetArg(args[n],XmNnoResize,FALSE); n++;
 #endif
   XtSetArg(args[n],XmNdialogTitle,titlestr); n++;
-  snd_error_dialog = XmCreateErrorDialog(MAIN_PANE(ss),STR_error,args,n);
+  snd_error_dialog = XmCreateErrorDialog(MAIN_PANE(ss),"error",args,n);
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog,XmDIALOG_SYMBOL_LABEL));
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog,XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog,XmDIALOG_HELP_BUTTON));

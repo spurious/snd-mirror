@@ -116,7 +116,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
     }
   else
     {
-      snd_error(STR_is_a_directory,last_filename);
+      snd_error("%s is a directory",last_filename);
       last_filename = NULL;
     }
 }
@@ -350,7 +350,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   sp = any_selected_sound(ss);
   if (last_save_as_filename)
     result = check_for_filename_collisions_and_save(ss,sp,last_save_as_filename,save_as_dialog_type,srate,type,format,comment);
-  else if (sp) report_in_minibuffer(sp,STR_not_saved_no_name_given);
+  else if (sp) report_in_minibuffer(sp,"not saved (no name given)");
   gtk_widget_hide(save_as_dialog);
 } 
 
@@ -1281,7 +1281,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   if (!new_dialog)
     {
       title = (char *)CALLOC(snd_strlen(newname) + 32,sizeof(char));
-      sprintf(title,STR_create_new_sound_p,newname);
+      sprintf(title,"create new sound: %s",newname);
 
       new_dialog = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(new_dialog),"delete_event",GTK_SIGNAL_FUNC(NewFileDeleteCallback),(gpointer)ss);
@@ -1415,7 +1415,7 @@ static void edit_header_ok_Callback(GtkWidget *w, gpointer clientData)
   ss = sp->state;
   if (!(sp->read_only))
     edit_header_callback(ss,sp,edit_header_data);
-  else snd_error(STR_is_write_protected,sp->shortname);
+  else snd_error("%s is write-protected",sp->shortname);
   gtk_widget_hide(edit_header_dialog);
 }
 

@@ -68,7 +68,7 @@ static void file_print_ok_callback(Widget w,XtPointer clientData,XtPointer callD
 	{
 	  plab = XmStringCreate(STR_Stop,XmFONTLIST_DEFAULT_TAG);
 	  nsp = any_selected_sound(ss);
-	  sprintf(print_string,STR_printing,nsp->shortname);
+	  sprintf(print_string,"printing %s",nsp->shortname);
 	  slab = XmStringCreate(print_string,XmFONTLIST_DEFAULT_TAG);
 	  XtVaSetValues(file_print_dialog,XmNokLabelString,plab,XmNmessageString,slab,NULL);
 	  XmStringFree(plab);
@@ -106,7 +106,7 @@ static void file_print_ok_callback(Widget w,XtPointer clientData,XtPointer callD
   if (ss->print_choice == PRINT_SND)
     {
       plab = XmStringCreate(STR_Print,XmFONTLIST_DEFAULT_TAG);
-      sprintf(print_string,STR_print_f,nsp->shortname);
+      sprintf(print_string,"print %s",nsp->shortname);
       slab = XmStringCreate(print_string,XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(file_print_dialog,XmNokLabelString,plab,XmNmessageString,slab,NULL);
       XmStringFree(plab);
@@ -127,7 +127,7 @@ void File_Print_Callback(Widget w,XtPointer clientData,XtPointer callData)
   if (ss->print_choice == PRINT_SND)
     {
       nsp = any_selected_sound(ss);
-      sprintf(print_string,STR_print_f,nsp->shortname);
+      sprintf(print_string,"print %s",nsp->shortname);
       xmstr4 = XmStringCreate(print_string,XmFONTLIST_DEFAULT_TAG);
     }
   else xmstr4 = XmStringCreate(STR_print_env,XmFONTLIST_DEFAULT_TAG);

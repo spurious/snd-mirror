@@ -5094,7 +5094,7 @@ static Float *init_sinc_table(int width)
 	  sincs+=8;
 	}
     }
-  sinc_tables[loc] = (Float *)CALLOC(width * SRC_SINC_DENSITY + 1,sizeof(Float));
+  sinc_tables[loc] = (Float *)CALLOC(width * SRC_SINC_DENSITY + 2,sizeof(Float));
   sinc_widths[loc] = width;
   size = width * SRC_SINC_DENSITY;
   sinc_freq = M_PI / (Float)SRC_SINC_DENSITY;
@@ -5188,6 +5188,9 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 {
   sr *srp = (sr *)srptr;
   Float sum,x,zf,srx,factor;
+#if 0
+  Float xx,frac;
+#endif
   int fsx,lim,i,k,loc;
   sum = 0.0;
   fsx = (int)(srp->x);
@@ -5205,7 +5208,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 	}
       srp->x -= fsx;
     }
-  if (srx == 0.0) srx = 0.01;
+  /* if (srx == 0.0) srx = 0.01; */ /* can't decide about this ... */
   if (srx < 0.0) srx = -srx;
   if (srx>1.0) factor=1.0/srx; else factor=1.0;
   zf = factor * (Float)SRC_SINC_DENSITY;
@@ -5213,7 +5216,15 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
     {
       /* we're moving backwards in the data array, so the sr->x field has to mimic that (hence the '1.0 - srp->x') */
       if (x<0) k = (int)(-x); else k = (int)x;
-      if (k < srp->len) sum += (srp->data[i] * srp->sinc_table[k]);
+      sum += (srp->data[i] * srp->sinc_table[k]);
+      /* rather than do a bounds check here, we just padded the sinc_table above with 2 extra 0's */
+#if 0      
+      /* this (non-interpolating) form requires a very large sinc table, here's the interpolating form: */
+      if (x<0.0) xx = -x; else xx = x;
+      k = (int)xx;
+      frac = xx-k;
+      sum += (srp->data[i] * (srp->sinc_table[k] + (frac * (srp->sinc_table[k+1] - srp->sinc_table[k]))));
+#endif
     }
   srp->x += srx;
   return(sum*factor);

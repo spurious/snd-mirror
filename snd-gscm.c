@@ -42,40 +42,10 @@ static SCM g_region_dialog(void)
   return(SCM_BOOL_F);
 }
 
-static SCM gtk_catch_scm_error(void *data, SCM tag, SCM throw_args)
-{
-  return(SND_EVAL_ERROR);
-}
-
-static SCM eval_str_wrapper(void *data)
-{
-  return(gh_eval_str((char *)data));
-}
-
-static SCM eval_str(char *buf)
-{
-  return(scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,gtk_catch_scm_error,buf));
-}
-
 static gint timed_eval(gpointer in_code)
 {
-  char *scode = NULL;
-  SCM code;
-  code = (SCM)in_code;
-  if (code)
-    {
-      if (gh_string_p(code))
-	{
-	  scode = gh_scm2newstr(code,NULL);
-	  eval_str(scode);
-	  free(scode);
-	}
-      else
-	{
-	  if (gh_procedure_p(code))
-	    g_call0(code);
-	}
-    }
+  SCM code = (SCM)in_code;
+  if ((code) && (gh_procedure_p(code))) g_call0(code);
   return(0);
 }
 
@@ -691,6 +661,21 @@ static SCM g_set_graph_cursor(SCM curs)
 
 #if HAVE_GUILE_GTK
 static void init_guile_gtk(SCM local_doc);
+
+static SCM gtk_catch_scm_error(void *data, SCM tag, SCM throw_args)
+{
+  return(SND_EVAL_ERROR);
+}
+
+static SCM eval_str_wrapper(void *data)
+{
+  return(gh_eval_str((char *)data));
+}
+
+static SCM eval_str(char *buf)
+{
+  return(scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,gtk_catch_scm_error,buf));
+}
 
 char *guile_gtk_version(void);
 char *guile_gtk_version(void)

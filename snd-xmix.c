@@ -1274,7 +1274,7 @@ static void create_mixer(mixdata *md, int x, int y)
   XtSetArg(args[n],XmNshadowThickness,0); n++;
   XtSetArg(args[n],XmNhighlightThickness,0); n++;
   XtSetArg(args[n],XmNmultiClick,XmMULTICLICK_KEEP); n++;
-  m->w[mm_amp] = sndCreatePushButtonWidget(STR_amp_m,m->w[mm_console],args,n);
+  m->w[mm_amp] = sndCreatePushButtonWidget("   amp:   ",m->w[mm_console],args,n);
   XtAddCallback(m->w[mm_amp],XmNactivateCallback,amp_click_callback,m);
   last_widget = m->w[mm_amp];
 
@@ -1359,7 +1359,7 @@ static void create_mixer(mixdata *md, int x, int y)
   XtSetArg(args[n],XmNshadowThickness,0); n++;
   XtSetArg(args[n],XmNhighlightThickness,0); n++;	 
   XtSetArg(args[n],XmNmultiClick,XmMULTICLICK_DISCARD); n++;
-  m->w[mm_speed] = sndCreatePushButtonWidget(STR_speed_m,m->w[mm_console],args,n);
+  m->w[mm_speed] = sndCreatePushButtonWidget("   speed:  ",m->w[mm_console],args,n);
   XtAddCallback(m->w[mm_speed],XmNactivateCallback,speed_click_callback,m);
   
   n=0;

@@ -1595,8 +1595,8 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
   if (sp->need_update) 
     {
       if ((snd_probe_file(sp->fullname)) == FILE_DOES_NOT_EXIST)
-	snd_error(STR_no_longer_exists,sp->shortname);
-      else snd_warning(STR_file_has_changed,sp->shortname);
+	snd_error("%s no longer exists!",sp->shortname);
+      else snd_warning("%s has changed since we last read it!",sp->shortname);
     }
   if ((edit_position < 0) || (edit_position > cp->edit_size)) return(NULL);
   ed = (ed_list *)(cp->edits[edit_position]);
@@ -1817,8 +1817,8 @@ static int snd_io_error;
 void set_snd_IO_error(int err) {snd_io_error = err;}
 
 static char *snd_error_names[] = {
-  STR_no_error,STR_cant_write_header,STR_cant_open_file,STR_cant_write_data,
-  STR_unsupported_header_type,STR_cant_find_file,STR_unsupported_data_format,STR_output_interrupted};
+  "no error","can't write header","can't open file","can't write data",
+  "unsupported header type","can't find file","unsupported data format","output interrupted"};
 
 char *snd_error_name(int i) {return(snd_error_names[i]);}
 
@@ -1863,7 +1863,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
       if ((kused > kleft) && (sp))
 	{
 	  prtbuf = (char *)CALLOC(64,sizeof(char));
-	  sprintf(prtbuf,STR_were_getting_short_on_disk_space,kused,kleft);
+	  sprintf(prtbuf,"disk nearly full: used %d Kbytes leaving %d",kused,kleft);
 	  report_in_minibuffer(sp,prtbuf);
 	  FREE(prtbuf);
 	}
@@ -2069,7 +2069,7 @@ static int save_edits_1(snd_info *sp)
     }
   sf = (snd_fd **)CALLOC(sp->nchans,sizeof(snd_fd *));
   for (i=0;i<sp->nchans;i++) sf[i] = init_sample_read(0,sp->chans[i],READ_FORWARD);
-  sprintf(edit_buf,STR_saving,sp->shortname);
+  sprintf(edit_buf,"saving %s",sp->shortname);
   report_in_minibuffer(sp,edit_buf);
   sphdr = sp->hdr;
 #if FILE_PER_CHAN
@@ -2140,8 +2140,8 @@ static int save_edits_1(snd_info *sp)
   reflect_file_revert_in_label(sp);
   reflect_file_save_in_menu(ss);
   if (err)
-    sprintf(edit_buf,STR_write_failed_temp_saved,strerror(saved_errno),ofile);
-  else sprintf(edit_buf,STR_wrote,sp->fullname); 
+    sprintf(edit_buf,"write failed: %s, edits saved in: %s",strerror(saved_errno),ofile);
+  else sprintf(edit_buf,"wrote %s",sp->fullname); 
   report_in_minibuffer(sp,edit_buf);
   if (ofile) {free(ofile); ofile=NULL;}
   if (auto_update(ss)) map_over_sounds(ss,snd_not_current,NULL);
@@ -2252,7 +2252,7 @@ int save_edits(snd_info *sp, void *ptr)
 	  current_write_date = file_write_date(sp->fullname);
 	  if (current_write_date != sp->write_date)
 	    {
-	      sprintf(edit_buf,STR_changed_on_disk_p,sp->shortname);
+	      sprintf(edit_buf,"%s changed on disk! Save anyway?",sp->shortname);
 	      err = snd_yes_or_no_p(sp->state,edit_buf);
 	      if (err == 0) return(0);
 	    }
@@ -2274,8 +2274,7 @@ int save_edits(snd_info *sp, void *ptr)
     }
   else
     {
-      sprintf(edit_buf,STR_cant_write,sp->shortname);
-      strcat(edit_buf," ("); strcat(edit_buf,STR_read_only); strcat(edit_buf,")");
+      sprintf(edit_buf,"can't write %s (it is read-only)",sp->shortname);
       report_in_minibuffer(sp,edit_buf);
     }
   return(0);

@@ -626,12 +626,12 @@ static Pixel get_color(Widget shell,
       /* snd_error here causes a seg fault (it builds on mainpane which has not yet been created) */
       if (use_white)
 	{
-	  fprintf(stderr,STR_no_color_use_white,rs_color);
+	  fprintf(stderr,"can't get %s -- will use white\n",rs_color);
 	  return(WhitePixel(dpy,scr));
 	}
       else
 	{
-	  fprintf(stderr,STR_no_color_use_black,rs_color);
+	  fprintf(stderr,"can't get %s -- will use black\n",rs_color);
 	  return(BlackPixel(dpy,scr));
 	}
     }
@@ -842,35 +842,35 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   if ((!(set_button_font(ss,snd_rs.button_font))) &&
       (!(set_button_font(ss,DEFAULT_BUTTON_FONT))) &&
       (!(set_button_font(ss,FALLBACK_FONT))))
-    fprintf(stderr,STR_cant_find_font,snd_rs.button_font);
+    fprintf(stderr,"can't find font %s",snd_rs.button_font);
 
   if ((!(set_tiny_font(ss,TINY_FONT))) &&
       (!(set_tiny_font(ss,FALLBACK_FONT))))
-    fprintf(stderr,STR_cant_find_font,TINY_FONT);
+    fprintf(stderr,"can't find font %s",TINY_FONT);
 
   if ((!(set_bold_button_font(ss,snd_rs.bold_button_font))) &&
       (!(set_bold_button_font(ss,DEFAULT_BOLD_BUTTON_FONT))) &&
       (!(set_bold_button_font(ss,FALLBACK_FONT))))
-    fprintf(stderr,STR_cant_find_font,snd_rs.bold_button_font);
+    fprintf(stderr,"can't find font %s",snd_rs.bold_button_font);
 
   if ((!(set_axis_label_font(ss,snd_rs.axis_label_font))) &&
       (!(set_axis_label_font(ss,DEFAULT_AXIS_LABEL_FONT))) &&
       (!(set_axis_label_font(ss,FALLBACK_FONT))))
-    fprintf(stderr,STR_cant_find_font,snd_rs.axis_label_font);
+    fprintf(stderr,"can't find font %s",snd_rs.axis_label_font);
 
   if ((!(set_axis_numbers_font(ss,snd_rs.axis_numbers_font))) &&
       (!(set_axis_numbers_font(ss,DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(ss,FALLBACK_FONT))))
-    fprintf(stderr,STR_cant_find_font,snd_rs.axis_numbers_font);
+    fprintf(stderr,"can't find font %s",snd_rs.axis_numbers_font);
 
   if ((!(set_help_text_font(ss,snd_rs.help_text_font))) &&
       (!(set_help_text_font(ss,DEFAULT_HELP_TEXT_FONT))) &&
       (!(set_help_text_font(ss,FALLBACK_FONT))))
-    fprintf(stderr,STR_cant_find_font,snd_rs.help_text_font);
+    fprintf(stderr,"can't find font %s",snd_rs.help_text_font);
 
   if ((snd_rs.listener_font) &&
       (!(set_listener_font(ss,snd_rs.listener_font))))
-    fprintf(stderr,STR_cant_find_font,snd_rs.listener_font);
+    fprintf(stderr,"can't find font %s",snd_rs.listener_font);
 
   if (!(ss->using_schemes)) XtVaSetValues(shell,XmNbackground,sx->basic_color,NULL);
   ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);

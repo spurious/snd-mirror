@@ -1389,7 +1389,7 @@ static void make_trigger_label(Float val)
   if (trigger_label)
     {
       buf = (char *)CALLOC(32,sizeof(char));
-      sprintf(buf,"%s %.3f",STR_trigger_p,val);
+      sprintf(buf,"%s %.3f","trigger:",val);
       s1 = XmStringCreate(buf,XmFONTLIST_DEFAULT_TAG);
       FREE(buf);
       XtVaSetValues(trigger_label,XmNlabelString,s1,NULL);
@@ -1820,7 +1820,7 @@ static int make_file_info_pane(snd_state *ss, Widget file_pane, int *ordered_dev
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_NONE); n++;
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_NONE); n++;
-  trigger_label = XtCreateManagedWidget(STR_trigger_p,xmLabelWidgetClass,file_form,args,n);
+  trigger_label = XtCreateManagedWidget("trigger:",xmLabelWidgetClass,file_form,args,n);
   XtAddCallback(trigger_label,XmNhelpCallback,trigger_help_Callback,ss);
   make_trigger_label(recorder_trigger(ss));
 
@@ -3996,7 +3996,7 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
 	    }
 	  if (recorder_out_chans(ss) <= 0)
 	    {
-	      record_report(messages,STR_cant_record_screwed_up_chans,NULL);
+	      record_report(messages,"can't record: you screwed up the output channel number!",NULL);
 	      recording = 0;
 	      triggered = (!triggering);
 	      return;
@@ -4029,7 +4029,7 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
 	    }
 	  if (in_chans_active() == 0)
 	    {
-	      record_report(messages,STR_cant_record_no_inputs,NULL);
+	      record_report(messages,"can't record: no inputs enabled",NULL);
 	      recording = 0;
 	      triggered = (!triggering);
 	      return;
@@ -4074,7 +4074,7 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
 	}
       else
 	{
-	  record_report(messages,STR_cant_record_no_output_file,NULL);
+	  record_report(messages,"can't record: no output file name supplied",NULL);
 	  recording = 0;
 	  triggered = (!triggering);
 	  return;

@@ -4,7 +4,6 @@
 
 (if (file-exists? "test.errors") (delete-file "test.errors"))
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
-(read-set! keywords 'prefix)
 
 (define tests 1)
 (set! full-test #t)
@@ -2910,8 +2909,8 @@
      (file-dialog) (w)
      (region-dialog) (w)
      (edit-header-dialog) (w)
-     (if (and (not (member 'gtk *features*))
-	      (not (member 'snd-guile-gtk *features*)))
+     (if (and (not (provided? 'gtk))
+	      (not (provided? 'snd-guile-gtk)))
 	 (begin
 	   ;(recorder-dialog) (w)
 	   (set-recorder-file "hiho.snd")
@@ -2929,7 +2928,7 @@
 	   (set-recorder-in-amp 0 0 0.5)
 	   (if (> (abs (- (recorder-in-amp 0 0) 0.5)) .01) (snd-print (format #f ";set-recorder-in-amp: ~A?" (recorder-in-amp 0 0))))))
      (help-dialog "Test" "snd-test here") (w)
-     (if (member 'snd-xmhtml *features*)
+     (if (provided? 'snd-xmhtml)
 	 (begin
 	   ;; these are trying to flush out html syntax errors
 	   (help-dialog "Find" "#find")

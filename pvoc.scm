@@ -2,7 +2,6 @@
 ;;;
 
 (use-modules (ice-9 optargs))
-(read-set! keywords 'prefix)
 
 (define ifloor (lambda (n) (inexact->exact (floor n))))
 (define pi 3.141592653589793)

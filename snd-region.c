@@ -1015,7 +1015,7 @@ void create_selection(chan_info *cp)
   sp = cp->sound;
   ss = cp->state;
   if (regions[0]) stack_region(ss,r); else regions[0] = r;
-  report_in_minibuffer(sp,STR_defining_region);
+  report_in_minibuffer(sp,"defining region...");
   r->header_type = (sp->hdr)->type;
   r->srate = SND_SRATE(sp);
   r->maxamp = 0.0;

@@ -4388,6 +4388,8 @@ the functions html and ? can be used in place of help to go to the HTML descript
   /* to handle (extend) apropos from session.scm, we need to set up the Snd module, I think */
   /* TODO: how to grab "display" output from scheme and put it in the listener? */
 
+    gh_eval_str("(read-set! keywords 'prefix)");
+
 #if DEBUGGING
   #if HAVE_GTK
     scm_add_feature("gtk");

@@ -1298,7 +1298,7 @@ void snd_file_bomb_icon(snd_info *sp, int on)
   if (on)
     {
       buf = (char *)CALLOC(256,sizeof(char));
-      sprintf(buf,STR_file_has_changed,sp->shortname);
+      sprintf(buf,"%s has changed since we last read it!",sp->shortname);
       report_in_minibuffer(sp,buf);
       FREE(buf);
     }

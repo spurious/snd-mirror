@@ -131,7 +131,7 @@ static void File_Open_OK_Callback(Widget w,XtPointer clientData,XtPointer callDa
       if (sp) select_channel(sp,0);           /* add_sound_window (snd-xsnd.c) will report reason for error, if any */
     }
   else
-    snd_error(STR_is_a_directory,fileName);
+    snd_error("%s is a directory",fileName);
 }
 
 static void File_Open_Help_Callback (Widget w,XtPointer clientData,XtPointer callData) 
@@ -329,7 +329,7 @@ void CreateOpenDialog(Widget w,XtPointer clientData)
 	{
 	  XtSetArg(args[n],XmNfileSearchProc,sound_file_search); n++;
 	}
-      s1 = XmStringCreate(STR_open_p,XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("open:",XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n],XmNselectionLabelString,s1); n++;
       open_dialog = XmCreateFileSelectionDialog(w,STR_File,args,n);
       XmStringFree(s1);
@@ -415,7 +415,7 @@ static void save_as_ok_callback(Widget w,XtPointer clientData,XtPointer callData
       check_for_filename_collisions_and_save(ss,sp,str,save_as_dialog_type,srate,type,format,comment);
       XtFree(str);
     }
-  else if (sp) report_in_minibuffer(sp,STR_not_saved_no_name_given);
+  else if (sp) report_in_minibuffer(sp,"not saved (no name given)");
   XtUnmanageChild(save_as_dialog);
 } 
 
@@ -779,7 +779,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
       xmstr1=XmStringCreate(STR_Save,XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n],XmNokLabelString,xmstr1); n++;
       file_string = (char *)CALLOC(256,sizeof(char));
-      sprintf(file_string,STR_saving,sound_name);
+      sprintf(file_string,"saving %s",sound_name);
       xmstr2 = XmStringCreate(file_string,XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n],XmNdialogTitle,xmstr2); n++;
 #if RESIZE_DIALOG
@@ -830,7 +830,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
   else
     {
       file_string = (char *)CALLOC(256,sizeof(char));
-      sprintf(file_string,STR_saving,sound_name);
+      sprintf(file_string,"saving %s",sound_name);
       xmstr2 = XmStringCreate(file_string,XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(save_as_dialog,XmNdialogTitle,xmstr2,NULL);
       XmStringFree(xmstr2);
@@ -1773,7 +1773,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n],XmNnoResize,FALSE); n++;
 #endif
   /* not transient -- we want this window to remain visible if possible */
-  raw_data_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss),STR_raw_data,args,n);
+  raw_data_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss),"raw data",args,n);
 #if OVERRIDE_TOGGLE
   override_form_translation(raw_data_dialog);
 #endif
@@ -2003,7 +2003,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   if (!new_dialog)
     {
       title = (char *)CALLOC(snd_strlen(newname) + 32,sizeof(char));
-      sprintf(title,STR_create_new_sound_p,newname);
+      sprintf(title,"create new sound: %s",newname);
       titlestr = XmStringCreate(title,XmFONTLIST_DEFAULT_TAG);
       FREE(title);
       xhelp = XmStringCreate(STR_Help,XmFONTLIST_DEFAULT_TAG);
@@ -2144,7 +2144,7 @@ void File_Mix_Callback(Widget w,XtPointer clientData,XtPointer callData)
       XtSetArg(args[n],XmNresizePolicy,XmRESIZE_GROW); n++;
       XtSetArg(args[n],XmNnoResize,FALSE); n++;
 #endif
-      s1 = XmStringCreate(STR_mix_in_p,XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("mix in:",XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n],XmNselectionLabelString,s1); n++;
       file_mix_dialog = XmCreateFileSelectionDialog(w,STR_mix_file_p,args,n);
 #if OVERRIDE_TOGGLE
@@ -2201,7 +2201,7 @@ static void edit_header_ok_Callback(Widget w,XtPointer clientData,XtPointer call
   if (cb->event == ((ss->sgx)->text_activate_event)) return; /* <cr> in one of text fields */
   if (!(sp->read_only))
     edit_header_callback(ss,sp,edit_header_data);
-  else snd_error(STR_is_write_protected,sp->shortname);
+  else snd_error("%s is write-protected",sp->shortname);
   XtUnmanageChild(edit_header_dialog);
 }
 
