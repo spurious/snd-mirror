@@ -311,9 +311,10 @@ static int mix_selection(chan_info *cp, off_t beg, const char *origin)
   if (err == MUS_NO_ERROR)
     {
       si_out = sync_to_chan(cp);
+      /* TODO: mix selection track id arg */
       id = mix(beg, selection_len(), si_out->chans, si_out->cps, tempfile, 
 	       (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
-	       origin, with_mix_tags(ss));
+	       origin, with_mix_tags(ss), 0);
       free_sync_info(si_out);	      
     }
   if (tempfile) FREE(tempfile);

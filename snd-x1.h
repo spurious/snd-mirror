@@ -523,6 +523,7 @@ void snd_record_file(void);
 bool record_dialog_is_active(void);
 void make_recorder_icons_transparent_again(Pixel old_color, Pixel new_color);
 void recorder_error(char *msg);
+void g_init_gxrec(void);
 
 
 /* -------- snd-xprint.c -------- */

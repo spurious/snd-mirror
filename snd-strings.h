@@ -404,6 +404,7 @@
 #define S_recorder_buffer_size          "recorder-buffer-size"
 #define S_recorder_dialog               "recorder-dialog"
 #define S_recorder_file                 "recorder-file"
+#define S_recorder_file_hook            "recorder-file-hook"
 #define S_recorder_gain                 "recorder-gain"
 #define S_recorder_in_amp               "recorder-in-amp"
 #define S_recorder_in_format            "recorder-in-format"
@@ -412,6 +413,7 @@
 #define S_recorder_out_amp              "recorder-out-amp"
 #define S_recorder_out_chans            "recorder-out-chans"
 #define S_recorder_out_format           "recorder-out-format"
+#define S_recorder_out_type             "recorder-out-type"
 #define S_recorder_srate                "recorder-srate"
 #define S_recorder_trigger              "recorder-trigger"
 #if HAVE_RUBY

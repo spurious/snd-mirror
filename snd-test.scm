@@ -30,6 +30,8 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
+;;; TODO: recorder-file-hook tests
+
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 syncase) (ice-9 session))
@@ -16255,6 +16257,8 @@ EDITS: 5
 		(if (not (= (recorder-in-device) mus-audio-line-in)) (snd-display ";set-recorder-in-device: ~A?" (recorder-in-device)))
 		(set! (recorder-out-format) mus-mulaw)
 		(if (not (= (recorder-out-format) mus-mulaw)) (snd-display ";set-recorder-out-format: ~A?" (recorder-out-format)))
+		(set! (recorder-out-type) mus-aifc)
+		(if (not (= (recorder-out-type) mus-aifc)) (snd-display ";set-recorder-out-type: ~A?" (recorder-out-type)))
 		(set! (recorder-srate) 44100)
 		(if (not (= (recorder-srate) 44100)) (snd-display ";set-recorder-srate: ~A?" (recorder-srate)))
 		(set! (recorder-gain 0) 0.5)
@@ -37583,7 +37587,7 @@ EDITS: 2
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
-		     recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
+		     recorder-out-chans recorder-out-format recorder-out-type recorder-srate recorder-trigger redo region-chans region-dialog
 		     region-graph-style region-frames region-maxamp selection-maxamp region-sample region-samples->vct
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 		     restore-marks restore-region reverb-control-decay reverb-control-feedback 
@@ -37684,7 +37688,7 @@ EDITS: 2
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height transform-normalization
 			 equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color
 			 recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
-			 recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format
+			 recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-out-type
 			 recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback
 			 reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style
 			 reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
@@ -38355,7 +38359,7 @@ EDITS: 2
 			      time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
 			      previous-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
 			      recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans
-			      recorder-out-format recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file
+			      recorder-out-format recorder-out-type recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file
 			      selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color
 			      selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			      show-selection-transform sinc-width temp-dir text-focus-color tiny-font

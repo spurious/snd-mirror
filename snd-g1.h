@@ -503,6 +503,7 @@ void cleanup_recording (void);
 void snd_record_file(void);
 bool record_dialog_is_active(void);
 void recorder_error(char *msg);
+void g_init_gxrec(void);
 
 
 

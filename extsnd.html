@@ -1426,11 +1426,13 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 
 <!-- multichannel-mix-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="multichannelmixhook">multichannel-mix-hook</a></em> (ids)</code></span></td><td>
-</td></tr>
+<span class=defbox><code><em class=def><a name="multichannelmixhook">multichannel-mix-hook</a></em> (track-id)</code></span></td><td align=right><b>progn</b></td>
+</tr>
 <tr><td></td><td colspan=2>
-called when a multichannel sound is mixed into a sync'd sound.
-<i>ids</i> is a list of mix id numbers.  <a href="sndscm.html#syncmultichannelmixes">sync-multichannel-mixes</a> in mix.scm uses
+called when a multichannel sound is mixed.
+<i>track-id</i> is the default track id (usually 0).  The hook function returns the (possibly different) track id used
+by all the mixes.
+<a href="sndscm.html#syncmultichannelmixes">sync-multichannel-mixes</a> in mix.scm uses
 this hook to sync together the members of a multichannel mix. 
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -8060,6 +8062,32 @@ default: 4.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderfile">recorder-file</a></em> ()</code></span></td></tr>
 <tr><td></td><td>Default recorder output file name.</td></tr>
 
+<!-- recorder-file-hook -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderfilehook">recorder-file-hook</a></em> (name)</code></span></td></tr>
+<tr><td></td><td>Called when 'Record' is pressed, passed the current recorder output filename.
+If it returns a string, that becomes the output filename.
+</td></tr>
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(add-hook! <em class=red>recorder-file-hook</em>
+  (lambda (name)
+    (let* ((header (recorder-out-type))
+	   (extension (if (or (= header mus-aifc) (= header mus-aiff)) ".aif"
+			  (if (= header mus-next) ".snd"
+			      ".wav"))))
+      (if name
+	  (let ((len (string-length name)))
+	    (do ((i 0 (1+ i)))
+		((or (= i len)
+		     (char=? (string-ref name i) #\.))
+		 (string-append (if (&gt; i 1)
+				    (substring name 0 i)
+				    "test")
+				extension))))
+	  (string-append "test" extension)))))
+</pre></td></tr></table>
+</td></tr>
+
 <!-- recorder-gain -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndrecordergain">recorder-gain</a></em> (gain)</code></span></td></tr>
 <tr><td></td><td>  recorder input (soundcard-audio) gain <i>gain</i>.</td></tr>
@@ -8090,7 +8118,11 @@ default: 4.
 
 <!-- recorder-out-format -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderoutformat">recorder-out-format</a></em> ()</code></span></td></tr>
-<tr><td></td><td>same as <a href="#recorderinformat">recorder-in-format</a></td></tr>
+<tr><td></td><td>recorder output file data format.</td></tr>
+
+<!-- recorder-out-type -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderouttype">recorder-out-type</a></em> ()</code></span></td></tr>
+<tr><td></td><td>recorder output file header type.</td></tr>
 
 <!-- recorder-srate -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="recordersrate">recorder-srate</a></em> ()</code></span></td></tr>

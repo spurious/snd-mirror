@@ -704,7 +704,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 #endif
 	    case CHANGE_FILING:
 	      clear_minibuffer(sp);
-	      mix_complete_file_at_cursor(sp, str, "C-x C-q", with_mix_tags(ss));
+	      mix_complete_file_at_cursor(sp, str, "C-x C-q", with_mix_tags(ss), 0);
 	      break;
 	    case INSERT_FILING:
 	      str1 = mus_expand_filename(str);

@@ -1818,12 +1818,14 @@ void finish_recording(recorder_info *rp)
     }
 }
 
+static XEN recorder_file_hook;
+
 static void record_button_callback(GtkWidget *w, gpointer context) 
 {
   Wdesc *wd;
   int i, old_srate, ofmt, rs, ochns;
   off_t oloc, samples;
-  static char *comment;
+  char *comment = NULL;
   char *str;
   char *buf;
   PANE *p;
@@ -1832,88 +1834,97 @@ static void record_button_callback(GtkWidget *w, gpointer context)
   rp->recording = (!(rp->recording));
   if (rp->recording)
     {
+      XEN res = XEN_FALSE;
       if (!(rp->taking_input)) fire_up_recorder();
+      old_srate = rp->srate;
+      comment = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
+      rp->output_data_format = ofmt;
+      if ((all_panes[out_file_pane]) && (all_panes[out_file_pane]->on_buttons_size < ochns))
+	{
+	  rp->out_chans = all_panes[out_file_pane]->on_buttons_size;
+	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, 
+		       "only %d out chan%s available",
+		       rp->out_chans, (rp->out_chans > 1) ? "s" : "");
+	  record_report(messages, buf, NULL);
+	  FREE(buf);
+	}
+      else rp->out_chans = ochns;
+      if (rs != old_srate) 
+	{
+	  rp->srate = rs;
+	  recorder_set_audio_srate(MUS_AUDIO_DEFAULT, rp->srate, 0, rp->taking_input);
+	}
+      if (rp->out_chans <= 0)
+	{
+	  record_report(messages, _("can't record: you screwed up the output channel number!"), NULL);
+	  rp->recording = false;
+	  rp->triggered = (!rp->triggering);
+	  if (comment) FREE(comment);
+	  return;
+	}
+      reflect_recorder_duration(0.0);
+      if (out_chans_active() != rp->out_chans)
+	{
+	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE,
+		       _("chans field (%d) doesn't match file out panel (%d channel%s active)"), 
+		       rp->out_chans, out_chans_active(), (out_chans_active() > 1) ? "s" : "");
+	  record_report(messages, buf, NULL);
+	  FREE(buf);
+	  wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
+	  wd->p = all_panes[out_file_pane];
+	  p = wd->p;
+	  wd->field = MUS_AUDIO_AMP;
+	  wd->device = p->device;
+	  wd->system = 0;
+	  for (i = 0; i < rp->out_chans; i++)
+	    if (!(p->active[i]))
+	      {
+		wd->chan = i;
+		meter_button_callback(p->on_buttons[i], (gpointer)wd);
+	      }
+	  FREE(wd);
+	}
+      if (in_chans_active() == 0)
+	{
+	  record_report(messages, _("can't record: no inputs enabled"), NULL);
+	  rp->recording = false;
+	  rp->triggered = (!rp->triggering);
+	  if (comment) FREE(comment);
+	  return;
+	}
       str = (char *)gtk_entry_get_text(GTK_ENTRY(file_text));
-      if ((str) && (*str))
+      if (XEN_HOOKED(recorder_file_hook))
+	res = run_progn_hook(recorder_file_hook,
+			     XEN_LIST_1((str) ? C_TO_XEN_STRING(str) : XEN_FALSE),
+			     S_recorder_file_hook);
+      if (XEN_STRING_P(res))
 	{
 	  if (rp->output_file) FREE(rp->output_file);
-	  rp->output_file = mus_expand_filename(str);
-	  str = NULL;
-	  old_srate = rp->srate;
-	  str = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
-	  if (str) FREE(str);
-	  str = NULL;
-	  rp->output_data_format = ofmt;
-	  if ((all_panes[out_file_pane]) && (all_panes[out_file_pane]->on_buttons_size < ochns))
-	    {
-	      rp->out_chans = all_panes[out_file_pane]->on_buttons_size;
-	      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	      mus_snprintf(buf, PRINT_BUFFER_SIZE, 
-			   "only %d out chan%s available",
-			   rp->out_chans, (rp->out_chans > 1) ? "s" : "");
-	      record_report(messages, buf, NULL);
-	      FREE(buf);
-	    }
-	  else rp->out_chans = ochns;
-	  if (rs != old_srate) 
-	    {
-	      rp->srate = rs;
-	      recorder_set_audio_srate(MUS_AUDIO_DEFAULT, rp->srate, 0, rp->taking_input);
-	    }
-
-	  if (rp->out_chans <= 0)
-	    {
-	      record_report(messages, _("can't record: you screwed up the output channel number!"), NULL);
-	      rp->recording = false;
-	      rp->triggered = (!rp->triggering);
-	      return;
-	    }
-	  if (GTK_IS_TEXT_VIEW(recdat->comment_text))
-	    comment = sg_get_text(recdat->comment_text, 0, -1);
-	  else comment = (char *)gtk_entry_get_text(GTK_ENTRY(recdat->comment_text));
-	  reflect_recorder_duration(0.0);
-	  if (out_chans_active() != rp->out_chans)
-	    {
-	      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	      mus_snprintf(buf, PRINT_BUFFER_SIZE,
-			   _("chans field (%d) doesn't match file out panel (%d channel%s active)"), 
-			   rp->out_chans, out_chans_active(), (out_chans_active() > 1) ? "s" : "");
-	      record_report(messages, buf, NULL);
-	      FREE(buf);
-	      wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
-	      wd->p = all_panes[out_file_pane];
-	      p = wd->p;
-	      wd->field = MUS_AUDIO_AMP;
-	      wd->device = p->device;
-	      wd->system = 0;
-	      for (i = 0; i < rp->out_chans; i++)
-		if (!(p->active[i]))
-		  {
-		    wd->chan = i;
-		    meter_button_callback(p->on_buttons[i], (gpointer)wd);
-		  }
-	      FREE(wd);
-	    }
-	  if (in_chans_active() == 0)
-	    {
-	      record_report(messages, _("can't record: no inputs enabled"), NULL);
-	      rp->recording = false;
-	      rp->triggered = (!rp->triggering);
-	      return;
-	    }
-	  gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, (ss->sgx)->red);
-	  set_button_label(reset_button, _("Cancel"));
-	  set_button_label(record_button, _("Done"));
-
-	  if (recorder_start_output_file(comment)) return; /* true = error */
+	  rp->output_file = mus_expand_filename(XEN_TO_C_STRING(res));
 	}
       else
 	{
-	  record_report(messages, _("can't record: no output file name supplied"), NULL);
-	  rp->recording = false;
-	  rp->triggered = (!rp->triggering);
-	  return;
+	  if ((str) && (*str))
+	    {
+	      if (rp->output_file) FREE(rp->output_file);
+	      rp->output_file = mus_expand_filename(str);
+	    }
+	  else
+	    {
+	      record_report(messages, _("can't record: no output file name supplied"), NULL);
+	      rp->recording = false;
+	      rp->triggered = (!rp->triggering);
+	      if (comment) FREE(comment);
+	      return;
+	    }
 	}
+      gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, (ss->sgx)->red);
+      set_button_label(reset_button, _("Cancel"));
+      set_button_label(record_button, _("Done"));
+      recorder_start_output_file(comment);
+      if (comment) FREE(comment);
     }
   else 
     finish_recording(rp);
@@ -2194,3 +2205,11 @@ void set_recorder_srate(recorder_info *rp, int val)
     }
 }
 
+void g_init_gxrec(void)
+{
+  #define H_recorder_file_hook S_recorder_file_hook " (filename): called when 'Record' is pressed \
+in the recorder dialog.  The currently displayed output filename is passed in as the argument, \
+or #f if no filename has been supplied.  The hook function should return the new filename."
+
+  XEN_DEFINE_HOOK(recorder_file_hook, S_recorder_file_hook, 1, H_recorder_file_hook);     /* args = displayed output file name */
+}

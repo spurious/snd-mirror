@@ -660,7 +660,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
     mix_complete_file_at_cursor(any_selected_sound(), 
 				filename,
 				"File: mix",
-				with_mix_tags(ss));
+				with_mix_tags(ss), 0);
   else snd_error(_("%s is a directory"), filename);
 }
 

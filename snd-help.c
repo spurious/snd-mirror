@@ -375,6 +375,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+13-Oct:  recorder-file-hook to set or modify recorder output file name, recorder-out-type.\n\
+         changed multichannel-mix-hook.\n\
 10-Oct:  removed mix-sync (use mix-track).\n\
 9-Oct:   removed the mix-id in list option for various functions.\n\
 8-Oct:   optional filename arg for save-marks (and Ruby case implemented).\n\

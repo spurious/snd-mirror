@@ -649,12 +649,10 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
     (define (hook-member value hook) 
       (member value (hook->list hook))))
 
-(define (multichannel-mix-to-track mix-ids)
-  (let ((new-track (unused-track)))
-    (for-each 
-     (lambda (n) 
-       (set! (mix-track n) new-track)) 
-     mix-ids)))
+(define (multichannel-mix-to-track track-id)
+  (if (= track-id 0)
+      (unused-track)
+      track-id))
 
 (define (multichannel-mix-moved id samps-moved)
   ;; id = mix that moved (via mouse), move all other mixes in its track by the same amount

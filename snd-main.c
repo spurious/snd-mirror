@@ -271,8 +271,8 @@ static void save_snd_state_options (FILE *fd)
   if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) pss_sd(fd, S_window_y, widget_y(MAIN_SHELL(ss)));
   if (default_output_chans(ss) != DEFAULT_OUTPUT_CHANS) pss_sd(fd, S_default_output_chans, default_output_chans(ss));
   if (default_output_srate(ss) != DEFAULT_OUTPUT_SRATE) pss_sd(fd, S_default_output_srate, default_output_srate(ss));
-  if (default_output_type(ss) != DEFAULT_OUTPUT_TYPE) pss_sd(fd, S_default_output_type, default_output_type(ss));
-  if (default_output_format(ss) != DEFAULT_OUTPUT_FORMAT) pss_sd(fd, S_default_output_format, default_output_format(ss));
+  if (default_output_type(ss) != DEFAULT_OUTPUT_TYPE) pss_ss(fd, S_default_output_type, mus_header_type_to_constant_name(default_output_type(ss)));
+  if (default_output_format(ss) != DEFAULT_OUTPUT_FORMAT) pss_ss(fd, S_default_output_format, mus_data_format_to_constant_name(default_output_format(ss)));
   if (auto_resize(ss) != DEFAULT_AUTO_RESIZE) pss_ss(fd, S_auto_resize, b2s(auto_resize(ss)));
   if (graphs_horizontal(ss) != DEFAULT_GRAPHS_HORIZONTAL) pss_ss(fd, S_graphs_horizontal, b2s(graphs_horizontal(ss)));
   if (auto_update(ss) != DEFAULT_AUTO_UPDATE) pss_ss(fd, S_auto_update, b2s(auto_update(ss)));

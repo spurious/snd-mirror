@@ -1,5 +1,7 @@
 Snd change log
 
+  13-Oct:    recorder-file-hook to set or modify recorder output file name, recorder-out-type.
+             changed multichannel-mix-hook.
   10-Oct:    removed mix-sync (use mix-track).
   9-Oct:     removed the mix-id in list option for various functions.
   8-Oct:     optional filename arg for save-marks (and Ruby case implemented).

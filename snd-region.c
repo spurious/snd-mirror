@@ -601,7 +601,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
       err = copy_file(r->filename, newname);
       if (err != MUS_NO_ERROR)
 	snd_error(_("can't save mix temp file (%s: %s)"), newname, strerror(errno));
-      else id = mix(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss));
+      /* TODO: mix region track id arg */
+      else id = mix(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), 0);
       if (newname) FREE(newname);
     }
   else

@@ -412,7 +412,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
   if (!(directory_p(filename)))
     {
       sp = snd_open_file(filename, open_dialog->file_dialog_read_only);
-      if (sp) select_channel(sp, 0);           /* add_sound_window (snd-xsnd.c) will report reason for error, if any */
+      if (sp) select_channel(sp, 0);           /* add_sound_window (snd-gsnd.c) will report reason for error, if any */
     }
   else snd_error(_("%s is a directory"), filename);
 }
@@ -440,7 +440,7 @@ void make_open_file_dialog(bool read_only, bool managed)
     {
       if (read_only != open_dialog->file_dialog_read_only)
 	{
-	  gtk_window_set_title(GTK_WINDOW(open_dialog->dialog), (read_only) ? _("View") : _("Open"));
+	  gtk_window_set_title(GTK_WINDOW(open_dialog->dialog), (read_only) ? (const char *)(_("View")) : (const char *)(_("Open")));
 	  open_dialog->file_dialog_read_only = read_only;
 	}
     }
@@ -468,7 +468,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
   file_dialog_stop_playing(mix_dialog);
   mix_complete_file_at_cursor(any_selected_sound(),
 			      (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(mix_dialog->dialog)),
-			      "File: mix", with_mix_tags(ss));
+			      "File: mix", with_mix_tags(ss), 0);
 }
 
 void make_mix_file_dialog(bool managed)

@@ -2957,6 +2957,8 @@ void finish_recording(recorder_info *rp)
     }
 }
 
+static XEN recorder_file_hook;
+
 static void record_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmString s1 = NULL, s2 = NULL;
@@ -2964,7 +2966,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
   char *buf = NULL;
   int i, old_srate, ofmt, rs, ochns;
   off_t oloc, samples;
-  static char *comment;
+  char *comment = NULL;
   char *str;
   PANE *p;
   recorder_info *rp;
@@ -2972,95 +2974,106 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
   rp->recording = (!(rp->recording));
   if (rp->recording)
     {
+      XEN res = XEN_FALSE;
       if (!(rp->taking_input)) fire_up_recorder();
-      str = XmTextGetString(file_text);
-      if ((str) && (*str))
+      old_srate = rp->srate;
+      comment = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
+      rp->output_data_format = ofmt;
+      if ((all_panes[out_file_pane]) && (all_panes[out_file_pane]->on_buttons_size < ochns))
 	{
-	  if (rp->output_file) FREE(rp->output_file);
-	  rp->output_file = mus_expand_filename(str);
-	  /* TODO: some way to specialize record output file name -- recorder-output-name|comment-hook? */
-	  /*       also perhaps set default -- if no name, allow hook to supply one */
-	  XtFree(str);
-	  str = NULL;
-	  old_srate = rp->srate;
-	  str = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
-	  if (str) FREE(str);
-	  str = NULL;
-	  rp->output_data_format = ofmt;
-	  if ((all_panes[out_file_pane]) && (all_panes[out_file_pane]->on_buttons_size < ochns))
+	  rp->out_chans = all_panes[out_file_pane]->on_buttons_size;
+	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, 
+		       "only %d out chan%s available",
+		       rp->out_chans, (rp->out_chans > 1) ? "s" : "");
+	  record_report(messages, buf, NULL);
+	  FREE(buf);
+	}
+      else rp->out_chans = ochns;
+      if (rs != old_srate) 
+	{
+	  rp->srate = rs;
+	  recorder_set_audio_srate(MUS_AUDIO_DEFAULT, rp->srate, 0, rp->taking_input);
+	}
+      if (rp->out_chans <= 0)
+	{
+	  record_report(messages, _("can't record: you screwed up the output channel number!"), NULL);
+	  rp->recording = false;
+	  rp->triggered = (!rp->triggering);
+	  if (comment) FREE(comment);
+	  return;
+	}
+      reflect_recorder_duration(0.0);
+      if (out_chans_active() != rp->out_chans)
+	{
+	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE,
+		       _("chans field (%d) doesn't match file out panel (%d channel%s active)"),
+		       rp->out_chans, out_chans_active(), (out_chans_active() > 1) ? "s" : "");
+	  record_report(messages, buf, NULL);
+	  FREE(buf);
+	  wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
+	  wd->p = all_panes[out_file_pane];
+	  p = wd->p;
+	  wd->field = MUS_AUDIO_AMP;
+	  wd->device = p->device;
+	  wd->system = 0;
+	  for (i = 0; i < rp->out_chans; i++)
 	    {
-	      rp->out_chans = all_panes[out_file_pane]->on_buttons_size;
-	      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	      mus_snprintf(buf, PRINT_BUFFER_SIZE, 
-			   "only %d out chan%s available",
-			   rp->out_chans, (rp->out_chans > 1) ? "s" : "");
-	      record_report(messages, buf, NULL);
-	      FREE(buf);
-	    }
-	  else rp->out_chans = ochns;
-	  if (rs != old_srate) 
-	    {
-	      rp->srate = rs;
-	      recorder_set_audio_srate(MUS_AUDIO_DEFAULT, rp->srate, 0, rp->taking_input);
-	    }
-	  if (rp->out_chans <= 0)
-	    {
-	      record_report(messages, _("can't record: you screwed up the output channel number!"), NULL);
-	      rp->recording = false;
-	      rp->triggered = (!rp->triggering);
-	      return;
-	    }
-	  comment = XmTextGetString(recdat->comment_text);
-	  reflect_recorder_duration(0.0);
-	  
-	  if (out_chans_active() != rp->out_chans)
-	    {
-	      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	      mus_snprintf(buf, PRINT_BUFFER_SIZE,
-			   _("chans field (%d) doesn't match file out panel (%d channel%s active)"),
-			   rp->out_chans, out_chans_active(), (out_chans_active() > 1) ? "s" : "");
-	      record_report(messages, buf, NULL);
-	      FREE(buf);
-	      wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
-	      wd->p = all_panes[out_file_pane];
-	      p = wd->p;
-	      wd->field = MUS_AUDIO_AMP;
-	      wd->device = p->device;
-	      wd->system = 0;
-	      for (i = 0; i < rp->out_chans; i++)
+	      if (!(p->active[i]))
 		{
-		  if (!(p->active[i]))
-		    {
-		      wd->chan = i;
-		      meter_button_callback(p->on_buttons[i], (XtPointer)wd, NULL); /* info not used */
-		    }
+		  wd->chan = i;
+		  meter_button_callback(p->on_buttons[i], (XtPointer)wd, NULL); /* info not used */
 		}
-	      FREE(wd);
 	    }
-	  if (in_chans_active() == 0)
-	    {
-	      record_report(messages, _("can't record: no inputs enabled"), NULL);
-	      rp->recording = false;
-	      rp->triggered = (!rp->triggering);
-	      return;
-	    }
-	  if (!(ss->using_schemes)) XmChangeColor(w, (Pixel)(ss->sgx)->red);
-	  s1 = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
-	  XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
-	  XmStringFree(s1);
-	  s2 = XmStringCreate(_("Done"), XmFONTLIST_DEFAULT_TAG);
-	  XtVaSetValues(record_button, XmNlabelString, s2, NULL);
-	  XmStringFree(s2);
-
-	  if (recorder_start_output_file(comment)) return; /* true = error */
+	  FREE(wd);
+	}
+      if (in_chans_active() == 0)
+	{
+	  record_report(messages, _("can't record: no inputs enabled"), NULL);
+	  rp->recording = false;
+	  rp->triggered = (!rp->triggering);
+	  if (comment) FREE(comment);
+	  return;
+	}
+      str = XmTextGetString(file_text);
+      if (XEN_HOOKED(recorder_file_hook))
+	res = run_progn_hook(recorder_file_hook,
+			     XEN_LIST_1((str) ? C_TO_XEN_STRING(str) : XEN_FALSE),
+			     S_recorder_file_hook);
+      if (XEN_STRING_P(res))
+	{
+	  XtFree(str);
+	  if (rp->output_file) FREE(rp->output_file);
+	  rp->output_file = mus_expand_filename(XEN_TO_C_STRING(res));
 	}
       else
 	{
-	  record_report(messages, _("can't record: no output file name supplied"), NULL);
-	  rp->recording = false;
-	  rp->triggered = (!rp->triggering);
-	  return;
+	  if ((str) && (*str))
+	    {
+	      if (rp->output_file) FREE(rp->output_file);
+	      rp->output_file = mus_expand_filename(str);
+	      XtFree(str);
+	    }
+	  else
+	    {
+	      record_report(messages, _("can't record: no output file name supplied"), NULL);
+	      rp->recording = false;
+	      rp->triggered = (!rp->triggering);
+	      if (comment) FREE(comment);
+	      return;
+	    }
 	}
+      if (!(ss->using_schemes)) XmChangeColor(w, (Pixel)(ss->sgx)->red);
+      s1 = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
+      XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
+      XmStringFree(s1);
+      s2 = XmStringCreate(_("Done"), XmFONTLIST_DEFAULT_TAG);
+      XtVaSetValues(record_button, XmNlabelString, s2, NULL);
+      XmStringFree(s2);
+      
+      recorder_start_output_file(comment);
+      if (comment) FREE(comment);
     }
   else 
     finish_recording(rp);
@@ -3398,4 +3411,13 @@ void set_recorder_srate(recorder_info *rp, int val)
 	  XmTextSetString(recdat->srate_text, sbuf);
 	}
     }
+}
+
+void g_init_gxrec(void)
+{
+  #define H_recorder_file_hook S_recorder_file_hook " (filename): called when 'Record' is pressed \
+in the recorder dialog.  The currently displayed output filename is passed in as the argument, \
+or #f if no filename has been supplied.  The hook function should return the new filename."
+
+  XEN_DEFINE_HOOK(recorder_file_hook, S_recorder_file_hook, 1, H_recorder_file_hook);     /* args = displayed output file name */
 }
