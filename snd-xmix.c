@@ -34,7 +34,7 @@ static Float scroll_to_speed(Widget speed_number, int ival)
 static void speed_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char speed_number_buffer[6];
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   mix_dialog_set_mix_speed(mix_dialog_id, 
 			   speed_changed(1.0,
 					 speed_number_buffer,
@@ -50,7 +50,7 @@ static void speed_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   int ival;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (!mix_dialog_slider_dragging) mix_dialog_start_drag(mix_dialog_id);
   mix_dialog_slider_dragging = true;
@@ -63,7 +63,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   mix_dialog_slider_dragging = false;
   mix_dialog_set_mix_speed(mix_dialog_id, 
 			   scroll_to_speed(w_speed_number, cb->value),
@@ -111,7 +111,7 @@ static void change_mix_amp(int mix_id, int chan, Float val)
 static void amp_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int chan;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   change_mix_amp(mix_dialog_id, chan, 1.0);
   XtVaSetValues(w_amps[chan], XmNvalue, amp_to_scroll(amp_control_min(ss), 1.0, amp_control_max(ss)), NULL);
@@ -121,7 +121,7 @@ static void amp_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   int ival, chan;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (!mix_dialog_slider_dragging) mix_dialog_start_drag(mix_dialog_id);
@@ -132,7 +132,7 @@ static void amp_drag_callback(Widget w, XtPointer context, XtPointer info)
 static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival, chan;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
@@ -171,7 +171,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
 {
   int chans, chan;
   env **e;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   if (ax == NULL)
     {
       XGCValues gv;
@@ -216,7 +216,7 @@ static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event,
   int chans, chan;
   env *e;
   Float pos;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
 #ifdef MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
@@ -235,7 +235,7 @@ static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, 
   int chans, chan;
   env *e;
   Float pos;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
 #ifdef MAC_OSX
   press_x = ev->x;
   press_y = ev->y;
@@ -255,7 +255,7 @@ static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event
   int chans, chan;
   env *e;
   Float pos;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   chans = mix_dialog_mix_input_chans(mix_dialog_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
@@ -275,7 +275,7 @@ static void track_activated(void)
 {
   char *val;
   track_changed = false;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   val = XmTextGetString(w_track);
   if (val)
     {
@@ -337,7 +337,7 @@ static void id_check_callback(Widget w, XtPointer context, XtPointer info)
 static void beg_activated(void)
 {
   char *val;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   val = XmTextGetString(w_beg);
   if (val)
     {
@@ -357,7 +357,7 @@ static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer inf
   /* set all mix amp envs, last one should remix */
   int i, chans;
   env **envs;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   chans = mix_dialog_mix_input_chans(mix_dialog_id);
   envs = mix_dialog_envs(mix_dialog_id);
   for (i = 0; i < chans; i++)
@@ -494,7 +494,7 @@ static void mix_previous_callback(Widget w, XtPointer context, XtPointer info)
 static void mix_dialog_pan_callback(Widget w, XtPointer context, XtPointer info) 
 {
   bool inverted;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   inverted = (!(mix_dialog_mix_inverted(mix_dialog_id)));
   if (!(ss->using_schemes))
     XmChangeColor(w_mix_pan, (inverted) ? (ss->sgx)->yellow : (ss->sgx)->highlight_color);
@@ -1030,7 +1030,7 @@ static void update_mix_dialog(int mix_id)
 	      s1 = XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
 	      XtVaSetValues(w_amp_labels[i], XmNlabelString, s1, NULL);
 	      XmStringFree(s1);
-	      if (mix_ok(mix_dialog_id))
+	      if (mix_ok_and_unlocked(mix_dialog_id))
 		val = mix_dialog_mix_amp(mix_dialog_id, i);
 	      else val = 1.0;
 	      XtVaSetValues(w_amps[i], XmNvalue, mix_amp_to_scroll(val, i), NULL);
@@ -2146,7 +2146,7 @@ void reflect_mix_or_track_change(int mix_id, int track_id, bool forced)
   if ((mix_dialog) && 
       (XtIsManaged(mix_dialog)))
     {
-      if ((forced) && (mix_ok(mix_id))) mix_dialog_id = mix_id;
+      if ((forced) && (mix_ok_and_unlocked(mix_id))) mix_dialog_id = mix_id;
       update_mix_dialog(mix_id);
       if (mix_id != INVALID_MIX_ID)
 	{

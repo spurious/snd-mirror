@@ -260,9 +260,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
   if (sc == NULL) return(NULL);
   si = sc->si;
 
-  origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(origin, PRINT_BUFFER_SIZE,
-	       "%s %s %.3f", 
+  origin = mus_format("%s \"%s\" %.3f", 
 	       (cp == NULL) ? S_convolve_selection_with : S_convolve_with, 
 	       filename, amp);
   if (!(ss->stopped_explicitly))
@@ -4346,7 +4344,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 		    OVER_SOUND, false));
 }
 
-/* TODO: origins for filter-selection, insert-selection? convolve-* etc */
+/* TODO: origins for filter-selection, insert-selection? */
 
 static XEN g_filter_selection(XEN e, XEN order, XEN truncate)
 {

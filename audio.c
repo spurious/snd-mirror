@@ -8890,8 +8890,14 @@ static void sndjack_write_process(jack_nframes_t nframes){
   }else{
 
     // First null out unused channels, if any.
-    for(ch=sndjack_num_channels_inuse;ch<sndjack_num_channels_allocated;ch++){
-      memset(out[ch],0,nframes*sizeof(sample_t));
+    if(sndjack_num_channels_inuse==1 && sndjack_num_channels_allocated>=2){
+      for(ch=2;ch<sndjack_num_channels_allocated;ch++){
+	memset(out[ch],0,nframes*sizeof(sample_t));
+      }
+    }else{
+      for(ch=sndjack_num_channels_inuse;ch<sndjack_num_channels_allocated;ch++){
+	memset(out[ch],0,nframes*sizeof(sample_t));
+      }
     }
 
     for(i=0;i<nframes;i++){
@@ -8905,9 +8911,15 @@ static void sndjack_write_process(jack_nframes_t nframes){
 	}
 	break;
       }
-      
-      for(ch=0;ch<sndjack_num_channels_inuse;ch++){
-	out[ch][i]=sndjack_channels[ch].buffer[sj_readplace];
+
+      if(sndjack_num_channels_inuse==1 && sndjack_num_channels_allocated>=2){
+	for(ch=0;ch<2;ch++){
+	  out[ch][i]=sndjack_channels[0].buffer[sj_readplace];
+	}
+      }else{
+	for(ch=0;ch<sndjack_num_channels_inuse;ch++){
+	  out[ch][i]=sndjack_channels[ch].buffer[sj_readplace];
+	}
       }
       sj_unread--;
       sj_readplace++;

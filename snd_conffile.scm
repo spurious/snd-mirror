@@ -1805,7 +1805,10 @@ Does not work.
   (lambda ()
     (select-file
       (lambda (filename)
-        (insert-sound filename))
+	(let ((chans (mus-sound-chans filename)))
+	  (if (= 1 chans)
+	      (insert-sound filename (cursor) 0 (selected-sound) (selected-channel))
+	      (insert-sound filename))))
       "Insert file" "." "*" "File will be inserted at cursor location.")))
 
 (define (append-sound filename)

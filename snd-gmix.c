@@ -50,7 +50,7 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   /* label click -- not part of slider stuff */
   speed_pressed = false;
   speed_dragged = false;
-  if (!(mix_ok(mix_dialog_id))) return(false);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   mix_dialog_set_mix_speed(mix_dialog_id, 1.0, mix_dialog_slider_dragging);
   reflect_mix_speed(1.0);
   return(false);
@@ -60,7 +60,7 @@ static gboolean speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer
 {
   if (!speed_pressed) {speed_dragged = false; return(false);}
   speed_dragged = true;
-  if (!(mix_ok(mix_dialog_id))) return(false);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   if (!mix_dialog_slider_dragging) mix_dialog_start_drag(mix_dialog_id);
   mix_dialog_slider_dragging = true;
   mix_dialog_set_mix_speed(mix_dialog_id, 
@@ -75,7 +75,7 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
   if (!speed_dragged) return(false);
   speed_dragged = false;
   mix_dialog_slider_dragging = false;
-  if (!(mix_ok(mix_dialog_id))) return(false);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   mix_dialog_set_mix_speed(mix_dialog_id, 
 			   set_speed_label(w_speed_number, scroll_to_speed(GTK_ADJUSTMENT(w_speed_adj)->value)), 
 			   false);
@@ -121,7 +121,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
   int chan;
   amp_dragged = false;
   amp_pressed = false;
-  if (!(mix_ok(mix_dialog_id))) return(false);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   chan = get_user_int_data(G_OBJECT(w));
   reflect_mix_amp(1.0, chan);
   mix_dialog_set_mix_amp(mix_dialog_id, chan, 1.0, mix_dialog_slider_dragging);    
@@ -136,7 +136,7 @@ static gboolean amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer d
   Float scrollval;
   if (!amp_pressed) {amp_dragged = false; return(false);}
   amp_dragged = true;
-  if (!(mix_ok(mix_dialog_id))) return(false);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   if (!mix_dialog_slider_dragging) mix_dialog_start_drag(mix_dialog_id);
   mix_dialog_slider_dragging = true;
   chan = get_user_int_data(G_OBJECT(w));
@@ -154,7 +154,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   amp_pressed = false;
   if (!amp_dragged) return(false);
   amp_dragged = false;
-  if (!(mix_ok(mix_dialog_id))) return(false);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   chan = get_user_int_data(G_OBJECT(w));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
   reflect_mix_amp(scroll_to_amp(scrollval), chan);
@@ -201,7 +201,7 @@ static void mix_amp_env_resize(GtkWidget *w)
 {
   int chans, chan;
   env **e;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   if (ax == NULL)
     {
       GdkWindow *wn;
@@ -243,7 +243,7 @@ static gboolean mix_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpoint
   int chans, chan;
   env *e;
   Float pos;
-  if (!(mix_ok(mix_dialog_id))) return(false);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   chans = mix_dialog_mix_input_chans(mix_dialog_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
@@ -260,7 +260,7 @@ static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoi
   int chans, chan;
   env *e;
   Float pos;
-  if (!(mix_ok(mix_dialog_id))) return(false);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   chans = mix_dialog_mix_input_chans(mix_dialog_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
@@ -273,7 +273,7 @@ static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoi
 
 static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
-  if (!(mix_ok(mix_dialog_id))) return(false);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   if (ev->state & GDK_BUTTON1_MASK)
     {
       int chans, chan, x, y;
@@ -307,7 +307,7 @@ static gboolean mix_amp_env_expose_callback(GtkWidget *w, GdkEventExpose *ev, gp
 
 static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
-  if (!(mix_ok(mix_dialog_id))) return(false);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   mix_amp_env_resize(w);
   return(false);
 }
@@ -352,7 +352,7 @@ static gboolean id_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer da
 static void beg_activated(GtkWidget *w, gpointer context) 
 {
   char *val;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   val = (char *)gtk_entry_get_text(GTK_ENTRY(w_beg));
   if (val)
     {
@@ -463,7 +463,7 @@ static gboolean w_mix_pan_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer 
 static void mix_pan_callback(GtkWidget *w, gpointer context) 
 {
   bool inverted;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   inverted = (!(mix_dialog_mix_inverted(mix_dialog_id)));
   if (inverted) mix_pan_pix = mix_yellow_pan_pix; else mix_pan_pix = mix_basic_pan_pix;
   gdk_draw_drawable(GDK_DRAWABLE(w_mix_pan1->window), ss->sgx->basic_gc, mix_pan_pix, 0, 0, 0, 4, 14, 12);
@@ -499,7 +499,7 @@ static void apply_mix_dialog(GtkWidget *w, gpointer context)
   /* set all mix amp envs, last one should remix */
   int i, chans;
   env **envs;
-  if (!(mix_ok(mix_dialog_id))) return;
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   chans = mix_dialog_mix_input_chans(mix_dialog_id);
   envs = mix_dialog_envs(mix_dialog_id);
   for (i = 0; i < chans; i++)
@@ -897,7 +897,7 @@ static void update_mix_dialog(int mix_id)
 	      gtk_widget_show(w_amp_numbers[i]);	  
 	      gtk_widget_show(w_amps[i]);
 	      gtk_widget_show(w_amp_forms[i]);
-	      if (mix_ok(mix_dialog_id))
+	      if (mix_ok_and_unlocked(mix_dialog_id))
 		val = mix_dialog_mix_amp(mix_dialog_id, i);
 	      else val = 1.0;
 	      reflect_mix_amp(val, i);
@@ -1789,7 +1789,7 @@ void reflect_mix_or_track_change(int mix_id, int track_id, bool forced)
   if ((mix_dialog) && 
       (GTK_WIDGET_VISIBLE(mix_dialog)))
     {
-      if ((forced) && (mix_ok(mix_id))) mix_dialog_id = mix_id;
+      if ((forced) && (mix_ok_and_unlocked(mix_id))) mix_dialog_id = mix_id;
       update_mix_dialog(mix_id);
       if (mix_id != INVALID_MIX_ID)
 	{

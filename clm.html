@@ -527,8 +527,8 @@ To get a cosine (as opposed to sin), set the initial-phase to (/ pi 2).
 (<a class=quiet href="#definstrument">definstrument</a> simple-fm (beg dur freq amp mc-ratio index &amp;optional amp-env index-env)
   (let* ((start (floor (* beg *srate*)))
 	 (end (+ start (floor (* dur *srate*))))
-	 (cr (make-oscil freq))                     ; our carrier
-         (md (make-oscil (* freq mc-ratio)))        ; our modulator
+	 (cr (<em class=red>make-oscil</em> freq))                     ; our carrier
+         (md (<em class=red>make-oscil</em> (* freq mc-ratio)))        ; our modulator
          (fm-index (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> (* index mc-ratio freq)))
          (ampf (<a class=quiet href="#make-env">make-env</a> (or amp-env '(0 0 .5 1 1 0)) :scaler amp :end end))
          (indf (<a class=quiet href="#make-env">make-env</a> (or index-env '(0 0 .5 1 1 0)) :scaler fm-index :end end)))
@@ -560,6 +560,41 @@ create the individual spectral components:
 	 (outa i (* amp .05 sum)))))))
 </pre>
 </td></tr></table>
+
+<p>Here are equivalent phase-modulation and frequency-modulation instruments,
+using Scheme (Snd/CLM) syntax:
+</p>
+<table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(definstrument (pm beg end freq amp mc-ratio index)
+  (let ((pm (<em class=red>make-oscil</em> (* freq mc-ratio)))
+	(carrier (<em class=red>make-oscil</em> freq)))
+   (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (<em class=red>oscil</em> carrier 0.0 (* index (<em class=red>oscil</em> pm)))) *output*))))))
+
+(definstrument (fm beg end freq amp mc-ratio index)
+  (let ((fm (<em class=red>make-oscil</em> (* freq mc-ratio) :initial-phase (/ 3.14159 2.0)))
+	(carrier (<em class=red>make-oscil</em> freq))
+        (fm-index (* (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> freq) mc-ratio index)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (<em class=red>oscil</em> carrier (* fm-index (<em class=red>oscil</em> fm)))) *output*))))))
+
+#!
+(with-sound () (pm 0 10000 1000 .25 0.1 4))
+(with-sound () (fm 0 10000 1000 .25 0.1 4))
+
+(with-sound () (pm 0 10000 100 .25 1.0 8))
+(with-sound () (fm 0 10000 100 .25 1.0 8))
+!#
+</pre>
+</td></tr></table>
+
 <br>
 
 <!-- ---------------------------------------- ENV ---------------------------------------- -->

@@ -12,25 +12,7 @@ static bool dont_save(snd_info *sp, const char *newname)
   return(XEN_TRUE_P(res));
 }
 
-#if 0
-static FILE *edfp = NULL;
-static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos);
-static void after_edit(chan_info *cp)
-{
-  if (cp->edit_ctr > 0)
-    {
-      edfp = fopen("edits", "a");
-      fprintf(edfp, "%s\n", edit_list_to_function(cp, 1, cp->edit_ctr));
-      fclose(edfp);
-    }
-  reflect_edit_history_change(cp);
-  reflect_enved_spectra_change(cp);
-  if ((XEN_HOOK_P(cp->after_edit_hook)) && (XEN_HOOKED(cp->after_edit_hook)))
-    run_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
-}
-#endif
-
-static void after_edit(chan_info *cp)
+void after_edit(chan_info *cp)
 {
   reflect_edit_history_change(cp);
   reflect_enved_spectra_change(cp);
@@ -4755,6 +4737,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 {
   char *function = NULL, *old_function = NULL;
+  bool close_mix_let = false;
   int i, edits;
   ed_list *ed;
   edits = cp->edit_ctr;
@@ -4766,8 +4749,15 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
     return(copy_string("(lambda (snd chn) #f)"));
   if (cp->have_mixes)
     {
-      function = mus_format("(lambda (snd chn) (let (%s)", old_function = edit_list_mix_and_track_init(cp));
-      if (old_function) {FREE(old_function); old_function = NULL;}
+      char *mix_list;
+      mix_list = edit_list_mix_and_track_init(cp);
+      if (mix_list)
+	{
+	  close_mix_let = true;
+	  function = mus_format("(lambda (snd chn) (let (%s)", mix_list);
+	  FREE(mix_list);
+	}
+      else function = copy_string("(lambda (snd chn)");
     }
   else function = copy_string("(lambda (snd chn)");
   for (i = start_pos; i <= edits; i++)
@@ -4838,8 +4828,8 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	}
     }
   old_function = function;
-  if (cp->have_mixes)
-    function = mus_format("%s))", function); /* close the "let" */
+  if (close_mix_let)
+    function = mus_format("%s))", function);
   else function = mus_format("%s)", function);
   FREE(old_function);
   return(function);
@@ -5282,14 +5272,14 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
   return(true);
 }
 
-bool extend_edit_list(chan_info *cp, const char *origin, int edpos)
+bool extend_edit_list(chan_info *cp, int edpos)
 {
   /* called by drag-mix (remix_file) in snd-mix.c to provide an "undo point" for mix reposition */
   /*   when both sides of the mix are currently zeroed out -- that is, no edit takes place, */
   /*   but it's confusing to the user not to have the position change show up in the history list */
   int i;
   ed_list *new_ed, *old_ed;
-  if (!(prepare_edit_list(cp, cp->samples[edpos], edpos, origin))) return(false);
+  if (!(prepare_edit_list(cp, cp->samples[edpos], edpos, S_pad_channel))) return(false);
   old_ed = cp->edits[edpos];
   new_ed = make_ed_list(cp->edits[edpos]->size);
   new_ed->beg = 0;
@@ -5301,7 +5291,7 @@ bool extend_edit_list(chan_info *cp, const char *origin, int edpos)
     }
   new_ed->edit_type = EXTEND_EDIT;
   new_ed->sound_location = 0;
-  new_ed->origin = copy_string(origin);
+  new_ed->origin = copy_string(S_pad_channel);
   new_ed->edpos = edpos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
@@ -5544,8 +5534,8 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
   return(new_state);
 }
 
-bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
-			 file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos)
+bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+			     file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos, bool with_mix)
 {
   file_info *hdr;
   ss->catch_message = NULL;
@@ -5594,8 +5584,11 @@ bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 	ed->edit_type = CHANGE_EDIT;
 	ed->sound_location = ED_SOUND(cb);
       }
-      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
-      after_edit(cp);
+      if (!with_mix)
+	{
+	  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
+	  after_edit(cp);
+	}
     }
   else
     {
@@ -5605,6 +5598,13 @@ bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
     }
   return(true);
 }
+
+bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+			 file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos)
+{
+  return(file_mix_change_samples(beg, num, tempfile, cp, chan, auto_delete, lock, origin, edpos, false));
+}
+
 
 bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, lock_mix_t lock, const char *origin)
 {
