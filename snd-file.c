@@ -520,9 +520,6 @@ dir *filter_sound_files(dir *dp, char *pattern)
   return(ndp);
 }
 
-static int incf_active_sounds (snd_state *ss) {ss->active_sounds++; return(ss->active_sounds);}
-static int decf_active_sounds (snd_state *ss) {ss->active_sounds--; return(ss->active_sounds);}
-
 typedef struct {
   int active_sounds;
   char **names;
@@ -650,7 +647,8 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
       sp->write_date = file_write_date(sp->fullname);
       sp->need_update = 0;
       if (ss->viewing) sp->read_only = 1;
-      files = incf_active_sounds(ss);
+      ss->active_sounds++;
+      files = ss->active_sounds;
       if (files == 1) reflect_file_open_in_menu();
       reflect_normalize_in_menu(active_channels(ss,0) > 1);
       reflect_file_change_in_title(ss);
@@ -696,7 +694,8 @@ void snd_close_file(snd_info *sp, snd_state *ss)
     }
   if (sp == selected_sound(ss)) ss->selected_sound = NO_SELECTION;
   free_snd_info(sp);
-  files = decf_active_sounds(ss);
+  ss->active_sounds--;
+  files = ss->active_sounds;
   if (files == 0) reflect_file_lack_in_menu();
   reflect_file_change_in_title(ss);
   reflect_normalize_in_menu(active_channels(ss,0) > 1);

@@ -551,7 +551,13 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
 #if TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV,segv);
 #endif
-      if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse)) select_channel(ss->sounds[0],0);
+      if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse)) 
+	{
+	  select_channel(ss->sounds[0],0);
+	  if ((ss->active_sounds > 1) &&
+	      ((sound_style(ss) == SOUNDS_VERTICAL) || (sound_style(ss) == SOUNDS_HORIZONTAL)))
+	    normalize_all_sounds(ss);
+	}
       FREE(tm);
       return(BACKGROUND_QUIT); 
       break;

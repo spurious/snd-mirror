@@ -1,8 +1,10 @@
 /* TODO: split out stuff that is not widget-dependent into snd-rec.c
- *         see snd-rec.h/c -- next step is to put all the non-GUI globals in a struct,
- *           then pass a pointer to that.
- *         (there's a trap here -- record_report has different args in g/x)
- *       re-merge with snd-grec.c
+ *         see snd-rec.h/c 
+ *
+ *
+ *   This split is underway -- many name changes, weird temporary code, etc
+ *
+ *
  *       multiple inputs in new sgi al on properly equipped machines (how do Indys behave in this case?)
  *       smoothed amp sliders(?)
  *       clicks upon swap or whatever (set process priority?)
@@ -77,32 +79,19 @@ typedef struct {
 } Wdesc;
 
 
+
 static char timbuf[TIME_STR_SIZE];
 static char *msgbuf = NULL;
 
 static int systems = 1;             /* multi-card setups */
-static int audio_open = 0;          /* input active */
 static int monitor_open = 0;        /* speakers active (monitor_fd open) */
 
 static int record_fd[MAX_SOUNDCARDS]; /* input (audio hardware) channel (mus_audio_read from this) */
 static int monitor_fd = -1;         /* output ("monitor" not recorded file) port -- mus_audio_write to this */
 static int output_fd = -1;          /* output file descriptor (mus_file_write to this) */
 
-static int audio_out_chans = 2;     /* number of channels being "monitored" -- i.e. output chans sent to the "output" pane
-				     *   not chans being sent to output file; used in conjunction with monitor_fd.
-				     * for example, on some SGI's you can have 4 incoming chans, 
-				     *   any number of recorded chans, but only 2 speaker chans
-				     *   and on some Linux setups, you can have 2 incoming chans,
-				     *   but no ("full duplex") speaker chans.
-				     */
 static XtWorkProcId ever_read = 0;  /* X work proc for recorder (defaults to being a background process) */
 static file_data *recdat;
-
-#ifdef LINUX
-  static int out_type = MUS_RIFF;
-#else
-  static int out_type = MUS_AIFC;
-#endif
 
 /* on the SGI 1024 is very prone to clicks */
 static char *record_buf[MAX_SOUNDCARDS];           /* incoming data has not yet been converted to sndlib representation */
@@ -115,7 +104,6 @@ static MUS_SAMPLE_TYPE *ffbuf = NULL;
 static int fbuf_size = 0;
 static MUS_SAMPLE_TYPE **obufs = NULL;            /* formatted non-interleaved output */
 static int total_out_frames,duration_frames;      /* used to be "_samps" but it's actually counting frames, causing confusion for multi-channel takes */
-static Float max_duration;
 static int overall_in_chans;
 static int input_channels[MAX_SOUNDCARDS];
 
@@ -125,8 +113,6 @@ static int input_channels[MAX_SOUNDCARDS];
   static int input_buffer_size[MAX_SOUNDCARDS];
 #endif
 
-static int *rec_in_active = NULL;   /* overall_in_chans */
-static int *rec_out_active = NULL;  /* (file)_out_chans */
 static VU **rec_in_VU = NULL;       /* from rec in to associated meter */
 static VU **rec_out_VU = NULL;      /* from rec out to associated meter */
 static MUS_SAMPLE_TYPE *outvals = NULL;       /* out_chans */
@@ -135,13 +121,9 @@ static MUS_SAMPLE_TYPE *out_max = NULL;       /* same on output */
 static int *in_device_on = NULL;    /* is this input channel receiving input */
 static int *in_device_chan = NULL;  /* which actual (audio) input channel is associated with which (virtual) recorder device */
 
-static Float **rec_in_amps = NULL;  /* overall_in_chans X out_chans */
-static Float *rec_out_amps = NULL;  /* out_chans (independent of file write: monitor vol) */
-static Float *audio_gains = NULL;   /* audio gain values (widgets are per pane) */
-static Wdesc **audio_GAINS = NULL;  /* associated sliders and descriptors for write audio state */
-static int audio_gains_size = 0;
-static AMP ***rec_in_AMPS = NULL;
-static AMP **rec_out_AMPS = NULL;
+static Wdesc **gain_sliders = NULL;  /* associated sliders and descriptors for write audio state */
+static AMP ***AMP_rec_ins = NULL;
+static AMP **AMP_rec_outs = NULL;
 
 static Widget recorder = NULL;      /* the outer dialog shell */
 static int recording = 0;
@@ -153,9 +135,6 @@ static int autoload_button = 0;
 static int digital_in_button = 0;
 static int microphone_button = 0;
 static int line_in_button = 0;
-static int triggering = 0;
-static Float trigger = 0.0;
-static int triggered = 1;
 
 static Widget rec_size_text,trigger_scale,trigger_label;
 static Widget file_duration,messages,record_button,reset_button,file_text;
@@ -186,35 +165,12 @@ static int pending_error_size = 0;
 
 static void set_read_in_progress (snd_state *ss);
 
-static Float get_audio_gain(Wdesc *wd)
-{
-  /* read and set local audio_gains value as well (for snd-clm connection) */
-  float g[1];
-  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(wd->system) | (wd->device),wd->field,wd->chan,g);
-  if (wd->gain > audio_gains_size) snd_error("%s[%d] %s: overflow %d > %d",__FILE__,__LINE__,__FUNCTION__,wd->gain,audio_gains_size);
-  audio_gains[wd->gain]=g[0];
-  return(g[0]);
-}
-
-static void set_audio_gain(Wdesc *wd, Float amp) 
-{
-  float g[1];
-  g[0] = amp;
-  if (wd->device == MUS_AUDIO_DAC_FILTER) /* bass or treble control affects both channels at once */
-    {
-      mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(wd->system) | (wd->device),wd->field,0,g);
-      mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(wd->system) | (wd->device),wd->field,1,g);
-    }
-  else 
-    mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(wd->system) | (wd->device),wd->field,wd->chan,g);
-  if (wd->gain > audio_gains_size) snd_error("%s[%d] %s: overflow %d > %d",__FILE__,__LINE__,__FUNCTION__,wd->gain,audio_gains_size);
-  audio_gains[wd->gain] = amp;
-}
-
 void close_recorder_audio(void) 
 {
   int i;
-  if (audio_open)
+  recorder_info *rp;
+  rp = get_recorder_info();
+  if (rp->taking_input)
     {
       for (i=0;i<systems;i++)
 	if (record_fd[i] != -1)
@@ -222,7 +178,7 @@ void close_recorder_audio(void)
 	    mus_audio_close(record_fd[i]);
 	    record_fd[i] = -1;
 	  }
-      audio_open = 0;
+      rp->taking_input = 0;
     }
   if (ever_read) 
     {
@@ -268,10 +224,10 @@ static void record_report(Widget text, ...)
 static void set_line_source(snd_state *ss, int in_digital)
 {
   int aud,err;
-  aud = audio_open;
+  aud = rp->taking_input;
   if (aud) close_recorder_audio();
   input_channels[0] = ((in_digital) ? 2 : 4);
-  audio_out_chans = input_channels[0];
+  rp->monitor_out_chans = input_channels[0];
   err = mus_audio_mixer_write(MUS_AUDIO_DEFAULT,MUS_AUDIO_PORT,((in_digital) ? MUS_AUDIO_DIGITAL_IN : MUS_AUDIO_MICROPHONE),NULL);
   if (err == -1) 
     {
@@ -926,6 +882,8 @@ static void display_vu_meter(VU *vu)
   snd_state *ss;
   Float size;
   state_context *sx;
+  recorder_info *rp;
+  rp = get_recorder_info();
   ss = vu->ss;
   sx = ss->sgx;
   size = vu->size;
@@ -934,7 +892,7 @@ static void display_vu_meter(VU *vu)
       if (vu->on_off == VU_ON) 
 	{
 	  vu->on_off = VU_CLIPPED;
-	  vu->clipped = (int)(CLIPPED_TIME * ((Float)(recorder_srate(ss)) / 22050.0));
+	  vu->clipped = (int)(CLIPPED_TIME * ((Float)(rp->srate) / 22050.0));
 	  /* might also change with record buffer size (recorder_buffer_size below)
 	   * at 4096, we're getting updated here every 1024 samps (4 chans in always)
 	   * which is fast enough to look smooth, except perhaps at 8kHz?
@@ -1066,9 +1024,9 @@ static char amp_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
 static void record_amp_changed(AMP *ap, int val)
 {
   char *sfs;
-  snd_state *ss;
   Float amp;
-  ss = ap->ss;
+  recorder_info *rp;
+  rp = get_recorder_info();
   if (val == 0) 
     amp = 0.0;
   else 
@@ -1082,8 +1040,8 @@ static void record_amp_changed(AMP *ap, int val)
   set_button_label(ap->number,amp_number_buffer);
   FREE(sfs);
   if (ap->type == INPUT_AMP)
-    rec_in_amps[ap->in][ap->out] = amp;
-  else rec_out_amps[ap->out] = amp;
+    rp->in_amps[ap->in][ap->out] = amp;
+  else rp->out_amps[ap->out] = amp;
 }
 
 static int amp_to_slider(Float val)
@@ -1101,9 +1059,11 @@ static int amp_to_slider(Float val)
 
 static Float global_amp(AMP *a)
 {
+  recorder_info *rp;
+  rp = get_recorder_info();
   if (a->type == INPUT_AMP)
-    return(rec_in_amps[a->in][a->out]);
-  else return(rec_out_amps[a->out]);
+    return(rp->in_amps[a->in][a->out]);
+  else return(rp->out_amps[a->out]);
 }
 
 static char *amp_to_string(Float val)
@@ -1252,7 +1212,7 @@ static void trigger_help_Callback(Widget w,XtPointer clientData,XtPointer callDa
 	   "Record Trigger",
 "This scale sets the auto-record trigger\n\
 value.  If it is non-zero, when you push the\n\
-'Triggered Record' button, Snd waits until it\n\
+'Rp->Triggered Record' button, Snd waits until it\n\
 receives data above that value before starting\n\
 the actual recording.\n\
 ");
@@ -1276,13 +1236,15 @@ static void make_trigger_label(Float val)
 static void internal_trigger_set(Float val)
 {
   XmString s1;
-  trigger = val;
-  triggering = (val > 0.0);
-  triggered = (!triggering);
+  recorder_info *rp;
+  rp = get_recorder_info();
+  rp->trigger = val;
+  rp->triggering = (val > 0.0);
+  rp->triggered = (!rp->triggering);
   make_trigger_label(val);
   if (!recording) /* else wait for current session to end (via click) */
     {
-      s1 = XmStringCreate((triggering) ? STR_Triggered_Record : STR_Record,XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate((rp->triggering) ? STR_Triggered_Record : STR_Record,XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(record_button,XmNlabelString,s1,NULL);
       XmStringFree(s1);
     }
@@ -1290,10 +1252,11 @@ static void internal_trigger_set(Float val)
 
 static void change_trigger_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  snd_state *ss = (snd_state *)clientData;
   /* if val=0, set record button normal label to 'Record', else 'Triggered Record' */
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)callData;
-  in_set_recorder_trigger(ss,(Float)(cb->value)/100.0);
+  recorder_info *rp;
+  rp = get_recorder_info();
+  rp->trigger = (Float)(cb->value)/100.0;
   internal_trigger_set((Float)(cb->value)/100.0);
 }
 
@@ -1313,6 +1276,8 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
   float val[2];
 #endif
 
+  recorder_info *rp;
+  rp = get_recorder_info();
   ss = p->ss;
 
 #if defined(SGI) || defined(SUN)
@@ -1370,7 +1335,7 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
 		  XtVaSetValues(p->pane,XmNpaneMinimum,1,XmNpaneMaximum,LOTSA_PIXELS,NULL);
 		  XmToggleButtonSetState(device_buttons[active_device_button],FALSE,FALSE); 
 		}
-	      if (audio_open) close_recorder_audio();
+	      if (rp->taking_input) close_recorder_audio();
 	    }
 	  active_device_button = button;
 	  p = all_panes[button];
@@ -1381,15 +1346,15 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
 	  if ((p->device == MUS_AUDIO_AES_IN) || (p->device == MUS_AUDIO_ADAT_IN))
 	    {
 	      mus_audio_mixer_read(p->device,MUS_AUDIO_SRATE,0,val);
-	      set_recorder_srate(ss,(int)val[0]);
+	      set_recorder_srate((int)val[0]);
 	    }
 	  record_fd[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | p->device,
-					  recorder_srate(ss),input_channels[0],recorder_in_format(ss),recorder_buffer_size(ss));
+					  rp->srate,input_channels[0],rp->in_format,rp->buffer_size);
 	  if (record_fd[0] == -1)
 	    record_report(messages,recorder_device_name(p->device),": ",mus_audio_error_name(mus_audio_error()),NULL);
 	  else
 	    {
-	      audio_open = 1;
+	      rp->taking_input = 1;
 	      set_read_in_progress(ss);
 	    }
 	}
@@ -1401,7 +1366,7 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
 	      if (!monitor_open)
 		{
 		  monitor_fd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
-						 recorder_srate(ss),audio_out_chans,recorder_out_format(ss),recorder_buffer_size(ss));
+						 rp->srate,rp->monitor_out_chans,rp->out_format,rp->buffer_size);
 		  if (monitor_fd == -1)
 		    {
 		      record_report(messages,"open output: ",mus_audio_error_name(mus_audio_error()),NULL);
@@ -1424,8 +1389,9 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
 
 static void autoload_file_callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  snd_state *ss = (snd_state *)clientData;
-  in_set_recorder_autoload(ss,XmToggleButtonGetState(w));
+  recorder_info *rp;
+  rp = get_recorder_info();
+  rp->autoload = XmToggleButtonGetState(w);
 }
 
 #if (HAVE_OSS || HAVE_ALSA)
@@ -1458,32 +1424,34 @@ static void Srate_Changed_Callback(Widget w,XtPointer clientData,XtPointer callD
 {
   char *str;
   int n;
-  snd_state *ss = (snd_state *)clientData;
+  recorder_info *rp;
+  rp = get_recorder_info();
   str = XmTextGetString(w); 
   if (str) 
     {
       n = string2int(str);
-      if ((n>0) && (n != recorder_srate(ss)))
+      if ((n>0) && (n != rp->srate))
 	{
-	  in_set_recorder_srate(ss,n);
-	  recorder_set_audio_srate(ss,MUS_AUDIO_DEFAULT,recorder_srate(ss),0,audio_open);
+	  rp->srate = n;
+	  recorder_set_audio_srate(get_global_state(),MUS_AUDIO_DEFAULT,rp->srate,0,rp->taking_input);
 	}
       XtFree(str);
     }
 }
 
-static void set_record_size (snd_state *ss, int new_size);
+static void set_record_size (int new_size);
 
 static void Rec_Size_Changed_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  snd_state *ss = (snd_state *)clientData;
   char *str;
   int n;
+  recorder_info *rp;
+  rp = get_recorder_info();
   str = XmTextGetString(w); 
   if (str) 
     {
       n = string2int(str);
-      if ((n>0) && (n != recorder_buffer_size(ss))) set_record_size(ss,n);
+      if ((n>0) && (n != rp->buffer_size)) set_record_size(n);
       XtFree(str);
     }
 }
@@ -1516,6 +1484,8 @@ static int make_file_info_pane(snd_state *ss, Widget file_pane, int *ordered_dev
   float val[1];
   int err;
 #endif
+  recorder_info *rp;
+  rp = get_recorder_info();
 
   n=0;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
@@ -1566,7 +1536,7 @@ static int make_file_info_pane(snd_state *ss, Widget file_pane, int *ordered_dev
   XtSetArg(args[n],XmNleftAttachment,XmATTACH_WIDGET); n++;
   XtSetArg(args[n],XmNleftWidget,file_label); n++;
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-  if (snd_strlen(recorder_file(ss)) > 0) {XtSetArg(args[n],XmNvalue,recorder_file(ss)); n++;}
+  if (snd_strlen(rp->output_file) > 0) {XtSetArg(args[n],XmNvalue,rp->output_file); n++;}
   file_text = sndCreateTextFieldWidget(ss,"text",ff_form,args,n,NOT_ACTIVATABLE,NO_COMPLETER);
   XtAddCallback(file_text,XmNhelpCallback,file_label_help_callback,ss);
 
@@ -1588,16 +1558,16 @@ static int make_file_info_pane(snd_state *ss, Widget file_pane, int *ordered_dev
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-  recdat = sndCreateFileDataForm(ss,ff_form,"data-form",args,n,TRUE,out_type,recorder_out_format(ss),FALSE);
+  recdat = sndCreateFileDataForm(ss,ff_form,"data-form",args,n,TRUE,rp->output_header_type,rp->out_format,FALSE);
   XtVaGetValues(recdat->comment_text,XmNy,&pane_max,NULL);
   XtAddCallback(recdat->srate_text,XmNactivateCallback,Srate_Changed_Callback,(void *)ss);
 #if defined(SGI)
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,MUS_AUDIO_SRATE,0,val);
-  if (!err) in_set_recorder_srate(ss,val[0]);
+  if (!err) rp->srate = val[0];
 #endif
-  sprintf(timbuf,"%d",recorder_srate(ss));
+  sprintf(timbuf,"%d",rp->srate);
   XmTextSetString(recdat->srate_text,timbuf);
-  sprintf(timbuf,"%d",recorder_out_chans(ss));
+  sprintf(timbuf,"%d",rp->out_chans);
   XmTextSetString(recdat->chans_text,timbuf);
   if (!(ss->using_schemes))
     {
@@ -1644,7 +1614,7 @@ static int make_file_info_pane(snd_state *ss, Widget file_pane, int *ordered_dev
   rec_size_text = sndCreateTextFieldWidget(ss,"rectext",file_form,args,n,NOT_ACTIVATABLE,NO_COMPLETER);
   XtAddCallback(rec_size_text,XmNhelpCallback,rec_size_help_callback,ss);
   XtAddCallback(rec_size_text,XmNactivateCallback,Rec_Size_Changed_Callback,(void *)ss);
-  sprintf(timbuf,"%d",recorder_buffer_size(ss));
+  sprintf(timbuf,"%d",rp->buffer_size);
   XmTextSetString(rec_size_text,timbuf);
 
   n=0;
@@ -1698,7 +1668,7 @@ static int make_file_info_pane(snd_state *ss, Widget file_pane, int *ordered_dev
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_NONE); n++;
   trigger_label = XtCreateManagedWidget("trigger:",xmLabelWidgetClass,file_form,args,n);
   XtAddCallback(trigger_label,XmNhelpCallback,trigger_help_Callback,ss);
-  make_trigger_label(recorder_trigger(ss));
+  make_trigger_label(rp->trigger);
 
   n=0;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
@@ -1709,7 +1679,7 @@ static int make_file_info_pane(snd_state *ss, Widget file_pane, int *ordered_dev
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_OPPOSITE_WIDGET); n++;
   XtSetArg(args[n],XmNtopWidget,trigger_label); n++;
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-  XtSetArg(args[n],XmNvalue,(int)(100*recorder_trigger(ss))); n++;
+  XtSetArg(args[n],XmNvalue,(int)(100*(rp->trigger))); n++;
   XtSetArg(args[n],XmNdragCallback,make_callback_list(drag_trigger_Callback,(XtPointer)ss)); n++;
   XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(change_trigger_Callback,(XtPointer)ss)); n++;
   trigger_scale = XtCreateManagedWidget("scale",xmScaleWidgetClass,file_form,args,n);
@@ -1775,7 +1745,7 @@ static int make_file_info_pane(snd_state *ss, Widget file_pane, int *ordered_dev
   autoload_button = ndevs;
   XtAddCallback(autoload_file,XmNhelpCallback,autoload_file_help_callback,ss);
   XtAddCallback(autoload_file,XmNvalueChangedCallback,autoload_file_callback,ss);
-  XmToggleButtonSetState(autoload_file,recorder_autoload(ss),FALSE); 
+  XmToggleButtonSetState(autoload_file,rp->autoload,FALSE); 
 #if (HAVE_OSS || HAVE_ALSA)
   save_audio_settings = sndCreateToggleButtonWidget(STR_Save_Audio_Settings,button_holder,args,n);
   XtAddCallback(save_audio_settings,XmNvalueChangedCallback,save_audio_settings_callback,NULL);
@@ -1825,60 +1795,6 @@ void unlock_recording_audio(void)
 /* -------------------------------- DEVICE PANE -------------------------------- */
 
 
-#if (!(HAVE_OSS || HAVE_ALSA))
-static char *channel_function(PANE *p)
-{
-  if (recorder_input_device(p->device)) return("gain"); else return("volume");
-}
-
-static char funbuf[16];
-static char *device_function(PANE *p)
-{
-  sprintf(funbuf,"%s %s",recorder_device_name(p->device),channel_function(p));
-  return(funbuf);
-}
-#endif
-
-static char numbuf[8];
-static char *channel_name(PANE *p, int chan)
-{
-  int use_numbers;
-  use_numbers = ((p->out_chans>4) || (p->in_chans>4));
-  if (use_numbers)
-    sprintf(numbuf,"%d",chan+1);
-  else sprintf(numbuf,"%c",(char)('A' + chan));
-  return(numbuf);
-}
-
-static char *out_channel_name(snd_state *ss, int chan)
-{
-  int use_numbers;
-  use_numbers = (recorder_out_chans(ss)>4);
-  if (use_numbers)
-    sprintf(numbuf,"%d",chan+1);
-  else sprintf(numbuf,"%c",(char)('A' + chan));
-  return(numbuf);
-}
-
-static char *gain_channel_name(PANE *p, int input, int dev_in, int out)
-{
-  int use_numbers;
-  if (input)
-    {
-      use_numbers = ((p->out_chans>4) || (p->in_chans>4));
-      if (use_numbers)
-	sprintf(numbuf,"%d->%d:",dev_in+1,out+1);
-      else sprintf(numbuf,"%c->%c:",(char)('A' + dev_in),(char)('A'+out));
-    }
-  else
-    {
-      use_numbers = (p->out_chans > 4);
-      if (use_numbers)
-	sprintf(numbuf,"%d:",out+1);
-      else sprintf(numbuf,"%c:",(char)('A'+out));
-    }
-  return(numbuf);
-}
 
 static void VU_Max_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
@@ -1889,7 +1805,7 @@ static void VU_Max_Help_Callback(Widget w,XtPointer clientData,XtPointer callDat
 since the last reset in ",
 	    pane_device_name(wd->p->device),"'s",
 	    " channel ",
-	    channel_name(wd->p,wd->chan),
+	    channel_name(wd->p->in_chans,wd->p->out_chans,wd->chan),
 	    ".\n\
 The reset button sets it back to 0.0.\n",
 	    NULL);
@@ -1903,7 +1819,7 @@ static void VU_On_Help_Callback(Widget w,XtPointer clientData,XtPointer callData
 	    "This button causes ",
 	    pane_device_name(wd->p->device),"'s",
 	    " channel ",
-	    channel_name(wd->p,wd->chan),
+	    channel_name(wd->p->in_chans,wd->p->out_chans,wd->chan),
 	    " to be included\n\
 in or removed from the recording. The button\n\
 is red when the signal is active.\n",
@@ -1950,7 +1866,7 @@ file's amplitude.\n",
 			  "Line In Gain",
 "This slider controls the volume of the analog\n\
 line-in channel ",
-			  channel_name(wd->p,channel),
+			  channel_name(wd->p->in_chans,wd->p->out_chans,channel),
 			  ".\n",
 			  NULL);
 	      else
@@ -1958,7 +1874,7 @@ line-in channel ",
 			  "Linux Mixer Settings",
 "This bank of sliders affects the OSS 'mixer'; this\n\
 particular slider claims to control channel ",
-			  channel_name(wd->p,channel),
+			  channel_name(wd->p->in_chans,wd->p->out_chans,channel),
 			  "'s\n",
 			  recorder_field_name(field),
 " field, which I believe has something to do with\n",
@@ -1970,11 +1886,11 @@ particular slider claims to control channel ",
     }
 #else
   ssnd_help(wd->ss,
-	    device_function(wd->p),
+	    recorder_device_name(wd->p->device),
 	    "This slider sets the ",
-	    channel_function(wd->p),
+	    (recorder_input_device(wd->p->device)) ? "gain" : "volume",
 	    " of channel ",
-	    channel_name(wd->p,wd->chan),
+	    channel_name(wd->p->in_chans,wd->p->out_chans,wd->chan),
 	    " of ",
 	    pane_device_name(wd->p->device),
 	    "\n",
@@ -1997,7 +1913,7 @@ static void amp_slider_help_Callback(Widget w,XtPointer clientData,XtPointer cal
 	    (recorder_input_device(((PANE *)(wd->p))->device)) ? "the contribution of " : "",
 	    pane_device_name(wd->p->device),"'s\n",
 	    "channel ",
-	    channel_name(wd->p,a->in),
+	    channel_name(wd->p->in_chans,wd->p->out_chans,a->in),
 	    (recorder_input_device(((PANE *)(wd->p))->device)) ? " to the output file's channel " : ".",
 	    (recorder_input_device(((PANE *)(wd->p))->device)) ? (out_channel_name(wd->ss,a->out)) : "",
 	    NULL);
@@ -2011,7 +1927,7 @@ static void Meter_Help_Callback(Widget w,XtPointer clientData,XtPointer callData
 	    "This meter shows the current volume of ",
 	    pane_device_name(wd->p->device),"'s",
 	    " channel ",
-	    channel_name(wd->p,wd->chan),
+	    channel_name(wd->p->in_chans,wd->p->out_chans,wd->chan),
 	    ".\n\
 It is yellow if active, red if clipping.\n",
 	    NULL);
@@ -2039,6 +1955,8 @@ static void Meter_Button_Callback(Widget w,XtPointer clientData,XtPointer callDa
   int val,i,n;
   char *str;
   PANE *p;
+  recorder_info *rp;
+  rp = get_recorder_info();
   p = wd->p;
   vu = p->meters[wd->chan];
   ss = vu->ss;
@@ -2058,7 +1976,7 @@ static void Meter_Button_Callback(Widget w,XtPointer clientData,XtPointer callDa
   p->active[wd->chan] = val;
   if (recorder_output_device(p->device))
     {
-      rec_out_active[wd->chan] = val;
+      rp->chan_out_active[wd->chan] = val;
       str = XmTextGetString(recdat->chans_text); 
       if (str) 
 	{
@@ -2076,19 +1994,19 @@ static void Meter_Button_Callback(Widget w,XtPointer clientData,XtPointer callDa
 	  /* FIXME: this apparently is not necessary, we cannot
 	   * change the number of recorded channels on the fly
 	   * (but we can activate or deactivate them in the gui?
-	       in_set_recorder_out_chans(ss,val);
+	   rp->out_chans = val;
 	   */
 #endif
 	}
     }
-  else rec_in_active[wd->gain] = val;
+  else rp->chan_in_active[wd->gain] = val;
 }
 
 static void volume_callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   Wdesc *wd = (Wdesc *)clientData;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  set_audio_gain(wd,(Float)cbs->value/100.0);
+  set_mixer_gain(wd->system,wd->device,wd->chan,wd->gain,wd->field,(Float)cbs->value/100.0);
 }
 
 /* ---- slider button matrix ---- */
@@ -2139,7 +2057,7 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   s1=XmStringCreate("     ","button_font");
   XtSetArg(args[n],XmNlabelString,s1); n++;
 #endif
-  a->label = sndCreatePushButtonWidget(gain_channel_name(p,input,a->device_in_chan,a->out),p->pane,args,n);
+  a->label = sndCreatePushButtonWidget(gain_channel_name(p->in_chans,p->out_chans,input,a->device_in_chan,a->out),p->pane,args,n);
   XtAddCallback(a->label,XmNactivateCallback,Record_Amp_Click_Callback,a);
   XtAddCallback(a->label,XmNhelpCallback,amp_slider_help_Callback,a->wd);
   
@@ -2533,7 +2451,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
   Widget frame,meter,last_frame,vu_vertical_sep,icon_label,last_slider=NULL,max_label,matrix_frame,
     button_label,button_box,button1_label,last_button,slider_sep,first_frame,last_max,left_frame;
   VU *vu;
-  int vu_meters,num_audio_gains,button_size,input,special_cases = 0;
+  int vu_meters,num_gains,button_size,input,special_cases = 0;
   int row,columns;
   XmString labelstr;
   Position pane_max;
@@ -2546,6 +2464,9 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
   XmString slabel = NULL;
 #endif
 
+  recorder_info *rp;
+  rp = get_recorder_info();
+
   sx = ss->sgx;
   p = (PANE *)CALLOC(1,sizeof(PANE));
   p->device = device;
@@ -2555,9 +2476,9 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
   p->ss = ss;
   vu_meters = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
   input = (recorder_input_device(device));
-  num_audio_gains = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
+  num_gains = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
 #if (HAVE_OSS || HAVE_ALSA)
-  if (num_audio_gains == 0)
+  if (num_gains == 0)
     {
       mixer_gains_posted[system] = 0;
       tone_controls_posted[system] = 0;
@@ -2571,13 +2492,13 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
 	  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER,MUS_AUDIO_FORMAT,32,mixer_field_chans);
 	  for (k=0;k<32;k++) mixflds[k] = (int)mixer_field_chans[k]; /* simplify life later */
 	  mixer_gains_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER);
-	  num_audio_gains = mixer_gains_posted[system]; /* includes the MUS_AUDIO_LINE_IN gains */
+	  num_gains = mixer_gains_posted[system]; /* includes the MUS_AUDIO_LINE_IN gains */
 	  special_cases = mixer_gains_posted[system];
 	}
       if ((!input) && (!tone_controls_posted[system]))
 	{
 	  tone_controls_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DAC_FILTER);
-	  num_audio_gains += tone_controls_posted[system];
+	  num_gains += tone_controls_posted[system];
 	  special_cases = tone_controls_posted[system];
 	}
     }
@@ -2587,7 +2508,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
   if (input) 
     {
       p->in_chans = vu_meters;
-      p->out_chans = recorder_out_chans(ss);
+      p->out_chans = rp->out_chans;
       /* this determines how many of the left-side buttons we get if chans>4; if defaults to 2 (snd.c)
        * but probably should look at the output device's out chans when we start the recorder for the
        * first time, but not clobber user's setting (if any); perhaps if it's not the default, it can
@@ -2596,7 +2517,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
     }
   else 
     {
-      if (vu_meters < recorder_out_chans(ss)) vu_meters = recorder_out_chans(ss);
+      if (vu_meters < rp->out_chans) vu_meters = rp->out_chans;
       p->out_chans = vu_meters;
       p->in_chans = 1;
     }
@@ -2757,7 +2678,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
   else {XtSetArg(args[n],XmNwidth,4); n++;}
   vu_vertical_sep = XtCreateManagedWidget("sep",xmSeparatorWidgetClass,p->pane,args,n);
 
-  if (num_audio_gains > 0)
+  if (num_gains > 0)
     {
       n=0;
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
@@ -2779,7 +2700,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_NONE); n++;
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-      if (num_audio_gains > 1)
+      if (num_gains > 1)
 	{XtSetArg(args[n],XmNalignment,XmALIGNMENT_CENTER); n++;}
       else {XtSetArg(args[n],XmNalignment,XmALIGNMENT_END); n++;}
 #if (HAVE_OSS || HAVE_ALSA)
@@ -2792,7 +2713,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
       icon_label = XtCreateManagedWidget("icon",xmLabelWidgetClass,p->pane,args,n);
       
       last_slider = NULL;
-      for (i=0,chan=num_audio_gains-1;i<num_audio_gains;i++,chan--)
+      for (i=0,chan=num_gains-1;i<num_gains;i++,chan--)
 	{
 	  /* we're moving right to left here, so the first slider represents the highest channel */
 	  /* in the Linux case, as each new device pops up, we need some indication above it */
@@ -2890,10 +2811,10 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
 	  wd->ss = ss;
 	  wd->p = p;
 	  wd->gain = gain_ctr+chan;
-	  if (wd->gain > audio_gains_size) 
-	    snd_error("%s[%d] %s: overflow %d > %d",__FILE__,__LINE__,__FUNCTION__,wd->gain,audio_gains_size);
-	  audio_GAINS[wd->gain] = wd;
-	  vol = get_audio_gain(wd);
+	  if (wd->gain > rp->num_mixer_gains) 
+	    snd_error("%s[%d] %s: overflow %d > %d",__FILE__,__LINE__,__FUNCTION__,wd->gain,rp->num_mixer_gains);
+	  gain_sliders[wd->gain] = wd;
+	  vol = mixer_gain(wd->system,wd->device,wd->chan,wd->gain,wd->field);
 #if (HAVE_OSS || HAVE_ALSA)
 	  if (last_device != this_device)
 	    {
@@ -2962,7 +2883,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
 	  last_device = this_device;
 #endif
 	}
-      gain_ctr += num_audio_gains;
+      gain_ctr += num_gains;
     }
 
   /* separator between vertical sliders and buttons */
@@ -2971,7 +2892,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNleftAttachment,XmATTACH_NONE); n++;
-  if (num_audio_gains > 0)
+  if (num_gains > 0)
     {
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_WIDGET); n++;
       XtSetArg(args[n],XmNrightWidget,last_slider); n++;
@@ -3080,7 +3001,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
 	  /* this is the rightmost button in a given row */
 	  XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
 	}
-      p->on_buttons[i] = XtCreateManagedWidget(channel_name(p,i),xmPushButtonWidgetClass,button_box,args,n);
+      p->on_buttons[i] = XtCreateManagedWidget(channel_name(p->in_chans,p->out_chans,i),xmPushButtonWidgetClass,button_box,args,n);
       last_button = p->on_buttons[i];
       wd = (Wdesc *)CALLOC(1,sizeof(Wdesc));
       wd->chan = i;
@@ -3225,10 +3146,10 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
 	  a->in = temp_in_chan + overall_input_ctr;
 	  a->device_in_chan = temp_in_chan;
 	  a->out = temp_out_chan;
-	  if (temp_in_chan == temp_out_chan)  /* CHECK ACTIVE_SLIDERS HERE OR SIMILAR TABLE (REC_IN_AMPS??) */
-	    rec_in_amps[a->in][a->out] = 1.0;
-	  else rec_in_amps[a->in][a->out] = 0.0;
-	  rec_in_AMPS[a->in][a->out] = p->amps[i];
+	  if (temp_in_chan == temp_out_chan)  /* CHECK ACTIVE_SLIDERS HERE OR SIMILAR TABLE (RP->IN_AMPS??) */
+	    rp->in_amps[a->in][a->out] = 1.0;
+	  else rp->in_amps[a->in][a->out] = 0.0;
+	  AMP_rec_ins[a->in][a->out] = p->amps[i];
 	  temp_in_chan++;
 	  if (temp_in_chan >= p->in_chans)
 	    {
@@ -3241,8 +3162,8 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
 	  a->type = OUTPUT_AMP;
 	  a->device_in_chan = 0;
 	  a->out = i;
-	  rec_out_amps[i] = 1.0;
-	  rec_out_AMPS[i] = a;
+	  rp->out_amps[i] = 1.0;
+	  AMP_rec_outs[i] = a;
 	}
 
       a->top = last_slider;
@@ -3285,11 +3206,13 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   int in_chan,out_chan,i,k,m,n,out_frame,mon_samp,diff,inchn,offset,active_in_chans,ochns,sr,buffer_size,in_datum_size;
   MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE *fbufs[1];
+  recorder_info *rp;
+  rp = get_recorder_info();
   if (ever_read == 0) return(BACKGROUND_QUIT); /* should not happen, but ... */
   out_frame = 0;
   mon_samp = 0;
-  ochns = recorder_out_chans(ss);
-  sr = recorder_srate(ss);
+  ochns = rp->out_chans;
+  sr = rp->srate;
   if (systems == 1)
     {
       active_in_chans = input_channels[0];
@@ -3343,7 +3266,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   /* run through input devices looking for any that are currently turned on */
   /* for each channel currently on, get its associated input channel */
 
-  diff = audio_out_chans - ochns;
+  diff = rp->monitor_out_chans - ochns;
   for (i=0,out_frame=0;i<buffer_size;i+=active_in_chans,out_frame++)
     {
       for (out_chan=0;out_chan<ochns;out_chan++) {outvals[out_chan] = MUS_SAMPLE_0;}
@@ -3354,11 +3277,11 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	    {
 	      /* inchn = in_device_chan[in_chan]; */
 	      val = fbuf[i+inchn];
-	      if (rec_in_active[in_chan])
+	      if (rp->chan_in_active[in_chan])
 		{
 		  for (out_chan=0;out_chan<ochns;out_chan++)
 		    {
-		      outvals[out_chan] += (MUS_SAMPLE_TYPE)(rec_in_amps[in_chan][out_chan] * val);
+		      outvals[out_chan] += (MUS_SAMPLE_TYPE)(rp->in_amps[in_chan][out_chan] * val);
 		    }
 		}
 	      if (val<MUS_SAMPLE_0) val=-val; 
@@ -3368,8 +3291,8 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	}
       for (out_chan=0;out_chan<ochns;out_chan++)
 	{
-	  val = (MUS_SAMPLE_TYPE)(outvals[out_chan]*rec_out_amps[out_chan]);
-	  if ((recording) && (rec_out_active[out_chan])) obufs[out_chan][out_frame] = val;
+	  val = (MUS_SAMPLE_TYPE)(outvals[out_chan]*rp->out_amps[out_chan]);
+	  if ((recording) && (rp->chan_out_active[out_chan])) obufs[out_chan][out_frame] = val;
 	  if (val<MUS_SAMPLE_0) val=-val;
 	  if (val>out_max[out_chan]) out_max[out_chan]=val;
 	}
@@ -3382,15 +3305,15 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   for (out_chan=0;out_chan<ochns;out_chan++)
     {
       set_vu_val(rec_out_VU[out_chan],MUS_SAMPLE_TO_FLOAT(out_max[out_chan]));
-      if ((!triggered) && (MUS_SAMPLE_TO_FLOAT(out_max[out_chan])>trigger)) triggered=1;
+      if ((!rp->triggered) && (MUS_SAMPLE_TO_FLOAT(out_max[out_chan])>rp->trigger)) rp->triggered=1;
     }
-  if ((monitor_open) && (obufs) && (ochns <= audio_out_chans))
+  if ((monitor_open) && (obufs) && (ochns <= rp->monitor_out_chans))
     {
-      /* opened in recorder_out_format and audio_out_chans */
-      mus_file_write_buffer(monitor_out_format,0,out_frame-1,audio_out_chans,obufs,monitor_buf,data_clipped(ss));
-      mus_audio_write(monitor_fd,monitor_buf,recorder_buffer_size(ss)*audio_out_chans*mus_data_format_to_bytes_per_sample(monitor_out_format));
+      /* opened in rp->out_format and rp->monitor_out_chans */
+      mus_file_write_buffer(monitor_out_format,0,out_frame-1,rp->monitor_out_chans,obufs,monitor_buf,data_clipped(ss));
+      mus_audio_write(monitor_fd,monitor_buf,rp->buffer_size*rp->monitor_out_chans*mus_data_format_to_bytes_per_sample(monitor_out_format));
     }
-  if ((recording) && (triggered))
+  if ((recording) && (rp->triggered))
     {
       mus_file_write(output_fd,0,out_frame-1,ochns,obufs);
       total_out_frames += out_frame;
@@ -3400,7 +3323,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	  duration_frames += (sr / 4);
 	}
     }
-  return(((total_out_frames/sr) >= max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
+  return(((total_out_frames/sr) >= rp->max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
 }
 
 #else
@@ -3418,14 +3341,16 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   int in_chan,out_chan,i,k,m,n,out_frame,mon_samp,diff,inchn,offset,active_in_chans,cur_size,ochns,sr,sz,ifmt,in_datum_size;
   MUS_SAMPLE_TYPE val;
   MUS_SAMPLE_TYPE *fbufs[1];
+  recorder_info *rp;
+  rp = get_recorder_info();
   if (ever_read == 0) return(BACKGROUND_QUIT); /* should not happen, but ... */
   fbufs[0] = fbuf;
   out_frame = 0;
   mon_samp = 0;
-  ifmt = recorder_in_format(ss);
-  ochns = recorder_out_chans(ss);
-  sr = recorder_srate(ss);
-  sz = recorder_buffer_size(ss);
+  ifmt = rp->in_format;
+  ochns = rp->out_chans;
+  sr = rp->srate;
+  sz = rp->buffer_size;
   in_datum_size = mus_data_format_to_bytes_per_sample(ifmt);
   if (systems == 1)
     {
@@ -3467,7 +3392,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   /* run through input devices looking for any that are currently turned on */
   /* for each channel currently on, get its associated input channel */
 
-  diff = audio_out_chans - ochns;
+  diff = rp->monitor_out_chans - ochns;
   for (i=0,out_frame=0;i<sz;i+=active_in_chans,out_frame++)
     {
       for (out_chan=0;out_chan<ochns;out_chan++) {outvals[out_chan] = MUS_SAMPLE_0;}
@@ -3478,11 +3403,11 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	    {
 	      /* inchn = in_device_chan[in_chan]; */
 	      val = fbuf[i+inchn];
-	      if (rec_in_active[in_chan])
+	      if (rp->chan_in_active[in_chan])
 		{
 		  for (out_chan=0;out_chan<ochns;out_chan++)
 		    {
-		      outvals[out_chan] += (MUS_SAMPLE_TYPE)(rec_in_amps[in_chan][out_chan] * val);
+		      outvals[out_chan] += (MUS_SAMPLE_TYPE)(rp->in_amps[in_chan][out_chan] * val);
 		    }
 		}
 	      if (val<MUS_SAMPLE_0) val=-val; 
@@ -3492,8 +3417,8 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	}
       for (out_chan=0;out_chan<ochns;out_chan++)
 	{
-	  val = (MUS_SAMPLE_TYPE)(outvals[out_chan]*rec_out_amps[out_chan]);
-	  if ((recording) && (rec_out_active[out_chan])) obufs[out_chan][out_frame] = val;
+	  val = (MUS_SAMPLE_TYPE)(outvals[out_chan]*rp->out_amps[out_chan]);
+	  if ((recording) && (rp->chan_out_active[out_chan])) obufs[out_chan][out_frame] = val;
 	  if (val<MUS_SAMPLE_0) val=-val;
 	  if (val>out_max[out_chan]) out_max[out_chan]=val;
 	}
@@ -3506,16 +3431,16 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   for (out_chan=0;out_chan<ochns;out_chan++)
     {
       set_vu_val(rec_out_VU[out_chan],MUS_SAMPLE_TO_FLOAT(out_max[out_chan]));
-      if ((!triggered) && (MUS_SAMPLE_TO_FLOAT(out_max[out_chan])>trigger)) triggered=1;
+      if ((!rp->triggered) && (MUS_SAMPLE_TO_FLOAT(out_max[out_chan])>rp->trigger)) rp->triggered=1;
     }
 
-  if ((monitor_open) && (obufs) && (ochns == audio_out_chans))
+  if ((monitor_open) && (obufs) && (ochns == rp->monitor_out_chans))
     {
-      /* opened in recorder_out_format and audio_out_chans */
-      mus_file_write_buffer(recorder_out_format(ss),0,out_frame-1,audio_out_chans,obufs,record_buf[0],data_clipped(ss));
-      mus_audio_write(monitor_fd,record_buf[0],out_frame*audio_out_chans*mus_data_format_to_bytes_per_sample(recorder_out_format(ss)));
+      /* opened in rp->out_format and rp->monitor_out_chans */
+      mus_file_write_buffer(rp->out_format,0,out_frame-1,rp->monitor_out_chans,obufs,record_buf[0],data_clipped(ss));
+      mus_audio_write(monitor_fd,record_buf[0],out_frame*rp->monitor_out_chans*mus_data_format_to_bytes_per_sample(rp->out_format));
     }
-  if ((recording) && (triggered))
+  if ((recording) && (rp->triggered))
     {
       mus_file_write(output_fd,0,out_frame-1,ochns,obufs);
       total_out_frames += out_frame;
@@ -3525,7 +3450,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	  duration_frames += (sr / 4);
 	}
     }
-  return(((total_out_frames/sr) >= max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
+  return(((total_out_frames/sr) >= rp->max_duration) ? BACKGROUND_QUIT : BACKGROUND_CONTINUE);
 }
 #endif
 
@@ -3548,11 +3473,13 @@ static void set_read_in_progress (snd_state *ss)
 #ifdef DEBUGGING
   int in_chan;
   char *str;
+  recorder_info *rp;
+  rp = get_recorder_info();
   str = (char *)CALLOC(512,sizeof(char));
   sprintf(str,"open: srate: %d, format: %s, size: %d, in_chans: %d %d, record_fds: %d %d",
-	  recorder_srate(ss),
-	  mus_data_format_name(recorder_in_format(ss)),
-	  recorder_buffer_size(ss),
+	  rp->srate,
+	  mus_data_format_name(rp->in_format),
+	  rp->buffer_size,
 	  input_channels[0],input_channels[1],
 	  record_fd[0],record_fd[1]);
   record_report(messages,str,NULL);
@@ -3561,7 +3488,7 @@ static void set_read_in_progress (snd_state *ss)
       sprintf(str,"in[%d, %d] %s (%s): %.3f -> (VU *)%p",
 	      in_chan,in_device_chan[in_chan],
 	      (in_device_on[in_chan]) ? "on" : "off",
-	      (rec_in_active[in_chan]) ? "active" : "idle",
+	      (rp->chan_in_active[in_chan]) ? "active" : "idle",
 	      MUS_SAMPLE_TO_FLOAT(in_max[in_chan]),
 	      rec_in_VU[in_chan]);
       record_report(messages,str,NULL);
@@ -3594,14 +3521,16 @@ static void unsensitize_control_buttons(void)
 
 void cleanup_recording (void)
 {
-  if (audio_open) close_recorder_audio();
+  recorder_info *rp;
+  rp = get_recorder_info();
+  if (rp->taking_input) close_recorder_audio();
 #if (!(HAVE_OSS || HAVE_ALSA))
   if (recorder) mus_audio_restore();
 #endif
   if ((recorder) && (recording) && (output_fd > 0)) 
     {
       recording = 0;
-      triggered = (!triggering);
+      rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
       snd_close(output_fd);
     }
@@ -3621,24 +3550,26 @@ static void Reset_Record_Callback(Widget w,XtPointer clientData,XtPointer callDa
   PANE *p;
   VU *vu;
   int i,k;
+  recorder_info *rp;
+  rp = get_recorder_info();
   if (recording)                  /* cancel */
     {
       recording = 0;
-      triggered = (!triggering);
+      rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
       XmChangeColor(record_button,(Pixel)(ss->sgx)->basic_color);
       s1 = XmStringCreate(STR_Reset,XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(reset_button,XmNlabelString,s1,NULL);
       XmStringFree(s1);
-      s1 = XmStringCreate((triggering) ? STR_Triggered_Record : STR_Record,XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate((rp->triggering) ? STR_Triggered_Record : STR_Record,XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(record_button,XmNlabelString,s1,NULL);
       XmStringFree(s1);
       snd_close(output_fd);
       output_fd = -1;
-      str = just_filename(recorder_file(ss));
+      str = just_filename(rp->output_file);
       record_report(messages,str," recording cancelled",NULL);
       FREE(str);
-      remove(recorder_file(ss));
+      remove(rp->output_file);
     }
   else                            /* reset or restart */
     { 
@@ -3653,7 +3584,7 @@ static void Reset_Record_Callback(Widget w,XtPointer clientData,XtPointer callDa
 	    }
 	}
       /* now if dac turned us off, turn everything back on */
-      if (!audio_open)            /* restart */
+      if (!(rp->taking_input))            /* restart */
 	{
 	  fire_up_recorder(ss);
 	  s1 = XmStringCreate(STR_Reset,XmFONTLIST_DEFAULT_TAG);
@@ -3718,33 +3649,35 @@ static void finish_recording(snd_state *ss)
   char *str;
   snd_info *sp;
   Float duration;
+  recorder_info *rp;
+  rp = get_recorder_info();
   sensitize_control_buttons();
   XmChangeColor(record_button,(Pixel)(ss->sgx)->basic_color);
   s1 = XmStringCreate(STR_Reset,XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(reset_button,XmNlabelString,s1,NULL);
   XmStringFree(s1);
-  s2 = XmStringCreate((triggering) ? STR_Triggered_Record : STR_Record,XmFONTLIST_DEFAULT_TAG);
+  s2 = XmStringCreate((rp->triggering) ? STR_Triggered_Record : STR_Record,XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(record_button,XmNlabelString,s2,NULL);
   XmStringFree(s2);
   snd_close(output_fd);
-  output_fd = mus_file_reopen_write(recorder_file(ss));
-  mus_header_update_with_fd(output_fd,out_type,total_out_frames*recorder_out_chans(ss)*mus_data_format_to_bytes_per_sample(recorder_out_format(ss)));
+  output_fd = mus_file_reopen_write(rp->output_file);
+  mus_header_update_with_fd(output_fd,rp->output_header_type,total_out_frames*rp->out_chans*mus_data_format_to_bytes_per_sample(rp->out_format));
   close(output_fd);
   output_fd = -1;
-  duration = (Float)total_out_frames / (Float)(recorder_srate(ss));
+  duration = (Float)total_out_frames / (Float)(rp->srate);
   /* 25-Jun-00: this used to divide by chans, but total_out_frames is in terms of frames (it was named total_out_samps) */
   update_duration(duration);
   str = (char *)CALLOC(256,sizeof(char));
   sprintf(str,"recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
-	  recorder_file(ss),duration,recorder_srate(ss),recorder_out_chans(ss),
-	  mus_header_type_name(out_type),mus_data_format_name(recorder_out_format(ss)));
+	  rp->output_file,duration,rp->srate,rp->out_chans,
+	  mus_header_type_name(rp->output_header_type),mus_data_format_name(rp->out_format));
   record_report(messages,str,NULL);
   FREE(str);
-  if (recorder_autoload(ss))
+  if (rp->autoload)
     {
-      if ((sp = find_sound(ss,recorder_file(ss))))
+      if ((sp = find_sound(ss,rp->output_file)))
 	snd_update(ss,sp);
-      else snd_open_file(recorder_file(ss),ss);
+      else snd_open_file(rp->output_file,ss);
     }
 }
 
@@ -3757,39 +3690,41 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
   static char *comment;
   char *str;
   PANE *p;
+  recorder_info *rp;
+  rp = get_recorder_info();
   recording = (!recording);
   if (recording)
     {
-      if (!audio_open) fire_up_recorder(ss);
+      if (!(rp->taking_input)) fire_up_recorder(ss);
       str = XmTextGetString(file_text);
       if ((str) && (*str))
 	{
-	  in_set_recorder_file(ss,mus_file_full_name(str));
+	  rp->output_file = mus_file_full_name(str);
 	  XtFree(str);
 	  str=NULL;
-	  old_srate = recorder_srate(ss);
-	  read_file_data_choices(recdat,&rs,&ochns,&out_type,&ofmt,&oloc); 
-	  in_set_recorder_out_format(ss,ofmt);
-	  in_set_recorder_out_chans(ss,ochns);
+	  old_srate = rp->srate;
+	  read_file_data_choices(recdat,&rs,&ochns,&rp->output_header_type,&ofmt,&oloc); 
+	  rp->out_format = ofmt;
+	  rp->out_chans = ochns;
 	  if (rs != old_srate) 
 	    {
-	      in_set_recorder_srate(ss,rs);
-	      recorder_set_audio_srate(ss,MUS_AUDIO_DEFAULT,recorder_srate(ss),0,audio_open);
+	      rp->srate = rs;
+	      recorder_set_audio_srate(ss,MUS_AUDIO_DEFAULT,rp->srate,0,rp->taking_input);
 	    }
-	  if (recorder_out_chans(ss) <= 0)
+	  if (rp->out_chans <= 0)
 	    {
 	      record_report(messages,"can't record: you screwed up the output channel number!",NULL);
 	      recording = 0;
-	      triggered = (!triggering);
+	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
 	  comment = XmTextGetString(recdat->comment_text);
 	  update_duration(0.0);
 	  
-	  if (out_chans_active() != recorder_out_chans(ss))
+	  if (out_chans_active() != rp->out_chans)
 	    {
 	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(512,sizeof(char));
-	      sprintf(msgbuf,"chans field (%d) doesn't match file out panel (%d channels active)",recorder_out_chans(ss),out_chans_active());
+	      sprintf(msgbuf,"chans field (%d) doesn't match file out panel (%d channels active)",rp->out_chans,out_chans_active());
 	      record_report(messages,msgbuf,NULL);
 	      wd = (Wdesc *)CALLOC(1,sizeof(Wdesc));
 	      wd->ss = ss;
@@ -3799,7 +3734,7 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
 	      wd->field = MUS_AUDIO_AMP;
 	      wd->device = p->device;
 	      wd->system = 0;
-	      for (i=0;i<recorder_out_chans(ss);i++)
+	      for (i=0;i<rp->out_chans;i++)
 		{
 		  if (!(p->active[i]))
 		    {
@@ -3813,7 +3748,7 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
 	    {
 	      record_report(messages,"can't record: no inputs enabled",NULL);
 	      recording = 0;
-	      triggered = (!triggering);
+	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
 	  XmChangeColor(w,(Pixel)(ss->sgx)->red);
@@ -3825,40 +3760,39 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
 	  XmStringFree(s2);
 	  comlen = (int)(snd_strlen(comment) + 3)/4;
 	  comlen *= 4;
-	  err = snd_write_header(ss,recorder_file(ss),out_type,recorder_srate(ss),recorder_out_chans(ss),28+comlen,0,
-				 recorder_out_format(ss),comment,snd_strlen(comment),NULL);
+	  err = snd_write_header(ss,rp->output_file,rp->output_header_type,rp->srate,rp->out_chans,28+comlen,0,
+				 rp->out_format,comment,snd_strlen(comment),NULL);
 	  if (err)
 	    {
-	      record_report(messages,recorder_file(ss),":\n  ",strerror(errno),NULL);
+	      record_report(messages,rp->output_file,":\n  ",strerror(errno),NULL);
 	      recording = 0;
-	      triggered = (!triggering);
+	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
 
 	  unsensitize_control_buttons();
 
-	  output_fd = snd_reopen_write(ss,recorder_file(ss));
+	  output_fd = snd_reopen_write(ss,rp->output_file);
 	  mus_header_read_with_fd(output_fd);
-	  mus_file_set_descriptors(output_fd,recorder_file(ss),
-				   recorder_out_format(ss),mus_data_format_to_bytes_per_sample(recorder_out_format(ss)),mus_header_data_location(),
-				   recorder_out_chans(ss),out_type);
+	  mus_file_set_descriptors(output_fd,rp->output_file,
+				   rp->out_format,mus_data_format_to_bytes_per_sample(rp->out_format),mus_header_data_location(),
+				   rp->out_chans,rp->output_header_type);
 	  mus_file_set_data_clipped(output_fd,data_clipped(ss));
 	  total_out_frames = 0;
-	  duration_frames = recorder_srate(ss)/4;
-	  max_duration = recorder_max_duration(ss);
+	  duration_frames = rp->srate/4;
 	  if (!obufs)
 	    obufs = (MUS_SAMPLE_TYPE **)CALLOC(MAX_OUT_CHANS,sizeof(MUS_SAMPLE_TYPE *));
-	  for (i=0;i<recorder_out_chans(ss);i++) 
+	  for (i=0;i<rp->out_chans;i++) 
 	    {
 	      if (!obufs[i])
-		obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(recorder_buffer_size(ss),sizeof(MUS_SAMPLE_TYPE));
+		obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(rp->buffer_size,sizeof(MUS_SAMPLE_TYPE));
 	    }
 	}
       else
 	{
 	  record_report(messages,"can't record: no output file name supplied",NULL);
 	  recording = 0;
-	  triggered = (!triggering);
+	  rp->triggered = (!rp->triggering);
 	  return;
 	}
     }
@@ -3866,7 +3800,7 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
     finish_recording(ss);
 }
 
-static void initialize_recorder(snd_state *ss);
+static void initialize_recorder(void);
 static Widget rec_panes,message_pane,file_info_pane;
 
 #define AUDVAL_SIZE 64
@@ -3885,6 +3819,8 @@ void snd_record_file(snd_state *ss)
   Drawable wn;
   state_context *sx;
   PANE *p;
+  recorder_info *rp;
+  rp = get_recorder_info();
 
   if (!recorder)
     {
@@ -3926,7 +3862,7 @@ void snd_record_file(snd_state *ss)
 		  if ((system == 0) && (recorder_output_device(device)))
 		    output_devices++;
 		}
-	      audio_gains_size += device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
+	      rp->num_mixer_gains += device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
 	    }
 	  all_devices += cur_devices;
 	}
@@ -3940,8 +3876,7 @@ void snd_record_file(snd_state *ss)
       all_panes = (PANE **)CALLOC(all_panes_size,sizeof(PANE *));
       device_buttons_size = input_devices + 2; /* inputs, one output, autoload_file */
       device_buttons = (Widget *)CALLOC(device_buttons_size,sizeof(Widget));
-      audio_gains = (Float *)CALLOC(audio_gains_size,sizeof(Float));
-      audio_GAINS = (Wdesc **)CALLOC(audio_gains_size,sizeof(Wdesc *));
+      gain_sliders = (Wdesc **)CALLOC(rp->num_mixer_gains,sizeof(Wdesc *));
       /* out_file_pane will be the bottom (output) audio pane, not the file info pane */
       overall_in_chans = 0;
       def_out = 2;
@@ -4012,8 +3947,6 @@ void snd_record_file(snd_state *ss)
 #else
       if (output_devices) ordered_devices[k] = MUS_AUDIO_DAC_OUT;
 #endif
-      rec_in_active = (int *)CALLOC(overall_in_chans,sizeof(int));
-      rec_out_active = (int *)CALLOC(MAX_OUT_CHANS,sizeof(int));
       rec_in_VU = (VU **)CALLOC(overall_in_chans,sizeof(VU *));
       rec_out_VU = (VU **)CALLOC(MAX_OUT_CHANS,sizeof(VU *));
       outvals = (MUS_SAMPLE_TYPE *)CALLOC(MAX_OUT_CHANS,sizeof(MUS_SAMPLE_TYPE));
@@ -4021,15 +3954,12 @@ void snd_record_file(snd_state *ss)
       in_max = (MUS_SAMPLE_TYPE *)CALLOC(overall_in_chans,sizeof(MUS_SAMPLE_TYPE));
       in_device_on = (int *)CALLOC(overall_in_chans,sizeof(int));
       in_device_chan = (int *)CALLOC(overall_in_chans,sizeof(int));
-      rec_in_amps = (Float **)CALLOC(overall_in_chans,sizeof(Float *));
-      rec_in_AMPS = (AMP ***)CALLOC(overall_in_chans,sizeof(AMP **));
+      AMP_rec_ins = (AMP ***)CALLOC(overall_in_chans,sizeof(AMP **));
       for (i=0;i<overall_in_chans;i++) 
 	{
-	  rec_in_amps[i] = (Float *)CALLOC(MAX_OUT_CHANS,sizeof(Float));
-	  rec_in_AMPS[i] = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
+	  AMP_rec_ins[i] = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
 	}
-      rec_out_amps = (Float *)CALLOC(MAX_OUT_CHANS,sizeof(Float));  /* monitor (speaker) vol, not file-output */
-      rec_out_AMPS = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
+      AMP_rec_outs = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
       /* out chans defaults to def_out = parallel to the maximal input choice or 2 whichever is more */
       if (def_out < 2) def_out = 2;
 
@@ -4141,8 +4071,8 @@ void snd_record_file(snd_state *ss)
 
       /* see note above (line 2809) about recorder out chans */
       n = device_channels(MUS_AUDIO_PACK_SYSTEM(ordered_systems[out_file_pane]) | ordered_devices[out_file_pane]);
-      if ((recorder_out_chans(ss) == DEFAULT_RECORDER_OUT_CHANS) && (n > 2))
-	in_set_recorder_out_chans(ss,n);
+      if ((rp->out_chans == DEFAULT_RECORDER_OUT_CHANS) && (n > 2))
+	rp->out_chans = n;
 
       for (i=0;i<all_panes_size;i++)
 	{
@@ -4189,7 +4119,7 @@ void snd_record_file(snd_state *ss)
       wm_delete = XmInternAtom(XtDisplay(recorder),"WM_DELETE_WINDOW",FALSE);
       XmAddWMProtocolCallback(XtParent(recorder),wm_delete,RecordCleanupCB,(XtPointer)ss);
 
-      initialize_recorder(ss);
+      initialize_recorder();
     }
   else 
     {
@@ -4215,118 +4145,51 @@ void snd_record_file(snd_state *ss)
       pending_error_size = 0;
     }
   
-  if (!audio_open) fire_up_recorder(ss);
+  if (!(rp->taking_input)) fire_up_recorder(ss);
 }
 
-typedef struct {
-  int which,vali,valj;
-  Float valf;
-} recorder_setf;
-
-static recorder_setf **setfs = NULL;
-static int setfs_size = 0;
-static int current_setf = 0;
-
-static void add_pending_setf(int which, int vali, int valj, Float valf)
+void set_recorder_autoload(int val)
 {
-  if (current_setf >= setfs_size)
-    {
-      setfs_size += 16;
-      if (setfs) 
-	setfs = (recorder_setf **)REALLOC(setfs,setfs_size * sizeof(recorder_setf *));
-      else
-	setfs = (recorder_setf **)CALLOC(setfs_size,sizeof(recorder_setf *));
-    }
-  setfs[current_setf] = (recorder_setf *)CALLOC(1,sizeof(recorder_setf));
-  setfs[current_setf]->which = which;
-  setfs[current_setf]->vali = vali;
-  setfs[current_setf]->valj = valj;
-  setfs[current_setf]->valf = valf;
-  current_setf++;
-}
-
-static Float scan_pending_setfs(int which, int vali, int valj)
-{
-  int i;
-  Float val;
-  recorder_setf *rs;
-  val = 0.0;
-  for (i=0;i<current_setf;i++)
-    {
-      rs = setfs[i];
-      if (which == rs->which)
-	{
-	  switch (which)
-	    {
-	    case REC_IN_AMPS: if ((vali == rs->vali) && (valj == rs->valj)) val = rs->valf; break;
-	    case REC_OUT_AMPS:        
-	    case AUDIO_GAINS: if (vali == rs->vali) val = rs->valf; break;
-	    }
-	}
-    }
-  return(val);
-}
-
-void set_autoload(snd_state *ss, int val)
-{
-  in_set_recorder_autoload(ss,val);
+  recorder_info *rp;
+  rp = get_recorder_info();
+  rp->autoload = val;
   if (recorder) XmToggleButtonSetState(device_buttons[autoload_button],val,FALSE); 
 }
 
-Float read_record_state(int which, int vali, int valj)
+void reflect_recorder_in_amp(int in, int out, Float val)
 {
-  if (!recorder) /* check list of pending setfs */
-    return(scan_pending_setfs(which,vali,valj));
-  else
-    {
-      switch (which)
-	{
-	case REC_IN_AMPS:  return(rec_in_amps[vali][valj]); break;
-	case REC_OUT_AMPS: return(rec_out_amps[vali]); break;
-	case AUDIO_GAINS:  return(audio_gains[vali]); break;
-	}
-    }
-  return(0.0);
-}
-
-void write_record_state(int which, int vali, int valj, Float valf)
-{
-  /* snd-clm input port-hole */
   int temp;
-  Wdesc *wd;
-  switch (which)
+  if (recorder)
     {
-    case REC_IN_AMPS:     
-      if (recorder)
-	{
-	  temp = amp_to_slider(valf); 
-	  record_amp_changed(rec_in_AMPS[vali][valj],temp); 
-	  XtVaSetValues(rec_in_AMPS[vali][valj]->slider,XmNvalue,temp,NULL); 
-	}
-      else add_pending_setf(which,vali,valj,valf);
-      break;
-    case REC_OUT_AMPS:
-      if (recorder)
-	{
-	  temp = amp_to_slider(valf); 
-	  record_amp_changed(rec_out_AMPS[vali],temp); 
-	  XtVaSetValues(rec_out_AMPS[vali]->slider,XmNvalue,temp,NULL); 
-	}
-      else add_pending_setf(which,vali,valj,valf);
-      break;
-    case AUDIO_GAINS:
-      if (recorder)
-	{
-	  wd = audio_GAINS[vali];
-	  XtVaSetValues(wd->wg,XmNvalue,(int)(valf * 100),NULL);
-	  set_audio_gain(wd,valf);
-	}
-      else add_pending_setf(which,vali,valj,valf);
-      break;
+      temp = amp_to_slider(val); 
+      record_amp_changed(AMP_rec_ins[in][out],temp); 
+      XtVaSetValues(AMP_rec_ins[in][out]->slider,XmNvalue,temp,NULL); 
     }
 }
 
-static void initialize_recorder(snd_state *ss)
+void reflect_recorder_out_amp(int ind, Float val)
+{
+  int temp;
+  if (recorder)
+    {
+      temp = amp_to_slider(val); 
+      record_amp_changed(AMP_rec_outs[ind],temp); 
+      XtVaSetValues(AMP_rec_outs[ind]->slider,XmNvalue,temp,NULL); 
+    }
+}
+
+void reflect_recorder_mixer_gain(int ind, Float val)
+{
+  Wdesc *wd;
+  if (recorder)
+    {
+      wd = gain_sliders[ind];
+      XtVaSetValues(wd->wg,XmNvalue,(int)(val * 100),NULL);
+      set_mixer_gain(wd->system,wd->device,wd->chan,wd->gain,wd->field,val);
+    }
+}
+
+static void initialize_recorder(void)
 {
   /* picked up initial (widget) values from globals vars */
   int i;
@@ -4337,6 +4200,8 @@ static void initialize_recorder(snd_state *ss)
   int err;
   int in_digital = 0;
 #endif
+  recorder_info *rp;
+  rp = get_recorder_info();
   for (i=0;i<MAX_SOUNDCARDS;i++) record_buf[i] = NULL;
 #if OLD_SGI_AL
   sb[0] = AL_INPUT_SOURCE;
@@ -4359,11 +4224,8 @@ static void initialize_recorder(snd_state *ss)
 	}
     }
 #endif
-  if (recorder_trigger(ss) != 0.0) set_recorder_trigger(ss,recorder_trigger(ss));
-  max_duration = recorder_max_duration(ss);
-  if (max_duration<=0.0) max_duration = 1000000.0;
-  for (i=0;i<current_setf;i++)
-    write_record_state(setfs[i]->which,setfs[i]->vali,setfs[i]->valj,setfs[i]->valf);
+  if (rp->trigger != 0.0) set_recorder_trigger(rp->trigger);
+  if (rp->max_duration<=0.0) rp->max_duration = 1000000.0;
 }
 
 
@@ -4377,9 +4239,11 @@ int fire_up_recorder(snd_state *ss)
   float direction=0.0;
   int size,sys,dev,sysdev,in_count;
   int err,new_srate = 0;
+  recorder_info *rp;
+  rp = get_recorder_info();
   if (!fbuf) 
     {
-      fbuf_size = recorder_buffer_size(ss);
+      fbuf_size = rp->buffer_size;
       fbuf = (MUS_SAMPLE_TYPE *)CALLOC(fbuf_size,sizeof(MUS_SAMPLE_TYPE));
     }
   for (i=0;i<systems;i++) 
@@ -4392,17 +4256,17 @@ int fire_up_recorder(snd_state *ss)
     {
       mus_audio_save();
     }
-  /* the recorder_srate sometimes depends purely on external devices */
-  if (recorder_srate(ss) <= 0) 
-    in_set_recorder_srate(ss,22050);
+  /* the recorder srate sometimes depends purely on external devices */
+  if (rp->srate <= 0) 
+    rp->srate = 22050;
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DEFAULT,MUS_AUDIO_SRATE,0,val);
   if (!err) 
     {
       new_srate = (int)val[0];
-      if ((new_srate > 0) && (recorder_srate(ss) != new_srate)) 
-	set_recorder_srate(ss,new_srate);
+      if ((new_srate > 0) && (rp->srate != new_srate)) 
+	set_recorder_srate(new_srate);
     }
-  audio_out_chans = 2;
+  rp->monitor_out_chans = 2;
   for (i=0;i<overall_in_chans;i++) 
     {
       in_device_on[i] = 1; 
@@ -4435,19 +4299,19 @@ int fire_up_recorder(snd_state *ss)
 		  if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_SRATE,2,val))==0)
 		    {
 		      input_srate[sys]=(int)val[0];
-		      if (i == 0) set_recorder_srate(ss,input_srate[sys]);
+		      if (i == 0) set_recorder_srate(input_srate[sys]);
 		    }
 		  input_format[sys]=mus_audio_compatible_format(sysdev);
-		  if (i == 0) in_set_recorder_in_format(ss,input_format[sys]);
+		  if (i == 0) rp->in_format = input_format[sys];
 		  if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_SAMPLES_PER_CHANNEL,0,val))==0)
 		    {
 		      input_buffer_size[sys]=(int)(val[0]);
 		      if (i == 0) 
 			{
-			  in_set_recorder_buffer_size(ss,input_buffer_size[sys]);
+			  rp->buffer_size = input_buffer_size[sys];
 			  if ((recorder) && (rec_size_text))
 			    {
-			      sprintf(timbuf,"%d",recorder_buffer_size(ss));
+			      sprintf(timbuf,"%d",rp->buffer_size);
 			      XmTextSetString(rec_size_text,timbuf);
 			    }
 			}
@@ -4477,7 +4341,7 @@ int fire_up_recorder(snd_state *ss)
 	      if ((int)direction == 1)
 		{
 		  size = mus_data_format_to_bytes_per_sample(input_format[sys]);
-		  record_fd[sys] = mus_audio_open_input(sysdev,recorder_srate(ss),input_channels[sys],input_format[sys],
+		  record_fd[sys] = mus_audio_open_input(sysdev,rp->srate,input_channels[sys],input_format[sys],
 							input_buffer_size[sys]*input_channels[sys]*size);
 		  if (record_fd[sys] == -1)
 		    {
@@ -4496,7 +4360,7 @@ int fire_up_recorder(snd_state *ss)
 		}
 	    }
 	}
-      audio_open = 1;
+      rp->taking_input = 1;
 
       /* search for output devices for monitoring, first one wins */
 
@@ -4513,26 +4377,26 @@ int fire_up_recorder(snd_state *ss)
 		  /* found the first pane that has an output device (must be the only one) */
 		  if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_CHANNEL,2,val))==0) 
 		    {
-		      audio_out_chans=(int)(val[0]);
+		      rp->monitor_out_chans=(int)(val[0]);
 		      /* FIXME: what would be the proper value for this? 
 		       * the computer wedges if I don't initialize it, why? */
-		      in_set_recorder_out_chans(ss,audio_out_chans);
+		      rp->out_chans = rp->monitor_out_chans;
 		    }
 		  monitor_out_format = mus_audio_compatible_format(sysdev);
 		  size = mus_data_format_to_bytes_per_sample(monitor_out_format);
-		  monitor_fd = mus_audio_open_output(sysdev,recorder_srate(ss),audio_out_chans,monitor_out_format,
-						     recorder_buffer_size(ss)*audio_out_chans*size);
+		  monitor_fd = mus_audio_open_output(sysdev,rp->srate,rp->monitor_out_chans,monitor_out_format,
+						     rp->buffer_size*rp->monitor_out_chans*size);
 		  if (monitor_fd != -1) 
 		    {
 		      if (!obufs)
 			obufs = (MUS_SAMPLE_TYPE **)CALLOC(MAX_OUT_CHANS,sizeof(MUS_SAMPLE_TYPE *));
-		      for (i=0;i<audio_out_chans;i++) 
+		      for (i=0;i<rp->monitor_out_chans;i++) 
 			{
 			  if (obufs[i]) FREE(obufs[i]);
-			  obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(recorder_buffer_size(ss),sizeof(MUS_SAMPLE_TYPE));
+			  obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(rp->buffer_size,sizeof(MUS_SAMPLE_TYPE));
 			}
 		      if (!monitor_buf)
-			monitor_buf = (char *)CALLOC(recorder_buffer_size(ss)*audio_out_chans*size,1);
+			monitor_buf = (char *)CALLOC(rp->buffer_size*rp->monitor_out_chans*size,1);
 		      monitor_open = monitor_fd;
 		    }
 		  else
@@ -4551,9 +4415,9 @@ int fire_up_recorder(snd_state *ss)
       for (i=0;i<systems;i++)
 	{
 	  if (!(record_buf[i]))
-	    record_buf[i] = (char *)CALLOC(recorder_buffer_size(ss),sizeof(int)); /* 4 bytes per sample is probably enough?? */
-	  input_format[i] = recorder_in_format(ss);
-	  input_buffer_size[i] = recorder_buffer_size(ss) / recorder_out_chans(ss);
+	    record_buf[i] = (char *)CALLOC(rp->buffer_size,sizeof(int)); /* 4 bytes per sample is probably enough?? */
+	  input_format[i] = rp->in_format;
+	  input_buffer_size[i] = rp->buffer_size / rp->out_chans;
 	}
       for (i=0;i<systems;i++)
 	{
@@ -4584,12 +4448,12 @@ int fire_up_recorder(snd_state *ss)
       /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
       for (i=0;i<systems;i++)
 	{
-	  record_fd[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,recorder_srate(ss),input_channels[i],
-					      recorder_in_format(ss),recorder_buffer_size(ss));
+	  record_fd[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,rp->srate,input_channels[i],
+					      rp->in_format,rp->buffer_size);
 	  if (record_fd[i] == -1) /* perhaps not full-duplex */
 	    {
-	      record_fd[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,recorder_srate(ss),input_channels[i],
-						  recorder_in_format(ss),recorder_buffer_size(ss));
+	      record_fd[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,rp->srate,input_channels[i],
+						  rp->in_format,rp->buffer_size);
 	    }
 	}
       if (record_fd[0] == -1)
@@ -4597,12 +4461,12 @@ int fire_up_recorder(snd_state *ss)
 	  record_report(messages,"open device: ",mus_audio_error_name(mus_audio_error()),NULL);
 	  return(-1);
 	}
-      audio_open = 1;
+      rp->taking_input = 1;
       monitor_fd = 0;
 
       /*
        * if (full_duplex(0))
-       *   monitor_fd = mus_audio_open_output(MUS_AUDIO_DUPLEX_DEFAULT,recorder_srate(ss),audio_out_chans,recorder_out_format(ss),recorder_buffer_size(ss));
+       *   monitor_fd = mus_audio_open_output(MUS_AUDIO_DUPLEX_DEFAULT,rp->srate,rp->monitor_out_chans,rp->out_format,rp->buffer_size);
        * else record_report(messages,"Simultaneous input and output is not enabled on this card.",NULL);
        */
 
@@ -4632,12 +4496,14 @@ int fire_up_recorder(snd_state *ss)
   int cur_dev;
   long sb[8];
 #endif
+  recorder_info *rp;
+  rp = get_recorder_info();
   for (i=0;i<systems;i++)
     if (!(record_buf[i]))
-      record_buf[i] = (char *)CALLOC(recorder_buffer_size(ss),sizeof(int)); /* 4 bytes per sample is probably enough?? */
+      record_buf[i] = (char *)CALLOC(rp->buffer_size,sizeof(int)); /* 4 bytes per sample is probably enough?? */
   if (!fbuf) 
     {
-      fbuf_size = recorder_buffer_size(ss);
+      fbuf_size = rp->buffer_size;
       fbuf = (MUS_SAMPLE_TYPE *)CALLOC(fbuf_size,sizeof(MUS_SAMPLE_TYPE));
     }
   for (i=0;i<systems;i++) record_fd[i] = -1;
@@ -4647,7 +4513,7 @@ int fire_up_recorder(snd_state *ss)
   mus_audio_save();
 #endif
 
-  /* the recorder_srate sometimes depends purely on external devices */
+  /* the recorder srate sometimes depends purely on external devices */
   
 #ifdef SGI
   cur_dev = MUS_AUDIO_MICROPHONE;
@@ -4674,10 +4540,10 @@ int fire_up_recorder(snd_state *ss)
     else
       {
 	err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,MUS_AUDIO_SRATE,0,val);
-	if (!err) in_set_recorder_srate(ss,(int)val[0]);
+	if (!err) rp->srate = (int)val[0];
       }
-    if ((new_srate > 0) && (new_srate != recorder_srate(ss))) set_recorder_srate(ss,new_srate);
-    audio_out_chans = input_channels[0];
+    if ((new_srate > 0) && (new_srate != rp->srate)) set_recorder_srate(new_srate);
+    rp->monitor_out_chans = input_channels[0];
     for (i=0;i<4;i++) 
       {
         in_device_on[i] = (cur_dev != MUS_AUDIO_DIGITAL_IN);
@@ -4693,8 +4559,8 @@ int fire_up_recorder(snd_state *ss)
     err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,MUS_AUDIO_SRATE,0,val);
     new_srate = (int)val[0];
     if (!err) 
-      if ((new_srate > 0) && (recorder_srate(ss) != new_srate)) set_recorder_srate(ss,new_srate);
-    audio_out_chans = 2;
+      if ((new_srate > 0) && (rp->srate != new_srate)) set_recorder_srate(new_srate);
+    rp->monitor_out_chans = 2;
     for (i=0;i<all_panes_size;i++)
       {
 	p = all_panes[i];
@@ -4709,7 +4575,7 @@ int fire_up_recorder(snd_state *ss)
       }
   #endif
 #else /* not SGI */
-    if (recorder_srate(ss) <= 0) in_set_recorder_srate(ss,22050);
+    if (rp->srate <= 0) rp->srate = 22050;
   #ifdef SUN
     /* turn on "monitor" */
     val[0] = 1.0;
@@ -4723,9 +4589,9 @@ int fire_up_recorder(snd_state *ss)
     if (!err) 
       {
 	new_srate = (int)val[0];
-	if ((new_srate > 0) && (recorder_srate(ss) != new_srate)) set_recorder_srate(ss,new_srate);
+	if ((new_srate > 0) && (rp->srate != new_srate)) set_recorder_srate(new_srate);
       }
-    audio_out_chans = 2;
+    rp->monitor_out_chans = 2;
     for (i=0;i<overall_in_chans;i++) 
       {
 	in_device_on[i] = 1; 
@@ -4740,7 +4606,7 @@ int fire_up_recorder(snd_state *ss)
 	{
 #if OLD_SGI_AL
 	  input_channels[i] = ((cur_dev == MUS_AUDIO_DIGITAL_IN) ? 2 : 4);
-	  audio_out_chans = input_channels[i];
+	  rp->monitor_out_chans = input_channels[i];
 #else
   #ifdef SUN
 	  input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_MICROPHONE);
@@ -4772,27 +4638,27 @@ int fire_up_recorder(snd_state *ss)
     }
 
 #if NEW_SGI_AL
-  record_fd[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,recorder_srate(ss),input_channels[0],
-				  recorder_in_format(ss),recorder_buffer_size(ss));
+  record_fd[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,rp->srate,input_channels[0],
+				  rp->in_format,rp->buffer_size);
 #else
   #if OLD_SGI_AL
-    record_fd[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | cur_dev,recorder_srate(ss),input_channels[0],
-				    recorder_in_format(ss),recorder_buffer_size(ss));
+    record_fd[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | cur_dev,rp->srate,input_channels[0],
+				    rp->in_format,rp->buffer_size);
   #else
     #ifdef SUN
-    record_fd[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,recorder_srate(ss),input_channels[0],
-				    recorder_in_format(ss),recorder_buffer_size(ss));
+    record_fd[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,rp->srate,input_channels[0],
+				    rp->in_format,rp->buffer_size);
     #else
     /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
 
     for (i=0;i<systems;i++)
       {
-	record_fd[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,recorder_srate(ss),input_channels[i],
-					recorder_in_format(ss),recorder_buffer_size(ss));
+	record_fd[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,rp->srate,input_channels[i],
+					rp->in_format,rp->buffer_size);
 	if (record_fd[i] == -1) /* perhaps not full-duplex */
 	  {
-	    record_fd[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,recorder_srate(ss),input_channels[i],
-					    recorder_in_format(ss),recorder_buffer_size(ss));
+	    record_fd[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,rp->srate,input_channels[i],
+					    rp->in_format,rp->buffer_size);
 	  }
       }
     #endif
@@ -4803,19 +4669,19 @@ int fire_up_recorder(snd_state *ss)
       record_report(messages,"open device: ",mus_audio_error_name(mus_audio_error()),NULL);
       return(-1);
     }
-  audio_open = 1;
+  rp->taking_input = 1;
 #if ((HAVE_OSS) || defined(SUN))
   monitor_fd = 0;
 
   /*
    * if (full_duplex(0))
-   *   monitor_fd = mus_audio_open_output(MUS_AUDIO_DUPLEX_DEFAULT,recorder_srate(ss),audio_out_chans,recorder_out_format(ss),recorder_buffer_size(ss));
+   *   monitor_fd = mus_audio_open_output(MUS_AUDIO_DUPLEX_DEFAULT,rp->srate,rp->monitor_out_chans,rp->out_format,rp->buffer_size);
    * else record_report(messages,"Simultaneous input and output is not enabled on this card.",NULL);
    */
 
 #else
-  monitor_fd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,recorder_srate(ss),audio_out_chans,
-				 recorder_out_format(ss),recorder_buffer_size(ss));
+  monitor_fd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,rp->srate,rp->monitor_out_chans,
+				 rp->out_format,rp->buffer_size);
 #endif
   if (monitor_fd == -1)
     {
@@ -4832,13 +4698,15 @@ int fire_up_recorder(snd_state *ss)
 }
 #endif
 
-static void set_record_size (snd_state *ss, int new_size)
+static void set_record_size (int new_size)
 {
   int i;
+  recorder_info *rp;
+  rp = get_recorder_info();
   lock_recording_audio();
-  if (new_size > recorder_buffer_size(ss))
+  if (new_size > rp->buffer_size)
     {
-      in_set_recorder_buffer_size(ss,new_size);
+      rp->buffer_size = new_size;
       if (ffbuf)
 	{
 	  FREE(ffbuf);
@@ -4846,7 +4714,7 @@ static void set_record_size (snd_state *ss, int new_size)
 	}
       if (obufs)
 	{
-	  for (i=0;i<recorder_out_chans(ss);i++) 
+	  for (i=0;i<rp->out_chans;i++) 
 	    {
 	      if (obufs[i]) 
 		{
@@ -4870,10 +4738,10 @@ static void set_record_size (snd_state *ss, int new_size)
 	  fbuf = (MUS_SAMPLE_TYPE *)CALLOC(fbuf_size,sizeof(MUS_SAMPLE_TYPE));
 	}
     }
-  else in_set_recorder_buffer_size(ss,new_size);
+  else rp->buffer_size = new_size;
   if ((recorder) && (rec_size_text)) 
     {
-      sprintf(timbuf,"%d",recorder_buffer_size(ss));
+      sprintf(timbuf,"%d",rp->buffer_size);
       XmTextSetString(rec_size_text,timbuf);
     }
   unlock_recording_audio();
@@ -4885,25 +4753,11 @@ int record_dialog_is_active(void)
 }
 
 
-#if 0
-/* to ensure alReadBuffers: -- this might be handy when multiple active inputs are supported */
-  pv.param = AL_VERSION; alGetParams(AL_SYSTEM,&pv,1); if (pv.sizeOut < 0 || pv.value.i < 6) {/* feature not present */}
-  ALport p;
-  short buf[8][1000];
-  void *bufs[8];
-  int i,j;
-  ALconfig c;
-  c = alNewConfig();
-  alSetChannels(c, 8);
-  p = alOpenPort("alReadBuffers example","r",c);
-  for (i = 0; i < 8; i++) {bufs[i] = buf[i];}
-  alReadBuffers(p, bufs, 0, 1000);          /* read 1000 8-channel frames */
-#endif
-
-
-void set_recorder_trigger(snd_state *ss, Float val)
+void set_recorder_trigger(Float val)
 {
-  in_set_recorder_trigger(ss,val);
+  recorder_info *rp;
+  rp = get_recorder_info();
+  rp->trigger = val;
   if (recorder)
     {
       XmScaleSetValue(trigger_scale,(int)(100*val));
@@ -4911,31 +4765,19 @@ void set_recorder_trigger(snd_state *ss, Float val)
     }
 }
 
-void set_recorder_max_duration(snd_state *ss, Float val)
-{
-  in_set_recorder_max_duration(ss,val);
-  max_duration = val;
-}
-
-#if 0
-void start_recorder(snd_state *ss)
-{
-  if (!recorder) snd_record_file(ss);
-  Record_Button_Callback(record_button,(XtPointer)ss,NULL); /* call again to stop */
-}
-#endif
-
-void set_recorder_srate(snd_state *ss, int val)
+void set_recorder_srate(int val)
 {
   char sbuf[8];
+  recorder_info *rp;
+  rp = get_recorder_info();
   /* this just reflects the setting in the text field -- it doesn't actually set anything in the audio system */
   if (val > 0)
     {
       /* SGI AES In sometimes claims its srate is 0 */
-      in_set_recorder_srate(ss,val);
+      rp->srate = val;
       if (recorder) 
 	{
-	  sprintf(sbuf,"%d",recorder_srate(ss));
+	  sprintf(sbuf,"%d",rp->srate);
 	  XmTextSetString(recdat->srate_text,sbuf);
 	}
     }

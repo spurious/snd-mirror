@@ -177,8 +177,9 @@ static const unsigned char I_ulaw[4] = {'u','l','a','w'};  /* or maybe it's lowe
 static const unsigned char I_ima4[4] = {'i','m','a','4'};  /* AIFC IMA adpcm apparently */
 static const unsigned char I_raw_[4] = {'r','a','w',' '};  /* AIFC offset binary OS 8.5 (others are 'MAC3' 'MAC6' 'cdx4' 'cdx2' 'str4') */
 static const unsigned char I_sowt[4] = {'s','o','w','t'};  /* AIFC little endian? */
-static const unsigned char I_fl32[4] = {'f','l','3','2'};  /* AIFC 32-bit float? */
-static const unsigned char I_fl64[4] = {'f','l','6','4'};  /* AIFC 64-bit float? */
+static const unsigned char I_fl32[4] = {'f','l','3','2'};  /* AIFC 32-bit float */
+static const unsigned char I_FL32[4] = {'F','L','3','2'};  /* AIFC 32-bit float (apparently used by CSound and SoundHack) */
+static const unsigned char I_fl64[4] = {'f','l','6','4'};  /* AIFC 64-bit float */
 static const unsigned char I_twos[4] = {'t','w','o','s'};  /* AIFC big endian? */
 static const unsigned char I_ALAW[4] = {'A','L','A','W'};
 static const unsigned char I_alaw[4] = {'a','l','a','w'};  /* apple */
@@ -865,7 +866,8 @@ static int read_aiff_header (int chan, int overall_offset)
 				}
 			      else
 				{
-				  if (match_four_chars((unsigned char *)(hdrbuf+26),I_fl32))
+				  if ((match_four_chars((unsigned char *)(hdrbuf+26),I_fl32)) ||
+				      (match_four_chars((unsigned char *)(hdrbuf+26),I_FL32)))
 				    data_format = MUS_BFLOAT;
 				  else
 				    {

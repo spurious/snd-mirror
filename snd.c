@@ -175,16 +175,6 @@ static void mus_error2snd(int type, char *msg)
   ss->Show_Mix_Waveforms = DEFAULT_SHOW_MIX_WAVEFORMS;
   ss->Mix_Waveform_Height = DEFAULT_MIX_WAVEFORM_HEIGHT;
   ss->Show_Usage_Stats = DEFAULT_SHOW_USAGE_STATS;
-  ss->Recorder_Autoload = DEFAULT_RECORDER_AUTOLOAD;
-  ss->Recorder_Buffer_Size = DEFAULT_RECORDER_BUFFER_SIZE;
-  ss->Recorder_Out_Chans = DEFAULT_RECORDER_OUT_CHANS;
-  ss->Recorder_Out_Format = DEFAULT_RECORDER_OUT_FORMAT;
-  ss->Reverb_Decay = DEFAULT_REVERB_DECAY;
-  ss->Recorder_In_Format = DEFAULT_RECORDER_IN_FORMAT;
-  ss->Recorder_Srate = DEFAULT_RECORDER_SRATE;
-  ss->Recorder_Trigger = DEFAULT_RECORDER_TRIGGER;
-  ss->Recorder_Max_Duration = DEFAULT_RECORDER_MAX_DURATION;
-  ss->Recorder_File = DEFAULT_RECORDER_FILE;
   ss->Save_State_File = DEFAULT_SAVE_STATE_FILE;
   ss->Enved_Base = DEFAULT_ENVED_BASE;
   ss->Enved_Power = DEFAULT_ENVED_POWER;
@@ -199,6 +189,7 @@ static void mus_error2snd(int type, char *msg)
   ss->Corruption_Time = DEFAULT_CORRUPTION_TIME;
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
   ss->Max_Fft_Peaks = DEFAULT_MAX_FFT_PEAKS;
+  ss->Reverb_Decay = DEFAULT_REVERB_DECAY;
   allocate_regions(ss,max_regions(ss));
 
   ss->min_dB = DEFAULT_MIN_DB;
@@ -233,6 +224,7 @@ static void mus_error2snd(int type, char *msg)
 #endif
 
   set_snd_IO_error(SND_NO_ERROR);
+  init_recorder(ss);
 
 #if HAVE_GUILE
   g_initialize_gh(ss);

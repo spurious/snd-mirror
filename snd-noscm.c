@@ -420,18 +420,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_raw_srate) == 0) {set_raw_srate(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_read_only) == 0) 
     {sp = get_sp(ss,str[2]); if (sp) {ival = istr(str[1]); sp->read_only = ival; snd_file_lock_icon(sp,ival);} isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_autoload) == 0) {set_autoload(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_buffer_size) == 0) {in_set_recorder_buffer_size(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_file) == 0) {in_set_recorder_file(ss,sstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_gain) == 0) {write_record_state(AUDIO_GAINS,istr(str[1]),0,fstr(str[2])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_in_amp) == 0) {write_record_state(REC_IN_AMPS,istr(str[1]),istr(str[2]),fstr(str[3])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_in_format) == 0) {in_set_recorder_in_format(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_out_amp) == 0) {write_record_state(REC_OUT_AMPS,istr(str[1]),0,fstr(str[2])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_out_chans) == 0) {in_set_recorder_out_chans(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_out_format) == 0) {in_set_recorder_out_format(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_srate) == 0) {set_recorder_srate(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_trigger) == 0) {set_recorder_trigger(ss,fstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_recorder_max_duration) == 0) {set_recorder_max_duration(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_reverb_feedback) == 0) {sp = get_sp(ss,str[2]); if (sp) sp->revfb = fstr(str[1]); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_reverb_length) == 0) 
     {
@@ -961,19 +949,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_raw_format) == 0) {isym(ss,raw_format(ss)); return(0);}
       if (strcmp(tok,S_raw_srate) == 0) {isym(ss,raw_srate(ss)); return(0);}
       if (strcmp(tok,S_read_only) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->read_only); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_recorder_dialog) == 0) {snd_record_file(ss); isym(ss,0); return(0);}
-      if (strcmp(tok,S_recorder_autoload) == 0) {isym(ss,recorder_autoload(ss)); return(0);}
-      if (strcmp(tok,S_recorder_buffer_size) == 0) {isym(ss,recorder_buffer_size(ss)); return(0);}
-      if (strcmp(tok,S_recorder_file) == 0) {ssym(ss,recorder_file(ss)); return(0);}
-      if (strcmp(tok,S_recorder_gain) == 0) {fsym(ss,read_record_state(AUDIO_GAINS,istr(str[1]),0)); return(0);}
-      if (strcmp(tok,S_recorder_in_amp) == 0) {fsym(ss,read_record_state(REC_IN_AMPS,istr(str[1]),istr(str[2]))); return(0);}
-      if (strcmp(tok,S_recorder_in_format) == 0) {isym(ss,recorder_in_format(ss)); return(0);}
-      if (strcmp(tok,S_recorder_max_duration) == 0) {fsym(ss,recorder_max_duration(ss)); return(0);}
-      if (strcmp(tok,S_recorder_out_amp) == 0) {fsym(ss,read_record_state(REC_OUT_AMPS,istr(str[1]),0)); return(0);}
-      if (strcmp(tok,S_recorder_out_chans) == 0) {isym(ss,recorder_out_chans(ss)); return(0);}
-      if (strcmp(tok,S_recorder_out_format) == 0) {isym(ss,recorder_out_format(ss)); return(0);}
-      if (strcmp(tok,S_recorder_srate) == 0) {isym(ss,recorder_srate(ss)); return(0);}
-      if (strcmp(tok,S_recorder_trigger) == 0) {fsym(ss,recorder_trigger(ss)); return(0);}
       if (strcmp(tok,S_region_chans) == 0) 
 	{ival = istr(str[1]); if (region_ok(ival)) isym(ss,region_chans(ival)); else display_results(ss,"no such region"); return(0);}
       if (strcmp(tok,S_region_length) == 0) 

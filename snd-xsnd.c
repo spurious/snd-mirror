@@ -2632,7 +2632,7 @@ static int even_channels(snd_info *sp, void *ptr)
   chans = sp->nchans;
   if (chans > 1)
     {
-      height = (*((int *)ptr));
+      height = (int)ptr;
       val = height/chans - 16;
       if (val < 6) val = 6;
       for (i=0;i<chans;i++)
@@ -2648,8 +2648,21 @@ static int even_channels(snd_info *sp, void *ptr)
 static int even_sounds(snd_info *sp,void *ptr)
 {
   int width;
-  width = (*((int *)ptr));
-  XtVaSetValues(w_snd_pane(sp),XmNwidth,width,NULL);
+  width = (int)ptr;
+  XtUnmanageChild(w_snd_pane(sp));
+  XtVaSetValues(w_snd_pane(sp),XmNpaneMinimum,width-5,XmNpaneMaximum,width+5,NULL);
+  return(0);
+}
+
+static int sound_open_pane(snd_info *sp, void *ptr)
+{
+  XtManageChild(w_snd_pane(sp));
+  return(0);
+}
+
+static int sound_unlock_pane(snd_info *sp, void *ptr)
+{
+  XtVaSetValues(w_snd_pane(sp),XmNpaneMinimum,5,XmNpaneMaximum,LOTSA_PIXELS,NULL);
   return(0);
 }
 
@@ -2691,20 +2704,16 @@ void normalize_all_sounds(snd_state *ss)
       if (sound_style(ss) == SOUNDS_HORIZONTAL)
 	{
 	  height = widget_height(SOUND_PANE(ss));
-	  /* each sound has the same vertical space, so here we are just normalizing chans per sound */
-	  if (sounds > 0) 
+	  if (sounds > 1) 
 	    {
 	      width = widget_width(MAIN_PANE(ss));
-	      if (ss->listening == LISTENER_OPEN) 
-		{
-		  set_listener_width(width/4);
-		  width = (int)(width * .75);
-		}
 	      width /= sounds;
-	      map_over_sounds(ss,even_sounds,&width);
+	      map_over_sounds(ss,even_sounds,(void *)width);
+	      map_over_sounds(ss,sound_open_pane,NULL);
+	      map_over_sounds(ss,sound_unlock_pane,NULL);
 	    }
 	  map_over_sounds(ss,sound_lock_ctrls,NULL);
-	  map_over_sounds(ss,even_channels,&height);
+	  map_over_sounds(ss,even_channels,(void *)height);
 	  map_over_separate_chans(ss,channel_open_pane,NULL);   /* manage the channel widgets */
 	  map_over_separate_chans(ss,channel_unlock_pane,NULL); /* allow pane to be resized */
 	  map_over_sounds(ss,sound_unlock_ctrls,NULL);

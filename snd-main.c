@@ -260,12 +260,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (show_mix_consoles(ss) != DEFAULT_SHOW_MIX_CONSOLES) fprintf(fd,"(%s %s)\n",S_set_show_mix_consoles,b2s(show_mix_consoles(ss)));
   if (show_mix_waveforms(ss) != DEFAULT_SHOW_MIX_WAVEFORMS) fprintf(fd,"(%s %s)\n",S_set_show_mix_waveforms,b2s(show_mix_waveforms(ss)));
   if (mix_waveform_height(ss) != DEFAULT_MIX_WAVEFORM_HEIGHT) fprintf(fd,"(%s %d)\n",S_set_mix_waveform_height,mix_waveform_height(ss));
-  if (recorder_autoload(ss) != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd,"(%s %s)\n",S_set_recorder_autoload,b2s(recorder_autoload(ss)));
-  if (recorder_buffer_size(ss) != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd,"(%s %d)\n",S_set_recorder_buffer_size,recorder_buffer_size(ss));
-  if (recorder_out_chans(ss) != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd,"(%s %d)\n",S_set_recorder_out_chans,recorder_out_chans(ss));
-  if (recorder_out_format(ss) != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd,"(%s %d)\n",S_set_recorder_out_format,recorder_out_format(ss));
-  if (recorder_in_format(ss) != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd,"(%s %d)\n",S_set_recorder_in_format,recorder_in_format(ss));
-  if (recorder_srate(ss) != DEFAULT_RECORDER_SRATE) fprintf(fd,"(%s %d)\n",S_set_recorder_srate,recorder_srate(ss));
   if (enved_waving(ss) != DEFAULT_ENVED_WAVING) fprintf(fd,"(%s %s)\n",S_set_enved_waving,b2s(enved_waving(ss)));
   if (enved_dBing(ss) != DEFAULT_ENVED_DBING) fprintf(fd,"(%s %s)\n",S_set_enved_dBing,b2s(enved_dBing(ss)));
   if (enved_clipping(ss) != DEFAULT_ENVED_CLIPPING) fprintf(fd,"(%s %s)\n",S_set_enved_clipping,b2s(enved_clipping(ss)));
@@ -273,7 +267,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (prefix_arg(ss) != 0) fprintf(fd,"(%s %d)\n",S_set_prefix_arg,prefix_arg(ss));
 
   if (vu_font(ss) != DEFAULT_VU_FONT) fprintf(fd,"(%s \"%s\")\n",S_set_vu_font,vu_font(ss));
-  if (recorder_file(ss) != DEFAULT_RECORDER_FILE) fprintf(fd,"(%s \"%s\")\n",S_set_recorder_file,recorder_file(ss));
   if (save_state_file(ss) != NULL) fprintf(fd,"(%s \"%s\")\n",S_set_save_state_file,save_state_file(ss));
   if (temp_dir(ss) != DEFAULT_TEMP_DIR) fprintf(fd,"(%s \"%s\")\n",S_set_temp_dir,temp_dir(ss));
   if (save_dir(ss) != DEFAULT_SAVE_DIR) fprintf(fd,"(%s \"%s\")\n",S_set_save_dir,save_dir(ss));
@@ -306,8 +299,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fneq(enved_power(ss),DEFAULT_ENVED_POWER)) fprintf(fd,"(%s %.4f)\n",S_set_enved_power,enved_power(ss));
   if (fneq(get_mix_console_amp_scaler(),1.0)) fprintf(fd,"(%s %.4f)\n",S_set_mix_console_amp_scaler,get_mix_console_amp_scaler());
   if (fneq(get_mix_console_speed_scaler(),1.0)) fprintf(fd,"(%s %.4f)\n",S_set_mix_console_speed_scaler,get_mix_console_speed_scaler());
-  if (fneq(recorder_trigger(ss),DEFAULT_RECORDER_TRIGGER)) fprintf(fd,"(%s %.4f)\n",S_set_recorder_trigger,recorder_trigger(ss));
-  if (fneq(recorder_max_duration(ss),DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd,"(%s %.4f)\n",S_set_recorder_max_duration,recorder_max_duration(ss));
+  save_recorder_state(fd);
 
   fprintf(fd,";;; end of snd options\n");
   if (locale)

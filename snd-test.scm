@@ -4274,6 +4274,18 @@
       (if (not (= hiho 32)) (snd-print (format #f "setf hiho 32: ~A" hiho)))
       ))
 
+(load "loop.scm")
+(if (or full-test (= snd-test 17))
+    (let ((hi 32)
+	  (ho 0))
+      (set! hi (progn (dotimes (k 3) (set! ho (1+ ho))) ho))
+      (if (not (= hi 3)) (snd-print (format #f "dotimes: ~A ~A?" ho hi)))
+      (loop for k from 0 to 12 do (set! ho (+ ho 1)))
+      (if (not (= ho 16)) (snd-print (format #f "loop: ~A?" ho)))
+      (set! hi (prog1 (+ 2 ho) (set! ho 3)))
+      (if (not (= hi 18)) (snd-print (format #f "prog1: ~A?" hi)))))
+
+
 ;;; these are just the right size to hit a bug in 4.4's amp-env subsampling
 ; (with-sound (:channels 4 :output "/zap/sounds/big4.snd" :play nil) 
 ;  (loop for i from 0 to 10 do (fm-violin (* i 12) 1 440 .5 :degrees 0)) 

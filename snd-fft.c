@@ -7,6 +7,7 @@
  * convolution from fft.c merged into this file 12-Nov-99.
  * clm fft window stuff replaces local funcs 6-May-00.
  * started replacing local transforms with those in gsl 6-May-00.
+ * all vars made channel-local 14-Aug-00
  */
 
 #define NUM_CACHED_FFT_WINDOWS 8

@@ -314,13 +314,7 @@ void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
 void cleanup_recording (void) {}
 void snd_record_file(snd_state *ss) {}
-void set_autoload(snd_state *ss, int val) {}
-Float read_record_state(int which, int vali, int valj) {return(0.0);}
-void write_record_state(int which, int vali, int valj, Float valf) {}
-void set_recorder_trigger(snd_state *ss,Float val) {}
-void set_recorder_max_duration(snd_state *ss,Float val) {}
 int record_dialog_is_active(void) {return(0);}
-void set_recorder_srate(snd_state *ss, int val) {}
 int fire_up_recorder(snd_state *ss) {return(0);}
 void close_recorder_audio(void) {}
 char *ps_rgb(snd_state *ss, int pchan) {return(NULL);}
@@ -352,6 +346,13 @@ void set_snd_revlen(snd_info *sp, Float val) {sp->revlen = val;}
 void set_snd_revscl(snd_info *sp, Float val) {sp->revscl = val;}
 void set_snd_filter_order(snd_info *sp, int val) {sp->filter_order = val;}
 void set_filter_dBing(snd_info *sp, int val) {sp->filter_dBing = val;}
+
+void set_recorder_autoload(int val) {}
+void set_recorder_trigger(Float val) {}
+void set_recorder_srate(int val) {}
+void reflect_recorder_mixer_gain(int ind, Float val) {}
+void reflect_recorder_out_amp(int ind, Float val) {}
+void reflect_recorder_in_amp(int in, int out, Float val) {}
 
 int calculate_fft(chan_info *cp, void *ptr) {return(0);}
 

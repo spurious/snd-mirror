@@ -1088,96 +1088,6 @@ static SCM g_set_raw_srate(SCM val)
   RTNINT(raw_srate(state));
 }
 
-static SCM g_recorder_autoload(void) {RTNBOOL(recorder_autoload(state));}
-static SCM g_set_recorder_autoload(SCM val) 
-{
-  #define H_recorder_autoload "(" S_recorder_autoload ") -> #t if newly recorded sound should be loaded into Snd automatically"
-  #define H_set_recorder_autoload "(" S_set_recorder_autoload " &optional (val #t)) sets " S_recorder_autoload
-  ERRB1(val,S_set_recorder_autoload); 
-  set_autoload(state,bool_int_or_one(val));
-  RTNBOOL(recorder_autoload(state));
-}
-
-static SCM g_recorder_buffer_size(void) {RTNINT(recorder_buffer_size(state));}
-static SCM g_set_recorder_buffer_size(SCM val) 
-{
-  #define H_recorder_buffer_size "(" S_recorder_buffer_size ") -> ADC buffer size (4096)"
-  #define H_set_recorder_buffer_size "(" S_set_recorder_buffer_size " val) sets " S_recorder_buffer_size
-  ERRN1(val,S_set_recorder_buffer_size); 
-  in_set_recorder_buffer_size(state,g_scm2int(val));
-  RTNINT(recorder_buffer_size(state));
-}
-
-static SCM g_recorder_file(void) {RTNSTR(recorder_file(state));}
-static SCM g_set_recorder_file(SCM val) 
-{
-  #define H_recorder_file "(" S_recorder_file ") -> default recorder file name"
-  #define H_set_recorder_file "(" S_set_recorder_file " val) sets " S_recorder_file
-  ERRS1(val,S_set_recorder_file); 
-  in_set_recorder_file(state,gh_scm2newstr(val,0));
-  RTNSTR(recorder_file(state));
-}
-
-static SCM g_recorder_in_format(void) {RTNINT(recorder_in_format(state));}
-static SCM g_set_recorder_in_format(SCM val) 
-{
-  #define H_recorder_in_format "(" S_recorder_in_format ") -> default recorder incoming data format (16 bit linear)"
-  #define H_set_recorder_in_format "(" S_set_recorder_in_format " val) sets " S_recorder_in_format
-  ERRN1(val,S_set_recorder_in_format); 
-  in_set_recorder_in_format(state,g_scm2int(val));
-  RTNINT(recorder_in_format(state));
-}
-
-static SCM g_recorder_out_chans(void) {RTNINT(recorder_out_chans(state));}
-static SCM g_set_recorder_out_chans(SCM val) 
-{
-  #define H_recorder_out_chans "(" S_recorder_out_chans ") -> default recorder output channels (2)"
-  #define H_set_recorder_out_chans "(" S_set_recorder_out_chans " val) sets " S_recorder_out_chans
-  ERRN1(val,S_set_recorder_out_chans); 
-  in_set_recorder_out_chans(state,g_scm2int(val));
-  RTNINT(recorder_out_chans(state));
-}
-
-static SCM g_recorder_out_format(void) {RTNINT(recorder_out_format(state));}
-static SCM g_set_recorder_out_format(SCM val) 
-{
-  #define H_recorder_out_format "(" S_recorder_out_format ") -> default recorder output data format (16-bit linear)"
-  #define H_set_recorder_out_format "(" S_set_recorder_out_format " val) sets " S_recorder_out_format
-  ERRN1(val,S_set_recorder_out_format); 
-  in_set_recorder_out_format(state,g_scm2int(val));
-  RTNINT(recorder_out_format(state));
-}
-
-static SCM g_recorder_srate(void) {RTNINT(recorder_srate(state));}
-static SCM g_set_recorder_srate(SCM val) 
-{
-  #define H_recorder_srate "(" S_recorder_srate ") -> default recorder sampling rate (22050)"
-  #define H_set_recorder_srate "(" S_set_recorder_srate " val) sets " S_recorder_srate
-  ERRN1(val,S_set_recorder_srate); 
-  set_recorder_srate(state,g_scm2int(val));
-  RTNINT(recorder_srate(state));
-}
-
-static SCM g_recorder_trigger(void) {RTNFLT(recorder_trigger(state));}
-static SCM g_set_recorder_trigger(SCM val) 
-{
-  #define H_recorder_trigger "(" S_recorder_trigger ") -> if doing triggered record, min amp that can trigger recording"
-  #define H_set_recorder_trigger "(" S_set_recorder_trigger " val) sets " S_recorder_trigger
-  ERRN1(val,S_set_recorder_trigger); 
-  set_recorder_trigger(state,gh_scm2double(val));
-  RTNFLT(recorder_trigger(state));
-}
-
-static SCM g_recorder_max_duration(void) {RTNFLT(recorder_max_duration(state));}
-static SCM g_set_recorder_max_duration(SCM val) 
-{
-  #define H_recorder_max_duration "(" S_recorder_max_duration ") -> max recorder output file length"
-  #define H_set_recorder_max_duration "(" S_set_recorder_max_duration " val) sets " S_recorder_max_duration
-  ERRN1(val,S_set_recorder_max_duration); 
-  set_recorder_max_duration(state,gh_scm2double(val));
-  RTNFLT(recorder_max_duration(state));
-}
-
 static SCM g_save_state_on_exit(void) {RTNBOOL(save_state_on_exit(state));}
 static SCM g_set_save_state_on_exit(SCM val) 
 {
@@ -1396,52 +1306,6 @@ static SCM g_set_just_sounds(SCM on)
   ERRB1(on,S_set_just_sounds); 
   toggle_just_sounds(n = bool_int_or_one(on)); 
   RTNBOOL(n);
-}
-
-static SCM g_recorder_gain (SCM num) 
-{
-  #define H_recorder_gain "(" S_recorder_gain " gain) -> recorder input (soundcard) gain"
-  RTNFLT(read_record_state(AUDIO_GAINS,g_scm2int(num),0));
-}
-
-static SCM g_recorder_in_amp (SCM in, SCM out) 
-{
-  #define H_recorder_in_amp "(" S_recorder_in_amp " in out) -> recorder scaler on input in to output out"
-  RTNFLT(read_record_state(REC_IN_AMPS,g_scm2int(in),g_scm2int(out)));
-}
-
-static SCM g_recorder_out_amp (SCM num) 
-{
-  #define H_recorder_out_amp "(" S_recorder_out_amp " out) -> recorder output out scaler"
-  RTNFLT(read_record_state(REC_OUT_AMPS,g_scm2int(num),0));
-}
-
-static SCM g_set_recorder_gain (SCM num, SCM amp) 
-{
-  #define H_set_recorder_gain "(" S_set_recorder_gain " num amp) sets recorder input gain num to amp"
-  ERRN1(num,S_set_recorder_gain);
-  ERRN2(amp,S_set_recorder_gain); 
-  write_record_state(AUDIO_GAINS,g_scm2int(num),0,gh_scm2double(amp)); 
-  return(amp);
-}
-
-static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp) 
-{
-  #define H_set_recorder_in_amp "(" S_set_recorder_in_amp " in out amp) sets recorder scaler on input in to output out to amp"
-  ERRN1(in,S_set_recorder_in_amp);
-  ERRN2(out,S_set_recorder_in_amp);
-  ERRN3(amp,S_set_recorder_in_amp);
-  write_record_state(REC_IN_AMPS,g_scm2int(in),g_scm2int(out),gh_scm2double(amp)); 
-  return(amp);
-}
-
-static SCM g_set_recorder_out_amp (SCM num, SCM amp) 
-{
-  #define H_set_recorder_out_amp "(" S_set_recorder_out_amp " num amp) sets recorder output gain num to amp"
-  ERRN1(num,S_set_recorder_out_amp);
-  ERRN2(amp,S_set_recorder_out_amp); 
-  write_record_state(REC_OUT_AMPS,g_scm2int(num),0,gh_scm2double(amp)); 
-  return(amp);
 }
 
 static SCM g_graph2ps(void) 
@@ -2849,13 +2713,6 @@ static SCM g_edit_header_dialog(SCM snd_n)
   return(SCM_BOOL_F);
 }
 
-static SCM g_recorder_dialog(void) 
-{
-  #define H_recorder_dialog "(" S_recorder_dialog ") fires up the Recorder"
-  snd_record_file(state); 
-  return(SCM_BOOL_F);
-}
-
 static SCM g_yes_or_no_p(SCM msg) 
 {
   #define H_yes_or_no_p "(" S_yes_or_no_p " message) displays message and waits for 'y' or 'n'; returns #t if 'y'"
@@ -3615,24 +3472,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_set_raw_format,g_set_raw_format),H_set_raw_format);
   DEFINE_PROC(gh_new_procedure0_0(S_raw_srate,g_raw_srate),H_raw_srate);
   DEFINE_PROC(gh_new_procedure1_0(S_set_raw_srate,g_set_raw_srate),H_set_raw_srate);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_autoload,g_recorder_autoload),H_recorder_autoload);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_recorder_autoload,g_set_recorder_autoload),H_set_recorder_autoload);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_buffer_size,g_recorder_buffer_size),H_recorder_buffer_size);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_buffer_size,g_set_recorder_buffer_size),H_set_recorder_buffer_size);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_file,g_recorder_file),H_recorder_file);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_file,g_set_recorder_file),H_set_recorder_file);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_in_format,g_recorder_in_format),H_recorder_in_format);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_in_format,g_set_recorder_in_format),H_set_recorder_in_format);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_out_chans,g_recorder_out_chans),H_recorder_out_chans);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_out_chans,g_set_recorder_out_chans),H_set_recorder_out_chans);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_out_format,g_recorder_out_format),H_recorder_out_format);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_out_format,g_set_recorder_out_format),H_set_recorder_out_format);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_srate,g_recorder_srate),H_recorder_srate);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_srate,g_set_recorder_srate),H_set_recorder_srate);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_trigger,g_recorder_trigger),H_recorder_trigger);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_trigger,g_set_recorder_trigger),H_set_recorder_trigger);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_max_duration,g_recorder_max_duration),H_recorder_max_duration);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_max_duration,g_set_recorder_max_duration),H_set_recorder_max_duration);
   DEFINE_PROC(gh_new_procedure0_0(S_save_state_on_exit,g_save_state_on_exit),H_save_state_on_exit);
   DEFINE_PROC(gh_new_procedure0_1(S_set_save_state_on_exit,g_set_save_state_on_exit),H_set_save_state_on_exit);
   DEFINE_PROC(gh_new_procedure0_0(S_show_indices,g_show_indices),H_show_indices);
@@ -3694,12 +3533,6 @@ void g_initialize_gh(snd_state *ss)
 
   DEFINE_PROC(gh_new_procedure2_0(S_set_oss_buffers,g_set_oss_buffers),H_set_oss_buffers);
   DEFINE_PROC(gh_new_procedure0_0(S_update_usage_stats,g_update_usage_stats),H_update_usage_stats);
-  DEFINE_PROC(gh_new_procedure1_0(S_recorder_gain,g_recorder_gain),H_recorder_gain);
-  DEFINE_PROC(gh_new_procedure2_0(S_recorder_in_amp,g_recorder_in_amp),H_recorder_in_amp);
-  DEFINE_PROC(gh_new_procedure1_0(S_recorder_out_amp,g_recorder_out_amp),H_recorder_out_amp);
-  DEFINE_PROC(gh_new_procedure2_0(S_set_recorder_gain,g_set_recorder_gain),H_set_recorder_gain);
-  DEFINE_PROC(gh_new_procedure3_0(S_set_recorder_in_amp,g_set_recorder_in_amp),H_set_recorder_in_amp);
-  DEFINE_PROC(gh_new_procedure2_0(S_set_recorder_out_amp,g_set_recorder_out_amp),H_set_recorder_out_amp);
 #if HAVE_OSS
   DEFINE_PROC(gh_new_procedure0_0(S_clear_audio_inputs,g_clear_audio_inputs),H_clear_audio_inputs);
 #endif
@@ -3710,7 +3543,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_0(S_transform_dialog,g_transform_dialog),H_transform_dialog);
   DEFINE_PROC(gh_new_procedure0_0(S_file_dialog,g_file_dialog),H_file_dialog);
   DEFINE_PROC(gh_new_procedure0_1(S_edit_header_dialog,g_edit_header_dialog),H_edit_header_dialog);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_dialog,g_recorder_dialog),H_recorder_dialog);
   DEFINE_PROC(gh_new_procedure2_0(S_help_dialog,g_help_dialog),H_help_dialog);
   DEFINE_PROC(gh_new_procedure1_2(S_sample,g_sample),H_sample);
   DEFINE_PROC(gh_new_procedure2_2(S_set_sample,g_set_sample),H_set_sample);
@@ -3840,6 +3672,7 @@ void g_initialize_gh(snd_state *ss)
   g_init_main(local_doc);
   g_init_snd(local_doc);
   g_init_file(local_doc);
+  g_init_recorder(local_doc);
 
   /* GOOPS */
   /* scm_init_oop_goops_goopscore_module (); */

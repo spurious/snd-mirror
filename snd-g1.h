@@ -546,13 +546,7 @@ void lock_recording_audio(void);
 void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(snd_state *ss);
-void set_autoload(snd_state *ss, int val);
-Float read_record_state(int which, int vali, int valj);
-void write_record_state(int which, int vali, int valj, Float valf);
 int record_dialog_is_active(void);
-void set_recorder_trigger(snd_state *ss,Float val);
-void set_recorder_max_duration(snd_state *ss,Float val);
-void set_recorder_srate(snd_state *ss, int val);
 #if HAVE_GUILE_GTK
   void init_recorder_widgets(SCM local_doc);
 #endif

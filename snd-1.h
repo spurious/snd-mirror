@@ -330,9 +330,8 @@ typedef struct snd__state {
   Float Initial_X0,Initial_X1,Initial_Y0,Initial_Y1,Reverb_Decay;
   int Raw_Srate,Raw_Chans,Raw_Format,Use_Raw_Defaults,Audio_Output_Device;
   int Print_Length,Show_Mix_Consoles,Dac_Size,Dac_Folding,Previous_Files_Sort,Show_Selection_Transform,With_Mix_Consoles;
-  char *Recorder_File,*Save_State_File,*Listener_Prompt;
-  Float Enved_Base,Enved_Power,Recorder_Trigger,Recorder_Max_Duration,Corruption_Time;
-  int Recorder_Autoload,Recorder_Buffer_Size,Recorder_In_Format,Recorder_Out_Format,Recorder_Out_Chans,Recorder_Srate;
+  char *Save_State_File,*Listener_Prompt;
+  Float Enved_Base,Enved_Power,Corruption_Time;
   int Enved_Clipping,Enved_Exping,Enved_Target,Enved_Waving,Enved_dBing,Prefix_Arg,Graphs_Horizontal;
   int Graph_Cursor,Use_Sinc_Interp,Data_Clipped,Show_Indices;
   Float min_dB,lin_dB;
@@ -1224,6 +1223,15 @@ int cursor_search(chan_info *cp, int count);
 /* -------- snd-trans.c -------- */
 
 int snd_translate(snd_state *ss, char *oldname, char *newname);
+
+
+/* -------- snd-rec.c -------- */
+
+void init_recorder(snd_state *ss);
+void save_recorder_state(FILE *fd);
+#if HAVE_GUILE
+  void g_init_recorder(SCM local_doc);
+#endif
 
 
 /* -------- snd.c -------- */

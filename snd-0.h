@@ -171,8 +171,6 @@ enum {FOURIER,WAVELET,HANKEL,WALSH,AUTOCORRELATION,CHEBYSHEV,CEPSTRUM,HADAMARD};
 #define NUM_FFT_WINDOWS 16
 #define NUM_WAVELETS 20
 
-enum {REC_IN_AMPS,REC_OUT_AMPS,AUDIO_GAINS};
-
 enum {NOT_FILING,INPUT_FILING,REGION_FILING,CHANNEL_FILING,TEMP_FILING,CHANGE_FILING,INSERT_FILING,MACRO_FILING};
 enum {APPLY_TO_SOUND,APPLY_TO_CHANNEL,APPLY_TO_SELECTION};
 enum {LISTENER_CLOSED,LISTENER_OPEN,LISTENER_LISTENING};
@@ -619,50 +617,6 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define enved_exping(ss) ss->Enved_Exping
 #define in_set_enved_exping(ss,a) ss->Enved_Exping = a
 #define DEFAULT_ENVED_EXPING 0
-
-#define recorder_autoload(ss) ss->Recorder_Autoload
-#define in_set_recorder_autoload(ss,a) ss->Recorder_Autoload = a
-#define DEFAULT_RECORDER_AUTOLOAD 0
-
-#define recorder_file(ss) ss->Recorder_File
-#define in_set_recorder_file(ss,a) ss->Recorder_File = a
-#define DEFAULT_RECORDER_FILE NULL
-
-#define recorder_buffer_size(ss) ss->Recorder_Buffer_Size
-#define in_set_recorder_buffer_size(ss,a) ss->Recorder_Buffer_Size = a
-#define DEFAULT_RECORDER_BUFFER_SIZE 4096
-
-#define recorder_in_format(ss) ss->Recorder_In_Format
-#define in_set_recorder_in_format(ss,a) ss->Recorder_In_Format = a
-#ifdef SUN
-#define DEFAULT_RECORDER_IN_FORMAT MUS_MULAW
-#else
-#define DEFAULT_RECORDER_IN_FORMAT MUS_COMPATIBLE_FORMAT
-#endif
-
-#define recorder_srate(ss) ss->Recorder_Srate
-#define in_set_recorder_srate(ss,a) ss->Recorder_Srate = a
-#ifdef SUN
-#define DEFAULT_RECORDER_SRATE 8000
-#else
-#define DEFAULT_RECORDER_SRATE 22050
-#endif
-
-#define recorder_trigger(ss) ss->Recorder_Trigger
-#define in_set_recorder_trigger(ss,a) ss->Recorder_Trigger = a
-#define DEFAULT_RECORDER_TRIGGER 0.0
-
-#define recorder_max_duration(ss) ss->Recorder_Max_Duration
-#define in_set_recorder_max_duration(ss,a) ss->Recorder_Max_Duration = a
-#define DEFAULT_RECORDER_MAX_DURATION 1000000.0
-
-#define recorder_out_format(ss) ss->Recorder_Out_Format
-#define in_set_recorder_out_format(ss,a) ss->Recorder_Out_Format = a
-#define DEFAULT_RECORDER_OUT_FORMAT MUS_COMPATIBLE_FORMAT
-
-#define recorder_out_chans(ss) ss->Recorder_Out_Chans
-#define in_set_recorder_out_chans(ss,a) ss->Recorder_Out_Chans = a
-#define DEFAULT_RECORDER_OUT_CHANS 2
 
 #define audio_output_device(ss) ss->Audio_Output_Device
 #define set_audio_output_device(ss,a) ss->Audio_Output_Device = a
