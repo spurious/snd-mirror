@@ -5003,7 +5003,7 @@ static int file_to_sample_channels(mus_any *ptr) {return((int)(((rdin *)ptr)->ch
 static Float file_to_sample_increment(mus_any *rd) {return((Float)(((rdin *)rd)->dir));}
 static Float file_to_sample_set_increment(mus_any *rd, Float val) {((rdin *)rd)->dir = (int)val; return(val);}
 static char *file_to_sample_file_name(mus_any *ptr) {return(((rdin *)ptr)->file_name);}
-static void noop_reset(mus_any *ptr) {}
+static void no_reset(mus_any *ptr) {}
 static Float file_sample(mus_any *ptr, off_t samp, int chan);
 static int file_to_sample_end(mus_any *ptr);
 static Float run_file_to_sample(mus_any *ptr, Float arg1, Float arg2) {return(file_sample(ptr, (int)arg1, (int)arg2));} /* mus_read_sample here? */
@@ -5034,7 +5034,7 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
   0, /* channel */
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &noop_reset
+  &no_reset
 };
 
 static Float file_sample(mus_any *ptr, off_t samp, int chan)
@@ -5191,7 +5191,7 @@ static mus_any_class READIN_CLASS = {
   &rd_channel,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &noop_reset
+  &no_reset
 };
 
 bool mus_readin_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_READIN));}
@@ -5281,7 +5281,7 @@ static mus_any_class FILE_TO_FRAME_CLASS = {
   0, /* channel */
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &noop_reset
+  &no_reset
 };
 
 mus_any *mus_make_file_to_frame(const char *filename)
@@ -5382,7 +5382,7 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &noop_reset
+  &no_reset
 };
 
 static void flush_buffers(rdout *gen)
@@ -5626,7 +5626,7 @@ static mus_any_class FRAME_TO_FILE_CLASS = {
   0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &noop_reset
+  &no_reset
 };
 
 mus_any *mus_make_frame_to_file(const char *filename, int chans, int out_format, int out_type)
@@ -5879,7 +5879,7 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0, 
   &locsig_xcoeffs, 0,
   &_mus_wrap_no_vcts,
-  &noop_reset
+  &no_reset
 };
 
 bool mus_locsig_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_LOCSIG));}

@@ -53,7 +53,44 @@
     menu))
 
 
-;;; -------- selection popup
+(define (display-properties props)
+  ;; there's no way to tell Guile's format that enormous vectors should not be printed in full
+  ;; so we search for them here and handle them ourselves
+
+  (define (vector-print v)
+    (if (< (vector-length v) 3)
+	(object->string v)
+	(let ((str (format #f "'#(~A" (vector-ref v 0))))
+	  (do ((i 1 (1+ i)))
+	      ((= i 3))
+	    (set! str (string-append str " " (object->string (vector-ref v i)))))
+	  (string-append str " ...)"))))
+
+  (let ((str ""))
+    (for-each
+     (lambda (pr)
+       (let ((property (car pr))
+	     (value (cdr pr)))
+	 (set! str (string-append str (string #\newline) "    " (object->string property) ": "))
+	 (if (vector? value)
+	     (set! str (string-append str (vector-print value)))
+	     (if (list? value)
+		 (let ((prev #f))
+		   (set! str (string-append str "'("))
+		   (for-each
+		    (lambda (v)
+		      (if prev 
+			  (set! str (string-append str " "))
+			  (set! prev #t))
+		      (if (vector? v)
+			  (set! str (string-append str (vector-print v)))
+			  (set! str (string-append str (object->string v)))))
+		    value)
+		   (set! str (string-append str ")")))
+		 (set! str (string-append str (object->string value)))))))
+     props)
+    str))
+
 
 (if (not popup-already-loaded)
     (let* ((selection-popup-menu 
@@ -63,6 +100,7 @@
 		  (stopping1 #f)
 		  (stop-widget #f)
 		  (stop-widget1 #f))
+	      ;; -------- selection popup
 	      (make-popup-menu 
 	       (lambda (w) ; top level settings
 		 #f)
@@ -307,7 +345,7 @@
 			(let ((snd graph-popup-snd))
 			  (info-dialog 
 			   (format #f "~A info" (file-name snd))
-			   (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%  maxamp: ~A~%~A~A~A"
+			   (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%  maxamp: ~A~%~A~A~A~A~A"
 				   (short-file-name snd)
 				   (chans snd)
 				   (srate snd)
@@ -324,7 +362,21 @@
 					 ""))
 				   (if (= (header-type snd) mus-soundfont)
 				       (format #f "  sounds: ~:{~%     ~S start: ~A, loop: ~A ~A~}" (soundfont-info))
-				       ""))))))
+				       "")
+				   (if (not (null? (sound-properties snd)))
+				       (format #f "  properties: ~A"
+					       (display-properties (sound-properties snd)))
+				       "")
+				   (let ((chan-str ""))
+				     (do ((i 0 (1+ i)))
+					 ((= i (chans snd)))
+				       (if (not (null? (channel-properties snd i)))
+					   (set! chan-str 
+						 (string-append chan-str
+								(format #f "~%  chan ~D properties: ~A" 
+									i (display-properties (channel-properties snd i)))))))
+				     chan-str)
+				   )))))
 		(list "Add mark"            every-menu 
 		      (lambda (w data)
 			(add-mark (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))

@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [365]
-;;;  test 1: defaults                           [920]
-;;;  test 2: headers                            [1116]
-;;;  test 3: variables                          [1416]
-;;;  test 4: sndlib                             [1807]
-;;;  test 5: simple overall checks              [3607]
-;;;  test 6: vcts                               [10942]
-;;;  test 7: colors                             [11192]
-;;;  test 8: clm                                [11694]
-;;;  test 9: mix                                [18273]
-;;;  test 10: marks                             [21335]
-;;;  test 11: dialogs                           [22039]
-;;;  test 12: extensions                        [22356]
-;;;  test 13: menus, edit lists, hooks, etc     [22771]
-;;;  test 14: all together now                  [24071]
-;;;  test 15: chan-local vars                   [25156]
-;;;  test 16: regularized funcs                 [26416]
-;;;  test 17: dialogs and graphics              [30783]
-;;;  test 18: enved                             [30858]
-;;;  test 19: save and restore                  [30878]
-;;;  test 20: transforms                        [32352]
-;;;  test 21: new stuff                         [33448]
-;;;  test 22: run                               [34308]
-;;;  test 23: with-sound                        [39400]
-;;;  test 24: user-interface                    [40395]
-;;;  test 25: X/Xt/Xm                           [43554]
-;;;  test 26: Gtk                               [48050]
-;;;  test 27: GL                                [52042]
-;;;  test 28: errors                            [52151]
-;;;  test all done                              [54228]
+;;;  test 0: constants                          [381]
+;;;  test 1: defaults                           [936]
+;;;  test 2: headers                            [1133]
+;;;  test 3: variables                          [1437]
+;;;  test 4: sndlib                             [1828]
+;;;  test 5: simple overall checks              [3628]
+;;;  test 6: vcts                               [10963]
+;;;  test 7: colors                             [11254]
+;;;  test 8: clm                                [11756]
+;;;  test 9: mix                                [18432]
+;;;  test 10: marks                             [21490]
+;;;  test 11: dialogs                           [22192]
+;;;  test 12: extensions                        [22509]
+;;;  test 13: menus, edit lists, hooks, etc     [22924]
+;;;  test 14: all together now                  [24224]
+;;;  test 15: chan-local vars                   [25310]
+;;;  test 16: regularized funcs                 [26570]
+;;;  test 17: dialogs and graphics              [30937]
+;;;  test 18: enved                             [31012]
+;;;  test 19: save and restore                  [31032]
+;;;  test 20: transforms                        [32506]
+;;;  test 21: new stuff                         [33602]
+;;;  test 22: run                               [34473]
+;;;  test 23: with-sound                        [39589]
+;;;  test 24: user-interface                    [40584]
+;;;  test 25: X/Xt/Xm                           [43743]
+;;;  test 26: Gtk                               [48239]
+;;;  test 27: GL                                [52231]
+;;;  test 28: errors                            [52340]
+;;;  test all done                              [54417]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -15401,6 +15401,10 @@ EDITS: 5
 	(set! (mus-frequency gen) 100.0)
 	(if (fneq (mus-frequency gen) 100.0) (snd-display ";set wave-train freq: ~A" (mus-frequency gen)))
 	(if (or (fneq (vct-ref v0 1) 0.5) (fneq (vct-ref v0 8) 4.0)) (snd-display ";wave-train output: ~A" v0))
+	(mus-reset gen)
+	(if (fneq (mus-phase gen) 0.0) (snd-display ";wt reset phase: ~A" (mus-phase gen)))
+	(let ((val (wave-train gen 0.0)))
+	  (if (fneq val 0.0) (snd-display ";wt reset data: ~A" val)))
 	(if (not (vct? (mus-data gen))) (snd-display ";mus-data wave-train: ~A" (mus-data gen)))
 	(set! (mus-data gen) (make-vct 3)))
       (set! (mus-data (make-oscil)) (make-vct 3))
@@ -39515,6 +39519,9 @@ EDITS: 2
 	(if (not (equal? val "hio")) (snd-display ";run b38 ~A" val)))
       (let ((val (run-eval '(let ((a (make-oscil)) (b 0)) (do ((i 0 (1+ i))) ((= i 3) a) (set! b i))))))
 	(if (not (oscil? val)) (snd-display ";run b39 ~A" val)))
+      (let ((osc (make-oscil)))
+	(let ((val (run (lambda () (oscil osc) (mus-reset osc) (oscil osc)))))
+	  (if (fneq val 0.0) (snd-display ";run reset oscil: ~A ~A" val osc))))
 
       (let ((val (run-eval '(let ((a 0) (hi 3)) (set! a (if (> hi 2) 2 3)) a))))
 	(if (not (= val 2)) (snd-display ";set let: ~A" val)))

@@ -1,5 +1,7 @@
 Snd change log
 
+  8-Feb:     grani.scm and grani in clm-ins.rb thanks to Mike Scholz.
+             CLM sndwarp (B Battey) translated to Scheme: sndwarp.scm.
   31-Jan:    removed support for Motif 1 and Lesstif.
              changed memo-sound to *snd-opened-sound*.
                      snd-load-files to *snd-loaded-files*.

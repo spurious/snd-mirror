@@ -369,6 +369,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Feb:   grani.scm and grani in clm-ins.rb thanks to Mike Scholz.\n\
+         CLM sndwarp (B Battey) translated to Scheme: sndwarp.scm.\n\
 31-Jan:  removed support for Motif 1 and Lesstif.\n\
          changed memo-sound to *snd-opened-sound*.\n\
          snd-load-files to *snd-loaded-files*.\n\

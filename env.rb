@@ -1,7 +1,7 @@
 # env.rb -- snd-7/env.scm
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sat Oct 30 14:47:37 CEST 2004
+# Last: Fri Feb 04 20:11:18 CET 2005
 
 # Commentary:
 #
@@ -26,6 +26,13 @@
 #  envelope_length(en)
 #  normalize_envelope(en, new_max)
 #  x_norm(en, xmax)
+#  exp_envelope(env, *args) [by Fernando Lopez-Lezcano (nando@ccrma.stanford.edu)]
+#    db_envelope(env, cutoff, error)
+#    make_db_env(env, *args)
+#    semitones_envelope(env, around, error)
+#    make_semitones_env(env, *args)
+#    octaves_envelope(env, around, error)
+#    make_octaves_env(env, *args)
 
 # Code:
 
@@ -435,6 +442,134 @@ XGRID is how fine a solution to sample our new envelope with.\n") if en == :help
   def x_norm(en, xmax)
     scl = xmax / en[-2].to_f
     en.each_pair do |x, y| [x * scl, y.to_f] end.flatten
+  end
+
+  # ;;;=============================================================================
+  # ;;; Exponential envelopes
+  # ;;;=============================================================================
+  # 
+  # ;;; Approximate an exponential envelope with a given base and error bound
+  # ;;; by Fernando Lopez-Lezcano (nando@ccrma.stanford.edu)
+  # ;;;
+  # ;;; base:
+  # ;;;   step size of the exponential envelope
+  # ;;; error:
+  # ;;;   error band of the approximation
+  # ;;; scaler:
+  # ;;;   scaling factor for the y coordinates
+  # ;;; offset:
+  # ;;;   offset for the y coordinates
+  # ;;; cutoff:
+  # ;;;   lowest value of the exponentially rendered envelope, values lower than
+  # ;;;   this cutoff value will be approximated as cero.
+  # ;;; out-scaler
+  # ;;;   scaler for the converted values
+
+  def exp_envelope(env, *args)
+    base       = get_args(args, :base, 2 ** (1.0 / 12)).to_f
+    error      = get_args(args, :error, 0.01).to_f
+    scaler     = get_args(args, :scaler, 1.0).to_f
+    offset     = get_args(args, :offset, 0.0).to_f
+    cutoff     = get_args(args, :cutoff, false)
+    out_scaler = get_args(args, :out_scaler, 1.0).to_f
+    result = []
+    ycutoff = (cutoff ? (base ** (offset + cutoff * scaler)) : false)
+    interpolate = lambda do |xl, yl, xh, yh, xi|
+      yl + (xi - xl) * ((yh - yl) / (xh - xl))
+    end
+    exp_seg = lambda do |xl, yle, xh, yhe, yl, yh, error|
+      xint = (xl + xh) / 2.0
+      yint = interpolate.call(xl, yl, xh, yh, xint)
+      yinte = interpolate.call(xl, yle, xh, yhe, xint)
+      yexp = base ** yint
+      yerr = base ** (yint + error) - yexp
+      if (yexp - yinte).abs > yerr and ((ycutoff and yinte > ycutoff) or true)
+        xi, yi = exp_seg.call(xl, yle, xint, yexp, yl, yint, error)
+        xj, yj = exp_seg.call(xint, yexp, xh, yhe, yint, yh, error)
+        [xi + [xint] + xj, yi + [yexp] + yj]
+      else
+        [[], []]
+      end
+    end
+    nx = nyscl = 0.0
+    0.step(env.length - 4, 2) do |i|
+      x  = env[i]
+      y  = env[i + 1]
+      nx = env[i + 2]
+      ny = env[i + 3]
+      yscl  = offset + y  * scaler
+      nyscl = offset + ny * scaler
+      result.push(x)
+      result.push((((not ycutoff) or base ** yscl >= ycutoff) ? (out_scaler * base ** yscl) : 0.0))
+      xs, ys = exp_seg.call(x, base ** yscl, nx, base ** nyscl, yscl, nyscl, error)
+      unless xs.empty?
+        ys_scaled = vct_scale!(list2vct(ys), out_scaler)
+        xs.each_with_index do |xx, i|
+          result.push(xx)
+          result.push(ys_scaled[i])
+        end
+      end
+    end
+    result.push(nx)
+    result.push((((not ycutoff) or base ** nyscl >= ycutoff) ? (out_scaler * base ** nyscl) : 0.0))
+  end
+
+  # ;;; Amplitude envelope in dBs
+  # ;;;
+  # ;;; The db scale is defined as:
+  # ;;;    value(db)=(* 20 (log10 (/ vin vref)))
+  # ;;;  where:
+  # ;;;    vref=1.0 reference value = digital clipping
+  def db_envelope(env, cutoff = -70, error = 0.01)
+    exp_envelope(env, :base, 10.0, :scaler, 1.0 / 20, :cutoff, cutoff, :error, error)
+  end
+
+  def make_db_env(env, *args)
+    scaler = get_args(args, :scaler, 1.0)
+    offset = get_args(args, :offset, 0.0)
+    base   = get_args(args, :base, 1.0)
+    dur    = get_args(args, :duration, 0.0)
+    fin    = get_args(args, :end, 0)
+    start  = get_args(args, :start, 0)
+    cutoff = get_args(args, :cutoff, -70)
+    error  = get_args(args, :error, 0.01)
+    make_env(:envelope, db_envelope(env, cutoff, error), :scaler, scaler, :offset, offset,
+             :base, base, :duration, dur, :end, fin, :start, start)
+  end
+
+  # ;;; Pitch envelopes (y units are semitone and octave intervals)
+  def semitones_envelope(env, around = 1.0, error = 0.01)
+    exp_envelope(env, :error, error, :out_scaler, around)
+  end
+
+  def make_semitones_env(env, *args)
+    around = get_args(args, :around, 1.0)
+    scaler = get_args(args, :scaler, 1.0)
+    offset = get_args(args, :offset, 0.0)
+    base   = get_args(args, :base, 1.0)
+    dur    = get_args(args, :duration, 0.0)
+    fin    = get_args(args, :end, 0)
+    start  = get_args(args, :start, 0)
+    error  = get_args(args, :error, 0.01)
+    make_env(:envelope, semitones_envelope(env, around, error), :scaler, scaler, :offset, offset,
+             :base, base, :duration, dur, :end, fin, :start, start)
+  end
+
+  def octaves_envelope(env, around = 1.0, error = 0.01)
+    exp_envelope(env, :error, error, :base, 2.0, :out_scaler, around)
+  end
+
+  def make_octaves_env(env, *args)
+    around = get_args(args, :around, 1.0)
+    scaler = get_args(args, :scaler, 1.0)
+    offset = get_args(args, :offset, 0.0)
+    base   = get_args(args, :base, 1.0)
+    dur    = get_args(args, :duration, 0.0)
+    fin    = get_args(args, :end, 0)
+    start  = get_args(args, :start, 0)
+    error  = get_args(args, :error, 0.01)
+    make_env(:envelope, octaves_envelope(env, around, error), :scaler, scaler, :offset, offset,
+             :base, base, :duration, dur, :end, fin, :start, start)
   end
 end
 

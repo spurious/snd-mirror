@@ -19,6 +19,7 @@
 ;;; channels-equal
 ;;; mono->stereo, mono-files->stereo, stereo->mono
 
+;;; TODO: somehow channel-properties can be set to '(295 3) causing subsequent troubles
 
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 (provide 'snd-extensions.scm)

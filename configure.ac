@@ -681,8 +681,6 @@ else
 
   if test "$with_gtk" = yes ; then
 
-    # PERHAPS: pango and gtk can follow independent paths, so ideally all the gtk macros would have pango counterparts
-
     AM_PATH_GTK_2_0(2.0.0,
       [
 	with_gtk=yes

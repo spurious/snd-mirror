@@ -24989,6 +24989,27 @@ GtkTextIter* iter, gint* trailing, gint x, gint y)"
                                      XEN_TO_C_gint(x), XEN_TO_C_gint(y));
   return(XEN_FALSE);
 }
+static XEN gxg_pango_attr_size_new_absolute(XEN size)
+{
+  #define H_pango_attr_size_new_absolute "PangoAttribute* pango_attr_size_new_absolute(int size)"
+  XEN_ASSERT_TYPE(XEN_int_P(size), size, 1, "pango_attr_size_new_absolute", "int");
+  return(C_TO_XEN_PangoAttribute_(pango_attr_size_new_absolute(XEN_TO_C_int(size))));
+}
+static XEN gxg_pango_font_description_set_absolute_size(XEN desc, XEN size)
+{
+  #define H_pango_font_description_set_absolute_size "void pango_font_description_set_absolute_size(PangoFontDescription* desc, \
+double size)"
+  XEN_ASSERT_TYPE(XEN_PangoFontDescription__P(desc), desc, 1, "pango_font_description_set_absolute_size", "PangoFontDescription*");
+  XEN_ASSERT_TYPE(XEN_double_P(size), size, 2, "pango_font_description_set_absolute_size", "double");
+  pango_font_description_set_absolute_size(XEN_TO_C_PangoFontDescription_(desc), XEN_TO_C_double(size));
+  return(XEN_FALSE);
+}
+static XEN gxg_pango_layout_get_font_description(XEN layout)
+{
+  #define H_pango_layout_get_font_description "PangoFontDescription* pango_layout_get_font_description(PangoLayout* layout)"
+  XEN_ASSERT_TYPE(XEN_PangoLayout__P(layout), layout, 1, "pango_layout_get_font_description", "PangoLayout*");
+    return(C_TO_XEN_PangoFontDescription_((PangoFontDescription*)pango_layout_get_font_description(XEN_TO_C_PangoLayout_(layout))));
+}
 #endif
 
 #define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))
@@ -28348,6 +28369,9 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_with_values, gxg_gtk_list_store_insert_with_values, 3, 0, 0, H_gtk_list_store_insert_with_values);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_with_valuesv, gxg_gtk_list_store_insert_with_valuesv, 6, 0, 0, H_gtk_list_store_insert_with_valuesv);
   XG_DEFINE_PROCEDURE(gtk_text_view_get_iter_at_position, gxg_gtk_text_view_get_iter_at_position, 5, 0, 0, H_gtk_text_view_get_iter_at_position);
+  XG_DEFINE_PROCEDURE(pango_attr_size_new_absolute, gxg_pango_attr_size_new_absolute, 1, 0, 0, H_pango_attr_size_new_absolute);
+  XG_DEFINE_PROCEDURE(pango_font_description_set_absolute_size, gxg_pango_font_description_set_absolute_size, 2, 0, 0, H_pango_font_description_set_absolute_size);
+  XG_DEFINE_PROCEDURE(pango_layout_get_font_description, gxg_pango_layout_get_font_description, 1, 0, 0, H_pango_layout_get_font_description);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER, 1, 0, 0, NULL);
@@ -31837,6 +31861,10 @@ static void define_integers(void)
   DEFINE_INTEGER(G_LOG_FATAL_MASK);
 #endif
 
+#if HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION
+  DEFINE_INTEGER(PANGO_WEIGHT_SEMIBOLD);
+#endif
+
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION_ITER);
@@ -32362,10 +32390,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"15-Jan-05\")");
+      XEN_EVAL_C_STRING("(define xm-version \"07-Feb-05\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("15-Jan-05"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("07-Feb-05"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

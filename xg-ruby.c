@@ -2892,6 +2892,9 @@ XEN_NARGIFY_1(gxg_gtk_label_get_max_width_chars_w, gxg_gtk_label_get_max_width_c
 XEN_NARGIFY_3(gxg_gtk_list_store_insert_with_values_w, gxg_gtk_list_store_insert_with_values)
 XEN_NARGIFY_6(gxg_gtk_list_store_insert_with_valuesv_w, gxg_gtk_list_store_insert_with_valuesv)
 XEN_NARGIFY_5(gxg_gtk_text_view_get_iter_at_position_w, gxg_gtk_text_view_get_iter_at_position)
+XEN_NARGIFY_1(gxg_pango_attr_size_new_absolute_w, gxg_pango_attr_size_new_absolute)
+XEN_NARGIFY_2(gxg_pango_font_description_set_absolute_size_w, gxg_pango_font_description_set_absolute_size)
+XEN_NARGIFY_1(gxg_pango_layout_get_font_description_w, gxg_pango_layout_get_font_description)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -6434,6 +6437,9 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_with_values, gxg_gtk_list_store_insert_with_values_w, 3, 0, 0, H_gtk_list_store_insert_with_values);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_with_valuesv, gxg_gtk_list_store_insert_with_valuesv_w, 6, 0, 0, H_gtk_list_store_insert_with_valuesv);
   XG_DEFINE_PROCEDURE(gtk_text_view_get_iter_at_position, gxg_gtk_text_view_get_iter_at_position_w, 5, 0, 0, H_gtk_text_view_get_iter_at_position);
+  XG_DEFINE_PROCEDURE(pango_attr_size_new_absolute, gxg_pango_attr_size_new_absolute_w, 1, 0, 0, H_pango_attr_size_new_absolute);
+  XG_DEFINE_PROCEDURE(pango_font_description_set_absolute_size, gxg_pango_font_description_set_absolute_size_w, 2, 0, 0, H_pango_font_description_set_absolute_size);
+  XG_DEFINE_PROCEDURE(pango_layout_get_font_description, gxg_pango_layout_get_font_description_w, 1, 0, 0, H_pango_layout_get_font_description);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);
