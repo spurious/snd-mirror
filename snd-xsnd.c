@@ -1417,7 +1417,7 @@ static char *bits_to_string(char **icon)
   /* show first few lines */
   char *buf;
   buf = (char *)CALLOC(128, sizeof(char));
-  snprintf(buf, 128, "\n%s\n%s\n%s...", icon[0], icon[1], icon[2]);
+  mus_snprintf(buf, 128, "\n%s\n%s\n%s...", icon[0], icon[1], icon[2]);
   return(buf);
 }
 #endif
