@@ -1,5 +1,7 @@
 Snd change log
 
+  10-Jun:    gtk support in fft-menu.scm thanks to Kjetil
+             ssb-bank in dsp.scm.
   9-Jun:     ssb-am in dsp.scm.
   4-Jun:     added add-colormap, delete-colormap, colormap-size, colormap-name, changed colormap-ref
              removed 2 previously built-in colormaps, added rainbow colormap, default colormap is 0.

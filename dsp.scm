@@ -1262,7 +1262,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	(sw 0.0)
 	(cw 0.0)
 	(reader (make-sample-reader beg)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (1+ i))) ; this could also use edot-product
 	((= i dur))
       (let ((samp (next-sample reader)))
 	(set! sw (+ sw (* samp (sin (* i incr)))))
@@ -1487,3 +1487,31 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define (ssb-am gen y) (gen y))
 
+(define (hz->2pi freq) (/ (* 2 pi freq) (srate)))
+
+(define* (ssb-bank old-freq new-freq pairs #:optional (order 40) (bw 50.0))
+  (let* ((ssbs (make-vector pairs))
+	 (bands (make-vector pairs))
+	 (factor (/ (- new-freq old-freq) old-freq))
+	 (mx (maxamp)))
+    (do ((i 1 (1+ i)))
+	((> i pairs))
+      (let* ((aff (* i old-freq))
+	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
+	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) (hz->2pi (+ aff bwf)) order))))
+    (as-one-edit
+     (lambda ()
+       (let ((nmx 0.0))
+	 (map-channel
+	  (lambda (y)
+	    (let ((sum 0.0))
+	      (do ((i 0 (1+ i)))
+		  ((= i pairs))
+		(set! sum (+ sum (ssb-am (vector-ref ssbs i) (bandpass (vector-ref bands i) y)))))
+	      (set! nmx (max nmx (abs sum)))
+	      sum)))
+	 (scale-by (/ mx nmx)))))))
+
+;;; TODO: doc/test ssb-bank, doc edot-product, doc/test ssb-am (gen/map)
+;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically

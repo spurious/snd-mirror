@@ -379,6 +379,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Jun:  gtk support in fft-menu.scm thanks to Kjetil\n\
+         ssb-bank in dsp.scm.\n\
 9-Jun:   ssb-am in dsp.scm.\n\
 4-Jun:   added add-colormap, delete-colormap, colormap-size, colormap-name, changed colormap-ref\n\
          removed 2 previously built-in colormaps, added rainbow colormap, default colormap is 0\n\
@@ -390,7 +392,6 @@ void about_snd_help(void)
 16-May:  snd 7.4\n\
 6-May:   mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).\n\
          channel-variance etc in dsp.scm, taken from J Smith \"Mathematics of the DFT\"\n\
-5-May:   reverse-channels, scramble-channels, rotate-channel, scramble-channel (extsnd.html, examp.scm)\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
