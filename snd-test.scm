@@ -8720,6 +8720,7 @@
 		 (fneq (vu-size) 0.5))
 	    (snd-display ";property vu-size: ~A" (vu-size)))
 	;; this basically never gets called -- force-event didn't help
+	(change-property "SND_VERSION" "SND_COMMAND" "(make-vector 10 3.14)")
 	(set! (vu-size) oldsize))
 
       (if (provided? 'snd-motif) (load "new-effects.scm"))
@@ -13070,6 +13071,9 @@ EDITS: 4
 		(let ((flttxt (find-child ctrls "filter-window")))
 		  (widget-string flttxt "'(0 0 1 1 2 0)")
 		  (key-event flttxt snd-return-key 0) (force-event))
+		(let ((fltord (find-child ctrls "filter-order")))
+		  (widget-string fltord "40")
+		  (key-event fltord snd-return-key 0) (force-event))
 		(click-button (find-child ctrls "Reset") #t)
 		(click-button (list-ref swids 4) #t |ControlMask)
 		(click-button (list-ref swids 4) #f 0)
@@ -13912,6 +13916,8 @@ EDITS: 4
                 (let* ((filed (list-ref (dialog-widgets) 8))
 		       (curform (find-child filed "curform"))
 		       (prevform (find-child filed "prevform"))
+		       (sort-menu (find-child prevform "sort"))
+		       (option-holder (cadr (|XtGetValues sort-menu (list |XmNsubMenuId 0))))
 		       (rw1 (find-child prevform "rw"))
 		       (sv1 (find-child rw1 "sv"))
 		       (pl1 (find-child rw1 "pl"))
@@ -13938,7 +13944,13 @@ EDITS: 4
 		  (enter-event nm1)
 		  (set! name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm2 (list |XmNlabelString 0))) "bold_button_font")))
 		  (close-sound (car (sounds)))
-		  (|XmToggleButtonSetState sv1 #t #t)		  
+		  (|XmToggleButtonSetState sv1 #t #t)
+		  (for-each-child option-holder
+				  (lambda (w)
+				    (if (|XmIsPushButton w)
+					(begin
+					  (click-button w #t)
+					  (force-event)))))
 		  (click-button (|XmMessageBoxGetChild filed |XmDIALOG_CANCEL_BUTTON)) (force-event)     ;clear
 		  (set! name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm2 (list |XmNlabelString 0))) "bold_button_font")))
 		  (click-button (|XmMessageBoxGetChild filed |XmDIALOG_OK_BUTTON)) (force-event)
@@ -15245,6 +15257,24 @@ EDITS: 4
 								      tags))
 							       (length tags)
 							       |XmMERGE_NEW)))
+
+		(let ((prop (cadr (|XmRenderTableCvtToProp (cadr (main-widgets)) rendertable))))
+		  (IF (not (string=? (substring prop 0 8) "tag,font"))
+		      (snd-display ";XmRenderTableCvtToProp: ~A" (substring prop 0 8)))
+		  (let ((copy (|XmRenderTableCopy rendertable)))
+		    (if (not (|XmRenderTable? copy)) (snd-display ";XmRenderTableCopy full: ~A" copy))
+		    (if (|XmRenderTableCopy) (snd-display ";XmRenderTableCopy null: ~A" (|XmRenderTableCopy)))
+		    (let ((rtags (|XmRenderTableGetTags copy))
+			  (rends (|XmRenderTableGetRenditions copy (list "one"))))
+		      (IF (|XmRenderTableGetRenditions) (snd-display ";XmRenderTableGetRenditions null: ~A" (|XmRenderTableGetRenditions)))
+		      (set! copy (|XmRenderTableRemoveRenditions copy (list (car rtags))))
+		      (IF (not (equal? (|XmRenderTableGetTags copy) (list "two" "three" "four")))
+			  (snd-display ";XmRenderTableRemoveRenditions: ~A" (|XmRenderTableGetTags copy)))
+		      (let ((another (|XmRenderTableCvtFromProp (cadr (main-widgets)) prop (string-length prop))))
+			(IF (not (|XmRenderTable? another)) (snd-display ";XmRenderTableCvtFromProp: ~A" another))
+			(|XmRenderTableFree another))
+		      )))
+
 		(IF (not (equal? (|XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
 		    (snd-display ";tags: ~A~%" (|XmRenderTableGetTags rendertable)))
 		(let ((r (|XmRenditionRetrieve (|XmRenderTableGetRendition rendertable "one")
@@ -15277,9 +15307,13 @@ EDITS: 4
 			 (IF (not (> (|XmStringLength strn) (|XmStringLength entry)))
 			     (snd-display ";concat xmstring: ~A ~A" (|XmStringLength strn) (|XmStringLength entry)))
 			 (let ((hgt (|XmStringHeight rendertable entry)))
-			   (IF (or (< hgt 5) (> hgt 120)) (snd-display ";~A height: ~A" entry hgt)))
-			 (let ((hgt (|XmStringWidth rendertable entry)))
-			   (IF (or (< hgt 3) (> hgt 120)) (snd-display ";~A width: ~A" entry hgt)))
+			   (IF (or (< hgt 5) (> hgt 120)) (snd-display ";~A height: ~A" entry hgt))
+			   (let ((wid (|XmStringWidth rendertable entry)))
+			     (IF (or (< wid 3) (> wid 120)) (snd-display ";~A width: ~A" entry wid))
+			     (let ((extent (|XmStringExtent rendertable entry)))
+			       (IF (or (not (= (car extent) wid))
+				       (not (= (cadr extent) hgt)))
+				   (snd-display ";XmStringExtent: ~A, wid: ~A, hgt: ~A", extent wid hgt)))))
 			 (let ((hgt (|XmStringBaseline rendertable entry)))
 			   (IF (or (< hgt 6) (> hgt 120)) (snd-display ";~A baseline: ~A" entry hgt)))
 			 (|XmStringFree strn)
@@ -15730,14 +15764,40 @@ EDITS: 4
 							       (IF (< (|endPos i) 0) (snd-display "endPos: A~" (|endPos i))))
 							     7)
 						      |XmNmotionVerifyCallback (list (lambda (w c i) (vector-set! calls c "motion")) 8)
-						      |XmNvalueChangedCallback (list (lambda (w c i) (vector-set! calls c "value")) 9))))
-		   (txtf (|XtVaCreateManagedWidget "textfield" |xmTextFieldWidgetClass frm
-						(list |XmNeditable #t
-						      |XmNleftAttachment      |XmATTACH_FORM
-						      |XmNrightAttachment     |XmATTACH_FORM
-						      |XmNtopAttachment       |XmATTACH_WIDGET
-						      |XmNtopWidget           txt
-						      |XmNbottomAttachment    |XmATTACH_FORM))))
+						      |XmNvalueChangedCallback (list (lambda (w c i) (vector-set! calls c "value")) 9)))))
+	      (letrec ((transfer-proc
+			(lambda (w c info)
+			  (let* ((dpy (|XtDisplay w))
+				 (TARGETS (|XmInternAtom dpy "TARGETS" #f))
+				 (CB_TARGETS (|XmInternAtom dpy "_MOTIF_CLIPBOARD_TARGETS" #f)))
+			    (if (equal? (|target info) |XA_STRING)
+				(begin
+				  (|XmTextInsert w (|XmTextGetInsertionPosition w) (->string (|value info)))
+				  (|XmTransferDone (|transfer_id info) |XmTRANSFER_DONE_SUCCEED))
+				(if (and (or (equal? (|target info) TARGETS)
+					     (equal? (|target info) CB_TARGETS))
+					 (equal? (|type info) |XA_ATOM))
+				    (let ((targets (->Atoms (|value info) (|length info)))
+					  (happy #f))
+				      (for-each
+				       (lambda (targ)
+					 (if (equal? targ |XA_STRING)
+					     (set! happy #t)))
+				       targets)
+				      (if happy
+					  (|XmTransferValue (|transfer_id info) 
+							    |XA_STRING
+							     transfer-proc
+							     #f
+							     (|XtLastTimestampProcessed dpy)))))))))
+		       (txtf (|XtVaCreateManagedWidget "textfield" |xmTextFieldWidgetClass frm
+						       (list |XmNeditable #t
+							     |XmNleftAttachment      |XmATTACH_FORM
+							     |XmNrightAttachment     |XmATTACH_FORM
+							     |XmNtopAttachment       |XmATTACH_WIDGET
+							     |XmNtopWidget           txt
+							     |XmNbottomAttachment    |XmATTACH_FORM))))
+							      
 	      (let ((vals (|XtVaGetValues txt (list |XmNrenderTable 0 |XmNselectionArray 0))))
 		(IF (not (|XmRenderTable? (list-ref vals 1))) (snd-display ";XmNrenderTable: ~A" (list-ref vals 1)))
 		(IF (not (list? (list-ref vals 3))) (snd-display ";XmNselectionArray: ~A" (list-ref vals 3))))
@@ -15907,12 +15967,32 @@ EDITS: 4
 	      (IF (not (string=? (vector-ref calls 8) "motion")) (snd-display ";motion callback: ~A" (vector-ref calls 8)))
 	      (IF (not (string=? (vector-ref calls 9) "value")) (snd-display ";value callback: ~A" (vector-ref calls 9)))
 
+	      (let ((txtf1 (|XtVaCreateManagedWidget "textfield" |xmTextFieldWidgetClass frm
+						       (list |XmNeditable #t
+							     |XmNleftAttachment      |XmATTACH_FORM
+							     |XmNrightAttachment     |XmATTACH_FORM
+							     |XmNtopAttachment       |XmATTACH_WIDGET
+							     |XmNtopWidget           txt
+							     |XmNbottomAttachment    |XmATTACH_FORM
+							     |XmNdestinationCallback
+							      (list (lambda (w c info)
+								      (let* ((dpy (|XtDisplay w))
+									     (TARGETS (|XmInternAtom dpy "TARGETS" #f)))
+									(|XmTransferValue (|transfer_id info) 
+											  TARGETS 
+											  transfer-proc
+											  #f
+											  (|XtLastTimestampProcessed dpy))))
+								    #f)))))
+		(|XmTextFieldPaste txtf1))
+
+
 	      (|XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
 	      (|XtAugmentTranslations txt (|XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
 	      (|XtCallActionProc txt "hiho" (|XEvent) "" 0)
 	      (|XtUninstallTranslations txt)
 
-	      (|XtUnmanageChild frm))
+	      (|XtUnmanageChild frm)))
 
 	    (let* ((shell (cadr (main-widgets)))
 		   (dpy (|XtDisplay shell))

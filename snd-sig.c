@@ -44,7 +44,9 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 					     AT_CURRENT_EDIT_POSITION, caller);
     }
   else pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(edpos, AT_CURRENT_EDIT_POSITION, caller);
-  if (((pos != AT_CURRENT_EDIT_POSITION) && (pos < 0)) || 
+  if (pos == AT_CURRENT_EDIT_POSITION)
+    return(cp->edit_ctr);
+  if ((pos < 0) || 
       (pos > cp->edit_size) ||
       (cp->edits[pos] == NULL))
     XEN_ERROR(NO_SUCH_EDIT,
@@ -52,8 +54,6 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 			 C_TO_XEN_INT(cp->sound->index),
 			 C_TO_XEN_INT(cp->chan),
 			 edpos));
-  if (pos == AT_CURRENT_EDIT_POSITION)
-    return(cp->edit_ctr);
   return(pos);
 }
 

@@ -838,7 +838,6 @@ dnl do we need explicit -n32?
     *-*-cygwin*)
 	AC_DEFINE(WINDOZE)
 	audio_system=Windoze
-	LDSO_FLAGS="-D_MT -MD -nologo -LD -Zi -W3"
 	;;
     *-aix*) 
         AC_DEFINE(AIX)

@@ -1022,12 +1022,12 @@
   XEN_ARGIFY_3(gxm_XmRenditionRetrieve_w, gxm_XmRenditionRetrieve)
   XEN_NARGIFY_1(gxm_XmRenditionFree_w, gxm_XmRenditionFree)
   XEN_ARGIFY_4(gxm_XmRenditionCreate_w, gxm_XmRenditionCreate)
-  XEN_NARGIFY_3(gxm_XmRenderTableGetRenditions_w, gxm_XmRenderTableGetRenditions)
+  XEN_ARGIFY_3(gxm_XmRenderTableGetRenditions_w, gxm_XmRenderTableGetRenditions)
   XEN_NARGIFY_2(gxm_XmRenderTableGetRendition_w, gxm_XmRenderTableGetRendition)
   XEN_NARGIFY_1(gxm_XmRenderTableGetTags_w, gxm_XmRenderTableGetTags)
   XEN_NARGIFY_1(gxm_XmRenderTableFree_w, gxm_XmRenderTableFree)
-  XEN_NARGIFY_3(gxm_XmRenderTableCopy_w, gxm_XmRenderTableCopy)
-  XEN_NARGIFY_3(gxm_XmRenderTableRemoveRenditions_w, gxm_XmRenderTableRemoveRenditions)
+  XEN_ARGIFY_3(gxm_XmRenderTableCopy_w, gxm_XmRenderTableCopy)
+  XEN_ARGIFY_3(gxm_XmRenderTableRemoveRenditions_w, gxm_XmRenderTableRemoveRenditions)
   XEN_NARGIFY_4(gxm_XmRenderTableAddRenditions_w, gxm_XmRenderTableAddRenditions)
 #endif
   XEN_NARGIFY_2(gxm_XmStringConcat_w, gxm_XmStringConcat)
@@ -2249,12 +2249,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenditionRetrieve" XM_POSTFIX, gxm_XmRenditionRetrieve_w, 2, 1, 0, H_XmRenditionRetrieve);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenditionFree" XM_POSTFIX, gxm_XmRenditionFree_w, 1, 0, 0, H_XmRenditionFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenditionCreate" XM_POSTFIX, gxm_XmRenditionCreate_w, 3, 1, 0, H_XmRenditionCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableGetRenditions" XM_POSTFIX, gxm_XmRenderTableGetRenditions_w, 3, 0, 0, H_XmRenderTableGetRenditions);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableGetRenditions" XM_POSTFIX, gxm_XmRenderTableGetRenditions_w, 0, 3, 0, H_XmRenderTableGetRenditions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableGetRendition" XM_POSTFIX, gxm_XmRenderTableGetRendition_w, 2, 0, 0, H_XmRenderTableGetRendition);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableGetTags" XM_POSTFIX, gxm_XmRenderTableGetTags_w, 1, 0, 0, H_XmRenderTableGetTags);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableFree" XM_POSTFIX, gxm_XmRenderTableFree_w, 1, 0, 0, H_XmRenderTableFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableCopy" XM_POSTFIX, gxm_XmRenderTableCopy_w, 3, 0, 0, H_XmRenderTableCopy);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableRemoveRenditions" XM_POSTFIX, gxm_XmRenderTableRemoveRenditions_w, 3, 0, 0, H_XmRenderTableRemoveRenditions);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableCopy" XM_POSTFIX, gxm_XmRenderTableCopy_w, 0, 3, 0, H_XmRenderTableCopy);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableRemoveRenditions" XM_POSTFIX, gxm_XmRenderTableRemoveRenditions_w, 0, 3, 0, H_XmRenderTableRemoveRenditions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableAddRenditions" XM_POSTFIX, gxm_XmRenderTableAddRenditions_w, 4, 0, 0, H_XmRenderTableAddRenditions);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringConcat" XM_POSTFIX, gxm_XmStringConcat_w, 2, 0, 0, H_XmStringConcat);

@@ -722,6 +722,7 @@ void g_init_fft(void);
 /* -------- snd-xen.c -------- */
 
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller);
+XEN snd_throw(XEN key, XEN args);
 XEN snd_no_such_file_error(const char *caller, XEN filename);
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn);
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc);

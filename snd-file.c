@@ -836,19 +836,17 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   hdr = make_file_info_1(filename);
   if (hdr == NULL)
     {
-      if (ss->catch_exists)
-	XEN_ERROR(NO_SUCH_FILE,
-		  XEN_LIST_2(C_TO_XEN_STRING(__FUNCTION__),
-			     C_TO_XEN_STRING(ss->catch_message)));
+      XEN_ERROR(NO_SUCH_FILE,
+		XEN_LIST_2(C_TO_XEN_STRING(__FUNCTION__),
+			   C_TO_XEN_STRING(ss->catch_message)));
       return(NULL);
     }
   chans = mus_sound_chans(filename);
   if (chans == 0)
     {
-      if (ss->catch_exists)
-	XEN_ERROR(XEN_ERROR_TYPE("no-channels"),
-		  XEN_LIST_2(C_TO_XEN_STRING(filename),
-			     C_TO_XEN_STRING("sound has no channels?")));
+      XEN_ERROR(XEN_ERROR_TYPE("no-channels"),
+		XEN_LIST_2(C_TO_XEN_STRING(filename),
+			   C_TO_XEN_STRING("sound has no channels?")));
       return(NULL);
     }
   sp = make_basic_snd_info(chans);

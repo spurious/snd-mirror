@@ -1304,10 +1304,9 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
     }
   else
     {
-      if (ss->catch_exists)
-	XEN_ERROR(NO_SUCH_FILE,
-		  XEN_LIST_2(C_TO_XEN_STRING(origin),
-			     C_TO_XEN_STRING(ss->catch_message)));
+      XEN_ERROR(NO_SUCH_FILE,
+		XEN_LIST_2(C_TO_XEN_STRING(origin),
+			   C_TO_XEN_STRING(ss->catch_message)));
     }
 }
 
@@ -1584,11 +1583,9 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
     }
   else
     {
-      if (ss->catch_exists)
-	XEN_ERROR(NO_SUCH_FILE,
-		  XEN_LIST_2(C_TO_XEN_STRING(origin),
-			     C_TO_XEN_STRING(ss->catch_message)));
-      else snd_error("%s: no such file: %s\n", origin, tempfile);
+      XEN_ERROR(NO_SUCH_FILE,
+		XEN_LIST_2(C_TO_XEN_STRING(origin),
+			   C_TO_XEN_STRING(ss->catch_message)));
     }
 }
 
@@ -1640,10 +1637,9 @@ void file_override_samples(int num, char *tempfile,
     }
   else
     {
-      if (ss->catch_exists)
-	XEN_ERROR(NO_SUCH_FILE,
-		  XEN_LIST_2(C_TO_XEN_STRING(origin),
-			     C_TO_XEN_STRING(ss->catch_message)));
+      XEN_ERROR(NO_SUCH_FILE,
+		XEN_LIST_2(C_TO_XEN_STRING(origin),
+			   C_TO_XEN_STRING(ss->catch_message)));
     }
 }
 

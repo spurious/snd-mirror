@@ -2191,7 +2191,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 (define (menu-option name)
-  ;; find the widget associated with a given menu item name ("Print" for example)
+  "(menu-option name) finds the widget associated with a given menu item name -- (menu-option \"Print\") for example)"
   (call-with-current-continuation
    (lambda (return)
      (for-each

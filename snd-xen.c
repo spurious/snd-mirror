@@ -274,6 +274,20 @@ static XEN snd_internal_stack_catch (XEN tag,
   return(result);
 }
 
+XEN snd_throw(XEN key, XEN args)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  if (ss->catch_exists)
+    return(scm_throw(key, args));
+  else
+    {
+      snd_error("%s: %s", 
+		XEN_TO_C_STRING(XEN_TO_STRING(key)),
+		XEN_TO_C_STRING(XEN_TO_STRING(args)));
+    }
+}
+
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return(snd_internal_stack_catch(XEN_TRUE, body, body_data, snd_catch_scm_error, (void *)caller));

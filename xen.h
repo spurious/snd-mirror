@@ -257,7 +257,11 @@
 #endif
 
 #define XEN_ERROR_TYPE(Typ)           C_STRING_TO_XEN_SYMBOL(Typ)
-#define XEN_ERROR(Type, Info)         scm_throw(Type, Info)
+#if USE_SND
+  #define XEN_ERROR(Type, Info)       snd_throw(Type, Info)
+#else
+  #define XEN_ERROR(Type, Info)       scm_throw(Type, Info)
+#endif
 
 #ifndef SCM_BOOLP
   #define SCM_BOOLP(Arg)              gh_boolean_p(Arg)

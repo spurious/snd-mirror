@@ -387,10 +387,9 @@ static void make_region_readable(region *r)
 	}
       else
 	{
-	  if ((ss->catch_exists) && (ss->catch_message))
-	    XEN_ERROR(MUS_MISC_ERROR,
-		      XEN_LIST_2(C_TO_XEN_STRING("can't read region file!!"),
-				 C_TO_XEN_STRING(ss->catch_message)));
+	  XEN_ERROR(MUS_MISC_ERROR,
+		    XEN_LIST_2(C_TO_XEN_STRING("can't read region file!!"),
+			       C_TO_XEN_STRING(ss->catch_message)));
 	}
     }
   r->rsp = regsp;

@@ -8,6 +8,7 @@
  * TODO: Motif 2.2 has a bunch of widgets that seem to be partly ICS-specific? (Xi... rather than Xm...)
  * TODO: callback struct print (and tie makers into Ruby)
  * TODO: XWindowChanges and XSetWindowAttributes accessible
+ * TODO: finish the -> converters
  */
 
 /* HISTORY: 
@@ -787,6 +788,11 @@ static XEN C_TO_XEN_Ints(int *array, int len)
   return(lst);
 }
 
+static XEN c_to_xen_ints(XEN array, XEN len)
+{
+  return(C_TO_XEN_Ints((int *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
+}
+
 static XEN C_TO_XEN_Atoms(Atom *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
@@ -799,6 +805,11 @@ static XEN C_TO_XEN_Atoms(Atom *array, int len)
       xm_unprotect_at(loc);
     }
   return(lst);
+}
+
+static XEN c_to_xen_atoms(XEN array, XEN len)
+{
+  return(C_TO_XEN_Atoms((Atom *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
 }
 
 static XEN C_TO_XEN_Strings(char **array, int len)
@@ -815,6 +826,16 @@ static XEN C_TO_XEN_Strings(char **array, int len)
   return(lst);
 }
 
+static XEN c_to_xen_strings(XEN array, XEN len)
+{
+  return(C_TO_XEN_Strings((char **)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
+}
+
+static XEN c_to_xen_string(XEN str)
+{
+  return(C_TO_XEN_STRING((char *)XEN_TO_C_ULONG(str)));
+}
+
 static XEN C_TO_XEN_XRectangles(XRectangle *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
@@ -827,6 +848,11 @@ static XEN C_TO_XEN_XRectangles(XRectangle *array, int len)
       xm_unprotect_at(loc);
     }
   return(lst);
+}
+
+static XEN c_to_xen_xrectangles(XEN array, XEN len)
+{
+  return(C_TO_XEN_XRectangles((XRectangle *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
 }
 
 static XEN C_TO_XEN_KeySyms(KeySym *array, int len)
@@ -2122,10 +2148,10 @@ static XEN gxm_XmTransferValue(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmTransferValue "void XmTransferValue(XtPointer transfer_id, Atom target, XtCallbackProc proc, XtPointer client_data, Time time) \
 transfers data to a destination"
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferSetParameters", "XtPointer");
-  XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmTransferSetParameters", "an Atom");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XmTransferSetParameters", "XtCallbackProc (3 args)");
-  XEN_ASSERT_TYPE(XEN_Time_P(arg5), arg5, 5, "XmTransferSetParameters", "Time");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferValue", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmTransferValue", "an Atom");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XmTransferValue", "XtCallbackProc (3 args)");
+  XEN_ASSERT_TYPE(XEN_Time_P(arg5), arg5, 5, "XmTransferValue", "Time");
   XmTransferValue((XtPointer)XEN_TO_C_ULONG(arg1), 
 		  XEN_TO_C_Atom(arg2), 
 		  gxm_TransferValueProc,
@@ -2259,17 +2285,26 @@ static XEN gxm_XmRenderTableRemoveRenditions(XEN arg1, XEN arg2, XEN arg3)
 removes renditions"
   /* DIFF: XmRenderTableRemoveRenditions arg2 is list of strings
    */
-  int len;
-  XmStringTag *tags;
-  XmRenderTable rt;
-  XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1), arg1, 1, "XmRenderTableRemoveRenditions", "XmRenderTable");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenderTableRemoveRenditions", "XmStringTag*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmRenderTableRemoveRenditions", "int");
-  len = XEN_TO_C_INT(arg3);
-  if (len <= 0) return(XEN_FALSE);
-  tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
+  int len = 0;
+  XmStringTag *tags = NULL;
+  XmRenderTable rt = NULL;
+  if (XEN_NOT_BOUND_P(arg1) || XEN_FALSE_P(arg1)) return(XEN_FALSE);
+  XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1) || XEN_FALSE_P(arg1), arg1, 1, "XmRenderTableRemoveRenditions", "XmRenderTable");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg2) || XEN_FALSE_P(arg2) || XEN_NOT_BOUND_P(arg2), arg2, 2, "XmRenderTableRemoveRenditions", "XmStringTag*");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmRenderTableRemoveRenditions", "int");
+  if (XEN_INTEGER_P(arg3)) 
+    {
+      len = XEN_TO_C_INT(arg3); 
+      if (len <= 0) return(XEN_FALSE);
+    }
+  else 
+    {
+      if (XEN_LIST_P(arg2))
+	len = XEN_LIST_LENGTH(arg2);
+    }
+  if (XEN_BOUND_P(arg2)) tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
   rt = XmRenderTableRemoveRenditions(XEN_TO_C_XmRenderTable(arg1), tags, len);
-  FREE(tags);
+  if (tags) FREE(tags);
   return(C_TO_XEN_XmRenderTable(rt));
 }
 
@@ -2278,17 +2313,26 @@ static XEN gxm_XmRenderTableCopy(XEN arg1, XEN arg2, XEN arg3)
   #define H_XmRenderTableCopy "XmRenderTable XmRenderTableCopy(XmRenderTable table, XmStringTag *tags, int tag_count) copies renditions"
   /* DIFF: XmRenderTableCopy arg2 is list of strings
    */
-  int len;
-  XmStringTag *tags;
-  XmRenderTable rt;
+  int len = 0;
+  XmStringTag *tags = NULL;
+  XmRenderTable rt = NULL;
+  if (XEN_NOT_BOUND_P(arg1) || XEN_FALSE_P(arg1)) return(XEN_FALSE);
   XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1), arg1, 1, "XmRenderTableCopy", "XmRenderTable");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenderTableCopy", "XmStringTag*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmRenderTableCopy", "int");
-  len = XEN_TO_C_INT(arg3);
-  if (len <= 0) return(XEN_FALSE);
-  tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg2) || XEN_FALSE_P(arg2) || XEN_NOT_BOUND_P(arg2), arg2, 2, "XmRenderTableCopy", "XmStringTag*");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmRenderTableCopy", "int");
+  if (XEN_INTEGER_P(arg3)) 
+    {
+      len = XEN_TO_C_INT(arg3); 
+      if (len <= 0) return(XEN_FALSE);
+    }
+  else 
+    {
+      if (XEN_LIST_P(arg2))
+	len = XEN_LIST_LENGTH(arg2);
+    }
+  if (XEN_BOUND_P(arg2)) tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
   rt = XmRenderTableCopy(XEN_TO_C_XmRenderTable(arg1), tags, len);
-  FREE(tags);
+  if (tags) FREE(tags);
   return(C_TO_XEN_XmRenderTable(rt));
 }
 
@@ -2339,14 +2383,17 @@ static XEN gxm_XmRenderTableGetRenditions(XEN arg1, XEN arg2, XEN arg3)
 matches rendition tags"
   /* DIFF: XmRenderTableGetRenditions returns list of XmRenditions, arg2 is list of strings
    */
-  int i, len, loc;
+  int i, len = 0, loc;
   XEN lst = XEN_EMPTY_LIST;
   XmRendition *rs;
   XmStringTag *tags;
+  if ((XEN_NOT_BOUND_P(arg1)) || XEN_NOT_BOUND_P(arg2) || XEN_FALSE_P(arg2)) return(XEN_FALSE);
   XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1), arg1, 1, "XmRenderTableGetRenditions", "XmRenderTable");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenderTableGetRenditions", "list of String");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmRenderTableGetRenditions", "int");
-  len = XEN_TO_C_INT(arg3);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmRenderTableGetRenditions", "int");
+  if (XEN_BOUND_P(arg3))
+    len = XEN_TO_C_INT(arg3);
+  else len = XEN_LIST_LENGTH(arg2);
   if (len <= 0) return(XEN_FALSE);
   loc = xm_protect(lst);
   tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
@@ -17866,12 +17913,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenditionRetrieve" XM_POSTFIX, gxm_XmRenditionRetrieve, 2, 1, 0, H_XmRenditionRetrieve);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenditionFree" XM_POSTFIX, gxm_XmRenditionFree, 1, 0, 0, H_XmRenditionFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenditionCreate" XM_POSTFIX, gxm_XmRenditionCreate, 3, 1, 0, H_XmRenditionCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableGetRenditions" XM_POSTFIX, gxm_XmRenderTableGetRenditions, 3, 0, 0, H_XmRenderTableGetRenditions);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableGetRenditions" XM_POSTFIX, gxm_XmRenderTableGetRenditions, 0, 3, 0, H_XmRenderTableGetRenditions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableGetRendition" XM_POSTFIX, gxm_XmRenderTableGetRendition, 2, 0, 0, H_XmRenderTableGetRendition);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableGetTags" XM_POSTFIX, gxm_XmRenderTableGetTags, 1, 0, 0, H_XmRenderTableGetTags);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableFree" XM_POSTFIX, gxm_XmRenderTableFree, 1, 0, 0, H_XmRenderTableFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableCopy" XM_POSTFIX, gxm_XmRenderTableCopy, 3, 0, 0, H_XmRenderTableCopy);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableRemoveRenditions" XM_POSTFIX, gxm_XmRenderTableRemoveRenditions, 3, 0, 0, H_XmRenderTableRemoveRenditions);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableCopy" XM_POSTFIX, gxm_XmRenderTableCopy, 0, 3, 0, H_XmRenderTableCopy);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableRemoveRenditions" XM_POSTFIX, gxm_XmRenderTableRemoveRenditions, 0, 3, 0, H_XmRenderTableRemoveRenditions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableAddRenditions" XM_POSTFIX, gxm_XmRenderTableAddRenditions, 4, 0, 0, H_XmRenderTableAddRenditions);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringConcat" XM_POSTFIX, gxm_XmStringConcat, 2, 0, 0, H_XmStringConcat);
@@ -18214,6 +18261,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XIconSize?" XM_POSTFIX, XEN_XIconSize_p, 1, 0, 0, NULL);
 
   XEN_DEFINE_PROCEDURE("xm-gc-elements", xm_gc_elements, 0, 0, 0, NULL);
+
+  XEN_DEFINE_PROCEDURE("->string", c_to_xen_string, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("->strings", c_to_xen_strings, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("->ints", c_to_xen_ints, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("->Atoms", c_to_xen_atoms, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("->XRectangles", c_to_xen_xrectangles, 2, 0, 0, NULL);
 }
 #endif
 
@@ -24337,7 +24390,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"21-Feb-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"28-Feb-02\")");
 #endif
       xm_already_inited = 1;
     }

@@ -29,16 +29,11 @@ static void mus_error2snd(int type, char *msg)
 {
   if (!(ignore_mus_error(type, msg)))
     {
-      if (ss->catch_exists) /* damned thing aborts main program if throw to tag is not caught! */
-	{
-	  if (msg == NULL)
-	    XEN_ERROR(MUS_MISC_ERROR,
-		      XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_to_string(type))));
-	  else XEN_ERROR(MUS_MISC_ERROR,
-			 XEN_LIST_1(C_TO_XEN_STRING(msg)));
-	}
-      /* else we're not called from guile? */
-      snd_error(msg);
+      if (msg == NULL)
+	XEN_ERROR(MUS_MISC_ERROR,
+		  XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_to_string(type))));
+      else XEN_ERROR(MUS_MISC_ERROR,
+		     XEN_LIST_1(C_TO_XEN_STRING(msg)));
     }
 }
 
@@ -68,16 +63,12 @@ static void mus_print2snd(char *msg)
 /* default gsl error handler apparently aborts main program! */
 static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
 {
-  if (ss->catch_exists)
-    XEN_ERROR(SND_GSL_ERROR,
-	      XEN_LIST_5(C_TO_XEN_STRING(reason),
-			 C_TO_XEN_STRING(file),
-			 C_TO_XEN_INT(line),
-			 C_TO_XEN_INT(gsl_errno),
-			 C_TO_XEN_STRING(gsl_strerror(gsl_errno))));
-  else 
-    snd_error("GSL: %s[%d]: %s (%s)\n",
-	      file, line, reason, gsl_strerror(gsl_errno));
+  XEN_ERROR(SND_GSL_ERROR,
+	    XEN_LIST_5(C_TO_XEN_STRING(reason),
+		       C_TO_XEN_STRING(file),
+		       C_TO_XEN_INT(line),
+		       C_TO_XEN_INT(gsl_errno),
+		       C_TO_XEN_STRING(gsl_strerror(gsl_errno))));
 }
 #endif
 
