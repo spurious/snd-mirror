@@ -11,7 +11,7 @@
   #endif
 #endif
 
-enum {NOGRAPH,WAVE,FFT,LISP,FFT_MAIN};    /* for marks, regions, mouse click detection */
+enum {NOGRAPH,WAVE,FFT_AXIS,LISP,FFT_MAIN};    /* for marks, regions, mouse click detection */
 
 #if HAVE_GUILE
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler);
@@ -6988,37 +6988,46 @@ static int within_graph(chan_info *cp, int x, int y)
 {
   axis_info *ap;
   fft_info *fp;
-  int x0,x1;
+  int x0,x1,y0,y1;
   x0 = x-SLOPPY_MOUSE;
   x1 = x+SLOPPY_MOUSE;
+  y0 = y-SLOPPY_MOUSE;
+  y1 = y+SLOPPY_MOUSE;
   if (cp->waving)
     {
       ap = cp->axis;
       /* does (x,y) fall within the current axis bounds x_axis_x0|x1, y_axis_y0|y1 */
-      if (((x0<=ap->x_axis_x1) && (x1>=ap->x_axis_x0)) && ((y<=ap->y_axis_y0) && (y>=ap->y_axis_y1)))
+      if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
+	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(WAVE);
     }
   if (cp->ffting)
     {
       fp = cp->fft;
       ap = fp->axis;
+      /* look first for on-axis (axis drag) mouse */
       if (cp->fft_style != SONOGRAM)
 	{
-	  if (((x>=ap->x_axis_x0) && (x<=ap->x_axis_x1)) && (((y-SLOPPY_MOUSE)<=ap->y_axis_y0) && ((y+SLOPPY_MOUSE)>=ap->y_axis_y0)))
-	    return(FFT);
+	  if (((x >= ap->x_axis_x0) && (x <= ap->x_axis_x1)) && 
+	      ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y0)))
+	    return(FFT_AXIS);
 	}
       else
 	{
-	  if ((((x-SLOPPY_MOUSE)<=ap->x_axis_x0) && ((x+SLOPPY_MOUSE)>=ap->x_axis_x0)) && ((y<=ap->y_axis_y0) && (y>=ap->y_axis_y1)))
-	    return(FFT);
+	  if (((x0 <= ap->x_axis_x0) && (x1 >= ap->x_axis_x0)) && 
+	      ((y <= ap->y_axis_y0) && (y >= ap->y_axis_y1)))
+	    return(FFT_AXIS);
 	}
-      if (((x0<=ap->x_axis_x1) && (x1>=ap->x_axis_x0)) && ((y<=ap->y_axis_y0) && (y>=ap->y_axis_y1)))
+      /* now check within fft graph */
+      if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
+	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(FFT_MAIN);
     }
   if ((cp->lisp_graphing) && (cp->lisp_info))
     {
       ap = (cp->lisp_info)->axis;
-      if (((x0<=ap->x_axis_x1) && (x1>=ap->x_axis_x0)) && ((y<=ap->y_axis_y0) && (y>=ap->y_axis_y1)))
+      if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
+	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(LISP);
     }
   return(NOGRAPH);
@@ -7270,7 +7279,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   mouse_mark = hit_mark(cp,x,y,key_state);
   if (mouse_mark == NULL) play_mark = hit_triangle(cp,x,y);
   click_within_graph = within_graph(cp,x,y);
-  if (click_within_graph == FFT) 
+  if (click_within_graph == FFT_AXIS) 
     {
       if (cp->fft_style != SONOGRAM)
 	fft_axis_start = x;
@@ -7494,7 +7503,7 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 	  else
 	    {
 	      ss = cp->state;
-	      if (click_within_graph == FFT)
+	      if (click_within_graph == FFT_AXIS)
 		{
 		  /* change spectro_cutoff(ss) and redisplay fft */
 		  old_cutoff = cp->spectro_cutoff;

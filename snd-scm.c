@@ -2346,6 +2346,9 @@ static SCM g_update_fft(SCM snd, SCM chn)
   return(SCM_BOOL_F);
 }
 
+/* TODO: update_lisp_graph, lisp_graph_style, fft_graph_style (lisp_graph->vct?) (axis-choice?)
+ */
+
 static SCM g_transform_size(SCM snd, SCM chn)
 {
   #define H_transform_size "(" S_transform_size " &optional snd chn) -> description of transform data in snd's channel chn.\n\
@@ -2991,7 +2994,7 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
   SCM data = SCM_UNDEFINED;
   char *label = NULL;
   vct *v = NULL;
-  int i,len,graph,graphs;
+  int i,len,graph,graphs,need_update=0;
   Float ymin,ymax,val,nominal_x0,nominal_x1;
   /* ldata can be a vct object, a vector, or a list of either */
   SCM_ASSERT(((vct_p(ldata)) || (gh_vector_p(ldata)) || (gh_list_p(ldata))),ldata,SCM_ARG1,S_graph);
@@ -3014,6 +3017,7 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
       lg->len = (int *)CALLOC(graphs,sizeof(int));
       lg->graphs = graphs;
       lg->data = (Float **)CALLOC(graphs,sizeof(Float *));
+      need_update = 1;
     }
   for (graph=0;graph<graphs;graph++)
     {
@@ -3074,7 +3078,9 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
   lg->axis = make_axis_info(cp,nominal_x0,nominal_x1,ymin,ymax,label,nominal_x0,nominal_x1,ymin,ymax,lg->axis);
   if (label) free(label);
   cp->lisp_graphing = 1;
-  display_channel_lisp_data(cp,cp->sound,cp->state);
+  if (need_update)
+    update_graph(cp,NULL);
+  else display_channel_lisp_data(cp,cp->sound,cp->state);
   return(scm_return_first(SCM_BOOL_F,data));
 }
 
@@ -3682,6 +3688,9 @@ the functions html and ? can be used in place of help to go to the HTML descript
                            (object-property func 'documentation))))))");
   /* TODO: should we append apropos results here, or a cf list? */
   /* TODO    to handle (extend) apropos from session.scm, we need to set up the Snd module, I think */
+  /*     Guile's help uses procedure-documentation, but that (at the C level) just picks up the
+   *     first line of the function's source!  apparently the subr .documentation field is ignored.
+   */
 
   gh_eval_str("(read-set! keywords 'prefix)");
 
