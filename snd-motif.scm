@@ -247,10 +247,12 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 		     (lambda (widget context info)
 		       ;; same as built-in "ok" callback, but does not "unmanage" the dialog
 		       (let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
-			 (if (not (file-is-directory? filename))
-			     (let ((snd (open-sound filename)))
-			       (select-channel 0))
-			     (snd-error (format #f "~S is a directory" filename))))))
+			 (if (file-exists? filename)
+			     (if (not (file-is-directory? filename))
+				 (let ((snd (open-sound filename)))
+				   (select-channel 0))
+				 (snd-error (format #f "~S is a directory" filename)))
+			     (snd-error (format #f "no such file: ~A" filename))))))
       'ok))) ; prettier in listener than printing out a callback procedure
 
 (define keep-mix-dialog-open-upon-ok
@@ -262,9 +264,11 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 		     (lambda (widget context info)
 		       ;; same as built-in "ok" callback, but does not "unmanage" the dialog
 		       (let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
-			 (if (not (file-is-directory? filename))
-			     (mix-sound filename (cursor))
-			     (snd-error (format #f "~S is a directory" filename))))))
+			 (if (file-exists? filename)
+			     (if (not (file-is-directory? filename))
+				 (mix-sound filename (cursor))
+				 (snd-error (format #f "~S is a directory" filename)))
+			     (snd-error (format #f "no such file: ~A" filename))))))
       'ok)))
 
 
@@ -1727,7 +1731,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	    (let* ((app (car (main-widgets)))
 		   (widgets (sound-widgets snd))
 		   (minibuffer (list-ref widgets 3))
-		   (name-form (XtParent minibuffer))
+		   (name-form (XtParent minibuffer)) ; "snd-name-form"
 		   (space (kmg (disk-kspace (file-name snd))))
 		   (str (XmStringCreateLocalized space))
 		   (new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
@@ -1738,8 +1742,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				      XmNrightAttachment XmATTACH_NONE
 				      XmNtopAttachment   XmATTACH_FORM))))
 	      (XmStringFree str)
-	      (XtSetValues minibuffer (list XmNrightAttachment XmATTACH_WIDGET
-					    XmNrightWidget new-label))
 	      (set! previous-label (list snd new-label app))
 	      (set! labelled-snds (cons previous-label labelled-snds))))
 	(XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label)))))
@@ -2448,44 +2450,43 @@ Reverb-feedback sets the scaler on the feedback.\n\
 (define variables-pages '())
 
 (define (make-variables-dialog)
-  (if (not (Widget? variables-dialog))
-      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
-	    (titlestr (XmStringCreate "Variables" XmFONTLIST_DEFAULT_TAG)))
-	(set! variables-dialog 
-	      (XmCreateTemplateDialog (cadr (main-widgets)) "variables-dialog"
-                (list XmNokLabelString       xdismiss
-		      XmNautoUnmanage        #f
-		      XmNdialogTitle         titlestr
-		      XmNresizePolicy        XmRESIZE_GROW
-	              XmNnoResize            #f
-		      XmNtransient           #f
-		      XmNheight              400
-		      XmNwidth               400
-		      XmNbackground          (basic-color))))
+  (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	(titlestr (XmStringCreate "Variables" XmFONTLIST_DEFAULT_TAG)))
+    (set! variables-dialog 
+	  (XmCreateTemplateDialog (cadr (main-widgets)) "variables-dialog"
+				  (list XmNokLabelString       xdismiss
+					XmNautoUnmanage        #f
+					XmNdialogTitle         titlestr
+					XmNresizePolicy        XmRESIZE_GROW
+					XmNnoResize            #f
+					XmNtransient           #f
+					XmNheight              400
+					XmNwidth               400
+					XmNbackground          (basic-color))))
+    
+    (XtVaSetValues (XmMessageBoxGetChild variables-dialog XmDIALOG_OK_BUTTON)
+		   (list XmNarmColor   (pushed-button-color)
+			 XmNbackground (basic-color)))
+    (XtAddCallback variables-dialog 
+		   XmNokCallback (lambda (w context info)
+				   (XtUnmanageChild variables-dialog)))
+    (XmStringFree xdismiss)
+    (XmStringFree titlestr)
+    
+    (set! variables-notebook
+	  (XtCreateManagedWidget "variables-notebook" xmNotebookWidgetClass variables-dialog
+				 (list XmNleftAttachment      XmATTACH_FORM
+				       XmNrightAttachment     XmATTACH_FORM
+				       XmNtopAttachment       XmATTACH_FORM
+				       XmNbottomAttachment    XmATTACH_WIDGET
+				       XmNbottomWidget        (XmMessageBoxGetChild variables-dialog XmDIALOG_SEPARATOR)
+				       XmNbackground          (basic-color)
+				       XmNframeBackground     (zoom-color)
+				       XmNbindingWidth        14)))
+    (XtManageChild variables-dialog)
+    variables-dialog))
 
-	(XtVaSetValues (XmMessageBoxGetChild variables-dialog XmDIALOG_OK_BUTTON)
-		       (list XmNarmColor   (pushed-button-color)
-			     XmNbackground (basic-color)))
-	(XtAddCallback variables-dialog 
-		       XmNokCallback (lambda (w context info)
-				       (XtUnmanageChild variables-dialog)))
-	(XmStringFree xdismiss)
-	(XmStringFree titlestr)
-
-	(set! variables-notebook
-	      (XtCreateManagedWidget "variables-notebook" xmNotebookWidgetClass variables-dialog
-		(list XmNleftAttachment      XmATTACH_FORM
-		      XmNrightAttachment     XmATTACH_FORM
-		      XmNtopAttachment       XmATTACH_FORM
-		      XmNbottomAttachment    XmATTACH_WIDGET
-		      XmNbottomWidget        (XmMessageBoxGetChild variables-dialog XmDIALOG_SEPARATOR)
-		      XmNbackground          (basic-color)
-		      XmNframeBackground     (zoom-color)
-		      XmNbindingWidth        14)))
-	(XtManageChild variables-dialog)
-	variables-dialog)))
-
-(define* (make-variable-display page-name variable-name #:optional (type 'text) (domain (list 0.0 1.0)))
+(define* (make-variable-display page-name variable-name #:optional (type 'text) (range (list 0.0 1.0)))
   ;; type = 'text, 'meter, 'graph, 'spectrum, 'scale
   (if (not (Widget? variables-dialog)) (make-variables-dialog))
   ;; rowColumn widget gets confused by drawingareas, so I'll split them out into separate panes
@@ -2522,8 +2523,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		(scl (XtCreateManagedWidget variable-name xmScaleWidgetClass row-pane
 					    (list XmNbackground  (basic-color)
 						  XmNslidingMode XmTHERMOMETER
-						  XmNminimum (inexact->exact (* 100 (car domain)))
-						  XmNmaximum (inexact->exact (* 100 (cadr domain)))
+						  XmNminimum (inexact->exact (* 100 (car range)))
+						  XmNmaximum (inexact->exact (* 100 (cadr range)))
 						  XmNdecimalPoints 2
 						  XmNtitleString title
 						  XmNorientation XmHORIZONTAL
@@ -2541,7 +2542,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	((graph)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane 
 					     (list XmNpaneMinimum 100)))
-		(snd (make-variable-graph form variable-name 2048 (mus-srate))))
+		(snd (make-variable-graph form (string-append variable-name ": time") 2048 (mus-srate))))
 	   (list snd (channel-data snd 0))))
 	((spectrum)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane
@@ -2549,6 +2550,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		(snd (make-variable-graph form variable-name 2048 (mus-srate))))
 	   (set! (time-graph? snd 0) #f)
 	   (set! (transform-graph? snd 0) #t)
+	   (set! (x-axis-label snd 0 transform-graph) (string-append variable-name ": frequency"))
 	   (list snd (channel-data snd 0))))
 	(else #f)))))
 
@@ -2557,11 +2559,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (if (XmIsTextField widget)
 	  ;; text representation
 	  (let ((old-str (XmTextFieldGetString widget))
-		(new-str (if (number? var)
-			     (number->string var)
-			     (if (string? var)
-				 var
-				 (format #f "~A" var)))))
+		(new-str (object->string var)))
 	    (if (not (string=? old-str new-str))
 		(begin
 		  (XmTextFieldSetString widget new-str)
@@ -2579,6 +2577,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		     (loc (cursor snd 0)))
 		(sound-data-set! data 0 loc var)
 		(if (time-graph? snd) (update-time-graph snd))
+		;; TODO: vardpy fft should probably not be updated(recalculated?) on every sample
+		;; TODO: also the spectrum x sliders are confusing -- should show entire window
+		;; TODO: some nice way to reset cursor to 0 upon new note
 		(if (transform-graph? snd) (update-transform-graph snd))
 		(if (= (+ loc 1) frames)
 		    (set! (cursor snd 0) 0)

@@ -176,6 +176,8 @@
   #define XEN_TO_C_LONG_LONG(a)       scm_num2long(a, 0, __FUNCTION__)
 #endif    
 
+/* there is SCM_CONTINUATIONP -- why doesn't scheme have continuation? */
+
 #ifndef SCM_STRING_CHARS
   #define XEN_TO_C_STRING(STR)        SCM_CHARS(STR)
 #else

@@ -633,7 +633,14 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       else cw[W_main_window] = main;
 
       cw[W_graph_window] = gtk_table_new(3, 5, FALSE);
-      gtk_paned_add2(GTK_PANED(cw[W_main_window]), cw[W_graph_window]);
+      if ((GTK_IS_VPANED(cw[W_main_window])) || (GTK_IS_HPANED(cw[W_main_window])))
+	gtk_paned_add2(GTK_PANED(cw[W_main_window]), cw[W_graph_window]);
+      else
+	{
+	  if ((GTK_IS_VBOX(cw[W_main_window])) || (GTK_IS_HBOX(cw[W_main_window])))
+	    gtk_box_pack_start(GTK_BOX(cw[W_main_window]), cw[W_graph_window], TRUE, TRUE, 4);
+	  else gtk_container_add(GTK_CONTAINER(cw[W_main_window]), cw[W_graph_window]);
+	}
 
       cw[W_graph] = gtk_drawing_area_new();
 #if HAVE_GL
@@ -861,8 +868,8 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_gsy] = NULL;
 	  cw[W_gzy] = NULL;
 	}
-
-      gtk_paned_set_position(GTK_PANED(cw[W_main_window]), 1);
+      if ((GTK_IS_VPANED(cw[W_main_window])) || (GTK_IS_HPANED(cw[W_main_window])))
+	gtk_paned_set_position(GTK_PANED(cw[W_main_window]), 1);
       gtk_widget_show(cw[W_graph_window]);
 
     }

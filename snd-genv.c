@@ -165,7 +165,7 @@ static void apply_enved(snd_state *ss)
 	  set_sensitive(applyB, FALSE);
 	  set_sensitive(apply2B, FALSE);
 	  set_button_label(cancelB, _("Stop"));
-	  check_for_event(ss);
+	  force_update(cancelB);
 	  switch (enved_target(ss))
 	    {
 	    case ENVED_AMPLITUDE:

@@ -4252,8 +4252,9 @@ static char *tf_to_string(track_fd *fd)
   mix_fd *mf = NULL;
   char *desc;
   char toi[16];
-  int i, len, happy = FALSE, banner = FALSE, previous = FALSE;
-  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  int i, len, happy = FALSE, banner = FALSE, previous = FALSE, desc_len;
+  desc_len = PRINT_BUFFER_SIZE;
+  desc = (char *)CALLOC(desc_len, sizeof(char));
   if (fd == NULL)
     sprintf(desc, "#<track-sample-reader: null>");
   else
@@ -4270,6 +4271,7 @@ static char *tf_to_string(track_fd *fd)
 		  happy = TRUE;
 		  if (!banner)
 		    {
+
 		      mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: %s chan %d via mixes '(",
 				   fd,
 				   md->in_filename,
@@ -4278,10 +4280,10 @@ static char *tf_to_string(track_fd *fd)
 		    }
 		  mus_snprintf(toi, 16, "%s%d", (previous) ? " ": "", (mf->md)->id);
 		  previous = TRUE;
-		  strcat(desc, toi);
+		  desc = snd_strcat(desc, toi, &desc_len);
 		}
 	    }
-	  strcat(desc, ")>");
+	  desc = snd_strcat(desc, ")>", &desc_len);
 	}
       if (!happy)
 	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: inactive>", fd);

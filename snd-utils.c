@@ -65,6 +65,24 @@ int snd_strlen(char *str)
   return(0);
 }
 
+char *snd_strcat(char *errmsg, char *str, int *size)
+{
+  int new_len, err_size;
+  new_len = (snd_strlen(str) + snd_strlen(errmsg));
+  err_size = size[0];
+  if (new_len >= err_size)
+    {
+      if ((err_size * 2) > new_len)
+	err_size = err_size * 2;
+      else err_size = new_len;
+      errmsg = (char *)REALLOC(errmsg, err_size * sizeof(char));
+      size[0] = err_size;
+    }
+  strcat(errmsg, str);
+  return(errmsg);
+}
+
+
 char *filename_without_home_directory(char *name)
 {
   /* since we don't want to mess with freeing these guys, I'll just return a pointer into the name */

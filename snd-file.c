@@ -2220,11 +2220,12 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 {
   char *reason_str, *tmp_str, *file_string;
   off_t nsamp;
-  int ns, better_srate = 0, better_chans = 0;
+  int ns, better_srate = 0, better_chans = 0, len;
   reason_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   tmp_str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   /* try to provide some notion of what might be the intended header (currently limited to byte-order mistakes) */
-  mus_snprintf(reason_str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
+  len = PRINT_BUFFER_SIZE;
+  mus_snprintf(reason_str, len, "srate: %d", hdr->srate);
   ns = (int)swap_int(hdr->srate);
   if ((ns < 4000) || (ns > 100000)) 
     ns = (int)swap_short((short)(hdr->srate));
@@ -2232,10 +2233,10 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
     {
       better_srate = ns;
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
-      strcat(reason_str, tmp_str);
+      reason_str = snd_strcat(reason_str, tmp_str, &len);
     }
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nchans: %d", hdr->chans);
-  strcat(reason_str, tmp_str);
+  reason_str = snd_strcat(reason_str, tmp_str, &len);
   ns = swap_int(hdr->chans);
   if ((ns < 0) || (ns > 8)) 
     ns = swap_short((short)(hdr->chans));
@@ -2243,39 +2244,39 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
     {
       better_chans = ns;
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
-      strcat(reason_str, tmp_str);
+      reason_str = snd_strcat(reason_str, tmp_str, &len);
     }
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" PRId64 " samples, " PRId64 " bytes total)",
 	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
 	       hdr->samples,
 	       mus_sound_length(filename));
-  strcat(reason_str, tmp_str);
+  reason_str = snd_strcat(reason_str, tmp_str, &len);
   nsamp = swap_off_t(hdr->samples);
   if (nsamp < mus_sound_length(filename))
     {
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\n  (swapped: " OFF_TD , nsamp);
-      strcat(reason_str, tmp_str);
+      reason_str = snd_strcat(reason_str, tmp_str, &len);
       if ((better_chans) && (better_srate))
 	{
 	  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE,
 		       ", swapped length: %.3f / sample-size-in-bytes)",
 		       (float)((double)nsamp / (float)(better_chans * better_srate)));
-	  strcat(reason_str, tmp_str);
+	  reason_str = snd_strcat(reason_str, tmp_str, &len);
 	}
-      else strcat(reason_str, ")");
+      else reason_str = snd_strcat(reason_str, ")", &len);
     }
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: " OFF_TD, hdr->data_location);
-  strcat(reason_str, tmp_str);
+  reason_str = snd_strcat(reason_str, tmp_str, &len);
   nsamp = swap_off_t(hdr->data_location);
   if ((nsamp > 0) && (nsamp <= 1024)) 
     {
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: " OFF_TD ")", nsamp);
-      strcat(reason_str, tmp_str);
+      reason_str = snd_strcat(reason_str, tmp_str, &len);
     }
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
-  strcat(reason_str, tmp_str);
+  reason_str = snd_strcat(reason_str, tmp_str, &len);
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
-  strcat(reason_str, tmp_str);
+  reason_str = snd_strcat(reason_str, tmp_str, &len);
   hdr->type = MUS_RAW;
   snd_help(ss, "Current header values", reason_str, FALSE);
   file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));

@@ -672,14 +672,7 @@ static char *add_comments(ptree *pt, char *str)
 
 static char *str_append(char *oldstr, int *oldsize, char *newstr)
 {
-  int size;
-  size = strlen(oldstr) + strlen(newstr);
-  if (size >= (*oldsize))
-    {
-      oldstr = (char *)REALLOC(oldstr, size * 2 * sizeof(char));
-      (*oldsize) = size * 2;
-    }
-  strcat(oldstr, newstr);
+  oldstr = snd_strcat(oldstr, newstr, oldsize);
   FREE(newstr);
   return(oldstr);
 }
@@ -3099,17 +3092,18 @@ static xen_value *package_n(ptree *prog,
 static char *describe_dbl_args(char *func, int num_args, int *args, Float *dbls, int start)
 {
   char *buf, *str;
-  int i;
-  buf = (char *)CALLOC(256, sizeof(char));
+  int i, len;
+  len = 256;
+  buf = (char *)CALLOC(len, sizeof(char));
   str = (char *)CALLOC(32, sizeof(char));
   sprintf(buf, FLT_PT " =", args[0], FLOAT_RESULT);
   for (i = start; i < num_args; i++)
     {
       mus_snprintf(str, 32, " " FLT_PT " %s", args[i], dbls[args[i]], func);
-      strcat(buf, str);
+      buf = snd_strcat(buf, str, &len);
     }
   mus_snprintf(str, 32, " " FLT_PT ")", args[num_args], dbls[args[num_args]]);
-  strcat(buf, str);
+  buf = snd_strcat(buf, str, &len);
   FREE(str);
   return(buf);
 }
@@ -3117,17 +3111,18 @@ static char *describe_dbl_args(char *func, int num_args, int *args, Float *dbls,
 static char *describe_int_args(char *func, int num_args, int *args, Int *ints, int start)
 {
   char *buf, *str;
-  int i;
-  buf = (char *)CALLOC(256, sizeof(char));
+  int i, len;
+  len = 256;
+  buf = (char *)CALLOC(len, sizeof(char));
   str = (char *)CALLOC(32, sizeof(char));
   sprintf(buf, INT_PT " =", args[0], INT_RESULT);
   for (i = start; i < num_args; i++)
     {
       mus_snprintf(str, 32, " " INT_PT " %s", args[i], ints[args[i]], func);
-      strcat(buf, str);
+      buf = snd_strcat(buf, str, &len);
     }
   mus_snprintf(str, 32, " " INT_PT ")", args[num_args], ints[args[num_args]]);
-  strcat(buf, str);
+  buf = snd_strcat(buf, str, &len);
   FREE(str);
   return(buf);
 }
@@ -3510,18 +3505,19 @@ static void divide_fn(int *args, Int *ints, Float *dbls)
 static char *descr_divide_fn(int *args, Int *ints, Float *dbls)
 {
   char *buf, *str;
-  int i, num_args;
+  int i, num_args, len;
   num_args = ints[args[1]] + 1;
-  buf = (char *)CALLOC(256, sizeof(char));
+  len = 256;
+  buf = (char *)CALLOC(len, sizeof(char));
   str = (char *)CALLOC(32, sizeof(char));
   sprintf(buf, FLT_PT " = " FLT_PT " / (", args[0], FLOAT_RESULT, args[2], FLOAT_ARG_2);
   for (i = 3; i < num_args; i++)
     {
       mus_snprintf(str, 32, " " FLT_PT " *", args[i], dbls[args[i]]);
-      strcat(buf, str);
+      buf = snd_strcat(buf, str, &len);
     }
   mus_snprintf(str, 32, " " FLT_PT ")", args[num_args], dbls[args[num_args]]);
-  strcat(buf, str);
+  buf = snd_strcat(buf, str, &len);
   FREE(str);
   return(buf);
 }
@@ -3611,17 +3607,18 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 static char *describe_rel_f_args(char *func, int num_args, int *args, Int *ints, Float *dbls, int start)
 {
   char *buf, *str;
-  int i;
-  buf = (char *)CALLOC(256, sizeof(char));
+  int i, len;
+  len = 256;
+  buf = (char *)CALLOC(len, sizeof(char));
   str = (char *)CALLOC(32, sizeof(char));
   sprintf(buf, BOOL_PT " =", args[0], B2S(BOOL_RESULT));
   for (i = start; i < num_args; i++)
     {
       mus_snprintf(str, 32, " " FLT_PT " %s", args[i], dbls[args[i]], func);
-      strcat(buf, str);
+      buf = snd_strcat(buf, str, &len);
     }
   mus_snprintf(str, 32, " " FLT_PT ")", args[num_args], dbls[args[num_args]]);
-  strcat(buf, str);
+  buf = snd_strcat(buf, str, &len);
   FREE(str);
   return(buf);
 }
@@ -3764,18 +3761,19 @@ static void max_fn(int *args, Int *ints, Float *dbls)
 static char *descr_max_min_fn(int *args, Int *ints, Float *dbls, char *which) 
 {
   char *buf, *str;
-  int i, n;
-  buf = (char *)CALLOC(256, sizeof(char));
+  int i, n, len;
+  len = 256;
+  buf = (char *)CALLOC(len, sizeof(char));
   str = (char *)CALLOC(32, sizeof(char));
   n = ints[args[1]];
   sprintf(buf, INT_PT " = %s(", args[0], INT_RESULT, which);
   for (i = 2; i <= n; i++)
     {
       mus_snprintf(str, 32, FLT_PT " ", args[i], dbls[args[i]]);
-      strcat(buf, str);
+      buf = snd_strcat(buf, str, &len);
     }
   mus_snprintf(str, 32, FLT_PT ")", args[n + 1], dbls[args[n + 1]]);
-  strcat(buf, str);
+  buf = snd_strcat(buf, str, &len);
   FREE(str);
   return(buf);
 }
@@ -3797,18 +3795,19 @@ static void max_in(int *args, Int *ints, Float *dbls)
 static char *descr_max_min_in(int *args, Int *ints, Float *dbls, char *which)
 {
   char *buf, *str;
-  int i, n;
-  buf = (char *)CALLOC(256, sizeof(char));
+  int i, n, len;
+  len = 256;
+  buf = (char *)CALLOC(len, sizeof(char));
   str = (char *)CALLOC(32, sizeof(char));
   n = ints[args[1]];
   sprintf(buf, INT_PT " = %s(", args[0], INT_RESULT, which);
   for (i = 2; i <= n; i++)
     {
       mus_snprintf(str, 32, INT_PT " ", args[i], ints[args[i]]);
-      strcat(buf, str);
+      buf = snd_strcat(buf, str, &len);
     }
   mus_snprintf(str, 32, INT_PT ")", args[n + 1], ints[args[n + 1]]);
-  strcat(buf, str);
+  buf = snd_strcat(buf, str, &len);
   FREE(str);
   return(buf);
 }
@@ -4756,19 +4755,20 @@ static void string_n(int *args, Int *ints, Float *dbls)
 }
 static char *descr_string_n(int *args, Int *ints, Float *dbls)
 {
-  int i, n;
+  int i, n, len;
   char *buf, *temp;
   n = ints[args[1]];
-  buf = (char *)CALLOC(32 + 16 * n, sizeof(char));
+  len = 32 + 16 * n;
+  buf = (char *)CALLOC(len, sizeof(char));
   temp = (char *)CALLOC(16, sizeof(char));
   sprintf(buf, STR_PT " = string(" CHR_PT , args[0], STRING_RESULT, args[2], (char)(ints[args[2]]));
   for (i = 2; i <= n; i++)
     {
       sprintf(temp, ", " CHR_PT , args[i + 1], (char)(ints[args[i + 1]]));
-      strcat(buf, temp);
+      buf = snd_strcat(buf, temp, &len);
     }
   FREE(temp);
-  strcat(buf, ")");
+  buf = snd_strcat(buf, ")", &len);
   return(buf);
 }
 static xen_value *string_1(ptree *pt, xen_value **args, int num_args)
@@ -4863,25 +4863,26 @@ static xen_value *string_ref_1(ptree *pt, xen_value **args, int num_args)
 
 static char *int_vct_to_string(int_vct *v)
 {
-  int len, i;
+  int len, i, slen;
   char *buf;
   char flt[16];
   if (v == NULL) return(copy_string("#<int_vct: null>"));
   len = 8;
   if (len > v->length) len = v->length;
-  buf = (char *)CALLOC(64 + len * 8, sizeof(char));
+  slen = 64 + len * 8;
+  buf = (char *)CALLOC(slen, sizeof(char));
   sprintf(buf, "#<int_vct[len=%d]:", v->length);
   if (len > 0)
     {
       for (i = 0; i < len; i++)
 	{
 	  mus_snprintf(flt, 16, " %d", v->data[i]);
-	  strcat(buf, flt);
+	  buf = snd_strcat(buf, flt, &slen);
 	}
       if (v->length > 8)
-	strcat(buf, " ...");
+	buf = snd_strcat(buf, " ...", &slen);
     }
-  strcat(buf, ">");
+  buf = snd_strcat(buf, ">", &slen);
   return(buf);
 }
 
@@ -5066,10 +5067,11 @@ static xen_value *substring_1(ptree *pt, xen_value **args, int num_args)
 
 static char *descr_strn(int *args, Int *ints, Float *dbls, char *which, int bool_result)
 {
-  int i, n;
+  int i, n, len;
   char *buf, *temp;
   n = ints[args[1]];
-  buf = (char *)CALLOC(1024, sizeof(char));
+  len = 1024;
+  buf = (char *)CALLOC(len, sizeof(char));
   temp = (char *)CALLOC(1024, sizeof(char));
   if (bool_result)
     mus_snprintf(buf, 1024, BOOL_PT " = %s(" STR_PT , args[0], B2S(BOOL_RESULT), which, args[2], (char *)(ints[args[2]]));
@@ -5077,11 +5079,10 @@ static char *descr_strn(int *args, Int *ints, Float *dbls, char *which, int bool
   for (i = 2; i <= n; i++)
     {
       mus_snprintf(temp, 1024, ", " STR_PT , args[i + 1], (char *)(ints[args[i + 1]]));
-      if ((snd_strlen(buf) + snd_strlen(temp) < 1023))
-	strcat(buf, temp);
+      buf = snd_strcat(buf, temp, &len);
     }
   FREE(temp);
-  strcat(buf, ")");
+  buf = snd_strcat(buf, ")", &len);
   return(buf);
 }
 
@@ -6258,16 +6259,17 @@ static xen_value *vct_convolve_1(ptree *prog, xen_value **args, int num_args)
 static char *descr_gen(int *args, Int *ints, Float *dbls, char *which, int num_args) 
 {
   char *buf, *str;
-  int i;
-  buf = (char *)CALLOC(256, sizeof(char));
+  int i, len;
+  len = 256;
+  buf = (char *)CALLOC(len, sizeof(char));
   str = (char *)CALLOC(32, sizeof(char));
   sprintf(buf, FLT_PT " = %s(" PTR_PT , args[0], FLOAT_RESULT, which, args[1], (mus_any *)(INT_ARG_1));
   for (i = 1; i <= num_args; i++)
     {
       mus_snprintf(str, 32, ", " FLT_PT , args[i + 1], dbls[args[i + 1]]);
-      strcat(buf, str);
+      buf = snd_strcat(buf, str, &len);
     }
-  strcat(buf, ")");
+  buf = snd_strcat(buf, ")", &len);
   FREE(str);
   return(buf);
 }
@@ -7860,15 +7862,16 @@ static XEN g_describe_walk_info(XEN obj)
       if (w)
 	{
 	  char *buf;
-	  int i;
-	  buf = (char *)CALLOC(1024, sizeof(char));
+	  int i, len;
+	  len = 1024;
+	  buf = (char *)CALLOC(len, sizeof(char));
 	  sprintf(buf, "%p %p %p: req: %d, max: %d, result: %s, need_int: %d, num_arg_types: %d: ",
 		  w->walker, w->special_walker, w->set_walker, 
 		  w->required_args, w->max_args, type_name(w->result_type), w->need_int_result, w->num_arg_types);
 	  for (i = 0; i < w->num_arg_types; i++)
 	    {
-	      strcat(buf, type_name(w->arg_types[i]));
-	      strcat(buf, " ");
+	      buf = snd_strcat(buf, type_name(w->arg_types[i]), &len);
+	      buf = snd_strcat(buf, " ", &len);
 	    }
 	  walker = C_TO_XEN_STRING(buf);
 	  FREE(buf);

@@ -177,6 +177,7 @@ typedef struct {
   Float scale;
   axis_info *axis;
   Float *data;
+  char *xlabel;
   struct chan__info *chan;
 } fft_info;
 
@@ -742,6 +743,7 @@ void g_init_fft(void);
 Float fft_beta_max(int win);
 void cp_free_fft_state(chan_info *cp);
 void autocorrelation(Float *data, int n);
+void set_fft_info_xlabel(chan_info *cp, char *new_label);
 
 
 
@@ -1165,6 +1167,7 @@ int snd_2pow2(int n);
 Float in_dB(Float min_dB, Float lin_dB, Float py);
 char *copy_string(const char *str);
 int snd_strlen(char *str);
+char *snd_strcat(char *errmsg, char *str, int *err_size);
 char *filename_without_home_directory(char *name);
 char *just_filename(char *name);
 char *prettyf(Float num, int tens);

@@ -975,10 +975,10 @@ Widget create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
-      apply2B = XtCreateManagedWidget(_("Undo&Apply"), xmPushButtonWidgetClass, enved_dialog, args, n);
+      apply2B = XtCreateManagedWidget(_("Undo&Apply"), xmPushButtonGadgetClass, enved_dialog, args, n);
       XtAddCallback(apply2B, XmNactivateCallback, undo_and_apply_enved_callback, ss);
 
-      resetB = XtCreateManagedWidget(_("Reset"), xmPushButtonWidgetClass, enved_dialog, args, n);
+      resetB = XtCreateManagedWidget(_("Reset"), xmPushButtonGadgetClass, enved_dialog, args, n);
       XtAddCallback(resetB, XmNactivateCallback, reset_button_callback, ss);
 
 

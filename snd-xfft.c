@@ -405,7 +405,7 @@ static void help_transform_callback(Widget w, XtPointer context, XtPointer info)
 static int need_callback = TRUE;
 Widget fire_up_transform_dialog(snd_state *ss, int managed)
 {
-  XmString xhelp, xdismiss, xtitle, bstr, xorient, xcolor;
+  XmString xhelp, xdismiss, xtitle, bstr, xorient;
   Arg args[32];
   XmString sizes[NUM_TRANSFORM_SIZES];
   XmString *types;
@@ -435,7 +435,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
       xtitle = XmStringCreate(_("Transform Options"), XmFONTLIST_DEFAULT_TAG);
       xorient = XmStringCreate(_("Orientation"), XmFONTLIST_DEFAULT_TAG);
-      xcolor = XmStringCreate(_("Color"), XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -456,7 +455,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XmStringFree(xdismiss);
       XmStringFree(xtitle);
       XmStringFree(xorient);
-      XmStringFree(xcolor);
       if (!(ss->using_schemes))
 	{
 	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
@@ -469,7 +467,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
-      color_button = XtCreateManagedWidget(_("Color"), xmPushButtonWidgetClass, transform_dialog, args, n);
+      color_button = XtCreateManagedWidget(_("Color"), xmPushButtonGadgetClass, transform_dialog, args, n);
       XtAddCallback(color_button, XmNactivateCallback, color_transform_callback, ss);
 
       n = 0;

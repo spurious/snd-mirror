@@ -35,6 +35,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     26-May:    removed nugatory GdkInputFunction stuff.
  *     7-Apr:     GTK_RC_STYLE has two incompatible definitions in gtk! (gtkwidget.h, gtkrc.h) -- will use int case.
  *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.
  *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).
@@ -151,7 +152,6 @@ static void define_xm_obj(void)
 /* type checks for callback wrappers */
 #define XEN_lambda2_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_lambda3_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
-#define XEN_GdkInputFunction_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_GtkCallback_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_GtkTimeoutFunction_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
 #define XEN_GtkDestroyNotify_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
@@ -179,7 +179,6 @@ static void define_xm_obj(void)
 #define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS(Arg) == 2) || (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_TO_C_lambda2(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_child_func
 #define XEN_TO_C_lambda3(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_find_func
-#define XEN_TO_C_GdkInputFunction(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_input_func
 #define XEN_TO_C_GtkCallback(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_func2
 #define XEN_TO_C_GtkTimeoutFunction(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_timeout_func
 #define XEN_TO_C_GtkDestroyNotify(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_destroy_func
@@ -234,12 +233,6 @@ static void define_xm_obj(void)
 XM_TYPE_PTR(GdkWindow_, GdkWindow*)
 XM_TYPE_PTR(GtkAccelKey_, GtkAccelKey*)
 XM_TYPE_PTR(GClosure_, GClosure*)
-#define C_TO_XEN_gint(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_gint(Arg) (gint)(XEN_TO_C_INT(Arg))
-#define XEN_gint_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GdkInputCondition(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GdkInputCondition(Arg) (GdkInputCondition)(XEN_TO_C_INT(Arg))
-#define XEN_GdkInputCondition_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkWidget_, GtkWidget*)
 XM_TYPE_PTR(GdkXEvent_, GdkXEvent*)
 XM_TYPE_PTR(GdkEvent_, GdkEvent*)
@@ -258,6 +251,9 @@ XM_TYPE_PTR(GtkClipboard_, GtkClipboard*)
 XM_TYPE_PTR(GtkSelectionData_, GtkSelectionData*)
 XM_TYPE_PTR(GtkTreeView_, GtkTreeView*)
 XM_TYPE_PTR(GtkTreeViewColumn_, GtkTreeViewColumn*)
+#define C_TO_XEN_gint(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_gint(Arg) (gint)(XEN_TO_C_INT(Arg))
+#define XEN_gint_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkCellRenderer_, GtkCellRenderer*)
 XM_TYPE_PTR(GtkTreeSelection_, GtkTreeSelection*)
 #define C_TO_XEN_gboolean(Arg) C_TO_XEN_BOOLEAN(Arg)
@@ -992,14 +988,6 @@ static gboolean gxg_find_func(GtkAccelKey* key, GClosure* closure, gpointer func
                                       C_TO_XEN_GClosure_(closure),
                                       XEN_CADR((XEN)func_data),
                                       __FUNCTION__)));
-}
-static void gxg_input_func(gpointer func_data, gint fd, GdkInputCondition condition)
-{
-  XEN_CALL_3(XEN_CAR((XEN)func_data),
-             XEN_CADR((XEN)func_data),
-             C_TO_XEN_gint(fd),
-             C_TO_XEN_GdkInputCondition(condition),
-             __FUNCTION__);
 }
 static void gxg_func2(GtkWidget* w, gpointer func_data)
 {
@@ -30563,10 +30551,10 @@ static int xg_already_inited = FALSE;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"14-Apr-03\")");
+      XEN_EVAL_C_STRING("(define xm-version \"24-May-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("14-Apr-03"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("24-May-03"));
 #endif
       xg_already_inited = TRUE;
 #if WITH_GTK_AND_X11

@@ -1008,7 +1008,7 @@ static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 {
   #define H_axis_info "(" S_axis_info " (snd #f) (chn #f) (grf #f)): info about axis: (list losamp hisamp \
-x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset)"
+x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset label)"
   axis_info *ap;
   ASSERT_JUST_CHANNEL(S_axis_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap_id), ap_id, XEN_ARG_3, S_axis_info, "an integer");
@@ -1031,7 +1031,8 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset)"
                        XEN_CONS(C_TO_XEN_INT(ap->y_offset),
 			XEN_CONS(C_TO_XEN_DOUBLE(ap->x_scale),
 			 XEN_CONS(C_TO_XEN_DOUBLE(ap->y_scale),
-		          XEN_EMPTY_LIST))))))))))))))))));
+			  XEN_CONS(C_TO_XEN_STRING(ap->xlabel),
+		           XEN_EMPTY_LIST)))))))))))))))))));
 }
 
 /* this is intended for use with the xm package */
@@ -1110,7 +1111,55 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   free_axis_info(ap);
   return(val);
 }
+
+static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)
+{
+  #define H_x_axis_label "(" S_x_axis_label " (snd #f) (chn #f) (ax #f)): current x axis label"
+  axis_info *ap;
+  ASSERT_JUST_CHANNEL(S_x_axis_label, snd, chn, 1);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_x_axis_label, "an integer");
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
+  return(C_TO_XEN_STRING(ap->xlabel));
+}
+
+static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
+{
+  axis_info *ap;
+  ASSERT_JUST_CHANNEL(S_setB S_x_axis_label, snd, chn, 2);
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_setB S_x_axis_label, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_x_axis_label, "an integer");
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
+  if (ap->xlabel) FREE(ap->xlabel);
+  ap->xlabel = copy_string(XEN_TO_C_STRING(label));
+  if ((XEN_TO_C_INT(ax)) == TRANSFORM_AXIS_INFO)
+    set_fft_info_xlabel(ap->cp, ap->xlabel);
+  update_graph(ap->cp);
+  return(label);
+}
+
+#if HAVE_GUILE
+static XEN g_set_x_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  if (XEN_NOT_BOUND_P(arg2))
+    return(g_set_x_axis_label(arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+  else
+    {
+      if (XEN_NOT_BOUND_P(arg3))
+	return(g_set_x_axis_label(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED));
+      else
+	{
+	  if (XEN_NOT_BOUND_P(arg4))
+	    return(g_set_x_axis_label(arg3, arg1, arg2, XEN_UNDEFINED));
+	  else return(g_set_x_axis_label(arg4, arg1, arg2, arg3));
+	}
+    }
+}
 #endif
+/* have guile for reversed args */
+
+#endif
+/* not use no gui */
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_4(g_grf_x_w, g_grf_x)
@@ -1119,6 +1168,8 @@ XEN_ARGIFY_4(g_ungrf_x_w, g_ungrf_x)
 XEN_ARGIFY_4(g_ungrf_y_w, g_ungrf_y)
 XEN_ARGIFY_3(g_axis_info_w, g_axis_info)
 XEN_VARGIFY(g_draw_axes_w, g_draw_axes)
+XEN_ARGIFY_3(g_x_axis_label_w, g_x_axis_label)
+XEN_ARGIFY_4(g_set_x_axis_label_w, g_set_x_axis_label)
 #else
 #define g_grf_x_w g_grf_x
 #define g_grf_y_w g_grf_y
@@ -1126,6 +1177,9 @@ XEN_VARGIFY(g_draw_axes_w, g_draw_axes)
 #define g_ungrf_y_w g_ungrf_y
 #define g_axis_info_w g_axis_info
 #define g_draw_axes_w g_draw_axes
+#define g_x_axis_label_w g_x_axis_label
+#define g_set_x_axis_label_w g_set_x_axis_label
+
 #endif
 
 void g_init_axis(void)
@@ -1134,6 +1188,9 @@ void g_init_axis(void)
   XEN_DEFINE_PROCEDURE(S_y2position, g_grf_y_w, 1, 3, 0,     H_y2position);
   XEN_DEFINE_PROCEDURE(S_position2x, g_ungrf_x_w, 1, 3, 0,   H_position2x);
   XEN_DEFINE_PROCEDURE(S_position2y, g_ungrf_y_w, 1, 3, 0,   H_position2y);
+
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_label, g_x_axis_label_w, H_x_axis_label,
+					    S_setB S_x_axis_label, g_set_x_axis_label_w, g_set_x_axis_label_reversed, 0, 3, 1, 3);
 
   XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, H_axis_info);
 

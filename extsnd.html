@@ -6708,7 +6708,7 @@ redisplay <i>chn's</i> time domain graph.  See <i>color-samples</i> in draw.scm.
 </td></tr>
 <tr><td></td><td>
 redisplay <i>chn's</i> fft graph; for historical reasons, it also forces the current transform to completion.  
-See <a href="#zeropad">zero-pad</a> and <a href="#beforeffthook">before-fft-hook</a>.
+See <a href="#zeropad">zero-pad</a> and <a href="#beforeffthook">before-transform-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9280,11 +9280,10 @@ The lowest level procedures are:
 <!-- axis-info -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="axisinfo">axis-info</a></em> (snd chn <i>grf</i>)</code></span></td></tr>
-
 <tr><td><spacer type=horizontal size=40><br></td><td>
 return a list describing the specified axis:
 <code>'(left-sample right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
-x0-position y0-position x1-position y1-position y-offset)</code>.  This might be
+x0-position y0-position x1-position y1-position y-offset xlabel)</code>.  This might be
 useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
 time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x2position">x-&gt;position</a>
 could be defined as:
@@ -9311,7 +9310,6 @@ See <i>draw-smpte-label</i> in snd-motif.scm, or <i>make-current-window-display<
 <!-- colormap-ref -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="colormapref">colormap-ref</a></em> (map pos)</code></span></td></tr>
-
 <tr><td></td><td>
 <i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
 suitable for use with make-color.  'map' can be a number
@@ -9322,7 +9320,6 @@ See <i>samples-via-colormap</i> in draw.scm.
 <!-- copy-context -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="copycontext">copy-context</a></em></code></span></td></tr>
-
 <tr><td></td><td>
 the graphics mode to use to draw over whatever is currently in a graph.
 The "contexts" refer to graphics contexts used throughout Snd; the <i>copy-context</i>
@@ -9335,7 +9332,6 @@ See draw.scm or <a href="#displaysampsinred">display-samps-in-red</a>.
 <!-- current-font -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="currentfont">current-font</a></em> (snd chn context)</code></span></td></tr>
-
 <tr><td></td><td>
 return the current font (also settable).</td></tr>
 <tr><td colspan=2></td></tr>
@@ -9343,7 +9339,6 @@ return the current font (also settable).</td></tr>
 <!-- cursor-context -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="cursorcontext">cursor-context</a></em></code></span></td></tr>
-
 <tr><td></td><td>
 the graphics mode for XOR drawing in the cursor color (for cursors, normally).
 See <a href="#xcursor">x-cursor</a> or
@@ -9354,7 +9349,6 @@ See <a href="#xcursor">x-cursor</a> or
 <!-- draw-axes -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="drawaxes">draw-axes</a></em> (wid gc <i>label x0 x1 y0 y1 style axes</i>)</code></span></td></tr>
-
 <tr><td width=50></td><td>
 draw axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
 going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
@@ -9366,7 +9360,6 @@ or the local envelope editor code in xm-enved.scm.
 <!-- draw-dot -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="drawdot">draw-dot</a></em> (x0 y0 dot-size snd chn context)</code></span></td></tr>
-
 <tr><td width=50></td><td>
 draw a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph.  See musglyphs.scm.</td></tr>
 <tr><td colspan=2></td></tr>
@@ -9374,7 +9367,6 @@ draw a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph.  Se
 <!-- draw-dots -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="drawdots">draw-dots</a></em> (positions dot-size snd chn context)</code></span></td></tr>
-
 <tr><td></td><td>
 draw dots of size <i>dot-size</i> from the (x y) pairs in the vector <i>positions</i> in the given context.
 draw-dots, draw-lines, and fill-polygon take vectors, rather than vcts (which would be more consistent
@@ -9386,7 +9378,6 @@ have made these functions obsolete.
 <!-- draw-line -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="drawline">draw-line</a></em> (x0 y0 x1 y1 snd chn context)</code></span></td></tr>
-
 <tr><td></td><td>
 draw a line from (x0 y0) to (x1 y1) in the given context.
 See <i>show-hiho</i> below.
@@ -9396,7 +9387,6 @@ See <i>show-hiho</i> below.
 <!-- draw-lines -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="drawlines">draw-lines</a></em> (lines size snd chn context)</code></span></td></tr>
-
 <tr><td></td><td>
 draw lines following the (x y) pairs in the vector <i>lines</i> in the given graphics context (copy-context is the default).
 See <i>make-current-window-display</i> in draw.scm.
@@ -9407,7 +9397,6 @@ See <i>make-current-window-display</i> in draw.scm.
 <!-- draw-string -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="drawstring">draw-string</a></em> (text x0 y0 snd chn context)</code></span></td></tr>
-
 <tr><td></td><td>
 draw a string (<i>text</i>) in the current font and foreground color starting at (x0 y0) in the given graphics context.
 The next procedures use the channel-property list (extensions.scm) to maintain a list
@@ -9446,10 +9435,10 @@ currently in the time-domain graph:
 </td></tr>
 <tr><td colspan=2></td></tr>
 <tr><td colspan=2></td></tr>
+
 <!-- fill-rectangle -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="fillrectangle">fill-rectangle</a></em> (x0 y0 width height snd chn context)</code></span></td></tr>
-
 <tr><td></td><td>
 draws a filled rectangle in the current foreground color from (x0 y0) of size (width height).
 See draw.scm, snd-motif.scm, or <a href="#showoriginal">show-original</a>.
@@ -9459,7 +9448,6 @@ See draw.scm, snd-motif.scm, or <a href="#showoriginal">show-original</a>.
 <!-- fill-polygon -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="fillpolygon">fill-polygon</a></em> (points snd chn context)</code></span></td></tr>
-
 <tr><td></td><td>
 draws a filled polygon whose vertices are in the vector <i>points</i>.</td></tr>
 <tr><td></td><td>
@@ -9488,10 +9476,10 @@ draws a filled polygon whose vertices are in the vector <i>points</i>.</td></tr>
 musglyphs.scm has some elaborate examples that use fill-polygon to draw music notation symbols.
 </td></tr>
 <tr><td colspan=2></td></tr>
+
 <!-- foreground-color -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="foregroundcolor">foreground-color</a></em> (snd chn context)</code></span></td></tr>
-
 <tr><td></td><td>
 return the current foreground color (also settable).
 The following gives us a green cursor:
@@ -9526,7 +9514,6 @@ We can goof around with colors and fonts:
 <!-- glSpectrogram -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="glspectrogram">glSpectrogram</a></em> (data gl-list cutoff use-dB min-dB scale br bg bb)</code></span></td></tr>
-
 <tr><td></td><td>
 <i>glSpectrogram</i> takes spectrogram data and passes it to openGL.  See snd-gl.scm for an example.</td></tr>
 <tr><td colspan=2></td></tr>
@@ -9534,7 +9521,6 @@ We can goof around with colors and fonts:
 <!-- graph-data -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="graphdata">graph-data</a></em> (data snd chn context low high graphics-style)</code></span></td></tr>
-
 <tr><td></td><td>
 <i>graph-data</i> displays <i>data</i> in the time domain graph of <i>snd</i>'s channel
 <i>chn</i> using the graphics context <i>context</i> (normally copy-context), placing the
@@ -9585,14 +9571,12 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 </pre></td></tr></table></td></tr>
 <tr><td></td><td align=center>
 <img src="redsamps.png" alt="red samples">
-
 </td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- load-font -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="loadfont">load-font</a></em> (font-name)</code></span></td></tr>
-
 <tr><td></td><td>
 load the font <i>font-name</i> (an X-style font spec), and return a handle for it (for <a href="#currentfont">current-font</a>).
 <pre>
@@ -9613,7 +9597,6 @@ load-font could be (should have been!) defined using the xm module as:
 <!-- make-graph-data -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="makegraphdata">make-graph-data</a></em> (snd chn edit-position low-sample high-sample)</code></span></td></tr>
-
 <tr><td></td><td>
 Use <i>make-graph-data</i> to get the currently displayed data (i.e. the waveform displayed
 in the graph, which can be based on an overall peak envelope rather than the
@@ -9624,7 +9607,6 @@ list of two vcts (the two sides of the peak envelope graph).
 <i>low-sample</i> defaults to the current window left sample, and
 <i>high-sample</i> defaults to the current rightmost sample.
 The result can be used in the lisp graph:
-
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -9661,7 +9643,6 @@ vcts), and displays it in any channel's time domain graph using its current grap
 <!-- mark-context -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="markcontext">mark-context</a></em></code></span></td></tr>
-
 <tr><td></td><td>
 the graphics context to use to draw a mark (XOR mode).
 </td></tr>
@@ -9670,7 +9651,6 @@ the graphics context to use to draw a mark (XOR mode).
 <!-- selection-context -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="selectioncontext">selection-context</a></em></code></span></td></tr>
-
 <tr><td></td><td>
 the graphics context for XOR drawing in the selection color.</td></tr>
 <tr><td colspan=2></td></tr>
@@ -9678,7 +9658,6 @@ the graphics context for XOR drawing in the selection color.</td></tr>
 <!-- send-netscape -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sendnetscape">send-netscape</a></em> (url)</code></span></td></tr>
-
 <tr><td></td><td>
 Start netscape, if necessary, and tell it to go to the location 'url'.
 </td></tr><tr><td colspan=2></td></tr>
@@ -9686,7 +9665,6 @@ Start netscape, if necessary, and tell it to go to the location 'url'.
 <!-- snd-gcs -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndgcs">snd-gcs</a></em></code></span></td></tr>
-
 <tr><td></td><td>
 <i>snd-gcs</i> returns a list of Snd's graphics contexts (intended for use with the xm module in snd-motif.scm):
 (0)basic (1)selected_basic (2)combined (3)cursor (4)selected_cursor (5)selection (6)selected_selection 
@@ -9697,9 +9675,16 @@ Start netscape, if necessary, and tell it to go to the location 'url'.
 <!-- with-gl -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="withgl">with-gl</a></em></code></span></td></tr>
-
 <tr><td></td><td>
 If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></tr>
+<tr><td colspan=2></td></tr>
+
+<!-- x-axis-label -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="xaxislabel">x-axis-label</a></em> (snd chn context)</code></span></td></tr>
+<tr><td></td><td>
+return the current x axis label (also settable).
+</td></tr>
 <tr><td colspan=2></td></tr>
 
 </table>

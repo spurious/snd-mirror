@@ -2312,7 +2312,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=def>add-find-to-listener</em>
   <em class=def><A NAME="uponsaveyourself">upon-save-yourself, upon-take-focus</a></em>
   <em class=def>add-text-to-status-area</em>
-  <em class=def><a name="makevariabledisplay">make-variable-display</a></em> page-name variable-name (type 'text) (domain (list 0.0 1.0))
+  <em class=def><a name="makevariabledisplay">make-variable-display</a></em> page-name variable-name (type 'text) (range (list 0.0 1.0))
   <em class=def><a name="variabledisplay">variable-display</a></em> val widget
 </pre>
 
@@ -3988,7 +3988,7 @@ static void init_fcomb(void)
 
 <span class=box><h2><A NAME="continuations">About Continuations</a></h2></span>
 
-<p>A continuation is a GOTO, a jump to the end of the 
+<p>A continuation is a kind of GOTO, a jump to the end of the 
 defining call-with-current-continuation form. 
 Here are a few simple examples:</p>
 <pre>
@@ -4008,27 +4008,6 @@ Here are a few simple examples:</p>
 
 ;;; (con-return)
 ;;;  =&gt; 'quitting
-
-;;; don't use a continuation named "break" in while -- while
-;;; itself defines a break continuation that will shadow your break:
-
-(define (con-broken)
-  "use call/cc to break out of a loop"
-  (call-with-current-continuation
-   (lambda (break)
-     (let ((i 0))
-       (while (&lt; i 123)
-	 (if (= i 3) 
-	     (break 'quitting)) ; this is while's break, not ours
-	 (display i)
-	 (set! i (+ i 1)))
-       'oops)                   ; so we end up here
-      ))
-  )                             ; not here as we intended
-
-;;; (con-broken)
-;;;  =&gt; 'oops
-
 
 (define (con-go-on)
   "use call/cc to continue where we left off if a non-serious error is reported"

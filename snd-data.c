@@ -834,18 +834,19 @@ snd_info *find_sound(snd_state *ss, char *name)
 static char *display_maxamps(const char *filename, int chans)
 {
   char *ampstr;
-  int i;
+  int i, len;
   mus_sample_t *vals;
   off_t *times;
-  ampstr = (char *)CALLOC(chans * 32, sizeof(char));
+  len = chans * 32;
+  ampstr = (char *)CALLOC(len, sizeof(char));
   vals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
   times = (off_t *)CALLOC(chans, sizeof(off_t));
   sprintf(ampstr, _("\nmax amp: "));
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {
-      strcat(ampstr, prettyf(MUS_SAMPLE_TO_FLOAT(vals[i]), 3));
-      strcat(ampstr, " ");
+      ampstr = snd_strcat(ampstr, prettyf(MUS_SAMPLE_TO_FLOAT(vals[i]), 3), &len);
+      ampstr = snd_strcat(ampstr, " ", &len);
     }
   FREE(vals);
   FREE(times);

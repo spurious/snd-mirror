@@ -295,6 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+26-May:  x-axis-label.\n\
 20-May:  make-variable-display in snd-motif.scm.\n\
 16-May:  definstrument changes, added clm-ins.scm.\n\
 14-May:  optional begin-time arg to make-mix-sample-reader.\n\
@@ -312,8 +313,6 @@ void news_help(snd_state *ss)
 28-Apr:  snd 6.8.\n\
          freeverb.rb and freeverb.scm from Michael Scholz.\n\
          removed mus-sound-seek.\n\
-25-Apr:  check-for-unsaved-edits arg defaults to #t now.\n\
-22-Apr:  samples function returns a vct, not a vector.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

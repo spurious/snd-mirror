@@ -582,13 +582,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       set_backgrounds(sx->soundpane, (ss->sgx)->sash_color);
       gtk_container_set_border_width(GTK_CONTAINER(SOUND_PANE(ss)), 0);
       gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), SOUND_PANE(ss));
-      /* set_background(SOUND_PANE(ss), (ss->sgx)->basic_color); */
-      
-      /* g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),
-	 g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(MAIN_SHELL(ss)))),
-	 0,
-	 g_cclosure_new(GTK_SIGNAL_FUNC(shell_key_press), (gpointer)ss, 0),
-      0);*/
 
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{

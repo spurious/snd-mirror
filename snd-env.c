@@ -36,12 +36,13 @@ env *copy_env(env *e)
 /* mus_describe(e) */
 char *env_to_string(env *e)
 {
-  int i, j, first = TRUE;
+  int i, j, first = TRUE, len;
   char *expr_buf;
   char *news = NULL;
   if (e)
     {
-      news = (char *)CALLOC(4 + (e->pts * 2 * 16), sizeof(char));
+      len = 4 + (e->pts * 2 * 16);
+      news = (char *)CALLOC(len, sizeof(char));
 #if HAVE_RUBY
       news[0] = '[';
 #else
@@ -56,14 +57,14 @@ char *env_to_string(env *e)
 #else
 	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f %.3f", (first) ? "" : " ", e->data[j], e->data[j + 1]);
 #endif
-	  strcat(news, expr_buf);
+	  news = snd_strcat(news, expr_buf, &len);
 	  first = FALSE;
 	}
       FREE(expr_buf);
 #if HAVE_RUBY
-      strcat(news, "]");
+      news = snd_strcat(news, "]", &len);
 #else
-      strcat(news, ")");
+      news = snd_strcat(news, ")", &len);
 #endif
     }
   else

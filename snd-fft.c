@@ -655,7 +655,12 @@ static char *spectro_xlabel(chan_info *cp)
     case FOURIER: 
       if (cp->fft_log_frequency)
 	return("log freq");
-      else return(_("frequency"));
+      else 
+	{
+	  if (cp->fft->xlabel)
+	    return(cp->fft->xlabel);
+	  else return(_("frequency"));
+	}
       break;
     case WAVELET:         return(wavelet_names[cp->wavelet_type]); break;
     case HAAR:            return(_("Haar spectrum"));              break;
@@ -1172,8 +1177,20 @@ static fft_info *make_fft_info(int size, int window, Float beta)
   fp->window = window;
   fp->beta = beta;
   fp->ok = TRUE;
+  fp->xlabel = NULL;
   fp->data = (Float *)CALLOC(size + 1, sizeof(Float)); /*  + 1 for complex storage or starts at 1 or something */
   return(fp);
+}
+
+void set_fft_info_xlabel(chan_info *cp, char *new_label)
+{
+  if ((cp) && (cp->fft))
+    {
+      if (cp->fft->xlabel) FREE(cp->fft->xlabel);
+      if (new_label) 
+	cp->fft->xlabel = copy_string(new_label); 
+      else cp->fft->xlabel = NULL;
+    }
 }
 
 fft_info *free_fft_info(fft_info *fp)

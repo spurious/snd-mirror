@@ -1764,7 +1764,8 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
-      updateB = XtCreateManagedWidget(_("Update"), xmPushButtonWidgetClass, view_files_dialog, args, n);
+      updateB = XtCreateManagedWidget(_("Update"), xmPushButtonGadgetClass, view_files_dialog, args, n);
+      /* need Gadget if we want a subsequent XmNbackgroundPixmap change to be reflected in the button */
       XtAddCallback(updateB, XmNactivateCallback, view_files_update_callback, ss);
 
       n = 0;
@@ -1959,7 +1960,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  defw = XtCreateManagedWidget(_("Default"), xmPushButtonWidgetClass, raw_data_dialog, args, n);
+  defw = XtCreateManagedWidget(_("Default"), xmPushButtonGadgetClass, raw_data_dialog, args, n);
   XtAddCallback(defw, XmNactivateCallback, raw_data_default_callback, ss);
 
   rform = XtCreateManagedWidget("sretc", xmFormWidgetClass, raw_data_dialog, NULL, 0);

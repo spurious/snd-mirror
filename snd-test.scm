@@ -278,7 +278,14 @@
       (if (not (defined? 'find-child))
 	  (begin
 	    (load "snd-motif.scm")
-	    (load "popup.scm")))))
+	    (load "popup.scm"))))
+    (if (and (provided? 'snd-gtk)
+	     (provided? 'xg))
+	(if (not (defined? 'make-variable-display))
+	    (begin
+	      (load "snd-gtk.scm")
+	      (load "gtk-popup.scm")))))
+
 
 
 ;;; ---------------- test 0: constants ----------------
@@ -6324,8 +6331,14 @@ EDITS: 5
       (if (not (= (transform-samples-size) 0)) (snd-display ";transform-samples-size ~A?" (transform-samples-size)))
       (set! (transform-graph?) #t)
       (set! (time-graph?) #t)
-      (graph '(0 0 1 1 2 0))
+      (if (not (string=? (x-axis-label) "time")) (snd-display ";def time x-axis-label: ~A" (x-axis-label)))
+      (set! (x-axis-label index 0 time-graph) "no time")
+      (if (not (string=? (x-axis-label) "no time")) (snd-display ";time x-axis-label: ~A" (x-axis-label index 0 time-graph)))
+      (graph '(0 0 1 1 2 0) "lisp")
       (update-lisp-graph)
+      (if (not (string=? (x-axis-label index 0 lisp-graph) "lisp")) (snd-display ";def lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
+      (set! (x-axis-label index 0 lisp-graph) "no lisp")
+      (if (not (string=? (x-axis-label index 0 lisp-graph) "no lisp")) (snd-display ";lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
       (graph-data (make-vct 4))
       (update-lisp-graph)
       (graph '#(0 0 1 1 2 0))
@@ -6352,6 +6365,9 @@ EDITS: 5
 		  (snd-display ";make-graph-data 50: ~A ~A" (vct-ref data 50) (sample 50))))))
       (set! (x-bounds) (list 0.0 0.1))
       (update-transform-graph)
+      (if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) (snd-display ";def fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+      (set! (x-axis-label index 0 transform-graph) "fourier")
+      (if (not (string=? (x-axis-label index 0 transform-graph) "fourier")) (snd-display ";fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
       (if (and (number? (transform-samples-size))
 	       (= (transform-samples-size) 0))
 	  (snd-display ";transform-graph? transform-samples-size ~A?" (transform-samples-size)))
@@ -11011,12 +11027,12 @@ EDITS: 5
 	      (v (make-vct 10))
 	      (inv 1.0))
 	  (vct-map! v (lambda () (let ((val (filter b inv))) (set! inv 0.0) val)))
-	  (if (not (vequal v (vct 0.725 -0.466 -0.315 -0.196 -0.104 -0.036 0.014 0.047 0.068 0.078)))
+	  (if (not (vequal v (vct 0.725 -0.466 -0.315 -0.196 -0.104 -0.036 0.014 0.047 0.0685 0.0775)))
 	      (snd-display ";butter hp: ~A" v))
 	  (set! b (make-butter-hp 4 1000.0))
 	  (map-channel (lambda (y) (filter b y)))
 	  (let ((sp (rough-spectrum ind)))
-	    (if (not (vequal sp (vct 0.050 0.982 1.000 1.000 0.998 0.998 0.999 0.998 0.996 0.999)))
+	    (if (not (vequal sp (vct 0.0505 0.982 1.000 1.000 0.998 0.998 0.999 0.998 0.996 0.999)))
 		(snd-display ";bhp rough spectrum: ~A" sp)))
 	  (undo))
 	
@@ -11050,7 +11066,7 @@ EDITS: 5
 	      (v (make-vct 10))
 	      (inv 1.0))
 	  (vct-map! v (lambda () (let ((val (filter b inv))) (set! inv 0.0) val)))
-	  (if (not (vequal v (vct 0.978 -0.043 -0.041 -0.038 -0.035 -0.031 -0.026 -0.022 -0.015 -0.009)))
+	  (if (not (vequal v (vct 0.978 -0.043 -0.041 -0.038 -0.035 -0.031 -0.026 -0.0225 -0.015 -0.0085)))
 	      (snd-display ";butter bs: ~A" v))
 	  (set! b (make-butter-bs 4 1000.0 1500.0))
 	  (map-channel (lambda (y) (filter b y)))
@@ -35232,7 +35248,7 @@ EDITS: 2
 	       polar->rectangular previous-files-sort-procedure 
 	       pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
                read-sample reset-listener-cursor sample-reader-home selection-chans selection-srate snd-gcs
-	       snd-warning sum-of-sines vct-map make-variable-display channel-data
+	       snd-warning sum-of-sines vct-map make-variable-display channel-data x-axis-label
 
 	       ))
 
@@ -35275,7 +35291,7 @@ EDITS: 2
 		   srate time-graph-type x-position-slider x-zoom-slider
 		   y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-x1 mus-x2 mus-y1 mus-y2 mus-array-print-length 
 		   mus-b1 mus-b2 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
-		   mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref
+		   mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 
 		   beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
 		   mus-position mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 
@@ -35642,7 +35658,7 @@ EDITS: 2
 			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample
 			  transform-samples->vct transform-samples-size transform-type update-transform-graph update-time-graph
 			  update-lisp-graph update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds
-			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad))
+			  x-position-slider x-zoom-slider x-axis-label y-bounds y-position-slider y-zoom-slider zero-pad))
 	  (gc))
 
 	(let ((ctr 0))
@@ -35668,7 +35684,7 @@ EDITS: 2
 			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update
 			  transform-sample transform-samples->vct transform-samples-size transform-type
 			  update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
-			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
+			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider x-axis-label y-bounds y-position-slider
 			  y-zoom-slider zero-pad)))
 
         (let ((ctr 0))
@@ -35695,7 +35711,7 @@ EDITS: 2
 			  src-sound transform-sample transform-samples->vct scale-sound-by scale-sound-to
 			  transform-samples-size transform-type undo update-transform-graph update-time-graph update-lisp-graph
 			  update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
-			  x->position x-zoom-slider y-bounds y-position-slider y->position y-zoom-slider zero-pad scale-channel)))
+			  x->position x-zoom-slider y-bounds y-position-slider x-axis-label y->position y-zoom-slider zero-pad scale-channel)))
 
         (let ((ctr 0))
 	  (for-each (lambda (n)
@@ -35710,7 +35726,7 @@ EDITS: 2
 		    (list backward-graph delete-sample edit-fragment forward-graph forward-mark
 			  forward-mix graph-data graph-style play play-and-wait position->x position->y redo
 			  time-graph-style lisp-graph-style transform-graph-style
-			  scale-sound-by scale-sound-to scale-by scale-to undo x->position y->position)))
+			  scale-sound-by scale-sound-to scale-by scale-to undo x->position y->position x-axis-label)))
 
         (let ((ctr 0)
 	      (index (open-sound "oboe.snd")))
@@ -35748,7 +35764,7 @@ EDITS: 2
 			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
 			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-samples->vct
 			  transform-samples-size transform-type update-transform-graph update-time-graph update-lisp-graph
-			  wavelet-type time-graph?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
+			  wavelet-type time-graph?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x-axis-label
 			  x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad channel-properties))
 	  (close-sound index))
 
@@ -35773,7 +35789,7 @@ EDITS: 2
 			  spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type
 			  update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
 			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
-			  y-zoom-slider zero-pad
+			  y-zoom-slider zero-pad x-axis-label
 			  ))
 	  (gc)
 	  (close-sound index))

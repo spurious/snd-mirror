@@ -3345,7 +3345,7 @@ void show_cursor_info(chan_info *cp)
   snd_info *sp;
   chan_info *ncp;
   Float y, absy;
-  int digits, i;
+  int digits, i, len;
   off_t samp;
   char *s1, *s2;
   sp = cp->sound;
@@ -3356,7 +3356,8 @@ void show_cursor_info(chan_info *cp)
   if (absy < .0001) digits = 4;
   else if (absy<.001) digits = 3;
   else digits = 2;
-  expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE,sizeof(char));
+  len = PRINT_BUFFER_SIZE;
+  expr_str = (char *)CALLOC(len, sizeof(char));
   if (sp->nchans == 1)
     mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " PRId64 ") = %s"),
 		 s1 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
@@ -3380,7 +3381,7 @@ void show_cursor_info(chan_info *cp)
 		       s2 = prettyf(y, digits));
 	  for (i = 1; i < sp->nchans; i++)
 	    {
-	      strcat(expr_str, ", ");
+	      expr_str = snd_strcat(expr_str, ", ", &len);
 	      FREE(s2);
 	      ncp = sp->chans[i];
 	      y = chn_sample(samp, ncp, ncp->edit_ctr);
@@ -3394,7 +3395,7 @@ void show_cursor_info(chan_info *cp)
 		  else digits = 2;
 		}
 	      s2 = prettyf(y, digits);
-	      strcat(expr_str, s2);
+	      expr_str = snd_strcat(expr_str, s2, &len);
 	    }
 	}
     }

@@ -72,8 +72,13 @@
 		thunk
 		(lambda args 
 		  (begin
-		    (set! intp #t) 
-		    (snd-print "interrupted!") 
+		    (set! intp #t)
+		    (if (not (null? (cdr args)))
+			(snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
+			;; here we could look for a procedure as the 2nd arg and apply it to the rest of the args.
+			;;   the (good-natured!) user could then implement a debugger, and a way to continue from
+			;;   the interrupt by passing a continuation as well.
+			(snd-print "with-sound interrupted"))
 		    args)))
 	 (if (and reverb (not intp))
 	     (begin
@@ -82,10 +87,10 @@
 	       (reverb)
 	       (mus-close *reverb*)))
 	 (mus-close *output*)
-	 (if statistics
-	     (set! cycles (/ (- (get-internal-real-time) start) 100)))
 	 (if to-snd
 	     (begin
+	       (if statistics
+		   (set! cycles (/ (- (get-internal-real-time) start) 100)))
 	       (let ((cur (find-sound output-1)))
 		 (if cur (close-sound cur)))
 	       (let ((snd-output (open-sound output-1)))

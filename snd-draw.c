@@ -472,6 +472,7 @@ widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-p
 
 static XEN dialog_widgets;
 static XEN new_widget_hook;
+/* ideally this would be an "after method" on XtCreateWidget or gtk_new_* */
 
 void run_new_widget_hook(widget_t w)
 {

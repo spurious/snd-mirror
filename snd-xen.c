@@ -142,9 +142,8 @@ static char *gl_print(XEN result);
 static XEN snd_format_if_needed(XEN args)
 {
   /* if car has formatting info, use next arg as arg list for it */
-  #define ERR_SIZE 8192
   XEN format_args = XEN_EMPTY_LIST, cur_arg, result;
-  int i, start = 0, num_args, format_info_len, got_tilde = FALSE, was_formatted = FALSE;
+  int i, start = 0, num_args, format_info_len, got_tilde = FALSE, was_formatted = FALSE, err_size = 8192;
   char *format_info, *errmsg = NULL;
   num_args = XEN_LIST_LENGTH(args);
   if (num_args == 1) return(XEN_CAR(args));
@@ -153,7 +152,7 @@ static XEN snd_format_if_needed(XEN args)
   if (XEN_LIST_P(XEN_CADR(args)))
     format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case, a no-op in Guile */
   else format_args = XEN_CADR(args);
-  errmsg = (char *)CALLOC(ERR_SIZE, sizeof(char));
+  errmsg = (char *)CALLOC(err_size, sizeof(char));
   for (i = 0; i < format_info_len; i++)
     {
       if (format_info[i] == '~')
@@ -170,8 +169,8 @@ static XEN snd_format_if_needed(XEN args)
 	      got_tilde = FALSE;
 	      switch (format_info[i])
 		{
-		case '~': strcat(errmsg, "~"); break;
-		case '%': strcat(errmsg, "\n"); break;
+		case '~': errmsg = snd_strcat(errmsg, "~", &err_size); break;
+		case '%': errmsg = snd_strcat(errmsg, "\n", &err_size); break;
 		case 'S': 
 		case 'A':
 		  if (XEN_NOT_NULL_P(format_args))
@@ -182,11 +181,8 @@ static XEN snd_format_if_needed(XEN args)
 			{
 			  char *vstr;
 			  vstr = gl_print(cur_arg);
-			  if (vstr)
-			    {
-			      strcat(errmsg, vstr);
-			      FREE(vstr);
-			    }
+			  errmsg = snd_strcat(errmsg, vstr, &err_size);
+			  FREE(vstr);
 			}
 		      else
 			{
@@ -197,12 +193,12 @@ static XEN snd_format_if_needed(XEN args)
 			      XEN str;
 			      str = scm_procedure_name(cur_arg);
 			      if (!(XEN_FALSE_P(str)))
-				strcat(errmsg, XEN_AS_STRING(str));
-			      else strcat(errmsg, XEN_AS_STRING(cur_arg));
+				errmsg = snd_strcat(errmsg, XEN_AS_STRING(str), &err_size);
+			      else errmsg = snd_strcat(errmsg, XEN_AS_STRING(cur_arg), &err_size);
 			    }
 			  else 
 #endif
-			    strcat(errmsg, XEN_AS_STRING(cur_arg));
+			    errmsg = snd_strcat(errmsg, XEN_AS_STRING(cur_arg), &err_size);
 			}
 		    }
 		  /* else ignore it */
@@ -216,16 +212,16 @@ static XEN snd_format_if_needed(XEN args)
     strncat(errmsg, (char *)(format_info + start), i - start);
   if (!was_formatted)
     {
-      strcat(errmsg, " ");
-      strcat(errmsg, XEN_AS_STRING(XEN_CADR(args)));
+      errmsg = snd_strcat(errmsg, " ", &err_size);
+      errmsg = snd_strcat(errmsg, XEN_AS_STRING(XEN_CADR(args)), &err_size);
     }
   if (num_args > 2)
     {
       if ((!was_formatted) || (!(XEN_FALSE_P(XEN_CADDR(args))))) start = 2; else start = 3;
       for (i = start; i < num_args; i++)
 	{
-	  strcat(errmsg, " ");
-	  strcat(errmsg, XEN_AS_STRING(XEN_LIST_REF(args, i)));
+	  errmsg = snd_strcat(errmsg, " ", &err_size);
+	  errmsg = snd_strcat(errmsg, XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
 	}
     }
   result = C_TO_XEN_STRING(errmsg);
@@ -399,10 +395,10 @@ static char *msg = NULL;
 void snd_rb_raise(XEN tag, XEN throw_args)
 {
   XEN err = rb_eStandardError;
-  int need_comma = FALSE;
+  int need_comma = FALSE, size = 2048;
   if (strcmp(rb_id2name(tag), "Out_of_range") == 0) err = rb_eRangeError;
   if (msg) FREE(msg);
-  msg = (char *)CALLOC(2048, sizeof(char));
+  msg = (char *)CALLOC(size, sizeof(char));
   if ((XEN_LIST_P(throw_args)) && 
       (XEN_LIST_LENGTH(throw_args) > 0))
     {
@@ -416,10 +412,10 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	{
 	  /* here XEN_CADR can contain formatting info and XEN_CADDR is a list of args to fit in */
 	  /* or it may be a list of info vars etc */
-	  if (need_comma) strcat(msg, ": ");
+	  if (need_comma) msg = snd_strcat(msg, ": ", &size);
 	  if (XEN_STRING_P(XEN_CADR(throw_args)))
-	    strcat(msg, XEN_TO_C_STRING(snd_format_if_needed(XEN_CDR(throw_args))));
-	  else strcat(msg, XEN_AS_STRING(XEN_CDR(throw_args)));
+	    msg = snd_strcat(msg, XEN_TO_C_STRING(snd_format_if_needed(XEN_CDR(throw_args))), &size);
+	  else msg = snd_strcat(msg, XEN_AS_STRING(XEN_CDR(throw_args)), &size);
 	}
     }
   rb_raise(err, msg);
@@ -763,7 +759,7 @@ char *g_print_1(XEN obj) /* don't free return val */
 static char *gl_print(XEN result)
 {
   char *newbuf = NULL, *str = NULL;
-  int i, ilen, savelen, savectr, slen;
+  int i, ilen, savelen;
   snd_state *ss;
   ss = get_global_state();
   /* specialize vectors which can be enormous in this context */
@@ -773,7 +769,6 @@ static char *gl_print(XEN result)
   ilen = print_length(ss); 
   newbuf = (char *)CALLOC(128, sizeof(char));
   savelen = 128;
-  savectr = 3;
 #if HAVE_GUILE
   sprintf(newbuf, "#("); 
 #else
@@ -784,30 +779,20 @@ static char *gl_print(XEN result)
       str = g_print_1(XEN_VECTOR_REF(result, i));
       if ((str) && (*str)) 
 	{
-	  slen = strlen(str);
-	  if ((slen + savectr + 1) >= savelen)
-	    {
-	      savelen += (slen + 128);
-	      newbuf = (char *)REALLOC(newbuf, savelen * sizeof(char));
-	    }
 	  if (i != 0) 
 	    {
 #if HAVE_RUBY
-	      strcat(newbuf, ",");
+	      newbuf = snd_strcat(newbuf, ",", &savelen);
 #endif
-	      strcat(newbuf, " "); 
-	      savectr++;
+	      newbuf = snd_strcat(newbuf, " ", &savelen); 
 	    }
-	  strcat(newbuf, str);
-	  savectr += slen;
+	  newbuf = snd_strcat(newbuf, str, &savelen);
 	}
     }
-  if (savectr + 8 > savelen) 
-    newbuf = (char *)REALLOC(newbuf, (savectr + 8) * sizeof(char));
 #if HAVE_GUILE
-  strcat(newbuf, " ...)");
+  newbuf = snd_strcat(newbuf, " ...)", &savelen);
 #else
-  strcat(newbuf, " ...]");
+  newbuf = snd_strcat(newbuf, " ...]", &savelen);
 #endif
   return(newbuf);
 }
@@ -2775,6 +2760,11 @@ static XEN g_snd_stdin_test(XEN str)
 
 static SCM g_gc_off(void) {++scm_block_gc; return(XEN_FALSE);}
 static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
+
+static SCM g_continuation_p(XEN obj)
+{
+  return(C_TO_XEN_BOOLEAN(SCM_NIMP(obj) && (SCM_CONTINUATIONP(obj))));
+}
 #endif
 
 #endif 
@@ -3137,6 +3127,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("gc-off", g_gc_off, 0, 0, 0, "turns off the garbage collector");
   XEN_DEFINE_PROCEDURE("gc-on", g_gc_on, 0, 0, 0, "turns on the garbage collector");
   XEN_DEFINE_PROCEDURE("snd-stdin-test", g_snd_stdin_test, 1, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p, 1, 0, 0, "#t if arg is a continuation");
 #endif
 #endif
 

@@ -641,6 +641,7 @@
 #define S_x_axis_in_beats               "x-axis-in-beats"
 #define S_x_axis_in_samples             "x-axis-in-samples"
 #define S_x_axis_in_seconds             "x-axis-in-seconds"
+#define S_x_axis_label                  "x-axis-label"
 #define S_x_axis_style                  "x-axis-style"
 #define S_x_bounds                      "x-bounds"
 #define S_x_position_slider             "x-position-slider"

@@ -125,7 +125,7 @@ static void make_edit_find_dialog(snd_state *ss)
       XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
       XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
     }
-  findnextB = XtCreateManagedWidget(_("Next"), xmPushButtonWidgetClass, edit_find_dialog, args, n);
+  findnextB = XtCreateManagedWidget(_("Next"), xmPushButtonGadgetClass, edit_find_dialog, args, n);
   XtAddCallback(findnextB, XmNactivateCallback, edit_find_next_callback, ss);
 
   rc = XtCreateManagedWidget("row", xmFormWidgetClass, edit_find_dialog, NULL, 0);

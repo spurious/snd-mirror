@@ -3063,7 +3063,7 @@ void snd_record_file(snd_state *ss)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNlabelString, titlestr); n++;
-      record_button = XtCreateManagedWidget("record-button", xmPushButtonWidgetClass, recorder, args, n);
+      record_button = XtCreateManagedWidget("record-button", xmPushButtonGadgetClass, recorder, args, n);
       XtAddCallback(record_button, XmNactivateCallback, record_button_callback, ss);
       XmStringFree(titlestr);
 

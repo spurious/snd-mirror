@@ -13,9 +13,7 @@ enum {W_pane, W_pane_box, W_control_panel,
       W_apply_form, W_remember, W_restore, W_apply, W_reset
 };
 
-enum {W_amp_adj, W_srate_adj, W_contrast_adj, W_expand_adj, W_revscl_adj, W_revlen_adj, W_filter_adj
-};
-
+enum {W_amp_adj, W_srate_adj, W_contrast_adj, W_expand_adj, W_revscl_adj, W_revlen_adj, W_filter_adj};
 
 #define NUM_SND_WIDGETS 60
 #define NUM_SND_ADJS 7
@@ -1966,12 +1964,11 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS) 
 	raise_dialog(sx->dialog);
       gtk_widget_show(sw[W_unite]);
-      gtk_widget_show(w_snd_pane(sp));
+      gtk_widget_show(sw[W_pane]);
       for (k = 0; k < nchans; k++) 
 	add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS, TRUE);
       gtk_label_set_text(GTK_LABEL(sw[W_name]), shortname_indexed(sp));
 
-      reset_controls(sp);
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	{
 	  gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], sp->short_filename);
@@ -1979,6 +1976,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 							 sw[W_pane]), 
 			      (ss->sgx)->basic_color);
 	}
+      else reset_controls(sp); /* segfault here in notebook case! */
     }
 
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
@@ -1998,7 +1996,10 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
   after_open(sp->index);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
-    sx->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane]);
+    {
+      sx->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane]);
+      reset_controls(sp);
+    }
   if (free_filename) FREE(filename);
   return(sp);
 }
@@ -2016,21 +2017,11 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
 void snd_info_cleanup(snd_info *sp)
 {
   snd_context *sx;
-  snd_state *ss;
   if ((sp) && (sp->sgx))
     {
-      if (w_snd_pane(sp)) gtk_widget_hide(w_snd_pane(sp));
-      ss = sp->state;
       sx = sp->sgx;
-      if (SYNC_BUTTON(sp))
-	{
-	  sp->channel_style = CHANNELS_SEPARATE; 
-	  if (sound_style(sp->state) == SOUNDS_IN_NOTEBOOK)
-	    {
-	      /* gtk_notebook_remove_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sx->page); */
-	    }
-	  /* gtk_widget_hide(w_snd_pane(sp)); */
-	}
+      if ((sx->snd_widgets) && (sx->snd_widgets[W_pane])) gtk_widget_hide(sx->snd_widgets[W_pane]);
+      sp->channel_style = CHANNELS_SEPARATE; 
     }
 }
 
@@ -2101,6 +2092,7 @@ int control_panel_height(snd_info *sp)
 
 void sound_check_control_panel(snd_info *sp, int height)
 {
+  if (sp->inuse != SOUND_NORMAL) return;
   if (((sp->sgx)->controls_fixed == FALSE) && 
       (height > 50))
     {
@@ -2157,7 +2149,7 @@ pane-box (10)name-form"
            XEN_CONS(XEN_WRAP_WIDGET(CONTROL_PANEL(sp)),
 	    XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_TEXT(sp)),
 	     XEN_CONS(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
-	      XEN_CONS(XEN_WRAP_WIDGET(filter_graph(sp)), /* this is the drawingarea widget */
+	      XEN_CONS(XEN_WRAP_WIDGET(filter_graph(sp)), /* this is the (filter) drawingarea widget */
 	       XEN_CONS(XEN_WRAP_WIDGET(unite_button(sp)),
 	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),
 	         XEN_CONS(XEN_WRAP_WIDGET(NAME_PIX(sp)),

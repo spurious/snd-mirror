@@ -340,6 +340,7 @@ void set_label(GtkWidget *label, const char *str);
 void sg_left_justify_button(GtkWidget *button);
 void sg_left_justify_label(GtkWidget *label);
 void check_for_event(snd_state *ss);
+void force_update(GtkWidget *wid);
 int event_pending(snd_state *ss);
 void set_title(snd_state *ss, const char *title);
 void goto_window(GtkWidget *text);

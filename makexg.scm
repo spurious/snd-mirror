@@ -281,11 +281,11 @@
 			      "find_func"
 			      (parse-args "GtkAccelKey* key GClosure* closure lambda_data func_data" 'callback)
 			      'temporary) ; ??
-			(list 'GdkInputFunction
-			      "void"
-			      "input_func"
-			      (parse-args "lambda_data func_data gint fd GdkInputCondition condition" 'callback)
-			      'semi-permanent)
+;			(list 'GdkInputFunction
+;			      "void"
+;			      "input_func"
+;			      (parse-args "lambda_data func_data gint fd GdkInputCondition condition" 'callback)
+;			      'semi-permanent)
 			(list 'GtkCallback
 			      "void"
 			      "func2"
@@ -949,6 +949,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     26-May:    removed nugatory GdkInputFunction stuff.~%")
 (hey " *     7-Apr:     GTK_RC_STYLE has two incompatible definitions in gtk! (gtkwidget.h, gtkrc.h) -- will use int case.~%")
 (hey " *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.~%")
 (hey " *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).~%")

@@ -260,7 +260,7 @@ void set_active_color(GtkWidget *w, GdkColor *col)
 void set_background_and_redraw(GtkWidget *w, GdkColor *col) 
 {
   set_background(w, col);
-  gtk_widget_queue_draw(w);
+  gtk_widget_queue_draw(w); /* force_update(w) ? */
 }
 
 void set_foreground(GtkWidget *w, GdkColor *col)
@@ -350,6 +350,12 @@ void check_for_event(snd_state *ss)
       i++; /* don't hang! */
     }
   ss->checking_explicitly = FALSE;
+}
+
+void force_update(GtkWidget *wid)
+{
+  gdk_window_invalidate_rect(GDK_WINDOW((GTK_WIDGET(wid))->window), NULL, TRUE);
+  gdk_window_process_updates(GDK_WINDOW((GTK_WIDGET(wid))->window), TRUE);
 }
 
 int event_pending(snd_state *ss)
